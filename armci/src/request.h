@@ -27,6 +27,9 @@ extern void _armci_buf_clear_all();
 #elif defined(VIA)
 #  include "via.h"
    typedef void* msg_tag_t;
+#elif defined(VAPI)
+#  include "armci-vapi.h"
+   typedef void *msg_tag_t;
 #elif defined(SOCKETS)
 #  include "sockets.h" 
    typedef long msg_tag_t;

@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.74 2003-07-10 19:19:27 d3h325 Exp $
+#$Id: GNUmakefile,v 1.75 2003-07-16 19:20:43 vinod Exp $
          FOPT = -O
          COPT = -O
 
@@ -76,6 +76,12 @@ endif
 ifeq ($(ARMCI_NETWORK),VIA)
   OBJ += spawn.o  request.o via.o ds-shared.o buffers.o async.o
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
+endif
+
+ifeq ($(ARMCI_NETWORK),MELLANOX)
+  OBJ += spawn.o  request.o vapi.o ds-shared.o buffers.o async.o
+  LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT -DMELLANOX -DVAPI
+  EXTRA_LIBS += -lpthread
 endif
 
 ifeq ($(ARMCI_NETWORK),QUADRICS)

@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.24 2003-04-02 23:52:15 vinod Exp $    **/
+/* $Id: buffers.c,v 1.25 2003-07-16 19:20:43 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -118,9 +118,9 @@ reqbuf_pool_t* _armci_buf_state;  /* array that describes state of each buf */
 void _armci_buf_init()
 {
 char *tmp;
-int  extra;
+int  extra=0;
 int smallbuf_size = sizeof(buf_smext_t)*(MAX_SMALL_BUFS);
-     tmp = BUF_ALLOCATE(MAX_BUFS*sizeof(buf_ext_t) + 64 + smallbuf_size);
+     tmp = (char *)BUF_ALLOCATE((MAX_BUFS*sizeof(buf_ext_t) + 64 + smallbuf_size));
      extra= ALIGN64ADD(tmp);
      if(sizeof(buf_state_t) != sizeof(int)) 
         armci_die("armci_buf_init size buf_state_t!=int",sizeof(buf_state_t));
@@ -223,7 +223,7 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
        if(idx>=MAX_BUFS){
          int relidx;
          relidx = idx-MAX_BUFS; 
-         /*printf("\n%d:relidx=%d \n",armci_me,relidx);fflush(stdout);*/
+         
          CLEAR_SEND_BUF_FIELD(_armci_buf_state->smallbuf[relidx].field,buf_state->snd,buf_state->rcv,buf_state->to,buf_state->op);
 
        /*later, we might just need to do this for all operations, not just get*/
