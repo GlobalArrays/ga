@@ -143,8 +143,10 @@ ifeq  ($(_CPU),ia64)
   endif
   ifeq ($(_FC),efc)
    GLOB_DEFINES += -DIFCLINUX
+   FOPT_REN= -w1 -cm -w90 #-align 
+   ifeq ($(FOPT),-O)
      FOPT =  -O3 -hlo -ftz -pad
-     FOPT_REN= -w1 -cm -w90 #-align 
+   endif
   endif
   ifeq ($(_CC),gcc)
      COPT= -O0 -g
