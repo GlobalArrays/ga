@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.39 2000-05-01 21:38:46 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.40 2000-05-05 20:40:10 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -28,7 +28,7 @@
  * publicly by or for the US Government, including the right to
  * distribute to other US Government contractors.
  */
-
+ 
 /*#define PERMUTE_PIDS */
 
 #include <stdio.h>
@@ -1484,15 +1484,15 @@ Integer  idx, elems, ndim, size;
 
       GA_PUSH_NAME("nga_put");
 
+      if(!nga_locate_region_(g_a, lo, hi, map, GA_proclist, &np ))
+          ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+
       size = GA[handle].elemsize;
       ndim = GA[handle].ndim;
 
       gam_CountElems(ndim, lo, hi, &elems);
       GAbytes.puttot += (double)size*elems;
       GAstat.numput++;
-
-      if(!nga_locate_region_(g_a, lo, hi, map, GA_proclist, &np ))
-          ga_RegionError(ndim, lo, hi, *g_a);
 
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
@@ -1578,6 +1578,9 @@ Integer  idx, elems, ndim, size ;
 
       GA_PUSH_NAME("nga_get");
 
+      if(!nga_locate_region_(g_a, lo, hi, map, GA_proclist, &np ))
+          ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+
       size = GA[handle].elemsize;
       ndim = GA[handle].ndim;
 
@@ -1585,8 +1588,6 @@ Integer  idx, elems, ndim, size ;
       GAbytes.gettot += (double)size*elems;
       GAstat.numget++;
 
-      if(!nga_locate_region_(g_a, lo, hi, map, GA_proclist, &np ))
-          ga_RegionError(ndim, lo, hi, *g_a);
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
           Integer ldrem[MAXDIM];
@@ -1668,6 +1669,9 @@ int optype;
 
       GA_PUSH_NAME("nga_acc");
 
+      if(!nga_locate_region_(g_a, lo, hi, map, GA_proclist, &np ))
+          ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+
       size = GA[handle].elemsize;
       type = GA[handle].type;
       ndim = GA[handle].ndim;
@@ -1681,9 +1685,6 @@ int optype;
       gam_CountElems(ndim, lo, hi, &elems);
       GAbytes.acctot += (double)size*elems;
       GAstat.numacc++;
-
-      if(!nga_locate_region_(g_a, lo, hi, map, GA_proclist, &np ))
-          ga_RegionError(ndim, lo, hi, *g_a);
 
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
