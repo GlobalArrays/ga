@@ -1,5 +1,5 @@
 /*
- * $Id: testc.c,v 1.4 1996-09-19 01:12:31 d3g681 Exp $
+ * $Id: testc.c,v 1.5 1999-05-27 16:31:16 d3h325 Exp $
  */
 
 /*
@@ -8,6 +8,8 @@
 
 #include "macdecls.h"
 #include "string-util.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 /**
  ** constants
@@ -141,7 +143,6 @@ main(argc, argv)
     int         	oi1;	/* out int buffer */
     int         	oi2;	/* out int buffer */
     Pointer         	op;	/* out Pointer buffer */
-    unsigned long	oul;	/* out unsigned long buffer */
     int         	value;	/* return value buffer */
 
     while (1)

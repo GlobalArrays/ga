@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.18 1998-10-30 21:46:04 d3g681 Exp $
+ * $Id: ma.c,v 1.19 1999-05-27 16:31:12 d3h325 Exp $
  */
 
 /*
@@ -2675,7 +2675,7 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
 
     new_sp = ma_sp - nbytes;
     /* if (new_sp < ma_hp) */
-    if ((ma_sp - ma_hp) < nbytes) 
+    if ((ma_sp - ma_hp) < nbytes)
     {
         (void)sprintf(ma_ebuf,
             "block '%s', not enough space to allocate %lu bytes",

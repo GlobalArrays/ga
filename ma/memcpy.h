@@ -33,9 +33,16 @@
 /* deallocate bytes */
 #define bytefree(pointer)	(void)free((char *)(pointer))
 
+#ifdef WIN32
+#  define NO_BCOPY
+#  include <string.h>
+#endif
+
 /* copy bytes */
 #ifdef NO_BCOPY
+#ifndef WIN32
 extern void *memcpy();
+#endif
 #define bytecopy(from,to,nbytes)	\
 	((void)memcpy((char *)(to), (char *)(from), (int)(nbytes)))
 #else

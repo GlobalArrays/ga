@@ -1,5 +1,5 @@
 c
-c     $Id: maf.F,v 1.8 1997-12-09 02:13:59 d3g681 Exp $
+c     $Id: maf.F,v 1.9 1999-05-27 16:31:13 d3h325 Exp $
 c
 
 c
@@ -23,8 +23,7 @@ c     --------------------------------------------------------------- c
 #include "mafdecls.fh"
 
       ma_set_sizes = 0
-
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
       if (f2c_inform_base_fcd(MT_BYTE, byte_mb(1), byte_mb(2)) .eq.
      $    MA_FALSE) return
 #else /* _CRAY */

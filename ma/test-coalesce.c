@@ -1,8 +1,9 @@
 /*
- $Id: test-coalesce.c,v 1.2 1997-11-04 10:01:04 d3e129 Exp $
+ $Id: test-coalesce.c,v 1.3 1999-05-27 16:31:16 d3h325 Exp $
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "macdecls.h"
 
 #define MAXHANDLES 10

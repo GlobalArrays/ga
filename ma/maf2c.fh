@@ -2,7 +2,7 @@
 #define _maf2c_fh
 
 c
-c     $Id: maf2c.fh,v 1.1 1997-02-26 20:39:20 d3h325 Exp $
+c     $Id: maf2c.fh,v 1.2 1999-05-27 16:31:14 d3h325 Exp $
 c
 
 c
@@ -31,7 +31,7 @@ c
       integer f2c_get_index
       integer f2c_get_next_memhandle
       integer f2c_inform_base
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
       integer f2c_inform_base_fcd
 #endif /* _CRAY */
       integer f2c_init
@@ -59,7 +59,7 @@ c     void f2c_summarize_allocated_blocks
       external f2c_get_index
       external f2c_get_next_memhandle
       external f2c_inform_base
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
       external f2c_inform_base_fcd
 #endif /* _CRAY */
       external f2c_init

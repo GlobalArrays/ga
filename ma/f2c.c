@@ -1,5 +1,5 @@
 /*
- * $Id: f2c.c,v 1.6 1997-12-09 02:13:56 d3g681 Exp $
+ * $Id: f2c.c,v 1.7 1999-05-27 16:31:12 d3h325 Exp $
  */
 
 /*
@@ -33,7 +33,7 @@ private void fstring2cstring();
  */
 /* ------------------------------------------------------------------------- */
 
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
 private void fstring2cstring(fcd, cstring, clength)
     _fcd	fcd;		/* FORTRAN character descriptor */
     char	*cstring;	/* C buffer */
@@ -46,7 +46,7 @@ private void fstring2cstring(fstring, flength, cstring, clength)
     Integer	clength;	/* max length (including NUL) of cstring */
 #endif /* _CRAY */
 {
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
     char	*fstring;	/* FORTRAN string */
     Integer	flength;	/* length of fstring */
 
@@ -83,15 +83,15 @@ private void fstring2cstring(fstring, flength, cstring, clength)
  */
 /* ------------------------------------------------------------------------- */
 
-#ifdef _CRAY
-public Boolean f2c_alloc_get_(datatype, nelem, name, memhandle, index)
+#if defined(_CRAY) || defined(WIN32)
+public Boolean FATR f2c_alloc_get_(datatype, nelem, name, memhandle, index)
     Integer	*datatype;
     Integer	*nelem;
     _fcd	name;
     Integer	*memhandle;
     Integer	*index;
 #else /* _CRAY */
-public Boolean f2c_alloc_get_(datatype, nelem, name, memhandle, index, namesize)
+public Boolean FATR f2c_alloc_get_(datatype, nelem, name, memhandle, index, namesize)
     Integer	*datatype;
     Integer	*nelem;
     char	*name;
@@ -104,7 +104,7 @@ public Boolean f2c_alloc_get_(datatype, nelem, name, memhandle, index, namesize)
     char	buf[MA_NAMESIZE];
 
     /* ensure that name is NUL-terminated */
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
     fstring2cstring(name, buf, (Integer)sizeof(buf));
 #else /* _CRAY */
     fstring2cstring(name, namesize, buf, (Integer)sizeof(buf));
@@ -124,14 +124,14 @@ public Boolean f2c_alloc_get_(datatype, nelem, name, memhandle, index, namesize)
  */
 /* ------------------------------------------------------------------------- */
 
-#ifdef _CRAY
-public Boolean f2c_allocate_heap_(datatype, nelem, name, memhandle)
+#if defined(_CRAY) || defined(WIN32)
+public Boolean FATR f2c_allocate_heap_(datatype, nelem, name, memhandle)
     Integer	*datatype;
     Integer	*nelem;
     _fcd	name;
     Integer	*memhandle;
 #else /* _CRAY */
-public Boolean f2c_allocate_heap_(datatype, nelem, name, memhandle, namesize)
+public Boolean FATR f2c_allocate_heap_(datatype, nelem, name, memhandle, namesize)
     Integer	*datatype;
     Integer	*nelem;
     char	*name;
@@ -142,7 +142,7 @@ public Boolean f2c_allocate_heap_(datatype, nelem, name, memhandle, namesize)
     char	buf[MA_NAMESIZE];
 
     /* ensure that name is NUL-terminated */
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
     fstring2cstring(name, buf, (Integer)sizeof(buf));
 #else /* _CRAY */
     fstring2cstring(name, namesize, buf, (Integer)sizeof(buf));
@@ -157,7 +157,7 @@ public Boolean f2c_allocate_heap_(datatype, nelem, name, memhandle, namesize)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_chop_stack_(memhandle)
+public Boolean FATR f2c_chop_stack_(memhandle)
     Integer	*memhandle;
 {
     return MA_chop_stack(*memhandle);
@@ -169,7 +169,7 @@ public Boolean f2c_chop_stack_(memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_free_heap_(memhandle)
+public Boolean FATR f2c_free_heap_(memhandle)
     Integer	*memhandle;
 {
     return MA_free_heap(*memhandle);
@@ -181,7 +181,7 @@ public Boolean f2c_free_heap_(memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_get_index_(memhandle, index)
+public Boolean FATR f2c_get_index_(memhandle, index)
     Integer	*memhandle;
     Integer	*index;
 {
@@ -199,7 +199,7 @@ public Boolean f2c_get_index_(memhandle, index)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_get_next_memhandle_(ithandle, memhandle)
+public Boolean FATR f2c_get_next_memhandle_(ithandle, memhandle)
     Integer	*ithandle;
     Integer	*memhandle;
 {
@@ -212,7 +212,7 @@ public Boolean f2c_get_next_memhandle_(ithandle, memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_inform_base_(datatype, address1, address2)
+public Boolean FATR f2c_inform_base_(datatype, address1, address2)
     Integer	*datatype;
     Pointer	address1;
     Pointer	address2;
@@ -220,7 +220,7 @@ public Boolean f2c_inform_base_(datatype, address1, address2)
     return MAi_inform_base(*datatype, address1, address2);
 }
 
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
 /* ------------------------------------------------------------------------- */
 /*
  * Crays pass a FORTRAN character descriptor (_fcd) for byte_mb(i)
@@ -231,7 +231,7 @@ public Boolean f2c_inform_base_(datatype, address1, address2)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_inform_base_fcd_(datatype, fcd1, fcd2)
+public Boolean FATR f2c_inform_base_fcd_(datatype, fcd1, fcd2)
     Integer	*datatype;
     _fcd	fcd1;
     _fcd	fcd2;
@@ -249,7 +249,7 @@ public Boolean f2c_inform_base_fcd_(datatype, fcd1, fcd2)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_init_(datatype, nominal_stack, nominal_heap)
+public Boolean FATR f2c_init_(datatype, nominal_stack, nominal_heap)
     Integer	*datatype;
     Integer	*nominal_stack;
     Integer	*nominal_heap;
@@ -263,7 +263,7 @@ public Boolean f2c_init_(datatype, nominal_stack, nominal_heap)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_initialized_()
+public Boolean FATR f2c_initialized_()
 {
     return MA_initialized();
 }
@@ -274,7 +274,7 @@ public Boolean f2c_initialized_()
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_init_memhandle_iterator_(ithandle)
+public Boolean FATR f2c_init_memhandle_iterator_(ithandle)
     Integer	*ithandle;
 {
     return MA_init_memhandle_iterator(ithandle);
@@ -286,7 +286,7 @@ public Boolean f2c_init_memhandle_iterator_(ithandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public Integer f2c_inquire_avail_(datatype)
+public Integer FATR f2c_inquire_avail_(datatype)
     Integer	*datatype;
 {
     return MA_inquire_avail(*datatype);
@@ -298,7 +298,7 @@ public Integer f2c_inquire_avail_(datatype)
  */
 /* ------------------------------------------------------------------------- */
 
-public Integer f2c_inquire_heap_(datatype)
+public Integer FATR f2c_inquire_heap_(datatype)
     Integer	*datatype;
 {
     return MA_inquire_heap(*datatype);
@@ -310,7 +310,7 @@ public Integer f2c_inquire_heap_(datatype)
  */
 /* ------------------------------------------------------------------------- */
 
-public Integer f2c_inquire_stack_(datatype)
+public Integer FATR f2c_inquire_stack_(datatype)
     Integer	*datatype;
 {
     return MA_inquire_stack(*datatype);
@@ -322,7 +322,7 @@ public Integer f2c_inquire_stack_(datatype)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_pop_stack_(memhandle)
+public Boolean FATR f2c_pop_stack_(memhandle)
     Integer	*memhandle;
 {
     return MA_pop_stack(*memhandle);
@@ -334,13 +334,13 @@ public Boolean f2c_pop_stack_(memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public void f2c_print_stats_(printroutines)
+public void FATR f2c_print_stats_(printroutines)
     Boolean	*printroutines;
 {
     MA_print_stats(*printroutines);
 }
 
-public void f2c_trace_(Integer *value)
+public void  FATR f2c_trace_(Integer *value)
 {
     MA_trace(*value);
 }
@@ -352,15 +352,15 @@ public void f2c_trace_(Integer *value)
  */
 /* ------------------------------------------------------------------------- */
 
-#ifdef _CRAY
-public Boolean f2c_push_get_(datatype, nelem, name, memhandle, index)
+#if defined(_CRAY) || defined(WIN32)
+public Boolean FATR f2c_push_get_(datatype, nelem, name, memhandle, index)
     Integer	*datatype;
     Integer	*nelem;
     _fcd	name;
     Integer	*memhandle;
     Integer	*index;
 #else /* _CRAY */
-public Boolean f2c_push_get_(datatype, nelem, name, memhandle, index, namesize)
+public Boolean FATR f2c_push_get_(datatype, nelem, name, memhandle, index, namesize)
     Integer	*datatype;
     Integer	*nelem;
     char	*name;
@@ -373,7 +373,7 @@ public Boolean f2c_push_get_(datatype, nelem, name, memhandle, index, namesize)
     char	buf[MA_NAMESIZE];
 
     /* ensure that name is NUL-terminated */
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
     fstring2cstring(name, buf, (Integer)sizeof(buf));
 #else /* _CRAY */
     fstring2cstring(name, namesize, buf, (Integer)sizeof(buf));
@@ -393,14 +393,14 @@ public Boolean f2c_push_get_(datatype, nelem, name, memhandle, index, namesize)
  */
 /* ------------------------------------------------------------------------- */
 
-#ifdef _CRAY
-public Boolean f2c_push_stack_(datatype, nelem, name, memhandle)
+#if defined(_CRAY) || defined(WIN32)
+public Boolean FATR f2c_push_stack_(datatype, nelem, name, memhandle)
     Integer	*datatype;
     Integer	*nelem;
     _fcd	name;
     Integer	*memhandle;
 #else /* _CRAY */
-public Boolean f2c_push_stack_(datatype, nelem, name, memhandle, namesize)
+public Boolean FATR f2c_push_stack_(datatype, nelem, name, memhandle, namesize)
     Integer	*datatype;
     Integer	*nelem;
     char	*name;
@@ -411,7 +411,7 @@ public Boolean f2c_push_stack_(datatype, nelem, name, memhandle, namesize)
     char	buf[MA_NAMESIZE];
 
     /* ensure that name is NUL-terminated */
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
     fstring2cstring(name, buf, (Integer)sizeof(buf));
 #else /* _CRAY */
     fstring2cstring(name, namesize, buf, (Integer)sizeof(buf));
@@ -426,7 +426,7 @@ public Boolean f2c_push_stack_(datatype, nelem, name, memhandle, namesize)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_set_auto_verify_(value)
+public Boolean FATR f2c_set_auto_verify_(value)
     Integer	*value;
 {
     return MA_set_auto_verify((Boolean)*value);
@@ -438,7 +438,7 @@ public Boolean f2c_set_auto_verify_(value)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_set_error_print_(value)
+public Boolean FATR f2c_set_error_print_(value)
     Integer	*value;
 {
     return MA_set_error_print((Boolean)*value);
@@ -450,7 +450,7 @@ public Boolean f2c_set_error_print_(value)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_set_hard_fail_(value)
+public Boolean FATR f2c_set_hard_fail_(value)
     Integer	*value;
 {
     return MA_set_hard_fail((Boolean)*value);
@@ -462,7 +462,7 @@ public Boolean f2c_set_hard_fail_(value)
  */
 /* ------------------------------------------------------------------------- */
 
-public Integer f2c_sizeof_(datatype1, nelem1, datatype2)
+public Integer FATR f2c_sizeof_(datatype1, nelem1, datatype2)
     Integer	*datatype1;
     Integer	*nelem1;
     Integer	*datatype2;
@@ -476,7 +476,7 @@ public Integer f2c_sizeof_(datatype1, nelem1, datatype2)
  */
 /* ------------------------------------------------------------------------- */
 
-public Integer f2c_sizeof_overhead_(datatype)
+public Integer FATR f2c_sizeof_overhead_(datatype)
     Integer	*datatype;
 {
     return MA_sizeof_overhead(*datatype);
@@ -488,7 +488,7 @@ public Integer f2c_sizeof_overhead_(datatype)
  */
 /* ------------------------------------------------------------------------- */
 
-public void f2c_summarize_allocated_blocks_()
+public void FATR f2c_summarize_allocated_blocks_()
 {
     /* FORTRAN indices are 1-based */
     MAi_summarize_allocated_blocks(1);
@@ -500,7 +500,7 @@ public void f2c_summarize_allocated_blocks_()
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean f2c_verify_allocator_stuff_()
+public Boolean FATR f2c_verify_allocator_stuff_()
 {
     return MA_verify_allocator_stuff();
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: error.c,v 1.6 1994-12-29 06:44:22 og845 Exp $
+ * $Id: error.c,v 1.7 1999-05-27 16:31:11 d3h325 Exp $
  */
 
 /*
@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "error.h"
 #include "scope.h"
 
