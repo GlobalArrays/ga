@@ -183,18 +183,17 @@ void FATR ga_copy_(Integer *g_a, Integer *g_b)
 {
 Integer  ndim, ndimb, type, typeb, me = ga_nodeid_();
 Integer dimsb[MAXDIM],i;
-void *ptr_a;
+void *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_COPY,__FILE__,__LINE__);
 #endif
+   GA_PUSH_NAME("ga_copy");
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(local_sync_begin)ga_sync_();
-
-   GA_PUSH_NAME("ga_copy");
 
    if(*g_a == *g_b) ga_error("arrays have to be different ", 0L);
 
@@ -205,17 +204,42 @@ int local_sync_begin,local_sync_end;
    if(ndim != ndimb) ga_error("dimensions not the same", ndimb);
 
    for(i=0; i< ndim; i++)if(dims[i]!=dimsb[i]) 
-                            ga_error("dimensions not the same",i);
+                          ga_error("dimensions not the same",i);
 
-   nga_distribution_(g_a, &me, lo, hi);
+   if ((ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) ||
+       (!ga_is_mirrored_(g_a) && !ga_is_mirrored_(g_b))) {
+     /* Both global arrays are mirrored or both global arrays are not mirrored.
+        Copy operation is straightforward */
 
-   if(lo[0]>0){
-      nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-      nga_put_(g_b, lo, hi, ptr_a, ld);
-   }
+     nga_distribution_(g_a, &me, lo, hi);
+
+     if(lo[0]>0){
+        nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+        nga_put_(g_b, lo, hi, ptr_a, ld);
+     }
    
-   if(local_sync_end)ga_sync_();
+   } else {
+     /* One global array is mirrored and the other is not */
+     if (ga_is_mirrored_(g_a)) {
+       /* Start by assuming that source array is mirrored and destination
+          array is not */
+       nga_distribution_(g_b, &me, lo, hi);
+       if (lo[0]>0) {
+         nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
+         nga_get_(g_a, lo, hi, ptr_b, ld);
+       } 
+     } else {
+       ga_zero_(g_b);
+       nga_distribution_(g_a, &me, lo, hi);
+       if (lo[0] > 0) {
+         nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+         nga_put_(g_b, lo, hi, ptr_a, ld);
+       }
+       ga_merge_mirrored_(g_b);
+     }
+   }
 
+   if(local_sync_end)ga_sync_();
    GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
    vampir_end(GA_COPY,__FILE__,__LINE__);
