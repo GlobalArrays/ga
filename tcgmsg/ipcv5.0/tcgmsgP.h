@@ -106,6 +106,7 @@ typedef struct {
   int sock;			/* Socket for send/receive */
   int comm_mode;		/* Defines communication info */
   pid_t pid;			/* Unix process id (or 0 if unknown) */
+  long tag_rcv;			/* Expected tag from next rcv() */
   long n_snd;			/* No. of messages sent from this process */
   long n_rcv;			/* No. of messages recv from this process */
   SendQEntry *sendq;		/* Queue of messages to be sent */

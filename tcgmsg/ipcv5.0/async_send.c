@@ -240,7 +240,8 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
   long nleft;
   long msg_type, msg_tag, msg_len;
   long buffer_number = 1;
-  
+  long expected_tag = TCGMSG_proc_info[node].tag_rcv++;
+
   if (node<0 || node>=TCGMSG_nnodes)
     Error("msg_rcv: node is out of range", node);
 
@@ -266,7 +267,15 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
   msg_tag  = recvbuf->info[2];
 
   /* Check type and size information */
-  
+
+  if (msg_tag != expected_tag) {
+    (void) fprintf(stdout,
+		   "rcv: me=%ld from=%ld type=%ld, tag=%ld, expectedtag=%ld\n",
+		   me, node, type, msg_tag, expected_tag);
+    fflush(stdout);
+    Error("msg_rcv: tag mismatch ... transport layer failed????", 0L);
+  }
+
   if (msg_type != type) {
     (void) fprintf(stdout,
 		   "rcv: me=%ld from=%ld type=(%ld != %ld) tag=%ld len=%ld\n",

@@ -311,6 +311,7 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
   long nleft;
   long msg_type, msg_tag, msg_len;
   long buffer_number = 1;
+  long expected_tag = TCGMSG_proc_info[node].tag_rcv++;
 #ifdef NOTIFY_SENDER
   void *busy_flag= &TCGMSG_proc_info[node].sendbuf->flag;
 #endif
@@ -349,6 +350,14 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
 
   /* Check type and size information */
   
+  if (msg_tag != expected_tag) {
+    (void) fprintf(stdout,
+		   "rcv: me=%ld from=%ld type=%ld, tag=%ld, expectedtag=%ld\n",
+		   me, node, type, msg_tag, expected_tag);
+    fflush(stdout);
+    Error("msg_rcv: tag mismatch ... transport layer failed????", 0L);
+  }
+
   if (msg_type != type) {
     (void) fprintf(stderr,
 		   "rcv: me=%ld from=%ld type=(%ld != %ld) tag=%ld len=%ld\n",
