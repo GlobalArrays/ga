@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.18 2000-06-01 22:25:52 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.19 2000-06-02 01:05:07 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -97,6 +97,9 @@ extern int armci_me;
 #elif defined(HPUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)64*1024)
+#elif defined(__FreeBSD__)
+#  undef _SHMMAX
+#  define _SHMMAX ((unsigned long)3*1024)
 #elif defined(LINUX) 
 #  if !defined(SHMMAX) /* Red Hat does not define SHMMAX */
 #     undef _SHMMAX
@@ -614,7 +617,6 @@ long ga_nodeid_();
 
   /* first time needs to initialize region_list structure */
   if(!alloc_regions){
-      printf("%d creating shm region list\n",armci_me); fflush(stdout);
       for(reg=0;reg<MAX_REGIONS;reg++){
         region_list[reg].addr=(char*)0;
         region_list[reg].attached=0;
