@@ -21,7 +21,7 @@ c vector boxes lack arithmetic precision
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 50, DIM = 2, nwidth = 2, MAXPROC = 2000)
-      parameter (nloop = 1000)
+      parameter (nloop = 1)
       integer ndim, nproc, pdims(7), type, dcnt, g_a, maxval
       integer i, j, k, dims(7), width(7), map(2*nmax)
       integer lo(7), hi(7), ld(7)
@@ -29,7 +29,7 @@ c vector boxes lack arithmetic precision
       integer dims3(7), ld3(7), index3, chunk(7)
       integer a(nmax, nmax), b(nmax+2*nwidth,nmax+2*nwidth)
       double precision start,finish,start1,finish1,t1,t2,t3,t4,t5,tmp
-      double precision t6,t7,t8,t9
+      double precision t6,t7,t8,t9,t10
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
       parameter (heap=60*60*4, fudge=100, stack=100*100)
 c     
@@ -172,7 +172,7 @@ c
 c
 c   print out values of a
 c
-#if 0
+#if 1
       do k = 0, nproc-1
         call ga_sync
         if (k.eq.me.and.has_data(me).and.maxval.lt.10000) then
@@ -189,7 +189,7 @@ c
       call ffflush(6)
 #endif
 
-c      go to 122
+      go to 123
       t1 = 0.0d00
       do i = 1, nloop
         start = util_timer()
@@ -249,6 +249,17 @@ c      go to 123
       end do
       t7 = t7/dble(nloop)
   123 continue
+
+      t10 = 0.0d00
+      call ga_sync
+      do i = 1, nloop
+        start = util_timer()
+        status = ga_update6_ghosts(g_a)
+        finish = util_timer()
+        call ga_sync
+        t10 = t10 + finish - start
+      end do
+      t10 = t10/dble(nloop)
 
       if (me.eq.0) then
         write(6,*) '*'
@@ -458,6 +469,22 @@ c      end do
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
         write(6,*) 'Average time for nga_update5_ghosts ',
+     +              tmp/dble(nproc)
+      endif
+      tmp = t10
+      call ga_dgop(1,tmp,1,'max')
+      if (me.eq.0) then
+        write(6,*) 'Maximum time for nga_update6_ghosts ',tmp
+      endif
+      tmp = t10
+      call ga_dgop(2,tmp,1,'min')
+      if (me.eq.0) then
+        write(6,*) 'Minimum time for nga_update6_ghosts ',tmp
+      endif
+      tmp = t10
+      call ga_dgop(3,tmp,1,'+')
+      if (me.eq.0) then
+        write(6,*) 'Average time for nga_update6_ghosts ',
      +              tmp/dble(nproc)
       endif
       tmp = t2
