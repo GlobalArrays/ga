@@ -6,6 +6,13 @@
 #include "armci.h"
 #include "message.h"
 
+#ifdef WIN32
+#include <windows.h>
+#define sleep(x) Sleep(100*(x))
+#else
+#include <unistd.h>
+#endif
+
 #if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
 #define CLUSTER 
 
