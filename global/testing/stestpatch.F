@@ -85,10 +85,10 @@ c
 #else
       if(dist_same.eq. .true.) then
 #endif
-         call ga_duplicate(g_a, g_b, 'a_duplicated')
+         status = ga_duplicate(g_a, g_b, 'a_duplicated')
          if(.not.ga_compare_distr(g_a, g_b))
      $           call ga_error("g_b distribution different",0) 
-         call ga_duplicate(g_a, g_c, 'a_duplicated_again')
+         status = ga_duplicate(g_a, g_c, 'a_duplicated_again')
          if(.not.ga_compare_distr(g_a, g_c))
      $           call ga_error("g_c distribution different",0) 
       else
