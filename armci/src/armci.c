@@ -137,7 +137,8 @@ int ARMCI_Init()
 #if defined(SYSV) || defined(WIN32)
 
     /* allocate locks */
-    armci_allocate_locks();
+    if (armci_nproc > 1)
+      armci_allocate_locks();
 
 #endif
 
