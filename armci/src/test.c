@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.16 1999-11-20 01:38:16 d3h325 Exp $ */
+/* $Id: test.c,v 1.17 1999-11-22 22:12:35 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -311,7 +311,7 @@ void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
 			print_subscript(" b",ndim,subscr2,msg);
                         fflush(stdout);
                         sleep(1);
-			assert(0);
+                        ARMCI_Error("Bailing out",0);
 		}
 
 		{ /* update subscript for the patches */
