@@ -138,6 +138,7 @@ or a better solution (for C shell users) is
 
    where xxxx is your machine. The list of supported machines is:
         SOLARIS (Sun running Solaris operating system)
+        SOLARIS64 (Sun running Solaris operating system)
         SGI (older 32-bit Mips-2 and Mips-3 SGI systems)
         SGI_N32 (64-bit Mips-4 processors, 32-bit address space, fastest code)
         SGITFP (all SGI systems with 64-bit address space) 
@@ -145,14 +146,15 @@ or a better solution (for C shell users) is
         IBM, IBM64 (IBM workstations/servers but NOT SP), 
         LAPI (IBM SP with PSSP > 2.2 on top of LAPI Active Messages)
         CRAY-T3E 
-        CRAY-YMP (J90 and SV1)
+        CRAY-YMP (J90)
+        CRAY-SV1
         LINUX  (Intel, PowerPC, Ultra procesors with kernel >2.0)
-        LINUX64 (Alpha processor with Compaq compilers, but not gcc/g77!)
+        LINUX64 (Alpha processor with Compaq compiler but not gcc/g77 and IA64)
         FUJITSU-VPP (VX/VPP)
         HPUX, HPUX64 (HP UNIX; bad luck if you got the free HP cc compiler!)
         WIN32 (Intel, Windows NT using Windows compilers and MS nmake)
         CYGNUS (Intel, Windows NT + Cygnus Unix interface)
-
+        HITACHI (HITACHI SR8000 System) 
 Obsolete target platforms on which GA was supported in previous releases:
         KSR (KSR-1/2)
         IPSC, DELTA, PARAGON
@@ -249,8 +251,8 @@ For Myrinet, define ARMCI_NETWORK=GM,  GM_LIB and GM_INCLUDE definitions
 for the location of the Myricom GM library and header files.
 Please refer to armci/doc/README.myrinet for installation details.
 
-For Compaq/Quadrix, define ARMCI_NETWORK=QUADRIX. You can also
-specify QUADRIX_INCLUDE and QUADRIX_LIB for nonstandard installation
+For Compaq/Quadrics, define ARMCI_NETWORK=QUADRICS. You can also
+specify QUADRICS_INCLUDE and QUADRICS_LIB for nonstandard installation
 of the libraries.
 
 

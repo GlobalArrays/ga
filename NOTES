@@ -44,6 +44,16 @@ memory.
 For up-to-date information regarding platform specific problems, go to:
 http://www.emsl.pnl.gov:2080/docs/global/support.html
 
+Systems with QSnet interconnects
+--------------------------------
+Due to a bug in elan library (old versions between and including 1.3 and 1.4.1),
+programs using the elan library can crash when transmiting 4-byte C Floats. 
+Please contact Quadrics support for further information about this problem.
+Since ARMCI uses the elan library on the QSnet interconnect, this elan library 
+bug can cause a problem if your system is using the above mentioned version
+of the elan library. This problem does not occur with the new 1.4.2 version of 
+the elan library.
+
 Linux 
 -----
 The release 3.1 of GA supports  Intel (x86), PowerPC, Alpha, and Sparc 
@@ -132,6 +142,7 @@ SunWorld. Also see Note below.
 
 Compaq/DEC
 ---------- 
+
 Tru64 is another example of an OS with a pityfully small size of 
 the shared memory region limit. Here are instruction on how to 
 modify shared memory max segment size to 256MB on  the Tru64 UNIX 
@@ -153,7 +164,7 @@ You can check if the file created is OK by typing:
 
 For more info:http://www.tru64unix.compaq.com/docs/base_doc/DOCUMENTATION/V40F_HTML/AQ0R3GTE/CHLMTSXX.HTM
 Also see Note below.
- 
+
 
 HP-UX 
 -----
