@@ -24,7 +24,7 @@ ACKNOWLEDGMENT
 
 
 GENERAL NOTES
-  Version 3.0 of Global Arrays Library:
+  Version 3.1 of Global Arrays Library:
   - supports a wide variety of platforms, from supercomputer, such as
     IBM SP and CRAY T3E, to Linux clusters and Windows NT.
   - supports arbitrary dimensional array operations. 
@@ -36,7 +36,7 @@ GENERAL NOTES
 SUPPORTED PLATFORMS
   * IBM SP, CRAY T3E & J90, SGI Origin, Fujitsu
   * Cluster of workstations/servers: Solaris, IRIX, AIX, HPUX, Digital Unix
-  * Linux clustes/servers
+  * Linux clusters/servers
   * Windows NT
 
 
@@ -50,7 +50,7 @@ DIRECTORY STRUCTURE
 
 
 HISTORY
-  version 3.1:
+  version 3.1   July 18th, 2000
               * ports to 64-bit IBM, HP, Sun, Linux(on alpha) platforms
               * support for clusters of Windows NT with TCP network
               * support for Myrinet (tested on Linux/intel/ultra) 
@@ -59,7 +59,8 @@ HISTORY
               * new nga_scatter_acc, nga_select_elem operations
               * restructured makefiles to simplify changes and enable
                 export of make definitions to application makefiles
-  version 3.0, November 15th, 1999:
+
+  version 3.0   November 15th, 1999:
               * This is the most significant update of the GA package to date: 
                 all source code for the core functionality of the library 
                 has been rewritten, ~90% of the library code is new/changed; 
