@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.61 2004-11-05 16:53:01 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.62 2004-11-05 19:44:26 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -2383,10 +2383,6 @@ void *pval;
 
     if(GAme == proc)GAbytes.rdiloc += (double)sizeof(Integer);
 
-    /* BJP */
-    if (p_handle != -1) {
-      proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
-    }
 #ifdef PERMUTE_PIDS
     if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
