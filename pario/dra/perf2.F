@@ -95,7 +95,7 @@ c     initialize g_a, g_b with random values
 c     ... use ga_access to avoid allocating local buffers for ga_put
 c
       call ga_sync()
-      call nga_distribution(g_a, me, glo, ghi, ld)
+      call nga_distribution(g_a, me, glo, ghi)
       call nga_access(g_a, glo, ghi, index, ld)
       call fill_random(DBL_MB(index), ghi(1)-glo(1)+1,
      &                 ghi(2)-glo(2)+1, ld(1))
@@ -111,16 +111,17 @@ c.......................................................................
       if (me.eq.0)call ffflush(6)
       dims(1) = n
       dims(2) = n
-      reqdims(1) = 1
-      reqdims(2) = 1
-      if(ndra_create(MT_DBL, 2, dims, 'A', FNAME, 
+      reqdims(1) = n
+      reqdims(2) = n
+      if(ndra_create(MT_DBL, 2, dims, 'A',
+     &      FNAME, 
      &      DRA_RW, reqdims, d_a).ne.0)
      $   CALL ga_error('ndra_create failed: ',0)
 c
       if(me.eq.0) print *, 'alligned blocking write'
       if (me.eq.0)call ffflush(6)
       tt0 = tcgtime()
-      if(ndra_write(g_a, d_a,req).ne.0)
+      if(ndra_write(g_a, d_a, req).ne.0)
      $   CALL ga_error('ndra_write failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       tt1 = tcgtime() -tt0
@@ -147,9 +148,10 @@ c
       dims(2) = m
       reqdims(1) = n
       reqdims(2) = n
-      if(dra_create(MT_DBL, 2, dims, 'A', FNAME1,
+      if(ndra_create(MT_DBL, 2, dims, 'B',
+     &      FNAME1,
      &      DRA_RW, reqdims, d_b).ne.0)
-     $   CALL ga_error('dra_create failed: ',0)
+     $   CALL ga_error('ndra_create failed: ',0)
 c
       if(me.eq.0) print *, 'non alligned blocking write'
       if (me.eq.0)call ffflush(6)
@@ -218,9 +220,9 @@ c
       if(me.eq.0) print *, 'non alligned blocking read'
       if (me.eq.0)call ffflush(6)
       tt0 = tcgtime()
-      if(dra_read_section(.false.,   g_b, glo, ghi,
+      if(ndra_read_section(.false.,   g_b, glo, ghi,
      &               d_b, dlo, dhi, req).ne.0)
-     &        call   ga_error('dra_read_section failed:',0)
+     &        call   ga_error('ndra_read_section failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       tt1 = tcgtime() -tt0
       if (me.eq.0)then
