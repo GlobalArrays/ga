@@ -116,7 +116,7 @@ int numprocs, myid;
 
    make_tcgmsg_comm();
    MPI_Barrier(MPI_COMM_WORLD);
-/*   printf("ready to go\n");*/
+   /* printf("%d:ready to go\n",NODEID_()); */
    install_nxtval();
 }
 

@@ -274,7 +274,14 @@ ifeq ($(TARGET),SOLARIS)
       LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
     RANLIB = echo $*
 endif
-
+ifeq ($(TARGET),SOLARIS64)
+    FFLAGS = -xarch=v9 -xtypemap=real:64,double:64,integer:64
+   DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN\
+             -DSUNF77_2
+    CFLAGS = -O -xarch=v9 -dalign $(DEFINES)
+      LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
+    RANLIB = echo $*
+endif
 
 ifeq ($(TARGET),CRAY)
         FC = cf77

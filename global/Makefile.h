@@ -1,4 +1,6 @@
-# Makefile.h, Wed Jan 25 13:01:15 PST 1995 
+#*****************************************************************************
+# As of 03/31/2000 this file is no longer used by GA
+#*****************************************************************************
 #
 # Specify message-passing library to be used with GA. The current choices
 # are: TCGMSG or MPI. For MPI, please refer to global.doc for 
@@ -30,16 +32,9 @@ GLOB_INCLUDES = -I../../include
       ARFLAGS = rcv
     EXPLICITF = FALSE
     MAKEFLAGS = -j 1
-  CUR_VERSION = SHMEM
         MKDIR = mkdir
        LINK.f = $(FLD)
        LINK.c = $(CLD)
-
-#    GA_TRACE = YES
-
-ifeq ($(GA_TRACE), YES)
-    DEF_TRACE = -DGA_TRACE
-endif
 
 ifdef OPTIMIZE
          FOPT = -O
@@ -476,10 +471,6 @@ ifeq ($(TARGET),LAPI)
        P_FILE = NO
  GLOB_DEFINES = -DEXTNAME -DAIX -DLAPI -DLAPI_SPLIT
 
-ifndef USE_MPI
- GLOB_DEFINES += -DTCGMSG
-endif
-
 ifeq ($(FOPT),-O)
          FOPT = -O3 -qstrict -qcompact -qarch=com -qtune=auto
 else
@@ -522,12 +513,10 @@ ifeq ($(VERSION),SHMEM)
  GLOB_DEFINES += -DSHMEM
 endif
 
-ifdef USE_MPI
+ifeq ($(MSG_COMMS),MPI)
+ GLOB_DEFINES += -DMPI
  ifdef MPI_INCLUDE
    GLOB_INCLUDES += -I$(MPI_INCLUDE)
- endif
- ifeq ($(MSG_COMMS),MPI)
-    GLOB_DEFINES += -DMPI
  endif
 endif
 

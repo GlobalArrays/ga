@@ -1,3 +1,9 @@
+# $Id: makefile.h,v 1.13 2000-04-17 22:40:57 d3h325 Exp $
+# This is the main include file for GNU make. It is included by makefiles
+# in most subdirectories of the package.
+# It includes compiler flags, preprocessor and library definitions
+#
+# JN 03/31/2000
 
            FC = f77
            CC = cc
@@ -24,6 +30,8 @@
        LINK.f = $(FLD)
        LINK.c = $(CLD)
       LIBBLAS = -lblas
+       P_FILE = YES
+        CLIBS = -lm
 
 
  GLOB_DEFINES = -D$(TARGET)
@@ -33,14 +41,38 @@ ifdef OPTIMIZE
          FOPT = -O
          COPT = -O
 endif
-
-
+#
+#................................ SUN ......................................
+#
+ifeq ($(TARGET),SOLARIS)
+          M4 = /usr/ccs/bin/m4
+     FLD_REN = -xs
+     COPT_REN = -dalign
+     FOPT_REN = -dalign
+     ifdef LARGE_FILES
+        LOC_LIBS += $(shell getconf LFS_LIBS)
+     endif
+endif
+ifeq ($(TARGET),SOLARIS64)
+           M4 = /usr/ccs/bin/m4
+      FLD_REN = -xs
+     COPT_REN = -xarch=v9 -dalign
+     FOPT_REN = -xarch=v9 -dalign -xtypemap=real:64,double:64,integer:64
+     ifdef LARGE_FILES
+        LOC_LIBS += $(shell getconf LFS_LIBS)
+     endif
+ GLOB_DEFINES = -DSOLARIS -DSOLARIS64
+        CDEFS = -DEXT_INT
+endif
+#obsolete: SunOS 4.X
 ifeq ($(TARGET),SUN)
            CC = gcc
      FOPT_REN = -Nl100 -dalign
        RANLIB = ranlib
 endif
-
+#
+#................................ FUJITSU ..................................
+#
 #32-bit VPP5000
 ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt
@@ -56,17 +88,10 @@ ifeq ($(TARGET),FUJITSU-VPP64)
  GLOB_DEFINES = -DFUJITSU
         CDEFS = -DEXT_INT
 endif
-
-
-ifeq ($(TARGET),SOLARIS)
-     FLD_REN = -xs
-     LOC_LIBS += -lsocket -lrpcsvc -lnsl -lucb -ldl 
-     ifdef LARGE_FILES
-        LOC_LIBS += $(shell getconf LFS_LIBS)
-     endif
-endif
-
-
+#
+#................................ LINUX ....................................
+# IBM PC running Linux
+#
 ifeq ($(TARGET),LINUX)
            CC=gcc
 ifndef USE_F77
@@ -79,15 +104,21 @@ else
 		$(CPP) $(CPP_FLAGS) .tmp.$$$$.c  | sed '/^$$/d' > $*.f; \
 	 	/bin/rm -f .tmp.$$$$.c ) || exit 1
 endif
-ifeq ($(CC),gcc)
+
+ifeq ($(TARGET_CPU),POWERPC)
+#    no special optimization flags
+else
+
+  ifeq ($(CC),gcc)
        COPT_REN = -malign-double
-endif
-ifeq ($(FC),g77)
-    FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
-#for 2.7.2 and earlier
-ifndef OLD_G77
-    FOPT_REN += -Wno-globals
-endif
+  endif
+  ifeq ($(FC),g77)
+      FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
+  #for 2.7.2 and earlier
+    ifndef OLD_G77
+      FOPT_REN += -Wno-globals
+    endif
+  endif
 endif
 
  GLOB_DEFINES = -DLINUX
@@ -99,14 +130,14 @@ ifeq ($(FC),pgf77)
 # for Pentium Pro or Pentium II
 # FOPT_REN  += -tp p6
        GLOB_DEFINES += -DPGLINUX
-# for parinoia
        MAKEFLAGS += FC=pgf77
 endif
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
 endif
-
-
+#
+#............................. CYGNUS on Windows ..........................
+#
 ifeq ($(TARGET),CYGNUS)
            FC = g77
            CC = gcc
@@ -115,55 +146,37 @@ ifeq ($(TARGET),CYGNUS)
      COPT_REN = -malign-double
        RANLIB = ranlib
 endif
-
-
+#
+#................................ HP  ....................................
 ifeq ($(TARGET),HPUX)
+# free HP cc compiler is not up to the job: use gcc if no commercial version
 #          CC = gcc
            FC = fort77
           CPP = /lib/cpp
     ifeq ($(FOPT),-O)
          FOPT = -O1
     endif
-     FOPT_REN = +ppu
-     COPT_REN = -Ae
+      FOPT_REN = +ppu
+      COPT_REN = -Ae
+        FLIBS = -lU77
+ GLOB_DEFINES = -DHPUX -DEXTNAME
 #   EXPLICITF = TRUE
      FCONVERT = $(CPP) $(CPP_FLAGS)  $< | sed '/^\#/D'  > $*.f
 endif
-
-
-ifeq ($(TARGET),CONVEX-SPP)
-           FC = fc 
-          CPP = /lib/cpp
-    ifeq ($(FOPT),-O) 
-	 FOPT = -O1
-    endif
-    ifeq ($(FOPT),-g) 
-	 FOPT = -no
-    endif
-    ifeq ($(COPT),-g) 
-	 COPT = -no
-    endif
-    COPT_REN  = -or none
-     FOPT_REN = -ppu -or none
-    EXPLICITF = TRUE
-     FCONVERT = $(CPP) $(CPP_FLAGS)  $< | sed '/^\#/D'  > $*.f
- GLOB_DEFINES = -DCONVEX
-endif
-
-
-ifeq ($(TARGET),KSR)
-       RANLIB = echo
-     FOPT_REN = -r8
-        CDEFS = -DEXT_INT
-     HAS_BLAS = yes
-endif
-
+#
+#................................ Compaq/DEC ALPHA .............................
+# we use historical name
+#
 ifeq ($(TARGET),DECOSF)
      FOPT_REN = -i8
         CDEFS = -DEXT_INT
        RANLIB = ranlib
+        CLIBS = -lfor -lots -lm
+          CLD = $(CC)
 endif
-
+#
+#................................ SGI ......................................
+#
 ifeq ($(TARGET),SGI)
        RANLIB = echo
      COPT_REN = -32 
@@ -182,18 +195,21 @@ endif
 ifeq ($(TARGET),SGITFP)
        RANLIB = echo
         CDEFS = -DEXT_INT
-#    COPT_REN = -fullwarn -64 
      COPT_REN = -64 -mips4 
-     FOPT_REN = -i8 -align64 -64 -mips4 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000 
+ GLOB_DEFINES = -DSGI -DSGITFP
+     FOPT_REN = -i8 -align64 -64 -mips4 
 endif
 
 ifeq ($(TARGET),SGI64)
        RANLIB = echo
+ GLOB_DEFINES = -DSGI -DSGI64
      COPT_REN = -64 -mips4 
-     FOPT_REN = -align64 -64 -mips4 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000 
+     FOPT_REN = -align64 -64 -mips4
 endif
-
-
+#
+#................................ CRAY ..................................
+# covers also J90 and SV1
+#
 ifeq ($(TARGET),CRAY-YMP)
      ifeq ($(FOPT), -O)
          FOPT = -O1
@@ -208,9 +224,7 @@ ifeq ($(TARGET),CRAY-YMP)
       LIBBLAS = 
     EXPLICITF = TRUE
 endif
-
-     
-
+#
 ifeq ($(TARGET),CRAY-T3D)
      ifeq ($(FOPT), -O)
          FOPT = -O1
@@ -221,8 +235,7 @@ ifeq ($(TARGET),CRAY-T3D)
      FOPT_REN = -Ccray-t3d -Wf-dp
     EXPLICITF = TRUE
 endif
-
-
+#
 ifeq ($(TARGET),CRAY-T3E)
      ifeq ($(FOPT), -O)
          FOPT = -O1
@@ -234,88 +247,25 @@ ifeq ($(TARGET),CRAY-T3E)
  GLOB_DEFINES = -DCRAY_T3D -DCRAY_T3E
     EXPLICITF = TRUE
 endif
-
-
-ifeq ($(TARGET),IPSC)
 #
-# IPSC running NX
+#.............................. IBM .........................................
+# LAPI is the primary target for SP
 #
-        INTEL = YES
-     FOPT_REN = -node
-     COPT_REN = -node
-      INSTALL = @echo "See TCGMSG README file on how to run program "
-endif
-
-ifeq ($(TARGET),DELTA)
-#
-# Delta
-#
-        INTEL = YES
-     FOPT_REN = -node
-     COPT_REN = -node
-      INSTALL = @echo 
-endif
-
-#
-#....................
-#
-ifeq ($(TARGET),DELTA)
-#
-# DELTA running NX
-#
-        INTEL = YES
-     FOPT_REN = -node
-     COPT_REN = -node
-      INSTALL = rcp $@ delta2:
-endif
-#
-#....................
-#
-ifeq ($(TARGET),PARAGON)
-#
-# PARAGON running OS>=1.2 with NX
-#
-        INTEL = YES
-     FOPT_REN = -nx
-     COPT_REN = -nx -Msafeptr
-endif
-#
-ifeq ($(INTEL), YES)
-#
-# all Intel machines
-#
-           FC = if77
-           CC = icc
-           AR = ar860
-           AS = as860
-          CLD = $(CC)
- ifeq ($(FOPT),-O)
-         FOPT = -O2
- endif
-     FOPT_REN += -Knoieee -Mquad -Mreentrant -Mrecursive
-     COPT_REN += -Knoieee -Mquad -Mreentrant
- GLOB_DEFINES += -DNX
-  CUR_VERSION = DISMEM
-     HAS_BLAS = yes
-endif
- 
 ifeq ($(TARGET),LAPI)
-         IBM  = 1
+         IBM_  = 1
          FLD  = mpcc_r -lxlf -lxlf90 -lm
 GLOB_DEFINES += -DSP
 endif
-
 #....................
 ifeq ($(TARGET),SP1)
 #
-         IBM  = 1
+         IBM_  = 1
          FLD  = mpxlf
 endif
- 
 #....................
 ifeq ($(TARGET),SP)
 #
-         IBM  = 1
+         IBM_  = 1
          FLD  = mpxlf
 
 # need to strip symbol table to alleviate a bug in AIX 4.1 ld
@@ -329,11 +279,11 @@ endif
 ifeq ($(TARGET),IBM)
 # IBM RS/6000 under AIX  
 #
-         IBM = 1
+         IBM_ = 1
 GLOB_DEFINES =
 endif
 
-ifdef IBM
+ifdef IBM_
            FC = xlf
      FOPT_REN = -qEXTNAME -qarch=com
 GLOB_DEFINES += -DIBM -DAIX
@@ -343,7 +293,12 @@ GLOB_DEFINES += -DIBM -DAIX
 #     HAS_BLAS = yes
 endif
 
+#
+#.............................. final flags ....................................
+#
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)
+       FC += $(FOPT_REN)
+       CC += $(COPT_REN)
 
 #Fujitsu fortran compiler requires -Wp prefix for cpp symbols
 ifeq ($(TARGET),FUJITSU-VPP)
@@ -356,22 +311,22 @@ else
        FDEFINES = $(DEFINES)
 endif
 
-       INCLUDES += $(LIB_INCLUDES)
 
+       INCLUDES += $(LIB_INCLUDES)
        CPP_FLAGS += $(INCLUDES) $(FDEFINES)
 
-       FFLAGS = $(FOPT) $(FOPT_REN)
-       CFLAGS = $(INCLUDES) $(DEFINES) $(COPT) $(COPT_REN) $(CDEFS) $(LIB_CDEFS)
+       FFLAGS = $(FOPT) 
+       CFLAGS = $(INCLUDES) $(DEFINES) $(COPT) $(CDEFS) $(LIB_CDEFS)
        CFLAGS := $(strip $(CFLAGS))
        FFLAGS := $(strip $(FFLAGS))
-
+       FLDOPT =  $(FLD_REN)
+       CLDOPT =  $(CLD_REN)
 
 #
 # Define known suffixes mostly so that .p files don't cause pc to be invoked
 #
-
 .SUFFIXES:	
-.SUFFIXES:	.o .s .F .f .c
+.SUFFIXES:	.o .s .F .f .c .m4
 
 ifeq ($(EXPLICITF), TRUE)
 #
@@ -379,7 +334,13 @@ ifeq ($(EXPLICITF), TRUE)
 # with CPP to get .f files
 #
 .SUFFIXES:	
-.SUFFIXES:	.o .s .F .f .c
+.SUFFIXES:	.o .s .F .f .c .m4
+
+.m4.o:
+	$(M4) $*.m4 > $*.F
+	$(MAKE) $*.f
+	$(FC) $(FOPT_REN) -c $*.f
+	$(RM) -f $*.F $*.f
 
 .F.o:	
 	@echo Converting $*.F '->' $*.f
@@ -390,6 +351,15 @@ ifeq ($(EXPLICITF), TRUE)
 .F.f:
 	@echo Converting $*.F '->' $*.f
 	$(FCONVERT)
+else
+
+.SUFFIXES:      .m4
+
+.m4.o:
+	$(M4) $*.m4 > $*.F
+	$(FC) $(CPP_FLAGS) -c $*.F -o $*.o
+	$(RM) $*.F
+
 endif
 
 # 
@@ -415,22 +385,44 @@ ifeq (CRAY,$(findstring CRAY,$(TARGET)))
 	$(FC) -c $(FFLAGS) $*.f
 endif
 
-# LOC_LIBS defines extra libraries required to build test programs 
-
-LIBS = -L$(LIB_DISTRIB)/$(TARGET) -lpario -lglobal -lma -llinalg $(LOC_LIBS)
-ifeq ($(HAS_BLAS),yes)
-      LIBS += $(LIBBLAS)
+#
+#.................. libraries for test programs ...............................
+# Almost every library in the package contains its test programs.
+# LIBS contains definitions of libraries used by these programs.
+# LOC_LIBS defines extra libraries required by test programs for each library 
+# This is rather complicated because of all different configurations and 
+# options supported:
+# We create list of libs needed by test programs in each of
+# the subdirectories by concatenating library definitions for
+# linear algebra, ARMCI, message-passing library, and any lower level libs
+#
+# core libs
+LIBS = -L$(LIB_DISTRIB)/$(TARGET) -lglobal -lma
+#
+#linear algebra
+ifdef USE_SCALAPACK
+  LIBS += $(SCALAPACK)
 endif
+LIBS += -llinalg $(LOC_LIBS)
+ifeq ($(HAS_BLAS),yes)
+  LIBS += $(LIBBLAS)
+endif
+#
+#communication libs
+LIBS += -larmci
 ifdef MPI_LIB
       LIBS += -L$(MPI_LIB)
 endif
-
-ifndef OLD_GA
-LIBS += -larmci
+ifndef LIBMPI
+  LIBMPI = -lmpi
 endif
-
 ifdef USE_MPI
-LIBS += -ltcgmsg-mpi -lmpi
+  LIBS += -ltcgmsg-mpi $(LIBMPI)
 else
-LIBS += -ltcgmsg
+  LIBS += -ltcgmsg
 endif
+# lower level libs used by communication libraries
+ifdef COMM_LIBS
+  LIBS += $(COMM_LIBS)
+endif
+#........................... End ..............................................

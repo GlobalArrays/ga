@@ -6,55 +6,15 @@
 
 ifndef TARGET
 error:
-	@echo "TARGET machine [SUN,SGI,SGITFP,IBM,DECOSF,SP1,IPSC,PARAGON,KSR,CRAY-T3D,CONVEX-SPP,LAPI] not defined "
+	@echo "TARGET machine not defined (see README file for list of valid targets" 
 	exit
 endif
 
-INTERRUPT_AVAILABLE = SP1 SP IPSC DELTA PARAGON LAPI
-DATA-SERVER = SUN SGI SGI_N32 SGITFP SGI64 HPUX SOLARIS IBM DECOSF LINUX
-ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP CYGNUS
-
-include ../Makefile.h
-
-ifdef IWAY
-       LOC_DEFINES = -DIWAY -DSOCKCONNECT
-endif
-
-# you can restore the old threshold for default decomposition in ga_create
-# by uncommenting the following statement
-# LOC_DEFINES += -DOLD_DEFAULT_BLK
-
-ifndef USE_ARMCI
-ifeq ($(TARGET),$(findstring $(TARGET),$(DATA-SERVER)))
-    ifndef IWAY
-       LOC_DEFINES += -DDATA_SERVER
-    endif
-endif
-
-ifeq ($(VERSION),SHMEM)
-  ifneq ($(TARGET),$(findstring $(TARGET),$(ONESIDED_AVAILABLE)))
-    LOC_DEFINES += -DSYSV
-  endif
-endif
-endif
-
-
-
-# We need to remove entire library when changing TARGET rather
-# than individual objects 
+# We can remove entire library when cleaning rather than individual objects
 #
 HARDCLEAN = yes
 
 LIB_DISTRIB = ../../lib
-
-ifndef OLD_GA 
-	LOC_DEFINES = -DARMCI
-	LOC_INCLUDES = -I../../armci/src
-ifndef USE_MPI
-	LOC_DEFINES += -DTCGMSG
-endif
-endif
-
 INCDIR = ../../include
 HEADERS = ga.h global.h global.fh c.names.h cray.names.h
 
@@ -63,7 +23,59 @@ ifndef LIBRARY
   LIBRARY = libglobal.a
 endif
 
+ifeq ($(GA_TRACE), YES)
+    DEF_TRACE = -DGA_TRACE
+endif
+
 include ../MakeFiles.h
+
+
+ifdef OLD_GA
+#............................ old version of GA (pre 3.0) ...................
+INTERRUPT_AVAILABLE = SP1 SP IPSC DELTA PARAGON LAPI
+DATA-SERVER = SUN SGI SGI_N32 SGITFP SGI64 HPUX SOLARIS IBM DECOSF LINUX
+ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP CYGNUS
+#
+ifdef IWAY
+       LOC_DEFINES = -DIWAY -DSOCKCONNECT
+endif
+ifeq ($(TARGET),$(findstring $(TARGET),$(DATA-SERVER)))
+    ifndef IWAY
+       LOC_DEFINES += -DDATA_SERVER
+    endif
+endif
+ifeq ($(VERSION),SHMEM)
+  ifneq ($(TARGET),$(findstring $(TARGET),$(ONESIDED_AVAILABLE)))
+    LOC_DEFINES += -DSYSV
+  endif
+endif
+LOC_DEFINES += $(DEF_TRACE)
+include ../Makefile.h
+
+else
+
+# ............................... ARMCI based version ........................
+# you can restore the old threshold for default decomposition in ga_create
+# by uncommenting the following statement
+# LIB_DEFINES += -DOLD_DEFAULT_BLK
+
+  LIB_DEFINES += -DARMCI $(DEF_TRACE)
+  LIB_INCLUDES += -I../../armci/src -I$(INCDIR)
+
+#we USE_MPI requires us to acces MPI headers to handle ga_mpi_communicator
+ifdef USE_MPI
+  MSG_COMMS = MPI
+endif
+ifeq ($(MSG_COMMS),MPI)
+include ../../armci/config/makemp.h
+LIB_INCLUDES += $(MP_INCLUDES)
+LIB_DEFINES += -DMPI
+endif
+include ../../config/makefile.h
+endif
+
+
+
 include ../../config/makelib.h
 
 $(OBJ_FRAGILE): %.o : %.c

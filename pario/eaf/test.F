@@ -1,7 +1,7 @@
 #define IO_TEST_SZ (1024*1024/8)
 #define IO_NUM_FILES 4
 #define MAX_ITER 4
-#define MAP(x) dble(IO_TEST_SZ*((x-1)*eaf_util_szint()))
+#define DMAP(x) dble(IO_TEST_SZ*((x-1)*eaf_util_szint()))
 #define MAX_FILE_SZ 4.0d9
 #define BASE_NAME 'EAFfile'
 #ifdef  HPIODIR
@@ -56,7 +56,7 @@ c
             enddo
 
             call testerr(eaf_awrite(fd(fnum),
-     $           MAP(iter),
+     $           DMAP(iter),
      $           buf(1,iter), buf_sz, aio(fnum, iter)))
 
             write(0,*) 'Submitted EAF_AWriteF  fnum=', fnum,
@@ -89,7 +89,7 @@ c.................................
             enddo
 
             call testerr(eaf_aread(fd(fnum), 
-     $           MAP(iter), 
+     $           DMAP(iter), 
      $           buf2, buf_sz, 
      $           aio(fnum,iter)))
 
@@ -157,7 +157,7 @@ c
                buf(i) = i + fnum + (iter*10000)
             enddo
             call testerr(eaf_write(fd(fnum), 
-     $           MAP(iter),
+     $           DMAP(iter),
      $           buf(1), buf_sz))
          enddo
       enddo
@@ -181,7 +181,7 @@ c
             enddo
 c     
             call testerr(eaf_read(fd(fnum), 
-     $           MAP(iter), 
+     $           DMAP(iter), 
      $           buf2(1), buf_sz))
             do i = 1, IO_TEST_SZ
                if(buf(i) .ne. buf2(i)) then 

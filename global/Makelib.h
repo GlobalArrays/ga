@@ -54,7 +54,7 @@ ifeq ($(INTEL),YES)
 #
 #................................ PARAGON ...................................
 ifeq ($(TARGET),PARAGON)
-       CLIB = -lm
+       CLIBS = -lm
 #
        EXTRA_LIBS = -nx 
 else
@@ -91,10 +91,6 @@ LIBLAPIDIR = /usr/lpp/ssp/css/lib
 # LIBCOM := -ltimer $(LIBCOM)
      BLAS = -lessl_r
 
-ifdef LAPI2
-EXTRA_LIBS = -L/u2/d3h325/lapi_vector_beta
-endif
-
 EXTRA_LIBS += -lxlf90_r -lxlf -lm
 
 EXTRA_LIBS__ += \
@@ -112,7 +108,7 @@ ifeq ($(TARGET),IBM)
 endif
 #...........................................................................
 ifeq ($(TARGET),DECOSF)
-     CLIB = -lfor -lots -lm
+     CLIBS = -lfor -lots -lm
 endif
 #...........................................................................
 

@@ -24,6 +24,9 @@
       INCDIR = ../../include
 LIB_INCLUDES = -I$(INCDIR)
 
+ifndef OLD_GA
+include ../../armci/config/makecoms.h
+endif
 include ../makefile.h
 include ../../config/makefile.h
 include ../../config/makelib.h
@@ -36,9 +39,9 @@ FOPT    = -g
 #
 %.x : %.o $(LIBRARY_PATH)  $(EXTRA)
 	if [ -f $(basename $@).c ]; then\
-		$(LINK.c) $(CLDOPT) -o $@ $< $(LIBS) $(CLIBS);\
+		$(LINK.c) $(CLDOPT) -o $@ $< $(LIBRARY_PATH) $(LIBS) $(CLIBS);\
 	else\
-		$(LINK.f) $(FOPT_REN) $(FLDOPT) -o $@ $< $(LIBS);\
+		$(LINK.f) $(FOPT_REN) $(FLDOPT) -o $@ $< $(LIBRARY_PATH) $(LIBS) $(FLIBS);\
 	fi
 
 # *.p file is required for tcgmsg `parallel' command to run your program

@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.5 1999-12-01 21:57:56 d3h325 Exp $ */
+/* $Id: collect.c,v 1.6 2000-04-17 22:41:04 d3h325 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -7,24 +7,6 @@
 #  include <fortran.h>
 #endif
 
-/*
-#if defined(CRAY) || defined(WIN32)
-#  define igop_ IGOP 
-#  define dgop_ DGOP 
-#  define synch_ SYNCH 
-#  define brdcst_  BRDCST
-#  define ga_brdcst_ GA_BRDCST
-#  define nodeid_ NODEID
-#  define nnodes_ NNODES
-#endif
-
-void FATR dgop_();
-void FATR igop_();
-*/
-
-#if !defined(TCGMSG) && !defined(MPI) 
-#   define MPI 
-#endif
 
 #ifdef MPI
 #  include <mpi.h>

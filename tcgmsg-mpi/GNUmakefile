@@ -14,375 +14,39 @@ else
 endif
 endif
 
-
-ifdef MPI_INCLUDE
-       GLOB_INCLUDES = -I$(MPI_INCLUDE)
-endif
-
-
-# On some platforms NXTVAL can be implemented using non-portable "native"
-# services. To enable use of such an implementation, you need to uncomment
-# the following line: 
-USE_NATIVE_NXTVAL=1
-
-# You need to specify MACHINE target and location of MPI include files and
-# library -- MPI_LOC
-#
+MSG_COMMS=MPI
+#defines communication libs and symbols
+include ../armci/config/makemp.h
+include ../armci/config/makecoms.h
 
 LIBRARY = libtcgmsg-mpi.a
 LIB_DISTRIB = ../lib
 INCDIR = ../include
-GLOB_INCLUDES += -I$(INCDIR)
+LIB_INCLUDES += -I$(INCDIR) -I../armci/src $(MP_INCLUDES)
+LIB_DEFINES += -DARMCI
+LIB_TARGETS = *.x
 
-# name of MPI library
-ifndef LIBMPI
-  LIBMPI  = -lmpi
+NEED_MEMALIGN = DECOSF CRAY-T3E CRAY-YMP HPUX LAPI IBM
+
+ifeq ($(MACHINE),$(findstring $(MACHINE),$(NEED_MEMALIGN)))
+        EXTRA_OBJ= memalign.o
 endif
 
-
-
-           FC = f77
-           CC = cc
-         FOPT = -O
-         COPT = -O
-           AR = ar
-           AS = as
-       RANLIB = @echo
-          CPP = /usr/lib/cpp
-        SHELL = /bin/sh
-           MV = /bin/mv
-           RM = /bin/rm
-      ARFLAGS = r
-    MAKEFLAGS = -j 1
-        MKDIR = mkdir
- GLOB_DEFINES = -D$(MACHINE)
-
-  
-#
-#.................................. SUN ....................................
-#
-ifeq ($(MACHINE),SUN)
-     FOPT_REN = -Nl100
-       RANLIB = ranlib
-endif
-
-#
-#................................. FUJITSU VPP .............................
-#
-ifeq ($(MACHINE),FUJITSU-VPP)
-      FC = frt
- GLOB_DEFINES = -DFUJITSU
-     COPT_REN = -KA32
-     FOPT_REN = -KA32
-   NXTVAL_OBJ = nxtval.fujitsu.o
- NXTVAL_AVAIL = yes
-#   EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
-   EXTRA_LIBS =  -lmp -lgen  -lpx -lelf -Wl,-J,-P
-endif
-
-ifeq ($(MACHINE),FUJITSU-VPP64)
-           FC = frt
-     FOPT_REN = -CcdII8
- GLOB_DEFINES = -DFUJITSU
-        CDEFS = -DEXT_INT
-   NXTVAL_OBJ = nxtval.fujitsu.o
- NXTVAL_AVAIL = yes
-   EXTRA_LIBS = -lmp -lgen -lpx -lelf -Wl,-J,-P
-endif
-
-
-#................................ SOLARIS ..................................
-#
-ifeq ($(MACHINE),SOLARIS)
-        CDEFS = -DSUNF77_2
-   EXTRA_LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
-endif
-
-#................................ LINUX ....................................
-#
-ifeq ($(MACHINE),LINUX)
-ifeq ($(FC),pgf77)
-	    FC = pgf77
-      FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
-    MAKEFLAGS += FC=pgf77
- GLOB_DEFINES += -DPGLINUX
-else
-            FC = g77
-      FOPT_REN = -Nl100 -fno-second-underscore -malign-double
-endif
-     COPT_REN = -malign-double
-       RANLIB = ranlib
-endif
-
-ifeq ($(MACHINE),FREEBSD)
-           FC = g77
-     FOPT_REN = -Nl100 -fno-second-underscore
-       RANLIB = ranlib
- GLOB_DEFINES += -DLINUX
-endif
-
-#................................ DEC ALPHA ................................
-#
-ifeq ($(MACHINE),DECOSF)
-#
-# DEC ALPHA running OSF/1
-#
-       RANLIB = ranlib
-        CDEFS = -DEXT_INT
-     FOPT_REN = -i8
-    EXTRA_OBJ = memalign.o
-endif
-
-#................................ CRAY-T3E ..................................
-#
-ifeq ($(MACHINE),CRAY-T3E)
-#
-           FC = f90
-         FOPT = -g
-          CPP = cpp
-     FOPT_REN = -dp
- GLOB_DEFINES = -DCRAY_T3D -DCRAY_T3E
-    EXTRA_OBJ = memalign.o
-   NXTVAL_OBJ = nxtval.cray.o
- NXTVAL_AVAIL = yes
-endif
-
-#................................ CRAY-T3D ..................................
-#
-ifeq ($(MACHINE),CRAY-T3D)
-#
-           FC = cf77
-         FOPT = -g
-          CPP = /mpp/lib/mppcpp
-     FOPT_REN = -Ccray-t3d -Wf-dp
- GLOB_DEFINES = -DCRAY_T3D
-    EXTRA_OBJ = memalign.o
-   NXTVAL_OBJ = nxtval.cray.o
- NXTVAL_AVAIL = yes
-endif
-
-#................................ CRAY-J90 ..................................
-ifeq ($(TARGET),CRAY-YMP)
-     ifeq ($(FOPT), -O)
-         FOPT = -O1
-     endif
-     COPT_REN = -htaskprivate -D_MULTIP_ 
-           FC = f90
-     FOPT_REN = -dp -ataskcommon
-#    FLD_REN =  $(LIBCM)
- GLOB_DEFINES = -DCRAY_YMP
-    EXTRA_OBJ = memalign.o
-   NXTVAL_OBJ = nxtval.cray.o
- NXTVAL_AVAIL = yes
-   EXTRA_LIBS = $(LIBCM)
-endif
-
-#
-#................................ KSR ......................................
-ifeq ($(MACHINE),KSR)
-#
-# KSR-2 running OSF 1.2.0.7
-#
-     FOPT_REN = -r8
-     COPT_REN = -qdiv
-        CDEFS = -DEXT_INT
-   EXTRA_LIBS = -lrpc -para
-endif
-
-#................................ HP ......................................
-ifeq ($(MACHINE),HPUX)
-           CC = gcc
-           FC = fort77
-          CPP = /lib/cpp
-     FOPT_REN = +ppu
- GLOB_DEFINES = -DHPUX -DEXTNAME
-    EXTRA_OBJ = memalign.o
-endif
-
-#................................ CONVEX ...................................
-ifeq ($(MACHINE),CONVEX-SPP)
-           FC = fc
-          CPP = /lib/cpp
-    ifeq ($(FOPT),-O)
-        FOPT = -O1
-    endif
-    ifeq ($(FOPT),-g)
-        FOPT = -no
-    endif
-    ifeq ($(COPT),-g)
-        COPT = -no
-    endif
-     COPT_REN = -or none
-     FOPT_REN = -ppu -or none
- GLOB_DEFINES = -DCONVEX -DHPUX -DEXTNAME
-    EXTRA_OBJ = memalign.o
-endif
-
-#................................ SGI ......................................
-#
-ifeq ($(MACHINE),SGI)
-#
-# SGI running IRIX 5.XX
-#
- GLOB_DEFINES = -DSGI
-endif
-
-ifeq ($(MACHINE),SGI_N32)
-#
-# SGI running IRIX 6.XX on 64-bit MIPS-4 processors
-#
- GLOB_DEFINES += -DSGI -DSGIUS
-   NXTVAL_OBJ = nxtval.sgius.o 
- NXTVAL_AVAIL = yes
-     FOPT_REN = -n32
-     COPT_REN = -n32
-endif
-
-
-ifeq ($(MACHINE),SGITFP)
-# SGI running IRIX6.XX 
-# (Fortran integer needs to be equivalent to C long)
-        CDEFS = -DEXT_INT
-     COPT_REN = -64
-     FOPT_REN = -i8 -64
- GLOB_DEFINES = -DSGI64 -DSGI -DSGIUS
-   NXTVAL_OBJ = nxtval.sgius.o 
- NXTVAL_AVAIL = yes
-endif
-
-ifeq ($(MACHINE),SGI64)
-#
-# SGI running IRIX6.XX with native Fortran integer
-#
- GLOB_DEFINES = -DSGI64 -DSGI -DSGIUS
-     COPT_REN = -64
-     FOPT_REN = -64
-   NXTVAL_OBJ = nxtval.sgius.o 
- NXTVAL_AVAIL = yes
-endif
-
-#................................ Intel Paragon .............................
-#
-ifeq ($(MACHINE),PARAGON)
-            CC = icc
-            FC = if77
-            AR = ar860
-     FOPT_REN += -Knoieee -Mreentrant
-     COPT_REN += -Knoieee -Mreentrant
-
-     EXTRA_OBJ = memalign.o
-    NXTVAL_OBJ = nxtval.nx.o
-    EXTRA_LIBS = -nx
-  NXTVAL_AVAIL = yes
-endif
-
-#.............................. IBM SP .....................................
-#
-ifeq ($(MACHINE),SP)
-      IBM-SP = 1
-endif
-
-ifeq ($(MACHINE),SP1)
-      IBM-SP = 1
-endif
-
-
-ifdef IBM-SP
-# IBM SP-x 
-#
-           CC = mpcc
-           FC = mpxlf
- GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
-#enable workaround for a bug in MPL under PSSP 3.1 on SMP nodes
-GLOB_DEFINES += -DMPL_SMP_BUG
-#   mpxlf fails with parallel make
-    MAKEFLAGS = -j 1
-       RANLIB = ranlib
-     FOPT_REN = -qEXTNAME
-   NXTVAL_OBJ = nxtval.sp.o
-    EXTRA_OBJ = memalign.o
- NXTVAL_AVAIL = yes
-endif
-
-#.............................. IBM .........................................
-#
-ifeq ($(MACHINE),IBM)
-#
-# IBM RS/6000 under AIX
-#
-           FC = xlf
-       RANLIB = ranlib
- GLOB_DEFINES = -DEXTNAME -DAIX
-     FOPT_REN = -qEXTNAME
-    EXTRA_OBJ = memalign.o
-endif
-
-#.............................. LAPI .........................................
-#
-ifeq ($(MACHINE),LAPI)
-       FC = mpxlf
-       CC = mpcc_r
-   RANLIB = ranlib
-      FLD = $(CC)
- FOPT_REN = -qEXTNAME
- COPT_REN = -DEXTNAME -DAIX
-    FLIBS =  -lxlf90 -lxlf
-LIBLAPIDIR = /usr/lpp/ssp/css/lib
-   LIBHAL = -lhal_r
-  LIBLAPI = -llapi_r
-  LIBMPI  = -lmpi_r
-
-   NXTVAL_OBJ = nxtval.lapi.o
-    EXTRA_OBJ = memalign.o
- NXTVAL_AVAIL = yes
-
-  LDLIBS = -L$(LIBLAPIDIR) $(LIBHAL) $(LIBLAPI) -bnso \
-          -bI:/usr/lib/threads.exp -lppe_r \
-          -bI:/usr/lpp/ssp/css/libus/fs_ext.exp \
-          -bI:/usr/lib/syscalls.exp  -lm \
-          -lppe -bl:new.map
-endif
-
-#...........................................................................
-
-
-ifdef OLD_GA 
-ifneq ($(NXTVAL_AVAIL),yes)
- GLOB_DEFINES += -DNXTVAL_SERVER
-    NXTVAL_OBJ = nxtval.o
-else
- ifndef USE_NATIVE_NXTVAL
-   GLOB_DEFINES += -DNXTVAL_SERVER
-      NXTVAL_OBJ = nxtval.o
- endif
-endif
-
-else
-  NXTVAL_OBJ = nxtval-armci.o
-  LOC_INCLUDES = -I../armci/src
-  GLOB_DEFINES += -DARMCI
-endif
-
-      DEFINES = $(GLOB_DEFINES) $(LOC_DEFINES)
-     INCLUDES = $(GLOB_INCLUDES) $(LOC_INCLUDES)
-       FFLAGS = $(FOPT) $(FOPT_REN) $(INCLUDES)
-       CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS)
-       FLDOPT = $(FOPT) $(FOPT_REN) $(FLD_REN)
-       CLDOPT = $(COPT) $(COPT_REN) $(CLD_REN)
 
 OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
       collect.o		misc.o		p2p.o		pfilecopy.o\
-      evlog.o		evon.o		random.o clustercheck.o
+      evlog.o		evon.o		random.o 	nxtval-armci.o
 
-
-      OBJ += $(EXTRA_OBJ) $(NXTVAL_OBJ) 
+      OBJ += $(EXTRA_OBJ) 
 
 HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h tcgmsg.fh
 
 # This include file specifies how and where the library should be built
 # LIBRARY_PATH  is the library location
 
+include ../config/makefile.h
 include ../config/makelib.h
+
 
 ifeq ($(TARGET),CRAY-YMP)
 pbeginf.o:
@@ -390,17 +54,7 @@ pbeginf.o:
 
 endif
 
-LIBS = -L$(LIBDIR)
-
-ifdef USE_ARMCI
-      LIBS += -larmci
-endif
-
-ifdef MPI_LIB
-      LIBS += -L$(MPI_LIB)
-endif
-
-LIBS += $(LIBMPI) $(EXTRA_LIBS)
+LIBS = -L$(LIBDIR) -larmci $(MP_LIBS) $(COMM_LIBS)
 
 all:	test.x testf.x
 

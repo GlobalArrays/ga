@@ -34,19 +34,16 @@ endif
 
 LIB_DISTRIB  = ../../lib
 LIB_TARGETS = *.x *.p
+      INCDIR = ../../include
+LIB_INCLUDES = -I$(INCDIR)
 
-include ../Makefile.h
-include ../Makelib.h
+include ../../armci/config/makecoms.h
+include ../../armci/config/makemp.h
+include ../../config/makefile.h
 
 ifndef LIBDIR
    LIBDIR = $(LIB_DISTRIB)/$(TARGET)
 endif
-
-# ifeq ($(GA_TRACE),YES)
-#    LIBTRACE= -ltrace
-# endif
-# LIBS = $(CORE_LIBS) $(LINALG) $(LIBCOM) $(LIBTRACE)
-LIBS = $(CORE_LIBS) $(LINALG) $(LIBCOM)
 
 #
 # main program in C requires extra effort to provide Fortran libs
@@ -60,11 +57,8 @@ endif
 
 
 ifeq ($(MSG_COMMS), MPI)
-  COPT_REN += -I../../tcgmsg/ipcv4.0
   P_FILE = no
 endif
-
-# no need to build TCGMSG file when GA runs with MPI
 ifdef USE_MPI
   P_FILE = no
 endif
@@ -77,26 +71,23 @@ COPT= $(NOPT)
 #
 # build test programs and .p files if needed
 #
-
 #.PRECIOUS: %.o
-
-
 
 
 ifeq ($(P_FILE),YES)
 %.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a  $(EXTRA)
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
 	if [ -f $(basename $@).c ]; then\
-		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(CLIB);\
+		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(CLIBS);\
 	else\
-		$(LINK.f) $(FOPT_REN) $(FLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS);\
+		$(LINK.f) $(FLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(FLIBS);\
         fi
 else
 %.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a  $(EXTRA)
 	if [ -f $(basename $@).c ]; then\
-		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(CLIB);\
+		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(CLIBS);\
 	else\
-		$(LINK.f) $(FOPT_REN) $(FLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS);\
+		$(LINK.f) $(FLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(FLIBS);\
         fi
 endif
 

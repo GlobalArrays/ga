@@ -1,6 +1,7 @@
 #include "eliop.h"
 #include "chemio.h"
  
+#define DEBUG_ 0
  
 /*\ determines directory path for a given file
 \*/
@@ -146,6 +147,10 @@ int  elio_stat(char *fname, stat_t *statinfo)
 
       /* on some older systems it was f_bsize */
       /* bsize = (int) ufs_statfs.f_bsize; */
+      if(DEBUG_)
+         printf("stat: f_frsize=%d f_bsize=%d bsize=%d free blocks=%ld\n",
+            (int) ufs_statfs.f_frsize,(int) ufs_statfs.f_bsize, bsize,
+            statinfo->avail );
 #   endif
     
     /* translate number of available blocks into kilobytes */
