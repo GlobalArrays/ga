@@ -22,9 +22,10 @@ void     ga_symmetrize_(), ga_print_(),        ga_distribution_(),
          ga_diag_reuse_(), ga_inquire_name(),  ga_release_update_(),   
          ga_copy_patch_(), ga_print_patch_(),  ga_matmul_patch_(),
 	 ga_dadd_patch_(), ga_dscal_patch_(),  ga_dfill_patch_(), 
-	 ga_ifill_patch_();
+	 ga_ifill_patch_(),ga_summarize_();
 
-Integer  ga_nnodes_(),     ga_nodeid_(),       ga_read_inc_();
+Integer  ga_nnodes_(),     ga_nodeid_(),       ga_read_inc_(),
+         ga_verify_handle_();
 
 logical  ga_create_(),     ga_create_irreg_(), ga_destroy_() ; 
 

@@ -634,11 +634,14 @@ void c2fstring( cstring, fstring, flen)
      char *cstring, *fstring;
      Integer flen;
 {
-char *strncpy();
-int clen = strlen(cstring);
-    strncpy(fstring, cstring, flen);
-    /* remove \n character if any */
-    if(flen>clen)fstring[clen]=' ';
+  int i;
+  char *strncpy();
+  int clen = strlen(cstring);
+  strncpy(fstring, cstring, flen);
+
+  /* Fill remainder of Fortran string with blanks */
+  for (i=clen; i<flen; i++)
+    fstring[i] = ' ';
 }
 
 

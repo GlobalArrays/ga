@@ -1789,9 +1789,23 @@ c
       endif
 c
       end
-
-
-
+      integer function ga_verify_handle(g_a)
+#include "mafdecls.h"
+#include "globalp.fh"
+#include "tcgmsg.fh"
+      logical status
+c
+c     Return 1/0 if array is active/inactive
+c
+      status = g_a.gt.0 .and. g_a.le.max_global_array
+      if (status) status = actv(g_a)
+      if (status) then
+         ga_verify_handle = 1
+      else
+         ga_verify_handle = 0
+      endif
+c
+      end
       subroutine ga_check_handle(g_a, string)
 #include "mafdecls.h"
 #include "globalp.fh"

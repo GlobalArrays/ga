@@ -88,6 +88,17 @@ int i;
      }
 }
 
+Integer ga_verify_handle_(g_a)
+     Integer *g_a;
+/*
+  Return Integer 1/0 if array is active/inactive
+*/  
+{
+  return (Integer) 
+    ((*g_a >= 0) &&
+    (*g_a < max_global_array) &&
+    GA[(*g_a)].actv);
+}  
 
 /*\ CHECK GA HANDLE AND IF IT'S WRONG TERMINATE
  *  Fortran version

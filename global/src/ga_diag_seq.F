@@ -20,9 +20,9 @@ c     all eigen-vectors and values in ascending order
 c
 c     The input matrices may be destroyed
 c
-      call ga_check_handle(g_a, 'ga_diag a')
-      call ga_check_handle(g_s, 'ga_diag s')
-      call ga_check_handle(g_v, 'ga_diag v')
+      call ga_check_handle(g_a, 'ga_diag_seq a')
+      call ga_check_handle(g_s, 'ga_diag_seq s')
+      call ga_check_handle(g_v, 'ga_diag_seq v')
       call ga_sync()
 c
 c     Only process 0 does the diag
@@ -37,11 +37,16 @@ c
 c
 c     allocate scratch space
 c     
-         status=ma_push_get(MT_DBL, n*n, 'a', l_a, k_a)
-         status=status.and.ma_push_get(MT_DBL, n*n, 's', l_s, k_s)
-         status=status.and.ma_push_get(MT_DBL, n*n, 'v', l_v, k_v)
-         status=status.and.ma_push_get(MT_DBL, n, 'fv1', l_fv1, k_fv1)
-         status=status.and.ma_push_get(MT_DBL, n, 'fv2', l_fv2, k_fv2)
+         status=ma_push_get(MT_DBL, n*n,
+     $        'diag_seq:a', l_a, k_a)
+         status=status.and.ma_push_get(MT_DBL, n*n,
+     $        'diag_seq:s', l_s, k_s)
+         status=status.and.ma_push_get(MT_DBL, n*n,
+     $        'diag_seq:v', l_v, k_v)
+         status=status.and.ma_push_get(MT_DBL, n,
+     $        'diag_seq:fv1', l_fv1, k_fv1)
+         status=status.and.ma_push_get(MT_DBL, n,
+     $        'diag_seq:fv2', l_fv2, k_fv2)
          if (.not. status)
      $        call errquit('ga_diag_seq: insufficient memory', n)
 c     
@@ -121,10 +126,14 @@ c
 c
 c     allocate scratch space
 c     
-         status=ma_push_get(MT_DBL, n*n, 'a', l_a, k_a)
-         status=status.and.ma_push_get(MT_DBL, n*n, 'v', l_v, k_v)
-         status=status.and.ma_push_get(MT_DBL, n, 'fv1', l_fv1, k_fv1)
-         status=status.and.ma_push_get(MT_DBL, n, 'fv2', l_fv2, k_fv2)
+         status=ma_push_get(MT_DBL, n*n,
+     $        'diag_std_seq:a', l_a, k_a)
+         status=status.and.ma_push_get(MT_DBL, n*n,
+     $        'diag_std_seq:v', l_v, k_v)
+         status=status.and.ma_push_get(MT_DBL, n,
+     $        'diag_std_seq:fv1', l_fv1, k_fv1)
+         status=status.and.ma_push_get(MT_DBL, n,
+     $        'diag_std_seq:fv2', l_fv2, k_fv2)
          if (.not. status)
      $        call errquit('ga_diag_std_seq: insufficient memory', n)
 c     
