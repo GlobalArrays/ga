@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.10 1997-02-17 20:37:27 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.11 1997-12-02 19:41:34 d3h325 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -246,6 +246,7 @@ static long RemoteCreate(remote_hostname, remote_username,
       argv2[3      ] = remote_username;
       argv2[4      ] = "-n";
       argv2[5      ] = remote_executable;
+      argv2[6      ] = " ";
       for (i=2; i<argc; i++)
 	argv2[i+5] = argv[i];
       argv2[argc+5 ] = "-master";
