@@ -185,6 +185,7 @@ void FATR ga_copy_(Integer *g_a, Integer *g_b)
 {
 Integer  ndim, ndimb, type, typeb, me = ga_nodeid_();
 Integer dimsb[MAXDIM],i;
+Integer nseg;
 Integer a_grp, b_grp, anproc, bnproc;
 void *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
@@ -250,21 +251,33 @@ int local_sync_begin,local_sync_end,use_put;
    } else {
      /* One global array is mirrored and the other is not */
      if (ga_is_mirrored_(g_a)) {
-       /* Start by assuming that source array is mirrored and destination
-          array is not */
+       /* Source array is mirrored and destination
+          array is distributed. Assume source array is consistent */
        nga_distribution_(g_b, &me, lo, hi);
        if (lo[0]>0) {
          nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
          nga_get_(g_a, lo, hi, ptr_b, ld);
        } 
      } else {
+       /* source array is distributed and destination
+          array is mirrored */
        ga_zero_(g_b);
-       nga_distribution_(g_a, &me, lo, hi);
-       if (lo[0] > 0) {
-         nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-         nga_put_(g_b, lo, hi, ptr_a, ld);
+       if (ndim == 1) {
+         nseg = ga_num_mirrored_seg_(g_b);
+         for (i=0; i< nseg; i++) {
+           ga_get_mirrored_block_(g_b, &i, lo, hi);
+           nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
+           nga_get_(g_a, lo, hi, ptr_b, ld);
+         }
+         ga_fast_merge_mirrored_(g_b);
+       } else {
+         nga_distribution_(g_a, &me, lo, hi);
+         if (lo[0] > 0) {
+           nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+           nga_put_(g_b, lo, hi, ptr_a, ld);
+         }
+         ga_merge_mirrored_(g_b);
        }
-       ga_merge_mirrored_(g_b);
      }
    }
 
