@@ -95,6 +95,9 @@ extern int single_cluster();
 }
         
 
+#ifdef CRAY_YMP
+#define BROKEN_MPI_INITIALIZED
+#endif
 
 /*\ Initialization for C programs
 \*/
@@ -103,19 +106,24 @@ int argc;
 char *argv[];
 {
 int numprocs, myid;
-int init;
+int init=0;
 
    if(SR_initialized)Error("TCGMSG initialized already???",-1);
    else SR_initialized=1;
 
    /* check if another library initialized MPI already */
    MPI_Initialized(&init);
+
+#ifdef BROKEN_MPI_INITIALIZED
+   /* we really do not have any choice but call MPI_Init possibly again */
+   if(init) init = 0;
+#endif
+
    if(!init){ 
       /* nope */
       MPI_Init(&argc, &argv);
       MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
    }
-
 
    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
