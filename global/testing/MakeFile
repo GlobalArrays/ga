@@ -1,12 +1,14 @@
 #
 
-OBJDIR=.\obj
-
 LOC_INCLUDES = -I..\..\include -I$(MPI_INCLUDE)
-
+OBJDIR=.\obj
 LIB_DISTRIB = ..\..\lib\win32
+TESTUTIL = $(OBJDIR)\util.obj
+CLINK = libf.lib
 
-all: test.exe testc.exe patch.exe
+all: test.exe testc.exe
+
+$(TESTUTIL): $(OBJDIR)
 
 !INCLUDE ..\..\config\NTmakefile.h
 !INCLUDE ..\..\config\NTmakelib.h
@@ -14,36 +16,7 @@ all: test.exe testc.exe patch.exe
 LIBS =  $(LIB_DISTRIB)\global.lib  $(LIB_DISTRIB)\tcgmsg-mpi.lib\
  $(LIB_DISTRIB)\ma.lib  $(LIB_DISTRIB)\linalg.lib $(LIB_DISTRIB)\armci.lib $(MPI) wsock32.lib
 
-CLINK = libf.lib
-
-test.exe: $(OBJDIR) $(OBJDIR)\test.obj $(OBJDIR)\util.obj
-	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\test.obj $(OBJDIR)\util.obj $(LIBS)
-
-patch.exe: $(OBJDIR) $(OBJDIR)\patch.obj $(OBJDIR)\util.obj
-	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\patch.obj $(OBJDIR)\util.obj $(LIBS)
-
-ndim.exe: $(OBJDIR) $(OBJDIR)\ndim.obj $(OBJDIR)\util.obj
-	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\ndim.obj $(OBJDIR)\util.obj  $(LIBS)
-
-perf.exe: $(OBJDIR) $(OBJDIR)\perf.obj $(OBJDIR)\util.obj
-	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\perf.obj $(OBJDIR)\util.obj $(LIBS)
-
-jacobi.exe: $(OBJDIR) $(OBJDIR)\jacobi.obj $(OBJDIR)\util.obj
-	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\jacobi.obj $(OBJDIR)\util.obj $(LIBS)
-
-p.exe: $(OBJDIR) $(OBJDIR)\p.obj $(OBJDIR)\util.obj
-	$(FC) $(FOPT) /F$@ $(OBJDIR)\p.obj $(OBJDIR)\util.obj $(LIBS)
-
-testc.exe: $(OBJDIR) $(OBJDIR)\testc.obj $(OBJDIR)\util.obj
-	$(CC) $(COPT) /Fe$@ $(OBJDIR)\testc.obj $(OBJDIR)\util.obj $(LIBS) $(CLINK)
-
-ntestc.exe: $(OBJDIR) $(OBJDIR)\ntestc.obj $(OBJDIR)\util.obj
-	$(CC) $(COPT) /Fe$@ $(OBJDIR)\ntestc.obj $(OBJDIR)\util.obj $(LIBS) $(CLINK)
-
 
 ngatest.exe: $(OBJDIR) $(OBJDIR)\ngatest.obj $(OBJDIR)\util.obj
 	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\ngatest.obj $(OBJDIR)\util.obj $(LIBS)
-
-clean:
-	-@erase /q $(OBJDIR)\* *.exe *.ilk *.pdb *.pch
 
