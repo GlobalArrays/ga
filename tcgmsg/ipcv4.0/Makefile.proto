@@ -1,5 +1,5 @@
 #
-# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.1.1.1 1994-03-29 06:44:54 d3g681 Exp $
+# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.2 1994-07-20 21:31:20 gg502 Exp $
 #
     TOPDIR = TOP_LEVEL_DIRECTORY
     LIBDIR = $(TOPDIR)/ipcv4.0
@@ -47,7 +47,8 @@ realclean:	clean
 	/bin/rm -f Makefile *~ *.p *.log msgtypesf.h #*#
 
 IF DELTA PARAGON
-# no front end code 
+parallel:
+	echo No front end required for paragon
 ELSE
 # parallel must be built on the front end machine!
 parallel:	para.ipsc.o
