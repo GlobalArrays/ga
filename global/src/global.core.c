@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.14 1995-10-12 20:26:26 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.15 1995-10-20 22:50:13 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -1422,10 +1422,10 @@ msgid_t  msgid;
 #  if defined(NX) || defined(SP1)
       len = msglen;
       msgid = ga_msg_ircv(GA_TYPE_GET, ptr_src, msglen, to);
-      ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_GET,proc,to);
+      ga_snd_req(g_a, ilo,ihi,jlo,jhi, (Integer)0, type, GA_OP_GET,proc,to);
       ga_msg_wait(msgid, &len, &from); 
 #  else
-      ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_GET,proc,to);
+      ga_snd_req(g_a, ilo,ihi,jlo,jhi, (Integer)0, type, GA_OP_GET,proc,to);
       ga_msg_rcv(GA_TYPE_GET, ptr_src, msglen, &len, to, &from);
 #  endif
 
