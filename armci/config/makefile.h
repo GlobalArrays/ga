@@ -66,6 +66,14 @@ endif
        RANLIB = ranlib
 endif
 
+#-----------------Linux 64-bit on DEC/Compaq Alpha with DEC compilers --
+ifeq ($(TARGET),LINUX64)
+       FC = fort
+     FOPT_REN = -assume no2underscore
+#     COPT_REN = -g3  
+       CC = ccc
+   GLOB_DEFINES = -DLINUX -DEXT_INT -DNOAIO
+endif
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt

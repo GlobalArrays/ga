@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/shmem.c,v 1.10 1997-02-18 00:30:39 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/shmem.c,v 1.11 2000-05-10 17:59:06 edo Exp $ */
 
 /*
   This stuff attempts to provide a simple interface to temporary shared
@@ -191,7 +191,7 @@ char *AttachSharedRegion(id, size)
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#if !defined(SGI) && !defined(KSR) && !defined(DECOSF) && !defined(HPUX) && !defined(AIX) && !defined(SOLARIS)
+#if !defined(SGI) && !defined(KSR) && !defined(DECOSF) && !defined(HPUX) && !defined(AIX) && !defined(SOLARIS)&& !(defined(LINUX64))
 extern char *shmat();
 #endif
 

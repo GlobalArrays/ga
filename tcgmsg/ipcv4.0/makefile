@@ -187,6 +187,17 @@ endif
       LIBS = -lc
      EXTRA = strdup.o strtok.o
 endif
+ifeq ($(TARGET),LINUX64)
+# LINUX 64-bit on Alpha using DEC compilers
+# LINUX64 define used in pbeginf and shmem
+       FC = fort
+   FFLAGS = -i8
+       CC = ccc
+   DEFINES = -DLINUX -DLINUX64 -DSYSV -DSHMEM -DTIMINGS -DNOSPIN -DEXT_INT
+    CFLAGS = -O $(DEFINES)
+     EXTRA = strdup.o strtok.o
+ LINTFLAGS = $(DEFINES) -u
+endif
 
 ifeq ($(TARGET),SGI-OLD)
 # 32-bit systems running IRIX 5.3 and older

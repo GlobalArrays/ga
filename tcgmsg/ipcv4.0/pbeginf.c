@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.5 1996-03-21 18:24:34 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.6 2000-05-10 17:59:06 edo Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -6,7 +6,7 @@
 
 extern void PBEGIN_();
 
-#if !(defined(HPUX) || defined(SUNF77_2))
+#if !(defined(HPUX) || defined(SUNF77_2)||(defined(LINUX64)))
 void PBEGINF_()
 /*
   Interface routine between FORTRAN and c version of pbegin.
@@ -23,7 +23,7 @@ void PBEGINF_()
 */
 {
   extern char *strdup();
-#if defined(SUNF77_2) || (defined(CONVEX) && defined (HPUX))
+#if defined(SUNF77_2) || (defined(CONVEX) && defined (HPUX))||(defined(LINUX64))
   extern int iargc_();
   extern void getarg_();
   int argc = iargc_() + 1;
@@ -40,7 +40,7 @@ void PBEGINF_()
   char *argv[256], arg[256];
 
   for (i=0; i<argc; i++) {
-#if defined(SUNF77_2) || (defined(CONVEX) && defined (HPUX))
+#if defined(SUNF77_2) || (defined(CONVEX) && defined (HPUX))||defined(LINUX64)
     getarg_(&i, arg, maxlen);
     for(len = maxlen-2; len && (arg[len] == ' '); len--);
     len++;

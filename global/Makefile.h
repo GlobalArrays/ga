@@ -91,6 +91,15 @@ endif
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
 endif
+#................................ LINUX64 ....................................
+#Linux 64-bit on DEC/Compaq Alpha with DEC compilers 
+ifeq ($(TARGET),LINUX64)
+FC =fort
+CC = ccc
+FOPT_REN = -i8 -assume no2underscore  -align dcommons
+COPT_REN = 
+GLOB_DEFINES = -DLINUX  -DEXT_INT -DNOAIO
+endif
 #
 #................................ PGLINUX ....................................
 # IBM PC running Linux with Portland Group Compilers
