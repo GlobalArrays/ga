@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.65 2004-04-09 18:41:10 vinod Exp $ */
+/* $Id: request.c,v 1.66 2004-06-24 19:40:42 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -647,7 +647,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
     armci_send_req(proc, msginfo, bufsize);
     if(nb_handle && op==GET)armci_save_vector_dscr(&buf0,darr,len,op,1);
     if(op == GET 
-#   if !defined(USE_SOCKET_VECTOR_API) 
+#   if !defined(SOCKETS) 
        && !nb_handle
 #   endif 
       ){
@@ -851,7 +851,7 @@ int armci_rem_strided(int op, void* scale, int proc,
        {
           armci_send_req(proc, msginfo, bufsize);
        }
-#     if !defined(USE_SOCKET_VECTOR_API)
+#     if !defined(SOCKETS)
        if(nb_handle){
 #ifdef ACC_SMP
 	 if(!ACC(op))
