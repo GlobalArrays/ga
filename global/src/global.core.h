@@ -141,8 +141,8 @@ int  GA_stack_size=0;
 #      elif defined(SGIUS)
 #          include "sgi.locks.h"
            long   lockID;
-#          define LOCK(g_a,proc, x)    SGI_LOCK((proc)-cluster_master)
-#          define UNLOCK(g_a,proc,x) SGI_UNLOCK((proc)-cluster_master)
+#          define LOCK(g_a,proc, x)    SGI_LOCK(((proc)-GAmaster))
+#          define UNLOCK(g_a,proc,x) SGI_UNLOCK(((proc)-GAmaster))
 #          define MUTEX cluster_nodes
            /* P & V compatible with binary sem ops */
 #          define P(s)  SGI_LOCK((s))
@@ -154,9 +154,9 @@ int  GA_stack_size=0;
 #          define ARR_SEM  (NUM_SEM -1) /* num of sems for locking arrays */
 #          define MUTEX    ARR_SEM      /* semid  for synchronization */
 #          define LOCK(g_a,proc, x)\
-                  P(((proc)-cluster_master)%ARR_SEM)
+                  P(((proc)-GAmaster)%ARR_SEM)
 #          define UNLOCK(g_a,proc, x)\
-                   V(((proc)-cluster_master)%ARR_SEM)
+                   V(((proc)-GAmaster)%ARR_SEM)
 #      endif
 #else
 #      ifdef CRAY_T3D

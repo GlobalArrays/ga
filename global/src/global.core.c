@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.13 1995-10-11 23:09:03 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.14 1995-10-12 20:26:26 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -88,7 +88,7 @@ void   ga_wait_server();
        if(ClusterMode) ga_wait_server();
        gaCentralBarrier();
 #elif  defined(CRAY_T3D)
-       Barrier();
+       barrier();
 #elif  defined(KSR)
        KSRbarrier();
 #else  

@@ -30,6 +30,10 @@
 #include "message.h"
 #include <stdio.h>
 
+#ifdef CRAY_T3D
+#  include <fortran.h>
+#endif
+
 
 /*\ wrapper to a BLOCKING MESSAGE SEND operation
 \*/
