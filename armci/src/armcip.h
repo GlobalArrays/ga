@@ -16,7 +16,8 @@
 #if defined(LAPI) || defined(CLUSTER)
 #  include "request.h"
 #endif
-
+/* min amount of data in strided request to be sent in a single TCP/IP message*/
+#define TCP_PAYLOAD   512
 
 #ifdef WIN32
 #  define bzero(a,len){\

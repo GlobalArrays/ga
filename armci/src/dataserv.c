@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.7 1999-10-29 18:46:07 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.8 1999-11-02 01:01:15 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -17,7 +17,6 @@
 #define QUIT 33
 #define ATTACH 34
 #define SOFFSET -1000
-#define PAYLOAD 120
 
 extern int AR_ready_sigchld;
 int *AR_sock;
@@ -95,6 +94,43 @@ void armci_write_strided_sock(void *ptr, int stride_levels, int stride_arr[],
 
 
 
+void armci_read_strided_sock(void *ptr, int stride_levels, int stride_arr[], 
+				   int count[], int fd)
+{
+    int i, j, stat;
+    long idx;    /* index offset of current block position to ptr */
+    int n1dim;  /* number of 1 dim block */
+    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL], 
+	    baseld[MAX_STRIDE_LEVEL];
+
+    /* number of n-element of the first dimension */
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++)
+        n1dim *= count[i];
+
+    /* calculate the destination indices */
+    bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+    for(i=2; i<=stride_levels; i++) {
+        bvalue[i] = 0;
+        bunit[i] = bunit[i-1] * count[i-1];
+    }
+
+    for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            idx += bvalue[j] * stride_arr[j-1];
+            if((i+1) % bunit[j] == 0) bvalue[j]++;
+            if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
+        }
+
+	    /* memcpy(buf, ((char*)ptr)+idx, count[0]); */
+	    /* buf += count[0]; */
+        stat = armci_ReadFromSocket(fd, ((char*)ptr)+idx, count[0]);
+        if(stat<0)armci_die("armci_read_strided_sock:read failed",stat);
+    }
+}
+
+
 
 /*\ client sends strided data + request to server
 \*/
@@ -122,7 +158,7 @@ int bytes;
         fflush(stdout);
     }
 
-    if(count[0] <  PAYLOAD){
+    if(count[0] <  TCP_PAYLOAD){
 
       /* for small contiguous blocks copy into a buffer before sending */
       armci_write_strided(ptr, strides, stride_arr, count, bdata);
@@ -174,7 +210,7 @@ int bytes;
          msginfo->to >= armci_master + armci_clus_info[armci_clus_me].nslave)
          armci_die("armci_rcv_req: invalid to",msginfo->to); 
 
-    if(msginfo->bytes > MSG_BUFLEN)
+    if(msginfo->operation != GET && msginfo->bytes > MSG_BUFLEN)
        armci_die("armci_rcv_req:message overflowing rcv buffer",msginfo->bytes);
 
     if(msginfo->dscrlen<0)armci_die("armci_rcv_req:dscrlen<0",msginfo->dscrlen);
@@ -203,7 +239,6 @@ int bytes;
        *(void**)pdescr = NULL;
     }
     
-    /* buffer not used for large strided get requests */
     if(msginfo->datalen>0 && msginfo->operation != GET){
 
        if(msginfo->datalen > MSG_BUFLEN -hdrlen -msginfo->dscrlen)
@@ -213,6 +248,12 @@ int bytes;
        *buflen -= msginfo->datalen;
 
     }
+/*        if (msginfo->operation == GET){
+        printf("%d received GET datalen=%d\n",armci_me,
+                                 msginfo->datalen);
+        fflush(stdout);
+       }
+*/
 }
 
 
@@ -254,14 +295,21 @@ int stat;
       printf("%d:armci_rcv_strided_data:  from \n",armci_me,proc);
       fflush(stdout);
     }
-    if(datalen > MSG_BUFLEN)
-       armci_die("armci_rcv_data:data overflowing rcv buffer",datalen);
 
-    stat =armci_ReadFromSocket(AR_sock[cluster],buf,datalen);
-    if(stat<0)armci_die("armci_rcv_data: read failed",stat);
+   if(count[0] < TCP_PAYLOAD && strides>1 ){
+
+     /* for small data segments minimize number of system calls */
+     stat =armci_ReadFromSocket(AR_sock[cluster],buf,datalen);
+     if(stat<0)armci_die("armci_rcv_data: read failed",stat);
 	
-       armci_read_strided(ptr, strides, stride_arr, count, buf);
+     armci_read_strided(ptr, strides, stride_arr, count, buf);
+
+   }else{
 	
+
+     /* for larger blocks read directly from socket thus avoiding memcopy */
+     armci_read_strided_sock(ptr, strides, stride_arr, count, AR_sock[cluster]);
+   }
 
     if(DEBUG_){
       printf("%d:armci_rcv_data: got %d bytes \n",armci_me,datalen);
@@ -293,7 +341,9 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo, char *bdata,
 int to = msginfo->from;
 int datalen = msginfo->datalen;
 
-    if(count[0] < PAYLOAD){
+   if(count[0] < TCP_PAYLOAD && strides>1 ){
+
+       /* minimize number of system calls */
        int stat;
 
        /* for small contiguous blocks copy into a buffer before sending */
@@ -302,11 +352,12 @@ int datalen = msginfo->datalen;
        stat = armci_WriteToSocket(AR_sock[to], bdata, datalen);
        if(stat<0)armci_die("armci_send_strided_data:write failed",stat);
 
-    }else{
+   }else{
 
-       /* for larger blocks write directly to socket thus avoiding memcopy */
-       armci_write_strided_sock(ptr, strides, stride_arr, count, AR_sock[to]);
-    }
+     /* for larger blocks write directly to socket thus avoiding memcopy */
+     armci_write_strided_sock(ptr, strides, stride_arr, count, AR_sock[to]);
+   }
+
 }
 
 
@@ -320,7 +371,6 @@ int stat;
     stat = armci_WriteToSocket(AR_sock[to], data, len);
     if(stat<0)armci_die("armci_sock_send:write failed",stat);
 }
-
 
 
 /*\ control message to the server, e.g.: ATTACH to shmem, return ptr etc.
@@ -439,11 +489,15 @@ void armci_server_goodbye(request_header_t* msginfo)
 
      armci_CleanupSockets();
 
-#ifdef MPI
+     /* Finalizing data server process w.r.t. MPI is not portable 
+      * some IBM implementations of MPI could hang in MPI_Finalize
+      * MPICH is OK
+      */ 
+#ifdef MPICH_NAME 
         MPI_Finalize();
 #endif
 
-     exit(0);
+     _exit(0);
 }
 
 
@@ -513,7 +567,7 @@ request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
 
 
 
-/*\ main routine for data server process in cluster environment
+/*\ main routine for data server process in a cluster environment
  *  the process is blocked (in select) until message arrives from
  *  the clients and services the requests
 \*/
@@ -605,7 +659,9 @@ int up=1;
 }
    
 
-
+/*\ Create Socket Connections
+ *  all tasks must participate at least to allocate memory
+\*/
 void armci_create_connections()
 {
   int p,master = armci_clus_info[armci_clus_me].master;
@@ -644,9 +700,8 @@ void armci_wait_for_server()
 
 void armci_client_code()
 {
-  int stat,p, c, master = armci_clus_info[armci_clus_me].master;
+  int stat,p, c, nall, master = armci_clus_info[armci_clus_me].master;
   char str[100];
-
 
   if(DEBUG_){
      bzero(str,99);
@@ -662,7 +717,8 @@ void armci_client_code()
    * save number of messages by using global sum -only masters contribute
    */
 
-  armci_msg_igop((long*)AR_port,armci_nclus*armci_nproc,"+",0);
+  nall = armci_nclus*armci_nproc;
+  armci_msg_igop((long*)AR_port,nall,"+",0);
   
   /*using port number create socket & connect to data server in each clus node*/
   for(c=0; c< armci_nclus; c++){
@@ -721,11 +777,14 @@ void armci_server_code()
 
 void armci_start_server()
 {
-   pid_t pid;
     
+   /* create socket connections accross the cluster */
    armci_create_connections();
 
    if(armci_me == armci_master){
+
+     pid_t pid;
+
      if ( (pid = fork() ) < 0)
         armci_die("fork failed", (int)pid);
 
@@ -735,6 +794,7 @@ void armci_start_server()
 
      }else {
 
+        sleep(1); /* wait before attempting to connect to data server */
         server_pid = pid;
         armci_client_code();
 
@@ -742,5 +802,6 @@ void armci_start_server()
 
    } else 
      armci_client_code();
+
 }
 
