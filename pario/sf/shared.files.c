@@ -1,4 +1,4 @@
-/* $Id: shared.files.c,v 1.6 1999-10-14 00:21:12 d3h325 Exp $ */
+/* $Id: shared.files.c,v 1.7 1999-10-21 21:53:40 d3g681 Exp $ */
 /* DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -138,12 +138,12 @@ int status;
 io_request_t id;
 
         sfi_check_handleM(*s_a,"sf_write");
-        status = elio_awrite(SF[handle].fd, (off_t)*offset, buffer, 
+        status = elio_awrite(SF[handle].fd, (Off_t)*offset, buffer, 
                             (Size_t)*bytes, &id);
         *req_id = (Integer)id;
         return((Integer)status);
 /*
- status = elio_write(SF[handle].fd, (off_t)*offset, buffer,(Size_t)*bytes);
+ status = elio_write(SF[handle].fd, (Off_t)*offset, buffer,(Size_t)*bytes);
                 *req_id = (Integer)ELIO_DONE;
         if(status != (int)*bytes)
               return((Integer)SF_FAIL);
@@ -166,7 +166,7 @@ int status;
 io_request_t id;
 
         sfi_check_handleM(*s_a,"sf_read");
-        status = elio_aread(SF[handle].fd, (off_t)*offset, buffer, 
+        status = elio_aread(SF[handle].fd, (Off_t)*offset, buffer, 
                            (Size_t)*bytes, &id);
         *req_id = (Integer)id;
         return((Integer)status);

@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.17 1999-10-14 00:20:15 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.18 1999-10-21 21:53:39 d3g681 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -452,7 +452,7 @@ void dai_release_handle(Integer *handle)
 
 /*\ find offset in file for (ilo,ihi) element
 \*/
-void dai_file_location(section_t ds_a, off_t* offset)
+void dai_file_location(section_t ds_a, Off_t* offset)
 {
 Integer row_blocks, handle=ds_a.handle+DRA_OFFSET, offelem, cur_ld, part_chunk1;
 
@@ -505,7 +505,7 @@ void dai_put(
         io_request_t *id)
 {
 Integer handle = ds_a.handle + DRA_OFFSET, elem;
-off_t   offset;
+Off_t   offset;
 Size_t  bytes;
 
         /* find location in a file where data should be written */
@@ -527,7 +527,7 @@ Size_t  bytes;
 void dai_zero_eof(Integer d_a)
 {
 Integer handle = d_a+DRA_OFFSET, nelem;
-off_t offset;
+Off_t offset;
 Size_t  bytes;
 
         if(DRA[handle].type == MT_F_DBL)*(DoublePrecision*)_dra_buffer = 0.;
@@ -578,7 +578,7 @@ Size_t  bytes;
 void dai_get(section_t ds_a, Void *buf, Integer ld, io_request_t *id)
 {
 Integer handle = ds_a.handle + DRA_OFFSET, elem, rc;
-off_t   offset;
+Off_t   offset;
 Size_t  bytes;
 void    dai_clear_buffer();
 
