@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.19 2000-11-01 22:46:08 d3h325 Exp $
+/* $Id: myrinet.c,v 1.20 2001-01-18 00:41:10 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -140,7 +140,7 @@ extern long check_flag(long*);
 
     res = check_flag(buf);
     while(res != (long)val){
-       for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work*=1.001;
+       for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work+=0.001;
        res = check_flag(buf);
     }
     *buf = ARMCI_GM_CLEAR;
@@ -159,7 +159,7 @@ extern long check_flag(long*);
 
     res = check_flag(buf);
     while(res == ARMCI_GM_CLEAR){
-       for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work*=1.001;
+       for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work+=0.001;
        res = check_flag(buf);
     }
     *buf = ARMCI_GM_CLEAR;
@@ -840,6 +840,7 @@ int armci_gm_server_init()
                armci_me, min_mesg_size, max_mesg_size);
         printf("%d: SERVER min_mesg_length = %d, max_mesg_length = %d\n",
                armci_me, min_mesg_length, max_mesg_length);
+         fflush(stdout);
     }
     
     /* accept only the smallest size messages */
@@ -921,10 +922,11 @@ void armci_server_initial_connection()
               if(armci_serv_send_complete() == ARMCI_GM_FAILED)
                   armci_die(" Init: server could not send msg to client", rid);
 
-              if(DEBUG_INIT_)
+              if(DEBUG_INIT_){
                  printf("%d(serv): sent msg to %d (@%ld),expecting ack at %p\n",
                           armci_me, rid, serv_gm->proc_buf_ptr[rid],
-                          &(serv_gm->ack[rid]));
+                          &(serv_gm->ack[rid])); fflush(stdout);
+              }
 
               /* wait for the client send back the ack */
               wait_flag_updated(&(serv_gm->ack[rid]), ARMCI_GM_ACK);
@@ -933,6 +935,7 @@ void armci_server_initial_connection()
               if(DEBUG_INIT_) {
                 printf("%d(server): connected to client %d\n", armci_me, rid);
                 printf("%d(server): expecting %d more cons\n", armci_me, iexit);
+                fflush(stdout);
               }
               
               buf = serv_gm->dma_buf[size];

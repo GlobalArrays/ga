@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.38 2000-12-28 00:43:06 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.39 2001-01-18 00:41:10 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -120,7 +120,7 @@ static  int logpagesize=0;
 #     if defined(__sparc__) || defined(__powerpc__) 
 #       define _SHMMAX ((unsigned long)16*1024)
 #     elif defined(__alpha__)
-#       define _SHMMAX ((unsigned long)4*1024)
+#       define _SHMMAX ((unsigned long)4072)
 #     else
         /* Intel */
 #       define _SHMMAX ((unsigned long)32*1024)

@@ -1,20 +1,24 @@
-#if defined(__i386__)
+#if defined(LINUX)
 
-#if defined(__GNUC__)
-#include "tas-i386.h"
-#define TESTANDSET testandset
-#else
-#define TESTANDSET gcc_testandset
-extern int gcc_testandset(int *s);
+#if defined(__i386__) || defined(__alpha__) 
+#  define SPINLOCK 
+#  if defined(__GNUC__)
+#     ifdef __i386__
+#          include "tas-i386.h"
+#     else
+#          include "tas-alpha.h"
+#     endif
+#     define TESTANDSET testandset
+#  else
+#     define TESTANDSET gcc_testandset
+#     define RELEASE_SPINLOCK gcc_clear_spinlock
+#  endif
+   extern int gcc_testandset();
+   extern void gcc_clear_spinlock();
 #endif
-
-#include <unistd.h>
-#define INLINE inline
-#define SPINLOCK 
 
 #elif defined(SGI)
 #include <mutex.h>
-#define INLINE 
 #define SPINLOCK 
 #define TESTANDSET(x) __lock_test_and_set((x), 1)
 #define RELEASE_SPINLOCK __lock_release
@@ -22,13 +26,11 @@ extern int gcc_testandset(int *s);
 #elif defined(AIX)
 #include <sys/atomic_op.h>
 #define SPINLOCK 
-#define INLINE 
 #define TESTANDSET(x) (_check_lock((x), 0, 1)==TRUE) 
 #define RELEASE_SPINLOCK(x) _clear_lock((x),0) 
 
 #elif defined(SOLARIS)
 #define SPINLOCK  
-#define INLINE 
 #define TESTANDSET(x) (!_lock_try((x))) 
 #define RELEASE_SPINLOCK _lock_clear 
 
@@ -36,10 +38,8 @@ extern int gcc_testandset(int *s);
 extern int _acquire_lock();
 extern void _release_lock();
 #define SPINLOCK  
-#define INLINE 
 #define TESTANDSET(x) (!_acquire_lock((x))) 
 #define RELEASE_SPINLOCK _release_lock 
-
 #endif
 
 
@@ -47,6 +47,7 @@ extern void _release_lock();
 #ifdef SPINLOCK
 
 #include <stdio.h>
+#include <unistd.h>
 
 #ifndef DBL_PAD
 #   define DBL_PAD 8
@@ -59,6 +60,12 @@ double  lock[DBL_PAD];
 
 #define LOCK_T int
 #define PAD_LOCK_T pad_lock_t
+
+#if defined(__GNUC__)
+#   define inline 
+#else
+#   define INLINE 
+#endif
 
 
 static INLINE void armci_init_spinlock(LOCK_T *mutex)

@@ -65,7 +65,7 @@ ifeq ($(_CC),gcc)
      COPT_REN += -Wall -finline-functions -funroll-loops $(OPT_ALIGN)
    endif
 else
-   EXTRA_OBJ = tas-i386.o
+   EXTRA_OBJ = tas.o
 endif
 #
 #           g77
@@ -96,6 +96,7 @@ ifeq ($(TARGET),LINUX64)
 #    COPT_REN = -g3  
      CC = ccc
    GLOB_DEFINES += -DLINUX
+   EXTRA_OBJ = tas.o
 endif
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
@@ -366,7 +367,5 @@ ifeq (CRAY,$(findstring CRAY,$(TARGET)))
 	$(FC) -c $(FFLAGS) $*.f
 endif
 
-ifeq ($(TARGET),LINUX)
 %.o:    %.gcc
 	gcc -x c -c $*.gcc
-endif
