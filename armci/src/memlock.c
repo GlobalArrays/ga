@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.19 2004-09-21 17:26:23 manoj Exp $ */
+/* $Id: memlock.c,v 1.20 2004-09-21 17:35:56 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -43,11 +43,12 @@ void **memlock_table_array;
 #endif
 static memlock_t table[MAX_SLOTS];
 
+#ifdef SGIALTIX
 #define MAX_SEGS 512
 armci_memoffset_t armci_memoffset_table[MAX_SEGS];
 static short int seg_count=0;
 static short int new_seg=0;
-
+#endif
 
 /*\ simple locking scheme that ignores addresses
 \*/
