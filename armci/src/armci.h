@@ -9,6 +9,8 @@ typedef struct {
     int bytes;
 } armci_giov_t;
 
+
+
 extern int ARMCI_Init(void);    /* initialize ARMCI */
 
 extern int ARMCI_Put(void *src, void* dst, int bytes, int proc);
@@ -123,6 +125,17 @@ extern void ARMCI_Copy(void *src, void *dst, int n);
 #define ARMCI_ACC_LNG (ARMCI_ACC_OFF + 6)
 
 #define ARMCI_MAX_STRIDE_LEVEL 8
+
+/************ locality information **********************************************/
+typedef int armci_domain_t;
+#define ARMCI_DOMAIN_SMP 0        /* SMP node domain for armci_domain_XXX calls */
+extern int armci_domain_nprocs(armci_domain_t domain, int id);
+extern int armci_domain_id(armci_domain_t domain, int glob_proc_id);
+extern int armci_domain_glob_proc_id(armci_domain_t domain, int id, int loc_proc_id);
+extern int armci_domain_my_id(armci_domain_t domain);
+extern int armci_domain_count(armci_domain_t domain);
+
+
 
 /* PVM group
  * On CrayT3E: the default group is the global group which is (char *)NULL

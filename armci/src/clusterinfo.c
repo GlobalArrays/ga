@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.16 2002-07-23 00:53:23 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.17 2002-07-31 00:04:39 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -369,4 +369,48 @@ int from, to, found, c;
 
     return (found);
 }
+
+
+/*\ return number of processes in the domain represented by id
+\*/
+int armci_domain_nprocs(armci_domain_t domain, int id)
+{
+    if(id<0 || id>= armci_nclus) armci_die2("armci domain error",id,armci_nclus);
+    return armci_clus_info[id].nslave;
+}
+
+/*\ return number of nodes in diven domain
+\*/
+int armci_domain_count(armci_domain_t domain)
+{
+    return armci_nclus;
+}
+
+/*\ return domain ID of the specified process
+\*/
+int armci_domain_id(armci_domain_t domain, int glob_proc_id)
+{
+int id = glob_proc_id;
+    if(id<0 || id>= armci_nclus) armci_die2("armci domain error",id,armci_nclus);
+    return armci_clus_id(glob_proc_id);
+}
+
+/*\ return global ID of a process loc_proc_id in domain identified by id
+ *  armci_domain_nproc(id)< loc_proc_id >=0
+\*/
+int armci_domain_glob_proc_id(armci_domain_t domain, int id, int loc_proc_id)
+{
+    if(id<0 || id>= armci_nclus) armci_die2("armci domain error",id,armci_nclus);
+    if(loc_proc_id<0 || loc_proc_id>= armci_clus_info[id].nslave)
+           armci_die2("armci domain proc error",loc_proc_id,armci_clus_info[id].nslave);
+    return (armci_clus_info[id].master + loc_proc_id);
+}
+
+/*\ return ID of domain that the calling process belongs to
+\*/
+int armci_domain_my_id(armci_domain_t domain)
+{
+    return(armci_clus_me);
+}
+
 
