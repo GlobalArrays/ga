@@ -7,7 +7,7 @@
 
 #define DEBUG_ 0
 
-#ifdef ELAN
+#ifdef ELAN_ACC
 static int armci_server_terminating=0;
 static ELAN_MAIN_QUEUE *mq;
 static int armci_request_from=-1;

@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.50 2002-09-04 23:11:06 d3h325 Exp $ */
+/* $Id: armci.c,v 1.51 2002-09-20 19:11:54 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -165,9 +165,9 @@ void ARMCI_Error(char *msg, int code)
 
 void armci_allocate_locks()
 {
-    /* note that if ELAN is defined the scope of locks is limited to SMP */ 
+    /* note that if ELAN_ACC is defined the scope of locks is limited to SMP */ 
 #if defined(HITACHI) || \
-     (defined(QUADRICS) && defined(_ELAN_LOCK_H) && !defined(ELAN))
+     (defined(QUADRICS) && defined(_ELAN_LOCK_H) && !defined(ELAN_ACC))
        armcill_allocate_locks(NUM_LOCKS);
 #elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
        if(armci_nproc == 1)return;    
@@ -293,7 +293,7 @@ int ARMCI_Init()
 
     /* allocate locks: we need to do it before server is started */
     armci_allocate_locks();
-#   if defined(DATA_SERVER) || defined(ELAN)
+#   if defined(DATA_SERVER) || defined(ELAN_ACC)
        if(armci_nclus >1) armci_start_server();
 #   endif
     armci_msg_barrier();
