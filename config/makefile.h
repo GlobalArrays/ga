@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.27 2000-05-22 22:41:23 d3h325 Exp $
+# $Id: makefile.h,v 1.28 2000-05-25 01:10:14 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -491,16 +491,20 @@ endif
 LIBS += -larmci
 
 ifdef USE_MPI
-ifndef LIBMPI
-  LIBMPI = -lmpi
-endif
-ifdef MPI_LIB
+  ifndef LIBMPI
+      LIBMPI = -lmpi
+  endif
+  ifdef MPI_LIB
       LIBS += -L$(MPI_LIB)
-endif
+  endif
   LIBS += -ltcgmsg-mpi $(LIBMPI)
-else
-  LIBS += -ltcgmsg
 endif
+ifeq ($(MSG_COMMS),MPI)
+  LIBS += $(MP_LIBS)
+else
+  LIBS += -ltcgmsg 
+endif
+
 # lower level libs used by communication libraries
 ifdef COMM_LIBS
   LIBS += $(COMM_LIBS)

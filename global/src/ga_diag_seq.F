@@ -84,7 +84,8 @@ c
 c     
 c     Broadcast the eigenvalues to all processes
 c
-      call ga_brdcst(11, evals, mdtob(n), 0)
+c     we explicitly assume 8-byte double precision to avoid tcgmsg calls
+      call ga_brdcst(11, evals, 8*n, 0)
       call ga_sync()
 c
       end
@@ -159,7 +160,8 @@ c
 c     
 c     Broadcast the eigenvalues to all processes
 c
-      call ga_brdcst(11, evals, mdtob(n), 0)
+c     we explicitly assume 8-byte double precision to avoid tcgmsg calls
+      call ga_brdcst(11, evals, 8*n, 0)
       call ga_sync()
 c
       end
