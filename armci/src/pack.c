@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.30 2003-03-06 06:00:36 vinod Exp $ */
+/* $Id: pack.c,v 1.31 2003-04-09 16:23:53 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -96,7 +96,7 @@ int armci_pack_strided(int op, void* scale, int proc,
 #  endif
 #endif
 
-#if !defined(LAPI) || defined(CLUSTER)
+#if (!defined(LAPI) || defined(CLUSTER)) && !defined(SOCKETS)
     /*we cant assume that the entire available buffer will be used for data, 
       fact that the header and descriptor also go in the same buffer should be
       considered while packing.
