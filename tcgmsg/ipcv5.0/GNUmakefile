@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.8 2003-07-10 19:19:28 d3h325 Exp $
+# $Id: GNUmakefile,v 1.9 2003-07-17 22:46:19 vinod Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -173,8 +173,8 @@ tcgmsg_vampir.o:	../tcgmsg_vampir.c
 	$(CC) $(CFLAGS) -c tcgmsg_vampir.c
 	rm tcgmsg_vampir.c
  
-ga_vt.o:	../../ga_vt.c
-	ln -s ../../ga_vt.c ga_vt.c
+ga_vt.o:	../../global/ga_vt.c
+	ln -s ../../global/ga_vt.c ga_vt.c
 	$(CC) $(CFLAGS) -c ga_vt.c
 	rm ga_vt.c
 endif

@@ -48,7 +48,7 @@ OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
 
 HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h tcgmsg.fh
 ifdef GA_USE_VAMPIR
-  HEADERS += tcgmsg_vampir.h ../ga_vt.h
+  HEADERS += tcgmsg_vampir.h ../global/ga_vt.h
   EXTRA_OBJ += tcgmsg_vampir.o ga_vt.o
 endif
 
@@ -70,8 +70,8 @@ pbeginf.o:
 endif
 
 ifdef GA_USE_VAMPIR
-ga_vt.o:	../ga_vt.c
-	ln -s ../ga_vt.c ga_vt.c
+ga_vt.o:	../global/ga_vt.c
+	ln -s ../global/ga_vt.c ga_vt.c
 	$(CC) $(CFLAGS) -c ga_vt.c
 	rm ga_vt.c
 endif
