@@ -1,4 +1,4 @@
-/* $Id: decomp.c,v 1.7 2001-03-22 21:46:17 d3h325 Exp $ */
+/* $Id: decomp.c,v 1.8 2001-05-04 01:58:27 edo Exp $ */
 /***************************************************************************
  *--- 
  *--- The software in this file implements three heuristics for distributing
@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <global.h>
 
  /*--
  *****************************************************************************
@@ -26,12 +27,12 @@
  *-- void ddb_ex implements an exhaustive search 
  */
 void ddb(long ndims, long ardims[], long npes, long blk[], long pedims[]);
-void ddb_ex( long ndims, long ardims[], long npes, double threshold,
-             long blk[], long pedims[]);
-void ddb_h1( long ndims, long ardims[], long npes, double threshold,
-             long blk[], long pedims[]);
-void ddb_h2( long ndims, long ardims[], long npes, double threshold,
-             long bias, long blk[], long pedims[]);
+void ddb_ex( long ndims, Integer ardims[], long npes, double threshold,
+             Integer blk[], Integer pedims[]);
+void ddb_h1( long ndims, Integer ardims[], long npes, double threshold,
+             Integer blk[], Integer pedims[]);
+void ddb_h2( Integer ndims, Integer ardims[], Integer npes, double threshold,
+             Integer bias, Integer blk[], Integer pedims[]);
 
 /*---------------------------------------------------------------------------
  *-- Arguments
@@ -83,11 +84,11 @@ void ddb_h2( long ndims, long ardims[], long npes, double threshold,
  *--
  *-- ddb_ap and dd_lk are specific to ddb_h1.
  */
-void ddb_ap(long ndims, double qedims[], long ardims[], long pedims[],
+void ddb_ap(long ndims, double qedims[], Integer ardims[], Integer pedims[],
             long npes, long npdivs, long pdivs[]);
-double dd_ev(long ndims,long ardims[], long pedims[]);
+double dd_ev(long ndims,Integer ardims[], Integer pedims[]);
 long dd_lk(long * prt, long n, double key);
-void dd_su(long ndims, long ardims[], long pedims[], long blk[]);
+void dd_su(long ndims, Integer ardims[], Integer pedims[], Integer blk[]);
 /*---------------------------------------------------------------------------
  *--
  *-- Dependencies:
@@ -114,8 +115,8 @@ void ddb(long ndims, long ardims[], long npes, long blk[], long pedims[])
     double ddb_threshold = 0.1;
     long ddb_bias = 0;
     long i, j;
-    long count = 0;
-    long *tardim, *tblk, *tpedim;
+    Integer count = 0;
+    Integer *tardim, *tblk, *tpedim;
     long tp, sp;
 
     tp = npes;
@@ -139,19 +140,19 @@ void ddb(long ndims, long ardims[], long npes, long blk[], long pedims[])
     }
 
     if(count>0){
-       tardim = (long *) calloc((size_t)count,sizeof(long));
+       tardim = (Integer *) calloc((size_t)count,sizeof(Integer));
        if(tardim==NULL) {
          fprintf(stderr,"ddb: Memory allocation failed\n");
          for(i=0;i<ndims;i++) pedims[i] = 0;
          return;
        }
-       tblk = (long *) calloc((size_t)count,sizeof(long));
+       tblk = (Integer *) calloc((size_t)count,sizeof(Integer));
        if(tblk==NULL) {
           fprintf(stderr,"ddb: Memory allocation failed\n");
           for(i=0;i<ndims;i++) pedims[i] = 0;
           return;
        }
-       tpedim = (long *) calloc((size_t)count,sizeof(long));
+       tpedim = (Integer *) calloc((size_t)count,sizeof(Integer));
        if(tpedim==NULL) {
           fprintf(stderr,"ddb: Memory allocation failed\n");
           for(i=0;i<ndims;i++) pedims[i] = 0;
@@ -203,16 +204,17 @@ void ddb(long ndims, long ardims[], long npes, long blk[], long pedims[])
  *--  This procedure allocates storage for 3*ndims+npes integers.
  *--
  ************************************************************************/
-void ddb_ex( long ndims, long ardims[], long npes, double threshold,
-             long blk[], long pedims[])
+void ddb_ex( long ndims, Integer ardims[], long npes, double threshold,
+             Integer blk[], Integer pedims[])
 {
-      long *tdims;
+      Integer *tdims;
       long *pdivs;
       long npdivs;
       long i, j, k;
       long bev;
       long pc, done;
-      long *stack, *tard;
+      long *stack;
+      Integer *tard;
       long r, cev;
       double clb, blb;
 
@@ -225,7 +227,7 @@ void ddb_ex( long ndims, long ardims[], long npes, double threshold,
       }
 
       /*- Reset array dimensions to reflect granularity -*/
-      tard = (long *) calloc((size_t)ndims,sizeof(long));
+      tard = (Integer *) calloc((size_t)ndims,sizeof(Integer));
       if(tard==NULL) {
          fprintf(stderr,"ddb_ex: Memory allocation failed\n");
          for(i=0;i<ndims;i++) blk[i] = 0;
@@ -237,7 +239,7 @@ void ddb_ex( long ndims, long ardims[], long npes, double threshold,
          tard[i] = 1; blk[i] = ardims[i]; }
 
       /*- Allocate memory for current solution -*/
-      tdims = (long *) calloc((size_t)ndims,sizeof(long));
+      tdims = (Integer *) calloc((size_t)ndims,sizeof(Integer));
       if(tdims==NULL) {
          fprintf(stderr,"ddb_ex: Memory allocation failed\n");
          for(i=0;i<ndims;i++) blk[i] = 0;
@@ -346,14 +348,15 @@ void ddb_ex( long ndims, long ardims[], long npes, double threshold,
  *-- may call ddb_ex.
  *--
  ************************************************************************/
-void ddb_h1(long ndims, long ardims[], long npes, double threshold,
-           long blk[], long pedims[])
+void ddb_h1(long ndims, Integer ardims[], long npes, double threshold,
+           Integer blk[], Integer pedims[])
       {
 #include <math.h>
       long h, i, j, k;
       double * qedims;
       long * pdivs;
-      long * apdims, *tard;
+      Integer * apdims;
+	  Integer *tard;
       long npdivs;
       double t, q;
       double cb, ub, blb;
@@ -365,7 +368,7 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
       }
 
       /*- Allocate memory to store the granularity -*/
-      tard = (long *) calloc((size_t)ndims,sizeof(long));
+      tard = (Integer *) calloc((size_t)ndims,sizeof(Integer));
       if(tard==NULL){
          fprintf(stderr,"%s: %s\n","ddb_h1",
              "memory allocation failed");
@@ -418,7 +421,7 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
 
       /*- Lookout for a permutation of the solution vector
        *- that would improve the initial solution -*/
-      apdims = (long *) calloc((size_t)ndims,sizeof(long));
+      apdims = (Integer *) calloc((size_t)ndims,sizeof(Integer));
       if(apdims==NULL){
          fprintf(stderr,"%s: %s\n","split",
              "memory allocation failed");
@@ -484,7 +487,7 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
  *-- to a real valued vector
  *--
  *---------------------------------------------------------------------------*/
-      void ddb_ap(long ndims, double * qedims, long * ardims, long * pedims,
+      void ddb_ap(long ndims, double * qedims, Integer * ardims, Integer * pedims,
                   long npes, long npdivs, long * pdivs)
       {
       long bq;
@@ -593,11 +596,11 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
  *-- ddb_h2 allocates storage for ndims+npes integers and may call ddb_ex.
  *--
  ************************************************************************/
-void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
-            long blk[], long pedims[])
+void ddb_h2(Integer ndims, Integer ardims[], Integer npes, double threshold, Integer bias,
+            Integer blk[], Integer pedims[])
       {
       long h, i, j, k;
-      long *tard;
+      Integer *tard;
       long * pdivs;
       long npdivs;
       long p0;
@@ -606,7 +609,7 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
       long istart, istep, ilook;
 
       /*- Allocate memory to store the granularity -*/
-      tard = (long *) calloc((size_t)ndims,sizeof(long));
+      tard = (Integer *) calloc((size_t)ndims,sizeof(Integer));
       if(tard==NULL){
          fprintf(stderr,"%s: %s\n","ddb_h2",
              "memory allocation failed");
@@ -708,7 +711,7 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
  *--  all monomials (ni/pi) of degree d-1.
  *--
  ****************************************************************************/
-      double dd_ev(long ndims,long ardims[], long pedims[])
+      double dd_ev(long ndims,Integer ardims[], Integer pedims[])
       {
       double q, t;
       long k;
@@ -726,7 +729,7 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
  *--  to the element with least global indices, e.g. A[0][0][0].
  *--
  ****************************************************************************/
-      void dd_su(long ndims, long ardims[], long pedims[], long blk[])
+      void dd_su(long ndims, Integer ardims[], Integer pedims[], Integer blk[])
       {
       long i;
 
