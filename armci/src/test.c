@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.18 1999-11-25 00:22:20 d3h325 Exp $ */
+/* $Id: test.c,v 1.19 2000-04-21 20:52:19 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -23,7 +23,7 @@
 #   define MP_MYID(pid)      *(pid)   = pvm_getinst(MPGROUP,pvm_mytid())
 #   define MP_PROCS(pproc)   *(pproc) = (int)pvm_gsize(MPGROUP)
     void pvm_init(int argc, char *argv[]);
-#elif defined(TCG)
+#elif defined(TCGMSG)
 #   include <sndrcv.h>
     long tcg_tag =30000;
 #   define MP_BARRIER()      SYNCH_(&tcg_tag)
