@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.111 2005-02-11 09:34:32 manoj Exp $ */
+/* $Id: base.c,v 1.112 2005-02-15 00:23:31 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2029,8 +2029,11 @@ int i, nproc,grp_me=GAme;
 
 int gai_uses_shm(int grp_id) 
 {
+#ifdef MPI
     if(grp_id > 0) return ARMCI_Uses_shm_grp(&PGRP_LIST[grp_id].group);
-    else return ARMCI_Uses_shm();
+    else
+#endif
+      return ARMCI_Uses_shm();
 }
 
 int gai_getmem(char* name, char **ptr_arr, Integer bytes, int type, long *id,
