@@ -112,7 +112,7 @@ c
       status = status .and. ma_pop_stack(l_c)
       status = status .and. ma_pop_stack(l_b)
       status = status .and. ma_pop_stack(l_a)
-      if (.not. status) call errquit('ga_dgemm: pop of stack failed', 0)
+      if (.not. status)call ga_error('ga_dgemm: pop of stack failed', 0)
       call ga_sync()
 c
       end
