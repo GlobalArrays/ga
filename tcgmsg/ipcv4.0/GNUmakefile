@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.1 2001-04-24 01:37:19 edo Exp $
+# $Id: GNUmakefile,v 1.2 2001-04-25 00:20:54 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -24,9 +24,11 @@ OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
 ifeq ($(TARGET),IBM)
    LIB_DEFINES =  -DAIX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
+   TCGLIBS=-lc
 endif
 ifeq ($(TARGET),IBM64)
    LIB_DEFINES = -DAIX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
+   TCGLIBS=-lc
 endif
 ifeq ($(TARGET),LINUX)
    LIB_DEFINES =   -DLINUX -DSYSV -DSHMEM -DNOSPIN
@@ -55,10 +57,12 @@ endif
 ifeq ($(TARGET),SOLARIS)
    LIB_DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN -DSUNF77_2
      EXTRA = wrap.o
+   TCGLIBS=/usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl 
 endif
 ifeq ($(TARGET),SOLARIS64)
    LIB_DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN -DSUNF77_2
      EXTRA = wrap.o
+   TCGLIBS=/usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl 
 endif
 ifeq ($(TARGET),DECOSF)
    LIB_DEFINES =  -DDECFORT -DSYSV -DSHMEM  -DNOSPIN
@@ -74,7 +78,6 @@ include ../../config/makelib.h
 
 
 #.......................... general ................................
-LIBS=
 ifndef BINDIR
        BINDIR = .
 endif
@@ -84,7 +87,7 @@ NO_TOPLOT = ARDENT CRAY SGI SGI_N32 SGITFP NEXT NEXTNOEXT HPUX HPUXNOEXT KSR
 NO_PARALLEL = SP1 SP
 
 
-LOADLIBES = $(LIBRARY_PATH) $(LIBS)
+LOADLIBES = $(LIBRARY_PATH) $(TCGLIBS)
 #......................... make targets ........................
 #
 ifeq ($(TARGET),$(findstring $(TARGET),$(NO_PARALLEL)))
@@ -111,7 +114,6 @@ ifneq ($(TARGET),$(findstring $(TARGET),$(NO_PARALLEL)))
         $(BINDIR)/parallel:	 $(LIBRARY_PATH)
 		$(CC) $(CFLAGS) -o $@ parallel.c $(LOADLIBES)
 		@echo ">>>" $@ "is used to run TCGMSG programs"
-		
   endif
 else
 .PHONY:
@@ -144,7 +146,7 @@ else
 endif
 
 testpf.x: $(LIBRARY_PATH)
-	$(FC) $(FFLAGS) -o $@ testpf.f $(LIBRARY_PATH) $(LIBS)
+	$(FC) $(FFLAGS) -o $@ testpf.f $(LIBRARY_PATH) $(TCGLIBS)
 
 $(LIBOBJ) parallel.o test.o testf.o:	$(INCLUDES)
 

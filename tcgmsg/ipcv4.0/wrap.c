@@ -1,6 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/wrap.c,v 1.1 2001-04-20 00:11:44 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/wrap.c,v 1.2 2001-04-25 00:20:55 edo Exp $ */
 
-//#include "wrap.h"
 #include "sndrcv.h"
 #include "sndrcvP.h"
 #include "typesf2c.h"

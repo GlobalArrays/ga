@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srftoc.h,v 1.9 2001-04-24 01:34:25 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srftoc.h,v 1.10 2001-04-25 00:20:55 edo Exp $ */
 
 #ifndef SRFTOC_H_
 #define SRFTOC_H_
@@ -113,7 +113,7 @@
 #define DRAND48_     drand48_ 
 #define SRAND48_     srand48_ 
 #define wrap_pfcopy  pfcopy_ 
-#define TCGREADY_    tcgready_ //no need of fortran interface ?
+#define TCGREADY_    tcgready_ 
 #endif
 
 #endif
