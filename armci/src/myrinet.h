@@ -64,14 +64,6 @@ extern int _armci_bypass;
 
 #define MEM_NONUNIFORM_HIGH
 
-#ifdef MEM_UNIFORM_HIGH
-#define NUMRCVBUFS 43 
-#elif defined(MEM_NONUNIFORM_HIGH)
-#define NUMRCVBUFS  108
-#else 
-#define NUMRCVBUFS 30
-#endif
-
 
 /* call back */ 
 #define ARMCI_GM_SENDING 3

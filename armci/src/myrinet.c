@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.63 2003-04-02 23:16:58 vinod Exp $
+/* $Id: myrinet.c,v 1.64 2003-04-03 18:51:31 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -53,7 +53,6 @@
 #define FALSE  0
 #define TRUE   1
 #define TAG_DFLT  0
-#define TAG_SHORT 1
 #define ARMCI_GM_SENT    1
 #define ARMCI_GM_READY     1
 
@@ -108,7 +107,6 @@ typedef struct {
     struct gm_port *rcv_port;   /* server receive port */
     struct gm_port *snd_port;   /* server receive port */
     void **dma_buf;         /* dma memory for receive */
-    void **dma_buf_short;   /* dma memory for receive */
     long *ack;              /* ack for each computing process */
     long *direct_ack;
     long *proc_buf_ptr;     /* keep the pointers of client MessageSndBuffer */
@@ -119,7 +117,6 @@ typedef struct {
     unsigned long complete_msg_ct;
 } armci_gm_serv_t;
 
-#define ONE_OUTSTANDING_GMSEND 0
 #define BUF_TO_EVBUF(buf) ((armci_gm_context_t *)(((char*)buf) - sizeof(armci_gm_context_t))) 
 /***************/
 typedef struct {
@@ -129,13 +126,6 @@ typedef struct {
  
 armci_gm_client_init_t *client_init_struct;
 armci_gm_client_init_t *server_init_struct;
-/****************added for put pipeline*****************/
-#define NUMOFSNDBUFS 4 
-int pipelinebufferindex=0;
-char *MultiMessageSndBuffer[NUMOFSNDBUFS];
-void (*callbacks[NUMOFSNDBUFS])(struct gm_port *port, void *context,gm_status_t status);
-/***************************************************/
-armci_gm_context_t context_array[NUMOFSNDBUFS];
 
 extern struct gm_port *gmpi_gm_port; /* the port that mpi currently using */
 
@@ -472,7 +462,6 @@ int armci_gm_client_mem_alloc()
 {
 char *tmp;
 /*int extra=256;*/
-int i; /*loop variable for multi put buffers*/
 
     /* allocate buf keeping the pointers of server ack buf */
     proc_gm->serv_ack_ptr = (long **)calloc(armci_nclus, sizeof(long*));
@@ -488,10 +477,6 @@ int i; /*loop variable for multi put buffers*/
     proc_gm->tmp = (long*)(tmp + sizeof(long)); 
     proc_gm->itmp = (int*)(tmp + 2*sizeof(long)); 
     
-    for(i=0;i<NUMOFSNDBUFS;i++){
-        context_array[i].tag = 0;
-        context_array[i].done = ARMCI_GM_CLEAR;
-    }
     return TRUE;
 }
 
@@ -576,13 +561,13 @@ int armci_gm_client_init()
     proc_gm->node_map[armci_me] = proc_gm->node_id;
     armci_msg_igop(proc_gm->node_map, armci_nproc, "+");
  
-#if 1
     if(armci_me==armci_master){
        for(i=0; i<armci_nproc; i++) serv_gm->node_map[i] = proc_gm->node_map[i];
        client_init_struct[armci_clus_me].ack = (long *)serv_gm->ack;
        /* publish port id of local server thread to other smp nodes */
        client_init_struct[armci_clus_me].port_id =  serv_gm->port_id;
-       armci_msg_gop_scope(SCOPE_MASTERS,(int *)(client_init_struct), intcount,"+", ARMCI_INT);
+       armci_msg_gop_scope(SCOPE_MASTERS,(int *)(client_init_struct), intcount,
+                           "+", ARMCI_INT);
     }
  
     /* master makes port ids of server processes available to other tasks */
@@ -600,14 +585,10 @@ int armci_gm_client_init()
         }
     }
  
-#endif
-
 
     /* allow direct send */
-#if 1
     status = gm_allow_remote_memory_access(proc_gm->port);
     if(status != GM_SUCCESS) armci_die("could not enable direct sends",0);
-#endif
  
     /* memory preallocation for computing process */
     if(!armci_gm_client_mem_alloc()) armci_die(" client mem alloc failed ",0);
@@ -638,6 +619,7 @@ int armci_gm_client_init()
     }
     armci_msg_brdcst(&_armci_bypass, sizeof(int), 0);
 #endif
+
     /*allocate an array for pending operation count on client side*/
     /*the fence array, has to be pinned for server to be able to put*/
     if(!(proc_gm->ops_pending_ar=(ops_t*)calloc(armci_nclus,sizeof(ops_t))))
@@ -797,17 +779,15 @@ void armci_client_send_ack(int p, int success)
                                                          sizeof(long),NULL,0);
 }
 
-void  armci_check_context_for_complete(int idx){
-    MPI_Status status;
-    int flag;
-    /* blocking: wait til the send is done by calling the callback */
-    while(context_array[idx].done == ARMCI_GM_SENDING){
-        MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
-    }
-    if(context_array[idx].done == ARMCI_GM_FAILED)
-       armci_die("armci_client_send_complete: failed code=",context_array[idx].done);
-} 
-
+static int get_corrected_size(size){
+    if(size<6)return 6;
+    else if(size<11)return 11;
+    else if(size<15)return 15;
+    else if(size<18)return 18;
+    else if(size<19)return 19;
+    else armci_die("wrong size",size);
+    return(-1);
+}
 
 /*\ send request message to server and wait for completion
  *  assumption: the buffer is pinned and most probably is MessageSndBuffer
@@ -815,7 +795,7 @@ void  armci_check_context_for_complete(int idx){
 int armci_send_req_msg(int proc, void *vbuf, int len)
 {
     char *buf     = (char*)vbuf;
-    int size      = gm_min_size_for_length(len);
+    int size      = get_corrected_size(gm_min_size_for_length(len));
     int s         = armci_clus_id(proc);
     int serv_mpi_id = armci_clus_info[s].master;
     request_header_t *msginfo = (request_header_t *)vbuf;
@@ -845,11 +825,6 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     gm_send_with_callback(proc_gm->port, buf, size, len, GM_LOW_PRIORITY,
                           proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
                           armci_client_send_callback, context);
-#ifndef MULTIPLE_SEND_BUFS
-/*     armci_client_send_complete(context);
-*/
-#endif
-
     return 0;
 }
 
@@ -895,59 +870,53 @@ char *armci_ReadFromDirect(int proc, request_header_t * msginfo, int len)
                            SERVER SIDE                            
  *********************************************************************/
 
+static int get_size_for_index(int index)
+{
+
+    /*when changing any of the below, dont forget to change the total returned
+     * in the line below! Also, modify get_corrected_size function accordingly*/
+
+    if(index==-1)return 94;        /*to get the number of buffers */
+    else if(index<64)return(11);    /*64 buffers of size 11 and length 2040*/
+    else if(index<84)return(15);    /*20 buffers of size 15 and length 32760*/
+    else if(index<92)return(18);    /* 8 buffers of size 18 and length 262136*/
+    else if(index<94)return(19);    /* 2 buffers of size 19 and length 400000*/
+    else return(0);                 /*total 94 buffers total length 3682848 */
+}
+
+
 /* preallocate required memory at the startup */
 int armci_gm_serv_mem_alloc()
 {
-    int i,j=0,k=0;
-    int armci_gm_max_msg_size = gm_min_size_for_length(MSG_BUFLEN);
-    int short_msg_size = gm_min_size_for_length(SHORT_MSGLEN);
-    int numofrcvbufs = NUMRCVBUFS; 
+    int i,idx=0;
     /********************** get local unregistered memory *******************/
     /* allocate dma buffer for low priority */
       
-    serv_gm->dma_buf = (void **)malloc((armci_gm_max_msg_size+1) * sizeof(void *));
+    serv_gm->dma_buf = (void **)malloc((get_size_for_index(-1))*sizeof(void*));
     if(!serv_gm->dma_buf)return FALSE;
-    
-    serv_gm->dma_buf_short = (void **)malloc((numofrcvbufs- armci_gm_max_msg_size+ 2*(ARMCI_GM_MIN_MESG_SIZE-0))*sizeof(void *));
-    if(!serv_gm->dma_buf_short)return FALSE;
 
     /* allocate buf for keeping the pointers of client MessageSndbuffer */
     serv_gm->proc_buf_ptr = (long *)calloc(armci_nproc, sizeof(long));
     if(!serv_gm->proc_buf_ptr) return FALSE;
     /********************** get registered memory **************************/
-    for(i=ARMCI_GM_MIN_MESG_SIZE; i<=armci_gm_max_msg_size; i++) {
+    i = get_size_for_index(idx);
+    while(i) {
+        gm_size_t len;
+        if(i==19)len = (gm_size_t)MSG_BUFLEN;
+        else len = gm_max_length_for_size(i);
         if((armci_me==0) && DEBUG_){
-           printf("size %d len=%ld\n",i,gm_max_length_for_size(i));
+           printf("%d:size %d len=%ld\n",armci_me,i,len);
         }
-        serv_gm->dma_buf[i] = (char *)gm_dma_malloc(serv_gm->rcv_port,
-                                        gm_max_length_for_size(i));
-        if(!serv_gm->dma_buf[i]) return FALSE;
-    }
-    for(i=ARMCI_GM_MIN_MESG_SIZE; i<=short_msg_size; i++) {
-        serv_gm->dma_buf_short[i] = (char *)gm_dma_malloc(serv_gm->rcv_port,
-                                        gm_max_length_for_size(i));
-        if(!serv_gm->dma_buf_short[i]) return FALSE;
+        serv_gm->dma_buf[idx] = (char *)gm_dma_malloc(serv_gm->rcv_port,
+                                        len);
+        if(!serv_gm->dma_buf[idx]) return FALSE;
+        i = get_size_for_index(++idx);
     }
 
-    if(DEBUG_INIT_){printf("\n%d:armci_serv_mem_alloc- allocated mem properly\n",armci_me);
+    if(DEBUG_INIT_){
+       printf("\n%d:armci_serv_mem_alloc- allocated mem properly\n",armci_me);
        fflush(stdout);
     }
-#ifdef MEM_UNIFORM_HIGH
-    for(j=ARMCI_GM_MIN_MESG_SIZE; i<=numofrcvbufs-armci_gm_max_msg_size+2*(ARMCI_GM_MIN_MESG_SIZE-1);j++,i++){
-	serv_gm->dma_buf_short[i] = (char *)gm_dma_malloc(serv_gm->rcv_port,
-                                        gm_max_length_for_size(j));
-        if(!serv_gm->dma_buf_short[i]) return FALSE;
-    } 
-#endif
-#ifdef MEM_NONUNIFORM_HIGH
-    for(j=ARMCI_GM_MIN_MESG_SIZE; i<=numofrcvbufs-armci_gm_max_msg_size+2*(ARMCI_GM_MIN_MESG_SIZE-1);j++){
-	for(k=0;k<armci_gm_max_msg_size-j-2;k++){
-            serv_gm->dma_buf_short[i] = (char *)gm_dma_malloc(serv_gm->rcv_port,
-                                        gm_max_length_for_size(j));
-            if(!serv_gm->dma_buf_short[i++]) return FALSE;
-	}
-    }
-#endif
 
     /* allocate ack buffer for each client process */
     serv_gm->ack = (long *)gm_dma_malloc(serv_gm->rcv_port,
@@ -982,26 +951,22 @@ int armci_gm_serv_mem_alloc()
 /* deallocate the preallocated memory used by gm */
 int armci_gm_serv_mem_free()
 {
-    int i;
-    int armci_gm_max_msg_size = gm_min_size_for_length(MSG_BUFLEN);
-    int short_msg_size = gm_min_size_for_length(SHORT_MSGLEN);
+    int i,idx;
 
     free(serv_gm->proc_buf_ptr);
     free(serv_gm->dma_buf);
-    free(serv_gm->dma_buf_short);
 
     gm_dma_free(serv_gm->snd_port, serv_gm->proc_ack_ptr);
     gm_dma_free(serv_gm->rcv_port, serv_gm->ack);
     gm_dma_free(serv_gm->snd_port, serv_gm->direct_ack);
     
-    for(i=ARMCI_GM_MIN_MESG_SIZE; i<=armci_gm_max_msg_size; i++) {
-        gm_dma_free(serv_gm->rcv_port, serv_gm->dma_buf[i]);
+    idx = 0;
+    i = get_size_for_index(idx);
+    while(i) {
+        gm_dma_free(serv_gm->rcv_port, serv_gm->dma_buf[idx]);
+        i = get_size_for_index(++idx);
     }
     
-    for(i=ARMCI_GM_MIN_MESG_SIZE; i<=short_msg_size; i++) {
-        gm_dma_free(serv_gm->rcv_port, serv_gm->dma_buf_short[i]);
-    }
-
     gm_dma_free(serv_gm->snd_port, MessageRcvBuffer);
 
     return TRUE;
@@ -1090,42 +1055,17 @@ static int armci_get_free_port(int ports, int boards, struct gm_port **p)
    }
    return(-1);     
 }
-int count_sizevar1=12,count_sizevar2=0;          
-int getsizeforbuffer(int i,unsigned int min_mesg_size,unsigned int max_mesg_size,int *tag_xtra){
-    int sizevar = 0;
-#ifdef MEM_UNIFORM_HIGH 
-	if(i<20)return(i);
-	else {*tag_xtra=TAG_SHORT+1;return(i%20+min_mesg_size);}    
-#elif defined(MEM_NONUNIFORM_HIGH)
-	if(i<20) return(i);
-	else {
-	   
-	   count_sizevar2++;
-	   *tag_xtra = TAG_SHORT+count_sizevar2;
-	   if(count_sizevar2 == count_sizevar1+1){
-		count_sizevar2=0;
-		count_sizevar1--;
-           }
-	   sizevar = max_mesg_size - 2 - count_sizevar1;	
-	   return(sizevar); 	
-	}
-#else 
-	sizevar = i;      
-	return(sizevar); 	
-#endif
-          
-}
 
 /* initialization of server thread */
 int armci_gm_server_init() 
 {
-    int i;
-    int status,sizevar,tag_xtra;
+    int i,idx;
+    int status;
+    int buf_tag = TAG_DFLT,prev_i;
     
     unsigned long size_mask;
     unsigned int min_mesg_size, min_mesg_length;
     unsigned int max_mesg_size, max_mesg_length;
-    unsigned int numofrcvbufs;
     char *enval;
  
     /* allocate gm data structure for server */
@@ -1136,10 +1076,12 @@ int armci_gm_server_init()
         return FALSE;
     }
 
-    if(DEBUG_) fprintf(stdout,
-                 "%d(server):opening gm port %d(rcv)dev=%d and %d(snd)dev=%d\n",
-                     armci_me, ARMCI_GM_SERVER_RCV_PORT,ARMCI_GM_SERVER_RCV_DEV,
-                             ARMCI_GM_SERVER_SND_PORT, ARMCI_GM_SERVER_SND_DEV);
+    if(DEBUG_) {
+       fprintf(stdout,
+               "%d(server):opening gm port %d(rcv)dev=%d and %d(snd)dev=%d\n",
+               armci_me, ARMCI_GM_SERVER_RCV_PORT,ARMCI_GM_SERVER_RCV_DEV,
+               ARMCI_GM_SERVER_SND_PORT, ARMCI_GM_SERVER_SND_DEV);
+    }
 
     serv_gm->rcv_port = NULL; serv_gm->snd_port = NULL;
 
@@ -1168,11 +1110,6 @@ int armci_gm_server_init()
     if(status != GM_SUCCESS)armci_die("Could not get GM node id",0);
     if(DEBUG_)printf("%d(server): node id is %d\n", armci_me, serv_gm->node_id);
 
-#if 0
-    for(i=0; i<armci_nproc; i++)
-        serv_gm->node_map[i] = proc_gm->node_map[i];
-#endif
-
     /* allow direct send */
     status = gm_allow_remote_memory_access(serv_gm->rcv_port);
     if(status != GM_SUCCESS) {
@@ -1198,7 +1135,6 @@ int armci_gm_server_init()
     max_mesg_size = gm_min_size_for_length(MSG_BUFLEN);
     min_mesg_length = gm_max_length_for_size(min_mesg_size);
     max_mesg_length = MSG_BUFLEN;
-    numofrcvbufs = NUMRCVBUFS;
     if(DEBUG_INIT_) {
         printf("%d: SERVER min_mesg_size = %d, max_mesg_size = %d\n",
                armci_me, min_mesg_size, max_mesg_size);
@@ -1217,21 +1153,26 @@ int armci_gm_server_init()
     }
 
     /* provide the buffers initially create a size mask and set */
-    for(i=min_mesg_size; i<=max_mesg_size; i++)
+    idx = 0;
+    i = get_size_for_index(idx);
+    while(i) {
+        prev_i=i;
+        if((armci_me==0) && DEBUG_){
+           printf("%d:size %d len=%ld tag=%d\n",armci_me,i,gm_max_length_for_size(i),buf_tag);
+        }
         gm_provide_receive_buffer_with_tag(serv_gm->rcv_port,
-               serv_gm->dma_buf[i], i, GM_LOW_PRIORITY, TAG_DFLT);
+               serv_gm->dma_buf[idx], i, GM_LOW_PRIORITY, buf_tag);
+        i = get_size_for_index(++idx);
+        if(prev_i != i)buf_tag++;
+        prev_i = i;
+    }
 
     /* provide the extra set of buffers for short messages */
-    tag_xtra = TAG_SHORT;
-    for(i=min_mesg_size; i<=numofrcvbufs - gm_min_size_for_length(SHORT_MSGLEN)+2*(min_mesg_size-1); i++){
-	sizevar = getsizeforbuffer(i,min_mesg_size,max_mesg_size,&tag_xtra);
-        gm_provide_receive_buffer_with_tag(serv_gm->rcv_port,
-               serv_gm->dma_buf_short[i], sizevar, GM_LOW_PRIORITY, tag_xtra);
+    if(DEBUG_);{
+       printf("provided (%d,%d) buffers, rcv tokens=%d\n",
+               idx,gm_min_size_for_length(get_size_for_index(idx-1)),
+               gm_num_receive_tokens(serv_gm->rcv_port));
     }
-    if(DEBUG_ && armci_me==0)printf("provided (%d,%d) buffers, rcv tokens=%d\n",
-           max_mesg_size,
-           gm_min_size_for_length(SHORT_MSGLEN),
-           gm_num_receive_tokens(serv_gm->rcv_port));
 
     serv_gm->pending_msg_ct = 0; serv_gm->complete_msg_ct = 0; 
 
