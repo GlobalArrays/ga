@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.15 1999-11-02 00:53:18 d3h325 Exp $ */
+/* $Id: strided.c,v 1.16 1999-11-10 01:53:45 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -493,8 +493,7 @@ void armci_write_strided(void *ptr, int stride_levels, int stride_arr[],
     int i, j;
     long idx;    /* index offset of current block position to ptr */
     int n1dim;  /* number of 1 dim block */
-    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL],
-        baseld[MAX_STRIDE_LEVEL];
+    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -528,8 +527,7 @@ void armci_read_strided(void *ptr, int stride_levels, int stride_arr[],
     int i, j;
     long idx;    /* index offset of current block position to ptr */
     int n1dim;  /* number of 1 dim block */
-    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL],
-        baseld[MAX_STRIDE_LEVEL];
+    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
 
     /* number of n-element of the first dimension */
     n1dim = 1;

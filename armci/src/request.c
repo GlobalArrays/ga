@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.7 1999-10-29 18:46:08 d3h325 Exp $ */
+/* $Id: request.c,v 1.8 1999-11-10 01:53:45 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -286,7 +286,7 @@ int armci_rem_strided(int op, void* scale, int proc,
 {
     char *buf = MessageSndBuffer;
     request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
-    int  rc, i;
+    int  i;
     size_t adr;
     int slen=0;
     void *rem_ptr;

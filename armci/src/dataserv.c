@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.8 1999-11-02 01:01:15 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.9 1999-11-10 01:53:45 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -62,8 +62,7 @@ void armci_write_strided_sock(void *ptr, int stride_levels, int stride_arr[],
     int i, j, stat;
     long idx;    /* index offset of current block position to ptr */
     int n1dim;  /* number of 1 dim block */
-    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL], 
-	    baseld[MAX_STRIDE_LEVEL];
+    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL]; 
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -100,8 +99,7 @@ void armci_read_strided_sock(void *ptr, int stride_levels, int stride_arr[],
     int i, j, stat;
     long idx;    /* index offset of current block position to ptr */
     int n1dim;  /* number of 1 dim block */
-    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL], 
-	    baseld[MAX_STRIDE_LEVEL];
+    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL]; 
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -292,7 +290,7 @@ int cluster = armci_clus_id(proc);
 int stat;
 
     if(DEBUG_){
-      printf("%d:armci_rcv_strided_data:  from \n",armci_me,proc);
+      printf("%d:armci_rcv_strided_data:  from %d \n",armci_me,proc);
       fflush(stdout);
     }
 
@@ -441,12 +439,15 @@ void armci_server_ipc(request_header_t* msginfo, void* descr,
 
    if(size<0) armci_die("armci_server_ipc: size<0",(int)size);
    ptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
+   if(!ptr)armci_die("armci_server_ipc: failed to attach",0);
 
    /* provide data server with access to the memory lock data structures */
    if(allocate_memlock){
       allocate_memlock = 0;
       server_alloc_memlock(ptr);
    }
+
+   armci_set_mem_offset(ptr);
    
    if(msginfo->datalen != sizeof(long)+sizeof(int))
       armci_die("armci_server_ipc: bad msginfo->datalen ",msginfo->datalen);
@@ -491,9 +492,8 @@ void armci_server_goodbye(request_header_t* msginfo)
 
      /* Finalizing data server process w.r.t. MPI is not portable 
       * some IBM implementations of MPI could hang in MPI_Finalize
-      * MPICH is OK
       */ 
-#ifdef MPICH_NAME 
+#ifdef MPICH_NAME___ 
         MPI_Finalize();
 #endif
 
