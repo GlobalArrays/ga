@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.64 2002-02-26 15:41:33 vinod Exp $
+# $Id: makefile.h,v 1.65 2002-04-10 22:49:12 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -242,26 +242,24 @@ endif
          _CPU = $(shell uname -m)
 #
 # IA64 --- only Intel fortran compiler supported
-FOPT_REN += -cm -w90 -w95
 ifeq  ($(_CPU),ia64)
-           CC = ecc
            FC = efc
-ifneq ($(FC),efc)
-     FLD_REN =   -Wl,--relax  -Wl,-Bstatic 
+           CC = gcc
      CLD_REN =   -Wl,--relax  -Wl,-Bstatic 
+ifeq ($(FC),efc)
+     FLD_REN =   -Wl,--relax  -Wl,-Bstatic 
+     FOPT_REN += -cm -w90 -w95 -align 
+endif
+ifeq ($(CC),ecc)
+     COPT_REN += -fno-alias  
+endif
+ifeq ($(CC),gcc) 
+     COPT=-O3
+     COPT_REN +=  -funroll-loops 
 endif
 ifneq (,$(findstring efc,$(_FC)))
       FLD_REN = -Vaxlib
     GLOB_DEFINES += -DIFCLINUX
-endif
-ifneq (,$(findstring sgif90,$(_FC)))
-# FOPT and COPT = -O breaks in global.armci.c with sgi pro64 0.13
-        FOPT= -O0
-     FOPT_REN =  -macro_expand 
-   GLOB_DEFINES += -DSGILINUX
-endif
-ifneq (,$(findstring sgicc,$(_CC)))
-        COPT = -O0
 endif
 endif
 #

@@ -121,16 +121,21 @@ ifeq ($(TARGET),LINUX64)
 
 ifeq  ($(_CPU),ia64)
      FC=efc
-     CC=ecc
+     CC=gcc
   ifeq ($(_FC),sgif90)
      FOPT_REN = -macro_expand 
   endif
   ifeq ($(_FC),efc)
-     FOPT =  -O3 -hlo -pad
-     FOPT_REN= -w1 -cm -w90
+   GLOB_DEFINES += -IFCLINUX
+     FOPT =  -O3 -hlo -ftz -pad
+     FOPT_REN= -w1 -cm -w90 -align 
+  endif
+  ifeq ($(_CC),gcc)
+     COPT= -O3
   endif
   ifeq ($(_CC),ecc)
      EXTRA_OBJ = tas.o
+     COPT_REN= -w1 #-fno-alias    
   endif
 endif
 
