@@ -14,20 +14,16 @@
 #include "sndrcv.h"
 #include "srftoc.h"
 
+#define SWITCH 1
+
 #define NDIM 3
-#define SIZE 250
-#define NSIZE 15625000
-#define LSIZE 125000000
+#define SIZE 500
 /*
 #define NDIM 2
 #define SIZE 4000
-#define NSIZE 16000000
-#define LSIZE 64000000
 
 #define NDIM 1
 #define SIZE 16000000
-#define NSIZE 16000000
-#define LSIZE 32000000
 */
 
 #define MAXDIM 7
@@ -97,8 +93,8 @@ void test_io_dbl()
   char filename[80], filename1[80], filename2[80];
   logical status;
  
-  n = (int)(pow(NSIZE,1.0/(double)ndim)+0.5);
-  m = (int)(pow(LSIZE,1.0/(double)ndim)+0.5);
+  n = SIZE;
+  m = 2*SIZE;
 
   loop  = 30;
   req = -1;
@@ -140,6 +136,106 @@ void test_io_dbl()
 
 
 /*.......................................................................*/
+#if SWITCH
+  if (me == 0) {
+    printf("Creating Disk array %d",m);
+    for (i=1; i<ndim; i++) {
+      printf(" x %d",m);
+    }
+    printf("\n");
+  }
+  if (me == 0) fflush(stdout);
+  for (i=0; i<ndim; i++) {
+    dims[i] = m;
+    reqdims[i] = n;
+  }
+  GA_Sync();
+  strcpy(filename1,FNAME1);
+  if (NDRA_Create(MT_DBL, ndim, dims, "B", filename1, DRA_RW,
+      reqdims, &d_b) != 0) GA_Error("NDRA_Create failed(d_b): ",0);
+
+  if (me == 0) printf("non alligned blocking write\n");
+  if (me == 0) fflush(stdout);
+
+  for (i=0; i<ndim; i++) {
+    glo[i] = 0;
+    ghi[i] = n-1;
+    dlo[i] = 1;
+    dhi[i] = n;
+  }
+  GA_Sync();
+  tt0 = tcgtime_();
+  if (NDRA_Write_section(FALSE, g_a, glo, ghi,
+                         d_b, dlo, dhi, &req) != 0)
+      GA_Error("ndra_write_section failed:",0);
+
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed(d_b): ",req);
+  tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
+  mbytes = 1.e-6*(double)(pow(n,ndim)*sizeof(double));
+  if (me == 0) {
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
+        mbytes,tt1,mbytes/tt1);
+  }
+
+  if (DRA_Close(d_b) != 0) GA_Error("DRA_Close failed(d_b): ",d_b);
+  tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
+  if (me == 0) {
+    printf("Time including DRA_Close\n");
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
+        mbytes,tt1,mbytes/tt1);
+  }
+
+  if (me == 0) printf("\n");
+  if (me == 0) printf("disk array closed\n");
+  if (me == 0) fflush(stdout);
+
+  GA_Sync();
+  if (me == 0) {
+    printf("Creating Disk array %d",n);
+    for (i=1; i<ndim; i++) {
+      printf(" x %d",n);
+    }
+    printf("\n");
+  }
+  for (i=0; i<ndim; i++) {
+    dims[i] = n;
+    reqdims[i] = n;
+  }
+  strcpy(filename,FNAME);
+  if (NDRA_Create(MT_DBL, ndim, dims, "A", filename, DRA_RW,
+      reqdims, &d_a) != 0) GA_Error("NDRA_Create failed(d_a): ",0);
+  if (me == 0) printf("alligned blocking write\n");
+  fflush(stdout);
+  tt0 = tcgtime_();
+  if (NDRA_Write(g_a, d_a, &req) != 0) GA_Error("NDRA_Write failed(d_a):",0);
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed(d_a): ",req);
+  tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
+  mbytes = 1.e-6 * (double)(pow(n,ndim)*sizeof(double));
+  if (me == 0) {
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
+        mbytes,tt1,mbytes/tt1);
+  }
+
+  if (DRA_Close(d_a) != 0) GA_Error("DRA_Close failed(d_a): ",d_a);
+  tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
+  if (me == 0) {
+    printf("Time including DRA_Close\n");
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
+        mbytes,tt1,mbytes/tt1);
+  }
+
+  if (me == 0) printf("\n");
+  if (me == 0) printf("disk array closed\n");
+  if (me == 0) fflush(stdout);
+#else
   if (me == 0) {
     printf("Creating Disk array %d",n);
     for (i=1; i<ndim; i++) {
@@ -152,23 +248,6 @@ void test_io_dbl()
     reqdims[i] = n;
   }
   strcpy(filename,FNAME);
-#if USEMULTFILES
-  ilen = strlen(filename);
-  if (me < 10) {
-    filename[ilen] = '0'+me;
-    filename[ilen+1] = '\0';
-  } else if (10 <= me && me < 100) {
-    filename[ilen] = '0' + me/10;
-    filename[ilen+1] = '0' + me%10;
-    filename[ilen+2] = '\0';
-  } else {
-    filename[ilen] = '0' + me/100;
-    i = me - me/100;
-    filename[ilen+1] = '0' + i/10;
-    filename[ilen+2] = '0' + i%10;
-    filename[ilen+3] = '\0';
-  }
-#endif
   GA_Sync();
   if (NDRA_Create(MT_DBL, ndim, dims, "A", filename, DRA_RW,
       reqdims, &d_a) != 0) GA_Error("NDRA_Create failed(d_a): ",0);
@@ -178,6 +257,8 @@ void test_io_dbl()
   if (NDRA_Write(g_a, d_a, &req) != 0) GA_Error("NDRA_Write failed(d_a):",0);
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed(d_a): ",req);
   tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
   mbytes = 1.e-6 * (double)(pow(n,ndim)*sizeof(double));
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
@@ -186,6 +267,8 @@ void test_io_dbl()
 
   if (DRA_Close(d_a) != 0) GA_Error("DRA_Close failed(d_a): ",d_a);
   tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
   if (me == 0) {
     printf("Time including DRA_Close\n");
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
@@ -210,23 +293,6 @@ void test_io_dbl()
     reqdims[i] = n;
   }
   strcpy(filename1,FNAME1);
-#if USEMULTFILES
-  ilen = strlen(filename);
-  if (me < 10) {
-    filename[ilen] = '0'+me;
-    filename[ilen+1] = '\0';
-  } else if (10 <= me && me < 100) {
-    filename[ilen] = '0' + me/10;
-    filename[ilen+1] = '0' + me%10;
-    filename[ilen+2] = '\0';
-  } else {
-    filename[ilen] = '0' + me/100;
-    i = me - me/100;
-    filename[ilen+1] = '0' + i/10;
-    filename[ilen+2] = '0' + i%10;
-    filename[ilen+3] = '\0';
-  }
-#endif
   if (NDRA_Create(MT_DBL, ndim, dims, "B", filename1, DRA_RW,
       reqdims, &d_b) != 0) GA_Error("NDRA_Create failed(d_b): ",0);
 
@@ -246,6 +312,8 @@ void test_io_dbl()
 
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed(d_b): ",req);
   tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
   mbytes = 1.e-6*(double)(pow(n,ndim)*sizeof(double));
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
@@ -254,6 +322,8 @@ void test_io_dbl()
 
   if (DRA_Close(d_b) != 0) GA_Error("DRA_Close failed(d_b): ",d_b);
   tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
   if (me == 0) {
     printf("Time including DRA_Close\n");
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
@@ -263,9 +333,37 @@ void test_io_dbl()
   if (me == 0) printf("\n");
   if (me == 0) printf("disk array closed\n");
   if (me == 0) fflush(stdout);
+#endif
 /*.......................................................................*/
 
-
+#if SWITCH
+  if (me == 0) printf("\n");
+  if (me == 0) printf("opening disk array\n");
+  if (DRA_Open(filename1, DRA_R, &d_b) != 0) GA_Error("DRA_Open failed",0);
+  if (me == 0) printf("non alligned blocking read\n");
+  if (me == 0) fflush(stdout);
+  tt0 = tcgtime_();
+  if (NDRA_Read_section(FALSE, g_b, glo, ghi, d_b, dlo, dhi, &req) != 0)
+    GA_Error("NDRA_Read_section failed:",0);
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
+  tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
+  if (me == 0) {
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
+        mbytes,tt1,mbytes/tt1);
+  }
+  plus = 1.0;
+  minus = -1.0;
+  GA_Add(&plus, g_a, &minus, g_b, g_b);
+  err = GA_Ddot(g_b, g_b);
+  if (err != 0) {
+    if (me == 0) printf("BTW, we have error = %f\n",err);
+  } else {
+    if (me == 0) printf("OK\n");
+  }
+  if (DRA_Delete(d_b) != 0) GA_Error("DRA_Delete failed",0);
+/*.......................................................................*/
   if (me == 0) printf("\n");
   if (me == 0) printf("opening disk array\n");
   if (DRA_Open(filename, DRA_R, &d_a) != 0) GA_Error("DRA_Open failed",0);
@@ -275,6 +373,32 @@ void test_io_dbl()
   if (NDRA_Read(g_b, d_a, &req) != 0) GA_Error("NDRA_Read failed:",0);
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
   tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
+  if (me == 0) {
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
+        mbytes,tt1,mbytes/tt1);
+  }
+  GA_Add(&plus, g_a, &minus, g_b, g_b);
+  err = GA_Ddot(g_b, g_b);
+  if (err != 0) {
+    if (me == 0) printf("BTW, we have error = %f\n",err);
+  } else {
+    if (me == 0) printf("OK\n");
+  }
+  if (DRA_Delete(d_a) != 0) GA_Error("DRA_Delete failed",0);
+#else
+  if (me == 0) printf("\n");
+  if (me == 0) printf("opening disk array\n");
+  if (DRA_Open(filename, DRA_R, &d_a) != 0) GA_Error("DRA_Open failed",0);
+  if (me == 0) printf("alligned blocking read\n");
+  if (me == 0) fflush(stdout);
+  tt0 = tcgtime_();
+  if (NDRA_Read(g_b, d_a, &req) != 0) GA_Error("NDRA_Read failed:",0);
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
+  tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
@@ -301,6 +425,8 @@ void test_io_dbl()
     GA_Error("NDRA_Read_section failed:",0);
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
   tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
@@ -313,6 +439,7 @@ void test_io_dbl()
     if (me == 0) printf("OK\n");
   }
   if (DRA_Delete(d_b) != 0) GA_Error("DRA_Delete failed",0);
+#endif
 /*.......................................................................*/
   GA_Destroy(g_a);
   GA_Destroy(g_b);
@@ -374,6 +501,8 @@ void test_io_dbl()
   for (i=0; i<ndim; i++) isize *= (ghi[i]-glo[i]+1);
   mbytes = 1.e-6 * (double)(isize*sizeof(double));
   tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
@@ -394,6 +523,8 @@ void test_io_dbl()
     GA_Error("NDRA_Read_section (transpose) failed: ",0);
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
   tt1 = tcgtime_() - tt0;
+  GA_Dgop(&tt1,1,"+");
+  tt1 = tt1/((double)nproc);
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
