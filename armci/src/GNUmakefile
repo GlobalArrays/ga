@@ -124,20 +124,26 @@ test0.x: test.o $(LIBRARY_PATH)
 ipctest.x: $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) ipctest.c -o $@ $^ $(LIBS)
 
-$(patsubst %,$(LIBRARY_PATH)(%),strided.o): copy.h armcip.h acc.h memlock.h
-$(patsubst %,$(LIBRARY_PATH)(%),vector.o): copy.h armcip.h acc.h memlock.h
-$(patsubst %,$(LIBRARY_PATH)(%),armci.o): armci.h armcip.h
-$(patsubst %,$(LIBRARY_PATH)(%),memory.o): armci.h armcip.h locks.h shmem.h
-$(patsubst %,$(LIBRARY_PATH)(%),shmem.o):  shmem.h shmalloc.h
-$(patsubst %,$(LIBRARY_PATH)(%),shmalloc.o):   shmalloc.h
-$(patsubst %,$(LIBRARY_PATH)(%),locks.o):   locks.h
-$(patsubst %,$(LIBRARY_PATH)(%),lapi.o):   lapidefs.h
-$(patsubst %,$(LIBRARY_PATH)(%),rmw.o):   locks.h armcip.h
-$(patsubst %,$(LIBRARY_PATH)(%),fence.o):    armcip.h
-$(patsubst %,$(LIBRARY_PATH)(%),clusterinfo.o):    armcip.h
-$(patsubst %,$(LIBRARY_PATH)(%),memlock.o):   memlock.h locks.h
-$(patsubst %,$(LIBRARY_PATH)(%),semaphores.o):   semaphores.h
+$(LIBRARY_PATH)(winshmem.o):    ./shmem.h ./shmalloc.h 
+$(LIBRARY_PATH)(vector.o):      ./memlock.h ./copy.h ./armcip.h ./acc.h 
+$(LIBRARY_PATH)(strided.o):     ./memlock.h ./copy.h ./armcip.h ./acc.h 
+$(LIBRARY_PATH)(shmem.o):       ./shmem.h ./shmalloc.h 
+$(LIBRARY_PATH)(semaphores.o):  ./semaphores.h 
+$(LIBRARY_PATH)(rmw.o): 	./locks.h ./copy.h ./armcip.h 
+$(LIBRARY_PATH)(request.o):     ./request.h ./memlock.h ./copy.h ./armcip.h 
+$(LIBRARY_PATH)(pack.o):        ./armcip.h 
+$(LIBRARY_PATH)(mutex.o):       ./request.h ./copy.h ./armcip.h 
+$(LIBRARY_PATH)(message.o):     ./message.h ./armcip.h 
+$(LIBRARY_PATH)(memory.o):      ./shmem.h ./message.h ./armcip.h 
+$(LIBRARY_PATH)(memlock.o):     ./memlock.h ./locks.h ./copy.h ./armcip.h 
+$(LIBRARY_PATH)(locks.o):       ./locks.h ./armcip.h 
+$(LIBRARY_PATH)(lapi.o):        ./copy.h ./armcip.h ./lapidefs.h
+$(LIBRARY_PATH)(ipctest.o):     ./shmem.h ./locks.h 
+$(LIBRARY_PATH)(fence.o):       ./copy.h ./armcip.h ./armci.h 
+$(LIBRARY_PATH)(dataserv.o):    ./sockets.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
+$(LIBRARY_PATH)(clusterinfo.o): ./message.h ./armcip.h 
+$(LIBRARY_PATH)(armci.o):       ./signaltrap.h ./shmem.h ./memlock.h ./locks.h ./lapidefs.h ./copy.h 
+
 locks.h: semaphores.h
 armcip.h: message.h lapidefs.h memlock.h
-
 %.x: %.c
