@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.25 2001-03-31 08:03:47 d3h325 Exp $ */
+/* $Id: message.c,v 1.26 2001-04-12 01:07:39 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -28,6 +28,7 @@ char *mp_group_name = "mp_working_group";
 static double work[BUF_SIZE];
 static long *lwork = (long*)work;
 static int *iwork = (int*)work;
+static int *fwork = (float*)work;
 
 
 void armci_msg_barrier()
@@ -392,6 +393,40 @@ static void ddoop(int n, char* op, double* x, double* work)
 }
 
 
+static void fdoop(int n, char* op, float* x, float* work)
+{
+  if (strncmp(op,"+",1) == 0)
+    while(n--)
+      *x++ += *work++;
+  else if (strncmp(op,"*",1) == 0)
+    while(n--)
+      *x++ *= *work++;
+  else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register float x1 = ABS(*x), x2 = ABS(*work);
+      *x = MAX(x1, x2);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register float x1 = ABS(*x), x2 = ABS(*work);
+      *x = MIN(x1, x2);
+      x++; work++;
+    }
+  else
+    armci_die("fdoop: unknown operation requested", n);
+}
+
 
 /*\ combine array of longs/ints accross all processes
 \*/
@@ -409,6 +444,7 @@ void *origx =x;
 
     if(type==ARMCI_INT) size = sizeof(int);
 	else if(type==ARMCI_LONG) size = sizeof(long);
+	     else if(type==ARMCI_FLOAT) size = sizeof(float);
     else size = sizeof(double);
 
     ratio = sizeof(double)/size;
@@ -420,6 +456,7 @@ void *origx =x;
            armci_msg_rcv(tag, lwork, len, &lenmes, left);
            if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+	   else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
            else ddoop(ndo, op, (double*)x, work);
          }
 
@@ -427,6 +464,7 @@ void *origx =x;
            armci_msg_rcv(tag, lwork, len, &lenmes, right);
            if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+	   else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
            else ddoop(ndo, op, (double*)x, work);
          }
          if (armci_me != root && up!=-1) armci_msg_snd(tag, x, len, up);
@@ -454,6 +492,7 @@ int ndo, len, lenmes, ratio;
 
     if(type==ARMCI_INT) size = sizeof(int);
         else if(type==ARMCI_LONG) size = sizeof(long);
+	     else if(type==ARMCI_FLOAT) size = sizeof(float);
     else size = sizeof(double);
 
     ratio = sizeof(double)/size;
@@ -465,6 +504,7 @@ int ndo, len, lenmes, ratio;
            armci_msg_rcv(tag, lwork, len, &lenmes, left);
            if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+	   else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
            else ddoop(ndo, op, (double*)x, work);
          }
 
@@ -472,6 +512,7 @@ int ndo, len, lenmes, ratio;
            armci_msg_rcv(tag, lwork, len, &lenmes, right);
            if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+	   else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
            else ddoop(ndo, op, (double*)x, work);
          }
          if (armci_me != root && up!=-1) armci_msg_snd(tag, x, len, up);
@@ -501,6 +542,7 @@ int size, root=0;
 
      if(type==ARMCI_INT) size = sizeof(int);
         else if(type==ARMCI_LONG) size = sizeof(long);
+	     else if(type==ARMCI_FLOAT) size = sizeof(float);
      else size = sizeof(double);
 
      armci_msg_reduce(x, n, op, type);
@@ -603,6 +645,7 @@ void armci_msg_dgop(double *x, int n, char* op)
 #else
 void armci_msg_igop(int *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_INT); }
 void armci_msg_lgop(long *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_LONG); }
+void armci_msg_fgop(float *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_FLOAT); }
 void armci_msg_dgop(double *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_DOUBLE); }
 #endif
 
@@ -614,6 +657,9 @@ void armci_msg_clus_igop(int *x, int n, char* op)
 
 void armci_msg_clus_lgop(long *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_INT); }
+
+void armci_msg_clus_fgop(float *x, int n, char* op)
+{ armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_FLOAT); }
 
 void armci_msg_clus_dgop_scope(double *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_DOUBLE); }
