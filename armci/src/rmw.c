@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.18 2003-10-21 04:17:02 d3h325 Exp $ */
+/* $Id: rmw.c,v 1.19 2004-04-09 22:07:53 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -145,6 +145,10 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
        armci_rem_rmw(op, ploc, prem,  extra, proc);
        return 0;
      }
+#endif
+
+#ifdef REGION_ALLOC
+     if(SAMECLUSNODE(proc)) (void)armci_region_fixup(proc,&prem);
 #endif
 
 

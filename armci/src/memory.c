@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.39 2004-04-03 06:09:18 d3h325 Exp $ */
+/* $Id: memory.c,v 1.40 2004-04-09 22:07:53 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -263,6 +263,43 @@ int ARMCI_Free_local(void *ptr) {
     return 0;
 }
 
+#ifdef REGION_ALLOC
+static  context_t ctx_region_shmem;
+ 
+void armci_region_shm_malloc(void *ptr_arr[], size_t bytes)
+{
+    long size=bytes;
+    void *ptr;
+    int i, peers=armci_clus_last-armci_clus_first+1;
+    extern void* armci_region_getcore(size_t);
+    extern int armci_region_register(int p, void **pinout, long pid, size_t bytes);
+    static  long *reg_pids=NULL;
+    
+    if(!reg_pids){
+       kr_malloc_init(0,0,500*1024*1024, armci_region_getcore, 0, 
+		      &ctx_region_shmem);
+       reg_pids = (long*)calloc(peers,sizeof(long));
+       reg_pids[armci_me -armci_clus_first] = getpid();
+       armci_msg_gop_scope(SCOPE_NODE,reg_pids, peers,"+",ARMCI_LONG);
+    }
+    
+    ptr=kr_malloc((size_t)size, &ctx_region_shmem);
+    if(bytes) if(!ptr) armci_die("armci_region_shm_malloc: failed",bytes);
+    
+    bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
+    ptr_arr[armci_me] = ptr;
+    
+    /* now combine individual addresses into a single array */
+    armci_exchange_address(ptr_arr, armci_nproc);
+    
+    for(i=0; i<peers; i++)
+       if(i+armci_clus_first == armci_me) continue;
+       else if(ptr_arr[i+armci_clus_first])armci_region_register(i,ptr_arr+i+armci_clus_first,reg_pids[i], bytes);
+}
+#endif
+
+
+
 /*\ Collective Memory Allocation
  *  returns array of pointers to blocks of memory allocated by everybody
  *  Note: as the same shared memory region can be mapped at different locations
@@ -279,14 +316,18 @@ int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 #endif
     if(DEBUG_)
        fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, (int)bytes);
+
+#ifdef REGION_ALLOC
+    armci_region_shm_malloc(ptr_arr, bytes);
+#else
 #ifdef USE_MALLOC
     if(armci_nproc == 1) {
       ptr = kr_malloc((size_t) bytes, &ctx_localmem);
       if(bytes) if(!ptr) armci_die("armci_malloc:malloc 1 failed",(int)bytes);
       ptr_arr[armci_me] = ptr;
-#ifdef GA_USE_VAMPIR
-      vampir_end(ARMCI_MALLOC,__FILE__,__LINE__);
-#endif
+#     ifdef GA_USE_VAMPIR
+           vampir_end(ARMCI_MALLOC,__FILE__,__LINE__);
+#     endif
       return (0);
     }
 #endif
@@ -302,10 +343,11 @@ int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 
       /* now combine individual addresses into a single array */
       armci_exchange_address(ptr_arr, armci_nproc);
-#ifdef ALLOW_PIN
-      armci_global_region_exchange(ptr, (long) bytes);
-#endif
+#     ifdef ALLOW_PIN
+         armci_global_region_exchange(ptr, (long) bytes);
+#     endif
     }
+#endif
 #ifdef GA_USE_VAMPIR
       vampir_end(ARMCI_MALLOC,__FILE__,__LINE__);
 #endif
@@ -323,10 +365,15 @@ int ARMCI_Free(void *ptr)
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_FREE,__FILE__,__LINE__);
 #endif
-#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
-#   ifdef USE_MALLOC
-      if(armci_nproc > 1)
-#   endif
+
+#ifdef REGION_ALLOC
+    kr_free(ptr, &ctx_region_shmem);
+#else
+
+#  if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
+#     ifdef USE_MALLOC
+        if(armci_nproc > 1)
+#     endif
       if(ARMCI_Uses_shm()){
          if(armci_me==armci_master){
 #          ifdef RMA_NEEDS_SHMEM
@@ -337,13 +384,14 @@ int ARMCI_Free(void *ptr)
 #          endif
          }
          ptr = NULL;
-#ifdef GA_USE_VAMPIR
-         vampir_end(ARMCI_FREE,__FILE__,__LINE__);
-#endif
+#        ifdef GA_USE_VAMPIR
+                 vampir_end(ARMCI_FREE,__FILE__,__LINE__);
+#        endif
          return 0;
       }
-#endif
+#  endif
         kr_free(ptr, &ctx_localmem);
+#endif
         ptr = NULL;
 #ifdef GA_USE_VAMPIR
         vampir_end(ARMCI_FREE,__FILE__,__LINE__);

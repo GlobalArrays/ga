@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.84 2004-03-29 19:12:08 vinod Exp $ */
+/* $Id: armci.c,v 1.85 2004-04-09 22:07:53 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -286,6 +286,9 @@ static void armci_check_shmmax()
 #endif
 
 
+void* test_ptr_arr[MAX_PROC];
+extern void armci_region_shm_malloc(void *ptr_arr[], size_t bytes);
+
 int ARMCI_Init()
 {
     _armci_initialized++;
@@ -329,11 +332,13 @@ int ARMCI_Init()
 		"libelan version '%s' incompatible with '%s' ('%s' expected)",
 		ELAN_VERSION, elan_version(), ELAN_VERSION);
 
+#ifdef QSNETLIBS_VERSION_CODE
 #   if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,4,6)
        elan_baseInit();
 #   else
        elan_baseInit(0);
 #   endif
+#endif
 
 #   ifdef LIBELAN_ATOMICS
     {
@@ -361,6 +366,23 @@ int ARMCI_Init()
 #   endif
 #endif
 
+#ifdef REGION_ALLOC
+       ARMCI_Malloc(test_ptr_arr,256*1024*1024);
+#if 0
+       {
+	  int i;
+	  armci_region_shm_malloc(test_ptr_arr, 100000000);
+	  *(long*)test_ptr_arr[armci_me]=10000+armci_me;
+	  armci_msg_barrier();
+	  for(i = 0; i < armci_clus_last -armci_clus_first+1; i++){
+	     printf("for %d got ptr is %p\n", armci_clus_first+i,(long*)test_ptr_arr[i+armci_clus_first]);
+	     printf("for %d got %ld\n",armci_clus_first+i, *(long*)test_ptr_arr[i+armci_clus_first]);
+	  }
+	  armci_msg_barrier();
+       }
+#endif
+       ARMCI_Free(test_ptr_arr[armci_me]);
+#endif
 
 #ifdef MULTI_CTX
     /* this is a hack for the Elan-3 multi-tiled memory (qsnetlibs v 1.4.10) 
