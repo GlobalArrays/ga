@@ -16,9 +16,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "mpi.h"
 #include "global.h"
 #include "message.h"
-#include "mpi.h"
 
 /*** data required to exploit locality and implement data server ***/
 cluster_info_t GA_clus_info[MAX_CLUST];
