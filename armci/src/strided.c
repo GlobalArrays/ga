@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.31 2001-04-13 19:05:12 d3h325 Exp $ */
+/* $Id: strided.c,v 1.32 2001-05-24 21:27:38 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -203,18 +203,15 @@ void (ATR *func)(void*, int*, int*, void*, int*, void*, int*);
 }
 
 
+/*\ compute range of strided data AND lock it
+\*/
 static void 
 armci_lockmem_patch(void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels, int proc)
 {
-    int  i, *buf_stride_arr = armci_iwork;
+    int  i;
     long span = count[stride_levels];
+    span *= dst_stride_arr[stride_levels-1];
 
-    /* compute range of data to lock AND stride array for data in buffer*/
-    buf_stride_arr[0]=count[0];
-    for(i=0; i< stride_levels; i++) {
-         span *= dst_stride_arr[i];
-         buf_stride_arr[i+1]= buf_stride_arr[i]*count[i+1];
-    }
     /* lock region of remote memory */
     ARMCI_LOCKMEM(dst_ptr, span + (char*)dst_ptr, proc);
 }
