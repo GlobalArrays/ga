@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.25 2003-07-16 19:20:43 vinod Exp $    **/
+/* $Id: buffers.c,v 1.26 2003-07-31 22:45:10 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -498,11 +498,15 @@ buf_state_t *buf_state = _armci_buf_state->table +index;
    for(; count; count--, buf_state++) *(int*)buf_state = 0;
    if(index >= MAX_BUFS){
       _armci_buf_state->smallbuf[index-MAX_BUFS].id.tag=0;
+#ifndef VAPI
       _armci_buf_state->smavail = index;
+#endif
    }
    else{
       _armci_buf_state->buf[index].id.tag=0;
+#ifndef VAPI
       _armci_buf_state->avail = index;
+#endif
    }
    
 

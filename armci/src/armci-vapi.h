@@ -109,7 +109,7 @@ typedef struct {
 #if defined(ALLOW_PIN)
 #  define NB_CMPL_T sdescr_t*
 #  define ARMCI_NB_WAIT(_cntr) if(nb_handle->tag==(_cntr)->tag)\
-          armci_client_send_complete((_cntr)->descr,"NB_WAIT");
+          armci_client_send_complete(&((_cntr)->descr),"NB_WAIT");
 #endif
 
 

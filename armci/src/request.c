@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.58 2003-07-30 19:01:59 vinod Exp $ */
+/* $Id: request.c,v 1.59 2003-07-31 22:45:10 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -624,6 +624,14 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
        
        armci_vector_to_buf(darr, len, buf);
     }
+#ifdef VAPI
+    else{
+    if(msginfo->dscrlen < (bytes - sizeof(int)))
+       *(int*)(((char*)(msginfo+1))+(bytes-sizeof(int))) = ARMCI_VAPI_COMPLETE;
+    else
+       *(int*)(((char*)(msginfo+1))+(msginfo->dscrlen+bytes-sizeof(int))) = ARMCI_VAPI_COMPLETE;
+    }
+#endif
 
     armci_send_req(proc, msginfo, bufsize);
     if(nb_handle && op==GET)armci_save_vector_dscr(&buf0,darr,len,op,1);
