@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.90 2004-07-20 02:36:30 manoj Exp $ */
+/* $Id: strided.c,v 1.91 2004-07-20 02:46:15 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -1208,7 +1208,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     }
 
 #ifdef ARMCI_PROFILE
-    /*to avoid event overlapping,should start profiling after aggregate calls*/
+    /* to avoid event overlapping, start profiling after aggregate calls */
     armci_profile_start_strided(seg_count, stride_levels, proc,
 				ARMCI_PROFILE_NBPUT);
 #endif
@@ -1324,7 +1324,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     }
     
 #ifdef ARMCI_PROFILE
-    /*to avoid event overlapping,should start profiling after aggregate calls*/
+    /* to avoid event overlapping, start profiling after aggregate calls */
     armci_profile_start_strided(seg_count, stride_levels, proc,
 				ARMCI_PROFILE_NBGET);
 #endif
