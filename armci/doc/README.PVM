@@ -1,3 +1,4 @@
+
 Regarding to the group used in PVM, a global variable is defined
 in armci.h and a extra optional function, ARMCI_PVM_Init, 
 can be used to pass a PVM group to ARMCI. 
