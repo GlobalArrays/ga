@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.13 2003-02-05 05:55:24 manoj Exp $*/
+/*$Id: matmul.c,v 1.14 2003-02-18 00:29:42 manoj Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -41,6 +41,7 @@
    /* min acceptable amount of memory (in elements) and default chunk size */
 #  define MINMEM 64
 #  define CHUNK_SIZE 128
+#  define EXTRA 4 /* Extra elements for safety reasons */
 #endif
 
 #define VECTORCHECK(rank,dims,dim1,dim2, ilo, ihi, jlo, jhi) \
@@ -82,7 +83,6 @@ void ga_matmul_patch(transa, transb, alpha, beta,
    DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
 #else
    DoubleComplex *a, *b, *c;
-   Integer handle, idx;
 #endif
 Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2, dims[2], rank;
 Integer me= ga_nodeid_(), nproc=ga_nnodes_();
@@ -169,31 +169,29 @@ int local_sync_begin,local_sync_end;
       * Find out how much memory we can grab.  It will be used in
       * three chunks, and the result includes only the first one.
       */
-     Integer avail = MA_inquire_avail(atype), used, elems;
-     ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
-     if(avail < MINMEM && ga_nodeid_() == 0)
-       ga_error("Not enough memory for buffers",avail);
-     elems = (Integer)(avail*0.9);/*Do not use entire mem. avail*/
-     if(MA_push_get(atype, elems, "GA mulmat bufs", &handle, &idx))
-       MA_get_pointer(handle, &a);
-     else ga_error("ma_alloc_get failed",avail);
      
+     Integer elems, factor = sizeof(DoubleComplex)/GAsizeofM(atype);
      Ichunk = Jchunk = Kchunk = CHUNK_SIZE;
-
-     if ( max_chunk > Ichunk) { 
-       max_chunk = MIN(max_chunk, (Integer)(sqrt( (double)((elems-4)/3))) );
+     
+     if ( max_chunk > Ichunk) {       
+       /*if memory if very limited, performance degrades for large matrices
+	 as chunk size is very small, which leads to communication overhead)*/
+       Integer avail = ga_memory_avail(atype);
+       ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+       if(avail<MINMEM && ga_nodeid_()==0) ga_error("NotEnough memory",avail);
+       elems = (Integer)(avail*0.9); /* Donot use every last drop */
+       
+       max_chunk=MIN(max_chunk, (Integer)(sqrt( (double)((elems-EXTRA)/3))));
        Ichunk = MIN(m,max_chunk);
        Jchunk = MIN(n,max_chunk);
        Kchunk = MIN(k,max_chunk);
      }
-     used = Ichunk * Kchunk;
-     if(atype == C_FLOAT)  used = 1+used/4;/*(sizeof(DCplx)/sizeof(float));*/
-     else if(atype ==  C_DBL) used = 1+used/2;
-     b = a+ used;
-     used = Kchunk*Jchunk;
-     if(atype == C_FLOAT) used = 1+used/4; /*(sizeof(DCplx)/sizeof(float));*/
-     else if(atype ==  C_DBL) used = 1+used/2; 
-     c = b+ used;
+     else /* "EXTRA" elems for safety - just in case */
+       elems = 3*Ichunk*Jchunk + EXTRA*factor;
+     
+     a = (DoubleComplex*) ga_malloc(elems, atype, "GA mulmat bufs");
+     b = a + (Ichunk*Kchunk)/factor + 1; 
+     c = b + (Kchunk*Jchunk)/factor + 1;
    }
 #endif
 
@@ -330,7 +328,7 @@ int local_sync_begin,local_sync_end;
    }
    
 #ifndef STATBUF
-   if(!MA_pop_stack(handle)) ga_error("MA_pop_stack failed",0);
+   ga_free(a);
 #endif
 
    GA_POP_NAME;
@@ -404,7 +402,6 @@ void nga_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
    DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
 #else
    DoubleComplex *a, *b, *c;
-   Integer handle, idx;
 #endif
 Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2;
 Integer me= ga_nodeid_(), nproc=ga_nnodes_();
@@ -494,37 +491,31 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    }
 #else
    {
-     Integer avail = MA_inquire_avail(atype),elems, used ;
-     ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
-     if(avail < MINMEM && ga_nodeid_() == 0)
-       ga_error("Not enough memory for buffers",avail);
-     elems = (Integer)(avail*0.9);
-     if(MA_push_get(atype, elems, "GA mulmat bufs", &handle, &idx))
-       MA_get_pointer(handle, &a);
-     else
-       ga_error("ma_alloc_get failed",avail);
-     
+     Integer elems, factor = sizeof(DoubleComplex)/GAsizeofM(atype);
      Ichunk = Jchunk = Kchunk = CHUNK_SIZE;
-
-     if ( max_chunk > Ichunk) {
-       max_chunk = MIN(max_chunk, (Integer)(sqrt( (double)((elems-4)/3))) );
+     
+     if ( max_chunk > Ichunk) {       
+       /*if memory if very limited, performance degrades for large matrices
+	 as chunk size is very small, which leads to communication overhead)*/
+       Integer avail = ga_memory_avail(atype);
+       ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+       if(avail<MINMEM && ga_nodeid_()==0) ga_error("Not enough memory",avail);
+       elems = (Integer)(avail*0.9);/* Donot use every last drop */
+       
+       max_chunk=MIN(max_chunk, (Integer)(sqrt( (double)((elems-EXTRA)/3))));
        Ichunk = MIN(m,max_chunk);
        Jchunk = MIN(n,max_chunk);
        Kchunk = MIN(k,max_chunk);
      }
+     else /* "EXTRA" elems for safety - just in case */
+       elems = 3*Ichunk*Jchunk + EXTRA*factor;
 
-     used = Ichunk * Kchunk;
-     if(atype == C_FLOAT) used = 1+used/4; /* @ check @ */
-     else if(atype ==  C_DBL) used = 1+used/2; 
-     b = a+ used;
-     used = Kchunk*Jchunk;
-     if(atype == C_FLOAT) used = 1+used/4;
-     else if(atype ==  C_DBL) used = 1+used/2; 
-     c = b+ used;
+     a = (DoubleComplex*) ga_malloc(elems, atype, "GA mulmat bufs");     
+     b = a + (Ichunk*Kchunk)/factor + 1; 
+     c = b + (Kchunk*Jchunk)/factor + 1;
    }
 #endif
 
- 
    if(atype==C_DCPL){if((((DoubleComplex*)beta)->real == 0) &&
 	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
    else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
@@ -565,7 +556,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	       i0= ajlo+klo; i1= ajlo+khi;   
 	       j0= ailo+ilo; j1= ailo+ihi;
 	     }
-	     
+
 	     /* ga_get_(g_a, &i0, &i1, &j0, &j1, a, &adim); */
 	     memcpy(tmplo,alo,arank*sizeof(Integer));
 	     memcpy(tmphi,ahi,arank*sizeof(Integer));
@@ -670,9 +661,9 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	 }
        }
    }
-   
+
 #ifndef STATBUF
-   if(!MA_pop_stack(handle)) ga_error("MA_pop_stack failed",0);
+   ga_free(a);
 #endif
    
    GA_POP_NAME;

@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.30 2003-02-17 22:50:55 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.31 2003-02-18 00:29:42 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -182,13 +182,10 @@ void *gai_malloc(int bytes)
        ptr = ga_int_malloc_buf+1;
        mbuf_used++;
     }else{
-        Integer handle, idx, elems = (bytes+sizeof(double)-1)/sizeof(double)+1; 
-        if(MA_push_get(MT_DBL, elems, "GA malloc temp", &handle, &idx)){
-            MA_get_pointer(handle, &ptr);
-            *((Integer*)ptr)= handle;
-            ptr = ((double*)ptr)+ 1;  /*needs sizeof(double)>=sizeof(Integer) */
-        }else
-            ptr=NULL;
+        Integer elems = (bytes+sizeof(double)-1)/sizeof(double)+1;
+	ptr=ga_malloc(elems, MT_DBL, "GA malloc temp");
+	/* *((Integer*)ptr)= handle;
+	   ptr = ((double*)ptr)+ 1;*/ /*needs sizeof(double)>=sizeof(Integer)*/
     }
     return ptr;
 }
@@ -203,8 +200,8 @@ void gai_free(void *ptr)
         }
         mbuf_used =0;
     }else{
-        Integer handle= *( (Integer*) (-1 + (double*)ptr));
-        if(!MA_pop_stack(handle)) ga_error("gai_free:MA_pop_stack failed",0);
+        /* Integer handle= *( (Integer*) (-1 + (double*)ptr)); */
+      ga_free(ptr);
     }
 }
 
@@ -1113,7 +1110,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
 {
     register Integer k;
     Integer kk;
-    Integer pindex, phandle, item_size;
+    Integer pindex, item_size;
     Integer proc, type=GA[GA_OFFSET + *g_a].type;
 
     Integer *aproc, naproc; /* active processes and numbers */
@@ -1153,7 +1150,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         count[kk] = 0; nelem[kk] = 0;
     }
     
-    /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
+    /* find proc that owns the (i,j) element; store it in temp:  */
     for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, owner+k)){
             sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
@@ -1253,8 +1250,9 @@ void FATR  ga_scatter_acc_(g_a, v, i, j, nv, alpha)
      Void *v, *alpha;
 {
 register Integer k;
-Integer pindex, phandle, item_size;
+Integer item_size;
 Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
+Integer *int_ptr;
 
   if (*nv < 1) return;
 
@@ -1262,11 +1260,10 @@ Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
   GA_PUSH_NAME("ga_scatter_acc");
   GAstat.numsca++;
 
-  if(!MA_push_get(MT_F_INT,*nv, "ga_scatter_acc--p", &phandle, &pindex))
-            ga_error("MA alloc failed ", *g_a);
+  int_ptr = (Integer*) ga_malloc(*nv, MT_F_INT, "ga_scatter_acc--p");
 
-  /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
-  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
+  /* find proc that owns the (i,j) element; store it in temp: int_ptr */
+  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, int_ptr+k)){
          sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
          ga_error(err_string,*g_a);
   }
@@ -1276,18 +1273,18 @@ Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
   GAbytes.scatot += (double)item_size**nv ;
 
   /* Sort the entries by processor */
-  ga_sort_scat(nv, v, i, j, INT_MB+pindex, type );
+  ga_sort_scat(nv, v, i, j, int_ptr, type );
 
   /* go through the list again executing scatter for each processor */
 
   first = 0;
   do {
-      proc  = INT_MB[pindex+first];
+      proc  = int_ptr[first];
       nelem = 0;
 
       /* count entries for proc from "first" to last */
       for(k=first; k< *nv; k++){
-        if(proc == INT_MB[pindex+k]) nelem++;
+        if(proc == int_ptr[k]) nelem++;
         else break;
       }
 
@@ -1301,7 +1298,7 @@ Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
 
   }while (first< *nv);
 
-  if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+  ga_free(int_ptr);
 
   GA_POP_NAME;
 }
@@ -1319,23 +1316,22 @@ void FATR  ga_sort_permut_(g_a, index, i, j, nv)
 
 #if 0
 register Integer k;
-Integer pindex, phandle;
+Integer *int_ptr;
 extern void ga_sort_permutation();
 
   if (*nv < 1) return;
 
-  if(!MA_push_get(MT_F_INT,*nv, "ga_sort_permut--p", &phandle, &pindex))
-            ga_error("MA alloc failed ", *g_a);
+  int_ptr = (Integer*) ga_malloc(*nv, MT_F_INT, "ga_sort_permut--p");
 
-  /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
-  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
+  /* find proc that owns the (i,j) element; store it in temp: int_ptr */
+  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, int_ptr+k)){
          sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
          ga_error(err_string,*g_a);
   }
 
   /* Sort the entries by processor */
-  ga_sort_permutation(nv, index, INT_MB+pindex);
-  if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+  ga_sort_permutation(nv, index, int_ptr);
+  ga_free(int_ptr);
 #endif
 }
 
@@ -1353,7 +1349,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
 {
     Integer k, handle=*g_a+GA_OFFSET;
     int  ndim, item_size, type;
-    Integer *proc, phandle;
+    Integer *proc;
 
     Integer *aproc, naproc; /* active processes and numbers */
     Integer *map;           /* map the active processes to allocated space */
@@ -1368,9 +1364,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     
     GA_PUSH_NAME("gai_gatscat");
 
-    if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-p",&phandle)) 
-        ga_error("MAfailed",*g_a);
-    if(!MA_get_pointer(phandle, &proc)) ga_error("MA pointer failed ", *g_a);
+    proc=(Integer *)ga_malloc(*nv, MT_F_INT, "ga_gat-p");
 
     ndim = GA[handle].ndim;
     type = GA[handle].type;
@@ -1539,7 +1533,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
 
     gai_free(buf2); gai_free(buf1);
     
-    if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+    ga_free(proc);
     GA_POP_NAME;
 }
 
@@ -1680,7 +1674,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         count[kk] = 0; nelem[kk] = 0;
     }
     
-    /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
+    /* find proc that owns the (i,j) element; store it in temp: */
     for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, owner+k)){
             sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);

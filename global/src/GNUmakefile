@@ -20,7 +20,7 @@ endif
 #---------------------- file list ---------------------------------
 # core of the library
 GA_CORE = base.o onesided.o nbutil.o ghosts.o global.util.o collect.o decomp.o \
-            capi.o global.nalg.o global.npatch.o ga_trace.o datatypes.o
+            capi.o global.nalg.o global.npatch.o ga_trace.o datatypes.o ga_malloc.o
 
 # extra interfaces
 GA_EXTRA = global.periodic.o sparse.o select.o ghosts.o DP.o hsort.scat.o \

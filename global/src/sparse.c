@@ -288,7 +288,7 @@ register Integer i;
 static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit, 
            Integer* lo, Integer* hi, int add)
 {
-   Integer *lim=NULL, handle, idx, nproc, me;
+   Integer *lim=NULL, nproc, me;
    Integer lop, hip, ndim, dims, type;
    double buf[2];
    Integer *ia, elems,ld;
@@ -303,9 +303,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    ga_sync_();
 
-   if(MA_push_get(MT_F_INT, nproc, "ga scan buf", &handle, &idx))
-                  MA_get_pointer(handle, &lim);
-   if(!lim) ga_error("ga_scan_copy: MA memory alloc failed",nproc);
+   lim = (Integer *) ga_malloc(nproc, MT_F_INT, "ga scan buf");
 
    ndim = ga_ndim_(g_a);
    if(ndim>1)ga_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
@@ -388,7 +386,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    ga_sync_();
 
-   if(!MA_pop_stack(handle)) ga_error("MA_pop_stack failed",0);
+   ga_free(lim);
 }
 
 
@@ -410,7 +408,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
               Integer* lo, Integer* hi, Integer* icount, int pack)
 {
    void *ptr;
-   Integer *lim=NULL, handle, idx, nproc, me;
+   Integer *lim=NULL, nproc, me;
    Integer lop, hip, ndim, dims, type,crap;
    Integer *ia, elems, i, first, myplace =0, counter=0;
 
@@ -423,9 +421,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    ga_sync_();
 
-   if(MA_push_get(MT_F_INT, nproc, "ga_pack lim buf", &handle, &idx))
-                  MA_get_pointer(handle, &lim);
-   if(!lim) ga_error("ga_pack: MA memory alloc failed",nproc);
+   lim = (Integer *) ga_malloc(nproc, MT_F_INT, "ga_pack lim buf");
 
    bzero(lim,sizeof(Integer)*nproc);
    nga_inquire_internal_(g_a, &type, &ndim, &dims);
@@ -462,7 +458,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
         if( i<me && lim[i]) myplace += lim[i];
         *icount += lim[i];
    }
-   if(!MA_pop_stack(handle)) ga_error("pack:MA_pop_stack failed",0);
+   ga_free(lim);
 
    if(*hi <lop || hip <*lo || counter ==0 ); /* we got no elements to update */
    else{
@@ -473,9 +469,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
      nga_access_ptr(g_a, &start, &hip, &ptr, &crap);
 
-     if(MA_push_get(type, counter, "ga pack buf", &handle, &idx))
-           MA_get_pointer(handle, &buf);
-     if(!buf) ga_error("ga_pack: MA memory alloc for data failed ",counter);
+     buf = ga_malloc(counter, type, "ga pack buf");
 
      /* stuff data selected by sbit into(pack) or from(unpack) buffer */
      if(pack){
@@ -490,7 +484,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
      }
 
-     if(!MA_pop_stack(handle)) ga_error("pack:MA_pop_stack failed",0);
+     ga_free(buf); 
 
    }
 

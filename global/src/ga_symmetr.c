@@ -46,7 +46,6 @@ ga_symmetrize_(Integer *g_a) {
   Logical have_data;
   Integer g_b; /* temporary global array (b = A') */
   Void *a_ptr, *b_ptr;
-  Integer bindex;
   int local_sync_begin,local_sync_end;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -72,10 +71,7 @@ ga_symmetrize_(Integer *g_a) {
     nga_access_ptr(g_a, alo, ahi, &a_ptr, lda); 
     
     for(i=0; i<ndim; i++) nelem *= ahi[i]-alo[i] +1;
-    if(!MA_push_get(MT_F_DBL, nelem, "v", &g_b, &bindex) ||
-       !MA_get_pointer(g_b, &b_ptr)) 
-      ga_error(" MA Failed: insufficient memory ", nelem);
-    
+    b_ptr = (Void *) ga_malloc(nelem, MT_F_DBL, "v");
     
     for(i=0; i<ndim-2; i++) {bhi[i]=ahi[i]; blo[i]=alo[i]; }
     
@@ -94,7 +90,7 @@ ga_symmetrize_(Integer *g_a) {
   if(have_data) {
     gai_add(alo, ahi, a_ptr, b_ptr, alpha, type, nelem, ndim);
     nga_release_update_(g_a, alo, ahi);
-    if (!MA_pop_stack(g_b)) ga_error("MA_pop_stack failed",0);
+    ga_free(b_ptr);
   }
   GA_POP_NAME;
   if(local_sync_end)ga_sync_();

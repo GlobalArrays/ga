@@ -544,22 +544,13 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   oactive = (me == 0);
 
   if (oactive) {
-    Integer ha, hb, hi;
     DoublePrecision *adra, *adrb, *adri;
-    Integer index, one=1; 
+    Integer one=1; 
 
     /** allocate a,b, and work and ipiv arrays */
-    if(!MA_push_get(C_DBL, dimA1*dimA2, "a", &ha, &index) ||
-       !MA_get_pointer(ha, &adra))
-      ga_error("ga_lu_solve: mem alloc failed A ", -1);
-    
-    if(!MA_push_get(C_DBL,dimB1*dimB2,"b", &hb, &index) ||
-       !MA_get_pointer(hb, &adrb))
-      ga_error("ga_lu_solve: mem alloc failed B ", -1);
-    
-    if(!MA_push_get(C_DBL,MIN(dimA1,dimA2),"ipiv", &hi, &index) ||
-       !MA_get_pointer(hi, &adri))
-      ga_error("ga_lu_solve: mem alloc failed ipiv ", -1);
+    adra = (DoublePrecision*) ga_malloc(dimA1*dimA2, C_DBL, "a");
+    adrb = (DoublePrecision*) ga_malloc(dimB1*dimB2, C_DBL, "b");
+    adri = (DoublePrecision*) ga_malloc(MIN(dimA1,dimA2), C_DBL, "ipiv");
 
     /** Fill local arrays from global arrays */   
     ga_get_(g_a, &one, &dimA1, &one, &dimA2, adra, &dimA1);
@@ -598,13 +589,10 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
       ga_error(" ga_lu_solve: LP_dgefa failed ", -info);
     
     /** deallocate work arrays */
-    if(!MA_pop_stack(hi)) ga_error("MA_pop_stack failed",0);
-    if(!MA_pop_stack(hb)) ga_error("MA_pop_stack failed",0);
-    if(!MA_pop_stack(ha)) ga_error("MA_pop_stack failed",0);
+    ga_free(adri);
+    ga_free(adrb);
+    ga_free(adra);
   }
-
-
-
 
   ga_sync_();
 #ifdef GA_USE_VAMPIR

@@ -753,7 +753,7 @@ int local_sync_begin,local_sync_end;
     nga_distribution_(g_a, &me, lo, hi);
 
     if(lo[0]>0){
-       Integer handle, index, nelem, ld, lob[2], hib[2], nrow, ncol;
+       Integer nelem, ld, lob[2], hib[2], nrow, ncol;
        char *ptr_tmp, *ptr_a;
        int i, size=GAsizeofM(atype);
        
@@ -764,9 +764,7 @@ int local_sync_begin,local_sync_end;
        hib[0] = hi[1]; hib[1] = hi[0];
        
        /* allocate memory for transposing elements locally */
-       if(!MA_push_get(atype, nelem, "transpose_tmp", &handle, &index) ||
-               !MA_get_pointer(handle, &ptr_tmp))
-                ga_error(" MA failed ", 0L); 
+       ptr_tmp = (char *) ga_malloc(nelem, atype, "transpose_tmp");
 
        /* get access to local data */
        nga_access_ptr(g_a, lo, hi, &ptr_a, &ld);
@@ -782,7 +780,7 @@ int local_sync_begin,local_sync_end;
 
        nga_put_(g_b, lob, hib,ptr_tmp ,&ncol);
 
-       if(!MA_pop_stack(handle))ga_error("Ma_pop_stack failed for tmp",0);
+       ga_free(ptr_tmp);
     }
 
     if(local_sync_end)ga_sync_();

@@ -184,4 +184,13 @@ extern void xb_zgemm (char * transa, char *transb, int *M, int *N, int *K,
 		      const void *alpha,const void *a,int *p_lda,const void *b,
 		      int *p_ldb, const void *beta, void *c, int *p_ldc);
 
+/* GA Memory allocation routines and variables */
+extern short int ga_usesMA;
+
+extern void * ga_malloc(Integer nelem, int type, char *name);
+
+extern void ga_free(void *ptr);
+
+extern Integer ga_memory_avail(Integer datatype);
+
 #endif

@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.27 2002-11-15 23:25:38 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.28 2003-02-18 00:29:41 manoj Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1083,7 +1083,6 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
 {
   Integer idx, ipx, idir, i, np, handle=GA_OFFSET + *g_a;
   Integer size, buflen, buftot, bufsize, ndim, increment[MAXDIM];
-  Integer send_buf = INVALID_MA_HANDLE, rcv_buf = INVALID_MA_HANDLE;
   Integer proc_rem_snd, proc_rem_rcv, pmax;
   Integer msgcnt, length, msglen;
   Integer width[MAXDIM], dims[MAXDIM], index[MAXDIM];
@@ -1096,7 +1095,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   int stride_snd[MAXDIM], stride_rcv[MAXDIM],count[MAXDIM];
   char *ptr_snd, *ptr_rcv;
   char send_name[32], rcv_name[32];
-  void *snd_ptr, *rcv_ptr;
+  void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
 
   /* This routine makes use of the shift algorithm to update data in the
    * ghost cells bounding the local block of visible data. The shift
@@ -1194,12 +1193,8 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   bufsize = size*buflen;
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
-  if (!MA_push_stack(GA[handle].type, buflen, send_name, &send_buf))
-      return FALSE;
-  if (!MA_get_pointer(send_buf, &snd_ptr)) return FALSE;
-  if (!MA_push_stack(GA[handle].type, buflen, rcv_name, &rcv_buf))
-      return FALSE;
-  if (!MA_get_pointer(rcv_buf, &rcv_ptr)) return FALSE;
+  snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
@@ -1472,8 +1467,8 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
     increment[idx] = 2*width[idx];
   }
 
-  (void)MA_pop_stack(rcv_buf);
-  (void)MA_pop_stack(send_buf);
+  ga_free(rcv_ptr_orig);
+  ga_free(snd_ptr_orig);
   GA_POP_NAME;
   return TRUE;
 }
@@ -2003,7 +1998,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 {
   Integer idx, ipx, idir, i, np, handle=GA_OFFSET + *g_a;
   Integer size, buflen, buftot, bufsize, ndim, increment[MAXDIM];
-  Integer send_buf = INVALID_MA_HANDLE, rcv_buf = INVALID_MA_HANDLE;
   Integer proc_rem_snd, proc_rem_rcv, pmax;
   Integer msgcnt, length, msglen;
   Integer width[MAXDIM], dims[MAXDIM], index[MAXDIM];
@@ -2021,7 +2015,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   char *ptr_snd, *ptr_rcv;
   char *ptr_loc, *ptr_rem;
   char send_name[32], rcv_name[32];
-  void *snd_ptr, *rcv_ptr;
+  void *snd_ptr, *rcv_ptr, *snd_ptr_orig, *rcv_ptr_orig;
 
   /* This routine makes use of the shift algorithm to update data in the
    * ghost cells bounding the local block of visible data. The shift
@@ -2132,12 +2126,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   bufsize = size*buflen;
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
-  if (!MA_push_stack(GA[handle].type, buflen, send_name, &send_buf))
-      return FALSE;
-  if (!MA_get_pointer(send_buf, &snd_ptr)) return FALSE;
-  if (!MA_push_stack(GA[handle].type, buflen, rcv_name, &rcv_buf))
-      return FALSE;
-  if (!MA_get_pointer(rcv_buf, &rcv_ptr)) return FALSE;
+  snd_ptr_orig = snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr_orig = rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
 
   /* loop over dimensions for sequential update using shift algorithm */
   msgcnt = 0;
@@ -2473,8 +2463,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
     increment[idx] = 2*width[idx];
   }
 
-  (void)MA_pop_stack(rcv_buf);
-  (void)MA_pop_stack(send_buf);
+  ga_free(rcv_ptr_orig);
+  ga_free(snd_ptr_orig);
   /* set update flags to zero for next operation */
   for (idx=0; idx < 2*ndim; idx++) {
     GA_Update_Flags[GAme][idx] = 0;

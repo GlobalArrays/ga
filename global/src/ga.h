@@ -201,7 +201,8 @@ extern int GA_Cluster_nnodes();
 extern int GA_Cluster_nodeid();
 extern int GA_Cluster_nprocs(int x);
 extern int GA_Cluster_procid(int x, int y);
-
+extern void GA_Register_stack_memory(void * (*ext_alloc)(), 
+				     void (*ext_free)());
 
 #ifdef __cplusplus
 }

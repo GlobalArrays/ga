@@ -161,7 +161,6 @@ void nga_copy_patch(char *trans,
     Integer los[MAXDIM], his[MAXDIM];
     Integer ld[MAXDIM], ald[MAXDIM], bld[MAXDIM];
     Integer lod[MAXDIM], hid[MAXDIM];
-    Integer src_hdl, src_idx, dst_hdl, dst_idx, vhandle, vindex;
     void *src_data_ptr, *tmp_ptr;
     Integer *src_idx_ptr, *dst_idx_ptr;
     Integer bvalue[MAXDIM], bunit[MAXDIM];
@@ -239,15 +238,9 @@ void nga_copy_patch(char *trans,
         }
         /*** due to generality of this transformation scatter is required ***/
         else{
-            if(!MA_push_get(atype, nelem, "v", &vhandle, &vindex) ||
-               !MA_get_pointer(vhandle, &tmp_ptr))
-                ga_error(" MA failed-v ", 0L);
-            if(!MA_push_get(MT_F_INT, (andim*nelem), "si", &src_hdl, &src_idx)
-               || !MA_get_pointer(src_hdl, &src_idx_ptr))
-                ga_error(" MA failed-si ", 0L);
-            if(!MA_push_get(MT_F_INT, (bndim*nelem), "di", &dst_hdl, &dst_idx)
-               || !MA_get_pointer(dst_hdl, &dst_idx_ptr))
-                ga_error(" MA failed-di ", 0L);
+	  tmp_ptr = ga_malloc(nelem, atype, "v");
+	  src_idx_ptr = (Integer*) ga_malloc((andim*nelem), MT_F_INT, "si");
+	  dst_idx_ptr = (Integer*) ga_malloc((bndim*nelem), MT_F_INT, "di");
                 
             /* calculate the destination indices */
 
@@ -346,8 +339,9 @@ void nga_copy_patch(char *trans,
 	    
 	    nga_release_(g_a, los, his);
             nga_scatter_(g_b, tmp_ptr, dst_idx_ptr, &nelem);
-            if (!MA_pop_stack(dst_hdl) || !MA_pop_stack(src_hdl) ||
-                !MA_pop_stack(vhandle)) ga_error("MA_pop_stack failed",0);
+	    ga_free(dst_idx_ptr);
+	    ga_free(src_idx_ptr);
+	    ga_free(tmp_ptr);
         }
     }
     GA_POP_NAME;
