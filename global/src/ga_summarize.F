@@ -64,9 +64,10 @@ c
             endif
 
  2          format('(''  array',i2,' => ', a ,' '',a', i2, 
-     $           ',''('',i',i,','','',i',i,''')'')')
+     $           ',''('',i',i2,','','',i',i2,''')'')')
             
-*     write(6,*) head
+            write(6,*) dim1, dim2, ldim1, ldim2
+            write(6,*) head
             write(6,head) name(1:lname), dim1, dim2
 c
             if (verbose) then
