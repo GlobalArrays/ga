@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.68 2002-07-17 17:33:19 vinod Exp $
+# $Id: makefile.h,v 1.69 2002-08-29 22:30:11 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -19,6 +19,7 @@
           CLD = $(FLD)
            M4 = /usr/bin/m4
           CXX = CC
+	CXXLD = $(CXX)
          FOPT = -O
          COPT = -O
          NOPT = -g
@@ -37,6 +38,7 @@
     MAKEFLAGS = -j 1
        LINK.f = $(FLD)
        LINK.c = $(CLD)
+      LINK.cc = $(CXXLD)
       LIBBLAS = -lblas
        P_FILE = YES
         CLIBS = -lm
@@ -452,6 +454,7 @@ ifeq ($(TARGET),CRAY-YMP)
            FC = f90
           CPP = cpp -P -N
      FCONVERT = $(CPP) $(CPP_FLAGS)  $< | sed '/^\#/D'  > $*.f
+
  GLOB_DEFINES = -DCRAY_YMP -D_MULTIP_
      FOPT_REN = -dp -ataskcommon
      HAS_BLAS = yes
@@ -602,10 +605,21 @@ endif
 
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)
 
+ifdef GA_C_CORE
+  DEFINES += -DGA_C_CORE
+endif
+
 ifeq ($(MSG_COMMS),MPI)
-  INCLUDES += $(MP_INCLUDES)
+  INCLUDES += $(MP_INCLUDES) 
+ifndef __MPIPP
   DEFINES += -DMPI
 endif
+ifdef __MPIPP
+  DEFINES += -DMPIPP
+endif
+endif
+
+
 
 #Fujitsu fortran compiler requires -Wp prefix for cpp symbols
 ifeq ($(TARGET),FUJITSU-VPP)
@@ -629,22 +643,35 @@ endif
        FLDOPT =  $(FLD_REN)
        CLDOPT =  $(CLD_REN)
 
+
 ifeq ($(LINK.f),$(FC))
        FLDOPT += $(FOPT_REN)
 else
        FLDOPT += $(COPT_REN)
 endif
+
+ifeq ($(LINK.cc),$(FC))
+       CXXLDOPT = $(CLD_REN)
+       CXXLDOPT += $(FOPT_REN)
+else
+       CXXLDOPT = $(CLD_REN)
+       CXXLDOPT += $(COPT_REN)
+endif
+
 ifeq ($(LINK.c),$(FC))
        CLDOPT += $(FOPT_REN)
 else
        CLDOPT += $(COPT_REN)
 endif
 
+CXXFLAGS = $(CFLAGS)    
+
+
 #
-# Define known suffixes mostly so that .p files don't cause pc to be invoked
+# Define known suffixes mostly so that .p files dont cause pc to be invoked
 #
 .SUFFIXES:	
-.SUFFIXES:	.o .s .F .f .c .m4
+.SUFFIXES:	.o .s .F .f .c .m4 .cc
 
 ifeq ($(EXPLICITF), TRUE)
 #
@@ -652,7 +679,7 @@ ifeq ($(EXPLICITF), TRUE)
 # with CPP to get .f files
 #
 .SUFFIXES:	
-.SUFFIXES:	.o .s .F .f .c .m4
+.SUFFIXES:	.o .s .F .f .c .m4 .cc
 
 .m4.o:
 	$(M4) $*.m4 > $*.F
