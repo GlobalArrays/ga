@@ -1,4 +1,4 @@
-/*$Id: mulmat.patch.c,v 1.7 2002-01-18 19:52:12 vinod Exp $*/
+/*$Id: mulmat.patch.c,v 1.8 2002-01-22 19:45:11 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -240,9 +240,19 @@ int d;
 	   if( (*ipos >=0) && (hi[d]>lo[d])) { *jpos =d; break; }
     }
     
-    if(*ipos >*jpos){Integer t=*ipos; *ipos=*jpos; *jpos=t;} 
-    if(*ipos <0) *ipos=0; 
-    if(*jpos <0) *jpos=0;
+/*    if(*ipos >*jpos){Integer t=*ipos; *ipos=*jpos; *jpos=t;} 
+*/
+
+    /* single element case (trivial) */
+    if((*ipos <0) && (*jpos <0)){ *ipos =0; *jpos=1; }
+    else{
+
+      /* handle almost trivial case of only one dimension with >1 elements */
+      if(*ipos <0) *ipos = *jpos-1; /* select i dimension based on j */ 
+      if(*jpos <0) *jpos = *ipos+1; /* select j dimenison based on i */
+
+    }
+
     *ilo = lo[*ipos]; *ihi = hi[*ipos];
     *jlo = lo[*jpos]; *jhi = hi[*jpos];
     *dim1 = dims[*ipos];
@@ -480,8 +490,8 @@ void FATR nga_matmul_patch_(transa, transb, alpha, beta, g_a, alo, ahi,
 #if defined(CRAY) || defined(WIN32)
      _fcd   transa, transb;
 {    
-     nga_matmul_patch(_fcdtocp(transa), _fcdtocp(transb), alpha, beta, g_a, alo, ahi,
-                      g_b, blo, bhi, g_c, clo, chi);
+     nga_matmul_patch(_fcdtocp(transa), _fcdtocp(transb), alpha, beta, g_a, alo,
+                      ahi, g_b, blo, bhi, g_c, clo, chi);
 #else
      char    *transa, *transb;
 {    
