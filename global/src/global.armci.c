@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.35 2000-04-13 17:56:08 jju Exp $ */
+/* $Id: global.armci.c,v 1.36 2000-04-14 23:11:27 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -564,7 +564,7 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
         /* RJH ... don't leave some nodes without data if possible
          but respect the users block size */
 
-        if (chunk[d] > 1) {
+        if (chunk && chunk[d] > 1) {
           int ddim = (dims[d]-1)/MIN(chunk[d],dims[d]) + 1;
           pcut = (ddim -(blk[d]-1)*pe[d]) ;
         }
@@ -577,7 +577,7 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
           if (p >= pcut)
             b = b-1;
           map[nblock] = i+1;
-          if (chunk[d]>1) b *= MIN(chunk[d],dims[d]);
+          if (chunk && chunk[d]>1) b *= MIN(chunk[d],dims[d]);
           i += b;
         }
 
