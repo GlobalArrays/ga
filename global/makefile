@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.14 1996-01-02 18:50:04 d3h325 Exp $
+#$Id: makefile,v 1.15 1996-01-23 23:59:00 d3h325 Exp $
 
 # Tiny makefile wrapper
 
@@ -15,7 +15,7 @@ USES_BLAS = src/ga_solve_seq.F src/ga_dgemm.F src/ga_dgemm_seq.F
 export LIBDIR CNFDIR
 
 global_stamp:	include_stamp 
-	$(MAKE) -f makefile.GA TARGET=$(TARGET)\
+	$(MAKE) -f Makefile TARGET=$(TARGET)\
 		DIAG=PAR
 
 include_stamp:	src/global.fh
@@ -24,11 +24,11 @@ include_stamp:	src/global.fh
 	touch include_stamp
 
 %.x:
-	$(MAKE) -f makefile.GA TARGET=$(TARGET) DIAG=PAR $@
+	$(MAKE) -f Makefile TARGET=$(TARGET) DIAG=PAR $@
 	
 realclean clean:	
 	/bin/rm -f include_stamp
-	-$(MAKE) -f makefile.GA clean
+	-$(MAKE) -f Makefile clean
 
 depend:
 	echo No dependencies in global
