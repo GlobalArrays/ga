@@ -47,6 +47,8 @@ c
       me = ga_nodeid()
       nproc = ga_nnodes()
 c
+**      write(6,*) ' ga_dgemm: beta ', beta
+**      call util_flush(6)
       if (beta .eq. 0.0d0) then
          call ga_zero(g_c)
       else

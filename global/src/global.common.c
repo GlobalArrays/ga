@@ -516,7 +516,7 @@ char name[80];
 	   }else if(type == MT_F_DBL){
 	     ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
 	     for(jj=0; jj<(jmax-j+1); jj++)
-	       fprintf(DEV,"%12.6f",dbuf[jj]);
+	       fprintf(DEV,"%#12.6g",dbuf[jj]);
 	     
 	   }else ga_error("ga_print: wrong type",0);
 	   fprintf(DEV,"\n");
