@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.53 2002-08-16 14:48:30 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.54 2002-09-09 19:38:48 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -121,9 +121,8 @@ int     Dra_num_serv=DRA_NUM_IOPROCS;
 
 #define dai_sizeofM(_type) MA_sizeof(_type, 1, MT_C_CHAR)
 
-#define dai_check_typeM(_type)  if (_type != MT_F_DBL && _type != MT_F_INT \
-     && _type != MT_INT && _type != MT_DBL\
-     && _type != MT_REAL && _type != MT_F_DCPL && _type != MT_F_REAL)\
+#define dai_check_typeM(_type)  if (_type != C_DBL && _type != C_INT \
+     && _type != C_LONG && _type != C_DCPL && _type != C_FLOAT) \
                                   dai_error("invalid type ",_type)  
 #define dai_check_handleM(_handle, msg)                                    \
 {\
@@ -551,12 +550,10 @@ Size_t  bytes;
 void dai_zero_eof(Integer d_a)
 {
 Integer handle = d_a+DRA_OFFSET, nelem;
+char byte;
 Off_t offset;
-Size_t  bytes;
 
-        if(DRA[handle].type == MT_F_DBL) *(DoublePrecision*)_dra_buffer = 0.;
-        if(DRA[handle].type == MT_F_INT) *(Integer*)_dra_buffer = 0;
-        if(DRA[handle].type == MT_F_REAL) *(float*)_dra_buffer = 0;
+        byte = (char)0;
 
         if(INDEPFILES(d_a)) {
 
@@ -583,7 +580,7 @@ Size_t  bytes;
 
           block_to_sectM(&ds_a, CR); /* convert block number to section */
           dai_file_location(ds_a, &offset);
-          nelem = (ds_a.hi[0] - ds_a.lo[0] +1)*(ds_a.hi[1] - ds_a.lo[1] +1) -1; 
+          nelem = (ds_a.hi[0] - ds_a.lo[0] +1)*(ds_a.hi[1] - ds_a.lo[1] +1); 
           offset += ((Off_t)nelem) * dai_sizeofM(DRA[handle].type);
 
 #         ifdef DEBUG
@@ -591,12 +588,11 @@ Size_t  bytes;
 #         endif
         } else {
 
-          nelem = DRA[handle].dims[0]*DRA[handle].dims[1] - 1;
+          nelem = DRA[handle].dims[0]*DRA[handle].dims[1];
           offset = ((Off_t)nelem) * dai_sizeofM(DRA[handle].type);
         }
 
-        bytes = dai_sizeofM(DRA[handle].type);
-        if(bytes != elio_write(DRA[handle].fd, offset, _dra_buffer, bytes))
+        if(elio_write(DRA[handle].fd, offset-1, &byte, 1) != (Size_t)1)
                      dai_error("dai_zero_eof: write error ",0);
 }
 
@@ -1185,31 +1181,25 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
 
 #        define COPY_TYPE(OPERATION, MATYPE, ds_chunk)\
          switch(MATYPE){\
-         case MT_F_DBL:  COPY_ ## OPERATION(DBL_MB,DoublePrecision,ds_chunk);break;\
-         case MT_F_INT:  COPY_ ## OPERATION(INT_MB, Integer, ds_chunk); break;\
-         case MT_F_DCPL: COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);break;\
-         case MT_F_REAL: COPY_ ## OPERATION(FLT_MB, float, ds_chunk);\
+         case C_DBL:  COPY_ ## OPERATION(DBL_MB,double,ds_chunk);break;\
+         case C_INT:  COPY_ ## OPERATION(INT_MB, int, ds_chunk); break;\
+         case C_DCPL: COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);break;\
+         case C_FLOAT: COPY_ ## OPERATION(FLT_MB, float, ds_chunk);\
          }
 
          if(ga_nodeid_()==0) printf("DRA warning: using scatter/gather\n");
 
          nelem = (ds_chunk.hi[0]-ds_chunk.lo[0]+1)
                * (ds_chunk.hi[1]-ds_chunk.lo[1]+1);
-         if(!MA_push_get(MT_F_INT, nelem, "i_", &ihandle, &iindex))
+         if(!MA_push_get(C_INT, nelem, "i_", &ihandle, &iindex))
                          dai_error("DRA move: MA failed-i ", 0L);
-         if(!MA_push_get(MT_F_INT, nelem, "j_", &jhandle, &jindex))
+         if(!MA_push_get(C_INT, nelem, "j_", &jhandle, &jindex))
                          dai_error("DRA move: MA failed-j ", 0L);
          if(!MA_push_get(type, nelem, "v_", &vhandle, &vindex))
                          dai_error("DRA move: MA failed-v ", 0L);
+         if(!MA_get_pointer(vhandle, &base_addr))
+                         dai_error("DRA move: MA get_pointer failed ", 0L);
 
-         /* set the address of base for each datatype */
-         switch(type){
-              case  MT_F_DBL:  base_addr = (char*) (DBL_MB+vindex); break;
-              case  MT_F_INT:  base_addr = (char*) (INT_MB+vindex); break;
-              case  MT_F_DCPL: base_addr = (char*) (DCPL_MB+vindex);break;
-              case  MT_F_REAL: base_addr = (char*) (FLT_MB+vindex);
-         }
-    
          if(trans==TRANS) 
            ITERATOR_2D(i,j, base, ds_chunk) {
               dai_dest_indicesM(j, i, ds_a.lo[0], ds_a.lo[1], ds_a.hi[0]-ds_a.lo[0]+1, 
@@ -1226,7 +1216,7 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
         /* move data */
          if(op==LOAD){
 
-           if(!MA_push_get(MT_F_INT, nelem, "pindex", &phandle, &pindex))
+           if(!MA_push_get(C_INT, nelem, "pindex", &phandle, &pindex))
                          dai_error("DRA move: MA failed-p ", 0L);
            for(i=0; i< nelem; i++) INT_MB[pindex+i] = i; 
            ga_sort_permut_(&gs_a.handle, INT_MB+pindex, INT_MB+iindex, INT_MB+jindex, &nelem);
@@ -1338,12 +1328,6 @@ void nga_move(int op,             /*[input] flag for read or write */
 
     /* determine gs_chunk corresponding to ds_chunk */
     section_t gs_chunk = gs_a;
-        /*dai_dest_indicesM(ds_chunk.lo[0], ds_chunk.lo[1], ds_a.lo[0], ds_a.lo[1], 
-                ds_a.hi[0]-ds_a.lo[0]+1, &gs_chunk.lo[0], &gs_chunk.lo[1], 
-                gs_a.lo[0], gs_a.lo[1],   gs_a.hi[0] - gs_a.lo[0] + 1);
-        dai_dest_indicesM(ds_chunk.hi[0], ds_chunk.hi[1], ds_a.lo[0], ds_a.lo[1], 
-                ds_a.hi[0]-ds_a.lo[0]+1, &gs_chunk.hi[0], &gs_chunk.hi[1],
-                gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);*/
     ndai_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a);
     consistent = TRUE;
     for (i=0; i<ndim; i++) {
@@ -1386,9 +1370,12 @@ void nga_move(int op,             /*[input] flag for read or write */
 
     /* create space to copy transpose of DRA section into */
     nelem = 1;
-    for (i=0; i<ndim; i++) nelem *= (ds_chunk.hi[i] - ds_chunk.lo[i] + 1);
+    for (i=0; i<ndim; i++) {
+      nelem *= (ds_chunk.hi[i] - ds_chunk.lo[i] + 1);
+    }
     nelem1 = 1;
-    for (i=1; i<ndim; i++) nelem1 *= (ds_chunk.hi[i] - ds_chunk.lo[i] + 1);
+    ndai_trnsp_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a);
+    for (i=1; i<ndim; i++) nelem1 *= (gs_chunk.hi[i] - gs_chunk.lo[i] + 1);
     nelem2 = 1;
     for (i=0; i<ndim-1; i++) nelem2 *= ldb[i];
     if(!MA_push_get(type, nelem, "v_", &vhandle, &vindex))
@@ -1400,7 +1387,6 @@ void nga_move(int op,             /*[input] flag for read or write */
     for (i=1; i<ndim; i++) ldt[ndim-1-i] = ds_chunk.hi[i] - ds_chunk.lo[i] + 1;
     if (op == LOAD) {
       /* transpose buffer with data from global array */
-      ndai_trnsp_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a);
       for (i=0; i<ndim; i++) ldg[i] = gs_chunk.hi[i] - gs_chunk.lo[i] + 1;
       /* copy data from global array to temporary buffer */
       nga_get_sectM(gs_chunk, base_addr, ldg); 
@@ -1430,24 +1416,22 @@ void nga_move(int op,             /*[input] flag for read or write */
         itmp = ldg[0]*i;
         jtmp = nelem3;
         for (j=0; j<ldg[0]; j++) {
-          switch(ga_type_c2f(type)){
-            case MT_F_DBL:
-              ((DoublePrecision*)buffer)[jtmp]
-                = ((DoublePrecision*)base_addr)[itmp];
+          switch(type){
+            case C_DBL:
+              ((double*)buffer)[jtmp] = ((double*)base_addr)[itmp];
               break;
-            case MT_F_INT:
-              ((Integer*)buffer)[jtmp]
-                = ((Integer*)base_addr)[itmp];
+            case C_INT:
+              ((int*)buffer)[jtmp] = ((int*)base_addr)[itmp];
               break;
-            case MT_F_DCPL:
-              ((DoublePrecision*)buffer)[2*jtmp]
-                = ((DoublePrecision*)base_addr)[2*itmp];
-              ((DoublePrecision*)buffer)[2*jtmp+1]
-                = ((DoublePrecision*)base_addr)[2*itmp+1];
+            case C_LONG:
+              ((long*)buffer)[jtmp] = ((long*)base_addr)[itmp];
               break;
-            case MT_F_REAL:
-              ((float*)buffer)[jtmp]
-                = ((float*)base_addr)[itmp];
+            case C_DCPL:
+              ((double*)buffer)[2*jtmp] = ((double*)base_addr)[2*itmp];
+              ((double*)buffer)[2*jtmp+1] = ((double*)base_addr)[2*itmp+1];
+              break;
+            case C_FLOAT:
+              ((float*)buffer)[jtmp] = ((float*)base_addr)[itmp];
               break;
           }
           itmp++;
@@ -1456,7 +1440,6 @@ void nga_move(int op,             /*[input] flag for read or write */
       }
     } else {
       /* get transposed indices */
-      ndai_trnsp_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a);
       for (i=0; i<ndim; i++) ldg[i] = gs_chunk.hi[i] - gs_chunk.lo[i] + 1;
       for (i=0; i<nelem1; i++ ) {
         /* find indices of elements in MA buffer */
@@ -1484,24 +1467,22 @@ void nga_move(int op,             /*[input] flag for read or write */
         itmp = ldg[0]*i;
         jtmp = nelem3;
         for (j=0; j<ldg[0]; j++) {
-          switch(ga_type_c2f(type)){
-            case MT_F_DBL:
-              ((DoublePrecision*)base_addr)[itmp]
-                = ((DoublePrecision*)buffer)[jtmp];
+          switch(type){
+            case C_DBL:
+              ((double*)base_addr)[itmp] = ((double*)buffer)[jtmp];
               break;
-            case MT_F_INT:
-              ((Integer*)base_addr)[itmp]
-                = ((Integer*)buffer)[jtmp];
+            case C_INT:
+              ((int*)base_addr)[itmp] = ((int*)buffer)[jtmp];
               break;
-            case MT_F_DCPL:
-              ((DoublePrecision*)base_addr)[2*itmp]
-                = ((DoublePrecision*)buffer)[2*jtmp];
-              ((DoublePrecision*)base_addr)[2*itmp+1]
-                = ((DoublePrecision*)buffer)[2*jtmp+1];
+            case C_LONG:
+              ((long*)base_addr)[itmp] = ((long*)buffer)[jtmp];
               break;
-            case MT_F_REAL:
-              ((float*)base_addr)[itmp]
-                = ((float*)buffer)[jtmp];
+            case C_DCPL:
+              ((double*)base_addr)[2*itmp] = ((double*)buffer)[2*jtmp];
+              ((double*)base_addr)[2*itmp+1] = ((double*)buffer)[2*jtmp+1];
+              break;
+            case C_FLOAT:
+              ((float*)base_addr)[itmp] = ((float*)buffer)[jtmp];
               break;
           }
           itmp++;
@@ -2277,12 +2258,10 @@ void ndai_zero_eof(Integer d_a)
 {
 Integer handle = d_a+DRA_OFFSET, nelem, i;
 Integer zero[MAXDIM];
+char byte;
 Off_t offset;
-Size_t  bytes;
 
-        if(DRA[handle].type == MT_F_DBL) *(DoublePrecision*)_dra_buffer = 0.;
-        if(DRA[handle].type == MT_F_INT) *(Integer*)_dra_buffer = 0;
-        if(DRA[handle].type == MT_F_REAL) *(float*)_dra_buffer = 0;
+        byte = (char)0;
 
         if(INDEPFILES(d_a)) {
 
@@ -2313,7 +2292,6 @@ Size_t  bytes;
           ndai_file_location(ds_a, &offset);
           nelem = 1;
           for (i=0; i<DRA[handle].ndim; i++) nelem *= (ds_a.hi[i] - ds_a.lo[i] + 1);
-          nelem--;
           offset += ((Off_t)nelem) * dai_sizeofM(DRA[handle].type);
 
 #         ifdef DEBUG
@@ -2323,12 +2301,10 @@ Size_t  bytes;
 
           nelem = 1;
           for (i=0; i<DRA[handle].ndim; i++) nelem *= DRA[handle].dims[i];
-          nelem--;
           offset = ((Off_t)nelem) * dai_sizeofM(DRA[handle].type);
         }
 
-        bytes = dai_sizeofM(DRA[handle].type);
-        if(bytes != elio_write(DRA[handle].fd, offset, _dra_buffer, bytes))
+        if(elio_write(DRA[handle].fd, offset-1, &byte, 1) != (Size_t)1)
                      dai_error("ndai_zero_eof: write error ",0);
 }
 
@@ -3322,18 +3298,21 @@ void FATR dra_print_internals_(Integer *d_a)
   if (me == 0) {
     printf("Internal Data for DRA: %s\n",DRA[handle].name);
     printf("  DRA Metafile Name: %s\n",DRA[handle].fname);
-    switch(ga_type_c2f(DRA[handle].type)){
-      case MT_F_DBL:
+    switch(DRA[handle].type){
+      case C_DBL:
         printf("  DRA data type is DOUBLE PRECISION\n");
         break;
-      case MT_F_REAL:
+      case C_FLOAT:
         printf("  DRA data type is SINGLE PRECISION\n");
         break;
-      case MT_F_INT:
+      case C_INT:
         printf("  DRA data type is INTEGER\n");
         break;
-      case MT_F_DCPL:
+      case C_DCPL:
         printf("  DRA data type is DOUBLE COMPLEX\n");
+        break;
+      case C_LONG:
+        printf("  DRA data type is LONG INTEGER\n");
         break;
       default:
         printf("  DRA data type is UNKNOWN\n");
