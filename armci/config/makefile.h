@@ -437,7 +437,7 @@ ifdef IBM_
          FOPT = -O4 -qarch=auto -qstrict
      else
 #        without this flag xlf_r creates nonreentrant code
-         FOPT += -qnosave
+         FOPT_REN += -qnosave
      endif
      ifeq ($(COPT), -O)
          COPT = -O3 -qinline=100 -qstrict -qarch=auto -qtune=auto
