@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.15 2000-06-01 21:37:21 d3h325 Exp $ */
+/* $Id: message.c,v 1.16 2000-06-13 22:06:44 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -100,13 +100,15 @@ int root, up, left, right, index, nproc;
        root  = armci_clus_info[0].master;
        nproc = armci_nclus;
        if(armci_me != armci_master){up = -1; left = -1; right = -1; }
-       index = armci_clus_me - root;
-       up    = (index-1)/2 + root;
+       else{
+               index = armci_clus_me - root;
+               up    = (index-1)/2 + root;
                up = ( up < root)? -1: armci_clus_info[up].master;
-       left  = 2*index + 1 + root;
-               left = ( left >= root+nproc)? -1: armci_clus_info[up].master;
-       right = 2*index + 2 + root;
-               right = ( right >= root+nproc)? -1: armci_clus_info[up].master;
+               left  = 2*index + 1 + root;
+                       left = ( left >= root+nproc)? -1: armci_clus_info[left].master;
+               right = 2*index + 2 + root;
+                       right = ( right >= root+nproc)? -1: armci_clus_info[right].master;
+       }
     }else{
        root  = 0;
        nproc = armci_nproc;
@@ -125,7 +127,7 @@ int root, up, left, right, index, nproc;
 
 /*\ root broadcasts to everyone else
 \*/
-void armci_msg_bcast(int scope, void *buf, int len, int root)
+void armci_msg_bcast_scope(int scope, void *buf, int len, int root)
 {
     int up, left, right, Root;
 
@@ -138,10 +140,26 @@ void armci_msg_bcast(int scope, void *buf, int len, int root)
         if(armci_me ==Root) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, root);
     }
     
+    /* printf("%d: scope=%d left=%d right=%d up=%d\n",armci_me, scope, left, right, up);*/
+
     if(armci_me != Root) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, up);
     if (left > -1)  armci_msg_snd(ARMCI_TAG, buf, len, left);
     if (right > -1) armci_msg_snd(ARMCI_TAG, buf, len, right);
 }
+
+
+#ifndef armci_msg_bcast
+/*\ SMP-aware global broadcast routine
+\*/
+void armci_msg_bcast(void *buf, int len, int root)
+{
+    /* inter-node operation between masters */
+    if(armci_nclus>1)armci_msg_bcast_scope(SCOPE_MASTERS, buf, len, root); 
+
+    /* intra-node operation */
+    armci_msg_bcast_scope(SCOPE_NODE, buf, len, armci_master);
+}
+#endif
 
 
 void armci_msg_brdcst(void* buffer, int len, int root)
@@ -478,7 +496,7 @@ int len, lenmes, min;
        else armci_msg_snd(tag, x, 0, up); /* send 0 bytes */
 
     /* Now, root broadcasts the result down the binary tree */
-    armci_msg_bcast(scope, x, n, root);
+    armci_msg_bcast_scope(scope, x, n, root);
 }
 
 

@@ -9,9 +9,15 @@
 #define SCOPE_MASTERS 339
 
 #define armci_msg_sel(x,n,op,type,contribute)\
-        armci_msg_sel_scope(SCOPE_ALL,x,n,op,type,contribute) 
+        armci_msg_sel_scope(SCOPE_ALL,(x),(n),(op),(type),(contribute)) 
+#if 0
+#define armci_msg_bcast(buffer, len, root)\
+        armci_msg_bcast_scope(SCOPE_ALL, (buffer), (len), (root))
+#endif
+
 extern void armci_msg_sel_scope(int scope, void *x, int n, char* op, 
                                 int type, int contribute);
+extern void armci_msg_bcast_scope(int scope, void* buffer, int len, int root);
 extern void armci_msg_brdcst(void* buffer, int len, int root);
 extern void armci_msg_snd(int tag, void* buffer, int len, int to);
 extern void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from);
