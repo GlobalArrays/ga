@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.27 2001-09-26 00:53:38 d3h325 Exp $ */
+/* $Id: request.c,v 1.28 2001-12-22 00:43:58 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -315,10 +315,9 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
      case ARMCI_SWAP_LONG:
         lold = *(long*) pextra;
      case ARMCI_FETCH_AND_ADD_LONG:
-        if(msginfo->datalen != sizeof(int))
+        if(msginfo->datalen != sizeof(long))
           armci_die("armci_server_rmw: long bad datalen=",msginfo->datalen);
         pold = &lold;
-        msginfo->datalen = sizeof(long);
         break;
 
      default:
