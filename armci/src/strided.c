@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.32 2001-05-24 21:27:38 d3h325 Exp $ */
+/* $Id: strided.c,v 1.33 2001-05-31 00:11:23 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -208,7 +208,6 @@ void (ATR *func)(void*, int*, int*, void*, int*, void*, int*);
 static void 
 armci_lockmem_patch(void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels, int proc)
 {
-    int  i;
     long span = count[stride_levels];
     span *= dst_stride_arr[stride_levels-1];
 
