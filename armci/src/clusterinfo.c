@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.28 2004-07-27 08:57:59 manoj Exp $ */
+/* $Id: clusterinfo.c,v 1.29 2005-01-24 09:01:38 manoj Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -338,9 +338,11 @@ void armci_init_clusinfo()
   len =  strlen(name);
 
 #ifdef HOSTNAME_TRUNCATE
+  {    
      /* in some cases (e.g.,SP) when name is used to determine
       * cluster structure but not to establish communication
       * we can truncate hostnames to save memory */
+     int i;
      limit = HOSTNAME_LEN-1;
      for(i=0; i<len; i++){
          if(name[i] =='.')break; /*we are not truncating 1st part of hostname*/
@@ -348,6 +350,7 @@ void armci_init_clusinfo()
      }
      if(len>limit)name[limit]='\0';
      len =limit;
+  }
 #else
   if(len >= HOSTNAME_LEN-1)
      armci_die("armci: gethostname overrun name string length",len);
@@ -376,11 +379,12 @@ void armci_init_clusinfo()
 
 #ifdef SHMEM_HACK
   if(armci_enable_alpha_hack()) {
-    for(i=0;i<armci_nclus;i++){
-      int len=strlen(armci_clus_info[i].hostname);
-      /*     fprintf(stderr,"----hostlen=%d\n",len);*/
-      armci_clus_info[i].hostname[len-1]='\0';
-    }
+     int i;
+     for(i=0;i<armci_nclus;i++){
+        int len=strlen(armci_clus_info[i].hostname);
+        /*     fprintf(stderr,"----hostlen=%d\n",len);*/
+        armci_clus_info[i].hostname[len-1]='\0';
+     }
   }
 #endif
 
