@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.31 2000-07-18 20:03:37 d3h325 Exp $
+# $Id: makefile.h,v 1.32 2000-08-01 22:37:33 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -168,7 +168,7 @@ ifeq ($(TARGET),LINUX64)
        RANLIB = echo
 GLOB_DEFINES += -DLINUX -DLINUX64 -DEXT_INT
 FOPT_REN=-i8 -assume no2underscore -align_dcommons -fpe3 -check nooverflow 
-FOPT_REN +=-assume accuracy_sensitive -checknopower -check nounderflow
+FOPT_REN +=-assume accuracy_sensitive -check nopower -check nounderflow
 #COPT_REN= 
           CLD = $(CC)
         CLIBS = -lfor
