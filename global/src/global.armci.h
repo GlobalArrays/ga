@@ -5,12 +5,10 @@
 #  define volatile
 #endif
 
-#define MAX_REG     128             /* max number of shmem regions per array */
-#define RESERVED    2*sizeof(long)  /* used for shmem buffer management */  
 #define FNAM        31              /* length of Fortran names   */
 #define FLEN        80              /* length of Fortran strings */
-#define BUF_SIZE    4096            /* size of shmem buffer */ 
 #define ERR_STR_LEN 256             /* length of string for error reporting */
+#define FLUSH_CACHE 
 
 #ifdef  CRAY_T3D
 #       define ALLIGN_SIZE      32
@@ -41,15 +39,14 @@ typedef struct {
 } global_array_t;
 
 
+static global_array_t GA[MAX_ARRAYS]; 
 int* GA_proc_list = NULL;           
 int* GA_inv_proc_list=NULL;
 int* GA_Proc_list = NULL;           
 int* GA_inv_Proc_list=NULL;
-static global_array_t GA[MAX_ARRAYS]; 
 static int max_global_array = MAX_ARRAYS;
 static Integer *map;       /* used in get/put/acc */
 static Integer *GA_proclist;
-extern Integer in_handler;                   /* set in interrupt handler*/
 
 
 char err_string[ ERR_STR_LEN];        /* string for extended error reporting */
@@ -154,12 +151,9 @@ Integer         *INT_MB;            /* integer base address */
 /* cache numbers of GA/message-passing processes and ids */
 static Integer GAme, GAnproc, GAmaster;
 static Integer MPme, MPnproc;
-
 static int GAinitialized = 0;
+
 int ProcListPerm[MAX_NPROC];            /* permuted list of processes */
-Integer local_buf_req=0;
-Integer *NumRecReq = &local_buf_req;/* # received requests by data server */
-                                    /* overwritten by shmem buf ptr if needed */
 struct ga_stat_t GAstat = {0,0,0,0,0,0,0,0,0,0,0};
 struct ga_bytes_t GAbytes ={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
 long   *GAstat_arr;  
@@ -180,10 +174,6 @@ static Integer GA_memory_limited = 0;
 # define ARGS_(s) ()
 #endif
 
-extern logical gaDirectAccess ARGS_((Integer, int  ));
-extern void ma_ga_get_ptr_ ARGS_((char **, char *));
-extern Integer ma_ga_diff_ ARGS_((char *, char *));
-extern void ma_ga_base_address_ ARGS_((Void*, Void**));
 extern void ga_sort_scat ARGS_((Integer*,Void*,Integer*,Integer*,Integer*, Integer));
 extern void ga_sort_gath_ ARGS_((Integer*, Integer*, Integer*, Integer*));
 
@@ -194,4 +184,3 @@ extern void ga_sort_gath_ ARGS_((Integer*, Integer*, Integer*, Integer*));
   static Integer     op_code;
 #endif
 
-#define FLUSH_CACHE 

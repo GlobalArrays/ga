@@ -154,6 +154,17 @@ extern void ga_check_req_balance();
 
 extern void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                            Integer *ld, void *alpha, Integer op_code);
+#else
+
+extern void ga_put_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo,
+                         Integer jhi, void* buf, Integer offset, Integer ld,
+                         Integer proc);
+extern void ga_get_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo,
+                         Integer jhi, void* buf, Integer offset, Integer ld,
+                         Integer proc);
+extern Integer ga_read_inc_local(Integer g_a, Integer i, Integer j, Integer inc,
+                                 Integer proc);
+extern void ga_check_req_balance();
 #endif
 
 
