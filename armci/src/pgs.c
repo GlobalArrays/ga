@@ -1,4 +1,4 @@
-/* $Id: pgs.c,v 1.12 2004-10-28 00:32:30 d3h325 Exp $ 
+/* $Id: pgs.c,v 1.13 2005-01-03 23:43:02 manoj Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
@@ -658,8 +658,8 @@ issueDSRequest(PGS_RAIL *pgsr, PGS_REQDESC *r, void *head, void* data, void *buf
     r->r_elan->re_chainEvent.ev_CountAndType = E4_EVENT_INIT_VALUE(-32,E4_EVENT_COPY,E4_EVENT_DTYPE_LONG,8);
 
     /* Perform a memory barrier to flush all outstanding stores */
-    mb ();
-
+    _armci_ia64_mb();    
+    
 #if 0
     printf("%d ChainDMA to=%d h=%p d=%p b=%p hlen=%d dlen=%d\n",
             armci_me,r->r_vp,head,data,buf,r->r_qdmasize,dlen);
