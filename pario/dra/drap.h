@@ -73,6 +73,10 @@ extern void dai_read_param(char* filename, Integer d_a);
 extern void dai_write_param(char* filename, Integer d_a);
 extern void dai_delete_param(char* filename, Integer d_a);
 extern logical dai_section_intersect(section_t sref, section_t* sadj);
+extern Integer MA_alloc_get (Integer, Integer, char*, Integer*, Integer*);
 extern Integer MA_push_get (Integer, Integer, char*, Integer*, Integer*);
-extern Integer MA_pop_stack (Integer);
-
+extern Integer MA_heap_stack (Integer);
+extern Integer MA_inquire_avail(Integer);
+extern Integer MA_get_pointer(Integer, void*);
+extern Integer MA_pop_stack(Integer);
+extern Integer MA_free_heap(Integer);

@@ -7,13 +7,12 @@
 #include "dra.h"
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "macommon.h"
 
 /************************** constants ****************************************/
 
 #define DRA_DBL_BUF_SIZE 100000 /*  buffer size --- reduce for debugging */
-#define DRA_BUF_SIZE     (DRA_DBL_BUF_SIZE*sizeof(DoublePrecision)) 
-#define DRA_INT_BUF_SIZE (DRA_BUF_SIZE/sizeof(Integer))
 
 #define DRA_FAIL  (Integer)1
 #define COLUMN    1
@@ -52,16 +51,25 @@
 #ifdef INDEPFILES
 #  undef DRA_NUM_IOPROCS
 #  define DRA_NUM_IOPROCS INFINITE_NUM_PROCS
+#  undef  DRA_DBL_BUF_SIZE
+#  define DRA_DBL_BUF_SIZE 60000
 #endif
 
 #ifndef DRA_NUM_FILE_MGR
 #  define DRA_NUM_FILE_MGR DRA_NUM_IOPROCS
 #endif
 
+#define DRA_BUF_SIZE     (DRA_DBL_BUF_SIZE*sizeof(DoublePrecision)) 
+#define DRA_INT_BUF_SIZE (DRA_BUF_SIZE/sizeof(Integer))
 /***************************** Global Data ***********************************/
 
-DoublePrecision _dra_dbl_buffer[DRA_DBL_BUF_SIZE];           /* DRA data buffer */
+#ifdef STATBUF
+DoublePrecision _dra_dbl_buffer[DRA_DBL_BUF_SIZE];        /* DRA data buffer */
 char*           _dra_buffer = (char*)_dra_dbl_buffer;
+#else
+char*           _dra_buffer;
+int             _idx_buffer, _handle_buffer;
+#endif
 
 disk_array_t *DRA;           /* array of struct for basic info about DRA arrays*/
 Integer _max_disk_array;    /* max number of disk arrays open at a time      */
@@ -269,12 +277,27 @@ int i;
            dai_error("dra_init: incorrect max number of arrays",*max_arrays);
         _max_disk_array = (*max_arrays==-1) ? DEF_MAX_ARRAYS: *max_arrays;
 
+
         DRA = (disk_array_t*)malloc(sizeof(disk_array_t)**max_arrays);
         if(!DRA) dai_error("dra_init: memory alocation failed\n",0);
         for(i=0; i<_max_disk_array ; i++)DRA[i].actv=0;
 
         for(i=0; i<MAX_REQ; i++)Requests[i].num_pending=0;
 
+#ifndef STATBUF
+        {
+            Integer avail = MA_inquire_avail(MT_C_DBL);
+            ga_igop(32000, &avail, (Integer)1, "min");
+            if(avail < DRA_DBL_BUF_SIZE && ga_nodeid_() == 0)
+              dai_error("Not enough memory available from MA for DRA",avail);
+            if(MA_alloc_get(MT_C_DBL, DRA_DBL_BUF_SIZE, "DRA buf", 
+              &_handle_buffer, &_idx_buffer))
+                MA_get_pointer(_handle_buffer, &_dra_buffer); 
+            else
+                dai_error("dra_init: ma_alloc_get failed",DRA_DBL_BUF_SIZE); 
+        }
+#endif
+ 
         ga_sync_();
 
         return(ELIO_OK);
@@ -1486,6 +1509,7 @@ Integer handle = *d_a+DRA_OFFSET;
 Integer dra_terminate_()
 {
         free(DRA);
+        MA_free_heap(_handle_buffer);
         ga_sync_();
         return(ELIO_OK);
 }
@@ -1493,5 +1517,5 @@ Integer dra_terminate_()
 void dai_clear_buffer()
 {
 int i;
-     for (i=0;i<DRA_DBL_BUF_SIZE;i++)_dra_dbl_buffer[i]=0.;
+     for (i=0;i<DRA_DBL_BUF_SIZE;i++) ((double*)_dra_buffer)[i]=0.;
 }
