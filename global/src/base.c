@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.66 2004-01-13 18:12:03 d3g293 Exp $ */
+/* $Id: base.c,v 1.67 2004-02-27 15:08:24 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -45,7 +45,7 @@
 #ifdef GA_USE_VAMPIR
 #include "ga_vampir.h"
 #endif
-/*#define AVOID_MA_STORAGE 1 */
+/*#define AVOID_MA_STORAGE 1*/ 
 #define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
@@ -1011,7 +1011,7 @@ logical ga_allocate_( Integer *g_a)
   Integer pe[MAXDIM], *pmap[MAXDIM], *map;
   Integer blk[MAXDIM];
 #ifdef GA_USE_VAMPIR
-  vampir_begin(NGA_ALLOCATE,__FILE__,__LINE__);
+  vampir_begin(GA_ALLOCATE,__FILE__,__LINE__);
 #endif
 
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
@@ -1170,7 +1170,7 @@ logical ga_allocate_( Integer *g_a)
   }
   GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
-  vampir_end(NGA_ALLOCATE,__FILE__,__LINE__);
+  vampir_end(GA_ALLOCATE,__FILE__,__LINE__);
 #endif
   return status;
 }

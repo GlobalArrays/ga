@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.h,v 1.3 2003-06-24 00:01:24 vinod Exp $ */
+/* $Id: ga_vampir.h,v 1.4 2004-02-27 15:08:24 vinod Exp $ */
 #ifndef _GA_VAMPIR_H_
 #define _GA_VAMPIR_H_
 
@@ -132,6 +132,7 @@
 #define NGA_STRIDED_PUT       32266
 #define NGA_STRIDED_GET       32265
 #define NGA_STRIDED_ACC       32264
+#define GA_ALLOCATE           32263
 
 #include "ga_vampir.fh"
 

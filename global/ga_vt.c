@@ -115,7 +115,7 @@ void vampir_send(int me, int other, int length, int type)
 {
 #if VT_VERSION <= 2010
     (void) VT_log_sendmsg(me,other,length,type,0);
-#elif VT_VERSION > 2090
+#elif VT_VERSION >= 2090
     (void) VT_log_sendmsg(other,length,type,VT_COMM_WORLD,VT_NOSCL);
 #else
     Not sure what the correct interface is.
@@ -127,7 +127,7 @@ void vampir_recv(int me, int other, int length, int type)
 {
 #if VT_VERSION <= 2010
     (void) VT_log_recvmsg(me,other,length,type,0);
-#elif VT_VERSION > 2090
+#elif VT_VERSION >= 2090
     (void) VT_log_recvmsg(other,length,type,VT_COMM_WORLD,VT_NOSCL);
 #else
     Not sure what the correct interface is.
@@ -139,7 +139,7 @@ void vampir_start_comm(int source, int other, int length, int type)
 {
 #if VT_VERSION <= 2010
     (void) VT_log_sendmsg(source,other,length,type,0);
-#elif VT_VERSION > 2090
+#elif VT_VERSION >= 2090
     (void) VT_begin_unordered();
     vampirtrace_timestamp = VT_timestamp();
 #else
@@ -152,7 +152,7 @@ void vampir_end_comm(int source, int other, int length, int type)
 {
 #if VT_VERSION <= 2010
     (void) VT_log_recvmsg(other,source,length,type,0);
-#elif VT_VERSION > 2090
+#elif VT_VERSION >= 2090
     (void) VT_log_msgevent(source,other,length,type,VT_COMM_WORLD,
            vampirtrace_timestamp,VT_NOSCL,VT_NOSCL);
     (void) VT_end_unordered();
@@ -173,7 +173,7 @@ void vampir_begin_gop(int mynode, int nnodes, int length, int type)
            (void) VT_log_sendmsg(mynode,mynode-1,length,type,0);
         };
     };
-#elif VT_VERSION > 2090
+#elif VT_VERSION >= 2090
     if (vampirtrace_level == 1) {
        (void) VT_begin_unordered();
        vampirtrace_timestamp = VT_timestamp();
@@ -195,7 +195,7 @@ void vampir_end_gop(int mynode, int nnodes, int length, int type)
            (void) VT_log_recvmsg(mynode,mynode-1,length,type,0);
         };
     };
-#elif VT_VERSION > 2090
+#elif VT_VERSION >= 2090
     if (vampirtrace_level == 1) {
        (void) VT_log_opevent(VT_OP_ALLTOALL,VT_COMM_WORLD,0,nnodes,
               &length,&length,&vampirtrace_timestamp,VT_NOSCL);
