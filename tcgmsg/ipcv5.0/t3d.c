@@ -75,8 +75,9 @@ void Error(string, code)
 {
 
   (void) fflush(stdout);
-  (void) fflush(stderr);
 
+  (void) fprintf(stdout, "%3d:%s %ld(%x)\n", NODEID_(), string, code, code);
+  (void) fflush(stdout);
   (void) fprintf(stderr, "%3d:%s %ld(%x)\n", NODEID_(), string, code, code);
   (void) perror("system message");
 

@@ -33,9 +33,10 @@ ifeq ($(MACHINE),CRAY-T3D)
        FC = cf77
   DEFINES = -DCRAY_T3D -DCRAY -DSHMEM
  INCLUDES = -I.
-   FFLAGS =  -Ccray-t3d -g -Wf-dp -Wl"-Drdahead=on"
+   FFLAGS =  -Ccray-t3d -g -Wf-dp 
 #  CFLAGS = -g $(DEFINES) $(INCLUDES) -Wl"-Drdahead=on"
-   CFLAGS = -O3 -h inline3 $(DEFINES) $(INCLUDES) -Wl"-Drdahead=on"
+   CFLAGS = -O3 -h inline3 $(DEFINES) $(INCLUDES)
+     LOPT = -Wl"-Drdahead=on"
 # -happrentice
     EXTRA = t3d.o snd_rcv_probe.o
 #   LIBS  = -lapp
@@ -53,21 +54,20 @@ endif
 all:	test.x
 
 test.x:	test.isend.o libtcgmsg.a
-	$(CC) $(CFLAGS) -o test.x test.isend.o  libtcgmsg.a $(LIBS)
+	$(CC) $(CFLAGS) $(LOPT) -o test.x test.isend.o  libtcgmsg.a $(LIBS)
 
 test2:	test2.o libtcgmsg.a
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS)  $(LOPT) -o $@ $^ $(LIBS)
 
 hello:	hello.o libtcgmsg.a
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) $(LOPT) -o $@ $^ $(LIBS)
 
 pvm.ring: pvm.o checkbyte.o mtime.o libtcgmsg.a	
-	$(CC) $(CFLAGS) -o pvm.ring pvm.o checkbyte.o mtime.o libtcgmsg.a $(LIBS)
+	$(CC) $(CFLAGS) $(LOPT) -o pvm.ring pvm.o checkbyte.o mtime.o libtcgmsg.a $(LIBS)
 jacobi.x: jacobi.o $(JOBJ) libtcgmsg.a
-	$(FC) $(FFLAGS) -o jacobi.x jacobi.o $(JOBJ) libtcgmsg.a $(LIBS)
+	$(FC) $(FFLAGS) $(LOPT) -o jacobi.x jacobi.o $(JOBJ) libtcgmsg.a $(LIBS)
 
 libtcgmsg.a:	$(OBJ) 
-	echo MACHINE = $(MACHINE), CFLAGS = $(CFLAGS)
 	/bin/rm -f $@ 
 	$(AR) $(ARFLAGS) $@ $(OBJ) 
 	$(RANLIB) $@ 
