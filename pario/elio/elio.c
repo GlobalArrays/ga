@@ -13,7 +13,7 @@
 #define  MAX_ATTEMPTS 10
 
 
-#if  defined(AIX) || defined(DECOSF) || defined(SGI) || defined(notKSR)
+#if  defined(AIX) || defined(DECOSF) || defined(SGITFP) || defined(SGI64)
 #   define AIO 1
 #   include <aio.h>
 #   if defined(KSR)||defined(AIX)
@@ -507,11 +507,13 @@ Fd_t fd;
 {
    PABLO_start(PABLO_elio_close);
 
+   fprintf(stderr,"closing %d\n",fd->fd);
    if(close(fd->fd)==-1) return 1;
    free(fd);
 
    PABLO_end(PABLO_elio_close);
 
+   fprintf(stderr,"success %d\n",ELIO_OK);
    return ELIO_OK;
 }
 

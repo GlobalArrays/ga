@@ -7,9 +7,6 @@
 #if (defined(SP) || defined(SP1)) && !defined(NOPIOFS)
 #define PIOFS 1
 #endif
-#if !defined(SGI) && (defined(SGITFP) || defined(SGI64))
-#define SGI 1
-#endif
 
 
 #if (defined(SUN) && !defined(SOLARIS)) || defined(LINUX)
