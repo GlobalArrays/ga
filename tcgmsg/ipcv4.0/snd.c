@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.14 2000-08-01 17:34:04 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.15 2000-08-01 23:13:35 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -34,10 +34,10 @@ extern void Error();
 #endif
 #include "sema.h"
 #include "shmem.h"
-#if defined(ALLIANT) || defined(SGI) || defined(SGITFP) || (defined(HPUX)&& !defined(HPUX64)) || defined(SOLARIS)
-#define SRmover(a,b,n) memcpy(a,b,n)
-#else
+#if defined(USE_SRMOVER)
 extern void SRmover();
+#else
+#define SRmover(a,b,n) memcpy(a,b,n)
 #endif
 #endif 
 
