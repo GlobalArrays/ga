@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.60 2003-03-27 17:39:46 vinod Exp $
+/* $Id: myrinet.c,v 1.61 2003-03-28 21:52:45 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -262,9 +262,11 @@ int armci_pin_contig(void *ptr, int bytes)
 
 static int pin_error(char *port, int bytes, void *ptr,  gm_status_t status)
 {
+#if 0
     printf("%d: pinning (%p,%d) on port %s failed status=%d\n",armci_me, ptr, bytes,
            port, status);
     fflush(stdout);
+#endif
     return FALSE;
 }
 
