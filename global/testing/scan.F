@@ -465,6 +465,7 @@ C     ..................................................................
 C     TEST THE SCAN ADD FUNCTION.
 C
       call ga_fill(g_src2,1)
+      call ga_fill(g_icolmat,0)
 *     call ga_print(g_icolmat)
 *     call ga_print(g_src2)
 *     call ga_print(g_sbit2)
