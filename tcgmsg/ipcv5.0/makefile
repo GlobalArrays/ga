@@ -17,7 +17,7 @@ MAKEFLAGS = -j1
 
 
       OBJ_CORE = pbegin.o queues.o globalop.o usleep.o nnodes.o nodeid.o \
-                 waitall.o drand48.o random.o\
+                 waitall.o drand48.o random.o pfilecopy.o\
                  mitob.o mdtob.o mitod.o mdtoi.o misc.o snd_rcv_probe.o mtime.o
 
       OBJ_SYSV = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o pbeginf.o synch.o
