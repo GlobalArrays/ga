@@ -243,7 +243,7 @@ endif
 
 ifeq ($(TARGET),HPUX)
     FFLAGS = -O +ppu
-   DEFINES = -DHPUX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
+   DEFINES = -DHPUX -DEXTNAME -DSYSV -DSHMEM  -DNOSPIN
  LINTFLAGS = $(DEFINES) -bhu
     RANLIB = @echo $*
      EXTRA = hpuxargs.o
