@@ -1,4 +1,4 @@
-/* $Id: regions.c,v 1.6 2004-03-31 02:17:17 manoj Exp $ interface to keep track of memory regions accross the cluster */
+/* $Id: regions.c,v 1.7 2004-03-31 02:38:34 manoj Exp $ interface to keep track of memory regions accross the cluster */
 /* 
  * armci_region_init - allocates list of regions, initialization
  * armci_region_register_shm - registers shared memory on the current node
@@ -272,8 +272,7 @@ int get_armci_region_local_hndl(void *loc, int node,ARMCI_MEMHDL_T **loc_memhdl)
   armci_reglist_t *reg = &loc_regions_arr;
   int i, found = 0;
 
-   if(!allow_pin) {printf("inside get_armci_region_local_hndl : 
-                 case allow_pin = 0\n"); return 0; }
+   if(!allow_pin) {printf("inside get_armci_region_local_hndl : case allow_pin = 0\n"); return 0; }
    if(!found){
       reg = serv_regions+armci_clus_me;
       for(i=0; i<reg->n; i++){
