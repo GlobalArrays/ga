@@ -3,7 +3,7 @@
 LOC_INCLUDES = -I..\..\include -I$(MPI_INCLUDE)
 OBJDIR=.\obj
 LIB_DISTRIB = ..\..\lib\win32
-TESTUTIL = $(OBJDIR)\util.obj
+TESTUTIL = $(OBJDIR)\util.obj $(OBJDIR)\ffflush.obj
 CLINK = libf.lib
 
 all: test.exe testc.exe
