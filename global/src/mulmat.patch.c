@@ -1,4 +1,4 @@
-/*$Id: mulmat.patch.c,v 1.9 2002-01-30 01:14:27 d3h325 Exp $*/
+/*$Id: mulmat.patch.c,v 1.10 2002-02-12 21:16:40 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -249,6 +249,7 @@ int d;
     else{
 
       /* handle almost trivial case of only one dimension with >1 elements */
+      if(*ipos == rank-1) (*ipos)--; /* i cannot be the last dimension */
       if(*ipos <0) *ipos = *jpos-1; /* select i dimension based on j */ 
       if(*jpos <0) *jpos = *ipos+1; /* select j dimenison based on i */
 
@@ -306,6 +307,10 @@ DoubleComplex ONE;
    nga_inquire_internal_(g_a, &atype, &arank, adims);
    nga_inquire_internal_(g_b, &btype, &brank, bdims);
    nga_inquire_internal_(g_c, &ctype, &crank, cdims);
+
+   if(arank<2)  ga_error("rank of A must be at least 2",arank);
+   if(brank<2)  ga_error("rank of B must be at least 2",brank);
+   if(crank<2)  ga_error("rank of C must be at least 2",crank);
 
    if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
    if(atype != C_DCPL && atype != C_DBL) ga_error(" type error",atype);

@@ -1,4 +1,4 @@
-c $Id: mulmatpatch.F,v 1.2 2002-01-05 06:36:48 windus Exp $
+c $Id: mulmatpatch.F,v 1.3 2002-02-12 21:16:45 d3h325 Exp $
 #if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
@@ -56,6 +56,7 @@ c        print *, 'gasize and bufsize are ', gasize, bufsize
          print *,' '
       endif
       call dpatch_test()
+      call dpatch_test2()
 c
       call ga_terminate()
 c
@@ -322,7 +323,6 @@ c
          call ffflush(6)
       endif
 c
-      call ga_sync()
       call nga_matmul_patch('t','t', 1d0, 0d0,
      $                      g_a1, alo, ahi,
      $                      g_b1, blo, bhi,
@@ -357,3 +357,75 @@ c
       if(.not. status) print *, 'ga_destroy failed'
 c
       end
+
+
+      subroutine dpatch_test2()
+      implicit none
+#include "mafdecls.fh"
+#include "global.fh"
+#include "testutil.fh"
+      integer n,m, dim, dim1
+      parameter (n = 10)
+      parameter (dim = 3)
+      parameter (dim1 = 2)
+      double precision alpha, beta, dot
+      integer nproc, me
+      integer i, j, ailo, ajlo, bilo, bjlo, base, iran
+      integer alo(dim), ahi(dim), ald(dim1), chunk(dim)
+      integer blo(dim), bhi(dim)
+      integer clo(dim), chi(dim)
+      integer g_a, g_b, g_c
+      logical status
+c
+      me = ga_nodeid()
+      nproc = ga_nnodes()
+c
+      do i = 1, dim
+         chunk(i) = -1
+         chi(i) =n
+         alo(i) =1
+         blo(i) =1
+         clo(i) =1
+         if (i.ne.dim) ald(i) = n
+      enddo
+c
+      ahi(1)=n
+      ahi(2)=1
+      status = nga_create(MT_DBL, dim1, ahi, 'a', chunk, g_a)
+      if(.not. status) call ga_error('create 1 failed',0)
+c
+      status = nga_create(MT_DBL, dim1, ahi, 'b', chunk, g_b)
+      if(.not. status) call ga_error('create 2 failed',0)
+c
+      status = nga_create(MT_DBL, dim, chi, 'c', chunk, g_c)
+      if(.not. status) call ga_error('create 2 failed',0)
+c
+      call ga_fill(g_a,1d0)
+      call ga_fill(g_b,1d0)
+      call ga_zero(g_c)
+
+      if(me.eq.0) print *,'  [1:N,1:N,1:1]=[1,N]x[N,1]^t'
+      chi(dim) = 1
+      bhi(1)=1
+      bhi(2)=n
+      call nga_matmul_patch('n','t', 1d0, 0d0,
+     $                      g_a, alo, ahi,
+     $                      g_b, blo, bhi,
+     $                      g_c, clo, chi)
+      
+c
+c     call nga_print_patch(g_c,clo,chi)
+      dot = nga_ddot_patch(g_c,'n', clo, chi, g_c,'n', clo, chi)
+      if(abs(dot- 1d0*n*n) .gt. 0.01) then
+        print *, 'error ', dot, n*n
+      else
+        if(me.eq.0)print *,'  OK'
+      endif
+      status = ga_destroy(g_a)
+      status = status .and. ga_destroy(g_b)
+      status = status .and. ga_destroy(g_c)
+      if(.not. status) print *, 'ga_destroy failed'
+c
+      end
+
+
