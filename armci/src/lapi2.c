@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.8 2002-10-30 17:21:25 vinod Exp $ */
+/* $Id: lapi2.c,v 1.9 2002-11-06 13:58:36 vinod Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -255,6 +255,9 @@ int dsize=3*sizeof(void*);
     /*CONTIG protocol: used for 1D(contiguous) or if stride is very large in
       a multi strided case*/
     if(stride_levels==0 || count[0]>LONG_PUT_THRESHOLD){
+       /*set bufid in nb_handle, in this case, no buffer used, hence NB_NONE*/
+       if(nb_handle)
+         armci_set_nbhandle_bufid(nb_handle,NULL,NB_NONE);
        switch (stride_levels) {
          case 0: /* 1D op */
            lapi_op_2d(op, (uint)proc, src_ptr, dst_ptr, count[0], 1,
@@ -289,7 +292,12 @@ int dsize=3*sizeof(void*);
 
        if(stride_levels==1){             /*small/med 2D, use lapi STRIDED */
          bufptr = GET_SEND_BUFFER(2*(sizeof(lapi_vec_t)+dsize),op,proc);
-         if(nb_handle)SET_BUF_TAG(bufptr,nb_handle->tag,0);
+         if(nb_handle){ 
+           /*update info in the buf_info_t data-structure*/
+           SET_BUF_TAG(bufptr,nb_handle->tag,0);
+           /*set the buffer id in nb_handle*/
+           armci_set_nbhandle_bufid(nb_handle,bufptr,0);
+         }
          if(op==PUT)UPDATE_FENCE_STATE(proc, PUT, 1); 
 
          /*we use the counter in the buffer*/
@@ -300,7 +308,12 @@ int dsize=3*sizeof(void*);
        }
        else {                            /*small/med >2D, use lapi VECTOR*/
          bufptr = GET_SEND_BUFFER(DSCR_SIZE,op,proc);
-         if(nb_handle)SET_BUF_TAG(bufptr,nb_handle->tag,0);
+         if(nb_handle){
+           /*update info in the buf_info_t data-structure*/
+           SET_BUF_TAG(bufptr,nb_handle->tag,0);
+           /*set the buffer id in nb_handle*/
+           armci_set_nbhandle_bufid(nb_handle,bufptr,0);
+         }
          /*we use the counter in the buffer*/
          o_cmpl = (BUF_TO_EVBUF(bufptr));
            

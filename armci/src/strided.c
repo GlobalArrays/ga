@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.48 2002-10-31 01:10:49 vinod Exp $ */
+/* $Id: strided.c,v 1.49 2002-11-06 13:58:36 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -800,6 +800,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = PUT;
+      nb_handle->proc= proc;
     }
 
 #ifndef LAPI2
@@ -863,6 +864,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(nb_handle){
        nb_handle->tag = GET_NEXT_NBTAG();
        nb_handle->op  = GET;
+       nb_handle->proc= proc;
     }
 
 #ifndef LAPI2
@@ -919,6 +921,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 
 
     ORDER(optype,proc); /* ensure ordering */
+
     direct=SAMECLUSNODE(proc);
 
 #   if defined(ACC_COPY) && !defined(ACC_SMP)
@@ -929,6 +932,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = optype;
+      nb_handle->proc= proc;
     }
 
     if(direct)
@@ -936,7 +940,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
                            dst_stride_arr, count, stride_levels,1,NULL);
     else
       rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
-                      dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,NULL);
+                    dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,nb_handle);
 
     if(rc) return FAIL6;
     else return 0;

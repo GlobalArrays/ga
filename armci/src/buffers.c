@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.13 2002-10-30 21:29:10 vinod Exp $    **/
+/* $Id: buffers.c,v 1.14 2002-11-06 13:58:36 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -379,11 +379,16 @@ char *_armci_buf_ptr_from_id(int id)
 
 
 
-/*\function called from armci_wait to wait for non-blocking ops
+/*\function called from ARMCI_Wait to wait for non-blocking ops
 \*/
 void _armci_buf_complete_nb_request(int bufid,unsigned int tag, int *retcode) 
 {
 int i=0;
+#if 0
+    printf("\n%d:wait called with bufid=%d tag=%d \n",armci_me,bufid,tag);
+    fflush(stdout);
+#endif
+ 
     if(bufid == NB_NONE) *retcode=0;
     else if(bufid == NB_MULTI) {
        for(i=0;i<MAX_BUFS;i++){ 

@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.42 2002-10-31 19:00:37 vinod Exp $ */
+/* $Id: request.c,v 1.43 2002-11-06 13:58:36 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -141,6 +141,20 @@ void *rem_ptr;
     }
     *bptr=buf;
 }
+
+/*\
+ * If buf==null, use set handle->bufid to val, else set it to the id of the buf
+\*/
+void armci_set_nbhandle_bufid(armci_hdl_t nb_handle,char *buf,int val)
+{
+BUF_INFO_T *info;
+    if(buf){
+       info = BUF_TO_BUFINFO(buf);
+       val = info->bufid;
+    }
+    nb_handle->bufid = val; 
+} 
+
 /**************End--Routines to handle completion descriptor******************/
 
 
@@ -582,7 +596,11 @@ int armci_rem_strided(int op, void* scale, int proc,
 #   endif
     }
     buf = buf0= GET_SEND_BUFFER(bufsize,op,proc);
-    if(nb_handle)INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
+    if(nb_handle){
+      INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
+      _armci_buf_set_tag(buf,nb_handle->tag,0);  
+      armci_set_nbhandle_bufid(nb_handle,NULL,NB_MULTI);
+    }
     
     msginfo = (request_header_t*)buf;
 

@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.26 2002-10-30 21:35:59 vinod Exp $ */
+/* $Id: test.c,v 1.27 2002-11-06 13:58:36 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -511,6 +511,7 @@ int idx1=0, idx2=0, idx3=0;
       fflush(stdout);
     }
     ARMCI_AllFence();
+    proc=nproc-1-me;
     MP_BARRIER();
     for(ndim=1;ndim<=MAXDIMS;ndim++){
        strideA[0]=sizeof(double);
@@ -542,7 +543,6 @@ int idx1=0, idx2=0, idx3=0;
        idx1 = Index(ndim, nloA[ndim], dimsA);
        idx2 = Index(ndim, nloB[ndim], dimsB);
        idx3 = Index(ndim, nloC[ndim], dimsA);
-       proc=nproc-1-me;
        for(j=0;j<ndim;j++)count[j]=nhiA[ndim][j]-nloA[ndim][j]+1;
        count[0]   *= sizeof(double); 
        /*if(me==0)
@@ -550,10 +550,10 @@ int idx1=0, idx2=0, idx3=0;
         */
        (void)ARMCI_NbPutS((double*)a[ndim]+idx1,strideA,
                           (double*)b[ndim][proc]+idx2,
-                          strideB, count, ndim-1, proc,NULL);
+                          strideB, count, ndim-1, proc,(hdl_put+ndim));
        (void)ARMCI_NbGetS((double*)b[ndim][proc]+idx2,strideB,
                           (double*)c[ndim]+idx3,
-                          strideA, count, ndim-1, proc,NULL);
+                          strideA, count, ndim-1, proc,(hdl_get+ndim));
        if(me==0){printf("OK\n");fflush(stdout);}
     }
     MP_BARRIER();
@@ -562,8 +562,8 @@ int idx1=0, idx2=0, idx3=0;
        fflush(stdout);
     }
     for(ndim=1;ndim<=MAXDIMS;ndim++){
-       ARMCI_Wait(&hdl_put[ndim]); 
-       ARMCI_Wait(&hdl_get[ndim]); 
+       ARMCI_Wait(hdl_put+ndim); 
+       ARMCI_Wait(hdl_get+ndim); 
        idx1 = Index(ndim, nloA[ndim], dimsA);
        idx2 = Index(ndim, nloB[ndim], dimsB);
        idx3 = Index(ndim, nloC[ndim], dimsA);
@@ -681,9 +681,9 @@ void test_acc(int ndim)
         ARMCI_AllFence();
         MP_BARRIER();
         for(i=0;i<TIMES*nproc;i++){ 
-
             proc=proclist[i%nproc];
-            (void)ARMCI_AccS(ARMCI_ACC_DBL,&alpha,(double*)a + idx1, strideA, (double*)b[proc] + idx2, strideB, count, ndim-1, proc);
+            (void)ARMCI_AccS(ARMCI_ACC_DBL,&alpha,(double*)a + idx1, strideA, 
+                   (double*)b[proc] + idx2, strideB, count, ndim-1, proc);
         }
 
 /*	sleep(9);*/

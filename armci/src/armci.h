@@ -154,6 +154,7 @@ typedef struct{
    unsigned int tag;
    int bufid;
    int op;
+   int proc;
 #ifdef NB_CMPL_T
    NB_CMPL_T cmpl_info;
 #endif
