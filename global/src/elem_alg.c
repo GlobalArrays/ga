@@ -125,6 +125,7 @@ Modified 3/2004 By Doug Baxter to increase robustness.
 #define OP_STEPMAX 7
 #define OP_STEPMAX2 8
 #define OP_ELEM_SDIV 9
+#define OP_ELEM_SDIV2 10
 #define OP_FILL 100 /*The OP_FILL is not currently in use */
 
 int debug_gai_oper_elem = 1;
@@ -182,24 +183,26 @@ static void do_stepmax(void *ptr, int nelem, int type)
 {
     int i;
     switch (type){
-         int *ia;
-         double *da;
-         float *fa;
-         DoubleComplex *ca,val;
-	 long *la;
+         int *ia,i_0;
+         double *da,d_0;
+         float *fa,f_0;
+	 long *la,l_0;
+
 
   	 case C_DBL:
                 /*Only double data type will be handled for TAO/GA project*/ 
               da = (double *) ptr;
-              for(i=0;i<nelem;i++)
-		/* Modified 01/24/04 to use _D ending. */
-                  if(da[i]>0) da[i]=-GA_INFINITY_D;
+	      d_0 = (double) 0.0;
+	      /* Modified 01/24/04 to use _D ending. */
+              for(i=0;i<nelem;i++) 
+		if(da[i]>d_0) da[i]=-GA_INFINITY_D;
               break;
          case C_INT:
 	   /* Thix case added 01/24/04*/
               ia = (int *) ptr;
-              for(i=0;i<nelem;i++)
-                  if(ia[i]>0) ia[i]=-GA_INFINITY_I;
+	      i_0 = (int)0;
+              for(i=0;i<nelem;i++) 
+		if(ia[i]>i_0)ia[i]=-GA_INFINITY_I;
               break;
          case C_DCPL:
 	   /* This operation is not well defined for complex
@@ -207,22 +210,26 @@ static void do_stepmax(void *ptr, int nelem, int type)
 	      behavior changed by adding code for C_FLOAT and C_LONG
 	      cases below. 01/24/04
 	   */
-	   ga_error("do_stepmax2:wrong data type",type);
+	   ga_error("do_stepmax:wrong data type",type);
          case C_FLOAT:
 	   /* Thix case added 01/24/04*/
               fa = (float *) ptr;
-              for(i=0;i<nelem;i++)
-                  if(fa[i]>0) fa[i]=-GA_INFINITY_F;
+	      f_0 = (float) 0.0;
+              for(i=0;i<nelem;i++) 
+		if(fa[i]>f_0) fa[i]=-GA_INFINITY_F;
               break;
          case C_LONG:
 	   /* Thix case added 01/24/04*/
               la = (long *) ptr;
+	      l_0 = (long)0;
               for(i=0;i<nelem;i++)
-                  if(la[i]>0) la[i]=-GA_INFINITY_L;
+		if(la[i]>l_0) la[i]=-GA_INFINITY_L;
               break;
          default: ga_error("do_stepmax:wrong data type",type);
     }
 }
+
+
 
 
 static void do_abs(void *ptr, int nelem, int type)
@@ -254,17 +261,17 @@ static void do_abs(void *ptr, int nelem, int type)
 		magi = ABS(val.imag);
 		magr = ABS(val.real);
 		if (ABS(val.real) >= ABS(val.imag)) {
-		  if (val.real == 0.0) {
-		    ca[i].real = 0.0;
+		  if (val.real == (double)0.0) {
+		    ca[i].real = (double)0.0;
 		  } else {
 		    x2 = val.imag/val.real;
-		    ca[i].real = ABS(val.real)*sqrt(1.0+(x2*x2));
+		    ca[i].real = ABS(val.real)*sqrt(((double)1.0)+(x2*x2));
 		  }
 		} else {
 		  x2 = val.real/val.imag;
-		  ca[i].real = ABS(val.imag)*sqrt(1.0+(x2*x2));
+		  ca[i].real = ABS(val.imag)*sqrt(((double)1.0)+(x2*x2));
 		}
-		ca[i].imag=0.0;
+		ca[i].imag=(double)0.0;
               }
               break;
   	 case C_DBL:
@@ -373,16 +380,17 @@ static void do_recip(void *ptr, int nelem, int type)
 		  ca[i].real = c*d;
 		  ca[i].imag = -d;
 		}
-		/*
+                /*
 		printf(" do_recip ca[%d].real = %le, ca[%d].imag = %le\n",
 		       i,ca[i].real,i,ca[i].imag);
 		*/
+
 	      }
               break;
          case C_DBL:
               da = (double *) ptr;
               for(i=0;i<nelem;i++)
-                  if(da[i]!=0.0) da[i]= ((double)1.0)/da[i];
+                  if(da[i]!=(double)0.0) da[i]= ((double)1.0)/da[i];
   		     else
 		   ga_error("zero value at index",i); 
 		    /* 
@@ -392,7 +400,7 @@ static void do_recip(void *ptr, int nelem, int type)
          case C_FLOAT:
               fa = (float *)ptr;
               for(i=0;i<nelem;i++)
-                  if(fa[i]!=0.0) fa[i]= ((float)1.0)/fa[i];
+                  if(fa[i]!=(float)0.0) fa[i]= ((float)1.0)/fa[i];
                      else
 		   ga_error("zero value at index",i); 
          	   /*
@@ -402,7 +410,7 @@ static void do_recip(void *ptr, int nelem, int type)
 	case C_LONG:
               la = (long *)ptr;
               for(i=0;i<nelem;i++)
-                  if(la[i]!=0.0) la[i]= ((long)1)/la[i];
+                  if(la[i]!=(long)0) la[i]= ((long)1)/la[i];
                      else
                   ga_error("zero value at index",i); 
 	          /*
@@ -737,7 +745,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
   
   case C_DBL:
     for(i = 0; i<nelems; i++) {
-      if(((double*)pB)[i]!=0.0)
+      if(((double*)pB)[i]!=(double)0.0)
 	((double*)pC)[i]=  ((double*)pA)[i]/((double*)pB)[i];
       else{
 	ga_error("zero divisor ",((double*)pB)[i]); 
@@ -765,10 +773,10 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
       }
       */
       if (ABS(bReal) >= ABS(bImag)) {
-	if (bReal != 0.0) {
+	if (bReal != (double)0.0) {
 	  x1 = bImag/bReal;
           /* So x1 <= 1 */
-	  x2 = 1.0/(bReal*(1.0+(x1*x1)));
+	  x2 = ((double)1.0)/(bReal*(((double)1.0)+(x1*x1)));
 	  ((DoubleComplex*)pC)[i].real = (aReal + aImag*x1)*x2;
 	  ((DoubleComplex*)pC)[i].imag = (aImag - aReal*x1)*x2;
 	}
@@ -778,7 +786,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
       } else {
 	x1 = bReal/bImag;
         /* So x1 <= 1 */
-	x2 = 1.0/(bImag*(1.0+(x1*x1)));
+	x2 = ((double)1.0)/(bImag*(((double)1.0)+(x1*x1)));
 	((DoubleComplex*)pC)[i].real = (aReal*x1 + aImag)*x2;
 	((DoubleComplex*)pC)[i].imag = (aImag*x1 - aReal)*x2;
       }
@@ -795,7 +803,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
     break;
   case C_FLOAT:
     for(i = 0; i<nelems; i++){
-      if(((float*)pB)[i]!=0.0) 
+      if(((float*)pB)[i]!=(float)0.0) 
 	((float*)pC)[i]=  ((float*)pA)[i]/((float*)pB)[i];
       else{
 	ga_error("zero divisor ",((float*)pB)[i]); 
@@ -817,111 +825,99 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
  
 
 static void do_step_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type){
+  /* Elementwise divide, not aborting on a zero denominator, but
+     returning an infinity. If an element in the numerator vector (PA)
+     is zero, then infinity is returned if the corresponding denominator
+     element is non-negative, else zero is returned for that element.
+     DJB 4/02/04
+  */
   Integer i;
-  double aReal, aImag, bReal, bImag, cReal, cImag;
-  double x1,x2;
+  double d_0;
+  long l_0;
+  float f_0;
+  Integer i_0;
 
+  d_0 = (double)0.0;
+  l_0 = (long)0;
+  f_0 = (float)0.0;
+  i_0 = (int)0;
   switch(type){
   
   case C_DBL:
     for(i = 0; i<nelems; i++) {
-      if(((double*)pB)[i]!=0.0)
-	((double*)pC)[i]=  ((double*)pA)[i]/((double*)pB)[i];
-      else{
-	if(((double*)pA)[i]>=0)
-	  /* _D added 01/24/04 */
+      if(((double*)pA)[i] == d_0) {
+	if(((double*)pB)[i]>=d_0) {
 	  ((double*)pC)[i]=  GA_INFINITY_D;
-	else
-	  /* _D added 01/24/04 */
-	  ((double*)pC)[i]=  GA_NEGATIVE_INFINITY_D;
-	/* ga_error("zero divisor ",((double*)pB)[i]); */
+	} else {
+	  ((double*)pC)[i]=  d_0;
+	}
+      } else {
+	if(((double*)pB)[i]!=d_0)
+	  ((double*)pC)[i]=  ((double*)pA)[i]/((double*)pB)[i];
+	else{
+	  /* if b is zero an infinite number could be added without
+	     changing the sign of a.
+	  */
+	  ((double*)pC)[i]=  GA_INFINITY_D;
+	}
       }
     }
     break;
   case C_DCPL:
-    for(i = 0; i<nelems; i++) {
-      aReal = ((DoubleComplex*)pA)[i].real;
-      bReal = ((DoubleComplex*)pB)[i].real;
-      aImag = ((DoubleComplex*)pA)[i].imag;
-      bImag = ((DoubleComplex*)pB)[i].imag;
-      /*
-        This algorithme was replaced with the
-	more overflow resistant code below.
-      temp = bReal*bReal+bImag*bImag;
-      if(temp!=0.0){
-	((DoubleComplex*)pC)[i].real
-	  =(aReal*bReal+aImag*bImag)/temp;
-	((DoubleComplex*)pC)[i].imag
-	  =(aImag*bReal-aReal*bImag)/temp;
-      }
-      else{
-	((DoubleComplex*)pC)[i].real=GA_INFINITY_D;
-	((DoubleComplex*)pC)[i].imag=GA_INFINITY_D;
-      }
-      */
-      if (ABS(bReal) >= ABS(bImag)) {
-        /* So x1 <= 1 */
-	if (bReal != 0.0) {
-	  x1 = bImag/bReal;
-	  x2 = 1.0/(bReal*(1.0+(x1*x1)));
-	  ((DoubleComplex*)pC)[i].real = (aReal + aImag*x1)*x2;
-	  ((DoubleComplex*)pC)[i].imag = (aImag - aReal*x1)*x2;
-	} else {
-	  if (aReal+aImag >= 0.0){
-	    ((DoubleComplex*)pC)[i].real=GA_INFINITY_D;
-	  } else {
-	    ((DoubleComplex*)pC)[i].real=-GA_INFINITY_D;
-	  }
-	  ((DoubleComplex*)pC)[i].imag=0.0;
-	}
-      } else {
-	x1 = bReal/bImag;
-        /* So x1 <= 1 */
-	x2 = 1.0/(bImag*(1.0+(x1*x1)));
-	((DoubleComplex*)pC)[i].real = (aReal*x1 + aImag)*x2;
-	((DoubleComplex*)pC)[i].imag = (aImag*x1 - aReal)*x2;
-      }
-
-    }
+    ga_error(" do_step_divide called with type C_DCPL",C_DCPL);
     break;
   case C_INT:
+    i_0 = (int)0;
     for(i = 0; i<nelems; i++){
-      if(((int*)pB)[i]!=0)
-	((int*)pC)[i] = ((int*)pA)[i]/((int*)pB)[i];
-      else{
-	if(((int*)pA)[i]>=0)
+      if(((int*)pA)[i]==i_0) {
+	if(((int*)pB)[i]>=i_0) {
 	  ((int*)pC)[i]=GA_INFINITY_I;
-	else
-	  ((int*)pC)[i]=GA_NEGATIVE_INFINITY_I;
-	/* ga_error("zero divisor ",((int*)pB)[i]); */
+	} else {
+	  ((int*)pC)[i]=i_0;
+	}
+      } else {
+	if(((int*)pB)[i]!=i_0)
+	  ((int*)pC)[i] = ((int*)pA)[i]/((int*)pB)[i];
+	else{
+	  ((int*)pC)[i]=GA_INFINITY_I;
+	}
       } 
     }
     break;
   case C_FLOAT:
+    f_0 = (float)0.0;
     for(i = 0; i<nelems; i++){
-      if(((float*)pB)[i]!=0.0) 
-	((float*)pC)[i]=  ((float*)pA)[i]/((float*)pB)[i];
-      else{
-	/* _F added 01/24/04 */
-	if(((float*)pA)[i]>=0)
+      if(((float*)pA)[i]==f_0) {
+	if(((float*)pB)[i]>=f_0) {
 	  ((float*)pC)[i]= GA_INFINITY_F;
-	else
+	} else {
+	  ((float*)pC)[i]= f_0;
+	}
+      } else {
+	if(((float*)pB)[i]!=f_0) {
+	  ((float*)pC)[i]=  ((float*)pA)[i]/((float*)pB)[i];
+	} else {
 	/* _F added 01/24/04 */
-	  ((float*)pC)[i]= GA_NEGATIVE_INFINITY_F;
-	/* ga_error("zero divisor ",((float*)pB)[i]); */
+	  ((float*)pC)[i]= GA_INFINITY_F;
+	}
       }
     }
     break;
   case C_LONG:
+    l_0 = (long)0;
     for(i = 0; i<nelems; i++){
-      if(((long *)pB)[i]!=0)
-	((long *)pC)[i]=  ((long *)pA)[i]/((long *)pB)[i];
-      else{
-	if(((long *)pA)[i]>=0)
+      if(((long *)pA)[i]==l_0) {
+	if(((long *)pB)[i]>=l_0) {
 	  ((long *)pC)[i] = GA_INFINITY_L;
-	else
-	  ((long *)pC)[i] = GA_NEGATIVE_INFINITY_L;
-	/* ga_error("zero divisor ",((long*)pB)[i]); */
+	} else {
+	  ((long *)pC)[i] = l_0;
+	}
+      } else {
+	if(((long *)pB)[i]!=l_0)
+	  ((long *)pC)[i]=  ((long *)pA)[i]/((long *)pB)[i];
+	else{
+	  ((long *)pC)[i] = GA_INFINITY_L;
+	}
       }
     }
     break;		
@@ -929,6 +925,106 @@ static void do_step_divide(void *pA, void *pB, void *pC, Integer nelems, Integer
   }
 }
 
+static void do_step2_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type){
+  /* Elementwise divide, not aborting on a zero denominator, but
+     returning an infinity. If an element in the numerator vector (PA)
+     is zero, then infinity is returned if the corresponding denominator
+     element is non-negative, else zero is returned for that element.
+     DJB 4/02/04
+  */
+  Integer i;
+  double d_0;
+  long l_0;
+  float f_0;
+  Integer i_0;
+
+  d_0 = (double)0.0;
+  l_0 = (long)0;
+  f_0 = (float)0.0;
+  i_0 = (int)0;
+  switch(type){
+  
+  case C_DBL:
+    for(i = 0; i<nelems; i++) {
+      if(((double*)pA)[i] == d_0) {
+	if(((double*)pB)[i]>d_0) {
+	  ((double*)pC)[i]=  d_0;
+	} else {
+	  ((double*)pC)[i]=  GA_INFINITY_D;
+	}
+      } else {
+	if(((double*)pB)[i]!=d_0)
+	  ((double*)pC)[i]=  ((double*)pA)[i]/((double*)pB)[i];
+	else{
+	  /* if b is zero an infinite number could be added without
+	     changing the sign of a.
+	  */
+	  ((double*)pC)[i]=  GA_INFINITY_D;
+	}
+      }
+    }
+    break;
+  case C_DCPL:
+    ga_error(" do_step2_divide called with type C_DCPL",C_DCPL);
+    break;
+  case C_INT:
+    i_0 = (int)0;
+    for(i = 0; i<nelems; i++){
+      if(((int*)pA)[i]==i_0) {
+	if(((int*)pB)[i]>i_0) {
+	  ((int*)pC)[i]=i_0;
+	} else {
+	  ((int*)pC)[i]=GA_INFINITY_I;
+	}
+      } else {
+	if(((int*)pB)[i]!=i_0)
+	  ((int*)pC)[i] = ((int*)pA)[i]/((int*)pB)[i];
+	else{
+	  ((int*)pC)[i]=GA_INFINITY_I;
+	}
+      } 
+    }
+    break;
+  case C_FLOAT:
+    f_0 = (float)0.0;
+    for(i = 0; i<nelems; i++){
+      if(((float*)pA)[i]==f_0) {
+	if(((float*)pB)[i]>f_0) {
+	  ((float*)pC)[i]= f_0;
+	} else {
+	  ((float*)pC)[i]= GA_INFINITY_F;
+	}
+      } else {
+	if(((float*)pB)[i]!=f_0) {
+	  ((float*)pC)[i]=  ((float*)pA)[i]/((float*)pB)[i];
+	} else {
+	/* _F added 01/24/04 */
+	  ((float*)pC)[i]= GA_INFINITY_F;
+	}
+      }
+    }
+    break;
+  case C_LONG:
+    l_0 = (long)0;
+    for(i = 0; i<nelems; i++){
+      if(((long *)pA)[i]==l_0) {
+	if(((long *)pB)[i]>l_0) {
+	  ((long *)pC)[i] = l_0;
+	} else {
+	  ((long *)pC)[i] = GA_INFINITY_L;
+	}
+      } else {
+	if(((long *)pB)[i]!=l_0)
+	  ((long *)pC)[i]=  ((long *)pA)[i]/((long *)pB)[i];
+	else{
+	  ((long *)pC)[i] = GA_INFINITY_L;
+	}
+      }
+    }
+    break;		
+  default: ga_error(" do_step2_divide: wrong data type ",type);
+  }
+}
 
 
 static void do_maximum(void *pA, void *pB, void *pC, Integer nelems, Integer type){
@@ -954,11 +1050,11 @@ static void do_maximum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
       x1    = MAX(ABS(aReal),ABS(aImag));
       x2    = MAX(ABS(bReal),ABS(bImag));
       x1    = MAX(x1,x2);
-      if (x1 == 0.0) {
+      if (x1 == (double)0.0) {
 	((DoubleComplex*)pC)[i].real=((DoubleComplex*)pA)[i].real;
 	((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pA)[i].imag;
       } else {
-	x1 = 1.0/x1;
+	x1 = ((double)1.0)/x1;
 	aReal = aReal*x1;
 	aImag = aImag*x1;
 	bReal = bReal*x1;
@@ -1019,11 +1115,11 @@ static void do_minimum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
       x1    = MAX(ABS(aReal),ABS(aImag));
       x2    = MAX(ABS(bReal),ABS(bImag));
       x1    = MAX(x1,x2);
-      if (x1 == 0.0) {
+      if (x1 == (double)0.0) {
 	((DoubleComplex*)pC)[i].real=((DoubleComplex*)pA)[i].real;
 	((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pA)[i].imag;
       } else {
-	x1 = 1.0/x1;
+	x1 = ((double)1.0)/x1;
 	aReal = aReal*x1;
 	aImag = aImag*x1;
 	bReal = bReal*x1;
@@ -1105,7 +1201,7 @@ int op; /* operation to be perform between g_a and g_b */
             ga_error("g_b indices out of range ", *g_b);
     for(i=0; i<cndim; i++)
         if(clo[i] <= 0 || chi[i] > cdims[i])
-            ga_error("g_b indices out of range ", *g_c);
+            ga_error("g_c indices out of range ", *g_c);
     
     /* check if numbers of elements in patches match each other */
     n1dim = 1; for(i=0; i<cndim; i++) n1dim *= (chi[i] - clo[i] + 1);
@@ -1234,24 +1330,28 @@ int op; /* operation to be perform between g_a and g_b */
 
                        default: ga_error(" wrong data type ",atype);
                    }   
-                   switch((int)op){
-                        case OP_ELEM_MULT:
-                          do_multiply(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-                           break;
-                        case OP_ELEM_DIV:
-                          do_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-                           break;
-                        case OP_ELEM_SDIV:
-                          do_step_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-                           break;
-                        case  OP_ELEM_MAX:
-                           do_maximum(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-                           break;
-                        case  OP_ELEM_MIN:
-                           do_minimum(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
-                           break;
-                        default: 
-			   printf("op : OP_ELEM_MULT = %d:%d\n", op, OP_ELEM_MULT);
+                   switch((int)op)
+		     {
+		     case OP_ELEM_MULT:
+		       do_multiply(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+		       break;
+		     case OP_ELEM_DIV:
+		       do_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+		       break;
+		     case OP_ELEM_SDIV:
+		       do_step_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+		       break;
+		     case OP_ELEM_SDIV2:
+		       do_step2_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+		       break;
+		     case  OP_ELEM_MAX:
+		       do_maximum(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+		       break;
+		     case  OP_ELEM_MIN:
+		       do_minimum(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+		       break;
+		     default: 
+		       printf("op : OP_ELEM_MULT = %d:%d\n", op, OP_ELEM_MULT);
 			  ga_error(" wrong operation ",op);
                    }
         }
@@ -1406,6 +1506,12 @@ Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi){
 
 }
 
+void FATR ga_elem_step2_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi){
+
+    ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_SDIV2);
+
+}
 void FATR ga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
 
@@ -1536,7 +1642,9 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
     Integer bvalue[MAXDIM], bunit[MAXDIM], baseldA[MAXDIM];
     Integer idx, n1dim;
     Integer atotal;
+    Integer iretval;
     Integer me= ga_nodeid_();
+    
  
     ga_sync_();
     ga_check_handle(g_a, "has_negative_elem");
@@ -1551,7 +1659,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
    
     /* find out coordinates of patches of g_a, g_b and g_c that I own */
     nga_distribution_(g_a, &me, loA, hiA);
-
+    iretval = 0;
    /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
         nga_access_ptr(g_a, loA, hiA, &A_ptr, ldA);
@@ -1585,11 +1693,11 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
                         /*double is the only type that is handled for Tao/GA project*/
 			/* 
 			  DJB modification to add types int, float and long.
-			  This operation does not make senses for complex.
+			  This operation does not make sense for complex.
 			*/
 			tempA=((double*)A_ptr)+idx;
-			for(i=0;i<hiA[0]-loA[0]+1;i++)
-			  if(tempA[i]<(double)0.0) return 1;
+			for(j=0;j<hiA[0]-loA[0]+1;j++)
+			  if(tempA[j]<(double)0.0) iretval=1;
 			break;
 		      case C_DCPL:
 		         ga_error(" has_negative_elem: wrong data type ",
@@ -1597,18 +1705,18 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
 			 break;
                       case C_INT:
 			itempA=((int*)A_ptr)+idx;
-			for(i=0;i<hiA[0]-loA[0]+1;i++)
-			  if(itempA[i]<(int)0) return 1;
+			for(j=0;j<hiA[0]-loA[0]+1;j++)
+			  if(itempA[j]<(int)0) iretval=1;
 			break;
                       case C_FLOAT:
 			ftempA=((float*)A_ptr)+idx;
-			for(i=0;i<hiA[0]-loA[0]+1;i++)
-			  if(ftempA[i]<(float)0.0) return 1;
+			for(j=0;j<hiA[0]-loA[0]+1;j++)
+			  if(ftempA[j]<(float)0.0) iretval=1;
 			break;
 		      case C_LONG:
 			ltempA=((long*)A_ptr)+idx;
-			for(i=0;i<hiA[0]-loA[0]+1;i++)
-			  if(ltempA[i]<(long)0) return 1;
+			for(j=0;j<hiA[0]-loA[0]+1;j++)
+			  if(ltempA[j]<(long)0) iretval=1;
 			break;
  
                       default: ga_error(" has_negative_elem: wrong data type ",
@@ -1623,7 +1731,7 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
  
     GA_POP_NAME;
     ga_sync_();
-    return 0; /*negative element is not found in g_a*/
+    return iretval; /*negative element is not found in g_a*/
 }
 
 
@@ -1634,47 +1742,266 @@ void FATR ga_step_max2_patch_(
      Integer *g_xxuu, Integer *xxuulo, Integer *xxuuhi,    /* patch of g_xxuu */
      double *result)
 {
-     Integer index;
-     Integer g_C, *g_c=&g_C;
-     double alpha = 1.0, beta = -1.0;
-     double  result1, result2;
-     
-        _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-     
-     	/*duplicatecate an array c to hold the temparary result */
-     	ga_duplicate(g_xx, &g_C, "TempC");
-     	if(g_C==0)
-		ga_error("ga_step_max2_patch_:fail to duplicate array c", *g_c);
+     double  result1,result2;
+     double  dresult,dresult2;
+     long    lresult,lresult2;
 
-        /*First, compute xu - xx */
-       nga_add_patch_(&alpha, g_xxuu, xxuulo, xxuuhi, &beta, g_xx, xxlo, xxhi, g_c, xxlo, xxhi); 
-       /* Then, compute (xu-xx)/dx */
-       /*
-       ga_elem_divide_patch_(g_c, xxlo, xxhi, g_vv, vvlo, vvhi, g_c, xxlo, xxhi); 
-       */
-       ga_elem_step_divide_patch_(g_c, xxlo, xxhi, g_vv, vvlo, vvhi, g_c, xxlo, xxhi); 
-        /*Now look at each element of the array g_c. 
-	  If an element of g_c is positive infinity, then replace it with -GA_INFINITY */ 
-        ngai_elem3_patch_(g_c, xxlo, xxhi, OP_STEPMAX2);  
-        /*Then, we will select the maximum of the array g_c*/ 
-        nga_select_elem_(g_c, "max", &result1, &index); 
+     Integer index[MAXDIM];
+     Integer xxtype;
+     Integer xxndim, xxdims[MAXDIM];
+     Integer loXX[MAXDIM], hiXX[MAXDIM], ldXX[MAXDIM];
+     Integer vvtype;
+     Integer vvndim, vvdims[MAXDIM];
+     Integer loVV[MAXDIM], hiVV[MAXDIM], ldVV[MAXDIM];
+     Integer g_XX = *g_xx, g_VV = *g_vv;
+     Integer xxtotal,vvtotal;
+     Integer xltype;
+     Integer xlndim, xldims[MAXDIM];
+     Integer loXL[MAXDIM], hiXL[MAXDIM], ldXL[MAXDIM];
+     Integer xutype;
+     Integer xundim, xudims[MAXDIM];
+     Integer loXU[MAXDIM], hiXU[MAXDIM], ldXU[MAXDIM];
+     Integer g_XL = *g_xxll, g_XU = *g_xxuu;
+     Integer xltotal,xutotal;
+     Integer me= ga_nodeid_();
+     Integer g_T;
+     Integer *g_t = &g_T;
+     Integer g_S;
+     Integer *g_s = &g_S;
+     double dalpha = (double)1.0, dbeta = (double)(-1.0);
+     long   lalpha = (long)1, lbeta = (long)(-1);
+     Integer ialpha = (int)1, ibeta = (int)(-1);
+     float   falpha = (float)1.0, fbeta = (float)(-1.0);
+     Integer iresult,iresult2;
+     float   fresult,fresult2;
+     Integer compatible;
+     Integer compatible2;
+     Integer compatible3;
+     void *sresult;
+     void *alpha,*beta;
+     int local_sync_begin,local_sync_end;
+     int i;
 
-        /*Now doing the same thing to get (xxll-xx)/dx */
-        /*First, compute xl - xx */
-       nga_add_patch_(&alpha, g_xxll, xxlllo, xxllhi, &beta, g_xx, xxlo, xxhi, g_c, xxlo, xxhi); 
-       /* Then, compute (xl-xx)/dx */
-       /*
-       ga_elem_divide_patch_(g_c, xxlo, xxhi, g_vv, vvlo, vvhi, g_c, xxlo, xxhi); 
-       */
-       ga_elem_step_divide_patch_(g_c, xxlo, xxhi, g_vv, vvlo, vvhi, g_c, xxlo, xxhi); 
-        /*Now look at each element of the array g_c. 
-	  If an element of g_c is positive infinity, then replace it with -GA_INFINITY */ 
-        ngai_elem3_patch_(g_c, xxlo, xxhi, OP_STEPMAX2);  
-        /*Then, we will select the maximum of the array g_c*/ 
-        nga_select_elem_(g_c, "max", &result2, &index); 
-        *result = MAX(result1, result2);
+     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+     if(local_sync_begin)ga_sync_();
+
+     /* Check for valid ga handles. */
+
+     ga_check_handle(g_xx, "ga_step_max2_patch_");
+     ga_check_handle(g_vv, "ga_step_max2_patch_");
+     ga_check_handle(g_xxll, "ga_step_max2_patch_");
+     ga_check_handle(g_xxuu, "ga_step_max2_patch_");
+
+     GA_PUSH_NAME("ga_step_max2_patch_");
+
+     /* get chaacteristics of the input ga patches */
+
+     nga_inquire_internal_(g_xx, &xxtype, &xxndim, xxdims);
+     nga_inquire_internal_(g_vv, &vvtype, &vvndim, vvdims);
+     nga_inquire_internal_(g_xxll, &xltype, &xlndim, xldims);
+     nga_inquire_internal_(g_xxuu, &xutype, &xundim, xudims);
+
+     /* Check for matching types. */
+
+     if(xxtype != vvtype) ga_error(" ga_step_max2_patch_: types mismatch ", 0L); 
+     if(xxtype != xltype) ga_error(" ga_step_max2_patch_: types mismatch ", 0L); 
+     if(xxtype != xutype) ga_error(" ga_step_max2_patch_: types mismatch ", 0L); 
+
+     /* check if patch indices and dims match */
+     for(i=0; i<xxndim; i++)
+       if(xxlo[i] <= 0 || xxhi[i] > xxdims[i])
+	 ga_error("ga_elem_step_max2_patch: g_a indices out of range ", *g_xx);
+
+     for(i=0; i<vvndim; i++)
+       if(vvlo[i] <= 0 || vvhi[i] > vvdims[i])
+	 ga_error("ga_elem_step_max2_patch: g_a indices out of range ", *g_vv);
+
+     for(i=0; i<xlndim; i++)
+       if(xxlllo[i] <= 0 || xxllhi[i] > xldims[i])
+	 ga_error("ga_elem_step_max2_patch: g_a indices out of range ", *g_xxll);
+     for(i=0; i<xundim; i++)
+       if(xxuulo[i] <= 0 || xxuuhi[i] > xudims[i])
+	 ga_error("ga_elem_step_max2_patch: g_a indices out of range ", *g_xxuu);
+     
+     /* check if numbers of elements in patches match each other */
+     xxtotal = 1; for(i=0; i<xxndim; i++) xxtotal *= (xxhi[i] - xxlo[i] + 1);
+     vvtotal = 1; for(i=0; i<vvndim; i++) vvtotal *= (vvhi[i] - vvlo[i] + 1);
+     xltotal = 1; for(i=0; i<xlndim; i++) xltotal *= (xxllhi[i] - xxlllo[i] + 1);
+     xutotal = 1; for(i=0; i<xundim; i++) xutotal *= (xxuuhi[i] - xxuulo[i] + 1);
+ 
+     if(xxtotal != vvtotal)
+        ga_error(" ga_step_max2_patch_ capacities of patches do not match ", 0L);
+     if(xxtotal != xltotal)
+        ga_error(" ga_step_max2_patch_ capacities of patches do not match ", 0L);
+     if(xxtotal != xutotal)
+        ga_error(" ga_step_max2_patch_ capacities of patches do not match ", 0L);
+     /* find out coordinates of patches of g_a, and g_b that I own */
+     nga_distribution_(&g_XX, &me, loXX, hiXX);
+     nga_distribution_(&g_VV, &me, loVV, hiVV);
+     nga_distribution_(&g_XL, &me, loXL, hiXL);
+     nga_distribution_(&g_XU, &me, loXU, hiXU);
+     
+
+     /* test if the local portion of patches matches */
+     if(ngai_comp_patch(xxndim, loXX, hiXX, vvndim, loVV, hiVV) &&
+	ngai_comp_patch(xxndim, xxlo, xxhi, vvndim, vvlo, vvhi)) {
+       compatible = 1;
+     }
+     else {
+       compatible = 0;
+     }
+     if(ngai_comp_patch(xxndim, loXX, hiXX, xlndim, loXL, hiXL) &&
+	ngai_comp_patch(xxndim, xxlo, xxhi, xlndim, xxlllo, xxllhi)) {
+       compatible2 = 1;
+     }
+     else {
+       compatible2 = 0;
+     }
+     if(ngai_comp_patch(xxndim, loXX, hiXX, xundim, loXU, hiXU) &&
+	ngai_comp_patch(xxndim, xxlo, xxhi, xundim, xxuulo, xxuuhi)) {
+       compatible3 = 1;
+     }
+     else {
+       compatible3 = 0;
+     }
+     compatible = compatible * compatible2 * compatible3;
+     ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
+     if(!compatible) {
+       ga_error(" ga_step_max2_patch_ mismatched patchs ",0);
+     }
+     switch (xxtype)
+       {
+       case C_INT:
+	 /* This should point to iresult but we use lresult
+	    due to the strange implementation if nga_select_elem_.
+	 */
+	 sresult = &lresult;
+	 alpha    = &ialpha;
+	 beta     = &ibeta;
+	 break;
+       case C_DCPL:
+	 ga_error ("Ga_step_max2_patch_: unavalable for complex datatype.", 
+		   xxtype);
+	 break;
+       case C_DBL:
+	 sresult = &dresult;
+	 alpha    = &dalpha;
+	 beta     = &dbeta;
+	 break;
+       case C_FLOAT:
+	 sresult = &fresult;
+	 alpha    = &falpha;
+	 beta     = &fbeta;
+	 break;
+       case C_LONG:
+	 sresult = &lresult;
+	 alpha    = &lalpha;
+	 beta     = &lbeta;
+	 break;
+       default:
+	 ga_error ("Ga_step_max_patch_: alpha/beta set wrong data type.", xxtype);
+       }
+
+     /*duplicatecate an array s to hold the temparary result */
+     ga_duplicate(g_xx, &g_S, "TempS");
+     if(g_S==0)
+       ga_error("ga_step_max2_patch_:fail to duplicate array S", g_S);
+     
+     /*duplicatecate an array T to hold the temparary result */
+     ga_duplicate(g_xx, &g_T, "TempT");
+     if(g_T==0)
+       ga_error("ga_step_max2_patch_:fail to duplicate array T", g_T);
+
+     /*First, compute xu - xx */
+     nga_add_patch_(alpha, g_xxuu, xxuulo, xxuuhi, beta, g_xx, xxlo, xxhi,&g_S, xxlo, xxhi); 
+
+     /*Check for negative elements in g_s, if it has any then xxuu was
+       not an upper bound, exit with error message.
+     */
+     if(has_negative_elem(&g_S, xxlo, xxhi) == 1)
+       ga_error("ga_step_max2_patch_: Upper bound is not > xx.", -1);
+
+     /* Then compute t = positve elements of vv */
+     ga_zero_(&g_T);
+     ga_elem_maximum_(g_vv,&g_T,&g_T);
+
+     /* Then, compute (xu-xx)/vv */
+     ga_elem_step2_divide_patch_(&g_S, xxlo, xxhi, &g_T, vvlo, vvhi, &g_T, xxlo, xxhi); 
+
+     /* Then, we will select the minimum of the array g_t*/ 
+     nga_select_elem_(&g_T, "min", sresult, &index[0]); 
+
+     switch (xxtype)
+       {
+       case C_INT:
+	 /* This should be iresult but is lresult because of
+	    the strange implementation of nga_select_elem.
+	 */
+           result1 = (double)((int)lresult);
+           break;
+       case C_DCPL:
+	 ga_error ("Ga_step_max2_patch_: unavalable for complex datatype.", 
+		   xxtype);
+	 break;
+       case C_DBL:
+	 result1 = dresult;
+	 break;
+       case C_FLOAT:
+	 result1 = (double)fresult;
+	 break;
+       case C_LONG:
+	 result1 = (double)lresult;
+	 break;
+       default:
+	 ga_error ("Ga_step_max2_patch_: result set: wrong data type.", xxtype);
+       }
+
+     /*Now doing the same thing to get (xx-xxll)/dv */
+     /*First, compute xl - xx */
+     nga_add_patch_(alpha, g_xx, xxlo, xxhi, beta, g_xxll, xxlllo, xxllhi, &g_S, xxlo, xxhi); 
+     /*Check for negative elements in g_s, if it has any then xxll was
+       not a lower bound, exit with error message.
+     */
+     if(has_negative_elem(&g_S, xxlo, xxhi) == 1)
+       ga_error("ga_step_max2_patch_: Lower bound is not < xx.", -1);
+
+     /* Then compute t = negative elements of vv */
+     ga_zero_(&g_T);
+     ga_elem_minimum_(g_vv,&g_T,&g_T);
+     ga_abs_value_(&g_T);
+
+     /* Then, compute (xx-xl)/vv */
+     ga_elem_step2_divide_patch_(&g_S, xxlo, xxhi, &g_T, vvlo, vvhi, &g_T, xxlo, xxhi); 
+     /* Then, we will select the minimum of the array g_t*/ 
+     nga_select_elem_(&g_T, "min", sresult, &index[0]); 
+     switch (xxtype)
+       {
+       case C_INT:
+	 result2 = (double)((int)lresult);
+	 break;
+       case C_DCPL:
+	 ga_error ("Ga_step_max2_patch_: unavalable for complex datatype.", 
+		   xxtype);
+	 break;
+       case C_DBL:
+	 result2 = dresult;
+	 break;
+       case C_FLOAT:
+	 result2 = (double)fresult;
+	 break;
+       case C_LONG:
+	 result2 = (double)lresult;
+	 break;
+       default:
+	 ga_error ("Ga_step_max2_patch_: result2 set: wrong data type.", xxtype);
+       }
      /* if(*result==0.0) *result = -GA_INFINITY; */
-     *result = ABS(*result);
+     ga_destroy_(&g_S); 
+     ga_destroy_(&g_T); 
+     *result = ABS(MIN(result1,result2));
+     GA_POP_NAME;
+     if(local_sync_end)ga_sync_();
 }
 
 /*\ generic  routine for element wise operation between two array
@@ -1693,19 +2020,107 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
 #endif
 
 {
-     Integer index;
+     double  dresult;
+     long    lresult;
+     Integer atype;
+     Integer andim, adims[MAXDIM];
+     Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
+     Integer btype;
+     Integer bndim, bdims[MAXDIM];
+     Integer loB[MAXDIM], hiB[MAXDIM], ldB[MAXDIM];
+     Integer index[MAXDIM];
      /* double result = -1; */
      Integer *g_c;
      Integer g_C;
-     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+     Integer g_A = *g_a, g_B = *g_b;
+     Integer iresult;
+     Integer atotal,btotal;
+     Integer me= ga_nodeid_();
+     float   fresult;
+     int local_sync_begin,local_sync_end;
+     int i;
+     Integer compatible;
+     void *sresult;
 
+     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+     if(local_sync_begin)ga_sync_();
+
+     /* Check for valid ga handles. */
+
+     ga_check_handle(g_a, "ga_step_max_patch_");
+     ga_check_handle(g_b, "ga_step_max_patch_");
+     
+     GA_PUSH_NAME("ga_step_max_patch_");
+     
+     /* get chacteristics of the input ga patches */
+
+     nga_inquire_internal_(g_a, &atype, &andim, adims);
+     nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+
+     /* Check for matching types. */
+     if(atype != btype) ga_error(" ga_step_max_patch_: types mismatch ", 0L); 
+
+     /* check if patch indices and dims match */
+     for(i=0; i<andim; i++)
+       if(alo[i] <= 0 || ahi[i] > adims[i])
+	 ga_error("g_a indices out of range ", *g_a);
+     for(i=0; i<bndim; i++)
+       if(blo[i] <= 0 || bhi[i] > bdims[i])
+	 ga_error("g_b indices out of range ", *g_b);
+
+     /* check if numbers of elements in patches match each other */
+     atotal = 1; for(i=0; i<andim; i++) atotal *= (ahi[i] - alo[i] + 1);
+     btotal = 1; for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
+ 
+     if(btotal != atotal)
+        ga_error(" ga_step_max_patch_ capacities of patches do not match ", 0L);
+    
+     /* find out coordinates of patches of g_a, and g_b that I own */
+     nga_distribution_(&g_A, &me, loA, hiA);
+     nga_distribution_(&g_B, &me, loB, hiB);
+
+     /* test if the local portion of patches matches */
+     if(ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB) &&
+	ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) compatible = 1;
+     else compatible = 0;
+     ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
+     if(!compatible) {
+       ga_error(" ga_step_max_patch_ mismatched patchs ",0);
+     }
+     switch (atype)
+       {
+       case C_INT:
+	 sresult = &iresult;
+	 break;
+       case C_DCPL:
+	 ga_error ("Ga_step_max_patch_: unavalable for complex datatype.", 
+		   atype);
+	 break;
+       case C_DBL:
+	 sresult = &dresult;
+	 break;
+       case C_FLOAT:
+	 sresult = &fresult;
+	 break;
+       case C_LONG:
+	 sresult = &lresult;
+	 break;
+       default:
+	 ga_error ("Ga_step_max_patch_: wrong data type.", atype);
+       }
      if(*g_a == *g_b)
-	*result = 1.0;
+       /* It used to say 1, but if ga and gb are the same, and 
+	  ga is nonnegative then any number of multiples of gb
+	  can be added to ga still leaving it nonnegative.
+         *result = (double)1.0;
+       */
+	*result = GA_INFINITY_D;
      else
      {
      	/*Now look at each element of the array g_a. 
           If an element of g_a is negative, then simply return */ 
-     	if(has_negative_elem(g_a, alo, ahi))
+     	if(has_negative_elem(g_a, alo, ahi) == 1)
 		ga_error("ga_step_max_patch_: g_a has negative element.", -1);
      
      	/*duplicatecate an array c to hold the temparate result = g_a/g_b; */
@@ -1723,10 +2138,33 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
           then replace it with -GA_INFINITY */ 
         ngai_elem3_patch_(g_c, alo, ahi, OP_STEPMAX);  
         /*Then, we will select the maximum of the array g_c*/ 
-        nga_select_elem_(g_c, "max", result, &index); 
+        nga_select_elem_(g_c, "max", sresult, &index[0]); 
+	switch (atype)
+	  {
+	  case C_INT:
+	    *result = (double)iresult;
+	    break;
+	  case C_DCPL:
+	    ga_error ("Ga_step_max_patch_: unavalable for complex datatype.", 
+		      atype);
+	    break;
+	  case C_DBL:
+	    *result = dresult;
+	    break;
+	  case C_FLOAT:
+	    *result = (double)fresult;
+	    break;
+	  case C_LONG:
+	    *result = (double)lresult;
+	    break;
+	  default:
+	    ga_error ("Ga_step_max_patch_: wrong data type.", atype);
+	  }
+	ga_destroy_ (&g_C);
      }
-     if(*result==0.0) *result = -GA_INFINITY_D;
      *result = ABS(*result);
+    GA_POP_NAME;
+    if(local_sync_end)ga_sync_();
 }
 
 
