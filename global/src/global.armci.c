@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.38 2000-04-17 20:56:16 jju Exp $ */
+/* $Id: global.armci.c,v 1.39 2000-05-01 21:38:46 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -535,7 +535,6 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
       gam_checktype(type);
       gam_checkdim(ndim, dims);
 
-
       if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
           for(d=0; d< ndim; d++) blk[d]=MIN(chunk[d],dims[d]);
       else
@@ -546,9 +545,8 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
       
       /* for load balancing overwrite block size if needed */ 
 /*      for(d=0; d<ndim; d++)if(blk[d]*GAnproc < dims[d])blk[d]=-1;*/
-          
 
-      if(GAme==0 && DEBUG)for(d=0;d<ndim;d++) fprintf(stderr,"b[%ld]=%ld\n",d,blk[d]);
+      if(GAme==0 && DEBUG )for(d=0;d<ndim;d++) fprintf(stderr,"b[%ld]=%ld\n",d,blk[d]);
       ga_sync_();
 
 /*      ddb(ndim, dims, GAnproc, blk, pe);*/
@@ -2187,7 +2185,7 @@ extern void ga_sort_permutation();
    /* Sort the entries by processor */
    ga_sort_permutation(nv, list, proc);
 }
-
+ 
 
 /*\ permutes input index list using sort routine used in scatter/gather
 \*/
@@ -2464,6 +2462,8 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     void **ptr_org; /* the entire pointer array */
     armci_giov_t desc;
     
+    GA_PUSH_NAME("gai_gatscat");
+
     if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-p",&phandle))
         ga_error("MAfailed",*g_a);
     if(!MA_get_pointer(phandle, &proc))
@@ -2634,6 +2634,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     gai_free(buf2); gai_free(buf1);
     
     if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+    GA_POP_NAME;
 }
 
 
