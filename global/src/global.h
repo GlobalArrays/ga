@@ -284,6 +284,8 @@ extern logical ga_update6_ghosts(Integer *g_a);
 extern logical nga_update_ghost_dir(Integer *g_a, Integer *idim, 
                                     Integer *idir, logical *flag);
 extern void ga_merge_mirrored(Integer *g_a);
+extern void nga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
+                                  Integer *g_b, Integer *blo, Integer *bhi);
 
 extern void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi);
 extern void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi);

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.56 2003-04-14 18:16:39 vinod Exp $ */
+/* $Id: capi.c,v 1.57 2003-04-22 18:57:17 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -355,6 +355,24 @@ void GA_Merge_mirrored(int g_a)
 {
     Integer a=(Integer)g_a;
     ga_merge_mirrored_(&a);
+}
+
+void NGA_Merge_distr_patch(int g_a, int *alo, int *ahi,
+                          int g_b, int *blo, int *bhi)
+{
+    Integer a = (Integer)g_a;
+    Integer andim = ga_ndim_(&a);
+
+    Integer b=(Integer)g_b;
+    Integer bndim = ga_ndim_(&b);
+    
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+    
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+
+    nga_merge_distr_patch_(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi);
 }
 
 int NGA_Update_ghost_dir(int g_a, int dimension, int dir, int flag)

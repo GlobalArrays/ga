@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.41 2003-04-17 22:17:07 d3g293 Exp $ */
+/* $Id: base.c,v 1.42 2003-04-22 18:57:17 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2654,6 +2654,128 @@ void FATR ga_merge_mirrored_(Integer *g_a)
     ga_sync_();
     nga_get_(&_ga_tmp, lo, hi, ptr_a, ld);
     ga_destroy_(&_ga_tmp);
+  }
+  if (local_sync_end) ga_sync_();
+  GA_POP_NAME;
+}
+
+/*\ merge all copies of a  patch of a mirrored array into a patch in a
+ *  distributed array
+\*/
+void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
+                                 Integer *g_b, Integer *blo, Integer *bhi)
+/*    Integer *g_a  handle to mirrored array
+      Integer *alo  indices of lower corner of mirrored array patch
+      Integer *ahi  indices of upper corner of mirrored array patch
+      Integer *g_b  handle to distributed array
+      Integer *blo  indices of lower corner of distributed array patch
+      Integer *bhi  indices of upper corner of distributed array patch
+*/
+{
+  Integer local_sync_begin, local_sync_end;
+  Integer a_handle, b_handle, adim, bdim;
+  Integer mlo[MAXDIM], mhi[MAXDIM], mld[MAXDIM];
+  Integer dlo[MAXDIM], dhi[MAXDIM];
+  double d_one;
+  Integer type, i_one;
+  double z_one[2];
+  float f_one;
+  long l_one;
+  void *src_data_ptr;
+  void *one;
+  Integer i, idim, intersect;
+
+  GA_PUSH_NAME("nga_merge_distr_patch");
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
+  if (local_sync_begin) ga_sync_();
+  ga_check_handle(g_a, "nga_merge_distr_patch");
+  ga_check_handle(g_b, "nga_merge_distr_patch");
+
+  /* check to make sure that both patches lie within global arrays and
+     that patches are the same dimensions */
+  a_handle = GA_OFFSET + *g_a;
+  b_handle = GA_OFFSET + *g_b;
+
+  if (ga_is_mirrored_(g_b))
+    ga_error("Distributed array is mirrored",0);
+
+  adim = GA[a_handle].ndim;
+  bdim = GA[b_handle].ndim;
+
+  if (adim != bdim)
+    ga_error("Global arrays must have same dimension",0);
+
+  type = GA[a_handle].type;
+  if (type != GA[b_handle].type)
+    ga_error("Global arrays must be of same type",0);
+
+  for (i=0; i<adim; i++) {
+    idim = GA[a_handle].dims[i];
+    if (alo[i] < 0 || alo[i] >= idim || ahi[i] < 0 || ahi[i] >= idim ||
+        alo[i] > ahi[i])
+      ga_error("Invalid patch index on mirrored GA",0);
+  }
+  for (i=0; i<bdim; i++) {
+    idim = GA[b_handle].dims[i];
+    if (blo[i] < 0 || blo[i] >= idim || bhi[i] < 0 || bhi[i] >= idim ||
+        blo[i] > bhi[i])
+      ga_error("Invalid patch index on distributed GA",0);
+  }
+  for (i=0; i<bdim; i++) {
+    idim = GA[b_handle].dims[i];
+    if (ahi[i] - alo[i] != bhi[i] - blo[i])
+      ga_error("Patch dimensions do not match for index ",i);
+  }
+  nga_zero_patch_(g_b, blo, bhi);
+
+  /* Find coordinates of mirrored array patch that I own */
+  nga_distribution_(g_a, &GAme, mlo, mhi);
+  /* Check to see if mirrored array patch intersects my portion of
+     mirrored array */
+  intersect = 1;
+  for (i=0; i<adim; i++) {
+    if (mhi[i] < alo[i]) intersect = 0;
+    if (mlo[i] > ahi[i]) intersect = 0;
+  }
+  if (intersect) {
+    /* get portion of mirrored array patch that actually resides on this
+       processor */
+    for (i=0; i<adim; i++) {
+      mlo[i] = MAX(alo[i],mlo[i]);
+      mhi[i] = MIN(ahi[i],mhi[i]);
+    }
+
+    /* get pointer to locally held distribution */
+    nga_access_ptr(g_a, mlo, mhi, &src_data_ptr, mld);
+
+    /* find indices in distributed array corresponding to this patch */
+    for (i=0; i<adim; i++) {
+      dlo[i] = blo[i] + mlo[i]-alo[i];
+      dhi[i] = blo[i] + mhi[i]-alo[i];
+    }
+
+    /* perform accumulate */
+    if (type == C_DBL) {
+      d_one = 1.0;
+      one = &d_one;
+    } else if (type == C_DCPL) {
+      z_one[0] = 1.0;
+      z_one[1] = 0.0;
+      one = &z_one;
+    } else if (type == C_FLOAT) {
+      f_one = 1.0;
+      one = &f_one;
+    } else if (type == C_INT) {
+      i_one = 1;
+      one = &i_one;
+    } else if (type == C_LONG) {
+      l_one = 1;
+      one = &l_one;
+    } else {
+      ga_error("Type not supported",type);
+    }
+    nga_acc_(g_b, dlo, dhi, src_data_ptr, mld, one);
   }
   if (local_sync_end) ga_sync_();
   GA_POP_NAME;
