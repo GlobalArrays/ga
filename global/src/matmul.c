@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.10 2002-11-27 19:54:09 edo Exp $*/
+/*$Id: matmul.c,v 1.11 2003-02-04 11:44:04 manoj Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -38,9 +38,13 @@
 #  define JCHUNK C_CHUNK
 #  define KCHUNK C_CHUNK
 #else
-   /* min acceptable and max amount of memory (in elements) */
+   /* min acceptable amount of memory (in elements) and default chunk size */
 #  define MINMEM 64
-#  define MAXMEM  786432  /*3*512*512 */
+#  ifdef DATA_SERVER
+#    define CHUNK_SIZE 256
+#  else
+#    define CHUNK_SIZE 128
+#  endif
 #endif
 
 #define VECTORCHECK(rank,dims,dim1,dim2, ilo, ihi, jlo, jhi) \
@@ -101,6 +105,7 @@ Integer get_new_B;
 int local_sync_begin,local_sync_end;
  int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
+ 
    ONE.real =1.; ZERO.real =0.;
    ONE.imag =0.; ZERO.imag =0.;
 
@@ -169,25 +174,25 @@ int local_sync_begin,local_sync_end;
      ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
      if(avail < MINMEM && ga_nodeid_() == 0)
        ga_error("Not enough memory for buffers",avail);
-     elems = MIN((Integer)(avail*0.9), MAXMEM);
+     elems = (Integer)(avail*0.9);/*Do not use entire mem. avail*/
      if(MA_push_get(atype, elems, "GA mulmat bufs", &handle, &idx))
        MA_get_pointer(handle, &a);
      else ga_error("ma_alloc_get failed",avail);
      
-     Ichunk = Jchunk = Kchunk = (Integer)(sqrt( (double)((elems-2)/3) ));
+     Ichunk = Jchunk = Kchunk = CHUNK_SIZE;
 
-     if ( max_chunk > max3(Ichunk, Jchunk, Kchunk) ) {
-       max_chunk = MIN(max_chunk, Ichunk); 
+     if ( max_chunk > Ichunk) { 
+       max_chunk = MIN(max_chunk, (Integer)(sqrt( (double)((elems-4)/3))) );
        Ichunk = MIN(m,max_chunk);
        Jchunk = MIN(n,max_chunk);
        Kchunk = MIN(k,max_chunk);
      }
      used = Ichunk * Kchunk;
-     if(atype == C_FLOAT)  used = 1+used/4;/*(sizeof(DoubleComplex)/sizeof(float)); */
+     if(atype == C_FLOAT)  used = 1+used/4;/*(sizeof(DCplx)/sizeof(float));*/
      else if(atype ==  C_DBL) used = 1+used/2;
      b = a+ used;
      used = Kchunk*Jchunk;
-     if(atype == C_FLOAT) used = 1+used/4; /*(sizeof(DoubleComplex)/sizeof(float));*/
+     if(atype == C_FLOAT) used = 1+used/4; /*(sizeof(DCplx)/sizeof(float));*/
      else if(atype ==  C_DBL) used = 1+used/2; 
      c = b+ used;
    }
@@ -200,7 +205,7 @@ int local_sync_begin,local_sync_end;
 
    if(need_scaling) ga_scale_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
    else  ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
-
+   
    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
        jhi = MIN(n-1, jlo+Jchunk-1);
        jdim= jhi - jlo +1;
@@ -216,7 +221,7 @@ int local_sync_begin,local_sync_end;
 	 for(ilo = 0; ilo < m; ilo += Ichunk){ /*loop through rows of g_c patch */
 	   
 	   if(ijk%nproc == me){
-	     
+
 	     ihi = MIN(m-1, ilo+Ichunk-1);
 	     idim= cdim = ihi - ilo +1;
 	     
@@ -226,7 +231,6 @@ int local_sync_begin,local_sync_end;
 	       for (i = 0; i < idim*jdim; i++) *(((double*)c)+i)=0;
 	     else
 	       for (i = 0; i < idim*jdim; i++){ c[i].real=0;c[i].imag=0;}
-	     
 	     
 	     if (*transa == 'n' || *transa == 'N'){ 
 	       adim = idim;
@@ -239,6 +243,7 @@ int local_sync_begin,local_sync_end;
 	       j0= *ailo+ilo; j1= *ailo+ihi;
 	       ga_get_(g_a, &i0, &i1, &j0, &j1, a, &kdim);
 	     }
+
 
 	     /* Avoid rereading B if it is the same patch as last time. */
 	     if(get_new_B) { 
@@ -255,10 +260,11 @@ int local_sync_begin,local_sync_end;
 	       }
 	       get_new_B = FALSE; /* Until J or K change again */
 	     }
+
 	     
 	     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
 	     adim_t=adim; bdim_t=bdim; cdim_t=cdim;
-	     
+
 #	   if (defined(CRAY) || defined(WIN32)) && !defined(GA_C_CORE)
 	     switch(atype) {
 	     case C_FLOAT:
@@ -327,7 +333,7 @@ int local_sync_begin,local_sync_end;
 #ifndef STATBUF
    if(!MA_pop_stack(handle)) ga_error("MA_pop_stack failed",0);
 #endif
-   
+
    GA_POP_NAME;
    if(local_sync_end)ga_sync_();
 }
@@ -493,20 +499,21 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
      ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
      if(avail < MINMEM && ga_nodeid_() == 0)
        ga_error("Not enough memory for buffers",avail);
-     elems = MIN((Integer)(avail*0.9), MAXMEM);
+     elems = (Integer)(avail*0.9);
      if(MA_push_get(atype, elems, "GA mulmat bufs", &handle, &idx))
        MA_get_pointer(handle, &a);
      else
        ga_error("ma_alloc_get failed",avail);
      
-     Ichunk = Kchunk = Jchunk = (Integer) sqrt((double)(elems-2)/3.0);
-     
-     if ( max_chunk > max3(Ichunk, Jchunk, Kchunk) ) {
-       max_chunk = MIN(max_chunk, Ichunk); 
+     Ichunk = Jchunk = Kchunk = CHUNK_SIZE;
+
+     if ( max_chunk > Ichunk) {
+       max_chunk = MIN(max_chunk, (Integer)(sqrt( (double)((elems-4)/3))) );
        Ichunk = MIN(m,max_chunk);
        Jchunk = MIN(n,max_chunk);
        Kchunk = MIN(k,max_chunk);
      }
+
      used = Ichunk * Kchunk;
      if(atype == C_FLOAT) used = 1+used/4; /* @ check @ */
      else if(atype ==  C_DBL) used = 1+used/2; 
@@ -769,7 +776,7 @@ void ga_dgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
   Integer cilo = 1;\
   Integer cihi = *m;\
   Integer cjlo = 1;\
-  Integer cjhi = *n;\
+  Integer cjhi = *n
 
 #if defined(CRAY) || defined(WIN32)
 void FATR GA_DGEMM(_fcd Transa, _fcd Transb, Integer *m, Integer *n, Integer *k,
@@ -787,11 +794,12 @@ void FATR GA_DGEMM(char *transa, char *transb, Integer *m, Integer *n, Integer *
 {
 SET_GEMM_INDICES;
 #endif
-
+ 
   ga_matmul_patch (transa, transb, alpha, beta,
                       g_a, &ailo, &aihi, &ajlo, &ajhi,
                       g_b, &bilo, &bihi, &bjlo, &bjhi,
                       g_c, &cilo, &cihi, &cjlo, &cjhi);
+#endif
 }
 
 #if defined(CRAY) || defined(WIN32)
