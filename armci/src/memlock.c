@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.6 1999-11-10 01:58:01 d3h325 Exp $ */
+/* $Id: memlock.c,v 1.7 2000-03-11 02:10:24 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -100,7 +100,7 @@ void armci_lockmem(void *start, void *end, int proc)
      register  int slot, avail=0;
      int turn=0, conflict=0;
      memlock_t *memlock_table;
-     register int lock;
+     int lock;
 
 #ifdef CORRECT_PTR
      if(! *armci_use_memlock_table){
