@@ -100,7 +100,7 @@ c***  create a global 1-D array
      $     call ga_error(' ga_create failed ',0)
 c
 c***  compute local ilo, ihi, num for each processor
-      call nga_distribution(g_a,me,ilo,ihi,chunck)
+      call nga_distribution(g_a,me,ilo,ihi)
       num=ihi-ilo+1
       if(ihi.le.0)num=0
 *     print *, 'me=',me, num,ilo
@@ -184,7 +184,7 @@ c***  Enumerate a each patch to get a sequential vector.
 c     call ga_print(g_b)
 c
 c***  enumerate manually g_a 
-      call nga_distribution(g_a,me,ilo,ihi,i)
+      call nga_distribution(g_a,me,ilo,ihi)
       if(ilo.gt.0) then
         do i = ilo,ihi,m
            nelem = MIN(m, ihi-i+1)
