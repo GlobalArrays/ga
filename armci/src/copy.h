@@ -25,7 +25,7 @@
 #   include <mpp/shmem.h>
 #else
 #   include <unistd.h>
-#   include <elan/shmem.h>
+#   include <shmem.h>
 #endif
     int cmpl_proc;
 #   define FENCE_NODE(p) if(cmpl_proc == (p)){\
