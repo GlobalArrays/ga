@@ -26,7 +26,7 @@ DEPENDENCIES ON OTHER SOFTWARE
    available.
 
  - if you'd like to use tracing, an additonal library libtrace.a is
-   required, and DGA_TRACE define flag should be specified for C and
+   required, and -DGA_TRACE define flag should be specified for C and
    Fortran compilers.
 
 MAKEFILES
