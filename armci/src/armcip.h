@@ -242,9 +242,9 @@ extern void armci_set_shmem_limit(unsigned long shmemlimit);
   extern int armci_gm_bypass;
 #endif
 
-#define ALIGN_PTR_LONG(type, x) { long _y = (long)(x);\
-              if(sizeof(long)==8){_y>>3; _y<<3; }\
-                            else { _y>>2; _y<<2; }\
+#define ALIGN_PTR_LONG(type, x) if( ((long)(x)) % sizeof(long)) { long _y = (long)(x);\
+              if(sizeof(long)==8){_y>>=3; _y<<=3; }\
+                            else { _y>>=2; _y<<=2; }\
               _y += sizeof(long); (x) = (type*)_y; }
 
 #endif
