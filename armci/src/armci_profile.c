@@ -1,4 +1,4 @@
-/* $Id: armci_profile.c,v 1.4 2004-07-20 02:26:10 manoj Exp $ */
+/* $Id: armci_profile.c,v 1.5 2004-07-20 03:00:50 manoj Exp $ */
 
 /**
  * Set an environment variable as follows to enable ARMCI profiling
@@ -240,8 +240,10 @@ void armci_profile_stop_strided() {
        ARMCI_PROF[event_type][range].time += time;
        gCURRENT_EVNT.is_set = 0; /* clear the event */
     }
-    else
+    else {
+       fprintf(stderr, "Event Type = %s\n", event_name[event_type]);
        armci_die("ARMCI_PROFILE: No event set. Probably armci_profile_stop_strided() is called before armci_profile_start_strided()", armci_me);
+    }
 
 #if ARMCI_PRINT_STRIDE
     /* record the time of each strided data transfer */
@@ -319,9 +321,10 @@ void armci_profile_stop_vector() {
        ARMCI_PROF[event_type][range].time += time;
        gCURRENT_EVNT.is_set = 0; /* clear the event */
     }
-    else
+    else {
+       fprintf(stderr, "Event Type = %s\n", event_name[event_type]);
        armci_die("ARMCI_PROFILE: No event set. Probably armci_profile_stop_vector() is called before armci_profile_start_vector()", armci_me);
-
+    }
 #if ARMCI_PRINT_STRIDE
     {  /* record the time of each vector data transfer */
        int idx = ARMCI_PROF[event_type][range].count-1;
@@ -372,8 +375,10 @@ void armci_profile_stop() {
        ARMCI_PROF[event_type][range].time += time;
        gCURRENT_EVNT.is_set = 0; /* clear the event */
     }
-    else
+    else {
+       fprintf(stderr, "Event Type = %s\n", event_name[event_type]);
        armci_die("ARMCI_PROFILE: No event set. Probably armci_profile_stop() is called before armci_profile_start()", armci_me);
+    }
 }
 
 #define ARMCI_HDR0(fp) fprintf(fp, "\n\n************** TOTAL DATA TRANSFERS **************\n\n");
