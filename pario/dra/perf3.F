@@ -1,8 +1,8 @@
 c
 c FNAME - filename for test program
 c
-#define BASE_NAME  '/gpfs2/d3g293/da.try'
-#define BASE_NAME1 '/gpfs2/d3g293/da1.try'
+#define BASE_NAME  'da.try'
+#define BASE_NAME1 'da1.try'
 #ifdef  HPIODIR
 #  define FNAME   HPIODIR//BASE_NAME
 #  define FNAME1  HPIODIR//BASE_NAME1
@@ -116,7 +116,8 @@ c.......................................................................
       do i = 1, ndim
         reqdims(i) = n
       end do
-      if(ndra_create(MT_DBL, ndim, dims, 'A', FNAME, 
+      if(ndra_create(MT_DBL, ndim, dims, 'A',
+     &      FNAME, 
      &      DRA_RW, reqdims, d_a).ne.0)
      $   CALL ga_error('ndra_create failed: ',0)
 c
@@ -150,7 +151,8 @@ c
         dims(i) = m
         reqdims(i) = n
       end do
-      if(ndra_create(MT_DBL, ndim, dims, 'A', FNAME1,
+      if(ndra_create(MT_DBL, ndim, dims, 'A',
+     &      FNAME1,
      &      DRA_RW, reqdims, d_b).ne.0)
      $   CALL ga_error('ndra_create failed: ',0)
 c
@@ -189,7 +191,8 @@ c
 c
       if (me.eq.0) print *,' '
       if (me.eq.0) print *,'opening disk array'
-      if(dra_open(FNAME,DRA_R, d_a).ne.0)
+      if(dra_open(FNAME,
+     &            DRA_R, d_a).ne.0)
      &            call ga_error('dra_open failed',0)
       if(me.eq.0) print *, 'alligned blocking read'
       if (me.eq.0)call ffflush(6)
@@ -215,7 +218,8 @@ c.......................................................................
 c
       if (me.eq.0) print *,' '
       if (me.eq.0) print *,'opening disk array'
-      if(dra_open(FNAME1,DRA_R, d_b).ne.0)
+      if(dra_open(FNAME1,
+     &            DRA_R, d_b).ne.0)
      &            call ga_error('dra_open failed',0)
       if(me.eq.0) print *, 'non alligned blocking read'
       if (me.eq.0)call ffflush(6)
