@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.45 2002-12-14 00:29:22 d3h325 Exp $ */
+/* $Id: copy.h,v 1.46 2002-12-17 13:01:33 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -166,6 +166,25 @@ void FATR DCOPY1D(void*, void*, int*);
               if(LAPI_Get(lapi_handle, (uint)proc, (uint)n, (src), (dst), \
                  NULL, &get_cntr.cntr))\
                  ARMCI_Error("LAPI_Get failed",0);else;}
+
+#      define ARMCI_NB_PUT(src,dst,n,proc,cmplt)\
+              {if(LAPI_Setcntr(lapi_handle, &((cmplt)->cntr), 0))\
+                  ARMCI_Error("LAPI_Setcntr in NB_PUT failed",0);\
+              (cmplt)->val=1;\
+              if(LAPI_Put(lapi_handle, (uint)proc, (uint)n, (dst), (src),\
+                 NULL, &((cmplt)->cntr), &cmpl_arr[proc].cntr))\
+                  ARMCI_Error("LAPI_put failed",0); else;}
+
+#      define ARMCI_NB_GET(src,dst,n,proc,cmplt)\
+              {if(LAPI_Setcntr(lapi_handle, &((cmplt)->cntr), 0))\
+                  ARMCI_Error("LAPI_Setcntr in NB_GET failed",0);\
+              (cmplt)->val=1;\
+              if(LAPI_Get(lapi_handle, (uint)proc, (uint)n, (src), (dst), \
+                 NULL, &((cmplt)->cntr)))\
+                 ARMCI_Error("LAPI_Get NB_GET failed",0);else;}
+
+#      define ARMCI_NB_WAIT(cmplt) CLEAR_COUNTER((cmplt))
+       
 
 #else
 
