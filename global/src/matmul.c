@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.2 2002-08-07 18:28:24 vinod Exp $*/
+/*$Id: matmul.c,v 1.3 2002-08-16 20:05:43 vinod Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -677,6 +677,7 @@ void FATR GA_DGEMM(_fcd Transa, _fcd Transb, Integer *m, Integer *n, Integer *k,
              void *beta, Integer *g_c)
 {
 char *transa, *transb;
+SET_GEMM_INDICES;
       transa = _fcdtocp(Transa);
       transb = _fcdtocp(Transb);
 #else
@@ -684,9 +685,9 @@ void FATR GA_DGEMM(char *transa, char *transb, Integer *m, Integer *n, Integer *
              void *alpha, Integer *g_a, Integer *g_b,
              void *beta, Integer *g_c, int talen, int tblen)
 {
+SET_GEMM_INDICES;
 #endif
 
-  SET_GEMM_INDICES;
 
   ga_matmul_patch (transa, transb, alpha, beta,
                       g_a, &ailo, &aihi, &ajlo, &ajhi,
@@ -700,6 +701,7 @@ void FATR ga_sgemm_(_fcd Transa, _fcd Transb, Integer *m, Integer *n, Integer *k
              void *beta, Integer *g_c)
 {
 char *transa, *transb;
+SET_GEMM_INDICES;
       transa = _fcdtocp(Transa);
       transb = _fcdtocp(Transb);
 #else
@@ -707,9 +709,9 @@ void FATR ga_sgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer 
              void *alpha, Integer *g_a, Integer *g_b,
              void *beta, Integer *g_c, int talen, int tblen)
 {
+SET_GEMM_INDICES;
 #endif
 
-  SET_GEMM_INDICES;
 
   ga_matmul_patch (transa, transb, alpha, beta,
                       g_a, &ailo, &aihi, &ajlo, &ajhi,
@@ -724,6 +726,7 @@ void FATR ga_zgemm_(_fcd Transa, _fcd Transb, Integer *m, Integer *n, Integer *k
              void *beta, Integer *g_c)
 {
 char *transa, *transb;
+SET_GEMM_INDICES;
       transa = _fcdtocp(Transa);
       transb = _fcdtocp(Transb);
 #else
@@ -731,9 +734,9 @@ void FATR ga_zgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer 
              void *alpha, Integer *g_a, Integer *g_b,
              void *beta, Integer *g_c, int talen, int tblen)
 {
+SET_GEMM_INDICES;
 #endif
 
-  SET_GEMM_INDICES;
 
   ga_matmul_patch (transa, transb, alpha, beta,
                       g_a, &ailo, &aihi, &ajlo, &ajhi,
