@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.1 2002-08-02 18:59:38 manoj Exp $*/
+/*$Id: matmul.c,v 1.2 2002-08-07 18:28:24 vinod Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -28,7 +28,6 @@
 #else
 #      define cptofcd(fcd) (fcd)
 #endif
-
 #ifdef STATBUF
 #  define C_CHUNK  92 
 #  define D_CHUNK  64
@@ -77,8 +76,8 @@ Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim;
 Integer Ichunk, Kchunk, Jchunk;
 DoubleComplex ONE, ZERO;
-float ONE_F = 1.0;
 int need_scaling=1;
+float ONE_F = 1.0;
 
    ONE.real =1.; ZERO.real =0.;
    ONE.imag =0.; ZERO.imag =0.;
@@ -149,11 +148,10 @@ int need_scaling=1;
    if( (*cjhi - *cjlo +1) != n) ga_error(" b & c dims error",n);
    if( (*bihi - *bilo +1) != k) ga_error(" a & b dims error",k);
    
-   if((atype==C_DCPL) && (((DoubleComplex*)beta)->real == 0) &&
-	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0; 
-   else if((atype==C_DBL) && (*(DoublePrecision*)beta) == 0) need_scaling =0;
+   if(atype==C_DCPL){if((((DoubleComplex*)beta)->real == 0) &&
+	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
+   else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
-   
    if(need_scaling) ga_scale_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
    else      ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
 
@@ -435,9 +433,9 @@ float ONE_F = 1.0;
    if( (cjhi - cjlo +1) != n) ga_error(" b & c dims error",n);
    if( (bihi - bilo +1) != k) ga_error(" a & b dims error",k);
 
-   if((atype==C_DCPL) && (((DoubleComplex*)beta)->real == 0) &&
-	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0; 
-   else if((atype==C_DBL) && (*(DoublePrecision*)beta) == 0) need_scaling =0;
+   if(atype==C_DCPL){if((((DoubleComplex*)beta)->real == 0) &&
+	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
+   else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
    if(need_scaling) nga_scale_patch_(g_c, clo, chi, beta);
