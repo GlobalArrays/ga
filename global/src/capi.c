@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.5 1999-07-28 00:41:09 d3h325 Exp $ */
+/* $Id: capi.c,v 1.6 1999-07-29 19:02:24 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 
@@ -546,4 +546,11 @@ void GA_Print(int g_a)
 {
     Integer a=(Integer)g_a;
     ga_print_(&a);
+}
+
+
+void GA_Print_distribution(int g_a)
+{
+    Integer a=(Integer)g_a;
+    ga_print_distribution_(&a);
 }

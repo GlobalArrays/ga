@@ -27,6 +27,7 @@ extern void NGA_Put(int g_a, int lo[], int hi[], void* buf, int ld[]);
 extern void NGA_Acc(int g_a, int lo[], int hi[],void* buf,int ld[],void* alpha);
 extern void NGA_Distribution(int g_a, int iproc, int lo[], int hi[]); 
 extern int NGA_Compare_distr(int g_a, int g_b); 
+extern void NGA_Print_distribution(int g_a); 
 extern void NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[]);
 extern void NGA_Release(int g_a, int lo[], int hi[]);
 extern void NGA_Release_update(int g_a, int lo[], int hi[]);

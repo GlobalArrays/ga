@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.25 1999-07-28 00:39:19 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.26 1999-07-29 19:02:25 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -390,29 +390,33 @@ void FATR ga_print_distribution_(Integer* g_a)
 Integer ndim, i, proc, type, nproc=ga_nnodes_();
 Integer dims[MAXDIM], lo[MAXDIM], hi[MAXDIM];
 char msg[100];
+char *name;
 
     ga_sync_();
 
-    nga_inquire_(g_a, &type, &ndim, dims);
-    printf("Array handle=%d name:'%s' ",g_a, ga_inquire_name_(g_a));
-    printf("data type:");
-    switch(type){
-      case MT_F_DBL: printf("double"); break;
-      case MT_F_INT: printf("integer"); break;
-      case MT_F_DCPL: printf("double complex"); break;
-      default: ga_error("ga_print_distribution: type not supported",type);
-    }
-    printf(" dimensions:");
-    for(i=0; i<ndim-1; i++)printf("%dx",dims[i]);
-    printf("%d\n",dims[ndim-1]);
+    if(ga_nodeid_() ==0){
+      nga_inquire_(g_a, &type, &ndim, dims);
+      ga_inquire_name(g_a,&name);
+      printf("Array handle=%d name:'%s' ",g_a, name);
+      printf("data type:");
+      switch(type){
+        case MT_F_DBL: printf("double"); break;
+        case MT_F_INT: printf("integer"); break;
+        case MT_F_DCPL: printf("double complex"); break;
+        default: ga_error("ga_print_distribution: type not supported",type);
+      }
+      printf(" dimensions:");
+      for(i=0; i<ndim-1; i++)printf("%dx",dims[i]);
+      printf("%d\n",dims[ndim-1]);
 
-    /* now everybody prints array range it owns */
-    for(proc = 0; proc < nproc; proc++){
-        nga_distribution_(g_a,&proc,lo,hi);
-        sprintf(msg,"proc=%d\t owns array section: ",proc);
-        gai_print_range(msg,(int)ndim,lo,hi,"\n");
+      /* print array range for every processor */
+      for(proc = 0; proc < nproc; proc++){
+          nga_distribution_(g_a,&proc,lo,hi);
+          sprintf(msg,"proc=%d\t owns array section: ",proc);
+          gai_print_range(msg,(int)ndim,lo,hi,"\n");
+      }
+      fflush(stdout);
     }
-    fflush(stdout);
 
     ga_sync_();
 }
