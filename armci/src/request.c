@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.15 2000-08-15 21:51:15 d3h325 Exp $ */
+/* $Id: request.c,v 1.16 2000-10-11 20:13:17 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -178,7 +178,7 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
 {
      long lold;
      int iold;
-     void *pold;
+     void *pold=0;
      int op = msginfo->operation;
 
      if(DEBUG_){
@@ -426,8 +426,8 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     char *dscr_save = dscr;
     int  rc, i,proc;
 #   ifdef CLIENT_BUF_BYPASS
-      int  *client_stride_arr; 
-      void *client_ptr;
+      int  *client_stride_arr=0; 
+      void *client_ptr=0;
 #   endif
 
     /* unpack descriptor record */
@@ -486,9 +486,9 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     } else{
 
-       if(rc = armci_op_strided(msginfo->operation, scale, proc,
+       if((rc = armci_op_strided(msginfo->operation, scale, proc,
                buf_ptr, buf_stride_arr, loc_ptr, loc_stride_arr,
-               count, stride_levels, 1))
+               count, stride_levels, 1)))
                armci_die("server_strided: op from buf failed",rc);
     }
 }

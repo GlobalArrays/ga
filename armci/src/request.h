@@ -109,6 +109,7 @@ extern void *armci_server_code(void *data);
 extern void armci_rcv_req(void *mesg, void *phdr, void *pdescr, 
                           void *pdata, int *buflen);
 extern void armci_client_connect_to_servers();
+extern int armci_send_req_msg(int proc, void *buf, int bytes);
 #endif
 
 #endif

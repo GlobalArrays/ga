@@ -4,6 +4,9 @@
 #include "memlock.h"
 #include "copy.h"
 #include <stdio.h>
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 #define DEBUG_ 0
 #define DEBUG1 1
@@ -37,7 +40,6 @@ int hdrlen = sizeof(request_header_t);
 int dscrlen = ((request_header_t*)MessageSndBuffer)->dscrlen;
 int datalen = ((request_header_t*)MessageSndBuffer)->datalen;
 int operation = ((request_header_t*)MessageSndBuffer)->operation;
-int cluster = armci_clus_id(proc);
 int bytes;
 
     if(((request_header_t*)MessageSndBuffer)->operation == GET)
@@ -88,10 +90,8 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
 \*/
 char *armci_rcv_data(int proc)
 {
-    int cluster = armci_clus_id(proc);
     int datalen = ((request_header_t*)MessageSndBuffer)->datalen;
     char *buf;
-    int stat;
 
     if(DEBUG_) {
         printf("%d:armci_rcv_data:  bytes= %d \n", armci_me, datalen);
@@ -129,8 +129,6 @@ void armci_rcv_strided_data(int proc, char *buf, int datalen, void *ptr,
                             int strides, int stride_arr[], int count[])
 {
     char *databuf;
-    int cluster = armci_clus_id(proc);
-    int stat;
 
     if(DEBUG_){
         printf("%d: armci_rcv_strided_data: expecting datalen %d from %d\n",

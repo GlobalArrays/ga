@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#ifdef WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 #include <math.h>
 #include <mpi.h>
 #include "armci.h"
@@ -234,7 +239,7 @@ double time_acc(double *src_buf, double *dst_buf, int chunk, int loop,
 
 void test_1D()
 {
-    int i, j;
+    int i;
     int src, dst;
     int ierr;
     double *buf;
@@ -328,7 +333,7 @@ void test_1D()
 
 void test_2D()
 {
-    int i, j;
+    int i;
     int src, dst;
     int ierr;
     double *buf;
@@ -420,7 +425,7 @@ void test_2D()
 }
 
     
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     
     MPI_Init(&argc, &argv);
@@ -467,6 +472,7 @@ main(int argc, char **argv)
     /* done */
     ARMCI_Finalize();
     MPI_Finalize();
+    return(0);
 }    
 
 void fill_array(double *arr, int count, int which)
