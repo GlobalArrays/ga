@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.38 2003-03-05 17:08:04 d3g293 Exp $ */
+/* $Id: base.c,v 1.39 2003-03-05 17:14:11 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2647,7 +2647,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
     nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
     nga_acc_(&_ga_tmp, lo, hi, ptr_a, ld, one);
     /* copy and data back to original global array */
-    ga_zero_(g_a);
+    ga_sync_();
     nga_get_(&_ga_tmp, lo, hi, ptr_a, ld);
     ga_destroy_(&_ga_tmp);
   }
