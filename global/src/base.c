@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.90 2004-08-23 23:18:49 manoj Exp $ */
+/* $Id: base.c,v 1.91 2004-09-15 18:50:27 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1099,7 +1099,7 @@ void ga_set_ghosts_(Integer *g_a, Integer *width)
     GA[ga_handle].width[i] = (int)width[i];
     if (width[i] > 0) GA[ga_handle].ghosts = 1;
   }
-  if (GA[ga_handle].actv == 1) {
+  if (GA[ga_handle].actv == 0) {
     if (!ga_set_ghost_info_(g_a))
       ga_error("Could not allocate update information for ghost cells",0);
   }
