@@ -5,6 +5,10 @@
 #include <string.h>
 #define MAXDIM 7
 
+#if defined(CRAY) && defined(__crayx1)
+#undef CRAY
+#endif
+
 #ifdef FALSE
 #undef FALSE
 #endif

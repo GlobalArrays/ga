@@ -24,7 +24,7 @@ extern void ga_error(char*, long);
 #endif
 
 
-#if defined(CRAY) || defined(NEC)
+#if (defined(CRAY) && !defined(__crayx1)) || defined(NEC)
 #        include <sys/statfs.h>
 #        define  STATVFS statfs
 #elif defined(KSR) || defined(__FreeBSD__) || defined(MACX)

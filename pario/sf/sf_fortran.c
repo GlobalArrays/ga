@@ -1,4 +1,9 @@
 #include "sf.h"
+
+#if defined(CRAY) && defined(__crayx1)
+#undef CRAY
+#endif
+ 
 #ifdef CRAY
 #      include <fortran.h>
 #endif

@@ -10,6 +10,9 @@ typedef long dra_size_t;
 #define  DRA_W  ELIO_W
 
 
+#if defined(CRAY) && defined(__crayx1)
+#undef CRAY
+#endif
 
 
 #define  DRA_REQ_INVALID -333

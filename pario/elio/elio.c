@@ -26,12 +26,16 @@
  * distribute to other US Government contractors.
  */
 
-#ifdef CRAY_T3E
+#if defined(CRAY_T3E)
 #define FFIO 1
 #endif
 
+
 #include "eliop.h"
 
+#if defined(CRAY) && defined(__crayx1)
+#undef CRAY
+#endif
 
 #if  defined(AIX) || defined(DECOSF) || defined(SGITFP) || defined(SGI64) || defined(SGI_N32) || defined(CRAY) || defined(PARAGON)
      /* systems with Asynchronous I/O */

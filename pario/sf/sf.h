@@ -15,7 +15,7 @@ extern Integer sf_create _ARGS_((char* fname, SFsize_t* size_hard_limit,
 extern void sf_errmsg _ARGS_((int code, char *msg));
 
 #undef _ARGS_
-#if defined(CRAY) || defined(WIN32)
+#if (defined(CRAY)&& !defined(__crayx1)) || defined(WIN32)
 #define sf_write_ SF_WRITE
 #define sf_read_ SF_READ
 #define sf_wait_ SF_WAIT

@@ -42,16 +42,16 @@ endif
 # a rule to build excutables: the filetype of an executable must be .x
 # for example, foo.x corresponds to either foo.f or foo.F or foo.c
 #
-%.x : %.o $(TESTUTIL) $(LIBRARY_PATH)  $(EXTRA)
+%.x : %.o $(TESTUTIL) $(FULL_LIBRARY_PATH)  $(EXTRA)
 	if [ -f $(basename $@).c ]; then\
-		$(LINK.c) $(NOPT) $(CLDOPT) -o $@ $< $(LIBRARY_PATH) $(LIBS) $(CLIBS);\
+		$(LINK.c) $(NOPT) $(CLDOPT) -o $@ $< $(FULL_LIBRARY_PATH) $(LIBS) $(CLIBS);\
 	else\
-		$(LINK.f) $(NOPT) $(FOPT_REN) $(FLDOPT) -o $@ $< $(TESTUTIL) $(LIBRARY_PATH) $(LIBS) $(FLIBS);\
+		$(LINK.f) $(NOPT) $(FOPT_REN) $(FLDOPT) -o $@ $< $(TESTUTIL) $(FULL_LIBRARY_PATH) $(LIBS) $(FLIBS);\
 	fi
 
 # *.p file is required for tcgmsg `parallel' command to run your program
 %.p:
 	echo "`whoami` `hostname` 4 `pwd`/$* ." > $@
 
-$(patsubst %,$(LIBRARY_PATH)(%),disk.arrays.o): drap.h dra.h 
-$(patsubst %,$(LIBRARY_PATH)(%),disk.param.o) : drap.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),disk.arrays.o): drap.h dra.h 
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),disk.param.o) : drap.h

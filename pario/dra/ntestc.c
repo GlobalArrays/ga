@@ -37,8 +37,9 @@ void test_io_int()
   int g_a, g_b, d_a;
   int ga_idot, plus, minus;
   int i, j, k, index, req, err, type, op, ndim=NDIM;
-  int me, nproc, dims[MAXDIM], reqdim[MAXDIM];
-  int chunk[MAXDIM], lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
+  int me, nproc;
+  dra_size_t dims[MAXDIM], reqdim[MAXDIM];
+  dra_size_t chunk[MAXDIM], lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
   logical status;
   char filename[200], fname[200];
   char name[80];

@@ -5,6 +5,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#if defined(CRAY) && defined(__crayx1)
+#undef CRAY
+#endif
+
 #if defined(CRAY)
 #include <fortran.h>
 #endif

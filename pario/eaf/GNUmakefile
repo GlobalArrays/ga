@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.4 2000-04-17 22:41:05 d3h325 Exp $
+#$Id: GNUmakefile,v 1.5 2003-07-09 20:10:20 d3h325 Exp $
 
           OBJ = eaf.o eaf_f2c.o
       LIBRARY = libpario.a
@@ -16,5 +16,5 @@ include ../makefile.h
 include ../../config/makefile.h
 include ../../config/makelib.h
 
-test.x:	test.o $(LIBRARY_PATH)
-	$(LINK.f) $(FLDOPT) -o $@ test.o $(LIBRARY_PATH) $(LIBS) $(FLIBS)
+test.x:	test.o $(FULL_LIBRARY_PATH)
+	$(LINK.f) $(FLDOPT) -o $@ test.o $(FULL_LIBRARY_PATH) $(LIBS) $(FLIBS)

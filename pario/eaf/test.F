@@ -10,6 +10,7 @@
 #  define FNAME   BASE_NAME
 #endif
 
+
       program eaftest
 c     
 c     call test1
@@ -103,7 +104,9 @@ c.................................
                goto 1000
             endif
 
+#ifndef __crayx1
             call sleep(10)
+#endif
             write(0,*) 'Finished reading file=',fnum, 
      $           '  fd=',fd(fnum),
      $           '  iter=',iter

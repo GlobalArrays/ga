@@ -1,6 +1,10 @@
 #include "eliop.h"
 #include "chemio.h"
  
+#if defined(CRAY) && defined(__crayx1)
+#undef CRAY
+#endif
+
 #define DEBUG_ 0
  
 /*\ determines directory path for a given file
