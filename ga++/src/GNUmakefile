@@ -23,10 +23,10 @@ endif
 OBJ = init_term.o GAServices.o GlobalArray.o
 
 #--------------------------- extra definitions ---------------------
-LIB_DEFINES += -DGA_C_CORE	
+
 LIB_INCLUDES += -I$(INCDIR)
 
-# we USE_MPI requires us to acces MPI headers to handle ga_mpi_communicator.
+# USE_MPI requires us to access MPI headers to handle ga_mpi_communicator.
 # Here "__MPIPP" is defined. The reason is, in some platforms(I experienced in 
 # Linux using MVICH - VIA) when mpiCC(C++ compiler) is used, name conflicts 
 # arise between namespace MPI in mpi++.h and command line MACRO definition 
