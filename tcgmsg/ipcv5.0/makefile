@@ -16,7 +16,7 @@ MAKEFLAGS = -j1
 
       OBJ_CORE = pbegin.o queues.o shmem.o usleep.o nnodes.o nodeid.o \
                  signals.o synch.o error.o async_send.o waitall.o busy.o\
-                 mitob.o mdtob.o
+                 mitob.o mdtob.o mitod.o mdtoi.o
 
 ifeq ($(MACHINE),SUN)
        CC = gcc
@@ -45,7 +45,7 @@ ifeq ($(MACHINE),CRAY-T3E)
 
  OBJ_CORE = pbegin.o queues.o  usleep.o mitob.o mdtob.o\
             async_send.o mtime.o memalign.o drand48.o busy.o \
-            random.o
+            random.o mitod.o mdtoi.o
 endif
 
      JOBJ = fexit.o timer.o getmem.o mxv_fortran.o
@@ -68,7 +68,7 @@ ifeq ($(MACHINE),CRAY-T3D)
 
  OBJ_CORE = pbegin.o queues.o  usleep.o mitob.o mdtob.o\
             async_send.o mtime.o memalign.o drand48.o busy.o \
-            random.o
+            random.o mitod.o mdtoi.o
 endif
 
      JOBJ = fexit.o timer.o getmem.o mxv_fortran.o
