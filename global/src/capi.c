@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.23 2000-04-10 22:06:11 jju Exp $ */
+/* $Id: capi.c,v 1.24 2000-09-21 20:42:58 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -398,7 +398,7 @@ void NGA_Proc_topology(int g_a, int proc, int coord[])
      Integer p=(Integer)proc;
      Integer ndim = ga_ndim_(&a);
      nga_proc_topology_(&a, &p, _ga_work);
-     COPYINDEX_F2C(_ga_work, coord,ndim);  
+     COPY(int,_ga_work, coord,ndim);  
 }
 
 
