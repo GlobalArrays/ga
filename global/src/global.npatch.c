@@ -1,25 +1,35 @@
-/*              
- * Copyright (c)  1999 Pacific Northwest National Laboratory
- * All rights reserved.
+/* 
+ * module: global.npatch.c
+ * author: Jialin Ju
+ * description: Implements the n-dimensional patch operations:
+ *              - fill patch
+ *              - copy patch
+ *              - scale patch
+ *              - dot patch
+ *              - add patch
+ * 
+ * DISCLAIMER
  *
- *	Author: Jialin Ju, PNNL
+ * This material was prepared as an account of work sponsored by an
+ * agency of the United States Government.  Neither the United States
+ * Government nor the United States Department of Energy, nor Battelle,
+ * nor any of their employees, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
+ * ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY,
+ * COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT,
+ * SOFTWARE, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT
+ * INFRINGE PRIVATELY OWNED RIGHTS.
+ *
+ *
+ * ACKNOWLEDGMENT
+ *
+ * This software and its documentation were produced with United States
+ * Government support under Contract Number DE-AC06-76RLO-1830 awarded by
+ * the United States Department of Energy.  The United States Government
+ * retains a paid-up non-exclusive, irrevocable worldwide license to
+ * reproduce, prepare derivative works, perform publicly and display
+ * publicly by or for the US Government, including the right to
+ * distribute to other US Government contractors.
  */
-
-/***
-   NAME
-     global.npatch.c
-   PURPOSE
-     Implements the n-dimensional patch operations:
-	- fill patch
-	- copy patch
-	- scale patch
-	- dot patch
-	- add patch
-   NOTES
-     
-   HISTORY
-     jju - Jun 28, 1999: Created.
-***/
 
 #include "global.h"
 #include "globalp.h"
@@ -92,10 +102,21 @@ static logical ngai_comp_patch(Integer andim, Integer *alo, Integer *ahi,
                           Integer bndim, Integer *blo, Integer *bhi)
 {
     Integer i;
+    Integer ndim;
     
-    if(andim != bndim) return FALSE;
+    if(andim > bndim) {
+        ndim = bndim;
+        for(i=ndim; i<andim; i++)
+            if(alo[i] != ahi[i]) return FALSE;
+    }
+    else if(andim < bndim) {
+        ndim = andim;
+        for(i=ndim; i<bndim; i++)
+            if(blo[i] != bhi[i]) return FALSE;
+    }
+    else ndim = andim;
     
-    for(i=0; i<andim; i++)
+    for(i=0; i<ndim; i++)
         if((alo[i] != blo[i]) || (ahi[i] != bhi[i])) return FALSE;
 
     return TRUE; 
@@ -385,7 +406,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
 
     /* compare patches and distributions of g_a and g_b */
     if(!(ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi) &&
-          ga_compare_distr_(g_a, g_b) && (transp=='n') ) ){
+         (transp=='n') ) ){
         
         /* either patches or distributions do not match:
          *        - create a temp array that matches distribution of g_a
@@ -407,9 +428,13 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     nga_distribution_(&g_A, &me, loA, hiA);
     nga_distribution_(&g_B, &me, loB, hiB);
     
-    if(!ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB))
+/*    if(!ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB))
         ga_error(" patches mismatch ",0);
+*/
 
+    /* A[83:125,1:1]  <==> B[83:125] */
+    if(andim > bndim) andim = bndim; /* need more work */
+    
     isum = 0; dsum = 0.; zsum.real = 0.; zsum.imag = 0.;
     
     /*  determine subsets of my patches to access  */
