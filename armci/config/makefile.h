@@ -128,6 +128,10 @@ ifeq ($(TARGET),LINUX64)
    GLOB_DEFINES += -DLINUX
          _CPU = $(shell uname -m)
 
+ifneq (,$(findstring mpicc,$(_CC)))
+         _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
+endif
+
 ifeq  ($(_CPU),ia64)
      FC=efc
      CC=gcc
@@ -143,7 +147,6 @@ ifeq  ($(_CPU),ia64)
      COPT= -O3
   endif
   ifeq ($(_CC),ecc)
-     EXTRA_OBJ = tas.o
      COPT_REN= -w1 #-fno-alias    
   endif
 endif
@@ -153,10 +156,9 @@ ifeq  ($(_CPU),alpha)
      CC = ccc
      FOPT_REN = -assume no2underscore -fpe3 -check nooverflow
      FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
-    ifeq ($(_CC),ccc)
-       EXTRA_OBJ = tas.o
-    endif
 endif
+     EXTRA_OBJ = tas.o
+
    
 endif
 #----------------------------- Fujitsu ------------------------------
