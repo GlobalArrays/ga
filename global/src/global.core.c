@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.4 1995-02-02 23:13:26 d3g681 Exp $*/
+/*$Id: global.core.c,v 1.5 1995-02-15 17:55:23 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -427,7 +427,7 @@ Integer *msg_buf = (Integer*)MessageRcv->buffer;
 #   endif
 
     /* synchronize, and then we are ready to do some real work */
-    ga_sync_();
+    { Integer tsyn = GA_TYPE_SYN; synch_(&tsyn); }
 }
 
 
