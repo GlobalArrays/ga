@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.36 2003-02-26 22:42:48 d3g293 Exp $ */
+/* $Id: base.c,v 1.37 2003-03-05 00:34:51 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -720,7 +720,7 @@ logical nga_create_config(Integer type,
                          Integer ndim,
                          Integer dims[],
                          char* array_name,
-                         Integer chunk[],
+                         Integer *chunk,
                          Integer p_handle,
                          Integer *g_a)
 {
@@ -814,7 +814,7 @@ logical nga_create(Integer type,
                    Integer ndim,
                    Integer dims[],
                    char* array_name,
-                   Integer chunk[],
+                   Integer *chunk,
                    Integer *g_a)
 {
   Integer p_handle = ga_default_config_();
@@ -2538,11 +2538,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
   nprocs = ga_cluster_nprocs_(&inode);
   zero = 0;
 
-  /* Check to make sure that all nodes contain the same number
-     of processors. Throw an error otherwise */
-  if (nnodes*nprocs != ga_nnodes_()) 
-    ga_error("Not all nodes contain the same number of processors",GAme);
-
+    printf("p[%d] ga_merge_mirrored: handle(orig): %d\n",(int)GAme,(int)handle);
   zproc = ga_cluster_procid_(&inode, &zero);
   zptr = GA[handle].ptr[zproc];
   map = GA[handle].mapc;
@@ -2552,61 +2548,132 @@ void FATR ga_merge_mirrored_(Integer *g_a)
   type = GA[handle].type;
   ndim = GA[handle].ndim;
 
-  /* check to see if there is any buffer space between the data
-     associated with each processor that needs to be zeroed out
-     before performing the merge */
-  if (zproc == GAme) {
-    for (i=0; i<nprocs; i++) {
-      /* Find out from mapc data how many elements are supposed to be located
-         on this processor. Start by converting processor number to indices */
-      itmp = i;
-      for (j=0; j<ndim; j++) {
-        index[j] = itmp%(Integer)blocks[j];
-        itmp = (itmp - index[j])/(Integer)blocks[j];
-      }
+  /* Check whether or not all nodes contain the same number
+     of processors. */
+  if (nnodes*nprocs == ga_nnodes_() && 0)  {
+    /* check to see if there is any buffer space between the data
+       associated with each processor that needs to be zeroed out
+       before performing the merge */
+    if (zproc == GAme) {
+      for (i=0; i<nprocs; i++) {
+        /* Find out from mapc data how many elements are supposed to be located
+           on this processor. Start by converting processor number to indices */
+        itmp = i;
+        for (j=0; j<ndim; j++) {
+          index[j] = itmp%(Integer)blocks[j];
+          itmp = (itmp - index[j])/(Integer)blocks[j];
+        }
 
-      nelem = 1;
-      count = 0;
-      for (j=0; j<ndim; j++) {
-        if (index[j] < (Integer)blocks[j]-1) {
-          nelem *= (Integer)(map[index[j]+1+count] - map[index[j]+count]
-                 + 2*width[j]);
-        } else {
-          nelem *= (Integer)(dims[j] - map[index[j]+count] + 1 + 2*width[j]);
+        nelem = 1;
+        count = 0;
+        for (j=0; j<ndim; j++) {
+          if (index[j] < (Integer)blocks[j]-1) {
+            nelem *= (Integer)(map[index[j]+1+count] - map[index[j]+count]
+                   + 2*width[j]);
+          } else {
+            nelem *= (Integer)(dims[j] - map[index[j]+count] + 1 + 2*width[j]);
+          }
+          count += (Integer)blocks[j];
         }
-        count += (Integer)blocks[j];
-      }
-      /* We now have the total number of elements located on this processor.
-         Find out if the location of the end of this data set matches the
-         origin of the data on the next processor. If not, then zero data in
-         the gap. */
-      nelem *= GAsizeof(type);
-      bptr = GA[handle].ptr[ga_cluster_procid_(&inode, &i)];
-      bptr += nelem;
-      if (i<nprocs-1) {
-        j = i+1;
-        nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
-        if (bptr != nptr) {
-          bytes = (Integer)nptr - (Integer)bptr;
-          bzero(bptr, bytes);
+        /* We now have the total number of elements located on this processor.
+           Find out if the location of the end of this data set matches the
+           origin of the data on the next processor. If not, then zero data in
+           the gap. */
+        nelem *= GAsizeof(type);
+        bptr = GA[handle].ptr[ga_cluster_procid_(&inode, &i)];
+        bptr += nelem;
+        if (i<nprocs-1) {
+          j = i+1;
+          nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
+          if (bptr != nptr) {
+            bytes = (Integer)nptr - (Integer)bptr;
+            bzero(bptr, bytes);
+          }
         }
       }
-    }
-    /* find total number of bytes containing global array */
-    total = (Integer)bptr - (Integer)zptr;
-    total /= GAsizeof(type);
-    /*convert from C data type to ARMCI type */
-    switch(type) {
-      case C_FLOAT: atype=ARMCI_FLOAT; break;
-      case C_DBL: atype=ARMCI_DOUBLE; break;
-      case C_LONG: atype=ARMCI_LONG; break;
-      case C_INT: atype=ARMCI_INT; break;
-      case C_DCPL: atype=ARMCI_DOUBLE; break;
+      /* find total number of bytes containing global array */
+      total = (Integer)bptr - (Integer)zptr;
+      total /= GAsizeof(type);
+      /*convert from C data type to ARMCI type */
+      switch(type) {
+        case C_FLOAT: atype=ARMCI_FLOAT; break;
+        case C_DBL: atype=ARMCI_DOUBLE; break;
+        case C_LONG: atype=ARMCI_LONG; break;
+        case C_INT: atype=ARMCI_INT; break;
+        case C_DCPL: atype=ARMCI_DOUBLE; break;
+        default: ga_error("type not supported",type);
+      }
+      /* now that gap data has been zeroed, do a global sum on data */
+      armci_msg_gop_scope(SCOPE_MASTERS, zptr, total, "+", atype);
+    } 
+  } else {
+    Integer _ga_tmp;
+    Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
+    Integer idims[MAXDIM], iwidth[MAXDIM], ichunk[MAXDIM];
+    void *ptr_a, *ptr_l;
+    void *one;
+    double d_one = 1.0;
+    int i_one = 1;
+    float f_one = 1.0;
+    long l_one = 1;
+    double c_one[2];
+    c_one[0] = 1.0;
+    c_one[1] = 0.0;
+
+    /* choose one as scaling factor in accumulate */
+    switch (type) {
+      case C_FLOAT: one = &f_one; break;
+      case C_DBL: one = &d_one; break;
+      case C_LONG: one = &l_one; break;
+      case C_INT: one = &i_one; break;
+      case C_DCPL: one = &c_one; break;
       default: ga_error("type not supported",type);
     }
-    /* now that gap data has been zeroed, do a global sum on data */
-    armci_msg_gop_scope(SCOPE_MASTERS, zptr, total, "+", atype);
-  } 
+    
+  /* Nodes contain a mixed number of processors. Create a temporary GA to
+     complete merge operation. */
+    count = 0;
+    for (i=0; i<ndim; i++) {
+      idims[i] = (Integer)dims[i];
+      iwidth[i] = (Integer)width[i];
+      ichunk[i] = 0;
+    }
+    if (!nga_create_ghosts(type, ndim, idims,
+        iwidth, "temporary", ichunk, &_ga_tmp)) 
+      ga_error("Unable to create work array for merge",GAme);
+    printf("p[%d] ga_merge_mirrored: temp array handle: %d\n",
+           (int)GAme,(int)(GA_OFFSET+_ga_tmp));
+    for (i=0; i<ga_nnodes_(); i++) {
+      printf("p[%d] ga_merge_mirrored: ptr[%d]: %d\n",(int)GAme,
+       (int)i,(int)GA[handle].ptr[i]);
+    }
+    ga_zero_(&_ga_tmp);
+    printf("p[%d] ga_merge_mirrored: ga_zero completed\n",(int)GAme);
+    /* Find data on this processor and accumulate in temporary global array */
+    nga_distribution_(g_a,&GAme,lo,hi);
+    printf("p[%d] ga_merge_mirrored: distribution found\n",(int)GAme);
+    nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+    printf("p[%d] ga_merge_mirrored: pointer found\n",(int)GAme);
+    for (i=0; i<ndim; i++) {
+      printf("p[%d] ga_merge_mirrored: lo[%d]: %d hi[%d]: %d ld[%d]: %d\n",(int)GAme,
+       (int)i,(int)lo[i],(int)i,(int)hi[i],(int)i,(int)ld[i]);
+    }
+    printf("p[%d] ga_merge_mirrored: handle: %d\n",(int)GAme,(int)handle);
+    ptr_l = GA[handle].ptr[GAme];
+    printf("p[%d] ga_merge_mirrored: got ptr okay\n",(int)GAme);
+    ga_sync_();
+    printf("p[%d] ga_merge_mirrored: ptr_a: %d g_a.ptr: %d\n",(int)GAme,
+            (int)ptr_a,(int)ptr_l);
+    ga_sync_();
+    nga_acc_(&_ga_tmp, lo, hi, ptr_a, ld, one);
+    printf("p[%d] ga_merge_mirrored: accumulate completed\n",(int)GAme);
+    /* copy and data back to original global array */
+    nga_access_ptr(&_ga_tmp, lo, hi, &ptr_a, ld);
+    printf("p[%d] ga_merge_mirrored: second pointer found\n",(int)GAme);
+    nga_put_(g_a, lo, hi, ptr_a, ld);
+    printf("p[%d] ga_merge_mirrored: nga_put completed\n",(int)GAme);
+    ga_destroy_(&_ga_tmp);
+  }
   if (local_sync_end) ga_sync_();
   GA_POP_NAME;
 }
