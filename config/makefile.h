@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.94 2003-12-05 06:18:18 vinod Exp $
+# $Id: makefile.h,v 1.95 2003-12-11 03:34:32 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -310,14 +310,8 @@ ifneq (,$(findstring mpif,$(_FC)))
          _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /efc/ { print "efc" ; exit } ' )
 endif
 ifdef USE_INTEGER4
-ifeq ($(FC),efc)
-    FOPT_REN += -i4  
-endif
 else
-GLOB_DEFINES += -DEXT_INT
-ifeq ($(FC),efc)
-    FOPT_REN +=-i8
-endif
+  GLOB_DEFINES += -DEXT_INT
 endif
          _CPU = $(shell uname -m)
 #
@@ -335,12 +329,17 @@ ifeq ($(FC),efc)
      FOPT_REN += -cm -w90 -w95 -align 
 endif
 ifeq ($(CC),ecc)
-     COPT_REN += -fno-alias  
+     COPT_REN += -fno-alias  -ftz
 endif
 ifeq ($(CC),gcc) 
      COPT=-O3
      COPT_REN +=  -funroll-loops 
 endif
+  ifdef USE_INTEGER4
+     FOPT_REN += -i4
+  else
+     FOPT_REN += -i8 
+  endif
 ifneq (,$(findstring efc,$(_FC)))
       FLD_REN = -Vaxlib
     GLOB_DEFINES += -DIFCLINUX
