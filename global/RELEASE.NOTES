@@ -51,8 +51,11 @@ DIRECTORY STRUCTURE
 
 HISTORY
   version 3.0, November 15th, 1999:
-              * support for n-dimensional arrays (n<=7)
-              * added n-dimensional testing program: ngatest.x;
+              * This is the most significant update of the GA package to date: 
+                all source code for the core functionality of the library 
+                has been rewritten, ~90% of the library code is new/changed; 
+              * added support for n-dimensional arrays (n<=7);
+              * added several n-dimensional test programs;
               * updated utility tools: ga_print, ga_summarize, which
                 support n-dimensional operations;
               * improved interoperability with MPI on clusters of
