@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.9 2001-04-27 00:55:31 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.10 2001-06-28 00:06:52 edo Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -46,6 +46,9 @@
 #elif defined(IFCLINUX)
 #define ARGC_ xargc
 #define ARGV_ xargv
+#elif defined(SGILINUX)
+#define ARGC_ _f90argc
+#define ARGV_ _f90argv
 #else
 #if defined(LINUX)
 /*---------------------------------------------------------------------------*\
