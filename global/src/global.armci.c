@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.27 1999-11-03 17:59:49 jju Exp $ */
+/* $Id: global.armci.c,v 1.28 1999-11-09 21:48:39 jju Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2306,15 +2306,6 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         ga_error("gai_malloc failed", GAnproc);
 
     /* initialize the counters and nelem */
-    for(kk=0; kk<GAnproc; kk++) {
-        count[kk] = 0; nelem[kk] = 0;
-        ga_distribution_(g_a, &kk,
-                         &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
-        
-        /* get address of the first element owned by proc */
-        gaShmemLocation(kk, *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),&(ldp[kk]));
-    }
-    
     /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
     for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
@@ -2322,6 +2313,15 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
             ga_error(err_string,*g_a);
         }
         nelem[INT_MB[pindex+k]]++;
+    }
+    for(kk=0; kk<GAnproc; kk++) {
+        count[kk] = 0; nelem[kk] = 0;
+        ga_distribution_(g_a, &kk,
+                         &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
+        
+        /* get address of the first element owned by proc */
+        if(nelem[kk] > 0) gaShmemLocation(kk, *g_a, ilo[kk], jlo[kk],
+                                          &(ptr_ref[kk]),&(ldp[kk]));
     }
     
     /* determine limit for message size --  v,i, & j will travel together */
@@ -2769,15 +2769,6 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         ga_error("gai_malloc failed", GAnproc);
 
     /* initialize the counters and nelem */
-    for(kk=0; kk<GAnproc; kk++) {
-        count[kk] = 0; nelem[kk] = 0;
-        ga_distribution_(g_a, &kk,
-                         &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
-        
-        /* get address of the first element owned by proc */
-        gaShmemLocation(kk, *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),&(ldp[kk]));
-    }
-
     /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
     for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
@@ -2786,7 +2777,17 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         }
         nelem[INT_MB[pindex+k]]++;
     }
-   
+
+    for(kk=0; kk<GAnproc; kk++) {
+        count[kk] = 0; nelem[kk] = 0;
+        ga_distribution_(g_a, &kk,
+                         &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
+        
+        /* get address of the first element owned by proc */
+        if(nelem[kk] > 0) gaShmemLocation(kk, *g_a, ilo[kk], jlo[kk],
+                                          &(ptr_ref[kk]),&(ldp[kk]));
+    }
+    
     item_size = GA[GA_OFFSET + *g_a].elemsize;
     GAbytes.gattot += (double)item_size**nv;
     GAbytes.gatloc += (double)item_size* nelem[GAme];
