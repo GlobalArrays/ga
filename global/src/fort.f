@@ -1,7 +1,6 @@
       double complex function ga_zdot(g_a,g_b)
       implicit none
       integer g_a, g_b
-      external gai_dot
       ga_zdot = (0.,0.)
       call gai_zdot(g_a,g_b,ga_zdot)
       end
