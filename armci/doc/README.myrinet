@@ -26,6 +26,8 @@
 
 2. Setting up environment
 
+   *  Note: We strongly recommend using GM version 1.2 or higher
+
    * ARMCI on top of GM requires the following environment variables to 
      be set (Examples are taken on colony cluster of PNNL, using csh)
    
@@ -91,3 +93,5 @@
 
    email: j_nieplocha@pnl.gov
    phone: (509) 372-4469
+
+
