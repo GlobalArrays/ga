@@ -146,8 +146,8 @@ void eaf_print_stats(int fd)
 
     printf("\n");
     printf("------------------------------------------------------------\n");
-    printf("EAF file %d: \"%s\" size=%lu bytes\n", 
-	   fd, file[fd].fname, (unsigned long) len);
+    printf("EAF file %d: \"%s\" size=%lld bytes\n", 
+	   fd, file[fd].fname, (unsigned long long) len);
     printf("------------------------------------------------------------\n");
     printf("               write      read    awrite     aread      wait\n");
     printf("               -----      ----    ------     -----      ----\n");
