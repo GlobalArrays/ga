@@ -7,7 +7,7 @@
 #endif
 
       program ga_test
-c $Id: testmatmult.F,v 1.2 2003-08-01 00:14:25 manoj Exp $
+c $Id: testmatmult.F,v 1.3 2003-08-20 22:01:45 manoj Exp $
 c
 c     test ga_dgemm
 c     compile with make FLD_REN="optimized blas" testmatmult.x
@@ -19,7 +19,7 @@ c
 c
       implicit none
       integer num_m,num_n,num_k,nummax,howmany,ntrans
-      parameter (nummax=512,howmany=2,ntrans=4)
+      parameter (nummax=1024,howmany=2,ntrans=4)
       integer num1
       parameter(num1=nummax)
       integer i,ii
@@ -34,9 +34,9 @@ c
       data transa/'n','t','n','t'/
       data transb/'n','n','t','t'/
 
-      data nums_m/256,512/
-      data nums_n/256,512/
-      data nums_k/256,512/
+      data nums_m/512,1024/
+      data nums_n/512,1024/
+      data nums_k/512,1024/
 
 #include "mafdecls.fh"
 #include "global.fh"
