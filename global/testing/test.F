@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.43 2002-09-17 17:07:38 vinod Exp $
+c $Id: test.F,v 1.44 2002-09-20 17:10:45 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -1565,7 +1565,7 @@ c---------------------------------------------------------------------
 #include "global.fh"
 #include "testutil.fh"
       integer n, m
-      parameter (n =100) 
+      parameter (n =10) 
       parameter (m=2*n)
       real a(n,n), b(n,n), v(m), w(m)
       integer iv(m), jv(m)
