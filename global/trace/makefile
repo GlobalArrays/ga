@@ -1,7 +1,7 @@
 include ../Makefile.h
 
 LIBM = -lma
-INCLUDE = ../../ma/src
+INCLUDE = ../../ma
 OBJ =  usc.o ga_trace.o
 
 # TARGET to DEFINE translation 
