@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.95 2004-10-20 21:25:58 vinod Exp $ */
+/* $Id: base.c,v 1.96 2004-10-25 19:21:13 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -85,7 +85,9 @@ int _max_global_array = MAX_ARRAYS;
 Integer *GA_proclist;
 int* GA_Proc_list = NULL;
 int* GA_inv_Proc_list=NULL;
+int GA_World_Proc_Group = -1;
 int GA_Default_Proc_Group = -1;
+int GA_Init_Proc_Group = -2;
 
 /* MA addressing */
 DoubleComplex   *DCPL_MB;           /* double precision complex base address */
@@ -563,7 +565,7 @@ logical FATR ga_is_mirrored_(Integer *g_a)
 {
   Integer ret = FALSE;
   Integer handle = GA_OFFSET + *g_a;
-  Integer p_handle = GA[handle].p_handle;
+  Integer p_handle = (Integer)GA[handle].p_handle;
   if (p_handle >= 0) {
      if (PGRP_LIST[p_handle].mirrored) ret = TRUE;
   }
@@ -965,7 +967,7 @@ Integer ga_create_handle_()
 
   /*** fill in Global Info Record for g_a ***/
   gai_init_struct(ga_handle);
-  GA[ga_handle].p_handle = GA_Default_Proc_Group;
+  GA[ga_handle].p_handle = GA_Init_Proc_Group;
   GA[ga_handle].name[0] = '\0';
   GA[ga_handle].mapc[0] = -1;
   GA[ga_handle].irreg = 0;
@@ -1057,7 +1059,11 @@ void ga_set_pgroup_(Integer *g_a, Integer *p_handle)
   GA_PUSH_NAME("ga_set_pgrouop");
   if (GA[ga_handle].actv == 1)
     ga_error("Cannot set processor configuration on array that has been allocated",0);
-  GA[ga_handle].p_handle = (int) (*p_handle);
+  if (PGRP_LIST[*p_handle].actv == 1) {
+    GA[ga_handle].p_handle = (int) (*p_handle);
+  } else {
+    ga_error("Processor group does not exist",0);
+  }
   GA_POP_NAME;
 }
 
@@ -1173,6 +1179,10 @@ logical ga_allocate_( Integer *g_a)
     ga_error("Insufficient data to create global array",0);
 
   p_handle = (Integer)GA[ga_handle].p_handle;
+  if (p_handle == (Integer)GA_Init_Proc_Group) {
+    GA[ga_handle].p_handle = GA_Default_Proc_Group;
+    p_handle = GA_Default_Proc_Group;
+  }
   ga_pgroup_sync_(&p_handle);
   GA_PUSH_NAME("ga_allocate");
 
@@ -1208,14 +1218,9 @@ logical ga_allocate_( Integer *g_a)
     /* ddb(ndim, dims, GAnproc, blk, pe);*/
     if (p_handle >= 0) {
        ddb_h2(ndim, dims, PGRP_LIST[p_handle].map_nproc, 0.0,
-	      (Integer)0, blk, pe);
+              (Integer)0, blk, pe);
     } else {
-       if (GA_Default_Proc_Group > 0) {
-	  ddb_h2(ndim, dims, PGRP_LIST[GA_Default_Proc_Group].map_nproc, 0.0,
-		 (Integer)0, blk, pe);
-       } else {
-	  ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
-       }
+       ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
     }
 
     for(d=0, map=mapALL; d< ndim; d++){
@@ -1273,7 +1278,7 @@ logical ga_allocate_( Integer *g_a)
   GAstat.numcre ++;
 
   GA[ga_handle].actv = 1;
-  /* If only one node is being used, set proc list to default value */
+  /* If only one processor is being used, set proc list to default value */
   if (ga_cluster_nnodes_() == 1) {
     GA[ga_handle].p_handle = GA_Default_Proc_Group;
   }
@@ -1292,8 +1297,8 @@ logical ga_allocate_( Integer *g_a)
   }
   GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
   /*** determine which portion of the array I am supposed to hold ***/
-  if (GA_Default_Proc_Group > 0) {
-     me_local = (Integer)PGRP_LIST[GA_Default_Proc_Group].map_proc_list[GAme];
+  if (p_handle > 0) {
+     me_local = (Integer)PGRP_LIST[p_handle].map_proc_list[GAme];
      nga_distribution_(g_a, &me_local, GA[ga_handle].lo, hi);
   } else {
      nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
@@ -1311,13 +1316,9 @@ logical ga_allocate_( Integer *g_a)
   if(GA_memory_limited){
      status = (GA_total_memory >= 0) ? 1 : 0;
      if (p_handle > 0) {
-	ga_pgroup_igop(p_handle,GA_TYPE_GSM, &status, 1, "*");
+        ga_pgroup_igop(p_handle,GA_TYPE_GSM, &status, 1, "*");
      } else {
-	if (GA_Default_Proc_Group > 0) {
-	   ga_pgroup_igop(GA_Default_Proc_Group,GA_TYPE_GSM, &status, 1, "*");
-	} else {
-	   ga_igop(GA_TYPE_GSM, &status, 1, "*");
-	}
+        ga_igop(GA_TYPE_GSM, &status, 1, "*");
      }
   }else status = 1;
 
@@ -2086,6 +2087,7 @@ Integer ga_handle, p_handle, lproc, tproc;
 
    ga_check_handleM(g_a, "nga_distribution");
    ga_handle = (GA_OFFSET + *g_a);
+   /* BJP
    p_handle = GA[ga_handle].p_handle;
    if (GA_Default_Proc_Group != -1) {
       tproc = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[*proc];
@@ -2097,6 +2099,9 @@ Integer ga_handle, p_handle, lproc, tproc;
    } else {
      lproc = PGRP_LIST[p_handle].map_proc_list[tproc];
    }
+   */
+   /* BJP */
+   lproc = *proc;
    ga_ownsM(ga_handle, lproc, lo, hi);
 
 }
@@ -2347,7 +2352,7 @@ int local_sync_begin;
 
     local_sync_begin = _ga_sync_begin; 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    p_handle = GA[ga_handle].p_handle;
+    p_handle = (Integer)GA[ga_handle].p_handle;
     if(local_sync_begin)ga_pgroup_sync_(&p_handle);
 
     GAstat.numdes ++; /*regardless of array status we count this call */
@@ -2713,14 +2718,18 @@ Integer p_handle;
    ga_ComputeIndexM(&proc, ndim, proc_s, GA[ga_handle].nblock); 
 
 /*   printf("p[%d] computed index: %d\n",(int)GAme,(int)proc); */
+   /* BJP
    p_handle = GA[ga_handle].p_handle;
    if (p_handle >= 0) {
       proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
    }
+   */
    *owner = GA_Proc_list ? GA_Proc_list[proc]: proc;
+   /* BJP
    if (GA_Default_Proc_Group != -1) {
       *owner = PGRP_LIST[GA_Default_Proc_Group].map_proc_list[*owner];
    }
+   */
    
    return TRUE;
 }
@@ -2798,7 +2807,7 @@ Integer  d, dpos, ndim, elems, p_handle;
    */
    ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,GA[ga_handle].nblock);
 
-   p_handle = GA[ga_handle].p_handle;
+   p_handle = (Integer)GA[ga_handle].p_handle;
    for(i= 0; i< elems; i++){ 
       Integer _lo[MAXDIM], _hi[MAXDIM];
       Integer  offset;
@@ -2822,11 +2831,15 @@ Integer  d, dpos, ndim, elems, p_handle;
       for(d = 0; d< ndim; d++)
               map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
+      /* BJP
       if (p_handle < 0) {
         owner = proc;
       } else {
 	owner = PGRP_LIST[p_handle].inv_map_proc_list[proc];
       }
+      */
+      /* BJP */
+      owner = proc;
       proclist[i] = owner;
       /* Update to proc_subscript so that it corresponds to the next
        * processor in the block of processors containing the patch */
@@ -2835,6 +2848,7 @@ Integer  d, dpos, ndim, elems, p_handle;
    }
 
    /* Remap processor list (if necessary)*/
+   /* BJP
    if (GA_Default_Proc_Group != -1) {
       Integer tmp_list[MAX_NPROC];
       for (i=0; i<*np; i++) {
@@ -2844,6 +2858,7 @@ Integer  d, dpos, ndim, elems, p_handle;
 	 proclist[i] = PGRP_LIST[GA_Default_Proc_Group].map_proc_list[tmp_list[i]];
       }
    }
+   */
 
    return(TRUE);
 }

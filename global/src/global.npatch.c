@@ -167,7 +167,7 @@ void nga_copy_patch(char *trans,
     Integer bvalue[MAXDIM], bunit[MAXDIM];
     Integer factor_idx1[MAXDIM], factor_idx2[MAXDIM], factor_data[MAXDIM];
     Integer base;
-    Integer me= ga_nodeid_();
+    Integer me_a, me_b;
     Integer a_grp, b_grp, anproc, bnproc;
     int use_put, has_intersection;
     int local_sync_begin,local_sync_end;
@@ -180,6 +180,8 @@ void nga_copy_patch(char *trans,
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     a_grp = ga_get_pgroup_(g_a);
     b_grp = ga_get_pgroup_(g_b);
+    me_a = ga_pgroup_nodeid_(&a_grp);
+    me_b = ga_pgroup_nodeid_(&b_grp);
     anproc = ga_get_pgroup_size_(&a_grp);
     bnproc = ga_get_pgroup_size_(&b_grp);
     if (anproc <= bnproc) {
@@ -232,9 +234,9 @@ void nga_copy_patch(char *trans,
     
     /* now find out cordinates of a patch of g_a that I own */
     if (use_put) {
-      nga_distribution_(g_a, &me, los, his);
+      nga_distribution_(g_a, &me_a, los, his);
     } else {
-      nga_distribution_(g_b, &me, los, his);
+      nga_distribution_(g_b, &me_b, los, his);
     }
     
     /* copy my share of data */

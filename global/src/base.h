@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.32 2004-10-20 21:25:58 vinod Exp $ */
+/*$Id: base.h,v 1.33 2004-10-25 19:21:13 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -184,11 +184,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
                                                                               \
       ga_ownsM(g_handle, proc, _lo, _hi);                                     \
       _p_handle = GA[g_handle].p_handle;                                      \
-      if (_p_handle != 0) {                                                   \
-        _iproc = proc;                                                        \
-      } else {                                                                \
-        _iproc = PGRP_LIST[_p_handle].inv_map_proc_list[proc];                \
-      }                                                                       \
+      _iproc = proc;                                                          \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
   __CRAYX1_PRAGMA("_CRI novector");                                         \
       for(_d=0; _d < _last; _d++)            {                                \

@@ -54,15 +54,18 @@ int local_sync_begin,local_sync_end;
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    p_handle = ga_get_pgroup_(g_a);
+   
    if(local_sync_begin) ga_pgroup_sync_(&p_handle);
 
-   me = ga_nodeid_();
+   me = ga_pgroup_nodeid_(&p_handle);
 
    ga_check_handle(g_a, "ga_zero");
    GA_PUSH_NAME("ga_zero");
 
    nga_inquire_internal_(g_a, &type, &ndim, dims);
+   elems = ga_pgroup_get_world_();
    nga_distribution_(g_a, &me, lo, hi);
+
    if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
  
       if (ga_has_ghosts_(g_a)) {
@@ -181,7 +184,7 @@ void *ptr_a, *ptr_b;
 \*/
 void FATR ga_copy_(Integer *g_a, Integer *g_b)
 {
-Integer  ndim, ndimb, type, typeb, me = ga_nodeid_();
+Integer  ndim, ndimb, type, typeb, me_a, me_b;
 Integer dimsb[MAXDIM],i;
 Integer nseg;
 Integer a_grp, b_grp, anproc, bnproc;
@@ -197,6 +200,8 @@ int local_sync_begin,local_sync_end,use_put;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    a_grp = ga_get_pgroup_(g_a);
    b_grp = ga_get_pgroup_(g_b);
+   me_a = ga_pgroup_nodeid_(&a_grp);
+   me_b = ga_pgroup_nodeid_(&b_grp);
    anproc = ga_get_pgroup_size_(&a_grp);
    bnproc = ga_get_pgroup_size_(&b_grp);
    if (anproc <= bnproc) {
@@ -231,9 +236,9 @@ int local_sync_begin,local_sync_end,use_put;
         Copy operation is straightforward */
 
      if (use_put) {
-       nga_distribution_(g_a, &me, lo, hi);
+       nga_distribution_(g_a, &me_a, lo, hi);
      } else {
-       nga_distribution_(g_b, &me, lo, hi);
+       nga_distribution_(g_b, &me_b, lo, hi);
      }
 
      if(lo[0]>0){
@@ -251,7 +256,7 @@ int local_sync_begin,local_sync_end,use_put;
      if (ga_is_mirrored_(g_a)) {
        /* Source array is mirrored and destination
           array is distributed. Assume source array is consistent */
-       nga_distribution_(g_b, &me, lo, hi);
+       nga_distribution_(g_b, &me_b, lo, hi);
        if (lo[0]>0) {
          nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
          nga_get_(g_a, lo, hi, ptr_b, ld);
@@ -269,7 +274,7 @@ int local_sync_begin,local_sync_end,use_put;
          }
          ga_fast_merge_mirrored_(g_b);
        } else {
-         nga_distribution_(g_a, &me, lo, hi);
+         nga_distribution_(g_a, &me_a, lo, hi);
          if (lo[0] > 0) {
            nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
            nga_put_(g_b, lo, hi, ptr_a, ld);
@@ -312,13 +317,13 @@ Integer andim, adims[MAXDIM];
 Integer bndim, bdims[MAXDIM];
 
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   me = ga_nodeid_();
 
    GA_PUSH_NAME("ga_dot");
    a_grp = ga_get_pgroup_(g_a);
    b_grp = ga_get_pgroup_(g_b);
    if (a_grp != b_grp)
      ga_error("Both arrays must be defined on same group",0L);
+   me = ga_pgroup_nodeid_(&a_grp);
 
    if(ga_compare_distr_(g_a,g_b) == FALSE ||
       ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b)) {
@@ -562,7 +567,7 @@ int local_sync_begin,local_sync_end;
    grp_id = ga_get_pgroup_(g_a);
    if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
-   me = ga_nodeid_();
+   me = ga_pgroup_nodeid_(&grp_id);
 
    ga_check_handle(g_a, "ga_scale");
    GA_PUSH_NAME("ga_scale");
@@ -646,7 +651,6 @@ int local_sync_begin,local_sync_end;
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_ADD,__FILE__,__LINE__);
 #endif
-   me = ga_nodeid_();
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -659,6 +663,7 @@ int local_sync_begin,local_sync_end;
    if (a_grp != b_grp || b_grp != c_grp)
      ga_error("All three arrays must be on same group for ga_add",0L);
 
+   me = ga_pgroup_nodeid_(&a_grp);
    if((ga_compare_distr_(g_a,g_b) == FALSE) ||
       (ga_compare_distr_(g_a,g_c) == FALSE) ||
        ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b) || ga_has_ghosts_(g_c)) {
