@@ -71,7 +71,7 @@ DoublePrecision _dra_dbl_buffer[DRA_DBL_BUF_SIZE];        /* DRA data buffer */
 char*           _dra_buffer = (char*)_dra_dbl_buffer;
 #else
 char*           _dra_buffer;
-int             _idx_buffer, _handle_buffer;
+Integer         _idx_buffer, _handle_buffer;
 #endif
 
 disk_array_t *DRA;           /* array of struct for basic info about DRA arrays*/
@@ -699,7 +699,8 @@ Integer handle;
         DRA[handle].mode = *mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
 
-        dai_read_param(DRA[handle].fname, *d_a);
+        if(dai_read_param(DRA[handle].fname, *d_a))return((Integer)-1);
+
         DRA[handle].indep = dai_file_config(filename); /*check file configuration*/
 
         if(dai_io_manage(*d_a)){ 

@@ -71,7 +71,7 @@ extern disk_array_t *DRA;
 
 #define dai_error ga_error
 
-extern void dai_read_param(char* filename, Integer d_a);
+extern int dai_read_param(char* filename, Integer d_a);
 extern void dai_write_param(char* filename, Integer d_a);
 extern void dai_delete_param(char* filename, Integer d_a);
 extern int dai_file_config(char* filename);

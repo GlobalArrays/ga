@@ -62,6 +62,7 @@ stat_t info;
     if(status == 1) return(1);
     else if(status == nproc) return 0;
          else dai_error("dai_file_config: confusing file configuration",status); 
+    return 1;
 #endif
 }
     
@@ -69,7 +70,7 @@ stat_t info;
 
 /*\ Retrive parameters of a disk array from the disk
 \*/
-void dai_read_param(char* filename,Integer d_a)
+int dai_read_param(char* filename,Integer d_a)
 {
 FILE *fd;
 char param_filename[MAX_HD_NAME_LEN];
@@ -77,6 +78,7 @@ Integer len;
 Integer me=ga_nodeid_();
 Integer brd_type=DRA_BRD_TYPE, orig, dra_hndl=d_a+DRA_OFFSET;
 long input;
+int rc=0;
 char dummy[HDLEN];
 
   ga_sync_();
@@ -90,37 +92,42 @@ char dummy[HDLEN];
     strcpy(param_filename,filename);
     strcat(param_filename,HD_EXT);
 
-    if(!(fd=fopen(param_filename,"r")))
-                    dai_error("dai_read_param: open failed",0);   
+    if((fd=fopen(param_filename,"r"))){
 
-    if(!fscanf(fd,"%ld", &input))  dai_error("dai_read_param:dim1",0);
-    DRA[dra_hndl].dim1 = (Integer) input;
-    if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:dim2",0);
-    DRA[dra_hndl].dim2 = (Integer) input;
+      if(!fscanf(fd,"%ld", &input))  dai_error("dai_read_param:dim1",0);
+      DRA[dra_hndl].dim1 = (Integer) input;
+      if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:dim2",0);
+      DRA[dra_hndl].dim2 = (Integer) input;
 
-    if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:type",0);
-    DRA[dra_hndl].type = (Integer) input;
-    if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:layout",0);
-    DRA[dra_hndl].layout = (Integer) input;
+      if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:type",0);
+      DRA[dra_hndl].type = (Integer) input;
+      if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:layout",0);
+      DRA[dra_hndl].layout = (Integer) input;
 
-    if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk1",0);
-    DRA[dra_hndl].chunk1 = (Integer) input;
-    if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk2",0);
-    DRA[dra_hndl].chunk2 = (Integer) input;
+      if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk1",0);
+      DRA[dra_hndl].chunk1 = (Integer) input;
+      if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk2",0);
+      DRA[dra_hndl].chunk2 = (Integer) input;
 
-    fgets(dummy,HDLEN,fd); /*advance to next line*/
-    if(!fgets(DRA[dra_hndl].name,DRA_MAX_NAME,fd))dai_error("dai_read_param:name",0);
+      fgets(dummy,HDLEN,fd); /*advance to next line*/
+      if(!fgets(DRA[dra_hndl].name,DRA_MAX_NAME,fd))dai_error("dai_read_param:name",0);
 
-    if(fclose(fd))dai_error("dai_read_param: fclose failed",0);
+      if(fclose(fd))dai_error("dai_read_param: fclose failed",0);
+   }else rc = -1;
   }
+
+
+  orig = 0; len=sizeof(int);
+  ga_brdcst_(&brd_type, &rc, &len, &orig);
+  if(rc) return(rc);
 
   /* process 0 broadcasts data to everybody else                            */
   /* for 6 Integers there shouldn't be alignement padding in the structure */
   /* the integers are followed by array name */
-  len = 6*sizeof(Integer)+DRA_MAX_NAME+1; orig =0;
+  len = 6*sizeof(Integer)+DRA_MAX_NAME+1;
   ga_brdcst_(&brd_type, DRA + dra_hndl, &len, &orig);
   
-  ga_sync_();
+  return(rc);
 }
   
 
