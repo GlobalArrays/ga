@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.40 2003-11-05 22:11:32 manoj Exp $ */
+/* $Id: matmul.c,v 1.41 2003-11-14 01:05:16 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -167,6 +167,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     Integer min_tasks = MINTASKS; /* Increase tasks if there is load imbalance.
 				     This controls the granularity of chunks */
     Integer  max_chunk, nproc=ga_nnodes_(), tmpa, tmpb, tmpc;
+    Integer avail = ga_memory_avail(atype);
 
     tmpa = *Ichunk;
     tmpb = *Jchunk;
@@ -179,12 +180,12 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     }
     else
        max_chunk = (Integer) max3(*Ichunk, *Jchunk, *Kchunk);
+
+    ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
     
     if ( max_chunk > CHUNK_SIZE/nbuf) {
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
-       Integer avail = ga_memory_avail(atype);
-       ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
       if(avail<MINMEM && ga_nodeid_()==0) ga_error("NotEnough memory",avail);
       *elems = (Integer)(avail*0.9); /* Donot use every last drop */
       
