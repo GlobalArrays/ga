@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.34 2002-01-23 17:51:32 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.35 2002-01-25 22:10:31 edo Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -3204,7 +3204,7 @@ Integer handle=*d_a+DRA_OFFSET;
 
 /*\ SET DEBUG FLAG FOR DRA OPERATIONS TO TRUE OR FALSE
 \*/
-void dra_set_debug_(logical *flag)
+void FATR dra_set_debug_(logical *flag)
 {
   if (*flag) {
     dra_debug_flag = TRUE;
