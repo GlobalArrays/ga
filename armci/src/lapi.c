@@ -1,4 +1,4 @@
-/* $Id: lapi.c,v 1.12 2001-05-25 22:09:19 d3h325 Exp $ */
+/* $Id: lapi.c,v 1.13 2001-12-05 23:18:40 d3h325 Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>
@@ -178,9 +178,8 @@ lapi_cntr_t *pcmpl_cntr, *pcntr = &buf_cntr.cntr;
 int rc;
 
       msginfo->tag.cntr= &buf_cntr.cntr;
+      msginfo->tag.buf = msginfo+1;
 
-      /* starting address is modified depending on the operation */
-      msginfo->tag.buf = MessageSndBuffer;
       if(msginfo->operation==GET || msginfo->operation==LOCK){
 
          if(lapi_max_uhdr_data_sz < msginfo->dscrlen){
@@ -211,7 +210,6 @@ int rc;
          /* trace completion of store ops */
          pcmpl_cntr = &cmpl_arr[msginfo->to].cntr; 
 
-         msginfo->tag.buf +=sizeof(request_header_t);
       }
 
       if(msginfo->operation==PUT || ACC(msginfo->operation)) 
@@ -264,8 +262,7 @@ char* armci_rcv_data(int proc, request_header_t *msginfo)
 
 /*     fprintf(stderr,"%d received %lf\n",armci_me, *((double*)MessageSndBuffer));*/
 
-     /* this needs to be changed - msginfo is overwritten with data */
-     return (char*)msginfo;
+     return (char*)(msginfo+1);
 }
 
 
@@ -276,7 +273,7 @@ void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
                         void *ptr, int strides, int stride_arr[], int count[])
 {
      CLEAR_COUNTER(buf_cntr);
-     armci_read_strided(ptr, strides, stride_arr, count, (char*)msginfo);
+     armci_read_strided(ptr, strides, stride_arr, count, (char*)(msginfo+1));
 }
 
 
