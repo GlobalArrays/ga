@@ -12,10 +12,12 @@ INTERRUPT_AVAILABLE = SP1 IPSC DELTA PARAGON
 #
 ifeq ($(VERSION),SHMEM)
      ifeq ($(TARGET),KSR)
-          GA_SYNC = barrier.KSR.o 
+          GA_SYNC = barrier.KSR.o
           EXTRA = ksrcopy.o
      else
-          GA_SYNC =  semaphores.o 
+     ifneq ($(TARGET),CRAY-T3D)
+          GA_SYNC =  semaphores.o
+     endif
      endif
 endif
 #
@@ -23,8 +25,10 @@ endif
 #                Core Routines of GAs
 #
 ifeq ($(VERSION),SHMEM)
-     GA_CORE = global.common.o global.shm.o global.ma.o shmem.o signal.o \
-               global.patch.o shmalloc.o
+     ifneq ($(TARGET),CRAY-T3D)
+          IPC = shmem.o signal.o shmalloc.o
+     endif
+     GA_CORE = global.shm.o global.common.o  global.ma.o global.patch.o $(IPC)
 else
      GA_CORE = global.common.o global.tcgmsg.o ma_addressing.o hsort.scat.o\
                global.patch.o  
@@ -38,7 +42,7 @@ GA_OBJ = $(GA_CORE) $(GA_SYNC) $(GA_HANDLER)
 #                  Linear Algebra
 #
 GA_ALG_BLAS = global.alg.o ga_dgemm.o ga_symmetrize.o ga_diag_seq.o rsg.o\
-              rs-mod.o ga_solve_seq.o ga_transpose.o ga_cholesky.o ga_dgemm_seq.o
+              rs-mod.o ga_solve_seq.o ga_transpose.o ga_cholesky.o 
 #
 ifeq ($(DIAG),PAR)
      GA_ALG_DIAG = ga_diag.o rsg.o
@@ -52,7 +56,7 @@ GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #
 #                 Utility Routines
 #
-GA_EXTRA_COMMON = ffflush.o ifill.o dfill.o ga_summarize.o
+GA_EXTRA_COMMON = ffflush.o ifill.o dfill.o ga_summarize.o 
 ifneq ($(VERSION),SHMEM)
      GA_EXTRA = lenstr.o icopy.o dcopy.o 
 endif

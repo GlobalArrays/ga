@@ -1,7 +1,7 @@
 # Makefile.h, Thu May 26 15:01:41 PDT 1994
 #
 # Define TARGET to be the machine you wish to build for
-# (one of SUN, SGI, IBM, KSR)
+# (one of SUN, SGI, IBM, KSR, SP1, CRAY-T3D, IPSC, PARAGON)
 #
 # Define VERSION of memory 
 # (SHMEM/DISMEM) - on some machines you can have either
@@ -11,17 +11,20 @@
 #
            FC = f77
            CC = cc
-         FOPT = -O
-         COPT = -O
+         FOPT = -g 
+         COPT = -g
+GLOB_INCLUDES = -I../../ma
            AR = ar
        RANLIB = ranlib
           CPP = /usr/lib/cpp
         SHELL = /bin/sh
            MV = /bin/mv
            RM = /bin/rm
+         MAKE = make
       INSTALL =
       ARFLAGS = rcv
     EXPLICITF = FALSE
+#   MAKEFLAGS = -j
 
 
 ifeq ($(GA_TRACE), YES)
@@ -37,12 +40,34 @@ ifeq ($(TARGET),SUN)
 #
 #
 #          CC = gcc
-     FOPT_REN = -Nl100
-GLOB_INCLUDES = -I../../ma
+     FOPT_REN = -Nl100 -dalign
+     COPT_REN = -dalign
      WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
 		-Wwrite-strings
  GLOB_DEFINES = -DSUN
 endif
+
+
+#
+#................................ CRAY-T3D ..................................
+#
+ifeq ($(TARGET),CRAY-T3D)
+#
+# Sun running SunOS
+#
+#
+       LIBSMA = ../../../libsma
+           FC = cf77
+         MAKE = /usr/local/bin/gmake
+          CPP = /lib/cpp
+       RANLIB = echo
+#GLOB_INCLUDES = -I../../ma -I$(LIBSMA)
+     FOPT_REN = -Ccray-t3d -Wf-dp -Wl"-Drdahead=on" 
+     COPT_REN = -Wl"-Drdahead=on" 
+ GLOB_DEFINES = -DCRAY_T3D
+    EXPLICITF = TRUE
+endif
+
 
 #................................ KSR ......................................
 #
@@ -52,7 +77,6 @@ ifeq ($(TARGET),KSR)
 #
        RANLIB = echo
      FOPT_REN = -r8
-GLOB_INCLUDES = -I../../ma
  GLOB_DEFINES = -DKSR
         CDEFS = -DEXT_INT
 endif
@@ -68,23 +92,7 @@ ifeq ($(TARGET),SGI)
 #
        RANLIB = echo
       FLD_REN = -v -Wl,-U
-GLOB_INCLUDES = -I../../ma
  GLOB_DEFINES = -DSGI
-endif
-
-#................................ SGITFP ......................................
-#
-ifeq ($(TARGET),SGITFP)
-#
-# SGI running IRIX
-#
-#
-        CDEFS = -DEXT_INT
-       FOPT   = -i8 -d8 -O 
-       RANLIB = echo
-      FLD_REN = -i8 -d8 -v -Wl,-U
-GLOB_INCLUDES = -I../../ma
- GLOB_DEFINES = -DSGITFP -DSGI
 endif
 
 #................................ IPSC ......................................
@@ -102,7 +110,6 @@ ifeq ($(TARGET),IPSC)
 
      FOPT_REN = -Knoieee -Mquad -Mreentrant -Mrecursive -node
      COPT_REN = -Knoieee -node
-GLOB_INCLUDES = -I. -I../../ma
  GLOB_DEFINES = -DNX -DIPSC -DNO_BCOPY
     EXPLICITF = TRUE
 endif
@@ -112,18 +119,14 @@ endif
 ifeq ($(TARGET),PARAGON)
 #
 # PARAGON running OS>=1.2 with NX (crosscompilation on Sun)
-# Paragon running OS1.2.2 with nx (compiled on Paragon, ORNL)
 #
            FC = if77
            CC = icc
            AR = ar860
        RANLIB = echo
-         FOPT = -O1
-         COPT = -O1
 
      FOPT_REN = -Knoieee -Mquad -Mreentrant -Mrecursive -nx
      COPT_REN = -Knoieee -nx
-GLOB_INCLUDES = -I. -I../../ma
  GLOB_DEFINES = -DPARAGON -DNX -DIPSC -DNO_BCOPY
     EXPLICITF = FALSE
 endif
@@ -136,6 +139,7 @@ ifeq ($(TARGET),SP1)
 
          EUIH = /usr/lpp/euih/eui
            FC = xlf
+         MAKE = gnumake
 
 GLOB_INCLUDES = -I. -I../../ma -I$(EUIH)
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
@@ -151,7 +155,6 @@ ifeq ($(TARGET),IBM)
 # IBM RS/6000 under AIX  
 #
           FC = xlf
-GLOB_INCLUDES = -I../../ma
 GLOB_DEFINES = -DIBM -DEXTNAME -DAIX
     FOPT_REN = -qEXTNAME 
 #    FLD_REN = -b rename:.dscal_,.dscal
