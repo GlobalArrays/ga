@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.68 2004-03-25 20:18:38 d3g293 Exp $ */
+/* $Id: base.c,v 1.69 2004-03-31 21:07:28 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1122,20 +1122,12 @@ logical ga_allocate_( Integer *g_a)
   if (ga_cluster_nnodes_() == 1) {
     GA[ga_handle].p_handle = -1;
   }
-  /* set corner flag, if it has not already been set and set up message
-     passing data */
-  if (GA[ga_handle].corner_flag == -1) {
-    i = 1;
-  } else {
-    i = GA[ga_handle].corner_flag;
-  }
-  ga_set_ghost_corner_flag_(g_a, &i);
+  GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
 
   for( i = 0; i< ndim; i++){
      GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
                             / (double)GA[ga_handle].dims[i];
   } 
-  GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
   /*** determine which portion of the array I am supposed to hold ***/
   nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
   for( i = 0, nelem=1; i< ndim; i++){
@@ -1163,6 +1155,15 @@ logical ga_allocate_( Integer *g_a)
   /* If array is mirrored, evaluate first and last indices */
   ngai_get_first_last_indices(g_a);
 
+  /* set corner flag, if it has not already been set and set up message
+     passing data */
+  if (GA[ga_handle].corner_flag == -1) {
+    i = 1;
+  } else {
+    i = GA[ga_handle].corner_flag;
+  }
+
+  ga_set_ghost_corner_flag_(g_a, &i);
   ga_sync_();
   if (status) {
     GAstat.curmem += GA[ga_handle].size;
