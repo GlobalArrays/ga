@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.19 2000-06-14 22:49:57 d3h325 Exp $ */
+/* $Id: message.c,v 1.20 2000-06-15 00:47:30 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -140,7 +140,7 @@ void armci_msg_bcast_scope(int scope, void *buf, int len, int root)
     
     /* printf("%d: scope=%d left=%d right=%d up=%d\n",armci_me, scope, left, right, up);*/
 
-    if(armci_me != Root) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, up);
+    if(armci_me != Root && up!=-1) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, up);
     if (left > -1)  armci_msg_snd(ARMCI_TAG, buf, len, left);
     if (right > -1) armci_msg_snd(ARMCI_TAG, buf, len, right);
 }
@@ -407,7 +407,7 @@ void *origx =x;
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
            else ddoop(ndo, op, (double*)x, work);
          }
-         if (armci_me != root) armci_msg_snd(tag, x, len, up);
+         if (armci_me != root && up!=-1) armci_msg_snd(tag, x, len, up);
 
          n -=ndo;
          x = len + (char*)x;
@@ -452,7 +452,7 @@ int ndo, len, lenmes, ratio;
            else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
            else ddoop(ndo, op, (double*)x, work);
          }
-         if (armci_me != root) armci_msg_snd(tag, x, len, up);
+         if (armci_me != root && up!=-1) armci_msg_snd(tag, x, len, up);
 
          n -=ndo;
          x = len + (char*)x;
