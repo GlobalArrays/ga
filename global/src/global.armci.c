@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.29 1999-11-09 22:00:01 jju Exp $ */
+/* $Id: global.armci.c,v 1.30 1999-11-13 05:45:18 bjohnson Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -1046,12 +1046,12 @@ Integer  i, ga_handle, status;
  *  Fortran version
 \*/
 #if defined(CRAY) || defined(WIN32)
-logical ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
+logical FATR ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
                          map2, nblock2, g_a)
      Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a;
      _fcd array_name;
 #else
-logical ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
+logical FATR ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
                          map2, nblock2, g_a, slen)
      Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a;
      char *array_name;
