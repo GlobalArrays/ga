@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.35 2003-03-07 23:44:29 manoj Exp $ */
+/* $Id: onesided.c,v 1.36 2003-04-02 23:21:26 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1113,10 +1113,12 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     Integer kk;
     Integer pindex, item_size;
     Integer proc, type=GA[GA_OFFSET + *g_a].type;
+    Integer nproc, p_handle, iproc;
 
     Integer *aproc, naproc; /* active processes and numbers */
     Integer *map;           /* map the active processes to allocated space */
     char *buf1, *buf2;
+    Integer handle = *g_a + GA_OFFSET;
     
     Integer *count;   /* counters for each process */
     Integer *nelem;   /* number of elements for each process */
@@ -1135,19 +1137,26 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     ga_check_handleM(g_a, "ga_scatter");
     GA_PUSH_NAME("ga_scatter");
     GAstat.numsca++;
+    /* determine how many processors are associated with array */
+    p_handle = GA[handle].p_handle;
+    if (p_handle < 0) {
+      nproc = GAnproc;
+    } else {
+      nproc = P_LIST[p_handle].map_nproc;
+    }
     
     /* allocate temp memory */
-    buf1 = gai_malloc((int) (GAnproc *4 +*nv)* (sizeof(Integer)));
-    if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
+    buf1 = gai_malloc((int) (nproc *4 +*nv)* (sizeof(Integer)));
+    if(buf1 == NULL) ga_error("gai_malloc failed", 3*nproc);
    
     owner = (Integer *)buf1;  
     count = owner+ *nv;  
-    nelem =  count + GAnproc;  
-    aproc = count + 2 * GAnproc;  
-    map = count + 3 * GAnproc;  
+    nelem =  count + nproc;  
+    aproc = count + 2 * nproc;  
+    map = count + 3 * nproc;  
     
     /* initialize the counters and nelem */
-    for(kk=0; kk<GAnproc; kk++) {
+    for(kk=0; kk<nproc; kk++) {
         count[kk] = 0; nelem[kk] = 0;
     }
     
@@ -1157,11 +1166,16 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
             sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
             ga_error(err_string,*g_a);
         }
-        nelem[owner[k]]++;
+        if (p_handle < 0) {
+          iproc = owner[k];
+        } else {
+          iproc = P_LIST[p_handle].map_proc_list[owner[k]];
+        }
+        nelem[iproc]++;
     }
 
     naproc = 0;
-    for(k=0; k<GAnproc; k++) if(nelem[k] > 0) {
+    for(k=0; k<nproc; k++) if(nelem[k] > 0) {
         aproc[naproc] = k;
         map[k] = naproc;
         naproc ++;
@@ -1184,6 +1198,11 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     ldp = jhi + naproc;
 
     for(kk=0; kk<naproc; kk++) {
+        if (p_handle < 0) {
+          iproc = aproc[kk];
+        } else {
+          iproc = P_LIST[p_handle].inv_map_proc_list[aproc[kk]];
+        }
         ga_distribution_(g_a, &aproc[kk],
                          &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
         
@@ -1204,7 +1223,11 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     
     for(k=0; k<(*nv); k++){
         Integer this_count;
-        proc = owner[k]; 
+        if (p_handle < 0) {
+          proc = owner[k];
+        } else {
+          proc = P_LIST[p_handle].map_proc_list[owner[k]];
+        }
         this_count = count[proc]; 
         count[proc]++;
         proc = map[proc];
@@ -1228,8 +1251,13 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         desc.src_ptr_array = ptr_src[k];
         desc.dst_ptr_array = ptr_dst[k];
         desc.ptr_array_len = (int)nelem[aproc[k]];
+        if (p_handle < 0) {
+          iproc = aproc[k];
+        } else {
+          iproc = P_LIST[p_handle].inv_map_proc_list[aproc[k]];
+        }
         
-        rc = ARMCI_PutV(&desc, 1, (int)aproc[k]);
+        rc = ARMCI_PutV(&desc, 1, (int)iproc);
         if(rc) ga_error("scatter failed in armci",rc);
     }
 
@@ -1641,6 +1669,8 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     Integer *aproc, naproc; /* active processes and numbers */
     Integer *map;           /* map the active processes to allocated space */
     char *buf1, *buf2;
+    Integer handle = *g_a + GA_OFFSET;
+    Integer nproc, p_handle, iproc;
     
     Integer *count;   /* counters for each process */
     Integer *nelem;   /* number of elements for each process */
@@ -1660,18 +1690,26 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     GA_PUSH_NAME("ga_gather");
     GAstat.numgat++;
 
+    /* determine how many processors are associated with array */
+    p_handle = GA[handle].p_handle;
+    if (p_handle < 0) {
+      nproc = GAnproc;
+    } else {
+      nproc = P_LIST[p_handle].map_nproc;
+    }
+
     /* allocate temp memory */
-    buf1 = gai_malloc((int)(GAnproc *4  + *nv)*  (sizeof(Integer)));
-    if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
+    buf1 = gai_malloc((int)(nproc *4  + *nv)*  (sizeof(Integer)));
+    if(buf1 == NULL) ga_error("gai_malloc failed", 3*nproc);
     
     owner = (Integer *)buf1; 
     count = owner+ *nv;
-    nelem = count + GAnproc;
-    aproc = count + 2 * GAnproc;
-    map =   count + 3 * GAnproc;
+    nelem = count + nproc;
+    aproc = count + 2 * nproc;
+    map =   count + 3 * nproc;
    
     /* initialize the counters and nelem */
-    for(kk=0; kk<GAnproc; kk++) {
+    for(kk=0; kk<nproc; kk++) {
         count[kk] = 0; nelem[kk] = 0;
     }
     
@@ -1681,11 +1719,16 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
             sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
             ga_error(err_string, *g_a);
         }
-        nelem[owner[k]]++;
+        if (p_handle < 0) {
+          iproc = owner[k];
+        } else {
+          iproc = P_LIST[p_handle].map_proc_list[owner[k]];
+        }
+        nelem[iproc]++;
     }
 
     naproc = 0;
-    for(k=0; k<GAnproc; k++) if(nelem[k] > 0) {
+    for(k=0; k<nproc; k++) if(nelem[k] > 0) {
         aproc[naproc] = k;
         map[k] = naproc;
         naproc ++;
@@ -1707,7 +1750,12 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     ldp = jhi + naproc;
 
     for(kk=0; kk<naproc; kk++) {
-        ga_distribution_(g_a, &aproc[kk],
+        if (p_handle < 0) {
+          iproc = aproc[kk];
+        } else {
+          iproc = P_LIST[p_handle].inv_map_proc_list[aproc[kk]];
+        }
+        ga_distribution_(g_a, &iproc,
                          &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
         
         /* get address of the first element owned by proc */
@@ -1727,7 +1775,11 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     
     for(k=0; k<(*nv); k++){
         Integer this_count;
-        proc = owner[k]; 
+        if (p_handle < 0) {
+          proc = owner[k];
+        } else {
+          proc = P_LIST[p_handle].map_proc_list[owner[k]];
+        }
         this_count = count[proc]; 
         count[proc]++;
         proc = map[proc]; 
@@ -1750,8 +1802,12 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         desc.src_ptr_array = ptr_src[k];
         desc.dst_ptr_array = ptr_dst[k];
         desc.ptr_array_len = (int)nelem[aproc[k]];
-        
-        rc=ARMCI_GetV(&desc, 1, (int)aproc[k]);
+        if (p_handle < 0) {
+          iproc = aproc[k];
+        } else {
+          iproc = P_LIST[p_handle].inv_map_proc_list[aproc[k]]; 
+        }
+        rc=ARMCI_GetV(&desc, 1, (int)iproc);
         if(rc) ga_error("gather failed in armci",rc);
     }
 
