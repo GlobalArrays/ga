@@ -610,7 +610,7 @@ GA::GlobalArray::addDiagonal(const GA::GlobalArray * g_v)  const {
 
 void 
 GA::GlobalArray::getDiagonal(const GA::GlobalArray * g_a)  const {
-  GA_Get_diagonal(g_a->mHandle, mHandle);
+  GA_Get_diag(g_a->mHandle, mHandle);
 }
 
 void 
