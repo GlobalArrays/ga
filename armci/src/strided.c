@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.87 2004-04-14 00:59:15 manoj Exp $ */
+/* $Id: strided.c,v 1.88 2004-07-14 02:30:51 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -7,6 +7,9 @@
 
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
+#endif
+#ifdef ARMCI_PROFILE
+#include "armci_profile.h"
 #endif
 
 #define ARMCI_OP_2D(op, scale, proc, src, dst, bytes, count, src_stride, dst_stride,lockit)\
@@ -553,6 +556,10 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
     if (armci_me != proc)
        vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
 #endif
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(seg_count, stride_levels, proc, 
+				ARMCI_PROFILE_PUT);
+#endif
 
     ORDER(PUT,proc); /* ensure ordering */
     PREPROCESS_STRIDED(tmp_count);
@@ -615,6 +622,9 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 				 0,NULL);
     }
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided();
+#endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
@@ -663,6 +673,10 @@ int ARMCI_PutS_flag_dir(
     vampir_begin(ARMCI_PUTS,__FILE__,__LINE__);
     if (armci_me != proc)
        vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
+#endif
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(seg_count, stride_levels, proc, 
+				ARMCI_PROFILE_PUT);
 #endif
 
     ORDER(PUT,proc); /* ensure ordering */
@@ -734,6 +748,9 @@ int ARMCI_PutS_flag_dir(
        armci_put(&val,flag,sizeof(int),proc); 
     }
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided();
+#endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
@@ -771,6 +788,10 @@ int ARMCI_PutS_flag(
     vampir_begin(ARMCI_PUTS,__FILE__,__LINE__);
     if (armci_me != proc)
        vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
+#endif
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(seg_count, stride_levels, proc, 
+				ARMCI_PROFILE_PUT);
 #endif
 
     ORDER(PUT,proc); /* ensure ordering */
@@ -811,6 +832,9 @@ int ARMCI_PutS_flag(
        armci_put(&val,flag,sizeof(int),proc); 
     }
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided();
+#endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
@@ -847,6 +871,10 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     vampir_begin(ARMCI_GETS,__FILE__,__LINE__);
     if (armci_me != proc)
        vampir_start_comm(proc,armci_me,count[0],ARMCI_GETS);
+#endif
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(seg_count, stride_levels, proc, 
+				ARMCI_PROFILE_GET);
 #endif
 
     ORDER(GET,proc); /* ensure ordering */
@@ -916,7 +944,9 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
                              dst_stride_arr,count, stride_levels,0,NULL);
-
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided();
+#endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(proc,armci_me,count[0],ARMCI_GETS);
@@ -957,6 +987,10 @@ int ARMCI_AccS( int  optype,            /* operation */
     if (armci_me != proc)
         vampir_start_comm(armci_me,proc,count[0],ARMCI_ACCS);
 #endif
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(seg_count, stride_levels, proc, 
+				ARMCI_PROFILE_ACC);
+#endif
 
     ORDER(optype,proc); /* ensure ordering */
     PREPROCESS_STRIDED(tmp_count);
@@ -973,6 +1007,9 @@ int ARMCI_AccS( int  optype,            /* operation */
       rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
                       dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,NULL);
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided();
+#endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(armci_me,proc,count[0],ARMCI_ACCS);

@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.82 2004-06-29 22:57:36 manoj Exp $
+#$Id: GNUmakefile,v 1.83 2004-07-14 02:30:51 manoj Exp $
          FOPT = -O
          COPT = -O
 
@@ -129,6 +129,10 @@ endif
 ifdef GA_USE_VAMPIR
    OBJ += armci_vampir.o
    LIB_INCLUDES += -I../../include
+endif
+ifeq ($(ARMCI_PROFILE),YES) 
+   OBJ += armci_profile.o
+   LIB_DEFINES += -DARMCI_PROFILE
 endif
 
 LIB_DEFINES += $(MP_DEFINES) $(COMM_DEFINES)

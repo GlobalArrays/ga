@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.86 2004-06-28 17:45:18 manoj Exp $ */
+/* $Id: armci.c,v 1.87 2004-07-14 02:30:51 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -44,6 +44,9 @@
 
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
+#endif
+#ifdef ARMCI_PROFILE
+#include "armci_profile.h"
 #endif
 
 /* global variables */
@@ -441,6 +444,9 @@ int ARMCI_Init()
     armci_msg_barrier();
     armci_msg_gop_init();
 
+#ifdef ARMCI_PROFILE
+    armci_profile_init();
+#endif
 #ifdef GA_USE_VAMPIR
     vampir_end(ARMCI_INIT,__FILE__,__LINE__);
 #endif    
@@ -455,6 +461,9 @@ void ARMCI_Finalize()
     if(_armci_initialized)return;
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_FINALIZE,__FILE__,__LINE__);
+#endif
+#ifdef ARMCI_PROFILE
+    armci_profile_terminate();
 #endif
 
     _armci_terminating =1;;

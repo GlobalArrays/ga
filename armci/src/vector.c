@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.29 2003-10-23 04:55:26 d3h325 Exp $ */
+/* $Id: vector.c,v 1.30 2004-07-14 02:30:52 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -7,6 +7,9 @@
 
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
+#endif
+#ifdef ARMCI_PROFILE
+#include "armci_profile.h"
 #endif
 
 typedef struct {
@@ -379,6 +382,9 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
     if (armci_me != proc)
        vampir_start_comm(armci_me,proc,tot,ARMCI_PUTV);
 #endif
+#ifdef ARMCI_PROFILE
+    armci_profile_start_vector(darr, len, proc, ARMCI_PROFILE_PUT);
+#endif
 
     ORDER(PUT,proc); /* ensure ordering */
 #ifndef QUADRICS
@@ -405,6 +411,9 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
          rc = armci_pack_vector(PUT, NULL, darr, len, proc,NULL);
     }
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_vector();
+#endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(armci_me,proc,tot,ARMCI_PUTV);
@@ -449,6 +458,9 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     if (armci_me != proc)
        vampir_start_comm(proc,armci_me,tot,ARMCI_GETV);
 #endif
+#ifdef ARMCI_PROFILE
+    armci_profile_start_vector(darr, len, proc, ARMCI_PROFILE_GET);
+#endif
 
     ORDER(GET,proc); /* ensure ordering */
 #ifndef QUADRICS
@@ -475,6 +487,9 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
        rc = armci_pack_vector(GET, NULL, darr, len, proc,NULL);
     }
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_vector();
+#endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(proc,armci_me,tot,ARMCI_GETV);
@@ -516,6 +531,9 @@ int ARMCI_AccV( int op,              /* oeration code */
     if (armci_me != proc)
        vampir_start_comm(armci_me,proc,tot,ARMCI_ACCV);
 #endif
+#ifdef ARMCI_PROFILE
+    armci_profile_start_vector(darr, len, proc, ARMCI_PROFILE_ACC);
+#endif
 
     ORDER(op,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
@@ -529,6 +547,9 @@ int ARMCI_AccV( int op,              /* oeration code */
     else
          rc = armci_pack_vector(op, scale, darr, len, proc,NULL);
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_vector();
+#endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(armci_me,proc,tot,ARMCI_ACCV);
