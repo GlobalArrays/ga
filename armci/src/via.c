@@ -36,6 +36,10 @@
 #define FOURTY 40
 #define NONE -1
 #define GET_DATA_PTR(buf) (sizeof(request_header_t) + (char*)buf)
+#define CLIENT_STAMP 101
+#define SERV_STAMP 99 
+static char * client_tail;
+static char * serv_tail;
 
 typedef struct {
   VIP_NIC_HANDLE handle;
@@ -101,7 +105,7 @@ typedef struct {
 }vbuf_long_t;
 
 #define MAX_BUFS 4
-reqbuf_t client_buf_pool[2];
+reqbuf_t client_buf_pool[MAX_BUFS];
 
 static vbuf_t *serv_buf_arr, *spare_serv_buf;
 static vbuf_long_t *client_buf, *serv_buf;
@@ -137,6 +141,14 @@ void armci_wait_for_server()
 
 void armci_transport_cleanup()
 {
+  if(SERVER_CONTEXT) if(*serv_tail != SERV_STAMP){
+        printf("%d: server_stamp %d %d\n",armci_me,*serv_tail, SERV_STAMP);
+        armci_die("ARMCI Internal Error: end-of-buffer overwritten",0); 
+  }
+  if(!SERVER_CONTEXT) if(*client_tail != CLIENT_STAMP){
+        printf("%d: client_stamp %d %d\n",armci_me,*client_tail, CLIENT_STAMP);
+        armci_die("ARMCI Internal Error: end-of-buffer overwritten",0); 
+  }
 }
 
 
@@ -350,6 +362,10 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
      bytes = (clients+1)*sizeof(vbuf_t) + sizeof(vbuf_long_t) + extra;
      tmp = malloc(bytes + SIXTYFOUR);
      if(!tmp) armci_die("failed to malloc recv vbufs",bytes);
+
+     /* stamp the last byte */
+     serv_tail= tmp + bytes+SIXTYFOUR-1;
+     *serv_tail=SERV_STAMP;
 
      /* setup descriptor memory */
      mod = ((ssize_t)tmp)%SIXTYFOUR;
@@ -718,6 +734,10 @@ char *tmp;
    tmp = malloc(bytes + extra+ SIXTYFOUR);
    if(!tmp) armci_die("failed to malloc recv vbufs",bytes);
 
+   /* stamp the last byte */
+   client_tail= tmp + extra+ bytes+SIXTYFOUR-1;
+   *client_tail=CLIENT_STAMP;
+
    /* setup descriptor memory */
    mod = ((ssize_t)tmp)%SIXTYFOUR;
    client_descr_pool.descr= (VIP_DESCRIPTOR*)(tmp+SIXTYFOUR-mod);
@@ -832,7 +852,7 @@ char *evbuf = ((char*)buf) - 2*sizeof(VIP_DESCRIPTOR);
 int i, found=0;
     for(i=0; i<MAX_BUFS; i++)if(client_buf_pool[i].buf == evbuf){found=1;break;}
     if(!found){
-        printf("%d(c) not found %p %p\n", armci_me,client_buf_pool[0].buf,evbuf);
+        printf("%d(c) not found %p %p\n",armci_me,client_buf_pool[0].buf,evbuf);
         armci_die("armci_buf2index: not found",0);
     }
     return(i);
@@ -971,7 +991,9 @@ VIP_MEM_HANDLE *pmhandle;
      armci_check_status(DEBUG0, rc,"pipe prepost vbuf");
 
      dp->avail--;
-     arg->buf+=bytes+extra;
+     arg->buf+=bytes;
+     if(DEBUG2)if(arg->buf > client_tail)
+               armci_die("overwriting end of buf",arg->buf-client_tail);
 }
 
 
@@ -1030,6 +1052,17 @@ descr_pool_t *dp;
 
     arg->count++;
     dp->avail++;
+    if(DEBUG2){
+      if((char*)buf>client_buf_pool[1].buf)armci_die("out end of buf",count[0]);
+      if(*client_tail != CLIENT_STAMP){
+         printf("%d:stamp corrupted %d tail=%p cur buf %p,%p %p %p %p %d %d\n",
+                armci_me, *client_tail, client_tail, buf,
+                client_buf_pool[0].buf, client_buf_pool[1].buf,
+                client_buf_pool[2].buf, client_buf_pool[3].buf,
+                sizeof(vbuf_ext_t),sizeof(vbuf_long_t));    
+         armci_die("end of buf",*client_tail);
+      }
+    }
 }
     
 
