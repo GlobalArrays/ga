@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.3 1999-11-19 00:21:33 d3h325 Exp $
+#$Id: GNUmakefile,v 1.4 2000-03-28 00:48:15 d3g681 Exp $
 #
 #  Initial version Jace A Mogill (12 June 1996), ANL
 
@@ -9,11 +9,7 @@
 
 
 INCDIR = ../../include
-include ../makefile.h
-include ../../config/makefile.h
-include ../../config/makelib.h
 
-# on platforms with Posix AIO you can choose not to use it by defining NOAIO
 ifdef NOAIO
    LIB_DEFINES += -DNOAIO
 else
@@ -26,6 +22,11 @@ ifdef PABLO
    LIB_DEFINES = -DPABLO
 endif
 
+include ../makefile.h
+include ../../config/makefile.h
+include ../../config/makelib.h
+
+# on platforms with Posix AIO you can choose not to use it by defining NOAIO
 
 
 $(LIBRARY_PATH)(elio.o):	./elio.h ./eliop.h ./chemio.h
