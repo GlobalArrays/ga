@@ -32,7 +32,7 @@ double buf[N], err, alpha, beta;
      if(me==0)printf("Creating matrix B\n");
      /* create matrix B  so that it has dims and distribution of A*/
      g_b = GA_Duplicate(g_a, "B");
-     if(! g_b) GA_error("duplicate failed",n); 
+     if(! g_b) GA_Error("duplicate failed",n); 
      if(me==0)printf("OK\n");
 
      GA_Zero(g_a);   /* zero the matrix */
@@ -72,7 +72,7 @@ double buf[N], err, alpha, beta;
      lo[0]=hi[0]=row;
      lo[1]=0; hi[1]=n-1;
      NGA_Acc(g_a, lo, hi, buf, &ONE, &alpha );
-     GA_sync();
+     GA_Sync();
 
      if(me==0){ /* node 0 is checking the result */
 

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.36 2001-10-29 19:55:13 d3h325 Exp $ */
+/* $Id: capi.c,v 1.37 2002-01-30 01:14:27 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -251,9 +251,11 @@ DoubleComplex GA_Zdot(int g_a, int g_b)
 
 float GA_Fdot(int g_a, int g_b)
 {
+    float sum;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    return (float)ga_sdot_(&a,&b);
+    gai_dot(C_FLOAT, &a, &b, &sum);
+    return sum;
 }    
 
 void GA_Fill(int g_a, void *value)
@@ -634,6 +636,8 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
 
 #if defined(CRAY) || defined(WIN32)
 #define ga_dgemm_easyc_ GA_DGEMM_EASYC
+#elif defined(F2C2_)
+#define ga_dgemm_easyc_ ga_dgemm_easyc__
 #endif
 extern void FATR ga_dgemm_easyc_(Integer *Ta, Integer *Tb, 
 				 Integer *M, Integer *N, Integer *K, 

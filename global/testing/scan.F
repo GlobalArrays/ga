@@ -1,4 +1,4 @@
-Cx
+C
 C     Test the minval, minloc, maxval, maxloc, and enum functions in GA.
 C
       program main

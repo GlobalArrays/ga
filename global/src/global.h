@@ -311,8 +311,19 @@ extern void FATR nga_add_patch_(DoublePrecision *alpha, Integer *g_a,
 extern int ga_type_c2f(int type);
 extern int ga_type_f2c(int type);
 extern void ga_type_gop(int type, void *x, int n, char* op);
+extern void FATR ga_pack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+                     Integer* lo, Integer* hi, Integer* icount);
+extern void FATR ga_unpack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+                       Integer* lo, Integer* hi, Integer* icount);
+extern void FATR ga_scan_copy_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+                          Integer* lo, Integer* hi);
+extern void FATR ga_scan_add_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+                          Integer* lo, Integer* hi);
+extern void nga_select_elem_(Integer *g_a, char* op, void* val,
+                             Integer *subscript);
 
-/* added bu Limin */
+
+/* added by Limin */
 extern void FATR ga_add_constant_(Integer *g_a, void *);
 extern void FATR ga_abs_value_(Integer *);
 extern void FATR ga_recip_(Integer *g_a);

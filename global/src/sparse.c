@@ -391,14 +391,14 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 }
 
 
-void ga_scan_copy_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+void FATR ga_scan_copy_(Integer* g_a, Integer* g_b, Integer* g_sbit,
                            Integer* lo, Integer* hi)
 {       
         gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 0);
 }
 
 
-void ga_scan_add_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+void FATR ga_scan_add_(Integer* g_a, Integer* g_b, Integer* g_sbit,
                            Integer* lo, Integer* hi)
 {       
         gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 1);
@@ -498,14 +498,14 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
 
 
-void ga_pack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+void FATR ga_pack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
               Integer* lo, Integer* hi, Integer* icount)
 {
      gai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 1);
 }
 
 
-void ga_unpack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
+void FATR ga_unpack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
               Integer* lo, Integer* hi, Integer* icount)
 {
      gai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 0);
@@ -570,7 +570,7 @@ int rc=0;
 }
 
 
-logical ga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range)
+logical FATR ga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range)
 {
 Integer type, ndim, nbin, lobin, hibin, me=ga_nodeid_(),crap;
 Integer dims[2], nproc=ga_nnodes_(),chunk[2];
@@ -658,7 +658,7 @@ Integer dims[2], nproc=ga_nnodes_(),chunk[2];
 }
 
 
-void ga_bin_sorter_(Integer *g_bin, Integer *g_cnt, Integer *g_off)
+void FATR ga_bin_sorter_(Integer *g_bin, Integer *g_cnt, Integer *g_off)
 {
 extern void gai_hsort(Integer *list, int n);
 Integer nbin,totbin,type,ndim,lo,hi,me=ga_nodeid_(),crap;
@@ -704,7 +704,7 @@ Integer g_range;
 
 /*\ note that subs values must be sorted; bins numbered from 1
 \*/
-void ga_bin_index_(Integer *g_bin, Integer *g_cnt, Integer *g_off, 
+void FATR ga_bin_index_(Integer *g_bin, Integer *g_cnt, Integer *g_off, 
                    Integer *values, Integer *subs, Integer *n, Integer *sortit)
 {
 int i, my_nbin=0;

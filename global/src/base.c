@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.18 2002-01-28 20:16:53 d3h325 Exp $ */
+/* $Id: base.c,v 1.19 2002-01-30 01:14:27 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1236,7 +1236,7 @@ Integer ga_handle;
 
 /*\ RETURN COORDINATES OF A GA PATCH ASSOCIATED WITH PROCESSOR proc
 \*/
-void FATR nga_distribution_no_handle_(Integer *ndim, Integer *dims,
+void nga_distribution_no_handle_(Integer *ndim, Integer *dims,
         Integer *nblock, Integer *mapc, Integer *proc, Integer *lo,
         Integer * hi)
 {

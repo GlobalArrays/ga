@@ -16,7 +16,7 @@ int _i;\
 }
 
 
-/* note that there is FATR - on windows and cray we call this though a wrapper below */
+/* note that there is no FATR - on windows and cray we call this though a wrapper below */
 void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
 {
 Integer ndim, type, me, elems, ind=0, i;

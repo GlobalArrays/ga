@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.19 2001-12-04 22:20:30 d3g293 Exp $
+#	$Id: MakeFile,v 1.20 2002-01-30 01:14:27 d3h325 Exp $
 #
 
 OBJDIR=.\obj
@@ -30,6 +30,8 @@ OBJ      = $(OBJDIR)\base.obj \
         $(OBJDIR)\peigstubs.obj\
         $(OBJDIR)\sclstubs.obj\
         $(OBJDIR)\datatypes.obj\
+        $(OBJDIR)\sparse.obj \
+        $(OBJDIR)\select.obj \
         $(OBJDIR)\DP.obj
 
 

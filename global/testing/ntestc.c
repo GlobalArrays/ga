@@ -225,7 +225,7 @@ int me, nproc;
     PBEGIN_(argc, argv);                        /* initialize TCGMSG */
 #endif
 
-    GA_initialize();                           /* initialize GA */
+    GA_Initialize();                           /* initialize GA */
 
     nproc = GA_Nnodes();
     me = GA_Nodeid();

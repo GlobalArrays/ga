@@ -30,7 +30,7 @@
 void do_work()
 {
 Integer ONE=1, ZERO=0;   /* useful constants */
-Integer g_a, g_b;
+int g_a, g_b;
 Integer n=N, type=MT_F_DBL;
 Integer me=GA_nodeid(), nproc=GA_nnodes();
 Integer col, i, j;
@@ -54,7 +54,7 @@ int     *proc_list, root=0, grp_me=-1;
           GA_error("create failed: B",n); 
      if(me==0)printf("OK\n");
 
-     GA_zero(&g_a);   /* zero the matrix */
+     GA_zero(g_a);   /* zero the matrix */
 
      if(me==0)printf("Initializing matrix A\n");
      /* fill in matrix A with values: A(i,j) = (i+j) */ 
@@ -146,8 +146,8 @@ int     *proc_list, root=0, grp_me=-1;
      
      if(me==0)printf("OK\n");
 
-     GA_destroy(&g_a);
-     GA_destroy(&g_b);
+     GA_Destroy(g_a);
+     GA_Destroy(g_b);
 }
      
 
@@ -165,8 +165,8 @@ Integer me, nproc;
     PBEGIN_(argc, argv);                        /* initialize TCGMSG */
 #endif
 
-    GA_initialize();                            /* initialize GA */
-    me=GA_nodeid();
+    GA_Initialize();                            /* initialize GA */
+    me=GA_Nodeid();
     nproc=GA_nnodes();
     if(me==0) printf("Using %ld processes\n",(long)nproc);
 
@@ -177,7 +177,7 @@ Integer me, nproc;
     do_work();
 
     if(me==0)printf("Terminating ..\n");
-    GA_terminate();
+    GA_Terminate();
 
 #   ifdef MPI
       MPI_Finalize();

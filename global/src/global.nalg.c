@@ -373,6 +373,8 @@ DoubleComplex sum;
 
 #if defined(CRAY) || defined(WIN32)
 # define gai_zdot_ GAI_ZDOT
+#elif defined(F2C2_)
+# define gai_zdot_ gai_zdot__
 #endif
 void FATR gai_zdot_(g_a, g_b, retval)
         Integer *g_a, *g_b;

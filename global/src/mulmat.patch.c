@@ -1,4 +1,4 @@
-/*$Id: mulmat.patch.c,v 1.8 2002-01-22 19:45:11 d3h325 Exp $*/
+/*$Id: mulmat.patch.c,v 1.9 2002-01-30 01:14:27 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -11,15 +11,16 @@
 #      include <fortran.h>
 #      define  DGEMM SGEMM
 #      define  ZGEMM CGEMM
-#endif
-
-#ifdef WIN32
+#elif defined(WIN32)
    extern void FATR DGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
                      void*, void*, Integer*, void*, Integer*, void*,
                      void*, Integer*);
    extern void FATR ZGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
-                     DoubleComplex*, DoubleComplex*, Integer*, DoubleComplex*, Integer*,
-                     DoubleComplex*, DoubleComplex*, Integer*);
+                     DoubleComplex*, DoubleComplex*, Integer*, DoubleComplex*,
+                     Integer*, DoubleComplex*, DoubleComplex*, Integer*);
+#elif defined(F2C2__)
+#      define DGEMM dgemm__
+#      define ZGEMM zgemm__
 #endif
 
 #if defined(CRAY) || defined(WIN32)
