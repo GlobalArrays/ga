@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.42 2003-11-14 02:06:54 manoj Exp $ */
+/* $Id: matmul.c,v 1.43 2003-12-18 23:25:10 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -166,12 +166,11 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     double temp;
     Integer min_tasks = MINTASKS; /* Increase tasks if there is load imbalance.
 				     This controls the granularity of chunks */
-    Integer  max_chunk, nproc=ga_nnodes_(), tmpa, tmpb, tmpc;
+    Integer  max_chunk, nproc=ga_nnodes_(), tmpa, tmpb;
     Integer avail = ga_memory_avail(atype);
 
     tmpa = *Ichunk;
     tmpb = *Jchunk;
-    tmpc = *Kchunk;
     
     if(irregular) {
        temp = (k*(double)(m*(double)n)) / (min_tasks * nproc);
@@ -496,9 +495,9 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 {
   
     Integer me= ga_nodeid_(), nproc=ga_nnodes_();
-    Integer get_new_B, i, i0, i1, j0, j1;
-    Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
-    Integer n, m, k, adim, bdim, cdim, adim_next, bdim_next;
+    Integer get_new_B, i0, i1, j0, j1;
+    Integer idim, jdim, kdim;
+    Integer k, adim, bdim, cdim, adim_next, bdim_next;
     Integer loC[2]={1,1}, hiC[2]={1,1}, ld[2];
     int g_t, max_tasks=0, shiftA=0, shiftB=0;
     int currA, nextA, currB, nextB; /* "current" and "next" task Ids */
@@ -512,8 +511,6 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     if(irregular) ga_error("irregular flag set", 0L);
 
     ONE.real =1.; ONE.imag =0.;   
-    m = *aihi - *ailo +1;
-    n = *bjhi - *bjlo +1;
     k = *ajhi - *ajlo +1;
     state.lo[0] = -1; /* just for first do-while loop */
 
@@ -883,7 +880,7 @@ void ga_matmul(transa, transb, alpha, beta,
 #endif
     Integer adim1, adim2, bdim1, bdim2, cdim1, cdim2, dims[2];
     Integer atype, btype, ctype, rank, me= ga_nodeid_(), nproc = ga_nnodes_();
-    Integer n, m, k, Ichunk, Kchunk, Jchunk, ZERO_I = 0, inode, iproc;
+    Integer n, m, k, Ichunk, Kchunk, Jchunk;
     Integer loA[2]={0,0}, hiA[2]={0,0};
     Integer loB[2]={0,0}, hiB[2]={0,0};
     Integer loC[2]={0,0}, hiC[2]={0,0};
@@ -911,16 +908,6 @@ void ga_matmul(transa, transb, alpha, beta,
 	  ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
        ga_error("Processors do not match for all arrays",ga_nnodes_());
     }
-#if 0
-    if (ga_is_mirrored_(g_a)) {
-       inode = ga_cluster_nodeid_();
-       nproc = ga_cluster_nprocs_(&inode);
-       iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
-    } else {
-       nproc = ga_nnodes_();
-       iproc = me;
-    }
-#endif
 
     /* check if ranks are O.K. */
     nga_inquire_internal_(g_a, &atype, &rank, dims); 
@@ -1142,20 +1129,19 @@ Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim;
 Integer Ichunk, Kchunk, Jchunk;
-DoubleComplex ONE, ZERO;
+DoubleComplex ONE;
 
 DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
 int need_scaling=1;
 Integer ZERO_I = 0, inode, iproc;
 float ONE_F = 1.0, ZERO_F = 0.0;
-double ZERO_D = 0.0;
 Integer get_new_B;
 int local_sync_begin,local_sync_end;
 int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
-   ONE.real =1.; ZERO.real =0.;
-   ONE.imag =0.; ZERO.imag =0.;
+   ONE.real =1.;
+   ONE.imag =0.;
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1356,9 +1342,12 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	       break;
 	     case C_DBL:
 #            ifdef GA_C_CORE
-	       xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			alpha, (double *)a, &adim_t, (double *)b, &bdim_t, 
-			&ZERO_D,  (double *)c, &cdim_t);
+	       {
+		  double ZERO_D = 0.0;
+		  xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			   alpha, (double *)a, &adim_t, (double *)b, &bdim_t, 
+			   &ZERO_D,  (double *)c, &cdim_t);
+	       }
 #            else
 	       dgemm_(transa, transb, &idim, &jdim, &kdim,
 		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
@@ -1366,9 +1355,13 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	       break;
 	     case C_DCPL:
 #            ifdef GA_C_CORE
-	       xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			(DoubleComplex *)alpha, a, &adim_t, b, &bdim_t, 
-			&ZERO,  c, &cdim_t);
+	       {
+		  DoubleComplex ZERO;
+		  ZERO.real =0.; ZERO.imag =0.;
+		  xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			   (DoubleComplex *)alpha, a, &adim_t, b, &bdim_t, 
+			   &ZERO,  c, &cdim_t);
+	       }
 #            else
 	       zgemm_(transa, transb, &idim, &jdim, &kdim,
 		      (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE, c, 
@@ -1503,9 +1496,8 @@ Integer bilo, bihi, bjlo, bjhi;    /* 2d plane of g_b */
 Integer cilo, cihi, cjlo, cjhi;    /* 2d plane of g_c */
 Integer adims[GA_MAX_DIM],bdims[GA_MAX_DIM],cdims[GA_MAX_DIM],tmpld[GA_MAX_DIM];
 Integer *tmplo = adims, *tmphi =bdims; 
-DoubleComplex ONE, ZERO;
+DoubleComplex ONE;
 float ONE_F = 1.0, ZERO_F = 0.0;
-double ZERO_D = 0.0;
 Integer ZERO_I = 0;
 Integer get_new_B;
 DoublePrecision chunk_cube;
@@ -1513,8 +1505,8 @@ Integer min_tasks = 10, max_chunk;
 int local_sync_begin,local_sync_end;
 int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
-   ONE.real =1.; ZERO.real =0.;
-   ONE.imag =0.; ZERO.imag =0.;
+   ONE.real =1.;
+   ONE.imag =0.;
    
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -1721,10 +1713,12 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 		    break;
 		  case C_DBL:
 #                 ifdef GA_C_CORE
-		    
-		    xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			     alpha, (double *)a, &adim_t, (double *)b, &bdim_t, 
-			     &ZERO_D,  (double *)c, &cdim_t);
+		    {
+		       double ZERO_D = 0.0;
+		       xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+				alpha, (double*)a,&adim_t, (double*)b,&bdim_t,
+				&ZERO_D,  (double *)c, &cdim_t);
+		    }
 #                 else
 #                 if !defined(HAS_BLAS) && defined(EXT_INT)
 		    dgemm_(transa, transb, &idim, &jdim, &kdim,
@@ -1737,9 +1731,13 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 		    break;
 		  case C_DCPL:
 #                 ifdef GA_C_CORE
-		    xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			     (DoubleComplex *)alpha, a, &adim_t, b, &bdim_t, 
-			     &ZERO,  c, &cdim_t);
+		    {
+		       DoubleComplex ZERO;
+		       ZERO.real =0.; ZERO.imag =0.;
+		       xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+				(DoubleComplex *)alpha, a, &adim_t, b,&bdim_t,
+				&ZERO,  c, &cdim_t);
+		    }
 #                 else
 		    zgemm_(transa, transb, &idim, &jdim, &kdim,
 			   (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE, c, 
@@ -1837,13 +1835,13 @@ Integer clo[2], chi[2];
                          g_b, blo, bhi, g_c, clo, chi);
 #else
 	if(ga_is_mirrored_(g_a)) 
-	   ga_matmul_mirrored(transa, transb, alpha, beta,
+	   ga_matmul_mirrored(transa, transb, (void*)alpha, (void*)beta,
 			      g_a, ailo, aihi, ajlo, ajhi,
 			      g_b, bilo, bihi, bjlo, bjhi,
 			      g_c, cilo, cihi, cjlo, cjhi);
 	else {
 	   _gai_matmul_patch_flag = SET;
-	   ga_matmul(transa, transb, alpha, beta,
+	   ga_matmul(transa, transb, (void*)alpha, (void*)beta,
 		     g_a, ailo, aihi, ajlo, ajhi,
 		     g_b, bilo, bihi, bjlo, bjhi,
 		     g_c, cilo, cihi, cjlo, cjhi);
