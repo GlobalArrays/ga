@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.125 2005-02-22 22:46:15 manoj Exp $
+# $Id: makefile.h,v 1.126 2005-02-23 00:15:27 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -60,6 +60,11 @@ ifndef USE_MPI
   ifeq ($(MSG_COMMS),MPI)
     F2C_TWO_UNDERSCORES=1
   endif
+endif
+#
+# enable -Wall when using GNU compilers
+ifdef USE_GNU_WALL
+   WALL = -Wall
 endif
 #
 #........................ SUN and Fujitsu Sparc/solaris ........................
@@ -211,7 +216,7 @@ ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
 #    COPT_REN += -funroll-loops $(OPT_ALIGN)
 #VT:unroll-loops options is causing single precision dot to fail, Is it the compiler?
-     COPT_REN += $(OPT_ALIGN)
+     COPT_REN += $(WALL) $(OPT_ALIGN)
    endif
 endif
 #
@@ -266,7 +271,7 @@ endif
 ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
       COPT = -O2
-      COPT_REN +=  -funroll-loops $(OPT_ALIGN)
+      COPT_REN += $(WALL) -funroll-loops $(OPT_ALIGN)
    endif
 endif
    ifneq (,$(findstring icc,$(_CC)))
@@ -283,7 +288,7 @@ endif
 ifeq ($(_FC),g77)
    ifeq ($(FOPT),-O)
       FOPT = -O2
-      FOPT_REN += -funroll-loops -fomit-frame-pointer $(OPT_ALIGN)
+      FOPT_REN += $(WALL) -funroll-loops -fomit-frame-pointer $(OPT_ALIGN)
    endif
 else
 #
@@ -380,7 +385,7 @@ ifeq ($(CC),icc)
 endif
 ifeq ($(CC),gcc) 
      COPT=-O3
-     COPT_REN +=   -funroll-loops 
+     COPT_REN += $(WALL)  -funroll-loops 
 endif
   ifdef USE_INTEGER4
      FOPT_REN += -i4
