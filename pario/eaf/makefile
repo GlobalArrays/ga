@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.15 1997-08-02 00:10:24 d3h325 Exp $
+#$Id: makefile,v 1.16 1998-07-17 17:21:02 d3g681 Exp $
 
           OBJ = eaf.o eaf_f2c.o
       LIBRARY = libchemio.a
@@ -8,8 +8,8 @@
   LIB_TARGETS = test.x
  LIB_INCLUDES = -I../elio -I../../global/src
 
-include ../makefile.h
 include ../../config/makefile.h
+include ../makefile.h
 include ../../config/makelib.h
 
 test.x:	test.o $(LIBRARY_PATH)

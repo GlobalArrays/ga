@@ -11,8 +11,8 @@
 LIB_INCLUDES = -I../elio
 
 
-include ../makefile.h
 include ../../config/makefile.h
+include ../makefile.h
 include ../../config/makelib.h
 
 COPT=-g

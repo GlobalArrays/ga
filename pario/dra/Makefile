@@ -4,8 +4,8 @@
      HEADERS = dra.fh
 LIB_INCLUDES = -I../elio
 
-include ../makefile.h
 include ../../config/makefile.h
+include ../makefile.h
 include ../../config/makelib.h
 
 $(patsubst %,$(LIBRARY_PATH)(%),disk.arrays.o): drap.h dra.h
