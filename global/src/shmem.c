@@ -72,6 +72,9 @@ extern void ga_error();
 #elif defined(HPUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)64*1024)
+#elif defined(FREEBSD)
+#  undef _SHMMAX
+#  define _SHMMAX ((unsigned long)4*1024)
 #elif defined(LINUX)&& !defined(SHMMAX) /* Red Hat does not define SHMMAX */
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)32*1024) 

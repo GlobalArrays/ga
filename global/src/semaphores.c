@@ -39,7 +39,7 @@ int SemGet(num_sem)
   semaphoreID = semget(IPC_PRIVATE,num_sem,0600);
   if(semaphoreID<0){
     fprintf(stderr," %ld SemGet failed \nsuggestions to fix the problem: \n",
-            ga_msg_nodeid_());
+            (long)ga_msg_nodeid_());
     fprintf(stderr," 1. run ipcs and ipcrm -s commands to clean semaphore ids\n");
     fprintf(stderr," 2. verify if constant SEMMSL defined in file semaphore.h is set correctly for your system\n");
        sleep(1);
