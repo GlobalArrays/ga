@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.6 1999-07-28 00:48:04 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.7 1999-09-02 18:32:15 jju Exp $ */
 /**************************************************************************
  This code was derived from the TCGMSG sockets.c by Robert Harrison
  *************************************************************************/
@@ -178,7 +178,9 @@ again:
      /* on linux 0 can be returned if socket is closed  by sender */ 
      if(nread < 0 || ((nread ==  0) && errno ) ){
        if (errno == EINTR){
-         fprintf(stderr,"%d:interrupted in recv\n",armci_me);
+         if(DEBUG_){
+           fprintf(stderr,"%d:interrupted in recv\n",armci_me);
+	 }
          goto again;
        }else {
          if(DEBUG_){
