@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.39 2001-05-09 22:17:50 llt Exp $
+c $Id: test.F,v 1.40 2001-05-25 19:31:43 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -1560,7 +1560,7 @@ c---------------------------------------------------------------------
 #include "global.fh"
 #include "testutil.fh"
       integer n, m
-      parameter (n =10) 
+      parameter (n =100) 
       parameter (m=2*n)
       real a(n,n), b(n,n), v(m), w(m)
       integer iv(m), jv(m)
@@ -1744,7 +1744,6 @@ c
 c
 c     Each node accumulates into disjoint sections of the array
 c
-      call ga_print (g_a,1)
       if (me .eq. 0) then
          write(6,9)
  9       format(/'> Checking accumulate ... ')
@@ -1789,9 +1788,6 @@ c
             do jj = jlo, jhi
                do ii = ilo, ihi
                   a(ii,jj) = a(ii,jj) + x * b(ii,jj)
-                  if (ii .eq. 2) then
-                    print*, 'a: ', a(ii,jj), ' ', jj
-                   endif
                enddo
             enddo
          enddo
@@ -1799,22 +1795,8 @@ c
       call ga_sync()                       
 c
 c     All nodes check all of a
-c>>>>>>
-      do j =1,5
-        do i=1,5
-          print*, 'a:', a(i,j), ' b:', b(i,j)
-        end do
-      end do
-c>>>>>
       call ga_get(g_a, 1, n, 1, n, b, n)
-c>>>>>      call ga_print(g_a, 1)
-      print*, 'AFTER ga_get'
-      do j =1,5
-        do i=1,5
-          print*, 'a:', a(i,j), ' b:', b(i,j)
-        end do
-      end do
-
+c
       do j = 1, n
          do i = 1, n
             if(MISMATCHF(b(i,j),a(i,j)))then
@@ -1824,7 +1806,6 @@ c>>>>>      call ga_print(g_a, 1)
             endif
          enddo
       enddo
-c>>>>>      write(6,*) a(2,1), ' ', b(2,1)
       if (me.eq.0) then
          write(6,*)
          write(6,*) ' disjoint ga_acc is OK'
