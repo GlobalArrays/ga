@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.37 2003-03-05 00:34:51 d3g293 Exp $ */
+/* $Id: base.c,v 1.38 2003-03-05 17:08:04 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2538,7 +2538,6 @@ void FATR ga_merge_mirrored_(Integer *g_a)
   nprocs = ga_cluster_nprocs_(&inode);
   zero = 0;
 
-    printf("p[%d] ga_merge_mirrored: handle(orig): %d\n",(int)GAme,(int)handle);
   zproc = ga_cluster_procid_(&inode, &zero);
   zptr = GA[handle].ptr[zproc];
   map = GA[handle].mapc;
@@ -2550,7 +2549,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
 
   /* Check whether or not all nodes contain the same number
      of processors. */
-  if (nnodes*nprocs == ga_nnodes_() && 0)  {
+  if (nnodes*nprocs == ga_nnodes_())  {
     /* check to see if there is any buffer space between the data
        associated with each processor that needs to be zeroed out
        before performing the merge */
@@ -2607,10 +2606,11 @@ void FATR ga_merge_mirrored_(Integer *g_a)
       armci_msg_gop_scope(SCOPE_MASTERS, zptr, total, "+", atype);
     } 
   } else {
-    Integer _ga_tmp;
+    Integer _ga_tmp, iproc;
     Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
     Integer idims[MAXDIM], iwidth[MAXDIM], ichunk[MAXDIM];
-    void *ptr_a, *ptr_l;
+    void *ptr_a;
+    void *ptr_l;
     void *one;
     double d_one = 1.0;
     int i_one = 1;
@@ -2641,37 +2641,14 @@ void FATR ga_merge_mirrored_(Integer *g_a)
     if (!nga_create_ghosts(type, ndim, idims,
         iwidth, "temporary", ichunk, &_ga_tmp)) 
       ga_error("Unable to create work array for merge",GAme);
-    printf("p[%d] ga_merge_mirrored: temp array handle: %d\n",
-           (int)GAme,(int)(GA_OFFSET+_ga_tmp));
-    for (i=0; i<ga_nnodes_(); i++) {
-      printf("p[%d] ga_merge_mirrored: ptr[%d]: %d\n",(int)GAme,
-       (int)i,(int)GA[handle].ptr[i]);
-    }
     ga_zero_(&_ga_tmp);
-    printf("p[%d] ga_merge_mirrored: ga_zero completed\n",(int)GAme);
     /* Find data on this processor and accumulate in temporary global array */
     nga_distribution_(g_a,&GAme,lo,hi);
-    printf("p[%d] ga_merge_mirrored: distribution found\n",(int)GAme);
     nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-    printf("p[%d] ga_merge_mirrored: pointer found\n",(int)GAme);
-    for (i=0; i<ndim; i++) {
-      printf("p[%d] ga_merge_mirrored: lo[%d]: %d hi[%d]: %d ld[%d]: %d\n",(int)GAme,
-       (int)i,(int)lo[i],(int)i,(int)hi[i],(int)i,(int)ld[i]);
-    }
-    printf("p[%d] ga_merge_mirrored: handle: %d\n",(int)GAme,(int)handle);
-    ptr_l = GA[handle].ptr[GAme];
-    printf("p[%d] ga_merge_mirrored: got ptr okay\n",(int)GAme);
-    ga_sync_();
-    printf("p[%d] ga_merge_mirrored: ptr_a: %d g_a.ptr: %d\n",(int)GAme,
-            (int)ptr_a,(int)ptr_l);
-    ga_sync_();
     nga_acc_(&_ga_tmp, lo, hi, ptr_a, ld, one);
-    printf("p[%d] ga_merge_mirrored: accumulate completed\n",(int)GAme);
     /* copy and data back to original global array */
-    nga_access_ptr(&_ga_tmp, lo, hi, &ptr_a, ld);
-    printf("p[%d] ga_merge_mirrored: second pointer found\n",(int)GAme);
-    nga_put_(g_a, lo, hi, ptr_a, ld);
-    printf("p[%d] ga_merge_mirrored: nga_put completed\n",(int)GAme);
+    ga_zero_(g_a);
+    nga_get_(&_ga_tmp, lo, hi, ptr_a, ld);
     ga_destroy_(&_ga_tmp);
   }
   if (local_sync_end) ga_sync_();
