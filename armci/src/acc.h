@@ -14,7 +14,7 @@
 #    define C_ACCUMULATE_2D	c_accumulate_2d_u
 #    define Z_ACCUMULATE_2D	z_accumulate_2d_u
 #    define F_ACCUMULATE_2D	f_accumulate_2d_u
-#elif defined(FUJITSU) ||  defined(HPUX64)
+#elif defined(FUJITSU) ||  defined(HPUX64) || defined(NEC)
 #    define I_ACCUMULATE_2D     i_accumulate_2d_
 #    define D_ACCUMULATE_2D     d_accumulate_2d_
 #    define C_ACCUMULATE_2D     c_accumulate_2d_
