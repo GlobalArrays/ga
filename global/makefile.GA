@@ -20,7 +20,7 @@
 
 
 # default version and target (to be overwritten on command line)
-CUR_TARGET  = SUN
+CUR_TARGET  =
 CUR_VERSION =
 
 # to be able to use parallel eigensolver and linear equation solver define 
@@ -39,7 +39,7 @@ endif
 
 
    LIBRARY = libglobal.a
-   TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x  testget.x perform.x
+   TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x perform.x
 
 
 export DIAG TARGET VERSION LU_SOLVE GA_TRACE
@@ -51,6 +51,8 @@ $(LIBRARY):
 
 $(TESTS):	$(LIBRARY)
 	(cd ./testing; $(MAKE) $@  || exit 1;)
+
+all: $(TESTS)
 
 clean:
 	$(RM) *.a events *.o core

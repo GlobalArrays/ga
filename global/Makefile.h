@@ -115,9 +115,11 @@ ifeq ($(TARGET),SGITFP)
 # SGI running IRIX6.0
 #
 #
-#        COPT = -g
+ ifeq ($(FOPT),-O)
+         FOPT = -O3
+ endif
         CDEFS = -DEXT_INT
-     FOPT_REN = -d8 -i8 -64 -mips4 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000 
+     FOPT_REN = -i8 -align64 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000 
  GLOB_DEFINES = -DSGI -DSGI64
 endif
 
@@ -194,6 +196,7 @@ else
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
+      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm
 endif
 
 #   mpxlf fails with parallel make
@@ -214,6 +217,7 @@ ifeq ($(TARGET),IBM)
        RANLIB = ranlib
  GLOB_DEFINES = -DEXTNAME -DAIX
      FOPT_REN = -qEXTNAME 
+      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm
     EXPLICITF = TRUE
 endif
 

@@ -1,4 +1,3 @@
-# $Id: Makelib.h,v 1.8 1995-02-02 23:12:53 d3g681 Exp $
 # Makelib.h, 01.26.94
 #
 # TARGET is one of (SUN, SGI, SGITFP, IBM, KSR, SP1, T3D)
@@ -13,53 +12,65 @@
 #
 
        LIBS = ../libglobal.a \
- 	      ../../ma/libma.a\
-              ../../lapack_blas/liblapack_blas.a
+ 	      ../../ma/libma.a
        LIBCOM = ../../tcgmsg/ipcv4.0/libtcgmsg.a 
+       BLAS = -lblas
 
+#................................ SUN ..........................................
+ifeq ($(TARGET),SUN)
+       BLAS = ../../lapack_blas/libblas.a
+endif
+#................................ DEC ..........................................
+ifeq ($(TARGET),DECOSF)
+       BLAS = ../../lapack_blas/libblas.a
+endif
 #................................ CRAY-T3D .....................................
 #
 ifeq ($(TARGET),CRAY-T3D)
 #
 
-       LIBCOM = ../../tcgmsg/ipcv5.0/libtcgmsg.a
+       LIBCOM = ../../tcgmsg/ipcv5.0/libtcgmsg.a /mpp/lib/old/libsma.a
+#      LIBCOM = ../../tcgmsg/ipcv5.0/libtcgmsg.a
+       BLAS=
 endif
-
 #................................ KSR ......................................
 #
 ifeq ($(TARGET),KSR)
 #
 # KSR-2 running OSF 1.2.0.7
 #
-        SRC = /home5/d3h325
+#
+# These are pointers to much faster (optimized for KSR) version of TCGMSG 
+# (does not come with the GA distribution package)
+#
+#       SRC = /home5/d3h325
+#    LIBCOM = $(SRC)/tcgmsg/ipcv4.0/libtcgmsg.a
 
-       LIBS +=  -lksrblas
-     LIBCOM = $(SRC)/tcgmsg/ipcv4.0/libtcgmsg.a
+       BLAS  = -lksrblas
      LIBCOM += -lrpc -para
 endif
-
-#................................ IPSC ......................................
+#................................ Intel .....................................
+ifeq ($(INTEL),YES)
 #
-ifeq ($(TARGET),IPSC)
+# all Intel machines
 #
-       LIBS += -lkmath -node 
-endif
-
-#................................ DELTA .....................................
-#
-ifeq ($(TARGET),DELTA)
-#
-       LIBS += -lkmath -node 
-endif
-
 #................................ PARAGON ...................................
 #
 ifeq ($(TARGET),PARAGON)
 #
-       LIBS += -lkmath -nx 
+       LIBS += -nx 
+else
+       LIBS += -node 
 endif
-
-#.............................. SP1 .........................................
+       BLAS  = -lkmath
+endif
+#................................ SGITFP ...................................
+#
+ifeq ($(TARGET),SGITFP)
+#
+       BLAS = ../../lapack_blas/libblas.a
+endif
+#.................................. SP1 ....................................
 #
 ifeq ($(TARGET),SP1)
 #
@@ -71,6 +82,9 @@ endif
 endif
 
 #...........................................................................
+
+LIBS += $(BLAS) ../../lapack_blas/liblapack.a
+
 ifeq (LU_SOLVE, PAR)
   SCALAPACK = $(SRC1)/scalapack/scalapack.a $(SRC1)/scalapack/pbblas.a\
               $(SRC1)/scalapack/blacs.a $(SRC1)/scalapack/SLtools.a

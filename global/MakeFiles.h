@@ -1,4 +1,3 @@
-#$Id: MakeFiles.h,v 1.12 1995-02-02 23:12:50 d3g681 Exp $
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # makefile.files.h -- specifies files for the GA library depending 
 #                     on TARGET and VERSION 
@@ -18,8 +17,6 @@ ifeq ($(VERSION),SHMEM)
      else
        ifneq ($(TARGET),CRAY-T3D)
             GA_SYNC =  semaphores.o
-       else
-            EXTRA = memcpy.t3d.o
        endif
      endif
 else
@@ -27,6 +24,12 @@ else
             EXTRA = memcpy.i860.o
      endif
 endif
+
+ifeq ($(TARGET),SGITFP)
+#       EXTRA = daxpy.o.sgi
+endif
+    
+
 #
 #
 #                Core Routines of GAs
@@ -63,11 +66,12 @@ GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #
 #                 Utility Routines
 #
-GA_UTIL = ffflush.o ifill.o dfill.o ga_summarize.o hsort.scat.o global.ma.o DP.o
+GA_UTIL = ffflush.o ifill.o dfill.o ga_summarize.o hsort.scat.o global.ma.o\
+          DP.o fops.2d.o
 
 
 $(GA_CORE)    : globalp.h global.h
-global.core.o : global.core.h message.h interrupt.h
+global.core.o : global.core.h message.h interrupt.h mem.ops.h
 global.msg.o  : message.h tcgmsg.h
 global.alg.o  : globalp.h global.h
 ga_handler.o  : interrupt.h message.h
