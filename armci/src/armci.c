@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.93 2004-09-15 17:01:35 vinod Exp $ */
+/* $Id: armci.c,v 1.94 2004-09-21 23:10:09 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -86,8 +86,9 @@ void ARMCI_Cleanup()
 #endif
 #if (defined(SYSV) || defined(WIN32) || defined(MMAP))&& !defined(HITACHI) 
     Delete_All_Regions();
+    if(armci_nproc>1)
 #if !defined(LAPI) 
-    DeleteLocks(lockid);
+       DeleteLocks(lockid);
 #endif
 
     /* in case of an error notify server that it is time to quit */

@@ -1,4 +1,4 @@
-/* $Id: locks.c,v 1.13 2004-09-08 00:42:13 manoj Exp $ */
+/* $Id: locks.c,v 1.14 2004-09-21 23:10:09 manoj Exp $ */
 #define _LOCKS_C_
 #include "armcip.h"
 #include "locks.h"
@@ -31,7 +31,7 @@ int locks_per_proc, size;
 }
 
 void DeleteLocks(lockset_t lockid) { 
-    void **ptr_arr = (void**)_armci_int_mutexes;
+    ptr_arr = (void**)_armci_int_mutexes;
     ARMCI_Free(ptr_arr[armci_me]);
     _armci_int_mutexes = (PAD_LOCK_T*)0; 
 }
@@ -40,6 +40,7 @@ void DeleteLocks(lockset_t lockid) {
 
 void CreateInitLocks(int num_locks, lockset_t *plockid)
 {
+void *ptr;
 int locks_per_proc, size;
 
   ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
