@@ -31,7 +31,6 @@ using std::cos;
 #define THRESH 1e-5
 #define MISMATCHED(x,y) ABS((x)-(y))>=THRESH
 
-#define N 8
 #define OP_ELEM_MULT 0
 #define OP_ELEM_DIV 1
 #define OP_ELEM_MAX 2
