@@ -1083,6 +1083,7 @@ int heap_status;
 #ifdef GA_CREATE_INDEF
 {
     Integer one = 1;
+    if (GAme == 0) fprintf(stderr,"Initializing GA %ld\n",*g_a);
     if(*type == MT_F_DBL) {
 	double bad = DBL_MAX;
 	ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
