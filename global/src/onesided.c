@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.44 2003-08-12 23:17:11 d3h325 Exp $ */
+/* $Id: onesided.c,v 1.45 2003-09-03 17:11:21 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -239,18 +239,6 @@ Integer _jw = GA[g_handle].width[1];                                           \
       *(_pld) = _ihi-_ilo+1+2*_iw;                                             \
 }
 
-
-#define gaCheckSubscriptM(subscr, lo, hi, ndim)                                \
-{                                                                              \
-Integer _d;                                                                    \
-   for(_d=0; _d<  ndim; _d++)                                                  \
-      if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
-        sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \
-                  subscr[_d],  lo[_d],  hi[_d]);                               \
-          ga_error(err_string, _d);                                            \
-      }\
-}
-
 /*\ Return pointer (ptr_loc) to location in memory of element with subscripts
  *  (subscript). Also return physical dimensions of array in memory in ld.
 \*/
@@ -277,33 +265,6 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
         _pinv = P_LIST[_p_handle].inv_map_proc_list[proc];                     \
       }                                                                        \
       *(ptr_loc) =  GA[g_handle].ptr[_pinv]+_offset*GA[g_handle].elemsize;     \
-}
-
-
-/*\ Just return pointer (ptr_loc) to location in memory of element with
- *  subscripts (subscript).
-\*/
-#define gam_Loc_ptr(proc, g_handle,  subscript, ptr_loc)                      \
-{                                                                             \
-Integer _offset=0, _d, _w, _factor=1, _last=GA[g_handle].ndim-1;              \
-Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
-                                                                              \
-      ga_ownsM(g_handle, proc, _lo, _hi);                                     \
-      _p_handle = GA[g_handle].p_handle;                                      \
-      if (_p_handle < 0) {                                                    \
-        _iproc = proc;                                                        \
-      } else {                                                                \
-        _iproc = P_LIST[_p_handle].inv_map_proc_list[proc];                   \
-      }                                                                       \
-      gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
-      for(_d=0; _d < _last; _d++)            {                                \
-          _w = GA[g_handle].width[_d];                                        \
-          _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                    \
-          _factor *= _hi[_d] - _lo[_d]+1+2*_w;                                \
-      }                                                                       \
-      _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])      \
-               * _factor;                                                     \
-      *(ptr_loc) =  GA[g_handle].ptr[_iproc]+_offset*GA[g_handle].elemsize;   \
 }
 
 #define ga_check_regionM(g_a, ilo, ihi, jlo, jhi, string){                     \

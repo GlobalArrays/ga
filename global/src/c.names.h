@@ -111,6 +111,7 @@
 #define  nga_nbget_ghost_dir_     NGA_NBGET_GHOST_DIR
 #define  ga_update_ghosts_         GA_UPDATE_GHOSTS
 #define  ga_merge_mirrored_        GA_MERGE_MIRRORED
+#define  ga_fast_merge_mirrored_   GA_FAST_MERGE_MIRRORED
 #define  nga_merge_distr_patch_    NGA_MERGE_DISTR_PATCH
 #define  ga_is_mirrored_           GA_IS_MIRRORED
 #define  nga_num_shmem_seg_        NGA_NUM_SHMEM_SEG
@@ -316,6 +317,7 @@
 #define  nga_nbget_ghost_dir_      nga_nbget_ghost_dir__   
 #define  ga_update_ghosts_         ga_update_ghosts__     
 #define  ga_merge_mirrored_        ga_merge_mirrored__     
+#define  ga_fast_merge_mirrored_   ga_fast_merge_mirrored__     
 #define  nga_merge_distr_patch_    nga_merge_distr_patch__     
 #define  ga_is_mirrored_           ga_is_mirrored__     
 #define  nga_num_shmem_seg_        ga_num_shmem_seg__     

@@ -69,6 +69,7 @@ extern int NGA_Create_ghosts_irreg_config(int type,int ndim,int dims[], int widt
                                           char *name, int map[], int nblock[], int p_handle);
 extern void GA_Update_ghosts(int g_a);
 extern void GA_Merge_mirrored(int g_a);
+extern void GA_Fast_merge_mirrored(int g_a);
 extern void NGA_Merge_distr_patch(int g_a, int alo[], int ahi[],
                                   int g_b, int blo[], int bhi[]);
 extern int GA_Is_mirrored(int g_a);

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.60 2003-08-12 14:18:12 manoj Exp $ */
+/* $Id: capi.c,v 1.61 2003-09-03 17:11:21 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -365,6 +365,12 @@ void GA_Merge_mirrored(int g_a)
 {
     Integer a=(Integer)g_a;
     ga_merge_mirrored_(&a);
+}
+
+void GA_Fast_merge_mirrored(int g_a)
+{
+    Integer a=(Integer)g_a;
+    ga_fast_merge_mirrored_(&a);
 }
 
 int GA_Is_mirrored(int g_a)

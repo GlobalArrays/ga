@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.49 2003-08-12 14:18:12 manoj Exp $ */
+/* $Id: base.c,v 1.50 2003-09-03 17:11:20 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -558,6 +558,8 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
   Integer  i, j, itmp, icheck, ndim, map_offset[MAXDIM];
   Integer  index[MAXDIM], subscript[MAXDIM];
   Integer  handle = GA_OFFSET + *g_a;
+  Integer  type, size, p_handle, id;
+  char     *fptr, *lptr;
 
   /* find total number of elements */
   ndim = GA[handle].ndim;
@@ -696,10 +698,64 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
       GA[handle].last[i] = GA[handle].mapc[map_offset[i]+index[i]]
                           + subscript[i];
     }
+    /* find length of shared memory segment owned by this node. Adjust
+     * length, if necessary, to account for gaps in memory between
+     * processors */
+    type = GA[handle].type;
+    switch(type) {
+      case C_FLOAT: size = sizeof(float); break;
+      case C_DBL: size = sizeof(double); break;
+      case C_LONG: size = sizeof(long); break;
+      case C_INT: size = sizeof(int); break;
+      case C_DCPL: size = 2*sizeof(double); break;
+      default: ga_error("type not supported",type);
+    }
+    for (i=0; i<ndim; i++) index[i] = (Integer)GA[handle].last[i];
+    i = nga_locate_(g_a, index, &id);
+    nga_distribution_(g_a, &id, lo, hi);
+    /* check to see if last is the last element on the processor */
+    icheck = 1;
+    for (i=0; i<ndim; i++) {
+      if (GA[handle].last[i] < hi[i]) icheck = 0;
+     /* BJP printf("p[%d] last[%d]: %d, hi[%d]: %d\n",GAme,i,GA[handle].last[i],i,hi[i]); */
+    }
+    /* if last is the last element on a processor that is NOT the last
+     * processor on the node then we need to get the first element on the
+     * next processor */
+    if (inode == nnodes - 1) icheck = 0;
+    if (icheck) {
+      /* BJP printf("p[%d] Augmenting index, inode: %d nproc: %d\n",GAme,inode,nproc); */
+      ilast = GA[handle].last[0]-1;
+      for (i=1; i<ndim; i++) {
+        ilast = ilast*GA[handle].dims[i-1]+GA[handle].last[i]-1;
+      }
+      ilast++;
+      for (i=ndim-1; i>=1; i--) {
+        subscript[i] = ilast%GA[handle].dims[i-1];
+        subscript[i]++;
+        /* BJP printf("p[%d] subscript[%d]: %d\n",GAme,i,subscript[i]); */
+        ilast /= GA[handle].dims[i-1];
+      }
+      subscript[0] = ilast+1;
+      /* BJP printf("p[%d] subscript[%d]: %d\n",GAme,0,subscript[0]); */
+      i = nga_locate_(g_a, subscript, &id);
+      id = P_LIST[GA[handle].p_handle].map_proc_list[id];
+      gam_Loc_ptr(id, handle, subscript, &lptr);
+      size = 0;
+    } else {
+      id = P_LIST[GA[handle].p_handle].map_proc_list[id];
+      gam_Loc_ptr(id, handle, GA[handle].last, &lptr);
+    }
+    for (i=0; i<ndim; i++) index[i] = (Integer)GA[handle].first[i];
+    i = nga_locate_(g_a, index, &id);
+    id = P_LIST[GA[handle].p_handle].map_proc_list[id];
+    gam_Loc_ptr(id, handle, GA[handle].first, &fptr);
+    GA[handle].shm_length = lptr - fptr + size;
   } else {
     for (i=0; i<ndim; i++) {
       GA[handle].first[i] = 0;
       GA[handle].last[i] = -1;
+      GA[handle].shm_length = -1;
     }
   }
 }
@@ -2768,6 +2824,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
           nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
           if (bptr != nptr) {
             bytes = (Integer)nptr - (Integer)bptr;
+            /* BJP printf("p[%d] Gap on proc %d is %d\n",GAme,i,bytes); */
             bzero(bptr, bytes);
           }
         }
@@ -3107,7 +3164,7 @@ void FATR nga_get_shmem_block_(Integer *g_a,
             hi[j] = upper[j];
           }
         }
-      } else if (icheck) {
+      } else {
         if (ret == 0) {
           for (j=0; j<ndim; j++) {
             lo[j] = first[j];
@@ -3131,4 +3188,275 @@ void FATR nga_get_shmem_block_(Integer *g_a,
   }
   GA_POP_NAME;
   return;
+}
+
+/*\ do a fast merge of all copies of a mirrored array only passing
+ *  around non-zero data
+\*/
+void FATR ga_fast_merge_mirrored_(Integer *g_a)
+{
+  Integer handle = GA_OFFSET + *g_a;
+  Integer inode, new_inode, nprocs, nnodes, new_nnodes, zero, zproc;
+  int *blocks, *map, *dims, *width;
+  Integer i, j, index[MAXDIM], itmp, ndim;
+  Integer nelem, count, type, size, atype;
+  Integer arr1[MAXDIM];
+  int slength, rlength, nsize;
+  char *zptr, *bptr, *nptr, *fptr;
+  Integer bytes, total;
+  Integer ilast,inext,id;
+  int local_sync_begin, local_sync_end;
+
+  /* declarations for message exchanges */
+  int next_node,next;
+  int armci_tag = 30000;
+  char *dstn,*srcp;
+  static int barr_count = 0;
+  int last, next_nodel=0;
+  int dummy=1, LnB, powof2nodes;
+  int groupA, groupB, sizeB;
+  void armci_util_wait_int(volatile int *,int,int);
+  double rdummy,rrdummy;
+  Integer one = 1;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
+  if (local_sync_begin) ga_sync_();
+  /* don't perform update if node is not mirrored */
+  if (!ga_is_mirrored_(g_a)) return;
+  GA_PUSH_NAME("ga_fast_merge_mirrored");
+
+  inode = ga_cluster_nodeid_();
+  /* BJP printf("p[%d] inode: %d\n",GAme,inode); */
+  nnodes = ga_cluster_nnodes_(); 
+  nprocs = ga_cluster_nprocs_(&inode);
+  zero = 0;
+
+  powof2nodes=1;
+  LnB = floor(log(nnodes)/log(2))+1;
+  if(pow(2,LnB-1)<nnodes){powof2nodes=0;}
+  /* Partition nodes into groups A and B. Group A contains a power of 2
+   * nodes, group B contains the remainder */
+  if (powof2nodes) {
+    groupA = 1;
+    groupB = 0;
+    sizeB = 0;
+    new_nnodes = nnodes;
+  } else {  
+    new_nnodes = pow(2,LnB-1);
+    sizeB = nnodes-new_nnodes;
+    if (inode<2*sizeB) {
+      if (inode%2 == 0) {
+        groupA = 1;
+        groupB = 0;
+      } else {
+        groupA = 0;
+        groupB = 1;
+      }
+    } else {
+      groupA = 1;
+      groupB = 0;
+    }
+  }
+  /*printf("p[%d] new_nnodes: %d sizeB: %d\n",GAme,new_nnodes,sizeB);
+  if (groupA) printf("p[%d] Group A\n",GAme);
+  if (groupB) printf("p[%d] Group B\n",GAme);*/
+
+  zproc = ga_cluster_procid_(&inode, &zero);
+  zptr = GA[handle].ptr[zproc];
+  map = GA[handle].mapc;
+  blocks = GA[handle].nblock;
+  dims = GA[handle].dims;
+  width = GA[handle].width;
+  type = GA[handle].type;
+  ndim = GA[handle].ndim;
+
+  /* Check whether or not all nodes contain the same number
+     of processors. */
+  if (nnodes*nprocs == ga_nnodes_())  {
+    /* check to see if there is any buffer space between the data
+       associated with each processor that needs to be zeroed out
+       before performing the merge */
+    if (zproc == GAme) {
+      nsize = 0;
+      for (i=0; i<nprocs; i++) {
+        /* Find out from mapc data how many elements are supposed to be located
+           on this processor. Start by converting processor number to indices */
+        itmp = i;
+        for (j=0; j<ndim; j++) {
+          index[j] = itmp%(Integer)blocks[j];
+          itmp = (itmp - index[j])/(Integer)blocks[j];
+        }
+
+        nelem = 1;
+        count = 0;
+        for (j=0; j<ndim; j++) {
+          if (index[j] < (Integer)blocks[j]-1) {
+            nelem *= (Integer)(map[index[j]+1+count] - map[index[j]+count]
+                   + 2*width[j]);
+          } else {
+            nelem *= (Integer)(dims[j] - map[index[j]+count] + 1 + 2*width[j]);
+          }
+          count += (Integer)blocks[j];
+        }
+        /* We now have the total number of elements located on this processor.
+           Find out if the location of the end of this data set matches the
+           origin of the data on the next processor. If not, then zero data in
+           the gap. */
+        nelem *= GAsizeof(type);
+        nsize += (int)nelem;
+        bptr = GA[handle].ptr[ga_cluster_procid_(&inode, &i)];
+        bptr += nelem;
+        if (i<nprocs-1) {
+          j = i+1;
+          nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
+          if (bptr != nptr) {
+            bytes = (Integer)nptr - (Integer)bptr;
+            nsize += (int)bytes;
+            bzero(bptr, bytes);
+          }
+        }
+      }
+      /* The gaps have now been zeroed out. Begin exchange of data */
+      /* This algorith is based on the armci_msg_barrier code */
+      /* Locate pointers to beginning and end of non-zero data */
+      for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].first[i];
+      i = nga_locate_(g_a, index, &id);
+      i = id;
+      id = P_LIST[GA[handle].p_handle].map_proc_list[id];
+      nga_get_(g_a,index,index,&rdummy,&one);
+      gam_Loc_ptr(id, handle, GA[handle].first, &fptr);
+      for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].last[i];
+      slength = GA[handle].shm_length;
+      if(nnodes>1){
+        int iinode = inode;
+        if (iinode < sizeB)
+          iinode = (Integer)inode/2;
+        else
+          iinode = (Integer)(inode-sizeB);
+        if(!powof2nodes && inode <new_nnodes && groupA) {
+          ilast = inode + 1;
+          next_nodel = ga_cluster_procid_(&ilast, &zero);
+        } else if (groupB) {
+          ilast = inode - 1;
+          next_nodel = ga_cluster_procid_(&ilast, &zero);
+        }
+        /*printf("p[%d] Value of next nodel: %d\n",GAme,next_nodel);*/
+        /*three step exchange if num of nodes is not pow of 2*/
+        /*divide _nodes_ into two sets, first set "pow2" will have a power of 
+         *two nodes, the second set "not-pow2" will have the remaining.
+         *Each node in the not-pow2 set will have a pair node in the pow2 set.
+         *Step-1:each node in pow2 set with a pair in not-pow2 set first recvs 
+         *      :a message from its pair in not-pow2. 
+         *step-2:All nodes in pow2 do a Rercusive Doubling based Pairwise exng.
+         *step-3:Each node in pow2 with a pair in not-pow2 snds msg to its 
+         *      :pair node.
+         *if num of nodes a pow of 2, only step 2 executed
+         */
+        if(last>inode && groupA){ /*the pow2 set of procs*/
+          /* Use actual index of processor you are recieving from in group B
+           * and perform first exchange (for non-power of 2) */
+          if(!powof2nodes && inode < 2*sizeB){ /*step 1*/
+            dstn = (char *)&rlength;
+            /*printf("p[%d] Recieving (1) data from %d\n",GAme,next_nodel);*/
+            armci_msg_rcv(armci_tag, dstn,4,NULL,next_nodel);
+            if (GAme > next_nodel) {
+              dstn = fptr - rlength;
+            } else {
+              dstn = fptr + slength;
+            }
+            armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_nodel);
+            printf("p[%d] Recieved (1) data from %d\n",GAme,next_nodel);
+            if (GAme > next_nodel)
+              fptr -= rlength;
+            slength += rlength;
+          }
+          /* Assign inode = new_inode */
+          if (inode < 2*sizeB) {
+            new_inode  = inode/2;
+          } else {
+            new_inode  = inode - sizeB;
+          }
+          /*LnB=1;*/ /*BJP*/
+          for(i=0;i<LnB-1;i++){ /*step 2*/
+            /*printf("p[%d] Executing power of 2 loop\n",GAme);*/
+            next=((int)pow(2,i))^new_inode;
+            if(next>=0 && next<new_nnodes){
+              /* Translate back from relative_next_node to actual_next_node */
+              if (next < sizeB)
+                inext = (Integer)2*next;
+              else
+                inext = (Integer)(next+sizeB);
+              next_node = ga_cluster_procid_(&inext, &zero);
+              srcp = (char *)&slength;
+              dstn = (char *)&rlength;
+              if(next_node > GAme){
+                armci_msg_snd(armci_tag, srcp,4,next_node);
+                armci_msg_rcv(armci_tag, dstn,4,NULL,next_node);
+              }
+              else{
+                /*would we gain anything by doing a snd,rcv instead of rcv,snd*/
+                armci_msg_rcv(armci_tag, dstn,4,NULL,next_node);
+                armci_msg_snd(armci_tag, srcp,4,next_node);
+              }
+              srcp = fptr;
+              if (GAme > next_node) {
+                dstn = fptr - rlength;
+              } else {
+                dstn = fptr + slength;
+              }
+              /* Translate back from relative_next_node to actual_next_node */
+              if(next_node > GAme){
+                armci_msg_snd(armci_tag, srcp,slength,next_node);
+                armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_node);
+              }
+              else{
+                /*would we gain anything by doing a snd,rcv instead of rcv,snd*/
+                armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_node);
+                armci_msg_snd(armci_tag, srcp,slength,next_node);
+              }
+              if (GAme > next_node)
+                fptr -= rlength;
+              slength += rlength;
+            }
+          }
+              /* Use actual index of processor that you already recieved from
+               * and that you will be sending to in group B*/
+          if(!powof2nodes && inode < 2*sizeB){ /*step 3*/
+            /*printf("p[%d] Sending (2) data to %d\n",GAme,next_nodel); */
+            srcp = GA[handle].ptr[GAme];
+            armci_msg_snd(armci_tag, srcp,nsize,next_nodel);
+            /*printf("p[%d] Sent (2) data to %d\n",GAme,next_nodel); */
+          }
+        }
+        else if (groupB) {
+          /* Send data from group B to group A and then wait to
+           * recieve data from group A to group B */
+          if(!powof2nodes){
+            /* printf("p[%d] Sending (1) data to %d\n",GAme,next_nodel); */
+            srcp = (char *)&slength;
+            armci_msg_snd(armci_tag, srcp,4,next_nodel);
+            srcp = fptr;
+            armci_msg_snd(armci_tag, srcp,slength,next_nodel);
+            /*printf("p[%d] Sent (1) data to %d\n",GAme,next_nodel);*/
+            dstn = GA[handle].ptr[GAme];
+            rlength = nsize;
+            /*printf("p[%d] Recieving (2) data from %d\n",GAme,next_nodel);*/
+            armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_nodel);
+            /*printf("p[%d] Recieved (2) data from %d\n",GAme,next_nodel);*/
+          }
+        }
+      }
+      /*printf("p[%d] About to execute armci_msg_gop_scope\n",GAme);*/
+      armci_msg_gop_scope(SCOPE_NODE,&dummy,1,"+",ARMCI_INT);
+    } else {
+      /*printf("p[%d] About to execute armci_msg_gop_scope\n",GAme);*/
+      armci_msg_gop_scope(SCOPE_NODE,&dummy,1,"+",ARMCI_INT);
+    }
+    /*printf("p[%d] Executed armci_msg_gop_scope\n",GAme);*/
+  } else {
+    ga_merge_mirrored_(g_a);
+  }
+  if (local_sync_end) ga_sync_();
+  GA_POP_NAME;
 }

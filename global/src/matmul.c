@@ -1066,7 +1066,7 @@ void ga_matmul_patch(transa, transb, alpha, beta,
      void    *alpha, *beta;
      char    *transa, *transb;
 {
-    if(ga_is_mirrored_(g_a)) 
+    if(ga_is_mirrored_(g_a) || 1) 
        ga_matmul_mirrored(transa, transb, alpha, beta,
 			  g_a, ailo, aihi, ajlo, ajhi,
 			  g_b, bilo, bihi, bjlo, bjhi,
@@ -1488,7 +1488,7 @@ Integer clo[2], chi[2];
 	nga_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
                          g_b, blo, bhi, g_c, clo, chi);
 #else
-	if(ga_is_mirrored_(g_a)) 
+	if(ga_is_mirrored_(g_a) || 1) 
 	   ga_matmul_mirrored(transa, transb, alpha, beta,
 			      g_a, ailo, aihi, ajlo, ajhi,
 			      g_b, bilo, bihi, bjlo, bjhi,
@@ -1560,7 +1560,7 @@ void FATR GA_DGEMM(char *transa, char *transb, Integer *m, Integer *n, Integer *
 SET_GEMM_INDICES;
 #endif
  
- ga_matmul(transa, transb, alpha, beta,
+ ga_matmul_mirrored(transa, transb, alpha, beta,
 	   g_a, &ailo, &aihi, &ajlo, &ajhi,
 	   g_b, &bilo, &bihi, &bjlo, &bjhi,
 	   g_c, &cilo, &cihi, &cjlo, &cjhi);

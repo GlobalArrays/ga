@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.14 2003-07-31 23:56:11 manoj Exp $ */
+/*$Id: base.h,v 1.15 2003-09-03 17:11:21 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -33,6 +33,7 @@ typedef struct {
        int  width[MAXDIM];      /* boundary cells per dimension         */
        int  first[MAXDIM];      /* (Mirrored only) first local element  */
        int  last[MAXDIM];       /* (Mirrored only) last local element   */
+       int  shm_length;         /* (Mirrored only) local shmem length   */
        Integer lo[MAXDIM];      /* top/left corner in local patch       */
        double scale[MAXDIM];    /* nblock/dim (precomputed)             */
        char **ptr;              /* arrays of pointers to remote data    */
@@ -147,3 +148,50 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
   ga_error(err_string, val);                                         \
 }
 
+/*\ Just return pointer (ptr_loc) to location in memory of element with
+ *  subscripts (subscript).
+\*/
+#define gam_Loc_ptr(proc, g_handle,  subscript, ptr_loc)                      \
+{                                                                             \
+Integer _offset=0, _d, _w, _factor=1, _last=GA[g_handle].ndim-1;              \
+Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
+                                                                              \
+      ga_ownsM(g_handle, proc, _lo, _hi);                                     \
+      _p_handle = GA[g_handle].p_handle;                                      \
+      if (_p_handle < 0) {                                                    \
+        _iproc = proc;                                                        \
+      } else {                                                                \
+        _iproc = P_LIST[_p_handle].inv_map_proc_list[proc];                   \
+      }                                                                       \
+      gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
+      for(_d=0; _d < _last; _d++)            {                                \
+          _w = GA[g_handle].width[_d];                                        \
+          _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                    \
+          _factor *= _hi[_d] - _lo[_d]+1+2*_w;                                \
+      }                                                                       \
+      _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])      \
+               * _factor;                                                     \
+      *(ptr_loc) =  GA[g_handle].ptr[_iproc]+_offset*GA[g_handle].elemsize;   \
+}
+
+#define ga_check_regionM(g_a, ilo, ihi, jlo, jhi, string){                     \
+   if (*(ilo) <= 0 || *(ihi) > GA[GA_OFFSET + *(g_a)].dims[0] ||               \
+       *(jlo) <= 0 || *(jhi) > GA[GA_OFFSET + *(g_a)].dims[1] ||               \
+       *(ihi) < *(ilo) ||  *(jhi) < *(jlo)){                                   \
+       sprintf(err_string,"%s:req(%ld:%ld,%ld:%ld) out of range (1:%ld,1:%ld)",\
+               string, *(ilo), *(ihi), *(jlo), *(jhi),                         \
+               GA[GA_OFFSET + *(g_a)].dims[0], GA[GA_OFFSET + *(g_a)].dims[1]);\
+       ga_error(err_string, *(g_a));                                           \
+   }                                                                           \
+}
+
+#define gaCheckSubscriptM(subscr, lo, hi, ndim)                                \
+{                                                                              \
+Integer _d;                                                                    \
+   for(_d=0; _d<  ndim; _d++)                                                  \
+      if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
+        sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \
+                  subscr[_d],  lo[_d],  hi[_d]);                               \
+          ga_error(err_string, _d);                                            \
+      }\
+}
