@@ -314,6 +314,9 @@ c
       t14 = 0.0d00
       t15 = 0.0d00
       call ga_sync
+      call ga_set_ghost_corner_flag(.false.)
+c
+      call ga_set_update5_info(g_a)
       do i = 1, nloop
         call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
         start = util_timer()
