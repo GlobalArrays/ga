@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.13 1999-11-15 22:00:38 d3h325 Exp $ */
+/* $Id: capi.c,v 1.14 1999-11-16 00:28:53 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -454,6 +454,7 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
     free(_subs_array);
 }
 
+
 void GA_Dgemm(char ta, char tb, int m, int n, int k,
               double alpha, int g_a, int g_b, double beta, int g_c )
 {
@@ -719,3 +720,6 @@ void GA_Print_distribution(int g_a)
     Integer a=(Integer)g_a;
     ga_print_distribution_(&a);
 }
+
+
+void NGA_Release_update(int g_a, int lo[], int hi[]){};
