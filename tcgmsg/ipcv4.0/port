@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# New port script in /bin/sh.
+# USAGE:
+# port 'machine-list' file.proto
+#
+
+output=`echo $2 | sed -e 's/\.proto//'`
+cdir=`pwd`
+
+echo Porting $2 to $output for $1
+
+echo $1  > port.$$
+cat  $2 >> port.$$
+
+awk -f ../port.awk port.$$ | \
+      sed "s,TOP_LEVEL_DIRECTORY,$cdir,g" > $output
+
+/bin/rm -f port.$$
