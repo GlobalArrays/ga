@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.43 2003-06-24 00:01:53 vinod Exp $ */
+/* $Id: base.c,v 1.44 2003-07-08 16:21:55 edo Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2530,12 +2530,12 @@ void FATR ga_merge_mirrored_(Integer *g_a)
   Integer bytes, total;
   int local_sync_begin, local_sync_end;
 
-  GA_PUSH_NAME("ga_merge_mirrored");
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
   if (local_sync_begin) ga_sync_();
   /* don't perform update if node is not mirrored */
   if (!ga_is_mirrored_(g_a)) return;
+  GA_PUSH_NAME("ga_merge_mirrored");
 
   inode = ga_cluster_nodeid_();
   nnodes = ga_cluster_nnodes_(); 
