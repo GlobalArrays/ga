@@ -1,4 +1,4 @@
-c $Id: pg2test.F,v 1.4 2004-11-04 15:35:42 d3g293 Exp $
+c $Id: pg2test.F,v 1.5 2004-11-08 20:08:01 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -31,7 +31,7 @@ c#define GA3
       integer n,m,grp_id
       parameter (n = 128)
       integer ndim, dims(2), chunk(2)
-      integer g_w
+      integer g_w, midproc
 c     
 c***  Intitialize a message passing library
 c
@@ -50,10 +50,6 @@ c     In the second, user can set limit (per processor) in bytes.
 c
       call ga_initialize()
       nproc = ga_nnodes()
-      if(nproc .ne. 8) then
-         write(*,*) 'nproc =', nproc
-         call ga_error('failed: need atleast 8 processors',10)
-      endif
       me = ga_nodeid()
 c
 c***  Initialize the MA package
@@ -79,33 +75,22 @@ c
       status = ga_allocate(g_w)
       call ga_zero(g_w)
 c
-c***  Create process groups on SMP nodes
-c
-      inode = ga_cluster_nodeid()
-      nnodes = ga_cluster_nnodes()
-c      do i=0, nnodes-1
-c        nprocs = ga_cluster_nprocs(i)
-c        do j = 0, nprocs - 1
-c          proclist(j+1) = ga_cluster_procid(i,j)
-c        end do
-c        proc_group(i) = ga_pgroup_create(proclist, nprocs)
-c      end do
-      proclist(1) = 0
-      proclist(2) = 1
-      proclist(3) = 2
-      proclist(4) = 3
-      nprocs = 4
+      midproc = nproc/2
+      do i = 1, midproc
+        proclist(i) = i-1
+      end do
+      nprocs = midproc
       proc_group(0) = ga_pgroup_create(proclist, nprocs)
-      proclist(1) = 4
-      proclist(2) = 5
-      proclist(3) = 6
-      proclist(4) = 7
-      nprocs = 4
+      do i = midproc + 1, nproc
+        proclist(i-midproc) = i-1
+      end do
+      nprocs = nproc - midproc
       proc_group(1) = ga_pgroup_create(proclist, nprocs)
+
 c
       write(6,*) 'Groups have been created'
       call ga_sync()
-      if (me.ge.4) then
+      if (me.ge.midproc) then
           call runtest(proc_group(1), g_w)
       else
       endif
@@ -1684,7 +1669,7 @@ c
       inc =5 
 c     every processor will be operating on somebody elses data
 c
-      lproc = ga_nnodes() - me - 1
+      lproc = nproc - me - 1
 c
       call ga_distribution(g_a,lproc,ilo,ihi,jlo,jhi)
 c
