@@ -144,16 +144,22 @@ double *buf;
 
      NGA_Distribution(g_a,me,lo,hi);
 
-     if(hi[0]>=0){  /* -1 means no array elements stored on this processor */
+     if(hi[0]>=0){/* -1 means no elements stored on this processor */
          double *ptr;
-         char msg[100];
          int locdim[NDIM];
          NGA_Access(g_a, lo,hi, &ptr, ld);
-         sprintf(msg,"%d: leading dimensions",me);
-         print_subscript(msg,ndim-1,ld,"\n");
          for(i=0;i<ndim;i++)locdim[i]=hi[i]-lo[i]+1;
          fill_patch(ptr, locdim, ld, ndim,(double)me);
+     }
+
+     for(i=0;i<nproc; i++){
+       if(me==i && hi[0]>=0){
+         char msg[100];
+         sprintf(msg,"%d: leading dimensions",me);
+         print_subscript(msg,ndim-1,ld,"\n");
          fflush(stdout);
+       }
+       GA_Sync();
      }
      
      GA_Sync();
