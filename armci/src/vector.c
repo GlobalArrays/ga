@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.7 1999-07-28 00:48:05 d3h325 Exp $ */
+/* $Id: vector.c,v 1.8 1999-08-16 18:53:13 jju Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -329,3 +329,114 @@ char *ptr = (char*)buf;
         }
       }
 }
+
+int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
+                int len,  /* length of descriptor array */
+                int proc  /* remote process(or) ID */
+              )
+{
+    int rc, i,direct=1;
+
+
+    if(len<1) return FAIL;
+    for(i=0;i<len;i++){
+        if(darr[i].src_ptr_array == NULL || darr[i].dst_ptr_array ==NULL) return FAIL2;
+        if(darr[i].bytes<1)return FAIL3;
+        if(darr[i].ptr_array_len <1) return FAIL4;
+    }
+
+    if(proc<0 || proc >= armci_nproc)return FAIL5;
+
+    ORDER(PUT,proc); /* ensure ordering */
+    direct=SAMECLUSNODE(proc);
+
+    /* use direct protocol for remote access when performance is better */
+#   ifdef LAPI
+      if(!direct)
+          if(len <5 || darr[0].ptr_array_len <5) direct=1;
+#   endif
+
+
+    if(direct)
+         rc = armci_copy_vector(PUT, darr, len, proc);
+    else
+         rc = armci_pack_vector(PUT, NULL, darr, len, proc);
+
+    if(rc) return FAIL6;
+    else return 0;
+
+}
+
+
+int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
+                int len,  /* length of descriptor array */
+                int proc  /* remote process(or) ID */
+              )
+{
+    int rc, i,direct=1;
+
+    if(len<1) return FAIL;
+    for(i=0;i<len;i++){
+      if(darr[i].src_ptr_array==NULL ||darr[i].dst_ptr_array==NULL)return FAIL2;
+      if(darr[i].bytes<1)return FAIL3;
+      if(darr[i].ptr_array_len <1) return FAIL4;
+    }
+
+    if(proc<0 || proc >= armci_nproc)return FAIL5;
+
+    ORDER(GET,proc); /* ensure ordering */
+    direct=SAMECLUSNODE(proc);
+
+    /* use direct protocol for remote access when performance is better */
+#   ifdef LAPI
+      if(!direct)
+          if(len <5 || darr[0].ptr_array_len <8) direct=1;
+#   endif
+
+
+    if(direct)
+       rc = armci_copy_vector(GET, darr, len, proc);
+    else
+       rc = armci_pack_vector(GET, NULL, darr, len, proc);
+
+    if(rc) return FAIL6;
+    else return 0;
+}
+
+
+
+
+int ARMCI_AccV( int op,              /* oeration code */
+                void *scale,         /*scaling factor for accumulate */
+                armci_giov_t darr[], /* descriptor array */
+                int len,             /* length of descriptor array */
+                int proc             /* remote process(or) ID */
+              )
+{
+    int rc, i,direct=1;
+
+    if(len<1) return FAIL;
+    for(i=0;i<len;i++){
+      if(darr[i].src_ptr_array==NULL ||darr[i].dst_ptr_array==NULL)return FAIL2;
+      if(darr[i].bytes<1)return FAIL3;
+      if(darr[i].ptr_array_len <1) return FAIL4;
+    }
+
+    if(proc<0 || proc >= armci_nproc)return FAIL5;
+
+    ORDER(op,proc); /* ensure ordering */
+    direct=SAMECLUSNODE(proc);
+
+#   if defined(ACC_COPY)
+       if(armci_me != proc) direct=0;
+#   endif
+
+    if(direct)
+         rc = armci_acc_vector( op, scale, darr, len, proc);
+    else
+         rc = armci_pack_vector(op, scale, darr, len, proc);
+
+    if(rc) return FAIL6;
+    else return 0;
+}
+
