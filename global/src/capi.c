@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.51 2003-02-21 20:49:12 d3g293 Exp $ */
+/* $Id: capi.c,v 1.52 2003-03-05 00:33:29 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -63,7 +63,7 @@ Integer lim = (Integer)limit;
 }
     
 
-int NGA_Create(int type, int ndim,int dims[], char *name, int chunk[])
+int NGA_Create(int type, int ndim,int dims[], char *name, int *chunk)
 {
     Integer *ptr, g_a; 
     logical st;
