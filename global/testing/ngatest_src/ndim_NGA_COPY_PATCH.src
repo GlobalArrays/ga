@@ -150,7 +150,7 @@ c
       endif
 c---  
 c     prepare array a, make it transposed
-      call m4_util_transpose(m4_test_type)(a,total,ndim,dims)
+      call m4_util_transpose(m4_test_type)(a,b,total,ndim,dims)
 c     
       do loop=1, 10
          call random_range(lop,hipl,alo,ahi,ndim)

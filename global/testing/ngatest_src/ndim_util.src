@@ -88,15 +88,14 @@ c
       end
 
 c     transpose an array
-      subroutine m4_util_transpose(m4_test_type)(arr,total,ndim,dims)
+      subroutine m4_util_transpose(m4_test_type)(a1,a2,total,ndim,dims)
       implicit none
       integer ndim,total
       integer dims(ndim)
-      m4_data_type arr(total)
+      m4_data_type a1(total),a2(total)
       integer i, j
       integer idx
-      integer bv(ndim), bunit(ndim)
-      m4_data_type arr2(total)
+      integer bv(m4_max_dim), bunit(m4_max_dim)
 c
       bv(1)=0
       bunit(1)=1
@@ -113,11 +112,11 @@ c
             if(bv(j).ge.dims(j)) bv(j) = 0
          enddo
 c         print *, 'i = ',i, 'idx = ',idx
-         arr2(idx) = arr(i)
+         a2(idx) = a1(i)
       enddo
 c
       do i=1, total
-         arr(i) = arr2(i)
+         a1(i) = a2(i)
       enddo
 c
       end

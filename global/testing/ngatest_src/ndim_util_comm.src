@@ -38,7 +38,7 @@ c     get the next available nindex in the range of lo and hi
       implicit none
       integer ind,total,ndim,lo(ndim),hi(ndim),dims(ndim)
       integer i
-      integer indx(ndim),nindex
+      integer indx(m4_max_dim),nindex
 c
       nindex = ind + 1
  200  call conv_1ton(ndim,dims,nindex,indx)
@@ -126,7 +126,7 @@ c     convert the index from one dimension to n dimension
       integer ndim
       integer dims(ndim)
       integer ind1,indn(ndim)
-      integer range(ndim),remainder,i
+      integer range(m4_max_dim),remainder,i
 c
       remainder = ind1
 c     get the range of each dimension
