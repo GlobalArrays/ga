@@ -394,7 +394,14 @@ int elio_truncate(Fd_t fd, Off_t dlength)
     int pablo_code = PABLO_elio_truncate;
     PABLO_start( pablo_code );
 #endif
-
+    if(dlength >= elio_max_file_size(fd)){
+      Fd_t next_fd = elio_get_next_extent(fd);
+      dlength -= elio_max_file_size(fd);
+#       if defined(DEBUG)
+      printf(stderr," calling ftruncate with length = %f \n", dlength);
+#endif
+      return elio_truncate(next_fd, dlength);
+    }
     (void) SEEK(fd->fd, 0L, SEEK_SET);
     if (ftruncate(fd->fd, length))
 	return TRUNFAIL;
