@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.11 1997-12-02 19:41:34 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.12 1998-03-31 01:41:15 d3e129 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -264,7 +264,10 @@ static long RemoteCreate(remote_hostname, remote_username,
 #ifdef HPUX
       (void) execv("/usr/bin/remsh",argv2);
 #endif
-#if !defined(SGI) && !defined(HPUX)
+#if defined(LINUX)
+      (void) execv("/usr/bin/rsh",argv2);
+#endif
+#if !defined(SGI) && !defined(HPUX) && !defined(LINUX)
       (void) execv("/usr/ucb/rsh",argv2);
 #endif
     }
