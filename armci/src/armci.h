@@ -170,13 +170,16 @@ extern char *mp_group_name;
 /*\ the request structure for non-blocking api. 
 \*/
 typedef struct{
-   unsigned int tag;
-   int bufid;
-   int op;
-   int proc;
-#ifdef NB_CMPL_T
-   NB_CMPL_T cmpl_info;
+#if defined(_AIX) 
+#   if defined(__64BIT__)
+    double dummy[27]; /*lapi_cntr_t is 200 bytes, using 216 just to be safe*/ 
+#   else
+    double dummy[20]; /*lapi_cntr_t is 148 bytes, using 166 just to be safe*/ 
+#   endif
+#else
+    double dummy;
 #endif
+    int data[4];
 } armci_req_t;
 /*\ the request structure for non-blocking api. 
 \*/

@@ -77,6 +77,8 @@ extern thread_id_t armci_usr_tid;
 #if defined(LAPI) || defined(CLUSTER)
 #  include "request.h"
 #endif
+
+
 /* min amount of data in strided request to be sent in a single TCP/IP message*/
 #ifdef SOCKETS
 #  define TCP_PAYLOAD 128 
@@ -164,7 +166,7 @@ extern void armci_read_strided(void *ptr, int stride_levels,
 extern int armci_op_strided(int op, void* scale, int proc,void *src_ptr, 
 			int src_stride_arr[],  void* dst_ptr, 
                         int dst_stride_arr[], int count[],  
-                        int stride_levels, int lockit,armci_hdl_t nb_handle);
+                        int stride_levels, int lockit,armci_ihdl_t nb_handle);
 extern int armci_copy_vector(int op, /* operation code */
                 armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
@@ -182,10 +184,10 @@ extern int armci_pack_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, ext_header_t *hdr,
-                       int fit_level, int nb, int last,armci_hdl_t nb_handle);
+                       int fit_level, int nb, int last,armci_ihdl_t nb_handle);
 
 extern int armci_pack_vector(int op, void *scale, 
-                    armci_giov_t darr[],int len,int proc,armci_hdl_t nb_handle);
+                    armci_giov_t darr[],int len,int proc,armci_ihdl_t nb_handle);
 
 extern void armci_lockmem(void *pstart, void* pend, int proc);
 extern void armci_unlockmem(int proc);

@@ -46,7 +46,7 @@ typedef struct {
 } armci_via_field_t;
 
 #define BUF_EXTRA_FIELD_T armci_via_field_t 
-#define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to) armci_via_complete_buf((armci_via_field_t *)(&(_field)),(_snd),(_rcv),(_to));_snd=0;_rcv=0;_to=0
+#define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op) armci_via_complete_buf((armci_via_field_t *)(&(_field)),(_snd),(_rcv),(_to),(_op));_snd=0;_rcv=0;_to=0
 #define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;if(operation==GET&&size>2*PIPE_MIN_BUFSIZE)_rcv=0
 extern char * armci_via_client_mem_alloc(int);
 #define BUF_ALLOCATE(_size) armci_via_client_mem_alloc(_size)
@@ -56,7 +56,7 @@ extern char * armci_via_client_mem_alloc(int);
 #define LONG_GET_THRESHOLD_STRIDED 20000000
 #define _armci_bypass 1
 
-extern void armci_via_complete_buf(armci_via_field_t *,int,int,int); 
+extern void armci_via_complete_buf(armci_via_field_t *,int,int,int,int); 
 extern int armci_pin_memory(void *ptr, int stride_arr[], int count[], int lev);
 extern void armci_unpin_memory(void *ptr,int stride_arr[],int count[],int lev);
 extern void armci_client_send_ack(int p, int success);

@@ -1,4 +1,4 @@
-/* $Id: via.c,v 1.24 2002-10-17 10:05:42 d3h325 Exp $ */
+/* $Id: via.c,v 1.25 2002-12-11 00:43:34 vinod Exp $ */
 #include <stdio.h>
 #include <strings.h>
 #include <assert.h>
@@ -838,9 +838,12 @@ void armci_client_connect_to_servers()
 
 #define BUF_TO_EVBUF(buf) (vbuf_ext_t*)(((char*)buf) - 2*sizeof(VIP_DESCRIPTOR))
 
-void armci_via_complete_buf(armci_via_field_t *field,int snd,int rcv,int to){
+void armci_via_complete_buf(armci_via_field_t *field,int snd,int rcv,int to,int op){
 VIP_RETURN rc;
 VIP_DESCRIPTOR *cmpl_dscr,* snd_dscr,* rcv_dscr;
+BUF_INFO_T *info;
+    info = (BUF_INFO_T *)((char *)field-sizeof(BUF_INFO_T));
+    if(info->tag && op==GET)return;
     if(snd){
         snd_dscr=(VIP_DESCRIPTOR *)(field->s);
         do{rc = VipSendDone((SRV_con+armci_clus_id(to))->vi, &cmpl_dscr);}

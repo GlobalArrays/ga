@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.46 2002-07-17 05:57:51 vinod Exp $
+/* $Id: myrinet.c,v 1.47 2002-12-11 00:43:34 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -203,7 +203,7 @@ static void armci_ensure_req_complete(request_header_t* msginfo){
 # if defined(BUF_EXTRA_FIELD_T)
     BUF_EXTRA_FIELD_T *tmp;
     tmp = ((BUF_EXTRA_FIELD_T *)((BUF_EXTRA_FIELD_T *)msginfo-1));
-    CLEAR_SEND_BUF_FIELD(*tmp,0,0,0);
+    CLEAR_SEND_BUF_FIELD(*tmp,0,0,0,0);
 # endif
 }
 

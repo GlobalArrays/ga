@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.27 2002-10-30 17:21:25 vinod Exp $ */
+/* $Id: pack.c,v 1.28 2002-12-11 00:43:34 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -76,7 +76,7 @@ int armci_pack_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, ext_header_t *h,
-                       int fit_level, int nb, int last,armci_hdl_t nb_handle)
+                       int fit_level, int nb, int last,armci_ihdl_t nb_handle)
 {
     int rc=0, sn, bufsize=BUFSIZE,noswap=0;
     void *src, *dst;
@@ -283,7 +283,7 @@ int bytes=0, split=0;
  
 
 int armci_pack_vector(int op, void *scale, armci_giov_t darr[],int len,
-                      int proc,armci_hdl_t nb_handle)
+                      int proc,armci_ihdl_t nb_handle)
 {
 armci_giov_t extra; /* keeps data remainder of set to be processed in chunks */
 armci_giov_t save;  /* keeps original value of set to be processed in chunks */

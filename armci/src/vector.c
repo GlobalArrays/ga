@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.20 2002-10-31 01:10:49 vinod Exp $ */
+/* $Id: vector.c,v 1.21 2002-12-11 00:43:34 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -528,9 +528,10 @@ int ARMCI_AccV( int op,              /* oeration code */
 int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
                 int proc, /* remote process(or) ID */
-                armci_hdl_t nb_handle  /*non-blocking request handle*/
+                armci_hdl_t usr_hdl  /*non-blocking request handle*/
               )
 {
+    armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int rc, i,direct=1,totvec=0;
 
     if(len<1) return FAIL;
@@ -577,9 +578,10 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
                 int proc, /* remote process(or) ID */
-                armci_hdl_t nb_handle  /*non-blocking request handle*/
+                armci_hdl_t usr_hdl  /*non-blocking request handle*/
               )
 {
+    armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int rc, i,direct=1,totvec=0;
 
     if(len<1) return FAIL;
@@ -626,9 +628,10 @@ int ARMCI_NbAccV( int op,              /* oeration code */
                 armci_giov_t darr[], /* descriptor array */
                 int len,             /* length of descriptor array */
                 int proc,            /* remote process(or) ID */
-                armci_hdl_t nb_handle  /*non-blocking request handle*/
+                armci_hdl_t usr_hdl  /*non-blocking request handle*/
               )
 {
+    armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int rc, i,direct=1;
 
 #ifdef GA_USE_VAMPIR

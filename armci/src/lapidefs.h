@@ -95,7 +95,7 @@ int _val_;\
 #define SET_COUNTER(counter, value) (counter).val += (value)
 
 #define INIT_SEND_BUF(_cntr,_snd,_rcv)    INIT_COUNTER(_cntr,1)
-#define CLEAR_SEND_BUF_FIELD(_cntr, _s, _r,_t) CLEAR_COUNTER(_cntr)
+#define CLEAR_SEND_BUF_FIELD(_cntr, _s, _r,_t,_o) CLEAR_COUNTER(_cntr)
 #define FIRST_INIT_SEND_BUF INIT_COUNTER
 #define SET_BUF_TAG _armci_buf_set_tag
 #define INIT_SENDBUF_INFO(_hdl,_buf,_op,_proc) \

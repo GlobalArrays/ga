@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.51 2002-12-04 19:20:53 vinod Exp $ */
+/* $Id: strided.c,v 1.52 2002-12-11 00:43:34 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -270,7 +270,7 @@ int armci_acc_copy_strided(int optype, void* scale, int proc,
 int armci_op_strided(int op, void* scale, int proc,void *src_ptr, 
                      int src_stride_arr[], void* dst_ptr, int dst_stride_arr[], 
                      int count[], int stride_levels, int lockit,
-                     armci_hdl_t nb_handle)
+                     armci_ihdl_t nb_handle)
 {
     char *src = (char*)src_ptr, *dst=(char*)dst_ptr;
     int s2, s3, i,j, unlockit=0;
@@ -373,7 +373,10 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
     
     /* deal with non-blocking loads and stores */
 #if defined(LAPI) || defined(_ELAN_PUTGET_H)
-    if(!nb_handle){
+#   ifdef LAPI
+     if(!nb_handle)
+#   endif
+    {
        if(proc != armci_me){
           if(op == GET){
             WAIT_FOR_GETS; /* wait for data arrival */
@@ -776,9 +779,10 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
                                          levels: count[0]=bytes*/
 		int stride_levels,    /* number of stride levels */
                 int proc,             /* remote process(or) ID */
-                armci_hdl_t nb_handle /* armci non-blocking call handle*/
+                armci_hdl_t usr_hdl /* armci non-blocking call handle*/
                 )
 {
+    armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int rc, direct=1;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
@@ -848,9 +852,10 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                                            levels: count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
                 int proc,               /* remote process(or) ID */
-                armci_hdl_t nb_handle  /* armci non-blocking call handle*/
+                armci_hdl_t usr_hdl  /* armci non-blocking call handle*/
                 )
 {
+    armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int rc,direct=1;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
@@ -917,9 +922,10 @@ int ARMCI_NbAccS( int  optype,            /* operation */
                                            levels: count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
                 int proc,               /* remote process(or) ID */
-                armci_hdl_t nb_handle  /* armci non-blocking call handle*/
+                armci_hdl_t usr_hdl  /* armci non-blocking call handle*/
                 )
 {
+    armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int rc, direct=1;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;

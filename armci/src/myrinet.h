@@ -75,7 +75,7 @@ extern struct gm_port *gmpi_gm_port;
 
 #define INIT_SEND_BUF(_cntr,_snd,_rcv) (_cntr).done=ARMCI_GM_CLEAR
 
-#define CLEAR_SEND_BUF_FIELD(_cntr, _s, _r,_t) if((_cntr).done==ARMCI_GM_SENDING){\
+#define CLEAR_SEND_BUF_FIELD(_cntr, _s, _r,_t,_o) if((_cntr).done==ARMCI_GM_SENDING){\
 MPI_Status status;\
 int flag;\
 while((_cntr).done==ARMCI_GM_SENDING)\

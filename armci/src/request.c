@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.45 2002-12-04 19:20:53 vinod Exp $ */
+/* $Id: request.c,v 1.46 2002-12-11 00:43:34 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -52,9 +52,25 @@ void armci_complete_req_buf(BUF_INFO_T *info, void *buffer)
 request_header_t *msginfo = (request_header_t*) buffer;
     if(info->protocol==0)return;
     else if(info->protocol==SDSCR_IN_PLACE){
-       strided_dscr_t *dscr = &(info->dscr.strided);
-       armci_rcv_strided_data(msginfo->to, msginfo, msginfo->datalen, dscr->ptr,
-                              dscr->stride_levels,dscr->stride_arr,dscr->count);
+       char *dscr = info->dscr.buf;
+       void *loc_ptr;
+       int stride_levels;
+       int *loc_stride_arr,*count;
+
+       loc_ptr = *(void**)dscr;           dscr += sizeof(void*);
+       stride_levels = *(int*)dscr;       dscr += sizeof(int);
+       loc_stride_arr = (int*)dscr;       dscr += stride_levels*sizeof(int);
+       count = (int*)dscr;
+       if(0 || DEBUG_){ 
+         if(armci_me==0){
+           printf("\n%d:extracted loc_ptr=%p, stridelevels=%d\n",armci_me,
+                  loc_ptr,stride_levels);
+           fflush(stdout);
+         }
+       }
+       armci_rcv_strided_data(msginfo->to, msginfo, msginfo->datalen, loc_ptr,
+                              stride_levels,loc_stride_arr,count);
+       FREE_SEND_BUFFER(msginfo);
     }
     else if(info->protocol==VDSCR_IN_PLACE || info->protocol==VDSCR_IN_PTR){
        char *dscr;
@@ -91,7 +107,7 @@ void armci_save_strided_dscr(char **bptr, void *rem_ptr,int rem_stride_arr[],
 {
 int i;
 char *bufptr=*bptr;
-BUF_INFO_T *info=BUF_TO_BUFINFO(bptr);
+BUF_INFO_T *info=BUF_TO_BUFINFO(*bptr);
 
     if(is_nb){    
        bufptr = (info->dscr.buf);
@@ -102,8 +118,14 @@ BUF_INFO_T *info=BUF_TO_BUFINFO(bptr);
     bufptr += stride_levels*sizeof(int);
     for(i=0;i< stride_levels+1;i++)((int*)bufptr)[i] = count[i];
     bufptr += (1+stride_levels)*sizeof(int);
-
-    /*rem_strided expects the pointer to point to the end of descr hence..*/
+    if((0 || DEBUG_) && is_nb){
+      bufptr = (info->dscr.buf);
+      if(armci_me==0)
+        printf("\n%d:rem_ptr %p=%p stride_levels %d=%d\n",armci_me,
+                *(void**)bufptr,rem_ptr,
+                *(int*)(bufptr + sizeof(void*)),stride_levels);
+    } 
+    /*remote_strided expects the pointer to point to the end of descr hence..*/
     if(is_nb)
        info->protocol=SDSCR_IN_PLACE;
     else
@@ -156,7 +178,7 @@ void *rem_ptr;
 /*\
  * If buf==null, set handle->bufid to val, else set it to the id of the buf
 \*/
-void armci_set_nbhandle_bufid(armci_hdl_t nb_handle,char *buf,int val)
+void armci_set_nbhandle_bufid(armci_ihdl_t nb_handle,char *buf,int val)
 {
 BUF_INFO_T *info;
     if(buf){
@@ -470,7 +492,7 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
 }
 
 extern int armci_direct_vector(request_header_t *msginfo , armci_giov_t darr[], int len, int proc);
-int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,int flag, armci_hdl_t nb_handle)
+int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,int flag, armci_ihdl_t nb_handle)
 {
     char *buf,*buf0;
     request_header_t *msginfo;
@@ -582,7 +604,7 @@ int armci_rem_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, 
-                       ext_header_t *h, int flag,armci_hdl_t nb_handle) 
+                       ext_header_t *h, int flag,armci_ihdl_t nb_handle) 
 {
     char *buf, *buf0;
     request_header_t *msginfo;
@@ -624,6 +646,9 @@ int armci_rem_strided(int op, void* scale, int proc,
         this shouldnt cause any problems. Later on this has to be properly
         set in pack.c for both strided and vector protocols*/
       armci_set_nbhandle_bufid(nb_handle,NULL,NB_MULTI);
+      if(op==GET)
+        armci_save_strided_dscr(&buf,dst_ptr,dst_stride_arr,count,
+                                stride_levels,1);
     }
     
     msginfo = (request_header_t*)buf;
@@ -744,12 +769,14 @@ int armci_rem_strided(int op, void* scale, int proc,
        {
           armci_send_req(proc, msginfo, bufsize);
        }
-
-       armci_rcv_strided_data(proc, msginfo, msginfo->datalen,
+#     if !defined(USE_SOCKET_VECTOR_API) 
+       if(0 || !nb_handle)
+#     endif 
+       {
+         armci_rcv_strided_data(proc, msginfo, msginfo->datalen,
                               dst_ptr, stride_levels, dst_stride_arr, count);
-
-       FREE_SEND_BUFFER(msginfo);
-
+         FREE_SEND_BUFFER(msginfo);
+       }
     } else{
        /* for put and accumulate send data */
        armci_send_strided(proc,msginfo, buf, 

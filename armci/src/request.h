@@ -1,6 +1,7 @@
 #ifndef _REQUEST_H_
 #define _REQUEST_H_
 
+
 /********  client buffer managment ops ****************************/
 extern void  _armci_buf_init();
 extern char* _armci_buf_get(int size, int operation, int to);
@@ -10,7 +11,6 @@ extern char* _armci_buf_ptr_from_id(int id);
 extern void  _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node);
 extern void _armci_buf_complete_nb_request(int bufid,unsigned int tag, int *retcode);
 extern void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol);
-extern void armci_set_nbhandle_bufid(armci_hdl_t nb_handle, char *buf, int val);
 
 #ifdef LAPI
 #  include "lapidefs.h"
@@ -33,6 +33,22 @@ extern void armci_set_nbhandle_bufid(armci_hdl_t nb_handle, char *buf, int val);
 #define ACK_QUIT 0
 #define QUIT 33
 #define ATTACH 34
+
+/*\ the internal request structure for non-blocking api. 
+\*/
+typedef struct{
+   unsigned int tag;
+   int bufid;
+   int op;
+   int proc;
+#ifdef NB_CMPL_T
+   NB_CMPL_T cmpl_info;
+#endif
+} armci_ireq_t;
+/*\ the internal request structure for non-blocking api. 
+\*/
+typedef armci_ireq_t* armci_ihdl_t;
+extern void armci_set_nbhandle_bufid(armci_ihdl_t nb_handle, char *buf, int val);
 
 typedef struct {
 #if 0 
@@ -185,12 +201,12 @@ extern void armci_send_strided_data(int proc,  request_header_t *msginfo,
 extern void armci_send_req(int proc, request_header_t* msginfo, int len);
 extern void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra);
 extern int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,
-                            int proc,int flag,armci_hdl_t nb_handle);
+                            int proc,int flag,armci_ihdl_t nb_handle);
 extern int armci_rem_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, 
-                       ext_header_t *h, int lockit,armci_hdl_t nb_handle);
+                       ext_header_t *h, int lockit,armci_ihdl_t nb_handle);
 
 extern void armci_rem_rmw(int op, int *ploc, int *prem, int extra, int proc);
 extern void armci_rem_ack(int clus);

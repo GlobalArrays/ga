@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.9 2002-11-06 13:58:36 vinod Exp $ */
+/* $Id: lapi2.c,v 1.10 2002-12-11 00:43:34 vinod Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -233,7 +233,7 @@ int i,rc;
 \*/
 void armci_lapi_strided(int op, void* scale, int proc,void *src_ptr,
                    int src_stride_arr[], void* dst_ptr, int dst_stride_arr[],
-                   int count[], int stride_levels, armci_hdl_t nb_handle)
+                   int count[], int stride_levels, armci_ihdl_t nb_handle)
 {
 int rc=0;
 lapi_cmpl_t *o_cmpl;

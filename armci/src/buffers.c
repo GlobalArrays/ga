@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.15 2002-12-04 19:20:52 vinod Exp $    **/
+/* $Id: buffers.c,v 1.16 2002-12-11 00:43:34 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -181,7 +181,8 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
 #   ifdef BUF_EXTRA_FIELD_T
     else{
        /* need to call platform specific function */
-       CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[idx].field,buf_state->snd,buf_state->rcv,buf_state->to);
+       CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[idx].field,buf_state->snd,buf_state->rcv,buf_state->to,buf_state->op);
+
        /*later, we might just need to do this for all operations, not just get*/
        if(_armci_buf_state->buf[idx].id.tag!=0 &&(buf_state->op == GET)){
          armci_complete_req_buf(&(_armci_buf_state->buf[idx].id),
