@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.11 2004-08-12 18:28:34 d3h325 Exp $ */
+/*$Id: armci-vapi.h,v 1.12 2005-03-23 00:01:41 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -33,11 +33,7 @@
 #define DEFAULT_R_KEY           (0x0)
 #define DEFAULT_L_KEY           (0x0)
 
-
-#define DEFAULT_MAX_SG_LIST	(40)
-#define DEFAULT_MAX_CQ_SIZE	40000/*(4000)*/
-
-#define  DEFAULT_MAX_WQE	10000/*(1023)*/
+#define  DEFAULT_MAX_WQE	2048/*(1023)*/
 
 typedef struct {
     void *data_ptr;         /* pointer where the data should go */

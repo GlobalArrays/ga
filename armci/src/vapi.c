@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.19 2004-09-14 18:18:01 vinod Exp $************************************************ 
+/* $Id: vapi.c,v 1.20 2005-03-23 00:01:42 vinod Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.
@@ -28,6 +28,8 @@ typedef struct {
 armci_connect_t *CLN_con,*SRV_con;
 VAPI_hca_id_t   hca_id= VAPIDEV_NAME;
 
+u_int32_t armci_max_num_sg_ent;
+u_int32_t armci_max_qp_ous_wr;
 
 /*\
  * datastrucure for infinihost NIC
@@ -419,18 +421,34 @@ VAPI_qp_init_attr_t initattr;
     bzero(&initattr, sizeof(VAPI_qp_init_attr_t));
     *qp=INVAL_HNDL;
 
+    if(DEBUG_INIT){
+       printf("\n%d:max wqe=%d max sglist=%d maxcq=%d\n",armci_me,
+               nic->attr.max_qp_ous_wr,nic->attr.max_num_sg_ent,
+               nic->attr.max_num_ent_cq);
+    }
+
+#if 1
+    initattr.cap.max_oust_wr_rq = armci_max_qp_ous_wr;
+    initattr.cap.max_oust_wr_sq = armci_max_qp_ous_wr;
+#else
     initattr.cap.max_oust_wr_rq = DEFAULT_MAX_WQE;
     initattr.cap.max_oust_wr_sq = DEFAULT_MAX_WQE;
-    initattr.cap.max_sg_size_rq = DEFAULT_MAX_SG_LIST;
-    initattr.cap.max_sg_size_sq = DEFAULT_MAX_SG_LIST;
+#endif
+
+    initattr.cap.max_sg_size_rq = armci_max_num_sg_ent;
+    initattr.cap.max_sg_size_sq = armci_max_num_sg_ent;
     initattr.pd_hndl            = nic->ptag;
-    initattr.rdd_hndl           = 0;
+    initattr.rdd_hndl           = VAPI_INVAL_HNDL;
     initattr.rq_cq_hndl         = nic->rcq;
     initattr.sq_cq_hndl         = nic->scq;
     initattr.rq_sig_type        = VAPI_SIGNAL_REQ_WR;
     initattr.sq_sig_type        = VAPI_SIGNAL_REQ_WR;
     initattr.ts_type            = IB_TS_RC;
-
+   
+    if(DEBUG_INIT){
+       printf("\n%d:here in create_qp before call\n",armci_me);
+       printf("\n%d:nic=%p,qp=%p,prop=%p\n",armci_me,nic,qp,qp_prop);
+    }
     rc = VAPI_create_qp(nic->handle, &initattr, qp, qp_prop);
     if(!armci_vapi_max_inline_size){
        armci_vapi_max_inline_size = qp_prop->cap.max_inline_data_sq;
@@ -469,7 +487,6 @@ VAPI_cqe_num_t num;
 
     nic->maxtransfersize = MAX_RDMA_SIZE;
 
-    /*now, query for properties, why?*/
     rc = VAPI_query_hca_cap(nic->handle, &nic->vendor, &nic->attr);
     armci_check_status(DEBUG_INIT, rc,"query nic");
 
@@ -492,18 +509,23 @@ VAPI_cqe_num_t num;
     nic->rcq = INVAL_HNDL;
     /*do the actual queue creation */
     if(scq_entries){
-       rc = VAPI_create_cq(nic->handle,DEFAULT_MAX_CQ_SIZE, 
+       rc = VAPI_create_cq(nic->handle,nic->attr.max_num_ent_cq, 
                            &nic->scq,&num);
        armci_check_status(DEBUG_INIT, rc,"create send completion queue");
     }
     if(rcq_entries){
        /*rc = VAPI_create_cq(nic->handle,(VAPI_cqe_num_t)rcq_entries, 
                            &nic->rcq,&num);*/
-       rc = VAPI_create_cq(nic->handle,DEFAULT_MAX_CQ_SIZE, 
+       rc = VAPI_create_cq(nic->handle,nic->attr.max_num_ent_cq, 
                            &nic->rcq,&num);
        armci_check_status(DEBUG_INIT, rc,"create recv completion queue");
     }
     /*VAPIErrorCallback(nic->handle, 0, armci_err_callback);*/
+    /*set local variable values*/
+    armci_max_num_sg_ent=nic->attr.max_num_sg_ent;
+    armci_max_qp_ous_wr=nic->attr.max_qp_ous_wr;
+    if(armci_max_qp_ous_wr>(2*armci_nproc+16/*for descpool*/+NUMOFBUFFERS))
+       armci_max_qp_ous_wr=(4*armci_nproc+16/*for descpool*/+NUMOFBUFFERS);
 }
 
 void armci_server_alloc_bufs()
@@ -577,8 +599,9 @@ int clients = armci_nproc,i,j=0;
      
     /* exchange address of ack/memhandle flag on servers */
 
-
+/*  I disabled it on 3/17/05 on system x
     if(!serv_memhandle.memhndl)armci_die("server got null handle for vbuf",0);
+*/
     if(DEBUG_SERVER){
        printf("%d(s):registered mem %p %dbytes mhandle=%d mharr starts%p\n",
               armci_me, tmp0, total, serv_memhandle.memhndl,CLN_handle);
@@ -708,7 +731,12 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
     for(c=0; c< armci_nproc; c++){
        armci_connect_t *con = CLN_con + c;
        if(armci_me!=armci_master){
-         con->rqpnum=(VAPI_qp_num_t *)malloc(sizeof(VAPI_qp_num_t)*armci_nproc);
+         char *ptrr;
+         int extra;
+         ptrr = malloc(8+sizeof(VAPI_qp_num_t)*armci_nproc);
+         extra = ALIGNLONGADD(ptrr);
+         ptrr = ptrr+extra;
+         con->rqpnum=(VAPI_qp_num_t *)ptrr;
          bzero(con->rqpnum,sizeof(VAPI_qp_num_t)*armci_nproc);
        }
        armci_msg_gop_scope(SCOPE_ALL,con->rqpnum,sz,"+",ARMCI_INT);
@@ -716,7 +744,7 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
 
     /*armci_set_serv_mh();*/
 
-    if(DEBUG_CLN)printf("%d: all connections ready \n",armci_me);
+    if(DEBUG_CLN){printf("%d:all connections ready\n",armci_me);fflush(stdout);}
 
     /* Modifying  QP to INIT */
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
@@ -1002,7 +1030,7 @@ int armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[]
    int num_dscr = 0; 
    int num_xmit = 0, num_seg, max_seg, rem_seg,vecind;
 
-   max_seg =  DEFAULT_MAX_SG_LIST; 
+   max_seg =  armci_max_num_sg_ent;
    index[2] = 0; unit[2] = 1;
    if (type == SERV)
       clear_scatterlist(1,id); /*scatter =1*/
@@ -1119,7 +1147,7 @@ int armci_post_gather(void *src_ptr, int src_stride_arr[], int count[]
       fflush(stdout);
     }
 
-    max_seg =  DEFAULT_MAX_SG_LIST; 
+    max_seg =  armci_max_num_sg_ent;
 
     index[2] = 0; unit[2] = 1;
    
@@ -1287,13 +1315,30 @@ char *enval;
     armci_util_wait_int(&armci_vapi_client_stage1,1,10000);
 
     for(c=0; c< armci_nproc; c++){
+       char *ptrr;
+       int extra;
        armci_connect_t *con = CLN_con + c;
-       con->rqpnum = (VAPI_qp_num_t *)malloc(sizeof(VAPI_qp_num_t)*armci_nproc);
+       if(DEBUG_SERVER){
+         printf("\n%d:create qp before malloc c=%d\n",armci_me,c);
+         fflush(stdout);
+         sleep(1);
+       }
+       ptrr = malloc(8+sizeof(VAPI_qp_num_t)*armci_nproc);
+       extra = ALIGNLONGADD(ptrr);
+       ptrr = ptrr+extra;
+       con->rqpnum = (VAPI_qp_num_t *)ptrr;
        bzero(con->rqpnum,sizeof(VAPI_qp_num_t)*armci_nproc);
        armci_create_qp(CLN_nic,&con->qp,&con->qp_prop);
        con->sqpnum  = con->qp_prop.qp_num;
        con->lid      = CLN_nic->lid_arr[c];
        con->rqpnum[armci_me]  = con->qp_prop.qp_num;
+       if(DEBUG_SERVER){
+         printf("\n%d:create qp success  for server c=%d\n",armci_me,c);fflush(stdout);
+         sleep(1);
+       }
+    }
+    if(DEBUG_SERVER){
+       printf("\n%d:create qps success for server",armci_me);fflush(stdout);
     }
 
     armci_vapi_server_stage2 = 1;
@@ -1628,7 +1673,9 @@ char *tmp,*tmp0;
                           &mr_out);
     armci_check_status(DEBUG_INIT, rc,"client register snd vbuf");
     /*printf("\n%d(c):my lkey=%d",armci_me,mr_out.l_key);fflush(stdout);*/
+/*  I disabled it on 3/17/05 on system x
     if(!client_memhandle.memhndl)armci_die("client got null handle for vbuf",total);
+*/
 
     client_memhandle.lkey = mr_out.l_key;
     client_memhandle.rkey = mr_out.r_key;

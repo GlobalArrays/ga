@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.95 2005-03-07 23:46:50 vinod Exp $ */
+/* $Id: armci.c,v 1.96 2005-03-23 00:01:40 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -535,6 +535,9 @@ extern void cpu_yield();
             else{
                cpu_yield();
                count =0;
+#if defined(MACX) && defined(__ppc__) && defined(__GNUC__)
+               __asm__ __volatile__ ("sync" ::: "memory");
+#endif
             }
 }
   

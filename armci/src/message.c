@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.57 2004-12-08 02:46:18 manoj Exp $ */
+/* $Id: message.c,v 1.58 2005-03-23 00:01:41 vinod Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -72,6 +72,11 @@ static bufstruct *_gop_buffer;
         extern void _armci_ia64_mb();
 #       define SET_SHM_FLAG(_flg,_val)\
             _armci_ia64_mb(); *(_flg)=(_val);
+#    endif
+#  elif defined(MACX)
+#    if defined(__GNUC__)
+#    define SET_SHM_FLAG(_flg,_val)\
+           *(_flg)=(_val);__asm__ __volatile__ ("isync" ::: "memory")
 #    endif
 #  endif
 #endif

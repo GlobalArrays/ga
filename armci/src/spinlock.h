@@ -144,6 +144,8 @@ static INLINE void armci_release_spinlock(LOCK_T *mutex)
   MEMORY_BARRIER ();
 #endif
   *mutex =0;
+#if defined(MACX) && defined(__GNUC__) && defined(__ppc__)
+  __asm__ __volatile__ ("isync" : : : "memory");
 }
 
 #endif

@@ -187,7 +187,7 @@ int **_armci_int_mutexes;
    typedef int lockset_t;
 #  include "fujitsu-vpp.h"
 
-#elif defined(SYSV) ||defined(MACX_)
+#elif defined(SYSV) ||defined(MACX)
 
 #  include "semaphores.h"
 #  undef NUM_LOCKS
