@@ -1,4 +1,4 @@
-#if defined(LINUX) || defined(DECOSF)
+#if defined(LINUX)
 
 #if defined(__i386__) || defined(__alpha) 
 #  define SPINLOCK 
