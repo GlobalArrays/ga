@@ -158,6 +158,7 @@ extern void FATR ga_add_   ARGS_((Void *, Integer *, Void *, Integer *,
       Integer *));
 extern Integer FATR ga_pgroup_get_default_();
 extern Integer FATR ga_pgroup_get_mirror_();
+extern Integer FATR ga_pgroup_get_world_();
 extern Integer FATR ga_idot_ ARGS_((Integer *, Integer *));
 extern float FATR ga_fdot_ ARGS_((Integer *, Integer *));            
 extern DoublePrecision FATR ga_ddot_ ARGS_((Integer *, Integer *));
@@ -224,14 +225,6 @@ extern logical nga_create_ghosts_irreg_config(
         Integer p_handle, /* processor list handle*/
         Integer *g_a);    /* array handle (output) */
 
-extern logical nga_create_ghosts_nocorner(Integer type,
-                   Integer ndim,
-                   Integer dims[],
-                   Integer width[],
-                   char* array_name,
-                   Integer chunk[],
-                   Integer *g_a);
-
 extern logical nga_create_ghosts(Integer type,
                    Integer ndim,
                    Integer dims[],
@@ -291,11 +284,11 @@ extern void ga_set_proc_config(Integer *g_a, Integer *p_handle);
 extern void ga_set_ghosts(Integer *g_a, Integer width[]);
 extern void ga_set_irreg_distr(Integer *g_a, Integer map[], Integer nblock[]);
 extern void ga_set_irreg_flag(Integer *g_a, logical flag);
+extern void ga_set_ghost_corner_flag(Integer *g_a, logical flag);
 extern Integer nga_get_dimension(Integer *g_a);
 extern logical ga_allocate(Integer *g_a);
 
 extern void ga_update_ghosts(Integer *g_a);
-extern void ga_update_ghosts_nocorner(Integer *g_a);
 extern void ga_update1_ghosts(Integer *g_a);
 extern logical ga_update2_ghosts(Integer *g_a);
 extern logical ga_update3_ghosts(Integer *g_a);
@@ -303,6 +296,7 @@ extern logical ga_update4_ghosts(Integer *g_a);
 extern logical ga_update5_ghosts(Integer *g_a);
 extern logical ga_update6_ghosts(Integer *g_a);
 extern logical ga_update7_ghosts(Integer *g_a);
+extern logical ga_set_update5_info(Integer *g_a);
 extern logical nga_update_ghost_dir(Integer *g_a, Integer *idim, 
                                     Integer *idir, logical *flag);
 extern void FATR ga_merge_mirrored_(Integer *g_a);

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.70 2004-01-02 20:41:22 d3g293 Exp $ */
+/* $Id: capi.c,v 1.71 2004-01-13 17:07:09 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -314,26 +314,6 @@ int NGA_Create_ghosts_irreg_config(int type, int ndim, int dims[], int width[],
     else return 0;
 }
 
-int NGA_Create_ghosts_nocorner(int type, int ndim,int dims[], int width[], 
-    char *name, int chunk[])
-{
-    Integer *ptr, g_a; 
-    logical st;
-    if(ndim>MAXDIM)return 0;
-
-    COPYC2F(dims,_ga_dims, ndim);
-    COPYC2F(width,_ga_width, ndim);
-    if(!chunk)ptr=(Integer*)0;  
-    else {
-         COPYC2F(chunk,_ga_work, ndim);
-         ptr = _ga_work;
-    }
-    st = nga_create_ghosts_nocorner((Integer)type, (Integer)ndim, _ga_dims,
-        _ga_width, name, ptr, &g_a);
-    if(st==TRUE) return (int) g_a;
-    else return 0;
-}
-
 int NGA_Create_ghosts(int type, int ndim,int dims[], int width[], char *name,
     int chunk[])
 {
@@ -483,6 +463,15 @@ void GA_Set_irreg_flag(int g_a, int flag)
   ga_set_irreg_flag_(&aa, &fflag);
 }
 
+void GA_Set_ghost_corner_flag(int g_a, int flag)
+{
+  Integer aa;
+  logical fflag;
+  aa = (Integer)g_a;
+  fflag = (logical)flag;
+  ga_set_ghost_corner_flag_(&aa, &fflag);
+}
+
 int GA_Get_dimension(int g_a)
 {
   Integer aa;
@@ -495,12 +484,6 @@ int GA_Allocate(int g_a)
   Integer aa;
   aa = (Integer)g_a;
   return (int)ga_allocate_(&aa);
-}
-
-void GA_Update_ghosts_nocorner(int g_a)
-{
-    Integer a=(Integer)g_a;
-    ga_update_ghosts_nocorner_(&a);
 }
 
 void GA_Update_ghosts(int g_a)
@@ -638,6 +621,12 @@ int GA_Pgroup_get_default()
 int GA_Pgroup_get_mirror()
 {
     int value = (int)ga_pgroup_get_mirror_();
+    return value;
+}
+
+int GA_Pgroup_get_world()
+{
+    int value = (int)ga_pgroup_get_world_();
     return value;
 }
 
