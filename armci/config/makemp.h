@@ -62,15 +62,19 @@ ifdef GA_USE_VAMPIR
    ifdef VT_DEBUG
       MP_DEFINES += -DVT_DEBUG
    endif
-   ifdef VT_PATH
-      ifdef VT_LIB
-         MP_LIBS += $(VT_PATH) $(VT_LIB)
+   ifdef VT_LIB
+      ifdef LIBVT
+         MP_LIBS += -L$(VT_LIB) $(LIBVT)
       else
-         MP_LIBS += $(VT_PATH) -lVT
+         MP_LIBS += -L$(VT_LIB) -lVT
       endif
-   else
-      echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
+#  else
+#     echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
    endif
+   ifdef VT_INCLUDE
+         INCLUDES += -I$(VT_INCLUDE)
+   endif
+
 endif
 #
 #
