@@ -1,3 +1,4 @@
+/* $Id: elan.c,v 1.16 2002-10-10 22:00:15 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <elan3/elan3.h>
 #include <stdio.h>
