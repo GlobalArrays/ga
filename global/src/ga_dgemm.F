@@ -45,7 +45,7 @@ c
 c
       if (beta .eq. 0.0d0) then
          call ga_zero(g_c)
-      else
+      else if (beta .ne. 1.0d0) then
          call ga_dscal(g_c, beta)
       endif
 c
