@@ -35,7 +35,15 @@ endif
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SHMEM)))
      LIB_DEFINES += -DSYSV
-     OBJ += shmalloc.o signaltrap.o shmlimit.o shmem.o
+     OBJ += shmalloc.o signaltrap.o shmlimit.o shmem.o 
+endif
+
+ifeq ($(TARGET),LAPI)
+     OBJ += async.o
+endif
+
+ifeq ($(TARGET),LAPI64)
+     OBJ += async.o
 endif
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
