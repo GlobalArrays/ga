@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "global.h"
 #include "macommon.h"
 #ifdef MPI
@@ -38,7 +39,7 @@ DoublePrecision buf[N], err, alpha, beta;
      /* fill in matrix A with random values in range 0.. 1 */ 
      for(col=1+me; col<=n; col+= nproc){
          /* each process works on a different column in MIMD style */
-         for(i=0; i<n; i++) buf[i]=drand48();
+         for(i=0; i<n; i++) buf[i]=sin((double)i + 0.1*col);
          GA_put(&g_a, &ONE, &n, &col, &col, buf, &n);
      }
 
