@@ -91,7 +91,8 @@ void InitLocks(int num, lockset_t id)
 
 void DeleteLocks(lockset_t id)
 {
-    (void) semctl(id,0,IPC_RMID,NULL);
+    union semun dummy;
+    (void) semctl(id,0,IPC_RMID,dummy);
 }
 
 

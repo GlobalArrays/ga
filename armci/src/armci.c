@@ -11,6 +11,7 @@
 
 
 int armci_me, armci_nproc;
+static int armci_initialized=0;
 int armci_cluster_nodes;
 double armci_internal_buffer[BUFSIZE_DBL];
 
@@ -46,6 +47,9 @@ void ARMCI_Error(char *msg, int code)
 int ARMCI_Init()
 {
     int rc;
+
+    if(armci_initialized)return 0;
+    else armci_initialized=1;
 
     MPI_Comm_size(MPI_COMM_WORLD, &armci_nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &armci_me);

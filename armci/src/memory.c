@@ -45,7 +45,7 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 #if defined(SYSV) || defined(WIN32)
     
     /* allocate a work arrays */
-    out_arr = (int*)malloc(armci_nproc*sizeof(int));
+    out_arr = (int*)calloc(armci_nproc,sizeof(int));
     assert(out_arr);
 
     inp_arr = (int*)calloc(armci_nproc,sizeof(int)); /* must be zero */
@@ -53,8 +53,12 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 
     inp_arr[armci_me] = bytes;
 
+/*    MPI_Barrier(MPI_COMM_WORLD);*/
+/*    fprintf(stderr,"%d before-------------- ALLreduce\n",armci_me);*/
     /* combine all memory requests into out_arr  */
-    MPI_Allreduce(inp_arr, out_arr, armci_nproc, MPI_LONG,MPI_SUM,MPI_COMM_WORLD);
+    MPI_Allreduce(inp_arr, out_arr, armci_nproc, MPI_INT,MPI_SUM,MPI_COMM_WORLD);
+/*    MPI_Barrier(MPI_COMM_WORLD);*/
+/*    fprintf(stderr,"%d ---------------- ALLreduce\n",armci_me);*/
 
     /* determine aggregate request size*/
     size =0;
@@ -67,7 +71,7 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
        assert(ptr);
     }
 
-    MPI_Bcast(idlist,SHMIDLEN,MPI_INT,0,MPI_COMM_WORLD);/* broadcast shmem id*/
+    MPI_Bcast(idlist,SHMIDLEN,MPI_LONG,0,MPI_COMM_WORLD);/*broadcast shmem id*/
 
     if(armci_me){
         ptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);

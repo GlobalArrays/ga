@@ -74,9 +74,9 @@ extern void armci_die();
 #elif defined(HPUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)64*1024)
-#elif defined(LINUX_1)
+#elif defined(LINUX) && !defined(SHMMAX) /* Red Hat does not define SHMMAX */
 #  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)8*1024) /* kernel default (4MB) increased */
+#  define _SHMMAX ((unsigned long)32*1024)
 #elif defined(SHMMAX)
 #  undef _SHMMAX
 #  define _SHMMAX (((unsigned long)SHMMAX)>>10)
