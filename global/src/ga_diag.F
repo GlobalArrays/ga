@@ -1,5 +1,5 @@
       subroutine ga_diag_std(g_a, g_v, eval)
-C$Id: ga_diag.F,v 1.15 1995-05-07 20:16:27 d3h325 Exp $
+C$Id: ga_diag.F,v 1.16 1995-09-06 23:35:00 d3h325 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"
@@ -627,6 +627,7 @@ c
       data first_time /.true./
       integer g_ps, eig_flag, thr_seq
       data thr_seq /64/         !min problem size to be run in parallel 
+      save g_ps, first_time
       
 c
       integer hma, adrma        !mapa
