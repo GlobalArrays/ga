@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.53 2002-11-26 18:45:30 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.54 2002-12-03 02:05:39 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -60,7 +60,9 @@
 static  size_t pagesize=0;
 static  int logpagesize=0;
 /* allow only that big shared memory segment (in MB)- incresed from 128 11/02 */
-#define MAX_ALLOC_MUNMAP 368
+#define MAX_ALLOC_MUNMAP 128
+#define MAX_ALLOC_MUNMAP_ 368
+static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #endif
 
 #if defined(SUN)
@@ -345,10 +347,25 @@ void armci_shmem_init()
 
 #ifdef ALLOC_MUNMAP
 
-#if defined(QUADRICS) && defined(__ia64__)
-   /* need aligment on 1MB boundary rather than the actual pagesize */
-   pagesize = 1024*1024;
-   logpagesize = 20;
+#if defined(QUADRICS)
+#   if defined(__ia64__) || defined(__alpha)
+      long x;
+      char *uval;
+      uval = getenv("LIBELAN_ALLOC_SIZE");
+      if(uval != NULL){
+       sscanf(uval,"%ld",&x);
+       if((x>80000000) && (x< 4*1024*1024*1024L)){ 
+         max_alloc_munmap = (x>>20) - 72;
+         printf("%d: max_alloc_munmap is %ld\n",armci_me,max_alloc_munmap);
+         fflush(stdout);
+        }
+      }
+#   endif
+#   if defined(__ia64__)
+       /* need aligment on 1MB boundary rather than the actual pagesize */
+       pagesize = 1024*1024;
+       logpagesize = 20;
+#   endif
 #else
    /* determine log2(pagesize) needed for address alignment */
    int tp=512;
@@ -380,7 +397,7 @@ void armci_shmem_init()
 
 #       if defined(ALLOC_MUNMAP)
            /* need to cap down for special memory allocator */
-           if(x>MAX_ALLOC_MUNMAP) x=MAX_ALLOC_MUNMAP;
+           if(x>max_alloc_munmap) x=max_alloc_munmap;
 #       endif
 
         if(DEBUG_) printf("%d: shmem_init: mbytes max segment size \n",x);fflush(stdout);
