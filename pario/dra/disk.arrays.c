@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.55 2002-09-20 15:38:29 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.56 2002-09-20 16:02:57 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -661,14 +661,14 @@ Integer dra_create(
         Integer *reqdim2,                  /*input: dim2 of typical request*/
         Integer *d_a)                      /*output:DRA handle*/
 {
-Integer handle, elem_size;
+Integer handle, elem_size, ctype;
 
         /* convert Fortran to C data type */
-        *type = (Integer)ga_type_f2c((int)(*type));
+        ctype = (Integer)ga_type_f2c((int)(*type));
         ga_sync_();
 
         /* if we have an error here, it is fatal */       
-        dai_check_typeM(*type);    
+        dai_check_typeM(ctype);    
         if( *dim1 <= 0 )
               dai_error("dra_create: disk array dimension1 invalid ",  *dim1);
         else if( *dim2 <= 0)
@@ -682,7 +682,7 @@ Integer handle, elem_size;
        *d_a = handle - DRA_OFFSET;
 
        /* determine disk array decomposition */ 
-        elem_size = dai_sizeofM(*type);
+        elem_size = dai_sizeofM(ctype);
         dai_chunking( elem_size, *reqdim1, *reqdim2, *dim1, *dim2, 
                     &DRA[handle].chunk[0], &DRA[handle].chunk[1]);
 
@@ -693,7 +693,7 @@ Integer handle, elem_size;
         DRA[handle].dims[0] = *dim1;
         DRA[handle].dims[1] = *dim2;
         DRA[handle].ndim = 2;
-        DRA[handle].type = ga_type_f2c((int)*type);
+        DRA[handle].type = ctype;
         DRA[handle].mode = (int)*mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
         strncpy(DRA[handle].name, name, DRA_MAX_NAME );
@@ -2325,14 +2325,14 @@ Integer ndra_create(
         Integer reqdims[],                 /*input: dimension of typical request*/
         Integer *d_a)                      /*output:DRA handle*/
 {
-Integer handle, elem_size, i;
+Integer handle, elem_size, ctype, i;
 
         /* convert Fortran to C data type */
-        *type = (Integer)ga_type_f2c((int)(*type));
+        ctype = (Integer)ga_type_f2c((int)(*type));
         ga_sync_();
 
         /* if we have an error here, it is fatal */       
-        dai_check_typeM(*type);    
+        dai_check_typeM(ctype);    
         for (i=0; i<*ndim; i++) if (dims[i] <=0)
               dai_error("ndra_create: disk array dimension invalid ", dims[i]);
         if(strlen(filename)>DRA_MAX_FNAME)
@@ -2344,7 +2344,7 @@ Integer handle, elem_size, i;
        *d_a = handle - DRA_OFFSET;
 
        /* determine disk array decomposition */ 
-        elem_size = dai_sizeofM(*type);
+        elem_size = dai_sizeofM(ctype);
         ndai_chunking( elem_size, *ndim, reqdims, dims, DRA[handle].chunk);
 
        /* determine layout -- by row or column */
@@ -2353,7 +2353,7 @@ Integer handle, elem_size, i;
        /* complete initialization */
         for (i=0; i<*ndim; i++) DRA[handle].dims[i] = dims[i];
         DRA[handle].ndim = *ndim;
-        DRA[handle].type = ga_type_f2c((int)*type);
+        DRA[handle].type = ctype;
         DRA[handle].mode = (int)*mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
         strncpy(DRA[handle].name, name, DRA_MAX_NAME );
