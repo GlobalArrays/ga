@@ -1,4 +1,4 @@
-/* $Id: shared.files.c,v 1.12 2002-10-23 22:55:16 sohirata Exp $ */
+/* $Id: shared.files.c,v 1.13 2002-10-30 19:41:11 d3h325 Exp $ */
 /* DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -21,6 +21,7 @@
  * publicly by or for the US Government, including the right to
  * distribute to other US Government contractors.
  */
+
 
 #include "elio.h"
 #include "sf.h"
@@ -101,6 +102,9 @@ Integer hndl;
 #       else
           SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
 #       endif
+
+        if(SF[hndl].fd==NULL) ERROR("sf_create: could not open file",0);
+        if(SF[hndl].fd->fd==-1) ERROR("sf_create: descriptor -1",0);
 
         SF[hndl].soft_size = *size_soft_limit;
         SF[hndl].hard_size = *size_hard_limit;
