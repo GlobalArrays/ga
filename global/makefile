@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.17 1997-02-26 00:26:44 d3h325 Exp $
+#$Id: makefile,v 1.18 1997-02-26 00:44:17 d3j191 Exp $
 
 # Tiny makefile wrapper
 
@@ -12,7 +12,7 @@ USES_BLAS = src/ga_solve_seq.F src/ga_dgemm.F src/ga_dgemm_seq.F
 # alternative but to do the make every time
 #
 
-export LIBDIR CNFDIR BINDIR
+export LIBDIR CNFDIR BINDIR INCDIR
 
 
 global_stamp:	include_stamp 
