@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.19 2001-11-09 18:21:58 d3h325 Exp $ */
+/* $Id: pack.c,v 1.20 2002-01-08 21:56:50 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -90,8 +90,10 @@ int armci_pack_strided(int op, void* scale, int proc,
         if(bytes > bufsize && bytes/bufsize < 3 && bytes%bufsize < BALANCE_BUFSIZE){
         /* bytes div bufsize - 1 is to increase the balence factor for 3 buffer case */
                 bufsize = bytes/ (bytes/bufsize - 1 + BALANCE_FACTOR);
-                noswap = 1;
+                noswap = 1; /*** yuck: if set to 1, error in buffers.c ***/
         }
+        bytes = bufsize%8;
+        bufsize -= bytes;
     }
 #endif
 
@@ -273,7 +275,7 @@ int rc=0, nlen, count=0;
        armci_split_dscr_array(ndarr, len, &extra, &nlen, &save); 
 
 #ifdef REMOTE_OP
-       rc = armci_rem_vector(op, scale, ndarr,nlen,proc);
+       rc = armci_rem_vector(op, scale, ndarr,nlen,proc,0);
 #else
        if(ACC(op))rc=armci_acc_vector(op,scale,ndarr,nlen,proc);
        else rc = armci_copy_vector(op,ndarr,nlen,proc);

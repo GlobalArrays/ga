@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.46 2001-12-05 00:30:31 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.47 2002-01-08 21:56:50 vinod Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -298,7 +298,7 @@ long lower_bound=0;
 }
 
 
-
+#ifdef SHMMAX_SEARCH_NO_FORK
 /*\ determine the max shmem segment size by halving
 \*/
 static int armci_shmem_test_no_fork()                          
@@ -329,6 +329,7 @@ long lower_bound=_SHMMAX*SHM_UNIT;
      if(DEBUG_) printf("%ld: shmax test no fork: bytes segment size, %d calls \n",lower_bound,i);
      return (int)( lower_bound>>20); /* return shmmax in mb */
 }
+#endif
 
 
 void armci_shmem_init()
@@ -373,7 +374,6 @@ void armci_shmem_init()
 #       ifdef REPORT_SHMMAX
               printf("%d using x=%d SHMMAX=%ldKB\n", armci_me,x, MinShmem);
               fflush(stdout);
-              sleep(1);
 #       endif
 #else
 
@@ -414,7 +414,7 @@ long sz=(long)size;
     printf("the system has sufficient amount of swap space. ");
     printf("Most UNIX systems can be easily reconfigured ");
     printf("to allow larger shared memory segments,\n");
-    printf("see http://www.emsl.pnl.gov/docs/global/support.html\n");
+    printf("see http://www.emsl.pnl.gov:2080/docs/global/support.html\n");
     printf("In some cases, the problem might be caused by insufficient swap space.\n");
     printf("*******************************************************\n");
 }

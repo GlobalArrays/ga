@@ -16,6 +16,8 @@
 #ifndef MYRINET_H
 #define MYRINET_H
 
+#define GM_STRONG_TYPES 0 
+#include "gm.h"
 /* in GM 1.4 memory registration got so slow we cannot use 0-copy protocols
  * we are disabling it for medium messages by changing thresholds */
 #if defined(GM_MAX_DEFAULT_MESSAGE_SIZE) && !defined(GM_ENABLE_PROGRESSION)
@@ -55,31 +57,49 @@ extern int _armci_bypass;
 #define NUMRCVBUFS 30
 #endif
 
+
+/* call back */ 
+#define ARMCI_GM_SENDING 3
+
+/* msg ack */ 
+#define ARMCI_GM_CLEAR   0
+
 /* context for callback routine */
 typedef struct {
     int tag;
     volatile int done;
 } armci_gm_context_t;
+extern struct gm_port *gmpi_gm_port;
+#define SND_BUFLEN (MSG_BUFLEN +128) 
+
+#define INIT_SEND_BUF(_cntr,_snd,_rcv) (_cntr).done=ARMCI_GM_CLEAR
+
+#define CLEAR_SEND_BUF_FIELD(_cntr, _s, _r,_t) if((_cntr).done==ARMCI_GM_SENDING){\
+MPI_Status status;\
+int flag;\
+while((_cntr).done==ARMCI_GM_SENDING)\
+MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);\
+if((_cntr).done == ARMCI_GM_FAILED)\
+       armci_die("armci_client_send_complete: failed code=",(_cntr).done);}\
+
 
 #define MULTIPLE_SND_BUFS 
 #ifdef MULTIPLE_SND_BUFS
-#define GET_SEND_BUFFER armci_gm_get_send_buf
-#define FREE_SEND_BUFFER armci_gm_free_send_buf  
-/* 
-#define GET_SEND_BUFFER armci_gm_getbuf
-#define FREE_SEND_BUFFER armci_gm_freebuf
-*/
+#  define STORE_BUFID 
+#  define BUF_ALLOCATE(_size) gm_dma_malloc(gmpi_gm_port,_size+256) 
+#  define BUF_EXTRA_FIELD_T armci_gm_context_t 
+#  define GET_SEND_BUFFER _armci_buf_get
+#  define FREE_SEND_BUFFER _armci_buf_release  
 #else
-#define GET_SEND_BUFFER(x) (char*)(((armci_gm_context_t*)MessageSndBuffer)+1);\
-        armci_client_send_complete((armci_gm_context_t*)MessageSndBuffer);
-
-#define FREE_SEND_BUFFER(x) 
+#  define GET_SEND_BUFFER(x)(char*)(((armci_gm_context_t*)MessageSndBuffer)+1);\
+        armci_client_send_complete((armci_gm_context_t*)MessageSndBuffer)
+#  define FREE_SEND_BUFFER(x) 
 #endif
 
 #define BALANCE_BUFFERS
 #ifdef BALANCE_BUFFERS
-#define BALANCE_FACTOR 1.6
-#define BALANCE_BUFSIZE 190000
+#  define BALANCE_FACTOR 1.6
+#  define BALANCE_BUFSIZE 190000
 #endif
 
 /* two ports used by ARMCI and their boards iff STATIC_PORTS defined */
@@ -119,6 +139,6 @@ extern char* armci_gm_get_send_buf(int bufsize);
 extern void armci_gm_free_send_buf(void *ptr);
 extern char* armci_gm_getbuf(size_t size);
 extern void armci_client_send_complete(armci_gm_context_t*);
-
+extern void  armci_check_context_for_complete(int);
 
 #endif /* MYRINET_H */

@@ -14,30 +14,48 @@ extern void armci_via_wait_ack();
 #define MSG_BUFLEN_DBL ((VBUF_DLEN)>>3)
 
 #ifdef PIPE_BUFSIZE
-#  define STRIDED_GET_BUFLEN_DBL 34*1024
+#  define STRIDED_GET_BUFLEN_DBL 31*1024
 #  define STRIDED_GET_BUFLEN (STRIDED_GET_BUFLEN_DBL<<3)
 #  define MAX_BUFLEN (STRIDED_GET_BUFLEN+EXTRA_MSG_BUFLEN)
 #else
 #  define MAX_BUFLEN (MSG_BUFLEN+EXTRA_MSG_BUFLEN)
 #endif
 
-#define GET_SEND_BUFFER_(_size) MessageSndBuffer;if(!armci_long_buf_free)armci_via_wait_ack()
-extern char* armci_getbuf(int size);
-extern void armci_relbuf(void *buf);
+#define GET_SEND_BUFFER____(_size) \
+        MessageSndBuffer;if(!armci_long_buf_free)armci_via_wait_ack()
 
-#define GET_SEND_BUFFER(_size) armci_getbuf(_size)
-#define FREE_SEND_BUFFER(x) armci_relbuf(x)
+#define GET_SEND_BUFFER _armci_buf_get
+#define FREE_SEND_BUFFER _armci_buf_release
 
 #define BALANCE_BUFFERS
 #ifdef BALANCE_BUFFERS
-#define BALANCE_FACTOR 1.6
-#define BALANCE_BUFSIZE 25000
+#  define BALANCE_FACTOR 1.6
+#  define BALANCE_BUFSIZE 25000
 #endif
+
+typedef struct {
+    char padd[64];
+} buf_pad_t;
+#define BUFID_PAD_T buf_pad_t
+
+typedef struct {
+    char s[64];
+    char r[64];
+} armci_via_field_t;
+
+#define STORE_BUFID
+#define BUF_EXTRA_FIELD_T armci_via_field_t 
+#define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to) armci_via_complete_buf((armci_via_field_t *)(&(_field)),(_snd),(_rcv),(_to));_snd=0;_rcv=0;_to=0
+#define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;if(operation==GET&&size>2*PIPE_MIN_BUFSIZE)_rcv=0
+extern char * armci_via_client_mem_alloc(int);
+#define BUF_ALLOCATE(_size) armci_via_client_mem_alloc(_size)
 
 #define CLIENT_BUF_BYPASS_ 
 #define LONG_GET_THRESHOLD 10000
 #define LONG_GET_THRESHOLD_STRIDED 20000000
 #define _armci_bypass 1
+
+extern void armci_via_complete_buf(armci_via_field_t *,int,int,int); 
 extern int armci_pin_memory(void *ptr, int stride_arr[], int count[], int lev);
 extern void armci_unpin_memory(void *ptr,int stride_arr[],int count[],int lev);
 extern void armci_client_send_ack(int p, int success);

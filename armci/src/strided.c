@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.35 2001-09-13 22:58:25 d3h325 Exp $ */
+/* $Id: strided.c,v 1.36 2002-01-08 21:56:50 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -410,9 +410,17 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
 #   endif
 
 #ifndef LAPI2
-    if(!direct)
+    if(!direct){
+#if defined(DATA_SERVER) && defined(SOCKETS)
+       if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
+           rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
+                       dst_ptr, dst_stride_arr, count, stride_levels,1);
+       }
+       else
+#endif
        rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
                        dst_ptr, dst_stride_arr, count, stride_levels, -1, -1);
+    }
     else
 #endif
        rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
@@ -598,3 +606,4 @@ void armci_read_strided(void *ptr, int stride_levels, int stride_arr[],
         buf += count[0];
     }
 }
+

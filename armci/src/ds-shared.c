@@ -239,6 +239,7 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
 }
 
 
+
 /*\ client receives data from server
 \*/
 char *armci_rcv_data(int proc, request_header_t* msginfo )
@@ -281,7 +282,6 @@ void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
                             void *ptr, int strides,int stride_arr[],int count[])
 {
     char *databuf;
-
     if(DEBUG_){
         printf("%d: armci_rcv_strided_data: expecting datalen %d from %d\n",
                 armci_me, datalen, proc); fflush(stdout);
@@ -310,7 +310,10 @@ void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
 void armci_rem_ack(int clus)
 {
 int bufsize = sizeof(request_header_t)+sizeof(int);
-request_header_t *msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize);
+int destproc = 0;
+request_header_t *msginfo;
+destproc = SERVER_NODE(clus);
+msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize,ACK,destproc);
 
     msginfo->dscrlen = 0;
     msginfo->from  = armci_me;
@@ -570,7 +573,10 @@ void *armci_server_code(void *data)
 void armci_serv_quit()
 {
 int bufsize = sizeof(request_header_t)+sizeof(int);
-request_header_t *msginfo= (request_header_t*)GET_SEND_BUFFER(bufsize);
+int destproc;
+request_header_t *msginfo;
+destproc = SERVER_NODE(armci_clus_me);  
+msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,QUIT,destproc);
 
     if(DEBUG_){ printf("%d master: sending quit request to server\n",armci_me);
         fflush(stdout);

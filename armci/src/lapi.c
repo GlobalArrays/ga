@@ -1,4 +1,4 @@
-/* $Id: lapi.c,v 1.14 2001-12-07 00:44:33 d3h325 Exp $ */
+/* $Id: lapi.c,v 1.15 2002-01-08 21:56:49 vinod Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>
@@ -27,6 +27,11 @@ lapi_info_t     lapi_info;
 lapi_handle_t   lapi_handle;
 #endif
 pthread_mutex_t _armci_mutex_thread=PTHREAD_MUTEX_INITIALIZER;
+
+
+double _armci_rcv_buf[MSG_BUFLEN_DBL];
+char* MessageRcvBuffer = (char*)_armci_rcv_buf;
+char* MessageSndBuffer = (char*)0;
 
 
 /************* LAPI Active Message handlers *******************************/
@@ -335,10 +340,12 @@ lapi_cmpl_t *pcntr;
      rc = LAPI_Setcntr(lapi_handle, &get_cntr.cntr, 0); 
      if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (get)",rc);
      get_cntr.val = 0;
+#if 0
      pcntr = (lapi_cmpl_t*)MessageSndBuffer;
      rc = LAPI_Setcntr(lapi_handle, &pcntr->cntr, 0); 
      if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (bufcntr)",rc);
      pcntr->val = 0;
+#endif
      
 
 #if  !defined(LAPI2)
@@ -348,8 +355,11 @@ lapi_cmpl_t *pcntr;
 
 #endif
 
-     /* make sure that LAPI interrupt mode is on */
+     /* make sure that interrupt mode is on */
      LAPI_Senv(lapi_handle, INTERRUPT_SET, 1);
+
+     /* initialize buffer managment module */
+     _armci_buf_init();
 }
        
 

@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.17 2001-05-25 22:09:20 d3h325 Exp $ */
+/* $Id: signaltrap.c,v 1.18 2002-01-08 21:56:50 vinod Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -16,7 +16,7 @@
 #include <unistd.h>
 #endif
 
-#define PAUSE_ON_ERROR__ 
+#define PAUSE_ON_ERROR 
 
 #define  Error armci_die 
 

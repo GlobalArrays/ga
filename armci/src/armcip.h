@@ -53,9 +53,10 @@ extern thread_id_t armci_usr_tid;
 
 /* min amount of data in strided request to be sent in a single TCP/IP message*/
 #ifdef SOCKETS
-#  define TCP_PAYLOAD 512
+#  define TCP_PAYLOAD 128 
 #  define LONG_GET_THRESHOLD  TCP_PAYLOAD  
-#  define LONG_GET_THRESHOLD_STRIDED LONG_GET_THRESHOLD  
+#  define LONG_GET_THRESHOLD_STRIDED LONG_GET_THRESHOLD
+#  define LONG_PUT_THRESHOLD 128  
 #endif
 
 #ifdef WIN32

@@ -1,5 +1,15 @@
 #ifndef _REQUEST_H_
 #define _REQUEST_H_
+
+/********  client buffer managment ops ****************************/
+extern void  _armci_buf_init();
+extern char* _armci_buf_get(int size, int operation, int to);
+extern void  _armci_buf_release(void *buf);
+extern int   _armci_buf_to_index(void *buf);
+extern char* _armci_buf_ptr_from_id(int id);
+extern void  _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node);
+
+
 #ifdef LAPI
 #  include "lapidefs.h"
 #elif defined(GM)
@@ -9,6 +19,9 @@
 #elif defined(VIA)
 #  include "via.h"
    typedef int msg_tag_t;
+#elif defined(SOCKETS)
+#  include "sockets.h" 
+   typedef long msg_tag_t;
 #else
    typedef long msg_tag_t;
 #endif
@@ -49,9 +62,10 @@ extern  char* MessageRcvBuffer;
 extern  char* MessageSndBuffer;
 
 #ifdef LAPI
-#  define GET_SEND_BUFFER(_size)(MessageSndBuffer+sizeof(lapi_cmpl_t));\
+#  define GET_SEND_BUFFER_(_size)(MessageSndBuffer+sizeof(lapi_cmpl_t));\
           CLEAR_COUNTER(*((lapi_cmpl_t*)MessageSndBuffer));\
           SET_COUNTER(*((lapi_cmpl_t*)MessageSndBuffer),1);
+#  define GET_SEND_BUFFER _armci_buf_get
 #  define GA_SEND_REPLY armci_lapi_send
 #else
 #  ifdef SOCKETS
@@ -62,7 +76,7 @@ extern  char* MessageSndBuffer;
 #endif
 
 #ifndef GET_SEND_BUFFER
-#  define GET_SEND_BUFFER(_len) MessageSndBuffer
+#  define GET_SEND_BUFFER(_size,_op,_to) MessageSndBuffer
 #endif
 
 #ifndef FREE_SEND_BUFFER
@@ -73,6 +87,7 @@ extern  char* MessageSndBuffer;
 typedef struct {
            char *buf; char* buf_posted; int count; int proc; int op; int extra;
 } buf_arg_t;
+
 
 #ifdef PIPE_BUFSIZE 
    extern void armcill_pipe_post_bufs(void *ptr, int stride_arr[], int count[],
@@ -100,7 +115,7 @@ extern void armci_send_strided_data(int proc,  request_header_t *msginfo,
 extern void armci_send_req(int proc, request_header_t* msginfo, int len);
 extern void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra);
 extern int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,
-                            int proc);
+                            int proc,int flag);
 extern int armci_rem_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],

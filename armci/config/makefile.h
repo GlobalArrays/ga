@@ -402,7 +402,7 @@ endif
 ifdef LAPI_
           CC  = mpcc_r
       LINK.f  = mpcc_r -lc_r -lxlf -lxlf90 -lm
-    EXTRA_OBJ = lapi.o request.o
+    EXTRA_OBJ = lapi.o request.o buffers.o
 GLOB_DEFINES += -DSP
 endif
 #

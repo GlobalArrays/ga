@@ -43,13 +43,13 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
 endif
 
 ifeq ($(ARMCI_NETWORK),GM)
-#  OBJ += dataserv-myri.o myrinet.o spawn.o request.o
-  OBJ += dataserv-gm.o ds-shared.o myrinet.o spawn.o request.o bufalloc.o
+#  OBJ += dataserv-myri.o myrinet.o spawn.o request.o 
+  OBJ += dataserv-gm.o ds-shared.o myrinet.o spawn.o request.o buffers.o
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
 endif
 
 ifeq ($(ARMCI_NETWORK),VIA)
-  OBJ += spawn.o  request.o via.o ds-shared.o
+  OBJ += spawn.o  request.o via.o ds-shared.o buffers.o
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
 endif
 
@@ -69,7 +69,7 @@ else
   # sockets
   LIBRARY_STAMP = $(MSG_COMMS)
   ifeq ($(TARGET),$(findstring $(TARGET),$(SOCKETS)))
-     OBJ += spawn.o dataserv.o sockets.o request.o ds-shared.o
+     OBJ += spawn.o dataserv.o sockets.o request.o ds-shared.o buffers.o async.o
      LIB_DEFINES += -DDATA_SERVER -DSOCKETS
      # to use pthread version uncomment the following two lines
      # LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT
