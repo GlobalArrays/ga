@@ -221,6 +221,8 @@ extern void NGA_NbGet(int g_a, int lo[], int hi[], void* buf, int ld[],
 		      ga_nbhdl_t* nbhandle);
 extern void NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[],
 		      ga_nbhdl_t* nbhandle);
+extern void NGA_NbAcc(int g_a,int lo[], int hi[],void* buf,int ld[],void* alpha,
+		      ga_nbhdl_t* nbhandle);
 extern int NGA_NbWait(ga_nbhdl_t* nbhandle);
 extern int GA_NbWait(ga_nbhdl_t* nbhandle);
 

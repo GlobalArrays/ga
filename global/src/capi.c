@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.55 2003-03-31 21:11:04 d3g293 Exp $ */
+/* $Id: capi.c,v 1.56 2003-04-14 18:16:39 vinod Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -585,6 +585,17 @@ void NGA_Acc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha)
     COPYC2F(ld,_ga_work, ndim-1);
     nga_acc_(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha);
 }    
+
+void NGA_NbAcc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha,
+               ga_nbhdl_t* nbhandle)
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+    COPYC2F(ld,_ga_work, ndim-1);
+    nga_acc_common(&a, _ga_lo,_ga_hi,buf,_ga_work,alpha,(Integer *)nbhandle);
+}
 
 void NGA_Periodic_get(int g_a, int lo[], int hi[], void* buf, int ld[])
 {

@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.38 2003-04-11 15:43:50 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.39 2003-04-14 18:16:39 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -720,17 +720,13 @@ Integer lo[2], hi[2];
 #endif
 }
 
-
-/*\ ACCUMULATE OPERATION FOR A N-DIMENSIONAL PATCH OF GLOBAL ARRAY
- *
- *  g_a += alpha * patch
-\*/
-void FATR nga_acc_(Integer *g_a,
+void FATR nga_acc_common(Integer *g_a,
                    Integer *lo,
                    Integer *hi,
                    void    *buf,
                    Integer *ld,
-                   void    *alpha)
+                   void    *alpha,
+                   Integer *nbhandle)
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size, type, p_handle;
@@ -759,6 +755,8 @@ int optype, proc, ndim;
       GAbytes.acctot += (double)size*elems;
       GAstat.numacc++;
       GAstat.numacc_procs += np;
+
+      if(nbhandle)ga_init_nbhandle(nbhandle);
 
       gaPermuteProcList(np);
       p_handle = GA[handle].p_handle;
@@ -800,7 +798,12 @@ int optype, proc, ndim;
           if (p_handle >= 0) {
             proc = (int)GA_proclist[p];
           }
-          ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count, ndim-1, proc);
+          if(nbhandle) 
+            ARMCI_NbAccS(optype,alpha, pbuf, stride_loc, prem, stride_rem,count,
+                       ndim-1, proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+          else
+            ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
+                       ndim-1, proc);
 
       }
 
@@ -810,6 +813,30 @@ int optype, proc, ndim;
 #endif
 }
 
+/*\ ACCUMULATE OPERATION FOR A N-DIMENSIONAL PATCH OF GLOBAL ARRAY
+ *
+ *  g_a += alpha * patch
+\*/
+void FATR nga_acc_(Integer *g_a,
+                   Integer *lo,
+                   Integer *hi,
+                   void    *buf,
+                   Integer *ld,
+                   void    *alpha)
+{
+    nga_acc_common(g_a,lo,hi,buf,ld,alpha,NULL);
+}
+
+void FATR nga_nbacc_(Integer *g_a,
+                   Integer *lo,
+                   Integer *hi,
+                   void    *buf,
+                   Integer *ld,
+                   void    *alpha,
+                   Integer *nbhndl)
+{
+    nga_acc_common(g_a,lo,hi,buf,ld,alpha,nbhndl);
+}
 
 
 void FATR  ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
@@ -828,7 +855,7 @@ Integer lo[2], hi[2];
    lo[1]=*jlo;
    hi[0]=*ihi;
    hi[1]=*jhi;
-   nga_acc_(g_a, lo, hi, buf, ld, alpha);
+   nga_acc_common(g_a,lo,hi,buf,ld,alpha,NULL);
 
 #ifdef GA_TRACE
    trace_etime_();
@@ -840,6 +867,33 @@ Integer lo[2], hi[2];
 #endif
 }
 
+void FATR  ga_nbacc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha,nbhndl)
+   Integer *g_a, *ilo, *ihi, *jlo, *jhi, *ld, *nbhndl;
+   void *buf, *alpha;
+{
+Integer lo[2], hi[2];
+#ifdef GA_TRACE
+   trace_stime_();
+#endif
+
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_ACC,__FILE__,__LINE__);
+#endif
+   lo[0]=*ilo;
+   lo[1]=*jlo;
+   hi[0]=*ihi;
+   hi[1]=*jhi;
+   nga_acc_common(g_a,lo,hi,buf,ld,alpha,nbhndl);
+
+#ifdef GA_TRACE
+   trace_etime_();
+   op_code = GA_OP_ACC;
+   trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
+#endif
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_ACC,__FILE__,__LINE__);
+#endif
+}
 
 void nga_access_ptr(Integer* g_a, Integer lo[], Integer hi[],
                       void* ptr, Integer ld[])

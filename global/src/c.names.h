@@ -4,6 +4,7 @@
 #if defined(CRAY) || defined(WIN32) || defined(HITACHI)
 
 #define  ga_acc_                   GA_ACC
+#define  ga_nbacc_                 GA_NBACC
 #define  ga_access_                GA_ACCESS
 #define  ga_add_                   GA_ADD
 #define  ga_add_patch_             GA_ADD_PATCH
@@ -118,6 +119,7 @@
 #define  gai_dot_                  GAI_DOT
 #define  gai_dot_patch_            GAI_DOT_PATCH
 #define  nga_acc_                  NGA_ACC
+#define  nga_nbacc_                NGA_NBACC
 #define  nga_access_               NGA_ACCESS
 #define  nga_access_ghosts_        NGA_ACCESS_GHOSTS
 #define  nga_access_ghost_element_ NGA_ACCESS_GHOST_ELEMENT
@@ -202,6 +204,7 @@
 #elif defined(F2C2_)
 
 #define  ga_acc_                   ga_acc__                 
+#define  ga_nbacc_                 ga_nbacc__                 
 #define  ga_access_                ga_access__              
 #define  ga_add_                   ga_add__                 
 #define  ga_add_patch_             ga_add_patch__           
@@ -317,6 +320,7 @@
 #define  gai_dot_                  gai_dot__                
 #define  gai_dot_patch_            gai_dot_patch__          
 #define  nga_acc_                  nga_acc__                
+#define  nga_nbacc_                nga_nbacc__                
 #define  nga_access_               nga_access__             
 #define  nga_access_ghosts_        nga_access_ghosts__      
 #define  nga_access_ghost_element_ nga_access_ghost_element__      

@@ -66,6 +66,8 @@ extern logical FATR ga_locate_region_ ARGS_((Integer*, Integer*, Integer*,
       Integer*, Integer*, Integer map[][5], Integer* ));
 extern void  FATR ga_acc_   ARGS_((Integer*, Integer*, Integer*, Integer*,
       Integer*, void*, Integer*, void* ));
+extern void  FATR ga_nbacc_   ARGS_((Integer*, Integer*, Integer*, Integer*,
+      Integer*, void*, Integer*, void* ,Integer *));
 extern void FATR ga_access_ ARGS_((Integer*, Integer*, Integer*, Integer*,
       Integer*, Integer*, Integer* ));
 extern void FATR ga_brdcst_ ARGS_((Integer*, Void*, Integer*, Integer* ));
@@ -327,6 +329,8 @@ extern void FATR nga_nbget_(Integer *g_a, Integer *lo, Integer *hi,
 extern void FATR nga_nbwait_(Integer *nbhdl);
 extern void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi,
                           void *buf, Integer *ld, void *alpha);
+extern void FATR nga_nbacc_(Integer *g_a, Integer *lo, Integer *hi,
+                          void *buf, Integer *ld, void *alpha,Integer *nbhdl);
 extern void FATR nga_scatter_(Integer *g_a, void* v, Integer subscr[], 
                               Integer *nv);
 extern void FATR nga_scatter_acc_(Integer *g_a, void* v, Integer subscr[], 
