@@ -69,7 +69,7 @@ else
   # sockets
   LIBRARY_STAMP = $(MSG_COMMS)
   ifeq ($(TARGET),$(findstring $(TARGET),$(SOCKETS)))
-     OBJ += spawn.o dataserv.o sockets.o request.o
+     OBJ += spawn.o dataserv.o sockets.o request.o ds-shared.o
      LIB_DEFINES += -DDATA_SERVER -DSOCKETS
      # to use pthread version uncomment the following two lines
      # LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT
@@ -131,8 +131,9 @@ $(LIBRARY_PATH)(locks.o):       ./locks.h ./armcip.h
 $(LIBRARY_PATH)(lapi.o):        ./copy.h ./armcip.h ./lapidefs.h
 $(LIBRARY_PATH)(ipctest.o):     ./shmem.h ./locks.h 
 $(LIBRARY_PATH)(fence.o):       ./copy.h ./armcip.h ./armci.h 
+$(LIBRARY_PATH)(ds-shared.o):   ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
 $(LIBRARY_PATH)(dataserv.o):    ./sockets.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
-$(LIBRARY_PATH)(dataserv-myri.o): ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
+$(LIBRARY_PATH)(dataserv-gm.o): ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
 $(LIBRARY_PATH)(clusterinfo.o): ./message.h ./armcip.h 
 $(LIBRARY_PATH)(armci.o):       ./signaltrap.h ./shmem.h ./memlock.h ./locks.h ./lapidefs.h ./copy.h 
 

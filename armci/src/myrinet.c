@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.24 2001-04-16 22:52:42 d3h325 Exp $
+/* $Id: myrinet.c,v 1.25 2001-05-25 22:09:19 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -601,7 +601,7 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
  * assume the buf is pinned and is inside MessageSndBuffer
  * format buf = hdr ack + data + tail ack
  */
-char *armci_ReadFromDirect(request_header_t * msginfo, int len)
+char *armci_ReadFromDirect(int proc, request_header_t * msginfo, int len)
 {
     char *buf = (char*) msginfo;
     long *tail;

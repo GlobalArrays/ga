@@ -18,7 +18,7 @@
 #define DEBUG1 0
 #define PAUSE_ON_ERROR__ 
 
-/* Giganet/Emilex cLAN is the default */
+/* Giganet/Emulex cLAN is the default */
 #ifndef VIADEV_NAME
 #   define VIADEV_NAME "/dev/clanvi0"
 #endif
@@ -117,8 +117,7 @@ void armci_rcv_req(void *mesg,
     if(DEBUG0) {
         printf("%d(server): got %d req (dscrlen=%d datalen=%d) from %d\n",
                armci_me, msginfo->operation, msginfo->dscrlen,
-               msginfo->datalen, msginfo->from);
-        fflush(stdout);
+               msginfo->datalen, msginfo->from); fflush(stdout);
     }
 
     /* we leave room for msginfo on the client side */
@@ -592,11 +591,9 @@ void armci_server_initial_connection()
 int c, ib;
 VIP_RETURN rc;
 
-     if(DEBUG1){
-        printf("in server after fork %d (%d)\n",armci_me,getpid());
+     if(DEBUG1){ printf("in server after fork %d (%d)\n",armci_me,getpid());
         fflush(stdout);
      }
-
  
      /* setup descriptors and post nonblocking receives */
      for(c = ib= 0; c < armci_nproc; c++) if(!SAMECLUSNODE(c)){
@@ -765,11 +762,11 @@ void armci_WriteToDirect(int proc, request_header_t* msginfo, void *buf)
 }
 
 
-char *armci_ReadFromDirect(request_header_t *msginfo, int len)
+char *armci_ReadFromDirect(int proc, request_header_t *msginfo, int len)
 {
 VIP_RETURN rc;
 VIP_DESCRIPTOR *pdscr;
-int cluster = armci_clus_id(msginfo->to);
+int cluster = armci_clus_id(proc);
 char *dataptr = GET_DATA_PTR(client_buf->buf); 
 
     armci_dequeue_send_descr((SRV_con+cluster)->vi);
@@ -844,4 +841,3 @@ void armci_err_callback(void *context, VIP_ERROR_DESCRIPTOR * d)
     }
     armci_ErrorCallbackFunction(0, d);
 }
-

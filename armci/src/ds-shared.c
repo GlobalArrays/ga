@@ -18,8 +18,7 @@
 void armci_client_code()
 {
    if(DEBUG_){
-       printf("in client after fork %d(%d)\n",armci_me,getpid());
-       fflush(stdout);
+      printf("in client after fork %d(%d)\n",armci_me,getpid()); fflush(stdout);
    }
 
    armci_client_connect_to_servers();
@@ -34,27 +33,25 @@ void armci_client_code()
 
 /*\ client sends request to server
 \*/
-void armci_send_req(int proc)
+void armci_send_req(int proc, request_header_t* msginfo, int len)
 {
 int hdrlen = sizeof(request_header_t);
-int dscrlen = ((request_header_t*)MessageSndBuffer)->dscrlen;
-int datalen = ((request_header_t*)MessageSndBuffer)->datalen;
-int operation = ((request_header_t*)MessageSndBuffer)->operation;
 int bytes;
 
-    if(((request_header_t*)MessageSndBuffer)->operation == GET)
-        bytes = dscrlen + hdrlen;
+    if(msginfo->operation == GET)
+        bytes = msginfo->dscrlen + hdrlen;
     else
-        bytes = ((request_header_t*)MessageSndBuffer)->bytes + hdrlen;
+        bytes = msginfo->bytes + hdrlen;
 
-    if(DEBUG_) {
-        printf( "%d: sending req %d (len=%d dscr=%d data=%d) to %d \n",
-                armci_me, operation, bytes, dscrlen, datalen, proc);
-        fflush(stdout);
+    if(DEBUG_){printf("%d: sending req %d (len=%d dscr=%d data=%d) to %d \n",
+               armci_me, msginfo->operation, bytes,msginfo->dscrlen,
+               msginfo->datalen,proc); fflush(stdout);
     }
 
-    if(armci_send_req_msg(proc,MessageSndBuffer, bytes))
-      armci_die("armci_send_req: failed",0);
+    if(bytes > len)armci_die2("armci_send_req:buffer overflow",bytes,len);
+
+    if(armci_send_req_msg(proc,msginfo, bytes))
+                      armci_die("armci_send_req:failed",0);
 }
 
 
@@ -74,23 +71,31 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
     if(DEBUG_){
        printf("%d:sending strided %d to(%d,%d,%d) bytes=%d dslen=%d dlen=%d,\n",
                 armci_me, msginfo->operation, msginfo->to,
-                cluster, proc, bytes, dscrlen, datalen);
-        fflush(stdout);
+                cluster, proc, bytes, dscrlen, datalen); fflush(stdout);
     }
 
-    /* for small contiguous blocks copy into a buffer before sending */
+#ifdef SOCKETS
+    /* zero-copy optimization for large requests */
+    if(count[0] >  TCP_PAYLOAD){
+       if(armci_send_req_msg_strided(proc, msginfo,ptr,strides,
+          stride_arr, count))armci_die("armci_send_strided_req long: failed",0);
+       return; /************** done **************/
+    }
+#endif
+
+    /*  copy into a buffer before sending */
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
 
-    if(armci_send_req_msg(proc,MessageSndBuffer, bytes))
-      armci_die("armci_send_strided_req: failed",0);
+    if(armci_send_req_msg(proc,msginfo, bytes))
+       armci_die("armci_send_strided_req: failed",0);
 }
 
 
 /*\ client receives data from server
 \*/
-char *armci_rcv_data(int proc)
+char *armci_rcv_data(int proc, request_header_t* msginfo )
 {
-    int datalen = ((request_header_t*)MessageSndBuffer)->datalen;
+    int datalen = msginfo->datalen;
     char *buf;
 
     if(DEBUG_) {
@@ -102,8 +107,7 @@ char *armci_rcv_data(int proc)
     if(datalen > (MSG_BUFLEN-sizeof(request_header_t)-sizeof(long)))
         armci_die("armci_rcv_data:data overflowing rcv buffer",datalen);
 
-    /* buf = header ack + data(len = datalen) + tail ack */
-    buf = armci_ReadFromDirect((request_header_t*)MessageSndBuffer, datalen);
+    buf = armci_ReadFromDirect(proc, msginfo, datalen);
 
     if(DEBUG_){
         printf("%d:armci_rcv_data: got %d bytes \n",armci_me,datalen);
@@ -116,40 +120,35 @@ char *armci_rcv_data(int proc)
 
 /*\ client receives vector data from server and unpacks to the right loc
 \*/
-void armci_rcv_vector_data(int proc, char *buf, armci_giov_t darr[], int len)
+void armci_rcv_vector_data(int proc, request_header_t* msginfo, armci_giov_t darr[], int len)
 {
-    buf = armci_rcv_data(proc);
+    char *buf = armci_rcv_data(proc, msginfo);
     armci_vector_from_buf(darr, len, buf);
 }
 
 
 /*\ client receives strided data from server
 \*/
-void armci_rcv_strided_data(int proc, char *buf, int datalen, void *ptr,
-                            int strides, int stride_arr[], int count[])
+void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen, 
+                            void *ptr, int strides,int stride_arr[],int count[])
 {
     char *databuf;
 
     if(DEBUG_){
         printf("%d: armci_rcv_strided_data: expecting datalen %d from %d\n",
-                armci_me, datalen, proc);
-        fflush(stdout);
+                armci_me, datalen, proc); fflush(stdout);
     }
 
-    /* the buf should be MessageSndBuffer */
-    if(buf != MessageSndBuffer)
-       armci_die("armci_rcv_strided_data: not the right buffer", 0L);
+#ifdef SOCKETS
+    /* zero-copy optimization for large requests */
+    if(count[0] >  TCP_PAYLOAD){
+       armci_ReadStridedFromDirect(proc,msginfo,ptr,strides,stride_arr, count);
+       return; /*********************** done ************************/
+    }
+#endif
 
-    /* for small data segments minimize number of system calls */
-    databuf = armci_ReadFromDirect((request_header_t*)MessageSndBuffer,datalen);
-
+    databuf = armci_ReadFromDirect(proc,msginfo,datalen);
     armci_read_strided(ptr, strides, stride_arr, count, databuf);
-
-    if(DEBUG_){
-        printf("%d: armci_rcv_strided_data: got %d bytes from %d\n",
-                armci_me, datalen, proc);
-        fflush(stdout);
-    }
 }
 
 
@@ -157,9 +156,8 @@ void armci_rcv_strided_data(int proc, char *buf, int datalen, void *ptr,
 \*/
 void armci_rem_ack(int clus)
 {
-request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
-
-    GET_SEND_BUFFER;
+int bufsize = sizeof(request_header_t)+sizeof(int);
+request_header_t *msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize);
 
     msginfo->dscrlen = 0;
     msginfo->from  = armci_me;
@@ -173,10 +171,9 @@ request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
         fflush(stdout);
     }
 
-    armci_send_req(armci_clus_info[clus].master);
-    armci_rcv_data(armci_clus_info[clus].master);  /* receive ACK */
+    armci_send_req(armci_clus_info[clus].master, msginfo, bufsize);
+    armci_rcv_data(armci_clus_info[clus].master, msginfo);  /* receive ACK */
 }
-
 
 
 
@@ -187,10 +184,12 @@ static void armci_check_req(request_header_t *msginfo, int buflen)
     if((msginfo->to != armci_me && msginfo->to < armci_master) ||
        msginfo->to >= armci_master + armci_clus_info[armci_clus_me].nslave)
         armci_die("armci_rcv_req: invalid to", msginfo->to);
-   
+#if 0   
+    /* should be done in recv_req */
     if(msginfo->operation != GET && msginfo->bytes > buflen)
-        armci_die("armci_rcv_req: message overflowing rcv buffer",
-                  msginfo->bytes);
+        armci_die2("armci_rcv_req: message overflowing rcv buffer",
+                  msginfo->bytes,MSG_BUFLEN);
+#endif
    
     if(msginfo->dscrlen < 0)
         armci_die("armci_rcv_req: dscrlen < 0", msginfo->dscrlen);
@@ -208,6 +207,7 @@ void armci_send_data(request_header_t* msginfo, void *data)
 {
     int to = msginfo->from;
 
+#if defined(VIA) || defined(GM)
     /* if the data is in the pinned buffer: MessageRcvBuffer */
     if((data > (void *)MessageRcvBuffer) &&
        (data < (void *)(MessageRcvBuffer + MSG_BUFLEN)))
@@ -224,6 +224,9 @@ void armci_send_data(request_header_t* msginfo, void *data)
         armci_copy(data, buf, msginfo->datalen);
         armci_WriteToDirect(to, msginfo, buf);
     }
+#else
+        armci_WriteToDirect(to, msginfo, data);
+#endif
 }
 
 
@@ -233,23 +236,28 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
                              char *bdata, void *ptr, int strides,
                              int stride_arr[], int count[])
 {
+
     int to = msginfo->from;
+
+    if(DEBUG_){ printf("%d(server): sending datalen = %d to %d\n",
+                armci_me, msginfo->datalen, to); fflush(stdout); }
+ 
+#ifdef SOCKETS
+    /* zero-copy optimization for large requests */
+    if(count[0] >  TCP_PAYLOAD){
+       armci_WriteStridedToDirect(to,msginfo,ptr, strides, stride_arr, count);
+       return; /*********************** done ************************/
+    }
+#endif
 
     /* for small contiguous blocks copy into a buffer before sending */
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
-
-    if(DEBUG_){
-        printf("%d(server): sending datalen = %d to %d\n",
-                armci_me, msginfo->datalen, to);
-        fflush(stdout);
-    }
 
     /* write the message to the client */
     armci_WriteToDirect(to, msginfo, bdata);
 
     if(DEBUG_){
-        printf("%d(server): sent datalen = %d to %d\n",
-                armci_me, msginfo->datalen, to);
+        printf("%d(serv):sent len=%d to %d\n",armci_me,msginfo->datalen,to);
         fflush(stdout);
     }
 }
@@ -291,15 +299,36 @@ void armci_data_server(void *mesg)
     armci_check_req(msginfo,buflen);
     from = msginfo->from;
 
+    if(DEBUG_){ 
+       printf("%d(serv):got %d request from %d\n",armci_me,msginfo->operation, from);
+       fflush(stdout);
+    }
+
     switch(msginfo->operation){
       case ACK:
           if(DEBUG_) {
               fprintf(stdout, "%d(server): got ACK request from %d\n",
-                      armci_me, msginfo->from);
-              fflush(stdout);
+                      armci_me, msginfo->from); fflush(stdout);
           }
           armci_server_ack(msginfo);
           break;
+
+      case ATTACH: 
+          if(DEBUG_){
+             printf("%d(serv):got ATTACH request from%d\n",armci_me, from);
+             fflush(stdout);
+          }
+          armci_server_ipc(msginfo, descr, buffer, buflen);
+          break;
+#ifdef SOCKETS
+      case QUIT:   
+          if(DEBUG_){ 
+             printf("%d(serv):got QUIT request from %d\n",armci_me, from);
+             fflush(stdout);
+          }
+          armci_server_goodbye(msginfo);
+          break;
+#endif
 
       case ARMCI_SWAP:
       case ARMCI_SWAP_LONG:
@@ -335,7 +364,16 @@ void armci_start_server()
     armci_init_connections();
 
     if(armci_me == armci_master) {
-        armci_create_server_thread(armci_server_code);
+
+#ifdef SERVER_THREAD
+
+     armci_create_server_thread( armci_server_code );
+#else
+
+     armci_create_server_process( armci_server_code );
+
+#endif
+
     }
 
     armci_client_code();
@@ -361,4 +399,62 @@ void *armci_server_code(void *data)
     armci_transport_cleanup();
 
     return(NULL);
+}
+
+
+
+/*\ request to QUIT sent by client
+\*/
+void armci_serv_quit()
+{
+int bufsize = sizeof(request_header_t)+sizeof(int);
+request_header_t *msginfo= (request_header_t*)GET_SEND_BUFFER(bufsize);
+
+    if(DEBUG_){ printf("%d master: sending quit request to server\n",armci_me);
+        fflush(stdout);
+    }
+
+    msginfo->dscrlen = 0;
+    msginfo->from  = armci_me;
+    msginfo->to    = SERVER_NODE(armci_clus_me);
+    msginfo->operation = QUIT;
+    if(ACK_QUIT)
+       msginfo->bytes   = msginfo->datalen = sizeof(int); /* ACK */
+    else
+       msginfo->bytes   = msginfo->datalen = 0; /* no ACK */
+
+    armci_send_req(armci_master, msginfo, bufsize);
+
+    if(ACK_QUIT){
+       int stat;
+       stat = *(int*)armci_rcv_data(armci_master,msginfo);  /* receive ACK */
+       if(stat  != QUIT)
+            armci_die("armci_serv_quit: wrong response from server", stat);
+    }
+}
+
+
+/*\ server action triggered by request to quit
+\*/
+void armci_server_goodbye(request_header_t* msginfo)
+{
+     int ack=QUIT;
+     if(DEBUG_){
+        printf("%d server: terminating request by %d\n",armci_me,msginfo->from);
+        fflush(stdout);
+     }
+
+     if(msginfo->datalen){
+       msginfo->datalen = -msginfo->datalen;
+       if(msginfo->datalen != sizeof(int))
+          armci_die("armci_server_goodbye: bad datalen=",msginfo->datalen);
+
+       armci_send_data(msginfo, &ack);
+     }
+
+     armci_transport_cleanup();
+
+     /* Finalizing data server process w.r.t. MPI is not portable
+      */
+     _exit(0);
 }

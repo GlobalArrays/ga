@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.40 2001-03-22 21:46:16 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.41 2001-05-25 22:09:20 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -694,7 +694,10 @@ static char *temp;
   if(alloc_regions>=MAX_REGIONS)
        armci_die("Attach_Shared_Region: to many regions ",0);
 
+  /* under Linux we can get valid id=0 */
+#ifndef LINUX
   if(!*id) armci_die("Attach_Shared_Region: shmem ID=0 ",(int)*id);
+#endif
 
   /* first time needs to initialize region_list structure */
   if(!alloc_regions){

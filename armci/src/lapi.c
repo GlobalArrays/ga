@@ -1,4 +1,4 @@
-/* $Id: lapi.c,v 1.11 2000-04-17 22:31:38 d3h325 Exp $ */
+/* $Id: lapi.c,v 1.12 2001-05-25 22:09:19 d3h325 Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>
@@ -171,9 +171,8 @@ request_header_t *msginfo = (request_header_t *)uhdr;
 }
 
 
-void armci_send_req(int proc)
+void armci_send_req(int proc, request_header_t* msginfo, int len)
 {
-request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
 int msglen = sizeof(request_header_t);
 lapi_cntr_t *pcmpl_cntr, *pcntr = &buf_cntr.cntr;
 int rc;
@@ -222,11 +221,8 @@ int rc;
                          MessageSndBuffer, msglen, NULL, 0, 
                          NULL, pcntr, pcmpl_cntr))) armci_die("AM failed",rc);
 
-/*      if(msglen == sizeof(request_header_t))sleep(1);*/
-
-      if(DEBUG_)
-        fprintf(stderr,"%d sending req=%d to %d\n",armci_me, msginfo->operation,
-                proc);
+      if(DEBUG_) fprintf(stderr,"%d sending req=%d to %d\n",
+                         armci_me, msginfo->operation, proc);
 }
       
 
@@ -238,7 +234,7 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
 {
 
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
-    armci_send_req(proc);
+    armci_send_req(proc,msginfo,msginfo->bytes + sizeof(request_header_t));
 }
 
 
@@ -261,33 +257,37 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo, char *bdata,
 }
 
 
-char* armci_rcv_data(int proc)
+char* armci_rcv_data(int proc, request_header_t *msginfo)
 {
 /*     fprintf(stderr,"%d: receiving cntr=%d val=%d\n", armci_me, buf_cntr.cntr, buf_cntr.val);*/
      CLEAR_COUNTER(buf_cntr);
 
 /*     fprintf(stderr,"%d received %lf\n",armci_me, *((double*)MessageSndBuffer));*/
-     return MessageSndBuffer;
+
+     /* this needs to be changed - msginfo is overwritten with data */
+     return (char*)msginfo;
 }
 
 
 
 /*\ client receives strided data from server
 \*/
-void armci_rcv_strided_data(int proc, char *buf, int datalen,
+void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
                         void *ptr, int strides, int stride_arr[], int count[])
 {
      CLEAR_COUNTER(buf_cntr);
-     armci_read_strided(ptr, strides, stride_arr, count, buf);
+     armci_read_strided(ptr, strides, stride_arr, count, (char*)msginfo);
 }
 
 
 
 /*\ client receives vector data from server to buffer and unpacks it            
 \*/
-void armci_rcv_vector_data(int proc, char *buf, armci_giov_t darr[], int len)
+void armci_rcv_vector_data(int proc, request_header_t* msginfo, 
+                           armci_giov_t darr[], int len)
 {
-    buf = armci_rcv_data(proc);
+char *buf;
+    buf = armci_rcv_data(proc,msginfo);
     armci_vector_from_buf(darr, len, buf);
 }
 

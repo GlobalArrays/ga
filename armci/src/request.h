@@ -13,6 +13,9 @@
    typedef long msg_tag_t;
 #endif
 
+#define ACK_QUIT 0
+#define QUIT 33
+#define ATTACH 34
 
 typedef struct {
 #if 0 
@@ -47,7 +50,7 @@ extern  char* MessageSndBuffer;
 
 #ifdef LAPI
 #  define REQ_TAG {MessageSndBuffer + sizeof(request_header_t), &buf_cntr.cntr }
-#  define GET_SEND_BUFFER CLEAR_COUNTER(buf_cntr); SET_COUNTER(buf_cntr,1);
+#  define GET_SEND_BUFFER(_size) MessageSndBuffer;CLEAR_COUNTER(buf_cntr); SET_COUNTER(buf_cntr,1);
 #  define GA_SEND_REPLY armci_lapi_send
 #else
 #  define REQ_TAG 32000
@@ -59,25 +62,25 @@ extern  char* MessageSndBuffer;
 #endif
 
 #ifndef GET_SEND_BUFFER
-#  define GET_SEND_BUFFER
+#  define GET_SEND_BUFFER(_len) MessageSndBuffer
 #endif
 
 
 extern void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
                          void *ptr, int strides, int stride_arr[], int count[]);
 
-extern char *armci_rcv_data(int proc);
+extern char *armci_rcv_data(int proc, request_header_t *msginfo);
 extern void armci_rcv_strided_data_bypass(int proc, int datalen,
                                           void *ptr, int stride_levels);
 extern void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
             void *loc_buf, int msg_buflen, void *loc_ptr, int *loc_stride_arr,
             void *rem_ptr, int *rem_stride_arr, int *count, int stride_levels);
 
-extern void armci_rcv_strided_data(int proc, char *buf, int datalen,
-                        void *ptr, int strides, int stride_arr[], int count[]);
+extern void armci_rcv_strided_data(int proc, request_header_t* msginfo, 
+                  int datalen, void *ptr, int strides,int stride_arr[],int count[]);
 extern void armci_send_strided_data(int proc,  request_header_t *msginfo, 
             char *bdata, void *ptr, int strides, int stride_arr[], int count[]);
-extern void armci_send_req(int proc);
+extern void armci_send_req(int proc, request_header_t* msginfo, int len);
 extern void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra);
 extern int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,
                             int proc);
@@ -100,18 +103,15 @@ extern void armci_create_server_thread ( void* (* func)(void*) );
 extern int armci_server_lock_mutex(int mutex, int proc, msg_tag_t tag);
 extern void armci_send_data(request_header_t* msginfo, void *data);
 extern int armci_server_unlock_mutex(int mutex, int p, int tkt, msg_tag_t* tag);
-extern void armci_rcv_vector_data(int p, char *buf, armci_giov_t dr[], int len);
+extern void armci_rcv_vector_data(int p, request_header_t* msginfo, armci_giov_t dr[], int len);
 
 #ifndef LAPI
 extern void armci_wait_for_server();
 extern void armci_start_server();
 extern void armci_transport_cleanup();
-#endif
-
-#if defined(GM) || defined(VIA) || defined(ELAN)
 extern int armci_send_req_msg(int proc, void *buf, int bytes);
 extern void armci_WriteToDirect(int proc, request_header_t* msginfo, void *buf);
-extern char *armci_ReadFromDirect(request_header_t *msginfo, int len);
+extern char *armci_ReadFromDirect(int proc, request_header_t *msginfo, int len);
 extern void armci_init_connections();
 extern void *armci_server_code(void *data);
 extern void armci_rcv_req(void *mesg, void *phdr, void *pdescr, 
@@ -120,7 +120,19 @@ extern void armci_client_connect_to_servers();
 extern void armci_data_server(void *mesg);
 extern void armci_server_initial_connection();
 extern void armci_call_data_server();
-
 #endif
+#ifdef SOCKETS
+extern void armci_ReadStridedFromDirect(int proc, request_header_t* msginfo,
+                  void *ptr, int strides, int stride_arr[], int count[]);
+extern void armci_WriteStridedToDirect(int proc, request_header_t* msginfo,
+                         void *ptr, int strides, int stride_arr[], int count[]);
+extern void armci_serv_quit();
+extern int armci_send_req_msg_strided(int proc, request_header_t *msginfo,
+                          char *ptr, int strides, int stride_arr[],int count[]);
+extern void armci_server_goodbye(request_header_t* msginfo);
+#endif
+
+extern void armci_server_ipc(request_header_t* msginfo, void* descr,
+                             void* buffer, int buflen);
 
 #endif

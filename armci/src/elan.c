@@ -161,7 +161,7 @@ void armci_WriteToDirect(int dst, request_header_t *msginfo, void *buffer)
 /* none in acc */
 }
 
-char *armci_ReadFromDirect(request_header_t * msginfo, int len)
+char *armci_ReadFromDirect(int proc, request_header_t * msginfo, int len)
 {
     char *buf = (char*) msginfo;
     return(buf);

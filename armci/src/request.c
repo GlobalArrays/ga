@@ -1,7 +1,8 @@
-/* $Id: request.c,v 1.20 2000-12-06 01:38:38 d3h325 Exp $ */
+/* $Id: request.c,v 1.21 2001-05-25 22:09:19 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
+#include "shmem.h"
 #include "copy.h"
 #include <stdio.h>
 
@@ -22,10 +23,11 @@
 \*/
 void armci_rem_lock(int mutex, int proc, int *ticket)      
 {
-request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
-int *ibuf = (int*)(msginfo+1);
+request_header_t *msginfo;
+int *ibuf;
+int bufsize = sizeof(request_header_t)+sizeof(int);
  
-    GET_SEND_BUFFER;
+    msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize);
 
     msginfo->datalen = sizeof(int);
     msginfo->dscrlen = 0;
@@ -33,18 +35,20 @@ int *ibuf = (int*)(msginfo+1);
     msginfo->to    = proc;
     msginfo->operation = LOCK;
     msginfo->format  = mutex;
-
-    *ibuf = mutex;
-
     msginfo->bytes = msginfo->datalen + msginfo->dscrlen;
 
-    armci_send_req(proc);
+    ibuf = (int*)(msginfo+1);
+    *ibuf = mutex;
+
+    armci_send_req(proc, msginfo, bufsize);
 
     /* receive ticket from server */
-    *ticket = *(int*)armci_rcv_data(proc);
+    *ticket = *(int*)armci_rcv_data(proc,msginfo);
     
     if(DEBUG_)fprintf(stderr,"%d receiving ticket %d\n",armci_me, *ticket);
 }
+
+
 
 
 void armci_server_lock(request_header_t *msginfo)
@@ -73,10 +77,11 @@ int ticket;
 \*/
 void armci_rem_unlock(int mutex, int proc, int ticket)
 {
-request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
-int *ibuf = (int*)(msginfo+1);
+request_header_t *msginfo;
+int *ibuf;
+int bufsize = sizeof(request_header_t)+sizeof(ticket);
 
-    GET_SEND_BUFFER;
+    msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize);
 
     msginfo->dscrlen = msginfo->bytes = sizeof(ticket); 
     msginfo->datalen = 0; 
@@ -85,10 +90,11 @@ int *ibuf = (int*)(msginfo+1);
     msginfo->operation = UNLOCK;
     msginfo->format  = mutex;
 
+    ibuf = (int*)(msginfo+1);
     *ibuf = ticket;
 
     if(DEBUG_)fprintf(stderr,"%d sending unlock\n",armci_me);
-    armci_send_req(proc);
+    armci_send_req(proc, msginfo, bufsize);
 }
     
 
@@ -129,15 +135,105 @@ request_header_t *msginfo = &header;
 }
 
 
+/*\ control message to the server, e.g.: ATTACH to shmem, return ptr etc.
+\*/
+void armci_serv_attach_req(void *info, int ilen, long size, void* resp,int rlen)
+{
+char *buf;
+int bufsize = sizeof(request_header_t)+ilen + sizeof(long)+sizeof(rlen);
+request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize);
+
+    msginfo->from  = armci_me;
+    msginfo->to    = SERVER_NODE(armci_clus_me);
+    msginfo->dscrlen   = ilen;
+    msginfo->datalen = sizeof(long)+sizeof(rlen);
+    msginfo->operation =  ATTACH;
+    msginfo->bytes = msginfo->dscrlen+ msginfo->datalen;
+
+    armci_copy(info, msginfo +1, ilen);
+    buf = ((char*)msginfo) + ilen + sizeof(request_header_t);
+    *((long*)buf) =size;
+    *(int*)(buf+ sizeof(long)) =rlen;
+    armci_send_req(armci_master, msginfo, bufsize);
+    if(rlen){
+      msginfo->datalen = rlen;
+      buf= armci_rcv_data(armci_master, msginfo);  /* receive response */
+      armci_copy(buf, resp, rlen);
+
+      if(DEBUG_){printf("%d:client attaching got ptr %d bytes\n",armci_me,rlen);
+         fflush(stdout);
+      }
+    }
+}
+
+
+/*\ server initializes its copy of the memory lock data structures
+\*/
+static void server_alloc_memlock(void *ptr_myclus)
+{
+int i;
+
+    /* for protection, set pointers for processes outside local node NULL */
+    memlock_table_array = calloc(armci_nproc,sizeof(void*));
+    if(!memlock_table_array) armci_die("malloc failed for ARMCI lock array",0);
+
+    /* set pointers for processes on local cluster node
+     * ptr_myclus - corresponds to the master process
+     */
+    for(i=0; i< armci_clus_info[armci_clus_me].nslave; i++){
+        memlock_table_array[armci_master +i] = ((char*)ptr_myclus)
+                + MAX_SLOTS*sizeof(memlock_t)*i;
+    }
+
+    if(DEBUG_) fprintf(stderr,"server initialized memlock\n");
+}
+
+
+static int allocate_memlock=1;
+
+/*\ server actions triggered by client request to ATTACH
+\*/
+void armci_server_ipc(request_header_t* msginfo, void* descr,
+                      void* buffer, int buflen)
+{
+   double *ptr;
+   long *idlist = (long*)descr;
+   long size = *(long*)buffer;
+   int rlen = *(int*)(sizeof(long)+(char*)buffer);
+
+   if(size<0) armci_die("armci_server_ipc: size<0",(int)size);
+   ptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
+   if(!ptr)armci_die("armci_server_ipc: failed to attach",0);
+
+   /* provide data server with access to the memory lock data structures */
+   if(allocate_memlock){
+      allocate_memlock = 0;
+      server_alloc_memlock(ptr);
+   }
+
+   /* compute offset if we are are really allocating new memory */
+   if(size>0)armci_set_mem_offset(ptr);
+
+   if(msginfo->datalen != sizeof(long)+sizeof(int))
+      armci_die("armci_server_ipc: bad msginfo->datalen ",msginfo->datalen);
+
+   if(rlen==sizeof(ptr)){
+     msginfo->datalen = rlen;
+     armci_send_data(msginfo, &ptr);
+   }else armci_die("armci_server_ipc: bad rlen",rlen);
+}
+
+
 /*\ send RMW request to server
 \*/
 void armci_rem_rmw(int op, int *ploc, int *prem, int extra, int proc)
 {
-request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
-char *buf = (char*)(msginfo+1);
+request_header_t *msginfo;
+char *buf;
 void *buffer;
+int bufsize = sizeof(request_header_t)+sizeof(long)+sizeof(void*);
  
-    GET_SEND_BUFFER;
+    msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize);
 
     msginfo->dscrlen = sizeof(void*);
     msginfo->from  = armci_me;
@@ -145,6 +241,7 @@ void *buffer;
     msginfo->operation = op;
     msginfo->datalen = sizeof(int); /* extra */
 
+    buf = (char*)(msginfo+1);
     ADDBUF(buf, void*, prem); /* pointer is shipped as descriptor */
 
     /* data field: extra argument in fetch&add and local value in swap */
@@ -154,12 +251,12 @@ void *buffer;
        ADDBUF(buf, long, *((long*)ploc) ); 
        msginfo->datalen = sizeof(long);
     }else {
-      ADDBUF(buf, int, extra);
+       ADDBUF(buf, int, extra);
     }
 
     msginfo->bytes   = msginfo->datalen+msginfo->dscrlen ;
 
-    armci_send_req(proc);
+    armci_send_req(proc, msginfo, bufsize);
 
     /* need to adjust datalen for long datatype version */
     if(op==ARMCI_FETCH_AND_ADD || op== ARMCI_SWAP)
@@ -167,13 +264,12 @@ void *buffer;
     else
         msginfo->datalen = sizeof(long);
 
-    buffer = armci_rcv_data(proc);  /* receive response */
+    buffer = armci_rcv_data(proc,msginfo);  /* receive response */
 
     if(op==ARMCI_FETCH_AND_ADD || op== ARMCI_SWAP)
         *ploc = *(int*)buffer;
     else
         *(long*)ploc = *(long*)buffer;
-    
 
 }
 
@@ -227,20 +323,31 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
 
 int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
 {
-    char *buf = MessageSndBuffer;
-    request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
+    char *buf,*buf0;
+    request_header_t *msginfo;
     int bytes =0, s, slen=0;
     void *rem_ptr;
     size_t adr;
+    int bufsize = sizeof(request_header_t);
 
-    GET_SEND_BUFFER;
+
+    /* compute size of the buffer needed */
+    for(s=0; s<len; s++){
+        bytes   += darr[s].ptr_array_len * darr[s].bytes; /* data */
+        bufsize += darr[s].ptr_array_len *sizeof(void*)+2*sizeof(int); /*descr*/
+    }
+            
+    bufsize += bytes + sizeof(long) +2*sizeof(double) +8; /*+scale+allignment*/
+    
+    buf = buf0= GET_SEND_BUFFER(bufsize);
+    msginfo = (request_header_t*)buf;
 
     /* fill vector descriptor */
     buf += sizeof(request_header_t);
     ADDBUF(buf,long,len); /* number of sets */
+
     for(s=0;s<len;s++){
 
-        bytes += darr[s].ptr_array_len * darr[s].bytes;
         ADDBUF(buf,int,darr[s].ptr_array_len); /* number of elements */
         ADDBUF(buf,int,darr[s].bytes);         /* sizeof element */
 
@@ -258,13 +365,11 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
     buf = (char*)adr;
 
     /* fill message header */
-    msginfo->dscrlen = buf - MessageSndBuffer - sizeof(request_header_t);
-    /*printf("VECTOR len=%d dscrlen=%d\n",len, msginfo->dscrlen);*/
+    msginfo->dscrlen = buf - buf0 - sizeof(request_header_t);
     msginfo->from  = armci_me;
     msginfo->to    = proc;
     msginfo->operation  = op;
     msginfo->format  = VECTOR;
-
     msginfo->datalen = bytes;
 
     /* put scale for accumulate */
@@ -294,14 +399,12 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
 /*       fprintf(stderr,"sending %lf\n",*(double*)darr[0].src_ptr_array[0]);*/
 
        armci_vector_to_buf(darr, len, buf);
-/*       fprintf(stderr,"sending first=%lf last =%lf in buffer\n",*/
-/*                     *((double*)buf),((double*)buf)[99]);*/
     }
 
-    armci_send_req(proc);
+    armci_send_req(proc, msginfo, bufsize);
 
     if(op == GET){
-        armci_rcv_vector_data(proc, MessageSndBuffer, darr, len);
+        armci_rcv_vector_data(proc, msginfo, darr, len);
         
     }
     return 0;
@@ -316,15 +419,21 @@ int armci_rem_strided(int op, void* scale, int proc,
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, int flag)
 {
-    char *buf = MessageSndBuffer;
-    request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
-    int  i;
+    char *buf, *buf0;
+    request_header_t *msginfo;
+    int  i, slen=0, bytes;
     size_t adr;
-    int slen=0;
     void *rem_ptr;
     int  *rem_stride_arr;
+    int bufsize = sizeof(request_header_t);
 
-    GET_SEND_BUFFER;
+    /* calculate size of the buffer needed */
+    for(i=0, bytes=1;i<=stride_levels;i++)bytes*=count[i];
+    bufsize += bytes+sizeof(void*)+2*sizeof(int)*(stride_levels+1)
+               +2*sizeof(double) + 8; /* +scale+alignment */
+
+    buf = buf0= GET_SEND_BUFFER(bufsize);
+    msginfo = (request_header_t*)buf;
 
     if(op == GET){
        rem_ptr = src_ptr;
@@ -334,7 +443,7 @@ int armci_rem_strided(int op, void* scale, int proc,
        rem_stride_arr = dst_stride_arr;
     }
     
-    for(i=0, msginfo->datalen=1;i<=stride_levels;i++)msginfo->datalen*=count[i];
+    msginfo->datalen=bytes;
 
     /* fill strided descriptor */
                                        buf += sizeof(request_header_t);
@@ -399,19 +508,19 @@ int armci_rem_strided(int op, void* scale, int proc,
 	*/
 
     buf += slen;
-    msginfo->dscrlen = buf - MessageSndBuffer - sizeof(request_header_t);
+    msginfo->dscrlen = buf - buf0 - sizeof(request_header_t);
     msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
 
     if(op == GET){
 #      ifdef CLIENT_BUF_BYPASS
          if(msginfo->bypass){
 
-             if(!msginfo->pinned) armci_send_req(proc);
+             if(!msginfo->pinned) armci_send_req(proc,msginfo,bufsize);
 
              if(!armci_pin_memory(dst_ptr,dst_stride_arr,count, stride_levels))
                                          return 1; /* failed:cannot do bypass */
 
-             if(msginfo->pinned) armci_send_req(proc);
+             if(msginfo->pinned) armci_send_req(proc,msginfo,bufsize);
              else armci_client_send_ack(proc, 1);
 
              armci_rcv_strided_data_bypass(proc, msginfo->datalen,
@@ -421,8 +530,8 @@ int armci_rem_strided(int op, void* scale, int proc,
          }else
 #      endif             
        {
-          armci_send_req(proc);
-          armci_rcv_strided_data(proc, MessageSndBuffer, msginfo->datalen,
+          armci_send_req(proc, msginfo, bufsize);
+          armci_rcv_strided_data(proc, msginfo, msginfo->datalen,
                                  dst_ptr, stride_levels, dst_stride_arr, count);
        }
 
@@ -609,3 +718,4 @@ void armci_server_vector( request_header_t *msginfo,
       }
     }
 }
+
