@@ -1,4 +1,4 @@
-/* $Id: shmlimit.c,v 1.3 1999-07-28 00:48:02 d3h325 Exp $ */
+/* $Id: shmlimit.c,v 1.4 1999-11-02 21:40:02 d3h325 Exp $ */
 /*
  * This code is used to test shared memory limits within
  * a separately forked child process.
@@ -15,7 +15,14 @@
 #include <errno.h>
 #include <signal.h>
 
+/* We got 2 ways to return shmmax value to parent by: exit status or pipe 
+ * the pipe mechanism is preferable since it allows to pass arbitrary values 
+ * from child to parent. The exit mechanism allows values from 0 to 255 (MB)
+ * only!
+ */
+#define USE_PIPE 
 #define DEBUG_ 0
+
 
 void (*Sig_Chld_Orig)();
 static int status=0;
@@ -51,33 +58,60 @@ static void RestoreSigChld()
     armci_die("Restore_SigChld: error from restoring signal SIGChld",0);
 }
 
-
 int armci_child_shmem_init()
 {
     pid_t pid;
     int x;
-    
+
+#ifdef USE_PIPE
+    int y;
+    int fd[2];
+
+    if(pipe(fd)==-1) armci_die("armci shmem_test pipe failed",0);
+#endif
+
     TrapSigChld();
+
     if ( (pid = fork() ) < 0)
+
         armci_die("armci shmem_test fork failed", (int)pid);
+
     else if(pid == 0){
 
+#ifdef USE_PIPE
        x= armci_shmem_test();
-       exit(x);
+       if(write(fd[1],&x,sizeof(int)) <sizeof(int))
+                         armci_die("armci shmem_test: write failed",0);
+#endif
+       _exit(x);
+
     }else{
 
        pid_t rc;
-       
+
+#ifdef USE_PIPE
+       if(read(fd[0],&y,sizeof(int))<sizeof(int))
+                         armci_die("armci shmem_test: read failed",0);
+#endif
+
        /* we might already got status from wait in SIGCHLD handler */
        if(!caught_sigchld){
 again:   rc = wait (&status);
-         /* can get SIGCHLD while waiting */
-/*         if(rc!=pid) perror("ARMCI: wait for child process Shm failed:");*/
          if(rc == -1 && errno == EINTR) goto again;
        }
        if (!WIFEXITED(status)) armci_die("ARMCI: child did not return rc",0);
        x = WEXITSTATUS(status);
     }
     RestoreSigChldDfl();
+
+#ifdef USE_PIPE
+    close(fd[0]);
+    close(fd[1]);
+    if(DEBUG_)
+       printf("%d:in parent: x=%d y=%d\n",armci_me,x,y);fflush(stdout);sleep(1);
+    return y;
+#else
     return x;
+#endif
+
 }
