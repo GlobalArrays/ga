@@ -1,14 +1,17 @@
-/* $Id: pgs.c,v 1.5 2004-06-14 18:31:40 d3h325 Exp $ 
+/* $Id: pgs.c,v 1.6 2004-08-10 06:23:57 vinod Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
 
-#ident	"@(#)$Id: pgs.c,v 1.5 2004-06-14 18:31:40 d3h325 Exp $"
+#ident	"@(#)$Id: pgs.c,v 1.6 2004-08-10 06:23:57 vinod Exp $"
+
+#define BINLOAD 1
 
 #include <stdlib.h>
 
 #include <qsnet/config.h>
 #include <qsnet/types.h>
+#include <qsnet/fence.h>
 #include <elan/elan.h>
 #include <elan4/library.h>
 #include <elan4/lib_spinlock.h>
@@ -20,6 +23,7 @@
 #include "pgs_thread.h"
 
 extern void armci_die();
+extern int armci_me;
 
 #ifndef offsetof
 #define offsetof(T,F)	((int)&(((T *)0)->F))
@@ -186,6 +190,8 @@ int pgs_initDesc (ELAN_STATE *state, ELAN_RAIL *rail, void *handle,
 
     INITEVENT_WORD(rail->rail_ctx, (E4_Event *)&re->re_doneEvent, &r->r_done);
     PRIMEEVENT_WORD(rail->rail_ctx, (E4_Event *)&re->re_doneEvent, 1);
+    re->re_chainEvent.ev_Params[0] = elan4_main2elan (rail->rail_ctx, (void *) &re->buf_dma);
+    re->re_chainEvent.ev_Params[1] = elan4_alloccq_space (rail->rail_ctx, 8, CQ_Size8K);
     
     req = &r->r_req;
     req->req_doneEvent = MAIN2ELAN(rail->rail_ctx, &re->re_doneEvent);
@@ -195,10 +201,7 @@ int pgs_initDesc (ELAN_STATE *state, ELAN_RAIL *rail, void *handle,
      * allocate and initialise the QDMA 
      */
     qdma = &r->r_qdma;
-    qdma->dma_srcAddr  = MAIN2ELAN(rail->rail_ctx, req);
     qdma->dma_dstAddr  = 0; /* Queue slot offset */
-    qdma->dma_srcEvent = 0;
-    qdma->dma_dstEvent = pgsrail->pr_state->pgs_qaddr;
     
     r->r_event.handle = pgsrail;
     r->r_event.pollFn = _elan_pgsPoll;
@@ -208,6 +211,7 @@ int pgs_initDesc (ELAN_STATE *state, ELAN_RAIL *rail, void *handle,
     return(TRUE);
 }
 
+static E4_uint64* _bflags;
 
 void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 {
@@ -254,12 +258,14 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
     /* 
      * allocate Elan control structure
      */
-    if (!(pe = ALLOC_ELAN(pgsrail->pr_alloc, ELAN_ALIGN, ELAN_ALIGNUP(sizeof(PGS_ELAN), ELAN_ALIGN))))
+    if(!(pe=ALLOC_ELAN(pgsrail->pr_alloc,ELAN_ALIGN,ELAN_ALIGNUP(sizeof(PGS_ELAN),ELAN_ALIGN))))
 	elan_exception(pgsstate->elan_state, ELAN_ENOMEM, "pgs_init: Elan memory exhausted");
     pgsrail->pr_elan = pe;
 
     memset(pe, 0, sizeof(PGS_ELAN));
+    MEMBAR_STORESTORE();
     
+
     /*
      * Allocate a command queue for issuing DMAs/STEN packets
      * and running pgs_thread
@@ -375,6 +381,7 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
     {
 	void *cspace;
 	LOADSO *code;
+#if BINLOAD
 	char file_name[20];
 	FILE *fp;
 	int sz;
@@ -386,6 +393,9 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 	sz = fwrite(bin_data, 1, BIN_DATA_ELEMS, fp);
 	if(sz<BIN_DATA_ELEMS) {armci_die("pgs:file write error",-1);}
 	fclose(fp);
+#else
+        char *file_name = "elan/pgs_thread.so";
+#endif
 	
 	if ((code = pgsrail->pr_pgsCode = OPEN_SO(rail->rail_ctx,
 				  (const char*)file_name, NULL, 0)) == NULL)
@@ -397,7 +407,11 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 	    armci_die("failed to load code",-1);
 	
 	pgsrail->pr_pgsSym  = elan4_find_sym (code, "pgs_thread");
+
+#ifndef BINLOAD
 	unlink((const char*)file_name);
+#endif
+
     }
 
 #if 0
@@ -430,8 +444,9 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 #endif
 }
 
-void *
-pgs_init (ELAN_STATE *state, void *qMem)
+
+
+void * pgs_init (ELAN_STATE *state, void *qMem)
 {
     pgsstate_t *pgsstate;
     int r;
@@ -454,8 +469,8 @@ pgs_init (ELAN_STATE *state, void *qMem)
      * initialisation each rail
      */
     pgsstate->pgs_nrails = elan_nRails(pgsstate->elan_state);
-    if ((pgsstate->pgs_rails = (PGS_RAIL *)calloc(pgsstate->pgs_nrails, sizeof(PGS_RAIL))) == NULL)
-	elan_exception(pgsstate->elan_state, ELAN_ENOMEM, "pgs_init: failed to allocate memory");
+    if((pgsstate->pgs_rails=(PGS_RAIL*)calloc(pgsstate->pgs_nrails, sizeof(PGS_RAIL))) == NULL)
+	elan_exception(pgsstate->elan_state, ELAN_ENOMEM,"pgs_init:failed to allocate memory");
     for (r=0; r < pgsstate->pgs_nrails; r++)
     {
 	PGS_RAIL *pr = pgsstate->pgs_rails + r;
@@ -473,13 +488,61 @@ pgs_init (ELAN_STATE *state, void *qMem)
     return pgsstate;
 }
 
+void * pgs_ds_init (ELAN_STATE *state, void *qMem, void *dsqMem, int maxbufs)
+{
+    pgsstate_t *pgsstate;
+    int r;
+   
+    /*
+     * setup the pgs state for this putget control
+     */
+    if ((pgsstate = (pgsstate_t *)calloc(1, sizeof(pgsstate_t))) == NULL)
+        elan_exception(state, ELAN_ENOMEM, "pgs_init: failed to allocate memory");
+   
+    pgsstate->elan_state = state;
+    pgsstate->pgs_vp = state->vp;
+   
+    pgsstate->pgs_waitType = (elan_base ? elan_base->waitType : ELAN_POLL_EVENT);
+   
+    /* Stash the main and Elan Queue addresses */
+    pgsstate->pgs_qaddr = (ADDR_ELAN) ((uintptr_t) qMem);
+    pgsstate->ds_qaddr = (ADDR_ELAN) ((uintptr_t) dsqMem);
+   
+    _bflags = elan_gallocElan(elan_base, elan_base->allGroup, 64, maxbufs*sizeof(E4_uint64));
+    if(!_bflags)elan_exception(pgsstate->elan_state, ELAN_ENOMEM, "bflags: no Elan memory");
+    memset(_bflags, 0, maxbufs*sizeof(E4_uint64));
+    MEMBAR_STORESTORE();
+
+    /*
+     * initialisation each rail
+     */
+    pgsstate->pgs_nrails = elan_nRails(pgsstate->elan_state);
+    if((pgsstate->pgs_rails=(PGS_RAIL*)calloc(pgsstate->pgs_nrails, sizeof(PGS_RAIL))) == NULL)
+        elan_exception(pgsstate->elan_state, ELAN_ENOMEM, "pgs_init:failed to allocate memory");
+    for (r=0; r < pgsstate->pgs_nrails; r++)
+    {
+        PGS_RAIL *pr = pgsstate->pgs_rails + r;
+        pr->pr_id = r;
+        pr->pr_rail = pgsstate->elan_state->rail[r];
+
+        pgs_railInit(pgsstate, pr, 16);
+    }
+
+    pgsstate->pgs_profile = 0;
+
+#if 0
+    printf("pgs initialized\n"); fflush(stdout);
+#endif
+    return pgsstate;
+}
+
+
 static ELAN_EVENT *issueStridedRequest(PGS_RAIL *pgsr, PGS_REQDESC *r)
 {
     PGS_REQ *req;
     DMA64 *qdma;
 
     MUTEX_LOCK(&pgsr->pr_mutex);
-    
     qdma = &r->r_qdma;
     req = &r->r_req;
     
@@ -487,6 +550,9 @@ static ELAN_EVENT *issueStridedRequest(PGS_RAIL *pgsr, PGS_REQDESC *r)
      * Update the request 
      */
     qdma->dma_typeSize = E4_DMA_TYPE_SIZE(r->r_qdmasize, DMA_DataTypeByte, DMA_QueueWrite, 16);
+    qdma->dma_dstEvent = pgsr->pr_state->pgs_qaddr;
+    qdma->dma_srcEvent = 0;
+    qdma->dma_srcAddr  = MAIN2ELAN(pgsr->pr_rail->rail_ctx, req);
     
     /* 
      * Update the DMA descriptor 
@@ -503,10 +569,97 @@ static ELAN_EVENT *issueStridedRequest(PGS_RAIL *pgsr, PGS_REQDESC *r)
     MUTEX_UNLOCK(&pgsr->pr_mutex);
     
     ELAN_EVENT_PRIME(&r->r_event);
-
     return(&r->r_event);
 }
 
+
+
+static ELAN_EVENT *issueDSRequest_(PGS_RAIL *pgsr, PGS_REQDESC *r, void *buf)
+{
+    DMA64 *qdma;
+    PGS_REQ *req=&r->r_req;
+
+    MUTEX_LOCK(&pgsr->pr_mutex);
+
+    /*  Update the DMA descriptor */
+    qdma = &r->r_qdma;
+    qdma->dma_typeSize = E4_DMA_TYPE_SIZE(r->r_qdmasize, DMA_DataTypeByte, DMA_QueueWrite, 16);
+    qdma->dma_dstEvent = pgsr->pr_state->ds_qaddr;
+    qdma->dma_cookie   = elan4_local_cookie(pgsr->pr_cpool, E4_COOKIE_TYPE_LOCAL_DMA, r->r_vp);
+    qdma->dma_vproc    = r->r_vp;
+    qdma->dma_srcEvent = req->req_doneEvent;
+    qdma->dma_srcAddr  = MAIN2ELAN(pgsr->pr_rail->rail_ctx, buf);
+
+    /* Send the QDMA */
+    elan4_run_dma_cmd(pgsr->pr_cmdq, (DMA *)qdma);
+    pgsr->pr_cmdq->cmdq_flush(pgsr->pr_cmdq);
+
+    MUTEX_UNLOCK(&pgsr->pr_mutex);
+
+    ELAN_EVENT_PRIME(&r->r_event);
+    return(&r->r_event);
+}
+
+
+
+static ELAN_EVENT *
+issueDSRequest(PGS_RAIL *pgsr, PGS_REQDESC *r, void *head, void* data, void *buf, int dlen)
+{
+    DMA64 *qdma;
+    DMA64 *dma;
+    PGS_REQ *req=&r->r_req;
+
+    MUTEX_LOCK(&pgsr->pr_mutex);
+
+    /*  Update the DMA descriptor */
+    qdma = &r->r_qdma;
+    qdma->dma_vproc    = r->r_vp;
+    qdma->dma_cookie   = elan4_local_cookie(pgsr->pr_cpool, E4_COOKIE_TYPE_LOCAL_DMA, r->r_vp);
+    qdma->dma_typeSize = E4_DMA_TYPE_SIZE(r->r_qdmasize, DMA_DataTypeByte, DMA_QueueWrite, 16);
+    qdma->dma_dstEvent = pgsr->pr_state->ds_qaddr;
+    qdma->dma_srcEvent = req->req_doneEvent;
+    qdma->dma_srcAddr  = MAIN2ELAN(pgsr->pr_rail->rail_ctx, head);
+    qdma->dma_typeSize |= RUN_DMA_CMD;
+    qdma->dma_pad      = NOP_CMD;
+
+    dma = &r->r_dma;
+    dma->dma_vproc    = r->r_vp;
+    dma->dma_cookie   = elan4_local_cookie(pgsr->pr_cpool, E4_COOKIE_TYPE_LOCAL_DMA, r->r_vp);
+    dma->dma_typeSize = E4_DMA_TYPE_SIZE(dlen, DMA_DataTypeByte, 0, 16);
+    dma->dma_srcEvent = MAIN2ELAN(pgsr->pr_rail->rail_ctx, &r->r_elan->re_chainEvent); 
+    dma->dma_dstEvent = 0;
+    dma->dma_srcAddr  = MAIN2ELAN(pgsr->pr_rail->rail_ctx, data);
+    dma->dma_dstAddr  = MAIN2ELAN(pgsr->pr_rail->rail_ctx, buf);
+
+    /* Copy down the chain dma to the chain buffer in elan sdram  */
+    memcpy ((void *)&r->r_elan->buf_dma, (void *)qdma, sizeof (E4_DMA64));
+
+    /* initialize the chain event  */
+    r->r_elan->re_chainEvent.ev_CountAndType = E4_EVENT_INIT_VALUE(-32,E4_EVENT_COPY,E4_EVENT_DTYPE_LONG,8);
+
+    /* Perform a memory barrier to flush all outstanding stores */
+    mb ();
+
+#if 0
+    printf("%d ChainDMA to=%d h=%p d=%p b=%p hlen=%d dlen=%d\n",
+            armci_me,r->r_vp,head,data,buf,r->r_qdmasize,dlen);
+#endif
+
+    /* run primary DMA */
+    elan4_run_dma_cmd(pgsr->pr_cmdq, (DMA *)dma);
+    pgsr->pr_cmdq->cmdq_flush(pgsr->pr_cmdq);
+
+#if 0
+    sleep(2);
+    elan4_run_dma_cmd(pgsr->pr_cmdq, (DMA *)qdma);
+    pgsr->pr_cmdq->cmdq_flush(pgsr->pr_cmdq);
+#endif
+
+    MUTEX_UNLOCK(&pgsr->pr_mutex);
+
+    ELAN_EVENT_PRIME(&r->r_event);
+    return(&r->r_event);
+}
 
 
 
@@ -558,14 +711,36 @@ ACQUIRE_LH (PGS_RAIL *pgsrail)
     return rbase;
 }
 
-void
-RELEASE_LH (PGS_REQDESC *r)
+void RELEASE_LH (PGS_REQDESC *r)
 {
     PGS_RAIL *pgsrail = r->r_rail;
 
     r->r_suc = pgsrail->pr_freeDescs;
     pgsrail->pr_freeDescs = r;
 }
+
+
+ELAN_EVENT *armci_sendq(void *pgs,u_int destvp, void *head, int hlen, void *data, void *buf, int dlen)
+{
+    extern int armci_me;
+    int rail=0 ;
+    pgsstate_t *pgsstate = (pgsstate_t *) pgs;
+    ELAN_EVENT *event = 0;
+    PGS_REQDESC *rdesc;
+    PGS_RAIL *pgsr = pgsstate->pgs_rails;
+
+    if (!(rdesc = (PGS_REQDESC *)ACQUIRE_LH(pgsr)))
+          elan_exception(pgsr->pr_state->elan_state, ELAN_ENOMEM,
+                       "elan_getbuflag: failed to allocate descriptor");
+    rdesc->r_qdmasize = hlen;
+    rdesc->r_vp = destvp;
+
+    event = issueDSRequest(pgsr, rdesc, head, data, buf, dlen);
+    return(event);
+    
+}
+
+
 
 #define PUTSIZE 512 
 #define GETSIZE 512 
@@ -729,6 +904,44 @@ ELAN_EVENT *elan_getss (void *pgs, void *src, void *dst, int *src_stride_arr, in
 }
 
 
+ELAN_EVENT *elan_getbflag(void *pgs,u_int destvp, int lo, int hi, int wait, long *retval)
+{
+    extern int armci_me;
+    int rail=0 ;
+    pgsstate_t *pgsstate = (pgsstate_t *) pgs;
+    ELAN_EVENT *event = 0;
+    PGS_REQDESC *rdesc;
+    PGS_RAIL *pgsr = pgsstate->pgs_rails;
+
+    if (!(rdesc = (PGS_REQDESC *)ACQUIRE_LH(pgsr)))
+          elan_exception(pgsr->pr_state->elan_state, ELAN_ENOMEM,
+                       "elan_getbuflag: failed to allocate descriptor");
+    //rdesc->r_qdmasize = BFLAGHSIZE;
+    rdesc->r_qdmasize = 128; 
+    rdesc->r_req.RangeLo = lo;
+    rdesc->r_req.RangeHi = hi;
+    rdesc->r_req.CanWait = wait;
+    rdesc->r_vp = destvp;
+    rdesc->r_req.req_type = PGS_BFLAG;
+    rdesc->r_req.req_rvp = pgsstate->elan_state->vp;
+    //rdesc->r_req.src = rdesc->r_pbflags;
+    rdesc->r_req.src = MAIN2ELAN(pgsr->pr_rail->rail_ctx, _bflags);
+    rdesc->r_req.dst = MAIN2ELAN(pgsr->pr_rail->rail_ctx, retval); 
+    event = issueStridedRequest(pgsr, rdesc);
+    return event;
+}
+
+
+
+void elan_clearbflag(void *pgs, int which)
+{
+    pgsstate_t *pgsstate = (pgsstate_t *) pgs;
+    PGS_RAIL *pgsr = pgsstate->pgs_rails;
+    elan4_store64(0,_bflags+which); 
+//    bzero(pgsr->bflags+which,sizeof(bflag_t));
+//    MEMBAR_STORESTORE();
+}
+
 
 static int _elan_pgsPoll (ELAN_EVENT *event, long how)
 {
@@ -762,6 +975,7 @@ static void _elan_pgsWait (ELAN_EVENT *event, long how)
     return;
 }
 
+
 static void _elan_pgsFree (ELAN_EVENT *event)
 {
     PGS_REQDESC *r = (PGS_REQDESC*)event;
@@ -783,8 +997,30 @@ static void _elan_pgsFree (ELAN_EVENT *event)
 }
 
 
+
+typedef struct devent {
+    EVENT_MAIN  de_event;
+    E4_uint64   de_doneWord;    /* main memory done word     */
+    E4_Event32 *de_doneEvent;   /* Elan event                */
+    ADDR_ELAN   de_elan;        /* preconverted address of done event */
+    int         de_count;       /* wait count */
+    int         de_current;
+    ELAN_STATE *de_state;
+} DEVENT;
+
+int elan_devent_completed(int setval, ELAN_EVENT *e)
+{
+    DEVENT *de = (DEVENT*)e;
+    int val = EVENT_COUNT(de->de_doneEvent);
+    return(setval + (val>>5));
+}
+
+
 /*
  * Local variables:
  * c-file-style: "stroustrup"
  * End:
  */
+
+
+

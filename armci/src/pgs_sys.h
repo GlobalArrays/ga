@@ -1,10 +1,10 @@
-/* $Id: pgs_sys.h,v 1.2 2004-04-13 20:04:00 manoj Exp $ */
+/* $Id: pgs_sys.h,v 1.3 2004-08-10 06:23:57 vinod Exp $ */
 /* $Source: /tmp/hpctools/ga/armci/src/pgs_sys.h,v $ */
 
 #ifndef _ELAN_PGSSYS_H
 #define _ELAN_PGSSYS_H
 
-#ident	"@(#)$Id: pgs_sys.h,v 1.2 2004-04-13 20:04:00 manoj Exp $"
+#ident	"@(#)$Id: pgs_sys.h,v 1.3 2004-08-10 06:23:57 vinod Exp $"
 
 #define PGS_QSLOTSIZE    1024
 #define PGS_THREADSTACK 16384
@@ -14,6 +14,8 @@
 #define PGS_PUTS   0x3000
 #define PGS_GETS   0x4000
 #define PGS_ACC    0x5000
+#define PGS_INIT   0x6000
+#define PGS_BFLAG  0x7000
 
 #define PGS_PACKED 0x0001
 #define PGS_DMA    0x0002
@@ -21,6 +23,7 @@
 #define ADDR_SDRAM void *
 #define ADDR_ELAN  E4_Addr
 
+typedef E4_uint64 bflag_t;
 
 /*
  * PGS components that are shared by Elan and Main
@@ -67,6 +70,10 @@ typedef struct pgs_elan
 #define MAXSTRIDE 7
 #define MAXCOUNTSIZE 8
 #define STRIDEDHSIZE 128
+#define BFLAGHSIZE   64
+#define RangeLo count[0] 
+#define RangeHi count[1] 
+#define CanWait count[2]
 
 typedef struct pgsreq {
 
@@ -80,13 +87,13 @@ typedef struct pgsreq {
     E4_Addr    src;
     E4_Addr    dst;
 #endif
-    E4_uint32  src_stride_arr[MAXSTRIDE];
-    E4_uint32  dst_stride_arr[MAXSTRIDE];
-    E4_uint32  count[MAXCOUNTSIZE];
-    E4_uint32  strides;
     E4_uint32  req_type;
     E4_uint32  req_srcvp;	/* calling process */
     E4_uint32  req_rvp;		/* remote process in DMA operations */
+    E4_uint32  count[MAXCOUNTSIZE];
+    E4_uint32  src_stride_arr[MAXSTRIDE];
+    E4_uint32  dst_stride_arr[MAXSTRIDE];
+    E4_uint32  strides;
     
 } PGS_REQ; 
 
@@ -127,6 +134,8 @@ typedef struct pgsrail {
 typedef struct pgsreqelan {
 
     E4_Event32 re_doneEvent;  /* Completion event in the caller */
+    E4_Event32 re_chainEvent;  
+    E4_DMA64   buf_dma;
 
 } PGS_REQELAN;
 
@@ -142,10 +151,12 @@ typedef struct pgsdesc {
 
     EVENT_MAIN   r_event;
     DMA64        r_qdma;
+    DMA64        r_dma;
     PGS_REQ      r_req;
     E4_uint64    r_done;	 
     PGS_REQELAN *r_elan;
     PGS_RAIL    *r_rail;
+    E4_Addr      r_pbflags;
     int          r_qdmasize;
     int          r_useDMA;
     void       **r_dests;		/* destination addresses for getv */
@@ -170,6 +181,7 @@ typedef struct pgsstate {
 
     PGS_RAIL               *pgs_rails;    /* per rail state */
     ADDR_ELAN               pgs_qaddr;	  /* InputQueue (Elan memory addr) */
+    ADDR_ELAN               ds_qaddr;	  /* InputQueue (Elan memory addr) data server*/
     
     int                     putsPending;
     int                     getsPending;

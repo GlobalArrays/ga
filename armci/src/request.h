@@ -18,6 +18,9 @@ extern void _armci_buf_clear_all();
 #  include "lapidefs.h"
 #elif defined(GM)
 #  include "myrinet.h"
+#elif defined(DOELAN4)
+#  include "elandefs.h"
+   typedef void* msg_tag_t; 
 #elif defined(QUADRICS)
 #  include <elan/elan.h>
    typedef void* msg_tag_t; 
@@ -70,7 +73,11 @@ typedef struct {
    short int from;            /* message sender */
 #endif
 unsigned int   operation:8;   /* operation code */
-#if defined(CLIENT_BUF_BYPASS) || defined(LAPI2)
+#if defined(DOELAN4) 
+unsigned int   format:2;      /* data format used */
+unsigned int   dowait:1;      /* indicates if should wait for data  */
+unsigned int   inbuf:1;       /* data is in one of the buffers */
+#elif defined(CLIENT_BUF_BYPASS) || defined(LAPI2)
 unsigned int   format:2;      /* data format used */
 unsigned int   pinned:1;      /* indicates if sender memory was pinned */
 unsigned int   bypass:1;      /* indicate if bypass protocol used */
@@ -81,7 +88,8 @@ unsigned int   bytes:20;      /* number of bytes requested */
          int   datalen;       /* >0 in lapi means that data is included */
          int   ehlen:8;       /* size of extra header and the end of descr */
   signed int   dscrlen:24;    /* >0 in lapi means that descriptor is included */
-         msg_tag_t tag;       /* message tag for response to this request */
+         long test;
+         msg_tag_t tag;       /* message tag for response to this request, MUST BE LAST */
 }request_header_t;
 
 
@@ -139,7 +147,7 @@ extern  char* MessageSndBuffer;
 #  endif
 #endif
 
-#ifdef QUADRICS
+#ifdef QUADRICS_
 #  define GET_SEND_BUFFER(_size,_op,_to) MessageSndBuffer;\
                     while(((request_header_t*)MessageSndBuffer)->tag)\
                     armci_util_spin(100, MessageSndBuffer)

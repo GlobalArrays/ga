@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.83 2004-07-14 02:30:51 manoj Exp $
+#$Id: GNUmakefile,v 1.84 2004-08-10 06:23:57 vinod Exp $
          FOPT = -O
          COPT = -O
 
@@ -106,7 +106,7 @@ endif
 
 ifeq ($(ARMCI_NETWORK),ELAN4)
 # works for Quadrics Elan-4 network
-    OBJ += elan.o pgs.o spawn.o ds-shared.o request.o buffers.o
+    OBJ += elan4.o pgs.o spawn.o ds-shared.o request.o buffers.o
     LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT -DACC_SMP
     EXTRA_LIBS += -lpthread
 endif

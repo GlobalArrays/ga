@@ -57,7 +57,7 @@ ARMCI_MEMHDL_T *mhloc=NULL,*mhrem=NULL;
 
 #ifdef REGIONS_REQUIRE_MEMHDL 
    int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
-                 ARMCI_MEMHDL_T **loc_memhdl,ARMCI_MEMHDL_T **rem_memhdl);
+                  ARMCI_MEMHDL_T **loc_memhdl,ARMCI_MEMHDL_T **rem_memhdl);
 #  define ARMCI_REGION_BOTH_FOUND(_s,_d,_b,_p) \
     armci_region_both_found_hndl((_s),(_d),(_b),(_p),&mhloc,&mhrem)
 #else
@@ -66,7 +66,7 @@ ARMCI_MEMHDL_T *mhloc=NULL,*mhrem=NULL;
 #endif
 
 #ifdef HAS_RDMA_GET
-        
+
 #  ifdef VAPI
    void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
          void** cptr,int nbtag,ARMCI_MEMHDL_T *lochdl,ARMCI_MEMHDL_T *remhdl);
@@ -74,6 +74,7 @@ ARMCI_MEMHDL_T *mhloc=NULL,*mhrem=NULL;
    void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
                     void** contextptr,int nbtag,void *mhdl,void *mhdl1);
 #  endif
+
 #  define ARMCI_NBREM_GET(_p,_s,_sst,_d,_dst,_cou,_lev,_hdl) \
     armci_client_direct_get((_p),(_s),(_d),(_cou)[0],&((_hdl)->cmpl_info),(_hdl)->tag,(void *)mhloc,(void *)mhrem); \
 
@@ -385,31 +386,6 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
     int total_of_2D;
     int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
     
-#if HAS_PUTS
-    if(op==PUT && (stride_levels>0) &&  !(SAMECLUSNODE(proc))){
-       if(nb_handle){
-          nb_handle->tag =0;
-          nb_handle->cmpl_info=armcill_nbputS(proc,src_ptr,src_stride_arr,dst_ptr,
-	   	       dst_stride_arr,count,stride_levels);
-       }else
-           armcill_putS(proc,src_ptr,src_stride_arr,dst_ptr,
-		    dst_stride_arr,count,stride_levels);
-       return 0;
-    }
-#endif
-#if HAS_GETS
-    if(op==GET && (stride_levels>0) &&  !(SAMECLUSNODE(proc))){
-       if(nb_handle){
-          nb_handle->tag =0;
-          nb_handle->cmpl_info=armcill_nbgetS(proc,src_ptr,src_stride_arr,dst_ptr,
-		    dst_stride_arr,count,stride_levels);
-       }else
-          armcill_getS(proc,src_ptr,src_stride_arr,dst_ptr,
-		    dst_stride_arr,count,stride_levels);
-       return 0;
-    }
-#endif
-
 #   if defined(ACC_COPY)
       
 #      ifdef ACC_SMP
@@ -577,7 +553,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #ifndef LAPI2
     if(!direct){
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
-       if(!stride_levels && 
+       if(!stride_levels &&
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
          ARMCI_Fence(proc);
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],NULL,0,mhloc,mhrem);
@@ -1089,9 +1065,17 @@ int ARMCI_Get(void *src, void* dst, int bytes, int proc)
     return rc;
 }
 
+#define PACK1D 0
 
+#if PACK1D 
+#  define armci_read_strided1  armci_read_strided
+#  define armci_write_strided1 armci_write_strided
+#else
+#  define armci_read_strided2  armci_read_strided
+#  define armci_write_strided2 armci_write_strided
+#endif
 
-void armci_write_strided(void *ptr, int stride_levels, int stride_arr[],
+void armci_write_strided1(void *ptr, int stride_levels, int stride_arr[],
                    int count[], char *buf)
 {
     int i, j;
@@ -1126,7 +1110,60 @@ void armci_write_strided(void *ptr, int stride_levels, int stride_arr[],
 }
 
 
-void armci_read_strided(void *ptr, int stride_levels, int stride_arr[],
+void armci_write_strided2(void *ptr, int stride_levels, int stride_arr[],
+                          int count[], char *buf)
+{                  
+    int i, j;
+    int total;   /* number of 2 dim block */
+    int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+    
+    if(stride_levels == 0){
+       armci_copy( ptr, buf, count[0]);
+    }else if (count[0]%ALIGN_SIZE || (unsigned long)ptr%ALIGN_SIZE)
+              armci_write_strided(ptr,stride_levels, stride_arr,count,buf);
+          else {
+             int rows, ld, idx, ldd;
+             char *src;
+             rows = count[0]/8;
+             ld   = stride_arr[0]/8;
+             switch(stride_levels){
+             case 1: 
+                     DCOPY21(&rows, count+1, ptr, &ld, buf, &idx);
+                     break;
+             case 2: 
+#if 0
+                     for(i=0; i< count[2]; i++){ 
+                         DCOPY21(&rows, count+1, ptr, &ld, buf, &idx);
+                         ptr = ((char*)ptr)+stride_arr[1];
+                         ((double*)buf) += idx;
+                     }
+#endif
+                     ldd = stride_arr[1]/stride_arr[0];
+                     DCOPY31(&rows, count+1, count+2, ptr, &ld, &ldd, buf,&idx);
+
+                     break;
+             default: 
+                     index[2] = 0; unit[2] = 1; total = count[2];
+                     for(j=3; j<=stride_levels; j++) {
+                         index[j] = 0; unit[j] = unit[j-1] * count[j-1];
+                         total *= count[j];
+                     }
+                     for(i=0; i<total; i++) {
+                         src = (char *)ptr; 
+                         for(j=2; j<=stride_levels; j++) {
+                             src += index[j] * stride_arr[j-1];
+                             if(((i+1) % unit[j]) == 0) index[j]++;
+                             if(index[j] >= count[j]) index[j] = 0;
+                         }
+                         DCOPY21(&rows, count+1,src, &ld, buf, &idx); 
+                         ((double*)buf) += idx;
+                     }
+            } /*switch */
+         } /*else */
+}
+
+
+void armci_read_strided1(void *ptr, int stride_levels, int stride_arr[],
                         int count[], char *buf)
 {
     int i, j;
@@ -1158,6 +1195,58 @@ void armci_read_strided(void *ptr, int stride_levels, int stride_arr[],
         armci_copy(buf, ((char*)ptr)+idx,bytes);
         buf += count[0];
     }
+}
+
+
+void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
+                         int count[], char *buf)
+{                  
+    int i, j;
+    int total;   /* number of 2 dim block */
+    int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+   
+    if(stride_levels == 0){
+       armci_copy( buf, ptr, count[0]);
+    }else if (count[0]%ALIGN_SIZE || (unsigned long)ptr%ALIGN_SIZE)
+              armci_read_strided(ptr,stride_levels, stride_arr,count,buf);
+          else {
+             int rows, ld, idx, ldd;
+             char *src;
+             rows = count[0]/8;
+             ld   = stride_arr[0]/8;
+             switch(stride_levels){
+             case 1: 
+                     DCOPY12(&rows, count+1, ptr, &ld, buf, &idx);
+                     break;
+             case 2:
+#if 0
+                     for(i=0; i< count[2]; i++){
+                         DCOPY12(&rows, count+1, ptr, &ld, buf, &idx);
+                         ptr = ((char*)ptr)+stride_arr[1];
+                         ((double*)buf) += idx;
+                     }
+#endif
+                     ldd = stride_arr[1]/stride_arr[0];   
+                     DCOPY13(&rows, count+1, count+2, ptr, &ld, &ldd, buf,&idx);
+                     break;
+             default:
+                     index[2] = 0; unit[2] = 1; total = count[2];
+                     for(j=3; j<=stride_levels; j++) {
+                         index[j] = 0; unit[j] = unit[j-1] * count[j-1];
+                         total *= count[j];
+                     }
+                     for(i=0; i<total; i++) {
+                         src = (char *)ptr; 
+                         for(j=2; j<=stride_levels; j++) {
+                             src += index[j] * stride_arr[j-1];
+                             if(((i+1) % unit[j]) == 0) index[j]++;
+                             if(index[j] >= count[j]) index[j] = 0;
+                         }
+                         DCOPY12(&rows, count+1,src, &ld, buf, &idx);
+                         ((double*)buf) += idx;
+                     }
+            } /*switch */
+         } /*else */
 }
 
 
@@ -1232,7 +1321,6 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
        
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-         ARMCI_Fence(proc);
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],
                                   (void **)(&nb_handle->cmpl_info),
                                   nb_handle->tag,mhloc,mhrem);
@@ -1255,7 +1343,6 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
        }
 #     endif
 #     endif
-    ORDER(PUT,proc); /* ensure ordering */
 #  if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)
        if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
            rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
@@ -1348,7 +1435,6 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #     ifdef ALLOW_PIN
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
-         ARMCI_Fence(proc);
          ARMCI_NBREM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
@@ -1369,7 +1455,6 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        }
 #     endif
 #     endif
-    ORDER(GET,proc); /* ensure ordering */
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS))
        /* for larger strided or 1D reqests buffering can be avoided to send data
         * we can try to bypass the packetization step and send request directly
@@ -1457,7 +1542,6 @@ int ARMCI_NbAccS( int  optype,            /* operation */
       nb_handle = armci_set_implicit_handle(optype, proc);
 
 
-    ORDER(PUT,proc); /* ensure ordering */
     if(direct)
       rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
 			    dst_stride_arr, count, stride_levels,1,NULL);
@@ -1524,7 +1608,6 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 #     else
 #       ifdef ALLOW_PIN
        if(ARMCI_REGION_BOTH_FOUND(src,dst,bytes,armci_clus_id(proc))){
-         ARMCI_Fence(proc);
          INIT_NB_HANDLE(nb_handle,PUT,proc);
 	 nb_handle->tag = GET_NEXT_NBTAG();
 	 nb_handle->op  = PUT;
@@ -1584,7 +1667,6 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 #     else
 #       ifdef ALLOW_PIN
        if(ARMCI_REGION_BOTH_FOUND(dst,src,bytes,armci_clus_id(proc))){
-         ARMCI_Fence(proc);
          INIT_NB_HANDLE(nb_handle,PUT,proc);
 	 nb_handle->tag = GET_NEXT_NBTAG();
 	 nb_handle->op  = GET;

@@ -277,6 +277,10 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
     }
 #endif
     /*  copy into a buffer before sending */
+   
+#  ifdef SERV_BUF_IDX_T
+    msginfo->inbuf = armcill_getbidx((msginfo->datalen+msginfo->dscrlen), proc, &msginfo->tag);
+#  endif
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
     if(armci_send_req_msg(proc,msginfo, bytes))
        armci_die("armci_send_strided_req: failed",0);

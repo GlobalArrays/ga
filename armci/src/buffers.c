@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.27 2004-04-09 18:41:10 vinod Exp $    **/
+/* $Id: buffers.c,v 1.28 2004-08-10 06:23:57 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -25,7 +25,7 @@
 #   define BUF_ALLOCATE malloc
 #endif
 
-#if defined(DATA_SERVER) && defined(SOCKETS)  
+#if defined(DATA_SERVER) && defined(SOCKETS)
 #define MAX_BUFS  1
 #define MAX_SMALL_BUFS 1
 #else
