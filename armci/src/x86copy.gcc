@@ -1,4 +1,4 @@
-// $Id: x86copy.gcc,v 1.11 2002-03-29 01:06:45 edo Exp $
+// $Id: x86copy.gcc,v 1.12 2002-05-09 21:22:35 d3h325 Exp $
 // memory copy implementation derived from examples 3 and 4 at
 // http://www.sgi.com/developers/library/resources/asc_cpu.html
 //
@@ -64,7 +64,6 @@ void *asm_memcpy3(void *dst, const void *src, size_t n)
 	      add $64, %1;
 	      dec %2;
 	      jnz loopl;
-	      sfence;
 	      emms;"
 	      : 
 	      : "r"(src), "r"(dst), "c"(n)
@@ -158,7 +157,6 @@ void *asm_memcpy4(void *dst, const void *src, size_t n, int bufid)
 	        popl %%esi; // Do next 2k block 
 	 	dec %0
 	        jnz loop2k; 
-		sfence;
 		emms;"
 		: "=r"(dum)
 	        : "r"(src), "r"(dst), "0"(n)
@@ -295,7 +293,7 @@ int _x86copy_mutex=0;
 // 128>n<2048 MMX copy       
 // n >2047    MMX copy with buffer
 //
-void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid)
+void *armci_asm_memcpy_nofence(void *dst, const void *src, size_t n, int bufid)
 {
 
     int locked=0;
@@ -333,4 +331,21 @@ void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid)
   }
 
     return dst;
+}
+
+
+
+void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid)
+{
+void *p;
+     if(n<128) return memcpy(dst, src, n);
+     p = armci_asm_memcpy_nofence(dst,src,n,bufid);
+     __asm__ __volatile__ ("sfence":::"memory");
+     return p;
+}
+
+
+void armci_asm_mem_fence()
+{
+ __asm__ __volatile__ ("sfence":::"memory");
 }
