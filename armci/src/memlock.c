@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.16 2004-07-27 08:57:59 manoj Exp $ */
+/* $Id: memlock.c,v 1.17 2004-07-27 09:00:49 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -104,7 +104,6 @@ int i=factor*100000;
    }
 }
    
-#define SGIALTIX
 #ifdef SGIALTIX
 #include <mpp/shmem.h>
 #endif
