@@ -35,6 +35,8 @@ GLOB_INCLUDES = -I../../ma
     MAKEFLAGS = -j 1
   CUR_VERSION = SHMEM
         MKDIR = mkdir
+       LINK.f = $(FLD)
+       LINK.c = $(CLD)
 
 ifeq ($(GA_TRACE), YES)
     DEF_TRACE = -DGA_TRACE
@@ -71,7 +73,6 @@ endif
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
 endif
-
 #
 #................................ PGLINUX ....................................
 # IBM PC running Linux with Portland Group Compilers
@@ -83,6 +84,17 @@ ifeq ($(TARGET),PGLINUX)
  GLOB_DEFINES = -DLINUX -DPGLINUX
            CC = gcc
           CPP = gcc -E -nostdinc -undef -P
+       RANLIB = ranlib
+endif
+#
+#............................. CYGNUS on Windows ..........................
+#
+
+ifeq ($(TARGET),CYGNUS)
+ GLOB_DEFINES = -DLINUX -DCYGNUS
+           FC = g77
+           CC = gcc
+     FOPT_REN = -fno-second-underscore
        RANLIB = ranlib
 endif
 #
@@ -224,7 +236,7 @@ ifeq ($(TARGET),CRAY-YMP)
  endif
      FOPT_REN = -dp -ataskcommon
 #    COPT_REN = -htaskprivate $(LIBCM)
-        CDEFS = -DFLUSHCACHE -htaskprivate $(LIBCM)
+        CDEFS = -htaskprivate $(LIBCM)
  GLOB_DEFINES = -DCRAY_YMP
     EXPLICITF = TRUE
 endif
@@ -266,7 +278,7 @@ ifeq ($(TARGET),SGI_N32)
  FOPT_8K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=3 -WK,-so=1,-o=1,-r=3,-dr=AKC
 
 #optimization flags for R10000 (IP28)
- FOPT_10K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
+FOPT_10K = -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC
 
 ifeq ($(TARGET_CPU),R10000)
  FOPT += $(FOPT_10K)
@@ -297,7 +309,7 @@ ifeq ($(TARGET),SGITFP)
  FOPT_8K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=3 -WK,-so=1,-o=1,-r=3,-dr=AKC
 
 #optimization flags for R10000 (IP28)
- FOPT_10K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
+FOPT_10K = -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC
 
 ifeq ($(TARGET_CPU),R10000)
  FOPT += $(FOPT_10K)
@@ -386,40 +398,33 @@ endef
      FOPT_REN = -qEXTNAME
   CUR_VERSION = DISMEM
     EXPLICITF = TRUE
-ifeq ($(NWCHEM_TARGET_CPU),604)
-        FC += -qarch=604
-        CC += -qarch=ppc
+ifeq ($(FOPT),-O)
+         FOPT = -O3 -qstrict -qcompact -qarch=com -qtune=auto
+else
+#        without this flag xlf_r creates nonreentrant code
+         FOPT += -qnosave
 endif
-
+ifeq ($(COPT),-O)
+         COPT = -O -qcompact -qarch=com -qtune=auto
+endif
 endif
  
 #......................... older SP systems .....................
 ifeq ($(TARGET),SP1)
 #
-# IBM SP-1 and SP-2 under EUIH/MPL and AIX 3.2.X 
+# IBM SP-1 and SP-2 under AIX 3.2.X 
 
        P_FILE = NO
-ifdef EUIH
-         EUIH = /usr/lpp/euih/eui
-           FC = xlf
-GLOB_INCLUDES = -I. -I../../ma -I$(EUIH)
- GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX -DEUIH
-      FLD_REN = -b  rename:.lockrnc_,.lockrnc
-else
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
       FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
-endif
-ifeq ($(NWCHEM_TARGET_CPU),604)
-	FC += -qarch=604 -qtune=604
-	CC += -qarch=ppc -qtune=604
-endif
-
        RANLIB = ranlib
      FOPT_REN = -qEXTNAME
   CUR_VERSION = DISMEM
     EXPLICITF = TRUE
+        FOPT += -qtune=auto
+        COPT += -qtune=auto
 endif
 
 #.............................. IBM  LAPI ......................................
@@ -437,23 +442,14 @@ ifndef USE_MPI
  GLOB_DEFINES += -DTCGMSG
 endif
 
-OPT3 = -O3 -qstrict -qcompact -qarch=com -qtune=pwr2
- ifeq ($(FOPT),-O)
-ifeq ($(NWCHEM_TARGET_CPU),604)
-     OPT3 = -O3 -qstrict -qcompact -qarch=com
-	FC += -qarch=604 -qtune=604 -qthreaded
-	CC += -qarch=ppc -qtune=604
-         FOPT = -O3 -qstrict -qcompact
+ifeq ($(FOPT),-O)
+         FOPT = -O3 -qstrict -qcompact -qarch=com -qtune=auto
 else
-         FOPT = -O3 -qstrict -qcompact -qarch=com -qtune=pwr2
-endif
+#        without this flag xlf_r creates nonreentrant code
+         FOPT += -qnosave
 endif
 ifeq ($(COPT),-O)
-ifeq ($(NWCHEM_TARGET_CPU),604)
-         COPT = -O -qcompact -qarch=ppc -qtune=604
-else
-         COPT = -O -qcompact -qarch=com -qtune=pwr2
-endif
+         COPT = -O -qcompact -qarch=com -qtune=auto
 endif
 
      FOPT_REN = -qEXTNAME
@@ -473,6 +469,8 @@ ifeq ($(TARGET),IBM)
  GLOB_DEFINES = -DEXTNAME -DAIX
      FOPT_REN = -qEXTNAME 
       FLD_REN = -b rename:.dgemm_,.dgemm -b rename:.zgemm_,.zgemm
+        FOPT += -qtune=auto
+        COPT += -qtune=auto
     EXPLICITF = TRUE
 endif
 #

@@ -22,16 +22,16 @@ ifeq ($(TARGET),SOLARIS)
 endif
 #................................ FUJITSU-VPP ..............................
 ifeq ($(TARGET),FUJITSU-VPP)
-        EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
+#        EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
+#MPlib 2.2.X 
+       EXTRA_LIBS = /usr/local/lib/libmp2.a -L/opt/tools/lib/ -lgen  -lpx -lelf
+ -Wl,-J,-P -L/usr/lang/lib -lblasvp
 endif
 #................................ KSR ......................................
 #
 ifeq ($(TARGET),KSR)
 #
 # KSR-2 running OSF 1.2.0.7
-#
-# These are pointers to much faster (optimized for KSR) version of TCGMSG 
-# (does not come with the GA distribution package)
 #
 #    LIBCOM = $(SRC)/tcgmsg/ipcv4.0/libtcgmsg.a
 
@@ -86,9 +86,9 @@ LIBLAPIDIR = /usr/lpp/ssp/css/lib
 # LIBCOM := -ltimer $(LIBCOM)
      BLAS = -lesslp2
 
-#EXTRA_LIBS = -lxlf90 -lxlf -lm
+EXTRA_LIBS = -lxlf90 -lxlf -lm
 
-EXTRA_LIBS = \
+EXTRA_LIBS__ = \
    -bnso -bI:/usr/lib/syscalls.exp -L$(LIBLAPIDIR) $(LIBHAL) $(LIBLAPI) \
           -bI:/usr/lib/threads.exp /usr/lpp/ssp/css/libtb3/libmpci_r.a \
           -bI:/usr/lpp/ssp/css/libus/fs_ext.exp \
