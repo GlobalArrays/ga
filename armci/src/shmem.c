@@ -67,7 +67,7 @@ extern void armci_die();
 #  define _SHMMAX ((unsigned long)228*1024)
 #elif defined(SGI) && !defined(SGI64)
 #  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)12*1024)
+#  define _SHMMAX ((unsigned long)128*1024)
 #elif defined(KSR)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
