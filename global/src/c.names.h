@@ -144,6 +144,9 @@
 #define  nga_zdot_patch_           NGA_ZDOT_PATCH
 #define  nga_zero_patch_           NGA_ZERO_PATCH
 #define  ngai_dot_patch_           NGAI_DOT_PATCH
+#define  ga_cluster_nodeid_        GA_CLUSTER_NODEID 
+#define  ga_cluster_nnodes_        GA_CLUSTER_NNODES
+#define  ga_cluster_nprocs_        GA_CLUSTER_NPROCS
 
 #elif defined(F2C2_)
 
@@ -290,6 +293,9 @@
 #define  nga_zdot_patch_           nga_zdot_patch__         
 #define  nga_zero_patch_           nga_zero_patch__         
 #define  ngai_dot_patch_           ngai_dot_patch__         
+#define  ga_cluster_nodeid_        ga_cluster_nodeid__ 
+#define  ga_cluster_nnodes_        ga_cluster_nnodes__
+#define  ga_cluster_nprocs_        ga_cluster_nprocs__
 
 #endif
 

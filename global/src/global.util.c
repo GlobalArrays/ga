@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.38 2002-01-19 00:40:05 vinod Exp $*/
+/*$Id: global.util.c,v 1.39 2002-07-31 19:11:06 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -36,6 +36,7 @@
 #include <unistd.h>
 #endif
 
+#include <armci.h> 
 
 #ifdef CRAY
 #include <fortran.h>
@@ -890,3 +891,27 @@ void FATR ga_print_(Integer *g_a)
   ga_print_file(stdout, g_a);
 }
 
+
+/*\ return id of the current node
+\*/
+Integer FATR ga_cluster_nodeid_()
+{
+int id = armci_domain_my_id(ARMCI_DOMAIN_SMP);
+        return (Integer) id;
+}
+
+/*\ number of nodes in a cluster
+\*/
+Integer FATR ga_cluster_nnodes_()
+{
+        return (Integer) armci_domain_count(ARMCI_DOMAIN_SMP);
+}
+
+/*\ number of processes in the job on the specified node
+\*/
+Integer FATR ga_cluster_nprocs_(Integer *node)
+{
+int id;
+        id = (int)*node;
+        return (Integer) armci_domain_nprocs(ARMCI_DOMAIN_SMP, id);
+}

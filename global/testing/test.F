@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.41 2002-07-22 23:50:46 d3h325 Exp $
+c $Id: test.F,v 1.42 2002-07-31 19:11:46 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -37,7 +37,6 @@ c     There are 2 choices: ga_initialize or ga_initialize_ltd.
 c     In the first case, there is no explicit limit on memory usage.
 c     In the second, user can set limit (per processor) in bytes.
 c
-      print*
       call ga_initialize()
       nproc = ga_nnodes()
       me = ga_nodeid()
@@ -57,10 +56,14 @@ c
       status = ma_init(MT_DCPL, stack, ma_heap)
       if (.not. status) call ga_error('ma_init failed',-1) 
 c
-      if(me.eq.0)then
-        print *, 'using ', nproc, ' process(es)'
+      if(me.eq.(nproc-1))then
+        print *, 'using ', nproc,' process(es) ', ga_cluster_nnodes(),
+     $           ' cluster nodes'
+        print *,'process ', me, ' is on node ',ga_cluster_nodeid(),
+     $          ' with ',  ga_cluster_nprocs(-1), ' processes' 
         call ffflush(6)
       endif
+      call ga_sync()
 c
 c***  Check support for double precision arrays
 c

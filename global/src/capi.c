@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.39 2002-06-26 20:29:49 d3g293 Exp $ */
+/* $Id: capi.c,v 1.40 2002-07-31 19:11:05 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -1008,3 +1008,19 @@ int GA_Ndim(int g_a)
     return (int)ga_ndim_(&a);
 }
 
+#include <../../armci/src/armci.h>
+
+int GA_Cluster_nnodes()
+{
+    return armci_domain_count(ARMCI_DOMAIN_SMP);
+} 
+
+int GA_Cluster_nodeid(int x) 
+{
+    return armci_domain_id(ARMCI_DOMAIN_SMP,x);
+}
+
+int GA_Cluster_nprocs(int x) 
+{
+    return armci_domain_nprocs(ARMCI_DOMAIN_SMP,x);
+}
