@@ -673,19 +673,25 @@ void Accum();
        ga_error(" ga_acc: indices out of range ", *g_a);
    if (GA[*g_a].type != MT_F_DBL) ga_error(" ga_acc: type not supported ",*g_a);
 
+#ifndef KSR
+   if(nproc>1) LOCK(0);
+#endif
    nelem = (*ihi - *ilo +1); 
    for (j = *jlo-1, jsrc=0; j < *jhi; j++, jsrc++){
      ptr_src = buf          + ( jsrc* *ld );
      ptr_dst = ((DoublePrecision *)GA[*g_a].ptr) +(j*GA[*g_a].dims[0] + *ilo-1);
 
-     if(nproc>1)LOCK(ptr_dst);
 #ifdef KSR
+     if(nproc>1) LOCK(ptr_dst);
      Accum(*alpha, ptr_src, ptr_dst, nelem);
 #else
      for (i = 0; i< nelem; i++) *(ptr_dst +i) += *alpha*  *(ptr_src +i); 
+     if(nproc>1) UNLOCK(ptr_dst);
 #endif
-     if(nproc>1)UNLOCK(ptr_dst);
    }
+#ifndef KSR
+   if(nproc>1) UNLOCK(0);
+#endif
 
 #ifdef GA_TRACE
    trace_etime_();
