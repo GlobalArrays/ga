@@ -155,3 +155,34 @@ Integer stat = dra_inquire(d_a, type, dim1, dim2, cname, cfilename);
    return stat;
 }
 
+#if defined(CRAY) || defined(WIN32)
+Integer FATR ndra_inquire_(d_a, type, ndim, dims, name, filename)
+        Integer *d_a;                      /*input:DRA handle*/
+        Integer *type;                     /*output*/
+        Integer *ndim;                     /*output*/
+        Integer dims[];                    /*output*/
+        _fcd    name;                      /*output*/
+        _fcd    filename;        
+#else
+Integer FATR ndra_inquire_(d_a, type, ndim, dims, name, filename, nlen, flen)
+        Integer *d_a;                      /*input:DRA handle*/
+        Integer *type;                     /*output*/
+        Integer *ndim;                     /*output*/
+        Integer dims[];                    /*output*/
+        char    *name;                     /*output*/
+        char    *filename;
+
+        int     nlen;
+        int     flen;
+#endif
+{
+Integer stat = ndra_inquire(d_a, type, ndim, dims, cname, cfilename);
+#if defined(CRAY) || defined(WIN32)
+   c2fstring(cname, _fcdtocp(name), _fcdlen(name));
+   c2fstring(cfilename, _fcdtocp(filename), _fcdlen(filename));
+#else
+   c2fstring(cname, name, nlen);
+   c2fstring(cfilename, filename, flen);
+#endif
+   return stat;
+}

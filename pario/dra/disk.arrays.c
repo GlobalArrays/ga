@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.28 2002-01-09 18:39:49 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.29 2002-01-10 17:57:47 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -999,6 +999,19 @@ int       retval;
     return 1;
 }
 
+#define nsect_to_blockM(ds_a, CR) \
+{ \
+  Integer hndl = (ds_a).handle+DRA_OFFSET;\
+  Integer _i, _ndim = DRA[hndl].ndim; \
+  Integer _R, _b; \
+  *(CR) = 0; \
+  _R = 0; \
+  for (_i=_ndim-1; _i >= 0; _i--) { \
+    _b = ((ds_a).lo[_i]-1)/DRA[hndl].chunk[_i]; \
+    *(CR) = *(CR) * _R + _b; \
+    _R = (DRA[hndl].dims[_i]+DRA[hndl].chunk[_i]-1)/DRA[hndl].chunk[_i];\
+  } \
+}
 
 int dai_myturn(section_t ds_chunk)
 {
@@ -1008,7 +1021,7 @@ Integer   iome    = dai_io_nodeid(ds_chunk.handle);
     if(INDEPFILES(ds_chunk.handle)){
 
       /* compute cardinal number for the current chunk */
-      sect_to_blockM(ds_chunk, &_dra_turn);
+      nsect_to_blockM(ds_chunk, &_dra_turn);
 
     }else{
       _dra_turn++;
@@ -1221,6 +1234,179 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
     }
 }
 
+#define nga_get_sectM(sect, _buf, _ld)\
+   nga_get_(&sect.handle, sect.lo, sect.hi, _buf, _ld)
+
+#define nga_put_sectM(sect, _buf, _ld)\
+   nga_put_(&sect.handle, sect.lo, sect.hi, _buf, _ld)
+
+#define ndai_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a)   \
+{ \
+  Integer _lds[MAXDIM], _ldd[MAXDIM], _i;\
+  Integer _ndim = ds_a.ndim;\
+  Integer _index_;\
+  for (_i=0; _i<_ndim; _i++) {\
+    _lds[_i] = ds_a.hi[_i]-ds_a.lo[_i] + 1;\
+    _ldd[_i] = gs_chunk.hi[_i]-gs_chunk.lo[_i] + 1;\
+  }\
+  _index_ = ds_chunk.lo[_ndim-1] - ds_a.lo[_ndim-1];\
+  for (_i=_ndim-2; _i>=0; _i--) {\
+    _index_ = _lds[_i]*_index_;\
+    _index_ += ds_chunk.lo[_i] - ds_a.lo[_i];\
+  }\
+  for (_i=0; _i<_ndim; _i++) {\
+    if (_i < _ndim-1) {\
+      gs_chunk.lo[_i] = _index_%_ldd[_i];\
+      _index_ = (_index_ - gs_chunk.lo[_i])/_ldd[_i];\
+      gs_chunk.lo[_i] += gs_a.lo[_i];\
+    } else {\
+      gs_chunk.lo[_i] = _index_ + gs_a.lo[_i];\
+    }\
+  }\
+  _index_ = ds_chunk.hi[_ndim-1] - ds_a.lo[_ndim-1];\
+  for (_i=_ndim-2; _i>=0; _i--) {\
+    _index_ = _lds[_i]*_index_;\
+    _index_ += ds_chunk.hi[_i] - ds_a.lo[_i];\
+  }\
+  for (_i=0; _i<_ndim; _i++) {\
+    if (_i < _ndim-1) {\
+      gs_chunk.hi[_i] = _index_%_ldd[_i];\
+      _index_ = (_index_ - gs_chunk.hi[_i])/_ldd[_i];\
+      gs_chunk.hi[_i] += gs_a.lo[_i];\
+    } else {\
+      gs_chunk.hi[_i] = _index_ + gs_a.lo[_i];\
+    }\
+  }\
+}
+
+void nga_move(int op,             /*[input] flag for read or write */
+              int trans,          /*[input] flag for transpose */
+              section_t gs_a,     /*[input] section of global array */
+              section_t ds_a,     /*[input] section of DRA */
+              section_t ds_chunk, /*[input] DRA cover section? */
+              void* buffer,       /*[input] pointer to io buffer */
+              Integer ldb[])
+{
+  Integer ndim = gs_a.ndim, i;
+  logical consistent = TRUE;
+  for (i=0; i<ndim-1; i++) 
+    if (gs_a.lo[i]-gs_a.hi[i] != ds_a.lo[i]-ds_a.hi[i]) consistent = FALSE;
+  if (!trans && consistent){
+
+    /*** straight copy possible if there's no reshaping or transpose ***/
+
+    /* determine gs_chunk corresponding to ds_chunk */
+    section_t gs_chunk = gs_a;
+        /*dai_dest_indicesM(ds_chunk.lo[0], ds_chunk.lo[1], ds_a.lo[0], ds_a.lo[1], 
+                ds_a.hi[0]-ds_a.lo[0]+1, &gs_chunk.lo[0], &gs_chunk.lo[1], 
+                gs_a.lo[0], gs_a.lo[1],   gs_a.hi[0] - gs_a.lo[0] + 1);
+        dai_dest_indicesM(ds_chunk.hi[0], ds_chunk.hi[1], ds_a.lo[0], ds_a.lo[1], 
+                ds_a.hi[0]-ds_a.lo[0]+1, &gs_chunk.hi[0], &gs_chunk.hi[1],
+                gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);*/
+    ndai_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a);
+/*    printf("(nga_move) gs_chunk.ndim = %d\n",gs_chunk.ndim);
+    for (i=0; i<ndim; i++) {
+      printf("(nga_move) gs_chunk.lo[%d] = %d\n",i,gs_chunk.lo[i]);
+      printf("(nga_move) gs_chunk.hi[%d] = %d\n",i,gs_chunk.hi[i]);
+    }
+    fflush(stdout); */
+    /* move data */
+    if (op==LOAD) {
+      nga_get_sectM(gs_chunk, buffer, ldb);
+    } else {
+      nga_put_sectM(gs_chunk, buffer, ldb);
+    }
+    
+  }
+#if 0  
+  else {
+    if (ndim == 2) {
+      /** due to generality of this transformation scatter/gather is required **/
+
+      Integer ihandle, jhandle, vhandle, iindex, jindex, vindex;
+      Integer pindex, phandle;
+      Integer type = DRA[ds_a.handle+DRA_OFFSET].type, nelem;
+      Integer i, j, ii, jj, base;  
+      char    *base_addr;
+
+#     define ITERATOR_2D(i,j, base, ds_chunk)\
+        for(j = ds_chunk.lo[1], base=0, jj=0; j<= ds_chunk.hi[1]; j++,jj++)\
+        for(i = ds_chunk.lo[0], ii=0; i<= ds_chunk.hi[0]; i++,ii++,base++)
+
+#     define COPY_SCATTER(ADDR_BASE, TYPE, ds_chunk)\
+        ITERATOR_2D(i,j, base, ds_chunk) \
+        ADDR_BASE[base+vindex] = ((TYPE*)buffer)[ldb*jj + ii]
+
+#     define COPY_GATHER(ADDR_BASE, TYPE, ds_chunk)\
+        for(i=0; i< nelem; i++){\
+          Integer ldc = ds_chunk.hi[0] - ds_chunk.lo[0]+1;\
+          base = INT_MB[pindex+i]; jj = base/ldc; ii = base%ldc;\
+          ((TYPE*)buffer)[ldb*jj + ii] = ADDR_BASE[i+vindex];\
+        }
+
+#     define COPY_TYPE(OPERATION, MATYPE, ds_chunk)\
+        switch(MATYPE){\
+          case MT_F_DBL: COPY_ ## OPERATION(DBL_MB,DoublePrecision,ds_chunk);break;\
+          case MT_F_INT: COPY_ ## OPERATION(INT_MB, Integer, ds_chunk); break;\
+          case MT_F_DCPL:COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);\
+        }
+
+      if(ga_nodeid_()==0) printf("DRA warning: using scatter/gather\n");
+
+      nelem = (ds_chunk.hi[0]-ds_chunk.lo[0]+1)
+            * (ds_chunk.hi[1]-ds_chunk.lo[1]+1);
+      if(!MA_push_get(MT_F_INT, nelem, "i_", &ihandle, &iindex))
+            dai_error("DRA move: MA failed-i ", 0L);
+      if(!MA_push_get(MT_F_INT, nelem, "j_", &jhandle, &jindex))
+            dai_error("DRA move: MA failed-j ", 0L);
+      if(!MA_push_get(type, nelem, "v_", &vhandle, &vindex))
+            dai_error("DRA move: MA failed-v ", 0L);
+
+      /* set the address of base for each datatype */
+      switch(type){
+        case  MT_F_DBL:  base_addr = (char*) (DBL_MB+vindex); break;
+        case  MT_F_INT:  base_addr = (char*) (INT_MB+vindex); break;
+        case  MT_F_DCPL: base_addr = (char*) (DCPL_MB+vindex);
+      }
+    
+      if(trans==TRANS) 
+         ITERATOR_2D(i,j, base, ds_chunk) {
+           dai_dest_indicesM(j, i, ds_a.lo[0], ds_a.lo[1], ds_a.hi[0]-ds_a.lo[0]+1, 
+                             INT_MB+base+iindex, INT_MB+base+jindex,
+                             gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);
+      } else
+         ITERATOR_2D(i,j, base, ds_chunk) {
+           dai_dest_indicesM(i, j, ds_a.lo[0], ds_a.lo[1], ds_a.hi[0]-ds_a.lo[0]+1, 
+                             INT_MB+base+iindex, INT_MB+base+jindex,
+                             gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);
+         }
+
+      /* move data */
+      if (op==LOAD) {
+
+        if(!MA_push_get(MT_F_INT, nelem, "pindex", &phandle, &pindex))
+              dai_error("DRA move: MA failed-p ", 0L);
+        for(i=0; i< nelem; i++) INT_MB[pindex+i] = i; 
+        ga_sort_permut_(&gs_a.handle, INT_MB+pindex, INT_MB+iindex, INT_MB+jindex, &nelem);
+        ga_gather_(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
+        COPY_TYPE(GATHER, type, ds_chunk);
+        MA_pop_stack(phandle);
+
+      } else { 
+
+         COPY_TYPE(SCATTER, type, ds_chunk);
+         ga_scatter_(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
+      }
+
+      MA_pop_stack(vhandle);
+      MA_pop_stack(jhandle);
+      MA_pop_stack(ihandle);
+    } else {
+      dai_error("Transpose not supported except for 2D arrays", 0L);
+    }
+  }
+#endif
+}
 
 
 /*\  executes callback function associated with completion of asynch. I/O
@@ -1232,8 +1418,8 @@ args_t   *arg;
         if(request->callback==OFF)return;
         request->callback = OFF;
         arg = &request->args;
-        ga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk,
-               _dra_buffer, arg->ld[0]);
+        nga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk,
+               _dra_buffer, arg->ld);
 }
 
 
@@ -1864,20 +2050,6 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
   } \
 }
 
-#define nsect_to_blockM(ds_a, CR) \
-{ \
-  Integer hndl = (ds_a).handle+DRA_OFFSET;\
-  Integer _i, _ndim = DRA[hndl].ndim; \
-  Integer _R, _b; \
-  *(CR) = 0; \
-  _R = 0; \
-  for (_i=_ndim-1; _i >= 0; _i--) { \
-    _b = ((ds_a).lo[_i]-1)/DRA[hndl].chunk[_i]; \
-    *(CR) = *(CR) * _R + _b; \
-    _R = (DRA[hndl].dims[_i]+DRA[hndl].chunk[_i]-1)/DRA[hndl].chunk[_i];\
-  } \
-}
-
 /*\ find offset in file for (lo,hi) element
 \*/
 void ndai_file_location(section_t ds_a, Off_t* offset)
@@ -2105,51 +2277,6 @@ Integer handle, elem_size, i;
         return(ELIO_OK);
 }
 
-#define ndai_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a)   \
-{ \
-  Integer _lds[MAXDIM], _ldd[MAXDIM], _i;\
-  Integer _ndim = ds_a.ndim;\
-  Integer _index_;\
-  for (_i=0; _i<_ndim; _i++) {\
-    _lds[_i] = ds_a.hi[_i]-ds_a.lo[_i] + 1;\
-    _ldd[_i] = gs_chunk.hi[_i]-gs_chunk.lo[_i] + 1;\
-  }\
-  _index_ = ds_chunk.lo[_ndim-1] - ds_a.lo[_ndim-1];\
-  for (_i=_ndim-2; _i>=0; _i--) {\
-    _index_ = _lds[_i]*_index_;\
-    _index_ += ds_chunk.lo[_i] - ds_a.lo[_i];\
-  }\
-  for (_i=0; _i<_ndim; _i++) {\
-    if (_i < _ndim-1) {\
-      gs_chunk.lo[_i] = _index_%_ldd[_i];\
-      _index_ = (_index_ - gs_chunk.lo[_i])/_ldd[_i];\
-      gs_chunk.lo[_i] += gs_a.lo[_i];\
-    } else {\
-      gs_chunk.lo[_i] = _index_ + gs_a.lo[_i];\
-    }\
-  }\
-  _index_ = ds_chunk.hi[_ndim-1] - ds_a.lo[_ndim-1];\
-  for (_i=_ndim-2; _i>=0; _i--) {\
-    _index_ = _lds[_i]*_index_;\
-    _index_ += ds_chunk.hi[_i] - ds_a.lo[_i];\
-  }\
-  for (_i=0; _i<_ndim; _i++) {\
-    if (_i < _ndim-1) {\
-      gs_chunk.hi[_i] = _index_%_ldd[_i];\
-      _index_ = (_index_ - gs_chunk.hi[_i])/_ldd[_i];\
-      gs_chunk.hi[_i] += gs_a.lo[_i];\
-    } else {\
-      gs_chunk.hi[_i] = _index_ + gs_a.lo[_i];\
-    }\
-  }\
-}
-
-#define nga_get_sectM(sect, _buf, _ld)\
-   nga_get_(&sect.handle, sect.lo, sect.hi, _buf, _ld)
-
-#define nga_put_sectM(sect, _buf, _ld)\
-   nga_put_(&sect.handle, sect.lo, sect.hi, _buf, _ld)
-
 /*\ write N-dimensional aligned block of data from memory buffer to d_a
 \*/
 void ndai_put(
@@ -2204,134 +2331,6 @@ void ndai_get(section_t ds_a, /*[input] section of DRA read from disk */
     bytes= (Size_t) elem * dai_sizeofM(DRA[handle].type);
     rc= elio_aread(DRA[handle].fd, offset, buf, bytes, id );
     if(rc !=  ELIO_OK) dai_error("dai_get failed", rc);
-}
-
-void nga_move(int op,             /*[input] flag for read or write */
-              int trans,          /*[input] flag for transpose */
-              section_t gs_a,     /*[input] section of global array */
-              section_t ds_a,     /*[input] section of DRA */
-              section_t ds_chunk, /*[input] DRA cover section? */
-              void* buffer,       /*[input] pointer to io buffer */
-              Integer ldb[])
-{
-  Integer ndim = gs_a.ndim, i;
-  logical consistent = TRUE;
-  for (i=0; i<ndim-1; i++) 
-    if (gs_a.lo[i]-gs_a.hi[i] != ds_a.lo[i]-ds_a.hi[i]) consistent = FALSE;
-  if (!trans && consistent){
-
-    /*** straight copy possible if there's no reshaping or transpose ***/
-
-    /* determine gs_chunk corresponding to ds_chunk */
-    section_t gs_chunk = gs_a;
-        /*dai_dest_indicesM(ds_chunk.lo[0], ds_chunk.lo[1], ds_a.lo[0], ds_a.lo[1], 
-                ds_a.hi[0]-ds_a.lo[0]+1, &gs_chunk.lo[0], &gs_chunk.lo[1], 
-                gs_a.lo[0], gs_a.lo[1],   gs_a.hi[0] - gs_a.lo[0] + 1);
-        dai_dest_indicesM(ds_chunk.hi[0], ds_chunk.hi[1], ds_a.lo[0], ds_a.lo[1], 
-                ds_a.hi[0]-ds_a.lo[0]+1, &gs_chunk.hi[0], &gs_chunk.hi[1],
-                gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);*/
-    ndai_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a);
-    /*printf("(nga_move) gs_chunk.ndim = %d\n",gs_chunk.ndim);
-    printf("(nga_move) gs_chunk.lo[0] = %d\n",gs_chunk.lo[0]);
-    printf("(nga_move) gs_chunk.hi[0] = %d\n",gs_chunk.hi[0]);
-    printf("(nga_move) gs_chunk.lo[1] = %d\n",gs_chunk.lo[1]);
-    printf("(nga_move) gs_chunk.hi[1] = %d\n",gs_chunk.hi[1]);*/
-    /* move data */
-    if (op==LOAD) {
-      nga_get_sectM(gs_chunk, buffer, ldb);
-    } else {
-      nga_put_sectM(gs_chunk, buffer, ldb);
-    }
-    
-  }
-#if 0  
-  else {
-    if (ndim == 2) {
-      /** due to generality of this transformation scatter/gather is required **/
-
-      Integer ihandle, jhandle, vhandle, iindex, jindex, vindex;
-      Integer pindex, phandle;
-      Integer type = DRA[ds_a.handle+DRA_OFFSET].type, nelem;
-      Integer i, j, ii, jj, base;  
-      char    *base_addr;
-
-#     define ITERATOR_2D(i,j, base, ds_chunk)\
-        for(j = ds_chunk.lo[1], base=0, jj=0; j<= ds_chunk.hi[1]; j++,jj++)\
-        for(i = ds_chunk.lo[0], ii=0; i<= ds_chunk.hi[0]; i++,ii++,base++)
-
-#     define COPY_SCATTER(ADDR_BASE, TYPE, ds_chunk)\
-        ITERATOR_2D(i,j, base, ds_chunk) \
-        ADDR_BASE[base+vindex] = ((TYPE*)buffer)[ldb*jj + ii]
-
-#     define COPY_GATHER(ADDR_BASE, TYPE, ds_chunk)\
-        for(i=0; i< nelem; i++){\
-          Integer ldc = ds_chunk.hi[0] - ds_chunk.lo[0]+1;\
-          base = INT_MB[pindex+i]; jj = base/ldc; ii = base%ldc;\
-          ((TYPE*)buffer)[ldb*jj + ii] = ADDR_BASE[i+vindex];\
-        }
-
-#     define COPY_TYPE(OPERATION, MATYPE, ds_chunk)\
-        switch(MATYPE){\
-          case MT_F_DBL: COPY_ ## OPERATION(DBL_MB,DoublePrecision,ds_chunk);break;\
-          case MT_F_INT: COPY_ ## OPERATION(INT_MB, Integer, ds_chunk); break;\
-          case MT_F_DCPL:COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);\
-        }
-
-      if(ga_nodeid_()==0) printf("DRA warning: using scatter/gather\n");
-
-      nelem = (ds_chunk.hi[0]-ds_chunk.lo[0]+1)
-            * (ds_chunk.hi[1]-ds_chunk.lo[1]+1);
-      if(!MA_push_get(MT_F_INT, nelem, "i_", &ihandle, &iindex))
-            dai_error("DRA move: MA failed-i ", 0L);
-      if(!MA_push_get(MT_F_INT, nelem, "j_", &jhandle, &jindex))
-            dai_error("DRA move: MA failed-j ", 0L);
-      if(!MA_push_get(type, nelem, "v_", &vhandle, &vindex))
-            dai_error("DRA move: MA failed-v ", 0L);
-
-      /* set the address of base for each datatype */
-      switch(type){
-        case  MT_F_DBL:  base_addr = (char*) (DBL_MB+vindex); break;
-        case  MT_F_INT:  base_addr = (char*) (INT_MB+vindex); break;
-        case  MT_F_DCPL: base_addr = (char*) (DCPL_MB+vindex);
-      }
-    
-      if(trans==TRANS) 
-         ITERATOR_2D(i,j, base, ds_chunk) {
-           dai_dest_indicesM(j, i, ds_a.lo[0], ds_a.lo[1], ds_a.hi[0]-ds_a.lo[0]+1, 
-                             INT_MB+base+iindex, INT_MB+base+jindex,
-                             gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);
-      } else
-         ITERATOR_2D(i,j, base, ds_chunk) {
-           dai_dest_indicesM(i, j, ds_a.lo[0], ds_a.lo[1], ds_a.hi[0]-ds_a.lo[0]+1, 
-                             INT_MB+base+iindex, INT_MB+base+jindex,
-                             gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);
-         }
-
-      /* move data */
-      if (op==LOAD) {
-
-        if(!MA_push_get(MT_F_INT, nelem, "pindex", &phandle, &pindex))
-              dai_error("DRA move: MA failed-p ", 0L);
-        for(i=0; i< nelem; i++) INT_MB[pindex+i] = i; 
-        ga_sort_permut_(&gs_a.handle, INT_MB+pindex, INT_MB+iindex, INT_MB+jindex, &nelem);
-        ga_gather_(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
-        COPY_TYPE(GATHER, type, ds_chunk);
-        MA_pop_stack(phandle);
-
-      } else { 
-
-         COPY_TYPE(SCATTER, type, ds_chunk);
-         ga_scatter_(&gs_a.handle, base_addr, INT_MB+iindex, INT_MB+jindex, &nelem);
-      }
-
-      MA_pop_stack(vhandle);
-      MA_pop_stack(jhandle);
-      MA_pop_stack(ihandle);
-    } else {
-      dai_error("Transpose not supported except for 2D arrays", 0L);
-    }
-  }
-#endif
 }
 
 #define ndai_check_rangeM(_lo, _hi, _ndim, _dims, _err_msg) \
@@ -3001,5 +3000,29 @@ Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
           lo[i] = 1;
           hi[i] = DRA[handle].dims[i];
         }
+        printf("just before ndra_read_section\n");
         return(ndra_read_section_(&transp, g_a, lo, hi, d_a, lo, hi, request));
+}
+
+/*\ INQUIRE PARAMETERS OF EXISTING N-DIMENSIONAL DISK ARRAY
+\*/
+Integer ndra_inquire(
+        Integer *d_a,                      /*input:DRA handle*/ 
+        Integer *type,                     /*output*/
+        Integer *ndim,                     /*output*/
+        Integer dims[],                    /*output*/
+        char    *name,                     /*output*/
+        char    *filename)                 /*output*/
+{
+Integer handle=*d_a+DRA_OFFSET;
+
+        dai_check_handleM(*d_a,"dra_inquire");
+
+        *type = DRA[handle].type;
+        *ndim = DRA[handle].ndim;
+        dims = DRA[handle].dims;
+        strcpy(name, DRA[handle].name);
+        strcpy(filename, DRA[handle].fname);
+ 
+        return(ELIO_OK);
 }
