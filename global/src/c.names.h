@@ -107,6 +107,7 @@
 #define  ga_update5_ghosts_        GA_UPDATE5_GHOSTS
 #define  ga_update6_ghosts_        GA_UPDATE6_GHOSTS
 #define  nga_update_ghost_dir_     NGA_UPDATE_GHOST_DIR
+#define  nga_nbget_ghost_dir_     NGA_NBGET_GHOST_DIR
 #define  ga_update_ghosts_         GA_UPDATE_GHOSTS
 #define  ga_merge_mirrored_        GA_MERGE_MIRRORED
 #define  ga_uses_ma_               GA_USES_MA
@@ -305,6 +306,7 @@
 #define  ga_update5_ghosts_        ga_update5_ghosts__  
 #define  ga_update6_ghosts_        ga_update6_ghosts__  
 #define  nga_update_ghost_dir_     nga_update_ghost_dir__   
+#define  nga_nbget_ghost_dir_      nga_nbget_ghost_dir__   
 #define  ga_update_ghosts_         ga_update_ghosts__     
 #define  ga_merge_mirrored_        ga_merge_mirrored__     
 #define  ga_uses_ma_               ga_uses_ma__             

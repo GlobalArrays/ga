@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.54 2003-03-07 23:44:29 manoj Exp $ */
+/* $Id: capi.c,v 1.55 2003-03-31 21:11:04 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -367,6 +367,14 @@ int NGA_Update_ghost_dir(int g_a, int dimension, int dir, int flag)
     idim++;
     st = nga_update_ghost_dir_(&a,&idim,&idir,&iflag);
     return (int)st;
+}
+
+void NGA_NbGet_ghost_dir(int g_a, int mask[], ga_nbhdl_t nbhandle)
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(mask,_ga_lo, ndim);
+    nga_nbget_ghost_dir_(&a, _ga_lo,(Integer *)nbhandle);
 }
 
 int GA_Has_ghosts(int g_a)

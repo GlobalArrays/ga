@@ -70,6 +70,7 @@ extern int NGA_Create_ghosts_irreg_config(int type,int ndim,int dims[], int widt
 extern void GA_Update_ghosts(int g_a);
 extern void GA_Merge_mirrored(int g_a);
 extern int NGA_Update_ghost_dir(int g_a, int dimension, int idir, int flag);
+extern void NGA_NbGet_ghost_dir(int g_a, int mask[], Integer handle);
 extern int GA_Has_ghosts(int g_a);
 extern void NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[]);
 extern void NGA_Access_ghost_element(int g_a,  void *ptr, int subscript[], int ld[]);
