@@ -302,6 +302,7 @@ extern void armci_set_shmem_limit(unsigned long shmemlimit);
 
 #define SIXTYFOUR 64
 #define ALIGN64ADD(buf) (SIXTYFOUR-(((ssize_t)(buf))%SIXTYFOUR))
+#define ALIGNLONGADD(buf) ((((ssize_t)(buf))%sizeof(long))?(sizeof(long)-(((ssize_t)(buf))%sizeof(long))):0)
 
 #define SET   1
 #define UNSET 0

@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.33 2003-07-30 19:06:00 vinod Exp $ */
+/* $Id: pack.c,v 1.34 2003-09-11 16:03:17 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -102,6 +102,9 @@ int armci_pack_strided(int op, void* scale, int proc,
       considered while packing.
     */
     bufsize-=(sizeof(request_header_t)+(MAX_STRIDE_LEVEL+4)*sizeof(int)+2*sizeof(void *));
+#  if defined(PIPE_BUFSIZE) && defined(MAX_PIPELINE_CHUNKS)
+    bufsize-=8*MAX_PIPELINE_CHUNKS;
+#  endif
 #endif
 
 #ifdef BALANCE_FACTOR

@@ -1,4 +1,4 @@
-/* $Id: ds-shared.c,v 1.26 2003-07-30 19:03:14 vinod Exp $ */
+/* $Id: ds-shared.c,v 1.27 2003-09-11 16:03:17 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "message.h"
@@ -21,30 +21,31 @@
 
 static int pack_size(int len)
 {
+int oldlen = len;
 #define PIPE_ROUNDUP 512 
 #define PIPE_SHORT_ROUNDUP (1024) 
 int n;
  if(len <4*PIPE_BUFSIZE){  
    len /=2;
     n = len%PIPE_SHORT_ROUNDUP;
-   len += (PIPE_SHORT_ROUNDUP-n);
+   if(n)len += (PIPE_SHORT_ROUNDUP-n);
  } 
 #if defined(VIA) || defined(VAPI)
  else if(len <25*PIPE_BUFSIZE){
    len /=4;
    n = len%PIPE_SHORT_ROUNDUP;
-   len += (PIPE_SHORT_ROUNDUP-n);
+   if(n)len += (PIPE_SHORT_ROUNDUP-n);
  }
 else if(len <41*PIPE_BUFSIZE){
    len /=8;
    n = len%PIPE_SHORT_ROUNDUP;
-   len += (PIPE_SHORT_ROUNDUP-n);
+   if(n)len += (PIPE_SHORT_ROUNDUP-n);
  }
 #else
  else if(len <32*PIPE_BUFSIZE){
    len /=8;
    n = len%PIPE_SHORT_ROUNDUP;
-   len += (PIPE_SHORT_ROUNDUP-n); 
+   if(n)len += (PIPE_SHORT_ROUNDUP-n); 
  }
 #endif 
 else 
@@ -54,6 +55,13 @@ else
    len = 128*1024-128;
 #else
    len = 64*1024-128;
+#endif
+#ifdef MAX_PIPELINE_CHUNKS
+ if(oldlen/len > MAX_PIPELINE_CHUNKS-1){
+  len = oldlen/MAX_PIPELINE_CHUNKS;
+  n = len%PIPE_SHORT_ROUNDUP;
+  if(n)len += (PIPE_SHORT_ROUNDUP-n);
+ }
 #endif
  return len;
 }

@@ -57,6 +57,7 @@ extern int _armci_bypass;
 #define INTERLEAVE_GET_THRESHOLD 662480000
 
 #define PIPE_BUFSIZE  (8*1024 -128)
+#define MAX_PIPELINE_CHUNKS 20
 #define PIPE_MIN_BUFSIZE 1024 
 #define PIPE_MEDIUM_BUFSIZE (4*8192)
 

@@ -1,4 +1,4 @@
-/* $Id: via.c,v 1.29 2003-03-27 17:39:46 vinod Exp $ */
+/* $Id: via.c,v 1.30 2003-09-11 16:03:17 vinod Exp $ */
 #include <stdio.h>
 #include <strings.h>
 #include <assert.h>
@@ -1031,7 +1031,7 @@ int i, extra;
 
      for(i=0, *bytes=1; i<=strides; i++)*bytes*=count[i]; /*compute chunk size*/
      /* allign receive buffer on 64-byte boundary */
-     extra = ALIGN64ADD((*buf));
+     extra = ALIGNLONGADD((*buf));
      (*buf) +=extra;                  /*** this where the data is *******/
      if(DEBUG2){ 
        printf("%d: pipe advancing %d %d\n",armci_me, *bytes,extra); 

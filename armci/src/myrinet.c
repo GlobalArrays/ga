@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.71 2003-08-21 07:00:33 d3h325 Exp $
+/* $Id: myrinet.c,v 1.72 2003-09-11 16:03:17 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -1655,7 +1655,6 @@ armci_gm_context_t *context = ((armci_gm_context_t *)ptr)-1;
 #endif
 
 /***************************** end dead code *******************************/
-
 static void armci_pipe_advance_buf(int strides, int count[], 
                                    char **buf, long **ack, int *bytes )
 {
@@ -1664,7 +1663,7 @@ int i, extra;
      for(i=0, *bytes=1; i<=strides; i++)*bytes*=count[i]; /*compute chunk size*/
      
      /* allign receive buffer on 64-byte boundary */
-     extra = ALIGN64ADD((*buf));
+     extra = ALIGNLONGADD((*buf));
      (*buf) +=extra;                  /*** this where the data is *******/
      if(DEBUG2){ printf("%d: pipe advancing %d %d\n",armci_me, *bytes,extra); fflush(stdout);
      }

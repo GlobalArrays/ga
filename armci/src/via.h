@@ -4,6 +4,7 @@ extern int armci_long_buf_free, armci_long_buf_taken_srv;
 extern void armci_via_wait_ack();
 #define VIA_USES_RDMA 1
 #define PIPE_BUFSIZE  (4096)
+#define MAX_PIPELINE_CHUNKS 20
 #define PIPE_MIN_BUFSIZE 1024 
 #define PIPE_MEDIUM_BUFSIZE (2*1024)
 
