@@ -733,6 +733,9 @@ void armci_server_initial_connection_gm()
     int procs_in_clus = armci_clus_info[armci_clus_me].nslave;
     int iexit;
 
+    /* notify client thread that we are ready to take requests */
+    armci_gm_server_ready = 1;
+
     /* receive the initial connection from all computing processes,
      * except those from the same node
      */
@@ -909,8 +912,6 @@ void armci_data_server_gm()
         fflush(stdout);
     }
 
-    /* notify client thread that we are ready to take requests */
-    armci_gm_server_ready = 1;
 
     /* server main loop; wait for and service requests until QUIT requested */
     while(!iexit) {        
