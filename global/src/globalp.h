@@ -41,6 +41,8 @@
 #     define MAX_NPROC     256
 #   elif defined(KSR)
 #     define MAX_NPROC      80
+#   elif defined(LINUX64)
+#     define MAX_NPROC    2048
 #   else
 #     define MAX_NPROC     128     /* default for everything else */
 #   endif
