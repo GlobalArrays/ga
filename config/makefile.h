@@ -41,12 +41,20 @@ ifeq ($(TARGET),SUN)
        RANLIB = ranlib
 endif
 
+#32-bit VPP5000
 ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt
-     FOPT_REN = -Sw
+     FOPT_REN = -Sw -KA32
+     COPT_REN = -KA32
  GLOB_DEFINES = -DFUJITSU
-     HAS_BLAS = yes
-     LIBBLAS = /usr/lang/lib/libblasvp.a
+endif
+
+#64-bit VPP5000
+ifeq ($(TARGET),FUJITSU-VPP64)
+           FC = frt
+     FOPT_REN = -Sw -CcdII8
+ GLOB_DEFINES = -DFUJITSU
+        CDEFS = -DEXT_INT
 endif
 
 
