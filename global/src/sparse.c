@@ -229,12 +229,13 @@ register Integer i;
       if(*hi <lop || hip <*lo); /* we got no elements to update */
       else{
         void *ptr;
+        Integer ld;
 
         if(lop < *lo)lop = *lo;
         if(hip > *hi)hip = *hi;
         off = lop - *lo;
 
-        nga_access_ptr(g_a, &lop, &hip, &ptr, NULL);
+        nga_access_ptr(g_a, &lop, &hip, &ptr, &ld);
         
         switch (type){
           int *ia;
