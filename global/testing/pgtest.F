@@ -1,4 +1,4 @@
-c $Id: pgtest.F,v 1.5 2004-11-08 19:59:01 d3g293 Exp $
+c $Id: pgtest.F,v 1.6 2005-02-11 07:47:04 manoj Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -53,13 +53,13 @@ c
 c***  Initialize the MA package
 c     MA must be initialized before any global array is allocated
 c
+      ma_heap = heap/nproc + fudge 
+      ma_heap = 2*ma_heap
       status = ma_init(MT_DCPL, stack, ma_heap)
       if (.not. status) call ga_error('ma_init failed',-1) 
 c
 c     we can also use GA_set_memory_limit BEFORE first ga_create call
 c
-      ma_heap = heap/nproc + fudge 
-      ma_heap = 2*ma_heap
       call GA_set_memory_limit(util_mdtob(ma_heap))
 c
 c***  Create process groups on SMP nodes
