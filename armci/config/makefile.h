@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.118 2005-02-24 06:59:26 manoj Exp $
+#$Id: makefile.h,v 1.119 2005-03-09 18:11:27 vinodtipparaju Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -57,6 +57,10 @@ GLOB_DEFINES += -DXLFLINUX -DEXTNAME
 endif
 ifeq ($(CC),xlc)      
    EXTRA_OBJ += tas.o
+endif
+ifeq ($(CC),acc)      
+   EXTRA_OBJ += tas.o
+     FOPT_REN = -f -N15
 endif
 
 endif
