@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.44 2004-07-27 08:57:59 manoj Exp $ */
+/* $Id: memory.c,v 1.45 2004-08-23 22:43:06 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -51,7 +51,8 @@ void *armci_altix_allocate(size_t size)
     size_t bytes = size;
  
     sptr=ptr= shmalloc(bytes);
- 
+    if(sptr == NULL) armci_die("armci_altix_allocate: shmalloc failed\n",
+			       armci_me);
 #if 0
     if(ptr){  /* touch each page to establish ownership */
        int i;
@@ -67,7 +68,7 @@ void *armci_altix_allocate(size_t size)
 void armci_altix_shm_init()
 {
     altix_pagesize = getpagesize();
-    kr_malloc_init(SHM_UNIT, _SHMMAX_ALTIX, _SHMMAX_ALTIX, 
+    kr_malloc_init(SHM_UNIT, _SHMMAX_ALTIX, 0, 
 		   armci_altix_allocate, 0, &altix_ctx_shmem);
     kr_malloc_init(SHM_UNIT, _SHMMAX_ALTIX_GRP, _SHMMAX_ALTIX_GRP, 
 		   armci_altix_allocate, 0, &altix_ctx_shmem_grp);
@@ -79,7 +80,7 @@ void armci_altix_shm_init()
        void *ptr;
        ptr=kr_malloc((size_t)8, &altix_ctx_shmem_grp);
        if(ptr==NULL) 
-	  armci_die("armci_altix_shm_init(): kr_malloc failed", armci_me);
+	  armci_die("armci_altix_shm_init(): malloc failed", armci_me);
     }
 }
 
@@ -92,6 +93,8 @@ void armci_altix_shm_malloc(void *ptr_arr[], armci_size_t bytes)
     ptr=kr_malloc((size_t)size, &altix_ctx_shmem);
     bzero(ptr_arr,(armci_nproc)*sizeof(void*));
     ptr_arr[armci_me] = ptr;
+    if(size!=0 && ptr==NULL)
+       armci_die("armci_altix_shm_malloc(): malloc failed", armci_me);
     for(i=0; i< armci_nproc; i++) if(i!=armci_me) ptr_arr[i]=shmem_ptr(ptr,i);
 }
 
@@ -107,7 +110,7 @@ void armci_altix_shm_malloc_group(void *ptr_arr[], armci_size_t bytes,
     armci_msg_group_lgop(&size,1,"max",group);
     ptr=kr_malloc((size_t)size, &altix_ctx_shmem_grp);
     if(size!=0 && ptr==NULL)
-       armci_die("armci_altix_shm_malloc_group(): kr_malloc failed for groups. Increase _SHMMAX_ALTIX_GRP", armci_me);
+       armci_die("armci_altix_shm_malloc_group(): malloc failed for groups. Increase _SHMMAX_ALTIX_GRP", armci_me);
     bzero(ptr_arr,(grp_nproc)*sizeof(void*));
     ptr_arr[grp_me] = ptr;
     for(i=0; i< grp_nproc; i++) if(i!=grp_me) ptr_arr[i]=shmem_ptr(ptr,i);

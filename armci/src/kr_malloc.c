@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.11 2004-07-27 08:57:59 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.12 2004-08-23 22:43:06 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -54,13 +54,16 @@ static Header *morecore(size_t nu, context_t *ctx) {
     Header *up;
 
 #if DEBUG
-    (void) printf("morecore 1: Getting %ld more units of length %d nalloc=%d\n",
-		  (long)nu, sizeof(Header),ctx->nalloc);
+    (void) printf("%d: morecore 1: Getting %ld more units of length %d nalloc=%d\n", armci_me, (long)nu, sizeof(Header),ctx->nalloc);
     (void) fflush(stdout);
 #endif
 
-    if (ctx->total >= ctx->max_nalloc)
-      return (Header *) NULL;   /* Enforce upper limit on core usage */
+    if (ctx->total >= ctx->max_nalloc) {
+#      if DEBUG
+         armci_die("kr_malloc: morecore: maximum allocation reached",armci_me);
+#      endif
+       return (Header *) NULL;   /* Enforce upper limit on core usage */
+    }
 
 #if 1
     /* 07/03 ctx->nalloc is now the minimum # units we ask from OS */
@@ -71,8 +74,8 @@ static Header *morecore(size_t nu, context_t *ctx) {
 #endif
 
 #if DEBUG
-    (void) printf("morecore: Getting %ld more units of length %d\n",
-		  (long)nu, sizeof(Header));
+    (void) printf("%d: morecore: Getting %ld more units of length %d\n",
+		  armci_me, (long)nu, sizeof(Header));
     (void) fflush(stdout);
 #endif
     
