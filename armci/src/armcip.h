@@ -323,4 +323,6 @@ extern void armci_agg_complete(armci_ihdl_t nb_handle, int condition);
 
 extern armci_ihdl_t armci_set_implicit_handle (int op, int proc);
 
+extern int armci_getnumcpus(void);
+
 #endif

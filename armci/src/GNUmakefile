@@ -1,9 +1,9 @@
-#$Id: GNUmakefile,v 1.67 2003-02-28 00:20:11 manoj Exp $
+#$Id: GNUmakefile,v 1.68 2003-03-20 00:57:27 d3h325 Exp $
          FOPT = -O
          COPT = -O
 
 OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o\
- memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o
+ memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o rtinfo.o
 
 OBJ_FRAGILE = message.o
 
