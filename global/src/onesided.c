@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.8 2001-09-10 15:12:37 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.9 2001-09-11 15:18:04 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -41,7 +41,7 @@
 #include "armci.h"
 #include "macdecls.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
@@ -2212,7 +2212,6 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
 
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) {
-    fprintf(stderr,"Returning early on p[%]\n",GAme);
     return TRUE;
   }
 
@@ -2230,8 +2229,6 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
   ipx = 0;
   for (idx = 0; idx < ndim; idx++) {
     for (np = 0; np < GA[handle].nblock[idx]; np++) {
-      fprintf(stderr,"p[%d]  ipx = %d mapc[%d] = %d\n",
-          GAme,ipx,ipx,GA[handle].mapc[ipx]);
       if (np < GA[handle].nblock[idx] - 1) {
         if (GA[handle].mapc[ipx+1]-GA[handle].mapc[ipx]+1<width[idx]) {
           if (DEBUG) {
@@ -2269,7 +2266,6 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
   /* evaluate total number of PUT operations that will be required */
   ntot = 1;
   for (idx=0; idx < ndim; idx++) ntot *= 3;
-  fprintf(stderr,"p[%d] ntot = %d",GAme,ntot);
 
   /* Loop over all PUT operations. The operation corresponding to the
      mask of all zeros is left out. */
