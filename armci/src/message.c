@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.21 2000-06-16 19:20:51 d3h325 Exp $ */
+/* $Id: message.c,v 1.22 2000-09-13 19:36:54 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -71,10 +71,17 @@ int armci_msg_nproc()
 #  endif
 }
 
+#ifdef CRAY_YMP
+#define BROKEN_MPI_ABORT
+#endif
+
+
 void armci_msg_abort(int code)
 {
 #  ifdef MPI
-     MPI_Abort(MPI_COMM_WORLD,code);
+#    ifndef BROKEN_MPI_ABORT
+         MPI_Abort(MPI_COMM_WORLD,code);
+#    endif
 #  elif defined(PVM)
      char error_msg[25];
      sprintf(error_msg, "ARMCI aborting [%d]", code);
@@ -82,6 +89,9 @@ void armci_msg_abort(int code)
 #  else
      Error("ARMCI aborting",(long)code);
 #  endif
+    fprintf(stderr,"%d:aborting\n",armci_me);
+   /* trap for broken abort in message passing libs */
+   _exit(1);
 }
 
 
