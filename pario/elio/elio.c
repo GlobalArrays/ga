@@ -29,7 +29,11 @@
 #      define INPROGRESS EINPROGRESS
 #   endif
     struct aiocb          cb_fout[MAX_AIO_REQ];
-    const struct aiocb   *cb_fout_arr[MAX_AIO_REQ];
+#ifndef AIX
+    const
+#endif
+           struct aiocb   *cb_fout_arr[MAX_AIO_REQ];
+
 #else
 #   define INPROGRESS 1            /* I wish this didn't have to be here */
 #endif
@@ -326,7 +330,7 @@ int elio_wait(io_request_t *req_id)
 \*/
 int elio_probe(io_request_t *req_id, int* status)
 {
-  int    errval;
+  int    errval=-1;
   int    aio_i = 0;
      
   int pablo_code = PABLO_elio_probe;
