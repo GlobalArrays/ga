@@ -1,4 +1,4 @@
-/* $Id: groups.c,v 1.3 2004-08-04 22:42:46 manoj Exp $ */
+/* $Id: groups.c,v 1.4 2004-09-08 00:42:13 manoj Exp $ */
 
 
 #include <stdio.h>
@@ -49,6 +49,7 @@ static void group_process_list(ARMCI_Group *group,
     armci_clus_t *grp_clus_info=NULL;
 #ifdef CLUSTER
     int i, len, clus_id, cluster=0, root=0;
+#endif
     
     if(comm==MPI_COMM_NULL || igroup->igroup==MPI_GROUP_NULL) 
        armci_die("group_process_list: NULL COMMUNICATOR",0);
@@ -56,6 +57,7 @@ static void group_process_list(ARMCI_Group *group,
     ARMCI_Group_rank(group, &grp_me);
     ARMCI_Group_size(group, &grp_nproc);
     
+#ifdef CLUSTER
     /* process 0 gets group cluster information: grp_nclus, grp_clus_info */
     if(grp_me == 0) {
        

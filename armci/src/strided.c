@@ -1137,7 +1137,7 @@ void armci_write_strided2(void *ptr, int stride_levels, int stride_arr[],
                      for(i=0; i< count[2]; i++){ 
                          DCOPY21(&rows, count+1, ptr, &ld, buf, &idx);
                          ptr = ((char*)ptr)+stride_arr[1];
-                         ((double*)buf) += idx;
+                         buf = (char*) ((double*)buf + idx);
                      }
 #endif
                      ldd = stride_arr[1]/stride_arr[0];
@@ -1158,7 +1158,7 @@ void armci_write_strided2(void *ptr, int stride_levels, int stride_arr[],
                              if(index[j] >= count[j]) index[j] = 0;
                          }
                          DCOPY21(&rows, count+1,src, &ld, buf, &idx); 
-                         ((double*)buf) += idx;
+                         buf = (char*) ((double*)buf + idx);
                      }
             } /*switch */
          } /*else */
@@ -1225,7 +1225,7 @@ void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
                      for(i=0; i< count[2]; i++){
                          DCOPY12(&rows, count+1, ptr, &ld, buf, &idx);
                          ptr = ((char*)ptr)+stride_arr[1];
-                         ((double*)buf) += idx;
+                         buf = (char*) ((double*)buf + idx);
                      }
 #endif
                      ldd = stride_arr[1]/stride_arr[0];   
@@ -1245,7 +1245,7 @@ void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
                              if(index[j] >= count[j]) index[j] = 0;
                          }
                          DCOPY12(&rows, count+1,src, &ld, buf, &idx);
-                         ((double*)buf) += idx;
+                         buf = (char*) ((double*)buf + idx);
                      }
             } /*switch */
          } /*else */

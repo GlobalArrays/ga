@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.68 2004-08-12 18:28:49 d3h325 Exp $ */
+/* $Id: copy.h,v 1.69 2004-09-08 00:42:13 manoj Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -22,7 +22,15 @@
 #define bcopy(src, dst, len) _fastbcopy(src, dst, len)
 #endif
 
-
+#ifndef EXTERN
+#   define EXTERN extern
+#endif
+ 
+#ifdef NEC
+#  define memcpy1 _VEC_memcpy
+#  define armci_copy1(src,dst,n) _VEC_memcpy((dst),(src),(n))
+   EXTERN long long _armci_vec_sync_flag;
+#endif
 
 #if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined (DECOSF) || defined(__ia64__)
 #   define PTR_ALIGN
@@ -33,7 +41,7 @@
 
 #   include "lapidefs.h"
 
-#elif defined(_CRAYMPP) || defined(QUADRICS)
+#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1)
 #ifdef CRAY
 #   include <mpp/shmem.h>
 #else
@@ -71,8 +79,13 @@
 #endif
 
 
-#define THRESH 32
-#define THRESH1D 512 
+#ifdef NEC
+#  define THRESH 1
+#  define THRESH1D 1
+#else
+#  define THRESH 32
+#  define THRESH1D 512
+#endif
 #define ALIGN_SIZE sizeof(double)
 
 /********* interface to fortran 1D and 2D memory copy functions ***********/
@@ -239,7 +252,7 @@ void FATR DCOPY13(int*, int*, int*, void*, int*, int*, void*, int*);
 #    ifndef MEMCPY
 #       define MEMCPY
 #    endif
-#    define MEM_FENCE armci_asm_mem_fence
+#    define MEM_FENCE armci_asm_mem_fence()
      extern void armci_asm_mem_fence();
 #endif
                                                  
@@ -248,7 +261,7 @@ void FATR DCOPY13(int*, int*, int*, void*, int*, int*, void*, int*);
 #endif
 
 #ifdef NEC
-#    define MEM_FENCE mpisx_clear_cache()
+#    define MEM_FENCE {mpisx_clear_cache(); _armci_vec_sync_flag=1;mpisx_syncset0_long(&_armci_vec_sync_flag);}
 #endif
 
 #ifdef DECOSF
