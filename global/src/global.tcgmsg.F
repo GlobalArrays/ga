@@ -616,8 +616,8 @@ c
       integer type, dim1, dim2, nblock1, nblock2, g_a
       integer map1(nblock1), map2(nblock2)
 c
-*     integer iproc, ldim1, ldim2, lname, lga, lp, i, j
-      character*256 form
+      integer  iproc, i, j
+*     character*256 form
       logical overbose, status, oterse
       integer lenstr, int
       double precision dsqrt, dfloat
