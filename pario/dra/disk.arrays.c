@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.65 2002-12-10 17:55:10 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.66 2003-01-23 00:02:02 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1002,39 +1002,6 @@ Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
         }
 }
        
-
-/*\ WRITE g_a TO d_a
-\*/
-Integer FATR dra_write_(
-        Integer *g_a,                      /*input:GA handle*/
-        Integer *d_a,                      /*input:DRA handle*/
-        Integer *request)                  /*output: handle to async oper. */
-{
-Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
-logical transp = FALSE;
-Integer ilo, ihi, jlo, jhi;
-
-        ga_sync_();
-
-        /* usual argument/type/range checking stuff */
-
-        dai_check_handleM(*d_a,"dra_write");
-        if( !dai_write_allowed(*d_a))
-             dai_error("dra_write: write not allowed to this array",*d_a);
-
-        ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
-        if(DRA[handle].type != (int)gtype)dai_error("dra_write: type mismatch",gtype);
-        if(DRA[handle].dims[0] != gdim1)dai_error("dra_write: dim1 mismatch",gdim1);
-        if(DRA[handle].dims[1] != gdim2)dai_error("dra_write: dim2 mismatch",gdim2);
-
-        /* right now, naive implementation just calls dra_write_section */
-        ilo = 1; ihi = DRA[handle].dims[0]; 
-        jlo = 1; jhi = DRA[handle].dims[1]; 
-        return(dra_write_section_(&transp, g_a, &ilo, &ihi, &jlo, &jhi,
-                                          d_a, &ilo, &ihi, &jlo, &jhi,request));
-}
-
-
 /*     given current (i,j) compute (ni, nj) - next loop index
  *     o - outermost loop, i- innermost loop
  *     iinc increment for i
@@ -1860,6 +1827,37 @@ section_t d_sect, g_sect;
    return(ELIO_OK);
 }
 
+/*\ WRITE g_a TO d_a
+\*/
+Integer FATR dra_write_(
+        Integer *g_a,                      /*input:GA handle*/
+        Integer *d_a,                      /*input:DRA handle*/
+        Integer *request)                  /*output: handle to async oper. */
+{
+Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
+logical transp = FALSE;
+Integer ilo, ihi, jlo, jhi;
+
+        ga_sync_();
+
+        /* usual argument/type/range checking stuff */
+
+        dai_check_handleM(*d_a,"dra_write");
+        if( !dai_write_allowed(*d_a))
+             dai_error("dra_write: write not allowed to this array",*d_a);
+
+        ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
+        if(DRA[handle].type != (int)gtype)dai_error("dra_write: type mismatch",gtype);
+        if(DRA[handle].dims[0] != gdim1)dai_error("dra_write: dim1 mismatch",gdim1);
+        if(DRA[handle].dims[1] != gdim2)dai_error("dra_write: dim2 mismatch",gdim2);
+
+        /* right now, naive implementation just calls dra_write_section */
+        ilo = 1; ihi = DRA[handle].dims[0];
+        jlo = 1; jhi = DRA[handle].dims[1];
+        return(dra_write_section_(&transp, g_a, &ilo, &ihi, &jlo, &jhi,
+                                          d_a, &ilo, &ihi, &jlo, &jhi,request));
+}
+
 
 
 /*\ READ SECTION g_a[gilo:gihi, gjlo:gjhi] FROM d_a[dilo:dihi, djlo:djhi]
@@ -2611,8 +2609,10 @@ Integer ndra_create(
         Integer *d_a)                      /*output:DRA handle*/
 {
    Integer ret;
-   Integer m1 = -1;
-   ret = ndra_create_config(type,ndim,dims,name,filename,mode,reqdims, &m1, &m1, d_a);
+   Integer files = _dra_number_of_files;
+   Integer procs = _dra_io_procs;
+   ret = ndra_create_config(type, ndim, dims, name, filename, mode, reqdims,
+                            &files, &procs, d_a);
    return ret;
 }
 
