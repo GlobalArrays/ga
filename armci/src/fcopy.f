@@ -1,3 +1,60 @@
+      subroutine dcopy21(rows, cols, A, ald, buf, cur)
+      integer rows, cols
+      integer c, r, ald, cur 
+      double precision A(ald,*), buf(ald) 
+      cur = 0
+      do c = 1, cols
+         do r = 1, rows
+            cur = cur+1
+            buf(cur) = A(r,c)
+         end do
+      end do
+      end
+
+      subroutine dcopy31(rows, cols, planes, A, aldr, aldc, buf, cur)
+      integer rows, cols, planes
+      integer c, r, p, aldr, aldc, cur
+      double precision A(aldr, aldc, *), buf(aldr)
+      cur = 0
+      do p = 1, planes 
+         do c = 1, cols
+            do r = 1, rows
+               cur = cur+1
+               buf(cur) = A(r,c,p)
+            end do
+         end do
+      end do
+      end
+
+      subroutine dcopy12(rows, cols, A, ald, buf, cur)
+      integer rows, cols
+      integer c, r, ald, cur
+      double precision A(ald,*), buf(ald)
+      cur = 0
+      do c = 1, cols
+         do r = 1, rows
+            cur = cur+1
+            A(r,c) = buf(cur)
+         end do
+      end do
+      end
+
+      subroutine dcopy13(rows, cols, planes, A, aldr, aldc, buf, cur)
+      integer rows, cols, planes
+      integer c, r, p, aldr, aldc, cur
+      double precision A(aldr, aldc, *), buf(aldr)
+      cur = 0
+      do p = 1, planes
+         do c = 1, cols
+            do r = 1, rows
+               cur = cur+1
+               A(r,c,p) = buf(cur)
+            end do
+         end do
+      end do
+      end
+
+
       subroutine dcopy2d_n(rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
