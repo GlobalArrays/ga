@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/pfilecopy.c,v 1.3 2002-07-17 17:15:19 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/pfilecopy.c,v 1.4 2002-09-20 17:11:15 d3h325 Exp $ */
 
 #include <stdio.h>
 
@@ -59,7 +59,7 @@ void PFILECOPY_(type, node0, filename)
     (void) fseek(file, 0L, (int) 2);   /* Seek to end of file */
     length = ftell(file);              /* Find the length of file */
     (void) fseek(file, 0L, (int) 0);   /* Seek to beginning of file */
-    if ( (length<0) || (length>1e8) )
+    if ( (length<0) || (length>1e12) )
       Error("pfilecopy: the file length is -ve or very big", length);
 
     /* Send the file in chunks of nread bytes */
