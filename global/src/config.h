@@ -12,7 +12,6 @@
 #ifndef _CONFIG_H
 #define _CONFIG_H 
 
-
 /* max number of global arrays */
 #define MAX_ARRAYS  256             
 
@@ -40,8 +39,11 @@
 #   define MSG_BUF_SIZE      4*4096
 #endif
 
-/* max number of dimensions  */
-#define MAXDIM  7
+/* max number of dimensions
+ * Now set in global.h and global.fh so users can access the value.
+ * We set the macro used internally from the global.h value.
+ */
+#define MAXDIM  GA_MAX_DIM
 
 /* uncomment the following line to overwrite default max number of processors */
 /*#define MAX_NPROC 128*/

@@ -7,6 +7,12 @@
 #include "typesf2c.h"
 
 
+/* Maximum number of array dimensions supported by GA
+ * NOTE: Must be changed in tandem with the Fortran definition 
+ *  in global.fh! 
+ */
+#define GA_MAX_DIM 7
+
 #ifdef FALSE
 #undef FALSE
 #endif

@@ -1,3 +1,11 @@
+!
+!     The maximum number of array dimensions supported by GA
+!     NOTE: This value must be changed in tandem with the 
+!     C definition in global.h!
+!
+      integer ga_max_dim
+      parameter (ga_max_dim = 7)
+!
       integer ga_nnodes, ga_nodeid, ga_read_inc
 #ifdef IWAY
       integer ga_net_nnodes, ga_net_nodeid
