@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.10 2000-08-01 17:47:53 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.11 2000-08-02 23:48:22 d3g681 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
@@ -36,7 +36,7 @@
 #define BIG_MESSAGE 41943040     /* 40Mb max message only for safety check.
 				    Change as needed.*/
 #else
-#define BIG_MESSAGE  2147483648  /* 2GB */
+#define BIG_MESSAGE  2147483647  /* 2GB */
 #endif
 
 /* Shared memory allocated per process .. make even multiple of
