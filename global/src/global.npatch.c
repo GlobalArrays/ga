@@ -547,7 +547,8 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
             break;
         case MT_F_REAL:
             ga_fgop(type, &fsum, 1, "+");
-            *((float *)retval) += isum;
+            *((float *)retval) += fsum;
+            break;
         default: ga_error(" wrong data type ",atype);
     }
     
@@ -897,6 +898,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
                     for(j=0; j<(hiA[0]-loA[0]+1); j++)
                         ((float *)src_data_ptr)[idx+j]  *= *(float*)alpha;
                 }                                                           
+                break;
             default: ga_error(" wrong data type ",type);
         }
 
