@@ -41,7 +41,7 @@ endif
 
 OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
       collect.o		misc.o		p2p.o		pfilecopy.o\
-      evlog.o		evon.o		random.o 	nxtval-armci.o
+      evlog.o		evon.o		random.o 	nxtval-armci.o wrap.o
 
       OBJ += $(EXTRA_OBJ) 
 

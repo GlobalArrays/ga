@@ -4,13 +4,13 @@
 
 
 #define LEN 2
-static Integer *pnxtval_counter;
+static long *pnxtval_counter;
 #define INCR 1                 /* increment for NXTVAL */
 #define BUSY -1L               /* indicates somebody else updating counter*/
 #define NXTV_SERVER ((int)NNODES_() -1)
 
-Integer FATR NXTVAL_(mproc)
-     Integer  *mproc;
+long FATR NXTVAL_(mproc)
+     long  *mproc;
 /*
   Get next value of shared counter.
 
@@ -21,7 +21,7 @@ Integer FATR NXTVAL_(mproc)
 
 */
 {
-  Integer local;
+  long local;
   int rc;
 
   int  server = NXTV_SERVER;         /* id of server process */
@@ -44,11 +44,7 @@ Integer FATR NXTVAL_(mproc)
      }
      if (*mproc > 0) {
 
-#    ifdef EXT_INT
        rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD_LONG,&local,pnxtval_counter,1,server);
-#    else
-       rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD,&local,pnxtval_counter,1,server); 
-#    endif
      
      }
    } else {
@@ -61,7 +57,7 @@ Integer FATR NXTVAL_(mproc)
       return 0;
     }
     else
-      Error("nxtval: sequential version with silly mproc ", (Integer) *mproc);
+      Error("nxtval: sequential version with silly mproc ", (long) *mproc);
   }
 
   return local;
@@ -86,7 +82,7 @@ void install_nxtval()
    rc = ARMCI_Malloc(ptr_ar,bytes);
    if(rc)Error("nxtv: armci_malloc failed",rc);
 
-   pnxtval_counter = (Integer*) ptr_ar[server];
+   pnxtval_counter = (long*) ptr_ar[server];
    if(me==server)*pnxtval_counter = (long)0;
     
    rc=MPI_Barrier(MPI_COMM_WORLD); 

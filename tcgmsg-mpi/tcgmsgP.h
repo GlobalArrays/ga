@@ -8,7 +8,7 @@
 extern MPI_Comm TCGMSG_Comm;
 extern int      SR_parallel;
 extern int      SR_single_cluster;
-extern Integer  DEBUG_;
+extern long  DEBUG_;
 extern int       _tcg_initialized;
 
 #ifdef  EXT_INT

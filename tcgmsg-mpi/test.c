@@ -20,11 +20,7 @@ extern char *sprintf();
 #include "winutil.h"
 #endif
 
-#ifdef EXT_INT
 #  define FMT_INT "%ld"
-#else
-#  define FMT_INT "%d"
-#endif
 
 static void TestProbe()
 /*
@@ -34,13 +30,13 @@ static void TestProbe()
   respond to process 0 which recieves using a wildcard probe.
   */
 {
-  Integer type_syn = 32;
-  Integer type_msg = 33;
-  Integer type_ack = 34;
-  Integer me = NODEID_();
+  long type_syn = 32;
+  long type_msg = 33;
+  long type_ack = 34;
+  long me = NODEID_();
   char buf;
-  Integer lenbuf = sizeof buf;
-  Integer sync = 1;
+  long lenbuf = sizeof buf;
+  long sync = 1;
 
 
   if (me == 0) {
@@ -52,10 +48,10 @@ static void TestProbe()
   SYNCH_(&type_syn);
 
   if (me == 0) {
-    Integer nproc = NNODES_();
-    Integer anyone = -1;
-    Integer ngot = 0;
-    Integer node;
+    long nproc = NNODES_();
+    long anyone = -1;
+    long ngot = 0;
+    long node;
 
     (void) sleep((unsigned) 20);
 
@@ -74,7 +70,7 @@ static void TestProbe()
       }
   }
   else {
-    Integer node = 0;
+    long node = 0;
     while (!PROBE_(&type_msg, &node)) {
       (void) printf("    Node %ld sleeping\n", (long)me);
       (void) fflush(stdout);
@@ -92,10 +88,10 @@ static void TestGlobals()
 {
 #define MAXLENG 256*1024
   double *dtest;
-  Integer *itest;
-  Integer len;
-  Integer me = NODEID_(), nproc = NNODES_(), from=NNODES_()-1;
-  Integer itype=3+MSGINT, dtype=4+MSGDBL;
+  long *itest;
+  long len;
+  long me = NODEID_(), nproc = NNODES_(), from=NNODES_()-1;
+  long itype=3+MSGINT, dtype=4+MSGDBL;
 
   if (me == 0) {
     (void) printf("Global test ... test brodcast, igop and dgop\n----------\n\n");
@@ -103,14 +99,14 @@ static void TestGlobals()
   }
 
   if (!(dtest = (double *) malloc((unsigned) (MAXLENG*sizeof(double)))))
-    Error("TestGlobals: failed to allocated dtest", (Integer) MAXLENG);
-  if (!(itest = (Integer *) malloc((unsigned) (MAXLENG*sizeof(Integer)))))
-    Error("TestGlobals: failed to allocated itest", (Integer) MAXLENG);
+    Error("TestGlobals: failed to allocated dtest", (long) MAXLENG);
+  if (!(itest = (long *) malloc((unsigned) (MAXLENG*sizeof(long)))))
+    Error("TestGlobals: failed to allocated itest", (long) MAXLENG);
 
   for (len=1; len<MAXLENG; len*=2) {
-    Integer ilen = len*sizeof(Integer);
-    Integer dlen = len*sizeof(double);
-    Integer i;
+    long ilen = len*sizeof(long);
+    long dlen = len*sizeof(double);
+    long i;
     
     if (me == 0) {
       printf("Test length = %d ... ", len);
@@ -136,7 +132,7 @@ static void TestGlobals()
     
     for (i=0; i<len; i++)
       if (itest[i] != i || dtest[i] != (double) i)
-	Error("TestGlobal: broadcast failed", (Integer) i);
+	Error("TestGlobal: broadcast failed", (long) i);
 
     if (me == 0) {
       printf("broadcast OK ...");
@@ -154,9 +150,11 @@ static void TestGlobals()
     DGOP_(&dtype, dtest, &len, "+");
 
     for (i=0; i<len; i++) {
-      Integer iresult = i*nproc*(nproc-1)/2;
-      if (itest[i] != iresult || dtest[i] != (double) iresult)
-	Error("TestGlobals: global sum failed", (Integer) i);
+      long iresult = i*nproc*(nproc-1)/2;
+      if (itest[i] != iresult || dtest[i] != (double) iresult){
+	printf(" dt %f it %ld ir %ld \n",dtest[i],itest[i],iresult);
+	Error("TestGlobals: global sum failed", (long) i);
+      }
     }
 
     if (me == 0) {
@@ -176,10 +174,10 @@ static void Hello()
 */
 {
   char buf[30];
-  Integer lenbuf = sizeof buf;
-  Integer type=19 | MSGCHR;
-  Integer node, kode, nodefrom, lenmes;
-  Integer sync = 1;
+  long lenbuf = sizeof buf;
+  long type=19 | MSGCHR;
+  long node, kode, nodefrom, lenmes;
+  long sync = 1;
 
   if (NODEID_() == 0) {
     (void) printf("Hello test ... show network integrity\n----------\n\n");
@@ -204,17 +202,17 @@ static void Hello()
 }
 
 static void RandList(lo, hi, list, n)
-     Integer lo, hi, *list, n;
+     long lo, hi, *list, n;
 /*
   Fill list with n random integers between lo & hi inclusively
 */
 {
-  Integer i, ran;
+  long i, ran;
   double dran;
 
   for (i=0; i<n; i++) {
     dran = DRAND48_();
-    ran = lo + (Integer) (dran * (double) (hi-lo+1));
+    ran = lo + (long) (dran * (double) (hi-lo+1));
     if (ran < lo)
       ran = lo;
     if (ran > hi)
@@ -229,25 +227,25 @@ void Stress()
   list of nodes
 */
 {
-  Integer me = NODEID_();
-  Integer nproc = NNODES_();
-  Integer type, lenbuf, node, lenmes, nodefrom, i, j, from, to;
-  Integer *list_i, *list_j, *list_n;
+  long me = NODEID_();
+  long nproc = NNODES_();
+  long type, lenbuf, node, lenmes, nodefrom, i, j, from, to;
+  long *list_i, *list_j, *list_n;
 #define N_LEN 11
-  static Integer len[N_LEN] = {0,1,2,4,8,4095,4096,4097,16367,16368,16369};
+  static long len[N_LEN] = {0,1,2,4,8,4095,4096,4097,16367,16368,16369};
   char *buf1, *buf2;
-  Integer n_stress, mod;
-  Integer sync = 1;
+  long n_stress, mod;
+  long sync = 1;
 
   from = 0;
-  lenbuf = sizeof(Integer);
+  lenbuf = sizeof(long);
 
   if (me == 0) {
     (void) printf("Stress test ... randomly exchange messages\n-----------");
     (void) printf("\n\nInput no. of messages: ");
     (void) fflush(stdout);
     if (scanf(FMT_INT,&n_stress) != 1)
-      Error("Stress: error reading n_stress",(Integer) -1);
+      Error("Stress: error reading n_stress",(long) -1);
     if ( (n_stress <= 0) || (n_stress > 100000) )
       n_stress = 100;
   }
@@ -255,32 +253,32 @@ void Stress()
   BRDCST_(&type, (char *) &n_stress, &lenbuf, &from);
   type++;
 
-  lenbuf = n_stress * sizeof(Integer);
+  lenbuf = n_stress * sizeof(long);
 
-  if ( (list_i = (Integer *) memalign(sizeof(Integer), (unsigned) lenbuf))
-      == (Integer *) NULL )
+  if ( (list_i = (long *) memalign(sizeof(long), (unsigned) lenbuf))
+      == (long *) NULL )
     Error("Stress: failed to allocate list_i",n_stress);
 
-  if ( (list_j = (Integer *) memalign(sizeof(Integer), (unsigned) lenbuf))
-      == (Integer *) NULL )
+  if ( (list_j = (long *) memalign(sizeof(long), (unsigned) lenbuf))
+      == (long *) NULL )
     Error("Stress: failed to allocate list_j",n_stress);
 
-  if ( (list_n = (Integer *) memalign(sizeof(Integer), (unsigned) lenbuf))
-      == (Integer *) NULL )
+  if ( (list_n = (long *) memalign(sizeof(long), (unsigned) lenbuf))
+      == (long *) NULL )
     Error("Stress: failed to allocate list_n",n_stress);
 
   if ( (buf1 = malloc((unsigned) 16376)) == (char *) NULL )
-    Error("Stress: failed to allocate buf1", (Integer) 16376);
+    Error("Stress: failed to allocate buf1", (long) 16376);
 
   if ( (buf2 = malloc((unsigned) 16376)) == (char *) NULL )
-    Error("Stress: failed to allocate buf2", (Integer) 16376);
+    Error("Stress: failed to allocate buf2", (long) 16376);
 
 
   if (me == 0) { /* Make random list of node pairs and message lengths */
 
-    RandList((Integer) 0, (Integer) (NNODES_()-1), list_i, n_stress);
-    RandList((Integer) 0, (Integer) (NNODES_()-1), list_j, n_stress);
-    RandList((Integer) 0, (Integer) (N_LEN-1), list_n, n_stress);
+    RandList((long) 0, (long) (NNODES_()-1), list_i, n_stress);
+    RandList((long) 0, (long) (NNODES_()-1), list_j, n_stress);
+    RandList((long) 0, (long) (N_LEN-1), list_n, n_stress);
     for (i=0; i<n_stress; i++)
       list_n[i] = len[list_n[i]];
   }
@@ -352,27 +350,27 @@ void Stress()
 void RingTest()
   /* Time passing a message round a ring */
 {
-  Integer me = NODEID_();
-  Integer type = 4;
-  Integer left = (me + NNODES_() - 1) % NNODES_();
-  Integer right = (me + 1) % NNODES_();
+  long me = NODEID_();
+  long type = 4;
+  long left = (me + NNODES_() - 1) % NNODES_();
+  long right = (me + 1) % NNODES_();
   char *buf, *buf2;
   unsigned char sum, sum2;
-  Integer lenbuf, lenmes, nodefrom;
+  long lenbuf, lenmes, nodefrom;
   double start, used, rate;
-  Integer max_len;
-  Integer i;
-  Integer sync = 1;
+  long max_len;
+  long i;
+  long sync = 1;
 
   i = 0;
-  lenbuf = sizeof(Integer);
+  lenbuf = sizeof(long);
 
   if (me == 0) {
     (void) printf("Ring test ... time network performance\n---------\n\n");
     (void) printf("Input maximum message size: ");
     (void) fflush(stdout);
     if (scanf(FMT_INT, &max_len) != 1)
-      Error("RingTest: error reading max_len",(Integer) -1);
+      Error("RingTest: error reading max_len",(long) -1);
     if ( (max_len <= 0) || (max_len >= 4*1024*1024) )
       max_len = 256*1024;
   }
@@ -432,26 +430,26 @@ void RingTest()
 void RcvAnyTest()
   /* Test receiveing a message from any node */
 {
-  Integer me = NODEID_();
-  Integer type = 337 | MSGINT;
+  long me = NODEID_();
+  long type = 337 | MSGINT;
   char buf[8];
-  Integer i, j, node, lenbuf, lenmes, nodefrom, receiver, n_msg;
-  Integer sync = 1;
+  long i, j, node, lenbuf, lenmes, nodefrom, receiver, n_msg;
+  long sync = 1;
 
-  lenbuf = sizeof(Integer);
+  lenbuf = sizeof(long);
 
   if (me == 0) {
     (void) printf("RCV any test ... check is working!\n-----------\n\n");
     (void) printf("Input node to receive : ");
     (void) fflush(stdout);
     if (scanf(FMT_INT, &receiver) != 1)
-      Error("RcvAnyTest: error reading receiver",(Integer) -1);
+      Error("RcvAnyTest: error reading receiver",(long) -1);
     if ( (receiver < 0) || (receiver >= NNODES_()) )
       receiver = NNODES_()-1;
     (void) printf("Input number of messages : ");
     (void) fflush(stdout);
     if (scanf(FMT_INT, &n_msg) != 1)
-      Error("RcvAnyTest: error reading n_msg",(Integer) -1);
+      Error("RcvAnyTest: error reading n_msg",(long) -1);
     if ( (n_msg <= 0) || (n_msg > 10) )
       n_msg = 5;
   }
@@ -485,21 +483,21 @@ void RcvAnyTest()
 void NextValueTest()
   /* Test the load balancing mechanism */
 {
-  Integer nproc = NNODES_();
-  Integer me = NODEID_();
-  Integer type = 51 | MSGINT;
-  Integer i, node, lenbuf, n_val, next;
-  Integer ngot, ntimes;
+  long nproc = NNODES_();
+  long me = NODEID_();
+  long type = 51 | MSGINT;
+  long i, node, lenbuf, n_val, next;
+  long ngot, ntimes;
   double start, used, rate;
 
-  lenbuf = sizeof(Integer);
+  lenbuf = sizeof(long);
 
   if (me == 0) {
     (void) printf("Next value test ... time overhead!\n---------------\n\n");
     (void) printf("Input iteration count : ");
     (void) fflush(stdout);
     if (scanf(FMT_INT, &n_val) != 1)
-      Error("NextValueTest: error reading n_val",(Integer) -1);
+      Error("NextValueTest: error reading n_val",(long) -1);
     if ( (n_val < 0) || (n_val >= 10000) )
       n_val = 100;
   }
@@ -559,18 +557,18 @@ void NextValueTest()
 
 void ToggleDebug()
 {
-  static Integer on = 0;
-  Integer me = NODEID_();
-  Integer type = 666 | MSGINT;
-  Integer lenbuf = sizeof(Integer);
-  Integer from=0;
-  Integer node;
+  static long on = 0;
+  long me = NODEID_();
+  long type = 666 | MSGINT;
+  long lenbuf = sizeof(long);
+  long from=0;
+  long node;
 
   if (me == 0) {
     (void) printf("\nInput node to debug (-1 = all) : ");
     (void) fflush(stdout);
     if (scanf(FMT_INT, &node) != 1)
-      Error("ToggleDebug: error reading node",(Integer) -1);
+      Error("ToggleDebug: error reading node",(long) -1);
   }
   BRDCST_(&type, (char *) &node, &lenbuf, &from);
 
@@ -584,9 +582,9 @@ int main(argc, argv)
     int argc;
     char **argv;
 {
-  Integer type;
-  Integer lenbuf;
-  Integer node, opt;
+  long type;
+  long lenbuf;
+  long node, opt;
   
   PBEGIN_(argc, argv);
 
@@ -595,7 +593,7 @@ int main(argc, argv)
 
   /* Read user input for action */
 
-  lenbuf = sizeof(Integer);
+  lenbuf = sizeof(long);
   node = 0;
 
   while (1) {
@@ -618,8 +616,8 @@ int main(argc, argv)
                           Enter test number : ");
 
       (void) fflush(stdout);
-      if (scanf(FMT_INT, &opt) != 1)
-	Error("test: input of option failed",(Integer) -1);
+      if (scanf("%ld", &opt) != 1)
+	Error("test: input of option failed",(long) -1);
       (void) printf("\n");
       (void) fflush(stdout);
       if ( (opt < 0) || (opt > 8) )

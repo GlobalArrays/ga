@@ -8,7 +8,7 @@
 char      tcgmsg_err_string[ERR_STR_LEN];
 MPI_Comm  TCGMSG_Comm;
 int       _tcg_initialized=0;
-Integer       DEBUG_;
+long       DEBUG_;
 int       SR_parallel; 
 int       SR_single_cluster =1;
 
@@ -20,31 +20,31 @@ long TCGREADY_()
 
 /*\ number of processes
 \*/
-Integer FATR NNODES_()
+long FATR NNODES_()
 {
 int numprocs;
 
    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 #  ifdef NXTVAL_SERVER
-     if(SR_parallel) return((Integer)numprocs-1);
+     if(SR_parallel) return((long)numprocs-1);
 #  endif
-   return((Integer)numprocs);
+   return((long)numprocs);
 }
 
 
 /*\ Get calling process id
 \*/
-Integer FATR NODEID_()
+long FATR NODEID_()
 {
 int myid;
 
     MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-    return((Integer)myid);
+    return((long)myid);
 }
 
 void Error(string, code)
      char *string;
-     Integer  code;
+     long  code;
 {
     fprintf(stdout,"%3ld: %s %ld (%#lx).\n", (long)NODEID_(), string,
            (long)code,(long)code);
@@ -142,7 +142,7 @@ int init=0;
 void FATR PEND_()
 {
 #   ifdef NXTVAL_SERVER
-       Integer zero=0;
+       long zero=0;
        if( SR_parallel )  (void) NXTVAL_(&zero);
        MPI_Barrier(MPI_COMM_WORLD);
 #   endif
@@ -177,24 +177,24 @@ double FATR TCGTIME_()
 
 
 
-Integer FATR MTIME_()
+long FATR MTIME_()
 {
-  return (Integer) (TCGTIME_()*100.0); /* time in centiseconds */
+  return (long) (TCGTIME_()*100.0); /* time in centiseconds */
 }
 
 
 
-/*\ Integererface from Fortran to C error routine
+/*\ longerface from Fortran to C error routine
 \*/
 void FATR PARERR_(code)
-   Integer *code;
+   long *code;
 {
   Error("User detected error in FORTRAN", *code);
 }
 
 
 void FATR SETDBG_(onoff)
-     Integer *onoff;
+     long *onoff;
 {
      DEBUG_ = *onoff;
 }

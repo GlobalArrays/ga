@@ -10,16 +10,16 @@ long nxtval_counter=0;
 
 void NextValueServer()
 {
-  Integer  cnt     = 0;            /* actual counter */
-  Integer  ndone   = 0;            /* no. finished for this loop */
+  long  cnt     = 0;            /* actual counter */
+  long  ndone   = 0;            /* no. finished for this loop */
   int  type    = TYPE_NXTVAL;  /* message type */
-  Integer  buf[LEN];               /* buffer to get values */
-  Integer  mproc;                  /* no. of processes running loop */
-  Integer  nval;                   /* no. of values requested */
+  long  buf[LEN];               /* buffer to get values */
+  long  mproc;                  /* no. of processes running loop */
+  long  nval;                   /* no. of values requested */
   int  done_list[MAX_PROCESS]; /* list of processes finished with this loop */
   int  lenmes, nodefrom;
   int  node;
-  Integer  ntermin=0;
+  long  ntermin=0;
   MPI_Status status;
 
 
@@ -27,12 +27,12 @@ void NextValueServer()
 
     /* Wait for input from any node */
     
-    MPI_Recv(buf, LEN, TCG_INT, MPI_ANY_SOURCE, type, MPI_COMM_WORLD, &status); 
-    MPI_Get_count(&status, TCG_INT, &lenmes);
+    MPI_Recv(buf, LEN, MPI_LONG, MPI_ANY_SOURCE, type, MPI_COMM_WORLD, &status); 
+    MPI_Get_count(&status, MPI_LONG, &lenmes);
     nodefrom = status.MPI_SOURCE;
 
     if (lenmes != LEN) {
-      Error("NextValueServer: lenmes != LEN", (Integer) lenmes);
+      Error("NextValueServer: lenmes != LEN", (long) lenmes);
       return;   /* Never actually gets here as does long jump */
     }
 
@@ -55,7 +55,7 @@ void NextValueServer()
 
       if (++ntermin == NNODES_()) {
         for (node=0; node<NNODES_(); node++) {
-          MPI_Send(&cnt, 1, TCG_INT,  node, type, MPI_COMM_WORLD); 
+          MPI_Send(&cnt, 1, MPI_LONG,  node, type, MPI_COMM_WORLD); 
         }
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Finalize();
@@ -67,7 +67,7 @@ void NextValueServer()
       
       /* This is what we are here for */
 
-      MPI_Send(&cnt, 1, TCG_INT,  nodefrom, type, MPI_COMM_WORLD); 
+      MPI_Send(&cnt, 1, MPI_LONG,  nodefrom, type, MPI_COMM_WORLD); 
       cnt += nval;
     }
     else if (mproc < 0) {
@@ -80,7 +80,7 @@ void NextValueServer()
       if (ndone == -mproc) {
 	while (ndone--) {
 	  nodefrom = done_list[ndone];
-          MPI_Send(&cnt, 1, TCG_INT,  nodefrom, type, MPI_COMM_WORLD); 
+          MPI_Send(&cnt, 1, MPI_LONG,  nodefrom, type, MPI_COMM_WORLD); 
 	}
 	cnt = 0;
 	ndone = 0;
@@ -90,8 +90,8 @@ void NextValueServer()
 }
 
 
-Integer NXTVAL_(mproc)
-     Integer  *mproc;
+long NXTVAL_(mproc)
+     long  *mproc;
 /*
   Get next value of shared counter.
 
@@ -102,7 +102,7 @@ Integer NXTVAL_(mproc)
 
 */
 {
-  Integer  buf[2];
+  long  buf[2];
   MPI_Status status;
   int  type = TYPE_NXTVAL;
 
@@ -122,8 +122,8 @@ Integer NXTVAL_(mproc)
      }
 
 #    ifdef NXTVAL_SERVER
-       MPI_Send(buf, LEN, TCG_INT,  server, type, MPI_COMM_WORLD); 
-       MPI_Recv(buf, 1,   TCG_INT,  server, type, MPI_COMM_WORLD, &status); 
+       MPI_Send(buf, LEN, MPI_LONG,  server, type, MPI_COMM_WORLD); 
+       MPI_Recv(buf, 1,   MPI_LONG,  server, type, MPI_COMM_WORLD, &status); 
        return buf[0];
 #    endif
     } else {
@@ -136,7 +136,7 @@ Integer NXTVAL_(mproc)
       return 0;
     }
     else
-      Error("nxtval: sequential version with silly mproc ", (Integer) *mproc);
+      Error("nxtval: sequential version with silly mproc ", (long) *mproc);
   }
 
   return 0;

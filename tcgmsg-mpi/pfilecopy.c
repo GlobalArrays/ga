@@ -9,7 +9,7 @@
 
 
 void FATR PFILECOPY_(type, node0, filename)
-     Integer *type, *node0;
+     long *type, *node0;
      char *filename;
 /*
   Process node0 has a file (assumed unopened) named fname.
@@ -28,9 +28,9 @@ void FATR PFILECOPY_(type, node0, filename)
 {
   char *buffer;
   FILE *file;
-  Integer length, nread=32768, len_nread=sizeof(Integer);
-  Integer typenr = (*type & 32767) | MSGINT;   /* Force user type integer */
-  Integer typebuf =(*type & 32767) | MSGCHR;
+  long length, nread=32768, len_nread=sizeof(long);
+  long typenr = (*type & 32767) | MSGINT;   /* Force user type integer */
+  long typebuf =(*type & 32767) | MSGCHR;
 
   if (!(buffer = malloc((unsigned) nread)))
     Error("pfilecopy: failed to allocate the I/O buffer",nread);
@@ -81,7 +81,7 @@ void FATR PFILECOPY_(type, node0, filename)
       if (nread) {
 	BRDCST_(&typebuf, buffer, &nread, node0);
 	typebuf++;
-	if (nread != (Integer)fwrite(buffer, 1, (int) nread, file))
+	if (nread != (long)fwrite(buffer, 1, (int) nread, file))
 	  Error("pfilecopy: error data to duplicate file", nread);
       }
     }
@@ -118,8 +118,8 @@ struct char_desc {
 
 #ifdef ARDENT
 void PFCOPY_(type, node0, arg)
-     Integer *type;
-     Integer *node0;
+     long *type;
+     long *node0;
      struct char_desc *arg;
 {
   char *fname = arg->string;
@@ -127,8 +127,8 @@ void PFCOPY_(type, node0, arg)
 #endif
 #if defined(CRAY) || defined(WIN32)
 void FATR PFCOPY_(type, node0, arg)
-     Integer *type;
-     Integer *node0;
+     long *type;
+     long *node0;
      _fcd arg;
 {
   char *fname = _fcdtocp(arg);
@@ -136,8 +136,8 @@ void FATR PFCOPY_(type, node0, arg)
 #endif
 #if !defined(ARDENT) && !defined(CRAY) && !defined(WIN32)
 void FATR PFCOPY_(type, node0, fname, len)
-  Integer *type;
-  Integer *node0;
+  long *type;
+  long *node0;
   char *fname;
   int   len;
 {
@@ -157,7 +157,7 @@ void FATR PFCOPY_(type, node0, fname, len)
   while ((len > 0) && (fname[len-1] == ' '))
     len--;
   if (len <= 0)
-    Error("pfcopy_: file name length is toast", (Integer) len);
+    Error("pfcopy_: file name length is toast", (long) len);
 
   /* Generate a NULL terminated string */
 
@@ -167,7 +167,7 @@ void FATR PFCOPY_(type, node0, fname, len)
     filename[len] = '\0';
   }
   else
-    Error("PFCOPY_: failed to malloc space for filename", (Integer) len);
+    Error("PFCOPY_: failed to malloc space for filename", (long) len);
 
   /* Now call the C routine to do the work */
 

@@ -5,11 +5,11 @@
 #define MAX_Q_LEN 1024         /* Maximum no. of outstanding messages */
 static struct msg_q_struct{
   MPI_Request request;
-  Integer         node;
-  Integer         type;
-  Integer         lenbuf;
-  Integer         snd;
-  Integer         from;
+  long         node;
+  long         type;
+  long         lenbuf;
+  long         snd;
+  long         from;
 } msg_q[MAX_Q_LEN];
 
 static int n_in_msg_q=0;
@@ -18,11 +18,11 @@ static int n_in_msg_q=0;
 
 
 void FATR SND_(type, buf, lenbuf, node, sync)
-     Integer  *type;
+     long  *type;
      Void *buf;
-     Integer  *lenbuf;
-     Integer  *node;
-     Integer  *sync;
+     long  *lenbuf;
+     long  *node;
+     long  *sync;
 {
 int ierr;
 int ttype = (int)*type;
@@ -55,13 +55,13 @@ int ttype = (int)*type;
 
 
 void FATR RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
-     Integer  *type;
+     long  *type;
      Void *buf;
-     Integer  *lenbuf;
-     Integer  *lenmes;
-     Integer  *nodeselect;
-     Integer  *nodefrom;
-     Integer  *sync;
+     long  *lenbuf;
+     long  *lenmes;
+     long  *nodeselect;
+     long  *nodefrom;
+     long  *sync;
 {
 int ierr;
 int node, count = (int)*lenbuf;
@@ -104,14 +104,14 @@ MPI_Request request;
       tcgmsg_test_statusM("RCV_:", ierr);
       ierr = MPI_Get_count(&status, MPI_CHAR, &count);
       tcgmsg_test_statusM("RCV:Get_count:", ierr);
-      *nodefrom = (Integer)status.MPI_SOURCE; 
-      *lenmes   = (Integer)count;
+      *nodefrom = (long)status.MPI_SOURCE; 
+      *lenmes   = (long)count;
     }
 }
 
 /* ignores nodesel !! */
 void FATR WAITCOM_(nodesel)
-     Integer *nodesel;
+     long *nodesel;
 {
 int ierr, i;
 MPI_Status status;
@@ -130,9 +130,9 @@ MPI_Status status;
 
 
 
-Integer FATR PROBE_(type, node)
-    Integer *type;
-    Integer *node;  
+long FATR PROBE_(type, node)
+    long *type;
+    long *node;  
 {
 int flag, source, ierr ;
 MPI_Status status;
