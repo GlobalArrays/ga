@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.52 2002-10-15 03:06:21 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.53 2002-11-26 18:45:30 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -59,8 +59,8 @@
 #include <unistd.h>
 static  size_t pagesize=0;
 static  int logpagesize=0;
-/* allow only that big shared memory segment (in MB) */
-#define MAX_ALLOC_MUNMAP 128
+/* allow only that big shared memory segment (in MB)- incresed from 128 11/02 */
+#define MAX_ALLOC_MUNMAP 368
 #endif
 
 #if defined(SUN)
