@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.64 2003-05-16 21:43:56 edo Exp $ */
+/* $Id: shmem.c,v 1.65 2003-05-20 01:40:17 edo Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -903,6 +903,10 @@ size_t sz = (size_t)size;
        }
 
        if ( (long)( (temp = shmat(id, pref_addr, shmflag))) == -1L){
+          char command[64];
+          CLEANUP_CMD(command);
+          if(system(command) == -1) 
+            printf("Please clean shared memory (id=%d): see man ipcrm\n",id);
           armci_die("allocate: failed to attach to shared region id=",id);
        }
        if(DEBUG_){
