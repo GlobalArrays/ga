@@ -1,4 +1,4 @@
-/* $Id: nxtval.shm.c,v 1.8 2004-04-01 02:23:05 manoj Exp $ */
+/* $Id: nxtval.shm.c,v 1.9 2005-02-21 21:51:40 manoj Exp $ */
 
 #include "tcgmsgP.h"
 long nxtval_counter=0;
@@ -27,27 +27,26 @@ static inline int testandset(int *spinlock)
 }
 
 #elif defined(MACX) && defined(__GNUC__)
-#     define TESTANDSET(x) (! __compare_and_swap((long int *)(x),0,1))
-
-static int __compare_and_swap (long int *p, long int oldval, long int newval)
+#     define TESTANDSET(x) ( krspin_lock((long int *)(x)))
+static int  krspin_lock(long int *p)
 {
-  int ret;
+	unsigned long tmp;
+	int ret;
 
-  __asm__ __volatile__ (  
-           "0:    lwarx %0,0,%1 ;"
-           "      xor. %0,%3,%0;"
-           "      bne 1f;"
-           "      stwcx. %2,0,%1;"
-           "      bne- 0b;"
-           "1:    "
-        : "=&r"(ret)
-        : "r"(p), "r"(newval), "r"(oldval)
-        : "cr0", "memory");
-  /* This version of __compare_and_swap is to be used when acquiring
-     a lock, so we don't need to worry about whether other memory
-     operations have completed, but we do need to be sure that any loads
-     after this point really occur after we have acquired the lock.  */
-  __asm__ __volatile__ ("isync" : : : "memory");
+	__asm__ __volatile__(
+	"b	1f		# spin_lock\n\
+2:	lwzx	%0,0,%1\n\
+	cmpwi	0,%0,0\n\
+	bne+	2b\n\
+1:	lwarx	%0,0,%1\n\
+	cmpwi	0,%0,0\n\
+	bne-	2b\n"
+"	stwcx.	%2,0,%1\n\
+	bne-	2b\n\
+	isync"
+	: "=&r"(tmp)
+	: "r"(p), "r"(1)
+	: "cr0", "memory");
   return ret == 0;
 }
 #endif
@@ -58,7 +57,7 @@ static int __compare_and_swap (long int *p, long int oldval, long int newval)
 
 static void acquire_spinlock(int *mutex)
 {
-int loop=0, maxloop =100;
+int loop=0, maxloop =10;
    while (TESTANDSET(mutex)){
       loop++;
       if(loop==maxloop){ usleep(1); loop=0; }
