@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/statfs.h>
 #include <unistd.h>
 #include <fcntl.h>
 #if defined(PARAGON)
@@ -44,7 +45,6 @@ const struct aiocb   *cb_fout_arr[MAX_AIO_REQ];
 
 static int            aio_req[MAX_AIO_REQ]; /* array for AIO requests */
 static int            first_elio_init = 1;  /* intialization status */
-static int            _elio_Errors_Fatal=1; /* sets mode of handling errors */
 
 /****************************** Internal Macros *****************************/
 #if defined(AIO) || defined(PARAGON)
@@ -72,12 +72,6 @@ static int            _elio_Errors_Fatal=1; /* sets mode of handling errors */
 
 /*****************************************************************************/
 
-
-void elio_errors_fatal(onoff)
-int onoff;
-{
-    _elio_Errors_Fatal = onoff;
-}
  
 
 /*\ Blocking Write - returns number of bytes written or -1 if failed
@@ -88,33 +82,37 @@ Size_t elio_write(fd, offset, buf, bytes)
      Void        *buf;
      Size_t       bytes;
 {
-Size_t stat, bytes_to_write = bytes;
-int    attempt=0;
+  Size_t stat           = -1;
+  Size_t bytes_to_write = bytes;
+  int    attempt        = 0;
 
       PABLO_start( PABLO_elio_write );
 
-      /* lseek error is always fatal */
       if(offset != lseek(fd->fd, offset, SEEK_SET))
-                         ELIO_ABORT("elio_write: seek broken:",0);
+	ELIO_ERR("elio_write: lseek()", NULL, stat);
 
       /* interrupted write should be restarted */
-      do {
-             if(attempt == MAX_ATTEMPTS) 
-                ELIO_ABORT("elio_write: num max attempts exceeded", attempt);
+      do 
+	{
+	  if(attempt == MAX_ATTEMPTS)
+	    ELIO_ERR("elio_write: max attempts exceeded", NULL, stat);
 
-             stat = write(fd->fd, buf, bytes_to_write);
-             if(stat < bytes_to_write && stat >= -1){
-                bytes_to_write -= stat;
-                buf = stat + (char*)buf; /*advance pointer by # bytes written */
-             }else
-                bytes_to_write = 0;
-             attempt++;
-      }while(bytes_to_write && (errno == EINTR || errno == EAGAIN));
+	  stat = write(fd->fd, buf, bytes_to_write);
+	  if(stat < bytes_to_write && stat >= -1)
+	    {
+	      bytes_to_write -= stat;
+	      buf = stat + (char*)buf; /*advance pointer by # bytes written */
+	    }
+	  else
+	    bytes_to_write = 0;
+	  attempt++;
+	}
+      while(bytes_to_write && (errno == EINTR || errno == EAGAIN));
 
       if(stat != -1) stat = bytes -  bytes_to_write;
 
-      if(_elio_Errors_Fatal && stat != bytes) 
-	ELIO_ABORT("elio_write: failed", 0);
+      if(stat != bytes)
+	ELIO_ERR("elio_write: write failed", NULL, stat)
 
       PABLO_end(PABLO_elio_write);
       return(stat);
@@ -157,7 +155,7 @@ int elio_awrite(fd, offset, buf, bytes, req_id)
      Size_t        bytes;
      io_request_t *req_id;
 {
-  Size_t stat;
+  Size_t stat = -1;
   int    aio_i;
 
   PABLO_start(PABLO_elio_awrite);
@@ -175,7 +173,8 @@ int elio_awrite(fd, offset, buf, bytes, req_id)
       elio_set_cb(fd, offset, aio_i, buf, bytes);
 #if defined(PARAGON)
       if(offset != lseek(fd->fd, offset, SEEK_SET))
-        ELIO_ABORT("elio_awrite: seek broken:",0);
+	ELIO_ERR("elio_awrite: lseek()", NULL, stat);
+
       *req_id = _iwrite(fd->fd, buf, bytes);
 
       stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
@@ -188,7 +187,9 @@ int elio_awrite(fd, offset, buf, bytes, req_id)
 #endif
       aio_req[aio_i] = (int) *req_id;
     }
-  if(_elio_Errors_Fatal && stat ==-1) ELIO_ABORT("elio_awrite: failed", aio_i);
+
+  if(stat ==-1) 
+    ELIO_ERR("elio_awrite: awrite failed", NULL, stat);
 
   PABLO_end(PABLO_elio_awrite);
   return(stat);
@@ -204,19 +205,20 @@ off_t        offset;
 Void        *buf;
 Size_t       bytes;
 {
-Size_t stat, bytes_to_read = bytes;
+Size_t stat = -1;
+Size_t bytes_to_read = bytes;
 int    attempt=0;
 
   PABLO_start(PABLO_elio_read);
 
       /* lseek error is always fatal */
       if(offset != lseek(fd->fd, offset, SEEK_SET))
-                         ELIO_ABORT("elio_read: seek broken:",0);
+	ELIO_ERR("elio_read: lseek() failed", NULL, stat);
 
       /* interrupted read should be restarted */
       do {
-             if(attempt == MAX_ATTEMPTS) 
-                ELIO_ABORT("elio_read: num max attempts exceeded", attempt);
+             if(attempt == MAX_ATTEMPTS)
+	       ELIO_ERR("elio_read: max attempts exceeded", NULL, stat);
 
              stat = read(fd->fd, buf, bytes_to_read);
              if(stat < bytes_to_read && stat >= -1){
@@ -229,8 +231,8 @@ int    attempt=0;
 
       if(stat != -1) stat = bytes -  bytes_to_read;
 
-      if(_elio_Errors_Fatal && stat != bytes) 
-	ELIO_ABORT("elio_read: failed", 0);
+      if(stat != bytes) 
+	ELIO_ERR("elio_read: read failed", NULL, stat);
 
   PABLO_end(PABLO_elio_read);
   return(stat);
@@ -247,7 +249,7 @@ Void         *buf;
 Size_t        bytes;
 io_request_t *req_id;
 {
-  Size_t stat;
+  Size_t stat = -1;
   int    aio_i;
 
   PABLO_start(PABLO_elio_aread);
@@ -266,7 +268,7 @@ io_request_t *req_id;
       elio_set_cb(fd, offset, aio_i, buf, bytes);
 #if defined(PARAGON)
       if(offset != lseek(fd->fd, offset, SEEK_SET))
-	ELIO_ABORT("elio_aread: seek broken:",0);
+	ELIO_ERR("elio_aread: lseek failed", NULL, stat);
        req_id = _iread(fd->fd, buf, bytes);
 
       stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
@@ -279,7 +281,8 @@ io_request_t *req_id;
 #endif
      aio_req[aio_i] = *req_id;
     }
-  if(_elio_Errors_Fatal && stat ==-1) ELIO_ABORT("elio_aread: failed", 0);
+  if(stat ==-1) 
+    ELIO_ERR("elio_aread: aread failed", NULL, stat);
 
   PABLO_end(PABLO_elio_aread);
   return(stat);
@@ -304,27 +307,28 @@ io_request_t *req_id;
       iowait(*req_id);
 #elif defined(KSR)
       if((int)iosuspend(1, cb_fout_arr+(int)*req_id) ==-1)
-	ELIO_ABORT("elio_wait: suspend error",0);
+	ELIO_ERR("elio_wait: iosuspend failed", NULL, -1);
 #elif defined(AIX)
 
       /* I/O can be interrupted on SP through rcvncall ! */
       do {
            rc =(int)aio_suspend(1, cb_fout_arr+(int)*req_id);
       } while(rc == -1 && errno == EINTR); 
-      if(rc  == -1) ELIO_ABORT("elio_wait:  suspend error",0);
+      if(rc  == -1) 
+	ELIO_ERR("elio_wait: aio_suspend failed", NULL, -1);
 
 #elif defined(AIO)
 
       if((int)aio_suspend(cb_fout_arr+(int)*req_id, 1, NULL) != 0)
-	      ELIO_ABORT("elio_wait: suspend error",0);
+	ELIO_ERR("elio_wait:aio_suspend", NULL, -1);
 
-      /* only on DEC aio_return is required to clean internal data structures */
+    /* only on DEC aio_return is required to clean internal data structures */
       if(aio_return(cb_fout+(int)*req_id) == -1)
-	      ELIO_ABORT("elio_wait: suspend error",0);
+	ELIO_ERR("elio_wait:aio_return", NULL, -1);
 #endif
       while(aio_req[aio_i] != *req_id && aio_i < MAX_AIO_REQ) aio_i++;
       if(aio_i >= MAX_AIO_REQ)
-	ELIO_ABORT("elio_wait: Handle is not in aio_req table", 1);
+	ELIO_ERR("elio_wait: Handle is not in aio_req table", NULL, -1);
       aio_req[aio_i] = NULL_AIO;
       *req_id = ELIO_DONE;
    }
@@ -361,15 +365,14 @@ int          *status;
        switch (errval) {
        case 0:           while(aio_req[aio_i] != *req_id && aio_i < MAX_AIO_REQ) aio_i++;
 			 if(aio_i >= MAX_AIO_REQ)
-			   ELIO_ABORT("elio_probe: id %d not in table", 1);
+			   ELIO_ERR("elio_probe: id not in table", NULL, -1);
 			 *req_id = ELIO_DONE; 
 	                 *status = ELIO_DONE;
 			 aio_req[aio_i] = NULL_AIO;
 			 break;
        case INPROGRESS:  *status = ELIO_PENDING; 
 			 break;
-       default:          ELIO_ABORT("problem in elio_probe",errval);
-			 return ELIO_FAIL;
+       default:          ELIO_ERR("elio_probe", NULL, -1);
        }
    }
    PABLO_end(PABLO_elio_probe);
@@ -381,10 +384,12 @@ int          *status;
 
 /*\ Stat a file (or path) to determine it's filesystem type
 \*/
-int  elio_stat(fname)
+int  elio_stat(fname, avail)
 char *fname;
+Size_t *avail;
 {
   struct  stat     ufs_stat;
+  struct  statfs   ufs_statfs;
   char             tmp_pathname[ELIO_FILENAME_MAX];
   int              i;
   int              ret_fs = -1;
@@ -419,7 +424,7 @@ char *fname;
 #if defined(PARAGON)
    bufsz = sizeof(struct statpfs) + SDIRS_INIT_SIZE;
    if( (statpfsbuf = (struct statpfs *) malloc(bufsz)) == NULL)
-     ELIO_ABORT("elio_stat: Unable to malloc struct statpfs\n", 1);
+     ELIO_ERR("elio_stat: unable to malloc statpfsbuf", tmp_pathname, -1);
    if(statpfs(tmp_pathname, &estatbuf, statpfsbuf, bufsz) == 0)
      {
        if(estatbuf.f_type == MOUNT_PFS)
@@ -427,10 +432,12 @@ char *fname;
        else if(estatbuf.f_type == MOUNT_UFS || estatbuf.f_type == MOUNT_NFS)
          ret_fs = FS_UFS;
        else
-          ELIO_ABORT("elio_stat: Able to stat, Unable to determine filesystem type\n", 1);
+	 ELIO_ERR("elio_stat: stat ok, Unable to determine filesystem type", 
+		  tmp_pathname, -1);
+       *avail = estatbuf.f_bavail * 1024;   /* blocks avail -- block == 1KB */
      }
    else
-     ELIO_ABORT("elio_stat: Unable to to stat path.\n",1);
+     ELIO_ERR("elio_stat: Unable to to stat path.", tmp_pathname, -1);
    free(statpfsbuf);
 #else
 #  if defined(SP) || defined(SP1)
@@ -441,9 +448,26 @@ char *fname;
    if(ret_fs == -1)
      {
        if(stat(tmp_pathname, &ufs_stat) != 0)
-	 ELIO_ABORT("elio_stat: Not able to stat UFS filesystem\n", 1)
+	 ELIO_ERR("elio_stat: Not able to stat UFS filesystem", 
+		  tmp_pathname, -1)
 	   else
 	     ret_fs = FS_UFS;
+/* SGI requires two additional arguments to statfs so as the structure grows
+   in future OS revisions, old binaries continues to work.
+*/
+#if defined(SGITFP) || defined(CRAY)
+       if(statfs(tmp_pathname, &ufs_statfs, sizeof(ufs_statfs), 0) != 0)
+#else
+       if(statfs(tmp_pathname, &ufs_statfs) != 0)
+#endif
+	 ELIO_ERR("elio_stat: Not able to statfs UFS filesystem",
+		  tmp_pathname, -1)
+           else
+#if defined(SGITFP) || defined(CRAY) /* f_bfree == f_bavail -- naming changes */
+	     *avail = ufs_statfs.f_bsize * ufs_statfs.f_bfree;
+#else
+	     *avail = ufs_statfs.f_bsize * ufs_statfs.f_bavail;
+#endif
      }
 #endif
 #if defined(DEBUG)
@@ -464,6 +488,7 @@ int   type;
 {
   Fd_t fd;
   int ptype;
+  Size_t avail;
 
   PABLO_start(PABLO_elio_open);
   if(first_elio_init) elio_init();
@@ -475,18 +500,18 @@ int   type;
                    break;
      case ELIO_RW: ptype = O_CREAT | O_RDWR;
                    break;
-     default:      ELIO_ABORT("elio_open: mode incorrect", 0);
+     default:      ELIO_ERR("elio_open: mode incorrect", fname, (Fd_t) -1);
    }
 
 
    if( (fd = (Fd_t) malloc(sizeof(fd_struct)) ) == NULL)
-     ELIO_ABORT("elio_open: Unable to malloc Fd_t structure\n", 1);
+     ELIO_ERR("elio_open: Unable to malloc Fd_t structure", fname, (Fd_t) -1);
 
-   fd->fs = elio_stat(fname);
+   fd->fs = elio_stat(fname, &avail);
    fd->fd = open(fname, ptype, FOPEN_MODE );
 
-   if(_elio_Errors_Fatal && (int)fd->fd == -1)
-     ELIO_ABORT("elio_open failed",0);
+   if((int)fd->fd == -1)
+     ELIO_ERR("elio_open: open failed", fname, (Fd_t) -1);
 
    PABLO_end(PABLO_elio_open);
    return(fd);
@@ -502,6 +527,7 @@ char* fname;
 int   type;
 {
   Fd_t fd;
+  Size_t avail;
 
   PABLO_start(PABLO_elio_gopen);
 
@@ -518,23 +544,25 @@ int   type;
                       break;
         case ELIO_RW: ptype = O_CREAT | O_RDWR;
                       break;
-        default:      ELIO_ABORT("elio_open: mode incorrect", 0);
+        default:      ELIO_ERR("elio_gopen: mode incorrect", fname, -1);
       }
 
      if( (fd = (Fd_t) malloc(sizeof(fd_struct)) ) == NULL)
-       ELIO_ABORT("elio_open: Unable to malloc Fd_t structure\n", 1);
+       ELIO_ERR("elio_gopen: Unable to malloc Fd_t structure\n", fname, -1);
 
-     fd->fs = elio_stat(fname);
+     fd->fs = elio_stat(fname, &avail);
      fd->fd = gopen(fname, ptype, M_ASYNC, FOPEN_MODE );
    }
 
-   if(_elio_Errors_Fatal && (int)fd->fd == -1)ELIO_ABORT("elio_gopen failed",0);
+   if( (int)fd->fd == -1)
+     ELIO_ERR("elio_gopen: gopen failed",(Fd_t) -1);
 #else
-      ELIO_ABORT("elio_gopen: Collective open only supported on Paragon",0);
+      ELIO_ERR("elio_gopen: Collective open only supported on Paragon", 
+	       fname, (Fd_t) -1);
 #  endif
 
-   if(_elio_Errors_Fatal && (int)fd->fd == -1)
-     ELIO_ABORT("elio_gopen failed",0);
+   if((int)fd->fd == -1)
+     ELIO_ERR("elio_gopen: gopen failed", fname, (Fd_t) -1);
 
    PABLO_end(PABLO_elio_gopen);
    return(fd);
@@ -543,17 +571,18 @@ int   type;
 
 /*\ Close File
 \*/
-void elio_close(fd)
+int elio_close(fd)
 Fd_t fd;
 {
    PABLO_start(PABLO_elio_close);
 
    /* if close fails, it must be a fatal error */
-   if(close(fd->fd)==-1) 
-     ELIO_ABORT("elio_close failed:",0);
+   if((int) close(fd->fd)==-1) 
+     ELIO_ERR("elio_close: close failed", NULL, -1);
    free(fd);
 
    PABLO_end(PABLO_elio_close);
+   return(ELIO_OK);
 }
 
 
@@ -567,8 +596,8 @@ char  *filename;
    PABLO_start(PABLO_elio_delete);
 
     rc = unlink(filename);
-    if(_elio_Errors_Fatal && rc ==-1) 
-      ELIO_ABORT("elio_delete failed",0);
+    if(rc ==-1) 
+      ELIO_ERR("elio_delete: unlink failed", filename, rc);
 
     PABLO_end(PABLO_elio_delete);
     return(rc);
@@ -595,3 +624,14 @@ void elio_init()
 }
 
 
+
+/*\ Error handling routine
+\*/
+void elio_err(char *func, char *fname)
+{
+  fprintf(stderr, "ELIO: Error in routine %s", func);
+  if(fname != NULL)
+    fprintf(stderr, " on file: |%s|", fname);
+  perror("\nELIO: ");
+}
+ 

@@ -46,9 +46,10 @@ extern int    elio_probe    _ARGS_((io_request_t *id, int* status));
 extern int    elio_delete   _ARGS_((char *filename));
 extern Fd_t   elio_open     _ARGS_((char *fname, int type));
 extern Fd_t   elio_gopen    _ARGS_((char *fname, int type));
-extern void   elio_close    _ARGS_((Fd_t fd));
-extern int    elio_stat     _ARGS_((char *fname));
+extern int    elio_close    _ARGS_((Fd_t fd));
+extern int    elio_stat     _ARGS_((char *fname, Size_t *avail));
        void   elio_init     _ARGS_(());
+       void   elio_err      _ARGS_((char *func, char *fname));
 
 #undef _ARGS_
 
@@ -80,9 +81,18 @@ extern void fflush();
   perror("elio failed:");\
   exit(val); \
 }
+
+
 #endif
 
 #define ELIO_ABORT(msg, val) PRINT_AND_ABORT(msg, val)
+
+
+#define ELIO_ERR(_func, _fname, _code) \
+{ \
+    elio_err(_func, _fname); \
+    return( _code ); \
+}
 
 /************** this stuff is exported because EAF uses it **************/
 #define ELIO_FILENAME_MAX 1024
