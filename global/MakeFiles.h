@@ -38,7 +38,7 @@ GA_OBJ = $(GA_CORE) $(GA_SYNC) $(GA_HANDLER)
 #                  Linear Algebra
 #
 GA_ALG_BLAS = global.alg.o ga_dgemm.o ga_symmetrize.o ga_diag_seq.o rsg.o\
-              rs-mod.o ga_solve_seq.o ga_transpose.o ga_cholesky.o 
+              rs-mod.o ga_solve_seq.o ga_transpose.o ga_cholesky.o ga_dgemm_seq.o
 #
 ifeq ($(DIAG),PAR)
      GA_ALG_DIAG = ga_diag.o rsg.o
