@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.2 1994-04-04 22:04:23 d3g681 Exp $
+ * $Id: ma.c,v 1.3 1994-05-27 02:05:38 d3g681 Exp $
  */
 
 /*
@@ -2430,7 +2430,7 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
     balloc_before(&ar, ma_sp, &client_space, &nbytes);
 
     new_sp = ma_sp - nbytes;
-    if (new_sp < ma_hp)
+    if ((ma_sp - ma_hp) < nbytes)
     {
         (void)sprintf(ma_ebuf,
             "block '%s', not enough space to allocate %lu bytes",
