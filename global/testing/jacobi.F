@@ -5,7 +5,7 @@
 *     J.N., 06.01.94, works with GA 1.2
 *
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
       integer heap, stack
       data heap,stack /2*40000/
@@ -27,7 +27,7 @@ c
 
       subroutine iterate()
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
       integer m                               ! grid size
       integer g_u, g_ux, g_diff               ! handles to global arrays
@@ -169,7 +169,7 @@ c
       subroutine jacinit(m, S, W, C, N, E, D, ldd, ux,
      &                   ilo, ihi, jlo, jhi, ldu )
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
       double precision S, W, C, N, E, temp
       integer ilo, ihi, jlo, jhi, ldu, ldd, i, j

@@ -1,6 +1,6 @@
       subroutine ga_lu_solve(trans,g_a, g_b)
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "slface.fh"
 c

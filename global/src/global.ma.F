@@ -7,7 +7,7 @@ c..................................................................
 c
        subroutine ma__base_address(type, address)
        implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
        Integer type
        Double Precision address
        External ma__get_ptr
@@ -33,7 +33,7 @@ c
 
        integer function ma__sizeof(type)
        implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
        integer ma__diff
        Integer type
        if(type .eq. MT_DBL)then

@@ -6,7 +6,7 @@ c
 c     J. Nieplocha 05.17.94
 c
       implicit none
-#include "mafdecls.h" 
+#include "mafdecls.fh" 
 #include "global.fh"
       integer g_a, g_b               ! g_b = trans(g_a) 
 c

@@ -1,6 +1,6 @@
       program test
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
 c     
@@ -30,7 +30,7 @@ c-----------------
 
       subroutine testit()
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
 c     

@@ -3,7 +3,7 @@ c***
 c***  Last modification: Fri Jan 13 12:13:27 PST 1995
 c***
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
       integer heap
 c     
@@ -30,7 +30,7 @@ c-----------------
 
       subroutine testit()
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
 c     

@@ -1,6 +1,6 @@
       subroutine ga_diag_seq(g_a, g_s, g_v, evals)
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
       integer g_a               ! Matrix to diagonalize
@@ -91,7 +91,7 @@ c
 c
       subroutine ga_diag_std_seq(g_a,  g_v, evals)
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
       integer g_a               ! Matrix to diagonalize

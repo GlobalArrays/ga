@@ -1,6 +1,6 @@
       subroutine ga_lu_solve_seq(trans,g_a, g_b)
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 c
       character trans           ! transpose or not  

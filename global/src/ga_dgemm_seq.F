@@ -1,7 +1,7 @@
       subroutine ga_dgemm_seq(transa, transb, m, n, k, alpha, g_a, g_b, 
      $     beta, g_c )
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
       character*1        transa, transb
       integer            m, n, k

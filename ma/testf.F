@@ -1,5 +1,5 @@
 c
-c     $Id: testf.F,v 1.3 1994-10-07 19:41:35 d3g681 Exp $
+c     $Id: testf.F,v 1.4 1995-10-17 08:54:09 d3g681 Exp $
 c
 
 c
@@ -22,7 +22,7 @@ c
       integer index2
       logical value
 
-#include "mafdecls.h"
+#include "mafdecls.fh"
 
 c     ok
       write (*,*) 'start testing MA_set_error_print ...'

@@ -1,5 +1,5 @@
 c
-c     $Id: maf.F,v 1.3 1994-10-07 19:41:27 d3g681 Exp $
+c     $Id: maf.F,v 1.4 1995-10-17 08:54:08 d3g681 Exp $
 c
 
 c
@@ -20,7 +20,7 @@ c     --------------------------------------------------------------- c
       implicit none
 
 #include "f2c.h"
-#include "mafdecls.h"
+#include "mafdecls.fh"
 
       ma_set_sizes = 0
 

@@ -1,4 +1,4 @@
-/*$Id: xregion0.c,v 1.2 1995-02-02 23:12:59 d3g681 Exp $*/
+/*$Id: xregion0.c,v 1.3 1995-10-17 08:53:23 d3g681 Exp $*/
 /*
  * A visualization program for GAs
  *
@@ -49,7 +49,7 @@ static  long oldslowdown = INITSLOW;
 
 static  unsigned long int cur_time=0; /* current time */
 
-static  Dimension frame_size;
+static  Dimension frame_size_i, frame_size_j;
 static  Arg arg[25]; 
 static  Display *display;
 static  Window window, window_map;
@@ -68,9 +68,9 @@ static  char interval_string[10], slowdown_string[10];
 static u_char cmap[MAX_COL+1];
 Colormap colormap;
 
-static int grid_size;		/* The size of the grid */
+static int grid_size_i, grid_size_j; /* The size of the grid */
 static int scale;		/* No. of pixels per element */
-static int pict_size;		/* The size of the piture = grid_size*scale */
+static int pict_size_i, pict_size_j; /* The size of the piture = grid_size*scale */
 
 static  u_char *grid;
 
@@ -119,11 +119,11 @@ void UpdatePixRegion(ilo, ihi, jlo, jhi, increment, time)
   for (i=ilo; i<=ihi; i++)
     for (j=jlo; j<=jhi; j++) {
 
-      to   = pict + (i*pict_size + j)*scale;
-      from = grid + (i*grid_size + j);
-      pflag = flag + (i*grid_size + j);
-      pintegr = integr + (i*grid_size + j);
-      pltime  = ltime  + (i*grid_size + j);
+      to   = pict + (i*pict_size_j + j)*scale;
+      from = grid + (i*grid_size_j + j);
+      pflag = flag + (i*grid_size_j + j);
+      pintegr = integr + (i*grid_size_j + j);
+      pltime  = ltime  + (i*grid_size_j + j);
 
       /* increment == 0 means animation is done and displaying integrals */
 
@@ -159,7 +159,7 @@ void UpdatePixRegion(ilo, ihi, jlo, jhi, increment, time)
       
       value     = cmap[index];
 
-      for (k=0, tempk=to; k<scale; k++, tempk+=pict_size)
+      for (k=0, tempk=to; k<scale; k++, tempk+=pict_size_j)
 	for (l=0, tempkl=tempk; l<scale; l++, tempkl++)
 	  *tempkl = value;
     }
@@ -178,7 +178,7 @@ double IntegralSum( ilo, ihi, jlo, jhi)
   for (i=ilo; i<=ihi; i++)
     for (j=jlo; j<=jhi; j++) {
 
-      pintegr = integr + (i*grid_size + j);
+      pintegr = integr + (i*grid_size_j + j);
       sum += *pintegr;
     }
   return(sum);
@@ -367,7 +367,7 @@ void DrawColorMap()
 {
 /* Actually fill in the colors */
 int i, black=1;
-unsigned width= 20, height = pict_size/MAX_COL;
+unsigned width= 20, height = pict_size_i/MAX_COL;
 int x, y, length,index;
 XColor color;
 
@@ -386,7 +386,7 @@ void PrintColorMapText()
 {
 /* Print Legend numbers */
 int i, black=1;
-unsigned width= 20, height = pict_size/MAX_COL;
+unsigned width= 20, height = pict_size_i/MAX_COL;
 int x, y, length;
 char string[9];
 XColor color;
@@ -461,7 +461,7 @@ Window W;
   n = 0;
   (void) sprintf(string, "max value = %8.5f", maxval);
   XtSetArg(arg[n], XtNx, 10); n++;
-  XtSetArg(arg[n], XtNwidth, frame_size); n++;
+  XtSetArg(arg[n], XtNwidth, frame_size_j); n++;
   XtSetArg(arg[n], XtNvertDistance, 2); n++;
   XtSetArg(arg[n], XtNfromVert, title_widget); n++;
   /*  XtSetArg(arg[n], XtNhorizDistance,90 ); n++;
@@ -530,12 +530,13 @@ int base, stime;
 
         animation = False;
         printf("\nEnd of Event Animation ...\n");
-        UpdatePixRegion(0, grid_size-1, 0, grid_size-1,  0, 0.0);
-        DisplayPixRegion( 0, grid_size-1, 0, grid_size-1);
+        UpdatePixRegion(0, grid_size_i-1, 0, grid_size_j-1,  0, 0.0);
+        DisplayPixRegion( 0, grid_size_i-1, 0, grid_size_j-1);
         UpdateDisplay();
 
         if(DEBUG){
-            for(inc=0;inc<grid_size*grid_size;inc++)printf("%f\n",integr[inc]);
+            for(inc=0;inc<grid_size_j*grid_size_i;inc++)
+		printf("%f\n",integr[inc]);
             printf("Intialized or computed max integral value = %f\n",maxval); 
         }
     }  
@@ -562,7 +563,7 @@ void Exposed(widget, data, event)
 
   DrawColorMap();
   PrintColorMapText();
-  DisplayPixRegion(0, grid_size-1, 0, grid_size-1);
+  DisplayPixRegion(0, grid_size_i-1, 0, grid_size_j-1);
   XFlush(display);
 }  
 
@@ -757,21 +758,24 @@ int main(argc, argv)
 
   if(argn <5 ){
     printf("Usage:\n");
-    printf("xregion <grid_size> <scale> <filename> <num_events> [max_integr]\
+    printf("xregion <grid_size_i> <grid_size_j> <scale> <filename> <num_events> [max_integr]\
     [Xtoolkit options]\n ");
     exit(1);
   }
-  sscanf(argv[1],"%d", &grid_size);
-  sscanf(argv[2],"%d", &scale);
-  sscanf(argv[3],"%s", filename);
-  sscanf(argv[4],"%d", &num_events);
-  if(argn>5)sscanf(argv[6],"%d",&maxval);
+  sscanf(argv[1],"%d", &grid_size_i);
+  sscanf(argv[2],"%d", &grid_size_j);
+  sscanf(argv[3],"%d", &scale);
+  sscanf(argv[4],"%s", filename);
+  sscanf(argv[5],"%d", &num_events);
+/*  if(argn>6)sscanf(argv[6],"%d",&maxval); */
   
   ReadEventFile(filename);
 
-  pict_size = grid_size * scale;
+  pict_size_i = grid_size_i * scale;
+  pict_size_j = grid_size_j * scale;
 
-  frame_size = MAX(pict_size, 512);
+  frame_size_i = MAX(pict_size_i, 512);
+  frame_size_j = MAX(pict_size_j, 512);
 
   /* Create top level shell widget */
   
@@ -790,7 +794,7 @@ int main(argc, argv)
   n = 0;
   XtSetArg(arg[n], XtNx, 10); n++;
   XtSetArg(arg[n], XtNy, 10); n++;
-  XtSetArg(arg[n], XtNwidth, frame_size); n++;
+  XtSetArg(arg[n], XtNwidth, frame_size_j); n++;
   XtSetArg(arg[n], XtNlabel, title); n++;
   XtSetArg(arg[n], XtNborderWidth, (Dimension) 0); n++;
   title_widget = XtCreateManagedWidget("title", labelWidgetClass,
@@ -884,8 +888,8 @@ int main(argc, argv)
   /* Now add the actual canvas ... pict_size square pixels*/
 
   n=0;
-  XtSetArg(arg[n],XtNheight, pict_size); n++;
-  XtSetArg(arg[n],XtNwidth,  pict_size); n++;
+  XtSetArg(arg[n],XtNheight, pict_size_i); n++;
+  XtSetArg(arg[n],XtNwidth,  pict_size_j); n++;
   XtSetArg(arg[n], XtNvertDistance, 10); n++;
   XtSetArg(arg[n], XtNfromVert, start_stop_button); n++;
   canvas_widget = XtCreateManagedWidget("canvas", compositeWidgetClass,
@@ -898,7 +902,7 @@ int main(argc, argv)
   /* Now add the color scale ... pict_size square pixels*/
 
   n=0;
-  XtSetArg(arg[n],XtNheight, pict_size); n++;
+  XtSetArg(arg[n],XtNheight, pict_size_i); n++;
   XtSetArg(arg[n],XtNwidth,  80); n++;
   XtSetArg(arg[n], XtNvertDistance, 10); n++;
   XtSetArg(arg[n], XtNfromVert, start_stop_button); n++;
@@ -941,40 +945,40 @@ int main(argc, argv)
 
   /* Make image to match the size of our canvas */
 
-  pict  = (u_char *) malloc((unsigned) (pict_size*pict_size));
+  pict  = (u_char *) malloc((unsigned) (pict_size_i*pict_size_j));
   image = XCreateImage(display, visual, depth, ZPixmap, 0,
-		       pict, pict_size, pict_size, 8, 0);
+		       pict, pict_size_i, pict_size_j, 8, 0);
 
 
   /* Make the byte array which will hold the access data */
 
-  if (!(grid = (u_char *) malloc((unsigned) (grid_size*grid_size))))
+  if (!(grid = (u_char *) malloc((unsigned) (grid_size_i*grid_size_j))))
       Error("failed to allocate grid", -1);
-  bzero((char *) grid, grid_size*grid_size);
+  bzero((char *) grid, grid_size_i*grid_size_j);
 
   /* Make the byte array which will hold the access flag */
 
-  if (!(flag = (u_char *) malloc((unsigned) (grid_size*grid_size))))
+  if (!(flag = (u_char *) malloc((unsigned) (grid_size_i*grid_size_j))))
       Error("failed to allocate flag", -1);
-  bzero((char *) flag, grid_size*grid_size);
+  bzero((char *) flag, grid_size_i*grid_size_j);
 
 
 
   /* Make the array which will hold the integral */
 
-  if (!(integr = (double *) malloc(sizeof(double)*(grid_size*grid_size))))
+  if (!(integr = (double *) malloc(sizeof(double)*(grid_size_i*grid_size_i))))
       Error("failed to allocate integr", -1);
 
 
   /* Make the array which will hold the last access time */
 
-  if (!(ltime = (double *) malloc(sizeof(double)*(grid_size*grid_size))))
+  if (!(ltime = (double *) malloc(sizeof(double)*(grid_size_i*grid_size_j))))
       Error("failed to allocate ltime", -1);
 
-  for(i=0; i<grid_size*grid_size; i++, *ltime=0.,  *integr = 0.0);
+  for(i=0; i<grid_size_i*grid_size_j; i++, *ltime=0.,  *integr = 0.0);
 
   /* clear the array display */
-  UpdatePixRegion(0, grid_size-1, 0, grid_size-1, 0,0.);
+  UpdatePixRegion(0, grid_size_i-1, 0, grid_size_j-1, 0,0.);
 
   /* Enter the event loop */
 

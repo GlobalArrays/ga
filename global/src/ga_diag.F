@@ -1,7 +1,7 @@
       subroutine ga_diag_std(g_a, g_v, eval)
-C$Id: ga_diag.F,v 1.17 1995-10-11 23:08:57 d3h325 Exp $
+C$Id: ga_diag.F,v 1.18 1995-10-17 08:53:34 d3g681 Exp $
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
 #include "diag.fh"
@@ -293,7 +293,7 @@ c
 
       subroutine ga_diag(g_a, g_s, g_v, eval)
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
 #include "diag.fh"
@@ -593,7 +593,7 @@ c
 c
       subroutine ga_diag_reuse(reuse,g_a, g_s, g_v, eval)
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
 #include "diag.fh"

@@ -1,6 +1,6 @@
       program test
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
@@ -75,7 +75,7 @@ c
 
       subroutine check_dbl()
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
 c     
@@ -559,7 +559,7 @@ c
 
       subroutine check_int()
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
 c     
@@ -882,7 +882,7 @@ c
       subroutine check_mem(mem_size)
       implicit none
       integer mem_size
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
 c

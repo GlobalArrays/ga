@@ -3,7 +3,7 @@ c
 c     Cholesky factorization G&VL: alg. 6.6.1
 c
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
       integer g_a

@@ -6,7 +6,7 @@ c
 c     J. Nieplocha 08.22.93
 c
       implicit none
-#include "mafdecls.h" 
+#include "mafdecls.fh" 
 #include "global.fh"
       integer g_a               ! Matrix to symmetrize 
 c

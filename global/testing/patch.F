@@ -6,7 +6,7 @@
 c
 c
       program test
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
       logical status
@@ -29,7 +29,7 @@ c
 
       subroutine patch_test()
       implicit none
-#include "mafdecls.h"
+#include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
 c
