@@ -13,9 +13,16 @@ ifeq ($(MACHINE),CRAY-T3D)
 
 all:	everything
 else
+ifeq ($(MACHINE),CRAY-T3E)
+  SUBDIRS = ipcv5.0 
+  VERSION = 5.0
+
+all:	everything
+else
 all:	machdep everything
   SUBDIRS = ipcv4.0 examples
   VERSION = 4.04
+endif
 endif
 
 
