@@ -108,7 +108,7 @@ ifeq ($(TARGET),PARAGON)
      COPT_REN = -Knoieee -nx
 GLOB_INCLUDES = -I. -I../../ma
  GLOB_DEFINES = -DPARAGON -DNX -DIPSC -DNO_BCOPY
-    EXPLICITF = TRUE
+    EXPLICITF = FALSE
 endif
  
 #.............................. SP1 .........................................
