@@ -1,5 +1,5 @@
-c $Id: patch.F,v 1.21 2002-10-15 23:35:52 vinod Exp $
-#if defined(CRAY) || defined(KSR)
+C $iD: PATch.F,v 1.21 2002/10/15 23:35:52 vinod Exp $
+#if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else
@@ -35,7 +35,7 @@ c
          call ffflush(6)
       endif
 c
-      status = ma_init(MT_DBL, 50000, 90000/ga_nnodes())
+      status = ma_init(MT_DBL, 500000, 900000/ga_nnodes())
       if (.not. status)call ga_error( 'ma_init failed', -1)
       if(ga_nodeid().eq.0)then
          print *,' '
