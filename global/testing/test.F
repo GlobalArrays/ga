@@ -112,9 +112,7 @@ c     call setdbg(1)
          call ffflush(6)
          call ga_error('... exiting ',0)
       endif
-*     call ga_distribution(g_a,me,ilo, ihi, jlo, jhi)
-*     print *,me, ilo, ihi, jlo, jhi
-*     call ffflush(6)
+      call ga_distribution(g_a,me,ilo, ihi, jlo, jhi)
       call ga_sync()
 c     
 c     Zero the array
@@ -179,6 +177,7 @@ c
 c     All nodes check all of a
 c
       call dfill(n*n, 0.0d0, b, 1)
+c     call ga_print(g_a,1)
       call ga_get(g_a, 1, n, 1, n, b, n)
 *      write(6,*) ' after get'
 *      call output(b, 1, n, 1, n, n, n, 1)
@@ -479,7 +478,7 @@ c
            iv(loop) = ilo
            jv(loop) = jlo
          enddo 
-         call ga_dgather(g_a, v, iv, jv, m)
+         call ga_gather(g_a, v, iv, jv, m)
          do loop = 1,m
            ilo= iv(loop)
            jlo= jv(loop)
@@ -513,8 +512,7 @@ c
 c          v(loop) = DSIN(a(ilo,jlo)+b(ilo,jlo)) 
            v(loop) = 1d0 *(ilo+jlo)
          enddo 
-         call ga_dscatter(g_a, v, iv, jv, m)
-c        call ga_dgather(g_a, v, iv, jv, m)
+         call ga_scatter(g_a, v, iv, jv, m)
          do loop = 1,m
            ilo= iv(loop)
            jlo= jv(loop) 

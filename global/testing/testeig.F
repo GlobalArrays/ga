@@ -249,7 +249,7 @@ c
       call ga_dgemm('n','n',n,n,n, 1d0, g_a, g_c, 0d0, g_d) ! d := a*c
 c
 c
-      if (me .eq. 0) call ga_dscatter(g_b, evals, index, ind, n)
+      if (me .eq. 0) call ga_scatter(g_b, evals, index, ind, n)
 
       call ga_sync()
       call ga_dgemm('n','n',n,n,n, 1d0, g_c, g_b, 0d0, g_a) ! a := c*b

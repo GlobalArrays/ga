@@ -1,12 +1,14 @@
 # Global Array library (shared and distributed memory version)
 #
-#      "make ipc.clean"   to create a utility to clean IPC resources 
-#      "make test.x"      to create a test program for GAs 
+#      "make test.x"      to create a test program for GA 
+#      "make patch.x"     to create a test program for GA patch operations
 #      "make testsolve.x" to create a test program for linear equation solver 
 #                         based on LU factorization
 #      "make testeig.x"   to create a test program for GA eigensolver,
 #                         matrix multiply, and symmetrization 
-#      "make patch.x"     to create a test program for GA patch operations
+#      "make perform.x"   to create a program testing performance of GA
+#                         primitives: get, put & accumulate,
+#      "make ipc.clean"   to create a utility to clean IPC resources 
 #      "make clean"       clean
 #      "make realclean"   even cleaner    
 #
@@ -63,11 +65,11 @@ ifeq ($(P_FILE),YES)
     %.x : %.o $(LIBRARY)
 	$(FC) $(FLDOPT) -o $@ $< $(LIBS) $(LIBCOM) 
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
-	$(INSTALL) $@ 
+	$(INSTALL)
 else
     %.x : %.o $(LIBRARY)
 	$(FC) $(FLDOPT) -o $@ $< $(LIBS) $(LIBCOM) 
-	$(INSTALL) $@ 
+	$(INSTALL)
 endif
 
 

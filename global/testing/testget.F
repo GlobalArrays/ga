@@ -7,19 +7,16 @@ c***
 #include "global.fh"
       integer heap
 c     
-c     Intitialize the TCGMSG package
+c***  Intitialize the TCGMSG package
 c
-c
-        call pbeginf
-c       call setdbg(1)            ! Turn TCGMSG debugging on/off
+      call pbeginf
 c
 c     Initialize the MA package
 c
       heap = 200000
-      if (.not. ma_init(MT_DBL, heap,heap))
-     $     call parerr(1)
+      if (.not. ma_init(MT_DBL, heap,heap)) call parerr(1)
 c
-c     Intitialize the GA package
+c***  Intitialize the GA package
 c
       call ga_initialize()
       if(ga_nnodes().ne.4)
@@ -40,188 +37,184 @@ c-----------------
 #include "global.fh"
 #include "tcgmsg.fh"
 c     
-c     not for the KSR
 c
-      integer n, nn
-      parameter (n = 2*352, nn = n*n)
-c     parameter (n = 60, nn = n*n)
-c     parameter (n = 40, nn = n*n)
-      double precisiON a(n),  buf(nn)
-c     double precision a(n,n), b(n,n), c(n,n)
-      integer g_a,g_b
-      integer  i, j
-      integer  ilo, ihi, jlo, jhi, ii0, ii1, jj0, jj1, bytes
-      integer nproc, me
-      integer loop, k,kk, ldb, count
-      double precision tp0, tp1, tg0, tg1, ta0, ta1, rk
+      integer n, nn, num_chunks
+      parameter (n = 710, nn = n*n, num_chunks=12)
+      double precision buf(nn)
+c
+      integer g_a
+      integer ilo, ihi, jlo, jhi
+      integer nproc, me, loop
+      integer chunk(num_chunks)
+      data    chunk /1,3,4,9,16,30,64,91,128,171,256,353/
 c     
       nproc = ga_nnodes()
       me = ga_nodeid()
-
-c     
 c
-c***  Create global arrays
+c***  Create global array
       if (.not. ga_create(MT_DBL, n, n, 'a', 1, 1, g_a))
      $     call ga_error(' ga_create failed ',1)
 c     
-c     
-c***  Fill in arrays A & B
       if (me .eq. 0) then
-         write(6,21)n 
- 21      format(/' preparing input data n=  ',i8)
+         write(6,*)' preparing input data n=  ',n
          call flush(6)
       endif
+      call ga_zero(g_a) 
 c
-c     do j = 1+me, n, nproc 
-c        do i = 1, n
-c           a(i) = 1d0 * (i+j)
-c           if(i.eq.j) then
-c              a(i) = i
-c           endif
-c        enddo
-c
-c        call ga_put(g_a, 1,n, j,j, a(1),n)
-c     enddo
-c
-c
-
-c     this guarantees that everybody touches own data
-c
-      call ga_dfill_patch(g_a, 1, n, 1,n , 1d0*me)
-
-      call ga_sync()
-c****
       if (me .eq. 0) then
         print *,' '
-        print *,'> test of ga_get, ga_put & ga_acc '
+        print *,'> Performance of ga_get, ga_put & ga_acc '
         print *,' '
         call flush(6)
       endif
 c
+      do loop=1,3
 c
-      
-      count = 30 
-      if (me .eq. 0) then
-        print *, 'bytes          get                     put',
-     &           '          acc' 
+c***  local ops
+c
+c     everybody touches own data 
+      call ga_dfill_patch(g_a, 1, n, 1, n , 1d0*me)
+c
+      call ga_distribution(g_a, me, ilo, ihi, jlo, jhi)
+      call TestPutGetAcc
+     &     (g_a, n, chunk, num_chunks, buf, ilo, ihi, jlo, jhi)
+c
+c***  remote ops
+c
+c     everybody touches own data
+      call ga_dfill_patch(g_a, 1, n, 1, n , 1d0*me)
+c
+      call ga_distribution(g_a, nproc-1, ilo, ihi, jlo, jhi)
+      call TestPutGetAcc
+     &     (g_a, n, chunk, num_chunks, buf, ilo, ihi, jlo, jhi)
 
-        do k = 1, count 
-         call ga_distribution(g_a, me, ilo, ihi, jlo, jhi)
-
-         rk = sqrt((1.* k)/count) 
-         ii0 = ilo 
-         ii1 = ii0 + int((ihi -ii0)*rk)
-         jj0 = jlo
-         jj1 = jj0 + int((jhi -jj0)*rk)
-
-         bytes= 8*(ii1-ii0+1)*(jj1-jj0+1)  
-         loop = 1
-         ldb = ii1-ii0+1
-c
-	 call ga_get(g_a, ii0,ii1, jj0, jj1, buf,ldb)
-         tg0 = tcgtime()
-         do kk = 1, loop 
-	    call ga_get(g_a, ii0,ii1, jj0, jj1, buf,ldb)
-         enddo
-         tg1 = tcgtime()
-c
-         tp0 = tcgtime()
-         do kk = 1, loop
-            call ga_put(g_a, ii0,ii1, jj0, jj1, buf,ldb)
-         enddo
-         tp1 = tcgtime()
-c
-         ta0 = tcgtime()
-         do kk = 1, loop
-            call ga_acc(g_a, ii0,ii1, jj0, jj1, buf,ldb, .999d0)
-         enddo
-         ta1 = tcgtime()
-c
-         write(*,77)bytes,(tg1-tg0)/loop,(tp1-tp0)/loop,(ta1-ta0)/loop 
-         call flush(6)
-        enddo
-      endif
-      call ga_sync()
-
-      if (me .eq. 0) then
-77      format(i9, 3d16.8)
-c
-        print *, ' '
-      endif
-c
-      do k = 1, count
-        
-#ifdef SHMEM
-c        everybody touches own data 
-         call ga_dfill_patch(g_a, 1, n, 1,n , 1d0)
-#endif
-      if (me .eq. 0) then
-         rk = sqrt((1.* k)/count )
-c
-         call ga_distribution(g_a, me+1, ilo, ihi, jlo, jhi)
-
-         ii0 = ilo 
-         ii1 = ii0 + int((ihi -ii0)*rk)
-         jj0 = jlo
-         jj1 = jj0 + int((jhi -jj0)*rk)
-c
-c        ii0 = ihi+1
-c        ii1 = ii0 + int((n -ii0)*rk)
-c        jj0 = jhi+1
-c        jj1 = jj0 + int((n -jj0)*rk)
-c
-
-         bytes= 8*(ii1-ii0+1)*(jj1-jj0+1) 
-c        loop = 20*k
-         loop = 1
-         ldb = ii1-ii0+1
-c
-c        call ga_get(g_a, ii0,ii1, jj0, jj1, buf,ldb)
-         tg0 = tcgtime()
-c         do kk = 1, loop
-            call ga_get(g_a, ii0,ii1, jj0, jj1, buf,ldb)
-c         enddo
-         tg1 = tcgtime()
- 	 call sleep(1)
-c
-         call ga_distribution(g_a, me+3, ilo, ihi, jlo, jhi)
-         ii0 = ilo 
-         ii1 = ii0 + int((ihi -ii0)*rk)
-         jj0 = jlo
-         jj1 = jj0 + int((jhi -jj0)*rk)
-	 if(8*(ii1-ii0+1)*(jj1-jj0+1).ne.bytes)call ga_error('dist',0)
-c
-         tp0 = tcgtime()
-         do kk = 1, loop
-            call ga_put(g_a, ii0,ii1, jj0, jj1, buf,ldb)
-         enddo
-         tp1 = tcgtime()
-c	 call sleep(1)
-c
-         call ga_distribution(g_a, me+2, ilo, ihi, jlo, jhi)
-         ii0 = ilo 
-         ii1 = ii0 + int((ihi -ii0)*rk)
-         jj0 = jlo
-         jj1 = jj0 + int((jhi -jj0)*rk)
-	 if(8*(ii1-ii0+1)*(jj1-jj0+1).ne.bytes)call ga_error('dist',0)
-c
-c        print *, ii0,ii1, jj0, jj1
-         ta0 = tcgtime()
-         do kk = 1, loop
-            call ga_acc(g_a, ii0,ii1, jj0, jj1, buf,ldb, .999d0)
-         enddo
-         ta1 = tcgtime()
-c
-         write(*,77)bytes,(tg1-tg0)/loop,(tp1-tp0)/loop,(ta1-ta0)/loop 
-         call flush(6)
-c	 call sleep(1)
-      else
-c         call sleep(1)
-      endif
       enddo
-c
-
       end
 
 
+      subroutine TestPutGetAcc
+     &          (g_a, n, chunk, num_chunks, buf, ilo, ihi, jlo,jhi)
+      implicit none
+#include "tcgmsg.fh"
+#include "global.fh"
+      integer num_chunks, chunk(num_chunks)
+      integer n, ilo, ihi, jlo,jhi,g_a
+      double precision buf(*), tg, tp, ta
+      double precision time_acc, time_get, time_put
+c
+      integer me
+      integer loop, jump, count, bytes
+c
+      me = nodeid()
+      if (me .eq. 0) then
+        write(*,*)' '
+        write(*,*)'                    ACCESS ',
+     &            '[',ilo,':',ihi,', ',jlo,':',jhi,']'
+        write(*,*), 'bytes  loop         get                    put',
+     &           '                 accumulate'
+        call flush(6)
+      endif
+      call ga_sync()
+c
+      do loop = 1, num_chunks
+c
+        call ga_dfill_patch(g_a, 1, n, 1, n , 1d0*me)
+        if (me .eq. 0) then
+c
+c         find how much data is accessed
+          bytes = mdtob(1)*chunk(loop)*chunk(loop)
+c
+          jump  =  n/(40*loop)
+          tg= time_get(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count)
+          tp= time_put(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count)
+          ta= time_acc(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count)
+c
+          write(6,77)bytes, count, tg, 1d-6*bytes/tg,
+     &               tp, 1d-6*bytes/tp, ta, 1d-6*bytes/ta
+          call flush(6)
+        else
+          call sleep(2)
+        endif
+        call ga_sync()
+      enddo
+c
+77    format(i6, i5, 3(d10.3, d9.2,'MB/s'))
+      end
+
+
+
+      double precision function
+     &       time_acc(g_a, is, ie, js, je, buf, chunk, jump, count)
+c
+      implicit none
+      integer g_a, chunk, jump, count, is, js, ie, je
+c
+      integer ilo, ihi, jlo, jhi
+      double precision tcgtime, seconds, buf 
+c
+      count = 0
+      seconds = tcgtime()
+        do ilo = is, ie -chunk-jump +1, chunk+jump
+           ihi = ilo + chunk -1
+           do jlo = js, je -chunk-jump +1, chunk+jump
+              jhi = jlo + chunk -1
+              count = count + 1
+              call ga_acc(g_a, ilo, ihi, jlo, jhi, buf, chunk, 1d0)
+           enddo
+        enddo
+      seconds = tcgtime() - seconds
+c
+      time_acc = seconds/count
+      end
+
+
+      double precision function
+     &       time_get(g_a, is, ie, js, je, buf, chunk, jump, count)
+c
+      implicit none
+      integer g_a, chunk, jump, count, is, js, ie, je
+c
+      integer ilo, ihi, jlo, jhi
+      double precision tcgtime, seconds, buf
+c
+      count = 0
+      seconds = tcgtime()
+        do ilo = is, ie -chunk-jump +1, chunk+jump
+           ihi = ilo + chunk -1
+           do jlo = js, je -chunk-jump +1, chunk+jump
+              jhi = jlo + chunk -1
+              count = count + 1
+              call ga_get(g_a, ilo, ihi, jlo, jhi, buf, chunk)
+           enddo
+        enddo
+      seconds = tcgtime() - seconds
+c
+      time_get = seconds/count
+      end
+
+
+
+      double precision function
+     &       time_put(g_a, is, ie, js, je, buf, chunk, jump, count)
+c
+      implicit none
+      integer g_a, chunk, jump, count, is, js, ie, je
+c
+      integer ilo, ihi, jlo, jhi
+      double precision tcgtime, seconds, buf
+c
+      count = 0
+      seconds = tcgtime()
+        do ilo = is, ie -chunk-jump +1, chunk+jump
+           ihi = ilo + chunk -1
+           do jlo = js, je -chunk-jump +1, chunk+jump
+              jhi = jlo + chunk -1
+              count = count + 1
+              call ga_put(g_a, ilo, ihi, jlo, jhi, buf, chunk)
+           enddo
+        enddo
+      seconds = tcgtime() - seconds
+c
+      time_put = seconds/count
+      end
 
