@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.102 2004-04-10 01:16:42 manoj Exp $
+#$Id: makefile.h,v 1.103 2004-04-28 01:02:52 edo Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -588,6 +588,9 @@ endif
 
 #get rid of 2nd underscore under g77
 ifeq ($(_FC),g77)
+     FOPT_REN += -fno-second-underscore
+endif
+ifeq ($(_FC),pathf90)
      FOPT_REN += -fno-second-underscore
 endif
 
