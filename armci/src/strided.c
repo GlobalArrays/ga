@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.49 2002-11-06 13:58:36 vinod Exp $ */
+/* $Id: strided.c,v 1.50 2002-12-03 18:48:41 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -407,7 +407,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
                 int proc              /* remote process(or) ID */
                 )
 {
-    int rc, direct=1;
+    int rc=0, direct=1;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
     if(count[0]<0)return FAIL3;
@@ -446,9 +446,16 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
     }
     else
 #endif
-       rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
-                            dst_ptr,dst_stride_arr,count,stride_levels, 0,NULL);
-    
+    {
+	if(stride_levels == 0) 
+	  armci_copy_2D(PUT, proc, src_ptr, dst_ptr, count[0], 1, count[0],
+			count[0]);
+	else 
+	  rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
+				 dst_ptr, dst_stride_arr,count,stride_levels, 
+				 0,NULL);
+    }
+
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
@@ -956,4 +963,61 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t nb_handle)
 int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t nb_handle)
 {
     return ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,nb_handle);
+}
+
+#if !defined(ACC_COPY)&&!defined(CRAY_YMP)&&!defined(CYGNUS)&&!defined(CYGWIN)
+#   define REMOTE_OP
+#endif
+
+static void _armci_rem_put_value(void *src, void *dst, int proc, int bytes) {
+  
+    if(src == NULL || dst == NULL) 
+       armci_die("_armci_rem_put_value: Invalid buffer", FAIL);
+    if(bytes<0) armci_die("_armci_rem_put_value: Invalid buffer length",FAIL3);
+    if(proc<0) armci_die("_armci_rem_put_value: Invalid Process id", FAIL5);
+  
+    ORDER(PUT,proc); /* ensure ordering */
+    
+#ifndef REMOTE_OP
+    UPDATE_FENCE_STATE(proc, PUT, 1);
+#  ifdef LAPI
+    SET_COUNTER(ack_cntr, 1);
+#  endif
+    armci_put(src, dst, bytes, proc);
+#else
+    armci_rem_strided(PUT, NULL, proc, src, NULL, dst, NULL,
+		      &bytes, 0, NULL, 0, NULL);
+#endif
+}
+
+#define CHK_ERR(dst, proc)       \
+    if(dst==NULL) armci_die("ARMCI_PutValue():NULL pointer passed",FAIL);  \
+    if(proc<0) armci_die("ARMCI_PutValue():Invalid process rank", proc);
+
+int ARMCI_PutValueInt(int src, void *dst, int proc) {
+    CHK_ERR(dst, proc);
+    if( SAMECLUSNODE(proc) ) *(int *)dst = src;
+    else _armci_rem_put_value(&src, dst, proc, sizeof(int));
+    return 0;
+}
+
+int ARMCI_PutValueLong(long src, void *dst, int proc) {
+    CHK_ERR(dst, proc);
+    if( SAMECLUSNODE(proc) ) *(long *)dst = src;
+    else _armci_rem_put_value(&src, dst, proc, sizeof(long));
+    return 0;
+}
+
+int ARMCI_PutValueFloat(float src, void *dst, int proc) {
+    CHK_ERR(dst, proc);
+    if( SAMECLUSNODE(proc) ) *(float *)dst = src;
+    else _armci_rem_put_value(&src, dst, proc, sizeof(float));
+    return 0;
+}
+
+int ARMCI_PutValueDouble(double src, void *dst, int proc) {
+    CHK_ERR(dst, proc);
+    if( SAMECLUSNODE(proc) ) *(double *)dst = src;
+    else _armci_rem_put_value(&src, dst, proc, sizeof(double));
+    return 0;
 }
