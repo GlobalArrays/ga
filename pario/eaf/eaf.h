@@ -13,8 +13,9 @@
 
 /* This to ensure size_t is defined */
 #include <stdio.h>
+#include <sys/types.h>
 
-typedef long eaf_off_t;
+typedef off_t eaf_off_t;
 
 int eaf_write(int fd, eaf_off_t offset, const void *buf, size_t bytes);
 

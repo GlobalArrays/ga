@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.11 1997-03-13 22:07:00 d3h325 Exp $
+#$Id: makefile,v 1.12 1997-04-16 18:19:15 d3h325 Exp $
 
           OBJ = eaf.o eaf_f2c.o
       LIBRARY = libchemio.a
@@ -13,6 +13,10 @@ LIB_DEFINES += $(shell uname -a | awk \
               '{ if ($$1 == "AIX" && ($$4 > 4 || ($$4 == 4 && $$3 > 1)))\
                print "-D_LARGE_FILES -D_LARGE_FILE_API" }')
 endif
+ifdef HPIODIR
+ LIB_DEFINES += -DHPIODIR=\'$(HPIODIR)/\'
+endif
+
 
 include ../../config/makefile.h
 include ../../config/makelib.h
