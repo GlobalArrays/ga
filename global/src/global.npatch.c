@@ -436,7 +436,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     /* A[83:125,1:1]  <==> B[83:125] */
     if(andim > bndim) andim = bndim; /* need more work */
 
-    isum = 0; dsum = 0.; zsum.real = 0.; zsum.imag = 0.;
+    isum = 0; dsum = 0.; zsum.real = 0.; zsum.imag = 0.; fsum = 0;
     
     /*  determine subsets of my patches to access  */
     if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
