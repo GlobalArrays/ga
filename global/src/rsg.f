@@ -1,4 +1,4 @@
-c $Id: rsg.f,v 1.6 2004-03-30 22:34:00 manoj Exp $
+c $Id: rsg.f,v 1.7 2004-07-29 08:37:12 manoj Exp $
       subroutine rsg(nm,n,a,b,w,matz,z,fv1,fv2,ierr)
 c
       integer n,nm,ierr,matz
@@ -48,21 +48,21 @@ c
       ierr = 10 * n
       go to 50
 c
-   10 call  rrreduc(nm,n,a,b,fv2,ierr)
+   10 call  ga_rrreduc(nm,n,a,b,fv2,ierr)
       if (ierr .ne. 0) go to 50
       if (matz .ne. 0) go to 20
 c     .......... find eigenvalues only ..........
-      call  tttred1(nm,n,a,w,fv1,fv2)
-      call  tttqlrat(n,w,fv2,ierr)
+      call  ga_tttred1(nm,n,a,w,fv1,fv2)
+      call  ga_tttqlrat(n,w,fv2,ierr)
       go to 50
 c     .......... find both eigenvalues and eigenvectors ..........
-   20 call  tttred2(nm,n,a,w,fv1,z)
-      call  tttql2(nm,n,w,fv1,z,ierr)
+   20 call  ga_tttred2(nm,n,a,w,fv1,z)
+      call  ga_tttql2(nm,n,w,fv1,z,ierr)
       if (ierr .ne. 0) go to 50
-      call  rrrebak(nm,n,b,fv2,n,z)
+      call  ga_rrrebak(nm,n,b,fv2,n,z)
    50 return
       end
-      subroutine tttql2(nm,n,d,e,z,ierr)
+      subroutine ga_tttql2(nm,n,d,e,z,ierr)
 c
       integer i,j,k,l,m,n,ii,l1,l2,nm,mml,ierr
       double precision d(n),e(n),z(nm,n)
@@ -232,7 +232,7 @@ c                eigenvalue after 30 iterations ..........
  1000 ierr = l
  1001 return
       end
-      subroutine tttqlrat(n,d,e2,ierr)
+      subroutine ga_tttqlrat(n,d,e2,ierr)
 c
       integer i,j,l,m,n,ii,l1,mml,ierr
       double precision d(n),e2(n)
@@ -375,7 +375,7 @@ c                eigenvalue after 30 iterations ..........
  1000 ierr = l
  1001 return
       end
-      subroutine tttred1(nm,n,a,d,e,e2)
+      subroutine ga_tttred1(nm,n,a,d,e,e2)
 c
       integer i,j,k,l,n,ii,nm,jp1
       double precision a(nm,n),d(n),e(n),e2(n)
@@ -510,7 +510,7 @@ c
 c
       return
       end
-      subroutine tttred2(nm,n,a,d,e,z)
+      subroutine ga_tttred2(nm,n,a,d,e,z)
 c
       integer i,j,k,l,n,ii,nm,jp1
       double precision a(nm,n),d(n),e(n),z(nm,n)
@@ -730,7 +730,7 @@ c
    20 pythag = p
       return
       end
-      subroutine rrrebak(nm,n,b,dl,m,z)
+      subroutine ga_rrrebak(nm,n,b,dl,m,z)
 c
       integer i,j,k,m,n,i1,ii,nm
       double precision b(nm,n),dl(n),z(nm,m)
@@ -793,7 +793,7 @@ c
 c
   200 return
       end
-      subroutine rrreduc(nm,n,a,b,dl,ierr)
+      subroutine ga_rrreduc(nm,n,a,b,dl,ierr)
 c
       integer i,j,k,n,i1,j1,nm,nn,ierr
       double precision a(nm,n),b(nm,n),dl(n)
@@ -910,7 +910,7 @@ c     .......... set error -- b is not positive definite ..........
       end
 
 
-c $Id: rsg.f,v 1.6 2004-03-30 22:34:00 manoj Exp $
+c $Id: rsg.f,v 1.7 2004-07-29 08:37:12 manoj Exp $
 c
 c JN: the original file has been slightly modified
 c JN: renamed pythag to pythag000 to avoid multiply defined symbol also in rsg.f
@@ -964,17 +964,17 @@ c
 c
    10 if (matz .ne. 0) go to 20
 c     .......... find eigenvalues only ..........
-      call  tred1(nm,n,a,w,fv1,fv2)
+      call  ga_tred1(nm,n,a,w,fv1,fv2)
 *  tqlrat encounters catastrophic underflow on the Vax
 *     call  tqlrat(n,w,fv2,ierr)
-      call  tql1(n,w,fv1,ierr)
+      call  ga_tql1(n,w,fv1,ierr)
       go to 50
 c     .......... find both eigenvalues and eigenvectors ..........
-   20 call  tred2(nm,n,a,w,fv1,z)
-      call  tql2(nm,n,w,fv1,z,ierr)
+   20 call  ga_tred2(nm,n,a,w,fv1,z)
+      call  ga_tql2(nm,n,w,fv1,z,ierr)
    50 return
       end
-      subroutine tql2(nm,n,d,e,z,ierr)
+      subroutine ga_tql2(nm,n,d,e,z,ierr)
 c
       integer i,j,k,l,m,n,ii,l1,l2,nm,mml,ierr
       double precision d(n),e(n),z(nm,n)
@@ -1144,7 +1144,7 @@ c                eigenvalue after 30 iterations ..........
  1000 ierr = l
  1001 return
       end
-      subroutine tred2(nm,n,a,d,e,z)
+      subroutine ga_tred2(nm,n,a,d,e,z)
 c
       integer i,j,k,l,n,ii,nm,jp1
       double precision a(nm,n),d(n),e(n),z(nm,n)
@@ -1308,7 +1308,7 @@ c
       e(1) = 0.0d0
       return
       end
-      subroutine tql1(n,d,e,ierr)
+      subroutine ga_tql1(n,d,e,ierr)
 c
       integer i,j,l,m,n,ii,l1,l2,mml,ierr
       double precision d(n),e(n)
@@ -1465,7 +1465,7 @@ c
    20 pythag000 = p
       return
       end
-      subroutine tred1(nm,n,a,d,e,e2)
+      subroutine ga_tred1(nm,n,a,d,e,e2)
 c
       integer i,j,k,l,n,ii,nm,jp1
       double precision a(nm,n),d(n),e(n),e2(n)
