@@ -145,11 +145,11 @@ extern thread_id_t armci_usr_tid;
 
 /* note opcodes must be lower than ARMCI_ACC_OFF !!! */
 #define PUT 1
-#define GET 3
-#define RMW 5
-#define LOCK   20
-#define UNLOCK 21
-#define ACK (ARMCI_ACC_OFF -1)
+#define GET 2
+#define RMW 3
+#define LOCK   4
+#define UNLOCK 5
+#define ACK 6 
 
 /* must fit in two bits, see msginfo->format in request.h */
 #define STRIDED 1
