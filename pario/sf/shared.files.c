@@ -113,6 +113,8 @@ Integer sf_write_(s_a, offset, bytes, buffer, req_id)
 Integer handle = *s_a+SF_OFFSET;
 int status;
 io_request_t id;
+
+        sfi_check_handleM(*s_a,"sf_write");
         status = elio_awrite(SF[handle].fd, (off_t)*offset, buffer, 
                             (Size_t)*bytes, &id);
         *req_id = (Integer)id;
@@ -139,6 +141,8 @@ Integer sf_read_(s_a, offset, bytes, buffer, req_id)
 Integer handle = *s_a+SF_OFFSET;
 int status;
 io_request_t id;
+
+        sfi_check_handleM(*s_a,"sf_read");
         status = elio_aread(SF[handle].fd, (off_t)*offset, buffer, 
                            (Size_t)*bytes, &id);
         *req_id = (Integer)id;
