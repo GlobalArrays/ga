@@ -15,6 +15,12 @@ divert(-1)
   define(m4_test_NGA_ACC, `yes')
   define(m4_test_NGA_SCATTER, `yes')
   define(m4_test_NGA_GATHER, `yes')
+  
+  # periodic functions
+  define(m4_test_NGA_PERIODIC_GET, `yes') 
+  define(m4_test_NGA_PERIODIC_PUT, `yes') 
+  define(m4_test_NGA_PERIODIC_ACC, `yes') 
+
   # patch related
   define(m4_test_NGA_FILL_PATCH, `yes')
   define(m4_test_NGA_COPY_PATCH, `yes')
