@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.17 2002-07-31 00:04:39 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.18 2002-07-31 17:32:48 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -371,11 +371,12 @@ int from, to, found, c;
 }
 
 
-/*\ return number of processes in the domain represented by id
+/*\ return number of processes in the domain represented by id; id<0 means my node
 \*/
 int armci_domain_nprocs(armci_domain_t domain, int id)
 {
-    if(id<0 || id>= armci_nclus) armci_die2("armci domain error",id,armci_nclus);
+    if(id>= armci_nclus) armci_die2("armci domain error",id,armci_nclus);
+    if(id<0) id = armci_clus_me;
     return armci_clus_info[id].nslave;
 }
 
@@ -391,7 +392,7 @@ int armci_domain_count(armci_domain_t domain)
 int armci_domain_id(armci_domain_t domain, int glob_proc_id)
 {
 int id = glob_proc_id;
-    if(id<0 || id>= armci_nclus) armci_die2("armci domain error",id,armci_nclus);
+    if(id<0 || id>= armci_nproc) armci_die2("armci domain error",id,armci_nproc);
     return armci_clus_id(glob_proc_id);
 }
 
