@@ -174,7 +174,7 @@ volatile int *turn = glob_mutex[proc].token  +mutex;
 
 static void armci_generic_lock(int mutex, int proc)
 {
-int i, myturn, factor=0, len=sizeof(int), loc;
+int i, myturn, factor=0, len=sizeof(int);
 int  *mutex_ticket, next_in_line;
         
       mutex_ticket= glob_mutex[proc].turn + mutex;
@@ -223,7 +223,7 @@ int len=sizeof(int);
 \*/
 int armci_server_lock_mutex(int mutex, int proc, msg_tag_t tag)
 {
-int myturn, turn;
+int myturn;
 int *mutex_ticket, next_in_line, len=sizeof(int);
 int owner = armci_me;
         
@@ -269,7 +269,7 @@ int armci_server_unlock_mutex(int mutex, int proc, int Ticket, msg_tag_t* ptag)
 #define NOBODY -1
 int owner = armci_me;
 int i, p=NOBODY, *mutex_ticket= glob_mutex[owner].turn + mutex;
-int ack, len=sizeof(int);
+int len=sizeof(int);
 
      if(DEBUG) fprintf(stderr,"SUNLOCK=%d node=%d mutex=%d ticket=%d\n",
                        armci_me,proc,mutex,Ticket);
