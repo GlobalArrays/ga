@@ -60,6 +60,20 @@ extern void GA_Copy_patch(char ta,int g_a, int ailo, int aihi,int ajlo,int ajhi,
 extern void GA_Brdcst(void *buf, int lenbuf, int root);
 extern void GA_Dgop(double x[], int n, char *op);
 extern void GA_Igop(Integer x[], int n, char *op);
+
+extern void NGA_Copy_patch(char trans, int g_a, int alo[], int ahi[],
+                           int g_b, int blo[], int bhi[]);
+extern int NGA_Idot_patch(int g_a, char t_a, int alo[], int ahi[],
+                          int g_b, char t_b, int blo[], int bhi[]);
+extern double NGA_Ddot_patch(int g_a, char t_a, int alo[], int ahi[],
+                             int g_b, char t_b, int blo[], int bhi[]);
+extern DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[],
+                                    int g_b, char t_b, int blo[], int bhi[]);
+extern void NGA_Fill_patch(int g_a, int lo[], int hi[], void *val);
+extern void NGA_Scale_patch(int g_a, int lo[], int hi[], void *alpha);
+extern void NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[],
+                          void * beta,  int g_b, int blo[], int bhi[],
+                          int g_c, int clo[], int chi[]);
 extern int  GA_Valid_handle(int g_a);
 
 #define GA_Initialize ga_initialize_
