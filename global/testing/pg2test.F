@@ -1,4 +1,4 @@
-c $Id: pg2test.F,v 1.5 2004-11-08 20:08:01 d3g293 Exp $
+c $Id: pg2test.F,v 1.6 2004-12-01 22:39:46 manoj Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -434,7 +434,7 @@ c
  9       format(/'> Checking accumulate ... ')
          call ffflush(6)
       endif
-      call ga_sync(grp_id)
+      call ga_pgroup_sync(grp_id)
 c     
       crap = util_drand(12345)       ! Same seed for each process
       do j = 1, n
