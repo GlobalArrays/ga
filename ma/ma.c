@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.29 2002-09-14 05:40:30 d3g001 Exp $
+ * $Id: ma.c,v 1.30 2002-10-07 22:44:34 d3g001 Exp $
  */
 
 /*
@@ -1883,7 +1883,7 @@ public void MAi_summarize_allocated_blocks(index_base)
 public Boolean MA_alloc_get(
     Integer	datatype,	/* of elements in this block */
     Integer	nelem,		/* # of elements in this block */
-    char	*name,		/* assigned to this block by client */
+    const char	*name,		/* assigned to this block by client */
     Integer	*memhandle,	/* RETURN: handle for this block */
     Integer	*index		/* RETURN: index for this block */   )
 {
@@ -3145,7 +3145,7 @@ public void MA_print_stats(Boolean printroutines)
 public Boolean MA_push_get(
     Integer	datatype,	/* of elements in this block */
     Integer	nelem,		/* # of elements in this block */
-    char	*name,		/* assigned to this block by client */
+    const char	*name,		/* assigned to this block by client */
     Integer	*memhandle,	/* RETURN: handle for this block */
     Integer	*index 		/* RETURN: index for this block */)
 {
@@ -3173,7 +3173,7 @@ public Boolean MA_push_get(
 public Boolean MA_push_stack(
     Integer	datatype,	/* of elements in this block */
     Integer	nelem,		/* # of elements in this block */
-    char	*name,		/* assigned to this block by client */
+    const char	*name,		/* assigned to this block by client */
     Integer	*memhandle 	/* RETURN: handle for this block */)
 {
     AR		ar;		/* allocation request */

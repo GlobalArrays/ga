@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.15 2002-09-14 05:40:30 d3g001 Exp $
+ * $Id: macdecls.h,v 1.16 2002-10-07 22:44:34 d3g001 Exp $
  */
 
 /* 
@@ -48,13 +48,13 @@ extern "C" {
 extern Boolean MA_alloc_get(
     Integer     datatype,       /* of elements in this block */
     Integer     nelem,          /* # of elements in this block */
-    char        *name,          /* assigned to this block by client */
+    const char  *name,          /* assigned to this block by client */
     Integer     *memhandle,     /* RETURN: handle for this block */
     Integer     *index          /* RETURN: index for this block */   );
 extern Boolean MA_allocate_heap(
     Integer     datatype,       /* of elements in this block */
     Integer     nelem,          /* # of elements in this block */
-    const char        *name,          /* assigned to this block by client */
+    const char  *name,          /* assigned to this block by client */
     Integer     *memhandle      /* RETURN: handle for this block */ );
 extern Boolean MA_chop_stack(Integer memhandle);
 extern Boolean MA_free_heap(Integer memhandle);
@@ -90,13 +90,13 @@ extern void MA_print_stats(Boolean printroutines);
 extern Boolean MA_push_get(
     Integer     datatype,       /* of elements in this block */
     Integer     nelem,          /* # of elements in this block */
-    char        *name,          /* assigned to this block by client */
+    const char  *name,          /* assigned to this block by client */
     Integer     *memhandle,     /* RETURN: handle for this block */
     Integer     *index          /* RETURN: index for this block */);
 extern Boolean MA_push_stack(
     Integer     datatype,       /* of elements in this block */
     Integer     nelem,          /* # of elements in this block */
-    char        *name,          /* assigned to this block by client */
+    const char  *name,          /* assigned to this block by client */
     Integer     *memhandle      /* RETURN: handle for this block */);
 extern Boolean MA_set_auto_verify(Boolean  value /* to set flag to */);
 extern Boolean MA_set_error_print(Boolean value /* to set flag to */);
