@@ -200,7 +200,7 @@ Integer FATR eaf_stat_(_fcd p, Integer *avail_kb, _fcd fst)
     char *fstype = _fcdtocp(fst);
     int fslen = _fcdlen(fst);
 #else
-Integer FATR eaf_stat_(const char *path, int *avail_kb, char *fstype, 
+Integer FATR eaf_stat_(const char *path, Integer *avail_kb, char *fstype, 
 		  int pathlen, int fslen)
 {
 #endif
