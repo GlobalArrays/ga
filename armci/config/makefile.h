@@ -76,6 +76,15 @@ else
 #             PGI fortran compiler on intel
    ifneq (,$(findstring pgf,$(_FC)))
        FOPT_REN = -Mvect  -Munroll -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
+ifeq ($(_CPU),686)
+       FOPT_REN +=  -tp p6
+endif
+   endif
+   ifneq (,$(findstring ifc,$(_FC)))
+       FOPT=-O3 -prefetch -unroll -ip
+ifeq ($(_CPU),686)
+       FOPT_REN = -xK -tpp6
+endif
    endif
 endif
 

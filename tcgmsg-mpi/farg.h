@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.5 1999-08-05 20:29:41 d3e129 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.6 2001-04-27 00:55:31 edo Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -44,6 +44,9 @@
 #if defined(PGLINUX)
 #define ARGC_ __argc_save
 #define ARGV_ __argv_save
+#elif defined(IFCLINUX)
+#define ARGC_ xargc
+#define ARGV_ xargv
 #else
 /* g77/gcc fortran argc/argv interface on linux is unstable */
 #if defined(LINUX)

@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.43 2001-04-24 01:31:23 edo Exp $
+# $Id: makefile.h,v 1.44 2001-04-27 00:56:24 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -187,6 +187,10 @@ else
        CMAIN = -Dmain=MAIN_
        FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
        GLOB_DEFINES += -DPGLINUX
+   endif
+   ifneq (,$(findstring ifc,$(_FC)))
+       FOPT_REN = -O3 -prefetch 
+       GLOB_DEFINES += -DIFCLINUX
    endif
 endif
 
