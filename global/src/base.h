@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.11 2003-03-05 00:31:51 d3g293 Exp $ */
+/*$Id: base.h,v 1.12 2003-03-06 20:09:10 vinod Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -138,7 +138,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
     sprintf(err_string+_l, ",%ld:%ld ",lo[_d],hi[_d]);               \
     _l=strlen(err_string);                                           \
   }                                                                  \
-  sprintf(err_string+_l, "]",lo[_d],hi[_d]);                         \
+  sprintf(err_string+_l, "]");                                       \
   _l=strlen(err_string);                                             \
   ga_error(err_string, val);                                         \
 }
