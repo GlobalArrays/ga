@@ -90,7 +90,7 @@ ifeq ($(MACHINE),DECOSF)
     EXTRA_OBJ = memalign.o
 endif
 
-#................................ CRAY-T3D ..................................
+#................................ CRAY-T3E ..................................
 #
 ifeq ($(MACHINE),CRAY-T3E)
 #
@@ -177,12 +177,10 @@ ifeq ($(MACHINE),SGI_N32)
  NXTVAL_AVAIL = yes
 endif
 
-#............................. SGI Power Challenge ..........................
-#
-# SGI running IRIX6.XX 
-# (Fortran integer size equivalent to C long)
-#
+
 ifeq ($(MACHINE),SGITFP)
+# SGI running IRIX6.XX 
+# (Fortran integer needs to be equivalent to C long)
         CDEFS = -DEXT_INT
      COPT_REN = -64
      FOPT_REN = -i8 -64
@@ -192,7 +190,7 @@ endif
 
 ifeq ($(MACHINE),SGI64)
 #
-# SGI running IRIX6.XX with native Fortran integer sizes
+# SGI running IRIX6.XX with native Fortran integer
 #
  GLOB_DEFINES = -DSGI64 -DSGI -DSGIUS
      COPT_REN = -64
