@@ -4,6 +4,9 @@
 Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM], _ga_work[MAXDIM];
 Integer _ga_dims[MAXDIM], _ga_map[MAX_NPROC];
 
+Integer _ga_alo[MAXDIM], _ga_ahi[MAXDIM];
+Integer _ga_blo[MAXDIM], _ga_bhi[MAXDIM];
+Integer _ga_clo[MAXDIM], _ga_chi[MAXDIM];
 
 #ifdef USE_FAPI
 #  define COPYC2F(carr, farr, n){\
@@ -394,3 +397,152 @@ void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
 void GA_Dgemm(char ta, char tb, int m, int n, int k,
               double alpha, int g_a, int g_b, double beta, int g_c )
 */
+
+/* Patch related */
+
+void NGA_Copy_patch(char trans, int g_a, int alo[], int ahi[],
+                                int g_b, int blo[], int bhi[])
+{
+    Integer a=(Integer)g_a;
+    Integer andim = ga_ndim_(&a);
+
+    Integer b=(Integer)g_b;
+    Integer bndim = ga_ndim_(&b);
+    
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+    
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+
+    nga_copy_patch_(&trans, &a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi);
+}
+
+int NGA_Idot_patch(int g_a, char t_a, int alo[], int ahi[],
+                   int g_b, char t_b, int blo[], int bhi[])
+{
+    Integer res;
+    Integer a=(Integer)g_a;
+    Integer andim = ga_ndim_(&a);
+
+    Integer b=(Integer)g_b;
+    Integer bndim = ga_ndim_(&b);
+    
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+    
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+
+    res = nga_idot_patch(&a, &t_a, _ga_alo, _ga_ahi,
+                         &b, &t_b, _ga_blo, _ga_bhi);
+
+    return ((int) res);
+}
+
+double NGA_Ddot_patch(int g_a, char t_a, int alo[], int ahi[],
+                   int g_b, char t_b, int blo[], int bhi[])
+{
+    DoublePrecision res;
+    Integer a=(Integer)g_a;
+    Integer andim = ga_ndim_(&a);
+
+    Integer b=(Integer)g_b;
+    Integer bndim = ga_ndim_(&b);
+
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+
+    res = nga_ddot_patch(&a, &t_a, _ga_alo, _ga_ahi,
+                         &b, &t_b, _ga_blo, _ga_bhi);
+
+    return ((double)res);
+}
+
+DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[],
+                             int g_b, char t_b, int blo[], int bhi[])
+{
+    DoubleComplex res;
+    
+    Integer a=(Integer)g_a;
+    Integer andim = ga_ndim_(&a);
+    
+    Integer b=(Integer)g_b;
+    Integer bndim = ga_ndim_(&b);
+    
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+    
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+    
+    res = nga_zdot_patch(&a, &t_a, _ga_alo, _ga_ahi,
+                         &b, &t_b, _ga_blo, _ga_bhi);
+    
+    return (res);
+}
+
+void NGA_Fill_patch(int g_a, int lo[], int hi[], void *val)
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+
+    nga_fill_patch_(&a, _ga_lo, _ga_hi, val);
+}
+
+void NGA_Scale_patch(int g_a, int lo[], int hi[], void *alpha)
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+
+    nga_scale_patch_(&a, _ga_lo, _ga_hi, alpha);
+}
+
+void NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[],
+                   void * beta,  int g_b, int blo[], int bhi[],
+                   int g_c, int clo[], int chi[])
+{
+    Integer a=(Integer)g_a;
+    Integer andim = ga_ndim_(&a);
+
+    Integer b=(Integer)g_b;
+    Integer bndim = ga_ndim_(&b);
+
+    Integer c=(Integer)g_c;
+    Integer cndim = ga_ndim_(&c);
+
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+    
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+
+    COPYINDEX_C2F(clo,_ga_clo, cndim);
+    COPYINDEX_C2F(chi,_ga_chi, cndim);
+
+    nga_add_patch_(alpha, &a, _ga_alo, _ga_ahi, beta, &b, _ga_blo, _ga_bhi,
+                   &c, _ga_clo, _ga_chi);
+}
+
+void NGA_Print_patch(int g_a, int lo[], int hi[], int pretty)
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+  
+    nga_print_patch_(&a, _ga_lo, _ga_hi, pretty);
+}
+
+void GA_Print(int g_a)
+{
+    Integer a=(Integer)g_a;
+    ga_print_(&a);
+}
