@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.29 2002-02-20 23:26:42 d3h325 Exp $ */
+/* $Id: message.c,v 1.30 2002-02-22 19:21:25 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -13,13 +13,14 @@
 #include "armcip.h"
 #include "copy.h"
 #include <stdio.h>
+#ifdef _POSIX_PRIORITY_SCHEDULING
+#  include <sched.h>
+#endif
 
 #define DEBUG_ 0
 
-#ifdef CRAY
-char *mp_group_name = (char *)NULL;
-#else
-char *mp_group_name = "mp_working_group";
+#if defined(SYSV) || defined(MMAP) ||defined (WIN32)
+#    include "shmem.h"
 #endif
 
 /* global operations are use buffer size of BUF_SIZE doubles */ 
@@ -29,11 +30,72 @@ static double work[BUF_SIZE];
 static long *lwork = (long*)work;
 static int *iwork = (int*)work;
 static float *fwork = (float*)work;
+static int _armci_gop_init=0;   /* tells us if we have a buffers allocated  */
+static int _armci_gop_shmem =0; /* tells us to use shared memory for gops */
+extern void armci_util_spin(int,void*);
+
+typedef struct {
+        union {
+           int flag;
+           double dummy[16];
+        };
+        union {
+           int flag2;
+           double dummy2[16];
+        };
+        double array[BUF_SIZE];
+} bufstruct;
+static  bufstruct *_gop_buffer; 
+
+#define GOP_BUF(p)  (_gop_buffer+((p)-armci_master))
+#define EMPTY 0
+#define FULL 1
 
 
+#ifdef CRAY
+char *mp_group_name = (char *)NULL;
+#else
+char *mp_group_name = "mp_working_group";
+#endif
+
+/*\ allocate and initialize buffers used for collective communication
+\*/
 void armci_msg_gop_init()
 {
+#if defined(SYSV) || defined(MMAP) || defined(WIN32)
+    if(ARMCI_Uses_shm()){
+       char *tmp;
+       double *work;
+       int size = sizeof(bufstruct);
+       long idlist[SHMIDLEN];
+       int bytes = size * armci_clus_info[armci_clus_me].nslave;
+       bytes += size*2; /* extra for brdcst */
+
+       if(armci_me == armci_master ){
+            tmp = Create_Shared_Region(idlist+1, bytes+128,idlist);
+            armci_msg_clus_brdcst(idlist, SHMIDLEN*sizeof(long));
+       }else{
+            armci_msg_clus_brdcst(idlist, SHMIDLEN*sizeof(long));
+            tmp = Attach_Shared_Region(idlist+1,bytes+128,idlist[0]);
+       }
+
+       if(DEBUG_){
+          printf("%d: allocate gop buffer %p %d\n",armci_me,tmp,bytes);
+          fflush(stdout);
+       }
+
+       if(!tmp) armci_die("armci_msg_init: shm malloc failed\n",size);
+       _gop_buffer = ( bufstruct *) tmp;
+       work = GOP_BUF(armci_me)->array; /* each process finds its place */
+       GOP_BUF(armci_me)->flag=EMPTY;   /* initially buffer is empty */
+       GOP_BUF(armci_me)->flag2=EMPTY;  /* initially buffer is empty */
+       _armci_gop_shmem = 1;
+     }
+#endif
+     _armci_gop_init=1;
 }
+
+
 
 void armci_msg_barrier()
 {
@@ -173,6 +235,179 @@ void armci_msg_bcast_scope(int scope, void *buf, int len, int root)
 }
 
 
+static void cpu_yield()
+{
+#if defined(SYSV) || defined(MMAP) || defined(WIN32)
+#ifdef _POSIX_PRIORITY_SCHEDULING
+               sched_yield();
+#elif defined(WIN32)
+               Sleep(1);
+#else
+               usleep(1);
+#endif
+#endif
+}
+
+
+static void armci_util_wait_int(int *p, int val, int maxspin)
+{
+int count=0;
+
+       while(*p != val)
+            if((++count)<maxspin) armci_util_spin(count,p);
+            else{ 
+               cpu_yield();
+               count =0; 
+            }
+}
+
+
+/*\ shared memory based broadcast for a single SMP node
+\*/
+static void armci_smp_bcast(void *x, int n )
+{
+int root, up, left, right;
+int ndo, len,i;
+int nslave = armci_clus_info[armci_clus_me].nslave;
+static int bufid=0;
+
+    if(nslave<2) return; /* nothing to do */
+
+    if(!x)armci_die("armci_msg_bcast: NULL pointer", n);
+  
+    armci_msg_bintree(SCOPE_NODE, &root, &up, &left, &right);
+       
+    while ((ndo = (n<=BUF_SIZE*sizeof(double)) ? n : BUF_SIZE*sizeof(double))) {
+       len = ndo;
+          
+       if(armci_me==root){
+#if 0     
+          for(i=armci_clus_first; i <= armci_clus_last; i++)
+                if(i!=root)armci_util_wait_int(&GOP_BUF(i)->flag2, EMPTY, 100);
+          armci_copy(x,GOP_BUF(armci_clus_last+bufid+1)->array,len);
+          for(i=armci_clus_first; i <= armci_clus_last; i++)
+                if(i!=root) GOP_BUF(i)->flag2=FULL;
+#else          
+          armci_copy(x,GOP_BUF(armci_clus_last+bufid+1)->array,len);
+          for(i=armci_clus_first; i <= armci_clus_last; i++)
+                if(i!=root){ 
+                  armci_util_wait_int(&GOP_BUF(i)->flag2, EMPTY, 100);
+                  GOP_BUF(i)->flag2=FULL;
+                } 
+#endif            
+       }else{     
+           armci_util_wait_int(&GOP_BUF(armci_me)->flag2 , FULL, 100);
+           armci_copy(GOP_BUF(armci_clus_last+bufid+1)->array,x,len);
+           GOP_BUF(armci_me)->flag2  = EMPTY;
+       }
+
+       n -=ndo;
+       x = len + (char*)x;
+       
+       bufid = (bufid+1)%2;
+    }    
+}        
+       
+#if 0
+/*\ shared memory based broadcast for a single SMP node
+\*/
+static void armci_smp_bcast3(void *x, int n )
+{
+int root, up, left, right;
+int ndo, len;
+int nslave = armci_clus_info[armci_clus_me].nslave;
+
+    if(nslave<2) return; /* nothing to do */
+   
+    if(!x)armci_die("armci_msg_bcast: NULL pointer", n);
+   
+    armci_msg_bintree(SCOPE_NODE, &root, &up, &left, &right);
+   
+    while ((ndo = (n<=BUF_SIZE*sizeof(double)) ? n : BUF_SIZE*sizeof(double))) {
+       len = ndo;
+      
+       if (left >-1)
+         armci_util_wait_int(&GOP_BUF(left)->flag , EMPTY, 100);
+
+       if (right >-1 )
+         armci_util_wait_int(&GOP_BUF(right)->flag , EMPTY, 100);
+
+       if(armci_me == root){
+           armci_util_wait_int(&GOP_BUF(armci_me)->flag , EMPTY, 100);
+           armci_copy(x,GOP_BUF(armci_me)->array,len);
+       } else {
+           armci_util_wait_int(&GOP_BUF(armci_me)->flag , FULL, 100);
+           armci_copy(GOP_BUF(up)->array,GOP_BUF(armci_me)->array,len);
+       }
+
+       if (left >-1)
+           GOP_BUF(left)->flag =FULL;
+
+       if (right >-1 )
+           GOP_BUF(right)->flag =FULL;
+
+       if (armci_me != root ){
+           armci_copy(GOP_BUF(up)->array,x,len);
+           GOP_BUF(armci_me)->flag=EMPTY;
+       }
+
+       n -=ndo;
+       x = len + (char*)x;
+    }
+}
+
+
+/*\ shared memory based broadcast for a single SMP node
+\*/ 
+static void armci_smp_bcast2(void *x, int n )
+{   
+int root, up, left, right;
+int ndo, len;
+int nslave = armci_clus_info[armci_clus_me].nslave;
+       
+    if(nslave<2) return; /* nothing to do */
+
+    if(!x)armci_die("armci_msg_bcast: NULL pointer", n);
+       
+    armci_msg_bintree(SCOPE_NODE, &root, &up, &left, &right);
+          
+    while ((ndo = (n<=BUF_SIZE*sizeof(double)) ? n : BUF_SIZE*sizeof(double))) {
+       len = ndo;
+
+       /* we should be able to get rid of this copy */
+       if(armci_me == root){
+           armci_copy(x,GOP_BUF(armci_me)->array,len);
+           GOP_BUF(armci_me)->flag = FULL;
+       }          
+               
+       armci_util_wait_int(&GOP_BUF(armci_me)->flag, FULL, 100);
+                  
+       /*  this version assumes a specific order of data arrival */
+       if (left >-1) { 
+         armci_util_wait_int(&GOP_BUF(left)->flag, EMPTY, 100);
+         armci_copy(GOP_BUF(armci_me)->array,GOP_BUF(left)->array,len);
+         GOP_BUF(left)->flag = FULL;
+       }       
+                      
+       if (right >-1 ) {
+         armci_util_wait_int(&GOP_BUF(right)->flag, EMPTY, 100);
+         armci_copy(GOP_BUF(armci_me)->array, GOP_BUF(right)->array,len);
+         GOP_BUF(right)->flag = FULL;
+       }
+       
+       if (armci_me != root ){
+           armci_copy(GOP_BUF(armci_me)->array,x,len);
+           GOP_BUF(armci_me)->flag=EMPTY;
+       }
+       
+       n -=ndo;
+       x = len + (char*)x;
+    }    
+}      
+
+
+#endif
+
 #ifndef armci_msg_bcast
 /*\ SMP-aware global broadcast routine
 \*/
@@ -180,13 +415,19 @@ void armci_msg_bcast(void *buf, int len, int root)
 {
 int Root = armci_master;
     /* inter-node operation between masters */
-    if(armci_nclus>1)armci_msg_bcast_scope(SCOPE_MASTERS, buf, len, root); 
+    if(armci_nclus>1)armci_msg_bcast_scope(SCOPE_MASTERS, buf, len, root);
     else  Root = root;
 
     /* intra-node operation */
+#if 1
+    if(_armci_gop_shmem)
+     armci_smp_bcast(buf, len);
+    else
+#endif
     armci_msg_bcast_scope(SCOPE_NODE, buf, len, Root);
 }
 #endif
+
 
 
 void armci_msg_brdcst(void* buffer, int len, int root)
@@ -526,12 +767,107 @@ int ndo, len, lenmes, ratio;
      }
 }
 
+static void gop(int type, int ndo, char* op, void *x, void *work)
+{
+     if(type==ARMCI_INT) idoop(ndo, op, (int*)x, (int*)work);
+     else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, (long*)work);
+     else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, (float*)work);
+     else ddoop(ndo, op, (double*)x, (double*)work);
+}
 
 
-static void armci_msg_reduce(void *x, int n, char* op, int type)
+
+
+
+/*\ shared memory based reduction for a single SMP node
+\*/
+static void armci_smp_reduce(void *x, int n, char* op, int type)
+{
+int root, up, left, right, size;
+int ndo, len, lenmes, ratio;
+int nslave = armci_clus_info[armci_clus_me].nslave; 
+
+    if(nslave<2) return; /* nothing to do */
+
+    if(!x)armci_die("armci_msg_gop: NULL pointer", n);
+
+    armci_msg_bintree(SCOPE_NODE, &root, &up, &left, &right);
+
+    if(type==ARMCI_INT) size = sizeof(int);
+        else if(type==ARMCI_LONG) size = sizeof(long);
+             else if(type==ARMCI_FLOAT) size = sizeof(float); 
+    else size = sizeof(double);
+    ratio = sizeof(double)/size;
+    
+    while ((ndo = (n<=BUF_SIZE*ratio) ? n : BUF_SIZE*ratio)) {
+       len = lenmes = ndo*size;
+
+       armci_util_wait_int(&GOP_BUF(armci_me)->flag, EMPTY, 100);
+       armci_copy(x,GOP_BUF(armci_me)->array,len);
+
+#if 1
+       /*  version oblivious to the order of data arrival */
+       {
+          int need_left = left >-1;
+          int need_right = right >-1;
+          int from, maxspin=100, count=0;
+          bufstruct *b;
+          
+          while(need_left || need_right){
+               from =-1;
+               if(need_left && GOP_BUF(left)->flag == FULL){
+                  from =left;
+                  need_left =0;
+               }else if(need_right && GOP_BUF(right)->flag == FULL) {
+                  from =right;
+                  need_right =0;
+               }
+               if(from != -1){
+                  b = GOP_BUF(from);
+                  gop(type, ndo, op, GOP_BUF(armci_me)->array, b->array);
+                  b->flag = EMPTY;
+               }else  if((++count)<maxspin) armci_util_spin(count,_gop_buffer);
+                      else{cpu_yield();count =0; }
+          }
+       }
+#else
+               
+       /*  this version requires a specific order of data arrival */
+       if (left >-1) {
+         while(GOP_BUF(left)->flag != FULL) cpu_yield();
+         gop(type, ndo, op, GOP_BUF(armci_me)->array, GOP_BUF(left)->array);
+         GOP_BUF(left)->flag = EMPTY;
+       }
+       if (right >-1 ) {
+         while(GOP_BUF(right)->flag != FULL) cpu_yield();
+         gop(type, ndo, op, GOP_BUF(armci_me)->array, GOP_BUF(right)->array);
+         GOP_BUF(right)->flag = EMPTY;
+       }
+#endif
+
+       if (armci_me != root ) {
+           GOP_BUF(armci_me)->flag=FULL;
+       }else
+           /* NOTE:  this copy can be eliminated in a cluster configuration */
+           armci_copy(GOP_BUF(armci_me)->array,x,len);
+
+       n -=ndo;
+       x = len + (char*)x;
+    }  
+}
+
+
+
+void armci_msg_reduce(void *x, int n, char* op, int type)
 {
     if(DEBUG_)printf("%d reduce  %d\n",armci_me, n);
     /* intra-node operation */
+
+#if 1
+    if(_armci_gop_shmem) 
+       armci_smp_reduce(x, n, op, type);
+    else
+#endif
     armci_msg_reduce_scope(SCOPE_NODE, x, n, op, type);
 
     /* inter-node operation between masters */
@@ -551,6 +887,7 @@ int size, root=0;
 
      armci_msg_reduce(x, n, op, type);
      armci_msg_bcast(x, size*n, root);
+
 }
 
 
@@ -654,7 +991,7 @@ void armci_msg_dgop(double *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI
 #endif
 
 
-/*\ add array of longs/ints within the same cluster 
+/*\ add array of longs/ints within the same cluster node
 \*/
 void armci_msg_clus_igop(int *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_INT); }

@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.44 2002-02-20 23:26:41 d3h325 Exp $ */
+/* $Id: armci.c,v 1.45 2002-02-22 19:21:25 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -256,7 +256,6 @@ int ARMCI_Init()
 #endif
 
     armci_init_clusinfo();
-    armci_msg_gop_init();
 
     /* trap signals to cleanup ARMCI system resources in case of crash */
     if(armci_me==armci_master) ARMCI_ParentTrapSignals();
@@ -283,6 +282,8 @@ int ARMCI_Init()
     armci_init_memlock(); /* allocate data struct for locking memory areas */
 
 /*    fprintf(stderr,"%d ready \n",armci_me);*/
+    armci_msg_barrier();
+    armci_msg_gop_init();
 
     return 0;
 }
