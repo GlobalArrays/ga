@@ -1,10 +1,10 @@
-c $Id: mulmatpatch.F,v 1.4 2003-02-12 07:49:03 manoj Exp $
-#if defined(CRAY) || defined(KSR)
+c $Id: mulmatpatch.F,v 1.5 2005-01-07 23:32:01 manoj Exp $
+#if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else
-#   define xgemm DGEMM
-#   define ygemm ZGEMM
+#   define xgemm TEST_DGEMM
+#   define ygemm TEST_ZGEMM
 #endif
 #if defined(FUJITSU) || defined(CRAY_YMP)
 # define THRESH  1.0d-10

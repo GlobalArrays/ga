@@ -2,12 +2,12 @@
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else
-#   define xgemm DGEMM
-#   define ygemm ZGEMM
+#   define xgemm TEST_DGEMM
+#   define ygemm TEST_ZGEMM
 #endif
 
       program ga_test
-c $Id: pg2testmatmult.F,v 1.2 2004-08-17 13:44:00 edo Exp $
+c $Id: pg2testmatmult.F,v 1.3 2005-01-07 23:32:01 manoj Exp $
 c
 c     test ga_dgemm
 c     compile with make FLD_REN="optimized blas" testmatmult.x
