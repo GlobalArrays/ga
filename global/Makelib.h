@@ -83,7 +83,7 @@ LIBLAPIDIR = /usr/lpp/ssp/css/lib
    LIBHAL = -lhal_r
   LIBLAPI = -llapi_r
 # LIBCOM := -ltimer $(LIBCOM)
-     BLAS = -lesslp2
+     BLAS = -lessl_r
 
 ifdef LAPI2
 EXTRA_LIBS = -L/u2/d3h325/lapi_vector_beta
