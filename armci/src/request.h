@@ -143,6 +143,9 @@ extern  char* MessageSndBuffer;
 #define FREE_SEND_BUFFER(_ptr)  
 #endif
 
+#ifndef INIT_SENDBUF_INFO
+#define INIT_SENDBUF_INFO(_hdl,_buf,_op,_proc) 
+#endif
 
 typedef struct {
            char *buf; char* buf_posted; int count; int proc; int op; int extra;

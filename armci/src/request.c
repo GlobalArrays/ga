@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.40 2002-10-30 17:21:25 vinod Exp $ */
+/* $Id: request.c,v 1.41 2002-10-31 01:09:27 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -580,6 +580,7 @@ int armci_rem_strided(int op, void* scale, int proc,
 #   endif
     }
     buf = buf0= GET_SEND_BUFFER(bufsize,op,proc);
+    if(nb_handle)INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
     
     msginfo = (request_header_t*)buf;
 

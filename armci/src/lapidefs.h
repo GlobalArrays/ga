@@ -98,6 +98,8 @@ int _val_;\
 #define CLEAR_SEND_BUF_FIELD(_cntr, _s, _r,_t) CLEAR_COUNTER(_cntr)
 #define FIRST_INIT_SEND_BUF INIT_COUNTER
 #define SET_BUF_TAG _armci_buf_set_tag
+#define INIT_SENDBUF_INFO(_hdl,_buf,_op,_proc) \
+        _armci_buf_set_tag(_buf,(_hdl)->tag,0)
 
 #define FENCE_NODE(p) CLEAR_COUNTER(cmpl_arr[(p)])
 
