@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.19 2002-07-17 17:20:11 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.20 2002-09-21 17:46:37 vinod Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -496,7 +496,7 @@ void SND_(type, buf, lenbuf, node, sync)
 #endif
 #ifdef GA_USE_VAMPIR
   vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
-  (void) VT_log_sendmsg(me,*node,*lenbuf,*type,0);
+  vampir_send(me,*node,*lenbuf,*type);
 #endif
 
   /* Error checking */
@@ -991,7 +991,7 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 	EVKEY_LAST_ARG);
 #endif
 #ifdef GA_USE_VAMPIR
-  (void) VT_log_recvmsg(me,node,*lenmes,*type,0);
+  vampir_recv(me,node,*lenmes,*type);
   vampir_end(TCGMSG_RCV,__FILE__,__LINE__);
 #endif
 }    

@@ -170,7 +170,7 @@ void SND_(type, buf, lenbuf, node, sync)
   me = NODEID_();
 
 #ifdef GA_USE_VAMPIR
-  (void) VT_log_sendmsg(me,*node,*lenbuf,*type,0)
+  vampir_send(me,*node,*lenbuf,*type);
 #endif
 
   if (DEBUG) {
@@ -371,7 +371,7 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 	EVKEY_LAST_ARG);
 #endif
 #ifdef GA_USE_VAMPIR
-  (void) VT_log_recvmsg(me,*nodefrom,*lenmes,*type,0);
+  vampir_recv(me,*nodefrom,*lenmes,*type);
   vampir_end(TCGMSG_RCV,__FILE__,__LINE__);
 #endif
 }

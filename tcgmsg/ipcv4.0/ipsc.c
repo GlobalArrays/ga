@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.8 2002-07-17 17:20:11 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.9 2002-09-21 17:46:37 vinod Exp $ */
 
 /*
    Toolkit interface for the iPSC-2, i860, DELTA and Paragon
@@ -162,7 +162,7 @@ void SND_(type, buf, lenbuf, node, sync)
   long ttype = MAKETYPE(*type, me);
 #ifdef GA_USE_VAMPIR
   vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
-  (void) VT_log_sendmsg(me,*node,*lenbuf,*type,0)
+  vampir_send(me,*node,*lenbuf,*type);
 #endif
 
   if (CHKTYPE(*type))
@@ -351,7 +351,7 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 	EVKEY_LAST_ARG);
 #endif
 #ifdef GA_USE_VAMPIR
-  (void) VT_log_recvmsg(me,*nodefrom,*lenmes,*type,0);
+  vampir_recv(me,*nodefrom,*lenmes,*type);
   vampir_end(TCGMSG_RCV,__FILE__,__LINE__);
 #endif
 }
