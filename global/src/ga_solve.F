@@ -162,7 +162,6 @@ c
 c
       call ga_sync()
       end
-<<<<<<< ga_solve.F
 
 c     alt entry point for C that avoids char args
 c
