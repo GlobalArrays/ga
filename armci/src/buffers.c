@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.11 2002-10-30 17:21:25 vinod Exp $    **/
+/* $Id: buffers.c,v 1.12 2002-10-30 18:41:29 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -56,6 +56,7 @@ typedef struct {
 #define BUFID_PAD_T BUF_INFO_T
 #endif
 
+#define STORE_BUFID
 /* message send buffer data structure */
 typedef struct {
 #ifdef STORE_BUFID
@@ -165,7 +166,6 @@ void _armci_buf_complete_index(int idx, int called)
 {
 int count;
 buf_state_t *buf_state = _armci_buf_state->table +idx;
-extern void _armci_asyn_complete_strided_get(int dsc_id, void *buf);
 
     count = buf_state->count;
     if(DEBUG_ ){
@@ -181,8 +181,7 @@ extern void _armci_asyn_complete_strided_get(int dsc_id, void *buf);
 
     if(buf_state->async){
       /* completion of strided get should release that buffer */
-      if(buf_state->op == GET)
-        _armci_asyn_complete_strided_get(idx,_armci_buf_state->buf[idx].buffer);
+      if(buf_state->op == GET);
       else
          armci_die2("buf_complete_index: async mode not avail for this op",
                      buf_state->op,idx);

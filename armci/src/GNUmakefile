@@ -37,7 +37,7 @@ ifeq ($(TARGET),HITACHI)
      LIB_DEFINES += -DMMAP -DCLUSTER
 #     OBJ += shmalloc.o signaltrap.o winshmem.o spawn.o ds-shared.o request.o
 #     LIB_DEFINES += -DDATA_SERVER -DMMAP
-     OBJ += shmalloc.o signaltrap.o winshmem.o ds-shared.o request.o 
+     OBJ += shmalloc.o signaltrap.o winshmem.o ds-shared.o request.o buffers.o
 endif
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SHMEM)))
@@ -75,7 +75,7 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
     LIB_DEFINES += -DALLOC_MUNMAP -DACC_SMP
     OBJ += elan.o
     LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT # -DELAN_ACC
-    OBJ += spawn.o ds-shared.o request.o
+    OBJ += spawn.o ds-shared.o request.o buffers.o
     EXTRA_LIBS += -lpthread
 endif
 
