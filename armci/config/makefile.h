@@ -301,7 +301,7 @@ ifdef IBM_
          FOPT += -qnosave
      endif
      ifeq ($(COPT), -O)
-         COPT = -O3 -Q -qstrict -qarch=com -qtune=auto
+         COPT = -O3 -qinline=100 -qstrict -qarch=com -qtune=auto
      endif
      CDEFS += -DEXTNAME
            FC = xlf
