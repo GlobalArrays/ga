@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.23 2000-06-08 18:51:48 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.24 2000-06-08 22:49:33 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -64,6 +64,8 @@ extern int armci_me, armci_master;
 #include <unistd.h>
 static  size_t pagesize=0;
 static  int logpagesize=0;
+/* allow only that big shared memory segment (in MB) */
+#define MAX_ALLOC_MUNMAP 128
 #endif
 
 #if defined(SUN)
@@ -146,9 +148,13 @@ static  int logpagesize=0;
 
 #ifdef   ALLOC_MUNMAP
 #ifdef QUADRICS
+#include <elan/elan.h>
+#include <elan3/elan3.h>
+/*
 extern void* elan_base;
 extern void   *elan3_allocMain(void*, int, int);
-#define ALGN_MALLOC(s,a) elan3_allocMain(elan_base, (a), (s))
+*/
+#define ALGN_MALLOC(s,a) elan_allocMain(elan_base->state, (a), (s))
 #else 
 #define ALGN_MALLOC(s,a) malloc((s))
 #endif
@@ -274,6 +280,11 @@ void armci_shmem_init()
         if(x<1)
           armci_die("no usable amount (%d bytes) of shared memory available\n",
           (int)LBOUND);
+
+#       if defined(ALLOC_MUNMAP)
+           /* need to cap down for special memory allocator */
+           if(x>MAX_ALLOC_MUNMAP) x=MAX_ALLOC_MUNMAP;
+#       endif
 
         if(DEBUG_) printf("GOT %d mbytes max segment size \n",x);fflush(stdout);
         MinShmem = (long)(x<<10); /* make sure it is in kb: mb <<10 */ 
@@ -423,7 +434,7 @@ long reg;
         region_list[reg].id=0;
       }
       shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
-      idlist[SHMIDLEN-1]=MinShmem;
+      idlist[SHMIDLEN-2]=MinShmem;
   }
 
   temp = shmalloc((unsigned long)size);
@@ -462,7 +473,7 @@ char *temp = (char*)0, *pref_addr=(char*)0;
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
-      MinShmem= idlist[SHMIDLEN-1];
+      MinShmem= idlist[SHMIDLEN-2];
   }
 
  /* 
@@ -638,9 +649,9 @@ int  reg, nreg;
         region_list[reg].id=0;
       }
       if(DEBUG_)
-           printf("allocation unit: %dK, max shmem:%dK\n",MinShmem,MaxShmem);
+           printf("%d:allocation unit: %dK, max shmem:%dK\n",armci_me,MinShmem,MaxShmem);
       shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
-      id[SHMIDLEN-1]=MinShmem;
+      id[SHMIDLEN-2]=MinShmem;
   }
 
 
@@ -692,7 +703,9 @@ static char *temp;
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
-      MinShmem= id[SHMIDLEN-1];
+      MinShmem= id[SHMIDLEN-2];
+      if(DEBUG_)
+         printf("%d:allocation unit: %dK\n",armci_me,MinShmem);
   }
 
   /* search region_list for the current shmem id */
@@ -713,7 +726,7 @@ static char *temp;
        char *pref_addr = (char*)0;
 #   endif
     if ( (long) (temp = shmat((int) *id, pref_addr, 0)) == -1L){
-       fprintf(stderr,"%d:attach error:id=%ld off=%ld\n",armci_me,*id,offset);
+       fprintf(stderr,"%d:attach error:id=%ld off=%ld seg=%d\n",armci_me,*id,offset,MinShmem);
        shmem_errmsg(MinShmem*1024);
        armci_die("Attach_Shared_Region:failed to attach to segment id=",*id);
     }
