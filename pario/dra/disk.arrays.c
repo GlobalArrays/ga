@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.21 2000-10-13 01:22:40 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.22 2000-10-13 23:18:27 d3h325 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -114,7 +114,7 @@ Integer _max_disk_array;    /* max number of disk arrays open at a time      */
 request_t     Requests[MAX_REQ];
 int num_pending_requests=0;
 Integer _dra_turn=0;
-static int     Dra_num_serv=DRA_NUM_IOPROCS;
+int     Dra_num_serv=DRA_NUM_IOPROCS;
  
 /****************************** Macros ***************************************/
 
