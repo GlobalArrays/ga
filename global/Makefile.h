@@ -60,6 +60,8 @@ ifeq ($(TARGET),LINUX)
     MAKEFLAGS = -j 1
     EXPLICITF = TRUE
  GLOB_DEFINES = -DLINUX
+          CPP = gcc -E -nostdinc -undef -P
+       RANLIB = ranlib
 endif
 
 #
@@ -317,5 +319,11 @@ ifeq ($(EXPLICITF),TRUE)
 
 .F.f:	
 	@echo Converting $*.F '->' $*.f
+ifeq ($(TARGET),LINUX)
+	(/bin/cp $< .tmp.$$$$.c; \
+		$(CPP) $(INCLUDES) $(DEFINES) .tmp.$$$$.c | sed '/^$$/d' > $*.f ;\
+		/bin/rm -f .tmp.$$$$.c) || exit 1
+else
 	$(CPP) $(INCLUDES) $(DEFINES) < $*.F | sed '/^#/D' > $*.f
+endif
 endif
