@@ -19,11 +19,19 @@ global_stamp:	include_stamp
 		DIAG=PAR LU_SOLVE=PAR
 	cp -p libglobal.a $(LIBDIR)
 else
+ifeq ($(TARGET),DELTA)
+# Delta which GA treats as the IPSC ?
+global_stamp:	include_stamp 
+	make -f makefile.GA TARGET=IPSC VERSION=DISMEM \
+		DIAG=PAR LU_SOLVE=PAR
+	cp -p libglobal.a $(LIBDIR)
+else
 # Shared memory machines
 global_stamp:	include_stamp 
 	make -f makefile.GA TARGET=$(TARGET) VERSION=SHMEM \
 		DIAG=PAR LU_SOLVE=PAR
 	cp -p libglobal.a $(LIBDIR)
+endif
 endif
 
 include_stamp:	src/global.fh
