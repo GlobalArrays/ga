@@ -161,6 +161,73 @@ extern Integer FATR DRA_probe          _ARGS_((Integer *request, Integer *status
 extern Integer FATR DRA_wait           _ARGS_((Integer *request));
 extern Integer FATR DRA_terminate      _ARGS_(());
 extern void    DRA_flick          _ARGS_(());
+
+/* C-interface prototypes */
+
+extern int NDRA_Create(       int type,
+                              int ndim,
+                              int dims[],
+                              char *name,
+                              char* filename,
+                              int mode,
+                              int reqdims[],
+                              int *d_a);
+
+extern int NDRA_Inquire(      int d_a,
+                              int *type,
+                              int *ndim,
+                              int dims[],
+                              char *name,
+                              char* filename);
+
+extern int NDRA_Write(        int g_a,
+                              int d_a,
+                              int *request);
+
+extern int NDRA_Read(         int g_a,
+                              int d_a,
+                              int *request);
+
+extern int NDRA_Write_section(logical transp,
+                              int g_a,
+                              int glo[],
+                              int ghi[],
+                              int d_a,
+                              int dlo[],
+                              int dhi[],
+                              int *request);
+
+extern int NDRA_Read_section( logical transp,
+                              int g_a,
+                              int glo[],
+                              int ghi[],
+                              int d_a,
+                              int dlo[],
+                              int dhi[],
+                              int *request);
+
+extern int DRA_Init(          int max_arrays,
+                              double max_array_size,
+                              double total_disk_space,
+                              double max_memory);
+
+extern int DRA_Terminate();
+
+extern int DRA_Open(          char* filename,
+                              int mode,
+                              int *d_a);
+
+extern int DRA_Probe(         int request,
+                              int *compl_status);
+
+extern int DRA_Wait(          int request);
+
+extern int DRA_Delete(        int d_a);
+
+extern int DRA_Close(         int d_a);
+
+extern void DRA_Flick();
+
 #ifdef __cplusplus
 	   }
 #endif

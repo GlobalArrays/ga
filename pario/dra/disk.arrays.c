@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.31 2002-01-14 17:37:57 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.32 2002-01-22 00:40:11 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -118,11 +118,11 @@ int     Dra_num_serv=DRA_NUM_IOPROCS;
  
 /****************************** Macros ***************************************/
 
-#define dai_sizeofM(_type)    ((_type)==MT_F_DBL? sizeof(DoublePrecision):\
-                               (_type)==MT_F_INT? sizeof(Integer): \
-                                                  sizeof(DoubleComplex))
+#define dai_sizeofM(_type) MA_sizeof(_type, 1, MT_C_CHAR)
 
-#define dai_check_typeM(_type)  if (_type != MT_F_DBL && _type != MT_F_INT)\
+#define dai_check_typeM(_type)  if (_type != MT_F_DBL && _type != MT_F_INT \
+     && _type != MT_INT && _type != MT_DBL && _type != MT_FLOAT \
+     && _type != MT_F_DCPL)\
                                   dai_error("invalid type ",_type)  
 #define dai_check_handleM(_handle, msg)                                    \
 {\
@@ -683,7 +683,7 @@ Integer handle, elem_size;
         DRA[handle].dims[0] = *dim1;
         DRA[handle].dims[1] = *dim2;
         DRA[handle].ndim = 2;
-        DRA[handle].type = *type;
+        DRA[handle].type = (Integer)ga_type_f2c((int)*type);
         DRA[handle].mode = *mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
         strncpy(DRA[handle].name, name, DRA_MAX_NAME );
@@ -2050,6 +2050,16 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
   } \
 }
 
+#define nblock_to_indicesM(_index,_ndim,_block_dims,_C) \
+{ \
+  Integer _i; \
+  _index[0] = (_C)%_block_dims[0]; \
+  for (_i=1; _i<(_ndim); _i++) { \
+    (_C) = ((_C) - _index[_i-1])/_block_dims[_i-1]; \
+    _index[_i] = (_C)%_block_dims[_i]; \
+  } \
+}
+
 /*\ find offset in file for (lo,hi) element
 \*/
 void ndai_file_location(section_t ds_a, Off_t* offset)
@@ -2062,7 +2072,7 @@ Integer par_block[MAXDIM];
             dai_error("ndai_file_location: not alligned ??",ds_a.lo[0]);
 
         ndim = DRA[handle].ndim;
-        for (i=0; i<ndim-1; i++) {
+        for (i=0; i<ndim; i++) {
           /* number of blocks from edge */
           blocks[i] = (ds_a.lo[i]-1)/DRA[handle].chunk[i];
           /* size of incomplete chunk */
@@ -2079,26 +2089,48 @@ Integer par_block[MAXDIM];
            * begin to work. Any calculation that makes use of this block
            * of code will produce only crap. */
 
-           Integer   CR, R; 
-           Integer   i, num_part_block = 0;
+           Integer   CR, C, block_dims[MAXDIM]; 
+           Integer   index[MAXDIM], nelem;
+           Integer   i, j;
            Integer   ioprocs = dai_io_procs(ds_a.handle); 
            Integer   iome = dai_io_nodeid(ds_a.handle);
-           Integer   part_chunk1;
            
-           nsect_to_blockM(ds_a, &CR); 
-
-           R = (DRA[handle].dims[0] + DRA[handle].chunk[0]-1)
-             / DRA[handle].chunk[0];
-           for(i = R -1; i< CR; i+=R) if(i%ioprocs == iome)num_part_block++;
-
-           if(!part_chunk1) part_chunk1=DRA[handle].chunk[0];
-           offelem = ((CR/ioprocs - num_part_block)*DRA[handle].chunk[0] +
-                     num_part_block * part_chunk1 ) * DRA[handle].chunk[1];
-
-           /* add offset within block */
-           offelem += ((ds_a.lo[1]-1) %DRA[handle].chunk[1])*cur_ld[0]; 
+           /* Find index of current block and find number of chunks in
+              each dimension of DRA */
+          nsect_to_blockM(ds_a, &CR); 
+          for (i=0; i<ndim; i++) {
+            block_dims[i] = (DRA[handle].dims[i]+DRA[handle].chunk[i]-1)
+                          / DRA[handle].chunk[i];
+          }
+          if (iome >= 0) {
+            offset = 0;
+            for (i=iome; i<CR-1; i+=ioprocs) {
+              /* Copy i because macro destroys i */
+              C = i;
+              nblock_to_indicesM(index,ndim,block_dims,C);
+              nelem = 1;
+              for (j=0; j<ndim; j++) {
+                if (index[j]<block_dims[j]-1) {
+                  nelem *= DRA[handle].chunk[j];
+                } else {
+                  nelem *= part_chunk[j];
+                }
+              }
+              offelem += nelem;
+            }
+            /* add fractional offset for current block */
+            nelem = 1;
+            for (i=0; i<ndim-1; i++) {
+              if (index[i]<block_dims[i]-1) {
+                nelem *= DRA[handle].chunk[i];
+              } else {
+                nelem *= part_chunk[i];
+              }
+            }
+            nelem *= (ds_a.lo[ndim-1]-1)%DRA[handle].chunk[ndim-1];
+            offelem += nelem;
+          }
         } else {
-
           /* Find offset by calculating the number of chunks that must be
            * traversed to get to the corner of block containing the lower
            * coordinate index ds_a.lo[]. Then move into the block along
@@ -2141,6 +2173,7 @@ Size_t  bytes;
         if(DRA[handle].type == MT_F_INT) *(Integer*)_dra_buffer = 0;
 
         if(INDEPFILES(d_a)) {
+          /* Warning!! This section of code does not work. */
 
           Integer   CR, i, nblocks; 
           section_t ds_a;
@@ -2227,7 +2260,7 @@ Integer handle, elem_size, i;
        /* complete initialization */
         for (i=0; i<*ndim; i++) DRA[handle].dims[i] = dims[i];
         DRA[handle].ndim = *ndim;
-        DRA[handle].type = *type;
+        DRA[handle].type = (Integer)ga_type_f2c((int)*type);
         DRA[handle].mode = *mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
         strncpy(DRA[handle].name, name, DRA_MAX_NAME );
@@ -2238,7 +2271,6 @@ Integer handle, elem_size, i;
         /* create file */
         if(dai_io_manage(*d_a)){ 
 
-           /* WARNING!! Multiple files not implemented */
            if (INDEPFILES(*d_a)) {
 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
@@ -2629,12 +2661,15 @@ int ndai_next_chunk(Integer req, Integer* list, section_t* ds_chunk)
 Integer   handle = ds_chunk->handle+DRA_OFFSET;
 int       retval, ndim = DRA[handle].ndim, i;
 
-    /* WARNING!! There is no chance that the multiple files stuff works */
+    /* If we are writing out to multiple files then we need to consider
+       chunk boundaries along last dimension */
     if(INDEPFILES(ds_chunk->handle))
-      if(ds_chunk->lo[1] && DRA[handle].chunk[1]>1) 
-         ds_chunk->lo[1] -= (ds_chunk->lo[1] -1) % DRA[handle].chunk[1];
+      if(ds_chunk->lo[ndim-1] && DRA[handle].chunk[ndim-1]>1) 
+         ds_chunk->lo[ndim-1] -= (ds_chunk->lo[ndim-1] -1) %
+           DRA[handle].chunk[ndim-1];
     
-    /* ds_chunk->lo is getting set in this call */
+    /* ds_chunk->lo is getting set in this call. list contains the
+       the lower and upper indices of the cover section. */
     retval = ndai_next(ds_chunk->lo, list, DRA[handle].chunk, ndim);
     /* retval = dai_next2d(&ds_chunk->lo[0], list[0], list[1],
            DRA[handle].chunk[0], &ds_chunk->lo[1], list[2], list[3],
@@ -2648,14 +2683,18 @@ int       retval, ndim = DRA[handle].ndim, i;
           ds_chunk->lo[i]+DRA[handle].chunk[i]-1);
     }
 
-    /* WARNING!! There is no chance that the multiple files stuff works */
+    /* Again, if we are writing out to multiple files then we need to consider
+       chunk boundaries along last dimension */
     if(INDEPFILES(ds_chunk->handle)) { 
-         Integer jhi_temp =  ds_chunk->lo[1] + DRA[handle].chunk[1] -1;
-         jhi_temp -= jhi_temp % DRA[handle].chunk[1];
-         ds_chunk->hi[1] = MIN(ds_chunk->hi[1], jhi_temp); 
+         Integer nlo;
+         Integer hi_temp =  ds_chunk->lo[ndim-1] +
+           DRA[handle].chunk[ndim-1] -1;
+         hi_temp -= hi_temp % DRA[handle].chunk[ndim-1];
+         ds_chunk->hi[ndim-1] = MIN(ds_chunk->hi[ndim-1], hi_temp); 
 
          /*this line was absent from older version on bonnie that worked */
-         if(ds_chunk->lo[1] < list[ JLO ]) ds_chunk->lo[1] = list[ JLO ]; 
+         nlo = 2*(ndim-1);
+         if(ds_chunk->lo[ndim-1] < list[nlo]) ds_chunk->lo[ndim-1] = list[nlo]; 
     }
 
     return 1;
@@ -2887,7 +2926,7 @@ section_t d_sect, g_sect;
    /* usual argument/type/range checking stuff */
 
    dai_check_handleM(*d_a,"ndra_write_sect");
-   nga_inquire_(g_a, &gtype, &ndim, gdims);
+   nga_inquire(g_a, &gtype, &ndim, gdims);
    if(!dai_write_allowed(*d_a))dai_error("ndra_write_sect: write not allowed",*d_a);
    if(DRA[handle].type != gtype)dai_error("ndra_write_sect: type mismatch",gtype);
    if(DRA[handle].ndim != ndim)dai_error("ndra_write_sect: dimension mismatch", ndim);
@@ -2973,7 +3012,7 @@ Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
         if( !dai_write_allowed(*d_a))
              dai_error("ndra_write: write not allowed to this array",*d_a);
 
-        nga_inquire_(g_a, &gtype, &ndim, gdims);
+        nga_inquire(g_a, &gtype, &ndim, gdims);
         if(DRA[handle].type != gtype)dai_error("ndra_write: type mismatch",gtype);
         if(DRA[handle].ndim != ndim)dai_error("ndra_write: dimension mismatch",ndim);
         for (i=0; i<ndim; i++) {
@@ -3011,7 +3050,7 @@ section_t d_sect, g_sect;
    /* usual argument/type/range checking stuff */
    dai_check_handleM(*d_a,"ndra_read_sect");
    if(!dai_read_allowed(*d_a))dai_error("ndra_read_sect: read not allowed",*d_a);
-   nga_inquire_(g_a, &gtype, &ndim, gdims);
+   nga_inquire(g_a, &gtype, &ndim, gdims);
    if(DRA[handle].type != gtype)dai_error("ndra_read_sect: type mismatch",gtype);
    if(DRA[handle].ndim != ndim)dai_error("ndra_read_sect: dimension mismatch", ndim);
    for (i=0; i<ndim; i++) dai_check_rangeM(glo[i], ghi[i], gdims[i],
@@ -3072,7 +3111,7 @@ Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
         /* usual argument/type/range checking stuff */
         dai_check_handleM(*d_a,"ndra_read");
         if(!dai_read_allowed(*d_a))dai_error("ndra_read: read not allowed",*d_a);
-        nga_inquire_(g_a, &gtype, &ndim, gdims);
+        nga_inquire(g_a, &gtype, &ndim, gdims);
         if(DRA[handle].type != gtype)dai_error("ndra_read: type mismatch",gtype);
         if(DRA[handle].ndim != ndim)dai_error("ndra_read: dimension mismatch",ndim);
         for (i=0; i<ndim; i++) {
