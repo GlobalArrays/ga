@@ -1,4 +1,4 @@
-/* $Id: lapi.c,v 1.18 2003-01-20 21:55:17 vinod Exp $ */
+/* $Id: lapi.c,v 1.19 2003-01-22 22:47:20 vinod Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>
@@ -128,6 +128,7 @@ request_header_t *msginfo = (request_header_t *)uhdr;
    if(DEBUG_)
         fprintf(stderr,"%d:HH: op=%d from %d\n",armci_me,msginfo->operation,
                 msginfo->from);
+   if(msginfo->to != armci_me)armci_die("wrong message delivered",msginfo->to);
 
    /* process small requests that do not require comms in header handler */
    if(msginfo->datalen >0 && msginfo->dscrlen>0 && msginfo->operation != GET 
