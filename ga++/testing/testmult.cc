@@ -73,7 +73,8 @@ test(int data_type, int ndim) {
   g_a->fill(value1);
   g_b->fill( value2);
   g_c->zero();
-
+  
+  /** g_c = g_a * g_b */
   g_c->matmulPatch('N', 'N', alpha, beta,
 		   g_a, lo, hi,
 		   g_b, lo, hi,
@@ -81,6 +82,14 @@ test(int data_type, int ndim) {
   g_a->destroy();
   g_b->destroy();
   
+  /** 
+   * Verifying g_c:
+   * 1. Create g_A(=g_a) and g_B(=g_b)
+   * 2. g_C = g_A*g_B; (Using Gemm routines)
+   * 3. g_A = g_c; (copy the 2-d patch og g_c into g_A)
+   * 4. g_C = g_A - g_C; (Using add() routine by making beta=-1.0)
+   * 5. If all the elements in g_C is zero, implies SUCCESS.
+   */
   dims[0] = dims[1] = m = n = k = N-2; 
   g_A = GA::SERVICES.createGA(data_type, 2, dims, "array A_", NULL);
   g_B = GA::SERVICES.createGA(g_A, "array B_");
@@ -114,10 +123,8 @@ test(int data_type, int ndim) {
   clo[0] = clo[1] = 0;
   chi[0] = chi[1] = N-3;
 
-  g_A->copyPatch('N', g_c, lo, hi, clo, chi) ;
-  
+  g_A->copyPatch('N', g_c, lo, hi, clo, chi) ;  
   g_C->add(alpha, g_A, beta, g_C);
-  /*  NGA_Add_patch (alpha, g_c, lo, hi, beta, g_C, clo, chi, g_C, clo, chi);*/
 
   switch (data_type) {
   case C_FLOAT:
@@ -169,6 +176,7 @@ int me, nproc;
 DoublePrecision time;
 
  GA::Initialize(argc, argv, heap, stack, GA_DATA_TYPE, 0);
+ me=GA_Nodeid();
 
  time = CLOCK_(); 
  do_work();
