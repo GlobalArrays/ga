@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.59 2003-11-01 00:11:53 manoj Exp $ */
+/* $Id: base.c,v 1.60 2003-11-06 18:57:22 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -45,7 +45,7 @@
 #ifdef GA_USE_VAMPIR
 #include "ga_vampir.h"
 #endif
-
+/*#define AVOID_MA_STORAGE 1 */
 #define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
@@ -893,10 +893,9 @@ void nga_set_array_name(Integer g_a, char *array_name)
 #if defined(CRAY) || defined(WIN32)
 void FATR nga_set_array_name_(Integer *g_a, _fcd array_name)
 #else
-void FATR nga_set_array_name_(Integer *g_a, char* array_name)
+void FATR nga_set_array_name_(Integer *g_a, char* array_name, int slen)
 #endif
 {
-  int slen;
   char buf[FNAM];
 #if defined(CRAY) || defined(WIN32)
   f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
@@ -3333,7 +3332,7 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
 
   /* declarations for message exchanges */
   int next_node,next;
-  int armci_tag = 30000;
+  int armci_tag = 88000;
   char *dstn,*srcp;
   static int barr_count = 0;
   int last, next_nodel=0;
