@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.29 2002-09-30 23:03:25 vinod Exp $ */
+/* $Id: dataserv.c,v 1.30 2004-03-31 14:20:48 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "copy.h"
@@ -231,6 +231,8 @@ int bufsize=0,bytes=0,s;
         bufsize += darr[s].ptr_array_len *sizeof(void*)+2*sizeof(int);/*descr*/
     }
      bufsize += bytes + sizeof(long) +2*sizeof(double) +8;
+    if(msginfo->operation==GET)
+       bufsize = msginfo->dscrlen+sizeof(request_header_t);
     if(msginfo->operation==PUT){
 	msginfo->datalen=0;
         msginfo->bytes=msginfo->dscrlen;
