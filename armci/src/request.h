@@ -93,6 +93,13 @@ typedef struct {
            char *buf; char* buf_posted; int count; int proc; int op; int extra;
 } buf_arg_t;
 
+/*includes for SERVER_LOCK*/
+#if defined(SERVER_THREAD) && !defined(VIA)
+   extern void armci_rem_lock(int mutex, int proc, int *ticket);
+   extern void armci_rem_unlock(int mutex, int proc, int ticket);
+   extern void armci_unlock_waiting_process(msg_tag_t tag,int proc, int ticket);
+#endif
+
 
 #ifdef PIPE_BUFSIZE 
    extern void armcill_pipe_post_bufs(void *ptr, int stride_arr[], int count[],

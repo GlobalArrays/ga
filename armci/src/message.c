@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.42 2002-08-19 17:03:27 vinod Exp $ */
+/* $Id: message.c,v 1.43 2002-08-23 19:06:31 vinod Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -146,8 +146,8 @@ void armci_msg_gop_init()
        _armci_barrier_init = 1;
      }
      /****************************************************/
-     _armci_gop_init=1;
 #endif
+     _armci_gop_init=1;
 }
 
 
@@ -216,10 +216,10 @@ void armci_msg_barr_init(){
 
     /*we have to figure if we have power of ,two nodes*/
     powof2nodes=1;
-    LnB = floor(log(armci_nclus)/log(2))+1;
+    LnB = (int)floor(log(armci_nclus)/log(2))+1;
     if(pow(2,LnB-1)<armci_nclus){powof2nodes=0;}
     /*Lp2 is the largest pow-of-2 less than or equal to nclus(num of nodes)*/
-    Lp2 = pow(2,LnB);
+    Lp2 = (int)pow(2,LnB);
     _armci_barrier_shmem = 1;
 #endif
     _armci_barrier_init = 1;
