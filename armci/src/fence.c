@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.14 2003-04-02 23:52:15 vinod Exp $ */
+/* $Id: fence.c,v 1.15 2003-07-10 19:19:28 d3h325 Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -11,9 +11,7 @@
 #   include <mpi.h>
 #endif
 
-#ifdef CLUSTER
-   char *_armci_fence_arr;
-#endif
+char *_armci_fence_arr;
 
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"

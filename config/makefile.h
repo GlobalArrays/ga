@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.79 2003-07-01 21:08:24 edo Exp $
+# $Id: makefile.h,v 1.80 2003-07-10 19:19:28 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -507,6 +507,24 @@ ifeq ($(TARGET),CRAY-YMP)
       LIBBLAS = 
     EXPLICITF = TRUE
 endif
+#
+#
+ifeq ($(TARGET),cray-sv2)
+           FC = ftn
+ GLOB_DEFINES =
+     ifeq ($(FOPT), -O)
+#        FOPT = -O vector3,msgs,negmsgs -rm
+         FOPT = -O vector3
+     endif
+     FOPT_REN = -F -s integer64
+     ifeq ($(COPT), -O)
+         COPT = -O -h inline2
+     endif
+     CDEFS = -DEXT_INT
+#    COPT_REN = -h report=imsvf
+#         CRAY = yes
+endif
+
 #
 ifeq ($(TARGET),CRAY-T3D)
      ifeq ($(FOPT), -O)

@@ -16,6 +16,8 @@ extern void ARMCI_Barrier(void);    /* ARMCI Barrier*/
 extern int ARMCI_Put(void *src, void* dst, int bytes, int proc);
 extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc);
 
+#define ARMCI_Put1(_s,_d,_b,_p) memcpy(_d,_s,_b), 0
+
 extern int ARMCI_PutS(          /* strided put */
                 void *src_ptr,        /* pointer to 1st segment at source*/ 
 		int src_stride_arr[], /* array of strides at source */
@@ -54,7 +56,11 @@ extern int ARMCI_AccS(                /* strided accumulate */
                 );
 
 
+#ifdef __crayx1__
+#define ARMCI_Get(_s,_d,_b,_p) memcpy(_d,_s,_b), 0
+#else
 extern int ARMCI_Get(void *src, void* dst, int bytes, int proc);
+#endif
 
 extern int ARMCI_GetS(          /* strided get */
                 void *src_ptr,        /* pointer to 1st segment at source*/ 

@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.49 2002-12-14 01:25:17 d3h325 Exp $ */
+/* $Id: message.c,v 1.50 2003-07-10 19:19:28 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -926,7 +926,7 @@ static void idoop2(int n, char *op, int *x, int* work, int* work2)
 
 static void ddoop(int n, char* op, double* x, double* work)
 {
-#if defined(CRAY)  || defined(WIN32) || defined(HITACHI)
+#if (defined(CRAY) && !defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
 #elif defined(AIX)
 #   define FORT_DADD fort_dadd
 #   define FORT_DMULT fort_dmult
@@ -978,7 +978,7 @@ extern void FATR FORT_DMULT(int *, double *, double*);
 \*/
 static void ddoop2(int n, char *op, double *x, double* work, double* work2)
 {
-#if defined(CRAY)  || defined(WIN32) || defined(HITACHI)
+#if (defined(CRAY) && !defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
 #elif defined(AIX)
 #   define FORT_DADD2 fort_dadd2
 #   define FORT_DMULT2 fort_dmult2

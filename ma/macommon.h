@@ -32,7 +32,7 @@
 #define MT_LAST		MT_F_DCPL
 #define MT_NUMTYPES	(MT_LAST - MT_FIRST + 1)
 
-#if defined(_CRAY) || defined(WIN32) || defined(HITACHI)
+#if (defined(_CRAY) && !defined(__crayx1))  || defined(WIN32) || defined(HITACHI)
 #define f2c_alloc_get_				F2C_ALLOC_GET
 #define f2c_allocate_heap_			F2C_ALLOCATE_HEAP
 #define f2c_chop_stack_				F2C_CHOP_STACK

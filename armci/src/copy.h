@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.50 2003-04-01 21:10:59 vinod Exp $ */
+/* $Id: copy.h,v 1.51 2003-07-10 19:19:28 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -71,7 +71,7 @@
 #if   defined(AIX)
 #     define DCOPY2D	dcopy2d_u
 #     define DCOPY1D	dcopy1d_u
-#elif defined(LINUX) || defined(HPUX64) || defined(DECOSF)
+#elif defined(LINUX) || defined(__crayx1) || defined(HPUX64) || defined(DECOSF)
 #     define DCOPY2D	dcopy2d_n_
 #     define DCOPY1D	dcopy1d_n_
 #elif defined(CRAY)  || defined(WIN32) || defined(HITACHI)

@@ -412,6 +412,19 @@ ifeq ($(TARGET),CRAY-SV1)
          CRAY = yes
 endif
 
+ifeq ($(TARGET),cray-sv2)
+           FC = ftn
+ GLOB_DEFINES = -DCRAY_YMP
+     ifeq ($(FOPT), -O)
+#        FOPT = -O vector3,msgs,negmsgs -rm
+         FOPT = -O vector3
+     endif
+     ifeq ($(COPT), -O)
+         COPT = -O -h inline2
+     endif
+#    COPT_REN = -h report=imsvf
+#         CRAY = yes
+endif
 
 ifeq ($(TARGET),CRAY-T3D)
            FC = cf77

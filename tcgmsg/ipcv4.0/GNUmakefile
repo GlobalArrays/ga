@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.13 2003-06-27 21:00:01 vinod Exp $
+# $Id: GNUmakefile,v 1.14 2003-07-10 19:19:28 d3h325 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -141,7 +141,7 @@ NO_TOPLOT = ARDENT CRAY SGI SGI_N32 SGITFP NEXT NEXTNOEXT HPUX HPUXNOEXT KSR
 NO_PARALLEL = SP1 SP
 
 
-LOADLIBES = $(LIBRARY_PATH) $(COMM_LIBS) 
+LOADLIBES = $(FULL_LIBRARY_PATH) $(COMM_LIBS) 
 ifdef GA_USE_VAMPIR
    ifdef GA_USE_VAMPIR
       ifdef VT_LIB
@@ -159,14 +159,14 @@ endif
 #......................... make targets ........................
 #
 ifeq ($(TARGET),$(findstring $(TARGET),$(NO_PARALLEL)))
-      all:    $(LIBRARY_PATH) test.x testf.x hello.x msgtypesf.h
+      all:    $(FULL_LIBRARY_PATH) test.x testf.x hello.x msgtypesf.h
 else
-      all:    $(LIBRARY_PATH) test.x testf.x hello.x msgtypesf.h hello.p test.p testf.p
+      all:    $(FULL_LIBRARY_PATH) test.x testf.x hello.x msgtypesf.h hello.p test.p testf.p
 endif
 
 everything:     all $(BINDIR)/parallel parse toplot
 
-hello.x: $(LIBRARY_PATH)
+hello.x: $(FULL_LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ hello.c  $(LOADLIBES)
 
 
@@ -179,7 +179,7 @@ ifneq ($(TARGET),$(findstring $(TARGET),$(NO_PARALLEL)))
 		cc -g -o $@ para.ipsc.c -host
 		echo Don't forget to copy parallel into bin directory
   else
-        $(BINDIR)/parallel:	 $(LIBRARY_PATH)
+        $(BINDIR)/parallel:	 $(FULL_LIBRARY_PATH)
 		$(CC) $(CFLAGS) -o $@ parallel.c $(LOADLIBES)
 		@echo ">>>" $@ "is used to run TCGMSG programs"
   endif
@@ -189,10 +189,10 @@ else
 		@echo "No parallel on this system"
 endif
 
-test.x:	$(LIBRARY_PATH) $(BINDIR)/parallel test.c
+test.x:	$(FULL_LIBRARY_PATH) $(BINDIR)/parallel test.c
 	$(CC) $(CFLAGS) $(CLD_REN) -o $@ test.c $(LOADLIBES)
 
-testf.x: msgtypesf.h testf.f.proto $(LIBRARY_PATH) $(BINDIR)/parallel
+testf.x: msgtypesf.h testf.f.proto $(FULL_LIBRARY_PATH) $(BINDIR)/parallel
 	./port "$(TARGET)" testf.f.proto
 	$(FC) $(FFLAGS) $(FLD_REN) -o $@ testf.f $(LOADLIBES)
 
@@ -211,13 +211,13 @@ else
 		$(CC) -g -o $@ toplot.c strdup.o -lplot
 endif
 
-testpf.x: $(LIBRARY_PATH)
+testpf.x: $(FULL_LIBRARY_PATH)
 	$(FC) $(FFLAGS) -o $@ testpf.f $(LOADLIBES) 
 
 $(LIBOBJ) parallel.o test.o testf.o:	$(INCLUDES)
 
 testf.o:	msgtypesf.h
-$(patsubst %,$(LIBRARY_PATH)(%),globalop.o):	msgtypesc.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),globalop.o):	msgtypesc.h
 
 msgtypesf.h:	msgtf.h
 	cp msgtf.h msgtypesf.h

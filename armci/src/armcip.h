@@ -74,7 +74,7 @@ extern thread_id_t armci_usr_tid;
 #  define SERVER_CONTEXT (armci_me<0)
 #endif
 
-#if defined(LAPI) || defined(CLUSTER)
+#if defined(LAPI) || defined(CLUSTER) || defined(CRAY)
 #  include "request.h"
 #endif
 
@@ -222,6 +222,8 @@ extern void armci_init_fence();
    extern char *_armci_fence_arr;
 #  define SAMECLUSNODE(p)\
      ( ((p) <= armci_clus_last) && ((p) >= armci_clus_first) )
+#elif defined(__crayx1)
+#  define SAMECLUSNODE(p) 1
 #else
 #  define SAMECLUSNODE(p) ((p)==armci_me) 
 #endif

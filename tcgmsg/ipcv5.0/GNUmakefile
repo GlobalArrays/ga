@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.7 2003-06-27 21:00:19 vinod Exp $
+# $Id: GNUmakefile,v 1.8 2003-07-10 19:19:28 d3h325 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -124,7 +124,7 @@ ifndef BINDIR
 endif
 
 
-LOADLIBES = $(LIBRARY_PATH) $(COMM_LIBS) 
+LOADLIBES = $(FULL_LIBRARY_PATH) $(COMM_LIBS) 
 ifdef GA_USE_VAMPIR
    ifdef GA_USE_VAMPIR
       ifdef VT_LIB
@@ -141,31 +141,31 @@ ifdef GA_USE_VAMPIR
 endif
 #......................... make targets ........................
 #
-      all:    $(LIBRARY_PATH) test.x testf.x hello.x msgtypesf.h
+      all:    $(FULL_LIBRARY_PATH) test.x testf.x hello.x msgtypesf.h
 
 
-hello.x: $(LIBRARY_PATH)
+hello.x: $(FULL_LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ hello.c  $(LOADLIBES)
 
-test.x:	$(LIBRARY_PATH)  checkbyte.o test.c
+test.x:	$(FULL_LIBRARY_PATH)  checkbyte.o test.c
 	$(CC) $(CFLAGS) -o $@ test.c $(LOADLIBES) checkbyte.o
 	$(RM) checkbyte.o
 
-pvm.ring:	$(LIBRARY_PATH)  checkbyte.o  pvm.c
+pvm.ring:	$(FULL_LIBRARY_PATH)  checkbyte.o  pvm.c
 	$(CC) $(CFLAGS) -o $@ pvm.c $(LOADLIBES) checkbyte.o
 	$(RM) checkbyte.o
 
-testf.x: msgtypesf.h $(LIBRARY_PATH) testf.o
+testf.x: msgtypesf.h $(FULL_LIBRARY_PATH) testf.o
 	$(FLD) $(FFLAGS) -o $@ testf.o $(LOADLIBES)
 
-jacobi.x: $(LIBRARY_PATH) jacobi.o $(JOBJ)
+jacobi.x: $(FULL_LIBRARY_PATH) jacobi.o $(JOBJ)
 	$(FLD) $(FFLAGS) -o $@ jacobi.o $(JOBJ) $(LOADLIBES)
 
 
 $(LIBOBJ)  test.o testf.o:	$(INCLUDES)
 
 testf.o:	msgtypesf.h
-$(patsubst %,$(LIBRARY_PATH)(%),globalop.o):	msgtypesc.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),globalop.o):	msgtypesc.h
 
 ifdef GA_USE_VAMPIR
 tcgmsg_vampir.o:	../tcgmsg_vampir.c

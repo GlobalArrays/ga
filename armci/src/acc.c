@@ -1,16 +1,37 @@
-/* $Id: acc.c,v 1.9 2002-09-06 16:13:02 vinod Exp $ */
-void  L_ACCUMULATE_2D(long* alpha, int* rows, int* cols, long* a, 
-                      int* lda, long* b, int* ldb)
+/* $Id: acc.c,v 1.10 2003-07-10 19:19:28 d3h325 Exp $ */
+
+#if defined(__crayx1)
+#else
+#define restrict
+#endif
+
+void  L_ACCUMULATE_2D(long* restrict alpha, int* restrict rows, 
+                      int* restrict cols, long* restrict a, 
+                      int* restrict lda, long* restrict b, int* restrict ldb)
 {
 int i,j;
 
+#ifdef __crayx1
+#pragma _CRI concurrent
+#endif
+
    for(j=0;j< *cols; j++){
-     long *aa = a + j* *lda;
-     long *bb = b + j* *ldb;
+     long * restrict aa = a + j* *lda;
+     long * restrict bb = b + j* *ldb;
      for(i=0;i< *rows; i++)
        aa[i] += *alpha * bb[i];
    }
 }
+
+void L_ACCUMULATE_1D(long * restrict alpha, long * restrict a, long * restrict b, 
+                  int * restrict rows)
+{
+int i;
+     for(i=0;i< *rows; i++)
+       a[i] += *alpha * b[i];
+}
+
+
 #ifdef CRAY_T3E
 void  F_ACCUMULATE_2D_(float* alpha, int* rows, int* cols, float* a,
                       int* lda, float* b, int* ldb)

@@ -110,7 +110,7 @@
 #  define NAT_LOCK(x,p)   setlock(x)
 #  define NAT_UNLOCK(x,p)  unsetlock(x)
 
-#elif defined(CRAY_YMP)
+#elif defined(CRAY_YMP) && !defined(__crayx1)
 #  include <tfork.h>
 
     typedef int lockset_t;
@@ -132,9 +132,9 @@ extern void armcill_unlock(int m, int proc);
    typedef int lockset_t;
 
 
-#elif defined(CRAY_T3E) || defined(QUADRICS)
+#elif defined(CRAY_T3E) || defined(QUADRICS) || defined(__crayx1)
 #  include <limits.h>
-#if defined(DECOSF) || defined(LINUX64)
+#if defined(DECOSF) || defined(LINUX64) || defined(__crayx1)
 #  define  _INT_MIN_64 (LONG_MAX-1)
 #endif
 #  undef NUM_LOCKS

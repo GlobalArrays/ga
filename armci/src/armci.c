@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.72 2003-07-03 23:14:34 d3h325 Exp $ */
+/* $Id: armci.c,v 1.73 2003-07-10 19:19:28 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -27,7 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef CRAY
+#if defined(CRAY) && !defined(__crayx1)
 #  include <sys/category.h>
 #  include <sys/resource.h>
 #  include <unistd.h>
@@ -113,7 +113,7 @@ static void armci_abort(int code)
 {
     armci_perror_msg();
     ARMCI_Cleanup();
-#ifdef CRAY
+#if defined(CRAY) && !defined(__crayx1)
     limit(C_PROC,0,L_CORE,1L); /* MPI_Abort on Cray dumps core!!! - sqeeze it */
     chdir("/"); /* we should not be able to write core file here */
 #endif

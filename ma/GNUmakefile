@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.3 2002-09-14 05:40:29 d3g001 Exp $
+# $Id: GNUmakefile,v 1.4 2003-07-10 19:19:28 d3h325 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -17,14 +17,14 @@
 include ../config/makefile.h
 include ../config/makelib.h
 
-testf.x:  testf.o $(LIBRARY_PATH)
+testf.x:  testf.o $(FULL_LIBRARY_PATH)
 	$(FC) -o $@ $(FFLAGS) $^
 
-testc.x: testc.o string-util.o $(LIBRARY_PATH)
+testc.x: testc.o string-util.o $(FULL_LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^
 
-test-coalesce.x: test-coalesce.o $(LIBRARY_PATH)
+test-coalesce.x: test-coalesce.o $(FULL_LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^
 
-test-inquire.x: test-inquire.o $(LIBRARY_PATH)
+test-inquire.x: test-inquire.o $(FULL_LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^

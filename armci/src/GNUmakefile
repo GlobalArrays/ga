@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.73 2003-07-03 23:14:34 d3h325 Exp $
+#$Id: GNUmakefile,v 1.74 2003-07-10 19:19:27 d3h325 Exp $
          FOPT = -O
          COPT = -O
 
@@ -28,7 +28,7 @@ SYSTEM_V += HPUX HPUX64 IBM IBM64 DECOSF LINUX LINUX64 INTERIX NEC
 SHMEM    = $(SYSTEM_V) LAPI LAPI64
 SHMMMAP  = NEC
 SOCKETS  = $(SYSTEM_V)
-ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP FUJITSU-AP
+ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP CRAY-SV2  LAPI FUJITSU-VPP FUJITSU-AP
 #USE_PTHREADS = LINUX SGI_N32 SOLARIS
 #USE_POSIX = IBM
 
@@ -143,34 +143,34 @@ LIBS += $(EXTRA_LIBS)
 %.x.p:%.x
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
 
-%.x:%.c  $(LIBRARY_PATH)
+%.x:%.c  $(FULL_LIBRARY_PATH)
 	$(CC) -g -I. $(COPT_REN) $(MP_INCLUDES) $(MP_DEFINES) -o $@ $^ $(LIBS) -lm
 
-ipctest.x: $(LIBRARY_PATH)
+ipctest.x: $(FULL_LIBRARY_PATH)
 	$(CC) $(CFLAGS) $(MP_DEFINES) ipctest.c -o $@ $^ $(LIBS)
 
 
-$(LIBRARY_PATH)(winshmem.o):    ./shmem.h ./kr_malloc.h 
-$(LIBRARY_PATH)(vector.o):      ./memlock.h ./copy.h ./armcip.h ./acc.h 
-$(LIBRARY_PATH)(strided.o):     ./memlock.h ./copy.h ./armcip.h ./acc.h 
-$(LIBRARY_PATH)(shmem.o):       ./shmem.h ./kr_malloc.h 
-$(LIBRARY_PATH)(semaphores.o):  ./semaphores.h 
-$(LIBRARY_PATH)(rmw.o): 	./locks.h ./copy.h ./armcip.h 
-$(LIBRARY_PATH)(request.o):     ./request.h ./memlock.h ./copy.h ./armcip.h 
-$(LIBRARY_PATH)(pack.o):        ./armcip.h ./request.h
-$(LIBRARY_PATH)(mutex.o):       ./request.h ./copy.h ./armcip.h 
-$(LIBRARY_PATH)(message.o):     ./message.h ./armcip.h  ./copy.h
-$(LIBRARY_PATH)(memory.o):      ./shmem.h ./message.h ./armcip.h 
-$(LIBRARY_PATH)(memlock.o):     ./memlock.h ./locks.h ./copy.h ./armcip.h 
-$(LIBRARY_PATH)(locks.o):       ./locks.h ./armcip.h 
-$(LIBRARY_PATH)(lapi.o):        ./copy.h ./armcip.h ./lapidefs.h
-$(LIBRARY_PATH)(ipctest.o):     ./shmem.h ./locks.h 
-$(LIBRARY_PATH)(fence.o):       ./copy.h ./armcip.h ./armci.h 
-$(LIBRARY_PATH)(ds-shared.o):   ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
-$(LIBRARY_PATH)(dataserv.o):    ./sockets.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
-$(LIBRARY_PATH)(dataserv-gm.o): ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
-$(LIBRARY_PATH)(clusterinfo.o): ./message.h ./armcip.h 
-$(LIBRARY_PATH)(armci.o):       ./signaltrap.h ./shmem.h ./memlock.h ./locks.h ./lapidefs.h ./copy.h 
+$(FULL_LIBRARY_PATH)(winshmem.o):    ./shmem.h ./kr_malloc.h 
+$(FULL_LIBRARY_PATH)(vector.o):      ./memlock.h ./copy.h ./armcip.h ./acc.h 
+$(FULL_LIBRARY_PATH)(strided.o):     ./memlock.h ./copy.h ./armcip.h ./acc.h 
+$(FULL_LIBRARY_PATH)(shmem.o):       ./shmem.h ./kr_malloc.h 
+$(FULL_LIBRARY_PATH)(semaphores.o):  ./semaphores.h 
+$(FULL_LIBRARY_PATH)(rmw.o): 	./locks.h ./copy.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(request.o):     ./request.h ./memlock.h ./copy.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(pack.o):        ./armcip.h ./request.h
+$(FULL_LIBRARY_PATH)(mutex.o):       ./request.h ./copy.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(message.o):     ./message.h ./armcip.h  ./copy.h
+$(FULL_LIBRARY_PATH)(memory.o):      ./shmem.h ./message.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(memlock.o):     ./memlock.h ./locks.h ./copy.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(locks.o):       ./locks.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(lapi.o):        ./copy.h ./armcip.h ./lapidefs.h
+$(FULL_LIBRARY_PATH)(ipctest.o):     ./shmem.h ./locks.h 
+$(FULL_LIBRARY_PATH)(fence.o):       ./copy.h ./armcip.h ./armci.h 
+$(FULL_LIBRARY_PATH)(ds-shared.o):   ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(dataserv.o):    ./sockets.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(dataserv-gm.o): ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(clusterinfo.o): ./message.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(armci.o):       ./signaltrap.h ./shmem.h ./memlock.h ./locks.h ./lapidefs.h ./copy.h 
 
 locks.h: semaphores.h
 armcip.h: message.h lapidefs.h memlock.h

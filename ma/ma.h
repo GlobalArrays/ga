@@ -2,7 +2,7 @@
 #define _ma_h
 
 /* 
- * $Id: ma.h,v 1.4 1997-02-26 20:39:17 d3h325 Exp $
+ * $Id: ma.h,v 1.5 2003-07-10 19:19:28 d3h325 Exp $
  */
 
 /* 
@@ -20,5 +20,10 @@
 
 extern Boolean MAi_inform_base();
 extern void MAi_summarize_allocated_blocks();
+#ifdef __crayx1
+#undef  _CRAY
+#undef CRAY
+#endif
+
 
 #endif /* _ma_h */

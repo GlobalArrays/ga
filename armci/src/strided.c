@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.69 2003-04-04 22:13:10 vinod Exp $ */
+/* $Id: strided.c,v 1.70 2003-07-10 19:19:28 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -12,6 +12,7 @@
 #define ARMCI_OP_2D(op, scale, proc, src, dst, bytes, count, src_stride, dst_stride,lockit)\
 if(op == GET || op ==PUT)\
       armci_copy_2D(op, proc, src, dst, bytes, count, src_stride,dst_stride);\
+else if(count==1) armci_acc_1D(op, scale, proc, src, dst, bytes,lockit);\
 else\
       armci_acc_2D(op, scale, proc, src, dst, bytes, count, src_stride,dst_stride,lockit) 
 
@@ -39,7 +40,11 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
 #  define COUNT count
 #endif
 
+#ifdef __crayx1
+    int shmem = 1;
+#else
     int shmem = SAMECLUSNODE(proc);
+#endif
     
     if(shmem) {
         
@@ -115,7 +120,7 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
 }
 
 
-#if defined(CRAY) || defined(FUJITSU)
+#if (defined(CRAY) && !defined(__crayx1)) || defined(FUJITSU)
 #ifdef CRAY
 #  define DAXPY  SAXPY
 #else
@@ -142,6 +147,47 @@ static void daxpy_2d_(void* alpha, int *rows, int *cols, void *a, int *ald,
 }
 #endif
 
+
+void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes, int lockit)
+{
+int rows,size;
+void (ATR *func)(void*, void*, void*, int*);
+      switch (op){
+      case ARMCI_ACC_INT:
+          rows = bytes/sizeof(int);
+          func = I_ACCUMULATE_1D;
+          break;
+      case ARMCI_ACC_LNG:
+          rows = bytes/sizeof(long);
+          func = L_ACCUMULATE_1D;
+          break;
+      case ARMCI_ACC_DBL:
+          rows = bytes/sizeof(double);
+          func = D_ACCUMULATE_1D;
+          break;
+      case ARMCI_ACC_DCP:
+          rows = bytes/(2*sizeof(double));
+          func = Z_ACCUMULATE_1D;
+          break;
+      case ARMCI_ACC_CPL:
+          rows = bytes/(2*sizeof(float));
+          func = C_ACCUMULATE_1D;
+          break;
+      case ARMCI_ACC_FLT:
+          rows = bytes/sizeof(float);
+          func = F_ACCUMULATE_1D;
+          break;
+      default: armci_die("ARMCI accumulate: operation not supported",op);
+          func = F_ACCUMULATE_1D; /*avoid compiler whining */
+      }
+
+
+      if(lockit){
+          ARMCI_LOCKMEM(dst, bytes + (char*)dst, proc);
+      }
+      func(scale, dst, src, &rows);
+      if(lockit)ARMCI_UNLOCKMEM(proc);
+}
 
 /*\ 2-dimensional accumulate
 \*/
@@ -704,6 +750,10 @@ int ARMCI_AccS( int  optype,            /* operation */
 
 int ARMCI_Put(void *src, void* dst, int bytes, int proc)
 {
+#ifdef __crayx1
+       memcpy(dst,src,bytes);
+       return 0;
+#else
 #ifdef ALLOW_PIN
     if( armci_region_both_found(src,dst,bytes,armci_clus_id(proc))){
 #if 0
@@ -714,6 +764,7 @@ int ARMCI_Put(void *src, void* dst, int bytes, int proc)
     }else
 #endif
     return ARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
+#endif
 }
 
 extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc)
@@ -723,6 +774,10 @@ extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc)
 
 int ARMCI_Get(void *src, void* dst, int bytes, int proc)
 {
+#ifdef __crayx1
+       memcpy(dst,src,bytes);   
+       return 0;
+#else
 #ifdef ALLOW_PIN
     if( armci_region_both_found(dst,src,bytes,armci_clus_id(proc))){
 #if 0
@@ -733,6 +788,7 @@ int ARMCI_Get(void *src, void* dst, int bytes, int proc)
     }  else
 #endif
     return ARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
+#endif
 }
 
 

@@ -43,14 +43,14 @@ else
       SYMBOL_STAMP = $(TARGET)
 endif
 
-LIBRARY_PATH := $(LIBDIR)/$(LIBRARY)
+FULL_LIBRARY_PATH := $(LIBDIR)/$(LIBRARY)
 
 OBJECTS := $(OBJ) $(OBJ_OPTIMIZE)
 
- LIBOBJ := $(patsubst %,$(LIBRARY_PATH)(%),$(OBJECTS))
- LIBOBJ_OPT := $(patsubst %,$(LIBRARY_PATH)(%),$(OBJ_OPTIMIZE))
+ LIBOBJ := $(patsubst %,$(FULL_LIBRARY_PATH)(%),$(OBJECTS))
+ LIBOBJ_OPT := $(patsubst %,$(FULL_LIBRARY_PATH)(%),$(OBJ_OPTIMIZE))
 
-$(LIBRARY_PATH): $(HEADERS) $(SYMBOL_STAMP).stamp $(LIBOBJ) $(LIBOBJ_OPT)
+$(FULL_LIBRARY_PATH): $(HEADERS) $(SYMBOL_STAMP).stamp $(LIBOBJ) $(LIBOBJ_OPT)
 	$(RANLIB) $@
 
 $(SYMBOL_STAMP).stamp:
@@ -76,7 +76,7 @@ MAKESUBDIRS = for dir in $(SUBDIRS); do $(MAKE)  -C $$dir $@ || exit 1 ; done
 
 ifdef SUBDIRS
 
-$(LIBRARY_PATH):        subdirs
+$(FULL_LIBRARY_PATH):        subdirs
 
 .PHONY: subdirs
 subdirs:
@@ -96,12 +96,12 @@ endif
 	-$(RM) -f *.o *.p *core *stamp *trace *.x *events* $(LIB_TARGETS)
 	-$(RM) -rf ./obj *.obj *.exe
 ifdef HARDCLEAN 
-	-$(RM) -f $(LIBRARY_PATH)
+	-$(RM) -f $(FULL_LIBRARY_PATH)
 else
-	if [ -f $(LIBRARY_PATH) ] ; then \
-		$(AR) d $(LIBRARY_PATH) $(OBJ) $(OBJ_OPTIMIZE) ; \
-		if [ `$(AR) t $(LIBRARY_PATH) | wc | awk ' {print $$1;}'` -eq 0 ] ; then \
-			$(RM) -f $(LIBRARY_PATH) ; \
+	if [ -f $(FULL_LIBRARY_PATH) ] ; then \
+		$(AR) d $(FULL_LIBRARY_PATH) $(OBJ) $(OBJ_OPTIMIZE) ; \
+		if [ `$(AR) t $(FULL_LIBRARY_PATH) | wc | awk ' {print $$1;}'` -eq 0 ] ; then \
+			$(RM) -f $(FULL_LIBRARY_PATH) ; \
 		fi ; \
 	fi ;
 endif

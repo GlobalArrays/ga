@@ -2,7 +2,6 @@
       integer rows, cols
       integer c, r, ald, bld
       double precision A(ald,*), B(bld,*)
-
       do c = 1, cols
          do r = 1, rows
             B(r,c) = A(r,c)
@@ -44,6 +43,7 @@ c$$$         b(r+3,c) = a(r+3,c) + b(r+3,c) * 0
       subroutine dcopy1d_n(A, B, n)
       integer n,i 
       double precision A(n), B(n)
+ccdir$ no_cache_alloc a,b
       do i = 1, n 
             B(i) = A(i)
       end do

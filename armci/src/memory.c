@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.31 2003-03-27 02:08:55 d3h325 Exp $ */
+/* $Id: memory.c,v 1.32 2003-07-10 19:19:28 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -8,6 +8,8 @@
 #define DEBUG_ 0
 #define USE_MALLOC 
 #define USE_SHMEM_
+
+static context_t ctx_localmem;
 
 #if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
 #include "shmem.h"
@@ -24,7 +26,6 @@
 #include "armci_vampir.h"
 #endif
 
-static context_t ctx_localmem;
 
 void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
 {
