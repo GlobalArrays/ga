@@ -168,6 +168,16 @@ ifeq ($(TARGET),FUJITSU-AP)
  GLOB_DEFINES = -DFUJITSU
 endif
 
+#---------------------------- Hitachi SR8000 ------------------------------
+ifeq ($(TARGET),HITACHI)
+           FC = f90 -hf77
+           CC = mpicc
+      ifeq ($(FOPT),-O)
+         FOPT = -opt=ss -nopar
+      endif
+   EXTRA_OBJ += sr8k.o
+endif
+
 #---------------------------- Sun or Fujitsu Sparc/Solaris ----------------
 ifeq ($(TARGET),SOLARIS)
   ifeq ($(_CC),mpifcc)

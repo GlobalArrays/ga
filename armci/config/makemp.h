@@ -9,8 +9,9 @@
 # e.g., on Compaq with Quadrics network LIBMPI should also add -lelan3
 # LIBMPI = -lmpi -lelan3
 # 
+SKIP_MPILIB = LAPI HITACHI
 MPI_LIB_NAME = -lmpi
-ifeq ($(TARGET),LAPI)
+ifeq ($(TARGET),$(findstring $(TARGET),$(SKIP_MPILIB)))
 MPI_LIB_NAME = 
 endif
 ifeq ($(ARMCI_NETWORK),QUADRICS)
