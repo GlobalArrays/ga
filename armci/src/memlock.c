@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.9 2000-06-08 23:47:47 d3h325 Exp $ */
+/* $Id: memlock.c,v 1.10 2000-06-14 18:38:41 edo Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -50,7 +50,7 @@ static memlock_t table[MAX_SLOTS];
 void armci_lockmem_(void *pstart, void *pend, int proc)
 {
 #ifdef QUADRICS
-    int lock = 0;
+    int lock = proc;
 #else
     int lock = proc-armci_master;
 #endif
@@ -67,7 +67,7 @@ void armci_lockmem_(void *pstart, void *pend, int proc)
 void armci_unlockmem_(int proc)
 {
 #ifdef QUADRICS
-    int lock = 0;
+    int lock = proc;
 #else
     int lock = proc-armci_master;
 #endif
