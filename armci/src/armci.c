@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.92 2004-07-27 08:57:59 manoj Exp $ */
+/* $Id: armci.c,v 1.93 2004-09-15 17:01:35 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -111,6 +111,11 @@ void ARMCI_Cleanup()
 void armci_notify_init()
 {
   int rc,bytes=sizeof(armci_notify_t)*armci_nproc;
+
+#ifdef DOELAN4
+  armci_elan_notify_init();
+  return;
+#endif
 
   _armci_notify_arr=
         (armci_notify_t**)malloc(armci_nproc*sizeof(armci_notify_t*));
@@ -449,7 +454,7 @@ int ARMCI_Init()
 
     armci_msg_barrier();
     armci_init_memlock(); /* allocate data struct for locking memory areas */
-#ifndef GM
+#if !defined(GM) 
     armci_notify_init();
 #endif
     armci_msg_barrier();
@@ -665,9 +670,16 @@ void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle) {
 
 int armci_notify(int proc)
 {
-#ifdef GM
-extern int armci_inotify_proc(int);
-   return(armci_inotify_proc(proc));
+#ifdef DOELAN4
+  if(proc==armci_me){
+    return 0;
+  }
+#endif
+#if defined(GM) || (defined(DOELAN4) && defined(ELAN_ACC))
+  {
+    extern int armci_inotify_proc(int);
+    return(armci_inotify_proc(proc));
+  }
 #else
    armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
    pnotify->sent++;
@@ -692,8 +704,20 @@ int armci_notify_wait(int proc,int *pval)
 #ifdef ARMCI_PROFILE
   armci_profile_start(ARMCI_PROF_NOTIFY);
 #endif
+#ifdef DOELAN4
+  if(proc==armci_me){
+#ifdef MEM_FENCE
+       MEM_FENCE;
+#endif
+#ifdef ARMCI_PROFILE
+    armci_profile_stop(ARMCI_PROF_NOTIFY);
+#endif
+    return 0;
+  }
+#endif
+	  
 
-#ifdef GM
+#if defined(GM) || (defined(DOELAN4) && defined(ELAN_ACC))
   {
      extern int armci_inotify_wait(int,int*);
      retval=armci_inotify_wait(proc,pval);

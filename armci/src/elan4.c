@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.3 2004-08-12 22:35:53 d3h325 Exp $ */
+/* $Id: elan4.c,v 1.4 2004-09-15 17:01:35 vinod Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +8,7 @@
 #include <elan/devent.h>
 
 #define DEBUG_ 0
+#define DEBUG_NOTIFY 0
 #ifndef DOELAN4
  what are we doing here?
 #endif
@@ -40,10 +41,28 @@ static ELAN_MAIN_QUEUE *mq;
 static int armci_request_from=-1;
 static int armci_request_to=-1;
 
-typedef unsigned short int ops_t;
+
+typedef struct{
+	int *verify_seq_ar;
+	int *wait_seq_ar;
+	int** recv_verify_arr;
+	int** recv_verify_smp_arr;
+}armci_verify_wait_t;
+armci_verify_wait_t __armci_verify_wait_struct;
+armci_verify_wait_t *verify_wait = &__armci_verify_wait_struct;
+
 static ops_t** armci_elan_fence_arr;
 static ops_t *ops_pending_ar;
+ops_t *rdma_ops_pending_ar;
 static ops_t *ops_done_ar;
+int notify_tmp[3];
+static ELAN_EVENT* prevnotifydscr = (ELAN_EVENT *)0;
+static ELAN_EVENT* prevnotifywaitdscr = (ELAN_EVENT *)0;
+int **mynotify_epochs;
+static int **notify_epoch_arr;
+static int *mycurrent_epoch;
+static int **current_epoch_seq;
+static int numepochs = 2;
 
 #define MSG_DATA_LEN (_ELAN_SLOTSIZE - sizeof(request_header_t))
 
@@ -66,14 +85,14 @@ static ELAN_QUEUE_RX *qrx;
 static ELAN_MAIN_QUEUE *mq;
 #endif
 
-#define NEVENTS MAX_BUFS 
+#define NEVENTS (armci_nproc*numepochs) 
 #define SETEVAL 1 
 static ELAN_EVENT_ELAN *evdelan;
-static ELAN_EVENT *elanev[NEVENTS];
+static ELAN_EVENT **elanev;
 
 extern int elan_devent_completed(int setval, ELAN_EVENT *e);
 #define DOPUT(_src, _dst, _bidx, _len, _p) \
-        elan_doput(_pgctrl,_s,_d,elan_destEvent(elanev[_bidx]),_len, _RAIL)
+        elan_doput(_pgctrl,_src,_dst,elan_destEvent(elanev[_bidx]),_len,_p,_RAIL)
 #define DOWAIT(_bidx) elan_wait(elanev[_bidx],elan_base->waitType)
 #define REPRIME(_bidx) elan_setWaitCount(elanev[_bidx],1)
 
@@ -128,8 +147,8 @@ void armci_clearbflag(int which)
 static ELAN_EVENT *event_getbflag=NULL;
 static long _bidx=0;
 
-#define BFLAG_PATH_SIZE_ (_ELAN_SLOTSIZE-sizeof(request_header_t))
-#define BFLAG_PATH_SIZE 4000
+#define BFLAG_PATH_SIZE (_ELAN_SLOTSIZE-sizeof(request_header_t))
+#define BFLAG_PATH_SIZE_ 4000
 
 int armcill_getbidx(int size, int proc, SERV_BUF_IDX_T *bufidx)
 {
@@ -144,7 +163,6 @@ int armcill_getbidx(int size, int proc, SERV_BUF_IDX_T *bufidx)
   *bufidx = -1;
   return 0;
 }
-
 
 void armci_init_connections()
 {
@@ -165,7 +183,7 @@ char *enval;
     if(!(qrx = elan_queueRxInit(elan_base->state, q, nslots, slotsize, R, 0))) 
                armci_die("Failed to initialise elan receive Q",0);
     if(!(qtx = elan_queueTxInit(elan_base->state, q, R, 0)))
-//    if(!(qtx = elan_queueTxInit(elan_base->state, q, R, LIBELAN_QUEUEREUSEBUF)))
+//  if(!(qtx = elan_queueTxInit(elan_base->state, q, R, LIBELAN_QUEUEREUSEBUF)))
 #else
     if(!(mq  = elan_mainQueueInit( elan_base->state, q, nslots, slotsize, 0)))
 #endif
@@ -184,9 +202,11 @@ char *enval;
 
     evdelan = elan_gallocElan(elan_base,elan_base->allGroup,32,NEVENTS*sizeof(ELAN_EVENT_ELAN));
     if(!evdelan) armci_die("failed elan_gallocElan for dest events",0);
+    elanev = (ELAN_EVENT **)malloc(sizeof(ELAN_EVENT *)*NEVENTS);
     for(i=0;  i<NEVENTS; i++){
-        elanev[i]= elan_initEvent(elan_base->state,elan_base->state->rail[_RAIL],evdelan+i,SETEVAL);
+        elanev[i]= elan_initEvent(elan_base->state,elan_base->state->rail[_RAIL],evdelan+i,0);
         if(!elanev[i]) armci_die("elan_initEvent failed",i);
+	//print_event_info(elanev[i]);
     }
     elan_gsync(elan_base->allGroup);
     //_elan_deventDump ("init",elanev[0]);
@@ -210,9 +230,11 @@ char *enval;
              armci_die("failed to allocate ARMCI fence array",0);
     bzero(armci_elan_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
 
-    if(!(ops_pending_ar=(ops_t*)calloc(armci_nclus,sizeof(ops_t))))
-         armci_die("malloc failed for ARMCI ops_pending_ar",0);
+    if(!(rdma_ops_pending_ar=(ops_t*)calloc(armci_nproc,sizeof(ops_t))))
+         armci_die("malloc failed for ARMCI rdma_ops_pending_ar",0);
 
+
+    
 #ifdef OLD_QSNETLIBS
     /* initialize control descriptor for put/get */
     armci_pgctrl = elan_putgetInit(elan_base->state, 32, 8);
@@ -232,6 +254,54 @@ char *enval;
     }else armci_die("armci_init_connections: buf not set",0);
 }
 
+void armci_elan_notify_init()
+{
+    int i;
+    if(!(ops_pending_ar=(ops_t*)calloc(armci_nclus,sizeof(ops_t))))
+         armci_die("malloc failed for ARMCI ops_pending_ar",0);
+
+    notify_epoch_arr = (int **)malloc(sizeof(int *)*armci_nproc);
+    if(!notify_epoch_arr)armci_die("malloc failed for notify_epoch_arr",0);
+    if(ARMCI_Malloc((void**)notify_epoch_arr,armci_nproc*numepochs*sizeof(int)))
+             armci_die("failed to allocate ARMCI fence array",0);
+    bzero(notify_epoch_arr[armci_me],armci_nproc*numepochs*sizeof(int));
+    mynotify_epochs = (int **)calloc(armci_nproc,sizeof(int *));
+    current_epoch_seq = (int **)calloc(armci_nproc,sizeof(int*));
+
+    for(i=0;i<armci_nproc;i++){
+       mynotify_epochs[i] = notify_epoch_arr[armci_me]+i*numepochs;
+       current_epoch_seq[i] = (int *)calloc(armci_nproc,sizeof(int));
+    }
+
+
+    if(!(verify_wait->verify_seq_ar=(int*)calloc(armci_nproc,sizeof(int))))
+        armci_die("malloc failed for ARMCI verify_seq_ar",0);
+    /*allocate an array for wait sequence array*/
+    if(!(verify_wait->wait_seq_ar=(int*)calloc(armci_nproc,sizeof(int))))
+        armci_die("malloc failed for ARMCI wait_seq_ar",0);
+    for(i=0;i<armci_nproc;i++){
+       verify_wait->verify_seq_ar[i]=1;
+       verify_wait->wait_seq_ar[i]=1;
+    }
+
+    verify_wait->recv_verify_smp_arr = (int**)malloc(armci_nproc*sizeof(int*));
+    if(!verify_wait->recv_verify_smp_arr)armci_die("malloc-recv_verify_smp",0);
+    bzero(verify_wait->recv_verify_smp_arr ,armci_nproc*sizeof(ops_t*));
+
+    verify_wait->recv_verify_arr = (int**)malloc(armci_nproc*sizeof(int*));
+    if(!verify_wait->recv_verify_arr)armci_die("malloc fail-recv_verify_arr",0);
+    bzero(verify_wait->recv_verify_arr ,armci_nproc*sizeof(int*));
+
+    if(ARMCI_Malloc((void**)verify_wait->recv_verify_arr,
+                    armci_nproc*3*sizeof(int)))
+             armci_die("failed to allocate recv_verify_arr",0);
+
+    if(ARMCI_Malloc((void**)verify_wait->recv_verify_smp_arr,
+                    armci_nproc*sizeof(int)*2))
+       armci_die("failed to allocate ARMCI fence array",0); 
+}
+
+
 
 /*\ server sends ACK to client when request is processed
 \*/
@@ -248,6 +318,7 @@ ops_t *buf = armci_elan_fence_arr[armci_request_from] + armci_clus_me;
 #endif
 
     val = ++ops_done_ar[armci_request_from];
+    verify_wait->recv_verify_smp_arr[armci_request_to][armci_request_from]=val;
 
     MY_PUT(&val,buf,sizeof(ops_t),armci_request_from);
 }
@@ -416,8 +487,8 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     int proc_serv = armci_clus_info[cluster].master;
     int off =sizeof(request_header_t);
     int payload=0;
-
-    ops_pending_ar[cluster]++;
+    if(msginfo->operation==PUT || ACC(msginfo->operation))
+       ops_pending_ar[cluster]++;
 
     if(msginfo->inbuf){
          if(event_getbflag)elan_wait(event_getbflag,elan_base->waitType);
@@ -530,6 +601,185 @@ void armci_transport_cleanup() {
 void armci_client_connect_to_servers(){}
 void armci_server_initial_connection(){}
 
+void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc,
+		ELAN_EVENT **phandle)
+{
+   int es;
+   
+   rdma_ops_pending_ar[proc]++;	
+   es = current_epoch_seq[armci_me][proc]+1;
+   es%=numepochs;
+   *phandle = DOPUT(src,dst,numepochs*armci_me+es,n,proc); 
+   if(DEBUG_){printf("\n%d:done put rdma=%d\n",armci_me,rdma_ops_pending_ar[proc]);fflush(stdout);}
+}
+
+int armci_inotify_proc(int proc)
+{
+int *remptr = verify_wait->recv_verify_arr[proc]+3*armci_me;
+int *myptr = verify_wait->recv_verify_smp_arr[armci_me]+armci_nproc;
+int loop=0;
+		   
+    if(SAMECLUSNODE(proc)){
+       remptr = verify_wait->recv_verify_smp_arr[proc]+armci_me;
+       *(remptr)=verify_wait->verify_seq_ar[proc]++;
+#ifdef MEM_FENCE
+       MEM_FENCE;
+#endif
+       return((*remptr));
+    }
+    else{
+
+       if(prevnotifydscr)elan_wait(prevnotifydscr,elan_base->waitType); 
+
+       ALIGN_PTR_LONG(int,myptr);
+       myptr[0] = verify_wait->verify_seq_ar[proc]++;
+       myptr[1] = ops_pending_ar[armci_clus_id(proc)];
+       myptr[2] = rdma_ops_pending_ar[proc];
+       rdma_ops_pending_ar[proc]=0;
+        
+       
+       /*\
+	* we wait before ensure that last epoch is complete, we do this because
+	* we want to overlap the time it takes to recv message from server
+       \*/
+
+       mycurrent_epoch =mynotify_epochs[proc]+current_epoch_seq[armci_me][proc];
+
+       if(DEBUG_NOTIFY){
+         fprintf(stderr,"%d:waiting for %p from %d at ind %d to be 0",
+               armci_me,mycurrent_epoch,proc,current_epoch_seq[armci_me][proc]);
+       }
+
+       while(armci_check_int_val(mycurrent_epoch)){
+         if(++loop == 1000) { loop=0;usleep(1); }
+         armci_util_spin(loop, mycurrent_epoch);
+       }
+
+       if(DEBUG_NOTIFY){
+         fprintf(stderr,"%d:done waiting for %p from %d at ind %d to be 0",
+               armci_me,mycurrent_epoch,proc,current_epoch_seq[armci_me][proc]);
+       }
+
+       current_epoch_seq[armci_me][proc]++;
+       current_epoch_seq[armci_me][proc]%=numepochs;
+       mycurrent_epoch =mynotify_epochs[proc]+current_epoch_seq[armci_me][proc];
+       *mycurrent_epoch=1;
+
+       /*prevnotifydscr = DOPUT(myptr,remptr,proc,sizeof(int)*3,proc);*/
+       prevnotifydscr = elan_put(elan_base->state,myptr,remptr,sizeof(int)*3,
+		       proc);
+
+       if(DEBUG_NOTIFY){
+         printf("\n%d: sending %d %d %d to %d at %p\n",armci_me,*(myptr),
+                  *(myptr+1),*(myptr+2),proc,remptr);
+         fflush(stdout);
+       }
+       fflush(stdout);
+       return(myptr[0]);
+    }
+}
+
+
+int armci_inotify_wait(int proc, int *pval)
+{
+int *buf_notify,serv_count,rdma_count,*myserv_count;
+int wait_val,wait_fence=0,zer=0;
+int res,eventcount,es;
+int *myptr=verify_wait->recv_verify_smp_arr[armci_me]+armci_nproc;
+long loop=0;
+
+    wait_val = verify_wait->wait_seq_ar[proc]++;
+
+    buf_notify = verify_wait->recv_verify_arr[armci_me]+3*proc;
+
+    if(SAMECLUSNODE(proc)){
+       buf_notify = verify_wait->recv_verify_smp_arr[armci_me]+proc;
+       *pval = wait_val;
+    }
+
+    if(DEBUG_NOTIFY){
+      printf("\n%d:expecting %d at %p from %d\n",armci_me,wait_val,buf_notify,
+              proc);
+      fflush(stdout);
+    }
+    /*first we wait for sequence to match*/
+    if((wait_val - armci_check_int_val(buf_notify)) > 0) {
+      if(DEBUG_NOTIFY){
+        printf("\n%d:verifyseq expecting%d have %d",armci_me,
+               wait_val,armci_check_int_val(buf_notify));fflush(stdout);
+      }
+#ifdef MEM_FENCE
+      MEM_FENCE;
+#endif
+      res = wait_val - armci_check_int_val(buf_notify);
+      while(res>0){
+        if(++loop == 1000) { loop=0;usleep(1); }
+         armci_util_spin(loop, buf_notify);
+#ifdef MEM_FENCE
+        MEM_FENCE;
+#endif
+        res = wait_val - armci_check_int_val(buf_notify);
+      }
+      if(DEBUG_NOTIFY){
+        printf("\n%d:arrived verifyseq expected %d have %d",armci_me,
+               wait_val,armci_check_int_val(buf_notify));fflush(stdout);
+      }
+    }
+
+    if(SAMECLUSNODE(proc))
+       return wait_val;
+
+    serv_count = verify_wait->recv_verify_arr[armci_me][3*proc+1];
+    rdma_count = verify_wait->recv_verify_arr[armci_me][3*proc+2];
+    myserv_count = verify_wait->recv_verify_smp_arr[armci_me]+proc;
+    wait_fence = serv_count;
+
+
+    _armci_ia64_mb();
+    res = wait_fence - armci_check_int_val(myserv_count);
+
+    if(DEBUG_NOTIFY){
+      printf("\n%d:fence expecting%d have %d",
+             armci_me,wait_fence,armci_check_int_val(myserv_count));
+      fflush(stdout);
+    }
+
+    if(!SAMECLUSNODE(proc)){ 
+      while(res>0){
+        if(++loop == 1000) { loop=0;usleep(1); }
+          armci_util_spin(loop, myserv_count);
+        _armci_ia64_mb();
+        wait_fence=serv_count =verify_wait->recv_verify_arr[armci_me][3*proc+1];
+        res = wait_fence - armci_check_int_val(myserv_count);
+      }
+    }
+    
+    rdma_count = verify_wait->recv_verify_arr[armci_me][3*proc+2];
+    current_epoch_seq[proc][armci_me]++;
+    current_epoch_seq[proc][armci_me]%=numepochs;
+    es = proc*numepochs+current_epoch_seq[proc][armci_me];
+    if(rdma_count)
+       armci_elan_wait_event(elanev[es],rdma_count);
+	    
+    *pval = armci_check_int_val(buf_notify);
+
+    *myptr = 0;
+
+    if(prevnotifywaitdscr)elan_wait(prevnotifywaitdscr,elan_base->waitType); 
+
+
+    if(DEBUG_NOTIFY){
+       fprintf(stderr,"\n%d:clearing %d on %d at %p\n",armci_me,
+               current_epoch_seq[proc][armci_me],proc,
+	       notify_epoch_arr[proc]+armci_me*numepochs+current_epoch_seq[proc][armci_me]);
+    }
+    prevnotifywaitdscr = elan_put(elan_base->state,myptr,
+    notify_epoch_arr[proc]+armci_me*numepochs+current_epoch_seq[proc][armci_me],
+    sizeof(int),proc);
+
+
+    return(wait_val);
+}
 #endif
 
 

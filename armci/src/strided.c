@@ -1251,7 +1251,6 @@ void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
          } /*else */
 }
 
-
 /*\Non-Blocking API
 \*/
 int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
@@ -1279,12 +1278,14 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     if (armci_me != proc)
        vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
 #endif
+
+    PREPROCESS_STRIDED(tmp_count);
+
 #ifdef ARMCI_PROFILE
     armci_profile_start_strided(seg_count, stride_levels, proc,
 				ARMCI_PROF_NBPUTS);
 #endif
 
-    PREPROCESS_STRIDED(tmp_count);
 
 #if !defined(QUADRICS) || defined(PACKPUT)
     direct=SAMECLUSNODE(proc);
@@ -1322,7 +1323,8 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     if(!direct) switch(stride_levels) {
           case 0:  direct =1; break;
           case 1:  if((count[1]<PACKPUT)||count[0]>LONG_PUT_THRESHOLD) direct =1; break;
-          default: if(count[0]> LONG_PUT_THRESHOLD )direct=1; break;
+          /*default: if(count[0]> LONG_PUT_THRESHOLD )direct=1; break;*/
+          default: break;
     }
 #endif
 

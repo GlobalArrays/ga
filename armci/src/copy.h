@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.69 2004-09-08 00:42:13 manoj Exp $ */
+/* $Id: copy.h,v 1.70 2004-09-15 17:01:35 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -126,7 +126,6 @@ void FATR DCOPY13(int*, int*, int*, void*, int*, int*, void*, int*);
 
 
 /***************************** 1-Dimensional copy ************************/
-
 #if defined(QUADRICS)
 #   include <elan/elan.h>
 
@@ -135,8 +134,14 @@ void FATR DCOPY13(int*, int*, int*, void*, int*, int*, void*, int*);
         elan_wait(elan_put(elan_base->state,src,dst,n,proc),elan_base->waitType)
 #      define qsw_get(src,dst,n,proc) \
         elan_wait(elan_get(elan_base->state,src,dst,n,proc),elan_base->waitType)
+/*
 #      define ARMCI_NB_PUT(src,dst,n,proc,phandle)\
               *(phandle)=elan_put(elan_base->state,src,dst,n,proc)
+*/
+extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, ELAN_EVENT **phandle);
+#      define ARMCI_NB_PUT(src,dst,n,proc,phandle)\
+              armci_elan_put_with_tracknotify(src,dst,n,proc,phandle)
+			                      
 #      define ARMCI_NB_GET(src,dst,n,proc,phandle)\
               *(phandle)=elan_get(elan_base->state,src,dst,n,proc)
 #      define ARMCI_NB_WAIT(handle) if(handle)elan_wait(handle,elan_base->waitType) 

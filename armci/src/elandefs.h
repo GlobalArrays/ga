@@ -7,6 +7,10 @@
 extern void armcill_getbufidx(int size, int proc, SERV_BUF_IDX_T *bidx);
 extern void armcill_clearbuf(ELAN_EVENT** handle);
 extern int armcill_testbuf(ELAN_EVENT** handle);
+extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc,ELAN_EVENT** phandle);
+
+typedef int ops_t;
+extern ops_t *rdma_ops_pending_ar;
 
 #define GET_SEND_BUFFER _armci_buf_get
 #define FREE_SEND_BUFFER _armci_buf_release
@@ -28,6 +32,6 @@ extern int armcill_testbuf(ELAN_EVENT** handle);
 #define TEST_SEND_BUF_FIELD(_field, _s, _r,_t,_o,_ret) *_ret=armcill_testbuf(&_field)
 
 #define LONG_PUT_THRESHOLD 128
-#define PACKPUT 32 
+#define PACKPUT 32
 
 #endif

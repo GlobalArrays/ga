@@ -1,9 +1,9 @@
-/* $Id: pgs.c,v 1.8 2004-08-13 05:26:25 d3h325 Exp $ 
+/* $Id: pgs.c,v 1.9 2004-09-15 17:01:35 vinod Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
 
-#ident	"@(#)$Id: pgs.c,v 1.8 2004-08-13 05:26:25 d3h325 Exp $"
+#ident	"@(#)$Id: pgs.c,v 1.9 2004-09-15 17:01:35 vinod Exp $"
 
 #define BINLOAD 1
 
@@ -1014,11 +1014,27 @@ typedef struct devent {
 
 int elan_devent_completed(int setval, ELAN_EVENT *e)
 {
-    DEVENT *de = (DEVENT*)e;
+    DEVENT *de = (DEVENT*)(e);
     int val = EVENT_COUNT(de->de_doneEvent);
     return(setval + (val>>5));
 }
 
+void armci_elan_wait_event(ELAN_EVENT *e, int val)
+{
+    DEVENT *de = (DEVENT*)(e);
+    /*printf("\n%d:calling eventcount %d val=%d\n",armci_me,de->de_count,val);fflush(stdout);*/
+    elan_issueWaitevent(e,val);
+    elan_wait(e,elan_base->waitType);
+    /*printf("\n%d:done with wait\n",armci_me);fflush(stdout);*/
+}
+
+void print_event_info(ELAN_EVENT *e)
+{
+    DEVENT *de = (DEVENT*)(e);
+    printf("\n%d:event info %d %d\n",armci_me,de->de_current,de->de_count);
+    fflush(stdout);
+
+}
 
 /*
  * Local variables:
