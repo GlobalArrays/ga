@@ -250,7 +250,7 @@ ifeq ($(MACHINE),SP)
       IBM-SP = 1
 endif
 
-ifeq ($(MACHINE),SP)
+ifeq ($(MACHINE),SP1)
       IBM-SP = 1
 endif
 
