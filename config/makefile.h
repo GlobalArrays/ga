@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.25 2000-05-10 23:59:50 d3h325 Exp $
+# $Id: makefile.h,v 1.26 2000-05-15 18:53:44 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -166,6 +166,8 @@ ifeq ($(TARGET),LINUX64)
  GLOB_DEFINES = -DLINUX -DLINUX64 -DEXT_INT
 FOPT_REN=-i8 -assume no2underscore -align_dcommons 
 #COPT_REN= 
+          CLD = $(CC)
+        CLIBS = -lfor
 endif
 
 #............................. CYGNUS on Windows ..........................
