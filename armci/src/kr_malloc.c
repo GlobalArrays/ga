@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.2 2003-03-21 19:43:38 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.3 2003-07-03 23:14:34 d3h325 Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 
@@ -54,20 +54,34 @@ static Header *freep = NULL;	/* start of free list */
 static Header *usedp = NULL;	/* start of used list */
 
 static void kr_error(char *s, unsigned long i, context_t *ctx) {
-    fflush(stdout);
-    fprintf(stderr,"kr_malloc error: %s %ld(0x%lx)\n", s, i, i);
-    fflush(stderr);
+char string[256];
+    sprintf(string,"kr_malloc: %s %ld(0x%lx)\n", s, i, i);
+#if 0
     kr_malloc_print_stats(ctx);
-    armci_die("kr_malloc: fatal error", i);
+#endif
+    armci_die(string, i);
 }
 
 static Header *morecore(size_t nu, context_t *ctx) {
     char *cp;
     Header *up;
 
+#if DEBUG
+    (void) printf("morecore 1: Getting %ld more units of length %d nalloc=%d\n",
+		  (long)nu, sizeof(Header),ctx->nalloc);
+#endif
+
+    (void) fflush(stdout);
     if (ctx->total >= ctx->max_nalloc)
       return (Header *) NULL;   /* Enforce upper limit on core usage */
+
+#if 1
+    /* 07/03 ctx->nalloc is now the minimum # units we ask from OS */
+    nu = DEFAULT_NALLOC*((nu-1)/DEFAULT_NALLOC+1);
+    if(nu < ctx->nalloc) nu = ctx->nalloc; 
+#else
     nu = ctx->nalloc*((nu-1)/ctx->nalloc+1); /* nu must by a multiplicity of nalloc */
+#endif
 
 #if DEBUG
     (void) printf("morecore: Getting %ld more units of length %d\n",

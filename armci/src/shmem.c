@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.69 2003-06-27 06:08:44 nwchem Exp $ */
+//* $Id: shmem.c,v 1.70 2003-07-03 23:14:34 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -53,7 +53,7 @@
 #include "kr_malloc.h"
 #include "shmlimit.h"
 
-#if   defined(ALLOC_MUNMAP)  || defined(MULTI_CTX)
+#ifdef   ALLOC_MUNMAP
 #include <sys/mman.h>
 #include <unistd.h>
 static  size_t pagesize=0;
@@ -158,25 +158,21 @@ static  int id_search_no_fork=0;
 
 #ifdef   ALLOC_MUNMAP
 #ifdef QUADRICS
-#include <elan/elan.h>
-#include <elan3/elan3.h>
+#  include <elan/elan.h>
+#  include <elan3/elan3.h>
+   static  char *armci_elan_starting_address = (char*)0;
 
-static  char *armci_elan_starting_address = (char*)0;
+#  ifdef __ia64__
+#    define ALLOC_MUNMAP_ALIGN 1024*1024
+#  else
+#    define ALLOC_MUNMAP_ALIGN 64*1024
+#  endif
 
-#ifdef __ia64__
-#define ALLOC_MUNMAP_ALIGN 1024*1024
-#else
-#define ALLOC_MUNMAP_ALIGN 64*1024
-#endif
-
-#if 0
-extern void* elan_base;
-extern void   *elan3_allocMain(void*, int, int);
-#endif
-#define ALGN_MALLOC(s,a) elan_allocMain(elan_base->state, (a), (s))
+#  define ALGN_MALLOC(s,a) elan_allocMain(elan_base->state, (a), (s))
 #else 
-#define ALGN_MALLOC(s,a) malloc((s))
+#  define ALGN_MALLOC(s,a) malloc((s))
 #endif
+
 static char* alloc_munmap(size_t size)
 {
 char *tmp;
@@ -206,17 +202,6 @@ size_t bytes = size+pagesize-1;
 }
 #endif
 
-#ifdef MULTI_CTX
-#define ALLOC_MUNMAP 1
-static char* alloc_munmap(size_t size)
-{
-    static caddr_t start = (caddr_t)0x2000000040000000;
-    caddr_t base = start;
-    printf ("hello from alloc_munmap, %p %p\n",base,start);
-    start += size;
-    return base;
-}
-#endif /* ELAN_MULTI_CONTEXT */
 
 /*\ test is a shared memory region of a specified size can be allocated
  *  return 0 (no) or 1 (yes)
@@ -376,12 +361,30 @@ long lower_bound=_SHMMAX*SHM_UNIT;
 #endif
 
 
+#ifdef MULTI_CTX
+void armci_nattach_preallocate_info(int* segments, int *segsize)
+{
+     int x;
+     char *uval;
+     uval = getenv("LIBELAN_NATTACH");
+     if(uval != NULL){
+        sscanf(uval,"%d",&x);
+        if(x<2 || x>8) armci_die("Error in LIBELAN_NATTACH <8, >1 ",(int)x);
+     }else
+        armci_die("Inconsistent configuration: ARMCI needs LIBELAN_NATTACH",0);
+     *segments =x;
+     *segsize = (int) (SHM_UNIT * MinShmem);
+
+}
+#endif
+        
+
 void armci_shmem_init()
 {
 
 #ifdef ALLOC_MUNMAP
 
-#if defined(QUADRICS) && !defined(DECOSF) && !defined(__alpha) && !defined(MULTI_CTX)
+#if defined(QUADRICS) && !defined(DECOSF) && !defined(__alpha)
 #   if defined(__ia64__) || defined(__alpha)
 
       /* this is to determine size of Elan Main memory allocator for munmap */
@@ -425,7 +428,9 @@ void armci_shmem_init()
    }
    if(tp!=pagesize)armci_die("armci_shmem_init:pagesize pow 2",pagesize);
 #endif
-   if(DEBUG_) {printf("page size =%d log=%d\n",pagesize,logpagesize); fflush(stdout); }
+
+   if(DEBUG_) {
+     printf("page size =%d log=%d\n",pagesize,logpagesize); fflush(stdout); }
 
 #endif
 
@@ -441,12 +446,14 @@ void armci_shmem_init()
           armci_die("no usable amount of shared memory available: only got \n",
           (int)LBOUND);
 
-#       if defined(ALLOC_MUNMAP) && !defined(MULTI_CTX)
+#       if defined(ALLOC_MUNMAP)
            /* need to cap down for special memory allocator */
            if(x>max_alloc_munmap && !armci_elan_starting_address) x=max_alloc_munmap;
 #       endif
 
-        if(DEBUG_) printf("%d: shmem_init: mbytes max segment size \n",x);fflush(stdout);
+        if(DEBUG_){
+           printf("%d:shmem_init: mbytes max segment size\n",x);fflush(stdout);}
+
         MinShmem = (long)(x<<10); /* make sure it is in kb: mb <<10 */ 
         MaxShmem = MAX_REGIONS*MinShmem;
 #       ifdef REPORT_SHMMAX
@@ -993,7 +1000,7 @@ int  reg, refreg=0,nreg;
 
     temp = kr_malloc((size_t)size, &ctx_shmem);
     if(temp == (char*)0 )
-       armci_die("CreateSharedRegion:kr_malloc failed size in KB",(int)size>>10);
+       armci_die("CreateSharedRegion:kr_malloc failed KB=",(int)size>>10);
     
     if(!(nreg=find_regions(temp,id,&reg)))
         armci_die("CreateSharedRegion: allocation inconsitent",0);

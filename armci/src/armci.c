@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.71 2003-04-16 23:59:12 edo Exp $ */
+/* $Id: armci.c,v 1.72 2003-07-03 23:14:34 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -26,6 +26,7 @@
 #define  EXTERN
 
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef CRAY
 #  include <sys/category.h>
 #  include <sys/resource.h>
@@ -305,6 +306,43 @@ int ARMCI_Init()
 #   endif
 #endif
 
+
+#ifdef MULTI_CTX
+    /* this is a hack for the Elan-3 multi-tiled memory (qsnetlibs v 1.4.10) 
+     * we need to allocate and then free memory to satisfy libelan requirements
+     * for symmetric memory addresses
+     */ 
+    if(armci_nclus >1){ 
+       int segments, segsize, seg;
+       void **addr;
+       armci_nattach_preallocate_info(&segments, &segsize);
+
+       segsize -= 1024*1024; /* leave some for the K&RM headers */
+       if(armci_me!=armci_master)segsize=0; /* only one allocates mem on node*/
+
+       addr = (void*) malloc(segments*armci_nproc*sizeof(void*));
+       if(!addr)armci_die("armci_init:addr malloc failed",segments*armci_nproc);
+
+       for(seg=0; seg< segments; seg++) /* allocate segments */
+          if(ARMCI_Malloc(addr+armci_nproc*seg,segsize))
+             armci_die("problem in Elan-3 mem preallocation",seg);
+       
+       for(seg=0; seg< segments; seg++) /* return to free pool */
+         if(armci_me==armci_master)
+           if(ARMCI_Free(*(addr+armci_nproc*seg+armci_me)))
+              armci_die("problem in Elan-3 mem preallocation - free stage",seg);
+       free(addr);
+
+#if 0
+       if(armci_me==armci_master){
+          printf("%d:preallocated %d segments %d bytes each\n",armci_me,
+                 segments, segsize); fflush(stdout);
+       }
+#endif
+
+    }
+#endif
+
     /* allocate locks: we need to do it before server is started */
     armci_allocate_locks();
 #   if defined(DATA_SERVER) || defined(ELAN_ACC)
@@ -316,12 +354,10 @@ int ARMCI_Init()
 #endif
 
     armci_msg_barrier();
-
     armci_init_memlock(); /* allocate data struct for locking memory areas */
-
-/*    fprintf(stderr,"%d ready \n",armci_me);*/
     armci_msg_barrier();
     armci_msg_gop_init();
+
 #ifdef GA_USE_VAMPIR
     vampir_end(ARMCI_INIT,__FILE__,__LINE__);
 #endif    
