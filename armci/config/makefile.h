@@ -42,7 +42,8 @@ ifeq ($(TARGET),LINUX)
           _FC = $(notdir $(FC))
           _CC = $(notdir $(CC))
          _CPU = $(shell uname -m |\
-                 awk ' /sparc/ { print "sparc" }; /i*86/ { print "x86" } ' )
+                 awk ' /sparc/ { print "sparc" };\
+                     /i686/{ print "686" }; /i*86&&^i686/ { print "x86" } ' )
 
 ifneq (,$(findstring mpif,$(_FC)))
          _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { print "pgf77" ; exit } ' )
@@ -55,10 +56,13 @@ endif
 ifeq ($(_CPU),x86)
      OPT_ALIGN = -malign-double
 endif
+ifeq ($(_CPU),686)
+     OPT_ALIGN = -malign-double -march=pentiumpro
+endif
 ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
           COPT = -O2
-     COPT_REN += -finline-functions -funroll-loops $(OPT_ALIGN)
+     COPT_REN += -Wall -finline-functions -funroll-loops $(OPT_ALIGN)
    endif
 else
    EXTRA_OBJ = tas-i386.o
