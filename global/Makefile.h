@@ -154,7 +154,7 @@ ifeq ($(TARGET),CRAY-T3E)
  ifeq ($(COPT),-O)
          COPT = -O2 -h inline3
  endif
-     FOPT_REN = -Wf-dp
+     FOPT_REN = -d p
  GLOB_DEFINES = -DCRAY_T3D -DCRAY_T3E
     EXPLICITF = TRUE
 endif
