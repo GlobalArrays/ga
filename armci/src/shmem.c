@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.79 2004-06-28 17:45:19 manoj Exp $ */
+/* $Id: shmem.c,v 1.80 2004-07-21 23:54:46 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -1088,9 +1088,9 @@ int  reg, refreg=0,nreg;
           fflush(stdout);
        }
 
-       ctx_shmem.ctx_type = KR_CTX_SHMEM;
        kr_malloc_init(SHM_UNIT, (size_t)MinShmem, (size_t)MaxShmem, 
 		      armci_allocate, 0, &ctx_shmem);
+       ctx_shmem.ctx_type = KR_CTX_SHMEM;
        id[SHMIDLEN-2]=MinShmem;
     }
 
