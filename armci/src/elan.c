@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.23 2003-10-21 05:20:47 d3h325 Exp $ */
+/* $Id: elan.c,v 1.24 2003-10-23 04:55:26 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +25,13 @@ static void *_qd;
 #include <elan3/elan3.h>
 #endif
 
+#if VCALLS
+#else
+#define MAX_SLOTS 64
+#define MIN_OUTSTANDING 6
+static int max_pending=MAX_SLOTS; /* throttle number of outstanding nb calls */
+#endif
+
 #ifdef ELAN_ACC
 static int armci_server_terminating=0;
 static ELAN_MAIN_QUEUE *mq;
@@ -35,6 +42,7 @@ typedef unsigned short int ops_t;
 static ops_t** armci_elan_fence_arr;
 static ops_t *ops_pending_ar;
 static ops_t *ops_done_ar;
+
 
 #define _ELAN_SLOTSIZE 320
 #define MSG_DATA_LEN (_ELAN_SLOTSIZE - sizeof(request_header_t))
@@ -66,6 +74,16 @@ void armci_init_connections()
 
 ELAN_QUEUE *q;
 int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
+  
+   /* on Elan-3 we limit the number of outstanding nb calls as f(nprocs) */
+#if !defined(DOELAN4) && (VCALLS==0)
+   if(armci_nproc >128) max_pending = MIN_OUTSTANDING;
+   else if(armci_nproc >64) max_pending =MAX_SLOTS/6;
+   else if(armci_nproc >32) max_pending =MAX_SLOTS/4;
+   else if(armci_nproc >16) max_pending =MAX_SLOTS/2;
+   else max_pending =MAX_SLOTS;
+#endif
+
 
 #if defined(SHMEM_TUNE_SMP_ENABLE) && defined(DECOSF)
 /* turn off HP SMP optimizations */
@@ -404,6 +422,27 @@ char *ps=src_ptr, *pd=dst_ptr;
     if(issued)elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
 }
 
+
+void armcill_getv(int proc, int bytes, int count, void* src[], void* dst[])
+{
+int _j, issued=0;
+
+#if 0
+    printf("%d: getv %d\n", armci_me, count); fflush(stdout);
+#endif
+    for (_j = 0;  _j < count;  _j++ ){
+        _src[issued] = src[_j];
+        _dst[issued] = dst[_j]; 
+        issued++;
+        if(issued == MAX_VECS){
+           elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
+           issued=0;
+        }
+    }
+    if(issued)elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
+}
+
+
 void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
                                                    void* dst_ptr,int dst_stride)
 {
@@ -428,6 +467,28 @@ char *ps=src_ptr, *pd=dst_ptr;
     if(issued)elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
 }
 
+void armcill_putv(int proc, int bytes, int count, void* src[], void* dst[])
+{
+int _j, issued=0;
+
+#if 0
+    printf("%d: putv %d\n", armci_me, count); fflush(stdout);
+#endif
+
+    for (_j = 0;  _j < count;  _j++ ){
+        _src[issued] = src[_j];
+        _dst[issued] = dst[_j];
+        issued++;
+        if(issued == MAX_VECS){
+           elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),
+                               elan_base->waitType);
+           issued=0;
+        }
+    }
+    if(issued)elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),
+                        elan_base->waitType);
+}
+
 void armcill_wait_get(){}
 void armcill_wait_put(){}
 
@@ -437,7 +498,6 @@ void armcill_wait_put(){}
 
 /* might have to use MAX_SLOTS<MAX_PENDING due to throttling a problem in Elan*/
 #define MAX_PENDING 6 
-#define MAX_SLOTS 64
 #define ZR  (ELAN_EVENT*)0
 
 static ELAN_EVENT* put_dscr[MAX_SLOTS]= {
@@ -465,7 +525,7 @@ char *ps=src_ptr, *pd=dst_ptr;
 #if 1
     for (_j = 0;  _j < count;  ){
       /* how big a batch of requests can we issue */
-      batch = (count - _j )<MAX_PENDING ? count - _j : MAX_PENDING; 
+      batch = (count - _j )<max_pending ? count - _j : max_pending; 
       _j += batch;
       for(i=0; i< batch; i++){
         if(put_dscr[cur_put])elan_wait(put_dscr[cur_put],100); 
@@ -479,7 +539,7 @@ char *ps=src_ptr, *pd=dst_ptr;
         ps += src_stride;
         pd += dst_stride;
         cur_put++;
-        if(cur_put>=MAX_PENDING)cur_put=0;
+        if(cur_put>=max_pending)cur_put=0;
       }
     }
 
@@ -495,6 +555,41 @@ char *ps=src_ptr, *pd=dst_ptr;
 }
 
 
+/*\ blocking vector put
+\*/
+void armcill_putv(int proc, int bytes, int count, void* src[], void* dst[])
+{
+int _j, i, batch, issued=0;
+void *ps, *pd;
+
+#if 0
+    printf("%d: putv %d\n", armci_me, count); fflush(stdout);
+#endif
+
+    for (_j = 0;  _j < count;  ){
+      /* how big a batch of requests can we issue */
+      batch = (count - _j )<max_pending ? count - _j : max_pending; 
+      _j += batch;
+      for(i=0; i< batch; i++){
+        if(put_dscr[cur_put])elan_wait(put_dscr[cur_put],100); 
+        else pending_put++;
+        ps = src[issued];
+        pd = dst[issued];
+        put_dscr[cur_put]= elan_put(elan_base->state,ps, pd,(size_t)bytes,proc);
+        issued++;
+        cur_put++;
+        if(cur_put>=max_pending)cur_put=0;
+      }
+    }
+    if(issued != count) 
+       armci_die2("armci-elan putv:mismatch\n", count,issued);
+
+    for(i=0; i<max_pending; i++) if(put_dscr[i]){
+        elan_wait(put_dscr[i],100);
+        put_dscr[i]=(ELAN_EVENT*)0;
+    }
+}
+
 
 
 /*\ strided get, nonblocking
@@ -508,7 +603,7 @@ char *ps=src_ptr, *pd=dst_ptr;
 #if 1
     for (_j = 0;  _j < count;  ){
       /* how big a batch of requests can we issue */
-      batch = (count - _j )<MAX_PENDING ? count - _j : MAX_PENDING;
+      batch = (count - _j )<max_pending ? count - _j : max_pending;
       _j += batch;
       for(i=0; i< batch; i++){
 #if 1
@@ -522,7 +617,7 @@ char *ps=src_ptr, *pd=dst_ptr;
         ps += src_stride;
         pd += dst_stride;
         cur_get++;
-        if(cur_get>=MAX_PENDING)cur_get=0;
+        if(cur_get>=max_pending)cur_get=0;
       }
     }
 
@@ -537,13 +632,50 @@ char *ps=src_ptr, *pd=dst_ptr;
 #endif
 }
 
+
+/*\ blocking vector get 
+\*/
+void armcill_getv(int proc, int bytes, int count, void* src[], void* dst[])
+{
+int _j, i, batch, issued=0;
+void *ps, *pd;
+
+#if 0
+    printf("%d: getv %d\n", armci_me, count); fflush(stdout);
+#endif
+
+    for (_j = 0;  _j < count;  ){
+      /* how big a batch of requests can we issue */
+      batch = (count - _j )<max_pending ? count - _j : max_pending;
+      _j += batch;
+      for(i=0; i< batch; i++){
+        if(get_dscr[cur_get])elan_wait(get_dscr[cur_get],100);
+        else pending_get++;
+        ps = src[issued];
+        pd = dst[issued];
+        get_dscr[cur_get]= elan_get(elan_base->state,ps, pd,(size_t)bytes,proc);
+        issued++;
+        cur_get++;
+        if(cur_get>=max_pending)cur_get=0;
+      }
+    }
+    if(issued != count)
+       armci_die2("armci-elan getv:mismatch %d %d \n", count,issued);
+
+    for(i=0; i<max_pending; i++) if(get_dscr[i]){
+        elan_wait(get_dscr[i],100);
+        get_dscr[i]=(ELAN_EVENT*)0;
+    }
+}
+
+
 void armcill_wait_get()
 {
 int i;
     
     if(!pending_get)return;
     else pending_get=0;
-    for(i=0; i<MAX_PENDING; i++) if(get_dscr[i]){
+    for(i=0; i<max_pending; i++) if(get_dscr[i]){
         elan_wait(get_dscr[i],100); 
         get_dscr[i]=(ELAN_EVENT*)0;
     }
@@ -555,7 +687,7 @@ void armcill_wait_put()
 int i;
     if(!pending_put)return;
     else pending_put=0;
-    for(i=0; i<MAX_PENDING; i++) if(put_dscr[i]){
+    for(i=0; i<max_pending; i++) if(put_dscr[i]){
         elan_wait(put_dscr[i],100); 
         put_dscr[i]=(ELAN_EVENT*)0;
     }

@@ -1,4 +1,4 @@
-/* $Id: perf_aggr.c,v 1.5 2003-10-23 00:25:36 d3h325 Exp $ */
+/* $Id: perf_aggr.c,v 1.6 2003-10-23 04:55:26 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -192,7 +192,7 @@ void test_aggregate(int dryrun) {
 
     /* only proc 0 does the work */
     if(me == 0) {
-      if(!dryrun)printf("Transferring %d doubles (Not an array of %d doubles)\nTime in seconds.\n\n", MAXELEMS, MAXELEMS);
+      if(!dryrun)printf("Transferring %d doubles (Not an array of %d doubles)\n", MAXELEMS, MAXELEMS);
       
       /* initializing non-blocking handles */
       for(i=0; i<elems[1]; i++) ARMCI_INIT_HANDLE(&hdl_put[i]);
@@ -217,7 +217,7 @@ void test_aggregate(int dryrun) {
 	}
 	for(j=start; j<end; j++) ARMCI_Wait(&hdl_put[j]);
       }
-      if(!dryrun)printf("%d: Value Put time      = %.2e\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Value Put time      = %.2es\n", me, MP_TIMER()-start_time);
  
       /* vector put */
       start_time=MP_TIMER();
@@ -234,7 +234,7 @@ void test_aggregate(int dryrun) {
 	  ARMCI_Error("armci_nbputv failed\n",rc);
       }
       for(i=1; i<nproc; i++) ARMCI_Wait(&hdl_put[i]);
-      if(!dryrun)printf("%d: Vector Put time     = %.2e\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Vector Put time     = %.2es\n", me, MP_TIMER()-start_time);
       
       /* regular put */
       start_time=MP_TIMER();    
@@ -246,7 +246,7 @@ void test_aggregate(int dryrun) {
 	}
 	for(j=start; j<end; j++) ARMCI_Wait(&hdl_put[j]);
       }
-      if(!dryrun)printf("%d: Regular Put time    = %.2e\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Regular Put time    = %.2es\n", me, MP_TIMER()-start_time);
       
       /* aggregate put */
       start_time=MP_TIMER();
@@ -258,7 +258,7 @@ void test_aggregate(int dryrun) {
 	}
       }
       for(i=0; i<nproc; i++) ARMCI_Wait(&aggr_hdl_put[i]);
-      if(!dryrun)printf("%d: Aggregate Put time  = %.2e\n\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Aggregate Put time  = %.2es\n\n", me, MP_TIMER()-start_time);
       
       
       /* **************** GET **************** */    
@@ -278,7 +278,7 @@ void test_aggregate(int dryrun) {
 	  ARMCI_Error("armci_nbgetv failed\n",rc);
 	ARMCI_Wait(&hdl_get[i]);
       }
-      if(!dryrun)printf("%d: Vector Get time     = %.2e\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Vector Get time     = %.2es\n", me, MP_TIMER()-start_time);
       
       /* regular get */
       start_time=MP_TIMER();    
@@ -290,7 +290,7 @@ void test_aggregate(int dryrun) {
 	}
 	for(j=start; j<end; j++) ARMCI_Wait(&hdl_get[j]);
       }
-      if(!dryrun)printf("%d: Regular Get time    = %.2e\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Regular Get time    = %.2es\n", me, MP_TIMER()-start_time);
       
       /* aggregate get */
       start_time=MP_TIMER();
@@ -301,7 +301,7 @@ void test_aggregate(int dryrun) {
 	}
       }
       for(i=0; i<nproc; i++) ARMCI_Wait(&aggr_hdl_get[i]);
-      if(!dryrun)printf("%d: Aggregate Get time  = %.2e\n", me, MP_TIMER()-start_time);
+      if(!dryrun)printf("%d: Aggregate Get time  = %.2es\n", me, MP_TIMER()-start_time);
     }
 
     MP_BARRIER();

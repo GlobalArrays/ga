@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.28 2003-10-22 21:29:10 d3h325 Exp $ */
+/* $Id: vector.c,v 1.29 2003-10-23 04:55:26 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -266,14 +266,20 @@ int armci_copy_vector(int op,            /* operation code */
 
         for(i = 0; i< len; i++){
 
+#ifdef QUADRICS
+          armcill_putv(proc, darr[i].bytes, darr[i].ptr_array_len,
+                       darr[i].src_ptr_array, darr[i].dst_ptr_array); 
+#else
 #         ifdef LAPI
                 SET_COUNTER(ack_cntr,darr[i].ptr_array_len);
 #         endif
           UPDATE_FENCE_STATE(proc, PUT, darr[i].ptr_array_len);
  
           for( s=0; s< darr[i].ptr_array_len; s++){   
-              armci_put(darr[i].src_ptr_array[s],darr[i].dst_ptr_array[s],darr[i].bytes, proc);
+              armci_put(darr[i].src_ptr_array[s],darr[i].dst_ptr_array[s],
+                        darr[i].bytes, proc);
            }
+#endif
         }
         break;
 
@@ -281,13 +287,19 @@ int armci_copy_vector(int op,            /* operation code */
 
         for(i = 0; i< len; i++){
 
+#ifdef QUADRICS
+          armcill_getv(proc, darr[i].bytes, darr[i].ptr_array_len,
+                       darr[i].src_ptr_array, darr[i].dst_ptr_array); 
+#else
 #         ifdef LAPI
                 SET_COUNTER(get_cntr,darr[i].ptr_array_len);
 #         endif
 
           for( s=0; s< darr[i].ptr_array_len; s++){   
-              armci_get(darr[i].src_ptr_array[s],darr[i].dst_ptr_array[s],darr[i].bytes,proc);
+              armci_get(darr[i].src_ptr_array[s],darr[i].dst_ptr_array[s],
+                        darr[i].bytes,proc);
            }
+#endif
         }
         break;
 
