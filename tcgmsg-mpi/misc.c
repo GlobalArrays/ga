@@ -110,7 +110,7 @@ int init;
 
    /* check if another library initialized MPI already */
    MPI_Initialized(&init);
-   if(init){ 
+   if(!init){ 
       /* nope */
       MPI_Init(&argc, &argv);
       MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
