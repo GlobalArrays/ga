@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.11 2004-01-07 02:32:59 edo Exp $
+# $Id: GNUmakefile,v 1.12 2004-04-21 00:16:46 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -64,7 +64,7 @@ endif
 
 ifeq ($(TARGET),INTERIX)
    LIB_DEFINES =   -DINTERIX -DSHMEM -DSYSV
-    EXTRA = $(OBJ_SYSV) 
+    EXTRA = $(OBJ_SYSV) memalign.o
 endif
 
 ifeq ($(TARGET),LAPI)
