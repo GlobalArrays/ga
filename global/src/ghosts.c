@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.37 2004-03-12 20:20:59 vinod Exp $ */
+/* $Id: ghosts.c,v 1.38 2004-03-12 20:29:38 vinod Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2102,18 +2102,13 @@ logical ga_update5_ghosts_(Integer *g_a)
 
       msgcnt++;
 
+      if (corner_flag){
+        /* check to make sure that last two messages have been recieved
+           before starting update along a new dimension */
+        waitforflags((GA_Update_Flags[GAme]+msgcnt-2),
+          (GA_Update_Flags[GAme]+msgcnt-1));
+      }
     }
-    else
-      msgcnt+=2;
-#if 1
-    if (corner_flag){
-      /* check to make sure that last two messages have been recieved
-         before starting update along a new dimension */
-      waitforflags((GA_Update_Flags[GAme]+msgcnt-2),
-        (GA_Update_Flags[GAme]+msgcnt-1));
-    }
-    if(!nwidth)msgcnt-=2;
-#endif
    
   }
 #if 1
