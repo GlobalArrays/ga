@@ -169,9 +169,9 @@ endif
 
 ifeq ($(TARGET),SGI-OLD)
 # 32-bit systems running IRIX 5.3 and older
-    FFLAGS = -O2
+    FFLAGS = -O2 -32
    DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
-    CFLAGS = -O -I/usr/include/bsd -I/usr/include/sun $(DEFINES)
+    CFLAGS = -O -32 -I/usr/include/bsd -I/usr/include/sun $(DEFINES)
  LINTFLAGS = -I/usr/include/bsd -I/usr/include/sun $(DEFINES) -u
       LIBS = -lmalloc -lbsd -lrpcsvc -lsun
     RANLIB = echo $*
