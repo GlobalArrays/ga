@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.83 2003-12-11 19:40:13 manoj Exp $ */
+/* $Id: armci.c,v 1.84 2004-03-29 19:12:08 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -537,10 +537,10 @@ int direct=SAMECLUSNODE(nb_handle->proc);
  * implicit handle 
  */
 static char hdl_flag[ARMCI_MAX_IMPLICIT];
-static int count=0;
+static int impcount=0;
 armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
  
-  int i=count%ARMCI_MAX_IMPLICIT;
+  int i=impcount%ARMCI_MAX_IMPLICIT;
   if(hdl_flag[i]=='1')
     ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
  
@@ -550,7 +550,7 @@ armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
   armci_inb_handle[i].bufid = NB_NONE;
   armci_inb_handle[i].agg_flag = 0;
   hdl_flag[i]='1';
-  ++count;
+  ++impcount;
   return &armci_inb_handle[i];
 }
  
@@ -558,7 +558,7 @@ armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
 /* wait for all non-blocking operations to finish */
 int ARMCI_WaitAll (void) {
   int i;
-  if(count) {
+  if(impcount) {
     for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
       if(hdl_flag[i] == '1') {
         ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
@@ -566,14 +566,14 @@ int ARMCI_WaitAll (void) {
       }
     }
   }
-  count=0;
+  impcount=0;
   return 0;
 }
  
 /* wait for all non-blocking operations to a particular process to finish */
 int ARMCI_WaitProc (int proc) {
   int i;
-  if(count) {
+  if(impcount) {
     for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
       if(hdl_flag[i]=='1' && armci_inb_handle[i].proc==proc) {
         ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);

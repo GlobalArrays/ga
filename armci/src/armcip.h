@@ -342,6 +342,8 @@ extern void armci_region_init();
 extern int armci_region_clus_found(int node, void *start, int size);
 extern int armci_region_loc_found(void *start, int size);
 extern int armci_region_both_found(void *loc, void *rem, int size, int node);
+extern int get_armci_region_local_hndl(void *loc, int node, ARMCI_MEMHDL_T **loc_memhdl);
+
 extern void armci_region_exchange(void *start, long size);
 extern void cpu_yield();
 

@@ -1,4 +1,4 @@
-/* $Id: regions.c,v 1.4 2003-10-08 07:16:06 vinod Exp $ interface to keep track of memory regions accross the cluster */
+/* $Id: regions.c,v 1.5 2004-03-29 19:12:08 vinod Exp $ interface to keep track of memory regions accross the cluster */
 /* 
  * armci_region_init - allocates list of regions, initialization
  * armci_region_register_shm - registers shared memory on the current node
@@ -189,10 +189,10 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
  armci_reglist_t *reg = &loc_regions_arr;
      int i,found=0; 
      if(!allow_pin) return 0;
-
      /* first scan for local */
      for(i=0; i<reg->n; i++){
         if((reg->list+i)->start <= loc && (reg->list+i)->end > loc){
+//          printf("\n%d: loc found \n",armci_me);
 	  found=1; break;
 	}
 #if 0
@@ -208,6 +208,7 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
          reg=clus_regions+armci_clus_me;
          for(i=0; i<reg->n; i++){
            if((reg->list+i)->start <= loc && (reg->list+i)->end > loc){
+//             printf("\n%d: clus found \n",armci_me);
 	     found=1; break;
 	   }
 #if 0
@@ -227,6 +228,7 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
      reg=serv_regions+node;
      for(i=0; i<reg->n; i++){
          if((reg->list+i)->start <= rem && (reg->list+i)->end > rem){
+//                 printf("\n%d: serv found \n",armci_me);
 		 found=2;break;
 	 }
 #if 0
@@ -238,12 +240,67 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
 #endif
      }
 
-#if 0
-     if(found==2){printf("%d: found both %d %p %p\n",armci_me,node,*loc_memhdl,*rem_memhdl); fflush(stdout); }
-#endif
+     if(0){ 
+            if(found==2){printf("%d: found both %d %p\n",
+                      armci_me,node,*loc_memhdl); 
+            fflush(stdout); 
+            }
+     }
      if(found==2){*rem_memhdl=&((reg->list+i)->memhdl); return 1;}
      else return 0; 
 }
+
+
+int armci_region_remote_found_hndl(void *rem,int size, int node, ARMCI_MEMHDL_T **remhdl)
+{
+armci_reglist_t *reg = serv_regions+node;
+int i,found=0;
+
+    for(i=0; i<reg->n; i++)
+      if((reg->list+i)->start <= rem && (reg->list+i)->end > rem){
+              found=1;break;
+      }
+
+    if(found==1){*remhdl=&((reg->list+i)->memhdl); return 1;}
+    else return 0;
+
+}
+
+int get_armci_region_local_hndl(void *loc, int node,ARMCI_MEMHDL_T **loc_memhdl)
+{
+
+  armci_reglist_t *reg = &loc_regions_arr;
+  int i, found = 0;
+
+   if(!allow_pin) {printf("inside get_armci_region_local_hndl : 
+                 case allow_pin = 0\n"); return 0; }
+   if(!found){
+      reg = serv_regions+armci_clus_me;
+      for(i=0; i<reg->n; i++){
+         if((reg->list+i)->start <= loc && (reg->list+i)->end >loc){
+           found =1;
+           break; 
+         }
+#if 0
+         else {
+	   printf("\n%d: serv ptr=%p st=%p end=%p nd=%d nreg=%d\n",armci_me,loc,
+	          (reg->list+i)->start,(reg->list+i)->end,node,reg->n);
+	   fflush(stdout);
+         }
+#endif
+      }
+   }
+   if(found == 1){
+      *loc_memhdl = &((reg->list+i)->memhdl); 
+      if(0){
+         printf("%d(s) : found local %p\n",armci_me,*loc_memhdl);
+         fflush(stdout);
+      }     
+      return 1;
+   }
+   else return 0;
+}
+
 
 int armci_region_serv_found(int node,void *start,int size)
 {
@@ -251,7 +308,7 @@ int armci_region_serv_found(int node,void *start,int size)
     int i,found=-1;
     if(!allow_pin) return 0;
     if(node > armci_nclus || node <0 ) 
-               armci_die("armci_region_clus_found: bad node ",node);
+      armci_die("armci_region_serv_found: bad node ",node);
     for(i=0; i<reg->n; i++)
         if((reg->list+i)->start <= start && (reg->list+i)->end > start){found=i; break;}
     
@@ -389,6 +446,9 @@ void armci_global_region_exchange(void *start, long size)
          clreglist = (clus_regions+armci_clus_me); 
        armci_serv_register_req((clreglist->list+foundclus)->start,((char *)(clreglist->list+foundclus)->end-(char *)((clreglist->list+foundclus)->start)),&((reglist->list+reglist->n)->memhdl));
        (void)armci_region_record((clreglist->list+foundclus)->start,(clreglist->list+foundclus)->end,reglist);
+#if 0
+       printf("\n%d:serv recording %p from %d n=%d \n",armci_me,(clreglist->list+foundclus)->start,armci_clus_me,reglist->n);fflush(stdout);
+#endif
        foundserv=armci_region_serv_found(armci_clus_me, start,size);
        reg = (serv_regions+armci_clus_me)->list+foundserv; 
     }

@@ -42,7 +42,8 @@ extern void _armci_buf_clear_all();
 #define QUIT 33
 #define ATTACH 34
 #define REGISTER 35
-
+#define TWOPHASE 36
+   
 /*\ the internal request structure for non-blocking api. 
 \*/
 typedef struct{
@@ -264,5 +265,14 @@ extern int armci_rem_get(int proc, void *src_ptr, int src_stride_arr[],
                   void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels,
                   armci_ihdl_t nb_handle,void *mhloc,void *mhrem);
 
-
+#if defined(ALLOW_PIN) && defined(VAPI)
+extern int armci_two_phase_send(int proc,void *src_ptr,int src_stride_arr[],
+                    void *dst_ptr,int dst_stride_arr[],int count[],
+                    int stride_levels,void ** context_ptr,armci_ihdl_t nbhandle,
+                    ARMCI_MEMHDL_T *mhloc);
+extern int armci_two_phase_get(int proc, void*src_ptr, int src_stride_arr[],
+                    void*dst_ptr,int dst_stride_arr[], int count[],
+                    int stride_levels, void**context_ptr,
+                    armci_ihdl_t nbhandle, ARMCI_MEMHDL_T *mhloc);
+#endif
 #endif

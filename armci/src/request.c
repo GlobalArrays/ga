@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.60 2004-02-25 21:34:26 vinod Exp $ */
+/* $Id: request.c,v 1.61 2004-03-29 19:12:08 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -23,6 +23,12 @@
 #define ALLIGN8(buf){size_t _adr=(size_t)(buf); \
                     _adr>>=3; _adr<<=3; _adr+=8; (buf) = (char*)_adr; }
 
+#ifndef CLN
+#   define CLN 1
+#endif                    
+#ifndef SERV
+#   define SERV 2
+#endif
 
 /*******************Routines to handle completion descriptor******************/
 /*\
@@ -199,7 +205,6 @@ BUF_INFO_T *info;
        val = info->bufid;
     }
     nb_handle->bufid = val; 
-    /*printf("\n%d:bufid value set to%d \n",armci_me,val);fflush(stdout);*/
 } 
 
 /**************End--Routines to handle completion descriptor******************/
@@ -793,10 +798,11 @@ int armci_rem_strided(int op, void* scale, int proc,
 
     if(op == GET){
 #ifdef VAPI
-    if(msginfo->dscrlen < (bytes - sizeof(int)))
-       *(int*)(((char*)(msginfo+1))+(bytes-sizeof(int))) = ARMCI_VAPI_COMPLETE;
-    else
-       *(int*)(((char*)(msginfo+1))+(msginfo->dscrlen+bytes-sizeof(int))) = ARMCI_VAPI_COMPLETE;
+       if(msginfo->dscrlen < (bytes - sizeof(int)))
+          *(int*)(((char*)(msginfo+1))+(bytes-sizeof(int)))=ARMCI_VAPI_COMPLETE;
+       else
+          *(int*)(((char*)(msginfo+1))+(msginfo->dscrlen+bytes-sizeof(int))) = 
+                  ARMCI_VAPI_COMPLETE;
 #endif            
 #      if defined(CLIENT_BUF_BYPASS) 
          if(msginfo->bypass){
@@ -859,6 +865,194 @@ int armci_rem_strided(int op, void* scale, int proc,
 
     return 0;
 }
+
+
+
+
+#if defined(ALLOW_PIN)
+/*\
+ * two phase send
+\*/
+int armci_two_phase_send(int proc,void *src_ptr,int src_stride_arr[],
+                void *dst_ptr,int dst_stride_arr[],int count[],
+                int stride_levels,void ** context_ptr,armci_ihdl_t nbhandle, 
+                ARMCI_MEMHDL_T *mhloc)
+{ 
+char *buf, *buf0;
+request_header_t *msginfo;
+int bytes, i;
+int ehlen = 0;
+int *rem_ptr;
+int * rem_stride_arr;
+int type;
+int bufsize = sizeof(request_header_t);
+
+/* for breaking into chinks */
+int j,k, num_xmit=0,lastiovlength,iovlength,max_iovec,vecind;
+int total_of_2D = 1;
+int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+     
+    bytes = 0;
+     
+
+    /*calculate the size of buffer needed */
+    bufsize += bytes+sizeof(void *) + 2*sizeof(int)*(stride_levels+1) + ehlen
+				                  +2*sizeof(double) + 16;
+
+    buf = buf0 = GET_SEND_BUFFER(bufsize,PUT,proc);
+    msginfo = (request_header_t*)buf;
+    buf += sizeof(request_header_t);
+					  
+    rem_ptr = dst_ptr;
+    rem_stride_arr = dst_stride_arr;
+
+    armci_save_strided_dscr(&buf,rem_ptr,rem_stride_arr,count,stride_levels,0);
+          
+    if(DEBUG_){
+       printf(" CLIENT :the dest_ptr is %d\n", rem_ptr);
+       for(i =0; i<stride_levels; i++)
+	 printf("the value of stride_arr[i] is %d,value of count[i] is %d\n",
+                               rem_stride_arr[i], count[i]);
+       printf("the value of stride_levels is %d\n", stride_levels);
+       fflush(stdout);	    
+    }
+    /* fill message header */
+    msginfo->datalen = 0;
+    msginfo->bypass = 1;
+    msginfo->pinned = 1;
+    msginfo->from = armci_me;
+    msginfo->to = proc;
+    msginfo->format = STRIDED;
+    msginfo->operation = PUT;
+    msginfo->ehlen = 0;
+    msginfo->dscrlen = buf - buf0 - sizeof(request_header_t);
+    msginfo->bytes = msginfo->datalen + msginfo->dscrlen;
+    /* I have not set msginfo->tag */
+
+    /* send the first phase request */
+    armci_send_req(proc, msginfo, bufsize); 
+
+    if(DEBUG_){
+        printf("%d:CLIENT : finished sending first put request \n",armci_me);
+        fflush(stdout);
+    }
+     
+    armci_wait_ack(buf0);
+
+    if(DEBUG_){
+       printf("\n%d: client got ack about to post gather\n",armci_me);
+       fflush(stdout);
+    }        
+                             
+    /* the client is now in the second phase, in a loop 
+       creates the gather descr one at a time and posts them */
+    armci_post_gather(src_ptr,src_stride_arr,count,stride_levels,
+                     mhloc,proc,CLN);
+    if(DEBUG_){
+       printf("%d(c) : returned from armci_post_gather\n",armci_me);
+       fflush(stdout);
+    }
+    if(!nbhandle)
+      armci_complete_multi_sglist_sends(proc);
+    else{
+       BUF_INFO_T *info=NULL; 
+       info=BUF_TO_BUFINFO(buf0);
+       info->protocol=SDSCR_IN_PLACE; 
+    }
+    return 0;
+}
+
+
+
+int armci_two_phase_get(int proc, void*src_ptr, int src_stride_arr[], 
+                void*dst_ptr,int dst_stride_arr[], int count[], 
+                int stride_levels, void**context_ptr,
+                armci_ihdl_t nb_handle, ARMCI_MEMHDL_T *mhloc)
+{
+char *buf, *buf0;
+request_header_t *msginfo;
+int bytes, i;
+int ehlen = 0;
+int *rem_ptr;
+int num; 
+int *rem_stride_arr;
+int bufsize = sizeof(request_header_t);
+
+    if(DEBUG_){
+       printf("%d(c):about to call armci_post_scatter, CLN value is %d\n",
+                      armci_me,CLN);
+       fflush(stdout);
+    }    
+    
+    num =  armci_post_scatter(dst_ptr, dst_stride_arr, count, stride_levels, 
+                   mhloc,proc,msginfo,CLN);
+    if(DEBUG_){
+       printf("%d(c) : returned from armci_post_scatter\n",armci_me);
+       fflush(stdout);
+    }   
+
+    bytes = 0; 
+    bufsize += bytes+sizeof(void *) + 2*sizeof(int)*(stride_levels+1) + ehlen
+                                            +2*sizeof(double) + 16;
+
+    buf = buf0 = GET_SEND_BUFFER(bufsize,GET,proc);
+    if(nb_handle){
+      INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
+      _armci_buf_set_tag(buf,nb_handle->tag,0);  
+      if(nb_handle->bufid == NB_NONE)
+        armci_set_nbhandle_bufid(nb_handle,buf,0);
+    }
+    msginfo = (request_header_t *)buf;  
+    buf += sizeof(request_header_t);
+
+    rem_ptr = src_ptr;
+    rem_stride_arr = src_stride_arr;
+
+    armci_save_strided_dscr(&buf,rem_ptr,rem_stride_arr,count,stride_levels,0);
+
+    msginfo->datalen = 0;
+    msginfo->bypass = 1;
+    msginfo->pinned = 1;
+    msginfo->from = armci_me;
+    msginfo->to = proc;
+    msginfo->format = STRIDED;
+    msginfo->operation = GET;
+    msginfo->ehlen = 0;
+    msginfo->dscrlen = buf - buf0 - sizeof(request_header_t);
+    msginfo->bytes = msginfo->datalen + msginfo->dscrlen; 
+
+    /* send the request asking the server to post gather */
+    armci_send_req(proc, msginfo, bufsize);
+  
+    if(DEBUG_){
+       printf("%d(c) : finished sending get request to server\n",armci_me);     
+       fflush(stdout);
+    }
+    if(!nb_handle){
+       *(int *)((char *)msginfo+msginfo->bytes) = num;
+       armci_client_recv_complete(proc, num);
+       FREE_SEND_BUFFER(msginfo);
+    }
+    else{
+       armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
+                                 stride_levels,1);
+       *(int *)((char *)msginfo+msginfo->bytes) = num;
+    }
+    if(DEBUG_){
+       printf("%d(c) : finished polling for scatter_recv\n",armci_me);
+       fflush(stdout);
+    }
+  
+    return 0;  
+}
+
+#endif
+
+
+
+
+
+
 
 #if defined(ALLOW_PIN) || defined(LAPI2)
 /*\ client version of remote strided get

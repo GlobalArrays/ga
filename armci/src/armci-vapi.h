@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.8 2003-10-22 22:12:16 d3h325 Exp $ */
+/*$Id: armci-vapi.h,v 1.9 2004-03-29 19:12:08 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -32,15 +32,12 @@
 
 #define DEFAULT_R_KEY           (0x0)
 #define DEFAULT_L_KEY           (0x0)
-#define MAX_OUTST_WQS		(2000)
 
 
-#define DEFAULT_MAX_SG_LIST	(1)
-#define DEFAULT_MAX_CQ_SIZE	500/*(4000)*/
+#define DEFAULT_MAX_SG_LIST	(40)
+#define DEFAULT_MAX_CQ_SIZE	40000/*(4000)*/
 
-#define MAX_NUM_DHANDLE		500/*(4000)*/
-
-#define  DEFAULT_MAX_WQE	500/*(1023)*/
+#define  DEFAULT_MAX_WQE	10000/*(1023)*/
 
 typedef struct {
     void *data_ptr;         /* pointer where the data should go */
@@ -78,7 +75,7 @@ typedef struct {
 #define PIPE_MEDIUM_BUFSIZE (2*1024)
 
 
-#define VBUF_DLEN 64*1023
+#define VBUF_DLEN 4*64*1023
 #define MSG_BUFLEN_DBL ((VBUF_DLEN)>>3)
 
 #ifdef PIPE_BUFSIZE
@@ -121,8 +118,16 @@ typedef struct {
 #define LONG_GET_THRESHOLD 20000000
 #define LONG_GET_THRESHOLD_STRIDED 20000000
 #define ARMCI_VAPI_COMPLETE 1088451863
+#define ARMCI_POST_SCATTER 1000000001
 #define ARMCI_VAPI_CLEAR 0
+#define VAPI_SGGET_MIN_COLUMN 720
+#define VAPI_SGPUT_MIN_COLUMN 1680
 
 #define HAS_RDMA_GET
 
 #endif /* _VAPI_CONST_H */
+
+extern int armci_send_gather_req_msg(void *loc_buf, int  stride_arr[], int count[] ,int stride_levels ,int nb_tag, ARMCI_MEMHDL_T * loc_hdl, int proc);
+extern void armci_wait_ack(char *buffer);
+extern void armci_complete_multi_sglist_sends(int proc);
+extern void armci_client_direct_send(int p,void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag,ARMCI_MEMHDL_T *lochdl,ARMCI_MEMHDL_T *remhdl);

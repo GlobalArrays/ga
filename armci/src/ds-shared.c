@@ -1,4 +1,3 @@
-/* $Id: ds-shared.c,v 1.27 2003-09-11 16:03:17 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "message.h"
@@ -14,10 +13,14 @@
 #define DEBUG_ 0
 #define DEBUG1 0
 
+#ifndef SERV
+#     define SERV 2
+#endif
 
 
 /**************************** pipelining for medium size msg ***********/
 #ifdef PIPE_BUFSIZE
+
 
 static int pack_size(int len)
 {
@@ -274,7 +277,6 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
 #endif
     /*  copy into a buffer before sending */
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
-
     if(armci_send_req_msg(proc,msginfo, bytes))
        armci_die("armci_send_strided_req: failed",0);
 }
@@ -509,6 +511,7 @@ void armci_data_server(void *mesg)
     void *buffer;
     int buflen;
     int from;
+    int id;
 
     /* read header, descriptor, data, and buffer length */
     armci_rcv_req(mesg, &msginfo, &descr, &buffer, &buflen );
@@ -518,7 +521,8 @@ void armci_data_server(void *mesg)
     from = msginfo->from;
 
     if(DEBUG_){ 
-       printf("%d(serv):got %d request from %d\n",armci_me,msginfo->operation, from);
+       printf("%d(serv):got %d request from %d\n",armci_me,msginfo->operation,
+               from);
        fflush(stdout);
     }
 
@@ -566,8 +570,64 @@ void armci_data_server(void *mesg)
       default:
           if(msginfo->format ==VECTOR)
               armci_server_vector(msginfo, descr, buffer, buflen);
-          else if(msginfo->format ==STRIDED)
-              armci_server(msginfo, descr, buffer, buflen);
+          else if(msginfo->format ==STRIDED){
+#if defined(VAPI) && defined(MELLANOX) /* buffer bypass protocol */
+              if(msginfo->pinned == 1){
+                  void * src_ptr;
+                  int stride_levels;
+                  int count[MAX_STRIDE_LEVEL];
+                  int src_stride_arr[MAX_STRIDE_LEVEL];    
+                  int found;
+                  ARMCI_MEMHDL_T *mhandle;
+                  int i,num;
+                  
+                  if(DEBUG1){
+                     printf("%d(s) : unpacking dscr\n",armci_me);
+                     fflush(stdout);
+                  }
+                  
+                  id = msginfo->from; 
+                  src_ptr = *(void**)descr;
+                  descr = (char*)descr + sizeof(void*);
+                  stride_levels = *(int*)descr;
+                  descr = (char*)descr + sizeof(int);
+                  for(i =0; i<stride_levels;i++){
+                      src_stride_arr[i] = *(int *)descr;
+                      descr = (int *)descr + 1;
+                  }
+                  for(i =0;i<stride_levels+1;i++){
+                      count[i] = *(int*)descr;
+                      descr = (int*)descr + 1;   
+                  
+                  }
+
+                  found = get_armci_region_local_hndl(src_ptr, armci_me,
+                                 &mhandle);
+                  if(!found){
+                     armci_die("SERVER : local region not found",id);
+                  }
+                 
+                  num =  armci_post_gather(src_ptr,src_stride_arr,
+                                  count,stride_levels, mhandle,
+                                  id,SERV );
+                  if(DEBUG1){
+                     printf("%d(s) : finished posting %d gather\n", 
+                                     armci_me,num);
+                     fflush(stdout);
+                  }     
+                 
+                  //armci_server_send_complete(id ,num);   
+                
+                  if(DEBUG1){
+                     printf("%d(s):finished send completion for gather\n",
+                             armci_me);
+                     fflush(stdout);
+                  }
+              }
+              else        
+#endif
+                armci_server(msginfo, descr, buffer, buflen);
+          }
           else
               armci_die2("armci_data_serv: unknown format code",
                          msginfo->format, msginfo->from);
