@@ -16,18 +16,30 @@
 #ifndef MYRINET_H
 #define MYRINET_H
 
-#include "mpi.h"
+/* in GM 1.4 memory registration got so slow we cannot use 0-copy protocols
+ * we are disabling it for medium messages by changing thresholds */
+#if defined(GM_MAX_DEFAULT_MESSAGE_SIZE) && !defined(GM_ENABLE_PROGRESSION)
+#   define GM_1_2      /* most likely we have GM <1.4 */
+#endif
 
 #define CLIENT_BUF_BYPASS 
 #ifdef __i386__
-#define LONG_GET_THRESHOLD 266248
-#define LONG_GET_THRESHOLD_STRIDED 30000 
+# ifdef GM_1_2
+#   define LONG_GET_THRESHOLD 66248
+#   define LONG_GET_THRESHOLD_STRIDED 3000
+# else
+#   define LONG_GET_THRESHOLD 266248
+#   define LONG_GET_THRESHOLD_STRIDED 30000 
+# endif
 #define INTERLEAVE_GET_THRESHOLD 66248
 #else
 #define LONG_GET_THRESHOLD 524288
 #define LONG_GET_THRESHOLD_STRIDED 30000 
 #define INTERLEAVE_GET_THRESHOLD 524288 
 #endif
+
+#define GET_SEND_BUFFER armci_gm_getbuf
+#define FREE_SEND_BUFFER armci_gm_freebuf
 
 /* two ports used by ARMCI and their boards iff STATIC_PORTS defined */
 #define ARMCI_GM_SERVER_RCV_PORT 5
@@ -46,6 +58,7 @@ typedef struct {
     long ack;               /* header ack */
 } msg_tag_t;
 
+#include <mpi.h>
 
 extern void armci_server_send_ack(int client);
 extern int armci_pin_contig(void *ptr, int bytes);
@@ -60,5 +73,8 @@ extern void armci_serv_send_nonblocking_complete(int max_outstanding);
 extern void armci_wait_for_data_bypass();
 extern int  armci_wait_pin_client(int);
 extern void armci_client_send_ack(int p, int success);
+extern void armci_gm_freebuf(void *ptr);
+extern char* armci_gm_getbuf(size_t size);
+
 
 #endif /* MYRINET_H */

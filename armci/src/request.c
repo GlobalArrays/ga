@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.21 2001-05-25 22:09:19 d3h325 Exp $ */
+/* $Id: request.c,v 1.22 2001-06-07 23:23:23 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -44,6 +44,7 @@ int bufsize = sizeof(request_header_t)+sizeof(int);
 
     /* receive ticket from server */
     *ticket = *(int*)armci_rcv_data(proc,msginfo);
+    FREE_SEND_BUFFER(msginfo);
     
     if(DEBUG_)fprintf(stderr,"%d receiving ticket %d\n",armci_me, *ticket);
 }
@@ -159,6 +160,7 @@ request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize);
       msginfo->datalen = rlen;
       buf= armci_rcv_data(armci_master, msginfo);  /* receive response */
       armci_copy(buf, resp, rlen);
+      FREE_SEND_BUFFER(msginfo);
 
       if(DEBUG_){printf("%d:client attaching got ptr %d bytes\n",armci_me,rlen);
          fflush(stdout);
@@ -271,6 +273,7 @@ int bufsize = sizeof(request_header_t)+sizeof(long)+sizeof(void*);
     else
         *(long*)ploc = *(long*)buffer;
 
+    FREE_SEND_BUFFER(msginfo);
 }
 
 
@@ -404,8 +407,8 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
     armci_send_req(proc, msginfo, bufsize);
 
     if(op == GET){
-        armci_rcv_vector_data(proc, msginfo, darr, len);
-        
+       armci_rcv_vector_data(proc, msginfo, darr, len);
+       FREE_SEND_BUFFER(msginfo);
     }
     return 0;
 }
@@ -431,7 +434,9 @@ int armci_rem_strided(int op, void* scale, int proc,
     for(i=0, bytes=1;i<=stride_levels;i++)bytes*=count[i];
     bufsize += bytes+sizeof(void*)+2*sizeof(int)*(stride_levels+1)
                +2*sizeof(double) + 8; /* +scale+alignment */
-
+#   ifdef CLIENT_BUF_BYPASS
+      if(flag && armci_gm_bypass) bufsize -=bytes; /* we are not sending data*/
+#   endif
     buf = buf0= GET_SEND_BUFFER(bufsize);
     msginfo = (request_header_t*)buf;
 
@@ -534,6 +539,8 @@ int armci_rem_strided(int op, void* scale, int proc,
           armci_rcv_strided_data(proc, msginfo, msginfo->datalen,
                                  dst_ptr, stride_levels, dst_stride_arr, count);
        }
+
+       FREE_SEND_BUFFER(msginfo);
 
     } else{
        /* for put and accumulate send data */

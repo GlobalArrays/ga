@@ -1,4 +1,4 @@
-/* $Id: bufalloc.c,v 1.1 2001-06-04 21:17:52 d3h325 Exp $ 
+/* $Id: bufalloc.c,v 1.2 2001-06-07 23:23:23 d3h325 Exp $ 
  * storage manager for a chunk of memory passed by user in armci_init_buf_alloc
  * derived from K&R that manages a chunk of memory
  */
@@ -45,7 +45,7 @@ static Header *usedp = NULL;	/* start of used list */
 static size_t nalloc = DEFAULT_NALLOC;
 static size_t max_nalloc = DEFAULT_NALLOC;
 static int do_verify = 0;	/* Flag for automatic heap verification */
-static initialized=0;
+static int initialized=0;
 
 
 static void buf_error(char* s, unsigned long i)

@@ -173,6 +173,7 @@ request_header_t *msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize);
 
     armci_send_req(armci_clus_info[clus].master, msginfo, bufsize);
     armci_rcv_data(armci_clus_info[clus].master, msginfo);  /* receive ACK */
+    FREE_SEND_BUFFER(msginfo);
 }
 
 
@@ -430,6 +431,7 @@ request_header_t *msginfo= (request_header_t*)GET_SEND_BUFFER(bufsize);
        stat = *(int*)armci_rcv_data(armci_master,msginfo);  /* receive ACK */
        if(stat  != QUIT)
             armci_die("armci_serv_quit: wrong response from server", stat);
+       FREE_SEND_BUFFER(msginfo);
     }
 }
 

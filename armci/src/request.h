@@ -65,6 +65,9 @@ extern  char* MessageSndBuffer;
 #  define GET_SEND_BUFFER(_len) MessageSndBuffer
 #endif
 
+#ifndef FREE_SEND_BUFFER
+#define FREE_SEND_BUFFER(_ptr)  
+#endif
 
 extern void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
                          void *ptr, int strides, int stride_arr[], int count[]);
