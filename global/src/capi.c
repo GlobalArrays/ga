@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.12 1999-10-25 21:57:27 jju Exp $ */
+/* $Id: capi.c,v 1.13 1999-11-15 22:00:38 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -149,6 +149,14 @@ void GA_Zero(int g_a)
 {
     Integer a=(Integer)g_a;
     ga_zero_(&a);
+}
+
+
+Integer GA_Idot(int g_a, int g_b)
+{
+    Integer a=(Integer)g_a;
+    Integer b=(Integer)g_b;
+    return (Integer)ga_idot_(&a,&b);
 }
 
      

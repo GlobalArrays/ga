@@ -1,4 +1,4 @@
-/* $Id: global.alg.c,v 1.14 1999-07-28 00:27:05 d3h325 Exp $ */
+/* $Id: global.alg.c,v 1.15 1999-11-15 22:00:39 d3h325 Exp $ */
 /*************************************************************************\
  Purpose:   File global.alg.c contains a set of linear algebra routines 
             that operate on global arrays in the SPMD mode. 
@@ -278,10 +278,10 @@ Integer     index_a, index_b;
 
    me = ga_nodeid_();
 
-   ga_check_handle(g_a, "ga_ddot");
-   ga_check_handle(g_b, "ga_ddot");
+   ga_check_handle(g_a, "ga_zdot");
+   ga_check_handle(g_b, "ga_zdot");
 
-   GA_PUSH_NAME("ga_ddot");
+   GA_PUSH_NAME("ga_zdot");
    ga_inquire_(g_a,  &atype, &adim1, &adim2);
    ga_inquire_(g_b,  &btype, &bdim1, &bdim2);
 

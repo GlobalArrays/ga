@@ -22,6 +22,7 @@ extern void GA_Destroy(int g_a);
 extern void GA_Terminate(void);
 extern void GA_Zero(int g_a); 
 extern void GA_Fill(int g_a, void *value);
+extern Integer GA_Idot(int g_a, int g_b);
 extern double GA_Ddot(int g_a, int g_b); 
 extern DoubleComplex GA_Zdot(int g_a, int g_b); 
 extern void GA_Scale(int g_a, void *value); 
