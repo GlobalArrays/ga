@@ -1,4 +1,4 @@
-c $Id: mulmatpatch.F,v 1.3 2002-02-12 21:16:45 d3h325 Exp $
+c $Id: mulmatpatch.F,v 1.4 2003-02-12 07:49:03 manoj Exp $
 #if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
@@ -47,7 +47,7 @@ c
       endif
       bufsize = (NMAX/2 + 1)*(NMAX/3 + 1)*2 + ((NMAX/2 + 1)**2)
       bufsize = bufsize*6/7
-      status = ma_init(MT_DBL, 10, gasize+bufsize)
+      status = ma_init(MT_DBL, 10, gasize+bufsize+500000)
       if (.not. status)call ga_error( 'ma_init failed', -1)
       if(ga_nodeid().eq.0)then
          print *,' '
