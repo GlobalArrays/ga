@@ -1,10 +1,14 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/nxtval.c,v 1.4 1995-02-24 02:17:34 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/nxtval.c,v 1.5 2002-07-17 17:20:11 vinod Exp $ */
 
 #include <stdio.h>
 #include <setjmp.h>
 #include <signal.h>
 #include "sndrcvP.h"
 #include "sndrcv.h"
+
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#endif
 
 jmp_buf SR_jmp_buf;   /* Jumped to on soft error */
 
@@ -125,6 +129,11 @@ long NXTVAL_(mproc)
   long type = TYPE_NXTVAL;
   long lenmes, nodefrom;
   long sync = 1;
+  long result;
+
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
 
   if (SR_parallel) {
     buf[0] = *mproc;
@@ -137,20 +146,24 @@ long NXTVAL_(mproc)
 
     SND_(&type, (char *) buf, &lenbuf, &server, &sync);
     RCV_(&type, (char *) buf, &lenbuf, &lenmes, &server, &nodefrom, &sync);
-    return buf[0];
+    result = buf[0];
   }
   else {
     /* Not running in parallel ... just do a simulation */
     static int count = 0;
     if (*mproc == 1)
-      return count++;
+      result = count++;
     else if (*mproc == -1) {
       count = 0;
-      return 0;
+      result = 0;
     }
     else
       Error("nxtval: sequential version with silly mproc ", (long) *mproc);
   }
 
-  return 0;
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
+
+  return result;
 }

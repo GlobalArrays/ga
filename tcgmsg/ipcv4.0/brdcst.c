@@ -1,9 +1,12 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/brdcst.c,v 1.5 1996-08-06 05:39:16 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/brdcst.c,v 1.6 2002-07-17 17:20:11 vinod Exp $ */
 
 #include "sndrcv.h"
 
 #include <stdio.h>
 #include "sndrcvP.h"
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#endif
 
 void BRDCST_(type, buf, lenbuf, originator)
      long *type;
@@ -25,6 +28,10 @@ void BRDCST_(type, buf, lenbuf, originator)
   long slaveid = me - master;
   long synch = 1;
   long lenmes, from, up, left, right;
+
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_BRDCST,__FILE__,__LINE__);
+#endif
 
   /* Process zero is at the top of the broadcast tree */
 
@@ -68,4 +75,8 @@ void BRDCST_(type, buf, lenbuf, originator)
     SND_(type, buf, lenbuf, &left, &synch);
   if (right < (master+nslave))
     SND_(type, buf, lenbuf, &right, &synch);
+
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_BRDCST,__FILE__,__LINE__);
+#endif
 }  

@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.9 2002-05-14 22:12:14 d3h325 Exp $
+# $Id: GNUmakefile,v 1.10 2002-07-17 17:20:11 vinod Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -16,6 +16,9 @@ OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
           evon.o      pfilecopy.o $(EXTRA)
 
  HEADERS =  msgtypesf.h msgtypesc.h sndrcv.h srftoc.h ../tcgmsg.fh
+ifdef GA_USE_VAMPIR
+ HEADERS += ../tcgmsg_vampir.h ../../ga_vt.h
+endif
 
 
   LIB_TARGETS = *.x *.o
@@ -122,6 +125,9 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
      LIB_DEFINES += -DSYSV -DSHMEM
 endif
 
+ifdef GA_USE_VAMPIR
+   EXTRA += tcgmsg_vampir.o ga_vt.o
+endif
          
 include ../../armci/config/makecoms.h
 include ../../armci/config/makemp.h
@@ -140,6 +146,13 @@ NO_PARALLEL = SP1 SP
 
 
 LOADLIBES = $(LIBRARY_PATH) $(COMM_LIBS) 
+ifdef GA_USE_VAMPIR
+   ifdef VT_PATH
+      LOADLIBES += $(VT_PATH) -lVT
+   else
+      echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
+   endif
+endif
 #......................... make targets ........................
 #
 ifeq ($(TARGET),$(findstring $(TARGET),$(NO_PARALLEL)))
@@ -242,6 +255,16 @@ else
 	echo "`whoami` `hostname` 4 `pwd`/testf.x /tmp" > testf.p
 endif
 
-
+ifdef GA_USE_VAMPIR
+tcgmsg_vampir.o:	../tcgmsg_vampir.c
+	ln -s ../tcgmsg_vampir.c tcgmsg_vampir.c
+	$(CC) $(CFLAGS) -c tcgmsg_vampir.c
+	rm tcgmsg_vampir.c
+ 
+ga_vt.o:	../../ga_vt.c
+	ln -s ../../ga_vt.c ga_vt.c
+	$(CC) $(CFLAGS) -c ga_vt.c
+	rm ga_vt.c
+endif
 
 machdep: msgtypesf.h

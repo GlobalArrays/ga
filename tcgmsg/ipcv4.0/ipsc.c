@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.7 1999-08-12 00:56:27 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.8 2002-07-17 17:20:11 vinod Exp $ */
 
 /*
    Toolkit interface for the iPSC-2, i860, DELTA and Paragon
@@ -10,6 +10,11 @@
 
 #ifdef EVENTLOG
 #include "evlog.h"
+#endif
+
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#include <mpi.h>
 #endif
 
 extern char* malloc();
@@ -155,6 +160,10 @@ void SND_(type, buf, lenbuf, node, sync)
 {
   long me = NODEID_();
   long ttype = MAKETYPE(*type, me);
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
+  (void) VT_log_sendmsg(me,*node,*lenbuf,*type,0)
+#endif
 
   if (CHKTYPE(*type))
     Error("SND_: invalid type specified",*type);
@@ -197,6 +206,9 @@ void SND_(type, buf, lenbuf, node, sync)
 #ifdef EVENTLOG
   evlog(EVKEY_END, EVENT_SND, EVKEY_LAST_ARG);
 #endif
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_SND,__FILE__,__LINE__);
+#endif
 }
 
 void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
@@ -223,6 +235,9 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
   long me = NODEID_();
   long ttype;
   static long node = 0;		/* For fairness in rcv from anyone */
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_RCV,__FILE__,__LINE__);
+#endif
   
   if (CHKTYPE(*type))
     Error("RCV_: invalid type specified",*type);
@@ -335,6 +350,10 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 	EVKEY_MSG_LEN, *lenmes,
 	EVKEY_LAST_ARG);
 #endif
+#ifdef GA_USE_VAMPIR
+  (void) VT_log_recvmsg(me,*nodefrom,*lenmes,*type,0);
+  vampir_end(TCGMSG_RCV,__FILE__,__LINE__);
+#endif
 }
 
 void PBEGINF_()
@@ -345,12 +364,16 @@ void PBEGINF_()
 long PROBE_(long *type, long *node)
 {
   long ttype;
+  long result;
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_PROBE,__FILE__,__LINE__);
+#endif
   
   if (*node >= 0) {
     /* Receive from specific node ... simple map to iprobe */
     
     ttype = MAKETYPE(*type, *node);
-    return iprobe(ttype);
+    result = iprobe(ttype);
   }
   else if (iprobe(-1L)) {
     /* Receive from anyone ... find the first available message ... if that
@@ -358,23 +381,29 @@ long PROBE_(long *type, long *node)
     
     ttype = infotype();
     if (GETTYPE(ttype) == *type) {
-      return 1;
+      result = 1;
     }
     else {
       long nn = NNODES_();
       long me = NODEID_();
       long p;
       
-      for (p=0; p<nn; p++) {
+      result = 0;
+      p = 0;
+      while (p<nn && 0==result) {
 	if (p != me) {
 	  ttype = MAKETYPE(*type, p);
 	  if (iprobe(ttype))
-	    return 1;
+	    result = 1;
 	}
+        p++;
       }
-      return 0;
     }
-  }
+  };
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_PROBE,__FILE__,__LINE__);
+#endif
+  return result;
 }
 
 void PBEGIN_()
@@ -383,6 +412,12 @@ void PBEGIN_()
   long start = MTIME_();
   long type = 1;
   DEBUG = 0;
+#ifdef GA_USE_VAMPIR
+  How does argc and argv work on this platform ???
+  vampir_init(ARGC,ARGV,__FILE__,__LINE__);
+  tcgmsg_vampir_init(__FILE__,__LINE__);
+  vampir_begin(TCGMSG_PBEGINF,__FILE__,__LINE__);
+#endif
 
   if (DEBUG) {
     (void) printf("node %ld called pbeginf\n",NODEID_());
@@ -441,6 +476,9 @@ void PBEGIN_()
   masktrap(0);  /* Ensure trap is enabled */
 
   SYNCH_(&type);
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_PBEGINF,__FILE__,__LINE__);
+#endif
 }
 
 void PEND_()
@@ -448,6 +486,9 @@ void PEND_()
   Zero effect for ipsc version ... for flash switch off green LED.
 */
 {
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_PEND,__FILE__,__LINE__);
+#endif
 #ifdef EVENTLOG
   long start=MTIME_();
 #endif
@@ -469,6 +510,10 @@ void PEND_()
 #if !(defined(DELTA) || defined(PARAGON))
   led((long) 0);
 #endif
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_PEND,__FILE__,__LINE__);
+  vampir_finalize(__FILE__,__LINE__);
+#endif
 }
 
 void SETDBG_(onoff)
@@ -487,7 +532,17 @@ void SYNCH_(type)
   Synchronize processes
 */
 {
+#ifdef GA_USE_VAMPIR
+  int me = NODEID_();
+  int nn = NNODES_();
+  vampir_begin(TCGMSG_SYNCH,__FILE__,__LINE__);
+  vampir_begin_gop(me,nn,0,*type);
+#endif
   gsync();
+#ifdef GA_USE_VAMPIR
+  vampir_end_gop(me,nn,0,*type);
+  vampir_end(TCGMSG_SYNCH,__FILE__,__LINE__);
+#endif
 }
 
 long NXTVAL_(mproc)
@@ -511,6 +566,10 @@ long NXTVAL_(mproc)
   long sync = 1;
   long msgid;
 
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
+
   buf[0] = *mproc;
   buf[1] = 1;
 
@@ -522,6 +581,10 @@ long NXTVAL_(mproc)
   msgid = irecv(TYPE_NXTVAL_REPLY, (char *) buf, lenbuf);
   csend(TYPE_NXTVAL, (char *) buf, lenbuf, nxtval_server, 0);
   msgwait(msgid);
+
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
 
   return buf[0];
 }
@@ -564,6 +627,9 @@ void WAITCOM_(nodesel)
 */
 {
   long i;
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_WAITCOM,__FILE__,__LINE__);
+#endif
 #ifdef EVENTLOG
   evlog(EVKEY_BEGIN,     "Waitcom",
 	EVKEY_STR_INT,   "n_in_msg_q", (int) n_in_msg_q,
@@ -581,6 +647,9 @@ void WAITCOM_(nodesel)
   n_in_msg_q = 0;
 #ifdef EVENTLOG
   evlog(EVKEY_END, "Waitcom", EVKEY_LAST_ARG);
+#endif
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_WAITCOM,__FILE__,__LINE__);
 #endif
 }
 
@@ -652,6 +721,12 @@ void BRDCST_(type, buf, lenbuf, originator)
   long me = NODEID_();
   long ttype = MAKETYPE(*type, *originator);
 
+#ifdef GA_USE_VAMPIR
+  long nnodes = NNODES_();
+  vampir_begin(TCGMSG_BRDCST,__FILE__,__LINE__);
+  vampir_begin_gop(me,nnodes,*lenbuf,*type);
+#endif
+
   if (CHKTYPE(*type))
     Error("BRDCST_: invalid type specified",*type);
 
@@ -659,6 +734,11 @@ void BRDCST_(type, buf, lenbuf, originator)
     csend(ttype, buf, *lenbuf, (long) -1, (long) 0);
   else
     crecv(ttype, buf, *lenbuf);
+
+#ifdef GA_USE_VAMPIR
+  vampir_end_gop(me,nnodes,*lenbuf,*type);
+  vampir_end(TCGMSG_BRDCST,__FILE__,__LINE__);
+#endif
 }
 
 #define GOP_BUF_SIZE 10000
@@ -678,6 +758,13 @@ void DGOP_(ptype, x, pn, op)
   long nleft  = *pn;
   long buflen = MIN(nleft,GOP_BUF_SIZE); /* Try to get even sized buffers */
   long nbuf   = (nleft-1) / buflen + 1;
+
+#ifdef GA_USE_VAMPIR
+  long me = NODEID_();
+  long nnodes = NNODES_();
+  vampir_begin(TCGMSG_DGOP,__FILE__,__LINE__);
+  vampir_begin_gop(me,nnodes,*pn,*ptype);
+#endif
 
   buflen = (nleft-1) / nbuf + 1;
 
@@ -703,6 +790,10 @@ void DGOP_(ptype, x, pn, op)
 
     nleft -= ndo; x+= ndo;
   }
+#ifdef GA_USE_VAMPIR
+  vampir_end_gop(me,nnodes,*pn,*ptype);
+  vampir_end(TCGMSG_DGOP,__FILE__,__LINE__);
+#endif
 }
 
 /*ARGSUSED*/
@@ -715,6 +806,13 @@ void IGOP_(ptype, x, pn, op)
   long nleft  = *pn;
   long buflen = MIN(nleft,2*GOP_BUF_SIZE); /* Try to get even sized buffers */
   long nbuf   = (nleft-1) / buflen + 1;
+
+#ifdef GA_USE_VAMPIR
+  long me = NODEID_();
+  long nnodes = NNODES_();
+  vampir_begin(TCGMSG_IGOP,__FILE__,__LINE__);
+  vampir_begin_gop(me,nnodes,*pn,*ptype);
+#endif
 
   buflen = (nleft-1) / nbuf + 1;
 
@@ -741,7 +839,11 @@ void IGOP_(ptype, x, pn, op)
       Error("IGOP: unknown operation requested", (long) *pn);
 
     nleft -= ndo; x+= ndo;
-  }
+  };
+#ifdef GA_USE_VAMPIR
+  vampir_end_gop(me,nnodes,*pn,*ptype);
+  vampir_end(TCGMSG_IGOP,__FILE__,__LINE__);
+#endif
 }
 
 double TCGTIME_()

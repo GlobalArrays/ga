@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.15 2002-01-28 20:08:01 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.16 2002-07-17 17:20:11 vinod Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -38,6 +38,10 @@
 
 #ifdef EVENTLOG
 #include "evlog.h"
+#endif
+
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
 #endif
 
 extern void exit();
@@ -144,6 +148,11 @@ void PBEGIN_(argc, argv)
 #endif
 #ifdef SHMEM
   long *flags;
+#endif
+#ifdef GA_USE_VAMPIR
+  vampir_init(argc,argv,__FILE__,__LINE__);
+  tcgmsg_vampir_init(__FILE__,__LINE__);
+  vampir_begin(TCGMSG_PBEGINF,__FILE__,__LINE__);
 #endif
 
   if(SR_initialized)Error("TCGMSG initialized already???",-1);
@@ -507,6 +516,9 @@ void PBEGIN_(argc, argv)
     printf("pbegin: %2ld: Returning to application\n",NODEID_());
     fflush(stdout);
   }
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_PBEGINF,__FILE__,__LINE__);
+#endif
 }
 
 void PEND_()
@@ -526,6 +538,9 @@ void PEND_()
   long status;
 #ifdef EVENTLOG
   long start=MTIME_();
+#endif
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_PEND,__FILE__,__LINE__);
 #endif
 
   if (!SR_parallel) return;
@@ -558,7 +573,10 @@ void PEND_()
 	EVKEY_DUMP,
 	EVKEY_LAST_ARG);
 #endif
-
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_PEND,__FILE__,__LINE__);
+  vampir_finalize(__FILE__,__LINE__);
+#endif
   /* Return to calling program unless we had an error */
 
   if (status)

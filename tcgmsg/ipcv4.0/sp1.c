@@ -19,6 +19,11 @@
 #include "evlog.h"
 #endif
 
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#include <mpi.h>
+#endif
+
 #define MAXPROC 1024
 
 /* By posting multiple interrupt receives (one for each process)
@@ -156,8 +161,17 @@ void SND_(type, buf, lenbuf, node, sync)
 */
 {
   int status, msgid;
-  int me = NODEID_();
+  int me;
   int ttype = *type;
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
+#endif
+
+  me = NODEID_();
+
+#ifdef GA_USE_VAMPIR
+  (void) VT_log_sendmsg(me,*node,*lenbuf,*type,0)
+#endif
 
   if (DEBUG) {
     (void)printf("SND_: node %d sending to %ld, len=%ld, type=%ld, sync=%ld\n",
@@ -216,6 +230,9 @@ void SND_(type, buf, lenbuf, node, sync)
 #ifdef EVENTLOG
   evlog(EVKEY_END, EVENT_SND, EVKEY_LAST_ARG);
 #endif
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_SND,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -267,6 +284,10 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
   static int status, msgid;
   size_t len;
   
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_RCV,__FILE__,__LINE__);
+#endif
+
   
   if (*nodeselect == -1) 
     node = dontcare; 
@@ -349,6 +370,10 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 	EVKEY_MSG_LEN, *lenmes,
 	EVKEY_LAST_ARG);
 #endif
+#ifdef GA_USE_VAMPIR
+  (void) VT_log_recvmsg(me,*nodefrom,*lenmes,*type,0);
+  vampir_end(TCGMSG_RCV,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -356,14 +381,20 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 long PROBE_(long *type, long *node)
 {
   int ttype, nbytes, nnode, rc ;
-  
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_PROBE,__FILE__,__LINE__);
+#endif
+ 
   nnode =  (*node < 0) ? dontcare : *node; 
   ttype = *type;
   rc = mpc_probe(&nnode, &ttype, &nbytes);
   if (DEBUG) 
      fprintf(stderr," %d in PROBE ret. code=%d from=%d type=%d bytes=%d\n",
              NODEID_(), rc, nnode, *type, nbytes); 
-  
+
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_PROBE,__FILE__,__LINE__);
+#endif  
   return (nbytes==-1 ? 0 : 1);
 }
 
@@ -380,6 +411,11 @@ void PBEGIN_()
   static int type = SYNC_TYPE, htype = TYPE_NXTVAL, msgid,node;
   static int newflag, oldflag, status;
   static size_t len_buf;
+#ifdef GA_USE_VAMPIR
+  vampir_init(argc,argv,__FILE__,__LINE__);
+  tcgmsg_vampir_init(__FILE__,__LINE__);
+  vampir_begin(TCGMSG_PBEGINF,__FILE__,__LINE__);
+#endif
   void SYNCH_();
   DEBUG = 0;
 
@@ -451,6 +487,10 @@ void PBEGIN_()
   /* Ensure trap is enabled */
   newflag = 0; mp_lockrnc(&newflag, &oldflag);
   SYNCH_(&type);
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_PBEGINF,__FILE__,__LINE__);
+#endif
+
 }
 
 
@@ -469,6 +509,9 @@ void PEND_()
 #ifdef EVENTLOG
   long start=MTIME_();
 #endif
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_PEND,__FILE__,__LINE__);
+#endif
 
   if (DEBUG) {
     (void) printf("node %ld called pend\n",NODEID_());
@@ -482,6 +525,10 @@ void PEND_()
 	EVKEY_STR_INT, "Time (cs) waiting to finish", MTIME_()-start,
 	EVKEY_DUMP,
 	EVKEY_LAST_ARG);
+#endif
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_PEND,__FILE__,__LINE__);
+  vampir_finalize(__FILE__,__LINE__);
 #endif
 }
 
@@ -502,7 +549,12 @@ void SYNCH_(type)
 {
 #ifdef INTR_SAFE
     static int ttype = SYNC_TYPE,node,inode, status;
-
+#endif
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_SYNCH,__FILE__,__LINE__);
+  vampir_begin_gop(NODEID_(),NNODES_(),0,*type);
+#endif
+#ifdef INTR_SAFE
     /* Dumb synchronization ... all send to 0 then 0 responds */
  
     /* post rcv for synchronization message */
@@ -522,6 +574,10 @@ void SYNCH_(type)
     }
 #else
     mpc_sync(allgrp);
+#endif
+#ifdef GA_USE_VAMPIR
+  vampir_end_gop(NODEID_(),NNODES_(),0,*type);
+  vampir_end(TCGMSG_SYNCH,__FILE__,__LINE__);
 #endif
 }
 
@@ -552,6 +608,10 @@ static  int msgid, status, type;
 static  int rtype  = TYPE_NXTVAL_REPLY;   /* reply message type */
 static  int  ret_val;
         int me = NODEID_();
+
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
 
   buf[0] = *mproc;
 #ifdef MPL_SMP_BUG
@@ -591,6 +651,9 @@ static  int  ret_val;
      fprintf(stderr,"nxtval: me=%d, got reply, nextval= %d \n",
        NODEID_(),ret_val); 
 
+#ifdef GA_USE_VAMPIR
+    vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
     return(ret_val);
 }
 
@@ -640,7 +703,9 @@ void WAITCOM_(nodesel)
  */
 {
   long i, status, nbytes, found = 0;
-
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_WAITCOM,__FILE__,__LINE__);
+#endif
 #ifdef EVENTLOG
   evlog(EVKEY_BEGIN,     "Waitcom",
 	EVKEY_STR_INT,   "n_in_msg_q",  n_in_msg_q,
@@ -684,6 +749,9 @@ void WAITCOM_(nodesel)
 
 #ifdef EVENTLOG
   evlog(EVKEY_END, "Waitcom", EVKEY_LAST_ARG);
+#endif
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_WAITCOM,__FILE__,__LINE__);
 #endif
 }
 
@@ -796,6 +864,10 @@ void BRDCST_(type, buf, lenbuf, originator)
   long status;
   long me = NODEID_();
   long ttype = *type;
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_BRDCST,__FILE__,__LINE__);
+  vampir_begin_gop(NODEID_(),NNODES_(),*lenbuf,*type);
+#endif
 
   if (DEBUG){
     fprintf(stderr," BRDCST: me=%d, type=%d, (%d,%d) int=%d, long=%d\n",
@@ -812,6 +884,10 @@ void BRDCST_(type, buf, lenbuf, originator)
   status = mpc_bcast(buf, *lenbuf, *originator, allgrp);
   if(status == -1) 
       Error("BRDCST failed: mperrno error code ", mperrno);
+#ifdef GA_USE_VAMPIR
+  vampir_end_gop(me,NNODES_(),*lenbuf,*type);
+  vampir_end(TCGMSG_BRDCST,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -850,6 +926,13 @@ void DGOP_(ptype, x, pn, op)
   long nbuf   = (nleft-1) / buflen + 1;
   long n;
 
+#ifdef GA_USE_VAMPIR
+  long me = NODEID_();
+  long nnodes = NNODES_();
+  vampir_begin(TCGMSG_DGOP,__FILE__,__LINE__);
+  vampir_begin_gop(me,nnodes,*pn,*ptype);
+#endif
+
   buflen = (nleft-1) / nbuf + 1;
 
   if (strncmp(op,"abs",3) == 0) {
@@ -880,6 +963,10 @@ void DGOP_(ptype, x, pn, op)
 
     nleft -= ndo; x+= ndo;
   }
+#ifdef GA_USE_VAMPIR
+  vampir_end_gop(me,nnodes,*pn,*ptype);
+  vampir_end(TCGMSG_DGOP,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -895,6 +982,13 @@ void IGOP_(ptype, x, pn, op)
   long buflen = MIN(nleft,2*GOP_BUF_SIZE); /* Try to get even sized buffers */
   long nbuf   = (nleft-1) / buflen + 1;
   long n;
+
+#ifdef GA_USE_VAMPIR
+  long me = NODEID_();
+  long nnodes = NNODES_();
+  vampir_begin(TCGMSG_IGOP,__FILE__,__LINE__);
+  vampir_begin_gop(me,nnodes,*pn,*ptype);
+#endif
 
   buflen = (nleft-1) / nbuf + 1;
 
@@ -928,6 +1022,11 @@ void IGOP_(ptype, x, pn, op)
 
     nleft -= ndo; x+= ndo;
   }
+
+#ifdef GA_USE_VAMPIR
+  vampir_end_gop(me,nnodes,*pn,*ptype);
+  vampir_end(TCGMSG_IGOP,__FILE__,__LINE__);
+#endif
 }
 
 void ALT_PBEGIN_(int *argc, char **argv[])

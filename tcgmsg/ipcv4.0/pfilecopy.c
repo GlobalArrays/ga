@@ -1,9 +1,13 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pfilecopy.c,v 1.5 2000-10-03 23:27:58 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pfilecopy.c,v 1.6 2002-07-17 17:20:11 vinod Exp $ */
 
 #include <stdio.h>
 
 #include "sndrcv.h"
 #include "msgtypesc.h"
+
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#endif
 
 #if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) || \
     defined(KSR)    || defined(DECOSF)
@@ -148,6 +152,9 @@ void PFCOPY_(type, node0, fname, len)
 
   char *filename;
 
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_PFCOPY,__FILE__,__LINE__);
+#endif
 #ifdef DEBUG 
   (void) printf("me=%d, type=%d, node0=%d, fname=%x, fname=%.8s, len=%d\n",
 		NODEID_(), *type, *node0, fname, fname, len);
@@ -175,5 +182,8 @@ void PFCOPY_(type, node0, fname, len)
   PFILECOPY_(type, node0, filename);
 
   (void) free(filename);
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_PFCOPY,__FILE__,__LINE__);
+#endif
 }
 
