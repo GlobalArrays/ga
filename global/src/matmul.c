@@ -474,17 +474,6 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
 
        nextA = gai_nxtask(irregular, g_t); /* get the next task id */
 
-       /* ---- GET the next A & B block ---- */
-       if(nextA < max_tasks) {
-	  GET_BLOCK(g_a, &taskListA[nextA], a_ar[(shiftA+1)%2], transa, 
-		    ailo, ajlo, &adim_next, &gNbhdlA[(shiftA+1)%2]);
-	  nextB = taskListA[nextA].chunkBId;
-	  if(currB != nextB) {
-	     GET_BLOCK(g_b, &taskListB[nextB], b_ar[(shiftB+1)%2], transb, 
-		       bilo, bjlo, &bdim_next, &gNbhdlB[(shiftB+1)%2]);
-	  }
-       }
-
        /* ---- WAIT till we get the current A & B block ---- */
        a = a_ar[shiftA];
        WAIT_GET_BLOCK(&gNbhdlA[shiftA]);
@@ -492,7 +481,18 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
 	  get_new_B = FALSE;
 	  b = b_ar[shiftB];
 	  WAIT_GET_BLOCK(&gNbhdlB[shiftB]);
-	  shiftB=((shiftB+1)%2);
+       }
+
+       /* ---- GET the next A & B block ---- */
+       if(nextA < max_tasks) {
+	  GET_BLOCK(g_a, &taskListA[nextA], a_ar[(shiftA+1)%2], transa, 
+		    ailo, ajlo, &adim_next, &gNbhdlA[(shiftA+1)%2]);
+	  nextB = taskListA[nextA].chunkBId;
+	  if(currB != nextB) {
+	     shiftB=((shiftB+1)%2);
+	     GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb, 
+		       bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
+	  }
        }
        if(currB != nextB) get_new_B = TRUE;
       
