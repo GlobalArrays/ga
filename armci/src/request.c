@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.22 2001-06-07 23:23:23 d3h325 Exp $ */
+/* $Id: request.c,v 1.23 2001-08-08 07:16:32 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -186,6 +186,15 @@ int i;
         memlock_table_array[armci_master +i] = ((char*)ptr_myclus)
                 + MAX_SLOTS*sizeof(memlock_t)*i;
     }
+
+    /* set pointer to the use flag */
+#ifdef MEMLOCK_SHMEM_FLAG
+    armci_use_memlock_table = (int*) (MAX_SLOTS*sizeof(memlock_t) +
+                      (char*) memlock_table_array[armci_clus_last]);
+
+    if(DEBUG_) fprintf(stderr,"server initialized memlock %p\n",
+                       armci_use_memlock_table);
+#endif
 
     if(DEBUG_) fprintf(stderr,"server initialized memlock\n");
 }

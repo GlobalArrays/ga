@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.40 2001-05-09 17:15:31 d3h325 Exp $ */
+/* $Id: armci.c,v 1.41 2001-08-08 07:16:32 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -24,7 +24,6 @@
  */
 
 #define  EXTERN
-#define MEMLOCK_SHMEM_FLAG  
 
 #include <stdio.h>
 #ifdef CRAY
