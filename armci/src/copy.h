@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.38 2002-07-17 22:51:08 d3h325 Exp $ */
+/* $Id: copy.h,v 1.39 2002-07-17 23:07:00 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -239,7 +239,7 @@ void FATR DCOPY1D(void*, void*, int*);
 #   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
            CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
 
-#elif defined(HITACHI) || defined(_ELAN_PUTGET_H_)
+#elif defined(HITACHI) || defined(_ELAN_PUTGET_H)
 
 #ifdef QUADRICS
 #if 0
