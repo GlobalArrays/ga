@@ -110,7 +110,7 @@ extern double ARMCI_GetValueDouble(void *src, int proc);
 
 extern int ARMCI_Malloc(void* ptr_arr[], int bytes);
 extern int ARMCI_Free(void *ptr);
-extern void* ARMCI_Malloc_local(size_t bytes);
+extern void* ARMCI_Malloc_local(int bytes);
 extern int ARMCI_Free_local(void *ptr);
 extern int ARMCI_Same_node(int proc);
 

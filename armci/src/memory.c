@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.29 2003-03-21 19:41:08 manoj Exp $ */
+/* $Id: memory.c,v 1.30 2003-03-25 19:51:21 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -227,7 +227,7 @@ void armci_krmalloc_init_localmem() {
 /**
  * Local Memory Allocation and Free
  */
-void *ARMCI_Malloc_local(size_t bytes) {
+void *ARMCI_Malloc_local(int bytes) {
     return (void *)kr_malloc(bytes, &ctx_localmem);
 }
 
