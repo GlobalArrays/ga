@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.19 2002-01-08 21:56:50 vinod Exp $ */
+/* $Id: sockets.c,v 1.20 2002-01-08 22:58:05 d3h325 Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -195,6 +195,9 @@ void armci_ShutdownAll(int socklist[], int num)
       }
 }
 
+
+#if defined(USE_SOCKET_VECTOR_API)
+
 int _armci_tcp_writev(int sock, struct iovec *iovptr,int writeiovlength,int currentwritesize,struct iovec *iov){
     int n=0;
     while(n!=currentwritesize){
@@ -357,6 +360,7 @@ int armci_WriteVToSocket(int sock,struct iovec *iov, int iovlength, int totalsiz
     return(n);
 }
 
+#endif /*for use_socket_vec_api*/
 
 int armci_ReadFromSocket(int sock, void* buffer, int lenbuf)
 /*

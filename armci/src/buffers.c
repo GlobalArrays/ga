@@ -1,6 +1,5 @@
-/* $Id: buffers.c,v 1.2 2002-01-08 21:56:49 vinod Exp $    **/
+/* $Id: buffers.c,v 1.3 2002-01-08 22:58:05 d3h325 Exp $    **/
 #define SIXTYFOUR 64
-#define ALIGN64ADD(buf) (SIXTYFOUR-(((ssize_t)(buf))%SIXTYFOUR))
 #define DEBUG_  0
 #define DEBUG2_ 0
 #define EXTRA_ERR_CHECK     
@@ -12,10 +11,12 @@
 #include "request.h"
 #ifdef WIN32
 #  include <windows.h>
+   typedef unsigned long ssize_t;
 #else
 #  include <unistd.h>
 #endif
 
+#define ALIGN64ADD(buf) (SIXTYFOUR-(((ssize_t)(buf))%SIXTYFOUR))
 /* the following symbols should be defined if needed in protocol specific
    header file:  BUF_EXTRA_FIELD, BUFID_PAD_T, BUF_ALLOCATE 
  */
@@ -163,7 +164,7 @@ extern void _armci_asyn_complete_strided_get(int dsc_id, void *buf);
               called); fflush(stdout);
     }
 
-    if(buf_state->first != idx){ sleep(10);
+    if(buf_state->first != (unsigned int)idx){ 
       armci_die2("complete_buf_index:inconsistent index:",idx,buf_state->first);
     }
 
@@ -205,15 +206,15 @@ void _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node)
     nfirst=armci_clus_info[node].master;
     nlast = nfirst+armci_clus_info[node].nslave-1;
 
-    if((_armci_buf_state->table[index].to<nfirst) || 
-       (_armci_buf_state->table[index].to<nlast))
+    if((_armci_buf_state->table[index].to<(unsigned int) nfirst) || 
+       (_armci_buf_state->table[index].to<(unsigned int) nlast))
         armci_die2("_armci_buf_ensure_one_outstanding_op_per_node: bad to",node,
                 (int)_armci_buf_state->table[index].to);
 
     for(i=0;i<MAX_BUFS;i++){
         buf_state_t *buf_state = _armci_buf_state->table +i;
-        if((buf_state->to >= nfirst) && (buf_state->to<= nlast))
-          if((buf_state->first != this)&&(buf_state->first==i) && buf_state->op)
+        if((buf_state->to >= nfirst) && (buf_state->to<= (unsigned int) nlast))
+          if((buf_state->first != (unsigned int) this)&&(buf_state->first==(unsigned int) i) && buf_state->op)
                 _armci_buf_complete_index(i,0);
     }
 }
@@ -227,14 +228,14 @@ void _armci_buf_ensure_one_outstanding_op_per_proc(void *buf, int proc)
     int index = BUF_TO_BUFINDEX(ptr);
     int this = _armci_buf_state->table[index].first;
 
-    if(_armci_buf_state->table[index].to != proc )
+    if(_armci_buf_state->table[index].to !=(unsigned int)  proc )
        armci_die2("_armci_buf_ensure_one_outstanding_op_per_proc: bad to", proc,
                 (int)_armci_buf_state->table[index].to);
 
     for(i=0;i<MAX_BUFS;i++){
         buf_state_t *buf_state = _armci_buf_state->table +i;
-        if(buf_state->to == proc)
-          if((buf_state->first != this)&&(buf_state->first==i) && buf_state->op)
+        if(buf_state->to == (unsigned int) proc)
+          if((buf_state->first != (unsigned int) this)&&(buf_state->first==(unsigned int) i) && buf_state->op)
                 _armci_buf_complete_index(i,0);
     }
 }
@@ -281,7 +282,7 @@ int count=1, i;
 
     /* avail should never point to buffer in a middle of a set of used bufs */
     if(_armci_buf_state->table[avail].op && 
-      (_armci_buf_state->table[avail].first != avail)){ sleep(1); 
+      (_armci_buf_state->table[avail].first != (unsigned int) avail)){ sleep(1); 
               armci_die2("armci_buf_get: inconsistent first", avail,
                          _armci_buf_state->table[avail].first);
       }
@@ -290,7 +291,7 @@ int count=1, i;
     for(i=0;i<count;i++){
         int cur = i +avail;
         if(_armci_buf_state->table[cur].op &&
-           _armci_buf_state->table[cur].first==cur)
+           _armci_buf_state->table[cur].first==(unsigned int) cur)
                                    _armci_buf_complete_index(cur,1);
     }
 

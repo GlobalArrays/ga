@@ -1,6 +1,5 @@
-/* $Id: dataserv.c,v 1.21 2002-01-08 21:56:49 vinod Exp $ */
+/* $Id: dataserv.c,v 1.22 2002-01-08 22:58:05 d3h325 Exp $ */
 #include "armcip.h"
-#include "sockets.h"
 #include "request.h"
 #include "copy.h"
 #include <stdio.h>
@@ -8,7 +7,7 @@
 #include <math.h>
 #define DEBUG_ 0
 #define DEBUG1 0
-#define USE_VECTOR_FORMAT 1 
+#define USE_VECTOR_FORMAT_ 1 
 extern int AR_ready_sigchld;
 int *SRV_sock;
 int *AR_port;
@@ -19,7 +18,7 @@ static int *readylist=(int*)0;
 
 #define GETBUF(buf,type,var) (var) = *(type*)(buf); (buf) += sizeof(type)
 
-
+#if defined(USE_SOCKET_VECTOR_API)
 int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,struct iovec *iov){
     
     int i,j=0,k,num_xmit=0,lastiovlength,iovlength,n=0,max_iovec,totalsize=0;
@@ -205,6 +204,8 @@ int bufsize=0,bytes=0,s;
     return(bytes);
 }
 
+#endif
+
 /*\ client sends request message to server
 \*/
 int armci_send_req_msg(int proc, void *buf, int bytes)
@@ -304,7 +305,7 @@ int stat, bytes;
     bytes = sizeof(request_header_t) + msginfo->dscrlen;
     stat = armci_WriteToSocket(SRV_sock[cluster], msginfo, bytes);
     if(stat<0)armci_die("armci_send_strided:write failed",stat);
-#if defined(USE_VECTOR_FORMAT)
+#if defined(USE_SOCKET_VECTOR_API)
     if(msginfo->operation==PUT && msginfo->datalen==0)
         armci_SendStridedToSocket( SRV_sock[cluster],ptr,stride_arr,count,strides,(struct iovec *)(msginfo+1) );
     else
@@ -343,7 +344,7 @@ int cluster=armci_clus_id(proc);
       fflush(stdout);
     }
  
-#if defined(USE_VECTOR_FORMAT)
+#if defined(USE_SOCKET_VECTOR_API)
     if(msginfo->operation==GET && strides > 0)
         armci_RecvStridedFromSocket( SRV_sock[cluster],ptr,stride_arr,count,strides,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen));
     else
@@ -354,6 +355,9 @@ int cluster=armci_clus_id(proc);
 
 
 /*********************************** server side ***************************/
+
+#if defined(USE_SOCKET_VECTOR_API)
+
 void armci_tcp_read_vector_data(request_header_t *msginfo,void *vdscr,int p){
 int bytes,i,j,stat;
 void **ptr;
@@ -401,7 +405,7 @@ int stride_levels, *stride_arr,*count,stat;
     count = (int*)dscr;            dscr += sizeof(int*); 
     armci_RecvStridedFromSocket( CLN_sock[p],ptr,stride_arr,count,stride_levels,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );
 }
-
+#endif
 
 /*\ server receives request
 \*/
@@ -414,14 +418,7 @@ int bytes;
 
     stat =armci_ReadFromSocket(CLN_sock[p],MessageRcvBuffer,hdrlen);
     if(stat<0) armci_die("armci_rcv_req: failed to receive header ",p);
-
-    if(DEBUG_){ printf("%d(server):got %d req from %d len=(%d,%d,%d)\n",
-            armci_me,msginfo->operation,p,msginfo->bytes,
-            msginfo->dscrlen, msginfo->datalen ); fflush(stdout);
-    }
-    *buflen = MSG_BUFLEN - hdrlen;
-    *(void**)phdr = msginfo;
- 
+#if defined(USE_SOCKET_VECTOR_API)
     if(msginfo->operation == PUT && msginfo->datalen==0){
         if(msginfo->format==STRIDED)  
             armci_tcp_read_strided_data(msginfo,pdescr,p);
@@ -431,6 +428,7 @@ int bytes;
         }  
         return;
     }
+#endif
     if (msginfo->operation == GET)
       bytes = msginfo->dscrlen; 
     else{
@@ -483,7 +481,7 @@ void armci_WriteStridedToDirect(int proc, request_header_t* msginfo,
       fflush(stdout);
     }
  
-#if defined(USE_VECTOR_FORMAT)
+#if defined(USE_SOCKET_VECTOR_API)
     if(msginfo->operation==GET && strides>0)
         armci_SendStridedToSocket(CLN_sock[proc],ptr,stride_arr,count,strides,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) ) ;
     else

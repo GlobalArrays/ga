@@ -60,6 +60,8 @@ COBJ =  "$(OBJDIR)\winshmem.obj" \
         "$(OBJDIR)\spawn.obj"\
         "$(OBJDIR)\request.obj"\
         "$(OBJDIR)\ds-shared.obj"\
+        "$(OBJDIR)\buffers.obj"\
+        "$(OBJDIR)\async.obj"\
         "$(OBJDIR)\sockets.obj"
 
 !ifndef NOFORT

@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.30 2002-01-08 21:56:50 vinod Exp $ */
+/* $Id: request.c,v 1.31 2002-01-08 22:58:05 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -343,7 +343,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
     }
             
     bufsize += bytes + sizeof(long) +2*sizeof(double) +8; /*+scale+allignment*/
-#if defined(DATA_SERVER) && defined(SOCKETS) 
+#if defined(USE_SOCKET_VECTOR_API) 
     if(flag){
         int totaliovecs=0;
         if(op==PUT)bufsize-=bytes; 
@@ -409,10 +409,13 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
     buf += slen;
     msginfo->datalen += slen;
     msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
+
+#if defined(USE_SOCKET_VECTOR_API) 
     if(flag&&(op==GET||op==PUT)){
     	armci_direct_vector(msginfo,darr,len,proc);
         return 0;
-    }    
+    }   
+#endif 
     /* for put and accumulate copy data into buffer */
     if(op != GET){
 /*       fprintf(stderr,"sending %lf\n",*(double*)darr[0].src_ptr_array[0]);*/
@@ -455,7 +458,7 @@ int armci_rem_strided(int op, void* scale, int proc,
 #   ifdef CLIENT_BUF_BYPASS
       if(flag && _armci_bypass) bufsize -=bytes; /* we are not sending data*/
 #   endif
-#if defined(DATA_SERVER) && defined(SOCKETS) 
+#if defined(USE_SOCKET_VECTOR_API) 
     if(flag){
 	bufsize = sizeof(request_header_t)+sizeof(void*)+2*sizeof(int)*(stride_levels+1)+2*sizeof(double) + 8;
 	
