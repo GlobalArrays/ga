@@ -1,5 +1,10 @@
 #include <pvm3.h>
 #include <stdio.h>
+
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#endif
+
 #define  MAX_PROC 128
 
 #define TCGTIME_ TCGTIME
@@ -48,9 +53,17 @@ void SND_(type, buf, lenbuf, node, sync)
      long *node;
      long *sync;
 {
-long tid=pvm_gettid("", *node);
+   long tid=pvm_gettid("", *node);
+#ifdef GA_USE_VAMPIR
+   vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
+   (void) VT_log_sendmsg(me,*node,*lenbuf,*type,0);
+#endif
     
     pvm_psend(tid, *type, buf, *lenbuf, PVM_BYTE); 
+
+#ifdef GA_USE_VAMPIR
+   vampir_end(TCGMSG_SND,__FILE__,__LINE__);
+#endif
 }
 
 void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
@@ -64,9 +77,16 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 {
 int tid=*nodeselect, tidfrom;
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(TCGMSG_RCV,__FILE__,__LINE__);
+#endif
   if(tid >-1) tid=pvm_gettid("", *nodeselect);
   pvm_precv(tid, *type, buf, *lenbuf, PVM_BYTE, &tidfrom, 0, 0);
   *nodefrom = pvm_get_PE(tidfrom);
+#ifdef GA_USE_VAMPIR
+   (void) VT_log_recvmsg(me,*nodefrom,*lenmes,*type,0);
+   vampir_begin(TCGMSG_RCV,__FILE__,__LINE__);
+#endif
 }
  
 

@@ -1,7 +1,9 @@
 #include "tcgmsgP.h"
 #include "srftoc.h"
 
-
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#endif
 
 #define BUF_SIZE  10000
 #define IBUF_SIZE (BUF_SIZE * sizeof(DoublePrecision)/sizeof(Integer)) 
@@ -21,6 +23,10 @@ void BRDCST_(type, buf, len, originator)
      Integer me=NODEID_(), nproc=NNODES_(), lenmes, from, root=0;
      Integer up, left, right;
 
+#ifdef GA_USE_VAMPIR
+     vampir_begin(TCGMSG_BRDCST,__FILE__,__LINE__);
+#endif
+
      /* determine location in the binary tree */
      up    = (me-1)/2;    if(up >= nproc)       up = -1;
      left  =  2* me + 1;  if(left >= nproc)   left = -1;
@@ -35,6 +41,10 @@ void BRDCST_(type, buf, len, originator)
      if (me != root) RCV_(type, buf, len, &lenmes, &up, &from, &one);
      if (left > -1)  SND_(type, buf, len, &left, &one);
      if (right > -1) SND_(type, buf, len, &right, &one);
+
+#ifdef GA_USE_VAMPIR
+     vampir_end(TCGMSG_BRDCST,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -135,6 +145,10 @@ void DGOP_(type, x, n, op)
      DoublePrecision *work = _gops_work, *origx = x;
      Integer ndo, up, left, right, np=*n, orign = *n;
 
+#ifdef GA_USE_VAMPIR
+     vampir_begin(TCGMSG_DGOP,__FILE__,__LINE__);
+#endif
+
      /* determine location in the binary tree */
      up    = (me-1)/2;    if(up >= nproc)       up = -1;
      left  =  2* me + 1;  if(left >= nproc)   left = -1;
@@ -160,6 +174,10 @@ void DGOP_(type, x, n, op)
      /* Now, root broadcasts the result down the binary tree */
      len = orign*sizeof(DoublePrecision);
      BRDCST_(type, (char *) origx, &len, &root);
+
+#ifdef GA_USE_VAMPIR
+     vampir_end(TCGMSG_DGOP,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -172,6 +190,10 @@ void IGOP_(type, x, n, op)
      Integer me=NODEID_(), nproc=NNODES_(), len, lenmes, from, root=0;
      Integer *work = (Integer*)_gops_work, *origx = x;
      Integer ndo, up, left, right, np=*n, orign =*n;
+
+#ifdef GA_USE_VAMPIR
+     vampir_begin(TCGMSG_IGOP,__FILE__,__LINE__);
+#endif
 
      /* determine location in the binary tree */
      up    = (me-1)/2;    if(up >= nproc)       up = -1;
@@ -198,5 +220,9 @@ void IGOP_(type, x, n, op)
      /* Now, root broadcasts the result down the binary tree */
      len = orign*sizeof(Integer);
      BRDCST_(type, (char *) origx, &len, &root);
+
+#ifdef GA_USE_VAMPIR
+     vampir_end(TCGMSG_IGOP,__FILE__,__LINE__);
+#endif
 }
 

@@ -8,6 +8,9 @@
 #include <mpp/shmem.h>
 #include "srftoc.h"
 
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#endif
 
 #ifdef EVENTLOG
 #include "evlog.h"
@@ -93,7 +96,13 @@ void Error(string, code)
 void SYNCH_(type)
      long *type;
 {
+#ifdef GA_USE_VAMPIR
+     vampir_begin(TCGMSG_SYNCH,__FILE__,__LINE__);
+#endif
      barrier();
+#ifdef GA_USE_VAMPIR
+     vampir_end(TCGMSG_SYNCH,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -139,6 +148,10 @@ long NXTVAL_(mproc)
   int server = MAX(0, (int) procs - 1);
   long local; 
 
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
+
   me = NODEID_();
   procs = NNODES_();
 
@@ -171,6 +184,9 @@ long NXTVAL_(mproc)
         (void) fflush(stdout);
   }
 
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
   return(local);
 }
 
@@ -232,6 +248,10 @@ void BRDCST_(type, x, bytes, originator)
   char *start = x;
   long *brdcst_buf = (long*)gop_work;
 
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_BRDCST,__FILE__,__LINE__);
+#endif
+
   me = NODEID_();
   procs = NNODES_();
 
@@ -266,6 +286,9 @@ void BRDCST_(type, x, bytes, originator)
         printf("BRDCST: me=%2ld  done,   long value=%ld \n", me,*(long*)start);
         (void) fflush(stdout);
   }
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_BRDCST,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -282,6 +305,11 @@ void DGOP_(ptype, x, pn, op)
   long buflen = MIN(nleft,GOP_WORK_SIZE); /* Try to get even sized buffers */
   long nbuf   = (nleft-1) / buflen + 1;
   long n;
+
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_DGOP,__FILE__,__LINE__);
+#endif
+
   me = NODEID_();
   procs = NNODES_();
 
@@ -315,6 +343,10 @@ void DGOP_(ptype, x, pn, op)
 
     nleft -= ndo; x+= ndo;
   }
+
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_DGOP,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -330,6 +362,11 @@ void IGOP_(ptype, x, pn, op)
   int buflen = MIN(nleft,GOP_WORK_SIZE); /* Try to get even sized buffers */
   int nbuf   = (nleft-1) / buflen + 1;
   int n;
+
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_IGOP,__FILE__,__LINE__);
+#endif
+
   me = NODEID_();
   procs = NNODES_();
 
@@ -364,6 +401,9 @@ void IGOP_(ptype, x, pn, op)
     MEMCPY(x,target,ndo*sizeof(int));
     nleft -= ndo; x+= ndo;
   }
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_IGOP,__FILE__,__LINE__);
+#endif
 }
 
 

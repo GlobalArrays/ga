@@ -3,6 +3,10 @@
 #include <lapi.h>
 #include "tcgmsgP.h"
 
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#endif
+
 lapi_handle_t lapi_handle;
 lapi_info_t   lapi_info;
 extern ShmemBuf TCGMSG_receive_buffer[];
@@ -167,6 +171,11 @@ Integer NXTVAL_(mproc)
 
   int  server = (int)NNODES_() -1;         /* id of server process */
 
+#ifdef GA_USE_VAMPIR
+  int me = (int)NODEID_();
+  vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
+
   if (server>0) { 
      /* parallel execution */
      if (DEBUG_) {
@@ -182,6 +191,10 @@ Integer NXTVAL_(mproc)
      }
      if (*mproc > 0) {
            /* use atomic swap operation to increment nxtval counter */
+#ifdef GA_USE_VAMPIR
+          (void) VT_log_sendmsg(me,server,0,TCGMSG_NXTVAL,0);
+#endif
+
            rc = LAPI_Setcntr(lapi_handle, &req_id, 0);
            if(rc)Error("nxtval: setcntr failed",rc);
            rc = LAPI_Rmw(lapi_handle, FETCH_AND_ADD, server, nxtval_cnt_adr,
@@ -189,6 +202,10 @@ Integer NXTVAL_(mproc)
            if(rc)Error("nxtval: rmw failed",rc);
            rc = LAPI_Waitcntr(lapi_handle, &req_id, 1, NULL);
            if(rc)Error("nxtval: waitcntr failed",rc);
+
+#ifdef GA_USE_VAMPIR
+           (void) VT_log_recvmsg(server,me,0,TCGMSG_NXTVAL,0);
+#endif
      }
    } else {
      /* Not running in parallel ... just do a simulation */
@@ -196,14 +213,18 @@ Integer NXTVAL_(mproc)
      if (*mproc == 1){
        int val = count;
        count+=INCR;
-       return (val);
+       local = val;
      }else if (*mproc == -1) {
        count = 0;
-      return 0;
+       local = 0;
     }
     else
       Error("nxtval: sequential version with silly mproc ", (Integer) *mproc);
   }
+
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
 
   return (Integer)local;
 }
@@ -287,9 +308,16 @@ void Busy(int n)
 void SYNCH_(Integer* type)
 {
 int rc;
+#ifdef GA_USE_VAMPIR
+     vampir_begin(TCGMSG_SYNCH,__FILE__,__LINE__);
+#endif
 
      rc=LAPI_Gfence(lapi_handle);
      if(rc) Error("lapi_gfence failed",rc);
+
+#ifdef GA_USE_VAMPIR
+     vampir_end(TCGMSG_SYNCH,__FILE__,__LINE__);
+#endif
 }
 
 void PARERR_(code)

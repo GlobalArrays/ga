@@ -1,9 +1,12 @@
-/* $Id: nxtval.shm.c,v 1.4 2002-02-14 18:56:25 d3h325 Exp $ */
+/* $Id: nxtval.shm.c,v 1.5 2002-07-17 17:15:19 vinod Exp $ */
 
 #include "tcgmsgP.h"
 long nxtval_counter=0;
 long *nxtval_shmem = &nxtval_counter;
 
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#endif
 
 #define LEN 2
 #define INCR 1                 /* increment for NXTVAL */
@@ -64,6 +67,11 @@ long NXTVAL_(long *mproc)
   long nproc=  NNODES_(); 
   long server=nproc-1; 
 
+#ifdef GA_USE_VAMPIR
+  long me = NODEID_();
+  vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
+
      if (DEBUG_) {
        (void) printf("%2ld: nxtval: mproc=%ld\n",NODEID_(), *mproc);
        (void) fflush(stdout);
@@ -76,12 +84,23 @@ long NXTVAL_(long *mproc)
            SYNCH_(&sync_type);
      }
      if (*mproc > 0) {
+#ifdef GA_USE_VAMPIR
+           (void) VT_log_sendmsg(me,server,0,TCGMSG_NXTVAL,0);
+#endif
+
            LOCK;
              local = *nxtval_shmem;
              *nxtval_shmem += INCR;
            UNLOCK;
+
+#ifdef GA_USE_VAMPIR
+           (void) VT_log_recvmsg(server,me,0,TCGMSG_NXTVAL,0);
+#endif
      }
 
-     return local;
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
+  return local;
 }
 

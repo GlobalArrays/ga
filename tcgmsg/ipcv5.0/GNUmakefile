@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.4 2002-01-28 19:42:04 d3h325 Exp $
+# $Id: GNUmakefile,v 1.5 2002-07-17 17:15:19 vinod Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -13,6 +13,9 @@
      JOBJ = fexit.o timer.o getmem.o mxv_fortran.o
 
 HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h ../tcgmsg.fh
+ifdef GA_USE_VAMPIR
+   HEADERS += ../tcgmsg_vampir.h ../../ga_vt.h
+endif
 
 OBJ = $(OBJ_CORE) $(EXTRA)  
 LIB_TARGETS = *.x pvm.ring
@@ -106,7 +109,9 @@ endif
 
      JOBJ = fexit.o timer.o getmem.o mxv_fortran.o
 
-         
+ifdef GA_USE_VAMPIR
+   EXTRA += tcgmsg_vampir.o ga_vt.o
+endif 
 
 include ../../armci/config/makecoms.h
 include ../../armci/config/makemp.h
@@ -123,6 +128,13 @@ endif
 
 
 LOADLIBES = $(LIBRARY_PATH) $(COMM_LIBS) 
+ifdef GA_USE_VAMPIR
+   ifdef VT_PATH
+      LOADLIBES += $(VT_PATH) -lVT
+   else
+      echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
+   endif
+endif
 #......................... make targets ........................
 #
       all:    $(LIBRARY_PATH) test.x testf.x hello.x msgtypesf.h
@@ -151,5 +163,16 @@ $(LIBOBJ)  test.o testf.o:	$(INCLUDES)
 testf.o:	msgtypesf.h
 $(patsubst %,$(LIBRARY_PATH)(%),globalop.o):	msgtypesc.h
 
+ifdef GA_USE_VAMPIR
+tcgmsg_vampir.o:	../tcgmsg_vampir.c
+	ln -s ../tcgmsg_vampir.c tcgmsg_vampir.c
+	$(CC) $(CFLAGS) -c tcgmsg_vampir.c
+	rm tcgmsg_vampir.c
+ 
+ga_vt.o:	../../ga_vt.c
+	ln -s ../../ga_vt.c ga_vt.c
+	$(CC) $(CFLAGS) -c ga_vt.c
+	rm ga_vt.c
+endif
 
 machdep: msgtypesf.h

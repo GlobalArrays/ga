@@ -3,6 +3,10 @@
 #include "tcgmsgP.h"
 #include <stdlib.h>
 
+#ifdef GA_USE_VAMPIR
+#include "tcgmsg_vampir.h"
+#endif
+
 extern long MatchShmMessage();
 extern void msg_wait();
 extern long DEBUG_;
@@ -78,7 +82,19 @@ long PROBE_(type, node)
       */
 {
     long nnode = *node;
-    return(ProbeNode(type, &nnode));
+    long result;
+
+#ifdef GA_USE_VAMPIR
+    vampir_begin(TCGMSG_PROBE,__FILE__,__LINE__);
+#endif
+
+    result = ProbeNode(type, &nnode);
+
+#ifdef GA_USE_VAMPIR
+    vampir_end(TCGMSG_PROBE,__FILE__,__LINE__);
+#endif
+
+    return(result);
 }
 
 
@@ -112,6 +128,9 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
   long   me = NODEID_();
   void msg_rcv();
 
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_RCV,__FILE__,__LINE__);
+#endif
 
   node = *nodeselect;
 
@@ -133,6 +152,10 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
                     me, *nodeselect, *lenbuf);
       (void) fflush(stdout);
   }
+#ifdef GA_USE_VAMPIR
+  (void) VT_log_recvmsg(me,*nodefrom,*lenmes,*type,0);
+  vampir_end(TCGMSG_RCV,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -162,6 +185,11 @@ void SND_(type, buf, lenbuf, node, sync)
   long block = *sync;
 #endif
 
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
+  (void) VT_log_sendmsg(me,*node,*lenbuf,*type,0);
+#endif
+
   if (DEBUG_) {
     (void)printf("SND_: node %ld sending to %ld, len=%ld, type=%ld, sync=%ld\n",
                   me, *node, *lenbuf, *type, *sync);
@@ -187,6 +215,10 @@ void SND_(type, buf, lenbuf, node, sync)
                     me, *node, *lenbuf);
       (void) fflush(stdout);
   }
+
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_SND,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -209,6 +241,10 @@ void WAITCOM_(nodesel)
  */
 {
   long i, status, nbytes, found = 0;
+
+#ifdef GA_USE_VAMPIR
+  vampir_begin(TCGMSG_WAITCOM,__FILE__,__LINE__);
+#endif
 
   for (i=0; i<n_in_msg_q; i++) if(*nodesel==msg_q[i].node || *nodesel ==-1){
 
@@ -238,4 +274,8 @@ void WAITCOM_(nodesel)
     n_in_msg_q = i;
 
   }
+
+#ifdef GA_USE_VAMPIR
+  vampir_end(TCGMSG_WAITCOM,__FILE__,__LINE__);
+#endif
 }
