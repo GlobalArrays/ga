@@ -1,5 +1,5 @@
 #
-# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.10 1995-10-11 23:46:19 d3h325 Exp $
+# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.11 1995-11-01 16:27:38 d3h325 Exp $
 #
 # for events and debugging with events add  -DEVENTLOG to the DEFINES definition
 # for the given machine
@@ -287,10 +287,6 @@ ENDIF DECOSF
 IF LINUX
 # PC80x86 Linux pl10.
 # f77 usage of argc&argv inside f2c is (xargc & xargv).
-# In order to compile TCGMSG under linuxOS you have to create the
-# libipc.a library as it can be found in /usr/src/linux/ipc/test directory.
-# This is needed to have full compatibility to SYSV shared memory management,
-# that is the shmget,shmat,shmdt... structures correctly available!
 # -DPLOT option removed for linux. See DECOSF comment....
         FC = f77
     FFLAGS = -O
@@ -298,7 +294,8 @@ IF LINUX
    DEFINES = -DLINUX -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
     CFLAGS = -O $(DEFINES)
  LINTFLAGS = $(DEFINES) -u
-      LIBS = -lc -lipc
+      LIBS = -lc
+# -lipc
      EXTRA = strdup.o strtok.o
 ENDIF LINUX
 IF SGI
