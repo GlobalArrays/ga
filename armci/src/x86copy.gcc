@@ -1,13 +1,25 @@
-//
-// memory copy implementation based on example 3 and 4
-// from http://www.sgi.com/developers/library/resources/asc_cpu.html
+// $Id: x86copy.gcc,v 1.3 2001-06-07 21:16:22 d3h325 Exp $
+// memory copy implementation derived from examples 3 and 4 at
+// http://www.sgi.com/developers/library/resources/asc_cpu.html
 //
 // void *armci_asm_memcpy(void *dst, const void *src, size_t n, int id);
+// id={0/1} - is used to support up to 2 threads 
 //
+// we turn the assembly memcpy on/off based on checking of the CPU type
 
 #include <stdio.h>
+#include <string.h>
 
-void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid);
+// EAX
+#define CPUFAMILY  0x00000F00
+#define MODEL      0x000000F0
+// EDX
+#define MMXSUPPORT 0x00800000
+#define SSESUPPORT 0x02000000
+#define IA64       0x70000000
+static  char vendor[13];
+typedef enum {unkown=0,p5, p2, p3, p4, pro, p6, K5, K6, K7, ia64} CPUTYPE;
+
 
 #define EX4  // use sgi's example_4_cpy if n is greater than 2k
              // use memcpy and example_3_memcpy for the rest 
@@ -16,6 +28,7 @@ void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid);
 static char tbuf0[2048];
 static char tbuf1[2048];
 static char *ptbuf;
+static int use_asm_copy=-1;
 
 //
 void *asm_memcpy3(void *dst, const void *src, size_t n)
@@ -59,7 +72,7 @@ void *asm_memcpy3(void *dst, const void *src, size_t n)
 	return dst;
 }
 
-//
+
 void *asm_memcpy4(void *dst, const void *src, size_t n, int bufid)
 {
 	
@@ -153,56 +166,160 @@ void *asm_memcpy4(void *dst, const void *src, size_t n, int bufid)
 }
 
 
-//
-// memory n byte copy from src to dst 
-// use standard memcpy for n%64 bytes from src 
-// use asm memory copy for rest of (n - n%64) bytes
-// if n is less than 128, only use memcpy 
-//
-void *asm_mcpy(void *dst, const void *src, size_t n)
-{
-    int residual; 
-    int n64;      
 
-    if(n < 128) memcpy(dst, src, n);
-    else{
-	residual = (int)n % 64;
-	n64 = n - residual;
-	
-	if(residual != 0) memcpy(dst, src, residual);
-	
-	if(n64 > 0)
-	    asm_memcpy3((char*)dst+residual, 
-			(char*)src+residual, 
-			n - residual);
+CPUTYPE cpu_check()
+{
+
+    int family;
+    int model;
+    int dum, dum2;
+    int mmxsupport;
+    int ssesupport;
+    int isIA64;
+    unsigned int reax;
+    unsigned int redx;
+
+    asm __volatile__ ("
+         movl $1, %%eax;
+         cpuid;
+         movl %%eax, %0;"
+                      :"=r"(reax)
+                      :"0"(reax)
+                      : "%eax"
+        );
+
+   asm __volatile__ ("
+        movl $1, %%eax;
+        cpuid;
+        movl %%edx, %0;"
+        :"=r"(redx)
+        :"0"(redx)
+        :"%eax", "%edx"
+      );
+
+    asm __volatile__ ("
+         movl $vendor, %%esi;
+         movl $0, %%eax;
+         cpuid;
+         movl %%ebx, 0(%%esi);
+         movl %%edx, 4(%%esi);
+         movl %%ecx, 8(%%esi);"
+                      :
+                      :
+                      : "%ebx", "%ecx", "%edx", "%esi"
+        );
+
+#if DEBUG
+    printf("eax=%x\n", reax);
+    printf("edx=%x\n", redx);
+    printf("vendor = %s\n", vendor);
+#endif
+
+    family = (CPUFAMILY & reax) >> 8;
+    model  = (MODEL     & reax) >> 4;
+
+    mmxsupport = (redx & MMXSUPPORT);
+    ssesupport = (redx & SSESUPPORT);
+    isIA64     = (redx & IA64);
+
+#if DEBUG
+    printf("mmx support = %s\n", mmxsupport ? "yes" : "no");
+    printf("SSE support = %s\n", ssesupport ? "yes" : "no");
+#endif
+
+    family = (reax & 0x00000f00) >> 8;
+    model  = (reax & 0x000000f0) >> 4;
+
+    if(strcmp(vendor, "GenuineIntel") == 0){
+
+        if(isIA64)
+            return ia64;
+
+        switch(family){
+        case 5: // P5
+            return p5;
+            break;
+        case 6: // pro,P2,P3
+            if(model == 1) return pro;
+            else if(model == 3 || model == 5) return p2;
+            else if(model == 6 || model==7 || model == 8 ) //celeron/p3
+                return p3;
+            else
+                return unkown;
+            break;
+        case 0xf: // extended family
+            if(redx & 0x0ff00000 == 0) return p4;
+            break;
+        }
+    }
+    else if(strcmp(vendor, "AuthenticAMD") == 0){
+        if(family == 5){
+            if(model < 4)
+                return K5;
+            else
+                return K6;
+        }
+
+        else if(family == 6){
+            return K7;
+        }
+        else
+            return unkown;
+    }
+    else {
+        if(family == 5)
+            return p5;
+        else if(family == 6)
+            return p6;
     }
 
-    return dst;
+    return unkown;
 }
 
 
+inline int asmcpy_works()
+{
+        CPUTYPE type = cpu_check();
+
+        if( type == p3 || type == K7 || type == p4)
+                return 1;
+        else
+                return 0;
+}
+
+
+//
+// n <128     memcpy
+// 128>n<2048 MMX copy       
+// n >2047    MMX copy with buffer
+//
 void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid)
 {
 
+    int residual;
+    if(use_asm_copy<0) use_asm_copy = asmcpy_works();
+    if(!use_asm_copy || (n<128) ) return memcpy(dst, src, n);
+     
 #ifdef EX3
 
-    asm_mcpy(dst, src, n);
+    residual = (int)n % 64;
+    if(residual != 0) memcpy(dst, src, residual);
+    asm_memcpy3((char*)dst+residual, (char*)src+residual, n - residual);
 
 #else EX4
-    int residual = n % 2048;
-    int n2k  = n - residual;
 
-    if(residual != 0)
-	asm_mcpy(dst, src, residual);
+    residual = (int)n % 2048;
 
-    if(n2k != 0)
-	asm_memcpy4((char*)dst + residual,
-	            (char*)src + residual, 
-	            n - residual, 
-		    bufid);
+    if(residual != 0){
+       int res64 = residual%64;
+       if(res64 != 0) memcpy(dst, src, res64);
+       asm_memcpy3((char*)dst+res64, (char*)src+res64, residual - res64);
+    }
 
+    if(n>=2048)
+	asm_memcpy4((char*)dst + residual, (char*)src + residual, 
+	            n - residual, bufid);
 #endif
 
     return dst;
 }
-
