@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/error.c,v 1.8 1996-07-19 19:37:48 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/error.c,v 1.9 2003-05-27 22:06:51 edo Exp $ */
 
 #include <stdio.h>
 #include <setjmp.h>
@@ -16,11 +16,7 @@
 
 extern jmp_buf SR_jmp_buf;   /* Jumped to on soft error */ 
 
-#ifdef CRAY
 #include <errno.h>
-#else
-extern int errno;
-#endif
 
 extern void exit();
 extern int SR_caught_sigint;
