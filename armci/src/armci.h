@@ -221,4 +221,6 @@ extern int ARMCI_NbAccV( int op,       /* operation code */
                 armci_hdl_t nb_handle /*armci_non-blocking request handle*/
               );
 
+extern int ARMCI_Wait(armci_hdl_t nb_handle); /*non-blocking request handle*/
+
 #endif /* _ARMCI_H */
