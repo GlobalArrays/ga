@@ -1,3 +1,7 @@
+/* $Id: copy.h,v 1.29 2001-05-31 18:44:11 d3h325 Exp $ */
+#ifndef _COPY_H_
+#define _COPY_H_
+
 #include <stdlib.h>
 #include <string.h>
 #ifdef WIN32
@@ -9,9 +13,6 @@
 
 #ifdef NOFORT
 #  define MEMCPY
-#endif
-#if !defined(MEMCPY) 
-#   define MEMCPY
 #endif
 
 #if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS)
@@ -231,4 +232,6 @@ void FATR DCOPY1D(void*, void*, int*);
           pd += dst_stride;\
       }\
     }
+#endif
+
 #endif
