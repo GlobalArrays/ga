@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.22 1997-11-14 05:07:20 d3g681 Exp $
+#$Id: makefile,v 1.23 1998-02-11 23:42:36 d3h325 Exp $
 
 # Tiny makefile wrapper
 
@@ -18,14 +18,18 @@ endif
 ifdef NWCHEM_TARGET
 ifeq ($(TARGET),SP1)
     TARGET = SP
+    ALTDIR = $(LIBDIR:SP1=LAPI)
 endif
 endif
 
 export LIBDIR CNFDIR BINDIR INCDIR TARGET_CPU
 
 global_stamp:	include_stamp 
-	$(MAKE) -f Makefile TARGET=$(TARGET)\
-		DIAG=PAR
+	$(MAKE) -f Makefile TARGET=$(TARGET) DIAG=PAR
+ifeq ($(TARGET),SP)
+	test -d $(ALTDIR) || $(MKDIR) -p $(ALTDIR)
+	$(MAKE) -f Makefile TARGET=LAPI DIAG=PAR LIBDIR=$(ALTDIR)
+endif
 
 include_stamp:	src/global.fh
 	cp src/global.fh src/global.h src/types.f2c.h\
@@ -38,6 +42,9 @@ include_stamp:	src/global.fh
 realclean clean:	
 	/bin/rm -f include_stamp
 	-$(MAKE) -f Makefile clean
+ifeq ($(TARGET),SP)
+	-$(MAKE) -f Makefile TARGET=LAPI LIBDIR=$(ALTDIR) clean
+endif
 
 depend:
 	echo No dependencies in global
