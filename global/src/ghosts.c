@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.11 2002-02-22 22:31:14 d3h325 Exp $ */
+/* $Id: ghosts.c,v 1.12 2002-03-09 01:31:21 d3h325 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1726,17 +1726,21 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
 }
 
 /* Utility function for ga_update5_ghosts routine */
-void waitforflags (int *ptr1, int *ptr2) {
+double waitforflags (int *ptr1, int *ptr2) {
   int i = 1;
   double val;
   while (gai_getval(ptr1) ==  0 || gai_getval(ptr2) == 0) {
-    val = exp(-(double)i);
+    val = exp(-(double)i++);
   }
+#if 0
+  printf("%d: flags set at %p and %p\n",GAme,ptr1,ptr2); fflush(stdout);
+#endif
+  return(val);
 }
 
 /* Stub in new ARMCI_PutS_flag call until actual implementation is
    available */
-int ARMCI_PutS_flag(
+int ARMCI_PutS_flag__(
       void* src_ptr,        /* pointer to 1st segment at source */
       int src_stride_arr[], /* array of strides at source */
       void* dst_ptr,        /* pointer to 1st segment at destination */
