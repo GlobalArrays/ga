@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.11 2000-08-15 21:39:49 d3h325 Exp $ */
+/* $Id: signaltrap.c,v 1.12 2000-10-11 19:52:48 d3h325 Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -11,6 +11,8 @@
 #include <stdio.h>
 #ifndef WIN32
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #endif
 
 #define  Error armci_die 
