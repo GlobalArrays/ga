@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.14 2003-03-21 19:45:19 d3h325 Exp $ */
+/* $Id: winshmem.c,v 1.15 2004-07-22 20:49:12 manoj Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -78,6 +78,7 @@
 #include <assert.h>
 #include "kr_malloc.h"
 #include "shmem.h"
+#include "armcip.h"
 
 #define SHM_UNIT (1024)
 
@@ -115,13 +116,66 @@ static  int last_allocated=0; /* counter trailing alloc_regions by 0/1 */
 static  unsigned long MinShmem = _SHMMAX;  
 static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
 static  context_t ctx_winshmem;    /* kr_malloc context */
+static  context_t *ctx_winshmem_global;/*for processor groups,kr_malloc context
+					is stored in shared memory */
 static  int parent_pid=-1;  /* process id of process 0 "parent" */
 
 extern void armci_die(char*,int);
 extern int armci_me;
 
+ 
+/* Create shared region to store kr_malloc context in shared memory */
+void armci_krmalloc_init_ctxwinshmem() {
+    void *myptr=NULL;
+    long idlist[SHMIDLEN];
+    long size = sizeof(context_t) + 2*sizeof(void*);
+    int offset = sizeof(void*)/sizeof(int);
+ 
+    if(armci_me == armci_master ){
+       myptr = Create_Shared_Region(idlist+1,size,idlist);
+       if(!myptr && size>0 ) armci_die("armci_krmalloc_init_ctxwinshmem: could not create", (int)(size>>10));
+       if(size) *(volatile void**)myptr = myptr;
+       if(DEBUG){
+          printf("%d:armci_krmalloc_init_ctxwinshmem addr mptr=%p ref=%p size=%ld\n", armci_me,myptr,*(void**)myptr, size);
+          fflush(stdout);
+       }
+       
+       /* Bootstrapping:allocate storage for ctx_winshmem_global. NOTE:there is
+          offset,as master places its address at begining for others to see */
+       ctx_winshmem_global = (context_t*) ( ((int*)myptr)+offset );
+       *ctx_winshmem_global=ctx_winshmem;/*master copies ctx into shared rgn*/
+       
+    }
+ 
+    /* broadcast shmem id to other processes on the same cluster node */
+    armci_msg_clus_brdcst(idlist, SHMIDLEN*sizeof(long));
+    
+    if(armci_me != armci_master){
+       myptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
+       if(!myptr)armci_die("armci_krmalloc_init_ctxwinshmem: could not attach",
+			   (int)(size>>10));
+       
+       /* now every process in a SMP node needs to find out its offset
+        * w.r.t. master - this offset is necessary to use memlock table
+        */
+       if(size) armci_set_mem_offset(myptr);
+       if(DEBUG){
+          printf("%d:armci_krmalloc_init_ctxwinshmem attached addr mptr=%p ref=%p size=%ld\n", armci_me,myptr, *(void**)myptr,size); fflush(stdout);
+       }
+       /* store context info */
+       ctx_winshmem_global = (context_t*) ( ((int*)myptr)+offset );
+       if(DEBUG){
+          printf("%d:armci_krmalloc_init_ctxwinshmem:shmid=%d off=%ld size=%ld\n", armci_me, ctx_winshmem_global->shmid,ctx_winshmem_global->shmoffset,
+                 (long)ctx_winshmem_global->shmsize);
+          fflush(stdout);
+       }
+    }
+}
+
 /* not done here yet */
-void armci_shmem_init() {}
+void armci_shmem_init() {
+    armci_krmalloc_init_ctxwinshmem();
+}
 
 unsigned long armci_max_region()
 {
@@ -142,7 +196,6 @@ void armci_set_shmem_limit(unsigned long shmemlimit) /* comes in bytes */
 void Delete_All_Regions()
 {
 int reg;
-long code=0;
 
   for(reg = 0; reg < alloc_regions; reg++){
     if(region_list[reg].addr != (char*)0){
@@ -166,7 +219,7 @@ long code=0;
 \*/
 void Free_Shmem_Ptr(long id, long size, char* addr)
 {  
-  kr_free(addr, &ctx_winshmem);
+  kr_free(addr, ctx_winshmem_global);
 }
 
 
@@ -320,7 +373,7 @@ char *armci_get_core_from_map_file(int exists, long size)
     
 #endif
 
-    if(DEBUG0){printf("%d: got ptr=%p bytes=%d mmap\n",armci_me,ptr,size); fflush(stdout); }
+    if(DEBUG0){printf("%d: got ptr=%p bytes=%ld mmap\n",armci_me,ptr,size); fflush(stdout); }
     region_list[alloc_regions].addr = (char*)ptr;
     region_list[alloc_regions].size = size;
 
@@ -339,7 +392,7 @@ char *armci_allocate(size_t size)
 
     ptr = armci_get_core_from_map_file( 0, (long)size);
     if(ptr !=NULL) alloc_regions++;
-    if(DEBUG)fprintf(stderr,"allocate got %lx %ld\n",ptr, size);
+    if(DEBUG)fprintf(stderr,"allocate got %lx %ld\n",(unsigned long)ptr, (long)size);
 
     return ptr;
 }
@@ -359,9 +412,12 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
           }
           kr_malloc_init(SHM_UNIT, (unsigned)MinShmem, (unsigned)MaxShmem, 
 			 (void *)armci_allocate, 0, &ctx_winshmem);
-     }
+	  ctx_winshmem.ctx_type = KR_CTX_SHMEM;
+    }
 
-     temp = kr_malloc((unsigned)size, &ctx_winshmem);
+    if(!alloc_regions) temp = kr_malloc((unsigned)size, &ctx_winshmem);
+    else temp = kr_malloc((unsigned)size, ctx_winshmem_global);
+
      if(temp == (char*)0 )
            armci_die("Create_Shared_Region: kr_malloc failed ",0);
     
@@ -398,7 +454,7 @@ void server_reset_memory_variables()
 
 char *Attach_Shared_Region(long id[], long size, long offset)
 {
-    char *temp;
+    char *temp=NULL;
     /*initialization */
     if(!alloc_regions){
           int reg;
@@ -409,7 +465,7 @@ char *Attach_Shared_Region(long id[], long size, long offset)
           }
      }
 
-     if(DEBUG)printf("%d:alloc_regions=%d size=%d\n",armci_me,alloc_regions,size);
+     if(DEBUG)printf("%d:alloc_regions=%d size=%ld\n",armci_me,alloc_regions,size);
      /* find out if a new shmem region was allocated */
      if(alloc_regions == id[0] -1){
 #if      defined(HITACHI) || defined(NEC)
@@ -419,7 +475,7 @@ char *Attach_Shared_Region(long id[], long size, long offset)
 
                region_list[alloc_regions].id = (HANDLE) id[2];
 #        endif
-         if(DEBUG)printf("alloc_regions=%d size=%d\n",alloc_regions,size);
+         if(DEBUG)printf("alloc_regions=%d size=%ld\n",alloc_regions,size);
          temp = armci_get_core_from_map_file(1,size);
          if(temp != NULL)alloc_regions++;
          else return NULL;
