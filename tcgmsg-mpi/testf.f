@@ -1,7 +1,7 @@
       program main
       implicit double precision (a-h,o-z)
 c
-c $Header: /tmp/hpctools/ga/tcgmsg-mpi/testf.f,v 1.3 1999-06-08 21:08:37 d3h325 Exp $
+c $Header: /tmp/hpctools/ga/tcgmsg-mpi/testf.f,v 1.4 2001-05-08 21:53:40 edo Exp $
 c
 c     FORTRAN program to test message passing routines
 c
@@ -11,6 +11,7 @@ c
       parameter (MAXLEN = 262144 / 8)
       include 'msgtypesf.h'
       dimension buf(MAXLEN)
+      integer ibuf(MAXLEN)
       character*80 fname
       integer IUNIT
       double precision tcgtime, start,used
@@ -81,6 +82,24 @@ c            rate = 1.0d-4 * dble(nproc * lenbuf) / dble(iused)
  31     format(' len=',i7,'bytes, used=',f10.6,'s, rate=',f10.6,'Mb/s')
         call evend('Ring test')
       endif
+c
+c     global sums
+c
+      do i=1,MAXLEN
+         ibuf(i) = i*me
+         buf(i) = dble(ibuf(i))
+      enddo
+      dtype=1+MSGDBL
+      call igop(itype, ibuf, MAXLEN, "+")
+      call dgop(dtype, buf, MAXLEN, "+")
+      
+      do i=1,MAXLEN
+         iresult = i*nproc*(nproc-1)/2
+         if (ibuf(i).ne.iresult.or.buf(i).ne.dble(iresult))
+     .      call error('TestGlobals: global sum failed',  i)
+      enddo
+      
+      if (me.eq.0) write(LOG,*) 'global sums OK'
 c
 c
 c     Check that everyone can open, write, read and close
