@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.4 1995-02-24 02:17:45 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.5 1996-07-11 21:56:20 d3h325 Exp $ */
 
 #include <signal.h>
 #include "sndrcvP.h"
@@ -13,15 +13,16 @@ int SR_caught_sigint = 0;
 /*ARGSUSED*/
 #if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
 int SigintHandler(sig, code, scp, addr)
-#else
-void SigintHandler(sig, code, scp, addr)
-#endif
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+void SigintHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  Error("SigintHandler: signal was caught",(long) code);
+  Error("SigintHandler: signal was caught",(long) sig);
 }
 
 void TrapSigint()
@@ -52,12 +53,13 @@ void ZapChildren()
 /*ARGSUSED*/
 #if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
 int SigchldHandler(sig, code, scp, addr)
-#else
-void SigchldHandler(sig, code, scp, addr)
-#endif
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+void SigchldHandler(sig)
+#endif
+     int sig;
 {
   int status, pid;
   
