@@ -86,7 +86,7 @@ extern void mpisx_clear_cache();
 #include <unistd.h>
 
 #ifndef DBL_PAD
-#   define DBL_PAD 8
+#   define DBL_PAD 16
 #endif
 
 /* make sure that locks are not sharing the same cache line */
