@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.47 2004-02-12 02:28:17 manoj Exp $ */
+/* $Id: matmul.c,v 1.48 2004-02-21 01:56:03 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -6,10 +6,7 @@
  *
  *===========================================================*/
 
-#include "stdlib.h"
 #include "matmul.h"
-
-#define DEBUG_ 0 /*set 1, to verify the correctness of parallel matrix mult.*/
 
 /* some optimization macros */
 #define KCHUNK_OPTIMIZATION 0 /* This Opt performing well only for m=1000;n=1000'k=2000 kinda cases and not for the opposite*/
@@ -287,7 +284,7 @@ gai_get_armci_memory(Integer Ichunk, Integer Jchunk, Integer Kchunk,
 static void GAI_DGEMM(Integer atype, char *transa, char *transb, 
 		      Integer idim, Integer jdim, Integer kdim, void *alpha, 
 		      DoubleComplex *a, Integer adim, DoubleComplex *b, 
-		      Integer bdim, void *beta, DoubleComplex *c, Integer cdim) {
+		      Integer bdim, DoubleComplex *c, Integer cdim) {
 
     int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
     DoubleComplex ZERO;
@@ -444,7 +441,7 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
 	 
 	     /* STEP2: Do the sequential matrix multiply - i.e.BLAS dgemm */
 	     GAI_DGEMM(atype, transa, transb, idim, jdim, kdim, alpha, 
-		       a, adim, b, bdim, beta, c, cdim);
+		       a, adim, b, bdim, c, cdim);
 
 	     /* STEP3: put/accumulate into "C" matrix */
 	     i0= *cilo+ilo; i1= *cilo+ihi;   
@@ -627,7 +624,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 	  
 	  /* Do the sequential matrix multiply - i.e.BLAS dgemm */
 	  GAI_DGEMM(atype, transa, transb, idim, jdim, kdim, alpha, 
-		    a, adim, b, bdim, beta, c, cdim);
+		    a, adim, b, bdim, c, cdim);
 	  
 	  /* Non-blocking Accumulate Operation. Note: skip wait in 1st loop*/
 	  i0 = *cilo + taskListA[currA].lo[0];
@@ -782,7 +779,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
 		   /* Do the sequential matrix multiply - i.e.BLAS dgemm */
 		   GAI_DGEMM(atype, transa, transb, idim_prev, jdim_prev, 
 			     kdim_prev, alpha, a, adim_prev, b, bdim_prev, 
-			     beta, c, cdim_prev);
+			     c, cdim_prev);
 		   
 		   i0= *cilo + taskListC.lo[0];
 		   i1= *cilo + taskListC.hi[0];
@@ -838,7 +835,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
        /* Do the sequential matrix multiply - i.e.BLAS dgemm */
        GAI_DGEMM(atype, transa, transb, idim_prev, jdim_prev, 
 		 kdim_prev, alpha, a, adim_prev, b, bdim_prev, 
-		 beta, c, cdim_prev);
+		 c, cdim_prev);
        
        i0= *cilo + taskListC.lo[0];
        i1= *cilo + taskListC.hi[0];
@@ -856,116 +853,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     GA_POP_NAME;
 }
 
-#if DEBUG_
-static void check_result(transa, transb, alpha, beta, atype,
-			 g_a, ailo, aihi, ajlo, ajhi,
-			 g_b, bilo, bihi, bjlo, bjhi,
-			 g_c, cilo, cihi, cjlo, cjhi)
-     
-     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
-     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
-     Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
-     Integer atype;
-     void    *alpha, *beta;
-     char    *transa, *transb;
-{
-    
-DoubleComplex *tmpa, *tmpb, *tmpc;
-Integer i,j,m,n,k;
 
-    m = *aihi - *ailo +1;
-    n = *bjhi - *bjlo +1;
-    k = *ajhi - *ajlo +1;
-     
-    /* Memory Allocation */
-    {
-       Integer factor=sizeof(DoubleComplex)/GAsizeofM(atype);
-       tmpa = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (m*k/factor+1));
-       tmpb = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (k*n/factor+1));
-       tmpc = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (m*n/factor+1));
-       if(tmpa==NULL || tmpb==NULL || tmpc==NULL)
-	  ga_error("check_result: malloc failed", 0);
-    }
-    
-    switch(atype) {
-       case C_FLOAT:
-	  for(i=0; i<m*k; i++) ((float*)tmpa)[i] = -1.0;
-	  for(i=0; i<k*n; i++) ((float*)tmpb)[i] = -1.0;
-	  for(i=0; i<m*n; i++) ((float*)tmpc)[i] = -1.0;
-	  break;
-       case C_DBL:
-	  for(i=0; i<m*k; i++) ((double*)tmpa)[i] = -1.0;
-	  for(i=0; i<k*n; i++) ((double*)tmpb)[i] = -1.0;
-	  for(i=0; i<m*n; i++) ((double*)tmpc)[i] = -1.0;
-	  break;
-       case C_DCPL:
-	  for(i=0; i<m*k; i++) {tmpa[i].real=-1.0; tmpa[i].imag=0.0;}
-	  for(i=0; i<k*n; i++) {tmpb[i].real=-1.0; tmpb[i].imag=0.0;}
-	  for(i=0; i<m*n; i++) {tmpc[i].real=-1.0; tmpc[i].imag=0.0;}
-	  break;
-       default:
-	  ga_error("ga_matmul_patch: wrong data type", atype); 
-    }
-    
-    
-    ga_get_(g_a, ailo, aihi, ajlo, ajhi, tmpa, &m);
-    ga_get_(g_b, bilo, bihi, bjlo, bjhi, tmpb, &k);
-    GAI_DGEMM(atype, transa, transb, m, n, k, alpha, 
-	      tmpa, m, tmpb, k, beta, tmpc, m);
-    /* after computing c locally, verify it with the values in g_c */
-    ga_get_(g_c, cilo, cihi, cjlo, cjhi, tmpa, &m); /*use tmpa buffer*/
-
-#define _GA_TOL_ 0.1 /* error tolerance */
-
-    switch(atype) {
-       case C_FLOAT:
-	 {
-	    float abs_value=0.0;
-	    for(i=0; i<m*n; i++) {
-	       abs_value = ((float*)tmpc)[i] - ((float*)tmpa)[i];
-	       if(abs_value > _GA_TOL_ || abs_value < -(_GA_TOL_)) {
-		  printf("Values are = %f : %f\n", ((float*)tmpc)[i], 
-			 ((float*)tmpa)[i]);
-		  ga_error("Matmul check failed", 0);
-	       }
-	    }
-	 }
-	 break;
-       case C_DBL:
-	 {
-	    double abs_value=0.0;
-	    for(i=0; i<m*n; i++) {
-	       abs_value = ((double*)tmpc)[i] - ((double*)tmpa)[i];
-	       if(abs_value > _GA_TOL_ || abs_value < -(_GA_TOL_)) {
-		  printf("Values are = %lf : %lf\n", ((double*)tmpc)[i], 
-			 ((double*)tmpa)[i]);
-		  ga_error("Matmul check failed", 0);
-	       }
-	    }
-	 }
-	 break;
-       case C_DCPL:
-	 {
-	    DoubleComplex abs_value;
-	    for(i=0; i<m*n; i++) {
-	       abs_value.real = tmpc[i].real - tmpa[i].real;
-	       abs_value.imag = tmpc[i].imag - tmpa[i].imag;
-	       if(abs_value.real > _GA_TOL_ || abs_value.real < -(_GA_TOL_) ||
-		  abs_value.imag > _GA_TOL_ || abs_value.imag < -(_GA_TOL_)) {
-		  printf("Values are (real, imag)= %lf, %lf : %lf, %lf\n", 
-			 tmpc[i].real,tmpc[i].imag,tmpa[i].real,tmpa[i].imag);
-		  ga_error("Matmul check failed", 0);
-	       }
-	    }
-	 }
-	 break;	
-       default:
-	  ga_error("ga_matmul_patch: wrong data type", atype); 
-    }
-    printf("Matrix Multiplication check (m,n,k=%ld %ld %ld)...O.K\n",m,n,k);
-    fflush(stdout);
-}
-#endif
 
 /******************************************
  * PARALLEL DGEMM
@@ -1210,15 +1098,7 @@ void ga_matmul(transa, transb, alpha, beta,
        if(memory_flag == SET) ARMCI_Free_local(a);
        else ga_free(a);
 #endif
-       
-#if DEBUG_
-       if(local_sync_end)ga_sync_();       
-       if(me==0) check_result(transa, transb, alpha, beta, atype,
-			      g_a, ailo, aihi, ajlo, ajhi,
-			      g_b, bilo, bihi, bjlo, bjhi,
-			      g_c, cilo, cihi, cjlo, cjhi);
-#endif
-       
+   
        GA_POP_NAME;   
        if(local_sync_end)ga_sync_();
 }
