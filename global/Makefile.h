@@ -14,6 +14,7 @@
            FC = f77
            CC = cc
           FLD = $(FC)
+	   M4 = /usr/bin/m4
           CLD = $(FLD)
           CXX = CC
          FOPT = -O
@@ -131,7 +132,8 @@ ifeq ($(TARGET),SOLARIS)
      WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
                 -Wwrite-strings
  GLOB_DEFINES = -DSOLARIS
-     FLD_REN = -xs
+      FLD_REN = -xs
+	   M4 = /usr/ccs/bin/m4
 endif
 #
 #................................ DEC ALPHA ................................
@@ -516,7 +518,7 @@ endif
      CXXFLAGS = $(CFLAGS)
 
 #.SUFFIXES:	
-#.SUFFIXES:	.o .s .F .f .c
+#.SUFFIXES:	.o .s .F .f .c .m4
 
 ifeq ($(EXPLICITF),TRUE)
 #
@@ -524,7 +526,13 @@ ifeq ($(EXPLICITF),TRUE)
 # with CPP to get .f files
 #
 .SUFFIXES:	
-.SUFFIXES:	.o .s .F .f .c
+.SUFFIXES:	.o .s .F .f .c .m4
+
+.m4.o:
+	$(M4) $*.m4 > $*.F
+	$(MAKE) $*.f
+	$(FC) $(FOPT) $(FOPT_REN) -c $*.f
+	$(RM) -f $*.F $*.f
 
 .F.o:	
 	$(MAKE) $*.f
@@ -543,4 +551,12 @@ ifeq ($(TARGET),LINUX)
 else
 	$(CPP) $(INCLUDES) $(DEFINES) $(FDEFS) < $*.F | sed '/^#/D' > $*.f
 endif
+else
+#.SUFFIXES:
+.SUFFIXES:      .m4
+
+.m4.o:
+	$(M4) $*.m4 > $*.F
+	$(FC) $(FFLAGS) -c $*.F -o $*.o
+	$(RM) $*.F
 endif
