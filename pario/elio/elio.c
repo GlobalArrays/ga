@@ -138,7 +138,7 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
 #ifdef LARGE_FILES
 #define ABSURDLY_LARGE 1e12
 #else
-#define ABSURDLY_LARGE (MAX_EXTENT*2147483647.0)
+#define ABSURDLY_LARGE (MAX_EXTENT*2147483648.0)
 #endif
 
 /*****************************************************************************/
@@ -152,7 +152,7 @@ static Off_t elio_max_file_size(Fd_t fd)
 #ifdef LARGE_FILES
   return ABSURDLY_LARGE;
 #else
-  return 2147483647.0;		/* 2 GB */
+  return 2147483648.0;		/* 2 GB */
 #endif
 }
 
@@ -177,7 +177,7 @@ static Fd_t elio_get_next_extent(Fd_t fd)
     len = strlen(fname);
     if (fd->extent) len -= 4;
     sprintf(fname+len,"x%3.3d",fd->extent+1);
-    /*printf("Opening extent %d with name '%s'\n",fd->extent+1,fname);*/
+    printf("Opening extent %d with name '%s'\n",fd->extent+1,fname);
     if ((next_fd = elio_open(fname, fd->type, fd->mode))) {
       next_fd->extent = fd->extent + 1;
       fd->next = (struct fd_struct *) next_fd;
@@ -319,7 +319,10 @@ int elio_awrite(Fd_t fd, Off_t doffset, const void* buf, Size_t bytes, io_reques
 
   if ((doffset+((Off_t) bytes)) >= elio_max_file_size(fd)) {
     *req_id = ELIO_DONE;
-    return elio_write(fd, doffset, buf, bytes);
+    if (elio_write(fd, doffset, buf, bytes) != bytes)
+      return -1;
+    else
+      return 0;
   }
 
   offset = (off_t) doffset;
@@ -540,7 +543,10 @@ int elio_aread(Fd_t fd, Off_t doffset, void* buf, Size_t bytes, io_request_t * r
 
   if ((doffset+((Off_t) bytes)) >= elio_max_file_size(fd)) {
     *req_id = ELIO_DONE;
-    return elio_read(fd, doffset, buf, bytes);
+    if (elio_read(fd, doffset, buf, bytes) != bytes)
+      return -1;
+    else
+      return 0;
   }
 
   offset = (off_t) doffset;
