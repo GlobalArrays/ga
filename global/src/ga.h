@@ -48,13 +48,23 @@ extern void GA_Scale_cols(int g_a, int g_v);
 extern void GA_Norm1(int g_a, double *nm);
 extern void GA_Norm_infinity(int g_a, double *nm);
 extern void GA_Median(int g_a, int g_b, int g_c, int g_m);
-extern void GA_Median_patch(int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi, int g_c, int *clo, int *chi, int g_m, int *mlo, int *mhi);
+extern void GA_Median_patch(int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
+                            int g_c, int *clo, int *chi, int g_m, int *mlo, int *mhi);
 
 extern void GA_Initialize(void);
 extern void GA_Initialize_ltd(size_t limit);
 extern int NGA_Create(int type,int ndim,int dims[], char *name, int chunk[]);
 extern int NGA_Create_irreg(int type,int ndim,int dims[],char *name,
                             int map[], int block[]);
+extern int NGA_Create_ghosts(int type,int ndim,int dims[], int width[], char *name, int chunk[]);
+extern int NGA_Create_ghosts_irreg(int type,int ndim,int dims[], int width[],
+                                   char *name, int map[], int nblock[]);
+extern void GA_Update_ghosts(int g_a);
+extern int NGA_Update_ghost_dir(int g_a, int dimension, int idir, int flag);
+extern int GA_Has_ghosts(int g_a);
+extern void NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[]);
+extern void NGA_Access_ghost_element(int g_a,  void *ptr, int subscript[], int ld[]);
+extern void GA_Mask_sync(int first, int last);
 extern int GA_Duplicate(int g_a, char* array_name);
 extern void GA_Destroy(int g_a);
 extern void GA_Terminate(void);

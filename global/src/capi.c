@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.43 2002-08-02 18:59:38 manoj Exp $ */
+/* $Id: capi.c,v 1.44 2002-08-21 14:43:02 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -201,7 +201,39 @@ int NGA_Create_ghosts(int type, int ndim,int dims[], int width[], char *name,
     else return 0;
 }
 
-    
+void GA_Update_ghosts(int g_a)
+{
+    Integer a=(Integer)g_a;
+    ga_update_ghosts_(&a);
+}
+
+int NGA_Update_ghost_dir(int g_a, int dimension, int dir, int flag)
+{
+    Integer a=(Integer)g_a;
+    Integer idim = (Integer)dimension;
+    Integer idir = (Integer)dir;
+    logical iflag = (logical)flag;
+    logical st;
+    idim++;
+    st = nga_update_ghost_dir_(&a,&idim,&idir,&iflag);
+    return (int)st;
+}
+
+int GA_Has_ghosts(int g_a)
+{
+    Integer a=(Integer)g_a;
+    logical st;
+    st = ga_has_ghosts_(&a);
+    return (int)st;
+}
+
+void GA_Mask_sync(int first, int last)
+{
+    Integer ifirst = (Integer)first;
+    Integer ilast = (Integer)last;
+    ga_mask_sync_(&ifirst,&ilast);
+}
+
 int GA_Duplicate(int g_a, char* array_name)
 {
     logical st;
