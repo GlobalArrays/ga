@@ -1,4 +1,4 @@
-#define BASE_NAME  "/dtemp/d3g293/da.try"
+#define BASE_NAME  "/scratch/da.try"
 #  define FNAME   BASE_NAME
 
 #include <stdio.h>
@@ -28,11 +28,11 @@
    2*SIZE**NDIM*sizeof(double) bytes. The amount of disk space
    required is approximately NFACTOR**NDIM times this amount.
 */
-#define USER_CONFIG 1
+#define USER_CONFIG 0
 
 #define NDIM 3
 #define SIZE 250
-#define NFACTOR 3
+#define NFACTOR 7
 
 /*
 #define NDIM 2
