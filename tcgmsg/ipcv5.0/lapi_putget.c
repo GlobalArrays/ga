@@ -21,8 +21,10 @@ int *nxtval_cnt_adr = &nxtval_counter;
 void lapi_initialize()
 {
 
-     int myid, numtasks;
-     int rc = LAPI_Init(&lapi_handle, &lapi_info);
+     int myid, numtasks,rc;
+
+     bzero(&lapi_info,sizeof(lapi_info)); /* needed under Mohonk */
+     rc = LAPI_Init(&lapi_handle, &lapi_info);
      if(rc) Error("lapi_init failed",rc);
      
      rc=LAPI_Qenv(lapi_handle, TASK_ID, &myid);
@@ -34,7 +36,7 @@ void lapi_initialize()
      TCGMSG_nnodes = (Integer)numtasks;
 
      /* disable LAPI internal error checking */
-     /* LAPI_Senv(lapi_handle, ERROR_CHK, 0);*/
+     LAPI_Senv(lapi_handle, ERROR_CHK, 0);
 
 #ifdef DEBUG
      printf("me=%d initialized %d processes\n", myid, numtasks);
@@ -191,12 +193,12 @@ Integer NXTVAL_(mproc)
 \*/
 void lapi_get(void* dest, void* src, long bytes, long node)
 {
-  static int req_cnt=0;
+  static lapi_cntr_t req_cnt;
   int rc;
 
-/*  rc = LAPI_Setcntr(lapi_handle, &req_cnt, 0);
+  rc = LAPI_Setcntr(lapi_handle, &req_cnt, 0);
   if(rc)Error("lapi_get: setcntr failed",rc);
-*/
+
 #ifdef DEBUG
   printf("%ld getting %ld bytes from addr=%lx node %ld to adr=%lx\n", 
         TCGMSG_nodeid, bytes, src, node, dest );
@@ -210,11 +212,10 @@ void lapi_get(void* dest, void* src, long bytes, long node)
 }
 
 
-/*\ put with nonblocking semantics and ordering
+/*\ put with nonblocking semantics
 \*/
 void lapi_put(void* dest, void* src, long bytes, long node)
 {
-  static lapi_cntr_t cntr;
   int rc;
 
 /*  LAPI_Fence(lapi_handle);*/
@@ -237,12 +238,12 @@ void lapi_put(void* dest, void* src, long bytes, long node)
 #endif
 
   rc = LAPI_Put(lapi_handle, (uint)node, (uint)bytes, dest, src,NULL,
-                &cntr,NULL);
+                NULL,NULL);
   if(rc)Error("lapi_put: sdput failed",rc);
 }
 
 
-/*\ put with nonblocking semantics and ordering
+/*\ put with nonblocking semantics and counter 
 \*/
 void lapi_put_c(void* dest, void* src, long bytes, long node, lapi_cntr_t* cntr)
 {
