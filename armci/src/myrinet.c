@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.67 2003-04-03 22:28:02 vinod Exp $
+/* $Id: myrinet.c,v 1.68 2003-06-16 19:51:25 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -48,6 +48,7 @@
 #define DEBUG_ 0
 #define DEBUG2 0
 #define DEBUG_INIT_ 0
+#define DEBUG_NOTIFY 0
 #define STATIC_PORTS__
 
 #define FALSE  0
@@ -96,6 +97,7 @@ typedef struct {
     int *itmp;               /*sending long as int on 64 bit pltfrms not safe*/
     long **serv_ack_ptr;     /* keep the pointers of server ack buffer */
     ops_t *ops_pending_ar;   /*for fence*/
+    ops_t *rdmaop_pending_ar;/*for fence*/
 } armci_gm_proc_t;
 
 /* data structure of server thread */
@@ -474,7 +476,7 @@ char *tmp;
     /* initialize buffer managment module */
     _armci_buf_init();
 
-    tmp = gm_dma_malloc(proc_gm->port, (2*sizeof(long)+2*sizeof(int)));
+    tmp = gm_dma_malloc(proc_gm->port, (2*sizeof(long)+3*sizeof(int)));
     if(!tmp)return FALSE;
     
     proc_gm->ack = (long*)tmp;
@@ -498,6 +500,7 @@ int armci_gm_proc_mem_free()
 /*should later be made a common function*/
 void armci_gm_fence_init()
 {
+    int i;
     armci_gm_fence_arr = (ops_t**)malloc(armci_nproc*sizeof(ops_t*));
     bzero(armci_gm_fence_arr,armci_nproc*sizeof(ops_t*));
     armci_gm_fence_arr[armci_me]=(ops_t *)malloc(armci_nproc*sizeof(ops_t)); 
@@ -517,25 +520,30 @@ void armci_gm_fence_init()
     /*allocate an array for wait sequence array*/
     if(!(verify_wait->wait_seq_ar=(int*)calloc(armci_nproc,sizeof(int))))
         armci_die("malloc failed for ARMCI wait_seq_ar",0);
+    for(i=0;i<armci_nproc;i++){
+       verify_wait->verify_seq_ar[i]=1;
+       verify_wait->wait_seq_ar[i]=1;
+    }
 
     verify_wait->recv_verify_smp_arr = (int**)malloc(armci_nproc*sizeof(int*));
-    if(!verify_wait->recv_verify_smp_arr)armci_die("malloc-recv_verify_arr",0);
+    if(!verify_wait->recv_verify_smp_arr)armci_die("malloc-recv_verify_smp",0);
     bzero(verify_wait->recv_verify_smp_arr ,armci_nproc*sizeof(ops_t*));
 
     verify_wait->recv_verify_arr = (int**)malloc(armci_nproc*sizeof(int*));
     if(!verify_wait->recv_verify_arr)armci_die("malloc fail-recv_verify_arr",0);
     bzero(verify_wait->recv_verify_arr ,armci_nproc*sizeof(ops_t*));
-#if 1
-    verify_wait->recv_verify_arr[armci_me]=(int *)malloc(armci_nproc*2*sizeof(int));
+#if 0
+    verify_wait->recv_verify_arr[armci_me]=
+	    (int *)malloc(armci_nproc*2*sizeof(int));
     armci_exchange_address((void **)verify_wait->recv_verify_arr ,armci_nproc);
 
+#else
+    if(ARMCI_Malloc((void**)verify_wait->recv_verify_arr, armci_nproc*2*sizeof(int)))
+             armci_die("failed to allocate ARMCI fence array",0);
+#endif
     if(ARMCI_Malloc((void**)verify_wait->recv_verify_smp_arr, 
                     armci_nproc*sizeof(int)))
        armci_die("failed to allocate ARMCI fence array",0);
-#else
-    if(ARMCI_Malloc((void**)verify_wait->recv_verify_arr, armci_nproc*sizeof(int)))
-             armci_die("failed to allocate ARMCI fence array",0);
-#endif
 /************************End verify-wait code*******************************/
     /*printf("\n%d:in fence init",armci_me);fflush(stdout);*/
 
@@ -628,10 +636,14 @@ int armci_gm_client_init()
     /*the fence array, has to be pinned for server to be able to put*/
     if(!(proc_gm->ops_pending_ar=(ops_t*)calloc(armci_nclus,sizeof(ops_t))))
         armci_die("malloc failed for ARMCI ops_pending_ar",0);
+    if(!(proc_gm->rdmaop_pending_ar=(ops_t*)calloc(armci_nclus,sizeof(ops_t))))
+        armci_die("malloc failed for ARMCI rdmaop_pending_ar",0);
+
     armci_pin_contig(armci_gm_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
     bzero(armci_gm_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
 
-    armci_pin_contig(verify_wait->recv_verify_arr[armci_me],armci_nproc*2*sizeof(int));
+    armci_pin_contig1(verify_wait->recv_verify_arr[armci_me],
+		    armci_nproc*2*sizeof(int));
     bzero(verify_wait->recv_verify_arr[armci_me],armci_nproc*2*sizeof(int));
     return TRUE;
 }
@@ -690,18 +702,21 @@ void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void*
 
     if(nbtag)
        *contextptr = context = armci_gm_get_next_context(nbtag);
-    else
+    else{
        context = armci_gm_client_context;
+       proc_gm->rdmaop_pending_ar[s]++;
+    }
+
 	    
     context->done = ARMCI_GM_SENDING;
     gm_directed_send_with_callback(proc_gm->port, src_buf,
                (gm_remote_ptr_t)(gm_up_t)dst_buf, len, GM_LOW_PRIORITY,
                 proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
                 armci_client_send_callback_direct, context);
-
-    /* blocking: wait until send is done by calling the callback */
     if(!nbtag)
        armci_client_send_complete(context);
+
+    /* blocking: wait until send is done by calling the callback */
 }
 
 
@@ -1650,9 +1665,6 @@ buf_arg_t *arg = (buf_arg_t*)argvoid;
 
      armci_wait_long_flag_updated(ack, 1); /********* wait for data ********/
 
-/****we suspect that cache is not being flushed out after data is written. myrinet is flushing*/
-/****the cache after writing data into memory, so we are not sure what could  be wrong*********/
-/****temporary solution is to write to the memory ourself, there by triggering  a flush cache**/
      *ack = 0L;                      /*** touching memory ***/
      /* copy data to the user buffer identified by ptr */
      armci_read_strided(ptr, strides, stride_arr, count, arg->buf_posted);
@@ -1751,10 +1763,16 @@ int *remptr = verify_wait->recv_verify_arr[proc]+2*armci_me;
     else {
        *(proc_gm->itmp) = verify_wait->verify_seq_ar[proc]++;
        *(proc_gm->itmp+1) = proc_gm->ops_pending_ar[armci_clus_id(proc)];
-       armci_client_to_client_direct_send(proc,proc_gm->itmp,remptr,2*sizeof(int));
-       if(DEBUG_){
-         printf("\n%d: sending %d to %d at %p\n",armci_me,*(proc_gm->itmp),
-                 proc,remptr);
+       *(proc_gm->itmp+2) = proc_gm->rdmaop_pending_ar[armci_clus_id(proc)];
+#if 0
+       armci_client_to_client_direct_send(proc,proc_gm->itmp,remptr,
+		                          2*sizeof(int));
+#else
+       armci_client_direct_send(proc,proc_gm->itmp,remptr,2*sizeof(int),NULL,0);
+#endif
+       if(DEBUG_NOTIFY){
+         printf("\n%d: sending %d %d to %d at %p\n",armci_me,*(proc_gm->itmp),
+                  *(proc_gm->itmp+1),proc,remptr);
          fflush(stdout);
        }
        return(*(proc_gm->itmp));
@@ -1764,40 +1782,54 @@ int *remptr = verify_wait->recv_verify_arr[proc]+2*armci_me;
 
 int armci_inotify_wait(int proc, int *pval)
 {
-int *buf,*buf_fence;
-int wait_val,wait_fence;
+int *buf_notify,*buf_fence;
+int wait_val,wait_fence=0;
 int res;
 long loop=0;
     wait_val = verify_wait->wait_seq_ar[proc]++;
-    wait_fence = *(verify_wait->recv_verify_arr[armci_me]+2*proc+1);
-    buf = verify_wait->recv_verify_arr[armci_me]+2*proc;
+    buf_notify = verify_wait->recv_verify_arr[armci_me]+2*proc;
     buf_fence = verify_wait->recv_verify_smp_arr[armci_me]+proc;
     if(SAMECLUSNODE(proc)){
-       buf = verify_wait->recv_verify_smp_arr[armci_me]+proc;
+       buf_notify = verify_wait->recv_verify_smp_arr[armci_me]+proc;
        wait_fence = wait_val; 
        *pval = wait_val;
     }
-    res = wait_fence - armci_check_int_val(buf_fence);
-    if(DEBUG_){
-      printf("\n%d:expecting %d at %p from %d\n",armci_me,wait_val,buf,proc);
+    if(DEBUG_NOTIFY){
+      printf("\n%d:expecting %d at %p from %d\n",armci_me,wait_val,buf_notify,
+              proc);
       fflush(stdout);
+    }
+    /*first we wait for sequence to match*/
+    if((wait_val - armci_check_int_val(buf_notify)) > 0) {
+      if(DEBUG_NOTIFY){
+        printf("\n%d:verifyseq expecting%d have %d",armci_me,
+               wait_val,armci_check_int_val(buf_notify));fflush(stdout);
+      }
+      res = wait_val - armci_check_int_val(buf_notify);
+      while(res>0){
+        if(++loop == 1000) { loop=0;usleep(1); }
+        armci_util_spin(loop, buf_notify);
+        res = wait_val - armci_check_int_val(buf_notify);
+      }
+      if(DEBUG_NOTIFY){
+        printf("\n%d:arrived verifyseq expected%d have %d",armci_me,
+               wait_val,armci_check_int_val(buf_notify));fflush(stdout);
+      }
+    }
+
+    if(!SAMECLUSNODE(proc))
+       wait_fence = *(verify_wait->recv_verify_arr[armci_me]+2*proc+1);
+    res = wait_fence - armci_check_int_val(buf_fence);
+    if(DEBUG_NOTIFY){
+      printf("\n%d:fence expecting%d have %d",
+             armci_me,wait_fence,armci_check_int_val(buf_fence));
     }
     while(res>0){
        if(++loop == 1000) { loop=0;usleep(1); }
-       armci_util_spin(loop, buf);
+       armci_util_spin(loop, buf_fence);
        res = wait_fence - armci_check_int_val(buf_fence);
-       
     }
-    if(!SAMECLUSNODE(proc)){
-      if((wait_val - armci_check_int_val(buf)) > 0)
-        armci_die("problems as fence arrived but verifyseq lost",0);
-    }
-    *pval = armci_check_int_val(buf);
-#if 0
-    printf("\n%d:on waiting got %d and %d I have %d waitval=%d waitfence=%d\n",
-           armci_me,*buf,*(buf+1),
-	   *(verify_wait->recv_verify_smp_arr[armci_me]+proc),wait_val,
-	   wait_fence);fflush(stdout);
-#endif
+    *pval = armci_check_int_val(buf_notify);
+
     return(wait_val);
 }
