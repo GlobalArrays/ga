@@ -35,6 +35,7 @@ c
 #ifdef DATA_SERVER
       parameter (ichunk=500, jchunk=500, kchunk=500)
 #else
+c     parameter (ichunk=64, jchunk=64, kchunk=64)
       parameter (ichunk=128, jchunk=128, kchunk=128)
 #endif
       double precision c(ichunk*jchunk), a(ichunk*kchunk),
@@ -45,7 +46,7 @@ c
 c
       if (beta .eq. 0.0d0) then
          call ga_zero(g_c)
-      else if (beta .ne. 1.0d0) then
+      else
          call ga_dscal(g_c, beta)
       endif
 c
@@ -53,15 +54,15 @@ c
       do jlo = 1, n, jchunk
          jhi = min(n, jlo+jchunk-1)
          jdim = jhi - jlo + 1
-         do ilo = 1, m, ichunk
-            ihi = min(m, ilo+ichunk-1)
-            idim = ihi - ilo + 1
-            cdim = idim
-            do klo = 1, k, kchunk
+         do klo = 1, k, kchunk
+            khi = min(k, klo+kchunk-1)
+            kdim = khi - klo + 1
+            do ilo = 1, m, ichunk
                if (mod(ijk,nproc) .eq. me) then
+                  ihi = min(m, ilo+ichunk-1)
+                  idim = ihi - ilo + 1
+                  cdim = idim
                   call dfill(idim*jdim, 0.0d0, c, 1)
-                  khi = min(k, klo+kchunk-1)
-                  kdim = khi - klo + 1
                   if (transa.eq.'n' .or. transa.eq.'N') then
                      adim = idim
                      call ga_get(g_a, ilo, ihi, klo, khi, a, adim)
