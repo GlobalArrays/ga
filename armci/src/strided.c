@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.25 2000-06-08 23:47:47 d3h325 Exp $ */
+/* $Id: strided.c,v 1.26 2000-10-11 20:12:17 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -181,6 +181,7 @@ void (ATR *func)(void*, int*, int*, void*, int*, void*, int*);
           func = F_ACCUMULATE_2D;
           break;
       default: armci_die("ARMCI accumulate: operation not supported",op);
+          func = F_ACCUMULATE_2D; /*avoid compiler whining */
       }
 
              
@@ -434,7 +435,8 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        /* larger strided or 1-D reqests, buffer not used to send data 
         * we can bypass the packetization step and send request directly
         */
-        if(count[0]> LONG_GET_THRESHOLD) {
+        if((count[0]> LONG_GET_THRESHOLD) ||
+           (stride_levels && count[0]>LONG_GET_THRESHOLD_STRIDED)) {
 #        ifdef GM
             if(armci_gm_bypass)
                 bypass= armci_pin_memory(dst_ptr,dst_stride_arr,count,
@@ -530,8 +532,8 @@ void armci_write_strided(void *ptr, int stride_levels, int stride_arr[],
             if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
         }
 
-    memcpy(buf, ((char*)ptr)+idx, count[0]);
-    buf += count[0];
+        armci_copy( ((char*)ptr)+idx, buf, count[0]);
+        buf += count[0];
     }
 }
 
@@ -564,7 +566,7 @@ void armci_read_strided(void *ptr, int stride_levels, int stride_arr[],
             if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
         }
 
-    memcpy(((char*)ptr)+idx, buf, count[0]);
-    buf += count[0];
+        armci_copy(buf, ((char*)ptr)+idx,count[0]);
+        buf += count[0];
     }
 }
