@@ -1,0 +1,146 @@
+/******************************************************************************
+Source File:    eaf.fh
+
+Description:    	THIS IS A FORTRAN HEADER
+		Header file for use by ALL Fortran codes using the EAF library
+		This header file includes the constants file 'c2f.h' 
+		This file is also intended for use by user codes.
+
+		Defining these constants configures the C-F77 interface
+SUNOS (formerly SUN_SPARC)
+FBSD - FreeBSD4.3
+
+
+AIX (formerly IBM_RS6000)
+PARAGON (formerly INTEL_i860)
+			  HP_HPUX
+SGITFP (Formerly SGI64 (formerly SGI_PC))
+T3D (formerly CRAY_T3D)
+
+Author:         Jace A Mogill
+
+Date Created:   16 May 1996
+
+Modifications:
+
+CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.fh,v $
+CVS: $Date: 1996-07-17 15:28:14 $
+CVS: $Revision: 1.1 $
+CVS: $State: Exp $
+******************************************************************************/
+
+#include "chemio.h"
+#include "c2f.h"
+
+/******************************************************************************
+                               Define constants
+
+******************************************************************************/
+#if defined(SUNOS)   || defined(AIX) || defined(PARAGON) || \
+    defined(HP_HPUX) || defined(FBSD)
+
+#  define EAF_SZ BYTE              1
+#  define EAF_SZ_CHARACTER         1
+#  define EAF_SZ_INTEGER           4
+#  define EAF_SZ_LOGICAL           4
+#  define EAF_SZ_REAL              4
+#  define EAF_SZ_COMPLEX           8
+#  define EAF_SZ_DOUBLE_COMPLEX    8
+#  define EAF_SZ_DOUBLE_PRECISION  8
+
+#elif defined(SGITFP)
+
+#  define EAF_SZ BYTE              1
+#  define EAF_SZ_CHARACTER         1
+#  define EAF_SZ_INTEGER           8
+#  define EAF_SZ_LOGICAL           8
+#  define EAF_SZ_REAL              8
+#  define EAF_SZ_COMPLEX           16
+#  define EAF_SZ_DOUBLE_COMPLEX    16
+#  define EAF_SZ_DOUBLE_PRECISION  16
+
+#elif defined(T3D)
+
+#  define EAF_SZ BYTE              1
+#  define EAF_SZ_CHARACTER         1
+#  define EAF_SZ_INTEGER           8
+#  define EAF_SZ_LOGICAL           8
+#  define EAF_SZ_REAL              8
+#  define EAF_SZ_COMPLEX           16
+#  define EAF_SZ_DOUBLE_COMPLEX    16
+#  define EAF_SZ_DOUBLE_PRECISION  16
+
+
+#endif
+
+
+#if 0      /* Jarek wants these out */
+/******************************************************************************
+                         Define types for general use
+******************************************************************************/
+#if defined(SUNOS)   || defined(AIX) || defined(PARAGON) || \
+    defined(HP_HPUX) || defined(FBSD)
+#  define EAF_address_t INTEGER*4
+#  define EAF_integer_t INTEGER*4
+#  define EAF_unsigned_t INTEGER*4
+#  define EAF_long_t INTEGER*4
+#  define EAF_ulong_t INTEGER*4
+#  define EAF_float_t REAL*4
+#  define EAF_double_t REAL*8
+
+#elif defined(SGITFP)
+
+#  define EAF_address_t INTEGER*4
+#  define EAF_integer_t INTEGER*8
+#  define EAF_unsigned_t INTEGER*8
+#  define EAF_long_t INTEGER*8
+#  define EAF_ulong_t INTEGER*8
+#  define EAF_float_t REAL*4
+#  define EAF_double_t REAL*8
+
+#elif defined(T3D)
+
+#  define EAF_address_t INTEGER*8
+#  define EAF_integer_t INTEGER*8
+#  define EAF_unsigned_t INTEGER*8
+#  define EAF_long_t INTEGER*8
+#  define EAF_ulong_t INTEGER*8
+#  define EAF_float_t REAL*4
+#  define EAF_double_t REAL*8
+
+#endif
+
+
+/* .  .  .  .  .  .  .  .  .  Common type definitions  .  .  .  .  .  .  .  */
+#define EAF_status_t EAF_unsigned_t
+#define EAF_fd_t EAF_address_t
+#define EAF_size_t EAF_long_t
+#define EAF_io_request_t EAF_long_t
+
+
+#endif   /* Jarek wants these out */
+c
+c    
+c Begin Fortran Code
+c
+c
+	INTEGER EAF_Close
+	INTEGER EAF_OpenPersist
+	INTEGER EAF_OpenScratch
+	INTEGER EAF_Write
+	INTEGER EAF_AWrite
+	INTEGER EAF_Read
+	INTEGER EAF_ARead
+	INTEGER EAF_Wait
+	INTEGER EAF_Probe
+
+	external EAF_Close
+	external EAF_OpenPersist
+	external EAF_OpenScratch
+	external EAF_Write
+	external EAF_AWrite
+	external EAF_Read
+	external EAF_ARead
+	external EAF_Wait
+	external EAF_Probe
+

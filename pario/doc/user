@@ -1,0 +1,381 @@
+An Exclusive Access File is a file which is generated and/or read by a single
+process of a distributed parallel application.  The Exclusive Access Files
+(EAF) library is an abstract high-performance distributed file system which
+provides a common interface for a variety of architecture specific parallel
+storage systems.  The library also makes available features like asynchronous
+input and output to Fortran.  EAF's syntax is similar to the standard Unix C
+file operations, differences indicate new semantics or extended features
+available through EAF. 
+
+This document is intended to demonstrate the primary functionality of EAF by
+tracing execution of example program segments. The first program is the most
+basic open-write-read-close sequence. 
+
+
+
+__  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __
+
+#include "chemio.h"
+#include "eaf.fh"
+
+	integer fh 		! File Handle
+	integer sz 		! Return value of size written
+	integer stat		! Return status
+	integer buf(100) 	! Data to write
+
+	fh = EAF_OpenPersist('/tmp/test.out', ELIO_RW) <- We probably want
+						          CHEMIO_RW here
+
+	sz = EAF_Write(fh, 0, buf, 100*EAF_SZ_INT)     <- What's the NWChem 
+                                                          macro for int size?
+	if(sz .ne. 100*EAF_SZ_INT) 
+      $       write(0,*) 'Error writing, wrote ', sz, ' bytes'
+
+	sz = EAF_Read(fh, 0, buf, 100*EAF_SZ_INT)
+	if(sz .ne. 100*EAF_SZ_INT) 
+      $       write(0,*) 'Error reading, read ', sz, ' bytes'
+
+	stat = EAF_Close(fh)
+	end
+
+
+The include file 'chemio.h' defines the permission macros ELIO_R, ELIO_W, and
+ELIO_RW for read, write, and read-write permissions, respectively.  The
+header file 'eaf.fh' is a Fortran program segment externally defining the EAF
+routines and must appear _before_ any executable code using EAF. 
+
+EAF_OpenPersist opens a persistent file, as opposed to a scratch file
+(EAF_OpenScratch) which is deleted when it is closed.  This file is named
+'/tmp/test.out' and has read-write permissions.  The returned value is the
+file handle for this file and should not be directly manipulated by the user.
+
+EAF_Write writes to the file opened with file handle, fh, at absolute offset
+0.  It is legal to write a scalar or array, for instance in the above 
+example both 'buf' and 'buf(1)' have the same meaning.  The last argument is
+the number of bytes to be written.  It is important to multiply the number of
+array elements by the element size.  The following macros are provided in
+'eaf.fh':
+	    EAF_SZ BYTE
+	    EAF_SZ_CHARACTER
+	    EAF_SZ_INTEGER
+	    EAF_SZ_LOGICAL
+	    EAF_SZ_REAL
+	    EAF_SZ_COMPLEX
+	    EAF_SZ_DOUBLE_COMPLEX
+	    EAF_SZ_DOUBLE_PRECISION
+
+
+The return value is the number of bytes written, if this number does not
+match the requested number of bytes to be written, an error has occured.
+
+
+EAF_Read is syntactically and semantialy identical to EAF_Write, except the
+buffer is read, not written.
+
+.. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. .. ..
+
+
+#include "chemio.h"
+#include "eaf.fh"
+
+	integer fh 		! File Handle
+	integer id1, id2 	! asynchronous ID handles
+	integer stat		! Return status
+	integer pend		! Pending status
+	integer iter		! Iterations counter
+	integer buf(100), x	! Data
+
+	iter = 0
+
+	fh = EAF_OpenScratch('/piofs/mogill/test.out', ELIO_RW)
+
+	stat = EAF_AWrite(fh, 0,  buf, 100*EAF_SZ_INT, id1)
+	if(stat .ne. 0) write(0,*) 'Error doing 1st asynch write.  stat=', stat
+
+	stat = EAF_AWrite(fh, 100*EAF_SZ_INT,  x, 1*EAF_SZ_INT, id2)
+	if(stat .ne. 0) write(0,*) 'Error doing 2nd asynch write.  stat=', stat
+
+100	stat = EAF_Probe(id1, pend)
+	iter = iter + 1
+	write(0,*) 'Waiting', iter
+	if(iter .lt. 100  .and.  pend .eq. ELIO_PENDING) goto 100
+	EAF_Wait(id1)
+
+	stat = EAF_ARead(fh, 0, buf, 100*EAF_SZ_INT, id1)
+	if(stat .ne. 0) write(0,*) 'Error doing 1st asynch read.  stat=', stat
+
+	EAF_Wait(id2)
+	stat = EAF_AWrite(fh, 100*EAF_SZ_INT,  x, 1*EAF_SZ_INT, id2)
+	if(stat .ne. 0) write(0,*) 'Error doing 2nd asynch write.  stat=', stat
+	EAF_Wait(id2)
+	EAF_Wait(id1)
+
+	stat = EAF_Close(fh)
+	end
+
+
+This example demonstrates use of asynchronous reading and writing.  The
+entire buffer 'buf' is written to offset 0, the beginning of the.  The file
+is simultaniously written to from the scalar x in the position following the
+buffer.  The positions in the file are determined by abosulte offset argument
+as with the synchronous write.
+
+The first write, id1, is repeatedly probed for completion for 100 tries or
+until completion, whichever comes first.  The two possible pending statuses
+are ELIO_DONE and ELIO_PENDING.
+
+When a completed asynchronous operation is detected with EAF_Wait or
+EAF_Probe, the id is invalidated with ELIO_DONE.  The following EAF_Wait(id1)
+blocks until id1 completes.  Using EAF_Probe or EAF_Wait with an invalidated
+ID has no effect. 
+
+Once id1 is freed, it is reused in the first asynchronous read statement.
+The following EAF_Wait blocks for completion and invalidation of id2, which
+is then used to asynchronously read the scalar X.
+
+The EAF_Close deletes the file because it was opened as a scratch file.
+
+
+
+
+_________________________________________________________________________
+
+EAF_OpenPersist
+
+  Description:
+     Open a persistent file
+
+  Prototype:
+	integer EAF_OpenPersist(fname, type)
+		character *(*)  fname
+		integer   	type
+
+  Parameters:
+     fname	Character string of a globally unique filename (path may
+		be fully qualified)
+     type	Read write permissions.  Legal values are ELIO_W, ELIO_R,
+		and ELIO_RW
+
+  Returns:
+     File handle, or -1 upon error
+
+_  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  _
+
+
+
+EAF_OpenScratch
+
+  Description:
+     Open a scratch file which is automatically deleted upon close
+
+  Prototype:
+	integer EAF_OpenScratch(fname, type)
+		character *(*)   fname
+		integer		 type
+
+  Parameters:
+     fname	Character string of a globally unique filename (path may 
+		be fully qualified)
+     type	Read write permissions.  Legal values are ELIO_W, ELIO_R,
+		and ELIO_RW
+
+  Returns:
+     File handle, or -1 upon error
+
+_  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  _
+
+
+EAF_Write
+
+  Description:
+     Synchronously write to the file specified by the file handle
+
+  Prototype:
+        integer EAF_Write(fh, offset, buf, bytes)
+		integer    fh
+		integer    offset
+		any	   buf
+		integer    bytes
+
+  Parameters:
+     fh		File Handle
+     offset	Absolute offset, in bytes, to start writing at
+     buf	Scalar or array of data
+     bytes	Size of buffer, in bytes
+
+  Returns:
+     Number of bytes written, or -1 if an error occured
+
+
+_  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  _
+
+
+EAF_AWrite
+
+  Description:
+     Asynchronously write to the file specified by the file handle,
+     and return a handle to the asynchronous operation.
+
+     If there are more than MAX_AIO_REQ asynchronous requests (reading
+     or writing) pending, the operation is handled in a synchronous
+     fashion and returns a "DONE" handle.
+
+     On architectures where asynchronous I/O operations are not supported,
+     all requests are handled synchronously, returning a "DONE" handle.
+
+  Prototype:
+        integer EAF_AWrite(fh, offset, buf, bytes, req_id)
+		integer      fh
+		integer      offset
+		any	     buf
+		integer      bytes
+		integer      req_id
+
+  Parameters:
+     fh		File Descriptor
+     offset	Absolute offset, in bytes, to start writing at
+     buf	Scalar or array of data
+     bytes	Size of buffer, in bytes
+     req_id	Handle of asynchronous operation
+
+
+  Returns:
+     0 if succeeded, or -1 if an error occured
+     A handle to the asynchronous operation in the argument req_id
+
+
+
+_  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  _
+
+
+
+EAF_Read
+
+  Description:
+     Synchronously read from the file specified by the file handle
+
+  Prototype:
+        integer EAF_Read(fh, offset, buf, bytes)
+		integer     fh
+		integer     offset
+		any	    buf
+		integer     bytes
+
+  Parameters:
+     fh		File Descriptor
+     offset	Absolute offset, in bytes, to start writing at
+     buf	Scalar or array of data
+     bytes	Size of buffer, in bytes
+
+  Returns:
+     Number of bytes read, or -1 if an error occured
+
+
+_  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  _
+
+
+EAF_ARead
+
+  Description:
+     Asynchronously read from the file specified by the file handle,
+     and return a handle to the asynchronous operation.
+
+     If there are more than MAX_AIO_REQ asynchronous requests (reading
+     or writing) pending, the operation is handled in a synchronous
+     fashion and returns a "DONE" handle.
+
+     On architectures where asynchronous I/O operations are not supported,
+     all requests are handled synchronously, returning a "DONE" handle.
+
+  Prototype:
+        integer EAF_ARead(fh, offset, buf, bytes, req_id)
+		integer       fh
+		integer       offset
+		any	      buf
+		integer       bytes
+		integer       req_id
+
+  Parameters:
+     fh		File Descriptor
+     offset	Absolute offset, in bytes, to start writing at
+     buf	Scalar or array of data
+     bytes	Size of buffer, in bytes
+     req_id	Handle of asynchronous operation
+
+
+  Returns:
+     0 if succeeded, or -1 if an error occured
+     A handle to the asynchronous operation in the argument req_id
+
+
+
+_  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  _
+
+
+
+EAF_Probe
+
+  Description:
+    Determine if an asynchronous request is completed or pending
+
+  Prototype:
+	integer EAF_Probe(id, status)
+		integer      id
+		integer      status
+
+  Parameters:
+     id		Handle of asynchronous request
+     status	Pending or completed status argument
+
+
+  Returns:
+     ELIO_OK if succeeded, else returns ELIO_FAIL
+     'status' returns ELIO_PENDING if the asyncronous operation is
+         not complete, or ELIO_DONE if finished.
+     If the asynchronous request is complete, the 'id' is invalidated
+         with ELIO_DONE.
+
+
+
+_  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  _
+
+
+
+EAF_Wait
+
+  Description:
+    Wait for the completion of the asynchronous request, id
+
+  Prototype:
+	integer EAF_Wait(id)
+		integer    id
+
+  Parameters:
+     id		Handle of asynchronous request
+
+  Returns:
+     ELIO_OK if succeeded, else returns ELIO_FAIL
+     'id' is invalidated with ELIO_DONE
+
+
+
+_  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  __  _
+
+
+
+EAF_Close
+
+  Description:
+    Close a file
+
+  Prototype:
+	integer EAF_Close(fh)
+		integer    fh
+
+  Parameters:
+     fd		File handle
+
+  Returns:
+     ELIO_OK if succeeded, else aborts
+
+
