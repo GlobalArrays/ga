@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.16 2000-08-15 21:37:13 d3h325 Exp $ */
+/* $Id: memory.c,v 1.17 2000-09-08 23:10:13 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -192,6 +192,13 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
 
     armci_msg_barrier();
 
+}
+
+#else
+
+void armci_shmem_malloc(void* ptr_arr[], int bytes)
+{
+  armci_die("armci_shmem_malloc should never be called on this system",0);
 }
 
 #endif

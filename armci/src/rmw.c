@@ -1,11 +1,14 @@
-/* $Id: rmw.c,v 1.8 2000-08-01 22:37:04 d3h325 Exp $ */
+/* $Id: rmw.c,v 1.9 2000-09-08 23:10:13 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
 #include <stdio.h>
 
 /* enable use of newer interfaces in SHMEM */
+#ifndef CRAY
+/* manpages for shmem_fadd exist on the T3E but library code does not */
 #define SHMEM_FADD 
+#endif
 
 /* global scope to prevent compiler optimization of volatile code */
 int  _a_temp;
