@@ -1,14 +1,16 @@
-// $Id: x86copy.gcc,v 1.3 2001-06-07 21:16:22 d3h325 Exp $
+// $Id: x86copy.gcc,v 1.4 2001-06-07 22:14:37 d3h325 Exp $
 // memory copy implementation derived from examples 3 and 4 at
 // http://www.sgi.com/developers/library/resources/asc_cpu.html
 //
 // void *armci_asm_memcpy(void *dst, const void *src, size_t n, int id);
-// id={0/1} - is used to support up to 2 threads 
+// id={0/1} - is used to support up to 2 threads
 //
 // we turn the assembly memcpy on/off based on checking of the CPU type
+//
 
 #include <stdio.h>
 #include <string.h>
+
 
 // EAX
 #define CPUFAMILY  0x00000F00
@@ -172,7 +174,6 @@ CPUTYPE cpu_check()
 
     int family;
     int model;
-    int dum, dum2;
     int mmxsupport;
     int ssesupport;
     int isIA64;
@@ -183,15 +184,15 @@ CPUTYPE cpu_check()
          movl $1, %%eax;
          cpuid;
          movl %%eax, %0;"
-                      :"=r"(reax)
-                      :"0"(reax)
-                      : "%eax"
+        :"=r"(reax)
+        :"0"(reax)
+        :"%eax"
         );
 
    asm __volatile__ ("
-        movl $1, %%eax;
-        cpuid;
-        movl %%edx, %0;"
+         movl $1, %%eax;
+         cpuid;
+         movl %%edx, %0;"
         :"=r"(redx)
         :"0"(redx)
         :"%eax", "%edx"
@@ -204,16 +205,10 @@ CPUTYPE cpu_check()
          movl %%ebx, 0(%%esi);
          movl %%edx, 4(%%esi);
          movl %%ecx, 8(%%esi);"
-                      :
-                      :
-                      : "%ebx", "%ecx", "%edx", "%esi"
+        :
+        :
+        : "%ebx", "%ecx", "%edx", "%esi"
         );
-
-#if DEBUG
-    printf("eax=%x\n", reax);
-    printf("edx=%x\n", redx);
-    printf("vendor = %s\n", vendor);
-#endif
 
     family = (CPUFAMILY & reax) >> 8;
     model  = (MODEL     & reax) >> 4;
@@ -222,13 +217,14 @@ CPUTYPE cpu_check()
     ssesupport = (redx & SSESUPPORT);
     isIA64     = (redx & IA64);
 
-#if DEBUG
+#ifdef DEBUG
+    printf("eax=%x\n", reax);
+    printf("edx=%x\n", redx);
+    printf("vendor = %s\n", vendor);
     printf("mmx support = %s\n", mmxsupport ? "yes" : "no");
     printf("SSE support = %s\n", ssesupport ? "yes" : "no");
 #endif
 
-    family = (reax & 0x00000f00) >> 8;
-    model  = (reax & 0x000000f0) >> 4;
 
     if(strcmp(vendor, "GenuineIntel") == 0){
 
