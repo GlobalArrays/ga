@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.16 2001-09-26 00:54:27 d3h325 Exp $ */
+/* $Id: pack.c,v 1.17 2001-11-09 01:31:07 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -68,7 +68,7 @@ int armci_pack_strided(int op, void* scale, int proc,
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, int fit_level, int nb)
 {
-    int rc=0, sn, bufsize=BUFSIZE;
+    int rc=0, sn, bufsize=BUFSIZE,i,bytes=1,noswap=0;
     void *src, *dst;
 #ifdef REMOTE_OP
     int flag=0;
@@ -80,7 +80,16 @@ int armci_pack_strided(int op, void* scale, int proc,
 #ifdef STRIDED_GET_BUFLEN
     if(op==GET)bufsize=STRIDED_GET_BUFLEN;
 #endif
-
+/* Added the following for balancing buffers */
+    if(op==PUT){
+        for(i=0; i<= stride_levels; i++)
+                bytes *= count[i];
+        if(bytes > bufsize && bytes/bufsize < 3 && bytes%bufsize < BALANCE_BUFSIZE){
+        /* bytes div bufsize - 1 is to increase the balence factor for 3 buffer case */
+                bufsize = bytes/ (bytes/bufsize - 1 + BALANCE_FACTOR);
+                noswap = 1;
+        }
+    }
     /* determine decomposition of the patch to fit in the buffer */
     if(fit_level<0)
        armci_fit_buffer(count, stride_levels, &fit_level, &nb, bufsize);
@@ -103,7 +112,7 @@ int armci_pack_strided(int op, void* scale, int proc,
            dst_stride = src_stride = 1;
         }
 
-        if(op == GET) b =nb; 
+        if(op == GET || noswap == 1) b =nb; 
         else{ b = chunk%nb; if(b==0)b=nb; } /* put smallest piece first */
 
         for(sn = 0; sn < chunk; ){

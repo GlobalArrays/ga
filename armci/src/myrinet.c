@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.35 2001-10-23 17:23:21 vinod Exp $
+/* $Id: myrinet.c,v 1.36 2001-11-09 01:31:07 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -65,7 +65,7 @@
 #define ARMCI_GM_ACK      -3
 
 #define ARMCI_GM_MIN_MESG_SIZE 5
-#define SHORT_MSGLEN 68000
+#define SHORT_MSGLEN 400000
 #define SND_BUFLEN (MSG_BUFLEN +128)
 #define CLIENT_STAMP 101
 #define SERV_STAMP 99

@@ -28,6 +28,12 @@ extern void armci_relbuf(void *buf);
 #define GET_SEND_BUFFER(_size) armci_getbuf(_size)
 #define FREE_SEND_BUFFER(x) armci_relbuf(x)
 
+#define BALANCE_BUFFERS
+#ifdef BALANCE_BUFFERS
+#define BALANCE_FACTOR 1.6
+#define BALANCE_BUFSIZE 25000
+#endif
+
 #define CLIENT_BUF_BYPASS_ 
 #define LONG_GET_THRESHOLD 10000
 #define LONG_GET_THRESHOLD_STRIDED 20000000

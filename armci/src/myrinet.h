@@ -66,6 +66,12 @@ typedef struct {
 #define FREE_SEND_BUFFER(x) 
 #endif
 
+#define BALANCE_BUFFERS
+#ifdef BALANCE_BUFFERS
+#define BALANCE_FACTOR 1.6
+#define BALANCE_BUFSIZE 190000
+#endif
+
 /* two ports used by ARMCI and their boards iff STATIC_PORTS defined */
 #define ARMCI_GM_SERVER_RCV_PORT 5
 #define ARMCI_GM_SERVER_RCV_DEV 0
