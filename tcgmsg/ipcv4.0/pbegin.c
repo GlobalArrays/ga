@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.14 2000-10-13 20:55:39 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.15 2002-01-28 20:08:01 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -564,3 +564,10 @@ void PEND_()
   if (status)
     exit((int) status);
 }
+
+
+void ALT_PBEGIN_(int *argc, char **argv[])
+{
+  PBEGIN_(*argc, *argv);
+}
+

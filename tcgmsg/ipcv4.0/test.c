@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.7 2000-10-13 20:55:40 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.8 2002-01-28 20:08:01 d3h325 Exp $ */
 
 #include <stdio.h>
 #if !defined(SEQUENT) && !defined(CONVEX)
@@ -590,7 +590,11 @@ int main(argc, argv)
   long lenbuf;
   long node, opt;
   
+#if TEST_OLD_PBEGIN
   PBEGIN_(argc, argv);
+#else
+  ALT_PBEGIN_(&argc, &argv);
+#endif
 
   (void) printf("In process %ld\n", NODEID_());
   (void) fflush(stdout);

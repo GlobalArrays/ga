@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcv.h,v 1.8 2001-03-08 20:43:31 erjurrus Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcv.h,v 1.9 2002-01-28 20:08:01 d3h325 Exp $ */
 
 #include "srftoc.h"
 
@@ -47,6 +47,7 @@ extern void LLOG_();
 extern void STATS_();
 extern void SYNCH_(long *type);
 extern void WAITCOM_(long *node);
+extern void ALT_PBEGIN_();
 }
 #else
 

@@ -930,3 +930,8 @@ void IGOP_(ptype, x, pn, op)
   }
 }
 
+void ALT_PBEGIN_(int *argc, char **argv[])
+{
+  PBEGIN_(*argc, *argv);
+}
+
