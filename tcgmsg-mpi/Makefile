@@ -20,7 +20,7 @@ ifdef MPI_INCLUDE
 endif
 
 
-# On some platforms NXVAL can be implemented using non-portable "native"
+# On some platforms NXTVAL can be implemented using non-portable "native"
 # services. To enable use of such an implementation, you need to uncomment
 # the following line: 
 USE_NATIVE_NXTVAL=1
