@@ -105,7 +105,7 @@ int     participate=0;
            break;
         case C_LONG:
            la = (long*)ptr;
-           lval = *fa;
+           lval = *la;
  
            if (strncmp(op,"min",3) == 0)
               for(i=0;i<elems;i++){ if(lval > la[i]) {lval=la[i];ind=i; } }

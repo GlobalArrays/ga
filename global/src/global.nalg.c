@@ -317,15 +317,15 @@ void *ptr_a, *ptr_b;
       }
 
 
-   if(Type == C_INT)ga_igop((Integer)GA_TYPE_GSM,(int*)value, 1, "+");
+   if(Type == C_INT)armci_msg_igop((int*)value, 1, "+");
    else if(Type == C_LONG)
-     ga_lgop((long)GA_TYPE_GSM,(long*)value, 1, "+"); 
+     armci_msg_lgop((long*)value, 1, "+"); 
    else if(Type == C_DBL) 
-     ga_dgop((Integer)GA_TYPE_GSM, (double*)value, 1, "+"); 
+     armci_msg_dgop( (double*)value, 1, "+"); 
    else if(Type == C_FLOAT)
-     ga_fgop((Integer)GA_TYPE_GSM, (float*)value, 1, "+");  
+     armci_msg_fgop((float*)value, 1, "+");  
    else
-     ga_dgop((Integer)GA_TYPE_GSM, (double*)value, 2, "+"); 
+     armci_msg_dgop((double*)value, 2, "+"); 
     
    GA_POP_NAME;
 
@@ -352,8 +352,13 @@ DoublePrecision sum;
 float FATR ga_sdot_(g_a, g_b)
         Integer *g_a, *g_b;
 {
+#if defined(CRAY) || defined(NEC)
+DoublePrecision sum;
+        gai_dot(C_DBL, g_a, g_b, &sum);
+#else 
 float sum;
         gai_dot(C_FLOAT, g_a, g_b, &sum);
+#endif
         return sum;
 }            
 
