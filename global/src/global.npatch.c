@@ -711,7 +711,7 @@ Void    *val;
 /*\ SCALE ARRAY 
 \*/
 void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
-                          DoublePrecision *alpha)
+                          void *alpha)
 {
     Integer i, j;
     Integer ndim, dims[MAXDIM], type;
