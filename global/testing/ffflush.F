@@ -1,4 +1,4 @@
-c $Id: ffflush.F,v 1.1 2000-11-04 01:47:15 d3h325 Exp $
+c $Id: ffflush.F,v 1.2 2002-10-07 16:50:05 d3h325 Exp $
       subroutine ffflush(unit)
       integer unit
 c
@@ -10,7 +10,7 @@ c
 *     endif
 #elif defined(NX)
       call forflush(unit)
-#elif !defined(AIX) && !defined(HPUX)
+#elif !defined(AIX) && !defined(HPUX) && !defined(IFCLINUX)
       call flush(unit)
 #endif
 c
