@@ -2,7 +2,7 @@
 #define _mafdecls_fh
 
 !
-!     $Id: mafdecls.fh,v 1.9 2000-07-18 20:05:02 d3h325 Exp $
+!     $Id: mafdecls.fh,v 1.10 2000-07-24 23:39:54 d3h325 Exp $
 !
 
 !
@@ -20,7 +20,7 @@
 !     file is included in a FORTRAN file.
 !
 
-#endif /* _mafdecls_fh */
+#endif
 
 !
 !     constants
@@ -110,7 +110,7 @@
       external MA_summarize_allocated_blocks
       external MA_trace
       external MA_verify_allocator_stuff
-#endif /* MAF_INTERNAL */
+#endif
 
 !
 !     variables
