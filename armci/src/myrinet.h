@@ -27,7 +27,7 @@
 
 #define CLIENT_BUF_BYPASS 
 #define LONG_GET_THRESHOLD 86528
-#define INTERLEAVE_GET_THRESHOLD 100000
+#define INTERLEAVE_GET_THRESHOLD 102400
 
 /* below are two ports used by ARMCI and their boards */
 #define ARMCI_GM_SERVER_RCV_PORT 5
