@@ -1,11 +1,11 @@
-/* $Id: nxtval.shm.c,v 1.3 2002-01-28 19:42:04 d3h325 Exp $ */
+/* $Id: nxtval.shm.c,v 1.4 2002-02-14 18:56:25 d3h325 Exp $ */
 
 #include "tcgmsgP.h"
-long *nxtval_shmem;
+long nxtval_counter=0;
+long *nxtval_shmem = &nxtval_counter;
 
 
 #define LEN 2
-long nxtval_counter=0;
 #define INCR 1                 /* increment for NXTVAL */
 #define BUSY -1L               /* indicates somebody else updating counter*/
 
@@ -47,8 +47,7 @@ static release_spinlock(int *mutex)
 #endif
 
 
-Integer NXTVAL_(mproc)
-     Integer  *mproc;
+long NXTVAL_(long *mproc)
 /*
   Get next value of shared counter.
 
@@ -73,16 +72,16 @@ Integer NXTVAL_(mproc)
      if (*mproc < 0) {
            SYNCH_(&sync_type);
            /* reset the counter value to zero */
-           if( NODEID_() == server) nxtval_counter = 0;
+           if( NODEID_() == server) *nxtval_shmem = 0;
            SYNCH_(&sync_type);
      }
      if (*mproc > 0) {
            LOCK;
-             local = nxtval_counter;
-             nxtval_counter += INCR;
+             local = *nxtval_shmem;
+             *nxtval_shmem += INCR;
            UNLOCK;
      }
 
-     return (Integer)local;
+     return local;
 }
 
