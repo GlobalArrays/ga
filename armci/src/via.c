@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <strings.h>
 #include <assert.h>
+#ifdef WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "armcip.h" 
 
 #define VIPL095  
@@ -67,7 +73,6 @@ static vbuf_long_t *client_buf, *serv_buf;
 static VIP_MEM_HANDLE serv_memhandle, client_memhandle;
 static armci_connect_t *SRV_con;
 static armci_connect_t *CLN_con;
-static int *AR_discrim;
 
 char *MessageSndBuffer;
 char *MessageRcvBuffer;
@@ -93,7 +98,6 @@ void armci_transport_cleanup()
 void armci_rcv_req(void *mesg,
                    void *phdr, void *pdescr, void *pdata, int *buflen)
 {
-    int stat;
     vbuf_t *vbuf = (vbuf_t*)mesg;
     request_header_t *msginfo = (request_header_t *)vbuf->buf;
     *(void **)phdr = msginfo;
@@ -267,7 +271,6 @@ void armci_init_connections()
 {
 VIP_RETURN rc;
 int c,s;
-VIP_NET_ADDRESS *pnetaddr;
 int *AR_base;
     
     /* get base for connection descriptor - we use process id */
@@ -289,7 +292,6 @@ int *AR_base;
     if(!SRV_con)armci_die("cannot allocate SRV_con",armci_nclus);
 
     for(s=0; s< armci_nclus; s++)if(armci_clus_me != s){
-       char *ptr;
        discrim_t dm;
        int cluster = s;
        int master  = armci_clus_info[cluster].master;
@@ -300,7 +302,7 @@ int *AR_base;
        con->vi  = armci_create_vi(SRV_nic);
 
        dm = MAKE_DISCRIMINATOR(AR_base[master], armci_me);
-       if(DEBUG_)printf("%d:discriminator(%d)=%lf\n",armci_me,master,dm);
+       if(DEBUG_)printf("%d:discriminator(%d)=%f\n",armci_me,master,dm);
        armci_make_netaddr(con->loc, armci_clus_info[armci_clus_me].hostname,dm);
        armci_make_netaddr(con->rem, armci_clus_info[cluster].hostname, dm);
        
@@ -321,7 +323,6 @@ int *AR_base;
        if(!CLN_con)armci_die("cannot allocate SRV_con",armci_nproc);
 
        for(c=0; c< armci_nproc; c++)if(!SAMECLUSNODE(c)){
-          char *ptr;
           discrim_t dm;
           int cluster  = armci_clus_id(c);
           armci_connect_t *con = CLN_con + c;
@@ -331,7 +332,7 @@ int *AR_base;
           con->vi  = armci_create_vi(CLN_nic);
 
           dm = MAKE_DISCRIMINATOR(AR_base[armci_me], c);
-          if(DEBUG_)printf("%d(s):discriminator(%d)=%lf\n",armci_me,c,dm);
+          if(DEBUG_)printf("%d(s):discriminator(%d)=%f\n",armci_me,c,dm);
 
           armci_make_netaddr(con->loc, armci_clus_info[armci_clus_me].hostname, dm);
           armci_make_netaddr(con->rem, armci_clus_info[cluster].hostname, dm);
@@ -364,7 +365,7 @@ static void armci_init_vbuf(VIP_DESCRIPTOR *d, char* buf, int len, VIP_MEM_HANDL
 }
 
 
-static void armci_call_data_server()
+void armci_call_data_server()
 {
 VIP_RETURN rc;
 VIP_VI_HANDLE vi;
@@ -414,11 +415,10 @@ int c;
 }
 
 
-void * armci_server_code(void *data)
+void armci_server_initial_connection()
 {
 int c, ib;
 VIP_RETURN rc;
-int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
 
      if(DEBUG1){
         printf("in server after fork %d (%d)\n",armci_me,getpid());
@@ -451,9 +451,6 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
      if(DEBUG1){
        printf("%d: server connected to all clients\n",armci_me); fflush(stdout);
      }
-
-     armci_call_data_server();
-     return(NULL);
 }
 
 
@@ -519,7 +516,7 @@ char *dataptr = GET_DATA_PTR(client_buf->buf);
 }
 
 
-static armci_dequeue_send_descr(VIP_VI_HANDLE vi)
+static void  armci_dequeue_send_descr(VIP_VI_HANDLE vi)
 {
 VIP_RETURN rc;
 VIP_DESCRIPTOR *cmpl_dscr;
@@ -557,7 +554,6 @@ int armci_send_req_msg(int proc, void *buf, int bytes)
 {
 VIP_RETURN rc;
 int cluster  = armci_clus_id(proc);
-VIP_DESCRIPTOR *cmpl_dscr;
 
     armci_client_post_buf(cluster); /* ack/response */
 

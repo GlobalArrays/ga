@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.27 2000-10-12 23:34:53 d3h325 Exp $ */
+/* $Id: strided.c,v 1.28 2000-10-13 23:04:16 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -404,7 +404,6 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                 )
 {
     int rc,direct=1;
-    int bypass=0;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
     if(count[0]<0)return FAIL3;
@@ -438,6 +437,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
         if((count[0]> LONG_GET_THRESHOLD) ||
            (stride_levels && count[0]>LONG_GET_THRESHOLD_STRIDED)) {
 #        ifdef GM
+            int bypass=0;
             if(armci_gm_bypass)
                 bypass= armci_pin_memory(dst_ptr,dst_stride_arr,count,
                                          stride_levels);
@@ -450,8 +450,10 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                 armci_unpin_memory(dst_ptr,dst_stride_arr,count, stride_levels);
 #        endif
        }else
+
+PINFAIL:   /* use the standard request with packing */
 #endif
-PINFAIL:   rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+           rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
                        dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
     }else
 #endif
