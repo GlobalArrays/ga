@@ -131,32 +131,38 @@ endif
 
 
 #------------------------------- Crays ------------------------------------
+
+# YMP, J90, ... PVP
+#
 ifeq ($(TARGET),CRAY-YMP)
-     ifeq ($(FOPT), -O)
-         FOPT = -O1
-     endif
      COPT_REN = -htaskprivate $(LIBCM)
            FC = f90
  GLOB_DEFINES = -DCRAY_YMP
      FOPT_REN = -dp -ataskcommon $(LIBCM)
+         CRAY = yes
 endif
 
 ifeq ($(TARGET),CRAY-T3D)
-     ifeq ($(FOPT), -O)
-         FOPT = -O1
-     endif
            FC = cf77
  GLOB_DEFINES = -DCRAY_T3D
+         CRAY = yes
 endif
 
 
 ifeq ($(TARGET),CRAY-T3E)
-     ifeq ($(FOPT), -O)
-         FOPT = -O1
-     endif
            FC = f90
      FOPT_REN = -dp
  GLOB_DEFINES = -DCRAY_T3E
+         CRAY = yes
+endif
+
+ifdef CRAY
+     ifeq ($(FOPT), -O)
+         FOPT = -O2
+     endif
+     ifeq ($(COPT), -O)
+         COPT = -O1 -hinline 3
+     endif
 endif
 
 #................................. IBM SP and workstations ...................

@@ -7,7 +7,8 @@ char *mp_group_name = (char *)NULL;
 char *mp_group_name = "mp_working_group";
 #endif
 
-long lwork[BUF_SIZE];
+static double work[BUF_SIZE];
+static long *lwork = (long*)work;
 
 void armci_msg_barrier()
 {
@@ -237,11 +238,46 @@ static void idoop(int n, char *op, int *x, int* work)
 }
 
 
-/*\ add array of longs within the same cluster 
+static void ddoop(int n, char* op, double* x, double* work)
+{
+  if (strncmp(op,"+",1) == 0)
+    while(n--)
+      *x++ += *work++;
+  else if (strncmp(op,"*",1) == 0)
+    while(n--)
+      *x++ *= *work++;
+  else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register double x1 = ABS(*x), x2 = ABS(*work);
+      *x = MAX(x1, x2);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register double x1 = ABS(*x), x2 = ABS(*work);
+      *x = MIN(x1, x2);
+      x++; work++;
+    }
+  else
+    armci_die("ddoop: unknown operation requested", n);
+}
+
+
+/*\ add array of longs/ints within the same cluster 
 \*/
 void armci_msg_clus_igop(long *x, int n, char* op, int longint)
 {
-int root, up, left, right, index, nproc;
+int root, up, left, right, index, nproc, size=sizeof(long);
 int tag=ARMCI_TAG;
 int ndo, len, lenmes, orign =n, bufsize;
 long *origx =x;  
@@ -254,10 +290,11 @@ long *origx =x;
     right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
 
     bufsize = BUF_SIZE;
-    if(!longint) bufsize *= sizeof(long)/sizeof(int);
+    if(!longint) size =sizeof(int);
+    bufsize *= sizeof(double)/size;
 
     while ((ndo = (n<=bufsize) ? n : bufsize)) {
-         len = lenmes = ndo*sizeof(long);
+         len = lenmes = ndo*size;
 
          if (left > -1) {
            armci_msg_rcv(tag, lwork, len, &lenmes, left);
@@ -276,17 +313,17 @@ long *origx =x;
      }
 
      /* Now, root broadcasts the result down the binary tree */
-     len = orign*sizeof(long);
+     len = orign*size;
      armci_msg_clus_brdcst(origx, len );
 }
 
 
 
-/*\ add array of longs accross all processes
+/*\ combine array of longs/ints accross all processes
 \*/
 void armci_msg_igop(long *x, int n, char* op, int longint)
 {
-int root, up, left, right, index, nproc;
+int root, up, left, right, index, nproc,size=sizeof(long);
 int tag=ARMCI_TAG;
 int ndo, len, lenmes, orign =n, bufsize;
 long *origx =x;
@@ -299,10 +336,11 @@ long *origx =x;
     right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
 
     bufsize = BUF_SIZE;
-    if(!longint) bufsize *= sizeof(long)/sizeof(int);
+    if(!longint) size =sizeof(int);
+    bufsize *= sizeof(double)/size;
 
     while ((ndo = (n<=BUF_SIZE) ? n : BUF_SIZE)) {
-         len = lenmes = ndo*sizeof(long);
+         len = lenmes = ndo*size;
 
          if (left > -1) {
            armci_msg_rcv(tag, lwork, len, &lenmes, left);
@@ -321,7 +359,48 @@ long *origx =x;
      }
 
      /* Now, root broadcasts the result down the binary tree */
-     len = orign*sizeof(long);
+     len = orign*size;
+     armci_msg_brdcst(origx, len,0 );
+}
+
+
+/*\ add array of doubles accross all processes
+\*/
+void armci_msg_dgop(double *x, int n, char* op)
+{
+int root, up, left, right, index, nproc,size=sizeof(double);
+int tag=ARMCI_TAG;
+int ndo, len, lenmes, orign =n, bufsize;
+double *origx =x;
+
+    root  = 0;
+    nproc = armci_nproc;
+    index = armci_me - root;
+    up    = (index-1)/2 + root; if( up < root) up = -1;
+    left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
+    right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
+
+    bufsize = BUF_SIZE;
+
+    while ((ndo = (n<=BUF_SIZE) ? n : BUF_SIZE)) {
+         len = lenmes = ndo*size;
+
+         if (left > -1) {
+           armci_msg_rcv(tag, work, len, &lenmes, left);
+           ddoop(ndo, op, x, work);
+         }
+         if (right > -1) {
+           armci_msg_rcv(tag, work, len, &lenmes, right);
+           ddoop(ndo, op, x, work);
+         }
+         if (armci_me != root) armci_msg_snd(tag, x, len, up);
+
+         n -=ndo;
+         x +=ndo;
+     }
+
+     /* Now, root broadcasts the result down the binary tree */
+     len = orign*size;
      armci_msg_brdcst(origx, len,0 );
 }
 
