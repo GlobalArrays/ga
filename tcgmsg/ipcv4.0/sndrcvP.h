@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.12 2000-08-03 22:31:53 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.13 2000-08-30 16:38:30 d3g681 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
@@ -33,10 +33,10 @@
 #define TYPE_CLOCK_SYNCH 32774;  /* Used to synch clocks */
 
 #ifdef BIG_MESSAGE_PROTECTION
-#define BIG_MESSAGE 41943040     /* 40Mb max message only for safety check.
+#define BIG_MESSAGE 41943040ul   /* 40Mb max message only for safety check.
 				    Change as needed.*/
 #else
-#define BIG_MESSAGE  2147483647  /* 2GB */
+#define BIG_MESSAGE  2147483647ul  /* 2GB */
 #endif
 
 /* Shared memory allocated per process .. make even multiple of
@@ -68,7 +68,7 @@
 #define SHMEM_BUF_SIZE KSR_SHMEM_BUF_SIZE
 #endif
 #if !defined(SHMEM_BUF_SIZE)
-#define SHMEM_BUF_SIZE 65536
+#define SHMEM_BUF_SIZE 131072
 #endif
 
 #if defined(PARTIALSPIN) && !defined(NOSPIN)
