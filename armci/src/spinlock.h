@@ -79,7 +79,8 @@ double  lock[DBL_PAD];
 #define LOCK_T int
 #define PAD_LOCK_T pad_lock_t
 
-#if defined(__GNUC__)
+/* we got problems on IA64/Linux64 with Elan if inlining is used */
+#if defined(__GNUC__) && !defined(ELAN)
 #   define INLINE inline 
 #else
 #   define INLINE 
