@@ -1,4 +1,4 @@
-/* $id: strided.c,v 1.91 2004/07/20 02:46:15 manoj Exp $ */
+/* $Id: strided.c,v 1.100 2005-01-08 06:12:26 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
