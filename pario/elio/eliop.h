@@ -91,7 +91,7 @@ extern int                   elio_pending_error;
 
 /* error codes and messages */
 
-#define ERRLEN 24
+#define ERRLEN 25
 #define OFFSET    (-2000)
 #define SEEKFAIL  (OFFSET + 0)
 #define WRITFAIL  (OFFSET + 1)
@@ -116,7 +116,8 @@ extern int                   elio_pending_error;
 #define TYPEFAIL  (OFFSET + 20)
 #define PROBFAIL  (OFFSET + 21)
 #define TRUNFAIL  (OFFSET + 22)
-#define UNKNFAIL  (OFFSET + 23)
+#define EOFFAIL   (OFFSET + 23)
+#define UNKNFAIL  (OFFSET + 24)
 
 extern  char *errtable[ERRLEN];
 

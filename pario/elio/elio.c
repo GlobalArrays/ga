@@ -71,35 +71,31 @@ void elio_errors_fatal(int onoff)
 \*/
 Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
 {
-Size_t stat, bytes_to_write = bytes;
-int    attempt=0;
+  Size_t stat, bytes_to_write = bytes;
 
-      int pablo_code = PABLO_elio_write;
-      PABLO_start( pablo_code );
+  int pablo_code = PABLO_elio_write;
+  PABLO_start( pablo_code );
+  
+  if(offset != lseek(fd->fd, offset, SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
+  
+  while (bytes_to_write) {
+    stat = write(fd->fd, buf, bytes_to_write);
+    if ((stat == -1) && ((errno == EINTR) || (errno == EAGAIN))) {
+      ; /* interrupted write should be restarted */
+    } else if (stat > 0) {
+      bytes_to_write -= stat;
+      buf = stat + (char*)buf; /*advance pointer by # bytes written*/
+    } else {
+      perror("elio_write");
+      ELIO_ERROR(WRITFAIL, stat);
+    }
+  };
 
-      if(offset != lseek(fd->fd, offset, SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
-
-      /* interrupted write should be restarted */
-      do {
-             if(attempt == MAX_ATTEMPTS) ELIO_ERROR(INTRFAIL,attempt);
-
-             stat = write(fd->fd, buf, bytes_to_write);
-             if(stat < bytes_to_write && stat >= -1){
-                bytes_to_write -= stat;
-                buf = stat + (char*)buf; /*advance pointer by # bytes written */
-             }else
-                bytes_to_write = 0;
-             attempt++;
-
-      }while(bytes_to_write && (errno == EINTR || errno == EAGAIN));
-
-      if(stat != -1) stat = bytes -  bytes_to_write;
-
-      if(stat < -1) ELIO_ERROR(WRITFAIL, stat);
-
-      PABLO_end(pablo_code);
-
-      return(stat);
+  /* Only get here if all has gone OK */
+  
+  PABLO_end(pablo_code);
+  
+  return bytes;
 }
 
 
@@ -212,26 +208,27 @@ int    attempt=0;
   PABLO_start( pablo_code );
 
   if(offset != lseek(fd->fd,offset,SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
-
-  /* interrupted read should be restarted */
-  do {
-         if(attempt == MAX_ATTEMPTS)ELIO_ERROR(INTRFAIL, attempt);
-
-         stat = read(fd->fd, buf, bytes_to_read);
-         if(stat < bytes_to_read && stat >= -1){
-            bytes_to_read -= stat;
-            buf = stat + (char*)buf; /*advance pointer by # bytes read*/
-         }else
-            bytes_to_read = 0;
-         attempt++;
-  }while(bytes_to_read && (errno == EINTR || errno == EAGAIN));
-
-  if(stat != -1) stat = bytes -  bytes_to_read;
-
-  if(stat < -1) ELIO_ERROR(READFAIL, stat);
-
+  
+  while (bytes_to_read) {
+    stat = read(fd->fd, buf, bytes_to_read);
+    if (stat == 0) {
+      ELIO_ERROR(EOFFAIL, stat);
+    } else if ((stat == -1) && ((errno == EINTR) || (errno == EAGAIN))) {
+      ; /* interrupted read should be restarted */
+    } else if (stat > 0) {
+      bytes_to_read -= stat;
+      buf = stat + (char*)buf; /*advance pointer by # bytes read*/
+    } else {
+      perror("elio_read");
+      ELIO_ERROR(READFAIL, stat);
+    }
+  };
+  
+  /* Only get here if all has gone OK */
+  
   PABLO_end(pablo_code);
-  return(stat);
+  
+  return bytes;
 }
 
 
@@ -572,4 +569,5 @@ char *errtable[ERRLEN] ={
 ">Incorrect Filesystem/Device Type",
 ">Error in Probe",
 ">Unable to Truncate",
+">End of File",
 ""};

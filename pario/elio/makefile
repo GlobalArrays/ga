@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.8 1996-10-01 23:30:02 d3h325 Exp $
+#$Id: makefile,v 1.9 1996-10-14 05:45:37 d3g681 Exp $
 #
 #  Initial version Jace A Mogill (12 June 1996), ANL
 
@@ -10,9 +10,13 @@
 ifdef PABLO
    LIB_DEFINES = -DPABLO
 endif
+
+NOPIOFS = 1
+
 ifdef NOPIOFS
    LIB_DEFINES = -DNOPIOFS
 endif
+
 # on platforms with Posix AIO you can choose not to use it by defining NOAIO
 ifdef NOAIO
    LIB_DEFINES += -DNOAIO
