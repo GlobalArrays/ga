@@ -165,6 +165,7 @@
 #define  ga_update2_ghosts_        GA_UPDATE2_GHOSTS
 #define  ga_update3_ghosts_        GA_UPDATE3_GHOSTS
 #define  ga_update4_ghosts_        GA_UPDATE4_GHOSTS
+#define  ga_update5_ghosts_        GA_UPDATE5_GHOSTS
 #define  ga_has_ghosts_            GA_HAS_GHOSTS
 
 #define  nga_create_               NGA_CREATE

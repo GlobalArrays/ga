@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.7 2001-09-04 17:14:09 d3h325 Exp $ */
+/* $Id: base.c,v 1.8 2001-10-25 21:06:39 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -62,6 +62,7 @@ DoubleComplex   *DCPL_MB;           /* double precision complex base address */
 DoublePrecision *DBL_MB;            /* double precision base address */
 Integer         *INT_MB;            /* integer base address */
 float           *FLT_MB;            /* float base address */
+int **GA_Update_Flags;
 
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
@@ -303,6 +304,7 @@ Integer  off_dbl, off_int, off_dcpl, off_flt;
 void FATR  ga_initialize_()
 {
 Integer  i;
+int bytes;
 
     if(GAinitialized) return;
 
@@ -347,6 +349,12 @@ Integer  i;
     /* assure that GA will not alocate more shared memory than specified */
     if(ARMCI_Uses_shm())
        if(GA_memory_limited) ARMCI_Set_shm_limit(GA_total_memory);
+
+    /* Allocate memory for update flags */
+    bytes = 2*MAXDIM*sizeof(int);
+    GA_Update_Flags = (int**)malloc(GAnproc*sizeof(int*));
+    if (ARMCI_Malloc((void**)GA_Update_Flags, bytes))
+      ga_error("ga_init:Failed to initialize memory for update flags",GAme);
 
     GAinitialized = 1;
 
@@ -2040,3 +2048,4 @@ logical FATR ga_valid_handle_(Integer *g_a)
    else return TRUE;
 }
 
+int gai_getval(int *ptr) { return *ptr;}
