@@ -48,8 +48,10 @@ ifeq ($(ARMCI_NETWORK),GM)
 endif
 
 ifeq ($(ARMCI_NETWORK),QUADRICS)
-# shared memory causes problems for shmem
-   LIB_DEFINES += -DNO_SHM
+# shared memory causes problems for shmem: NO_SHM disables use of shared memory
+# only one of the two lines below can be uncommented
+#   LIB_DEFINES += -DNO_SHM
+    LIB_DEFINES += -DALLOC_MUNMAP -DACC_SMP
 endif
 
 ifdef ARMCI_NETWORK

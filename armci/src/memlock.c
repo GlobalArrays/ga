@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.8 2000-04-17 22:31:38 d3h325 Exp $ */
+/* $Id: memlock.c,v 1.9 2000-06-08 23:47:47 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -49,7 +49,12 @@ static memlock_t table[MAX_SLOTS];
 \*/
 void armci_lockmem_(void *pstart, void *pend, int proc)
 {
+#ifdef QUADRICS
+    int lock = 0;
+#else
     int lock = proc-armci_master;
+#endif
+
     NATIVE_LOCK(lock);
 #   ifdef LAPI
     {
@@ -61,7 +66,11 @@ void armci_lockmem_(void *pstart, void *pend, int proc)
 
 void armci_unlockmem_(int proc)
 {
+#ifdef QUADRICS
+    int lock = 0;
+#else
     int lock = proc-armci_master;
+#endif
     NATIVE_UNLOCK(lock);
 #   ifdef LAPI
     {

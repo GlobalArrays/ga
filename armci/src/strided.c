@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.24 2000-05-31 17:51:05 d3h325 Exp $ */
+/* $Id: strided.c,v 1.25 2000-06-08 23:47:47 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -254,10 +254,18 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
     int total_of_2D;
     int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
     
-#   ifdef ACC_COPY
-    if ( ACC(op) && proc!=armci_me) /* copy remote data, accumulate, copy back*/
-        return (armci_acc_copy_strided(op,scale, proc, src_ptr, src_stride_arr,
+#   if defined(ACC_COPY)
+      
+#      ifdef ACC_SMP
+         if(ACC(op) && !(SAMECLUSNODE(proc)) )
+#      else
+         if ( ACC(op) && proc!=armci_me)
+#      endif
+             /* copy remote data, accumulate, copy back*/
+             return (armci_acc_copy_strided(op,scale, proc, src_ptr, src_stride_arr,
                                        dst_ptr, dst_stride_arr, count, stride_levels));
+
+         else; /* do it directly through shared/local memory */
 #   endif
 
 
@@ -359,6 +367,7 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
     if(proc<0)return FAIL5;
 
     ORDER(PUT,proc); /* ensure ordering */
+
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
@@ -477,7 +486,7 @@ int ARMCI_AccS( int  optype,            /* operation */
     ORDER(optype,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
 
-#   if defined(ACC_COPY)
+#   if defined(ACC_COPY) && !defined(ACC_SMP)
        if(armci_me != proc) direct=0;
 #   endif
  
