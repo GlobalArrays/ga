@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.45 2003-10-01 21:15:13 manoj Exp $*/
+/*$Id: global.util.c,v 1.46 2003-10-16 19:22:23 d3g681 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -791,6 +791,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                         }
             }
         }
+        fflush(file);
     }
     
     ga_sync_();
