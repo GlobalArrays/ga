@@ -1,7 +1,7 @@
       program main
       implicit double precision (a-h,o-z)
 c
-c $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/testf.f,v 1.1 1994-12-29 06:57:36 og845 Exp $
+c $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/testf.f,v 1.2 2001-05-08 17:30:39 edo Exp $
 c
 c     FORTRAN program to test message passing routines
 c
@@ -11,6 +11,7 @@ c
       parameter (MAXLEN = 262144 / 8)
       include 'msgtypesf.h'
       dimension buf(MAXLEN)
+      integer ibuf(MAXLEN)
       character*80 fortnn
       character*80 fname
 c
@@ -72,6 +73,24 @@ c
         if (lenbuf .le. mdtob(MAXLEN)) goto 30
  31     format(' len=',i7,' bytes, used=',i4,' cs, rate=',f10.6,' Mb/s')
       endif
+c
+c     global sums
+c
+      do i=1,MAXLEN
+         ibuf(i) = i*me
+         buf(i) = dble(ibuf(i))
+      enddo
+      dtype=1+MSGDBL
+      call igop(itype, ibuf, MAXLEN, "+")
+      call dgop(dtype, buf, MAXLEN, "+")
+      
+      do i=1,MAXLEN
+         iresult = i*nproc*(nproc-1)/2
+         if (ibuf(i).ne.iresult.or.buf(i).ne.dble(iresult))
+     .      call error('TestGlobals: global sum failed',  i)
+      enddo
+      
+      if (me.eq.0) write(LOG,*) 'global sums OK'
 c
 c
 c     Check that everyone can open, write, read and close

@@ -1,6 +1,7 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/test.c,v 1.2 1994-12-30 20:56:21 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/test.c,v 1.3 2001-05-08 17:30:39 edo Exp $ */
 
 #include <stdio.h>
+#include <stdlib.h>
 #if !defined(SEQUENT) && !defined(CONVEX)
 #include <memory.h>
 #endif
@@ -9,12 +10,6 @@
 #include "evlog.h"
 
 extern char *memalign();
-#if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) \
-                    || defined(DECOSF)
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
 extern unsigned char CheckByte();
 extern double DRAND48_();
 #if (defined(SUN) && !defined(SOLARIS))

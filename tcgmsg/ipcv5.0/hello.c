@@ -1,6 +1,7 @@
 /* $$ */
 
 #include "tcgmsg.h"
+#include "sndrcv.h"
 
 int main(argc, argv)
      int argc;

@@ -161,7 +161,7 @@ Integer NXTVAL_(mproc)
 {
 #define INC 1
   int local;
-  long stype = INTERNAL_SYNC_TYPE;
+  Integer stype = INTERNAL_SYNC_TYPE;
   lapi_cntr_t req_id;
   int rc, inc = INC;
 
@@ -284,7 +284,7 @@ void Busy(int n)
  /*   LAPI_Probe(lapi_handle); */
 }
 
-void SYNCH_(long* type)
+void SYNCH_(Integer* type)
 {
 int rc;
 

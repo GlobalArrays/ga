@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.49 2001-05-08 00:03:21 edo Exp $
+# $Id: makefile.h,v 1.50 2001-05-08 17:31:00 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -390,10 +390,16 @@ ifeq ($(TARGET),LAPI64)
          IBM_ = 1
          FLD  = mpcc_r -lxlf -lxlf90 -lm
            CC = mpcc_r
-     FOPT_REN = -q64 -qintsize=8
+     FOPT_REN = -q64 
      COPT_REN = -q64
+ifdef USE_INTEGER4
+   FOPT_REN += -qintsize=4
+else
+   FOPT_REN += -qintsize=8
         CDEFS = -DEXT_INT
-      ARFLAGS = -rcv -X 64
+endif
+      ARFLAGS = -rcv 
+      AR = ar -X 64
 GLOB_DEFINES += -DSP -DLAPI
 endif
 
