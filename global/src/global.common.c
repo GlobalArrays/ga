@@ -293,7 +293,7 @@ void ga_igop(type, x, n, op)
      Integer factor = 1;  /*  log of level of binary tree */
      Integer rem, me, nproc, lenmes, sync=1,to,lenbuf ;
      Integer work[BUF_SIZE];
-     static void ddoop();
+     static void idoop();
      long ndo;
 
      me = ga_nodeid_(); nproc = ga_nnodes_(); 
@@ -314,7 +314,7 @@ void ga_igop(type, x, n, op)
 	   to = me + factor/2;
 	   if(to < nproc){
 	     rcv_(&type, work, &lenmes, &lenbuf, &to, &to, &sync);
-	     ddoop(ndo, op, x, work); 
+	     idoop(ndo, op, x, work); 
 	   }
 	 }
        }while (factor < nproc);
@@ -762,6 +762,43 @@ static void ddoop(n, op, x, work)
     }
   else
     ga_error("ddoop: unknown operation requested", (long) n);
+}
+
+static void idoop(n, op, x, work)
+     long n;
+     char *op;
+     Integer *x, *work;
+{
+  if (strncmp(op,"+",1) == 0)
+    while(n--)
+      *x++ += *work++;
+  else if (strncmp(op,"*",1) == 0)
+    while(n--)
+      *x++ *= *work++;
+  else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register double x1 = ABS(*x), x2 = ABS(*work);
+      *x = MAX(x1, x2);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register double x1 = ABS(*x), x2 = ABS(*work);
+      *x = MIN(x1, x2);
+      x++; work++;
+    }
+  else
+    ga_error("idoop: unknown operation requested", (long) n);
 }
 
 
