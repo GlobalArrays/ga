@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.33 2002-04-05 20:50:33 d3h325 Exp $ */
+/* $Id: copy.h,v 1.34 2002-05-04 06:27:00 edo Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -29,6 +29,9 @@
 #   include <mpp/shmem.h>
 #else
 #   include <unistd.h>
+#ifndef ptrdiff_t
+#   include <malloc.h>
+#endif
 #   include <shmem.h>
 #endif
 #   ifdef ELAN
