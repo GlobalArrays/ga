@@ -107,7 +107,8 @@ ifeq ($(TARGET),HPUX)
          FOPT = -O1
     endif
      FOPT_REN = +ppu
-     COPT_REN = -Ae -DEXTNAME
+     COPT_REN = -Ae
+       CDEFS += -DEXTNAME
     EXTRA_OBJ = tas-parisc.o
 endif
 
@@ -242,7 +243,6 @@ ifeq ($(TARGET),IBM)
 # IBM RS/6000 under AIX
 #
          IBM_  = 1
-        CDEFS = -DEXTNAME
 endif
 
 ifdef IBM_
@@ -255,6 +255,7 @@ ifdef IBM_
      ifeq ($(COPT), -O)
          COPT = -O3 -Q -qstrict -qarch=com -qtune=auto
      endif
+     CDEFS += -DEXTNAME
            FC = xlf
 GLOB_DEFINES  += -DAIX
 endif
