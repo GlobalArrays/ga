@@ -1,7 +1,8 @@
 # Makefile.h, Wed Jan 25 13:01:15 PST 1995 
 #
 # Define TARGET to be the machine you wish to build for
-# (one of SUN,SOLARIS,SGI,SGITFP,IBM,KSR,SP1,CRAY-T3D,IPSC,DELTA,PARAGON,DECOSF)
+# choose one of :
+# SUN,SOLARIS,SGI,SGITFP,IBM,KSR,SP1,CRAY-T3D,CRAY-T3E,IPSC,DELTA,PARAGON,DECOSF
 #
 # Specify message-passing library to be used with GA. The current choices
 # are: TCGMSG (default) or MPI. For MPI, please refer to global.doc for 
@@ -64,7 +65,6 @@ ifeq ($(TARGET),LINUX)
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
 endif
-
 #
 #................................ SUN ......................................
 #
@@ -79,7 +79,6 @@ ifeq ($(TARGET),SUN)
 		-Wwrite-strings
  GLOB_DEFINES = -DSUN
 endif
-
 #
 #.............................. SOLARIS ....................................
 #
@@ -92,7 +91,6 @@ ifeq ($(TARGET),SOLARIS)
  GLOB_DEFINES = -DSOLARIS
      FLD_REN = -xs
 endif
-
 #
 #................................ DEC ALPHA ................................
 #
@@ -105,9 +103,8 @@ ifeq ($(TARGET),DECOSF)
      FOPT_REN = -i8
  GLOB_DEFINES = -DDECOSF
 endif
-
+#
 #............................... Convex ....................................
-
 ifeq ($(TARGET),CONVEX-SPP)
      FOPT_REN = -ppu -or none
      COPT_REN = -or none
@@ -126,9 +123,8 @@ ifeq ($(TARGET),CONVEX-SPP)
  endif
     EXPLICITF = TRUE
 endif
-
+#
 #................................ HP  ....................................
-
 ifeq ($(TARGET),HPUX)
 # free HP cc compiler is not up to the job
      FOPT_REN = +ppu
@@ -138,14 +134,28 @@ ifeq ($(TARGET),HPUX)
  GLOB_DEFINES = -DHPUX -DEXTNAME
     EXPLICITF = TRUE
 endif
-
-
+#
+#................................ CRAY-T3E ..................................
+#
+ifeq ($(TARGET),CRAY-T3E)
+#
+           FC = f90
+          CPP = cpp
+       P_FILE = NO
+ ifeq ($(FOPT),-O)
+         FOPT = -O1
+ endif
+ ifeq ($(COPT),-O)
+         COPT = -O2 -h inline3
+ endif
+     FOPT_REN = -Wf-dp
+ GLOB_DEFINES = -DCRAY_T3D -DCRAY_T3E
+    EXPLICITF = TRUE
+endif
 #
 #................................ CRAY-T3D ..................................
 #
 ifeq ($(TARGET),CRAY-T3D)
-#
-#
 #
        LIBSMA = ../../../libsma
            FC = cf77
@@ -164,7 +174,7 @@ ifeq ($(TARGET),CRAY-T3D)
 #       CDEFS = -DFLUSHCACHE
     EXPLICITF = TRUE
 endif
-
+#
 #................................ KSR ......................................
 #
 ifeq ($(TARGET),KSR)
@@ -176,53 +186,74 @@ ifeq ($(TARGET),KSR)
  GLOB_DEFINES = -DKSR
         CDEFS = -DEXT_INT
 endif
-
+#
 #................................ SGI ......................................
 #
 ifeq ($(TARGET),SGI)
 #
 # SGI running IRIX 5.X
 #
-#
-      FLD_REN = -v -Wl,-U
  GLOB_DEFINES = -DSGI
 endif
 
 ifeq ($(TARGET),SGI_N32)
 #
-# SGI running IRIX >6.1, MIPS-4
-#
+# SGI running IRIX >6.0, MIPS-4
 #
  ifeq ($(FOPT),-O)
          FOPT = -O3
  endif
-     COPT_REN = -n32 -mips4
+ COPT_REN = -n32 -mips4
+ FOPT_REN = -n32 -mips4
 
 #optimization flags for R8000 (IP21)
  FOPT_8K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000:fprop_limit=2000 -TENV:X=3 -WK,-so=1,-o=1,-r=3,-dr=AKC
 
 #optimization flags for R10000 (IP28)
  FOPT_10K = -O3 -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000:fprop_limit=2000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
- FOPT_REN = -n32 -mips4 $(FOPT_8K)
- GLOB_DEFINES = -DSGI
+
+ifeq ($(TARGET_CPU),R10000)
+ FOPT_REN += $(FOPT_10K)
+endif
+ifeq ($(TARGET_CPU),R8000)
+ FOPT_REN += $(FOPT_8K)
 endif
 
+#if you are running more processes than CPUs are available, remove -DSGIUS
+# spin locks kill performance
+ GLOB_DEFINES = -DSGI -DSGIUS
+endif
+#
 #................................ SGI Power Challenge .......................
 #
 ifeq ($(TARGET),SGITFP)
 #
 # SGI running IRIX 6.X
 #
-#
  ifeq ($(FOPT),-O)
          FOPT = -O3
  endif
         CDEFS = -DEXT_INT
+     FOPT_REN = -i8 -align64
 
-     FOPT_REN = -i8 -align64 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000 
- GLOB_DEFINES = -DSGI -DSGI64 -DSGIUS
+#optimization flags for R8000 (IP21)
+ FOPT_8K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000:fprop_limit=2000 -TENV:X=3 -WK,-so=1,-o=1,-r=3,-dr=AKC
+
+#optimization flags for R10000 (IP28)
+ FOPT_10K = -O3 -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000:fprop_limit=2000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
+
+ifeq ($(TARGET_CPU),R10000)
+ FOPT_REN += $(FOPT_10K)
+endif
+ifeq ($(TARGET_CPU),R8000)
+ FOPT_REN += $(FOPT_8K)
 endif
 
+#if you are running more processes than CPUs are available, remove -DSGIUS
+# spin locks kill performance
+ GLOB_DEFINES = -DSGI -DSGI64 -DSGIUS
+endif
+#
 #............................. IPSC/DELTA/PARAGON .............................
 #
 ifeq ($(TARGET),IPSC)
@@ -232,13 +263,10 @@ ifeq ($(TARGET),IPSC)
         INTEL = YES
      FOPT_REN = -node
      COPT_REN = -node
-      INSTALL = @echo "See TCGMSG README file on how to run program "
+      INSTALL = @echo "See TCGMSG README file on how to run programs"
 endif
-#
 #....................
-#
 ifeq ($(TARGET),DELTA)
-#
 # DELTA running NX
 #
         INTEL = YES
@@ -247,9 +275,7 @@ ifeq ($(TARGET),DELTA)
  GLOB_DEFINES = -DDELTA
       INSTALL = rcp $@ delta2: 
 endif
-#
 #....................
-#
 ifeq ($(TARGET),PARAGON)
 #
 # PARAGON running OS>=1.2 with NX (crosscompilation on Sun)
@@ -260,6 +286,7 @@ ifeq ($(TARGET),PARAGON)
  GLOB_DEFINES = -DPARAGON
 endif
 #
+#....................
 ifeq ($(INTEL),YES)
 #
 # all Intel machines
@@ -278,7 +305,7 @@ ifeq ($(INTEL),YES)
  GLOB_DEFINES += -DNX
   CUR_VERSION = DISMEM
 endif
- 
+#
 #.............................. SP .........................................
 #
 ifeq ($(TARGET),SP)
@@ -322,15 +349,12 @@ else
       FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
 endif
 
-#   mpxlf fails with parallel make
-    MAKEFLAGS = -j 1
        RANLIB = ranlib
      FOPT_REN = -qEXTNAME
   CUR_VERSION = DISMEM
     EXPLICITF = TRUE
 endif
- 
-
+#
 #.............................. IBM .........................................
 #
 ifeq ($(TARGET),IBM)
@@ -344,11 +368,9 @@ ifeq ($(TARGET),IBM)
       FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
     EXPLICITF = TRUE
 endif
-
 #
 #.......................... other common defs ............................
 #
-
 ifndef VERSION
        VERSION = $(CUR_VERSION)
 endif
@@ -376,7 +398,6 @@ endif
 
 #.SUFFIXES:	
 #.SUFFIXES:	.o .s .F .f .c
-
 
 ifeq ($(EXPLICITF),TRUE)
 #
