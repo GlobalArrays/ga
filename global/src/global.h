@@ -167,6 +167,30 @@ extern void FATR nga_gather_(Integer *g_a, void* v, Integer subscr[],
 extern Integer FATR nga_read_inc_(Integer* g_a,Integer* subscr,Integer* inc);
 extern void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscr);
 
+extern void nga_copy_patch(char *trans,
+                           Integer *g_a, Integer *alo, Integer *ahi,
+                           Integer *g_b, Integer *blo, Integer *bhi);
+extern Integer nga_idot_patch(Integer *g_a, char *t_a, Integer *alo,
+          Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi);
+
+extern DoublePrecision nga_ddot_patch(Integer *g_a, char *t_a, 
+          Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo,
+          Integer *bhi);
+
+extern DoubleComplex nga_zdot_patch(Integer *g_a, char *t_a,
+          Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo,
+          Integer *bhi);
+
+extern void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi,
+                                 void *val);
+
+extern void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
+                                  void *alpha);
+
+extern void FATR nga_add_patch_(DoublePrecision *alpha, Integer *g_a,
+                    Integer *alo, Integer *ahi, DoublePrecision *beta,
+                    Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c,
+                    Integer *clo, Integer *chi);
 
 extern DoubleComplex   *DCPL_MB;
 extern DoublePrecision *DBL_MB;
