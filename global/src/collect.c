@@ -1,8 +1,12 @@
-/* $Id: collect.c,v 1.9 2000-06-14 01:20:10 d3h325 Exp $ */
+/* $Id: collect.c,v 1.10 2000-06-14 22:45:42 d3h325 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
 #include "message.h"
+
+/* can handle ga_brdcst/igop/dgop via ARMCI or native message-passing library
+ * uncomment line below to use the ARMCI version */
+#define  ARMCI_COLLECTIVES 
 
 #if defined(CRAY)
 #  include <fortran.h>
@@ -18,8 +22,9 @@ void ga_msg_brdcst(type, buffer, len, root)
 Integer type, len, root;
 Void*   buffer;
 {
+#ifdef ARMCI_COLLECTIVES
    armci_msg_bcast(buffer, (int)len, (int)root);
-#if 0
+#else
 #  ifdef MPI
       MPI_Bcast(buffer, (int)len, MPI_CHAR, (int)root, MPI_COMM_WORLD);
 #  else
@@ -61,8 +66,7 @@ void ga_dgop(type, x, n, op)
      DoublePrecision *x;
      char *op;
 {
-#ifdef MPI
-extern void armci_msg_dgop();
+#if defined(ARMCI_COLLECTIVES) || defined(MPI)
             armci_msg_dgop(x, (int)n, op);
 #else
             DGOP_(&type, x, &n, op);
@@ -99,14 +103,12 @@ void ga_igop(type, x, n, op)
      Integer type, n, *x;
      char *op;
 {
-#ifdef MPI
-#ifdef EXT_INT
-extern void armci_msg_lgop();
+#if defined(ARMCI_COLLECTIVES) || defined(MPI)
+#   ifdef EXT_INT
             armci_msg_lgop(x, (int)n, op);
-#else
-extern void armci_msg_igop();
+#   else
             armci_msg_igop(x, (int)n, op);
-#endif
+#   endif
 #else
             IGOP_(&type, x, &n, op);
 #endif
@@ -138,6 +140,7 @@ long gtype,gn;
 }
 
 
+#if 0
 Integer ga_msg_nnodes_()
 {     
 #ifdef MPI
@@ -161,6 +164,4 @@ Integer ga_msg_nodeid_()
      return NODEID_();
 #endif
 }
-
-
-
+#endif

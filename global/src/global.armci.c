@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.43 2000-06-12 17:45:00 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.44 2000-06-14 22:45:43 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -297,8 +297,7 @@ Integer  i;
        GA[i].ptr  = (char**)0;
        GA[i].mapc = (int*)0;
     }
-    GAmaster= 0;
-    GAnproc = (Integer)ga_msg_nnodes_();
+    GAnproc = (Integer)armci_msg_nproc();
 
 #ifdef PERMUTE_PIDS
     ga_sync_();
@@ -306,12 +305,12 @@ Integer  i;
     if(GA_Proc_list) GAme = (Integer)GA_Proc_list[ga_msg_nodeid_()];
     else
 #endif
-    GAme = (Integer)ga_msg_nodeid_();
+    GAme = (Integer)armci_msg_me();
     if(GAme<0 || GAme>20000) 
        ga_error("ga_init:message-passing initialization problem: my ID=",GAme);
 
-    MPme= ga_msg_nodeid_();
-    MPnproc = ga_msg_nnodes_();
+    MPme= (Integer)armci_msg_me();
+    MPnproc = (Integer)armci_msg_nproc();
 
     if(GA_Proc_list)
       fprintf(stderr,"permutation applied %d now becomes %d\n",(int)MPme,(int)GAme);
@@ -1537,8 +1536,7 @@ Integer  idx, elems, ndim, size;
     }
 #endif
 
-/*          if(proc == GAme){*/
-          if(proc/4 == MPme/4){
+          if(proc == GAme){
              gam_CountElems(ndim, plo, phi, &elems);
              GAbytes.putloc += (double)size*elems;
           }

@@ -149,7 +149,7 @@ Integer         *INT_MB;            /* integer base address */
 
 
 /* cache numbers of GA/message-passing processes and ids */
-static Integer GAme, GAnproc, GAmaster;
+static Integer GAme, GAnproc;
 static Integer MPme, MPnproc;
 static int GAinitialized = 0;
 
