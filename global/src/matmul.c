@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.6 2002-08-29 22:42:19 manoj Exp $*/
+/*$Id: matmul.c,v 1.7 2002-09-12 08:19:18 edo Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -36,8 +36,13 @@
 #  define KCHUNK C_CHUNK
 #else
    /* min acceptable and max amount of memory (in elements) */
+#if  defined(__ia64)
+#  define MINMEM 128
+#  define MAXMEM 196608  /*3*256x256 */
+#else
 #  define MINMEM 64
 #  define MAXMEM 49152 /*3*128*128 */ 
+#endif
 #endif
 
 #define VECTORCHECK(rank,dims,dim1,dim2, ilo, ihi, jlo, jhi) \
