@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.24 1999-11-10 01:57:18 d3h325 Exp $ */
+/* $Id: armci.c,v 1.25 1999-11-12 00:07:51 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -72,9 +72,9 @@ void ARMCI_Cleanup()
 
 void armci_perror_msg()
 {
-    char *perr_str="Last System Error Message from Task          ";
+    char perr_str[80];
     if(!errno)return;
-    sprintf(perr_str +(strlen(perr_str)-9),"%d:",armci_me);
+    sprintf(perr_str,"Last System Error Message from Task %d:",armci_me);
     perror(perr_str);
 }
 
