@@ -40,24 +40,25 @@ MAKESUBDIRS = for dir in $(SUBDIRS); do $(MAKE)  -C $$dir $@ || exit 1 ; done
 ifndef TARGET 
        TARGET = $(CUR_TARGET)
 endif
-
 ifndef LIBDIR
      LIBDIR = ../lib/$(TARGET)
 endif
 
-
    LIBRARY = $(LIBDIR)/libglobal.a
+   TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x perform.x testc.x
 
-
-   TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x perform.x testc.x\
-             ga-mpi.x 
-
+ifdef USE_MPI
+   TESTS +=  ga-mpi.x 
+else
+ifeq ($(MSG_COMMS),MPI)
+   TESTS +=  ga-mpi.x 
+endif
+endif
 ifdef USE_SCALAPACK
    TESTS += testspd.x
 endif
 
-
-export DIAG TARGET VERSION LU_SOLVE GA_TRACE MSG_COMMS
+export DIAG TARGET LU_SOLVE GA_TRACE MSG_COMMS
 
 .PHONY: $(LIBRARY)
 
