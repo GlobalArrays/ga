@@ -414,9 +414,9 @@ void LJ_Initialize(int natoms) {
 	rCell[1] = j * b;
 	for (k = 0; k < c; k++) {
 	  rCell[2] = k * b;
-	  for (m = 0; m < 4; m++)	// 4 particles in cell
+	  for (m = 0; m < 4; m++)	/* 4 particles in cell */
 	    if (p < natoms) {
-	      for (n = 0; n < NDIM; n++)  // 3-dimensions - x, y, z
+	      for (n = 0; n < NDIM; n++)  /* 3-dimensions - x, y, z */
 		x[p*NDIM + n] = rCell[n] + b * rFCC[m][n];
 	      ++p;
 	    }
@@ -615,7 +615,7 @@ void writeToFile(int natoms) {
     NGA_Get(g_X, &lo, &hi, p_data, &hi);
     
     /* in molden format */
-    fprintf(gOutfile, "%d\n\n", natoms) ; // 2 new lines needed
+    fprintf(gOutfile, "%d\n\n", natoms) ; /* 2 new lines needed */
     do {
       fprintf(gOutfile, "%s %lf %lf %lf\n", "XX",
 	      p_data[i], p_data[i+1], p_data[i+2]);
