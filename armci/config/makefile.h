@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.104 2004-04-30 04:49:46 edo Exp $
+#$Id: makefile.h,v 1.105 2004-06-11 05:10:31 vinod Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -167,7 +167,8 @@ ifeq  ($(_CPU),ia64)
      FC=efc
      CC=gcc
 # _SGIALTIX= $(shell /bin/rpm -q -i sgi-mpt  2>&1| head -1|egrep Reloc|awk ' /Rel/  {print "Y"}')
- _SGIALTIX= $(shell /bin/rpm -q --last sgi-mpt  2>&1| head -1|egrep Reloc|awk ' /20/  {print "Y"}')
+# _SGIALTIX= $(shell /bin/rpm -q --last sgi-mpt  2>&1| head -1|egrep Reloc|awk ' /20/  {print "Y"}')
+  _SGIALTIX= $(shell if [ -r /proc/sgi_sn/system_serial_number ]; then /bin/echo Y; fi) 
   ifeq ($(_SGIALTIX),Y)
    GLOB_DEFINES += -DSGIALTIX
   endif
