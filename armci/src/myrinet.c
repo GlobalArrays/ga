@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.25 2001-05-25 22:09:19 d3h325 Exp $
+/* $Id: myrinet.c,v 1.26 2001-05-31 00:59:46 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -76,7 +76,6 @@ typedef struct {
     long *ack;               /* acknowledgment for server */
     long *tmp;
     long **serv_ack_ptr;     /* keep the pointers of server ack buffer */
-    void **serv_buf_ptr;     /* keep the pointers of server MessageRcvBuffer */
 } armci_gm_proc_t;
 
 /* data structure of server thread */
@@ -109,8 +108,8 @@ extern struct gm_port *gmpi_gm_port; /* the port that mpi currently using */
 armci_gm_proc_t __armci_proc_gm_struct;
 armci_gm_proc_t *proc_gm = &__armci_proc_gm_struct;
 
-armci_gm_context_t __armci_gm_context_struct = {0, ARMCI_GM_CLEAR};
-armci_gm_context_t *armci_gm_context = &__armci_gm_context_struct;
+armci_gm_context_t __armci_gm_client_context_struct = {0, ARMCI_GM_CLEAR};
+armci_gm_context_t *armci_gm_client_context = &__armci_gm_client_context_struct;
 
 armci_gm_context_t __armci_gm_serv_context_struct = {0, ARMCI_GM_CLEAR};
 armci_gm_context_t *armci_gm_serv_context = &__armci_gm_serv_context_struct;
@@ -338,10 +337,6 @@ char *tmp;
     proc_gm->serv_ack_ptr = (long **)calloc(armci_nclus, sizeof(long*));
     if(!proc_gm->serv_ack_ptr) return FALSE;
 
-    /* allocate buf keeping the pointers of server MessageRcvBuffer */
-    proc_gm->serv_buf_ptr = (void **)calloc(armci_nclus, sizeof(void*));
-    if(!proc_gm->serv_buf_ptr) return FALSE;
-    
     /* allocate send buffer */
     MessageSndBuffer = (char *)gm_dma_malloc(proc_gm->port, MSG_BUFLEN);
     if(MessageSndBuffer == 0) return FALSE;
@@ -359,7 +354,6 @@ char *tmp;
 int armci_gm_proc_mem_free()
 {
     free(proc_gm->serv_ack_ptr);
-    free(proc_gm->serv_buf_ptr);
 
     gm_dma_free(proc_gm->port, proc_gm->ack);
     gm_dma_free(proc_gm->port, MessageSndBuffer);
@@ -433,24 +427,24 @@ int armci_gm_client_init()
 
 
 /* callback func of gm_send_with_callback */
-void armci_proc_callback(struct gm_port *port, void *context,gm_status_t status)
+void armci_client_send_callback(struct gm_port *port, void *context,gm_status_t status)
 {
-    if(status==GM_SUCCESS) ((armci_gm_context_t*)context)->done = ARMCI_GM_SENT;
+    if(status==GM_SUCCESS)((armci_gm_context_t*)context)->done = ARMCI_GM_CLEAR;
     else ((armci_gm_context_t *)context)->done = ARMCI_GM_FAILED;
 }
 
 
 /* client trigers gm_unknown, so that callback func can be executed */
-int armci_client_send_complete()
+static int armci_client_send_complete()
 {
     MPI_Status status;
     int flag;
     
     /* blocking: wait til the send is done by calling the callback */
-    while(armci_gm_context->done == ARMCI_GM_SENDING) 
+    while(armci_gm_client_context->done == ARMCI_GM_SENDING) 
         MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
 
-    return(armci_gm_context->done);
+    return(armci_gm_client_context->done);
 }
 
 /*\ direct send to server 
@@ -460,11 +454,11 @@ void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len)
     int s           = armci_clus_id(p);
     int serv_mpi_id = armci_clus_info[s].master;
 
-    armci_gm_context->done = ARMCI_GM_SENDING;
+    armci_gm_client_context->done = ARMCI_GM_SENDING;
     gm_directed_send_with_callback(proc_gm->port, src_buf,
                (gm_remote_ptr_t)(gm_up_t)dst_buf, len, GM_LOW_PRIORITY,
                 proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
-                armci_proc_callback, armci_gm_context);
+                armci_client_send_callback, armci_gm_client_context);
 
     /* blocking: wait until send is done by calling the callback */
     if(armci_client_send_complete() == ARMCI_GM_FAILED)
@@ -487,20 +481,20 @@ void armci_client_connect_to_servers()
             server_mpi_id = armci_clus_info[i].master;
             ((long *)(MessageSndBuffer))[0] = ARMCI_GM_CLEAR;
             ((long *)(MessageSndBuffer))[1] = armci_me;
-            ((long *)(MessageSndBuffer))[2] = (long)MessageSndBuffer;
+            ((long *)(MessageSndBuffer))[2] = (long)MessageSndBuffer;;
             ((long *)(MessageSndBuffer))[3] = (long)(proc_gm->ack);
             ((long *)(MessageSndBuffer))[4] = ARMCI_GM_CLEAR;
 
             /* wait til the last sending done, either successful or failed */
-            while(armci_gm_context->done == ARMCI_GM_SENDING);
+            while(armci_gm_client_context->done == ARMCI_GM_SENDING);
 
             size = gm_min_size_for_length(3*sizeof(long));
             
-            armci_gm_context->done = ARMCI_GM_SENDING;
+            armci_gm_client_context->done = ARMCI_GM_SENDING;
             gm_send_with_callback(proc_gm->port,
                     MessageSndBuffer+sizeof(long), size, 3*sizeof(long),
                     GM_LOW_PRIORITY, proc_gm->node_map[server_mpi_id],
-                    proc_gm->port_map[i], armci_proc_callback,armci_gm_context);
+                    proc_gm->port_map[i], armci_client_send_callback,armci_gm_client_context);
 
             /* blocking: wait til the send is done by calling the callback */
             if(armci_client_send_complete() == ARMCI_GM_FAILED)
@@ -514,11 +508,10 @@ void armci_client_connect_to_servers()
             armci_wait_long_flag_updated((long *)MessageSndBuffer+4, ARMCI_GM_COMPLETE);
             
             proc_gm->serv_ack_ptr[i] = (long*)((long *)MessageSndBuffer)[1];
-            proc_gm->serv_buf_ptr[i] = (void*)((long *)MessageSndBuffer)[2];
             
             /* send back the ack to server */
             ((long *)MessageSndBuffer)[0] = ARMCI_GM_ACK;
-            armci_gm_context->done = ARMCI_GM_SENDING;
+            armci_gm_client_context->done = ARMCI_GM_SENDING;
 
             if(DEBUG_INIT_) {
                 printf("%d:rcvd 1 msg from server %d\n",armci_me,server_mpi_id);
@@ -586,13 +579,13 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     msginfo->tag.data_ptr = buf + sizeof(request_header_t) - sizeof(long);
     msginfo->tag.ack = ARMCI_GM_CLEAR;
 
-    armci_gm_context->done = ARMCI_GM_SENDING;
+    armci_gm_client_context->done = ARMCI_GM_SENDING;
     gm_send_with_callback(proc_gm->port, buf, size, len, GM_LOW_PRIORITY,
                           proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
-                          armci_proc_callback, armci_gm_context);
+                          armci_client_send_callback, armci_gm_client_context);
 
-    if(armci_client_send_complete() == ARMCI_GM_FAILED) return 1;
-    else return 0;
+    if(armci_client_send_complete() == ARMCI_GM_FAILED) return -1;
+    return 0;
 }
 
 
