@@ -749,7 +749,7 @@ int main(int argc, char **argv) {
   /**
    * Deaalocate the arrays and free the resources 
    */
-  GA_Destroy(g_X);  GA_Destroy(g_G);  GA_Destroy(g_V);
+  GA_Destroy(g_X);  GA_Destroy(g_G);  GA_Destroy(g_V); GA_Destroy(g_T);
 
   /**
    * Termination signal to release the resources, etc.
