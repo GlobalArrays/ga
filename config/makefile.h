@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.81 2003-07-28 23:45:55 d3h325 Exp $
+# $Id: makefile.h,v 1.82 2003-07-30 18:36:57 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -337,6 +337,10 @@ endif
 
           CLD = $(CC)
 ifeq ($(_FC),g77)
+          CLD = $(FLD)
+      CLD_REN =
+endif
+ifeq ($(_FC),efc) 
           CLD = $(FLD)
       CLD_REN =
 endif
