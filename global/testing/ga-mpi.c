@@ -160,7 +160,7 @@ Integer heap=20000, stack=20000;
 Integer me, nproc;
 
 #ifdef MPI
-    MPI_Init(argc, argv);                       /* initialize MPI */
+    MPI_Init(&argc, &argv);                       /* initialize MPI */
 #else
     PBEGIN_(argc, argv);                        /* initialize TCGMSG */
 #endif

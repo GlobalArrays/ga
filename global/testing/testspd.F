@@ -1,4 +1,4 @@
-c $Id: testspd.F,v 1.6 1999-07-28 17:34:46 d3h325 Exp $
+c $Id: testspd.F,v 1.7 2000-05-25 01:09:21 d3h325 Exp $
 c***********************************************************************
 c* Source : testllt
 c* Scope  : test LLT SCALAPACK routines
@@ -30,7 +30,8 @@ c
 c***  Intitialize a message passing library
 c
 #ifdef MPI
-      call mpi_init
+      integer ierr
+      call mpi_init(ierr)
 #else
       call pbeginf
 #endif
@@ -57,7 +58,7 @@ c**** Exit from the GA package
       call ga_terminate()
 c
 #ifdef MPI
-      call mpi_finalize()
+      call mpi_finalize(ierr)
 #else
       call pend()
 #endif

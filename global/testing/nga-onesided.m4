@@ -16,4 +16,4 @@ divert(-1)
   define(m4_test_NGA_SCATTER_ACC, `yes')
   define(m4_test_NGA_GATHER, `yes')
 divert
-include(`ngatest/ngatest.def')
+include(`ngatest_src/ngatest.def')

@@ -11,7 +11,8 @@ c**** You can change dimension of the array and duration of the test here
       parameter (dim=500, minutes =90)
 c
 #ifdef MPI
-      call mpi_init
+      integer ierr
+      call mpi_init(ierr)
 #else
       call pbeginf
 #endif
@@ -44,7 +45,7 @@ c
       if(ga_nodeid().eq.0)call ga_print_stats()
       call ga_terminate()
 #ifdef MPI
-      call mpi_finalize()
+      call mpi_finalize(ierr)
 #else
       call pend()
 #endif

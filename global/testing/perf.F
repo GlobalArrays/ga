@@ -1,4 +1,4 @@
-c $Id: perf.F,v 1.4 1999-07-28 17:34:42 d3h325 Exp $
+c $Id: perf.F,v 1.5 2000-05-25 01:09:20 d3h325 Exp $
 c------------------------------------------------------------------------
 c Program perf.x is used to test performance of GA put, get, accumulate  |
 c It has to be executed on four processors.                              |
@@ -15,7 +15,8 @@ c
 c***  Intitialize a message passing library
 c
 #ifdef MPI
-      call mpi_init
+      integer ierr
+      call mpi_init(ierr)
 #else
       call pbeginf
 #endif
@@ -35,7 +36,7 @@ c
       call ga_terminate()
 c
 #ifdef MPI
-      call mpi_finalize()
+      call mpi_finalize(ierr)
 #else
       call pend()
 #endif

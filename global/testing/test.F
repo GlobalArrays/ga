@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.29 2000-05-05 19:48:05 d3h325 Exp $
+c $Id: test.F,v 1.30 2000-05-25 01:09:21 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-11
@@ -21,7 +21,8 @@ c
 c***  Intitialize a message passing library
 c
 #ifdef MPI
-      call mpi_init
+      integer ierr
+      call mpi_init(ierr)
 #else
       call pbeginf
 #endif
@@ -114,7 +115,7 @@ c
 c***  Tidy up after message-passing library
 c
 #ifdef MPI
-      call mpi_finalize()
+      call mpi_finalize(ierr)
 #else
       call pend()
 #endif

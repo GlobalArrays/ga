@@ -12,7 +12,8 @@ c
 c***  Intitialize a message passing library
 c
 #ifdef MPI
-      call mpi_init
+      integer ierr
+      call mpi_init(ierr)
 #else
       call pbeginf
 #endif
@@ -44,8 +45,8 @@ c
         call ffflush(6)
       endif
 c
-      call test_nga_select_elem()                            ! Test global max/min
-      call test_ga_patch_enum()                              ! Test enumerate
+      call test_nga_select_elem()                         ! Test global max/min
+      call test_ga_patch_enum()                           ! Test enumerate
 
 c     if(me.eq.0) call ga_print_stats()
 c
@@ -56,7 +57,7 @@ c
 c***  Tidy up after message-passing library
 c
 #ifdef MPI
-      call mpi_finalize()
+      call mpi_finalize(ierr)
 #else
       call pend()
 #endif

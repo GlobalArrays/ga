@@ -1,4 +1,4 @@
-c $Id: ndim.F,v 1.4 1999-09-10 23:53:42 d3h325 Exp $
+c $Id: ndim.F,v 1.5 2000-05-25 01:09:19 d3h325 Exp $
 #define  MAXLOOP 100
 
       program test
@@ -11,7 +11,8 @@ c
 c***  Intitialize a message passing library
 c
 #ifdef MPI
-      call mpi_init
+      integer ierr
+      call mpi_init(ierr)
 #else
       call pbeginf
 #endif
@@ -37,7 +38,7 @@ c
 c***  Tidy up after message-passing library
 c
 #ifdef MPI
-      call mpi_finalize()
+      call mpi_finalize(ierr)
 #else
       call pend()
 #endif

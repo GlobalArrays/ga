@@ -1,4 +1,4 @@
-c $Id: testsolve.F,v 1.8 1999-07-28 17:34:45 d3h325 Exp $
+c $Id: testsolve.F,v 1.9 2000-05-25 01:09:21 d3h325 Exp $
       program test
       implicit none
 #include "mafdecls.fh"
@@ -8,7 +8,8 @@ c
 c***  Intitialize a message passing library
 c
 #ifdef MPI
-      call mpi_init
+      integer ierr
+      call mpi_init(ierr)
 #else
       call pbeginf
 #endif
@@ -30,7 +31,7 @@ c
       call ga_terminate()
 c
 #ifdef MPI
-      call mpi_finalize()
+      call mpi_finalize(ierr)
 #else
       call pend()
 #endif

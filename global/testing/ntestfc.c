@@ -254,7 +254,7 @@ Integer heap=300000, stack=300000;
 int me, nproc;
 
 #ifdef MPI
-    MPI_Init(argc, argv);                       /* initialize MPI */
+    MPI_Init(&argc, &argv);                       /* initialize MPI */
 #else
     PBEGIN_(argc, argv);                        /* or, initialize TCGMSG */
 #endif

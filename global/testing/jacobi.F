@@ -1,4 +1,4 @@
-c $Id: jacobi.F,v 1.7 1999-07-28 17:34:39 d3h325 Exp $
+c $Id: jacobi.F,v 1.8 2000-05-25 01:09:19 d3h325 Exp $
       program jacobi 
 *
 *     Jacobi iterative method for solving Uxx + Uyy = 1 on [0,1]x[0,1] area
@@ -9,16 +9,18 @@ c $Id: jacobi.F,v 1.7 1999-07-28 17:34:39 d3h325 Exp $
 #include "mafdecls.fh"
 #include "global.fh"
       integer heap, stack
-      data heap,stack /2*40000/
 c
 c***  Intitialize a message passing library
 c
 #ifdef MPI
-      call mpi_init
+      integer ierr
+      call mpi_init(ierr)
 #else
       call pbeginf
 #endif
 c
+      heap = 40000
+      stack = heap
       call ga_initialize()                                   ! initialize GAs 
       if (.not. ma_init(MT_DBL, heap, stack))                ! initialize MA
      $    call ga_error("ma init failed",heap+stack)
@@ -32,7 +34,7 @@ c
       call ga_terminate()                                    ! terminate GAs 
 c
 #ifdef MPI
-      call mpi_finalize()
+      call mpi_finalize(ierr)
 #else
       call pend()
 #endif

@@ -14,4 +14,4 @@ divert(-1)
   define(m4_test_NGA_PERIODIC_ACC, `yes') 
 
 divert
-include(`ngatest/ngatest.def')
+include(`ngatest_src/ngatest.def')

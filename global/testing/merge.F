@@ -1,4 +1,4 @@
-c $Id: merge.F,v 1.3 1999-07-28 17:34:40 d3h325 Exp $
+c $Id: merge.F,v 1.4 2000-05-25 01:09:19 d3h325 Exp $
 c This program should run only in the network of MPPs (IWAY) environment 
 c
 c
@@ -11,7 +11,8 @@ c
 c***  Intitialize a message passing library
 c
 #ifdef MPI
-      call mpi_init
+      integer ierr
+      call mpi_init(ierr)
 #else
       call pbeginf
 #endif
@@ -31,7 +32,7 @@ c
       call ga_terminate()
 
 #ifdef MPI
-      call mpi_finalize()
+      call mpi_finalize(ierr)
 #else
       call pend()
 #endif

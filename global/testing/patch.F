@@ -1,4 +1,4 @@
-c $Id: patch.F,v 1.15 1999-07-28 17:34:42 d3h325 Exp $
+c $Id: patch.F,v 1.16 2000-05-25 01:09:20 d3h325 Exp $
 #if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
@@ -20,10 +20,11 @@ c
 #include "global.fh"
       logical status
 c
-c***  Intitialize a message passing library
+c***  Initialize a message passing library
 c
 #ifdef MPI
-      call mpi_init
+      integer ierr
+      call mpi_init(ierr)
 #else
       call pbeginf
 #endif
@@ -53,7 +54,7 @@ c
       call ga_terminate()
 c
 #ifdef MPI
-      call mpi_finalize()
+      call mpi_finalize(ierr)
 #else
       call pend()
 #endif

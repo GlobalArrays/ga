@@ -11,4 +11,4 @@ divert(-1)
   # functions to test
   define(m4_test_GA_FILL, `yes') 
 divert
-include(`ngatest/ngatest.def')
+include(`ngatest_src/ngatest.def')
