@@ -26,6 +26,7 @@
 extern Integer ga_nnodes_   ARGS_(( void));
 extern Integer ga_nodeid_   ARGS_(( void));
 extern Integer ga_inquire_memory_  ARGS_(( void));
+extern Integer ga_memory_avail_ ARGS_(( void));
 extern Integer ga_read_inc_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
 extern Integer ga_verify_handle_ ARGS_((Integer* ));
 extern logical ga_create ARGS_((Integer*, Integer*, Integer*, char*, Integer*,                                  Integer*, Integer*));

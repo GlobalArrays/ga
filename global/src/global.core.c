@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.6 1995-02-28 19:50:39 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.7 1995-03-08 02:08:51 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -470,6 +470,14 @@ Integer i, sum=0;
     for(i=0; i<max_global_array; i++) 
         if(GA[i].actv) sum += GA[i].size; 
     return(sum);
+}
+
+
+/*\ RETURNS AMMOUT OF GA MEMORY AVAILABLE on calling processor 
+\*/
+Integer ga_memory_avail_()
+{
+   return(GA_total_memory); 
 }
 
 

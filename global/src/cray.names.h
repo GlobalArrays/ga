@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.7 1995-02-28 19:50:37 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.8 1995-03-08 02:08:49 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -39,6 +39,7 @@
 #define  ga_mask_                  GA_MASK
 #define  ga_matmul_patch_          GA_MATMUL_PATCH
 #define  ga_memory_limited_        GA_MEMORY_LIMITED
+#define  ga_memory_avail_          GA_MEMORY_AVAIL
 #define  ga_nnodes_                GA_NNODES
 #define  ga_nodeid_                GA_NODEID
 #define  ga_print_                 GA_PRINT
