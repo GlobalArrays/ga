@@ -19,6 +19,14 @@ ifdef LARGE_FILES
     LIB_DEFINES += -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
     CC += $(shell getconf LFS_CFLAGS)
   endif  
+#
+# LINUX: kernel 2.4 is needed
+#
+  ifeq ($(TARGET), LINUX)
+    LIB_DEFINES += -D_LARGEFILE64_SOURCE
+    LIB_DEFINES += $(shell getconf LFS_CFLAGS)
+  endif  
+
   LIB_DEFINES += -DLARGE_FILES
 endif
 

@@ -341,7 +341,7 @@ c
          write(6,*) ' Random write: len=',iolen
          call testerr(eaf_open(fname, eaf_rw, fd))
          do loop = 1, int(length/iolen)/4
-           offset = int((length-iolen)*eaf_util_random(0))
+           offset = aint((length-iolen)*eaf_util_random(0))
            ierr = eaf_write(fd, offset, buf, iolen)
            if (ierr .ne. 0) then
              call testerr(ierr)
@@ -352,7 +352,7 @@ c
          write(6,*) ' Random read : len=',iolen
          call testerr(eaf_open(fname, eaf_rw, fd))
          do loop = 1, int(length/iolen)/4
-           offset = int((length-iolen)*eaf_util_random(0))
+           offset = aint((length-iolen)*eaf_util_random(0))
            ierr = eaf_read(fd, offset, buf, iolen)
            if (ierr .ne. 0) then
              call testerr(ierr)
