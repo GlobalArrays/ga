@@ -104,10 +104,13 @@ endif
 #............................. CYGNUS on Windows ..........................
 #
 ifeq ($(TARGET),CYGNUS)
+       P_FILE = NO
  GLOB_DEFINES = -DLINUX -DCYGNUS
            FC = g77
            CC = gcc
      FOPT_REN = -fno-second-underscore
+    FOPT_REN += -Wno-globals
+     COPT_REN = -malign-double
        RANLIB = ranlib
 endif
 #
