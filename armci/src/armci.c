@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.58 2002-12-14 00:29:22 d3h325 Exp $ */
+/* $Id: armci.c,v 1.59 2002-12-17 12:33:55 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -395,6 +395,10 @@ int direct=SAMECLUSNODE(nb_handle->proc);
     if(nb_handle){
 #     ifdef ARMCI_NB_WAIT
         if(nb_handle->tag==0){
+              ARMCI_NB_WAIT(nb_handle->cmpl_info);
+              return(success);
+        }
+        if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
               ARMCI_NB_WAIT(nb_handle->cmpl_info);
               return(success);
         }
