@@ -1,17 +1,10 @@
-/*
- *    Copyright (c) 2003 by Quadrics Ltd.
- *
- *    For licensing information please see the supplied COPYING file
- *
- */
-
-/* $Id: pgs_sys.h,v 1.1 2004-04-13 19:57:18 manoj Exp $ */
+/* $Id: pgs_sys.h,v 1.2 2004-04-13 20:04:00 manoj Exp $ */
 /* $Source: /tmp/hpctools/ga/armci/src/pgs_sys.h,v $ */
 
 #ifndef _ELAN_PGSSYS_H
 #define _ELAN_PGSSYS_H
 
-#ident	"@(#)$Id: pgs_sys.h,v 1.1 2004-04-13 19:57:18 manoj Exp $"
+#ident	"@(#)$Id: pgs_sys.h,v 1.2 2004-04-13 20:04:00 manoj Exp $"
 
 #define PGS_QSLOTSIZE    1024
 #define PGS_THREADSTACK 16384

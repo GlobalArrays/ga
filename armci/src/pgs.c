@@ -1,14 +1,7 @@
-/*
- *    Copyright (c) 2003 by Quadrics Ltd.
- *
- *    For licensing information please see the supplied COPYING file
- *
- */
-
-/* $Id: pgs.c,v 1.1 2004-04-13 19:57:18 manoj Exp $ */
+/* $Id: pgs.c,v 1.2 2004-04-13 20:04:00 manoj Exp $ */
 /* $Source: /tmp/hpctools/ga/armci/src/pgs.c,v $ */
 
-#ident	"@(#)$Id: pgs.c,v 1.1 2004-04-13 19:57:18 manoj Exp $"
+#ident	"@(#)$Id: pgs.c,v 1.2 2004-04-13 20:04:00 manoj Exp $"
 
 #include <stdlib.h>
 
