@@ -623,7 +623,7 @@ c**** if return code is < 0
       elseif (irc.lt.0) then
          call emsg('there is a zero diagonal element:', irc)
 c**** if return code is > 0         
-      elseif (irc.lt.0) then
+      elseif (irc.gt.0) then
          call emsg('It is not positive definite the minor of order:',
      &        irc)
       endif
