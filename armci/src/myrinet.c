@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.33 2001-09-13 22:58:24 d3h325 Exp $
+/* $Id: myrinet.c,v 1.34 2001-09-17 18:25:28 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -67,6 +67,10 @@
 #define ARMCI_GM_MIN_MESG_SIZE 5
 #define SHORT_MSGLEN 68000
 #define SND_BUFLEN (MSG_BUFLEN +128)
+#define CLIENT_STAMP 101
+#define SERV_STAMP 99
+static char * client_tail;
+static char * serv_tail;
 
 extern void armci_buf_free(char *ap);
 extern void armci_init_buf_alloc(size_t len, void* buffer);
@@ -343,14 +347,19 @@ void armci_unpin_memory(void *ptr, int stride_arr[], int count[], int strides)
 int armci_gm_client_mem_alloc()
 {
 char *tmp;
+int extra=256;
 
     /* allocate buf keeping the pointers of server ack buf */
     proc_gm->serv_ack_ptr = (long **)calloc(armci_nclus, sizeof(long*));
     if(!proc_gm->serv_ack_ptr) return FALSE;
 
     /* allocate send buffer */
-    MessageSndBuffer = (char *)gm_dma_malloc(proc_gm->port, SND_BUFLEN);
+    MessageSndBuffer = (char *)gm_dma_malloc(proc_gm->port, SND_BUFLEN+extra);
     if(MessageSndBuffer == 0) return FALSE;
+    /* stamp the last byte */
+    client_tail= MessageSndBuffer+SND_BUFLEN+extra-1;
+    *client_tail=CLIENT_STAMP;
+
 
     tmp = gm_dma_malloc(proc_gm->port, 2*sizeof(long));
     if(!tmp)return FALSE;
@@ -738,8 +747,11 @@ int armci_gm_serv_mem_alloc()
     *serv_gm->ack = ARMCI_GM_CLEAR;
     
     /* allocate recv buffer */
-    MessageRcvBuffer = (char *)gm_dma_malloc(serv_gm->snd_port, MSG_BUFLEN);
+    MessageRcvBuffer = (char *)gm_dma_malloc(serv_gm->snd_port, MSG_BUFLEN+64);
     if(MessageRcvBuffer == 0) return FALSE;
+    /* stamp the last byte */
+    serv_tail= MessageRcvBuffer + MSG_BUFLEN;
+    *serv_tail=SERV_STAMP;
 
     serv_gm->proc_ack_ptr = (long *)gm_dma_malloc(serv_gm->snd_port,
                                                   armci_nproc*sizeof(long));
@@ -1225,6 +1237,10 @@ void armci_transport_cleanup()
         gm_close(serv_gm->rcv_port);
         gm_close(serv_gm->snd_port);
         free(serv_gm->node_map); free(serv_gm->port_map);
+        if(*serv_tail != SERV_STAMP){
+          printf("%d: server_stamp %d %d\n",armci_me,*serv_tail, SERV_STAMP);
+          armci_die("ARMCI Internal Error: end-of-buffer overwritten",0);
+        }
     }
     else {
 #if 0
@@ -1232,6 +1248,10 @@ void armci_transport_cleanup()
             armci_die("computing process  memory deallocate memory failed",0);
 #endif   
         free(proc_gm->node_map);
+        if(*client_tail != CLIENT_STAMP){
+          printf("%d: client_stamp %d %d\n",armci_me,*client_tail,CLIENT_STAMP);
+          armci_die("ARMCI Internal Error: end-of-buffer overwritten",0);
+        }
     }
 }
  
