@@ -20,6 +20,9 @@ ifdef IWAY
        LOC_DEFINES = -DIWAY -DSOCKCONNECT
 endif
 
+
+
+ifndef USE_ARMCI
 ifeq ($(TARGET),$(findstring $(TARGET),$(DATA-SERVER)))
     ifndef IWAY
        LOC_DEFINES += -DDATA_SERVER
@@ -31,6 +34,9 @@ ifeq ($(VERSION),SHMEM)
     LOC_DEFINES += -DSYSV
   endif
 endif
+endif
+
+
 
 # We need to remove entire library when changing TARGET rather
 # than individual objects 
@@ -42,6 +48,9 @@ LIB_DISTRIB = ../../lib
 ifdef USE_ARMCI
 	LOC_DEFINES = -DARMCI
 	LOC_INCLUDES = -I../../armci/src
+ifndef USE_MPI
+	LOC_DEFINES = -DARMCI -DTCGMSG
+endif
 endif
 
 INCDIR = ../../include

@@ -24,7 +24,7 @@ void FATR igop_();
 #   define MPI 
 #endif
 
-ifdef MPI
+#ifdef MPI
 #  include <mpi.h>
 #else
 #  include "sndrcv.h"
