@@ -16,6 +16,10 @@ To build C and Fortran programs type:
 "make ntestc.x"    to create a C test program for n-dim GA
 "make ga-mpi.x"    to create a C test program for GA that demonstrates
                    the interface to MPI
+"make mtest.x"     To create a test program for matrix functions
+"make testmult.x"  To create a test program for GEMM functions (Eg:dgemm).
+"make elempatch.x" To create a test program for the  element-wise 
+		   functions 
 
 
                    M4-based N-dim test program
