@@ -299,13 +299,13 @@ void armci_agg_complete(armci_ihdl_t nb_handle, int condition) {
     if(aggr[index]->request_len) {
       switch(nb_handle->op) {
       case PUT:
-	if((rc=ARMCI_NbPutV(aggr[index]->darr, aggr[index]->request_len, 
-			    nb_handle->proc, NULL)))
+	if((rc=ARMCI_PutV(aggr[index]->darr, aggr[index]->request_len, 
+			  nb_handle->proc)))
 	  ARMCI_Error("armci_agg_complete: putv failed",rc);
 	break;
       case GET:
-	if((rc=ARMCI_NbGetV(aggr[index]->darr, aggr[index]->request_len, 
-			    nb_handle->proc, NULL)))
+	if((rc=ARMCI_GetV(aggr[index]->darr, aggr[index]->request_len, 
+			  nb_handle->proc)))
 	  ARMCI_Error("armci_agg_complete: getv failed",rc);  
 	break;
       }
