@@ -37,6 +37,9 @@ p.exe: $(OBJDIR) $(OBJDIR)\p.obj
 testc.exe: $(OBJDIR) $(OBJDIR)\testc.obj
 	$(CC) $(COPT) /Fe$@ $(OBJDIR)\testc.obj $(LIBS) $(CLINK)
 
+ngatest.exe: $(OBJDIR) $(OBJDIR)\ngatest.obj
+	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\ngatest.obj $(LIBS)
+
 clean:
 	-@erase /q $(OBJDIR)\* *.exe *.ilk *.pdb *.pch
 
