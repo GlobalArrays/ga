@@ -1,4 +1,4 @@
-/* $Id: shmlimit.c,v 1.5 1999-11-02 22:47:20 d3h325 Exp $ */
+/* $Id: shmlimit.c,v 1.6 1999-11-24 23:45:04 d3h325 Exp $ */
 /*
  * This code is used to test shared memory limits within
  * a separately forked child process.
@@ -103,7 +103,9 @@ again:   rc = wait (&status);
        if (!WIFEXITED(status)) armci_die("ARMCI: child did not return rc",0);
        x = WEXITSTATUS(status);
     }
-    RestoreSigChldDfl();
+   
+    /* restore previous signal handler */
+    RestoreSigChld();
 
 #ifdef USE_PIPE
     close(fd[0]);
