@@ -38,7 +38,6 @@
       logical nga_create_ghosts_irreg,nga_create_ghosts
       logical nga_create_config, nga_create_irreg_config
       logical nga_create_ghosts_irreg_config, nga_create_ghosts_config
-      integer ga_is_mirrored, nga_num_shmem_seg
 !
       external ga_create, ga_destroy, ga_ddot, ga_locate
       external ga_nnodes, ga_nodeid, ga_read_inc, ga_create_irreg
