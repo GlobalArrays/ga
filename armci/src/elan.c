@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.16 2002-10-10 22:00:15 d3h325 Exp $ */
+/* $Id: elan.c,v 1.17 2003-04-03 23:56:16 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <elan3/elan3.h>
 #include <stdio.h>
@@ -54,8 +54,13 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
     if ((q = elan_gallocQueue(elan_base, elan_base->allGroup)) == NULL)
             armci_die( "elan_gallocElan",0 );
 
+#if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,4,6) 
     if (!(mq = elan_mainQueueInit( elan_base->state, q, nslots, slotsize)))
-            armci_die("Failed to to initialise Main Queue",0);
+            armci_die("Failed to to initialise Main Q",0);
+#else
+    if (!(mq = elan_mainQueueInit( elan_base->state, q, nslots, slotsize,
+          0)))armci_die("Failed to initialise Main Q",0);
+#endif
 
     if(armci_me == armci_master) {
         if(!(ops_done_ar=(ops_t*)calloc(armci_nproc,sizeof(ops_t))))
