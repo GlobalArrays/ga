@@ -276,8 +276,8 @@ Size_t elio_write(Fd_t fd, Off_t  doffset, const void* buf, Size_t bytes)
 
 int elio_set_cb(Fd_t fd, Off_t doffset, int reqn, void *buf, Size_t bytes)
 {
-  off_t offset = (off_t) doffset;
 #if defined(AIO)
+    off_t offset = (off_t) doffset;
 #   if defined(PARAGON) || defined(CRAY)
        if(offset != SEEK(fd->fd, offset, SEEK_SET))return (SEEKFAIL);
 #      if  defined(CRAY)
@@ -311,8 +311,9 @@ int elio_awrite(Fd_t fd, Off_t doffset, const void* buf, Size_t bytes, io_reques
 {
   off_t offset;
   Size_t stat;
+#ifdef AIO
   int    aio_i;
-  int    rc;
+#endif
 
   if (doffset >= ABSURDLY_LARGE) 
     ELIO_ERROR(SEEKFAIL,0);
@@ -357,6 +358,7 @@ int elio_awrite(Fd_t fd, Off_t doffset, const void* buf, Size_t bytes, io_reques
 #     endif
       SYNC_EMULATE(write);
    } else {
+      int rc;
       *req_id = (io_request_t) aio_i;
       if((rc=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
                                                  ELIO_ERROR(rc,0);
@@ -542,7 +544,9 @@ int elio_aread(Fd_t fd, Off_t doffset, void* buf, Size_t bytes, io_request_t * r
 {
   off_t offset = (off_t) doffset;
   Size_t stat;
+#ifdef AIO
   int    aio_i;
+#endif
 #ifdef CRAY
   int rc;
 #endif
@@ -632,8 +636,9 @@ int elio_aread(Fd_t fd, Off_t doffset, void* buf, Size_t bytes, io_request_t * r
 int elio_wait(io_request_t *req_id)
 {
   int  aio_i=0;
-  int  rc=0;
+  int  rc;
 
+  rc=0; /* just to remove the compiler warning */
 #ifdef PABLO
   int pablo_code = PABLO_elio_wait;
   PABLO_start( pablo_code );
@@ -802,7 +807,7 @@ Fd_t  elio_open(const char* fname, int type, int mode)
 {
   Fd_t fd=NULL;
   stat_t statinfo;
-  int ptype, rc;
+  int ptype=0, rc;
   char dirname[ELIO_FILENAME_MAX];
 
 #ifdef PABLO
