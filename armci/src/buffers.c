@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.9 2002-10-23 18:37:38 vinod Exp $    **/
+/* $Id: buffers.c,v 1.10 2002-10-23 19:01:49 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -387,7 +387,7 @@ char *_armci_buf_ptr_from_id(int id)
 
 /*\function called from armci_wait to wait for non-blocking ops
 \*/
-void _armci_complete_nb_request(armci_hdl_t nb_handle, int *retcode) 
+void _armci_buf_complete_nb_request(armci_hdl_t nb_handle, int *retcode) 
 {
 int i=0;
     if(nb_handle->bufid == NB_NONE) *retcode=0;
@@ -408,7 +408,7 @@ int i=0;
 
 /*\function to set the buffer tag and also the async flag
 \*/
-void _armci_set_buffer_tag(void *bufptr,unsigned int tag)
+void _armci_buf_set_tag(void *bufptr,unsigned int tag)
 {
 int  index = BUF_TO_BUFINDEX(bufptr);
    /*_armci_buf_state->table[index].async=1;*/

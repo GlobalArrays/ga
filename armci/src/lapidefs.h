@@ -9,7 +9,7 @@
 
 #ifdef LAPI_ERR_BAD_NINTH_PARM
 #define LAPI2
-#define COMPLETE_HANDLE _armci_complete_nb_request
+#define COMPLETE_HANDLE _armci_buf_complete_nb_request
 #endif
 
 #define NB_CMPL_T lapi_cmpl_t   
@@ -98,7 +98,7 @@ int _val_;\
 #define CLEAR_SEND_BUF_FIELD(_cntr, _s, _r,_t) CLEAR_COUNTER(_cntr)
 #define FIRST_INIT_SEND_BUF INIT_COUNTER
 #define STORE_BUFID
-#define SET_BUF_TAG _armci_set_buffer_tag
+#define SET_BUF_TAG _armci_buf_set_tag
 
 #define FENCE_NODE(p) CLEAR_COUNTER(cmpl_arr[(p)])
 
