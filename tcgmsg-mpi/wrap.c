@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.3 2001-11-14 19:12:01 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.4 2002-01-30 01:15:36 d3h325 Exp $ */
 #include <stdlib.h>
 #include <mpi.h>
 #ifdef CRAY
@@ -17,7 +17,7 @@ static double gop_work[DGOP_BUF_SIZE];              /* global ops buffer */
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
-static void FATR idoop(n, op, x, work)
+static void idoop(n, op, x, work)
      long n;
      char *op;
      Integer *x, *work;
@@ -81,6 +81,7 @@ void FATR wrap_snd(wrap_type, buf, wrap_lenbuf, wrap_node, wrap_sync)
      (void)  SND_(&type, buf, &lenbuf, &node, &sync);
      return;
      }
+
 void FATR wrap_rcv(wrap_type, buf, wrap_lenbuf, wrap_lenmes, wrap_nodeselect, wrap_nodefrom, wrap_sync)
 
      Integer *wrap_type;
@@ -115,7 +116,7 @@ Integer FATR wrap_probe(wrap_type, wrap_node)
      type=  (long) *wrap_type;
      node=  (long) *wrap_node;
 
-  return (Integer) PROBE_(type, node);
+  return (Integer) PROBE_(&type, &node);
 }
 
 Integer FATR wrap_mitod(wrap_n)
@@ -186,7 +187,7 @@ void FATR wrap_parerr( wrap_code)
      Integer *wrap_code;
 {
   long code=  (long) *wrap_code;
-  (void )PARERR_(&code);
+  (void )Error("User detected error in FORTRAN",code);
   return;
 }
 void FATR wrap_waitcom(wrap_node)

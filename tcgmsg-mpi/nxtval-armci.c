@@ -9,7 +9,7 @@ static long *pnxtval_counter;
 #define BUSY -1L               /* indicates somebody else updating counter*/
 #define NXTV_SERVER ((int)NNODES_() -1)
 
-long FATR NXTVAL_(mproc)
+long NXTVAL_(mproc)
      long  *mproc;
 /*
   Get next value of shared counter.

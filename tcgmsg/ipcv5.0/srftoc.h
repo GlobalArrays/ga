@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/srftoc.h,v 1.4 2001-05-08 17:30:39 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/srftoc.h,v 1.5 2002-01-30 01:15:35 d3h325 Exp $ */
 
 #ifndef SRFTOC_H_
 #define SRFTOC_H_
@@ -53,6 +53,39 @@
 #define DGOP_        DGOP
 #define IGOP_        IGOP
 
+
+#elif defined(F2C2__)
+#define  niceftn_  niceftn__ 
+#define  tcgtime_  tcgtime__
+#define  pbeginf_  pbeginf__  
+#define  pbginf_   pbginf__ 
+#define  pend_     pend__ 
+#define  pbftoc_   pbftoc__
+#define  llog_     llog__ 
+#define  stats_    stats__ 
+#define  drand48_  drand48__ 
+#define  srand48_  srand48__ 
+#define  tcgready_ tcgready__
+#define  nodeid_   nodeid__ 
+#define  probe_    probe__ 
+#define  nnodes_   nnodes__
+#define  mtime_    mtime__ 
+#define  snd_      snd__ 
+#define  rcv_      rcv__  
+#define  brdcst_   brdcst__ 
+#define  synch_    synch__ 
+#define  setdbg_   setdbg__ 
+#define  nxtval_   nxtval__
+#define  parerr_   parerr__ 
+#define  waitcom_  waitcom__
+#define  mitod_    mitod__ 
+#define  mdtoi_    mdtoi__ 
+#define  mdtob_    mdtob__ 
+#define  mitob_    mitob__ 
+#define  pfcopy_   pfcopy__ 
+
+
+
 #else
 
 #define NICEFTN_     niceftn_ 
@@ -85,5 +118,11 @@
 #define wrap_pfcopy  pfcopy_ 
 #define TCGREADY_    tcgready_ 
 #endif
+
+
+
 #endif
+
+
+
 

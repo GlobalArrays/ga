@@ -36,4 +36,4 @@ testf.exe: .\obj\testf.obj .\obj\checkbyte.obj $(LIBRARY_PATH)
 	$(FC) $(FOPT)  -I. /Fetestf.exe $** $(LIBS)
 
 test.exe: .\obj\test.obj .\obj\checkbyte.obj $(LIBRARY_PATH)
-	$(CC) $(COPT) /Fetest.exe $** $(LIBS)
+	$(CC) $(COPT) /Fetest.exe $** $(LIBS) libf.lib

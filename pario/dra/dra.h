@@ -1,5 +1,7 @@
 /******************* header file for Disk Arrays *****************/
 
+#ifndef _DRA_H_
+#define _DRA_H_
 /* used to be file.modes.h */
 #include "chemio.h"
 #define  DRA_RW ELIO_RW
@@ -56,7 +58,34 @@
 #  define dra_wait_           DRA_WAIT
 #  define dra_terminate_      DRA_TERMINATE
 #  define dra_flick_          DRA_FLICK
+
+#elif defined(F2C2_)
+
+#  define dra_create_         dra_create__         
+#  define ndra_create_        ndra_create__        
+#  define dra_open_           dra_open__           
+#  define dra_inquire_        dra_inquire__        
+#  define ndra_inquire_       ndra_inquire__       
+#  define dra_init_           dra_init__           
+#  define dra_close_          dra_close__          
+#  define dra_delete_         dra_delete__         
+#  define dra_read_           dra_read__           
+#  define ndra_read_          ndra_read__          
+#  define dra_read_section_   dra_read_section__   
+#  define ndra_read_section_  ndra_read_section__  
+#  define dra_write_          dra_write__          
+#  define ndra_write_         ndra_write__         
+#  define dra_write_section_  dra_write_section__  
+#  define ndra_write_section_ ndra_write_section__ 
+#  define dra_probe_          dra_probe__          
+#  define dra_set_debug_      dra_set_debug__      
+#  define dra_wait_           dra_wait__           
+#  define dra_terminate_      dra_terminate__      
+#  define dra_flick_          dra_flick__          
+
 #endif
+
+
 
 
 
@@ -238,3 +267,6 @@ extern void DRA_Flick();
 #endif
 
 #undef _ARGS_
+
+#endif
+

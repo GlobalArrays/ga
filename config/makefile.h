@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.62 2002-01-28 20:16:53 d3h325 Exp $
+# $Id: makefile.h,v 1.63 2002-01-30 01:15:26 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -51,6 +51,10 @@ ifdef OPTIMIZE
          FOPT = -O
          COPT = -O
 endif
+
+# to enable two underscores in fortran names, please define environment variable
+# F2C_TWO_UNDERSCORES or uncomment the following line
+#F2C_TWO_UNDERSCORES=1
 #
 #........................ SUN and Fujitsu Sparc/solaris ........................
 #
@@ -256,8 +260,11 @@ endif
 ifeq  ($(_CPU),alpha)
            CC = ccc
            FC = fort
-    FOPT_REN +=-assume no2underscore -align_dcommons -fpe3 -check nooverflow 
+    FOPT_REN +=-align_dcommons -fpe3 -check nooverflow 
     FOPT_REN +=-assume accuracy_sensitive -check nopower -check nounderflow
+ifndef F2C_TWO_UNDERSCORES
+    FOPT_REN +=-assume no2underscore
+endif
 ifdef USE_INTEGER4
     FLD_REN +=  -Wl,-taso
     CLD_REN+= -Wl,-taso 
@@ -295,8 +302,8 @@ endif
 ifeq ($(TARGET),HPUX)
 # free HP cc compiler is not up to the job: use gcc if no commercial version
 #          CC = gcc
-           FC = fort77
-!           FC = f90
+#          FC = fort77
+           FC = f90
 
           CPP = /lib/cpp
     ifeq ($(FOPT),-O)
@@ -528,10 +535,17 @@ endif
 
 #get rid of 2nd underscore under g77
 ifeq ($(_FC),g77)
+ifndef F2C_TWO_UNDERSCORES
      FOPT_REN += -fno-second-underscore
+endif
      ifndef OLD_G77
         FOPT_REN += -Wno-globals
      endif
+endif
+
+#add 2nd underscore under linux/cygwin to match g77 names
+ifdef F2C_TWO_UNDERSCORES
+     CDEFS += -DF2C2_
 endif
 
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)

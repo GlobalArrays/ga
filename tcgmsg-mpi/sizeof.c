@@ -9,7 +9,7 @@
 
 
 
-long FATR MDTOB_(n)
+long MDTOB_(n)
      long *n;
 /*
   Return the no. of bytes that n doubles occupy
@@ -23,7 +23,7 @@ long FATR MDTOB_(n)
 
 
 
-long FATR MDTOI_(n)
+long MDTOI_(n)
      long *n;
 /*
   Return the minimum no. of integers which will hold n doubles.
@@ -36,7 +36,7 @@ long FATR MDTOI_(n)
 }
 
 
-long FATR MITOB_(n)
+long MITOB_(n)
      long *n;
 /*
   Return the no. of bytes that n ints=longs occupy
@@ -49,7 +49,7 @@ long FATR MITOB_(n)
 }
 
 
-long FATR MITOD_(n)
+long MITOD_(n)
      long *n;
 /*
   Return the minimum no. of doubles in which we can store n longs

@@ -8,24 +8,43 @@
 #endif
 
 #if defined(CRAY) || defined(WIN32)
-#define eaf_write_ EAF_WRITE
-#define eaf_awrite_ EAF_AWRITE
-#define eaf_read_ EAF_READ
-#define eaf_aread_ EAF_AREAD
-#define eaf_wait_ EAF_WAIT
-#define eaf_probe_ EAF_PROBE
-#define eaf_open_ EAF_OPEN
-#define eaf_close_ EAF_CLOSE
-#define eaf_delete_ EAF_DELETE
-#define eaf_length_ EAF_LENGTH
-#define eaf_truncate_ EAF_TRUNCATE
-#define eaf_stat_ EAF_STAT
-#define eaf_eof_ EAF_EOF
-#define eaf_error_ EAF_ERROR
+#define eaf_write_ 	EAF_WRITE
+#define eaf_awrite_ 	EAF_AWRITE
+#define eaf_read_ 	EAF_READ
+#define eaf_aread_ 	EAF_AREAD
+#define eaf_wait_ 	EAF_WAIT
+#define eaf_probe_ 	EAF_PROBE
+#define eaf_open_ 	EAF_OPEN
+#define eaf_close_ 	EAF_CLOSE
+#define eaf_delete_ 	EAF_DELETE
+#define eaf_length_ 	EAF_LENGTH
+#define eaf_truncate_ 	EAF_TRUNCATE
+#define eaf_stat_ 	EAF_STAT
+#define eaf_eof_ 	EAF_EOF
+#define eaf_error_ 	EAF_ERROR
 #define eaf_print_stats_ EAF_PRINT_STATS
-#define eaf_errmsg_ EAF_ERRMSG
+#define eaf_errmsg_ 	EAF_ERRMSG
 #define eaf_util_szint_ EAF_UTIL_SZINT
 #define eaf_util_random_ EAF_UTIL_RANDOM
+#elif defined(F2C2_)
+#define eaf_write_ 	eaf_write__ 	
+#define eaf_awrite_ 	eaf_awrite__ 	
+#define eaf_read_ 	eaf_read__ 	
+#define eaf_aread_ 	eaf_aread__ 	
+#define eaf_wait_ 	eaf_wait__ 	
+#define eaf_probe_ 	eaf_probe__ 	
+#define eaf_open_ 	eaf_open__ 	
+#define eaf_close_ 	eaf_close__ 	
+#define eaf_delete_ 	eaf_delete__ 	
+#define eaf_length_ 	eaf_length__ 	
+#define eaf_truncate_ 	eaf_truncate__ 	
+#define eaf_stat_ 	eaf_stat__ 	
+#define eaf_eof_ 	eaf_eof__ 	
+#define eaf_error_ 	eaf_error__ 	
+#define eaf_print_stats_ eaf_print_stats__  
+#define eaf_errmsg_ 	eaf_errmsg__ 	
+#define eaf_util_szint_ eaf_util_szint__   
+#define eaf_util_random_ eaf_util_random__
 #endif
 
 static int fortchar_to_string(const char *f, int flen, char *buf, 

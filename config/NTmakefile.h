@@ -18,12 +18,12 @@ ARFLAGS = /out:$(LIBRARY_PATH)
 
 CC = cl -nologo
 #COPT =   -Zi
-COPT =  -G5 -O2
+COPT =  -O2
 CFLAGS = $(COPT) $(DEFINES) $(INCLUDES) -Fo"$(OBJDIR)/" -c
 
 FC = fl32 -nologo
 #FOPT = -Zi
-FOPT = -G5 -Ox
+FOPT = -Ox
 FFLAGS = $(FOPT) -Fo"$(OBJDIR)/" -c
 
 CPP   = $(CC) -EP
@@ -46,7 +46,7 @@ CPPFLAGS = $(INCLUDES) $(DEFINES)
         $(CPP) $(CPPFLAGS) $< > $*.for
 
 .exe.pg:
-        @echo Creating WMPI file (4 MPI tasks): $*.pg
+        @echo Creating .pg file (4 MPI tasks): $*.pg
         @echo local 3 > $*.pg
 
 .c.exe:
@@ -56,7 +56,6 @@ CPPFLAGS = $(INCLUDES) $(DEFINES)
 !ENDIF
 	@$(MAKE) -nologo $(OBJDIR)\$*.obj
 	$(CC) /Fe$@ $(OBJDIR)\$*.obj $(TESTUTIL) $(LIBS) $(CLINK)
-	@if not exist $*.pg $(MAKE) -nologo $*.pg
 
 .F.exe:
 	@$(MAKE) -nologo $(OBJDIR)
@@ -65,4 +64,3 @@ CPPFLAGS = $(INCLUDES) $(DEFINES)
 !ENDIF
 	@$(MAKE) -nologo $(OBJDIR)\$*.obj
 	$(FC) /Fe$@ $(OBJDIR)\$*.obj $(TESTUTIL) $(LIBS)
-	@if not exist $*.pg $(MAKE) -nologo $*.pg

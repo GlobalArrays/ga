@@ -20,7 +20,7 @@ long TCGREADY_()
 
 /*\ number of processes
 \*/
-long FATR NNODES_()
+long NNODES_()
 {
 int numprocs;
 
@@ -34,7 +34,7 @@ int numprocs;
 
 /*\ Get calling process id
 \*/
-long FATR NODEID_()
+long NODEID_()
 {
 int myid;
 
@@ -183,7 +183,7 @@ double FATR TCGTIME_()
 
 
 
-long FATR MTIME_()
+long MTIME_()
 {
   return (long) (TCGTIME_()*100.0); /* time in centiseconds */
 }
@@ -192,14 +192,14 @@ long FATR MTIME_()
 
 /*\ longerface from Fortran to C error routine
 \*/
-void FATR PARERR_(code)
+void PARERR_(code)
    long *code;
 {
   Error("User detected error in FORTRAN", *code);
 }
 
 
-void FATR SETDBG_(onoff)
+void SETDBG_(onoff)
      long *onoff;
 {
      DEBUG_ = *onoff;

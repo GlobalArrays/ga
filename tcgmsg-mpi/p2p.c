@@ -17,7 +17,7 @@ static int n_in_msg_q=0;
 
 
 
-void FATR SND_(type, buf, lenbuf, node, sync)
+void SND_(type, buf, lenbuf, node, sync)
      long  *type;
      Void *buf;
      long  *lenbuf;
@@ -54,7 +54,7 @@ int ttype = (int)*type;
 
 
 
-void FATR RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
+void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
      long  *type;
      Void *buf;
      long  *lenbuf;
@@ -110,7 +110,7 @@ MPI_Request request;
 }
 
 /* ignores nodesel !! */
-void FATR WAITCOM_(nodesel)
+void WAITCOM_(nodesel)
      long *nodesel;
 {
 int ierr, i;
@@ -130,7 +130,7 @@ MPI_Status status;
 
 
 
-long FATR PROBE_(type, node)
+long PROBE_(type, node)
     long *type;
     long *node;  
 {

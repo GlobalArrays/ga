@@ -8,7 +8,7 @@
 #include "msgtypesc.h"
 
 
-void FATR PFILECOPY_(type, node0, filename)
+void PFILECOPY_(type, node0, filename)
      long *type, *node0;
      char *filename;
 /*
@@ -126,7 +126,7 @@ void PFCOPY_(type, node0, arg)
   int   len = arg->len;
 #endif
 #if defined(CRAY) || defined(WIN32)
-void FATR PFCOPY_(type, node0, arg)
+void PFCOPY_(type, node0, arg)
      long *type;
      long *node0;
      _fcd arg;
@@ -135,7 +135,7 @@ void FATR PFCOPY_(type, node0, arg)
   int len = _fcdlen(arg);
 #endif
 #if !defined(ARDENT) && !defined(CRAY) && !defined(WIN32)
-void FATR PFCOPY_(type, node0, fname, len)
+void PFCOPY_(type, node0, fname, len)
   long *type;
   long *node0;
   char *fname;

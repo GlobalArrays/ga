@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srftoc.h,v 1.10 2001-04-25 00:20:55 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srftoc.h,v 1.11 2002-01-30 01:15:35 d3h325 Exp $ */
 
 #ifndef SRFTOC_H_
 #define SRFTOC_H_
@@ -21,7 +21,7 @@
   Note that pbegin and pfilecopy are only called from c.
 */
 
-#if (defined(CRAY) || defined(ARDENT))
+#if defined(CRAY) || defined(ARDENT) || defined(WIN32)
 
 #define NICEFTN_     NICEFTN
 #define NODEID_      NODEID
@@ -54,68 +54,99 @@
 #define igop_        IGOP
 #define TCGREADY_    TCGREADY
 
-#else
-
-#if (defined(AIX) || defined(NEXT) || defined(HPUX)) && !defined(EXTNAME)
+#elif (defined(AIX) || defined(NEXT) || defined(HPUX)) && !defined(EXTNAME)
 #define NICEFTN_     niceftn 
+#define TCGTIME_     tcgtime 
+#define PBEGINF_     pbeginf  
+#define PBGINF_      pbginf 
+#define PEND_        pend 
+#define PBFTOC_      pbftoc
+#define LLOG_        llog 
+#define STATS_       stats 
+#define DRAND48_     drand48 
+#define SRAND48_     srand48 
+#define TCGREADY_    tcgready
+
 #define wrap_nodeid  nodeid 
 #define wrap_probe   probe 
 #define wrap_nnodes  nnodes
 #define wrap_mtime   mtime 
-#define TCGTIME_     tcgtime 
 #define wrap_snd     snd 
 #define wrap_rcv     rcv  
 #define wrap_brdcst  brdcst 
 #define wrap_synch   synch 
-#define PBEGINF_     pbeginf  
-#define PBGINF_      pbginf 
-#define PEND_        pend 
 #define wrap_setdbg  setdbg 
 #define wrap_nxtval  nxtval
-#define PBFTOC_      pbftoc
 #define wrap_parerr  parerr 
-#define LLOG_        llog 
-#define STATS_       stats 
 #define wrap_waitcom waitcom
 #define wrap_mitod   mitod 
 #define wrap_mdtoi   mdtoi 
 #define wrap_mdtob   mdtob 
 #define wrap_mitob   mitob 
-#define DRAND48_     drand48 
-#define SRAND48_     srand48 
 #define wrap_pfcopy  pfcopy 
-#define TCGREADY_    tcgready //no need of fortran interface ?
+
+#elif defined(F2C2__)
+#define  niceftn_  niceftn__ 
+#define  tcgtime_  tcgtime__
+#define  pbeginf_  pbeginf__  
+#define  pbginf_   pbginf__ 
+#define  pend_     pend__ 
+#define  pbftoc_   pbftoc__
+#define  llog_     llog__ 
+#define  stats_    stats__ 
+#define  drand48_  drand48__ 
+#define  srand48_  srand48__ 
+#define  tcgready_ tcgready__
+#define  nodeid_   nodeid__ 
+#define  probe_    probe__ 
+#define  nnodes_   nnodes__
+#define  mtime_    mtime__ 
+#define  snd_      snd__ 
+#define  rcv_      rcv__  
+#define  brdcst_   brdcst__ 
+#define  synch_    synch__ 
+#define  setdbg_   setdbg__ 
+#define  nxtval_   nxtval__
+#define  parerr_   parerr__ 
+#define  waitcom_  waitcom__
+#define  mitod_    mitod__ 
+#define  mdtoi_    mdtoi__ 
+#define  mdtob_    mdtob__ 
+#define  mitob_    mitob__ 
+#define  pfcopy_   pfcopy__ 
+
+
 #else
+
 #define NICEFTN_     niceftn_ 
+#define TCGTIME_     tcgtime_ 
+#define PBEGINF_     pbeginf_  
+#define PBGINF_      pbginf_ 
+#define PEND_        pend_ 
+#define PBFTOC_      pbftoc_
+#define LLOG_        llog_ 
+#define STATS_       stats_ 
+#define DRAND48_     drand48_ 
+#define SRAND48_     srand48_ 
+#define TCGREADY_    tcgready_
+
 #define wrap_nodeid  nodeid_ 
 #define wrap_probe   probe_ 
 #define wrap_nnodes  nnodes_
 #define wrap_mtime   mtime_ 
-#define TCGTIME_     tcgtime_ 
 #define wrap_snd     snd_ 
 #define wrap_rcv     rcv_  
 #define wrap_brdcst  brdcst_ 
 #define wrap_synch   synch_ 
-#define PBEGINF_     pbeginf_  
-#define PBGINF_      pbginf_ 
-#define PEND_        pend_ 
 #define wrap_setdbg  setdbg_ 
 #define wrap_nxtval  nxtval_
-#define PBFTOC_      pbftoc_
 #define wrap_parerr  parerr_ 
-#define LLOG_        llog_ 
-#define STATS_       stats_ 
 #define wrap_waitcom waitcom_
 #define wrap_mitod   mitod_ 
 #define wrap_mdtoi   mdtoi_ 
 #define wrap_mdtob   mdtob_ 
 #define wrap_mitob   mitob_ 
-#define DRAND48_     drand48_ 
-#define SRAND48_     srand48_ 
 #define wrap_pfcopy  pfcopy_ 
-#define TCGREADY_    tcgready_ 
-#endif
-
 #endif
 
 #endif

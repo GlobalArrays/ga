@@ -11,7 +11,7 @@ static double gop_work[DGOP_BUF_SIZE];              /* global ops buffer */
 
 /*\ global operations -- integer version 
 \*/
-void FATR IGOP_(ptype, x, pn, op)
+void IGOP_(ptype, x, pn, op)
      long  *x;
      long  *ptype, *pn;
      char *op;
@@ -69,7 +69,7 @@ long n;
 
 /*\ global operations -- double version 
 \*/
-void FATR DGOP_(ptype, x, pn, op)
+void DGOP_(ptype, x, pn, op)
      double  *x;
      long     *ptype, *pn;
      char    *op;
@@ -117,7 +117,7 @@ long n;
 
 /*\ Synchronize processes
 \*/
-void FATR SYNCH_(type)
+void SYNCH_(type)
      long *type;
 {
 #ifdef ARMCI
@@ -133,7 +133,7 @@ void FATR SYNCH_(type)
 
 /*\ broadcast buffer to all other processes from process originator
 \*/
-void FATR BRDCST_(type, buf, lenbuf, originator)
+void BRDCST_(type, buf, lenbuf, originator)
      long  *type;
      char *buf;
      long  *lenbuf;
@@ -144,13 +144,4 @@ int count = (int)*lenbuf, root = (int)*originator;
 
      MPI_Bcast(buf, count, MPI_CHAR, root, TCGMSG_Comm);
 }
-
-
-/* Wrapper for fortran interface ... UGH ... note that
-   string comparisons above do NOT rely on NULL termination
-   of the operation character string */
-
-#ifdef CRAY
-#  include <fortran.h>
-#endif
 

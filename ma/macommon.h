@@ -63,6 +63,43 @@
 #define f2c_trace_                              F2C_TRACE
 #define f2c_verify_allocator_stuff_		F2C_VERIFY_ALLOCATOR_STUFF
 #define ma_set_sizes_				MA_SET_SIZES
+
+
+
+#elif defined(F2C2_)
+
+#define f2c_alloc_get_                  f2c_alloc_get__
+#define f2c_allocate_heap_              f2c_allocate_heap__
+#define f2c_chop_stack_                 f2c_chop_stack__
+#define f2c_free_heap_                  f2c_free_heap__
+#define f2c_free_heap_piece_            f2c_free_heap_piece__
+#define f2c_get_index_                  f2c_get_index__
+#define f2c_get_next_memhandle_         f2c_get_next_memhandle__
+#define f2c_get_numalign_               f2c_get_numalign__
+#define f2c_inform_base_                f2c_inform_base__
+#define f2c_inform_base_fcd_            f2c_inform_base_fcd__
+#define f2c_init_                       f2c_init__
+#define f2c_init_memhandle_iterator_    f2c_init_memhandle_iterator__
+#define f2c_initialized_                f2c_initialized__
+#define f2c_inquire_avail_              f2c_inquire_avail__
+#define f2c_inquire_heap_               f2c_inquire_heap__
+#define f2c_inquire_stack_              f2c_inquire_stack__
+#define f2c_pop_stack_                  f2c_pop_stack__
+#define f2c_print_stats_                f2c_print_stats__
+#define f2c_push_get_                   f2c_push_get__
+#define f2c_push_stack_                 f2c_push_stack__
+#define f2c_set_auto_verify_            f2c_set_auto_verify__
+#define f2c_set_error_print_            f2c_set_error_print__
+#define f2c_set_hard_fail_              f2c_set_hard_fail__
+#define f2c_set_numalign_               f2c_set_numalign__
+#define f2c_sizeof_                     f2c_sizeof__
+#define f2c_sizeof_overhead_            f2c_sizeof_overhead__
+#define f2c_summarize_allocated_blocks_ f2c_summarize_allocated_blocks__
+#define f2c_trace_                      f2c_trace__
+#define f2c_verify_allocator_stuff_     f2c_verify_allocator_stuff__
+#define ma_set_sizes_                   ma_set_sizes__
+
 #endif
+
 
 #endif

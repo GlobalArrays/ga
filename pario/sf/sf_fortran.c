@@ -37,6 +37,10 @@ Integer FATR SF_CREATE(fname, size_hard_limit, size_soft_limit, req_size, handle
         SFsize_t *size_hard_limit, *size_soft_limit, *req_size;
         Integer *handle;
 #else
+#  if defined(F2C2_)
+#    define sf_create_   sf_create__
+#  endif
+
 Integer FATR sf_create_(fname, size_hard_limit, size_soft_limit, req_size,handle,len)
         char *fname;
         SFsize_t *size_hard_limit, *size_soft_limit, *req_size;

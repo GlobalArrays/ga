@@ -1,5 +1,8 @@
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/sndrcv.h,v 1.7 2002-01-30 01:15:36 d3h325 Exp $ */
+
 #include "srftoc.h"
 #include "msgtypesc.h"
+#include "typesf2c.h"
 
 #ifndef SNDRCV
 #define SNDRCV 1
@@ -13,55 +16,24 @@
 
 #ifdef __cplusplus
 extern "C" {
-   extern long FATR NODEID_();
-   extern long FATR NNODES_();
-   extern long FATR MTIME_();
-   extern double FATR TCGTIME_();
-   extern void FATR SND_();
-   extern void FATR RCV_();
-   extern long FATR PROBE_();
-   extern void FATR BRDCST_();
-   extern void FATR DGOP_();
-   extern void FATR IGOP_();
-   extern void FATR PBEGINF_();
-   extern void PBEGIN_();
-   extern void FATR PEND_();
-   extern void FATR SETDBG_();
-   extern long FATR NXTVAL_();
-   extern void FATR LLOG_();
-   extern void FATR SYNCH_();
-   extern void FATR STATS_();
-   extern void FATR WAITCOM_();
-   extern void Error();
-   extern void FATR PARERR_();
-   extern double FATR DRAND48_();
-   extern void FATR SRAND48_();
-   extern long TCGREADY_();
-   extern long FATR MDTOB_();
-   extern long FATR MITOB_();
-   extern long FATR MDTOI_();
-   extern long FATR MITOD_();
-   extern void FATR PFILECOPY_();
-   extern void FATR PFCOPY_();
-   extern void ALT_PBEGIN_();
-}
 #endif
+
 
 /*
   long NODEID_() returns logical node no. of current process.
   This is 0,1,...,NNODES_()-1
 */
-extern long FATR NODEID_();
+extern long NODEID_();
 
 /*
   long NNODES_() returns total no. of processes
 */
-extern long FATR NNODES_();
+extern long NNODES_();
 
 /*
   MTIME_() return wall clock time in centiseconds
 */
-extern long FATR MTIME_();
+extern long MTIME_();
 
 /*
   TCGTIME_() returns wall clock time in seconds as accurately as possible
@@ -69,77 +41,72 @@ extern long FATR MTIME_();
 extern double FATR TCGTIME_();
 
 /*
-  void SND_(long *type, char *buf, long *lenbuf, long *node, long *sync)
   send message of type *type, from address buf, length *lenbuf bytes
   to node *node.
   Specify *sync as 1 for (mostly) synchronous, 0 for asynchronous.
 */
-extern void FATR SND_();
+extern void SND_(long *type, void *buf, long *lenbuf, long *node, long *sync);
   
 /*
-  void RCV_(long *type, char *buf, long *lenbuf, long *lenmes, 
-  long *nodeselect, long * nodefrom, long *sync)
   receive a message of type *type in buffer buf, size of buf is *lenbuf
   bytes. The actual length returned in lenmes, the sending node in 
   nodefrom. If *nodeselect is a positve integer a message is sought
   from that node. If it is -1 the next pending message is read.
   Specify sync as 1 for synchronous, 0 for asynchronous.
 */
-extern void FATR RCV_();
+extern  void RCV_(long *type, void *buf, long *lenbuf, long *lenmes, 
+       long *nodeselect, long * nodefrom, long *sync);
 
 /*
-  long PROBE_(long *type, long *node)
   Return TRUE/FALSE (1/0) if a message of the specified type is
   available from the specified node (-1 == any node)
 */
-extern long FATR PROBE_();
+extern long PROBE_(long *type, long *node);
 
 /*
-  void BRDCST_(long *type, char *buf, long *lenbuf, long *originator)
   Broadcast to all other nodes the contents of buf, length *lenbuf
   bytes, type *type, with the info originating from node *originator.
 */
-extern void FATR BRDCST_();
+extern 
+  void BRDCST_(long *type, char *buf, long *lenbuf, long *originator);
 
 /*
-  void DGOP_(long *type, double *x, long *n, char *op)
-  void IGOP_(long *type,   long *x, long *n, char *op)
   Apply commutative global operation to elements of x on an element
   by element basis.
 */
-extern void FATR DGOP_();
-extern void FATR IGOP_();
+extern 
+  void DGOP_(long *type, double *x, long *n, char *op);
+extern
+  void IGOP_(long *type,   long *x, long *n, char *op);
 
 /*
   void PBEGINF_()
   This interfaces FORTRAN to the C routine pbegin. This is the first
   thing that should be called on entering the FORTRAN main program.
   The last thing done is to call PEND_()
+extern void PBEGINF_();
 */
-extern void FATR PBEGINF_();
 
 /*
-  void PBEGIN_(int argc, char **argv)
   Initialize the parallel environment ... argc and argv contain the
   arguments in the usual C fashion. pbegin is only called from C.
   FORTRAN should call pbeginf which has no arguments.
 */
-extern void PBEGIN_();
+extern void PBEGIN_(int argc, char **argv);
+extern void ALT_PBEGIN_(int *argc, char ***argv);
 
 /*
-  void PEND_()
   call to tidy up and signal master that have finished
 */
 extern void FATR PEND_();
 
 /*
-  void SETDBG_(long *value)
   set internal debug flag on this process to value (TRUE or FALSE)
 */
-extern void FATR SETDBG_();
+extern 
+  void SETDBG_(long *value);
 
 /*
-  long NXTVAL_(long *mproc)
   This call communicates with a dedicated server process and returns the 
   next counter (value 0, 1, ...) associated with a single active loop.
   mproc is the number of processes actively requesting values. 
@@ -158,7 +125,8 @@ extern void FATR SETDBG_();
   of nxtval() may be large (approx 0.05-0.5s per call ... so each process
   should do about 5-50s of work per call for a 1% overhead).
 */
-extern long FATR NXTVAL_();
+extern 
+  long NXTVAL_(long *mproc);
 
 /*
   void LLOG_() reopens stdin and stderr as log.<process no.>
@@ -166,10 +134,10 @@ extern long FATR NXTVAL_();
 extern void FATR LLOG_();
 
 /*
-  void SYNCH_(long *type)
   Synchronize processes with messages of given type.
 */
-extern void FATR SYNCH_();
+extern 
+  void SYNCH_(long *type);
 
 /*
   void STATS_() print out communication statitics for the current process
@@ -177,17 +145,17 @@ extern void FATR SYNCH_();
 extern void FATR STATS_();
 
 /*
-  void WAITCOM_(long *node)
   Wait for completion of all asynchronous send/recieve to node *node
 */
-extern void FATR WAITCOM_();
+extern
+  void WAITCOM_(long *node);
 
 /*
-  void Error(char *string, long integer) 
   Prints error message and terminates after cleaning up as much as possible. 
   Called only from C. FORTRAN should call the routine PARERR.
 */
-extern void Error();
+extern 
+  void Error(char *string, long integer);
 #define ERROR_ Error
 
 /*
@@ -195,7 +163,6 @@ extern void Error();
   FORTRAN interface to Error which is called as
   Error("User detected error in FORTRAN", *code);
 */
-extern void FATR PARERR_();
 
 /*
   double DRAND48_()  returns double precision random no. in [0.0,1.0]
@@ -205,20 +172,15 @@ extern double FATR DRAND48_();
 extern void FATR SRAND48_();
 
 /*
- TCGREADY tells if TCGMSG was already initialized (1) or not (0)
-*/
-extern long TCGREADY_();
-
-/*
   long MDTOB_(long *n) returns no. of bytes that *n double occupy
-  long MITOB_(long *n) returns no. of bytes that *n Ints occupy
+  long MITOB_(long *n) returns no. of bytes that *n longs occupy
   long MDTOI_(long *n) returns minimum no. of longs that can hold n doubles
-  long MITOD_(long *n) returns minimum no. of doubles that can hold b Ints
+  long MITOD_(long *n) returns minimum no. of doubles that can hold b longs
 */
-extern long FATR MDTOB_();
-extern long FATR MITOB_();
-extern long FATR MDTOI_();
-extern long FATR MITOD_();
+extern long MDTOB_(long *n);
+extern long MITOB_(long *n);
+extern long MDTOI_(long *n);
+extern long MITOD_(long *n);
 
 /*
   void PFILECOPY_(long *type, long *node0, char *filename)
@@ -231,7 +193,25 @@ extern long FATR MITOD_();
   may be in the same directory it is recommended that distinct
   filenames are used.
 */
-extern void FATR PFILECOPY_();
-extern void FATR PFCOPY_();
+extern void PFILECOPY_(long *type, long *node0, char *filename);
+
+/*
+ TCGREADY tells if TCGMSG was already initialized (1) or not (0) 
+*/
+extern long TCGREADY_();
+
+#ifdef __cplusplus
+}
+#endif
+
+/*
+  Miscellaneous routines for internal use only?
+*/
+
+extern void RemoteConnect();
+extern void PrintProcInfo();
+extern void MtimeReset();
+extern void USleep();
+
 
 #endif
