@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.7 2002-01-22 23:52:15 vinod Exp $ */
+/*$Id: base.h,v 1.8 2002-09-17 17:03:52 vinod Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -28,7 +28,20 @@ typedef struct {
        char name[FNAM+1];       /* array name                           */
 } global_array_t;
 
-extern global_array_t _ga_main_data_structure[MAX_ARRAYS]; 
+extern global_array_t *_ga_main_data_structure; 
+/*\
+ *The following statement had to be moved here because of a problem in the c
+ *compiler on SV1. The problem is that when a c file is compiled with a 
+ *-htaskprivate option on SV1, all global objects are given task-private status
+ *even static variables are supposed to be initialized and given a task-private
+ *memory/status. Somehow SV1 fails to do this for global variables that are 
+ *initialized during declaration.
+ *So to handle that,we cannot initialize global variables to be able to run 
+ *on SV1.
+\*/
+extern global_array_t *GA;
+
+
 #define ERR_STR_LEN 256               /* length of string for error reporting */
 static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 

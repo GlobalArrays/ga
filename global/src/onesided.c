@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.23 2002-07-17 17:31:33 vinod Exp $ */
+/* $Id: onesided.c,v 1.24 2002-09-17 17:03:52 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -55,7 +55,6 @@
 #endif
 
 int    ProcListPerm[MAX_NPROC];            /* permuted list of processes */
-static global_array_t *GA = _ga_main_data_structure;
 
 
 /*uncomment line below to verify consistency of MA in every sync */

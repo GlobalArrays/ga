@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.23 2002-08-22 22:21:22 vinod Exp $ */
+/* $Id: base.c,v 1.24 2002-09-17 17:03:52 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -54,8 +54,8 @@
 #define MAPLEN  (MIN(GAnproc, MAX_NPROC) +MAXDIM)
 #define FLEN        80              /* length of Fortran strings */
 
-global_array_t _ga_main_data_structure[MAX_ARRAYS];
-static global_array_t *GA = _ga_main_data_structure;
+global_array_t *_ga_main_data_structure;
+global_array_t *GA;
 static int GAinitialized = 0;
 int _ga_sync_begin = 1;
 int _ga_sync_end = 1;
@@ -320,13 +320,15 @@ int bytes;
 #endif
 
     /* zero in pointers in GA array */
+    _ga_main_data_structure = (global_array_t *)malloc(sizeof(global_array_t)*MAX_ARRAYS);
+    if(!_ga_main_data_structure) ga_error("ga_init:malloc failed",0);
+    GA = _ga_main_data_structure;
     for(i=0;i<MAX_ARRAYS; i++) {
        GA[i].ptr  = (char**)0;
        GA[i].mapc = (int*)0;
     }
 
     GAnproc = (Integer)armci_msg_nproc();
-    GA = _ga_main_data_structure;
 
 #ifdef PERMUTE_PIDS
     ga_sync_();
@@ -1525,7 +1527,6 @@ int local_sync_begin,local_sync_end;
     if(local_sync_begin)ga_sync_();
 
     GAstat.numdes ++; /*regardless of array status we count this call */
-
     /* fails if handle is out of range or array not active */
     if(ga_handle < 0 || ga_handle >= _max_global_array){
 #ifdef GA_USE_VAMPIR
