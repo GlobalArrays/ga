@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.15 2000-06-23 22:22:06 d3h325 Exp $ */
+/* $Id: memory.c,v 1.16 2000-08-15 21:37:13 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -221,24 +221,20 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
     }
 #endif
 
-#if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
+    if( ARMCI_Uses_shm() ) armci_shmem_malloc(ptr_arr,bytes);
+    else {
 
-    armci_shmem_malloc(ptr_arr,bytes);
+      /* on distributed-memory systems just malloc & collect all addresses */
+      ptr = malloc(bytes);
+      if(bytes) if(!ptr) armci_die("armci_malloc:malloc failed",bytes);
 
-#else
+      bzero(ptr_arr,armci_nproc*sizeof(void*));
+      ptr_arr[armci_me] = ptr;
 
-    /* on distributed-memory systems just malloc & collect all addresses */
-    ptr = malloc(bytes);
-    if(bytes) if(!ptr) armci_die("armci_malloc:malloc failed",bytes);
+      /* now combine individual addresses into a single array */
+      armci_exchange_address(ptr_arr, armci_nproc);
+    }
 
-    bzero(ptr_arr,armci_nproc*sizeof(void*));
-    ptr_arr[armci_me] = ptr;
-
-    /* now combine individual addresses into a single array */
-    armci_exchange_address(ptr_arr, armci_nproc);
-
-
-#endif
     return(0);
 }
 
