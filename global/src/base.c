@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.46 2003-07-30 04:57:31 d3h325 Exp $ */
+/* $Id: base.c,v 1.47 2003-07-31 07:10:36 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -3026,7 +3026,7 @@ void FATR nga_get_shmem_block_(Integer *g_a,
   Integer ret = 0, icheck, np;
   Integer iblock=0;
   if (!ga_is_mirrored_(g_a)) {
-    for (j=0; j<ndim; j++) {
+    for (j=0; j<GA[handle].ndim; j++) {
       lo[j] = 0;
       hi[j] = -1;
     }
