@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.38 2002-01-28 23:24:57 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.39 2002-03-15 16:25:30 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -577,7 +577,7 @@ Size_t  bytes;
           block_to_sectM(&ds_a, CR); /* convert block number to section */
           dai_file_location(ds_a, &offset);
           nelem = (ds_a.hi[0] - ds_a.lo[0] +1)*(ds_a.hi[1] - ds_a.lo[1] +1) -1; 
-          offset += nelem * dai_sizeofM(DRA[handle].type);
+          offset += ((Off_t)nelem) * dai_sizeofM(DRA[handle].type);
 
 #         ifdef DEBUG
             printf("me=%d zeroing EOF (%d) at %ld bytes \n",iome,CR,offset);
@@ -585,7 +585,7 @@ Size_t  bytes;
         } else {
 
           nelem = DRA[handle].dims[0]*DRA[handle].dims[1] - 1;
-          offset = nelem * dai_sizeofM(DRA[handle].type);
+          offset = ((Off_t)nelem) * dai_sizeofM(DRA[handle].type);
         }
 
         bytes = dai_sizeofM(DRA[handle].type);
@@ -2040,7 +2040,7 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
 #define nblock_to_sectM(ds_a, _CR) \
 {\
   Integer _i, _b[MAXDIM], _C = (_CR); \
-  Integer _hndl = (ds_a)->handle + DRA_OFFSET; \
+  Integer _hndl = (ds_a)->handle+DRA_OFFSET; \
   Integer _R = (DRA[_hndl].dims[0]+DRA[_hndl].chunk[0]-1)/DRA[_hndl].chunk[0]; \
   (ds_a)->ndim = DRA[_hndl].ndim; \
   _b[0] = _C%_R; \
@@ -2057,13 +2057,13 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
   } \
 }
 
-#define nblock_to_indicesM(_index,_ndim,_block_dims,_C) \
+#define nblock_to_indicesM(_index,_ndim,_block_dims,_CC) \
 { \
-  Integer _i; \
-  _index[0] = (_C)%_block_dims[0]; \
+  Integer _i, _C=(_CC); \
+  _index[0] = _C%_block_dims[0]; \
   for (_i=1; _i<(_ndim); _i++) { \
-    (_C) = ((_C) - _index[_i-1])/_block_dims[_i-1]; \
-    _index[_i] = (_C)%_block_dims[_i]; \
+    _C = (_C - _index[_i-1])/_block_dims[_i-1]; \
+    _index[_i] = _C%_block_dims[_i]; \
   } \
 }
 
@@ -2071,29 +2071,34 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
 \*/
 void ndai_file_location(section_t ds_a, Off_t* offset)
 {
-Integer handle=ds_a.handle+DRA_OFFSET, offelem, ndim, i, j;
+Integer handle=ds_a.handle+DRA_OFFSET, ndim, i, j;
 Integer blocks[MAXDIM], part_chunk[MAXDIM], cur_ld[MAXDIM];
-Integer par_block[MAXDIM];
+long par_block[MAXDIM];
+long offelem;
 
-        if((ds_a.lo[0]-1)%DRA[handle].chunk[0])
-            dai_error("ndai_file_location: not alligned ??",ds_a.lo[0]);
-
+     
         ndim = DRA[handle].ndim;
+        for (i=0; i<ndim-1; i++) {
+          if((ds_a.lo[i]-1)%DRA[handle].chunk[i])
+            dai_error("ndai_file_location: not alligned ??",ds_a.lo[i]);
+        }
+
         for (i=0; i<ndim; i++) {
           /* number of blocks from edge */
           blocks[i] = (ds_a.lo[i]-1)/DRA[handle].chunk[i];
           /* size of incomplete chunk */
-          part_chunk[i] = DRA[handle].dims[i]%DRA[handle].chunk[0];
+          part_chunk[i] = DRA[handle].dims[i]%DRA[handle].chunk[i];
           /* stride for this block of data in this direction */
-          cur_ld[i] = (blocks[i] == DRA[handle].dims[0]/DRA[handle].chunk[0]) ?
+          cur_ld[i] = (blocks[i] == DRA[handle].dims[i]/DRA[handle].chunk[i]) ?
                     part_chunk[i]: DRA[handle].chunk[i];
         }
 
         /* compute offset (in elements) */
 
         if (INDEPFILES(ds_a.handle)) {
-          Integer   CR, C, block_dims[MAXDIM]; 
-          Integer   index[MAXDIM], nelem;
+          Integer   CR, block_dims[MAXDIM]; 
+          Integer   index[MAXDIM];
+          long      nelem;
           Integer   i, j;
           Integer   ioprocs = dai_io_procs(ds_a.handle); 
           Integer   iome = dai_io_nodeid(ds_a.handle);
@@ -2109,17 +2114,16 @@ Integer par_block[MAXDIM];
             offelem = 0;
             for (i=iome; i<CR; i+=ioprocs) {
               /* Copy i because macro destroys i */
-              C = i;
-              nblock_to_indicesM(index,ndim,block_dims,C);
+              nblock_to_indicesM(index,ndim,block_dims,i);
               nelem = 1;
               for (j=0; j<ndim; j++) {
                 if (index[j]<block_dims[j]-1) {
-                  nelem *= DRA[handle].chunk[j];
+                  nelem *= (long)DRA[handle].chunk[j];
                 } else {
                   if (part_chunk[j] != 0) {
-                    nelem *= part_chunk[j];
+                    nelem *= (long)part_chunk[j];
                   } else {
-                    nelem *= DRA[handle].chunk[j];
+                    nelem *= (long)DRA[handle].chunk[j];
                   }
                 }
               }
@@ -2129,17 +2133,17 @@ Integer par_block[MAXDIM];
             nelem = 1;
             for (i=0; i<ndim-1; i++) {
               if (index[i]<block_dims[i]-1) {
-                nelem *= DRA[handle].chunk[i];
+                nelem *= (long)DRA[handle].chunk[i];
               } else {
                 if (part_chunk[i] != 0) {
-                  nelem *= part_chunk[i];
+                  nelem *= (long)part_chunk[i];
                 } else {
-                  nelem *= DRA[handle].chunk[i];
+                  nelem *= (long)DRA[handle].chunk[i];
                 }
               }
             }
-            nelem *= (ds_a.lo[ndim-1]-1)%DRA[handle].chunk[ndim-1];
-            offelem += nelem;
+            nelem *= (long)(ds_a.lo[ndim-1]-1)%DRA[handle].chunk[ndim-1];
+            offelem += (long)nelem;
           }
         } else {
           /* Find offset by calculating the number of chunks that must be
@@ -2150,25 +2154,25 @@ Integer par_block[MAXDIM];
             par_block[i] = 1;
             for (j=0; j<ndim; j++) {
               if (j < i) {
-                par_block[i] *= cur_ld[j];
+                par_block[i] *= (long)cur_ld[j];
               } else if (j == i) {
                 if (i == ndim-1) {
                   /* special case for last dimension, which may represent
                    * a fraction of a chunk */
-                  par_block[i] *= (ds_a.lo[i]-1);
+                  par_block[i] *= (long)(ds_a.lo[i]-1);
                 } else {
-                  par_block[i] *= blocks[j]*DRA[handle].chunk[j];
+                  par_block[i] *= (long)(blocks[j]*DRA[handle].chunk[j]);
                 }
               } else {
-                par_block[i] *= DRA[handle].dims[j];
+                par_block[i] *= (long)(DRA[handle].dims[j]);
               }
             }
           }
           offelem = 0;
-          for (i=0; i<ndim; i++) offelem += par_block[i];
+          for (i=0; i<ndim; i++) offelem += (long)par_block[i];
         }
 
-        *offset = offelem * dai_sizeofM(DRA[handle].type); 
+        *offset = (Off_t)offelem * dai_sizeofM(DRA[handle].type); 
 }
 
 /*\ write zero at EOF for NDRA
@@ -2185,7 +2189,6 @@ Size_t  bytes;
         if(DRA[handle].type == MT_F_REAL) *(float*)_dra_buffer = 0;
 
         if(INDEPFILES(d_a)) {
-          /* Warning!! This section of code does not work. */
 
           Integer   CR, i, nblocks; 
           section_t ds_a;
@@ -2215,7 +2218,7 @@ Size_t  bytes;
           nelem = 1;
           for (i=0; i<DRA[handle].ndim; i++) nelem *= (ds_a.hi[i] - ds_a.lo[i] + 1);
           nelem--;
-          offset += nelem * dai_sizeofM(DRA[handle].type);
+          offset += ((Off_t)nelem) * dai_sizeofM(DRA[handle].type);
 
 #         ifdef DEBUG
             printf("me=%d zeroing EOF (%d) at %ld bytes \n",iome,CR,offset);
@@ -2225,12 +2228,12 @@ Size_t  bytes;
           nelem = 1;
           for (i=0; i<DRA[handle].ndim; i++) nelem *= DRA[handle].dims[i];
           nelem--;
-          offset = nelem * dai_sizeofM(DRA[handle].type);
+          offset = ((Off_t)nelem) * dai_sizeofM(DRA[handle].type);
         }
 
         bytes = dai_sizeofM(DRA[handle].type);
         if(bytes != elio_write(DRA[handle].fd, offset, _dra_buffer, bytes))
-                     dai_error("dai_zero_eof: write error ",0);
+                     dai_error("ndai_zero_eof: write error ",0);
 }
 
 
