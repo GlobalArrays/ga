@@ -1,8 +1,8 @@
-/* $Id: kr_malloc.c,v 1.1 2003-03-21 19:41:35 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.2 2003-03-21 19:43:38 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 /* Storage allocator basically copied from ANSI K&R and corrupted */
 
