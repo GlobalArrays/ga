@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.60 2002-11-27 16:12:25 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.61 2002-11-27 20:14:23 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -81,6 +81,9 @@
 #define CLIENT_TO_SERVER 2
 
 /*#define DRA_DBLE_BUFFER */
+#define DRA_USE_PRLL_IO
+/*#define DRA_USE_SNGL_NODE */
+/*#define DRA_USE_MULT_FILES */
 
 #ifdef PARAGON
 #  define DRA_NUM_IOPROCS  64
@@ -113,6 +116,12 @@ DoublePrecision _dra_dbl_buffer[DRA_DBL_BUF_SIZE];        /* DRA data buffer */
 #  endif
 #else
 Integer         _idx_buffer, _handle_buffer;
+#endif
+
+#ifdef DRA_USE_MULT_FILES
+  int _dra_use_mult_files = 1;
+#else
+  int _dra_use_mult_files = 0;
 #endif
 
 disk_array_t *DRA;          /* array of struct for basic info about DRA arrays*/
@@ -242,11 +251,16 @@ Integer num;
         if (INDEPFILES(d_a)) {
           num = ga_cluster_nnodes_();
         } else {
+#if defined(DRA_USE_PRLL_IO) || defined(DRA_USE_MULT_FILES)
           if (ga_cluster_nnodes_() >= DRA_NUM_IOPROCS) {
             num = ga_cluster_nnodes_();
           } else {
             num = DRA_NUM_IOPROCS;
           }
+#endif
+#ifdef DRA_USE_SNGL_NODE
+          num = 1;
+#endif
         }
 
         return( MIN( ga_nnodes_(), num));
@@ -270,12 +284,17 @@ Integer zero = 0;
           if(me == ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
           else me = -1;
         } else {
+#if defined(DRA_USE_PRLL_IO) || defined(DRA_USE_MULT_FILES)
           if (ga_cluster_nnodes_() >= DRA_NUM_IOPROCS) {
             if(me == ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
             else me = -1;
           } else {
             if (me >= dai_io_procs(d_a)) me = -me;
           }
+#endif
+#ifdef DRA_USE_SNGL_NODE
+          if (me != 0) me = -1;
+#endif
         }
 
 /*        if (me >= dai_io_procs(d_a)) me = -me;*/
@@ -306,7 +325,8 @@ Integer dai_file_master(Integer d_a)
         * for shared file 0 is the master
         */
      
-       if(INDEPFILES(d_a) || dai_io_nodeid(d_a) == 0 ) return 1;
+       if(INDEPFILES(d_a) || _dra_use_mult_files ||
+          dai_io_nodeid(d_a) == 0 ) return 1;
        else return 0;
 
 }
@@ -555,7 +575,7 @@ Integer row_blocks, handle=ds_a.handle+DRA_OFFSET, offelem, cur_ld, part_chunk1;
 
         /* compute offset (in elements) */
 
-        if(INDEPFILES(ds_a.handle)) {
+        if(INDEPFILES(ds_a.handle) || _dra_use_mult_files) {
 
            Integer   CR, R; 
            Integer   i, num_part_block = 0;
@@ -621,7 +641,7 @@ Off_t offset;
 
         byte = (char)0;
 
-        if(INDEPFILES(d_a)) {
+        if(INDEPFILES(d_a) || _dra_use_mult_files) {
 
           Integer   CR, i, nblocks; 
           section_t ds_a;
@@ -770,7 +790,7 @@ Integer handle, elem_size, ctype;
         /* create file */
         if(dai_io_manage(*d_a)){ 
 
-           if (INDEPFILES(*d_a)) {
+           if (INDEPFILES(*d_a) || _dra_use_mult_files) {
 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
@@ -832,7 +852,7 @@ Integer handle;
 
         if(dai_io_manage(*d_a)){ 
 
-           if (INDEPFILES(*d_a)) {
+           if (INDEPFILES(*d_a) || _dra_use_mult_files) {
 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
@@ -1049,7 +1069,7 @@ int dai_next_chunk(Integer req, Integer* list, section_t* ds_chunk)
 Integer   handle = ds_chunk->handle+DRA_OFFSET;
 int       retval;
 
-    if(INDEPFILES(ds_chunk->handle))
+    if(INDEPFILES(ds_chunk->handle) || _dra_use_mult_files)
       if(ds_chunk->lo[1] && DRA[handle].chunk[1]>1) 
          ds_chunk->lo[1] -= (ds_chunk->lo[1] -1) % DRA[handle].chunk[1];
     
@@ -1062,7 +1082,7 @@ int       retval;
     ds_chunk->hi[0] = MIN(list[ IHI ], ds_chunk->lo[0] + DRA[handle].chunk[0] -1);
     ds_chunk->hi[1] = MIN(list[ JHI ], ds_chunk->lo[1] + DRA[handle].chunk[1] -1);
 
-    if(INDEPFILES(ds_chunk->handle)) { 
+    if(INDEPFILES(ds_chunk->handle) || _dra_use_mult_files) { 
          Integer jhi_temp =  ds_chunk->lo[1] + DRA[handle].chunk[1] -1;
          jhi_temp -= jhi_temp % DRA[handle].chunk[1];
          ds_chunk->hi[1] = MIN(ds_chunk->hi[1], jhi_temp); 
@@ -1093,7 +1113,7 @@ int dai_myturn(section_t ds_chunk)
 Integer   ioprocs = dai_io_procs(ds_chunk.handle); 
 Integer   iome    = dai_io_nodeid(ds_chunk.handle);
     
-    if(INDEPFILES(ds_chunk.handle)){
+    if(INDEPFILES(ds_chunk.handle) || _dra_use_mult_files){
 
       /* compute cardinal number for the current chunk */
       nsect_to_blockM(ds_chunk, &_dra_turn);
@@ -2048,7 +2068,7 @@ int rc;
                             dai_error("dra_close: close failed",rc);
 
         if(dai_file_master(*d_a))
-          if(INDEPFILES(*d_a)){ 
+          if(INDEPFILES(*d_a) || _dra_use_mult_files){ 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              elio_delete(dummy_fname);
           }else {
@@ -2290,7 +2310,7 @@ long offelem;
 
         /* compute offset (in elements) */
 
-        if (INDEPFILES(ds_a.handle)) {
+        if (INDEPFILES(ds_a.handle) || _dra_use_mult_files) {
           Integer   CR, block_dims[MAXDIM]; 
           Integer   index[MAXDIM];
           long      nelem;
@@ -2382,7 +2402,7 @@ Off_t offset;
 
         byte = (char)0;
 
-        if(INDEPFILES(d_a)) {
+        if(INDEPFILES(d_a) || _dra_use_mult_files) {
 
           Integer   CR, i, nblocks; 
           section_t ds_a;
@@ -2479,7 +2499,7 @@ Integer handle, elem_size, ctype, i;
         /* create file */
         if(dai_io_manage(*d_a)){ 
 
-           if (INDEPFILES(*d_a)) {
+           if (INDEPFILES(*d_a) || _dra_use_mult_files) {
 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
@@ -2890,7 +2910,7 @@ int       retval, ndim = DRA[handle].ndim, i;
 
     /* If we are writing out to multiple files then we need to consider
        chunk boundaries along last dimension */
-    if(INDEPFILES(ds_chunk->handle))
+    if(INDEPFILES(ds_chunk->handle) || _dra_use_mult_files)
       if(ds_chunk->lo[ndim-1] && DRA[handle].chunk[ndim-1]>1) 
          ds_chunk->lo[ndim-1] -= (ds_chunk->lo[ndim-1] -1) %
            DRA[handle].chunk[ndim-1];
@@ -2915,7 +2935,7 @@ int       retval, ndim = DRA[handle].ndim, i;
 
     /* Again, if we are writing out to multiple files then we need to consider
        chunk boundaries along last dimension */
-    if(INDEPFILES(ds_chunk->handle)) { 
+    if(INDEPFILES(ds_chunk->handle) || _dra_use_mult_files) { 
          Integer nlo;
          Integer hi_temp =  ds_chunk->lo[ndim-1] +
            DRA[handle].chunk[ndim-1] -1;
