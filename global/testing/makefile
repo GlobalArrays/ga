@@ -42,7 +42,7 @@ ifndef LIBDIR
 endif
 
 ifeq ($(GA_TRACE),YES)
-   LIBTRACE= ../trace/libtrace.a
+   LIBTRACE= -ltrace
 endif
 LIBS = $(CORE_LIBS) $(LINALG) $(LIBCOM) $(LIBTRACE)
 
