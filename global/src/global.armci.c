@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.23 1999-10-14 00:19:58 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.24 1999-10-26 00:20:34 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -583,14 +583,19 @@ logical ga_create(type, dim1, dim2, array_name, chunk1, chunk2, g_a)
 {
 Integer ndim=2, dims[2], chunk[2];
 logical status;
+#ifdef  OLD_DEFAULT_BLK
+#define BLK_THR 1
+#else
+#define BLK_THR 0
+#endif
 
     dims[0]=*dim1;
     dims[1]=*dim2;
    
     /*block size of 1 is troublesome, old ga treated it as "use default" */
     /* for backward compatibility we use old convention */
-    chunk[0] = (*chunk1 ==0)? -1: *chunk1;
-    chunk[1] = (*chunk2 ==0)? -1: *chunk2;
+    chunk[0] = (*chunk1 ==BLK_THR)? -1: *chunk1;
+    chunk[1] = (*chunk2 ==BLK_THR)? -1: *chunk2;
         
     status = nga_create(*type, ndim,  dims, array_name, chunk, g_a); 
 

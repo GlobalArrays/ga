@@ -20,7 +20,9 @@ ifdef IWAY
        LOC_DEFINES = -DIWAY -DSOCKCONNECT
 endif
 
-
+# you can restore the old threshold for default decomposition in ga_create
+# by uncommenting the following statement
+# LOC_DEFINES += -DOLD_DEFAULT_BLK
 
 ifndef USE_ARMCI
 ifeq ($(TARGET),$(findstring $(TARGET),$(DATA-SERVER)))
@@ -45,11 +47,11 @@ HARDCLEAN = yes
 
 LIB_DISTRIB = ../../lib
 
-ifdef USE_ARMCI
+ifndef OLD_GA 
 	LOC_DEFINES = -DARMCI
 	LOC_INCLUDES = -I../../armci/src
 ifndef USE_MPI
-	LOC_DEFINES = -DARMCI -DTCGMSG
+	LOC_DEFINES += -DTCGMSG
 endif
 endif
 
