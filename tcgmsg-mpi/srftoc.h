@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/srftoc.h,v 1.8 2002-08-22 22:18:03 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/srftoc.h,v 1.9 2003-07-10 15:12:01 d3h325 Exp $ */
 
 #ifndef SRFTOC_H_
 #define SRFTOC_H_
@@ -21,7 +21,7 @@
   Note that pbegin and pfilecopy are only called from c.
 */
 
-#if defined(CRAY) || defined(ARDENT) || defined(HITACHI)
+#if (defined(CRAY)&& !defined(__crayx1)) || defined(ARDENT) || defined(HITACHI)
 
 #define NICEFTN_     NICEFTN
 #define NODEID_      NODEID

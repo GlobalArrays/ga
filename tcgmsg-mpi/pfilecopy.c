@@ -11,6 +11,10 @@
 #include "tcgmsg_vampir.h"
 #endif
 
+#ifdef __crayx1
+#undef CRAY
+#endif
+
 void PFILECOPY_(type, node0, filename)
      long *type, *node0;
      char *filename;

@@ -53,7 +53,7 @@ ifdef GA_USE_VAMPIR
 endif
 
 # This include file specifies how and where the library should be built
-# LIBRARY_PATH  is the library location
+# FULL_LIBRARY_PATH  is the library location
 
 include ../config/makefile.h
 include ../config/makelib.h
@@ -81,26 +81,26 @@ LIBS = -L$(LIBDIR) -larmci $(MP_LIBS) $(COMM_LIBS)
 all:	test.x testf.x
 
 
-test.x: test.o	$(LIBRARY_PATH)
+test.x: test.o	$(FULL_LIBRARY_PATH)
 	$(CC)  $(COPT_REN) -o $@ $^ $(LIBS) $(CLIBS)
 
-testf.x: testf.o $(LIBRARY_PATH)
+testf.x: testf.o $(FULL_LIBRARY_PATH)
 	$(FC) $(FLD_REN) $(FOPT_REN) -o $@ $^ $(LIBS)
 
-hello.x: hello.o $(LIBRARY_PATH)
+hello.x: hello.o $(FULL_LIBRARY_PATH)
 	$(CC)  $(COPT_REN) -o $@ $^ $(LIBS) $(CLIBS)
 
-test_arcv.x: test_arcv.o $(LIBRARY_PATH)
+test_arcv.x: test_arcv.o $(FULL_LIBRARY_PATH)
 	$(FC)  $(FOPT_REN) -o $@ $^ $(LIBS) $(CLIBS)
 
-test_asyn.x: test_asyn.o $(LIBRARY_PATH)
+test_asyn.x: test_asyn.o $(FULL_LIBRARY_PATH)
 	$(CC)  $(COPT_REN) -o $@ $^ $(LIBS) $(CLIBS)
 
-$(patsubst %,$(LIBRARY_PATH)(%),$(OBJ))      : tcgmsgP.h
-$(patsubst %,$(LIBRARY_PATH)(%),evon.o)      : evlog.h
-$(patsubst %,$(LIBRARY_PATH)(%),evlog.o)     : evlog.h
-$(patsubst %,$(LIBRARY_PATH)(%),pfilecopy.o) : msgtypesc.h
-$(patsubst %,$(LIBRARY_PATH)(%),pbeginf.o))  : farg.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),$(OBJ))      : tcgmsgP.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),evon.o)      : evlog.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),evlog.o)     : evlog.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),pfilecopy.o) : msgtypesc.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),pbeginf.o))  : farg.h
 tcgmsgP.h: srftoc.h
 sndrcv.h: msgtypesc.h
 srftoc.h: sndrcv.h

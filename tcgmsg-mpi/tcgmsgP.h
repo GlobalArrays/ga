@@ -44,3 +44,7 @@ extern  char  tcgmsg_err_string[ERR_STR_LEN];
 
 extern void finalize_nxtval();
 extern void install_nxtval();
+
+#ifdef __crayx1
+#undef CRAY
+#endif

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.8 2002-02-26 15:47:52 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.9 2003-07-10 15:12:01 d3h325 Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -14,6 +14,7 @@
 #define ARGC_ xargc
 #define ARGV_ xargv
 #endif
+
 
 #if defined(ARDENT)
 #define ARGC_ _UT_argc

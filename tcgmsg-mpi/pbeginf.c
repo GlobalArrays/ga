@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.13 2002-02-26 15:47:52 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.14 2003-07-10 15:12:01 d3h325 Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -7,7 +7,7 @@
 
 extern void PBEGIN_();
 
-#if defined(HPUX) || defined(SUN) || defined(SOLARIS) ||defined(PARAGON) ||defined(FUJITSU) || defined(WIN32) ||defined(LINUX64) || defined(NEC)||defined(LINUX) || defined(HITACHI)
+#if defined(HPUX) || defined(SUN) || defined(SOLARIS) ||defined(PARAGON) ||defined(FUJITSU) || defined(WIN32) ||defined(LINUX64) || defined(NEC)||defined(LINUX) || defined(HITACHI) || defined(__crayx1)
 #define HAS_GETARG 1
 #endif
 
@@ -16,8 +16,17 @@ extern void PBEGIN_();
 extern int FATR IARGC(void);
 #include <windows.h>
 #include "winutil.h"
+#define NTYPE short
+extern void FATR getarg_( NTYPE *, char*, int, NTYPE*);
 #else
 #define FATR 
+#endif
+
+#ifdef __crayx1
+#define getarg_  pxfgetarg_
+#define IARGC  ipxfargc_
+#define NTYPE  int 
+extern void FATR getarg_( NTYPE *, char*, NTYPE*, NTYPE*, int);
 #endif
 
 
@@ -39,8 +48,7 @@ void FATR PBEGINF_()
 {
   extern char *strdup();
 
-#if defined(WIN32)
-    extern void FATR getarg_(short*, char*, int, short*);
+#if defined(WIN32) || defined(__crayx1)
     int argc = IARGC() + 1;
 #elif !defined(HPUX)
     extern int iargc_();
@@ -64,11 +72,16 @@ void FATR PBEGINF_()
           len = hpargv_(&ii, arg, &lmax);
 #      elif defined(HPUX)
           len = hpargv_(&i, arg, &maxlen);
-#      elif defined(WIN32)
+#      elif defined(WIN32) 
           short n=(short)i, status;
           getarg_(&n, arg, maxlen, &status);
           if(status == -1)Error("getarg failed for argument",i); 
           len = status;
+#      elif  defined(__crayx1)
+          NTYPE n=(NTYPE)i, status,ilen;
+          getarg_(&n, arg, &ilen, &status,maxlen);
+          if(status )Error("getarg failed for argument",i); 
+          len=(int)ilen;
 #      else
           getarg_(&i, arg, maxlen);
           for(len = maxlen-2; len && (arg[len] == ' '); len--);
@@ -76,7 +89,7 @@ void FATR PBEGINF_()
 #      endif
 
        arg[len] = '\0'; /* insert string terminator */
-       /* printf("%10s, len=%d\n", arg, len);  fflush(stdout); */
+       /*printf("%10s, len=%d\n", arg, len);  fflush(stdout);*/ 
        argv[i] = strdup(arg);
   }
 
