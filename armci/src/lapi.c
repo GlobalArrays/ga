@@ -209,7 +209,7 @@ int rc;
          msginfo->tag.buf +=sizeof(request_header_t);
       }
 
-      if(msginfo->operation!=GET) 
+      if(msginfo->operation==PUT || ACC(msginfo->operation)) 
                   UPDATE_FENCE_STATE(msginfo->to, msginfo->operation, 1);
 
       if((rc=LAPI_Amsend(lapi_handle,(uint)msginfo->to,armci_header_handler,
