@@ -51,20 +51,14 @@ extern void FATR ZGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
 #else
 /* min acceptable amount of memory (in elements) and default chunk size */
 #  define MINMEM 64
-#  define CHUNK_SIZE 128
+#  define CHUNK_SIZE 256
 #  define MAX_CHUNKS 1024
 #  define NUM_MATS 3 
 #  define MINTASKS 6 /* increase this if there is high load imbalance */
 #  define EXTRA 4
 #endif
 
-#ifdef MPI
-#  include "mpi.h"
-#  define CLOCK_ MPI_Wtime
-#else
-#include "sndrcv.h"
-#  define CLOCK_ TCGTIME_
-#endif
+#define MIN_CHUNK_SIZE 256
 
 #define SET   1
 #define UNSET 0
