@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.40 2001-12-21 17:19:29 vinod Exp $
+/* $Id: myrinet.c,v 1.41 2001-12-28 17:18:03 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -406,6 +406,7 @@ int armci_gm_client_init()
 {
     int status,i,intcount;
     client_init_struct = (armci_gm_client_init_t *)(calloc(armci_nclus, sizeof(armci_gm_client_init_t))); 
+    intcount = armci_nclus *sizeof(armci_gm_client_init_t)/sizeof(int);
     /* allocate gm data structure for computing process */
     proc_gm->node_map = (int *)calloc(armci_nproc, sizeof(int));
     if(!proc_gm->node_map) armci_die("Error allocating proc data structure",0);
@@ -431,17 +432,16 @@ int armci_gm_client_init()
        client_init_struct[armci_clus_me].ack = (long *)serv_gm->ack;
        /* publish port id of local server thread to other smp nodes */
        client_init_struct[armci_clus_me].port_id =  serv_gm->port_id;
-       intcount = armci_nclus *sizeof(armci_gm_client_init_t)/sizeof(int); 
        armci_msg_gop_scope(SCOPE_MASTERS,(int *)(client_init_struct), intcount,"+", ARMCI_INT);
     }
  
     /* master makes port ids of server processes available to other tasks */
-    armci_msg_bcast_scope(SCOPE_NODE,(int *)(client_init_struct), intcount*sizeof(int),
+    if(armci_nclus*sizeof(armci_gm_client_init_t)%sizeof(int)!=0)armci_die("allignment problem in client init",sizeof(armci_gm_client_init_t));
+    armci_msg_bcast_scope(SCOPE_NODE,client_init_struct,intcount*sizeof(int),
                           armci_master);
     for(i=0;i<armci_nclus;i++){
-        
         proc_gm->port_map[i] = client_init_struct[i].port_id;
-        /*fprintf(stderr,"%d: portmap for me \n%d = %d   %d ",armci_me,client_init_struct[i].port_id, proc_gm->port_map[i],i);*/
+        if(DEBUG_){printf("%d: portmap for me \n%d = %d   %d ",armci_me,client_init_struct[i].port_id, proc_gm->port_map[i],i);fflush(stdout);}
     }
  
 #endif
