@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.4 1995-02-24 02:17:41 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.5 1995-08-23 23:19:27 d3h325 Exp $ */
 
 /*
   These routines simplify the interface to semaphores for use in mutual
@@ -94,7 +94,12 @@ union semun {
 static int sem_set_id_list[MAX_SEM_SETS];
 static int num_sem_set = 0;
 
-#define MAX_N_SEM 40
+#if defined(SGITFP) || defined(SGI64) || defined(KSR)
+#   define MAX_N_SEM 128
+#else
+#   define MAX_N_SEM 40
+#endif
+
 
 void InitSemSetList()
 /* Initialise sem_set_id_list */
