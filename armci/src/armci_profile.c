@@ -1,3 +1,4 @@
+/* $Id: armci_profile.c,v 1.2 2004-07-14 02:32:16 manoj Exp $ */
 /**
  * Note #1: Right now, only process 0's profile is printed.
  * Each and every process saves its profile in the correspoding data struture.
