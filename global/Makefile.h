@@ -16,8 +16,8 @@
           FLD = $(FC)
           CLD = $(FLD)
           CXX = CC
-         FOPT = -O
-         COPT = -O
+         FOPT = -g
+         COPT = -g
 	 NOPT = -g
 GLOB_INCLUDES = -I../../ma
            AR = ar
@@ -168,7 +168,7 @@ ifeq ($(TARGET),CRAY-T3E)
  ifeq ($(COPT),-O)
          COPT = -O2 -h inline3
  endif
-     FOPT_REN = -d p
+     FOPT_REN = -dp
  GLOB_DEFINES = -DCRAY_T3D -DCRAY_T3E
     EXPLICITF = TRUE
 endif
@@ -211,7 +211,7 @@ ifeq ($(TARGET),CRAY-YMP)
      FOPT_REN = -dp -ataskcommon
 #    COPT_REN = -htaskprivate $(LIBCM)
         CDEFS = -DFLUSHCACHE -htaskprivate $(LIBCM)
- GLOB_DEFINES = -DCRAY_T3D -DCRAY_YMP
+ GLOB_DEFINES = -DCRAY_YMP
     EXPLICITF = TRUE
 endif
 #
