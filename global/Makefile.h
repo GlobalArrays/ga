@@ -320,9 +320,9 @@ ifeq ($(EXPLICITF),TRUE)
 .F.f:	
 	@echo Converting $*.F '->' $*.f
 ifeq ($(TARGET),LINUX)
-	(/bin/cp $< .tmp.$$$$.c; \
-		$(CPP) $(INCLUDES) $(DEFINES) .tmp.$$$$.c | sed '/^$$/d' > $*.f ;\
-		/bin/rm -f .tmp.$$$$.c) || exit 1
+	(/bin/cp $< .tmp.$$$$.f; \
+	$(CPP) $(INCLUDES) $(DEFINES) .tmp.$$$$.f | sed '/^$$/d' > $*.f ;\
+	/bin/rm -f .tmp.$$$$.f) || exit 1
 else
 	$(CPP) $(INCLUDES) $(DEFINES) < $*.F | sed '/^#/D' > $*.f
 endif
