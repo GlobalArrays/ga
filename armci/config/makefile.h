@@ -80,7 +80,7 @@ ifeq ($(TARGET),HPUX)
          FOPT = -O1
     endif
      FOPT_REN = +ppu
-     COPT_REN = -Ae
+     COPT_REN = -Ae -DEXTNAME
 endif
 
 ifeq ($(TARGET),CONVEX-SPP)
