@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.57 2001-08-27 20:55:09 edo Exp $
+# $Id: makefile.h,v 1.58 2001-12-10 19:15:34 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -300,12 +300,20 @@ endif
 #
 ifeq ($(TARGET),HPUX64)
 # 64-bit version
+         _CPU = $(shell uname -m)
            FC = f90
     ifeq ($(FOPT),-O)
          FOPT = -O1
     endif
-     FOPT_REN = +DA2.0W +ppu 
-     COPT_REN = +DA2.0W -Ae
+     FOPT_REN = +ppu 
+     COPT_REN = -Ae
+ifeq  ($(_CPU),ia64)
+     FOPT_REN = +DD64
+     COPT_REN = +DD64
+else
+     FOPT_REN += +DA2.0W
+     COPT_REN += +DA2.0W
+endif
         FLIBS = -lU77
  GLOB_DEFINES+= -DHPUX -DEXTNAME
 ifdef USE_INTEGER4

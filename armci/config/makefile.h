@@ -225,13 +225,21 @@ ifeq ($(TARGET),HPUX)
 endif
 #
 ifeq ($(TARGET),HPUX64)
+         _CPU = $(shell uname -m)
            FC = f90
            AS = cc -c
+     FOPT_REN = +ppu
+     COPT_REN = -Ae 
+ifeq  ($(_CPU),ia64)
+     FOPT_REN = +DD64
+     COPT_REN = +DD64
+else
+     FOPT_REN += +DA2.0W 
+     COPT_REN += +DA2.0W 
     ifeq ($(FOPT),-O)
          FOPT = -O3 +Odataprefetch +Ofastaccess
     endif
-     FOPT_REN = +DA2.0W +ppu
-     COPT_REN = +DA2.0W -Ae 
+endif
        CDEFS += -DEXTNAME
 GLOB_DEFINES += -DHPUX
 endif
