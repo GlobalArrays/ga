@@ -1,4 +1,4 @@
-c $Id: patch.F,v 1.19 2001-05-22 21:20:46 llt Exp $
+c $Id: patch.F,v 1.20 2001-05-31 17:19:23 llt Exp $
 #if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
@@ -1200,7 +1200,7 @@ c***
          if(Mod(j,nproc).eq.me) then
             do i = ailo, ailo+n/2
                base = base+1
-               if(ABS(buf(base)- a(i,j)*val).gt.1e-4) then
+               if(ABS(buf(base)- a(i,j)*val).gt.1e-3) then
                   print *,me, ' error ',i,j, buf(base), a(i,j)*val
                   call ga_error('exiting ...',0)
                endif
