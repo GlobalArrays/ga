@@ -28,6 +28,7 @@ extern void armci_msg_lgop(long *x, int n, char* op);
 extern void armci_msg_dgop(double *x, int n, char* op);
 extern void armci_exchange_address(void *ptr_ar[], int n);
 extern void armci_msg_barrier();
+extern void armci_msg_bintree(int scope, int* Root, int *Up, int *Left, int *Right);
 
 extern int  armci_msg_me();
 extern int  armci_msg_nproc();

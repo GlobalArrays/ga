@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.23 2000-10-11 19:36:24 d3h325 Exp $ */
+/* $Id: message.c,v 1.24 2001-01-26 21:19:09 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -95,7 +95,7 @@ void armci_msg_abort(int code)
 }
 
 
-static void armci_msg_bintree(int scope, int* Root, int *Up, int *Left, int *Right)
+void armci_msg_bintree(int scope, int* Root, int *Up, int *Left, int *Right)
 {
 int root, up, left, right, index, nproc;
     if(scope == SCOPE_NODE){
