@@ -1,5 +1,4 @@
-/* elan hack: This character array stores libpgs_thread.so */
-
+/* $Id: pgs_thread.h,v 1.2 2004-04-13 21:24:36 d3h325 Exp $ */
 /* begin binary data: */
 #define BIN_DATA_ELEMS 20866
 char bin_data[] = /* 20866 */

@@ -39,6 +39,16 @@ ifeq ($(ARMCI_NETWORK),MELLANOX)
   COMM_LIBS += $(IB_LIB_NAME)
 endif
 
+ifeq ($(ARMCI_NETWORK),ELAN3)
+  ifdef ELAN3_INCLUDE
+        QUADRICS_INCLUDE = $(ELAN3_INCLUDE)
+  endif
+  ifdef ELAN3_LIB
+        QUADRICS_LIB = $(ELAN3_LIB)
+  endif
+  ARMCI_NETWORK = QUADRICS
+endif
+
 ifeq ($(ARMCI_NETWORK),QUADRICS)
   COMM_DEFINES = -DQUADRICS
   ifdef QUADRICS_INCLUDE
@@ -55,15 +65,28 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
       COMM_LIBS = -L/usr/opt/rms/lib
     endif
   endif
- ifdef DOELAN4
-  QUADRICS_LIB_NAME = -lelan4 -lelan -lpthread
-#    COMM_INCLUDES += -I/usr/lib/qsnet/elan4/include
-#      COMM_LIBS += -L/usr/lib/qsnet/elan4/lib -L/usr/lib/qsnet/elan/lib #-L/usr/lib/qsnet/elan3/lib
-    COMM_DEFINES += -DDOELAN4
- else
   QUADRICS_LIB_NAME = -lshmem -lelan -lpthread
- endif
   COMM_LIBS += $(QUADRICS_LIB_NAME)
+endif
+
+ifeq ($(ARMCI_NETWORK),ELAN4)
+  ifdef ELAN4_INCLUDE
+    COMM_INCLUDES = -I$(ELAN4_INCLUDE)
+  else
+    ifeq ($(TARGET),DECOSF)
+       COMM_INCLUDES = -I/usr/opt/rms/include
+    endif
+  endif
+  ifdef ELAN4_LIB
+    COMM_LIBS = -L$(ELAN4_LIB) -Wl,-rpath-link -Wl,$(ELAN4_LIB)
+  else
+    ifeq ($(TARGET),DECOSF)
+      COMM_LIBS = -L/usr/opt/rms/lib
+    endif
+  endif
+  COMM_DEFINES += -DDOELAN4  -DQUADRICS
+  ELAN4_LIB_NAME = -lelan4 -lelan -lpthread
+  COMM_LIBS += $(ELAN4_LIB_NAME)
 endif
 
 

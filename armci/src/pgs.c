@@ -1,13 +1,14 @@
-/* $Id: pgs.c,v 1.2 2004-04-13 20:04:00 manoj Exp $ */
-/* $Source: /tmp/hpctools/ga/armci/src/pgs.c,v $ */
+/* $Id: pgs.c,v 1.3 2004-04-13 21:24:36 d3h325 Exp $ 
+ * Note: the general ARMCI copyright does not apply to code included in this file 
+ *       Explicit permission is required to copy/modify this code. 
+ */
 
-#ident	"@(#)$Id: pgs.c,v 1.2 2004-04-13 20:04:00 manoj Exp $"
+#ident	"@(#)$Id: pgs.c,v 1.3 2004-04-13 21:24:36 d3h325 Exp $"
 
 #include <stdlib.h>
 
 #include <qsnet/config.h>
 #include <qsnet/types.h>
-
 #include <elan/elan.h>
 #include <elan4/library.h>
 #include <elan4/lib_spinlock.h>
@@ -18,11 +19,11 @@
 #include <elan4/registers.h>
 #include "pgs_thread.h"
 
+extern void armci_die();
+
 #ifndef offsetof
 #define offsetof(T,F)	((int)&(((T *)0)->F))
 #endif
-
-/* Stuff from "elan_sys.h" */
 
 /* Hardware event defines */
 #define EVENT			E4_Event
@@ -97,8 +98,6 @@
 #  define PRINTF8(STATE,m,fmt,a,b,c,d,e,f,g,h)
 
 
-/* Ripped off event_sys.h */
-
 /* 
  * Generic libelan EVENT managament functions
  *
@@ -107,8 +106,8 @@
 typedef enum eventState
 {
     EVENT_BAD = 0,    /* Unconfigured */
-    EVENT_LIVE_LIVE,  /* In the hands of a higher level library - possibly ourselfs */
-    EVENT_LIVE_DONE,  /* In the hands of a higher level library but known finished */
+    EVENT_LIVE_LIVE,  /* In hands of a higher level library-possibly ourselfs */
+    EVENT_LIVE_DONE,  /* In hands of a higher level library but known finished */
     EVENT_FREE        /* Idle */
 } EVENTSTATE;
 
@@ -150,9 +149,7 @@ extern void	elan_waitWord (ELAN_STATE *elan_state, ELAN_RAIL *rail,
 /* Called every time it's before it's released to the user */
 #define ELAN_EVENT_PRIME(X)   (((EVENT_MAIN *)X)->e_state = EVENT_LIVE_LIVE);
 
-/* End of event_sys.h */
 
-//#include "putget_sys.h"
 #include "pgs_sys.h"
 
 static void _elan_pgsFree (ELAN_EVENT *event);
@@ -169,9 +166,6 @@ void pgs_getStats(pgsstate_t *state, ELAN_PUTGETSTATS *stats)
 }
 
 #define idivide(x,y) ((y) ? (x)/(y) : 0)
-
-
-
 
 
 /*
@@ -228,14 +222,12 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
     /* Create an SDRAM allocator */
     if ((pgsrail->pr_sdram = elan4_open_sdram (pgsrail->pr_id, 0, ELAN_ALLOCATOR_SIZE)) == NULL)
     {
-	printf ("Failed: elan4_open_sdram\n");
-	exit (-1);
+	armci_die ("Failed: elan4_open_sdram",-1);
     }
     
     /* Create a Main/Elan memory allocator */
     if ((pgsrail->pr_alloc = elan4_createAllocator (MAIN_ALLOCATOR_SIZE, pgsrail->pr_sdram, 0, ELAN_ALLOCATOR_SIZE)) == NULL) {
-	printf ("Failed: elan4_createAllocator\n");
-	exit (-1);
+	armci_die ("Failed: elan4_createAllocator\n",-1);
     }
 
 #if 0
@@ -366,17 +358,13 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 	     pgsrail->pr_qevent, pgsrail->pr_q->q_event);
 #endif
     
-    /* 
-     * Allocate thread stack 
-     */
+    /* Allocate thread stack */
     if (!(pgsrail->pr_stack = ALLOC_ELAN(pgsrail->pr_alloc, THREAD_STACK_ALIGN, PGS_THREADSTACK)))
 	elan_exception (pgsstate->elan_state, ELAN_ENOMEM, 
 			"pgsInit: Elan memory exhausted: stack allocate: pgs %p", pgsstate);
     
 
-    /*
-     * Load the co-processor thread 
-     */
+     /* Load the co-processor thread */
     {
 	void *cspace;
 	LOADSO *code;
@@ -385,24 +373,21 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 	int sz;
 	extern int armci_msg_me();
 
-	/* hack: creating binary file in working directory */
-	sprintf(file_name, "./PGS1234%d.so", armci_msg_me()); 
+	sprintf(file_name, "/tmp/PGS1234%d.so", armci_msg_me()); 
 	fp = fopen((const char*)file_name, "w");
-	if(fp==NULL){printf("cannot open pgs_thread.so\n");exit(-1);}
+	if(fp==NULL)armci_die("cannot open so file",-1);
 	sz = fwrite(bin_data, 1, BIN_DATA_ELEMS, fp);
-	if(sz<BIN_DATA_ELEMS) {printf("pgs:file write error\n");exit(-1);}
+	if(sz<BIN_DATA_ELEMS) {armci_die("pgs:file write error",-1);}
 	fclose(fp);
 	
 	if ((code = pgsrail->pr_pgsCode = OPEN_SO(rail->rail_ctx,
-						  (const char*)file_name,
-						  //"libelan_thread.so",
-						  NULL, 0)) == NULL)
-	    exit (-1);
+				  (const char*)file_name, NULL, 0)) == NULL)
+	    armci_die("failed to load thread code",-1);
 	
 	cspace = elan4_allocElan (pgsrail->pr_alloc, 8192, code->loadsize);
 
 	if (LOAD_SO(code, cspace, elan4_main2elan (rail->rail_ctx, cspace)) < 0)
-	    exit (-1);
+	    armci_die("failed to load code",-1);
 	
 	pgsrail->pr_pgsSym  = elan4_find_sym (code, "pgs_thread");
 	unlink((const char*)file_name);

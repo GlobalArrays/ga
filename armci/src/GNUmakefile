@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.79 2004-04-13 19:56:36 manoj Exp $
+#$Id: GNUmakefile,v 1.80 2004-04-13 21:24:36 d3h325 Exp $
          FOPT = -O
          COPT = -O
 
@@ -86,24 +86,27 @@ ifeq ($(ARMCI_NETWORK),MELLANOX)
 endif
 
 ifeq ($(ARMCI_NETWORK),QUADRICS)
+# works for Elan-3 network
 # shared memory causes problems for shmem: NO_SHM disables use of shared memory
-# only one of the two lines below can be uncommented
 #   LIB_DEFINES += -DNO_SHM
-ifdef DOELAN4
-    LIB_DEFINES += -DACC_SMP
-    OBJ += pgs.o
-else
 ifdef LIBELAN_NATTACH
     LIB_DEFINES +=  -DMULTI_CTX -DACC_SMP
 else
     LIB_DEFINES += -DALLOC_MUNMAP -DACC_SMP
-endif
 endif
     OBJ += elan.o
     LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT # -DELAN_ACC
     OBJ += spawn.o ds-shared.o request.o buffers.o
     EXTRA_LIBS += -lpthread
 endif
+
+ifeq ($(ARMCI_NETWORK),ELAN4)
+# works for Quadrics Elan-4 network
+    OBJ += elan.o pgs.o spawn.o ds-shared.o request.o buffers.o
+    LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT -DACC_SMP
+    EXTRA_LIBS += -lpthread
+endif
+    
 
 ifdef ARMCI_NETWORK
   LIBRARY_STAMP = $(ARMCI_NETWORK).$(MSG_COMMS)
