@@ -1,3 +1,5 @@
+/* $Id: armci_profile.h,v 1.2 2004-07-14 02:32:52 manoj Exp $ */
+
 #define ARMCI_PROFILE_GET 1
 #define ARMCI_PROFILE_PUT 2
 #define ARMCI_PROFILE_ACC 3
