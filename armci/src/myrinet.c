@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.20 2001-01-18 00:41:10 d3h325 Exp $
+/* $Id: myrinet.c,v 1.21 2001-02-17 01:53:22 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -611,8 +611,10 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
 char *armci_ReadFromDirect(request_header_t * msginfo, int len)
 {
     char *buf = (char*) msginfo;
+    long *tail;
 
     /* check the header ack */
+
     wait_flag_updated(&(msginfo->tag.ack), ARMCI_GM_COMPLETE);
     /* reset header ack */
     msginfo->tag.ack = ARMCI_GM_CLEAR;
@@ -620,9 +622,13 @@ char *armci_ReadFromDirect(request_header_t * msginfo, int len)
     buf += sizeof(request_header_t);
     
     /* check the tail ack */
-    wait_flag_updated((long *)(buf + len), ARMCI_GM_COMPLETE);
+    tail = (long*)(buf+len);
+    ALIGN_PTR_LONG(long, tail);
+
+    wait_flag_updated(tail, ARMCI_GM_COMPLETE);
+
     /* reset tail ack */
-    *(long *)(buf + len) = ARMCI_GM_CLEAR;
+    *tail = ARMCI_GM_CLEAR;
 
     return(buf);
 }
@@ -990,6 +996,8 @@ void armci_WriteToDirect(int dst, request_header_t *msginfo, void *buffer)
 {
     char *buf = (char*)buffer; 
     char *ptr = buf - sizeof(long);
+    long *tail, *utail;
+    int bytes;
 
     /* adjust the dst pointer */
     void *dst_addr = msginfo->tag.data_ptr;
@@ -997,8 +1005,12 @@ void armci_WriteToDirect(int dst, request_header_t *msginfo, void *buffer)
     /* set head ack */
     *(long *)ptr = ARMCI_GM_COMPLETE;
    
-    /* set tail ack */
-    *(long *)(buf + msginfo->datalen) = ARMCI_GM_COMPLETE;
+    /* set tail ack, make sure it is alligned */
+    utail= tail = (long*)(buf + msginfo->datalen);
+    ALIGN_PTR_LONG(long, tail);
+    *tail = ARMCI_GM_COMPLETE;
+    bytes = (char*)tail - (char*)utail; /* add allignment */
+    bytes+= 2*sizeof(long);
 
     if(armci_serv_send_complete() == ARMCI_GM_FAILED)
         armci_die(" server last send failed", dst);
@@ -1006,7 +1018,7 @@ void armci_WriteToDirect(int dst, request_header_t *msginfo, void *buffer)
     
     gm_directed_send_with_callback(serv_gm->snd_port, ptr,
                      (gm_remote_ptr_t)(gm_up_t)(dst_addr),
-                     msginfo->datalen+2*sizeof(long), GM_LOW_PRIORITY,
+                     msginfo->datalen+bytes, GM_LOW_PRIORITY,
                      serv_gm->node_map[dst], serv_gm->port_map[dst],
                      armci_serv_callback, armci_gm_serv_context);
 }
