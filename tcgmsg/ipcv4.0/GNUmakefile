@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.15 2003-07-17 22:45:56 vinod Exp $
+# $Id: GNUmakefile,v 1.16 2003-11-06 05:33:18 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -6,7 +6,7 @@
   LIB_DISTRIB = ../../lib
 OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
           checkbyte.o llog.o      nxtval.o    shmem.o     synch.o   \
-          cluster.o   memalign.o  signals.o                         \
+          cluster.o    signals.o                         \
           usleep.o    srmover.o   pbegin.o    snd.o       waitall.o \
           drand48.o   mtime.o     pbeginf.o   sockets.o             \
           error.o     nnodes.o    sema.o      stats.o               \

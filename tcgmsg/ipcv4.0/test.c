@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.9 2003-10-22 03:36:39 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.10 2003-11-06 05:33:18 edo Exp $ */
 
 #include <stdio.h>
 #if !defined(SEQUENT) && !defined(CONVEX)
@@ -8,7 +8,6 @@
 #include "sndrcv.h"
 #include "evlog.h"
 
-extern char *memalign();
 #if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) \
                     || defined(DECOSF)
 extern void *malloc();
