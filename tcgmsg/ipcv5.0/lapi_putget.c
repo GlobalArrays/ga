@@ -282,3 +282,10 @@ void PARERR_(code)
   Error("User detected error in FORTRAN", *code);
 }
 
+
+void SYNCH_(Integer *ptype)
+{
+
+   LAPI_Gfence(lapi_handle);
+
+}
