@@ -18,7 +18,7 @@ void FATR nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript
 Integer ndim, type, me, elems, ind=0, i;
 Integer lo[MAXDIM],hi[MAXDIM],dims[MAXDIM],ld[MAXDIM-1];
 struct  info_t{ 
-        union val_t {double dval; long lval;}v; 
+        union val_t {double dval; long lval; float fval;}v; 
         Integer subscr[MAXDIM]; 
         DoubleComplex extra;} info;
 int     participate=0;
@@ -49,6 +49,7 @@ int     participate=0;
         Integer *ia,ival;
         DoublePrecision *da,dval;
         DoubleComplex *ca;
+        float *fa,fval;
 
         case MT_F_INT:
            ia = (Integer*)ptr;
@@ -91,6 +92,18 @@ int     participate=0;
            info.v.dval = dval; 
            break;
 
+        case MT_F_REAL:
+           fa = (float*)ptr;
+           fval = *fa;
+ 
+           if (strncmp(op,"min",3) == 0)
+              for(i=0;i<elems;i++){ if(fval > fa[i]) {fval=fa[i];ind=i; } }
+           else
+              for(i=0;i<elems;i++){ if(fval < fa[i]) {fval=fa[i];ind=i; } }
+ 
+           info.v.fval = fval;
+           break;
+                                      
         default: ga_error(" wrong data type ",type);
       }
 
@@ -114,6 +127,10 @@ int     participate=0;
       int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
       *(DoublePrecision*)val = info.v.dval;
+   }else if(type==MT_F_REAL){
+      int size = sizeof(double) + sizeof(Integer)*ndim;
+      armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
+      *(float*)val = info.v.fval;        
    }else{
       int size = sizeof(info); /* for simplicity we send entire info */
       armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);

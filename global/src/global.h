@@ -96,6 +96,7 @@ extern void FATR ga_fill_   ARGS_((Integer *, void *));
 extern void FATR ga_scale_  ARGS_((Integer *, void *));
 extern void FATR ga_add_   ARGS_((Void *, Integer *, Void *,                                Integer *, Integer *));
 extern Integer FATR ga_idot_ ARGS_((Integer *, Integer *));
+extern float FATR ga_fdot_ ARGS_((Integer *, Integer *));            
 extern DoublePrecision FATR ga_ddot_ ARGS_((Integer *, Integer *));
 extern DoubleComplex ga_zdot ARGS_((Integer *, Integer *));
 extern void FATR ga_print_patch_ ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *));
@@ -197,6 +198,10 @@ extern DoublePrecision nga_ddot_patch(Integer *g_a, char *t_a,
           Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo,
           Integer *bhi);
 
+extern float nga_fdot_patch(Integer *g_a, char *t_a,
+          Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo,
+          Integer *bhi);  
+
 extern DoubleComplex nga_zdot_patch(Integer *g_a, char *t_a,
           Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo,
           Integer *bhi);
@@ -221,5 +226,6 @@ extern void FATR nga_add_patch_(DoublePrecision *alpha, Integer *g_a,
 extern DoubleComplex   *DCPL_MB;
 extern DoublePrecision *DBL_MB;
 extern Integer         *INT_MB;
+extern float           *FLT_MB;
 
 #endif 

@@ -25,6 +25,7 @@ extern void GA_Fill(int g_a, void *value);
 extern Integer GA_Idot(int g_a, int g_b);
 extern double GA_Ddot(int g_a, int g_b); 
 extern DoubleComplex GA_Zdot(int g_a, int g_b); 
+extern float GA_Fdot(int g_a, int g_b);
 extern void GA_Scale(int g_a, void *value); 
 extern void GA_Add(void *alpha, int g_a, void* beta, int g_b, int g_c); 
 extern void GA_Copy(int g_a, int g_b); 
@@ -82,6 +83,8 @@ extern int NGA_Idot_patch(int g_a, char t_a, int alo[], int ahi[],
 extern double NGA_Ddot_patch(int g_a, char t_a, int alo[], int ahi[],
                              int g_b, char t_b, int blo[], int bhi[]);
 extern DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[],
+                                    int g_b, char t_b, int blo[], int bhi[]);
+extern float NGA_Fdot_patch(int g_a, char t_a, int alo[], int ahi[],
                                     int g_b, char t_b, int blo[], int bhi[]);
 extern void NGA_Zero_patch(int g_a, int lo[], int hi[]);
     

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.28 2001-03-22 21:46:17 d3h325 Exp $ */
+/* $Id: capi.c,v 1.29 2001-05-07 22:56:56 llt Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -175,6 +175,13 @@ DoubleComplex GA_Zdot(int g_a, int g_b)
     Integer b=(Integer)g_b;
     return ga_zdot(&a,&b);
 }
+
+float GA_Fdot(int g_a, int g_b)
+{
+    Integer a=(Integer)g_a;
+    Integer b=(Integer)g_b;
+    return (float)ga_fdot_(&a,&b);
+}    
 
 void GA_Fill(int g_a, void *value)
 {
@@ -472,6 +479,13 @@ void GA_Igop(Integer x[], int n, char *op)
   ga_igop(type, x, len, op);
 }
 
+void GA_Fgop(Integer x[], int n, char *op)
+{
+  Integer type=GA_TYPE_GOP;
+  Integer len = (Integer)n;
+  ga_fgop(type, x, len, op);
+}       
+
 /*********** to do *******/
 /*
 void GA_Print_patch(int g_a,int ilo,int ihi,int jlo,int jhi,int pretty)
@@ -644,6 +658,28 @@ DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[],
     
     return (res);
 }
+
+float NGA_Fdot_patch(int g_a, char t_a, int alo[], int ahi[],
+                   int g_b, char t_b, int blo[], int bhi[])
+{
+    float res;
+    Integer a=(Integer)g_a;
+    Integer andim = ga_ndim_(&a);
+ 
+    Integer b=(Integer)g_b;
+    Integer bndim = ga_ndim_(&b);
+ 
+    COPYINDEX_C2F(alo,_ga_alo, andim);
+    COPYINDEX_C2F(ahi,_ga_ahi, andim);
+ 
+    COPYINDEX_C2F(blo,_ga_blo, bndim);
+    COPYINDEX_C2F(bhi,_ga_bhi, bndim);
+ 
+    res = nga_fdot_patch(&a, &t_a, _ga_alo, _ga_ahi,
+                         &b, &t_b, _ga_blo, _ga_bhi);
+ 
+    return (res);
+}                                           
 
 void NGA_Fill_patch(int g_a, int lo[], int hi[], void *val)
 {

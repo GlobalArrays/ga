@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.35 2001-03-22 21:46:18 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.36 2001-05-07 22:56:59 llt Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -26,6 +26,7 @@
  * publicly by or for the US Government, including the right to
  * distribute to other US Government contractors.
  */
+
 
 #include "global.h"
 #include "globalp.h"
@@ -59,6 +60,7 @@ void ga_file_print_patch(file, g_a, ilo, ihi, jlo, jhi, pretty)
 #define FLEN 80 
 Integer i, j,jj, dim1, dim2, type, ibuf[BUFSIZE], jmax, ld=1, bufsize ;
 DoublePrecision  dbuf[BUFSIZE];
+float fbuf[BUFSIZE];
 char *name;
 
   ga_sync_();
@@ -102,6 +104,11 @@ char *name;
                    for(jj=0; jj<(jmax-j+1); jj+=2)
                      fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
                    break;
+              case MT_F_REAL:
+                   ga_get_(g_a, &i, &i, &j, &jmax, fbuf, &ld);
+                   for(jj=0; jj<(jmax-j+1); jj++)
+                     fprintf(file," %11.5f",fbuf[jj]);
+                   break;        
               default: ga_error("ga_print: wrong type",0);
            }
          }
@@ -133,6 +140,10 @@ char *name;
               case MT_F_DBL:
                    for (jj=j; jj<=jmax; jj++) fprintf(file,"%8ld    ", jj);
                    fprintf(file,"\n      ");
+                   for (jj=j; jj<=jmax; jj++) fprintf(file," -----------");         
+              case MT_F_REAL:
+                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%8ld    ", jj);
+                   fprintf(file,"\n      ");
                    for (jj=j; jj<=jmax; jj++) fprintf(file," -----------");
            }
            fprintf(file,"\n");
@@ -152,7 +163,11 @@ char *name;
                       for(jj=0; jj<(jmax-j+1); jj++)
                         fprintf(file," %11.5f",dbuf[jj]);
                       break;
-
+                 case MT_F_REAL:
+                      ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
+                      for(jj=0; jj<(jmax-j+1); jj++)
+                        fprintf(file," %11.5f",fbuf[jj]);
+                      break;     
                  case MT_F_DCPL:
 	              ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
 	              for(jj=0; jj<(jmax-j+1); jj+=2)
@@ -425,6 +440,7 @@ char *name;
         case MT_F_DBL: printf("double"); break;
         case MT_F_INT: printf("integer"); break;
         case MT_F_DCPL: printf("double complex"); break;
+        case MT_F_REAL: printf("float"); break; 
         default: ga_error("ga_print_distribution: type not supported",type);
       }
       printf("\nArray Dimensions:");
@@ -492,6 +508,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
     Integer bufsize;
     Integer ibuf[BUFSIZE], ibuf_2d[BUFSIZE*BUFSIZE];
     DoublePrecision dbuf[BUFSIZE], dbuf_2d[BUFSIZE*BUFSIZE];
+    float fbuf[BUFSIZE], fbuf_2d[BUFSIZE*BUFSIZE];
     Integer lop[MAXDIM], hip[MAXDIM];
     Integer done, status_2d, status_3d;
     ga_sync_();
@@ -530,6 +547,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     case MT_F_INT: nga_get_(g_a, lop, hip, ibuf, ld); break;
                     case MT_F_DBL: nga_get_(g_a, lop, hip, dbuf, ld); break;
                     case MT_F_DCPL: nga_get_(g_a, lop, hip, dbuf, ld); break;
+                    case MT_F_REAL: nga_get_(g_a, lop, hip, fbuf, ld); break; 
                     default: ga_error("ga_print: wrong type",0);
                 }
                 
@@ -559,6 +577,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                             else
                                 fprintf(file,") = (%e,%e)\n",
                                         dbuf[i*2],dbuf[i*2+1]);
+                        case MT_F_REAL: fprintf(file,") = %f\n", fbuf[i]);break; 
                     }
                 }
                 
@@ -629,6 +648,14 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                             fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," -----------------------");
+                            break;
+                        case MT_F_REAL:
+                            fprintf(file, "     ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(file, "%7ld  ", i);
+                            fprintf(file,"\n      ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(file," --------");
                     }
                     
                     fprintf(file,"\n");
@@ -639,6 +666,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     case MT_F_INT: nga_get_(g_a, lop, hip, ibuf_2d, ld); break;
                     case MT_F_DBL: nga_get_(g_a, lop, hip, dbuf_2d, ld); break;
                     case MT_F_DCPL: nga_get_(g_a, lop, hip, dbuf_2d, ld);break;
+                    case MT_F_REAL: nga_get_(g_a, lop, hip, fbuf_2d, ld);break;      
                     default: ga_error("ga_print: wrong type",0);
                 }
                 
@@ -666,6 +694,12 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                                 else
                                     fprintf(file," %.5e",dbuf_2d[i]);
                             break;
+                        case MT_F_REAL:
+                            if(ndim > 1)
+                                for(j=0; j<(hip[1]-lop[1]+1); j++)
+                                    fprintf(file," %11.5f", fbuf_2d[j*bufsize+i]);
+                            else fprintf(file," %11.5f", fbuf_2d[i]);
+                            break;           
                         case MT_F_DCPL:
                             if(ndim > 1)
                                 for(j=0; j<(hip[1]-lop[1]+1); j++)
@@ -763,6 +797,9 @@ void FATR ga_summarize_(Integer *verbose)
                 case MT_F_DCPL:
                     fprintf(DEV, "  array %d => double complex ", (int)arr_no);
                     break;
+                case MT_F_REAL:
+                    fprintf(DEV, "  array %d => float ",(int)arr_no);
+                    break;          
                 default: ga_error("ga_print: wrong type",0);
             }
             arr_no++;

@@ -321,6 +321,9 @@ void nga_copy_patch(char *trans,
                     break;
                     case MT_F_DCPL:((DoubleComplex *)tmp_ptr)[i] =
                                        ((DoubleComplex *)src_data_ptr)[idx];
+                    break;
+                    case MT_F_REAL: ((float *)tmp_ptr)[i] =
+                                       ((float *)src_data_ptr)[idx];      
                 }
             }
 
@@ -370,6 +373,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     Integer isum;
     DoublePrecision dsum;
     DoubleComplex zsum;
+    float fsum;
     Integer me= ga_nodeid_(), temp_created=0;
     Integer type = GA_TYPE_GSM;
     char *tempname = "temp", transp, transp_a, transp_b;
@@ -503,6 +507,21 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                         dsum += ((DoublePrecision *)A_ptr)[idx+j] *
                             ((DoublePrecision *)B_ptr)[idx+j];
                 }
+                break;
+            case MT_F_REAL:
+                for(i=0; i<n1dim; i++) {
+                    idx = 0;
+                    for(j=1; j<andim; j++) {
+                        idx += bvalue[j] * baseldA[j-1];
+                        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+                        if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+                    }
+ 
+                    for(j=0; j<(hiA[0]-loA[0]+1); j++)
+                        fsum += ((float *)A_ptr)[idx+j] *
+                            ((float *)B_ptr)[idx+j];
+                }
+                break;                                              
         }
 
         /* release access to the data */
@@ -527,6 +546,10 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
             ga_dgop(type, &zsum.imag, 1, "+");
             (*((DoubleComplex *)retval)).real = zsum.real;
             (*((DoubleComplex *)retval)).imag = zsum.imag;
+            break;
+        case MT_F_REAL:
+            ga_fgop(type, &fsum, 1, "+");
+            *((float *)retval) += isum;
     }
     
     if(temp_created) ga_destroy_(&g_B);
@@ -587,6 +610,33 @@ DoublePrecision nga_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     GA_POP_NAME;
     return (sum);
 }
+
+/*\ compute float DOT PRODUCT of two patches
+ *
+ *          . different shapes and distributions allowed but not recommended
+ *          . the same number of elements required
+\*/
+float nga_fdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
+     Integer *g_a, *alo, *ahi;    /* patch of g_a */
+     Integer *g_b, *blo, *bhi;    /* patch of g_b */
+     char    *t_a, *t_b;        /* transpose operators */
+{
+    Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
+    float  sum = 0.;
+ 
+    ga_sync_();
+    GA_PUSH_NAME("nga_fdot_patch");
+ 
+    ga_inquire_(g_a, &atype, &andim, adims);
+    ga_inquire_(g_b, &btype, &bndim, bdims);
+ 
+    if(atype != btype || (atype != MT_F_REAL )) ga_error(" wrong types ", 0L);
+ 
+    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
+ 
+    GA_POP_NAME;
+    return (sum);
+}                                      
 
 /*\ compute Double Complex DOT PRODUCT of two patches
  *
@@ -718,6 +768,18 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
                             *(DoublePrecision *)val;
                 }
                 break;
+            case MT_F_REAL:
+                for(i=0; i<n1dim; i++) {
+                    idx = 0;
+                    for(j=1; j<ndim; j++) {
+                        idx += bvalue[j] * baseld[j-1];
+                        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+                        if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+                    }
+                    for(j=0; j<(hiA[0]-loA[0]+1); j++)
+                        ((float *)data_ptr)[idx+j] = *(float*)val;
+                }
+                break;                                
             default: ga_error(" wrong data type ",type);
         }
         
@@ -821,6 +883,19 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
                     for(j=0; j<(hiA[0]-loA[0]+1); j++)
                         ((Integer *)src_data_ptr)[idx+j]  *= *(Integer*)alpha;
                 }
+                break;
+            case MT_F_REAL:
+                for(i=0; i<n1dim; i++) {
+                    idx = 0;
+                    for(j=1; j<ndim; j++) {
+                        idx += bvalue[j] * baseld[j-1];
+                        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+                        if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+                    }
+ 
+                    for(j=0; j<(hiA[0]-loA[0]+1); j++)
+                        ((float *)src_data_ptr)[idx+j]  *= *(float*)alpha;
+                }                                                           
         }
 
         /* release access to the data */
@@ -1018,7 +1093,21 @@ DoublePrecision *alpha, *beta;
                             ((Integer *)B_ptr)[idx+j];
                 }
                 break;
-        }
+            case MT_F_REAL:
+                for(i=0; i<n1dim; i++) {
+                    idx = 0;
+                    for(j=1; j<cndim; j++) {
+                        idx += bvalue[j] * baseldC[j-1];
+                        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+                        if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+                    }
+ 
+                    for(j=0; j<(hiC[0]-loC[0]+1); j++)
+                        ((float *)C_ptr)[idx+j] = *(float *)alpha *
+                            ((float *)A_ptr)[idx+j] + *(float *)beta *
+                            ((float *)B_ptr)[idx+j];
+                }
+                break;                                               }
         
         /* release access to the data */
         nga_release_       (&g_A, loC, hiC);
@@ -1040,6 +1129,7 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
     Integer ival = 0;
     DoublePrecision dval = 0.0;
     DoubleComplex cval;
+    float fval = 0.0;
     void *valptr;
     
     ga_sync_();
@@ -1060,6 +1150,9 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
             valptr = (void *)(&cval);
             break;
         }
+        case MT_F_REAL:
+            valptr = (void *)(&fval);
+            break;      
         
         default: ga_error(" wrong data type ",type);
     }
@@ -1189,6 +1282,35 @@ DoubleComplex  sum;
    GA_POP_NAME;
    return (sum);
 }
+
+/*\ compute float DOT PRODUCT of two patches
+ *
+ *          . different shapes and distributions allowed but not recommended
+ *          . the same number of elements required
+\*/
+float ga_fdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                              g_b, t_b, bilo, bihi, bjlo, bjhi)
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+     char    *t_a, *t_b;                          /* transpose operators */
+{
+Integer atype, btype, adim1, adim2, bdim1, bdim2;
+float  sum = 0.;
+ 
+   ga_sync_();
+   GA_PUSH_NAME("ga_fdot_patch");
+ 
+   ga_inquire_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_(g_b, &btype, &bdim1, &bdim2);
+ 
+   if(atype != btype || (atype != MT_F_REAL )) ga_error(" wrong types ", 0L);
+ 
+   gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                 g_b, t_b, bilo, bihi, bjlo, bjhi, (DoublePrecision*)&sum);
+ 
+   GA_POP_NAME;
+   return (sum);
+}                   
 
 
 /*\ compute DOT PRODUCT of two patches

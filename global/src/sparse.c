@@ -13,6 +13,7 @@ static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integ
        Integer *ia;
        DoublePrecision *da;
        DoubleComplex *ca;
+       float *fa;
 
        case MT_F_INT:
             ia = (Integer*)ptr;
@@ -52,6 +53,17 @@ static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integ
             } else
                for(i=0; i< n; i++) da[i] = *(double*)val; 
             break;
+       case MT_F_REAL:
+            fa = (float*)ptr;
+            if(add) for(i=0; i< n; i++) {
+                    if(i==0)
+                       fa[i] += *(float*)val;
+                    else
+                       fa[i] = fa[i-1] + *(float*)val;
+            }
+            else
+                    for(i=0; i< n; i++) fa[i] = *(float*)val;
+            break;                                                          
        default: ga_error("ga_scan/add:wrong data type",type);
        }
 }
@@ -64,6 +76,7 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
           Integer *ia1, *ia2;
           DoublePrecision *da1, *da2;
           DoubleComplex *ca1, *ca2;
+          float *fa1, *fa2;
  
           case MT_F_INT:
              ia1 = (Integer*)ptr1;
@@ -87,6 +100,12 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
              da2[0] = da1[0] +  *(double*)val; 
              for(i=1; i< n; i++) da2[i] = da2[i-1]+da1[i];
              break;
+          case MT_F_REAL:
+             fa1 = (float*)ptr1;
+             fa2 = (float*)ptr2;
+             fa2[0] = fa1[0] +  *(float*)val;
+             for(i=1; i< n; i++) fa2[i] = fa2[i-1]+fa1[i];
+             break;   
           default: ga_error("ga_add_val:wrong data type",type);
         }
 }                                                               
@@ -98,6 +117,7 @@ static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sb
     Integer         *is, *id;
     DoublePrecision *ds, *dd;
     DoubleComplex   *cs, *cd;
+    float           *fs, *fd;
 
     if(pack)
         switch (type){
@@ -119,6 +139,12 @@ static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sb
              ds = (double*)a; dd = (double*)b;
              for(i=0; i< n; i++)if(sbit[i]){ *dd = ds[i]; dd++; cnt++; }
              break;
+          case MT_F_REAL:
+             fs = (float*)a; fd = (float*)b;
+             for(i=0; i< n; i++) if(sbit[i]) {
+                     *fd = fs[i]; fd++; cnt++;
+          }
+             break;       
           default: ga_error("ga_copy_sbit:wrong data type",type);
         }
     else
@@ -136,6 +162,10 @@ static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sb
              ds = (double*)b; dd = (double*)a;
              for(i=0; i< n; i++)if(sbit[i]){ dd[i] = *ds; ds++; cnt++; }
              break;
+          case MT_F_REAL:
+             fs = (float*)b; fd = (float*)a;
+             for(i=0; i< n; i++) if(sbit[i]) { fd[i] = *fs; fs++;  cnt++; }
+             break;        
           default: ga_error("ga_copy_sbit:wrong data type",type);
         }
     if(cnt!=mx){
@@ -183,6 +213,7 @@ register Integer i;
           Integer *ia;
           DoublePrecision *da;
           DoubleComplex *ca;
+          float *fa;
 
           case MT_F_INT:
              ia = (Integer*)ptr;
@@ -204,6 +235,11 @@ register Integer i;
                  da[i] = *(DoublePrecision*)start+
                          (off+i)* *(DoublePrecision*)stride; 
              break;
+          case MT_F_REAL:
+             fa = (float*)ptr;
+             for(i=0; i< hip-lop+1; i++)
+                 fa[i] = *(float*)start+(off+i)* *(float*)stride;
+             break;                 
           default: ga_error("ga_patch_enum:wrong data type ",type);
         }
 

@@ -151,7 +151,7 @@ int  GA_stack_size=0;
 DoubleComplex   *DCPL_MB;           /* double precision complex base address */
 DoublePrecision *DBL_MB;            /* double precision base address */
 Integer         *INT_MB;            /* integer base address */
-
+float           *FLT_MB;            /* float base address */
 
 /* cache numbers of GA/message-passing processes and ids */
 static Integer GAme, GAnproc;

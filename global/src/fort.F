@@ -1,4 +1,4 @@
-c $Id: fort.F,v 1.2 1999-07-28 00:25:30 d3h325 Exp $
+c $Id: fort.F,v 1.3 2001-05-07 22:56:57 llt Exp $
       double complex function ga_zdot(g_a,g_b)
       implicit none
       integer g_a, g_b
@@ -131,4 +131,17 @@ c $Id: fort.F,v 1.2 1999-07-28 00:25:30 d3h325 Exp $
       call ngai_dot_patch(g_a, t_a, alo, ahi,
      $            g_b, t_b, blo, bhi, nga_idot_patch)
       end
+
+      real function nga_sdot_patch(
+     $            g_a, t_a, alo, ahi,
+     $            g_b, t_b, blo, bhi)
+      implicit none
+      integer  g_a, g_b, alo, ahi
+      integer  blo, bhi
+      character*1 t_a, t_b
+      external ngai_dot_patch
+      nga_sdot_patch = 0.0
+      call ngai_dot_patch(g_a, t_a, alo, ahi,
+     $            g_b, t_b, blo, bhi, nga_sdot_patch)
+      end                                             
 #endif

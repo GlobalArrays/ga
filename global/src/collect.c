@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.10 2000-06-14 22:45:42 d3h325 Exp $ */
+/* $Id: collect.c,v 1.11 2001-05-07 22:56:57 llt Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -138,6 +138,40 @@ long gtype,gn;
      ga_igop(gtype, x, gn, op);
 #endif
 }
+
+
+void ga_fgop(type, x, n, op)
+     Integer type, n;
+     float *x;
+     char *op;
+{
+            armci_msg_fgop(x, (int)n, op);
+}
+ 
+ 
+/*\ GLOBAL OPERATIONS
+ *  Fortran
+\*/
+#if defined(CRAY) || defined(WIN32)
+void FATR GA_SGOP(type, x, n, op)
+     _fcd op;
+#else
+void ga_sgop_(type, x, n, op, len)
+     char *op;
+     int  len;
+#endif
+     Integer *type, *n;
+     float *x;
+{
+long gtype,gn;
+     gtype = (long)*type; gn = (long)*n;
+ 
+#if defined(CRAY) || defined(WIN32)
+     ga_fgop(gtype, x, gn, _fcdtocp(op));
+#else
+     ga_fgop(gtype, x, gn, op);
+#endif
+}                                   
 
 
 #if 0

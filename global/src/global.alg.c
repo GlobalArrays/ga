@@ -1,4 +1,4 @@
-/* $Id: global.alg.c,v 1.15 1999-11-15 22:00:39 d3h325 Exp $ */
+/* $Id: global.alg.c,v 1.16 2001-05-07 22:56:58 llt Exp $ */
 /*************************************************************************\
  Purpose:   File global.alg.c contains a set of linear algebra routines 
             that operate on global arrays in the SPMD mode. 
@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include "global.h"
 #include "globalp.h"
+
 
 
 /*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
@@ -37,8 +38,8 @@ Integer me= ga_nodeid_(), index, ld;
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != MT_F_DBL && atype != MT_F_INT &&
-                         atype != MT_F_DCPL))
+   if(atype != btype || (atype != MT_F_DBL  && atype != MT_F_INT &&
+                         atype != MT_F_DCPL && atype != MT_F_REAL))
                ga_error("ga_copy: wrong types ", 0L);
 
    if(adim1 != bdim1 || adim2!=bdim2 )
@@ -54,7 +55,9 @@ Integer me= ga_nodeid_(), index, ld;
         case MT_F_DCPL:
            ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, DCPL_MB+index-1, &ld); break;
         case MT_F_INT:
-           ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, INT_MB+index-1, &ld);
+           ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, INT_MB+index-1, &ld); break;
+        case MT_F_REAL:
+           ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, FLT_MB+index-1, &ld);
       }
       ga_release_(g_a, &ilo, &ihi, &jlo, &jhi);
    }
@@ -82,7 +85,7 @@ Integer index;
 
    if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0 )
                   ga_error("null pointer for base array",0L);
-   if (DCPL_MB == (DoubleComplex*)0 )
+   if (DCPL_MB == (DoubleComplex*)0 || FLT_MB == (float*)0 )
                   ga_error("null pointer for base array",0L);
 
    if (  ihi>0 && jhi>0 ){
@@ -108,6 +111,11 @@ Integer index;
               for(i=0; i<ihi-ilo+1; i++)
                    DBL_MB[index +j*ld + i]  = 0.; 
            break;
+        case MT_F_REAL:
+           for(j=0; j<jhi-jlo+1; j++)
+              for(i=0; i<ihi-ilo+1; i++)
+                   FLT_MB[index +j*ld + i]  = 0.;
+           break; 
         default: ga_error(" wrong data type ",type);
       }
 
@@ -350,7 +358,78 @@ DoubleComplex sum;
         gai_zdot_(g_a, g_b, &sum);
         return sum;
 }
-  
+
+real FATR ga_sdot_(g_a, g_b)
+        Integer *g_a, *g_b;
+{
+Integer  atype, adim1, adim2, btype, bdim1, bdim2, ald, bld;
+Integer  ailo,aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi;
+register Integer i,j;
+Integer  type,len, me;
+float    sum;
+Integer     index_a, index_b;
+ 
+   ga_sync_();
+ 
+   me = ga_nodeid_();
+
+   ga_check_handle(g_a, "ga_fdot");
+   ga_check_handle(g_b, "ga_fdot");
+ 
+   GA_PUSH_NAME("ga_fdot");
+   ga_inquire_(g_a,  &atype, &adim1, &adim2);
+   ga_inquire_(g_b,  &btype, &bdim1, &bdim2);
+ 
+   if(atype != btype || atype != MT_F_REAL)
+        ga_error("types not correct", 0L);
+ 
+   if (adim1!=bdim1 || adim2 != bdim2)
+            ga_error("arrays not conformant", 0L);
+ 
+   if (FLT_MB == (float*)0 )
+                  ga_error(" null pointer for base array",0L);
+ 
+   ga_distribution_(g_a, &me, &ailo, &aihi, &ajlo, &ajhi);
+   ga_distribution_(g_b, &me, &bilo, &bihi, &bjlo, &bjhi);
+ 
+   if (ailo!=bilo || aihi != bihi || ajlo!=bjlo || ajhi != bjhi){
+         /*
+         fprintf(stderr,"\nme =%d: %d-%d %d-%d vs %d-%d %d-%d dim:%dx%d\n",me,
+                ailo,aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi,adim1,adim2);
+         */
+         ga_error("distributions not identical",0L);
+   }
+ 
+   sum = 0.;
+   if (  aihi>0 && ajhi>0 ){
+       ga_access_(g_a, &ailo, &aihi, &ajlo, &ajhi,  &index_a, &ald);
+       if(g_a == g_b){
+          index_b = index_a; bld =ald;
+       }else
+       ga_access_(g_b, &bilo, &bihi, &bjlo, &bjhi,  &index_b, &bld);
+ 
+       index_a --;  /* Fortran to C correction of starting address */
+       index_b --;  /* Fortran to C correction of starting address */
+                                                                              
+       /* compute "local" contribution to the dot product */
+       for(j=0; j<ajhi-ajlo+1; j++)
+          for(i=0; i<aihi-ailo+1; i++)
+             sum += FLT_MB[index_a +j*ald + i]  *
+                    FLT_MB[index_b +j*bld + i];
+ 
+       /* release access to the data */
+       ga_release_(g_a, &ailo, &aihi, &ajlo, &ajhi);
+       ga_release_(g_b, &bilo, &bihi, &bjlo, &bjhi);
+   }
+ 
+   type = GA_TYPE_GSM; len =1;
+   ga_fgop(type, &sum, len, "+");
+ 
+   GA_POP_NAME;
+ 
+   return (sum);
+}
+                          
  
 void FATR ga_scale_(g_a, alpha)
         Integer *g_a;
@@ -369,7 +448,7 @@ Integer index;
 
    if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
                   ga_error("null pointer for base array", 0L);
-   if (DCPL_MB == (DoubleComplex*)0 )
+   if (DCPL_MB == (DoubleComplex*)0  || FLT_MB == (float*)0)
                   ga_error("null pointer for base array",0L);
 
    ga_distribution_(g_a, &me, &ilo, &ihi, &jlo, &jhi);
@@ -401,6 +480,11 @@ Integer index;
               for(j=0; j<jhi-jlo+1; j++)
                  for(i=0; i<ihi-ilo+1; i++)
                      INT_MB[index +j*ld + i]  *= *(Integer*)alpha;
+              break;
+         case MT_F_REAL:
+              for(j=0; j<jhi-jlo+1; j++)
+                 for(i=0; i<ihi-ilo+1; i++)
+                     FLT_MB[index +j*ld + i]  *= *(float*)alpha;
       }
 
       /* release access to the data */
@@ -410,9 +494,6 @@ Integer index;
    GA_POP_NAME;
    ga_sync_();
 }
-
-
-
 
 void FATR ga_add_(alpha, g_a, beta, g_b,g_c)
         Integer *g_a, *g_b, *g_c;
@@ -449,7 +530,7 @@ Integer index_a, index_b, index_c;
 
    if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
                   ga_error(": null pointer for base array",0L);
-   if (DCPL_MB == (DoubleComplex*)0 )
+   if (DCPL_MB == (DoubleComplex*)0 || FLT_MB == (float*)0)
                   ga_error("null pointer for base array",0L);
 
    ga_distribution_(g_a, &me, &ailo, &aihi, &ajlo, &ajhi);
@@ -507,6 +588,13 @@ Integer index_a, index_b, index_c;
                       INT_MB[index_c +j*cld + i]  =
                          *(Integer*)alpha * INT_MB[index_a +j*ald + i] +
                          *(Integer*)beta  * INT_MB[index_b +j*bld + i];
+              break;
+         case MT_F_REAL:
+              for(j=0; j<ajhi-ajlo+1; j++)
+                  for(i=0; i<aihi-ailo+1; i++)
+                      FLT_MB[index_c +j*cld + i]  =
+                         *(float*)alpha * FLT_MB[index_a +j*ald + i] +
+                         *(float*)beta  * FLT_MB[index_b +j*bld + i];  
        }
 
        /* release access to the data */
@@ -519,3 +607,6 @@ Integer index_a, index_b, index_c;
    GA_POP_NAME;
    ga_sync_();
 }
+
+
+

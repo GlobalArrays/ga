@@ -98,7 +98,8 @@
 
 #define GAsizeofM(type)  ( (type)==MT_F_DBL? sizeof(DoublePrecision): \
                            (type)==MT_F_INT? sizeof(Integer): \
-                           (type)==MT_F_DCPL? sizeof(DoubleComplex):0)
+                           (type)==MT_F_DCPL? sizeof(DoubleComplex): \
+                           (type)==MT_F_REAL? sizeof(float):0)
 
 #define NAME_STACK_LEN 10
 #define PAGE_SIZE  4096

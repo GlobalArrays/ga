@@ -147,7 +147,29 @@ void ga_sort_scat_int_(pn, v, i, j, base)
   INDEX_SORT(base,pn,SWAP);
 }
 
-
+void ga_sort_scat_flt_(pn, v, i, j, base)
+     Integer *pn;
+     float   *v;
+     Integer *i;
+     Integer *j;
+     Integer *base;
+{
+ 
+  if (*pn < 2) return;
+ 
+#  undef SWAP
+#  define SWAP(a,b) { \
+    Integer ltmp; \
+    float dtmp; \
+    int ia = a - base; \
+    int ib = b - base; \
+    ltmp=*a; *a=*b; *b=ltmp; \
+    dtmp=v[ia]; v[ia]=v[ib]; v[ib]=dtmp; \
+    ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
+    ltmp=j[ia]; j[ia]=j[ib]; j[ib]=ltmp; \
+  }
+  INDEX_SORT(base,pn,SWAP);
+}                                   
 
 void ga_sort_scat(pn, v, i, j, base, type)
      Integer *pn;
@@ -161,10 +183,10 @@ void ga_sort_scat(pn, v, i, j, base, type)
      case MT_F_DBL:  ga_sort_scat_dbl_(pn, (DoublePrecision*)v, i,j,base);break;
      case MT_F_DCPL: ga_sort_scat_dcpl_(pn, (DoubleComplex*)v, i,j,base); break;
      case MT_F_INT:  ga_sort_scat_int_(pn, (Integer*)v, i, j, base); break;
+     case MT_F_REAL:  ga_sort_scat_flt_(pn, (float*)v, i, j, base); break; 
      default:        ga_error("ERROR:ga_sort_scat: wrong type",type);
    } 
 }
-
 
 
 void ga_sort_gath_(pn, i, j, base)

@@ -50,6 +50,7 @@ register Integer i;
       switch (type){
         Integer *ia;
         DoublePrecision *da;
+        float *fa;
         case MT_F_INT:
            ia = (Integer*)ptr;
            for(i=0;i<elems;i++) ia[i]  = 0;
@@ -60,6 +61,10 @@ register Integer i;
            da = (DoublePrecision*)ptr;
            for(i=0;i<elems;i++) da[i] = 0;
            break;
+        case MT_F_REAL:
+           fa = (float*)ptr;
+           for(i=0;i<elems;i++) fa[i]  = 0;
+           break;                                 
         default: ga_error(" wrong data type ",type);
       }
 
@@ -174,6 +179,7 @@ Integer  ndim, type, me, elems=0, elemsb=0;
 register Integer i;
 Integer isum=0;
 DoubleComplex zsum ={0.,0.};
+float fsum=0.0;
 void *ptr_a, *ptr_b;
 
  Integer andim, adims[MAXDIM];
@@ -224,6 +230,7 @@ void *ptr_a, *ptr_b;
       switch (type){
 	Integer *ia, *ib;
 	DoublePrecision *da,*db;
+        float *fa, *fb;
         case MT_F_INT:
            ia = (Integer*)ptr_a;
            ib = (Integer*)ptr_b;
@@ -249,6 +256,13 @@ void *ptr_a, *ptr_b;
                  zsum.real += da[i]  * db[i];
            *(DoublePrecision*)value = zsum.real; 
            break;
+        case MT_F_REAL:
+           fa = (float*)ptr_a;
+           fb = (float*)ptr_b;
+           for(i=0;i<elems;i++)
+                 fsum += fa[i]  * fb[i];
+           *(float*)value = fsum;
+           break;                        
         default: ga_error(" wrong data type ",type);
       }
    
@@ -262,6 +276,8 @@ void *ptr_a, *ptr_b;
    if(Type == MT_F_INT)ga_igop((Integer)GA_TYPE_GSM,(Integer*)value, 1, "+");
    else if(Type == MT_F_DBL) 
      ga_dgop((Integer)GA_TYPE_GSM, (DoublePrecision*)value, 1, "+"); 
+   else if(Type == MT_F_REAL)
+     ga_fgop((Integer)GA_TYPE_GSM, (float*)value, 1, "+");  
    else
      ga_dgop((Integer)GA_TYPE_GSM, (DoublePrecision*)value, 2, "+"); 
     
@@ -287,6 +303,13 @@ DoublePrecision sum;
         return sum;
 }
 
+float FATR ga_sdot_(g_a, g_b)
+        Integer *g_a, *g_b;
+{
+float sum;
+        gai_dot(MT_F_REAL, g_a, g_b, &sum);
+        return sum;
+}            
 
 /*\ DoubleComplex ga_zdot - C version
 \*/ 
@@ -296,7 +319,6 @@ DoubleComplex sum;
         gai_dot(MT_F_DCPL, g_a, g_b, &sum);
         return sum;
 }
-
 
 #if defined(CRAY) || defined(WIN32)
 # define gai_zdot_ GAI_ZDOT
@@ -335,7 +357,7 @@ void *ptr;
         Integer *ia;
         DoublePrecision *da;
         DoubleComplex *ca, scale;
-
+        float *fa;
         case MT_F_INT:
            ia = (Integer*)ptr;
            for(i=0;i<elems;i++) ia[i]  *= *(Integer*)alpha;
@@ -353,6 +375,10 @@ void *ptr;
            da = (DoublePrecision*)ptr;
            for(i=0;i<elems;i++) da[i] *= *(DoublePrecision*)alpha;
            break;
+        case MT_F_REAL:
+           fa = (float*)ptr;
+           for(i=0;i<elems;i++) fa[i]  *= *(float*)alpha;
+           break;       
         default: ga_error(" wrong data type ",type);
       }
 
@@ -440,6 +466,7 @@ void *ptr_a, *ptr_b, *ptr_c;
        switch(type){
          Integer *ia, *ib, *ic;
          DoublePrecision *da,*db,*dc;
+         float *fa, *fb, *fc;
          case MT_F_DBL:
                   da = (DoublePrecision *)ptr_a;
                   db = (DoublePrecision *)ptr_b;
@@ -461,6 +488,13 @@ void *ptr_a, *ptr_b, *ptr_c;
                      ac[i].imag = x.real*a.imag + 
                               x.imag*a.real + y.real*b.imag + y.imag*b.real;
                   }
+              break;
+         case MT_F_REAL:
+                  fa = (float*)ptr_a;
+                  fb = (float*)ptr_b;
+                  fc = (float*)ptr_c;
+                  for(i=0; i<elems; i++)
+                      fc[i] = *(float*)alpha *fa[i] + *(float*)beta *fb[i]; 
               break;
          case MT_F_INT:
                   ia = (Integer*)ptr_a;
@@ -502,6 +536,10 @@ int i;
             for(i = 0; i< n; i++, ptrb+= stride) 
                *(double*)ptrb= ((double*)ptra)[i];
             break;
+       case MT_F_REAL:
+            for(i = 0; i< n; i++, ptrb+= stride)
+               *(float*)ptrb= ((float*)ptra)[i];
+            break;                                       
        default: ga_error("bad type:",type);
     }
 }

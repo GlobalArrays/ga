@@ -14,10 +14,13 @@
 #define  GA_ddot_patch             ga_ddot_patch
 #define  GA_zdot                   ga_zdot_
 #define  GA_idot                   ga_idot_
+#define  GA_fdot                   ga_sdot_
+#define  GA_fdot_patch             ga_fdot_patch
 #define  GA_zdot_patch             ga_zdot_patch
 #define  GA_ddot_patch_dp          ga_ddot_patch_dp
 #define  GA_destroy                ga_destroy_
 #define  GA_dgop                   ga_dgop_
+#define  GA_fgop                   ga_fgop
 #define  GA_dgemm                  ga_dgemm_
 #define  GA_diag                   ga_diag_
 #define  GA_diag_reuse             ga_diag_reuse_

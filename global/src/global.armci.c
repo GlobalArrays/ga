@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.51 2001-05-07 21:55:20 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.52 2001-05-07 22:56:58 llt Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -28,6 +28,7 @@
  * publicly by or for the US Government, including the right to
  * distribute to other US Government contractors.
  */
+
  
 /*#define PERMUTE_PIDS */
 
@@ -110,6 +111,7 @@ Integer GAsizeof(type)
      case MT_F_DBL  : return (sizeof(DoublePrecision));
      case MT_F_INT  : return (sizeof(Integer));
      case MT_F_DCPL : return (sizeof(DoubleComplex));
+     case MT_F_REAL : return (sizeof(float));
           default   : return 0; 
   }
 }
@@ -256,17 +258,19 @@ static int ma_address_init=0;
 void gai_ma_address_init()
 {
 #ifdef CHECK_MA_ALGN
-Integer  off_dbl, off_int, off_dcpl;
+Integer  off_dbl, off_int, off_dcpl, off_flt;
 #endif
      ma_address_init=1;
      INT_MB = (Integer*)MA_get_mbase(MT_F_INT);
      DBL_MB = (DoublePrecision*)MA_get_mbase(MT_F_DBL);
      DCPL_MB= (DoubleComplex*)MA_get_mbase(MT_F_DCPL);
+     FLT_MB = (float*)MA_get_mbase(MT_F_REAL);  
 
 #   ifdef CHECK_MA_ALGN
         off_dbl = 0 != ((long)DBL_MB)%sizeof(DoublePrecision);
         off_int = 0 != ((long)INT_MB)%sizeof(Integer);
         off_dcpl= 0 != ((long)DCPL_MB)%sizeof(DoublePrecision);
+        off_flt = 0 != ((long)FLT_MB)%sizeof(float);  
 
         if(off_dbl)
            ga_error("GA initialize: MA DBL_MB not alligned", (Integer)DBL_MB);
@@ -276,11 +280,14 @@ Integer  off_dbl, off_int, off_dcpl;
 
         if(off_dcpl)
           ga_error("GA initialize: DCPL_MB not alligned", (Integer)DCPL_MB);
+
+        if(off_flt)
+           ga_error("GA initialize: FLT_MB not alligned", (Integer)FLT_MB);   
 #   endif
 
     if(DEBUG)
-        printf("%d INT_MB=%ld(%lx) DBL_MB=%ld(%lx) DCPL_MB=%ld(%lx)\n",
-                (int)GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB);
+        printf("%d INT_MB=%ld(%lx) DBL_MB=%ld(%lx) DCPL_MB=%ld(%lx) FLT_MB=%ld(%lx)\n",
+          (int)GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB, FLT_MB,FLT_MB);
 }
 
 
@@ -492,8 +499,9 @@ void FATR  ga_initialize_ltd_(Integer *mem_limit)
   
 
 #define gam_checktype(_type)\
-       if(_type != MT_F_DBL && _type != MT_F_INT &&  _type != MT_F_DCPL)\
-         ga_error("type not yet supported ",  _type)
+       if(_type != MT_F_DBL  && _type != MT_F_INT &&  \
+          _type != MT_F_DCPL && _type != MT_F_REAL)\
+         ga_error("ttype not yet supported ",  _type)
 
 #define gam_checkdim(ndim, dims)\
 {\
@@ -568,7 +576,7 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
 
         /* RJH ... don't leave some nodes without data if possible
          but respect the users block size */
-
+           
         if (chunk && chunk[d] > 1) {
           Integer ddim = (dims[d]-1)/MIN(chunk[d],dims[d]) + 1;
           pcut = (ddim -(blk[d]-1)*pe[d]) ;
@@ -601,9 +609,7 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
          }
          fflush(stdout);
       }
-
       status = nga_create_irreg(type, ndim, dims, array_name, mapALL, pe, g_a);
-
       GA_POP_NAME;
       return status;
 }
@@ -742,6 +748,7 @@ int i;
       case MT_F_DBL: base =  (char *) DBL_MB; break;
       case MT_F_INT: base =  (char *) INT_MB; break;
       case MT_F_DCPL: base =  (char *) DCPL_MB; break;
+      case MT_F_REAL: base =  (char *) FLT_MB; break;  
       default:        base = (char*)0;
     }
 
@@ -887,8 +894,12 @@ Integer  i, ga_handle, status, maplen=0;
       GA[ga_handle].type = (int)type;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
+/*<<<<<<< global.armci.c*/
+      GA[ga_handle].ndim    = ndim;
+/*=======*/
       GA[ga_handle].ndim    = (int) ndim;
 
+/*>>>>>>> 1.50*/
       for( i = 0; i< ndim; i++){
          GA[ga_handle].dims[i] = (int)dims[i];
          GA[ga_handle].nblock[i] = (int)nblock[i];
@@ -898,27 +909,22 @@ Integer  i, ga_handle, status, maplen=0;
       for(i = 0; i< maplen; i++)GA[ga_handle].mapc[i] = (int)map[i];
       GA[ga_handle].mapc[maplen] = -1;
       GA[ga_handle].elemsize = GAsizeofM(type);
-
       /*** determine which portion of the array I am supposed to hold ***/
       nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
       for( i = 0, nelem=1; i< ndim; i++){
            GA[ga_handle].chunk[i] = (int)(hi[i]-GA[ga_handle].lo[i]+1);
            nelem *= GA[ga_handle].chunk[i];
       }
-
       mem_size = mem_size_proc =  nelem * GA[ga_handle].elemsize;
       GA[ga_handle].id = INVALID_MA_HANDLE;
       GA[ga_handle].size = mem_size_proc;
-
       /* if requested, enforce limits on memory consumption */
       if(GA_memory_limited) GA_total_memory -= mem_size_proc;
-
       /* check if everybody has enough memory left */
       if(GA_memory_limited){
          status = (GA_total_memory >= 0) ? 1 : 0;
          ga_igop(GA_TYPE_GSM, &status, 1, "*");
       }else status = 1;
-
 /*      fprintf(stderr,"%d, elems=%d size=%d status=%d\n",GAme,nelem,mem_size,status);*/
 /*      ga_sync_();*/
       if(status){
@@ -927,7 +933,6 @@ Integer  i, ga_handle, status, maplen=0;
       }else{
           GA[ga_handle].ptr[GAme]=NULL;
       }
-
       ga_sync_();
 
       if(status){
@@ -973,7 +978,8 @@ Integer  i, ga_handle, status;
 
       GAstat.numcre ++; 
 
-      if(*type != MT_F_DBL && *type != MT_F_INT &&  *type != MT_F_DCPL)
+      if(*type != MT_F_DBL  && *type != MT_F_INT &&  
+         *type != MT_F_DCPL && *type != MT_F_REAL)
          ga_error("ga_create_irreg: type not yet supported ",  *type);
       else if( *dim1 <= 0 )
          ga_error("ga_create_irreg: array dimension1 invalid ",  *dim1);
@@ -1081,6 +1087,9 @@ Integer  i, ga_handle, status;
          } else if (*type == MT_F_DCPL) {
              DoubleComplex bad = {DBL_MAX, DBL_MAX};
              ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
+          } else if (*type == MT_F_REAL) {
+             float bad = FLT_MAX;
+             ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad); 
          } else {
              ga_error("ga_create_irreg: type not yet supported ",  *type);
          }
@@ -1210,6 +1219,9 @@ int      *save_mapc;
          } else if (GA[ga_handle].type == MT_F_DCPL) {
              DoubleComplex bad = {DBL_MAX, DBL_MAX};
              ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
+         } else if (GA[ga_handle].type == MT_F_REAL) {
+             float bad = FLT_MAX;
+             ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);   
          } else {
              ga_error("ga_duplicate: type not supported ",GA[ga_handle].type);
          }
@@ -1483,6 +1495,9 @@ char *ptr;
    case MT_F_INT:  
         for(i=0; i<elems;i++)((Integer*)ptr)[i]=*(Integer*)val;
         break;
+   case MT_F_REAL:
+        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val;
+        break;     
    default:
         ga_error("type not supported",GA[handle].type);
    }
@@ -1711,6 +1726,7 @@ int optype, proc, ndim;
       ndim = GA[handle].ndim;
 
       if(type==MT_F_DBL) optype= ARMCI_ACC_DBL;
+      else if(type==MT_F_REAL) optype= ARMCI_ACC_FLT;
       else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
       else if(size==sizeof(int))optype= ARMCI_ACC_INT;
       else if(size==sizeof(long))optype= ARMCI_ACC_LNG;
@@ -1861,6 +1877,11 @@ unsigned long    lref, lptr;
         *index = (Integer) ((Integer*)ptr - INT_MB);
         lref = (unsigned long)INT_MB;
         break;
+
+     case MT_F_REAL:
+        *index = (Integer) ((float*)ptr - FLT_MB);
+        lref = (unsigned long)FLT_MB;
+        break;        
    }
 
 #ifdef BYTE_ADDRESSABLE_MEMORY
@@ -2222,6 +2243,7 @@ int rc;
     else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
     else if(item_size==sizeof(int))optype= ARMCI_ACC_INT;
     else if(item_size==sizeof(long))optype= ARMCI_ACC_LNG;
+    else if(type==MT_F_REAL)optype= ARMCI_ACC_FLT;  
     else ga_error("type not supported",type);
     rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)proc);
   }
@@ -2690,6 +2712,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
                 else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
                 else if(item_size==sizeof(int))optype= ARMCI_ACC_INT;
                 else if(item_size==sizeof(long))optype= ARMCI_ACC_LNG;
+                else if(type==MT_F_REAL)optype= ARMCI_ACC_FLT; 
                 else ga_error("type not supported",type);
                 rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)aproc[k]);
             }
@@ -3208,3 +3231,4 @@ logical FATR ga_valid_handle_(Integer *g_a)
       ! (GA[GA_OFFSET+(*g_a)].actv) ) return FALSE;
    else return TRUE;
 }
+
