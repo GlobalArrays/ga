@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.20 2003-09-23 22:14:16 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.21 2003-09-24 04:19:39 vinod Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -45,11 +45,11 @@
     static char *network_protocol="VIA";
 #elif defined(MELLANOX)
     static char *network_protocol="Mellanox VAPI";
-elif defined(QUADRICS)
+#elif defined(QUADRICS)
     static char *network_protocol="Quadrics ELAN";
-elif defined(PM)
+#elif defined(PM)
     static char *network_protocol="Score PM";
-else
+#else
     static char *network_protocol="TCP/IP Sockets";
 #endif
     
