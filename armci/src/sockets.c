@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.14 2000-03-11 01:29:37 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.15 2000-03-28 18:33:56 d3h325 Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -260,9 +260,11 @@ again:
          goto again;
       }else{
 
-        (void) fprintf(stderr,"sock=%d, pid=%d, nsent=%d, len=%d\n",
-                     sock, armci_me, nsent, lenbuf);
-        (void) fflush(stderr);
+         if(DEBUG_){
+           (void) fprintf(stderr,"sock=%d, pid=%d, nsent=%d, len=%d\n",
+                        sock, armci_me, nsent, lenbuf);
+           (void) fflush(stderr);
+         }
         status = -1; break;
       }
     }
