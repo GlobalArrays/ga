@@ -295,6 +295,7 @@ extern void ga_set_ghost_corner_flag(Integer *g_a, logical flag);
 extern Integer nga_get_dimension(Integer *g_a);
 extern logical ga_allocate(Integer *g_a);
 extern Integer ga_pgroup_create(Integer list[], Integer *count);
+extern Integer ga_pgroup_split( Integer *num_group);
 
 extern void ga_update_ghosts(Integer *g_a);
 extern void ga_update1_ghosts(Integer *g_a);

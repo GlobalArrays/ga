@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.78 2004-12-08 02:40:50 manoj Exp $ */
+/* $Id: capi.c,v 1.79 2005-01-21 22:21:25 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -500,6 +500,12 @@ int GA_Pgroup_create(int *list, int count)
     for (i=0; i<count; i++)
        _ga_map_capi[i] = (Integer)list[i];
     return (int)ga_pgroup_create_(_ga_map_capi,&acount);
+}
+
+int GA_Pgroup_split(int num_group)
+{
+    Integer anum = (Integer)num_group;
+    return (int)ga_pgroup_create_(&anum);
 }
 
 void GA_Update_ghosts(int g_a)

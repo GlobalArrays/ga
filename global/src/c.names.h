@@ -163,6 +163,7 @@
 #define  ga_get_dimension_         GA_GET_DIMENSION
 #define  ga_allocate_              GA_ALLOCATE
 #define  ga_pgroup_create_         GA_PGROUP_CREATE
+#define  ga_pgroup_split_          GA_PGROUP_SPLIT
 #define  nga_ddot_patch_           NGA_DDOT_PATCH
 #define  nga_distribution_         NGA_DISTRIBUTION
 #define  nga_fill_patch_           NGA_FILL_PATCH
@@ -395,6 +396,7 @@
 #define  ga_get_dimension_         ga_get_dimension__
 #define  ga_allocate_              ga_allocate__
 #define  ga_pgroup_create_         ga_pgroup_create__ 
+#define  ga_pgroup_split_          ga_pgroup_split__ 
 #define  nga_ddot_patch_           nga_ddot_patch__         
 #define  nga_distribution_         nga_distribution__       
 #define  nga_fill_patch_           nga_fill_patch__         

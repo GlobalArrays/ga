@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.109 2005-01-13 16:33:52 d3g293 Exp $ */
+/* $Id: base.c,v 1.110 2005-01-21 22:21:25 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -946,6 +946,48 @@ Integer FATR ga_pgroup_get_mirror_()
 Integer FATR ga_pgroup_get_world_()
 {
   return -1;
+}
+
+logical FATR ga_pgroup_split_(Integer *grp_num)
+{
+  Integer nprocs, me, default_grp, world_grp;
+  Integer ratio, start, end, grp_size;
+  Integer i, icnt, nodes[MAX_NPROC];
+  Integer grp_id, ret;
+
+  default_grp = ga_pgroup_get_default_();
+  world_grp = ga_pgroup_get_world_();
+  ga_pgroup_set_default_(&world_grp);
+  nprocs = ga_nnodes_();
+  me = ga_nodeid_();
+  /* Figure out how big groups are */
+  grp_size = nprocs/(*grp_num);
+  if (nprocs > grp_size*(*grp_num)) grp_size++;
+  /* Figure out what procs are in my group */
+  ratio = me/grp_size;
+  start = ratio*grp_size;
+  end = (ratio+1)*grp_size-1;
+  end = MIN(end,nprocs-1);
+  if (end<start)
+    ga_error("Invalid proc range encountered",0);
+  icnt = 0;
+  for (i= 0; i<nprocs; i++) {
+    if (icnt%grp_size == 0 && i>0) {
+      grp_id = ga_pgroup_create_(nodes, &grp_size);
+      if (i == end + 1) {
+        ret = grp_id;
+      }
+      icnt = 0;
+    }
+    nodes[icnt] = i;
+    icnt++;
+  }
+  grp_id = ga_pgroup_create_(nodes, &icnt);
+  if (end == nprocs-1) {
+    ret = grp_id;
+  }
+  ga_pgroup_set_default_(&default_grp);
+  return ret;
 }
 
 #ifdef MPI
