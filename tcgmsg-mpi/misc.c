@@ -5,7 +5,7 @@
 #define USE_MPI_ABORT   
 #endif
 
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
 #include "tcgmsg_vampir.h"
 #endif
 
@@ -125,13 +125,13 @@ int init=0;
    if(!init){ 
       /* nope */
       MPI_Init(argc, argv);
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
       tcgmsg_vampir_init(__FILE__,__LINE__);
 #endif
       MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
    }
 
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
    vampir_begin(TCGMSG_PBEGINF,__FILE__,__LINE__);
 #endif
 
@@ -143,7 +143,7 @@ int init=0;
    MPI_Barrier(MPI_COMM_WORLD);
    /* printf("%d:ready to go\n",NODEID_()); */
    install_nxtval();
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
    vampir_end(TCGMSG_PBEGINF,__FILE__,__LINE__);
 #endif
 }
@@ -161,7 +161,7 @@ void PBEGIN_(int argc, char* argv[])
 \*/ 
 void FATR PEND_()
 {
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
     vampir_begin(TCGMSG_PEND,__FILE__,__LINE__);
 #endif
 #   ifdef NXTVAL_SERVER
@@ -170,7 +170,7 @@ void FATR PEND_()
        MPI_Barrier(MPI_COMM_WORLD);
 #   endif
     finalize_nxtval();
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
     vampir_end(TCGMSG_PEND,__FILE__,__LINE__);
 #endif
     MPI_Finalize();

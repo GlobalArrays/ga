@@ -1,7 +1,7 @@
 #include <mpi.h>
 #include "tcgmsgP.h"
 
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
 #include "tcgmsg_vampir.h"
 #endif
 
@@ -116,7 +116,7 @@ long NXTVAL_(mproc)
      int  server = (int)NNODES_() -1;         /* id of server process */
 #  endif
 
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
   vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
 #endif
 
@@ -147,7 +147,7 @@ long NXTVAL_(mproc)
       Error("nxtval: sequential version with silly mproc ", (long) *mproc);
   }
 
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
   vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
 #endif
   return local;

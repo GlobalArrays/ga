@@ -1,7 +1,7 @@
 #include <mpi.h>
 #include "tcgmsgP.h"
 
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
 #include "tcgmsg_vampir.h"
 #endif
 
@@ -25,7 +25,7 @@ long buflen = MIN(nleft,IGOP_BUF_SIZE); /* Try to get even sized buffers */
 long nbuf   = (nleft-1) / buflen + 1;
 long n;
 
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
   vampir_begin(TCGMSG_IGOP,__FILE__,__LINE__);
 #endif
 
@@ -70,7 +70,7 @@ long n;
 
     nleft -= ndo; x+= ndo;
   }
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
   vampir_end(TCGMSG_IGOP,__FILE__,__LINE__);
 #endif
 }
@@ -90,7 +90,7 @@ long buflen = MIN(nleft,DGOP_BUF_SIZE); /* Try to get even sized buffers */
 long nbuf   = (nleft-1) / buflen + 1;
 long n;
 
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
   vampir_begin(TCGMSG_DGOP,__FILE__,__LINE__);
 #endif
   buflen = (nleft-1) / nbuf + 1;
@@ -125,7 +125,7 @@ long n;
 
     nleft -= ndo; x+= ndo;
   }
-#ifdef GA_USE_VT
+#ifdef GA_USE_VAMPIR
   vampir_end(TCGMSG_DGOP,__FILE__,__LINE__);
 #endif
 }
