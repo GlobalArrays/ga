@@ -78,6 +78,7 @@ ifeq ($(CC),gcc)
 endif
 ifeq ($(FC),g77)
        FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
+       FOPT_REN += -Wno-globals
 endif      
  GLOB_DEFINES = -DLINUX
           CPP = gcc -E -nostdinc -undef -P
