@@ -115,7 +115,6 @@ distribute to other US Government contractors.
       ga_access         ... access internal data
       ga_release        ... relinquish access to internal data
       ga_release_update ... relinquish access after data were updated 
-      ga_mask           ... protect critical sections
       ga_check_handle   ... verify that a GA handle is valid
 
    d) Operations to support portability between implementations
@@ -888,26 +887,6 @@ distribute to other US Government contractors.
       integer g_a                         [input]
 
       Prints an entire g_a array to the standard output.
-
-      -------------------------------------------------------------------
-      integer function ga_mask(newmask)
-      integer newmask                     [input]
- 
-      Set the mask for the receipt of remote accesses to local data
-      returning the old value of the mask
- 
-      newmask = 1 (disabled ... use to enter critical section)
-      newmask = 0 (enabled  ... use to exit  critical section)
- 
-
-      This is intended for mostly internal use, e.g. when updating
-      data when it is possible that interrupts may arrive.
-
-      e.g.,
-
-           oldmask = ga_mask(1)
-           <critical section>
-           oldmask = ga_mask(oldmask)
 
       -------------------------------------------------------------------
       subroutine ga_check_handle(g_a, string)
