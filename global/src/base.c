@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.11 2001-12-04 22:20:30 d3g293 Exp $ */
+/* $Id: base.c,v 1.12 2001-12-14 20:19:11 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -490,8 +490,7 @@ void gai_print_subscript(char *pre,int ndim, Integer subscript[], char* post)
         }
 }
 
-void gai_init_struct(handle)
-Integer handle;
+void gai_init_struct(int handle)
 {
      if(!GA[handle].ptr){
         int len = (int)MIN(GAnproc, MAX_PTR);
