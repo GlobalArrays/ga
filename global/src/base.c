@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.52 2003-09-18 21:23:44 d3h325 Exp $ */
+/* $Id: base.c,v 1.53 2003-09-23 07:16:28 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1501,13 +1501,17 @@ logical FATR ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
 #endif
 {
 char buf[FNAM];
+Integer st;
 #if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
 #endif
-  return( ga_create_irreg(type, dim1, dim2, buf, map1, nblock1,
-                         map2, nblock2, g_a));
+      _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular*/
+      st = ga_create_irreg(type, dim1, dim2, buf, map1, nblock1,
+			   map2, nblock2, g_a);
+      _ga_irreg_flag = 0; /* unset it, after creating array */ 
+      return st;
 }
 
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
@@ -1533,7 +1537,7 @@ Integer st;
       f2cstring(array_name ,slen, buf, FNAM);
 #endif
 
-      _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */ 
+      _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular*/
       st = nga_create_irreg_config(*type, *ndim,  dims, buf, map, block,
 				   *p_handle, g_a);
       _ga_irreg_flag = 0; /* unset it, after creating array */ 
