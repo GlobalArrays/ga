@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.34 2002-03-12 18:29:48 d3h325 Exp $ */
+/* $Id: request.c,v 1.35 2002-03-13 17:13:33 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -215,7 +215,6 @@ void armci_server_ipc(request_header_t* msginfo, void* descr,
    long *idlist = (long*)descr;
    long size = *(long*)buffer;
    int rlen = *(int*)(sizeof(long)+(char*)buffer);
-
    if(size<0) armci_die("armci_server_ipc: size<0",(int)size);
 	ptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
    if(!ptr)armci_die("armci_server_ipc: failed to attach",0);
@@ -224,9 +223,7 @@ void armci_server_ipc(request_header_t* msginfo, void* descr,
       allocate_memlock = 0;
       server_alloc_memlock(ptr);
    }
-#  ifndef HITACHI
    if(size>0)armci_set_mem_offset(ptr);
-#endif
    if(msginfo->datalen != sizeof(long)+sizeof(int))
       armci_die("armci_server_ipc: bad msginfo->datalen ",msginfo->datalen);
 

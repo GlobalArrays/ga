@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.12 2002-01-09 18:56:41 vinod Exp $ */
+/* $Id: vector.c,v 1.13 2002-03-13 17:13:33 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -355,7 +355,7 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 #endif
 
     /* use direct protocol for remote access when performance is better */
-#   ifdef LAPI
+#   if defined(LAPI) || defined(HITACHI)
       if(!direct)
           if(len <5 || darr[0].ptr_array_len <5) direct=1;
 #   endif
@@ -398,7 +398,7 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 #endif
 
     /* use direct protocol for remote access when performance is better */
-#   ifdef LAPI
+#   if defined(LAPI) || defined(HITACHI)
       if(!direct)
           if(len <5 || darr[0].ptr_array_len <8) direct=1;
 #   endif

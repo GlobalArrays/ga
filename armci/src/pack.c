@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.23 2002-03-12 18:29:48 d3h325 Exp $ */
+/* $Id: pack.c,v 1.24 2002-03-13 17:13:33 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -295,16 +295,12 @@ int rc=0, nlen, count=0;
     while(len){
 
        armci_split_dscr_array(ndarr, len, &extra, &nlen, &save); 
-#if defined(HITACHI)
-      rc=armci_sr8k_rem_vector(op, scale, ndarr,nlen,proc,0);
-#else
-#if defined(REMOTE_OP) 
+#  if defined(REMOTE_OP) 
        rc = armci_rem_vector(op, scale, ndarr,nlen,proc,0);
-#else
+#  else
        if(ACC(op))rc=armci_acc_vector(op,scale,ndarr,nlen,proc);
        else rc = armci_copy_vector(op,ndarr,nlen,proc);
-#endif
-#endif
+#  endif
        if(rc) break;
 
        /* non-NULL pointer indicates that set was split */

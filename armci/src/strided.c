@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.38 2002-03-12 18:29:49 d3h325 Exp $ */
+/* $Id: strided.c,v 1.39 2002-03-13 17:13:33 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -13,10 +13,14 @@ else\
       armci_acc_2D(op, scale, proc, src, dst, bytes, count, src_stride,dst_stride,lockit) 
 
 /* macro supports run-time selection of request sending scheme */
-#ifdef CLIENT_BUF_BYPASS
+#if defined(CLIENT_BUF_BYPASS)
 #define CAN_REQUEST_DIRECTLY _armci_bypass
 #else
-#define CAN_REQUEST_DIRECTLY 1
+#  if defined(HITACHI)
+#    define CAN_REQUEST_DIRECTLY 0
+#  else
+#    define CAN_REQUEST_DIRECTLY 1
+#  endif
 #endif
 
 int armci_iwork[MAX_STRIDE_LEVEL];
@@ -405,10 +409,15 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #endif
 
     /* use direct protocol for remote access when performance is better */
-#   if defined(LAPI) && !defined(LAPI2)
+#   if (defined(LAPI) && !defined(LAPI2)) 
       if(!direct)
          if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
 #   endif
+#if defined(HITACHI)
+      if(!direct)
+         if(stride_levels< 2 || count[0]> LONG_PUT_THRESHOLD )direct=1;
+#endif
+
 
 #ifndef LAPI2
     if(!direct){
@@ -524,7 +533,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;
 
     /* use direct protocol for remote access when performance is better */
-#   if defined(LAPI) && !defined(LAPI2)
+#   if (defined(LAPI) && !defined(LAPI2)) || defined(HITACHI)
       if(!direct)
         if( stride_levels==0 || count[0]> LONG_GET_THRESHOLD)direct=1;
         else{
@@ -535,14 +544,13 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #   endif
 
 #ifndef LAPI2
-
     if(!direct){
 
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS))
        /* for larger strided or 1D reqests buffering can be avoided to send data
         * we can try to bypass the packetization step and send request directly
         */
-        if( CAN_REQUEST_DIRECTLY && ((count[0]> LONG_GET_THRESHOLD) ||
+        if(CAN_REQUEST_DIRECTLY && ((count[0]> LONG_GET_THRESHOLD) ||
             (stride_levels && count[0]>LONG_GET_THRESHOLD_STRIDED) ) ) {
 
           int nobuf =1; /* tells the sending routine not to buffer */
