@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.12 2001-12-14 20:19:11 d3h325 Exp $ */
+/* $Id: base.c,v 1.13 2002-01-18 19:52:12 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -65,6 +65,7 @@ DoubleComplex   *DCPL_MB;           /* double precision complex base address */
 DoublePrecision *DBL_MB;            /* double precision base address */
 Integer         *INT_MB;            /* integer base address */
 float           *FLT_MB;            /* float base address */
+long            *LONG_MB;
 int** GA_Update_Flags;
 
 /*uncomment line below to verify consistency of MA in every sync */
@@ -144,10 +145,11 @@ Integer GAsizeof(type)
         Integer type;
 {
   switch (type) {
-     case MT_F_DBL  : return (sizeof(DoublePrecision));
-     case MT_F_INT  : return (sizeof(Integer));
-     case MT_F_DCPL : return (sizeof(DoubleComplex));
-     case MT_F_REAL : return (sizeof(float));
+     case C_DBL  : return (sizeof(DoublePrecision));
+     case C_INT  : return (sizeof(Integer));
+     case C_DCPL : return (sizeof(DoubleComplex));
+     case C_FLOAT : return (sizeof(float));
+     case C_LONG : return (sizeof(long));
           default   : return 0; 
   }
 }
@@ -267,11 +269,11 @@ void gai_ma_address_init()
 Integer  off_dbl, off_int, off_dcpl, off_flt;
 #endif
      ma_address_init=1;
-     INT_MB = (Integer*)MA_get_mbase(MT_F_INT);
-     DBL_MB = (DoublePrecision*)MA_get_mbase(MT_F_DBL);
-     DCPL_MB= (DoubleComplex*)MA_get_mbase(MT_F_DCPL);
-     FLT_MB = (float*)MA_get_mbase(MT_F_REAL);  
-
+     INT_MB = (Integer*)MA_get_mbase(C_INT);
+     DBL_MB = (DoublePrecision*)MA_get_mbase(C_DBL);
+     DCPL_MB= (DoubleComplex*)MA_get_mbase(C_DCPL);
+     FLT_MB = (float*)MA_get_mbase(C_FLOAT);  
+/*?? LONG_MB= (long *)MA_get_mbase(C_LONG); */     
 #   ifdef CHECK_MA_ALGN
         off_dbl = 0 != ((long)DBL_MB)%sizeof(DoublePrecision);
         off_int = 0 != ((long)INT_MB)%sizeof(Integer);
@@ -463,8 +465,8 @@ void FATR  ga_initialize_ltd_(Integer *mem_limit)
   
 
 #define gam_checktype(_type)\
-       if(_type != MT_F_DBL  && _type != MT_F_INT &&  \
-          _type != MT_F_DCPL && _type != MT_F_REAL)\
+       if(_type != C_DBL  && _type != C_INT &&  \
+          _type != C_DCPL && _type != C_FLOAT &&_type != C_LONG)\
          ga_error("ttype not yet supported ",  _type)
 
 #define gam_checkdim(ndim, dims)\
@@ -530,7 +532,7 @@ Integer  i, ga_handle, status, maplen=0;
       if(!GAinitialized) ga_error("GA not initialized ", 0);
       if(!ma_address_init) gai_ma_address_init();
 
-      gam_checktype(type);
+      gam_checktype(ga_type_f2c(type));
       gam_checkdim(ndim, dims);
       for(i=0; i< ndim; i++)
          if(nblock[i]>dims[i]) 
@@ -556,7 +558,7 @@ Integer  i, ga_handle, status, maplen=0;
 
       /*** fill in Global Info Record for g_a ***/
       gai_init_struct(ga_handle);
-      GA[ga_handle].type = (int)type;
+      GA[ga_handle].type = ga_type_f2c((int)type) ;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
       GA[ga_handle].ndim    = (int) ndim;
@@ -572,7 +574,7 @@ Integer  i, ga_handle, status, maplen=0;
       } 
       for(i = 0; i< maplen; i++)GA[ga_handle].mapc[i] = (int)map[i];
       GA[ga_handle].mapc[maplen] = -1;
-      GA[ga_handle].elemsize = GAsizeofM(type);
+      GA[ga_handle].elemsize = GAsizeofM(ga_type_f2c((int)type));
       /*** determine which portion of the array I am supposed to hold ***/
       nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
       for( i = 0, nelem=1; i< ndim; i++){
@@ -589,16 +591,17 @@ Integer  i, ga_handle, status, maplen=0;
          status = (GA_total_memory >= 0) ? 1 : 0;
          ga_igop(GA_TYPE_GSM, &status, 1, "*");
       }else status = 1;
-/*      fprintf(stderr,"%d, elems=%d size=%d status=%d\n",GAme,nelem,mem_size,status);*/
+
+/*      printf("%d, elems=%d size=%d status=%d\n",GAme,nelem,mem_size,status);fflush(stdout);*/
 /*      ga_sync_();*/
       if(status){
           status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
-                                 (int)type, &GA[ga_handle].id);
+                                 (int)ga_type_f2c((int)type), &GA[ga_handle].id);
       }else{
           GA[ga_handle].ptr[GAme]=NULL;
       }
-/*      fprintf(stderr,"Memory on %d is located at %u\n",
-              GAme,GA[ga_handle].ptr[GAme]); */
+/*      printf("Memory on %d is located at %u\n",
+              GAme,GA[ga_handle].ptr[GAme]); fflush(stdout);*/
       ga_sync_();
 
       if(status){
@@ -639,7 +642,7 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
 
       GA_PUSH_NAME("nga_create");
       if(!GAinitialized) ga_error("GA not initialized ", 0);
-      gam_checktype(type);
+      gam_checktype(ga_type_f2c(type));
       gam_checkdim(ndim, dims);
 
       if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
@@ -733,7 +736,7 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
 
       GA_PUSH_NAME("nga_create_ghosts");
       if(!GAinitialized) ga_error("GA not initialized ", 0);
-      gam_checktype(type);
+      gam_checktype(ga_type_f2c(type));
       gam_checkdim(ndim, dims);
 
       if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
@@ -873,12 +876,12 @@ logical ga_create_irreg(type, dim1, dim2, array_name, map1, nblock1, map2,
       */
 {
 Integer  ndim, dims[MAXDIM], width[MAXDIM], nblock[MAXDIM], *map;
-Integer  i;
+Integer  i,ctype;
 logical status;
 
-
-      if(*type != MT_F_DBL  && *type != MT_F_INT &&  
-         *type != MT_F_DCPL && *type != MT_F_REAL)
+      ctype = ga_type_f2c((int)(*type));  
+      if(ctype != C_DBL  && ctype != C_INT &&  
+         ctype != C_DCPL && ctype != C_FLOAT  && ctype != C_LONG)
          ga_error("ga_create_irreg: type not yet supported ",  *type);
       else if( *dim1 <= 0 )
          ga_error("ga_create_irreg: array dimension1 invalid ",  *dim1);
@@ -1073,10 +1076,11 @@ int i;
 
     /* need to enforce proper, natural allignment (on size boundary)  */
     switch (type){
-      case MT_F_DBL: base =  (char *) DBL_MB; break;
-      case MT_F_INT: base =  (char *) INT_MB; break;
-      case MT_F_DCPL: base =  (char *) DCPL_MB; break;
-      case MT_F_REAL: base =  (char *) FLT_MB; break;  
+      case C_DBL: base =  (char *) DBL_MB; break;
+      case C_INT: base =  (char *) INT_MB; break;
+      case C_DCPL: base =  (char *) DCPL_MB; break;
+      case C_FLOAT: base =  (char *) FLT_MB; break;  
+      case C_LONG: base =  (char *) LONG_MB; break;
       default:        base = (char*)0;
     }
 
@@ -1131,14 +1135,13 @@ char *ptr = (char*)0;
 #else
    if(ARMCI_Uses_shm()) return gai_get_shmem(ptr_arr, bytes, type, id);
    else{
-
      nelem = bytes/item_size + 1;
      if(bytes)
-        if(MA_alloc_get(type, nelem, name, &handle, &index))
-                MA_get_pointer(handle, &ptr);
+        if(MA_alloc_get(type, nelem, name, &handle, &index)){
+                MA_get_pointer(handle, &ptr);}
      *id   = (long)handle;
 
-     /*
+     /* 
             printf("bytes=%d ptr=%ld index=%d\n",bytes, ptr,index);
             fflush(stdout);
      */
@@ -1327,16 +1330,19 @@ int      *save_mapc;
          Integer one = 1; 
          Integer dim1 =GA[ga_handle].dims[1], dim2=GA[ga_handle].dims[2];
          if(GAme==0)fprintf(stderr,"duplicate:initializing GA array%ld\n",*g_b);
-         if(GA[ga_handle].type == MT_F_DBL) {
+         if(GA[ga_handle].type == C_DBL) {
              DoublePrecision bad = DBL_MAX;
              ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
-         } else if (GA[ga_handle].type == MT_F_INT) {
+         } else if (GA[ga_handle].type == C_INT) {
              Integer bad = (Integer) INT_MAX;
              ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
-         } else if (GA[ga_handle].type == MT_F_DCPL) {
+         } else if (GA[ga_handle].type == C_LONG) {
+             long bad = LONG_MAX;
+             ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
+         } else if (GA[ga_handle].type == C_DCPL) { 
              DoubleComplex bad = {DBL_MAX, DBL_MAX};
              ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
-         } else if (GA[ga_handle].type == MT_F_REAL) {
+         } else if (GA[ga_handle].type == C_FLOAT) {
              float bad = FLT_MAX;
              ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);   
          } else {
@@ -1398,8 +1404,8 @@ int g_b;
       for(i=0;i<MAPLEN; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ g_a].mapc[i];
 
       /* get ptrs and datatype from user memory */
-      gam_checktype(info->type);
-      GA[ga_handle].type = info->type;
+      gam_checktype(ga_type_f2c(info->type));
+      GA[ga_handle].type = ga_type_f2c(info->type);
       GA[ga_handle].size = info->size;
       GA[ga_handle].id = info->id;
       memcpy(GA[ga_handle].ptr,ptr_arr,(size_t)GAnproc*sizeof(char**));
@@ -1532,18 +1538,21 @@ char *ptr;
    ptr = GA[handle].ptr[GAme];
 
    switch (GA[handle].type){
-   case MT_F_DCPL: 
+   case C_DCPL: 
         for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
         break;
-   case MT_F_DBL:  
+   case C_DBL:  
         for(i=0; i<elems;i++)((DoublePrecision*)ptr)[i]=*(DoublePrecision*)val;
         break;
-   case MT_F_INT:  
+   case C_INT:  
         for(i=0; i<elems;i++)((Integer*)ptr)[i]=*(Integer*)val;
         break;
-   case MT_F_REAL:
+   case C_FLOAT:
         for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val;
         break;     
+   case C_LONG:
+        for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val;
+        break;
    default:
         ga_error("type not supported",GA[handle].type);
    }
@@ -1551,7 +1560,20 @@ char *ptr;
    GA_POP_NAME;
 }
 
-
+/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
+ *   Fortran version for internal global array functions
+\*/
+void FATR ga_inquire_internal_(Integer* g_a, Integer* type, Integer* dim1, Integer* dim2)
+{
+Integer ndim = ga_ndim_(g_a);
+ 
+   if(ndim != 2)
+      ga_error("ga_inquire: 2D API cannot be used for array dimension",ndim);
+ 
+   *type       = GA[GA_OFFSET + *g_a].type;
+   *dim1       = GA[GA_OFFSET + *g_a].dims[0];
+   *dim2       = GA[GA_OFFSET + *g_a].dims[1];
+}
 
 
 /*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
@@ -1610,7 +1632,17 @@ Integer handle = GA_OFFSET + *g_a,i;
    for(i=0;i<*ndim;i++)dims[i]=GA[handle].dims[i];
 }
 
-
+/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
+ *  Fortran version for internal global array routines
+\*/
+void FATR nga_inquire_internal_(Integer *g_a, Integer *type, Integer *ndim,Integer *dims)
+{
+Integer handle = GA_OFFSET + *g_a,i;
+   ga_check_handleM(g_a, "nga_inquire");
+   *type       = GA[handle].type;
+   *ndim       = GA[handle].ndim;
+   for(i=0;i<*ndim;i++)dims[i]=GA[handle].dims[i];
+}
 
 /*\ INQUIRE NAME OF A GLOBAL ARRAY
  *  Fortran version

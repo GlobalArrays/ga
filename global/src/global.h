@@ -24,7 +24,12 @@ extern "C" {
 #else
 # define ARGS_(s) ()
 #endif
-
+#define C_DBL MT_C_DBL
+#define C_INT MT_C_INT
+#define C_FLOAT MT_C_FLOAT
+#define C_DCPL MT_C_DCPL
+#define C_LONG MT_C_LONGINT
+#define C_SCPL MT_C_SCPL
 extern void *GA_Getmem(int type, int nelem);
 extern void GA_Freemem(void* ptr);
 extern int GA_Assemble_duplicate(int g_a, char *name, void *ptr);
@@ -75,9 +80,11 @@ extern void FATR ga_get_     ARGS_((Integer*, Integer*, Integer*, Integer*,
 extern void ga_dgop ARGS_((Integer, DoublePrecision*, Integer, char* ));
 extern void ga_fgop     ARGS_((Integer, float*, Integer, char* ));
 extern void ga_igop     ARGS_((Integer, Integer*, Integer, char* ));
+extern void ga_lgop    ARGS_((Integer, long*,Integer, char* ));
 extern void FATR ga_initialize_ ARGS_(( void));
 extern void FATR ga_initialize_ltd_ ARGS_(( Integer* ));
 extern void FATR ga_inquire_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
+extern void FATR ga_inquire_internal_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
 extern void ga_inquire_name ARGS_((Integer*, char** ));
 extern void FATR ga_list_data_servers_ ARGS_((Integer* ));
 extern void FATR ga_list_nodeid_ ARGS_((Integer*, Integer* ));
@@ -220,6 +227,8 @@ extern void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi);
 extern void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi);
 extern void FATR  nga_inquire_(Integer *g_a, Integer *type, Integer *ndim,
     Integer *dims); 
+extern void FATR  nga_inquire_internal_(Integer *g_a, Integer *type, Integer *ndim,
+    Integer *dims);
 
 extern logical FATR nga_locate_(Integer *g_a,
                                 Integer* subscr,
@@ -309,5 +318,5 @@ extern DoubleComplex   *DCPL_MB;
 extern DoublePrecision *DBL_MB;
 extern Integer         *INT_MB;
 extern float           *FLT_MB;
-
+extern long            *LONG_MB;
 #endif 

@@ -1,4 +1,4 @@
-/* $Id: DP.c,v 1.11 1999-11-13 05:44:04 bjohnson Exp $ */
+/* $Id: DP.c,v 1.12 2002-01-18 19:52:12 vinod Exp $ */
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
@@ -70,10 +70,10 @@ char transp;
 
    /* if(*g_a == *g_b) ga_error("ga_copy_patch_dp: arrays have to different ", 0L); */
 
-   ga_inquire_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_(g_b, &btype, &bdim1, &bdim2);
+   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != MT_F_DBL ))
+   if(atype != btype || (atype != C_DBL ))
       ga_error("ga_copy_patch_dp: wrong types ", 0L);
 
    /* check if patch indices and dims match */
@@ -108,7 +108,7 @@ char transp;
 	  jhid  = jhis + corr;
       } else {
 	  /* If this is a transpose copy, we need local scratch space */
-	  if ( !MA_push_get(MT_F_DBL, nelem, "ga_copy_patch_dp",
+	  if ( !MA_push_get(C_DBL, nelem, "ga_copy_patch_dp",
 			    &handleT, &indexT))
 	      ga_error(" ga_copy_patch_dp: MA failed ", 0L);
 
@@ -176,10 +176,10 @@ DoublePrecision  sum = 0.;
    ga_check_handle(g_a, "ga_ddot_patch_dp");
    ga_check_handle(g_b, "ga_ddot_patch_dp");
 
-   ga_inquire_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_(g_b, &btype, &bdim1, &bdim2);
+   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != MT_F_DBL ))
+   if(atype != btype || (atype != C_DBL ))
       ga_error("ga_ddot_patch_dp: wrong types ", 0L);
 
   /* check if patch indices and g_a dims match */
@@ -222,7 +222,7 @@ DoublePrecision  sum = 0.;
       }else{
          /* data is remote -- get it to temp storage*/
          temp_created =1;
-         if(!MA_push_get(MT_F_DBL,nelem, "ddot_dp_b", &handleB, &indexB))
+         if(!MA_push_get(C_DBL,nelem, "ddot_dp_b", &handleB, &indexB))
              ga_error(" ga_ddot_patch_dp: MA failed ", 0L);
          /* no need to adjust index (indexB--;) -- we got it from MA*/
 

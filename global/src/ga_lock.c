@@ -1,4 +1,4 @@
-/* $Id: ga_lock.c,v 1.5 1999-07-28 00:27:04 d3h325 Exp $ */
+/* $Id: ga_lock.c,v 1.6 2002-01-18 19:52:12 vinod Exp $ */
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
@@ -44,7 +44,7 @@ static waiting_list_t* blocked; /* stores info about locked (waiting) process */
 
 logical FATR ga_create_mutexes_(Integer *num)
 {
-Integer type=MT_F_INT, nproc = ga_nnodes_(), indx;
+Integer type=C_INT, nproc = ga_nnodes_(), indx;
 
 	if (*num <= 0 || *num > 32768) return(FALSE);
         if(num_mutexes) Error("mutexes already created",num_mutexes);
@@ -60,7 +60,7 @@ Integer type=MT_F_INT, nproc = ga_nnodes_(), indx;
         {
           /* need MA memory properly alligned */
           int mem = nproc*sizeof(waiting_list_t)/sizeof(double) + 1;
-          if(!MA_alloc_get(MT_C_DBL,mem,"GA lock wait list",&Whandle,&indx))
+          if(!MA_alloc_get(C_DBL,mem,"GA lock wait list",&Whandle,&indx))
                  Error("ga_create_mutexes:error allocating memory for lock",0); 
           MA_get_pointer(Whandle, &blocked);
           if(!blocked)Error("ga_create_mutexes:error allocating memory W",0);
@@ -68,7 +68,7 @@ Integer type=MT_F_INT, nproc = ga_nnodes_(), indx;
 #       endif
 
         /* one extra element to make indexing consistent with GA */
-        if(!MA_alloc_get(MT_F_INT, *num+1, "GA lock next", &Nhandle,&indx))
+        if(!MA_alloc_get(C_INT, *num+1, "GA lock next", &Nhandle,&indx))
                  Error("ga_create_mutexes:error allocating memory for lock",1);
         MA_get_pointer(Nhandle, &next);
         if(!next)Error("ga_create_mutexes:error allocating memory N",0);

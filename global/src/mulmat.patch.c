@@ -1,4 +1,4 @@
-/*$Id: mulmat.patch.c,v 1.6 2002-01-11 20:57:20 edo Exp $*/
+/*$Id: mulmat.patch.c,v 1.7 2002-01-18 19:52:12 vinod Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -83,15 +83,15 @@ DoubleComplex ONE;
    ga_sync_();
    GA_PUSH_NAME("ga_matmul_patch");
 
-   ga_inquire_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_(g_b, &btype, &bdim1, &bdim2);
-   ga_inquire_(g_c, &ctype, &cdim1, &cdim2);
+   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
+   ga_inquire_internal_(g_c, &ctype, &cdim1, &cdim2);
 
    if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
-   if(atype != MT_F_DCPL && atype != MT_F_DBL) ga_error(" type error",atype);
+   if(atype != C_DCPL && atype != C_DBL) ga_error(" type error",atype);
 
 #ifdef STATBUF
-   if(atype ==  MT_F_DBL){
+   if(atype ==  C_DBL){
       Ichunk=D_CHUNK, Kchunk=D_CHUNK, Jchunk=D_CHUNK;
    }else{
       Ichunk=ICHUNK; Kchunk=KCHUNK; Jchunk=JCHUNK;
@@ -109,10 +109,10 @@ DoubleComplex ONE;
                 ga_error("ma_alloc_get failed",avail);
             Ichunk = Kchunk = Jchunk = (Integer) sqrt((double)(elems-2)/3.0);
             used = Ichunk * Kchunk;
-            if(atype ==  MT_F_DBL) used = 1+used/2; 
+            if(atype ==  C_DBL) used = 1+used/2; 
             b = a+ used;
             used = Kchunk*Jchunk;
-            if(atype ==  MT_F_DBL) used = 1+used/2; 
+            if(atype ==  C_DBL) used = 1+used/2; 
             c = b+ used;
    }
 #endif
@@ -155,7 +155,7 @@ DoubleComplex ONE;
            for(klo = 0; klo < k; klo += Kchunk){    /* loop cols of g_a patch */
                                                     /* loop rows of g_b patch */
                if(ijk%nproc == me){
-                  if(atype ==  MT_F_DBL)
+                  if(atype ==  C_DBL)
                      for (i = 0; i < idim*jdim; i++) *(((double*)c)+i)=0;
                   else
                      for (i = 0; i < idim*jdim; i++){ c[i].real=0;c[i].imag=0;}
@@ -183,7 +183,7 @@ DoubleComplex ONE;
                      j0= *bilo+klo; j1= *bilo+khi;
                      ga_get_(g_b, &i0, &i1, &j0, &j1, b, &jdim);
                   }
-   if(atype ==  MT_F_DBL){
+   if(atype ==  C_DBL){
 #                 if defined(CRAY) || defined(WIN32)
                     DGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
                           alpha, (double*)a, &adim, (double*)b, &bdim, &ONE, (double*)c, &cdim);
@@ -292,12 +292,12 @@ DoubleComplex ONE;
    ga_sync_();
    GA_PUSH_NAME("nga_matmul_patch");
 
-   nga_inquire_(g_a, &atype, &arank, adims);
-   nga_inquire_(g_b, &btype, &brank, bdims);
-   nga_inquire_(g_c, &ctype, &crank, cdims);
+   nga_inquire_internal_(g_a, &atype, &arank, adims);
+   nga_inquire_internal_(g_b, &btype, &brank, bdims);
+   nga_inquire_internal_(g_c, &ctype, &crank, cdims);
 
    if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
-   if(atype != MT_F_DCPL && atype != MT_F_DBL) ga_error(" type error",atype);
+   if(atype != C_DCPL && atype != C_DBL) ga_error(" type error",atype);
 
    gai_setup_2d_patch(arank, adims, alo, ahi, &ailo, &aihi, &ajlo, &ajhi, 
 		                  &adim1, &adim2, &aipos, &ajpos);
@@ -307,7 +307,7 @@ DoubleComplex ONE;
 		                  &cdim1, &cdim2, &cipos, &cjpos);
 
 #ifdef STATBUF
-   if(atype ==  MT_F_DBL){
+   if(atype ==  C_DBL){
       Ichunk=D_CHUNK, Kchunk=D_CHUNK, Jchunk=D_CHUNK;
    }else{
       Ichunk=ICHUNK; Kchunk=KCHUNK; Jchunk=JCHUNK;
@@ -325,10 +325,10 @@ DoubleComplex ONE;
                 ga_error("ma_alloc_get failed",avail);
             Ichunk = Kchunk = Jchunk = (Integer) sqrt((double)(elems-2)/3.0);
             used = Ichunk * Kchunk;
-            if(atype ==  MT_F_DBL) used = 1+used/2; 
+            if(atype ==  C_DBL) used = 1+used/2; 
             b = a+ used;
             used = Kchunk*Jchunk;
-            if(atype ==  MT_F_DBL) used = 1+used/2; 
+            if(atype ==  C_DBL) used = 1+used/2; 
             c = b+ used;
    }
 #endif
@@ -359,9 +359,9 @@ DoubleComplex ONE;
    if( (cjhi - cjlo +1) != n) ga_error(" b & c dims error",n);
    if( (bihi - bilo +1) != k) ga_error(" a & b dims error",k);
 
-   if((atype==MT_F_DCPL) && (((DoubleComplex*)beta)->real == 0) &&
+   if((atype==C_DCPL) && (((DoubleComplex*)beta)->real == 0) &&
 	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0; 
-   else if((atype==MT_F_DBL) && (*(DoublePrecision*)beta) == 0) need_scaling =0;
+   else if((atype==C_DBL) && (*(DoublePrecision*)beta) == 0) need_scaling =0;
    else if( *(float*)beta ==0) need_scaling =0;
 		   
 #ifdef DEBUG_
@@ -381,7 +381,7 @@ DoubleComplex ONE;
            for(klo = 0; klo < k; klo += Kchunk){    /* loop cols of g_a patch */
                                                     /* loop rows of g_b patch */
                if(ijk%nproc == me){
-                  if(atype ==  MT_F_DBL)
+                  if(atype ==  C_DBL)
                      for (i = 0; i < idim*jdim; i++) *(((double*)c)+i)=0;
                   else
                      for (i = 0; i < idim*jdim; i++){ c[i].real=0;c[i].imag=0;}
@@ -424,7 +424,7 @@ DoubleComplex ONE;
 		  tmpld[bipos]=i1-i0+1;
 		  nga_get_(g_b,tmplo,tmphi,b,tmpld);
 
-   if(atype ==  MT_F_DBL){
+   if(atype ==  C_DBL){
 #                 if defined(CRAY) || defined(WIN32)
                     DGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
                           alpha, (double*)a, &adim, (double*)b, &bdim, &ONE, (double*)c, &cdim);

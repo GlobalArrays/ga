@@ -80,10 +80,11 @@
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
 
-#define GAsizeofM(type)  ( (type)==MT_F_DBL? sizeof(DoublePrecision): \
-                           (type)==MT_F_INT? sizeof(Integer): \
-                           (type)==MT_F_DCPL? sizeof(DoubleComplex): \
-                           (type)==MT_F_REAL? sizeof(float):0)
+#define GAsizeofM(type)  ( (type)==C_DBL? sizeof(DoublePrecision): \
+                           (type)==C_INT? sizeof(Integer): \
+                           (type)==C_DCPL? sizeof(DoubleComplex): \
+                           (type)==C_LONG? sizeof(long): \
+                           (type)==C_FLOAT? sizeof(float):0)
 
 #define NAME_STACK_LEN 10
 #define PAGE_SIZE  4096

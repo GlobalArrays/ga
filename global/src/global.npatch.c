@@ -169,8 +169,8 @@ void nga_copy_patch(char *trans,
     
     GA_PUSH_NAME("nga_copy_patch");
     
-    nga_inquire_(g_a, &atype, &andim, adims);
-    nga_inquire_(g_b, &btype, &bndim, bdims);
+    nga_inquire_internal_(g_a, &atype, &andim, adims);
+    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
     
     if(*g_a == *g_b)
         /* they are the same patch */
@@ -228,10 +228,10 @@ void nga_copy_patch(char *trans,
             if(!MA_push_get(atype, nelem, "v", &vhandle, &vindex) ||
                !MA_get_pointer(vhandle, &tmp_ptr))
                 ga_error(" MA failed-v ", 0L);
-            if(!MA_push_get(MT_F_INT, (andim*nelem), "si", &src_hdl, &src_idx)
+            if(!MA_push_get(C_INT, (andim*nelem), "si", &src_hdl, &src_idx)
                || !MA_get_pointer(src_hdl, &src_idx_ptr))
                 ga_error(" MA failed-si ", 0L);
-            if(!MA_push_get(MT_F_INT, (bndim*nelem), "di", &dst_hdl, &dst_idx)
+            if(!MA_push_get(C_INT, (bndim*nelem), "di", &dst_hdl, &dst_idx)
                || !MA_get_pointer(dst_hdl, &dst_idx_ptr))
                 ga_error(" MA failed-di ", 0L);
                 
@@ -313,17 +313,20 @@ void nga_copy_patch(char *trans,
 
                 /* move the element to the temporary location */
                 switch(atype) {
-                    case MT_F_DBL: ((DoublePrecision *)tmp_ptr)[i] =
+                    case C_DBL: ((DoublePrecision *)tmp_ptr)[i] =
                                        ((DoublePrecision *)src_data_ptr)[idx]; 
                     break;
-                    case MT_F_INT: ((Integer *)tmp_ptr)[i] =
+                    case C_INT: ((Integer *)tmp_ptr)[i] =
                                        ((Integer *)src_data_ptr)[idx];
                     break;
-                    case MT_F_DCPL:((DoubleComplex *)tmp_ptr)[i] =
+                    case C_DCPL:((DoubleComplex *)tmp_ptr)[i] =
                                        ((DoubleComplex *)src_data_ptr)[idx];
                     break;
-                    case MT_F_REAL: ((float *)tmp_ptr)[i] =
-                                       ((float *)src_data_ptr)[idx];      
+                    case C_FLOAT: ((float *)tmp_ptr)[i] =
+                                       ((float *)src_data_ptr)[idx]; 
+                    break;     
+                    case C_LONG: ((long *)tmp_ptr)[i] =
+				       ((long *)src_data_ptr)[idx];	
                 }
             }
 
@@ -371,6 +374,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     Integer idx, n1dim;
     Integer atotal, btotal;
     Integer isum;
+    long lsum;
     DoublePrecision dsum;
     DoubleComplex zsum;
     float fsum;
@@ -381,8 +385,8 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     ga_sync_();
     GA_PUSH_NAME("ngai_dot_patch");
 
-    nga_inquire_(g_a, &atype, &andim, adims);
-    nga_inquire_(g_b, &btype, &bndim, bdims);
+    nga_inquire_internal_(g_a, &atype, &andim, adims);
+    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
     
     if(atype != btype ) ga_error(" type mismatch ", 0L);
     
@@ -461,7 +465,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
         
         /* compute "local" contribution to the dot product */
         switch (atype){
-            case MT_F_INT:
+            case C_INT:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<andim; j++) {
@@ -475,7 +479,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                             ((Integer *)B_ptr)[idx+j];
                 }
                 break;
-            case MT_F_DCPL:
+            case C_DCPL:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<andim; j++) {
@@ -492,7 +496,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                     }
                 }
                 break;
-            case  MT_F_DBL:
+            case  C_DBL:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<andim; j++) {
@@ -506,7 +510,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                             ((DoublePrecision *)B_ptr)[idx+j];
                 }
                 break;
-            case MT_F_REAL:
+            case C_FLOAT:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<andim; j++) {
@@ -519,7 +523,21 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                         fsum += ((float *)A_ptr)[idx+j] *
                             ((float *)B_ptr)[idx+j];
                 }
-                break;                                              
+                break;         
+            case C_LONG:
+                for(i=0; i<n1dim; i++) {
+                    idx = 0;
+                    for(j=1; j<andim; j++) {
+                        idx += bvalue[j] * baseldA[j-1];
+                        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+                        if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+                    }
+ 
+                    for(j=0; j<(hiA[0]-loA[0]+1); j++)
+                        lsum += ((long *)A_ptr)[idx+j] *
+                            ((long *)B_ptr)[idx+j];
+                }
+                break;                                     
         }
 
         /* release access to the data */
@@ -531,24 +549,28 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
 
     /* the return value */
     switch (atype){
-        case MT_F_INT:
+        case C_INT:
             ga_igop(type, &isum, 1, "+");
             *((Integer *)retval) += isum;
             break;
-        case  MT_F_DBL:
+        case  C_DBL:
             ga_dgop(type, &dsum, 1, "+");
             *((DoublePrecision *)retval) = dsum;
             break;
-        case MT_F_DCPL:
+        case C_DCPL:
             ga_dgop(type, &zsum.real, 1, "+");
             ga_dgop(type, &zsum.imag, 1, "+");
             (*((DoubleComplex *)retval)).real = zsum.real;
             (*((DoubleComplex *)retval)).imag = zsum.imag;
             break;
-        case MT_F_REAL:
+        case C_FLOAT:
             ga_fgop(type, &fsum, 1, "+");
             *((float *)retval) += fsum;
             break;
+        case C_LONG:
+ 	    ga_lgop(type, &lsum, 1, "+");
+            *((float *)retval) += lsum;
+            break;  
         default: ga_error(" wrong data type ",atype);
     }
     
@@ -574,10 +596,10 @@ Integer nga_idot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     ga_sync_();
     GA_PUSH_NAME("nga_idot_patch");
     
-    ga_inquire_(g_a, &atype, &andim, adims);
-    ga_inquire_(g_b, &btype, &bndim, bdims);
+    ga_inquire_internal_(g_a, &atype, &andim, adims);
+    ga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-    if(atype != btype || (atype != MT_F_INT )) ga_error(" wrong types ", 0L);
+    if(atype != btype || (atype != C_INT )) ga_error(" wrong types ", 0L);
 
     ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
 
@@ -601,10 +623,10 @@ DoublePrecision nga_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     ga_sync_();
     GA_PUSH_NAME("nga_ddot_patch");
     
-    ga_inquire_(g_a, &atype, &andim, adims);
-    ga_inquire_(g_b, &btype, &bndim, bdims);
+    ga_inquire_internal_(g_a, &atype, &andim, adims);
+    ga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-    if(atype != btype || (atype != MT_F_DBL )) ga_error(" wrong types ", 0L);
+    if(atype != btype || (atype != C_DBL )) ga_error(" wrong types ", 0L);
 
     ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
 
@@ -628,10 +650,10 @@ float nga_fdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     ga_sync_();
     GA_PUSH_NAME("nga_fdot_patch");
  
-    ga_inquire_(g_a, &atype, &andim, adims);
-    ga_inquire_(g_b, &btype, &bndim, bdims);
+    ga_inquire_internal_(g_a, &atype, &andim, adims);
+    ga_inquire_internal_(g_b, &btype, &bndim, bdims);
  
-    if(atype != btype || (atype != MT_F_REAL )) ga_error(" wrong types ", 0L);
+    if(atype != btype || (atype != C_FLOAT )) ga_error(" wrong types ", 0L);
  
     ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
  
@@ -655,10 +677,10 @@ DoubleComplex  sum;
    ga_sync_();
    GA_PUSH_NAME("nga_zdot_patch");
 
-   ga_inquire_(g_a, &atype, &andim, adims);
-   ga_inquire_(g_b, &btype, &bndim, bdims);
+   ga_inquire_internal_(g_a, &atype, &andim, adims);
+   ga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-   if(atype != btype || (atype != MT_F_DCPL )) ga_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_DCPL )) ga_error(" wrong types ", 0L);
 
    ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi,
                   (void *)(&sum));
@@ -702,7 +724,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
     ga_sync_();
     GA_PUSH_NAME("nga_fill_patch");
     
-    nga_inquire_(g_a,  &type, &ndim, dims);
+    nga_inquire_internal_(g_a,  &type, &ndim, dims);
 
     /* get limits of VISIBLE patch */ 
     nga_distribution_(g_a, &me, loA, hiA);
@@ -732,7 +754,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
         }
 
         switch (type){
-            case MT_F_INT:
+            case C_INT:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<ndim; j++) {
@@ -744,7 +766,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
                         ((Integer *)data_ptr)[idx+j] = *(Integer*)val;
                 }
                 break;
-            case MT_F_DCPL:
+            case C_DCPL:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<ndim; j++) {
@@ -761,7 +783,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
                 }
                 
                 break;
-            case MT_F_DBL:
+            case C_DBL:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<ndim; j++) {
@@ -775,7 +797,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
                             *(DoublePrecision *)val;
                 }
                 break;
-            case MT_F_REAL:
+            case C_FLOAT:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<ndim; j++) {
@@ -786,7 +808,19 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
                     for(j=0; j<(hiA[0]-loA[0]+1); j++)
                         ((float *)data_ptr)[idx+j] = *(float*)val;
                 }
-                break;                                
+                break;     
+            case C_LONG:
+                for(i=0; i<n1dim; i++) {
+                    idx = 0;
+                    for(j=1; j<ndim; j++) {
+                        idx += bvalue[j] * baseld[j-1];
+                        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+                        if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+                    }
+                    for(j=0; j<(hiA[0]-loA[0]+1); j++)
+                        ((long *)data_ptr)[idx+j] = *(long*)val;
+                } 
+                break;                          
             default: ga_error(" wrong data type ",type);
         }
         
@@ -817,7 +851,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
     ga_sync_();
     GA_PUSH_NAME("nga_scal_patch");
     
-    nga_inquire_(g_a,  &type, &ndim, dims);
+    nga_inquire_internal_(g_a,  &type, &ndim, dims);
     nga_distribution_(g_a, &me, loA, hiA);
     
     /* determine subset of my patch to access */
@@ -842,7 +876,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
             
         /* scale local part of g_a */
         switch(type){
-            case MT_F_DBL:
+            case C_DBL:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<ndim; j++) {
@@ -856,7 +890,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
                             *(DoublePrecision*)alpha;                    
                 }
                 break;
-            case MT_F_DCPL:
+            case C_DCPL:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;  
                     for(j=1; j<ndim; j++) {
@@ -878,7 +912,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
                     }
                 }
                 break;
-            case MT_F_INT:
+            case C_INT:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<ndim; j++) {
@@ -891,7 +925,20 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
                         ((Integer *)src_data_ptr)[idx+j]  *= *(Integer*)alpha;
                 }
                 break;
-            case MT_F_REAL:
+            case C_LONG:
+                for(i=0; i<n1dim; i++) {
+                    idx = 0;
+                    for(j=1; j<ndim; j++) {
+                        idx += bvalue[j] * baseld[j-1];
+                        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+                        if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
+                    }
+ 
+                    for(j=0; j<(hiA[0]-loA[0]+1); j++)
+                        ((long *)src_data_ptr)[idx+j]  *= *(long*)alpha; 
+                }
+                break;
+            case C_FLOAT:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<ndim; j++) {
@@ -942,9 +989,9 @@ DoublePrecision *alpha, *beta;
     ga_sync_();
     GA_PUSH_NAME("nga_add_patch");
 
-    nga_inquire_(g_a, &atype, &andim, adims);
-    nga_inquire_(g_b, &btype, &bndim, bdims);
-    nga_inquire_(g_c, &ctype, &cndim, cdims);
+    nga_inquire_internal_(g_a, &atype, &andim, adims);
+    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+    nga_inquire_internal_(g_c, &ctype, &cndim, cdims);
 
     if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L); 
 
@@ -1049,7 +1096,7 @@ DoublePrecision *alpha, *beta;
         }
         
         switch(atype){
-            case MT_F_DBL:
+            case C_DBL:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<cndim; j++) {
@@ -1066,7 +1113,7 @@ DoublePrecision *alpha, *beta;
                             ((DoublePrecision*)B_ptr)[idx+j];
                 }
                 break;
-            case MT_F_DCPL:
+            case C_DCPL:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<cndim; j++) {
@@ -1087,7 +1134,7 @@ DoublePrecision *alpha, *beta;
                     }
                 }
                 break;
-            case MT_F_INT:
+            case C_INT:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<cndim; j++) {
@@ -1102,7 +1149,7 @@ DoublePrecision *alpha, *beta;
                             ((Integer *)B_ptr)[idx+j];
                 }
                 break;
-            case MT_F_REAL:
+            case C_FLOAT:
                 for(i=0; i<n1dim; i++) {
                     idx = 0;
                     for(j=1; j<cndim; j++) {
@@ -1115,6 +1162,21 @@ DoublePrecision *alpha, *beta;
                         ((float *)C_ptr)[idx+j] = *(float *)alpha *
                             ((float *)A_ptr)[idx+j] + *(float *)beta *
                             ((float *)B_ptr)[idx+j];
+                }
+                break;
+            case C_LONG:
+                for(i=0; i<n1dim; i++) {
+                    idx = 0;
+                    for(j=1; j<cndim; j++) {
+                        idx += bvalue[j] * baseldC[j-1];
+                        if(((i+1) % bunit[j]) == 0) bvalue[j]++;
+                        if(bvalue[j] > (hiC[j]-loC[j])) bvalue[j] = 0;
+                    }
+ 
+                    for(j=0; j<(hiC[0]-loC[0]+1); j++)
+                        ((long *)C_ptr)[idx+j] = *(long *)alpha *
+                            ((long *)A_ptr)[idx+j] + *(long *)beta *
+                            ((long *)B_ptr)[idx+j];
                 }
                 break;
             default: ga_error(" wrong data type ",atype);
@@ -1138,6 +1200,7 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
     Integer ndim, dims[MAXDIM], type;
     Integer ival = 0;
+    long lval = 0; 
     DoublePrecision dval = 0.0;
     DoubleComplex cval;
     float fval = 0.0;
@@ -1146,25 +1209,27 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
     ga_sync_();
     GA_PUSH_NAME("nga_zero_patch");
     
-    nga_inquire_(g_a,  &type, &ndim, dims);
+    nga_inquire_internal_(g_a,  &type, &ndim, dims);
     
     switch (type){
-        case MT_F_INT:
+        case C_INT:
             valptr = (void *)(&ival);
             break;
-        case MT_F_DBL:
+        case C_DBL:
             valptr = (void *)(&dval);
             break;
-        case MT_F_DCPL:
+        case C_DCPL:
         {
             cval.real = 0.0; cval.imag = 0.0;
             valptr = (void *)(&cval);
             break;
         }
-        case MT_F_REAL:
+        case C_FLOAT:
             valptr = (void *)(&fval);
             break;      
-        
+       case C_LONG:
+            valptr = (void *)(&lval);
+            break; 
         default: ga_error(" wrong data type ",type);
     }
     nga_fill_patch_(g_a, lo, hi, valptr);
@@ -1251,10 +1316,10 @@ DoublePrecision  sum = 0.;
    ga_sync_();
    GA_PUSH_NAME("ga_ddot_patch");
 
-   ga_inquire_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_(g_b, &btype, &bdim1, &bdim2);
+   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != MT_F_DBL )) ga_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_DBL )) ga_error(" wrong types ", 0L);
 
    gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
                  g_b, t_b, bilo, bihi, bjlo, bjhi, &sum);
@@ -1281,10 +1346,10 @@ DoubleComplex  sum;
    ga_sync_();
    GA_PUSH_NAME("ga_zdot_patch");
 
-   ga_inquire_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_(g_b, &btype, &bdim1, &bdim2);
+   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != MT_F_DCPL )) ga_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_DCPL )) ga_error(" wrong types ", 0L);
 
    gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
                  g_b, t_b, bilo, bihi, bjlo, bjhi, (DoublePrecision*)&sum);
@@ -1310,10 +1375,10 @@ float  sum = 0.;
    ga_sync_();
    GA_PUSH_NAME("ga_fdot_patch");
  
-   ga_inquire_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_(g_b, &btype, &bdim1, &bdim2);
+   ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_internal_(g_b, &btype, &bdim1, &bdim2);
  
-   if(atype != btype || (atype != MT_F_REAL )) ga_error(" wrong types ", 0L);
+   if(atype != btype || (atype != C_FLOAT )) ga_error(" wrong types ", 0L);
  
    gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
                  g_b, t_b, bilo, bihi, bjlo, bjhi, (DoublePrecision*)&sum);

@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.12 2001-06-01 22:13:35 d3h325 Exp $ */
+/* $Id: collect.c,v 1.13 2002-01-18 19:52:12 vinod Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -113,6 +113,13 @@ long gtype,gn;
 #endif
 }
 
+void ga_lgop(type, x, n, op)
+     Integer type, n;
+     long *x;
+     char *op;
+{
+	armci_msg_lgop(x, (int)n, op);
+}
 
 void ga_igop(type, x, n, op)
      Integer type, n, *x;

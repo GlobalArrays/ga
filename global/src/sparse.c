@@ -14,8 +14,8 @@ static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integ
        DoublePrecision *da;
        DoubleComplex *ca;
        float *fa;
-
-       case MT_F_INT:
+       long *la;
+       case C_INT:
             ia = (Integer*)ptr;
             if(add) for(i=0; i< n; i++) {
                     if(i==0) 
@@ -26,7 +26,7 @@ static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integ
             else
                     for(i=0; i< n; i++) ia[i] = *(Integer*)val; 
             break;
-       case MT_F_DCPL:
+       case C_DCPL:
             ca = (DoubleComplex*)ptr;
             if(add) for(i=0; i< n; i++){
                     if(i==0) {
@@ -43,7 +43,7 @@ static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integ
                     ca[i].imag = ((DoubleComplex*)val)->imag; 
                 }
             break;
-       case MT_F_DBL:
+       case C_DBL:
             da = (double*)ptr;
             if(add) for(i=0; i< n; i++) {
                     if(i==0) 
@@ -53,7 +53,7 @@ static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integ
             } else
                for(i=0; i< n; i++) da[i] = *(double*)val; 
             break;
-       case MT_F_REAL:
+       case C_FLOAT:
             fa = (float*)ptr;
             if(add) for(i=0; i< n; i++) {
                     if(i==0)
@@ -63,7 +63,18 @@ static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integ
             }
             else
                     for(i=0; i< n; i++) fa[i] = *(float*)val;
-            break;                                                          
+            break; 
+       case C_LONG:
+            la = (long*)ptr; 
+            if(add) for(i=0; i< n; i++) {
+                    if(i==0)
+                       la[i] += *(long*)val;
+                    else
+                       la[i] = la[i-1] + *(long*)val;
+            }
+            else
+                    for(i=0; i< n; i++) la[i] = *(long*)val;
+            break;                                                         
        default: ga_error("ga_scan/add:wrong data type",type);
        }
 }
@@ -77,14 +88,14 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
           DoublePrecision *da1, *da2;
           DoubleComplex *ca1, *ca2;
           float *fa1, *fa2;
- 
-          case MT_F_INT:
+          long *la1, *la2; 
+          case C_INT:
              ia1 = (Integer*)ptr1;
              ia2 = (Integer*)ptr2;
              ia2[0] = ia1[0] +  *(Integer*)val; 
              for(i=1; i< n; i++) ia2[i] = ia2[i-1]+ia1[i];
              break;
-          case MT_F_DCPL:
+          case C_DCPL:
              ca1 = (DoubleComplex*)ptr1;
              ca2 = (DoubleComplex*)ptr2;
              ca2->real = ca1->real +  ((DoubleComplex*)val)->real; 
@@ -94,18 +105,24 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
                    ca2[i].imag = ca2[i-1].imag + ca1[i].imag;
              }
              break;
-          case MT_F_DBL:
+          case C_DBL:
              da1 = (double*)ptr1;
              da2 = (double*)ptr2;
              da2[0] = da1[0] +  *(double*)val; 
              for(i=1; i< n; i++) da2[i] = da2[i-1]+da1[i];
              break;
-          case MT_F_REAL:
+          case C_FLOAT:
              fa1 = (float*)ptr1;
              fa2 = (float*)ptr2;
              fa2[0] = fa1[0] +  *(float*)val;
              for(i=1; i< n; i++) fa2[i] = fa2[i-1]+fa1[i];
              break;   
+          case C_LONG:
+             la1 = (long*)ptr1;
+             la2 = (long*)ptr2;
+             la2[0] = la1[0] +  *(long*)val;
+             for(i=1; i< n; i++) la2[i] = la2[i-1]+la1[i];
+             break;
           default: ga_error("ga_add_val:wrong data type",type);
         }
 }                                                               
@@ -118,54 +135,64 @@ static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sb
     DoublePrecision *ds, *dd;
     DoubleComplex   *cs, *cd;
     float           *fs, *fd;
-
+    long            *ls, *ld;
     if(pack)
         switch (type){
-         case MT_F_INT:
+         case C_INT:
              is = (Integer*)a; id = (Integer*)b;
              for(i=0; i< n; i++) if(sbit[i]) { 
                      *id = is[i]; id++;
                      cnt++;
           }
              break;
-          case MT_F_DCPL:
+          case C_DCPL:
              cs = (DoubleComplex*)a; cd = (DoubleComplex*)b;
              for(i=0; i< n; i++)if(sbit[i]){
                  cd->real  = cs[i].real; cd->imag  = cs[i].imag; cd ++;
                  cnt++;
          }
              break;
-          case MT_F_DBL:
+          case C_DBL:
              ds = (double*)a; dd = (double*)b;
              for(i=0; i< n; i++)if(sbit[i]){ *dd = ds[i]; dd++; cnt++; }
              break;
-          case MT_F_REAL:
+          case C_FLOAT:
              fs = (float*)a; fd = (float*)b;
              for(i=0; i< n; i++) if(sbit[i]) {
                      *fd = fs[i]; fd++; cnt++;
           }
-             break;       
+             break;   
+          case C_LONG:
+             ls = (long*)a; ld = (long*)b;
+             for(i=0; i< n; i++) if(sbit[i]) {
+                     *ld = ls[i]; ld++; cnt++;
+          }
+             break;    
           default: ga_error("ga_copy_sbit:wrong data type",type);
         }
     else
         switch (type){
-          case MT_F_INT:
+          case C_INT:
              is = (Integer*)b; id = (Integer*)a;
              for(i=0; i< n; i++) if(sbit[i]) { id[i] = *is; is++;  cnt++; }
              break;
-          case MT_F_DCPL:
+          case C_DCPL:
              cs = (DoubleComplex*)b; cd = (DoubleComplex*)a;
              for(i=0; i< n; i++)if(sbit[i]){
                  cd[i].real  = cs->real; cd[i].imag  = cs->imag; cs++; cnt++; }
              break;
-          case MT_F_DBL:
+          case C_DBL:
              ds = (double*)b; dd = (double*)a;
              for(i=0; i< n; i++)if(sbit[i]){ dd[i] = *ds; ds++; cnt++; }
              break;
-          case MT_F_REAL:
+          case C_FLOAT:
              fs = (float*)b; fd = (float*)a;
              for(i=0; i< n; i++) if(sbit[i]) { fd[i] = *fs; fs++;  cnt++; }
-             break;        
+             break;   
+          case C_LONG:
+             ls = (long*)b; ld = (long*)a;
+             for(i=0; i< n; i++) if(sbit[i]) { ld[i] = *ls; ls++;  cnt++; }
+             break;     
           default: ga_error("ga_copy_sbit:wrong data type",type);
         }
     if(cnt!=mx){
@@ -193,7 +220,7 @@ register Integer i;
    ndim = ga_ndim_(g_a);
    if(ndim > 1)ga_error("ga_patch_enum:applicable to 1-dim arrays",ndim);
 
-   nga_inquire_(g_a, &type, &ndim, dims);
+   nga_inquire_internal_(g_a, &type, &ndim, dims);
    nga_distribution_(g_a, &me, &lop, &hip);
 
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */
@@ -214,13 +241,13 @@ register Integer i;
           DoublePrecision *da;
           DoubleComplex *ca;
           float *fa;
-
-          case MT_F_INT:
+          long *la;
+          case C_INT:
              ia = (Integer*)ptr;
              for(i=0; i< hip-lop+1; i++)
                  ia[i] = *(Integer*)start+(off+i)* *(Integer*)stride; 
              break;
-          case MT_F_DCPL:
+          case C_DCPL:
              ca = (DoubleComplex*)ptr;
              for(i=0; i< hip-lop+1; i++){
                  ca[i].real = ((DoubleComplex*)start)->real +
@@ -229,17 +256,22 @@ register Integer i;
                          (off+i)* ((DoubleComplex*)stride)->imag; 
              }
              break;
-          case MT_F_DBL:
+          case C_DBL:
              da = (DoublePrecision*)ptr;
              for(i=0; i< hip-lop+1; i++)
                  da[i] = *(DoublePrecision*)start+
                          (off+i)* *(DoublePrecision*)stride; 
              break;
-          case MT_F_REAL:
+          case C_FLOAT:
              fa = (float*)ptr;
              for(i=0; i< hip-lop+1; i++)
                  fa[i] = *(float*)start+(off+i)* *(float*)stride;
-             break;                 
+             break;   
+          case C_LONG:
+             la = (long*)ptr;
+             for(i=0; i< hip-lop+1; i++)
+                 la[i] = *(long*)start+(off+i)* *(long*)stride;
+             break;              
           default: ga_error("ga_patch_enum:wrong data type ",type);
         }
 
@@ -270,14 +302,14 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    ga_sync_();
 
-   if(MA_push_get(MT_F_INT, nproc, "ga scan buf", &handle, &idx))
+   if(MA_push_get(C_INT, nproc, "ga scan buf", &handle, &idx))
                   MA_get_pointer(handle, &lim);
    if(!lim) ga_error("ga_scan_copy: MA memory alloc failed",nproc);
 
    ndim = ga_ndim_(g_a);
    if(ndim>1)ga_error("ga_scan_copy: applicable to 1-dim arrays",ndim);
 
-   nga_inquire_(g_a, &type, &ndim, &dims);
+   nga_inquire_internal_(g_a, &type, &ndim, &dims);
    nga_distribution_(g_sbit, &me, &lop, &hip);
 
    bzero(lim,sizeof(Integer)*nproc);
@@ -390,12 +422,12 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    ga_sync_();
 
-   if(MA_push_get(MT_F_INT, nproc, "ga_pack lim buf", &handle, &idx))
+   if(MA_push_get(C_INT, nproc, "ga_pack lim buf", &handle, &idx))
                   MA_get_pointer(handle, &lim);
    if(!lim) ga_error("ga_pack: MA memory alloc failed",nproc);
 
    bzero(lim,sizeof(Integer)*nproc);
-   nga_inquire_(g_a, &type, &ndim, &dims);
+   nga_inquire_internal_(g_a, &type, &ndim, &dims);
    if(ndim>1) ga_error("ga_pack: supports 1-dim arrays only",ndim);
    nga_distribution_(g_sbit, &me, &lop, &hip);
 
@@ -543,12 +575,12 @@ logical ga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Int
 Integer type, ndim, nbin, lobin, hibin, me=ga_nodeid_();
 Integer dims[2], nproc=ga_nnodes_(),chunk[2];
 
-    nga_inquire_(g_bin, &type, &ndim, &nbin);
+    nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
     if(ndim !=1) ga_error("ga_bin_index: 1-dim array required",ndim);
-    if(type!= MT_F_INT)ga_error("ga_bin_index: not integer type",type);
+    if(type!= C_INT)ga_error("ga_bin_index: not integer type",type);
 
     chunk[0]=dims[0]=2; dims[1]=nproc; chunk[1]=1;
-    if(!nga_create(MT_F_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
+    if(!nga_create(C_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
 
     nga_distribution_(g_off,&me, &lobin,&hibin);
 
@@ -635,7 +667,7 @@ Integer g_range;
     if(FALSE==ga_create_bin_range_(g_bin, g_cnt, g_off, &g_range))
         ga_error("ga_bin_sorter: failed to create temp bin range array",0); 
 
-    nga_inquire_(g_bin, &type, &ndim, &totbin);
+    nga_inquire_internal_(g_bin, &type, &ndim, &totbin);
     if(ndim !=1) ga_error("ga_bin_sorter: 1-dim array required",ndim);
      
     nga_distribution_(g_bin, &me, &lo, &hi);
@@ -679,9 +711,9 @@ int i, my_nbin=0;
 int *all_bin_contrib, *offset;
 Integer type, ndim, nbin;
 
-    nga_inquire_(g_bin, &type, &ndim, &nbin);
+    nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
     if(ndim !=1) ga_error("ga_bin_index: 1-dim array required",ndim);
-    if(type!= MT_F_INT)ga_error("ga_bin_index: not integer type",type);
+    if(type!= C_INT)ga_error("ga_bin_index: not integer type",type);
 
     all_bin_contrib = (int*)calloc(nbin,sizeof(int));
     if(!all_bin_contrib)ga_error("ga_binning:calloc failed",nbin);

@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.17 2002-01-15 17:41:40 d3h325 Exp $ */
+/* $Id: onesided.c,v 1.18 2002-01-18 19:52:13 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -478,7 +478,6 @@ int proc, ndim;
              GAbytes.getloc += (double)size*elems;
           }
           ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1, proc);
-
       }
 
       GA_POP_NAME;
@@ -534,9 +533,9 @@ int optype, proc, ndim;
       type = GA[handle].type;
       ndim = GA[handle].ndim;
 
-      if(type==MT_F_DBL) optype= ARMCI_ACC_DBL;
-      else if(type==MT_F_REAL) optype= ARMCI_ACC_FLT;
-      else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
+      if(type==C_DBL) optype= ARMCI_ACC_DBL;
+      else if(type==C_FLOAT) optype= ARMCI_ACC_FLT;
+      else if(type==C_DCPL)optype= ARMCI_ACC_DCP;
       else if(size==sizeof(int))optype= ARMCI_ACC_INT;
       else if(size==sizeof(long))optype= ARMCI_ACC_LNG;
       else ga_error("type not supported",type);
@@ -671,25 +670,29 @@ unsigned long    lref, lptr;
 
    /* compute index and check if it is correct */
    switch (GA[handle].type){
-     case MT_F_DBL:
+     case C_DBL:
         *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;
         break;
 
-     case MT_F_DCPL:
+     case C_DCPL:
         *index = (Integer) ((DoubleComplex*)ptr - DCPL_MB);
         lref = (unsigned long)DCPL_MB;
         break;
 
-     case MT_F_INT:
+     case C_INT:
         *index = (Integer) ((Integer*)ptr - INT_MB);
         lref = (unsigned long)INT_MB;
         break;
 
-     case MT_F_REAL:
+     case C_FLOAT:
         *index = (Integer) ((float*)ptr - FLT_MB);
         lref = (unsigned long)FLT_MB;
         break;        
+     case C_LONG:
+        *index = (Integer) ((long*)ptr - LONG_MB);
+        lref = (unsigned long)LONG_MB; 
+        break;
    }
 
 #ifdef BYTE_ADDRESSABLE_MEMORY
@@ -807,11 +810,11 @@ int rc;
 
   if(alpha != NULL) {
     int optype;
-    if(type==MT_F_DBL) optype= ARMCI_ACC_DBL;
-    else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
+    if(type==C_DBL) optype= ARMCI_ACC_DBL;
+    else if(type==C_DCPL)optype= ARMCI_ACC_DCP;
     else if(item_size==sizeof(int))optype= ARMCI_ACC_INT;
     else if(item_size==sizeof(long))optype= ARMCI_ACC_LNG;
-    else if(type==MT_F_REAL)optype= ARMCI_ACC_FLT;  
+    else if(type==C_FLOAT)optype= ARMCI_ACC_FLT;  
     else ga_error("type not supported",type);
     rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)proc);
   }
@@ -859,7 +862,7 @@ Integer pindex, phandle;
 
   if (*nv < 1) return;
 
-  if(!MA_push_get(MT_F_INT,*nv, "nga_sort_permut--p", &phandle, &pindex))
+  if(!MA_push_get(C_INT,*nv, "nga_sort_permut--p", &phandle, &pindex))
               ga_error("MA alloc failed ", *g_a);
 
   gai_sort_proc(g_a, subscr_arr, nv, index, INT_MB+pindex);
@@ -897,7 +900,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     GA_PUSH_NAME("ga_scatter");
     GAstat.numsca++;
     
-    if(!MA_push_get(MT_F_INT,*nv, "ga_scatter--p", &phandle, &pindex))
+    if(!MA_push_get(C_INT,*nv, "ga_scatter--p", &phandle, &pindex))
         ga_error("MA alloc failed ", *g_a);
 
     /* allocate temp memory */
@@ -1017,7 +1020,7 @@ Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
   GA_PUSH_NAME("ga_scatter_acc");
   GAstat.numsca++;
 
-  if(!MA_push_get(MT_F_INT,*nv, "ga_scatter_acc--p", &phandle, &pindex))
+  if(!MA_push_get(C_INT,*nv, "ga_scatter_acc--p", &phandle, &pindex))
             ga_error("MA alloc failed ", *g_a);
 
   /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
@@ -1079,7 +1082,7 @@ extern void ga_sort_permutation();
 
   if (*nv < 1) return;
 
-  if(!MA_push_get(MT_F_INT,*nv, "ga_sort_permut--p", &phandle, &pindex))
+  if(!MA_push_get(C_INT,*nv, "ga_sort_permut--p", &phandle, &pindex))
             ga_error("MA alloc failed ", *g_a);
 
   /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
@@ -1123,7 +1126,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     
     GA_PUSH_NAME("gai_gatscat");
 
-    if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-p",&phandle)) 
+    if(!MA_push_stack(C_INT,*nv,"ga_gat-p",&phandle)) 
         ga_error("MAfailed",*g_a);
     if(!MA_get_pointer(phandle, &proc)) ga_error("MA pointer failed ", *g_a);
 
@@ -1276,11 +1279,11 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             
             if(alpha != NULL) {
                 int optype;
-                if(type==MT_F_DBL) optype= ARMCI_ACC_DBL;
-                else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
+                if(type==C_DBL) optype= ARMCI_ACC_DBL;
+                else if(type==C_DCPL)optype= ARMCI_ACC_DCP;
                 else if(item_size==sizeof(int))optype= ARMCI_ACC_INT;
                 else if(item_size==sizeof(long))optype= ARMCI_ACC_LNG;
-                else if(type==MT_F_REAL)optype= ARMCI_ACC_FLT; 
+                else if(type==C_FLOAT)optype= ARMCI_ACC_FLT; 
                 else ga_error("type not supported",type);
                 rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)aproc[k]);
             }
@@ -1484,7 +1487,6 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         ptr_src[proc][this_count] = ptr_ref[proc] + item_size *
             ((j[k] - jlo[proc])* ldp[proc] + i[k] - ilo[proc]);
     }
-    
     /* source and destination pointers are ready for all processes */
     for(k=0; k<naproc; k++) {
         int rc;
@@ -1516,7 +1518,7 @@ int optype;
     ga_check_handleM(g_a, "nga_read_inc");
     GA_PUSH_NAME("ga_read_inc");
 
-    if(GA[handle].type!=MT_F_INT) ga_error("type must be integer",*g_a);
+    if(GA[handle].type!=C_INT && GA[handle].type!=C_LONG) ga_error("type must be integer",GA[handle].type);
 
     GAstat.numrdi++;
     GAbytes.rditot += (double)sizeof(Integer);
@@ -1527,11 +1529,10 @@ int optype;
     /* get an address of the g_a(subscript) element */
     gam_Location(proc, handle,  subscript, (char**)&ptr, ldp);
 
-#   ifdef EXT_INT
-      optype = ARMCI_FETCH_AND_ADD_LONG;
-#   else
-      optype = ARMCI_FETCH_AND_ADD;
-#   endif
+    if(GA[handle].type==C_INT)
+       optype = ARMCI_FETCH_AND_ADD;
+    else
+       optype = ARMCI_FETCH_AND_ADD_LONG;
 
     if(GAme == proc)GAbytes.rdiloc += (double)sizeof(Integer);
 

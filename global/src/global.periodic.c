@@ -150,7 +150,7 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
     Integer lop[MAXDIM], hip[MAXDIM];
     int get_range;
     
-    nga_inquire_(g_a, &type, &ndim, dims);
+    nga_inquire_internal_(g_a, &type, &ndim, dims);
 
     get_range = ngai_peri_get_range_(ndim, dims, lo, hi, range, range_num,
                                      offset, op_code);

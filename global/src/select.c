@@ -34,7 +34,7 @@ int     participate=0;
    else if (strncmp(op,"max",3) == 0);
    else ga_error("operator not recognized",0);
 
-   nga_inquire_(g_a, &type, &ndim, dims);
+   nga_inquire_internal_(g_a, &type, &ndim, dims);
    nga_distribution_(g_a, &me, lo, hi);
 
    if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
@@ -51,7 +51,7 @@ int     participate=0;
         DoubleComplex *ca;
         float *fa,fval;
 
-        case MT_F_INT:
+        case C_INT:
            ia = (Integer*)ptr;
            ival = *ia;
           
@@ -63,7 +63,7 @@ int     participate=0;
            info.v.lval = (long) ival;
            break;
 
-        case MT_F_DCPL:
+        case C_DCPL:
            ca = (DoubleComplex*)ptr;
            dval=ca->real*ca->real + ca->imag*ca->imag;
            if (strncmp(op,"min",3) == 0)
@@ -81,7 +81,7 @@ int     participate=0;
            info.extra = ((DoubleComplex*)ptr)[ind]; /* append the actual val */
            break;
 
-        case MT_F_DBL:
+        case C_DBL:
            da = (DoublePrecision*)ptr;
            dval = *da;
            if (strncmp(op,"min",3) == 0)
@@ -92,8 +92,19 @@ int     participate=0;
            info.v.dval = dval; 
            break;
 
-        case MT_F_REAL:
+        case C_FLOAT:
            fa = (float*)ptr;
+           fval = *fa;
+ 
+           if (strncmp(op,"min",3) == 0)
+              for(i=0;i<elems;i++){ if(fval > fa[i]) {fval=fa[i];ind=i; } }
+           else
+              for(i=0;i<elems;i++){ if(fval < fa[i]) {fval=fa[i];ind=i; } }
+ 
+           info.v.fval = fval;
+           break;
+        case C_LONG:
+           fa = (long*)ptr;
            fval = *fa;
  
            if (strncmp(op,"min",3) == 0)
@@ -119,18 +130,18 @@ int     participate=0;
    } 
 
    /* calculate global result */
-   if(type==MT_F_INT){ 
+   if(type==C_INT || type==C_LONG){ 
       int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
       *(Integer*)val = info.v.lval;
-   }else if(type==MT_F_DBL){
+   }else if(type==C_DBL){
       int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
       *(DoublePrecision*)val = info.v.dval;
-   }else if(type==MT_F_REAL){
+   }else if(type==C_FLOAT){
       int size = sizeof(double) + sizeof(Integer)*ndim;
       armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
-      *(float*)val = info.v.fval;        
+      *(float*)val = info.v.fval;       
    }else{
       int size = sizeof(info); /* for simplicity we send entire info */
       armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
