@@ -121,7 +121,12 @@ extern thread_id_t armci_usr_tid;
 #define VECTOR  2
 
 extern  int armci_me, armci_nproc;
-extern  double *armci_internal_buffer;
+
+#ifdef HITACHI
+   extern  double *armci_internal_buffer;
+#else
+   extern  double armci_internal_buffer[BUFSIZE_DBL];
+#endif
 
 extern void armci_shmem_init();
 extern void armci_die(char *msg, int code);
