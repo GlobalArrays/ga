@@ -6,75 +6,80 @@
 #include "message.h"
 
 
-static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integer add)
+static void gai_combine_val(Integer type, void *ptra, void *ptrb, Integer n, void* val, Integer add)
 {
     int i;
 
     switch (type){
-       int *ia;
-       double *da;
-       DoubleComplex *ca;
-       float *fa;
-       long *la;
+       int *ia, *ib;
+       double *da, *db;
+       DoubleComplex *ca, *cb;
+       float *fa, *fb;
+       long *la, *lb;
        case C_INT:
-            ia = (int*)ptr;
+            ia = (int*)ptra;
+            ib = (int*)ptrb;
             if(add) for(i=0; i< n; i++) {
                     if(i==0) 
-                       ia[i] += *(int*)val; 
+		      ib[i] = ia[i];
                     else
-                       ia[i] = ia[i-1] + *(int*)val; 
+                      ib[i] = ib[i-1] + ia[i-1]; 
             }
             else
-                    for(i=0; i< n; i++) ia[i] = *(int*)val; 
+                    for(i=0; i< n; i++) ib[i] = *(int*)val; 
             break;
        case C_DCPL:
-            ca = (DoubleComplex*)ptr;
+            ca = (DoubleComplex*)ptra;
+            cb = (DoubleComplex*)ptrb;
             if(add) for(i=0; i< n; i++){
                     if(i==0) {
-                       ca[i].real += ((DoubleComplex*)val)->real; 
-                       ca[i].imag += ((DoubleComplex*)val)->imag; 
+ 		      cb[i].real = ca[i].real;
+                      cb[i].imag = ca[i].imag;
                     }  else {
-                       ca[i].real = ca[i-1].real + ((DoubleComplex*)val)->real; 
-                       ca[i].imag = ca[i-1].imag + ((DoubleComplex*)val)->imag; 
+		      cb[i].real = cb[i-1].real + ca[i-1].real; 
+		      cb[i].imag = cb[i-1].imag + ca[i-1].imag; 
                     }
                 }
             else
                 for(i=0; i< n; i++){
-                    ca[i].real = ((DoubleComplex*)val)->real; 
-                    ca[i].imag = ((DoubleComplex*)val)->imag; 
+                    cb[i].real = ((DoubleComplex*)val)->real; 
+                    cb[i].imag = ((DoubleComplex*)val)->imag; 
                 }
             break;
        case C_DBL:
-            da = (double*)ptr;
+            da = (double*)ptra;
+            db = (double*)ptrb;
             if(add) for(i=0; i< n; i++) {
                     if(i==0) 
-                       da[i] += *(double*)val; 
+ 		      db[i] = da[i];
                     else
-                       da[i] = da[i-1] + *(double*)val; 
+		      db[i] = db[i-1] + da[i-1]; 
             } else
-               for(i=0; i< n; i++) da[i] = *(double*)val; 
+               for(i=0; i< n; i++) db[i] = *(double*)val; 
             break;
        case C_FLOAT:
-            fa = (float*)ptr;
+            fa = (float*)ptra;
+            fb = (float*)ptrb;
             if(add) for(i=0; i< n; i++) {
                     if(i==0)
-                       fa[i] += *(float*)val;
+		      fb[i] = fa[i];
                     else
-                       fa[i] = fa[i-1] + *(float*)val;
+		      fb[i] = fb[i-1] + fa[i-1];
             }
             else
-                    for(i=0; i< n; i++) fa[i] = *(float*)val;
+                    for(i=0; i< n; i++) fb[i] = *(float*)val;
             break; 
        case C_LONG:
-            la = (long*)ptr; 
+            la = (long*)ptra; 
+            lb = (long*)ptrb; 
             if(add) for(i=0; i< n; i++) {
                     if(i==0)
-                       la[i] += *(long*)val;
+		      lb[i] = la[i];
                     else
-                       la[i] = la[i-1] + *(long*)val;
+		      lb[i] = lb[i-1] + la[i-1];
             }
             else
-                    for(i=0; i< n; i++) la[i] = *(long*)val;
+                    for(i=0; i< n; i++) lb[i] = *(long*)val;
             break;                                                         
        default: ga_error("ga_scan/add:wrong data type",type);
        }
@@ -334,6 +339,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
        Integer k, *ip=ia, lops=lop, hips=hip;
        Integer startp=0;
        void *ptr_b;
+       void *ptr_a;
 
        /* what part of local data we should be working on */
        if(lop < *lo){
@@ -345,6 +351,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
       
        /* access the data */
        nga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
+       nga_access_ptr(g_a, &lop, &hip, &ptr_a, &ld);
 
        /* find start bit corresponding to my patch */
        /* case 1: sbit set for the first patch element and check earlier elems*/
@@ -371,14 +378,16 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
            nga_get_(g_a, &startp, &startp, buf, &one);
 
            /* assign it to "elems" elements of B */
-           gai_combine_val(type, ptr_b, elems, buf,add); 
+           gai_combine_val(type, ptr_a, ptr_b, elems, buf,add); 
 
+           ptr_a = (char*)ptr_a + elems*elemsize;
            ptr_b = (char*)ptr_b + elems*elemsize;
            k += elems;
            startp = k;
        }
 
        /* release local access to arrays */
+       nga_release_(g_a, &lop, &hip);
        nga_release_(g_b, &lop, &hip);
        nga_release_(g_sbit, &lops, &hips);
    }
@@ -741,7 +750,12 @@ Integer type, ndim, nbin;
 /*
        printf("%d: elems=%d lo=%d sel=%d off=%d contrib=%d nbin=%d\n",ga_nodeid_(), elems, lo, selected,offset[selected-1],all_bin_contrib[0],nbin);
 */
-       nga_put_(g_bin, &lo, &hi, values+i, &selected); 
+       if(lo > nbin) {
+	 printf("Writing off end of bins array: index=%d elems=%d lo=%d hi=%d values=%d nbin=%d\n",i,elems,lo,hi,values+i,nbin);
+         break;   
+       }else{
+          nga_put_(g_bin, &lo, &hi, values+i, &selected); 
+       }
        i+=elems;
     }
     
