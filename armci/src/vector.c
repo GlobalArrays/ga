@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.24 2002-12-23 20:49:56 manoj Exp $ */
+/* $Id: vector.c,v 1.25 2002-12-31 05:04:59 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -567,6 +567,8 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 	nb_handle->proc= proc;
 	nb_handle->bufid=NB_NONE;
       }
+      else
+	nb_handle = armci_set_implicit_handle(PUT, proc);
     }
 
     if(direct)
@@ -624,6 +626,8 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 	nb_handle->proc= proc;
 	nb_handle->bufid=NB_NONE;
       }
+      else
+	nb_handle = armci_set_implicit_handle(GET, proc);
     }
     
     if(direct) 
@@ -678,6 +682,9 @@ int ARMCI_NbAccV( int op,              /* oeration code */
       nb_handle->proc= proc;
       nb_handle->bufid=NB_NONE;
     }
+    else
+      nb_handle = armci_set_implicit_handle(op, proc);
+
 
 #   if defined(ACC_COPY)
        if(armci_me != proc) direct=0;

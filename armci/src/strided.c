@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.58 2002-12-23 22:16:23 vinod Exp $ */
+/* $Id: strided.c,v 1.59 2002-12-31 05:04:59 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -450,9 +450,13 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
     else
 #endif
     {
-	if(stride_levels == 0) 
+      if(stride_levels == 0) {
 	  armci_copy_2D(PUT, proc, src_ptr, dst_ptr, count[0], 1, count[0],
 			count[0]);
+#         if defined(LAPI) || defined(_ELAN_PUTGET_H)
+	  if(proc != armci_me) { WAIT_FOR_PUTS; }
+#         endif
+      }
 	else 
 	  rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
 				 dst_ptr, dst_stride_arr,count,stride_levels, 
@@ -819,6 +823,8 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 	nb_handle->proc= proc;
 	nb_handle->bufid=NB_NONE;
       }
+      else
+        nb_handle = armci_set_implicit_handle(PUT, proc);
     }
 
 #ifndef LAPI2
@@ -836,12 +842,8 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     else
 #endif 
       {
-	if(stride_levels == 0)
-          armci_copy_2D(PUT, proc, src_ptr, dst_ptr, count[0], 1, count[0],
-                        count[0]);
-        else 
-	  rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr,
-				 dst_ptr,dst_stride_arr,count,stride_levels, 0,nb_handle);
+	rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr,
+			       dst_ptr,dst_stride_arr,count,stride_levels, 0,nb_handle);
       }
     
 #ifdef GA_USE_VAMPIR
@@ -900,6 +902,8 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 	nb_handle->proc= proc;
 	nb_handle->bufid=NB_NONE;
       }
+      else
+        nb_handle = armci_set_implicit_handle(GET, proc);
     }
     
 #ifndef LAPI2
@@ -972,6 +976,9 @@ int ARMCI_NbAccS( int  optype,            /* operation */
       nb_handle->proc= proc;
       nb_handle->bufid=NB_NONE;
     }
+    else
+      nb_handle = armci_set_implicit_handle(optype, proc);
+
 
     if(direct)
       rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
@@ -992,7 +999,8 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 #define INIT_NB_HANDLE(nb,o,p) if(nb){\
              (nb)->tag = 0;\
              (nb)->op  = (o); (nb)->proc= (p);\
-             (nb)->bufid=NB_NONE;}
+             (nb)->bufid=NB_NONE;}\
+             else { (nb)=armci_set_implicit_handle(o, p); (nb)->tag=0; }
 
 int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
 {
@@ -1067,30 +1075,68 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
 
 
 static void _armci_rem_value(int op, void *src, void *dst, int proc, 
-			     int bytes, armci_ihdl_t nb_handle) {  
-    int rc=0, pv=0;
+			     int bytes) {  
+  int rc=0;
     
-    if(nb_handle) {
-      if(nb_handle->agg_flag == SET) {
-	if(op==PUT) pv = 1;
-	(void)armci_agg_save_descriptor(src,dst,bytes,proc,op,pv,nb_handle);
-	return;
-      }
-      else {
-	if(op==PUT) UPDATE_FENCE_INFO(proc); 
-	
-	/*set tag and op in the nb handle*/
-	if(nb_handle){
-	  nb_handle->tag = GET_NEXT_NBTAG();
-	  nb_handle->op  = op;
-	  nb_handle->proc= proc;
-	  nb_handle->bufid=NB_NONE;
-	}
+    ORDER(op,proc); /* ensure ordering */
+    
+#if defined(REMOTE_OP) && !defined(QUADRICS)
+    rc = armci_rem_strided(op, NULL, proc, src, NULL, dst, NULL,
+			   &bytes, 0, NULL, 0, NULL);
+    if(rc) armci_die("ARMCI_Value: armci_rem_strided incomplete", FAIL6);
+#else
+    
+    if(op==PUT) {
+      UPDATE_FENCE_STATE(proc, PUT, 1);
+#     ifdef LAPI
+      SET_COUNTER(ack_cntr, 1);
+#     endif
+      armci_put(src, dst, bytes, proc);
+    }
+    else {
+#     ifdef LAPI
+      SET_COUNTER(get_cntr, 1);
+#     endif
+      armci_get(src, dst, bytes, proc);
+    }
+    
+    /* deal with non-blocking loads and stores */
+# if defined(LAPI) || defined(_ELAN_PUTGET_H)
+    if(proc != armci_me){
+      if(op == GET){
+	WAIT_FOR_GETS; /* wait for data arrival */
+      }else {
+	WAIT_FOR_PUTS; /* data must be copied out*/
       }
     }
-    else
-      ORDER(op,proc); /* ensure ordering */
-    
+#endif
+#endif
+}
+
+/* non-blocking remote value put/get operation */
+static void _armci_nb_rem_value(int op, void *src, void *dst, int proc, 
+				int bytes, armci_ihdl_t nb_handle) {  
+    int rc=0, pv=0;
+
+    if(nb_handle && nb_handle->agg_flag == SET) {
+      if(op==PUT) pv = 1;
+      (void)armci_agg_save_descriptor(src,dst,bytes,proc,op,pv,nb_handle);
+      return;
+    }
+    else {
+      if(op==PUT) UPDATE_FENCE_INFO(proc); 
+      
+      /*set tag and op in the nb handle*/
+      if(nb_handle){
+	nb_handle->tag = GET_NEXT_NBTAG();
+	nb_handle->op  = op;
+	nb_handle->proc= proc;
+	nb_handle->bufid=NB_NONE;
+      }
+      else 
+	nb_handle = armci_set_implicit_handle(op, proc);
+    }
+
 #if defined(REMOTE_OP) && !defined(QUADRICS)
     rc = armci_rem_strided(op, NULL, proc, src, NULL, dst, NULL,
 			   &bytes, 0, NULL, 0, nb_handle);
@@ -1129,6 +1175,7 @@ static void _armci_rem_value(int op, void *src, void *dst, int proc,
 #endif
 }
 
+
 #define CHK_ERR(dst, proc)       \
     if(dst==NULL) armci_die("ARMCI_PutValue: NULL pointer passed",FAIL);  \
     if(proc<0) armci_die("ARMCI_PutValue: Invalid process rank", proc);
@@ -1145,7 +1192,7 @@ int ARMCI_PutValueInt(int src, void *dst, int proc)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(int *)dst = src;
-    else _armci_rem_value(PUT, &src, dst, proc, sizeof(int), NULL);
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(int));
     return 0;
 }
 
@@ -1153,7 +1200,7 @@ int ARMCI_PutValueLong(long src, void *dst, int proc)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(long *)dst = src;
-    else _armci_rem_value(PUT, &src, dst, proc, sizeof(long), NULL);
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(long));
     return 0;
 }
 
@@ -1161,7 +1208,7 @@ int ARMCI_PutValueFloat(float src, void *dst, int proc)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(float *)dst = src;
-    else _armci_rem_value(PUT, &src, dst, proc, sizeof(float), NULL);
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(float));
     return 0;
 }
 
@@ -1169,7 +1216,7 @@ int ARMCI_PutValueDouble(double src, void *dst, int proc)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(double *)dst = src;
-    else _armci_rem_value(PUT, &src, dst, proc, sizeof(double), NULL);
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(double));
     return 0;
 }
 
@@ -1180,7 +1227,7 @@ int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t usr_hdl)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(int *)dst = src;
-    else _armci_rem_value(PUT, &src, dst, proc, sizeof(int), (armci_ihdl_t)usr_hdl);
+    else _armci_nb_rem_value(PUT,&src,dst,proc,sizeof(int),(armci_ihdl_t)usr_hdl);
     return 0;
 }
 
@@ -1188,7 +1235,7 @@ int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t usr_hdl)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(long *)dst = src;
-    else _armci_rem_value(PUT, &src, dst, proc, sizeof(long), (armci_ihdl_t)usr_hdl);
+    else _armci_nb_rem_value(PUT,&src,dst,proc,sizeof(long),(armci_ihdl_t)usr_hdl);
     return 0;
 }
 
@@ -1196,7 +1243,7 @@ int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t usr_hdl)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(float *)dst = src;
-    else _armci_rem_value(PUT, &src, dst, proc, sizeof(float), (armci_ihdl_t)usr_hdl);
+    else  _armci_nb_rem_value(PUT,&src,dst,proc,sizeof(float),(armci_ihdl_t)usr_hdl);
     return 0;
 }
 
@@ -1204,28 +1251,28 @@ int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t usr_hdl)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(double *)dst = src;
-    else _armci_rem_value(PUT, &src, dst, proc, sizeof(double), (armci_ihdl_t)usr_hdl);
-    return 0;
-}
+    else  _armci_nb_rem_value(PUT,&src,dst,proc,sizeof(double),(armci_ihdl_t)usr_hdl);
+     return 0;
+ }
 
-/**
- * Register-Originated Get.
- */
-int ARMCI_GetValue(void *src, void *dst, int proc, int bytes) 
-{
-    CHK_ERR_GET(src, dst, proc, bytes);
-    if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
-    else _armci_rem_value(GET, src, dst, proc, bytes, NULL);
-    return 0;
-}
+ /**
+  * Register-Originated Get.
+  */
+ int ARMCI_GetValue(void *src, void *dst, int proc, int bytes) 
+ {
+     CHK_ERR_GET(src, dst, proc, bytes);
+     if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
+     else _armci_rem_value(GET, src, dst, proc, bytes);
+     return 0;
+ }
 
-/**
- * Non-Blocking register-originated get.
- */
-int ARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t usr_hdl) 
-{
-    CHK_ERR_GET(src, dst, proc, bytes);
-    if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
-    else _armci_rem_value(GET, src, dst, proc, bytes, (armci_ihdl_t)usr_hdl);
-    return 0;
+ /**
+  * Non-Blocking register-originated get.
+  */
+ int ARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t usr_hdl) 
+ {
+     CHK_ERR_GET(src, dst, proc, bytes);
+     if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
+     else _armci_nb_rem_value(GET, src, dst, proc, bytes, (armci_ihdl_t)usr_hdl);
+     return 0;
 }

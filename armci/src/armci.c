@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.62 2002-12-23 22:22:21 manoj Exp $ */
+/* $Id: armci.c,v 1.63 2002-12-31 05:04:59 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -52,6 +52,7 @@ int armci_clus_first, armci_clus_last;
 int _armci_initialized=0;
 int _armci_terminating =0;
 thread_id_t armci_usr_tid;
+armci_ireq_t armci_inb_handle[ARMCI_MAX_IMPLICIT];/*implicit non-blocking handle*/
 #ifndef HITACHI
 double armci_internal_buffer[BUFSIZE_DBL];
 #endif
@@ -414,6 +415,57 @@ int direct=SAMECLUSNODE(nb_handle->proc);
 #     endif
     }
     return(success);
+}
+
+/** 
+ * implicit handle 
+ */
+static char hdl_flag[ARMCI_MAX_IMPLICIT];
+static int count=0;
+armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
+ 
+  int i=count%ARMCI_MAX_IMPLICIT;
+  if(hdl_flag[i]=='1')
+    ARMCI_Wait((armci_hdl_t)&armci_inb_handle[i]);
+ 
+  armci_inb_handle[i].tag   = GET_NEXT_NBTAG();
+  armci_inb_handle[i].op    = op;
+  armci_inb_handle[i].proc  = proc;
+  armci_inb_handle[i].bufid = NB_NONE;
+  armci_inb_handle[i].agg_flag = 0;
+  hdl_flag[i]='1';
+  ++count;
+  return &armci_inb_handle[i];
+}
+ 
+ 
+/* wait for all non-blocking operations to finish */
+int ARMCI_WaitAll (void) {
+  int i;
+  if(count) {
+    for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
+      if(hdl_flag[i] == '1') {
+        ARMCI_Wait((armci_hdl_t)&armci_inb_handle[i]);
+        hdl_flag[i]='0';
+      }
+    }
+  }
+  count=0;
+  return 0;
+}
+ 
+/* wait for all non-blocking operations to a particular process to finish */
+int ARMCI_WaitProc (int proc) {
+  int i;
+  if(count) {
+    for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
+      if(hdl_flag[i]=='1' && armci_inb_handle[i].proc==proc) {
+        ARMCI_Wait((armci_hdl_t)&armci_inb_handle[i]);
+        hdl_flag[i]='0';
+      }
+    }
+  }
+  return 0;
 }
 
 static unsigned int _armci_nb_tag=0;

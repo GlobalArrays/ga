@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.34 2002-12-23 20:49:56 manoj Exp $ */
+/* $Id: test.c,v 1.35 2002-12-31 05:04:59 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -1459,7 +1459,7 @@ void test_rput()
 #define MAXPROC       256
 #define MAXELEMS      6400
 #define NUMAGG        20   /* NUMAGG < MAXELEMS/10 */
-#define MAX_REQUESTS  320 /* MAXELEMS/NUMAGG */
+#define MAX_REQUESTS  325 /* MAXELEMS/NUMAGG */
 #define DUMMY         50
 
 void test_aggregate() {
@@ -1607,6 +1607,141 @@ void test_aggregate() {
     destroy_array((void **)dsrc);
 }
 
+void test_implicit() {
+  
+    int i, j, k, rc, bytes, elems[2] = {MAXPROC, MAXELEMS};
+    double *ddst_put[MAXPROC];
+    double *ddst_get[MAXPROC];
+    double *dsrc[MAXPROC];
+    armci_giov_t darr;
+    void *src_ptr[MAX_REQUESTS], *dst_ptr[MAX_REQUESTS];
+    int start = 0, end = 0;
+    armci_req_t usr_hdl[MAXPROC];
+    
+    create_array((void**)ddst_put, sizeof(double),2, elems);
+    create_array((void**)ddst_get, sizeof(double),2, elems);
+    create_array((void**)dsrc, sizeof(double),1, &elems[1]);
+    
+    for(i=0; i<elems[1]; i++) dsrc[me][i]=i*1.001*(me+1);
+    for(i=0; i<elems[0]*elems[1]; i++) {
+      ddst_put[me][i]=0.0;
+      ddst_get[me][i]=0.0;
+    }
+    
+    MP_BARRIER();
+    for(i=0; i<nproc; i++) ARMCI_INIT_HANDLE(&usr_hdl[i]);
+
+    for(i=0; i<nproc; i++) {
+      
+      start = 0; end = DUMMY*NUMAGG; 
+      for(j=start; j<end; j++) {  
+	bytes = sizeof(double);
+	ARMCI_NbPutValueDouble(dsrc[me][j], &ddst_put[i][me*elems[1]+j], i, 
+			       NULL);
+      }
+      
+      start = end; end = start + DUMMY*NUMAGG;
+      for(j=start, k=0; j<end; j+=NUMAGG, k++) {
+	src_ptr[k] = (void *)&dsrc[me][j];
+	dst_ptr[k] = (void *)&ddst_put[i][me*elems[1]+j];
+      }
+      darr.src_ptr_array = src_ptr;
+      darr.dst_ptr_array = dst_ptr;
+      darr.bytes = NUMAGG*sizeof(double);
+      darr.ptr_array_len = k;
+      if((rc=ARMCI_NbPutV(&darr, 1, i, NULL)))
+	ARMCI_Error("armci_nbputv failed\n",rc);
+
+      start = end; end = start + DUMMY*NUMAGG;
+      for(j=start; j<end; j+=NUMAGG) {  
+	bytes = sizeof(double)*NUMAGG;
+	if((rc=ARMCI_NbPutS(&dsrc[me][j], NULL, &ddst_put[i][me*elems[1]+j], NULL, 
+			    &bytes, 0, i, NULL)))
+	  ARMCI_Error("armci_nbputs failed\n",rc);
+      }
+
+      start = end; end = elems[1]; 
+      for(j=start; j<end; j+=NUMAGG) {  
+	bytes = sizeof(double)*NUMAGG;
+	if((rc=ARMCI_NbPut(&dsrc[me][j], &ddst_put[i][me*elems[1]+j], bytes,
+			   i, NULL)))
+ 	  ARMCI_Error("armci_nbput failed\n",rc);
+      }
+    }
+
+
+    for(i=0; i<nproc; i++) {
+
+      start = 0; end = DUMMY*NUMAGG; 
+      for(j=start; j<end; j++) {  
+	bytes = sizeof(double);
+	ARMCI_NbGetValue(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], i, bytes,
+			 NULL);
+      }
+
+      start = end; end = start + DUMMY*NUMAGG;
+      for(j=start, k=0; j<end; j+=NUMAGG, k++) {
+	src_ptr[k] = (void *)&dsrc[i][j];
+	dst_ptr[k] = (void *)&ddst_get[me][i*elems[1]+j];
+      }
+      darr.src_ptr_array = src_ptr;
+      darr.dst_ptr_array = dst_ptr;
+      darr.bytes = NUMAGG*sizeof(double);
+      darr.ptr_array_len = k;
+      if((rc=ARMCI_NbGetV(&darr, 1, i, NULL)))
+	ARMCI_Error("armci_nbgetv failed\n", rc);
+
+      start = end; end = start + DUMMY*NUMAGG;
+      for(j=start; j<end; j+=NUMAGG) {  
+	bytes = sizeof(double)*NUMAGG;
+	if((rc=ARMCI_NbGetS(&dsrc[i][j], NULL, &ddst_get[me][i*elems[1]+j], NULL, 
+			    &bytes, 0, i, NULL)))
+	  ARMCI_Error("armci_nbputs failed\n",rc);
+      }
+
+      start = end; end = elems[1];
+      for(j=start; j<end; j+=NUMAGG) {  
+	bytes = sizeof(double)*NUMAGG;
+	if((rc=ARMCI_NbGet(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], bytes,
+			   i, NULL)))
+	  ARMCI_Error("armci_nbget failed\n",rc);
+      }
+    }
+
+    ARMCI_WaitAll(); 
+        
+    
+    MP_BARRIER();
+    ARMCI_AllFence();
+    MP_BARRIER();
+    
+    for(i=0; i<nproc; i++) {
+      for(j=0; j<elems[1]; j++) {
+	if( ABS(ddst_put[me][i*elems[1]+j]-j*1.001*(i+1)) > 0.1) {
+	  ARMCI_Error("implicit handle(s) failed...(a)", 0);
+	}
+      }
+    }
+    MP_BARRIER();
+
+    for(i=0; i<nproc; i++) {
+      for(j=0; j<elems[1]; j++) {
+	if( ABS(ddst_get[me][i*elems[1]+j]-j*1.001*(i+1)) > 0.1) {
+	  ARMCI_Error("implicit handles(s) failed...(b)", 0);
+	}
+      }
+    }
+
+    MP_BARRIER();
+    ARMCI_AllFence();
+    MP_BARRIER();
+    
+    if(me==0){printf("O.K.\n\n"); fflush(stdout);}
+    destroy_array((void **)ddst_put);
+    destroy_array((void **)ddst_get);
+    destroy_array((void **)dsrc);
+}
+
 
 /* we need to rename main if linking with frt compiler */
 #ifdef FUJITSU_FRT
@@ -1726,12 +1861,20 @@ int main(int argc, char* argv[])
         ARMCI_AllFence();
         MP_BARRIER();
 
-
 	if(me==0){
 	  printf("\nTesting aggregate put/get requests\n");
 	  fflush(stdout);
 	}
 	test_aggregate();
+	
+	ARMCI_AllFence();
+	MP_BARRIER();
+
+	if(me==0){
+	  printf("\nTesting implicit handles\n");
+	  fflush(stdout);
+	}
+	test_implicit();
 	
 	ARMCI_AllFence();
 	MP_BARRIER();

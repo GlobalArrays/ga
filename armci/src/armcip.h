@@ -40,7 +40,7 @@ extern void armci_elan_fence(int p);
 #define NB_NONE  -2 /*no armci buffer(buffers.c) used for nbcall*/
 extern unsigned int _armci_get_next_tag();
 #define GET_NEXT_NBTAG _armci_get_next_tag
-
+#define ARMCI_MAX_IMPLICIT 15
 
 typedef struct{
   int len;
@@ -329,5 +329,7 @@ extern int armci_agg_save_descriptor(void *src, void *dst, int bytes,
 				      armci_ihdl_t nb_handle);
 
 extern void armci_agg_complete(armci_ihdl_t nb_handle, int condition);
+
+extern armci_ihdl_t armci_set_implicit_handle (int op, int proc);
 
 #endif

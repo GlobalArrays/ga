@@ -286,6 +286,10 @@ extern int ARMCI_NbGetValue(void *src, /* src starting addr   */
 
 extern int ARMCI_Wait(armci_hdl_t nb_handle); /*non-blocking request handle*/
 
+extern int ARMCI_WaitAll (void);
+
+extern int ARMCI_WaitProc (int proc);
+
 extern void ARMCI_SET_AGGREGATE_HANDLE(armci_hdl_t nb_handle);
 
 extern void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t nb_handle);
