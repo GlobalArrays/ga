@@ -118,12 +118,25 @@ endif
 #
 #................................ FUJITSU ..................................
 #
+# 32-bit mode; note that -KA32 option is unknown to old compilers
 ifeq ($(TARGET),FUJITSU-VPP)
-      FC = frt
+      FC = frt 
       CC = cc
-FOPT_REN = -Sw
+FOPT_REN = -Sw -KA32
+COPT_REN = -KA32 -x50
  GLOB_DEFINES = -DFUJITSU
 endif
+
+
+ifeq ($(TARGET),FUJITSU-VPP64)
+           FC = frt
+           CC = cc
+     FOPT_REN = -Sw -CcdII8
+     COPT_REN = -x50
+ GLOB_DEFINES = -DFUJITSU -DFUJITSU64
+        CDEFS = -DEXT_INT
+endif
+
 #................................ SUN ......................................
 #
 ifeq ($(TARGET),SUN)

@@ -24,8 +24,14 @@ endif
 ifeq ($(TARGET),FUJITSU-VPP)
 #       EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
 #MPlib 2.2.X and higher
-        EXTRA_LIBS = /usr/local/lib/libmp.a -L/opt/tools/lib/ -lgen  -lpx -lelf -Wl,-J,-P -L/usr/lang/lib -lblasvp -lcvp
+        EXTRA_LIBS = /usr/local/lib/libmp.a -L/opt/tools/lib/ -lgen  -lpx -lelf -Wl,-J,-P 
 endif
+
+ifeq ($(TARGET),FUJITSU-VPP64)
+#MPlib 2.3.1 and higher
+        EXTRA_LIBS = -lmp -lgen -lpx -lelf -Wl,-J,-P
+endif
+
 #................................ KSR ......................................
 #
 ifeq ($(TARGET),KSR)

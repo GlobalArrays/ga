@@ -71,11 +71,23 @@ endif
 #
 ifeq ($(MACHINE),FUJITSU-VPP)
       FC = frt
-      CC = cc
  GLOB_DEFINES = -DFUJITSU
+     COPT_REN = -KA32
+     FOPT_REN = -KA32
    NXTVAL_OBJ = nxtval.fujitsu.o
  NXTVAL_AVAIL = yes
-   EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
+#   EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
+   EXTRA_LIBS =  -lgen  -lpx -lelf -Wl,-J,-P
+endif
+
+ifeq ($(MACHINE),FUJITSU-VPP64)
+           FC = frt
+     FOPT_REN = -CcdII8
+ GLOB_DEFINES = -DFUJITSU
+        CDEFS = -DEXT_INT
+   NXTVAL_OBJ = nxtval.fujitsu.o
+ NXTVAL_AVAIL = yes
+   EXTRA_LIBS = -lgen -lpx -lelf -Wl,-J,-P
 endif
 
 
