@@ -2,6 +2,7 @@
 #include "global.h"
 #include "globalp.h"
 #include "macdecls.h"
+#include "message.h"
 
 
 static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integer add)
@@ -442,3 +443,271 @@ void ga_unpack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
      gai_pack_unpack( g_a, g_b, g_sbit, lo, hi, icount, 0);
 }
 
+
+
+#define N 1000
+int workR[N], workL[N];
+
+/*\ compute offset for each of n bins for the given processor to contribute its
+ *  elements, number of which for each bin is specified in x
+\*/ 
+void gai_bin_offset(int scope, int *x, int n, int *offset)
+{
+int root, up, left, right;
+int len, lenmes, tag=32100, i, me=armci_msg_me();
+
+    if(!x)armci_die("armci_bin_offset: NULL pointer", n);
+    if(n>N)armci_die("armci_bin_offset: >N", n);
+    len = sizeof(int)*n;
+
+    armci_msg_bintree(scope, &root, &up, &left, &right);
+
+    /* up-tree phase: collect number of elements */
+    if (left > -1) armci_msg_rcv(tag, workL, len, &lenmes, left);
+    if (right > -1) armci_msg_rcv(tag, workR, len, &lenmes, right);
+
+    /* add number of elements in each bin */
+    if((right > -1) && left>-1) for(i=0;i<n;i++)workL[i] += workR[i] +x[i];
+    else if(left > -1) for(i=0;i<n;i++)workL[i] += x[i];
+    else for(i=0;i<n;i++)workL[i] = x[i]; 
+
+    /* now, workL on root contains the number of elements in each bin*/
+         
+    if (me != root && up!=-1) armci_msg_snd(tag, workL, len, up);
+
+    /* down-tree: compute offset subtracting elements for self and right leaf*/
+    if (me != root && up!=-1){
+             armci_msg_rcv(tag, workL, len, &lenmes, up);
+    }
+    for(i=0; i<n; i++) offset[i] = workL[i]-x[i];
+
+    if (right > -1) armci_msg_snd(tag, offset, len, right);
+    if (left > -1) {
+            /* we saved num elems for right subtree to adjust offset for left*/
+            for(i=0; i<n; i++) workR[i] = offset[i] -workR[i]; 
+            armci_msg_snd(tag, workR, len, left);
+    }
+/*    printf("%d:left=%d right=%d up=%d root=%d off=%d\n",me,left, right,up,root,offset[0]);
+    fflush(stdout);
+*/
+}
+
+static 
+Integer gai_match_bin2proc(Integer blo, Integer bhi, Integer plo, Integer phi)
+{
+int rc=0;
+       if(blo == plo) rc=1;
+       if(bhi == phi) rc+=2; 
+       return rc; /* 1 - first 2-last 3-last+first */
+}
+
+
+logical ga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range)
+{
+Integer type, ndim, nbin, lobin, hibin, me=ga_nodeid_();
+Integer dims[2], nproc=ga_nnodes_(),chunk[2];
+
+    nga_inquire_(g_bin, &type, &ndim, &nbin);
+    if(ndim !=1) ga_error("ga_bin_index: 1-dim array required",ndim);
+    if(type!= MT_F_INT)ga_error("ga_bin_index: not integer type",type);
+
+    chunk[0]=dims[0]=2; dims[1]=nproc; chunk[1]=1;
+    if(!nga_create(MT_F_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
+
+    nga_distribution_(g_off,&me, &lobin,&hibin);
+
+    if(lobin>0){ /* enter this block when we have data */
+      Integer first_proc, last_proc, p;
+      Integer first_off, last_off;
+      Integer *myoff, bin;
+
+      /* get offset values stored on my processor to first and last bin */
+      nga_access_ptr(g_off, &lobin, &hibin, &myoff, NULL);
+      first_off = myoff[0]; last_off = myoff[hibin-lobin];
+/*
+      nga_get_(g_off,&lobin,&lobin,&first_off,&lo);
+      nga_get_(g_off,&hibin,&hibin,&last_off,&hi);
+*/
+
+      /* since offset starts at 0, add 1 to get index to g_bin */
+      first_off++; last_off++;
+
+      /* find processors on which these bins are located */
+      if(!nga_locate_(g_bin, &first_off, &first_proc))
+          ga_error("ga_bin_sorter: failed to locate region f",first_off);
+      if(!nga_locate_(g_bin, &last_off, &last_proc))
+          ga_error("ga_bin_sorter: failed to locate region l",last_off);
+
+      /* inspect range of indices to bin elements stored on these processors */
+      for(p=first_proc, bin=lobin; p<= last_proc; p++){
+          Integer lo, hi, buf[2], off, cnt; 
+          buf[0] =-1; buf[1]=-1;
+
+          nga_distribution_(g_bin,&p,&lo,&hi);
+
+          for(/* start from current bin */; bin<= hibin; bin++, myoff++){ 
+              Integer blo,bhi,stat;
+
+              blo = *myoff +1;
+              if(bin == hibin){
+                 nga_get_(g_cnt, &hibin, &hibin, &cnt, &hibin); /* local */
+                 bhi = blo + cnt-1; 
+              }else
+                 bhi = myoff[1]; 
+
+              stat= gai_match_bin2proc(blo, bhi, lo, hi);
+
+              switch (stat) {
+              case 0:  /* bin in a middle */ break;
+              case 1:  /* first bin on that processor */
+                       buf[0] =bin; break;
+              case 2:  /* last bin on that processor */
+                       buf[1] =bin; break;
+              case 3:  /* first and last bin on that processor */
+                       buf[0] =bin; buf[1] =bin; break;
+              }
+
+printf("%d: bin %d proc=%d stat %d\n",ga_nodeid_(),bin,p,stat); fflush(stdout);
+
+              if(stat>1)break; /* found last bin on that processor */
+          }
+          
+          /* set range of bins on processor p */
+          cnt =0; off=1;
+          if(buf[0]!=-1){cnt=1; off=0;} 
+          if(buf[1]!=-1)cnt++; 
+          if(cnt){
+                 Integer p1 = p+1;
+                 lo = 1+off; hi = lo+cnt-1;
+                 ga_put_(g_range,&lo,&hi,&p1, &p1, buf+off, &cnt);
+          }
+      }
+   }
+/*
+   ga_print_(g_range);
+   ga_print_(g_bin);
+   ga_print_distribution_(g_bin);
+*/
+   return TRUE;
+}
+
+
+void ga_bin_sorter_(Integer *g_bin, Integer *g_cnt, Integer *g_off)
+{
+extern void gai_hsort(Integer *list, int n);
+Integer nbin,totbin,type,ndim,lo,hi,me=ga_nodeid_();
+Integer g_range;
+
+    if(FALSE==ga_create_bin_range_(g_bin, g_cnt, g_off, &g_range))
+        ga_error("ga_bin_sorter: failed to create temp bin range array",0); 
+
+    nga_inquire_(g_bin, &type, &ndim, &totbin);
+    if(ndim !=1) ga_error("ga_bin_sorter: 1-dim array required",ndim);
+     
+    nga_distribution_(g_bin, &me, &lo, &hi);
+    if (lo > 0 ){ /* we get 0 if no elements stored on this process */
+        Integer bin_range[2], rlo[2],rhi[2];
+        Integer *bin_cnt, *ptr, i;
+
+        /* get and inspect range of bins stored on current processor */
+        rlo[0] = 1; rlo[1]= me+1; rhi[0]=2; rhi[1]=rlo[1];
+        nga_get_(&g_range, rlo, rhi, bin_range, rhi); /* local */
+        nbin = bin_range[1]-bin_range[0]+1;
+        if(nbin<1 || nbin> totbin || nbin>(hi-lo+1))
+           ga_error("ga_bin_sorter:bad nbin",nbin);
+
+        /* get count of elements in each bin stored on this task */
+        if(!(bin_cnt = (Integer*)malloc(nbin*sizeof(Integer))))
+           ga_error("ga_bin_sorter:memory allocation failed",nbin);
+        nga_get_(g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
+
+        /* get access to local bin elements */
+        nga_access_ptr(g_bin, &lo, &hi, &ptr, NULL);
+        
+        for(i=0;i<nbin;i++){ 
+            int elems =(int) bin_cnt[i];
+            gai_hsort(ptr, elems);
+            ptr+=elems;
+        }
+        nga_release_update_(g_bin, &lo, &hi);             
+    }
+
+    ga_sync_();
+}
+
+
+/*\ note that subs values must be sorted; bins numbered from 1
+\*/
+void ga_bin_index_(Integer *g_bin, Integer *g_cnt, Integer *g_off, 
+                   Integer *values, Integer *subs, Integer *n, Integer *sortit)
+{
+int i, my_nbin=0;
+int *all_bin_contrib, *offset;
+Integer type, ndim, nbin;
+
+    nga_inquire_(g_bin, &type, &ndim, &nbin);
+    if(ndim !=1) ga_error("ga_bin_index: 1-dim array required",ndim);
+    if(type!= MT_F_INT)ga_error("ga_bin_index: not integer type",type);
+
+    all_bin_contrib = (int*)calloc(nbin,sizeof(int));
+    if(!all_bin_contrib)ga_error("ga_binning:calloc failed",nbin);
+    offset = (int*)malloc(nbin*sizeof(int));
+    if(!offset)ga_error("ga_binning:malloc failed",nbin);
+
+    /* count how many elements go to each bin */
+    for(i=0; i< *n; i++){
+       int selected = subs[i];
+       if(selected <1 || selected> nbin) ga_error("wrong bin",selected);
+
+       if(all_bin_contrib[selected-1] ==0) my_nbin++; /* new bin found */
+       all_bin_contrib[selected-1]++;
+    }
+
+    gai_bin_offset(SCOPE_ALL, all_bin_contrib, (int)nbin, offset);
+
+    for(i=0; i< *n; ){
+       Integer lo, hi;
+       Integer selected = subs[i];
+       int elems = all_bin_contrib[selected-1];
+
+       nga_get_(g_off,&selected,&selected, &lo, &selected);
+       lo += offset[selected-1]+1;
+       hi = lo + elems -1;
+       printf("%d: elems=%d lo=%d sel=%d off=%d contrib=%d nbin=%d\n",ga_nodeid_(), elems, lo, selected,offset[selected-1],all_bin_contrib[0],nbin);
+       nga_put_(g_bin, &lo, &hi, values+i, &selected); 
+       i+=elems;
+    }
+    
+    free(offset);
+    free(all_bin_contrib);
+
+    if(*sortit)ga_bin_sorter_(g_bin, g_cnt, g_off);
+    else ga_sync_();
+}
+
+
+#if 0
+logical ga_create_bin_(Integer *type, Integer *nelem, char* name, 
+                       Integer* g_off, Integer *g_a)
+{
+Integer ndim, lobin, hibin, me=ga_nodeid_(), nproc=ga_nnodes_();
+Integer *map = (Integer*)calloc(nproc,sizeof(sizeof(Integer)));
+
+    if(!all_bin_contrib)ga_error("ga_create_bin:calloc failed",nbin);
+
+    nga_distribution_(g_off,&me, &lobin,&hibin);
+
+    if(lobin>0){ /* enter this block when we have data */
+      Integer first_proc, last_proc, p;
+      Integer first_off, last_off;
+      Integer *myoff, bin;
+
+      /* get offset values stored on my processor to first and last bin */
+      nga_access_ptr(g_off, &lobin, &hibin, &myoff, NULL);
+      map[me]=myoff[0]+1;
+    }else ga_error(ga_create_bin: no offset data on this processor",me);
+
+    ga_igop(map,nproc,'+');
+    nga_create_irreg_(type,one,nelem, name,map,&nproc,g_a);
+}
+#endif
