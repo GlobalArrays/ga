@@ -1,4 +1,3 @@
-/*$Id: usc.h,v 1.2 1995-02-02 23:14:41 d3g681 Exp $*/
 /*
  * USC.H  (Public header file for the Microsecond Clock package)
  *     This header file has to be included by an application using
@@ -110,4 +109,4 @@ extern usc_time_t usc_MD_rollover_val;
 VOID usc_init();
 usc_time_t usc_MD_clock();
 
-#endif  ifndef _USC_DEFS_
+#endif

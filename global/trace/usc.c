@@ -1,4 +1,3 @@
-/*$Id: usc.c,v 1.2 1995-02-02 23:14:40 d3g681 Exp $*/
 /*
  * USC.C  (Source file for the Microsecond Clock package)
  *

@@ -1,8 +1,7 @@
-#$Id: makefile,v 1.2 1995-02-02 23:14:38 d3g681 Exp $
 include ../Makefile.h
 
-LIBM = ../../ma/libma.a
-INCLUDE = ../../ma
+LIBM = -lma
+INCLUDE = ../../ma/src
 OBJ =  usc.o ga_trace.o
 
 # TARGET to DEFINE translation 
@@ -18,12 +17,11 @@ ifeq ($(TARGET),SP1)
      DEFINE = IBM_RS6000
 endif
 
-LIB = libtrace.a
+LIB_DISTRIB = ../../lib
+LIBRARY = libtrace.a
+LIB_TARGETS = test adjust collisions
 
-$(LIB):  $(OBJ)
-	$(RM) -f $@
-	$(AR) $(ARFLAGS) $@ $(OBJ)
-	$(RANLIB) $@
+include ../../config/makelib.h
 
 .c.o:   $*.c
 	$(CC) $(COPT) -I$(INCLUDE) -D$(DEFINE) -c $*.c
@@ -32,7 +30,5 @@ $(LIB):  $(OBJ)
 	$(F77) $(FOPT)  -c  $*.f
 
 test:   $(OBJ)
-	$(F77) -o test $(OBJ) $(LIB) $(LIBM)
-clean:
-	$(RM) -rf *.o  *.a test adjust collisions 
+	$(F77) -o test $(OBJ) $(LIB) -L$(LIBDIR) $(LIBM)
 

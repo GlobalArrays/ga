@@ -1,12 +1,58 @@
-/*$Id: collisions.c,v 1.2 1995-02-02 23:14:35 d3g681 Exp $*/
 #include <stdio.h>
-#include "/msrc/files/home/d3h325/include/mem2.h"
+#include <stdlib.h>
 
 int **Patches,  *Col, *lastCol;
 int p;
    
 #define hash(ilo,ihi,p) (((ilo)+(ihi))%(p))
 #define hash2(ilo,ihi,jlo,jhi,p) ( ((ilo)+(ihi) + (jlo)+(jhi))%(p) )
+
+
+
+int **idim2(row,col)
+int row,col;
+{
+   register int **prow, *pdata, i;
+   
+   pdata = (int*) calloc(row*col, sizeof(int));
+   if(pdata == (int*) NULL){
+      printf("Memory allocation failed - data: %dx%d\n",row,col);
+      exit(1);
+   }
+   prow = (int **)calloc(row,sizeof(int *));
+   if(prow == (int**) NULL){
+      printf("memory allocation failed for prow");
+      exit(1);
+   }
+   for(i=0;i<row;i++){
+      prow[i]= pdata;
+      pdata += col;
+   }
+   return(prow);
+}
+
+float **fdim2(row,col)
+int row,col;
+{
+   int i;
+   register float **prow, *pdata;
+   
+   pdata = (float*) calloc(row*col, sizeof(float));
+   if(pdata == (float*) NULL){
+      printf("Memory allocation failed - data: %dx%d\n",row,col);
+      exit(1);
+   }
+   prow = (float **)calloc(row,sizeof(float*));
+   if(prow == (float**) NULL){
+      printf("memory allocation failed for prow");
+      exit(1);
+   }
+   for(i=0;i<row;i++){
+      prow[i]= pdata;
+      pdata += col;
+   }
+   return(prow);
+}
 
 main(argc,argv)
 int argc;
@@ -40,7 +86,7 @@ unsigned long time;
       printf("Wrong values of <from> and <to> \n");
       exit(1);
    }
-    if(!(Col = (int*)calloc(p*sizeof(int)))){
+    if(!(Col = (int*)calloc(p,sizeof(int)))){
                      printf("couldn't allocate memory 2\n");
                      exit(2);
    }

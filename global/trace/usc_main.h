@@ -1,4 +1,3 @@
-/*$Id: usc_main.h,v 1.2 1995-02-02 23:14:42 d3g681 Exp $*/
 /*
  * USC_MAIN.H  (Private header file for the Microsecond Clock package)
  *
@@ -39,12 +38,12 @@
 #endif
 
 
-#if (defined(IPSC860_NODE) || defined(IPSC860_NODE_PGI) || defined(DELTA))
+#if (defined(DELTA)||defined(PARAGON))
 
 #    if (defined (DELTA))
 #        include <mesh.h>
 #    else
-#        include <cube.h>
+#        include <nx.h>
 #    endif
 #    define usc_MD_timer_size ((sizeof(long)*8)+3)
 #    define usc_MD_ticks_per_usec (HWHZ/1000000)
