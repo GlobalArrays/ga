@@ -42,6 +42,7 @@ if((_cntr)->done==ARMCI_GM_SENDING){\
     that uses registration -- sloooooow on GM >1.2 */
 extern int _armci_bypass;
 #define CLIENT_BUF_BYPASS 
+#define NEEDS_PINNING 
 #ifdef __i386__
 # ifdef GM_1_2
 #   define LONG_GET_THRESHOLD 66248
