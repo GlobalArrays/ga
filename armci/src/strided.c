@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.9 1999-07-28 00:48:04 d3h325 Exp $ */
+/* $Id: strided.c,v 1.10 1999-08-16 18:56:36 jju Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -34,83 +34,83 @@ void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
 #  define COUNT count
 #endif
 
-int shmem = SAMECLUSNODE(proc);
+    int shmem = SAMECLUSNODE(proc);
+    
+    if(shmem) {
+        
+        /* data is in local/shared memory -- can use memcpy */
 
-  if(shmem) {
-
-    /* data is in local/shared memory -- can use memcpy */
-
-    if(count==1 && bytes <THRESH1D){
-
-       armci_copy(src_ptr, dst_ptr, bytes); 
-
-    }else {
-
-        if(bytes < THRESH){     /* low-latency copy for small data segments */        
-          char *ps=(char*)src_ptr;
-          char *pd=(char*)dst_ptr;
-          int j;
-
-          for (j = 0;  j < count;  j++){
-              int i;
-              for(i=0;i<bytes;i++) pd[i] = ps[i];
-              ps += src_stride;
-              pd += dst_stride;
-          }
-
-        } else if(    bytes %ALIGN_SIZE  
-                   || dst_stride % ALIGN_SIZE
-                   || src_stride % ALIGN_SIZE
+        if(count==1 && bytes <THRESH1D){
+            
+            armci_copy(src_ptr, dst_ptr, bytes); 
+            
+        }else {
+            
+            if(bytes < THRESH){     /* low-latency copy for small data segments */        
+                char *ps=(char*)src_ptr;
+                char *pd=(char*)dst_ptr;
+                int j;
+                
+                for (j = 0;  j < count;  j++){
+                    int i;
+                    for(i=0;i<bytes;i++) pd[i] = ps[i];
+                    ps += src_stride;
+                    pd += dst_stride;
+                }
+                
+            } else if(bytes %ALIGN_SIZE  
+                      || dst_stride % ALIGN_SIZE
+                      || src_stride % ALIGN_SIZE
 #ifdef PTR_ALIGN
-                   || (unsigned long)src_ptr%ALIGN_SIZE
-                   || (unsigned long)dst_ptr%ALIGN_SIZE
+                      || (unsigned long)src_ptr%ALIGN_SIZE
+                      || (unsigned long)dst_ptr%ALIGN_SIZE
 #endif
-                ){ 
+                      ){ 
 
-            /* size/address not alligned */
-            ByteCopy2D(bytes, count, src_ptr, src_stride, dst_ptr, dst_stride);
-
-        }else { /* segment size aligned -- should be the most efficient copy */
-
-            DCopy2D(bytes/ALIGN_SIZE, count, src_ptr, src_stride/ALIGN_SIZE, 
-                                        dst_ptr, dst_stride/ALIGN_SIZE);
+                /* size/address not alligned */
+                ByteCopy2D(bytes, count, src_ptr, src_stride, dst_ptr, dst_stride);
+                
+            }else { /* segment size aligned -- should be the most efficient copy */
+                
+                DCopy2D(bytes/ALIGN_SIZE, count, src_ptr, src_stride/ALIGN_SIZE, 
+                        dst_ptr, dst_stride/ALIGN_SIZE);
+            }
         }
-      }
-
-  } else {
-
-  /* data not in local/shared memory -- access through global address space */
-
-       if(op==PUT){ 
-
-          UPDATE_FENCE_STATE(proc, PUT, COUNT);
+        
+    } else {
+        
+        /* data not in local/shared memory -- access through global address space */
+        
+        if(op==PUT){ 
+            
+            UPDATE_FENCE_STATE(proc, PUT, COUNT);
 #ifdef LAPI
-          SET_COUNTER(ack_cntr,COUNT);
+            SET_COUNTER(ack_cntr,COUNT);
 #endif
-          if(count==1){
-              armci_put(src_ptr, dst_ptr, bytes, proc);
-          }else{
-              armci_put2D(proc, bytes, count, src_ptr, src_stride,
-                                                  dst_ptr, dst_stride);
-          }
-
-       }else{
-
+            if(count==1){
+                armci_put(src_ptr, dst_ptr, bytes, proc);
+            }else{
+                armci_put2D(proc, bytes, count, src_ptr, src_stride,
+                            dst_ptr, dst_stride);
+            }
+            
+        }else{
+            
 #ifdef LAPI
-          SET_COUNTER(get_cntr, COUNT);
+            SET_COUNTER(get_cntr, COUNT);
 #endif
-          if(count==1){
-              armci_get(src_ptr, dst_ptr, bytes, proc);
-          }else{
-             armci_get2D(proc, bytes, count, src_ptr, src_stride,
-                                            dst_ptr, dst_stride);
+            if(count==1){
+                armci_get(src_ptr, dst_ptr, bytes, proc);
+            }else{
+                armci_get2D(proc, bytes, count, src_ptr, src_stride,
+                            dst_ptr, dst_stride);
 #ifdef LAPI2
-             wait_for_get(); /* it works here */
+                wait_for_get(); /* it works here */
 #endif
-          }
-       }
-  }
-
+            }
+        }
+    }
+    
 }
 
 
@@ -263,6 +263,10 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
     char *src = (char*)src_ptr, *dst=(char*)dst_ptr;
     int s2, s3, s4, sn;
 
+    int i, j;
+    int total_of_2D;
+    int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+    
 #   ifdef ACC_COPY
     if ( ACC(op) && proc!=armci_me) /* copy remote data, accumulate, copy back*/
         return (armci_acc_copy_strided(op,scale, proc, src_ptr, src_stride_arr,
@@ -272,66 +276,65 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
 
 /*    if(proc!=armci_me) INTR_OFF;*/
 
-    switch (stride_levels){
-    case 0: /* 1D copy */ 
+    switch (stride_levels) {
+      case 0: /* 1D copy */ 
 
-            ARMCI_OP_2D(op, scale, proc, src_ptr, dst_ptr, count[0], 1, 
-                        count[0], count[0], lockit); 
+          ARMCI_OP_2D(op, scale, proc, src_ptr, dst_ptr, count[0], 1, 
+                      count[0], count[0], lockit); 
+          
+          break;
+          
+      case 1: /* 2D op */
+          ARMCI_OP_2D(op, scale, proc, src_ptr, dst_ptr, count[0], count[1], 
+                      src_stride_arr[0], dst_stride_arr[0], lockit);
+          break;
 
-            break;
-    
-    case 1: /* 2D op */
-            ARMCI_OP_2D(op, scale, proc, src_ptr, dst_ptr, count[0], count[1], 
-                         src_stride_arr[0], dst_stride_arr[0], lockit);
-            break;
-    
-    case 2: /* 3D op */
-            for (s2= 0; s2  < count[2]; s2++){ /* 2D copy */
+      case 2: /* 3D op */
+          for (s2= 0; s2  < count[2]; s2++){ /* 2D copy */
               ARMCI_OP_2D(op, scale, proc, src+s2*src_stride_arr[1], 
-                           dst+s2*dst_stride_arr[1], count[0], count[1], 
-                       src_stride_arr[0], dst_stride_arr[0], lockit );
-            }
-            break;
-
-    case 3: /* 4D op */
-            for(s3=0; s3< count[3]; s3++){
-               src = (char*)src_ptr + src_stride_arr[2]*s3;
-               dst = (char*)dst_ptr + dst_stride_arr[2]*s3;
-               for (s2= 0; s2  < count[2]; s2++){ /* 3D copy */
-                 ARMCI_OP_2D(op, scale, proc, src+s2*src_stride_arr[1],
-                       dst+s2*dst_stride_arr[1],
-                       count[0], count[1],src_stride_arr[0],dst_stride_arr[0],lockit);
-               }
-            }
-            break;
-    
-    case 4: /* 5D op */
-            for(s4=0; s4< count[4]; s4++){
-              for(s3=0; s3< count[3]; s3++){      /* 4D copy */
-                 src = (char*)src_ptr + src_stride_arr[2]*s3 + src_stride_arr[3]*s4;
-                 dst = (char*)dst_ptr + dst_stride_arr[2]*s3 + dst_stride_arr[3]*s4;
-                 for (s2= 0; s2  < count[2]; s2++){ /* 3D copy */
-                   ARMCI_OP_2D(op, scale, proc, src+s2*src_stride_arr[1], 
-                                dst+s2*dst_stride_arr[1], 
-                                count[0], count[1],
-                                src_stride_arr[0], dst_stride_arr[0],lockit);
-                 }
+                          dst+s2*dst_stride_arr[1], count[0], count[1], 
+                          src_stride_arr[0], dst_stride_arr[0], lockit );
+          }
+          break;
+          
+      case 3: /* 4D op */
+          for(s3=0; s3< count[3]; s3++){
+              src = (char*)src_ptr + src_stride_arr[2]*s3;
+              dst = (char*)dst_ptr + dst_stride_arr[2]*s3;
+              for (s2= 0; s2  < count[2]; s2++){ /* 3D copy */
+                  ARMCI_OP_2D(op, scale, proc, src+s2*src_stride_arr[1],
+                              dst+s2*dst_stride_arr[1],
+                              count[0], count[1],src_stride_arr[0],
+                              dst_stride_arr[0],lockit);
               }
-            }
-            break;
-    
-    default: /* N-dimensional op by recursion */
-             for(sn = 0; sn < count[stride_levels]; sn++){
-                 int rc;
-                 src = (char*)src_ptr + src_stride_arr[stride_levels -1]* sn;
-                 dst = (char*)dst_ptr + dst_stride_arr[stride_levels -1]* sn;
-                 rc  = armci_op_strided(op, scale, proc, src, src_stride_arr,  
-		                          dst, dst_stride_arr, 
-                                          count, stride_levels -1, lockit);
-                 if(rc) return(rc);
-             }
-    }
+          }
+          break;
+          
+      default: /* N-dimentional */ 
+      {
+          index[2] = 0; unit[2] = 1; total_of_2D = count[2];
+          for(j=3; j<=stride_levels; j++) {
+              index[j] = 0; unit[j] = unit[j-1] * count[j-1];
+              total_of_2D *= count[j];
+          }
 
+          for(i=0; i<total_of_2D; i++) {
+              src = (char *)src_ptr; dst = (char *)dst_ptr;
+              for(j=2; j<=stride_levels; j++) {
+                  src += index[j] * src_stride_arr[j-1];
+                  dst += index[j] * dst_stride_arr[j-1];
+                  
+                  if(((i+1) % unit[j]) == 0) index[j]++;
+                  if(index[j] >= count[j]) index[j] = 0;
+              }
+              
+              ARMCI_OP_2D(op, scale, proc, src, dst, count[0], count[1], 
+                          src_stride_arr[0], dst_stride_arr[0], lockit);
+          }
+          
+      }
+    }
+    
 #ifdef LAPI
     if(proc != armci_me){
 
@@ -351,3 +354,132 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
     return 0;
 }
 
+
+int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/ 
+		int src_stride_arr[], /* array of strides at source */
+		void* dst_ptr,        /* pointer to 1st segment at destination*/
+		int dst_stride_arr[], /* array of strides at destination */
+		int count[],          /* number of segments at each stride levels: count[0]=bytes*/
+		int stride_levels,    /* number of stride levels */
+                int proc              /* remote process(or) ID */
+                )
+{
+    int rc, direct=1;
+
+    if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
+    if(count[0]<0)return FAIL3;
+    if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
+    if(proc<0)return FAIL5;
+
+    ORDER(PUT,proc); /* ensure ordering */
+    direct=SAMECLUSNODE(proc);
+
+
+    /* use direct protocol for remote access when performance is better */
+#   if defined(LAPI) && !defined(LAPI2)
+      if(!direct)
+         if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
+#   endif
+
+#ifndef LAPI
+    if(!direct)
+       rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
+                       dst_ptr, dst_stride_arr, count, stride_levels, -1, -1);
+    else
+#endif
+       rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
+                              dst_ptr, dst_stride_arr, count, stride_levels, 0);
+
+    if(rc) return FAIL6;
+    else return 0;
+
+}
+
+
+int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/ 
+		int src_stride_arr[],   /* array of strides at source */
+		void* dst_ptr,          /* pointer to 1st segment at destination*/
+		int dst_stride_arr[],   /* array of strides at destination */
+		int count[],            /* number of segments at each stride levels: count[0]=bytes*/
+		int stride_levels,      /* number of stride levels */
+                int proc                /* remote process(or) ID */
+                )
+{
+    int rc,direct=1;
+
+    if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
+    if(count[0]<0)return FAIL3;
+    if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
+    if(proc<0)return FAIL5;
+
+    ORDER(GET,proc); /* ensure ordering */
+    direct=SAMECLUSNODE(proc);
+
+    /* use direct protocol for remote access when performance is better */
+#   if defined(LAPI) && !defined(LAPI2)
+      if(!direct)
+        if( stride_levels==0 || count[0]> LONG_GET_THRESHOLD)direct=1;
+        else{
+          int i;
+          int chunks=1;
+          direct = 1;
+          for(i=1; i<= stride_levels;i++){
+              chunks *= count[i];
+              if(chunks>MAX_CHUNKS_SHORT_GET){
+                 direct = 0;
+                 break;
+                 }
+              }
+          }
+#   endif
+
+#ifndef LAPI2
+    if(!direct)
+       rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+                       dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
+    else
+#endif
+       rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, 
+                               dst_ptr, dst_stride_arr, count, stride_levels,0);
+
+    if(rc) return FAIL6;
+    else return 0;
+
+}
+
+int ARMCI_AccS( int  optype,            /* operation */
+                void *scale,            /* scale factor x += scale*y */
+                void *src_ptr,          /* pointer to 1st segment at source*/ 
+		int src_stride_arr[],   /* array of strides at source */
+		void* dst_ptr,          /* pointer to 1st segment at destination*/
+		int dst_stride_arr[],   /* array of strides at destination */
+		int count[],            /* number of segments at each stride levels: count[0]=bytes*/
+		int stride_levels,      /* number of stride levels */
+                int proc                /* remote process(or) ID */
+                )
+{
+    int rc, direct=1;
+
+    if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
+    if(src_stride_arr == NULL || dst_stride_arr ==NULL) return FAIL2;
+    if(count[0]<0)return FAIL3;
+    if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
+    if(proc<0)return FAIL5;
+
+    ORDER(optype,proc); /* ensure ordering */
+    direct=SAMECLUSNODE(proc);
+
+#   if defined(ACC_COPY)
+       if(armci_me != proc) direct=0;
+#   endif
+ 
+    if(direct)
+      rc = armci_op_strided( optype, scale, proc, src_ptr, src_stride_arr, 
+                           dst_ptr, dst_stride_arr, count, stride_levels,1);
+    else
+      rc = armci_pack_strided(optype, scale, proc, src_ptr, src_stride_arr, 
+                              dst_ptr,dst_stride_arr,count,stride_levels,-1,-1);
+
+    if(rc) return FAIL6;
+    else return 0;
+}
