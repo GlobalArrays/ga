@@ -376,6 +376,7 @@ endif
 ifeq ($(TARGET),DECOSF)
           CLD = cc
      FOPT_REN = -fpe2 -check nounderflow -check nopower -check nooverflow
+     COPT_REN += -D_POSIX_PII_SOCKET
 endif
 #------------------------------- Crays ------------------------------------
 
