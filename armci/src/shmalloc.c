@@ -1,4 +1,4 @@
-/* $Id: shmalloc.c,v 1.4 1999-07-28 00:48:01 d3h325 Exp $ */
+/* $Id: shmalloc.c,v 1.5 2000-04-17 22:23:19 d3h325 Exp $ */
 #include <stdio.h>
 #include "shmalloc.h"
 
@@ -67,7 +67,7 @@ static void sherror(s, i)
      unsigned long i;
 {
   fflush(stdout);
-  fprintf(stderr,"shmalloc error: %s %ld(0x%x)\n", s, i, i);
+  fprintf(stderr,"shmalloc error: %s %ld(0x%lx)\n", s, i, i);
   fflush(stderr);
   shmalloc_print_stats();
 /* abort(); */
@@ -336,10 +336,10 @@ void shmalloc_print_stats()
   printf("Total memory from system ... %d bytes\n", total);
   printf("Current memory usage ....... %d bytes\n", inuse);
   printf("Maximum memory usage ....... %d bytes\n", maxuse);
-  printf("No. chunks from system ..... %d\n", nchunk);
-  printf("No. of fragments ........... %d\n", nfrags);
-  printf("No. of calls to shmalloc ... %d\n", nmcalls);
-  printf("No. of calls to shfree ..... %d\n", nfcalls);
+  printf("No. chunks from system ..... %ld\n", nchunk);
+  printf("No. of fragments ........... %ld\n", nfrags);
+  printf("No. of calls to shmalloc ... %ld\n", nmcalls);
+  printf("No. of calls to shfree ..... %ld\n", nfcalls);
   printf("\n");
 
   fflush(stdout);
