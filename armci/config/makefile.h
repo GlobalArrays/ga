@@ -14,6 +14,7 @@
        LINK.f = $(FLD)
        LINK.c = $(CLD)
  GLOB_DEFINES = -D$(TARGET)
+          CLD = $(CC)
 
 
 ifeq ($(TARGET),LINUX)
