@@ -2,7 +2,7 @@
 #define SOCKETS_H_
 #include "armci.h"
 #ifndef WIN32
-/*#define USE_SOCKET_VECTOR_API*/
+#define USE_SOCKET_VECTOR_API
 #endif
 #if defined(USE_SOCKET_VECTOR_API)
 #  include <sys/uio.h>  
