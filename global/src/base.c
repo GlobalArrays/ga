@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.83 2004-06-29 22:39:18 d3g293 Exp $ */
+/* $Id: base.c,v 1.84 2004-08-06 00:18:44 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -59,6 +59,21 @@
 #define MAPLEN  (MIN(GAnproc, MAX_NPROC) +MAXDIM)
 #define FLEN        80              /* length of Fortran strings */
 
+/*uncomment line below to verify consistency of MA in every sync */
+/*#define CHECK_MA yes */
+
+/*uncomment line below to verify if MA base address is alligned wrt datatype*/
+#if !(defined(LINUX) || defined(CRAY) || defined(CYGWIN))
+#define CHECK_MA_ALGN 1
+#endif
+
+/*uncomment line below to initialize arrays in ga_create/duplicate */
+/*#define GA_CREATE_INDEF yes */
+
+/*uncomment line below to introduce padding between shared memory regions 
+  of a GA when the region spans in more than 1 process within SMP */
+/*#define GA_ELEM_PADDING yes */
+
 global_array_t *_ga_main_data_structure;
 global_array_t *GA;
 proc_list_t *_proc_list_main_data_structure;
@@ -79,17 +94,6 @@ Integer         *INT_MB;            /* integer base address */
 float           *FLT_MB;            /* float base address */
 int** GA_Update_Flags;
 int* GA_Update_Signal;
-
-/*uncomment line below to verify consistency of MA in every sync */
-/*#define CHECK_MA yes */
-
-/* uncomment line below to verify if MA base address is alligned wrt datatype*/ 
-#if !(defined(LINUX) || defined(CRAY) || defined(CYGWIN))
-#define CHECK_MA_ALGN 1
-#endif
-
-/*uncomment line below to initialize arrays in ga_create/duplicate */
-/*#define GA_CREATE_INDEF yes */
 
 typedef struct {
 long id;
@@ -1906,7 +1910,9 @@ int i, nproc;
     }
 
     item_size = GAsizeofM(type);
-    bytes += item_size; 
+#   ifdef GA_ELEM_PADDING
+       bytes += item_size; 
+#   endif
 
 #endif
 
