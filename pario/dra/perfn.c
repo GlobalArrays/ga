@@ -1,6 +1,6 @@
-#define BASE_NAME  "/scratch/da.try"
-#define BASE_NAME1 "/scratch/da1.try"
-#define BASE_NAME2 "/scratch/da2.try"
+#define BASE_NAME  "/dtemp/d3g293/da.try"
+#define BASE_NAME1 "/dtemp/d3g293/da1.try"
+#define BASE_NAME2 "/dtemp/d3g293/da2.try"
 #  define FNAME   BASE_NAME
 #  define FNAME1  BASE_NAME1
 #  define FNAME2  BASE_NAME2
@@ -13,12 +13,28 @@
 #include "dra.h"
 #include "sndrcv.h"
 #include "srftoc.h"
+/* If USER_CONFIG set to:
+     0: Use default configuration
+     1: Number of files is 1, number of I/O procs equals
+        the number of nodes
+     2: Number of files and number of I/O procs equals
+        the number of nodes
+     3: Number of files and number of I/O procs equals 1
+   These configurations only apply if files are not located
+   on local scratch disk. For local scratch, system defaults
+   to 1 I/O proc per node and 1 file per node. Note that
+   USER_CONFIG=1 will only work if system has parallel I/O.
 
-#define SWITCH 0
-#define USER_CONFIG 0
+   Memory and Disk Usage:
+   The aggregate memory required to run this test is approximately
+   2*SIZE**NDIM*sizeof(double) bytes. The amount of disk space
+   required is approximately 1+2**NDIM times this amount.
+*/
+#define USER_CONFIG 2
+#define TEST_TRANSPOSE 0
 
 #define NDIM 3
-#define SIZE 250
+#define SIZE 500
 /*
 #define NDIM 2
 #define SIZE 4000
@@ -27,6 +43,7 @@
 #define SIZE 16000000
 */
 
+#define SWITCH 0
 #define MAXDIM 7
 #define TRUE (logical)1
 #define FALSE (logical)0
@@ -256,14 +273,8 @@ void test_io_dbl()
   }
   strcpy(filename,FNAME);
   GA_Sync();
-#if USER_CONFIG
-  if (NDRA_Create_config(MT_DBL, ndim, ddims, "A", filename, DRA_RW,
-      reqdims, numfiles, nioprocs, &d_a) != 0)
-      GA_Error("NDRA_Create failed(d_a): ",0);
-#else
   if (NDRA_Create(MT_DBL, ndim, ddims, "A", filename, DRA_RW,
       reqdims, &d_a) != 0) GA_Error("NDRA_Create failed(d_a): ",0);
-#endif
   if (me == 0) printf("alligned blocking write\n");
   fflush(stdout);
   tt0 = tcgtime_();
@@ -306,14 +317,8 @@ void test_io_dbl()
     reqdims[i] = n;
   }
   strcpy(filename1,FNAME1);
-#if USER_CONFIG
-  if (NDRA_Create_config(MT_DBL, ndim, ddims, "B", filename1, DRA_RW,
-      reqdims, numfiles, nioprocs, &d_b) != 0)
-      GA_Error("NDRA_Create failed(d_b): ",0);
-#else
   if (NDRA_Create(MT_DBL, ndim, ddims, "B", filename1, DRA_RW,
       reqdims, &d_b) != 0) GA_Error("NDRA_Create failed(d_b): ",0);
-#endif
 
   if (me == 0) printf("non alligned blocking write\n");
   if (me == 0) fflush(stdout);
@@ -463,6 +468,7 @@ void test_io_dbl()
   GA_Destroy(g_a);
   GA_Destroy(g_b);
 /*.......................................................................*/
+#if TEST_TRANSPOSE
 /* Test transpose function for DRAs */
   dims[0] = n;
   for (i=1; i<ndim; i++) dims[i] = n/2;
@@ -494,14 +500,8 @@ void test_io_dbl()
   }
   strcpy(filename2,FNAME2);
   if (me == 0) printf("Creating DRA for transpose test\n");
-#if USER_CONFIG
-  if (NDRA_Create_config(MT_DBL, ndim, ddims, "C", filename2, DRA_RW,
-      reqdims, numfiles, nioprocs, &d_c) != 0)
-      GA_Error("NDRA_Create failed(d_c): ",0);
-#else
   if (NDRA_Create(MT_DBL, ndim, ddims, "C", filename2, DRA_RW,
       reqdims, &d_c) != 0) GA_Error("NDRA_Create failed(d_c): ",0);
-#endif
   if (me == 0) printf("done\n");
   if (me == 0) fflush(stdout);
   GA_Sync();
@@ -565,6 +565,7 @@ void test_io_dbl()
 /*.......................................................................*/
   GA_Destroy(g_c);
   GA_Destroy(g_d);
+#endif
 }
 
 void main(argc, argv)
@@ -574,24 +575,44 @@ char **argv;
   int status, me;
   int max_arrays = 10;
   double max_sz = 1e8, max_disk = 1e10, max_mem = 1e6;
+  int numfiles, numioprocs;
 #if   defined(IBM)|| defined(CRAY_T3E)
   int stack = 9000000, heap = 4000000;
 #else
-  int stack = 1200000, heap = 800000;
+  int stack = 12000000, heap = 8000000;
 #endif
 
   PBEGIN_(argc, argv); 
   GA_Initialize();
   if (!GA_Uses_ma()) {
-    stack = 400000;
-    heap  = 400000;
+    if (ga_nodeid_() == 0) printf("GA not using MA\n");
+    stack = 1000000000;
+    heap  = 1000000000;
   }
 
   if (MA_init(MT_F_DBL, stack, heap) ) {
     me    = GA_Nodeid();
     if (DRA_Init(max_arrays, max_sz, max_disk, max_mem) != 0)
        GA_Error("DRA_Init failed: ",0);
-    DRA_Set_default_config(-1,-1);
+    if (USER_CONFIG == 0) {
+      numfiles = -1;
+      numioprocs = -1;
+    } else if (USER_CONFIG == 1) {
+      numfiles = 1;
+      numioprocs = GA_Cluster_nnodes();
+    } else if (USER_CONFIG == 2) {
+      numfiles = GA_Cluster_nnodes();
+      numioprocs = GA_Cluster_nnodes();
+    } else {
+      numfiles = 1;
+      numioprocs = 1;
+    }
+    if (me==0) {
+      printf("Disk resident arrays configured as:\n");
+      printf("    Number of files: %d\n",numfiles);
+      printf("    Number of I/O processors: %d\n",numioprocs);
+    }
+    DRA_Set_default_config(numfiles,numioprocs);
     if (me == 0) printf("\n");
     if (me == 0) printf("TESTING PERFORMANCE OF DISK ARRAYS\n");
     if (me == 0) printf("\n");
