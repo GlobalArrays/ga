@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.10 2003-02-21 20:49:12 d3g293 Exp $ */
+/*$Id: base.h,v 1.11 2003-03-05 00:31:51 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -106,13 +106,11 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 #define gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc){\
   int _i;                                                            \
   stride_rem[0]= stride_loc[0] = (int)size;                          \
-  for(_i=0;_i<ndim;_i++){                                            \
+  for(_i=0;_i<ndim-1;_i++){                                            \
     stride_rem[_i] *= (int)ldrem[_i];                                \
     stride_loc[_i] *= (int)ld[_i];                                   \
-    if(_i<ndim-1){                                                   \
       stride_rem[_i+1] = stride_rem[_i];                             \
       stride_loc[_i+1] = stride_loc[_i];                             \
-    }                                                                \
   }                                                                  \
 }
 
