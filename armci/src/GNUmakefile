@@ -94,7 +94,7 @@ $(LIBRARY_PATH)(shmem.o):       ./shmem.h ./shmalloc.h
 $(LIBRARY_PATH)(semaphores.o):  ./semaphores.h 
 $(LIBRARY_PATH)(rmw.o): 	./locks.h ./copy.h ./armcip.h 
 $(LIBRARY_PATH)(request.o):     ./request.h ./memlock.h ./copy.h ./armcip.h 
-$(LIBRARY_PATH)(pack.o):        ./armcip.h 
+$(LIBRARY_PATH)(pack.o):        ./armcip.h ./request.h
 $(LIBRARY_PATH)(mutex.o):       ./request.h ./copy.h ./armcip.h 
 $(LIBRARY_PATH)(message.o):     ./message.h ./armcip.h 
 $(LIBRARY_PATH)(memory.o):      ./shmem.h ./message.h ./armcip.h 
