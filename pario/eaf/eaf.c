@@ -155,7 +155,7 @@ void eaf_print_stats(int fd)
     printf("\n");
     printf("------------------------------------------------------------\n");
     printf("EAF file %d: \"%s\" size=%lld bytes\n", 
-#ifdef WIN32
+#if defined(WIN32) || defined (IFCLINUX)
 	    fd, file[fd].fname, (unsigned long) len);
 #else
 	    fd, file[fd].fname, (unsigned long long) len);
