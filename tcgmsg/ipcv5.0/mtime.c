@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/mtime.c,v 1.4 2000-08-23 16:59:06 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/mtime.c,v 1.5 2002-03-12 18:59:31 d3h325 Exp $ */
 
 #include <stdio.h>
 #include "srftoc.h"
@@ -12,7 +12,7 @@ double TCGTIME_();
   return (long) (TCGTIME_()*100.0);
 }
 
-#if !(defined(KSR) || defined(ALLIANT) || defined(CRAY_T3D)) 
+#if !(defined(KSR) || defined(ALLIANT) || defined(CRAY_T3D) || defined(LAPI)) 
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -145,4 +145,57 @@ double TIMEF();
        /* initialization not needed since initial call to TIMEF returns 0.0 */
        return (1.e-3*TIMEF());
 }
+#endif
+
+
+#ifdef LAPI
+#include <sys/time.h>
+#include <sys/systemcfg.h>
+
+static int firstsec=0;    /* Reference for timer */
+static int firstnsec=0;    
+
+void MtimeReset()               /* Sets timer reference */
+{
+  timebasestruct_t t;
+  read_real_time(&t, TIMEBASE_SZ);
+  time_base_to_time(&t, TIMEBASE_SZ);
+
+  firstsec = t.tb_high;
+  firstnsec = t.tb_low;
+}
+
+
+
+double TCGTIME_()
+/*
+  Return wall clock time in seconds as accurately as possible
+*/
+{
+  static int firstcall=1;
+  timebasestruct_t t;
+  int low, high;
+  int secs, nsecs;
+
+  if (firstcall) {
+    MtimeReset();
+    firstcall = 0;
+  }
+
+  
+  read_real_time(&t, TIMEBASE_SZ);
+  time_base_to_time(&t, TIMEBASE_SZ);
+
+  secs = t.tb_high - firstsec;
+  nsecs = t.tb_low - firstnsec;
+
+  /* If there was a carry from low-order to high-order during
+     the measurement, we have to undo it */
+  if(nsecs < 0){
+     secs--;
+     nsecs+= 1000000000;
+  }
+  return (double)(secs + 1.0e-9*nsecs);
+}
+
 #endif
