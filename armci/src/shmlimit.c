@@ -1,4 +1,4 @@
-/* $Id: shmlimit.c,v 1.9 2000-05-12 01:10:06 d3h325 Exp $ */
+/* $Id: shmlimit.c,v 1.10 2000-05-24 23:13:36 d3h325 Exp $ */
 /*
  * This code is used to test shared memory limits within
  * a separately forked child process.
@@ -15,21 +15,15 @@
 #include <errno.h>
 #include <signal.h>
 
-/* We got 2 ways to return shmmax value to parent by: exit status or pipe 
- * the pipe mechanism is preferable since it allows to pass arbitrary values 
- * from child to parent. The exit mechanism allows values from 0 to 255 (MB)
- * only!
- */
-#define USE_PIPE 
 #define DEBUG_ 0
 
 #if defined(DECOSF) || defined(SOLARIS64) || defined(HPUX)
 #define PIPE_AFTER_FORK_BUG
 #endif
 
-void (*Sig_Chld_Orig)();
+void (*armci_sig_chld_orig)();
 static int status=0;
-static int caught_sigchld=0;
+int armci_shmlimit_caught_sigchld=0;
 extern int armci_me;
 
 #if defined(SUN) && !defined(SOLARIS)
@@ -45,22 +39,29 @@ static void SigChldHandler(sig)
 #ifdef DISABLED
   int pid;
   pid = wait(&status);
-  caught_sigchld=1;
 #endif
+  armci_shmlimit_caught_sigchld=1;
 }
 
 static void TrapSigChld()
 {
-  if ( (Sig_Chld_Orig = signal(SIGCHLD, SigChldHandler)) == SIG_ERR)
+  if ( (armci_sig_chld_orig = signal(SIGCHLD, SigChldHandler)) == SIG_ERR)
     armci_die("TrapSigChld: error from signal setting SIGCHLD",0);
 }
 
 
 static void RestoreSigChld()
 {
-  if ( signal(SIGCHLD, Sig_Chld_Orig) == SIG_ERR)
+  if ( signal(SIGCHLD, armci_sig_chld_orig) == SIG_ERR)
     armci_die("Restore_SigChld: error from restoring signal SIGChld",0);
 }
+
+
+static int child_finished()
+{
+  return armci_shmlimit_caught_sigchld;
+}
+
 
 int armci_child_shmem_init()
 {
@@ -70,12 +71,10 @@ int armci_child_shmem_init()
     int i;
 #endif
 
-#ifdef USE_PIPE
     int y;
     int fd[2];
 
     if(pipe(fd)==-1) armci_die("armci shmem_test pipe failed",0);
-#endif
 
     TrapSigChld();
 
@@ -85,7 +84,6 @@ int armci_child_shmem_init()
 
     else if(pid == 0){
 
-#ifdef USE_PIPE
        x= armci_shmem_test();
 
 #ifdef PIPE_AFTER_FORK_BUG
@@ -94,14 +92,12 @@ int armci_child_shmem_init()
 #endif
            if(write(fd[1],&x,sizeof(int)) <sizeof(int))
                          armci_die("armci shmem_test: write failed",0);
-#endif
-       _exit(x);
+       _exit(0);
 
     }else{
 
        pid_t rc;
 
-#ifdef USE_PIPE
        int val;
 #ifdef PIPE_AFTER_FORK_BUG
        /* due to a bug in OSF1 V4.0/1229/alpha first item read is garbage */
@@ -109,10 +105,14 @@ int armci_child_shmem_init()
 #endif
           if((val=read(fd[0],&y,sizeof(int)))<sizeof(int))
                          armci_die("armci shmem_test: read failed",val);
-#endif
 
-       /* we might already got status from wait in SIGCHLD handler */
-       if(!caught_sigchld){
+#ifdef SOLARIS
+       while(!child_finished());
+#else
+
+       if(!armci_shmlimit_caught_sigchld)
+#endif
+       {
 again:   rc = wait (&status);
          if(rc == -1 && errno == EINTR) goto again;
        }
@@ -121,16 +121,12 @@ again:   rc = wait (&status);
     }
    
     /* restore previous signal handler */
-    RestoreSigChld();
+    RestoreSigChld(); 
 
-#ifdef USE_PIPE
     close(fd[0]);
     close(fd[1]);
     if(DEBUG_)
        printf("%d:in parent: x=%d y=%d\n",armci_me,x,y);fflush(stdout);sleep(1);
     return y;
-#else
-    return x;
-#endif
 
 }

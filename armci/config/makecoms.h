@@ -53,10 +53,14 @@ endif
 endif
 
 ifeq ($(TARGET),SOLARIS)
-   COMM_LIBS += /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
+#  need gethostbyname from -lucb under earlier versions of Solaris
+   COMM_LIBS += $(shell uname -r |\
+                awk -F. '{ if ( $$1 == 5 && $$2 < 6 )\
+                print "/usr/ucblib/libucb.a" }')
+   COMM_LIBS +=  -lsocket -lrpcsvc -lnsl
 endif
 ifeq ($(TARGET),SOLARIS64)
-   COMM_LIBS += /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
+   COMM_LIBS +=  -lsocket -lrpcsvc -lnsl
 endif
 
 ifeq ($(TARGET),FUJITSU-VPP)
