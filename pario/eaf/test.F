@@ -7,7 +7,7 @@
 #define IO_NUM_FILES 4
 #define MAX_ITER 4
 #define MAP(x) dble(IO_TEST_SZ*((x-1)*EAF_SZ_INT))
-#define MAX_FILE_SZ 5.0d8
+#define MAX_FILE_SZ 1.8d9
 #define BASE_NAME 'EAFfile'
 #ifdef  HPIODIR
 #  define FNAME   HPIODIR//BASE_NAME
@@ -275,9 +275,11 @@ c
 #include "eaf.fh"
       character*200 fname
       character*8 fstype
-      integer avail, fd, i, nwrite, ierr
+      integer avail, fd, i, nwrite, ierr, iolen4, iolen, loop
       double precision length, offset, ofw
       double precision buf(IO_TEST_SZ)
+      double precision util_random
+      external util_random
 c
       write(6,*)
       write(6,*) ' TEST 4 ... fill the file system '
@@ -334,7 +336,40 @@ c
          enddo
       enddo
 c
+      call eaf_print_stats(fd)
+c
       call testerr(eaf_close(fd))
+c
+c     random read and write
+c
+      buf(1) = util_random(35321)
+      do iolen4 = 0,2
+         iolen = 8*1024 * (4**iolen4)   ! 1024,4096,16384 doubles
+         write(6,*) ' Random write: len=',iolen
+         call testerr(eaf_open(fname, eaf_rw, fd))
+         do loop = 1, int(length/iolen)/4
+           offset = int((length-iolen)*util_random(0))
+           ierr = eaf_write(fd, offset, buf, iolen)
+           if (ierr .ne. 0) then
+             call testerr(ierr)
+             call ga_error('bad write',ierr)
+           endif
+         enddo
+         call eaf_print_stats(fd)
+         write(6,*) ' Random read : len=',iolen
+         call testerr(eaf_open(fname, eaf_rw, fd))
+         do loop = 1, int(length/iolen)/4
+           offset = int((length-iolen)*util_random(0))
+           ierr = eaf_read(fd, offset, buf, iolen)
+           if (ierr .ne. 0) then
+             call testerr(ierr)
+             call ga_error('bad write',ierr)
+           endif
+         enddo
+         call eaf_print_stats(fd)
+         call testerr(eaf_close(fd))
+      enddo
+c
       call testerr(eaf_delete(fname))
 c
       end
