@@ -1,4 +1,6 @@
 #
+#	$Id: MakeFile,v 1.6 1999-11-13 02:04:48 bjohnson Exp $
+#
 
 OBJDIR=.\obj
 
