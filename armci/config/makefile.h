@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.119 2005-03-09 18:11:27 vinodtipparaju Exp $
+#$Id: makefile.h,v 1.120 2005-03-09 20:26:37 vinodtipparaju Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -51,6 +51,13 @@ ifeq ($(TARGET),MACX)
  GLOB_DEFINES+= -DSHMEM -DMMAP -DDATA_SERVER
      EXTRA_OBJ = winshmem.o signaltrap.o shmalloc.o dataserv.o spawn.o \
                  dataserv.o sockets.o request.o ds-shared.o buffers.o async.o
+
+ifneq (,$(findstring mpif,$(_FC)))
+	_FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /xlf/ {print "xlf"; exit }; /Pro Fortran/ {print "absoft"; exit }' )
+endif
+ifneq (,$(findstring mpicc,$(_CC)))
+        _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  }; /Pro Fortran/ {print "absoft"; exit }' ) 
+endif
 ifeq ($(FC),xlf)      
      FOPT_REN = -q32  -qextname
 GLOB_DEFINES += -DXLFLINUX -DEXTNAME
@@ -58,8 +65,17 @@ endif
 ifeq ($(CC),xlc)      
    EXTRA_OBJ += tas.o
 endif
-ifeq ($(CC),acc)      
+ifneq ($(_FC),xlf)
+ifneq ($(_FC),g77)
+	_FC = $(shell $(FC) -v 2>&1 | awk ' /Pro Fortran/ {print "absoft"; exit }' )
+endif
+endif
+ifneq ($(_CC),xlc)      
+ifneq ($(_CC),gcc)      
    EXTRA_OBJ += tas.o
+endif
+endif
+ifeq ($(_FC),absoft)      
      FOPT_REN = -f -N15
 endif
 

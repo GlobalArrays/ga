@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.128 2005-03-09 18:11:22 vinodtipparaju Exp $
+# $Id: makefile.h,v 1.129 2005-03-09 20:26:35 vinodtipparaju Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -248,8 +248,9 @@ endif
 endif
 ifeq ($(_FC),absoft)
 #    echo $_FC
-     FOPT_REN += -f -N15  
+     FOPT_REN += -f -N15
 GLOB_DEFINES += -DABSOFTMAC
+        FLIBS+= -lU77
 endif
 
 endif
