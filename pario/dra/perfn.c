@@ -31,7 +31,7 @@
    required is approximately 1+2**NDIM times this amount.
 */
 #define USER_CONFIG 0
-#define TEST_TRANSPOSE 1
+#define TEST_TRANSPOSE 0
 
 #define NDIM 3
 #define SIZE 250
@@ -587,8 +587,8 @@ char **argv;
   GA_Initialize();
   if (!GA_Uses_ma()) {
     if (ga_nodeid_() == 0) printf("GA not using MA\n");
-    stack = 10000000;
-    heap  = 10000000;
+    stack = 100000;
+    heap = 2*sizeof(double)*pow(SIZE,NDIM)/ga_nnodes_()+10000000;
   }
 
   if (MA_init(MT_F_DBL, stack, heap) ) {
