@@ -104,7 +104,7 @@ typedef struct {
   char buf[MAX_BUFLEN];
 }vbuf_long_t;
 
-#define MAX_BUFS 2
+#define MAX_BUFS 4
 reqbuf_t client_buf_pool[MAX_BUFS];
 
 static vbuf_t *serv_buf_arr, *spare_serv_buf;
@@ -353,15 +353,16 @@ void armci_server_alloc_bufs()
 {
 VIP_RETURN rc;
 VIP_MEM_ATTRIBUTES mattr;
-int mod, bytes,extra =sizeof(VIP_DESCRIPTOR)*MAX_DESCR+SIXTYFOUR;
-char *tmp;
+int mod, bytes, total, extra =sizeof(VIP_DESCRIPTOR)*MAX_DESCR+SIXTYFOUR;
+char *tmp, *tmp0;
 int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
 
      /* allocate memory for the recv buffers-must be alligned on 64byte bnd */
      /* note we add extra one to repost it for the client we are received req */
      bytes = (clients+1)*sizeof(vbuf_t) + sizeof(vbuf_long_t) + extra;
-     tmp = malloc(bytes + SIXTYFOUR);
-     if(!tmp) armci_die("failed to malloc recv vbufs",bytes);
+     total = bytes + SIXTYFOUR;
+     tmp0=tmp = malloc(total);
+     if(!tmp) armci_die("failed to malloc server vbufs",total);
 
      /* stamp the last byte */
      serv_tail= tmp + bytes+SIXTYFOUR-1;
@@ -385,14 +386,13 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
      mattr.EnableRdmaRead  = VIP_FALSE;
 
      /* lock it */
-     rc = VipRegisterMem(CLN_nic->handle,serv_buf_arr,bytes,
-                         &mattr,&serv_memhandle);
+     rc = VipRegisterMem(CLN_nic->handle,tmp0, total, &mattr,&serv_memhandle);
      armci_check_status(DEBUG0, rc,"server register recv vbuf");
 
      if(!serv_memhandle)armci_die("server got null handle for vbuf",0);
      if(DEBUG1){
         printf("%d: registered server memory %p %dbytes memhandle=%d\n",
-               armci_me, serv_buf_arr, bytes, serv_memhandle); fflush(stdout);
+               armci_me, tmp0, total, serv_memhandle); fflush(stdout);
      }
 }
 
