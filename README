@@ -251,9 +251,13 @@ For Myrinet, define ARMCI_NETWORK=GM,  GM_LIB and GM_INCLUDE definitions
 for the location of the Myricom GM library and header files.
 Please refer to armci/doc/README.myrinet for installation details.
 
-For Compaq/Quadrics, define ARMCI_NETWORK=QUADRICS. You can also
-specify QUADRICS_INCLUDE and QUADRICS_LIB for nonstandard installation
-of the libraries.
+For Quadrics (QsNet1), define ARMCI_NETWORK=QUADRICS or ARMCI_NETWORK=ELAN3. 
+For Quadrics (QsNet2), define ARMCI_NETWORK=ELAN4. 
+You can also specify QUADRICS_INCLUDE and QUADRICS_LIB for nonstandard 
+installation of the libraries.
+
+For Infiniband (VAPI), define ARMCI_NETWORK=MELLANOX. You can also specify 
+IB_INCLUDE and IB_LIB for nonstandard installation of the libraries. 
 
 
 7. Other issues 
