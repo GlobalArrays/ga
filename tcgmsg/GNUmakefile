@@ -25,9 +25,10 @@ test.x:
 all:
 	(cd $(SRCDIR); $(MAKE) $@)
 
-clean:
-	(cd $(SRCDIR); $(MAKE) $@)
+realclean: clean
 
-realclean:
-	(cd $(SRCDIR); $(MAKE) $@)
+clean:
+	(cd ipcv5.0; $(MAKE) $@)
+	(cd ipcv4.0; $(MAKE) $@)
+
 

@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.11 2002-09-21 17:47:42 vinod Exp $
+# $Id: GNUmakefile,v 1.12 2002-10-16 00:22:45 d3h325 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -17,7 +17,7 @@ OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
 
  HEADERS =  msgtypesf.h msgtypesc.h sndrcv.h srftoc.h ../tcgmsg.fh
 
-  LIB_TARGETS = *.x *.o
+  LIB_TARGETS = *.x *.o parallel msgtypesf.h msgtf.h testf.f
   INCDIR      = ../../include
 
 ifeq ($(TARGET),IBM)
