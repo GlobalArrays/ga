@@ -75,26 +75,26 @@ endif
 
 #----------------------------- SGI ---------------------------------
 ifeq ($(TARGET),SGI)
-    COPT_REN = -n32 -mips4
-    FOPT_REN = -n32 -mips4
+    COPT_REN = -32
+    FOPT_REN = -32
     SGI = yes
 endif
 
 ifeq ($(TARGET),SGI_N32)
-    COPT_REN = -n32 -mips4
-    FOPT_REN = -n32 -mips4
+    COPT_REN = -n32
+    FOPT_REN = -n32
     SGI = yes
 endif
 
 ifeq ($(TARGET),SGI64)
-    COPT_REN = -64 -mips4
-    FOPT_REN = -align64 -64 -mips4 
+    COPT_REN = -64
+    FOPT_REN = -align64 -64
     SGI = yes
 endif
 
 ifeq ($(TARGET),SGITFP)
-    COPT_REN = -64 -mips4
-    FOPT_REN = -align64 -64 -mips4 
+    COPT_REN = -64
+    FOPT_REN = -align64 -64
     SGI = yes
 endif
 
@@ -109,6 +109,11 @@ GLOB_DEFINES += -DSGI
     endif
 
 #CPU specific compiler flags
+ifneq ($(TARGET_CPU),R4000)
+    COPT_REN += -mips4
+    FOPT_REN += -mips4
+endif
+
 ifdef TARGET_CPU
 
 ifeq ($(TARGET_CPU),R10000)
@@ -223,7 +228,7 @@ endif
        CPP_FLAGS += $(INCLUDES) $(FDEFINES)
 
        FFLAGS = $(FOPT) $(FOPT_REN)
-       CFLAGS = $(INCLUDES) $(DEFINES) $(COPT) $(COPT_REN) $(CDEFS) $(LIB_CDEFS)
+       CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) $(LIB_CDEFS)
        CFLAGS := $(strip $(CFLAGS))
        FFLAGS := $(strip $(FFLAGS))
 
