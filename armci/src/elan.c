@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.34 2004-04-13 22:55:42 manoj Exp $ */
+/* $Id: elan.c,v 1.35 2004-04-14 00:59:15 manoj Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -450,6 +450,13 @@ void armcill_putS(int proc, void* src_ptr, int src_stride_arr[], void* dst_ptr,
               dst_stride_arr, count, stride_levels, proc),elan_base->waitType);
 }
 
+ELAN_EVENT * armcill_nbputS(int proc, void* src_ptr, int src_stride_arr[], 
+             void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels)
+{
+    return elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+              dst_stride_arr, count, stride_levels, proc);
+}
+
 void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
                                                    void* dst_ptr,int dst_stride)
 {
@@ -515,6 +522,13 @@ void armcill_getS(int proc, void* src_ptr, int src_stride_arr[], void* dst_ptr,
 {
     elan_wait(elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr, 
               dst_stride_arr, count, stride_levels, proc),elan_base->waitType);
+}
+
+ELAN_EVENT* armcill_nbgetS(int proc, void* src_ptr, int src_stride_arr[],  
+              void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels)
+{
+    return elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+              dst_stride_arr, count, stride_levels, proc);
 }
  
 void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,

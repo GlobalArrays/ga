@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.86 2004-04-13 22:54:24 manoj Exp $ */
+/* $Id: strided.c,v 1.87 2004-04-14 00:59:15 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -384,14 +384,24 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
     
 #if HAS_PUTS
     if(op==PUT && (stride_levels>0) &&  !(SAMECLUSNODE(proc))){
-       armcill_putS(proc,src_ptr,src_stride_arr,dst_ptr,
+       if(nb_handle){
+          nb_handle->tag =0;
+          nb_handle->cmpl_info=armcill_nbputS(proc,src_ptr,src_stride_arr,dst_ptr,
+	   	       dst_stride_arr,count,stride_levels);
+       }else
+           armcill_putS(proc,src_ptr,src_stride_arr,dst_ptr,
 		    dst_stride_arr,count,stride_levels);
        return 0;
     }
 #endif
 #if HAS_GETS
     if(op==GET && (stride_levels>0) &&  !(SAMECLUSNODE(proc))){
-       armcill_getS(proc,src_ptr,src_stride_arr,dst_ptr,
+       if(nb_handle){
+          nb_handle->tag =0;
+          nb_handle->cmpl_info=armcill_nbgetS(proc,src_ptr,src_stride_arr,dst_ptr,
+		    dst_stride_arr,count,stride_levels);
+       }else
+          armcill_getS(proc,src_ptr,src_stride_arr,dst_ptr,
 		    dst_stride_arr,count,stride_levels);
        return 0;
     }
