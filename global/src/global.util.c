@@ -247,7 +247,7 @@ void clean_all();
 #      endif
        Error(string,  icode);
     }
-    fprintf(stderr,"%s %ld",string,icode);
+    fprintf(stderr,"%s %ld\n",string,icode);
     fflush(stderr);
 #   if defined(SUN) || defined(SGI)
 /*       abort(); */
