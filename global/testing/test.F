@@ -1,3 +1,10 @@
+#ifdef FUJITSU
+# define THRESH  1.0d-12
+#else
+# define THRESH  1.0d-20 
+#endif
+#define MISMATCH(x,y) abs(x-y)/max(1,abs(x)).gt.THRESH
+
       program main
       implicit none
 #include "mafdecls.fh"
@@ -107,7 +114,7 @@ c
       double precision drand, crap, sum1, sum2, x
       double precision nwords
       intrinsic int
-      iran(i) = int(drand(0)*dble(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -335,7 +342,7 @@ c
       call ga_get(g_a, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n
-            if (abs(b(i,j) - a(i,j)) .gt. 1.0d-6) then
+            if (MISMATCH(b(i,j), a(i,j))) then
                write(6,*) ' acc ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
 c              call ga_error('... exiting ',0)
@@ -391,7 +398,7 @@ c
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n
-            if (abs(b(i,j) - a(i,j)) .gt. 1.0d-6) then
+            if (MISMATCH(b(i,j), a(i,j))) then
                write(6,*) ' add ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
                call ga_error('... exiting ',0) 
@@ -426,7 +433,7 @@ c
       endif
       call ga_sync()
       sum2 = ga_ddot(g_a,g_b)
-      if (dabs(sum2 - sum1)/dabs(sum1) .gt. 1.0d-12) then
+      if (MISMATCH(sum1, sum2)) then
          write(6,*) ' ddot wrong ', sum1, sum2
          call ffflush(6)
          call ga_error('... exiting ',0)
@@ -448,7 +455,7 @@ c
       do j = 1, n
          do i = 1, n
             a(i,j) = a(i,j)*0.123d0
-            if (b(i,j) .ne. a(i,j)) then
+            if (MISMATCH(b(i,j), a(i,j))) then
                write(6,*) ' dscal ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
                call ga_error('... exiting ',0)
@@ -469,6 +476,7 @@ c
          write(6,*)
          call ffflush(6)
       endif
+      if(me.eq.0) call ga_put(g_a, 1, n, 1, n, a, n)
       call ga_copy(g_a, g_b)
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
@@ -591,9 +599,9 @@ c
       parameter (maxproc = 128)
       double precision drand, crap, real
       double precision nwords, error
-      double complex   x, sum1, sum2
+      double complex   x, sum1, sum2, factor
       intrinsic int
-      iran(i) = int(drand(0)*dble(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -804,7 +812,7 @@ c
       call ga_get(g_a, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n
-            if (abs(b(i,j) - a(i,j)) .gt. 1.0d-6) then
+            if (MISMATCH(b(i,j), a(i,j))) then
                write(6,*) ' acc ', me, i, j, a(i,j), b(i,j)
                call ga_error('... exiting ',0)
             endif
@@ -823,8 +831,9 @@ c
       call ga_sync()
       if (me.eq.0) then
          call ga_get(g_b, n/2, n/2, n/2, n/2, x, 1)
-         error = abs(x -(1d0,-1d0)*nproc)
-         if(error.gt. (1d-8))then
+c        error = abs(x -(1d0,-1d0)*nproc)
+         if (MISMATCH(x, ((1d0,-1d0)*nproc))) then
+c        if(error.gt. (1d-8))then
             write(6,*)'val=',x,' expected=(',nproc,',',-nproc,')'
             call ga_error('overlapping accumulate failed',0)
          endif
@@ -867,12 +876,13 @@ c
  92      format(/'> Checking scale ...')
          call ffflush(6)
       endif
-      call ga_scale(g_a, (1d0,-1d0))
+      factor = (1d0,-1d0)
+      call ga_scale(g_a, factor)
       call ga_get(g_a, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n
-            a(i,j) = a(i,j)*(1d0,-1d0)
-            if (b(i,j) .ne. a(i,j)) then
+            a(i,j) = a(i,j)*factor
+            if (MISMATCH(b(i,j), a(i,j))) then
                write(6,*) ' dscal ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
                call ga_error('... exiting ',0)
@@ -891,6 +901,7 @@ c
       if (me .eq. 0) then
          write(6,*) '> Checking scatter/gather (might be slow)... '
          call ffflush(6)
+         if(me.eq.0) call ga_put(g_a, 1, n, 1, n, a, n)
       endif
       call ga_sync()
 c
@@ -979,7 +990,7 @@ c
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n
-            if (abs(b(i,j) - a(i,j)) .gt. 1.0d-6) then
+            if (MISMATCH(b(i,j), a(i,j))) then
                write(6,*) ' add ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
                call ga_error('... exiting ',0)
@@ -1014,7 +1025,7 @@ c
       endif
       call ga_sync()
       sum2 =  ga_zdot(g_a,g_b)
-      if (abs(sum2 - sum1)/abs(sum1) .gt. 1.0d-10) then
+      if (MISMATCH(sum1, sum2)) then
          write(6,*) ' zdot wrong ', sum1, sum2
          call ffflush(6)
          call ga_error('... exiting ',0)
@@ -1057,7 +1068,7 @@ c
       integer buf
       intrinsic int
       external drand
-      iran(i) = int(drand(0)*dble(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()

@@ -50,6 +50,13 @@ LIBS = $(CORE_LIBS) $(LINALG) $(LIBCOM) $(LIBTRACE)
 # main program in C requires extra effort to provide Fortran libs
 # Highly system dependent !!!
 
+
+#on Fujitsu need to rename main to avoid conflict with Fortran libs
+ifeq ($(TARGET),FUJITSU-VPP)
+   COPT_REN += -Dmain=MAIN__
+endif 
+
+
 ifeq ($(MSG_COMMS), MPI)
   COPT_REN += -I../../tcgmsg/ipcv4.0
   P_FILE = no
@@ -76,10 +83,12 @@ ifeq ($(P_FILE),YES)
     testc.x: testc.o $(LIBDIR)/libglobal.a
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
 	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
+	$(RM) testc.o
     ifdef USE_MPI
       ga-mpi.x: ga-mpi.o $(LIBDIR)/libglobal.a
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
 	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
+	$(RM)  ga-mpi.o 
     else
       ga-mpi.x:
 	@echo "You need to recompile the package to use MPI "
@@ -87,9 +96,11 @@ ifeq ($(P_FILE),YES)
 else
     testc.x: testc.o $(LIBDIR)/libglobal.a
 	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
+	$(RM) testc.o
     ifdef USE_MPI
       ga-mpi.x: ga-mpi.o $(LIBDIR)/libglobal.a
 	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
+	$(RM)  ga-mpi.o 
     else
       ga-mpi.x:
 	@echo "You need to define USE_MPI and recompile the package "
@@ -115,7 +126,7 @@ ifeq ($(P_FILE),YES)
 	$(INSTALL)
 else
     %.x : %.o $(LIBDIR)/libglobal.a
-	$(FC) $(FLDOPT) -o $@ $<  -L$(LIBDIR) $(LIBS)
+	$(FLD) $(FLDOPT) -o $@ $<  -L$(LIBDIR) $(LIBS)
 	$(INSTALL)
 endif
 

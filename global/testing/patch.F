@@ -1,10 +1,16 @@
-#if defined(CRAY_T3D) || defined(CRAY_T3E) || defined(KSR)
+#if defined(CRAY_T3D) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else
 #   define xgemm DGEMM
 #   define ygemm ZGEMM
 #endif
+#ifdef FUJITSU
+# define THRESH  1.0d-12
+#else
+# define THRESH  1.0d-20
+#endif
+#define MISMATCH(x,y) abs(x-y)/max(1,abs(x)).gt.THRESH
 c
 c
       program test
@@ -14,7 +20,7 @@ c
 #include "tcgmsg.fh"
       logical status
       call pbeginf
-      status = ma_init(MT_DBL, 50000, 50000/nnodes())
+      status = ma_init(MT_DBL, 50000, 90000/nnodes())
       if (.not. status) print *, 'ma_init failed'
       call ga_initialize()
       if(ga_nodeid().eq.0)then
@@ -56,7 +62,7 @@ c
       integer g_a, g_b, g_c 
       integer rows, cols, loop
       logical status, dist_same 
-      iran(i) = int(drand(0)*dble(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -79,11 +85,7 @@ c     call setdbg(1)
          call ga_error('... exiting ',0)
       endif
 c
-#if   defined(CRAY_T3D) || defined(CRAY_T3E) || defined(AIX) || defined(SGI)
       if(dist_same) then
-#else
-      if(dist_same.eq. .true.) then
-#endif
          status = ga_duplicate(g_a, g_b, 'a_duplicated')
          if(.not.ga_compare_distr(g_a, g_b))
      $           call ga_error("g_b distribution different",0) 
@@ -500,7 +502,7 @@ c
       integer rows, cols, loop
       logical status, dist_same 
       double precision drand
-      iran(i) = int(drand(0)*dble(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -523,11 +525,7 @@ c     call setdbg(1)
          call ga_error('... exiting ',0)
       endif
 c
-#if   defined(CRAY_T3D) || defined(CRAY_T3E) || defined(AIX) || defined(SGI)
       if(dist_same) then
-#else
-      if(dist_same.eq. .true.) then
-#endif
          status = ga_duplicate(g_a, g_b, 'a_duplicated')
          if(.not.ga_compare_distr(g_a, g_b))
      $           call ga_error("g_b distribution different",0) 
