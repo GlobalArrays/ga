@@ -95,6 +95,7 @@ endif
 ifeq ($(TARGET),SGITFP)
     COPT_REN = -64
     FOPT_REN = -align64 -64
+GLOB_DEFINES += -DSGI64
     SGI = yes
 endif
 
