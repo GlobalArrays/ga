@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.44 2002-09-20 17:10:45 d3h325 Exp $
+c $Id: test.F,v 1.45 2003-02-18 00:43:43 manoj Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -57,6 +57,10 @@ c     MA must be initialized before any global array is allocated
 c
       status = ma_init(MT_DCPL, stack, ma_heap)
       if (.not. status) call ga_error('ma_init failed',-1) 
+c
+c     Uncomment the below line to register external memory allocator
+c     for dynamic arrays inside GA routines.
+c      call register_ext_memory()
 c
       if(me.eq.(nproc-1))then
         print *, 'using ', nproc,' process(es) ', ga_cluster_nnodes(),

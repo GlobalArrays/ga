@@ -11,6 +11,7 @@
 #define util_mdtob_   UTIL_MDTOB
 #define util_drand_   UTIL_DRAND
 #define util_timer_   UTIL_TIMER
+#define register_ext_memory_ REGISTER_EXT_MEMORY
 
 #elif defined(F2C2_)
 
@@ -25,6 +26,7 @@
 #define util_mdtob_   util_mdtob__   
 #define util_drand_   util_drand__   
 #define util_timer_   util_timer__   
+#define register_ext_memory_ register_ext_memory__
 
 #endif
 extern void get_range( int ndim, int dims[], int lo[], int hi[]);
