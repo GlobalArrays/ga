@@ -20,29 +20,25 @@ static int** armci_elan_fence_arr;
 void armci_init_connections()
 {
 ELAN_QUEUE *q;
-int nslots=armci_nproc, slotsize=_ELAN_SLOTSIZE;
+int nslots=armci_nproc+32, slotsize=_ELAN_SLOTSIZE;
 
 
-    if ((q = elan_gallocQueue(elan_base->galloc, elan_base->allGroup)) == NULL)
+    if ((q = elan_gallocQueue(elan_base, elan_base->allGroup)) == NULL)
         armci_die( "elan_gallocElan",0 );
 
     if (!(mq = elan_mainQueueInit( elan_base->state, q, nslots, slotsize)))
         armci_die("Failed to to initialise Main Queue",0);
 
-#if 0
-    if(!(armci_elan_fence_arr = elan_allocMain(elan_base->state, 4, armci_nproc*sizeof(int))))
-        armci_die("failed to to initialise Elan fence array",0);
-#endif
-
     armci_elan_fence_arr = (int**)malloc(armci_nproc*sizeof(int*));
-    if(!armci_elan_fence_arr) armci_die("malloc failed for ARMCI fence array",0);
+    if(!armci_elan_fence_arr)armci_die("malloc failed for ARMCI fence array",0);
     if(ARMCI_Malloc((void**)armci_elan_fence_arr, armci_nproc*sizeof(int)))
              armci_die("failed to allocate ARMCI fence array",0);
     bzero(armci_elan_fence_arr[armci_me],armci_nproc*sizeof(int));
 
-#if 0
-  printf("%d:vp=%d localId=%d SendBuf=%p\n",armci_me,elan_base->state->vp,elan_base->state->localId,        MessageSndBuffer); 
-#endif
+    if(MessageSndBuffer){
+      ((request_header_t*)MessageSndBuffer)->tag = (void*)0;
+    }else armci_die("armci_init_connections: buf not set",0);
+
 }
 
 
@@ -58,18 +54,17 @@ int *buf = armci_elan_fence_arr[armci_request_from] + armci_request_to;
            armci_request_from, armci_elan_fence_arr[armci_request_from],buf);
     fflush(stdout);
 #endif
-    armci_put(&zero,buf,sizeof(int),armci_request_from);
+
+    elan_wait(elan_put(elan_base->state,&zero,buf,sizeof(int),
+                    armci_request_from), elan_base->waitType);
 }
 
 
 int armci_check_int_val(int *v)
 {
-return (*v);
+  return (*v);
 }
 
-
-int __armci_wait_some =20;
-double __armci_fake_work=99.0;
 
 void armci_elan_fence(int p)
 {
@@ -78,17 +73,21 @@ void armci_elan_fence(int p)
     int  res = armci_check_int_val(buf);
 
 #if 0
-    printf("%d: client fencing proc=%d fence=%p slot %p\n", armci_me, p, armci_elan_fence_arr[armci_me], buf);
+    printf("%d: client fencing proc=%d fence=%p slot %p\n", 
+           armci_me, p, armci_elan_fence_arr[armci_me], buf);
     fflush(stdout);
 #endif
 
     while(res){
-       if(++loop == 100) { loop=0; usleep(1); }
-       for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work+=0.001;
+       if(++loop == 1000) { loop=0; usleep(1);  }
+       armci_util_spin(loop, buf);
        res = armci_check_int_val(buf);
     }
     *buf = 0; 
-    __armci_fake_work =99.0;
+
+    /* wait for buffer to be free to handle requests in transition */
+    while(((request_header_t*)MessageSndBuffer)->tag)
+                              armci_util_spin(100, MessageSndBuffer);
 }
 
 
@@ -142,10 +141,21 @@ void armci_rcv_req(void *mesg,
           }else rembuf += msginfo->dscrlen;
 
           if((msginfo->dscrlen+msginfo->datalen)> MSG_DATA_LEN){
+             void *zero=(void*)0;
+             void *flag_to_clear;
              *(void **)pdata  = MessageRcvBuffer + off; 
-             armci_get(rembuf, MessageRcvBuffer, payload, msginfo->from); 
-          }
+             elan_wait(elan_get(elan_base->state,rembuf,MessageRcvBuffer,
+                       payload, msginfo->from),elan_base->waitType);
 
+             if(DEBUG_){ printf("%d:in serv &tag=%p tag=%p\n",armci_me,
+                                flag_to_clear, msginfo->tag); fflush(stdout);
+             }
+
+             /* mark sender buffer as free -- flag is before descriptor */
+             flag_to_clear = ((void**)msginfo->tag)-1; 
+             elan_wait(elan_put(elan_base->state,&zero,flag_to_clear,
+                       sizeof(void*),msginfo->from), elan_base->waitType);
+          }
         }
     }else
         *(void**)pdescr = NULL;
@@ -156,7 +166,7 @@ void armci_rcv_req(void *mesg,
 \*/
 void armci_WriteToDirect(int dst, request_header_t *msginfo, void *buffer)
 {
-/* none in acc */
+   armci_die("armci_WriteToDirect: should not be called in this case",0);
 }
 
 char *armci_ReadFromDirect(int proc, request_header_t * msginfo, int len)
@@ -172,13 +182,21 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
 {
     char *buf = (char*)vbuf;
     request_header_t *msginfo = (request_header_t *)buf;
+    int cluster = armci_clus_id(proc);
     int size=_ELAN_SLOTSIZE;
+    int proc_serv = armci_clus_info[cluster].master;
 
     *(armci_elan_fence_arr[armci_me]+proc)=1;
 
-    /* set message tag -> contains pointer to client buffer with descriptor+data */
-    msginfo->tag = (void *)(buf + sizeof(request_header_t));
-    elan_queueReq(mq, proc, vbuf, size);
+    if((msginfo->dscrlen+msginfo->datalen)> MSG_DATA_LEN){
+      /* set message tag -> has pointer to client buffer with descriptor+data */
+      msginfo->tag = (void *)(buf + sizeof(request_header_t));
+      if(DEBUG_){ printf("%d:in send &tag=%p tag=%p\n",armci_me,&msginfo->tag,
+                msginfo->tag); fflush(stdout);
+      }
+    } else /* null tag means buffer is free -- true after elan_queueReq*/;
+
+    elan_queueReq(mq, proc_serv, vbuf, size); /* vbuf is sent/copied out */
 
     return 0;
 }
@@ -197,11 +215,16 @@ void armci_server_initial_connection(){}
 #endif
 
 
+/************************************************************************/
 #ifdef _ELAN_LOCK_H
 
 #define MAX_LOCKS 4
 static ELAN_LOCK *my_locks, *all_locks;
 static int num_locks=0;
+
+/* NOTE that if ELAN is defined the scope of locks is limited to SMP
+   and we do not call the interfaces below */
+
 
 /*\ allocate and initialize num locks on each processor (collective call)
 \*/
@@ -265,16 +288,19 @@ ELAN_LOCK *rem_locks = (ELAN_LOCK*)(all_locks + proc*num_locks);
      
 #endif
 
+/************************************************************************/
 #ifdef _ELAN_PUTGET_H
 
-#define MAX_PENDING 64
+/* might have to use MAX_SLOTS<MAX_PENDING due to throttling a problem in Elan*/
+#define MAX_PENDING 6 
+#define MAX_SLOTS 64
 #define ZR  (ELAN_EVENT*)0
 
-static ELAN_EVENT* put_dscr[MAX_PENDING]= {
+static ELAN_EVENT* put_dscr[MAX_SLOTS]= {
 ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,
 ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR};
 
-static ELAN_EVENT* get_dscr[MAX_PENDING] = {
+static ELAN_EVENT* get_dscr[MAX_SLOTS] = {
 ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,
 ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR};
 
@@ -283,7 +309,7 @@ static int cur_put=0;
 static int pending_get=0;
 static int pending_put=0;
 
-
+int kwach=0;
 /*\ strided put, nonblocking
 \*/
 void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,

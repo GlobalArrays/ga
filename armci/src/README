@@ -9,5 +9,5 @@ perf.c      perf.x      perf.exe
 
 On Unix systems that support shared memory shmtest
 could be used to verify how big System V shared
-memory segments can be allocated. ARMCI used that
+memory segments can be allocated. ARMCI uses that
 type of memory on these systems.
