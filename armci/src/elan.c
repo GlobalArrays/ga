@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.36 2004-04-15 22:17:07 d3h325 Exp $ */
+/* $Id: elan.c,v 1.37 2004-06-11 04:28:44 vinod Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,6 +119,7 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
     elan_gsync(elan_base->allGroup);
 #endif
 
+#ifdef DOELAN4 
     {
 	/* New PutS/GetS subsystem */
 	q = elan_gallocElan(elan_base, elan_base->allGroup, ELAN_QUEUE_ALIGN,
@@ -127,6 +128,7 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
 	
 	_pgsstate = pgs_init(elan_base->state, q);
     }
+#endif
 #endif
 
     if(armci_me == armci_master) {
@@ -472,9 +474,27 @@ int _j, issued=0;
 
 
 
+extern ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
+
+extern ELAN_EVENT *elan_getss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
 
 
-#if HAS_PUTS
+#ifdef HAS_PUTS
+
+void armcill_putS(int proc, void* src_ptr, int src_stride_arr[], void* dst_ptr,
+                  int dst_stride_arr[], int count[], int stride_levels)
+{
+    elan_wait(elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr, 
+              dst_stride_arr, count, stride_levels, proc),elan_base->waitType);
+}
+
+ELAN_EVENT * armcill_nbputS(int proc, void* src_ptr, int src_stride_arr[], 
+             void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels)
+{
+    return elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+              dst_stride_arr, count, stride_levels, proc);
+}
+
 void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
                                                    void* dst_ptr,int dst_stride)
 {

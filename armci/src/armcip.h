@@ -9,8 +9,10 @@
 #ifdef QUADRICS
 #include <elan/elan.h>
 #ifdef QSNETLIBS_VERSION_CODE
+#ifndef DECOSF
 #  define ELAN_ACC
 #  define PENDING_OPER(x) ARMCI_ACC_INT
+#endif
 
 #  if QSNETLIBS_VERSION_CODE > QSNETLIBS_VERSION(1,5,0)
 #     define LIBELAN_ATOMICS
