@@ -101,14 +101,14 @@ c***  compute local ilo, ihi, num for each processor
       call nga_distribution(g_a,me,ilo,ihi,chunck)
       num=ihi-ilo+1
       if(ihi.le.0)num=0
-      print *, 'me=',me, num,ilo
+*     print *, 'me=',me, num,ilo
 c
 c***  scatter some values into the global array
       call ga_fill(g_a,0.0d+00)
       do i=1,Min(num,m)
          v(i)=real(ilo+i-1)
          iv(i)=ilo+i-1
-         print *,'me=',me,'val=',iv(i)
+*        print *,'me=',me,'val=',iv(i)
       enddo
       if(num.gt.0)call NGA_scatter(g_a,v,iv,Min(num,m))
       call ga_sync()
@@ -135,7 +135,7 @@ c
         print *,"     GA Max: value=",xmax_ga," location=",ilocmax_ga
         print *," "
         print *,"Correct Min: value=",xmin1  ," location=",ilocmin
-        print *,"Correct Min: value=",xmin_ga," location=",ilocmin_ga
+        print *,"     GA Min: value=",xmin_ga," location=",ilocmin_ga
       endif
 c
       if(.not. ga_destroy(g_a)) call ga_error('invalid handle: g_a',0)
