@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.37 2002-05-21 19:48:08 d3h325 Exp $ */
+/* $Id: copy.h,v 1.38 2002-07-17 22:51:08 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -239,11 +239,16 @@ void FATR DCOPY1D(void*, void*, int*);
 #   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
            CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
 
-#elif defined(HITACHI) || defined(_ELAN_PUTGET_H)
+#elif defined(HITACHI) || defined(_ELAN_PUTGET_H_)
 
 #ifdef QUADRICS
+#if 0
 #   define WAIT_FOR_PUTS elan_putWaitAll(elan_base->state,200)
 #   define WAIT_FOR_GETS elan_getWaitAll(elan_base->state,200)
+#else
+#   define WAIT_FOR_PUTS armcill_wait_put()
+#   define WAIT_FOR_GETS armcill_wait_get()
+#endif
 #endif
 
     extern void armcill_put2D(int proc, int bytes, int count,
