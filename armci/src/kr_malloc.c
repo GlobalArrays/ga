@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.13 2004-11-22 19:36:20 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.14 2004-11-24 02:05:23 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -274,7 +274,6 @@ void kr_free(char *ap, context_t *ctx) {
 	  ctx->nfrags--;          /* Lost a fragment */
        } else
 	  p->s.ptr = bp;
-
        ctx->freep = p;
 
     } /* end if on ap */
@@ -323,7 +322,8 @@ static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
     if ((prevp = ctx->freep) == NULL) { 
       
       if (sizeof(Header) != ALIGNMENT)
-	kr_error("Alignment is not valid", (unsigned long) ALIGNMENT, ctx);
+	kr_error("kr_malloc_shmem: Alignment is not valid",
+                 (unsigned long) ALIGNMENT, ctx);
       
       ctx->total  = 0; /* Initialize statistics */
       ctx->nchunk = ctx->inuse   = ctx->maxuse  = 0;  
@@ -424,7 +424,7 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
       bp = (Header *) ap - 1;  /* Point to block header */
       
       if (bp->s.valid1 != VALID1 || bp->s.valid2 != VALID2)
-	kr_error("kr_free: pointer not from kr_malloc", 
+	kr_error("kr_free_shmem: pointer not from kr_malloc", 
 		 (unsigned long) ap, ctx);
       
       ctx->inuse -= bp->s.size; /* Decrement memory ctx->usage */
@@ -435,7 +435,7 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
       
       for (up=&(ctx->usedp); ; up = &((*up)->s.ptr)) {
 	if (!*up)
-	  kr_error("kr_free: block not found in used list\n", 
+	  kr_error("kr_free_shmem: block not found in used list\n", 
 		   (unsigned long) ap, ctx);
 	if (*up == bp) {
 	  *up = bp->s.ptr;
