@@ -55,7 +55,7 @@ int NGA_Create(int type, int ndim,int dims[], char *name, int chunk[])
     if(ndim>MAXDIM)return 0;
 
     COPYC2F(dims,_ga_dims, ndim);
-    if(chunk==NULL)ptr=NULL;  
+    if(!chunk)ptr=(Integer*)0;  
     else {
          COPYC2F(chunk,_ga_work, ndim);
          ptr = _ga_work;
@@ -360,7 +360,7 @@ void GA_Brdcst(void *buf, int lenbuf, int root)
   Integer type=GA_TYPE_BRD;
   Integer len = (Integer)lenbuf;
   Integer orig = (Integer)root;
-  ga_brdcst_(&type, buf, &len, &orig);
+  ga_msg_brdcst(type, buf, len, orig);
 }
    
 void GA_Dgop(double x[], int n, char *op)

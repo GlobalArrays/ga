@@ -41,6 +41,10 @@ typedef struct {
 } global_array_t;
 
 
+int* GA_proc_list = NULL;           
+int* GA_inv_proc_list=NULL;
+int* GA_Proc_list = NULL;           
+int* GA_inv_Proc_list=NULL;
 static global_array_t GA[MAX_ARRAYS]; 
 static int max_global_array = MAX_ARRAYS;
 Integer *map;       /* used in get/put/acc */
@@ -81,7 +85,9 @@ int  GA_stack_size=0;
          lo[_d] = (Integer)0;                                                  \
          hi[_d] = (Integer)-1;                                                 \
    }else{                                                                      \
-         for(_d=0, _index = proc; _d<_dim; _d++){                              \
+         _index = proc;                                                        \
+         if(GA_inv_proc_list) _index = GA_inv_proc_list[proc];                 \
+         for(_d=0; _d<_dim; _d++){                                             \
              _loc = _index% GA[ga_handle].nblock[_d];                          \
              _index  /= GA[ga_handle].nblock[_d];                              \
              _dimpos = _loc + _dimstart; /* correction to find place in mapc */\

@@ -13,6 +13,7 @@
 #define  GA_ddot                   ga_ddot_
 #define  GA_ddot_patch             ga_ddot_patch
 #define  GA_zdot                   ga_zdot_
+#define  GA_idot                   ga_idot_
 #define  GA_zdot_patch             ga_zdot_patch
 #define  GA_ddot_patch_dp          ga_ddot_patch_dp
 #define  GA_destroy                ga_destroy_
@@ -24,7 +25,7 @@
 #define  GA_scale                  ga_scale_
 #define  GA_scale_patch            ga_scale_patch_
 #define  GA_duplicate              ga_duplicate
-#define  GA_error                  ga_error_
+#define  GA_error                  ga_error
 #define  GA_fence                  ga_fence_
 #define  GA_gather                 ga_gather_
 #define  GA_get                    ga_get_
@@ -52,6 +53,7 @@
 #define  GA_release                ga_release_
 #define  GA_release_update         ga_release_update_
 #define  GA_scatter                ga_scatter_
+#define  GA_scatter_acc            ga_scatter_acc_
 #define  GA_sort_scat_dbl          ga_sort_scat_dbl_
 #define  GA_sort_scat_int          ga_sort_scat_int_
 #define  GA_sync                   ga_sync_

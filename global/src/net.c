@@ -2,7 +2,7 @@
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
-#include "macommon.h"
+#include "macdecls.h"
 
 extern Integer  NumSndReq; /* request counter */
 

@@ -22,60 +22,61 @@
 #endif
 
 #include "c.names.h"
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
 #  include "cray.names.h"
 #endif
 
 
-#if defined(__STDC__) || defined(__cplusplus)
+#if defined(__STDC__) || defined(__cplusplus) || defined(WIN32)
 # define ARGS_(s) s
 #else
 # define ARGS_(s) ()
 #endif
 
-extern Integer ga_nnodes_   ARGS_(( void));
-extern Integer ga_nodeid_   ARGS_(( void));
-extern Integer ga_inquire_memory_  ARGS_(( void));
-extern Integer ga_memory_avail_ ARGS_(( void));
-extern Integer ga_read_inc_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
-extern Integer ga_verify_handle_ ARGS_((Integer* ));
+extern Integer  FATR ga_nnodes_   ARGS_(( void));
+extern Integer FATR ga_nodeid_   ARGS_(( void));
+extern Integer FATR ga_inquire_memory_  ARGS_(( void));
+extern Integer FATR ga_memory_avail_ ARGS_(( void));
+extern Integer FATR ga_read_inc_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
+extern Integer FATR ga_verify_handle_ ARGS_((Integer* ));
 extern logical ga_create ARGS_((Integer*, Integer*, Integer*, char*, Integer*,                                  Integer*, Integer*));
 extern logical ga_create_irreg ARGS_((Integer*, Integer*, Integer*, char*,                                            Integer*, Integer*, Integer*, Integer*,                                         Integer* ));
-extern logical ga_create_mutexes_ ARGS_((Integer*));
-extern logical ga_destroy_  ARGS_((Integer* ));
-extern logical ga_destroy_mutexes_  ARGS_((void ));
+extern logical FATR ga_create_mutexes_ ARGS_((Integer*));
+extern logical FATR ga_destroy_  ARGS_((Integer* ));
+extern logical FATR ga_destroy_mutexes_  ARGS_((void ));
 extern logical ga_duplicate ARGS_((Integer*, Integer*, char* ));
-extern logical ga_locate_   ARGS_((Integer*, Integer*, Integer*, Integer* ));
-extern void ga_lock_        ARGS_((Integer* ));
-extern void ga_unlock_      ARGS_((Integer* ));
+extern logical FATR ga_compare_distr_ ARGS_((Integer*, Integer* ));
+extern logical FATR ga_locate_   ARGS_((Integer*, Integer*, Integer*, Integer* ));
+extern void FATR ga_lock_        ARGS_((Integer* ));
+extern void FATR ga_unlock_      ARGS_((Integer* ));
 extern void ga_check_handle ARGS_((Integer*, char*));
-extern logical ga_locate_region_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer*, Integer map[][5], Integer* ));
-extern void  ga_acc_   ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               void*, Integer*, void* ));
-extern void ga_access_ ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Integer*, Integer* ));
-extern void ga_brdcst_ ARGS_((Integer*, Void*, Integer*, Integer* ));
-extern void ga_gather_ ARGS_((Integer*, Void*, Integer*, Integer*, Integer* ));
-extern void ga_dgop    ARGS_((Integer, DoublePrecision*, Integer, char* ));
-extern void ga_distribution_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer*, Integer* ));
-extern void ga_scatter_ ARGS_((Integer*, Void*, Integer*, Integer*, Integer*));
+extern logical FATR ga_locate_region_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer*, Integer map[][5], Integer* ));
+extern void  FATR ga_acc_   ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               void*, Integer*, void* ));
+extern void FATR ga_access_ ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Integer*, Integer* ));
+extern void FATR ga_brdcst_ ARGS_((Integer*, Void*, Integer*, Integer* ));
+extern void FATR ga_gather_ ARGS_((Integer*, Void*, Integer*, Integer*, Integer* ));
+extern void ga_dgop ARGS_((Integer, DoublePrecision*, Integer, char* ));
+extern void FATR ga_distribution_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer*, Integer* ));
+extern void FATR ga_scatter_ ARGS_((Integer*, Void*, Integer*, Integer*, Integer*));
 extern void ga_error    ARGS_((char*, Integer));
-extern void ga_init_fence_   ARGS_(( void));
-extern void ga_fence_   ARGS_(( void));
-extern void ga_get_     ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Void*, Integer* ));
+extern void FATR ga_init_fence_   ARGS_(( void));
+extern void FATR ga_fence_   ARGS_(( void));
+extern void FATR ga_get_     ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Void*, Integer* ));
 extern void ga_igop     ARGS_((Integer, Integer*, Integer, char* ));
-extern void ga_initialize_ ARGS_(( void));
-extern void ga_initialize_ltd_ ARGS_(( Integer* ));
-extern void ga_inquire_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
-extern void ga_inquire_name ARGS_((Integer*, char* ));
-extern void ga_list_data_servers_ ARGS_((Integer* ));
-extern void ga_list_nodeid_ ARGS_((Integer*, Integer* ));
-extern void ga_num_data_servers_ ARGS_((Integer* ));
-extern void ga_put_  ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Void*, Integer* ));
-extern void ga_release_ ARGS_((Integer*, Integer*, Integer*,Integer*,Integer*));
-extern void ga_release_update_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer* ));
-extern void ga_sync_ ARGS_(( void));
-extern void ga_terminate_ ARGS_(( void));
-extern logical ga_uses_ma_ ARGS_(( void));
-extern logical ga_memory_limited_ ARGS_(( void));
+extern void FATR ga_initialize_ ARGS_(( void));
+extern void FATR ga_initialize_ltd_ ARGS_(( Integer* ));
+extern void FATR ga_inquire_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
+extern void ga_inquire_name ARGS_((Integer*, char** ));
+extern void FATR ga_list_data_servers_ ARGS_((Integer* ));
+extern void FATR ga_list_nodeid_ ARGS_((Integer*, Integer* ));
+extern void FATR ga_num_data_servers_ ARGS_((Integer* ));
+extern void FATR ga_put_  ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Void*, Integer* ));
+extern void FATR ga_release_ ARGS_((Integer*, Integer*, Integer*,Integer*,Integer*));
+extern void FATR ga_release_update_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer* ));
+extern void FATR ga_sync_ ARGS_(( void));
+extern void FATR ga_terminate_ ARGS_(( void));
+extern logical FATR ga_uses_ma_ ARGS_(( void));
+extern logical FATR ga_memory_limited_ ARGS_(( void));
 
 
 extern void ga_copy_patch ARGS_((char *, Integer *, Integer *, Integer *,                                        Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *, Integer *));
@@ -83,40 +84,50 @@ extern DoublePrecision ga_ddot_patch ARGS_((Integer *, char*, Integer *,        
                                            Integer *, Integer *, Integer *));
 extern DoubleComplex ga_zdot_patch ARGS_((Integer *, char*, Integer *,                                                   Integer *, Integer *, Integer *,                                                Integer *, char*, Integer *,
                                            Integer *, Integer *, Integer *));
-extern void ga_fill_patch_  ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, Void *));
-extern void ga_scale_patch_  ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, DoublePrecision *));
-extern void ga_add_patch_   ARGS_((DoublePrecision *, Integer *,                                                   Integer *, Integer *, Integer *, Integer *,                                     DoublePrecision *, Integer *,                                                   Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *, Integer *, Integer *,                                     Integer *  ));
+extern void FATR ga_fill_patch_  ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, Void *));
+extern void FATR ga_scale_patch_  ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, DoublePrecision *));
+extern void FATR ga_add_patch_   ARGS_((DoublePrecision *, Integer *,                                                   Integer *, Integer *, Integer *, Integer *,                                     DoublePrecision *, Integer *,                                                   Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *, Integer *, Integer *,                                     Integer *  ));
 extern void ga_matmul_patch  ARGS_((char *, char *,                                                                 DoublePrecision *, DoublePrecision *,                                           Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *, Integer *,                                                Integer *, Integer *, Integer *, Integer *, 
                                     Integer *, Integer *, Integer *, Integer*));
 
-extern void ga_copy_   ARGS_((Integer *, Integer *));
-extern void ga_print_  ARGS_((Integer *));
-extern void ga_print_stats_();
-extern void ga_zero_   ARGS_((Integer *));
-extern void ga_scale_  ARGS_((Integer *, DoublePrecision *));
-extern void ga_add_   ARGS_((Void *, Integer *, Void *,                                Integer *, Integer *));
-extern DoublePrecision ga_ddot_ ARGS_((Integer *, Integer *));
-extern DoublePrecision ga_zdot_ ARGS_((Integer *, Integer *));
-extern void ga_print_patch_ ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *));
+extern void FATR ga_copy_   ARGS_((Integer *, Integer *));
+extern void FATR ga_print_  ARGS_((Integer *));
+extern void FATR ga_print_stats_();
+extern void FATR ga_zero_   ARGS_((Integer *));
+extern void FATR ga_scale_  ARGS_((Integer *, void *));
+extern void FATR ga_add_   ARGS_((Void *, Integer *, Void *,                                Integer *, Integer *));
+extern Integer FATR ga_idot_ ARGS_((Integer *, Integer *));
+extern DoublePrecision FATR ga_ddot_ ARGS_((Integer *, Integer *));
+extern DoubleComplex FATR ga_zdot_ ARGS_((Integer *, Integer *));
+extern void FATR ga_print_patch_ ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *));
 
 extern void ga_summarize     ARGS_((logical*));
-extern void ga_symmetrize_   ARGS_((Integer *)); 
-extern void ga_transpose_    ARGS_((Integer *, Integer *));
-extern void ga_diag_seq_     ARGS_((Integer *, Integer *, Integer *,                                                DoublePrecision *));
-extern void ga_diag_reuse_   ARGS_((Integer*, Integer *, Integer *, Integer *,
+extern void FATR ga_symmetrize_   ARGS_((Integer *)); 
+extern void FATR ga_transpose_    ARGS_((Integer *, Integer *));
+extern void FATR ga_diag_seq_     ARGS_((Integer *, Integer *, Integer *,                                                DoublePrecision *));
+extern void FATR ga_diag_reuse_   ARGS_((Integer*, Integer *, Integer *, Integer *,
                                   DoublePrecision *));
-extern void ga_diag_std_     ARGS_((Integer *, Integer *, DoublePrecision *));
-extern void ga_diag_std_seq_ ARGS_((Integer *, Integer *, DoublePrecision *));
+extern void FATR ga_diag_std_     ARGS_((Integer *, Integer *, DoublePrecision *));
+extern void FATR ga_diag_std_seq_ ARGS_((Integer *, Integer *, DoublePrecision *));
 extern void ga_lu_solve      ARGS_((char *, Integer *, Integer *));
 extern void ga_lu_solve_seq  ARGS_((char *, Integer *, Integer *));
 
 extern void ga_dgemm ARGS_((char *, char *, Integer *, Integer *, Integer *,                                DoublePrecision *, Integer *, Integer *,                                        DoublePrecision *, Integer *));
-extern void ga_diag_ ARGS_((Integer *, Integer *, Integer *,DoublePrecision *));
-extern void ga_proc_topology_ ARGS_((Integer *g_a, Integer *proc,  Integer *pr,\
+extern void FATR ga_diag_ ARGS_((Integer *, Integer *, Integer *,DoublePrecision *));
+extern void FATR ga_proc_topology_ ARGS_((Integer *g_a, Integer *proc,  Integer *pr,\
                                      Integer *pc));
 
-extern void ga_sort_permut_ ARGS_((Integer* g_a, Integer* index, Integer* i, Integer* j, Integer* nv));
+extern void FATR ga_sort_permut_ ARGS_((Integer* g_a, Integer* index, Integer* i, Integer* j, Integer* nv));
 #undef ARGS_
+
+extern logical nga_create_irreg(
+        Integer type,    /* MA type */
+        Integer ndim,    /* number of dimensions */
+        Integer dims[],   /* array of dimensions */
+        char *array_name, /* array name */
+        Integer map[],    /* decomposition map array */
+        Integer nblock[], /* number of blocks for each dimension in map */
+        Integer *g_a);    /* array handle (output) */
 
 
 extern DoubleComplex   *DCPL_MB;

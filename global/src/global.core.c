@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.51 1999-01-08 01:23:36 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.52 1999-06-08 00:08:33 d3h325 Exp $*/
 /* 
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -38,7 +38,7 @@
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
-#include "macommon.h"
+#include "macdecls.h"
 #include "global.core.h"
 
 #define DEBUG 0
@@ -92,7 +92,7 @@ void gaCentralBarrier()
 
 /*\ SYNCHRONIZE ALL THE PROCESSES
 \*/
-void ga_sync_()
+void FATR ga_sync_()
 {
 void   ga_wait_server();
        extern int GA_fence_set;
@@ -151,8 +151,8 @@ Integer GAsizeof(type)
 /*\ FINAL CLEANUP of shmem when terminating
 \*/
 void ga_clean_resources()
-{                  
-#ifdef SYSV 
+{
+#if defined(SYSV) 
     if(GAinitialized){
 #      ifndef KSR
 #         if defined(SGIUS) || defined (SPPLOCKS)
@@ -170,12 +170,12 @@ void ga_clean_resources()
 /*\ CHECK GA HANDLE and if it's wrong TERMINATE
  *  Fortran version
 \*/
-#ifdef CRAY
-void ga_check_handle_(g_a, fstring)
+#if defined(CRAY) || defined(WIN32)
+void FATR  ga_check_handle_(g_a, fstring)
      Integer *g_a;
      _fcd fstring;
 #else
-void ga_check_handle_(g_a, fstring,slen)
+void FATR  ga_check_handle_(g_a, fstring,slen)
      Integer *g_a;
      int  slen;
      char *fstring;
@@ -184,7 +184,7 @@ void ga_check_handle_(g_a, fstring,slen)
 char  buf[FLEN];
 
     if( GA_OFFSET + (*g_a) < 0 || GA_OFFSET + (*g_a) >= max_global_array){
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(fstring), _fcdlen(fstring), buf, FLEN);
 #else
       f2cstring(fstring, slen, buf, FLEN);
@@ -193,7 +193,7 @@ char  buf[FLEN];
       ga_error(" invalid global array handle ", (*g_a));
     }
     if( ! (GA[GA_OFFSET + (*g_a)].actv) ){
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(fstring), _fcdlen(fstring), buf, FLEN);
 #else
       f2cstring(fstring, slen, buf, FLEN);
@@ -333,11 +333,14 @@ void gaPermuteProcList2(nproc)
  *  either ga_initialize_ltd or ga_initialize must be the first 
  *         GA routine called (except ga_uses_ma)
 \*/
-void ga_initialize_()
+void FATR  ga_initialize_()
 {
-Integer type, i;
-Integer buf_size, bar_size;
+Integer  i;
 long *msg_buf;
+#ifdef SYSV
+Integer buf_size, bar_size;
+Integer type;
+#endif
 
     if(GAinitialized) return;
 
@@ -394,22 +397,22 @@ long *msg_buf;
 
     gaAllTrapSignals(); /* all processes set up own signal handlers */
 
-#ifdef KSR
-    bar_size = KSRbarrier_mem_req();
-#else
-    bar_size = 2*sizeof(long);
-#endif
 
 #ifdef SYSV 
 
     /*....................... System V IPC stuff  ..........................*/
+#   ifdef KSR
+      bar_size = KSRbarrier_mem_req();
+#   else
+      bar_size = 2*sizeof(long);
+#   endif
+
     buf_size = sizeof(DoublePrecision)*cluster_compute_nodes; /*shmem buffer*/ 
 
     /* at the end there is shmem counter for ONE server request counter */
     shmSIZE  = bar_size + buf_size+ sizeof(Integer); 
 
     if(MPme == cluster_master){
-
         /* assure that GA will not alocate more shared memory than specified */
         if(GA_memory_limited){ 
             unsigned long shmemlimit;
@@ -517,6 +520,7 @@ long *msg_buf;
      * 
      */
     {
+      extern void FATR ga_ma_base_address_(Integer*, void**);
       static Integer dtype = MT_F_DBL;
       ga_ma_base_address_(&dtype, (Void**)&DBL_MB);
       if(!DBL_MB)ga_error("ga_initialize: wrong dbl pointer ", 1L);
@@ -551,7 +555,7 @@ long *msg_buf;
 
     /* selected processes now become data servers */
 #ifdef DATA_SERVER
-    gai_setup_cluster(); 
+       gai_setup_cluster();
        if(ClusterMode) if(GAme <0) ga_SERVER(0, MessageRcv);
 #elif defined(IWAY)
     if(ClusterMode) if(GAme <0) ga_server_handler();
@@ -594,7 +598,7 @@ long *msg_buf;
 
 /*\ IS MA USED FOR ALLOCATION OF GA MEMORY ?
 \*/ 
-logical ga_uses_ma_()
+logical FATR ga_uses_ma_()
 {
 #  ifdef SYSV
      return FALSE;
@@ -606,7 +610,7 @@ logical ga_uses_ma_()
 
 /*\ IS MEMORY LIMIT SET ?
 \*/
-logical ga_memory_limited_()
+logical FATR ga_memory_limited_()
 {
    if(GA_memory_limited) return TRUE;
    else                  return FALSE;
@@ -616,7 +620,7 @@ logical ga_memory_limited_()
 
 /*\ RETURNS AMOUNT OF MEMORY on each processor IN ACTIVE GLOBAL ARRAYS 
 \*/
-Integer  ga_inquire_memory_()
+Integer  FATR ga_inquire_memory_()
 {
 Integer i, sum=0;
     for(i=0; i<max_global_array; i++) 
@@ -627,7 +631,7 @@ Integer i, sum=0;
 
 /*\ RETURNS AMOUNT OF GA MEMORY AVAILABLE on calling processor 
 \*/
-Integer ga_memory_avail_()
+Integer FATR ga_memory_avail_()
 {
 #ifdef SYSV
    return(GA_total_memory); 
@@ -650,7 +654,7 @@ Integer ga_memory_avail_()
  *         without memory control
  *  mem_limit < 0 means "memory unlimited"
 \*/
-void ga_initialize_ltd_(mem_limit)
+void FATR  ga_initialize_ltd_(mem_limit)
 Integer *mem_limit;
 {
 
@@ -755,7 +759,7 @@ Integer nblock1, nblock2;
 /*\ CREATE A GLOBAL ARRAY
  *  Fortran version
 \*/
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
 logical ga_create_(type, dim1, dim2, array_name, chunk1, chunk2, g_a)
      Integer *type, *dim1, *dim2, *chunk1, *chunk2, *g_a;
      _fcd array_name;
@@ -767,7 +771,7 @@ logical ga_create_(type, dim1, dim2, array_name, chunk1, chunk2, g_a, slen)
 #endif
 {
 char buf[FNAM];
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
@@ -857,12 +861,13 @@ Void    **pptr;
 char    *array_name;
 {
 #ifdef SYSV
+   char *base;
+   int adjust, diff;
    long *msg_buf = (long*)MessageRcv->buffer, bytes=(long)mem_size;
 #else
    Integer handle, index;
 #endif
-   char *base;
-   int adjust, diff, item_size;
+   int item_size;
 
    *id   = INVALID_MA_HANDLE;
    *pptr = (Void*)NULL;
@@ -1190,7 +1195,7 @@ int heap_status;
 /*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
  *  Fortran version
 \*/
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
 logical ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
                          map2, nblock2, g_a)
      Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a;
@@ -1204,7 +1209,7 @@ logical ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
 #endif
 {
 char buf[FNAM];
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
@@ -1371,7 +1376,7 @@ long **ptr_ptr_long,*ptr_long;
 /*\ DUPLICATE A GLOBAL ARRAY
  *  Fortran version
 \*/
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
 logical ga_duplicate_(g_a, g_b, array_name)
      Integer *g_a, *g_b;
      _fcd array_name;
@@ -1383,7 +1388,7 @@ logical ga_duplicate_(g_a, g_b, array_name, slen)
 #endif
 {
 char buf[FNAM];
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
@@ -1397,8 +1402,7 @@ char buf[FNAM];
 
 /*\ DESTROY A GLOBAL ARRAY
 \*/
-logical ga_destroy_(g_a)
-        Integer *g_a;
+logical FATR ga_destroy_(Integer *g_a)
 {
 Integer ga_handle = GA_OFFSET + *g_a;
 
@@ -1449,7 +1453,7 @@ Integer ga_handle = GA_OFFSET + *g_a;
  *  all GA arrays are destroyed & shared memory is dealocated
  *  GA routines (except for ga_initialize) should not be called thereafter 
 \*/
-void ga_terminate_() 
+void FATR  ga_terminate_() 
 {
 Integer i, handle;
 extern double t_dgop, n_dgop, s_dgop;
@@ -1495,7 +1499,7 @@ extern double t_dgop, n_dgop, s_dgop;
     
 /*\ IS ARRAY ACTIVE/INACTIVE
 \*/ 
-Integer ga_verify_handle_(g_a)
+Integer FATR ga_verify_handle_(g_a)
      Integer *g_a;
 {
   return (Integer)
@@ -1633,7 +1637,7 @@ Integer  type;
 
 /*\ PUT A 2-DIMENSIONAL PATCH OF DATA INTO A GLOBAL ARRAY 
 \*/
-void ga_put_(g_a, ilo, ihi, jlo, jhi, buf, ld)
+void FATR  ga_put_(g_a, ilo, ihi, jlo, jhi, buf, ld)
    Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld;
    Void  *buf;
 {
@@ -1787,7 +1791,6 @@ void ga_get_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
 char     *ptr_src, *ptr_dst;
 Integer  type, rows, cols, len, to, from, msglen, expected_len, need_copy;
 msgid_t  msgid_snd, msgid_rcv;
-      double tcgtime_(),t;
 
    if(proc<0)ga_error(" get_remote: invalid process ",proc);
    type = GA[GA_OFFSET + g_a].type;
@@ -1850,7 +1853,7 @@ msgid_t  msgid_snd, msgid_rcv;
 
 /*\ GET A 2-DIMENSIONAL PATCH OF DATA FROM A GLOBAL ARRAY
 \*/
-void ga_get_(g_a, ilo, ihi, jlo, jhi, buf, ld)
+void FATR  ga_get_(g_a, ilo, ihi, jlo, jhi, buf, ld)
    Integer  *g_a, *ilo, *ihi, *jlo, *jhi,  *ld;
    Void     *buf;
 {
@@ -2293,7 +2296,7 @@ Integer  type;
  *
  *  g_a += alpha * patch
 \*/
-void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
+void FATR  ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *ld;
    void *buf, *alpha;
 {
@@ -2394,7 +2397,7 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
 
 /*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
 \*/
-void ga_access_(g_a, ilo, ihi, jlo, jhi, index, ld)
+void FATR  ga_access_(g_a, ilo, ihi, jlo, jhi, index, ld)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *index, *ld;
 {
 register char *ptr;
@@ -2478,14 +2481,14 @@ Integer ow;
 
 /*\ RELEASE ACCESS TO A PATCH OF A GLOBAL ARRAY
 \*/
-void ga_release_(g_a, ilo, ihi, jlo, jhi)
+void FATR  ga_release_(g_a, ilo, ihi, jlo, jhi)
      Integer *g_a, *ilo, *ihi, *jlo, *jhi;
 {}
 
 
 /*\ RELEASE ACCESS & UPDATE A PATCH OF A GLOBAL ARRAY
 \*/
-void ga_release_update_(g_a, ilo, ihi, jlo, jhi)
+void FATR  ga_release_update_(g_a, ilo, ihi, jlo, jhi)
      Integer *g_a, *ilo, *ihi, *jlo, *jhi;
 {}
 
@@ -2494,7 +2497,7 @@ void ga_release_update_(g_a, ilo, ihi, jlo, jhi)
 /*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
  *  Fortran version
 \*/ 
-void ga_inquire_(g_a,  type, dim1, dim2)
+void FATR  ga_inquire_(g_a,  type, dim1, dim2)
       Integer *g_a, *dim1, *dim2, *type;
 {
    ga_check_handleM(g_a, "ga_inquire");
@@ -2508,15 +2511,15 @@ void ga_inquire_(g_a,  type, dim1, dim2)
 /*\ INQUIRE NAME OF A GLOBAL ARRAY
  *  Fortran version
 \*/
-#ifdef CRAY
-void ga_inquire_name_(g_a, array_name)
+#if defined(CRAY) || defined(WIN32)
+void FATR  ga_inquire_name_(g_a, array_name)
       Integer *g_a;
       _fcd    array_name;
 {
    c2fstring(GA[GA_OFFSET+ *g_a].name,_fcdtocp(array_name),_fcdlen(array_name));
 }
 #else
-void ga_inquire_name_(g_a, array_name, len)
+void FATR  ga_inquire_name_(g_a, array_name, len)
       Integer *g_a;
       char    *array_name;
       int     len;
@@ -2531,19 +2534,17 @@ void ga_inquire_name_(g_a, array_name, len)
 /*\ INQUIRE NAME OF A GLOBAL ARRAY
  *  C version
 \*/
-void ga_inquire_name(g_a, array_name)
-      Integer *g_a;
-      char    *array_name;
+void ga_inquire_name(Integer *g_a, char** array_name)
 { 
    ga_check_handleM(g_a, "ga_inquire_name");
-   strcpy(array_name, GA[GA_OFFSET + *g_a].name);
+   *array_name = GA[GA_OFFSET + *g_a].name;
 }
 
 
 
 /*\ RETURN COORDINATES OF A GA PATCH ASSOCIATED WITH CALLING PROCESSOR
 \*/
-void ga_distribution_(g_a, proc, ilo, ihi, jlo, jhi)
+void FATR  ga_distribution_(g_a, proc, ilo, ihi, jlo, jhi)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *proc;
 {
 register Integer iproc, jproc, loc, ga_handle;
@@ -2575,7 +2576,7 @@ register Integer iproc, jproc, loc, ga_handle;
 
 /*\ RETURN COORDINATES OF ARRAY BLOCK HELD BY A PROCESSOR
 \*/
-void ga_proc_topology_(g_a, proc, pr, pc)
+void FATR  ga_proc_topology_(g_a, proc, pr, pc)
    Integer *g_a, *proc, *pr, *pc;
 {
 register Integer ga_handle;
@@ -2654,7 +2655,7 @@ int candidate, found, b, *map= (map_ij);\
 
 /*\ LOCATE THE OWNER OF THE (i,j) ELEMENT OF A GLOBAL ARRAY
 \*/
-logical ga_locate_(g_a, i, j, owner)
+logical FATR ga_locate_(g_a, i, j, owner)
         Integer *g_a, *i, *j, *owner;
 {
 int  iproc, jproc; 
@@ -2682,7 +2683,7 @@ Integer ga_handle;
 
 /*\ LOCATE OWNERS OF THE SPECIFIED PATCH OF A GLOBAL ARRAY
 \*/
-logical ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, np )
+logical FATR ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, np )
         Integer *g_a, *ilo, *jlo, *ihi, *jhi, map[][5], *np;
 {
 int  iprocLT, iprocRB, jprocLT, jprocRB;
@@ -2816,7 +2817,7 @@ register Integer item_size, offset, nbytes, msglen;
 
 /*\ SCATTER OPERATION elements of v into the global array
 \*/
-void ga_scatter_(g_a, v, i, j, nv)
+void FATR  ga_scatter_(g_a, v, i, j, nv)
      Integer *g_a, *nv, *i, *j;
      Void *v;
 {
@@ -2910,7 +2911,7 @@ Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
 
 /*\ permutes input index list using sort routine used in scatter/gather
 \*/
-void ga_sort_permut_(g_a, index, i, j, nv)
+void FATR  ga_sort_permut_(g_a, index, i, j, nv)
      Integer *g_a, *nv, *i, *j, *index;
 {
 register Integer k;
@@ -3045,7 +3046,7 @@ msgid_t  msgid;
 
 /*\ GATHER OPERATION elements from the global array into v
 \*/
-void ga_gather_(g_a, v, i, j, nv)
+void FATR  ga_gather_(g_a, v, i, j, nv)
      Integer *g_a, *nv, *i, *j;
      Void *v;
 {
@@ -3231,7 +3232,7 @@ msgid_t  msgid;
 
 /*\ READ AND INCREMENT AN ELEMENT OF A GLOBAL ARRAY
 \*/
-Integer ga_read_inc_(g_a, i, j, inc)
+Integer FATR ga_read_inc_(g_a, i, j, inc)
         Integer *g_a, *i, *j, *inc;
 {
 Integer  value, proc; 
@@ -3271,29 +3272,53 @@ Integer  value, proc;
 
 
 
-Integer ga_nodeid_()
+Integer FATR ga_nodeid_()
 {
   return ((Integer)GAme);
 }
 
 
-Integer ga_nnodes_()
+Integer FATR ga_nnodes_()
 {
   return ((Integer)GAnproc);
 }
 
 
+/*\ COMPARE DISTRIBUTIONS of two global arrays
+\*/
+logical FATR ga_compare_distr_(g_a, g_b)
+     Integer *g_a, *g_b;
+{
+int h_a =*g_a + GA_OFFSET;
+int h_b =*g_b + GA_OFFSET;
+int i;
+
+   GA_PUSH_NAME("ga_compare_distr");
+   ga_check_handleM(g_a, "distribution a");
+   ga_check_handleM(g_b, "distribution b");
+
+   GA_POP_NAME;
+
+   if(GA[h_a].dims[0] == GA[h_b].dims[0]) return FALSE;
+   if(GA[h_a].dims[1] == GA[h_b].dims[1]) return FALSE;
+   for(i=0; i <MAPLEN; i++){
+      if(GA[h_a].mapc[i] != GA[h_b].mapc[i]) return FALSE;
+      if(GA[h_a].mapc[i] == -1) break;
+   }
+   return TRUE;
+}
+
 
 /*********************** other utility routines *************************/
 
-void ga_ma_get_ptr_(ptr, address)
+void FATR  ga_ma_get_ptr_(ptr, address)
       char **ptr, *address;
 {
    *ptr = address; 
 }
 
 
-Integer ga_ma_diff_(ptr1, ptr2)
+Integer FATR ga_ma_diff_(ptr1, ptr2)
         char *ptr1, *ptr2;
 {
    return((Integer)(ptr2-ptr1));

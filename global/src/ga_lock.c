@@ -1,7 +1,6 @@
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
-#include "macommon.h"
 #include <stdio.h>
 
 #define MAX_LOCKS 32768
@@ -27,7 +26,7 @@ save_t savelock[512];
 
 static waiting_list_t* blocked; /* stores info about locked (waiting) process */
 
-#define ERROR(str,code) ga_error(str, (Integer)code)
+#define Error(str,code) ga_error(str, (Integer)code)
 
 #if defined(NX) || defined(SP1) || defined(SP)
 #   define SERVER_LOCK 
@@ -42,12 +41,12 @@ static waiting_list_t* blocked; /* stores info about locked (waiting) process */
 
 
 
-logical ga_create_mutexes_(Integer *num)
+logical FATR ga_create_mutexes_(Integer *num)
 {
 Integer type=MT_F_INT, nproc = ga_nnodes_(), indx;
 
 	if (*num <= 0 || *num > 32768) return(FALSE);
-        if(num_mutexes) ERROR("mutexes already created",num_mutexes);
+        if(num_mutexes) Error("mutexes already created",num_mutexes);
 
         num_mutexes= (int)*num;
 
@@ -61,17 +60,17 @@ Integer type=MT_F_INT, nproc = ga_nnodes_(), indx;
           /* need MA memory properly alligned */
           int mem = nproc*sizeof(waiting_list_t)/sizeof(double) + 1;
           if(!MA_alloc_get(MT_C_DBL,mem,"GA lock wait list",&Whandle,&indx))
-                 ERROR("ga_create_mutexes:error allocating memory for lock",0); 
+                 Error("ga_create_mutexes:error allocating memory for lock",0); 
           MA_get_pointer(Whandle, &blocked);
-          if(!blocked)ERROR("ga_create_mutexes:error allocating memory W",0);
+          if(!blocked)Error("ga_create_mutexes:error allocating memory W",0);
         }
 #       endif
 
         /* one extra element to make indexing consistent with GA */
         if(!MA_alloc_get(MT_F_INT, *num+1, "GA lock next", &Nhandle,&indx))
-                 ERROR("ga_create_mutexes:error allocating memory for lock",1);
+                 Error("ga_create_mutexes:error allocating memory for lock",1);
         MA_get_pointer(Nhandle, &next);
-        if(!next)ERROR("ga_create_mutexes:error allocating memory N",0);
+        if(!next)Error("ga_create_mutexes:error allocating memory N",0);
 
         ga_zero_(&g_mutexes);
 
@@ -79,9 +78,9 @@ Integer type=MT_F_INT, nproc = ga_nnodes_(), indx;
 }
         
 
-logical ga_destroy_mutexes_()
+logical FATR ga_destroy_mutexes_()
 {
-     if(num_mutexes==0)ERROR("ga_destroy_mutexes: mutexes not created",0);
+     if(num_mutexes==0)Error("ga_destroy_mutexes: mutexes not created",0);
      num_mutexes=0;
      if(ga_nnodes_() == 1) return(TRUE);
 
@@ -112,7 +111,6 @@ Integer i, myturn, factor=0;
            ga_get_(&g_mutexes, &id, &id, &two, &two, &myturn, &one);
               fprintf(stderr,"%d proble with next %d %d\n",ga_nodeid_(),myturn,
               next[id]);
-              pause();
            }
           
            /* linear backoff before retrying  */
@@ -149,7 +147,6 @@ Integer myturn, turn, me;
         if(turn > myturn){
               fprintf(stderr,"%d serv:problem with turn %d %d\n",ga_nodeid_(),myturn,
               myturn);
-              pause();
         }
 
 #ifdef DEBUG
@@ -183,7 +180,6 @@ void ga_server_unlock(Integer handle, Integer id, Integer node,
                       Integer server_next)
 {
 Integer i, proc=-1, me = ga_nodeid_();
-int ack;
 
         if(DEBUG) fprintf(stderr,"SUNLOCK:server=%d node=%d id=%d next=%d\n",
                           me,node,id,server_next);
@@ -201,7 +197,7 @@ int ack;
            }
         }
         if(proc != -1)
-           if(proc ==me)ERROR("server_unlock: cannot unlock self",0);
+           if(proc ==me)Error("server_unlock: cannot unlock self",0);
            else {
              GA_SEND_REPLY(blocked[proc].tag, &server_next, sizeof(Integer), 
                                                                       proc); 
@@ -220,10 +216,10 @@ Integer owner, owner2, server, me=ga_nodeid_();
 
       /* check if elements (id,1) and (id,2) reside on the same process */ 
       if(!ga_locate_(&g_mutexes, &id, &one, &owner))
-                     ERROR("ga_lock:locate fail",1);
+                     Error("ga_lock:locate fail",1);
       if(!ga_locate_(&g_mutexes, &id, &two, &owner2))
-                     ERROR("ga_lock:locate fail",2);
-      if(owner != owner2) ERROR("ga_lock:error in mutex array distribution",0);
+                     Error("ga_lock:locate fail",2);
+      if(owner != owner2) Error("ga_lock:error in mutex array distribution",0);
 
       server = DataServer(owner);
 
@@ -265,7 +261,7 @@ static void dst_unlock(Integer id)
 Integer owner, server;
 
       if(!ga_locate_(&g_mutexes, &id, &one, &owner)) 
-                                  ERROR("ga_lock:locate failed",0);      
+                                  Error("ga_lock:locate failed",0);      
       server = DataServer(owner);
       if(server == ga_nodeid_()){
          ga_server_unlock(g_mutexes, id, server, next[id]);
@@ -278,14 +274,14 @@ Integer owner, server;
 }
 
 
-void ga_lock_(Integer *id)        
+void FATR ga_lock_(Integer *id)        
 {
 
         if(DEBUG)fprintf(stderr,"%d enter lock\n",ga_nodeid_());
 
-        if(!num_mutexes) ERROR("ga_lock: need to create mutexes first",0);
+        if(!num_mutexes) Error("ga_lock: need to create mutexes first",0);
 
-        if(*id >= num_mutexes)ERROR("ga_lock: need more mutexes", num_mutexes); 
+        if(*id >= num_mutexes)Error("ga_lock: need more mutexes", num_mutexes); 
 
         if(ga_nnodes_() == 1) return;
 
@@ -300,13 +296,13 @@ void ga_lock_(Integer *id)
 
 
 
-void ga_unlock_(Integer *id)
+void FATR ga_unlock_(Integer *id)
 {
         if(DEBUG)fprintf(stderr,"%d enter unlock\n",ga_nodeid_());
 
-        if(!num_mutexes) ERROR("ga_unlock: need to create mutexes first",0);
+        if(!num_mutexes) Error("ga_unlock: need to create mutexes first",0);
 
-        if(*id >= num_mutexes) ERROR("ga_lock: need more mutexes", num_mutexes);
+        if(*id >= num_mutexes) Error("ga_lock: need more mutexes", num_mutexes);
 
         if(ga_nnodes_() == 1) return;
 

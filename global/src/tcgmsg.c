@@ -56,7 +56,7 @@ void init_msg_interface()
   GA_clus_id = (Integer)SR_clus_id;
 #else
   GA_n_clus = 1;
-  GA_n_proc = nnodes_();
+  GA_n_proc = NNODES_();
   GA_clus_id = 0;
   GA_clus_info[0].nslave = GA_n_proc;
 #endif

@@ -43,12 +43,16 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(INTERRUPT_AVAILABLE)))
 endif
 
 GA_CORE := global.core.o global.util.o global.patch.o global.msg.o \
-           global.serv.o ga_lock.o
+           global.serv.o ga_lock.o fops.2d.o global.ma.o global.alg.o
 
 ifeq ($(TARGET),LAPI)
   GA_CORE += lapi.o
 endif
 
+ifdef USE_ARMCI
+  GA_CORE = global.armci.o global.util.o global.patch.o \
+	    collect.o decomp.o capi.o global.nalg.o
+else
 ifdef IWAY
   GA_CORE += iway.o net.o
 else
@@ -58,14 +62,15 @@ else
     GA_CORE += tcgmsg.o
   endif
 endif
+endif
 
-GA_OBJ = $(GA_CORE) $(GA_SYNC) $(GA_HANDLER) $(IPC)
+  GA_OBJ = $(GA_CORE) $(GA_SYNC) $(GA_HANDLER) $(IPC)
 
 #
 #
 #                  Linear Algebra
 #
-GA_ALG_BLAS = global.alg.o ga_dgemm.o ga_symmetr.o ga_diag_seq.o rsg.o\
+GA_ALG_BLAS = ga_dgemm.o ga_symmetr.o ga_diag_seq.o rsg.o\
               rs-mod.o ga_solve_seq.o ga_transpose.o 
 #
 #ifeq ($(DIAG),PAR)
@@ -80,8 +85,11 @@ GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #
 #                 Utility Routines
 #
-GA_UTIL = ffflush.o fill.o ga_summarize.o hsort.scat.o global.ma.o\
-          DP.o fops.2d.o
+GA_UTIL = ffflush.o fill.o ga_summarize.o hsort.scat.o\
+          DP.o fort.o fops.2d.o
 
-OBJ_FRAGILE = $(GA_SYNC) $(GA_HANDLER) $(IPC)
+ifndef USE_ARMCI
+  OBJ_FRAGILE = $(GA_SYNC) $(GA_HANDLER) $(IPC)
+endif
+
 OBJ = $(GA_CORE) $(GA_ALG) $(GA_UTIL) $(EXTRA) $(OBJ_FRAGILE)

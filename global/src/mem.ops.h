@@ -288,7 +288,7 @@ Integer rrows, ldd, lds;
 
 
 /**************************** accumulate operation **************************/
-#if defined(CRAY) || defined(FUJITSU)
+#if defined(CRAY) || defined(FUJITSU) || defined(CYGNUS)
 static void dacc_column(alpha, a, b,n)
 Integer n;
 DoublePrecision *alpha, *a, *b;

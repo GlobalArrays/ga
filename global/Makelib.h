@@ -22,10 +22,9 @@ ifeq ($(TARGET),SOLARIS)
 endif
 #................................ FUJITSU-VPP ..............................
 ifeq ($(TARGET),FUJITSU-VPP)
-#        EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
-#MPlib 2.2.X 
-       EXTRA_LIBS = /usr/local/lib/libmp2.a -L/opt/tools/lib/ -lgen  -lpx -lelf
- -Wl,-J,-P -L/usr/lang/lib -lblasvp
+#       EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
+#MPlib 2.2.X and higher
+        EXTRA_LIBS = /usr/local/lib/libmp2.a -L/opt/tools/lib/ -lgen  -lpx -lelf -Wl,-J,-P -L/usr/lang/lib -lblasvp
 endif
 #................................ KSR ......................................
 #
@@ -88,7 +87,7 @@ LIBLAPIDIR = /usr/lpp/ssp/css/lib
 
 EXTRA_LIBS = -lxlf90 -lxlf -lm
 
-EXTRA_LIBS__ = \
+EXTRA_LIBS_11 = \
    -bnso -bI:/usr/lib/syscalls.exp -L$(LIBLAPIDIR) $(LIBHAL) $(LIBLAPI) \
           -bI:/usr/lib/threads.exp /usr/lpp/ssp/css/libtb3/libmpci_r.a \
           -bI:/usr/lpp/ssp/css/libus/fs_ext.exp \
@@ -109,6 +108,9 @@ endif
 
 #LIBS += $(BLAS) -llinalg $(BLAS)
 
+ifdef USE_ARMCI
+	LIBCOM += -larmci
+endif
 
 ifdef USE_MPI
    ifdef MPI_LIB

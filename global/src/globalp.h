@@ -1,7 +1,12 @@
-#ifndef  GLOBALP_H
-#define GLOBALP_H
+#ifndef  _GLOBALP_H_
+#define _GLOBALP_H_
 
 #include "config.h"
+
+#if defined(WIN32)
+#   include "winutil.h"
+#endif
+#include "macdecls.h"
 
 #define GA_OFFSET   1000           /* offset for handle numbering */
 
@@ -114,11 +119,11 @@ struct ga_bytes_t{
 
 #define STAT_AR_SZ sizeof(ga_stat_t)/sizeof(long)
 
-extern long   *GAstat_arr;  
+extern long *GAstat_arr;  
 extern struct ga_stat_t GAstat;
 extern struct ga_bytes_t GAbytes;
 extern char *GA_name_stack[NAME_STACK_LEN];    /* stack for names of GA ops */ 
-extern int  GA_stack_size;
+extern int GA_stack_size;
 
 #define  GA_PUSH_NAME(name) (GA_name_stack[GA_stack_size++] = (name)) 
 #define  GA_POP_NAME        (GA_stack_size--)
@@ -127,21 +132,32 @@ extern int  GA_stack_size;
 extern void f2cstring(char*, Integer, char*, Integer);
 extern void c2fstring( char*, char*, Integer);
 extern void ga_clean_resources( void);
-extern Integer MA_push_get (Integer, Integer, char*, Integer*, Integer*);
-extern Integer MA_alloc_get (Integer, Integer, char*, Integer*, Integer*);
-extern Integer MA_pop_stack (Integer);
-extern Integer MA_free_heap (Integer);
 
 
+#ifdef ARMCI
+extern Integer ga_ndim_(Integer *g_a);
+
+extern logical FATR nga_locate_(Integer *g_a, 
+                                Integer* subscript, 
+                                Integer* owner);
+
+extern logical FATR nga_locate_region_( Integer *g_a,
+                                        Integer *lo,
+                                        Integer *hi,
+                                        Integer *map,
+                                        Integer *proclist,
+                                        Integer *np);
+#else
 extern void ga_put_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo, 
                          Integer jhi, void* buf, Integer offset, Integer ld, 
                          Integer proc);
 extern void ga_get_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo, 
                          Integer jhi, void* buf, Integer offset, Integer ld, 
                          Integer proc);
-extern Integer ga_read_inc_local(Integer g_a, Integer i, Integer j, Integer inc, 
+extern Integer ga_read_inc_local(Integer g_a, Integer i, Integer j, Integer inc,
                                  Integer proc);
-
 extern void ga_check_req_balance();
-extern void gai_setup_cluster();
+#endif
+
+
 #endif

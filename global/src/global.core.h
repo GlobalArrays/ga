@@ -203,6 +203,9 @@ int  GA_stack_size=0;
 #              define UNLOCK(g_a,proc, x) \
                     { if( in_handler == 0) ga_mask(oldmask, &oldmask) }
 #            endif
+#      elif defined(CYGNUS)
+#            define LOCK(g_a, proc, x) 
+#            define UNLOCK(g_a, proc, x) 
 #      endif
 #endif
 

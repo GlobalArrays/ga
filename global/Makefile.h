@@ -2,10 +2,10 @@
 #
 # Define TARGET to be the machine you wish to build for
 # choose one of :
-# SUN,SOLARIS,SGI,SGITFP,IBM,KSR,SP1,CRAY-T3D,CRAY-T3E,IPSC,DELTA,PARAGON,DECOSF,LAPI
-# LINUX, PGLINUX
+# SUN,SOLARIS,SGI,SGITFP,IBM,KSR,SP,CRAY-T3D,CRAY-T3E,
+# IPSC,DELTA,PARAGON,DECOSF,LAPI, LINUX
 # Specify message-passing library to be used with GA. The current choices
-# are: TCGMSG (default) or MPI. For MPI, please refer to global.doc for 
+# are: TCGMSG or MPI. For MPI, please refer to global.doc for 
 # configuration info.
 # MSG_COMMS = MPI
 #
@@ -19,7 +19,7 @@
          FOPT = -O
          COPT = -O
 	 NOPT = -g
-GLOB_INCLUDES = -I../../ma
+GLOB_INCLUDES = -I../../include
            AR = ar
            AS = as
        RANLIB = echo
@@ -70,6 +70,9 @@ else
            FC = g77
 endif
  GLOB_DEFINES = -DLINUX
+ifeq ($(FC),pgf77)
+ GLOB_DEFINES+= -DPGLINUX
+endif
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
 endif
@@ -89,7 +92,6 @@ endif
 #
 #............................. CYGNUS on Windows ..........................
 #
-
 ifeq ($(TARGET),CYGNUS)
  GLOB_DEFINES = -DLINUX -DCYGNUS
            FC = g77

@@ -1,7 +1,6 @@
-/*$Id: global.patch.c,v 1.21 1998-07-20 22:16:11 bernhold Exp $*/
+/*$Id: global.patch.c,v 1.22 1999-06-08 00:08:37 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
-#include "macommon.h"
 #include <math.h>
 
 #ifdef KSR
@@ -11,7 +10,21 @@
 
 #ifdef CRAY
 #      include <fortran.h>
-#      define cptofcd(fcd)  _cptofcd((fcd),1)
+#      define  DGEMM SGEMM
+#      define  ZGEMM CGEMM
+#endif
+
+#ifdef WIN32
+   extern void FATR DGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
+                     void*, void*, Integer*, void*, Integer*, void*,
+                     void*, Integer*);
+   extern void FATR ZGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
+                     DoubleComplex*, DoubleComplex*, Integer*, DoubleComplex*, Integer*,
+                     DoubleComplex*, DoubleComplex*, Integer*);
+#endif
+
+#if defined(CRAY) || defined(WIN32)
+#   define cptofcd(fcd)  _cptofcd((fcd),1)
 #else
 #      define cptofcd(fcd) (fcd)
 #endif
@@ -78,8 +91,9 @@ static logical patch_intersect(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
 
 
 /*\ COMPARE DISTRIBUTIONS of two global arrays
+ *  now implemented elsewhere using internal GA API
 \*/
-logical ga_compare_distr_(g_a, g_b)
+logical FATR ga_compare_distr_disabled(g_a, g_b)
      Integer *g_a, *g_b;
 {
 Integer me= ga_nodeid_();
@@ -95,7 +109,7 @@ Integer type = GA_TYPE_GSM, len = 1;
    ga_distribution_(g_b, &me, &iloB, &ihiB, &jloB, &jhiB);
 
    mismatch = comp_patch(iloA, ihiA, jloA, jhiA, iloB, ihiB, jloB, jhiB)?0. :1.;
-   ga_dgop_(&type, &mismatch, &len, "+",1);
+   ga_dgop(type, &mismatch, len, "+");
    ga_sync_();
    GA_POP_NAME;
 
@@ -131,7 +145,7 @@ Integer byte_index;
    ga_sync_();
 
    GA_PUSH_NAME("ga_copy_patch");
-   /*   if(*g_a == *g_b) ga_error(" arrays have to be different ", 0L); */
+/*   if(*g_a == *g_b) ga_error(" arrays have to be different ", 0L);*/
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
@@ -230,11 +244,11 @@ Integer byte_index;
 /*\ COPY A PATCH AND POSSIBLY RESHAPE
  *  Fortran interface
 \*/
-void ga_copy_patch_(trans, g_a, ailo, aihi, ajlo, ajhi,
+void FATR ga_copy_patch_(trans, g_a, ailo, aihi, ajlo, ajhi,
                     g_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
      _fcd    trans;
 {ga_copy_patch(_fcdtocp(trans),g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi);}
 #else 
@@ -297,8 +311,7 @@ DoublePrecision  sum[2];
           *        - create a temp array that matches distribution of g_a
           *        - copy & reshape patch of g_b into g_B
           */
-         if (!ga_duplicate_(g_a, &g_B, tempname, sizeof(tempname)))
-            ga_error(" duplicate failed", 0L);
+         if (!ga_duplicate(g_a, &g_B, tempname)) ga_error("duplicate failed",0L);
 
          ga_copy_patch(&transp, g_b, bilo, bihi, bjlo, bjhi,
                                &g_B, ailo, aihi, ajlo, ajhi);
@@ -341,7 +354,7 @@ DoublePrecision  sum[2];
    }
 
    len = (atype == MT_F_DCPL) ? 2 : 1; 
-   ga_dgop_(&type, sum, &len, "+",1);
+   ga_dgop(type, sum, len, "+");
    for(i=0;i<len;i++) retval[i]=sum[i];
 
    if(temp_created) ga_destroy_(&g_B);
@@ -414,13 +427,13 @@ DoubleComplex  sum;
 /*\ compute DOT PRODUCT of two patches
  *  Fortran interface
 \*/
-void gai_dot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
+void FATR gai_dot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
                     g_b, t_b, bilo, bihi, bjlo, bjhi, retval)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
      DoublePrecision *retval;
 
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
      _fcd   t_a, t_b;                          /* transpose operators */
 {  gai_dot_patch(g_a, _fcdtocp(t_a), ailo, aihi, ajlo, ajhi,
                  g_b, _fcdtocp(t_b), bilo, bihi, bjlo, bjhi, retval);}
@@ -435,7 +448,7 @@ void gai_dot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
 
 /*\ FILL IN ARRAY WITH VALUE 
 \*/
-void ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val)
+void FATR ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val)
      Integer *g_a, *ilo, *ihi, *jlo, *jhi;
      Void    *val;
 {
@@ -487,7 +500,7 @@ Integer me= ga_nodeid_(), i, j;
 
 /*\ SCALE ARRAY 
 \*/
-void ga_scale_patch_(g_a, ilo, ihi, jlo, jhi, alpha)
+void FATR ga_scale_patch_(g_a, ilo, ihi, jlo, jhi, alpha)
      Integer *g_a, *ilo, *ihi, *jlo, *jhi;
      DoublePrecision     *alpha;
 {
@@ -541,7 +554,7 @@ Integer me= ga_nodeid_();
 
 /*\  SCALED ADDITION of two patches
 \*/
-void ga_add_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
+void FATR ga_add_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
                     beta,  g_b, bilo, bihi, bjlo, bjhi,
                            g_c, cilo, cihi, cjlo, cjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
@@ -589,8 +602,8 @@ char *tempname = "temp", notrans='n';
           *        - create a temp array that matches distribution of g_c
           *        - copy & reshape patch of g_a into g_A
           */
-         if (!ga_duplicate_(g_c, &g_A, tempname, sizeof(tempname)))
-            ga_error("ga_dadd_patch: dup failed", 0L);
+         if (!ga_duplicate(g_c, &g_A, tempname))
+              ga_error("ga_dadd_patch: duplicate failed", 0L);
          ga_copy_patch(&notrans, g_a, ailo, aihi, ajlo, ajhi,
                                 &g_A, cilo, cihi, cjlo, cjhi);  
          A_created = 1;
@@ -604,7 +617,7 @@ char *tempname = "temp", notrans='n';
           *        - create a temp array that matches distribution of g_c
           *        - copy & reshape patch of g_b into g_B
           */
-         if (!ga_duplicate_(g_c, &g_B, tempname, sizeof(tempname)))
+         if (!ga_duplicate(g_c, &g_B, tempname))
             ga_error("ga_dadd_patch: dup failed", 0L);
          ga_copy_patch(&notrans, g_b, bilo, bihi, bjlo, bjhi,
                                 &g_B, cilo, cihi, cjlo, cjhi);  
@@ -827,16 +840,16 @@ DoubleComplex ONE;
                      ga_get_(g_b, &i0, &i1, &j0, &j1, b, &jdim);
                   }
    if(atype ==  MT_F_DBL){
-#                 ifdef CRAY
-                    SGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-                          alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
+#                 if defined(CRAY) || defined(WIN32)
+                    DGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
+                          alpha, (double*)a, &adim, (double*)b, &bdim, &ONE, (double*)c, &cdim);
 #                 else
                     dgemm_(transa, transb, &idim, &jdim, &kdim,
                            alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
 #                 endif
    }else{
-#                 ifdef CRAY
-                    CGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
+#                 if defined(CRAY) || defined(WIN32)
+                    ZGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
                           alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
 #                 else
                     zgemm_(transa, transb, &idim, &jdim, &kdim,
@@ -864,7 +877,7 @@ DoubleComplex ONE;
 /*\ MATRIX MULTIPLICATION for patches 
  *  Fortran interface
 \*/
-void ga_matmul_patch_(transa, transb, alpha, beta,
+void FATR ga_matmul_patch_(transa, transb, alpha, beta,
                       g_a, ailo, aihi, ajlo, ajhi,
                       g_b, bilo, bihi, bjlo, bjhi,
                       g_c, cilo, cihi, cjlo, cjhi)
@@ -874,7 +887,7 @@ void ga_matmul_patch_(transa, transb, alpha, beta,
      Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
      DoublePrecision      *alpha, *beta;
 
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
      _fcd   transa, transb;
 {    ga_matmul_patch(_fcdtocp(transa), _fcdtocp(transb), alpha, beta,
                       g_a, ailo, aihi, ajlo, ajhi,

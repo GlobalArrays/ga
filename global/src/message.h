@@ -1,7 +1,9 @@
-/*$Id: message.h,v 1.11 1997-11-08 00:01:59 d3h325 Exp $*/
+/*$Id: message.h,v 1.12 1999-06-08 00:08:46 d3h325 Exp $*/
 
 #ifdef MPI
 #  include "mpi.h"
+#else
+#  include "sndrcv.h"
 #endif
 #include "config.h"
 
@@ -137,6 +139,7 @@ extern Integer *NumRecReq;
 # define ARGS_(s) ()
 #endif
 
+extern void init_msg_interface ARGS_(( void));
 extern void ClustInfoInit ARGS_(( void));
 extern Integer ClusterID  ARGS_((Integer ));
 extern Integer DataServer ARGS_((Integer ));
@@ -162,13 +165,15 @@ extern void ga_msg_sync_  ARGS_((void));
 extern void ga_snd_req    ARGS_((Integer, Integer, Integer, Integer, Integer,
                                  Integer nbytes, Integer data_type,Integer oper,
                                  Integer, Integer to));
+extern void ga_snd_req2D    ARGS_((Integer, Integer, Integer, Integer, Integer,
+                                 Integer type, Integer oper, char* src,
+                                 Integer ld, Integer proc, Integer to));
 extern void ga_SERVER     ARGS_((Integer, struct message_struct*));
 extern void ga_igop_clust ARGS_((Integer, Integer *, Integer, char *, Integer));
 extern void ga_brdcst_clust ARGS_((Integer, Void*, Integer, Integer, Integer));
 extern void ga_dgop_clust   ARGS_((Integer , DoublePrecision *, Integer, char *,
                                    Integer ));
 extern void ga_wait_server  ARGS_(( void));
-extern void        waitcom_ ARGS_((Integer*));
 
 #undef ARGS_
 

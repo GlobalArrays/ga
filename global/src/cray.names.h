@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.18 1997-02-01 00:26:52 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.19 1999-06-08 00:08:30 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -12,6 +12,7 @@
 #define  ga_add_patch_             GA_ADD_PATCH
 #define  ga_ddot_                  GA_DDOT
 #define  ga_zdot_                  GA_ZDOT
+#define  ga_idot_                  GA_IDOT
 #define  ga_destroy_               GA_DESTROY
 #define  ga_fence_                 GA_FENCE
 #define  ga_gather_                GA_GATHER
@@ -52,6 +53,7 @@
 #define  ga_scale_                 GA_SCALE
 #define  ga_scale_patch_           GA_SCALE_PATCH
 #define  ga_scatter_               GA_SCATTER
+#define  ga_scatter_acc_           GA_SCATTER_ACC
 #define  ga_terminate_             GA_TERMINATE
 #define  ga_uses_ma_               GA_USES_MA
 #define  ga_zero_                  GA_ZERO
@@ -69,22 +71,6 @@
 
 #define  gai_dot_patch_            GAI_DOT_PATCH
 #define  gai_dot_                  GAI_DOT
-
-#define  synch_                    SYNCH 
-#define  nnodes_                   NNODES 
-#define  nodeid_                   NODEID 
-#define  brdcst_                   BRDCST
-#define  dgop_                     DGOP 
-#define  igop_                     IGOP 
-#define  rcv_                      RCV 
-#define  snd_                      SND 
-#define  pend_                     PEND 
-#define  probe_                    PROBE
-#define  waitcom_                  WAITCOM
-#define  tcgtime_                  TCGTIME 
-
-#define  ga_ma_base_address_       GA_MA_BASE_ADDRESS 
-#define  ga_ma_sizeof_             GA_MA_SIZEOF
-#define  ga_ma_get_ptr_            GA_MA_GET_PTR
+#define  ga_ma_base_address_       GA_MA_BASE_ADDRESS
 #define  ga_ma_diff_               GA_MA_DIFF
-#define  dgemm_                    DGEMM
+#define  ga_ma_get_ptr_            GA_MA_GET_PTR

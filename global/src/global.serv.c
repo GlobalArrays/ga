@@ -33,7 +33,6 @@
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
-#include "macommon.h"
 #include <stdio.h>
 #ifdef CRAY_T3D
 #  include <fortran.h>
@@ -80,13 +79,12 @@ struct message_struct *MessageSnd = (struct message_struct*)_snd_dbl_buf,
                       *MessageRcv = (struct message_struct*)_rcv_dbl_buf;
 
 
-
-Integer cluster_master;
+Integer ClusterMode=0;
+Integer cluster_master=0;
+Integer cluster_nodes=1;
 Integer cluster_hidden_nodes;
 Integer cluster_compute_nodes;
 Integer cluster_server=-1;
-Integer ClusterMode=0;
-Integer cluster_nodes=0;
 
 int GA_fence_set=0;
 #if !(defined(CRAY_T3D) || defined(CONVEX) || defined(KSR))
@@ -113,8 +111,6 @@ void    ClustInfoInit()
     
     if( GA_n_proc ==1){
        GA_clus_id =  0;
-       cluster_master = 0;
-       cluster_nodes  = 1;
     }else{
        cluster_master = GA_clus_info[GA_clus_id].masterid; 
        cluster_nodes  = GA_clus_info[GA_clus_id].nslave; 
@@ -196,8 +192,7 @@ Integer DataServer(proc)
 
 /*\ returns the number of data_servers to the application
 \*/
-void ga_num_data_servers_(num)
-     Integer *num;
+void FATR ga_num_data_servers_(Integer *num)
 {
     if(ClusterMode) *num = GA_n_clus;
     else *num = 0;
@@ -208,8 +203,7 @@ void ga_num_data_servers_(num)
 /*\ returns nodeid for all the data servers in user provided array "list"
  *  dimension of list has to be >= number returned from ga_num_data_servers()
 \*/
-void ga_list_data_servers_(list)
-     Integer *list;
+void FATR ga_list_data_servers_(Integer *list)
 {
    int clust;
    if(ClusterMode)
@@ -221,8 +215,7 @@ void ga_list_data_servers_(list)
 
 /*\ determine msg-passing nodeid for the first GA <num_procs> processes 
 \*/
-void ga_list_nodeid_(list, num_procs)
-     Integer *list, *num_procs;
+void FATR ga_list_nodeid_(Integer *list, Integer *num_procs)
 {
     Integer proc, msg_node, server;
 
@@ -276,7 +269,7 @@ int snum =0;
 void ga_snd_req(g_a, ilo,ihi,jlo,jhi, nbytes, type, oper, proc, to)
      Integer g_a, ilo,ihi,jlo,jhi,nbytes,  type, oper, to, proc; 
 {
-    Integer  len, from;
+    Integer  len;
 #ifdef LAPI
     int rc, val;
     lapi_cntr_t *pcntr, *pcmpl_cntr;
@@ -327,14 +320,14 @@ void ga_snd_req(g_a, ilo,ihi,jlo,jhi, nbytes, type, oper, proc, to)
     RECORD_FENCE(to, oper);
 }
 
-
+#ifndef WIN32
 #include "mem.ops.h"
 
 void ga_snd_req2D(g_a, ilo,ihi,jlo,jhi, type, oper, ptr_src, ld, proc, to)
      Integer g_a, ilo,ihi,jlo,jhi, type, oper, proc, to, ld;
      char *ptr_src;
 {
-    Integer  len, from, rows, cols, nbytes;
+    Integer  len, rows, cols, nbytes;
 #ifdef LAPI
     int rc, val;
     lapi_cntr_t *pcntr,*pcmpl_cntr;
@@ -395,7 +388,7 @@ void ga_snd_req2D(g_a, ilo,ihi,jlo,jhi, type, oper, ptr_src, ld, proc, to)
     NumSndReq++; /* count requests sent */
     RECORD_FENCE(to, oper);
 }
-
+#endif
 
 void ga_update_serv_num()
 {
@@ -444,7 +437,7 @@ Integer ga_read_inc_local();
                                 ga_msg_nodeid_(),message->operation, from,
                                 message->to);
 
-      elem_size = GAsizeof(message->type);
+      elem_size = GAsizeofM(message->type);
       toproc =  message->to;
 
 #ifndef DATA_SERVER
@@ -587,7 +580,7 @@ Integer ga_read_inc_local();
                               if(!ga_create_irreg(& message->type, 
                                   &dim1, &dim2, array_name, (Integer*) map1, 
                                   &nblock1, (Integer*) map2, &nblock2, &g_a))
-                                  fprintf(stderr,"%d ga_server:create failed\n",
+                                  fprintf(stderr,"%d:ga_server:create failed\n",
                                              ga_nodeid_());
                             }
                             break;                          
@@ -599,7 +592,7 @@ Integer ga_read_inc_local();
 
                               /* duplicate can fail due to memory limits */
                               if(!ga_duplicate(&g_a, &g_b, array_name))
-                                  fprintf(stderr,"%d duplicate failed\n",
+                                  fprintf(stderr,"%d:duplicate failed\n",
                                            ga_nodeid_());
                             }
                             break;                          
@@ -616,7 +609,7 @@ Integer ga_read_inc_local();
 #                           ifdef MPI
                               MPI_Finalize();
 #                           else
-                              pend_();
+                              PEND_();
 #                           endif
                             exit(0);
 
@@ -665,7 +658,7 @@ Integer ga_read_inc_local();
 
 /*\ initialize tracing of request completion
 \*/
-void ga_init_fence_()
+void FATR ga_init_fence_()
 {
     Integer proc;
     GA_fence_set++;
@@ -684,7 +677,7 @@ void ga_init_fence_()
 
 /*\ wait until requests intiated by calling process are completed
 \*/
-void ga_fence_()
+void FATR ga_fence_()
 {
     Integer proc;
     if(GA_fence_set<1)ga_error("ga_fence: fence not initialized",0);

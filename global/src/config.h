@@ -8,8 +8,12 @@
  *
  */
 
+#ifndef _CONFIG_H
+#define _CONFIG_H 
+
+
 /* max number of global arrays */
-#define MAX_ARRAYS  128            
+#define MAX_ARRAYS  128             
 
 /* there are 20 message-passing tags/types numbered from GA_MSG_OFFSET up */
 #define  GA_MSG_OFFSET 32000
@@ -31,6 +35,10 @@
 #   define MSG_BUF_SIZE      4*4096
 #endif
 
+/* max number of dimensions  */
+#define MAXDIM  7
 
 /* uncomment the following line to overwrite default max number of processors */
 /*#define MAX_NPROC 128*/
+
+#endif

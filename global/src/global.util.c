@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.21 1998-05-26 20:21:18 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.22 1999-06-08 00:08:41 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -29,10 +29,11 @@
 
 #include "global.h"
 #include "globalp.h"
-#include "macommon.h"
 #include <stdio.h>
 #include <string.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 
 #ifdef CRAY_T3D
@@ -47,7 +48,7 @@
 
 /*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
 \*/
-void ga_copy_(g_a, g_b)
+void FATR ga_copy_(g_a, g_b)
      Integer *g_a, *g_b;
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
@@ -93,7 +94,7 @@ Integer me= ga_nodeid_(), index, ld;
 
 /*\ PRINT g_a[ilo:ihi, jlo:jhi]
 \*/
-void ga_print_patch_(g_a, ilo, ihi, jlo, jhi, pretty)
+void FATR ga_print_patch_(g_a, ilo, ihi, jlo, jhi, pretty)
         Integer *g_a, *ilo, *ihi, *jlo, *jhi, *pretty;
 /*
   Pretty = 0 ... spew output out with no formatting
@@ -105,15 +106,15 @@ void ga_print_patch_(g_a, ilo, ihi, jlo, jhi, pretty)
 #define FLEN 80 
 Integer i, j,jj, dim1, dim2, type, ibuf[BUFSIZE], jmax, ld=1, bufsize ;
 DoublePrecision  dbuf[BUFSIZE];
-char name[FLEN];
+char *name;
 
   ga_sync_();
   ga_check_handle(g_a, "ga_print");
   if(ga_nodeid_() == 0){
 
      ga_inquire_(g_a,  &type, &dim1, &dim2);
-     name[FLEN-1]='\0';
-     ga_inquire_name(g_a,  name);
+/*     name[FLEN-1]='\0';*/
+     ga_inquire_name(g_a,  &name);
      if (*ilo <= 0 || *ihi > dim1 || *jlo <= 0 || *jhi > dim2){
                       fprintf(stderr,"%d %d %d %d dims: [%d,%d]\n", 
                              *ilo,*ihi, *jlo,*jhi, dim1, dim2);
@@ -217,8 +218,7 @@ char name[FLEN];
 }
 
 
-void ga_print_(g_a)
-     Integer *g_a;
+void FATR ga_print_(Integer *g_a)
 {
   Integer type, dim1, dim2;
   Integer ilo=1, jlo=1;
@@ -230,7 +230,7 @@ void ga_print_(g_a)
 }
   
 
-void ga_print_stats_()
+void FATR ga_print_stats_()
 {
 int i;
      GAstat_arr = (long*)&GAstat;
@@ -311,10 +311,10 @@ extern void Error();
  *   Fortran version
 \*/
 #ifdef CRAY_T3D
-void ga_error_(string, icode)
+void FATR ga_error_(string, icode)
      _fcd        string;
 #else
-void ga_error_(string, icode, slen)
+void FATR ga_error_(string, icode, slen)
      char        *string;
      int         slen;
 #endif

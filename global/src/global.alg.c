@@ -15,11 +15,10 @@
 #include <stdio.h>
 #include "global.h"
 #include "globalp.h"
-#include "macommon.h"
 
 
 
-void ga_zero_(g_a)
+void FATR ga_zero_(g_a)
      Integer *g_a;
 {
 Integer ilo,ihi,jlo,jhi,ld,me,type,dim1,dim2;
@@ -45,6 +44,7 @@ Integer index;
       ga_access_(g_a, &ilo, &ihi, &jlo, &jhi,  &index, &ld);
       index --;  /* Fortran to C correction of starting address */ 
 
+/*      fprintf(stderr,"%d: ld=%d idx=%d\n",me, ld, index);*/
       switch (type){
         case MT_F_INT:
            for(j=0; j<jhi-jlo+1; j++)
@@ -76,7 +76,7 @@ Integer index;
 }
 
 
-DoublePrecision ga_ddot_(g_a, g_b)
+DoublePrecision FATR ga_ddot_(g_a, g_b)
         Integer *g_a, *g_b;
 {
 Integer  atype, adim1, adim2, btype, bdim1, bdim2, ald, bld;
@@ -87,7 +87,6 @@ DoublePrecision  sum;
 Integer     index_a, index_b;
 
    ga_sync_();
-
 
    me = ga_nodeid_();
 
@@ -142,7 +141,7 @@ Integer     index_a, index_b;
    }
 
    type = GA_TYPE_GSM; len =1;
-   ga_dgop_(&type, &sum, &len, "+",1); 
+   ga_dgop(type, &sum, len, "+"); 
     
    GA_POP_NAME;
 
@@ -150,8 +149,73 @@ Integer     index_a, index_b;
 }
  
 
+Integer FATR ga_idot_(g_a, g_b)
+        Integer *g_a, *g_b;
+{
+Integer  atype, adim1, adim2, btype, bdim1, bdim2, ald, bld;
+Integer  ailo,aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi;
+register Integer i,j;
+Integer  type,len, me;
+Integer  sum;
+Integer     index_a, index_b;
+
+   ga_sync_();
+
+   me = ga_nodeid_();
+
+   ga_check_handle(g_a, "ga_idot");
+   ga_check_handle(g_b, "ga_idot");
+
+   GA_PUSH_NAME("ga_idot");
+   ga_inquire_(g_a,  &atype, &adim1, &adim2);
+   ga_inquire_(g_b,  &btype, &bdim1, &bdim2);
+
+   if(atype != btype || atype != MT_F_INT) ga_error("type not correct", 0L);
+
+   if (adim1!=bdim1 || adim2 != bdim2) ga_error("arrays not conformant", 0L);
+
+   if (INT_MB == (Integer*)0 )ga_error(" null pointer for base array",0L);
+
+   ga_distribution_(g_a, &me, &ailo, &aihi, &ajlo, &ajhi);
+   ga_distribution_(g_b, &me, &bilo, &bihi, &bjlo, &bjhi);
+
+   if (ailo!=bilo || aihi != bihi || ajlo!=bjlo || ajhi != bjhi){
+         ga_error("distributions not identical",0L);
+   }
+
+   sum = 0.;
+   if (  aihi>0 && ajhi>0 ){
+       ga_access_(g_a, &ailo, &aihi, &ajlo, &ajhi,  &index_a, &ald);
+       if(g_a == g_b){
+          index_b = index_a; bld =ald;
+       }else
+       ga_access_(g_b, &bilo, &bihi, &bjlo, &bjhi,  &index_b, &bld);
+
+       index_a --;  /* Fortran to C correction of starting address */ 
+       index_b --;  /* Fortran to C correction of starting address */ 
+
+       /* compute "local" contribution to the dot product */
+       for(j=0; j<ajhi-ajlo+1; j++)
+          for(i=0; i<aihi-ailo+1; i++)
+             sum += INT_MB[index_a +j*ald + i]  *
+                    INT_MB[index_b +j*bld + i];
+   
+       /* release access to the data */
+       ga_release_(g_a, &ailo, &aihi, &ajlo, &ajhi);
+       ga_release_(g_b, &bilo, &bihi, &bjlo, &bjhi);
+   }
+
+   type = GA_TYPE_GSM; len =1;
+   ga_igop(type, &sum, len, "+"); 
+    
+   GA_POP_NAME;
+
+   return (sum);
+}
+
+
 /*DoubleComplex ga_zdot_(g_a, g_b)*/
-void gai_dot_(g_a, g_b, retval)
+void FATR gai_dot_(g_a, g_b, retval)
         Integer *g_a, *g_b;
         DoubleComplex *retval;
 {
@@ -221,7 +285,7 @@ Integer     index_a, index_b;
    }
 
    type = GA_TYPE_GSM; len =2; /* take advantage of DoubleComplex layout */
-   ga_dgop_(&type, &sum, &len, "+",1); 
+   ga_dgop(type, (DoublePrecision*)&sum, len, "+"); 
 
    GA_POP_NAME;
 /*   ga_sync_();*/
@@ -231,9 +295,9 @@ Integer     index_a, index_b;
 
   
  
-void ga_scale_(g_a, alpha)
+void FATR ga_scale_(g_a, alpha)
         Integer *g_a;
-        DoublePrecision *alpha;
+        void *alpha;
 {
 Integer type, dim1, dim2, ld,   ilo,ihi, jlo, jhi,me;
 register Integer i,j;
@@ -293,7 +357,7 @@ Integer index;
 
 
 
-void ga_add_(alpha, g_a, beta, g_b,g_c)
+void FATR ga_add_(alpha, g_a, beta, g_b,g_c)
         Integer *g_a, *g_b, *g_c;
         Void *alpha, *beta;
 {
@@ -398,81 +462,3 @@ Integer index_a, index_b, index_c;
    GA_POP_NAME;
    ga_sync_();
 }
-
-
-#ifdef CRAY
-#  define ga_idot_	GA_IDOT
-#endif
-
-
-/*\ Integer version of ga_ddot 
-\*/
-Integer ga_idot_(g_a, g_b)
-        Integer *g_a, *g_b;
-{
-Integer  atype, adim1, adim2, btype, bdim1, bdim2, ald, bld;
-Integer  ailo,aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi;
-register Integer i,j;
-Integer  me, sum;
-Integer  index_a, index_b;
-
-   ga_sync_();
-
-   me = ga_nodeid_();
-
-   ga_check_handle(g_a, "ga_idot");
-   ga_check_handle(g_b, "ga_idot");
-
-   ga_inquire_(g_a,  &atype, &adim1, &adim2);
-   ga_inquire_(g_b,  &btype, &bdim1, &bdim2);
-
-   if(atype != btype || atype != MT_F_INT)
-        ga_error("ga_idot: types not correct", 0L);
-
-   if (adim1!=bdim1 || adim2 != bdim2)
-            ga_error("ga_idot: arrays not conformant", 0L);
-
-   if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
-                  ga_error("ga_idot: null pointer for base array",0L);
-
-   ga_distribution_(g_a, &me, &ailo, &aihi, &ajlo, &ajhi);
-   ga_distribution_(g_b, &me, &bilo, &bihi, &bjlo, &bjhi);
-
-   if (ailo!=bilo || aihi != bihi || ajlo!=bjlo || ajhi != bjhi){
-         /*
-         fprintf(stderr,"\nme =%d: %d-%d %d-%d vs %d-%d %d-%d dim:%dx%d\n",me,
-                ailo,aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi,adim1,adim2);
-         */
-         ga_error("ga_idot: distributions not identical",0L);
-   }
-
-   sum = 0.;
-   if (  aihi>0 && ajhi>0 ){
-       ga_access_(g_a, &ailo, &aihi, &ajlo, &ajhi,  &index_a, &ald);
-       if(g_a == g_b){
-          index_b = index_a; bld =ald;
-       }else
-       ga_access_(g_b, &bilo, &bihi, &bjlo, &bjhi,  &index_b, &bld);
-
-       index_a --;  /* Fortran to C correction of starting address */
-       index_b --;  /* Fortran to C correction of starting address */
-
-
-       /* compute "local" contribution to the dot product */
-       for(j=0; j<ajhi-ajlo+1; j++)
-          for(i=0; i<aihi-ailo+1; i++)
-             sum += INT_MB[index_a +j*ald + i]  *
-                    INT_MB[index_b +j*bld + i];
-
-       /* release access to the data */
-       ga_release_(g_a, &ailo, &aihi, &ajlo, &ajhi);
-       ga_release_(g_b, &bilo, &bihi, &bjlo, &bjhi);
-   }
-
-   ga_igop((Integer)GA_TYPE_GSM, &sum, (Integer)1, "+");
-
-   ga_sync_();
-
-   return (sum);
-}
-

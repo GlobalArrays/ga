@@ -30,12 +30,14 @@ Integer GA_n_proc;        /* No. of processes */
 Integer GA_n_clus;        /* No. of clusters */
 Integer GA_clus_id=0;     /* Logical id of current cluster */
 
+#ifndef ARMCI
 int SR_caught_sigint;     /* for compatibility with TCGMSG interface only */
+#endif
 
 #define MAX_PROC 1024     /* max no. processes used in data server model */
 #define DEBUG 0
 
-MPI_Comm GA_MPI_COMM;
+MPI_Comm GA_MPI_COMM=MPI_COMM_WORLD;
 
 
 /*\ returns communicator for GA compute processes

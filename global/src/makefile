@@ -45,7 +45,7 @@ ifdef USE_ARMCI
 endif
 
 INCDIR = ../../include
-HEADERS = global.h global.fh c.names.h cray.names.h
+HEADERS = ga.h global.h global.fh c.names.h cray.names.h
 
 #upper level might want to override library name
 ifndef LIBRARY

@@ -28,6 +28,7 @@
  * distribute to other US Government contractors.
  */
 
+/*#define PERMUTE_PIDS */
 
 #include <stdio.h>
 #include <string.h>
@@ -56,7 +57,8 @@
 #define CHECK_MA_ALGN 1
 #endif
 
-
+char *fence_array;
+static int GA_fence_set=0;
 
 /*\ SYNCHRONIZE ALL THE PROCESSES
 \*/
@@ -67,12 +69,33 @@ extern int GA_fence_set;
 Integer status;
 #endif
 
-       GA_fence_set=0;
        ARMCI_AllFence();
        ga_msg_sync_();
+       if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+       GA_fence_set=0;
 #ifdef CHECK_MA
        status = MA_verify_allocator_stuff();
 #endif
+}
+
+
+/*\ wait until requests intiated by calling process are completed
+\*/
+void ga_fence_()
+{
+    int proc;
+    if(GA_fence_set<1)ga_error("ga_fence: fence not initialized",0);
+    GA_fence_set--;
+    for(proc=0;proc<GAnproc;proc++)if(fence_array[proc])ARMCI_Fence(proc);
+    bzero(fence_array,(int)GAnproc);
+}
+
+/*\ initialize tracing of request completion
+\*/
+void ga_init_fence_()
+{
+    int proc;
+    GA_fence_set++;
 }
 
 
@@ -86,6 +109,56 @@ Integer GAsizeof(type)
           default   : return 0; 
   }
 }
+
+
+/*\ Register process list
+ *  process list can be used to:
+ *   1. permute process ids w.r.t. message-passing ids (set PERMUTE_PIDS), or
+ *   2. change logical mapping of array blocks to processes
+\*/
+void ga_register_proclist_(Integer *list, Integer* np)
+{
+int i;
+
+      GA_PUSH_NAME("ga_register_proclist");
+      if( *np <0 || *np >GAnproc) ga_error("invalid number of processors",*np);
+      if( *np <GAnproc) ga_error("Invalid number of processors",*np);
+
+      GA_Proc_list = (int*)malloc(GAnproc * sizeof(int)*2);
+      GA_inv_Proc_list = GA_Proc_list + *np;
+      if(!GA_Proc_list) ga_error("could not allocate proclist",*np);
+
+      for(i=0;i< (int)*np; i++){
+          int p  = (int)list[i];
+          if(p<0 || p>= GAnproc) ga_error("invalid list entry",p);
+          GA_Proc_list[i] = p; 
+          GA_inv_Proc_list[p]=i;
+      }
+
+      GA_POP_NAME;
+}
+
+
+void GA_Register_proclist(int *list, int np)
+{
+      int i;
+      GA_PUSH_NAME("ga_register_proclist");
+      if( np <0 || np >GAnproc) ga_error("invalid number of processors",np);
+      if( np <GAnproc) ga_error("Invalid number of processors",np);
+
+      GA_Proc_list = (int*)malloc(GAnproc * sizeof(int)*2);
+      GA_inv_Proc_list = GA_Proc_list + np;
+      if(!GA_Proc_list) ga_error("could not allocate proclist",np);
+
+      for(i=0; i< np; i++){
+          int p  = list[i];
+          if(p<0 || p>= GAnproc) ga_error("invalid list entry",p);
+          GA_Proc_list[i] = p;
+          GA_inv_Proc_list[p]=i;
+      }
+      GA_POP_NAME;
+}
+
 
 
 /*\ FINAL CLEANUP of shmem when terminating
@@ -192,9 +265,19 @@ Integer  off_dbl, off_int, off_dcpl;
     }
     GAmaster= 0;
     GAnproc = (Integer)ga_msg_nnodes_();
-    GAme = (Integer)ga_msg_nodeid_();
+
+#ifdef PERMUTE_PIDS
+    ga_sync_();
+    ga_hook_();
+    if(GA_Proc_list) GAme = (Integer)GA_Proc_list[ga_msg_nodeid_()];
+    else
+#endif
+      GAme = (Integer)ga_msg_nodeid_();
+
     MPme= ga_msg_nodeid_();
     MPnproc = ga_msg_nnodes_();
+    if(GA_Proc_list)
+      fprintf(stderr,"permutation applied %d now becomes %d\n",MPme, GAme);
 
     if(GAnproc > MAX_NPROC && MPme==0){
       fprintf(stderr,"Current GA setup is for up to %d processors\n",MAX_NPROC);
@@ -207,6 +290,8 @@ Integer  off_dbl, off_int, off_dcpl;
     if(!map) ga_error("ga_init:malloc failed (map)",0);
     proclist = (Integer*)malloc(GAnproc*sizeof(Integer)); 
     if(!proclist) ga_error("ga_init:malloc failed (proclist)",0);
+    fence_array = calloc(GAnproc,1);
+    if(!fence_array) ga_error("ga_init:calloc failed",0);
 
     /* set activity status for all arrays to inactive */
     for(i=0;i<max_global_array;i++)GA[i].actv=0;
@@ -295,6 +380,8 @@ Integer FATR ga_memory_avail_()
 }
 
 
+/*\ internal malloc that bypasses MA and uses internal buf when possible
+\*/
 #define MBUFLEN 256
 #define MBUF_LEN MBUFLEN+2
 static double ga_int_malloc_buf[MBUF_LEN];
@@ -373,7 +460,7 @@ int _d;\
 
 /*\ print subscript of ndim dimensional array with two strings before and after
 \*/
-static void print_subscript(char *pre,int ndim, int subscript[], char* post)
+static void print_subscript(char *pre,int ndim, Integer subscript[], char* post)
 {
         int i;
 
@@ -411,9 +498,10 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
       else
           for(d=0; d< ndim; d++) blk[d]=-1;
 
+      if(GAme==0 && DEBUG)for(d=0;d<ndim;d++) fprintf(stderr,"b[%d]=%d\n",d,blk[d]);
+      ga_sync_();
+
       ddb(ndim, dims, GAnproc, blk, pe);
-/*      pe[0]=pe[1]=1; pe[2]=8;*/
-/*      blk[0]=blk[1]=8; blk[2]=1;*/
 
       for(d=0, map=mapALL; d< ndim; d++){
          Integer nblock;
@@ -437,11 +525,6 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
 
       status = nga_create_irreg(type, ndim, dims, array_name, mapALL, pe, g_a);
 
-/*
-      status = ga_create_irreg( type, &dims[0], &dims[1], array_name, pmap[0], 
-              &pe[0], pmap[1], &pe[1], g_a);
-*/
-
       GA_POP_NAME;
       return status;
 }
@@ -454,101 +537,19 @@ logical ga_create(type, dim1, dim2, array_name, chunk1, chunk2, g_a)
      char *array_name;
 {
 Integer ndim=2, dims[2], chunk[2];
+logical status;
 
     dims[0]=*dim1;
     dims[1]=*dim2;
-    chunk[0]=*chunk1;
-    chunk[1]=*chunk2;
+   
+    /*block size of 1 is troublesome, old ga treated it as "use default" */
+    /* for backward compatibility we use old convention */
+    chunk[0] = (*chunk1 ==0)? -1: *chunk1;
+    chunk[1] = (*chunk2 ==0)? -1: *chunk2;
         
-    return nga_create(*type, ndim,  dims, array_name, chunk, g_a); 
-}
+    status = nga_create(*type, ndim,  dims, array_name, chunk, g_a); 
 
-/*\ CREATE A GLOBAL ARRAY
-\*/
-logical oga_create(type, dim1, dim2, array_name, chunk1, chunk2, g_a)
-     Integer *type, *dim1, *dim2, *chunk1, *chunk2, *g_a; 
-     char *array_name;
-     /*
-      * array_name    - a unique character string [input]
-      * type          - MA type [input]
-      * dim1/2        - array(dim1,dim2) as in FORTRAN [input]
-      * chunk1/2      - minimum size that dimensions should
-      *                 be chunked up into [input]
-      *                 setting chunk1=dim1 gives distribution by rows
-      *                 setting chunk2=dim2 gives distribution by columns 
-      *                 Actual chunk sizes are modified so that they are
-      *                 at least the min size and each process has either
-      *                 zero or one chunk. 
-      *                 chunk1/2 <=1 yields even distribution
-      * g_a           - Integer handle for future references [output]
-      */
-{
-int   i, nprocx, nprocy, fchunk1, fchunk2;
-static Integer map1[MAX_NPROC], map2[MAX_NPROC];
-Integer nblock1, nblock2;
-
-      if(!GAinitialized) ga_error("GA not initialized ", 0);
-
-      /* sync is in ga_create_irreg */
-
-      if(*type != MT_F_DBL && *type != MT_F_INT &&  *type != MT_F_DCPL)
-         ga_error("ga_create: type not yet supported ",  *type);
-      else if( *dim1 <= 0 )
-         ga_error("ga_create: array dimension1 invalid ",  *dim1);
-      else if( *dim2 <= 0)
-         ga_error("ga_create: array dimension2 invalid ",  *dim2);
-
-      /*** figure out chunking ***/
-      if(*chunk1 <= 1 && *chunk2 <= 1){
-        if(*dim1 == 1)      { nprocx =1; nprocy=(int)GAnproc;}
-        else if(*dim2 == 1) { nprocy =1; nprocx=(int)GAnproc;}
-        else {
-           /* nprocx= (int)sqrt((double)GAnproc);*/
-           double dproc = ((double)GAnproc*(*dim1))/((double) *dim2);
-           nprocx = NEAR_INT(sqrt(dproc)); 
-           nprocx = MAX(1, nprocx); /* to avoid division by 0 */
-           for(i=nprocx;i>0&& (GAnproc%i);i--);
-           nprocx =(int)i; nprocy=(int)GAnproc/nprocx;
-        }
-
-        fchunk1 = (int) MAX(1, *dim1/nprocx);
-        fchunk2 = (int) MAX(1, *dim2/nprocy);
-      }else if(*chunk1 <= 1){
-        fchunk1 = (int) MAX(1, (*dim1 * *dim2)/(GAnproc* *chunk2));
-        fchunk2 = (int) *chunk2;
-      }else if(*chunk2 <= 1){
-        fchunk1 = (int) *chunk1;
-        fchunk2 = (int) MAX(1, (*dim1 * *dim2)/(GAnproc* *chunk1));
-      }else{
-        fchunk1 = (int) MAX(1,  *chunk1);
-        fchunk2 = (int) MAX(1,  *chunk2);
-      }
-
-      fchunk1 = (int)MIN(fchunk1, *dim1);
-      fchunk2 = (int)MIN(fchunk2, *dim2);
-
-      /*** chunk size correction for load balancing ***/
-      while(((*dim1-1)/fchunk1+1)*((*dim2-1)/fchunk2+1) >GAnproc){
-           if(fchunk1 == *dim1 && fchunk2 == *dim2) 
-                     ga_error("ga_create: chunking failed !! ", 0L);
-           if(fchunk1 < *dim1) fchunk1 ++; 
-           if(fchunk2 < *dim2) fchunk2 ++; 
-      }
-
-      /* Now build map arrays */
-      for(i=0, nblock1=0; i< *dim1; i += fchunk1, nblock1++) map1[nblock1]=i+1;
-      for(i=0, nblock2=0; i< *dim2; i += fchunk2, nblock2++) map2[nblock2]=i+1;   
-      if(GAme==0&& DEBUG){
-         fprintf(stderr,"blocks (%d,%d)\n",nblock1, nblock2);
-         fprintf(stderr,"chunks (%d,%d)\n",fchunk1, fchunk2);
-         if(GAme==0){
-           for (i=0;i<nblock1;i++)fprintf(stderr," %d ",map1[i]);
-           for (i=0;i<nblock2;i++)fprintf(stderr," .%d ",map2[i]);
-         }
-      }
-
-      return( ga_create_irreg(type, dim1, dim2, array_name, map1, &nblock1,
-                         map2, &nblock2, g_a) );
+    return status;
 }
 
 
@@ -617,6 +618,8 @@ Integer handle;
 }
 
 
+char* ptr_array[1024];
+
 /*\ get memory alligned w.r.t. MA base
  *  required on Linux as g77 ignores natural data alignment in common blocks
 \*/ 
@@ -643,8 +646,16 @@ int i;
 #endif
 
     *adj = 0;
+#ifdef PERMUTE_PIDS
+    if(GA_Proc_list){
+      bzero(ptr_array,GAnproc*sizeof(char*));
+      status = ARMCI_Malloc((void**)ptr_array, bytes);
+      for(i=0;i<GAnproc;i++)ptr_arr[i] = ptr_array[GA_inv_Proc_list[i]]; 
+    }else
+#endif
+
     status = ARMCI_Malloc((void**)ptr_arr, bytes);
-/*    printf("%d ptr=%d\n",GAme,ptr_arr[GAme]);*/
+
     if(status) return status;
 
 #ifndef _CHECK_MA_ALGN
@@ -660,7 +671,6 @@ int i;
     ga_igop(GA_TYPE_GSM, adjust, GAnproc, "+");
     
     for(i=0;i<GAnproc;i++){
-/*       printf("%d: adjust[%d]=%d\n",GAme, i, adjust[i]);*/
        ptr_arr[i] = adjust[i] + (char*)ptr_arr[i];
     }
 
@@ -686,8 +696,8 @@ Integer ga_handle;
 /*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
 \*/
 logical nga_create_irreg(
-        Integer type,    /* MA type */ 
-        Integer ndim,    /* number of dimensions */
+        Integer type,     /* MA type */ 
+        Integer ndim,     /* number of dimensions */
         Integer dims[],   /* array of dimensions */
         char *array_name, /* array name */
         Integer map[],    /* decomposition map array */ 
@@ -765,7 +775,6 @@ Integer  i, ga_handle, status, maplen=0;
           GA[ga_handle].ptr[GAme]=NULL;
       }
 
-/*      fprintf(stderr,"%d, status=%d\n",GAme,status);*/
       ga_sync_();
 
       if(status){
@@ -1021,7 +1030,7 @@ int      *save_mapc;
       /* if requested, enforce limits on memory consumption */
       if(GA_memory_limited) GA_total_memory -= mem_size_proc;
 
-     /* check if everybody has enough memory left */
+      /* check if everybody has enough memory left */
       if(GA_memory_limited){
          status = (GA_total_memory >= 0) ? 1 : 0;
          ga_igop(GA_TYPE_GSM, &status, 1, "*");
@@ -1065,6 +1074,7 @@ int      *save_mapc;
          return(FALSE);
       }
 }
+
 
 
 /*\ DUPLICATE A GLOBAL ARRAY
@@ -1126,7 +1136,7 @@ Integer ga_handle = GA_OFFSET + *g_a;
 \*/
 void FATR  ga_terminate_() 
 {
-Integer i, handle;
+Integer i, p, handle;
 extern double t_dgop, n_dgop, s_dgop;
 
 
@@ -1146,6 +1156,7 @@ extern double t_dgop, n_dgop, s_dgop;
 
     ARMCI_Finalize();
     GAinitialized = 0;
+    ga_sync_();
 }   
 
     
@@ -1243,30 +1254,6 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
 }
 
 
-/*\ local put of a 2-dimensional patch of data into a global array
-\*/
-void ga_put_local(Integer g_a, Integer ilo, Integer ihi,
-                               Integer jlo, Integer jhi,
-                  void* buf, Integer offset, Integer ld_loc, Integer proc)
-{
-char     *ptr_glob, *ptr_loc;
-int      ld_glob, rows, cols, size=GAsizeofM(GA[GA_OFFSET + g_a].type);
-int      count[2];
-
-   GA_PUSH_NAME("ga_put_local");
-
-   rows = ihi - ilo +1;
-   cols = jhi - jlo +1;
-
-   gaShmemLocation(proc, g_a, ilo, jlo, &ptr_glob, &ld_glob);
-   ptr_loc = (char *)buf  +  size* offset;
-   count[0] = rows*size; count[1]=cols;
-   ld_loc *= size; ld_glob *= size;
-
-   ARMCI_PutS(ptr_loc, &ld_loc, ptr_glob, &ld_glob, count, 1, proc); 
-
-   GA_POP_NAME;
-}
 
 #define gam_GetRangeFromMap0(p, ndim, plo, phi, proc){\
 Integer   _mloc = p* (ndim *2 +1);\
@@ -1329,7 +1316,9 @@ char *ptr;
    ptr = GA[handle].ptr[GAme];
 
    switch (GA[handle].type){
-   case MT_F_DCPL: elems*=2; /* fall through */ 
+   case MT_F_DCPL: 
+        for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
+        break;
    case MT_F_DBL:  
         for(i=0; i<elems;i++)((DoublePrecision*)ptr)[i]=*(DoublePrecision*)val;
         break;
@@ -1383,19 +1372,14 @@ Integer  idx, elems, ndim, size, type, ld0;
 
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
-          Integer ldrem[MAXDIM], count[MAXDIM];
-          Integer stride_rem[MAXDIM], stride_loc[MAXDIM];
+          Integer ldrem[MAXDIM];
+          int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
           Integer idx_buf, *plo, *phi;
           char *pbuf, *prem;
 
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
           proc = proclist[p];
-
-          if(proc == GAme){
-             gam_CountElems(ndim, plo, phi, &elems);
-             GAbytes.putloc += (double)size*elems;
-          }
 
           gam_Location(proc,handle, plo, &prem, ldrem); 
 
@@ -1409,6 +1393,19 @@ Integer  idx, elems, ndim, size, type, ld0;
           count[0] *= size; 
           gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
+          if(GA_fence_set)fence_array[proc]=1;
+#ifdef PERMUTE_PIDS
+    if(GA_Proc_list){
+/*       fprintf(stderr,"permuted %d %d\n",proc,GA_inv_Proc_list[proc]);*/
+       proc = GA_inv_Proc_list[proc];
+    }
+#endif
+
+/*          if(proc == GAme){*/
+          if(proc/4 == MPme/4){
+             gam_CountElems(ndim, plo, phi, &elems);
+             GAbytes.putloc += (double)size*elems;
+          }
           ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1, proc);
 
       }
@@ -1443,33 +1440,6 @@ Integer lo[2], hi[2];
 
 
 
-/*\ local get of a 2-dimensional patch of data from a global array
-\*/
-void ga_get_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo,
-                  Integer jhi, void* buf, Integer offset, Integer ld_loc,
-                  Integer proc)
-{
-char     *ptr_glob, *ptr_loc;
-int      ld_glob, rows, cols, size=GAsizeofM(GA[GA_OFFSET + g_a].type);
-int      count[2];
-
-   GA_PUSH_NAME("ga_get_local");
-
-   rows = ihi - ilo +1;
-   cols = jhi - jlo +1;
-
-   gaShmemLocation(proc, g_a, ilo, jlo, &ptr_glob, &ld_glob);
-
-   ptr_loc = (char *)buf  + size * offset;
-   count[0] = rows*size; count[1]=cols;
-   ld_loc *= size; ld_glob *= size;
-
-   ARMCI_GetS(ptr_glob, &ld_glob, ptr_loc, &ld_loc, count, 1, proc); 
-
-   GA_POP_NAME;
-}
-
-
 
 /*\ GET AN N-DIMENSIONAL PATCH OF DATA FROM A GLOBAL ARRAY
 \*/
@@ -1496,19 +1466,14 @@ Integer  idx, elems, ndim, size, type, ld0;
           ga_RegionError(ndim, lo, hi, *g_a);
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
-          Integer ldrem[MAXDIM], count[MAXDIM];
-          Integer stride_rem[MAXDIM], stride_loc[MAXDIM];
+          Integer ldrem[MAXDIM];
+          int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
           Integer idx_buf, *plo, *phi, i;
           char *pbuf, *prem;
 
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
           proc = proclist[p];
-
-          if(proc == GAme){
-             gam_CountElems(ndim, plo, phi, &elems);
-             GAbytes.getloc += (double)size*elems;
-          }
 
           gam_Location(proc,handle, plo, &prem, ldrem);
 
@@ -1523,6 +1488,13 @@ Integer  idx, elems, ndim, size, type, ld0;
 
           gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
+#ifdef PERMUTE_PIDS
+          if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+          if(proc == GAme){
+             gam_CountElems(ndim, plo, phi, &elems);
+             GAbytes.getloc += (double)size*elems;
+          }
           ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1, proc);
 
       }
@@ -1556,39 +1528,6 @@ Integer lo[2], hi[2];
 
 
 
-/*\ local accumulate
-\*/
-void ga_acc_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo, 
-                  Integer jhi, void* buf, Integer offset, Integer ld_loc,
-                  Integer proc, void* alpha)
-{
-char     *ptr_loc, *ptr_glob;
-int      ld_glob, rows, cols, type = GA[GA_OFFSET + g_a].type;
-int      size=GAsizeofM(type);
-int      count[2], optype;
-
-   GA_PUSH_NAME("ga_acc_local"); 
-
-   gaShmemLocation(proc, g_a, ilo, jlo, &ptr_glob, &ld_glob);
-   ptr_loc = (char *)buf   + size * offset;
-   rows = ihi - ilo +1;
-   cols = jhi - jlo +1;
-
-   count[0] = rows*size; count[1]=cols;
-   ld_loc *= size; ld_glob *= size;
-
-   if(GA[GA_OFFSET + g_a].type==MT_F_DBL) optype= ARMCI_ACC_DBL;
-   else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
-   else if(size==sizeof(int))optype= ARMCI_ACC_INT;
-   else ga_error("now is the time to add MT_F_LONG to armci!",0);
-
-   ARMCI_AccS(optype, alpha, ptr_loc, &ld_loc, ptr_glob, &ld_glob, count, 1,proc);
-
-   GA_POP_NAME;
-
-}
-
-
 /*\ ACCUMULATE OPERATION FOR A N-DIMENSIONAL PATCH OF GLOBAL ARRAY
  *
  *  g_a += alpha * patch
@@ -1613,7 +1552,8 @@ int optype;
       if(type==MT_F_DBL) optype= ARMCI_ACC_DBL;
       else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
       else if(size==sizeof(int))optype= ARMCI_ACC_INT;
-      else ga_error("now is the time to add MT_F_LONG to armci!",0);
+      else if(size==sizeof(long))optype= ARMCI_ACC_LNG;
+      else ga_error("type not supported",type);
 
       gam_CountElems(ndim, lo, hi, &elems);
       GAbytes.acctot += (double)size*elems;
@@ -1624,19 +1564,14 @@ int optype;
 
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
-          Integer ldrem[MAXDIM], count[MAXDIM];
-          Integer stride_rem[MAXDIM], stride_loc[MAXDIM];
+          Integer ldrem[MAXDIM];
+          int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
           Integer idx_buf, *plo, *phi;
           char *pbuf, *prem;
 
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
           proc = proclist[p];
-
-          if(proc == GAme){
-             gam_CountElems(ndim, plo, phi, &elems);
-             GAbytes.accloc += (double)size*elems;
-          }
 
           gam_Location(proc,handle, plo, &prem, ldrem);
 
@@ -1650,8 +1585,17 @@ int optype;
           count[0] *= size;
           gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
+          if(GA_fence_set)fence_array[proc]=1;
+
+#ifdef PERMUTE_PIDS
+          if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+          if(proc == GAme){
+             gam_CountElems(ndim, plo, phi, &elems);
+             GAbytes.accloc += (double)size*elems;
+          }
+
           ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count, ndim-1, proc);
-/*          ARMCI_AccS(optype, alpha, pbuf, ld, prem, ldrem, count, ndim-1, proc);*/
 
       }
 
@@ -1971,7 +1915,9 @@ Integer d, index, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
    ga_check_handleM(g_a, "nga_proc_topology");
    ndim = GA[ga_handle].ndim;
 
-   for(d=0, index = *proc; d<ndim; d++){
+   index = GA_proc_list ? GA_proc_list[*proc]: *proc;
+
+   for(d=0; d<ndim; d++){
        subscript[d] = index% GA[ga_handle].nblock[d];
        index  /= GA[ga_handle].nblock[d];  
    }
@@ -2011,7 +1957,7 @@ int candidate, found, b, *map= (map_ij);\
 \*/
 logical FATR nga_locate_(Integer *g_a, Integer* subscript, Integer* owner)
 {
-Integer d, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
+Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
 
    ga_check_handleM(g_a, "nga_locate");
    ndim = GA[ga_handle].ndim;
@@ -2025,7 +1971,9 @@ Integer d, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
        dpos += GA[ga_handle].nblock[d];
    }
 
-   ga_ComputeIndexM(owner, ndim, proc_s, GA[ga_handle].nblock); 
+   ga_ComputeIndexM(&proc, ndim, proc_s, GA[ga_handle].nblock); 
+
+   *owner = GA_proc_list ? GA_proc_list[proc]: proc;
 
    return TRUE;
 }
@@ -2042,7 +1990,7 @@ logical FATR nga_locate_region_( Integer *g_a,
                                  Integer *np)
 {
 int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
-Integer  owner, i,j, ga_handle;
+Integer  proc, owner, i,j, ga_handle;
 Integer  d, dpos, ndim, elems, p;
 
    ga_check_handleM(g_a, "nga_locate_region");
@@ -2050,7 +1998,7 @@ Integer  d, dpos, ndim, elems, p;
    ga_handle = GA_OFFSET + *g_a;
 
    for(d = 0; d< GA[ga_handle].ndim; d++)
-       if(lo[d] < 1 || hi[d]> GA[ga_handle].dims[d]) return FALSE;
+       if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
    ndim = GA[ga_handle].ndim;
 
@@ -2077,8 +2025,10 @@ Integer  d, dpos, ndim, elems, p;
       Integer  offset;
 
       /* convert i to owner processor id */
-      ga_ComputeIndexM(&owner, ndim, proc_subscript, GA[ga_handle].nblock); 
+      ga_ComputeIndexM(&proc, ndim, proc_subscript, GA[ga_handle].nblock); 
+      owner = GA_proc_list ? GA_proc_list[proc]: proc;
       ga_ownsM(ga_handle, owner, _lo, _hi);
+
       offset = *np *(ndim*2); /* location in mapc to put patch range */
 
       for(d = 0; d< ndim; d++)
@@ -2137,6 +2087,12 @@ int rc;
   desc.dst_ptr_array = ptr_dst;
   desc.ptr_array_len = nv;
 
+  if(GA_fence_set)fence_array[proc]=1;
+
+#ifdef PERMUTE_PIDS
+    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+
   if(alpha ==NULL) rc=ARMCI_PutV(&desc, 1, (int)proc);
   else{
 
@@ -2144,7 +2100,8 @@ int rc;
     if(type==MT_F_DBL) optype= ARMCI_ACC_DBL;
     else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
     else if(item_size==sizeof(int))optype= ARMCI_ACC_INT;
-    else ga_error("now is the time to add MT_F_LONG to ARMCI!",0);
+    else if(item_size==sizeof(long))optype= ARMCI_ACC_LNG;
+    else ga_error("type not supported",type);
     rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)proc);
   }
 
@@ -2387,6 +2344,10 @@ register Integer k, offset;
   desc.dst_ptr_array = ptr_dst;
   desc.ptr_array_len = nv;
 
+#ifdef PERMUTE_PIDS
+    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+
   ARMCI_GetV(&desc, 1, (int)proc);
 
   gai_free(ptr_src);
@@ -2445,6 +2406,10 @@ Integer *proc, *list, phandle, lhandle;
       desc.dst_ptr_array = ptr_dst;
       desc.ptr_array_len = nelem;
 
+#ifdef PERMUTE_PIDS
+    if(GA_Proc_list) p = GA_inv_Proc_list[p];
+#endif
+
       switch(op){ 
         case GATHER:
           for(k=0; k<nelem; k++){
@@ -2458,6 +2423,7 @@ Integer *proc, *list, phandle, lhandle;
             ptr_src[k] = ((char*)v) + list[first+k]*item_size;
             gam_Loc_ptr(p, handle,  (subscript+list[first+k]*ndim), ptr_dst+k);
           }
+          if(GA_fence_set)fence_array[p]=1;
           ARMCI_PutV(&desc, 1, (int)p);
           break;
         default: ga_error("operation not supported",op);
@@ -2472,7 +2438,6 @@ Integer *proc, *list, phandle, lhandle;
   if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
 
 }
-
 
 
 
@@ -2627,9 +2592,14 @@ int optype;
       optype = ARMCI_FETCH_AND_ADD;
 #   endif
 
+    if(GAme == proc)GAbytes.rdiloc += (double)sizeof(Integer);
+
+#ifdef PERMUTE_PIDS
+    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+
     ARMCI_Rmw(optype, (int*)&value, (int*)ptr, (int)*inc, (int)proc);
 
-    if(GAme == proc)GAbytes.rdiloc += (double)sizeof(Integer);
 
    GA_POP_NAME;
    return(value);
@@ -2671,6 +2641,94 @@ int i;
    }
    return TRUE;
 }
+
+
+static int num_mutexes=0;
+static int chunk_mutex;
+
+logical FATR ga_create_mutexes_(Integer *num)
+{
+Integer myshare, chunk;
+int rc;
+
+   if (*num <= 0 || *num > 32768) return(FALSE);
+   if(num_mutexes) ga_error("mutexes already created",num_mutexes);
+
+   num_mutexes= (int)*num;
+
+   if(GAnproc == 1) return(TRUE);
+
+   chunk_mutex = (*num + GAnproc-1)/GAnproc;
+   if(GAme * chunk_mutex >= *num)myshare =0;
+   else myshare=chunk_mutex;
+
+   /* need work here to use permutation */
+   if(ARMCI_Create_mutexes(myshare)) return FALSE;
+   return TRUE;
+}
+
+
+void FATR ga_lock_(Integer *mutex)
+{
+int m,p;
+
+   if(GAnproc == 1) return;
+   if(num_mutexes< *mutex)ga_error("invalid mutex",*mutex);
+
+   p = num_mutexes/chunk_mutex -1;
+   m = num_mutexes%chunk_mutex;
+
+#ifdef PERMUTE_PIDS
+    if(GA_Proc_list) p = GA_inv_Proc_list[p];
+#endif
+
+   ARMCI_Lock(m,p);
+}
+
+
+void FATR ga_unlock_(Integer *mutex)
+{
+int m,p;
+
+   if(GAnproc == 1) return;
+   if(num_mutexes< *mutex)ga_error("invalid mutex",*mutex);
+   
+   p = num_mutexes/chunk_mutex -1;
+   m = num_mutexes%chunk_mutex;
+
+#ifdef PERMUTE_PIDS
+    if(GA_Proc_list) p = GA_inv_Proc_list[p];
+#endif
+
+   ARMCI_Unlock(m,p);
+}              
+   
+
+logical FATR ga_destroy_mutexes_()
+{
+   if(num_mutexes<1) ga_error("mutexes destroyed",0);
+   num_mutexes= 0;
+   if(GAnproc == 1) return TRUE;
+   if(ARMCI_Destroy_mutexes()) return FALSE;
+   return TRUE;
+}
+
+
+/*\ return list of message-passing process ids for GA process ids
+\*/
+void FATR ga_list_nodeid_(list, num_procs)
+     Integer *list, *num_procs;
+{
+Integer proc;
+   for( proc = 0; proc < *num_procs; proc++)
+
+     #ifdef PERMUTE_PIDS
+       if(GA_Proc_list) list[proc] = GA_inv_Proc_list[proc]; 
+       else
+     #endif
+       list[proc]=proc;
+}
+
 
 /*************************************************************************/
 

@@ -31,7 +31,7 @@
 
 #include "global.h"
 #include "globalp.h"
-#include <stdio.h>
+#include <stdio.h> 
 
 #if defined(LAPI)
    /* we use MPI as native msg-passing library with lapi */
@@ -138,8 +138,7 @@ Integer ga_msg_probe(type, from)
      }
 #    else
      {
-       extern Integer probe_();
-       return probe_(&type, &from);
+       return PROBE_(&type, &from);
      }
 #    endif
 }
@@ -222,7 +221,7 @@ void ga_msg_snd(type, buffer, bytes, to)
 #    else
      {
         Integer sync=SYNC;
-        snd_(&type, buffer, &bytes, &to, &sync);
+        SND_(&type, buffer, &bytes, &to, &sync);
      }
 #    endif
 }
@@ -334,7 +333,7 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
 #    else
      {
         Integer sync=SYNC;
-        rcv_(&type, buffer, &buflen, msglen, &from, whofrom, &sync);
+        RCV_(&type, buffer, &buflen, msglen, &from, whofrom, &sync);
      }
 #    endif
 
@@ -410,7 +409,7 @@ msgid_t msgid;
 #    else
      {
        Integer sync=ASYNC, msglen, whofrom;
-       rcv_(&type, buffer, &buflen, &msglen, &from, &whofrom, &sync);
+       RCV_(&type, buffer, &buflen, &msglen, &from, &whofrom, &sync);
        msgid = from; /*TCGMSG waits for all comms to/from node */
      }
 #    endif
@@ -453,20 +452,20 @@ Integer *whofrom, *msglen;
         MPI_Status status;
 
         ierr = MPI_Wait(&msgid, &status);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: failed ", msgid);
+        if(ierr != MPI_SUCCESS)ga_error("ga_msg_wait: failed ", 1);
         ierr = MPI_Get_count(&status, MPI_CHAR, &count);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: Get_count failed",msgid);
+        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: Get_count failed",2);
         *whofrom = (Integer)status.MPI_SOURCE;
         *msglen  = (Integer)count;
      }
 #    else
-        waitcom_(&msgid); /* cannot get whofrom and msglen from TCGMSG */
+        WAITCOM_(&msgid); /* cannot get whofrom and msglen from TCGMSG */
 #    endif
 } 
 
 
 /*\ total NUMBER OF PROCESSES that can communicate using message-passing
- *  Note: might be larger than the value returned by ga_nnodes_()
+ *  Note: might be larger than the value returned by ga_NNODES_()
 \*/
 Integer ga_msg_nnodes_()
 {
@@ -478,13 +477,13 @@ Integer ga_msg_nnodes_()
      MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
      return((Integer)numprocs);
 #  else
-     return (nnodes_());
+     return (NNODES_());
 #  endif
 }
 
 
 /*\ message-passing RANK/NUMBER of current PROCESS
- *  Note: might be different than the value returned by ga_nodeid_()
+ *  Note: might be different than the value returned by ga_NODEID_()
 \*/
 Integer ga_msg_nodeid_()
 {
@@ -495,7 +494,7 @@ Integer msg_id;
      MPI_Comm_rank(MPI_COMM_WORLD,&myid);
      msg_id = ((Integer)myid);
 #  else
-     msg_id =  (nodeid_());
+     msg_id =  (NODEID_());
 #  endif
 #  ifdef SOCKCONNECT
      msg_id += cluster_master;
@@ -512,8 +511,7 @@ Void*   buffer;
 #  ifdef MPI
       MPI_Bcast(buffer, (int)len, MPI_CHAR, (int)root, MPI_COMM_WORLD);
 #  else
-      void brdcst_();
-      brdcst_(&type, buffer, &len, &root);
+      BRDCST_(&type, buffer, &len, &root);
 #  endif
 }
 
@@ -627,7 +625,7 @@ void ga_msg_sync_()
 #  else
    {
       Integer type = GA_TYPE_SYN;
-      synch_(&type);
+      SYNCH_(&type);
    }
 #  endif
    if(DEBUG0){
@@ -763,11 +761,10 @@ void ga_brdcst_clust(type, buf, len, originator, group)
 
 /*\ BROADCAST
 \*/
-void ga_brdcst_(type, buf, len, originator)
+void FATR ga_brdcst_(type, buf, len, originator)
      Integer *type, *len, *originator;
      Void *buf;
 {
-     void brdcst_();
      Integer orig_clust, tcg_orig_node, tcg_orig_master; 
 
      if(DEBUG1){
@@ -957,8 +954,6 @@ void ga_dgop(type, x, n, op)
      DoublePrecision *x;
      char *op;
 {
-     void dgop_();
-     
 
 #ifdef TIME_DGOP
      t0_dgop = tcgtime_();
@@ -982,7 +977,7 @@ void ga_dgop(type, x, n, op)
 #       ifdef MPI
             ga_dgop_clust(type, x, n, op, ALL_GRP);
 #       else
-            dgop_(&type, x, &n, op);
+            DGOP_(&type, x, &n, op);
 #       endif
 #       if defined(SP1) || defined(SP)
             ga_msg_sync_();
@@ -1073,7 +1068,6 @@ void ga_igop(type, x, n, op)
      Integer type, n, *x;
      char *op;
 {
-     void igop_();
 
      if(ClusterMode){
 #       ifdef IWAY
@@ -1093,7 +1087,7 @@ void ga_igop(type, x, n, op)
 #       ifdef MPI
             ga_igop_clust(type, x, n, op, ALL_GRP);
 #       else
-            igop_(&type, x, &n, op);
+            IGOP_(&type, x, &n, op);
 #       endif
 #       if defined(SP1) || defined(SP)
             ga_msg_sync_();
