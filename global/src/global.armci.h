@@ -1,4 +1,5 @@
 /*Wed Jan 25 10:25:49 PST 1995*/
+#include "config.h"
   
 #if !defined(__STDC__) || !defined(__cplusplus) && !defined(LINUX)
 #  define volatile
@@ -18,7 +19,6 @@
 #endif
 
 #define MAX_PTR MAX_NPROC
-#define MAXDIM  4
 #define MAPLEN  (MIN(GAnproc, MAX_NPROC) +MAXDIM)
 
 
@@ -43,8 +43,9 @@ typedef struct {
 
 static global_array_t GA[MAX_ARRAYS]; 
 static int max_global_array = MAX_ARRAYS;
-Integer map[MAX_NPROC][2*MAXDIM +1];             /* used in get/put/acc */
-extern Integer in_handler;               /* set in interrupt handler*/
+Integer *map;       /* used in get/put/acc */
+Integer *proclist;
+extern Integer in_handler;                   /* set in interrupt handler*/
 
 
 char err_string[ ERR_STR_LEN];        /* string for extended error reporting */

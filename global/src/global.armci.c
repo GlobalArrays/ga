@@ -203,6 +203,11 @@ Integer  off_dbl, off_int, off_dcpl;
     }
 
 
+    map = (Integer*)malloc((GAnproc*2*MAXDIM +1)*sizeof(Integer));
+    if(!map) ga_error("ga_init:malloc failed (map)",0);
+    proclist = (Integer*)malloc(GAnproc*sizeof(Integer)); 
+    if(!proclist) ga_error("ga_init:malloc failed (proclist)",0);
+
     /* set activity status for all arrays to inactive */
     for(i=0;i<max_global_array;i++)GA[i].actv=0;
 
@@ -413,7 +418,7 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
       for(d=0, map=mapALL; d< ndim; d++){
          Integer nblock;
          pmap[d] = map;
-         for(i=0,nblock=0; i< dims[d]; i += blk[d], nblock++) map[nblock]=i+1;
+         for(i=0,nblock=0; i< dims[d]; i += blk[d], nblock++)map[nblock]=i+1;
          pe[d] = MIN(pe[d],nblock);
          map +=  pe[d]; 
       }
@@ -591,7 +596,7 @@ char buf[FNAM];
       f2cstring(array_name ,slen, buf, FNAM);
 #endif
 
-  return (nga_create(*type, *ndim,  dims, array_name, chunk, g_a));
+  return (nga_create(*type, *ndim,  dims, buf, chunk, g_a));
 }
 
 
@@ -615,7 +620,7 @@ Integer handle;
 /*\ get memory alligned w.r.t. MA base
  *  required on Linux as g77 ignores natural data alignment in common blocks
 \*/ 
-int gai_getmem(void **ptr_arr, int bytes, int type, long *adj)
+int gai_getmem(char **ptr_arr, int bytes, int type, long *adj)
 {
 int status;
 #ifndef _CHECK_MA_ALGN
@@ -638,7 +643,7 @@ int i;
 #endif
 
     *adj = 0;
-    status = ARMCI_Malloc(ptr_arr, bytes);
+    status = ARMCI_Malloc((void**)ptr_arr, bytes);
 /*    printf("%d ptr=%d\n",GAme,ptr_arr[GAme]);*/
     if(status) return status;
 
@@ -672,7 +677,7 @@ hi)
 {
 Integer ga_handle;
 
-   ga_check_handleM(g_a, "aga_distribution");
+   ga_check_handleM(g_a, "nga_distribution");
    ga_handle = (GA_OFFSET + *g_a);
    ga_ownsM(ga_handle, *proc, lo, hi);
 }
@@ -958,6 +963,13 @@ char buf[FNAM];
 }
 
 
+Integer ga_ndim_(Integer *g_a)
+{
+      ga_check_handleM(g_a,"ga_ndim");       
+      return GA[*g_a +GA_OFFSET].ndim;
+}
+ 
+
 
 /*\ DUPLICATE A GLOBAL ARRAY
  *  -- new array g_b will have properties of g_a
@@ -1129,6 +1141,8 @@ extern double t_dgop, n_dgop, s_dgop;
 
     GA_total_memory = -1; /* restore "unlimited" memory usage status */
     GA_memory_limited = 0;
+    free(map);
+    free(proclist);
 
     ARMCI_Finalize();
     GAinitialized = 0;
@@ -1171,30 +1185,31 @@ Integer _lo[2], _hi[2];                                                        \
 }
 
 
-#define gaCheckSubscriptM(subscript, lo, hi, ndim)                             \
+#define gaCheckSubscriptM(subscr, lo, hi, ndim)                             \
 {                                                                              \
 Integer _d;                                                                    \
    for(_d=0; _d<  ndim; _d++)                                                  \
-      if( subscript[_d]<  lo[_d] ||  subscript[_d]>  hi[_d]){                  \
+      if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                  \
           sprintf(err_string,"check subscript failed: %d not in (%d:%d) dim=", \
-                  subscript[_d],  lo[_d],  hi[_d]);                            \
+                  subscr[_d],  lo[_d],  hi[_d]);                            \
           ga_error(err_string, _d);                                            \
       }\
 }
 
 
-#define gam_Location(proc, g_handle,  subscript, ptr_loc, ld)                   \
+#define gam_Location(proc, g_handle,  subscript, ptr_loc, ld)                  \
 {                                                                              \
-Integer _offset=0, _d, _factor=1;                                              \
+Integer _offset=0, _d, _factor=1, _last=GA[g_handle].ndim-1;                   \
 Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
                                                                                \
       ga_ownsM(g_handle, proc, _lo, _hi);                                      \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
-      for(_d=0; _d < GA[g_handle].ndim; _d++){                                 \
+      for(_d=0; _d < _last; _d++)            {                                 \
           _offset += (subscript[_d]-_lo[_d]) * _factor;                        \
           ld[_d] = _hi[_d] - _lo[_d]+1;                                        \
           _factor *= ld[_d];                                                   \
       }                                                                        \
+      _offset += (subscript[_last]-_lo[_last]) * _factor;                      \
       *(ptr_loc) =  GA[g_handle].ptr[proc]+_offset*GA[g_handle].elemsize;      \
 }
 
@@ -1238,13 +1253,18 @@ int      count[2];
    GA_POP_NAME;
 }
 
-#define gam_GetRangeFromMap(p, ndim, plo, phi, proc){\
+#define gam_GetRangeFromMap0(p, ndim, plo, phi, proc){\
 Integer   _mloc = p* (ndim *2 +1);\
           *plo  = (Integer*)map + _mloc;\
           *phi  = *plo + ndim;\
           *proc = *phi[ndim]; /* proc is immediately after hi */\
 }
 
+#define gam_GetRangeFromMap(p, ndim, plo, phi){\
+Integer   _mloc = p* ndim *2;\
+          *plo  = (Integer*)map + _mloc;\
+          *phi  = *plo + ndim;\
+}
 
 #define gam_CountElems(ndim, lo, hi, pelems){\
 Integer _d;\
@@ -1343,7 +1363,7 @@ Integer  idx, elems, ndim, size, type, ld0;
       GAbytes.puttot += (double)size*elems;
       GAstat.numput++;
 
-      if(!nga_locate_region_(g_a, lo, hi, map, &np ))
+      if(!nga_locate_region_(g_a, lo, hi, map, proclist, &np ))
           ga_RegionError(ndim, lo, hi, *g_a);
 
       gaPermuteProcList(np);
@@ -1354,7 +1374,8 @@ Integer  idx, elems, ndim, size, type, ld0;
           char *pbuf, *prem;
 
           p = (Integer)ProcListPerm[idx];
-          gam_GetRangeFromMap(p, ndim, &plo, &phi, &proc);
+          gam_GetRangeFromMap(p, ndim, &plo, &phi);
+          proc = proclist[p];
 
           if(proc == GAme){
              gam_CountElems(ndim, plo, phi, &elems);
@@ -1456,7 +1477,7 @@ Integer  idx, elems, ndim, size, type, ld0;
       GAbytes.gettot += (double)size*elems;
       GAstat.numget++;
 
-      if(!nga_locate_region_(g_a, lo, hi, map, &np ))
+      if(!nga_locate_region_(g_a, lo, hi, map, proclist, &np ))
           ga_RegionError(ndim, lo, hi, *g_a);
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
@@ -1466,7 +1487,8 @@ Integer  idx, elems, ndim, size, type, ld0;
           char *pbuf, *prem;
 
           p = (Integer)ProcListPerm[idx];
-          gam_GetRangeFromMap(p, ndim, &plo, &phi, &proc);
+          gam_GetRangeFromMap(p, ndim, &plo, &phi);
+          proc = proclist[p];
 
           if(proc == GAme){
              gam_CountElems(ndim, plo, phi, &elems);
@@ -1582,7 +1604,7 @@ int optype;
       GAbytes.acctot += (double)size*elems;
       GAstat.numacc++;
 
-      if(!nga_locate_region_(g_a, lo, hi, map, &np ))
+      if(!nga_locate_region_(g_a, lo, hi, map, proclist, &np ))
           ga_RegionError(ndim, lo, hi, *g_a);
 
       gaPermuteProcList(np);
@@ -1593,7 +1615,8 @@ int optype;
           char *pbuf, *prem;
 
           p = (Integer)ProcListPerm[idx];
-          gam_GetRangeFromMap(p, ndim, &plo, &phi, &proc);
+          gam_GetRangeFromMap(p, ndim, &plo, &phi);
+          proc = proclist[p];
 
           if(proc == GAme){
              gam_CountElems(ndim, plo, phi, &elems);
@@ -1648,7 +1671,95 @@ Integer lo[2], hi[2];
 
 /*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
 \*/
-void FATR  ga_access_(g_a, ilo, ihi, jlo, jhi, index, ld)
+void FATR nga_access_(Integer* g_a, Integer lo[], Integer hi[],
+                      Integer* index, Integer ld[])
+{
+char *ptr;
+Integer  handle = GA_OFFSET + *g_a;
+Integer  ow,i;
+
+   GA_PUSH_NAME("nga_access");
+   if(!nga_locate_(g_a,lo,&ow))ga_error("locate top failed",0);
+   if(ow != GAme) ga_error("cannot access top of the patch",ow);
+   if(!nga_locate_(g_a,hi, &ow))ga_error("locate bottom failed",0);
+   if(ow != GAme) ga_error("cannot access bottom of the patch",ow);
+
+   for (i=0; i<GA[handle].ndim; i++)
+       if(lo[i]>hi[i]) {
+           ga_RegionError(GA[handle].ndim, lo, hi, *g_a);
+       }
+
+
+   gam_Location(ow,handle, lo, &ptr, ld);
+
+   /*
+    * return patch address as the distance in bytes from the reference address
+    *
+    * .in Fortran we need only the index to the type array: dbl_mb or int_mb
+    *  that are elements of COMMON in the the mafdecls.h include file
+    * .in C we need both the index and the pointer
+    */
+
+   /* compute index and check if it is correct */
+   switch (GA[handle].type){
+     case MT_F_DBL:
+        *index = (Integer) (ptr - (char*)DBL_MB);
+        if(ptr != ((char*)DBL_MB)+ *index ){
+               ga_error("ga_access: MA addressing problem dbl - index",handle);
+        }
+        break;
+
+     case MT_F_DCPL:
+        *index = (Integer) (ptr - (char*)DCPL_MB);
+        if(ptr != ((char*)DCPL_MB)+ *index ){
+              ga_error("ga_access: MA addressing problem dcpl - index",handle);
+        }
+        break;
+
+     case MT_F_INT:
+        *index = (Integer) (ptr - (char*)INT_MB);
+        if(ptr != ((char*)INT_MB) + *index) {
+               ga_error("ga_access: MA addressing problem int - index",handle);
+        }
+        break;
+   }
+
+   /* check the allignment */
+   if(*index % GA[handle].elemsize){
+       fprintf(stderr,"index=%ld size=%ld off =%ld\n",
+              (long)*index, (long)GA[handle].elemsize,(long)*index%GA[handle].elemsize);
+       ga_error(" ga_access: base address misallignment ",(long)index);
+   }
+
+   /* adjust index according to the data type */
+   *index /= GA[handle].elemsize;
+
+   /* adjust index for Fortran addressing */
+   (*index) ++ ;
+   FLUSH_CACHE;
+
+   GA_POP_NAME;
+}
+
+
+
+/*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
+\*/
+void FATR ga_access_(g_a, ilo, ihi, jlo, jhi, index, ld)
+   Integer *g_a, *ilo, *ihi, *jlo, *jhi, *index, *ld;
+{
+Integer lo[2], hi[2];
+     lo[0]=*ilo;
+     lo[1]=*jlo;
+     hi[0]=*ihi;
+     hi[1]=*jhi;
+     nga_access_(g_a,lo,hi,index,ld);
+} 
+
+
+/*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
+\*/
+void FATR ga_access_o(g_a, ilo, ihi, jlo, jhi, index, ld)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *index, *ld;
 {
 register char *ptr;
@@ -1673,16 +1784,12 @@ Integer ow;
    *ld    = GA[handle].chunk[0];  
    FLUSH_CACHE;
 
-
    /*
     * return address of the patch  as the distance in bytes
     * from the reference address
-    *
     * .in Fortran we need only the index to the type array: dbl_mb or int_mb
     *  that are elements of COMMON in the the mafdecls.h include file
-    *
     * .in C we need both the index and the pointer
-    *
     */ 
    /* compute index and check if it is correct */
    switch (GA[handle].type){
@@ -1706,7 +1813,6 @@ Integer ow;
                ga_error("ga_access: MA addressing problem int - index",handle);
         }
         break;
-
    }
 
    /* check the allignment */
@@ -1731,12 +1837,25 @@ void FATR  ga_release_(g_a, ilo, ihi, jlo, jhi)
 {}
 
 
+/*\ RELEASE ACCESS TO A PATCH OF A GLOBAL ARRAY
+\*/
+void FATR  nga_release_(g_a, lo, hi)
+     Integer *g_a, *lo, *hi;
+{}
+
+
 /*\ RELEASE ACCESS & UPDATE A PATCH OF A GLOBAL ARRAY
 \*/
 void FATR  ga_release_update_(g_a, ilo, ihi, jlo, jhi)
      Integer *g_a, *ilo, *ihi, *jlo, *jhi;
 {}
 
+
+/*\ RELEASE ACCESS & UPDATE A PATCH OF A GLOBAL ARRAY
+\*/
+void FATR  nga_release_update_(g_a, lo, hi)
+     Integer *g_a, *lo, *hi;
+{}
 
 
 /*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
@@ -1751,6 +1870,19 @@ void FATR  ga_inquire_(g_a,  type, dim1, dim2)
    *dim2       = GA[GA_OFFSET + *g_a].dims[1];
 }
 
+
+
+/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
+ *  Fortran version
+\*/
+void FATR nga_inquire_(Integer *g_a, Integer *type, Integer *ndim,Integer *dims)
+{
+Integer handle = GA_OFFSET + *g_a,i;
+   ga_check_handleM(g_a, "nga_inquire");
+   *type       = GA[handle].type;
+   *ndim       = GA[handle].ndim;
+   for(i=0;i<*ndim;i++)dims[i]=GA[handle].dims[i];
+}
 
 
 /*\ INQUIRE NAME OF A GLOBAL ARRAY
@@ -1781,10 +1913,10 @@ void FATR  ga_inquire_name_(g_a, array_name, len)
 \*/
 void ga_inquire_name(g_a, array_name)
       Integer *g_a;
-      char    *array_name;
+      char    **array_name;
 { 
    ga_check_handleM(g_a, "ga_inquire_name");
-   strcpy(array_name, GA[GA_OFFSET + *g_a].name);
+   *array_name = GA[GA_OFFSET + *g_a].name;
 }
 
 
@@ -1867,6 +1999,7 @@ logical FATR nga_locate_region_( Integer *g_a,
                                  Integer *lo,
                                  Integer *hi,
                                  Integer *map,
+                                 Integer *proclist,
                                  Integer *np)
 {
 int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
@@ -1906,24 +2039,18 @@ Integer  d, dpos, ndim, elems, p;
 
       /* convert i to owner processor id */
       ga_ComputeIndexM(&owner, ndim, proc_subscript, GA[ga_handle].nblock); 
-
       ga_ownsM(ga_handle, owner, _lo, _hi);
-      offset = *np *(ndim*2 +1); /* location in mapc to put patch range */
+      offset = *np *(ndim*2); /* location in mapc to put patch range */
 
       for(d = 0; d< ndim; d++)
               map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
-      
       for(d = 0; d< ndim; d++)
               map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
-      map[ndim*2 + offset ] = owner;
-
+      proclist[i] = owner;
       ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].nblock);
-
-
       (*np)++;
    }
- 
    return(TRUE);
 }
     
@@ -2307,24 +2434,48 @@ Integer FATR ga_nnodes_()
 }
 
 
+
+/*\ COMPARE DISTRIBUTIONS of two global arrays
+\*/
+logical FATR ga_compare_distr_(Integer *g_a, Integer *g_b)
+{
+int h_a =*g_a + GA_OFFSET;
+int h_b =*g_b + GA_OFFSET;
+int i;
+
+   GA_PUSH_NAME("ga_compare_distr");
+   ga_check_handleM(g_a, "distribution a");
+   ga_check_handleM(g_b, "distribution b");
+   
+   GA_POP_NAME;
+
+   if(GA[h_a].ndim != GA[h_b].ndim) return FALSE; 
+   for(i=0; i <MAPLEN; i++){
+      if(GA[h_a].mapc[i] != GA[h_b].mapc[i]) return FALSE;
+      if(GA[h_a].mapc[i] == -1) break;
+   }
+   return TRUE;
+}
+
 /*************************************************************************/
 
-logical FATR ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, np )
-        Integer *g_a, *ilo, *jlo, *ihi, *jhi, map[][5], *np;
+logical FATR ga_locate_region_(g_a, ilo, ihi, jlo, jhi, mapl, np )
+        Integer *g_a, *ilo, *jlo, *ihi, *jhi, mapl[][5], *np;
 {
    logical status;
    Integer lo[2], hi[2], p;
    lo[0]=*ilo; lo[1]=*jlo;
    hi[0]=*ihi; hi[1]=*jhi;
 
-   status = nga_locate_region_(g_a,lo,hi,(Integer*)map,np);
+   status = nga_locate_region_(g_a,lo,hi,map, proclist, np);
 
    /* need to swap elements (ilo,jlo,ihi,jhi) -> (ilo,ihi,jlo,jhi) */
    for(p = 0; p< *np; p++){
-     Integer temp;
-     temp = map[p][1];
-     map[p][1] = map[p][2];
-     map[p][2] = temp;
+     mapl[p][0] = map[4*p];
+     mapl[p][1] = map[4*p + 2];
+     mapl[p][2] = map[4*p + 1];
+     mapl[p][3] = map[4*p + 3];
+     mapl[p][4] = proclist[p];
    } 
 
    return status;
