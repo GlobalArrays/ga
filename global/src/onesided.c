@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.43 2003-08-12 15:45:28 manoj Exp $ */
+/* $Id: onesided.c,v 1.44 2003-08-12 23:17:11 d3h325 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -2040,8 +2040,10 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
 \*/
 Integer FATR nga_read_inc_(Integer* g_a, Integer* subscript, Integer* inc)
 {
-Integer *ptr, ldp[MAXDIM], value, proc, handle=GA_OFFSET+*g_a;
-int optype;
+Integer *ptr, ldp[MAXDIM], proc, handle=GA_OFFSET+*g_a;
+int optype,ivalue;
+long lvalue;
+void *pval;
 
 #ifdef GA_USE_VAMPIR
     vampir_begin(NGA_READ_INC,__FILE__,__LINE__);
@@ -2060,10 +2062,13 @@ int optype;
     /* get an address of the g_a(subscript) element */
     gam_Location(proc, handle,  subscript, (char**)&ptr, ldp);
 
-    if(GA[handle].type==C_INT)
+    if(GA[handle].type==C_INT){
        optype = ARMCI_FETCH_AND_ADD;
-    else
+       pval = &ivalue;
+    }else{
        optype = ARMCI_FETCH_AND_ADD_LONG;
+       pval = &lvalue;
+    }
 
     if(GAme == proc)GAbytes.rdiloc += (double)sizeof(Integer);
 
@@ -2071,13 +2076,17 @@ int optype;
     if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
 
-    ARMCI_Rmw(optype, (int*)&value, (int*)ptr, (int)*inc, (int)proc);
+    ARMCI_Rmw(optype, (int*)pval, (int*)ptr, (int)*inc, (int)proc);
 
    GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
    vampir_end(NGA_READ_INC,__FILE__,__LINE__);
 #endif
-   return(value);
+
+    if(GA[handle].type==C_INT)
+         return (Integer) ivalue;
+    else
+         return (Integer) lvalue;
 }
 
 
