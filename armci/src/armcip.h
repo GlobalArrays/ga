@@ -6,6 +6,12 @@
 #include "armci.h"
 #include "message.h"
 
+#ifdef QUADRICS
+#include <elan/elan.h>
+#ifdef QSNETLIBS_VERSION_CODE
+#  define ELAN_ACC
+#endif 
+#endif
 
 #ifdef WIN32
 #include <windows.h>
