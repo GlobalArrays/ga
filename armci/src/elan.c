@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.26 2003-11-14 19:51:34 d3h325 Exp $ */
+/* $Id: elan.c,v 1.27 2004-02-02 20:38:16 nwchem Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,8 +20,9 @@ static void *_qd;
 #endif
 
 #ifdef DOELAN4
-#define VCALLS 1
-#define _ELAN_SLOTSIZE elan_queueMaxSlotSize(elan_base->state)
+#define VCALLS 0
+#define _ELAN_SLOTSIZE_ elan_queueMaxSlotSize(elan_base->state)
+#define _ELAN_SLOTSIZE 512
 #else
 #include <elan3/elan3.h>
 #define _ELAN_SLOTSIZE 320
