@@ -1,9 +1,14 @@
+#if defined(CRAY_T3D) || defined(KSR)
+#   define xx_dgemm sgemm
+#else
+#   define xx_dgemm dgemm
+#endif
 c     ijk loops rearanged into ikj
 c     Thu Aug 25 14:08:17 PDT 1994, JN
 c
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.14 1995-08-31 21:53:12 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.15 1995-09-06 23:34:05 d3h325 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -150,7 +155,7 @@ C
                      Get_New_B = .FALSE. ! Until J or K change again
                   EndIf
 C
-                  call dgemm(transa, transb, idim, jdim, kdim,
+                  call xx_dgemm(transa, transb, idim, jdim, kdim,
      $                 alpha, dbl_mb(k_a), adim, dbl_mb(k_b), bdim,
      $                 1.0d0, dbl_mb(k_c), cdim)
                   call ga_acc(g_c, ilo, ihi, jlo, jhi, dbl_mb(k_c), 
