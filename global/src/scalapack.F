@@ -1,4 +1,4 @@
-c $Id: scalapack.F,v 1.2 2004-11-13 02:49:13 edo Exp $
+c $Id: scalapack.F,v 1.3 2004-11-15 17:49:16 edo Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
@@ -1364,11 +1364,13 @@ c
      4        int_mb(adrclustr), dbl_mb(adrgaps), info)
 c     
 c
+#ifdef DEBUG
          if ( me . eq. 0 ) then
             do iii = 1, n
                write(*,*) iii, eval(iii)
             enddo
          endif
+#endif
          
 c     
          if (nz .ne. n ) then
@@ -1391,7 +1393,6 @@ c
      &        mpB, ldb, nqB)
 c     
 c     
-         call blacs_gridexit(iSLctxt)
 c     
 c***  deallocate work/SL arrays
 c     
@@ -1677,11 +1678,13 @@ c
 c     
 c     
 c
+#ifdef DEBUG
          if ( me . eq. 0 ) then
             do iii = 1, n
                write(*,*) iii, eval(iii)
             enddo
          endif
+#endif
          
 c     
          if (nz .ne. n ) then
@@ -1705,7 +1708,6 @@ c
      &        mpB, ldb, nqB)
 c     
      
-         call blacs_gridexit(iSLctxt)
 c     
 c***  deallocate work/SL arrays
 c     
