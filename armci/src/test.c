@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.25 2001-03-31 08:03:47 d3h325 Exp $ */
+/* $Id: test.c,v 1.26 2002-10-30 21:35:59 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -272,8 +272,10 @@ void update_subscript(int ndim, int subscript[], int lo[], int hi[], int dims[])
 
 	
 
-void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[], int dims1[],
-					           double *patch2, int lo2[], int hi2[], int dims2[])
+void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
+                     int dims1[],double *patch2, int lo2[], int hi2[], 
+                     int dims2[])
+					           
 {
 	int i,j, elems=1;	
 	int subscr1[MAXDIMS], subscr2[MAXDIMS];
@@ -479,6 +481,107 @@ void test_dim(int ndim)
         destroy_array(b);
         free(a);
 }
+
+int nloA[MAXDIMS+1][MAXDIMS], nhiA[MAXDIMS+1][MAXDIMS];
+int nloB[MAXDIMS+1][MAXDIMS], nhiB[MAXDIMS+1][MAXDIMS];
+int nloC[MAXDIMS+1][MAXDIMS], nhiC[MAXDIMS+1][MAXDIMS];
+
+void test_nbdim()
+{
+int elems=1,elems1=1;
+int i,j, proc,ndim,rc;
+void *b[MAXDIMS+1][MAXPROC];
+void *a[MAXDIMS+1], *c[MAXDIMS+1];
+armci_req_t hdl_put[MAXDIMS+1],hdl_get[MAXDIMS+1];
+int idx1=0, idx2=0, idx3=0;
+    /* create shared and local arrays */
+    for(ndim=1;ndim<=MAXDIMS;ndim++){
+       elems1*= dimsB[ndim-1];
+       elems *= dimsA[ndim-1];
+       rc = ARMCI_Malloc(b[ndim], sizeof(double)*elems1);
+       assert(rc==0);assert(b[ndim][me]);
+       a[ndim] = malloc(sizeof(double)*elems);
+       assert(a[ndim]);
+       c[ndim] = malloc(sizeof(double)*elems);
+       assert(c[ndim]);
+       init(a[ndim], ndim, elems, dimsA);
+    }
+    if(me==0){
+      printf("Testing Non-blocking API for 1 to 7 dimentions data transfers\n");
+      fflush(stdout);
+    }
+    ARMCI_AllFence();
+    MP_BARRIER();
+    for(ndim=1;ndim<=MAXDIMS;ndim++){
+       strideA[0]=sizeof(double);
+       strideB[0]=sizeof(double);
+       for(i=0;i<ndim;i++){
+         strideA[i] *= dimsA[i];
+         strideB[i] *= dimsB[i];
+         if(i<ndim-1){
+           strideA[i+1] = strideA[i];
+           strideB[i+1] = strideB[i];
+         }
+       }
+       if(me==0){
+         printf("--------array[%d",dimsA[0]);
+         for(i=1;i<ndim;i++)printf(",%d",dimsA[i]);
+         printf("]--------\n");
+       }
+       get_range(ndim, dimsA, nloA[ndim], nhiA[ndim]);
+       new_range(ndim, dimsB, nloA[ndim], nhiA[ndim], nloB[ndim], 
+                 nhiB[ndim]);
+       new_range(ndim, dimsA, nloA[ndim], nhiA[ndim], nloC[ndim], 
+                 nhiC[ndim]);
+       if(me==0){
+         print_range("local",ndim,nloA[ndim], nhiA[ndim],"-> ");
+         print_range("remote",ndim,nloB[ndim], nhiB[ndim],"-> ");
+         print_range("local",ndim,nloC[ndim], nhiC[ndim],"\n");
+       }
+
+       idx1 = Index(ndim, nloA[ndim], dimsA);
+       idx2 = Index(ndim, nloB[ndim], dimsB);
+       idx3 = Index(ndim, nloC[ndim], dimsA);
+       proc=nproc-1-me;
+       for(j=0;j<ndim;j++)count[j]=nhiA[ndim][j]-nloA[ndim][j]+1;
+       count[0]   *= sizeof(double); 
+       /*if(me==0)
+         printf("%d:count[0]=%d idxs= %d %d %d\n",me,count[0],idx1,idx2,idx3);
+        */
+       (void)ARMCI_NbPutS((double*)a[ndim]+idx1,strideA,
+                          (double*)b[ndim][proc]+idx2,
+                          strideB, count, ndim-1, proc,NULL);
+       (void)ARMCI_NbGetS((double*)b[ndim][proc]+idx2,strideB,
+                          (double*)c[ndim]+idx3,
+                          strideA, count, ndim-1, proc,NULL);
+       if(me==0){printf("OK\n");fflush(stdout);}
+    }
+    MP_BARRIER();
+    if(me==0){
+       printf("Now waiting for all non-blocking calls and verifying data...\n");
+       fflush(stdout);
+    }
+    for(ndim=1;ndim<=MAXDIMS;ndim++){
+       ARMCI_Wait(&hdl_put[ndim]); 
+       ARMCI_Wait(&hdl_get[ndim]); 
+       idx1 = Index(ndim, nloA[ndim], dimsA);
+       idx2 = Index(ndim, nloB[ndim], dimsB);
+       idx3 = Index(ndim, nloC[ndim], dimsA);
+       compare_patches(0.,ndim,(double*)a[ndim]+idx1,nloA[ndim],nhiA[ndim],
+                     dimsA,(double*)c[ndim]+idx3,nloC[ndim],nhiC[ndim],dimsA);
+    }
+    if(me==0){
+       printf("Wait successful and data verified\n");
+       fflush(stdout);
+    }
+    
+    for(ndim=1;ndim<=MAXDIMS;ndim++){
+       destroy_array(b[ndim]);
+       free(c[ndim]);
+       free(a[ndim]);
+    }
+}
+
 
 
 
@@ -1090,6 +1193,17 @@ int main(int argc, char* argv[])
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
         ARMCI_AllFence();
         MP_BARRIER();
+
+#if 1
+        if(me==0){
+           printf("\nTesting non-blocking gets and puts\n");
+           fflush(stdout);
+           sleep(1);
+        }
+        test_nbdim(); 
+        ARMCI_AllFence();
+        MP_BARRIER();
+#endif
         if(me==0){
            printf("\nTesting atomic accumulate\n");
            fflush(stdout);
