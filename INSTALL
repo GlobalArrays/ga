@@ -1,6 +1,6 @@
 To build the entire GA toolkit package type,
 
-	./make
+	./gmake
 
 in the top level directory.
 
