@@ -61,8 +61,10 @@ extern void Busy(int);
 /*              (void) copyfrom(src, dest, (long) n)*/
 
 #else
-#define COPY_TO_SHMEM(src, dest, n, destnode) (void) memcpy(dest, src, (long) n)
-#define COPY_FROM_SHMEM(src, dest, n) (void)memcpy(dest, src, (long) n)
+#define COPY_TO_LOCAL(src, dest, n, destnode) (void) memcpy(dest, src, n)
+#define COPY_FROM_LOCAL(src, dest, n) (void)memcpy(dest, src, n)
+#define COPY_FROM_REMOTE(src,dest,n,p) (void)memcpy(dest, src, n) 
+#define COPY_TO_REMOTE(src,dest,n,p) (void)memcpy(dest, src, n)
 #endif
 #ifndef FLUSH_CACHE 
 #	define FLUSH_CACHE          

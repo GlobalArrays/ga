@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <signal.h>
 
 #ifdef LAPI
@@ -13,7 +14,13 @@
 #include "shmem.h"
 #endif
 
+/* under Cygnus we got only serial execution */
+#ifdef CYGNUS
+#define    MAX_PROC 1
+#else
 #define    MAX_PROC 512
+#endif
+
 #define    INTERNAL_SYNC_TYPE 33333
 #define    MAX_N_OUTSTANDING_MSG 64
 

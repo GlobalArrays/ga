@@ -14,6 +14,10 @@
        void lapi_initialize();
 #endif
 
+#ifdef CYGNUS
+       ShmemBuf  TCGMSG_receive_buffer[MAX_PROC];
+#endif
+
 extern void TrapSigint(void);
 extern void TrapSigchld(void);
 extern int WaitAll(long);

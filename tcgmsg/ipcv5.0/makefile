@@ -13,6 +13,7 @@ endif
        RM = rm
 MAKEFLAGS = -j1
   TESTOBJ = test.isend.o
+       FC = g77
 
 
       OBJ_CORE = pbegin.o queues.o globalop.o usleep.o nnodes.o nodeid.o \
@@ -23,33 +24,33 @@ ifeq ($(MACHINE),SUN)
        CC = gcc
    CFLAGS = -g -Wall -DSHMEM -DSYSV -DSUN
    RANLIB = ranlib
-    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o pbeginf.o
 endif
 
 
 ifeq ($(MACHINE),SGITFP)
    CFLAGS = -O3 -fullwarn -DSHMEM -DSYSV -DSGI -DSGITFP
-    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o pbeginf.o
 endif
 
 ifeq ($(MACHINE),SGI)
    CFLAGS = -O -DSHMEM -DSYSV -DSGI -DNOSPIN -DNOTIFY_SENDER
-    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o pbeginf.o
 endif
 
 
 ifeq ($(MACHINE),LINUX)
        CC = gcc
    CFLAGS = -Wall -O -DSHMEM -DSYSV -DLINUX -DNOSPIN -DNOTIFY_SENDER
-    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o pbeginf.o
    RANLIB = ranlib
 endif
 
 ifeq ($(MACHINE),CYGNUS)
        CC = gcc
        FC = g77
-   CFLAGS = -Wall -O -DSHMEM -DLINUX -DCYGNUS
-    EXTRA =  error.o busy.o async_send.o nxtval.shm.o pbeginf.o memalign.o
+   CFLAGS = -Wall -O -DLINUX -DCYGNUS -DSHMEM
+    EXTRA =  error.o busy.o async_send.o nxtval.shm.o memalign.o pbeginf.o
 endif
 
 ifeq ($(MACHINE),LAPI)
@@ -146,6 +147,7 @@ lint:
 	$(LINT) $(DEFINES) $(INCLUDES) test.isend.c t3d.c queues.c async_send.c\
                                        snd_rcv_probe.c
 
+SUFFIXES: .f .o
 .f.o:
 	$(FC) -c $(FFLAGS)  $*.f
 
