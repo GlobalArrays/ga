@@ -49,6 +49,7 @@
 #define  ga_locate_region_         GA_LOCATE_REGION
 #define  ga_lock_                  GA_LOCK
 #define  ga_lu_solve_alt_          GA_LU_SOLVE_ALT
+#define  ga_lu_solve_seq_          GA_LU_SOLVE_SEQ
 #define  ga_ma_base_address_       GA_MA_BASE_ADDRESS
 #define  ga_ma_diff_               GA_MA_DIFF
 #define  ga_ma_get_ptr_            GA_MA_GET_PTR
@@ -229,6 +230,7 @@
 #define  ga_locate_region_         ga_locate_region__       
 #define  ga_lock_                  ga_lock__                
 #define  ga_lu_solve_alt_          ga_lu_solve_alt__
+#define  ga_lu_solve_seq_          ga_lu_solve_seq__
 #define  ga_ma_base_address_       ga_ma_base_address__     
 #define  ga_ma_diff_               ga_ma_diff__             
 #define  ga_ma_get_ptr_            ga_ma_get_ptr__          
