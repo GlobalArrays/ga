@@ -28,7 +28,7 @@
 #   define VIADEV_NAME "/dev/clanvi0"
 #endif
 
-/* SHORTNAME is use to bridge the hostname as retruned by gethostbyname() and
+/* SHORTNAME is use to bridge the hostname as returned by gethostbyname() and
    used by VipNSGetHostByName - on Giganet at least it must be w/o domainname */
 #define SHORTNAME
 
@@ -769,16 +769,26 @@ vbuf_ext_t *evbuf = (vbuf_ext_t*)client_buf_pool[b].buf;
     }
 
     if(client_buf_pool[b].snd){
+#if 0
        rc = VipSendWait((SRV_con+client_buf_pool[b].srv)->vi, VIP_INFINITE,
                          &cmpl_dscr);
+#else
+       do{rc = VipSendDone((SRV_con+client_buf_pool[b].srv)->vi, &cmpl_dscr);}
+       while(rc==VIP_NOT_DONE);
+#endif
        armci_check_status(DEBUG0, rc,"complete_buf: wait for send to complete");
        if(&evbuf->snd_dscr != cmpl_dscr)
        armci_die("armci_complete_buf: wrong dscr completed",b);
        client_buf_pool[b].snd = 0;
     }
     if(client_buf_pool[b].rcv){
+#if 0
        rc = VipRecvWait((SRV_con+client_buf_pool[b].srv)->vi, VIP_INFINITE,
                             &cmpl_dscr);
+#else
+       do{rc = VipRecvDone((SRV_con+client_buf_pool[b].srv)->vi, &cmpl_dscr);}
+       while(rc==VIP_NOT_DONE);
+#endif
        armci_check_status(DEBUG0, rc,"complete_buf: wait receive to complete");
        if(&evbuf->rcv_dscr != cmpl_dscr){
            printf("%d(c): DIFFERENT recv DESCRIPTOR %p %p buf=%p \n",
@@ -857,7 +867,11 @@ static void  armci_dequeue_send_descr(VIP_VI_HANDLE vi)
 {
 
 VIP_DESCRIPTOR *cmpl_dscr;
-VIP_RETURN   rc = VipSendWait(vi, VIP_INFINITE, &cmpl_dscr);
+VIP_RETURN   rc;
+#if 0
+    rc = VipSendWait(vi, VIP_INFINITE, &cmpl_dscr);
+#endif
+    do{rc = VipSendDone(vi, &cmpl_dscr);}while(rc==VIP_NOT_DONE);
     armci_check_status(DEBUG0, rc,"WAIT for send to complete");
 }
 
@@ -1183,10 +1197,17 @@ char *dataptr = GET_DATA_PTR(evbuf->buf);
         vbuf_ext_t* cur = (vbuf_ext_t*)client_buf_pool[i].buf;
         if(cur == evbuf){ mybufid = i; break;}
     }
+    
+    do{rc = VipSendDone((SRV_con+cluster)->vi, &pdscr);}while(rc==VIP_NOT_DONE);
+    armci_check_status(DEBUG0, rc,"WAIT for send to complete");
 
+#if 0
     armci_dequeue_send_descr((SRV_con+cluster)->vi);
 
     rc = VipRecvWait((SRV_con+ cluster)->vi, VIP_INFINITE, &pdscr);
+#endif
+
+    do{rc = VipRecvDone((SRV_con+cluster)->vi, &pdscr);}while(rc==VIP_NOT_DONE);
     armci_check_status(DEBUG0, rc,"client getting data from server");
     if(pdscr != &evbuf->rcv_dscr){
        printf("%d(c): reading data client-DIFFERENT DESCRIPTOR %p %p buf=%p\n",
