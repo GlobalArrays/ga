@@ -23,10 +23,10 @@ extern void GA_Elem_minimum(int g_a, int g_b, int g_c);
 extern void GA_Abs_value_patch(int g_a, int *lo, int *hi);
 extern void GA_Add_constant_patch(int g,int *lo,int *hi,void *alpha);
 extern void GA_Recip_patch(int g_a,int *lo, int *hi);
-extern void GA_Step_max(int g_a, int g_b, double *step);
-extern void GA_Step_bound_info(int g_xx, int g_vv, int g_xxll, int g_xxuu, double *boundmin, double *wolfemin, double *boundmax);
-extern void GA_Step_max_patch(int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi, double *step);
-extern void GA_Step_bound_info_patch(int g_xx, int *xxlo, int *xxhi, int g_vv, int *vvlo, int *vvhi, int g_xxll, int *xxlllo, int *xxllhi, int g_xxuu, int *xxuulo, int *xxuuhi, double *boundmin, double *wolfemin, double* boundmax);
+extern void GA_Step_max(int g_a, int g_b, void *step);
+extern void GA_Step_bound_info(int g_xx, int g_vv, int g_xxll, int g_xxuu, void *boundmin, void *wolfemin, void *boundmax);
+extern void GA_Step_max_patch(int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi, void *step);
+extern void GA_Step_bound_info_patch(int g_xx, int *xxlo, int *xxhi, int g_vv, int *vvlo, int *vvhi, int g_xxll, int *xxlllo, int *xxllhi, int g_xxuu, int *xxuulo, int *xxuuhi, void *boundmin, void *wolfemin, void *boundmax);
 extern void GA_Elem_multiply_patch(int g_a,int *alo,int *ahi,
 				     	int g_b,int *blo,int *bhi,int g_c,int *clo,int *chi);
 extern void GA_Elem_divide_patch(int g_a,int *alo,int *ahi,
