@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.6 1999-10-14 00:18:51 d3h325 Exp $ */
+/* $Id: message.c,v 1.7 1999-11-02 00:52:21 d3h325 Exp $ */
 #include "message.h"
 #include "armcip.h"
 
@@ -76,6 +76,8 @@ void armci_msg_bcast(void *buf, int len, int root)
 {
     int up, left, right, index, Root=0;
     int tag=ARMCI_TAG, lenmes;
+
+    if(!buf)armci_die("armci_msg_bcast: NULL pointer", len);
     
     if(root !=Root){
         int msglen;
@@ -96,6 +98,8 @@ void armci_msg_bcast(void *buf, int len, int root)
 
 void armci_msg_brdcst(void* buffer, int len, int root)
 {
+   if(!buffer)armci_die("armci_msg_brdcast: NULL pointer", len);
+
 #  ifdef MPI
       MPI_Bcast(buffer, len, MPI_CHAR, root, MPI_COMM_WORLD);
 #  elif defined(PVM)
@@ -283,6 +287,7 @@ int tag=ARMCI_TAG;
 int ndo, len, lenmes, orign =n, bufsize;
 long *origx =x;  
 
+    if(!x)armci_die("armci_msg_clus_igop: NULL pointer", n);
     root  = armci_clus_info[armci_clus_me].master;
     nproc = armci_clus_info[armci_clus_me].nslave;
     index = armci_me - root;
@@ -329,6 +334,7 @@ int tag=ARMCI_TAG;
 int ndo, len, lenmes, orign =n, bufsize;
 long *origx =x;
 
+    if(!x)armci_die("armci_msg_igop: NULL pointer", n);
     root  = 0;
     nproc = armci_nproc;
     index = armci_me - root;
@@ -374,6 +380,7 @@ int tag=ARMCI_TAG;
 int ndo, len, lenmes, orign =n;
 double *origx =x;
 
+    if(!x)armci_die("armci_msg_dgop: NULL pointer", n);
     root  = 0;
     nproc = armci_nproc;
     index = armci_me - root;
