@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.25 2003-10-23 19:11:20 d3h325 Exp $ */
+/* $Id: elan.c,v 1.26 2003-11-14 19:51:34 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,9 +20,11 @@ static void *_qd;
 #endif
 
 #ifdef DOELAN4
-#define VCALLS 0
+#define VCALLS 1
+#define _ELAN_SLOTSIZE elan_queueMaxSlotSize(elan_base->state)
 #else
 #include <elan3/elan3.h>
+#define _ELAN_SLOTSIZE 320
 #endif
 
 #if VCALLS
@@ -44,7 +46,6 @@ static ops_t *ops_pending_ar;
 static ops_t *ops_done_ar;
 
 
-#define _ELAN_SLOTSIZE 320
 #define MSG_DATA_LEN (_ELAN_SLOTSIZE - sizeof(request_header_t))
 
 /* elan 1.3 defined DBG_QUEUE */
@@ -103,7 +104,7 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
           0)))armci_die("Failed to initialise Main Q",0);
 
 #if VCALLS
-    _qd = elan_gallocElan(elan_base, elan_base->allGroup, E3_QUEUE_ALIGN,
+    _qd = elan_gallocElan(elan_base, elan_base->allGroup, ELAN_QUEUE_ALIGN,
                               elan_pgvGlobalMemSize(elan_base->state));
 
     if(!_qd) armci_die("failed elan_gallocElan 1",0);
