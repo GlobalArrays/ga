@@ -10,12 +10,11 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.c,v $
-CVS: $Date: 1996-08-19 16:31:10 $
-CVS: $Revision: 1.6 $
+CVS: $Date: 1996-09-17 22:12:18 $
+CVS: $Revision: 1.7 $
 CVS: $State: Exp $
 ******************************************************************************/
 
-/* #include "../ELIO/elio.h" */
 #include "elio.h"
 #include "eaf.h"
 
@@ -189,7 +188,7 @@ Fd_t  fd;
   int i=0;
   int r;
  
-  r = elio_close(fd);
+  elio_close(fd);
   while(i< EAF_MAX_FILES && eaf_fd[i] != fd) i++;
   if(eaf_fd[i] == fd && i < EAF_MAX_FILES)
     {
@@ -199,7 +198,7 @@ Fd_t  fd;
       eaf_fd[i] = NULL;
       free(eaf_fname[i]);
     } 
-  return( r);
+  return( CHEMIO_OK);
 }
 
 
@@ -252,9 +251,6 @@ void EAF_TerminateC()
 
 
 
-
-
-
 /*\ Error handling routine
 \*/
 void eaf_err(char *func, char *fname)
@@ -263,4 +259,20 @@ void eaf_err(char *func, char *fname)
   if(fname != NULL)
     fprintf(stderr, " on file: |%s|", fname);
   perror("\nEAF: ");
+}
+
+
+
+
+int EAF_Stat(path, statinfo)
+char *path;
+stat_t *statinfo;
+{
+ char dirname[ELIO_FILENAME_MAX];
+
+ if(strlen(path)>ELIO_FILENAME_MAX) 
+    EAF_ERR("eaf_stat: internal param. LEN too small", path, ELIO_FILENAME_MAX);
+
+ elio_dirname(path, dirname, ELIO_FILENAME_MAX);
+ return(elio_stat(dirname, statinfo));
 }

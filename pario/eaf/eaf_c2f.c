@@ -11,8 +11,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf_c2f.c,v $
-CVS: $Date: 1996-08-19 16:31:19 $
-CVS: $Revision: 1.5 $
+CVS: $Date: 1996-09-17 22:12:19 $
+CVS: $Revision: 1.6 $
 CVS: $State: Exp $
 ******************************************************************************/
 #define EAF_FILENAME_MAX ELIO_FILENAME_MAX
@@ -245,4 +245,33 @@ eaf_fort_status_t          EAF_Probe(eaf_fort_req_t   *id,
 }
 
 
+
+
+
+#if defined(CRAY)
+Integer        EAF_STAT(_fcd  path, Integer *avail, Integer *fstype)
+#else
+Integer        eaf_stat_(char *path, Integer *avail, Integer *fstype, int flen)
+#endif
+{
+ char cpath[EAF_FILENAME_MAX], dirname[EAF_FILENAME_MAX];
+ stat_t statinfo;
+ int rc;
+
+
+ if(flen>EAF_FILENAME_MAX) return((Integer)CHEMIO_FAIL);
+
+
+#ifdef CRAY
+  strncpy(cpath, _fcdtocp(path), _fcdlen(path));
+#else
+  strncpy(cpath, path, flen);
+#endif
+
+ elio_dirname(cpath, dirname, EAF_FILENAME_MAX);
+ rc = elio_stat(dirname, &statinfo);
+ *fstype = (statinfo.fs == FS_UFS)? 0 : 1;
+ *avail = (Integer)statinfo.avail;
+ return((Integer)rc);
+}
 

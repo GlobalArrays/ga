@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.3 1996-07-27 23:20:43 d3h325 Exp $
+#$Id: makefile,v 1.4 1996-09-17 22:12:21 d3h325 Exp $
 #
 # Nakefile for EAF of ChemIO 
 #
@@ -36,6 +36,7 @@ LIB_DISTRIB = ../../lib
 OBJ = eaf.o eaf_c2f.o
 LIBRARY = libeaf.a
 HEADERS = eaf.h eaf.fh eaf_c2f.h
+LIB_TARGETS = *.x
 
 LIB_DEFINES = $(F_AFFIX) $(F_CASE)
 LIB_INCLUDES= -I../elio
@@ -47,8 +48,10 @@ include ../../config/makelib.h
 
 LIBS = $(LIB_DISTRIB)/$(TARGET)/libeaf.a $(LIB_DISTRIB)/$(TARGET)/libelio.a
 
-ftest_eaf : ftest_eaf.o $(LIBS)
+%.x : %.o $(LIBS)
+	$(FC) $(FFLAGS) -o $@ $^
+
+ftest : ftest_eaf.o $(LIBS)
 
 $(patsubst %,$(LIBRARY_PATH)(%),eaf.o): eaf.h
 $(patsubst %,$(LIBRARY_PATH)(%),eaf_c2f.o): eaf.h eaf_c2f.h
-/*$(OBJ) : $(HEADERS)*/

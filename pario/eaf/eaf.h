@@ -10,8 +10,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.h,v $
-CVS: $Date: 1996-08-19 16:31:16 $
-CVS: $Revision: 1.6 $
+CVS: $Date: 1996-09-17 22:12:19 $
+CVS: $Revision: 1.7 $
 CVS: $State: Exp $
 ******************************************************************************/
 #if defined(__STDC__) || defined(__cplusplus)
@@ -40,7 +40,7 @@ extern int    EAF_CloseC     _ARGS_((Fd_t fd));
 #undef _ARGS_
 
 /******************************************************************/
-#define  EAF_MAX_FILES ELIO_MAX_FILES
+#define  EAF_MAX_FILES 16
 
 static Fd_t eaf_fd[EAF_MAX_FILES];
 static char *eaf_fname[EAF_MAX_FILES];
