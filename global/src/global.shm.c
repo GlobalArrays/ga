@@ -1025,6 +1025,8 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
    if(nproc>1) UNLOCK(0);
 #endif
 
+#endif
+
 #ifdef GA_TRACE
    trace_etime_();
    op_code = GA_OP_ACC; 
