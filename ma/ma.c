@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.20 1999-10-19 01:01:07 d3g681 Exp $
+ * $Id: ma.c,v 1.21 2000-05-09 21:29:17 d3h325 Exp $
  */
 
 /*
@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "error.h"
 #include "ma.h"

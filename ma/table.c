@@ -1,5 +1,5 @@
 /*
- * $Id: table.c,v 1.4 1998-01-30 18:49:33 d3h325 Exp $
+ * $Id: table.c,v 1.5 2000-05-09 21:29:17 d3h325 Exp $
  */
 
 /*
@@ -12,6 +12,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "error.h"
 #include "memcpy.h"
 #include "scope.h"
