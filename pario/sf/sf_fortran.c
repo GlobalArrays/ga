@@ -3,7 +3,6 @@
 #      include <fortran.h>
 #endif
  
-
 #define MAX_NAME 256
 char cname[MAX_NAME+1];
 

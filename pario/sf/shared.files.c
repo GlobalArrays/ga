@@ -1,4 +1,4 @@
-/* $Id: shared.files.c,v 1.10 2001-03-31 00:12:55 d3h325 Exp $ */
+/* $Id: shared.files.c,v 1.11 2002-01-29 17:54:44 d3h325 Exp $ */
 /* DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -48,10 +48,10 @@ SF_t SF[_max_shared_files];
 {\
         if(_handle+SF_OFFSET >=_max_shared_files||_handle+SF_OFFSET<0)\
         {fprintf(stderr,"%s, %ld --",msg,(long) _max_shared_files);   \
-            ERROR("invalid SF handle",_handle);}                      \
+            ERROR("invalid SF handle",(int)_handle);}                 \
         if( SF[(_handle+SF_OFFSET)].actv == 0)                        \
         {fprintf(stderr,"%s:",msg);                                   \
-            ERROR("disk array not active",_handle);}                  \
+            ERROR("disk array not active",(int)_handle);}             \
 }
 
 
@@ -90,7 +90,7 @@ Integer hndl;
 
         /*** Get next free SF handle ***/
         if( (hndl = sfi_get_handle()) == -1)
-           ERROR("sf_create: too many shared files ",_max_shared_files);
+           ERROR("sf_create: too many shared files ",(int)_max_shared_files);
         *handle = hndl - SF_OFFSET;
 
         /*generate file name(s) */

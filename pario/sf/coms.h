@@ -2,11 +2,11 @@
 #define SFSYNC 29000
 
 #ifndef TSCMSG 
-#   include "global.h"
-#   define SYNC      GA_sync
-#   define NPROC     GA_nnodes
-#   define ME        GA_nodeid
-#   define ERROR     GA_error
+#   include "ga.h"
+#   define SYNC      GA_Sync
+#   define NPROC     GA_Nnodes
+#   define ME        GA_Nodeid
+#   define ERROR     GA_Error
 #else
 #   include "sndrcv.h"
     long sync_flag = SFSYNC;
