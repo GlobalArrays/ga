@@ -24,10 +24,7 @@ extern void ga_error(char*, long);
 #endif
 
 
-#if (defined(SUN) && !defined(SOLARIS)) || defined(LINUX)
-#        include <sys/vfs.h>
-#        define  STATVFS statfs
-#elif defined(CRAY) || defined(AIX)
+#if defined(CRAY) || defined(AIX)
 #        include <sys/statfs.h>
 #        define  STATVFS statfs
 #elif defined(KSR)
