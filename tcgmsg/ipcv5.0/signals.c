@@ -1,4 +1,4 @@
-/* $$ */
+/* $Id: signals.c,v 1.3 2000-11-14 20:43:56 d3h325 Exp $ */
 
 #include "tcgmsgP.h"
 #ifdef LINUX
@@ -10,18 +10,20 @@
 #include <sys/wait.h>
 #endif
 
-/*ARGSUSED*/
 #if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigintHandler(sig, code, scp, addr)
+#   define SigType  int
 #else
-void SigintHandler(sig, code, scp, addr)
+#   define SigType  void
 #endif
-     int sig, code;
-     struct sigcontext *scp;
-     char *addr;
+
+#ifndef SIG_ERR
+#       define SIG_ERR         (SigType (*)(int))-1
+#endif
+
+SigType SigintHandler(int sig)
 {
   TCGMSG_caught_sigint = 1L;
-  Error("SigintHandler: signal was caught",(long) code);
+  Error("SigintHandler: signal was caught",0L);
 }
 
 void TrapSigint()
@@ -31,13 +33,8 @@ void TrapSigint()
   manner not possible just by killing everyone
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGINT, SigintHandler) == (int (*)()) -1L)
+  if ( signal(SIGINT, SigintHandler) == SIG_ERR)
     Error("TrapSigint: error from signal setting SIGINT",(long) SIGINT);
-#else
-  if ( signal(SIGINT, SigintHandler) == (void (*)()) -1L)
-    Error("TrapSigint: error from signal setting SIGINT",(long) SIGINT);
-#endif
 }
 
 void ZapChildren()
@@ -53,27 +50,11 @@ void ZapChildren()
 }
 
 /*ARGSUSED*/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigchldHandler(sig, code, scp, addr)
-#else
-void SigchldHandler(sig, code, scp, addr)
-#endif
-     int sig, code;
-     struct sigcontext *scp;
-     char *addr;
+SigType SigchldHandler(int sig)
 {
   int status;
   
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
-  union wait ustatus;
-#endif
-
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
-  (void) wait(&ustatus);
-  status = ustatus.w_status;
-#else
   (void) wait(&status);
-#endif
   TCGMSG_caught_sigint = 1;
   Error("Child process terminated prematurely, status=",(long) status);
 }
@@ -83,13 +64,6 @@ void TrapSigchld()
   Trap SIGCHLD so that can tell if children die unexpectedly.
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGCHLD, SigchldHandler) == (int (*)()) -1L)
-    Error("TrapSigchld: error from signal setting SIGCHLD",
-		  (long) SIGCHLD);
-#else
-  if ( signal(SIGCHLD, SigchldHandler) == (void (*)()) -1L)
-    Error("TrapSigchld: error from signal setting SIGCHLD",
-		  (long) SIGCHLD);
-#endif
+  if ( signal(SIGCHLD, SigchldHandler) == SIG_ERR)
+    Error("TrapSigchld: error from signal setting SIGCHLD", (long) SIGCHLD);
 }

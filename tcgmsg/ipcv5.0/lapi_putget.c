@@ -162,7 +162,7 @@ Integer NXTVAL_(mproc)
 #define INC 1
   long local;
   long stype = INTERNAL_SYNC_TYPE;
-  static int req_id;
+  lapi_cntr_t req_id;
   int rc, inc = INC;
 
   int  server = (int)NNODES_() -1;         /* id of server process */
