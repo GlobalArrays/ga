@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.51 2002-08-09 15:13:43 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.52 2002-08-15 16:21:50 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1378,7 +1378,8 @@ void nga_move(int op,             /*[input] flag for read or write */
     /* Only transpose is supported, not reshaping, so scatter/gather is not
        required */
     Integer vhandle, vindex, index[MAXDIM];
-    Integer i, j, itmp, jtmp, nelem, ldt[MAXDIM],ldg[MAXDIM];
+    Integer i, j, itmp, jtmp, nelem, ldt[MAXDIM], ldg[MAXDIM];
+    Integer nelem1, nelem2, nelem3;
     int type = DRA[ds_a.handle+DRA_OFFSET].type;
     char    *base_addr;
     section_t gs_chunk = gs_a;
@@ -1386,6 +1387,10 @@ void nga_move(int op,             /*[input] flag for read or write */
     /* create space to copy transpose of DRA section into */
     nelem = 1;
     for (i=0; i<ndim; i++) nelem *= (ds_chunk.hi[i] - ds_chunk.lo[i] + 1);
+    nelem1 = 1;
+    for (i=1; i<ndim; i++) nelem1 *= (ds_chunk.hi[i] - ds_chunk.lo[i] + 1);
+    nelem2 = 1;
+    for (i=0; i<ndim-1; i++) nelem2 *= ldb[i];
     if(!MA_push_get(type, nelem, "v_", &vhandle, &vindex))
           dai_error("DRA move: MA failed-v ", 0L);
     if(!MA_get_pointer(vhandle, &base_addr))
@@ -1399,86 +1404,106 @@ void nga_move(int op,             /*[input] flag for read or write */
       for (i=0; i<ndim; i++) ldg[i] = gs_chunk.hi[i] - gs_chunk.lo[i] + 1;
       /* copy data from global array to temporary buffer */
       nga_get_sectM(gs_chunk, base_addr, ldg); 
-      for (i=0; i<nelem; i++ ) {
+      for (i=0; i<nelem1; i++ ) {
         /* find indices of elements in MA buffer */
-        itmp = i;
-        index[0] = itmp%ldt[0];
-        for (j=1; j<ndim; j++) {
-          itmp = (itmp-index[j-1])/ldt[j-1];
-          if (j != ndim-1) {
-            index[j] = itmp%ldt[j];
-          } else {
-            index[j] = itmp;
+        if (ndim > 1) {
+          itmp = i;
+          index[1] = itmp%ldg[1];
+          for (j=2; j<ndim; j++) {
+            itmp = (itmp-index[j-1])/ldg[j-1];
+            if (j != ndim-1) {
+              index[j] = itmp%ldg[j];
+            } else {
+              index[j] = itmp;
+            }
           }
+          nelem3 = index[1];
+          for (j=2; j<ndim; j++) {
+            nelem3 *= ldb[ndim-1-j];
+            nelem3 += index[j];
+          }
+        } else {
+          nelem2 = 1;
+          nelem3 = 0;
         }
         /* find corresponding indices of element from IO buffer */
-        jtmp = index[0];
-        for (j=1; j<ndim; j++) {
-          jtmp *= ldb[ndim-1-j];
-          jtmp += index[j];
-        }
-        switch(ga_type_c2f(type)){
-          case MT_F_DBL:
-            ((DoublePrecision*)buffer)[jtmp]
-              = ((DoublePrecision*)base_addr)[i];
-            break;
-          case MT_F_INT:
-            ((Integer*)buffer)[jtmp]
-              = ((Integer*)base_addr)[i];
-            break;
-          case MT_F_DCPL:
-            ((DoublePrecision*)buffer)[2*jtmp]
-              = ((DoublePrecision*)base_addr)[2*i];
-            ((DoublePrecision*)buffer)[2*jtmp+1]
-              = ((DoublePrecision*)base_addr)[2*i+1];
-            break;
-          case MT_F_REAL:
-            ((float*)buffer)[jtmp]
-              = ((float*)base_addr)[i];
-            break;
+        for (j=0; j<ldg[0]; j++) {
+          itmp = ldg[0]*i+j;
+          jtmp = j*nelem2 + nelem3;
+          switch(ga_type_c2f(type)){
+            case MT_F_DBL:
+              ((DoublePrecision*)buffer)[jtmp]
+                = ((DoublePrecision*)base_addr)[itmp];
+              break;
+            case MT_F_INT:
+              ((Integer*)buffer)[jtmp]
+                = ((Integer*)base_addr)[itmp];
+              break;
+            case MT_F_DCPL:
+              ((DoublePrecision*)buffer)[2*jtmp]
+                = ((DoublePrecision*)base_addr)[2*itmp];
+              ((DoublePrecision*)buffer)[2*jtmp+1]
+                = ((DoublePrecision*)base_addr)[2*itmp+1];
+              break;
+            case MT_F_REAL:
+              ((float*)buffer)[jtmp]
+                = ((float*)base_addr)[itmp];
+              break;
+          }
         }
       }
     } else {
-      for (i=0; i<nelem; i++ ) {
-        /* find indices of elements to go in MA buffer */
-        itmp = i;
-        index[0] = itmp%ldt[0];
-        for (j=1; j<ndim; j++) {
-          itmp = (itmp-index[j-1])/ldt[j-1];
-          if (j != ndim-1) {
-            index[j] = itmp%ldt[j];
-          } else {
-            index[j] = itmp;
+      /* get transposed indices */
+      ndai_trnsp_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a);
+      for (i=0; i<ndim; i++) ldg[i] = gs_chunk.hi[i] - gs_chunk.lo[i] + 1;
+      for (i=0; i<nelem1; i++ ) {
+        /* find indices of elements in MA buffer */
+        if (ndim > 1) {
+          itmp = i;
+          index[1] = itmp%ldg[1];
+          for (j=2; j<ndim; j++) {
+            itmp = (itmp-index[j-1])/ldg[j-1];
+            if (j != ndim-1) {
+              index[j] = itmp%ldg[j];
+            } else {
+              index[j] = itmp;
+            }
+          }
+          nelem3 = index[1];
+          for (j=2; j<ndim; j++) {
+            nelem3 *= ldb[ndim-1-j];
+            nelem3 += index[j];
+          }
+        } else {
+          nelem2 = 1;
+          nelem3 = 0;
+        }
+        /* find corresponding indices of element from IO buffer */
+        for (j=0; j<ldg[0]; j++) {
+          itmp = ldg[0]*i+j;
+          jtmp = j*nelem2 + nelem3;
+          switch(ga_type_c2f(type)){
+            case MT_F_DBL:
+              ((DoublePrecision*)base_addr)[itmp]
+                = ((DoublePrecision*)buffer)[jtmp];
+              break;
+            case MT_F_INT:
+              ((Integer*)base_addr)[itmp]
+                = ((Integer*)buffer)[jtmp];
+              break;
+            case MT_F_DCPL:
+              ((DoublePrecision*)base_addr)[2*itmp]
+                = ((DoublePrecision*)buffer)[2*jtmp];
+              ((DoublePrecision*)base_addr)[2*itmp+1]
+                = ((DoublePrecision*)buffer)[2*jtmp+1];
+              break;
+            case MT_F_REAL:
+              ((float*)base_addr)[itmp]
+                = ((float*)buffer)[jtmp];
+              break;
           }
         }
-        /* find corresponding indices of element from IO buffer */ 
-        jtmp = index[0];
-        for (j=1; j<ndim; j++) {
-          jtmp *= ldb[ndim-1-j];
-          jtmp += index[j];
-        }
-        switch(ga_type_c2f(type)){
-          case MT_F_DBL:
-            ((DoublePrecision*)base_addr)[i]
-              = ((DoublePrecision*)buffer)[jtmp];
-            break;
-          case MT_F_INT:
-            ((Integer*)base_addr)[i]
-              = ((Integer*)buffer)[jtmp];
-            break;
-          case MT_F_DCPL:
-            ((DoublePrecision*)base_addr)[2*i]
-              = ((DoublePrecision*)buffer)[2*jtmp];
-            ((DoublePrecision*)base_addr)[2*i+1]
-              = ((DoublePrecision*)buffer)[2*jtmp+1];
-            break;
-          case MT_F_REAL:
-            ((float*)base_addr)[i]
-              = ((float*)buffer)[jtmp];
-            break;
-        }
       }
-      ndai_trnsp_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a);
       nga_put_sectM(gs_chunk, base_addr, ldt); 
     }
     MA_pop_stack(vhandle);
@@ -2439,12 +2464,12 @@ void ndai_get(section_t ds_a, /*[input] section of DRA read from disk */
 
   for (i=0; i<ndim-1; i++) if ((ds_a.hi[i] - ds_a.lo[i] + 1) != ld[i])
     dai_error("ndai_get: bad ld",ld[i]); 
-    /* since everything is aligned, read data from disk */
-    elem = 1;
-    for (i=0; i<ndim; i++) elem *= (ds_a.hi[i]-ds_a.lo[i]+1);
-    bytes= (Size_t) elem * dai_sizeofM(DRA[handle].type);
-    rc= elio_aread(DRA[handle].fd, offset, buf, bytes, id );
-    if(rc !=  ELIO_OK) dai_error("ndai_get failed", rc);
+  /* since everything is aligned, read data from disk */
+  elem = 1;
+  for (i=0; i<ndim; i++) elem *= (ds_a.hi[i]-ds_a.lo[i]+1);
+  bytes= (Size_t) elem * dai_sizeofM(DRA[handle].type);
+  rc= elio_aread(DRA[handle].fd, offset, buf, bytes, id );
+  if(rc !=  ELIO_OK) dai_error("ndai_get failed", rc);
 }
 
 #define ndai_check_rangeM(_lo, _hi, _ndim, _dims, _err_msg) \
