@@ -31,6 +31,7 @@
 !
       integer nga_read_inc
       integer ga_cluster_nprocs, ga_cluster_nodeid, ga_cluster_nnodes
+      integer ga_cluster_procid
       logical nga_create, nga_locate, nga_create_irreg
       logical nga_create_ghosts_irreg,nga_create_ghosts
 !
@@ -56,3 +57,4 @@
       external nga_ddot_patch, nga_zdot_patch, nga_idot_patch
       external ga_sdot, ga_sdot_patch, nga_sdot_patch
       external ga_cluster_nprocs, ga_cluster_nodeid, ga_cluster_nnodes
+      external ga_cluster_procid

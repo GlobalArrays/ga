@@ -132,6 +132,7 @@ extern void GA_Nblock(int g_a, int *nblock);
 extern int GA_Cluster_nnodes();
 extern int GA_Cluster_nodeid(int x);
 extern int GA_Cluster_nprocs(int x);
+extern int GA_Cluster_procid();
 
 
 #ifdef __cplusplus

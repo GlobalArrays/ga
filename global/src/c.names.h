@@ -147,6 +147,7 @@
 #define  ga_cluster_nodeid_        GA_CLUSTER_NODEID 
 #define  ga_cluster_nnodes_        GA_CLUSTER_NNODES
 #define  ga_cluster_nprocs_        GA_CLUSTER_NPROCS
+#define  ga_cluster_procid_        GA_CLUSTER_PROCID
 
 #elif defined(F2C2_)
 
@@ -296,6 +297,7 @@
 #define  ga_cluster_nodeid_        ga_cluster_nodeid__ 
 #define  ga_cluster_nnodes_        ga_cluster_nnodes__
 #define  ga_cluster_nprocs_        ga_cluster_nprocs__
+#define  ga_cluster_procid_        ga_cluster_procid__
 
 #endif
 
