@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.16 2002-09-21 17:43:00 vinod Exp $ */
+/* $Id: vector.c,v 1.17 2002-10-01 23:32:31 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -340,7 +340,7 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
                 int proc  /* remote process(or) ID */
               )
 {
-    int rc, i,direct=1;
+    int rc, i,direct=1,totvec=0;
 
 #ifdef GA_USE_VAMPIR
     int tot=0;
@@ -352,6 +352,9 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
         if(darr[i].src_ptr_array == NULL || darr[i].dst_ptr_array ==NULL) return FAIL2;
         if(darr[i].bytes<1)return FAIL3;
         if(darr[i].ptr_array_len <1) return FAIL4;
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)  
+        totvec+=darr[i].ptr_array_len;
+#endif
     }
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
@@ -378,7 +381,12 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
          rc = armci_copy_vector(PUT, darr, len, proc);
     else{
 #if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)  
-       rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1);
+       /*500 is very conservative, the number here should be modified to be 
+       based on the size of send/recv buffer*/
+       if(totvec<500)
+         rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1);
+       else 
+         rc = armci_pack_vector(PUT, NULL, darr, len, proc);
 #else	 
          rc = armci_pack_vector(PUT, NULL, darr, len, proc);
 #endif    
@@ -401,7 +409,7 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
                 int proc  /* remote process(or) ID */
               )
 {
-    int rc, i,direct=1;
+    int rc, i,direct=1,totvec=0;
 
 #ifdef GA_USE_VAMPIR
     int tot=0;
@@ -413,6 +421,9 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
       if(darr[i].src_ptr_array==NULL ||darr[i].dst_ptr_array==NULL)return FAIL2;
       if(darr[i].bytes<1)return FAIL3;
       if(darr[i].ptr_array_len <1) return FAIL4;
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)  
+      totvec+=darr[i].ptr_array_len;
+#endif
     }
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
@@ -438,8 +449,13 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     if(direct)
        rc = armci_copy_vector(GET, darr, len, proc);
     else{
-#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)       	
-       rc = armci_rem_vector(GET, NULL, darr, len, proc,1);
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
+       /*500 is very conservative, the number here should be modified to be 
+       based on the size of send/recv buffer*/
+       if(totvec<500)
+          rc = armci_rem_vector(GET, NULL, darr, len, proc,1);
+       else
+          rc = armci_pack_vector(GET, NULL, darr, len, proc);
 #else
        rc = armci_pack_vector(GET, NULL, darr, len, proc);
 #endif   
