@@ -291,7 +291,8 @@ endif
 ifeq ($(TARGET),IBM)
 # IBM RS/6000 under AIX  
 #
-         IBM  = 1
+         IBM = 1
+GLOB_DEFINES =
 endif
 
 ifdef IBM
