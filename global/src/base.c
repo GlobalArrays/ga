@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.51 2003-09-03 17:42:13 d3g293 Exp $ */
+/* $Id: base.c,v 1.52 2003-09-18 21:23:44 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2823,14 +2823,14 @@ void FATR ga_merge_mirrored_(Integer *g_a)
           j = i+1;
           nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
           if (bptr != nptr) {
-            bytes = (Integer)nptr - (Integer)bptr;
+            bytes = (long)nptr - (long)bptr;
             /* BJP printf("p[%d] Gap on proc %d is %d\n",GAme,i,bytes); */
             bzero(bptr, bytes);
           }
         }
       }
       /* find total number of bytes containing global array */
-      total = (Integer)bptr - (Integer)zptr;
+      total = (long)bptr - (long)zptr;
       total /= GAsizeof(type);
       /*convert from C data type to ARMCI type */
       switch(type) {
@@ -3311,7 +3311,7 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
           j = i+1;
           nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
           if (bptr != nptr) {
-            bytes = (Integer)nptr - (Integer)bptr;
+            bytes = (long)nptr - (long)bptr;
             nsize += (int)bytes;
             bzero(bptr, bytes);
           }
