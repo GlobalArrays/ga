@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.67 2003-05-22 19:21:56 edo Exp $ */
+/* $Id: shmem.c,v 1.68 2003-05-22 19:29:48 edo Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -295,7 +295,7 @@ long lower_bound=0;
      if(!x) x = upper_bound;
      else upper_bound =x;
      
-     printf("%d: x = %ld upper_bound=%ld\n",armci_me, x, upper_bound); fflush(stdout);
+     if(DEBUG_){printf("%d: x = %ld upper_bound=%ld\n",armci_me, x, upper_bound); fflush(stdout);}
 
      for(i=1;;i++){
         long step;
