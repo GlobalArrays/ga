@@ -51,11 +51,14 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
    LIB_DEFINES += -DNO_SHM
 endif
 
-ifndef ARMCI_NETWORK
-ifeq ($(TARGET),$(findstring $(TARGET),$(SOCKETS)))
- OBJ += spawn.o dataserv.o sockets.o request.o
- LIB_DEFINES += -DDATA_SERVER -DSOCKETS
-endif
+ifdef ARMCI_NETWORK
+  LIBRARY_STAMP = $(ARMCI_NETWORK).$(MSG_COMMS)
+else
+  LIBRARY_STAMP = $(MSG_COMMS)
+  ifeq ($(TARGET),$(findstring $(TARGET),$(SOCKETS)))
+     OBJ += spawn.o dataserv.o sockets.o request.o
+     LIB_DEFINES += -DDATA_SERVER -DSOCKETS
+  endif
 endif
 
 LIB_DEFINES += $(MP_DEFINES) $(COMM_DEFINES)
