@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.103 2004-04-28 01:02:52 edo Exp $
+#$Id: makefile.h,v 1.104 2004-04-30 04:49:46 edo Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -474,6 +474,11 @@ ifeq ($(TARGET),cray-sv2)
      ifeq ($(COPT), -O)
          COPT = -O -h inline2
      endif
+     ifdef USE_SSP
+       FOPT_REN += -O ssp
+       COPT_REN += -h ssp
+     endif
+
 #    COPT_REN = -h report=imsvf
 #         CRAY = yes
 endif
