@@ -139,11 +139,10 @@ static void process_hostlist(char *names)
            }
 #else
 
-    armci_nclus= armci_nproc;
-    armci_clus_info = (armci_clus_t*)malloc(armci_nclus*sizeof(armci_clus_t));
-    if(!armci_clus_info)armci_die("malloc failed for clusinfo",armci_nclus);
     armci_clus_me=0;
     armci_nclus=1;
+    armci_clus_info = (armci_clus_t*)malloc(armci_nclus*sizeof(armci_clus_t));
+    if(!armci_clus_info)armci_die("malloc failed for clusinfo",armci_nclus);
     strcpy(armci_clus_info[0].hostname, names); 
     armci_clus_info[0].master=0;
     armci_clus_info[0].nslave=armci_nproc;

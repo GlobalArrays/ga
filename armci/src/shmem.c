@@ -60,7 +60,10 @@ extern void armci_die();
  * 1. use predefined SHMMAX if available or set some reasonable values, or
  * 2. trial-and-error search for a max value (default)
  */
-/*#define NO_SHMMAX_SEARCH*/
+/* on SP cannot get return status from a child process needed to test SHMMAX */
+#ifdef LAPI
+#define NO_SHMMAX_SEARCH
+#endif
 
 #ifdef NO_SHMMAX_SEARCH
 /* Limits for the largest shmem segment are in Kilobytes to avoid passing
@@ -75,7 +78,7 @@ extern void armci_die();
 #  define _SHMMAX (1024)  /* memory in KB */
 #elif defined(SGI64) || defined(AIX) || defined(CONVEX)
 #  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)228*1024)
+#  define _SHMMAX ((unsigned long)512*1024)
 #elif defined(SGI) && !defined(SGI64)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)128*1024)
@@ -176,7 +179,12 @@ void armci_shmem_init()
 {
 #ifndef NO_SHMMAX_SEARCH
         int x;
+#ifdef LAPI
+        x = armci_shmem_test();
+#else
         x =armci_child_shmem_init();
+#endif
+
         if(x<1)
           armci_die("no usable amount (%d bytes) of shared memory available\n",
           (int)LBOUND);

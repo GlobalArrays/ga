@@ -121,13 +121,18 @@ unsigned long limit;
 
 int ARMCI_Uses_shm()
 {
+    int uses=0;
     if(!armci_initialized)armci_die("ARMCI not yet initialized",0);
 
 #if defined(SYSV) || defined(WIN32)
-    if(armci_nproc >1) return 1;
-    else
+#   ifdef LAPI
+      if(armci_nproc != armci_nclus)uses= 1;
+#   else
+      if(armci_nproc >1) uses= 1;
+#   endif
 #endif
-    return 0;
+/*    fprintf(stderr,"uses shmem %d\n",uses);*/
+    return uses;
 }
 
 
@@ -141,6 +146,8 @@ int ARMCI_Init()
 
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
+
+    fprintf(stderr,"%d starting\n",armci_me); sleep(1);
 
 #ifdef CRAY
     cmpl_proc=-1;
@@ -160,11 +167,12 @@ int ARMCI_Init()
 
 #if defined(SYSV) || defined(WIN32)
 
-    /* allocate locks and init shared memory */
-    if (armci_nproc > 1){
-      armci_allocate_locks();
+    /* init shared memory */
+    if(ARMCI_Uses_shm())
       if(armci_master == armci_me) armci_shmem_init();
-    }
+
+    /* allocate locks */
+    if (armci_nproc > 1) armci_allocate_locks();
 
 #endif
 

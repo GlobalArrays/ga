@@ -247,7 +247,7 @@ int ARMCI_Free(void *ptr)
 #   ifdef USE_MALLOC
       if(armci_nproc > 1)
 #   endif
-      {
+      if(ARMCI_Uses_shm()){
           if(armci_me==armci_master) Free_Shmem_Ptr( 0, 0, ptr);
           ptr = NULL;
           return 0;
