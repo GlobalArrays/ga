@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.19 2002-10-30 17:21:24 vinod Exp $ */
+/* $Id: vector.c,v 1.20 2002-10-31 01:10:49 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -550,6 +550,11 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
+/*set tag and op in the nb handle*/
+    if(nb_handle){
+      nb_handle->tag = GET_NEXT_NBTAG();
+      nb_handle->op  = PUT;
+    }
 
 
     if(direct)
@@ -594,6 +599,11 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
     direct=SAMECLUSNODE(proc);
 #endif
 
+    if(nb_handle){
+      nb_handle->tag = GET_NEXT_NBTAG();
+      nb_handle->op  = GET;
+    }
+
     if(direct)
        rc = armci_copy_vector(GET, darr, len, proc);
     else{
@@ -637,6 +647,11 @@ int ARMCI_NbAccV( int op,              /* oeration code */
 
     ORDER(op,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
+
+    if(nb_handle){
+      nb_handle->tag = GET_NEXT_NBTAG();
+      nb_handle->op  = op;
+    }
 
 #   if defined(ACC_COPY)
        if(armci_me != proc) direct=0;

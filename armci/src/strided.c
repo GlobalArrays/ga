@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.47 2002-10-30 17:21:24 vinod Exp $ */
+/* $Id: strided.c,v 1.48 2002-10-31 01:10:49 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -926,8 +926,10 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 #   endif
  
 /*set tag and op in the nb handle*/
-    nb_handle->tag = GET_NEXT_NBTAG();
-    nb_handle->op  = optype;
+    if(nb_handle){
+      nb_handle->tag = GET_NEXT_NBTAG();
+      nb_handle->op  = optype;
+    }
 
     if(direct)
       rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
