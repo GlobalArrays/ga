@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.35 2002-12-31 05:04:59 manoj Exp $ */
+/* $Id: test.c,v 1.36 2003-03-06 05:59:36 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -1456,7 +1456,6 @@ void test_rput()
 }
 
 
-#define MAXPROC       256
 #define MAXELEMS      6400
 #define NUMAGG        20   /* NUMAGG < MAXELEMS/10 */
 #define MAX_REQUESTS  325 /* MAXELEMS/NUMAGG */
