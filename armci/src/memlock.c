@@ -4,9 +4,9 @@
 #include "memlock.h"
 #include <stdio.h>
 
+#define DEBUG_ 0
 #define INVALID_VAL -9999999
 static int locked_slot=INVALID_VAL;
-static int locked_proc=INVALID_VAL;
 
 volatile double armci_dummy_work=0.;
 void **memlock_table_array;
@@ -20,7 +20,7 @@ void **memlock_table_array;
 #  define LOG_CALGN 6
 #endif
 
-#define ALIGN_ADDRESS(x)  (char*)( ( ((unsigned long)x) >> LOG_CALGN ) << LOG_CALGN ) 
+#define ALIGN_ADDRESS(x) (char*)((((unsigned long)x) >> LOG_CALGN) << LOG_CALGN) 
 
 /*\ idle for a time proportional to factor 
 \*/
@@ -50,9 +50,15 @@ void armci_lockmem(void *start, void *end, int proc)
      register void* pstart, *pend;
      register  int slot, avail=0;
      int turn=0, conflict=0;
-     memlock_t *memlock_table = (memlock_t*)memlock_table_array[proc];
-     register int lock = proc%NUM_LOCKS;
-     locked_proc = proc;
+     memlock_t *memlock_table;
+     register int lock;
+
+
+     if(DEBUG_)
+       fprintf(stderr,"%d: armci_lockmem for %d\n",armci_me, proc);
+     memlock_table = (memlock_t*)memlock_table_array[proc];
+
+     lock = proc%NUM_LOCKS;
 
 #ifdef ALIGN_ADDRESS
      /* align address range on cache line boundary to avoid false sharing */
@@ -118,7 +124,7 @@ void armci_lockmem(void *start, void *end, int proc)
 
 /*\ release lock to the memory area locked by previous call to armci_lockemem
 \*/
-void armci_unlockmem()
+void armci_unlockmem(int proc)
 {
      void *null[2] = {NULL,NULL};
      memlock_t *memlock_table;
@@ -127,19 +133,19 @@ void armci_unlockmem()
      if(locked_slot == INVALID_VAL) armci_die("armci_unlock: empty",0);
      if(locked_slot >= MAX_SLOTS || locked_slot <0) 
         armci_die("armci_unlock: corrupted slot?",locked_slot);
-     if(locked_proc >= MAX_PROC || locked_proc <0) 
-        armci_die("armci_unlock: corrupted proc?",locked_proc);
 #endif
 
-     memlock_table = (memlock_t*)memlock_table_array[locked_proc];
-     armci_put(null,&memlock_table[locked_slot].start,2*sizeof(void*),locked_proc);
+     memlock_table = (memlock_t*)memlock_table_array[proc];
+     armci_put(null,&memlock_table[locked_slot].start,2*sizeof(void*),proc);
 
 }
     
+
+
 void armci_lockmem_(void *pstart, void *pend, int proc)
 {
-    locked_proc =proc;
-    NATIVE_LOCK(proc);
+    int lock = proc-armci_master;
+    NATIVE_LOCK(lock);
 #   ifdef LAPI
     {
        extern int kevin_ok;
@@ -148,9 +154,10 @@ void armci_lockmem_(void *pstart, void *pend, int proc)
 #   endif
 }
 
-void armci_unlockmem_()
+void armci_unlockmem_(int proc)
 {
-    NATIVE_UNLOCK(locked_proc);
+    int lock = proc-armci_master;
+    NATIVE_UNLOCK(lock);
 #   ifdef LAPI
     {
        extern int kevin_ok;

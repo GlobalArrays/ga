@@ -139,7 +139,7 @@ void armci_scatter_acc(int op, void *scale, armci_giov_t dsc,
       default: armci_die("ARMCI vector accumulate: operation not supported",op);
       }
 
-      if(lockit) ARMCI_UNLOCKMEM();
+      if(lockit) ARMCI_UNLOCKMEM(proc);
 }
 
 
@@ -201,7 +201,7 @@ int armci_acc_vector(int op,             /* operation code */
 
                    /* get data to the local buffer */
                    rc = armci_copy_vector(GET, &dl, 1, proc);
-                   if(rc){ ARMCI_UNLOCKMEM(); return(rc);}
+                   if(rc){ ARMCI_UNLOCKMEM(proc); return(rc);}
 
                    /* update source array for accumulate */
                    dl.src_ptr_array = dr.src_ptr_array +j;
@@ -217,10 +217,10 @@ int armci_acc_vector(int op,             /* operation code */
                    rc = armci_copy_vector(PUT, &dl, 1, proc);
                    FENCE_NODE(proc);
 
-                   if(rc){ ARMCI_UNLOCKMEM(); return(rc);}
+                   if(rc){ ARMCI_UNLOCKMEM(proc); return(rc);}
                }
 
-               ARMCI_UNLOCKMEM();
+               ARMCI_UNLOCKMEM(proc);
            }
        }/*endfor*/
     }
@@ -238,9 +238,10 @@ int armci_copy_vector(int op,            /* operation code */
                     int proc             /* remote process(or) ID */
               )
 {
-    int i,s;
+    int i,s,shmem= SAMECLUSNODE(proc);
 
-    if(proc == armci_me ){ /* local copy */
+    if(shmem ){ 
+      /* local/shared memory copy */
 
       for(i = 0; i< len; i++){
         for( s=0; s< darr[i].ptr_array_len; s++){
@@ -250,7 +251,10 @@ int armci_copy_vector(int op,            /* operation code */
 
     }else {   
 
-      FENCE_NODE(proc);
+      /* access through global address space */
+
+      /* March 19 - removed FENCE from here - it is in ORDER inside armci.c */
+
       switch(op){
       case PUT:
 
@@ -287,7 +291,7 @@ int armci_copy_vector(int op,            /* operation code */
    }
 
 #ifdef LAPI
-    if(proc != armci_me){
+    if(!shmem){
 
        if(op == GET) CLEAR_COUNTER(get_cntr); /* wait for data arrival */
        if(op == PUT) CLEAR_COUNTER(ack_cntr); /* data must be copied out*/

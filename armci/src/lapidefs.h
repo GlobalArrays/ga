@@ -1,6 +1,11 @@
 #ifndef LAPI_DEFS_H
 #define LAPI_DEFS_H
+
+#ifdef LAPI2
+#include "/u2/d3h325/lapi_vector_beta/lapi.h"
+#else
 #include <lapi.h>
+#endif
    
 extern lapi_handle_t lapi_handle;
 extern int lapi_max_uhdr_data_sz; /* max data payload in AM header */
@@ -35,13 +40,20 @@ extern void armci_init_lapi(void);  /* initialize LAPI data structures*/
 extern void armci_term_lapi(void);  /* destroy LAPI data structures */
 extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI send */
 
+#define MAX_CHUNKS_SHORT_GET  9
 #define SHORT_ACC_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
 #define SHORT_PUT_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
-#define LONG_PUT_THRESHOLD 3000
-#define LONG_GET_THRESHOLD 3000
+
+#ifdef LAPI2
+#  define LONG_PUT_THRESHOLD 0
+#  define LONG_GET_THRESHOLD 0
+#else
+#  define LONG_PUT_THRESHOLD 3000
+#  define LONG_GET_THRESHOLD 3000
+#endif
 
 
-#define INTR_ON  if(intr_status==1)LAPI_Senv(lapi_handle, INTERRUPT_SET, 1) 
+#define INTR_ON  if(intr_status==1)LAPI_Senv(lapi_handle, INTERRUPT_SET, 1)
 #define INTR_OFF {\
         LAPI_Qenv(lapi_handle, INTERRUPT_SET, &intr_status);\
         LAPI_Senv(lapi_handle, INTERRUPT_SET, 0);\

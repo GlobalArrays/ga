@@ -131,7 +131,7 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
       }\
     }
 
-#ifdef FUJITSU
+#if defined(FUJITSU) || defined(LAPI2)
 
 #   define armci_put2D(p, bytes,count,src_ptr,src_stride,dst_ptr,dst_stride)\
            CopyPatchTo(src_ptr, src_stride, dst_ptr, dst_stride, count,bytes, p)

@@ -1,6 +1,9 @@
 #include "armcip.h"
 #include <stdio.h>
 
+#if !defined(ACC_COPY) && !defined(CRAY_YMP)
+#   define REMOTE_OP 
+#endif
 
 /*\ determine if patch fits in the ARMCI buffer, and if not 
  *  at which stride level (patch dim) need to decompose it

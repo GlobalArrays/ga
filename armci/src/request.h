@@ -1,3 +1,5 @@
+#ifndef _REQUEST_H_
+#define _REQUEST_H_
 #ifdef LAPI
 #  include "lapidefs.h"
 #else
@@ -10,8 +12,8 @@ typedef struct {
   short int operation;  /* operation code */
   short int format;     /* data format used */
   int   bytes;          /* number of bytes requested */ 
-  int   datalen;        /* >0 indicates if data is included */
-  int   dscrlen;        /* >0 indicates if descriptor is included */
+  int   datalen;        /* >0 in lapi indicates if data is included */
+  int   dscrlen;        /* >0 in lapi indicates if descriptor is included */
   msg_tag_t tag;        /* message tag for response to this request */
 }request_header_t;
 
@@ -26,4 +28,21 @@ extern  char* MessageSndBuffer;
 #else
 #  define REQ_TAG 32000
 #  define GET_SEND_BUFFER
+#endif
+
+extern void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra);
+extern int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,
+                            int proc);
+extern int armci_rem_strided(int op, void* scale, int proc,
+                       void *src_ptr, int src_stride_arr[],
+                       void* dst_ptr, int dst_stride_arr[],
+                       int count[], int stride_levels, int lockit);
+
+extern void armci_server(request_header_t *msginfo, char *dscr, char* buf, 
+                         int buflen);
+
+extern void armci_server_vector( request_header_t *msginfo,
+                          char *dscr, char* buf, int buflen);
+
+
 #endif

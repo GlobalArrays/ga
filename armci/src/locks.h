@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #define NUM_LOCKS 128
 
+
 #ifdef SGI
 
 #  define SGI_SPINS 100
@@ -57,6 +58,13 @@
 #  define INVALID (long)(_INT_MIN_64 +1)
 #  define NATIVE_LOCK(x)  while( shmem_swap(&armci_lock_var,INVALID,(x)) )
 #  define NATIVE_UNLOCK(x) shmem_swap(&armci_lock_var, 0, (x))
+
+#elif  defined(SYSV) && defined(LAPI)
+
+int **_armci_lapi_mutexes;
+#  define NATIVE_LOCK(x) armci_lapi_lock(_armci_lapi_mutexes[armci_master]+x)
+#  define NATIVE_UNLOCK(x) armci_lapi_unlock(_armci_lapi_mutexes[armci_master]+x)
+   typedef int lockset_t;
 
 #elif defined(SYSV)
 

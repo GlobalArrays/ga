@@ -1,40 +1,178 @@
 #include <stdio.h>
-#include <mpi.h>
 #include <assert.h>
+#include "armcip.h"
+#include "message.h"
+
+#define DEBUG 0
 
 #if defined(SYSV) || defined(WIN32)
 #include "shmem.h"
-#endif
 
-#include "armcip.h"
+
+void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
+{
+int i;
+int nproc = armci_clus_info[armci_clus_me].nslave;
+
+    for(i=0; i< armci_nproc; i++){
+      int j;
+      if(armci_me ==i){
+        printf("%d master =%d nproc=%d off=%d\n",armci_me, 
+               armci_master,nproc, off);
+        printf("%d bytes=%d mptr=%d s=%d ptr=",armci_me, bytes, myptr,size);
+        for(j = 0; j< armci_nproc; j++)printf(" %d",(int)ptr_arr[j]);
+        printf("\n"); fflush(stdout);
+      }
+      armci_msg_barrier();
+   }
+}
+
+
+/*\ Collective Memory Allocation on shared memory systems
+\*/
+void armci_shmem_malloc(void *ptr_arr[],int bytes)
+{
+    void *myptr, *ptr;
+    long idlist[SHMIDLEN];
+    long size=0, offset=0;
+    long *size_arr;
+    void **ptr_ref_arr;
+    int root=0, i,cn, len;
+    int nproc = armci_clus_info[armci_clus_me].nslave;
+
+    bzero(ptr_arr,armci_nproc*sizeof(void*));
+
+    /* allocate work arrays */
+    size_arr = (long*)calloc(armci_nproc,sizeof(long));
+    if(!size_arr)armci_die("armci_malloc:calloc failed",armci_nproc);
+
+    /* allocate arrays for cluster address translations */
+#   if defined(DATA_SERVER)
+       len = armci_nclus;
+#   else
+       len = nproc;
+#   endif
+
+    ptr_ref_arr = calloc(len,sizeof(void*)); /* must be zero */
+    if(!ptr_ref_arr)armci_die("armci_malloc:calloc 2 failed",len);
+
+    /* combine all memory requests into size_arr  */
+    size_arr[armci_me] = bytes;
+    armci_msg_igop(size_arr, armci_nproc, "+",1);
+
+    /* determine aggregate request size on the cluster node */
+    for(i=0, size=0; i< nproc; i++) size += size_arr[i+armci_master];
+
+    /* master process creates shmem region and then others attach to it */
+    if(armci_me == armci_master ){
+
+       /* we can use malloc if there is no data server and has 1 process/node */
+#      ifndef DATA_SERVER 
+             if(nproc == 1)
+                myptr = malloc(size);
+             else
+#      endif
+                myptr = Create_Shared_Region(idlist+1,size,idlist);
+       if(!myptr && size>0 )armci_die("armci_malloc: could not create", size);
+    }
+
+    /* broadcast shmem id to other processes on the same cluster node */
+    armci_msg_clus_brdcst(idlist, SHMIDLEN*sizeof(long));
+
+    if(armci_me != armci_master){
+       myptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
+       if(!myptr)armci_die("armci_malloc: could not attach", size);
+    }
+
+#   if defined(DATA_SERVER)
+
+       /* get server reference address for every cluster node to perform
+        * remote address translation for global address space */
+       if(armci_nclus>1){
+          if(armci_me == armci_master){
+
+             armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size, 
+                                &ptr, sizeof(void*));
+             ptr_ref_arr[armci_clus_me]= ptr; /* from server*/
+             
+          }
+
+          /* exchange ref addr of shared memory region on every cluster node*/
+          armci_exchange_address(ptr_ref_arr, armci_nclus);
+
+       }else {
+
+          ptr_ref_arr[armci_master] = myptr;
+
+       }
+
+       /* translate addresses for all cluster nodes */
+       for(cn = 0; cn < armci_nclus; cn++){
+
+         int master = armci_clus_info[cn].master;
+         offset = 0;
+
+         /* on local cluster node use myptr directly */
+         ptr = (armci_clus_me == cn) ? myptr: ptr_ref_arr[cn];
+
+         /* compute addresses pointing to the memory regions on cluster node*/
+         for(i=0; i< armci_clus_info[cn].nslave; i++){
+
+           /* NULL if request size is 0*/
+           ptr_arr[i+master] = (size_arr[i+master])? ((char*)ptr)+offset : NULL;
+           offset += size_arr[i+master];
+
+         }
+       }
+
+#   else
+
+      /* compute addresses for local cluster node */
+      offset =0;
+      for(i=0; i< nproc; i++) {
+
+        ptr_ref_arr[i] = (size_arr[i+armci_master])? ((char*)myptr)+offset : 0L;
+        offset += size_arr[i+armci_master];
+
+      }
+      
+      /* exchange addreses with all other processes */
+      ptr_arr[armci_me] = (char*)ptr_ref_arr[armci_me-armci_master]; 
+      armci_exchange_address(ptr_arr, armci_nproc);
+
+      /* overwrite entries for local cluster node with ptr_ref_arr */
+      bcopy( ptr_ref_arr, ptr_arr + armci_master, nproc*sizeof(void*)); 
+
+      /* armci_print_ptr(ptr_arr, bytes, size, myptr, off);*/
+
+#   endif
+
+    /* free work arrays */
+    free(ptr_ref_arr);
+    free(size_arr);
+
+}
+
+#endif
 
 
 
 /*\ Collective Memory Allocation
  *  returns array of pointers to blocks of memory allocated by everybody
  *  Note: as the same shared memory region can be mapped at different locations
- *        in each process address space, the array might hold differnt values
- *        on every processors. However, the addresses are legitimate
+ *        in each process address space, the array might hold different values
+ *        on every process. However, the addresses are legitimate
  *        and can be used in the ARMCI data transfer operations.
  *        ptr_arr[nproc]
 \*/
 int ARMCI_Malloc(void *ptr_arr[],int bytes)
 {
     void *ptr;
-
-#if defined(SYSV) || defined(WIN32)
-
-    long idlist[SHMIDLEN];
-    long size=0, offset=0;
-    int *out_arr,*inp_arr;
-    int root=0, i;
-
-#else
-
     void **addr;
 
-#endif
 
+    if(DEBUG)
+       fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, bytes);
     if(armci_nproc == 1) {
       ptr = malloc(bytes);
       assert(ptr);
@@ -42,93 +180,54 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
       return (0);
     }
 
+    assert(sizeof(long) == sizeof(void*)); /* is it ever false? - yes, WIN64 */
+
 #if defined(SYSV) || defined(WIN32)
-    
-    /* allocate a work arrays */
-    out_arr = (int*)calloc(armci_nproc,sizeof(int));
-    assert(out_arr);
 
-    inp_arr = (int*)calloc(armci_nproc,sizeof(int)); /* must be zero */
-    assert(inp_arr);
-
-    inp_arr[armci_me] = bytes;
-
-/*    MPI_Barrier(MPI_COMM_WORLD);*/
-/*    fprintf(stderr,"%d before-------------- ALLreduce\n",armci_me);*/
-    /* combine all memory requests into out_arr  */
-    MPI_Allreduce(inp_arr, out_arr, armci_nproc, MPI_INT,MPI_SUM,MPI_COMM_WORLD);
-/*    MPI_Barrier(MPI_COMM_WORLD);*/
-/*    fprintf(stderr,"%d ---------------- ALLreduce\n",armci_me);*/
-
-    /* determine aggregate request size*/
-    size =0;
-    for(i=0; i< armci_nproc; i++) size += out_arr[i];
-
-
-    /* process 0 creates shmem region and then others attach to it */
-    if(armci_me == 0){
-       ptr = Create_Shared_Region(idlist+1,size,idlist);
-       assert(ptr);
-    }
-
-    MPI_Bcast(idlist,SHMIDLEN,MPI_LONG,0,MPI_COMM_WORLD);/*broadcast shmem id*/
-
-    if(armci_me){
-        ptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
-        assert(ptr);
-    }
-
-    /* construct array of addresses pointing to the memory regions for each process*/
-    offset = 0;
-    for(i=0; i< armci_nproc; i++){
-        ptr_arr[i] = (out_arr[i]) ? ((char*)ptr) + offset : NULL; /* NULL if request size is 0*/
-        offset += out_arr[i];
-    }
-
-    /*free work arrays */
-    free(out_arr);
-    free(inp_arr);
+    armci_shmem_malloc(ptr_arr,bytes);
 
 #else
 
     /* on distributed-memory systems just malloc & collect all addresses */
-    addr = calloc(armci_nproc,sizeof(void*)); /* must be zero */
-    assert(addr);
-
     ptr = malloc(bytes);
-    if(bytes) assert(ptr);
+    if(bytes) if(!ptr) armci_die("armci_malloc:malloc failed",bytes);
 
-    addr[armci_me] = ptr;
+    bzero(ptr_arr,armci_nproc*sizeof(void*));
+    ptr_arr[armci_me] = ptr;
 
     /* now combine individual addresses into a single array */
-    assert(sizeof(long) == sizeof(void*)); /* is it ever false ? */
-    MPI_Allreduce(addr, ptr_arr, armci_nproc, MPI_LONG,MPI_SUM,MPI_COMM_WORLD);
+    armci_exchange_address(ptr_arr, armci_nproc);
 
-    free(addr);
 
 #endif
     return(0);
 }
 
 
+
 /*\ shared memory is released to shmalloc only on process 0
+ *  with data server malloc cannot be used
 \*/
 int ARMCI_Free(void *ptr)
 {
 #if defined(SYSV) || defined(WIN32)
 
-    if(armci_nproc == 1)
+#   ifdef DATA_SERVER
+      if(armci_nproc == 1) {
+#   else
+      if(armci_clus_info[armci_clus_me].nslave == 1) {
+#   endif
 
 #endif
-    {
 
 	if(!ptr)return 1;
 	free(ptr);
-    }
 
 #if defined(SYSV) || defined(WIN32)
 
-    else if(armci_me==0) Free_Shmem_Ptr( 0, 0, ptr);
+    }else 
+
+       if(armci_me==armci_master) Free_Shmem_Ptr( 0, 0, ptr);
 
 #endif
 

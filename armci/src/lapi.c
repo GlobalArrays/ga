@@ -1,11 +1,13 @@
 /* initialization of data structures and setup of lapi internal parameters */ 
 
+#include <pthread.h>
 #include <stdio.h>
 #include "lapidefs.h"
 #include "armcip.h"
 #include "copy.h"
 #include <sys/atomic_op.h>
 
+#define DEBUG_ 0
 #define ERROR(str,val) armci_die((str),(val))
 
 
@@ -44,7 +46,10 @@ request_header_t *msginfo = (request_header_t *)save;
 char *descr= (char*)(msginfo+1), *buf=MessageRcvBuffer;
 int buflen=MSG_BUFLEN;
 
-/*     fprintf(stderr,"%d:CH:op=%d from=%d datalen=%d dscrlen=%d\n",armci_me, msginfo->operation, msginfo->from,msginfo->datalen,msginfo->dscrlen);*/
+   if(DEBUG_)
+      fprintf(stderr,"%d:CH:op=%d from=%d datalen=%d dscrlen=%d\n", armci_me,
+        msginfo->operation, msginfo->from,msginfo->datalen,msginfo->dscrlen);
+
    if(  msginfo->dscrlen < 0 || msginfo->datalen <0 ){
      /* for large put/acc/scatter need to get the data */
      int rc;
@@ -100,6 +105,10 @@ lapi_handle_t hndl = *t_hndl;
 uint uhdrlen = *t_uhdrlen;
 request_header_t *msginfo = (request_header_t *)uhdr;
 
+   if(DEBUG_)
+        fprintf(stderr,"%d:HH: op=%d from %d\n",armci_me,msginfo->operation,
+                msginfo->from);
+
    /* process small requests inside header handler */
    if(msginfo->datalen >0 && msginfo->dscrlen>0 && msginfo->operation!=GET){
 
@@ -117,7 +126,8 @@ request_header_t *msginfo = (request_header_t *)uhdr;
              char *buf   = descr + msginfo->dscrlen;
              int buflen = uhdrlen - sizeof(request_header_t) - msginfo->dscrlen;
 
-/*             fprintf(stderr,"%d:HH: getting into server\n",armci_me);*/
+             if(DEBUG_)
+                fprintf(stderr,"%d:HH: buf =%lf\n",armci_me,*(double*)buf);
              if(msginfo->format == STRIDED)
                 armci_server(msginfo, descr, buf, buflen);
              else
@@ -144,7 +154,6 @@ request_header_t *msginfo = (request_header_t *)uhdr;
 }
 
 
-/* ONLY STRIDED SUPPORTED NOW ! - packetization of descriptor in gather */
 void armci_send_req(int proc)
 {
 request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
@@ -192,7 +201,10 @@ int rc;
                          NULL, pcntr, pcmpl_cntr))) armci_die("AM failed",rc);
 
 /*      if(msglen == sizeof(request_header_t))sleep(1);*/
-/*        fprintf(stderr,"%d sending req cntr=%d\n",armci_me, buf_cntr.val);*/
+
+      if(DEBUG_)
+        fprintf(stderr,"%d sending req=%d to %d\n",armci_me, msginfo->operation,
+                proc);
 }
       
 
@@ -255,8 +267,12 @@ int lapi_max_uhdr_sz;
      if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (get)",rc);
      get_cntr.val = 0;
 
+#if  !defined(LAPI2)
+
      /* for high performance, disable LAPI internal error checking */
      LAPI_Senv(lapi_handle, ERROR_CHK, 0);
+
+#endif
 
      /* make sure that LAPI interrupt mode is on */
      LAPI_Senv(lapi_handle, INTERRUPT_SET, 1);
@@ -313,3 +329,46 @@ void print_counters_()
   fflush(stdout);
 }
 
+
+
+#define LOCKED 1
+
+void armci_lapi_lock(int *lock)
+{
+atomic_p word_addr = (atomic_p)lock;
+int spin = 1;
+
+
+     while(1){
+
+        if(_check_lock(word_addr, 0, LOCKED) == FALSE )
+          break; /* we got the lock */ 
+
+        if(spin){
+          armci_waitsome(1);
+          spin = 0;
+        }else{
+
+         /* yield processor to another thread */
+         yield(); /* mark thread as not runnable */
+   
+         /* call usleep to notify scheduler */
+         (void)usleep(5);
+       }
+    }
+}
+
+
+void armci_lapi_unlock(int *lock)
+{
+atomic_p word_addr = (atomic_p)lock;
+
+  if(_check_lock(word_addr, LOCKED, 0) == TRUE ) 
+      armci_die("somebody else unlocked",0);
+}
+         
+
+
+#ifdef LAPI2
+#include "lapi2.c"
+#endif

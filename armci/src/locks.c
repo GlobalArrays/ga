@@ -1,4 +1,5 @@
 #include "locks.h"
+#include "armcip.h"
 #ifndef WIN32
 #   include <unistd.h>
 #endif
@@ -19,17 +20,17 @@ extern char *getenv(const char *);
 
 void CreateInitLocks(int num_locks, lockset_t *lockid)
 {
-extern int armci_cluster_nodes;
 int i;
 char *tmp;
 
    if(num_locks > NUM_LOCKS) armci_die("To many locks requested", num_locks);
    lockset.id = (int)getpid();
    if (!(tmp = getenv("ARENA_DIR"))) tmp = "/tmp";
-   sprintf(arena_name,"%s/armci_arena.%ld", tmp,lockset.id);
+   sprintf(arena_name,"%s/armci_arena%d.%ld", tmp,armci_clus_me,lockset.id);
 
   (void) usconfig(CONF_ARENATYPE, US_GENERAL);
-  (void) usconfig(CONF_INITUSERS, (unsigned int)armci_cluster_nodes); 
+  (void) usconfig(CONF_INITUSERS, (unsigned int)
+                  armci_clus_info[armci_clus_me].nslave+1); /* +1 for server */
    arena_ptr = usinit(arena_name);    
    if(!arena_ptr) armci_die("Failed to Create Arena", 0);
 /*   else fprintf(stderr,	"created arena %x\n",arena_ptr); */
@@ -52,7 +53,7 @@ char *tmp;
 /*   if(avail) armci_die("Arena already attached", avail); */
    lockset = lockid;
    if (!(tmp = getenv("ARENA_DIR"))) tmp = "/tmp";
-   sprintf(arena_name,"%s/armci_arena.%ld", tmp,lockset.id);
+   sprintf(arena_name,"%s/armci_arena%d.%ld", tmp,armci_clus_me,lockset.id);
 
    (void) usconfig(CONF_ARENATYPE, US_GENERAL);
    arena_ptr = usinit(arena_name);

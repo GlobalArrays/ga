@@ -29,7 +29,7 @@
 #ifdef SYSV
 
 
-#define DEBUG 0
+#define DEBUG_ 0
 #define STAMP 0
 
 extern void armci_die();
@@ -67,7 +67,7 @@ extern void armci_die();
 #  define _SHMMAX ((unsigned long)228*1024)
 #elif defined(SGI) && !defined(SGI64)
 #  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)128*1024)
+#  define _SHMMAX ((unsigned long)12*1024)
 #elif defined(KSR)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
@@ -216,7 +216,7 @@ long reg;
   *offset = (long) (temp - region_list[0].addr);
   occup_blocks ++;
 
-  if(DEBUG) fprintf(stderr, ">Create_Shared_Region: reg=%d id= %d  off=%d  addr=%d addr+off=%d s=%d stamp=%d num ids=%d\n",reg,region_list[reg].id, *offset, region_list[reg].addr, temp, size, *(int*)temp,idlist[0]);
+  if(DEBUG_) fprintf(stderr, ">Create_Shared_Region: reg=%d id= %d  off=%d  addr=%d addr+off=%d s=%d stamp=%d num ids=%d\n",reg,region_list[reg].id, *offset, region_list[reg].addr, temp, size, *(int*)temp,idlist[0]);
 
   return temp;
 }
@@ -277,7 +277,7 @@ long ga_nodeid_();
          region_list[reg].attached = 1;
          alloc_regions++;
 
-         if(DEBUG) fprintf(stderr, "-Attach_Shared_Region: id=%d addr=%d \n",
+         if(DEBUG_) fprintf(stderr, "-Attach_Shared_Region: id=%d addr=%d \n",
                            idlist[1+ir], temp);
       }
       /* now we have this region attached and ready to go */
@@ -287,7 +287,7 @@ long ga_nodeid_();
 
   reg = first; /* first region on the list */ 
 
-  if(DEBUG) fprintf(stderr, ">Attach_Shared_Region: reg=%d id= %d  off=%d  addr=%d addr+off=%d \n",reg,region_list[reg].id, offset, region_list[reg].addr, region_list[reg].addr+ offset);
+  if(DEBUG_) fprintf(stderr, ">Attach_Shared_Region: reg=%d id= %d  off=%d  addr=%d addr+off=%d \n",reg,region_list[reg].id, offset, region_list[reg].addr, region_list[reg].addr+ offset);
 
   if(STAMP)
   /* check stamp to make sure that we are attached in the right place */
@@ -319,7 +319,7 @@ long sz;
 
     prev_alloc_regions = alloc_regions; 
 
-    if(DEBUG)fprintf(stderr, "in allocate size=%d\n",size);
+    if(DEBUG_)fprintf(stderr, "in allocate size=%d\n",size);
     /* allocate shmem in as many segments as neccesary */
     for(i =0; i< newreg; i++){ 
        sz =(i==newreg-1)? size - i*MinShmem*SHM_UNIT: min(size,SHM_UNIT*MinShmem);
@@ -338,7 +338,7 @@ long sz;
        else
          pref_addr= (char*)0;   /* first time let the OS choose address */
 
-       if(DEBUG)printf("  calling shmat: id=%d adr=%d sz=%d\n",id,pref_addr,sz);
+       if(DEBUG_)printf("  calling shmat: id=%d adr=%d sz=%d\n",id,pref_addr,sz);
 
        if ( (int)(temp = (char*)shmat((int) id, pref_addr, 0)) == -1){
           char command[64];
@@ -352,7 +352,7 @@ long sz;
        region_list[alloc_regions].addr = temp;
        region_list[alloc_regions].id = id;
 
-       if(DEBUG) fprintf(stderr,"  allocate:attach: id=%d addr=%d \n",id, temp);
+       if(DEBUG_) fprintf(stderr,"  allocate:attach: id=%d addr=%d \n",id, temp);
        alloc_regions++;
        if(i==0)ftemp = temp;
     }
@@ -409,7 +409,7 @@ int  reg, nreg;
     *id = region_list[reg].id;
     occup_blocks++;
   
-  if(DEBUG) fprintf(stderr,"Create_Shared_Region: reg=%d id= %d  off=%d  addr=%d    addr+off=%d s=%d\n",reg,*id, *offset, region_list[reg].addr, temp, size);
+  if(DEBUG_) fprintf(stderr,"Create_Shared_Region: reg=%d id= %d  off=%d  addr=%d    addr+off=%d s=%d\n",reg,*id, *offset, region_list[reg].addr, temp, size);
 
     return temp;
 }
@@ -457,7 +457,7 @@ long ga_nodeid_();
     region_list[reg].attached = 1;
   }
 
-  if(DEBUG) fprintf(stderr, "attach: reg=%d id= %d  off=%d  addr=%d addr+off=%d   f=%d\n",reg,*id,offset, region_list[reg].addr,region_list[reg].addr+ offset,  found);
+  if(DEBUG_) fprintf(stderr, "attach: reg=%d id= %d  off=%d  addr=%d addr+off=%d   f=%d\n",reg,*id,offset, region_list[reg].addr,region_list[reg].addr+ offset,  found);
 
   if(STAMP)
   /* check stamp to make sure that we are attached in the right place */
@@ -494,7 +494,7 @@ long id;
        armci_die("allocate: failed to attach to shared region",  temp);
     }
 
-    if(DEBUG)fprintf(stderr,"allocate: id= %d addr=%d size=%d\n",id,temp,size);
+    if(DEBUG_)fprintf(stderr,"allocate: id= %d addr=%d size=%d\n",id,temp,size);
     region_list[alloc_regions].addr = temp;
     region_list[alloc_regions].id = id;
     alloc_regions++;
@@ -521,12 +521,16 @@ void Delete_All_Regions()
 {
 int reg;
 long code=0;
+extern int armci_me;
 
   for(reg = 0; reg < MAX_REGIONS; reg++){
     if(region_list[reg].addr != (char*)0){
       code += shmctl((int)region_list[reg].id,IPC_RMID,(struct shmid_ds *)NULL);
       region_list[reg].addr = (char*)0;
       region_list[reg].attached = 0;
+      if(DEBUG_)
+         fprintf(stderr,"%d Delete_All_Regions id=%d code=%d\n",armci_me, 
+                (int)region_list[reg].id, code);
     }
   }
 }

@@ -9,7 +9,10 @@ typedef struct{
 
 extern void** memlock_table_array;
 
-#if defined(LAPI) || defined(FUJITSU)
+
+/* DATA_SERVER code requires more work to use memlock table */
+
+#if defined(LAPI) || defined(FUJITSU) || defined(DATA_SERVER_)
 #  define ARMCI_LOCKMEM armci_lockmem_
 #  define ARMCI_UNLOCKMEM armci_unlockmem_
 #else

@@ -10,27 +10,6 @@ double _armci_snd_buf[MSG_BUFLEN_DBL], _armci_rcv_buf[MSG_BUFLEN_DBL];
 char* MessageRcvBuffer = (char*)_armci_rcv_buf;
 char* MessageSndBuffer = (char*)_armci_snd_buf;
 
-void armci_send_req_(int proc)
-{
-void armci_server_vector();
-int hdrlen = sizeof(request_header_t);
-int dscrlen = ((request_header_t*)MessageSndBuffer)->dscrlen;
-
-    armci_copy(MessageSndBuffer, MessageRcvBuffer, MSG_BUFLEN);
-    armci_server_vector(MessageRcvBuffer, MessageRcvBuffer + hdrlen,
-                 MessageRcvBuffer +hdrlen+dscrlen, MSG_BUFLEN-hdrlen-dscrlen);
-}
-
-void armci_rcv_data_(int proc)
-{
-}
-
-void armci_send_data_(request_header_t* msginfo, char *data)
-{
-int hdrlen = sizeof(request_header_t);
-armci_copy(data,MessageSndBuffer,msginfo->datalen);
-}
-
 
 #define ADDBUF(buf,type,val) *(type*)(buf) = (val); (buf) += sizeof(type)
 #define GETBUF(buf,type,var) (var) = *(type*)(buf); (buf) += sizeof(type)
@@ -431,7 +410,7 @@ void armci_server_vector( request_header_t *msginfo,
                        bytes, 1, bytes, bytes, 0);
           buf += bytes;
         }
-        ARMCI_UNLOCKMEM();
+        ARMCI_UNLOCKMEM(proc);
       }
     }
 }

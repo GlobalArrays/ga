@@ -14,6 +14,12 @@ if(op == GET || op ==PUT)\
 else\
       armci_acc_2D(op, scale, proc, src, dst, bytes, count, src_stride,dst_stride,lockit) 
 
+#ifdef LAPI
+void wait_for_get()
+{
+CLEAR_COUNTER(get_cntr);
+}
+#endif
 
 
 /*\ 2-dimensional array copy
@@ -21,10 +27,18 @@ else\
 void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes, 
 		  int count, int src_stride, int dst_stride)
 {
-#if !defined(SYSV) && !defined(WIN32)
-  if(proc == armci_me)
+#ifdef LAPI2
+#  define COUNT 1
+#else
+#  define COUNT count
 #endif
-  {
+
+int shmem = SAMECLUSNODE(proc);
+
+  if(shmem) {
+
+    /* data is in local/shared memory -- can use memcpy */
+
     if(count==1){
 
        armci_copy(src_ptr, dst_ptr, bytes); 
@@ -61,17 +75,16 @@ void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
                                         dst_ptr, dst_stride/ALIGN_SIZE);
         }
       }
-  }
 
-#if !defined(SYSV) && !defined(WIN32)
-  else {
+  } else {
+
+  /* data not in local/shared memory -- access through global address space */
 
        if(op==PUT){ 
 
-          UPDATE_FENCE_STATE(proc, PUT, count);
-
+          UPDATE_FENCE_STATE(proc, PUT, COUNT);
 #ifdef LAPI
-          SET_COUNTER(ack_cntr,count);
+          SET_COUNTER(ack_cntr,COUNT);
 #endif
           if(count==1){
               armci_put(src_ptr, dst_ptr, bytes, proc);
@@ -83,22 +96,24 @@ void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
        }else{
 
 #ifdef LAPI
-          SET_COUNTER(get_cntr, count);
+          SET_COUNTER(get_cntr, COUNT);
 #endif
           if(count==1){
               armci_get(src_ptr, dst_ptr, bytes, proc);
           }else{
              armci_get2D(proc, bytes, count, src_ptr, src_stride,
                                             dst_ptr, dst_stride);
+#ifdef LAPI2
+             wait_for_get(); /* it works here */
+#endif
           }
        }
   }
-#endif
 
 }
 
 
-#if defined(CRAY_T3E) || defined(FUJITSU)
+#if defined(CRAY) || defined(FUJITSU)
 #ifdef CRAY
 #  define DAXPY  SAXPY
 #else
@@ -185,7 +200,7 @@ void (FATR *func)(void*, int*, int*, void*, int*, void*, int*);
           ARMCI_LOCKMEM(dst_ptr, span + (char*)dst_ptr, proc);
       }
       func(scale, &rows, &cols, dst_ptr, &ldd, src_ptr, &lds);
-      if(lockit)ARMCI_UNLOCKMEM();
+      if(lockit)ARMCI_UNLOCKMEM(proc);
 
 }
 
@@ -218,19 +233,19 @@ int armci_acc_copy_strided(int optype, void* scale, int proc,
     /* get remote data to local buffer */
     rc = armci_op_strided(GET, scale, proc, dst_ptr, dst_stride_arr, 
                           buf_ptr, buf_stride_arr, count, stride_levels, 0);
-    if(rc) { ARMCI_UNLOCKMEM(); return(rc); }
+    if(rc) { ARMCI_UNLOCKMEM(proc); return(rc); }
 
     /* call local accumulate with lockit=0 (we locked it already) and proc=me */
     rc = armci_op_strided(optype, scale, armci_me, src_ptr, src_stride_arr, 
                           buf_ptr, buf_stride_arr, count, stride_levels, 0);
-    if(rc) { ARMCI_UNLOCKMEM(); return(rc); }
+    if(rc) { ARMCI_UNLOCKMEM(proc); return(rc); }
 
     /* put data back from the buffer to remote location */
     rc = armci_op_strided(PUT, scale, proc, buf_ptr, buf_stride_arr, 
                           dst_ptr, dst_stride_arr, count, stride_levels, 0);
 
     FENCE_NODE(proc); /* make sure put completes before unlocking */
-    ARMCI_UNLOCKMEM();    /* release memory lock */
+    ARMCI_UNLOCKMEM(proc);    /* release memory lock */
 
     return(rc);
 }
@@ -253,6 +268,8 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
                                        dst_ptr, dst_stride_arr, count, stride_levels));
 #   endif
 
+
+/*    if(proc!=armci_me) INTR_OFF;*/
 
     switch (stride_levels){
     case 0: /* 1D copy */ 
@@ -318,13 +335,18 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
     if(proc != armci_me){
 
        if(op == GET){
+           /* it breaks if you move it here */
+
            CLEAR_COUNTER(get_cntr); /* wait for data arrival */
+/*           printf("%d out of get cntr =%d\n",armci_me, get_cntr.cntr);*/
+/*           fflush(stdout);*/
        }else { 
            CLEAR_COUNTER(ack_cntr); /* data must be copied out*/ 
        }
     }
 #endif
 
+/*    if(proc!=armci_me) INTR_ON;*/
     return 0;
 }
 
