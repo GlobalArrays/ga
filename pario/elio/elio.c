@@ -1,3 +1,6 @@
+/* --------------------------------------------------- *\
+   $Id: elio.c,v 1.29 1997-07-10 23:19:44 d3e129 Exp $
+\* --------------------------------------------------- */
 /**********************************************************************\
  ELementary I/O (ELIO) disk operations for Chemio libraries   
  Authors: Jarek Nieplocha (PNNL) and Jace Mogill (ANL)
@@ -485,7 +488,7 @@ Fd_t  elio_open(const char* fname, int type, int mode)
     ptype |= ( O_BIG | O_PLACE | O_RAW );
     cbits = (sparts != 0) ? 1 : 0;
 
-    if( pparts != 1) {
+    if(( pparts != 1)&&(sparts != 0)) {
 
       /* stripe is set so we only select secondary partitions with cbits */
       if(mode == ELIO_SHARED){
@@ -500,8 +503,6 @@ Fd_t  elio_open(const char* fname, int type, int mode)
      }
 
      
-     printf ("parts=%d cbits = %X\n",sparts,cbits);
-
      if(mode == ELIO_SHARED)
       fd->fd = OPEN(fname, ptype, FOPEN_MODE, cbits, cblocks, &ffstat,ffio_str);
      else
