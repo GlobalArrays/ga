@@ -21,7 +21,7 @@ c vector boxes lack arithmetic precision
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 20, DIM = 3, nwidth = 2, MAXPROC = 2000)
-      parameter (nloop = 100)
+      parameter (nloop = 1)
       integer ndim, nproc, pdims(7), type, dcnt, g_a, maxval
       integer i, j, k, dims(7), width(7), map(2*nmax)
       integer lo(7), hi(7), ld(7)
@@ -30,7 +30,7 @@ c vector boxes lack arithmetic precision
       integer a(nmax, nmax, nmax)
       integer b(nmax+2*nwidth,nmax+2*nwidth,nmax+2*nwidth)
       double precision start,finish,start1,finish1
-      double precision t1,t2,t3,t4,t5,t6,t7,tmp
+      double precision t1,t2,t3,t4,t5,t6,t7,t8,tmp
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
       parameter (heap=30*30*30*4, fudge=100, stack=100*100)
 c     
@@ -173,23 +173,29 @@ c
       end do
       if (has_data(me).and.safe_put) call nga_put(g_a, lo, hi, a, ld)
 c
+c      go to 123
       t1 = 0.0d00
       do i = 1, nloop
         start = util_timer()
-        call ga_update_ghosts(g_a)
+        call ga_update1_ghosts(g_a)
         finish = util_timer()
         t1 = t1 + finish - start
       end do
       t1 = t1/dble(nloop)
 
       t4 = 0.0d00
+      t8 = 0.0d00
       do i = 1, nloop
         start = util_timer()
         status = ga_update2_ghosts(g_a)
         finish = util_timer()
         t4 = t4 + finish - start
+        call ga_sync
+        finish = util_timer()
+        t8 = t8 + finish - start
       end do
       t4 = t4/dble(nloop)
+      t8 = t8/dble(nloop)
 
       t5 = 0.0d00
       do i = 1, nloop
@@ -209,15 +215,18 @@ c
       end do
       t6 = t6/dble(nloop)
 
+  123 continue
       t7 = 0.0d00
       do i = 1, nloop
         start = util_timer()
-        status = ga_update5_ghosts(g_a)
+        status = ga_update5_ghosts(g_a, i)
         finish = util_timer()
+        call ga_sync
         t7 = t7 + finish - start
       end do
       t7 = t7/dble(nloop)
 
+      write(6,*) 'Update finished on processor ',me
       if (me.eq.0) then
         write(6,*) '*'
         write(6,*) '*   Completed updates successfully'
@@ -266,17 +275,18 @@ c
       tmp = t1
       call ga_dgop(1,tmp,1,'max')
       if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update_ghosts ',tmp
+        write(6,*) 'Maximum time for nga_update1_ghosts ',tmp
       endif
       tmp = t1
       call ga_dgop(2,tmp,1,'min')
       if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update_ghosts ',tmp
+        write(6,*) 'Minimum time for nga_update1_ghosts ',tmp
       endif
       tmp = t1
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update_ghosts ',tmp/dble(nproc)
+        write(6,*) 'Average time for nga_update1_ghosts ',
+     +              tmp/dble(nproc)
       endif
       tmp = t4
       call ga_dgop(1,tmp,1,'max')
@@ -292,6 +302,22 @@ c
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
         write(6,*) 'Average time for nga_update2_ghosts ',
+     +              tmp/dble(nproc)
+      endif
+      tmp = t8
+      call ga_dgop(1,tmp,1,'max')
+      if (me.eq.0) then
+        write(6,*) 'Maximum time for nga_update2_ghosts(sync) ',tmp
+      endif
+      tmp = t8
+      call ga_dgop(2,tmp,1,'min')
+      if (me.eq.0) then
+        write(6,*) 'Minimum time for nga_update2_ghosts(sync) ',tmp
+      endif
+      tmp = t8
+      call ga_dgop(3,tmp,1,'+')
+      if (me.eq.0) then
+        write(6,*) 'Average time for nga_update2_ghosts(sync) ',
      +              tmp/dble(nproc)
       endif
       tmp = t5
