@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.8 1996-09-19 02:21:21 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.9 1996-10-04 22:10:22 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -231,6 +231,8 @@ static long RemoteCreate(remote_hostname, remote_username,
   pid = fork();
   if (pid == 0) {
     /* In child process */
+
+      sleep(1); /* So that parallel can make the sockets */
 
 #ifndef SUN
     if (proc_id != 0)    	/* Close all uneeded files */
