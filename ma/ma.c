@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.35 2004-06-03 16:53:50 vinod Exp $
+ * $Id: ma.c,v 1.36 2005-01-24 12:31:38 manoj Exp $
  */
 
 /*
@@ -2205,7 +2205,7 @@ public Boolean MA_free_heap_piece(
     if (nbytes < ad->nbytes)
     {
         /* ad has extra space; split block if possible */
-        ad_reclaim = block_split(ad, nbytes, MA_FALSE);
+        ad_reclaim = block_split(ad, nbytes, (Boolean)MA_FALSE);
 
         if (ad_reclaim)
         {
