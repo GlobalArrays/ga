@@ -157,6 +157,7 @@ ifeq  ($(_CPU),ia64)
   ifeq ($(_CC),ecc)
      COPT_REN= -w1 #-fno-alias    
   endif
+  GLOB_DEFINES += -DNEED_MEM_SYNC
 endif
 
 ifeq  ($(_CPU),alpha)

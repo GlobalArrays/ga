@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.48 2002-12-03 16:42:52 vinod Exp $ */
+/* $Id: message.c,v 1.49 2002-12-14 01:25:17 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -27,6 +27,9 @@
 /* global operations are use buffer size of BUF_SIZE doubles */ 
 #define BUF_SIZE  (4*2048)
 #define INFO_BUF_SIZE  (BUF_SIZE*sizeof(BUF_SIZE) - sizeof(double))
+#define EMPTY 0
+#define FULL 1
+
 static double *work=NULL;
 static long *lwork = NULL;
 static int *iwork = NULL;
@@ -34,6 +37,7 @@ static float *fwork = NULL;
 static int _armci_gop_init=0;   /* tells us if we have a buffers allocated  */
 static int _armci_gop_shmem =0; /* tells us to use shared memory for gops */
 extern void armci_util_wait_int(volatile int *, int , int );
+static int empty=EMPTY,full=FULL;
 
 typedef struct {
         union {
@@ -50,16 +54,31 @@ typedef struct {
 static bufstruct *_gop_buffer; 
 
 #define GOP_BUF(p)  (_gop_buffer+((p)-armci_master))
-#define EMPTY 0
-#define FULL 1
 
+/*\ macro to set a flag includes mem barrier to assure that flag is not set 
+ *  before any outstanding writes complete 
+\*/
 #ifdef NEED_MEM_SYNC
-#define SET_SHM_FLAG(_flg,_val) _clear_lock((int *)(_flg),_val);
-#else
-#define SET_SHM_FLAG(_flg,_val) *(_flg)=_val;
+#  ifdef AIX
+#    define SET_SHM_FLAG(_flg,_val) _clear_lock((int *)(_flg),_val);
+#  elif defined(__ia64) && defined(__GNUC__)
+#    if defined(__GNUC__)
+#       define SET_SHM_FLAG(_flg,_val)\
+            __asm__ __volatile__ ("mf" ::: "memory"); *(_flg)=(_val)
+#    else
+        /* intel compiler */
+        extern void _armci_ia64_mb();
+#       define SET_SHM_FLAG(_flg,_val)\
+            _armci_ia64_mb(); *(_flg)=(_val);
+#    endif
+#  endif
 #endif
 
-static int empty=EMPTY,full=FULL;
+#ifndef SET_SHM_FLAG
+#   define SET_SHM_FLAG(_flg,_val) *(_flg)=_val;
+#endif
+
+
 
 /*\
  *  Variables/structures for use in Barrier and for Binomial tree

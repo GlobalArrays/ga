@@ -1,15 +1,22 @@
 #ifdef __alpha
-# include "tas-alpha.h"
+#   include "tas-alpha.h"
 #elif defined(__i386__) 
-# include "tas-i386.h"
+#   include "tas-i386.h"
 #elif defined(__ia64)
-# include "tas-ia64.h"
+#   include "tas-ia64.h"
+
+  void _armci_ia64_mb()
+  {
+     __asm__ __volatile__ ("mf" ::: "memory");
+  }
 #else
+
   int testandset(int *spinlock)
   {
     printf("ARMCI NEEDS TESTANDSET FOR THIS PLATFORM\n");
     armci_die("cannot run",0);
   }
+
 #endif
 
 int gcc_testandset(int *spinlock)
