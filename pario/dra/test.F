@@ -90,7 +90,8 @@ c
       enddo
 c
       if(me.eq.0) print *, 'Creating Disk Array ',n,' x',n
-      if(dra_create(MT_INT, n, n, 'array A', FNAME, 
+      if(dra_create(MT_INT, n, n, 'array A', 
+     &   FNAME, 
      &   DRA_RW,    n, 1, d_a).ne.0)
      $   CALL ga_error('dra_create failed: ',0)
       if (me.eq.0) print *,'OK'
@@ -159,7 +160,7 @@ c
 #include "global.fh"
 #include "dra.fh"
       integer n,m
-      parameter (n = 4)
+      parameter (n = 100)
       parameter (m = 2*n)
       double precision a(n,n),  err
       integer g_a, g_b,  d_a
@@ -201,7 +202,8 @@ c
       enddo
 c
       if (me.eq.0) print*, 'Creating Disk Array ',n,' x',n
-      if(dra_create(MT_DBL, n, n, 'A', FNAME, 
+      if(dra_create(MT_DBL, n, n, 'A', 
+     &      FNAME, 
      &      DRA_RW, n, 3, d_a).ne.0)
      $   CALL ga_error('dra_create failed: ',0)
 c
@@ -286,7 +288,8 @@ c
 c***  now d_a is 4 times larger than g_a
 c
       if (me.eq.0) print*, 'Creating New Disk Array ',m,' x',m
-      if(dra_create(MT_DBL, m, m, 'A', FNAME, 
+      if(dra_create(MT_DBL, m, m, 'A', 
+     &      FNAME, 
      &      DRA_RW, n, 2, d_a).ne.0)
      $   CALL ga_error('dra_create failed: ',0)
       if (me.eq.0) print*,' OK'

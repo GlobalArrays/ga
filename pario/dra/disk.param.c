@@ -1,5 +1,5 @@
 /**********************************************************************/
-/* store and retrieve parameters of disk arrays                       */ 
+/* store and retrieve parameters for disk resident array              */ 
 /*       -- at present time, we use additional file for parameters    */
 /**********************************************************************/
 
@@ -11,9 +11,60 @@
 
 #define MAX_HD_NAME_LEN 100
 #define HD_NAME_EXT_LEN 10
-#define HD_EXT ".info"
+#define HDLEN           80 
+#define HD_EXT          ".info"
 
 
+/*\ check file configuration: shared or independent files are used
+ *  we'll verify if every process can access DRA param file
+ *  if yes, then we have shared file, otherwise independent files
+\*/
+int dai_file_config(char* filename)
+{
+    /* on T3E always use independent files */
+
+#ifdef CRAY_T3E
+    return 1;
+#else
+
+char param_filename[MAX_HD_NAME_LEN];
+Integer len;
+Integer me=ga_nodeid_(), nproc = ga_nnodes_();
+Integer gop_type, orig=0, one=1;
+char dummy[HDLEN], sum='+';
+Integer status;
+stat_t info;
+
+    /* build param file name */
+    len = strlen(filename);
+    if(len+HD_NAME_EXT_LEN >= MAX_HD_NAME_LEN)
+       dai_error("dai_read_param: filename too long:",len);
+    strcpy(param_filename,filename);
+    strcat(param_filename,HD_EXT);
+
+    /*    printf("checking file: %s\n",param_filename);fflush(stdout);*/
+
+    status = (Integer) elio_stat(param_filename, &info);
+
+    /* processor 0 created the file => it must be able to stat it */
+    if(me==0 && status!= ELIO_OK)
+                dai_error("dai_file_config: no access from 0",status);
+
+    status = (status==ELIO_OK) ? 1 : 0; /* normalize status */
+
+    /* combine status accross all processors */
+    ga_igop(DRA_GOP_TYPE, &status, 1, &sum);
+
+    /* 1     - only 0 can access the file => independent files 
+     * nproc - all can access it => shared file
+     * otherwise - same processors can access it => something is wrong!!!
+     */ 
+    if(status == 1) return(1);
+    else if(status == nproc) return 0;
+         else dai_error("dai_file_config: confusing file configuration",status); 
+#endif
+}
+    
 
 
 /*\ Retrive parameters of a disk array from the disk
@@ -26,7 +77,7 @@ Integer len;
 Integer me=ga_nodeid_();
 Integer brd_type=DRA_BRD_TYPE, orig, dra_hndl=d_a+DRA_OFFSET;
 long input;
-char dummy[80];
+char dummy[HDLEN];
 
   ga_sync_();
     
@@ -57,7 +108,7 @@ char dummy[80];
     if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk2",0);
     DRA[dra_hndl].chunk2 = (Integer) input;
 
-    fgets(dummy,80,fd); /*advance to next line*/
+    fgets(dummy,HDLEN,fd); /*advance to next line*/
     if(!fgets(DRA[dra_hndl].name,DRA_MAX_NAME,fd))dai_error("dai_read_param:name",0);
 
     if(fclose(fd))dai_error("dai_read_param: fclose failed",0);
