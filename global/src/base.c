@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.78 2004-05-12 15:38:07 vinod Exp $ */
+/* $Id: base.c,v 1.79 2004-05-12 16:08:59 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2183,7 +2183,6 @@ int local_sync_begin;
     return(TRUE);
 }
 
-extern double putcallcount,putcounttime,putlocatetime; 
      
 /*\ TERMINATE GLOBAL ARRAY STRUCTURES
  *
@@ -2204,8 +2203,6 @@ extern double t_dgop, n_dgop, s_dgop;
 #ifdef GA_PROFILE 
     ga_profile_terminate();
 #endif
-    if(putcallcount){
-    printf("\n%d:putcalls=%.2e cou=%.2e loc=%.2e \n",GAme,putcallcount,putcounttime/putcallcount,putlocatetime/putcallcount); fflush(stdout);}
     for (i=0;i<_max_global_array;i++){
           handle = i - GA_OFFSET ;
           if(GA[i].actv) ga_destroy_(&handle);
