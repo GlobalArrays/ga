@@ -802,7 +802,7 @@ Fd_t  elio_open(const char* fname, int type, int mode)
                    ELIO_ERROR_NULL(MODEFAIL, type);
    }
 
-#ifdef WIN32
+#if defined(WIN32) || defined(CYGNUS)
    ptype |= O_BINARY;
 #endif
 
