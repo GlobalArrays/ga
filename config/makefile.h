@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.26 2000-05-15 18:53:44 d3h325 Exp $
+# $Id: makefile.h,v 1.27 2000-05-22 22:41:23 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -87,6 +87,15 @@ ifeq ($(TARGET),FUJITSU-VPP64)
      FOPT_REN = -Sw -CcdII8
  GLOB_DEFINES = -DFUJITSU
         CDEFS = -DEXT_INT
+endif
+#
+
+#32-bit AP3000
+ifeq ($(TARGET),FUJITSU-AP)
+           CC = fcc
+           FC = frt
+     FOPT_REN = -fw
+ GLOB_DEFINES = -DFUJITSU
 endif
 #
 #................................ LINUX ....................................
