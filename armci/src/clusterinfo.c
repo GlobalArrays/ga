@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.19 2002-08-23 18:27:34 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.20 2003-09-23 22:14:16 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -38,6 +38,21 @@
 #else
 #  define PRINT_CLUSTER_INFO 0
 #endif
+
+#if defined(GM)
+    static char *network_protocol="Myrinet GM";
+#elif defined(VIA)
+    static char *network_protocol="VIA";
+#elif defined(MELLANOX)
+    static char *network_protocol="Mellanox VAPI";
+elif defined(QUADRICS)
+    static char *network_protocol="Quadrics ELAN";
+elif defined(PM)
+    static char *network_protocol="Score PM";
+else
+    static char *network_protocol="TCP/IP Sockets";
+#endif
+    
 
 /*** stores cluster configuration ***/
 armci_clus_t *armci_clus_info;
@@ -269,6 +284,26 @@ static char *new_hostname(char *host)
 }
 
 
+static void print_clus_info()
+{
+int i;
+
+  if(PRINT_CLUSTER_INFO && armci_nclus >1 && armci_me ==0){
+#ifdef DATA_SERVER
+     printf("ARMCI configured for %d cluster nodes. Network protocol is '%s'.\n",
+            armci_nclus, network_protocol);
+#else
+     printf("ARMCI configured for %d cluster nodes\n", armci_nclus);
+#endif
+     fflush(stdout);
+  }
+
+  if(armci_me==0 && DEBUG) for(i=0;i<armci_nclus;i++)
+     printf("%s cluster:%d nodes:%d master=%d\n",armci_clus_info[i].hostname,i,
+                         armci_clus_info[i].nslave,armci_clus_info[i].master);
+
+}
+
 void armci_init_clusinfo()
 {
   char name[MAX_HOSTNAME], *merged;
@@ -337,14 +372,7 @@ void armci_init_clusinfo()
   }
 #endif
 
-  if(PRINT_CLUSTER_INFO && armci_nclus >1 && armci_me ==0){
-     printf("ARMCI configured for %d cluster nodes\n", armci_nclus);
-     fflush(stdout);
-  }
-
-  if(armci_me==0 && DEBUG) for(i=0;i<armci_nclus;i++)
-     printf("%s cluster:%d nodes:%d master=%d\n",armci_clus_info[i].hostname,i, 
-                         armci_clus_info[i].nslave,armci_clus_info[i].master);
+  print_clus_info();
 
 }
 
