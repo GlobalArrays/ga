@@ -91,7 +91,7 @@ ifeq ($(MACHINE),LAPI64)
     EXTRA = lapi_putget.o memalign.o async_send_lapi.o signals.o
   TESTOBJ = test.o
     FLIBS = -lxlf90 -lxlf
-     LIBS = -L$(LIBPATH) -llapi_r -lhal_r
+     LIBS = $(LAPI64LIBS) #-llapi_r -lhal_r
   ARFLAGS = -rcv -X 64
 endif
 
