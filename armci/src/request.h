@@ -13,7 +13,7 @@ extern void  _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node);
 #  include "lapidefs.h"
 #elif defined(GM)
 #  include "myrinet.h"
-#elif defined(ELAN)
+#elif defined(QUADRICS)
    typedef void* msg_tag_t; 
 #elif defined(VIA)
 #  include "via.h"
@@ -80,7 +80,7 @@ extern  char* MessageSndBuffer;
 #  endif
 #endif
 
-#ifdef ELAN
+#ifdef QUADRICS
 #  define GET_SEND_BUFFER(_size,_op,_to) MessageSndBuffer;\
                     while(((request_header_t*)MessageSndBuffer)->tag)\
                     armci_util_spin(100, MessageSndBuffer)
