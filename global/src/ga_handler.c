@@ -46,7 +46,7 @@ int    dontcare, allmsg, nulltask,allgrp; /*values of MPL/EUIH wildcards*/
 \*/
 void wildcards()
 {
-long buf[4], qtype, nelem, status;
+  int buf[4], qtype, nelem, status;
      qtype = 3; nelem = 4;
      status = mpc_task_query(buf,nelem,qtype);
      if(status==-1) ga_error("wildcards: mpc_task_query error", -1L);
@@ -80,11 +80,7 @@ size_t msglen;
 }
 
 
-
-
-void ga_init_handler(buffer, lenbuf)   /* Also called in ga_initialize */
-char *buffer;
-int lenbuf;
+void ga_init_handler(char *buffer, long lenbuf)   /* Also called in ga_initialize */
 {
 static long status; 
 
