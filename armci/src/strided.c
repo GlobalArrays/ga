@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.73 2003-08-01 00:10:36 manoj Exp $ */
+/* $Id: strided.c,v 1.74 2003-09-25 20:48:01 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -1042,7 +1042,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(!direct){
 #     ifdef ALLOW_PIN
        if(!stride_levels && 
-         ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+         ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
          ARMCI_NBREM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
          return 0;
        }
