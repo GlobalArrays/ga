@@ -1,4 +1,4 @@
-/* $Id: decomp.c,v 1.4 2000-04-03 18:56:09 d3h325 Exp $ */
+/* $Id: decomp.c,v 1.5 2000-05-01 21:26:56 d3j540 Exp $ */
 /***************************************************************************
  *--- 
  *--- The software in this file implements three heuristics for distributing
@@ -605,14 +605,7 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
       double ub,blb;
       long istart, istep, ilook;
 
-      if(ndims==1) {
-        pedims[0] = npes;
-        blb = dd_ev(ndims,ardims,pedims);
-        dd_su(ndims,ardims,pedims,blk);
-        return;
-      }
-
-       /*- Allocate memory to store the granularity -*/
+      /*- Allocate memory to store the granularity -*/
       tard = (long *) calloc(ndims,sizeof(long));
       if(tard==NULL){
          fprintf(stderr,"%s: %s\n","ddb_h2",
