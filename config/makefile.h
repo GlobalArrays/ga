@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.126 2005-02-23 00:15:27 manoj Exp $
+# $Id: makefile.h,v 1.127 2005-02-23 01:29:46 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -63,7 +63,7 @@ ifndef USE_MPI
 endif
 #
 # enable -Wall when using GNU compilers
-ifdef USE_GNU_WALL
+ifdef USE_FULL_WARNINGS
    WALL = -Wall
 endif
 #

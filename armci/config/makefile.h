@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.115 2005-02-23 00:19:50 manoj Exp $
+#$Id: makefile.h,v 1.116 2005-02-23 01:29:50 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -23,7 +23,7 @@
       FOPT_NO = -g
 
 # enable -Wall when using GNU compilers
-ifdef USE_GNU_WALL
+ifdef USE_FULL_WARNINGS
    WALL = -Wall
 endif
 
