@@ -33,6 +33,12 @@ include ../../config/makelib.h
 COPT    = -g
 FOPT    = -g  
 
+# DRA test program fails with high optimization on PRIMEPOWER
+ifeq ($(_FC),frt)
+	FFLAGS += -O2
+endif
+
+
 # a rule to build excutables: the filetype of an executable must be .x
 # for example, foo.x corresponds to either foo.f or foo.F or foo.c
 #
