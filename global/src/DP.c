@@ -1,10 +1,13 @@
-/* $Id: DP.c,v 1.10 1999-07-28 00:27:02 d3h325 Exp $ */
+/* $Id: DP.c,v 1.11 1999-11-13 05:44:04 bjohnson Exp $ */
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
+#if defined(CRAY_T3D)
+#include <fortran.h>
+#endif
+#include "typesf2c.h"
 
-#ifdef CRAY_T3D
-#      include <fortran.h>
+#if defined(CRAY_T3D) || defined(WIN32)
 #      define cptofcd(fcd)  _cptofcd((fcd),1)
 #else
 #      define cptofcd(fcd) (fcd)
@@ -140,11 +143,11 @@ char transp;
 /*\ COPY A PATCH
  *  Fortran interface
 \*/
-void ga_copy_patch_dp_(trans, g_a, ailo, aihi, ajlo, ajhi,
+void FATR ga_copy_patch_dp_(trans, g_a, ailo, aihi, ajlo, ajhi,
                     g_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
-#ifdef CRAY_T3D
+#if defined(CRAY_T3D) || defined(WIN32)
      _fcd    trans;
 {ga_copy_patch_dp(_fcdtocp(trans),g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi);}
 #else 
@@ -242,12 +245,12 @@ DoublePrecision  sum = 0.;
 /*\ compute DOT PRODUCT of two patches
  *  Fortran interface
 \*/
-DoublePrecision ga_ddot_patch_dp_(g_a, t_a, ailo, aihi, ajlo, ajhi,
+DoublePrecision FATR ga_ddot_patch_dp_(g_a, t_a, ailo, aihi, ajlo, ajhi,
                                g_b, t_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
 
-#ifdef CRAY_T3D
+#if defined(CRAY_T3D) || defined(WIN32)
      _fcd   t_a, t_b;                          /* transpose operators */
 { return ga_ddot_patch_dp(g_a, _fcdtocp(t_a), ailo, aihi, ajlo, ajhi,
                        g_b, _fcdtocp(t_b), bilo, bihi, bjlo, bjhi);}
