@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.44 2002-09-06 16:13:02 vinod Exp $ */
+/* $Id: message.c,v 1.45 2002-09-17 16:57:27 vinod Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -28,10 +28,10 @@
 /* global operations are use buffer size of BUF_SIZE doubles */ 
 #define BUF_SIZE  (4*2048)
 #define INFO_BUF_SIZE  (BUF_SIZE*sizeof(BUF_SIZE) - sizeof(double))
-static double work[BUF_SIZE];
-static long *lwork = (long*)work;
-static int *iwork = (int*)work;
-static float *fwork = (float*)work;
+static double *work=NULL;
+static long *lwork = NULL;
+static int *iwork = NULL;
+static float *fwork = NULL;
 static int _armci_gop_init=0;   /* tells us if we have a buffers allocated  */
 static int _armci_gop_shmem =0; /* tells us to use shared memory for gops */
 extern void armci_util_spin(int,void*);
@@ -82,10 +82,22 @@ char *mp_group_name = (char *)NULL;
 char *mp_group_name = "mp_working_group";
 #endif
 
+
+static void _allocate_mem_for_work(){
+    work = (double *)malloc(sizeof(double)*BUF_SIZE);
+    if(!work)armci_die("malloc in _allocate_mem_for_work failed",0);
+    lwork = (long *)work; iwork = (int *)work; fwork = (float *)work;
+}
+
+
 /*\ allocate and initialize buffers used for collective communication
 \*/
 void armci_msg_gop_init()
 {
+/*work was a static global array of doubles. It has been changed to get
+  memory from malloc because of a problem with cc on SV1
+*/
+    if(work==NULL)_allocate_mem_for_work();
 #if defined(SYSV) || defined(MMAP) || defined(WIN32)
     if(ARMCI_Uses_shm()){
        char *tmp;
@@ -1069,6 +1081,7 @@ void *origx =x;
 
 
     if(!x)armci_die("armci_msg_gop: NULL pointer", n);
+    if(work==NULL)_allocate_mem_for_work();
 
     armci_msg_bintree(scope, &root, &up, &left, &right);
 
@@ -1117,6 +1130,7 @@ int ndo, len, lenmes, ratio;
 
 
     if(!x)armci_die("armci_msg_gop: NULL pointer", n);
+    if(work==NULL)_allocate_mem_for_work();
 
     armci_msg_bintree(scope, &root, &up, &left, &right);
 
@@ -1288,6 +1302,7 @@ void _armci_msg_binomial_reduce(void *x, int n, char* op, int type){
     int i,next_node,next;
     int size, ratio, ndo, lenmes,len;
 /*    int my_rank,root_rank,next_rank; */
+    if(work==NULL)_allocate_mem_for_work();
     if(armci_me!=armci_master)return;
     if(type==ARMCI_INT) size = sizeof(int);
         else if(type==ARMCI_LONG) size = sizeof(long);
@@ -1360,15 +1375,13 @@ void armci_msg_reduce(void *x, int n, char* op, int type)
 static void armci_msg_gop2(void *x, int n, char* op, int type)
 {
 int size, root=0;
-
+     if(work==NULL)_allocate_mem_for_work();
      if(type==ARMCI_INT) size = sizeof(int);
         else if(type==ARMCI_LONG) size = sizeof(long);
 	     else if(type==ARMCI_FLOAT) size = sizeof(float);
      else size = sizeof(double);
-
      armci_msg_reduce(x, n, op, type);
      armci_msg_bcast(x, size*n, root);
-
 }
 
 
@@ -1501,6 +1514,7 @@ void armci_exchange_address(void *ptr_ar[], int n)
   armci_msg_lgop((long*)ptr_ar, n, "+");
 */
   if(DEBUG_)printf("%d: exchanging %ld ratio=%d\n",armci_me,(long)ptr_ar[armci_me],ratio);
+
   armci_msg_gop2(ptr_ar, n*ratio, "+",ARMCI_INT);
 }
 
