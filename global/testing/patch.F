@@ -1,3 +1,4 @@
+c $Id: patch.F,v 1.15 1999-07-28 17:34:42 d3h325 Exp $
 #if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM

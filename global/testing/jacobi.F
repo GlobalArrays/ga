@@ -1,3 +1,4 @@
+c $Id: jacobi.F,v 1.7 1999-07-28 17:34:39 d3h325 Exp $
       program jacobi 
 *
 *     Jacobi iterative method for solving Uxx + Uyy = 1 on [0,1]x[0,1] area

@@ -1,3 +1,4 @@
+c $Id: perform.F,v 1.8 1999-07-28 17:34:43 d3h325 Exp $
       program perform
 c***
 c***  Last modification: Fri Jan 13 12:13:27 PST 1995

@@ -1,3 +1,4 @@
+c $Id: testspd.F,v 1.6 1999-07-28 17:34:46 d3h325 Exp $
 c***********************************************************************
 c* Source : testllt
 c* Scope  : test LLT SCALAPACK routines

@@ -1,3 +1,4 @@
+c $Id: perfmod.F,v 1.3 1999-07-28 17:34:43 d3h325 Exp $
 c------------------------------------------------------------------------
 c Program perfmod.x is used to test performance of GA put,get,accumulate |
 c It has to be executed on four processors.                              |

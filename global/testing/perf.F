@@ -1,3 +1,4 @@
+c $Id: perf.F,v 1.4 1999-07-28 17:34:42 d3h325 Exp $
 c------------------------------------------------------------------------
 c Program perf.x is used to test performance of GA put, get, accumulate  |
 c It has to be executed on four processors.                              |

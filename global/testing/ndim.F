@@ -1,3 +1,4 @@
+c $Id: ndim.F,v 1.3 1999-07-28 17:34:41 d3h325 Exp $
 #define  MAXLOOP 100
 
       program test

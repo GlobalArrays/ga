@@ -1,3 +1,4 @@
+c $Id: testeig.F,v 1.8 1999-07-28 17:34:45 d3h325 Exp $
       program test
       implicit none
 #include "mafdecls.fh"

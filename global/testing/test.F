@@ -1,3 +1,4 @@
+c $Id: test.F,v 1.26 1999-07-28 17:34:44 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-11
