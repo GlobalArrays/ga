@@ -196,6 +196,9 @@ void nga_copy_patch(char *trans,
     if(local_sync_begin) {
       if (anproc <= bnproc) {
         ga_pgroup_sync_(&a_grp);
+      } else if (a_grp == ga_pgroup_get_world_() &&
+                b_grp == ga_pgroup_get_world_()) {
+        ga_sync_();
       } else {
         ga_pgroup_sync_(&b_grp);
       }
@@ -497,6 +500,9 @@ void nga_copy_patch(char *trans,
     if(local_sync_end) {
       if (anproc <= bnproc) {
         ga_pgroup_sync_(&a_grp);
+      } else if (a_grp == ga_pgroup_get_world_() &&
+                b_grp == ga_pgroup_get_world_()) {
+        ga_sync_();
       } else {
         ga_pgroup_sync_(&b_grp);
       }
