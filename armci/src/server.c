@@ -77,13 +77,17 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
     case ARMCI_ACC_INT:
                *(int*)buf = *(int*)scale; slen= sizeof(int); break;
     case ARMCI_ACC_DCP:
-               *(double*)buf = *(double*)scale; slen=sizeof(double); /*down*/
+               ((double*)buf)[0] = ((double*)scale)[0];
+               ((double*)buf)[1] = ((double*)scale)[1];
+               slen=2*sizeof(double);break;
     case ARMCI_ACC_DBL:
-               *(double*)buf = *(double*)scale; slen += sizeof(double); break;
+               *(double*)buf = *(double*)scale; slen = sizeof(double); break;
     case ARMCI_ACC_CPL:
-               *(float*)buf = *(float*)scale; slen=sizeof(float);   /*down*/
+               ((float*)buf)[0] = ((float*)scale)[0];
+               ((float*)buf)[1] = ((float*)scale)[1];
+               slen=2*sizeof(float);break; 
     case ARMCI_ACC_FLT:
-               *(float*)buf = *(float*)scale; slen += sizeof(float); break;
+               *(float*)buf = *(float*)scale; slen = sizeof(float); break;
     default: slen=0;
     }
     buf += slen;
@@ -169,15 +173,22 @@ int armci_rem_strided(int op, void* scale, int proc,
     case ARMCI_ACC_INT: 
                *(int*)buf = *(int*)scale; slen= sizeof(int); break;
     case ARMCI_ACC_DCP:
-               *(double*)buf = *(double*)scale; slen=sizeof(double); /*down*/ 
+               ((double*)buf)[0] = ((double*)scale)[0];
+               ((double*)buf)[1] = ((double*)scale)[1];
+               slen=2*sizeof(double);break; 
     case ARMCI_ACC_DBL: 
-               *(double*)buf = *(double*)scale; slen += sizeof(double); break;
+               *(double*)buf = *(double*)scale; slen = sizeof(double); break;
     case ARMCI_ACC_CPL:
-               *(float*)buf = *(float*)scale; slen=sizeof(float);   /*down*/ 
+               ((float*)buf)[0] = ((float*)scale)[0];
+               ((float*)buf)[1] = ((float*)scale)[1];
+               slen=2*sizeof(float);break; 
     case ARMCI_ACC_FLT:
-               *(float*)buf = *(float*)scale; slen += sizeof(float); break;
+               *(float*)buf = *(float*)scale; slen = sizeof(float); break;
     default: slen=0;
     }
+/*    if(ACC(op))*/
+/*      fprintf(stderr,"%d in server len=%d alpha=(%d,%d)\n",*/
+/*              armci_me, slen, ((double*)buf)[0],((double*)buf)[1]); */
     buf += slen;
     msginfo->datalen += slen;
 
@@ -288,6 +299,7 @@ void armci_server_vector( request_header_t *msginfo,
         void **ptr;
         GETBUF(dscr, int, parlen);
         GETBUF(dscr, int, bytes);
+/*        fprintf(stderr,"len=%d bytes=%d parlen=%d\n",len,bytes,parlen);*/
         ptr = (void**)dscr; dscr += parlen*sizeof(char*);
         for(s=0; s< parlen; s++){
           armci_copy(ptr[s], buf, bytes);
@@ -335,7 +347,5 @@ void armci_server_vector( request_header_t *msginfo,
         }
         ARMCI_UNLOCKMEM();
       }
-
-
     }
 }

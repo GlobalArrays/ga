@@ -128,8 +128,8 @@ static void daxpy_2d_(void* alpha, int *rows, int *cols, void *a, int *ald,
 
 /*\ 2-dimensional accumulate
 \*/
-void armci_acc_2D(int op, void* scale, int proc, void *src_ptr, void *dst_ptr, int bytes, 
-		  int cols, int src_stride, int dst_stride, int lockit)
+void armci_acc_2D(int op, void* scale, int proc, void *src_ptr, void *dst_ptr,
+                  int bytes, int cols, int src_stride, int dst_stride, int lockit)
 {
 int   rows, lds, ldd, span;
 void (FATR *func)(void*, int*, int*, void*, int*, void*, int*);

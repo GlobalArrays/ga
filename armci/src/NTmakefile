@@ -35,7 +35,6 @@ OBJ =   "$(OBJDIR)\winshmem.obj" \
         "$(OBJDIR)\fcopy.obj" \
         "$(OBJDIR)\faccumulate.obj"\
         "$(OBJDIR)\strided.obj" \
-        "$(OBJDIR)\server.obj" \
         "$(OBJDIR)\armci.obj" \
         "$(OBJDIR)\vector.obj"\
         "$(OBJDIR)\pack.obj"\

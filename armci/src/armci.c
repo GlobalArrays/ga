@@ -139,6 +139,8 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
 
 }
 
+#define MAX_CHUNKS_SHORT_GET  9
+
 int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* pointer to 1st segment at destination*/
@@ -148,7 +150,7 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
                 int proc                /* remote process(or) ID */
                 )
 {
-    int rc;
+    int rc,direct=1;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
     if(count[0]<0)return FAIL3;
@@ -158,17 +160,34 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
     ORDER(GET,proc); /* ensure ordering */
 
 #   ifdef REMOTE_OP
-      if(armci_me != proc 
-#      ifdef LAPI
-             && stride_levels>0 && count[0]< LONG_GET_THRESHOLD 
-#      endif
-       )
-       rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
-                       dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
-      else
+       if(armci_me == proc) direct = 1; 
+       else{
+           direct = 0;
+#          ifdef LAPI
+             if(stride_levels==0 || count[0]> LONG_GET_THRESHOLD )direct=1; 
+             else{
+                 int i;
+                 int chunks=1;
+                 direct = 1;
+                 for(i=1; i<= stride_levels;i++){
+                    chunks *= count[i];
+                    if(chunks>MAX_CHUNKS_SHORT_GET){
+                        direct = 0;
+                        break;
+                    }
+                 }
+              }
+                   
+#          endif
+      }
 #   endif
+
+    if(direct)
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, 
                                dst_ptr, dst_stride_arr, count, stride_levels,0);
+    else
+       rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+                       dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
 
     if(rc) return FAIL6;
     else return 0;
@@ -184,6 +203,8 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 {
     int rc, i;
 
+    ORDER(PUT,proc); /* ensure ordering */
+
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
         if(darr[i].src_ptr_array == NULL || darr[i].dst_ptr_array ==NULL) return FAIL2;
@@ -193,7 +214,16 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-    rc = armci_copy_vector( PUT, darr, len, proc);
+#   ifdef REMOTE_OP
+      if(armci_me != proc
+#      ifdef LAPI
+             && (len >5 || darr[0].ptr_array_len >5)
+#      endif
+       )
+         rc = armci_pack_vector(PUT, NULL, darr, len, proc);
+      else
+#   endif
+         rc = armci_copy_vector( PUT, darr, len, proc);
 
     if(rc) return FAIL6;
     else return 0;
@@ -210,13 +240,24 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
-        if(darr[i].src_ptr_array == NULL || darr[i].dst_ptr_array ==NULL) return FAIL2;
-        if(darr[i].bytes<1)return FAIL3;
-        if(darr[i].ptr_array_len <1) return FAIL4;
+      if(darr[i].src_ptr_array==NULL || darr[i].dst_ptr_array==NULL)return FAIL2;
+      if(darr[i].bytes<1)return FAIL3;
+      if(darr[i].ptr_array_len <1) return FAIL4;
     }
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
+    ORDER(GET,proc); /* ensure ordering */
+
+#   ifdef REMOTE_OP
+      if(armci_me != proc
+#       ifdef LAPI
+             && (len >5 || darr[0].ptr_array_len >8)
+#       endif
+        )
+        rc = armci_pack_vector(GET, NULL, darr, len, proc);
+      else
+#   endif
     rc = armci_copy_vector( GET, darr, len, proc);
 
     if(rc) return FAIL6;
@@ -257,7 +298,6 @@ int ARMCI_AccS( int  optype,            /* operation */
 
     if(rc) return FAIL6;
     else return 0;
-
 }
 
 
@@ -265,24 +305,30 @@ int ARMCI_AccS( int  optype,            /* operation */
 int ARMCI_AccV( int op,              /* oeration code */
                 void *scale,         /*scaling factor for accumulate */
                 armci_giov_t darr[], /* descriptor array */
-                int len,  /* length of descriptor array */
-                int proc  /* remote process(or) ID */
+                int len,             /* length of descriptor array */
+                int proc             /* remote process(or) ID */
               )
 {
     int rc, i;
 
+    ORDER(op,proc); /* ensure ordering */
+
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
-        if(darr[i].src_ptr_array == NULL || darr[i].dst_ptr_array ==NULL) return FAIL2;
-        if(darr[i].bytes<1)return FAIL3;
-        if(darr[i].ptr_array_len <1) return FAIL4;
+      if(darr[i].src_ptr_array==NULL || darr[i].dst_ptr_array==NULL)return FAIL2;
+      if(darr[i].bytes<1)return FAIL3;
+      if(darr[i].ptr_array_len <1) return FAIL4;
     }
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-    rc = armci_acc_vector( op, scale, darr, len, proc);
+#   if defined(ACC_COPY) || defined(REMOTE_OP)
+      if(proc != armci_me)
+         rc = armci_pack_vector(op, scale, darr, len, proc);
+      else
+#   endif
+         rc = armci_acc_vector( op, scale, darr, len, proc);
 
     if(rc) return FAIL6;
     else return 0;
-
 }

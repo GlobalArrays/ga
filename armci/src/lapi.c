@@ -50,12 +50,17 @@ int buflen=MSG_BUFLEN;
      int rc;
      lapi_cntr_t req_cntr;    
      int bytes=0;
+     char *origin_ptr = msginfo->tag.buf;
+
      if (msginfo->dscrlen<0) {
          descr =MessageRcvBuffer;
          msginfo->dscrlen = -msginfo->dscrlen;
          buf = descr + msginfo->dscrlen;
          buflen += msginfo->dscrlen;
          bytes += msginfo->dscrlen;
+
+         /* for large gather, compute address of descriptor at origin */
+         if(msginfo->operation == GET) origin_ptr +=sizeof(request_header_t);
      }
      if (msginfo->datalen <0){
          msginfo->datalen = -msginfo->datalen;
@@ -64,7 +69,7 @@ int buflen=MSG_BUFLEN;
 
      if(rc=LAPI_Setcntr(hndl, &req_cntr, 0)) ERROR("CH:setcntr failed",rc);
      if(rc=LAPI_Get(hndl, (uint)msginfo->from, bytes,
-                msginfo->tag.buf, MessageRcvBuffer,
+                origin_ptr, MessageRcvBuffer,
                 msginfo->tag.cntr,&req_cntr))ERROR("CH:LAPI_Get failed",rc);
 
      if(rc=LAPI_Waitcntr(hndl, &req_cntr,1,NULL))ERROR("CH:Waitcntr failed",rc);
@@ -78,7 +83,10 @@ int buflen=MSG_BUFLEN;
    }
 
 /*   fprintf(stderr,"CH: val=%lf\n",*(double*)(buf+msginfo->datalen -8));*/
-   armci_server(msginfo, descr, buf, buflen); 
+   if(msginfo->format == STRIDED)
+                armci_server(msginfo, descr, buf, buflen);
+   else
+                armci_server_vector(msginfo, descr, buf, buflen);
 
    free(msginfo);
    (void)fetch_and_add(&num_malloc,-1);
@@ -110,7 +118,11 @@ request_header_t *msginfo = (request_header_t *)uhdr;
              int buflen = uhdrlen - sizeof(request_header_t) - msginfo->dscrlen;
 
 /*             fprintf(stderr,"%d:HH: getting into server\n",armci_me);*/
-             armci_server(msginfo, descr, buf, buflen);
+             if(msginfo->format == STRIDED)
+                armci_server(msginfo, descr, buf, buflen);
+             else
+                armci_server_vector(msginfo, descr, buf, buflen);
+
 /*             fprintf(stderr,"%d:HH: getting out of server\n",armci_me);*/
              *psave = NULL;
              *handler = NULL;
@@ -131,7 +143,8 @@ request_header_t *msginfo = (request_header_t *)uhdr;
     return(NULL);
 }
 
-/* ONLY STRIDED SUPPORTED NOW ! */
+
+/* ONLY STRIDED SUPPORTED NOW ! - packetization of descriptor in gather */
 void armci_send_req(int proc)
 {
 request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
@@ -145,9 +158,14 @@ int rc;
       msginfo->tag.buf = MessageSndBuffer;
       if(msginfo->operation==GET){
 
-            msglen += msginfo->dscrlen;
-            msginfo->datalen = msginfo->datalen;
-            pcmpl_cntr=NULL; /* don't increment counter for load ops */
+         if(lapi_max_uhdr_data_sz < msginfo->dscrlen){
+
+            msginfo->dscrlen = -msginfo->dscrlen; /* no room for descriptor */
+            pcntr = NULL; /* GET(descr) from CH will increment buf_cntr */
+
+         }else msglen += msginfo->dscrlen;
+
+            pcmpl_cntr=NULL; /* don't trace completion status for load ops */
             SET_COUNTER(buf_cntr,1); /* expect data to arrive into same buf*/
 
       }else{

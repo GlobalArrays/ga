@@ -1,8 +1,8 @@
          FOPT = -O
-         COPT = -g
+         COPT = -O
 
 OBJ= armci.o memory.o fcopy.o fence.o rmw.o faccumulate.o\
- memlock.o pack.o strided.o vector.o server.o
+ memlock.o pack.o strided.o vector.o
 
 MPI_LIB_NAME = -lmpi
 INTERRUPT_AVAILABLE = SP1 SP PARAGON LAPI
@@ -61,13 +61,14 @@ LIB_DISTRIB = ../lib
 include ../config/makefile.h
 include ../config/makelib.h
 
+%.x:%.c $(LIBRARY_PATH)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 test.x: test.c $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 ipctest.x: $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) ipctest.c -o $@ $^ $(LIBS)
-
 
 $(patsubst %,$(LIBRARY_PATH)(%),strided.o): copy.h armcip.h acc.h memlock.h
 $(patsubst %,$(LIBRARY_PATH)(%),vector.o): copy.h armcip.h acc.h memlock.h

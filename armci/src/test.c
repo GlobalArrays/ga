@@ -765,6 +765,7 @@ void test_vector_acc()
 */
         }
 
+        ARMCI_AllFence();
         MPI_Barrier(MPI_COMM_WORLD);
 
         /* copy my patch into local array c */
@@ -945,8 +946,8 @@ int main(int argc, char* argv[])
 
     ARMCI_Init();
 
-    /*
- */
+/*
+*/
         if(me==0){
            printf("\nTesting strided gets and puts\n");
            printf("(Only std output for process 0 is printed)\n\n"); 
@@ -975,7 +976,6 @@ int main(int argc, char* argv[])
         }
 
         test_vector();
-
         ARMCI_AllFence();
         MPI_Barrier(MPI_COMM_WORLD);
 

@@ -134,15 +134,17 @@ int i, bytes=0;
 }
 
 
-#define BUFSIZE1 25600 
+#define BUFSIZE10 26000 
+#define BUFSIZE1  BUFSIZE
 
 void armci_split_dscr_array( armci_giov_t darr[], int len,
-                             armci_giov_t* extra, int *nlen)
+                             armci_giov_t* extra, int *nlen, armci_giov_t* save)
 {
 int s;
 int bytes=0, split=0;
 
     extra->src_ptr_array=NULL;
+    /* go through the sets looking for set to be split */
     for(s=0;s<len;s++){
         int csize;
 
@@ -151,7 +153,7 @@ int bytes=0, split=0;
 
         if(csize + bytes >BUFSIZE1){
 
-          split = (BUFSIZE1 -bytes-2*sizeof(int))/(darr[s].bytes +sizeof(void*));
+          split =(BUFSIZE1 -bytes-2*sizeof(int))/(darr[s].bytes +sizeof(void*));
           if(split == 0) s--; /* no room available - do not split */
           break;
 
@@ -164,7 +166,11 @@ int bytes=0, split=0;
     *nlen = s+1;
 
     if(split){
-       /* split the set */
+
+       /* save the value to be overwritten only if "save" is not filled */ 
+       if(!save->src_ptr_array)*save= darr[s];
+
+       /* split the set: reduce # of elems, "extra" keeps info for rest of set*/
        *extra = darr[s];
        darr[s].ptr_array_len = split;
        extra->ptr_array_len -= split;
@@ -177,15 +183,17 @@ int bytes=0, split=0;
 
 int armci_pack_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
 {
-armci_giov_t extra;
-int rc, nlen;
-armci_giov_t *ndarr;
+armci_giov_t extra; /* keeps data remainder of set to be processed in chunks */
+armci_giov_t save;  /* keeps original value of set to be processed in chunks */
+armci_giov_t *ndarr; /* points to first array element to be processed now */
+int rc, nlen, count=0;
 
     ndarr = darr;
 
+    save.src_ptr_array=NULL; /* indicates that save slot is empty */
     while(len){
 
-       armci_split_dscr_array(ndarr, len, &extra, &nlen); 
+       armci_split_dscr_array(ndarr, len, &extra, &nlen, &save); 
 
 #ifdef REMOTE_OP
        rc = armci_rem_vector(op, scale, ndarr,nlen,proc);
@@ -195,14 +203,26 @@ armci_giov_t *ndarr;
 #endif
        if(rc) break;
 
+       /* non-NULL pointer indicates that set was split */
        if(extra.src_ptr_array){
+
           ndarr[nlen-1]=extra; /* set the pointer to remainder of last set */
           nlen--; /* since last set not done in full need to process it again */
+
+       }else{
+
+          if(save.src_ptr_array){
+             ndarr[0]=save;
+             save.src_ptr_array=NULL; /* indicates that save slot is empty */
+          }
+
+          if(nlen==0)
+            armci_die("vector packetization problem:buffer too small",BUFSIZE1);
        }
 
-       if(nlen==0)armci_die("buffer too small ",BUFSIZE1);
        len -=nlen;
        ndarr +=nlen;
+       count ++;
     }
 
     return rc;

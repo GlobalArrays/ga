@@ -51,7 +51,7 @@ void I_ACCUMULATE(void* scale, int elems, void*src, void* dst)
 
 /*\ compute address range for memory to lock 
 \*/
-static void armci_lockmem_scatter(void *ptr_array[], int len, int bytes, int proc)
+void armci_lockmem_scatter(void *ptr_array[], int len, int bytes, int proc)
 {
      int i;
 
@@ -292,4 +292,32 @@ int armci_copy_vector(int op,            /* operation code */
 #endif
 
    return 0;
+}
+
+
+void armci_vector_to_buf(armci_giov_t darr[], int len, void* buf)
+{
+int i,s;
+char *ptr = (char*)buf; 
+
+      for(i = 0; i< len; i++){
+        for( s=0; s< darr[i].ptr_array_len; s++){
+          armci_copy(darr[i].src_ptr_array[s],ptr,darr[i].bytes);
+          ptr += darr[i].bytes;
+        }
+      }
+}
+
+
+void armci_vector_from_buf(armci_giov_t darr[], int len, void* buf)
+{
+int i,s;
+char *ptr = (char*)buf;
+
+      for(i = 0; i< len; i++){
+        for( s=0; s< darr[i].ptr_array_len; s++){
+          armci_copy(ptr, darr[i].dst_ptr_array[s],darr[i].bytes);
+          ptr += darr[i].bytes;
+        }
+      }
 }

@@ -38,7 +38,7 @@ extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI send */
 #define SHORT_ACC_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
 #define SHORT_PUT_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
 #define LONG_PUT_THRESHOLD 3000
-#define LONG_GET_THRESHOLD 2500
+#define LONG_GET_THRESHOLD 3000
 
 
 #define INTR_ON  if(intr_status==1)LAPI_Senv(lapi_handle, INTERRUPT_SET, 1) 

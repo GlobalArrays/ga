@@ -79,6 +79,8 @@ extern int armci_pack_strided(int op, void* scale, int proc,
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, int fit_level, int nb);
 
+extern int armci_pack_vector(int op, void *scale, 
+                      armci_giov_t darr[],int len,int proc);
 
 extern void armci_lockmem(void *pstart, void* pend, int proc);
 extern void armci_unlockmem(void);
@@ -87,6 +89,9 @@ extern int armci_acc_copy_strided(int optype, void* scale, int proc,
                                   void* src_ptr, int src_stride_arr[],  
 		                  void* dst_ptr, int dst_stride_arr[], 
                                   int count[], int stride_levels);
+
+extern void armci_vector_to_buf(armci_giov_t darr[], int len, void* buf);
+extern void armci_vector_from_buf(armci_giov_t darr[], int len, void* buf);
 
 #define MAX(a,b) (((a) >= (b)) ? (a) : (b))
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
@@ -101,4 +106,10 @@ extern int armci_acc_copy_strided(int optype, void* scale, int proc,
 #define ORDER(op,proc) if(proc != armci_me) FENCE_NODE(proc) 
 #endif
         
+typedef struct {
+    int  ptr_array_len;
+    int bytes;
+    void **ptr_array;
+} armci_riov_t;
+
 #endif
