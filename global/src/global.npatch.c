@@ -852,7 +852,7 @@ DoublePrecision *alpha, *beta;
     Integer idx, n1dim;
     Integer atotal, btotal;
     Integer g_A = *g_a, g_B = *g_b;
-    Integer me= ga_nodeid_(), B_created=0;
+    Integer me= ga_nodeid_(), A_created=0, B_created=0;
     char *tempname = "temp", notrans='n';
 
     ga_sync_();
@@ -898,10 +898,20 @@ DoublePrecision *alpha, *beta;
          *        - create a temp array that matches distribution of g_c
          *        - do C<= A
          */
-        nga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
-        andim = cndim;
-        g_A = *g_c;
-        nga_distribution_(&g_A, &me, loA, hiA);
+        if(*g_b != *g_c) {
+            nga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
+            andim = cndim;
+            g_A = *g_c;
+            nga_distribution_(&g_A, &me, loA, hiA);
+        }
+        else {
+            if (!ga_duplicate(g_c, &g_A, tempname))
+            ga_error("ga_dadd_patch: dup failed", 0L);
+            nga_copy_patch(&notrans, g_a, alo, ahi, &g_A, clo, chi);
+            andim = cndim;
+            A_created = 1;
+            nga_distribution_(&g_A, &me, loA, hiA);
+        }
     }
 
     /* test if the local portion of patches matches */
@@ -1016,7 +1026,8 @@ DoublePrecision *alpha, *beta;
         nga_release_update_( g_c, loC, hiC); 
 
     }
-    
+
+    if(A_created) ga_destroy_(&g_A);
     if(B_created) ga_destroy_(&g_B);
     
     GA_POP_NAME;
