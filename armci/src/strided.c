@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.14 1999-10-29 18:46:09 d3h325 Exp $ */
+/* $Id: strided.c,v 1.15 1999-11-02 00:53:18 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -65,7 +65,7 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
                 /* size/address not alligned */
                 ByteCopy2D(bytes, count, src_ptr, src_stride, dst_ptr, dst_stride);
                 
-            }else { /* ize aligned -- should be the most efficient copy */
+            }else { /* size aligned -- should be the most efficient copy */
                 
                 DCopy2D(bytes/ALIGN_SIZE, count,src_ptr, src_stride/ALIGN_SIZE, 
                         dst_ptr, dst_stride/ALIGN_SIZE);
@@ -74,7 +74,7 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
         
     } else {
         
-        /* data not in local/shared memory - access through global address space */
+        /* data not in local/shared memory-access through global address space*/
         
         if(op==PUT){ 
             
@@ -303,10 +303,10 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
           
       default: /* N-dimensional */ 
       {
-		  /* stride_levels is not the same as ndim. it is ndim-1
-		   * For example a 10x10x10... array, suppose the datatype is byte
-		   * the stride_arr is 10, 10x10, 10x10x10 ....
-		   */
+	  /* stride_levels is not the same as ndim. it is ndim-1
+	   * For example a 10x10x10... array, suppose the datatype is byte
+	   * the stride_arr is 10, 10x10, 10x10x10 ....
+	   */
           index[2] = 0; unit[2] = 1; total_of_2D = count[2];
           for(j=3; j<=stride_levels; j++) {
               index[j] = 0; unit[j] = unit[j-1] * count[j-1];
@@ -334,11 +334,7 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
     if(proc != armci_me){
 
        if(op == GET){
-           /* it breaks if you move it here */
-
            CLEAR_COUNTER(get_cntr); /* wait for data arrival */
-/*           printf("%d out of get cntr =%d\n",armci_me, get_cntr.cntr);*/
-/*           fflush(stdout);*/
        }else { 
            CLEAR_COUNTER(ack_cntr); /* data must be copied out*/ 
        }
@@ -429,10 +425,21 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
 #   endif
 
 #ifndef LAPI2
-    if(!direct)
-       rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+
+    if(!direct){
+
+#ifdef DATA_SERVER
+       /* larger strided or 1-D reqests, buffer not used to send data 
+        * we can bypass the packetization step and send request directly
+        */
+       if(count[0]>TCP_PAYLOAD || stride_levels==0 )
+         rc = armci_rem_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+                          dst_ptr, dst_stride_arr, count, stride_levels, 1);
+       else
+#endif
+         rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
                        dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
-    else
+    }else
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, 
                                dst_ptr, dst_stride_arr, count, stride_levels,0);
