@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.57 2004-04-01 19:06:36 vinod Exp $
+c $Id: test.F,v 1.58 2004-08-10 22:04:08 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -1870,7 +1870,7 @@ c
 c
       dimi = ihi-ilo
       dimj = jhi-jlo
-      write(6,111) me,ilo,ihi,jlo,jhi,dimi,dimj
+c     write(6,111) me,ilo,ihi,jlo,jhi,dimi,dimj
   111 format(i2,'..',4i8,'.',2i8)
       call ga_sync()
       if(ilo .gt.0 .and. jhi .gt. 0)then
@@ -2064,7 +2064,7 @@ c---------------------------------------------------------------------
 #include "global.fh"
 #include "testutil.fh"
       integer n, m
-      parameter (n =10) 
+      parameter (n =100) 
       parameter (m=2*n)
       real a(n,n), b(n,n), v(m), w(m)
       integer iv(m), jv(m)
