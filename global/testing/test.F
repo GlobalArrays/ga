@@ -3,7 +3,7 @@
 #include "mafdecls.h"
 #include "global.fh"
 #include "tcgmsg.fh"
-      integer heap, stack, fudge, ma_heap
+      integer heap, stack, fudge, ma_heap, me
       logical status
       parameter (heap=100*100*4, fudge=100, stack=100)
 c     
@@ -18,6 +18,7 @@ c
       status = ma_init(MT_DBL, stack, ma_heap)
       if (.not. status) print *, 'ma_init failed' 
 c
+      me = nodeid()
       if(nodeid().eq.0)then
         print *, 'using ',nnodes(), ' process(es)'
         call ffflush(6)
@@ -760,7 +761,7 @@ c
       inc =5 
 c     every processor will be operating on somebody elses data
 c
-      iproc = nnodes()-me-1
+      iproc = ga_nnodes()-me-1
 c
       call ga_distribution(g_a,iproc,ilo,ihi,jlo,jhi)
 c

@@ -8,6 +8,9 @@
 #                         matrix multiply, and symmetrization 
 #      "make perform.x"   to create a program testing performance of GA
 #                         primitives: get, put & accumulate,
+#      "make testc.x"     to create a C test program for GA
+#      "make ga-mpi.x"    to create a C test program for GA that demonstrates
+#                         the interface to MPI
 #      "make ipc.clean"   to create a utility to clean IPC resources 
 #      "make clean"       clean
 #      "make realclean"   even cleaner    
@@ -43,7 +46,17 @@ ifeq ($(GA_TRACE),YES)
    LIBTRACE= ../trace/libtrace.a
 endif
 
+#
+# main program in C requires extra effort to provide Fortran libs
+# Highly system dependent !!!
+ifneq ($(MSG_COMMS), MPI)
+  COPT_REN += -I../../tcgmsg/ipcv4.0
+endif
 
+
+
+FOPT=-g
+COPT=-g
 
 #
 # build test programs and .p files if needed
@@ -72,6 +85,30 @@ else
 	$(INSTALL)
 endif
 
+
+ifeq ($(P_FILE),YES)
+testc.x: testc.o $(LIBRARY)
+	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
+	$(CLD) $(CLDOPT) -o $@ $< $(LIBS) $(LIBCOM) $(CLIB)
+    ifdef USE_MPI
+ga-mpi.x: ga-mpi.o $(LIBRARY)
+	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
+	$(CLD) $(CLDOPT) -o $@ $< $(LIBS) $(LIBCOM) $(CLIB)
+    else
+ga-mpi.x:
+	@echo "You need to define USE_MPI and recompile the package "
+    endif
+else
+testc.x: testc.o $(LIBRARY)
+	$(CLD) $(CLDOPT) -o $@ $< $(LIBS) $(LIBCOM) $(CLIB)
+    ifdef USE_MPI
+ga-mpi.x: ga-mpi.o $(LIBRARY)
+	$(CLD) $(CLDOPT) -o $@ $< $(LIBS) $(LIBCOM) $(CLIB)
+    else
+ga-mpi.x:
+	@echo "You need to define USE_MPI and recompile the package "
+    endif
+endif
 
 ipc.clean:	ipc.clean.o
 	$(CC) -o $@  ipc.clean.o
