@@ -1,3 +1,4 @@
+#include <sys/types.h>
 #include "eaf.h"
 #include "eafP.h"
 #include "types.f2c.h"

@@ -25,5 +25,8 @@
 #define EAF_ERR_TRUNCATE       -10019
 #define EAF_ERR_LENGTH         -10020
 
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
 
 #endif
