@@ -74,11 +74,10 @@ $(patsubst %,$(LIBRARY_PATH)(%),global.msg.o)   : message.h
 $(patsubst %,$(LIBRARY_PATH)(%),global.alg.o)   : globalp.h global.h
 $(patsubst %,$(LIBRARY_PATH)(%),ga_handler.o)   : interrupt.h message.h
 $(patsubst %,$(LIBRARY_PATH)(%),lapi.o)         : lapidefs.h
-$(patsubst %,$(LIBRARY_PATH)(%),hsort.scat.o)   : types.f2c.h
-$(patsubst %,$(LIBRARY_PATH)(%),semaphores.o)   : semaphores.h types.f2c.h
+$(patsubst %,$(LIBRARY_PATH)(%),semaphores.o)   : semaphores.h
 $(patsubst %,$(LIBRARY_PATH)(%),shmalloc.o)     : shmalloc.h
 $(patsubst %,$(LIBRARY_PATH)(%),iway.o)         : global.h message.h farg.h
 $(patsubst %,$(LIBRARY_PATH)(%),net.o)          : global.h message.h farg.h
 $(patsubst %,$(LIBRARY_PATH)(%),ga_diag.o)      : global.fh diag.fh 
-global.h       : types.f2c.h cray.names.h
+global.h       : cray.names.h
 global.core.h  : interrupt.h mem.ops.h semaphores.h locks.h lapidefs.h
