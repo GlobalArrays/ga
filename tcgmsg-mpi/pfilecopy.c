@@ -7,6 +7,9 @@
 #include "sndrcv.h"
 #include "msgtypesc.h"
 
+#ifdef GA_USE_VT
+#include "tcgmsg_vampir.h"
+#endif
 
 void PFILECOPY_(type, node0, filename)
      long *type, *node0;
@@ -34,6 +37,10 @@ void PFILECOPY_(type, node0, filename)
 
   if (!(buffer = malloc((unsigned) nread)))
     Error("pfilecopy: failed to allocate the I/O buffer",nread);
+
+#ifdef GA_USE_VT
+   vampir_begin(TCGMSG_PFCOPY,__FILE__,__LINE__);
+#endif
 
   if (*node0 == NODEID_()) {
 
@@ -92,6 +99,9 @@ void PFILECOPY_(type, node0, filename)
   (void) fflush(file);
   (void) fclose(file);
   (void) free(buffer);
+#ifdef GA_USE_VT
+  vampir_end(TCGMSG_PFCOPY,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -151,6 +161,9 @@ void PFCOPY_(type, node0, fname, len)
   (void) printf("me=%d, type=%d, node0=%d, fname=%x, fname=%.8s, len=%d\n",
 		NODEID_(), *type, *node0, fname, fname, len);
 #endif 
+#ifdef GA_USE_VT
+   vampir_begin(TCGMSG_PFCOPY,__FILE__,__LINE__);
+#endif
 
   /* Strip trailing blanks off the file name */
 
@@ -174,5 +187,8 @@ void PFCOPY_(type, node0, fname, len)
   PFILECOPY_(type, node0, filename);
 
   (void) free(filename);
+#ifdef GA_USE_VT
+  vampir_end(TCGMSG_PFCOPY,__FILE__,__LINE__);
+#endif
 }
 

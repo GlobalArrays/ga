@@ -2,6 +2,9 @@
 #include "tcgmsgP.h"
 #include "armci.h"
 
+#ifdef GA_USE_VT
+#include "tcgmsg_vampir.h"
+#endif
 
 #define LEN 2
 static long *pnxtval_counter;
@@ -25,6 +28,10 @@ long NXTVAL_(mproc)
   int rc;
 
   int  server = NXTV_SERVER;         /* id of server process */
+
+#ifdef GA_USE_VT
+  vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
 
   if (SR_parallel) {
      if (DEBUG_) {
@@ -51,15 +58,18 @@ long NXTVAL_(mproc)
      /* Not running in parallel ... just do a simulation */
      static int count = 0;
      if (*mproc == 1)
-       return count++;
+       local = count++;
      else if (*mproc == -1) {
        count = 0;
-      return 0;
+       local = 0;
     }
     else
       Error("nxtval: sequential version with silly mproc ", (long) *mproc);
   }
 
+#ifdef GA_USE_VT
+  vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
   return local;
 }
 

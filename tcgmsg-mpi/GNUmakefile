@@ -47,6 +47,10 @@ OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
       OBJ += $(EXTRA_OBJ) 
 
 HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h tcgmsg.fh
+ifdef GA_USE_VT
+  HEADERS += tcgmsg_vampir.h ../ga_vt.h
+  EXTRA_OBJ += tcgmsg_vampir.o ga_vt.o
+endif
 
 # This include file specifies how and where the library should be built
 # LIBRARY_PATH  is the library location
@@ -59,6 +63,13 @@ ifeq ($(TARGET),CRAY-YMP)
 pbeginf.o:
 	$(CC) $(COPT) $(INCLUDES) $(DEFINES) -g -c pbeginf.c
 
+endif
+
+ifdef GA_USE_VT
+ga_vt.o:	../ga_vt.c
+	ln -s ../ga_vt.c ga_vt.c
+	$(CC) $(CFLAGS) -c ga_vt.c
+	rm ga_vt.c
 endif
 
 LIBS = -L$(LIBDIR) -larmci $(MP_LIBS) $(COMM_LIBS)

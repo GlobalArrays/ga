@@ -1,6 +1,9 @@
 #include <mpi.h>
 #include "tcgmsgP.h"
 
+#ifdef GA_USE_VT
+#include "tcgmsg_vampir.h"
+#endif
 
 #define LEN 2
 long nxtval_counter=0;
@@ -105,12 +108,17 @@ long NXTVAL_(mproc)
   long  buf[2];
   MPI_Status status;
   int  type = TYPE_NXTVAL;
+  long local;
 
 #  ifdef NXTVAL_SERVER
      int  server = (int)NNODES_();         /* id of server process */
 #  else
      int  server = (int)NNODES_() -1;         /* id of server process */
 #  endif
+
+#ifdef GA_USE_VT
+  vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
 
   if (SR_parallel) {
      buf[0] = *mproc;
@@ -126,20 +134,23 @@ long NXTVAL_(mproc)
        MPI_Recv(buf, 1,   MPI_LONG,  server, type, MPI_COMM_WORLD, &status); 
        return buf[0];
 #    endif
-    } else {
+  } else {
      /* Not running in parallel ... just do a simulation */
      static int count = 0;
      if (*mproc == 1)
-       return count++;
+       local = count++;
      else if (*mproc == -1) {
        count = 0;
-      return 0;
+       local = 0;
     }
     else
       Error("nxtval: sequential version with silly mproc ", (long) *mproc);
   }
 
-  return 0;
+#ifdef GA_USE_VT
+  vampir_end(TCGMSG_NXTVAL,__FILE__,__LINE__);
+#endif
+  return local;
 }
 
 /*\ initialization for nxtval -- called in PBEGIN

@@ -1,6 +1,9 @@
 #include <mpi.h>
 #include "tcgmsgP.h"
 
+#ifdef GA_USE_VT
+#include "tcgmsg_vampir.h"
+#endif
 
 /* size of internal buffer for global ops */
 #define DGOP_BUF_SIZE 65536 
@@ -21,6 +24,10 @@ long nleft  = *pn;
 long buflen = MIN(nleft,IGOP_BUF_SIZE); /* Try to get even sized buffers */
 long nbuf   = (nleft-1) / buflen + 1;
 long n;
+
+#ifdef GA_USE_VT
+  vampir_begin(TCGMSG_IGOP,__FILE__,__LINE__);
+#endif
 
 #ifdef ARMCI
      if(!_tcg_initialized){
@@ -63,6 +70,9 @@ long n;
 
     nleft -= ndo; x+= ndo;
   }
+#ifdef GA_USE_VT
+  vampir_end(TCGMSG_IGOP,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -80,6 +90,9 @@ long buflen = MIN(nleft,DGOP_BUF_SIZE); /* Try to get even sized buffers */
 long nbuf   = (nleft-1) / buflen + 1;
 long n;
 
+#ifdef GA_USE_VT
+  vampir_begin(TCGMSG_DGOP,__FILE__,__LINE__);
+#endif
   buflen = (nleft-1) / nbuf + 1;
 
   if (strncmp(op,"abs",3) == 0) {
@@ -112,6 +125,9 @@ long n;
 
     nleft -= ndo; x+= ndo;
   }
+#ifdef GA_USE_VT
+  vampir_end(TCGMSG_DGOP,__FILE__,__LINE__);
+#endif
 }
 
 

@@ -5,6 +5,10 @@
 #define USE_MPI_ABORT   
 #endif
 
+#ifdef GA_USE_VT
+#include "tcgmsg_vampir.h"
+#endif
+
 char      tcgmsg_err_string[ERR_STR_LEN];
 MPI_Comm  TCGMSG_Comm;
 int       _tcg_initialized=0;
@@ -121,8 +125,15 @@ int init=0;
    if(!init){ 
       /* nope */
       MPI_Init(argc, argv);
+#ifdef GA_USE_VT
+      tcgmsg_vampir_init(__FILE__,__LINE__);
+#endif
       MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
    }
+
+#ifdef GA_USE_VT
+   vampir_begin(TCGMSG_PBEGINF,__FILE__,__LINE__);
+#endif
 
    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
@@ -132,6 +143,9 @@ int init=0;
    MPI_Barrier(MPI_COMM_WORLD);
    /* printf("%d:ready to go\n",NODEID_()); */
    install_nxtval();
+#ifdef GA_USE_VT
+   vampir_end(TCGMSG_PBEGINF,__FILE__,__LINE__);
+#endif
 }
 
 /*\ Initialization for C programs
@@ -147,12 +161,18 @@ void PBEGIN_(int argc, char* argv[])
 \*/ 
 void FATR PEND_()
 {
+#ifdef GA_USE_VT
+    vampir_begin(TCGMSG_PEND,__FILE__,__LINE__);
+#endif
 #   ifdef NXTVAL_SERVER
        long zero=0;
        if( SR_parallel )  (void) NXTVAL_(&zero);
        MPI_Barrier(MPI_COMM_WORLD);
 #   endif
     finalize_nxtval();
+#ifdef GA_USE_VT
+    vampir_end(TCGMSG_PEND,__FILE__,__LINE__);
+#endif
     MPI_Finalize();
     exit(0);
 }
