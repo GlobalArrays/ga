@@ -409,6 +409,11 @@ int up=1;
                        armci_server_rmw(msginfo,descr,buffer);
                        break;
              
+          case LOCK:   armci_server_lock(msginfo); 
+                       break;
+
+          case UNLOCK: armci_server_unlock(msginfo, descr);
+                       break;
 
           default:     if(msginfo->format ==VECTOR)
                           armci_server_vector(msginfo, descr, buffer, buflen); 

@@ -25,12 +25,17 @@ extern  char* MessageSndBuffer;
 #ifdef LAPI
 #  define REQ_TAG {MessageSndBuffer + sizeof(request_header_t), &buf_cntr.cntr }
 #  define GET_SEND_BUFFER CLEAR_COUNTER(buf_cntr); SET_COUNTER(buf_cntr,1);
+#  define GA_SEND_REPLY armci_lapi_send
 #else
 #  define REQ_TAG 32000
 #  define GET_SEND_BUFFER
+#  ifdef DATA_SERVER
+#    define GA_SEND_REPLY(tag, buf, len, p) armci_sock_send(p,buf,len)
+#  else
+#    define GA_SEND_REPLY(tag, buf, len, p)  
+#  endif
 #endif
 
-#define GA_SEND_REPLY(tag, buf, len, p) armci_sock_send(p,buf,len)
 
 extern void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra);
 extern int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,

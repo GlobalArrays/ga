@@ -28,7 +28,7 @@ pthread_mutex_t _armci_mutex_thread=PTHREAD_MUTEX_INITIALIZER;
 
 
 /************* LAPI Active Message handlers *******************************/
-
+ 
 volatile static int hndlcnt=0, header_cnt=0;
 static int hhnum=0;
 static long num_malloc=0;   /* trace and limit the number malloc calls in HH */
@@ -52,6 +52,7 @@ int buflen=MSG_BUFLEN;
       fprintf(stderr,"%d:CH:op=%d from=%d datalen=%d dscrlen=%d\n", armci_me,
         msginfo->operation, msginfo->from,msginfo->datalen,msginfo->dscrlen);
 
+   /*** assure that descriptor and data are in the right format and place ***/
    if(  msginfo->dscrlen < 0 || msginfo->datalen <0 ){
      /* for large put/acc/scatter need to get the data */
      int rc;
@@ -89,15 +90,27 @@ int buflen=MSG_BUFLEN;
      buflen = MSG_BUFLEN;
    }
 
-/*   fprintf(stderr,"CH: val=%lf\n",*(double*)(buf+msginfo->datalen -8));*/
-   if(msginfo->format == STRIDED)
-                armci_server(msginfo, descr, buf, buflen);
-   else
-                armci_server_vector(msginfo, descr, buf, buflen);
+   /*   fprintf(stderr,"CH: val=%lf\n",*(double*)(buf+msginfo->datalen -8));*/
+
+
+   /*** dispatch request to the appropriate handler function ***/
+   switch(msginfo->operation){
+   case LOCK:   armci_server_lock(msginfo); 
+                break;
+   case UNLOCK: armci_server_unlock(msginfo, descr); 
+                break;
+   default:
+                if(msginfo->format == STRIDED)
+                   armci_server(msginfo, descr, buf, buflen);
+                else
+                   armci_server_vector(msginfo, descr, buf, buflen);
+   }
 
    free(msginfo);
    (void)fetch_and_add(&num_malloc,-1);
 }
+
+
 
 
 void* armci_header_handler(lapi_handle_t *t_hndl, void *uhdr, uint *t_uhdrlen,
@@ -111,8 +124,9 @@ request_header_t *msginfo = (request_header_t *)uhdr;
         fprintf(stderr,"%d:HH: op=%d from %d\n",armci_me,msginfo->operation,
                 msginfo->from);
 
-   /* process small requests inside header handler */
-   if(msginfo->datalen >0 && msginfo->dscrlen>0 && msginfo->operation!=GET){
+   /* process small requests that do not require comms in header handler */
+   if(msginfo->datalen >0 && msginfo->dscrlen>0 && msginfo->operation != GET 
+      && msginfo->operation != LOCK && msginfo->operation != UNLOCK){
 
         /* If another thread is in accumulate use compl. handler path:
          * Try to avoid blocking inside HH which degrades Lapi performance.
@@ -167,7 +181,7 @@ int rc;
 
       /* starting address is modified depending on the operation */
       msginfo->tag.buf = MessageSndBuffer;
-      if(msginfo->operation==GET){
+      if(msginfo->operation==GET || msginfo->operation==LOCK){
 
          if(lapi_max_uhdr_data_sz < msginfo->dscrlen){
 
@@ -185,7 +199,7 @@ int rc;
 
             msginfo->datalen = -msginfo->datalen;
             msginfo->dscrlen = -msginfo->dscrlen;
-            pcntr = NULL; /* GET from CH will increment buf_cntr */
+            pcntr = NULL; /* GET/LOCK from CH will increment buf_cntr */
 
          }else msglen += msginfo->dscrlen+msginfo->datalen;
 
@@ -354,7 +368,8 @@ int spin = 1;
         }else{
 
          /* yield processor to another thread */
-         yield(); /* mark thread as not runnable */
+         /* mark thread as not runnable */
+/*         yield(); */
    
          /* call usleep to notify scheduler */
          (void)usleep(5);

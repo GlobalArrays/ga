@@ -39,7 +39,7 @@ int shmem = SAMECLUSNODE(proc);
 
     /* data is in local/shared memory -- can use memcpy */
 
-    if(count==1){
+    if(count==1 && bytes <THRESH1D){
 
        armci_copy(src_ptr, dst_ptr, bytes); 
 

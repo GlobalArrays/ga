@@ -3,9 +3,13 @@
 #include "message.h"
 #include <stdio.h>
 
+#define DEBUG 0
 #define MAX_LOCKS 32768
 #define SPINMAX 1000
-#define DEBUG 0
+
+#ifdef LAPI
+#  define SERVER_LOCK 
+#endif
 
 double _dummy_work_=0.;
 static int g_mutexes;
@@ -38,7 +42,7 @@ int ARMCI_Create_mutexes(int num)
 int rc,p, totcount;
 int *mutex_count = (int*)armci_internal_buffer;
 
-	if (num <= 0 || num > MAX_LOCKS) return(FAIL);
+	if (num < 0 || num > MAX_LOCKS) return(FAIL);
         if(num_mutexes) armci_die("mutexes already created",num_mutexes);
 
         if(armci_nproc == 1){  num_mutexes=1; return(0); }
@@ -169,7 +173,7 @@ int  *mutex_ticket, next_in_line;
 
       }while (myturn != next_in_line);
 
-      glob_mutex[proc].tickets[mutex] = myturn+1; /* save next ticket value */
+      glob_mutex[proc].tickets[mutex] = myturn; /* save ticket value */
 }
 
 
@@ -179,7 +183,7 @@ int *mutex_ticket= glob_mutex[proc].turn + mutex;
 int *newval = glob_mutex[proc].tickets +mutex;
 int len=sizeof(int);
 
-/*       (*newval) ++; */
+       (*newval) ++; 
 /* update ticket for next process requesting this mutex */
 
        /* write new ticket value stored previously in tickets  */
@@ -191,17 +195,18 @@ int len=sizeof(int);
  *   -must be executed in hrecv/AM handler thread
  *   -application thread must use generic_lock routine
 \*/
-void armci_server_lock(int handle, int mutex, int proc, msg_tag_t tag)
+int armci_server_lock_mutex(int mutex, int proc, msg_tag_t tag)
 {
 int myturn, turn;
 int *mutex_ticket, next_in_line, len=sizeof(int);
+int owner = armci_me;
         
 
-     if(DEBUG) fprintf(stderr,"SLOCK:server=%d node=%d id=%d\n",
-                          armci_me,proc,mutex);
+      if(DEBUG)fprintf(stderr,"SLOCK=%d owner=%d p=%d m=%d\n",
+                       armci_me,owner, proc,mutex);
 
-      mutex_ticket= glob_mutex[proc].turn + mutex;
-      myturn = register_in_mutex_queue(mutex, proc);
+      mutex_ticket= glob_mutex[owner].turn + mutex;
+      myturn = register_in_mutex_queue(mutex, owner);
 
       armci_copy(mutex_ticket, &next_in_line, len);
 
@@ -209,21 +214,23 @@ int *mutex_ticket, next_in_line, len=sizeof(int);
          armci_die2("armci-s: problem with tickets",myturn,next_in_line); 
 
       if(next_in_line != myturn){
+           if(!blocked)armci_serv_mutex_create();
            blocked[proc].mutex = mutex;
            blocked[proc].turn = myturn;
            blocked[proc].tag  = tag;
-           if(DEBUG) fprintf(stderr,"SLOCK:server=%d proc=%d blocked (%d,%d)\n",
+           if(DEBUG) fprintf(stderr,"SLOCK=%d proc=%d blocked (%d,%d)\n",
                                      armci_me, proc, next_in_line,myturn);
+           return -1;
+
       } else {
-           if(DEBUG) fprintf(stderr,"server=%d proc=%d sending ticket (%d)\n",
+
+           if(DEBUG) fprintf(stderr,"SLOCK=%d proc=%d sending ticket (%d)\n",
                                                        armci_me, proc, myturn);
+
            /* send ticket to requesting node */
-           GA_SEND_REPLY(tag, &myturn, sizeof(int), proc); 
-
+           /* GA_SEND_REPLY(tag, &myturn, sizeof(int), proc); */
+           return (myturn);
       } 
-
-      if(DEBUG) fprintf(stderr,"SLOCK:server=%d node=%d id=%d (%d,%d)\n",
-                    armci_me,proc,mutex,blocked[proc].mutex,blocked[proc].turn);
 }
            
 
@@ -231,21 +238,23 @@ int *mutex_ticket, next_in_line, len=sizeof(int);
 /*\  Release mutex "id" held by proc 
  *   called from hrecv/AM handler AND application thread
 \*/
-void armci_server_unlock(int handle, int mutex, int proc, int Ticket)
+int armci_server_unlock_mutex(int mutex, int proc, int Ticket, msg_tag_t* ptag)
 {
 #define NOBODY -1
-int i, p=NOBODY, *mutex_ticket= glob_mutex[proc].turn + mutex;
+int owner = armci_me;
+int i, p=NOBODY, *mutex_ticket= glob_mutex[owner].turn + mutex;
 int ack, len=sizeof(int);
 
-     if(DEBUG) fprintf(stderr,"SUNLOCK:server=%d node=%d mutex=%d ticket=%d\n",
+     if(DEBUG) fprintf(stderr,"SUNLOCK=%d node=%d mutex=%d ticket=%d\n",
                        armci_me,proc,mutex,Ticket);
 
-     /*     Ticket++; already incremented */
+     Ticket++; 
      armci_copy(&Ticket, mutex_ticket, len);
 
      /* search for the next process in queue waiting for this mutex */
      for(i=0; i< armci_nproc; i++){
-        if(DEBUG)fprintf(stderr,"SUNLOCK:server=%d node=%d list=(%d,%d)\n",
+        if(!blocked)break; /* not allocated yet - nobody is waiting */
+        if(DEBUG)fprintf(stderr,"SUNLOCK=%d node=%d list=(%d,%d)\n",
                           armci_me, i, blocked[i].mutex, blocked[i].turn);
         if((blocked[i].mutex == mutex) && (blocked[i].turn == Ticket)){
            p = i;
@@ -257,11 +266,17 @@ int ack, len=sizeof(int);
      if(p != NOBODY)
         if(p == armci_me)armci_die("server_unlock: cannot unlock self",0);
         else {
-          if(DEBUG)fprintf(stderr,"server=%d node=%d unlock tickets=%d go=%d\n",
-                                         armci_me, proc, Ticket, proc);
-          GA_SEND_REPLY(blocked[p].tag, &Ticket, sizeof(int), p); 
+
+          if(DEBUG)fprintf(stderr,"SUNLOCK=%d node=%d unlock ticket=%d go=%d\n",
+                                         armci_me, proc, Ticket, p);
+
+          /*   GA_SEND_REPLY(blocked[p].tag, &Ticket, sizeof(int), p); */
+          *ptag = blocked[p].tag;
+          return p;
+
         }
-   
+
+     return -1; /* nobody is waiting */
 }
 
 
@@ -306,9 +321,19 @@ void ARMCI_Unlock(int mutex, int proc)
 #       if defined(SERVER_LOCK)
            if(proc != armci_me)
                armci_rem_unlock(mutex, proc, glob_mutex[proc].tickets[mutex]);
-           else
-#       endif
+           else {
+               int ticket = glob_mutex[proc].tickets[mutex];
+               msg_tag_t tag;
+               int waiting;
+
+               waiting = armci_server_unlock_mutex(mutex, proc, ticket, &tag);
+               if(waiting >-1)
+                  armci_unlock_waiting_process(tag, waiting, ++ticket);
+           }
+               
+#       else
            armci_generic_unlock(mutex, proc);
+#       endif
 
         if(DEBUG)fprintf(stderr,"%d leave unlock\n",armci_me);
 }

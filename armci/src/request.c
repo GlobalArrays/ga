@@ -21,23 +21,45 @@ char* MessageSndBuffer = (char*)_armci_snd_buf;
 void armci_rem_lock(int mutex, int proc, int *ticket)      
 {
 request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
-char *buf = (char*)(msginfo+1);
+char *buffer = (char*)(msginfo+1);
 
     GET_SEND_BUFFER;
 
-    msginfo->dscrlen = msginfo->datalen = msginfo->bytes   =0;
+    msginfo->datalen = msginfo->dscrlen= 0;
     msginfo->from  = armci_me;
     msginfo->to    = proc;
     msginfo->operation = LOCK;
     msginfo->format  = mutex;
+
+    msginfo->bytes = msginfo->datalen + msginfo->dscrlen;
 
     armci_send_req(proc);
 
     msginfo->datalen = sizeof(int); /* receive ticket from server */
     armci_rcv_data(proc);
 
-    GETBUF(buf, int, *ticket);
+    *ticket = *(int*)MessageSndBuffer;
+    if(DEBUG_)fprintf(stderr,"%d receiving ticket %d\n",armci_me, *ticket);
 }
+
+
+void armci_server_lock(request_header_t *msginfo)
+{
+    int mutex = msginfo->format;
+    int proc  = msginfo->from;
+    int ticket;
+
+    /* acquire lock on behalf of requesting process */
+    ticket = armci_server_lock_mutex(mutex, proc, msginfo->tag);
+    
+    if(ticket >-1){
+       /* got lock */
+       msginfo->datalen = sizeof(int);
+       armci_send_data(msginfo, &ticket);
+    }
+}
+       
+    
 
 
 /*\ send request to server to UNLOCK MUTEX
@@ -49,8 +71,8 @@ char *buf = (char*)(msginfo+1);
 
     GET_SEND_BUFFER;
 
-    msginfo->dscrlen = 0; 
-    msginfo->datalen = msginfo->bytes   =sizeof(ticket);
+    msginfo->dscrlen = msginfo->bytes = sizeof(ticket); 
+    msginfo->datalen = 0; 
     msginfo->from  = armci_me;
     msginfo->to    = proc;
     msginfo->operation = UNLOCK;
@@ -61,7 +83,43 @@ char *buf = (char*)(msginfo+1);
     armci_send_req(proc);
 }
     
+
+
+/*\ server unlocks mutex and passes lock to the next waiting process
+\*/
+void armci_server_unlock(request_header_t *msginfo, char* dscr)
+{
+    int ticket = *(int*)dscr;
+    int mutex  = msginfo->format;
+    int proc   = msginfo->to;
+    int waiting;
     
+    waiting = armci_server_unlock_mutex(mutex,proc,ticket,&msginfo->tag);
+
+    if(waiting >-1){ /* -1 means that nobody is waiting */
+
+       ticket++;
+       /* pass ticket to the waiting process */
+       msginfo->from = waiting;
+       msginfo->datalen = sizeof(ticket);
+       armci_send_data(msginfo, &ticket);
+
+    }
+}
+
+
+void armci_unlock_waiting_process(msg_tag_t tag, int proc, int ticket)
+{
+request_header_t header;
+request_header_t *msginfo = &header;
+
+       msginfo->datalen = sizeof(int);
+       msginfo->tag     = tag;
+       msginfo->from      = proc;
+       msginfo->to    = armci_me;
+       armci_send_data(msginfo, &ticket); 
+}
+
 
 /*\ send RMW request to server
 \*/

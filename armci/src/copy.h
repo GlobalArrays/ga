@@ -25,6 +25,7 @@
 
 
 #define THRESH 32
+#define THRESH1D 1000
 #define ALIGN_SIZE sizeof(double)
 
 /* dcopy2d_u_ uses explicit unrolled loops to depth 4 */
