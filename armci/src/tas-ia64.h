@@ -40,8 +40,8 @@ testandset (int *spinlock)
 
   __asm__ __volatile__(
        "xchg4 %0=%1,%2"
-       : "=r"(ret), "=m"(__atomic_fool_gcc (spinlock))
-       : "r"(1), "1"(__atomic_fool_gcc (spinlock))
+       : "=r"(ret), "+m"(__atomic_fool_gcc (spinlock))
+       : "r"(1)
        : "memory");
 
   return ret;
