@@ -135,6 +135,7 @@
 #define  nga_periodic_put_         NGA_PERIODIC_PUT
 #define  nga_print_patch_          NGA_PRINT_PATCH
 #define  nga_put_                  NGA_PUT
+#define  nga_strided_put_          NGA_STRIDED_PUT
 #define  nga_read_inc_             NGA_READ_INC
 #define  nga_release_              NGA_RELEASE
 #define  nga_release_update_       NGA_RELEASE_UPDATE
@@ -317,6 +318,7 @@
 #define  nga_periodic_put_         nga_periodic_put__  
 #define  nga_print_patch_          nga_print_patch__        
 #define  nga_put_                  nga_put__                
+#define  nga_strided_put_          nga_strided_put__                
 #define  nga_read_inc_             nga_read_inc__           
 #define  nga_release_              nga_release__            
 #define  nga_release_update_       nga_release_update__  

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.48 2002-09-30 22:30:24 manoj Exp $ */
+/* $Id: capi.c,v 1.49 2002-12-17 22:43:36 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -7,6 +7,7 @@
 Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM], _ga_work[MAXDIM];
 Integer _ga_dims[MAXDIM], _ga_map_capi[MAX_NPROC];
 Integer _ga_width[MAXDIM];
+Integer _ga_skip[MAXDIM];
 
 Integer _ga_alo[MAXDIM], _ga_ahi[MAXDIM];
 Integer _ga_blo[MAXDIM], _ga_bhi[MAXDIM];
@@ -360,6 +361,18 @@ void NGA_Put(int g_a, int lo[], int hi[], void* buf, int ld[])
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
     nga_put_(&a, _ga_lo, _ga_hi, buf, _ga_work);
+}    
+
+void NGA_Strided_put(int g_a, int lo[], int hi[], int skip[],
+                     void* buf, int ld[])
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+    COPYC2F(ld,_ga_work, ndim-1);
+    COPYC2F(skip, _ga_skip, ndim);
+    nga_strided_put_(&a, _ga_lo, _ga_hi, _ga_skip, buf, _ga_work);
 }    
 
 

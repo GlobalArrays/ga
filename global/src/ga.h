@@ -80,6 +80,8 @@ extern void GA_Add(void *alpha, int g_a, void* beta, int g_b, int g_c);
 extern void GA_Copy(int g_a, int g_b); 
 extern void NGA_Get(int g_a, int lo[], int hi[], void* buf, int ld[]); 
 extern void NGA_Put(int g_a, int lo[], int hi[], void* buf, int ld[]); 
+extern void NGA_Strided_put(int g_a, int lo[], int hi[], int skip[],
+                            void* buf, int ld[]); 
 extern void NGA_Acc(int g_a, int lo[], int hi[],void* buf,int ld[],void* alpha);
 extern void NGA_Periodic_get(int g_a, int lo[], int hi[], void* buf, int ld[]); 
 extern void NGA_Periodic_put(int g_a, int lo[], int hi[], void* buf, int ld[]); 

@@ -271,6 +271,8 @@ extern void FATR nga_distribution_(Integer *g_a, Integer *proc,
                                    Integer *lo, Integer *hi);
 extern void FATR nga_put_(Integer *g_a, Integer *lo, Integer *hi, 
                           void *buf, Integer *ld);
+extern void FATR nga_strided_put_(Integer *g_a, Integer *lo, Integer *hi, 
+                                  Integer *skip, void *buf, Integer *ld);
 extern void FATR nga_get_(Integer *g_a, Integer *lo, Integer *hi, 
                           void *buf, Integer *ld);
 extern void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi,
