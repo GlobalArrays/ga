@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.10 1999-11-20 01:41:57 d3h325 Exp $ */
+/* $Id: memory.c,v 1.11 1999-11-24 23:50:43 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -9,7 +9,6 @@
 
 #if defined(SYSV) || defined(WIN32)
 #include "shmem.h"
-
 
 void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
 {
@@ -90,7 +89,8 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
        if(size)armci_master_exp_attached_ptr(myptr);
 
        if(DEBUG_){
-         printf("%d:armci_malloc addr me=%d\n",armci_me,myptr); fflush(stdout);
+         printf("%d:armci_malloc addr me=%d size=%d\n",armci_me,myptr,size); 
+         fflush(stdout);
        }
     }
 
@@ -104,10 +104,10 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
        /* now every process in a SMP node needs to find out its offset
         * w.r.t. master - this offset is ncessary to use memlock table
         */
+       if(size) armci_set_mem_offset(myptr);
        if(DEBUG_){
-          armci_set_mem_offset(myptr);
-
-          printf("%d:armci_malloc addr me=%d ref=%d\n",armci_me,myptr,*(void**)myptr); fflush(stdout);
+          printf("%d:armci_malloc attached addr me=%d ref=%d size=%d\n",
+                 armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }
 
@@ -181,6 +181,8 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
     /* free work arrays */
     free(ptr_ref_arr);
     free(size_arr);
+
+    armci_msg_barrier();
 
 }
 
