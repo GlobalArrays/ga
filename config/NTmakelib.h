@@ -22,7 +22,10 @@ $(STAMP): $(HEADERS)
     if not exist "$(INCDIR)/$(NULL)" mkdir "$(INCDIR)"
 
 clean:
-	-@erase /q $(STAMP) *.exe *.ilk *.pdb $(OBJDIR)\*.*  $(LIBRARY_PATH)
+	-@echo Cleaning in directory: $(MAKEDIR) 
+	-@erase /q $(STAMP) *.exe *.ilk *.pdb *.pg $(OBJDIR)\*.* 
 	-@if exist "$(OBJDIR)" rmdir "$(OBJDIR)"
 	-@if exist "*.stamp" erase /q "*.stamp"
-	
+!IFDEF LIBRARY
+	-erase /q $(LIBRARY_PATH)
+!ENDIF
