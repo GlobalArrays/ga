@@ -7,6 +7,5 @@
 
 
 GA++  provides a C++ interface to global arrays (GA) libraries. This is 
-the first beta release. The documentation of GA++ can be see in the 
-GA++/doc/html/index.html.
-
+the first beta release. Here is the doxygen documentation of GA++:
+http://www.emsl.pnl.gov:2080/docs/global/ga++/index.html
