@@ -11,6 +11,14 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
+c#define CHECK1
+c#define CHECK2
+c#define CHECK3
+c#define CHECK4
+c#define CHECK5
+c#define CHECK6
+c#define CHECK7
+
 c#define NEW_API
 
       program main
@@ -208,6 +216,7 @@ c
       call ffflush(6)
 #endif
 
+c      go to 131
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 1'
@@ -231,6 +240,9 @@ c
       t1 = t1/dble(nloop)
       t2 = t2/dble(nloop)
       t3 = t3/dble(nloop)
+#ifdef CHECK1
+      go to 132
+#endif
 
       if (me.eq.0) then
         write(6,*)
@@ -255,6 +267,9 @@ c
       t4 = t4/dble(nloop)
       t5 = t5/dble(nloop)
       t6 = t6/dble(nloop)
+#ifdef CHECK2
+      go to 132
+#endif
 
       if (me.eq.0) then
         write(6,*)
@@ -279,16 +294,22 @@ c
       t7 = t7/dble(nloop)
       t8 = t8/dble(nloop)
       t9 = t9/dble(nloop)
+#ifdef CHECK3
+      go to 132
+#endif
 
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 4'
         write(6,*)
       endif
-  122 continue
       t10 = 0.0d00
       t11 = 0.0d00
       t12 = 0.0d00
+      call ga_sync
+      call ga_set_ghost_corner_flag(g_a,.true.)
+c
+      status = ga_set_update4_info(g_a)
       do i = 1, nloop
         call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
         start = util_timer()
@@ -304,6 +325,9 @@ c
       t10 = t10/dble(nloop)
       t11 = t11/dble(nloop)
       t12 = t12/dble(nloop)
+#ifdef CHECK4
+      go to 132
+#endif
 
       if (me.eq.0) then
         write(6,*)
@@ -314,9 +338,9 @@ c
       t14 = 0.0d00
       t15 = 0.0d00
       call ga_sync
-      call ga_set_ghost_corner_flag(.true.)
+      call ga_set_ghost_corner_flag(g_a,.true.)
 c
-      call ga_set_update5_info(g_a)
+      status = ga_set_update5_info(g_a)
       do i = 1, nloop
         call zero_ghosts(int_mb(index3),ld3,a,hi(1)-lo(1)+1,width,dims3)
         start = util_timer()
@@ -334,6 +358,9 @@ c     write(6,*) 'completed ga_update5_ghosts'
       t13 = t13/dble(nloop)
       t14 = t14/dble(nloop)
       t15 = t15/dble(nloop)
+#ifdef CHECK5
+      go to 132
+#endif
 
       if (me.eq.0) then
         write(6,*)
@@ -359,6 +386,9 @@ c     write(6,*) 'completed ga_update5_ghosts'
       t16 = t16/dble(nloop)
       t17 = t17/dble(nloop)
       t18 = t18/dble(nloop)
+#ifdef CHECK6
+      go to 132
+#endif
 
       if (me.eq.0) then
         write(6,*)
@@ -384,8 +414,10 @@ c     write(6,*) 'completed ga_update5_ghosts'
       t22 = t22/dble(nloop)
       t23 = t23/dble(nloop)
       t24 = t24/dble(nloop)
+#ifdef CHECK7
+      go to 132
+#endif
 
-  123 continue
       if (me.eq.0) then
         write(6,*) '*'
         write(6,*) '*   Completed update successfully'
@@ -395,6 +427,7 @@ c     write(6,*) 'completed ga_update5_ghosts'
 c
 c     get patch with ghost cells
 c
+  132 continue
       do i = 1, ndim
         lo2(i) = lo(i) - width(i)
         hi2(i) = hi(i) + width(i)
@@ -475,7 +508,7 @@ c      end do
       if (maxval.lt.10000)
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
-     +           nmax+2*nwidth,has_data)
+     +           nmax+2*nwidth,has_data,nwidth)
       call ga_sync
       tmp = t2
       call ga_dgop(3,tmp,1,'+')
@@ -661,12 +694,15 @@ c
       return
       end
 c
-      subroutine atest(a,nrow,ncol,ld,b,ld2,has_data)
+      subroutine atest(a,nrow,ncol,ld,b,ld2,has_data,nwidth)
 #include "global.fh"
       integer ld
       integer a(ld,*), b(ld2,*)
       integer i, j, k, nproc
       logical has_data(0:1999), check_data
+      logical check_corner
+
+      check_corner = .true.
 
       nproc = ga_nnodes()
       check_data = .true.
@@ -675,7 +711,15 @@ c
         if (k-1.eq.ga_nodeid().and.has_data(k-1)) then
           do i = 1, nrow
             do j = 1, ncol
-              if (a(i,j).ne.b(i,j)) check_data = .false.
+              if (.not.check_corner.and.(.not.
+     +            ((i.le.nwidth.and.j.le.nwidth).or.
+     +             (i.le.nwidth.and.j.gt.ncol-nwidth).or.
+     +             (i.gt.nrow-nwidth.and.j.le.nwidth).or.
+     +             (i.gt.nrow-nwidth.and.j.gt.ncol-nwidth)))) then
+                if (a(i,j).ne.b(i,j)) check_data = .false.
+              else if (check_corner) then
+                if (a(i,j).ne.b(i,j)) check_data = .false.
+              endif
             end do
           end do
           if (check_data) then
