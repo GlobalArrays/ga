@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.8 2002-09-30 17:27:58 manoj Exp $*/
+/*$Id: matmul.c,v 1.9 2002-10-15 11:35:18 vinod Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -21,6 +21,9 @@
 #elif defined(F2C2__)
 #      define DGEMM dgemm__
 #      define ZGEMM zgemm__
+#elif defined(HITACHI)
+#      define dgemm_ DGEMM
+#      define zgemm_ ZGEMM
 #endif
 
 #if defined(CRAY) || defined(WIN32)

@@ -23,6 +23,9 @@ extern void FATR DGETRS(char *, int, Integer *, Integer *, void *,
 #elif defined(F2C2__)
 #  define DGETRF dgetrf__
 #  define DGETRS dgetrs__
+#elif defined(HITACHI)
+#  define dgetrf_ DGETRF
+#  define dgetrs_ DGETRS
 #else
 #  define DGETRF dgetrf_
 #  define DGETRS dgetrs_
