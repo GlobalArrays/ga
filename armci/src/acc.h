@@ -22,9 +22,9 @@
 #define  D_ACCUMULATE_2D daxpy_2d_
 #endif
 
-#ifdef FUJITSU
+#if defined(FUJITSU)
 #undef D_ACCUMULATE_2D
-#define D_ACCUMULATE_2D daxpy_2d_
+#define D_ACCUMULATE_2D d_accumulate_2d_
 #endif
 
 void FATR I_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 

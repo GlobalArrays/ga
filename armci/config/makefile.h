@@ -58,13 +58,26 @@ ifeq ($(TARGET),SUN)
        RANLIB = ranlib
 endif
 
+#----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt
-     FOPT_REN = -Sw
+     FOPT_REN = -Sw -KA32
+     COPT_REN = -x100 -KA32
  GLOB_DEFINES = -DFUJITSU
-   EXTRA_LIBS = /usr/local/lib/libmp.a -L/opt/tools/lib/ -lgen  -lpx -lelf -Wl,-J,-P -L/usr/lang/lib -lblasvp -lcvp
+   EXTRA_LIBS = -lmp -lgen -lpx -lelf -Wl,-J,-P
+#   EXTRA_LIBS = /usr/local/lib/libmp.a -L/opt/tools/lib/ -lgen  -lpx -lelf -Wl,-J,-P
 endif
 
+ifeq ($(TARGET),FUJITSU-VPP64)
+           FC = frt
+     FOPT_REN = -Sw
+     COPT_REN = -x100
+ GLOB_DEFINES = -DFUJITSU -DFUJITSU64
+   EXTRA_LIBS = -lmp -lgen -lpx -lelf -Wl,-J,-P
+#  -L/usr/lang/lib64 -lblasvp
+endif
+
+#----------------------------Sun ------------------------------
 ifeq ($(TARGET),SOLARIS)
      FLD_REN  = -xs
    EXTRA_LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl

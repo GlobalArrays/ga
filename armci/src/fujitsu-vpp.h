@@ -9,12 +9,17 @@
  * Notes:
  *     1. This file contains calls to an undisclosed Fujitsu MPlib library and
  *        is NOT intended for public distribution.
- *     2. This file should be copied to g/config directory in GA package
- *        before compiling the GA software.
  */
 
 #ifndef _FUJITSU_VPP_H
 #define _FUJITSU_VPP_H
+
+/* with buggy/missing implementation of BothStrided ops disable them*/
+#if !defined(FUJITSU64___)
+#define VPP_STRIDED_READ 
+#define VPP_STRIDED_WRITE  
+#endif
+
 
 /* specify full path to MPlib include file (here is my account on Fecit VX)*/
 #include "/home/jniep/include/mplib.h"
@@ -72,7 +77,12 @@
  * This code is using byte- rather than word- interface.
  */
 
-#define CopyPatchTo___(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
+#ifdef VPP_STRIDED_WRITE
+#  define CopyPatchTo(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
+        if(VPP_WriteBothStrided((PROC)(proc), (ADDRP)dst, (ADDRP)src,\
+                    bytes, ld_dst, ld_src, bytes*blocks))MPLIB_TERMINATE; }
+#else
+#  define CopyPatchTo(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
         int _iii, _stat=0, _bytes2copy=1;\
         char *ps=(char*)src, *pd=(char*)dst;\
         if((blocks)>1)for (_iii=0;_iii<(blocks);_iii++){\
@@ -81,16 +91,9 @@
              pd += (ld_dst);\
         }else _bytes2copy=(bytes);\
         _stat += VPP_Write((PROC)(proc),(ADDRP)(dst),(ADDRP)(src),_bytes2copy);\
-        if(_stat)MPLIB_TERMINATE;\
-}
+        if(_stat)MPLIB_TERMINATE; }
+#endif
 
-#define CopyPatchTo(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
-        int _stat;\
-        _stat = VPP_WriteBothStrided((PROC)(proc), (ADDRP)dst, (ADDRP)src,\
-                    bytes, ld_dst, ld_src, bytes*blocks);\
-        if(_stat)MPLIB_TERMINATE;\
-}
-                                                              
 #define MAX_IDS 10
 static DRWD *_id[MAX_IDS];
 
@@ -127,7 +130,12 @@ printf("lds=%d ldd=%d bl=%d bytes=%d proc=%d\n",ld_src,ld_dst,blocks, bytes, pro
         if(_stat)MPLIB_TERMINATE;\
 }
 
-#define CopyPatchFrom___(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
+#ifdef VPP_STRIDED_READ
+#  define CopyPatchFrom(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
+        if(VPP_ReadBothStrided((PROC)(proc), (ADDRP)src, (ADDRP)dst,\
+                    bytes, ld_src, ld_dst, bytes*blocks))MPLIB_TERMINATE;}
+#else
+#  define CopyPatchFrom___(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
         int _iii, _stat=0, _bytes2copy=1;\
         char *ps=(char*)src, *pd=(char*)dst;\
         if((blocks)>1)for (_iii=0;_iii<(blocks);_iii++){\
@@ -136,13 +144,7 @@ printf("lds=%d ldd=%d bl=%d bytes=%d proc=%d\n",ld_src,ld_dst,blocks, bytes, pro
              pd += (ld_dst);\
         }else _bytes2copy=(bytes);\
         _stat += VPP_Read((PROC)(proc),(ADDRP)(src),(ADDRP)(dst),_bytes2copy);\
-        if(_stat)MPLIB_TERMINATE;\
-}
+        if(_stat)MPLIB_TERMINATE; }
+#endif
 
-#define CopyPatchFrom(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
-        int _stat;\
-        _stat = VPP_ReadBothStrided((PROC)(proc), (ADDRP)src, (ADDRP)dst,\
-                    bytes, ld_src, ld_dst, bytes*blocks);\
-        if(_stat)MPLIB_TERMINATE;\
-}
 #endif
