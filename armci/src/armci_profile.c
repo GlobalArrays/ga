@@ -1,5 +1,9 @@
-/* $Id: armci_profile.c,v 1.2 2004-07-14 02:32:16 manoj Exp $ */
+/* $Id: armci_profile.c,v 1.3 2004-07-16 02:18:00 manoj Exp $ */
 /**
+ * Set an environment variable as follows to enable ARMCI profiling
+ *    export ARMCI_PROFILE=YES (bash)
+ *    setenv ARMCI_PROFILE YES (csh/tcsh)
+ *
  * Note #1: Right now, only process 0's profile is printed.
  * Each and every process saves its profile in the correspoding data struture.
  * However profiler prints process 0's profile when armci_profile_terminate()
