@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.33 2003-10-23 14:43:18 manoj Exp $ */
+/* $Id: matmul.c,v 1.34 2003-10-23 17:39:50 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -220,24 +220,26 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
        *Ichunk = *Jchunk = *Kchunk = CHUNK_SIZE/nbuf;
 
     /* Try to use 1-d data transfer & take advantage of zero-copy protocol */
-    if(!irregular) {
-       if(*Ichunk > tmpa && *Jchunk > tmpb) {
-	  *Ichunk = tmpa;
-	  *Jchunk = tmpb;
-	  *Kchunk = MIN(*Ichunk,*Jchunk);
-       }
-       else if(CONTIG_CHUNKS_OPT_FLAG) { /* select a contiguous piece */
-	  int i=1;/* i should be >=1 , to avoid divide by zero error */
-	  temp = max_chunk*max_chunk;
-	  if(temp > tmpa) {
+    if(CONTIG_CHUNKS_OPT_FLAG) { /* select a contiguous piece */
+       if(!irregular) {
+	  if(*Ichunk > tmpa && *Jchunk > tmpb) {
 	     *Ichunk = tmpa;
-	     *Jchunk = (Integer)(temp/(*Ichunk));
-	     if(*Jchunk < tmpb) {
-		while(tmpb/i > *Jchunk) ++i;
-		*Jchunk = tmpb/i;
+	     *Jchunk = tmpb;
+	     *Kchunk = MIN(*Ichunk,*Jchunk);
+	  }
+	  else {
+	     int i=1;/* i should be >=1 , to avoid divide by zero error */
+	     temp = max_chunk*max_chunk;
+	     if(temp > tmpa) {
+		*Ichunk = tmpa;
+		*Jchunk = (Integer)(temp/(*Ichunk));
+		if(*Jchunk < tmpb) {
+		   while(tmpb/i > *Jchunk) ++i;
+		   *Jchunk = tmpb/i;
+		}
+		else *Jchunk = tmpb;
+		*Kchunk = MIN(*Ichunk, *Jchunk);
 	     }
-	     else *Jchunk = tmpb;
-	     *Kchunk = MIN(*Ichunk, *Jchunk);
 	  }
        }
     }
@@ -963,7 +965,11 @@ void ga_matmul(transa, transb, alpha, beta,
 	_gai_matmul_patch_flag == SET) irregular = SET;
     if(!irregular) {
        if((adim1=GA_Cluster_nnodes()) > 1) use_NB_matmul = SET;
-       else use_NB_matmul = UNSET;
+       else {
+	  use_NB_matmul = UNSET;
+	  CONTIG_CHUNKS_OPT_FLAG = SET;
+	  DIRECT_ACCESS_OPT_FLAG = SET;
+       }
 #    if defined(__crayx1) || defined(NEC)
        use_NB_matmul = UNSET;
 #    endif
