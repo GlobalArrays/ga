@@ -211,8 +211,10 @@ void STATS_()
 #define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
 #define GPSZ 10000
-#define GOP_WORK_SIZE (MAX(GPSZ, _SHMEM_BCAST_SYNC_SIZE)) /*gops work size*/
-#define GOP_BUF_SIZE  (2*GOP_WORK_SIZE-2)                 /* gops buffer size */
+/* hpp */
+#define GOP_WORK_SIZE (MAX(GPSZ, _SHMEM_REDUCE_MIN_WRKDATA_SIZE)) /*gops work size*/
+/* #define GOP_BUF_SIZE  (2*GOP_WORK_SIZE-2)                  gops buffer size */
+#define GOP_BUF_SIZE  GOP_WORK_SIZE
 
 static double gop_work[GOP_WORK_SIZE];
 static double gop_buf[GOP_BUF_SIZE];
@@ -302,15 +304,15 @@ void DGOP_(ptype, x, pn, op)
   while (nleft) {
     long ndo = MIN(nleft, buflen);
 
-    MEMCPY(y,x,ndo*sizeof(double));
+    MEMCPY(y,x,ndo*sizeof(double)); 
     if (strncmp(op,"+",1) == 0)
-      shmem_double_sum_to_all(y, y, ndo, 0, 0, procs, work, pSync);
+      shmem_double_sum_to_all(y, x, ndo, 0, 0, procs, work, pSync);
     else if (strncmp(op,"*",1) == 0)
-      shmem_double_prod_to_all(y, y, ndo, 0, 0, procs, work, pSync);
+      shmem_double_prod_to_all(y, x, ndo, 0, 0, procs, work, pSync);
     else if (strncmp(op,"max",3) == 0 || strncmp(op,"absmax",6) == 0)
-      shmem_double_max_to_all(y, y, ndo, 0, 0, procs, work, pSync);
+      shmem_double_max_to_all(y, x, ndo, 0, 0, procs, work, pSync);
     else if (strncmp(op,"min",3) == 0 || strncmp(op,"absmin",6) == 0)
-      shmem_double_min_to_all(y, y, ndo, 0, 0, procs, work, pSync);
+      shmem_double_min_to_all(y, x, ndo, 0, 0, procs, work, pSync);
     else
       Error("DGOP: unknown operation requested", (long) *pn);
 
@@ -346,17 +348,17 @@ void IGOP_(ptype, x, pn, op)
   while (nleft) {
     int ndo = MIN(nleft, buflen);
 
-    MEMCPY(y,x,ndo*sizeof(int));
+    MEMCPY(y,x,ndo*sizeof(int)); 
     if (strncmp(op,"+",1) == 0)
-      shmem_int_sum_to_all(y, y, ndo, 0, 0, procs, work, pSync);
+      shmem_int_sum_to_all(y, x, ndo, 0, 0, procs, work, pSync);
     else if (strncmp(op,"*",1) == 0)
-      shmem_int_prod_to_all(y, y, ndo, 0, 0, procs, work, pSync);
+      shmem_int_prod_to_all(y, x, ndo, 0, 0, procs, work, pSync);
     else if (strncmp(op,"max",3) == 0 || strncmp(op,"absmax",6) == 0)
-      shmem_int_max_to_all(y, y, ndo, 0, 0, procs, work, pSync);
+      shmem_int_max_to_all(y, x, ndo, 0, 0, procs, work, pSync);
     else if (strncmp(op,"min",3) == 0 || strncmp(op,"absmax",6) == 0)
-      shmem_int_min_to_all(y, y, ndo, 0, 0, procs, work, pSync);
+      shmem_int_min_to_all(y, x, ndo, 0, 0, procs, work, pSync);
     else if (strncmp(op,"or",2) == 0)
-      shmem_int_or_to_all(y, y, ndo, 0, 0, procs, work, pSync);
+      shmem_int_or_to_all(y, x, ndo, 0, 0, procs, work, pSync);
     else
       Error("IGOP: unknown operation requested", (long) *pn);
 
