@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #ifdef WIN32
 #  include <string.h>
 #endif
@@ -120,6 +121,10 @@ void FATR DCOPY1D(void*, void*, int*);
 
 #endif
                                                  
+#if  defined(MEMCPY)  && !defined(armci_copy)
+#    define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 
+#endif
+
 #ifndef armci_copy
 # ifdef PTR_ALIGN
 #   define armci_copy(src,dst,n)     \

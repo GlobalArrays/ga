@@ -2,6 +2,12 @@
 #define _ACC_H_
 
 
+#ifdef NOFORT
+#    define ATR  
+#else
+
+#  define ATR FATR
+
 #if defined(AIX)
 #    define I_ACCUMULATE_2D	i_accumulate_2d_u
 #    define D_ACCUMULATE_2D	d_accumulate_2d_u
@@ -29,11 +35,8 @@
 #define  D_ACCUMULATE_2D daxpy_2d_
 #endif
 
-#ifdef NOFORT
-#  define ATR  
-#else
-#  define ATR FATR
 #endif
+
 
 void ATR I_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
 void ATR L_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
