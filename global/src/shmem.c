@@ -69,6 +69,9 @@ extern void ga_error();
 #elif defined(DECOSF)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)4*1024)
+#elif defined(LINUX)
+#  undef _SHMMAX
+#  define _SHMMAX ((unsigned long)2*1024)
 #elif defined(SHMAX)
 #  undef _SHMMAX
 #  define _SHMMAX SHMMAX

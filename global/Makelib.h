@@ -19,6 +19,12 @@ ifneq ($(MSG_COMMS),MPI)
        LIBCOM = ../../tcgmsg/ipcv4.0/libtcgmsg.a 
 endif
 
+#............................... LINUX .........................................
+ifeq ($(TARGET),LINUX)
+       BLAS = ../../lapack_blas/libblas.a
+       MPI_DEV = linux/ch_p4
+endif
+
 #................................ SUN ..........................................
 ifeq ($(TARGET),SUN)
        BLAS = ../../lapack_blas/libblas.a

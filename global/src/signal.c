@@ -210,8 +210,10 @@ void TrapSigSys()
   Trap SIGSYS
 */
 {
+#ifndef LINUX
   if ( signal(SIGSYS, SigSysHandler) == SIG_ERR)
     ga_error("TrapSigSys: error from signal setting SIGSYS", 0);
+#endif
 }
 
 

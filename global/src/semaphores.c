@@ -45,17 +45,18 @@ union semun {
    long val;
    struct semid_ds *buf;
    ushort *array;
-} semctl_arg;
-#else
+};
+#elif !defined(LINUX)
 union semun {
    int val;
    struct semid_ds *buf;
    ushort *array;
-} semctl_arg;
+};
 #endif
 
   int i, semid, num_sem;
   void ga_error();
+  union semun semctl_arg;
 
     /*fprintf(stderr,"SemInit %d %d\n",id,value);*/
    
@@ -77,6 +78,6 @@ union semun {
 /*  release semaphore(s) */
 void SemDel()
 {
-    (void) semctl(semaphoreID,NULL,IPC_RMID,NULL);
+    (void) semctl(semaphoreID,0,IPC_RMID,NULL);
 }
 

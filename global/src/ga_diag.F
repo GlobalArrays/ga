@@ -1,5 +1,5 @@
       subroutine ga_diag_std(g_a, g_v, eval)
-C$Id: ga_diag.F,v 1.18 1995-10-17 08:53:34 d3g681 Exp $
+C$Id: ga_diag.F,v 1.19 1995-11-01 16:23:20 d3h325 Exp $
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -624,9 +624,7 @@ c
       integer iproc, pan, istart, iend, k, n, npan, proc, myproc
       integer mypanel, myelem, mycol, elemz, ipan, ik, info
       logical status, first_time
-      data first_time /.true./
       integer g_ps, eig_flag, thr_seq
-      data thr_seq /64/         !min problem size to be run in parallel 
       save g_ps, first_time
       
 c
@@ -658,6 +656,8 @@ c
 c
       integer Elem
       Elem(istart,iend,n)=((iend-istart+1)*(2*n-istart-iend+2))/2
+      data first_time /.true./
+      data thr_seq /64/         !min problem size to be run in parallel 
 c~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c***  check the environment
 c

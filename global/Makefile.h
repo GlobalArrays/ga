@@ -37,6 +37,16 @@ ifeq ($(GA_TRACE), YES)
     DEF_TRACE = -DGA_TRACE
 endif
 
+GLOB_DEFINES = -D$(TARGET)
+
+#
+#................................ LINUX ....................................
+# IBM ThinkPad running Linux 1.2.13
+#
+ifeq ($(TARGET),LINUX)
+    MAKEFLAGS = -j 1
+    EXPLICITF = TRUE
+endif
 #
 #................................ SUN ......................................
 #

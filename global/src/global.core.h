@@ -1,6 +1,6 @@
 /*Wed Jan 25 10:25:49 PST 1995*/
   
-#if !defined(__STDC__) || !defined(__cplusplus)
+#if !defined(__STDC__) || !defined(__cplusplus) && !defined(LINUX)
 #  define volatile
 #endif
 
