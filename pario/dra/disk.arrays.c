@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.61 2002-11-27 20:14:23 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.62 2002-12-02 23:59:47 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -81,9 +81,6 @@
 #define CLIENT_TO_SERVER 2
 
 /*#define DRA_DBLE_BUFFER */
-#define DRA_USE_PRLL_IO
-/*#define DRA_USE_SNGL_NODE */
-/*#define DRA_USE_MULT_FILES */
 
 #ifdef PARAGON
 #  define DRA_NUM_IOPROCS  64
@@ -118,11 +115,17 @@ DoublePrecision _dra_dbl_buffer[DRA_DBL_BUF_SIZE];        /* DRA data buffer */
 Integer         _idx_buffer, _handle_buffer;
 #endif
 
-#ifdef DRA_USE_MULT_FILES
-  int _dra_use_mult_files = 1;
-#else
-  int _dra_use_mult_files = 0;
-#endif
+/* This parameter controls which algorithm will be used for handling DRAs
+   on open file systems.
+   0: Multiple files (one file for each IO node)
+   1: Single file with single IO node
+   2: Single file using multiple IO nodes on a parallel file system
+*/
+int _dra_open_file_alg = 0;
+/* Maximum number of nodes that can create files when using multiple files
+   algorithm (when _dra_open_file_alg = 0)
+*/
+int _dra_max_io_nodes;
 
 disk_array_t *DRA;          /* array of struct for basic info about DRA arrays*/
 Integer _max_disk_array;    /* max number of disk arrays open at a time      */
@@ -238,6 +241,7 @@ Integer handle = d_a+DRA_OFFSET;
 \*/
 Integer dai_io_procs(Integer d_a)
 {
+Integer handle = d_a+DRA_OFFSET;
 Integer num;
 
         /* this one of many possibilities -- depends on the system */
@@ -251,18 +255,22 @@ Integer num;
         if (INDEPFILES(d_a)) {
           num = ga_cluster_nnodes_();
         } else {
-#if defined(DRA_USE_PRLL_IO) || defined(DRA_USE_MULT_FILES)
-          if (ga_cluster_nnodes_() >= DRA_NUM_IOPROCS) {
-            num = ga_cluster_nnodes_();
+          if (_dra_open_file_alg != 1) {
+            if (_dra_open_file_alg == 2) {
+              if (ga_cluster_nnodes_() >= DRA_NUM_IOPROCS) {
+                num = ga_cluster_nnodes_();
+              } else {
+                num = DRA_NUM_IOPROCS;
+              }
+            } else {
+              num = DRA[handle].nnodes;
+            }
           } else {
-            num = DRA_NUM_IOPROCS;
+            num = 1;
           }
-#endif
-#ifdef DRA_USE_SNGL_NODE
-          num = 1;
-#endif
         }
 
+/*        printf("p[%d] dai_io_procs returning %d\n",ga_nodeid_(),num);*/
         return( MIN( ga_nnodes_(), num));
 }
 
@@ -272,6 +280,7 @@ Integer num;
 \*/
 Integer dai_io_nodeid(Integer d_a)
 {
+Integer handle = d_a+DRA_OFFSET;
 Integer me = ga_nodeid_();
 Integer nodeid = ga_cluster_nodeid_();
 Integer zero = 0;
@@ -284,20 +293,26 @@ Integer zero = 0;
           if(me == ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
           else me = -1;
         } else {
-#if defined(DRA_USE_PRLL_IO) || defined(DRA_USE_MULT_FILES)
-          if (ga_cluster_nnodes_() >= DRA_NUM_IOPROCS) {
-            if(me == ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
-            else me = -1;
+          if (_dra_open_file_alg != 1) {
+            if (_dra_open_file_alg == 2) {
+              if (ga_cluster_nnodes_() >= DRA_NUM_IOPROCS) {
+                if(me == ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
+                else me = -1;
+              } else {
+                if (me >= dai_io_procs(d_a)) me = -me;
+              }
+            } else {
+              if(me == ga_cluster_procid_(&nodeid, &zero) &&
+                 nodeid < DRA[handle].nnodes ) me = nodeid;
+              else me = -1;
+            }
           } else {
-            if (me >= dai_io_procs(d_a)) me = -me;
+            if (me != 0) me = -1;
           }
-#endif
-#ifdef DRA_USE_SNGL_NODE
-          if (me != 0) me = -1;
-#endif
         }
 
 /*        if (me >= dai_io_procs(d_a)) me = -me;*/
+/*        printf("p[%d] dai_io_nodeid returning %d\n",ga_nodeid_(),me);*/
         return (me);
 }
 
@@ -325,7 +340,7 @@ Integer dai_file_master(Integer d_a)
         * for shared file 0 is the master
         */
      
-       if(INDEPFILES(d_a) || _dra_use_mult_files ||
+       if(INDEPFILES(d_a) || !_dra_open_file_alg ||
           dai_io_nodeid(d_a) == 0 ) return 1;
        else return 0;
 
@@ -429,6 +444,8 @@ int i;
         _dra_buffer_state[1].id = ELIO_DONE;
         _dra_buffer_state[0].args.gs_a.handle = 0;
         _dra_buffer_state[1].args.gs_a.handle = 0;
+
+        _dra_max_io_nodes = ga_cluster_nnodes_();
  
         ga_sync_();
 
@@ -575,7 +592,7 @@ Integer row_blocks, handle=ds_a.handle+DRA_OFFSET, offelem, cur_ld, part_chunk1;
 
         /* compute offset (in elements) */
 
-        if(INDEPFILES(ds_a.handle) || _dra_use_mult_files) {
+        if(INDEPFILES(ds_a.handle) || !_dra_open_file_alg) {
 
            Integer   CR, R; 
            Integer   i, num_part_block = 0;
@@ -641,7 +658,7 @@ Off_t offset;
 
         byte = (char)0;
 
-        if(INDEPFILES(d_a) || _dra_use_mult_files) {
+        if(INDEPFILES(d_a) || !_dra_open_file_alg) {
 
           Integer   CR, i, nblocks; 
           section_t ds_a;
@@ -783,6 +800,21 @@ Integer handle, elem_size, ctype;
         DRA[handle].mode = (int)*mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
         strncpy(DRA[handle].name, name, DRA_MAX_NAME );
+        DRA[handle].algorithm = _dra_open_file_alg;
+        if (INDEPFILES(*d_a) || _dra_open_file_alg == 0) {
+          if (!INDEPFILES(*d_a) && _dra_max_io_nodes > 0 &&
+               ga_cluster_nnodes_() >= _dra_max_io_nodes) {
+            DRA[handle].nnodes = _dra_max_io_nodes;
+          } else {
+            DRA[handle].nnodes = ga_cluster_nnodes_();
+          }
+        } else {
+          if (_dra_open_file_alg == 1) {
+            DRA[handle].nnodes = 1;
+          } else {
+            DRA[handle].nnodes = ga_cluster_nnodes_();
+          }
+        }
 
         dai_write_param(DRA[handle].fname, *d_a);      /* create param file */
         DRA[handle].indep = dai_file_config(filename); /*check file configuration*/
@@ -790,12 +822,11 @@ Integer handle, elem_size, ctype;
         /* create file */
         if(dai_io_manage(*d_a)){ 
 
-           if (INDEPFILES(*d_a) || _dra_use_mult_files) {
+           if (INDEPFILES(*d_a) || !_dra_open_file_alg) {
 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
-
-           }else{
+           } else {
 
               /* collective open supported only on Paragon */
 #             ifdef PARAGON
@@ -852,7 +883,7 @@ Integer handle;
 
         if(dai_io_manage(*d_a)){ 
 
-           if (INDEPFILES(*d_a) || _dra_use_mult_files) {
+           if (INDEPFILES(*d_a) || !_dra_open_file_alg) {
 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
@@ -1069,7 +1100,7 @@ int dai_next_chunk(Integer req, Integer* list, section_t* ds_chunk)
 Integer   handle = ds_chunk->handle+DRA_OFFSET;
 int       retval;
 
-    if(INDEPFILES(ds_chunk->handle) || _dra_use_mult_files)
+    if(INDEPFILES(ds_chunk->handle) || !_dra_open_file_alg)
       if(ds_chunk->lo[1] && DRA[handle].chunk[1]>1) 
          ds_chunk->lo[1] -= (ds_chunk->lo[1] -1) % DRA[handle].chunk[1];
     
@@ -1082,7 +1113,7 @@ int       retval;
     ds_chunk->hi[0] = MIN(list[ IHI ], ds_chunk->lo[0] + DRA[handle].chunk[0] -1);
     ds_chunk->hi[1] = MIN(list[ JHI ], ds_chunk->lo[1] + DRA[handle].chunk[1] -1);
 
-    if(INDEPFILES(ds_chunk->handle) || _dra_use_mult_files) { 
+    if(INDEPFILES(ds_chunk->handle) || !_dra_open_file_alg) { 
          Integer jhi_temp =  ds_chunk->lo[1] + DRA[handle].chunk[1] -1;
          jhi_temp -= jhi_temp % DRA[handle].chunk[1];
          ds_chunk->hi[1] = MIN(ds_chunk->hi[1], jhi_temp); 
@@ -1113,7 +1144,7 @@ int dai_myturn(section_t ds_chunk)
 Integer   ioprocs = dai_io_procs(ds_chunk.handle); 
 Integer   iome    = dai_io_nodeid(ds_chunk.handle);
     
-    if(INDEPFILES(ds_chunk.handle) || _dra_use_mult_files){
+    if(INDEPFILES(ds_chunk.handle) || !_dra_open_file_alg){
 
       /* compute cardinal number for the current chunk */
       nsect_to_blockM(ds_chunk, &_dra_turn);
@@ -2068,7 +2099,7 @@ int rc;
                             dai_error("dra_close: close failed",rc);
 
         if(dai_file_master(*d_a))
-          if(INDEPFILES(*d_a) || _dra_use_mult_files){ 
+          if(INDEPFILES(*d_a) || !_dra_open_file_alg){ 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              elio_delete(dummy_fname);
           }else {
@@ -2310,7 +2341,7 @@ long offelem;
 
         /* compute offset (in elements) */
 
-        if (INDEPFILES(ds_a.handle) || _dra_use_mult_files) {
+        if (INDEPFILES(ds_a.handle) || !_dra_open_file_alg) {
           Integer   CR, block_dims[MAXDIM]; 
           Integer   index[MAXDIM];
           long      nelem;
@@ -2402,7 +2433,7 @@ Off_t offset;
 
         byte = (char)0;
 
-        if(INDEPFILES(d_a) || _dra_use_mult_files) {
+        if(INDEPFILES(d_a) || !_dra_open_file_alg) {
 
           Integer   CR, i, nblocks; 
           section_t ds_a;
@@ -2492,6 +2523,21 @@ Integer handle, elem_size, ctype, i;
         DRA[handle].mode = (int)*mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
         strncpy(DRA[handle].name, name, DRA_MAX_NAME );
+        DRA[handle].algorithm = _dra_open_file_alg;
+        if (INDEPFILES(*d_a) || _dra_open_file_alg == 0) {
+          if (!INDEPFILES(*d_a) && _dra_max_io_nodes > 0 &&
+               ga_cluster_nnodes_() >= _dra_max_io_nodes) {
+            DRA[handle].nnodes = _dra_max_io_nodes;
+          } else {
+            DRA[handle].nnodes = ga_cluster_nnodes_();
+          }
+        } else {
+          if (_dra_open_file_alg == 1) {
+            DRA[handle].nnodes = 1;
+          } else {
+            DRA[handle].nnodes = ga_cluster_nnodes_();
+          }
+        }
 
         dai_write_param(DRA[handle].fname, *d_a);      /* create param file */
         DRA[handle].indep = dai_file_config(filename); /*check file configuration*/
@@ -2499,18 +2545,17 @@ Integer handle, elem_size, ctype, i;
         /* create file */
         if(dai_io_manage(*d_a)){ 
 
-           if (INDEPFILES(*d_a) || _dra_use_mult_files) {
+           if (INDEPFILES(*d_a) || !_dra_open_file_alg) {
 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
-
-           }else{
+           } else{
 
               /* collective open supported only on Paragon */
 #           ifdef PARAGON
-              DRA[handle].fd = elio_gopen(DRA[handle].fname,(int)*mode); 
+             DRA[handle].fd = elio_gopen(DRA[handle].fname,(int)*mode); 
 #           else
-              DRA[handle].fd = elio_open(DRA[handle].fname,(int)*mode, ELIO_SHARED); 
+             DRA[handle].fd = elio_open(DRA[handle].fname,(int)*mode, ELIO_SHARED); 
 #           endif
            }
 
@@ -2910,7 +2955,7 @@ int       retval, ndim = DRA[handle].ndim, i;
 
     /* If we are writing out to multiple files then we need to consider
        chunk boundaries along last dimension */
-    if(INDEPFILES(ds_chunk->handle) || _dra_use_mult_files)
+    if(INDEPFILES(ds_chunk->handle) || !_dra_open_file_alg)
       if(ds_chunk->lo[ndim-1] && DRA[handle].chunk[ndim-1]>1) 
          ds_chunk->lo[ndim-1] -= (ds_chunk->lo[ndim-1] -1) %
            DRA[handle].chunk[ndim-1];
@@ -2935,7 +2980,7 @@ int       retval, ndim = DRA[handle].ndim, i;
 
     /* Again, if we are writing out to multiple files then we need to consider
        chunk boundaries along last dimension */
-    if(INDEPFILES(ds_chunk->handle) || _dra_use_mult_files) { 
+    if(INDEPFILES(ds_chunk->handle) || !_dra_open_file_alg) { 
          Integer nlo;
          Integer hi_temp =  ds_chunk->lo[ndim-1] +
            DRA[handle].chunk[ndim-1] -1;
