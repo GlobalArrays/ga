@@ -46,7 +46,7 @@ extern char* strdup(const char*);
 #ifdef OPEN_MAX
 #define EAF_MAX_FILES OPEN_MAX
 #else
-#define EAF_MAX_FILES 64
+#define EAF_MAX_FILES 1048576
 #endif
 
 static struct {
