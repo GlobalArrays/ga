@@ -2,7 +2,7 @@
 #define DGETRF SGETRF
 #define DGETRS SGETRS
 #endif
-
+c -- this comment needed by CPP on Digital Unix 4.0E
       subroutine ga_lu_solve_seq(trans,g_a, g_b)
       implicit none
 #include "mafdecls.fh"
