@@ -4,7 +4,8 @@
 ##############################################################################
 
 #path and name of MPI library
-MPI_LIB_NAME=Cvwmpi.lib
+#MPI_LIB_NAME=Cvwmpi.lib
+MPI_LIB_NAME=mpich.lib
 MPI = $(MPI_LIB)\$(MPI_LIB_NAME)
 
 GLOB_DEFINES =-DWIN32

@@ -9,7 +9,7 @@ $(LIBRARY_PATH): $(INCDIR) $(STAMP) $(OBJDIR) $(LIB_DISTRIB) $(OBJS)
 
 $(STAMP): $(HEADERS)
 	!copy $** $(INCDIR)
-	erase "*.stamp"
+	-@if exist "*.stamp" erase /q "*.stamp"
 	@echo "" > $(STAMP)
 
 "$(LIB_DISTRIB)" :

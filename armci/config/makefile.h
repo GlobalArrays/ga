@@ -419,6 +419,11 @@ endif
 #...................... common definitions .......................
 #
 
+#alternative malloc library
+ifdef ALT_MALLOC
+EXTRA_LIBS += $(ALT_MALLOC)
+endif
+
 #get rid of 2nd underscore under g77
 ifeq ($(_FC),g77)
      FOPT_REN += -fno-second-underscore

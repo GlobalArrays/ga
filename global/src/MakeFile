@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.17 2001-07-30 22:52:34 d3h325 Exp $
+#	$Id: MakeFile,v 1.18 2001-11-30 19:06:40 d3h325 Exp $
 #
 
 OBJDIR=.\obj
@@ -13,6 +13,7 @@ OBJ      = $(OBJDIR)\base.obj \
         $(OBJDIR)\collect.obj \
         $(OBJDIR)\global.npatch.obj \
         $(OBJDIR)\global.util.obj \
+        $(OBJDIR)\global.periodic.obj \
         $(OBJDIR)\mulmat.patch.obj \
         $(OBJDIR)\hsort.scat.obj \
         $(OBJDIR)\global.nalg.obj \
