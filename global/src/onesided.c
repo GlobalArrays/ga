@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.60 2004-10-25 19:21:13 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.61 2004-11-05 16:53:01 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -259,7 +259,7 @@ Integer _jw = GA[g_handle].width[1];                                           \
       if (_p_handle != 0) {                                                    \
         proc_place =  proc;                                                    \
       } else {                                                                 \
-        proc_place = PGRP_LIST[_p_handle].inv_map_proc_list[proc];                \
+        proc_place = PGRP_LIST[_p_handle].inv_map_proc_list[proc];             \
       }                                                                        \
       _ilo = _lo[0]; _ihi=_hi[0];                                              \
       _jlo = _lo[1]; _jhi=_hi[1];                                              \
@@ -1319,11 +1319,12 @@ int rc=0;
   ga_distribution_(&g_a, &proc, &ilo, &ihi, &jlo, &jhi);
 
   /* get address of the first element owned by proc */
+  /* BJP
   if (p_handle < 0) {
-    iproc = proc;
   } else {
     iproc = PGRP_LIST[p_handle].map_proc_list[proc];
-  }
+  } */
+  iproc = proc;
   gaShmemLocation(iproc, g_a, ilo, jlo, &ptr_ref, &ldp);
 
   type = GA[handle].type;
@@ -1356,6 +1357,9 @@ int rc=0;
     if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
 
+  if (p_handle >= 0) {
+    proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
+  }
   if(alpha != NULL) {
     int optype=-1;
     if(type==C_DBL) optype= ARMCI_ACC_DBL;
@@ -1551,13 +1555,15 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     /* determine limit for message size --  v,i, & j will travel together */
     item_size = GAsizeofM(type);
     GAbytes.scatot += (double)item_size**nv ;
+    /* BJP
     if (p_handle < 0) {
       iproc = owner[GAme];
     } else if (p_handle == 0) {
        iproc = PGRP_LIST[p_handle].map_proc_list[owner[GAme]];
     } else {
        iproc = owner[PGRP_LIST[p_handle].map_proc_list[GAme]];
-    }
+    } */
+    iproc = owner[GAme];
     GAbytes.scaloc += (double)item_size* nelem[iproc];
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
     for(k=1; k<naproc; k++) {
@@ -2251,13 +2257,15 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     GAbytes.gattot += (double)item_size**nv;
     /*This stuff is probably completely wrong. Doesn't affect performance,
      * just statistics. */
+    /* BJP
     if (p_handle < 0) {
       iproc = owner[GAme];
     } else if (p_handle == 0) {
       iproc = PGRP_LIST[p_handle].map_proc_list[owner[GAme]];
     } else {
       iproc = owner[PGRP_LIST[p_handle].map_proc_list[GAme]];
-    }
+    } */
+    iproc = owner[GAme];
     GAbytes.gatloc += (double)item_size * nelem[iproc];
 
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);

@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.33 2004-10-25 19:21:13 d3g293 Exp $ */
+/*$Id: base.h,v 1.34 2004-11-05 16:53:01 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -186,7 +186,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
       _p_handle = GA[g_handle].p_handle;                                      \
       _iproc = proc;                                                          \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
+  __CRAYX1_PRAGMA("_CRI novector");                                           \
       for(_d=0; _d < _last; _d++)            {                                \
           _w = GA[g_handle].width[_d];                                        \
           _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                    \
@@ -194,6 +194,9 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
       }                                                                       \
       _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])      \
                * _factor;                                                     \
+      if (_p_handle == 0) {                                                   \
+        _iproc = PGRP_LIST[_p_handle].inv_map_proc_list[_iproc];              \
+      }                                                                       \
       *(ptr_loc) =  GA[g_handle].ptr[_iproc]+_offset*GA[g_handle].elemsize;   \
 }
 
