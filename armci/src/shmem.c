@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.41 2001-05-25 22:09:20 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.42 2001-09-05 17:35:55 edo Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -688,9 +688,13 @@ int nreg, reg;
 char *Attach_Shared_Region(id, size, offset)
      long *id, offset, size;
 {
-int reg, found;
+int reg, found, shmflag=0;
 static char *temp;
 
+#if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
+  shmflag= SHM_SGI_ANYADDR;
+#endif
+  
   if(alloc_regions>=MAX_REGIONS)
        armci_die("Attach_Shared_Region: to many regions ",0);
 
@@ -729,7 +733,7 @@ static char *temp;
 #   else
        char *pref_addr = (char*)0;
 #   endif
-    if ( (long) (temp = shmat((int) *id, pref_addr, 0)) == -1L){
+    if ( (long) (temp = shmat((int) *id, pref_addr, shmflag)) == -1L){
        fprintf(stderr,"%d:attach error:id=%ld off=%ld seg=%ld\n",armci_me,*id,offset,MinShmem);
        shmem_errmsg((size_t)MinShmem*1024);
        armci_die("Attach_Shared_Region:failed to attach to segment id=",(int)*id);
@@ -755,12 +759,15 @@ static char *temp;
 char *allocate(long size)
 {
 char * temp;
-int id;
+int id,shmflag=0;
 size_t sz = (size_t)size;
 #ifdef ALLOC_MUNMAP
        char *pref_addr = alloc_munmap((size_t) (MinShmem*SHM_UNIT));
 #else
        char *pref_addr = (char*)0;
+#endif
+#if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
+  shmflag= SHM_SGI_ANYADDR;
 #endif
 
     if(DEBUG1){
@@ -787,7 +794,11 @@ size_t sz = (size_t)size;
           armci_die("allocate: failed to create shared region ",id);
        }
 
-       if ( (long)( (temp = shmat(id, pref_addr, 0))) == -1L){
+    if(DEBUG_){
+      printf("%d:allocate:attach:id=%d paddr=%p size=%ld\n",armci_me,id,pref_addr,size);
+      fflush(stdout);
+    }
+       if ( (long)( (temp = shmat(id, pref_addr, shmflag))) == -1L){
           armci_die("allocate: failed to attach to shared region id=",id);
        }
     }
