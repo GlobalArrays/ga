@@ -83,15 +83,25 @@ ifeq ($(_CPU),ppc)
         CDEFS += -DPPC
 endif
 ifeq ($(_CPU),x86)
+ifneq ($(ARMCI_NETWORK),MELLANOX)
      OPT_ALIGN = -malign-double
 endif
+endif
 ifeq ($(_CPU),686)
+ifneq ($(ARMCI_NETWORK),MELLANOX)
      OPT_ALIGN = -malign-double -march=pentiumpro
+else
+     OPT_ALIGN = -march=pentiumpro 
+endif
         CDEFS += -DCOPY686
     EXTRA_OBJ += x86copy.o
 endif
 ifeq ($(_CPU),786)
+ifneq ($(ARMCI_NETWORK),MELLANOX)
      OPT_ALIGN = -malign-double -march=pentiumpro
+else
+     OPT_ALIGN = -march=pentiumpro 
+endif
 #        CDEFS += -DCOPY686
     EXTRA_OBJ += x86copy.o
 endif
