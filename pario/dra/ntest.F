@@ -103,7 +103,6 @@ c
         hi(3) = j
         call nga_put(g_a, lo, hi, a(1,1,j), ld)
       enddo
-      write(6,*) 'Imediately after nga_put'
 c
       if(me.eq.0) print *, 'Creating Disk Array ',n,' x',n,' x',n
       dims(1) = n
@@ -328,7 +327,7 @@ c
 c
 c***  now d_a is 4 times larger than g_a
 c
-      if (me.eq.0) print*, 'Creating New Disk Array ',m,' x',m
+      if (me.eq.0) print*, 'Creating New Disk Array ',m,' x',m,' x',m
       dims(1) = m
       dims(2) = m
       dims(3) = m
