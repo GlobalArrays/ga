@@ -40,3 +40,32 @@ c$$$         b(r+3,c) = a(r+3,c) + b(r+3,c) * 0
       enddo
       enddo
       end
+
+      subroutine dcopy1d_n(A, B, n)
+      integer n,i 
+      double precision A(n), B(n)
+      do i = 1, n 
+            B(i) = A(i)
+      end do
+      end
+
+      subroutine dcopy1d_u(A, B, n)
+      integer n,n1,i
+      double precision A(n), B(n)
+      double precision d1, d2, d3, d4
+      n1 = iand(max0(n,0),3)
+      do i = 1, n1
+            B(i) = A(i)
+      end do
+      do i = n1+1, n, 4
+         d1 = a(i)
+         d2 = a(i+1)
+         d3 = a(i+2)
+         d4 = a(i+3)
+         b(i) = d1
+         b(i+1) = d2
+         b(i+2) = d3
+         b(i+3) = d4
+      end do
+      end
+      

@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.14 2000-05-15 23:30:24 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.15 2000-05-25 23:51:41 d3h325 Exp $ */
 /* System V shared memory allocation and managment for GAs:
  *
  * Interface:
@@ -144,6 +144,7 @@ int armci_test_allocate(long size)
  * UBOUND is chosen to be < 2GB to avoid overflowing on 32-bit systems
  * smaller PAGE gives more accurate results but with more search steps
  * LBOUND  is set to minimum amount for our purposes
+ * change UBOUND=512MB if you need larger arrays than 512 MB
  */
 #define PAGE (16*65536L)
 #define LBOUND  1048576L
