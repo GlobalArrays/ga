@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.4 1995-02-24 02:17:18 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.5 1996-03-21 18:24:32 d3h325 Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -9,8 +9,8 @@
 */
 
 /* Used to be SEQUENT here but charged to _X_argv */
-#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(CONVEX) || \
-  defined(KSR)
+#if defined(SUN) || defined(ALLIANT) || defined(ENCORE) ||  \
+  defined(CONVEX) ||  defined(KSR)
 #define ARGC_ xargc
 #define ARGV_ xargv
 #endif

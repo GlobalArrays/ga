@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.6 1995-10-11 23:46:34 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.7 1996-03-21 18:24:38 d3h325 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -39,7 +39,7 @@ extern void Error();
 #else
 extern void SRmover();
 #endif
-#endif SHMEM
+#endif 
 
 #ifdef EVENTLOG
 #include "evlog.h"
@@ -201,6 +201,10 @@ static int DummyRoutine()
 static long flag(p)
      long *p;
 {
+#if defined(CONVEX) && defined(HPUX)
+  asm("sync");
+#endif
+
   return *p;
 }
 
@@ -319,6 +323,10 @@ static void rcv_local(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
   SemPost(semid, sem_read);
 #else
   *buffer_full = FALSE;
+# if defined(CONVEX) && defined(HPUX)
+     asm("sync");
+# endif
+
 #endif
 
   len -= buflen;
@@ -387,10 +395,13 @@ static void snd_local(type, buf, lenbuf, node)
   /* Fill in message header */
   
   head->nodefrom = (char) me;
-  head->nodeto = (char) *node;
   head->type = *type;
   head->length = *lenbuf;
   head->tag = tag;
+  head->nodeto = (char) *node;
+#if defined(CONVEX) && defined(HPUX)
+  asm("sync");
+#endif
 
   if (DEBUG_) {
     PrintMessageHeader("snd_local ",head);
@@ -408,6 +419,9 @@ static void snd_local(type, buf, lenbuf, node)
   SemPost(semid, sem_written);
 #else
   *buffer_full = TRUE;
+# if defined(CONVEX) && defined(HPUX)
+   asm("sync");
+# endif
 #endif
 #ifdef NOSPIN
   SemPost(semid_to, sem_pend);
@@ -427,6 +441,9 @@ static void snd_local(type, buf, lenbuf, node)
     SemPost(semid, sem_written);
 #else
     *buffer_full = TRUE;
+#   if defined(CONVEX) && defined(HPUX)
+       asm("sync");
+#   endif
 #endif
     len -= buflen;
     buf += buflen;

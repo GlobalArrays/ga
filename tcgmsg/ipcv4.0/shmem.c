@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/shmem.c,v 1.7 1996-01-25 01:02:26 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/shmem.c,v 1.8 1996-03-21 18:24:37 d3h325 Exp $ */
 
 /*
   This stuff attempts to provide a simple interface to temporary shared
@@ -241,7 +241,7 @@ char *AttachSharedRegion(id, size)
 }
 
 #endif
-#if defined(CONVEX) || defined(APOLLO)
+#if (defined(CONVEX) || defined(APOLLO)) && !defined(HPUX) 
 
 #include <stdio.h>
 #include <sys/time.h>

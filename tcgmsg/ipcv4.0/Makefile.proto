@@ -1,5 +1,5 @@
 #
-# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.12 1996-01-26 22:01:37 hltaylor Exp $
+# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.13 1996-03-21 18:24:22 d3h325 Exp $
 #
 # for events and debugging with events add  -DEVENTLOG to the DEFINES definition
 # for the given machine
@@ -142,14 +142,25 @@ testf.p:
 # ENDIF IPSC DELTA PARAGON SP1 SP1GA
 #
 ELSE
-IF CONVEX
+IF CONVEX-SPP
+# Convex SPP 
         FC = fc
-    FFLAGS =  -O2
+    FFLAGS = -O1 -ppu -or none
         CC = cc
-   DEFINES = -DCONVEX -DTIMINGS -DSHMEM -DGOTXDR -DEVENTLOG -DNOSPIN
-    CFLAGS = -O1 $(DEFINES)
+   DEFINES = -DHPUX -DCONVEX -DEXTNAME -DSYSV -DSHMEM -DSPPLOCKS -DTIMINGS
+    CFLAGS = -O1 -or none $(DEFINES)
  LINTFLAGS = $(DEFINES) -bhu
       LIBS = 
+ENDIF CONVEX-SPP
+IF CONVEX
+# Convex C series
+        FC = fc
+    FFLAGS =  -O1
+        CC = cc
+   DEFINES = -DCONVEX -DTIMINGS -DSHMEM -DGOTXDR -DEVENTLOG -DNOSPIN
+    CFLAGS = -O1 -or none $(DEFINES)
+ LINTFLAGS = $(DEFINES) -bhu
+      LIBS =
      EXTRA = strdup.o strtok.o sprintf.o
 ENDIF CONVEX
 IF ARDENT
@@ -295,7 +306,6 @@ IF LINUX
     CFLAGS = -O $(DEFINES)
  LINTFLAGS = $(DEFINES) -u
       LIBS = -lc
-# -lipc
      EXTRA = strdup.o strtok.o
 ENDIF LINUX
 IF SGI
@@ -355,7 +365,7 @@ IF HPUX HPUXNOEXT
 #HPUX ... Hewlett Packard Risc Box
 #     ... +ppu appends underscores to FORTRAN globals (recommended)
         FC = f77
-        CC = c89
+        CC = cc
 IF HPUX
     FFLAGS = -O +ppu
    DEFINES = -DHPUX -DEXTNAME -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
@@ -382,8 +392,7 @@ ENDIF
 IF SUN SOLARIS
         FC = f77
 IF SOLARIS
-        CC = cc 
-# was /usr/ucb/cc 
+        CC = /usr/ucb/cc 
    DEFINES = -DSUN -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN \
              -DSOLARIS -DSUNF77_2
     CFLAGS = -O  $(DEFINES)

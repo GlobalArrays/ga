@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.6 1995-10-11 23:46:32 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.7 1996-03-21 18:24:35 d3h325 Exp $ */
 
 /*
   These routines simplify the interface to semaphores for use in mutual
@@ -58,7 +58,7 @@
 
 extern void Error();
 
-#if defined(SYSV) && !defined SGIUS
+#if defined(SYSV) && !defined SGIUS  && !defined(SPPLOCKS)
 
 /********************************************************************
   Most system V compatible machines
@@ -385,7 +385,7 @@ long SemSetDestroyAll()
 }
 
 #endif
-#if defined(CONVEX) || defined(APOLLO)
+#if (defined(CONVEX) || defined(APOLLO)) && !defined(HPUX)
 
 #include <stdio.h>
 #include <sys/param.h>
@@ -599,29 +599,32 @@ long SemSetDestroyAll()
 
 #endif
 
-#ifdef SGIUS
+
+#if defined(SGIUS) || defined(SPPLOCKS)
 
 /*
   SGI fast US library semaphores ... aren't any faster
   than system V semaphores ... implement using spin locks
 */
 
-#include <ulocks.h>
 #include <stdio.h>
-
-static usptr_t *arena_ptr;
-
+#include <unistd.h>  
 #define MAX_SEMA 128
 static volatile int *val;
-static ulock_t *locks[MAX_SEMA];
+#define NAME_LEN 200
 
-#define EIGHT 8
-#define ARENA_NAME_LEN 200
+#ifdef SGI
+# include <ulocks.h>
+  static usptr_t *arena_ptr;
+  static ulock_t *locks[MAX_SEMA];
+  static char arena_name[NAME_LEN];
+# define EIGHT 8
+# define LOCK ussetlock
+# define UNLOCK usunsetlock
+#define  JUMP EIGHT
 
-static char arena_name[ARENA_NAME_LEN];
-
-#include <unistd.h>  
 #include "sndrcvP.h"
+
 
 long SemSetCreate(long n_sem, long value)
 {
@@ -637,7 +640,7 @@ long SemSetCreate(long n_sem, long value)
     Error("SemSetCreate: failed to create arena", 0L);
 
   /* Magic factors of EIGHT here to ensure that values are
-     in different cache lines to avoid aliasing */
+     in different cache lines to avoid aliasing -- good on SGI and Convex */
 
   if (!(val = (int *) usmalloc(EIGHT*MAX_SEMA*sizeof(int), arena_ptr)))
     Error("SemSetCreate: failed to get shmem", (long) (MAX_SEMA*sizeof(int)));
@@ -647,11 +650,102 @@ long SemSetCreate(long n_sem, long value)
       Error("SemSetCreate: failed to create lock", (long) i);
     val[i*EIGHT] = (int) value;
   }
-
-/*  printf("Created arena\n"); fflush(stdout);*/
-    
   return 1L;
 }
+
+long SemSetDestroyAll()
+{
+  usdetach (arena_ptr);
+  arena_ptr = 0;
+  if((int)unlink(arena_name)==-1)Error("SemSetDestroyAll: unlink failed",0);
+  return 0;
+}
+
+#endif
+
+
+#ifdef SPPLOCKS
+#include <sys/param.h>
+#include <sys/file.h>
+#include <sys/cnx_mman.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+
+#define SIXTEEN 16
+#define JUMP SIXTEEN
+typedef struct{
+        int state;
+        int pad[15]; 
+} lock_t;
+
+static lock_t *locks;
+
+#  define    LOCK(x) set_lock(&x.state)
+#  define  UNLOCK(x) unset_lock(&x.state)
+#  define INILOCK(x) init_lock(&x.state)
+
+
+void init_lock(int * volatile ip)
+{
+    *ip = 1;
+}
+
+void set_lock(int * volatile ip)
+{
+    while (1) {
+        while (!(*ip));
+        if (__ldcws32(ip))
+                        break;
+    }
+}
+
+void unset_lock(int *ip)
+{
+  *ip = 1;
+  asm("sync");
+}
+
+static int fd = -1;
+static char template[] = "/tmp/SEMA.XXXXXX";
+static char *filename = (char *) NULL;
+static unsigned shmem_size;
+
+long SemSetCreate(long n_sem, long value)
+{
+  int i;
+  shmem_size = SIXTEEN*MAX_SEMA*sizeof(int)+MAX_SEMA*sizeof(lock_t);
+
+  if ( (n_sem <= 0) || (n_sem >= MAX_SEMA) )
+    Error("SemSetCreate: n_sem has invalid value",n_sem);
+
+  /* allocate shared memory for locks and semaphore val */
+  filename = mktemp(template);
+  if ( (fd = open(filename, O_RDWR|O_CREAT, 0666)) < 0 )
+    Error("SemSetCreate: failed to open temporary file",0);
+  val = (int *) mmap((caddr_t) 0, shmem_size,
+                     PROT_READ|PROT_WRITE,
+                     MAP_ANONYMOUS|CNX_MAP_SEMAPHORE|MAP_SHARED, fd, 0);
+  locks = (lock_t*)( val + SIXTEEN*MAX_SEMA);
+
+  /* initialize locks and semaphore values */
+  for (i=0; i<n_sem; i++) {
+    INILOCK(locks[i]);
+    val[i*SIXTEEN] = (int) value;
+  }
+  return 1L;
+}
+
+long SemSetDestroyAll()
+{
+  long status=0;
+  if((int)unlink(filename)==-1)Error("SemSetDestroyAll: unlink failed",0);
+  status = munmap((char *) shmem_size, 0);
+  if(status)status = -1;
+  return status;
+}
+
+#endif
+
 
 double __tcgmsg_fred__=0.0;
 
@@ -665,14 +759,17 @@ Dummy()
 void SemWait(long sem_set_id, long sem_num)
 {
   int value = 0;
-  int off = sem_num*EIGHT;
+  int off = sem_num*JUMP;
+
+  if ( (sem_num < 0) || (sem_num >= MAX_SEMA) )
+    Error("SemWait: invalid sem_num",sem_num);
 
   while (value<=0) {
-    ussetlock(locks[sem_num]);
+    LOCK(locks[sem_num]);
     value = val[off];
     if (value>0)
       val[off]--;
-    usunsetlock(locks[sem_num]);
+    UNLOCK(locks[sem_num]);
     if (value<=0) 
       Dummy();
   }
@@ -680,10 +777,13 @@ void SemWait(long sem_set_id, long sem_num)
 
 void SemPost(long sem_set_id, long sem_num)
 {
-  int off = sem_num*EIGHT;
-  ussetlock(locks[sem_num]);
+  int off = sem_num*JUMP;
+  if ( (sem_num < 0) || (sem_num >= MAX_SEMA) )
+    Error("SemPost: invalid sem_num",sem_num);
+
+  LOCK(locks[sem_num]);
   val[off]++;
-  usunsetlock(locks[sem_num]);
+  UNLOCK(locks[sem_num]);
 }
 
 long SemValue(long sem_set_id, long sem_num)
@@ -694,16 +794,7 @@ long SemValue(long sem_set_id, long sem_num)
 
 long SemSetDestroy(long sem_set_id)
 {
-  usdetach (arena_ptr);
-  arena_ptr = 0;
-  return 0;
+  return(SemSetDestroyAll());
 }
 
-long SemSetDestroyAll()
-{
-  usdetach (arena_ptr);
-  arena_ptr = 0;
-  if((int)unlink(arena_name)==-1)Error("SemSetDestroyAll: unlink failed",0);
-  return 0;
-}
 #endif

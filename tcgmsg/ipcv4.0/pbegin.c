@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.6 1995-10-11 23:46:30 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.7 1996-03-21 18:24:33 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -9,6 +9,9 @@
 #endif
 #include <sys/types.h>
 #include <sys/time.h>
+#if defined(CONVEX) && defined(HPUX)
+#include <sys/cnx_types.h>
+#endif
 #if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) \
                  || defined(CONVEX)  || defined(AIX)    || defined(NEXT) \
                  || defined(LINUX)
@@ -339,7 +342,12 @@ void PBEGIN_(argc, argv)
   	(void) printf("pbegin: %ld fork process, i=%ld\n", NODEID_(), nslave);
   	(void) fflush(stdout);
       }
+#if   defined(CONVEX) && defined(HPUX)
+      status=i/8; /* on SPP-1200 there are eight processors per hypernode */
+      status = cnx_sc_fork(CNX_INHERIT_SC,status);
+#else
       status = fork();
+#endif
       if (status < 0)
         Error("pbegin: error forking process",status);
       else if (status == 0) {
