@@ -148,6 +148,7 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
                                     void *rem_ptr, int *rem_stride_arr,
                                     int *count, int stride_levels)
 {
+    int armcill_server_wait_ack(int,int);
     if(DEBUG_){
       printf("%d(s): strided(%d) get bypass from %d\n",armci_me,stride_levels,
              msginfo->from);
@@ -572,6 +573,8 @@ void armci_data_server(void *mesg)
           else if(msginfo->format ==STRIDED){
 #if defined(VAPI) && defined(MELLANOX) /* buffer bypass protocol */
               if(msginfo->pinned == 1){
+                  int armci_post_gather(void *, int *, int *,int, 
+                                  armci_vapi_memhndl_t *,int,int);
                   void * src_ptr;
                   int stride_levels;
                   int count[MAX_STRIDE_LEVEL];
@@ -605,7 +608,7 @@ void armci_data_server(void *mesg)
                   if(!found){
                      armci_die("SERVER : local region not found",id);
                   }
-                 
+                   
                   num =  armci_post_gather(src_ptr,src_stride_arr,
                                   count,stride_levels, mhandle,
                                   id,SERV );
