@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.48 2003-04-21 17:29:56 d3g293 Exp $
+c $Id: test.F,v 1.49 2003-04-22 18:58:19 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -14,7 +14,7 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 
 
-#define MIRROR
+c#define MIRROR
 #define GA3
 
       program main
@@ -77,9 +77,9 @@ c
       endif
 #ifdef MIRROR
       if (me.eq.0) then
-         write(6,*) '*'
-         write(6,*) '* TESTING MIRRORED ARRAYS  '
-         write(6,*) '*'
+         write(6,*)
+         write(6,*) '  TESTING MIRRORED ARRAYS  '
+         write(6,*)
          call ffflush(6)
       endif
 #endif
@@ -180,6 +180,7 @@ c
       parameter (maxloop = 100)
       integer maxproc
       integer ndim, dims(2), chunk(2), p_mirror
+      integer alo(2), blo(2), ahi(2), bhi(2)
       parameter (maxproc = 128)
       double precision crap, sum1, sum2, x
       double precision nwords
@@ -851,7 +852,6 @@ c
       do j = 1, n
          do i = 1, n
             a(i,j) = inode + i-1 + (j-1)*n
-            b(i,j) =i-1 + (j-1)*n
          enddo
       enddo
       if (me .eq. 0) then
@@ -869,14 +869,10 @@ c
       ihi = nnodes*(nnodes-1)/2
       do i = 1, n
         do j = 1, n
-          if (nnodes*a(j,i)+ihi.ne.b(j,i)) then
+          if ((dble(nnodes)*(a(j,i)-dble(inode))
+     +        + dble(ihi)).ne.b(j,i)) then
             lsame = .false.
             ilo = ilo + 1
-*            if (ilo.lt.2) then
-*              write(6,22) me,i,j,a(i,j),b(i,j)
-*   22         format('p[',i1,'] i = ',i3,' j = ',i3,' a = ',e12.6,
-*     +               ' b = ',e12.6)
-*            endif
           endif
         end do
       end do
@@ -884,7 +880,7 @@ c
          write(6,*)
          write(6,*) ' merge is OK '
          write(6,*)
-      elseif (me.eq.0) then
+      else if (.not.lsame) then
          write(6,*)
          write(6,*) ' merge is wrong ',ilo
          write(6,*)
@@ -939,6 +935,62 @@ c
       elseif (me.eq.0) then
          write(6,*)
          write(6,*) ' Mixed copy (normal to mirrored) is wrong ',ilo
+         write(6,*)
+         call ga_error('... exiting ',0)
+      endif
+c
+c   Check the merge to distributed patch function
+c
+      do j = 1, n
+         do i = 1, n
+            a(i,j) = inode + i-1 + (j-1)*n
+         enddo
+      enddo
+      if (me .eq. 0) then
+         write(6,24) 
+ 24      format(/'> Checking merge to distributed patch ...')
+         call ffflush(6)
+      endif
+c
+c    get low and high indices of patch
+c
+      ilo = n/4
+      ihi = ilo + n/2
+      do i = 1, 2
+       alo(i) = ilo
+       blo(i) = ilo + 1
+       ahi(i) = ihi
+       bhi(i) = ihi + 1
+      end do
+      if (iproc.eq.0) then 
+         call ga_put(g_a, 1, n, 1, n, a, n)
+      endif
+      call nga_merge_distr_patch(g_a, alo, ahi, g_c, blo, bhi)
+      call ga_get(g_c, 1, n, 1, n, b, n)
+      lsame = .true.
+      ilo = 0
+      ihi = nnodes*(nnodes-1)/2
+      do i = alo(1), ahi(1)
+        ii = i-alo(1) + blo(1)
+        do j = alo(2), ahi(2)
+          jj = j-alo(2) + blo(2)
+          if ((dble(nnodes)*(a(j,i)-dble(inode))
+     +        + dble(ihi)).ne.b(jj,ii)) then
+c            if (me.eq.0) then
+c              write(6,*) i,j,ii,jj, nnodes*a(j,i)+ihi, b(jj,ii)
+c            endif
+            lsame = .false.
+            ilo = ilo + 1
+          endif
+        end do
+      end do
+      if(lsame.and.me.eq.0)then
+         write(6,*)
+         write(6,*) ' merge to distributed patch is OK '
+         write(6,*)
+      elseif (.not.lsame) then
+         write(6,*)
+         write(6,*) ' merge to distributed patch is wrong ',ilo
          write(6,*)
          call ga_error('... exiting ',0)
       endif
