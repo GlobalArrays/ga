@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.12 2002-12-18 18:25:33 vinod Exp $ */
+/* $Id: lapi2.c,v 1.13 2003-04-02 01:36:07 d3h325 Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -338,3 +338,65 @@ int dsize=3*sizeof(void*);
        
     }
 }
+
+
+void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
+                                    void *bufptr, int msg_buflen,
+                                    void *src_ptr, int *loc_stride_arr,
+                                    void *dst_ptr, int *rem_stride_arr,
+                                    int *pcount, int stride_levels)
+{
+lapi_cntr_t c;
+int count= pcount[1],bytes=pcount[0],rc;
+int src_stride= loc_stride_arr[0];
+int dst_stride= rem_stride_arr[0];
+lapi_vec_t *src, *dst;
+int offset=0;
+int p=msginfo->from;
+
+
+  if(stride_levels!=1)armci_die("armci_send_strided_data_bypass wrong stride",stride_levels);
+
+  LAPI_Setcntr(lapi_handle,&c,0);
+ 
+  src    = (lapi_vec_t *)(bufptr+offset);    offset+=sizeof(lapi_vec_t);
+  dst    = (lapi_vec_t *)(bufptr+offset);    offset+=sizeof(lapi_vec_t);
+  src->info  = (void **)(bufptr+offset);         offset+=3*sizeof(void *);
+  dst->info  = (void **)(bufptr+offset);         offset+=3*sizeof(void *);
+
+
+  src->vec_type = dst->vec_type                   = LAPI_GEN_STRIDED_XFER;
+  src->num_vecs = (uint)count;       dst->num_vecs= (uint)count;
+
+  src->len      = NULL;              dst->len     = NULL;
+  src->info[0]  = src_ptr;           dst->info[0]  = dst_ptr;
+  src->info[1]  = (void*)bytes;      dst->info[1]  = (void*)bytes;
+  src->info[2]  = (void*)src_stride; dst->info[2]  = (void*)dst_stride;
+
+  rc = LAPI_Putv(lapi_handle,(uint)p,dst,src,msginfo->tag.cntr,&c,NULL);
+  if(rc)armci_die("armci_send_strided_data_bypass failed",rc);
+
+  if(DEBUG_){
+     printf("%dserv: did putv to %d cntr =%p\n",armci_me,p,msginfo->tag.cntr); fflush(stdout);
+  }
+  LAPI_Waitcntr(lapi_handle, &c,1,NULL);
+}
+ 
+
+
+/*\ client receives strided data from server
+\*/
+void armci_rcv_strided_data_bypass_both(int proc, request_header_t* msginfo,
+                        void *ptr, int count[], int strides)
+{
+lapi_cmpl_t *pcntr=BUF_TO_EVBUF(msginfo);
+     if(DEBUG_){
+        printf("%d: expecting data from %d cntr =%p v=%d\n",armci_me,proc,&pcntr->cntr,pcntr->val);
+        fflush(stdout);
+     }
+     CLEAR_COUNTER((*pcntr));
+     if(DEBUG_){
+        printf("%d: got data from %d\n",armci_me,proc); fflush(stdout);
+     }
+}
+ 

@@ -65,7 +65,7 @@ typedef struct {
    short int from;            /* message sender */
 #endif
 unsigned int   operation:8;   /* operation code */
-#ifdef CLIENT_BUF_BYPASS
+#if defined(CLIENT_BUF_BYPASS) || defined(LAPI2)
 unsigned int   format:2;      /* data format used */
 unsigned int   pinned:1;      /* indicates if sender memory was pinned */
 unsigned int   bypass:1;      /* indicate if bypass protocol used */

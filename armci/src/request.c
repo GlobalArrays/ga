@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.53 2003-03-29 00:18:43 vinod Exp $ */
+/* $Id: request.c,v 1.54 2003-04-02 01:36:07 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -69,7 +69,7 @@ request_header_t *msginfo = (request_header_t*) buffer;
          }
        }
 
-#ifdef ALLOW_PIN
+#if defined(ALLOW_PIN) || defined(LAPI2)
        if(msginfo->pinned && msginfo->bypass){
          armci_rcv_strided_data_bypass_both(msginfo->to,msginfo,loc_ptr,count,
 	                                    stride_levels);
@@ -698,6 +698,11 @@ int armci_rem_strided(int op, void* scale, int proc,
          msginfo->pinned=0;
       }
 #   endif
+#ifdef LAPI2
+         msginfo->bypass=0;
+         msginfo->pinned=0;
+#endif
+  
 
 
     /* align buf for doubles (8-bytes) before copying data */
@@ -747,7 +752,7 @@ int armci_rem_strided(int op, void* scale, int proc,
     msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
 
     if(op == GET){
-#      ifdef CLIENT_BUF_BYPASS
+#      if defined(CLIENT_BUF_BYPASS) 
          if(msginfo->bypass){
 
 #ifdef MULTISTEP_PIN
@@ -766,10 +771,9 @@ int armci_rem_strided(int op, void* scale, int proc,
 #endif
           {
              if(!msginfo->pinned) armci_send_req(proc,msginfo,bufsize);
-
              if(!armci_pin_memory(dst_ptr,dst_stride_arr,count, stride_levels)){
                armci_client_send_ack(proc, -1);
-              armci_rcv_strided_data_bypass(proc,msginfo,dst_ptr,stride_levels);
+               armci_rcv_strided_data_bypass(proc,msginfo,dst_ptr,stride_levels);
                FREE_SEND_BUFFER(msginfo);
                return 1; /* failed:cannot do bypass */
              }
@@ -806,7 +810,7 @@ int armci_rem_strided(int op, void* scale, int proc,
     return 0;
 }
 
-#ifdef ALLOW_PIN
+#if defined(ALLOW_PIN) || defined(LAPI2)
 /*\ client version of remote strided get
 \*/
 int armci_rem_get(int proc,
@@ -862,9 +866,13 @@ int armci_rem_get(int proc,
     msginfo->dscrlen = buf - buf0 - sizeof(request_header_t);
     msginfo->bytes = msginfo->dscrlen;
 
-    /* set the stamp at the end of the user buffer */
+
+#ifdef GM
+    /* prepare for  set the stamp at the end of the user buffer */
     if(count[0]<sizeof(long)) armci_die("armci_rem_get: wrong protocol",count[0]);
     *(long*)(((char*)(dst_ptr)) + (count[0] -sizeof(long))) = ARMCI_GM_COMPLETE; 
+#endif
+
     armci_send_req(proc,msginfo,bufsize);
 
     if(nb_handle) {
@@ -904,7 +912,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     void *scale;
     char *dscr_save = dscr;
     int  rc, i,proc;
-#   ifdef CLIENT_BUF_BYPASS
+#   if defined(CLIENT_BUF_BYPASS) || defined(LAPI2) 
       int  *client_stride_arr=0; 
       void *client_ptr=0;
 #   endif
@@ -927,7 +935,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     for(i=0; i< stride_levels; i++)
         buf_stride_arr[i+1]= buf_stride_arr[i]*count[i+1];
 
-#   ifdef CLIENT_BUF_BYPASS
+#   if defined(CLIENT_BUF_BYPASS) || defined(LAPI2) 
        if(msginfo->bypass){
           dscr += (1+stride_levels)*sizeof(int); /* move past count */
           GETBUF(dscr,void*,client_ptr);
@@ -959,10 +967,9 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     if(msginfo->operation == GET){
     
-#      ifdef CLIENT_BUF_BYPASS
+#      if defined(CLIENT_BUF_BYPASS) || defined(LAPI2) 
          if(msginfo->bypass){
-             armci_send_strided_data_bypass(proc, msginfo, buf, buflen,
-                       loc_ptr, loc_stride_arr, 
+             armci_send_strided_data_bypass(proc, msginfo, buf, buflen, loc_ptr, loc_stride_arr, 
                        client_ptr, client_stride_arr, count, stride_levels);
 
          }else

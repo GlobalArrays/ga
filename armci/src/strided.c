@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.65 2003-03-29 00:18:43 vinod Exp $ */
+/* $Id: strided.c,v 1.66 2003-04-02 01:36:07 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -620,6 +620,11 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                                  dst_ptr,dst_stride_arr,count,stride_levels,
                                  NULL,-1,-1,-1,NULL);
     }else
+#else
+       /* avoid LAPI_GetV  - note count[0]<0 means disabled*/
+       if(stride_levels==1 && count[0]<0 && !direct) armci_rem_get(proc,src_ptr,src_stride_arr,dst_ptr,
+                                dst_stride_arr, count, stride_levels, NULL);
+       else
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
                              dst_stride_arr,count, stride_levels,0,NULL);
@@ -950,6 +955,11 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                                  dst_ptr,dst_stride_arr,count,stride_levels,
                                  NULL,-1,-1,-1,nb_handle);
     }else
+#else
+       /* avoid LAPI_GetV */
+       if(stride_levels==1 && count[0]>320 && !direct) armci_rem_get(proc,src_ptr,src_stride_arr,dst_ptr,
+                                dst_stride_arr, count, stride_levels, nb_handle);
+       else
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
                              dst_stride_arr,count, stride_levels,0,nb_handle);
