@@ -1,7 +1,11 @@
 		      Global Array Documentation
                       --------------------------
 
+NOTE
 
+The primary source of documentation is the GA webpage
+http://www.emsl.pnl.gov:2080/docs/global
+This file might be out-of-date.
 
 
 DISCLAIMER
@@ -164,39 +168,25 @@ distribute to other US Government contractors.
   There are two classes of platforms that GA work on: 
 
   1) Network of (possibly multiprocessor) machines, using the
-     data-server/compute-nodes model where each machine needs an
+     data-server/compute-nodes model where each machine uses an
      additional process (data-server) that services requests for the
-     data. Therefore, number of processes specified in the TCGMSG *.p
-     file minus one are considered to be compute nodes, and remaining
-     ones are the data servers. Data servers use shared memory to
-     access the data on local machine.
-
-     Example .p file for one 4-processor and one 8-processor workstations:
-
-         d3h325 coho 4 /usr/people/d3h325/g/global/testing/test.x /tmp
-         d3h325 bohr 8 /usr/people/d3h325/g/global/testing/test.x /tmp
-
-     defines 10 compute processes and 2 data-servers (one on coho and 
-     one on bohr).
+     data. 
 
      Single (possibly multiprocessor) machines with shared memory
      like:  the KSR-2, workstations, and even Cray T3D are in fact a
-     special case of 1).  The shared memory implementation uses TCGMSG
-     (in the future MPI) to fork all the processes (except for the 
-     Cray T3D) and implement ga_brdcst and ga_dgop. There are no data server
-     processes; therefore, all the specified processes/processors are
-     used for computations.
+     special case of 1).  The shared memory implementation uses MPI or TCGMSG 
+     to fork all the processes (except for the Cray T3D/E) and implement 
+     ga_brdcst and ga_dgop. There are no data server processes.
 
 
   2) True message passing MPP architectures with interrupt communication
      available: the Intel IPSC, Delta, Paragon with the NX, and the IBM SP-1/2
-     with the EUIH or MPL message passing library. 
+     with the EUIH/MPL message passing or LAPI library. 
 
 
   Starting with version 2.1, Global Arrays works with either TCGMSG or
-  MPI message-passing librarries.  TCGMSG still is and going to be the
-  default library for a while until MPI implementations mature. There are 
-  two possible interfaces between GA and MPI:
+  MPI message-passing librarries.  There are two possible interfaces 
+  between GA and MPI:
 
      1. TCGMSG emulation library, TCGMSG-MPI, that implements functionality
         of TCGMSG using MPI and other techniques. In this mode, message-
@@ -220,8 +210,8 @@ distribute to other US Government contractors.
   1. with TCGMSG or TCGMSG-MPI (GA-MPI interface 1) library:
 
   call pbeginf()                  ! start TCGMSG
-  status = ma_init(..)            ! start memory allocator if required
   call ga_initialize()            ! start global arrays
+  status = ma_init(..)            ! start memory allocator
 
   .... do work
 
@@ -232,16 +222,7 @@ distribute to other US Government contractors.
   2. with MPI  (GA-MPI interface 2) library:
 
   call MPI_Initialize()           ! start MPI
-  status = ma_init(..)            ! start memory allocator if required
-  call ga_initialize()            ! start global arrays
-
-  .... do work
-
-  call ga_terminate()             ! tidy up global arrays
-  call MPI_Finalize()             ! tidy up MPI
-  stop                            ! exit program
-  call MPI_Initialize()           ! start MPI
-  status = ma_init(..)            ! start memory allocator if required
+  status = ma_init(..)            ! start memory allocator
   call ga_initialize()            ! start global arrays
 
   .... do work
@@ -267,19 +248,10 @@ distribute to other US Government contractors.
   There are two issues to be aware of when using message-passing in GA
   programs:
 
-    1. Process count and numbering. In the network environment,
-       some message-passing processes are hiden from the application
-       when GA is initialized. This will cause that ga_nodeid() and
-       ga_nnodes() return values inconsistent with the process
-       rank/count values obtained from the message-passing library. The
-       GA routine ga_list_nodeid() could be used to transform GA
-       process ID/rank into the message-passing process ID/rank. In
-       addition, with MPI library, C-language routine
-       ga_mpi_communicator provides communicator for the GA processes.
-       This operation is unavailable if the original TCGMSG library is
-       used. ga_mpi_communicator cannot be called from Fortran since
-       there is no mechanism in MPI for passing handles between C and
-       Fortran. Contact MPI Forum for fixing this problem !
+    1. Process count and numbering. Starting with version 3.0 the
+       issue was simplified.
+       GA process id is the same as the message-passing process id.
+       The same number of processes is available.
 
     2. Synchronization. The current implementation of interrupt-receive
        on the IBM SP requires that in order to avoid deadlock, GA application
@@ -336,9 +308,8 @@ distribute to other US Government contractors.
                        they are at least the size of the minimum and
                        each process has either zero or one chunk.
  
-                       Specifying chunk1/2 as <= 1 will cause that
+                       Specifying chunk1/2 as < 1 will cause that
                        dimension to be distributed evenly.
-                       [Current distribution algorithm is primitive !]
  
        g_a           - integer handle for future references [output]
 
@@ -1114,6 +1085,7 @@ distribute to other US Government contractors.
 
       Available in C only if MPI is used. Returns communicator handle
       for GA processes (group).
+      Starting with GA 3.0 this is equivalent to MPI_COMM_WORLD
 
       -------------------------------------------------------------------
 
