@@ -117,7 +117,7 @@ ifeq ($(MACHINE),KSR)
 endif
 
 #................................ HP ......................................
-ifeq ($(TARGET),HPUX)
+ifeq ($(MACHINE),HPUX)
            CC = gcc
            FC = fort77
           CPP = /lib/cpp
@@ -127,7 +127,7 @@ ifeq ($(TARGET),HPUX)
 endif
 
 #................................ CONVEX ...................................
-ifeq ($(TARGET),CONVEX-SPP)
+ifeq ($(MACHINE),CONVEX-SPP)
            FC = fc
           CPP = /lib/cpp
     ifeq ($(FOPT),-O)
@@ -190,10 +190,15 @@ endif
 #.............................. IBM SP .....................................
 #
 ifeq ($(MACHINE),SP)
-      MACHINE = SP1
+      IBM-SP = 1
 endif
 
-ifeq ($(MACHINE),SP1)
+ifeq ($(MACHINE),SP)
+      IBM-SP = 1
+endif
+
+
+ifdef IBM-SP
 # IBM SP-x 
 #
            CC = mpcc
