@@ -101,7 +101,7 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-    rc = armci_copy_strided( PUT, proc, src_ptr, src_stride_arr, 
+    rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
                                dst_ptr, dst_stride_arr,
                                count, stride_levels);
 
@@ -127,7 +127,7 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-    rc = armci_copy_strided(GET, proc, src_ptr, src_stride_arr, 
+    rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, 
                                dst_ptr, dst_stride_arr,
                                count, stride_levels);
     if(rc) return FAIL6;

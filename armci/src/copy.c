@@ -1,44 +1,52 @@
 #include "armcip.h"
 #include "copy.h"
+#include "acc.h"
 #include <stdio.h>
+
+#define ARMCI_OP_2D(op, scale, proc, src, dst, bytes, count, src_stride, dst_stride)\
+if(op == GET || op ==PUT)\
+      armci_copy_2D(op, proc, src, dst, bytes, count, src_stride,dst_stride);\
+else\
+      armci_acc_2D(op, scale, proc, src, dst, bytes, count, src_stride,dst_stride) 
 
 
 
 /*\ 2-dimensional array copy
 \*/
-void armci_copy2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes, 
+void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes, 
 		  int count, int src_stride, int dst_stride)
 {
-
 #if !defined(SYSV) && !defined(WIN32)
   if(proc == armci_me)
 #endif
   {
-    if(bytes < THRESH){     /* low-latency copy for small data segments */        
-      char *ps=(char*)src_ptr;
-      char *pd=(char*)dst_ptr;
-      int j;
-      for (j = 0;  j < count;  j++){
-          int i;
-          for(i=0;i<bytes;i++) pd[i] = ps[i];
-          ps += src_stride;
-          pd += dst_stride;
+    switch (count){
+    case 1: armci_copy(src_ptr, dst_ptr, bytes); break;
+    default:
+        if(bytes < THRESH){     /* low-latency copy for small data segments */        
+          char *ps=(char*)src_ptr;
+          char *pd=(char*)dst_ptr;
+          int j;
+          for (j = 0;  j < count;  j++){
+              int i;
+              for(i=0;i<bytes;i++) pd[i] = ps[i];
+              ps += src_stride;
+              pd += dst_stride;
+          }
+        } else if( bytes % ALIGN_SIZE ){ /* segment size not alligned */
+
+            ByteCopy2D(bytes, count, src_ptr, src_stride, dst_ptr, dst_stride);
+
+        }else { /* segment size alligned -- should be the most efficient copy */
+
+            DCopy2D(bytes/ALIGN_SIZE, count, src_ptr, src_stride/ALIGN_SIZE, 
+                                        dst_ptr, dst_stride/ALIGN_SIZE);
+        }
       }
-    } else if( bytes % ALIGN_SIZE ){ /* segment size not alligned */
-
-        ByteCopy2D(bytes, count, src_ptr, src_stride, dst_ptr, dst_stride);
-
-    }else { /* segment size alligned -- should be the most efficient copy */
-
-        DCopy2D(bytes/ALIGN_SIZE, count, src_ptr, src_stride/ALIGN_SIZE, 
-                                    dst_ptr, dst_stride/ALIGN_SIZE);
-    }
   }
 
 #if !defined(SYSV) && !defined(WIN32)
   else {
-
-       fflush(stdout);
 
        if(op==PUT){ 
 
@@ -47,27 +55,34 @@ void armci_copy2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
 #ifdef LAPI
           SET_COUNTER(ack_cntr,count);
 #endif
-          armci_put2D(proc, bytes, count, src_ptr, src_stride,
+          if(count==1){
+              armci_put(src_ptr, dst_ptr, bytes, proc);
+          }else{
+              armci_put2D(proc, bytes, count, src_ptr, src_stride,
                                                   dst_ptr, dst_stride);
+          }
+
        }else{
 
 #ifdef LAPI
           SET_COUNTER(get_cntr, count);
 #endif
-          armci_get2D(proc, bytes, count, src_ptr, src_stride,
+          if(count==1){
+              armci_get(src_ptr, dst_ptr, bytes, proc);
+          }else{
+             armci_get2D(proc, bytes, count, src_ptr, src_stride,
                                             dst_ptr, dst_stride);
+          }
        }
-
   }
 #endif
 
 }
 
 
-
 /*\ Strided copy
 \*/
-int armci_copy_strided(int op, int proc,void *src_ptr, int src_stride_arr[],  
+int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride_arr[],  
 		       void* dst_ptr, int dst_stride_arr[], 
                        int count[], int stride_levels)
 {
@@ -79,74 +94,42 @@ int armci_copy_strided(int op, int proc,void *src_ptr, int src_stride_arr[],
     switch (stride_levels){
     case 0: /* 1D copy */ 
 
-#           if !defined(SYSV) && !defined(WIN32)
-
-               if(armci_me == proc){
-
-#           endif
-
-               armci_copy(src_ptr, dst_ptr, count[0]);
-
-#           if !defined(SYSV) && !defined(WIN32)
-
-               }else{
-
-                 if(op==PUT) {
-
-                    UPDATE_FENCE_STATE(proc, PUT, 1);
-#ifdef LAPI
-                    SET_COUNTER(ack_cntr,1);
-#endif
-                    
-                    armci_put(src_ptr, dst_ptr, count[0], proc);
-
-                 } else {
-
-#ifdef LAPI
-                    SET_COUNTER(get_cntr, 1);
-#endif
-                    armci_get(src_ptr, dst_ptr, count[0], proc);
-
-                 }
-
-               } 
-
-#           endif
+            ARMCI_OP_2D(op, scale, proc, src_ptr, dst_ptr, count[0], 1, 0,0); 
 
             break;
     
-    case 1: /* 2D copy */
-            armci_copy2D(op, proc, src_ptr, dst_ptr, count[0], count[1], 
+    case 1: /* 2D op */
+            ARMCI_OP_2D(op, scale, proc, src_ptr, dst_ptr, count[0], count[1], 
                          src_stride_arr[0], dst_stride_arr[0]);
             break;
     
-    case 2: /* 3D copy */
+    case 2: /* 3D op */
             for (s2= 0; s2  < count[2]; s2++){ /* 2D copy */
-              armci_copy2D(op, proc, src+s2*src_stride_arr[1], 
+              ARMCI_OP_2D(op, scale, proc, src+s2*src_stride_arr[1], 
                            dst+s2*dst_stride_arr[1], count[0], count[1], 
                        src_stride_arr[0], dst_stride_arr[0]);
             }
             break;
 
-    case 3: /* 4D copy */
+    case 3: /* 4D op */
             for(s3=0; s3< count[3]; s3++){
                src = (char*)src_ptr + src_stride_arr[2]*s3;
                dst = (char*)dst_ptr + dst_stride_arr[2]*s3;
                for (s2= 0; s2  < count[2]; s2++){ /* 3D copy */
-                 armci_copy2D(op, proc, src+s2*src_stride_arr[1],
+                 ARMCI_OP_2D(op, scale, proc, src+s2*src_stride_arr[1],
                        dst+s2*dst_stride_arr[1],
                        count[0], count[1],src_stride_arr[0],dst_stride_arr[0]);
                }
             }
             break;
     
-    case 4: /* 5D copy */
+    case 4: /* 5D op */
             for(s4=0; s4< count[4]; s4++){
               for(s3=0; s3< count[3]; s3++){      /* 4D copy */
                  src = (char*)src_ptr + src_stride_arr[2]*s3 + src_stride_arr[3]*s4;
                  dst = (char*)dst_ptr + dst_stride_arr[2]*s3 + dst_stride_arr[3]*s4;
                  for (s2= 0; s2  < count[2]; s2++){ /* 3D copy */
-                   armci_copy2D(op, proc, src+s2*src_stride_arr[1], 
+                   ARMCI_OP_2D(op, scale, proc, src+s2*src_stride_arr[1], 
                                 dst+s2*dst_stride_arr[1], 
                                 count[0], count[1],
                                 src_stride_arr[0], dst_stride_arr[0]);
@@ -155,12 +138,12 @@ int armci_copy_strided(int op, int proc,void *src_ptr, int src_stride_arr[],
             }
             break;
     
-    default: /* N-dimensional copy by recursion */
+    default: /* N-dimensional op by recursion */
              for(sn = 0; sn < count[stride_levels]; sn++){
                  int rc;
                  src = (char*)src_ptr + src_stride_arr[stride_levels -1]* sn;
                  dst = (char*)dst_ptr + dst_stride_arr[stride_levels -1]* sn;
-                 rc  = armci_copy_strided(op, proc, src, src_stride_arr,  
+                 rc  = armci_op_strided(op, scale, proc, src, src_stride_arr,  
 		                          dst, dst_stride_arr, 
                                           count, stride_levels -1);
                  if(rc) return(rc);
@@ -170,8 +153,11 @@ int armci_copy_strided(int op, int proc,void *src_ptr, int src_stride_arr[],
 #ifdef LAPI
     if(proc != armci_me){
 
-       if(op == GET) CLEAR_COUNTER(get_cntr); /* wait for data arrival */
-       if(op == PUT) CLEAR_COUNTER(ack_cntr); /* data must be copied out*/ 
+       if(op == GET){
+           CLEAR_COUNTER(get_cntr); /* wait for data arrival */
+       }else { 
+           CLEAR_COUNTER(ack_cntr); /* data must be copied out*/ 
+       }
     }
 #endif
 

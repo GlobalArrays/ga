@@ -10,7 +10,7 @@
 *
 *----------------------- original loop versions ---------------------------
 
-      subroutine d_accumulate(alpha, rows, cols, A, ald, B, bld)
+      subroutine d_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       double precision A(ald,*), B(bld,*), alpha
@@ -22,7 +22,7 @@
       enddo
       end
 
-      subroutine f_accumulate(alpha, rows, cols, A, ald, B, bld)
+      subroutine f_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       real A(ald,*), B(bld,*), alpha
@@ -35,7 +35,7 @@
       end
 
 
-      subroutine z_accumulate(alpha, rows, cols, A, ald, B, bld)
+      subroutine z_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       double complex A(ald,*), B(bld,*), alpha
@@ -48,7 +48,7 @@
       end
 
 
-      subroutine c_accumulate(alpha, rows, cols, A, ald, B, bld)
+      subroutine c_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       complex A(ald,*), B(bld,*), alpha
@@ -61,7 +61,7 @@
       end
 
 
-      subroutine i_accumulate(alpha, rows, cols, A, ald, B, bld)
+      subroutine i_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       integer A(ald,*), B(bld,*), alpha
@@ -76,7 +76,7 @@
 *
 *-----------------------------  loops unrolled ---------------------------------
 *
-      subroutine d_accumulate_u(alpha, rows, cols, A, ald, B, bld)
+      subroutine d_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       double precision A(ald,*), B(bld,*), alpha
@@ -101,7 +101,7 @@
       enddo
       end
 
-      subroutine f_accumulate_u(alpha, rows, cols, A, ald, B, bld)
+      subroutine f_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       real A(ald,*), B(bld,*), alpha
@@ -127,7 +127,7 @@
       end
 
 
-      subroutine z_accumulate_u(alpha, rows, cols, A, ald, B, bld)
+      subroutine z_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       double complex A(ald,*), B(bld,*), alpha
@@ -153,7 +153,7 @@
       end
 
 
-      subroutine c_accumulate_u(alpha, rows, cols, A, ald, B, bld)
+      subroutine c_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       complex A(ald,*), B(bld,*), alpha
@@ -179,7 +179,7 @@
       end
 
 
-      subroutine i_accumulate_u(alpha, rows, cols, A, ald, B, bld)
+      subroutine i_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       integer A(ald,*), B(bld,*), alpha

@@ -81,7 +81,7 @@ void DCOPY2D();
 #      define armci_put(src,dst,n,p)    armci_copy((src),(dst),(n))
 
 #endif
-
+                                                 
 /****************************** 2D Copy *******************/
 
 

@@ -10,7 +10,7 @@
 extern  int armci_me, armci_nproc;
 
 extern void armci_die(char *msg, int code);
-extern int armci_copy_strided(int op, int proc,void *src_ptr, 
+extern int armci_op_strided(int op, void* scale, int proc,void *src_ptr, 
 			int src_stride_arr[],  
 		       void* dst_ptr, int dst_stride_arr[], 
                        int count[], int stride_levels);

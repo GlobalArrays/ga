@@ -19,6 +19,21 @@ extern int ARMCI_PutS(          /* strided put */
 		int stride_levels,    /* number of stride levels */
                 int proc	      /* remote process(or) ID */
                 );
+
+extern int ARMCI_AccS(                /* strided accumulate */
+                int  optype,          /* operation */
+                void *scale,          /* scale factor x += scale*y */
+                void *src_ptr,        /* pointer to 1st segment at source*/ 
+		int src_stride_arr[], /* array of strides at source */
+		void* dst_ptr,        /* pointer to 1st segment at destination*/
+		int dst_stride_arr[], /* array of strides at destination */
+		int count[],          /* number of units at each stride level count[0]=bytes */
+		int stride_levels,    /* number of stride levels */
+                int proc	      /* remote process(or) ID */
+                );
+
+
+
 extern int ARMCI_GetS(          /* strided get */
                 void *src_ptr,        /* pointer to 1st segment at source*/ 
 		int src_stride_arr[], /* array of strides at source */
@@ -58,4 +73,9 @@ extern int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc);
 #define FAIL8 -8
 #define ARMCI_FETCH_AND_ADD 88
 #define ARMCI_FETCH_AND_ADD_LONG 89
+#define ARMCI_ACC_INT 11
+#define ARMCI_ACC_DBL 12
+#define ARMCI_ACC_FLT 13
+#define ARMCI_ACC_CPL 14
+#define ARMCI_ACC_DCP 15
 #endif
