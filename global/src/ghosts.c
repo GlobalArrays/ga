@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.12 2002-03-09 01:31:21 d3h325 Exp $ */
+/* $Id: ghosts.c,v 1.13 2002-03-19 17:42:14 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -70,7 +70,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
   if (_last == 0) ld[0] = _hi[0] - _lo[0] + 1 + 2*GA[handle].width[0];         \
   for (_d = 0; _d < _last; _d++) {                                             \
     _offset += subscript[_d] * _factor;                                        \
-    ld[_d] = _hi[_d] - _lo[_d] + 1 + 2*GA[handle].width[0];                    \
+    ld[_d] = _hi[_d] - _lo[_d] + 1 + 2*GA[handle].width[_d];                    \
     _factor *= ld[_d];                                                         \
   }                                                                            \
   _offset += subscript[_last] * _factor;                                       \
@@ -454,7 +454,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
  
           /* get remote data */
           ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
-              ndim - 1, proc_rem);
+              (int)(ndim - 1), (int)proc_rem);
         }
       }
 
@@ -619,7 +619,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
  
           /* get remote data */
           ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
-              ndim - 1, proc_rem);
+              (int)(ndim - 1), (int)proc_rem);
         }
       }
     }
@@ -811,7 +811,7 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
  
     /* put data on remote processor */
     ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          ndim - 1, proc_rem);
+          (int)(ndim - 1), (int)proc_rem);
   }
 
   GA_POP_NAME;
@@ -1051,7 +1051,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
 
       /* Put local data on remote processor */
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          ndim - 1, proc_rem);
+          (int)(ndim - 1), (int)proc_rem);
 
       /* Perform update in positive direction. Start by getting rough
          idea of where data needs to go. */
@@ -1172,7 +1172,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
 
       /* get remote data */
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          ndim - 1, proc_rem);
+          (int)(ndim - 1), (int)proc_rem);
     }
     /* synchronize all processors and update increment array */
     if (idx < ndim-1) ga_sync_();
@@ -2350,7 +2350,7 @@ logical FATR ga_update_ghost_dir_(Integer *g_a, Integer *pdim, Integer *pdir,
  
     /* get data from remote processor */
     ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
-          ndim - 1, proc_rem);
+          (int)(ndim - 1), (int)proc_rem);
   }
 
   GA_POP_NAME;
