@@ -1,4 +1,4 @@
-c $Id: pg2test.F,v 1.3 2004-08-18 11:09:55 edo Exp $
+c $Id: pg2test.F,v 1.4 2004-11-04 15:35:42 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -109,13 +109,7 @@ c
           call runtest(proc_group(1), g_w)
       else
       endif
-c      if (nnodes.gt.0) then
-c        if (inode.eq.1) call runtest
-c      else
-c        write(6,*) 'You must run test on more nodes'
-c      endif
 c
-      call ga_pgroup_set_default(ga_pgroup_get_world())
 c***  Check if memory limits are enforced 
 c
 c      call check_mem(util_mdtob(ma_heap*ga_nnodes()))
@@ -290,6 +284,7 @@ c     call setdbg(1)
       dims(2) = n
       call ga_set_data(g_a,ndim,dims,MT_DBL)
       call ga_set_array_name(g_a,'a')
+      write(6,*) 'grp_id ',grp_id
       call ga_set_pgroup(g_a,grp_id)
       status = ga_allocate(g_a)
       if (.not. status) then
@@ -1689,7 +1684,7 @@ c
       inc =5 
 c     every processor will be operating on somebody elses data
 c
-      lproc = nproc - me - 1
+      lproc = ga_nnodes() - me - 1
 c
       call ga_distribution(g_a,lproc,ilo,ihi,jlo,jhi)
 c
@@ -1805,7 +1800,7 @@ c
       if(me.eq.0)call ga_put(g_a,1,n,1,n,b,n)
       call ga_pgroup_sync(grp_id)
       do k = 1, np
-         if(map(5,k).eq.abs_me)then
+         if(map(5,k).eq.me)then
                 if(found.eq.1) then
                     write(6,*)'double entry in map for proc ',me
                     call ffflush(6)
@@ -1823,7 +1818,7 @@ c
       call ga_pgroup_sync(grp_id)
 c
       do k = 1, np
-         if(map(5,k).eq.abs_me)then
+         if(map(5,k).eq.me)then
                 call ga_get(g_a, map(1,k),map(2,k),map(3,k),map(4,k),
      &                 a(map(1,k),map(3,k)),n)
                 do j= map(3,k), map(4,k)
