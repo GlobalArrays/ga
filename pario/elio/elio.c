@@ -483,7 +483,6 @@ int elio_close(Fd_t fd)
 {
    PABLO_start(PABLO_elio_close);
 
-   fprintf(stderr,"closing %d\n",fd->fd);
    if(close(fd->fd)==-1) return 1;
    free(fd);
 
