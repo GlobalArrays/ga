@@ -101,6 +101,11 @@ struct ga_stat_t {
          long   numser;
          long   curmem; 
          long   maxmem; 
+         long   numget_procs;
+         long   numput_procs;
+         long   numacc_procs;
+         long   numsca_procs;
+         long   numgat_procs;
 };
 
 struct ga_bytes_t{ 

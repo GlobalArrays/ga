@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.24 2002-09-17 17:03:52 vinod Exp $ */
+/* $Id: onesided.c,v 1.25 2002-11-26 01:25:11 d3h325 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -354,6 +354,7 @@ int proc, ndim;
       gam_CountElems(ndim, lo, hi, &elems);
       GAbytes.puttot += (double)size*elems;
       GAstat.numput++;
+      GAstat.numput_procs += np;
 
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
@@ -475,6 +476,7 @@ int proc, ndim;
       gam_CountElems(ndim, lo, hi, &elems);
       GAbytes.gettot += (double)size*elems;
       GAstat.numget++;
+      GAstat.numget_procs += np;
 
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
@@ -598,6 +600,7 @@ int optype, proc, ndim;
       gam_CountElems(ndim, lo, hi, &elems);
       GAbytes.acctot += (double)size*elems;
       GAstat.numacc++;
+      GAstat.numacc_procs += np;
 
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
@@ -1006,6 +1009,8 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         naproc ++;
     }
     
+    GAstat.numsca_procs += naproc;
+
     buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
                       5*naproc*sizeof(Integer) + naproc*sizeof(char*)));
     if(buf2 == NULL) ga_error("gai_malloc failed", naproc);
@@ -1299,6 +1304,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             rc=ARMCI_GetV(&desc, 1, (int)aproc[k]);
             if(rc) ga_error("gather failed in armci",rc);
         }
+        GAstat.numgat_procs += naproc;
         break;
       case SCATTER:
         /* go through all the elements
@@ -1328,6 +1334,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             rc=ARMCI_PutV(&desc, 1, (int)aproc[k]);
             if(rc) ga_error("scatter failed in armci",rc);
         }
+        GAstat.numsca_procs += naproc;
         break;
       case SCATTER_ACC:
         /* go through all the elements
@@ -1528,6 +1535,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         map[k] = naproc;
         naproc ++;
     }
+    GAstat.numgat_procs += naproc;
     
     buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
                       5*naproc*sizeof(Integer) + naproc*sizeof(char*)));

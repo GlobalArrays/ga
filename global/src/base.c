@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.25 2002-11-12 06:15:55 d3h325 Exp $ */
+/* $Id: base.c,v 1.26 2002-11-26 01:25:10 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -93,7 +93,7 @@ long dummy;
 /* set total limit (bytes) for memory usage per processor to "unlimited" */
 static Integer GA_total_memory = -1;
 static Integer GA_memory_limited = 0;
-struct ga_stat_t GAstat = {0,0,0,0,0,0,0,0,0,0,0};
+struct ga_stat_t GAstat;
 struct ga_bytes_t GAbytes ={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
 long   *GAstat_arr;
 static Integer GA_memory_limit=0;
@@ -328,6 +328,8 @@ int bytes;
        GA[i].ptr  = (char**)0;
        GA[i].mapc = (int*)0;
     }
+
+    bzero(GAstat,sizeof(GAstat));
 
     GAnproc = (Integer)armci_msg_nproc();
 

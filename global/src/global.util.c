@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.43 2002-08-22 22:22:13 vinod Exp $*/
+/*$Id: global.util.c,v 1.44 2002-11-26 01:25:10 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -224,6 +224,18 @@ int i;
         if(GAstat_arr[i] < 9999) printf("%4ld     ",GAstat_arr[i]);
         else                   printf("%.2e ",(double)GAstat_arr[i]);
      printf("\n");
+     if(GAstat.numget==0)GAstat.numget=1;
+     if(GAstat.numput==0)GAstat.numput=1;
+     if(GAstat.numacc==0)GAstat.numacc=1;
+     if(GAstat.numsca==0)GAstat.numsca=1;
+     if(GAstat.numgat==0)GAstat.numgat=1;
+     printf("number of processes/call %.2e %.2e %.2e %.2e %.2e\n",
+                   ((double)GAstat.numget_procs)/(double)GAstat.numget,
+                   ((double)GAstat.numput_procs)/(double)GAstat.numput,
+                   ((double)GAstat.numacc_procs)/(double)GAstat.numacc,
+                   ((double)GAstat.numsca_procs)/(double)GAstat.numsca,
+                   ((double)GAstat.numgat_procs)/(double)GAstat.numgat);
+
 
      printf("bytes total:             %.2e %.2e %.2e %.2e %.2e %.2e\n",
                    GAbytes.gettot, GAbytes.puttot, GAbytes.acctot,
@@ -236,6 +248,7 @@ int i;
                    GAbytes.scatot - GAbytes.scaloc,
                    GAbytes.gattot - GAbytes.gatloc,
                    GAbytes.rditot - GAbytes.rdiloc);
+
      printf("Max memory consumed for GA by this process: %ld bytes\n",GAstat.maxmem);
      if(GAstat.numser)
         printf("Number of requests serviced: %ld\n",GAstat.numser);
