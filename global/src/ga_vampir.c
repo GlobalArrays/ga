@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.c,v 1.5 2003-06-24 00:01:24 vinod Exp $ */
+/* $Id: ga_vampir.c,v 1.6 2004-02-27 15:21:37 vinod Exp $ */
 #include "ga_vampir.h"
 
 void ga_vampir_init() {
@@ -129,4 +129,5 @@ void ga_vampir_init() {
     vampir_symdef(NGA_STRIDED_PUT,           "NGA_Strided_put",            "GA",__FILE__,__LINE__);
     vampir_symdef(NGA_STRIDED_GET,           "NGA_Strided_get",            "GA",__FILE__,__LINE__);
     vampir_symdef(NGA_STRIDED_ACC,           "NGA_Strided_acc",            "GA",__FILE__,__LINE__);
+    vampir_symdef(GA_ALLOCATE,               "GA_ALLOCATE",                "GA",__FILE__,__LINE__);
 }
