@@ -16,7 +16,7 @@ FORTDEF  =-DNOFORT
 
 
 LIBRARY=armci.lib
-LIBDIR =.\..\lib\win32
+LIBDIR =..\..\lib\win32
 OBJDIR =.\obj
 PRJDIR =.\NTprojects
 LIBRARY_PATH = $(LIBDIR)\$(LIBRARY)
