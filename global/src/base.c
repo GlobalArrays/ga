@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.104 2004-11-08 15:53:33 d3g293 Exp $ */
+/* $Id: base.c,v 1.105 2004-11-08 20:33:06 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -3392,7 +3392,7 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
   if (!ga_is_mirrored_(g_a))
     ga_error("Handle to a non-mirrored array passed",0);
 
-  if (ga_is_mirrored_(g_b))
+  if (ga_is_mirrored_(g_b) && ga_cluster_nnodes_())
     ga_error("Distributed array is mirrored",0);
 
   adim = GA[a_handle].ndim;
