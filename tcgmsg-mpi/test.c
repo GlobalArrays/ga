@@ -10,6 +10,10 @@
 
 #ifdef NEED_MEMALIGN
 extern char *memalign();
+#else
+#ifdef LINUX
+#include <malloc.h>
+#endif
 #endif
 extern unsigned char CheckByte();
 #if defined(SUN)
