@@ -427,6 +427,34 @@ void armci_dma_send_gm(int dst, char *buf, int len)
                           armci_proc_callback, armci_gm_context);
 }
 
+
+/*\ similar to armci_dma_send_gm but waits for completion
+\*/
+int armci_send_req_msg(int proc, char *buf, int len)
+{
+    int size;
+    int stat;
+    request_header_t *msginfo = (request_header_t *)buf;
+
+    armci_gm_context->done = ARMCI_GM_SENDING;
+
+    /* set the message tag */
+    msginfo->tag.data_ptr = (void *)(buf + sizeof(request_header_t)
+                                     - sizeof(long));
+    msginfo->tag.ack = ARMCI_GM_CLEAR;
+
+    size = gm_min_size_for_length(len);
+
+    gm_send_with_callback(proc_gm->port, buf, size, len, GM_LOW_PRIORITY,
+                          proc_gm->node_map[proc], ARMCI_GM_SERVER_RCV_PORT,
+                          armci_proc_callback, armci_gm_context);
+
+    if(armci_client_send_complete() == ARMCI_GM_FAILED) return 1;
+    else return 0;
+}
+
+
+
 void armci_client_direct_send(int dst, char *src_buf, char *dst_buf, int len,
                               int dst_port_id)
 {
