@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.63 2004-04-14 00:59:15 manoj Exp $ */
+/* $Id: copy.h,v 1.64 2004-04-22 22:08:58 manoj Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -124,8 +124,8 @@ void FATR DCOPY1D(void*, void*, int*);
               *(phandle)=elan_get(elan_base->state,src,dst,n,proc)
 #      define ARMCI_NB_WAIT(handle) elan_wait(handle,elan_base->waitType) 
 #      define ARMCI_NB_TEST(handle,_succ) (*(_succ))=!elan_poll(handle,1L) 
-#      define HAS_PUTS 1
-#      define HAS_GETS 1
+#      define HAS_PUTS 0
+#      define HAS_GETS 0
 #   else
 #      define qsw_put(src,dst,n,proc) shmem_putmem((dst),(src),(int)(n),(proc))
 #      define qsw_get(src,dst,n,proc) shmem_getmem((dst),(src),(int)(n),(proc))
