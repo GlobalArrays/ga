@@ -1,4 +1,4 @@
-/*eId: global.core.c,v 1.36 1997/02/24 19:18:44 d3h325 Exp $*/
+/*Id: global.core.c,v 1.36 1997/02/24 19:18:44 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -742,17 +742,10 @@ Void    *ptr;
 {
 Integer  ga_handle = g_a + GA_OFFSET;
 
-#  ifdef CRAY_T3D
-     Integer i, len = sizeof(Void*);
-     Integer mtype = GA_TYPE_BRD;
-     GA[ga_handle].ptr[GAme] = ptr;
+   GA[ga_handle].ptr[0] = ptr;
 
-     /* need pointers on all procs to support global addressing */
-     for(i=0; i < GAnproc; i++) ga_brdcst_(&mtype, GA[ga_handle].ptr+i,&len,&i);
-
-#  else
-     GA[ga_handle].ptr[0] = ptr;
-
+#  ifdef SHMEM 
+     /* true shared memory */
 #    ifdef SYSV 
      {
        Integer ilo, ihi, jlo, jhi, nelem, ganode, clust_node;
@@ -767,6 +760,18 @@ Integer  ga_handle = g_a + GA_OFFSET;
                           GA[ga_handle].ptr[clust_node-1] + nelem*item_size;
        }
      }
+
+#    else
+     /* global address space */
+     { 
+       Integer i, len = sizeof(Void*);
+       Integer mtype = GA_TYPE_BRD;
+       GA[ga_handle].ptr[GAme] = ptr;
+
+       /* need pointers on all procs to support global addressing */
+       for(i=0; i<GAnproc; i++) ga_brdcst_(&mtype, GA[ga_handle].ptr+i,&len,&i);
+     }
+
 #    endif
 #  endif
 }
@@ -1383,7 +1388,7 @@ logical gaDirectAccess(proc)
    Integer proc;
 {
 #ifdef SHMEM
-#  ifndef CRAY_T3D
+#  ifdef SYSV 
      if(ClusterMode && (ClusterID(proc) != GA_clus_id))
          return(FALSE);
      else
@@ -1860,7 +1865,10 @@ adj_item_size = item_size/sizeof(Integer);
 
 }
 
+#endif
 /*****************************/
+
+
 /*\local accumulate using intermediate buffer in local memory 
 \*/
 void ga_acc_1d_local(Integer type, void* alpha, Integer rows, Integer cols, 
@@ -1891,7 +1899,6 @@ char *ptr_dst, *ptr_src;
           CopyElemTo(buf, ptr_dst, words, proc);
        }
 }
-#endif
 
 
 
@@ -1903,16 +1910,20 @@ void ga_acc_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
 {
 char     *ptr_src, *ptr_dst;
 Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
-#ifdef CRAY_T3D
+int      work_done=0;
+
+#if defined(SHMEM) && !defined(SYSV)
 #  define LEN_DBL_BUF 500
 #  define LEN_BUF (LEN_DBL_BUF * sizeof(DoublePrecision))
-   global_array_t *ga_ptr;
    DoublePrecision acc_buffer[LEN_DBL_BUF], *pbuffer;
    Integer buflen,  bytes, handle, index;
+#ifdef CRAY_T3D
    Integer jstop,jstart,jstop_b,jstart_b;
    Integer jlo_proc,loc,jproc,j,wait_cycles=0;
    Integer *ptr_lock_list;
    long swaperand=INVALID,tswap;
+   global_array_t *ga_ptr;
+#endif
 #endif
 
    GA_PUSH_NAME("ga_acc_local"); 
@@ -1923,10 +1934,9 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
    rows = ihi - ilo +1;
    cols = jhi - jlo +1;
 
-#  ifdef CRAY_T3D
+#if defined(SHMEM) && !defined(SYSV)
 
      bytes = rows*item_size;
-     ga_ptr = &GA[GA_OFFSET + g_a];
 
      if(proc != GAme){
 
@@ -1947,29 +1957,46 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
           }
        }
 
+#      ifdef CRAY_T3D
+         /* we have a fine-grain locking from Howard Pritchard */
+         ga_ptr = &GA[GA_OFFSET + g_a];
+         jproc = proc/ga_ptr->nblock[0];
+         loc = jproc + ga_ptr->nblock[0];
+         jlo_proc = ga_ptr->mapc[loc];
+         jstart = jlo - jlo_proc;
+         jstart_b = jstart>>LOG2_COLS_PER_LOCK;
+         jstop = jhi - jlo_proc;
+         jstop_b = jstop>>LOG2_COLS_PER_LOCK;
 
-       jproc = proc/ga_ptr->nblock[0];
-       loc = jproc + ga_ptr->nblock[0];
-       jlo_proc = ga_ptr->mapc[loc];
-       jstart = jlo - jlo_proc;
-       jstart_b = jstart>>LOG2_COLS_PER_LOCK;
-       jstop = jhi - jlo_proc;
-       jstop_b = jstop>>LOG2_COLS_PER_LOCK;
+         /*  set the column work list to 1 */
+         ptr_lock_list = ga_ptr->lock_list;
+         for(j=jstart_b;j<=jstop_b;j++) ptr_lock_list[j] = 1;
 
-       /*  set the column work list to 1 */
-       ptr_lock_list = ga_ptr->lock_list;
-       for(j=jstart_b;j<=jstop_b;j++) ptr_lock_list[j] = 1;
+         ga_acc_1d_local_fg(type, alpha, rows, cols, ptr_dst,
+                            ldp, ptr_src, ld,pbuffer, buflen,
+                            proc, ptr_lock_list, jstart,jstop,ga_ptr);
+         work_done =1;
 
-       ga_acc_1d_local_fg(type, alpha, rows, cols, ptr_dst,
-                           ldp, ptr_src, ld,pbuffer, buflen,
-                           proc, ptr_lock_list, jstart,jstop,ga_ptr);
+#      else
+         if(proc != GAme){
+            LOCK(g_a, proc, ptr_dst);
+            ga_acc_1d_local(type, alpha, rows, cols, ptr_dst, ldp, ptr_src, ld,
+                                                      pbuffer, buflen, proc);
+#           ifdef CRAY_T3E
+              shmem_quiet();
+#           endif
+            UNLOCK(g_a, proc, ptr_dst);
+            work_done =1;
+         }
+#      endif
 
        if((bytes >LEN_BUF)&&(proc != GAme)) MA_pop_stack(handle);
 
-
        if(proc == GAme) FLUSH_CACHE; /* cache coherency problem on T3D */
-#   else
 
+#  endif
+
+   if(! work_done) {
      if(GAnproc>1) LOCK(g_a, proc, ptr_dst);
        if(type==MT_F_DBL){
           accumulate(alpha, rows, cols, (DoublePrecision*)ptr_dst, ldp, 
@@ -1983,10 +2010,10 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
        }
 
      if(GAnproc>1) UNLOCK(g_a, proc, ptr_dst);
+   }
 
-     if(GAme == proc && !in_handler) 
-        GAbytes.accloc += (double)item_size*rows*cols;
-#  endif
+   if(GAme == proc && !in_handler) 
+      GAbytes.accloc += (double)item_size*rows*cols;
 
    GA_POP_NAME;
 }
@@ -2451,8 +2478,8 @@ register Integer k, offset;
      ptr_dst = ptr_ref + item_size * offset;
      ptr_src = ((char*)v) + k*item_size; 
 
-#ifdef CRAY_T3D
-           CopyElemTo(ptr_src, ptr_dst, item_size/8, proc);
+#    if defined(SHMEM) && !defined(SYSV)
+           CopyElemTo(ptr_src, ptr_dst, item_size/sizeof(Integer), proc);
 #    else
            Copy(ptr_src, ptr_dst, item_size);
 #    endif
@@ -2628,8 +2655,8 @@ register Integer k, offset;
      ptr_src = ptr_ref + item_size * offset;
      ptr_dst = ((char*)v) + k*item_size; 
 
-#    ifdef CRAY_T3D
-        CopyElemFrom(ptr_src, ptr_dst, item_size/8, proc);
+#    if defined(SHMEM) && !defined(SYSV)
+        CopyElemFrom(ptr_src, ptr_dst, item_size/sizeof(Integer), proc);
 #    else
         Copy(ptr_src, ptr_dst, item_size);
 #    endif
@@ -2781,7 +2808,7 @@ Integer first, BufLimit, proc;
 Integer ga_read_inc_local(Integer g_a, Integer i, Integer j, Integer inc, 
                                                             Integer proc)
 {
-Integer *ptr, ldp, value;
+Integer *ptr, ldp, value, lval;
 
    GA_PUSH_NAME("ga_read_inc_local");
    if(GAme == proc && !in_handler)GAbytes.rdiloc += (double)sizeof(Integer);
@@ -2790,15 +2817,21 @@ Integer *ptr, ldp, value;
    gaShmemLocation(proc, g_a, i, j, (char**)&ptr, &ldp);
 
 #  ifdef CRAY_T3D
-        { long lval;
           while ( (lval = shmem_swap((long*)ptr, INVALID, proc) ) == INVALID);
           value = (Integer) lval;
-          (void) shmem_swap((long*)ptr, (lval + inc), proc);
-        }
+          lval += inc;
+          (void) shmem_swap((long*)ptr, lval, proc);
 #  else
         if(GAnproc>1)LOCK(g_a, proc, ptr);
-          value = *ptr;
-          (*ptr) += inc;
+#         if defined(SHMEM) && !defined(SYSV)
+             CopyElemFrom(ptr, &value, 1, proc);
+             lval = value + inc;
+             CopyElemTo(&lval,ptr,1, proc);
+#         else 
+             value = *ptr;
+             lval = value +inc;
+             (*ptr) = lval;
+#         endif
         if(GAnproc>1)UNLOCK(g_a, proc, ptr);
 #  endif
    GA_POP_NAME;

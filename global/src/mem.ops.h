@@ -27,6 +27,9 @@ static DoublePrecision DPzero=0.;
        void   CopyFrom(char*, char*, Integer);
 #      define CopyElemFrom(src, dst, n,proc ) CopyFrom((src),(dst),8*(n));
 #      define CopyElemTo(src, dst, n, proc) CopyTo((src),(dst),8*(n));
+#elif  defined(FUJITSU)
+#      define Copy(src,dst,n)          memcpy((dst), (src), (n))
+#      include "../../config/fujitsu-vpp.h"
 #else
 #      define Copy(src,dst,n)           memcpy((dst),(src),(n))
 #      define CopyTo(src,dst,n)         Copy((src),(dst),(n))
@@ -157,14 +160,12 @@ Integer rrows, ldd, lds;
 
 
 /***************** 2D copy between local and shared/global memory ***********/
-#if defined(CRAY_T3D) || defined(KSR)
+#if defined(CRAY_T3D) || defined(KSR) || defined(FUJITSU)
     /* special copy routines for moving words */
 #   define Copy2DTo(type, proc, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
     Integer item_size=GAsizeofM(type), j;\
-    Integer words =  (type==MT_F_DCPL)? 2* *rows: *rows; \
+    Integer words =  *rows * item_size/sizeof(Integer); \
     char *ps=ptr_src, *pd=ptr_dst;\
-    if(sizeof(Integer) != sizeof(DoublePrecision))\
-              ga_error("Copy broken", sizeof(Integer));\
       for (j = 0;  j < *cols;  j++){\
           CopyElemTo(ps, pd, words, proc);\
           ps += item_size* *ld_src;\
@@ -174,18 +175,14 @@ Integer rrows, ldd, lds;
 
 #   define Copy2DFrom(type, proc, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
     Integer item_size=GAsizeofM(type), j;\
-    Integer nbytes = item_size* *rows;\
-    Integer words =  (type==MT_F_DCPL)? 2* *rows: *rows; \
+    Integer words =  *rows * item_size/sizeof(Integer); \
     char *ps=ptr_src, *pd=ptr_dst;\
-    if(sizeof(Integer) != sizeof(DoublePrecision))\
-              ga_error("Copy broken", sizeof(Integer));\
       for (j = 0;  j < *cols;  j++){\
           CopyElemFrom(ps, pd, words, proc);\
           ps += item_size* *ld_src;\
           pd += item_size* *ld_dst;\
       }\
     }
-
 
 #else
 
@@ -199,7 +196,7 @@ Integer rrows, ldd, lds;
 
 
 /**************************** accumulate operation **************************/
-#ifdef CRAY_T3D
+#if defined(CRAY_T3D) || defined(FUJITSU)
 static void dacc_column(alpha, a, b,n)
 Integer n;
 DoublePrecision *alpha, *a, *b;
@@ -239,7 +236,7 @@ Integer n,  *alpha, *a, *b;
       for(c=0;c<(cols);c++)\
           Accum(*(DoublePrecision*)(alpha), (B)+c*(bld), (A)+c*(ald), (rows));\
    }
-#elif defined(CRAY_T3D)
+#elif defined(CRAY_T3D) || defined(FUJITSU)
 #  define accumulate(alpha, rows, cols, A, ald, B, bld) {\
    register Integer c,r;\
    DoublePrecision *AA = (DoublePrecision*)(A), *BB= (DoublePrecision*)(B);\

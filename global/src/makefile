@@ -12,6 +12,7 @@ endif
 
 INTERRUPT_AVAILABLE = SP1 IPSC DELTA PARAGON
 DATA-SERVER = SUN SGI SGI_N32 SGITFP SGI64 HPUX SOLARIS IBM DECOSF
+ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E LAPI FUJITSU-VPP
 
 include ../Makefile.h
 
@@ -26,8 +27,15 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(DATA-SERVER)))
 endif
 
 ifeq ($(VERSION),SHMEM)
-  ifneq (CRAY,$(findstring CRAY,$(TARGET)))
+  ifneq ($(TARGET),$(findstring $(TARGET),$(ONESIDED_AVAILABLE)))
     LOC_DEFINES += -DSYSV
+    ifndef IWAY
+      ifneq ($(TARGET),KSR)
+        ifneq ($(TARGET),CONVEX-SPP)
+            LOC_DEFINES += -DDATA_SERVER
+        endif
+      endif
+    endif
   endif
 endif
 

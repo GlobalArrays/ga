@@ -42,7 +42,7 @@ typedef struct {
        long id;			/* ID of shmem region / MA handle       */
 #ifdef _CRAYMPP
        long *newlock[MAX_NPROC]; /* pointer to pointer to locks */
-       Integer *lock_list;        /* pointer to vector of column markers */
+       Integer *lock_list;       /* pointer to vector of column markers */
 #endif
        char name[FNAM+1];       /* array name                           */
 } global_array_t;
@@ -99,6 +99,8 @@ int  GA_stack_size=0;
 }
 
 
+#include "mem.ops.h"
+
 /**************** Shared Memory and Mutual Exclusion Co.  **************/
 #ifdef SYSV
        /* SHARED MEMORY */
@@ -145,7 +147,7 @@ int  GA_stack_size=0;
                    V(((proc)-GAmaster)%ARR_SEM+RESERVED_LOCKS)
 #      endif
 #else
-#      ifdef CRAY_T3D
+#      if defined(CRAY_T3D)
 #          include <limits.h>
 #          include <mpp/shmem.h>
 #          define INVALID (long)(_INT_MIN_64 +1)
@@ -165,6 +167,11 @@ int  GA_stack_size=0;
 #          define COLS_PER_LOCK            16
 #          define LOG2_COLS_PER_LOCK       4
 
+#       elif defined(FUJITSU)
+#          define MUTEX(g_a)  SEM_BASE + (g_a+GA_OFFSET)%NUM_SEM
+#          define LOCK(g_a,proc, x)   NATIVE_LOCK(proc,MUTEX(g_a))
+#          define UNLOCK(g_a,proc, x) NATIVE_UNLOCK(proc,MUTEX(g_a))
+
 #      elif defined(NX) || defined(SP1) || defined(SP)
 #            include "interrupt.h"
              long oldmask;
@@ -180,7 +187,7 @@ int  GA_stack_size=0;
 #      endif
 #endif
 
-#include "mem.ops.h"
+
 /************************************************************************/
 
 /* cache coherency in shared memory copy operations */
