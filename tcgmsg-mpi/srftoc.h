@@ -53,6 +53,7 @@
 #define PFCOPY_      PFCOPY
 #define DGOP_        DGOP
 #define IGOP_        IGOP
+#define TCGREADY_    TCGREADY
 
 #else
 
@@ -87,6 +88,7 @@
 #define igop_        igop
 #define DGOP_        dgop
 #define IGOP_        igop
+#define TCGREADY_    tcgready
 #else
 #define NICEFTN_     niceftn_
 #define NODEID_      nodeid_
@@ -115,6 +117,7 @@
 #define DRAND48_     drand48_
 #define SRAND48_     srand48_
 #define PFCOPY_      pfcopy_
+#define TCGREADY_    tcgready_
 #endif
 
 #endif

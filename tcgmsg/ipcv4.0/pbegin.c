@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.8 1997-02-17 20:37:27 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.9 1999-08-12 00:56:27 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -55,6 +55,13 @@ extern char *malloc();
 #define bzero(A,N) memset((A), 0, (N))
 #endif
 
+static int SR_initialized=0;
+long TCGREADY_()
+{
+     return (long)SR_initialized;
+}
+
+
 static void ConnectAll()
 {
   long j, k, clus1, clus2, node1, node2, nslave1, nslave2;
@@ -107,6 +114,7 @@ static void PrintArgs(argc, argv)
   (void) fflush(stdout);
 }
 
+
 void PBEGIN_(argc, argv)
       int argc;
       char **argv;
@@ -131,6 +139,9 @@ void PBEGIN_(argc, argv)
   long *flags;
 #endif
   long on = 1;
+
+  if(SR_initialized)Error("TCGMSG initialized already???",-1);
+  else SR_initialized=1;
 
   if (DEBUG_) {
 	(void) printf("In pbegin .. print the arguments\n");

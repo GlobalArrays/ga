@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/sndrcv.h,v 1.2 1994-12-30 20:56:15 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/sndrcv.h,v 1.3 1999-08-12 00:55:27 d3h325 Exp $ */
 
 #include "srftoc.h"
 
@@ -195,6 +195,12 @@ extern long MITOD_();
 */
 extern void PFILECOPY_();
 extern void PFCOPY_();
+
+
+/*
+ TCGREADY tells if TCGMSG was already initialized (1) or not (0)
+*/
+extern long TCGREADY_();
 
 /*
   Miscellaneous routines for internal use only?

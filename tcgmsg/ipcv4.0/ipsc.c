@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.6 1995-02-24 02:17:22 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.7 1999-08-12 00:56:27 d3h325 Exp $ */
 
 /*
    Toolkit interface for the iPSC-2, i860, DELTA and Paragon
@@ -66,6 +66,12 @@ static struct msg_q_struct{
   long   snd;
   long   from;
 } msg_q[MAX_Q_LEN];
+
+static int SR_initialized=0;
+long TCGREADY_()
+{
+     return (long)SR_initialized;
+}
 
 /***********************************************************/
 
@@ -382,6 +388,10 @@ void PBEGIN_()
     (void) printf("node %ld called pbeginf\n",NODEID_());
     (void) fflush(stdout);
   }
+
+  if(SR_initialized)Error("TCGMSG initialized already???",-1);
+  else SR_initialized=1;
+
 
 #if !(defined(DELTA) || defined(PARAGON))
   led((long) 1);		/* Green LED on */

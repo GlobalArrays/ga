@@ -169,6 +169,11 @@ extern double FATR DRAND48_();
 extern void FATR SRAND48_();
 
 /*
+ TCGREADY tells if TCGMSG was already initialized (1) or not (0)
+*/
+extern long TCGREADY_();
+
+/*
   Integer MDTOB_(Integer *n) returns no. of bytes that *n double occupy
   Integer MITOB_(Integer *n) returns no. of bytes that *n Ints occupy
   Integer MDTOI_(Integer *n) returns minimum no. of Integers that can hold n doubles

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srftoc.h,v 1.7 1999-06-21 19:04:52 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srftoc.h,v 1.8 1999-08-12 00:56:28 d3h325 Exp $ */
 
 #ifndef SRFTOC_H_
 #define SRFTOC_H_
@@ -52,6 +52,7 @@
 #define PFCOPY_      PFCOPY
 #define dgop_        DGOP
 #define igop_        IGOP
+#define TCGREADY_    TCGREADY
 
 #else
 
@@ -86,6 +87,7 @@
 #define igop_        igop
 #define DGOP_        dgop
 #define IGOP_        igop
+#define TCGREADY_    tcgready
 #else
 #define NICEFTN_     niceftn_
 #define NODEID_      nodeid_
@@ -114,6 +116,7 @@
 #define DRAND48_     drand48_
 #define SRAND48_     srand48_
 #define PFCOPY_      pfcopy_
+#define TCGREADY_    tcgready_
 #if defined(SP1) || defined(SP) || defined(LAPI)
 #define DGOP_        dgop_
 #define IGOP_        igop_

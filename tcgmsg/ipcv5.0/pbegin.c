@@ -24,6 +24,11 @@ extern void bzero(char *, int);
 extern pid_t getpid(void), fork(void);
 
 long DEBUG_ =0;           /* debug flag ... see setdbg */
+static int SR_initialized=0;
+long TCGREADY_()
+{
+     return (long)SR_initialized;
+}
 
 void PBEGIN_(int argc, char **argv)
 /*
@@ -34,6 +39,9 @@ void PBEGIN_(int argc, char **argv)
 
   TCGMSG_nodeid = 0;
   TCGMSG_nnodes = 1;		/* By default just sequential */
+
+  if(SR_initialized)Error("TCGMSG initialized already???",-1);
+  else SR_initialized=1;
 
 #ifdef CRAY_T3D
   TCGMSG_nnodes = (long)_num_pes(); 

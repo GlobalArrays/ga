@@ -12,7 +12,11 @@ Integer       DEBUG_;
 int       SR_parallel; 
 int       SR_single_cluster =1;
 
-
+static int SR_initialized=0;
+long TCGREADY_()
+{
+     return (long)SR_initialized;
+}
 
 /*\ number of processes
 \*/
@@ -100,6 +104,8 @@ char *argv[];
 {
 int numprocs, myid;
 
+   if(SR_initialized)Error("TCGMSG initialized already???",-1);
+   else SR_initialized=1;
 
    MPI_Init(&argc, &argv);
 
