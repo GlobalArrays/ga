@@ -206,7 +206,7 @@ extern void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
 #define GA_Fence  ga_fence_
 #define GA_Nodeid (int)ga_nodeid_
 #define GA_Nnodes (int)ga_nnodes_
-#define ga_nbhdl_t Integer *
+#define ga_nbhdl_t Integer
 
 extern int GA_Cluster_nnodes();
 extern int GA_Cluster_nodeid();
@@ -214,6 +214,14 @@ extern int GA_Cluster_nprocs(int x);
 extern int GA_Cluster_procid(int x, int y);
 extern void GA_Register_stack_memory(void * (*ext_alloc)(), 
 				     void (*ext_free)());
+
+/* Non-blocking APIs */
+extern void NGA_NbGet(int g_a, int lo[], int hi[], void* buf, int ld[],
+		      ga_nbhdl_t* nbhandle);
+extern void NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[],
+		      ga_nbhdl_t* nbhandle);
+extern int NGA_NbWait(ga_nbhdl_t* nbhandle);
+extern int GA_NbWait(ga_nbhdl_t* nbhandle);
 
 #ifdef __cplusplus
 }

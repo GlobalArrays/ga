@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.53 2003-03-06 20:09:51 vinod Exp $ */
+/* $Id: capi.c,v 1.54 2003-03-07 23:44:29 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -514,7 +514,7 @@ void NGA_Get(int g_a, int lo[], int hi[], void* buf, int ld[])
 }
 
 void NGA_NbGet(int g_a, int lo[], int hi[], void* buf, int ld[],
-               ga_nbhdl_t nbhandle)
+               ga_nbhdl_t* nbhandle)
 {
     Integer a=(Integer)g_a;
     Integer ndim = ga_ndim_(&a);
@@ -535,7 +535,7 @@ void NGA_Put(int g_a, int lo[], int hi[], void* buf, int ld[])
 }    
 
 void NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[],
-               ga_nbhdl_t nbhandle)
+               ga_nbhdl_t* nbhandle)
 {
     Integer a=(Integer)g_a;
     Integer ndim = ga_ndim_(&a);
@@ -545,12 +545,12 @@ void NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[],
     nga_put_common(&a, _ga_lo, _ga_hi, buf, _ga_work,(Integer *)nbhandle);
 }
 
-int NGA_NbWait(ga_nbhdl_t nbhandle)
+int NGA_NbWait(ga_nbhdl_t* nbhandle)
 {
     return(nga_wait_internal((Integer *)nbhandle));
 }
 
-int GA_NbWait(ga_nbhdl_t nbhandle)
+int GA_NbWait(ga_nbhdl_t* nbhandle)
 {
     return(nga_wait_internal((Integer *)nbhandle));
 }

@@ -14,7 +14,7 @@ typedef struct {
 
 /*Each element in the armci handle linked list is of type ga_armcihdl_t*/
 typedef struct struct_armcihdl_t{
-    armci_hdl_t handle;
+    armci_hdl_t* handle;
     struct struct_armcihdl_t *next;
     struct struct_armcihdl_t *previous;
     int index;
@@ -34,7 +34,7 @@ typedef struct{
 
 
 /*fills up the armci_hdl_t entries in ga_armcihdl_t */
-static armci_req_t hdl_array[NUM_HDLS];
+static armci_hdl_t hdl_array[NUM_HDLS];
 
 
 /*index of the following array goes into ihdl_index. while waiting for a
@@ -212,7 +212,7 @@ int elementtofree,i;
 
 /*\ called from ga_put/get before a call to every non-blocking armci request. 
 \*/
-armci_hdl_t get_armci_nbhandle(Integer *nbhandle){
+armci_hdl_t* get_armci_nbhandle(Integer *nbhandle){
 gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
 ga_armcihdl_t *ret_handle;
     if(inbhandle->ihdl_index == (NUM_HDLS+1)){

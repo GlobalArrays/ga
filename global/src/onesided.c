@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.34 2003-03-06 19:36:34 vinod Exp $ */
+/* $Id: onesided.c,v 1.35 2003-03-07 23:44:29 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -68,7 +68,7 @@ extern void ga_sort_scat(Integer*,Void*,Integer*,Integer*,Integer*, Integer);
 extern void ga_sort_gath_(Integer*, Integer*, Integer*, Integer*);
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
-extern armci_hdl_t get_armci_nbhandle(Integer *);
+extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
 /***************************************************************************/
 
@@ -423,7 +423,7 @@ int proc, ndim,i;
           }
           if(nbhandle) 
             ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1, 
-                         proc,(armci_hdl_t)get_armci_nbhandle(nbhandle));
+                         proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
           else
             ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,proc);
 
@@ -620,7 +620,7 @@ int proc, ndim;
           }
           if(nbhandle) 
             ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
-                         proc,(armci_hdl_t)get_armci_nbhandle(nbhandle));
+                         proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
           else
             ARMCI_GetS(prem,stride_rem, pbuf,stride_loc, count, ndim -1, proc);
       }
