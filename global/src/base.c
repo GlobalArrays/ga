@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.55 2003-10-03 14:55:17 d3g293 Exp $ */
+/* $Id: base.c,v 1.56 2003-10-10 21:42:19 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -73,6 +73,7 @@ DoublePrecision *DBL_MB;            /* double precision base address */
 Integer         *INT_MB;            /* integer base address */
 float           *FLT_MB;            /* float base address */
 int** GA_Update_Flags;
+int* GA_Update_Signal;
 
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
@@ -394,13 +395,16 @@ int bytes;
     if(ARMCI_Uses_shm())
        if(GA_memory_limited) ARMCI_Set_shm_limit(GA_total_memory);
 
-    /* Allocate memory for update flags */
+    /* Allocate memory for update flags and signal*/
     bytes = 2*MAXDIM*sizeof(int);
     GA_Update_Flags = (int**)malloc(GAnproc*sizeof(void*));
     if (!GA_Update_Flags)
       ga_error("ga_init: Failed to initialize GA_Update_Flags",(int)GAme);
     if (ARMCI_Malloc((void**)GA_Update_Flags, (armci_size_t) bytes))
       ga_error("ga_init:Failed to initialize memory for update flags",GAme);
+    bytes = sizeof(int);
+    GA_Update_Signal = ARMCI_Malloc_local((armci_size_t) bytes);
+
     /* Zero update flags */
     for (i=0; i<2*MAXDIM; i++) GA_Update_Flags[GAme][i] = 0;
 

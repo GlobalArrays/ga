@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.29 2003-03-05 21:58:55 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.30 2003-10-10 21:42:19 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -690,9 +690,12 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
 
     /* check to see if ghost cell block has zero elements*/
     mask0 = FALSE;
+    itmp = 0;
     for (idx = 0; idx < ndim; idx++) {
       if (mask[idx] != 0 && width[idx] == 0) mask0 = TRUE;
+      if (mask[idx] != 0) itmp++;
     }
+    /*if (itmp>1) mask0 = TRUE; */
     if (mask0) continue;
     /* Now that mask has been determined, find data that is to be moved
      * and identify processor to which it is going. Wrap boundaries
@@ -772,8 +775,11 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
     /* put data on remote processor */
     ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           (int)(ndim - 1), (int)proc_rem);
+    /*ARMCI_NbPutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+          (int)(ndim - 1), (int)proc_rem, NULL); */
   }
 
+  /*ARMCI_WaitAll();*/
   GA_POP_NAME;
   return TRUE;
 }
@@ -1497,7 +1503,7 @@ int ARMCI_PutS_flag__(
                                count[0] = #bytes */
       int stride_levels,    /* number of stride levels */
       int *flag,            /* pointer to remote flag */
-      int val,              /* value to set flag upon completion of
+      int *val,             /* pointer to value to set flag upon completion of
                                data transfer */
       int proc              /* remote process(or) ID */
       )
@@ -1510,7 +1516,7 @@ int ARMCI_PutS_flag__(
   /* Send signal to remote processor that data transfer has
    * been completed. */
   bytes = sizeof(int);
-  ARMCI_Put(&val, flag, bytes, proc);
+  ARMCI_Put(val, flag, bytes, proc);
   return 1;
 }
 
@@ -1531,7 +1537,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
-  int msgcnt, signal, bytes;
+  int msgcnt, bytes;
   char *ptr_loc, *ptr_rem;
 
   /* This routine makes use of the shift algorithm to update data in the
@@ -1622,7 +1628,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
 
   /* loop over dimensions for sequential update using shift algorithm */
   msgcnt = 0;
-  signal = 1;
+  (*GA_Update_Signal) = 1;
   for (idx=0; idx < ndim; idx++) {
     nwidth = width[idx];
 
@@ -1682,11 +1688,11 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
-#if 0
+#if 1
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count, ndim- 1, proc_rem);
       /* Send signal to remote processor that data transfer has been completed. */
       bytes = sizeof(int);
-      ARMCI_Put(&signal, GA_Update_Flags[proc_rem]+msgcnt, bytes, proc_rem);
+      ARMCI_Put(GA_Update_Signal, GA_Update_Flags[proc_rem]+msgcnt, bytes, proc_rem);
 #else
       ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
@@ -1747,11 +1753,11 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
-#if 0
+#if 1
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count, ndim- 1, proc_rem);
       /* Send signal to remote processor that data transfer has been completed. */
       bytes = sizeof(int);
-      ARMCI_Put(&signal, GA_Update_Flags[proc_rem]+msgcnt, bytes, proc_rem);
+      ARMCI_Put(GA_Update_Signal, GA_Update_Flags[proc_rem]+msgcnt, bytes, proc_rem);
 
 #else
       ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
@@ -2011,7 +2017,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   int stride_snd[MAXDIM], stride_rcv[MAXDIM],count[MAXDIM];
   int stride_loc[MAXDIM], stride_rem[MAXDIM];
-  int signal, bytes, flag1, flag2, sprocflag, rprocflag;
+  int bytes, flag1, flag2, sprocflag, rprocflag;
   char *ptr_snd, *ptr_rcv;
   char *ptr_loc, *ptr_rem;
   char send_name[32], rcv_name[32];
@@ -2131,7 +2137,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 
   /* loop over dimensions for sequential update using shift algorithm */
   msgcnt = 0;
-  signal = 1;
+  (*GA_Update_Signal) = 1;
   for (idx=0; idx < ndim; idx++) {
 
     /* Do not bother with update if nwidth is zero */
@@ -2251,9 +2257,18 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
         } 
         if (rprocflag) {
+#if 1
+          ARMCI_PutS(ptr_snd, stride_snd, ptr_rem, stride_rem, count, ndim- 1,
+                     proc_rem_snd);
+          /* Send signal to remote processor that data transfer has been completed. */
+          bytes = sizeof(int);
+          ARMCI_Put(GA_Update_Signal, GA_Update_Flags[proc_rem_snd]+msgcnt, bytes,
+                    proc_rem_snd);
+#else
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
-                          signal, (int)proc_rem_snd);
+                          GA_Update_Signal, (int)proc_rem_snd);
+#endif
         }
         if (index[idx]%2 != 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
@@ -2269,9 +2284,18 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
         }
         if (rprocflag) {
+#if 1
+          ARMCI_PutS(ptr_snd, stride_snd, ptr_rem, stride_rem, count, ndim- 1,
+                     proc_rem_snd);
+          /* Send signal to remote processor that data transfer has been completed. */
+          bytes = sizeof(int);
+          ARMCI_Put(GA_Update_Signal, GA_Update_Flags[proc_rem_snd]+msgcnt, bytes,
+                    proc_rem_snd);
+#else
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
-                          signal, (int)proc_rem_snd);
+                          GA_Update_Signal, (int)proc_rem_snd);
+#endif
         }
         if (index[idx]%2 != 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
@@ -2410,9 +2434,18 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
         } 
         if (rprocflag) {
+#if 1
+          ARMCI_PutS(ptr_snd, stride_snd, ptr_rem, stride_rem, count, ndim- 1,
+                     proc_rem_snd);
+          /* Send signal to remote processor that data transfer has been completed. */
+          bytes = sizeof(int);
+          ARMCI_Put(GA_Update_Signal, GA_Update_Flags[proc_rem_snd]+msgcnt, bytes,
+                    proc_rem_snd);
+#else
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
-                          signal, (int)proc_rem_snd);
+                          GA_Update_Signal, (int)proc_rem_snd);
+#endif
         }
         if (index[idx]%2 != 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
@@ -2428,9 +2461,18 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
         }
         if (rprocflag) {
+#if 1
+          ARMCI_PutS(ptr_snd, stride_snd, ptr_rem, stride_rem, count, ndim- 1,
+                     proc_rem_snd);
+          /* Send signal to remote processor that data transfer has been completed. */
+          bytes = sizeof(int);
+          ARMCI_Put(GA_Update_Signal, GA_Update_Flags[proc_rem_snd]+msgcnt, bytes,
+                    proc_rem_snd);
+#else
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
-                          signal, (int)proc_rem_snd);
+                          GA_Update_Signal, (int)proc_rem_snd);
+#endif
         }
         if (index[idx]%2 != 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
@@ -2470,6 +2512,155 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
     GA_Update_Flags[GAme][idx] = 0;
   }
 
+  GA_POP_NAME;
+  return TRUE;
+}
+
+/*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING GET CALLS
+\*/
+logical FATR ga_update7_ghosts_(Integer *g_a)
+{
+  Integer idx, ipx, np, handle=GA_OFFSET + *g_a, proc_rem;
+  Integer ntot, mask[MAXDIM];
+  Integer size, ndim, i, itmp;
+  Integer width[MAXDIM], dims[MAXDIM];
+  Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
+  Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
+  Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
+  Integer plo_rem[MAXDIM];
+  Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
+  logical mask0;
+  int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
+  char *ptr_loc, *ptr_rem;
+
+  /* if global array has no ghost cells, just return */
+  if (!ga_has_ghosts_(g_a)) {
+    return TRUE;
+  }
+
+  size = GA[handle].elemsize;
+  ndim = GA[handle].ndim;
+  /* initialize ghost cell widths and get array dimensions */
+  for (idx=0; idx < ndim; idx++) {
+    width[idx] = GA[handle].width[idx];
+    dims[idx] = GA[handle].dims[idx];
+  }
+
+  /* Check to make sure that global array is well-behaved (all processors
+     have data and the width of the data in each dimension is greater than
+     the corresponding value in width[]). */
+  if (!gai_check_ghost_distr(g_a)) return FALSE;
+
+  GA_PUSH_NAME("ga_update7_ghosts");
+  /* Get pointer to local memory */
+  ptr_loc = GA[handle].ptr[GAme];
+  /* obtain range of data that is held by local processor */
+  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+
+  /* evaluate total number of GET operations that will be required */
+  ntot = 1;
+  for (idx=0; idx < ndim; idx++) ntot *= 3;
+
+  /* Loop over all GET operations. The operation corresponding to the
+     mask of all zeros is left out. */
+  for (ipx=0; ipx < ntot; ipx++) {
+    /* Convert ipx to corresponding mask values */
+    itmp = ipx;
+    mask0 = TRUE;
+    for (idx = 0; idx < ndim; idx++) {
+      i = itmp%3;
+      mask[idx] = i-1;
+      if (mask[idx] != 0) mask0 = FALSE;
+      itmp = (itmp-i)/3;
+    }
+    if (mask0) continue;
+
+    /* check to see if ghost cell block has zero elements*/
+    mask0 = FALSE;
+    itmp = 0;
+    for (idx = 0; idx < ndim; idx++) {
+      if (mask[idx] != 0 && width[idx] == 0) mask0 = TRUE;
+      if (mask[idx] != 0) itmp++;
+    }
+    /*if (itmp>1) mask0 = TRUE; */
+    if (mask0) continue;
+    /* Now that mask has been determined, find data that is to be moved
+     * and identify processor from which it is coming. Wrap boundaries
+     * around, if necessary */
+    for (idx = 0; idx < ndim; idx++) {
+      if (mask[idx] == 0) {
+        tlo_rem[idx] = lo_loc[idx];
+        thi_rem[idx] = hi_loc[idx];
+      } else if (mask[idx] == -1) {
+        if (lo_loc[idx] > 1) {
+          tlo_rem[idx] = lo_loc[idx]-width[idx];
+          thi_rem[idx] = lo_loc[idx]-1;
+        } else {
+          tlo_rem[idx] = dims[idx]-width[idx]+1;
+          thi_rem[idx] = dims[idx];
+        }
+      } else if (mask[idx] == 1) {
+        if (hi_loc[idx] < dims[idx]) {
+          tlo_rem[idx] = hi_loc[idx] + 1;
+          thi_rem[idx] = hi_loc[idx] + width[idx];
+        } else {
+          tlo_rem[idx] = 1;
+          thi_rem[idx] = width[idx];
+        }
+      } else {
+        fprintf(stderr,"Illegal mask value found\n");
+      }
+    }
+    /* Locate remote processor to which data must be sent */
+    if (!nga_locate_region_(g_a, tlo_rem, thi_rem, _ga_map,
+       GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+       tlo_rem, thi_rem, *g_a);
+    if (np > 1) {
+      fprintf(stderr,"More than one remote processor found\n");
+    }
+    /* Remote processor has been identified, now get ready to send
+       data to it. Start by getting distribution on remote
+       processor.*/
+    proc_rem = GA_proclist[0];
+    nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+    for (idx = 0; idx < ndim; idx++) {
+      if (mask[idx] == 0) {
+        plo_loc[idx] = width[idx];
+        phi_loc[idx] = hi_loc[idx]-lo_loc[idx]+width[idx];
+        plo_rem[idx] = plo_loc[idx];
+      } else if (mask[idx] == -1) {
+        plo_loc[idx] = 0;
+        phi_loc[idx] = width[idx]-1;
+        plo_rem[idx] = thi_rem[idx]-tlo_rem[idx]+1;
+      } else if (mask[idx] == 1) {
+        plo_loc[idx] = hi_loc[idx]-lo_loc[idx]+width[idx]+1;
+        phi_loc[idx] = hi_loc[idx]-lo_loc[idx]+2*width[idx];
+        plo_rem[idx] = width[idx];
+      }
+    }
+    /* Get pointer to local data buffer and remote data
+       buffer as well as lists of leading dimenstions */
+    gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+    gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
+
+    /* Evaluate strides on local and remote processors */
+    gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
+                  stride_loc);
+
+    /* Compute the number of elements in each dimension and store
+       result in count. Scale the first element in count by the
+       element size. */
+    gam_ComputeCount(ndim, plo_loc, phi_loc, count);
+    count[0] *= size;
+ 
+    /* put data on remote processor */
+/*    ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
+          (int)(ndim - 1), (int)proc_rem); */
+    ARMCI_NbGetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
+          (int)(ndim - 1), (int)proc_rem, NULL);
+  }
+
+  ARMCI_WaitAll();
   GA_POP_NAME;
   return TRUE;
 }

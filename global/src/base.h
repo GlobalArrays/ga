@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.15 2003-09-03 17:11:21 d3g293 Exp $ */
+/*$Id: base.h,v 1.16 2003-10-10 21:42:19 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -6,6 +6,7 @@ extern Integer *GA_proclist;
 extern int* GA_Proc_list;
 extern int* GA_inv_Proc_list;
 extern int** GA_Update_Flags;
+extern int* GA_Update_Signal;
 extern short int _ga_irreg_flag; 
 
 #define FNAM        31              /* length of array names   */
