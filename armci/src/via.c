@@ -532,6 +532,15 @@ char *dataptr = GET_DATA_PTR(client_buf->buf);
 }
 
 
+static armci_dequeue_send_descr(VIP_VI_HANDLE vi)
+{
+VIP_RETURN rc;
+VIP_DESCRIPTOR *cmpl_dscr;
+    rc = VipSendWait(vi, VIP_INFINITE, &cmpl_dscr);
+    armci_check_status(DEBUG0, rc,"client wait for send to complete");
+}
+
+
 void armci_via_wait_ack()
 {
 VIP_RETURN rc;
@@ -541,6 +550,10 @@ VIP_DESCRIPTOR *pdscr;
 
      armci_long_buf_free =1; /* mark up the buffer as free */
 
+     /* make sure that msg associated with buffer completed */
+     armci_dequeue_send_descr((SRV_con+armci_long_buf_taken_srv)->vi);
+
+     /* wait for ack */
      rc = VipRecvWait((SRV_con+armci_long_buf_taken_srv)->vi, VIP_INFINITE, &pdscr);
      armci_check_status(DEBUG0, rc,"client wait_ack out of recv wait");
 
@@ -548,6 +561,8 @@ VIP_DESCRIPTOR *pdscr;
        printf("%d client got ack for req\n",armci_me);fflush(stdout);
      }
 }
+
+
 
 
 /*\ client sends request to server
@@ -563,12 +578,6 @@ VIP_DESCRIPTOR *cmpl_dscr;
     armci_init_vbuf(&client_buf->snd_dscr, client_buf->buf, bytes, client_memhandle);
     rc = VipPostSend((SRV_con+cluster)->vi, &client_buf->snd_dscr, client_memhandle);
     armci_check_status(DEBUG0, rc,"client sent data to server");
-    
-    /********** should be moved to code that gets the buffer  **********/
-    rc = VipSendWait((SRV_con+cluster)->vi, VIP_INFINITE, &cmpl_dscr);
-    armci_check_status(DEBUG0, rc,"client wait for send to complete");
-    if(cmpl_dscr !=&client_buf->snd_dscr)
-       armci_die("different descriptor completed",0);
 
     if(DEBUG0){ printf("%d:client sent %dbytes to server\n",armci_me,bytes);
                 fflush(stdout);
@@ -618,6 +627,8 @@ VIP_RETURN rc;
 VIP_DESCRIPTOR *pdscr;
 int cluster = armci_clus_id(msginfo->to);
 char *dataptr = GET_DATA_PTR(client_buf->buf); 
+
+    armci_dequeue_send_descr((SRV_con+cluster)->vi);
 
     rc = VipRecvWait((SRV_con+ cluster)->vi, VIP_INFINITE, &pdscr);
     armci_check_status(DEBUG0, rc,"client getting data from server");
