@@ -20,7 +20,7 @@ ifndef LIBRARY
   LIBRARY = libga++.a
 endif
 
-OBJ = init_term.o GAServices.o GlobalArray.o
+OBJ = init_term.o GAServices.o GlobalArray.o overload.o
 
 #--------------------------- extra definitions ---------------------
 
