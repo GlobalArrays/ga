@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.79 2004-05-12 16:08:59 vinod Exp $ */
+/* $Id: base.c,v 1.80 2004-06-24 02:55:48 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2183,6 +2183,7 @@ int local_sync_begin;
     return(TRUE);
 }
 
+    
      
 /*\ TERMINATE GLOBAL ARRAY STRUCTURES
  *
@@ -2525,38 +2526,30 @@ logical FATR nga_locate_region_( Integer *g_a,
 int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
 Integer  proc, owner, i, ga_handle;
 Integer  d, dpos, ndim, elems, p_handle;
-global_array_t *lochdlptr;
-#if defined(__crayx1_)
-global_array_t lochdl;
-#endif
+
    ga_check_handleM(g_a, "nga_locate_region");
 
    ga_handle = GA_OFFSET + *g_a;
-#if defined(__crayx1_)
-   memcpy(&lochdl,&GA[ga_handle],sizeof(global_array_t));
-   lochdlptr = &lochdl;
-#else
-   lochdlptr = &GA[ga_handle];
-#endif
-   for(d = 0; d< lochdlptr->ndim; d++)
-       if((lo[d]<1 || hi[d]>lochdlptr->dims[d]) ||(lo[d]>hi[d]))return FALSE;
-   
-   ndim = lochdlptr->ndim;
+
+   for(d = 0; d< GA[ga_handle].ndim; d++)
+       if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
+
+   ndim = GA[ga_handle].ndim;
 
    /* find "processor coordinates" for the top left corner and store them
     * in ProcT */
-   for(d = 0, dpos = 0; d< lochdlptr->dims[d]; d++){
-       findblock(lochdlptr->mapc + dpos, lochdlptr->nblock[d], 
-                 lochdlptr->scale[d], (int)lo[d], &procT[d]);
-       dpos += lochdlptr->nblock[d];
+   for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
+       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
+                 GA[ga_handle].scale[d], (int)lo[d], &procT[d]);
+       dpos += GA[ga_handle].nblock[d];
    }
 
    /* find "processor coordinates" for the right bottom corner and store
     * them in procB */
-   for(d = 0, dpos = 0; d< lochdlptr->ndim; d++){
-       findblock(lochdlptr->mapc + dpos, lochdlptr->nblock[d], 
-                 lochdlptr->scale[d], (int)hi[d], &procB[d]);
-       dpos += lochdlptr->nblock[d];
+   for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
+       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
+                 GA[ga_handle].scale[d], (int)hi[d], &procB[d]);
+       dpos += GA[ga_handle].nblock[d];
    }
 
    *np = 0;
@@ -2565,16 +2558,16 @@ global_array_t lochdl;
     * result in elems. Also find the lowest "processor coordinates" of the
     * processor block containing data and return these in proc_subscript.
    */
-   ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,lochdlptr->nblock);
+   ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,GA[ga_handle].nblock);
 
-   p_handle = lochdlptr->p_handle;
+   p_handle = GA[ga_handle].p_handle;
    for(i= 0; i< elems; i++){ 
       Integer _lo[MAXDIM], _hi[MAXDIM];
       Integer  offset;
 
       /* convert i to owner processor id using the current values in
        proc_subscript */
-      ga_ComputeIndexM(&proc, ndim, proc_subscript, lochdlptr->nblock); 
+      ga_ComputeIndexM(&proc, ndim, proc_subscript, GA[ga_handle].nblock); 
       /* get range of global array indices that are owned by owner */
       ga_ownsM(ga_handle, proc, _lo, _hi);
 
@@ -2593,7 +2586,7 @@ global_array_t lochdl;
       proclist[i] = owner;
       /* Update to proc_subscript so that it corresponds to the next
        * processor in the block of processors containing the patch */
-      ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,lochdlptr->nblock);
+      ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].nblock);
       (*np)++;
    }
    return(TRUE);
