@@ -1,14 +1,64 @@
-/* $Id: rmw.c,v 1.17 2002-07-17 18:05:33 vinod Exp $ */
+/* $Id: rmw.c,v 1.18 2003-10-21 04:17:02 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
 #include <stdio.h>
 
+#ifdef LIBELAN_ATOMICS 
+
+ELAN_ATOMIC *a;
+
+int elan_int_fadd(int *target, int inc, int vp)
+{
+    int result;
+
+    elan_wait(elan_atomic32(a, ELAN_ATOMIC_ADD, target, inc, 0, vp, &result), elan_base->waitType);
+    return(result);
+}
+
+int elan_long_fadd(long *target, long inc, int vp)
+{
+    long result;
+    
+#ifdef _LP64
+    elan_wait(elan_atomic64(a, ELAN_ATOMIC_ADD, target, inc, 0, vp, &result), elan_base->waitType);
+#else
+    elan_wait(elan_atomic32(a, ELAN_ATOMIC_ADD, target, inc, 0, vp, &result), elan_base->waitType);
+#endif
+
+    return(result);
+}
+
+int elan_int_swap(int *target, int value, int vp)
+{
+    int result;
+
+    elan_wait(elan_atomic32(a, ELAN_ATOMIC_SWAP, target, value, 0, vp, &result), elan_base->waitType);
+    return(result);
+}
+
+int elan_long_swap(long *target, long value, int vp)
+{
+    long result;
+    
+#ifdef _LP64
+    elan_wait(elan_atomic64(a, ELAN_ATOMIC_SWAP, target, value, 0, vp, &result), elan_base->waitType);
+#else
+    elan_wait(elan_atomic32(a, ELAN_ATOMIC_SWAP, target, value, 0, vp, &result), elan_base->waitType);
+#endif
+
+    return(result);
+}
+#endif /* LIBELAN_ATOMICS */
+
 /* enable use of newer interfaces in SHMEM */
 #ifndef CRAY
+#ifndef LIBELAN_ATOMICS
 /* manpages for shmem_fadd exist on the T3E but library code does not */
 #define SHMEM_FADD 
 #endif
+#endif
+
 
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
@@ -102,7 +152,10 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 #   if defined(QUADRICS) || defined(_CRAYMPP)
       case ARMCI_FETCH_AND_ADD:
 #ifdef SHMEM_FADD
+         /* printf(" calling intfdd arg %x %ld \n", prem, *prem); */
           *(int*) ploc = shmem_int_fadd(prem, extra, proc);
+#elif defined(LIBELAN_ATOMICS)
+          *(int*) ploc = elan_int_fadd(prem, extra, proc);
 #else
           while ( (ival = shmem_int_swap(prem, INT_MAX, proc) ) == INT_MAX);
           (void) shmem_int_swap(prem, ival +extra, proc);
@@ -112,6 +165,8 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
       case ARMCI_FETCH_AND_ADD_LONG:
 #ifdef SHMEM_FADD
           *(long*) ploc = shmem_long_fadd( (long*)prem, (long) extra, proc);
+#elif defined(LIBELAN_ATOMICS)
+          *(long*) ploc = elan_long_fadd( (long*)prem, (long) extra, proc);
 #else
           while ((lval=shmem_long_swap((long*)prem,LONG_MAX,proc)) == LONG_MAX);
           (void) shmem_long_swap((long*)prem, (lval + extra), proc);
@@ -119,10 +174,18 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 #endif
         break;
       case ARMCI_SWAP:
+#ifdef LIBELAN_ATOMICS
+          *(int*)ploc = elan_int_swap((int*)prem, *(int*)ploc,  proc); 
+#else
           *(int*)ploc = shmem_int_swap((int*)prem, *(int*)ploc,  proc); 
+#endif
         break;
       case ARMCI_SWAP_LONG:
+#ifdef LIBELAN_ATOMICS
+          *(long*)ploc = elan_long_swap((long*)prem, *(long*)ploc,  proc); 
+#else
           *(long*)ploc = shmem_swap((long*)prem, *(long*)ploc,  proc); 
+#endif
         break;
 #   elif defined(LAPI)
 #     if defined(LAPI64) && !defined(RMWBROKEN)

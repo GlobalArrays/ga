@@ -1,4 +1,5 @@
-/* $Id: armci.c,v 1.80 2003-08-21 21:17:43 d3h325 Exp $ */
+
+/* $Id: armci.c,v 1.81 2003-10-21 04:17:02 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -61,8 +62,11 @@ double armci_internal_buffer[BUFSIZE_DBL];
 #   include "locks.h"
     lockset_t lockid;
 #endif
-#ifdef QUADRICS
-#include <elan/elan.h>
+
+
+#ifdef LIBELAN_ATOMICS
+ELAN_ATOMIC *a;
+#warning "Enabling new atomics"
 #endif
 
 typedef struct{
@@ -273,7 +277,7 @@ static void armci_check_shmmax()
   mylimit = limit = (long) armci_max_region();
   armci_msg_bcast_scope(SCOPE_MASTERS, &limit, sizeof(long), 0);
   if(mylimit != limit){
-     printf("%d:Shared memory limit detected by ARMCI is %ld bytes on node %s vs %ld on %s\n",
+     printf("%d:Shared mem limit in ARMCI is %ld bytes on node %s vs %ld on %s\n",
             armci_me,mylimit<<10,armci_clus_info[armci_clus_me].hostname,
             limit<<10, armci_clus_info[0].hostname);
      fflush(stdout); sleep(1);
@@ -310,17 +314,37 @@ int ARMCI_Init()
     }
     armci_init_lapi();
 #endif
+
 #ifdef QUADRICS
-    {
 #   ifdef DECOSF
+    {
        char *tmp = getenv("SHMEM_SMP_ENABLE");
        if(tmp == NULL || strcmp((const char *)tmp,"0"))
 	  printf("WARNING: On Tru64 (Compaq Alphaserver) it might be required to set the Quadrics environment variable SHMEM_SMP_ENABLE=0 as a work around for shmem_fadd problem.\n");
-#   endif
     }
-    shmem_init();
-    /*printf("after shmem_init\n"); */
-#endif
+#   endif
+
+    /* Ensure we're linked with compatible software */
+    if (!elan_checkVersion (ELAN_VERSION))
+	fprintf(stderr,
+		"libelan version '%s' incompatible with '%s' ('%s' expected)",
+		ELAN_VERSION, elan_version(), ELAN_VERSION);
+
+#   if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,4,6)
+       elan_baseInit();
+#   else
+       elan_baseInit(0);
+#   endif
+
+#   ifdef LIBELAN_ATOMICS
+    {
+	ELAN_QUEUE *q = elan_gallocQueue(elan_base, elan_base->allGroup);
+	a = elan_atomicInit(elan_base->state, q, 16, 0);
+    }
+#   else
+       shmem_init();
+#   endif
+#endif /* QUADRICS */
 
     armci_init_clusinfo();
 
