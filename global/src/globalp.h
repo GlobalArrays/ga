@@ -156,5 +156,15 @@ extern void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
 #define allign_page(n) allign__((long)(n), PAGE_SIZE)
 
 extern void gai_print_subscript(char *pre,int ndim, Integer subscript[], char* post);
+extern void ngai_dest_indices(Integer ndims, Integer *los, Integer *blos, Integer *dimss,
+               Integer ndimd, Integer *lod, Integer *blod, Integer *dimsd);
+
+extern logical ngai_patch_intersect(Integer *lo, Integer *hi,
+                        Integer *lop, Integer *hip, Integer ndim);
+
+extern logical ngai_comp_patch(Integer andim, Integer *alo, Integer *ahi,
+                          Integer bndim, Integer *blo, Integer *bhi);
+extern logical ngai_test_shape(Integer *alo, Integer *ahi, Integer *blo,
+                          Integer *bhi, Integer andim, Integer bndim);
 
 #endif

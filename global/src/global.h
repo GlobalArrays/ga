@@ -24,12 +24,14 @@ extern "C" {
 #else
 # define ARGS_(s) ()
 #endif
+
 #define C_DBL MT_C_DBL
 #define C_INT MT_C_INT
 #define C_FLOAT MT_C_FLOAT
 #define C_DCPL MT_C_DCPL
 #define C_LONG MT_C_LONGINT
 #define C_SCPL MT_C_SCPL
+
 extern void *GA_Getmem(int type, int nelem);
 extern void GA_Freemem(void* ptr);
 extern int GA_Assemble_duplicate(int g_a, char *name, void *ptr);
@@ -309,6 +311,14 @@ extern void FATR nga_add_patch_(DoublePrecision *alpha, Integer *g_a,
 extern int ga_type_c2f(int type);
 extern int ga_type_f2c(int type);
 extern void ga_type_gop(int type, void *x, int n, char* op);
+
+/* added bu Limin */
+extern void FATR ga_add_constant_(Integer *g_a, void *);
+extern void FATR ga_abs_value_(Integer *);
+extern void FATR ga_recip_(Integer *g_a);
+extern void FATR ga_abs_value_patch_ (Integer *,  Integer *, Integer *);
+extern void FATR nga_add_constant_patch_(Integer *, Integer *, Integer *, void *);
+
 
 #ifdef __cplusplus
 }

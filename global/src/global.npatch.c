@@ -71,7 +71,7 @@ void ngai_dest_indices(Integer ndims, Integer *los, Integer *blos, Integer *dims
 
 
 /* check if I own data in the patch */
-static logical ngai_patch_intersect(Integer *lo, Integer *hi,
+logical ngai_patch_intersect(Integer *lo, Integer *hi,
                         Integer *lop, Integer *hip, Integer ndim)
 {
     Integer i;
@@ -98,7 +98,7 @@ static logical ngai_patch_intersect(Integer *lo, Integer *hi,
 
 /*\ check if patches are identical 
 \*/
-static logical ngai_comp_patch(Integer andim, Integer *alo, Integer *ahi,
+logical ngai_comp_patch(Integer andim, Integer *alo, Integer *ahi,
                           Integer bndim, Integer *blo, Integer *bhi)
 {
     Integer i;
@@ -123,7 +123,7 @@ static logical ngai_comp_patch(Integer andim, Integer *alo, Integer *ahi,
 }
 
 /* test two GAs to see if they have the same shape */
-static logical ngai_test_shape(Integer *alo, Integer *ahi, Integer *blo,
+logical ngai_test_shape(Integer *alo, Integer *ahi, Integer *blo,
                           Integer *bhi, Integer andim, Integer bndim)
 {
     Integer i;
