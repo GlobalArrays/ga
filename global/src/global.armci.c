@@ -538,6 +538,9 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
 
       /* eliminate dimensions =1 from ddb analysis */
       for(d=0; d<ndim; d++)if(dims[d]==1)blk[d]=1;
+      
+      /* for load balancing overwrite block size if needed */ 
+      for(d=0; d<ndim; d++)if(blk[d]*GAnproc < dims[d])blk[d]=-1;
           
 
       if(GAme==0 && DEBUG)for(d=0;d<ndim;d++) fprintf(stderr,"b[%d]=%d\n",d,blk[d]);
@@ -1825,7 +1828,11 @@ Integer  ow,i;
 void FATR ga_access_(g_a, ilo, ihi, jlo, jhi, index, ld)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *index, *ld;
 {
-Integer lo[2], hi[2];
+Integer lo[2], hi[2],ndim=ga_ndim_(g_a);
+
+     if(ndim != 2) 
+        ga_error("ga_access: 2D API cannot be used for array dimension",ndim);
+
      lo[0]=*ilo;
      lo[1]=*jlo;
      hi[0]=*ihi;
@@ -1939,7 +1946,11 @@ void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi)
 void FATR  ga_inquire_(g_a,  type, dim1, dim2)
       Integer *g_a, *dim1, *dim2, *type;
 {
-   ga_check_handleM(g_a, "ga_inquire");
+Integer ndim = ga_ndim_(g_a);
+
+   if(ndim != 2)
+      ga_error("ga_inquire: 2D API cannot be used for array dimension",ndim);
+
    *type       = GA[GA_OFFSET + *g_a].type;
    *dim1       = GA[GA_OFFSET + *g_a].dims[0];
    *dim2       = GA[GA_OFFSET + *g_a].dims[1];
@@ -2877,12 +2888,15 @@ Integer subscript[2];
 void FATR  ga_distribution_(g_a, proc, ilo, ihi, jlo, jhi)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *proc;
 {
-Integer  lo[2], hi[2];
+Integer lo[2], hi[2];
+Integer ndim = ga_ndim_(g_a);
+
+   if(ndim != 2)
+      ga_error("ga_distribution:2D API cannot be used for array dimension",ndim);
 
    nga_distribution_(g_a, proc, lo, hi);
    *ilo = lo[0]; *ihi=hi[0];
    *jlo = lo[1]; *jhi=hi[1]; 
-   
 }
 
 
