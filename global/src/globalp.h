@@ -1,21 +1,42 @@
+#define MAX_ARRAYS  40             /* max number of global arrays */
 
-#define     GA_TYPE_REQ 32760 - 1
-#define     GA_TYPE_GET 32760 - 2
-#define     GA_TYPE_SYN 32760 - 3
-#define     GA_TYPE_PUT 32760 - 4
-#define     GA_TYPE_ACC 32760 - 5
-#define     GA_TYPE_GSM 32760 - 6
-#define     GA_TYPE_ACK 32760 - 7
-#define     GA_TYPE_ADD 32760 - 8
-#define     GA_TYPE_DCV 32760 - 9
-#define     GA_TYPE_DCI 32760 - 10
-#define     GA_TYPE_DCJ 32760 - 11
-#define     GA_TYPE_DSC 32760 - 12
-#define     GA_TYPE_RDI 32760 - 13
-#define     GA_TYPE_DGT 32760 - 14
-#define     GA_TYPE_GOP 32760 - 29
-#define     GA_TYPE_BRD 32760 - 30
+#ifndef MAX_NPROC                  /* default max number of processors  */
+#   ifdef PARAGON
+#     define MAX_NPROC    1024
+#   elif defined(DELTA)
+#     define MAX_NPROC     512
+#   elif defined(SP1)
+#     define MAX_NPROC     400
+#   elif defined(CRAY_T3D)
+#     define MAX_NPROC     256
+#   elif defined(KSR)
+#     define MAX_NPROC      80
+#   else
+#     define MAX_NPROC      128     /* default for everything else */
+#   endif
+#endif
 
+/* types/tags of messages used internally by GA */
+#define     GA_MSG_OFFSET 32000
+#define     GA_TYPE_REQ   GA_MSG_OFFSET + 1
+#define     GA_TYPE_GET   GA_MSG_OFFSET + 2
+#define     GA_TYPE_PUT   GA_MSG_OFFSET + 3
+#define     GA_TYPE_ACC   GA_MSG_OFFSET + 4
+#define     GA_TYPE_GSM   GA_MSG_OFFSET + 5
+#define     GA_TYPE_ACK   GA_MSG_OFFSET + 6
+#define     GA_TYPE_ADD   GA_MSG_OFFSET + 7
+#define     GA_TYPE_DCV   GA_MSG_OFFSET + 8
+#define     GA_TYPE_DCI   GA_MSG_OFFSET + 9
+#define     GA_TYPE_DCJ   GA_MSG_OFFSET + 10
+#define     GA_TYPE_DSC   GA_MSG_OFFSET + 11
+#define     GA_TYPE_RDI   GA_MSG_OFFSET + 12
+#define     GA_TYPE_DGT   GA_MSG_OFFSET + 13
+#define     GA_TYPE_SYN   GA_MSG_OFFSET + 14
+#define     GA_TYPE_GOP   GA_MSG_OFFSET + 15
+#define     GA_TYPE_BRD   GA_MSG_OFFSET + 16
+#define     GA_TYPE_MAS   GA_MSG_OFFSET + 20
+
+/* GA operation ids */
 #define     GA_OP_GET 1          /* Get                         */
 #define     GA_OP_END 2          /* Terminate                   */
 #define     GA_OP_CRE 3          /* Create                      */
@@ -41,6 +62,9 @@
 #define MAX(a,b) (((a) >= (b)) ? (a) : (b))
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
+
+#define GAsizeofM(type)  ( (type)==MT_F_DBL? sizeof(DoublePrecision): \
+                           (type)==MT_F_INT? sizeof(Integer): 0)
 
 #define NAME_STACK_LEN 10
 #define PAGE_SIZE  4096

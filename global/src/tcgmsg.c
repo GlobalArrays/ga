@@ -1,10 +1,10 @@
 /************************* interface to TCGMSG  *****************************/ 
 
+#ifdef SYSV
+# include<string.h>
+#endif
 #include "global.h"
 #include "message.h"
-#ifdef SYSV
-#include<string.h>
-#endif
 
 /*** data required to exploit locality and implement data server ***/
 cluster_info_t GA_clus_info[MAX_CLUST];
@@ -53,6 +53,10 @@ void init_msg_interface()
   GA_n_proc  = (Integer)SR_n_proc;
   GA_n_clus  = (Integer)SR_n_clus;
   GA_clus_id = (Integer)SR_clus_id;
+#else
+  GA_n_clus = 1;
+  GA_n_proc = nnodes_();
+  GA_clus_id = 0;
 #endif
 }
 

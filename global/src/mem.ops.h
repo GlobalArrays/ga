@@ -5,8 +5,8 @@
 * Jarek Nieplocha, 08.15.95                                                 *
 \***************************************************************************/
 
-Integer ONE=1;
-DoublePrecision DPzero=0.;
+static Integer ONE=1;
+static DoublePrecision DPzero=0.;
 
 /***************************** 1-Dimensional copy ************************/
 
@@ -14,11 +14,11 @@ DoublePrecision DPzero=0.;
        extern Integer GAme;
 #      define Copy(src,dst,n)          memcpy((dst), (src), (n))
 #      define CopyElemTo(src,dst,n,proc){   \
-                  if(proc==GAme)memwcpy((dst), (src), (n));\
+                  if(proc==GAme)memwcpy((long*)(dst), (long*)(src), (n));\
                   else shmem_put((long*) (dst), (long*)(src), (n), (proc));\
               }
 #      define CopyElemFrom(src,dst,n,proc){ \
-                  if(proc==GAme)memwcpy((dst), (src), (n));\
+                  if(proc==GAme)memwcpy((long*)(dst), (long*)(src), (n));\
                   else shmem_get((long*) (dst), (long*)(src), (n), (proc));\
               }
 #elif  defined(KSR)
@@ -40,10 +40,16 @@ DoublePrecision DPzero=0.;
 #  define icopy2d_ ICOPY2D
 #  define accumulatef_ ACCUMULATEF
 #  define XX_DAXPY SAXPY
+#  define XX_ICOPY SCOPY
+#  define XX_DCOPY SCOPY
 #elif defined(KSR)
 #  define XX_DAXPY saxpy_
+#  define XX_ICOPY scopy_
+#  define XX_DCOPY scopy_
 #else
 #  define XX_DAXPY daxpy_
+#  define XX_ICOPY scopy_
+#  define XX_DCOPY dcopy_
 #endif
 
 #  define THRESH   32
@@ -76,9 +82,30 @@ void dcopy2d_(), icopy2d_(), accumulatef_();
     }\
     }
 
+#elif defined(SP1__)
+    /* call BLAS version if more than THRESH rows */
+#   define Copy2D(type, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
+    Integer item_size=GAsizeofM(type), j;\
+    Integer nbytes = item_size* *rows;\
+    char *ps=ptr_src, *pd=ptr_dst;\
+    if((*rows < THRESH) || type==MT_F_INT)\
+      for (j = 0;  j < *cols;  j++){\
+          Copy(ps, pd, nbytes);\
+          ps += item_size* *ld_src;\
+          pd += item_size* *ld_dst;\
+      }\
+    else\
+      for (j = 0;  j < *cols;  j++){\
+          XX_DCOPY(rows, ps, &ONE, pd,  &ONE);\
+          ps += item_size* *ld_src;\
+          pd += item_size* *ld_dst;\
+      }\
+    }
+
+
 #elif defined(PARAGON)
-    /* call vectorized version if more than THRESH rows */
-void Copy2D(type, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst)
+     /* call vectorized version if more than THRESH rows */
+static void Copy2D(type, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst)
 Integer type, *rows, *cols, *ld_src, *ld_dst;
 char *ptr_src, *ptr_dst;
 {
@@ -156,7 +183,7 @@ char *ptr_src, *ptr_dst;
 
 
 /**************************** accumulate operation **************************/
-void acc_column(alpha, a, b,n)
+static void acc_column(alpha, a, b,n)
 Integer n;
 DoublePrecision alpha, *a, *b;
 {

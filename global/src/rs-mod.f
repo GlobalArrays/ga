@@ -1,3 +1,7 @@
+c
+c JN: the original file has been slightly modified
+c JN: renamed pythag to pythag000 to avoid multiply defined symbol also in rsg.f
+c
       subroutine rs(nm,n,a,w,matz,z,fv1,fv2,ierr)
 c
       integer n,nm,ierr,matz

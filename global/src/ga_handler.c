@@ -60,15 +60,15 @@ long buf[4], qtype, nelem, status;
 
 
 
-static void ga_handler(long *pid)
+static void ga_handler(int *pid)
 {
-long msglen;
+size_t msglen;
 
   mpc_wait(pid, &msglen);
 
   /* fprintf(stderr,"in handler: msg from %d\n",requesting_node); */
   ga_SERVER(requesting_node);
-  ga_init_handler(MessageRcv, TOT_MSG_SIZE );
+  ga_init_handler((char*)MessageRcv, TOT_MSG_SIZE );
   /* fprintf(stderr,"leaving handler\n"); */
 }
 
@@ -77,7 +77,7 @@ long msglen;
 
 void ga_init_handler(buffer, lenbuf)   /* Also called in ga_initialize */
 char *buffer;
-long lenbuf;
+int lenbuf;
 {
 static long status; 
 

@@ -5,17 +5,20 @@
  * description: internal GA message-passing communication routines 
                 implemented as wrappers to MPI/NX/MPL/TCGMSG libraries
  * notes:       non-reentrant MPICH code must be avoided in the context
- *              of interrupt-driven communication; 
+ *              of interrupt-driven communication (in GA); 
  *              MPICH might be also invoked through TCGMSG interface therefore
  *              for that reason need to avoid TCGMSG on Intel and SP machines 
  *
  */
 
+#define DEBUG  0
+#define DEBUG0 0 
+#define DEBUG1 0 
+#define SYNC   1
 
-
-#if defined SP1 
+#if defined SP1
 #  include <mpproto.h>
-#elif defined(NX) 
+#elif defined(NX)
 #  if defined(PARAGON)
 #     include <nx.h>
 #  elif defined(DELTA)
@@ -25,14 +28,112 @@
 #  endif
 #endif
 
+
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
 #include <stdio.h>
 
+
 #ifdef CRAY_T3D
 #  include <fortran.h>
 #endif
+
+#ifdef SOCKCONNECT
+       typedef struct{
+               int type;
+               int from;
+               int to;
+               int len;
+       }server_header_t; 
+       int ga_msg_from_server=0;
+       server_header_t msg_header;
+       int got_header=0;
+#endif
+
+      
+
+/*\ wrapper to PROBE operation
+\*/
+Integer ga_msg_probe(type, from)
+     Integer type, from;
+{
+     if(DEBUG){
+         printf("%s:%d> probing for message type=%d from=%d\n",
+              GA_clus_info[GA_clus_id].hostname, ga_msg_nodeid_(), type, from);
+         fflush(stdout); 
+     }
+
+#ifdef SOCKCONNECT
+
+     /* message on the socket has priority i.e., probe returns 0 until
+      * called with type argument matching type of the message available
+      * from ther server socket !!
+      */
+
+     if(from != -1)ga_error("ga_msg_probe: only from=-1 works now",from);
+
+     /* check if msg header was read before */
+     if(got_header){
+
+         if(msg_header.type == type) return 1; /* msg type available */ 
+         else return(0);
+
+     /*check if there is a message available */
+     }else if(poll_server()){ 
+
+           int msglen;
+    
+           /* read the message header */
+           recv_from_server(&msg_header,&msglen);
+           if(msglen != sizeof(msg_header))
+                        ga_error("ga_msg_probe: error in header",msglen); 
+           got_header=1;
+           
+           if(DEBUG){
+              printf("%s:%d> server probing for message type=%d,%d available\n",
+              GA_clus_info[GA_clus_id].hostname, ga_nodeid_(), type, 
+              msg_header.type);
+              fflush(stdout);
+           }
+
+           if(msg_header.type == type) return 1; /* msg type available */
+           else return(0);
+     }
+#endif
+
+     /* Now check the "regular" (i.e., not from server socket) messages */
+
+#    if defined(NX)
+        if (iprobe(-1L))if(infotype()==type)return (1);
+        return (0);
+#    elif defined(SP1)
+     {
+       int node, rc, ttype = type, nbytes;
+
+       node =  (from < 0) ? DONTCARE : from;
+       rc = mpc_probe(&node, &ttype, &nbytes);
+       if(rc <0 ) ga_error("ga_msg_probe: failed ", type);
+       return (nbytes==-1 ? 0 : 1);
+     }
+#    elif defined(MPI)
+     {
+       int flag, node, ierr ;
+       MPI_Status status;
+
+       node =  (from < 0) ? MPI_ANY_SOURCE : from;
+       ierr   = MPI_Iprobe(source, (int)*type, TCGMSG_Comm, &flag, &status);
+       if(ierr != MPI_SUCCESS) ga_error("ga_msg_probe: failed ", type);
+       return (flag == 0 ? 0 : 1);
+     }
+#    else
+     {
+       extern Integer probe_();
+       return probe_(&type, &from);
+     }
+#    endif
+}
+           
 
 
 /*\ wrapper to a BLOCKING MESSAGE SEND operation
@@ -41,12 +142,58 @@ void ga_msg_snd(type, buffer, bytes, to)
      Integer type, bytes, to;
      Void    *buffer;
 {
+     if(DEBUG1){
+         printf("%s:%d> sending message type=%d len=%d to=%d\n",
+              GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,bytes,to);
+         fflush(stdout); 
+     }
+
+#ifdef SOCKCONNECT
+     if(to > cluster_server || to < cluster_master){
+
+        /* message goes outside cluster */
+        server_header_t send_header; 
+
+        if(cluster_server != ga_msg_nodeid_()){
+              printf("%s:%d> ERROR sending to server type=%d len=%d to=%d\n",
+              GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,bytes,to);
+                ga_error("ga_msg_snd:I cannot send message outside cluster",to);
+        }
+        
+        send_header.type = (int)type; 
+        send_header.len  = (int)bytes; 
+        send_header.to   = (int)to; 
+        send_header.from = (int)ga_msg_nodeid_();
+        
+     if(DEBUG){
+         printf("%s:%d> SENDING message to server type=%d len=%d to=%d\n",
+              GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,bytes,to);
+         fflush(stdout);
+     }
+
+        send_to_server(&send_header, sizeof(send_header));
+        send_to_server(buffer, (int)bytes);
+
+     if(DEBUG){
+         printf("%s:%d> SENT message to server type=%d len=%d to=%d\n",
+              GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,bytes,to);
+         fflush(stdout); 
+     }
+        return;
+
+     } else {
+       
+        /* message goes to local node ==> adjust "to" nodeid for local send */
+        to -= cluster_master;
+     }
+#    endif
+
 #    if defined(NX) 
 
         csend(type, buffer, bytes, to, 0);
 
 #    elif defined(SP1)
-
+     {
         /* need to avoid blocking calls that disable interrupts */
         int status, msgid;
 
@@ -54,17 +201,19 @@ void ga_msg_snd(type, buffer, bytes, to)
         if(status == -1) ga_error("ga_msg_snd: error sending ", type);
         while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
         if(status < -1) ga_error("ga_msg_snd: invalid message ID ", msgid );
-
+     }
 #    elif defined(MPI)
-
+     {
         int ierr;
         ierr = MPI_Send(buffer, (int)bytes, MPI_CHAR, (int)to, (int)type,
                         MPI_COMM_WORLD);
         if(ierr != MPI_SUCCESS) ga_error("ga_msg_snd: failed ", type);
-
+     }
 #    else
+     {
         Integer sync=SYNC;
         snd_(&type, buffer, &bytes, &to, &sync);
+     }
 #    endif
 }
 
@@ -76,13 +225,63 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
      Integer type, buflen, *msglen, from, *whofrom;
      Void    *buffer;
 {
-#    if defined(NX) 
+     if(DEBUG){
+         printf("%s:%d> receiving message type=%d buflen=%d from=%d\n",
+           GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,buflen,from);
+         fflush(stdout);
+     }
 
-#       ifdef  PARAGON
+#ifdef SOCKCONNECT
+     if(ga_msg_nodeid_() == cluster_server){
+       
+/*       if(from != -1)ga_error("ga_msg_rcv: server must use src =-1",from);*/
+
+       if(got_header){
+          if(msg_header.type != type)
+              ga_error("ga_msg_rcv: server: wrong type",msg_header.type);
+          if(msg_header.len > buflen) 
+              ga_error("ga_msg_rcv:overflowing buffer",msg_header.len);
+
+          /* get the message body from server socket */
+          recv_from_server(buffer, msglen);
+          if(*msglen  != msg_header.len)
+              ga_error("ga_msg_rcv: inconsistent length header",*msglen);
+          *whofrom = msg_header.from;
+          if(*whofrom <0 || *whofrom >GA_n_proc)
+              ga_error("ga_msg_rcv: wrong sender entry in header",*whofrom);
+
+          got_header = 0;
+
+     if(DEBUG){
+         printf("%s:%d> Received messagefrom Server type=%d len=%d from=%d\n",
+           GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,*msglen,
+           *whofrom);
+         fflush(stdout);
+     }
+
+
+          return;
+       }
+
+     }
+
+     if(from>=0) {
+             from -= cluster_master;
+             if(from<0) ga_error("ga_msg_rcv: msgid problem ", from);
+     }
+
+#    endif
+
+     /* receive the message using local message-passing library */
+
+#    if defined(NX) 
+#       ifdef  PARAGON 
+        {
            long info[8], ptype=0;
            crecvx(type, buffer, buflen, from, ptype, info); 
            *msglen = info[1];
            *whofrom = info[2];
+        }
 #       else
            crecv(type, buffer, buflen); /* cannot receive by sender */ 
            *msglen = infocount();
@@ -94,7 +293,7 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
 #       endif
 
 #    elif defined(SP1)
-
+     {
         /* need to avoid blocking calls that disable interrupts */
         int status, msgid, ffrom, ttype=type; 
  
@@ -105,9 +304,10 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
         while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
         if(status < -1) ga_error("ga_msg_rcv: invalid message ID ", msgid );
         *msglen = status;
-
+        *whofrom = (Integer)ffrom;
+     }
 #    elif defined(MPI)
-
+     {
         int ierr, count, ffrom;
         MPI_Status status;
 
@@ -120,11 +320,25 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
         if(ierr != MPI_SUCCESS) ga_error("ga_msg_rcv: Get_count failed ", type);
         *whofrom = (Integer)status.MPI_SOURCE;
         *msglen  = (Integer)count;
-
+     }
 #    else
+     {
         Integer sync=SYNC;
         rcv_(&type, buffer, &buflen, msglen, &from, whofrom, &sync);
+     }
 #    endif
+
+#ifdef SOCKCONNECT
+     /* adjust whofrom to reflect cluster environment */ 
+     if(*whofrom < cluster_master) *whofrom += cluster_master;
+#endif
+     if(DEBUG0){
+         printf("%s:%d> received message from local type=%d len=%d from=%d\n",
+           GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,*msglen,
+           *whofrom);
+         fflush(stdout);
+     }
+
 }
 
 
@@ -137,39 +351,57 @@ msgid_t ga_msg_ircv(type, buffer, buflen, from)
 {
 msgid_t msgid;
 
+     if(DEBUG){
+         printf("%s:%d> async receiving message type=%d buflen=%d from=%d\n",
+           GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,buflen,from);
+         fflush(stdout);
+     }
+
+#ifdef SOCKCONNECT
+     if(ga_msg_nodeid_() == cluster_server){
+        ga_error("ga_msg_ircv: server cannot use irecv",type);
+     }
+     if(from>=0) {
+             from -= cluster_master;
+             if(from<0) ga_error("ga_msg_ircv: msgid problem ", from);
+     }
+#endif
+
 #    if defined(NX) 
 
 #       ifdef  PARAGON
+        {
            long ptype=0;
            /*msginfo is NX internal */
            msgid = irecvx(type, buffer, buflen, from, ptype, msginfo);
+        }
 #       else
            msgid = irecv(type, buffer, buflen); /* cannot receive by sender */
 #       endif
 
 #    elif defined(SP1)
-
+     {
         int status;
         static int ffrom, ttype; /*  MPL writes upon message arrival */
         ttype = type;
         ffrom = (from == -1)? DONTCARE: from;
         status = mpc_recv(buffer, buflen, &ffrom, &ttype, &msgid);
         if(status == -1) ga_error("ga_msg_ircv: error receiving", type);
-
+     }
 #    elif defined(MPI)
-
+     {
         int ierr, count, ffrom;
         ffrom = (from == -1)? MPI_ANY_SOURCE : (int)from;
         ierr = MPI_Irecv(buffer, (int)buflen, MPI_CHAR, ffrom, (int)type,
                MPI_COMM_WORLD, &msgid);
         if(ierr != MPI_SUCCESS) ga_error("ga_msg_ircv: Recv failed ", type);
-
+     }
 #    else
-
+     {
        Integer sync=ASYNC, msglen, whofrom;
        rcv_(&type, buffer, &buflen, &msglen, &from, &whofrom, &sync);
        msgid = from; /*TCGMSG waits for all comms to/from node */
-
+     }
 #    endif
 
      return(msgid);
@@ -184,6 +416,12 @@ void ga_msg_wait(msgid, whofrom, msglen)
 msgid_t msgid;
 Integer *whofrom, *msglen;
 {
+     if(DEBUG){
+         printf("%s:%d> WAITING FOR MESSAGE\n",
+              GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_());
+         fflush(stdout);
+     }
+
 #    if defined(NX) 
 
         msgwait(msgid);
@@ -191,25 +429,25 @@ Integer *whofrom, *msglen;
 /*        *whofrom = infonode();*/
 
 #    elif defined(SP1)
-
+     {
         int status;
         while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
         if(status < -1) ga_error("ga_wait_msg: invalid message ID ", msgid);
         *msglen = status;
         /* whofrom is currently not retrieved from MPL */
-
+     }
 #    elif defined(MPI)
-
+     {
         int ierr, count;
         MPI_Status status;
 
         ierr = MPI_Wait(&msgid, &status);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: failed ", 0);
+        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: failed ", type);
         ierr = MPI_Get_count(&status, MPI_CHAR, &count);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: Get_count failed", 0);
+        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: Get_count failed", type);
         *whofrom = (Integer)status.MPI_SOURCE;
         *msglen  = (Integer)count;
-
+     }
 #    else
         waitcom_(&msgid); /* cannot get whofrom and msglen from TCGMSG */
 #    endif
@@ -221,6 +459,9 @@ Integer *whofrom, *msglen;
 \*/
 Integer ga_msg_nnodes_()
 {
+#  ifdef SOCKCONNECT
+     return GA_n_proc;
+#  endif
 #  ifdef MPI
      int numprocs;
      MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
@@ -236,14 +477,20 @@ Integer ga_msg_nnodes_()
 \*/
 Integer ga_msg_nodeid_()
 {
+Integer msg_id;
 #  ifdef MPI
      int myid;
 
      MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-     return((Integer)myid);
+     msg_id = ((Integer)myid);
 #  else
-     return (nodeid_());
+     msg_id =  (nodeid_());
 #  endif
+#  ifdef SOCKCONNECT
+     msg_id += cluster_master;
+     if(msg_id >= GA_n_proc) ga_error("ga_msg_nodeid:what is going on?",msg_id);
+#  endif
+   return (msg_id);
 }
 
 
@@ -309,26 +556,59 @@ Integer len, from, xsyn;
 }
 #endif
 
+static long sync_cnt=0;
 
-
+/*\ Synchronization using message-passing
+ *  Note: ga_sync might not be calling it at all on some platforms
+\*/
 void ga_msg_sync_()
 {
-#  ifdef SP1
-     Integer group_participate();
-     if(first_time){
-        group_participate(&syn_me, &syn_root, &syn_up, &syn_left, &syn_right, ALL_GRP);
+   if(DEBUG){
+       printf("%s:%d> ga_msg_sync\n",
+              GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_());
+       fflush(stdout);
+   }
+
+#  if defined SP1
+   {
+      /* on SP sync needs extra care to avoid conflict with rcvncall */
+      Integer group_participate();
+      if(first_time){
+#       ifdef IWAY
+            group_participate(&syn_me, &syn_root, &syn_up, &syn_left,
+                              &syn_right, CLUST_GRP);
+#       else
+            group_participate(&syn_me, &syn_root, &syn_up, &syn_left,
+                              &syn_right, ALL_GRP);
+#       endif
         sp_init_sync();
         first_time =0;
-     }
-     sp_sync(); 
-     sp_sync(); /* one sync should be enogh -- this code needs more work */
+      }
 
+      /* one sync should be enough but it is not -- this code needs more work!*/
+      sp_sync();
+      sp_sync();
+   }
+#  elif defined IWAY
+   {
+      char sum='+';
+      Integer dummy=1; 
+      ga_igop_clust(GA_TYPE_GOP, &dummy, 1, &sum, CLUST_GRP);
+   }
 #  elif defined(MPI)
       MPI_Barrier(MPI_COMM_WORLD);
 #  else
+   {
       Integer type = GA_TYPE_SYN;
       synch_(&type);
+   }
 #  endif
+   if(DEBUG0){
+       printf("%s:%d> ga_msg_sync completed %ld\n",
+              GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),sync_cnt++);
+       fflush(stdout);
+   }
+
 }
 
 
@@ -386,21 +666,30 @@ Integer group_participate(me, root, up, left, right, group)
                            break;
                            /* cluster masters (designated process in cluster) */
     case INTER_CLUST_GRP:  *root = GA_clus_info[0].masterid;
-                           *me = ga_msg_nodeid_();  nproc = num_clusters;
+                           *me = ga_msg_nodeid_();  nproc = GA_n_clus;
 
                            if(*me != cluster_master) return 0; /*does not*/
 
-                           *up    = (cluster_id-1)/2;
+                           *up    = (GA_clus_id-1)/2;
                            if(*up >= nproc) *up = -1;
                              else *up = GA_clus_info[*up].masterid;
 
-                           *left  = 2*cluster_id+ 1;
+                           *left  = 2*GA_clus_id+ 1;
                            if(*left >= nproc) *left = -1;
                              else *left = GA_clus_info[*left].masterid;
 
-                           *right = 2*cluster_id+ 2;
+                           *right = 2*GA_clus_id+ 2;
                            if(*right >= nproc) *right = -1;
                              else *right = GA_clus_info[*right].masterid;
+
+#                          ifdef IWAY 
+                             /* WARNING: will break if more than 2 clusters !!*/
+                             if(GA_n_clus>2)
+                                ga_error("group_participate:fix me too",0);
+                             if(*up>-1)    *up = cluster_server; 
+                             if(*left>-1)  *left = cluster_server; 
+                             if(*right>-1) *right = cluster_server; 
+#                          endif
 
                            break;
                  default:  ga_error("group_participate: wrong group ", group);
@@ -421,6 +710,11 @@ void ga_brdcst_clust(type, buf, len, originator, group)
 {
      Integer me, lenmes, from, root=0;
      Integer up, left, right, participate;
+
+#    ifdef SOCKCONNECT
+       /* data server recognizes fixed set of message types */
+       type = GA_TYPE_BRD;
+#    endif
 
      participate = group_participate(&me, &root, &up, &left, &right, group);
 
@@ -449,18 +743,30 @@ void ga_brdcst_(type, buf, len, originator)
      void brdcst_();
      Integer orig_clust, tcg_orig_node, tcg_orig_master; 
 
+     if(DEBUG1){
+         printf("%s:%d> broadcast type=%d len=%d root=%d\n",
+              GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),*type,*len, *originator);
+         fflush(stdout);
+     }
+
      if(ClusterMode){
-        /* originator is GA node --> need to transform it into TCGMSG */
+#       ifdef IWAY
+           ga_sync_();
+#       endif
+        /* originator is GA node --> need to transform it into msg nodeid */
         orig_clust = ClusterID(*originator); 
         tcg_orig_master =  GA_clus_info[orig_clust].masterid;
         tcg_orig_node   =  *originator + orig_clust;
-        if(orig_clust == cluster_id){
+        if(orig_clust == GA_clus_id){
            ga_brdcst_clust(*type, buf, *len, tcg_orig_node, CLUST_GRP);
            ga_brdcst_clust(*type, buf, *len, tcg_orig_master, INTER_CLUST_GRP);
         }else{
            ga_brdcst_clust(*type, buf, *len, tcg_orig_master, INTER_CLUST_GRP);
            ga_brdcst_clust(*type, buf, *len, cluster_master, CLUST_GRP);
         }
+#       ifdef IWAY
+           ga_sync_();
+#       endif
      } else {
         /* use TCGMSG as a wrapper to native implementation of broadcast */
         Integer gtype,gfrom,glen;
@@ -492,6 +798,12 @@ void ga_dgop_clust(type, x, n, op, group)
      DoublePrecision work[BUF_SIZE], *origx = x;
      static void ddoop();
      Integer ndo, up, left, right, orign = n;
+
+#    ifdef IWAY
+       /* data server recognizes fixed set of message types */
+       type = GA_TYPE_GOP;
+#    endif
+
 
      if( ! group_participate(&me, &root, &up, &left, &right, group)) return;
 
@@ -530,10 +842,16 @@ void ga_dgop(type, x, n, op)
      void dgop_();
 
      if(ClusterMode){
+#       ifdef IWAY
+           ga_sync_();
+#       endif
         ga_dgop_clust(type, x, n, op, CLUST_GRP);
         ga_dgop_clust(type, x, n, op, INTER_CLUST_GRP);
         ga_brdcst_clust(type, x, n*sizeof(DoublePrecision), cluster_master,
                         CLUST_GRP);
+#       ifdef IWAY
+           ga_sync_();
+#       endif
      } else {
         /* use TCGMSG as a wrapper to native implementation of global ops */
 #       ifdef SP1
@@ -592,6 +910,11 @@ void ga_igop_clust(type, x, n, op, group)
      static void idoop();
      Integer ndo, up, left, right, orign =n;
 
+#    ifdef IWAY
+       /* data server recognizes fixed set of message types */
+       type = GA_TYPE_GOP;
+#    endif
+
      if( ! group_participate(&me, &root, &up, &left, &right, group)) return;
 
      while ((ndo = (n<=BUF_SIZE) ? n : BUF_SIZE)) {
@@ -628,9 +951,15 @@ void ga_igop(type, x, n, op)
      void igop_();
 
      if(ClusterMode){
+#       ifdef IWAY
+           ga_sync_();
+#       endif
         ga_igop_clust(type, x, n, op, CLUST_GRP);
         ga_igop_clust(type, x, n, op, INTER_CLUST_GRP);
         ga_brdcst_clust(type, x, n*sizeof(Integer), cluster_master, CLUST_GRP);
+#       ifdef IWAY
+           ga_sync_();
+#       endif
      } else {
         /* use TCGMSG as a wrapper to native implementation of global ops */
 #       ifdef SP1

@@ -71,7 +71,7 @@ extern void ga_error();
 #  define _SHMMAX ((unsigned long)4*1024)
 #elif defined(LINUX)
 #  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)2*1024)
+#  define _SHMMAX ((unsigned long)8*1024) /* kernel reconfigured from 4MB */
 #elif defined(SHMAX)
 #  undef _SHMMAX
 #  define _SHMMAX SHMMAX

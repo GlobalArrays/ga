@@ -14,46 +14,39 @@ INTERRUPT_AVAILABLE = SP1 IPSC DELTA PARAGON
 
 include ../Makefile.h
 
+ifdef IWAY
+#       LOC_DEFINES = -DIWAY -DSOCKCONNECT
+endif
+
 ifeq ($(VERSION),SHMEM)
   ifneq ($(TARGET),CRAY-T3D)
-    LOC_DEFINES = -DSYSV
-    ifneq ($(TARGET),KSR)
+    LOC_DEFINES += -DSYSV
+    ifndef IWAY
        LOC_DEFINES += -DDATA_SERVER
     endif
   endif
-else
-  ifneq ($(TARGET),$(findstring $(TARGET),$(INTERRUPT_AVAILABLE)))
-       LOC_DEFINES = -DDATA_SERVER
-  endif
 endif
 
-include ../Makelib.h
+LIB_DISTRIB = ../../lib
+LIBRARY = libglobal.a
+
 include ../MakeFiles.h
+include ../../config/makelib.h
 
-   LIBRARY = ../libglobal.a
+$(OBJ_FRAGILE): %.o : %.c
+	$(CC) -g $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) -c $<
 
-OBJ = $(GA_OBJ) $(GA_ALG) $(GA_UTIL) $(SUMMA_OBJ)
-
-all: $(GA_SYNC) $(LIBRARY)
-
-$(LIBRARY):  $(OBJ) $(EXTRA)
-	$(RM) -f $@
-	$(AR) $(ARFLAGS) $@ $(OBJ) $(EXTRA) 
-	$(RANLIB) $@
-	@echo
-	@echo libglobal.a is built for $(TARGET)
-	@echo
-
-$(GA_SYNC): $(GA_SYNC:.o=.c)
-	cc -g $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) -c  $(GA_SYNC:.o=.c)
-
-$(OBJ): $(TARGET).$(VERSION).stamp 
-
-$(TARGET).$(VERSION).stamp: 
-	$(RM) -f *.o *.a core *.*.stamp
-	echo "" > $(TARGET).$(VERSION).stamp
-
-#clean *.o  and crap left by MPL on SP1
-clean:
-	$(RM) -f *.o *.a core *.*.stamp mputil.mp*
-
+$(patsubst %,$(LIBRARY_PATH)(%),$(GA_CORE))     : globalp.h global.h
+$(patsubst %,$(LIBRARY_PATH)(%),global.core.o)  : global.core.h message.h
+$(patsubst %,$(LIBRARY_PATH)(%),global.serv.o)  : message.h mem.ops.h
+$(patsubst %,$(LIBRARY_PATH)(%),global.msg.o)   : message.h
+$(patsubst %,$(LIBRARY_PATH)(%),global.alg.o)   : globalp.h global.h
+$(patsubst %,$(LIBRARY_PATH)(%),ga_handler.o)   : interrupt.h message.h
+$(patsubst %,$(LIBRARY_PATH)(%),hsort.scat.o)   : types.f2c.h
+$(patsubst %,$(LIBRARY_PATH)(%),semaphores.o)   : semaphores.h types.f2c.h
+$(patsubst %,$(LIBRARY_PATH)(%),shmalloc.o)     : shmalloc.h
+$(patsubst %,$(LIBRARY_PATH)(%),iway.o)         : global.h message.h farg.h
+$(patsubst %,$(LIBRARY_PATH)(%),net.o)          : global.h message.h farg.h
+$(patsubst %,$(LIBRARY_PATH)(%),ga_diag.o)      : global.fh diag.fh 
+global.h       : types.f2c.h cray.names.h
+global.core.h  : interrupt.h mem.ops.h

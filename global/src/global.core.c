@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.17 1995-11-03 20:42:36 d3g681 Exp $*/
+/*$Id: global.core.c,v 1.18 1996-01-02 18:41:21 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -33,6 +33,8 @@
  
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <math.h>
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
@@ -42,6 +44,7 @@
 #define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
+#define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
 
 
@@ -85,7 +88,10 @@ void ga_sync_()
 void   ga_wait_server();
        if (GAme < 0) return;
 
-#if    defined(SYSV) && !defined(KSR) 
+#if    defined(SYSV) && !defined(KSR)
+#      ifdef IWAY
+             gaCentralBarrier();
+#      endif
        if(ClusterMode) ga_wait_server();
        gaCentralBarrier();
 #elif  defined(CRAY_T3D)
@@ -94,8 +100,11 @@ void   ga_wait_server();
        KSRbarrier();
 #else  
        ga_msg_sync_();
-#      ifdef PARAGON
+#      if defined(PARAGON) || defined(IWAY)
              ga_wait_server();  /* synchronize data server thread */
+#      endif
+#      ifdef IWAY
+             ga_msg_sync_();
 #      endif
 #endif
 }
@@ -228,14 +237,6 @@ void RestoreSigChld(), RestoreSigInt(), RestoreSigHup();
 }
 
 
-#if defined(SUN) || defined(KSR)
-    int random();
-    int rand();
-#else
-    long random();
-    long rand();
-#endif
-
 
 /*\ prepare permuted list of processes for remote ops
 \*/
@@ -267,7 +268,6 @@ void gaPermuteProcList2(nproc)
     Integer nproc;
 {
     int i, iswap, temp;
-    void srandom(), srand();
 
     if(nproc ==1) {
        ProcListPerm[0]=0;
@@ -325,13 +325,13 @@ long *msg_buf;
         *  .cluster master participates in inter-cluster collective ops
         *   and contacts data server to create or destroy arrays
         */ 
-       GAnproc = ga_msg_nnodes_() - num_clusters;
+       GAnproc = ga_msg_nnodes_() - GA_n_clus;
        GAme = ga_msg_nodeid_();
-       GAmaster= cluster_master - cluster_id; 
+       GAmaster= cluster_master - GA_clus_id; 
 
        /* data servers have their message-passing node id negated */
        if(GAme > cluster_master + cluster_compute_nodes -1) GAme = -GAme; 
-          else GAme -= cluster_id;
+          else GAme -= GA_clus_id;
     }else{
        GAmaster= 0;
        GAnproc = (Integer)ga_msg_nnodes_();
@@ -348,7 +348,7 @@ long *msg_buf;
 
     if(DEBUG)
     fprintf(stderr, "mode=%d, me=%d, master=%d, clusters=%d clust_nodes=%d\n",
-            ClusterMode, GAme, cluster_master, num_clusters, cluster_nodes); 
+            ClusterMode, GAme, cluster_master, GA_n_clus, cluster_nodes); 
 
     gaAllTrapSignals(); /* all processes set up own signal handlers */
 
@@ -399,7 +399,7 @@ long *msg_buf;
     /* Broadcast shmem ID to all the processes */
 
     if(DEBUG) fprintf(stderr,"brdcst GAme=%d\n",GAme);
-    type = GA_TYPE_SYN;
+    type = GA_TYPE_BRD;
     ga_brdcst_clust(type, (char*) msg_buf, SHMID_BUF_SIZE, cluster_master, 
                     ALL_CLUST_GRP);
     if(DEBUG) fprintf(stderr,"GAme=%d\n",GAme);
@@ -455,20 +455,24 @@ long *msg_buf;
      *
      * DBL_MB and INT_MB are assigned adresses of their counterparts
      *    (of the same name in MA mafdecls.h file) by calling Fortran
-     *    ma_ga_base_address_() routine that calls C ma_ga_get_ptr_ to copy
+     *    ga_ma_base_address_() routine that calls C ga_ma_get_ptr_ to copy
      *    pointers
      */
     {
       static Integer dtype = MT_F_DBL;
-      ma_ga_base_address_(&dtype, (Void**)&DBL_MB);
+      ga_ma_base_address_(&dtype, (Void**)&DBL_MB);
       if(!DBL_MB)ga_error("ga_initialize: wrong dbl pointer ", 1L);
       dtype = MT_F_INT;
-      ma_ga_base_address_(&dtype, (Void**)&INT_MB);
+      ga_ma_base_address_(&dtype, (Void**)&INT_MB);
       if(!INT_MB)ga_error("ga_initialize: wrong int pointer ", 2L);
     }
 
     /* selected processes now become data servers */
-    if(ClusterMode) if(GAme <0) ga_SERVER(0);
+#ifdef DATA_SERVER
+       if(ClusterMode) if(GAme <0) ga_SERVER(0);
+#elif defined(IWAY)
+    if(ClusterMode) if(GAme <0) ga_server_handler();
+#endif
 
     /* enable interrupts on machines with interrupt receive */
 #   if defined(SP1) || defined (NX)
@@ -485,7 +489,7 @@ long *msg_buf;
 #   else
       ga_sync_();
 #   endif
-/*        fprintf(stderr,"__Barrier=%ld\n",(long)Barrier);*/
+    if(DEBUG)    fprintf(stderr,"ga_init done=%ld\n",GAme);
 }
 
 
@@ -581,7 +585,7 @@ logical ga_create(type, dim1, dim2, array_name, chunk1, chunk2, g_a)
       * g_a           - Integer handle for future references [output]
       */
 {
-register int   i, nprocx, nprocy, fchunk1, fchunk2;
+int   i, nprocx, nprocy, fchunk1, fchunk2;
 static Integer map1[MAX_NPROC], map2[MAX_NPROC];
 Integer nblock1, nblock2;
 
@@ -601,7 +605,9 @@ Integer nblock1, nblock2;
         if(*dim1 == 1)      { nprocx =1; nprocy=(int)GAnproc;}
         else if(*dim2 == 1) { nprocy =1; nprocx=(int)GAnproc;}
         else {
-           nprocx= (int)sqrt((double)GAnproc);
+           /* nprocx= (int)sqrt((double)GAnproc);*/
+           double dproc = ((double)GAnproc*(*dim1))/((double) *dim2);
+           nprocx = NEAR_INT(sqrt(dproc)); 
            for(i=nprocx;i>0&& (GAnproc%i);i--);
            nprocx =(int)i; nprocy=(int)GAnproc/nprocx;
         }
@@ -704,7 +710,7 @@ Integer  ga_handle = g_a + GA_OFFSET;
 
 #  ifdef CRAY_T3D
      Integer i, len = sizeof(Void*);
-     Integer mtype = GA_TYPE_SYN;
+     Integer mtype = GA_TYPE_BRD;
      GA[ga_handle].ptr[GAme] = ptr;
 
      /* need pointers on all procs to support global addressing */
@@ -754,10 +760,10 @@ char    *array_name;
 
    *id   = 1;
 
-#ifdef LINUX
-   mem_size += 7;		/* Worst case alignment error */
-   bytes = (long) mem_size;
-#endif
+#  ifdef LINUX
+     mem_size += 7;               /* Worst case alignment error */
+     bytes = (long) mem_size;
+#  endif
 
 #  ifndef SYSV
          /*............. allocate local memory ...........*/
@@ -772,7 +778,7 @@ char    *array_name;
          if(MPme == cluster_master){
             if(GAnproc == 1 && USE_MALLOC){
                /* for single process, shmem not needed */
-	      *pptr  = malloc((int)mem_size);
+               *pptr  = malloc((int)mem_size);
             }else {
                /* cluster master uses Snd buffer */
                msg_buf = (long*)MessageSnd->buffer;
@@ -782,30 +788,34 @@ char    *array_name;
          }
 
          /* every other compute node in the cluster gets shmem id(s) to attach*/
-         ga_brdcst_clust(GA_TYPE_SYN, (char*)msg_buf, SHMID_BUF_SIZE,
+         ga_brdcst_clust(GA_TYPE_BRD, (char*)msg_buf, SHMID_BUF_SIZE,
                                       cluster_master, CLUST_GRP);
 
          if(MPme != cluster_master)
                     *pptr =  Attach_Shared_Region(msg_buf+1, bytes, msg_buf);
 
-#ifdef LINUX
-         if (type == MT_F_DBL) {
-	   char *base = (char *) DBL_MB;
-	   int diff = (abs(base - (char *) *pptr)) % sizeof(DoublePrecision);
-	   adjust = (diff > 0) ? sizeof(DoublePrecision) - diff : 0;
-	 }
-         else if (type == MT_F_INT) {
-	   char *base = (char *) INT_MB;
-	   int diff = (abs(base - (char *) *pptr)) % sizeof(Integer);
-	   int adjust = (diff > 0) ? sizeof(Integer) - diff : 0;
-	 }
-         if (DEBUG)
-           fprintf(stderr, "align: DBL=%lx, INT=%lx, adjust=%lx, old=%lx, new=%lx \n", 
-	  	   DBL_MB, INT_MB, adjust, *pptr, *pptr+adjust);
-         *id = adjust;		/* Id kludged to hold adjust */
-         *pptr = (void *) (adjust + (char *) *pptr);
-#endif
+         *id = (*pptr) ? 1 :0;
 
+#        ifdef LINUX
+	    /* need to enforce proper allignment */
+
+            if (type == MT_F_DBL) {
+              char *base = (char *) DBL_MB;
+              int diff = (abs(base - (char *) *pptr)) % sizeof(DoublePrecision);
+              adjust = (diff > 0) ? sizeof(DoublePrecision) - diff : 0;
+            }
+            else if (type == MT_F_INT) {
+              char *base = (char *) INT_MB;
+              int diff = (abs(base - (char *) *pptr)) % sizeof(Integer);
+              int adjust = (diff > 0) ? sizeof(Integer) - diff : 0;
+            }
+            if (DEBUG)
+            fprintf(stderr,"align:DBL=%lx,INT=%lx,adjust=%lx,old=%lx,new=%lx\n",
+                   DBL_MB, INT_MB, adjust, *pptr, *pptr+adjust);
+
+            *id = adjust;          /* Id kludged to hold adjust */
+            *pptr = (void *) (adjust + (char *) *pptr);
+#        endif
 #  endif
 
    if(DEBUG)fprintf(stderr,"me=%d ga__alloc_mem:ptr=%d id=%d\n",GAme,*pptr,*id);
@@ -926,18 +936,21 @@ Integer  i, ga_handle, status;
       if(GA_memory_limited) GA_total_memory -= mem_size_proc; 
 
       if(!GA_memory_limited || GA_total_memory >= 0){
+         /*          fprintf(stderr,"%d allocating mem %d \n",GAme,mem_size);*/
           status =  ga__allocate_memory(*type, nelem, mem_size, array_name, 
                                          &(GA[ga_handle].id), &ptr);
       }else
           status = 0;
 
-      ga_igop(GA_TYPE_SYN, &status, 1, &op); /* check if everybody succeded */
+
+      ga_igop(GA_TYPE_GOP, &status, 1, &op); /* check if everybody succeded */
 
       /* determine pointers to individual blocks*/
       if(status) ga__set_ptr_array(*g_a, ptr);
 
-      /*** in cluster mode, master sends create request to data server ***/
-      if(ClusterMode && (MPme == cluster_master)) {
+#     ifdef SYSV
+        /*** in cluster mode, master sends create request to data server ***/
+        if(ClusterMode && (MPme == cluster_master)) {
             Integer nbytes = *nblock1 * sizeof(Integer);
             Copy(map1, MessageSnd->buffer + SHMID_BUF_SIZE, nbytes);
             Copy(map2, MessageSnd->buffer + SHMID_BUF_SIZE +nbytes,
@@ -946,8 +959,9 @@ Integer  i, ga_handle, status;
 
             /*** send g_a info + shmem id(s) to data server ***/
             ga_snd_req(0,  *dim1, *nblock1, *dim2, *nblock2, nbytes, *type,
-                       GA_OP_CRE, GAme, DataServer(GAme));
-      }
+                       GA_OP_CRE, GAme, cluster_server);
+        }
+#     endif
 
       ga_sync_();
 
@@ -1043,15 +1057,17 @@ Integer  i, ga_handle, status;
       else
           status = 0;
 
-      ga_igop(GA_TYPE_SYN, &status, 1, &op); /* check if everybody succeded */
+      ga_igop(GA_TYPE_GOP, &status, 1, &op); /* check if everybody succeded */
 
       /* determine pointers to individual blocks*/
       if(status) ga__set_ptr_array(*g_b, ptr);
 
-      if( ClusterMode && MPme == cluster_master){
+#     ifdef SYSV
+        if( ClusterMode && MPme == cluster_master){
                 ga_snd_req(*g_a, 0, 0, 0, 0, SHMID_BUF_SIZE, 0, GA_OP_DUP,
-                           GAme, DataServer(GAme));
-      }
+                           GAme, cluster_server);
+        }
+#     endif
 
       ga_sync_();
 
@@ -1102,26 +1118,26 @@ Integer ga_handle = GA_OFFSET + *g_a;
  
 #   ifdef SYSV 
       if(GAnproc == 1 && USE_MALLOC){
-#ifdef LINUX
-         free(GA[ga_handle].ptr[0]-GA[ga_handle].id);	/* Id = adjust */
-#else
-         free(GA[ga_handle].ptr[0]);
-#endif
+#        ifdef LINUX
+            free(GA[ga_handle].ptr[0]-GA[ga_handle].id);   /* Id = adjust */
+#        else
+            free(GA[ga_handle].ptr[0]);
+#        endif
       }else{
          if(MPme == cluster_master){
             /* Now, deallocate shared memory */
             if(GA[ga_handle].ptr[0]){
-#ifdef LINUX
-               Free_Shmem_Ptr(GA[ga_handle].id, GA[ga_handle].size, 
-                              GA[ga_handle].ptr[0]-GA[ga_handle].id);
-#else
-               Free_Shmem_Ptr(GA[ga_handle].id, GA[ga_handle].size, 
-                              GA[ga_handle].ptr[0]);
-#endif
+#              ifdef LINUX
+                     Free_Shmem_Ptr(GA[ga_handle].id, GA[ga_handle].size,
+                                    GA[ga_handle].ptr[0]-GA[ga_handle].id);
+#              else
+                     Free_Shmem_Ptr(GA[ga_handle].id, GA[ga_handle].size, 
+                                    GA[ga_handle].ptr[0]);
+#              endif
                GA[ga_handle].ptr[0]=NULL;
             }
             if(ClusterMode) 
-               ga_snd_req(*g_a, 0,0,0,0,0,0, GA_OP_DES, GAme, DataServer(GAme));
+               ga_snd_req(*g_a, 0,0,0,0,0,0, GA_OP_DES, GAme, cluster_server);
          } 
       }
 #   else
@@ -1166,7 +1182,7 @@ Integer i, handle;
 
     if(MPme == cluster_master){
        if(ClusterMode) 
-             ga_snd_req(0, 0, 0, 0, 0, 0, 0, GA_OP_END, GAme, DataServer(GAme));
+             ga_snd_req(0, 0, 0, 0, 0, 0, 0, GA_OP_END, GAme, cluster_server);
          ga_clean_resources();
          gaParentRestoreSignals();
     }
@@ -1192,7 +1208,7 @@ logical gaDirectAccess(proc)
 {
 #ifdef SHMEM
 #  ifndef CRAY_T3D
-     if(ClusterMode && (ClusterID(proc) != cluster_id))
+     if(ClusterMode && (ClusterID(proc) != GA_clus_id))
          return(FALSE);
      else
 #  endif
@@ -1433,9 +1449,8 @@ void ga_get_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
    Void *buf;
 {
 char     *ptr_src, *ptr_dst;
-Integer  type, rows, cols, len, to, from, msglen=0;
-int      need_copy;
-msgid_t  msgid;
+Integer  type, rows, cols, len, to, from, msglen, expected_len, need_copy;
+msgid_t  msgid_snd, msgid_rcv;
 
    if(proc<0)ga_error(" get_remote: invalid process ",proc);
    type = GA[GA_OFFSET + g_a].type;
@@ -1444,24 +1459,33 @@ msgid_t  msgid;
    msglen = rows*cols*GAsizeofM(type);
    to = DataServer(proc);
 
-   /* this stuff is to avoid buffering if possible */
-   need_copy=cols-1; /* true only if cols > 1 */
+   expected_len = msglen;
+
+#  ifdef IWAY
+     expected_len += MSG_HEADER_SIZE;
+     need_copy = 1;
+#  else
+     /* this stuff is to avoid double buffering if possible */
+     need_copy=cols-1; /* true only if cols > 1 */
+#  endif
+
    if(need_copy)
-      ptr_src = (char*)MessageSnd;  /* data arrives to message buffer */
+      ptr_src = MessageSnd->buffer;  /* data arrives to the same msg buffer */
    else
       ptr_src = (char *)buf + GAsizeofM(type)* offset;/*arrives to user buffer*/
 
 #  if defined(NX) || defined(SP1)
-      len = msglen;
-      msgid = ga_msg_ircv(GA_TYPE_GET, ptr_src, msglen, to);
+      len = expected_len;
       ga_snd_req(g_a, ilo,ihi,jlo,jhi, (Integer)0, type, GA_OP_GET,proc,to);
-      ga_msg_wait(msgid, &len, &from); 
+      msgid_rcv = ga_msg_ircv(GA_TYPE_GET,  ptr_src, expected_len, to);
+      ga_msg_wait(msgid_rcv, &len, &from); 
 #  else
       ga_snd_req(g_a, ilo,ihi,jlo,jhi, (Integer)0, type, GA_OP_GET,proc,to);
-      ga_msg_rcv(GA_TYPE_GET, ptr_src, msglen, &len, to, &from);
+      ga_msg_rcv(GA_TYPE_GET, ptr_src, expected_len, &len, to,&from);
 #  endif
 
-   if(len != msglen) ga_error(" get_remote: wrong data length",len); 
+   if(len != expected_len)ga_error("get_remote:wrong msg length",len); 
+
    if(need_copy){
       /* Copy patch [ilo:ihi, jlo:jhi] from MessageBuffer */
       ptr_dst = (char *)buf  + GAsizeofM(type)* offset;
@@ -1511,9 +1535,16 @@ Integer ilop, ihip, jlop, jhip, offset;
             /* number of messages determined by message-buffer size */
 
             Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk;
-            Integer TmpSize = MSG_BUF_SIZE/GAsizeofM(GA[GA_OFFSET + *g_a].type);
-            Integer ilimit  = MIN(TmpSize, ihip-ilop+1);
-            Integer jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
+            Integer TmpSize;
+            Integer ilimit;
+            Integer jlimit;
+#           if defined(IWAY) && defined(SP1)
+               TmpSize = IWAY_MSG_BUF_SIZE/GAsizeofM(GA[GA_OFFSET + *g_a].type);
+#           else
+               TmpSize = MSG_BUF_SIZE/GAsizeofM(GA[GA_OFFSET + *g_a].type);
+#           endif
+            ilimit  = MIN(TmpSize, ihip-ilop+1);
+            jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
 
 #           if defined(PARAGON)||defined(SP1)
               /* this limits column chunking to 1 for larger number of rows */
@@ -1754,10 +1785,8 @@ Integer  item_size, proc_place;
    else ga_error(" ga_access: type not supported ",-1L);
 
    /* check the allignment */
-   if(*index % item_size) {
-     fprintf(stderr, "ga_access: index=%ld, item_size=%ld\n", *index, item_size);
-     ga_error(" ga_access: base address misallignment ",(long)index);
-   }
+   if(*index % item_size)
+       ga_error(" ga_access: base address misallignment ",(long)index);
 
    /* adjust index according to the data type */
    *index /= item_size;
@@ -2187,9 +2216,12 @@ register Integer k, offset;
 
   for(k=0; k< nv; k++){
      if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
-       sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
-               proc, i[k], j[k], ilo, ihi, jlo, jhi);
+       sprintf(err_string,"k=%d proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
+               k, proc, i[k], j[k], ilo, ihi, jlo, jhi);
+       printf("&i=%d, &j=%d, &v=%d\n",(long)i+k, (long)j+k,(long) v+k);
+       fflush(stdout);
        ga_error(err_string,g_a);
+      
 
      }
 
@@ -2213,7 +2245,7 @@ void ga_gather_remote(g_a, v, i, j, nv, proc)
      Void *v;
 {
 register Integer item_size, offset, nbytes;
-Integer  len, from, to,  msglen, handle = GA_OFFSET + g_a;
+Integer  len, from, to,  msglen, handle = GA_OFFSET + g_a, expected_len;
 msgid_t  msgid;
 
   if (nv < 1) return;
@@ -2231,16 +2263,27 @@ msgid_t  msgid;
   msglen = offset + nbytes; 
   nbytes = item_size * nv; /* data to receive */
   to = DataServer(proc);
+  expected_len = nbytes;
+# ifdef IWAY
+     expected_len += MSG_HEADER_SIZE;
+# endif
+
 # if defined(NX) || defined(SP1)
-     len = nbytes;
-     msgid = ga_msg_ircv(GA_TYPE_DGT, v, nbytes, to);
+     len = expected_len;
+     msgid = ga_msg_ircv(GA_TYPE_DGT, MessageSnd, expected_len, to);
      ga_snd_req(g_a, nv, 0,0,0, msglen, GA[handle].type, GA_OP_DGT, proc, to);
      ga_msg_wait(msgid, &len, &from); 
 # else
      ga_snd_req(g_a, nv, 0, 0, 0, msglen, GA[handle].type, GA_OP_DGT, proc, to);
-     ga_msg_rcv(GA_TYPE_DGT, v, nbytes, &len, to, &from);
+     ga_msg_rcv(GA_TYPE_DGT, MessageSnd, expected_len, &len,to,&from);
 # endif
-  if(len != nbytes) ga_error(" gather_remote: wrong data length",len); 
+
+     if(len != expected_len) ga_error(" gather_remote: wrong data length",len); 
+
+# ifdef IWAY
+     /* this is a redundant copy; in IWAY version needs message header */
+     Copy(MessageSnd->buffer, (char*)v, nbytes);
+# endif
 }
 
 
@@ -2362,16 +2405,20 @@ msgid_t  msgid;
    if(proc<0)ga_error(" read_inc_remote: invalid process ",proc);
 
    to = DataServer(proc);
+   bytes = MSG_HEADER_SIZE; /* for iway needs header */
 #  if defined(NX) || defined(SP1)
       len = bytes;
-      msgid = ga_msg_ircv(GA_TYPE_RDI, &value, bytes, to);
+      msgid = ga_msg_ircv(GA_TYPE_RDI, MessageSnd, bytes, to);
       ga_snd_req(g_a, i, inc, j, 0, bytes, GA[handle].type, GA_OP_RDI,proc, to);
       ga_msg_wait(msgid, &len, &from);
 #  else
       ga_snd_req(g_a, i, inc, j, 0, bytes, GA[handle].type, GA_OP_RDI,proc, to);
-      ga_msg_rcv(GA_TYPE_RDI, (char*)&value, bytes, &len, to, &from);
+      ga_msg_rcv(GA_TYPE_RDI, MessageSnd, bytes, &len,to,&from);
 #  endif
-   if(len != bytes) ga_error(" read_inc_remote: wrong data length",len); 
+
+   if(len != bytes)
+             ga_error("read_inc_remote: wrong data length",len); 
+   value = MessageSnd->ilo;
    return(value);
 }
 
@@ -2424,14 +2471,14 @@ Integer ga_nnodes_()
 
 /*********************** other utility routines *************************/
 
-void ma_ga_get_ptr_(ptr, address)
+void ga_ma_get_ptr_(ptr, address)
       char **ptr, *address;
 {
    *ptr = address; 
 }
 
 
-Integer ma_ga_diff_(ptr1, ptr2)
+Integer ga_ma_diff_(ptr1, ptr2)
         char *ptr1, *ptr2;
 {
    return((Integer)(ptr2-ptr1));

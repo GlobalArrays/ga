@@ -55,8 +55,8 @@ union semun {
 #endif
 
   int i, semid, num_sem;
-  void ga_error();
   union semun semctl_arg;
+  void ga_error();
 
     /*fprintf(stderr,"SemInit %d %d\n",id,value);*/
    

@@ -10,23 +10,6 @@
 #  define PRIVATE  
 #endif
 
-#define MAX_ARRAYS  32             /* max number of global arrays */
-
-#ifndef MAX_NPROC                  /* default max number of processors  */
-#   ifdef PARAGON
-#     define MAX_NPROC    1024
-#   elif defined(DELTA)
-#     define MAX_NPROC     512 
-#   elif defined(SP1)
-#     define MAX_NPROC     400 
-#   elif defined(CRAY_T3D)
-#     define MAX_NPROC     256 
-#   elif defined(KSR)
-#     define MAX_NPROC      80 
-#   else
-#     define MAX_NPROC      64     /* default for everything else */ 
-#   endif 
-#endif
 
 #define MAX_REG     128             /* max number of shmem regions per array */
 #define RESERVED    2*sizeof(long)  /* used for shmem buffer management */  
@@ -60,9 +43,9 @@ typedef struct {
 } global_array;
 
 
-PRIVATE static global_array GA[MAX_ARRAYS]; 
-PRIVATE static int max_global_array = MAX_ARRAYS;
-PRIVATE Integer map[MAX_NPROC][5];               /* used in get/put/acc */
+static global_array GA[MAX_ARRAYS]; 
+static int max_global_array = MAX_ARRAYS;
+Integer map[MAX_NPROC][5];               /* used in get/put/acc */
 
 
 
@@ -118,9 +101,6 @@ int  GA_stack_size=0;
    }                                                                           \
 }
 
-#define GAsizeofM(type)  ( (type)==MT_F_DBL? sizeof(DoublePrecision): \
-                           (type)==MT_F_INT? sizeof(Integer): 0)
-
 
 /**************** Shared Memory and Mutual Exclusion Co.  **************/
 #ifdef SYSV
@@ -141,8 +121,8 @@ int  GA_stack_size=0;
 #      elif defined(SGIUS)
 #          include "sgi.locks.h"
            long   lockID;
-#          define LOCK(g_a,proc, x)    SGI_LOCK(((proc)-GAmaster))
-#          define UNLOCK(g_a,proc,x) SGI_UNLOCK(((proc)-GAmaster))
+#          define LOCK(g_a,proc, x)    SGI_LOCK((proc)-GAmaster)
+#          define UNLOCK(g_a,proc,x) SGI_UNLOCK((proc)-GAmaster)
 #          define MUTEX cluster_nodes
            /* P & V compatible with binary sem ops */
 #          define P(s)  SGI_LOCK((s))
@@ -192,7 +172,7 @@ int  GA_stack_size=0;
 #include "mem.ops.h"
 /************************************************************************/
 
-/* cache coherency ? */
+/* cache coherency in shared memory copy operations */
 #ifndef CRAY_T3D
 #       define  FLUSH_CACHE
 #       define  FLUSH_CACHE_LINE(x) 
@@ -213,16 +193,15 @@ DoublePrecision *DBL_MB;            /* double precision base address */
 Integer         *INT_MB;            /* integer base address */
 
 
-PRIVATE static int GAinitialized = 0;
-PRIVATE static Integer GAme, GAnproc, GAmaster;
-PRIVATE static Integer MPme, MPnproc;
+/* cache numbers of GA/message-passing processes and ids */
+static Integer GAme, GAnproc, GAmaster;
+static Integer MPme, MPnproc;
+
+static int GAinitialized = 0;
 int ProcListPerm[MAX_NPROC];            /* permuted list of processes */
-#if defined(DATA_SERVER)
-    Integer *NumRecReq;                 /* # received requests by data server */
-#else
-    Integer local_buf_req;
-    Integer *NumRecReq = &local_buf_req;/* # received requests by data server */
-#endif
+Integer local_buf_req;
+Integer *NumRecReq = &local_buf_req;/* # received requests by data server */
+                                    /* overwritten by shmem buf ptr if needed */
     
 #if !(defined(SGI)|| defined(AIX))
 #   ifndef CRAY_T3D
@@ -244,10 +223,6 @@ static Integer GA_memory_limited = 0;
 # define ARGS_(s) ()
 #endif
 
-extern char* strcpy      ARGS_((char*, const char*));
-extern void srand        ARGS_((Integer));
-extern void srandom      ARGS_((Integer));
-extern Void *malloc      ARGS_((size_t));
 extern logical gaDirectAccess ARGS_((Integer ));
 extern void ma_ga_get_ptr_ ARGS_((char **, char *));
 extern Integer ma_ga_diff_ ARGS_((char *, char *));
@@ -262,17 +237,12 @@ extern long Detach_Shared_Region ARGS_((long id, long size, char *addr));
 extern long Delete_Shared_Region ARGS_((long id));
 extern long Delete_All_Regions ARGS_(( void));
 
-#ifdef VIOLATESTANDARD
-extern Void* memcpy ARGS_((Void*, const Void*, size_t));
-#endif
-extern double sqrt ARGS_((double));
 extern Integer MA_push_get ARGS_((Integer, Integer, char*, Integer*, Integer*));
 extern Integer MA_pop_stack ARGS_((Integer));
 extern void ga_sort_scat_dbl_ ARGS_((Integer*,DoublePrecision*,Integer*,                                             Integer*,Integer*));
 extern void ga_sort_scat_int_ ARGS_((Integer*,Integer*,Integer*,Integer*,                                            Integer*));
 extern void ga_sort_gath_ ARGS_((Integer*, Integer*, Integer*, Integer*));
 
-extern void free ARGS_((Void*));
 
 #undef ARGS_
 
