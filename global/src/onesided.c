@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.2 2001-08-17 20:57:55 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.3 2001-08-24 18:33:09 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -64,6 +64,27 @@ extern void ga_sort_scat(Integer*,Void*,Integer*,Integer*,Integer*, Integer);
 extern void ga_sort_gath_(Integer*, Integer*, Integer*, Integer*);
 
 /***************************************************************************/
+
+/*\ Return a pointer to the location indicated by subscript and and an array
+ * of leading dimensions (ld). Assume that subscript refers to a set of local
+ * coordinates relative to the origin of the array and account for the
+ * presence of ghost cells.
+\*/
+#define gam_LocationWithGhosts(proc, handle, subscript, ptr_loc, ld)           \
+{                                                                              \
+Integer _d, _factor = 1, _last=GA[handle].ndim - 1, _offset=0;                 \
+Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
+  ga_ownsM(handle, proc, _lo, _hi);                                            \
+  if (_last == 0) ld[0] = _hi[0] - _lo[0] + 1 + 2*GA[handle].width[0];         \
+  for (_d = 0; _d < _last; _d++) {                                             \
+    _offset += subscript[_d] * _factor;                                        \
+    ld[_d] = _hi[_d] - _lo[_d] + 1 + 2*GA[handle].width[0];                    \
+    _factor *= ld[_d];                                                         \
+  }                                                                            \
+  _offset += subscript[_last] * _factor;                                       \
+  *(ptr_loc) = GA[handle].ptr[proc] + _offset*GA[handle].elemsize;             \
+}
+
 
 /*\ SYNCHRONIZE ALL THE PROCESSES
 \*/
@@ -669,6 +690,32 @@ Integer  ow,i;
    GA_POP_NAME;
 }
 
+void nga_access_ghost_ptr(Integer* g_a, Integer dims[],
+                      void* ptr, Integer ld[])
+
+{
+char *lptr;
+Integer  handle = GA_OFFSET + *g_a;
+Integer  i, lo[MAXDIM], hi[MAXDIM];
+Integer ndim = GA[handle].ndim;
+
+   GA_PUSH_NAME("nga_access_ghost_ptr");
+
+   ga_sync_();
+   nga_distribution_(g_a, &GAme, lo, hi);
+   ga_sync_();
+
+   for (i=0; i < ndim; i++) {
+     dims[i] = 0;
+   }
+
+   gam_LocationWithGhosts(GAme, handle, dims, &lptr, ld);
+   *(char**)ptr = lptr; 
+   for (i=0; i < ndim; i++)
+     dims[i] = hi[i] - lo[i] + 1 + 2*GA[handle].width[i];
+   GA_POP_NAME;
+}
+
 
 /*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
 \*/
@@ -746,6 +793,69 @@ unsigned long    lref, lptr;
    GA_POP_NAME;
 }
 
+/*\ PROVIDE ACCESS TO LOCAL PATCH OF A GLOBAL ARRAY WITH GHOST CELLS
+\*/
+void FATR nga_access_ghosts_(Integer* g_a, Integer dims[],
+                      Integer* index, Integer ld[])
+{
+char     *ptr;
+Integer  handle = GA_OFFSET + *g_a;
+unsigned long    elemsize;
+unsigned long    lref, lptr;
+
+   GA_PUSH_NAME("nga_access_ghosts");
+   nga_access_ghost_ptr(g_a, dims, &ptr, ld);
+
+   /*
+    * return patch address as the distance elements from the reference address
+    *
+    * .in Fortran we need only the index to the type array: dbl_mb or int_mb
+    *  that are elements of COMMON in the the mafdecls.h include file
+    * .in C we need both the index and the pointer
+    */
+
+   elemsize = (unsigned long)GA[handle].elemsize;
+
+   /* compute index and check if it is correct */
+   switch (GA[handle].type){
+     case MT_F_DBL:
+        *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
+        lref = (unsigned long)DBL_MB;
+        break;
+
+     case MT_F_DCPL:
+        *index = (Integer) ((DoubleComplex*)ptr - DCPL_MB);
+        lref = (unsigned long)DCPL_MB;
+        break;
+
+     case MT_F_INT:
+        *index = (Integer) ((Integer*)ptr - INT_MB);
+        lref = (unsigned long)INT_MB;
+        break;
+
+     case MT_F_REAL:
+        *index = (Integer) ((float*)ptr - FLT_MB);
+        lref = (unsigned long)FLT_MB;
+        break;        
+   }
+
+#ifdef BYTE_ADDRESSABLE_MEMORY
+   /* check the allignment */
+   lptr = (unsigned long)ptr;
+   if( lptr%elemsize != lref%elemsize ){ 
+       printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
+                                                    lref,lref%elemsize);
+       ga_error("nga_access: MA addressing problem: base address misallignment",
+                 handle);
+   }
+#endif
+
+   /* adjust index for Fortran addressing */
+   (*index) ++ ;
+   FLUSH_CACHE;
+
+   GA_POP_NAME;
+}
 
 
 /*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
@@ -1618,3 +1728,266 @@ Integer  value, subscript[2];
    return(value);
 }
 
+/*\ UPDATE GHOST CELLS OF GLOBAL ARRAY
+\*/
+void FATR nga_update_(Integer *g_a)
+{
+  Integer idx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
+  Integer size, ndim, nwidth, increment[MAXDIM];
+  Integer width[MAXDIM];
+  Integer dims[MAXDIM];
+  Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
+  Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
+  Integer lo_rem[MAXDIM], hi_rem[MAXDIM];
+  Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
+  Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
+  int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
+  char *ptr_loc, *ptr_rem;
+
+  /* if global array has no ghost cells, just return */
+  if (!ga_has_ghosts_(g_a)) return;
+
+  GA_PUSH_NAME("nga_update");
+
+  size = GA[handle].elemsize;
+  ndim = GA[handle].ndim;
+
+  /* Get pointer to local memory */
+  ptr_loc = GA[handle].ptr[GAme];
+  /* obtain range of data that is held by local processor */
+  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  if (DEBUG) {
+    fprintf(stderr,"p[%d] lo(1) %d hi(1) %d\n",(int)GAme,
+        (int)lo_loc[0],(int)hi_loc[0]);
+    fprintf(stderr,"p[%d] lo(2) %d hi(2) %d\n",(int)GAme,
+        (int)lo_loc[1],(int)hi_loc[1]);
+  }
+  /* initialize range increments and get array dimensions */
+  for (idx=0; idx < ndim; idx++) {
+    increment[idx] = 0;
+    width[idx] = GA[handle].width[idx];
+    dims[idx] = GA[handle].dims[idx];
+  }
+
+  /* loop over dimensions for sequential update using shift algorithm */
+  for (idx=0; idx < ndim; idx++) {
+    nwidth = width[idx];
+
+    /* Do not bother with update if nwidth is zero */
+    if (nwidth == 0) continue;
+
+    /* Perform update in negative direction. Start by getting rough
+       estimate of block of needed data*/
+    if (DEBUG) {
+      fprintf(stderr,"\n\np[%d] Update in negative direction\n",(int)GAme);
+    }
+    for (i = 0; i < ndim; i++) {
+      if (i == idx) {
+        lo_rem[i] = lo_loc[i] - nwidth;
+        hi_rem[i] = lo_loc[i] - 1;
+        /* wrap boundary conditions around if data limits go past
+           end of global array */
+        if (lo_rem[i] < 1) {
+          lo_rem[i] = dims[i] - nwidth + 1;
+          hi_rem[i] = dims[i];
+        }
+      } else {
+        lo_rem[i] = lo_loc[i];
+        hi_rem[i] = hi_loc[i];
+      }
+      if (DEBUG) {
+        fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
+            (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
+        fprintf(stderr,"p[%d] lo_loc(%d) %d hi_loc(%d) %d\n",
+            (int)GAme,(int)i+1,(int)lo_loc[i],(int)i+1,(int)hi_loc[i]);
+      }
+    }
+
+    /* locate processor with this data */
+    if (!nga_locate_region_(g_a, lo_rem, hi_rem, _ga_map,
+        GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+        lo_rem, hi_rem, *g_a);
+
+    if (np > 1) {
+      /* Boundary data is distributed across more than one
+         processor. Special steps need to be taken.
+      */
+      fprintf(stderr,"More than 1 remote processor on proc %d\n",(int)GAme);
+    }
+
+    /* Get actual coordinates of desired chunk of remote
+       data as well as the actual coordinates of the local chunk
+       of data that will receive the remote data (these
+       coordinates take into account the presence of ghost
+       cells). Start by finding out what data is actually held by
+       remote processor. */
+    proc_rem = GA_proclist[0];
+    nga_distribution_(g_a, &proc_rem, lo_rem, hi_rem);
+    if (DEBUG) {
+      fprintf(stderr,"p[%d] Checking second step\n",(int)GAme);
+    }
+    for (i = 0; i < ndim; i++) {
+      if (increment[i] == 0) {
+        if (i == idx) {
+          plo_rem[i] = hi_rem[i] - lo_rem[i] + 1;
+          phi_rem[i] = hi_rem[i] - lo_rem[i] + width[i];
+          plo_loc[i] = 0;
+          phi_loc[i] = width[i] - 1;
+        } else {
+          plo_rem[i] = width[i];
+          phi_rem[i] = hi_rem[i] - lo_rem[i] + width[i];
+          plo_loc[i] = width[i];
+          phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+        }
+      } else {
+        plo_rem[i] = 0;
+        phi_rem[i] = hi_rem[i] - lo_rem[i] + increment[i];
+        plo_loc[i] = 0;
+        phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+      }
+      if (DEBUG) {
+        fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
+            (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
+        fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
+            (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
+      }
+    }
+
+    /* Get pointer to local data buffer and remote data
+       buffer as well as lists of leading dimenstions */
+    gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+    gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
+    if (DEBUG) {
+      for (i=0; i<ndim-1; i++) {
+        fprintf(stderr,"p[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
+            (int)ld_loc[i]);
+        fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
+            (int)ld_rem[i]);
+      }
+    }
+
+    /* Evaluate strides on local and remote processors */
+    gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
+        stride_loc);
+
+    /* Compute the number of elements in each dimension and store
+       result in count. Scale the first element in count by the
+       element size. */
+    gam_ComputeCount(ndim, plo_rem, phi_rem, count);
+    count[0] *= size;
+      
+    /* get remote data */
+    ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
+        ndim - 1, proc_rem);
+
+    /* Perform update in positive direction. Start by getting rough
+       estimate of block of needed data*/
+    if (DEBUG) {
+      fprintf(stderr,"\n\np[%d] Update in positive direction\n",(int)GAme);
+    }
+    for (i = 0; i < ndim; i++) {
+      if (i == idx) {
+        lo_rem[i] = hi_loc[i] + 1;
+        hi_rem[i] = hi_loc[i] + nwidth;
+        /* wrap boundary conditions around if data limits go past
+           end of global array */
+        if (hi_rem[i] > dims[i]) {
+          lo_rem[i] = 1;
+          hi_rem[i] = nwidth;
+        }
+      } else {
+        lo_rem[i] = lo_loc[i];
+        hi_rem[i] = hi_loc[i];
+      }
+      if (DEBUG) {
+        fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
+            (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
+        fprintf(stderr,"p[%d] lo_loc(%d) %d hi_loc(%d) %d\n",
+            (int)GAme,(int)i+1,(int)lo_loc[i],(int)i+1,(int)hi_loc[i]);
+      }
+    }
+
+    /* locate processor with this data */
+    if (!nga_locate_region_(g_a, lo_rem, hi_rem, _ga_map,
+        GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+        lo_rem, hi_rem, *g_a);
+
+    if (np > 1) {
+      /* Boundary data is distributed across more than one
+         processor. Special steps need to be taken.
+      */
+      fprintf(stderr,"More than 1 remote processor on proc %d\n",(int)GAme);
+    }
+
+    /* Get actual coordinates of desired chunk of remote
+       data as well as the actual coordinates of the local chunk
+       of data that will receive the remote data (these
+       coordinates take into account the presence of ghost
+       cells). Start by finding out what data is actually held by
+       remote processor. */
+    proc_rem = GA_proclist[0];
+    nga_distribution_(g_a, &proc_rem, lo_rem, hi_rem);
+    if (DEBUG) {
+      fprintf(stderr,"p[%d] Checking second step\n",(int)GAme);
+    }
+    for (i = 0; i < ndim; i++) {
+      if (increment[i] == 0) {
+        if (i == idx) {
+          plo_rem[i] = width[i];
+          phi_rem[i] = 2*width[i] - 1;
+          plo_loc[i] = hi_loc[i] - lo_loc[i] + 1 + width[i];
+          phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i];
+        } else {
+          plo_rem[i] = width[i];
+          phi_rem[i] = hi_rem[i] - lo_rem[i] + width[i];
+          plo_loc[i] = width[i];
+          phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+        }
+      } else {
+        plo_rem[i] = 0;
+        phi_rem[i] = hi_rem[i] - lo_rem[i] + increment[i];
+        plo_loc[i] = 0;
+        phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+      }
+      if (DEBUG) {
+        fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
+            (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
+        fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
+            (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
+      }
+    }
+
+    /* Get pointer to local data buffer and remote data
+       buffer as well as lists of leading dimenstions */
+    gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+    gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
+    if (DEBUG) {
+      for (i=0; i<ndim-1; i++) {
+        fprintf(stderr,"p[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
+            (int)ld_loc[i]);
+        fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
+            (int)ld_rem[i]);
+      }
+    }
+
+    /* Evaluate strides on local and remote processors */
+    gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
+        stride_loc);
+
+    /* Compute the number of elements in each dimension and store
+       result in count. Scale the first element in count by the
+       element size. */
+    gam_ComputeCount(ndim, plo_rem, phi_rem, count);
+    count[0] *= size;
+    
+    /* get remote data */
+    ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
+        ndim - 1, proc_rem);
+
+    /* synchronize all processors and update increment array */
+    ga_sync_();
+    increment[idx] = 2*nwidth;
+  }
+
+  GA_POP_NAME;
+}

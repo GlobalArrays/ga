@@ -53,7 +53,7 @@ register Integer i;
 
    if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
  
-      if (ga_has_ghosts(g_a)) {
+      if (ga_has_ghosts_(g_a)) {
         nga_zero_patch_(g_a,lo,hi);
         return;
       }
@@ -122,7 +122,7 @@ void *ptr_a, *ptr_b;
      nga_distribution_(g_a, &me, lo, hi);
      if(lo[0]>0){
         nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-        if (ga_has_ghosts(g_a)) {
+        if (ga_has_ghosts_(g_a)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
         } else {
           GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -132,7 +132,7 @@ void *ptr_a, *ptr_b;
      nga_distribution_(g_b, &me, lo, hi);
      if(lo[0]>0){
         nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-        if (ga_has_ghosts(g_b)) {
+        if (ga_has_ghosts_(g_b)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
         } else {
           GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -211,7 +211,7 @@ void *ptr_a, *ptr_b;
    GA_PUSH_NAME("ga_dot");
 
    if(ga_compare_distr_(g_a,g_b) == FALSE ||
-      ga_has_ghosts(g_a) || ga_has_ghosts(g_b)) {
+      ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b)) {
        /* distributions not identical */
        nga_inquire_(g_a, &type, &andim, adims);
        nga_inquire_(g_b, &type, &bndim, bdims);
@@ -229,7 +229,7 @@ void *ptr_a, *ptr_b;
    nga_distribution_(g_a, &me, lo, hi);
    if(lo[0]>0){
       nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-      if (ga_has_ghosts(g_a)) {
+      if (ga_has_ghosts_(g_a)) {
         GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elems);
       } else {
         GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -245,7 +245,7 @@ void *ptr_a, *ptr_b;
      nga_distribution_(g_b, &me, lo, hi);
      if(lo[0]>0){
 	nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-        if (ga_has_ghosts(g_b)) {
+        if (ga_has_ghosts_(g_b)) {
           GET_ELEMS_W_GHOSTS(ndim,lo,hi,ld,&elemsb);
         } else {
           GET_ELEMS(ndim,lo,hi,ld,&elemsb);
@@ -377,7 +377,7 @@ void *ptr;
 
    nga_inquire_(g_a, &type, &ndim, dims);
    nga_distribution_(g_a, &me, lo, hi);
-   if (ga_has_ghosts(g_a)) {
+   if (ga_has_ghosts_(g_a)) {
      nga_scale_patch_(g_a, lo, hi, alpha);
      return;
    }
@@ -445,7 +445,7 @@ void *ptr_a, *ptr_b, *ptr_c;
 
    if((ga_compare_distr_(g_a,g_b) == FALSE) ||
       (ga_compare_distr_(g_a,g_c) == FALSE) ||
-       ga_has_ghosts(g_a) || ga_has_ghosts(g_b) || ga_has_ghosts(g_c)) {
+       ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b) || ga_has_ghosts_(g_c)) {
        /* distributions not identical */
        nga_inquire_(g_a, &type, &andim, adims);
        nga_inquire_(g_b, &type, &bndim, bdims);

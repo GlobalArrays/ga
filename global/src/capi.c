@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.33 2001-08-17 20:57:55 d3g293 Exp $ */
+/* $Id: capi.c,v 1.34 2001-08-24 18:33:09 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -391,6 +391,16 @@ void NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[])
 
      nga_access_ptr(&a,_ga_lo, _ga_hi, ptr, _ga_work);
      COPYF2C(_ga_work,ld, ndim-1);
+}
+
+void NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[])
+{
+     Integer a=(Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+
+     nga_access_ghost_ptr(&a, _ga_lo, ptr, _ga_work);
+     COPYF2C(_ga_work,ld, ndim-1);
+     COPYF2C(_ga_lo, dims, ndim);
 }
 
 void NGA_Release(int g_a, int lo[], int hi[])

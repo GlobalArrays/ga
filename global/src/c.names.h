@@ -166,6 +166,7 @@
 #define  nga_create_irreg_         NGA_CREATE_IRREG
 #define  nga_create_ghosts_irreg_  NGA_CREATE_GHOSTS_IRREG
 #define  nga_has_ghosts_           NGA_HAS_GHOSTS
+#define  nga_update_               NGA_UPDATE
 #define  nga_acc_                  NGA_ACC
 #define  nga_put_                  NGA_PUT
 #define  nga_get_                  NGA_GET
@@ -174,6 +175,7 @@
 #define  nga_locate_region_        NGA_LOCATE_REGION
 #define  nga_distribution_         NGA_DISTRIBUTION
 #define  nga_access_               NGA_ACCESS
+#define  nga_access_ghosts_        NGA_ACCESS_GHOSTS
 #define  nga_scatter_              NGA_SCATTER
 #define  nga_gather_               NGA_GATHER
 #define  nga_scatter_acc_          NGA_SCATTER_ACC
