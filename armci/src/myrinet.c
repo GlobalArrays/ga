@@ -226,14 +226,12 @@ int armci_gm_proc_init()
     /* allocate gm data structure for computing process */
     proc_gm = (armci_gm_proc_t *)malloc(1 * sizeof(armci_gm_proc_t));
     if(proc_gm == NULL) {
-        fprintf(stderr, "%d: Error allocate proc data structure.\n",
-                armci_me);
+        fprintf(stderr, "%d: Error allocate proc data structure.\n", armci_me);
         return FALSE;
     }
     proc_gm->node_map = (int *)calloc(armci_nproc, sizeof(int));
     if(proc_gm->node_map == NULL) {
-        fprintf(stderr, "%d: Error allocate proc data structure.\n",
-                armci_me);
+        fprintf(stderr, "%d: Error allocate proc data structure.\n", armci_me);
         return FALSE;
     }
 
@@ -251,7 +249,6 @@ int armci_gm_proc_init()
 
     /* broadcasting my node id to other processes */
     proc_gm->node_map[armci_me] = proc_gm->node_id;
-    armci_msg_barrier();
     armci_msg_igop(proc_gm->node_map, armci_nproc, "+");
 
     /* allow direct send */
@@ -278,6 +275,8 @@ int armci_gm_proc_init()
         else if(strcmp(gm_version, "1.1") == 0) armci_gm_bypass = FALSE;
         else armci_gm_bypass = TRUE;
     }
+
+    armci_msg_brdcst(&armci_gm_bypass, sizeof(int), 0);
     
     return TRUE;
 }
@@ -357,11 +356,10 @@ void armci_client_connect_to_servers()
 
             /* blocking: wait til the send is done by calling the callback */
             if(armci_client_send_complete() == ARMCI_GM_FAILED)
-                armci_die(" failed to make connection with server",
-                          server_mpi_id);
+                armci_die(" failed to make connection with server",0);
 
             if(DEBUG_INIT_)
-                fprintf(stdout,
+                fprintf(stderr,
                         "%d: sent 1st msg to server %d waiting reply at %d\n",
                         armci_me, server_mpi_id, MessageSndBuffer);
 
@@ -395,8 +393,9 @@ void armci_client_connect_to_servers()
                 armci_die(" failed sending ack to server", server_mpi_id);
 
             if(DEBUG_INIT_)
-                fprintf(stdout, "%d: connected to server %d\n",
+                fprintf(stderr, "%d: connected to server %d\n",
                         armci_me, server_mpi_id);
+
         }
     }
 }
