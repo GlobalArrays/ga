@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.78 2003-06-24 00:02:25 vinod Exp $
+# $Id: makefile.h,v 1.79 2003-07-01 21:08:24 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -278,12 +278,15 @@ endif
 # Alphas running Linux
 # using DEC compilers
 # ia64 using Intel Compiler
+# Opteron using GNU compilers with USE_INTEGER4=y
 # to cross compile on x86 type: make _CPU=ia64
 ifeq ($(TARGET),LINUX64)
        RANLIB = echo
 GLOB_DEFINES += -DLINUX 
 ifdef USE_INTEGER4
+ifneq ($(FC),g77)
     FOPT_REN += -i4  
+endif
 else
 GLOB_DEFINES += -DEXT_INT
     FOPT_REN +=-i8
@@ -337,10 +340,19 @@ ifeq ($(_FC),g77)
           CLD = $(FLD)
       CLD_REN =
 endif
-ifeq ($(_FC),efc) 
+ifeq ($(_FC),fort) 
           CLD = $(FLD)
       CLD_REN =
 endif
+endif
+#
+# Opteron
+ifeq  ($(_CPU),x86_64)
+  ifeq ($(_FC),pgf90)
+#     CMAIN = -Dmain=MAIN_
+     FOPT_REN += -Mdalign 
+     GLOB_DEFINES += -DPGLINUX
+  endif
 endif
 #
 #............................. CYGNUS on Windows ..........................

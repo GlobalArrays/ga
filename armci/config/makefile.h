@@ -129,6 +129,7 @@ endif
 endif
 #-----------------Linux 64-bit on DEC/Compaq Alpha with DEC compilers --
 #-----------------Linux 64-bit on Itanium with Intel compilers --
+#-----------------Linux 64-bit on Optern with GNU compilers --
 ifeq ($(TARGET),LINUX64)
    GLOB_DEFINES += -DLINUX
          _CPU = $(shell uname -m)
@@ -174,6 +175,14 @@ endif
      EXTRA_OBJ += tas.o
 
    
+endif
+ifeq  ($(_CPU),x86_64)
+  ifeq ($(_FC),pgf90)
+     FOPT_REN= -fastsse -Mdalign -tp k8-64 -O3
+  endif
+  ifeq ($(_FC),g77)
+        FOPT_REN  += -funroll-loops -fstrength-reduce -mfpmath=sse 
+  endif
 endif
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
