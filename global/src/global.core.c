@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.33 1996-10-02 01:59:05 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.34 1996-12-20 19:48:14 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -1298,32 +1298,6 @@ logical gaDirectAccess(proc)
 }
 
 
-/*\ computes leading dim and pointer to (i,j) element owned by processor proc
-\*/
-void gaShmemLocation2(proc, g_a, i, j, ptr, ld)
-Integer g_a, i, j, proc, *ld;
-char **ptr;
-{
-Integer ilo, ihi, jlo, jhi, offset, proc_place,g_handle=g_a+GA_OFFSET;
-
-      ga_ownsM(g_handle, proc, ilo, ihi, jlo, jhi);
-      if(i<ilo || i>ihi || j<jlo || j>jhi)
-                           ga_error(" gaShmemLocation: invalid (i,j) ",GAme);
-
-      offset = (i - ilo) + (ihi-ilo+1)*(j-jlo);
-
-      /* find location of the proc in current cluster pointer array */
-      if(! ClusterMode) proc_place = proc;
-      else{
-         proc_place = proc - GAmaster;
-         if(proc_place < 0 || proc_place >= cluster_compute_nodes){
-              ga_error(" gaShmemLocation: invalid process ",proc);
-         }
-      }
-
-      *ptr = GA[g_handle].ptr[proc_place] + offset*GAsizeofM(GA[g_handle].type);
-      *ld = ihi-ilo+1;
-}
 
 
 #ifdef SHMEM
@@ -1366,9 +1340,10 @@ Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
    if (*(ilo) <= 0 || *(ihi) > GA[GA_OFFSET + *(g_a)].dims[0] ||               \
        *(jlo) <= 0 || *(jhi) > GA[GA_OFFSET + *(g_a)].dims[1] ||               \
        *(ihi) < *(ilo) ||  *(jhi) < *(jlo)){                                   \
-       sprintf(err_string,"%s:request(%d:%d,%d:%d) out of range (1:%d,1:%d)",  \
+       sprintf(err_string,"%s:request(%d:%d,%d:%d) out of range(1:%d,1:%d):%s",\
                string, *(ilo), *(ihi), *(jlo), *(jhi),                         \
-               GA[GA_OFFSET + *(g_a)].dims[0], GA[GA_OFFSET + *(g_a)].dims[1]);\
+               GA[GA_OFFSET + *(g_a)].dims[0], GA[GA_OFFSET + *(g_a)].dims[1], \
+               GA[GA_OFFSET + *(g_a)].name);                                   \
        ga_error(err_string, *(g_a));                                           \
    }                                                                           \
 }
@@ -1671,75 +1646,116 @@ Integer ilop, ihip, jlop, jhip, offset;
 }
 
 
+#ifdef CRAY_T3D
+/*\local accumulate using intermediate buffer in local memory 
+\*/
+void ga_acc_1d_local(Integer type, void* alpha, Integer rows, Integer cols, 
+                void* pglobal, Integer ldg, void *plocal, Integer ldl, 
+                void* buf, Integer buflen, Integer proc)
+{
+Integer item_size = GAsizeofM(type), elem, words, j, istart, iend;
+char *ptr_dst, *ptr_src;
+
+     for (j = 0;  j < cols;  j++)
+       for( istart = 0;  istart < rows;  istart += buflen){
+          iend   = MIN(istart + buflen, rows);
+          elem   = iend - istart;
+          words  = elem*item_size/sizeof(Integer);
+
+          ptr_dst = (char *)pglobal  + item_size* (istart + j *ldg);
+          ptr_src = (char *)plocal   + item_size* (istart + j *ldl);
+       
+          CopyElemFrom(ptr_dst, buf, words, proc);
+          switch (type){
+          case MT_F_DBL:
+             dacc_column(alpha, buf, ptr_src, elem ); break;
+          case MT_F_DCPL:
+             zacc_column(alpha, buf, ptr_src, elem ); break;
+          case MT_F_INT:
+             iacc_column(alpha, buf, ptr_src, elem ); break;
+          }
+          CopyElemTo(buf, ptr_dst, words, proc);
+       }
+}
+#endif
+
+
 
 /*\ local accumulate 
 \*/
 void ga_acc_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
    Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
-   DoublePrecision *alpha, *buf;
+   void *alpha, *buf;
 {
 char     *ptr_src, *ptr_dst;
 Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
 #ifdef CRAY_T3D
-#  define LEN_ACC_BUF 100
-   DoublePrecision acc_buffer[LEN_ACC_BUF], *pbuffer, *ptr;
-   Integer j, elem, words, handle, index;
+#  define LEN_DBL_BUF 500
+#  define LEN_BUF (LEN_DBL_BUF * sizeof(DoublePrecision))
+   DoublePrecision acc_buffer[LEN_DBL_BUF], *pbuffer;
+   Integer buflen,  bytes, handle, index;
 #endif
 
    GA_PUSH_NAME("ga_acc_local"); 
+
    item_size =  GAsizeofM(type);
    gaShmemLocation(proc, g_a, ilo, jlo, &ptr_dst, &ldp);
+   ptr_src = (char *)buf   + item_size * offset;
+   rows = ihi - ilo +1;
+   cols = jhi - jlo +1;
 
 #  ifdef CRAY_T3D
-     elem = ihi - ilo +1;
-     words = elem*item_size/8;
      if(proc != GAme){
-        ptr = (DoublePrecision *) ptr_dst;
-        if(words>LEN_ACC_BUF){
-            if(!MA_push_get(MT_F_DBL, words, "ga_acc_temp", &handle, &index))
-                ga_error("allocation of ga_acc buffer failed ",GAme);
-            MA_get_pointer(handle, &pbuffer);
-        }else pbuffer = acc_buffer;
+
+        bytes = rows*item_size;
+        buflen  = MIN(bytes,LEN_BUF)/item_size;
+        pbuffer = acc_buffer;
+
+        /* for larger patches try to get more buffer space from MA */ 
+        if(bytes > LEN_BUF){
+
+            Integer avail = MA_inquire_avail(type);
+            if(avail * item_size * 0.9 > LEN_BUF) {
+            
+               buflen = (Integer) (avail *0.9); /* leave some */
+               if(!MA_push_get(type, buflen, "ga_acc_buf", &handle, &index))
+                        ga_error("allocation of ga_acc buffer failed ",GAme);
+               MA_get_pointer(handle, &pbuffer);
+            }
+        }
 
         LOCK(g_a, proc, ptr_dst);
-           for (j = 0;  j < jhi-jlo+1;  j++){
-              ptr_dst = (char *)ptr  + item_size* j *ldp;
-              ptr_src = (char *)buf  + item_size* (j*ld + offset );
-   
-              CopyElemFrom(ptr_dst, pbuffer, words, proc);
-              if(type== MT_F_DBL)
-                 dacc_column(alpha, pbuffer, ptr_src, elem );
-              else
-                 zacc_column(alpha, pbuffer, ptr_src, elem );
-              CopyElemTo(pbuffer, ptr_dst, words, proc);
-           }
-           /* _remote_write_barrier(); Howard's func.*/
+            ga_acc_1d_local(type, alpha, rows, cols, ptr_dst, ldp, ptr_src, ld, 
+                                                      pbuffer, buflen, proc);
         UNLOCK(g_a, proc, ptr_dst);
-        if(words>LEN_ACC_BUF) MA_pop_stack(handle);
+
+        if(bytes >LEN_BUF) MA_pop_stack(handle);
         GA_POP_NAME;
         return;
      }
-    /* cache coherency problem on T3D */
-     FLUSH_CACHE;
+     FLUSH_CACHE; /* cache coherency problem on T3D */
 #  endif
-     ptr_src = (char *)buf   + item_size * offset;
-     rows = ihi - ilo +1;
-     cols = jhi-jlo+1;
-     if(GAme == proc && !in_handler) GAbytes.accloc += (double)GAsizeofM(type)*rows*cols;
 
      if(GAnproc>1) LOCK(g_a, proc, ptr_dst);
-       if(type == MT_F_DBL){
+       if(type==MT_F_DBL){
           accumulate(alpha, rows, cols, (DoublePrecision*)ptr_dst, ldp, 
                                         (DoublePrecision*)ptr_src, ld );
-       }else{
+       }else if(type==MT_F_DCPL){
           zaccumulate(alpha, rows, cols, (DoubleComplex*)ptr_dst, ldp, 
                                          (DoubleComplex*)ptr_src, ld );
+       }else{
+          iaccumulate(alpha, rows, cols, (Integer*)ptr_dst, ldp, 
+                                         (Integer*)ptr_src, ld );
        }
+
 #      if defined(CRAY_T3D)
-        /* flush write buffer before unlocking */
-        _memory_barrier();
+        _memory_barrier(); /* flush write buffer before unlocking */
 #      endif
      if(GAnproc>1) UNLOCK(g_a, proc, ptr_dst);
+
+     if(GAme == proc && !in_handler) 
+        GAbytes.accloc += (double)item_size*rows*cols;
+
    GA_POP_NAME;
 }
 
@@ -1748,7 +1764,7 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
 \*/
 void ga_acc_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
    Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
-   DoublePrecision *alpha, *buf;
+   void *alpha, *buf;
 {
 char     *ptr_src, *ptr_dst;
 Integer  type, rows, cols, msglen;
@@ -1766,8 +1782,9 @@ Integer  type, rows, cols, msglen;
 
    /* append alpha at the end */
    ptr_dst += rows*cols*GAsizeofM(type);
-   if(type==MT_F_DBL)*(DoublePrecision*)ptr_dst= *alpha; 
-   else *(DoubleComplex*)ptr_dst= *(DoubleComplex*)alpha;
+   if(type==MT_F_DBL)*(DoublePrecision*)ptr_dst= *(DoublePrecision*)alpha; 
+   else if(type==MT_F_DCPL) *(DoubleComplex*)ptr_dst= *(DoubleComplex*)alpha;
+   else *(Integer*)ptr_dst= *(Integer*)alpha;
 
    msglen = rows*cols*GAsizeofM(type) + GAsizeofM(type); /* plus alpha */
    ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_ACC,
@@ -1781,7 +1798,7 @@ Integer  type, rows, cols, msglen;
 \*/
 void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *ld;
-   DoublePrecision *buf, *alpha;
+   void *buf, *alpha;
 {
    Integer p, np, proc, idx;
    Integer ilop, ihip, jlop, jhip, offset, type = GA[GA_OFFSET + *g_a].type;
@@ -1799,9 +1816,6 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
                   *ilo, *ihi, *jlo, *jhi);
           ga_error(err_string, *g_a);
    }
-
-   if (type != MT_F_DBL && type !=  MT_F_DCPL) 
-                       ga_error(" ga_acc: type not supported ",*g_a);
 
    gaPermuteProcList(np); /* prepare permuted list of indices */
    for(idx=0; idx<np; idx++){

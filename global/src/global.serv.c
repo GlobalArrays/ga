@@ -356,7 +356,7 @@ Integer ga_read_inc_local();
                                MessageRcv->ilo, MessageRcv->ihi,
                                MessageRcv->jlo, MessageRcv->jhi,
                                MessageRcv->buffer, offset, ld, toproc,
-                               (DoublePrecision*)(MessageRcv->buffer+msglen)); 
+                               MessageRcv->buffer+msglen); 
                                /* alpha is at the end*/
                             break;
 

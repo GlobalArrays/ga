@@ -25,6 +25,18 @@
       end
 
 
+      subroutine i_accumulate(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      integer A(ald,*), B(bld,*), alpha
+      do c = 1, cols
+         do r = 1, rows
+            A(r,c) = A(r,c)+ alpha*B(r,c)
+         enddo
+      enddo
+      end
+
+
       subroutine dcopy2d(rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld

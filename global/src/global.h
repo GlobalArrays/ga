@@ -40,7 +40,7 @@ extern logical ga_duplicate ARGS_((Integer*, Integer*, char* ));
 extern logical ga_locate_   ARGS_((Integer*, Integer*, Integer*, Integer* ));
 extern void ga_check_handle ARGS_((Integer*, char*));
 extern logical ga_locate_region_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer*, Integer map[][5], Integer* ));
-extern void  ga_acc_   ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               DoublePrecision*, Integer*, DoublePrecision* ));
+extern void  ga_acc_   ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               void*, Integer*, void* ));
 extern void ga_access_ ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Integer*, Integer* ));
 extern void ga_brdcst_ ARGS_((Integer*, Void*, Integer*, Integer* ));
 extern void ga_gather_ ARGS_((Integer*, Void*, Integer*, Integer*, Integer* ));

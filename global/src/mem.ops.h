@@ -40,6 +40,7 @@ static DoublePrecision DPzero=0.;
 #  define icopy2d_ ICOPY2D
 #  define d_accumulate_ D_ACCUMULATE
 #  define z_accumulate_ Z_ACCUMULATE
+#  define i_accumulate_ I_ACCUMULATE
 #  define XX_DAXPY SAXPY
 #  define XX_ZAXPY CAXPY
 #  define XX_ICOPY SCOPY
@@ -59,7 +60,7 @@ static DoublePrecision DPzero=0.;
 #  define THRESH   32
 
 
-void dcopy2d_(), icopy2d_(), d_accumulate(), z_accumulate();
+void dcopy2d_(), icopy2d_(), d_accumulate(), z_accumulate(), i_accumulate(); 
 
 /******************** 2D copy from local to local memory ******************/
 #if defined(SGI64)||defined(DECOSF)||defined(SGI)
@@ -220,6 +221,13 @@ DoubleComplex *alpha, *a, *b;
   else XX_ZAXPY(&(n), alpha, b, &ONE, a, &ONE);
 }
 
+static void iacc_column(alpha, a, b,n)
+Integer n,  *alpha, *a, *b;
+{
+  int i;
+  for (i=0;i<n;i++) a[i] += *alpha * b[i];
+}
+
 #endif
 
 #ifdef KSR
@@ -229,15 +237,17 @@ DoubleComplex *alpha, *a, *b;
       void Accum(DoublePrecision, DoublePrecision*, DoublePrecision*, Integer);\
       /* A and B are Fortran arrays! */\
       for(c=0;c<(cols);c++)\
-           Accum(*(alpha), (B) + c*(bld), (A) + c*(ald), (rows));\
+          Accum(*(DoublePrecision*)(alpha), (B)+c*(bld), (A)+c*(ald), (rows));\
    }
 #elif defined(CRAY_T3D)
 #  define accumulate(alpha, rows, cols, A, ald, B, bld) {\
    register Integer c,r;\
+   DoublePrecision *AA = (DoublePrecision*)(A), *BB= (DoublePrecision*)(B);\
+   DoublePrecision Alpha=*(DoublePrecision*)alpha;\
    if(rows< THRESH)\
       for(c=0;c<(cols);c++)\
-           for(r=0;r<(rows);r++)\
-                *((A) +c*(ald) + r) += *(alpha) * *((B) + c*(bld) +r);\
+         for(r=0;r<(rows);r++)\
+           *((AA)+c*(ald)+ r) += Alpha * *((BB)+c*(bld)+r);\
     else for(c=0;c<(cols);c++)\
            XX_DAXPY(&(rows), alpha, (B)+c*(bld), &ONE, (A)+c*(ald), &ONE);\
    }
@@ -273,5 +283,11 @@ DoubleComplex *alpha, *a, *b;
 #  define zaccumulate(alpha, rows, cols, A, ald, B, bld){\
       Integer r=rows, c=cols, a_ld=ald, b_ld=bld;\
       z_accumulate_(alpha, &r, &c, A, &a_ld, B, &b_ld);\
+}
+/******************* integer accumulate operation **************************/
+
+#  define iaccumulate(alpha, rows, cols, A, ald, B, bld){\
+      Integer r=rows, c=cols, a_ld=ald, b_ld=bld;\
+      i_accumulate_(alpha, &r, &c, A, &a_ld, B, &b_ld);\
 }
 
