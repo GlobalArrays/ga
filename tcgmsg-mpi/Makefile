@@ -168,6 +168,13 @@ ifeq ($(MACHINE),SGI)
  GLOB_DEFINES = -DSGI
 endif
 
+ifeq ($(MACHINE),SGI_N32)
+#
+# SGI running IRIX 6.XX on 64-bit MIPS-4 processors
+#
+ GLOB_DEFINES += -DSGI -n32
+endif
+
 #............................. SGI Power Challenge ..........................
 #
 # SGI running IRIX6.XX 
@@ -175,6 +182,7 @@ endif
 #
 ifeq ($(MACHINE),SGITFP)
         CDEFS = -DEXT_INT
+     COPT_REN = -64
      FOPT_REN = -i8 -64
  GLOB_DEFINES = -DSGI64 -DSGI
 endif
@@ -184,6 +192,8 @@ ifeq ($(MACHINE),SGI64)
 # SGI running IRIX6.XX with native Fortran integer sizes
 #
  GLOB_DEFINES = -DSGI64 -DSGI
+     COPT_REN = -64
+     FOPT_REN = -64
 endif
 
 #................................ Intel Paragon .............................
