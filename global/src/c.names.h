@@ -131,6 +131,7 @@
 #define  ga_net_nodeid_            GA_NET_NODEID
 #define  ga_print_                 GA_PRINT
 #define  ga_print_patch_           GA_PRINT_PATCH
+#define  ga_print_patch_           GA_PRINT_PATCH
 #define  ga_print_stats_           GA_PRINT_STATS
 #define  ga_put_                   GA_PUT
 #define  ga_read_inc_              GA_READ_INC
@@ -207,6 +208,7 @@
 #define  nga_scale_patch_          NGA_SCALE_PATCH
 #define  nga_add_patch_            NGA_ADD_PATCH
 #define  nga_print_patch_          NGA_PRINT_PATCH
+#define  nga_zero_patch_           NGA_ZERO_PATCH
 
 #define  nga_select_elem_          NGA_SELECT_ELEM
 #define  ga_patch_enum_            GA_PATCH_ENUM
