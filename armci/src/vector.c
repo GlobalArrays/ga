@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.21 2002-12-11 00:43:34 vinod Exp $ */
+/* $Id: vector.c,v 1.22 2002-12-17 13:03:42 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -547,7 +547,7 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
 
-    ORDER(PUT,proc); /* ensure ordering */
+    /*ORDER(PUT,proc);  ensure ordering */
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
@@ -555,6 +555,8 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = PUT;
+      nb_handle->proc= proc;
+      nb_handle->bufid=NB_NONE;
     }
 
 
@@ -565,7 +567,7 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
        /*500 is very conservative, the number here should be modified to be 
        based on the size of send/recv buffer*/
        if(totvec<500)
-         rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1,NULL);
+         rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1,nb_handle);
        else 
 #endif    
          rc = armci_pack_vector(PUT, NULL, darr, len, proc,nb_handle);
@@ -596,7 +598,7 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-    ORDER(GET,proc); /* ensure ordering */
+    /*ORDER(GET,proc);  ensure ordering */
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
@@ -604,6 +606,8 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = GET;
+      nb_handle->proc= proc;
+      nb_handle->bufid=NB_NONE;
     }
 
     if(direct)
@@ -613,7 +617,7 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
        /*500 is very conservative, the number here should be modified to be 
        based on the size of send/recv buffer*/
        if(totvec<500)
-          rc = armci_rem_vector(GET, NULL, darr, len, proc,1,NULL);
+          rc = armci_rem_vector(GET, NULL, darr, len, proc,1,nb_handle);
        else
 #endif   
        rc = armci_pack_vector(GET, NULL, darr, len, proc,nb_handle);
@@ -648,12 +652,14 @@ int ARMCI_NbAccV( int op,              /* oeration code */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-    ORDER(op,proc); /* ensure ordering */
+    /* ORDER(op,proc);  ensure ordering */
     direct=SAMECLUSNODE(proc);
 
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = op;
+      nb_handle->proc= proc;
+      nb_handle->bufid=NB_NONE;
     }
 
 #   if defined(ACC_COPY)
@@ -663,7 +669,7 @@ int ARMCI_NbAccV( int op,              /* oeration code */
     if(direct)
          rc = armci_acc_vector( op, scale, darr, len, proc);
     else
-         rc = armci_pack_vector(op, scale, darr, len, proc,NULL);
+         rc = armci_pack_vector(op, scale, darr, len, proc,nb_handle);
 
     if(rc) return FAIL6;
     else return 0;

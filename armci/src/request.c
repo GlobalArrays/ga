@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.46 2002-12-11 00:43:34 vinod Exp $ */
+/* $Id: request.c,v 1.47 2002-12-17 13:03:42 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -153,7 +153,7 @@ void *rem_ptr;
          info->protocol=VDSCR_IN_PLACE;
        }
        else {
-         info->ptr.dscrbuf = malloc(size);
+         info->ptr.dscrbuf = (void *)malloc(size);
          buf = (char *)info->ptr.dscrbuf;
          info->protocol=VDSCR_IN_PTR;
        }
@@ -165,9 +165,13 @@ void *rem_ptr;
     for(i=0;i<len;i++){
         ADDBUF(buf,int,darr[i].ptr_array_len); /* number of elements */
         ADDBUF(buf,int,darr[i].bytes);         /* sizeof element */
-        if(op==GET)rem_ptr = darr[i].src_ptr_array;
+        if(op==GET){
+          if(is_nb)
+            rem_ptr = darr[i].dst_ptr_array;
+          else
+            rem_ptr = darr[i].src_ptr_array;
+        }
         else rem_ptr = darr[i].dst_ptr_array;
-          
         armci_copy(rem_ptr,buf, darr[i].ptr_array_len * sizeof(void*));
         buf += darr[i].ptr_array_len*sizeof(void*);
     }
@@ -529,6 +533,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
         this shouldnt cause any problems. Later on this has to be properly
         set in pack.c for both strided and vector protocols*/
       armci_set_nbhandle_bufid(nb_handle,NULL,NB_MULTI);
+      if(op==GET)armci_save_vector_dscr(&buf,darr,len,op,1);
     }
 
     buf += sizeof(request_header_t);
@@ -587,8 +592,11 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
     }
 
     armci_send_req(proc, msginfo, bufsize);
-
-    if(op == GET && !nb_handle){
+    if(op == GET 
+#   if !defined(USE_SOCKET_VECTOR_API) 
+       && !nb_handle
+#   endif 
+      ){
        armci_complete_vector_get(darr,len,msginfo);
     }
     return 0;
