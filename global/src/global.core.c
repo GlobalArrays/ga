@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.24 1996-05-10 22:00:16 d3g681 Exp $*/
+/*$Id: global.core.c,v 1.25 1996-05-20 18:01:46 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -1485,7 +1485,8 @@ msgid_t  msgid_snd, msgid_rcv;
       len = expected_len;
       msgid_rcv = ga_msg_ircv(GA_TYPE_GET,  ptr_src, expected_len, to);
       ga_snd_req(g_a, ilo,ihi,jlo,jhi, (Integer)0, type, GA_OP_GET,proc,to);
-      ga_msg_wait(msgid_rcv, &len, &from); 
+      ga_msg_wait(msgid_rcv, &from, &len);
+
 #  else
       ga_snd_req(g_a, ilo,ihi,jlo,jhi, (Integer)0, type, GA_OP_GET,proc,to);
       ga_msg_rcv(GA_TYPE_GET, ptr_src, expected_len, &len, to,&from);
@@ -2296,7 +2297,8 @@ msgid_t  msgid;
      len = expected_len;
      msgid = ga_msg_ircv(GA_TYPE_DGT, MessageSnd, expected_len, to);
      ga_snd_req(g_a, nv, 0,0,0, msglen, GA[handle].type, GA_OP_DGT, proc, to);
-     ga_msg_wait(msgid, &len, &from); 
+     ga_msg_wait(msgid, &from, &len);
+
 # else
      ga_snd_req(g_a, nv, 0, 0, 0, msglen, GA[handle].type, GA_OP_DGT, proc, to);
      ga_msg_rcv(GA_TYPE_DGT, MessageSnd, expected_len, &len,to,&from);
@@ -2434,7 +2436,7 @@ msgid_t  msgid;
       len = bytes;
       msgid = ga_msg_ircv(GA_TYPE_RDI, MessageSnd, bytes, to);
       ga_snd_req(g_a, i, inc, j, 0, bytes, GA[handle].type, GA_OP_RDI,proc, to);
-      ga_msg_wait(msgid, &len, &from);
+      ga_msg_wait(msgid, &from, &len);
 #  else
       ga_snd_req(g_a, i, inc, j, 0, bytes, GA[handle].type, GA_OP_RDI,proc, to);
       ga_msg_rcv(GA_TYPE_RDI, MessageSnd, bytes, &len,to,&from);
