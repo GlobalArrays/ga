@@ -7,7 +7,7 @@
 #endif
 
       program ga_test
-c $Id: testmatmult.F,v 1.3 2003-08-20 22:01:45 manoj Exp $
+c $Id: testmatmult.F,v 1.4 2003-08-20 22:14:36 manoj Exp $
 c
 c     test ga_dgemm
 c     compile with make FLD_REN="optimized blas" testmatmult.x
@@ -30,6 +30,8 @@ c
       integer itime,ntimes,me
       integer nums_m(howmany),nums_n(howmany),nums_k(howmany)
       character*1 transa(ntrans),transb(ntrans),ta,tb
+      real *8 tmpa(nummax,nummax), tmpb(nummax,nummax)
+      real *8 tmpc(nummax,nummax)
       logical verify
       data transa/'n','t','n','t'/
       data transb/'n','n','t','t'/
@@ -131,7 +133,7 @@ c
                   call ffflush(6) 
                   if (verify .AND. itime.eq.1) then
                      call verify_ga_dgemm(ta, tb, num_m, num_n, num_k, 
-     &                    1.0d0, g_a, g_b, 0.0d0, g_c)
+     &                    1.0d0, g_a, g_b, 0.0d0, g_c,tmpa,tmpb,tmpc)
                   endif
                endif
             enddo
@@ -178,14 +180,14 @@ c     locally. For larger arrays, disbale this test as memory
 c     might not be sufficient
 c
       subroutine verify_ga_dgemm(xt1, xt2, num_m, num_n, num_k, 
-     $     alpha, g_a, g_b, beta, g_c)
+     $     alpha, g_a, g_b, beta, g_c, tmpa, tmpb, tmpc)
       implicit none
       character *1 xt1, xt2
       integer num_m, num_n, num_k, g_a, g_b, g_c
       double precision alpha, beta
+      real *8 tmpa(num_m,num_k), tmpb(num_k,num_n), tmpc(num_m,num_n)
 
       integer i,j,type,dim1, dim2
-      real *8 tmpa(num_m,num_k), tmpb(num_k,num_n), tmpc(num_m,num_n)
       real *8 abs_value
 #include "mafdecls.fh"
 #include "testutil.fh"
