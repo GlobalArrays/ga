@@ -1,5 +1,5 @@
       subroutine ga_summarize(verbose)
-C$Id: ga_summarize.F,v 1.9 1995-10-17 08:53:37 d3g681 Exp $
+C$Id: ga_summarize.F,v 1.10 1996-01-17 20:44:28 gg502 Exp $
       implicit none
 #include "global.fh"
 #include "mafdecls.fh"
@@ -67,7 +67,7 @@ c
             endif
 
  2          format('(''  array',i2,' => ', a ,' '',a', i2, 
-     $           ',''('',i',i2,','','',i',i2,''')'')')
+     $           ',''('',i',i2,','','',i',i2,','')'')')
             
 *            write(6,*) dim1, dim2, ldim1, ldim2
 *            write(6,*) head
