@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.51 2004-03-27 00:26:28 d3h325 Exp $ */
+/* $Id: message.c,v 1.52 2004-03-31 02:39:58 manoj Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -27,6 +27,7 @@
 /* global operations are use buffer size of BUF_SIZE doubles */ 
 #define BUF_SIZE  (4*2048)
 #define INFO_BUF_SIZE  (BUF_SIZE*sizeof(BUF_SIZE) - sizeof(double))
+#undef EMPTY
 #define EMPTY 0
 #define FULL 1
 
