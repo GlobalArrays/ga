@@ -24,7 +24,7 @@ c#define NEW_API
 #include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
-      parameter (nmax = 50, DIM = 2, nwidth = 2, MAXPROC = 2000)
+      parameter (nmax = 1000, DIM = 2, nwidth = 2, MAXPROC = 2000)
       parameter (nloop = 50)
       integer ndim, nproc, pdims(7), type, dcnt, g_a, maxval
       integer i, j, k, dims(7), width(7), map(2*nmax)
@@ -36,7 +36,7 @@ c#define NEW_API
       double precision t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,t17,t18
       double precision t19,t20,t21,t22,t23,t24
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
-      parameter (heap=60*60*4, fudge=100, stack=100*100)
+      parameter (heap=1000*1000*4, fudge=1000, stack=1000*1000)
       logical corner_flag
 c     
 c***  Intitialize a message passing library
@@ -258,7 +258,7 @@ c      go to 131
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
-     +           nmax+2*nwidth,has_data,nwidth,corner_flag,1)
+     +           nmax+2*width(1),has_data,width,corner_flag,1)
       call ga_sync
 
       if (me.eq.0) then
@@ -289,7 +289,7 @@ c      go to 131
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
-     +           nmax+2*nwidth,has_data,nwidth,corner_flag,2)
+     +           nmax+2*width(1),has_data,width,corner_flag,2)
       call ga_sync
 
       if (me.eq.0) then
@@ -320,7 +320,7 @@ c      go to 131
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
-     +           nmax+2*nwidth,has_data,nwidth,corner_flag,3)
+     +           nmax+2*width(1),has_data,width,corner_flag,3)
       call ga_sync
 
       if (me.eq.0) then
@@ -355,7 +355,7 @@ c
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
-     +           nmax+2*nwidth,has_data,nwidth,corner_flag,4)
+     +           nmax+2*width(1),has_data,width,corner_flag,4)
       call ga_sync
 
       if (me.eq.0) then
@@ -392,7 +392,7 @@ c     write(6,*) 'completed ga_update5_ghosts'
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
-     +           nmax+2*nwidth,has_data,nwidth,corner_flag,5)
+     +           nmax+2*width(1),has_data,width,corner_flag,5)
       call ga_sync
 
       if (me.eq.0) then
@@ -424,7 +424,7 @@ c     write(6,*) 'completed ga_update5_ghosts'
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
-     +           nmax+2*nwidth,has_data,nwidth,corner_flag,6)
+     +           nmax+2*width(1),has_data,width,corner_flag,6)
       call ga_sync
 
       if (me.eq.0) then
@@ -456,7 +456,7 @@ c     write(6,*) 'completed ga_update5_ghosts'
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
-     +           nmax+2*nwidth,has_data,nwidth,corner_flag,7)
+     +           nmax+2*width(1),has_data,width,corner_flag,7)
       call ga_sync
 
       if (me.eq.0) then
@@ -651,10 +651,10 @@ c
       return
       end
 c
-      subroutine atest(a,nrow,ncol,ld,b,ld2,has_data,nwidth,
+      subroutine atest(a,nrow,ncol,ld,b,ld2,has_data,width,
      +                 check_corner, idx)
 #include "global.fh"
-      integer ld
+      integer ld, width(7)
       integer a(ld,*), b(ld2,*)
       integer i, j, k, nproc, me, idx
       logical has_data(0:1999), check_data
@@ -668,10 +668,10 @@ c
         do i = 1, nrow
           do j = 1, ncol
             if (.not.check_corner.and.(.not.
-     +          ((i.le.nwidth.and.j.le.nwidth).or.
-     +           (i.le.nwidth.and.j.gt.ncol-nwidth).or.
-     +           (i.gt.nrow-nwidth.and.j.le.nwidth).or.
-     +           (i.gt.nrow-nwidth.and.j.gt.ncol-nwidth)))) then
+     +          ((i.le.width(1).and.j.le.width(2)).or.
+     +           (i.le.width(1).and.j.gt.ncol-width(2)).or.
+     +           (i.gt.nrow-width(1).and.j.le.width(2)).or.
+     +           (i.gt.nrow-width(1).and.j.gt.ncol-width(2))))) then
               if (a(i,j).ne.b(i,j)) check_data = .false.
             else if (check_corner) then
               if (a(i,j).ne.b(i,j)) check_data = .false.
