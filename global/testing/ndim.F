@@ -1,10 +1,12 @@
-c $Id: ndim.F,v 1.3 1999-07-28 17:34:41 d3h325 Exp $
+c $Id: ndim.F,v 1.4 1999-09-10 23:53:42 d3h325 Exp $
 #define  MAXLOOP 100
 
       program test
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
+      integer nproc
+      logical status
 c
 c***  Intitialize a message passing library
 c
@@ -13,16 +15,17 @@ c
 #else
       call pbeginf
 #endif
-c
-c     Initialize the MA package
-c
-      if (.not. ma_init(MT_DBL, 19000, 19000))
-     $     call parerr(1)
-c
 c     Intitialize the GA package
 c
       call ga_initialize()
-c     if(ga_nodeid().eq.0)print *,ga_nnodes(),' nodes'
+      nproc = ga_nnodes()
+c     if(ga_nodeid().eq.0)print *,nproc,' nodes'
+c
+c     Initialize the MA package
+c
+      status = ma_init(MT_DBL, 500000/nproc, 50000)
+      if(.not. status) call ga_error("ma_init failed",0) 
+c
 c
       if(ga_nodeid().eq.0)print *,' Testing 3-dimensional Arrays'
       call testit()
