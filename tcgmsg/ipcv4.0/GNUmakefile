@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.5 2001-05-05 05:24:19 edo Exp $
+# $Id: GNUmakefile,v 1.6 2001-06-28 00:09:09 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -22,68 +22,51 @@ OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
   INCDIR      = ../../include
 
 ifeq ($(TARGET),IBM)
-   LIB_DEFINES =  -DAIX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
+   LIB_DEFINES = -DGOTXDR -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),IBM64)
-   LIB_DEFINES = -DAIX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
-   EXTRA = strdup.o strtok.o wrap.o
-endif
-ifeq ($(TARGET),IBM64_32)
-   LIB_DEFINES = -DAIX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
+   LIB_DEFINES = -DGOTXDR -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),LINUX)
-   LIB_DEFINES =   -DLINUX -DSYSV -DSHMEM -DNOSPIN
+   LIB_DEFINES = -DNOSPIN
+   EXTRA = strdup.o strtok.o wrap.o
+endif
+ifeq ($(TARGET),LINUXIA64)
+   LIB_DEFINES = -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),LINUX64)
-   LIB_DEFINES =  -DLINUX -DLINUX64 -DCOMPAQ_FORT -DSYSV -DSHMEM -DTIMINGS -DNOSPIN
-   EXTRA = strdup.o strtok.o wrap.o
-endif
-ifeq ($(TARGET),LINUX64_32)
-   LIB_DEFINES =  -DLINUX -DLINUX64 -DCOMPAQ_FORT -DSYSV -DSHMEM -DTIMINGS -DNOSPIN
+   LIB_DEFINES = -DCOMPAQ_FORT -DTIMINGS -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),SGI_N32)
-   LIB_DEFINES = -DSGI -DSYSV -DSHMEM  -DGOTXDR -DPARTIALSPIN -DSGIUS
+   LIB_DEFINES = -DGOTXDR -DPARTIALSPIN -DSGIUS
    EXTRA = strdup.o  wrap.o
 endif
 ifeq ($(TARGET),SGITFP)
-   LIB_DEFINES = -DSGI -DSYSV -DSHMEM  -DPARTIALSPIN -DSGIUS
+   LIB_DEFINES = -DPARTIALSPIN -DSGIUS
    EXTRA = strdup.o  wrap.o
 endif
 ifeq ($(TARGET),HPUX)
-   LIB_DEFINES = -DHPUX -DEXTNAME -DSYSV -DSHMEM  -DNOSPIN
+   LIB_DEFINES = -DNOSPIN
      EXTRA = hpuxargs.o wrap.o
 endif
 ifeq ($(TARGET),HPUX64)
-   LIB_DEFINES = -DHPUX64 -DHPUX -DEXTNAME -DSYSV -DSHMEM  -DNOSPIN
+   LIB_DEFINES = -DNOSPIN
      EXTRA = hpuxargs.o wrap.o
 endif
 ifeq ($(TARGET),SOLARIS)
-   LIB_DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN -DSUNF77_2
+   LIB_DEFINES = -DSUN -DGOTXDR -DNOSPIN -DSUNF77_2
      EXTRA = wrap.o
 endif
 ifeq ($(TARGET),SOLARIS64)
-   LIB_DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN -DSUNF77_2
+   LIB_DEFINES = -DSUN -DGOTXDR -DNOSPIN -DSUNF77_2
      EXTRA = wrap.o
-          _FC = $(notdir $(FC))
-          _CC = $(notdir $(CC))
-  ifeq ($(_CC),fcc)
-     COPT_REN = -Kfast -KV9FMADD
-  endif
-  ifeq ($(_FC),frt)
-     FFLAGS = -Kfast -KV9FMADD -CcdII8
-      CMAIN = -Dmain=MAIN__
-  endif                                                           
 endif
 ifeq ($(TARGET),DECOSF)
-   LIB_DEFINES =  -DDECFORT -DSYSV -DSHMEM  -DNOSPIN
-   EXTRA = strdup.o strtok.o wrap.o
-endif
-ifeq ($(TARGET),DECOSF32)
-   LIB_DEFINES = -DDECOSF -DDECFORT -DSYSV -DSHMEM  -DNOSPIN
+   LIB_DEFINES =  -DDECFORT -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),CRAY-YMP)
@@ -92,7 +75,7 @@ ifeq ($(TARGET),CRAY-YMP)
 endif                                                                         
 ifeq ($(TARGET),SP)
     FFLAGS = -g -qEXTNAME
-   LIB_DEFINES = -DSP1 -DAIX -DEXTNAME
+   LIB_DEFINES = -DSP1 -DEXTNAME
 #enable workaround for a bug in MPL under PSSP 3.1 on SMP nodes
    LIB_DEFINES += -DMPL_SMP_BUG
  LINTFLAGS = -u -a -wkD $(LIB_DEFINES)
@@ -103,7 +86,7 @@ ifeq ($(TARGET),SP)
 endif
 ifeq ($(TARGET),SP1)
     FFLAGS = -g -qEXTNAME
-   LIB_DEFINES = -DSP1 -DAIX -DEXTNAME
+   LIB_DEFINES = -DSP1 -DEXTNAME
  LINTFLAGS = -u -a -wkD $(LIB_DEFINES)
      EXTRA = strdup.o strtok.o
    OBJ  = sp1.o evon.o evlog.o checkbyte.o mtime.o \
@@ -127,18 +110,24 @@ endif
 ifeq ($(TARGET),CONVEX-SPP)
         FC = fc
     FFLAGS = -O1 -ppu -or none
-   LIB_DEFINES = -DHPUX -DCONVEX -DEXTNAME -DSYSV -DSHMEM -DSPPLOCKS
+   LIB_DEFINES = -DHPUX -DCONVEX -DEXTNAME -DSPPLOCKS
     CFLAGS = -O1 -or none $(DEFINES)
     RANLIB = echo $*
  LINTFLAGS = $(DEFINES) -bhu
 endif
-         
 
+SYSTEM_V =  IBM IBM64 LINUX SGI SGI_N32 SGITFP HPUX HPUX64 SOLARIS SOLARIS64 
+SYSTEM_V += DECOSF CONVEX-SPP LINUXIA64
+
+ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
+     LIB_DEFINES += -DSYSV -DSHMEM
+endif
+
+         
 include ../../armci/config/makecoms.h
 include ../../armci/config/makemp.h
 include ../../config/makefile.h
 include ../../config/makelib.h
-
 
 
 
@@ -187,9 +176,7 @@ else
 endif
 
 test.x:	$(LIBRARY_PATH) $(BINDIR)/parallel test.c
-	$(CC) $(CFLAGS) -c checkbyte.c
 	$(CC) $(CFLAGS) -o $@ test.c $(LOADLIBES)
-	$(RM) checkbyte.o
 
 testf.x: msgtypesf.h testf.f.proto $(LIBRARY_PATH) $(BINDIR)/parallel
 	./port "$(TARGET)" testf.f.proto
