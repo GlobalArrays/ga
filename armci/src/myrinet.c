@@ -43,6 +43,9 @@ char *MessageRcvBuffer;
 armci_gm_context_t *armci_gm_context, *armci_gm_serv_context;
 armci_gm_context_t *armci_serv_ack_context;
 
+int armci_gm_bypass = 0;
+GM_ENTRY_POINT char * _gm_get_kernel_build_id(struct gm_port *p);
+
 /*********************************************************************
                         UTILITY FUNCTIONS                            
  *********************************************************************/
@@ -259,6 +262,15 @@ int armci_gm_proc_init()
         return FALSE;
     }
 
+    /* get the gm version number and set bypass flag */
+    if(armci_me == 0) {
+        char gm_version[8];
+        strncpy(gm_version, _gm_get_kernel_build_id(proc_gm->port), 3);
+        gm_version[3] = '\0';
+        if(strcmp(gm_version, "1.2") == 0) armci_gm_bypass = TRUE;
+        else armci_gm_bypass = FALSE;
+    }
+    
     return TRUE;
 }
 
@@ -690,7 +702,7 @@ int armci_gm_server_init()
         gm_provide_receive_buffer_with_tag(serv_gm->rcv_port,
                serv_gm->dma_buf[i], i, GM_LOW_PRIORITY, 0);
 
-    serv_gm->pending_msg_ct = 0; serv_gm->complete_msg_ct = 0;
+    serv_gm->pending_msg_ct = 0; serv_gm->complete_msg_ct = 0; 
     
     return TRUE;
 }
