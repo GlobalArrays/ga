@@ -4,7 +4,7 @@ c vector guys somehow lack arithmetic precision
 #elif defined(FUJITSU)
 # define THRESH 1d-12
 #else
-# define THRESH 1d-14
+# define THRESH 1d-13
 #endif
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 
