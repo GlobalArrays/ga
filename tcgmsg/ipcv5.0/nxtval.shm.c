@@ -1,3 +1,5 @@
+/* $Id: nxtval.shm.c,v 1.3 2002-01-28 19:42:04 d3h325 Exp $ */
+
 #include "tcgmsgP.h"
 long *nxtval_shmem;
 

@@ -56,9 +56,13 @@ EXTERN long TCGMSG_caught_sigint; /* True if SIGINT was trapped */
    in T3D code. */
 
 #ifdef NOTIFY_SENDER
-#define RESERVED (6*sizeof(long) + sizeof(lapi_cntr_t))
+#  ifdef LAPI
+#    define RESERVED (6*sizeof(long) + sizeof(lapi_cntr_t))
+#  else
+#    define RESERVED 6*sizeof(long)
+#  endif
 #else
-#define RESERVED 4*sizeof(long)
+#  define RESERVED 4*sizeof(long)
 #endif
 
 #ifdef CRAY_T3E
@@ -86,13 +90,14 @@ typedef struct {
 sendbuf_t *sendbuf_arr, *localbuf;
 #endif
 
-
 typedef struct {
   long info[4];                 /* 0=type, 1=length, 2=tag, 3=full */
   char buf[SHMEM_BUF_SIZE];	/* Message buffer */
 #ifdef NOTIFY_SENDER
   long stamp;
+#ifdef LAPI
   lapi_cntr_t cntr;
+#endif
   long flag;                    /* JN: used by receiver to signal sender */
 #endif
 } ShmemBuf;

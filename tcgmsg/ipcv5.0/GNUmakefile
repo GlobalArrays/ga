@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.3 2002-01-24 22:07:25 d3h325 Exp $
+# $Id: GNUmakefile,v 1.4 2002-01-28 19:42:04 d3h325 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -37,7 +37,7 @@ endif
 
 
 ifeq ($(TARGET),LINUX)
-   LIB_DEFINES = -DSHMEM -DSYSV -DLINUX -DNOSPIN -DNOTIFY_SENDER
+   LIB_DEFINES = -DSHMEM -DSYSV -DLINUX
     EXTRA = $(OBJ_SYSV)
 endif
 

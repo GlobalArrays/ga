@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/test.c,v 1.3 2001-05-08 17:30:39 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/test.c,v 1.4 2002-01-28 19:42:04 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -582,7 +582,7 @@ int main(argc, argv)
   long lenbuf;
   long node, opt;
   
-  PBEGIN_(argc, argv);
+  ALT_PBEGIN_(&argc, &argv);
 
   (void) printf("In process %ld\n", NODEID_());
   (void) fflush(stdout);

@@ -54,7 +54,7 @@ void PBEGIN_(int argc, char **argv)
   lapi_initialize();
 #else
   for (arg=1; arg<(argc-1); arg++)
-    if (strcmp(argv[arg],"-p") == 0) {
+    if (strcmp(argv[arg],"-np") == 0) {
       TCGMSG_nnodes = atol(argv[arg+1]);
       break;
     }
@@ -183,6 +183,13 @@ void PBEGIN_(int argc, char **argv)
   }
 
 }
+
+
+void ALT_PBEGIN_(int *argc, char **argv[])
+{ 
+  PBEGIN_(*argc, *argv);
+} 
+
 
 void PEND_(void)
 {
