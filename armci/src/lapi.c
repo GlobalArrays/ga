@@ -1,4 +1,4 @@
-/* $Id: lapi.c,v 1.9 1999-10-29 18:46:08 d3h325 Exp $ */
+/* $Id: lapi.c,v 1.10 1999-11-24 01:24:56 d3h325 Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>
@@ -403,8 +403,8 @@ int spin = 1;
         }else{
 
          /* yield processor to another thread */
-         /* mark thread as not runnable */
-/*         yield(); */
+         /* cannot yield w/o affecting thread priority - better sleep */
+         /* yield(); */
    
          /* call usleep to notify scheduler */
          (void)usleep(5);
