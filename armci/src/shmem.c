@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.71 2003-07-08 18:07:20 vinod Exp $ */
+/* $Id: shmem.c,v 1.72 2003-07-30 23:29:42 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -691,7 +691,7 @@ char *temp = (char*)0, *pref_addr=(char*)0;
 /*\ allocates shmem, to be called by kr_malloc that is called by process that
  *  creates shmem region
 \*/
-char *armci_allocate(long size)
+void *armci_allocate(long size)
 {
 #define min(a,b) ((a)>(b)? (b): (a))
 char *temp = (char*)0, *pref_addr=(char*)0, *ftemp;
@@ -760,7 +760,7 @@ size_t sz;
        alloc_regions++;
        if(i==0)ftemp = temp;
     }
-    return (min(ftemp,temp));
+    return (void*)(min(ftemp,temp));
 }
     
 /************************** END of MULTIPLE_REGIONS *******************/
@@ -890,7 +890,7 @@ extern void armci_region_register_shm(void *start, long size);
 /*\ allocates shmem, to be called by krmalloc that is called by process that
  *  creates shmem region
 \*/
-char *armci_allocate(long size)
+void *armci_allocate(long size)
 {
 char * temp;
 int id,shmflag=0;
@@ -958,7 +958,7 @@ size_t sz = (size_t)size;
     armci_region_register_shm(temp, size);
 #endif
 
-    return (temp);
+    return (void*) (temp);
 }
     
 #endif
@@ -994,7 +994,7 @@ int  reg, refreg=0,nreg;
           fflush(stdout);
        }
        kr_malloc_init(SHM_UNIT, (size_t)MinShmem, (size_t)MaxShmem, 
-		      (void *)armci_allocate, 0, &ctx_shmem);
+		      armci_allocate, 0, &ctx_shmem);
        id[SHMIDLEN-2]=MinShmem;
     }
 
