@@ -1,4 +1,4 @@
-#if defined(CRAY_T3D) || defined(KSR)
+#if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else

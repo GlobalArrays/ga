@@ -91,7 +91,7 @@ int     *proc_list, root=0, grp_me=-1;
      
 
         /* get the list of processors that own this block column A[:,jlo:jhi] */
-        GA_locate_region(&g_a, &ONE, &n, &jlo, &jhi, region_list, &reg_proc);
+        GA_locate_region(&g_a, &ONE, &n, &jlo, &jhi, (Integer (*)[5])region_list, &reg_proc);
         for(i=0; i< reg_proc; i++) proc_list[i] = (int) region_list[5*i];
      }
 
