@@ -5,13 +5,6 @@
 
 ifndef LIBMPI
    LIBMPI = -lmpi
-# name LIBMPI when MPICH used
-ifeq ($(CC),mpicc)
-   LIBMPI = -lmpich
-endif
-ifeq ($(FC),mpif77)
-   LIBMPI = -lmpich
-endif
 endif
 
 ifneq ($(MSG_COMMS),MPI)
@@ -31,7 +24,7 @@ endif
 ifeq ($(TARGET),FUJITSU-VPP)
 #       EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
 #MPlib 2.2.X and higher
-        EXTRA_LIBS = /usr/local/lib/libmp2.a -L/opt/tools/lib/ -lgen  -lpx -lelf -Wl,-J,-P -L/usr/lang/lib -lblasvp
+        EXTRA_LIBS = /usr/local/lib/libmp.a -L/opt/tools/lib/ -lgen  -lpx -lelf -Wl,-J,-P -L/usr/lang/lib -lblasvp -lcvp
 endif
 #................................ KSR ......................................
 #
