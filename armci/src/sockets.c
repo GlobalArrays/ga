@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.11 1999-11-10 01:55:55 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.12 1999-11-24 01:34:46 d3h325 Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -135,10 +135,6 @@ void armci_TcpNoDelay( int sock)
   struct protoent *proto = getprotobyname("tcp");
 #else
   struct protoent *proto = getprotobyname("TCP");
-#endif
-
-#if  defined(LINUX)
-  if (value) return;
 #endif
 
   if (proto == (struct protoent *) NULL)
@@ -301,27 +297,21 @@ void armci_CreateSocketAndBind(int *sock, int *port)
 }
 
 
-/*
- * Listen and accept a connection on the specified socket
- * which was created with CreateSocketAndBind
- */
-
-void armci_ListenAndAcceptAll(int* socklist, int num)
+/*\ listen for socket connections
+\*/
+void armci_ListenSockAll(int* socklist, int num)
 {
-  fd_set ready, fdzero;
-  struct timeval timelimit;
-  int maxsock, msgsock, nready, num_accept=0;
-  int size = PACKET_SIZE, i;
+int i;
 
-  if(num<0)armci_die("armci_ListenAndAcceptAll invalid number of sockets",num);
+  if(num<0)armci_die("armci_ListenSockAll invalid number of sockets",num);
 
-  for(i=0; i< num; i++){ 
+  for(i=0; i< num; i++){
      againlist:
        if (listen(socklist[i], num) < 0) {
          if (errno == EINTR)
            goto againlist;
          else
-           armci_die("armci_ListenAndAcceptAll: listen failed",  0);
+           armci_die("armci_ListenSockAll: listen failed",  0);
        }
   }
 
@@ -329,6 +319,19 @@ void armci_ListenAndAcceptAll(int* socklist, int num)
     (void) printf("process %ld out of listen on %d sockets\n",armci_me,num);
     (void) fflush(stdout);
   }
+}
+
+
+/*\  accept connections on the specified sockets
+\*/
+void armci_AcceptSockAll(int* socklist, int num)
+{
+  fd_set ready, fdzero;
+  struct timeval timelimit;
+  int maxsock, msgsock, nready, num_accept=0;
+  int size = PACKET_SIZE, i;
+
+  if(num<0)armci_die("armci_AcceptSockAll invalid number of sockets",num);
 
   /* Use select to wait for someone to try and establish a connection
      so that we can add a short timeout to avoid hangs */
@@ -354,12 +357,12 @@ againsel:
   if ( (nready <= 0) && (errno == EINTR) )
     goto againsel;
   else if (nready < 0)
-    armci_die("armci_ListenAndAcceptAll: error from select",nready);
+    armci_die("armci_AcceptSockAll: error from select",nready);
   else if (nready == 0)
-    armci_die("armci_ListenAndAcceptAll:timeout waiting for connection",nready);
+    armci_die("armci_AcceptSockAll:timeout waiting for connection",nready);
 
 /*  if (bcmp(&ready,&fdzero,sizeof(fdzero)))*/
-/*    armci_die("armci_ListenAndAcceptAll: out of select but not ready!",nready);*/
+/*    armci_die("armci_AcceptSockAll: out of select but not ready!",nready);*/
 
   /* accept connection from newly contacted clients */
   for(i=0; i< num; i++){ 
@@ -375,7 +378,7 @@ againsel:
         if (errno == EINTR)
           goto againacc;
         else
-          armci_die("armci_ListenAndAcceptAll: accept failed",  msgsock);
+          armci_die("armci_AcceptSockAll: accept failed",  msgsock);
       }
 
     if(DEBUG_) {
@@ -387,9 +390,9 @@ againsel:
        performance and increase size of message that goes asynchronously */
 
     if(setsockopt(msgsock, SOL_SOCKET, SO_RCVBUF, (char *) &size, sizeof size))
-      armci_die("armci_ListenAndAcceptAll: error setting SO_RCVBUF",  size);
+      armci_die("armci_AcceptSockAll: error setting SO_RCVBUF",  size);
     if(setsockopt(msgsock, SOL_SOCKET, SO_SNDBUF, (char *) &size, sizeof size))
-      armci_die("armci_ListenAndAcceptAll: error setting SO_SNDBUF",  size);
+      armci_die("armci_AcceptSockAll: error setting SO_SNDBUF",  size);
 
     armci_TcpNoDelay(msgsock);
 
@@ -405,7 +408,7 @@ againsel:
 
   for(i=0; i< num; i++) 
      if(socklist[i]>=0)
-        armci_die("armci_ListenAndAcceptAll: not connected",socklist[i]);
+        armci_die("armci_AcceptSockAll: not connected",socklist[i]);
      else
         socklist[i] = - socklist[i];
 
