@@ -2,7 +2,7 @@
  *    Author: Jialin Ju, PNNL
  */
 
-/* $Id: perf.c,v 1.18 2003-07-25 23:09:07 d3h325 Exp $ */
+/* $Id: perf.c,v 1.19 2003-10-23 21:45:31 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -300,7 +300,6 @@ void test_1D()
     
     /* only the proc 0 does the work */
     if(me == 0) {
-        printf("\n\t\t\tRemote 1-D Array Section\n");
         if(!CHECK_RESULT){
           printf("  section               get                 put");
           printf("                 acc\n");
@@ -321,6 +320,7 @@ void test_1D()
             
             loop = (SIZE * SIZE) / (chunk[i] * chunk[i]);
             loop = (int)sqrt((double)loop);
+            if(loop<2)loop=2;
             
             for(dst=1; dst<nproc; dst++) {
                 /* strided get */
@@ -406,7 +406,6 @@ void test_2D()
     /* only the proc 0 doest the work */
     /* print the title */
     if(me == 0) {
-        printf("\n\t\t\tRemote 2-D Array Square Section\n");
         if(!CHECK_RESULT){
            printf("  section               get                 put");
            printf("                 acc\n");
@@ -426,6 +425,7 @@ void test_2D()
             double bandwidth_get, bandwidth_put, bandwidth_acc;
             
             loop = SIZE / chunk[i];
+            if(loop<2)loop=2;
 
             for(dst=1; dst<nproc; dst++) {
                 /* strided get */
@@ -495,12 +495,17 @@ int main(int argc, char **argv)
     /* initialize ARMCI */
     ARMCI_Init();
 
+    if(!me)printf("\n             Performance of Basic Blocking Communication Operations\n");
     MP_BARRIER();
     
+    CHECK_RESULT=1; test_1D(); CHECK_RESULT=0; /* warmup run */
+
     /* test 1 dimension array */
+    if(!me)printf("\n\t\t\tContiguous Data Transfer\n");
     test_1D();
     
     /* test 2 dimension array */
+    if(!me)printf("\n\t\t\tStrided Data Transfer\n");
     test_2D();
 
     MP_BARRIER();
@@ -513,9 +518,11 @@ int main(int argc, char **argv)
 
     MP_BARRIER();
     CHECK_RESULT=1;
+    if(!me)printf("\n\t\t\tContiguous Data Transfer\n");
     test_1D();
     if(me == 0) printf("OK\n");
     MP_BARRIER();
+    if(!me)printf("\n\t\t\tStrided Data Transfer\n");
     test_2D();
     if(me == 0) printf("OK\n\n\nTests Completed.\n");
     MP_BARRIER();
