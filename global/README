@@ -3,12 +3,14 @@
 
 DEPENDENCIES ON OTHER SOFTWARE
 
+ - ARMCI - one-sided communication library used by GA as its run-time system
+   This s/w is new in release 3.0
+
  - TCGMSG or MPI: more or less extensive support is required. For
    example, a message-passing library is used on some platforms to
    fork processes, implement broadcast, ga_dgop;
 
- - MA (memory allocator by Greg Thomas) include files are used to
-   implement MA-like addressing;
+ - MA (memory allocator by Greg Thomas)
 
  - GA eigensolver, ga_diag, is a wrapper for the eigensolver from
    PEIGS library; (Please contact George Fann <gi_fann@pnl.gov> about
@@ -21,8 +23,7 @@ DEPENDENCIES ON OTHER SOFTWARE
  - MPI, SCALAPACK, PBBLAS, and BLACS libraries are required for
    ga_lu_solve, ga_cholesky, ga_llt_solve, ga_spd_invert, ga_solve. If
    you do not install these libs, the named operations will not be
-   available. Please see note below on how to build BLACS compatible
-   with GA.
+   available.
 
  - if you'd like to use tracing, an additonal library libtrace.a is
    required, and DGA_TRACE define flag should be specified for C and
@@ -66,10 +67,7 @@ BUILDING GA
   
    Additionaly, if the TCGMSG-MPI library is not needed, the
    make/environmental variable MSG_COMMS should be defined as
-   MSG_COMMS = MPI.  Note that some fortran GA test programs use
-   certain TCGMSG utility functions (for example, equivalent of C
-   sizeof operator) and therefore will not built without TCGMSG or
-   TCGMSG-MPI library.
+   MSG_COMMS = MPI. 
 
    Interface routines to ScaLAPACK are only available with MPI, and of
    course with ScaLAPACK. The user is required to define environment
