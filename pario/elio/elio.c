@@ -9,10 +9,13 @@
 
 #include "eliop.h"
 
-#if defined(SUN)||defined(SOLARIS)||defined(WIN32)||defined(LINUX)
-#   ifndef NOAIO
+
+#if  defined(AIX) || defined(DECOSF) || defined(SGITFP) || defined(SGI64) || defined(SGI_N32) || defined(CRAY) || defined(PARAGON)
+     /* systems with Asynchronous I/O */
+#else
+#    ifndef NOAIO
 #      define NOAIO
-#   endif
+#    endif
 #endif
 
 /****************** Internal Constants and Parameters **********************/
@@ -224,7 +227,7 @@ int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request
       SYNC_EMULATE(write);
 #endif
 
-  if(stat ==-1) ELIO_ERROR(AWRITFAIL, aio_i);
+  if(stat ==-1) ELIO_ERROR(AWRITFAIL, 0);
 
   PABLO_end(pablo_code);
 
@@ -369,7 +372,7 @@ int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * re
 int elio_wait(io_request_t *req_id)
 {
   int  aio_i=0;
-  int  rc;
+  int  rc=0;
 
   int pablo_code = PABLO_elio_wait;
   PABLO_start( pablo_code );
