@@ -299,19 +299,6 @@ extern void armci_set_shmem_limit(unsigned long shmemlimit);
 #define SET   1
 #define UNSET 0
 
-#define AGG_INIT_NB_HANDLE(op_type, p, nb_handle)  { \
-    if(nb_handle->proc < 0) {                 \
-      nb_handle->tag  = GET_NEXT_NBTAG();     \
-      nb_handle->op   = op_type;              \
-      nb_handle->proc = p;                    \
-      nb_handle->bufid= NB_NONE;              \
-    }                                         \
-    else if(nb_handle->op != op_type)         \
-      armci_die("ARMCI_NbXXX: AGG_INIT_NB_HANDLE(): Aggregate Failed, Invalid non-blocking handle", nb_handle->op);             \
-    else if(nb_handle->proc != p)          \
-      armci_die("ARMCI_NbXXX: AGG_INIT_NB_HANDLE(): Aggregate Failed, Invalid non-blocking handle", p);                      \
-    }
-
 extern int armci_agg_save_strided_descriptor(void *src_ptr, 
 					     int src_stride_arr[],
 					     void* dst_ptr, 
