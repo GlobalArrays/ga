@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.34 2000-09-13 22:17:07 d3h325 Exp $
+# $Id: makefile.h,v 1.35 2000-11-02 00:57:12 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -87,6 +87,7 @@ ifeq ($(TARGET),FUJITSU-VPP)
      FOPT_REN = -Sw -KA32
      COPT_REN = -KA32
  GLOB_DEFINES = -DFUJITSU
+        CMAIN = -Dmain=MAIN__
 endif
 
 #64-bit VPP5000
@@ -95,6 +96,7 @@ ifeq ($(TARGET),FUJITSU-VPP64)
      FOPT_REN = -Sw -CcdII8
  GLOB_DEFINES = -DFUJITSU
         CDEFS = -DEXT_INT
+        CMAIN = -Dmain=MAIN__
 endif
 #
 
@@ -151,6 +153,7 @@ else
 #
 #             PGI fortran compiler on intel
    ifneq (,$(findstring pgf,$(_FC)))
+       CMAIN = -Dmain=MAIN_
        FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
        GLOB_DEFINES += -DPGLINUX
    endif
