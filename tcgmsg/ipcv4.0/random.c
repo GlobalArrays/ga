@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/random.c,v 1.5 1996-07-19 19:37:50 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/random.c,v 1.6 2002-01-28 20:07:37 d3h325 Exp $ */
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -122,7 +122,7 @@ static  int		seps[ MAX_TYPES ]	= { SEP_0, SEP_1, SEP_2,
  *	MAX_TYPES*(rptr - state) + TYPE_3 == TYPE_3.
  */
 
-static  long		randtbl[ DEG_3 + 1 ]	= { TYPE_3,
+static  unsigned  long		randtbl[ DEG_3 + 1 ]	= { TYPE_3,
 			    0x9a319039, 0x32d9c024, 0x9b663182, 0x5da1f342,
 			    0xde3b81e0, 0xdf0a6fb5, 0xf103bc02, 0x48f340fb,
 			    0x7449e56b, 0xbeb1dbb0, 0xab5c5918, 0x946554fd,
@@ -144,8 +144,8 @@ static  long		randtbl[ DEG_3 + 1 ]	= { TYPE_3,
  * to point to randtbl[1] (as explained below).
  */
 
-static  long		*fptr			= &randtbl[ SEP_3 + 1 ];
-static  long		*rptr			= &randtbl[ 1 ];
+static  long		*fptr			= (long*) &randtbl[ SEP_3 + 1 ];
+static  long		*rptr			= (long*) &randtbl[ 1 ];
 
 
 
@@ -161,13 +161,13 @@ static  long		*rptr			= &randtbl[ 1 ];
  * the front and rear pointers have wrapped.
  */
 
-static  long		*state			= &randtbl[ 1 ];
+static  long		*state			= (long*) &randtbl[ 1 ];
 
 static  int		rand_type		= TYPE_3;
 static  int		rand_deg		= DEG_3;
 static  int		rand_sep		= SEP_3;
 
-static  long		*end_ptr		= &randtbl[ DEG_3 + 1 ];
+static  long		*end_ptr		= (long*) &randtbl[ DEG_3 + 1 ];
 
 
 
@@ -364,13 +364,4 @@ random()
 	}
 	return( i );
 }
-/*  Added by RJH ... usual FORTRAN drand interface */
 
-double drand_(flag)
-    unsigned long *flag;
-{
-  if (*flag)
-    srandom((unsigned) *flag);
-
-  return ((double) random()) * 4.6566128752458e-10;
-}
