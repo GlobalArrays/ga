@@ -67,7 +67,7 @@ ifneq (,$(findstring mpif,$(_FC)))
          _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { apgfcount++}; END {if(apgfcount)print "pgf77"} ' )
 endif
 ifneq (,$(findstring mpicc,$(_CC)))
-         _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
+         _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ {agcccount++}; END {if(agcccount)print "gcc"} ' )
 endif
 #
 #              GNU compilers 
@@ -447,8 +447,7 @@ ifeq ($(TARGET),LAPI64)
          LAPI_= 1
 GLOB_DEFINES += -DLAPI -DIBM64
 endif
-
-
+#
 # IBM RS/6000 under AIX
 ifeq ($(TARGET),IBM)
         IBM_  = 1
@@ -456,16 +455,11 @@ endif
 ifeq ($(TARGET),IBM64)
       IBM64_  = 1
 endif
-
+#
 ifdef LAPI_
-         _CPU = $(shell lsattr -El `lsdev -C -c processor -F name | head -1` | awk ' /POWER4/ { print "PWR4" };')
-
           CC  = mpcc_r
       LINK.f  = mpcc_r -lc_r -lxlf -lxlf90 -lm
     EXTRA_OBJ = lapi.o request.o buffers.o
-ifeq ($(_CPU),PWR4)
-GLOB_DEFINES += -DNEED_MEM_SYNC
-endif
 GLOB_DEFINES += -DSP
 endif
 #
@@ -489,8 +483,13 @@ ifdef IBM_
        CDEFS += -DEXTNAME
            FC = xlf
 GLOB_DEFINES += -DAIX
+         _CPU = $(shell lsattr -El `lsdev -C -c processor -F name | head -1` | awk ' /POWER4/ { print "PWR4" };')
 endif
-
+#
+ifeq ($(_CPU),PWR4)
+GLOB_DEFINES += -DNEED_MEM_SYNC
+endif
+#
 #...................... common definitions .......................
 #
 
