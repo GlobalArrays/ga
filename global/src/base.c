@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.96 2004-10-25 19:21:13 d3g293 Exp $ */
+/* $Id: base.c,v 1.97 2004-10-26 18:49:19 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1056,10 +1056,10 @@ void FATR ga_set_array_name_(Integer *g_a, char* array_name, int slen)
 void ga_set_pgroup_(Integer *g_a, Integer *p_handle)
 {
   Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("ga_set_pgrouop");
+  GA_PUSH_NAME("ga_set_pgroup");
   if (GA[ga_handle].actv == 1)
     ga_error("Cannot set processor configuration on array that has been allocated",0);
-  if (PGRP_LIST[*p_handle].actv == 1) {
+  if (*p_handle == GA_World_Proc_Group || PGRP_LIST[*p_handle].actv == 1) {
     GA[ga_handle].p_handle = (int) (*p_handle);
   } else {
     ga_error("Processor group does not exist",0);
