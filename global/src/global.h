@@ -222,6 +222,7 @@ extern void FATR nga_add_patch_(DoublePrecision *alpha, Integer *g_a,
                     Integer *clo, Integer *chi);
 extern int ga_type_c2f(int type);
 extern int ga_type_f2c(int type);
+extern void ga_type_gop(int type, void *x, int n, char* op);
 
 #ifdef __cplusplus
 }

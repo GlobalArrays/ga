@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.11 2001-05-07 22:56:57 llt Exp $ */
+/* $Id: collect.c,v 1.12 2001-06-01 22:13:35 d3h325 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -60,6 +60,21 @@ void ga_msg_sync_()
      SYNCH_(&type);
 #endif
 }
+
+
+void ga_type_gop(int Type, void *x, int n, char* op)
+{
+int atype, type=ga_type_f2c(Type);
+    switch(type){
+    case MT_FLOAT: atype=ARMCI_FLOAT; break;
+    case MT_DBL: atype=ARMCI_DOUBLE; break;
+    case MT_LONGINT: atype=ARMCI_LONG; break;
+    case MT_INT: atype=ARMCI_INT; break;
+    default: ga_error("ga_type_gop: type not supported",Type);
+    }
+    armci_msg_gop_scope(SCOPE_ALL, x, n, op, atype);   
+}
+
 
 void ga_dgop(type, x, n, op)
      Integer type, n;
