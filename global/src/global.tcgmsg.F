@@ -137,6 +137,7 @@ c
       integer g_a
       integer ack
       integer value, Itmp_recv(1)
+      logical status
       integer  ga_local_read_inc, ga_map_myplace, ga_map_id 
       external ga_local_read_inc, ga_map_myplace, ga_map_id 
       EQUIVALENCE (msg, header_recv)
@@ -219,7 +220,7 @@ c
 c
       else if (msg(8) .eq. GA_OP_DUP) then
 c
-         call ga_duplicate(msg(1),msg(2),'duplicate')
+         status = ga_duplicate(msg(1),msg(2),'duplicate')
 c
       else if (msg(8) .eq. GA_OP_DES) then
 c
@@ -615,7 +616,7 @@ c
       integer type, dim1, dim2, nblock1, nblock2, g_a
       integer map1(nblock1), map2(nblock2)
 c
-      integer iproc, ldim1, ldim2, lname, lga, lp, i, j
+*     integer iproc, ldim1, ldim2, lname, lga, lp, i, j
       character*256 form
       logical overbose, status, oterse
       integer lenstr, int
@@ -831,7 +832,7 @@ c
 
 
 
-      subroutine ga_duplicate(g_a, g_b, array_name)
+      logical function ga_duplicate(g_a, g_b, array_name)
       implicit none
 #include "mafdecls.h"
 #include "globalp.fh"
@@ -840,7 +841,6 @@ c
       character*(*) array_name
       integer g_a, g_b
 c
-      ga_duplicate = .false.
       integer iproc, i
       logical overbose, oterse
       integer lenstr, int
@@ -858,6 +858,7 @@ c     Synchronize all processes before messing with data structures
 c
       call ga_sync()
 c
+      ga_duplicate = .false.
       call ga_check_handle(g_a, 'ga_duplicate')
 c
 c     Get next free global_array handle for g_b
@@ -1641,6 +1642,7 @@ c
 c
       integer g_a, ilo, ihi, jlo, jhi, ma_index, ld
       integer node
+      character*80 array_name
 c
 c      g_a             - array handle [input]
 c      iproc           - process number [input]
@@ -1662,8 +1664,12 @@ c
      &    ilo .le. ihi .and. jlo .le. jhi) then 
 c
 #ifdef DATA_SERVER
-      if(access_handle(g_a).ne.-1)
-     & call ga_error('ga_access: only one access per array allowed',g_a)
+      if(access_handle(g_a).ne.-1)then
+       call ga_inquire_name(g_a,array_name)
+       write(6,*) 'offending array: ', array_name, g_a
+       call ffflush(6)
+       call ga_error('ga_access: only one access per array allowed',g_a)
+      endif
 c
 c           The least efficient approach used: compute nodes copy the 
 c           data to a local temporary buffer and then provide access
@@ -1729,6 +1735,17 @@ c
       end
 
 
+      subroutine check_access(g_a, accessed)
+      implicit none
+#include "mafdecls.h"
+#include "globalp.fh"
+      integer g_a, accessed
+#ifdef DATA_SERVER
+      accessed = access_handle(g_a)
+#endif
+c
+      end
+ 
       subroutine ga_release_update(g_a, ilo, ihi, jlo, jhi)
       implicit none
 #include "mafdecls.h"
