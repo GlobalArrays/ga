@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.15 2000-10-12 22:43:46 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.16 2001-08-02 19:41:10 d3h325 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
@@ -60,7 +60,7 @@
 #define SHMEM_BUF_SIZE 262144
 #endif
 #if defined(SOLARIS)
-#define SHMEM_BUF_SIZE 262144
+#define SHMEM_BUF_SIZE 253952 
 #endif
 #ifdef KSR_NATIVE
 #include "ksr.h"
