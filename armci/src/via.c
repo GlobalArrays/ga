@@ -226,6 +226,43 @@ char *p = (char*)pnaddr;
 }
 
 
+/*\ allocate receive buffers for data server thread
+\*/
+void armci_server_alloc_bufs()
+{
+VIP_RETURN rc;
+VIP_MEM_ATTRIBUTES mattr;
+int mod, bytes;
+char *tmp;
+int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
+
+     /* allocate memory for the recv buffers-must be alligned on 64byte bnd */
+     bytes = clients*sizeof(vbuf_t) + sizeof(vbuf_long_t);
+     tmp = malloc(bytes + SIXTYFOUR);
+     if(!tmp) armci_die("failed to malloc recv vbufs",bytes);
+
+     /* setup buffer pointers */
+     mod = ((ssize_t)tmp)%SIXTYFOUR;
+     serv_buf_arr = (vbuf_t*)(tmp+SIXTYFOUR-mod);
+     serv_buf = (vbuf_long_t*)(serv_buf_arr+clients); /* buffer for response */
+     MessageRcvBuffer = serv_buf->buf;
+
+     /* setup memory attributes for the region */
+     mattr.Ptag = CLN_nic->ptag;
+     mattr.EnableRdmaWrite = VIP_FALSE;
+     mattr.EnableRdmaRead  = VIP_FALSE;
+
+     /* lock it */
+     rc = VipRegisterMem(CLN_nic->handle,serv_buf_arr,bytes,
+                         &mattr,&serv_memhandle);
+     armci_check_status(DEBUG0, rc,"server register recv vbuf");
+
+     if(!serv_memhandle)armci_die("server got null handle for vbuf",0);
+}
+
+
+/*\ initialize connection data structures - called by main thread
+\*/
 void armci_init_connections()
 {
 VIP_RETURN rc;
@@ -301,6 +338,9 @@ int *AR_base;
    
        }
        if(DEBUG_) printf("%d: connections ready for server\n",armci_me);
+
+       armci_server_alloc_bufs(); /* get receive buffers for server thread */
+
     }
 
     if(DEBUG_) printf("%d: all connections ready \n",armci_me);
@@ -378,9 +418,6 @@ void * armci_server_code(void *data)
 {
 int c, ib;
 VIP_RETURN rc;
-VIP_MEM_ATTRIBUTES mattr;
-int mod, bytes;
-char *tmp;
 int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
 
      if(DEBUG1){
@@ -388,27 +425,7 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
         fflush(stdout);
      }
 
-     /* allocate memory for the recv buffers-must be alligned on 64byte bnd */
-     bytes = clients*sizeof(vbuf_t) + sizeof(vbuf_long_t);
-     tmp = malloc(bytes + SIXTYFOUR);
-     if(!tmp) armci_die("failed to malloc recv vbufs",bytes);
-
-     /* setup buffer pointers */
-     mod = ((ssize_t)tmp)%SIXTYFOUR;
-     serv_buf_arr = (vbuf_t*)(tmp+SIXTYFOUR-mod);
-     serv_buf = (vbuf_long_t*)(serv_buf_arr+clients); /* buffer for response */
-     MessageRcvBuffer = serv_buf->buf;
-
-     /* setup memory attributes for the region */
-     mattr.Ptag = CLN_nic->ptag;
-     mattr.EnableRdmaWrite = VIP_FALSE;
-     mattr.EnableRdmaRead  = VIP_FALSE;
-     
-     /* lock it */
-     rc = VipRegisterMem(CLN_nic->handle,serv_buf_arr,bytes,
-                         &mattr,&serv_memhandle);
-     armci_check_status(DEBUG0, rc,"server register recv vbuf");
-     if(!serv_memhandle)armci_die("server got null handle for vbuf",0);
+ 
      /* setup descriptors and post nonblocking receives */
      for(c = ib= 0; c < armci_nproc; c++) if(!SAMECLUSNODE(c)){
         vbuf_t *vbuf = serv_buf_arr+ib;
