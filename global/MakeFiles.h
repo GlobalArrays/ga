@@ -51,7 +51,7 @@ endif
 
 ifdef USE_ARMCI
   GA_CORE = global.armci.o global.util.o global.patch.o \
-	    collect.o decomp.o capi.o global.nalg.o
+	    collect.o decomp.o capi.o global.nalg.o global.npatch.o
 else
 ifdef IWAY
   GA_CORE += iway.o net.o
