@@ -80,10 +80,10 @@
 
 
 #ifdef WIN32
-#define FSYNC _commit
+#define FFSYNC _commit
 #else
 #include <unistd.h>
-#define FSYNC fsync
+#define FFSYNC fsync
 #endif
 
 /* structure to emulate control block in Posix AIO */
@@ -670,7 +670,7 @@ int elio_wait(io_request_t *req_id)
 #  elif defined(KSR)
       rc = iosuspend(1, cb_fout_arr+(int)*req_id);
 #  else
-      if((int)aio_suspend(cb_fout_arr+(int)*req_id, 1, NULL) != 0) rc =-1;
+      if((int)aio_suspend((const struct aiocb *const*)(cb_fout_arr+(int)*req_id), 1, NULL) != 0) rc =-1;
 #  endif
       if(rc ==-1) ELIO_ERROR(SUSPFAIL,0);
 
@@ -1007,12 +1007,12 @@ int elio_fsync(Fd_t fd)
 {
     int status = ELIO_OK;
 
-#ifdef FSYNC
+#ifdef FFSYNC
     if (fd->next)
       status = elio_fsync((Fd_t) fd->next);
 
     printf("syncing extent %d name %s\n", fd->extent, fd->name);
-//    if(FSYNC(fd->fd)==-1 || (status != ELIO_OK))
+    /*   if(FFSYNC(fd->fd)==-1 || (status != ELIO_OK)) */
     sync();
     if(fsync(fd->fd)==-1 )
       ELIO_ERROR(FSYNCFAIL, 0);
