@@ -81,7 +81,7 @@ else
 #
 #             PGI fortran compiler on intel
    ifneq (,$(findstring pgf,$(_FC)))
-       FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
+       FOPT_REN = -Mvect  -Munroll -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
    endif
 endif
 
