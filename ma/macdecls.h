@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.9 2000-07-04 11:27:03 d3g001 Exp $
+ * $Id: macdecls.h,v 1.10 2000-10-03 23:00:23 erjurrus Exp $
  */
 
 /* 
@@ -10,6 +10,9 @@
  *
  * This file may be included by internal and external C files.
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "macommon.h"
 #include "matypes.h"
@@ -17,6 +20,7 @@
 /**
  ** constants
  **/
+
 
 /* datatypes */
 #define MT_CHAR		MT_C_CHAR	/* char */
@@ -80,5 +84,10 @@ extern MA_LongDouble		ma_cb_ldbl[];	/* MT_C_LDBL */
 extern MA_SingleComplex		ma_cb_scpl[];	/* MT_C_SCPL */
 extern MA_DoubleComplex		ma_cb_dcpl[];	/* MT_C_DCPL */
 extern MA_LongDoubleComplex	ma_cb_ldcpl[];	/* MT_C_LDCPL */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _macdecls_h */
