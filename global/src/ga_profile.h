@@ -4,6 +4,6 @@
 
 extern void ga_profile_init();
 extern void ga_profile_terminate();
-extern void ga_profile_start(long bytes, int ndim, Integer *lo, Integer *hi,
-			     int comm_type);
+extern void ga_profile_start(int g_a, long bytes, int ndim, Integer *lo, 
+			     Integer *hi, int comm_type);
 extern void ga_profile_stop();

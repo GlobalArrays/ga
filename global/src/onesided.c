@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.56 2004-07-19 18:37:49 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.57 2004-07-21 21:10:15 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -391,7 +391,8 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       else ga_init_nbhandle(&ga_nbhandle);
 
 #ifdef GA_PROFILE
-      ga_profile_start((long)size*elems, ndim, lo, hi, GA_PROFILE_PUT);
+      ga_profile_start((int)handle, (long)size*elems, ndim, lo, hi, 
+		       GA_PROFILE_PUT);
 #endif
       
       gaPermuteProcList(np);
@@ -629,7 +630,8 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       else ga_init_nbhandle(&ga_nbhandle);
 
 #ifdef GA_PROFILE
-      ga_profile_start((long)size*elems, ndim, lo, hi, GA_PROFILE_GET);
+      ga_profile_start((int)handle, (long)size*elems, ndim, lo, hi,
+		       GA_PROFILE_GET);
 #endif
       
       gaPermuteProcList(np);
@@ -857,7 +859,8 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       else ga_init_nbhandle(&ga_nbhandle);
 
 #ifdef GA_PROFILE
-      ga_profile_start((long)size*elems, ndim, lo, hi, GA_PROFILE_ACC);
+      ga_profile_start((int)handle, (long)size*elems, ndim, lo, hi,
+		       GA_PROFILE_ACC);
 #endif
       
       gaPermuteProcList(np);
