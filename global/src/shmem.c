@@ -373,7 +373,7 @@ int  reg, nreg;
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
-      fprintf(stderr,"allocation unit: %dK, max shmem: %dK\n",MinShmem,MaxShmem);
+/*      fprintf(stderr,"allocation unit: %dK, max shmem: %dK\n",MinShmem,MaxShmem);*/
       shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
   }
 
