@@ -370,7 +370,7 @@ c
       tmp = t5
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update1_ghosts ',
+        write(6,*) 'Average time for nga_update2_ghosts ',
      +              tmp/dble(nproc)
       endif
       tmp = t4
@@ -386,7 +386,7 @@ c
       tmp = t8
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update1_ghosts ',
+        write(6,*) 'Average time for nga_update3_ghosts ',
      +              tmp/dble(nproc)
       endif
       tmp = t7
@@ -402,7 +402,7 @@ c
       tmp = t11
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update1_ghosts ',
+        write(6,*) 'Average time for nga_update4_ghosts ',
      +              tmp/dble(nproc)
       endif
       tmp = t10
@@ -418,7 +418,7 @@ c
       tmp = t14
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update1_ghosts ',
+        write(6,*) 'Average time for nga_update5_ghosts ',
      +              tmp/dble(nproc)
       endif
       tmp = t13
@@ -434,7 +434,7 @@ c
       tmp = t17
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update1_ghosts ',
+        write(6,*) 'Average time for nga_update6_ghosts ',
      +              tmp/dble(nproc)
       endif
       tmp = t16
