@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.9 2000-09-08 23:10:13 d3h325 Exp $ */
+/* $Id: rmw.c,v 1.10 2000-10-11 22:42:44 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -51,7 +51,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
 {
 #ifdef LAPI
-    int  ival, rc, opcode=0;
+    int  ival, rc, opcode=SWAP, *parg=ploc;
     lapi_cntr_t req_id;
 #elif defined(_CRAYMPP) || defined(QUADRICS)
     int  ival;
@@ -96,13 +96,13 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
       case ARMCI_FETCH_AND_ADD:
       case ARMCI_FETCH_AND_ADD_LONG:
            opcode = FETCH_AND_ADD;
+           parg = &extra;
       case ARMCI_SWAP:
       case ARMCI_SWAP_LONG:
-          if(opcode!=FETCH_AND_ADD)opcode = SWAP;
           if( rc = LAPI_Setcntr(lapi_handle,&req_id,0))
                         armci_die("rmw setcntr failed",rc);
           if( rc = LAPI_Rmw(lapi_handle, opcode, proc, prem,
-                        &extra, &ival, &req_id)) armci_die("rmw failed",rc);
+                        parg, &ival, &req_id)) armci_die("rmw failed",rc);
           if( rc = LAPI_Waitcntr(lapi_handle, &req_id, 1, NULL))
                         armci_die("rmw wait failed",rc);
           *ploc  = ival;
