@@ -1,4 +1,4 @@
-/* $Id: decomp.c,v 1.3 1999-10-14 00:19:57 d3h325 Exp $ */
+/* $Id: decomp.c,v 1.4 2000-04-03 18:56:09 d3h325 Exp $ */
 /***************************************************************************
  *--- 
  *--- The software in this file implements three heuristics for distributing
@@ -622,7 +622,8 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
       }
       /*- Reset array dimensions to reflect granularity -*/
       for(i=0;i<ndims;i++) if (blk[i]<1) blk[i] = 1;
-      for(i=0;i<ndims;i++) tard[i] = ardims[i]/blk[i];
+
+      for(i=0;i<ndims;i++) tard[i] = (ardims[i]+ blk[i]-1)/blk[i]; /* JM */
       for(i=0;i<ndims;i++) if (tard[i]<1) {
          tard[i] = 1; blk[i] = ardims[i];
       }
@@ -688,6 +689,13 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
       }
 
       dd_su(ndims,ardims,pedims,blk);
+
+      for(i=0;i<ndims;i++)
+          if(pedims[i]>0){
+             blk[i] = (tard[i]+pedims[i]-1)/pedims[i];
+          } else {
+             ga_error("process dimension is zero: ddb_h2",0);
+          }
 
       free(tard);
       return;

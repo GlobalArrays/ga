@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.31 1999-11-18 01:06:56 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.32 2000-04-03 18:56:09 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -307,6 +307,8 @@ Integer  i;
     else
 #endif
     GAme = (Integer)ga_msg_nodeid_();
+    if(GAme<0 || GAme>20000) 
+       ga_error("ga_init:message-passing initialization problem: my ID=",GAme);
 
     MPme= ga_msg_nodeid_();
     MPnproc = ga_msg_nnodes_();
@@ -523,7 +525,10 @@ Integer pe[MAXDIM], *pmap[MAXDIM], *map;
 Integer d, i;
 Integer blk[MAXDIM];
 logical status;
+/*
 extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Integer pedims[]);
+*/
+extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Integer bias, Integer blk[], Integer pedims[]);
 
       GA_PUSH_NAME("nga_create");
       if(!GAinitialized) ga_error("GA not initialized ", 0);
@@ -532,7 +537,7 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
 
 
       if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
-          for(d=0; d< ndim; d++) blk[d]=chunk[d];
+          for(d=0; d< ndim; d++) blk[d]=MIN(chunk[d],dims[d]);
       else
           for(d=0; d< ndim; d++) blk[d]=-1;
 
@@ -540,20 +545,44 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
       for(d=0; d<ndim; d++)if(dims[d]==1)blk[d]=1;
       
       /* for load balancing overwrite block size if needed */ 
-      for(d=0; d<ndim; d++)if(blk[d]*GAnproc < dims[d])blk[d]=-1;
+/*      for(d=0; d<ndim; d++)if(blk[d]*GAnproc < dims[d])blk[d]=-1;*/
           
 
       if(GAme==0 && DEBUG)for(d=0;d<ndim;d++) fprintf(stderr,"b[%d]=%d\n",d,blk[d]);
       ga_sync_();
 
-      ddb(ndim, dims, GAnproc, blk, pe);
+/*      ddb(ndim, dims, GAnproc, blk, pe);*/
+      ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
 
       for(d=0, map=mapALL; d< ndim; d++){
-         Integer nblock;
-         pmap[d] = map;
-         for(i=0,nblock=0; i< dims[d]; i += blk[d], nblock++)map[nblock]=i+1;
-         pe[d] = MIN(pe[d],nblock);
-         map +=  pe[d]; 
+        Integer nblock;
+        int p;
+        int pcut; /* # procs that get full blk[] elements; the rest gets less*/
+
+        pmap[d] = map;
+
+        /* RJH ... don't leave some nodes without data if possible
+         but respect the users block size */
+
+        if (chunk[d] > 1) {
+          int ddim = (dims[d]-1)/MIN(chunk[d],dims[d]) + 1;
+          pcut = (ddim -(blk[d]-1)*pe[d]) ;
+        }
+        else {
+          pcut = (dims[d]-(blk[d]-1)*pe[d]) ;
+        }
+
+        for (nblock=i=p=0; (p<pe[d]) && (i<dims[d]); p++, nblock++) {
+          int b = blk[d];
+          if (p >= pcut)
+            b = b-1;
+          map[nblock] = i+1;
+          if (chunk[d]>1) b *= MIN(chunk[d],dims[d]);
+          i += b;
+        }
+
+        pe[d] = MIN(pe[d],nblock);
+        map +=  pe[d]; 
       }
 
       if(GAme==0&& DEBUG){
