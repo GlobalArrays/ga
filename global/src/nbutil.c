@@ -84,7 +84,7 @@ unsigned int get_next_tag(){
 static void clear_list_element(int index){
 ga_armcihdl_t *listele,*prev,*next;
     if(DEBUG){
-       printf("\n%d:clearing handle\n",GAme,index);fflush(stdout);
+       printf("\n%d:clearing handle %d\n",GAme,index);fflush(stdout);
     }
     listele = &(list_element_array[index]);
 
