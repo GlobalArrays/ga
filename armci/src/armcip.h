@@ -208,6 +208,7 @@ extern void armci_acc_2D(int op, void* scale, int proc, void *src_ptr,
                          int dst_stride, int lockit);
 extern void armci_lockmem_scatter(void *ptr_array[], int len, int bytes, int p);
 extern void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int p);
+extern unsigned long armci_max_region();
 
 #if defined(SYSV) || defined(WIN32)
 extern void armci_shmem_init();

@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.4 2000-04-17 22:31:43 d3h325 Exp $ */
+/* $Id: winshmem.c,v 1.5 2000-06-14 00:57:55 d3h325 Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -90,6 +90,11 @@ extern void armci_die(char*,int);
 
 /* not done here yet */
 void armci_shmem_init(){};
+
+unsigned long armci_max_region()
+{
+  return MinShmem;
+}
 
 /*\ application can reset the upper limit for memory allocation
 \*/

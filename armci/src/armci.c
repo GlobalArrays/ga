@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.33 2000-06-07 01:12:46 d3h325 Exp $ */
+/* $Id: armci.c,v 1.34 2000-06-14 00:57:55 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -205,6 +205,21 @@ void armci_init_memlock()
 }
 
 
+static void armci_check_shmmax()
+{
+  long mylimit, limit;
+  int root = armci_clus_info[0].master;
+  mylimit = limit = (long) armci_max_region();
+  armci_msg_bcast_scope(SCOPE_MASTERS, &limit, sizeof(long), 0);
+  if(mylimit != limit){
+     printf("%d:Shared memory limit detected by ARMCI is %ld bytes on node %s vs %ld on %s\n",
+            armci_me,mylimit<<10,armci_clus_info[armci_clus_me].hostname,
+            limit<<10, armci_clus_info[0].hostname);
+     fflush(stdout); sleep(1);
+     armci_die("All nodes must have the same SHMMAX limit if NO_SHM is not defined",0);
+  }
+}
+
 
 int ARMCI_Init()
 {
@@ -237,6 +252,9 @@ int ARMCI_Init()
 #if defined(SYSV) || defined(WIN32)
     /* init shared memory */
     if(ARMCI_Uses_shm() ) armci_shmem_init();
+#   if defined(QUADRICS) && !defined(NO_SHM)
+       if(armci_me == armci_master)armci_check_shmmax();
+#   endif
 #endif
 
     /* allocate locks: we need to do it before server is started */

@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.28 2000-06-13 18:41:07 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.29 2000-06-14 00:57:55 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -372,6 +372,13 @@ static long occup_blocks=0;
 
 static long prev_alloc_regions=0;
 
+
+unsigned long armci_max_region()
+{
+  /* we assume that at least two regions can be glued */
+  return MinShmem*2;
+}
+
 /*\
  *   assembles the list of shmem id for the block 
 \*/
@@ -628,6 +635,10 @@ long sz;
 
 #else /* Now, the machines where shm segments are not glued together */ 
 
+unsigned long armci_max_region()
+{
+  return MinShmem;
+}
 
 int last_allocated=-1;
 /*\
