@@ -1,0 +1,12 @@
+                   The GA++ Test Programs
+
+These programs can be built after the GA library is compiled.
+To build C and Fortran programs type:
+"make testc.x"     to create a test program for GA
+"make ntestc.x"    to create a test program for n-dim GA
+"make mtest.x"     To create a test program for matrix functions
+"make elempatch.x" To create a test program for the  element-wise 
+		   functions 
+"make testmult.x"  To create a test program for dgemm,sgemm,zgemm, 
+		   nga_matmul_patch
+
