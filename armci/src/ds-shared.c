@@ -21,11 +21,28 @@ static int pack_size(int len)
 #define PIPE_ROUNDUP 512 
 #define PIPE_SHORT_ROUNDUP (1024) 
 int n;
- if(len <4*PIPE_BUFSIZE){
+/*fprintf(stderr,"in pack_size\n ");*/
+ if(len <4*PIPE_BUFSIZE){  
+   len /=2;
+    n = len%PIPE_SHORT_ROUNDUP;
+   len += (PIPE_SHORT_ROUNDUP-n);
+ }  
+ else if(len <25*PIPE_BUFSIZE){
    len /=4;
    n = len%PIPE_SHORT_ROUNDUP;
+   len += (PIPE_SHORT_ROUNDUP-n);
+ }
+ else if(len <32*PIPE_BUFSIZE){
+   len /=8;
+   n = len%PIPE_SHORT_ROUNDUP;
    len += (PIPE_SHORT_ROUNDUP-n); 
- }else len=PIPE_BUFSIZE;
+ }
+else 
+#ifdef VIA
+   len = 8*4096;
+#else
+   len = 64*1024-128;
+#endif
  return len;
 }
     

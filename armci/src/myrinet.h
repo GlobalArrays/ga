@@ -41,8 +41,8 @@ extern int _armci_bypass;
 #define INTERLEAVE_GET_THRESHOLD 524288 
 #endif
 
-#define PIPE_BUFSIZE  (64*1024 -128)
-#define PIPE_MIN_BUFSIZE 8192
+#define PIPE_BUFSIZE  (16*1024 -128)
+#define PIPE_MIN_BUFSIZE 4096 
 #define PIPE_MEDIUM_BUFSIZE (4*8192)
 
 /* context for callback routine */
@@ -51,10 +51,14 @@ typedef struct {
     volatile int done;
 } armci_gm_context_t;
 
-#define MULTIPLE_SND_BUFS_ 
-#ifdef MULTIPLE_SND_BUFS 
+#define MULTIPLE_SND_BUFS 
+#ifdef MULTIPLE_SND_BUFS
+#define GET_SEND_BUFFER armci_gm_get_send_buf
+#define FREE_SEND_BUFFER armci_gm_free_send_buf  
+/* 
 #define GET_SEND_BUFFER armci_gm_getbuf
 #define FREE_SEND_BUFFER armci_gm_freebuf
+*/
 #else
 #define GET_SEND_BUFFER(x) (char*)(((armci_gm_context_t*)MessageSndBuffer)+1);\
         armci_client_send_complete((armci_gm_context_t*)MessageSndBuffer);
@@ -95,6 +99,8 @@ extern void armci_wait_for_data_bypass();
 extern int  armci_wait_pin_client(int);
 extern void armci_client_send_ack(int p, int success);
 extern void armci_gm_freebuf(void *ptr);
+extern char* armci_gm_get_send_buf(int bufsize);
+extern void armci_gm_free_send_buf(void *ptr);
 extern char* armci_gm_getbuf(size_t size);
 extern void armci_client_send_complete(armci_gm_context_t*);
 
