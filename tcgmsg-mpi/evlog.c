@@ -1,9 +1,9 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.c,v 1.3 2002-02-26 15:47:52 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.c,v 1.4 2003-06-27 13:46:34 manoj Exp $ */
 
 /* Event logging routine with key driven varargs interface */
 
 #include <stdio.h>
-#include <varargs.h>
+#include <stdarg.h>
 #include "sndrcv.h"
 
 /*extern long nodeid_();*/
@@ -40,8 +40,7 @@ static double walltime();
 #define INTSPRINTF
 #endif
 
-void evlog(va_alist)
-     va_dcl
+void evlog(int farg_key, ...)
 /* 
   The format of the argument list is as follows:
 
@@ -219,9 +218,9 @@ void evlog(va_alist)
   temp = bufpt;    /* Save to check if anything has been logged */
   valid = 0;       /* One of BEGIN, END or EVENT must preceed most keys */
   
-  va_start(ap);
-  
-  while ( (key = va_arg(ap, int)) != EVKEY_LAST_ARG) {
+  va_start(ap, farg_key);
+  key = farg_key;
+  while (key != EVKEY_LAST_ARG) {
 
     if ( (!logging) && (key != EVKEY_ENABLE) )
       return;
@@ -245,19 +244,19 @@ void evlog(va_alist)
 
     case EVKEY_BEGIN:
       valid = 1;
-      RECORD(sprintf(bufpt, ":BEGIN:%s", va_arg(ap, int)));
+      RECORD(sprintf(bufpt, ":BEGIN:%s", va_arg(ap, char *)));
       RECORD(sprintf(bufpt, ":TIME:%.2f", walltime()));
       break;
 
     case EVKEY_END:
       valid = 1;
-      RECORD(sprintf(bufpt, ":END:%s", va_arg(ap, int)));
+      RECORD(sprintf(bufpt, ":END:%s", va_arg(ap, char *)));
       RECORD(sprintf(bufpt, ":TIME:%.2f", walltime()));
       break;
 
     case EVKEY_EVENT:
       valid = 1;
-      RECORD(sprintf(bufpt, ":EVENT:%s", va_arg(ap, int)));
+      RECORD(sprintf(bufpt, ":EVENT:%s", va_arg(ap, char *)));
       RECORD(sprintf(bufpt, ":TIME:%.2f", walltime()));
       break;
 
@@ -317,6 +316,7 @@ void evlog(va_alist)
       {DUMPBUF}
       {ERROR_RETURN}
     }
+    key = va_arg(ap, int);
   }
   
  done:
