@@ -168,7 +168,7 @@ extern void FATR ga_diag_std_seq_ ARGS_((Integer *, Integer *,
       DoublePrecision *));
 extern void FATR ga_lu_solve_      ARGS_((char *, Integer *, Integer *));
 extern void FATR ga_lu_solve_alt_  ARGS_((Integer *, Integer *, Integer *));
-extern void ga_lu_solve_seq_  ARGS_((char *, Integer *, Integer *));
+extern void ga_lu_solve_seq  ARGS_((char *, Integer *, Integer *));
 
 extern Integer FATR ga_llt_solve_ ARGS_((Integer *, Integer *));
 extern Integer FATR ga_solve_ ARGS_((Integer *, Integer *));
