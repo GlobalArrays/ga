@@ -242,6 +242,15 @@ ifeq ($(TARGET),SGITFP)
      EXTRA = strdup.o
 endif
 
+ifeq ($(TARGET),SGI64)
+    FFLAGS = -O2 -64
+    CFLAGS = -O -64 $(DEFINES)
+   DEFINES = -DSGI -DSYSV -DSHMEM  -DPARTIALSPIN -DSGIUS
+ LINTFLAGS = $(DEFINES) -u
+    RANLIB = @echo $*
+     EXTRA = strdup.o
+endif
+
 
 ifeq ($(TARGET),KSR)
     FFLAGS = -para -O2 -r8
