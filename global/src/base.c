@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.4 2001-08-24 18:33:08 d3g293 Exp $ */
+/* $Id: base.c,v 1.5 2001-08-29 16:04:23 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -526,6 +526,9 @@ Integer  i, ga_handle, status, maplen=0;
       for(i=0; i< ndim; i++)
          if(width[i]<0) 
             ga_error("Boundary widths must be >= 0",i);
+      for(i=0; i< ndim; i++)
+         if(width[i]>dims[i]) 
+            ga_error("Boundary widths must be <= corresponding dimension",i);
 
       GAstat.numcre ++;
 
