@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.54 2002-09-09 19:38:48 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.55 2002-09-20 15:38:29 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -239,9 +239,11 @@ Integer zero = 0;
        /* again, one of many possibilities: 
         * if proc id beyond I/O procs number, negate it
         */
+
         if(me == ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
         else me = -1;
-        /*if (me >= dai_io_procs(d_a)) me = -me;*/
+
+/*        if (me >= dai_io_procs(d_a)) me = -me;*/
         return (me);
 }
 
@@ -661,6 +663,8 @@ Integer dra_create(
 {
 Integer handle, elem_size;
 
+        /* convert Fortran to C data type */
+        *type = (Integer)ga_type_f2c((int)(*type));
         ga_sync_();
 
         /* if we have an error here, it is fatal */       
@@ -2323,6 +2327,8 @@ Integer ndra_create(
 {
 Integer handle, elem_size, i;
 
+        /* convert Fortran to C data type */
+        *type = (Integer)ga_type_f2c((int)(*type));
         ga_sync_();
 
         /* if we have an error here, it is fatal */       
