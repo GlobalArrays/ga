@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.36 2003-04-02 23:21:26 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.37 2003-04-07 20:22:22 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -212,11 +212,17 @@ void gai_free(void *ptr)
 #define gaShmemLocation(proc, g_a, _i, _j, ptr_loc, _pld)                      \
 {                                                                              \
 Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
-Integer _lo[2], _hi[2];                                                        \
+Integer _lo[2], _hi[2], _p_handle;                                             \
 Integer _iw = GA[g_handle].width[0];                                           \
 Integer _jw = GA[g_handle].width[1];                                           \
                                                                                \
-      ga_ownsM(g_handle, (proc),_lo,_hi);                                      \
+      ga_ownsM(g_handle, (proc),_lo,_hi);                                \
+      _p_handle = GA[g_handle].p_handle;                                       \
+      if (_p_handle < 0) {                                                     \
+        proc_place =  proc;                                                    \
+      } else {                                                                 \
+        proc_place = P_LIST[_p_handle].inv_map_proc_list[proc];                \
+      }                                                                        \
       _ilo = _lo[0]; _ihi=_hi[0];                                              \
       _jlo = _lo[1]; _jhi=_hi[1];                                              \
                                                                                \
@@ -228,7 +234,6 @@ Integer _jw = GA[g_handle].width[1];                                           \
       offset = ((_i)-_ilo+_iw) + (_ihi-_ilo+1+2*_iw)*((_j)-_jlo+_jw);          \
                                                                                \
       /* find location of the proc in current cluster pointer array */         \
-      proc_place =  proc;                                                      \
       *(ptr_loc) = GA[g_handle].ptr[proc_place] +                              \
                    offset*GAsizeofM(GA[g_handle].type);                        \
       *(_pld) = _ihi-_ilo+1+2*_iw;                                             \
@@ -740,8 +745,8 @@ int optype, proc, ndim;
       if(type==C_DBL) optype= ARMCI_ACC_DBL;
       else if(type==C_FLOAT) optype= ARMCI_ACC_FLT;
       else if(type==C_DCPL)optype= ARMCI_ACC_DCP;
-      else if(size==sizeof(int))optype= ARMCI_ACC_INT;
-      else if(size==sizeof(long))optype= ARMCI_ACC_LNG;
+      else if(type==C_INT)optype= ARMCI_ACC_INT;
+      else if(type==C_LONG)optype= ARMCI_ACC_LNG;
       else ga_error("type not supported",type);
 
       gam_CountElems(ndim, lo, hi, &elems);
@@ -1045,8 +1050,8 @@ int rc;
     int optype;
     if(type==C_DBL) optype= ARMCI_ACC_DBL;
     else if(type==C_DCPL)optype= ARMCI_ACC_DCP;
-    else if(item_size==sizeof(int))optype= ARMCI_ACC_INT;
-    else if(item_size==sizeof(long))optype= ARMCI_ACC_LNG;
+    else if(type==C_INT)optype= ARMCI_ACC_INT;
+    else if(type==C_LONG)optype= ARMCI_ACC_LNG;
     else if(type==C_FLOAT)optype= ARMCI_ACC_FLT;  
     else ga_error("type not supported",type);
     rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)proc);
@@ -1203,7 +1208,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         } else {
           iproc = P_LIST[p_handle].inv_map_proc_list[aproc[kk]];
         }
-        ga_distribution_(g_a, &aproc[kk],
+        ga_distribution_(g_a, &iproc,
                          &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
         
         /* get address of the first element owned by proc */
@@ -1214,7 +1219,12 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     /* determine limit for message size --  v,i, & j will travel together */
     item_size = GAsizeofM(type);
     GAbytes.scatot += (double)item_size**nv ;
-    GAbytes.scaloc += (double)item_size* nelem[owner[GAme]];
+    if (p_handle < 0) {
+      iproc = owner[GAme];
+    } else {
+      iproc = P_LIST[p_handle].map_proc_list[owner[GAme]];
+    }
+    GAbytes.scaloc += (double)item_size* nelem[iproc];
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
     for(k=1; k<naproc; k++) {
         ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
@@ -1379,6 +1389,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     Integer k, handle=*g_a+GA_OFFSET;
     int  ndim, item_size, type;
     Integer *proc;
+    Integer nproc, p_handle, iproc;
 
     Integer *aproc, naproc; /* active processes and numbers */
     Integer *map;           /* map the active processes to allocated space */
@@ -1400,18 +1411,26 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     item_size = GA[handle].elemsize;
     *totbytes += (double)item_size**nv;
 
+    /* determine how many processors are associated with array */
+    p_handle = GA[handle].p_handle;
+    if (p_handle < 0) {
+      nproc = GAnproc;
+    } else {
+      nproc = P_LIST[p_handle].map_nproc;
+    }
+
     /* allocate temp memory */
-    buf1 = gai_malloc((int) GAnproc * 4 * (sizeof(Integer)));
-    if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
+    buf1 = gai_malloc((int) nproc * 4 * (sizeof(Integer)));
+    if(buf1 == NULL) ga_error("gai_malloc failed", 3*nproc);
     
     count = (Integer *)buf1;
-    nelem = (Integer *)(buf1 + GAnproc * sizeof(Integer));
-    aproc = (Integer *)(buf1 + 2 * GAnproc * sizeof(Integer));
-    map = (Integer *)(buf1 + 3 * GAnproc * sizeof(Integer));
+    nelem = (Integer *)(buf1 + nproc * sizeof(Integer));
+    aproc = (Integer *)(buf1 + 2 * nproc * sizeof(Integer));
+    map = (Integer *)(buf1 + 3 * nproc * sizeof(Integer));
     
     /* initialize the counters and nelem */
-    for(k=0; k<GAnproc; k++) count[k] = 0; 
-    for(k=0; k<GAnproc; k++) nelem[k] = 0;
+    for(k=0; k<nproc; k++) count[k] = 0; 
+    for(k=0; k<nproc; k++) nelem[k] = 0;
 
     /* get the process id that the element should go and count the
      * number of elements for each process
@@ -1421,12 +1440,17 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
             ga_error("failed -element:",k);
         }
-        nelem[proc[k]]++;
+        if (p_handle < 0) {
+          iproc = proc[k];
+        } else {
+          iproc = P_LIST[p_handle].map_proc_list[proc[k]];
+        }
+        nelem[iproc]++;
     }
 
     /* find the active processes (with which transfer data) */
     naproc = 0;
-    for(k=0; k<GAnproc; k++) if(nelem[k] > 0) {
+    for(k=0; k<nproc; k++) if(nelem[k] > 0) {
         aproc[naproc] = k;
         map[k] = naproc;
         naproc ++;
@@ -1484,7 +1508,12 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             desc.dst_ptr_array = ptr_dst[k];
             desc.ptr_array_len = (int)nelem[aproc[k]];
             
-            rc=ARMCI_GetV(&desc, 1, (int)aproc[k]);
+            if (p_handle < 0) {
+              iproc = aproc[k];
+            } else {
+              iproc = P_LIST[p_handle].inv_map_proc_list[aproc[k]];
+            }
+            rc=ARMCI_GetV(&desc, 1, (int)iproc);
             if(rc) ga_error("gather failed in armci",rc);
         }
         GAstat.numgat_procs += naproc;
@@ -1512,9 +1541,15 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             desc.dst_ptr_array = ptr_dst[k];
             desc.ptr_array_len = (int)nelem[aproc[k]];
             
-            if(GA_fence_set) fence_array[aproc[k]]=1;
             
-            rc=ARMCI_PutV(&desc, 1, (int)aproc[k]);
+            if (p_handle < 0) {
+              iproc = aproc[k];
+            } else {
+              iproc = P_LIST[p_handle].inv_map_proc_list[aproc[k]];
+            }
+            if(GA_fence_set) fence_array[iproc]=1;
+
+            rc=ARMCI_PutV(&desc, 1, (int)iproc);
             if(rc) ga_error("scatter failed in armci",rc);
         }
         GAstat.numsca_procs += naproc;
@@ -1542,17 +1577,22 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             desc.dst_ptr_array = ptr_dst[k];
             desc.ptr_array_len = (int)nelem[aproc[k]];
             
-            if(GA_fence_set) fence_array[aproc[k]]=1;
+            if (p_handle < 0) {
+              iproc = aproc[k];
+            } else {
+              iproc = P_LIST[p_handle].inv_map_proc_list[aproc[k]];
+            }
+            if(GA_fence_set) fence_array[iproc]=1;
             
             if(alpha != NULL) {
                 int optype;
                 if(type==C_DBL) optype= ARMCI_ACC_DBL;
                 else if(type==C_DCPL)optype= ARMCI_ACC_DCP;
-                else if(item_size==sizeof(int))optype= ARMCI_ACC_INT;
-                else if(item_size==sizeof(long))optype= ARMCI_ACC_LNG;
+                else if(type==C_INT)optype= ARMCI_ACC_INT;
+                else if(type==C_LONG)optype= ARMCI_ACC_LNG;
                 else if(type==C_FLOAT)optype= ARMCI_ACC_FLT; 
                 else ga_error("type not supported",type);
-                rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)aproc[k]);
+                rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)iproc);
             }
             if(rc) ga_error("scatter_acc failed in armci",rc);
         }
@@ -1765,7 +1805,12 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     
     item_size = GA[GA_OFFSET + *g_a].elemsize;
     GAbytes.gattot += (double)item_size**nv;
-    GAbytes.gatloc += (double)item_size * nelem[owner[GAme]];
+    if (p_handle < 0) {
+      iproc = owner[k];
+    } else {
+      iproc = P_LIST[p_handle].map_proc_list[owner[k]];
+    }
+    GAbytes.gatloc += (double)item_size * nelem[iproc];
 
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
     for(k=1; k<naproc; k++) {
@@ -2244,8 +2289,8 @@ void FATR nga_strided_acc_(Integer *g_a,
   if (type == C_DBL) optype = ARMCI_ACC_DBL;
   else if (type == C_FLOAT) optype = ARMCI_ACC_FLT;
   else if (type == C_DCPL) optype = ARMCI_ACC_DCP;
-  else if (size == sizeof(int)) optype = ARMCI_ACC_INT;
-  else if (size == sizeof(long)) optype = ARMCI_ACC_LNG;
+  else if (type == C_INT) optype = ARMCI_ACC_INT;
+  else if (type == C_LONG) optype = ARMCI_ACC_LNG;
   else ga_error("nga_strided_acc: type not supported",type);
 
   /* Loop over all processors containing a portion of patch */
