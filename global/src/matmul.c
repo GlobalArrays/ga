@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.57 2004-08-17 07:50:03 manoj Exp $ */
+/* $Id: matmul.c,v 1.58 2005-01-08 03:16:00 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -276,7 +276,7 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
     adim_t=adim; bdim_t=bdim; cdim_t=cdim;
     ZERO.real = 0.; ZERO.imag = 0.;
-    
+
 # if (defined(CRAY) || defined(WIN32)) && !defined(GA_C_CORE)
     switch(atype) {
        case C_FLOAT:
@@ -326,9 +326,15 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
 		   (DoubleComplex *)alpha, a, &adim_t, b, &bdim_t, 
 		   &ZERO,  c, &cdim_t);
 #   else
+#     if !defined(HAS_BLAS) && defined(EXT_INT)
 	  zgemm_(transa, transb, &idim, &jdim, &kdim,
 		 (DoubleComplex*)alpha, a, &adim, b, &bdim, &ZERO, c, 
 		 &cdim, 1, 1);
+#     else
+	  zgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+                 (DoubleComplex*)alpha, a, &adim_t, b, &bdim_t, &ZERO, c,
+                 &cdim_t, 1, 1);
+#     endif
 #   endif
       break;
        default:
