@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.15 2000-12-06 01:38:38 d3h325 Exp $ */
+/* $Id: signaltrap.c,v 1.16 2001-02-27 21:42:08 d3h325 Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -415,7 +415,7 @@ void RestoreSigTerm()
  Restore the original signal handler
 */
 {
-  if(AR_caught_sigterm) SigTermOrig(SIGTERM);
+  if(AR_caught_sigterm && (SigTermOrig != SIG_DFL) ) SigTermOrig(SIGTERM);
   if ( signal(SIGTERM, SigTermOrig) == SIG_ERR)
     Error("RestoreSigTerm: error from restoring signal SIGTerm",0);
 }
