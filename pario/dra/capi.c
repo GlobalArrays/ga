@@ -17,11 +17,15 @@ Integer _da_clo[MAXDIM], _da_chi[MAXDIM];
    int i; for(i=0; i< (n); i++)(farr)[i]=(Integer)(carr)[i];} 
 #  define COPYF2C(farr, carr, n){\
    int i; for(i=0; i< (n); i++)(carr)[i]=(int)(farr)[i];} 
+#  define COPYF2C_DRA(farr, carr, n){\
+   int i; for(i=0; i< (n); i++)(carr)[i]=(dra_size_t)(farr)[i];} 
 #else
 #  define COPYC2F(carr, farr, n){\
    int i; for(i=0; i< (n); i++)(farr)[n-i-1]=(Integer)(carr)[i];} 
 #  define COPYF2C(farr, carr, n){\
    int i; for(i=0; i< (n); i++)(carr)[n-i-1]=(int)(farr)[i];} 
+#  define COPYF2C_DRA(farr, carr, n){\
+   int i; for(i=0; i< (n); i++)(carr)[n-i-1]=(dra_size_t)(farr)[i];} 
 #define BASE_0
 #endif
 
@@ -33,8 +37,11 @@ Integer _da_clo[MAXDIM], _da_chi[MAXDIM];
    int i; for(i=0; i< (n); i++)(farr)[n-i-1]=(Integer)(carr)[i]+1;}
 #  define COPYINDEX_F2C(farr, carr, n){\
    int i; for(i=0; i< (n); i++)(carr)[n-i-1]=(int)(farr)[i] -1;}
+#  define COPYINDEX_F2C_DRA(farr, carr, n){\
+   int i; for(i=0; i< (n); i++)(carr)[n-i-1]=(dra_size_t)(farr)[i] -1;}
 #else
 #  define COPYINDEX_F2C COPYF2C
+#  define COPYINDEX_F2C_DRA COPYF2C_DRA
 #  define COPYINDEX_C2F COPYC2F
 #endif
 
@@ -48,8 +55,8 @@ return 0;
 }
 
 
-int NDRA_Create(int type, int ndim, int dims[], char *name, char* filename,
-    int mode, int reqdims[], int *d_a)
+int NDRA_Create(int type, int ndim, dra_size_t dims[], char *name,
+                char* filename, int mode, dra_size_t reqdims[], int *d_a)
 {
     Integer ttype, nndim, dd_a, mmode; 
     logical st;
@@ -68,15 +75,15 @@ int NDRA_Create(int type, int ndim, int dims[], char *name, char* filename,
     else return 0;
 }
 
-int NDRA_Inquire(int d_a, int *type, int *ndim, int dims[], char *name,
+int NDRA_Inquire(int d_a, int *type, int *ndim, dra_size_t dims[], char *name,
     char* filename)
 {
    Integer  dd_a, ttype, nndim, status;
    dd_a = (Integer)d_a;
    status = ndra_inquire(&dd_a, &ttype, &nndim, _da_dims, name, filename);
-   COPYF2C(_da_dims, dims, nndim);
-   *type = (Integer)ttype;
-   *ndim = (Integer)nndim;
+   COPYF2C_DRA(_da_dims, dims, nndim);
+   *type = (int)ttype;
+   *ndim = (int)nndim;
    return (int)status;
 }
 
@@ -103,7 +110,8 @@ int NDRA_Read(int g_a, int d_a, int *request)
 }
 
 int NDRA_Write_section(logical transp, int g_a, int glo[], int ghi[],
-                       int d_a, int dlo[], int dhi[], int *request)
+                       int d_a, dra_size_t dlo[], dra_size_t dhi[],
+                       int *request)
 {
    Integer status;
    Integer ttransp, gg_a, dd_a, rrequest;
@@ -125,7 +133,7 @@ int NDRA_Write_section(logical transp, int g_a, int glo[], int ghi[],
 }
 
 int NDRA_Read_section(logical transp, int g_a, int glo[], int ghi[],
-                       int d_a, int dlo[], int dhi[], int *request)
+                       int d_a, dra_size_t dlo[], dra_size_t dhi[], int *request)
 {
    Integer status;
    Integer ttransp, gg_a, dd_a, rrequest;

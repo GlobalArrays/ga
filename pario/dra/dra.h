@@ -4,6 +4,7 @@
 #define _DRA_H_
 /* used to be file.modes.h */
 #include "chemio.h"
+typedef Integer dra_size_t;
 #define  DRA_RW ELIO_RW
 #define  DRA_R  ELIO_R
 #define  DRA_W  ELIO_W
@@ -202,17 +203,17 @@ extern void    DRA_flick               _ARGS_(());
 
 extern int NDRA_Create(       int type,
                               int ndim,
-                              int dims[],
+                              dra_size_t dims[],
                               char *name,
                               char* filename,
                               int mode,
-                              int reqdims[],
+                              dra_size_t reqdims[],
                               int *d_a);
 
 extern int NDRA_Inquire(      int d_a,
                               int *type,
                               int *ndim,
-                              int dims[],
+                              dra_size_t dims[],
                               char *name,
                               char* filename);
 
@@ -229,8 +230,8 @@ extern int NDRA_Write_section(logical transp,
                               int glo[],
                               int ghi[],
                               int d_a,
-                              int dlo[],
-                              int dhi[],
+                              dra_size_t dlo[],
+                              dra_size_t dhi[],
                               int *request);
 
 extern int NDRA_Read_section( logical transp,
@@ -238,8 +239,8 @@ extern int NDRA_Read_section( logical transp,
                               int glo[],
                               int ghi[],
                               int d_a,
-                              int dlo[],
-                              int dhi[],
+                              dra_size_t dlo[],
+                              dra_size_t dhi[],
                               int *request);
 
 extern int DRA_Init(          int max_arrays,
