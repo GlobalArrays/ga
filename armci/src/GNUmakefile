@@ -94,7 +94,7 @@ LIBS += $(EXTRA_LIBS)
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
 
 %.x:%.c  $(LIBRARY_PATH)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lm
+	$(CC) -g $(COPT_REN) $(MP_INCLUDES) $(MP_DEFINES) -o $@ $^ $(LIBS) -lm
 
 ipctest.x: $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) $(MP_DEFINES) ipctest.c -o $@ $^ $(LIBS)
