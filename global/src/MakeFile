@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.9 1999-11-17 02:06:30 d3h325 Exp $
+#	$Id: MakeFile,v 1.10 1999-11-18 19:52:40 d3h325 Exp $
 #
 
 OBJDIR=.\obj
@@ -13,13 +13,14 @@ USE_MPI=y
 #EXTRA_OBJ =  tcgmsg.obj
 #!ENDIF
 
-OBJ      = "$(OBJDIR)\global.armci.obj" \
-        "$(OBJDIR)\collect.obj" \
-        "$(OBJDIR)\global.patch.obj" \
-        "$(OBJDIR)\global.npatch.obj" \
-        "$(OBJDIR)\global.util.obj" \
-        "$(OBJDIR)\hsort.scat.obj" \
-        "$(OBJDIR)\global.nalg.obj" \
+OBJ      = $(OBJDIR)\global.armci.obj \
+        $(OBJDIR)\collect.obj \
+        $(OBJDIR)\global.patch.obj \
+        $(OBJDIR)\global.npatch.obj \
+        $(OBJDIR)\global.util.obj \
+        $(OBJDIR)\mulmat.patch.obj \
+        $(OBJDIR)\hsort.scat.obj \
+        $(OBJDIR)\global.nalg.obj \
         $(OBJDIR)\ffflush.obj \
         $(OBJDIR)\fill.obj \
         $(OBJDIR)\decomp.obj \

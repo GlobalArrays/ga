@@ -70,7 +70,7 @@ endif
 #
 #                  Linear Algebra
 #
-GA_ALG_BLAS = ga_dgemm.o ga_symmetr.o ga_diag_seq.o rsg.o\
+GA_ALG_BLAS = mulmat.patch.o ga_dgemm.o ga_symmetr.o ga_diag_seq.o rsg.o\
               rs-mod.o ga_solve_seq.o ga_transpose.o 
 
 ifeq ($(DIAG),PAR)
