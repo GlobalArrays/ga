@@ -7,6 +7,7 @@
 
 extern MPI_Comm TCGMSG_Comm;
 extern int      SR_parallel;
+extern int      SR_single_cluster;
 extern Int      DEBUG_;
 
 #ifdef  EXT_INT
@@ -40,3 +41,5 @@ extern  char  tcgmsg_err_string[ERR_STR_LEN];
   }\
 }
 
+extern void finalize_nxtval();
+extern void install_nxtval();

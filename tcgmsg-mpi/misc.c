@@ -5,6 +5,7 @@ char      tcgmsg_err_string[ERR_STR_LEN];
 MPI_Comm  TCGMSG_Comm;
 Int       DEBUG_;
 int       SR_parallel; 
+int       SR_single_cluster =1;
 
 
 
@@ -41,6 +42,8 @@ void Error(string, code)
     fflush(stdout);
     fprintf(stderr,"%3ld: %s %ld (%#lx).\n", (long)NODEID_(), string,
            (long)code,(long)code);
+
+    finalize_nxtval(); /* clean nxtval resources */
     MPI_Abort(MPI_COMM_WORLD,(int)code);
 }
 
@@ -51,8 +54,9 @@ void make_tcgmsg_comm()
 /*  this is based on the MPI Forum decision that MPI_COMM_WORLD 
  *  is a C constant 
  */
-#   ifdef NXTVAL_SERVER
-      if( SR_parallel ){   
+
+# ifdef NXTVAL_SERVER
+    if( SR_parallel ){   
           /* data server for a single process */
           int server;
           MPI_Group MPI_GROUP_WORLD, tcgmsg_grp;
@@ -65,6 +69,13 @@ void make_tcgmsg_comm()
       }else
 #   endif
           TCGMSG_Comm = MPI_COMM_WORLD; 
+
+#if !defined(NXTVAL_SERVER) && defined(SGI)
+       SR_single_cluster = single_cluster();
+       if(!SR_single_cluster)
+         Error("native nxtval not supported multiple hosts",0); 
+#endif
+
 }
         
 
@@ -102,6 +113,7 @@ void PEND_()
        if( SR_parallel )  (void) NXTVAL_(&zero);
        MPI_Barrier(MPI_COMM_WORLD);
 #   endif
+    finalize_nxtval();
     MPI_Finalize();
     exit(0);
 }

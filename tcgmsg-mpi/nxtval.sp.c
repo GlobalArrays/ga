@@ -252,3 +252,4 @@ static  size_t  msglen;
 
 }
 
+void finalize_nxtval(){};

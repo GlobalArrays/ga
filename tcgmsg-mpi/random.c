@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/random.c,v 1.1 1995-10-12 00:06:52 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/random.c,v 1.2 1997-08-01 21:21:27 d3h325 Exp $ */
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -184,7 +184,7 @@ static  long		*end_ptr		= &randtbl[ DEG_3 + 1 ];
  * values produced by this routine.
  */
 
-srandom( x )
+void srandom( x )
 
     unsigned		x;
 {

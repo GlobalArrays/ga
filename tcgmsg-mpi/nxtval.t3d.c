@@ -65,3 +65,4 @@ void install_nxtval()
 {
 }
 
+void finalize_nxtval(){};

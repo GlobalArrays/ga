@@ -165,3 +165,4 @@ int numprocs, myid;
 #  endif
 }
 
+void finalize_nxtval(){}

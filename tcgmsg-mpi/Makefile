@@ -172,7 +172,9 @@ ifeq ($(MACHINE),SGI_N32)
 #
 # SGI running IRIX 6.XX on 64-bit MIPS-4 processors
 #
- GLOB_DEFINES += -DSGI -n32
+ GLOB_DEFINES += -DSGI -n32 -DSGIUS
+   NXTVAL_OBJ = nxtval.sgius.o
+ NXTVAL_AVAIL = yes
 endif
 
 #............................. SGI Power Challenge ..........................
@@ -184,16 +186,18 @@ ifeq ($(MACHINE),SGITFP)
         CDEFS = -DEXT_INT
      COPT_REN = -64
      FOPT_REN = -i8 -64
- GLOB_DEFINES = -DSGI64 -DSGI
+ GLOB_DEFINES = -DSGI64 -DSGI -DSGIUS
+ NXTVAL_AVAIL = yes
 endif
 
 ifeq ($(MACHINE),SGI64)
 #
 # SGI running IRIX6.XX with native Fortran integer sizes
 #
- GLOB_DEFINES = -DSGI64 -DSGI
+ GLOB_DEFINES = -DSGI64 -DSGI -DSGIUS
      COPT_REN = -64
      FOPT_REN = -64
+ NXTVAL_AVAIL = yes
 endif
 
 #................................ Intel Paragon .............................
@@ -260,6 +264,8 @@ else
  ifndef USE_NATIVE_NXTVAL
    GLOB_DEFINES += -DNXTVAL_SERVER
       NXTVAL_OBJ = nxtval.o
+ else
+    EXTRA_OBJ += clustercheck.o
  endif
 endif
 
@@ -290,7 +296,7 @@ LIBS += $(LIBMPI) $(EXTRA_LIBS)
 all:	test.x testf.x
 
 
-test.x:	test.o $(LIBRARY_PATH)
+test.x: test.o	$(LIBRARY_PATH)
 	$(CC)  $(CLDOPT) -o $@ $^ $(LIBS)
 
 testf.x: testf.o $(LIBRARY_PATH)
