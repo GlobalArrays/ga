@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.35 2004-04-14 00:59:15 manoj Exp $ */
+/* $Id: elan.c,v 1.36 2004-04-15 22:17:07 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -407,6 +407,42 @@ ELAN_LOCK *rem_locks = (ELAN_LOCK*)(all_locks + proc*num_locks);
      
 #endif
 
+#if HAS_PUTS
+extern ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
+
+
+void armcill_putS(int proc, void* src_ptr, int src_stride_arr[], void* dst_ptr,
+                  int dst_stride_arr[], int count[], int stride_levels)
+{
+    elan_wait(elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr, 
+              dst_stride_arr, count, stride_levels, proc),elan_base->waitType);
+}
+
+ELAN_EVENT * armcill_nbputS(int proc, void* src_ptr, int src_stride_arr[], 
+             void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels)
+{
+    return elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+              dst_stride_arr, count, stride_levels, proc);
+}
+#endif
+
+#if HAS_GETS
+extern ELAN_EVENT *elan_getss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
+void armcill_getS(int proc, void* src_ptr, int src_stride_arr[], void* dst_ptr,
+                  int dst_stride_arr[], int count[], int stride_levels)
+{
+    elan_wait(elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr, 
+              dst_stride_arr, count, stride_levels, proc),elan_base->waitType);
+}
+
+ELAN_EVENT* armcill_nbgetS(int proc, void* src_ptr, int src_stride_arr[],  
+              void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels)
+{
+    return elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+              dst_stride_arr, count, stride_levels, proc);
+}
+#endif
+
 /************************************************************************/
 #if VCALLS 
 
@@ -436,27 +472,9 @@ int _j, issued=0;
 
 
 
-extern ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
-
-extern ELAN_EVENT *elan_getss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
 
 
-#ifdef HAS_PUTS
-
-void armcill_putS(int proc, void* src_ptr, int src_stride_arr[], void* dst_ptr,
-                  int dst_stride_arr[], int count[], int stride_levels)
-{
-    elan_wait(elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr, 
-              dst_stride_arr, count, stride_levels, proc),elan_base->waitType);
-}
-
-ELAN_EVENT * armcill_nbputS(int proc, void* src_ptr, int src_stride_arr[], 
-             void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels)
-{
-    return elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
-              dst_stride_arr, count, stride_levels, proc);
-}
-
+#if HAS_PUTS
 void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
                                                    void* dst_ptr,int dst_stride)
 {
@@ -516,21 +534,8 @@ int _j, issued=0;
                         elan_base->waitType);
 }
 
-#ifdef HAS_GETS
-void armcill_getS(int proc, void* src_ptr, int src_stride_arr[], void* dst_ptr,
-                  int dst_stride_arr[], int count[], int stride_levels)
-{
-    elan_wait(elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr, 
-              dst_stride_arr, count, stride_levels, proc),elan_base->waitType);
-}
-
-ELAN_EVENT* armcill_nbgetS(int proc, void* src_ptr, int src_stride_arr[],  
-              void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels)
-{
-    return elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
-              dst_stride_arr, count, stride_levels, proc);
-}
  
+#if HAS_GETS
 void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
                                                    void* dst_ptr,int dst_stride)
 {
