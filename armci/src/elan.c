@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.33 2004-04-13 19:56:53 manoj Exp $ */
+/* $Id: elan.c,v 1.34 2004-04-13 22:55:42 manoj Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +23,7 @@ static void *_qd;
 extern void *pgs_init (ELAN_STATE *state, void *qMem);
 
 #ifdef DOELAN4
+#undef VCALLS
 #define VCALLS 1
 #define _ELAN_SLOTSIZE_ elan_queueMaxSlotSize(elan_base->state)
 #define _ELAN_SLOTSIZE 512
