@@ -29,6 +29,9 @@ distribute to other US Government contractors.
 
 What is new ?
 ~~~~~~~~~~~~
+version 1.3.1   port to CRAY-T3D
+                new operation ga_summarize  
+                improved ga_dgemm
 
 version 1.3	introduced patch versions of ga_ddot, ga_dscal, ga_dadd;
 		also ga_matmul_patch, ga_ifill_patch, ga_dfill_patch, and
