@@ -1,5 +1,6 @@
 /**
- * GA_Lu_solve_seq.c: Implemented with CLINPACK routines
+ * GA_Lu_solve_seq.c: Implemented with CLINPACK routines. Uses LINPACK
+ * routines if GA_C_CORE is defined, else uses scalapack.
  */
 
 #include "global.h"
