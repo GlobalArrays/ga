@@ -146,5 +146,15 @@ extern Integer ga_read_inc_local(Integer g_a, Integer i, Integer j, Integer inc,
 extern void ga_check_req_balance();
 #endif
 
+#ifdef ARMCI
+/* periodic operations */
+#define PERIODIC_GET 1
+#define PERIODIC_PUT 2
+#define PERIODIC_ACC 3
+
+extern void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
+                           Integer *ld, void *alpha, Integer op_code);
+#endif
+
 
 #endif
