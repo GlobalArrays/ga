@@ -42,7 +42,7 @@
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
-#if defined(__STDC__) || defined(__cplusplus)
+#if !defined(NX) && defined(__STDC__) || defined(__cplusplus)
 # define ARGS_(s) s
 #else
 # define ARGS_(s) ()
