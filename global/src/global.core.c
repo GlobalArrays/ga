@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.52 1999-06-08 00:08:33 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.53 1999-07-12 20:49:22 d3h325 Exp $*/
 /* 
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -507,51 +507,6 @@ Integer type;
 
     GAinitialized = 1;
 
-    /* Initialize MA-like addressing:
-     *    get addressees for the base arrays for double, complex and int types
-     *
-     * MA include files: macommon.h, macdecls.h and mafdecls.h
-     *
-     * DBL_MB, DCPL_MB, and INT_MB are assigned adresses of their counterparts
-     *    (of the same name in MA mafdecls.h file) by calling Fortran
-     *    ga_ma_base_address_() routine that calls C ga_ma_get_ptr_ to copy
-     *    pointers
-     * This is needed to be able to run GA without MA and preserve ga_access API
-     * 
-     */
-    {
-      extern void FATR ga_ma_base_address_(Integer*, void**);
-      static Integer dtype = MT_F_DBL;
-      ga_ma_base_address_(&dtype, (Void**)&DBL_MB);
-      if(!DBL_MB)ga_error("ga_initialize: wrong dbl pointer ", 1L);
-#     ifdef CHECK_MA_ALGN
-        if(((long)DBL_MB)%sizeof(DoublePrecision)){
-           fprintf(stderr,"ptr=%ld mod=%d size=%d\n",(long)DBL_MB, 
-        ((long)DBL_MB)%sizeof(DoublePrecision), sizeof(DoublePrecision));
-           ga_error("ga_initialize: MA DBL_MB not alligned", (Integer)DBL_MB);
-        }
-#     endif
-
-      dtype = MT_F_INT;
-      ga_ma_base_address_(&dtype, (Void**)&INT_MB);
-      if(!INT_MB)ga_error("ga_initialize: wrong int pointer ", 2L);
-#     ifdef CHECK_MA_ALGN
-        if(((long)INT_MB)%sizeof(Integer))
-           ga_error("ga_initialize: INT_MB not alligned", (Integer)INT_MB);
-#     endif
-
-      dtype = MT_F_DCPL;
-      ga_ma_base_address_(&dtype, (Void**)&DCPL_MB);
-      if(!DCPL_MB)ga_error("ga_initialize: wrong dcmpl pointer ", 3L);
-#     ifdef CHECK_MA_ALGN
-        if(((long)DCPL_MB)%sizeof(DoublePrecision))
-          ga_error("ga_initialize: DCPL_MB not alligned", (Integer)DCPL_MB);
-#     endif
-
-      if(DEBUG)
-        printf("%d INT_MB=%d(%x) DBL_MB=%ld(%lx) DCPL_MB=%d(%lx)\n",
-                GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB);
-    }
 
     /* selected processes now become data servers */
 #ifdef DATA_SERVER
@@ -664,6 +619,39 @@ Integer *mem_limit;
 }
 
 
+/*\ Initialize MA-like addressing:
+ *  get addressees for the base arrays for double, complex and int types
+\*/
+static int ma_address_init=0;
+void gai_ma_address_init()
+{
+#ifdef CHECK_MA_ALGN
+Integer  off_dbl, off_int, off_dcpl;
+#endif
+     ma_address_init=1;
+     INT_MB = (Integer*)MA_get_mbase(MT_F_INT);
+     DBL_MB = (DoublePrecision*)MA_get_mbase(MT_F_DBL);
+     DCPL_MB= (DoubleComplex*)MA_get_mbase(MT_F_DCPL);
+
+#   ifdef CHECK_MA_ALGN
+        off_dbl = 0 != ((long)DBL_MB)%sizeof(DoublePrecision);
+        off_int = 0 != ((long)INT_MB)%sizeof(Integer);
+        off_dcpl= 0 != ((long)DCPL_MB)%sizeof(DoublePrecision);
+
+        if(off_dbl)
+           ga_error("GA initialize: MA DBL_MB not alligned", (Integer)DBL_MB);
+
+        if(off_int)
+           ga_error("GA initialize: INT_MB not alligned", (Integer)INT_MB);
+
+        if(off_dcpl)
+          ga_error("GA initialize: DCPL_MB not alligned", (Integer)DCPL_MB);
+#   endif
+
+    if(DEBUG)
+        printf("%d INT_MB=%d(%x) DBL_MB=%ld(%lx) DCPL_MB=%d(%lx)\n",
+                GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB);
+}
 
 
 /*\ CREATE A GLOBAL ARRAY
@@ -990,6 +978,7 @@ int heap_status;
 
 
       if(!GAinitialized) ga_error("GA not initialized ", 0);
+      if(!ma_address_init) gai_ma_address_init();
 
       ga_sync_();
 
