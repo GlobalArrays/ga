@@ -26,17 +26,15 @@
 CUR_TARGET  =
 CUR_VERSION =
 
-# to be able to use parallel eigensolver and linear equation solver define 
-# DIAG = PAR  &  LU_SOLVE = PAR
-
+# to be able to use parallel eigensolver
+# DIAG = PAR 
 DIAG =
-LU_SOLVE =
 
 #do you want tracing ? [YES/NO]
 #
 GA_TRACE = 
 
-SUBDIRS     = src testing trace da X
+SUBDIRS     = src testing trace X
 MAKESUBDIRS = for dir in $(SUBDIRS); do $(MAKE)  -C $$dir $@ || exit 1 ; done
 
 ifndef TARGET 
@@ -53,6 +51,10 @@ endif
 
    TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x perform.x testc.x\
              ga-mpi.x
+
+ifdef USE_SCALAPACK
+   TESTS += testspd.x
+endif
 
 
 export DIAG TARGET VERSION LU_SOLVE GA_TRACE MSG_COMMS
