@@ -10,6 +10,7 @@
 #include <elan/elan.h>
 #ifdef QSNETLIBS_VERSION_CODE
 #  define ELAN_ACC
+#  define PENDING_OPER(x) ARMCI_ACC_INT
 #endif 
 extern void armci_elan_fence(int p);
 #endif
@@ -215,7 +216,7 @@ extern void armci_init_fence();
 #endif
 
 
-#ifdef LAPI
+#if defined(LAPI) || defined(ELAN_ACC)
 #  define ORDER(op,proc)\
         if( proc == armci_me || ( ACC(op) && ACC(PENDING_OPER(proc))) );\
         else  FENCE_NODE(proc)
