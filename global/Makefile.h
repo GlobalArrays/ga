@@ -72,7 +72,7 @@ ifeq ($(TARGET),SUN)
 #
 # Sun running SunOS
 #
-#          CC = gcc
+           CC = gcc
      FOPT_REN = -Nl100 -dalign
        RANLIB = ranlib
      WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
@@ -87,7 +87,6 @@ ifeq ($(TARGET),SOLARIS)
 #
 # Sun running Solaris
 #
-           CC = gcc
      WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
                 -Wwrite-strings
  GLOB_DEFINES = -DSOLARIS
@@ -131,10 +130,11 @@ endif
 #................................ HP  ....................................
 
 ifeq ($(TARGET),HPUX)
+# free HP cc compiler is not up to the job
      FOPT_REN = +ppu
          CPP  = /lib/cpp -P
            FC = fort77
-          CC = gcc
+           CC = cc
  GLOB_DEFINES = -DHPUX -DEXTNAME
     EXPLICITF = TRUE
 endif
@@ -158,10 +158,10 @@ ifeq ($(TARGET),CRAY-T3D)
          COPT = -O2 -h inline3
  endif
      FOPT_REN = -Ccray-t3d -Wf-dp
-#    COPT_REN = -h inline3 
       FLD_REN = -Wl"-Drdahead=on -Ddalign=64"
       CLD_REN = -Wl"-Drdahead=on -Ddalign=64"
  GLOB_DEFINES = -DCRAY_T3D
+#       CDEFS = -DFLUSHCACHE
     EXPLICITF = TRUE
 endif
 
@@ -259,11 +259,38 @@ ifeq ($(INTEL),YES)
   CUR_VERSION = DISMEM
 endif
  
-#.............................. SP1 .........................................
+#.............................. SP .........................................
 #
+ifeq ($(TARGET),SP)
+#
+# SP-2 and SP-2.5 under AIX 4.X (allows some latency optimizations) 
+
+       P_FILE = NO
+ifdef EUIH
+           CC = mpcc
+           FC = mpxlf
+ GLOB_DEFINES = -DSP -DEXTNAME -DAIX
+      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
+endif
+
+# need to strip symbol table to alleviate a bug in AIX ld
+define AIX4_RANLIB
+  ranlib @^
+  strip
+endef
+
+#   mpxlf fails with parallel make
+    MAKEFLAGS = -j 1
+       RANLIB = $(AIX4_RANLIB) 
+     FOPT_REN = -qEXTNAME
+  CUR_VERSION = DISMEM
+    EXPLICITF = TRUE
+endif
+ 
+#......................... older SP systems .....................
 ifeq ($(TARGET),SP1)
 #
-# IBM SP-1 and SP-2 under EUIH or MPL 
+# IBM SP-1 and SP-2 under EUIH/MPL and AIX 3.2.X 
 
        P_FILE = NO
 ifdef EUIH
@@ -276,7 +303,7 @@ else
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
-      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy
+      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dco
 endif
 
 #   mpxlf fails with parallel make
@@ -287,6 +314,7 @@ endif
     EXPLICITF = TRUE
 endif
  
+
 #.............................. IBM .........................................
 #
 ifeq ($(TARGET),IBM)
@@ -297,7 +325,7 @@ ifeq ($(TARGET),IBM)
        RANLIB = ranlib
  GLOB_DEFINES = -DEXTNAME -DAIX
      FOPT_REN = -qEXTNAME 
-      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy
+      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
     EXPLICITF = TRUE
 endif
 
