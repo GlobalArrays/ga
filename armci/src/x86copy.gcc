@@ -1,4 +1,4 @@
-// $Id: x86copy.gcc,v 1.12 2002-05-09 21:22:35 d3h325 Exp $
+// $Id: x86copy.gcc,v 1.13 2002-12-10 01:35:20 edo Exp $
 // memory copy implementation derived from examples 3 and 4 at
 // http://www.sgi.com/developers/library/resources/asc_cpu.html
 //
@@ -338,7 +338,8 @@ void *armci_asm_memcpy_nofence(void *dst, const void *src, size_t n, int bufid)
 void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid)
 {
 void *p;
-     if(n<128) return memcpy(dst, src, n);
+    if(use_asm_copy<0) use_asm_copy = asmcpy_works();
+    if(!use_asm_copy ||n<128) return memcpy(dst, src, n);
      p = armci_asm_memcpy_nofence(dst,src,n,bufid);
      __asm__ __volatile__ ("sfence":::"memory");
      return p;
