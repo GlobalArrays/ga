@@ -7,3 +7,5 @@ all:
 clean:
 	!cd src &nmake -nologo clean
 	!cd testing &nmake -nologo clean
+
+test.exe: all
