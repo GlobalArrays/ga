@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/brdcst.c,v 1.4 1995-02-24 02:17:09 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/brdcst.c,v 1.5 1996-08-06 05:39:16 d3g681 Exp $ */
 
 #include "sndrcv.h"
 
@@ -35,6 +35,8 @@ void BRDCST_(type, buf, lenbuf, originator)
   else if ((*originator != 0) && (me == 0)) {
     RCV_(type, buf, lenbuf, &lenmes, originator, &from, &synch);
   }
+
+  if ((*originator != 0) && (SR_n_proc == 2)) return;	/* Special case */
 
   /* Broadcast amoung cluster masters */
 
