@@ -1,0 +1,45 @@
+#
+
+OBJDIR=.\obj
+
+#on NT we use MPI
+USE_MPI=y
+
+!IFDEF USE_MPI
+EXTRA_OBJ =  mpi.obj
+!ELSE 
+EXTRA_OBJ =  tcgmsg.obj
+!ENDIF
+
+OBJ      = "$(OBJDIR)\global.armci.obj" "$(OBJDIR)\$(EXTRA_OBJ)" \
+        "$(OBJDIR)\global.msg.obj" \
+        "$(OBJDIR)\collect.obj" \
+        "$(OBJDIR)\global.patch.obj" \
+        "$(OBJDIR)\global.util.obj" \
+        "$(OBJDIR)\hsort.scat.obj" \
+        "$(OBJDIR)\global.alg.obj" \
+        $(OBJDIR)\ffflush.obj \
+        $(OBJDIR)\fill.obj \
+        $(OBJDIR)\decomp.obj \
+        $(OBJDIR)\fort.obj \
+        $(OBJDIR)\rsg.obj \
+        $(OBJDIR)\rs-mod.obj \
+        $(OBJDIR)\ga_summarize.obj \
+        $(OBJDIR)\ga_symmetr.obj\
+        $(OBJDIR)\ga_diag_seq.obj\
+        $(OBJDIR)\ga_solve_seq.obj\
+        $(OBJDIR)\ga_dgemm.obj\
+        $(OBJDIR)\ga_dgemm_seq.obj\
+        $(OBJDIR)\ga_transpose.obj
+
+
+LOC_DEFINES =
+INCDIR = ..\..\include
+LOC_INCLUDES = -I..\..\include -I$(MPI_INCLUDE) -I..\..\armci\src
+
+HEADERS = global.h ga.h global.fh c.names.h cray.names.h tcgmsg.fh
+LIBRARY = global.lib
+LIB_DISTRIB = ..\..\lib\win32
+
+!INCLUDE ..\..\config\NTmakefile.h
+!INCLUDE ..\..\config\NTmakelib.h
