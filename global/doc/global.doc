@@ -42,8 +42,9 @@ distribute to other US Government contractors.
    the information on the actual data distribution can be obtained and 
    taken advantage of whenever data locality is important.
 
-   Currently support is limited to 2-D double precision or integer arrays
-   with block distribution, at most one block per array per processor.
+   Currently support is limited to 2-D double precision, double complex
+   or integer arrays with block distribution, at most one block per
+   array per processor.
 
 
    Basic operations
@@ -63,20 +64,19 @@ distribute to other US Government contractors.
       ga_sync           ... synchronize processes (a barrier)
       ga_zero           ... zero an array
       ga_ddot           ... dot product of two arrays (doubles only)
-      ga_dscal          ... scale the elements in an array by a constant
-                            (double precision data only)
-      ga_dadd           ... scale and add two arrays to put result in a third
-                            (may overwrite one of the other two, doubles only)
+      ga_zdot           ... dot product of two arrays (double complex only)
+      ga_scale          ... scale the elements in an array by a constant
+      ga_add            ... scale and add two arrays to put result in a third
+                            (may overwrite one of the other two)
       ga_copy           ... copy one array into another
       ga_dgemm          ... BLAS-like matrix multiply 
-      ga_ddot_patch     ... dot product of two arrays (doubles only)
+      ga_ddot_patch     ... dot product of two patches (doubles only)
+      ga_zdot_patch     ... dot product of two patches (double complex only)
+      ga_scale_patch    ... scale the elements in an array by a constant
                             (patch version)
-      ga_dscal_patch    ... scale the elements in an array by a constant
+      ga_add_patch      ... scale and add two arrays to put result in a third
                             (patch version)
-      ga_dadd_patch     ... scale and add two arrays to put result in a third
-                            (patch version)
-      ga_ifill_patch    ... fill a patch of array with value (integer version)
-      ga_dfill_patch    ... fill a patch of array with value (double version)
+      ga_fill_patch     ... fill a patch of array with value
       ga_matmul_patch   ... matrix multiply (patch version)
       ga_diag           ... real symmetric generalized eigensolver 
                             (sequential version also exists)
@@ -154,9 +154,9 @@ distribute to other US Government contractors.
       appropriate insertion of ga_sync calls)
 
 
-  Status of current implementation (version 2.1)
+  Status of current implementation (version 2.2)
   --------------------------------
-  
+
   There are two classes of platforms that GA work on: 
 
   1) Network of (possibly multiprocessor) machines, using the
@@ -182,9 +182,6 @@ distribute to other US Government contractors.
      Cray T3D) and implement ga_brdcst and ga_dgop. There are no data server
      processes; therefore, all the specified processes/processors are
      used for computations.
-
-     Note: Interface to ScaLAPACK is not working on network of workstations
-     -- waiting for a new release of BLACS.
 
 
   2) True message passing MPP architectures with interrupt communication
@@ -404,16 +401,20 @@ distribute to other US Government contractors.
 
       -------------------------------------------------------------------
       double precision function ga_ddot(g_a, g_b)
+      double precision function ga_zdot(g_a, g_b)
 
       integer g_a, g_b                    [input]
 
       Computes the element-wise dot product of the two arrays which
-      must be double precision, the same shape and identically aligned.
+      must be double precision/complex, the same shape and identically 
+      aligned.
   
-         ga_ddot = sum(i,j) a(i,j)*b(i,j)
+         ga_*dot = sum(i,j) a(i,j)*b(i,j)
 
       -------------------------------------------------------------------
       double precision function ga_ddot_patch(g_a, ta, ailo, aihi, ajlo, ajhi,
+                                              g_b, tb, bilo, bihi, bjlo, bjhi) 
+      double precision function ga_zdot_patch(g_a, ta, ailo, aihi, ajlo, ajhi,
                                               g_b, tb, bilo, bihi, bjlo, bjhi) 
 
       integer     g_a, g_b                   [input]
@@ -421,9 +422,9 @@ distribute to other US Government contractors.
       integer     bilo, bihi, bjlo, bjhi     [input] g_b patch coordinates
       character*1 ta, tb                     [input] transpose flags
 
-      Computes the element-wise dot product of the two (possibly transposed)
-      patches which must be double precision and have the same number of 
-      elements. 
+      Computes the element-wise dot product of the two (possibly
+      transposed) patches which must be double precision/complex and
+      have the same number of elements.
 
       -------------------------------------------------------------------
       subroutine ga_matmul_patch(transa, transb, alpha, beta,
@@ -434,7 +435,7 @@ distribute to other US Government contractors.
      integer g_a, ailo, aihi, ajlo, ajhi;    [input]  patch of g_a
      integer g_b, bilo, bihi, bjlo, bjhi;    [input]  patch of g_b
      integer g_c, cilo, cihi, cjlo, cjhi;    [input]  patch of g_c 
-     double precision      alpha, beta;      [input]
+     double precision/complex alpha, beta;   [input]
      character*1    transa, transb;          [input]
 
       ga_matmul_patch is a patch version of ga_dgemm: 
@@ -446,30 +447,32 @@ distribute to other US Government contractors.
 
       Valid values for transpose arguments:  'n', 'N', 't', 'T'.
 
+      It works for both double precision and double complex data type.
+
       -------------------------------------------------------------------
-      subroutine ga_dscal(g_a, s)
+      subroutine ga_scale(g_a, s)
  
       integer g_a                         [input]
-      double precision s                  [input]
+      double precision/complex/integer s  [input]
 
-      Scales the double precision array by the constant s.
+      Scales an array  by the constant s.
 
       -------------------------------------------------------------------
-      subroutine ga_dscal_patch(g_a, ailo, aihi, ajlo, ajhi, s)
+      subroutine ga_scale_patch(g_a, ailo, aihi, ajlo, ajhi, s)
 
       integer g_a                         [input]
-      double precision s                  [input]
+      double precision/complex/integer s  [input]
       integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
 
-      Scales the patch of double precision array by the constant s.
+      Scales a patch of an array by the constant s.
 
       -------------------------------------------------------------------
-      subroutine ga_dadd(alpha, g_a, beta, g_b, g_c)
+      subroutine ga_add(alpha, g_a, beta, g_b, g_c)
 
-      integer g_a, g_b, g_c               [input]
-      double precision alpha, beta        [input]
+      integer g_a, g_b, g_c                          [input]
+      double precision/complex/integer alpha, beta   [input]
 
-      The double precision arrays (which must be the same shape and
+      The  arrays (which must be the same shape and
       identically aligned) are added together element-wise
 
            c = alpha * a  +  beta * b
@@ -477,36 +480,27 @@ distribute to other US Government contractors.
       The result (c) may replace one of the input arrays (a/b).
 
       -------------------------------------------------------------------
-      subroutine ga_dadd_patch (alpha, g_a, ailo, aihi, ajlo, ajhi,
-                                beta,  g_b, bilo, bihi, bjlo, bjhi,
-                                       g_c, cilo, cihi, cjlo, cjhi)
+      subroutine ga_add_patch (alpha, g_a, ailo, aihi, ajlo, ajhi,
+                               beta,  g_b, bilo, bihi, bjlo, bjhi,
+                                      g_c, cilo, cihi, cjlo, cjhi)
 
       integer g_a, g_b, g_c               [input]
-      double precision alpha, beta        [input]
+      double precision/complex/integer alpha, beta   [input]
       integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
       integer  bilo, bihi, bjlo, bjhi     [input] g_b patch coordinates
       integer  cilo, cihi, cjlo, cjhi     [input] g_c patch coordinates
 
-      Patches of double precision arrays (which must have the same number 
-      of elements) are added together element-wise.
+      Patches of arrays (which must have the same number of elements)
+      are added together element-wise.
 
       -------------------------------------------------------------------
-      subroutine ga_dfill_patch(g_a, ailo, aihi, ajlo, ajhi, s)
+      subroutine ga_fill_patch(g_a, ailo, aihi, ajlo, ajhi, s)
 
       integer g_a                         [input]
-      double precision s                  [input]
+      double precision/complex/integer s  [input]
       integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
 
-      Fills the patch of double precision array with value s.
-
-      -------------------------------------------------------------------
-      subroutine ga_ifill_patch(g_a, ailo, aihi, ajlo, ajhi, s)
-
-      integer g_a                         [input]
-      integer s                           [input]
-      integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
-
-      Fills the patch of integer array with value s.
+      Fills the patch of array with value s.
 
       -------------------------------------------------------------------
       subroutine ga_summarize(verbose)
@@ -652,7 +646,7 @@ distribute to other US Government contractors.
       Initializes tracing of completion status of data movement operations.
      
       -------------------------------------------------------------------
-      subroutine ga_init_fence()
+      subroutine ga_fence()
 
       Blocks the calling process until all the data transfers corresponding
       to GA operations called after ga_init_fence complete. For example,
@@ -668,7 +662,8 @@ distribute to other US Government contractors.
       assures completion of all data transfers and implicitly cancels 
       outstanding ga_init_fence. ga_init_fence and ga_fence must be used
       in pairs, multiple calls to ga_fence require the same number
-      of corresponding ga_init_fence calls.
+      of corresponding ga_init_fence calls. ga_init_fence/ga_fence
+      pairs can be nested.
 
       ga_fence works for multiple GA operations. For example:
 
