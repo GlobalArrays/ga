@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.66 2003-02-06 02:15:48 d3h325 Exp $
+#$Id: GNUmakefile,v 1.67 2003-02-28 00:20:11 manoj Exp $
          FOPT = -O
          COPT = -O
 
@@ -129,8 +129,23 @@ LIB_TARGETS = *.x shmtest $(NTSTUFF)
 LIB_DISTRIB = ../lib
 
 include ../config/makefile.h
-OBJ += $(EXTRA_OBJ)
 
+#
+# for IA64 only. gcc 3.x cannot find the symbols modsi3 and divsi3 in IA64.
+# lib1funs-ia64 includes these symbols.
+ifeq ($(TARGET),LINUX64)
+ifeq ($(_CPU),ia64)
+ifeq ($(CC), gcc)
+ifeq ($(FC), efc)
+     EXTRA_OBJ += lib1funcs-ia64.o
+%.o: %.S
+	$(CC) -c lib1funcs-ia64.S
+endif
+endif
+endif
+endif
+
+OBJ += $(EXTRA_OBJ)
 include ../config/makelib.h
 LIBS += $(EXTRA_LIBS)
 
