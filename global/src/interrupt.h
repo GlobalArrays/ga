@@ -1,3 +1,9 @@
+#ifndef LAPI
+
+extern int in_handler;
+
+#endif
+
 #ifdef NX 
 
 extern long masktrap(long);
@@ -19,5 +25,11 @@ extern long masktrap(long);
 
 
 #define ga_mask(new, old) { long __new = new; mp_lockrnc(& __new, (old));}
+
+#elif defined(LAPI)
+#  include <pthread.h>
+#else
+
+This file should not be compiled on this platform
 
 #endif

@@ -12,6 +12,8 @@
 #     define MAX_NPROC     512
 #   elif defined(SP1) || defined(SP)
 #     define MAX_NPROC     400
+#   elif defined(LAPI)
+#     define MAX_NPROC     512
 #   elif defined(CRAY_T3D)
 #     define MAX_NPROC     256
 #   elif defined(KSR)
@@ -37,13 +39,14 @@
 #define     GA_TYPE_DCV   GA_MSG_OFFSET + 8
 #define     GA_TYPE_DCI   GA_MSG_OFFSET + 9
 #define     GA_TYPE_DCJ   GA_MSG_OFFSET + 10
-#define     GA_TYPE_DSC   GA_MSG_OFFSET + 11
+#define     GA_TYPE_SCT   GA_MSG_OFFSET + 11
 #define     GA_TYPE_RDI   GA_MSG_OFFSET + 12
-#define     GA_TYPE_DGT   GA_MSG_OFFSET + 13
+#define     GA_TYPE_GAT   GA_MSG_OFFSET + 13
 #define     GA_TYPE_SYN   GA_MSG_OFFSET + 14
 #define     GA_TYPE_GOP   GA_MSG_OFFSET + 15
 #define     GA_TYPE_BRD   GA_MSG_OFFSET + 16
 #define     GA_TYPE_LCK   GA_MSG_OFFSET + 17
+#define     GA_TYPE_UNL   GA_MSG_OFFSET + 18
 #define     GA_TYPE_MAS   GA_MSG_OFFSET + 20
 
 /* GA operation ids */
@@ -56,11 +59,8 @@
 #define     GA_OP_DUP 7          /* Duplicate                   */
 #define     GA_OP_ZER 8          /* Zero                        */
 #define     GA_OP_DDT 9          /* dot product                 */
-#define     GA_OP_DST 10         /* scatter                     */
-#define     GA_OP_DGT 11         /* gather                      */
-#define     GA_OP_DSC 12         /* scale                       */
-#define     GA_OP_COP 13         /* Copy                        */
-#define     GA_OP_ADD 14         /* add                         */
+#define     GA_OP_SCT 10         /* scatter                     */
+#define     GA_OP_GAT 11         /* gather                      */
 #define     GA_OP_RDI 15         /* Integer read and increment  */
 #define     GA_OP_ACK 16         /* acknowledgment              */
 #define     GA_OP_LCK 17         /* acquire lock                */

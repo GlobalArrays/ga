@@ -4,7 +4,6 @@
 #include "message.h"
 #include "macommon.h"
 
-extern Integer in_handler;
 extern Integer  NumSndReq; /* request counter */
 
 
@@ -128,7 +127,7 @@ Integer  len, to;
    MessageSnd->to     = proc;
    MessageSnd->from   = ga_nodeid_();
    MessageSnd->type   = type;
-   MessageSnd->tag    = 77;
+   MessageSnd->req_tag    = 77;
    MessageSnd->operation  = GA_OP_ACC;
 
    len = msglen + MSG_HEADER_SIZE;

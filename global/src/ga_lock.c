@@ -17,16 +17,27 @@ static Integer Whandle, Nhandle;
 typedef struct {
        Integer lock;
        Integer turn;
+       msg_tag_t tag;
 } waiting_list_t;
 
-static waiting_list_t* blocked;
+#ifdef DEBUG
+typedef struct {Integer id; Integer turn; Integer myturn; } save_t;
+save_t savelock[512];
+#endif
 
+static waiting_list_t* blocked; /* stores info about locked (waiting) process */
 
 #define ERROR(str,code) ga_error(str, (Integer)code)
 
 #if defined(NX) || defined(SP1) || defined(SP)
-#   define SERVER_LOCK
+#   define SERVER_LOCK 
 #   define ASYN_COMMS
+#endif
+
+#if defined(LAPI)
+#   define SERVER_LOCK 
+#   include "lapidefs.h"
+#else 
 #endif
 
 
@@ -46,15 +57,21 @@ Integer type=MT_F_INT, nproc = ga_nnodes_(), indx;
                                                                 return(FALSE);
 
 #       if defined(SERVER_LOCK)
-          if(!MA_alloc_get(MT_F_INT,2*nproc,"GA lock wait list",&Whandle,&indx))
+        {
+          /* need MA memory properly alligned */
+          int mem = nproc*sizeof(waiting_list_t)/sizeof(double) + 1;
+          if(!MA_alloc_get(MT_C_DBL,mem,"GA lock wait list",&Whandle,&indx))
                  ERROR("ga_create_mutexes:error allocating memory for lock",0); 
           MA_get_pointer(Whandle, &blocked);
-
+          if(!blocked)ERROR("ga_create_mutexes:error allocating memory W",0);
+        }
 #       endif
+
         /* one extra element to make indexing consistent with GA */
         if(!MA_alloc_get(MT_F_INT, *num+1, "GA lock next", &Nhandle,&indx))
                  ERROR("ga_create_mutexes:error allocating memory for lock",1);
         MA_get_pointer(Nhandle, &next);
+        if(!next)ERROR("ga_create_mutexes:error allocating memory N",0);
 
         ga_zero_(&g_mutexes);
 
@@ -88,6 +105,15 @@ Integer i, myturn, factor=0;
         do {
 
            ga_get_(&g_mutexes, &id, &id, &two, &two, &myturn, &one);
+           if(myturn > next[id]){
+              fprintf(stderr,"%d proble with next %d %d\n",ga_nodeid_(),myturn,
+              next[id]);
+              sleep(1);
+           ga_get_(&g_mutexes, &id, &id, &two, &two, &myturn, &one);
+              fprintf(stderr,"%d proble with next %d %d\n",ga_nodeid_(),myturn,
+              next[id]);
+              pause();
+           }
           
            /* linear backoff before retrying  */
            for(i=0; i<  SPINMAX * factor; i++) _dummy_work_ += 1.;
@@ -109,41 +135,65 @@ static void ga_generic_unlock(Integer id)
  *   -must be executed in hrecv/AM handler thread
  *   -application thread must use generic_lock routine
 \*/
-void ga_server_lock(Integer handle, Integer id, Integer node)
+void ga_server_lock(Integer handle, Integer id, Integer node, msg_tag_t tag)
 {
-Integer myturn, turn, me = ga_nodeid_();
+Integer myturn, turn, me;
+        me = ga_nodeid_();
         
 
+        if(DEBUG) fprintf(stderr,"SLOCK:server=%d node=%d id=%d\n",
+                          me,node,id);
         myturn = ga_read_inc_local(handle, id, one, one, me);
         ga_get_local(handle, id, id, two, two, &turn, 0, 1, me);
+
+        if(turn > myturn){
+              fprintf(stderr,"%d serv:problem with turn %d %d\n",ga_nodeid_(),myturn,
+              myturn);
+              pause();
+        }
+
+#ifdef DEBUG
+        savelock[node].id=id;
+        savelock[node].turn=turn;
+        savelock[node].myturn=myturn;
+#endif
 
         if(turn != myturn){
            blocked[node].lock = id;
            blocked[node].turn = myturn;
-           if(DEBUG) fprintf(stderr,"server=%d node=%d wait for lock (%d)\n",
-                                                         me, node, myturn);
+           blocked[node].tag  = tag;
+           if(DEBUG) fprintf(stderr,"SLOCK:server=%d node=%d blocked (%d,%d)\n",
+                                                         me, node, turn,myturn);
         } else {
+           if(DEBUG) fprintf(stderr,"server=%d node=%d sending ticket (%d)\n",
+                                                         me, node, myturn);
            /* send ticket to requesting node */
-           ga_msg_snd(GA_TYPE_LCK, &myturn, sizeof(Integer), node);  
+           GA_SEND_REPLY(tag, &myturn, sizeof(Integer), node); 
            if(DEBUG)fprintf(stderr,"server=%d node=%d got lock\n",me, node);
         } 
+        if(DEBUG) fprintf(stderr,"SLOCK:server=%d node=%d id=%d (%d,%d)\n",
+                          me,node,id,blocked[node].lock,blocked[node].turn);
 }
            
         
 /*\  Release mutex "id" held by "node"
  *   called from hrecv/AM handler AND application thread
 \*/
-void ga_server_unlock(Integer handle, Integer id, Integer node, Integer server_next)
+void ga_server_unlock(Integer handle, Integer id, Integer node, 
+                      Integer server_next)
 {
 Integer i, proc=-1, me = ga_nodeid_();
 int ack;
+
+        if(DEBUG) fprintf(stderr,"SUNLOCK:server=%d node=%d id=%d next=%d\n",
+                          me,node,id,server_next);
 
         server_next++;
         ga_put_local(handle, id, id, two, two, &server_next, 0, one, me);
         
         /* search for the node next in queue for this lock */
         for(i=0; i< ga_nnodes_(); i++){
-           if(DEBUG)fprintf(stderr,"server=%d node=%d list=(%d,%d)\n",
+           if(DEBUG)fprintf(stderr,"SUNLOCK:server=%d node=%d list=(%d,%d)\n",
                              me, i, blocked[i].lock, blocked[i].turn);
            if((blocked[i].lock == id) && (blocked[i].turn == server_next)){
               proc = i;
@@ -152,10 +202,12 @@ int ack;
         }
         if(proc != -1)
            if(proc ==me)ERROR("server_unlock: cannot unlock self",0);
-           else ga_msg_snd(GA_TYPE_LCK, &server_next, sizeof(Integer), proc);  
-
-        if(DEBUG)fprintf(stderr,"server=%d node=%d unlock next=%d go=%d\n",
+           else {
+             GA_SEND_REPLY(blocked[proc].tag, &server_next, sizeof(Integer), 
+                                                                      proc); 
+             if(DEBUG)fprintf(stderr,"server=%d node=%d unlock next=%d go=%d\n",
                                              me, node, server_next, proc);
+           }
 }
             
      
@@ -164,7 +216,7 @@ int ack;
 \*/
 static void dst_lock(Integer id)
 {
-Integer owner, owner2, server;
+Integer owner, owner2, server, me=ga_nodeid_();
 
       /* check if elements (id,1) and (id,2) reside on the same process */ 
       if(!ga_locate_(&g_mutexes, &id, &one, &owner))
@@ -175,19 +227,31 @@ Integer owner, owner2, server;
 
       server = DataServer(owner);
 
-      if(server == ga_nodeid_()){
+      if(server == me){
          ga_generic_lock(id);
       }else{
          Integer len, exp_len=sizeof(Integer), from;
 
-#        if defined(SERVER_LOCK) && defined(ASYN_COMMS)
+#        if defined(LAPI)
+
+            CLEAR_COUNTER(buf_cntr); /* get AM buffer */
+            SET_COUNTER(buf_cntr,1); /* mark buffer for data arrival */
+            ga_snd_req(g_mutexes, id,0,0,0, 0, 0, GA_OP_LCK, owner, server);
+            CLEAR_COUNTER(buf_cntr); /* wait for notification to arrive */
+            next[id] = *(Integer*)MessageSnd->buffer; 
+
+#        elif defined(SERVER_LOCK) && defined(ASYN_COMMS)
+
             msgid_t msgid;
             msgid = ga_msg_ircv(GA_TYPE_LCK,  next+id, exp_len, server);
             ga_snd_req(g_mutexes, id,0,0,0, 0, 0, GA_OP_LCK, owner, server);
             ga_msg_wait(msgid, &from, &len);
+
 #        else
+
             ga_snd_req(g_mutexes, id,0,0,0, 0, 0, GA_OP_LCK, owner, server);
             ga_msg_rcv(GA_TYPE_LCK, next+id, exp_len, &len, server, &from);
+
 #        endif
       }
 }
@@ -205,7 +269,12 @@ Integer owner, server;
       server = DataServer(owner);
       if(server == ga_nodeid_()){
          ga_server_unlock(g_mutexes, id, server, next[id]);
-      }else ga_snd_req(g_mutexes, id,next[id],0,0, 0,0,GA_OP_UNL, owner,server);
+      }else{ 
+#       if defined(LAPI)
+            CLEAR_COUNTER(buf_cntr); /* get AM buffer */
+#       endif
+        ga_snd_req(g_mutexes, id,next[id],0,0, 0,0,GA_OP_UNL, owner,server);
+      }
 }
 
 

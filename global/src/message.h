@@ -1,7 +1,17 @@
-/*$Id: message.h,v 1.10 1997-02-01 00:27:02 d3h325 Exp $*/
+/*$Id: message.h,v 1.11 1997-11-08 00:01:59 d3h325 Exp $*/
 
 #ifdef MPI
 #  include "mpi.h"
+#endif
+#include "config.h"
+
+/* GA_SEND_REPLY  operation is used by server send data back to client */
+#if defined(LAPI)
+#   include "lapidefs.h"
+#   define  GA_SEND_REPLY ga_lapi_send
+#else
+    typedef int msg_tag_t;
+#   define  GA_SEND_REPLY ga_msg_snd
 #endif
 
 /* flags to specify blocking/nonblocking communication in TCGMSG */
@@ -18,11 +28,6 @@
 /* limit the buffer size on SP when unexpected messages arrive (IWAY) */
 #define IWAY_MSG_BUF_SIZE    8000 
 
-#define REQ_FIELDS_INT 10
-#define REQ_FIELDS_DBL 2
-#define MSG_HEADER_SIZE  (REQ_FIELDS_INT*sizeof(Integer)+REQ_FIELDS_DBL*sizeof(DoublePrecision))
-#define TOT_MSG_SIZE     (MSG_BUF_SIZE + MSG_HEADER_SIZE) 
-#define MSG_BUF_DBL_SIZE ((TOT_MSG_SIZE + sizeof(double)-1)/sizeof(double))
 
 /* size of buffer used to send/broadcast shared memory ids in ga_create */
 #ifdef SUN
@@ -32,6 +37,33 @@
 #endif
 
 
+#define REQ_FIELDS_DBL 2
+typedef struct{
+       Integer g_a;
+       Integer ilo;
+       Integer ihi;
+       Integer jlo;
+       Integer jhi;
+       Integer to;
+       Integer type;
+       Integer operation;
+       Integer from;
+       Integer req_tag;
+#ifdef LAPI_SPLIT
+       Integer bytes;
+       msg_tag_t tag;
+#ifdef CHECKSUM
+       double checksum;
+#endif
+#endif
+       DoublePrecision alpha[REQ_FIELDS_DBL];
+}request_header_t;
+
+
+#define MSG_HEADER_SIZE sizeof(request_header_t) 
+
+#define TOT_MSG_SIZE     (MSG_BUF_SIZE + MSG_HEADER_SIZE) 
+#define MSG_BUF_DBL_SIZE ((TOT_MSG_SIZE + sizeof(double)-1)/sizeof(double))
 struct message_struct{
        Integer g_a;
        Integer ilo; 
@@ -42,7 +74,14 @@ struct message_struct{
        Integer type; 
        Integer operation; 
        Integer from; 
-       Integer tag; 
+       Integer req_tag; 
+#ifdef LAPI_SPLIT
+       Integer bytes;
+       msg_tag_t tag;
+#ifdef CHECKSUM
+       double checksum;
+#endif
+#endif
        DoublePrecision alpha[REQ_FIELDS_DBL];
        char    buffer[MSG_BUF_SIZE];
 };
@@ -123,7 +162,7 @@ extern void ga_msg_sync_  ARGS_((void));
 extern void ga_snd_req    ARGS_((Integer, Integer, Integer, Integer, Integer,
                                  Integer nbytes, Integer data_type,Integer oper,
                                  Integer, Integer to));
-extern void ga_SERVER     ARGS_((Integer));
+extern void ga_SERVER     ARGS_((Integer, struct message_struct*));
 extern void ga_igop_clust ARGS_((Integer, Integer *, Integer, char *, Integer));
 extern void ga_brdcst_clust ARGS_((Integer, Void*, Integer, Integer, Integer));
 extern void ga_dgop_clust   ARGS_((Integer , DoublePrecision *, Integer, char *,

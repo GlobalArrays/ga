@@ -39,8 +39,34 @@
 #  include <fortran.h>
 #endif
 
+Integer NumSndReq=0;
+int in_handler =0;
 
-#define DEBUG  0 
+#ifdef LAPI
+#  include "lapidefs.h"
+   extern void ga_header_handler();
+
+   void ga_wait_cmpl()
+   { 
+/*
+   int val;
+            if(LAPI_Getcntr(lapi_handle, &cmpl_cntr, &val)) 
+                                         ga_error("LAPI_Getcntr failed",0);
+   fprintf(stderr," %d ga_wait_cmpl (%d, %d)\n",ga_nodeid_(),NumSndReq, val);
+
+         do {
+            if(LAPI_Getcntr(lapi_handle, &cmpl_cntr, &val)) 
+                                         ga_error("LAPI_Getcntr failed",0);
+         }while (NumSndReq > val);
+*/
+    int p;
+
+    for (p=0;p<ga_nnodes_();p++) FENCE_NODE(p);
+   }
+#endif
+
+
+#define DEBUG  0
 #define DEBUG0 0
 #define DEBUG1 0
 
@@ -54,9 +80,6 @@ struct message_struct *MessageSnd = (struct message_struct*)_snd_dbl_buf,
                       *MessageRcv = (struct message_struct*)_rcv_dbl_buf;
 
 
-Integer NumSndReq=0;
-Integer in_handler =0;
-
 
 Integer cluster_master;
 Integer cluster_hidden_nodes;
@@ -65,10 +88,16 @@ Integer cluster_server=-1;
 Integer ClusterMode=0;
 Integer cluster_nodes=0;
 
-#if !(defined(KSR) || defined(CONVEX) || defined(CRAY_T3D))
-    char fence_array[MAX_NPROC];
-#endif
 int GA_fence_set=0;
+#if !(defined(CRAY_T3D) || defined(CONVEX) || defined(KSR))
+    char fence_array[MAX_NPROC];
+#   define  RECORD_FENCE(to, oper)\
+      if(GA_fence_set && (oper == GA_OP_PUT || oper == GA_OP_ACC ||\
+             oper == GA_OP_SCT || oper == GA_OP_RDI)) fence_array[to]=1
+#else
+#   define  RECORD_FENCE(to, oper)
+#endif
+
 
 
 /*\ determines cluster structure according to *.p file
@@ -132,7 +161,7 @@ Integer ClusterID(proc)
 }
 
 
-/*\ determines to which process (data_server) we need to send request for proc
+/*\ determines to which process (data server) we need to send request for proc
 \*/
 Integer DataServer(proc)
     Integer proc;
@@ -190,7 +219,6 @@ void ga_list_data_servers_(list)
 }
 
 
-
 /*\ determine msg-passing nodeid for the first GA <num_procs> processes 
 \*/
 void ga_list_nodeid_(list, num_procs)
@@ -217,6 +245,17 @@ void ga_list_nodeid_(list, num_procs)
 }
 
 
+void ga_checksum(void* data, int bytes, double *sum)
+{
+    int i;
+    *sum =0;
+    for(i=0;i<bytes;i+=sizeof(double))
+        *sum += *(double*)(i + (char*)data);
+}
+
+int snum =0;
+
+
 #define FILL_MSG_HEADER {\
         MessageSnd->g_a = g_a;\
         MessageSnd->ilo = ilo;\
@@ -226,79 +265,142 @@ void ga_list_nodeid_(list, num_procs)
         MessageSnd->to     = proc;\
         MessageSnd->from   = ga_nodeid_();\
         MessageSnd->type   = type;\
-        MessageSnd->tag    = 77;\
+        MessageSnd->req_tag    = 77;\
         MessageSnd->operation  = oper;\
 }
-
-        
-#if !(defined(CRAY_T3D) || defined(CONVEX) || defined(KSR))
-#   define  RECORD_FENCE(to, oper)\
-      if(GA_fence_set && (oper == GA_OP_PUT || oper == GA_OP_ACC ||\
-             oper == GA_OP_DST || oper == GA_OP_RDI)) fence_array[to]=1
-#else 
-#   define  RECORD_FENCE(to, oper) 
-#endif
-
 
 
 /*\  SEND REQUEST MESSAGE to the owner/data_server 
  *   to perform operation "oper" on g_a[ilo:ihi,jlo:jhi]
 \*/
 void ga_snd_req(g_a, ilo,ihi,jlo,jhi, nbytes, type, oper, proc, to)
-     Integer g_a, ilo,ihi,jlo,jhi,nbytes, type, oper, to, proc; 
+     Integer g_a, ilo,ihi,jlo,jhi,nbytes,  type, oper, to, proc; 
 {
-    Integer  len, ack, from;
+    Integer  len, from;
+#ifdef LAPI
+    int rc, val;
+    lapi_cntr_t *pcntr, *pcmpl_cntr;
+#if defined(LAPI_SPLIT)
+    MessageSnd->bytes = nbytes;
+    MessageSnd->tag.cntr = &buf_cntr.cntr;
+    MessageSnd->tag.buf  = MessageSnd->buffer;
+#endif
+#endif
 
-    FILL_MSG_HEADER;
-    
+    FILL_MSG_HEADER; 
+
+#ifdef LAPI
+      len = MSG_HEADER_SIZE;
+      
+      SET_COUNTER(buf_cntr,1); 
+#     ifdef LAPI_SPLIT
+            if(nbytes <= lapi_max_uhdr_data_sz ){
+               len += nbytes;
+               pcntr = &buf_cntr.cntr;
+            } else
+#     endif
+               pcntr = NULL;
+
+      /* completion counter should be incremented only for store ops */
+      if(oper == GA_OP_GET || oper == GA_OP_GAT || 
+         oper == GA_OP_LCK || oper == GA_OP_UNL  ) pcmpl_cntr=NULL;
+      else pcmpl_cntr = &cmpl_arr[to].cntr; 
+
+      if((rc=LAPI_Amsend(lapi_handle,(uint)to,ga_header_handler,MessageSnd,len, 
+#     if defined(LAPI_MPI) || defined(LAPI_SPLIT)
+              NULL, 0, 
+#     else
+              MessageSnd->buffer, nbytes,
+#     endif
+              NULL, pcntr, pcmpl_cntr )))
+              ga_error("ga_snd_req: LAPI_Amsend failed",rc); 
+#     if defined(LAPI_MPI)
+              ga_msg_snd(GA_TYPE_REQ, MessageSnd->buffer, nbytes, to);
+#     endif
+#else
     len = nbytes + MSG_HEADER_SIZE;
-
-    if(DEBUG1) fprintf(stderr,"request %d GAto=%d to server %d\n",oper,proc,to);
     ga_msg_snd(GA_TYPE_REQ, (char*)MessageSnd, len, to);
+#endif
 
-#   if defined(DATA_SERVER)
-     if(ACK) ga_msg_rcv(GA_TYPE_ACK, (char*)&ack, sizeof(ack), &len, to, &from);
-#   endif
-
-    if(DEBUG0)fprintf(stderr,"GAme=%d request %d sent to server %d\n",
-              ga_nodeid_(), oper, to);
-
+    if(DEBUG0)fprintf(stderr,"GAme=%d request=%d to%d\n",ga_nodeid_(),oper,to);
     NumSndReq++; /* count requests sent */
-
-    RECORD_FENCE(to, oper); 
+    RECORD_FENCE(to, oper);
 }
 
 
 #include "mem.ops.h"
 
 void ga_snd_req2D(g_a, ilo,ihi,jlo,jhi, type, oper, ptr_src, ld, proc, to)
-     Integer g_a, ilo,ihi,jlo,jhi, type, oper, proc, to, ld; 
+     Integer g_a, ilo,ihi,jlo,jhi, type, oper, proc, to, ld;
      char *ptr_src;
 {
-    Integer  len, ack, from, rows, cols;
-
-    FILL_MSG_HEADER;
+    Integer  len, from, rows, cols, nbytes;
+#ifdef LAPI
+    int rc, val;
+    lapi_cntr_t *pcntr,*pcmpl_cntr;
+#endif
 
     rows = ihi-ilo+1;
     cols = jhi-jlo+1;
-    len = (rows*cols)*GAsizeofM(type) + MSG_HEADER_SIZE;
+    nbytes = (rows*cols)*GAsizeofM(type);
 
-    Copy2D(type, &rows, &cols, ptr_src, &ld, (char *)MessageSnd->buffer, &rows);
+#if defined(LAPI_SPLIT)
+    MessageSnd->bytes = nbytes;
+    MessageSnd->tag.cntr = &buf_cntr.cntr;
+    MessageSnd->tag.buf  = MessageSnd->buffer;
+#endif
 
-    if(DEBUG1) fprintf(stderr,"request %d GAto=%d to server %d\n",oper,proc,to);    ga_msg_snd(GA_TYPE_REQ, (char*)MessageSnd, len, to);
+    FILL_MSG_HEADER;
 
-#   if defined(DATA_SERVER)
-     if(ACK) ga_msg_rcv(GA_TYPE_ACK, (char*)&ack, sizeof(ack), &len, to, &from);
-#   endif
+    Copy2D(type, &rows, &cols, ptr_src, &ld, (char *)MessageSnd->buffer,&rows);
 
-    if(DEBUG0)fprintf(stderr,"GAme=%d request %d  sent to server %d\n",
-              ga_nodeid_(), oper, to);
+#ifdef CHECKSUM
+    ga_checksum(MessageSnd->buffer, nbytes, &(MessageSnd->checksum));
+    if(DEBUG) fprintf(stderr,"%d checksum=%f (%d)\n",ga_nodeid_(),MessageSnd->checksum,snum++);
+#endif
 
+#ifdef LAPI
+      len = MSG_HEADER_SIZE;
+      SET_COUNTER(buf_cntr,1);
+#     ifdef LAPI_SPLIT
+            if(nbytes <= lapi_max_uhdr_data_sz ){
+               len += nbytes;
+               pcntr = &buf_cntr.cntr;
+               if(DEBUG) fprintf(stderr,"short AM len=%d\n",len);
+            } else
+#     endif
+               pcntr = NULL;
+
+      /* completion counter should be incremented only for store ops */
+      if(oper == GA_OP_GET || oper == GA_OP_GAT) pcmpl_cntr=NULL;
+      else pcmpl_cntr = &cmpl_arr[to].cntr; 
+
+      if((rc=LAPI_Amsend(lapi_handle,(uint)to,ga_header_handler,MessageSnd,len,
+#     if defined(LAPI_MPI) || defined(LAPI_SPLIT)
+              NULL, 0,
+#     else
+              MessageSnd->buffer, nbytes,
+#     endif
+              NULL, pcntr, pcmpl_cntr )))
+              ga_error("ga_snd_req: LAPI_Amsend failed",rc);
+#     if defined(LAPI_MPI)
+              ga_msg_snd(GA_TYPE_REQ, MessageSnd->buffer, nbytes, to);
+#     endif
+#else
+    len = nbytes + MSG_HEADER_SIZE;
+    ga_msg_snd(GA_TYPE_REQ, (char*)MessageSnd, len, to);
+#endif
+
+    if(DEBUG0)fprintf(stderr,"GAme=%d request=%d to%d\n",ga_nodeid_(),oper,to);
     NumSndReq++; /* count requests sent */
-
-    RECORD_FENCE(to, oper); 
+    RECORD_FENCE(to, oper);
 }
 
+
+void ga_update_serv_num()
+{
+   GAstat.numser ++;
+}
 
 
 /*\ DATA SERVER services remote requests
@@ -309,17 +411,20 @@ void ga_snd_req2D(g_a, ilo,ihi,jlo,jhi, type, oper, ptr_src, ld, proc, to)
  *         since this routine is called in ga_initialize() until terminate
  *         request GA_OP_END (sent in ga_terminate() ) is received
 \*/
-void ga_SERVER(from)
+void ga_SERVER(from, message)
      Integer from;
+     struct message_struct *message;
 {
 Integer msglen, ld, offset = 0, rdi_val, elem_size, nelem, toproc,ack;
 char    *piindex, *pjindex, *pvalue;
-
-void ga_server_lock(Integer handle, Integer id, Integer node);
+void ga_server_lock(Integer handle, Integer id, Integer node, msg_tag_t tag);
 void ga_server_unlock(Integer handle, Integer id, Integer node, Integer next);
-void    ga_get_local(), ga_put_local(), ga_acc_local(), ga_scatter_local(),
-        ga_gather_local();
+void    ga_acc_local(), ga_scatter_local(), ga_gather_local();
 Integer ga_read_inc_local();
+
+#     ifndef LAPI
+         GA_PUSH_NAME("ga_server"); /*not thread-safe */
+#     endif
 
 #     if   defined(SOCKCONNECT) && defined(IWAY) && !defined(SHMEM)
           /* adjust process number for msg sender -- from is set by NX/MPL */
@@ -331,150 +436,155 @@ Integer ga_read_inc_local();
    do {
       Integer len;
       len = TOT_MSG_SIZE; /* MSG_BUF_SIZE + MSG_HEADER_SIZE */ 
-      ga_msg_rcv(GA_TYPE_REQ, (char*)MessageRcv, len, &msglen, -1, &from);
+      ga_msg_rcv(GA_TYPE_REQ, (char*)message, len, &msglen, -1, &from);
       if(ACK) ga_msg_snd(GA_TYPE_ACK, &ack, sizeof(ack), from);
-#else
-      in_handler = 1; /*distinguish cases when GA ops are called by the server*/
-      GAstat.numser ++;
 #endif
 
       if(DEBUG0) fprintf(stderr,"%d>ga_server got request %d from %d GAto=%d\n",
-                                ga_msg_nodeid_(),MessageRcv->operation, from,
-                                MessageRcv->to);
-      /* fprintf(stderr, "server %d ready\n",ga_msg_nodeid_()); */
+                                ga_msg_nodeid_(),message->operation, from,
+                                message->to);
 
-      elem_size = GAsizeof(MessageRcv->type);
-      toproc =  MessageRcv->to;
-      MessageRcv->to = MessageRcv->from;
-      MessageRcv->from = toproc;
+      elem_size = GAsizeof(message->type);
+      toproc =  message->to;
 
-      if(MessageRcv->operation == GA_OP_GET || 
-         MessageRcv->operation == GA_OP_PUT ||
-         MessageRcv->operation == GA_OP_ACC){
-           msglen = (MessageRcv->ihi - MessageRcv->ilo +1)
-                  * (MessageRcv->jhi - MessageRcv->jlo +1) * elem_size;
+#ifndef DATA_SERVER
+      if(from != message->from){
+         printf("from=%d message->from=%d\n",from,message->from);
+         ga_error("server error: from=", message->from);
+      }
+#endif
+
+#     ifdef IWAY
+        /* set up header for the response message */
+        message->to = message->from;
+        message->from = toproc;
+#     endif
+
+      if(message->operation == GA_OP_GET || message->operation == GA_OP_PUT ||
+         message->operation == GA_OP_ACC){
+           msglen = (message->ihi - message->ilo +1)
+                  * (message->jhi - message->jlo +1) * elem_size;
            if(msglen > MSG_BUF_SIZE) 
                 ga_error("ga_server: msgbuf overflow ", msglen);
 
            /* leading dimension for buf */
-           ld = MessageRcv->ihi - MessageRcv->ilo +1;
+           ld = message->ihi - message->ilo +1;
       }
 
-      GA_PUSH_NAME("ga_server");
-      switch ( MessageRcv->operation) {
+      switch ( message->operation) {
           case GA_OP_GET:   /* get */
-                            ga_check_handle(&MessageRcv->g_a,"server: ga_get");
-                            ga_get_local( MessageRcv->g_a,
-                               MessageRcv->ilo, MessageRcv->ihi,
-                               MessageRcv->jlo, MessageRcv->jhi,  
-                               MessageRcv->buffer, offset, ld, toproc);
+                            ga_check_handle(&message->g_a,"server: ga_get");
+                            ga_get_local( message->g_a,
+                               message->ilo, message->ihi,
+                               message->jlo, message->jhi,  
+                               message->buffer, offset, ld, toproc);
 
-#                           ifdef IWAY
+#                           ifdef LAPI
+                               ga_lapi_send(message->tag, 
+                                            message->buffer, msglen, from);
+#                           elif defined(IWAY)
                                /* need header */
-                               ga_msg_snd(GA_TYPE_GET, MessageRcv, 
+                               ga_msg_snd(GA_TYPE_GET, message, 
                                        msglen+MSG_HEADER_SIZE, from);
 #                           else
-                               ga_msg_snd(GA_TYPE_GET, MessageRcv->buffer, 
+                               ga_msg_snd(GA_TYPE_GET, message->buffer, 
                                        msglen, from);
 #                           endif
-                            /*
-                            fprintf(stderr,"#%d> first elem=%lf\n",ga_nodeid_(),
-                                   *((double*)MessageRcv->buffer));
-                            */
                             break;
 
           case GA_OP_PUT:   /* put */
-                            ga_check_handle(&MessageRcv->g_a,"server: ga_put");
-                            ga_put_local( MessageRcv->g_a,
-                               MessageRcv->ilo, MessageRcv->ihi,
-                               MessageRcv->jlo, MessageRcv->jhi,
-                               MessageRcv->buffer, offset, ld, toproc);
+                            ga_check_handle(&message->g_a,"server: ga_put");
+                            ga_put_local( message->g_a,
+                               message->ilo, message->ihi,
+                               message->jlo, message->jhi,
+                               message->buffer, offset, ld, toproc);
                             break;
 
           case GA_OP_ACC:   /* accumulate */
-                            ga_check_handle(&MessageRcv->g_a,"server: ga_acc");
-                            if(DEBUG)fprintf(stderr,"alpha in server %lf\n",
-                                *(DoublePrecision*)(MessageRcv->buffer+msglen));
-                            ga_acc_local( MessageRcv->g_a,
-                               MessageRcv->ilo, MessageRcv->ihi,
-                               MessageRcv->jlo, MessageRcv->jhi,
-                               MessageRcv->buffer, offset, ld, toproc,
-                               MessageRcv->alpha); 
+                            ga_check_handle(&message->g_a,"server: ga_acc");
+                            ga_acc_local( message->g_a,
+                               message->ilo, message->ihi,
+                               message->jlo, message->jhi,
+                               message->buffer, offset, ld, toproc,
+                               message->alpha);
                             break;
 
           case GA_OP_RDI:   /* read and increment */
                             {
-                              Integer inc = MessageRcv->ihi;
-                              ga_check_handle(&MessageRcv->g_a,"server:ga_rdi");
-                              rdi_val = ga_read_inc_local( MessageRcv->g_a,
-                                 MessageRcv->ilo, MessageRcv->jlo, inc, toproc);
+                              Integer inc = message->ihi;
+                              ga_check_handle(&message->g_a,"server:ga_rdi");
+                              rdi_val = ga_read_inc_local( message->g_a,
+                                 message->ilo, message->jlo, inc, toproc);
 
-                              MessageRcv->ilo = rdi_val;
-                              ga_msg_snd(GA_TYPE_RDI, MessageRcv, 
+                              message->ilo = rdi_val;
+                              ga_msg_snd(GA_TYPE_RDI, message, 
                                          MSG_HEADER_SIZE, from);
                             }
                             break;
-          case GA_OP_DST:   /* scatter */
-                            ga_check_handle(&MessageRcv->g_a,"server:ga_scat");
+          case GA_OP_SCT:   /* scatter */
+                            ga_check_handle(&message->g_a,"server:ga_scat");
 
                             /* buffer contains (val,i,j) */
-                            nelem = MessageRcv->ilo;
+                            nelem = message->ilo;
                             if (nelem > MSG_BUF_SIZE/
                                (elem_size+2*sizeof(Integer)) )
                                   ga_error("ga_server: scatter overflows buf ",
                                             nelem);
-                            pvalue  = (char*)MessageRcv->buffer;
-                            piindex = ((char*)MessageRcv->buffer) + 
+                            pvalue  = (char*)message->buffer;
+                            piindex = ((char*)message->buffer) + 
                                       nelem*elem_size;
                             pjindex = piindex + nelem*sizeof(Integer);
-                            ga_scatter_local(MessageRcv->g_a, pvalue,
+                            ga_scatter_local(message->g_a, pvalue,
                                              piindex, pjindex, nelem, toproc);
                             break;
 
-          case GA_OP_DGT:   /* gather */
-                            ga_check_handle(&MessageRcv->g_a,"server:ga_gath");
+          case GA_OP_GAT:   /* gather */
+                            ga_check_handle(&message->g_a,"server:ga_gath");
 
                             /* rcv buffer contains (i,j) only but we also
                              * need space in the same buffer for v
                              * value will be sent by server in rcv buffer 
                              */
-                            nelem = MessageRcv->ilo;
+                            nelem = message->ilo;
                             if (nelem > MSG_BUF_SIZE/
                                (elem_size+2*sizeof(Integer)) )
-                                  ga_error("ga_server: scatter overflows buf ",
+                                  ga_error("ga_server: gather overflows buf ",
                                             nelem);
 
-                            piindex = (char*)MessageRcv->buffer;  
+                            piindex = (char*)message->buffer;  
                             pjindex = piindex + nelem*sizeof(Integer);
                             pvalue  = pjindex + nelem*sizeof(Integer);
 
-                            ga_gather_local(MessageRcv->g_a, pvalue,
+                            ga_gather_local(message->g_a, pvalue,
                                             piindex, pjindex, nelem, toproc);
 
-#                           ifdef IWAY
+#                           ifdef LAPI
+                               ga_lapi_send(message->tag, 
+                                            pvalue, elem_size*nelem,from); 
+#                           elif defined(IWAY)
                               /* redundant copy: for IWAY need header */
-                              Copy(pvalue, MessageRcv->buffer, elem_size*nelem);
-                              ga_msg_snd(GA_TYPE_DGT, MessageRcv,
+                              Copy(pvalue, message->buffer, elem_size*nelem);
+                              ga_msg_snd(GA_TYPE_GAT, message,
                                        elem_size*nelem+MSG_HEADER_SIZE, from);
 #                           else
-                              ga_msg_snd(GA_TYPE_DGT, pvalue,
+                              ga_msg_snd(GA_TYPE_GAT, pvalue,
                                        elem_size*nelem, from);
 #                           endif
                             break;                          
 
           case GA_OP_CRE:   /* create an array */
                             {
-                              Integer dim1   = MessageRcv->ilo;
-                              Integer nblock1 = MessageRcv->ihi;
-                              Integer dim2 = MessageRcv->jlo;
-                              Integer nblock2 = MessageRcv->jhi;
-                              char *map1 = MessageRcv->buffer+SHMID_BUF_SIZE;
+                              Integer dim1   = message->ilo;
+                              Integer nblock1 = message->ihi;
+                              Integer dim2 = message->jlo;
+                              Integer nblock2 = message->jhi;
+                              char *map1 = message->buffer+SHMID_BUF_SIZE;
                               char *map2 = map1 + nblock1*sizeof(Integer);
                               char *array_name = "server_created";
                               Integer g_a;
 
                               /* create can fail due to memory limits */
-                              if(!ga_create_irreg(& MessageRcv->type, 
+                              if(!ga_create_irreg(& message->type, 
                                   &dim1, &dim2, array_name, (Integer*) map1, 
                                   &nblock1, (Integer*) map2, &nblock2, &g_a))
                                      fprintf(stderr,"ga_server:create failed\n",
@@ -484,7 +594,7 @@ Integer ga_read_inc_local();
 
           case GA_OP_DUP:   /* duplicate an array */
                             {
-                              Integer g_a = MessageRcv->g_a , g_b;
+                              Integer g_a = message->g_a , g_b;
                               char *array_name = "server_created";
 
                               /* duplicate can fail due to memory limits */
@@ -495,9 +605,9 @@ Integer ga_read_inc_local();
                             break;                          
 
           case GA_OP_DES:   /* destroy an array */
-                            if (! ga_destroy_(&MessageRcv->g_a))
+                            if (! ga_destroy_(&message->g_a))
                                   fprintf(stderr,"ga_server:destroy failed%d\n",
-                                            MessageRcv->g_a);
+                                            message->g_a);
                             break;                          
 
           case GA_OP_END:   /* terminate */
@@ -513,31 +623,42 @@ Integer ga_read_inc_local();
           case GA_OP_ACK:   /* acknowledge completion of previous requests */
                             /* Note that since messages are not overtaking,
                              * all requests from the client must be already done
+                             * It does not apply to LAPI
                              */
                             ga_msg_snd(GA_TYPE_ACK, &ack, 0, from);
                             break;                          
 
           case GA_OP_LCK:   /* acquire lock on behalf client node*/
-                            ga_server_lock(MessageRcv->g_a,MessageRcv->ilo,
-                                                                     from);
+                            ga_server_lock(message->g_a,message->ilo,from,
+#                              ifdef LAPI
+                                           message->tag); 
+#                              else
+                                           GA_TYPE_LCK);  
+#                              endif
                             break;
 
           case GA_OP_UNL:   /* release lock held  the node; g_a = id */
-                            ga_server_unlock(MessageRcv->g_a,MessageRcv->ilo,
-                                                        from,MessageRcv->ihi); 
+                            ga_server_unlock(message->g_a,message->ilo,
+                                             from,message->ihi);
                             break;
+
 
                  default:   ga_error("ga_server: unknown request",ga_nodeid_());
       }
 
-      (*NumRecReq)++;  /* increment Counter of Requests received and serviced */
-      GA_POP_NAME;
+#ifndef LAPI
+      (*NumRecReq)++;  /*increment Counter of Requests serviced--thread-unsafe*/
+      if(DEBUG)fprintf(stderr,"%d received %d\n", ga_nodeid_(), *NumRecReq);
+#endif
 
 #ifdef DATA_SERVER
-   }while (MessageRcv->operation != GA_OP_END); 
-#else
-   in_handler = 0;
+   }while (message->operation != GA_OP_END); 
 #endif
+
+#ifndef LAPI
+    GA_POP_NAME;
+#endif
+
     if(DEBUG)fprintf(stderr,"leaving handler %d\n",ga_msg_nodeid_()); 
 }
 
@@ -548,7 +669,7 @@ void ga_init_fence_()
 {
     Integer proc;
     GA_fence_set++;
-#if defined(KSR) || defined(CONVEX) || defined(CRAY_T3D)
+#if defined(KSR) || defined(CONVEX) || defined(CRAY_T3D) || defined(CRAY_T3E)
 #else
 # ifdef SYSV
        proc = ga_msg_nnodes_()-1;
@@ -568,7 +689,7 @@ void ga_fence_()
     Integer proc;
     if(GA_fence_set<1)ga_error("ga_fence: fence not initialized",0);
     GA_fence_set--;
-#if defined(CRAY_T3D)
+#if defined(CRAY_T3D) || defined(CRAY_T3E)
     shmem_quiet();
 #elif defined(CONVEX) || defined(KSR)
     return;
@@ -579,10 +700,14 @@ void ga_fence_()
        proc = ga_nnodes_()-1;
 #   endif
     for(;proc >= 0; proc--) if(fence_array[proc]){
-       Integer dummy;
-       fence_array[proc]=0;
-       ga_snd_req(0, 0, 0, 0, 0, 0, 0, GA_OP_ACK, 0, proc);
-       ga_msg_rcv(GA_TYPE_ACK, &dummy, 0, &dummy, proc, &dummy);
+#      ifdef LAPI
+         FENCE_NODE(proc);
+#      else
+         Integer dummy;
+         fence_array[proc]=0;
+         ga_snd_req(0, 0, 0, 0, 0, 0, 0, GA_OP_ACK, 0, proc);
+         ga_msg_rcv(GA_TYPE_ACK, &dummy, 0, &dummy, proc, &dummy);
+#      endif
     }
 #endif
 }
@@ -594,7 +719,7 @@ void ga_fence_()
 #  define SERVER_TYPES 8
 Integer server_type_array[SERVER_TYPES] = {
         GA_TYPE_REQ, GA_TYPE_GET, GA_TYPE_RDI,
-        GA_TYPE_DGT, GA_TYPE_SYN,
+        GA_TYPE_GAT, GA_TYPE_SYN,
         GA_TYPE_GOP, GA_TYPE_BRD};
 
 void ga_server_handler()
@@ -714,7 +839,7 @@ void ga_server_handler()
 
         case GA_TYPE_GET:
         case GA_TYPE_RDI:
-        case GA_TYPE_DGT:
+        case GA_TYPE_GAT:
              if(DEBUG0){
                 printf("%s:%d> server forwarding response %d from=%d\n",
                 GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),type,from);
@@ -788,10 +913,6 @@ void ga_server_handler()
 
 
 
-  
-
-
-
 
 /*\ WAIT until all requests are serviced 
 \*/
@@ -799,6 +920,10 @@ void ga_wait_server()
 {
 Integer outstanding, local_req=NumSndReq; 
 char sum='+';
+
+#  ifdef LAPI
+   ga_error("ga_wait_server: does not work under LAPI -relies on NumRecReq",0);
+#  endif
    
 #  if defined(IWAY)
       Integer msglen, from;

@@ -31,9 +31,19 @@
 
 #include "global.h"
 #include "globalp.h"
-#include "message.h"
 #include <stdio.h>
 
+#if defined(LAPI)
+   /* we use MPI as native msg-passing library with lapi */
+#  if !(defined(MPI) || defined(TCGMSG))
+#    define MPI y
+#    include <mpi.h>
+#  endif
+#  include <lapi.h>
+#endif
+
+
+#include "message.h"
 
 #ifdef CRAY_T3D
 #  include <fortran.h>
@@ -122,7 +132,7 @@ Integer ga_msg_probe(type, from)
        MPI_Status status;
 
        node =  (from < 0) ? MPI_ANY_SOURCE : from;
-       ierr   = MPI_Iprobe(source, (int)*type, TCGMSG_Comm, &flag, &status);
+       ierr   = MPI_Iprobe(node, (int)type, MPI_COMM_WORLD, &flag, &status);
        if(ierr != MPI_SUCCESS) ga_error("ga_msg_probe: failed ", type);
        return (flag == 0 ? 0 : 1);
      }
@@ -388,6 +398,7 @@ msgid_t msgid;
         status = mpc_recv(buffer, buflen, &ffrom, &ttype, &msgid);
         if(status == -1) ga_error("ga_msg_ircv: error receiving", type);
      }
+     /*****  we use MPI with lapi ********/
 #    elif defined(MPI)
      {
         int ierr, count, ffrom;
@@ -442,9 +453,9 @@ Integer *whofrom, *msglen;
         MPI_Status status;
 
         ierr = MPI_Wait(&msgid, &status);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: failed ", type);
+        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: failed ", msgid);
         ierr = MPI_Get_count(&status, MPI_CHAR, &count);
-        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: Get_count failed", type);
+        if(ierr != MPI_SUCCESS) ga_error("ga_msg_wait: Get_count failed",msgid);
         *whofrom = (Integer)status.MPI_SOURCE;
         *msglen  = (Integer)count;
      }
@@ -508,7 +519,7 @@ Void*   buffer;
 
 
 
-#if defined(SP1) || defined(SP)
+#if defined(SP1) || defined(SP) || defined(LAPI)
 
 /* This paranoia is required to assure that there is always posted receive 
  * for synchronization message. MPL (and EUIH) "in order message delivery"
@@ -569,6 +580,14 @@ void ga_msg_sync_()
        fflush(stdout);
    }
 
+#  ifdef LAPI
+   {
+     extern lapi_handle_t lapi_handle;
+     if(LAPI_Fence(lapi_handle)) ga_error("lapi_gfence failed",0);
+   }
+#  endif
+
+ 
 #  if defined(SP1) || defined(SP)
    {
       int i_on;
@@ -925,6 +944,9 @@ void ga_dgop_clust(type, x, n, op, group)
 }
 
 
+#ifdef TIME_DGOP
+double t0_dgop, t_dgop=0., n_dgop=0., s_dgop=0., tcgtime_();
+#endif
 /*\ GLOBAL OPERATIONS
  *  (C)
  *  We cannot use TCGMSG in data-server mode
@@ -936,7 +958,11 @@ void ga_dgop(type, x, n, op)
      char *op;
 {
      void dgop_();
+     
 
+#ifdef TIME_DGOP
+     t0_dgop = tcgtime_();
+#endif
      if(ClusterMode){
 #       ifdef IWAY
            ga_sync_();
@@ -962,6 +988,11 @@ void ga_dgop(type, x, n, op)
             ga_msg_sync_();
 #       endif
      }
+#ifdef TIME_DGOP
+     t_dgop += tcgtime_() - t0_dgop;
+     n_dgop+= 1;
+     s_dgop+= (double)n;
+#endif
 }
 
 
@@ -1043,6 +1074,7 @@ void ga_igop(type, x, n, op)
      char *op;
 {
      void igop_();
+
      if(ClusterMode){
 #       ifdef IWAY
            ga_sync_();

@@ -21,6 +21,8 @@
 #   else
 #      define MSG_BUF_SIZE    122840
 #   endif
+#elif defined(LAPI)
+#   define MSG_BUF_SIZE      131072
 #elif defined(SYSV)
 #   define MSG_BUF_SIZE      262152
 #elif defined(CRAY)

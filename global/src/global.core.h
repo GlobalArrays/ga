@@ -6,7 +6,7 @@
 
 #define MAX_REG     128             /* max number of shmem regions per array */
 #define RESERVED    2*sizeof(long)  /* used for shmem buffer management */  
-#define FNAM        35              /* length of Fortran names   */
+#define FNAM        31              /* length of Fortran names   */
 #define FLEN        80              /* length of Fortran strings */
 #define BUF_SIZE    4096            /* size of shmem buffer */ 
 #define ERR_STR_LEN 200             /* length of string for error reporting */
@@ -172,6 +172,12 @@ int  GA_stack_size=0;
 #          define LOCK(g_a,proc, x)   NATIVE_LOCK(proc,MUTEX(g_a))
 #          define UNLOCK(g_a,proc, x) NATIVE_UNLOCK(proc,MUTEX(g_a))
 
+#      elif defined(LAPI)
+#          include "interrupt.h"
+           static pthread_mutex_t ga_mymutex = PTHREAD_MUTEX_INITIALIZER;
+#          define LOCK(g_a, proc, x) pthread_mutex_lock(&ga_mymutex)
+#          define UNLOCK(g_a, proc, x) pthread_mutex_unlock(&ga_mymutex)
+
 #      elif defined(NX) || defined(SP1) || defined(SP)
 #            include "interrupt.h"
              long oldmask;
@@ -210,6 +216,28 @@ int  GA_stack_size=0;
         void   KSRbarrier(), KSRbarrier_init(int, int, int, char*);
 #endif
 
+#if (defined(SP) || defined(SP1)) && !defined(AIX3)
+               int intr_on;
+#endif
+
+
+#ifdef LAPI
+#  include "lapidefs.h"
+#elif (defined(SP) || defined(SP1)) && !defined(AIX3)
+   int i_on;
+#  define INTR_ON  if(intr_on) mpc_enableintr()
+#  define INTR_OFF { intr_on = mpc_queryintr(); mpc_disableintr(); }
+#  define FENCE_NODE(p)
+#  define PENDING_OPER(p) 0
+#  define UPDATE_FENCE_STATE(p, opcode, nissued)
+#else
+#  define INTR_ON
+#  define INTR_OFF
+#  define FENCE_NODE(p)
+#  define PENDING_OPER(p) 0
+#  define UPDATE_FENCE_STATE(p, opcode, nissued)
+#endif
+
 
 /* MA addressing */
 DoubleComplex   *DCPL_MB;           /* double precision complex base address */
@@ -245,7 +273,7 @@ static Integer GA_memory_limited = 0;
 # define ARGS_(s) ()
 #endif
 
-extern logical gaDirectAccess ARGS_((Integer ));
+extern logical gaDirectAccess ARGS_((Integer, int  ));
 extern void ma_ga_get_ptr_ ARGS_((char **, char *));
 extern Integer ma_ga_diff_ ARGS_((char *, char *));
 extern void ma_ga_base_address_ ARGS_((Void*, Void**));

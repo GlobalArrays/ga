@@ -1,4 +1,4 @@
-/*Id: global.core.c,v 1.36 1997/02/24 19:18:44 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.46 1997-11-08 00:01:54 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -35,7 +35,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include <limits.h>
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
@@ -47,7 +46,16 @@
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
+/*uncomment line below to initialize arrays in ga_create/duplicate */
+/*#define GA_CREATE_INDEF yes */
 
+/*uncomment line below to verify consistency of MA in every sync */
+/*#define CHECK_MA yes */
+
+/* uncomment line below to verify if MA base address is alligned wrt datatype*/ 
+#ifndef LINUX
+#define CHECK_MA_ALGN 1
+#endif
 
 /* need to move these variables outside gaCentralBarrier() so 
  * that SGI compiler will not break (overoptimize) the code 
@@ -88,10 +96,14 @@ void ga_sync_()
 {
 void   ga_wait_server();
        extern int GA_fence_set;
+#ifdef CHECK_MA
+extern Integer MA_verify_allocator_stuff();
+Integer status;
+#endif
 
        GA_fence_set=0;
        if (GAme < 0) return;
-#ifdef CONVEX
+#if defined(CONVEX)
        ga_msg_sync_();
 #elif defined(CRAY_T3D) || defined(KSR)
        NATIVEbarrier();
@@ -102,6 +114,9 @@ void   ga_wait_server();
        if(ClusterMode) ga_wait_server();
        gaCentralBarrier();
 #else  
+#      if defined(LAPI)
+             ga_wait_cmpl(); /* remote requests must be completed */
+#      endif
        ga_msg_sync_();
 #      if defined(PARAGON) || defined(IWAY)
              ga_wait_server();  /* synchronize data server thread */
@@ -109,6 +124,9 @@ void   ga_wait_server();
 #      ifdef IWAY
              ga_msg_sync_();
 #      endif
+#endif
+#ifdef CHECK_MA
+       status = MA_verify_allocator_stuff();
 #endif
 }
 
@@ -202,7 +220,7 @@ void TrapSigInt(), TrapSigChld(),
      TrapSigIll(), TrapSigSegv(),
      TrapSigSys(), TrapSigTrap(),
      TrapSigHup(), TrapSigTerm(),
-     TrapSigIot(), TrapSigCont();
+     TrapSigIot();
 
      TrapSigBus();
      TrapSigFpe();
@@ -211,7 +229,6 @@ void TrapSigInt(), TrapSigChld(),
      TrapSigSys();
      TrapSigTrap();
      TrapSigTerm();
-     TrapSigCont();
 #ifdef SGI
      TrapSigIot();
 #endif
@@ -316,7 +333,7 @@ long *msg_buf;
     MessageSnd = (struct message_struct*)allign_page(MessageSnd);
     MessageRcv = (struct message_struct*)allign_page(MessageRcv);
 #   ifdef PARAGON
-       /* wire down buffer memory pages */ 
+       /* wire down msg buffer pages */ 
        mcmsg_wire(MessageRcv,MSG_BUF_SIZE+PAGE_SIZE);
        mcmsg_wire(MessageSnd,MSG_BUF_SIZE+PAGE_SIZE);
 #   endif
@@ -349,6 +366,7 @@ long *msg_buf;
        GAnproc = (Integer)ga_msg_nnodes_();
        GAme = (Integer)ga_msg_nodeid_();
     }
+
     MPme= ga_msg_nodeid_();
     MPnproc = ga_msg_nnodes_();
 
@@ -409,7 +427,7 @@ long *msg_buf;
 #       if !defined(KSR)
            if(GAnproc > 1 ){
 #             if defined(SGIUS)  || defined (SPPLOCKS)
-                 CreateInitLocks(cluster_nodes+RESERVED_LOCKS, &lockID); 
+                 CreateInitLocks(cluster_nodes+1, &lockID); 
 #             else
                  /* allocate and intialize semaphores */
                  semaphoreID = SemGet(NUM_SEM);
@@ -433,7 +451,7 @@ long *msg_buf;
 #   endif
 #   if defined(SGIUS)
        ga_brdcst_clust(type, (char*)lock_array,
-                      (cluster_nodes+RESERVED_LOCKS)*sizeof(ulock_t*), cluster_master,
+                      (cluster_nodes+1)*sizeof(ulock_t*), cluster_master,
                        ALL_CLUST_GRP);
 #   endif
 
@@ -475,7 +493,7 @@ long *msg_buf;
     GAinitialized = 1;
 
     /* Initialize MA-like addressing:
-     *    get addressees for the base arrays for DP and INT
+     *    get addressees for the base arrays for double, complex and int types
      *
      * MA include files: macommon.h, macdecls.h and mafdecls.h
      *
@@ -483,22 +501,45 @@ long *msg_buf;
      *    (of the same name in MA mafdecls.h file) by calling Fortran
      *    ga_ma_base_address_() routine that calls C ga_ma_get_ptr_ to copy
      *    pointers
+     * This is needed to be able to run GA without MA and preserve ga_access API
+     * 
      */
     {
       static Integer dtype = MT_F_DBL;
       ga_ma_base_address_(&dtype, (Void**)&DBL_MB);
       if(!DBL_MB)ga_error("ga_initialize: wrong dbl pointer ", 1L);
+#     ifdef CHECK_MA_ALGN
+        if(((long)DBL_MB)%sizeof(DoublePrecision)){
+           fprintf(stderr,"ptr=%ld mod=%d size=%d\n",(long)DBL_MB, 
+        ((long)DBL_MB)%sizeof(DoublePrecision), sizeof(DoublePrecision));
+           ga_error("ga_initialize: MA DBL_MB not alligned", (Integer)DBL_MB);
+        }
+#     endif
+
       dtype = MT_F_INT;
       ga_ma_base_address_(&dtype, (Void**)&INT_MB);
       if(!INT_MB)ga_error("ga_initialize: wrong int pointer ", 2L);
+#     ifdef CHECK_MA_ALGN
+        if(((long)INT_MB)%sizeof(Integer))
+           ga_error("ga_initialize: INT_MB not alligned", (Integer)INT_MB);
+#     endif
+
       dtype = MT_F_DCPL;
       ga_ma_base_address_(&dtype, (Void**)&DCPL_MB);
       if(!DCPL_MB)ga_error("ga_initialize: wrong dcmpl pointer ", 3L);
+#     ifdef CHECK_MA_ALGN
+        if(((long)DCPL_MB)%sizeof(DoublePrecision))
+          ga_error("ga_initialize: DCPL_MB not alligned", (Integer)DCPL_MB);
+#     endif
+
+      if(DEBUG)
+        printf("%d INT_MB=%ld(%lx) DBL_MB=%ld(%lx) DCPL_MB=%d(%lx)\n",
+                GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB);
     }
 
     /* selected processes now become data servers */
 #ifdef DATA_SERVER
-       if(ClusterMode) if(GAme <0) ga_SERVER(0);
+       if(ClusterMode) if(GAme <0) ga_SERVER(0, MessageRcv);
 #elif defined(IWAY)
     if(ClusterMode) if(GAme <0) ga_server_handler();
 #endif
@@ -515,11 +556,18 @@ long *msg_buf;
 #      endif
 #   endif
 
+#ifdef LAPI
+    ga_init_lapi();
+#endif
+
 #if defined(CRAY_T3D) && !defined(FLUSHCACHE)
     shmem_set_cache_inv();
 #endif
 
     /* synchronize, and then we are ready to do real work */
+#   ifdef LAPI
+      LAPI_Gfence(lapi_handle);
+#   endif
 #   ifdef KSR
       ga_msg_sync_(); /* barrier not ready yet */
 #   else
@@ -626,6 +674,8 @@ static Integer map1[MAX_NPROC], map2[MAX_NPROC];
 Integer nblock1, nblock2;
 
       if(!GAinitialized) ga_error("GA not initialized ", 0);
+
+      /* sync is in ga_create_irreg */
 
       if(*type != MT_F_DBL && *type != MT_F_INT &&  *type != MT_F_DCPL)
          ga_error("ga_create: type not yet supported ",  *type);
@@ -743,10 +793,17 @@ Void    *ptr;
 {
 Integer  ga_handle = g_a + GA_OFFSET;
 
-   GA[ga_handle].ptr[0] = ptr;
+#  if defined (CRAY_T3D) || defined(LAPI)
+     Integer i, len = sizeof(Void*);
+     Integer mtype = GA_TYPE_BRD;
+     GA[ga_handle].ptr[GAme] = ptr;
 
-#  ifdef SHMEM 
-     /* true shared memory */
+     /* need pointers on all procs to support global addressing */
+     for(i=0; i < GAnproc; i++) ga_brdcst_(&mtype, GA[ga_handle].ptr+i,&len,&i);
+
+#  else
+     GA[ga_handle].ptr[0] = ptr;
+
 #    ifdef SYSV 
      {
        Integer ilo, ihi, jlo, jhi, nelem, ganode, clust_node;
@@ -761,18 +818,6 @@ Integer  ga_handle = g_a + GA_OFFSET;
                           GA[ga_handle].ptr[clust_node-1] + nelem*item_size;
        }
      }
-
-#    else
-     /* global address space */
-     { 
-       Integer i, len = sizeof(Void*);
-       Integer mtype = GA_TYPE_BRD;
-       GA[ga_handle].ptr[GAme] = ptr;
-
-       /* need pointers on all procs to support global addressing */
-       for(i=0; i<GAnproc; i++) ga_brdcst_(&mtype, GA[ga_handle].ptr+i,&len,&i);
-     }
-
 #    endif
 #  endif
 }
@@ -787,11 +832,11 @@ char    *array_name;
 {
 #ifdef SYSV
    long *msg_buf = (long*)MessageRcv->buffer, bytes=(long)mem_size;
-   int adjust, diff, item_size;
-   char *base;
 #else
    Integer handle, index;
 #endif
+   char *base;
+   int adjust, diff, item_size;
 
    *id   = INVALID_MA_HANDLE;
    *pptr = (Void*)NULL;
@@ -808,6 +853,14 @@ char    *array_name;
               MA_get_pointer(handle, pptr);
          else handle = INVALID_MA_HANDLE; 
          *id   = handle;
+         item_size = GAsizeofM(type);
+#ifdef JEFFS_TEST
+         if( ((int) *pptr)%item_size){
+/*           fprintf(stderr,"%d:GA: MA allocated nonalligned memory(%d): %d mod=%d\n",GAme, item_size, ((int) *pptr)%item_size); */
+           ga_error("GA: MA allocated nonalligned memory",*pptr);      
+         }
+#endif
+         
 #  else
          /*............. allocate shared memory ..........*/
 
@@ -893,11 +946,10 @@ logical ga_create_irreg(type, dim1, dim2, array_name, map1, nblock1,
       * g_a           - Integer handle for future references [output]
       */
 {
-char     op[]="*", *ptr = NULL;
+char     op='*', *ptr = NULL;
 Integer  ilo, ihi, jlo, jhi;
 Integer  mem_size, nelem, mem_size_proc;
 Integer  i, ga_handle, status;
-/* Howard */
 #ifdef _CRAYMPP
 Integer ncols,maxcols=0,*ptr_Integer,j,nlocks;
 long **ptr_ptr_long,*ptr_long;
@@ -971,7 +1023,7 @@ int heap_status;
          fprintf(stderr,"\n\n");
       }
 
-#ifdef CRAY_T3D
+#ifdef _CRAYMPP
       for(i=0;i<GAnproc;i++){
           ga_distribution_(g_a,&i,&ilo,&ihi,&jlo,&jhi);
           ncols = jhi-jlo+1;
@@ -1013,7 +1065,7 @@ int heap_status;
 
       if(!status) GA[ga_handle].actv=0; /* no memory allocated */
 
-      ga_igop(GA_TYPE_GOP, &status, 1, op); /* check if everybody succeded */
+      ga_igop(GA_TYPE_GOP, &status, 1, &op); /* check if everybody succeded */
 
       /* determine pointers to individual blocks*/
       if(status) ga__set_ptr_array(*g_a, ptr);
@@ -1052,52 +1104,51 @@ int heap_status;
 
 /* construct lock arrays for columns of local array */
 
-      status=1;
       ncols = maxcols;
 
       nlocks = (ncols + COLS_PER_LOCK - 1)/COLS_PER_LOCK;
       for(i=0;i<MAX_NPROC;i++) GA[ga_handle].newlock[i] = 0;
+
       ptr_long = (long *)shmalloc(nlocks*sizeof(long));
-      if(ptr_long==NULL) status = 0;
-      ga_igop(GA_TYPE_SYN, &status, 1, op);
-      if(!status)ga_error("ga_create_irreg:malloc failure for ptr_long",status);
+      if(ptr_long==NULL) 
+         ga_error("ga_create_irreg:malloc failure for ptr_long",0);    
       GA[ga_handle].newlock[GAme]=ptr_long;
 
       for(i=0;i<nlocks;i++) GA[ga_handle].newlock[GAme][i] = 1;
 
       ptr_Integer = (Integer *)malloc(nlocks*sizeof(Integer));
-      if(ptr_Integer==NULL) status = 0;
-      ga_igop(GA_TYPE_SYN, &status, 1, op);
-      if(!status)ga_error("ga_create_irreg: malloc failure for ptr_Integer",0);
+      if(ptr_Integer==NULL) 
+               ga_error("ga_create_irreg: malloc failure for ptr_Integer",0);
       GA[ga_handle].lock_list=ptr_Integer;
 
       for(i=0;i<nlocks;i++) GA[ga_handle].lock_list[i]=0;
 
-      /*learn where my fellow pes malloced their arrays -this avoids shmalloc */
-      ga_igop(GA_TYPE_SYN, (Integer *)GA[ga_handle].newlock, GAnproc, &opadd);
+      /*learn where my fellow pes malloced their arrays -this avoids shmalloc */      ga_igop(GA_TYPE_SYN, (Integer *)GA[ga_handle].newlock, GAnproc, &opadd);
 
 #endif
+
+
       ga_sync_();
 
-/*#define GA_CREATE_INDEF*/
-#ifdef GA_CREATE_INDEF
-{
-    Integer one = 1;
-    if (GAme == 0) fprintf(stderr,"Initializing GA %ld\n",*g_a);
-    if(*type == MT_F_DBL) {
-	double bad = DBL_MAX;
-	ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
-    } else if (*type == MT_F_INT) {
-	Integer bad = (Integer) INT_MAX;
-	ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
-    } else if (*type == MT_F_DCPL) {
-	double bad[2] = {DBL_MAX, DBL_MAX};
-	ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) bad);
-    } else {
-	ga_error("ga_create_irreg: type not yet supported ",  *type);
-    }
-}
-#endif
+#     ifdef GA_CREATE_INDEF
+      if(status){
+         Integer one = 1;
+         if (GAme == 0) fprintf(stderr,"Initializing GA array%ld\n",*g_a);
+         if(*type == MT_F_DBL){ 
+             double bad = DBL_MAX;
+             ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
+         } else if (*type == MT_F_INT) {
+             Integer bad = (Integer) INT_MAX;
+             ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
+         } else if (*type == MT_F_DCPL) {
+             DoubleComplex bad = {DBL_MAX, DBL_MAX};
+             ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
+         } else {
+             ga_error("ga_create_irreg: type not yet supported ",  *type);
+         }
+      }
+#     endif
+
 
       if(status){
          GAstat.curmem += GA[ga_handle].size;
@@ -1151,12 +1202,11 @@ logical ga_duplicate(g_a, g_b, array_name)
       * g_b           - Integer handle for new array [output]
       */
 {
-char     op[]="*", *ptr = NULL, **save_ptr;
+char     op='*', *ptr = NULL, **save_ptr;
 Integer  mem_size, mem_size_proc, nelem;
 Integer  i, ga_handle, status;
 int      *save_mapc;
-/*Howard */
-#ifdef CRAY_T3D
+#ifdef _CRAYMPP
 char opadd='+';
 Integer ncols,maxcols=0,*ptr_Integer,nlocks;
 Integer ilo,ihi,jlo,jhi;
@@ -1215,7 +1265,7 @@ long **ptr_ptr_long,*ptr_long;
           status = 0;
 
       if(!status) GA[ga_handle].actv=0; /* no memory allocated */
-      ga_igop(GA_TYPE_GOP, &status, 1, op); /* check if everybody succeded */
+      ga_igop(GA_TYPE_GOP, &status, 1, &op); /* check if everybody succeded */
 
       /* determine pointers to individual blocks*/
       if(status) ga__set_ptr_array(*g_b, ptr);
@@ -1229,7 +1279,7 @@ long **ptr_ptr_long,*ptr_long;
 
 #ifdef _CRAYMPP
 
-/* construct lock arrays for columns of local array */
+      /* construct lock arrays for columns of local array */
 
       for(i=0;i<GAnproc;i++){
           ga_distribution_(g_a,&i,&ilo,&ihi,&jlo,&jhi);
@@ -1237,34 +1287,50 @@ long **ptr_ptr_long,*ptr_long;
           if(ncols > maxcols) maxcols = ncols;
       }
 
-      status=1;
       nlocks = (maxcols + COLS_PER_LOCK - 1)/COLS_PER_LOCK;
       for(i=0;i<MAX_NPROC;i++) GA[ga_handle].newlock[i] = 0;
 
       ptr_long = (long *)shmalloc(nlocks*sizeof(long));
-      if(ptr_long==NULL) status = 0;
-      ga_igop(GA_TYPE_SYN, &status, 1, op);
-      if(!status) ga_error("ga_duplicate: malloc failure for ptr_long",status);
+      if(ptr_long==NULL) ga_error("ga_duplicate:malloc failure for ptr_long",0);
       GA[ga_handle].newlock[GAme]=ptr_long;
 
       for(i=0;i<nlocks;i++) GA[ga_handle].newlock[GAme][i]  = 1;
 
       ptr_Integer = (Integer *)malloc(nlocks*sizeof(Integer));
-      if(ptr_Integer==NULL) status = 0;
-      ga_igop(GA_TYPE_SYN, &status, 1, op);
-      if(!status)ga_error("ga_create_irreg: malloc failure for ptr_Integer",0);
+      if(ptr_Integer==NULL)
+         ga_error("ga_duplicate: malloc failure for ptr_Integer",0);
       GA[ga_handle].lock_list=ptr_Integer;
 
       for(i=0;i<nlocks;i++) GA[ga_handle].lock_list[i] = 0;
 
-/* learn where my fellow pes malloced their arrays - this avoids shmalloc */
-
+     /*learn where my fellow pes malloced their arrays - this avoids shmalloc */
       ga_igop(GA_TYPE_SYN, (Integer *)GA[ga_handle].newlock, GAnproc, &opadd);
 
 #endif
 
 
       ga_sync_();
+
+#     ifdef GA_CREATE_INDEF
+      if(status){
+         Integer one = 1; 
+         Integer dim1 =GA[ga_handle].dims[1], dim2=GA[ga_handle].dims[2];
+         if(GAme==0)fprintf(stderr,"duplicate:initializing GA array%ld\n",*g_b);
+         if(GA[ga_handle].type == MT_F_DBL) {
+             DoublePrecision bad = DBL_MAX;
+             ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
+         } else if (GA[ga_handle].type == MT_F_INT) {
+             Integer bad = (Integer) INT_MAX;
+             ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
+         } else if (GA[ga_handle].type == MT_F_DCPL) {
+             DoubleComplex bad = {DBL_MAX, DBL_MAX};
+             ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
+         } else {
+             ga_error("ga_duplicate: type not supported ",GA[ga_handle].type);
+         }
+      }
+#     endif
+
 
       if(status){
          GAstat.curmem += GA[ga_handle].size;
@@ -1340,6 +1406,7 @@ Integer ga_handle = GA_OFFSET + *g_a;
     if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
     GA[ga_handle].actv = 0;     
     GAstat.curmem -= GA[ga_handle].size;
+
 #ifdef _CRAYMPP
 
     free(GA[ga_handle].lock_list);
@@ -1360,6 +1427,8 @@ Integer ga_handle = GA_OFFSET + *g_a;
 void ga_terminate_() 
 {
 Integer i, handle;
+extern double t_dgop, n_dgop, s_dgop;
+
 
     if(!GAinitialized) return;
     for (i=0;i<max_global_array;i++){
@@ -1369,6 +1438,13 @@ Integer i, handle;
           if(GA[i].mapc) free(GA[i].mapc);
     }
     
+#ifdef TIME_DGOP
+    ga_sync_();
+    fprintf(stderr,"%d: t_buf=%f t_fence=%f\n",GAme,t_buf,t_fence);
+    fprintf(stderr,"%d: t_dgop=%f n_dgop=%f s_dgop=%f avg_time=%f avg_sz=%f\n",
+           GAme,t_dgop,n_dgop, s_dgop, t_dgop/n_dgop, s_dgop/n_dgop);
+    sleep(5);
+#endif
     ga_sync_();
 
     GA_total_memory = -1; /* restore "unlimited" memory usage status */
@@ -1403,25 +1479,23 @@ Integer ga_verify_handle_(g_a)
 }
 
 
-/*\ determine if access to <proc> data through shared memory is possible 
+/*\ determine if access to "proc" data through shared/global memory is possible 
 \*/
-logical gaDirectAccess(proc)
+logical gaDirectAccess(proc, op)
    Integer proc;
+   int op;
 {
 #ifdef SHMEM
-#  ifdef SYSV 
-     if(ClusterMode && (ClusterID(proc) != GA_clus_id))
-         return(FALSE);
-     else
+#  ifdef SYSV
+     if(ClusterMode && (ClusterID(proc) != GA_clus_id)) return(FALSE);
+#  elif defined (LAPI)
+     if((proc != GAme) && ((op==GA_OP_ACC) || (op==GA_OP_SCT) )) return (FALSE);
 #  endif
-   return(TRUE);
 #else
-   if(proc == GAme) return(TRUE);
-   else return(FALSE);
+   if(proc != GAme) return(FALSE);
 #endif
+   return(TRUE);
 }
-
-
 
 
 #ifdef SHMEM
@@ -1446,9 +1520,8 @@ Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
                                                                                \
       ga_ownsM(g_handle, (proc), _ilo, _ihi, _jlo, _jhi);                      \
       if((_i)<_ilo || (_i)>_ihi || (_j)<_jlo || (_j)>_jhi){                    \
-          sprintf(err_string,"%s:%d p=%d invalid i/j (%d,%d) >< (%d:%d,%d:%d)",\
-                 "gaShmemLocation", g_handle, proc,                   \
-                                          (_i),(_j), _ilo, _ihi, _jlo, _jhi);  \
+          sprintf(err_string,"%s: p=%d invalid i/j (%d,%d) >< (%d:%d,%d:%d)",  \
+                 "gaShmemLocation", proc, (_i),(_j), _ilo, _ihi, _jlo, _jhi);  \
           ga_error(err_string, g_a );                                          \
       }                                                                        \
       offset = ((_i) - _ilo) + (_ihi-_ilo+1)*((_j)-_jlo);                      \
@@ -1465,10 +1538,9 @@ Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
    if (*(ilo) <= 0 || *(ihi) > GA[GA_OFFSET + *(g_a)].dims[0] ||               \
        *(jlo) <= 0 || *(jhi) > GA[GA_OFFSET + *(g_a)].dims[1] ||               \
        *(ihi) < *(ilo) ||  *(jhi) < *(jlo)){                                   \
-       sprintf(err_string,"%s:request(%d:%d,%d:%d) out of range(1:%d,1:%d):%s",\
+       sprintf(err_string,"%s:request(%d:%d,%d:%d) out of range (1:%d,1:%d)",  \
                string, *(ilo), *(ihi), *(jlo), *(jhi),                         \
-               GA[GA_OFFSET + *(g_a)].dims[0], GA[GA_OFFSET + *(g_a)].dims[1], \
-               GA[GA_OFFSET + *(g_a)].name);                                   \
+               GA[GA_OFFSET + *(g_a)].dims[0], GA[GA_OFFSET + *(g_a)].dims[1]);\
        ga_error(err_string, *(g_a));                                           \
    }                                                                           \
 }
@@ -1476,27 +1548,38 @@ Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
 
 /*\ local put of a 2-dimensional patch of data into a global array
 \*/
-void ga_put_local(Integer g_a, Integer ilo, Integer ihi, 
-                               Integer jlo, Integer jhi, 
+void ga_put_local(Integer g_a, Integer ilo, Integer ihi,
+                               Integer jlo, Integer jhi,
                   void* buf, Integer offset, Integer ld, Integer proc)
 {
 char     *ptr_glob, *ptr_loc;
 Integer  ld_glob, rows, cols, type;
 
+#ifndef LAPI
    GA_PUSH_NAME("ga_put_local");
+#endif
 
    type = GA[GA_OFFSET + g_a].type;
    rows = ihi - ilo +1;
    cols = jhi - jlo +1;
 
-   if(GAme == proc && !in_handler) GAbytes.putloc += (double)GAsizeofM(type)*rows*cols;
    gaShmemLocation(proc, g_a, ilo, jlo, &ptr_glob, &ld_glob);
    ptr_loc = (char *)buf  + GAsizeofM(type) * offset;
 
    Copy2DTo(type, proc, &rows, &cols, ptr_loc, &ld, ptr_glob, &ld_glob);    
 
+#ifdef LAPI
+   if(GAme != proc) {
+              UPDATE_FENCE_STATE(proc, GA_OP_PUT, cols);
+              SET_COUNTER(ack_cntr, cols);
+   }
+#endif
+
+#ifndef LAPI
    GA_POP_NAME;
+#endif
 }
+
 
 
 /*\ remote put of a 2-dimensional patch of data into a global array
@@ -1514,6 +1597,9 @@ Integer  type;
    type = GA[GA_OFFSET + g_a].type;
    ptr_src = (char *)buf  + GAsizeofM(type)* offset;
 
+#ifdef LAPI
+   CLEAR_COUNTER(buf_cntr); /* make sure the buffer is available */
+#endif
    ga_snd_req2D(g_a, ilo,ihi,jlo,jhi, type, GA_OP_PUT, ptr_src, ld,
                 proc, DataServer(proc));
 }
@@ -1527,15 +1613,19 @@ void ga_put_(g_a, ilo, ihi, jlo, jhi, buf, ld)
    Void  *buf;
 {
 Integer  p, np, proc, idx, type=GA[GA_OFFSET + *g_a].type;
-Integer  ilop, ihip, jlop, jhip, offset;
+Integer  ilop, ihip, jlop, jhip, offset, size, rows, cols;
+logical  localop;
 
 #ifdef GA_TRACE
    trace_stime_();
 #endif
 
       GA_PUSH_NAME("ga_put");
+
+      size = GAsizeofM(type);
       GAstat.numput++;
-      GAbytes.puttot += (double)GAsizeofM(type)*(*ihi-*ilo+1)*(*jhi-*jlo+1);
+
+      GAbytes.puttot += (double)size*(*ihi-*ilo+1)*(*jhi-*jlo+1);
 
       if(!ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np )){
           sprintf(err_string, "cannot locate region (%d:%d,%d:%d)",
@@ -1543,7 +1633,7 @@ Integer  ilop, ihip, jlop, jhip, offset;
           ga_error(err_string, *g_a);
       }
 
-      if(np > 1 || map[0][4] != GAme) FENCE;
+      if(np > 1 || map[0][4] != GAme) INTR_OFF; /* disable interrupts */
 
       gaPermuteProcList(np); 
       for(idx=0; idx<np; idx++){
@@ -1555,30 +1645,48 @@ Integer  ilop, ihip, jlop, jhip, offset;
           jhip = map[p][3];
           proc = map[p][4];
 
-          if(gaDirectAccess(proc)){
+          
+          rows = ihip-ilop+1;
+          cols = jhip-jlop+1;
+             
+          if(proc == GAme){
+
+             localop =1;
+             GAbytes.putloc += (double)size*rows*cols;
+
+          }else{
+             /* can we access data on remote process directly? */
+             localop = gaDirectAccess(proc, GA_OP_PUT);
+
+             /* might still want to go with remote access protocol */
+#            ifdef LAPI
+               if((cols > 1) && (rows*size < LONG_PUT_THRESHOLD)) localop = 0;
+#            endif
+
+             FENCE_NODE(proc);
+          }
+
+          if(localop){
 
              offset = (jlop - *jlo)* *ld + ilop - *ilo;
              ga_put_local(*g_a, ilop, ihip, jlop, jhip, buf, offset, *ld, proc);
 
           }else{
             /* number of messages determined by message-buffer size */
+            Integer TmpSize, ilimit, jlimit;
+            Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk, chunks=0;
 
-            Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk;
-#if defined(LINUX)
-            Integer TmpSize = MSG_BUF_SIZE;
-            Integer ilimit;
-            Integer jlimit;
+#           ifdef LAPI
+              /* small requests packetized to fit in AM header */
+              if(cols*rows*size < SHORT_PUT_THRESHOLD)
+                    TmpSize = lapi_max_uhdr_data_sz/size;
+              else
+#           endif
+                    TmpSize = MSG_BUF_SIZE/size;
 
-	    TmpSize /= GAsizeofM(type);
-	    ilimit = MIN(TmpSize, ihip-ilop+1);
-	    jlimit = MIN(TmpSize/ilimit, jhip-jlop+1);
-#else
-	    /*-BREAKS GCC on LINUX --------------*/
-            Integer TmpSize = MSG_BUF_SIZE/GAsizeofM(type);
-            Integer ilimit  = MIN(TmpSize, ihip-ilop+1);
-            Integer jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
-	    /*-BREAKS GCC on LINUX --------------*/
-#endif
+            ilimit  = MIN(TmpSize, rows);
+            jlimit  = MIN(TmpSize/ilimit, cols);
+
             for(jlo_chunk = jlop; jlo_chunk <= jhip; jlo_chunk += jlimit){
                jhi_chunk  = MIN(jhip, jlo_chunk+jlimit-1);
                for( ilo_chunk = ilop; ilo_chunk<= ihip; ilo_chunk += ilimit){
@@ -1587,12 +1695,23 @@ Integer  ilop, ihip, jlop, jhip, offset;
                   offset = (jlo_chunk - *jlo)* *ld + ilo_chunk - *ilo;
                   ga_put_remote(*g_a, ilo_chunk, ihi_chunk,
                                 jlo_chunk, jhi_chunk, buf, offset, *ld, proc);
-
+                  chunks++;
                }
             }
+            UPDATE_FENCE_STATE(proc, GA_OP_PUT, chunks);
          }
       }
+
       GA_POP_NAME;
+
+      if(np > 1 || map[0][4] != GAme){ 
+
+#       ifdef LAPI
+          CLEAR_COUNTER(ack_cntr);
+#       endif
+        INTR_ON;
+
+      }
 
 #ifdef GA_TRACE
    trace_etime_();
@@ -1611,12 +1730,14 @@ void ga_get_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo,
 char     *ptr_glob, *ptr_loc;
 Integer  ld_glob, rows, cols, type;
 
+#ifndef LAPI
    GA_PUSH_NAME("ga_get_local");
+#endif
 
    type = GA[GA_OFFSET + g_a].type;
    rows = ihi - ilo +1;
    cols = jhi - jlo +1;
-   if(GAme == proc && !in_handler) GAbytes.getloc += (double)GAsizeofM(type)*rows*cols;
+
 
    gaShmemLocation(proc, g_a, ilo, jlo, &ptr_glob, &ld_glob);
 
@@ -1625,12 +1746,14 @@ Integer  ld_glob, rows, cols, type;
 
    Copy2DFrom(type, proc, &rows, &cols, ptr_glob, &ld_glob, ptr_loc, &ld);
 
+#ifndef LAPI
    GA_POP_NAME;
+#endif
 }
 
 
 
-/*\  get a patch of an array from remote processor
+/*\  get an array patch from remote processor
 \*/
 void ga_get_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
    Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
@@ -1639,6 +1762,7 @@ void ga_get_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
 char     *ptr_src, *ptr_dst;
 Integer  type, rows, cols, len, to, from, msglen, expected_len, need_copy;
 msgid_t  msgid_snd, msgid_rcv;
+      double tcgtime_(),t;
 
    if(proc<0)ga_error(" get_remote: invalid process ",proc);
    type = GA[GA_OFFSET + g_a].type;
@@ -1649,31 +1773,46 @@ msgid_t  msgid_snd, msgid_rcv;
 
    expected_len = msglen;
 
-#  ifdef IWAY
-     expected_len += MSG_HEADER_SIZE;
+#  if defined(IWAY) || defined(LAPI)
+     /* for LAPI data always arrives in msg buffer in remote protocol */ 
+#    ifdef IWAY
+        expected_len += MSG_HEADER_SIZE;
+#    endif
      need_copy = 1;
 #  else
-     /* this stuff is to avoid double buffering if possible */
+     /* this stuff is to avoid data copying if possible */
      need_copy=cols-1; /* true only if cols > 1 */
 #  endif
+
+/*   t = tcgtime_();*/
 
    if(need_copy)
       ptr_src = MessageSnd->buffer;  /* data arrives to the same msg buffer */
    else
       ptr_src = (char *)buf + GAsizeofM(type)* offset;/*arrives to user buffer*/
 
+   /* expected_len is overwritten if the MP layer is able to determine length*/
+   len = expected_len;
 #  if defined(NX) || defined(SP1) || defined(SP)
-      len = expected_len;
       msgid_rcv = ga_msg_ircv(GA_TYPE_GET,  ptr_src, expected_len, to);
       ga_snd_req(g_a, ilo,ihi,jlo,jhi, (Integer)0, type, GA_OP_GET,proc,to);
       ga_msg_wait(msgid_rcv, &from, &len);
+
+#  elif(LAPI)
+      CLEAR_COUNTER(buf_cntr); /* make sure the buffer is available */
+      SET_COUNTER(buf_cntr,1); /* expect data to arrive into the same buffer */
+      ga_snd_req(g_a, ilo,ihi,jlo,jhi, (Integer)0, type, GA_OP_GET,proc,to);
+      CLEAR_COUNTER(buf_cntr); /* wait for data to arrive */
 
 #  else
       ga_snd_req(g_a, ilo,ihi,jlo,jhi, (Integer)0, type, GA_OP_GET,proc,to);
       ga_msg_rcv(GA_TYPE_GET, ptr_src, expected_len, &len, to,&from);
 #  endif
 
-   if(len != expected_len)ga_error("get_remote:wrong msg length",len); 
+/*   t = tcgtime_() -t;*/
+/*   printf("%d p=%d [%d:%d,%d:%d] t=%lf\n",GAme,proc,ilo,ihi,jlo,jhi,t);*/
+
+   if(len != expected_len)ga_error("ga_get_remote:wrong msg length",len); 
 
    if(need_copy){
       /* Copy patch [ilo:ihi, jlo:jhi] from MessageBuffer */
@@ -1691,7 +1830,7 @@ void ga_get_(g_a, ilo, ihi, jlo, jhi, buf, ld)
    Void     *buf;
 {
 Integer p, np, proc, idx, type=GA[GA_OFFSET + *g_a].type;
-Integer ilop, ihip, jlop, jhip, offset;
+Integer ilop, ihip, jlop, jhip, offset, localop, size, rows,cols;
 
 #ifdef GA_TRACE
    trace_stime_();
@@ -1699,13 +1838,16 @@ Integer ilop, ihip, jlop, jhip, offset;
 
       GA_PUSH_NAME("ga_get");
       GAstat.numget++;
-      GAbytes.gettot += (double)GAsizeofM(type)*(*ihi-*ilo+1)*(*jhi-*jlo+1);
+      size = GAsizeofM(type);
+      GAbytes.gettot += (double)size*(*ihi-*ilo+1)*(*jhi-*jlo+1);
 
       if(!ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np )){
           sprintf(err_string, "cannot locate region (%d:%d,%d:%d)",
                   *ilo, *ihi, *jlo, *jhi);
           ga_error(err_string, *g_a);
       }
+
+      if(np > 1 || map[0][4] != GAme) INTR_OFF; /* disable interrupts */
 
       gaPermuteProcList(np);
 
@@ -1717,7 +1859,29 @@ Integer ilop, ihip, jlop, jhip, offset;
           jhip = map[p][3];
           proc = map[p][4]; 
 
-          if(gaDirectAccess(proc)){
+
+          rows = ihip-ilop+1;
+          cols = jhip-jlop+1;
+
+          if(proc == GAme){
+
+             localop =1;
+             GAbytes.getloc += (double)size*rows*cols;
+
+          }else{
+
+             /* can we access data on remote process directly? */
+             localop = gaDirectAccess(proc, GA_OP_GET);
+
+             /* might still want to go with remote access protocol */
+#            ifdef LAPI
+               if((cols > 10) && (rows*size < LONG_GET_THRESHOLD)) localop = 0;
+#            endif
+
+             FENCE_NODE(proc);
+          }
+
+          if(localop){
 
              offset = (jlop - *jlo)* *ld + ilop - *ilo;
              ga_get_local(*g_a, ilop, ihip, jlop, jhip, buf, offset, *ld, proc);
@@ -1729,34 +1893,22 @@ Integer ilop, ihip, jlop, jhip, offset;
             Integer TmpSize;
             Integer ilimit;
             Integer jlimit;
-#           if (defined(SP) || defined(SP1)) && !defined(AIX3)
-               int i_on;
-#           endif
+
 #           if defined(IWAY) && defined(SP1)
-               TmpSize = IWAY_MSG_BUF_SIZE/GAsizeofM(type);
+               TmpSize = IWAY_MSG_BUF_SIZE/size;
 #           else
-#              if defined(LINUX)
-                 TmpSize = MSG_BUF_SIZE;
-	         TmpSize /= GAsizeofM(GA[GA_OFFSET + *g_a].type);
-#              else
-	       /*-------------- breaks LINUX gcc ----------------*/
-               TmpSize = MSG_BUF_SIZE/GAsizeofM(GA[GA_OFFSET + *g_a].type);
-	       /*-------------- breaks LINUX gcc ----------------*/
-#              endif
+               TmpSize = MSG_BUF_SIZE/size;
 #           endif
             ilimit  = MIN(TmpSize, ihip-ilop+1);
             jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
 
 #           if defined(PARAGON)||defined(SP1) || defined(SP)
               /* this limits column chunking to 1 for larger number of rows */
+              /* saves one memory copy */
               /**** it is an optimization only -- comment out if fails ******/
               if(ilimit > 2048) jlimit  = 1;
 #           endif
 
-#           if (defined(SP) || defined(SP1)) && !defined(AIX3)
-              i_on = mpc_queryintr();
-              mpc_disableintr();
-#           endif
             for(jlo_chunk = jlop; jlo_chunk <= jhip; jlo_chunk += jlimit){
                jhi_chunk  = MIN(jhip, jlo_chunk+jlimit-1);
                for( ilo_chunk = ilop; ilo_chunk<= ihip; ilo_chunk += ilimit){
@@ -1768,13 +1920,15 @@ Integer ilop, ihip, jlop, jhip, offset;
 
                }
             }
-#           if (defined(SP) || defined(SP1)) && !defined(AIX3)
-              if(i_on) mpc_enableintr();
-#           endif
-
           }
       }
+
       GA_POP_NAME;
+#ifdef LAPI
+      /* wait for non-blocking copies to complete */
+      CLEAR_COUNTER(get_cntr);
+#endif
+      if(np > 1 || map[0][4] != GAme) INTR_ON;
 
 #ifdef GA_TRACE
    trace_etime_();
@@ -1783,23 +1937,21 @@ Integer ilop, ihip, jlop, jhip, offset;
 #endif
 }
 
-
 #ifdef CRAY_T3D
 
-/******Howard***********************/
-
+/****** Howard's version of ga_acc_1d_local ***********************/
 
 /*\local accumulate using intermediate buffer in local memory  (fine grain)
 \*/
-void ga_acc_1d_local_fg(Integer type, void* alpha, Integer rows, Integer cols, 
-                void* pglobal, Integer ldg, void *plocal, Integer ldl, 
-                void* buf, Integer buflen, Integer proc, Integer *lock_list, 
+void ga_acc_1d_local_fg(Integer type, void* alpha, Integer rows, Integer cols,
+                void* pglobal, Integer ldg, void *plocal, Integer ldl,
+                void* buf, Integer buflen, Integer proc, Integer *lock_list,
                 Integer jfirst, Integer jlast,global_array_t *ga_ptr)
 {
-Integer item_size = GAsizeofM(type), elem, words, j, istart, iend,jj,jlock,jmax,jmin;
+Integer item_size=GAsizeofM(type), elem, words,j,istart,iend,jj,jlock,jmax,jmin;
 char *ptr_dst, *ptr_src;
-  
-Integer ncols=cols,adj_item_size;     
+
+Integer ncols=cols,adj_item_size;
 
 adj_item_size = item_size/sizeof(Integer);
 
@@ -1813,9 +1965,9 @@ adj_item_size = item_size/sizeof(Integer);
 
 /* have I done this block of columns ? */
 
-       if(lock_list[jlock] == 0) continue; 
+       if(lock_list[jlock] == 0) continue;
 
-       if(shmem_swap(&ga_ptr->newlock[proc][jlock],INVALID,proc) ==INVALID) continue; 
+       if(shmem_swap(&ga_ptr->newlock[proc][jlock],INVALID,proc) ==INVALID) continue;
 
 /* have the lock - now work fast! */
 
@@ -1832,22 +1984,25 @@ adj_item_size = item_size/sizeof(Integer);
                  elem   = iend - istart;
                  words  = elem*adj_item_size;
 
-                 ptr_dst = (char *)pglobal  + item_size* (istart + (jj-jfirst) *ldg);
-                 ptr_src = (char *)plocal   + item_size* (istart + (jj-jfirst) *ldl);
-       
+                 ptr_dst = (char*)pglobal + item_size*(istart+ (jj-jfirst)*ldg);
+                 ptr_src = (char*)plocal + item_size* (istart+ (jj-jfirst)*ldl);
+
                  CopyElemFrom(ptr_dst, buf, words, proc);
                  switch (type){
                      case MT_F_DBL:
-                        dacc_column((double *)alpha,(double *)buf, (double *)ptr_src, elem ); break;
+                        dacc_column((DoublePrecision*)alpha,(DoublePrecision*)buf, 
+                                    (DoublePrecision *)ptr_src, elem ); break;
                      case MT_F_DCPL:
-                        zacc_column((DoubleComplex *)alpha, (DoubleComplex *)buf, (DoubleComplex *)ptr_src, elem ); break;
+                        zacc_column((DoubleComplex *)alpha, (DoubleComplex*)buf,
+                                    (DoubleComplex *)ptr_src, elem ); break;
                      case MT_F_INT:
-                        iacc_column((Integer *)alpha, (Integer *)buf, (Integer *)ptr_src, elem ); break;
+                        iacc_column((Integer *)alpha, (Integer *)buf, 
+                                    (Integer *)ptr_src, elem ); break;
                   }
                  CopyElemTo(buf, ptr_dst, words, proc);
-            }                                               /* end loop over column element blocks */
+            }                     /* end loop over column element blocks */
 
-         }                                                  /* end loop  over columns in lock block */
+         }                        /* end loop  over columns in lock block */
 
        }else{
 
@@ -1858,45 +2013,41 @@ adj_item_size = item_size/sizeof(Integer);
 
                case(MT_F_DBL):
 
-                  accumulate((DoublePrecision *)alpha, rows, jmax-jmin+1, (DoublePrecision*)ptr_dst, ldg,
-                            (DoublePrecision*)ptr_src, ldl );
+                  accumulate((DoublePrecision *)alpha, rows, jmax-jmin+1, 
+                             (DoublePrecision*)ptr_dst, ldg,
+                             (DoublePrecision*)ptr_src, ldl );
                    break;
 
                 case(MT_F_DCPL):
 
-                   zaccumulate((DoubleComplex *)alpha, rows, jmax-jmin+1, (DoubleComplex*)ptr_dst, ldg,
-                                (DoubleComplex*)ptr_src, ldl );
+                   zaccumulate((DoubleComplex *)alpha, rows, jmax-jmin+1, 
+                               (DoubleComplex*)ptr_dst, ldg,
+                               (DoubleComplex*)ptr_src, ldl );
                    break;
 
                 case(MT_F_INT):
 
-                    iaccumulate((Integer *)alpha, rows, jmax-jmin+1, (Integer*)ptr_dst, ldg,
-                                (Integer*)ptr_src, ldl );
+                    iaccumulate((Integer *)alpha, rows, jmax-jmin+1, 
+                                (Integer*)ptr_dst, ldg, (Integer*)ptr_src, ldl);
                     break;
 
                 default:
 
-                   ga_error(" acc_local: unknown math type",type);
+                   ga_error(" acc_local: unknown data type",type);
                    break;
             }
 
         }
 
-/* decrement the ncols value */
- 
-      ncols -= jmax-jmin+1;
 
-/* set the lock_list element to zero again */
+      ncols -= jmax-jmin+1;    /* decrement the ncols value */
 
-      lock_list[jlock] = 0; 
+      lock_list[jlock] = 0; /* set the lock_list element to zero again */
 
-/* wait for quietness */
+      shmem_quiet(); /* fence */
 
-      shmem_quiet();
-
-/* unlock the processor for others */
-
-      shmem_swap(&ga_ptr->newlock[proc][jlock],1,proc); 
+      /* unlock the processor for others */
+      shmem_swap(&ga_ptr->newlock[proc][jlock],1,proc);
 
    }  /* end loop over columns */
 
@@ -1907,12 +2058,13 @@ adj_item_size = item_size/sizeof(Integer);
 #endif
 /*****************************/
 
-#if defined(SHMEM) && !defined(SYSV)
 
-/*\local accumulate using intermediate buffer in local memory 
+#if defined(SHMEM) && !defined(SYSV) && !defined(LAPI)
+
+/*\local accumulate using intermediate buffer in local memory
 \*/
-void ga_acc_1d_local(Integer type, void* alpha, Integer rows, Integer cols, 
-                void* pglobal, Integer ldg, void *plocal, Integer ldl, 
+void ga_acc_1d_local(Integer type, void* alpha, Integer rows, Integer cols,
+                void* pglobal, Integer ldg, void *plocal, Integer ldl,
                 void* buf, Integer buflen, Integer proc)
 {
 Integer item_size = GAsizeofM(type), elem, words, j, istart, iend;
@@ -1926,24 +2078,25 @@ char *ptr_dst, *ptr_src;
 
           ptr_dst = (char *)pglobal  + item_size* (istart + j *ldg);
           ptr_src = (char *)plocal   + item_size* (istart + j *ldl);
-       
+
           CopyElemFrom(ptr_dst, buf, words, proc);
           switch (type){
-          case MT_F_DBL:
-             dacc_column(alpha, buf, ptr_src, elem ); break;
-          case MT_F_DCPL:
-             zacc_column(alpha, buf, ptr_src, elem ); break;
-          case MT_F_INT:
-             iacc_column(alpha, buf, ptr_src, elem ); break;
+                 case MT_F_DBL:
+                      dacc_column((DoublePrecision*)alpha,(DoublePrecision*)buf,
+                                  (DoublePrecision *)ptr_src, elem ); break;
+                 case MT_F_DCPL:
+                      zacc_column((DoubleComplex *)alpha, (DoubleComplex*)buf,
+                                  (DoubleComplex *)ptr_src, elem ); break;
+                 case MT_F_INT:
+                      iacc_column((Integer *)alpha, (Integer *)buf,
+                                  (Integer *)ptr_src, elem ); break;
           }
           CopyElemTo(buf, ptr_dst, words, proc);
        }
 }
 #endif
 
-
-
-/*\ local accumulate 
+/*\ local accumulate
 \*/
 void ga_acc_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
    Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
@@ -1967,7 +2120,11 @@ int      work_done=0;
 #endif
 #endif
 
-   GA_PUSH_NAME("ga_acc_local"); 
+#ifdef LAPI
+   extern int kevin_ok; /* used to indicate if some thread holds acc lock */
+#else
+   GA_PUSH_NAME("ga_acc_local"); /* not thread safe */
+#endif
 
    item_size =  GAsizeofM(type);
    gaShmemLocation(proc, g_a, ilo, jlo, &ptr_dst, &ldp);
@@ -1975,7 +2132,7 @@ int      work_done=0;
    rows = ihi - ilo +1;
    cols = jhi - jlo +1;
 
-#if defined(SHMEM) && !defined(SYSV)
+#if defined(SHMEM) && !defined(SYSV) && !defined(LAPI)
 
      bytes = rows*item_size;
 
@@ -1984,12 +2141,12 @@ int      work_done=0;
         buflen  = MIN(bytes,LEN_BUF)/item_size;
         pbuffer = acc_buffer;
 
-        /* for larger patches try to get more buffer space from MA */ 
+        /* for larger patches try to get more buffer space from MA */
         if(bytes > LEN_BUF){
 
             Integer avail = MA_inquire_avail(type);
             if(avail * item_size * 0.9 > LEN_BUF) {
-            
+
                buflen = (Integer) (avail *0.9); /* leave some */
                if(!MA_push_get(type, buflen, "ga_acc_buf", &handle, &index))
                         ga_error("allocation of ga_acc buffer failed ",GAme);
@@ -1997,7 +2154,6 @@ int      work_done=0;
             }
           }
        }
-
 #      ifdef CRAY_T3D
          /* we have a fine-grain locking from Howard Pritchard */
          ga_ptr = &GA[GA_OFFSET + g_a];
@@ -2039,28 +2195,38 @@ int      work_done=0;
 
    if(! work_done) {
      if(GAnproc>1) LOCK(g_a, proc, ptr_dst);
+
+#      ifdef LAPI
+         kevin_ok = 0; /* signal other threads that lock is taken */
+#      endif
+
        if(type==MT_F_DBL){
-          accumulate(alpha, rows, cols, (DoublePrecision*)ptr_dst, ldp, 
+          accumulate(alpha, rows, cols, (DoublePrecision*)ptr_dst, ldp,
                                         (DoublePrecision*)ptr_src, ld );
        }else if(type==MT_F_DCPL){
-          zaccumulate(alpha, rows, cols, (DoubleComplex*)ptr_dst, ldp, 
+          zaccumulate(alpha, rows, cols, (DoubleComplex*)ptr_dst, ldp,
                                          (DoubleComplex*)ptr_src, ld );
        }else{
-          iaccumulate(alpha, rows, cols, (Integer*)ptr_dst, ldp, 
+          iaccumulate(alpha, rows, cols, (Integer*)ptr_dst, ldp,
                                          (Integer*)ptr_src, ld );
        }
 
      if(GAnproc>1) UNLOCK(g_a, proc, ptr_dst);
+
+#    ifdef LAPI
+         kevin_ok = 1; /* signal other threads that lock is available */
+#    endif
+
    }
 
-   if(GAme == proc && !in_handler) 
-      GAbytes.accloc += (double)item_size*rows*cols;
+#ifndef LAPI
+   GA_POP_NAME; /* not thread safe */
+#endif
 
-   GA_POP_NAME;
 }
 
 
-/*\ remote accumulate of a 2-dimensional patch of data into a global array
+/*\ remote accumulate for a 2-dimensional array patch 
 \*/
 void ga_acc_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
    Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
@@ -2075,18 +2241,25 @@ Integer  type;
    type = GA[GA_OFFSET + g_a].type;
    ptr_src = (char *)buf  + GAsizeofM(type)* offset;
 
+/*   fprintf(stderr,"buf_cntr=(%d,%d) ptr=%x to=%d patch=[%d:%d,%d:%d]\n",buf_cntr.cntr, buf_cntr.val, &buf_cntr.cntr, proc, ilo, ihi, jlo, jhi);*/
+#  ifdef LAPI
+      CLEAR_COUNTER(buf_cntr);
+#  endif
+
    if(type==MT_F_DBL)
-     *(DoublePrecision*)MessageSnd->alpha= *(DoublePrecision*)alpha; 
-   else if(type==MT_F_DCPL) 
+     *(DoublePrecision*)MessageSnd->alpha= *(DoublePrecision*)alpha;
+   else if(type==MT_F_DCPL)
      *(DoubleComplex*)MessageSnd->alpha= *(DoubleComplex*)alpha;
    else *(Integer*)MessageSnd->alpha= *(Integer*)alpha;
 
    ga_snd_req2D(g_a, ilo,ihi,jlo,jhi, type, GA_OP_ACC, ptr_src, ld,
-              proc, DataServer(proc));
+                proc, DataServer(proc));
 }
 
 
-/*\ ACCUMULATE OPERATION ON A 2-DIMENSIONAL PATCH OF GLOBAL ARRAY
+
+
+/*\ ACCUMULATE OPERATION FOR A 2-DIMENSIONAL PATCH OF GLOBAL ARRAY
  *
  *  g_a += alpha * patch
 \*/
@@ -2094,8 +2267,8 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *ld;
    void *buf, *alpha;
 {
-   Integer p, np, proc, idx;
    Integer ilop, ihip, jlop, jhip, offset, type = GA[GA_OFFSET + *g_a].type;
+   Integer p, np, proc, idx, rows, cols, size = GAsizeofM(type);
 
 #ifdef GA_TRACE
    trace_stime_();
@@ -2103,7 +2276,8 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
 
    GA_PUSH_NAME("ga_acc");
    GAstat.numacc++;
-   GAbytes.acctot += (double)GAsizeofM(type)*(*ihi-*ilo+1)*(*jhi-*jlo+1);
+   GAbytes.acctot += (double)size*(*ihi-*ilo+1)*(*jhi-*jlo+1);
+
 
    if(!ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np )){
           sprintf(err_string, "cannot locate region (%d:%d,%d:%d)",
@@ -2112,6 +2286,9 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
    }
 
    gaPermuteProcList(np); /* prepare permuted list of indices */
+
+   if(np > 1 || map[0][4] != GAme) INTR_OFF;
+
    for(idx=0; idx<np; idx++){
        p = (Integer)ProcListPerm[idx];
 
@@ -2121,43 +2298,58 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
        jhip = map[p][3];
        proc = map[p][4];
 
-       if(gaDirectAccess(proc)){
+       if(proc == GAme){
+
+             rows = ihip-ilop+1;
+             cols = jhip-jlop+1;
+             GAbytes.accloc += (double)size*rows*cols;
+
+        }
+
+
+       if(proc != GAme && PENDING_OPER(proc) != GA_OP_ACC) FENCE_NODE(proc);
+
+       if(gaDirectAccess(proc, GA_OP_ACC)){
 
           offset = (jlop - *jlo)* *ld + ilop - *ilo;
           ga_acc_local(*g_a, ilop, ihip, jlop, jhip, buf, offset, *ld,
                        proc, alpha);
 
        }else{
-         /* number of messages determined by message-buffer size */
 
-         Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk;
-#if defined(LINUX)
-         Integer TmpSize = MSG_BUF_SIZE;
-         Integer ilimit  ;
-         Integer jlimit  ;
-	 TmpSize /= GAsizeofM(type);
-	 ilimit = MIN(TmpSize, ihip-ilop+1);
-	 jlimit = MIN(TmpSize/ilimit, jhip-jlop+1);
-#else
-	 /*-BREAKS GCC on LINUX --------------*/
-         Integer TmpSize = MSG_BUF_SIZE/GAsizeofM(type);
-         Integer ilimit  = MIN(TmpSize, ihip-ilop+1);
-         Integer jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
-	 /*-BREAKS GCC on LINUX --------------*/
-#endif
+         /* number of messages determined by message-buffer size */
+         Integer TmpSize, ilimit, jlimit;
+         Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk, chunks=0;
+
+#        ifdef LAPI
+           Integer   bytes = (ihip - ilop +1)*(jhip - jlop +1)*GAsizeofM(type);
+           if(bytes<SHORT_ACC_THRESHOLD) 
+                   TmpSize = lapi_max_uhdr_data_sz/size; 
+           else
+#        endif
+                   TmpSize = MSG_BUF_SIZE/size;
+
+         ilimit  = MIN(TmpSize, ihip-ilop+1);
+         jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
+
          for(jlo_chunk = jlop; jlo_chunk <= jhip; jlo_chunk += jlimit){
             jhi_chunk  = MIN(jhip, jlo_chunk+jlimit-1);
             for( ilo_chunk = ilop; ilo_chunk<= ihip; ilo_chunk += ilimit){
 
                   ihi_chunk = MIN(ihip, ilo_chunk+ilimit-1);
                   offset = (jlo_chunk - *jlo)* *ld + ilo_chunk - *ilo;
+
                   ga_acc_remote(*g_a, ilo_chunk, ihi_chunk,
                          jlo_chunk, jhi_chunk, buf, offset, *ld, proc, alpha);
 
+                  chunks++;
             }
          }
+         UPDATE_FENCE_STATE(proc, GA_OP_ACC, chunks);
       }
   }
+
+   if(np > 1 || map[0][4] != GAme) INTR_ON;
 
   GA_POP_NAME;
 
@@ -2178,6 +2370,12 @@ void ga_access_(g_a, ilo, ihi, jlo, jhi, index, ld)
 register char *ptr;
 Integer  item_size, proc_place, handle = GA_OFFSET + *g_a;
 
+Integer ow;
+
+   if(!ga_locate_(g_a,ilo, jlo, &ow))ga_error("ga_access:locate top failed",0);
+   if(ow != GAme) ga_error("ga_access: cannot access top of the patch",0);
+   if(!ga_locate_(g_a,ihi, jhi, &ow))ga_error("ga_access:locate bot failed",0);
+   if(ow != GAme) ga_error("ga_access: cannot access bottom of the patch",0);
 
    ga_check_handleM(g_a, "ga_access");
    ga_check_regionM(g_a, ilo, ihi, jlo, jhi, "ga_access");
@@ -2189,6 +2387,7 @@ Integer  item_size, proc_place, handle = GA_OFFSET + *g_a;
 #  else
      proc_place = 0;
 #  endif
+
 
    ptr = GA[handle].ptr[proc_place] + item_size * ( (*jlo - GA[handle].jlo )
          *GA[handle].chunk[0] + *ilo - GA[handle].ilo);
@@ -2218,7 +2417,7 @@ Integer  item_size, proc_place, handle = GA_OFFSET + *g_a;
      case MT_F_DCPL:
         *index = (Integer) (ptr - (char*)DCPL_MB);
         if(ptr != ((char*)DCPL_MB)+ *index ){
-               ga_error("ga_access: MA addressing problem dcpl - index",handle);
+              ga_error("ga_access: MA addressing problem dcpl - index",handle);
         }
         break;
 
@@ -2229,13 +2428,14 @@ Integer  item_size, proc_place, handle = GA_OFFSET + *g_a;
         }
         break;
 
-     default: ga_error(" ga_access: type not supported ",-1L);
+
 
    }
 
    /* check the allignment */
-   if(*index % item_size)
+   if(*index % item_size){
        ga_error(" ga_access: base address misallignment ",(long)index);
+   }
 
    /* adjust index according to the data type */
    *index /= item_size;
@@ -2508,7 +2708,10 @@ Integer ilo, ihi, jlo, jhi;
 register Integer k, offset;
 
   if (nv < 1) return;
+
+#ifndef LAPI
   GA_PUSH_NAME("ga_scatter_local");
+#endif
 
   ga_distribution_(&g_a, &proc, &ilo, &ihi, &jlo, &jhi);
 
@@ -2516,7 +2719,6 @@ register Integer k, offset;
   gaShmemLocation(proc, g_a, ilo, jlo, &ptr_ref, &ldp);
 
   item_size = GAsizeofM(GA[GA_OFFSET + g_a].type);
-  if(GAme==proc && !in_handler) GAbytes.scaloc += (double)item_size*nv ;
 
   for(k=0; k< nv; k++){
      if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
@@ -2529,13 +2731,24 @@ register Integer k, offset;
      ptr_dst = ptr_ref + item_size * offset;
      ptr_src = ((char*)v) + k*item_size; 
 
-#    if defined(SHMEM) && !defined(SYSV)
+#if  defined(CRAY_T3D) || defined(LAPI)
            CopyElemTo(ptr_src, ptr_dst, item_size/sizeof(Integer), proc);
 #    else
            Copy(ptr_src, ptr_dst, item_size);
 #    endif
+
   }
+
+# ifdef LAPI
+  if(proc!=GAme){
+           UPDATE_FENCE_STATE(proc, GA_OP_SCT, nv);
+           SET_COUNTER(ack_cntr, nv);
+  }
+# endif
+
+#ifndef LAPI
   GA_POP_NAME;
+#endif
 }
 
 
@@ -2551,6 +2764,10 @@ register Integer item_size, offset, nbytes, msglen;
 
   item_size = GAsizeofM(GA[GA_OFFSET + g_a].type);
   
+#ifdef LAPI
+  CLEAR_COUNTER(buf_cntr); /* wait for buffer */
+#endif
+
   nbytes = nv*item_size; 
   Copy(v, MessageSnd->buffer, nbytes);
 
@@ -2562,7 +2779,7 @@ register Integer item_size, offset, nbytes, msglen;
   Copy((char*)j, MessageSnd->buffer + offset, nbytes);
   
   msglen = offset + nbytes;
-  ga_snd_req(g_a, nv, 0,0,0, msglen, GA[GA_OFFSET + g_a].type, GA_OP_DST,proc,  DataServer(proc));
+  ga_snd_req(g_a, nv, 0,0,0, msglen, GA[GA_OFFSET + g_a].type, GA_OP_SCT,proc,  DataServer(proc));
 }
 
 
@@ -2574,7 +2791,7 @@ void ga_scatter_(g_a, v, i, j, nv)
      Void *v;
 {
 register Integer k;
-Integer pindex, phandle, item_size;
+Integer pindex, phandle, item_size, localop;
 Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
 
 
@@ -2583,7 +2800,6 @@ Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
   ga_check_handleM(g_a, "ga_scatter");
   GA_PUSH_NAME("ga_scatter");
   GAstat.numsca++;
-
 
   if(!MA_push_get(MT_F_INT,*nv, "ga_scatter--p", &phandle, &pindex))
             ga_error("MA alloc failed ", *g_a);
@@ -2602,9 +2818,8 @@ Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
   /* Sort the entries by processor */
   ga_sort_scat(nv, (DoublePrecision*)v, i, j, INT_MB+pindex, type );
    
-  /* go through the list again executing scatter for each processor */
 
-  FENCE;
+  /* go through the list again executing scatter for each processor */
 
   first = 0;
   do { 
@@ -2617,9 +2832,23 @@ Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
         else break;
       }
 
-      /* send request for processor proc */
+      if(proc == GAme){
+             localop =1;
+             GAbytes.scaloc += (double)item_size* nelem ;
+      }else{
 
-      if(gaDirectAccess(proc))
+             /* can we access data on remote process directly? */
+             localop = gaDirectAccess(proc, GA_OP_SCT);
+
+             /* might still want to go with remote access protocol */
+#            ifdef LAPI
+               if(nelem > 10 ) localop = 0;
+#            endif
+
+             FENCE_NODE(proc);
+      }
+
+      if(localop)
         ga_scatter_local(*g_a, ((char*)v)+item_size*first, i+first, 
                          j+first, nelem,proc);
       else{
@@ -2627,17 +2856,24 @@ Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
         /* limit messages to buffer length */
 
         Integer last = first + nelem -1; 
-        Integer range, chunk;
+        Integer range, chunk, num=0;
         for(range = first; range <= last; range += BufLimit){
             chunk = MIN(BufLimit, last -range+1); 
             ga_scatter_remote(*g_a, ((char*)v)+item_size*range, 
                               i+range,j+range, chunk, proc);
+            num++;
         }
+        UPDATE_FENCE_STATE(proc, GA_OP_SCT, num);
       }
 
       first += nelem;
   }while (first< *nv);
   if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+
+# ifdef LAPI
+    CLEAR_COUNTER(ack_cntr);
+# endif
+
   GA_POP_NAME;
 }
       
@@ -2679,7 +2915,10 @@ Integer ilo, ihi, jlo, jhi;
 register Integer k, offset;
 
   if (nv < 1) return;
+
+#ifndef LAPI
   GA_PUSH_NAME("ga_gather_local");
+#endif
 
   if(proc==GAme) FLUSH_CACHE;
 
@@ -2689,7 +2928,6 @@ register Integer k, offset;
   gaShmemLocation(proc, g_a, ilo, jlo, &ptr_ref, &ldp);
 
   item_size = GAsizeofM(GA[GA_OFFSET + g_a].type);
-  if(GAme==proc && !in_handler) GAbytes.gatloc += (double)item_size*nv ;
 
   for(k=0; k< nv; k++){
      if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
@@ -2706,13 +2944,18 @@ register Integer k, offset;
      ptr_src = ptr_ref + item_size * offset;
      ptr_dst = ((char*)v) + k*item_size; 
 
-#    if defined(SHMEM) && !defined(SYSV)
+#if  defined(CRAY_T3D) || defined(LAPI)
         CopyElemFrom(ptr_src, ptr_dst, item_size/sizeof(Integer), proc);
 #    else
         Copy(ptr_src, ptr_dst, item_size);
 #    endif
   }
+#if defined(LAPI)
+    if(proc != GAme)LAPI_Fence(lapi_handle);
+#endif
+#ifndef LAPI
   GA_POP_NAME;
+#endif
 }
 
 
@@ -2745,15 +2988,19 @@ msgid_t  msgid;
      expected_len += MSG_HEADER_SIZE;
 # endif
 
+  len = expected_len;
 # if defined(NX) || defined(SP1) || defined(SP)
-     len = expected_len;
-     msgid = ga_msg_ircv(GA_TYPE_DGT, MessageSnd, expected_len, to);
-     ga_snd_req(g_a, nv, 0,0,0, msglen, GA[handle].type, GA_OP_DGT, proc, to);
+     msgid = ga_msg_ircv(GA_TYPE_GAT, MessageSnd, expected_len, to);
+     ga_snd_req(g_a, nv, 0,0,0, msglen, GA[handle].type, GA_OP_GAT, proc, to);
      ga_msg_wait(msgid, &from, &len);
-
+#  elif(LAPI)
+     CLEAR_COUNTER(buf_cntr); /* make sure the buffer is available */
+     SET_COUNTER(buf_cntr,1); /* expect data to arrive into the same buffer */
+     ga_snd_req(g_a, nv, 0,0,0, msglen, GA[handle].type, GA_OP_GAT, proc, to);
+     CLEAR_COUNTER(buf_cntr); /* wait for data to arrive */
 # else
-     ga_snd_req(g_a, nv, 0, 0, 0, msglen, GA[handle].type, GA_OP_DGT, proc, to);
-     ga_msg_rcv(GA_TYPE_DGT, MessageSnd, expected_len, &len,to,&from);
+     ga_snd_req(g_a, nv, 0, 0, 0, msglen, GA[handle].type, GA_OP_GAT, proc, to);
+     ga_msg_rcv(GA_TYPE_GAT, MessageSnd, expected_len, &len,to,&from);
 # endif
 
      if(len != expected_len) ga_error(" gather_remote: wrong data length",len); 
@@ -2774,7 +3021,7 @@ void ga_gather_(g_a, v, i, j, nv)
 {
 register Integer k, nelem;
 Integer pindex, phandle, item_size;
-Integer first, BufLimit, proc;
+Integer first, BufLimit, proc, localop;
 
   if (*nv < 1) return;
 
@@ -2785,7 +3032,6 @@ Integer first, BufLimit, proc;
 
   if(!MA_push_get(MT_F_INT, *nv, "ga_gather--p", &phandle, &pindex))
             ga_error("MA failed ", *g_a);
-
 
   /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
   for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
@@ -2807,6 +3053,7 @@ Integer first, BufLimit, proc;
   BufLimit   = MSG_BUF_SIZE/(2*sizeof(Integer)+item_size);
   /*BufLimit = MIN( MSG_BUF_SIZE/(2*sizeof(Integer)), MSG_BUF_SIZE/item_size);*/
 
+
   /* go through the list again executing gather for each processor */
 
   first = 0;
@@ -2820,35 +3067,49 @@ Integer first, BufLimit, proc;
         else break;
       }
 
-      /* send request for processor proc */
+      if(proc == GAme){
 
-      if(gaDirectAccess(proc))
+             localop =1;
+             GAbytes.gatloc += (double)item_size* nelem ;
+
+      }else{
+
+             /* can we access data on remote process directly? */
+             localop = gaDirectAccess(proc, GA_OP_GAT);
+
+             /* might still want to go with remote access protocol */
+#            ifdef LAPI
+               if(nelem > 10 ) localop = 0;
+#            endif
+
+             FENCE_NODE(proc);
+      }
+
+
+      if(localop)
         ga_gather_local(*g_a, ((char*)v)+item_size*first, i+first, j+first,
                         nelem,proc);
       else{
 
-        /* limit messages to buffer length */
+        /* send request for processor proc */
 
+        /* limit messages to buffer length */
         Integer last = first + nelem -1;
         Integer range, chunk;
-#       if (defined(SP) || defined(SP1)) && !defined(AIX3)
-              int i_on = mpc_queryintr();
-              mpc_disableintr();
-#       endif
+        INTR_OFF;
         for(range = first; range <= last; range += BufLimit){
             chunk = MIN(BufLimit, last -range+1);
             ga_gather_remote(*g_a, ((char*)v)+item_size*range, i+range, j+range,
                               chunk, proc);
         }
-#       if (defined(SP) || defined(SP1)) && !defined(AIX3)
-              if(i_on) mpc_enableintr();
-#       endif
+        INTR_ON;
       }
 
       first += nelem;
   }while (first< *nv);
 
   if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+
   GA_POP_NAME;
 }
       
@@ -2856,36 +3117,46 @@ Integer first, BufLimit, proc;
 
 /*\ local read and increment of an element of a global array
 \*/
-Integer ga_read_inc_local(Integer g_a, Integer i, Integer j, Integer inc, 
-                                                            Integer proc)
+Integer ga_read_inc_local(g_a, i, j, inc, proc)
+        Integer g_a, i, j, inc, proc;
 {
-Integer *ptr, ldp, value, lval;
+Integer *ptr, ldp, value;
 
+#ifndef LAPI
    GA_PUSH_NAME("ga_read_inc_local");
-   if(GAme == proc && !in_handler)GAbytes.rdiloc += (double)sizeof(Integer);
+#endif
 
    /* get a address of the g_a(i,j) element */
    gaShmemLocation(proc, g_a, i, j, (char**)&ptr, &ldp);
 
 #  ifdef CRAY_T3D
+        { long lval;
           while ( (lval = shmem_swap((long*)ptr, INVALID, proc) ) == INVALID);
           value = (Integer) lval;
-          lval += inc;
-          (void) shmem_swap((long*)ptr, lval, proc);
+          (void) shmem_swap((long*)ptr, (lval + inc), proc);
+        }
+#  elif defined(LAPI)
+   {      int rc, local;
+          lapi_cntr_t req_id;
+          if( rc = LAPI_Setcntr(lapi_handle,&req_id,0))
+                ga_error("setcntr failed",(Integer)rc);
+          if( rc= LAPI_Rmw(lapi_handle, FETCH_AND_ADD, (int)proc, (int*)ptr,
+                          &inc,&local,&req_id))ga_error("rmw fail",(Integer)rc);
+          if( rc= LAPI_Waitcntr(lapi_handle, &req_id, 1, NULL))
+                ga_error("wait failed",(Integer)rc);
+          value = local;
+   }
 #  else
         if(GAnproc>1)LOCK(g_a, proc, ptr);
-#         if defined(SHMEM) && !defined(SYSV)
-             CopyElemFrom(ptr, &value, 1, proc);
-             lval = value + inc;
-             CopyElemTo(&lval,ptr,1, proc);
-#         else 
-             value = *ptr;
-             lval = value +inc;
-             (*ptr) = lval;
-#         endif
+          value = *ptr;
+          (*ptr) += inc;
         if(GAnproc>1)UNLOCK(g_a, proc, ptr);
 #  endif
+
+#ifndef LAPI
    GA_POP_NAME;
+#endif
+
    return(value);
 }
 
@@ -2930,26 +3201,24 @@ Integer  value, proc;
 #endif
 
     ga_check_handleM(g_a, "ga_read_inc");
+    GA_PUSH_NAME("ga_read_inc");
+
     GAstat.numrdi++;
     GAbytes.rditot += (double)sizeof(Integer);
 
     if(GA[GA_OFFSET + *g_a].type !=MT_F_INT)
-       ga_error(" ga_read_inc: type must be integer ",*g_a);
+       ga_error("type must be integer ",*g_a);
 
-    GA_PUSH_NAME("ga_read_inc");
     ga_locate_(g_a, i, j, &proc);
-    if(gaDirectAccess(proc)){
+    if(gaDirectAccess(proc, GA_OP_RDI)){
         value = ga_read_inc_local(*g_a, *i, *j, *inc, proc);
     }else{
-#       if (defined(SP) || defined(SP1)) && !defined(AIX3)
-              int i_on = mpc_queryintr();
-              mpc_disableintr();
-#       endif
+        INTR_OFF;
         value = ga_read_inc_remote(*g_a, *i, *j, *inc, proc);
-#       if (defined(SP) || defined(SP1)) && !defined(AIX3)
-              if(i_on) mpc_enableintr();
-#       endif
+        INTR_ON;
     }
+
+   if(GAme == proc)GAbytes.rdiloc += (double)sizeof(Integer);
 
 #  ifdef GA_TRACE
      trace_etime_();

@@ -21,15 +21,40 @@ static DoublePrecision DPzero=0.;
                   if(proc==GAme)memwcpy((long*)(dst), (long*)(src), (int)(n));\
                   else shmem_get((long*) (dst), (long*)(src), (int)(n),(proc));\
               }
+
+#elif  defined(FUJITSU)
+#      define Copy(src,dst,n)          memcpy((dst), (src), (n))
+#      include "../../config/fujitsu-vpp.h"
+
+#elif  defined(LAPI)
+#      include <lapi.h>
+       extern Integer GAme;
+       extern lapi_handle_t lapi_handle;
+#      define Copy(src,dst,n)          memcpy((dst), (src), (n))
+#      define CopyElemTo(src,dst,n,proc){   \
+                  if(proc==GAme)memcpy((long*)(dst), (long*)(src), \
+                                       (int)((n)*sizeof(Integer)));\
+                  else if(LAPI_Put(lapi_handle, (uint)proc, (uint) n*sizeof(Integer), (void*) (dst), (void*)(src), NULL, &ack_cntr.cntr, &cmpl_arr[proc].cntr))\
+                  ga_error("LAPI_put failed",0);\
+              }
+
+       /**** this copy is nonblocking and requires fence to complete!!! ****/
+#      define CopyElemFrom(src,dst,n,proc){ \
+                  if(proc==GAme)memcpy((long*)(dst), (long*)(src), \
+                                (int)((n)*sizeof(Integer)));\
+                  else {\
+                    if(LAPI_Get(lapi_handle, (uint)proc, \
+                        (uint) n*sizeof(Integer), (void*) (src), (void*)(dst),\
+                         NULL, NULL))\
+                    ga_error("LAPI_Get failed",0);\
+                  }\
+              }
 #elif  defined(KSR)
 #      define Copy(src,dst,n)      memcpy((char*)(dst),(char*)(src),(n))
        void   CopyTo(char*, char*, Integer);
        void   CopyFrom(char*, char*, Integer);
 #      define CopyElemFrom(src, dst, n,proc ) CopyFrom((src),(dst),8*(n));
 #      define CopyElemTo(src, dst, n, proc) CopyTo((src),(dst),8*(n));
-#elif  defined(FUJITSU)
-#      define Copy(src,dst,n)          memcpy((dst), (src), (n))
-#      include "../../config/fujitsu-vpp.h"
 #else
 #      define Copy(src,dst,n)           memcpy((dst),(src),(n))
 #      define CopyTo(src,dst,n)         Copy((src),(dst),(n))
@@ -183,6 +208,46 @@ Integer rrows, ldd, lds;
           pd += item_size* *ld_dst;\
       }\
     }
+
+#elif defined(LAPI)
+#   define Copy2DTo(type, proc, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
+    if(proc==GAme){\
+      Copy2D(type, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst);\
+      }\
+    else {\
+      uint item_size=GAsizeofM(type), j;\
+      uint bytes =  *rows * item_size; \
+      char *ps=ptr_src, *pd=ptr_dst;\
+      for (j = 0;  j < *cols;  j++){\
+         if(LAPI_Put(lapi_handle, (uint)proc, bytes, pd, ps, NULL,\
+                     &ack_cntr.cntr, &cmpl_arr[proc].cntr))\
+                     ga_error("LAPI_put (2D) failed",0);\
+          ps += item_size* *ld_src;\
+          pd += item_size* *ld_dst;\
+      }\
+    }\
+  }
+
+#   define Copy2DFrom(type, proc, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
+    if(proc==GAme){\
+      Copy2D(type, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst);\
+      }\
+    else {\
+         uint item_size=GAsizeofM(type), j;\
+         uint bytes = item_size* *rows;\
+         char *ps = ptr_src, *pd=ptr_dst;\
+         static int val;\
+         SET_COUNTER(get_cntr, *cols); \
+         for (j = 0;  j < *cols;  j++){\
+              if(LAPI_Get(lapi_handle, (uint)proc, \
+                 bytes, ps, pd, NULL, &get_cntr.cntr))\
+                      ga_error("LAPI_get failed",0);\
+              ps += item_size* *ld_src; \
+              pd += item_size* *ld_dst;\
+         }\
+      }\
+    }
+
 
 #else
 
