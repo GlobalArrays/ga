@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.52 2003-07-31 19:27:39 d3g293 Exp $
+c $Id: test.F,v 1.53 2003-12-12 16:12:15 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -14,6 +14,7 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 
 
+c#define NEW_API
 c#define MIRROR
 c#define GA3
 c#define NGA_GATSCAT
@@ -178,6 +179,10 @@ c
       integer g_c, p_mirror
       integer ndim, dims(2), chunk(2)
       integer alo(2), blo(2), ahi(2), bhi(2)
+#else
+#  ifdef NEW_API
+      integer ndim, dims(2), chunk(2)
+#  endif
 #endif
       integer iv(m), jv(m)
 #ifdef NGA_GATSCAT
@@ -226,9 +231,22 @@ c
 *     print *,ga_nodeid(), ' creating array'
 *     call ffflush(6)
 c     call setdbg(1)
-#ifndef MIRROR
-      status = ga_create(MT_DBL, n, n, 'a', 0, 0, g_a)
+#ifdef NEW_API
+      g_a = ga_create_handle()
+      ndim = 2
+      dims(1) = n
+      dims(2) = n
+      call nga_set_data(g_a,ndim,dims,MT_DBL)
+      call nga_set_array_name(g_a,'a')
+#  ifdef MIRROR
+      p_mirror = ga_mirror_config()
+      call nga_set_proc_config(g_a,p_mirror)
+#  endif
+      status = ga_allocate(g_a)
 #else
+#  ifndef MIRROR
+      status = ga_create(MT_DBL, n, n, 'a', 0, 0, g_a)
+#  else
       ndim = 2
       dims(1) = n
       dims(2) = n
@@ -237,6 +255,7 @@ c     call setdbg(1)
       p_mirror = ga_mirror_config()
       status = nga_create_config(MT_DBL, ndim,  dims, 'a', chunk,
      +                  p_mirror, g_a)
+#  endif
 #endif
       if (.not. status) then
          write(6,*) ' ga_create failed'
@@ -473,11 +492,21 @@ c              call ga_error('... exiting ',0)
 c
 c     overlapping accumulate
       call ga_sync()
-#ifndef MIRROR
-      if (.not. ga_create(MT_DBL, n, n, 'b', 0, 0, g_b)) then
+#ifdef NEW_API
+      g_b = ga_create_handle()
+      call nga_set_data(g_b,ndim,dims,MT_DBL)
+      call nga_set_array_name(g_b,'b')
+#  ifdef MIRROR
+      call nga_set_proc_config(g_b,p_mirror)
+#  endif
+      if (.not.ga_allocate(g_b)) then
 #else
+#  ifndef MIRROR
+      if (.not. ga_create(MT_DBL, n, n, 'b', 0, 0, g_b)) then
+#  else
       if (.not. nga_create_config(MT_DBL, ndim, dims, 'b', chunk,
      +                    p_mirror, g_b)) then
+#  endif
 #endif
          call ga_error('ga_create failed for second array ',0)
       endif
@@ -902,7 +931,14 @@ c
  20      format(/'> Checking mixed copy ...')
          call ffflush(6)
       endif
+#ifdef NEW_API
+      g_c = ga_create_handle()
+      call nga_set_data(g_c,ndim,dims,MT_DBL)
+      call nga_set_array_name(g_c,'c')
+      if (.not.ga_allocate(g_c)) then
+#else
       if (.not. nga_create(MT_DBL, ndim, dims, 'c', chunk, g_c)) then
+#endif
          call ga_error('ga_create failed for third array ',0)
       endif
       call ga_zero(g_c)
@@ -1024,6 +1060,10 @@ c
       double complex a(n,n), b(n,n), v(m),w(m)
 #ifdef MIRROR
       integer ndim, dims(2), chunk(2), p_mirror
+#else
+#  ifdef NEW_API
+      integer ndim, dims(2), chunk(2), p_mirror
+#  endif
 #endif
       integer iv(m), jv(m)
       logical status
@@ -1067,9 +1107,22 @@ c
 c     print *,ga_nodeid(), ' creating array'
       call ffflush(6)
 c     call setdbg(1)
-#ifndef MIRROR
-      status = ga_create(MT_DCPL, n, n, 'a', 0, 0, g_a)
+#ifdef NEW_API
+      ndim = 2
+      dims(1) = n
+      dims(2) = n
+      g_a = ga_create_handle()
+      call nga_set_data(g_a,ndim,dims,MT_DCPL)
+      call nga_set_array_name(g_a,'a')
+#  ifdef MIRROR
+      p_mirror = ga_mirror_config()
+      call nga_set_proc_config(g_a,p_mirror)
+#  endif
+      status = ga_allocate(g_a)
 #else
+#  ifndef MIRROR
+      status = ga_create(MT_DCPL, n, n, 'a', 0, 0, g_a)
+#  else
       ndim = 2
       dims(1) = n
       dims(2) = n
@@ -1078,16 +1131,27 @@ c     call setdbg(1)
       p_mirror = ga_mirror_config()
       status = nga_create_config(MT_DCPL, ndim, dims, 'a', chunk,
      +                           p_mirror, g_a)
+#  endif
 #endif
       if (.not. status) then
          write(6,*) ' ga_create failed'
          call ga_error('... exiting ',0)
       endif
-#ifndef MIRROR
-      if (.not. ga_create(MT_DCPL, n, n, 'b', 0, 0, g_b)) then
+#ifdef NEW_API
+      g_b = ga_create_handle()
+      call nga_set_data(g_b,ndim,dims,MT_DCPL)
+      call nga_set_array_name(g_b,'b')
+#  ifdef MIRROR
+      call nga_set_proc_config(g_b,p_mirror)
+#  endif
+      if (.not.ga_allocate(g_b)) then
 #else
+#  ifndef MIRROR
+      if (.not. ga_create(MT_DCPL, n, n, 'b', 0, 0, g_b)) then
+#  else
       if (.not. nga_create_config(MT_DCPL, ndim, dims, 'b', chunk,
      _                            p_mirror, g_b)) then
+#  endif
 #endif
          call ga_error('ga_create failed for second array ',0)
       endif
@@ -1601,12 +1665,23 @@ c
       dims(2) = n
       chunk(1) = 0
       chunk(2) = 0
+#ifdef NEW_API
+      g_a = ga_create_handle()
+      call nga_set_data(g_a,ndim,dims,MT_INT)
+      call nga_set_array_name(g_a,'a')
+#  ifdef MIRROR
       p_mirror = ga_mirror_config()
-#ifndef MIRROR
-      if (.not. ga_create(MT_INT, n, n, 'a', 0, 0, g_a)) then
+      call nga_set_proc_config(g_a,p_mirror)
+#  endif
+      if (.not.ga_allocate(g_a)) then
 #else
+#  ifndef MIRROR
+      if (.not. ga_create(MT_INT, n, n, 'a', 0, 0, g_a)) then
+#  else
+      p_mirror = ga_mirror_config()
       if (.not. nga_create_config(MT_INT, ndim, dims, 'a', chunk,
      +                            p_mirror, g_a)) then
+#  endif
 #endif
          write(6,*) ' ga_create failed'
          call ffflush(6)
@@ -2033,12 +2108,29 @@ c
       dims(2) = n
       chunk(1) = 0
       chunk(2) = 0
+#ifdef NEW_API
+      g_a = ga_create_handle()
+      call nga_set_data(g_a,ndim,dims,MT_REAL)
+      call nga_set_array_name(g_a,'a')
+#  ifdef MIRROR
+      write(6,*) 'Getting p_mirror'
       p_mirror = ga_mirror_config()
-#ifndef MIRROR
-      if (.not. ga_create(MT_REAL, n, n, 'a', 0, 0, g_a)) then
+      write(6,*) 'Setting proc config'
+      call nga_set_proc_config(g_a,p_mirror)
+#  endif
+      if (.not.ga_allocate(g_a)) then
 #else
+#  ifndef MIRROR
+      if (.not. ga_create(MT_REAL, n, n, 'a', 0, 0, g_a)) then
+#  else
+cBJP
+      write(6,*) 'Creating g_a'
+      p_mirror = ga_mirror_config()
       if (.not. nga_create_config(MT_REAL, ndim, dims, 'a', chunk,
      +                            p_mirror, g_a)) then
+cBJP
+      write(6,*) 'Created g_a'
+#  endif
 #endif
          write(6,*) ' ga_create failed'
          call ffflush(6)
