@@ -250,7 +250,8 @@ void clean_all();
     fprintf(stderr,"%s %ld",string,icode);
     fflush(stderr);
 #   if defined(SUN) || defined(SGI)
-       abort();
+/*       abort(); */
+       exit(1);
 #   else
        exit(1);
 #   endif
