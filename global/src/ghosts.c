@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.14 2002-03-29 19:53:11 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.15 2002-04-03 18:44:32 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2720,20 +2720,20 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
        * for whether or not there are an odd number of processors along
        * update direction. */
 
-      flag1 = 0;
       if (GA[handle].nblock[idx]%2 == 0) {
         if (index[idx]%2 != 0 && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
-        } else if (!sprocflag) {
+        } else if (index[idx]%2 == 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
-        } else {
+        } 
+        if (rprocflag) {
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
                           signal, (int)proc_rem_snd);
         }
         if (index[idx]%2 != 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
-        } else if (!rprocflag) {
+        } else if (index[idx]%2 == 0 && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
         }
       } else {
@@ -2741,25 +2741,22 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
         pmax = GA[handle].nblock[idx] - 1;
         if (index[idx]%2 != 0 && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
-        } else if (index[idx] != pmax && !sprocflag) {
+        } else if (index[idx]%2 == 0 && index[idx] != pmax && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
-        } else {
+        }
+        if (rprocflag) {
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
                           signal, (int)proc_rem_snd);
         }
         if (index[idx]%2 != 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
-        } else if (index[idx] != 0 && !rprocflag) {
+        } else if (index[idx]%2 == 0 && index[idx] != 0 && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
         }
         /* make up for odd processor at end of string */
         if (index[idx] == 0 && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
-        } else if (index[idx] == 0) {
-          ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
-                          (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
-                          signal, (int)proc_rem_snd);
         }
         if (index[idx] == pmax && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
@@ -2948,16 +2945,17 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       if (GA[handle].nblock[idx]%2 == 0) {
         if (index[idx]%2 != 0 && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
-        } else if (!sprocflag) {
+        } else if (index[idx]%2 == 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
-        } else {
+        } 
+        if (rprocflag) {
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
                           signal, (int)proc_rem_snd);
         }
         if (index[idx]%2 != 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
-        } else if (!rprocflag) {
+        } else if (index[idx]%2 == 0 && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
         }
       } else {
@@ -2965,25 +2963,22 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
         pmax = GA[handle].nblock[idx] - 1;
         if (index[idx]%2 != 0 && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
-        } else if (index[idx] != 0 && !sprocflag) {
+        } else if (index[idx]%2 == 0 && index[idx] != 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
-        } else {
+        }
+        if (rprocflag) {
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
                           signal, (int)proc_rem_snd);
         }
         if (index[idx]%2 != 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
-        } else if (index[idx] != pmax && !rprocflag) {
+        } else if (index[idx]%2 == 0 && index[idx] != pmax && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
         }
         /* make up for odd processor at end of string */
         if (index[idx] == pmax && !rprocflag) {
           armci_msg_snd(msgcnt, snd_ptr, length, proc_rem_snd);
-        } else if (index[idx] == pmax) {
-          ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
-                          (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
-                          signal, (int)proc_rem_snd);
         }
         if (index[idx] == 0 && !sprocflag) {
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
