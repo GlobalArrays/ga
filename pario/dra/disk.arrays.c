@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.37 2002-01-25 23:07:49 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.38 2002-01-28 23:24:57 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1024,8 +1024,7 @@ Integer   iome    = dai_io_nodeid(ds_chunk.handle);
     if(INDEPFILES(ds_chunk.handle)){
 
       /* compute cardinal number for the current chunk */
-      /*nsect_to_blockM(ds_chunk, &_dra_turn); */
-      sect_to_blockM(ds_chunk, &_dra_turn);
+      nsect_to_blockM(ds_chunk, &_dra_turn);
 
     }else{
       _dra_turn++;
@@ -2345,7 +2344,7 @@ void ndai_put(
   for (i=0; i<ndim; i++) elem *= (ds_a.hi[i]-ds_a.lo[i]+1);
   bytes= (Size_t) elem * dai_sizeofM(DRA[handle].type);
   if( ELIO_OK != elio_awrite(DRA[handle].fd, offset, buf, bytes, id ))
-                 dai_error("dai_put failed", ds_a.handle);
+                 dai_error("ndai_put failed", ds_a.handle);
 }
 
 /*\ read N-dimensional aligned block of data from d_a to memory buffer
