@@ -249,6 +249,8 @@ extern void nga_access_ptr(Integer* g_a, Integer lo[], Integer hi[],
                            void* ptr, Integer ld[]);
 extern void nga_access_ghost_ptr(Integer* g_a, Integer dims[],
                            void* ptr, Integer ld[]);
+extern void nga_access_ghost_element(Integer* g_a, void* ptr, Integer subscript[],
+                              Integer ld[]);
 
 extern void FATR nga_access_(Integer* g_a, Integer lo[], Integer hi[],
                              Integer* index, Integer ld[]);

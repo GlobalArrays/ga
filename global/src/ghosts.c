@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.17 2002-04-26 20:08:47 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.18 2002-06-26 20:29:49 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -70,7 +70,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
   if (_last == 0) ld[0] = _hi[0] - _lo[0] + 1 + 2*GA[handle].width[0];         \
   for (_d = 0; _d < _last; _d++) {                                             \
     _offset += subscript[_d] * _factor;                                        \
-    ld[_d] = _hi[_d] - _lo[_d] + 1 + 2*GA[handle].width[_d];                    \
+    ld[_d] = _hi[_d] - _lo[_d] + 1 + 2*GA[handle].width[_d];                   \
     _factor *= ld[_d];                                                         \
   }                                                                            \
   _offset += subscript[_last] * _factor;                                       \
@@ -98,6 +98,73 @@ Integer ndim = GA[handle].ndim;
    *(char**)ptr = lptr; 
    for (i=0; i < ndim; i++)
      dims[i] = hi[i] - lo[i] + 1 + 2*GA[handle].width[i];
+   GA_POP_NAME;
+}
+
+/*\  PROVIDE POINTER TO LOCALLY HELD DATA, ACCOUNTING FOR
+ *   PRESENCE OF GHOST CELLS
+\*/
+void nga_access_ghost_element_(Integer* g_a, Integer* index,
+                        Integer subscript[], Integer ld[])
+{
+char *ptr;
+Integer  handle = GA_OFFSET + *g_a;
+Integer i;
+unsigned long    elemsize;
+unsigned long    lref, lptr;
+   GA_PUSH_NAME("nga_access_ghost_element");
+   /* Indices conform to Fortran convention. Shift them down 1 so that
+      gam_LocationWithGhosts works. */
+   for (i=0; i<GA[handle].ndim; i++) subscript[i]--;
+   gam_LocationWithGhosts(GAme, handle, subscript, &ptr, ld);
+   /*
+    * return patch address as the distance elements from the reference address
+    *
+    * .in Fortran we need only the index to the type array: dbl_mb or int_mb
+    *  that are elements of COMMON in the the mafdecls.h include file
+    * .in C we need both the index and the pointer
+    */
+
+   elemsize = (unsigned long)GA[handle].elemsize;
+
+   /* compute index and check if it is correct */
+   switch (ga_type_c2f(GA[handle].type)){
+     case MT_F_DBL:
+        *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
+        lref = (unsigned long)DBL_MB;
+        break;
+
+     case MT_F_DCPL:
+        *index = (Integer) ((DoubleComplex*)ptr - DCPL_MB);
+        lref = (unsigned long)DCPL_MB;
+        break;
+
+     case MT_F_INT:
+        *index = (Integer) ((Integer*)ptr - INT_MB);
+        lref = (unsigned long)INT_MB;
+        break;
+
+     case MT_F_REAL:
+        *index = (Integer) ((float*)ptr - FLT_MB);
+        lref = (unsigned long)FLT_MB;
+        break;        
+   }
+
+#ifdef BYTE_ADDRESSABLE_MEMORY
+   /* check the allignment */
+   lptr = (unsigned long)ptr;
+   if( lptr%elemsize != lref%elemsize ){ 
+       printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
+                                                    lref,lref%elemsize);
+       ga_error("nga_access: MA addressing problem: base address misallignment",
+                 handle);
+   }
+#endif
+
+   /* adjust index for Fortran addressing */
+   (*index) ++ ;
+
+   FLUSH_CACHE;
    GA_POP_NAME;
 }
 

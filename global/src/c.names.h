@@ -112,6 +112,7 @@
 #define  nga_acc_                  NGA_ACC
 #define  nga_access_               NGA_ACCESS
 #define  nga_access_ghosts_        NGA_ACCESS_GHOSTS
+#define  nga_access_ghost_element_ NGA_ACCESS_GHOST_ELEMENT
 #define  nga_add_patch_            NGA_ADD_PATCH
 #define  nga_copy_patch_           NGA_COPY_PATCH
 #define  nga_create_               NGA_CREATE
@@ -256,6 +257,7 @@
 #define  nga_acc_                  nga_acc__                
 #define  nga_access_               nga_access__             
 #define  nga_access_ghosts_        nga_access_ghosts__      
+#define  nga_access_ghost_element_ nga_access_ghost_element__      
 #define  nga_add_patch_            nga_add_patch__          
 #define  nga_copy_patch_           nga_copy_patch__         
 #define  nga_create_               nga_create__             
