@@ -81,7 +81,7 @@ Integer _dra_turn=0;
 #define dai_check_handleM(_handle, msg)                                    \
 {\
         if((_handle+DRA_OFFSET)>=_max_disk_array || (_handle+DRA_OFFSET)<0) \
-        {fprintf(stderr,"%s, %ld --",msg, _max_disk_array);\
+        {fprintf(stderr,"%s, %ld --",msg, (long)_max_disk_array);\
         dai_error("invalid DRA handle",_handle);}                           \
         if( DRA[(_handle+DRA_OFFSET)].actv == 0)                            \
         {fprintf(stderr,"%s:",msg);\
@@ -1082,10 +1082,8 @@ Integer req;
  *  for write: overwrite part of buffer with data from g_a and write all to disk
  *
 \*/
-void dai_transfer_unlgn(opcode, transp, ds_a, gs_a, req)
-        int opcode, transp;
-        Integer req;
-        section_t ds_a, gs_a;
+void dai_transfer_unlgn(int opcode, int transp, 
+                        section_t ds_a, section_t gs_a, Integer req)
 {
 Integer   chunk_ld,  next, offset;
 Integer   type = DRA[ds_a.handle+DRA_OFFSET].type;
@@ -1156,10 +1154,8 @@ char      *buffer;
 
 /*\ write or read aligned subsections to disk 
 \*/
-void dai_transfer_algn(opcode, transp, ds_a, gs_a, req)
-        int opcode, transp;
-        Integer req;
-        section_t ds_a, gs_a;
+void dai_transfer_algn(int opcode, int transp, 
+                       section_t ds_a, section_t gs_a, Integer req)
 {
 Integer   next, chunk_ld;
 section_t ds_chunk = ds_a;
