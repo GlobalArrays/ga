@@ -1,4 +1,4 @@
-/*$Id: global.patch.c,v 1.18 1996-10-17 04:56:07 d3h325 Exp $*/
+/*$Id: global.patch.c,v 1.19 1997-05-29 22:31:15 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
@@ -218,9 +218,8 @@ Integer byte_index;
          byte_index = vindex *  GAsizeofM(atype); 
          ga_scatter_(g_b, base_addr+byte_index, 
                      INT_MB+iindex, INT_MB+jindex, &nelem);
-         MA_pop_stack(vhandle);
-         MA_pop_stack(jhandle);
-         MA_pop_stack(ihandle);
+         if (!MA_pop_stack(vhandle) || !MA_pop_stack(jhandle) ||
+             !MA_pop_stack(ihandle)) ga_error("MA_pop_stack failed",0);
       }
   }
   GA_POP_NAME;
@@ -851,10 +850,11 @@ DoubleComplex ONE;
                ijk++;
           }
       }
-#ifndef STATBUF
-   MA_pop_stack(handle);
-#endif
    }
+
+#ifndef STATBUF
+   if(!MA_pop_stack(handle)) ga_error("MA_pop_stack failed",0);
+#endif
  
    GA_POP_NAME;
    ga_sync_();
