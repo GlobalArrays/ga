@@ -1,9 +1,17 @@
-# $Id: makefile.h,v 1.30 2000-06-01 01:18:35 d3h325 Exp $
+# $Id: makefile.h,v 1.31 2000-07-18 20:03:37 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
 #
 # JN 03/31/2000
+# 
+# A note on the compiler optimization flags:
+# The most aggressive flags should be set for ARMCI elsewhere.
+# The code compiled with the flags set below is not floating point intensive.
+# The only exception are a few lapack/blas calls used by some
+# GA test programs but this should not be an issue here since
+# real GA apps should use their own version of blas/lapack for best performance.
+#
 
            FC = f77
            CC = cc
@@ -159,7 +167,8 @@ ifeq ($(TARGET),LINUX64)
            FC = fort
        RANLIB = echo
 GLOB_DEFINES += -DLINUX -DLINUX64 -DEXT_INT
-FOPT_REN=-i8 -assume no2underscore -align_dcommons 
+FOPT_REN=-i8 -assume no2underscore -align_dcommons -fpe3 -check nooverflow 
+FOPT_REN +=-assume accuracy_sensitive -checknopower -check nounderflow
 #COPT_REN= 
           CLD = $(CC)
         CLIBS = -lfor
@@ -207,10 +216,10 @@ ifeq ($(TARGET),HPUX64)
 endif
 #
 #................................ Compaq/DEC ALPHA .............................
-# we use historical name
+# we use a historical name
 #
 ifeq ($(TARGET),DECOSF)
-     FOPT_REN = -i8
+     FOPT_REN = -i8 -fpe2 -check nounderflow -check nopower -check nooverflow
         CDEFS = -DEXT_INT
        RANLIB = ranlib
         CLIBS = -lfor -lots -lm
