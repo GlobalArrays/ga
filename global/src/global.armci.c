@@ -1,3 +1,4 @@
+/* $Id: global.armci.c,v 1.22 1999-07-28 00:36:05 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -1067,7 +1068,7 @@ char buf[FNAM];
 }
 
 
-Integer ga_ndim_(Integer *g_a)
+Integer FATR ga_ndim_(Integer *g_a)
 {
       ga_check_handleM(g_a,"ga_ndim");       
       return GA[*g_a +GA_OFFSET].ndim;
