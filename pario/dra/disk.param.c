@@ -119,6 +119,12 @@ char dummy[HDLEN];
         DRA[dra_hndl].chunk[i] = (Integer) input;
       }
 
+      if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:numfiles",0);
+      DRA[dra_hndl].numfiles = (Integer) input;
+
+      if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:ioprocs",0);
+      DRA[dra_hndl].ioprocs = (Integer) input;
+
       fgets(dummy,HDLEN,fd); /*advance to next line*/
       if(!fgets(DRA[dra_hndl].name,DRA_MAX_NAME,fd))dai_error("dai_read_param:name",0);
 
@@ -134,7 +140,7 @@ char dummy[HDLEN];
   /* process 0 broadcasts data to everybody else                           */
   /* for 6 Integers there shouldn't be alignement padding in the structure */
   /* the integers are followed by array name */
-  len = (2+2*MAXDIM)*sizeof(Integer)+2*sizeof(int)+DRA_MAX_NAME+8;
+  len = (4+2*MAXDIM)*sizeof(Integer)+2*sizeof(int)+DRA_MAX_NAME+8;
   ga_brdcst_(&brd_type, DRA + dra_hndl, &len, &orig);
   
   return(rc);
@@ -180,6 +186,11 @@ Integer i, ndim = DRA[dra_hndl].ndim;
       if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].chunk[i]))
                                 dai_error("dai_write_param:chunk",i);
     }
+    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].numfiles)) 
+                                dai_error("dai_write_param:numfiles",0);
+    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].ioprocs)) 
+                                dai_error("dai_write_param:ioprocs",0);
+
     if(!fprintf(fd,"\n%s\n",DRA[dra_hndl].name))
                                 dai_error("dai_write_param:name",0);
 

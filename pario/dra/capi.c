@@ -207,6 +207,15 @@ void DRA_Print_internals(int d_a)
   return;
 }
 
+void DRA_Set_default_config(int numfiles, int numioprocs)
+{
+  Integer nfiles, nprocs;
+  nfiles = (Integer)numfiles;
+  nprocs = (Integer)numioprocs;
+  dra_set_default_config_(&nfiles, &nprocs);
+  return;
+}
+
 int DRA_Wait(int request)
 {
   Integer rrequest, status;
