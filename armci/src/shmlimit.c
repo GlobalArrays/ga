@@ -1,4 +1,4 @@
-/* $Id: shmlimit.c,v 1.8 2000-04-17 22:31:41 d3h325 Exp $ */
+/* $Id: shmlimit.c,v 1.9 2000-05-12 01:10:06 d3h325 Exp $ */
 /*
  * This code is used to test shared memory limits within
  * a separately forked child process.
@@ -23,7 +23,7 @@
 #define USE_PIPE 
 #define DEBUG_ 0
 
-#if defined(DECOSF) || defined(SOLARIS64)
+#if defined(DECOSF) || defined(SOLARIS64) || defined(HPUX)
 #define PIPE_AFTER_FORK_BUG
 #endif
 
