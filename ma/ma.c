@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.16 1998-01-30 18:49:31 d3h325 Exp $
+ * $Id: ma.c,v 1.17 1998-05-26 20:15:19 d3h325 Exp $
  */
 
 /*
@@ -368,6 +368,7 @@ typedef enum
     FID_MA_get_index,
     FID_MA_get_next_memhandle,
     FID_MA_get_pointer,
+    FID_MA_get_mbase,
     FID_MA_init,
     FID_MA_initialized,
     FID_MA_init_memhandle_iterator,
@@ -411,6 +412,7 @@ private char *ma_routines[] =
     "MA_get_index",
     "MA_get_next_memhandle",
     "MA_get_pointer",
+    "MA_get_mbase",
     "MA_init",
     "MA_initialized",
     "MA_init_memhandle_iterator",
@@ -2207,6 +2209,7 @@ public Boolean MA_init(datatype, nominal_stack, nominal_heap)
         return MA_FALSE;
     }
 
+
     /*
      * initialize management stuff
      */
@@ -3015,4 +3018,37 @@ public Boolean MA_verify_allocator_stuff()
     return MA_FALSE;
 
 #endif /* VERIFY */
+}
+
+/*
+what follows is a modification by
+M.G. Schuetz, Dep. Theoretical Chemistry, University Lund, Sweden, Nov. 1995
+to provide access to the datatype anchors...
+Roland Lindh <teohrl@castor.qcl.t.u-tokyo.ac.jp>
+*/
+
+public Pointer MA_get_mbase(datatype)
+    Integer     datatype;
+{
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_get_mbase]++;
+#endif /* STATS */
+
+    /* preinitialize if necessary */
+    ma_preinitialize("MA_get_mbase");
+
+    /* verify datatype */
+    if (!mt_valid(datatype))
+    {
+        (void)sprintf(ma_ebuf,
+            "invalid datatype: %ld",
+            (long)datatype);
+        ma_error(EL_Fatal, ET_External, "ma_get_mbase", ma_ebuf);
+        return NULL;
+    }
+
+    /* convert datatype to internal (index-suitable) value */
+    datatype = mt_import(datatype);
+
+    return ma_base[datatype];
 }

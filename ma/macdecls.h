@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.5 1997-12-09 02:13:58 d3g681 Exp $
+ * $Id: macdecls.h,v 1.6 1998-05-26 20:15:20 d3h325 Exp $
  */
 
 /* 
@@ -44,6 +44,7 @@ extern Boolean MA_free_heap();
 extern Boolean MA_get_index();
 extern Boolean MA_get_next_memhandle();
 extern Boolean MA_get_pointer();
+extern Pointer MA_get_mbase();
 extern Boolean MA_init();
 extern Boolean MA_initialized();
 extern Boolean MA_init_memhandle_iterator();
