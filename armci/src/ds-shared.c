@@ -1,3 +1,4 @@
+/* $Id: ds-shared.c,v 1.20 2002-09-25 00:42:28 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "message.h"

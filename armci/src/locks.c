@@ -1,7 +1,7 @@
-/* $Id: locks.c,v 1.9 2002-09-04 18:24:38 d3h325 Exp $ */
+/* $Id: locks.c,v 1.10 2002-09-25 00:42:28 d3h325 Exp $ */
 #define _LOCKS_C_
-#include "locks.h"
 #include "armcip.h"
+#include "locks.h"
 #ifndef WIN32
 #   include <unistd.h>
 #endif
