@@ -30,11 +30,13 @@ CPP   = $(CC) -EP
 CPPFLAGS = $(INCLUDES) $(DEFINES)
 
 .SUFFIXES:
-.SUFFIXES:      .obj .s .f .F .c .pg .exe
+.SUFFIXES:      .obj .s .f .F .c .pg .exe .cc
 
 .c{$(OBJDIR)}.obj:
 	$(CC) $(CFLAGS) $<
 
+.cc{$(OBJDIR)}.obj:
+	$(CC) $(CFLAGS) /Tp$<
 
 .F{$(OBJDIR)}.obj: 
         $(CPP) $(CPPFLAGS) $< > $*.for
@@ -49,6 +51,14 @@ CPPFLAGS = $(INCLUDES) $(DEFINES)
         @echo Creating .pg file (4 MPI tasks): $*.pg
         @echo local 3 > $*.pg
 
+.cc.exe:
+	@$(MAKE) -nologo $(OBJDIR)
+!IFDEF TESTUTIL
+	@$(MAKE) -nologo $(TESTUTIL)
+!ENDIF
+	@$(MAKE) -nologo $(OBJDIR)\$*.obj
+	$(CC) /Fe$@ $(OBJDIR)\$*.obj $(TESTUTIL) $(LIBS) $(CCLINK)
+
 .c.exe:
 	@$(MAKE) -nologo $(OBJDIR)
 !IFDEF TESTUTIL
@@ -60,7 +70,7 @@ CPPFLAGS = $(INCLUDES) $(DEFINES)
 .F.exe:
 	@$(MAKE) -nologo $(OBJDIR)
 !IFDEF TESTUTIL
-	@$(MAKE) -nologo $(TESTUTIL)
+	@$(MAKE) -nologo $(TESTUTIL) $(TESTUTILF)
 !ENDIF
 	@$(MAKE) -nologo $(OBJDIR)\$*.obj
-	$(FC) /Fe$@ $(OBJDIR)\$*.obj $(TESTUTIL) $(LIBS)
+	$(FC) /Fe$@ $(OBJDIR)\$*.obj $(TESTUTIL) $(FFLUSH) $(LIBS)
