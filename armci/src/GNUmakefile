@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.65 2003-02-05 23:33:25 d3h325 Exp $
+#$Id: GNUmakefile,v 1.66 2003-02-06 02:15:48 d3h325 Exp $
          FOPT = -O
          COPT = -O
 
@@ -26,6 +26,7 @@ include ../config/makecoms.h
 SYSTEM_V = SUN SOLARIS SOLARIS64 SGI SGI_N32 SGI64 SGITFP 
 SYSTEM_V += HPUX HPUX64 IBM IBM64 DECOSF LINUX LINUX64 INTERIX NEC
 SHMEM    = $(SYSTEM_V) LAPI LAPI64
+SHMMMAP  = NEC
 SOCKETS  = $(SYSTEM_V)
 ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP FUJITSU-AP
 #USE_PTHREADS = LINUX SGI_N32 SOLARIS
@@ -45,7 +46,12 @@ endif
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SHMEM)))
      LIB_DEFINES += -DSYSV
-     OBJ += shmalloc.o signaltrap.o shmlimit.o shmem.o 
+     OBJ += shmalloc.o signaltrap.o 
+  ifeq ($(TARGET),$(findstring $(TARGET),$(SHMMMAP)))
+     OBJ += winshmem.o 
+  else
+     OBJ += shmlimit.o shmem.o 
+  endif
 endif
 
 ifeq ($(TARGET),LAPI)
