@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.30 2000-06-16 22:25:41 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.31 2000-08-15 21:35:35 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -335,6 +335,8 @@ void armci_shmem_init()
       /* nothing to do here - limits were given */
 #endif
     }
+
+    if(DEBUG_)printf("%d: out of shmem_init\n",armci_me);
 }
 
 
@@ -796,7 +798,7 @@ int  reg, refreg=0,nreg;
 
     temp = shmalloc((unsigned)size);
     if(temp == (char*)0 )
-       armci_die("Create_Shared_Region: shmalloc failed ",0);
+       armci_die("Create_Shared_Region: shmalloc failed size",(int)size);
     
     if(!(nreg=find_regions(temp,id,&reg)))
         armci_die("CreateSharedRegion: allocation inconsitent",0);
