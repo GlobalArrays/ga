@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.43 2002-11-06 13:58:36 vinod Exp $ */
+/* $Id: request.c,v 1.44 2002-12-04 17:20:15 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -86,18 +86,28 @@ request_header_t *msginfo = (request_header_t*) buffer;
 
 /*\ save a part of strided descriptor needed to complete request
 \*/
-void armci_save_strided_dscr(void *bufptr, void *ptr, int stride[],
-                                   int count[], int levels)
+void armci_save_strided_dscr(char **bptr, void *rem_ptr,int rem_stride_arr[],
+                             int count[], int stride_levels,int is_nb)
 {
-strided_dscr_t *dscr;
 int i;
-BUF_INFO_T *info=BUF_TO_BUFINFO(bufptr);
-   dscr = &(info->dscr.strided);
-   dscr->stride_levels = levels;
-   dscr->ptr =ptr;
-   for(i=0;i<levels;i++)dscr->stride_arr[i]=stride[i];
-   for(i=0;i<levels+1;i++)dscr->count[i]=count[i];
-   info->protocol=SDSCR_IN_PLACE;
+char *bufptr=*bptr;
+BUF_INFO_T *info=BUF_TO_BUFINFO(bptr);
+
+    if(is_nb){    
+       bufptr = (info->dscr.buf);
+    }
+    *(void**)bufptr = rem_ptr;         bufptr += sizeof(void*);
+    *(int*)bufptr = stride_levels;     bufptr += sizeof(int);
+    for(i=0;i<stride_levels;i++)((int*)bufptr)[i] = rem_stride_arr[i];
+    bufptr += stride_levels*sizeof(int);
+    for(i=0;i< stride_levels+1;i++)((int*)bufptr)[i] = count[i];
+    bufptr += (1+stride_levels)*sizeof(int);
+
+    /*rem_strided expects the pointer to point to the end of descr hence..*/
+    if(is_nb)
+       info->protocol=SDSCR_IN_PLACE;
+    else
+       *bptr=bufptr;
 }
 
 
@@ -139,11 +149,12 @@ void *rem_ptr;
         armci_copy(rem_ptr,buf, darr[i].ptr_array_len * sizeof(void*));
         buf += darr[i].ptr_array_len*sizeof(void*);
     }
-    *bptr=buf;
+    if(!is_nb)
+       *bptr=buf;
 }
 
 /*\
- * If buf==null, use set handle->bufid to val, else set it to the id of the buf
+ * If buf==null, set handle->bufid to val, else set it to the id of the buf
 \*/
 void armci_set_nbhandle_bufid(armci_hdl_t nb_handle,char *buf,int val)
 {
@@ -488,10 +499,19 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
     }
     msginfo = (request_header_t*)buf;
 
+    if(nb_handle){
+      INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
+      _armci_buf_set_tag(buf,nb_handle->tag,0);  
+      /*for now, set handle->bufid to MULTI. Since MULTI is a superset of ONE
+        this shouldnt cause any problems. Later on this has to be properly
+        set in pack.c for both strided and vector protocols*/
+      armci_set_nbhandle_bufid(nb_handle,NULL,NB_MULTI);
+    }
+
     buf += sizeof(request_header_t);
 
     /* fill vector descriptor */
-    armci_save_vector_dscr(&buf,darr,len,op,isnonblocking);
+    armci_save_vector_dscr(&buf,darr,len,op,0);
     
     /* align buf for doubles (8-bytes) before copying data */
     adr = (size_t)buf;
@@ -599,6 +619,9 @@ int armci_rem_strided(int op, void* scale, int proc,
     if(nb_handle){
       INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
       _armci_buf_set_tag(buf,nb_handle->tag,0);  
+      /*for now, set handle->bufid to MULTI. Since MULTI is a superset of ONE
+        this shouldnt cause any problems. Later on this has to be properly
+        set in pack.c for both strided and vector protocols*/
       armci_set_nbhandle_bufid(nb_handle,NULL,NB_MULTI);
     }
     
@@ -614,19 +637,16 @@ int armci_rem_strided(int op, void* scale, int proc,
      
     msginfo->datalen=bytes;  
 #if defined(USE_SOCKET_VECTOR_API) 
-    /*****for making put use readv/writev is sockets*****/
+    /*****for making put use readv/writev on sockets*****/
     if(op==PUT && flag)
        msginfo->datalen=0;
 #endif
 
     /* fill strided descriptor */
-                                       buf += sizeof(request_header_t);
-    *(void**)buf = rem_ptr;            buf += sizeof(void*);
-    *(int*)buf = stride_levels;        buf += sizeof(int);
-    for(i=0;i<stride_levels;i++)((int*)buf)[i] = rem_stride_arr[i];
-                                       buf += stride_levels*sizeof(int);
-    for(i=0;i< stride_levels+1;i++)((int*)buf)[i] = count[i];
-                                       buf += (1+stride_levels)*sizeof(int);
+    buf += sizeof(request_header_t);
+    /*this function fills the dscr into buf and also moves the buf ptr to the 
+      end of the dscr*/
+    armci_save_strided_dscr(&buf,rem_ptr,rem_stride_arr,count,stride_levels,0);
 
 #   ifdef CLIENT_BUF_BYPASS
       if(flag && _armci_bypass){
