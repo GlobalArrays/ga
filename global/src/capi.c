@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.17 1999-11-17 21:15:49 d3h325 Exp $ */
+/* $Id: capi.c,v 1.18 1999-11-18 14:37:24 d3g681 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -643,6 +643,23 @@ void GA_Print_file(FILE *file, int g_a)
   ga_print_file(file, &G_a);
 }
 
+void GA_Diag_seq(int g_a, int g_s, int g_v, void *eval)
+{
+    Integer a = (Integer)g_a;
+    Integer s = (Integer)g_s;
+    Integer v = (Integer)g_v;
+
+    ga_diag_seq_(&a, &s, &v, eval);
+}
+
+void GA_Diag_std_seq(int g_a, int g_v, void *eval)
+{
+    Integer a = (Integer)g_a;
+    Integer v = (Integer)g_v;
+
+    ga_diag_std_seq_(&a, &v, eval);
+}
+
 void GA_Diag(int g_a, int g_s, int g_v, void *eval)
 {
     Integer a = (Integer)g_a;
@@ -650,6 +667,14 @@ void GA_Diag(int g_a, int g_s, int g_v, void *eval)
     Integer v = (Integer)g_v;
 
     ga_diag_(&a, &s, &v, eval);
+}
+
+void GA_Diag_std(int g_a, int g_v, void *eval)
+{
+    Integer a = (Integer)g_a;
+    Integer v = (Integer)g_v;
+
+    ga_diag_std_(&a, &v, eval);
 }
 
 void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval)
@@ -660,14 +685,6 @@ void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval)
     Integer v = (Integer)g_v;
 
     ga_diag_reuse_(&r, &a, &s, &v, eval);
-}
-
-void GA_Diag_std(int g_a, int g_v, void *eval)
-{
-    Integer a = (Integer)g_a;
-    Integer v = (Integer)g_v;
-
-    ga_diag_std_(&a, &v, eval);
 }
 
 void GA_Lu_solve(char tran, int g_a, int g_b)
