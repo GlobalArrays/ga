@@ -1,4 +1,4 @@
-c $Id: mirror.F,v 1.4 2003-03-24 17:14:17 d3g293 Exp $
+c $Id: mirror.F,v 1.5 2003-04-11 15:44:41 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -158,6 +158,7 @@ c
       parameter (m = 2*n)
       double precision a(n,n), b(n,n), v(m),w(m)
       integer iv(m), jv(m)
+      integer ijv(2,m)
       logical status, lsame
       integer g_a, g_b, g_c
       integer iran, i,j, loop,nloop,maxloop, ilo, ihi, jlo, jhi, itmp
@@ -169,6 +170,7 @@ c
       double precision crap, sum1, sum2, x
       double precision nwords
       intrinsic int
+      logical found
       integer lprocs, inode, iproc
       iran(i) = int(util_drand(0)*real(i)) + 1
 c     
@@ -574,152 +576,194 @@ c
          write(6,*)
       endif
 c
-c      call ga_sync()
-c      if (me .eq. 0) then
-c         write(6,*) '> Checking scatter/gather (might be slow)... '
-c         call ffflush(6)
-c      endif
-c      call ga_sync()
+      call ga_sync()
+      if (me .eq. 0) then
+         write(6,*) '> Checking scatter/gather (might be slow)... '
+         call ffflush(6)
+      endif
+      call ga_sync()
 c
-c      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
-c      do j = 1, 10 
-c       call ga_sync()
-c       itmp = iran(lprocs)-1
-c       if(iproc.eq.itmp) then
-c         do loop = 1,m 
-c           ilo = iran(n) 
-cc           jlo = iran(n)
-c           iv(loop) = ilo
-c           jv(loop) = jlo
-c         enddo 
-c         call ga_gather(g_a, v, iv, jv, m)
-c         do loop = 1,m
-c           ilo= iv(loop)
-c           jlo= jv(loop)
-c           call ga_get(g_a,ilo,ilo,jlo,jlo,v(loop),1)
-c           if(v(loop)  .ne. a(ilo,jlo))then
-c             write(6,*)me,' gather ', ilo,',',jlo,',', a(ilo,jlo)
-c     &             ,' ',v(loop)
-c             call ffflush(6)
-c             call ga_error('... exiting ',0)
-c           endif
-c         enddo
-c       endif
-c      enddo
-c
-c      if (me.eq.0) then
-c         write(6,*)
-c         write(6,*) ' gather is  OK'
-c         write(6,*)
-c         call ffflush(6)
-c      endif
-c
+#define NGA_GATSCAT 1
+      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      do j = 1, 10 
+       call ga_sync()
+       itmp = iran(lprocs)-1
+       if(iproc.eq.itmp) then
+#if NGA_GATSCAT
+         do loop = 1,m 
+           ilo = iran(n) 
+           jlo = iran(n)
+           ijv(1,loop) = ilo
+           ijv(2,loop) = jlo
+         enddo 
+         call nga_gather(g_a, v, ijv, m)
+         do loop = 1,m
+           ilo= ijv(1,loop)
+           jlo= ijv(2,loop)
+           call ga_get(g_a,ilo,ilo,jlo,jlo,v(loop),1)
+           if(v(loop)  .ne. a(ilo,jlo))then
+             write(6,*)me,' gather ', ilo,',',jlo,',', a(ilo,jlo)
+     &             ,' ',v(loop)
+             call ffflush(6)
+             call ga_error('... exiting ',0)
+           endif
+         enddo
+#else
+         do loop = 1,m 
+           ilo = iran(n) 
+           jlo = iran(n)
+           iv(loop) = ilo
+           jv(loop) = jlo
+         enddo 
+         call ga_gather(g_a, v, iv, jv, m)
+         do loop = 1,m
+           ilo= iv(loop)
+           jlo= jv(loop)
+           call ga_get(g_a,ilo,ilo,jlo,jlo,v(loop),1)
+           if(v(loop)  .ne. a(ilo,jlo))then
+             write(6,*)me,' gather ', ilo,',',jlo,',', a(ilo,jlo)
+     &             ,' ',v(loop)
+             call ffflush(6)
+             call ga_error('... exiting ',0)
+           endif
+         enddo
+#endif
+       endif
+      enddo
 
-c      do j = 1,10 
-c       call ga_sync()
-c       if(me.eq.iran(ga_nnodes())-1) then
-c         do loop = 1,m
-c           ilo = iran(n)
-c           jlo = iran(n)
-c           iv(loop) = ilo
-c           jv(loop) = jlo
-cc          v(loop) = DSIN(a(ilo,jlo)+b(ilo,jlo)) 
-c           v(loop) = 1d0 *(ilo+jlo)
-c         enddo 
-c         call ga_scatter(g_a, v, iv, jv, m)
-c         do loop = 1,m
-c           ilo= iv(loop)
-c           jlo= jv(loop) 
-c           call ga_get(g_a,ilo,ilo,jlo,jlo,w(loop),1)
-cc          if(v(loop)  .ne. w(loop))then 
-c           if(w(loop)  .ne. 1d0 *(ilo+jlo) )then 
-c             write(6,*)me,' scatter ', ilo,',',jlo,',',w(loop) 
-c     &             ,' ', 1d0 *(ilo+jlo) 
-c             call ffflush(6)
-c             call ga_error('... exiting ',0)
-c           endif
-c         enddo 
-c       endif
-c       call ga_sync()
-c      enddo
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' gather is  OK'
+         write(6,*)
+         call ffflush(6)
+      endif
 c
-c      if (me.eq.0) then
-c         write(6,*)
-c         write(6,*) ' scatter is  OK'
-c         write(6,*)
-c      endif
+      do j = 1,10 
+        call ga_sync()
+        if(iproc.eq.iran(lprocs)-1) then
+#if NGA_GATSCAT
+          do loop = 1,m
+            ilo = iran(n)
+            jlo = iran(n)
+            ijv(1,loop) = ilo
+            ijv(2,loop) = jlo
+            v(loop) = 1d0 *(ilo+jlo)
+          enddo 
+          call nga_scatter(g_a, v, ijv, m)
+          do loop = 1,m
+            ilo= ijv(1,loop)
+            jlo= ijv(2,loop) 
+            call ga_get(g_a,ilo,ilo,jlo,jlo,w(loop),1)
+            if(w(loop)  .ne. 1d0 *(ilo+jlo) )then 
+              write(6,*)me,' scatter ', ilo,',',jlo,',',w(loop) 
+     &              ,' ', 1d0 *(ilo+jlo) 
+              call ffflush(6)
+              call ga_error('... exiting ',0)
+            endif
+          enddo 
+#else
+          do loop = 1,m
+            ilo = iran(n)
+            jlo = iran(n)
+            iv(loop) = ilo
+            jv(loop) = jlo
+            v(loop) = 1d0 *(ilo+jlo)
+          enddo 
+          call ga_scatter(g_a, v, iv, jv, m)
+          do loop = 1,m
+            ilo= iv(loop)
+            jlo= jv(loop) 
+            call ga_get(g_a,ilo,ilo,jlo,jlo,w(loop),1)
+            if(w(loop)  .ne. 1d0 *(ilo+jlo) )then 
+              write(6,*)me,' scatter ', ilo,',',jlo,',',w(loop) 
+     &              ,' ', 1d0 *(ilo+jlo) 
+              call ffflush(6)
+              call ga_error('... exiting ',0)
+            endif
+          enddo 
+#endif
+        endif
+        call ga_sync()
+      enddo
+c
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' scatter is  OK'
+         write(6,*)
+      endif
 c
       call ga_sync()
 c
 c     scatter-acc available in GA ver. 3.0
-c#ifdef GA3
-c      if (me.eq.0) then
-c         write(6,*)
-c         write(6,*) ' checking scatter-accumulate'
-c         write(6,*)
-c      endif
+#define GA3
+#ifdef GA3
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' checking scatter-accumulate'
+         write(6,*)
+      endif
 c
-c      crap = util_drand(1234)
-c      call ga_zero(g_a)
+      crap = util_drand(1234)
+      call ga_zero(g_a)
 c
-c      do j = 1, n
-c         do i = 1, n
-c            b(i,j) =0.
-c         enddo
-c      enddo
+      do j = 1, n
+         do i = 1, n
+            b(i,j) =0.
+         enddo
+      enddo
 c
-c      x = .1d0
-c      ii =n
-c      do jj = 1,1 
-c	  call ga_sync()
-c        do loop = 1, ii 
-c
-c          generate unique i,j pairs
-c10         continue
-c              i = iran(n)
-c	      j=iran(n)
-c           if (found(i,j, iv, jv, loop-1) ) goto 10
-c
-c           iv(loop) = i
-c           jv(loop) = j
-c           v(loop) = 1d0 *(i+j)
-c           b(i,j) = b(i,j) + nproc*x*v(loop) ! update local ref. array
-c        enddo
+      x = .1d0
+      ii =n
+      do jj = 1,1 
+        call ga_sync()
+        do loop = 1, ii 
+
+c         generate unique i,j pairs
+10        continue
+            i = iran(n)
+            j = iran(n)
+          if (found(i,j, iv, jv, loop-1) ) goto 10
+
+          iv(loop) = i
+          jv(loop) = j
+          ijv(1,loop) = i
+          ijv(2,loop) = j
+          v(loop) = 1d0 *(i+j)
+          b(i,j) = b(i,j) + lprocs*x*v(loop) ! update local ref. array
+        enddo
 
 
-c	call ga_scatter_acc(g_a,v,iv,jv, ii,x)
+#if NGA_GATSCAT
+        call nga_scatter_acc(g_a,v,ijv,ii,x)
+#else
+        call ga_scatter_acc(g_a,v,iv,jv, ii,x)
+#endif
 c
-c
-c        call ga_sync()
+        call ga_sync()
 c     
 c       check the result
 c
-c        call ga_get(g_a, 1, n, 1,n, a, n)
+        call ga_get(g_a, 1, n, 1,n, a, n)
 c
-c        do loop = 1,ii
-c          i = iv(loop)
-c          j = jv(loop)
-c          if(MISMATCH(a(i,j),b(i,j)))then
-c             print *,'Error',i,j,loop,a(i,j),'expected=',b(i,j)  
-c*            if(me.eq.0)then
-c*              do ii=1,loop
-c*                   print *,'element',ii, iv(ii),jv(ii)
-c*              enddo
-c*            endif
-c             call ga_error('scatter-acc error in trial ',jj) 
-c          endif
-c        enddo
-c	  call ga_sync()
+        do loop = 1,ii
+          i = iv(loop)
+          j = jv(loop)
+          if(MISMATCH(a(i,j),b(i,j)))then
+             print *,'Error',i,j,loop,a(i,j),'expected=',b(i,j)  
+             call ga_error('scatter-acc error in trial ',jj) 
+          endif
+        enddo
+        call ga_sync()
 c
-c      enddo
-
-c      call ga_sync()
-c      if (me.eq.0) then
-c         write(6,*)
-c         write(6,*) ' scatter-accumulate is  OK'
-c         write(6,*)
-c      endif
-c#endif
+        enddo
+c
+      call ga_sync()
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' scatter-accumulate is  OK'
+         write(6,*)
+      endif
+#endif
 c
 c     Check the merge function
 c
@@ -1699,6 +1743,7 @@ c---------------------------------------------------------------------
       double precision crap
       real x, sum1, sum2
       intrinsic int
+      logical found
       iran(i) = int(util_drand(0)*real(i)) + 1
 
       nproc = ga_nnodes()
