@@ -69,16 +69,16 @@ static INLINE void armci_init_spinlock(LOCK_T *mutex)
 static INLINE void armci_acquire_spinlock(LOCK_T *mutex)
 {
 int loop=0, maxloop =100;
-extern int armci_me;
 
    while (TESTANDSET(mutex)){
       loop++;
       if(loop==maxloop){ 
-         usleep(1);
-         loop=0;
 #if 0
+         extern int armci_me;
          printf("%d:spinlock sleeping\n",armci_me); fflush(stdout);
 #endif
+         usleep(1);
+         loop=0;
       }
   }
 }

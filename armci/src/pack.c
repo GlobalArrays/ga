@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.12 2000-04-21 20:54:18 d3h325 Exp $ */
+/* $Id: pack.c,v 1.13 2000-10-11 19:42:55 d3h325 Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -11,7 +11,7 @@
 \*/
 static void armci_fit_buffer(int count[], int stride_levels, int* fit_level, int *nb)
 {
-   int bytes=1, sbytes;
+   int bytes=1, sbytes=1;
    int level;
 
    /* find out at which stride level BUFFER becomes too small */
@@ -190,7 +190,7 @@ int armci_pack_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
 armci_giov_t extra; /* keeps data remainder of set to be processed in chunks */
 armci_giov_t save;  /* keeps original value of set to be processed in chunks */
 armci_giov_t *ndarr; /* points to first array element to be processed now */
-int rc, nlen, count=0;
+int rc=0, nlen, count=0;
 
     ndarr = darr;
 
