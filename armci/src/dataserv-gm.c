@@ -91,12 +91,38 @@ void armci_send_contig_bypass(int proc, request_header_t *msginfo,
                               void *src_ptr, void *rem_ptr, int bytes)
 {
      int to = msginfo->from;
+#if 0
+     extern char *armci_foo;
+     armci_server_direct_send(to,armci_foo,rem_ptr,bytes,ARMCI_GM_NONBLOCKING);
+     armci_server_send_ack(to);
+#else
 
+#ifdef PINALL
      if(armci_pin_contig(src_ptr,bytes)){
        armci_server_direct_send(to,src_ptr,rem_ptr,bytes,ARMCI_GM_NONBLOCKING);
        armci_server_send_ack(to);
        armci_unpin_contig(src_ptr, bytes);
      }else armci_die("send_contig_bypass failed", bytes);
+#endif
+
+     int chunk=bytes>>1;
+     int half = chunk>>2;
+     int left=bytes;
+     char *sptr=(char*)src_ptr, *rptr=(char*)rem_ptr;
+     while(left>0){ 
+       if(!armci_pin_contig(sptr,chunk))
+           armci_die("send_contig_bypass failed",chunk);
+       armci_server_direct_send(to,sptr,rptr,chunk,ARMCI_GM_NONBLOCKING);
+       left -= chunk;
+       sptr += chunk;
+       rptr += chunk;
+       if(left < chunk+half)chunk=left;
+     }
+     armci_server_send_ack(to);
+     armci_unpin_contig(src_ptr, bytes);
+     
+#endif
+
 }
        
 
@@ -133,7 +159,6 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
     }
 #endif
 
-
     /* number of n-element of the first dimension */
     n1dim = 1;
     for(i=1; i<=stride_levels; i++) n1dim *= count[i];
@@ -165,7 +190,7 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
             int msglen = count[0];
 
             /* the message buffer is divided into two */
-            int msg_size = msg_buflen/2;
+            int msg_size = msg_buflen>>1;
             while(msglen > 0) {
                 int len;
                 if(msglen > msg_size) len = msg_size;
@@ -173,7 +198,6 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
                 
                 armci_copy(src_ptr, buf, len);
                 armci_server_direct_send(to, buf, dst_ptr, len, ARMCI_GM_NONBLOCKING);
-                
                 msglen -= len;
                 src_ptr += len; dst_ptr += len;
 
@@ -190,7 +214,7 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
         if( count[0] > INTERLEAVE_GET_THRESHOLD) {
             int msg_size = count[0] /2;
 
-            armci_serv_send_nonblocking_complete(0);
+            armci_serv_send_nonblocking_complete(1);
             
             armci_copy(src_ptr, buf, msg_size);
             armci_server_direct_send(to, buf, dst_ptr, msg_size, ARMCI_GM_NONBLOCKING);
