@@ -33,7 +33,6 @@
 
 #define DEBUG_ 0
 #define DEBUG_INIT_ 0
-#define PIN_MEM_ONE_BLOCK__
 
 armci_gm_proc_t *proc_gm;
 armci_gm_serv_t *serv_gm;
@@ -58,6 +57,11 @@ void wait_flag_updated(long *buf, int val)
     *buf = ARMCI_GM_CLEAR;
 }
 
+int pin_in_block;    /* indicate pin the memory in one large block or not */
+int pin_in_segment;  /* in the case of pining segment by segment, serves as
+                      * counter how many segments have been pinned so far
+                      */
+
 int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
 {
     int i, j, sizes;
@@ -67,17 +71,19 @@ int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
     gm_status_t status;
     struct gm_port *port;
 
-#if defined(PIN_MEM_ONE_BLOCK)
+    if(SERVER_CONTEXT) port = serv_gm->snd_port;
+    else port = proc_gm->port;
+    
     sizes = 1;
     for(i=0; i<strides; i++) sizes *= stride_arr[i];
     sizes *= count[strides];
         
-    status = gm_register_memory(proc_gm->port, (char *)ptr, sizes);
-    if(status == GM_SUCCESS) return TRUE;
-    return FALSE;
-
-#else
+    status = gm_register_memory(port, (char *)ptr, sizes);
+    if(status == GM_SUCCESS) { pin_in_block = TRUE; return TRUE; }
+    pin_in_block = FALSE;
+    pin_in_segment = 0;  /* set counter to zero */
     
+    /* if can pin memory in one piece, pin it segment by segment */
     n1dim = 1;
     for(i=1; i<=strides; i++) n1dim *= count[i];
 
@@ -87,9 +93,6 @@ int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
         bvalue[i] = 0; bunit[i] = bunit[i-1] * count[i-1];
     }
 
-    if(SERVER_CONTEXT) port = serv_gm->snd_port;
-    else port = proc_gm->port;
-    
     for(i=0; i<n1dim; i++) {
         idx = 0;
         for(j=1; j<=strides; j++) {
@@ -99,15 +102,14 @@ int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
         }
 
         status = gm_register_memory(port, (char *)ptr+idx, count[0]);
-        if(status != GM_SUCCESS) return FALSE;
-
-        if(DEBUG_)
-            printf("%d addr = %d count = %d pinned status = %d\n",
-                   armci_me, (long)((char *)ptr+idx), count[0], status);
+        if(status != GM_SUCCESS) {
+            armci_unpin_memory(ptr, stride_arr, count, strides);
+            return FALSE;
+        }
+        pin_in_segment++;
     }
 
     return TRUE;
-#endif
 }
 
 void armci_unpin_memory(void *ptr, int stride_arr[], int count[], int strides)
@@ -119,44 +121,46 @@ void armci_unpin_memory(void *ptr, int stride_arr[], int count[], int strides)
     gm_status_t status;
     struct gm_port *port;
 
-#if defined(PIN_MEM_ONE_BLOCK)
-    sizes = 1;
-    for(i=0; i<strides; i++) sizes *= stride_arr[i];
-    sizes *= count[strides];
-        
-    status = gm_deregister_memory(proc_gm->port, (char *)ptr, sizes);
-    if(status != GM_SUCCESS) armci_die(" unpinning memory failed", armci_me);
-
-#else
-    
-    n1dim = 1;
-    for(i=1; i<=strides; i++) n1dim *= count[i];
-
-    /* calculate the destination indices */
-    bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
-    for(i=2; i<=strides; i++) {
-        bvalue[i] = 0; bunit[i] = bunit[i-1] * count[i-1];
-    }
-
     if(SERVER_CONTEXT) port = serv_gm->snd_port;
     else port = proc_gm->port;
-    
-    for(i=0; i<n1dim; i++) {
-        idx = 0;
-        for(j=1; j<=strides; j++) {
-            idx += bvalue[j] * stride_arr[j-1];
-            if((i+1) % bunit[j] == 0) bvalue[j]++;
-            if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
-        }
+
+    if(pin_in_block) {
+        sizes = 1;
+        for(i=0; i<strides; i++) sizes *= stride_arr[i];
+        sizes *= count[strides];
         
-        status = gm_deregister_memory(port, (char *)ptr+idx, count[0]);
+        status = gm_deregister_memory(port, (char *)ptr, sizes);
         if(status != GM_SUCCESS)
             armci_die(" unpinning memory failed", armci_me);
-
-        if(DEBUG_) printf("%d addr = %d unpinned\n",
-                          armci_me, (long)((char *)ptr+idx));
     }
-#endif
+    else {
+        
+        /* if can unpin memory in one piece, unpin it segment by segment */
+        n1dim = 1;
+        for(i=1; i<=strides; i++) n1dim *= count[i];
+        
+        /* calculate the destination indices */
+        bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+        for(i=2; i<=strides; i++) {
+            bvalue[i] = 0; bunit[i] = bunit[i-1] * count[i-1];
+        }
+        
+        for(i=0; i<n1dim; i++) {
+            idx = 0;
+            for(j=1; j<=strides; j++) {
+                idx += bvalue[j] * stride_arr[j-1];
+                if((i+1) % bunit[j] == 0) bvalue[j]++;
+                if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
+            }
+
+            if(pin_in_segment > 0) {
+                status = gm_deregister_memory(port, (char *)ptr+idx, count[0]);
+                if(status != GM_SUCCESS)
+                    armci_die(" unpinning memory failed", armci_me);
+                pin_in_segment--;
+            }
+        }
+    }
 }
 
 /*********************************************************************

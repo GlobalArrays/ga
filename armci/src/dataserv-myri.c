@@ -247,7 +247,7 @@ void armci_rcv_req(void *mesg,
                msginfo->datalen, msginfo->from);
         fflush(stdout);
     }
-    
+
     *(void **)phdr = msginfo;
 
     if(msginfo->bypass) {
@@ -288,7 +288,7 @@ void armci_rcv_req(void *mesg,
     /* make sure last send is complete and the buffer is available */
     stat = armci_serv_send_complete();
     if(stat == ARMCI_GM_FAILED)
-        armci_die(" last armci_send_(strided_)data: write failed", stat);
+        armci_die(" last armci_send_(strided_)data: write failed", stat);  
 }
 
 
@@ -461,16 +461,23 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
 
     /* for small contiguous blocks copy into a buffer before sending */
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
-    
+
     if(DEBUG_){
         fprintf(stdout,
-                "%d(server): sending datalen = %d to %d first: %f\n",
-                armci_me, msginfo->datalen, to, *(double *)bdata);
+                "%d(server): sending datalen = %d to %d\n",
+                armci_me, msginfo->datalen, to);
         fflush(stdout);
     }
-    
+   
     /* write the message to the client */
     armci_WriteToDirect(to, msginfo, bdata);
+
+    if(DEBUG_){
+        fprintf(stdout,
+                "%d(server): sent datalen = %d to %d\n",
+                armci_me, msginfo->datalen, to);
+        fflush(stdout);
+    }
 }
 
 

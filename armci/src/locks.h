@@ -24,8 +24,14 @@
 #endif
 #endif
 
+
 #if defined(PTHREADS) && !(defined(PMUTEXES) || defined(SPINLOCK))
-cannot run
+# if defined(LINUX) && defined(ULTRA)
+#    define PMUTEXES
+#    include <pthread.h>
+# else
+     cannot run
+# endif
 #endif
 
 #if defined(SPINLOCK) || defined(PMUTEXES)

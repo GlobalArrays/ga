@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.12 2000-04-17 22:31:41 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.13 2000-05-04 19:50:26 jju Exp $ */
 /* System V shared memory allocation and managment for GAs:
  *
  * Interface:
@@ -95,9 +95,15 @@ extern void armci_die();
 #elif defined(HPUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)64*1024)
-#elif defined(LINUX) && !defined(SHMMAX) /* Red Hat does not define SHMMAX */
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)32*1024)
+#elif defined(LINUX) 
+#  if !defined(SHMMAX) /* Red Hat does not define SHMMAX */
+#     undef _SHMMAX
+#     ifdef ULTRA
+#       define _SHMMAX ((unsigned long)16*1024)
+#     else
+#       define _SHMMAX ((unsigned long)32*1024)
+#     endif
+#  endif
 #elif defined(SHMMAX)
 #  undef _SHMMAX
 #  define _SHMMAX (((unsigned long)SHMMAX)>>10)

@@ -28,7 +28,7 @@
 
 #define CHUNK_NUM 28
 
-#define CHECK_RESULT 0
+#define CHECK_RESULT 1
 
 int chunk[CHUNK_NUM] = {1,3,4,6,9,12,16,20,24,30,40,48,52,64,78,91,104,
                         128,142,171,210,256,300,353,400,440,476,512};
@@ -348,6 +348,7 @@ void test_2D()
         printf("  --------  --------\n");
         fflush(stdout);
         
+        /* for(i=0; i<CHUNK_NUM; i++) { */
         for(i=0; i<CHUNK_NUM; i++) {
             int loop;
             int bytes = chunk[i] * chunk[i] * sizeof(double);
@@ -391,11 +392,13 @@ void test_2D()
         }
     }
     else sleep(4);
+
+    MPI_Barrier(MPI_COMM_WORLD);
     
     /* cleanup */
     ARMCI_Free(get_ptr[armci_me]);
     ARMCI_Free(ptr[armci_me]);
-    free(buf);
+    if(armci_me == 0) free(buf);
 }
 
     
