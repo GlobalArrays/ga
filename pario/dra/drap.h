@@ -45,10 +45,11 @@ typedef struct{                               /* stores basic DRA info */
 } disk_array_t;
 
 #define MAX_ALGN  1                /* max # aligned subsections   */ 
-#define MAX_UNLG  2               /* max # unaligned subsections */
+#define MAX_UNLG  (2*(MAXDIM-1))   /* max # unaligned subsections */
 
 typedef struct{                   /* object describing DRA/GA section */
         Integer handle;
+        Integer ndim;
         Integer lo[MAXDIM];
         Integer hi[MAXDIM];
 }section_t;
@@ -68,9 +69,9 @@ typedef struct{                   /* stores info associated with DRA request */
         Integer  d_a;             /* disk array handle */
         io_request_t  id;         /* low level asynch. I/O  op. id */
         int num_pending;          /* number of pending  asynch. I/O ops */ 
-        Integer list_algn[MAX_ALGN][4]; /* coordinates of aligned subsection */
-        Integer list_unlgn[MAX_UNLG][4];/*coordinates of unaligned subsections*/
-        Integer list_cover[MAX_UNLG][4];/* coordinates of "cover" subsections */
+        Integer list_algn[MAX_ALGN][2*MAXDIM]; /* coordinates of aligned subsection */
+        Integer list_unlgn[MAX_UNLG][2*MAXDIM];/*coordinates of unaligned subsections*/
+        Integer list_cover[MAX_UNLG][2*MAXDIM];/* coordinates of "cover" subsections */
         int        nu;            
         int        na;
         int        callback;      /* callback status flag ON/OFF */

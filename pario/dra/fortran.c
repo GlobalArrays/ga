@@ -62,6 +62,42 @@ Integer FATR dra_create_(type, dim1, dim2, name, filename, mode, reqdim1, reqdim
 return dra_create(type, dim1, dim2,cname,cfilename, mode, reqdim1, reqdim2,d_a);
 }
 
+#if defined(CRAY) || defined(WIN32)
+Integer FATR ndra_create_(type, ndim, dims, name, filename, mode, reqdims, d_a)
+        Integer *d_a;                      /*input:DRA handle*/
+        Integer *type;                     /*input*/
+        Integer dims[];                    /*input*/
+        Integer reqdims[];                 /*input: dims of typical request*/
+        Integer *mode;                     /*input*/
+        _fcd    name;                      /*input*/
+        _fcd    filename;                  /*input*/
+#else
+Integer FATR ndra_create_(type, ndim, dims, name, filename, mode, reqdims, d_a,
+                   nlen, flen)
+        Integer *d_a;                      /*input:DRA handle*/
+        Integer *type;                     /*input*/
+        Integer *ndim;                     /*input*/
+        Integer dims[];                    /*input*/
+        Integer reqdims[];                 /*input: dims of typical request*/
+        Integer *mode;                     /*input*/
+        char    *name;                     /*input*/
+        char    *filename;                 /*input*/
+
+        int     nlen;
+        int     flen;
+
+#endif
+{
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(name), _fcdlen(name), cname, DRA_MAX_NAME);
+      f2cstring(_fcdtocp(filename), _fcdlen(filename), cfilename, DRA_MAX_FNAME);
+#else
+      f2cstring(name, nlen, cname, DRA_MAX_NAME);
+      f2cstring(filename, flen, cfilename, DRA_MAX_FNAME);
+#endif
+return ndra_create(type, ndim, dims, cname, cfilename, mode, reqdims, d_a);
+}
+
 
 
 #if defined(CRAY) || defined(WIN32)

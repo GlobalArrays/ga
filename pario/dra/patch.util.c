@@ -69,22 +69,32 @@ logical dai_patch_intersect(
 \*/
 logical dai_section_intersect(section_t sref, section_t *sadj)
 {
-     /* check consistency of patch coordinates */
-     if( sref.hi[0] < sref.lo[0] || sref.hi[1] < sref.lo[1])     
-                                  return FALSE; /* inconsistent */
-     if( sadj->hi[0] < sadj->lo[0] || sadj->hi[1] < sadj->lo[1]) 
-                                  return FALSE; /* inconsistent */
-
-     /* find the intersection and update (ilop: ihip, jlop: jhip) */
-     if( sref.hi[0] < sadj->lo[0] || sadj->hi[0] < sref.lo[0]) 
-                                  return FALSE; /* don't intersect */
-     if( sref.hi[1] < sadj->lo[1] || sadj->hi[1] < sref.lo[1]) 
-                                  return FALSE; /* don't intersect */
-     sadj->lo[0] = MAX(sref.lo[0],sadj->lo[0]);
-     sadj->hi[0] = MIN(sref.hi[0],sadj->hi[0]);
-     sadj->lo[1] = MAX(sref.lo[1],sadj->lo[1]);
-     sadj->hi[1] = MIN(sref.hi[1],sadj->hi[1]);
-
-     return(TRUE);
+  Integer ndim = sref.ndim;
+  Integer i;
+  logical isconsistent = TRUE;
+  /* check that patches have same dimension */
+  if (ndim != sadj->ndim) isconsistent = FALSE;
+  /* check consistency of patch coordinates */
+  if (isconsistent) {
+    for (i=0; i<ndim; i++) {
+      if (sref.hi[i] < sref.lo[i]) isconsistent = FALSE;
+      if (sadj->hi[i] < sadj->lo[i]) isconsistent = FALSE;
+    }
+  }
+  /* check to see if there is an intersection */
+  if (isconsistent) {
+    for (i=0; i<ndim; i++) {
+      if (sref.hi[i] < sadj->lo[i]) isconsistent = FALSE;
+      if (sadj->hi[i] < sref.lo[i]) isconsistent = FALSE;
+    }
+  }
+  /* if there is an intersection then return it in sadj */
+  if (isconsistent) {
+    for (i=0; i<ndim; i++) {
+      sadj->lo[i] = MAX(sref.lo[i],sadj->lo[i]);
+      sadj->hi[i] = MIN(sref.hi[i],sadj->hi[i]);
+    }
+  }
+  return (isconsistent);
 }
 
