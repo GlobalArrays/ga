@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.20 2002-01-28 20:31:22 d3h325 Exp $ */
+/* $Id: signaltrap.c,v 1.21 2002-10-12 02:24:32 manoj Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <errno.h>
 #endif
 
 #define PAUSE_ON_ERROR__ 
@@ -126,13 +127,36 @@ SigType SigChldHandler(sig)
      int sig;
 {
   int status;
-  
 #if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
   union wait ustatus;
-  (void) wait(&ustatus);
+#endif
+  
+#if defined(LINUX)
+  pid_t ret;
+  /* Trap signal as soon as possible to avoid race */
+  if ( (SigChldOrig = signal(SIGCHLD, SigChldHandler)) == SIG_ERR)
+    Error("SigChldHandler: error from signal setting SIGCHLD",0);
+#endif
+
+#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
+
+# if defined(LINUX)
+  ret = wait(&ustatus);
+  if((ret == 0) || ((ret = -1) && (errno == ECHILD))) { return; }
+# else
+  (void) wait(&ustatus); 
+# endif  
   status = ustatus.w_status;
+
 #else
+
+# if defined(LINUX)
+  ret = waitpid(0, &status, WNOHANG);
+  if((ret == 0) || ((ret = -1) && (errno == ECHILD))) { return; }
+# else
   (void)wait(&status);
+# endif
+
 #endif
       AR_caught_sigchld=1;
       AR_caught_sig= sig;
