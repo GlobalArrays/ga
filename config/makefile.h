@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.66 2002-05-16 18:47:01 d3h325 Exp $
+# $Id: makefile.h,v 1.67 2002-07-16 23:40:03 vinod Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -290,6 +290,10 @@ ifneq (,$(findstring efc,$(_FC)))
       FLD_REN = -Vaxlib
     GLOB_DEFINES += -DIFCLINUX
 endif
+ifneq (,$(findstring mpif,$(_FC)))
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /efc/ { print "efc" ; exit } ' )
+endif
+
 endif
 #
 # Alpha
@@ -307,9 +311,18 @@ ifdef USE_INTEGER4
 endif
         CLIBS = -lfor
 endif
-          CLD = $(CC)
-endif
 
+          CLD = $(CC)
+ifeq ($(_FC),g77)
+          CLD = $(FLD)
+      CLD_REN =
+endif
+ifeq ($(_FC),efc) 
+          CLD = $(FLD)
+      CLD_REN =
+endif
+endif
+#
 #............................. CYGNUS on Windows ..........................
 #
 ifeq ($(TARGET),CYGWIN)
