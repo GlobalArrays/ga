@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.20 2000-10-11 21:37:01 d3h325 Exp $ */
+/* $Id: memory.c,v 1.21 2000-12-04 23:32:17 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -264,7 +264,10 @@ int ARMCI_Free(void *ptr)
       if(armci_nproc > 1)
 #   endif
       if(ARMCI_Uses_shm()){
-          if(armci_me==armci_master) Free_Shmem_Ptr( 0, 0, ptr);
+          if(armci_me==armci_master){
+            if(armci_clus_info[armci_clus_me].nslave>1) Free_Shmem_Ptr(0,0,ptr);
+            else free(ptr);
+          }
           ptr = NULL;
           return 0;
       }
@@ -286,7 +289,7 @@ int ARMCI_Uses_shm()
       if(armci_nproc != armci_nclus)uses= 1; /* only when > 1 node used */
 #   endif
 #endif
-    if(DEBUG_) fprintf(stderr,"uses shmem %d\n",uses);
+    if(DEBUG_) fprintf(stderr,"%d:uses shmem %d\n",armci_me, uses);
     return uses;
 }
 
