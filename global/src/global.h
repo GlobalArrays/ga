@@ -22,7 +22,7 @@
 #endif
 
 #include "c.names.h"
-#ifdef CRAY_T3D
+#ifdef CRAY
 #  include "cray.names.h"
 #endif
 

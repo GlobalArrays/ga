@@ -1,5 +1,7 @@
 #include "locks.h"
+#ifdef unix
 #include <unistd.h>
+#endif
 #include <stdio.h>
 
 

@@ -318,6 +318,7 @@ long sz;
     prev_alloc_regions = alloc_regions; 
 
     /* allocate shmem in as many segments as neccesary */
+    if(DEBUG)printf("  in allocate size=%d\n",id,pref_addr,size);
     for(i =0; i< newreg; i++){ 
        sz =(i==newreg-1)? size - i*MinShmem*SHM_UNIT: min(size,SHM_UNIT*MinShmem);
 

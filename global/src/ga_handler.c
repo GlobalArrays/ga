@@ -284,7 +284,7 @@ static void ga_handler(int *pid)
 {
 size_t msglen;
 
-# ifndef RISKY 
+# ifdef AIX3
     mpc_wait(pid, &msglen);
 # endif
 
@@ -294,8 +294,8 @@ size_t msglen;
   ga_SERVER(requesting_node, MessageRcv);
   in_handler = 0;
 
-# ifdef RISKY 
-    mpc_wait(pid, &msglen);/*under AIX4 version of MPL can wait after handler*/ 
+# ifndef AIX3
+    mpc_wait(pid, &msglen); /*under AIX4 version of MPL can wait after handler*/ 
 # endif
 
   ga_init_handler((char*)MessageRcv, TOT_MSG_SIZE );

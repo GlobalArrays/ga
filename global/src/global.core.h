@@ -177,7 +177,9 @@ int  GA_stack_size=0;
 
 #          define LOCK(g_a, proc, x)     t_lock(&cri_l) 
 #          define UNLOCK(g_a, proc, x)   t_unlock(&cri_l) 
-#          define NATIVEbarrier barrier
+           /* on j90 shmem barrier appaers to be broken (MPT1.2) */
+#          include <mpi.h>
+#          define NATIVEbarrier() MPI_Barrier(MPI_COMM_WORLD) 
 #       elif defined(FUJITSU)
 #          define MUTEX(g_a)  SEM_BASE + (g_a+GA_OFFSET)%NUM_SEM
 #          define LOCK(g_a,proc, x)   NATIVE_LOCK(proc,MUTEX(g_a))

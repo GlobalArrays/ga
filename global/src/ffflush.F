@@ -1,7 +1,7 @@
       subroutine ffflush(unit)
       integer unit
 c
-#ifdef CRAY_T3D
+#ifdef CRAY
 *     if(unit.eq.6)then
 *       call flush(101)
 *     else

@@ -59,11 +59,13 @@ static DoublePrecision DPzero=0.;
 #      define Copy(src,dst,n)           memcpy((dst),(src),(n))
 #      define CopyTo(src,dst,n)         Copy((src),(dst),(n))
 #      define CopyFrom(src,dst,n)       Copy((src),(dst),(n))
+#      define CopyElemFrom(src, dst, n,proc ) CopyFrom((src),(dst),sizeof(Integer)*(n));
+#      define CopyElemTo(src, dst, n, proc) CopyTo((src),(dst),sizeof(Integer)*(n));
 #endif
 
 /***************************** 2-Dimensional copy ************************/
 
-#ifdef CRAY_T3D
+#ifdef CRAY
 #  define dcopy2d_ DCOPY2D
 #  define icopy2d_ ICOPY2D
 #  define d_accumulate_ D_ACCUMULATE
@@ -286,7 +288,7 @@ Integer rrows, ldd, lds;
 
 
 /**************************** accumulate operation **************************/
-#if defined(CRAY_T3D) || defined(FUJITSU)
+#if defined(CRAY) || defined(FUJITSU)
 static void dacc_column(alpha, a, b,n)
 Integer n;
 DoublePrecision *alpha, *a, *b;

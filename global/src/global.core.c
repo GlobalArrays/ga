@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.49 1997-12-30 23:58:39 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.50 1998-04-18 01:03:09 d3h325 Exp $*/
 /* 
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -463,7 +463,7 @@ long *msg_buf;
 #   endif
 #   if defined(SGIUS)
        ga_brdcst_clust(type, (char*)lock_array,
-                      (cluster_nodes+1)*sizeof(ulock_t*), cluster_master,
+                (cluster_nodes+RESERVED_LOCKS)*sizeof(ulock_t*), cluster_master,
                        ALL_CLUST_GRP);
 #   endif
 
@@ -833,11 +833,11 @@ Integer  ga_handle = g_a + GA_OFFSET;
 
        /* need pointers on all procs to support global addressing */
        /* on YMP we need to adjust them w.r.t. local address base */
-#ifdef CRAY_YMP
+#ifdef CRAY_YMP_0
        GA[ga_handle].ptr[GAme] = (char*)((int)ptr - (int)DBL_MB);
 #endif
        for(i=0; i<GAnproc; i++) ga_brdcst_(&mtype, GA[ga_handle].ptr+i,&len,&i);
-#ifdef CRAY_YMP
+#ifdef CRAY_YMP_0
        for(i=0; i<GAnproc; i++)
           GA[ga_handle].ptr[i] = (char*)((int)GA[ga_handle].ptr[i]+(int)DBL_MB);
 #endif
@@ -2156,7 +2156,7 @@ int      work_done=0;
    rows = ihi - ilo +1;
    cols = jhi - jlo +1;
 
-#if defined(SHMEM) && !defined(SYSV) && !defined(LAPI)
+#if defined(SHMEM) && !defined(SYSV) && !defined(LAPI) && !defined(CRAY_YMP)
 
      bytes = rows*item_size;
 
@@ -2200,6 +2200,7 @@ int      work_done=0;
 
 #      else
          if(proc != GAme){
+         
             LOCK(g_a, proc, ptr_dst);
 
             ga_acc_1d_local(type, alpha, rows, cols, ptr_dst, ldp, ptr_src, ld,
@@ -2221,6 +2222,7 @@ int      work_done=0;
 #  endif
 
    if(! work_done) {
+
      if(GAnproc>1) LOCK(g_a, proc, ptr_dst);
 
 #      ifdef LAPI

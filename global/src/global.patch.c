@@ -1,4 +1,4 @@
-/*$Id: global.patch.c,v 1.19 1997-05-29 22:31:15 d3h325 Exp $*/
+/*$Id: global.patch.c,v 1.20 1998-04-18 01:03:11 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
@@ -9,7 +9,7 @@
 #  define zgemm_ cgemm_
 #endif
 
-#ifdef CRAY_T3D
+#ifdef CRAY
 #      include <fortran.h>
 #      define cptofcd(fcd)  _cptofcd((fcd),1)
 #else
@@ -234,7 +234,7 @@ void ga_copy_patch_(trans, g_a, ailo, aihi, ajlo, ajhi,
                     g_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
-#ifdef CRAY_T3D
+#ifdef CRAY
      _fcd    trans;
 {ga_copy_patch(_fcdtocp(trans),g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi);}
 #else 
@@ -420,7 +420,7 @@ void gai_dot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
      DoublePrecision *retval;
 
-#ifdef CRAY_T3D
+#ifdef CRAY
      _fcd   t_a, t_b;                          /* transpose operators */
 {  gai_dot_patch(g_a, _fcdtocp(t_a), ailo, aihi, ajlo, ajhi,
                  g_b, _fcdtocp(t_b), bilo, bihi, bjlo, bjhi, retval);}
@@ -827,7 +827,7 @@ DoubleComplex ONE;
                      ga_get_(g_b, &i0, &i1, &j0, &j1, b, &jdim);
                   }
    if(atype ==  MT_F_DBL){
-#                 ifdef CRAY_T3D
+#                 ifdef CRAY
                     SGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
                           alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
 #                 else
@@ -835,7 +835,7 @@ DoubleComplex ONE;
                            alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
 #                 endif
    }else{
-#                 ifdef CRAY_T3D
+#                 ifdef CRAY
                     CGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
                           alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
 #                 else
@@ -874,7 +874,7 @@ void ga_matmul_patch_(transa, transb, alpha, beta,
      Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
      DoublePrecision      *alpha, *beta;
 
-#ifdef CRAY_T3D
+#ifdef CRAY
      _fcd   transa, transb;
 {    ga_matmul_patch(_fcdtocp(transa), _fcdtocp(transb), alpha, beta,
                       g_a, ailo, aihi, ajlo, ajhi,
