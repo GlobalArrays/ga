@@ -357,9 +357,13 @@ ifeq ($(TARGET),LAPI64)
 GLOB_DEFINES += -DLAPI -DIBM64
 endif
 
+
 # IBM RS/6000 under AIX
 ifeq ($(TARGET),IBM)
         IBM_  = 1
+endif
+ifeq ($(TARGET),IBM64_32)
+      IBM64_  = 1
 endif
 ifeq ($(TARGET),IBM64)
       IBM64_  = 1
@@ -381,13 +385,13 @@ endif
 #
 ifdef IBM_
      ifeq ($(FOPT), -O)
-         FOPT = -O4 -qarch=com -qstrict
+         FOPT = -O4 -qarch=auto -qstrict
      else
 #        without this flag xlf_r creates nonreentrant code
          FOPT += -qnosave
      endif
      ifeq ($(COPT), -O)
-         COPT = -O3 -qinline=100 -qstrict -qarch=com -qtune=auto
+         COPT = -O3 -qinline=100 -qstrict -qarch=auto -qtune=auto
      endif
        CDEFS += -DEXTNAME
            FC = xlf
