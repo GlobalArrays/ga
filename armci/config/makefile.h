@@ -139,7 +139,9 @@ ifeq  ($(_CPU),alpha)
      CC = ccc
      FOPT_REN = -assume no2underscore -fpe3 -check nooverflow
      FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
-     EXTRA_OBJ = tas.o
+    ifeq ($(_CC),ccc)
+       EXTRA_OBJ = tas.o
+    endif
 endif
    
 endif
