@@ -189,9 +189,9 @@
 #define  ga_elem_multiply_	   GA_ELEM_MULTIPLY  
 #define  ga_elem_divide_	   GA_ELEM_DIVIDE  
 #define  ga_step_max_	           GA_STEP_MAX  
-#define  ga_step_max2_	           GA_STEP_MAX2  
+#define  ga_step_bound_info_	   GA_STEP_BOUND_INFO
 #define  ga_step_max_patch_	   GA_STEP_MAX_PATCH  
-#define  ga_step_max2_patch_	   GA_STEP_MAX2_PATCH  
+#define  ga_step_bound_info_patch  GA_STEP_BOUND_INFO_PATCH
 #define  ga_elem_maximum_	   GA_ELEM_MAXIMUM  
 #define  ga_elem_minimum_	   GA_ELEM_MINIMUM  
 #define  ga_aba_value_patch_       GA_ABS_VALUE_PATCH
@@ -413,9 +413,8 @@
 #define  ga_elem_multiply_	   ga_elem_multiply__  
 #define  ga_elem_divide_	   ga_elem_divide__  
 #define  ga_step_max_	           ga_step_max__ 
-#define  ga_step_max2_	           ga_step_max2__ 
+#define  ga_step_bound_info_	   ga_step_bound_info__ 
 #define  ga_step_max_patch_	   ga_step_max_patch__ 
-#define  ga_step_max2_patch_	   ga_step_max2_patch__ 
 #define  ga_elem_maximum_	   ga_elem_maximum__  
 #define  ga_elem_minimum_	   ga_elem_minimum__  
 #define  ga_aba_value_patch_       ga_abs_value_patch__
