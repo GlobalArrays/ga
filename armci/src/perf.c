@@ -2,7 +2,7 @@
  *    Author: Jialin Ju, PNNL
  */
 
-/* $Id: perf.c,v 1.12 2001-06-01 23:27:20 edo Exp $ */
+/* $Id: perf.c,v 1.13 2001-06-04 17:23:18 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +13,7 @@
 #include <unistd.h>
 #endif
 #include <math.h>
-#include <mp3.h>
+#include "mp3.h"
 #include "armci.h"
 
 #define SIZE 550
@@ -475,7 +475,7 @@ int main(int argc, char **argv)
     MP_BARRIER();
     if(me == 0){
        if(warn_accuracy) 
-          printf("\n\nWARNING: Your MPI timer does not have sufficient accuracy for this test (%d)\n",warn_accuracy);
+          printf("\nWARNING: Your timer does not have sufficient accuracy for this test (%d)\n",warn_accuracy);
        printf("\n\n------------ Now we test the same data transfer for correctness ----------\n");
        fflush(stdout);
     }
@@ -491,11 +491,7 @@ int main(int argc, char **argv)
 
     /* done */
     ARMCI_Finalize();
-#if defined(TCGMSG)
-    PEND_();
-#else
-    MPI_Finalize();
-#endif
+    MP_FINALIZE();
     return(0);
 }    
 
