@@ -22,7 +22,8 @@ typedef struct {
 #endif
 unsigned int   operation:8;   /* operation code */
 #ifdef CLIENT_BUF_BYPASS
-unsigned int   format:3;      /* data format used */
+unsigned int   format:2;      /* data format used */
+unsigned int   pinned:1;      /* indicates if sender memory was pinned */
 unsigned int   bypass:1;      /* indicate if bypass protocol used */
 #else
 unsigned int   format:4;      /* data format used */
