@@ -78,22 +78,22 @@ GA::GAServices::brdcst(void *buf, int lenbuf, int root) {
 }
 
 int 
-clusterNnodes() {
+GA::GAServices::clusterNnodes() {
   return GA_Cluster_nnodes();
 }
 
 int 
-clusterNodeid() {
+GA::GAServices::clusterNodeid() {
   return GA_Cluster_nodeid();
 }
 
 int 
-clusterNprocs(int inode) {
+GA::GAServices::clusterNprocs(int inode) {
   return GA_Cluster_nprocs(inode) ;
 }
   
 int 
-clusterProcid(int inode, int iproc) {
+GA::GAServices::clusterProcid(int inode, int iproc) {
   return GA_Cluster_procid(inode, iproc);
 }
 
