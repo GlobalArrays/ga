@@ -1,4 +1,4 @@
-/* $Id: regions.c,v 1.1 2003-03-27 02:08:56 d3h325 Exp $ interface to keep track of memory regions accross the cluster */
+/* $Id: regions.c,v 1.2 2003-04-04 22:13:47 vinod Exp $ interface to keep track of memory regions accross the cluster */
 /* 
  * armci_region_init - allocates list of regions, initialization
  * armci_region_register_shm - registers shared memory on the current node
@@ -57,7 +57,7 @@ static int armci_region_record(void *start, void *end, armci_reglist_t *reg)
 static void armci_region_register(void *start, long size, armci_reglist_t *reg)
 {
      if(reg->n >= MAX_REGIONS) return;
-
+     if(armci_nclus<=1)return;
      if(!armci_pin_contig1(start, (int) size)){
         printf("%d pin failed %p bytes=%ld\n",armci_me,start,size);
         fflush(stdout); return; }
@@ -194,6 +194,7 @@ void armci_region_exchange(void *start, long size)
      armci_region_t *reg=0;
 
      if(!allow_pin)return;
+     if(armci_nclus<=1)return;
 
      found=armci_region_clus_found(armci_clus_me, start,size);
      if(found>-1){
