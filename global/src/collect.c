@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.14 2002-03-28 20:37:08 d3g293 Exp $ */
+/* $Id: collect.c,v 1.15 2002-08-19 21:59:39 vinod Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -57,7 +57,11 @@ void ga_msg_sync_()
      MPI_Barrier(MPI_COMM_WORLD);
 #else
      long type=GA_TYPE_SYN;
+#  ifdef LAPI
+     armci_msg_barrier();
+#  else
      SYNCH_(&type);
+#  endif
 #endif
 }
 
