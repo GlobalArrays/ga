@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.120 2005-01-19 18:28:22 manoj Exp $
+# $Id: makefile.h,v 1.121 2005-01-22 02:25:10 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -441,7 +441,14 @@ endif
 # LINUX 64 CPU Specific Setup: Opteron
 #-------------------------------------
 ifeq  ($(_CPU),x86_64)
-     _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90"} ')
+_FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ')
+
+# As "pathf90 -v" also gives "gcc version" as output, if FC=pathf90, then
+# _FC will be "g77 pathf90". So we need to make sure _FC=pathf90
+ifneq (,$(findstring pathf90,$(_FC)))
+    _FC = pathf90
+endif
+
   ifneq ($(_FC),g77)
     ifdef USE_INTEGER4
        FOPT_REN += -i4
@@ -459,9 +466,9 @@ ifeq  ($(_CPU),x86_64)
   endif
   ifeq ($(_FC),pathf90)
      FOPT_REN += -cpp
-     FOPT_REN += -fno-second-underscore
-     CLD_REN += -static
-     COPT +=  -static
+     FOPT_REN +=  -fno-second-underscore
+#     CLD_REN += -static
+#     COPT +=  -static
   endif
    ifeq ($(_FC),ifort)
        ifeq ($(FOPT),-O)
