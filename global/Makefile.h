@@ -24,7 +24,7 @@ GLOB_INCLUDES = -I../../ma
       INSTALL =
       ARFLAGS = rcv
     EXPLICITF = FALSE
-#   MAKEFLAGS = -j
+    MAKEFLAGS = -j 4
 
 
 ifeq ($(GA_TRACE), YES)
@@ -58,9 +58,8 @@ ifeq ($(TARGET),CRAY-T3D)
 #
        LIBSMA = ../../../libsma
            FC = cf77
-         FOPT = -O1
-         MAKE = /usr/local/bin/gmake
           CPP = /lib/cpp
+         FOPT = -O1 
        RANLIB = echo
 #GLOB_INCLUDES = -I../../ma -I$(LIBSMA)
      FOPT_REN = -Ccray-t3d -Wf-dp -Wl"-Drdahead=on" 
@@ -103,7 +102,8 @@ ifeq ($(TARGET),SGITFP)
 #
        RANLIB = echo
         CDEFS = -DEXT_INT
-     FOPT_REN = -i8
+#    FOPT_REN = -i8
+     FOPT_REN = -d8 -i8 -64 -mips4 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000 
  GLOB_DEFINES = -DSGI -DSGITFP 
 endif
 
@@ -152,7 +152,6 @@ ifeq ($(TARGET),SP1)
 
          EUIH = /usr/lpp/euih/eui
            FC = xlf
-         MAKE = gnumake
 
 GLOB_INCLUDES = -I. -I../../ma -I$(EUIH)
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
