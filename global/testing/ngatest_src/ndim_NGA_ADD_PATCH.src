@@ -2,7 +2,6 @@
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c     
       integer n,m
       integer ndim

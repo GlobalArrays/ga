@@ -97,7 +97,7 @@ divert(-1)
   #---------------------------------------------------------------------
   # insert the main program
 divert
-include(`ngatest/ndim_main.src')
+include(`ngatest_src/ndim_main.src')
 c-----------------
 divert(-1)
   # insert the testing subroutines
@@ -124,35 +124,35 @@ divert
             define(m4_ndim, m4_i)
 	    divert
             ifelse(m4_test_GA_FILL, `yes', `
-include(`ngatest/ndim_GA_FILL.src')')
+include(`ngatest_src/ndim_GA_FILL.src')')
 	    ifelse(m4_test_NGA_PUT, `yes', `
-include(`ngatest/ndim_NGA_PUT.src')')
+include(`ngatest_src/ndim_NGA_PUT.src')')
 	    ifelse(m4_test_NGA_GET, `yes', `
-include(`ngatest/ndim_NGA_GET.src')')
+include(`ngatest_src/ndim_NGA_GET.src')')
 	    ifelse(m4_test_NGA_ACC, `yes', `
-include(`ngatest/ndim_NGA_ACC.src')')
+include(`ngatest_src/ndim_NGA_ACC.src')')
 	    ifelse(m4_test_NGA_SCATTER, `yes', `
-include(`ngatest/ndim_NGA_SCATTER.src')')
+include(`ngatest_src/ndim_NGA_SCATTER.src')')
 	    ifelse(m4_test_NGA_SCATTER_ACC, `yes', `
-include(`ngatest/ndim_NGA_SCATTER_ACC.src')')
+include(`ngatest_src/ndim_NGA_SCATTER_ACC.src')')
 	    ifelse(m4_test_NGA_GATHER, `yes', `
-include(`ngatest/ndim_NGA_GATHER.src')')
+include(`ngatest_src/ndim_NGA_GATHER.src')')
 	    ifelse(m4_test_NGA_PERIODIC_PUT, `yes', `
-include(`ngatest/ndim_NGA_PERIODIC_PUT.src')')
+include(`ngatest_src/ndim_NGA_PERIODIC_PUT.src')')
 	    ifelse(m4_test_NGA_PERIODIC_GET, `yes', `
-include(`ngatest/ndim_NGA_PERIODIC_GET.src')')
+include(`ngatest_src/ndim_NGA_PERIODIC_GET.src')')
 	    ifelse(m4_test_NGA_PERIODIC_ACC, `yes', `
-include(`ngatest/ndim_NGA_PERIODIC_ACC.src')')
+include(`ngatest_src/ndim_NGA_PERIODIC_ACC.src')')
 	    ifelse(m4_test_NGA_FILL_PATCH, `yes', `
-include(`ngatest/ndim_NGA_FILL_PATCH.src')')
+include(`ngatest_src/ndim_NGA_FILL_PATCH.src')')
 	    ifelse(m4_test_NGA_COPY_PATCH, `yes', `
-include(`ngatest/ndim_NGA_COPY_PATCH.src')')
+include(`ngatest_src/ndim_NGA_COPY_PATCH.src')')
 	    ifelse(m4_test_NGA_SCALE_PATCH, `yes', `
-include(`ngatest/ndim_NGA_SCALE_PATCH.src')')
+include(`ngatest_src/ndim_NGA_SCALE_PATCH.src')')
 	    ifelse(m4_test_NGA_ADD_PATCH, `yes', `
-include(`ngatest/ndim_NGA_ADD_PATCH.src')')
+include(`ngatest_src/ndim_NGA_ADD_PATCH.src')')
 	    ifelse(m4_test_NGA_DOT_PATCH, `yes', `
-include(`ngatest/ndim_NGA_DOT_PATCH.src')')')')
+include(`ngatest_src/ndim_NGA_DOT_PATCH.src')')')')
       ifelse(m4_test_dbl, `yes',
       	`divert(-1)
 	 undefine(`m4_data_type')
@@ -176,35 +176,35 @@ include(`ngatest/ndim_NGA_DOT_PATCH.src')')')')
             define(m4_ndim, m4_i)
 	    divert
             ifelse(m4_test_GA_FILL, `yes', `
-include(`ngatest/ndim_GA_FILL.src')')
+include(`ngatest_src/ndim_GA_FILL.src')')
 	    ifelse(m4_test_NGA_PUT, `yes', `
-include(`ngatest/ndim_NGA_PUT.src')')
+include(`ngatest_src/ndim_NGA_PUT.src')')
 	    ifelse(m4_test_NGA_GET, `yes', `
-include(`ngatest/ndim_NGA_GET.src')')
+include(`ngatest_src/ndim_NGA_GET.src')')
 	    ifelse(m4_test_NGA_ACC, `yes', `
-include(`ngatest/ndim_NGA_ACC.src')')
+include(`ngatest_src/ndim_NGA_ACC.src')')
 	    ifelse(m4_test_NGA_SCATTER, `yes', `
-include(`ngatest/ndim_NGA_SCATTER.src')')
+include(`ngatest_src/ndim_NGA_SCATTER.src')')
 	    ifelse(m4_test_NGA_SCATTER_ACC, `yes', `
-include(`ngatest/ndim_NGA_SCATTER_ACC.src')')
+include(`ngatest_src/ndim_NGA_SCATTER_ACC.src')')
 	    ifelse(m4_test_NGA_GATHER, `yes', `
-include(`ngatest/ndim_NGA_GATHER.src')')
+include(`ngatest_src/ndim_NGA_GATHER.src')')
 	    ifelse(m4_test_NGA_PERIODIC_PUT, `yes', `
-include(`ngatest/ndim_NGA_PERIODIC_PUT.src')')
+include(`ngatest_src/ndim_NGA_PERIODIC_PUT.src')')
 	    ifelse(m4_test_NGA_PERIODIC_GET, `yes', `
-include(`ngatest/ndim_NGA_PERIODIC_GET.src')')
+include(`ngatest_src/ndim_NGA_PERIODIC_GET.src')')
 	    ifelse(m4_test_NGA_PERIODIC_ACC, `yes', `
-include(`ngatest/ndim_NGA_PERIODIC_ACC.src')')
+include(`ngatest_src/ndim_NGA_PERIODIC_ACC.src')')
 	    ifelse(m4_test_NGA_FILL_PATCH, `yes', `
-include(`ngatest/ndim_NGA_FILL_PATCH.src')')
+include(`ngatest_src/ndim_NGA_FILL_PATCH.src')')
 	    ifelse(m4_test_NGA_COPY_PATCH, `yes', `
-include(`ngatest/ndim_NGA_COPY_PATCH.src')')
+include(`ngatest_src/ndim_NGA_COPY_PATCH.src')')
 	    ifelse(m4_test_NGA_SCALE_PATCH, `yes', `
-include(`ngatest/ndim_NGA_SCALE_PATCH.src')')
+include(`ngatest_src/ndim_NGA_SCALE_PATCH.src')')
 	    ifelse(m4_test_NGA_ADD_PATCH, `yes', `
-include(`ngatest/ndim_NGA_ADD_PATCH.src')')
+include(`ngatest_src/ndim_NGA_ADD_PATCH.src')')
 	    ifelse(m4_test_NGA_DOT_PATCH, `yes', `
-include(`ngatest/ndim_NGA_DOT_PATCH.src')')')')
+include(`ngatest_src/ndim_NGA_DOT_PATCH.src')')')')
       ifelse(m4_test_dcpl, `yes',
       	`divert(-1)
          undefine(`m4_data_type')
@@ -228,41 +228,41 @@ include(`ngatest/ndim_NGA_DOT_PATCH.src')')')')
             define(m4_ndim, m4_i)
 	    divert
             ifelse(m4_test_GA_FILL, `yes', `
-include(`ngatest/ndim_GA_FILL.src')')
+include(`ngatest_src/ndim_GA_FILL.src')')
 	    ifelse(m4_test_NGA_PUT, `yes', `
-include(`ngatest/ndim_NGA_PUT.src')')
+include(`ngatest_src/ndim_NGA_PUT.src')')
 	    ifelse(m4_test_NGA_GET, `yes', `
-include(`ngatest/ndim_NGA_GET.src')')
+include(`ngatest_src/ndim_NGA_GET.src')')
 	    ifelse(m4_test_NGA_ACC, `yes', `
-include(`ngatest/ndim_NGA_ACC.src')')
+include(`ngatest_src/ndim_NGA_ACC.src')')
 	    ifelse(m4_test_NGA_SCATTER, `yes', `
-include(`ngatest/ndim_NGA_SCATTER.src')')
+include(`ngatest_src/ndim_NGA_SCATTER.src')')
 	    ifelse(m4_test_NGA_SCATTER_ACC, `yes', `
-include(`ngatest/ndim_NGA_SCATTER_ACC.src')')
+include(`ngatest_src/ndim_NGA_SCATTER_ACC.src')')
 	    ifelse(m4_test_NGA_GATHER, `yes', `
-include(`ngatest/ndim_NGA_GATHER.src')')
+include(`ngatest_src/ndim_NGA_GATHER.src')')
 	    ifelse(m4_test_NGA_PERIODIC_PUT, `yes', `
-include(`ngatest/ndim_NGA_PERIODIC_PUT.src')')
+include(`ngatest_src/ndim_NGA_PERIODIC_PUT.src')')
 	    ifelse(m4_test_NGA_PERIODIC_GET, `yes', `
-include(`ngatest/ndim_NGA_PERIODIC_GET.src')')
+include(`ngatest_src/ndim_NGA_PERIODIC_GET.src')')
 	    ifelse(m4_test_NGA_PERIODIC_ACC, `yes', `
-include(`ngatest/ndim_NGA_PERIODIC_ACC.src')')
+include(`ngatest_src/ndim_NGA_PERIODIC_ACC.src')')
 	    ifelse(m4_test_NGA_FILL_PATCH, `yes', `
-include(`ngatest/ndim_NGA_FILL_PATCH.src')')
+include(`ngatest_src/ndim_NGA_FILL_PATCH.src')')
 	    ifelse(m4_test_NGA_COPY_PATCH, `yes', `
-include(`ngatest/ndim_NGA_COPY_PATCH.src')')
+include(`ngatest_src/ndim_NGA_COPY_PATCH.src')')
 	    ifelse(m4_test_NGA_SCALE_PATCH, `yes', `
-include(`ngatest/ndim_NGA_SCALE_PATCH.src')')
+include(`ngatest_src/ndim_NGA_SCALE_PATCH.src')')
 	    ifelse(m4_test_NGA_ADD_PATCH, `yes', `
-include(`ngatest/ndim_NGA_ADD_PATCH.src')')
+include(`ngatest_src/ndim_NGA_ADD_PATCH.src')')
 	    ifelse(m4_test_NGA_DOT_PATCH, `yes', `
-include(`ngatest/ndim_NGA_DOT_PATCH.src')')')')
+include(`ngatest_src/ndim_NGA_DOT_PATCH.src')')')')
 c-----------------------
 c 	Utility functions
 divert(-1)
   # insert the utility program
 divert
-include(`ngatest/ndim_util_comm.src')
+include(`ngatest_src/ndim_util_comm.src')
 ifelse(m4_test_int, `yes',
   `divert(-1)
    undefine(`m4_data_type')
@@ -272,7 +272,7 @@ ifelse(m4_test_int, `yes',
    define(m4_test_type, m4_test_type_int)
    define(m4_rand, `int(drand(0) * i * 2)')
    divert
-include(`ngatest/ndim_util.src')')
+include(`ngatest_src/ndim_util.src')')
 ifelse(m4_test_dbl, `yes',
   `divert(-1)
    undefine(`m4_data_type')
@@ -282,7 +282,7 @@ ifelse(m4_test_dbl, `yes',
    define(m4_test_type, m4_test_type_dbl)
    define(m4_rand, `drand(0) * i * 2')
    divert
-include(`ngatest/ndim_util.src')')
+include(`ngatest_src/ndim_util.src')')
 ifelse(m4_test_dcpl, `yes',
   `divert(-1)
    undefine(`m4_data_type')
@@ -292,4 +292,4 @@ ifelse(m4_test_dcpl, `yes',
    define(m4_test_type, m4_test_type_dcpl)
    define(m4_rand, `dcmplx(drand(0) * i * 2,-drand(0) * i * 2)')
    divert
-include(`ngatest/ndim_util.src')')
+include(`ngatest_src/ndim_util.src')')
