@@ -6,14 +6,17 @@
 #include <stdio.h>
 
 /*********************** type definitions for ELIO interface *****************/
-
+typedef long Size_t;         /* size of I/O request type */ 
 typedef struct {
   int   fd;
   int   fs;
 } fd_struct;                      /* file descriptor type definition */
-typedef fd_struct *Fd_t;          /* C version of file descriptor type  */
+typedef struct{
+  int   fs;
+  long  avail;
+} stat_t;
+typedef fd_struct* Fd_t;
 typedef long io_request_t;   /* asynchronous I/O request type */
-typedef long Size_t;         /* size of I/O request type */ 
 
 
 #ifndef _VOID_DEFINED_
@@ -46,10 +49,10 @@ extern int    elio_probe    _ARGS_((io_request_t *id, int* status));
 extern int    elio_delete   _ARGS_((char *filename));
 extern Fd_t   elio_open     _ARGS_((char *fname, int type));
 extern Fd_t   elio_gopen    _ARGS_((char *fname, int type));
-extern int    elio_close    _ARGS_((Fd_t fd));
-extern int    elio_stat     _ARGS_((char *fname, Size_t *avail));
+extern void   elio_close    _ARGS_((Fd_t fd));
+extern int    elio_stat     _ARGS_((char *fname, stat_t *statinfo));
+extern int    elio_dirname  _ARGS_((char *fname, char *statinfo, int len));
        void   elio_init     _ARGS_(());
-       void   elio_err      _ARGS_((char *func, char *fname));
 
 #undef _ARGS_
 
@@ -74,29 +77,23 @@ extern void fflush();
 #endif
 
 #define PRINT_AND_ABORT(msg, val) \
-{ \
+do { \
   fprintf(stderr, "ELIO fatal error: %s %d\n", msg, (int) val); \
   fprintf(stdout, "ELIO fatal error: %s %d\n", msg, (int) val); \
   fflush(stdout);\
   perror("elio failed:");\
   exit(val); \
-}
-
-
+} while(0)
 #endif
 
-#define ELIO_ABORT(msg, val) PRINT_AND_ABORT(msg, val)
+#define ELIO_ABORT PRINT_AND_ABORT
 
+#define ELIO_ERROR(msg, val) do{ \
+ if(_elio_Errors_Fatal) PRINT_AND_ABORT(msg, val);\
+ else return(ELIO_FAIL);\
+} while(0)
 
-#define ELIO_ERR(_func, _fname, _code) \
-{ \
-    elio_err(_func, _fname); \
-    return( _code ); \
-}
 
 /************** this stuff is exported because EAF uses it **************/
 #define ELIO_FILENAME_MAX 1024
-#define ELIO_MAX_FILES    64
 #define SDIRS_INIT_SIZE 1024
-
-
