@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.53 2003-03-10 22:19:01 d3h325 Exp $
+/* $Id: myrinet.c,v 1.54 2003-03-10 22:56:36 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -1359,10 +1359,9 @@ void armci_call_data_server()
                                                  size, GM_LOW_PRIORITY, tag);
     
               break;
-#ifdef ARMCI_POLLING_RECV
           case GM_NO_RECV_EVENT:
-              break;
-#endif
+              if(server_can_poll) break;
+
           default:
               gm_unknown(serv_gm->rcv_port, event);
               break;
