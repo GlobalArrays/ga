@@ -92,7 +92,14 @@ ifeq ($(ARMCI_NETWORK),ELAN4)
   ELAN4_LIB_NAME = -lelan4 -lelan -lpthread
   COMM_LIBS += $(ELAN4_LIB_NAME)
 endif
-
+    
+ifeq ($(TARGET),LINUX64)
+# _ALTIX= $(shell /bin/rpm -q -i sgi-mpt  2>&1|egrep Reloc|awk ' /Rel/  {print "Y"}')
+     _SGIALTIX= $(shell if [ -r /proc/sgi_sn/system_serial_number ]; then /bin/echo Y; fi)
+ifeq ($(_SGIALTIX),Y)
+  COMM_LIBS += -lsma
+endif
+endif
 
 ifeq ($(TARGET),LAPI)
 ifdef LAPI2
