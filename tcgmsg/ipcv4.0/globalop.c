@@ -1,5 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/globalop.c,v 1.5 2001-04-24 01:34:25 edo Exp $ */
-
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/globalop.c,v 1.6 2001-05-07 23:02:25 edo Exp $ */
+#include <stdlib.h>
 #include "sndrcv.h"
 #include "msgtypesc.h"
 
@@ -7,12 +7,6 @@
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
-#if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) || \
-defined(KSR) || defined(DECOSF)
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
 extern void free();
 
 #ifndef IPSC
@@ -218,8 +212,7 @@ void IGOP_(ptype, x, pn, op)
   while (nleft) {
     ndo = MIN(nleft, GOP_BUF_SIZE);
     nb  = ndo * sizeof(long);
-
-    /* Do summation amoung slaves in a cluster */
+     /* Do summation amoung slaves in a cluster */
 
     up    = master + (slaveid-1)/2;
     left  = master + 2*slaveid + 1;
