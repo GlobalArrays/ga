@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.19 2002-08-14 14:57:44 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.20 2002-08-14 15:14:05 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2242,8 +2242,10 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY ALONG ONE SIDE OF ARRAY
 \*/
-logical FATR nga_update_ghost_dir_(Integer *g_a, Integer *pdim, Integer *pdir,
-           logical *pflag)
+logical FATR nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
+                                   Integer *pdim,   /* Dimension of update */
+                                   Integer *pdir,   /* Direction of update (+/-1) */
+                                   logical *pflag)  /* include corner cells */
 {
   Integer idx, ipx, inx, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer ntot, mask[MAXDIM],lmask[MAXDIM];
@@ -2298,7 +2300,7 @@ logical FATR nga_update_ghost_dir_(Integer *g_a, Integer *pdim, Integer *pdir,
     }
   }
 
-  GA_PUSH_NAME("ga_update2_ghosts");
+  GA_PUSH_NAME("ga_update_ghosts_dir");
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
   /* obtain range of data that is held by local processor */
