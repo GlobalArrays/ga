@@ -1,21 +1,25 @@
 
+/**
+ * Aggregate Put/Get requests
+ */
 
 #include "armcip.h"
 #include <string.h> /* memcpy */
 #include <stdio.h>
 
-#define _MAX_AGG_BUFFERS   64   /* Maximum # of aggregation buffers available */
-#define _MAX_AGG_BUFSIZE   2048 /* size of each buffer */
-#define _MAX_AGG_HANDLE    _MAX_AGG_BUFFERS /* Max # of aggregation handles */
+#define _MAX_AGG_BUFFERS 32   /* Maximum # of aggregation buffers available*/
+#define _MAX_AGG_BUFSIZE 2048 /* size of each buffer. should be < 2^15 */
+#define _MAX_PTRS        256  /* < 2^15, as it is "short int" in agg_req_t */
+#define _MAX_AGG_HANDLE  _MAX_AGG_BUFFERS /* Max # of aggregation handles */
 
 /* aggregate request handle */
 typedef struct {
-  unsigned int tag;      /* non-blocking request tag */
-  short int proc;        /* remote process id */
-  short int request_len; /* number of requests */
-  short int buf_pos;     /* current position of the agg buffer */
-  short int buf_pos_end; /* current ending position of the buffer */
-  armci_giov_t *darr;    /* giov vectors */
+  unsigned int tag;        /* non-blocking request tag */
+  short int proc;          /* remote process id */
+  short int request_len ;  /* number of requests */
+  short int ptr_array_len; /* pointer length for this request */
+  short int buf_pos_end;   /* position of buffer (from right end) */
+  armci_giov_t *darr;      /* giov vectors */
 }agg_req_t;
 static agg_req_t *aggr[_MAX_AGG_HANDLE];  /* aggregate request handle */
 
@@ -30,6 +34,9 @@ static agg_list_t ulist, alist;/*in-use & available aggr buffer index list*/
 
 /* aggregation buffer */
 static char agg_buf[_MAX_AGG_BUFFERS][_MAX_AGG_BUFSIZE];
+/* aggregation buffer to store the pointers */
+static void* agg_src_ptr[_MAX_AGG_BUFFERS][_MAX_PTRS]; 
+static void* agg_dst_ptr[_MAX_AGG_BUFFERS][_MAX_PTRS]; 
 
 /**
  * ---------------------------------------------------------------------
@@ -48,6 +55,19 @@ static char agg_buf[_MAX_AGG_BUFFERS][_MAX_AGG_BUFSIZE];
  * ---------------------------------------------------------------------
  */
 
+#define AGG_INIT_NB_HANDLE(op_type, p, nb_handle) \
+    if(nb_handle->proc < 0) {                 \
+      nb_handle->tag  = GET_NEXT_NBTAG();     \
+      nb_handle->op   = op_type;              \
+      nb_handle->proc = p;                    \
+      nb_handle->bufid= NB_NONE;              \
+    }                                         \
+    else if(nb_handle->op != op_type)         \
+      armci_die("ARMCI_NbXXX: AGG_INIT_NB_HANDLE(): Aggregate Failed, Invalid non-blocking handle", nb_handle->op);             \
+    else if(nb_handle->proc != p)          \
+      armci_die("ARMCI_NbXXX: AGG_INIT_NB_HANDLE(): Aggregate Failed, Invalid non-blocking handle", p)
+
+
 /* initialize/set the fields in the buffer*/
 #define _armci_agg_set_buffer(index, tag, proc, len) { \
     aggr[(index)]->tag = (tag);       \
@@ -56,13 +76,15 @@ static char agg_buf[_MAX_AGG_BUFFERS][_MAX_AGG_BUFSIZE];
     ulist.index[ulist.size++] = (index);/* add the new index to the in-use list and increment it's size*/ \
 }
 
-static int _armci_agg_get_buffer_index(int tag, int proc) {
-    int i, index;
+/* get the index of the aggregation buffer to be used */
+static int _armci_agg_get_bufferid(armci_ihdl_t nb_handle) {
+    int i, index, tag = nb_handle->tag, proc = nb_handle->proc;
     
     /* check if there is an entry for this handle in the existing list*/
     for(i=ulist.size-1; i>=0; i--) {
       index = ulist.index[i];
-      if(aggr[index]->tag == tag && aggr[index]->proc == proc)	return index;
+      if(aggr[index]->tag == tag && aggr[index]->proc == proc) 
+	return index;
     }
     
     /* else it is a new handle, so get a aggr buffer from either 
@@ -77,13 +99,13 @@ static int _armci_agg_get_buffer_index(int tag, int proc) {
       
       /* allocate memory for aggregate request handle */
       aggr[index] = (agg_req_t *)agg_buf[index];
-      aggr[index]->buf_pos = sizeof(agg_req_t); /* update position of buffer */
       
+      aggr[index]->request_len   = 0;
+      aggr[index]->ptr_array_len = 0;
+      aggr[index]->buf_pos_end   = _MAX_AGG_BUFSIZE;
+
       /* allocate memory for giov vector field in aggregate request handler */
-      aggr[index]->darr = (armci_giov_t *)(agg_buf[index] +
-					   aggr[index]->buf_pos);
-      aggr[index]->buf_pos_end = _MAX_AGG_BUFSIZE;
-      aggr[index]->request_len = 0;
+      aggr[index]->darr = (armci_giov_t *)(agg_buf[index]+sizeof(agg_req_t));
     }
     
     _armci_agg_set_buffer(index, tag, proc, 0); 
@@ -105,117 +127,106 @@ static void _armci_agg_update_lists(int index) {
     alist.index[alist.size++] = index;
 }
 
+
 /* replace with macro later */
-static int _armci_agg_get_buffer_position(int index, int *ptr_array_len, 
-					  int is_registered_put, int bytes,
-					  int *rid, armci_ihdl_t nb_handle) {
-  int bytes_needed;
+static armci_giov_t* 
+_armci_agg_get_descriptor(int *ptr_array_len,int bytes,armci_ihdl_t nb_handle,
+			  int is_registered_put, void **registered_put_data) {
+  
+    short unsigned int get_new_descr=0, bytes_needed=0, rid;
+    int bytes_remaining;
+    int index = _armci_agg_get_bufferid(nb_handle);
     
-    /* memory required for this request */
-    bytes_needed = 2 * (*ptr_array_len) * sizeof(void **);
-    if(is_registered_put)  bytes_needed += bytes;
-
-    aggr[index]->buf_pos += sizeof(armci_giov_t);
+    rid   = aggr[index]->request_len; /* index of giov descriptor */
+    bytes_remaining = aggr[index]->buf_pos_end - 
+      (sizeof(agg_req_t) + aggr[index]->request_len*sizeof(armci_giov_t));
     
-#if 0
-    if(armci_me == 0) {
-      printf("%d: %d %d %d\n", aggr[index]->request_len, bytes_needed, 
-	     aggr[index]->buf_pos, aggr[index]->buf_pos_end);
-    }
-#endif
+    /* extra bytes required to store registered put data */
+    if(is_registered_put) bytes_needed = bytes; 
     
-    /* If buffer is full, then complete data transfer */
-    if(aggr[index]->buf_pos + bytes_needed > aggr[index]->buf_pos_end) {
-      
+    /* if (byte-)sizes are equal, use previously created descriptor 
+       else get a new descriptor */
+    if( rid && bytes==aggr[index]->darr[rid-1].bytes) --rid;
+    else { get_new_descr=1;  bytes_needed += sizeof(armci_giov_t); }
+    
+    /* If buffer is full, then complete data transfer. After completion, 
+       if still ptr array_len is greater than maximum limit(_MAX_PTRS), 
+       then do it by parts. Determine new ptr_array_len that fits buffer */
+    if( (bytes_needed > bytes_remaining) ||
+	(_MAX_PTRS - aggr[index]->ptr_array_len < *ptr_array_len)) {
       armci_agg_complete(nb_handle, SET);
-      aggr[index]->buf_pos += sizeof(armci_giov_t);
-          
-      /* if buffer is still not big enough to hold all pointer array, then
-	 do it by parts. determine a new ptr_array_len that fits buffer */
-      if(bytes_needed >= aggr[index]->buf_pos_end - aggr[index]->buf_pos) {
-        bytes_needed   = aggr[index]->buf_pos_end - aggr[index]->buf_pos;
-        *ptr_array_len = bytes_needed/(2*sizeof(void **));
-      }
+      rid = 0; get_new_descr=1; 
+      if(*ptr_array_len > _MAX_PTRS) *ptr_array_len = _MAX_PTRS;
     }
     
-    *rid=aggr[index]->request_len++;/*get new request id*/
+    /* if new descriptor, allocate memory for src_ptr & dst_ptr arrays */
+    if(get_new_descr) { 
+      int i = aggr[index]->ptr_array_len;
+      aggr[index]->darr[rid].src_ptr_array = (void **)&agg_src_ptr[index][i];
+      aggr[index]->darr[rid].dst_ptr_array = (void **)&agg_dst_ptr[index][i];
+      aggr[index]->darr[rid].ptr_array_len = 0;
+      aggr[index]->request_len++;    
+    }
 
-    /* update end position of buffer, according to usage of memory required 
-       to store descriptor, src and dst pointer array */
-    return (aggr[index]->buf_pos_end -= bytes_needed);
+    /* store registered put data */
+    if(is_registered_put) {
+      aggr[index]->buf_pos_end -= bytes;
+      memcpy(&((char *)aggr[index])[aggr[index]->buf_pos_end], 
+	     *((char **)registered_put_data), bytes);
+      *(char **)registered_put_data = (char *)&((char *)aggr[index])[aggr[index]->buf_pos_end];
+    }
+
+    aggr[index]->ptr_array_len += *ptr_array_len;
+    return (&aggr[index]->darr[rid]);
 }
-
 
 int armci_agg_save_descriptor(void *src, void *dst, int bytes, int proc, int op,
 			      int is_registered_put, armci_ihdl_t nb_handle) {
-    int pos; /* current position of the buffer */
-    int rid; /* request id */
-    int index, one=1, vptr_size = sizeof(void **);
-    char *buf;
+
+    int one=1, idx;
+    armci_giov_t * darr;
 
     /* set up the handle if it is a new aggregation request */
     AGG_INIT_NB_HANDLE(op, proc, nb_handle);
     
-    /* get the index of the aggregation buffer to be used */
-    index = _armci_agg_get_buffer_index(nb_handle->tag, nb_handle->proc);
-    buf = agg_buf[index]; /* buffer used for this handle */
-    
-    /* get the current end position of the buffer and request id */
-    pos=_armci_agg_get_buffer_position(index, &one, is_registered_put, 
-				       bytes, &rid, nb_handle);
+    darr = _armci_agg_get_descriptor(&one, bytes, nb_handle, 
+				     is_registered_put, &src);
+    idx = darr->ptr_array_len;
 
-    if(is_registered_put) { /* if it is registered put, copy data into buffer */
-      memcpy(&buf[pos], src, bytes);
-      src = &buf[pos];
-      pos += bytes;
-    }
-    
-    /* malloc and, save source & destination pointers in descriptor */
-    aggr[index]->darr[rid].src_ptr_array = (void **)&buf[pos]; pos+=vptr_size;
-    aggr[index]->darr[rid].dst_ptr_array = (void **)&buf[pos]; pos+=vptr_size;
-    
-    aggr[index]->darr[rid].src_ptr_array[0] = src;
-    aggr[index]->darr[rid].dst_ptr_array[0] = dst;
-    aggr[index]->darr[rid].bytes = bytes;
-    aggr[index]->darr[rid].ptr_array_len = 1;
-    
+    darr->src_ptr_array[idx] = src;
+    darr->dst_ptr_array[idx] = dst;
+    darr->bytes              = bytes;
+    darr->ptr_array_len     += 1;
+
+    fflush(stdout);
     return 0;
 }
 
 
-int armci_agg_save_giov_descriptor(armci_giov_t darr[], int len, int proc, 
+int armci_agg_save_giov_descriptor(armci_giov_t dscr[], int len, int proc, 
 				   int op, armci_ihdl_t nb_handle) {  
-    int pos; /* current position of the buffer */
-    int rid; /* request id */
-    int i, j, k, index, size, ptr_array_len;
-    char *buf;
+    int i, j, k, idx, bytes, ptr_array_len;
+    armci_giov_t * darr;
 
     /* set up the handle if it is a new aggregation request */
     AGG_INIT_NB_HANDLE(op, proc, nb_handle);
 
-    /* get the index of the aggregation buffer to be used */
-    index = _armci_agg_get_buffer_index(nb_handle->tag, nb_handle->proc);
-    buf = agg_buf[index]; /* buffer used for this handle */
-
     for(i=0; i<len; i++) {
       k = 0;
-      ptr_array_len = darr[i].ptr_array_len;
+      bytes         = dscr[i].bytes;
+      ptr_array_len = dscr[i].ptr_array_len;
       do {
-	/* get the current end position of the buffer */
-	pos = _armci_agg_get_buffer_position(index, &ptr_array_len, 0, 0,
-					     &rid, nb_handle);
-
-	/* malloc, and save source & destination pointers in descriptor */
-	size = ptr_array_len * sizeof(void **);
-	aggr[index]->darr[rid].src_ptr_array = (void **)&buf[pos]; pos += size;
-	aggr[index]->darr[rid].dst_ptr_array = (void **)&buf[pos]; pos += size;
-	for(j=0; j<ptr_array_len; j++, k++) {
-	  aggr[index]->darr[rid].src_ptr_array[j] = darr[i].src_ptr_array[k];
-	  aggr[index]->darr[rid].dst_ptr_array[j] = darr[i].dst_ptr_array[k];
+	darr=_armci_agg_get_descriptor(&ptr_array_len,bytes,nb_handle,0,0);
+	idx = darr->ptr_array_len;
+	
+	for(j=idx; j<idx+ptr_array_len; j++, k++) {
+	  darr->src_ptr_array[j] = dscr[i].src_ptr_array[k];
+	  darr->dst_ptr_array[j] = dscr[i].dst_ptr_array[k];
 	}
-	aggr[index]->darr[rid].bytes = darr[i].bytes;
-	aggr[index]->darr[rid].ptr_array_len = ptr_array_len;
-	ptr_array_len = darr[i].ptr_array_len - ptr_array_len;
+	darr->bytes          = dscr[i].bytes;
+	darr->ptr_array_len += ptr_array_len;
+
+	ptr_array_len = dscr[i].ptr_array_len - ptr_array_len;
       } while(k < darr[i].ptr_array_len);
     }
     return 0;
@@ -225,43 +236,32 @@ int armci_agg_save_strided_descriptor(void *src_ptr, int src_stride_arr[],
 				      void* dst_ptr, int dst_stride_arr[], 
 				      int count[], int stride_levels, int proc,
 				      int op, armci_ihdl_t nb_handle) {  
-    int pos; /* current position of the buffer */
-    int rid; /* request id */
-    int i, j, k, index, size, ptr_array_len=1, total1D=1, num1D=0;
+
+    int i, j, k, idx, ptr_array_len=1, total1D=1, num1D=0;
     int offset1, offset2, factor[MAX_STRIDE_LEVEL];
-    char *buf;
+    armci_giov_t * darr;
 
     /* set up the handle if it is a new aggregation request */
     AGG_INIT_NB_HANDLE(op, proc, nb_handle);
 
-    /* get the index of the aggregation buffer to be used */
-    index = _armci_agg_get_buffer_index(nb_handle->tag, nb_handle->proc);
-    buf = agg_buf[index]; /* buffer used for this handle */
-    
     for(i=1; i<=stride_levels; i++) {
       total1D *= count[i]; 
       factor[i-1]=0;   
-    }
-      
+    }      
     ptr_array_len = total1D;
+
     do {
-      /* get the current end position of the buffer */
-      pos = _armci_agg_get_buffer_position(index, &ptr_array_len, 0, 0,
-					   &rid, nb_handle);
-      
-      /* malloc, and save source & destination pointers in descriptor */
-      size = ptr_array_len * sizeof(void **);
-      aggr[index]->darr[rid].src_ptr_array = (void **)&buf[pos]; pos += size;
-      aggr[index]->darr[rid].dst_ptr_array = (void **)&buf[pos]; pos += size;
-      
+      darr=_armci_agg_get_descriptor(&ptr_array_len,count[0],nb_handle,0,0);
+      idx = darr->ptr_array_len;
+  
       /* converting stride into giov vector */
-      for(i=0; i<ptr_array_len; i++) {
+      for(i=idx; i<idx+ptr_array_len; i++) {
 	for(j=0, offset1=0, offset2=0; j<stride_levels; j++) {
 	  offset1 += src_stride_arr[j]*factor[j];
 	  offset2 += dst_stride_arr[j]*factor[j];
 	}
-	aggr[index]->darr[rid].src_ptr_array[i] = (char *)src_ptr + offset1;
-	aggr[index]->darr[rid].dst_ptr_array[i] = (char *)dst_ptr + offset2;
+	darr->src_ptr_array[i] = (char *)src_ptr + offset1;
+	darr->dst_ptr_array[i] = (char *)dst_ptr + offset2;
 	++factor[0];
 	++num1D;
 	for(j=1; j<stride_levels; j++)
@@ -270,10 +270,12 @@ int armci_agg_save_strided_descriptor(void *src_ptr, int src_stride_arr[],
 	    for(k=0; k<j;k++) factor[k]=0;
 	  }
       }
-      aggr[index]->darr[rid].bytes = count[0];
-      aggr[index]->darr[rid].ptr_array_len = ptr_array_len;      
+
+      darr->bytes          = count[0];
+      darr->ptr_array_len += ptr_array_len;      
       ptr_array_len = total1D - ptr_array_len;
     } while(num1D < total1D);
+
     return 0;
 }
 
@@ -295,9 +297,25 @@ void armci_agg_complete(armci_ihdl_t nb_handle, int condition) {
 	   armci_me, nb_handle->proc, index, aggr[index]->request_len);
 #endif
 
-    /* complete the data transfer */
+    /* complete the data transfer. NOTE: in LAPI, Non-blocking calls 
+       (followed by wait) performs better than blocking put/get */
     if(aggr[index]->request_len) {
       switch(nb_handle->op) {
+#ifdef LAPI
+      armci_req_t usr_hdl;
+      case PUT:
+	if((rc=ARMCI_NbPutV(aggr[index]->darr, aggr[index]->request_len, 
+			    nb_handle->proc, (armci_hdl_t)&usr_hdl)))
+	  ARMCI_Error("armci_agg_complete: nbputv failed",rc);
+	ARMCI_Wait((armci_hdl_t)&usr_hdl);
+	break;
+      case GET:
+	if((rc=ARMCI_NbGetV(aggr[index]->darr, aggr[index]->request_len, 
+			    nb_handle->proc, (armci_hdl_t)&usr_hdl)))
+	  ARMCI_Error("armci_agg_complete: nbgetv failed",rc);  
+	ARMCI_Wait((armci_hdl_t)&usr_hdl);
+	break;
+#else
       case PUT:
 	if((rc=ARMCI_PutV(aggr[index]->darr, aggr[index]->request_len, 
 			  nb_handle->proc)))
@@ -308,17 +326,18 @@ void armci_agg_complete(armci_ihdl_t nb_handle, int condition) {
 			  nb_handle->proc)))
 	  ARMCI_Error("armci_agg_complete: getv failed",rc);  
 	break;
+#endif
       }
     }
-
+    
     /* setting request length to zero, as the requests are completed */
-    aggr[index]->request_len = 0;
-    aggr[index]->buf_pos = sizeof(agg_req_t);
-    aggr[index]->buf_pos_end = _MAX_AGG_BUFSIZE;
+    aggr[index]->request_len   = 0;
+    aggr[index]->ptr_array_len = 0;
+    aggr[index]->buf_pos_end   = _MAX_AGG_BUFSIZE;
     
     /* If armci_agg_complete() is called ARMCI_Wait(), then unset nb_handle*/
     if(condition==UNSET) { 
-      nb_handle->proc = -1; /* nb_handle->tag  = 0; */
+      nb_handle->proc = -1;
       _armci_agg_update_lists(index);
     }
 }
