@@ -2,7 +2,7 @@
 #
 # Define TARGET to be the machine you wish to build for
 # choose one of :
-# SUN,SOLARIS,SGI,SGITFP,IBM,KSR,SP1,CRAY-T3D,CRAY-T3E,IPSC,DELTA,PARAGON,DECOSF
+# SUN,SOLARIS,SGI,SGITFP,IBM,KSR,SP1,CRAY-T3D,CRAY-T3E,IPSC,DELTA,PARAGON,DECOSF,LAPI
 #
 # Specify message-passing library to be used with GA. The current choices
 # are: TCGMSG (default) or MPI. For MPI, please refer to global.doc for 
@@ -402,7 +402,7 @@ endif
 #
 ifeq ($(TARGET),LAPI)
 #
-           FC = xlf
+           FC = mpxlf_r
            CC = mpcc_r
           FLD = $(CC)
        RANLIB = ranlib

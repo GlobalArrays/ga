@@ -17,7 +17,7 @@
 # All programs are built in ./testing subdirectory. 
 # TARGET might be one of:
 #      SUN, SGI, SGITFP, IBM, DECOSF, KSR, SP1, CRAY-T3D, IPSC, DELTA, PARAGON
-#      SOLARIS, LINUX
+#      SOLARIS, LINUX, LAPI
 #
 #........................................................................
 
