@@ -88,7 +88,6 @@ unsigned int   bytes:20;      /* number of bytes requested */
          int   datalen;       /* >0 in lapi means that data is included */
          int   ehlen:8;       /* size of extra header and the end of descr */
   signed int   dscrlen:24;    /* >0 in lapi means that descriptor is included */
-         long test;
          msg_tag_t tag;       /* message tag for response to this request, MUST BE LAST */
 }request_header_t;
 
