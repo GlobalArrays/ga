@@ -63,19 +63,19 @@ c
          endif
          call ga_sync()
 c        keep a copy of the original patch
-         if(hi(0).ne.0) call nga_get(g_a,lo,hi,
+         if(hi(1).ne.-1) call nga_get(g_a,lo,hi,
      $        a(substr(m4_lo_all, 1, eval(m4_ndim*6-1))),ld)
 c        generate the alpha
          alpha = val
 c
          call ga_sync()
 c        keep a copy of the original patch
-         if(hi(0).ne.0) call nga_acc(g_a,lo,hi,
+         if(hi(1).ne.-1) call nga_acc(g_a,lo,hi,
      $        b(substr(m4_lo_all, 1, eval(m4_ndim*6-1))),ld,alpha)
 c     
          call ga_sync()
 c
-         if(hi(0).ne.0) then
+         if(hi(1).ne.-1) then
 c           scale the local copy of array            
             call m4_util_scale_patch(m4_test_type)(total,
      $        m4_conv(1),a,lo,hi,ndim,dims,
