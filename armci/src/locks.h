@@ -107,7 +107,7 @@
 
 #elif defined(CRAY_T3E) || defined(QUADRICS)
 #  include <limits.h>
-#ifdef DECOSF
+#if defined(DECOSF) || defined(LINUX64)
 #  define  _INT_MIN_64 (LONG_MAX-1)
 #endif
    static long armci_lock_var=0;

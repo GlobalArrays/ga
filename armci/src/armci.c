@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.30 2000-05-31 17:50:12 d3h325 Exp $ */
+/* $Id: armci.c,v 1.31 2000-06-02 21:49:42 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -222,7 +222,9 @@ int ARMCI_Init()
     armci_init_lapi();
 #endif
 #ifdef QUADRICS
+    printf("calling shmem_init\n");
     shmem_init();
+    printf("after shmem_init\n");
 #endif
 
     armci_init_clusinfo();

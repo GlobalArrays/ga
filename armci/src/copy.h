@@ -20,6 +20,7 @@
 #ifdef CRAY
 #   include <mpp/shmem.h>
 #else
+#   include <unistd.h>
 #   include <elan/shmem.h>
 #endif
     int cmpl_proc;
