@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.116 2005-01-14 02:32:12 manoj Exp $
+# $Id: makefile.h,v 1.117 2005-01-14 03:49:46 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -335,7 +335,7 @@ ifeq ($(TARGET),LINUX64)
        RANLIB = echo
 GLOB_DEFINES += -DLINUX 
 ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /efc/ { print "efc" ; exit } ' )
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /ifort/ { print "ifort" ; exit } ' )
 endif
 ifdef USE_INTEGER4
 else
@@ -343,25 +343,35 @@ else
 endif
          _CPU = $(shell uname -m)
 #
-# IA64 --- only Intel fortran compiler supported
+#-----------------------------------
+# LINUX 64 CPU Specific Setup: IA64
+#-----------------------------------
+# IA64, only Intel fortran compiler supported 
 ifeq  ($(_CPU),ia64)
            FC = efc
            CC = gcc
-     CLD_REN =   -Wl,--relax  -Wl,-Bstatic 
 ifeq ($(FC),efc)
-       _IFCV8= $(shell efc -V  2>&1|egrep -v Inte|egrep -v efc |egrep 8|awk ' /8\./  {print "Y"}')
+       _IFCV8= $(shell efc -V  2>&1|egrep -v Intel|egrep -v efc |egrep -i "version 8"|awk ' /8\./  {print "Y"}')
+       ifeq ($(_IFCV8),Y)
+         FC = ifort
+         GLOB_DEFINES+= -DIFCV8
+       endif	
+     FOPT_REN += -cm -w90 -w95 -align 
+endif
+ifeq ($(FC),ifort)
+       _IFCV8= $(shell efc -V  2>&1|egrep -v Intel|egrep -v efc |egrep -i "version 8"|awk ' /8\./  {print "Y"}')
        ifeq ($(_IFCV8),Y)
          GLOB_DEFINES+= -DIFCV8
        endif	
-     FLD_REN =   -Wl,--relax  -Wl,-Bstatic 
      FOPT_REN += -cm -w90 -w95 -align 
 endif
+
 ifeq ($(CC),ecc)
      COPT_REN += -fno-alias  -ftz
 endif
 ifeq ($(CC),gcc) 
      COPT=-O3
-     COPT_REN +=  -funroll-loops 
+     COPT_REN +=  -Wall -funroll-loops 
 endif
   ifdef USE_INTEGER4
      FOPT_REN += -i4
@@ -369,16 +379,33 @@ endif
      FOPT_REN += -i8 
   endif
 ifneq (,$(findstring efc,$(_FC)))
-      FLD_REN = -Vaxlib
-    GLOB_DEFINES += -DIFCLINUX
+     FLD_REN += -Vaxlib
+     GLOB_DEFINES += -DIFCLINUX
 endif
+ifneq (,$(findstring ifort,$(_FC)))
+     FLD_REN += -Vaxlib
+     GLOB_DEFINES += -DIFCLINUX
+endif  
 ifneq (,$(findstring mpif,$(_FC)))
          _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /efc/ { print "efc" ; exit } ' )
 endif
-
+          CLD = $(CC)
+ifeq ($(_FC),g77)
+          CLD = $(FLD)
+      CLD_REN =
 endif
-#
-# Alpha
+ifeq ($(_FC),efc) 
+          CLD = $(FLD)
+      CLD_REN =
+endif
+ifeq ($(_FC),ifort) 
+          CLD = $(FLD)
+      CLD_REN = -nofor_main
+endif
+endif
+#-----------------------------------
+# LINUX 64 CPU Specific Setup: Alpha
+#-----------------------------------
 ifeq  ($(_CPU),alpha)
            CC = ccc
            FC = fort
@@ -392,14 +419,8 @@ ifdef USE_INTEGER4
     CLD_REN+= -Wl,-taso 
 endif
         CLIBS = -lfor
-endif
-
           CLD = $(CC)
 ifeq ($(_FC),g77)
-          CLD = $(FLD)
-      CLD_REN =
-endif
-ifeq ($(_FC),efc) 
           CLD = $(FLD)
       CLD_REN =
 endif
@@ -407,9 +428,15 @@ ifeq ($(_FC),fort)
           CLD = $(FLD)
       CLD_REN =
 endif
+ifeq ($(_FC),efc) 
+          CLD = $(FLD)
+      CLD_REN =
+endif
 endif
 #
-# Opteron
+#-------------------------------------
+# LINUX 64 CPU Specific Setup: Opteron
+#-------------------------------------
 ifeq  ($(_CPU),x86_64)
      _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90"} ')
   ifneq ($(_FC),g77)
@@ -442,7 +469,9 @@ ifeq  ($(_CPU),x86_64)
    GLOB_DEFINES += -DNOUSE_MMAP
 endif
 #
-# power4
+#-------------------------------------
+# LINUX 64 CPU Specific Setup: power4
+#-------------------------------------
 ifeq  ($(_CPU),ppc64)
   FC=xlf
   CC=/opt/cross/bin/powerpc64-linux-gcc
@@ -464,6 +493,8 @@ ifeq  ($(_CPU),ppc64)
      endif
   endif
 endif
+
+endif 
 #
 #............................. CYGNUS on Windows ..........................
 #
