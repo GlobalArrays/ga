@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.27 2001-04-12 18:00:37 d3h325 Exp $ */
+/* $Id: message.c,v 1.28 2001-09-26 00:06:47 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -656,7 +656,7 @@ void armci_msg_clus_igop(int *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_INT); }
 
 void armci_msg_clus_lgop(long *x, int n, char* op)
-{ armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_INT); }
+{ armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_LONG); }
 
 void armci_msg_clus_fgop(float *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_FLOAT); }
