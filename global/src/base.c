@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.61 2003-11-14 16:15:30 vinod Exp $ */
+/* $Id: base.c,v 1.62 2003-12-09 16:17:58 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1278,6 +1278,23 @@ logical nga_create_ghosts_config(Integer type,
   return status;
 }
 
+logical nga_create_ghosts_nocorner(Integer type,
+                   Integer ndim,
+                   Integer dims[],
+                   Integer width[],
+                   char* array_name,
+                   Integer chunk[],
+                   Integer *g_a)
+{
+  Integer p_handle = ga_default_config_();
+  logical status;
+  status = nga_create_ghosts_config(type, ndim, dims, width, array_name,
+                  chunk, p_handle, g_a);
+  if(ga_has_ghosts_(g_a))nga_set_neighbor_ghost_info(g_a);
+  return status;
+}
+
+
 logical nga_create_ghosts(Integer type,
                    Integer ndim,
                    Integer dims[],
@@ -1583,6 +1600,29 @@ char buf[FNAM];
 
   return (nga_create_ghosts_config(*type, *ndim,  dims, width, buf, chunk,
                    *p_handle, g_a));
+}
+
+
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
+ *  Fortran version
+\*/
+#if defined(CRAY) || defined(WIN32)
+logical FATR nga_create_ghosts_nocorner_(Integer *type, Integer *ndim, Integer *dims,
+                   Integer *width, _fcd array_name, Integer *chunk, Integer *g_a)
+#else
+logical FATR nga_create_ghosts_nocorner_(Integer *type, Integer *ndim, Integer *dims,
+                   Integer *width, char* array_name, Integer *chunk, Integer *g_a,
+                   int slen)
+#endif
+{
+char buf[FNAM];
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
+#else
+      f2cstring(array_name ,slen, buf, FNAM);
+#endif
+
+  return(nga_create_ghosts_nocorner(*type, *ndim,  dims, width,buf, chunk, g_a));
 }
 
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS

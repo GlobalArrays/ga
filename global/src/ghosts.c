@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.32 2003-10-10 22:03:39 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.33 2003-12-09 16:17:59 vinod Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1961,6 +1961,288 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   if(local_sync_end)ga_sync_();
   return TRUE;
 }
+
+/*uncomment for using message passing sendrecv in north south direction */
+/*#define USE_MP_NORTHSOUTH */
+
+
+/*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING PUT CALLS WITHOUT CORNERS AND
+ *  WITHOUT ANY BARRIERS
+\*/
+logical ga_update_ghosts_nocorner_(Integer *g_a)
+{
+  Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
+  Integer size, ndim, nwidth, increment[MAXDIM];
+  Integer width[MAXDIM];
+  Integer dims[MAXDIM];
+  int *stride_loc, *stride_rem,*count;
+  int msgcnt, bytes;
+  char *ptr_loc, *ptr_rem,*cache;
+  int local_sync_begin,local_sync_end,scope;
+#ifdef USE_MP_NORTHSOUTH
+  char send_name[32], rcv_name[32];
+  void *snd_ptr, *rcv_ptr;
+#endif
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
+#ifdef USE_MP_NORTHSOUTH
+  strcpy(send_name,"send_buffer");
+  strcpy(rcv_name,"receive_buffer");
+
+  snd_ptr = ga_malloc(buflen, GA[handle].type, send_name);
+  rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
+#endif
+ 
+  cache = GA[handle].cache;
+  /* if global array has no ghost cells, just return */
+  if (!ga_has_ghosts_(g_a)) return TRUE;
+
+  size = GA[handle].elemsize;
+  ndim = GA[handle].ndim;
+
+  if (!gai_check_ghost_distr(g_a)) return FALSE;
+
+  GA_PUSH_NAME("ga_update_ghosts_nocorner");
+
+  /* loop over dimensions for sequential update using shift algorithm */
+  msgcnt = 0;
+  (*GA_Update_Signal) = 1;
+  for (idx=0; idx < ndim; idx++) {
+    nwidth = width[idx];
+    if (nwidth != 0) {
+
+      /* Perform update in negative direction. */
+      ptr_rem = *(char **)(cache);
+      if(ptr_rem==NULL)return FALSE;
+      ptr_loc = *(char **)(cache+sizeof(char *));
+      stride_loc = (int *)(cache+2*sizeof(char *));
+      stride_rem = (int *)(stride_loc+ndim);
+      count = (int *)(stride_rem+ndim);
+      proc_rem = *(int *)(count+ndim);
+      cache = (char *)(count+ndim+1);
+          
+      if(count[0]>10000){
+        /*tries to use armci direct put when possible */
+        ARMCI_PutS_flag_dir(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+            (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
+            *GA_Update_Signal, (int)proc_rem);
+      }
+      else{
+#ifndef USE_MP_NORTHSOUTH
+        ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+            (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
+            *GA_Update_Signal, (int)proc_rem);
+#else
+#endif
+      }
+
+      msgcnt++;
+
+      /* Perform update in positive direction. */
+      ptr_rem = *(char **)(cache);
+      ptr_loc = *(char **)(cache+sizeof(char *));
+      stride_loc = (int *)(cache+2*sizeof(char *));
+      stride_rem = (int *)(stride_loc+ndim);
+      count = (int *)(stride_rem+ndim);
+      proc_rem = *(int *)(count+ndim);
+      cache = (char *)(count+ndim+1);
+
+      if(count[0]>10000){
+        /*tries to use armci direct put when possible */
+        ARMCI_PutS_flag_dir(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+            (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
+            *GA_Update_Signal, (int)proc_rem);
+      }
+      else{
+#ifndef USE_MP_NORTHSOUTH
+        ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+            (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
+            *GA_Update_Signal, (int)proc_rem);
+#else
+#endif
+
+      }
+
+      msgcnt++;
+
+    }
+    /*waitforflags((GA_Update_Flags[GAme]+msgcnt-2),
+        (GA_Update_Flags[GAme]+msgcnt-1));*/
+  }
+#if 1
+  while(msgcnt){
+    waitforflags((GA_Update_Flags[GAme]+msgcnt-1),
+        (GA_Update_Flags[GAme]+msgcnt-2));
+    GA_Update_Flags[GAme][msgcnt-1]=0;
+    GA_Update_Flags[GAme][msgcnt-2]=0;
+    msgcnt-=2;
+  }
+#endif 
+  GA_POP_NAME;
+  return TRUE;
+}
+
+/*#define UPDATE_SAMENODE_GHOSTS_FIRST*/
+
+void nga_set_neighbor_ghost_info(Integer *g_a)
+{
+  int *proc_rem,i;
+  Integer size, ndim, nwidth, increment[MAXDIM],np;
+  Integer width[MAXDIM];
+  Integer dims[MAXDIM];
+  Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
+  Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
+  Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
+  Integer lo_rem[MAXDIM], hi_rem[MAXDIM];
+  Integer slo_rem[MAXDIM], shi_rem[MAXDIM];
+  Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
+  Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
+  int *stride_loc, *stride_rem,*count;
+  int msgcnt, bytes,idx;
+  char **ptr_loc, **ptr_rem,*cache;
+  Integer handle = GA_OFFSET + *g_a;
+  int scope;
+  ndim = GA[handle].ndim;
+  size = GA[handle].elemsize;
+  cache = GA[handle].cache;
+
+  for (idx=0; idx < ndim; idx++) {
+    increment[idx] = 0;
+    width[idx] = GA[handle].width[idx];
+    dims[idx] = GA[handle].dims[idx];
+    if (lo_loc[idx] == 0 && hi_loc[idx] == -1){
+      *(char **)cache = NULL; 
+      return;
+    }
+  } 
+  nga_distribution_(g_a,&GAme,lo_loc,hi_loc); 
+#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
+  for(scope=0;scope < 2; scope ++)
+#endif
+    for (idx=0; idx < ndim; idx++) {
+      nwidth = width[idx];
+      if (nwidth != 0) {  
+      
+        ptr_rem = (char **)cache;
+        ptr_loc = (char **)(cache+sizeof(char *));
+        stride_loc = (int *)(cache+2*sizeof(char *));
+        stride_rem = (int *)(stride_loc+ndim);
+        count = (int *)(stride_rem+ndim);
+        proc_rem = (int *)(count+ndim);
+
+        get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
+                             dims, width);
+        if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
+            GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+            slo_rem, shi_rem, *g_a);
+
+        *proc_rem = GA_proclist[0];
+
+#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
+        if(scope == 0 && ARMCI_Same_node(*proc_rem))
+          goto do_negative;
+#endif
+
+        cache = (char *)(proc_rem+1);
+
+        nga_distribution_(g_a, proc_rem, tlo_rem, thi_rem);
+        
+
+        for (i = 0; i < ndim; i++) {
+          if (increment[i] == 0) {
+            if (i == idx) {
+              plo_rem[i] = thi_rem[i] - tlo_rem[i] + width[i] + 1;
+              phi_rem[i] = thi_rem[i] - tlo_rem[i] + 2*width[i];
+              plo_loc[i] = width[i];
+              phi_loc[i] = 2*width[i] - 1;
+            } else {
+              plo_rem[i] = width[i];
+              phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
+              plo_loc[i] = width[i];
+              phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+            }
+          } else {
+            plo_rem[i] = 0;
+            phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
+            plo_loc[i] = 0;
+            phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+          }
+        }
+        gam_LocationWithGhosts(GAme, handle, plo_loc, ptr_loc, ld_loc);
+        gam_LocationWithGhosts(*proc_rem, handle, plo_rem, ptr_rem, ld_rem);
+ 
+        /* Evaluate strides on local and remote processors */
+        gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
+            stride_loc);
+        gam_ComputeCount(ndim, plo_rem, phi_rem, count);
+        count[0] *= size;
+
+        do_negative:
+
+        ptr_rem = (char **)cache;
+        ptr_loc = (char **)(cache+sizeof(char *));
+        stride_loc = (int *)(cache+2*sizeof(char *));
+        stride_rem = (int *)(stride_loc+ndim);
+        count = (int *)(stride_rem+ndim);
+        proc_rem = (int *)(count+ndim);
+
+        get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
+                             dims, width);
+
+        if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
+            GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+            slo_rem, shi_rem, *g_a);
+
+        *proc_rem = GA_proclist[0];
+
+#ifdef UPDATE_SAMENODE_GHOSTS_FIRST
+        if(scope == 0 && ARMCI_Same_node(*proc_rem))
+          continue;
+#endif
+
+        cache = (char *)(proc_rem+1);
+
+        nga_distribution_(g_a, proc_rem, tlo_rem, thi_rem);
+
+
+
+        for (i = 0; i < ndim; i++) {
+          if (increment[i] == 0) {
+            if (i == idx) {
+              plo_rem[i] = 0;
+              phi_rem[i] = width[i] - 1;
+              plo_loc[i] = hi_loc[i] - lo_loc[i] + width[i] - 1;
+              phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i] - 1;
+            } else {
+              plo_rem[i] = width[i];
+              phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
+              plo_loc[i] = width[i];
+              phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+            }
+          } else {
+            plo_rem[i] = 0;
+            phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
+            plo_loc[i] = 0;
+            phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+          }
+        }
+
+
+        gam_LocationWithGhosts(GAme, handle, plo_loc, ptr_loc, ld_loc);
+        gam_LocationWithGhosts(*proc_rem, handle, plo_rem, ptr_rem, ld_rem);
+
+        gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
+            stride_loc);
+
+        gam_ComputeCount(ndim, plo_rem, phi_rem, count);
+        count[0] *= size;
+      }
+    }
+}
+
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM
 \*/

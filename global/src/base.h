@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.16 2003-10-10 21:42:19 d3g293 Exp $ */
+/*$Id: base.h,v 1.17 2003-12-09 16:17:58 vinod Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -10,6 +10,7 @@ extern int* GA_Update_Signal;
 extern short int _ga_irreg_flag; 
 
 #define FNAM        31              /* length of array names   */
+#define CACHE_SIZE  256             /* size of the cache inside GA DS*/
 
 typedef struct {
        int mirrored;
@@ -41,6 +42,7 @@ typedef struct {
        int  *mapc;              /* block distribution map               */
        char name[FNAM+1];       /* array name                           */
        int p_handle;            /* pointer to processor list for array  */
+       char cache[CACHE_SIZE];  /* store for frequently accessed ptrs   */
 } global_array_t;
 
 extern global_array_t *_ga_main_data_structure; 

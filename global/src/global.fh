@@ -40,6 +40,7 @@
       integer ga_cluster_procid, ga_cluster_proc_nodeid
       logical nga_create, nga_locate, nga_create_irreg
       logical nga_create_ghosts_irreg,nga_create_ghosts
+      logical nga_create_ghosts_nocorner
       logical nga_create_config, nga_create_irreg_config
       logical nga_create_ghosts_irreg_config, nga_create_ghosts_config
 !
@@ -67,6 +68,7 @@
       external ga_spd_invert, ga_solve, ga_llt_solve
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg
       external nga_create_ghosts_irreg,nga_create_ghosts
+      external nga_create_ghosts_nocorner
       external nga_create_config, nga_create_irreg_config
       external nga_create_ghosts_irreg_config,nga_create_ghosts_config
       external nga_ddot_patch, nga_zdot_patch, nga_idot_patch

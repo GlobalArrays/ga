@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.67 2003-11-01 00:10:14 manoj Exp $ */
+/* $Id: capi.c,v 1.68 2003-12-09 16:17:58 vinod Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -314,6 +314,25 @@ int NGA_Create_ghosts_irreg_config(int type, int ndim, int dims[], int width[],
     else return 0;
 }
 
+int NGA_Create_ghosts_nocorner(int type, int ndim,int dims[], int width[], 
+    char *name, int chunk[])
+{
+    Integer *ptr, g_a; 
+    logical st;
+    if(ndim>MAXDIM)return 0;
+
+    COPYC2F(dims,_ga_dims, ndim);
+    COPYC2F(width,_ga_width, ndim);
+    if(!chunk)ptr=(Integer*)0;  
+    else {
+         COPYC2F(chunk,_ga_work, ndim);
+         ptr = _ga_work;
+    }
+    st = nga_create_ghosts_nocorner((Integer)type, (Integer)ndim, _ga_dims,
+        _ga_width, name, ptr, &g_a);
+    if(st==TRUE) return (int) g_a;
+    else return 0;
+}
 
 int NGA_Create_ghosts(int type, int ndim,int dims[], int width[], char *name,
     int chunk[])
@@ -476,6 +495,12 @@ int GA_Allocate(int g_a)
   Integer aa;
   aa = (Integer)g_a;
   return (int)ga_allocate_(&aa);
+}
+
+void GA_Update_ghosts_nocorner(int g_a)
+{
+    Integer a=(Integer)g_a;
+    ga_update_ghosts_nocorner_(&a);
 }
 
 void GA_Update_ghosts(int g_a)

@@ -224,6 +224,14 @@ extern logical nga_create_ghosts_irreg_config(
         Integer p_handle, /* processor list handle*/
         Integer *g_a);    /* array handle (output) */
 
+extern logical nga_create_ghosts_nocorner(Integer type,
+                   Integer ndim,
+                   Integer dims[],
+                   Integer width[],
+                   char* array_name,
+                   Integer chunk[],
+                   Integer *g_a);
+
 extern logical nga_create_ghosts(Integer type,
                    Integer ndim,
                    Integer dims[],
@@ -287,6 +295,7 @@ extern Integer nga_get_dimension(Integer *g_a);
 extern logical ga_allocate(Integer *g_a);
 
 extern void ga_update_ghosts(Integer *g_a);
+extern void ga_update_ghosts_nocorner(Integer *g_a);
 extern void ga_update1_ghosts(Integer *g_a);
 extern logical ga_update2_ghosts(Integer *g_a);
 extern logical ga_update3_ghosts(Integer *g_a);

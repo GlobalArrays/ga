@@ -57,6 +57,7 @@ extern int NGA_Create(int type,int ndim,int dims[], char *name, int chunk[]);
 extern int NGA_Create_irreg(int type,int ndim,int dims[],char *name,
                             int map[], int block[]);
 extern int NGA_Create_ghosts(int type,int ndim,int dims[], int width[], char *name, int chunk[]);
+extern int NGA_Create_ghosts_nocorner(int type,int ndim,int dims[], int width[], char *name, int chunk[]);
 extern int NGA_Create_ghosts_irreg(int type,int ndim,int dims[], int width[],
                                    char *name, int map[], int nblock[]);
 extern int NGA_Create_config(int type,int ndim,int dims[], char *name,
@@ -78,6 +79,7 @@ extern void GA_Set_irreg_flag(int g_a, int flag);
 extern int GA_Get_dimension(int g_a);
 extern int GA_Allocate(int g_a);
 extern void GA_Update_ghosts(int g_a);
+extern void GA_Update_ghosts_nocorner(int g_a);
 extern void GA_Merge_mirrored(int g_a);
 extern void GA_Fast_merge_mirrored(int g_a);
 extern void NGA_Merge_distr_patch(int g_a, int alo[], int ahi[],

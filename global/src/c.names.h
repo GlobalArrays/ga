@@ -111,6 +111,7 @@
 #define  nga_update_ghost_dir_     NGA_UPDATE_GHOST_DIR
 #define  nga_nbget_ghost_dir_     NGA_NBGET_GHOST_DIR
 #define  ga_update_ghosts_         GA_UPDATE_GHOSTS
+#define  ga_update_ghosts_nocorner_ GA_UPDATE_GHOSTS_NOCORNER
 #define  ga_merge_mirrored_        GA_MERGE_MIRRORED
 #define  ga_fast_merge_mirrored_   GA_FAST_MERGE_MIRRORED
 #define  nga_merge_distr_patch_    NGA_MERGE_DISTR_PATCH
@@ -135,6 +136,7 @@
 #define  nga_copy_patch_           NGA_COPY_PATCH
 #define  nga_create_               NGA_CREATE
 #define  nga_create_ghosts_        NGA_CREATE_GHOSTS
+#define  nga_create_ghosts_nocorner_ NGA_CREATE_GHOSTS_NOCORNER
 #define  nga_create_ghosts_irreg_  NGA_CREATE_GHOSTS_IRREG
 #define  nga_create_irreg_         NGA_CREATE_IRREG
 #define  nga_create_config_               NGA_CREATE_CONFIG
@@ -331,6 +333,7 @@
 #define  nga_update_ghost_dir_     nga_update_ghost_dir__   
 #define  nga_nbget_ghost_dir_      nga_nbget_ghost_dir__   
 #define  ga_update_ghosts_         ga_update_ghosts__     
+#define  ga_update_ghosts_nocorner_ ga_update_ghosts_nocorner__ 
 #define  ga_merge_mirrored_        ga_merge_mirrored__     
 #define  ga_fast_merge_mirrored_   ga_fast_merge_mirrored__     
 #define  nga_merge_distr_patch_    nga_merge_distr_patch__     
@@ -355,6 +358,7 @@
 #define  nga_copy_patch_           nga_copy_patch__         
 #define  nga_create_               nga_create__             
 #define  nga_create_ghosts_        nga_create_ghosts__      
+#define  nga_create_ghosts_nocorner_ nga_create_ghosts_nocorner__      
 #define  nga_create_ghosts_irreg_  nga_create_ghosts_irreg__
 #define  nga_create_irreg_         nga_create_irreg__       
 #define  nga_create_config_               nga_create_config__             
