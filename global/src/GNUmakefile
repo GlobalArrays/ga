@@ -72,4 +72,3 @@ $(patsubst %,$(LIBRARY_PATH)(%),global.alg.o)   : globalp.h global.h
 $(patsubst %,$(LIBRARY_PATH)(%),ga_diag.o)      : global.fh diag.fh 
 $(patsubst %,$(LIBRARY_PATH)(%),global.armci.o) : global.h global.armci.h 
 global.h       : cray.names.h
-global.core.h  : interrupt.h mem.ops.h semaphores.h locks.h lapidefs.h
