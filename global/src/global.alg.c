@@ -99,13 +99,13 @@ Integer     index_a, index_b;
    ga_inquire_(g_b,  &btype, &bdim1, &bdim2);
 
    if(atype != btype || atype != MT_F_DBL)
-        ga_error("ga_ddot: types not correct", 0L);
+        ga_error("types not correct", 0L);
 
    if (adim1!=bdim1 || adim2 != bdim2)
-            ga_error("ga_ddot: arrays not conformant", 0L);
+            ga_error("arrays not conformant", 0L);
 
    if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
-                  ga_error("ga_ddot: null pointer for base array",0L);
+                  ga_error(" null pointer for base array",0L);
 
    ga_distribution_(g_a, &me, &ailo, &aihi, &ajlo, &ajhi);
    ga_distribution_(g_b, &me, &bilo, &bihi, &bjlo, &bjhi);
@@ -115,7 +115,7 @@ Integer     index_a, index_b;
          fprintf(stderr,"\nme =%d: %d-%d %d-%d vs %d-%d %d-%d dim:%dx%d\n",me,
                 ailo,aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi,adim1,adim2);
          */
-         ga_error("ga_ddot: distributions not identical",0L);
+         ga_error("distributions not identical",0L);
    }
 
    sum = 0.;

@@ -9,7 +9,7 @@ c
 *     endif
 #elif defined(NX)
       call forflush(unit)
-#elif !defined(AIX)
+#elif !defined(AIX) && !defined(HPUX)
       call flush(unit)
 #endif
 c

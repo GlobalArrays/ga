@@ -75,10 +75,6 @@ Integer  len;
 static void proc_list(names)
 char *names;  
 {
-     GA_clus_info[0].nslave=1;
-     GA_clus_info[0].masterid=0;
-     strcpy(GA_clus_info[0].hostname, names); 
-     GA_n_clus = 0;
      
 #    if(DATA_SERVER)
      {
@@ -86,6 +82,11 @@ char *names;
         Integer i, cluster=0;
         char *s =names, *master=names;
         Integer len, type=3000, root=0;
+
+        GA_n_clus = 0;
+        GA_clus_info[0].nslave=1;
+        GA_clus_info[0].masterid=0;
+        strcpy(GA_clus_info[0].hostname, names); 
 
         /* looks through machine names to determine locality */
         if (me==0) for(i=1; i < nproc; i++){
@@ -111,6 +112,17 @@ char *names;
         len = (sizeof(Integer)+HOSTNAME_LEN)*GA_n_clus;
         ga_msg_brdcst(type, GA_clus_info, len, root);
      }
+#    else
+        MPI_Comm ga_comm;
+        int proc;
+
+        ga_mpi_communicator(&ga_comm);
+        (void) MPI_Comm_size(ga_comm,&proc); 
+        GA_clus_info[0].nslave=proc;
+        GA_n_clus = 1;
+        GA_clus_info[0].masterid=0;
+        strcpy(GA_clus_info[0].hostname, names); 
+
 #    endif
 
 }
@@ -128,7 +140,7 @@ void init_msg_interface()
      sleep(1);
   }
   
-  merged = merge_names(name, len);
+  merged = merge_names(name, (Integer)len);
   proc_list(merged);
   if(ga_msg_nodeid_()==0 && DEBUG)
     for(i=0;i<GA_n_clus;i++)
@@ -139,7 +151,7 @@ void init_msg_interface()
 
 /*\ Creates communicator for GA compute processes
 \*/
-ga_mpi_communicator(GA_COMM)
+void ga_mpi_communicator(GA_COMM)
 MPI_Comm *GA_COMM;
 {
 MPI_Comm MSG_COMM;

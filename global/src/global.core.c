@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.19 1996-01-17 00:38:12 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.20 1996-03-20 01:04:37 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -42,7 +42,7 @@
 #include "global.core.h"
 
 #define DEBUG 0
-#define USE_MALLOC 1
+#define USE_MALLOC 0
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
@@ -88,16 +88,16 @@ void ga_sync_()
 void   ga_wait_server();
        if (GAme < 0) return;
 
-#if    defined(SYSV) && !defined(KSR)
+#ifdef CONVEX
+       ga_msg_sync_();
+#elif defined(CRAY_T3D) || defined(KSR)
+       NATIVEbarrier();
+#elif defined(SYSV)
 #      ifdef IWAY
              gaCentralBarrier();
 #      endif
        if(ClusterMode) ga_wait_server();
        gaCentralBarrier();
-#elif  defined(CRAY_T3D)
-       barrier();
-#elif  defined(KSR)
-       KSRbarrier();
 #else  
        ga_msg_sync_();
 #      if defined(PARAGON) || defined(IWAY)
@@ -128,7 +128,7 @@ void ga_clean_resources()
 #ifdef SYSV 
     if(GAinitialized){
 #      ifndef KSR
-#         if defined(SGIUS)
+#         if defined(SGIUS) || defined (SPPLOCKS)
              if(GAnproc>1) DeleteLocks(lockID);
 #         else
              if(GAnproc>1) SemDel();
@@ -342,7 +342,7 @@ long *msg_buf;
 
     if(GAnproc > MAX_NPROC && MPme==0){
       fprintf(stderr,"current GA setup is for up to %d processors\n",MAX_NPROC);
-      fprintf(stderr,"please change MAX_NPROC in global.core.h & recompile\n");
+      fprintf(stderr,"please change MAX_NPROC in globalp.h & recompile\n");
       ga_error("terminating...",0);
     }
 
@@ -375,8 +375,6 @@ long *msg_buf;
         }else
            Barrier  = (int*) Create_Shared_Region(msg_buf+1,&shmSIZE,msg_buf);
 
-/*        fprintf(stderr,"Barrier=%ld\n",(long)Barrier);*/
-        
         /* Now, set up shmem communication buffer */
         shmBUF = (DoublePrecision*)( bar_size + (char *)Barrier);
         NumRecReq = (Integer*)( bar_size + buf_size +(char *)Barrier );
@@ -384,8 +382,8 @@ long *msg_buf;
 
 #       if !defined(KSR)
            if(GAnproc > 1 ){
-#             if defined(SGIUS) 
-                 CreateInitLocks(lock_array, cluster_nodes+1, &lockID); 
+#             if defined(SGIUS)  || defined (SPPLOCKS)
+                 CreateInitLocks(cluster_nodes+1, &lockID); 
 #             else
                  /* allocate and intialize semaphores */
                  semaphoreID = SemGet(NUM_SEM);
@@ -403,11 +401,13 @@ long *msg_buf;
     ga_brdcst_clust(type, (char*) msg_buf, SHMID_BUF_SIZE, cluster_master, 
                     ALL_CLUST_GRP);
     if(DEBUG) fprintf(stderr,"GAme=%d\n",GAme);
-#   if defined(SGIUS) 
+#   if defined(SGIUS)  || defined (SPPLOCKS)
        ga_brdcst_clust(type, (char*) &lockID, sizeof(long), cluster_master, 
                        ALL_CLUST_GRP);
-       ga_brdcst_clust(type, (char*)lock_array, 
-                      (cluster_nodes+1)*sizeof(ulock_t *), cluster_master, 
+#   endif
+#   if defined(SGIUS)
+       ga_brdcst_clust(type, (char*)lock_array,
+                      (cluster_nodes+1)*sizeof(ulock_t*), cluster_master,
                        ALL_CLUST_GRP);
 #   endif
 
@@ -421,8 +421,8 @@ long *msg_buf;
 
 #       if !defined(KSR)
            if(GAnproc > 1 ){
-#             if defined(SGIUS)
-                 InitLocks(lock_array, cluster_nodes+1, lockID); 
+#             if defined(SGIUS) || defined (SPPLOCKS)
+                 InitLocks(cluster_nodes+1, lockID); 
 #             else
                  /* read semaphore_id from shmem buffer */
                  semaphoreID = *((int*)shmBUF);
@@ -1621,7 +1621,6 @@ Integer  item_size, ldp, rows, cols;
         return;
      }
     /* cache coherency problem on T3D */
-/*   if(elem >1 || (jhi-jlo+1)>1) FLUSH_CACHE; else FLUSH_CACHE_LINE(ptr_dst);*/
      FLUSH_CACHE;
 #  endif
      ptr_src = (char *)buf   + item_size * offset;
@@ -1747,7 +1746,7 @@ void ga_access_(g_a, ilo, ihi, jlo, jhi, index, ld)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *index, *ld;
 {
 register char *ptr;
-Integer  item_size, proc_place;
+Integer  item_size, proc_place, handle = GA_OFFSET + *g_a;
 
 
    ga_check_handleM(g_a, "ga_access");
@@ -1761,9 +1760,9 @@ Integer  item_size, proc_place;
      proc_place = 0;
 #  endif
 
-   ptr = GA[GA_OFFSET + *g_a].ptr[proc_place] + item_size * ( (*jlo - GA[GA_OFFSET + *g_a].jlo )
-         *GA[GA_OFFSET + *g_a].chunk[0] + *ilo - GA[GA_OFFSET + *g_a].ilo);
-   *ld    = GA[GA_OFFSET + *g_a].chunk[0];  
+   ptr = GA[handle].ptr[proc_place] + item_size * ( (*jlo - GA[handle].jlo )
+         *GA[handle].chunk[0] + *ilo - GA[handle].ilo);
+   *ld    = GA[handle].chunk[0];  
    FLUSH_CACHE;
 
 
@@ -1777,13 +1776,27 @@ Integer  item_size, proc_place;
     * .in C we need both the index and the pointer
     *
     */ 
-   if(GA[GA_OFFSET + *g_a].type == MT_F_DBL){
-      *index = (Integer) (ptr - (char*)DBL_MB);
+   /* compute index and check if it is correct */
+   switch (GA[handle].type){
+     case MT_F_DBL: 
+        *index = (Integer) (ptr - (char*)DBL_MB);
+        if(ptr != ((char*)DBL_MB)+ *index ){ 
+             printf("ga_access: ptr=%x base=%x <> index=%d array=%x\n",
+                      ptr, DBL_MB, *index, ((char*)DBL_MB) + *index  );
+              ga_error("ga_access: problem with MA addressing - index",handle);
+        }
+        break;
+
+     case MT_F_INT:
+        *index = (Integer) (ptr - (char*)INT_MB);
+        if(ptr != ((char*)INT_MB) + *index) {
+          ga_error("ga_access: problem with MA addressing - index",handle);
+        }
+        break;
+
+     default: ga_error(" ga_access: type not supported ",-1L);
+
    }
-   else if(GA[GA_OFFSET + *g_a].type == MT_F_INT){
-      *index = (Integer) (ptr - (char*)INT_MB);
-   }
-   else ga_error(" ga_access: type not supported ",-1L);
 
    /* check the allignment */
    if(*index % item_size)
@@ -1795,7 +1808,6 @@ Integer  item_size, proc_place;
    /* adjust index for Fortran addressing */
    (*index) ++ ;
 }
-
 
 
 
@@ -1836,7 +1848,7 @@ void ga_inquire_name_(g_a, array_name)
       Integer *g_a;
       _fcd    array_name;
 {
-   c2fstring( GA[GA_OFFSET + *g_a].name , _fcdtocp(array_name), _fcdlen(array_name));
+   c2fstring(GA[GA_OFFSET+ *g_a].name,_fcdtocp(array_name),_fcdlen(array_name));
 }
 #else
 void ga_inquire_name_(g_a, array_name, len)
@@ -2484,7 +2496,6 @@ Integer ga_ma_diff_(ptr1, ptr2)
 {
    return((Integer)(ptr2-ptr1));
 }
-
 
 
 /*************************************************************************/

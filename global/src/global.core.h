@@ -111,26 +111,35 @@ int  GA_stack_size=0;
        PRIVATE static  DoublePrecision *shmBUF;
 #      ifdef KSR
            /* lock entire block owned by proc
-            * Note that this to work in data server mode we need use
+            * Note that for this to work in data server mode we need use
             * (proc - cluster_master) instead of proc
             */
 #          define LOCK(g_a, proc, x)    _gspwt(GA[GA_OFFSET + g_a].ptr[(proc)])
 #          define UNLOCK(g_a, proc, x)    _rsp(GA[GA_OFFSET + g_a].ptr[(proc)])
 #          define UNALIGNED(x)    (((unsigned long) (x)) % sizeof(long))
            typedef __align128 unsigned char subpage[128];
+#          define NATIVEbarrier KSRbarrier
 #      elif defined(SGIUS)
-#          include "sgi.locks.h"
+#          include "locks.h"
            long   lockID;
-#          define LOCK(g_a,proc, x)    SGI_LOCK((proc)-GAmaster)
-#          define UNLOCK(g_a,proc,x) SGI_UNLOCK((proc)-GAmaster)
-#          define MUTEX cluster_nodes
+#          define LOCK(g_a,proc, x)  NATIVE_LOCK((proc)-GAmaster)
+#          define UNLOCK(g_a,proc,x) NATIVE_UNLOCK((proc)-GAmaster)
+#          define MUTEX cluster_nodes 
            /* P & V compatible with binary sem ops */
-#          define P(s)  SGI_LOCK((s))
-#          define V(s)  SGI_UNLOCK((s)) 
+#          define P(s)  NATIVE_LOCK((s))
+#          define V(s)  NATIVE_UNLOCK((s)) 
+#      elif defined(SPPLOCKS)
+#          include "locks.h"
+#          include "semaphores.h"
+           long   lockID;
+#          define LOCK(g_a,proc, x)  NATIVE_LOCK((proc)-GAmaster)
+#          define UNLOCK(g_a,proc,x) NATIVE_UNLOCK((proc)-GAmaster)
+#          define NUM_SEM 1
+#          define MUTEX 0
 #      else
            /* define LOCK OPERATIONS using SYSV semaphores */
 #          include "semaphores.h"
-#          define NUM_SEM  SEMMSL
+#          define NUM_SEM  MIN(2,SEMMSL)
 #          define ARR_SEM  (NUM_SEM -1) /* num of sems for locking arrays */
 #          define MUTEX    ARR_SEM      /* semid  for synchronization */
 #          define LOCK(g_a,proc, x)\
@@ -153,6 +162,7 @@ int  GA_stack_size=0;
 
 #          define UNLOCK(g_a, proc, x)\
                  shmem_swap(&GA[GA_OFFSET +g_a].lock, 1, (proc))
+#          define NATIVEbarrier barrier
 #      elif defined(NX) || defined(SP1)
 #            include "interrupt.h"
              extern Integer in_handler;

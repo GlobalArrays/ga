@@ -14,6 +14,21 @@ int semget(),semctl();
 struct sembuf sops;
 int semaphoreID;
 
+#if defined(ARDENT) || defined(ENCORE) || defined(SEQUENT) || \
+    defined(ULTRIX) || defined(AIX)    || defined(HPUX) || defined(KSR)
+union semun {
+   long val;
+   struct semid_ds *buf;
+   ushort *array;
+};
+#elif !defined(LINUX) && !defined(SUN) && !defined(SGI)
+union semun {
+   int val;
+   struct semid_ds *buf;
+   ushort *array;
+};
+#endif
+
 
 int SemGet(num_sem)
     int num_sem;
@@ -39,21 +54,6 @@ int SemGet(num_sem)
 void SemInit(id,value)
     int id,value;
 {
-#if defined(ARDENT) || defined(ENCORE) || defined(SEQUENT) || \
-    defined(ULTRIX) || defined(AIX)    || defined(HPUX) || defined(KSR)
-union semun {
-   long val;
-   struct semid_ds *buf;
-   ushort *array;
-};
-#elif !defined(LINUX)
-union semun {
-   int val;
-   struct semid_ds *buf;
-   ushort *array;
-};
-#endif
-
   int i, semid, num_sem;
   union semun semctl_arg;
   void ga_error();

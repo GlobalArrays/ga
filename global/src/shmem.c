@@ -60,7 +60,7 @@ extern void ga_error();
 #if defined(SUN)||defined(SOLARIS)
 #  undef _SHMMAX
 #  define _SHMMAX (1024)  /* memory in KB */
-#elif defined(SGI) || defined(AIX) || defined(HPUX)
+#elif defined(SGI) || defined(AIX) || defined(CONVEX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)228*1024)
 #elif defined(KSR)
@@ -69,6 +69,9 @@ extern void ga_error();
 #elif defined(DECOSF)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)4*1024)
+#elif defined(HPUX)
+#  undef _SHMMAX
+#  define _SHMMAX ((unsigned long)64*1024)
 #elif defined(LINUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)8*1024) /* kernel reconfigured from 4MB */
@@ -394,6 +397,9 @@ long ga_nodeid_();
 
   if(alloc_regions>=MAX_REGIONS)
        ga_error("Attach_Shared_Region: to many regions ",0L);
+
+  if(! *id)
+      ga_error("Attach_Shared_Region: shmem ID=0 ",*id);
 
   /* first time needs to initialize region_list structure */
   if(!alloc_regions){

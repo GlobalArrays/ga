@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.12 1996-01-23 22:33:51 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.13 1996-03-20 01:04:40 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -32,6 +32,7 @@
 #include "macommon.h"
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 
 #ifdef CRAY_T3D
@@ -340,3 +341,17 @@ void f2cstring(fstring, flength, cstring, clength)
 }
 
 
+void ga_debug_suspend()
+{
+#ifdef SYSV
+#  define SECS 10
+#  include <sys/types.h>
+#  include <unistd.h>
+
+   fprintf(stdout,"ga_debug: process %ld sleeping for %d seconds\n",
+           (long)getpid(), SECS);
+   fflush(stdout);
+   sleep(SECS);
+
+#endif
+}
