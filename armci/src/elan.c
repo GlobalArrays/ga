@@ -68,7 +68,7 @@ int armci_check_int_val(int *v)
 
 void armci_elan_fence(int p)
 {
-    long spin =0, loop=0;
+    long loop=0;
     int *buf = armci_elan_fence_arr[armci_me] + p;
     int  res = armci_check_int_val(buf);
 
