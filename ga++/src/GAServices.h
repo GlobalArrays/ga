@@ -18,11 +18,7 @@ class GAServices {
    */
   GAServices();
   
-  /**
-   * We should have a virtual destructor to get us destroyed
-   * properly when an outer scope knowing us only as a
-   * Component * calls delete.
-   */
+  /** Destructor. */
   ~GAServices();
   
   /**  
@@ -44,7 +40,7 @@ class GAServices {
    * As a convenience, when chunk is specified as NULL, the entire array is 
    * distributed evenly.
    
-   * This is a collective operation. 
+   * \n This is a collective operation. 
    
    * @param arrayname  - a unique character string               [input]
    * @param type        - data type(MT_F_DBL,MT_F_INT,MT_F_DCPL)  [input]
@@ -53,8 +49,8 @@ class GAServices {
    * @param chunk[ndim] - array of chunks, each element specifies 
    * minimum size that given dimensions should be chunked up into [input]
    
-   * @return Return value: a non-zero array handle means the call was 
-   * succesful. 
+   * @return Returns pointer to GlobalArray object created. Returns
+   * NULL if it fails to create a GA object.
    */
   GlobalArray * createGA(int type, int ndim, int dims[], char *arrayname, 
 			 int chunk[]);
@@ -71,12 +67,14 @@ class GAServices {
    * distribution is nonuniform because, P1 and P4 get 20 elements each and 
    * processors P0,P2,P3, and P5 only 10 elements each. 
    *        
-   *  5        5    \n
-   *  P0       P3     2 \n
-   *  P1       P4     4 \n
-   *  P2       P5     2 \n
+   * <TABLE>
+   * <TR> <TD>5</TD>  <TD>5</TD>  </TR>
+   * <TR> <TD>P0</TD> <TD>P3</TD> <TD>2</TD> </TR>
+   * <TR> <TD>P1</TD> <TD>P4</TD> <TD>4</TD> </TR>
+   * <TR> <TD>P2</TD> <TD>P5</TD> <TD>2</TD> </TR>
+   *  </TABLE>
    *
-   * This is a collective operation. 
+   * \n This is a collective operation. 
    * @param arrayname    - a unique character string          [input]
    * @param type  - MA data type (MT_F_DBL,MT_F_INT,MT_F_DCPL) [input]
    * @param ndim  - number of array dimensions                 [input]
@@ -84,35 +82,37 @@ class GAServices {
    * @param block[ndim] - no. of blocks each dimension is divided into [input]
    * @param maps[s]  - starting index for for each block; the size s is a sum 
    * all elements of nblock array      [input]
-   * @return Return value: a non-zero array handle means the call was 
-   * succesful. 
+   * @return Returns pointer to GlobalArray object created. Returns
+   * NULL if it fails to create a GA object.
    */
   GlobalArray * createGA(int type, int ndim, int dims[], char *arrayname, 
 			 int maps[], int block[]);
 
   /**
    * Creates a new array by applying all the properties of another existing 
-   * array. It returns array handle. 
-   * This is a collective operation. 
+   * array.
+   * \n This is a collective operation. 
    * @param arrayname    - a character string                 [input]
    * @param g_b           - integer handle for reference array [input]
-   * @return Return value: a non-zero array handle means the call was 
-   * succesful. 
+   * @return Returns pointer to GlobalArray object created. Returns
+   * NULL if it fails to create a GA object.
    */
   GlobalArray * createGA(const GlobalArray *g_b, char *arrayname);
   
   /**
    * Creates a new array by applying all the properties of another existing 
-   * array. It returns array handle.  
-   * This is a collective operation. 
+   * array.
+   * \n This is a collective operation. 
    * @param g_b           - integer handle for reference array [input]
-   * @return Return value: a non-zero array handle means the call was 
-   * succesful. 
+   * @return Returns pointer to GlobalArray object created. Returns
+   * NULL if it fails to create a GA object.
    */
   GlobalArray * createGA(const GlobalArray &g_b);
   
   /**
-   * Creates a 10x10 global array (default).
+   * Creates a 10x10 global array of type "double"(default).
+   * @return Returns pointer to GlobalArray object created. Returns
+   * NULL if it fails to create a GA object.
    */
   GlobalArray * createGA();  
   
@@ -143,8 +143,8 @@ class GAServices {
    *                       minimum size that given dimensions should be
    *                       chunked up into                          [input]
    *
-   * @returns Return value: a non-zero array handle means the call was 
-   * successful. This is a collective operation. 
+   * @returns Returns pointer to GlobalArray object created. Returns
+   * NULL if it fails to create a GA object.
    */
    GlobalArray * createGA_Ghosts(int type, int ndim, int dims[], 
 				 int width[], char *array_name, 
@@ -161,15 +161,12 @@ class GAServices {
    * nonuniform because, P1 and P4 get 20 elements each and processors 
    * P0,P2,P3, and P5 only 10 elements each. 
    *
-   *            |
-   *    5    5  |
-   *    -------------
-   *    P0   P3 |  2 
-   *            |
-   *    P1   P4 |  4 
-   *            |
-   *    P2   P5 |  2 
-   *
+   * <TABLE>
+   * <TR> <TD>5</TD>  <TD>5</TD>  </TR>
+   * <TR> <TD>P0</TD> <TD>P3</TD> <TD>2</TD> </TR>
+   * <TR> <TD>P1</TD> <TD>P4</TD> <TD>4</TD> </TR>
+   * <TR> <TD>P2</TD> <TD>P5</TD> <TD>2</TD> </TR>
+   *  </TABLE>
    *
    * The array width[] is used to control the width of the ghost cell 
    * boundary around the visible data on each processor. The local data 
@@ -186,9 +183,9 @@ class GAServices {
    * @param  map[s]      - starting index for for each block; the size     
    *                       s is a sum of all elements of nblock array[input]
    *
-   * @return Return value: a non-zero array handle means the call was 
-   * succesful. 
-   * This is a collective operation. 
+   * @return Returns pointer to GlobalArray object created. Returns
+   * NULL if it fails to create a GA object.
+   * \n This is a collective operation. 
    */
    GlobalArray * createGA_Ghosts(int type, int ndim, int dims[], 
 				 int width[], char *array_name, int map[], 
@@ -203,7 +200,7 @@ class GAServices {
    * length lenbuf. This is operation is provided only for convenience 
    * purposes: it is available regardless of the message-passing library 
    * that GA is running with. 
-   * This is a collective operation. 
+   * \n This is a collective operation. 
    */
   void brdcst(void *buf, int lenbuf, int root);
 
@@ -211,7 +208,7 @@ class GAServices {
    * This functions returns the total number of nodes that the program is 
    * running on. On SMP architectures, this will be less than or equal to 
    * the total number of processors. 
-   * This is a  local operation. 
+   * \n This is a  local operation. 
    */
   int clusterNnodes();
   
@@ -220,13 +217,13 @@ class GAServices {
    * with more than one processor per node, several processes may return the
    * same node id. 
    * @param inode                [input]
-   * This is a  local operation. 
+   * \n This is a  local operation. 
    */
   int clusterNodeid();
   
   /**
    * This function returns the number of processors available on node inode. 
-   * This is a  local operation. 
+   * \n This is a  local operation. 
    * @param inode                [input]
    */
   int clusterNprocs(int inode);
@@ -236,7 +233,7 @@ class GAServices {
    * This function returns the processor id associated with node inode and 
    * the local processor id iproc. If node inode has N processors, then the 
    * value of iproc lies between 0 and N-1. 
-   * This is a  local operation. 
+   * \n This is a  local operation. 
    */
   int clusterProcid(int inode, int iproc);
 
@@ -249,14 +246,14 @@ class GAServices {
    * set of mutexes can exist at a time. Array of mutexes can be created 
    * and destroyed as many times as needed. 
    * Mutexes are numbered: 0, ..., number -1. 
-   * This is a collective operation. 
+   * \n This is a collective operation. 
    */
   int createMutexes(int number);
     
   /** 
    * Destroys the set of mutexes created with ga_create_mutexes. Returns 0 
    * if the operation succeeded or 1 when failed. 
-   * This is a collective operation. 
+   * \n This is a collective operation. 
    */
   int destroyMutexes();
   
@@ -273,7 +270,7 @@ class GAServices {
    * 'min', 'absmax', 'absmin'. The use of lowerecase for operators is 
    * necessary. This is operation is provided only for convenience purposes: 
    * it is available regardless of the message-passing library that GA is 
-   * running with. This is a collective operation. 
+   * running with. \n This is a collective operation. 
    */
   void dgop(double x[], int n, char *op);
 
@@ -284,7 +281,7 @@ class GAServices {
    * Creates a new array by applying all the properties of another existing 
    * array. It returns array handle. 
    * Return value: a non-zero array handle means the call was succesful. 
-   * This is a collective operation. 
+   * \n This is a collective operation. 
    */
   int duplicate(int g_a, char* array_name);
   
@@ -296,7 +293,7 @@ class GAServices {
    * @param message  - string to print          [input]
    * @param code     - code to print            [input]
    */
-  void error(char *message, int code);
+  void error(const char *message, int code);
 
   /**
   * Blocks the calling process until all the data transfers corresponding to 
@@ -337,7 +334,7 @@ class GAServices {
    * of ga_dgop described above, also include the bitwise OR operation. 
    * This is operation is provided only for convenience purposes: it is 
    * available regardless of the message-passing library that GA is running 
-   * with. This is a collective operation. 
+   * with. \n This is a collective operation. 
    */
   void igop(Integer x[], int n, char *op);
   
@@ -423,7 +420,7 @@ class GAServices {
    * @param limit    - the amount of memory in bytes per process    [input]
    * 
    * Sets the amount of memory to be used (in bytes) per process. 
-   * This is a local operation. 
+   * \n This is a local operation. 
    */
   void setMemoryLimit(size_t limit);
   
@@ -436,7 +433,7 @@ class GAServices {
   /**
    * Synchronize processes (a barrier) and ensure that all GA operations 
    * completed. 
-   * This is a collective operation. 
+   * \n This is a collective operation. 
    */
   void sync();
   
