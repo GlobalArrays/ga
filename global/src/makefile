@@ -12,7 +12,7 @@ endif
 
 INTERRUPT_AVAILABLE = SP1 SP IPSC DELTA PARAGON LAPI
 DATA-SERVER = SUN SGI SGI_N32 SGITFP SGI64 HPUX SOLARIS IBM DECOSF LINUX
-ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP
+ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP CYGNUS
 
 include ../Makefile.h
 
@@ -38,6 +38,14 @@ endif
 HARDCLEAN = yes
 
 LIB_DISTRIB = ../../lib
+
+ifdef USE_ARMCI
+	LOC_DEFINES = -DARMCI
+	LOC_INCLUDES = -I../../armci/src
+endif
+
+INCDIR = ../../include
+HEADERS = global.h global.fh c.names.h cray.names.h
 
 #upper level might want to override library name
 ifndef LIBRARY
