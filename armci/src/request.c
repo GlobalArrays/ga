@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.37 2002-09-30 23:03:25 vinod Exp $ */
+/* $Id: request.c,v 1.38 2002-10-17 10:07:43 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -569,34 +569,16 @@ int armci_rem_strided(int op, void* scale, int proc,
 
 #ifdef MULTISTEP_PIN
           if(stride_levels==0 && !msginfo->pinned && count[0]>=400000){
-              int seq=1;
-              armci_send_req(proc,msginfo,bufsize);
-              for(i=0; i< bytes; i+=CHUN){
-                  int len= MIN(CHUN,(bytes-i));
-                  char *p = i +(char*)dst_ptr;
-  
-#if 0
-                  armci_pin_contig(p, len);
-                  armci_client_send_ack(proc, seq);
-#endif
-                  seq++;
-              }
-                  armci_pin_contig(dst_ptr,CHUN);
-                  armci_client_send_ack(proc, 1);
-                  armci_pin_contig(CHUN+(char*)dst_ptr,count[0]-CHUN);
-                  armci_client_send_ack(proc, seq-1);
-             armci_rcv_strided_data_bypass(proc, msginfo->datalen,
-                                           dst_ptr, stride_levels);
-                  armci_unpin_contig(dst_ptr,CHUN);
-                  armci_unpin_contig(CHUN+(char*)dst_ptr,count[0]-CHUN);
-#if 0
-                  armci_unpin_contig(dst_ptr,count[0]);
+             int seq=1;
+             armci_send_req(proc,msginfo,bufsize);
              for(i=0; i< bytes; i+=CHUN){
                   int len= MIN(CHUN,(bytes-i));
                   char *p = i +(char*)dst_ptr;
-                  armci_unpin_contig(p, len);
+  
+                  armci_pin_contig(p, len);
+                  armci_client_send_ack(proc, seq);
+                  seq++;
              }
-#endif
           }else
 #endif
           {
@@ -607,17 +589,16 @@ int armci_rem_strided(int op, void* scale, int proc,
 
              if(msginfo->pinned) armci_send_req(proc,msginfo,bufsize);
              else armci_client_send_ack(proc, 1);
-             armci_rcv_strided_data_bypass(proc, msginfo,dst_ptr,stride_levels);
-             armci_unpin_memory(dst_ptr,dst_stride_arr,count, stride_levels);
           }
 
          }else
 #      endif             
        {
           armci_send_req(proc, msginfo, bufsize);
-          armci_rcv_strided_data(proc, msginfo, msginfo->datalen,
-                                 dst_ptr, stride_levels, dst_stride_arr, count);
        }
+
+       armci_rcv_strided_data(proc, msginfo, msginfo->datalen,
+                              dst_ptr, stride_levels, dst_stride_arr, count);
 
        FREE_SEND_BUFFER(msginfo);
 

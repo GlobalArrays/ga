@@ -1,4 +1,4 @@
-/* $Id: ds-shared.c,v 1.20 2002-09-25 00:42:28 d3h325 Exp $ */
+/* $Id: ds-shared.c,v 1.21 2002-10-17 10:07:43 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "message.h"
@@ -291,10 +291,22 @@ void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
                             void *ptr, int strides,int stride_arr[],int count[])
 {
     char *databuf;
+
     if(DEBUG_){
         printf("%d: armci_rcv_strided_data: expecting datalen %d from %d\n",
                 armci_me, datalen, proc); fflush(stdout);
     }
+
+#ifdef CLIENT_BUF_BYPASS
+    if(msginfo->bypass){
+       printf("%d bypass %d\n",armci_me, count[0]);
+       /* zero-copy protocol: get ACK and then unpin user buffer */
+       armci_rcv_strided_data_bypass(proc, msginfo, ptr, strides);
+       armci_unpin_memory(ptr, stride_arr, count, strides);
+       return; /* we are done */
+    }
+#endif
+      
 
 #ifdef SOCKETS
     /* zero-copy optimization for large requests */
