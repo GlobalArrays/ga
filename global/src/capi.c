@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.6 1999-07-29 19:02:24 d3h325 Exp $ */
+/* $Id: capi.c,v 1.7 1999-07-29 21:36:48 jju Exp $ */
 #include "ga.h"
 #include "globalp.h"
 
@@ -546,6 +546,101 @@ void GA_Print(int g_a)
 {
     Integer a=(Integer)g_a;
     ga_print_(&a);
+}
+<<<<<<< capi.c
+
+void GA_Diag(int g_a, int g_s, int g_v, void *eval)
+{
+    Integer a = (Integer)g_a;
+    Integer s = (Integer)g_s;
+    Integer v = (Integer)g_v;
+
+    ga_diag_(&a, &s, &v, eval);
+}
+
+void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval)
+{
+    Integer r = (Integer)reuse;
+    Integer a = (Integer)g_a;
+    Integer s = (Integer)g_s;
+    Integer v = (Integer)g_v;
+
+    ga_diag_reuse_(&r, &a, &s, &v, eval);
+}
+
+void GA_Diag_std(int g_a, int g_v, void *eval)
+{
+    Integer a = (Integer)g_a;
+    Integer v = (Integer)g_v;
+
+    ga_diag_std_(&a, &v, eval);
+}
+
+void GA_Lu_solve(char tran, int g_a, int g_b)
+{
+    Integer a = (Integer)g_a;
+    Integer b = (Integer)g_b;
+
+    Integer t;
+
+    if(tran == 't' || tran == 'T') t = 1;
+    else t = 0;
+
+    ga_lu_solve_alt_(&t, &a, &b);
+}
+
+int GA_Llt_solve(int g_a, int g_b)
+{
+    Integer res;
+    Integer a = (Integer)g_a;
+    Integer b = (Integer)g_b;
+
+    res = ga_llt_solve_(&a, &b);
+
+    return((int)res);
+}
+
+int GA_Solve(int g_a, int g_b)
+{
+    Integer res;
+    Integer a = (Integer)g_a;
+    Integer b = (Integer)g_b;
+
+    res = ga_solve_(&a, &b);
+
+    return((int)res);
+}
+
+int GA_Spd_invert(int g_a)
+{
+    Integer res;
+    Integer a = (Integer)g_a;
+
+    res = ga_spd_invert_(&a);
+
+    return((int)res);
+}
+
+void GA_Summarize(int verbose)
+{
+    Integer v = (Integer)verbose;
+
+    ga_summarize_(&v);
+}
+
+void GA_Symmetrize(int g_a)
+{
+    Integer a = (Integer)g_a;
+
+    ga_symmetrize_(&a);
+}
+
+void GA_Transpose(int g_a, int g_b)
+{
+    Integer a = (Integer)g_a;
+    Integer b = (Integer)g_b;
+
+    ga_transpose_(&a, &b);
 }
 
 
