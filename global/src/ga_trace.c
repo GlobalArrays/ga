@@ -16,6 +16,8 @@
 
 #ifndef MPI
 #  include "sndrcv.h"
+#else
+#  include "mpi.h"
 #endif
 
 static double tt0, tt1;
