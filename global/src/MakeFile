@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.24 2002-08-30 22:56:06 d3h325 Exp $
+#	$Id: MakeFile,v 1.25 2002-09-30 17:09:45 manoj Exp $
 #
 
 OBJDIR=.\obj
@@ -27,7 +27,8 @@ GA_CORE  = $(OBJDIR)\base.obj \
         $(OBJDIR)\DP.obj \
         $(OBJDIR)\xgemm.obj \
         $(OBJDIR)\matrix.obj \
-        $(OBJDIR)\elem_alg.obj
+        $(OBJDIR)\elem_alg.obj \
+	$(OBJDIR)\ga_solve_seq.obj 
 	
 !IFDEF GA_USE_VAMPIR
 GA_EXTRA = $(OBJDIR)\ga_vampir.obj
@@ -35,8 +36,7 @@ GA_EXTRA = $(OBJDIR)\ga_vampir.obj
 
 # Linear Algebra
 !IFNDEF GA_C_CORE
-GA_LIN_ALG = $(OBJDIR)\rsg.obj $(OBJDIR)\ga_diag_seq.obj \
-	$(OBJDIR)\ga_solve_seq.obj 
+GA_LIN_ALG = $(OBJDIR)\rsg.obj $(OBJDIR)\ga_diag_seq.obj
 LOC_DEFINES = -DARMCI
 !ELSE
 LOC_DEFINES = -DARMCI -DGA_C_CORE
