@@ -2,13 +2,13 @@
                    Agregate Remote Memory Copy Interface
              http://www.emsl.pnl.gov:2080/docs/parsoft/armci
 
-Implementation status as of 06.30.99:
+Implementation status as of January, 2001:
 
 A. Supported Platforms
-   1. shared-memory systems: SUN Solaris, SGI, IBM, Linux, DEC, HP, Cray J90,
+   1. shared-memory systems: SUN Solaris, SGI, IBM, Linux, DEC, HP, Cray SV1,
       and Windows NT/95
    2. distributed-memory systems: Cray T3E, IBM SP(TARGET=LAPI), FUJITSU VX/VPP 
-   3. clusters of UNIX workstations
+   3. clusters of workstations (sockets, Myrinet, VIA, Qudarics supported)
 
 Notes: 
    1. TARGET=SGI generates a MIPS-4 64-bit code with 32-bit address space 
@@ -18,20 +18,17 @@ Notes:
       Tested with MPI vendor implementations in addition to MPICH and WMPI (NT).
       Tested with PVM 3.4 on SGI and Cray PVM on the T3E only (doc/README.PVM).
       Tested TCGMSG by developers of the  NWChem package on many platforms.
-   4. Files windows.mak and windows.mdp in ./src contain makefile and project 
-      file for Microsoft Visual C/C++ 4.0 and Fortran PowerStation 4.0.
-   5. GNU make is required on Unix. For command line build on Windows, 
+   4. GNU make is required on Unix. For command line build on Windows, 
       simply call MS nmake instead of GNU make.
+   5. As a general rule, 64-bit versions can be built by appending to
+      64 to the TARGET name (HPUX, SOLARIS, LINUX64(alpha), IBM, LAPI, FUJITSU)
 
 C. Documentation and examples
-   1. Limited documentation is in files .doc/armci.[ps,pdf]
-   2. Examples are in test.c. It builds into test.x.
+   1. Limited documentation is in files ./doc/armci.pdf
+   2. Test programs are in src/(test.c,perf.c). It builds into (test.x,perf.x)
+   3. SPLASH LU benchmark is in ./examples
 
-D. Added functionality (not documented in ./doc/armci.[ps,pdf])
-   1. ARMCI_Rmw - atomic read-modify-write
-   2. ARMCI_Lock/Unlock - locks
-
-E. How to build it?
+D. How to build it?
    1. Define environment variable TARGET ("setenv TARGET SOLARIS").
       The official TARGET names are shown in ./config/makefile.h 
    2. If MPI is not known to the system compilers, add include and library paths
@@ -40,19 +37,16 @@ E. How to build it?
         setenv MPI_LIB /msrc/dist/mpi/mpich/lib/IRIX/ch_shmem
         setenv MPI_INCLUDE /msrc/dist/mpi/mpich/include
 
-      The recent releases of MPICH use two include directories that complicates
-      this setup.  The best solution is to call "make CC=mpicc" in Step 3 &4.
+      An alternative solution is to call "make CC=mpicc" in Step 3 &4.
 
    3. Type "make" in ./src to build libarmci.a which goes into armci/lib/$TARGET
    4. Type "make test.x" to build the example program. 
 
-F. Platform specific issues
-   . IBM SP under PSSP 3.1 (Troutbeck), define environment variable 
-     "setenv MP_MSG_API lapi" when running with TCGMSG and
-     "setenv MP_MSG_API mpi,lapi" when running with MPI
-     Older versions of PSSP do not require this.
-     
+   NOTE: for workstation clusters with special networks, ARMCI_NETWORK
+         muste be set (GM,VIA,QUADRICS) to specify the protocol.
 
-G. Contact info
-   email: j_nieplocha@pnl.gov
-   phone: (509) 372-4469
+E. Platform specific issues
+   see http://www.emsl.pnl.gov:2080/docs/global/support.html
+
+F. Contact info
+   email: parsoft-support@emsl.pnl.gov
