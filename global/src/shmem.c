@@ -74,16 +74,30 @@ extern void ga_error();
 #  define _SHMMAX ((unsigned long)64*1024)
 #elif defined(LINUX)
 #  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)8*1024) /* kernel reconfigured from 4MB */
+#  define _SHMMAX ((unsigned long)8*1024) /* kernel default (4MB) increased */
 #elif defined(SHMAX)
 #  undef _SHMMAX
 #  define _SHMMAX SHMMAX
 #endif
 
 #define MAX_REGIONS 100
-#define SHM_MAX  (MAX_REGIONS*_SHMMAX)
-#define SHM_MIN  (_SHMMAX)
 #define SHM_UNIT (1024)
+
+static  unsigned long MinShmem = _SHMMAX;  
+static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
+
+
+/*\ application can reset the upper limit for memory allocation
+\*/
+void Set_Shmem_Limit(shmemlimit)
+unsigned long shmemlimit; /* comes in bytes */
+{
+     unsigned long kbytes;
+     kbytes = (shmemlimit + SHM_UNIT -1)/SHM_UNIT;
+     if(MaxShmem > kbytes) MaxShmem = kbytes;
+     if(MinShmem > kbytes) MinShmem = kbytes;
+}
+
 
 
 static struct shm_region_list{
@@ -179,7 +193,7 @@ long reg;
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
-      shmalloc_request((unsigned)SHM_MIN, (unsigned)SHM_MAX);
+      shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
   }
 
   temp = shmalloc((unsigned long)*size);
@@ -244,7 +258,7 @@ long ga_nodeid_();
       if(!region_list[reg].attached){
         /* make sure the next shmem region will be adjacent to previous one */
          if(alloc_regions)
-           pref_addr= region_list[alloc_regions-1].addr SHM_OP (SHM_MIN*SHM_UNIT);
+           pref_addr= region_list[alloc_regions-1].addr SHM_OP (MinShmem*SHM_UNIT);
          else
             pref_addr = (char*)0;   /* first time let the OS choose address */
 
@@ -293,7 +307,7 @@ char *temp, *ftemp, *pref_addr, *valloc();
 int id, newreg, i;
 long sz;
 
-    newreg = (size+(SHM_UNIT*SHM_MIN)-1)/(SHM_UNIT*SHM_MIN);
+    newreg = (size+(SHM_UNIT*MinShmem)-1)/(SHM_UNIT*MinShmem);
     if( (alloc_regions + newreg)> MAX_REGIONS)
        ga_error("allocate: to many regions already allocated ",(long)newreg);
 
@@ -301,18 +315,18 @@ long sz;
 
     /* allocate shmem in as many segments as neccesary */
     for(i =0; i< newreg; i++){ 
-       sz =(i==newreg-1)? size - i*SHM_MIN*SHM_UNIT: min(size,SHM_UNIT*SHM_MIN);
+       sz =(i==newreg-1)? size - i*MinShmem*SHM_UNIT: min(size,SHM_UNIT*MinShmem);
 
        if ( (int)(id = shmget(IPC_PRIVATE, (int) sz,
                      (int) (IPC_CREAT | 00600))) < 0 ){
-          fprintf(stderr,"id=%d size=%d MAX=%d\n",id,  (int) sz, SHM_MIN);
+          fprintf(stderr,"id=%d size=%d MAX=%d\n",id,  (int) sz, MinShmem);
           alloc_regions++;
           ga_error("allocate: failed to create shared region ",(long)id);
        }
 
        /* make sure the next shmem region will be adjacent to previous one */
        if(alloc_regions)
-         pref_addr =region_list[alloc_regions-1].addr SHM_OP (SHM_MIN*SHM_UNIT);
+         pref_addr =region_list[alloc_regions-1].addr SHM_OP (MinShmem*SHM_UNIT);
        else
          pref_addr = (char*)0;   /* first time let the OS choose address */
 
@@ -356,8 +370,8 @@ int  reg, nreg;
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
-      fprintf(stderr,"allocation unit: %dK, max shmem: %dK\n",SHM_MIN,SHM_MAX);
-      shmalloc_request((unsigned)SHM_MIN, (unsigned)SHM_MAX);
+      fprintf(stderr,"allocation unit: %dK, max shmem: %dK\n",MinShmem,MaxShmem);
+      shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
   }
 
 

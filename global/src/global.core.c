@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.32 1996-09-29 02:04:50 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.33 1996-10-02 01:59:05 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -351,8 +351,8 @@ long *msg_buf;
     MPnproc = ga_msg_nnodes_();
 
     if(GAnproc > MAX_NPROC && MPme==0){
-      fprintf(stderr,"current GA setup is for up to %d processors\n",MAX_NPROC);
-      fprintf(stderr,"please change MAX_NPROC in globalp.h & recompile\n");
+      fprintf(stderr,"Current GA setup is for up to %d processors\n",MAX_NPROC);
+      fprintf(stderr,"Please change MAX_NPROC in globalp.h & recompile\n");
       ga_error("terminating...",0);
     }
 
@@ -377,6 +377,20 @@ long *msg_buf;
     shmSIZE  = bar_size + buf_size+ sizeof(Integer); 
 
     if(MPme == cluster_master){
+
+        /* assure that GA will not alocate more shared memory than specified */
+        if(GA_memory_limited){ 
+            unsigned long shmemlimit;
+            extern void Set_Shmem_Limit();
+
+            shmemlimit = (unsigned long) cluster_compute_nodes *GA_total_memory;
+            shmemlimit += shmSIZE; /* add GA overhead */
+            if (shmemlimit < GA_total_memory)
+                ga_error("GA panic: shmemlimit problem ",shmemlimit);
+            Set_Shmem_Limit(shmemlimit);
+        }
+
+
          gaParentTrapSignals(); /* set up the remaining signal handlers */
 
         /* allocate shared memory for communication buffer and barrier  */

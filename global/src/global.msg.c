@@ -791,6 +791,93 @@ void ga_brdcst_(type, buf, len, originator)
 }
 
 
+/*\ reduce operation for double
+\*/
+static void ddoop(n, op, x, work)
+     long n;
+     char *op;
+     double *x, *work;
+{
+  if (strncmp(op,"+",1) == 0)
+    while(n--)
+      *x++ += *work++;
+  else if (strncmp(op,"*",1) == 0)
+    while(n--)
+      *x++ *= *work++;
+  else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register double x1 = ABS(*x), x2 = ABS(*work);
+      *x = MAX(x1, x2);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register double x1 = ABS(*x), x2 = ABS(*work);
+      *x = MIN(x1, x2);
+      x++; work++;
+    }
+  else
+    ga_error("ga_ddoop: unknown operation requested", (long) n);
+}
+
+
+
+/*\ reduce operation for integer
+\*/
+static void idoop(n, op, x, work)
+     long n;
+     char *op;
+     Integer *x, *work;
+{
+  if (strncmp(op,"+",1) == 0)
+    while(n--)
+      *x++ += *work++;
+  else if (strncmp(op,"*",1) == 0)
+    while(n--)
+      *x++ *= *work++;
+  else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*x, *work);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register Integer x1 = ABS(*x), x2 = ABS(*work);
+      *x = MAX(x1, x2);
+      x++; work++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register Integer x1 = ABS(*x), x2 = ABS(*work);
+      *x = MIN(x1, x2);
+      x++; work++;
+    }
+  else if (strncmp(op,"or",2) == 0) 
+    while(n--) {
+      *x |= *work;
+      x++; work++;
+    }
+  else
+    ga_error("ga_idoop: unknown operation requested", (long) n);
+}
+
+
+
 /*\  global operations:
  *     . all processors participate  
  *     . all processors in the cluster participate  
@@ -804,10 +891,6 @@ void ga_dgop_clust(type, x, n, op, group)
 #    define BUF_SIZE 10000
      Integer  me, lenmes, from, len, root;
      DoublePrecision work[BUF_SIZE], *origx = x;
-#ifndef HPUX
-     static
-#endif
-     void ddoop();
      Integer ndo, up, left, right, orign = n;
 
 #    ifdef IWAY
@@ -918,11 +1001,6 @@ void ga_igop_clust(type, x, n, op, group)
 #    define BUF_SIZE 10000
      Integer  me, lenmes,  from, len, root=0 ;
      Integer work[BUF_SIZE], *origx = x;
-#ifndef HPUX
-     static
-#endif
-     void idoop();
-
      Integer ndo, up, left, right, orign =n;
 
 #    ifdef IWAY
@@ -1017,87 +1095,3 @@ long gtype,gn;
      ga_igop(gtype, x, gn, op);
 #endif
 }
-
-
-
-static void ddoop(n, op, x, work)
-     long n;
-     char *op;
-     double *x, *work;
-{
-  if (strncmp(op,"+",1) == 0)
-    while(n--)
-      *x++ += *work++;
-  else if (strncmp(op,"*",1) == 0)
-    while(n--)
-      *x++ *= *work++;
-  else if (strncmp(op,"max",3) == 0)
-    while(n--) {
-      *x = MAX(*x, *work);
-      x++; work++;
-    }
-  else if (strncmp(op,"min",3) == 0)
-    while(n--) {
-      *x = MIN(*x, *work);
-      x++; work++;
-    }
-  else if (strncmp(op,"absmax",6) == 0)
-    while(n--) {
-      register double x1 = ABS(*x), x2 = ABS(*work);
-      *x = MAX(x1, x2);
-      x++; work++;
-    }
-  else if (strncmp(op,"absmin",6) == 0)
-    while(n--) {
-      register double x1 = ABS(*x), x2 = ABS(*work);
-      *x = MIN(x1, x2);
-      x++; work++;
-    }
-  else
-    ga_error("ga_ddoop: unknown operation requested", (long) n);
-}
-
-
-static void idoop(n, op, x, work)
-     long n;
-     char *op;
-     Integer *x, *work;
-{
-  if (strncmp(op,"+",1) == 0)
-    while(n--)
-      *x++ += *work++;
-  else if (strncmp(op,"*",1) == 0)
-    while(n--)
-      *x++ *= *work++;
-  else if (strncmp(op,"max",3) == 0)
-    while(n--) {
-      *x = MAX(*x, *work);
-      x++; work++;
-    }
-  else if (strncmp(op,"min",3) == 0)
-    while(n--) {
-      *x = MIN(*x, *work);
-      x++; work++;
-    }
-  else if (strncmp(op,"absmax",6) == 0)
-    while(n--) {
-      register Integer x1 = ABS(*x), x2 = ABS(*work);
-      *x = MAX(x1, x2);
-      x++; work++;
-    }
-  else if (strncmp(op,"absmin",6) == 0)
-    while(n--) {
-      register Integer x1 = ABS(*x), x2 = ABS(*work);
-      *x = MIN(x1, x2);
-      x++; work++;
-    }
-  else if (strncmp(op,"or",2) == 0) 
-    while(n--) {
-      *x |= *work;
-      x++; work++;
-    }
-  else
-    ga_error("ga_idoop: unknown operation requested", (long) n);
-}
-
-
