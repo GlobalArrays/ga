@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.64 2003-03-27 19:43:43 vinod Exp $ */
+/* $Id: strided.c,v 1.65 2003-03-29 00:18:43 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -696,7 +696,7 @@ int ARMCI_Put(void *src, void* dst, int bytes, int proc)
 #if 0
       printf("direct put s=%p d=%p %d bytes to %d\n",src,dst,bytes,proc); fflush(stdout);
 #endif
-      armci_client_direct_send(proc, src, dst, bytes);
+      armci_client_direct_send(proc, src, dst, bytes,NULL,0);
       return 0;
     }else
 #endif
@@ -1053,7 +1053,20 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
       
       ARMCI_NB_PUT(src, dst, bytes, proc, &nb_handle->cmpl_info);
 #     else
-      return ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+#       ifdef ALLOW_PIN
+       if( armci_region_both_found(src,dst,bytes,armci_clus_id(proc))){
+         INIT_NB_HANDLE(nb_handle,PUT,proc);
+	 nb_handle->tag = GET_NEXT_NBTAG();
+	 nb_handle->op  = PUT;
+	 nb_handle->proc= proc;
+	 nb_handle->bufid=NB_NONE;
+         armci_client_direct_send(proc, src, dst, bytes,
+                                  (void **)(&nb_handle->cmpl_info),
+                                  nb_handle->tag);
+         return 0;
+       }else
+#       endif
+         return ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
     }
     return(rc);

@@ -184,6 +184,8 @@ typedef struct{
 #   else
     double dummy[20]; /*lapi_cntr_t is 148 bytes, using 166 just to be safe*/ 
 #   endif
+#elif defined(ALLOW_PIN)
+    void *dummy[2];/*2 cause itshould be aligned after we cast hdl_t to ihdl_t*/
 #else
     double dummy;
 #endif

@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.52 2003-03-27 02:08:56 d3h325 Exp $ */
+/* $Id: request.c,v 1.53 2003-03-29 00:18:43 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -68,8 +68,17 @@ request_header_t *msginfo = (request_header_t*) buffer;
            fflush(stdout);
          }
        }
-       armci_rcv_strided_data(msginfo->to, msginfo, msginfo->datalen, loc_ptr,
-                              stride_levels,loc_stride_arr,count);
+
+#ifdef ALLOW_PIN
+       if(msginfo->pinned && msginfo->bypass){
+         armci_rcv_strided_data_bypass_both(msginfo->to,msginfo,loc_ptr,count,
+	                                    stride_levels);
+       }
+       else
+#endif
+         armci_rcv_strided_data(msginfo->to, msginfo, msginfo->datalen, loc_ptr,
+                                stride_levels,loc_stride_arr,count);
+
        FREE_SEND_BUFFER(msginfo);
     }
     else if(info->protocol==VDSCR_IN_PLACE || info->protocol==VDSCR_IN_PTR){
@@ -529,9 +538,6 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
     if(nb_handle){
       INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
       _armci_buf_set_tag(buf,nb_handle->tag,0);  
-      /*for now, set handle->bufid to MULTI. Since MULTI is a superset of ONE
-        this shouldnt cause any problems. Later on this has to be properly
-        set in pack.c for both strided and vector protocols*/
       if(nb_handle->bufid == NB_NONE)
         armci_set_nbhandle_bufid(nb_handle,buf,0);
     }
@@ -651,9 +657,6 @@ int armci_rem_strided(int op, void* scale, int proc,
     if(nb_handle){
       INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
       _armci_buf_set_tag(buf,nb_handle->tag,0);  
-      /*for now, set handle->bufid to MULTI. Since MULTI is a superset of ONE
-        this shouldnt cause any problems. Later on this has to be properly
-        set in pack.c for both strided and vector protocols*/
       if(nb_handle->bufid == NB_NONE)
         armci_set_nbhandle_bufid(nb_handle,buf,0);
     }
@@ -828,9 +831,6 @@ int armci_rem_get(int proc,
     if(nb_handle){
       INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
       _armci_buf_set_tag(buf,nb_handle->tag,0);
-      /*for now, set handle->bufid to MULTI. Since MULTI is a superset of ONE
-        this shouldnt cause any problems. Later on this has to be properly
-        set in pack.c for both strided and vector protocols*/
       if(nb_handle->bufid == NB_NONE)
         armci_set_nbhandle_bufid(nb_handle,buf,0);
     }
@@ -867,8 +867,15 @@ int armci_rem_get(int proc,
     *(long*)(((char*)(dst_ptr)) + (count[0] -sizeof(long))) = ARMCI_GM_COMPLETE; 
     armci_send_req(proc,msginfo,bufsize);
 
-    armci_rcv_strided_data_bypass_both(proc,msginfo,dst_ptr,count,stride_levels);
-    FREE_SEND_BUFFER(msginfo);
+    if(nb_handle) {
+         armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
+                                 stride_levels,1);
+    }
+    else {
+       armci_rcv_strided_data_bypass_both(proc,msginfo,dst_ptr,count,
+		                          stride_levels);
+       FREE_SEND_BUFFER(msginfo);
+    }
     return 0;
 }
 #endif

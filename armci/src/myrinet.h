@@ -18,6 +18,18 @@
 
 #define COMPLETE_HANDLE _armci_buf_complete_nb_request
 #define TEST_HANDLE _armci_buf_test_nb_request
+#if defined(ALLOW_PIN)
+# define NB_CMPL_T armci_gm_context_t*
+# define ARMCI_NB_WAIT(_cntr) if(nb_handle->tag==(_cntr)->tag)\
+if((_cntr)->done==ARMCI_GM_SENDING){\
+  MPI_Status status;\
+  int flag;\
+  while((_cntr)->done==ARMCI_GM_SENDING)\
+  MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);\
+  if((_cntr)->done == ARMCI_GM_FAILED)\
+       armci_die("armci_client_send_complete: failed code=",(_cntr)->done);}
+#endif
+
 #define GM_STRONG_TYPES 0 
 #include "gm.h"
 /* in GM 1.4 memory registration got so slow we cannot use 0-copy protocols
@@ -150,5 +162,5 @@ extern char* armci_gm_getbuf(size_t size);
 extern void armci_client_send_complete(armci_gm_context_t*);
 extern void  armci_check_context_for_complete(int);
 extern void armci_gm_fence_init();
-extern void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len);
+extern void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag);
 #endif /* MYRINET_H */

@@ -63,7 +63,7 @@ int loop=0;
           }
     }
 
-    if(DEBUG1){ printf("%d:rcv_strided_data bypass both: got %d bytes from %d\n",
+    if(DEBUG1){printf("%d:rcv_strided_data bypass both: got %d bytes from %d\n",
                 armci_me, datalen, proc); fflush(stdout);
     }
 }

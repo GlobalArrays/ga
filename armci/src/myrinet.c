@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.61 2003-03-28 21:52:45 d3h325 Exp $
+/* $Id: myrinet.c,v 1.62 2003-03-29 00:18:43 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -167,6 +167,29 @@ static int armci_gm_num_receive_tokens=0;
 
 GM_ENTRY_POINT char * _gm_get_kernel_build_id(struct gm_port *p);
 
+#define MAX_PENDING 8
+static armci_gm_context_t armci_gm_nbcontext_array[MAX_PENDING];
+armci_gm_context_t *armci_gm_get_next_context(int nbtag)
+{
+static int avail=-1;
+armci_gm_context_t *retcontext;
+    if(avail==-1){
+       int i;
+       for(i=0;i<MAX_PENDING;i++){
+         armci_gm_nbcontext_array[i].tag=0;
+         armci_gm_nbcontext_array[i].done = ARMCI_GM_CLEAR;
+       }
+       avail=0;
+    }
+    if(armci_gm_nbcontext_array[avail].tag!=0){
+       armci_client_send_complete(armci_gm_nbcontext_array+avail);
+    }
+    armci_gm_nbcontext_array[avail].tag=nbtag;
+    retcontext= (armci_gm_nbcontext_array+avail);
+    avail = (avail+1)%MAX_PENDING;
+    return(retcontext);
+}
+
 /*global variables set from rcv_req to be used by server_ack (....fence) */
 int armci_gm_req_to=0,armci_gm_req_from=0,armci_gm_req_op=0;
 
@@ -285,7 +308,7 @@ int armci_pin_contig1(void *ptr, int bytes)
        /* prepare for direct put by client */
        status = gm_register_memory(serv_gm->rcv_port, (char *)ptr, bytes);
        if(DEBUG_){
-          printf("%d:  pinning sr %p %d status=%d\n",armci_me, ptr, bytes,status);
+          printf("%d: pinning sr %p %d status=%d\n",armci_me, ptr,bytes,status);
           fflush(stdout);
        }
        if(status != GM_SUCCESS) return pin_error("SRV RCV",bytes,ptr,status);
@@ -293,7 +316,7 @@ int armci_pin_contig1(void *ptr, int bytes)
        /* prepare for get reply by server */
        status = gm_register_memory(serv_gm->snd_port, (char *)ptr, bytes);
        if(DEBUG_){
-          printf("%d:  pinning ss %p %d status=%d\n",armci_me, ptr, bytes,status);
+          printf("%d: pinning ss %p %d status=%d\n",armci_me, ptr,bytes,status);
           fflush(stdout);
        }
        if(status != GM_SUCCESS) return pin_error("SRV SND",bytes,ptr,status);
@@ -673,19 +696,26 @@ void armci_client_to_client_direct_send(int p, void *src_buf, void *dst_buf, int
 
 /*\ direct send to server 
 \*/
-void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len)
+void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag)
 {
     int s           = armci_clus_id(p);
     int serv_mpi_id = armci_clus_info[s].master;
+    armci_gm_context_t *context;
 
-    armci_gm_client_context->done = ARMCI_GM_SENDING;
+    if(nbtag)
+       *contextptr = context = armci_gm_get_next_context(nbtag);
+    else
+       context = armci_gm_client_context;
+	    
+    context->done = ARMCI_GM_SENDING;
     gm_directed_send_with_callback(proc_gm->port, src_buf,
                (gm_remote_ptr_t)(gm_up_t)dst_buf, len, GM_LOW_PRIORITY,
                 proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
-                armci_client_send_callback_direct, armci_gm_client_context);
+                armci_client_send_callback_direct, context);
 
     /* blocking: wait until send is done by calling the callback */
-    armci_client_send_complete(armci_gm_client_context);
+    if(!nbtag)
+       armci_client_send_complete(context);
 }
 
 
@@ -764,7 +794,7 @@ void armci_client_send_ack(int p, int success)
      long *pflag = proc_gm->tmp;
      *pflag= (success)? success : ARMCI_GM_FAILED;
      armci_client_direct_send(p, pflag, proc_gm->serv_ack_ptr[cluster], 
-                                                         sizeof(long));
+                                                         sizeof(long),NULL,0);
 }
 
 void armci_client_send_ack_seq(int p, int success)
@@ -773,7 +803,7 @@ void armci_client_send_ack_seq(int p, int success)
      long *pflag = proc_gm->tmp;
      *pflag= (success)? ARMCI_GM_READY : ARMCI_GM_FAILED;
      armci_client_direct_send(p, pflag, proc_gm->serv_ack_ptr[cluster],
-                                                         sizeof(long));
+                                                         sizeof(long),NULL,0);
 }
 
 void  armci_check_context_for_complete(int idx){
