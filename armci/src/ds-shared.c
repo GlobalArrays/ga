@@ -67,7 +67,7 @@ buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
 
      arg.buf_posted = arg.buf   = buf;
-#ifndef HITACHI
+#ifdef HITACHI
      arg.count = 0;
 #else
      arg.count = bufsize;

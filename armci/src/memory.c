@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.26 2002-03-13 17:13:33 vinod Exp $ */
+/* $Id: memory.c,v 1.27 2002-06-20 23:10:30 vinod Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -119,6 +119,9 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
                  armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }
+#   ifdef HITACHI
+        armci_register_shmem(myptr,size,idlist+1,idlist[0],ptr_ref_arr[armci_clus_me]);
+#   endif
 #   if defined(DATA_SERVER)
 
        /* get server reference address for every cluster node to perform
@@ -151,9 +154,6 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
 
        }
 
-#   ifdef HITACHI
-        armci_register_shmem(myptr,size,idlist+1,idlist[0],ptr_ref_arr[armci_clus_me]);
-#   endif
        /* translate addresses for all cluster nodes */
        for(cn = 0; cn < armci_nclus; cn++){
 

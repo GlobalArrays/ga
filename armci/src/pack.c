@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.24 2002-03-13 17:13:33 vinod Exp $ */
+/* $Id: pack.c,v 1.25 2002-06-20 23:10:30 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -163,7 +163,7 @@ int armci_pack_strided(int op, void* scale, int proc,
                  if(last && (sn == count[stride_levels]-1)) looplast =1;
                  rc = armci_pack_strided(op, scale, proc, src, src_stride_arr,
                             dst, dst_stride_arr, count, stride_levels -1, 
-                            h, looplast, fit_level, nb );
+                            h,fit_level, nb, looplast);
                  if(rc) return rc;
     }
     return rc;

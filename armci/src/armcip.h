@@ -14,7 +14,7 @@
 #include <unistd.h>
 #endif
 
-#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM)
+#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(HITACHI)
 #define CLUSTER 
 
 #ifdef SERVER_THREAD
@@ -81,7 +81,8 @@ extern thread_id_t armci_usr_tid;
 # include <strings.h>
 #endif
 
-#if defined (CRAY_T3E) || defined(FUJITSU) || (defined(QUADRICS) && !defined(ELAN))
+#if defined (CRAY_T3E) || defined(FUJITSU) || (defined(QUADRICS) && !defined(ELAN))\
+                       || defined(HITACHI)
 #define ACC_COPY
 #endif
 
@@ -211,7 +212,7 @@ extern void armci_init_fence();
 #  define ORDER(op,proc)\
         if( proc == armci_me || ( ACC(op) && ACC(PENDING_OPER(proc))) );\
         else  FENCE_NODE(proc)
-#elif defined(CLUSTER) && !defined(QUADRICS)
+#elif defined(CLUSTER) && !defined(QUADRICS) && !defined(HITACHI)
 #  define ORDER(op,proc)\
         if(!SAMECLUSNODE(proc) && op != GET )_armci_fence_arr[proc]=1
 #else

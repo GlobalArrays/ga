@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.40 2002-05-21 19:48:09 d3h325 Exp $ */
+/* $Id: strided.c,v 1.41 2002-06-20 23:10:30 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -407,13 +407,12 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
-
     /* use direct protocol for remote access when performance is better */
 #   if (defined(LAPI) && !defined(LAPI2)) 
       if(!direct)
          if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
 #   endif
-#if defined(HITACHI)
+#if defined(HITACHI__)
       if(!direct)
          if(stride_levels< 2 || count[0]> LONG_PUT_THRESHOLD )direct=1;
 #endif
@@ -533,7 +532,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;
 
     /* use direct protocol for remote access when performance is better */
-#   if (defined(LAPI) && !defined(LAPI2)) || defined(HITACHI)
+#   if (defined(LAPI) && !defined(LAPI2))
       if(!direct)
         if( stride_levels==0 || count[0]> LONG_GET_THRESHOLD)direct=1;
         else{
