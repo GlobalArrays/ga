@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.58 2003-10-21 03:46:57 d3h325 Exp $ */
+/* $Id: copy.h,v 1.59 2003-10-21 04:12:01 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -44,7 +44,7 @@
 #   include <shmem.h>
 #endif
 #   ifdef ELAN_ACC
-#     define FENCE_NODE(p) {
+#     define FENCE_NODE(p) {\
           if(((p)<armci_clus_first)||((p)>armci_clus_last))armci_elan_fence(p);}
 #     define UPDATE_FENCE_STATE(p, op, nissued) 
 #   else
