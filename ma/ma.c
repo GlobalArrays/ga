@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.30 2002-10-07 22:44:34 d3g001 Exp $
+ * $Id: ma.c,v 1.31 2003-11-13 22:28:24 edo Exp $
  */
 
 /*
@@ -2471,7 +2471,11 @@ public Boolean MA_init(
 
     /* segment consists of heap and stack */
     total_bytes = heap_bytes + stack_bytes;
-
+#ifdef NOUSE_MMAP
+    /* disable memory mapped malloc */
+    mallopt(M_MMAP_MAX, 0);
+    mallopt(M_TRIM_THRESHOLD, -1);
+#endif
     /* allocate the segment of memory */
     if ((ma_segment = (Pointer)bytealloc(total_bytes)) == (Pointer)NULL)
     {
