@@ -1,7 +1,10 @@
 #include "armcip.h"
+#include "request.h"
 #include "memlock.h"
 #include "copy.h"
 #include <stdio.h>
+
+#define DEBUG_ 0
 
 double _armci_snd_buf[MSG_BUFLEN_DBL], _armci_rcv_buf[MSG_BUFLEN_DBL];
 char* MessageRcvBuffer = (char*)_armci_rcv_buf;
@@ -16,15 +19,11 @@ int dscrlen = ((request_header_t*)MessageSndBuffer)->dscrlen;
     armci_copy(MessageSndBuffer, MessageRcvBuffer, MSG_BUFLEN);
     armci_server_vector(MessageRcvBuffer, MessageRcvBuffer + hdrlen,
                  MessageRcvBuffer +hdrlen+dscrlen, MSG_BUFLEN-hdrlen-dscrlen);
-/*
-*/
 }
-
 
 void armci_rcv_data_(int proc)
 {
 }
-
 
 void armci_send_data_(request_header_t* msginfo, char *data)
 {
@@ -37,12 +36,83 @@ armci_copy(data,MessageSndBuffer,msginfo->datalen);
 #define GETBUF(buf,type,var) (var) = *(type*)(buf); (buf) += sizeof(type)
 
 
+
+/*\  request RMW from server
+\*/
+void armci_rem_rmw(int op, int *ploc, int *prem, int extra, int proc)
+{
+request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
+char *buf = (char*)(msginfo+1);
+
+    msginfo->dscrlen = sizeof(void*);
+    msginfo->from  = armci_me;
+    msginfo->to    = proc; 
+    msginfo->format  = msginfo->operation = op;
+    msginfo->datalen =sizeof(int); /* extra */
+    msginfo->bytes   =msginfo->datalen+msginfo->dscrlen ;
+
+    ADDBUF(buf,void* ,prem);
+    ADDBUF(buf,int,extra); 
+
+    armci_send_req(proc);
+
+    /* need to adjust datalen for long datatype version */
+    msginfo->datalen = (op==ARMCI_FETCH_AND_ADD)? sizeof(int): sizeof(long);
+
+    armci_rcv_data(proc);  /* receive response */
+    if(op==ARMCI_FETCH_AND_ADD)
+      *ploc = *(int*)MessageSndBuffer;
+    else
+      *(long*)ploc = *(long*)MessageSndBuffer;
+}
+
+
+/*\ server response to RMW 
+\*/
+void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
+{
+     long lold;
+     int iold;
+     void *pold;
+     int op = msginfo->operation;
+
+     if(DEBUG_){
+        printf("%d server: executing RMW from %d\n",armci_me,msginfo->from);
+        fflush(stdout);
+     }
+
+     switch(op){
+     case ARMCI_FETCH_AND_ADD:
+        if(msginfo->datalen != sizeof(int))
+          armci_die("armci_server_rmw: bad datalen=",msginfo->datalen);
+        pold = &iold;
+        msginfo->datalen = sizeof(int);
+        break;
+
+     case ARMCI_FETCH_AND_ADD_LONG:
+        if(msginfo->datalen != sizeof(int))
+          armci_die("armci_server_rmw: long bad datalen=",msginfo->datalen);
+        pold = &lold;
+        msginfo->datalen = sizeof(long);
+        break;
+
+     default:
+          armci_die("armci_server_rmw: bad operation code=",op);
+     }
+
+     armci_generic_rmw(op, pold, *(int**)ptr, *(int*) pextra, msginfo->to);
+
+     armci_send_data(msginfo, pold);
+}
+
+
 int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
 {
     char *buf = MessageSndBuffer;
     request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
     int bytes =0, s, slen=0;
     void *rem_ptr;
+    size_t adr;
 
     GET_SEND_BUFFER;
 
@@ -61,10 +131,16 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
         buf += darr[s].ptr_array_len*sizeof(void*);
     }
 
+    /* align buf for doubles (8-bytes) before copying data */
+    adr = (size_t)buf;
+    adr >>=3;
+    adr <<=3;
+    adr +=8;
+    buf = (char*)adr;
+
     /* fill message header */
     msginfo->dscrlen = buf - MessageSndBuffer - sizeof(request_header_t);
-/*    printf("len=%d dscrlen=%d\n",len, msginfo->dscrlen);*/
-    msginfo->bytes = bytes;
+    /*printf("VECTOR len=%d dscrlen=%d\n",len, msginfo->dscrlen);*/
     msginfo->from  = armci_me;
     msginfo->to    = proc;
     msginfo->operation  = op;
@@ -92,13 +168,15 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
     }
     buf += slen;
     msginfo->datalen += slen;
+    msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
 
     /* for put and accumulate copy data into buffer */
     if(op != GET){
 /*       fprintf(stderr,"sending %lf\n",*(double*)darr[0].src_ptr_array[0]);*/
-/*       fprintf(stderr,"in buffer %lf\n",*(double*)buf);*/
 
        armci_vector_to_buf(darr, len, buf);
+/*       fprintf(stderr,"sending first=%lf last =%lf in buffer\n",*/
+/*                     *((double*)buf),((double*)buf)[99]);*/
     }
 
     armci_send_req(proc);
@@ -162,7 +240,6 @@ int armci_rem_strided(int op, void* scale, int proc,
 
     /* fill message header */
     msginfo->dscrlen = buf - MessageSndBuffer - sizeof(request_header_t);
-    msginfo->bytes = buf_stride_arr[stride_levels];
     msginfo->from  = armci_me;
     msginfo->to    = proc;
     msginfo->operation  = op;
@@ -191,6 +268,7 @@ int armci_rem_strided(int op, void* scale, int proc,
 /*              armci_me, slen, ((double*)buf)[0],((double*)buf)[1]); */
     buf += slen;
     msginfo->datalen += slen;
+    msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
 
     /* for put and accumulate copy data into buffer */
     if(op != GET)
@@ -220,7 +298,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     int  *count, stride_levels;
     void *buf_ptr, *loc_ptr;
     void *scale;
-    int  rc, i;
+    int  rc, i,proc;
 
     /* unpack descriptor record */
     loc_ptr = *(void**)dscr;           dscr += sizeof(void*);
@@ -245,9 +323,11 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     buf_ptr = buf; /*  data in buffer */
 
+    proc = msginfo->to;
+
     if(msginfo->operation == GET){
     
-       if(rc = armci_op_strided(GET, scale, armci_me, loc_ptr, loc_stride_arr,
+       if(rc = armci_op_strided(GET, scale, proc, loc_ptr, loc_stride_arr,
                buf_ptr, buf_stride_arr, count, stride_levels, 0))
                armci_die("server_strided: get to buf failed",rc);
 
@@ -255,7 +335,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     } else{
 
-       if(rc = armci_op_strided(msginfo->operation, scale, armci_me,
+       if(rc = armci_op_strided(msginfo->operation, scale, proc,
                buf_ptr, buf_stride_arr, loc_ptr, loc_stride_arr,
                count, stride_levels, 1))
                armci_die("server_strided: op from buf failed",rc);
@@ -267,7 +347,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 void armci_server_vector( request_header_t *msginfo, 
                           char *dscr, char* buf, int buflen)
 {
-    int  len;
+    int  len,proc;
     void *buf_ptr, *loc_ptr;
     void *scale;
     int  rc, i,s;
@@ -289,6 +369,9 @@ void armci_server_vector( request_header_t *msginfo,
     }
 
 
+    proc = msginfo->to;
+
+    /*fprintf(stderr,"scale=%lf\n",*(double*)scale);*/
     /* execute the operation */
 
     switch(msginfo->operation) {
@@ -333,15 +416,18 @@ void armci_server_vector( request_header_t *msginfo,
       if(!ACC(msginfo->operation))
                armci_die("v server: wrong op code",msginfo->operation);
 
+/*      fprintf(stderr,"received first=%lf last =%lf in buffer\n",*/
+/*                     *((double*)buf),((double*)buf)[99]);*/
+
       for(i = 0; i< len; i++){
         int parlen, bytes;
         void **ptr;
         GETBUF(dscr, int, parlen);
         GETBUF(dscr, int, bytes);
         ptr = (void**)dscr; dscr += parlen*sizeof(char*);
-        armci_lockmem_scatter(ptr, parlen, bytes, armci_me); 
+        armci_lockmem_scatter(ptr, parlen, bytes, proc); 
         for(s=0; s< parlen; s++){
-          armci_acc_2D(msginfo->operation, scale, armci_me, buf, ptr[s],
+          armci_acc_2D(msginfo->operation, scale, proc, buf, ptr[s],
                        bytes, 1, bytes, bytes, 0);
           buf += bytes;
         }
