@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.8 2000-05-10 20:47:02 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.9 2000-11-06 20:10:33 d3h325 Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -12,8 +12,9 @@ extern void PBEGIN_();
 #endif
 
 #ifdef WIN32
-#define iargc_ IARGC
 #define getarg_ GETARG
+extern int FATR IARGC(void);
+#include <windows.h>
 #include "winutil.h"
 #else
 #define FATR 
@@ -39,9 +40,8 @@ void FATR PBEGINF_()
   extern char *strdup();
 
 #if defined(WIN32)
-    extern int FATR iargc_();
     extern void FATR getarg_(short*, char*, int, short*);
-    int argc = iargc_() + 1;
+    int argc = IARGC() + 1;
 #elif !defined(HPUX)
     extern int iargc_();
     extern void getarg_();

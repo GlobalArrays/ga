@@ -1,4 +1,4 @@
-/*$Id: mulmat.patch.c,v 1.1 1999-11-18 21:36:54 d3h325 Exp $*/
+/*$Id: mulmat.patch.c,v 1.2 2000-11-06 20:10:27 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -192,10 +192,10 @@ DoubleComplex ONE;
    }else{
 #                 if defined(CRAY) || defined(WIN32)
                     ZGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-                          alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
+                          (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
 #                 else
                     zgemm_(transa, transb, &idim, &jdim, &kdim,
-                           alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
+                           (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
 #                 endif
    }
                   i0= *cilo+ilo; i1= *cilo+ihi;   j0= *cjlo+jlo; j1= *cjlo+jhi;

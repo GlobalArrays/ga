@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.26 2000-10-25 18:08:05 edo Exp $
+ * $Id: ma.c,v 1.27 2000-11-06 20:10:32 d3h325 Exp $
  */
 
 /*
@@ -307,6 +307,9 @@ private Integer ma_numalign = 0;
  **/
 
 /* maximum of two values */
+#ifdef max
+#undef max
+#endif
 #define max(a, b)	(((b) > (a)) ? (b) : (a))
 
 /* proper word ending corresponding to n */
