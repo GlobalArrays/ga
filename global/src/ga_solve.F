@@ -175,15 +175,3 @@ c
         endif
         end
 
-c     alt entry point for C that avoids char args
-c
-	subroutine ga_lu_solve_alt(tr, g_a, g_b)
-	implicit none
-        integer g_a, g_b, tr
-        if(tr.eq.0) then
-           call ga_lu_solve('n',g_a, g_b) 
-        else
-           call ga_lu_solve('t',g_a, g_b) 
-        endif
-        end
-
