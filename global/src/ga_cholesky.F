@@ -50,13 +50,13 @@ c
             call dscal(n-k+1, alpha, dbl_mb(adrv+k-1), 1)
             call ga_put(g_a, k,n, k, k, dbl_mb(adrv+k-1),n)
             if(k.lt.n) 
-     &         call ga_brdcst(11, dbl_mb(adrv+k), mdtob(n-k),me)
+     &         call ga_brdcst(32111, dbl_mb(adrv+k), mdtob(n-k),me)
          endif
          call ga_sync()
 c
          if(k.lt.n)then
             if(me.ne.0)then
-                  call ga_brdcst(11, dbl_mb(adrv+k), mdtob(n-k),0)
+                  call ga_brdcst(32111, dbl_mb(adrv+k), mdtob(n-k),0)
             endif
          endif
 c          

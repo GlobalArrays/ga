@@ -2,6 +2,9 @@
 #ifdef IWAY
       integer ga_net_nnodes, ga_net_nodeid
 #endif
+#ifdef SCALAPACK
+      integer ga_spd_invert, ga_solve, ga_llt_solve, ga_cholesky
+#endif
       integer ga_inquire_memory, ga_memory_avail
       logical ga_create, ga_destroy, ga_locate, ga_create_irreg
       logical ga_compare_distr, ga_duplicate, ga_uses_ma
@@ -17,6 +20,9 @@
       external ga_inquire_memory, ga_uses_ma, ga_memory_limited
       external ga_memory_avail, ga_init_fence, ga_fence
       external ga_zdot, ga_zdot_patch
+#ifdef SCALAPACK
+      external ga_spd_invert, ga_solve, ga_llt_solve, ga_cholesky
+#endif
 #ifdef IWAY
       external ga_net_nnodes, ga_net_nodeid
 #endif
