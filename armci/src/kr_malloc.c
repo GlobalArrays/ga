@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.17 2005-02-09 21:21:25 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.18 2005-03-07 23:46:50 vinod Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -340,7 +340,7 @@ void kr_malloc_verify(context_t *ctx) {
 }
 
 /********************** BEGIN: kr_malloc for ctx_shmem *********************/
-#ifdef SYSV
+#if defined(SYSV) || defined(MMAP)
 
 #include "shmem.h"
 

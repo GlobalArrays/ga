@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.94 2004-09-21 23:10:09 manoj Exp $ */
+/* $Id: armci.c,v 1.95 2005-03-07 23:46:50 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -370,7 +370,7 @@ int ARMCI_Init()
     if(armci_me==armci_master) ARMCI_ParentTrapSignals();
     ARMCI_ChildrenTrapSignals();
 
-#if defined(SYSV) || defined(WIN32)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP)
     /* init shared/K&R memory */
     if(ARMCI_Uses_shm() ) {
 #      ifdef SGIALTIX
