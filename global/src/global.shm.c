@@ -1,7 +1,7 @@
 /*
  * module: global.shm.c
  * author: Jarek Nieplocha
- * last modification: Mon Oct  3 08:59:07 PDT 1994
+ * last modification: Tue Oct  4 14:01:04 PDT 1994
  *
  * DISCLAIMER
  *
@@ -85,7 +85,6 @@ void ga_sync_()
 void clean_all()
 {                  
 #ifndef CRAY_T3D
-    int i;
 
     if(GAinitialized){
 #ifndef KSR
@@ -106,7 +105,8 @@ void ga_check_handle_(g_a, fstring)
      _fcd fstring;
 #else
 void ga_check_handle_(g_a, fstring,slen)
-     Integer *g_a, slen;
+     Integer *g_a;
+     int  slen;
      char *fstring;
 #endif
 {
@@ -149,7 +149,7 @@ void ga_check_handle(g_a, string)
 \*/
 void ga_initialize_()
 {
-long id,  originator = 0L;
+long originator = 0L;
 long nnodes_(), nodeid_(),type,i;
 void TrapSigInt(), TrapSigChld(),
      TrapSigBus(), TrapSigFpe(),
@@ -239,7 +239,6 @@ long msg_buf[MAX_REG+2], len = sizeof(msg_buf);
 #       endif
     }
 
-    shmID  = id;  /* save the shared memory ID */
 
     /* initialize the barrier for nproc processes  */
 #   ifdef KSR
@@ -384,6 +383,7 @@ logical ga_create_(type, dim1, dim2, array_name, chunk1, chunk2, g_a)
 logical ga_create_(type, dim1, dim2, array_name, chunk1, chunk2, g_a, slen)
      Integer *type, *dim1, *dim2, *chunk1, *chunk2, *g_a;
      char* array_name;
+     int slen;
 #endif
 {
 char buf[FNAM];
@@ -418,7 +418,7 @@ logical ga_create_irreg(type, dim1, dim2, array_name, map1, nblock1,
       */
 {
 #ifdef CRAY_T3D
-   Integer ilo, ihi, jlo, jhi, nelem, handle=INVALID_MA_HANDLE, index;
+   Integer handle=INVALID_MA_HANDLE, index;
    Integer len = sizeof(char*);
    char    op='*', *ptr = NULL;
 #else
@@ -426,6 +426,7 @@ logical ga_create_irreg(type, dim1, dim2, array_name, map1, nblock1,
    long  msg_buf[MAX_REG+2], len = sizeof(msg_buf);
 #endif
 
+Integer  ilo, ihi, jlo, jhi, nelem, item_size;
 Integer  id=1, mtype = GA_TYPE_SYN, mem_size;
 Integer  i, k;
 double   sqrt();
@@ -493,17 +494,18 @@ double   sqrt();
       }
       *************/
 
+      ga_distribution_(g_a, &me, &ilo, &ihi, &jlo, &jhi);
+      nelem = (ihi-ilo+1)*(jhi-jlo+1);
+      GA[*g_a].chunk[0] = ihi-ilo+1;
+      GA[*g_a].chunk[1] = jhi-jlo+1;
+      GA[*g_a].ilo = ilo;
+      GA[*g_a].jlo = jlo;
+      item_size = GAsizeof(*type);
+
+
       /************************ Allocate Memory ***************************/
 #     ifdef CRAY_T3D
-         ga_distribution_(g_a, &me, &ilo, &ihi, &jlo, &jhi);
-
-         nelem = (ihi-ilo+1)*(jhi-jlo+1);
-         mem_size = GAsizeof(*type);
-         mem_size *= nelem;
-         GA[*g_a].chunk[0] = ihi-ilo+1;
-         GA[*g_a].chunk[1] = jhi-jlo+1;
-         GA[*g_a].ilo = ilo;
-         GA[*g_a].jlo = jlo;
+         mem_size = nelem * item_size;
    
          if(nelem){
             if(!MA_alloc_get(*type, nelem, array_name, &handle, &index)) id =0;
@@ -512,7 +514,7 @@ double   sqrt();
 
          GA[*g_a].ptr[me] = ptr;
          for(i=0;i<nproc;i++) ga_brdcst_(&mtype, GA[*g_a].ptr+i, &len, &i);
-         GA[*g_a].handle   = handle;
+         GA[*g_a].id   = handle;
          ga_igop(mtype, &id, 1, &op); /*check if everybody succeded */
 
 #     else
@@ -521,16 +523,24 @@ double   sqrt();
          mem_size *= *dim1* *dim2;
          if(!me){
             if(nproc == 1 && USE_MALLOC){
-               GA[*g_a].ptr  = malloc(mem_size);
+               GA[*g_a].ptr[0]  = malloc(mem_size);
             }else
-            GA[*g_a].ptr = Create_Shared_Region(msg_buf+1,&mem_size,msg_buf);
+            GA[*g_a].ptr[0] = Create_Shared_Region(msg_buf+1,&mem_size,msg_buf);
          }
 
          ga_brdcst_(&mtype,  msg_buf, &len, &originator );
 
          if(me){
-            GA[*g_a].ptr  = Attach_Shared_Region(msg_buf+1,mem_size, msg_buf);
+            GA[*g_a].ptr[0] = Attach_Shared_Region(msg_buf+1,mem_size, msg_buf);
          }
+
+         /* now, determine pointers to individual blocks */
+         for(i=0; i<nproc-1;i++){
+            ga_distribution_(g_a, &i, &ilo, &ihi, &jlo, &jhi);
+            nelem = (ihi-ilo+1)*(jhi-jlo+1);
+            GA[*g_a].ptr[i+1] = GA[*g_a].ptr[i] + nelem * item_size;
+         }
+            
          GA[*g_a].id   = id;
       /* ............................................................... */
 #     endif
@@ -559,8 +569,9 @@ logical ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
 #else
 logical ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
                          map2, nblock2, g_a, slen)
-     Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a, slen;
+     Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a;
      char *array_name;
+     int slen;
 #endif
 {
 char buf[FNAM];
@@ -588,14 +599,15 @@ logical ga_duplicate(g_a, g_b, array_name)
       */
 {
 #ifdef CRAY_T3D
-   Integer ilo, ihi, jlo, jhi, index, handle=INVALID_MA_HANDLE;
-   Integer len = sizeof(char*),nelem;
+   Integer index, handle=INVALID_MA_HANDLE;
+   Integer len = sizeof(char*);
    char    op='*', *ptr = NULL;
 #else
    long  originator = 0L;
    long  msg_buf[MAX_REG+2], len = sizeof(msg_buf);
 #endif
 
+Integer  ilo, ihi, jlo, jhi, nelem, item_size;
 Integer  id=1, mtype = GA_TYPE_SYN, mem_size;
 Integer  i, k;
 
@@ -616,7 +628,8 @@ Integer  i, k;
       GA[*g_b] = GA[*g_a];
       strcpy(GA[*g_b].name, array_name);
 
-      mem_size = GA[*g_b].size;
+      mem_size  = GA[*g_b].size;
+      item_size = GAsizeof(GA[*g_a].type);
 
       /************************ Allocate Memory ***************************/
 #     ifdef CRAY_T3D
@@ -628,7 +641,7 @@ Integer  i, k;
 
             GA[*g_b].ptr[me] = ptr;
          }
-         GA[*g_b].handle   = handle;
+         GA[*g_b].id   = handle;
   
          for(i=0;i<nproc;i++) ga_brdcst_(&mtype, GA[*g_b].ptr+i, &len, &i);
   
@@ -638,17 +651,25 @@ Integer  i, k;
       /*......................... allocate shared memory .................*/
          if(!me){
             if(nproc == 1 && USE_MALLOC){
-               GA[*g_b].ptr  = malloc(mem_size);
+               GA[*g_b].ptr[0]  = malloc(mem_size);
                id =1;
             }else
-            GA[*g_b].ptr = Create_Shared_Region(msg_buf+1,&mem_size,msg_buf);
+            GA[*g_b].ptr[0] = Create_Shared_Region(msg_buf+1,&mem_size,msg_buf);
          }
 
          ga_brdcst_(&mtype,  msg_buf, &len, &originator );
 
          if(me){
-            GA[*g_b].ptr  = Attach_Shared_Region(msg_buf+1,mem_size, msg_buf);
+            GA[*g_b].ptr[0] = Attach_Shared_Region(msg_buf+1,mem_size, msg_buf);
          }
+
+         /* now, determine pointers to individual blocks */
+         for(i=0; i<nproc-1;i++){
+            ga_distribution_(g_b, &i, &ilo, &ihi, &jlo, &jhi);
+            nelem = (ihi-ilo+1)*(jhi-jlo+1);
+            GA[*g_b].ptr[i+1] = GA[*g_b].ptr[i]+ nelem*item_size;
+         }
+
          GA[*g_b].id   = id;
       /* ............................................................... */
 #     endif
@@ -672,8 +693,9 @@ logical ga_duplicate_(g_a, g_b, array_name)
      _fcd array_name;
 #else
 logical ga_duplicate_(g_a, g_b, array_name, slen)
-     Integer *g_a, *g_b, slen;
-     char* array_name;
+     Integer *g_a, *g_b;
+     char  *array_name;
+     int   slen;
 #endif
 {
 char buf[FNAM];
@@ -700,17 +722,17 @@ void Free_Shmem_Ptr();
     ga_check_handleM(g_a,"ga_destroy");       
  
 #   ifdef CRAY_T3D
-      if(GA[*g_a].handle != INVALID_MA_HANDLE) MA_free_heap(GA[*g_a].handle);
+      if(GA[*g_a].id != INVALID_MA_HANDLE) MA_free_heap(GA[*g_a].id);
 #   else
       if(nproc == 1 && USE_MALLOC){
-         free(GA[*g_a].ptr);
+         free(GA[*g_a].ptr[0]);
       }else{
          /* Now, deallocate shared memory */
          if(!me){
-            Free_Shmem_Ptr(GA[*g_a].id,GA[*g_a].size,GA[*g_a].ptr);
+            Free_Shmem_Ptr(GA[*g_a].id,GA[*g_a].size,GA[*g_a].ptr[0]);
          } 
       }
-      GA[*g_a].ptr = NULL;
+      GA[*g_a].ptr[0] = NULL;
 #   endif
 
     GA[*g_a].actv = 0;     
@@ -746,11 +768,10 @@ Integer i;
 }   
 
     
+/*\ Return Integer 1/0 if array is active/inactive
+\*/ 
 Integer ga_verify_handle_(g_a)
      Integer *g_a;
-/*
-  Return Integer 1/0 if array is active/inactive
-*/
 {
   return (Integer)
     ((*g_a >= 0) &&
@@ -759,7 +780,6 @@ Integer ga_verify_handle_(g_a)
 }
 
 
-#ifdef CRAY_T3D
 /*\ computes leading dim and pointer to (i,j) element owned by processor proc
 \*/
 remote_location(proc, g_a, i, j, ptr, ld)
@@ -773,7 +793,6 @@ Integer ilo, ihi, jlo, jhi, offset;
       *ptr = GA[*g_a].ptr[proc] + offset*GAsizeof(GA[*g_a].type);
       *ld = ihi-ilo+1;
 }
-#endif
 
   
 
@@ -782,14 +801,10 @@ Integer ilo, ihi, jlo, jhi, offset;
 void ga_put_(g_a, ilo, ihi, jlo, jhi, buf, ld)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *buf, *ld;
 {
-char *ptr_src, *ptr_dst;
-register int  j, jsrc, item_size, nbytes;
-
-#ifdef CRAY_T3D
-   Integer p, np, proc;
-   Integer ilop, ihip, jlop, jhip, ldp, elem;
-   char *ptr;
-#endif
+char     *ptr_src, *ptr_dst, *ptr;
+register int  j,  item_size, nbytes;
+Integer  p, np, proc;
+Integer  ilop, ihip, jlop, jhip, ldp, elem;
 
 #ifdef GA_TRACE
    trace_stime_();
@@ -803,7 +818,6 @@ register int  j, jsrc, item_size, nbytes;
    item_size = (int) GAsizeof(GA[*g_a].type);
 
 
-#  ifdef CRAY_T3D
       if(! ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np ))
                         ga_error("ga_put: error locate region ", me);
 
@@ -821,21 +835,17 @@ register int  j, jsrc, item_size, nbytes;
               ptr_src = (char *)buf   + 
                         item_size*((jlop - *jlo + j)* *ld + ilop - *ilo );
               ptr_dst = (char*)ptr + item_size* j *ldp; 
+#             ifdef CRAY_T3D
               if(proc==me){
                  Copy(ptr_src, ptr_dst, nbytes);
                  FLUSH_CACHE;
               }else CopyTo(ptr_src, ptr_dst, elem, proc);
+#             else
+                 CopyTo(ptr_src, ptr_dst, nbytes);
+#             endif
           }
       }
-#  else
 
-      nbytes = item_size * (*ihi - *ilo +1);
-      for (j = *jlo-1,jsrc =0; j < *jhi; j++, jsrc ++){
-        ptr_dst = GA[*g_a].ptr + item_size*( j*GA[*g_a].dims[0] + *ilo -1);
-        ptr_src = (char *)buf  + item_size*( jsrc* *ld );
-        CopyTo(ptr_src, ptr_dst, nbytes); 
-      }
-#  endif
 
 #ifdef GA_TRACE
    trace_etime_();
@@ -850,15 +860,10 @@ register int  j, jsrc, item_size, nbytes;
 void ga_get_(g_a, ilo, ihi, jlo, jhi, buf, ld)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *buf, *ld;
 {
-char *ptr_src, *ptr_dst;
-register int  i, j, jdst, item_size, nbytes;
-
-#ifdef CRAY_T3D
-   Integer p, np, proc;
-   Integer ilop, ihip, jlop, jhip, ldp, elem;
-   char *ptr;
-#endif
-
+char *ptr_src, *ptr_dst, *ptr;
+register int   j, item_size, nbytes;
+Integer p, np, proc;
+Integer ilop, ihip, jlop, jhip, ldp, elem;
 
 #ifdef GA_TRACE
    trace_stime_();
@@ -874,7 +879,6 @@ register int  i, j, jdst, item_size, nbytes;
    item_size = (int) GAsizeof(GA[*g_a].type);
 
 
-#  ifdef CRAY_T3D
       if(! ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np ))
                         ga_error("ga_get: error locate region ", me);
 
@@ -892,22 +896,16 @@ register int  i, j, jdst, item_size, nbytes;
               ptr_dst = (char *)buf  + 
                         item_size*((jlop - *jlo + j)* *ld + ilop - *ilo );
               ptr_src = (char*)ptr + item_size* j *ldp; 
+#             ifdef CRAY_T3D
               if(proc==me){
                  FLUSH_CACHE;
                  Copy(ptr_src, ptr_dst, nbytes);
               }else CopyFrom(ptr_src, ptr_dst, elem, proc);
-/*              fprintf(stderr,"me=%d (%d,%d) copied from %d_%d %d_%d\n", me, elem, ilop, ihip, jlop+j, jlop+j);*/
+#             else
+                 CopyFrom(ptr_src, ptr_dst, nbytes); 
+#             endif
           }
       }
-#  else
-      nbytes = item_size * (*ihi - *ilo +1);
-
-      for (j = *jlo-1, jdst =0; j < *jhi; j++, jdst++){
-        ptr_src = GA[*g_a].ptr + item_size*( j*GA[*g_a].dims[0] + *ilo -1);
-        ptr_dst = (char *)buf  + item_size*( jdst* *ld );
-        CopyFrom(ptr_src, ptr_dst, nbytes); 
-      }
-#  endif
 
 #ifdef GA_TRACE
    trace_etime_();
@@ -918,19 +916,24 @@ register int  i, j, jdst, item_size, nbytes;
 
 
 
-#ifdef CRAY_T3D
 void accumulate(alpha, rows, cols, a, ald, b, bld)
 Integer rows, cols, ald, bld;
 DoublePrecision alpha, *a, *b;
 {
-   Integer r, c;
+Integer r, c;
+#ifdef KSR
+   void Accum();
+#endif
 
    /* a and b are Fortran arrays! */
    for(c=0;c<cols;c++)
-      for(r=0;r<rows;r++)
-           *(a +c*ald + r) += alpha * *(b + c*bld +r);
+#     ifdef KSR
+           Accum(alpha, b + c*bld, a + c*ald, rows);
+#     else
+           for(r=0;r<rows;r++)
+                *(a +c*ald + r) += alpha * *(b + c*bld +r);
+#     endif
 }
-#endif 
 
 
 
@@ -942,19 +945,13 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
    Integer *g_a, *ilo, *ihi, *jlo, *jhi, *ld;
    DoublePrecision *buf, *alpha;
 {
-#ifdef CRAY_T3D
    char *ptr_src, *ptr_dst;
-   register int  j, jdst, item_size, nbytes,i;
+   register int  item_size;
    Integer p, np, proc;
-   Integer ilop, ihip, jlop, jhip, ldp, nelem;
+   Integer ilop, ihip, jlop, jhip, ldp;
+#ifdef CRAY_T3D
    DoublePrecision *pbuffer, val;
-#else 
-   register DoublePrecision *ptr_src, *ptr_dst;
-   register int  i,j, jsrc, nelem;
-#endif
-
-#ifdef KSR
-   void Accum();
+   int nbytes, nelem;
 #endif
 
 #ifdef GA_TRACE
@@ -967,13 +964,14 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
        ga_error(" ga_acc: indices out of range ", *g_a);
    if (GA[*g_a].type != MT_F_DBL) ga_error(" ga_acc: type not supported ",*g_a);
 
-#  ifdef CRAY_T3D
       item_size = sizeof(DoublePrecision);
-      nelem = (*ihi - *ilo +1)*(*jhi - *jlo +1);
-      nbytes = item_size * nelem;
 
-      pbuffer = (DoublePrecision*)malloc(nbytes);
-      if(!pbuffer)ga_error("allocation of ga_acc buffer failed ",me);
+#     ifdef CRAY_T3D
+        nelem = (*ihi - *ilo +1)*(*jhi - *jlo +1);
+        nbytes = item_size * nelem;
+        pbuffer = (DoublePrecision*)malloc(nbytes);
+        if(!pbuffer)ga_error("allocation of ga_acc buffer failed ",me);
+#     endif
 
       if(! ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np ))
                        ga_error("ga_acc: error locate region ", me);
@@ -986,50 +984,27 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
           proc = map[p][4];
 
           remote_location(proc, g_a, ilop, jlop, &ptr_dst, &ldp);
-          ldp = ihip - ilop +1;
-          LOCK(*g_a, proc);
-
-/*          LOCK_AND_GET(val, ptr_src, proc)*/
-
-            ga_get_(g_a, &ilop, &ihip, &jlop, &jhip, pbuffer, &ldp);
-
-/*            *pbuffer = val;*/
-
-            ptr_src = (char *)buf   + 
+          ptr_src = (char *)buf   + 
                         item_size*((jlop - *jlo )* *ld + ilop - *ilo );
-            accumulate(*alpha, ldp, jhip-jlop+1, pbuffer, ldp, ptr_src, *ld );
-            ga_put_(g_a, &ilop, &ihip, &jlop, &jhip, pbuffer, &ldp);
-          UNLOCK(*g_a, proc);
+
+#         ifdef CRAY_T3D
+            ldp = ihip - ilop +1;
+            LOCK(*g_a, proc);
+              ga_get_(g_a, &ilop, &ihip, &jlop, &jhip, pbuffer, &ldp);
+              accumulate(*alpha, ldp, jhip-jlop+1, pbuffer, ldp, ptr_src, *ld );
+              ga_put_(g_a, &ilop, &ihip, &jlop, &jhip, pbuffer, &ldp);
+            UNLOCK(*g_a, proc);
+#         else 
+            if(nproc>1) LOCK(ptr_dst);
+              accumulate(*alpha, ihip - ilop +1, jhip-jlop+1, 
+                        ptr_dst, ldp, ptr_src, *ld );
+            if(nproc>1) UNLOCK(ptr_dst);
+#         endif
+
      }
-     free(pbuffer);
-#  else 
-#ifndef KSR
-   if(nproc>1) LOCK(0);
-#endif
-   nelem = (*ihi - *ilo +1);
-   for (j = *jlo-1, jsrc=0; j < *jhi; j++, jsrc++){
-     ptr_src = buf          + ( jsrc* *ld );
-     ptr_dst = ((DoublePrecision *)GA[*g_a].ptr) +(j*GA[*g_a].dims[0] + *ilo-1);
-
-#ifdef KSR
-     if(nproc>1) LOCK(ptr_dst);
-#endif
-
-#ifdef KSR
-     Accum(*alpha, ptr_src, ptr_dst, nelem);
-#else
-     for (i = 0; i< nelem; i++) *(ptr_dst +i) += *alpha*  *(ptr_src +i);
-#endif
-
-#ifdef KSR    
-     if(nproc>1) UNLOCK(ptr_dst);
-#endif
-   }
-#ifndef KSR
-   if(nproc>1) UNLOCK(0);
-#endif
-
-#endif
+#    ifdef CRAY_T3D
+           free(pbuffer);
+#    endif
 
 #ifdef GA_TRACE
    trace_etime_();
@@ -1061,15 +1036,10 @@ register int  item_size;
 
    item_size = (int) GAsizeof(GA[*g_a].type);
 
-#  ifdef CRAY_T3D
-      ptr = GA[*g_a].ptr[me] + item_size * ( (*jlo - GA[*g_a].jlo )
-           *GA[*g_a].chunk[0] + *ilo - GA[*g_a].ilo);
-      *ld    = GA[*g_a].chunk[0];  
-      FLUSH_CACHE;
-#  else
-      ptr = GA[*g_a].ptr + item_size*((*jlo -1) *GA[*g_a].dims[0] + *ilo -1);
-      *ld    = GA[*g_a].dims[0];  
-#  endif
+   ptr = GA[*g_a].ptr[me] + item_size * ( (*jlo - GA[*g_a].jlo )
+         *GA[*g_a].chunk[0] + *ilo - GA[*g_a].ilo);
+   *ld    = GA[*g_a].chunk[0];  
+   FLUSH_CACHE;
 
 
    /*
@@ -1146,8 +1116,9 @@ void ga_inquire_name_(g_a, array_name)
 }
 #else
 void ga_inquire_name_(g_a, array_name, len)
-      Integer *g_a, len;
+      Integer *g_a;
       char    *array_name;
+      int     len;
 {
    c2fstring(GA[*g_a].name, array_name, len);
 }
@@ -1321,9 +1292,7 @@ void ga_dscatter_(g_a, v, i, j, nv)
 {
 register int k;
 DoublePrecision *ptr;
-#ifdef CRAY_T3D
-  Integer ldp, proc;
-#endif
+Integer ldp, proc;
 
   if (*nv < 1) return;
 
@@ -1337,24 +1306,21 @@ DoublePrecision *ptr;
          j[k] <= 0 || j[k] > GA[*g_a].dims[1])
          ga_error("ga_dscatter: invalid i/j",i[k]*100000 + j[k]);
 
-#    ifdef CRAY_T3D
         /* first, find out who owns the (i,j) element */
         ga_locate_(g_a, i+k, j+k, &proc);
    
         /* now, get a remote/local address of the element */
         remote_location(proc, g_a, i[k], j[k], &ptr, &ldp);
 
-        if(proc==me){
+#       ifdef CRAY_T3D
+           if(proc==me){
                  Copy(v+k, ptr, GAsizeof(GA[*g_a].type));
                  FLUSH_CACHE;
-        }else CopyTo((v+k), ptr, 1, proc);
+           }else CopyTo((v+k), ptr, 1, proc);
+#       else
+           *ptr = v[k];
+#       endif
 
-#    else
-
-        ptr  = ((DoublePrecision *)GA[*g_a].ptr) +
-                  ((j[k]-1)*GA[*g_a].dims[0] + i[k]-1);
-        *ptr = v[k];
-#    endif
   }
 }
 
@@ -1368,9 +1334,7 @@ void ga_dgather_(g_a, v, i, j, nv)
 {
 register int k;
 DoublePrecision *ptr;
-#ifdef CRAY_T3D
-  Integer ldp, proc;
-#endif
+Integer ldp, proc;
 
   if (*nv < 1) return;
 
@@ -1382,23 +1346,21 @@ DoublePrecision *ptr;
      if (i[k] <= 0 || i[k] > GA[*g_a].dims[0]  ||
          j[k] <= 0 || j[k] > GA[*g_a].dims[1])
          ga_error("ga_dscatter: invalid i/j",i[k]*100000 + j[k]);
-#    ifdef CRAY_T3D
+
         /* first, find out who owns the (i,j) element */
         ga_locate_(g_a, i+k, j+k, &proc);
   
         /* now, get a remote/local address of the element */
         remote_location(proc, g_a, i[k], j[k], &ptr, &ldp);
 
-        if(proc==me){
+#       ifdef CRAY_T3D
+           if(proc==me){
                  FLUSH_CACHE;
                  Copy(ptr, v+k, GAsizeof(GA[*g_a].type));
-        }else CopyFrom(ptr, v+k, 1, proc);
+           }else CopyFrom(ptr, v+k, 1, proc);
 
-#    else
-
-        ptr = ((DoublePrecision *)GA[*g_a].ptr) +
-                  ((j[k]-1)*GA[*g_a].dims[0] + i[k]-1);
-        v[k] = *ptr ;
+#       else
+           v[k] = *ptr ;
 #    endif
   }
 }
@@ -1412,9 +1374,7 @@ Integer ga_read_inc_(g_a, i, j, inc)
         Integer *g_a, *i, *j, *inc;
 {
 Integer *ptr, value;
-#ifdef CRAY_T3D
-   Integer ldp, proc; 
-#endif
+Integer ldp, proc; 
 
 #ifdef GA_TRACE
        trace_stime_();
@@ -1424,18 +1384,17 @@ Integer *ptr, value;
   if(GA[*g_a].type !=MT_F_INT)ga_error(" ga_read_inc: must be integer ",*g_a);
 
 
-# ifdef CRAY_T3D
         /* first, find out who owns the (i,j) element */
         ga_locate_(g_a, i, j, &proc);
 
         /* now, get a remote/local address of the element */
         remote_location(proc, g_a, *i, *j, &ptr, &ldp);
 
+# ifdef CRAY_T3D
         while( (value = shmem_swap(ptr, INVALID, proc) ) == INVALID);
         (void) shmem_swap(ptr, value + *inc, proc);
 
 # else
-        ptr = ((Integer *)GA[*g_a].ptr) +((*j-1)*GA[*g_a].dims[0] + *i -1);
         if(nproc>1)LOCK(ptr);
           value = *ptr;
           (*ptr) += *inc;

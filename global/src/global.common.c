@@ -39,7 +39,7 @@ void f2cstring();
 void c2fstring();
 #if !(defined(SGI)||defined(AIX))
 #ifndef CRAY_T3D
-int  fprintf();
+extern int fprintf();
 #endif
 #endif
 #if defined(SUN)
@@ -214,12 +214,12 @@ void ga_dgop_(type, x, n, op)
 #else
 void ga_dgop_(type, x, n, op, len)
      char *op;
-     long len;
+     int len;
 #endif
      Integer *type, *n;
      DoublePrecision *x;
 {
-long gtype,gn,glen;
+long gtype,gn;
      gtype = (long)*type; gn = (long)*n; 
 
 #ifdef CRAY_T3D
@@ -314,12 +314,12 @@ void ga_igop_(type, x, n, op)
 #else
 void ga_igop_(type, x, n, op, len)
      char *op;
-     long len;
+     int  len;
 #endif
      Integer *type, *n;
      Integer *x;
 {
-long gtype,gn,glen;
+long gtype,gn;
      gtype = (long)*type; gn = (long)*n;
 
 #ifdef CRAY_T3D
@@ -576,7 +576,6 @@ void ga_error(string, icode)
      char     *string;
      Integer  icode;
 {
-Integer i;
 #ifdef TCGMSG
 extern void Error();
 #ifdef DATA_SERVER
@@ -617,7 +616,7 @@ void ga_error_(string, icode)
 #else
 void ga_error_(string, icode, slen)
      char        *string;
-     Integer     slen;
+     int         slen;
 #endif
      Integer     *icode;
 {

@@ -31,7 +31,7 @@ void     ga_symmetrize_(), ga_print_(),        ga_distribution_(),
 Integer  ga_nnodes_(),     ga_nodeid_(),       ga_read_inc_();
 
 logical  ga_create(),      ga_create_irreg(), ga_destroy_() ; 
-logical  ga_duplicate_();
+logical  ga_duplicate_(),  ga_locate_region_();
 
 DoublePrecision ga_ddot_(), ga_ddot_patch_();
 

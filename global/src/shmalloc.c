@@ -62,10 +62,10 @@ static Header *usedp = NULL;	/* start of used list */
 
 static void sherror(s, i)
      char *s;
-     unsigned i;
+     unsigned long i;
 {
   fflush(stdout);
-  fprintf(stderr,"shmalloc error: %s %d(0x%x)\n", s, i, i);
+  fprintf(stderr,"shmalloc error: %s %ld(0x%x)\n", s, i, i);
   fflush(stderr);
   shmalloc_print_stats();
   abort();
@@ -116,7 +116,7 @@ char *shmalloc(nbytes)
   if ((prevp = freep) == NULL) { 
 
     if (sizeof(Header) != ALIGNMENT)
-      sherror("Alignment is not valid", (unsigned) ALIGNMENT);
+      sherror("Alignment is not valid", (unsigned long) ALIGNMENT);
     
     usage.total  = 0;  /* Initialize statistics */
     usage.nchunk = 0;
@@ -251,7 +251,7 @@ void shfree(ap)
   bp = (Header *) ap - 1;  /* Point to block header */
 
   if (bp->s.valid1 != VALID1 || bp->s.valid2 != VALID2)
-    sherror("shfree: pointer not from shmalloc", (unsigned) ap);
+    sherror("shfree: pointer not from shmalloc", (unsigned long) ap);
   
   usage.inuse -= bp->s.size; /* Decrement memory usage */
 
@@ -260,7 +260,7 @@ void shfree(ap)
 
   for (up=&usedp; ; up = &((*up)->s.ptr)) {
     if (!*up)
-      sherror("shfree: block not found in used list\n", (unsigned) ap);
+      sherror("shfree: block not found in used list\n", (unsigned long) ap);
     if (*up == bp) {
       *up = bp->s.ptr;
       break;
@@ -362,10 +362,10 @@ void shmalloc_verify()
 
   for (p=usedp; p; p=p->s.ptr) {
     if (p->s.valid1 != VALID1 || p->s.valid2 != VALID2)
-      sherror("invalid header on usedlist", (unsigned) p->s.valid1);
+      sherror("invalid header on usedlist", (unsigned long) p->s.valid1);
 
     if (p->s.size > usage.total)
-      sherror("invalid size in header on usedlist", (unsigned) p->s.size);
+      sherror("invalid size in header on usedlist", (unsigned long) p->s.size);
   }
 
   /* Check the free list */
@@ -373,10 +373,10 @@ void shmalloc_verify()
   p = base.s.ptr;
   while (p != &base) {
     if (p->s.valid1 != VALID1 || p->s.valid2 != VALID2)
-      sherror("invalid header on freelist", (unsigned) p->s.valid1);
+      sherror("invalid header on freelist", (unsigned long) p->s.valid1);
 
     if (p->s.size > usage.total)
-      sherror("invalid size in header on freelist", (unsigned) p->s.size);
+      sherror("invalid size in header on freelist", (unsigned long) p->s.size);
 
     p = p->s.ptr;
   }
@@ -407,7 +407,7 @@ void addtofree(ap)
   bp = (Header *) ap - 1;  /* Point to block header */
 
   if (bp->s.valid1 != VALID1 || bp->s.valid2 != VALID2)
-    sherror("shfree: pointer not from shmalloc", (unsigned) ap);
+    sherror("shfree: pointer not from shmalloc", (unsigned long) ap);
   
   usage.inuse -= bp->s.size; /* Decrement memory usage */
 
@@ -416,7 +416,7 @@ void addtofree(ap)
 
   for (up=&usedp; ; up = &((*up)->s.ptr)) {
     if (!*up)
-      sherror("shfree: block not found in used list\n", (unsigned) ap);
+      sherror("shfree: block not found in used list\n", (unsigned long) ap);
     if (*up == bp) {
       *up = bp->s.ptr;
       break;

@@ -84,7 +84,6 @@ static struct shm_region_list{
    int      attached;
 }region_list[MAX_REGIONS];
 static long alloc_regions=0;
-static long prev_alloc_regions=0;
 static long occup_blocks=0;
 
 /* Terminology
@@ -95,7 +94,7 @@ static long occup_blocks=0;
 
 
 #if defined(MULTIPLE_REGIONS)
-
+/********************************* MULTIPLE_REGIONS *******************/
 /* allocate contiguous shmem -- glue pieces together -- works on SUN 
  * SUN max shmem segment is only 1MB so we might need several to    
  * satisfy a request
@@ -108,6 +107,7 @@ static long occup_blocks=0;
 #define SHM_OP -
 
 
+static long prev_alloc_regions=0;
 
 /*\
  *   assembles the list of shmem id for the block 
@@ -327,6 +327,7 @@ long sz;
     return (min(ftemp,temp));
 }
     
+/********************************* MULTIPLE_REGIONS *******************/
 #else /* Now, the machines where shm segments are not glued together */ 
 
 
@@ -385,7 +386,7 @@ int  reg, nreg;
 char *Attach_Shared_Region(id, size, offset)
      long *id, *offset, size;
 {
-int reg, b, found;
+int reg, found;
 static char *temp;
 long ga_nodeid_();
 
@@ -523,7 +524,6 @@ void shfree();
 long Delete_Shared_Region(id)
      long id;
 {
-int reg;
 long code;
 
  code = 0;

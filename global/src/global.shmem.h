@@ -19,12 +19,11 @@
 #define FLEN        80              /* length of Fortran strings */
 #define max_nproc   256		    /* max number of processors  */
 
-#ifdef CRAY_T3D
-/******************************* Cray ***********************************/
+
 typedef struct {
-       char *ptr[max_nproc];    /* pointer to local/remote data         */
        Integer type;            /* type of array                        */
        int  actv;               /* activity status                      */
+       char *ptr[max_nproc];    /* pointers to local/remote data        */
        long ilo;                /* coordinates of local patch           */
        long ihi;
        long jlo;
@@ -34,33 +33,15 @@ typedef struct {
        int  chunk[2];           /* chunking                             */
        int  nblock[2];          /* number of chunks (blocks)            */
        int  mapc[max_nproc+1];  /* block distribution map               */
-       long handle;		/* MA handle */
        long lock;
-       char name[FNAM+1];       /* array name (possibly Fortran string) */
+       long id;			/* ID of shmem region / MA handle       */
+       char name[FNAM+1];       /* array name                           */
 } global_array;
-Integer map[max_nproc][5];
-
-#else
-
-/******************************* everybody else *************************/
-typedef struct {
-       char *ptr;		/* pointer to storage */ 
-       Integer type;		/* type of array      */ 
-       int  actv;		/* activity status    */ 
-       long id;			/* ID of shmem region */
-       long size;		/* array size in bytes*/       
-       int  dims[2];		/* dimensions [i,j]   */ 
-       int  chunk[2];           /* chunking                             */
-       int  nblock[2];          /* number of chunks (blocks)            */
-       int  mapc[max_nproc+1];  /* block distribution map */
-       char name[FNAM+1];	/* array name (possibly Fortran string) */ 
-} global_array;
-/************************************************************************/
-#endif
 
 
-PRIVATE static global_array GA[MAX_ARRAYS];
+PRIVATE static global_array GA[MAX_ARRAYS]; 
 PRIVATE static int max_global_array = MAX_ARRAYS;
+PRIVATE Integer map[max_nproc][5];               /* used in get/put/acc */
 
 
 #ifndef CRAY_T3D
@@ -70,6 +51,12 @@ PRIVATE static int max_global_array = MAX_ARRAYS;
 	PRIVATE static  DoublePrecision *shmBUF;
 #endif 
 
+#ifdef  CRAY_T3D
+#define ALLIGN_SIZE      32 
+#else
+#define ALLIGN_SIZE      128
+#endif
+
 
 PRIVATE static int GAinitialized = 0;
 PRIVATE static Integer me, nproc;
@@ -78,6 +65,8 @@ Integer *INT_MB;
 
 
 /********************** MACROS ******************************/
+#define allign_size(n) \
+        (((n)%ALLIGN_SIZE) ? (n)+ALLIGN_SIZE - (n)%ALLIGN_SIZE: (n))
 
 #define ga_check_handleM(g_a, string) \
 {\

@@ -100,8 +100,8 @@ void ga_copy_patch(trans, g_a, ailo, aihi, ajlo, ajhi,
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer ilos, ihis, jlos, jhis;
-Integer ilod, ihid, jlod, jhid;
-Integer me= ga_nodeid_(), index, ld, ldp, index_patch, index_my_array, i,j;
+/*Integer ilod, ihid, jlod, jhid;*/
+Integer me= ga_nodeid_(), index, ld, i,j;
 Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj; 
 
    ga_sync_();
@@ -553,7 +553,7 @@ Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2;
 Integer me= ga_nodeid_(), nproc=ga_nnodes_();
 Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
-Integer nelem, n, m, k, adim, bdim, cdim;
+Integer n, m, k, adim, bdim, cdim;
 DoublePrecision ONE = 1.;
 
    ga_sync_();
@@ -627,7 +627,7 @@ DoublePrecision ONE = 1.;
                         alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
 #else
                   dgemm_(transa, transb, &idim, &jdim, &kdim,
-                         alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1L, 1L);
+                         alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
 #endif
                   i0= *cilo+ilo; i1= *cilo+ihi;   j0= *cjlo+jlo; j1= *cjlo+jhi;
                   ga_acc_(g_c, &i0, &i1, &j0, &j1, c, &cdim, &ONE);
