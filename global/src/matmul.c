@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.49 2004-02-24 22:58:55 manoj Exp $ */
+/* $Id: matmul.c,v 1.50 2004-03-09 07:55:11 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -938,8 +938,12 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 	     dgemm_(transa, transb, &m, &n, &k, alpha, tmpa, &adim,
 		    tmpb, &bdim, beta, tmpc_orig, &cdim, 1, 1);
 	     break;
+	  case C_DCPL: 
+	     zgemm_(transa, transb, &idim, &jdim, &kdim, (DoubleComplex*)alpha,
+		    a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
+	     break;
 	  default:
-	     ga_error("check_result: data type not supported", atype);
+	     ga_error("check_result: data type not supported here", atype);
        }
 # endif
        
@@ -948,7 +952,6 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 	      *bilo, *bihi, *bjlo, *bjhi, *cilo, *cihi, *cjlo, *cjhi);
        
        free(tmpa); free(tmpb);
-       
        /* after computing c locally, verify it with the values in g_c */
        tmpc2 = (DoubleComplex*)malloc( sizeof(DoubleComplex)* (m*n/factor+1));
        if(tmpc2==NULL) ga_error("check_result: malloc failed for tmpc2", 0);
@@ -1048,6 +1051,10 @@ void ga_matmul(transa, transb, alpha, beta,
     int local_sync_begin,local_sync_end;
     short int need_scaling=SET,use_NB_matmul=SET;
     short int irregular=UNSET, memory_flag=UNSET;
+
+#ifdef GA_USE_VAMPIR
+  vampir_begin(GA_MATMUL,__FILE__,__LINE__);
+#endif
 
     /* OPTIMIZATIONS FLAGS. To unset an optimization, replace SET by UNSET) */
     CYCLIC_DISTR_OPT_FLAG  = UNSET;
@@ -1278,6 +1285,9 @@ void ga_matmul(transa, transb, alpha, beta,
        
        GA_POP_NAME;   
        if(local_sync_end)ga_sync_();
+#ifdef GA_USE_VAMPIR
+  vampir_end(GA_MATMUL,__FILE__,__LINE__);
+#endif
 }
 
 /* This is the old matmul code. It is enadle now for mirrored matrix multiply. 
@@ -1595,6 +1605,9 @@ void ga_matmul_patch(transa, transb, alpha, beta,
      void    *alpha, *beta;
      char    *transa, *transb;
 {
+#ifdef GA_USE_VAMPIR
+  vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
+#endif
     if(ga_is_mirrored_(g_a)) 
        ga_matmul_mirrored(transa, transb, alpha, beta,
 			  g_a, ailo, aihi, ajlo, ajhi,
@@ -1608,6 +1621,10 @@ void ga_matmul_patch(transa, transb, alpha, beta,
 		 g_c, cilo, cihi, cjlo, cjhi);
        _gai_matmul_patch_flag = UNSET;
     }
+#ifdef GA_USE_VAMPIR
+  vampir_end(GA_MATMUL_PATCH,__FILE__,__LINE__);
+#endif
+
 }
 
 
@@ -1692,6 +1709,10 @@ DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
 int local_sync_begin,local_sync_end;
 int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
+
+#ifdef GA_USE_VAMPIR
+  vampir_begin(NGA_MATMUL_PATCH,__FILE__,__LINE__);
+#endif
 
    ONE.real =1.;
    ONE.imag =0.;
@@ -1962,6 +1983,10 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    
    GA_POP_NAME;
    if(local_sync_end)ga_sync_(); 
+
+#ifdef GA_USE_VAMPIR
+  vampir_end(NGA_MATMUL_PATCH,__FILE__,__LINE__);
+#endif
 }
 
 /*\ MATRIX MULTIPLICATION for patches 
@@ -2002,16 +2027,25 @@ void FATR ga_matmul_patch_(transa, transb, alpha, beta,
 #if defined(CRAY) || defined(WIN32)
      _fcd   transa, transb;
      {   
+#ifdef GA_USE_VAMPIR
+  vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
+#endif
 	_gai_matmul_patch_flag = SET;
 	ga_matmul(_fcdtocp(transa), _fcdtocp(transb), alpha, beta,
 		  g_a, ailo, aihi, ajlo, ajhi,
 		  g_b, bilo, bihi, bjlo, bjhi,
 		  g_c, cilo, cihi, cjlo, cjhi);
 	_gai_matmul_patch_flag = UNSET;
+#ifdef GA_USE_VAMPIR
+  vampir_end(GA_MATMUL_PATCH,__FILE__,__LINE__);
+#endif
      }
 #else
      char    *transa, *transb;
 {    
+#ifdef GA_USE_VAMPIR
+  vampir_begin(GA_MATMUL_PATCH,__FILE__,__LINE__);
+#endif
 #if 0
 Integer alo[2], ahi[2]; 
 Integer blo[2], bhi[2];
@@ -2036,6 +2070,9 @@ Integer clo[2], chi[2];
 	   _gai_matmul_patch_flag = UNSET;
 	}
 #endif
+#ifdef GA_USE_VAMPIR
+  vampir_end(GA_MATMUL_PATCH,__FILE__,__LINE__);
+#endif
 }
 #endif
 
@@ -2049,11 +2086,18 @@ Integer clo[2], chi[2];
 void ga_dgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
                double *alpha, Integer *g_a, Integer *g_b,
                double *beta, Integer *g_c) {
+
+#ifdef GA_USE_VAMPIR
+  vampir_begin(GA_DGEMM,__FILE__,__LINE__);
+#endif
   /**
    * ga_summa calls ga_ga_dgemm to handle cases it does not cover
    */
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   ga_summa_(transa, transb, m, n, k, alpha, g_a, g_b, beta, g_c);
+#ifdef GA_USE_VAMPIR
+  vampir_end(GA_DGEMM,__FILE__,__LINE__);
+#endif
 }
 #  define GA_DGEMM ga_ga_dgemm_
 #else
@@ -2094,10 +2138,16 @@ void FATR GA_DGEMM(char *transa, char *transb, Integer *m, Integer *n, Integer *
 SET_GEMM_INDICES;
 #endif
  
+#ifdef GA_USE_VAMPIR
+  vampir_begin(GA_DGEMM,__FILE__,__LINE__);
+#endif
  ga_matmul(transa, transb, alpha, beta,
 	   g_a, &ailo, &aihi, &ajlo, &ajhi,
 	   g_b, &bilo, &bihi, &bjlo, &bjhi,
 	   g_c, &cilo, &cihi, &cjlo, &cjhi);
+#ifdef GA_USE_VAMPIR
+  vampir_end(GA_DGEMM,__FILE__,__LINE__);
+#endif
 }
 
 #if defined(CRAY) || defined(WIN32)
@@ -2118,10 +2168,16 @@ SET_GEMM_INDICES;
 #endif
 
 
+#ifdef GA_USE_VAMPIR
+  vampir_begin(GA_SGEMM,__FILE__,__LINE__);
+#endif
   ga_matmul (transa, transb, alpha, beta,
 	     g_a, &ailo, &aihi, &ajlo, &ajhi,
 	     g_b, &bilo, &bihi, &bjlo, &bjhi,
 	     g_c, &cilo, &cihi, &cjlo, &cjhi);
+#ifdef GA_USE_VAMPIR
+  vampir_end(GA_SGEMM,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -2142,10 +2198,15 @@ void FATR ga_zgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer 
 SET_GEMM_INDICES;
 #endif
 
-
+#ifdef GA_USE_VAMPIR
+  vampir_begin(GA_ZGEMM,__FILE__,__LINE__);
+#endif
   ga_matmul (transa, transb, alpha, beta,
 	     g_a, &ailo, &aihi, &ajlo, &ajhi,
 	     g_b, &bilo, &bihi, &bjlo, &bjhi,
 	     g_c, &cilo, &cihi, &cjlo, &cjhi);
+#ifdef GA_USE_VAMPIR
+  vampir_end(GA_ZGEMM,__FILE__,__LINE__);
+#endif
 }
 
