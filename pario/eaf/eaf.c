@@ -311,7 +311,7 @@ int eaf_stat(const char *path, int *avail_kb, char *fstype, int fslen)
 
  if (rc = elio_dirname(path, dirname, sizeof(dirname))) return rc;
  if (rc = elio_stat(dirname, &statinfo)) return rc;
- if (fslen < 6) return EAF_ERR_TOO_SHORT;
+ if (fslen < 8) return EAF_ERR_TOO_SHORT;
 
  *avail_kb = statinfo.avail;
  if (statinfo.fs == ELIO_UFS)
