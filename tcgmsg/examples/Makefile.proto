@@ -24,6 +24,16 @@ IF SGI
       LIBS = -lmalloc -lbsd -lrpcsvc -lsun
    SCFBLAS = scfblas.o
 ENDIF SGI
+IF SGITFP
+#SGI IRIX ...  note that need -lmalloc ... default break in Stress
+        FC = f77
+    FFLAGS = -O2 -d8 -i8
+        CC = cc
+   DEFINES = -DSGI -DSGITFP
+    CFLAGS = -O  $(DEFINES)
+      LIBS = -lmalloc -lbsd -lrpcsvc 
+   SCFBLAS = scfblas.o
+ENDIF SGI
 IF KSR
         FC = f77
     FFLAGS = -para -g -r8

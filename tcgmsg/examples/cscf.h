@@ -28,10 +28,10 @@ c     icut1        = no. of successful ij   2-e screening tests
 c     icut2        = no. of successful ijkl 2-e screening tests
 c     icut3        = no. of 2-e integrals computed
 c
-      parameter (natom = 4, nbfn = 60, nocc = 8, mxiter = 20)
+      parameter (natom = 1, nbfn = 15, nocc = 2, mxiter = 20)
       parameter (nnbfn = nbfn*(nbfn+1)/2, pi = 3.141592653589793d0)
       parameter (tol= 1.0d-4)
-      parameter (tol2e=1.0d-6)
+      parameter (tol2e=1.0d-7)
 c
       common /cscf/
      $     enrep, q(natom), ax(natom), ay(natom), az(natom),
