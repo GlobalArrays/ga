@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/defglobals.h,v 1.4 1995-02-24 02:17:13 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/defglobals.h,v 1.5 1999-11-20 03:15:05 d3g681 Exp $ */
 
 #ifndef SNDRCVP
 #include "sndrcvP.h"
@@ -26,7 +26,7 @@ long SR_exit_on_error;            /* flag to exit on error */
 long SR_error;                    /* flag indicating error has been called
                                      with SR_exit_on_error == FALSE */
 
-long SR_nchild;                   /* no. of forked processes */
+long SR_numchild;                   /* no. of forked processes */
 long SR_pids[MAX_SLAVE];          /* pids of forked processes */
 
 

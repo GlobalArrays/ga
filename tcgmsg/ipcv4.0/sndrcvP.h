@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.5 1995-10-11 23:46:36 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.6 1999-11-20 03:15:06 d3g681 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
@@ -93,7 +93,7 @@ extern long SR_exit_on_error;            /* flag to exit on error */
 extern long SR_error;                    /* flag indicating error has been called
                                      with SR_exit_on_error == FALSE */
 
-extern long SR_nchild;                   /* no. of forked processes */
+extern long SR_numchild;                   /* no. of forked processes */
 extern long SR_pids[MAX_SLAVE];          /* pids of forked processes */
 
 

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.15 1999-10-06 18:00:35 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.16 1999-11-20 03:15:05 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -288,7 +288,7 @@ static long RemoteCreate(remote_hostname, remote_username,
     Error("RemoteCreate: in child after execv", (long) -1);
   }
   else if (pid > 0)
-    SR_pids[SR_nchild++] = pid;
+    SR_pids[SR_numchild++] = pid;
   else
     Error("RemoteCreate: failed forking process", (long) pid);
 

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.6 1999-08-10 23:27:31 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.7 1999-11-20 03:15:06 d3g681 Exp $ */
 
 
 #include <stdio.h>
@@ -230,6 +230,93 @@ void CreateSocketAndBind(sock, port)
 
   *port = ntohs(server.sin_port);
 
+}
+
+void ListenOnSock(sock)
+  int sock;
+/*
+  Listen for a connection on the specified socket
+  which was created with CreateSocketAndBind
+*/
+{
+againlist:
+  if (listen(sock, 1) < 0) {
+    if (errno == EINTR)
+      goto againlist;
+    else
+      Error("ListenAndAccept: listen failed", (long) 0);
+  }
+
+  if (DEBUG_) {
+    (void) printf("process %ld out of listen on socket %d\n",NODEID_(),sock);
+    (void) fflush(stdout);
+  }
+}
+
+int AcceptConnection(sock)
+  int sock;
+/*
+  Accept a connection on the specified socket
+  which was created with CreateSocketAndBind and
+  listen has been called.
+*/
+{
+  fd_set ready;
+  struct timeval timelimit;
+  int msgsock, nready;
+  int size = SR_SOCK_BUF_SIZE;
+  
+  /* Use select to wait for someone to try and establish a connection
+     so that we can add a short timeout to avoid hangs */
+
+againsel:
+  FD_ZERO(&ready);
+  FD_SET(sock, &ready);
+
+  timelimit.tv_sec = TIMEOUT_ACCEPT;
+  timelimit.tv_usec = 0;
+  nready = select(sock+1, &ready, (fd_set *) NULL, (fd_set *) NULL,
+		  &timelimit);
+  if ( (nready <= 0) && (errno == EINTR) )
+    goto againsel;
+  else if (nready < 0)
+    Error("ListenAndAccept: error from select",  (long) nready);
+  else if (nready == 0)
+    Error("ListenAndAccept: timeout waiting for connection", 
+          (long) nready);
+
+  if (!FD_ISSET(sock, &ready))
+    Error("ListenAndAccept: out of select but not ready!", (long) nready);
+
+againacc:
+  msgsock = accept(sock, (struct sockaddr *) NULL, (int *) NULL);
+  if (msgsock == -1) {
+    if (errno == EINTR)
+      goto againacc;
+    else
+      Error("ListenAndAccept: accept failed", (long) msgsock);
+  }
+
+  if (DEBUG_) {
+    (void) printf("process %ld out of accept on socket %d\n",
+		  NODEID_(),msgsock);
+    (void) fflush(stdout);
+  }
+
+  /* Increase size of socket buffers to improve long message
+     performance and increase size of message that goes asynchronously */
+
+  if(setsockopt(msgsock, SOL_SOCKET, SO_RCVBUF, (char *) &size, sizeof size))
+    Error("ListenAndAccept: error setting SO_RCVBUF", (long) size);
+  if(setsockopt(msgsock, SOL_SOCKET, SO_SNDBUF, (char *) &size, sizeof size))
+    Error("ListenAndAccept: error setting SO_SNDBUF", (long) size);
+
+#ifndef ARDENT
+  TcpNoDelay(msgsock);
+#endif
+
+  (void) close(sock); /* will not be needing this again */
+  return msgsock;
 }
 
 int ListenAndAccept(sock)

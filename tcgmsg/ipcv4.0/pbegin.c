@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.9 1999-08-12 00:56:27 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.10 1999-11-20 03:15:05 d3g681 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -368,7 +368,7 @@ void PBEGIN_(argc, argv)
 	break;
       }
       else if (status > 0)
-	SR_pids[SR_nchild++] = status;
+	SR_pids[SR_numchild++] = status;
     }
     
     masterid = SR_clus_info[SR_clus_id].masterid;

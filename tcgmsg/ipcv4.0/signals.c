@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.8 1999-10-06 18:00:35 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.9 1999-11-20 03:15:06 d3g681 Exp $ */
 
 #include <signal.h>
 #include "sndrcvP.h"
@@ -53,8 +53,8 @@ void ZapChildren()
   kill -SIGINT all of my beloved children
 */
 {
-  while (SR_nchild--)
-    (void) kill((int) SR_pids[SR_nchild], SIGINT);
+  while (SR_numchild--)
+    (void) kill((int) SR_pids[SR_numchild], SIGINT);
 }
 
 #if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))

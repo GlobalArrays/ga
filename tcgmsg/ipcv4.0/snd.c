@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.10 1999-08-10 23:27:31 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.11 1999-11-20 03:15:06 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -1001,8 +1001,9 @@ void RemoteConnect(a, b, c)
     }
     lport = port;
     lenbuf = sizeof lport;
+    ListenOnSock(sock);
     SND_(&type, (char *) &lport, &lenbuf, &c, &sync); /* Port to intermediate */
-    SR_proc_info[b].sock = ListenAndAccept(sock); /* Accept connection
+    SR_proc_info[b].sock = AcceptConnection(sock); /* Accept connection
 						     and save socket info */
   }
   else if (b == me) {

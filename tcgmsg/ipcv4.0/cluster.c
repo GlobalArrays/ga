@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.7 1997-02-17 20:37:26 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.8 1999-11-20 03:15:05 d3g681 Exp $ */
 
 #include <stdio.h>
 
@@ -146,7 +146,7 @@ void InitGlobal()
 
   SR_error = FALSE;
 
-  SR_nchild = 0;
+  SR_numchild = 0;
   for (i=0; i<MAX_SLAVE; i++)
     SR_pids[i] = 0;
 
