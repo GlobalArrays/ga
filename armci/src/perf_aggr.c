@@ -1,4 +1,4 @@
-/* $Id: perf_aggr.c,v 1.6 2003-10-23 04:55:26 d3h325 Exp $ */
+/* $Id: perf_aggr.c,v 1.7 2004-07-21 00:23:06 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -257,7 +257,7 @@ void test_aggregate(int dryrun) {
 	    ARMCI_Error("armci_nbput failed\n",rc);
 	}
       }
-      for(i=0; i<nproc; i++) ARMCI_Wait(&aggr_hdl_put[i]);
+      for(i=1; i<nproc; i++) ARMCI_Wait(&aggr_hdl_put[i]);
       if(!dryrun)printf("%d: Aggregate Put time  = %.2es\n\n", me, MP_TIMER()-start_time);
       
       
@@ -300,7 +300,7 @@ void test_aggregate(int dryrun) {
 		      i, &aggr_hdl_get[i]);
 	}
       }
-      for(i=0; i<nproc; i++) ARMCI_Wait(&aggr_hdl_get[i]);
+      for(i=1; i<nproc; i++) ARMCI_Wait(&aggr_hdl_get[i]);
       if(!dryrun)printf("%d: Aggregate Get time  = %.2es\n", me, MP_TIMER()-start_time);
     }
 
