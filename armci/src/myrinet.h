@@ -16,6 +16,7 @@
 #ifndef MYRINET_H
 #define MYRINET_H
 
+#define COMPLETE_HANDLE _armci_buf_complete_nb_request
 #define GM_STRONG_TYPES 0 
 #include "gm.h"
 /* in GM 1.4 memory registration got so slow we cannot use 0-copy protocols

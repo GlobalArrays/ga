@@ -26,7 +26,7 @@ extern void armci_via_wait_ack();
 
 #define GET_SEND_BUFFER _armci_buf_get
 #define FREE_SEND_BUFFER _armci_buf_release
-
+#define COMPLETE_HANDLE _armci_buf_complete_nb_request
 #define BALANCE_BUFFERS
 #ifdef BALANCE_BUFFERS
 #  define BALANCE_FACTOR 1.6

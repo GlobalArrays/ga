@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.14 2002-11-06 13:58:36 vinod Exp $    **/
+/* $Id: buffers.c,v 1.15 2002-12-04 19:20:52 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -179,16 +179,16 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
                      buf_state->op,idx);
     }
 #   ifdef BUF_EXTRA_FIELD_T
-      else{
+    else{
        /* need to call platform specific function */
        CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[idx].field,buf_state->snd,buf_state->rcv,buf_state->to);
-       /*later, we might just need to do this for all ops, not just get*/
+       /*later, we might just need to do this for all operations, not just get*/
        if(_armci_buf_state->buf[idx].id.tag!=0 &&(buf_state->op == GET)){
          armci_complete_req_buf(&(_armci_buf_state->buf[idx].id),
                                 _armci_buf_state->buf[idx].buffer);
-         _armci_buf_state->buf[idx].id.tag=0;
        }
-      }
+       _armci_buf_state->buf[idx].id.tag=0;
+    }
 #   endif
 
     /* clear table slots for all the buffers in the set for this request */
@@ -392,20 +392,22 @@ int i=0;
     if(bufid == NB_NONE) *retcode=0;
     else if(bufid == NB_MULTI) {
        for(i=0;i<MAX_BUFS;i++){ 
-         if(tag==_armci_buf_state->buf[i].id.tag)
+         if(tag==_armci_buf_state->buf[i].id.tag && 
+            _armci_buf_state->table[i].first==i)
            _armci_buf_complete_index(i,1); 
        }
        *retcode=0;
     }
     else {
-       if(tag==_armci_buf_state->buf[bufid].id.tag)
+       if(tag==_armci_buf_state->buf[bufid].id.tag &&
+            _armci_buf_state->table[i].first==i)
          _armci_buf_complete_index(bufid,1);
        *retcode=0;
     } 
 }
 
 
-/*\function to set the buffer tag and also the async flag
+/*\function to set the buffer tag and the protocol
 \*/
 void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol)
 {

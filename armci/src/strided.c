@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.50 2002-12-03 18:48:41 manoj Exp $ */
+/* $Id: strided.c,v 1.51 2002-12-04 19:20:53 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -808,6 +808,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = PUT;
       nb_handle->proc= proc;
+      nb_handle->bufid=NB_NONE;
     }
 
 #ifndef LAPI2
@@ -815,12 +816,12 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #  if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)
        if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
            rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
-                     dst_ptr, dst_stride_arr, count, stride_levels,NULL,1,NULL);
+                     dst_ptr, dst_stride_arr, count, stride_levels,NULL,1,nb_handle);
        }
        else
 #  endif
        rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,dst_ptr,
-                  dst_stride_arr, count, stride_levels, NULL, -1, -1, -1,NULL);
+                  dst_stride_arr, count, stride_levels, NULL, -1, -1, -1,nb_handle);
     }
     else
 #endif 
@@ -872,6 +873,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        nb_handle->tag = GET_NEXT_NBTAG();
        nb_handle->op  = GET;
        nb_handle->proc= proc;
+       nb_handle->bufid=NB_NONE;
     }
 
 #ifndef LAPI2
@@ -887,7 +889,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
           int nobuf =1; /* tells the sending routine not to buffer */
           rc = armci_rem_strided(GET, NULL, proc,src_ptr,src_stride_arr,dst_ptr,
                                 dst_stride_arr, count, stride_levels,
-                                (ext_header_t*)0,nobuf,NULL);
+                                (ext_header_t*)0,nobuf,nb_handle);
           if(rc) goto DefaultPath; /* attempt to avoid buffering failed */ 
 
        }else
@@ -895,7 +897,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #endif
           rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
                                  dst_ptr,dst_stride_arr,count,stride_levels,
-                                 NULL,-1,-1,-1,NULL);
+                                 NULL,-1,-1,-1,nb_handle);
     }else
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
@@ -940,6 +942,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = optype;
       nb_handle->proc= proc;
+      nb_handle->bufid=NB_NONE;
     }
 
     if(direct)

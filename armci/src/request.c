@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.44 2002-12-04 17:20:15 vinod Exp $ */
+/* $Id: request.c,v 1.45 2002-12-04 19:20:53 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -164,6 +164,7 @@ BUF_INFO_T *info;
        val = info->bufid;
     }
     nb_handle->bufid = val; 
+    /*printf("\n%d:bufid value set to%d \n",armci_me,val);fflush(stdout);*/
 } 
 
 /**************End--Routines to handle completion descriptor******************/
