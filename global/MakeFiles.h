@@ -49,8 +49,8 @@ ifeq ($(TARGET),LAPI)
 endif
 
 ifndef OLD_GA
-  GA_CORE = global.armci.o global.util.o global.patch.o \
-	    collect.o decomp.o capi.o global.nalg.o global.npatch.o ga_trace.o
+  GA_CORE = global.armci.o global.util.o collect.o decomp.o capi.o \
+	    global.nalg.o global.npatch.o ga_trace.o
 else
 ifdef IWAY
   GA_CORE += iway.o net.o
