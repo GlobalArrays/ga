@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.112 2005-02-15 00:23:31 d3g293 Exp $ */
+/* $Id: base.c,v 1.113 2005-02-25 21:06:03 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1217,7 +1217,7 @@ logical ga_allocate_( Integer *g_a)
   Integer dims[MAXDIM], chunk[MAXDIM];
   Integer pe[MAXDIM], *pmap[MAXDIM], *map;
   Integer blk[MAXDIM];
-  Integer me_local;
+  Integer grp_me=GAme, grp_nproc=GAnproc;
 #ifdef GA_USE_VAMPIR
   vampir_begin(GA_ALLOCATE,__FILE__,__LINE__);
 #endif
@@ -1234,6 +1234,11 @@ logical ga_allocate_( Integer *g_a)
   ga_pgroup_sync_(&p_handle);
   GA_PUSH_NAME("ga_allocate");
 
+  if (p_handle > 0) {
+     grp_nproc  = PGRP_LIST[p_handle].map_nproc;
+     grp_me = PGRP_LIST[p_handle].map_proc_list[GAme];
+  }
+  
   if(!GAinitialized) ga_error("GA not initialized ", 0);
   if(!ma_address_init) gai_ma_address_init();
 
@@ -1264,12 +1269,7 @@ logical ga_allocate_( Integer *g_a)
     ga_pgroup_sync_(&p_handle);
 
     /* ddb(ndim, dims, GAnproc, blk, pe);*/
-    if (p_handle >= 0) {
-       ddb_h2(ndim, dims, PGRP_LIST[p_handle].map_nproc, 0.0,
-              (Integer)0, blk, pe);
-    } else {
-       ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
-    }
+    ddb_h2(ndim, dims, grp_nproc, 0.0, (Integer)0, blk, pe);
 
     for(d=0, map=mapALL; d< ndim; d++){
       Integer nblock;
@@ -1347,8 +1347,7 @@ logical ga_allocate_( Integer *g_a)
   GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
   /*** determine which portion of the array I am supposed to hold ***/
   if (p_handle >= 0) {
-     me_local = (Integer)PGRP_LIST[p_handle].map_proc_list[GAme];
-     nga_distribution_(g_a, &me_local, GA[ga_handle].lo, hi);
+     nga_distribution_(g_a, &grp_me, GA[ga_handle].lo, hi);
   } else {
      nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
   }
@@ -1375,7 +1374,7 @@ logical ga_allocate_( Integer *g_a)
     status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
                              GA[ga_handle].type, &GA[ga_handle].id, p_handle);
   } else {
-    GA[ga_handle].ptr[GAme]=NULL;
+     GA[ga_handle].ptr[grp_me]=NULL;
   }
 
   /* If array is mirrored, evaluate first and last indices */
@@ -2040,7 +2039,7 @@ int gai_getmem(char* name, char **ptr_arr, Integer bytes, int type, long *id,
 	       int grp_id)
 {
 Integer handle = INVALID_MA_HANDLE, index;
-Integer nproc, grp_me, nelem, item_size = GAsizeofM(type);
+Integer nproc=GAnproc, grp_me=GAme, nelem, item_size = GAsizeofM(type);
 char *ptr = (char*)0;
  
 
@@ -2048,10 +2047,6 @@ char *ptr = (char*)0;
      nproc  = PGRP_LIST[grp_id].map_nproc;
      grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
    }
-   else {
-     nproc = GAnproc;
-     grp_me=GAme;
-   } 
  
 #ifdef AVOID_MA_STORAGE
    return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
@@ -2223,7 +2218,7 @@ Integer  mem_size, mem_size_proc;
 Integer  i, ga_handle, status;
 int      *save_mapc;
 int local_sync_begin,local_sync_end;
-Integer grp_id;
+Integer grp_id, grp_me=GAme, grp_nproc=GAnproc;
 
 #ifdef GA_USE_VAMPIR
       vampir_begin(GA_DUPLICATE,__FILE__,__LINE__);
@@ -2234,6 +2229,11 @@ Integer grp_id;
       _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
       grp_id = ga_get_pgroup_(g_a);
       if(local_sync_begin)ga_pgroup_sync_(&grp_id);
+
+      if (grp_id > 0) {
+         grp_nproc  = PGRP_LIST[grp_id].map_nproc;
+         grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
+      }
 
       GAstat.numcre ++; 
 
@@ -2283,7 +2283,7 @@ Integer grp_id;
                                (int)GA[ga_handle].type, &GA[ga_handle].id,
 			       (int)grp_id);
       else{
-          GA[ga_handle].ptr[GAme]=NULL;
+         GA[ga_handle].ptr[grp_me]=NULL;
       }
 
       if(local_sync_end)ga_pgroup_sync_(&grp_id);
@@ -2416,7 +2416,7 @@ char buf[FNAM];
 \*/
 logical FATR ga_destroy_(Integer *g_a)
 {
-Integer ga_handle = GA_OFFSET + *g_a, p_handle;
+Integer ga_handle = GA_OFFSET + *g_a, grp_id, grp_me=GAme;
 int local_sync_begin;
 
 #ifdef GA_USE_VAMPIR
@@ -2425,9 +2425,12 @@ int local_sync_begin;
 
     local_sync_begin = _ga_sync_begin; 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    p_handle = (Integer)GA[ga_handle].p_handle;
-    if(local_sync_begin)ga_pgroup_sync_(&p_handle);
+    grp_id = (Integer)GA[ga_handle].p_handle;
+    if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
+    if (grp_id > 0) grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
+    else grp_me=GAme;
+    
     GAstat.numdes ++; /*regardless of array status we count this call */
     /* fails if handle is out of range or array not active */
     if(ga_handle < 0 || ga_handle >= _max_global_array){
@@ -2446,21 +2449,20 @@ int local_sync_begin;
       free(GA[ga_handle].cache);
     GA[ga_handle].cache = NULL;
     GA[ga_handle].actv = 0;     
-    if(GA[ga_handle].ptr[GAme]==NULL){
+    if(GA[ga_handle].ptr[grp_me]==NULL){
 #ifdef GA_USE_VAMPIR
        vampir_end(GA_DESTROY,__FILE__,__LINE__);
 #endif
        return TRUE;
     } 
 #ifndef AVOID_MA_STORAGE
-    if(gai_uses_shm(GA[ga_handle].p_handle)){
+    if(gai_uses_shm((int)grp_id)){
 #endif
       /* make sure that we free original (before address allignment) pointer */
 #ifdef MPI
-      if (GA[ga_handle].p_handle > 0){
-	 int grp_me = PGRP_LIST[GA[ga_handle].p_handle].map_proc_list[GAme];
+      if (grp_id > 0){
 	 ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
-			  &PGRP_LIST[GA[ga_handle].p_handle].group);
+			  &PGRP_LIST[grp_id].group);
       }
       else
 #endif
@@ -2774,7 +2776,6 @@ int candidate, found, b, *map= (map_ij);\
 logical FATR nga_locate_(Integer *g_a, Integer* subscript, Integer* owner)
 {
 Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
-Integer p_handle;
 
    ga_check_handleM(g_a, "nga_locate");
    ndim = GA[ga_handle].ndim;
@@ -3463,7 +3464,7 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
   a_handle = GA_OFFSET + *g_a;
   b_handle = GA_OFFSET + *g_b;
 
-  if (!ga_is_mirrored_(g_a))
+  if (!ga_is_mirrored_(g_a)) {
     if (ga_cluster_nnodes_() > 1) {
       ga_error("Handle to a non-mirrored array passed",0);
     } else {
@@ -3472,6 +3473,7 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
       nga_copy_patch(trans, g_a, alo, ahi, g_b, blo, bhi);
       return;
     }
+  }
 
   if (ga_is_mirrored_(g_b) && ga_cluster_nnodes_())
     ga_error("Distributed array is mirrored",0);
