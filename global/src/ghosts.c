@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.33 2003-12-09 16:17:59 vinod Exp $ */
+/* $Id: ghosts.c,v 1.34 2004-01-13 17:05:36 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1470,7 +1470,8 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
       armci_read_strided(ptr_rcv, (int)ndim-1, stride_rcv, count, rcv_ptr);
       msgcnt++;
     }
-    increment[idx] = 2*width[idx];
+    if (GA[handle].corner_flag)
+      increment[idx] = 2*width[idx];
   }
 
   ga_free(rcv_ptr_orig);
@@ -1523,7 +1524,7 @@ int ARMCI_PutS_flag__(
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND PUT CALLS
  *  WITHOUT ANY BARRIERS
 \*/
-logical FATR ga_update5_ghosts_(Integer *g_a)
+logical FATR ga_update55_ghosts_(Integer *g_a)
 {
   Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer size, ndim, nwidth, increment[MAXDIM];
@@ -1619,7 +1620,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
      than the corresponding value in width[]. */
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
-  GA_PUSH_NAME("ga_update5_ghosts");
+  GA_PUSH_NAME("ga_update55_ghosts");
 
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
@@ -1969,20 +1970,45 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING PUT CALLS WITHOUT CORNERS AND
  *  WITHOUT ANY BARRIERS
 \*/
-logical ga_update_ghosts_nocorner_(Integer *g_a)
+logical ga_update5_ghosts_(Integer *g_a)
 {
   Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer size, ndim, nwidth, increment[MAXDIM];
   Integer width[MAXDIM];
   Integer dims[MAXDIM];
   int *stride_loc, *stride_rem,*count;
-  int msgcnt, bytes;
+  int msgcnt, bytes, corner_flag;
   char *ptr_loc, *ptr_rem,*cache;
   int local_sync_begin,local_sync_end,scope;
 #ifdef USE_MP_NORTHSOUTH
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr;
 #endif
+  /* This routine makes use of the shift algorithm to update data in the
+   * ghost cells bounding the local block of visible data. The shift
+   * algorithm starts by updating the blocks of data along the first
+   * dimension by grabbing a block of data that is width[0] deep but
+   * otherwise matches the  dimensions of the data residing on the
+   * calling processor. The update of the second dimension, however,
+   * grabs a block that is width[1] deep in the second dimension but is
+   * ldim0 + 2*width[0] in the first dimensions where ldim0 is the
+   * size of the visible data along the first dimension. The remaining
+   * dimensions are left the same. For the next update, the width of the
+   * second dimension is also increased by 2*width[1] and so on. This
+   * algorith makes use of the fact that data for the dimensions that
+   * have already been updated is available on each processor and can be
+   * used in the updates of subsequent dimensions. The total number of
+   * separate updates is 2*ndim, an update in the negative and positive
+   * directions for each dimension.
+   *
+   * This operation is implemented using put calls to place the
+   * appropriate data on remote processors. To signal the remote
+   * processor that it has received the data, a second put call
+   * consisting of a single integer is sent after the first put call and
+   * used to update a signal buffer on the remote processor. Each
+   * processor can determine how much data it has received by checking
+   * its signal buffer. 
+   */
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -2005,10 +2031,11 @@ logical ga_update_ghosts_nocorner_(Integer *g_a)
 
   if (!gai_check_ghost_distr(g_a)) return FALSE;
 
-  GA_PUSH_NAME("ga_update_ghosts_nocorner");
+  GA_PUSH_NAME("ga_update5_ghosts_");
 
   /* loop over dimensions for sequential update using shift algorithm */
   msgcnt = 0;
+  corner_flag = GA[handle].corner_flag;
   (*GA_Update_Signal) = 1;
   for (idx=0; idx < ndim; idx++) {
     nwidth = width[idx];
@@ -2016,7 +2043,7 @@ logical ga_update_ghosts_nocorner_(Integer *g_a)
 
       /* Perform update in negative direction. */
       ptr_rem = *(char **)(cache);
-      if(ptr_rem==NULL)return FALSE;
+      if(ptr_rem==NULL) return FALSE;
       ptr_loc = *(char **)(cache+sizeof(char *));
       stride_loc = (int *)(cache+2*sizeof(char *));
       stride_rem = (int *)(stride_loc+ndim);
@@ -2069,16 +2096,25 @@ logical ga_update_ghosts_nocorner_(Integer *g_a)
       msgcnt++;
 
     }
-    /*waitforflags((GA_Update_Flags[GAme]+msgcnt-2),
-        (GA_Update_Flags[GAme]+msgcnt-1));*/
+    if (corner_flag) {
+      /* check to make sure that last two messages have been recieved
+         before starting update along a new dimension */
+      waitforflags((GA_Update_Flags[GAme]+msgcnt-2),
+        (GA_Update_Flags[GAme]+msgcnt-1));
+      /* update increment array */
+      increment[idx] = 2*nwidth;
+    }
   }
 #if 1
-  while(msgcnt){
-    waitforflags((GA_Update_Flags[GAme]+msgcnt-1),
-        (GA_Update_Flags[GAme]+msgcnt-2));
-    GA_Update_Flags[GAme][msgcnt-1]=0;
-    GA_Update_Flags[GAme][msgcnt-2]=0;
-    msgcnt-=2;
+  if (!corner_flag) {
+    /* check to make sure that all messages have been recieved */
+    while(msgcnt){
+      waitforflags((GA_Update_Flags[GAme]+msgcnt-1),
+          (GA_Update_Flags[GAme]+msgcnt-2));
+      GA_Update_Flags[GAme][msgcnt-1]=0;
+      GA_Update_Flags[GAme][msgcnt-2]=0;
+      msgcnt-=2;
+    }
   }
 #endif 
   GA_POP_NAME;
@@ -2087,7 +2123,7 @@ logical ga_update_ghosts_nocorner_(Integer *g_a)
 
 /*#define UPDATE_SAMENODE_GHOSTS_FIRST*/
 
-void nga_set_neighbor_ghost_info(Integer *g_a)
+void ga_set_update5_info_(Integer *g_a)
 {
   int *proc_rem,i;
   Integer size, ndim, nwidth, increment[MAXDIM],np;
@@ -2101,14 +2137,52 @@ void nga_set_neighbor_ghost_info(Integer *g_a)
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   int *stride_loc, *stride_rem,*count;
-  int msgcnt, bytes,idx;
+  int msgcnt, bytes, idx, corner_flag;
   char **ptr_loc, **ptr_rem,*cache;
   Integer handle = GA_OFFSET + *g_a;
   int scope;
+
+  /* This routine sets up the arrays that are used to transfer data
+   * using the update5 algorithm. The arrays begining with the character
+   * "p" represent relative indices marking the location of the data set
+   * relative to the origin the local patch of the global array, all
+   * other indices are in absolute coordinates and mark locations in the
+   * total global array. The indices used by this routine are described
+   * below.
+   *
+   *       lo_loc[], hi_loc[]: The lower and upper indices of the visible
+   *       block of data held by the calling processor.
+   *
+   *       lo_rem[], hi_rem[]: The lower and upper indices of the block
+   *       of data on a remote processor or processors that is needed to
+   *       fill in the calling processors ghost cells. These indices are
+   *       NOT corrected for wrap-around (periodic) boundary conditions
+   *       so they can be negative or greater than the array dimension
+   *       values held in dims[].
+   *
+   *       slo_rem[], shi_rem[]: Similar to lo_rem[] and hi_rem[], except
+   *       that these indices have been corrected for wrap-around
+   *       boundary conditions. 
+   *
+   *       thi_rem[], thi_rem[]: The lower and upper indices of the visible
+   *       data on a remote processor.
+   *
+   *       plo_loc[], phi_loc[]: The indices of the local data patch that
+   *       is going to be updated.
+   *
+   *       plo_rem[], phi_rem[]: The indices of the data patch on the
+   *       remote processor that will be used to update the data on the
+   *       calling processor. Note that the dimensions of the patches
+   *       represented by plo_loc[], plo_rem[] and plo_loc[], phi_loc[]
+   *       must be the same.
+   */
+
   ndim = GA[handle].ndim;
   size = GA[handle].elemsize;
   cache = GA[handle].cache;
+  corner_flag = GA[handle].corner_flag;
 
+  nga_distribution_(g_a,&GAme,lo_loc,hi_loc); 
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
     width[idx] = GA[handle].width[idx];
@@ -2118,7 +2192,6 @@ void nga_set_neighbor_ghost_info(Integer *g_a)
       return;
     }
   } 
-  nga_distribution_(g_a,&GAme,lo_loc,hi_loc); 
 #ifdef UPDATE_SAMENODE_GHOSTS_FIRST
   for(scope=0;scope < 2; scope ++)
 #endif
@@ -2239,10 +2312,27 @@ void nga_set_neighbor_ghost_info(Integer *g_a)
 
         gam_ComputeCount(ndim, plo_rem, phi_rem, count);
         count[0] *= size;
+
+        if (corner_flag)
+          increment[idx] = 2*nwidth;
       }
     }
 }
 
+/*\ SET FLAG ON WHETHER OR NOT TO UPDATE GHOST CELL CORNER DATA
+\*/
+void ga_set_ghost_corner_flag_(Integer *g_a, logical *flag)
+{
+  Integer handle = *g_a + GA_OFFSET;
+  GA[handle].corner_flag = (int)*flag;
+  if (GA[handle].actv == 1) {
+#ifdef CRAY_T3D
+    ga_set_update5_info_(g_a)
+#else
+#endif
+  }
+  
+}
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM
 \*/
