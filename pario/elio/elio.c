@@ -416,7 +416,6 @@ int elio_length(Fd_t fd, Off_t *dlength)
 
   /* Add up the lengths of any extents */
   if (fd->next) {
-    Off_t tmp;
     status = elio_length((Fd_t) fd->next, dlength);
     *dlength += elio_max_file_size(fd);
     return status;
@@ -525,7 +524,7 @@ int elio_aread(Fd_t fd, Off_t doffset, void* buf, Size_t bytes, io_request_t * r
 {
   off_t offset = (off_t) doffset;
   Size_t stat;
-  int    aio_i, rc;
+  int    aio_i,rc;
 
   if (doffset >= ABSURDLY_LARGE) 
     ELIO_ERROR(SEEKFAIL,0);
