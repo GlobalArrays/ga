@@ -11,8 +11,8 @@
 #
            FC = f77
            CC = cc
-         FOPT = -g 
-         COPT = -g
+         FOPT = -O 
+         COPT = -O
 GLOB_INCLUDES = -I../../ma
            AR = ar
        RANLIB = ranlib
@@ -20,7 +20,7 @@ GLOB_INCLUDES = -I../../ma
         SHELL = /bin/sh
            MV = /bin/mv
            RM = /bin/rm
-         MAKE = make
+#        MAKE = make
       INSTALL =
       ARFLAGS = rcv
     EXPLICITF = FALSE
