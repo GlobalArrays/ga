@@ -8,6 +8,7 @@
           parameter        (DRA_REQ_INVALID = -333)
           Integer           DRA_CREATE
           Integer           NDRA_CREATE
+          Integer           NDRA_CREATE_CONFIG
           Integer           DRA_OPEN
           Integer           DRA_INQUIRE
           Integer           NDRA_INQUIRE
@@ -28,6 +29,7 @@
           Integer           DRA_TERMINATE  
           External          DRA_CREATE
           External          NDRA_CREATE
+          External          NDRA_CREATE_CONFIG
           External          DRA_OPEN
           External          DRA_INQUIRE
           External          NDRA_INQUIRE

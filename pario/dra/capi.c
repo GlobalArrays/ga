@@ -75,6 +75,30 @@ int NDRA_Create(int type, int ndim, dra_size_t dims[], char *name,
     else return 0;
 }
 
+int NDRA_Create_config(int type, int ndim, dra_size_t dims[], char *name,
+                char* filename, int mode, dra_size_t reqdims[], int numfiles,
+                int ioprocs, int *d_a)
+{
+    Integer ttype, nndim, dd_a, mmode;
+    Integer nnumfiles, iioprocs;
+    logical st;
+    if (ndim>MAXDIM) return 0;
+
+    COPYC2F(dims, _da_dims, ndim);
+    COPYC2F(reqdims, _da_reqdims, ndim);
+    ttype = (Integer)type;
+    nndim = (Integer)ndim;
+    mmode = (Integer)mode;
+    nnumfiles = (Integer)numfiles;
+    iioprocs = (Integer)ioprocs;
+
+    st = ndra_create_config(&ttype, &nndim, _da_dims, name,
+        filename, &mmode, _da_reqdims, &nnumfiles, &iioprocs, &dd_a);
+    *d_a = (int)dd_a;
+    if(st==TRUE) return 1;
+    else return 0;
+}
+
 int NDRA_Inquire(int d_a, int *type, int *ndim, dra_size_t dims[], char *name,
     char* filename)
 {

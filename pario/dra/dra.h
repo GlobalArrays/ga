@@ -16,6 +16,7 @@ typedef Integer dra_size_t;
 
 #define DRA_create             dra_create
 #define NDRA_create            ndra_create
+#define NDRA_create_config     ndra_create_config
 #define DRA_open               dra_open
 #define DRA_inquire            dra_inquire
 #define NDRA_inquire           ndra_inquire
@@ -42,6 +43,7 @@ typedef Integer dra_size_t;
 #if defined(CRAY) || defined(WIN32)
 #  define dra_create_             DRA_CREATE
 #  define ndra_create_            NDRA_CREATE
+#  define ndra_create_config_     NDRA_CREATE_CONFIG
 #  define dra_open_               DRA_OPEN
 #  define dra_inquire_            DRA_INQUIRE
 #  define ndra_inquire_           NDRA_INQUIRE
@@ -68,6 +70,7 @@ typedef Integer dra_size_t;
 
 #  define dra_create_             dra_create__         
 #  define ndra_create_            ndra_create__        
+#  define ndra_create_config_     ndra_create_config__        
 #  define dra_open_               dra_open__           
 #  define dra_inquire_            dra_inquire__        
 #  define ndra_inquire_           ndra_inquire__       
@@ -125,6 +128,16 @@ extern Integer NDRA_create         _ARGS_((Integer *type,\
                                          char    *filename,\
                                          Integer *mode,\
                                          Integer reqdims[],\
+                                         Integer *d_a));
+extern Integer NDRA_create_config  _ARGS_((Integer *type,\
+                                         Integer *ndim,\
+                                         Integer dims[],\
+                                         char    *name,\
+                                         char    *filename,\
+                                         Integer *mode,\
+                                         Integer reqdims[],\
+                                         Integer *numfiles,\
+                                         Integer *numprocs,\
                                          Integer *d_a));
 extern Integer DRA_open           _ARGS_((char *filename,\
                                          Integer *mode, 

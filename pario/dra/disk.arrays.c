@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.64 2002-12-06 19:27:22 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.65 2002-12-10 17:55:10 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -2450,10 +2450,65 @@ Off_t offset;
                      dai_error("ndai_zero_eof: write error ",0);
 }
 
-
-/*\ CREATE AN N-DIMENSIONAL DISK ARRAY
+/*\ SET CONFIGURATION FOR HANDLING DRAs STORED ON OPEN FILE SYSTEMS
 \*/
-Integer ndra_create(
+void dai_set_config(Integer numfiles, Integer numioprocs,
+                    Integer *number_of_files, Integer *io_procs)
+{
+  if (numfiles < 1) {
+    if (numioprocs > 0) {
+      numfiles = numioprocs;
+    } else {
+      numfiles = ga_cluster_nnodes_();
+    }
+  }
+  if (numioprocs < 1) {
+    numioprocs = numfiles;
+  }
+  *number_of_files = numfiles;
+  *io_procs = numioprocs;
+  if (*number_of_files > ga_cluster_nnodes_()) {
+    if (ga_nodeid_() == 0) {
+      printf("WARNING: Number of files requested exceeds\n");
+      printf("number of IO nodes. Value is reset to number of IO nodes: %d\n",
+              ga_cluster_nnodes_());
+    }
+    *number_of_files = ga_cluster_nnodes_();
+  }
+  if (*io_procs > 1 && *number_of_files > 1) {
+    if (*io_procs != *number_of_files) {
+      if (ga_nodeid_() == 0) {
+        printf("WARNING: Number of IO processors is not\n");
+        printf("equal to number of files requested. Number of IO processors\n");
+        printf("is reset to number of files: %d\n",*number_of_files);
+      }
+      *io_procs = *number_of_files;
+    }
+  }
+  if (*number_of_files == 1) {
+    if (*io_procs > ga_cluster_nnodes_()) {
+      if (ga_nodeid_() == 0) {
+        printf("WARNING: Number of requested IO processors\n");
+        printf("exceeds number of available IO processors. Number of IO\n");
+        printf("processors reset to number of available IO processors %d\n",
+               ga_cluster_nnodes_());
+      }
+      *io_procs = ga_cluster_nnodes_();
+    }
+  }
+  if (*number_of_files > *io_procs) {
+    if (ga_nodeid_() == 0) {
+      printf("WARNING: Number of files is greater than\n");
+      printf("number of IO processors. Number of files reset to number of\n");
+      printf("IO processors: %d",*io_procs);
+    }
+    *number_of_files = *io_procs;
+  }
+}
+
+/*\ CREATE AN N-DIMENSIONAL DISK ARRAY WITH USER SPECIFIED IO CONFIGURATION
+\*/
+Integer ndra_create_config(
         Integer *type,                     /*input*/
         Integer *ndim,                     /*input: dimension of DRA*/
         Integer dims[],                    /*input: dimensions of DRA*/
@@ -2461,9 +2516,12 @@ Integer ndra_create(
         char    *filename,                 /*input*/
         Integer *mode,                     /*input*/
         Integer reqdims[],                 /*input: dimension of typical request*/
+        Integer *numfiles,                 /*input: number of files for DRA */
+        Integer *numioprocs,               /*input: number of IO procs to use */
         Integer *d_a)                      /*output:DRA handle*/
 {
 Integer handle, elem_size, ctype, i;
+Integer nfile,nioproc;
 
         /* convert Fortran to C data type */
         ctype = (Integer)ga_type_f2c((int)(*type));
@@ -2481,6 +2539,10 @@ Integer handle, elem_size, ctype, i;
            dai_error("ndra_create: too many disk arrays ", _max_disk_array);
        *d_a = handle - DRA_OFFSET;
 
+       /* Determine array configuration */
+       dai_set_config(*numfiles, *numioprocs, &DRA[handle].numfiles,
+                      &DRA[handle].ioprocs);
+
        /* determine disk array decomposition */ 
         elem_size = dai_sizeofM(ctype);
         ndai_chunking( elem_size, *ndim, reqdims, dims, DRA[handle].chunk);
@@ -2495,8 +2557,6 @@ Integer handle, elem_size, ctype, i;
         DRA[handle].mode = (int)*mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
         strncpy(DRA[handle].name, name, DRA_MAX_NAME );
-        DRA[handle].numfiles = _dra_number_of_files;
-        DRA[handle].ioprocs = _dra_io_procs;
 
         dai_write_param(DRA[handle].fname, *d_a);      /* create param file */
         DRA[handle].indep = dai_file_config(filename); /*check file configuration*/
@@ -2536,6 +2596,24 @@ Integer handle, elem_size, ctype, i;
         ga_sync_();
 
         return(ELIO_OK);
+}
+
+/*\ CREATE AN N-DIMENSIONAL DISK ARRAY
+\*/
+Integer ndra_create(
+        Integer *type,                     /*input*/
+        Integer *ndim,                     /*input: dimension of DRA*/
+        Integer dims[],                    /*input: dimensions of DRA*/
+        char    *name,                     /*input*/
+        char    *filename,                 /*input*/
+        Integer *mode,                     /*input*/
+        Integer reqdims[],                 /*input: dimension of typical request*/
+        Integer *d_a)                      /*output:DRA handle*/
+{
+   Integer ret;
+   Integer m1 = -1;
+   ret = ndra_create_config(type,ndim,dims,name,filename,mode,reqdims, &m1, &m1, d_a);
+   return ret;
 }
 
 /*\ write N-dimensional aligned block of data from memory buffer to d_a
@@ -3506,65 +3584,20 @@ void FATR dra_print_internals_(Integer *d_a)
     } else {
       printf("  DRA is using shared files\n");
     }
-    printf("  Number files used for DRA: %d",(int)DRA[handle].numfiles);
-    printf("  Number IO processors used for DRA: %d",
+    printf("  Number files used for DRA: %d\n",(int)DRA[handle].numfiles);
+    printf("  Number IO processors used for DRA: %d\n",
            (int)DRA[handle].ioprocs);
   }
 }
 
-/*\ SET ALGORITHM FOR HANDLING DRAs STORED ON OPEN FILE SYSTEMS
+/*\ SET DEFAULT CONFIGURATION FOR HANDLING DRAs STORED ON OPEN FILE SYSTEMS
 \*/
 void FATR dra_set_default_config_(Integer *numfiles, Integer *numioprocs)
 {
-  if (*numfiles < 1) {
-    if (*numioprocs > 0) {
-      *numfiles = *numioprocs;
-    } else {
-      *numfiles = ga_cluster_nnodes_();
-    }
-  }
-  if (*numioprocs < 1) {
-    *numioprocs = *numfiles;
-  }
-  _dra_number_of_files = *numfiles;
-  _dra_io_procs = *numioprocs;
-  if (_dra_number_of_files > ga_cluster_nnodes_()) {
-    if (ga_nodeid_() == 0) {
-      printf("dra_set_default_config: Number of files requested exceeds\n");
-      printf("number of IO nodes. Value is reset to number of IO nodes: %d\n",
-              ga_cluster_nnodes_());
-    }
-    _dra_number_of_files = ga_cluster_nnodes_();
-  }
-  if (_dra_io_procs > 1 && _dra_number_of_files > 1) {
-    if (_dra_io_procs != _dra_number_of_files) {
-      if (ga_nodeid_() == 0) {
-        printf("dra_set_default_config: Number of IO processors is not\n");
-        printf("equal to number of files requested. Number of IO processors\n");
-        printf("is reset to number of files: %d\n",_dra_number_of_files);
-      }
-      _dra_io_procs = _dra_number_of_files;
-    }
-  }
-  if (_dra_number_of_files == 1) {
-    if (_dra_io_procs > ga_cluster_nnodes_()) {
-      if (ga_nodeid_() == 0) {
-        printf("dra_set_default_config: Number of requested IO processors\n");
-        printf("exceeds number of available IO processors. Number of IO\n");
-        printf("processors reset to number of available IO processors %d\n",
-               ga_cluster_nnodes_());
-      }
-      _dra_io_procs = ga_cluster_nnodes_();
-    }
-  }
-  if (_dra_number_of_files > _dra_io_procs) {
-    if (ga_nodeid_() == 0) {
-      printf("dra_set_default_config: Number of files is greater than\n");
-      printf("number of IO processors. Number of files reset to number of\n");
-      printf("IO processors: %d",_dra_io_procs);
-    }
-    _dra_number_of_files = _dra_io_procs;
-  }
+  Integer number_of_files, io_procs;
+  dai_set_config(*numfiles, *numioprocs, &number_of_files, &io_procs);
+  _dra_number_of_files = number_of_files;
+  _dra_io_procs = io_procs;
 }
 
 /*\ SET DEBUG FLAG FOR DRA OPERATIONS TO TRUE OR FALSE
