@@ -9,7 +9,6 @@
 
 #define DEBUG_ 0
 
-#define ACK 0
 #define QUIT 33
 #define ATTACH 34
 
