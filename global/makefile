@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.23 1998-02-11 23:42:36 d3h325 Exp $
+#$Id: makefile,v 1.24 1998-05-07 18:32:06 d3e129 Exp $
 
 # Tiny makefile wrapper
 
@@ -18,7 +18,10 @@ endif
 ifdef NWCHEM_TARGET
 ifeq ($(TARGET),SP1)
     TARGET = SP
-    ALTDIR = $(LIBDIR:SP1=LAPI)
+#    ALTDIR = $(LIBDIR:SP1=LAPI)
+endif
+ifeq ($(TARGET),LAPI)
+    TARGET = LAPI
 endif
 endif
 
@@ -26,10 +29,10 @@ export LIBDIR CNFDIR BINDIR INCDIR TARGET_CPU
 
 global_stamp:	include_stamp 
 	$(MAKE) -f Makefile TARGET=$(TARGET) DIAG=PAR
-ifeq ($(TARGET),SP)
-	test -d $(ALTDIR) || $(MKDIR) -p $(ALTDIR)
-	$(MAKE) -f Makefile TARGET=LAPI DIAG=PAR LIBDIR=$(ALTDIR)
-endif
+#ifeq ($(TARGET),SP)
+#	test -d $(ALTDIR) || $(MKDIR) -p $(ALTDIR)
+#	$(MAKE) -f Makefile TARGET=LAPI DIAG=PAR LIBDIR=$(ALTDIR)
+#endif
 
 include_stamp:	src/global.fh
 	cp src/global.fh src/global.h src/types.f2c.h\
