@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.58 2003-10-21 22:41:17 d3g293 Exp $ */
+/* $Id: base.c,v 1.59 2003-11-01 00:11:53 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2183,6 +2183,7 @@ extern double t_dgop, n_dgop, s_dgop;
     GA_memory_limited = 0;
     free(_ga_map);
     free(GA_proclist);
+    ARMCI_Free_local(GA_Update_Signal);
 
     ARMCI_Finalize();
     GAinitialized = 0;
