@@ -79,7 +79,7 @@ distribute to other US Government contractors.
       ga_copy_patch     ... copy one array into another (patch version)
       ga_ifill_patch    ... fill a patch of array with value (integer version)
       ga_dfill_patch    ... fill a patch of array with value (DP version)
-      ga_mulmat_patch   ... matrix multiply (patch version)
+      ga_matmul_patch   ... matrix multiply (patch version)
       ga_diag           ... real symmetric generalized eigensolver 
       ga_diag_reuse     ... a version of ga_diag for repeated use    
       ga_diag_std       ... standard real symmetric eigensolver 
@@ -176,6 +176,9 @@ distribute to other US Government contractors.
      Cray T3D) and implement ga_brdcst and ga_dgop. There are no data server
      processes; therefore, all the specified processes/processors are
      used for computations.
+
+     Note: Interface to ScaLAPACK is not working on network of workstations
+     -- waiting for a new release of BLACS.
 
 
   2) True message passing MPP architectures with interrupt communication
@@ -341,6 +344,28 @@ distribute to other US Government contractors.
       Computes the element-wise dot product of the two (possibly transposed)
       patches which must be double precision and have the same number of 
       elements. 
+
+      -------------------------------------------------------------------
+      subroutine ga_matmul_patch(transa, transb, alpha, beta,
+     $                           g_a, ailo, aihi, ajlo, ajhi,
+     $                           g_b, bilo, bihi, bjlo, bjhi,
+     $                           g_c, cilo, cihi, cjlo, cjhi)
+
+     integer g_a, ailo, aihi, ajlo, ajhi;    [input]  patch of g_a
+     integer g_b, bilo, bihi, bjlo, bjhi;    [input]  patch of g_b
+     integer g_c, cilo, cihi, cjlo, cjhi;    [input]  patch of g_c 
+     double precision      alpha, beta;      [input]
+     character*1    transa, transb;          [input]
+
+      ga_matmul_patch is a patch version of ga_dgemm: 
+         C[cilo:cihi,cjlo:cjhi] := alpha*op( A[ailo:aihi,ajlo:ajhi] )*
+                                  op( B[bilo:bihi,bjlo:bjhi] ) +
+                                  beta*C[cilo:cihi,cjlo:cjhi],
+      where  op( X ) is one of
+         op( X ) = X   or   op( X ) = X',
+
+      Valid values for transpose arguments:  'n', 'N', 't', 'T'.
+
 
       -------------------------------------------------------------------
       subroutine ga_dscal(g_a, s)
