@@ -15,6 +15,7 @@
 #include "srftoc.h"
 
 #define SWITCH 0
+#define USER_CONFIG 0
 
 #define NDIM 3
 #define SIZE 250
@@ -86,7 +87,7 @@ void test_io_dbl()
   dra_size_t ddims[MAXDIM], reqdims[MAXDIM];
   int glo[MAXDIM],ghi[MAXDIM];
   int dims[MAXDIM];
-  int me, nproc, isize;
+  int me, nproc, isize, numfiles, nioprocs;
   double plus, minus;
   double *index;
   int ld[MAXDIM], chunk[MAXDIM];
@@ -103,6 +104,8 @@ void test_io_dbl()
   req = -1;
   nproc = GA_Nnodes();
   me    = GA_Nodeid();
+  nioprocs = GA_Cluster_nnodes();
+  numfiles = nioprocs;
 
   if (me == 0) {
     printf("Creating temporary global arrays %d",n);
@@ -253,8 +256,14 @@ void test_io_dbl()
   }
   strcpy(filename,FNAME);
   GA_Sync();
+#if USER_CONFIG
+  if (NDRA_Create_config(MT_DBL, ndim, ddims, "A", filename, DRA_RW,
+      reqdims, numfiles, nioprocs, &d_a) != 0)
+      GA_Error("NDRA_Create failed(d_a): ",0);
+#else
   if (NDRA_Create(MT_DBL, ndim, ddims, "A", filename, DRA_RW,
       reqdims, &d_a) != 0) GA_Error("NDRA_Create failed(d_a): ",0);
+#endif
   if (me == 0) printf("alligned blocking write\n");
   fflush(stdout);
   tt0 = tcgtime_();
@@ -297,8 +306,14 @@ void test_io_dbl()
     reqdims[i] = n;
   }
   strcpy(filename1,FNAME1);
+#if USER_CONFIG
+  if (NDRA_Create_config(MT_DBL, ndim, ddims, "B", filename1, DRA_RW,
+      reqdims, numfiles, nioprocs, &d_b) != 0)
+      GA_Error("NDRA_Create failed(d_b): ",0);
+#else
   if (NDRA_Create(MT_DBL, ndim, ddims, "B", filename1, DRA_RW,
       reqdims, &d_b) != 0) GA_Error("NDRA_Create failed(d_b): ",0);
+#endif
 
   if (me == 0) printf("non alligned blocking write\n");
   if (me == 0) fflush(stdout);
@@ -479,8 +494,14 @@ void test_io_dbl()
   }
   strcpy(filename2,FNAME2);
   if (me == 0) printf("Creating DRA for transpose test\n");
+#if USER_CONFIG
+  if (NDRA_Create_config(MT_DBL, ndim, ddims, "C", filename2, DRA_RW,
+      reqdims, numfiles, nioprocs, &d_c) != 0)
+      GA_Error("NDRA_Create failed(d_c): ",0);
+#else
   if (NDRA_Create(MT_DBL, ndim, ddims, "C", filename2, DRA_RW,
       reqdims, &d_c) != 0) GA_Error("NDRA_Create failed(d_c): ",0);
+#endif
   if (me == 0) printf("done\n");
   if (me == 0) fflush(stdout);
   GA_Sync();
@@ -570,6 +591,7 @@ char **argv;
     me    = GA_Nodeid();
     if (DRA_Init(max_arrays, max_sz, max_disk, max_mem) != 0)
        GA_Error("DRA_Init failed: ",0);
+    DRA_Set_default_config(-1,-1);
     if (me == 0) printf("\n");
     if (me == 0) printf("TESTING PERFORMANCE OF DISK ARRAYS\n");
     if (me == 0) printf("\n");
