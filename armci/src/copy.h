@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.49 2003-03-27 17:39:46 vinod Exp $ */
+/* $Id: copy.h,v 1.50 2003-04-01 21:10:59 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -189,7 +189,7 @@ void FATR DCOPY1D(void*, void*, int*);
                  ARMCI_Error("LAPI_Get NB_GET failed",0);else;}
 
 #      define ARMCI_NB_WAIT(cmplt) CLEAR_COUNTER((cmplt))
-#      define ARMCI_NB_TEST(cmplt,_succ) CLEAR_COUNTER((cmplt),(_succ))
+#      define ARMCI_NB_TEST(cmplt,_succ) TEST_COUNTER((cmplt),(_succ))
        
 
 #else
