@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.21 2004-07-14 20:36:15 d3g293 Exp $ */
+/* $Id: collect.c,v 1.22 2004-08-11 17:16:57 d3h325 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -67,7 +67,7 @@ void FATR ga_pgroup_brdcst_(grp_id, type, buf, len, originator)
 #endif
     } else {
        int aroot = (int)*originator;
-       armci_msg_bcast(buf, (int)len, (int)aroot);
+       armci_msg_bcast(buf, (int)*len, (int)aroot);
     }
 }
 
