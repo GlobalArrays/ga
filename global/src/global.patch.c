@@ -1,4 +1,4 @@
-/*$Id: global.patch.c,v 1.15 1996-07-19 20:05:38 d3h325 Exp $*/
+/*$Id: global.patch.c,v 1.16 1996-07-30 21:26:29 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
@@ -698,9 +698,12 @@ void ga_matmul_patch(transa, transb, alpha, beta,
      DoublePrecision    *alpha, *beta;
      char    *transa, *transb;
 {
-#define ICHUNK 64
-#define JCHUNK 64
-#define KCHUNK 64
+/* approx. sqrt(2) ratio in chunk size to use the same buffer space */
+#define C_CHUNK  92 
+#define D_CHUNK  64
+#define ICHUNK C_CHUNK
+#define JCHUNK C_CHUNK
+#define KCHUNK C_CHUNK
 DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
 Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2;
 Integer me= ga_nodeid_(), nproc=ga_nnodes_();
@@ -724,7 +727,7 @@ DoubleComplex ONE;
    if(atype != MT_F_DCPL && atype != MT_F_DBL) ga_error(" type error",atype);
 
    if(atype ==  MT_F_DBL){
-      Ichunk=2*ICHUNK, Kchunk=2*KCHUNK, Jchunk=2*JCHUNK;
+      Ichunk=D_CHUNK, Kchunk=D_CHUNK, Jchunk=D_CHUNK;
    }else{
       Ichunk=ICHUNK; Kchunk=KCHUNK; Jchunk=JCHUNK;
    }
