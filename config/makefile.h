@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.33 2000-08-23 16:59:05 d3h325 Exp $
+# $Id: makefile.h,v 1.34 2000-09-13 22:17:07 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -274,12 +274,12 @@ ifeq ($(TARGET),CRAY-YMP)
      ifeq ($(FOPT), -O)
          FOPT = -O1
      endif
-     COPT_REN = -htaskprivate $(LIBCM) 
+     COPT_REN = -htaskprivate 
            FC = f90
           CPP = cpp -P -N
      FCONVERT = $(CPP) $(CPP_FLAGS)  $< | sed '/^\#/D'  > $*.f
- GLOB_DEFINES = -DCRAY_YMP
-     FOPT_REN = -dp -ataskcommon $(LIBCM)
+ GLOB_DEFINES = -DCRAY_YMP -D_MULTIP_
+     FOPT_REN = -dp -ataskcommon
      HAS_BLAS = yes
       LIBBLAS = 
     EXPLICITF = TRUE

@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.44 2000-06-14 22:45:43 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.45 2000-09-13 22:17:07 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -46,6 +46,10 @@
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
+
+#if !defined(CRAY_YMP)
+#define BYTE_ADDRESSABLE_MEMORY
+#endif
 
 /*uncomment line below to initialize arrays in ga_create/duplicate */
 /*#define GA_CREATE_INDEF yes */
@@ -797,6 +801,11 @@ char *ptr = (char*)0;
         if(MA_alloc_get(type, nelem, name, &handle, &index))
                 MA_get_pointer(handle, &ptr);
      *id   = (long)handle;
+
+     /*
+            printf("MA DBL_MB=%ld ptr=%ld index=%d\n",DBL_MB, ptr,index);
+            fflush(stdout);
+     */
 
      bzero(ptr_arr,(int)GAnproc*sizeof(char*));
      ptr_arr[GAme] = ptr;
@@ -1839,6 +1848,7 @@ unsigned long    lref, lptr;
         break;
    }
 
+#ifdef BYTE_ADDRESSABLE_MEMORY
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
@@ -1847,6 +1857,7 @@ unsigned long    lref, lptr;
        ga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
    }
+#endif
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;
