@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.7 1999-09-02 18:32:15 jju Exp $ */
+/* $Id: sockets.c,v 1.8 1999-09-10 23:26:24 d3h325 Exp $ */
 /**************************************************************************
  This code was derived from the TCGMSG sockets.c by Robert Harrison
  *************************************************************************/
@@ -23,12 +23,19 @@
 #include <memory.h>
 #endif
 
+/* portability of socklen_t definition is iffy - we need to avoid it !!
 #if defined(LINUX) && ( defined(_SOCKETBITS_H) || defined(__BITS_SOCKET_H))
- /* should have socklen_t defined */
 #elif defined(AIX)
   typedef size_t socklen_t;
 #else
   typedef int socklen_t;
+#endif
+*/
+
+#ifdef AIX
+typedef size_t soclen_t;
+#else
+typedef int soclen_t;
 #endif
 
 #include "sockets.h"
@@ -239,7 +246,7 @@ void armci_CreateSocketAndBind(int *sock, int *port)
   the info so that its port number may be advertised
 */
 {
-  socklen_t  length;
+  soclen_t  length;
   struct sockaddr_in server;
   int size = PACKET_SIZE;
   int on = 1;
@@ -350,7 +357,7 @@ againsel:
 
     againacc:
 
-      msgsock = accept(sock, (struct sockaddr *) NULL, (socklen_t *) NULL);
+      msgsock = accept(sock, (struct sockaddr *) NULL, (soclen_t *) NULL);
 
       if (msgsock == -1) {
         if (errno == EINTR)
@@ -439,7 +446,7 @@ againsel:
     armci_die("armci_ListenAndAccept: out of select but not ready!",  nready);
 
 againacc:
-  msgsock = accept(sock, (struct sockaddr *) NULL, (socklen_t *) NULL);
+  msgsock = accept(sock, (struct sockaddr *) NULL, (soclen_t *) NULL);
   if (msgsock == -1) {
     if (errno == EINTR)
       goto againacc;

@@ -1,8 +1,8 @@
          FOPT = -O
          COPT = -O
 
-OBJ= armci.o memory.o fcopy.o fence.o rmw.o faccumulate.o acc.o\
- memlock.o pack.o strided.o vector.o clusterinfo.o message.o mutex.o
+OBJ= strided.o armci.o memory.o fcopy.o fence.o rmw.o faccumulate.o acc.o\
+ memlock.o pack.o vector.o clusterinfo.o message.o mutex.o
 
 #reference to the MPI library name, overwritten by LIBMPI environment variable
 MPI_LIB_NAME = -lmpi
