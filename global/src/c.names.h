@@ -116,8 +116,8 @@
 #define  ga_fast_merge_mirrored_   GA_FAST_MERGE_MIRRORED
 #define  nga_merge_distr_patch_    NGA_MERGE_DISTR_PATCH
 #define  ga_is_mirrored_           GA_IS_MIRRORED
-#define  nga_num_mirrored_seg_     NGA_NUM_MIRRORED_SEG
-#define  nga_get_mirrored_block_   NGA_GET_MIRRORED_BLOCK
+#define  ga_num_mirrored_seg_      GA_NUM_MIRRORED_SEG
+#define  ga_get_mirrored_block_    GA_GET_MIRRORED_BLOCK
 #define  nga_get_common_           NGA_GET_COMMON
 #define  nga_acc_common_           NGA_ACC_COMMON
 #define  ga_uses_ma_               GA_USES_MA
@@ -338,8 +338,8 @@
 #define  ga_fast_merge_mirrored_   ga_fast_merge_mirrored__     
 #define  nga_merge_distr_patch_    nga_merge_distr_patch__     
 #define  ga_is_mirrored_           ga_is_mirrored__     
-#define  nga_num_mirrored_seg_     ga_num_mirrored_seg__     
-#define  nga_get_mirrored_block_   ga_get_mirrored_block__     
+#define  ga_num_mirrored_seg_      ga_num_mirrored_seg__     
+#define  ga_get_mirrored_block_    ga_get_mirrored_block__     
 #define  ga_uses_ma_               ga_uses_ma__            
 #define  nga_get_common_           nga_get_common__
 #define  nga_acc_common_           nga_acc_common__

@@ -302,18 +302,18 @@ extern logical nga_update_ghost_dir(Integer *g_a, Integer *idim,
 extern void FATR ga_merge_mirrored_(Integer *g_a);
 extern void FATR ga_fast_merge_mirrored_(Integer *g_a);
 extern logical FATR ga_is_mirrored_(Integer *g_a);
-extern Integer FATR nga_num_mirrored_seg_(Integer *g_a);
+extern Integer FATR ga_num_mirrored_seg_(Integer *g_a);
 extern void nga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
                                   Integer *g_b, Integer *blo, Integer *bhi);
-extern void FATR nga_get_mirrored_block_(Integer *g_a, Integer *npatch,
-					 Integer *lo,  Integer *hi);
+extern void FATR ga_get_mirrored_block_(Integer *g_a, Integer *npatch,
+                                        Integer *lo,  Integer *hi);
 extern void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
-					Integer *g_b, Integer *blo, Integer *bhi);
+                                        Integer *g_b, Integer *blo, Integer *bhi);
 extern void  FATR nga_nbget_ghost_dir_(Integer *g_a, Integer *mask, Integer *nbhandle);
 extern void FATR nga_get_common(Integer *g_a, Integer *lo, Integer *hi,
-				void    *buf, Integer *ld, Integer *nbhandle);
+                                void *buf, Integer *ld, Integer *nbhandle);
 extern void FATR nga_acc_common(Integer *g_a, Integer *lo, Integer *hi,
-				void    *buf, Integer *ld, void    *alpha, Integer *nbhandle);
+                 void *buf, Integer *ld, void *alpha, Integer *nbhandle);
 
 
 extern void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi);
