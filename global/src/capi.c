@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.11 1999-10-14 19:57:23 jju Exp $ */
+/* $Id: capi.c,v 1.12 1999-10-25 21:57:27 jju Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -139,6 +139,11 @@ void GA_Destroy(int g_a)
     if(st==FALSE)GA_Error("GA (c) destroy failed",g_a);
 }
 
+void GA_Set_memory_limit(size_t limit)
+{
+Integer lim = (Integer)limit;
+     ga_set_memory_limit_(&lim);
+}
 
 void GA_Zero(int g_a)
 {
