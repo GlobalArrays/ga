@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.6 1996-07-19 19:37:53 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.7 1996-07-19 20:27:57 d3h325 Exp $ */
 
 #include <signal.h>
 #include "sndrcvP.h"
@@ -11,7 +11,6 @@ extern void Error();
 int SR_caught_sigint = 0;
 
 #if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-<<<<<<< signals.c
 #   define SigType  int
 #else
 #   define SigType  void
@@ -25,23 +24,12 @@ int SR_caught_sigint = 0;
 #if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
 SigType SigintHandler(sig, code, scp, addr)
      int code;
-=======
-int SigintHandler(sig, code, scp, addr)
-     int code;
->>>>>>> 1.5
      struct sigcontext *scp;
      char *addr;
-<<<<<<< signals.c
 #else
 SigType SigintHandler(sig)
 #endif
      int sig;
-=======
-#else
-void SigintHandler(sig)
-#endif
-     int sig;
->>>>>>> 1.5
 {
   SR_caught_sigint = 1;
   Error("SigintHandler: signal was caught",(long) sig);
@@ -69,16 +57,9 @@ void ZapChildren()
     (void) kill((int) SR_pids[SR_nchild], SIGINT);
 }
 
-<<<<<<< signals.c
 #if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
 SigType SigchldHandler(sig, code, scp, addr)
      int code;
-=======
-/*ARGSUSED*/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigchldHandler(sig, code, scp, addr)
-     int code;
->>>>>>> 1.5
      struct sigcontext *scp;
      char *addr;
 #else
