@@ -66,9 +66,7 @@ ifdef USE_MPI
   P_FILE = no
 endif
 
-#ifdef USE_ARMCI
-  TESTUTIL=util.o
-#endif
+TESTUTIL=util.o
 
 FOPT= $(NOPT)
 COPT= $(NOPT)
