@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.13 2001-08-09 23:53:45 d3h325 Exp $ */
+/* $Id: memlock.c,v 1.14 2002-01-29 23:28:01 vinod Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -49,13 +49,13 @@ static memlock_t table[MAX_SLOTS];
 \*/
 void armci_lockmem_(void *pstart, void *pend, int proc)
 {
-#ifdef QUADRICS
-    int lock = proc;
+#if defined(CLUSTER)
+    int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
-    int lock = proc-armci_master;
+    int lock = 0;
 #endif
 
-    NATIVE_LOCK(lock);
+    NATIVE_LOCK(lock,proc);
 #   ifdef LAPI
     {
        extern int kevin_ok;
@@ -66,12 +66,12 @@ void armci_lockmem_(void *pstart, void *pend, int proc)
 
 void armci_unlockmem_(int proc)
 {
-#ifdef QUADRICS
-    int lock = proc;
+#if defined(CLUSTER)
+    int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
-    int lock = proc-armci_master;
+    int lock = 0;
 #endif
-    NATIVE_UNLOCK(lock);
+    NATIVE_UNLOCK(lock,proc);
 #   ifdef LAPI
     {
        extern int kevin_ok;
@@ -106,7 +106,11 @@ void armci_lockmem(void *start, void *end, int proc)
      register  int slot, avail=0;
      int turn=0, conflict=0;
      memlock_t *memlock_table;
-     int lock;
+#if defined(CLUSTER)
+    int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
+#else
+    int lock = 0;
+#endif
 
 #ifdef CORRECT_PTR
      if(! *armci_use_memlock_table){
@@ -131,7 +135,6 @@ void armci_lockmem(void *start, void *end, int proc)
      }
      memlock_table = (memlock_t*)memlock_table_array[proc];
 
-     lock = proc%NUM_LOCKS;
 
 #ifdef ALIGN_ADDRESS
      /* align address range on cache line boundary to avoid false sharing */
@@ -144,7 +147,7 @@ void armci_lockmem(void *start, void *end, int proc)
 
      while(1){
 
-        NATIVE_LOCK(lock);
+        NATIVE_LOCK(lock,proc);
 
         armci_get(memlock_table, table, sizeof(table), proc);
 /*        armci_copy(memlock_table, table, sizeof(table));*/
@@ -177,7 +180,7 @@ void armci_lockmem(void *start, void *end, int proc)
         
        if(avail != -1 && !conflict)break;
 
-       NATIVE_UNLOCK(lock);
+       NATIVE_UNLOCK(lock,proc);
        armci_waitsome( ++turn );
 
      }
@@ -189,7 +192,7 @@ void armci_lockmem(void *start, void *end, int proc)
 
      FENCE_NODE(proc);
 
-     NATIVE_UNLOCK(lock);
+     NATIVE_UNLOCK(lock,proc);
      locked_slot = avail;
 
 }
