@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.51 2003-03-10 15:28:48 vinod Exp $
+/* $Id: myrinet.c,v 1.52 2003-03-10 19:29:07 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -1348,7 +1348,9 @@ void armci_call_data_server()
               length = gm_ntohl(event->recv.length);
               buf = (char *)gm_ntohp(event->recv.buffer);
               armci_data_server(buf);
+#           ifdef ACK_FENCE
               armci_send_pendingop_ack();
+#           endif
               gm_provide_receive_buffer_with_tag(serv_gm->rcv_port, buf,
                                                  size, GM_LOW_PRIORITY, tag);
     
