@@ -23,7 +23,7 @@
 #else
 #  define MAX_PTR 1
 #endif
-#define   MAPLEN  MAX_NPROC+2
+#define   MAPLEN  (MIN(GAnproc, MAX_NPROC) +2)
 
 
 

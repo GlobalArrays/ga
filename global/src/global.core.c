@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.28 1996-08-16 23:08:29 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.29 1996-08-22 21:55:58 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -843,8 +843,8 @@ Integer handle;
         GA[handle].ptr = (char**)malloc(len*sizeof(char**));
      }
      if(!GA[handle].mapc){
-        int len = MIN(GAnproc, MAX_NPROC) +2;
-        GA[handle].mapc = (int*)malloc(len*sizeof(int));
+        int len = MAPLEN;
+        GA[handle].mapc = (int*)malloc(len*sizeof(int*));
      }
      if(!GA[handle].ptr)ga_error("malloc failed: ptr:",0);
      if(!GA[handle].mapc)ga_error("malloc failed: mapc:",0);
