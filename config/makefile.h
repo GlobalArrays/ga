@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.76 2003-02-07 19:42:13 manoj Exp $
+# $Id: makefile.h,v 1.77 2003-02-11 20:17:29 vinod Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -99,22 +99,25 @@ ifeq ($(TARGET),SOLARIS64)
      COPT_REN = -Kfast -KV9FMADD
   else
      COPT_REN = -xarch=v9 -dalign
+     ifdef USE_INTEGER4
+     else
+        COPT_REN += -DNO_REAL_32
+     endif
   endif
 
   ifeq ($(_FC),frt)
 #    Fujitsu SPARC systems (thanks to Herbert Fruchtl)
      FOPT_REN = -Kfast -KV9FMADD
      ifdef USE_INTEGER4
-       FOPT_REN += -KV9FMADD -CcdLL8 -CcdRR8
      else
-       FOPT_REN += -KV9FMADD -CcdLL8 -CcdII8 -CcdRR8
+       FOPT_REN += -CcdLL8 -CcdII8
      endif
      CMAIN = -Dmain=MAIN__
   else
      FOPT_REN = -xarch=v9 -dalign
      ifdef USE_INTEGER4
-       FOPT_REN += -xtypemap=real:64,double:64,integer:32
      else
+# No 32-bit reals because of a bug in older Sun Workshop compilers
        FOPT_REN += -xtypemap=real:64,double:64,integer:64
      endif
      FLD_REN = -xs
@@ -151,11 +154,10 @@ endif
 #64-bit VPP5000
 ifeq ($(TARGET),FUJITSU-VPP64)
            FC = frt
-     FOPT_REN = -Sw
  GLOB_DEFINES = -DFUJITSU
         CMAIN = -Dmain=MAIN__
+     FOPT_REN = -Sw
  ifdef USE_INTEGER4
-    FOPT_REN += -CcdLL8
  else
         CDEFS = -DEXT_INT
      FOPT_REN += -CcdLL8 -CcdII8
@@ -224,7 +226,7 @@ ifneq (,$(findstring mpif,$(_FC)))
          _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { pgfcount++}; END {if(pgfcount)print "pgf77"} ' )
 endif
 ifneq (,$(findstring mpicc,$(_CC)))
-         _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
+         _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ {gcccount++}; END {if(gcccount)print "gcc"} ' )
 endif
 #
 #              GNU compilers
@@ -256,12 +258,16 @@ else
        GLOB_DEFINES += -DPGLINUX
    endif
    ifneq (,$(findstring ifc,$(_FC)))
-       FOPT_REN = -O3 -prefetch 
+       ifeq ($(FOPT),-O)
+           FOPT_REN = -O3 -prefetch
+       endif
        GLOB_DEFINES += -DIFCLINUX
+       FLD_REN += -Vaxlib
    endif
    ifneq (,$(findstring icc,$(_CC)))
-       FOPT_REN = -O3 -prefetch 
-       GLOB_DEFINES += -DIFCLINUX
+       ifeq ($(COPT),-O)
+           COPT_REN = -O3 -prefetch 
+       endif
    endif
 endif
 
