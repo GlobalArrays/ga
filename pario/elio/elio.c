@@ -138,7 +138,7 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
 #ifdef LARGE_FILES
 #define ABSURDLY_LARGE 1e12
 #else
-#define ABSURDLY_LARGE (MAX_EXTENTS*2147483647.0)
+#define ABSURDLY_LARGE (MAX_EXTENT*2147483647.0)
 #endif
 
 /*****************************************************************************/
