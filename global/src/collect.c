@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.20 2004-06-29 22:39:18 d3g293 Exp $ */
+/* $Id: collect.c,v 1.21 2004-07-14 20:36:15 d3g293 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -341,12 +341,13 @@ void ga_pgroup_igop(p_grp, type, x, n, op)
               armci_msg_lgop(x, (int)n, op);
             }
 #   else
-            if (group > 0)
+            if (group > 0) {
 #ifdef MPI
               armci_msg_group_igop(x, (int)n, op,(&(PGRP_LIST[group].group)));
 #endif
-            else
+            } else {
               armci_msg_igop(x, (int)n, op);
+            }
 #   endif
 #else
             ga_error("Groups not implemented for system",0);
