@@ -26,10 +26,16 @@ LIB_INCLUDES += -I$(INCDIR) -I../armci/src $(MP_INCLUDES)
 LIB_DEFINES += -DARMCI
 LIB_TARGETS = *.x
 
-NEED_MEMALIGN = DECOSF CRAY-T3E CRAY-YMP HPUX LAPI IBM
+NEED_MEMALIGN = DECOSF CRAY-T3E CRAY-YMP HPUX HPUX64 LAPI IBM IBM64
 
 ifeq ($(MACHINE),$(findstring $(MACHINE),$(NEED_MEMALIGN)))
         EXTRA_OBJ= memalign.o
+endif
+ifeq ($(TARGET),HPUX)
+        EXTRA_OBJ += hpuxargs.o
+endif
+ifeq ($(TARGET),HPUX64)
+        EXTRA_OBJ += hpuxargs.o
 endif
 
 
@@ -60,19 +66,19 @@ all:	test.x testf.x
 
 
 test.x: test.o	$(LIBRARY_PATH)
-	$(CC)  $(CLDOPT) -o $@ $^ $(LIBS)
+	$(CC)  $(COPT_REN) -o $@ $^ $(LIBS)
 
 testf.x: testf.o $(LIBRARY_PATH)
-	$(FC)  $(FLDOPT) -o $@ $^ $(LIBS)
+	$(FC)  $(FOPT_REN) -o $@ $^ $(LIBS)
 
 hello.x: hello.o $(LIBRARY_PATH)
-	$(CC)  $(CLDOPT) -o $@ $^ $(LIBS)
+	$(CC)  $(COPT_REN) -o $@ $^ $(LIBS)
 
 test_arcv.x: test_arcv.o $(LIBRARY_PATH)
-	$(FC)  $(FLDOPT) -o $@ $^ $(LIBS)
+	$(FC)  $(FOPT_REN) -o $@ $^ $(LIBS)
 
 test_asyn.x: test_asyn.o $(LIBRARY_PATH)
-	$(CC)  $(CLDOPT) -o $@ $^ $(LIBS)
+	$(CC)  $(COPT_REN) -o $@ $^ $(LIBS)
 
 $(patsubst %,$(LIBRARY_PATH)(%),$(OBJ))      : tcgmsgP.h
 $(patsubst %,$(LIBRARY_PATH)(%),evon.o)      : evlog.h
