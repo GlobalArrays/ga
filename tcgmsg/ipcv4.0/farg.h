@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.6 1998-11-23 10:09:16 d3e129 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.7 1999-06-29 23:26:40 d3e129 Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -41,8 +41,38 @@
 #endif
 
 #if defined(LINUX)
+/*---------------------------------------------------------------------------*\
+ There are a multitutde of LINUX distributions and ALL of them differ
+ to some extent.  To compile and use this software with code compiled 
+ using g77 you MUST use the C compiler that was used to build g77.  
+ Most distributions are shipping the egcs version of g77 and gcc as 
+ well as the 2.7.2.3 version from the GNU group because of the known 
+ LINUX kernel bug.  
+ On Redhat 5.2 and 6.0 the egcs C compiler is called egcs so you 
+    need to do a top level make with "CC=egcs" for the tools to work
+    with g77 based applications.
+ On Slackware 4.0 gcc is a link to the 2.7.2.3 version change the link to 
+    point to gcc-egcs-1.1.2 or do a top level make with "CC=gcc-egcs-1.1.2"
+ On Caldera 2.2 you only get EGCS compilers.  
+
+ The folowing test is our best guess as to the proper environment using
+ the EGCS c compilers with g77.  The major mode > 2 should use f__xarg{c|v}
+ Assuming that the convention does not change in the next release.  
+ For sure 2.91 or egcs 1.1.2 uses f__xarg{c|v}
+
+ To determine which arguments are needed for the version of g77 you are using:
+  1) write a hello world fortran code
+  2) compile and link the code (generate a.out)
+  3) nm a.out | grep xarg and then fix this file.
+\*---------------------------------------------------------------------------*/
+
+#if ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ > 90)))
+#define ARGC_ f__xargc
+#define ARGV_ f__xargv
+#else
 #define ARGC_ xargc
 #define ARGV_ xargv
+#endif
 #endif
 
 #if defined(PGLINUX)

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.12 1998-03-31 01:41:15 d3e129 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.13 1999-06-29 23:26:40 d3e129 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -28,7 +28,7 @@ extern void *malloc();
 #else
 extern char *malloc();
 #endif
-#ifndef SGI
+#if !(defined(SGI) || defined(LINUX))
 extern char *strdup();
 #endif
 

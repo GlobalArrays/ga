@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.10 1996-07-19 19:37:51 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.11 1999-06-29 23:26:40 d3e129 Exp $ */
 
 /*
   These routines simplify the interface to semaphores for use in mutual
@@ -78,12 +78,18 @@ extern void Error();
 
 #if defined(ARDENT) || defined(ENCORE) || defined(SEQUENT) || \
     defined(ULTRIX) || defined(AIX)    || defined(HPUX) || defined(KSR) || \
-    defined(DECOSF) || defined(SOLARIS)
-union semun {
-   long val;
-   struct semid_ds *buf;
-   ushort *array;
-};
+    defined(DECOSF) || defined(SOLARIS) || defined(LINUX) 
+#   if defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)
+    /* union semun is defined by including <sys/sem.h> */
+#   else
+    /* according to X/OPEN we have to define it ourselves */
+    union semun {
+            int val;                    /* value for SETVAL */
+            struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
+            unsigned short int *array;  /* array for GETALL, SETALL */
+            struct seminfo *__buf;      /* buffer for IPC_INFO */
+    };
+#   endif
 #endif
 
 
