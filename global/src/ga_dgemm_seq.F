@@ -14,12 +14,14 @@ c
       call ga_sync()
 c
       if (me .eq. 0) then
+         status = .true.
          status = ma_push_get(MT_DBL,dims(1,g_a)*dims(2,g_a),'a',
-     $        l_a,k_a)
+     $        l_a,k_a) .and. status
          status = ma_push_get(MT_DBL,dims(1,g_b)*dims(2,g_b),'b',
-     $        l_b,k_b)
+     $        l_b,k_b) .and. status
          status = ma_push_get(MT_DBL,dims(1,g_c)*dims(2,g_c),'c',
-     $        l_c,k_c)
+     $        l_c,k_c) .and. status
+         if (.not. status) call errquit('ga_dgemm_seq: memory?, 0)
 c     
          call ga_get(g_a, 1, dims(1,g_a), 1, dims(2,g_a), dbl_mb(k_a), 
      $        dims(1,g_a))
@@ -35,9 +37,11 @@ c
          call ga_put(g_c, 1, dims(1,g_c), 1, dims(2,g_c), dbl_mb(k_c), 
      $        dims(1,g_c))
 c     
-         status = ma_pop_stack(l_c)
-         status = ma_pop_stack(l_b)
-         status = ma_pop_stack(l_a)
+         status = .true.
+         status = status .and. ma_pop_stack(l_c)
+         status = status .and. ma_pop_stack(l_b)
+         status = status .and. ma_pop_stack(l_a)
+         if (.not. status) call errquit('ga_dgemm_seq: pop?, 0)
       endif
 c
       call ga_sync

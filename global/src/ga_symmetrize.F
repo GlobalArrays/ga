@@ -43,7 +43,8 @@ c     if(myproc.eq.0)call ga_print(g_a)
          nrow = ihi-ilo+1
          ncol = jhi-jlo+1
          myelem = nrow * ncol
-         status = ma_push_get(MT_DBL,myelem,'B',hB,adrB)
+         if (.not. ma_push_get(MT_DBL,myelem,'B',hB,adrB))
+     $        call errquit('ga_symmetrize: insufficient memory', myelem)
 c        
          call GA_GET(g_a, jlo, jhi, ilo, ihi, dbl_mb(adrB),ncol) 
 c        print *, myproc,'a, aT', dbl_mb(adrA), dbl_mb(adrB),
@@ -56,7 +57,8 @@ c    $            ilo, ihi, jlo, jhi
          call ga__add(nrow, ncol, dbl_mb(adrA), lda, dbl_mb(adrB),
      &                ncol, alpha)
          call ga_release_update(g_a, ilo, ihi, jlo, jhi)
-         status = ma_pop_stack(hB) 
+         if (.not. ma_pop_stack(hB))
+     $        call errquit('ga_symmetrize: ma_pop?', 0)
       endif
 c
       call ga_sync()

@@ -50,7 +50,8 @@ c     if(myproc.eq.0)call ga_print(g_a)
          myelem = nrow * ncol
 c
 c***     get temporary storage for transposed local patch of array 
-         status = ma_push_get(MT_DBL,myelem,'B',hB,adrB)
+         if (.not. ma_push_get(MT_DBL,myelem,'B',hB,adrB))
+     $        call errquit('ga_transpose: insufficient memory', myelem)
 c
 c***     transpose local patch
          Bbase = adrB-1
