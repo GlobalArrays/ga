@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.77 2004-06-11 05:16:38 vinod Exp $ */
+/* $Id: shmem.c,v 1.78 2004-06-11 07:09:57 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -480,7 +480,7 @@ void armci_shmem_init()
           if(!getenv("ARMCI_DEFAULT_SHMMAX"))
             if(x>max_alloc_munmap && !armci_elan_starting_address) x=max_alloc_munmap;
 #         else
-	    x = 10*1024*1024;
+	    x = 10; /* mb */
 #         endif
 #       endif
 

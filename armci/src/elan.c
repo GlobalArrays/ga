@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.37 2004-06-11 04:28:44 vinod Exp $ */
+/* $Id: elan.c,v 1.38 2004-06-11 07:09:57 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -474,12 +474,11 @@ int _j, issued=0;
 
 
 
+
+
+
+#if HAS_PUTS
 extern ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
-
-extern ELAN_EVENT *elan_getss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
-
-
-#ifdef HAS_PUTS
 
 void armcill_putS(int proc, void* src_ptr, int src_stride_arr[], void* dst_ptr,
                   int dst_stride_arr[], int count[], int stride_levels)
@@ -556,6 +555,8 @@ int _j, issued=0;
 
  
 #if HAS_GETS
+extern ELAN_EVENT *elan_getss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
+
 void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
                                                    void* dst_ptr,int dst_stride)
 {
