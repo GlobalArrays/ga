@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.59 2002-12-17 12:33:55 vinod Exp $ */
+/* $Id: armci.c,v 1.60 2002-12-22 04:25:49 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -398,10 +398,12 @@ int direct=SAMECLUSNODE(nb_handle->proc);
               ARMCI_NB_WAIT(nb_handle->cmpl_info);
               return(success);
         }
-        if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
-              ARMCI_NB_WAIT(nb_handle->cmpl_info);
-              return(success);
-        }
+#       ifdef LAPI
+         if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
+               ARMCI_NB_WAIT(nb_handle->cmpl_info);
+               return(success);
+         }
+#       endif
 #     endif
 #     ifdef COMPLETE_HANDLE
        COMPLETE_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
