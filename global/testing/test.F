@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.59 2004-11-03 22:15:26 d3g293 Exp $
+c $Id: test.F,v 1.60 2004-11-05 19:57:20 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -15,16 +15,19 @@ c vector boxes lack arithmetic precision
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 
 
 c#define NEW_API
-c#define MIRROR
+#define MIRROR
 c#define GA3
 c#define NGA_GATSCAT
+
+#define MEM_INC 1000
 
       program main
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-      integer heap, stack, fudge, ma_heap, me, nproc
+      integer heap, stack, fudge, ma_heap, me, nproc, map(1000), block
+      integer g_s, ndim, dim1, i
       logical status
       parameter (heap=200*200*4, fudge=100, stack=200*200)
 c     
@@ -77,6 +80,22 @@ c
      $          ' with ',  ga_cluster_nprocs(-1), ' processes' 
         call ffflush(6)
       endif
+c
+c   create array to force staggering of memory and uneven distribution
+c   of pointers
+c
+      dim1 = MEM_INC
+      map(1) = 1
+      do i = 2, nproc
+        map(i) = MEM_INC*(i-1)+1
+        dim1 = dim1 + MEM_INC*i
+      end do
+      g_s = ga_create_handle()
+      ndim = 1
+      call ga_set_data(g_s,ndim,dim1,MT_INT)
+      call ga_set_array_name(g_s,'s')
+      call ga_set_irreg_distr(g_s,map,nproc)
+
 #ifdef MIRROR
       if (me.eq.0) then
          write(6,*)
@@ -148,6 +167,7 @@ c
       if(me.eq.0) call ga_print_stats()
       if(me.eq.0) print *,' ' 
       if(me.eq.0) print *,'All tests succesful ' 
+      status = ga_destroy(g_s)
 c
 c***  Tidy up the GA package
 c
