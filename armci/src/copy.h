@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.72 2004-10-20 17:29:07 vinod Exp $ */
+/* $Id: copy.h,v 1.73 2004-12-08 02:46:18 manoj Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -278,11 +278,10 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #if defined(NEED_MEM_SYNC)
 #  ifdef AIX
 #    define MEM_FENCE {int _dummy=1; _clear_lock((int *)&_dummy,0); }
-#  elif defined(__ia64) && defined(__GNUC__)
-#    if defined(__GNUC__)
+#  elif defined(__ia64)
+#    if defined(__GNUC__) && !defined (__INTEL_COMPILER)
 #       define MEM_FENCE __asm__ __volatile__ ("mf" ::: "memory");
-#    else
-       /* intel compiler */
+#    else /* Intel Compiler */ 
         extern void _armci_ia64_mb();
 #       define MEM_FENCE _armci_ia64_mb();
 #    endif

@@ -8,7 +8,7 @@
 
 #if defined(__i386__) || defined(__alpha) || defined(__ia64) || defined(__x86_64__)
 #  define SPINLOCK 
-#  if defined(__GNUC__)
+#  if defined(__GNUC__) && !defined(__INTEL_COMPILER)
 #     if defined(__i386__) || defined(__x86_64__) 
 #          include "tas-i386.h"
 #     elif  defined(__ia64)
