@@ -34,7 +34,7 @@
 
 extern void ga_error();
 
-#if defined(SUN) || defined(SOLARIS) || defined(DECOSF)
+#if defined(SUN) || defined(SOLARIS) || defined(DECOSF) || defined(LINUX)
 #define MULTIPLE_REGIONS
 #endif
 
@@ -129,7 +129,7 @@ static long occup_blocks=0;
 /* SHM_OP is an operator to calculate shmem address to attach 
  * might be + or - depending on the system 
  */
-#if defined(DECOSF)
+#if defined(DECOSF) || defined(LINUX)
 #define SHM_OP +
 #else
 #define SHM_OP -
