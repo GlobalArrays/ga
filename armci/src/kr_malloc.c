@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.12 2004-08-23 22:43:06 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.13 2004-11-22 19:36:20 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -27,11 +27,20 @@ static void kr_free_shmem(char *ap, context_t *ctx);
 #define DEFAULT_MAX_NALLOC   (1024*1024*16) 
 
 /* mutual exclusion defs go here */
-#define  LOCKIT(p)   NAT_LOCK(0,p)
-#define  UNLOCKIT(p) NAT_UNLOCK(0,p)
 #define LOCKED   100
 #define UNLOCKED 101
 static int lock_mode=UNLOCKED;
+
+/* enable locking only after armci is initailized as locks (and lock
+   data structures) are initialized in ARMCI_Init */
+#define  LOCKIT(p) \
+    if(_armci_initialized && lock_mode==UNLOCKED) { \
+       NAT_LOCK(0,p); lock_mode=LOCKED;             \
+    }
+#define  UNLOCKIT(p) \
+    if(_armci_initialized && lock_mode==LOCKED) {   \
+       NAT_UNLOCK(0,p); lock_mode=UNLOCKED;         \
+    }
 
 static int do_verify = 0;	/* Flag for automatic heap verification */
 
@@ -136,12 +145,11 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
     size_t nunits;
     char *return_ptr;
 
-#if 0
+#if 1
     if(ctx->ctx_type == KR_CTX_SHMEM) return kr_malloc_shmem(nbytes,ctx);
 #endif
 
     /* If first time in need to initialize the free list */
-
     if ((prevp = ctx->freep) == NULL) {
 
        if (sizeof(Header) != ALIGNMENT)
@@ -154,9 +162,8 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
        ctx->maxuse = 0;
        ctx->nmcalls= 0;
        ctx->nfcalls= 0;
-
-       ctx->base.s.ptr = ctx->freep = prevp = &(ctx->base);  /* Initialize linke\
-								d list */
+       /* Initialize linked list */
+       ctx->base.s.ptr = ctx->freep = prevp = &(ctx->base);
        ctx->base.s.size = 0;
        ctx->base.s.valid1 = VALID1;
        ctx->base.s.valid2 = VALID2;
@@ -213,7 +220,7 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
 void kr_free(char *ap, context_t *ctx) {
     Header *bp, *p, **up;
 
-#if 0
+#if 1
     if(ctx->ctx_type == KR_CTX_SHMEM) { kr_free_shmem(ap,ctx); return; }
 #endif
 
@@ -288,19 +295,16 @@ Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize) {
     if(!(p=(Header*)Attach_Shared_Region(idlist+1, shmsize, idlist[0])))
        armci_die("kr_malloc:could not attach",(int)(p->s.shmsize>>10));
 #if DEBUG
-    printf("%d: armci_shmem_get_ptr: %d %ld %ld\n", armci_me, idlist[1], idlist[0], shmsize); fflush(stdout);
+    printf("%d: armci_shmem_get_ptr: %d %ld %ld %p\n",
+           armci_me, idlist[1], idlist[0], shmsize, p); fflush(stdout);
 #endif
     return p;
 }
 
 /* get the legitimate pointer */
-static 
-Header *get_ptr(context_t *ctx, Header *p) {
-    if(ctx->ctx_type == KR_CTX_LOCALMEM || p->s.shmid == -1) return p->s.ptr;
-    else if(ctx->ctx_type == KR_CTX_SHMEM) 
-       return armci_shmem_get_ptr(p->s.shmid, p->s.shmoffset, p->s.shmsize);
-    else kr_error("Invalid context type", (unsigned long)0, ctx);
-    return NULL;
+static
+Header *get_ptr(Header *p) {
+    return armci_shmem_get_ptr(p->s.shmid, p->s.shmoffset, p->s.shmsize);
 }
 
 static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
@@ -309,14 +313,12 @@ static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
     char *return_ptr;
     int prev_shmid=-1;
     long prev_shmoffset=0;
-    context_t tmp;
 
-    if(_armci_initialized && lock_mode==UNLOCKED) {
-       LOCKIT(armci_master); lock_mode=LOCKED; 
-    }
+    LOCKIT(armci_master);
 
-    tmp = *ctx;
-
+    /* Rather than divide make the alignment a known power of 2 */
+    nunits = ((nbytes + sizeof(Header) - 1)>>LOG_ALIGN) + 1;
+    
     /* If first time in need to initialize the free list */ 
     if ((prevp = ctx->freep) == NULL) { 
       
@@ -328,31 +330,27 @@ static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
       ctx->nfrags = ctx->nmcalls = ctx->nfcalls = 0;
       
       /* Initialize linked list */
-      ctx->base.s.ptr = ctx->freep = prevp = &(ctx->base);
       ctx->base.s.size = 0;
       ctx->base.s.shmid     = -1;
       ctx->base.s.shmoffset = 0;
       ctx->base.s.shmsize   = 0;
       ctx->base.s.valid1 = VALID1;
       ctx->base.s.valid2 = VALID2;
-      tmp.ctx_type = KR_CTX_LOCALMEM; /* 1st time, there is no shmem ctx */
+      if ((p = morecore(nunits, ctx)) == (Header *) NULL) return NULL;
+      ctx->base.s.ptr = prevp = ctx->freep; /* CHECK */
     }
-    else {
-       prev_shmid     = ctx->shmid;
-       prev_shmoffset = ctx->shmoffset;
-       prev_shmsize   = ctx->shmsize;
-       prevp = ctx->freep = armci_shmem_get_ptr(ctx->shmid, ctx->shmoffset,
-						ctx->shmsize);
-    }
+
+    prev_shmid     = ctx->shmid;
+    prev_shmoffset = ctx->shmoffset;
+    prev_shmsize   = ctx->shmsize;
+    prevp = ctx->freep = armci_shmem_get_ptr(ctx->shmid, ctx->shmoffset,
+                                             ctx->shmsize);
 
     ctx->nmcalls++;
     
     if (do_verify)  kr_malloc_verify(ctx);
     
-    /* Rather than divide make the alignment a known power of 2 */
-    nunits = ((nbytes + sizeof(Header) - 1)>>LOG_ALIGN) + 1;
-
-    for (p=get_ptr(&tmp,prevp); ; prevp = p, p = get_ptr(&tmp, p)) {
+    for (p=get_ptr(prevp); ; prevp = p, p = get_ptr(p)) {
 
       if (p->s.size >= nunits) {	/* Big enuf */
 	if (p->s.size == nunits) {	/* exact fit */
@@ -369,7 +367,6 @@ static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
 	   p->s.valid2 = VALID2;
 	   ctx->nfrags++;  /* Have just increased the fragmentation */
 	}
-	
 #if USEDP
 	/* Insert into linked list of blocks in use ... for debug only */
 	p->s.ptr = ctx->usedp;
@@ -402,12 +399,8 @@ static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
       }
     }
     
-    if(_armci_initialized && lock_mode==LOCKED) {
-       UNLOCKIT(armci_master); lock_mode=UNLOCKED;
-    }
-
-    return return_ptr;
-    
+    UNLOCKIT(armci_master);
+    return return_ptr;    
 }
 
 
@@ -416,11 +409,8 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
     int shmid=-1;
     long shmoffset=0;
     size_t shmsize=0;
-    context_t tmp;
 
-    if(_armci_initialized && lock_mode==UNLOCKED) {
-       LOCKIT(armci_master); lock_mode=LOCKED;
-    }
+    LOCKIT(armci_master);
     
     ctx->nfcalls++;
     
@@ -454,21 +444,27 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
       }
 #endif
 
-      tmp = *ctx;
-      if(ctx->shmid==-1) { /* At start, store shmem info in context */
+      if(ctx->shmid==-1) { 
 	 armci_get_shmem_info((char*)bp, &ctx->shmid, &ctx->shmoffset,
 			      &ctx->shmsize);
-	 ctx->base.s.shmid     = ctx->shmid; 
-	 
-	 /* CHECK - offset */
-	 ctx->base.s.shmoffset = ctx->shmsize - 4 * sizeof(Header) +
-	   sizeof(void*) + ((char*)&(ctx->base) - (char*)ctx);
-	 ctx->shmoffset = ctx->base.s.shmoffset;
+
+         ctx->base.s.shmid     = ctx->shmid;
 	 ctx->base.s.shmsize   = ctx->shmsize;
-	 tmp.ctx_type = KR_CTX_LOCALMEM;
+	 ctx->base.s.shmoffset = ctx->shmoffset;
+
+         p = ctx->freep = bp;
+         p->s.ptr  = bp;
+         p->s.size-=SHMEM_CTX_BYTES; /*memory to store shmem info in context*/
+         p->s.shmid     = ctx->shmid;
+	 p->s.shmsize   = ctx->shmsize;
+	 p->s.shmoffset = ctx->shmoffset;
+         
+         UNLOCKIT(armci_master);
+         return;
       }
-      else ctx->freep = armci_shmem_get_ptr(ctx->shmid, ctx->shmoffset,
-					    ctx->shmsize);
+
+      ctx->freep = armci_shmem_get_ptr(ctx->shmid, ctx->shmoffset,
+                                       ctx->shmsize);
 
       shmid     = ctx->shmid;
       shmoffset = ctx->shmoffset;
@@ -476,12 +472,12 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
 
       /* Join the memory back into the free linked list */
       p = ctx->freep;
-      nextp = get_ptr(&tmp,p);
+      nextp = get_ptr(p);
 
-      for ( ; !(bp > p && bp < nextp); p=nextp, nextp=get_ptr(&tmp,p)) {
+      for ( ; !(bp > p && bp < nextp); p=nextp, nextp=get_ptr(p)) {
 	 if (p >= nextp && (bp > p || bp < nextp))
 	    break; /* Freed block at start or end of arena */
-	 nextp = get_ptr(&tmp,p);
+	 nextp = get_ptr(p);
 	 shmid     = p->s.shmid;
 	 shmoffset = p->s.shmoffset;
 	 shmsize   = p->s.shmsize;
@@ -498,7 +494,7 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
 	 bp->s.ptr = nextp;
 	 bp->s.shmid     = p->s.shmid;
 	 bp->s.shmoffset = p->s.shmoffset;
-	 bp->s.shmsize   = p->s.shmsize;	   
+	 bp->s.shmsize   = p->s.shmsize;
       }
 
       if (p + p->s.size == bp) { /* Join to lower neighbour */
@@ -520,9 +516,7 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
       ctx->shmsize   = shmsize;
     } /* end if on ap */
     
-    if(_armci_initialized && lock_mode==LOCKED) {
-       UNLOCKIT(armci_master); lock_mode=UNLOCKED;
-    }
+    UNLOCKIT(armci_master);
 }
 /********************** end of kr_malloc for ctx_shmem *********************/
 

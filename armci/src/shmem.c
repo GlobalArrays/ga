@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.81 2004-08-10 18:43:26 manoj Exp $ */
+/* $Id: shmem.c,v 1.82 2004-11-22 19:36:20 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -411,8 +411,11 @@ void armci_nattach_preallocate_info(int* segments, int *segsize)
 void armci_krmalloc_init_ctxshmem() {
     void *myptr=NULL;
     long idlist[SHMIDLEN];
-    long size = sizeof(context_t) + 2*sizeof(void*);
+    long size; 
     int offset = sizeof(void*)/sizeof(int);
+
+    /* If you are changing this size, change SHMEM_CTX_MEM accordingly */
+    size = sizeof(context_t)+sizeof(void*);
     
     if(armci_me == armci_master ){
        myptr = Create_Shared_Region(idlist+1,size,idlist);

@@ -52,6 +52,10 @@ typedef struct malloc_context {
   Header *usedp;                /* start of used list */
 } context_t;
 
+/* Memory required to store the shmem context in shared memory */
+#define SHMEM_CTX_MEM   (sizeof(context_t)+sizeof(void*))
+#define SHMEM_CTX_BYTES ((SHMEM_CTX_MEM + sizeof(Header) - 1)>>LOG_ALIGN) + 1; 
+
 extern void kr_malloc_init(size_t usize, /* unit size in bytes */
 			   size_t nalloc,
 			   size_t max_nalloc,
