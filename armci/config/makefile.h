@@ -170,10 +170,10 @@ endif
 
 ifdef IBM
      ifeq ($(FOPT), -O)
-         FOPT = -O3 -qstrict -qcompact -qarch=com -qtune=pwr2
+         FOPT = -O3 -qstrict -qcompact -qarch=com -qtune=auto
      endif
      ifeq ($(COPT), -O)
-         COPT = -O3 -qstrict -qcompact -qarch=com -qtune=pwr2
+         COPT = -O3 -qstrict -qcompact -qarch=com -qtune=auto
      endif
            FC = xlf
 GLOB_DEFINES  += -DAIX
