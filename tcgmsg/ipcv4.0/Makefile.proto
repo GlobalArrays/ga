@@ -1,5 +1,5 @@
 #
-# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.11 1995-11-01 16:27:38 d3h325 Exp $
+# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.12 1996-01-26 22:01:37 hltaylor Exp $
 #
 # for events and debugging with events add  -DEVENTLOG to the DEFINES definition
 # for the given machine
@@ -382,7 +382,8 @@ ENDIF
 IF SUN SOLARIS
         FC = f77
 IF SOLARIS
-        CC = /usr/ucb/cc 
+        CC = cc 
+# was /usr/ucb/cc 
    DEFINES = -DSUN -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN \
              -DSOLARIS -DSUNF77_2
     CFLAGS = -O  $(DEFINES)
