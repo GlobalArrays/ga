@@ -14,10 +14,10 @@
 #include "sndrcv.h"
 #include "srftoc.h"
 
-#define SWITCH 1
+#define SWITCH 0
 
 #define NDIM 3
-#define SIZE 500
+#define SIZE 250
 /*
 #define NDIM 2
 #define SIZE 4000
@@ -77,12 +77,15 @@ void fill_random(double *a, int isize)
 
 void test_io_dbl()
 {
-  int n,m,ndim = NDIM;
+  int ndim = NDIM;
   double err, tt0, tt1, mbytes;
   int g_a, g_b, g_c, g_d, d_a, d_b, d_c;
   int i, req, loop;
-  int dlo[MAXDIM],dhi[MAXDIM],glo[MAXDIM],ghi[MAXDIM];
-  int dims[MAXDIM],reqdims[MAXDIM];
+  dra_size_t dlo[MAXDIM],dhi[MAXDIM];
+  dra_size_t n, m;
+  dra_size_t ddims[MAXDIM], reqdims[MAXDIM];
+  int glo[MAXDIM],ghi[MAXDIM];
+  int dims[MAXDIM];
   int me, nproc, isize;
   double plus, minus;
   double *index;
@@ -146,12 +149,12 @@ void test_io_dbl()
   }
   if (me == 0) fflush(stdout);
   for (i=0; i<ndim; i++) {
-    dims[i] = m;
+    ddims[i] = m;
     reqdims[i] = n;
   }
   GA_Sync();
   strcpy(filename1,FNAME1);
-  if (NDRA_Create(MT_DBL, ndim, dims, "B", filename1, DRA_RW,
+  if (NDRA_Create(MT_DBL, ndim, ddims, "B", filename1, DRA_RW,
       reqdims, &d_b) != 0) GA_Error("NDRA_Create failed(d_b): ",0);
 
   if (me == 0) printf("non alligned blocking write\n");
@@ -202,11 +205,11 @@ void test_io_dbl()
     printf("\n");
   }
   for (i=0; i<ndim; i++) {
-    dims[i] = n;
+    ddims[i] = n;
     reqdims[i] = n;
   }
   strcpy(filename,FNAME);
-  if (NDRA_Create(MT_DBL, ndim, dims, "A", filename, DRA_RW,
+  if (NDRA_Create(MT_DBL, ndim, ddims, "A", filename, DRA_RW,
       reqdims, &d_a) != 0) GA_Error("NDRA_Create failed(d_a): ",0);
   if (me == 0) printf("alligned blocking write\n");
   fflush(stdout);
@@ -245,11 +248,12 @@ void test_io_dbl()
   }
   if (me == 0) fflush(stdout);
   for (i=0; i<ndim; i++) {
+    ddims[i] = n;
     reqdims[i] = n;
   }
   strcpy(filename,FNAME);
   GA_Sync();
-  if (NDRA_Create(MT_DBL, ndim, dims, "A", filename, DRA_RW,
+  if (NDRA_Create(MT_DBL, ndim, ddims, "A", filename, DRA_RW,
       reqdims, &d_a) != 0) GA_Error("NDRA_Create failed(d_a): ",0);
   if (me == 0) printf("alligned blocking write\n");
   fflush(stdout);
@@ -289,11 +293,11 @@ void test_io_dbl()
     printf("\n");
   }
   for (i=0; i<ndim; i++) {
-    dims[i] = m;
+    ddims[i] = m;
     reqdims[i] = n;
   }
   strcpy(filename1,FNAME1);
-  if (NDRA_Create(MT_DBL, ndim, dims, "B", filename1, DRA_RW,
+  if (NDRA_Create(MT_DBL, ndim, ddims, "B", filename1, DRA_RW,
       reqdims, &d_b) != 0) GA_Error("NDRA_Create failed(d_b): ",0);
 
   if (me == 0) printf("non alligned blocking write\n");
@@ -470,12 +474,12 @@ void test_io_dbl()
   GA_Copy(g_c,g_d);
 
   for (i=0; i<ndim; i++) {
-    dims[i] = m;
+    ddims[i] = m;
     reqdims[i] = n;
   }
   strcpy(filename2,FNAME2);
   if (me == 0) printf("Creating DRA for transpose test\n");
-  if (NDRA_Create(MT_DBL, ndim, dims, "C", filename2, DRA_RW,
+  if (NDRA_Create(MT_DBL, ndim, ddims, "C", filename2, DRA_RW,
       reqdims, &d_c) != 0) GA_Error("NDRA_Create failed(d_c): ",0);
   if (me == 0) printf("done\n");
   if (me == 0) fflush(stdout);
@@ -558,8 +562,8 @@ char **argv;
   PBEGIN_(argc, argv); 
   GA_Initialize();
   if (!GA_Uses_ma()) {
-    stack = 100000;
-    heap  = 100000;
+    stack = 400000;
+    heap  = 400000;
   }
 
   if (MA_init(MT_F_DBL, stack, heap) ) {
