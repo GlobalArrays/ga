@@ -51,7 +51,10 @@ void armci_rcv_req(void *mesg,
                    void *phdr, void *pdescr, void *pdata, int *buflen)
 {
     request_header_t *msginfo = (request_header_t *)mesg;
+    extern void armci_gm_set_tofromop(int,int,int);
     
+    armci_gm_set_tofromop(msginfo->to,msginfo->from,msginfo->operation);
+
     if(DEBUG_) {
         printf("%d(server): got %d req (dscrlen=%d datalen=%d) from %d\n",
                armci_me, msginfo->operation, msginfo->dscrlen,
@@ -84,6 +87,9 @@ void armci_rcv_req(void *mesg,
     /* make sure last send is complete and the buffer is available */
     if(armci_serv_send_complete()==ARMCI_GM_FAILED)
         armci_die("armci_send_(strided_)data: write failed",msginfo->from);  
+    /*set armci_gm_req_to, armci_gm_req_from and armci_gm_req_op to later be
+      used be armci_send_ack
+    */
 }
 
 

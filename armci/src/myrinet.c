@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.47 2002-12-11 00:43:34 vinod Exp $
+/* $Id: myrinet.c,v 1.48 2003-03-07 17:00:54 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -77,6 +77,9 @@ extern void armci_buf_free(char *ap);
 extern void armci_init_buf_alloc(size_t len, void* buffer);
 #endif
 
+typedef unsigned short int ops_t;
+ops_t** armci_gm_fence_arr;
+
 
 /***************/
 
@@ -89,6 +92,7 @@ typedef struct {
     long *ack;               /* acknowledgment for server */
     long *tmp;
     long **serv_ack_ptr;     /* keep the pointers of server ack buffer */
+    ops_t *ops_pending_ar;
 } armci_gm_proc_t;
 
 /* data structure of server thread */
@@ -105,6 +109,8 @@ typedef struct {
     long *direct_ack;
     long *proc_buf_ptr;     /* keep the pointers of client MessageSndBuffer */
     long *proc_ack_ptr;
+    ops_t *ops_done_ar;
+    ops_t *ops_done_ack;
     unsigned long pending_msg_ct;
     unsigned long complete_msg_ct;
 } armci_gm_serv_t;
@@ -141,6 +147,9 @@ armci_gm_context_t *armci_gm_serv_context = &__armci_gm_serv_context_struct;
 armci_gm_context_t __armci_gm_serv_ack_context_struct = {0, ARMCI_GM_CLEAR};
 armci_gm_context_t *armci_gm_serv_ack_context = &__armci_gm_serv_ack_context_struct;
 
+armci_gm_context_t __armci_gm_serv_pendingop_context_struct = {0, ARMCI_GM_CLEAR};
+armci_gm_context_t *armci_gm_serv_pendingop_context = &__armci_gm_serv_pendingop_context_struct;
+
 armci_gm_serv_t __armci_serv_gm_struct;
 armci_gm_serv_t *serv_gm = &__armci_serv_gm_struct;
 
@@ -153,6 +162,16 @@ static int armci_gm_num_send_tokens=0;
 static int armci_gm_num_receive_tokens=0;
 
 GM_ENTRY_POINT char * _gm_get_kernel_build_id(struct gm_port *p);
+
+/*global variables set from rcv_req to be used by server_ack (....fence) */
+int armci_gm_req_to=0,armci_gm_req_from=0,armci_gm_req_op=0;
+
+void armci_gm_set_tofromop(int to,int from,int op)
+{
+    armci_gm_req_to=to;
+    armci_gm_req_from=from;
+    armci_gm_req_op=op;
+}
 
 /*********************************************************************
                         UTILITY FUNCTIONS                            
@@ -441,17 +460,21 @@ int armci_gm_client_init()
     }
  
     /* master makes port ids of server processes available to other tasks */
-    if(armci_nclus*sizeof(armci_gm_client_init_t)%sizeof(int)!=0)armci_die("allignment problem in client init",sizeof(armci_gm_client_init_t));
+    if(armci_nclus*sizeof(armci_gm_client_init_t)%sizeof(int)!=0)
+       armci_die("allignment problem in client init",
+                  sizeof(armci_gm_client_init_t));
     armci_msg_bcast_scope(SCOPE_NODE,client_init_struct,intcount*sizeof(int),
                           armci_master);
     for(i=0;i<armci_nclus;i++){
         proc_gm->port_map[i] = client_init_struct[i].port_id;
-        if(DEBUG_){printf("%d: portmap for me \n%d = %d   %d ",armci_me,client_init_struct[i].port_id, proc_gm->port_map[i],i);fflush(stdout);}
+        if(DEBUG_){
+          printf("%d: portmap for me \n%d = %d   %d ",armci_me,
+                  client_init_struct[i].port_id, proc_gm->port_map[i],i);
+          fflush(stdout);
+        }
     }
  
 #endif
- 
-
 
 
     /* allow direct send */
@@ -463,7 +486,8 @@ int armci_gm_client_init()
     /* memory preallocation for computing process */
     if(!armci_gm_client_mem_alloc()) armci_die(" client mem alloc failed ",0);
  
-    server_init_struct = (armci_gm_client_init_t *)(calloc(armci_nproc, sizeof(armci_gm_client_init_t)));    server_init_struct[armci_me].port_id = gm_get_port_id(proc_gm->port);
+    server_init_struct = (armci_gm_client_init_t *)(calloc(armci_nproc, sizeof(armci_gm_client_init_t)));    
+    server_init_struct[armci_me].port_id = gm_get_port_id(proc_gm->port);
     server_init_struct[armci_me].ack = proc_gm->ack;
     intcount = armci_nproc*sizeof(armci_gm_client_init_t)/sizeof(int);
     armci_msg_igop((int*)(server_init_struct), intcount, "+");
@@ -488,7 +512,17 @@ int armci_gm_client_init()
     }
     armci_msg_brdcst(&_armci_bypass, sizeof(int), 0);
 #endif
- 
+    /*allocate an array for pending operation count on client side*/
+    if(!(proc_gm->ops_pending_ar=(ops_t*)calloc(armci_nclus,sizeof(ops_t))))
+        armci_die("malloc failed for ARMCI ops_pending_ar",0);
+
+    /*the fence array, has to be pinned for server to be able to put*/
+    armci_gm_fence_arr = (ops_t**)malloc(armci_nproc*sizeof(ops_t*));
+    if(!armci_gm_fence_arr)armci_die("malloc failed for ARMCI fence array",0);
+    if(ARMCI_Malloc((void**)armci_gm_fence_arr, armci_nclus*sizeof(ops_t)))
+             armci_die("failed to allocate ARMCI fence array",0);
+    armci_pin_contig(armci_gm_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
+    bzero(armci_gm_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
     return TRUE;
 }
 
@@ -658,6 +692,7 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     context->done = ARMCI_GM_SENDING;
 
     /* flow control */
+    if(msginfo->operation==PUT || ACC(msginfo->operation))proc_gm->ops_pending_ar[s]++;
     _armci_buf_ensure_one_outstanding_op_per_node(buf, s ); 
 
     if(DEBUG_)fprintf(stderr,":%d: armci_send_req_msg op is %d sending buffer %d\n",armci_me,msginfo->operation,pipelinebufferindex);
@@ -779,6 +814,11 @@ int armci_gm_serv_mem_alloc()
     if(serv_gm->direct_ack == 0) return FALSE;
     *serv_gm->ack = ARMCI_GM_CLEAR;
     
+    /*place to copy the done operation count before transmission (for fence) */
+    serv_gm->ops_done_ack=(ops_t*)gm_dma_malloc(serv_gm->snd_port,sizeof(ops_t));
+    if(serv_gm->ops_done_ack == 0) return FALSE;
+    *serv_gm->ops_done_ack = ARMCI_GM_CLEAR;
+ 
     /* allocate recv buffer */
     MessageRcvBuffer = (char *)gm_dma_malloc(serv_gm->snd_port, MSG_BUFLEN+64);
     if(MessageRcvBuffer == 0) return FALSE;
@@ -880,6 +920,17 @@ int armci_serv_ack_complete()
     return(armci_gm_serv_ack_context->done);
 }
 
+static int armci_serv_pendingop_complete()
+{
+    gm_recv_event_t *event;
+
+    while(armci_gm_serv_pendingop_context->done == ARMCI_GM_SENDING) {
+        event = gm_blocking_receive_no_spin(serv_gm->snd_port);
+        gm_unknown(serv_gm->snd_port, event);
+    }
+
+    return(armci_gm_serv_pendingop_context->done);
+}
 
 
 static int port_id=1,board_id=0;
@@ -1039,6 +1090,9 @@ int armci_gm_server_init()
            gm_num_receive_tokens(serv_gm->rcv_port));
 
     serv_gm->pending_msg_ct = 0; serv_gm->complete_msg_ct = 0; 
+
+    if(!(serv_gm->ops_done_ar = (ops_t*)calloc(armci_nproc,sizeof(ops_t))))
+        armci_die("malloc failed for ARMCI ops_done_ar",0);
     
     return TRUE;
 }
@@ -1171,6 +1225,28 @@ void armci_server_send_ack(int client)
         armci_die(" failed sending data to client", client);
 }
 
+/*\ send the count of pending ops every time we get a put request
+ *  to be used for fence
+\*/
+void armci_send_pendingop_ack()
+{
+ops_t *p_ack=serv_gm->ops_done_ack;
+ops_t *remptr = armci_gm_fence_arr[armci_gm_req_from] + armci_clus_me;
+int client=armci_gm_req_from;
+
+    if(armci_gm_req_op!=PUT && !ACC(armci_gm_req_op))return;
+
+    *p_ack=++(serv_gm->ops_done_ar[client]);
+    /*printf("%d: sening ack %d to %p on %d\n",armci_me,*p_ack,p_ack,client);fflush(stdout);*/
+    gm_directed_send_with_callback(serv_gm->snd_port, p_ack,
+        (gm_remote_ptr_t)(gm_up_t)(remptr), sizeof(ops_t),
+        GM_LOW_PRIORITY, serv_gm->node_map[client], serv_gm->port_map[client],
+        armci_serv_callback, armci_gm_serv_pendingop_context);
+    if(armci_serv_pendingop_complete() == ARMCI_GM_FAILED)
+          armci_die(" failed sending data to client", client);
+
+}
+
 
 /* the main data server loop: accepting events and pass it to data server
  * code to be processed -- this is handler for GM specific requests
@@ -1207,7 +1283,7 @@ void armci_call_data_server()
               length = gm_ntohl(event->recv.length);
               buf = (char *)gm_ntohp(event->recv.buffer);
               armci_data_server(buf);
-              
+              /*armci_send_pendingop_ack();*/ 
               gm_provide_receive_buffer_with_tag(serv_gm->rcv_port, buf,
                                                  size, GM_LOW_PRIORITY, tag);
     
@@ -1482,3 +1558,31 @@ void armci_pipe_send_req(int proc, void *vbuf, int len)
 {
  armci_send_req_msg(proc, vbuf, len);
 }
+
+ops_t armci_check_int_val(ops_t *v)
+{
+  return (*v);
+}
+
+void armci_gm_fence(int p)
+{
+    long loop=0;
+    int cluster = armci_clus_id(p);
+    ops_t *buf = armci_gm_fence_arr[armci_me] + cluster;
+    long res = proc_gm->ops_pending_ar[cluster] - armci_check_int_val(buf);
+
+#if 0
+    if(proc_gm->ops_pending_ar[cluster])
+    printf("%d: client fencing proc=%d fence=%p slot %p pending=%d got=%d\n", 
+           armci_me, p, armci_gm_fence_arr[armci_me], buf, 
+           proc_gm->ops_pending_ar[cluster], armci_check_int_val(buf)); 
+    fflush(stdout);
+#endif
+
+    while(res){
+       if(++loop == 1000) { loop=0; usleep(1);  }
+       armci_util_spin(loop, buf);
+       res = proc_gm->ops_pending_ar[cluster] - armci_check_int_val(buf);
+    }
+}
+
