@@ -62,7 +62,11 @@ include ../config/makelib.h
 ifeq ($(TARGET),CRAY-YMP)
 pbeginf.o:
 	$(CC) $(COPT) $(INCLUDES) $(DEFINES) -g -c pbeginf.c
+endif
 
+ifeq ($(TARGET),CRAY-SV1)
+pbeginf.o:
+	$(CC) $(COPT) -htaskprivate $(INCLUDES) $(DEFINES) -g -c pbeginf.c
 endif
 
 ifdef GA_USE_VAMPIR
