@@ -6,7 +6,7 @@ cjqm#include "chemio.h"
 /*  This define just got added because the size declarations were removed from
     eaf.fh, but the test codes still use them.
 */
-#define EAF_SZ_INT 8
+#define EAF_SZ_INT 4
 
 #define IO_TEST_SZ (1024*1024/128)
 #define IO_NUM_FILES 4
@@ -35,7 +35,7 @@ cjqm	endif
 
 	do fnum = 1, IO_NUM_FILES
 #if 1
-	  write (fname, 10) '/tmp/output', fnum
+	  write (fname, 10) '/piofs/mogill/output', fnum
 #else
 	  write (fname, 10) '/pfs-temp/mogill/output',fnum
 #endif
@@ -73,7 +73,7 @@ c.................................
 
 	do fnum = 1, IO_NUM_FILES
 #if 1
-	  write (fname, 10) '/tmp/output', fnum
+	  write (fname, 10) '/piofs/mogill/output', fnum
 #else
           write (fname, 10) '/pfs-temp/mogill/output',fnum
 #endif

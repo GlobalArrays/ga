@@ -21,7 +21,7 @@ main()
   
   for(fnum = 0; fnum < IO_NUM_FILES; fnum++)
     {
-#if 1
+#if 0
       sprintf(fname,"/tmp/output.%1d", fnum); 
 #else
       sprintf(fname, "/piofs/mogill/output.%1d", fnum);
@@ -55,7 +55,7 @@ main()
   
   for(fnum = 0; fnum < IO_NUM_FILES; fnum++)
     {
-#if 1
+#if 0
       sprintf(fname,"/tmp/output.%1d", fnum); 
 #else
       sprintf(fname, "/piofs/mogill/output.%1d", fnum);
