@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.49 2002-05-15 20:01:40 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.50 2002-06-20 23:34:17 vinod Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -6,7 +6,7 @@
  *  char *Create_Shared_Region(long *idlist, long size, long *offset)
  *       . to be called by just one process. 
  *       . calls shmalloc, a modified by Robert Harrison version of malloc-like
- *         memory allocator from K&R. shmalloc in turn calls allocate() that
+ *         memory allocator from K&R.shmalloc inturn calls armci_allocate() that
  *         does shmget() and shmat(). 
  *       . idlist might be just a pointer to integer or a true array in the
  *         MULTIPLE_REGIONS versions (calling routine has to take care of it) 
@@ -619,7 +619,7 @@ char *temp = (char*)0, *pref_addr=(char*)0;
 /*\ allocates shmem, to be called by shmalloc that is called by process that
  *  creates shmem region
 \*/
-char *allocate(long size)
+char *armci_allocate(long size)
 {
 #define min(a,b) ((a)>(b)? (b): (a))
 char *temp = (char*)0, *pref_addr=(char*)0, *ftemp;
@@ -808,7 +808,7 @@ static char *temp;
 /*\ allocates shmem, to be called by shmalloc that is called by process that
  *  creates shmem region
 \*/
-char *allocate(long size)
+char *armci_allocate(long size)
 {
 char * temp;
 int id,shmflag=0;
@@ -878,7 +878,7 @@ size_t sz = (size_t)size;
 \*/
 char *Create_Shared_Region(long *id, long size, long *offset)
 {
-char *temp,  *shmalloc();
+char *temp,  *armci_shmalloc();
 int  reg, refreg=0,nreg;
   
     if(alloc_regions>=MAX_REGIONS)
@@ -905,7 +905,7 @@ int  reg, refreg=0,nreg;
        id[SHMIDLEN-2]=MinShmem;
     }
 
-    temp = shmalloc((size_t)size);
+    temp = armci_shmalloc((size_t)size);
     if(temp == (char*)0 )
        armci_die("CreateSharedRegion:shmalloc failed size in KB",(int)size>>10);
     

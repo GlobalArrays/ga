@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.11 2002-05-16 22:53:53 vinod Exp $ */
+/* $Id: winshmem.c,v 1.12 2002-06-20 23:34:17 vinod Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -7,7 +7,7 @@
  *  char *Create_Shared_Region(long *idlist, long *size, long *offset)
  *       . to be called by just one process. 
  *       . calls shmalloc, a modified by Robert Harrison version of malloc-like
- *         memory allocator from K&R. shmalloc in turn calls allocate() that
+ *         memory allocator from K&R.shmalloc inturn calls armci_allocate() that
  *         does shmget() and shmat(). 
  *       . idlist might be just a pointer to integer or a true array in the
  *         MULTIPLE_REGIONS versions (calling routine has to take cere of it) 
@@ -329,7 +329,7 @@ char *armci_get_core_from_map_file(int exists, long size)
 
 /*\ function called by shared memory allocator (shmalloc)
 \*/
-char *allocate(size_t size)
+char *armci_allocate(size_t size)
 {
     char *ptr;
 
@@ -359,7 +359,7 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
           shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
      }
 
-     temp = shmalloc((unsigned)size);
+     temp = armci_shmalloc((unsigned)size);
      if(temp == (char*)0 )
            armci_die("Create_Shared_Region: shmalloc failed ",0);
     

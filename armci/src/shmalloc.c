@@ -1,10 +1,10 @@
-/* $Id: shmalloc.c,v 1.9 2002-05-16 18:39:49 d3h325 Exp $ */
+/* $Id: shmalloc.c,v 1.10 2002-06-20 23:34:17 vinod Exp $ */
 #include <stdio.h>
 #include "shmalloc.h"
 
 /* Storage allocator basically copied from ANSI K&R and corrupted */
 
-extern char *allocate(); /* Used to get memory from the system */
+extern char *armci_allocate(); /* Used to get memory from the system */
 extern void armci_die();
 
 #define DEFAULT_NALLOC 8192	/* No. of units of length ALIGNMENT to get in
@@ -113,7 +113,7 @@ static Header *morecore(nu)
   (void) fflush(stdout);
 #endif
 
-  if ((cp = allocate((size_t)nu * sizeof(Header))) == (char *) NULL)
+  if ((cp = armci_allocate((size_t)nu * sizeof(Header))) == (char *) NULL)
     return (Header *) NULL;
  
   usage.total += nu;   /* Have just got nu more units */
@@ -135,7 +135,7 @@ static Header *morecore(nu)
   return freep;
 }
 
-char *shmalloc(nbytes)
+char *armci_shmalloc(nbytes)
      size_t nbytes;
 {
   Header *p, *prevp;

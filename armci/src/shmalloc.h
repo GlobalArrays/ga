@@ -5,11 +5,11 @@
   Returns data aligned on a quad boundary. Even if the request
   size is zero it returns a non-zero pointer.
 */
-extern char *shmalloc(size_t size);
+extern char *armci_shmalloc(size_t size);
 
 /*
   void shfree(char *pointer)
-  Frees memory allocated by shmalloc(). Ignores NULL pointers
+  Frees memory allocated by armci_shmalloc(). Ignores NULL pointers
   but must not be called twice for the same pointer or called
   with non-shmalloc'ed pointers
 */
