@@ -35,6 +35,10 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #endif
+#ifdef INTERIX
+extern char* strdup(const char*);
+#endif
+
 #include "elio.h"
 #include "eaf.h"
 #include "eafP.h"
@@ -80,7 +84,11 @@ static double wall_time(void)
   static unsigned firstsec, firstusec;
   double low, high;
   struct timeval tp;
+#ifdef __INTERIX
+  char tzp[10];
+#else
   struct timezone tzp;
+#endif
 
   if (firstcall) {
       (void) gettimeofday(&tp,&tzp);
