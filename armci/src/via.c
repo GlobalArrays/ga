@@ -1,4 +1,4 @@
-/* $Id: via.c,v 1.23 2002-07-17 05:57:51 vinod Exp $ */
+/* $Id: via.c,v 1.24 2002-10-17 10:05:42 d3h325 Exp $ */
 #include <stdio.h>
 #include <strings.h>
 #include <assert.h>
@@ -110,11 +110,8 @@ typedef struct {
   char buf[MAX_BUFLEN];
 }vbuf_long_t;
 
-#define MAX_BUFS 4
-reqbuf_t client_buf_pool[MAX_BUFS];
-
 static vbuf_t *serv_buf_arr, *spare_serv_buf;
-static vbuf_long_t *client_buf, *serv_buf;
+static vbuf_long_t *serv_buf;
 static VIP_MEM_HANDLE serv_memhandle, client_memhandle;
 static armci_connect_t *SRV_con;
 static armci_connect_t *CLN_con;
@@ -838,19 +835,22 @@ void armci_client_connect_to_servers()
 
 }
 
+
+#define BUF_TO_EVBUF(buf) (vbuf_ext_t*)(((char*)buf) - 2*sizeof(VIP_DESCRIPTOR))
+
 void armci_via_complete_buf(armci_via_field_t *field,int snd,int rcv,int to){
 VIP_RETURN rc;
 VIP_DESCRIPTOR *cmpl_dscr,* snd_dscr,* rcv_dscr;
     if(snd){
         snd_dscr=(VIP_DESCRIPTOR *)(field->s);
-	do{rc = VipSendDone((SRV_con+armci_clus_id(to))->vi, &cmpl_dscr);}
+        do{rc = VipSendDone((SRV_con+armci_clus_id(to))->vi, &cmpl_dscr);}
         while(rc==VIP_NOT_DONE);
        armci_check_status(DEBUG0, rc,"complete_buf: wait for send to complete");
        if(snd_dscr != cmpl_dscr)
        armci_die("armci_via_complete_buf: wrong dscr completed",0);
     }
     if(rcv){
-	rcv_dscr=(VIP_DESCRIPTOR *)(field->r);
+        rcv_dscr=(VIP_DESCRIPTOR *)(field->r);
         do{rc = VipRecvDone((SRV_con+armci_clus_id(to))->vi, &cmpl_dscr);}
         while(rc==VIP_NOT_DONE);
         if(rcv_dscr != cmpl_dscr){
@@ -858,103 +858,8 @@ VIP_DESCRIPTOR *cmpl_dscr,* snd_dscr,* rcv_dscr;
                   armci_me,cmpl_dscr ,&rcv_dscr);
            fflush(stdout);
            armci_die("armci_via_complete_buf: wrong rcv dscr completed",0);
-        } 
+        }
     }
-}    
-static void armci_complete_buf_index(int b)
-{
-VIP_RETURN rc;
-VIP_DESCRIPTOR *cmpl_dscr;
-vbuf_ext_t *evbuf = (vbuf_ext_t*)client_buf_pool[b].buf;
-
-    if(DEBUG1){
-       printf("%d(c): completing %d snd=%d rcv=%d  buf=%p\n",armci_me,b,
-              client_buf_pool[b].snd,client_buf_pool[b].rcv,evbuf->buf);
-       fflush(stdout);
-    }
-
-    if(client_buf_pool[b].snd){
-#if 0
-       rc = VipSendWait((SRV_con+client_buf_pool[b].srv)->vi, VIP_INFINITE,
-                         &cmpl_dscr);
-#else
-       do{rc = VipSendDone((SRV_con+client_buf_pool[b].srv)->vi, &cmpl_dscr);}
-       while(rc==VIP_NOT_DONE);
-#endif
-       armci_check_status(DEBUG0, rc,"complete_buf: wait for send to complete");
-       if(&evbuf->snd_dscr != cmpl_dscr)
-       armci_die("armci_complete_buf: wrong dscr completed",b);
-       client_buf_pool[b].snd = 0;
-    }
-    if(client_buf_pool[b].rcv){
-#if 0
-       rc = VipRecvWait((SRV_con+client_buf_pool[b].srv)->vi, VIP_INFINITE,
-                            &cmpl_dscr);
-#else
-       do{rc = VipRecvDone((SRV_con+client_buf_pool[b].srv)->vi, &cmpl_dscr);}
-       while(rc==VIP_NOT_DONE);
-#endif
-       armci_check_status(DEBUG0, rc,"complete_buf: wait receive to complete");
-       if(&evbuf->rcv_dscr != cmpl_dscr){
-           printf("%d(c): DIFFERENT recv DESCRIPTOR %p %p buf=%p \n",
-                  armci_me,cmpl_dscr ,&evbuf->rcv_dscr, &client_buf->rcv_dscr);
-        
-           fflush(stdout);
-           armci_die("armci_complete_buf: wrong rcv dscr completed",b);
-       }
-       client_buf_pool[b].rcv = 0;
-    }
-}
-
-
-char* armci_getbuf(int size)
-{
-static int avail=0;
-
-      if(size >= VBUF_DLEN){
-         int i;
-         /* clear all the buffers */
-         for(i=0;i<MAX_BUFS;i++)if(client_buf_pool[i].snd)
-             armci_complete_buf_index(i);
-         avail =0;
-      }else{
-         avail +=1;
-         avail %= MAX_BUFS;
-         if(client_buf_pool[avail].snd) armci_complete_buf_index(avail);
-      }
-      if(DEBUG1){
-         printf("%d(c) GETBUF size=%d %d %p\n",armci_me,size,avail,
-               client_buf_pool[avail].buf); fflush(stdout);
-      }
-#if 0
-      if(size > 15000){printf("%d: size=%d %d %p %p\n",armci_me,
-                       size,avail,client_buf_pool[avail].buf,
-                       ((vbuf_ext_t*)client_buf_pool[avail].buf)->buf);
-                      fflush(stdout);
-      } 
-#endif
-      return(((vbuf_ext_t*)client_buf_pool[avail].buf)->buf);
-     
-}
-
-#define BUF_TO_EVBUF(buf) (vbuf_ext_t*)(((char*)buf) - 2*sizeof(VIP_DESCRIPTOR))
-
-static int armci_buf2index(void *buf)
-{
-char *evbuf = ((char*)buf) - 2*sizeof(VIP_DESCRIPTOR);
-int i, found=0;
-    for(i=0; i<MAX_BUFS; i++)if(client_buf_pool[i].buf == evbuf){found=1;break;}
-    if(!found){
-        printf("%d(c) not found %p %p\n",armci_me,client_buf_pool[0].buf,evbuf);
-        armci_die("armci_buf2index: not found",0);
-    }
-    return(i);
-}
-
-void armci_relbuf(void *buf)
-{
-int index = armci_buf2index(buf);
-    armci_complete_buf_index(index);
 }
 
 
@@ -1149,10 +1054,8 @@ descr_pool_t *dp;
     dp->avail++;
     if(DEBUG1){
       if(*client_tail != CLIENT_STAMP){
-         printf("%d:stamp corrupted %d tail=%p cur buf %p,%p %p %p %p %d %d\n",
+         printf("%d:stamp corrupted %d tail=%p cur buf %p, %d %d\n",
                 armci_me, *client_tail, client_tail, buf,
-                client_buf_pool[0].buf, client_buf_pool[1].buf,
-                client_buf_pool[2].buf, client_buf_pool[3].buf,
                 sizeof(vbuf_ext_t),sizeof(vbuf_long_t));fflush(stdout);    
          armci_die("end of buf",*client_tail);
       }
@@ -1303,16 +1206,12 @@ char *armci_ReadFromDirect(int proc, request_header_t *msginfo, int len)
 {
 VIP_RETURN rc;
 VIP_DESCRIPTOR *pdscr;
-int i, mybufid=0, cluster = armci_clus_id(proc);
+int cluster = armci_clus_id(proc);
 vbuf_ext_t* evbuf=BUF_TO_EVBUF(msginfo);
 char *dataptr = GET_DATA_PTR(evbuf->buf);
 
     if(DEBUG1){ printf("%d(c):read direct %d vi=%p\n",armci_me,
                 (int)msginfo->datalen,(SRV_con+cluster)->vi); fflush(stdout);
-    }
-    for(i=0; i< MAX_BUFS; i++){
-        vbuf_ext_t* cur = (vbuf_ext_t*)client_buf_pool[i].buf;
-        if(cur == evbuf){ mybufid = i; break;}
     }
     
     do{rc = VipSendDone((SRV_con+cluster)->vi, &pdscr);}while(rc==VIP_NOT_DONE);
@@ -1320,7 +1219,6 @@ char *dataptr = GET_DATA_PTR(evbuf->buf);
 
 #if 0
     armci_dequeue_send_descr((SRV_con+cluster)->vi);
-
     rc = VipRecvWait((SRV_con+ cluster)->vi, VIP_INFINITE, &pdscr);
 #endif
 
@@ -1332,15 +1230,9 @@ char *dataptr = GET_DATA_PTR(evbuf->buf);
        armci_die("reading data client-different descriptor completed",0);
     }
     
-    client_buf_pool[mybufid].rcv =0;
-    client_buf_pool[mybufid].snd =0;
-
-#if 0
-    armci_long_buf_free =1;
-#endif
-
     return dataptr;
 }
+
 
 void armci_rcv_strided_data_bypass(int proc, request_header_t* msginfo,
                                    void *ptr, int stride_levels)
@@ -1348,22 +1240,15 @@ void armci_rcv_strided_data_bypass(int proc, request_header_t* msginfo,
 VIP_RETURN rc;
 VIP_DESCRIPTOR *pdscr;
 vbuf_ext_t* evbuf=BUF_TO_EVBUF(msginfo);
-int mybufid=-1,i,cluster = armci_clus_id(proc);
+int cluster = armci_clus_id(proc);
 
 #if 0
     do{rc = VipSendDone((SRV_con+cluster)->vi, &pdscr);}while(rc==VIP_NOT_DONE);
     armci_check_status(DEBUG0, rc,"WAIT for send msg req to complete");
 #endif
-    for(i=0; i< MAX_BUFS; i++){
-        vbuf_ext_t* cur = (vbuf_ext_t*)client_buf_pool[i].buf;
-        if(cur == evbuf){ mybufid = i; break;}
-    }
-
-    if(mybufid<0)armci_die("rcv_strided_data_bypass:did not find buf",0);
-    if(!client_buf_pool[mybufid].rcv)armci_die("rcv_strided_data_bypass: cv",0);
 
     if(DEBUG2){
-       printf("%d:rcv_strided_data_bypass wait for ack%d\n",armci_me,mybufid);
+       printf("%d:rcv_strided_data_bypass wait for ack\n",armci_me);
        fflush(stdout);
     }
     do{rc = VipRecvDone((SRV_con+cluster)->vi, &pdscr);}while(rc==VIP_NOT_DONE);
@@ -1371,11 +1256,8 @@ int mybufid=-1,i,cluster = armci_clus_id(proc);
     if(pdscr != &evbuf->rcv_dscr)
        armci_die("rcv_strided_data_bypass:different descriptor completed",0);
 
-    client_buf_pool[mybufid].rcv =0;
-    client_buf_pool[mybufid].snd =0;
-
     if(DEBUG2){
-       printf("%d(c):rcv_strided_data_bypass buf %d\n",armci_me,mybufid);
+       printf("%d(c):rcv_strided_data_bypass buf %p\n",armci_me,msginfo);
        fflush(stdout);
     }
 }
