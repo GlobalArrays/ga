@@ -1465,7 +1465,7 @@ Integer lo[2], hi[2];
 void FATR nga_get_(Integer *g_a,
                    Integer *lo,
                    Integer *hi,
-                   Void    *buf,
+                   void    *buf,
                    Integer *ld)
 {
 Integer  p, np, proc, handle=GA_OFFSET + *g_a;
