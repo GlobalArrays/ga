@@ -30,6 +30,15 @@ distribute to other US Government contractors.
 What is new ?
 ~~~~~~~~~~~~
 
+version 2.3   . added lock operations: ga_lock, ga_unlock, ga_create_mutex,
+                ga_destroy_mutex
+              . ga_acc works for integer data type
+              . port to the CRAY T3E (with streams disabled)
+              . environment variable TARGET_CPU can be use to guide 
+                compilation for particular CPU (R10000 and R8000 are currently 
+                recognized on the SGI systems)
+              . a new TARGET, SGI_N32 used for the 64-bit SGI systems
+
 version 2.2   . added support for double complex datatype;
               . port to HP and Convex SPP;
               . latency optimizations for IBM SP running AIX 4.X;
@@ -133,7 +142,7 @@ Dependencies on other software:
   operation (see README in tcgmsg-mpi directory), it is required to modify 
   a BLACS file blacs_pinfo_.c to substitute MPI_COMM_WORLD with the
   communicator returned from ga_mpi_communicator routine.
-  This is an excerpt form the modified file:
+  This is an excerpt from the modified file:
 
 #ifdef GA
       ga_mpi_communicator(&BI_MPI_COMM_WORLD);
@@ -148,7 +157,7 @@ Makefiles:
 
 In addition to makefile there are three more files included in makefiles 
 located in the subdirectories: Makefile.h  (definitions & include symbols),
-MakeFiles.h (file names to be compiled depending on the TARGET machine and
+MakeFiles.h (files to be compiled depending on the TARGET machine and
 VERSION of memory (shared or distributed), and Makelib.h (specification of
 libraries to be linked with when test programs are built).
 The user needs to specify TARGET in the ./makefile or on the 
@@ -156,7 +165,7 @@ command line when calling make. The library and test programs should be
 built by calling make in the current directory. The appropriate value
 of VERSION will be determined automatically. 
 
-Valid TARGET is one of: SUN, SOLARIS, SGI, SGITFP (Power Challenge),
+Valid TARGET is one of: SUN, SOLARIS, SGI, SGI_N32, SGITFP,
         DECOSF, IBM, KSR, SP1, SP, CRAY-T3D, CONVEX-SPP,IPSC, DELTA, PARAGON,
         LINUX, HPUX 
 
@@ -166,7 +175,7 @@ Test Programs:
       - Programs: test.x, testsolve.x, testeig.x, testpatch.x are
         available to test this software.
 
-      - Program testspd.x would work only with ScaLAPACK and TCGMSG-MPI
+      - Program testspd.x should work only with the ScaLAPACK and TCGMSG-MPI
         interface.
 
       - Another example program that uses GA is called jacobi.x. The Jacobi
