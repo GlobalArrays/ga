@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.20 2004-09-21 17:35:56 manoj Exp $ */
+/* $Id: memlock.c,v 1.21 2004-09-21 18:39:46 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -173,18 +173,16 @@ void armci_lockmem(void *start, void *end, int proc)
 	addresses. Addresses written to memlock table must be adjusted to 
 	the node master
       */
-     {
+     if(ARMCI_Uses_shm()){
 	int i, seg_id=-1;
 	size_t tile_size,offset;
-	void *start_addr, *end_addr, *tmp[4];
+	void *start_addr, *end_addr;
 	for(i=0; i<seg_count; i++) {
 	   tile_size = armci_memoffset_table[i].tile_size;
 	   start_addr = (void*) ((char*)armci_memoffset_table[i].seg_addr +
 				 proc*tile_size);
 	   end_addr = (void*) ((char*)start_addr +
 			       armci_memoffset_table[i].seg_size);
-	   tmp[2*i]   = start_addr;
-	   tmp[2*i+1] = end_addr;
 	   /* CHECK: because of too much "span" in armci_lockmem_patch in 
 	    * strided.c, it is not possible to have condition as (commented):*/
 	   /*if(pstart>=start_addr && pend<=end_addr) {seg_id=i; break;}*/
