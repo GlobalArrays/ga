@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.5 1995-02-24 02:17:12 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.6 1995-10-11 23:46:21 d3h325 Exp $ */
 
 #include <stdio.h>
 
@@ -24,6 +24,18 @@ extern char *strtok();
 
 extern void Error();
 
+void InitClusInfoNotParallel()
+{
+int SR_n_clus = 0;
+
+    SR_clus_info[SR_n_clus].user = "?";
+    SR_clus_info[SR_n_clus].hostname = "?";
+    SR_clus_info[SR_n_clus].nslave = 1;
+    SR_clus_info[SR_n_clus].image = "?";
+    SR_clus_info[SR_n_clus].workdir = "?";
+    SR_clus_info[SR_n_clus].masterid = 0;
+}
+  
 void InitClusInfo(procgrp, masterhostname)
      char *procgrp, *masterhostname;
 /*
@@ -46,6 +58,8 @@ void InitClusInfo(procgrp, masterhostname)
 
   SR_n_clus = 0;
   SR_n_proc = 0;
+
+  if (!tmp) Error("InitClusInfo: no memory", 0L);
 
   while (1) {
     user = strtok(tmp, white);
@@ -73,6 +87,10 @@ void InitClusInfo(procgrp, masterhostname)
     SR_clus_info[SR_n_clus].swtchport = sw_port_by_name(host);
 #endif
 
+    if (!SR_clus_info[SR_n_clus].user || !SR_clus_info[SR_n_clus].hostname ||
+        !SR_clus_info[SR_n_clus].image || !SR_clus_info[SR_n_clus].workdir)
+      Error("InitClusInfo: no memory 2 ", 0L);
+
     for (i=0; i<atoi(nslave); i++)
       SR_proc_info[SR_n_proc+i].clusid = SR_n_clus;
 
@@ -80,20 +98,32 @@ void InitClusInfo(procgrp, masterhostname)
     SR_n_clus++;
   }
 
+  
+
   /* Define info about the parallel command process */
   SR_proc_info[SR_n_proc].clusid   = SR_n_clus;
   SR_clus_info[SR_n_clus].hostname = strdup(masterhostname);
+  SR_clus_info[SR_n_clus].user     = "?";
+  SR_clus_info[SR_n_clus].workdir  = "?";
+  SR_clus_info[SR_n_clus].image    = "parallel";
+  if (!SR_clus_info[SR_n_clus].hostname)
+    Error("InitClusInfo: no memory 3 ", 0L);
 #if defined(ALLIANT) && defined(SWTCH)
   SR_clus_info[SR_n_clus].swtchport = sw_port_by_name(masterhostname);
 #endif
+
+  free(tmp);
 }
 
 
 void PrintClusInfo()
 {
-  long i;
+  long i, clus_to_print;
   
-  for (i=0; i<=SR_n_clus; i++)
+  clus_to_print = SR_parallel ? SR_n_clus+1: SR_n_clus;
+
+  printf("No. Clusters: %d\n", SR_n_clus);
+  for (i=0; i<clus_to_print; i++)
 #ifndef SWTCH
     (void) printf("Cluster %ld {\n  user = %s\n  host = %s\n  nslave = %ld\n\
   image = %s\n  workdir = %s\n  masterid = %ld}\n",

@@ -1,5 +1,5 @@
 #
-# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.9 1995-02-24 19:18:42 d3h325 Exp $
+# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.10 1995-10-11 23:46:19 d3h325 Exp $
 #
 # for events and debugging with events add  -DEVENTLOG to the DEFINES definition
 # for the given machine
@@ -313,15 +313,15 @@ IF SGI
      EXTRA = strdup.o strtok.o
 ENDIF SGI
 IF SGITFP
-#SGI IRIX ...  note that need -lmalloc ... default break in Stress
         FC = f77
     FFLAGS = -O2 -d8 -i8
         CC = cc
-   DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS  -DNOSPIN
+   DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS -DPARTIALSPIN -DSGIUS
+#   DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS  -DNOSPIN
     CFLAGS = -O  $(DEFINES)
  LINTFLAGS = -I/usr/include/bsd -I/usr/include/sun $(DEFINES) -u
-      LIBS = -lmalloc 
-     EXTRA = strdup.o strtok.o
+#      LIBS = -lmalloc 
+     EXTRA = strdup.o
 ENDIF SGI
 IF KSR
 #KSROS
@@ -358,7 +358,7 @@ IF HPUX HPUXNOEXT
 #HPUX ... Hewlett Packard Risc Box
 #     ... +ppu appends underscores to FORTRAN globals (recommended)
         FC = f77
-        CC = cc
+        CC = c89
 IF HPUX
     FFLAGS = -O +ppu
    DEFINES = -DHPUX -DEXTNAME -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
@@ -382,20 +382,30 @@ IF APOLLO
       LIBS =
      EXTRA =
 ENDIF
-IF SUN
+IF SUN SOLARIS
         FC = f77
-    FFLAGS = -O3 -Bstatic
+IF SOLARIS
+        CC = /usr/ucb/cc 
+   DEFINES = -DSUN -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN \
+             -DSOLARIS -DSUNF77_2
+    CFLAGS = -O  $(DEFINES)
+    FFLAGS = -O 
+ LINTFLAGS = $(DEFINES)
+      LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
+ELSE
         CC = cc
 IF SUNF77_2
    DEFINES = -DSUN -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN -DSUNF77_2
 ELSE
    DEFINES = -DSUN -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
 ENDIF
-    CFLAGS = -O $(DEFINES) -Bstatic
  LINTFLAGS = $(DEFINES) -bhzu
       LIBS = 
+    CFLAGS = -O $(DEFINES)
+    FFLAGS = -O3
+ENDIF SOLARIS
      EXTRA = 
-ENDIF SUN
+ENDIF SUN SOLARIS
 IF CRAY
         FC = cf77
         CC = cc
@@ -451,7 +461,7 @@ ENDIF KSR
 libtcgmsg.a:	$(LIBOBJ)
 	/bin/rm -f libtcgmsg.a
 	ar rc libtcgmsg.a $(LIBOBJ)
-IF CRAY ARDENT SGI HPUX HPUX HPUXNOEXT KSR SGITFP
+IF CRAY ARDENT SGI HPUX HPUX HPUXNOEXT KSR SGITFP SOLARIS
 ELSE
 	ranlib libtcgmsg.a
 ENDIF

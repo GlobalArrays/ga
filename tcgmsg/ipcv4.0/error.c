@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/error.c,v 1.6 1995-03-29 23:55:51 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/error.c,v 1.7 1995-10-11 23:46:23 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <setjmp.h>
@@ -59,7 +59,7 @@ void Error(string, integer)
 		     and call Error in the handler */
 
 #ifdef SHMEM
-#if defined(NOSPIN)
+#if defined(NOSPIN) || defined(PARTIALSPIN)
   (void) SemSetDestroyAll();
 #endif
   (void) DeleteSharedRegion(SR_proc_info[NODEID_()].shmem_id);

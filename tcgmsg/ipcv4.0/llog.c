@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/llog.c,v 1.4 1995-02-24 02:17:23 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/llog.c,v 1.5 1995-10-11 23:46:25 d3h325 Exp $ */
 
 #include <stdio.h>
 
@@ -7,11 +7,11 @@
 
 #include "sndrcv.h"
 
-#if defined(SUN)
-extern char *sprintf();
+#if (defined(SUN) && !defined(SOLARIS))
+    extern char *sprintf();
 #endif
 #ifndef SGI
-extern time_t time();
+    extern time_t time();
 #endif
 
 extern void Error();

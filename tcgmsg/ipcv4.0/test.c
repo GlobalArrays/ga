@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.4 1995-02-24 02:17:57 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.5 1995-10-11 23:46:38 d3h325 Exp $ */
 
 #include <stdio.h>
 #if !defined(SEQUENT) && !defined(CONVEX)
@@ -17,8 +17,8 @@ extern char *malloc();
 #endif
 extern unsigned char CheckByte();
 extern double DRAND48_();
-#if defined(SUN)
-extern char *sprintf();
+#if (defined(SUN) && !defined(SOLARIS))
+    extern char *sprintf();
 #endif
 #ifdef IPSC
 #define bzero(A,N) memset((A), 0, (N))

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.5 1995-02-24 02:17:47 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.6 1995-10-11 23:46:34 d3h325 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -14,8 +14,8 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#if defined(SUN)
-extern char *sprintf();
+#if (defined(SUN) && !defined(SOLARIS))
+    extern char *sprintf();
 #endif
 
 extern void Error();
@@ -34,7 +34,7 @@ extern void Error();
 #endif
 #include "sema.h"
 #include "shmem.h"
-#if defined(ALLIANT)
+#if defined(ALLIANT) || defined(SGI) || defined(SGITFP)
 #define SRmover(a,b,n) memcpy(a,b,n)
 #else
 extern void SRmover();
@@ -223,16 +223,18 @@ static void Await(p, value)
   }
 
   for (; flag(p) != value; nspin++) {
-#ifdef NOSPIN
+#if defined(NOSPIN) && !defined(PARTIALSPIN)
     if (nspin < 100)
       (void) DummyRoutine();
     else 
       USleep((long) 10000);
 #else
-    if (nspin < 100000)
+    if (nspin < 10000000)
       (void) DummyRoutine();
-    else 
+    else {
+/*      printf("%2ld: Await sleeping\n", NODEID_()); fflush(stdout); */
       USleep((long) 100000);
+    }
 #endif
   }
 }
@@ -257,7 +259,8 @@ static void rcv_local(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
   long sem_written = SR_proc_info[node].sem_written;
   long semid_to = SR_proc_info[me].semid;
   long sem_pend = SR_proc_info[me].sem_pend;
-#else
+#endif
+#if !defined(NOSPIN) || defined(PARTIALSPIN)
   long *buffer_full = SR_proc_info[node].buffer_full;
 #endif
   
@@ -278,7 +281,7 @@ static void rcv_local(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
 
   Await(&head->nodeto, me);	/* Still have this possible spin */
 
-#ifdef NOSPIN
+#if defined(NOSPIN) && !defined(PARTIALSPIN)
   SemWait(semid, sem_written);
 #else
   Await(buffer_full, (long) TRUE);
@@ -312,7 +315,7 @@ static void rcv_local(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
   if (len)
     (void) SRmover(buf, buffer, (len > buflen) ? buflen : len);
 
-#ifdef NOSPIN
+#if defined(NOSPIN) && !defined(PARTIALSPIN)
   SemPost(semid, sem_read);
 #else
   *buffer_full = FALSE;
@@ -324,13 +327,13 @@ static void rcv_local(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
   /* Copy the remainder of the message */
   
   while (len > 0) {
-#ifdef NOSPIN
+#if defined(NOSPIN) && !defined(PARTIALSPIN)
     SemWait(semid, sem_written);
 #else    
     Await(buffer_full, (long) TRUE);
 #endif
     (void) SRmover(buf, buffer, (len > buflen) ? buflen : len);
-#ifdef NOSPIN
+#if defined(NOSPIN) && !defined(PARTIALSPIN)
     SemPost(semid, sem_read);
 #else
     *buffer_full = FALSE;
@@ -358,7 +361,8 @@ static void snd_local(type, buf, lenbuf, node)
   long sem_written = SR_proc_info[me].sem_written;
   long semid_to = SR_proc_info[*node].semid;
   long sem_pend = SR_proc_info[*node].sem_pend;
-#else
+#endif
+#if !defined(NOSPIN) || defined(PARTIALSPIN)
   long *buffer_full = SR_proc_info[me].buffer_full;
 #endif
 
@@ -374,7 +378,7 @@ static void snd_local(type, buf, lenbuf, node)
 
   /* Check that final segment of last message has been consumed */
 
-#ifdef NOSPIN
+#if defined(NOSPIN) && !defined(PARTIALSPIN)
   SemWait(semid, sem_read);
 #else
   Await(buffer_full, (long) FALSE);
@@ -400,24 +404,26 @@ static void snd_local(type, buf, lenbuf, node)
   if (len)
     (void) SRmover(buffer, buf, (len > buflen) ? buflen : len);
 
-#ifdef NOSPIN
+#if defined(NOSPIN) && !defined(PARTIALSPIN)
   SemPost(semid, sem_written);
-  SemPost(semid_to, sem_pend);
 #else
   *buffer_full = TRUE;
+#endif
+#ifdef NOSPIN
+  SemPost(semid_to, sem_pend);
 #endif
 
   len -= buflen;
   buf += buflen;
 
   while (len > 0) {
-#ifdef NOSPIN
+#if defined(NOSPIN) && !defined(PARTIALSPIN)
     SemWait(semid, sem_read);
 #else
     Await(buffer_full, (long) FALSE);
 #endif
     (void) SRmover(buffer, buf, (len > buflen) ? buflen : len);
-#ifdef NOSPIN
+#if defined(NOSPIN) && !defined(PARTIALSPIN)
     SemPost(semid, sem_written);
 #else
     *buffer_full = TRUE;

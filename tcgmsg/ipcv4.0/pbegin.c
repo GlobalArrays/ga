@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.5 1995-02-24 02:17:37 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.6 1995-10-11 23:46:30 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -170,6 +170,8 @@ void PBEGIN_(argc, argv)
 
   if ( (i+6) >= argc ) {
     SR_parallel = FALSE;
+    InitClusInfoNotParallel();
+    SR_n_clus=1;
     return;
   }
   else

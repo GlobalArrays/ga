@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.4 1995-02-24 02:17:48 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.5 1995-10-11 23:46:36 d3h325 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
@@ -37,6 +37,9 @@
 
 /* Shared memory allocated per process .. make even multiple of
    page size ... usually 4096 */
+#if defined(SGI) || defined(SGITFP)
+#define SHMEM_BUF_SIZE 262144
+#endif
 #ifdef KSR
 #define SHMEM_BUF_SIZE 524288
 #endif
@@ -56,6 +59,10 @@
 #endif
 #if !defined(SHMEM_BUF_SIZE)
 #define SHMEM_BUF_SIZE 65536
+#endif
+
+#if defined(PARTIALSPIN) && !defined(NOSPIN)
+#define NOSPIN
 #endif
 
 #define SR_SOCK_BUF_SIZE  32768       /* Size that system buffers set to */

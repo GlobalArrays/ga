@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.5 1995-02-24 02:17:35 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.6 1995-10-11 23:46:28 d3h325 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -39,8 +39,8 @@ extern char *strdup();
 extern void NextValueServer();
 extern void Error();
 
-#if defined(SUN)
-extern char *sprintf();
+#if (defined(SUN) && !defined(SOLARIS))
+    extern char *sprintf();
 #endif
 
 #if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(AIX)

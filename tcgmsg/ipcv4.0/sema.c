@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.5 1995-08-23 23:19:27 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.6 1995-10-11 23:46:32 d3h325 Exp $ */
 
 /*
   These routines simplify the interface to semaphores for use in mutual
@@ -58,7 +58,7 @@
 
 extern void Error();
 
-#ifdef SYSV
+#if defined(SYSV) && !defined SGIUS
 
 /********************************************************************
   Most system V compatible machines
@@ -78,7 +78,7 @@ extern void Error();
 
 #if defined(ARDENT) || defined(ENCORE) || defined(SEQUENT) || \
     defined(ULTRIX) || defined(AIX)    || defined(HPUX) || defined(KSR) || \
-    defined(DECOSF)
+    defined(DECOSF) || defined(SOLARIS)
 union semun {
    long val;
    struct semid_ds *buf;
@@ -95,11 +95,10 @@ static int sem_set_id_list[MAX_SEM_SETS];
 static int num_sem_set = 0;
 
 #if defined(SGITFP) || defined(SGI64) || defined(KSR)
-#   define MAX_N_SEM 128
+#   define MAX_N_SEM 128 
 #else
 #   define MAX_N_SEM 40
 #endif
-
 
 void InitSemSetList()
 /* Initialise sem_set_id_list */
@@ -598,4 +597,113 @@ long SemSetDestroyAll()
   return status;
 }
 
+#endif
+
+#ifdef SGIUS
+
+/*
+  SGI fast US library semaphores ... aren't any faster
+  than system V semaphores ... implement using spin locks
+*/
+
+#include <ulocks.h>
+#include <stdio.h>
+
+static usptr_t *arena_ptr;
+
+#define MAX_SEMA 128
+static volatile int *val;
+static ulock_t *locks[MAX_SEMA];
+
+#define EIGHT 8
+#define ARENA_NAME_LEN 200
+
+static char arena_name[ARENA_NAME_LEN];
+
+#include <unistd.h>  
+#include "sndrcvP.h"
+
+long SemSetCreate(long n_sem, long value)
+{
+  int i;
+
+   sprintf(arena_name,"tcgmsg.arena.%ld",(long)getpid()); 
+#ifdef PRIVATE_ARENA
+   (void) usconfig(CONF_ARENATYPE, US_SHAREDONLY);
+#endif
+   (void) usconfig(CONF_INITUSERS, (unsigned int)SR_clus_info[SR_clus_id].nslave );
+
+  if (!(arena_ptr = usinit(arena_name)))
+    Error("SemSetCreate: failed to create arena", 0L);
+
+  /* Magic factors of EIGHT here to ensure that values are
+     in different cache lines to avoid aliasing */
+
+  if (!(val = (int *) usmalloc(EIGHT*MAX_SEMA*sizeof(int), arena_ptr)))
+    Error("SemSetCreate: failed to get shmem", (long) (MAX_SEMA*sizeof(int)));
+
+  for (i=0; i<n_sem; i++) {
+    if (!(locks[i] = usnewlock(arena_ptr)))
+      Error("SemSetCreate: failed to create lock", (long) i);
+    val[i*EIGHT] = (int) value;
+  }
+
+/*  printf("Created arena\n"); fflush(stdout);*/
+    
+  return 1L;
+}
+
+double __tcgmsg_fred__=0.0;
+
+Dummy()
+{
+  int n = 200;			/* This seems optimal */
+  while(n--)
+    __tcgmsg_fred__++;
+}
+
+void SemWait(long sem_set_id, long sem_num)
+{
+  int value = 0;
+  int off = sem_num*EIGHT;
+
+  while (value<=0) {
+    ussetlock(locks[sem_num]);
+    value = val[off];
+    if (value>0)
+      val[off]--;
+    usunsetlock(locks[sem_num]);
+    if (value<=0) 
+      Dummy();
+  }
+}
+
+void SemPost(long sem_set_id, long sem_num)
+{
+  int off = sem_num*EIGHT;
+  ussetlock(locks[sem_num]);
+  val[off]++;
+  usunsetlock(locks[sem_num]);
+}
+
+long SemValue(long sem_set_id, long sem_num)
+{
+  Error("SemValue: not implemented", sem_num);
+  return 1;
+}
+
+long SemSetDestroy(long sem_set_id)
+{
+  usdetach (arena_ptr);
+  arena_ptr = 0;
+  return 0;
+}
+
+long SemSetDestroyAll()
+{
+  usdetach (arena_ptr);
+  arena_ptr = 0;
+  if((int)unlink(arena_name)==-1)Error("SemSetDestroyAll: unlink failed",0);
+  return 0;
+}
 #endif
