@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.22 1999-07-28 00:36:05 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.23 1999-10-14 00:19:58 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -95,7 +95,6 @@ void FATR ga_fence_()
 \*/
 void FATR ga_init_fence_()
 {
-    int proc;
     GA_fence_set++;
 }
 
@@ -798,7 +797,6 @@ logical nga_create_irreg(
         Integer *g_a)     /* array handle (output) */
 {
 
-char     op='*', *ptr = NULL;
 Integer  hi[MAXDIM];
 Integer  mem_size, nelem, mem_size_proc;
 Integer  i, ga_handle, status, maplen=0;
@@ -904,7 +902,6 @@ logical ga_create_irreg(type, dim1, dim2, array_name, map1, nblock1,
       * g_a           - Integer handle for future references [output]
       */
 {
-char     op='*', *ptr = NULL;
 Integer  ilo, ihi, jlo, jhi;
 Integer  mem_size, nelem, mem_size_proc;
 Integer  i, ga_handle, status;
@@ -1086,7 +1083,7 @@ logical ga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
       * g_b           - Integer handle for new array [output]
       */
 {
-char     op='*', *ptr = NULL, **save_ptr;
+char     **save_ptr;
 Integer  mem_size, mem_size_proc;
 Integer  i, ga_handle, status;
 int      *save_mapc;
@@ -1234,7 +1231,7 @@ Integer ga_handle = GA_OFFSET + *g_a;
 \*/
 void FATR  ga_terminate_() 
 {
-Integer i, p, handle;
+Integer i, handle;
 extern double t_dgop, n_dgop, s_dgop;
 
 
@@ -1453,12 +1450,11 @@ void FATR nga_put_(Integer *g_a,
                    Integer *ld)
 {
 Integer  p, np, proc, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, ndim, size, type, ld0;
+Integer  idx, elems, ndim, size;
 
       GA_PUSH_NAME("nga_put");
 
       size = GA[handle].elemsize;
-      type = GA[handle].type;
       ndim = GA[handle].ndim;
 
       gam_CountElems(ndim, lo, hi, &elems);
@@ -1548,12 +1544,11 @@ void FATR nga_get_(Integer *g_a,
                    Integer *ld)
 {
 Integer  p, np, proc, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, ndim, size, type, ld0;
+Integer  idx, elems, ndim, size ;
 
       GA_PUSH_NAME("nga_get");
 
       size = GA[handle].elemsize;
-      type = GA[handle].type;
       ndim = GA[handle].ndim;
 
       gam_CountElems(ndim, lo, hi, &elems);
@@ -1566,7 +1561,7 @@ Integer  idx, elems, ndim, size, type, ld0;
       for(idx=0; idx< np; idx++){
           Integer ldrem[MAXDIM];
           int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
-          Integer idx_buf, *plo, *phi, i;
+          Integer idx_buf, *plo, *phi;
           char *pbuf, *prem;
 
           p = (Integer)ProcListPerm[idx];
@@ -1638,7 +1633,7 @@ void FATR nga_acc_(Integer *g_a,
                    void    *alpha)
 {
 Integer  p, np, proc, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, ndim, size, type, ld0;
+Integer  idx, elems, ndim, size, type;
 int optype;
 
       GA_PUSH_NAME("nga_acc");
@@ -2014,7 +2009,7 @@ void ga_inquire_name(g_a, array_name)
 \*/
 void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscript)
 {
-Integer d, index, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
+Integer d, index, ndim, ga_handle = GA_OFFSET + *g_a;
 
    ga_check_handleM(g_a, "nga_proc_topology");
    ndim = GA[ga_handle].ndim;
@@ -2094,8 +2089,8 @@ logical FATR nga_locate_region_( Integer *g_a,
                                  Integer *np)
 {
 int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
-Integer  proc, owner, i,j, ga_handle;
-Integer  d, dpos, ndim, elems, p;
+Integer  proc, owner, i, ga_handle;
+Integer  d, dpos, ndim, elems;
 
    ga_check_handleM(g_a, "nga_locate_region");
 
@@ -2244,8 +2239,7 @@ extern void ga_sort_permutation();
 void FATR nga_sort_permut_(Integer* g_a, Integer index[], 
                            Integer* subscr_arr, Integer *nv)
 {
-register int k;
-Integer pindex, phandle, ndim;
+Integer pindex, phandle;
 
   if (*nv < 1) return;
 
@@ -2489,7 +2483,6 @@ Integer *proc, *list, phandle, lhandle;
   first = 0;
   do {
       void **ptr_src, **ptr_dst;
-      char *ptr_ref;
       armci_giov_t desc;
 
       p  = proc[first];
@@ -2756,10 +2749,9 @@ static int chunk_mutex;
 
 logical FATR ga_create_mutexes_(Integer *num)
 {
-Integer myshare, chunk;
-int rc;
+Integer myshare;
 
-   if (*num <= 0 || *num > 32768) return(FALSE);
+   if (*num <= 0 || *num > MAX_MUTEXES) return(FALSE);
    if(num_mutexes) ga_error("mutexes already created",num_mutexes);
 
    num_mutexes= (int)*num;

@@ -1,4 +1,4 @@
-/* $Id: decomp.c,v 1.2 1999-07-28 00:27:03 d3h325 Exp $ */
+/* $Id: decomp.c,v 1.3 1999-10-14 00:19:57 d3h325 Exp $ */
 /***************************************************************************
  *--- 
  *--- The software in this file implements three heuristics for distributing
@@ -209,7 +209,7 @@ void ddb_ex( long ndims, long ardims[], long npes, double threshold,
       long *tdims;
       long *pdivs;
       long npdivs;
-      long h, i, j, k;
+      long i, j, k;
       long bev;
       long pc, done;
       long *stack, *tard;
@@ -357,7 +357,6 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
       long npdivs;
       double t, q;
       double cb, ub, blb;
-      long bq;
       if(ndims==1) {
          pedims[0] = npes;
          blb = dd_ev(ndims,ardims,pedims);
@@ -489,7 +488,7 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
                   long npes, long npdivs, long * pdivs)
       {
       long bq;
-      long h, i, k, g;
+      long i, k, g;
       long idim;
          for(idim=0;idim<ndims-1;idim++){
             g = dd_lk(pdivs,npdivs,qedims[idim]);
@@ -529,7 +528,7 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
       long dd_lk(long *prt, long n, double key)
       {
       long lw, md, hgh;
-      double km,kz,kp;
+      double km,kz;
       long h, i;
       long k;
       double u, v;
@@ -598,14 +597,12 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
             long blk[], long pedims[])
       {
       long h, i, j, k;
-      long * brdims, *tard;
+      long *tard;
       long * pdivs;
-      long * apdims;
       long npdivs;
       long p0;
-      double t, q, w;
-      double cb, ub, blb;
-      long bq;
+      double q, w;
+      double ub,blb;
       long istart, istep, ilook;
 
       if(ndims==1) {
@@ -713,7 +710,7 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
  ****************************************************************************/
       double dd_ev(long ndims,long ardims[], long pedims[])
       {
-      double q, t, u;
+      double q, t;
       long k;
       q = 1.0;
       t = 1.0;

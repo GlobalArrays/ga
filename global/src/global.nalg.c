@@ -172,7 +172,7 @@ void *ptr_a;
 void gai_dot(int Type, Integer *g_a, Integer *g_b, void *value)
 {
 Integer  ndim, type, me, elems=0, elemsb=0;
-Integer  sum =0, index_a, index_b; 
+Integer  index_a, index_b; 
 register Integer i;
 Integer isum=0;
 DoubleComplex zsum ={0.,0.};

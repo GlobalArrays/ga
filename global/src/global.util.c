@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.28 1999-07-31 00:04:36 jju Exp $*/
+/*$Id: global.util.c,v 1.29 1999-10-14 00:19:58 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -439,7 +439,7 @@ void FATR nga_print_patch_(g_a, lo, hi, pretty)
 #define BUFSIZE 6
 #define FLEN 80 
 
-    Integer i, j, jj, jmax;
+    Integer i, j;
     Integer type;
     char *name;
     Integer ndim, dims[MAXDIM], ld[MAXDIM];

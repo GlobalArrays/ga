@@ -371,7 +371,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     DoublePrecision dsum;
     DoubleComplex zsum;
     Integer me= ga_nodeid_(), temp_created=0;
-    Integer type = GA_TYPE_GSM, len = 1;
+    Integer type = GA_TYPE_GSM;
     char *tempname = "temp", transp, transp_a, transp_b;
 
     ga_sync_();
@@ -643,7 +643,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
     Integer ndim, dims[MAXDIM], type;
     Integer loA[MAXDIM], hiA[MAXDIM], ld[MAXDIM];
     void *data_ptr;
-    Integer idx, factor, n1dim;
+    Integer idx, n1dim;
     Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
     Integer me= ga_nodeid_();
     
@@ -740,7 +740,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
     Integer loA[MAXDIM], hiA[MAXDIM];
     Integer ld[MAXDIM];
     void *src_data_ptr;
-    Integer idx, factor, n1dim;
+    Integer idx, n1dim;
     Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
     DoublePrecision tmp1_real, tmp1_imag, tmp2_real, tmp2_imag;
     Integer me= ga_nodeid_();
@@ -1019,6 +1019,7 @@ DoublePrecision *alpha, *beta;
     }
     
     if(B_created) ga_destroy_(&g_B);
+    if(A_created) ga_destroy_(&g_A);
     
     GA_POP_NAME;
     ga_sync_();
