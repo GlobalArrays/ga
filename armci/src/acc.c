@@ -1,4 +1,4 @@
-/* $Id: acc.c,v 1.8 2000-04-17 22:31:36 d3h325 Exp $ */
+/* $Id: acc.c,v 1.9 2002-09-06 16:13:02 vinod Exp $ */
 void  L_ACCUMULATE_2D(long* alpha, int* rows, int* cols, long* a, 
                       int* lda, long* b, int* ldb)
 {
@@ -11,7 +11,20 @@ int i,j;
        aa[i] += *alpha * bb[i];
    }
 }
-   
+#ifdef CRAY_T3E
+void  F_ACCUMULATE_2D_(float* alpha, int* rows, int* cols, float* a,
+                      int* lda, float* b, int* ldb)
+{
+int i,j;
+   for(j=0;j< *cols; j++){
+     float *aa = a + j* *lda;
+     float *bb = b + j* *ldb;
+     for(i=0;i< *rows; i++)
+       aa[i] += *alpha * bb[i];
+   }
+}
+#endif
+
 #ifdef NOFORT
 
 typedef struct {
@@ -37,11 +50,11 @@ int i,j;
    }
 }
 
+#ifndef CRAY_T3E
 void  F_ACCUMULATE_2D(float* alpha, int* rows, int* cols, float* a,
                       int* lda, float* b, int* ldb)
 {
 int i,j;
-
    for(j=0;j< *cols; j++){
      float *aa = a + j* *lda;
      float *bb = b + j* *ldb;
@@ -49,7 +62,7 @@ int i,j;
        aa[i] += *alpha * bb[i];
    }
 }
-
+#endif
 
 void  D_ACCUMULATE_2D(double* alpha, int* rows, int* cols, double* a,
                       int* lda, double* b, int* ldb)
@@ -97,5 +110,25 @@ int i,j;
    }
 }
 
+void FORT_DADD(int *n, double *x, double *work){
+int i;
+    for(i=0;i<*n;i++)
+       x[i] = x[i] + work[i];
+}
+void FORT_DADD2(int *n, double *x, double *work, double *work2){
+int i;
+    for(i=0;i<*n;i++)
+       x[i] = work[i] + work2[i];
+}
+void FORT_DMULT(int *n, double *x, double *work){
+int i;
+    for(i=0;i<*n;i++)
+       x[i] = x[i]*work[i];
+}
+void FORT_DMULT2(int *n, double *x, double *work, double *work2){
+int i;
+    for(i=0;i<*n;i++)
+       x[i] = work[i]*work2[i];
+}
 
 #endif

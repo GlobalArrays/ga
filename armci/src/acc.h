@@ -34,7 +34,6 @@
 #undef D_ACCUMULATE_2D 
 #define  D_ACCUMULATE_2D daxpy_2d_
 #endif
-
 #endif
 
 
@@ -43,7 +42,13 @@ void ATR L_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*);
 void ATR D_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
 void ATR C_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
 void ATR Z_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
+
+#ifndef CRAY_T3E
 void ATR F_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*);
+#else
+#define F_ACCUMULATE_2D F_ACCUMULATE_2D_
+void F_ACCUMULATE_2D_(void*, int*, int*, void*, int*, void*, int*);
+#endif
 
 extern void armci_acc_2D(int op, void* scale, int proc, void *src_ptr, 
                          void *dst_ptr, int bytes, 

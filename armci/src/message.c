@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.43 2002-08-23 19:06:31 vinod Exp $ */
+/* $Id: message.c,v 1.44 2002-09-06 16:13:02 vinod Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -895,8 +895,13 @@ static void ddoop(int n, char* op, double* x, double* work)
 #   define FORT_DADD fort_dadd_
 #   define FORT_DMULT fort_dmult_
 #endif
+#ifdef NOFORT
+extern void FORT_DADD(int *, double *, double*);
+extern void FORT_DMULT(int *, double *, double*);
+#else
 extern void FATR FORT_DADD(int *, double *, double*);
 extern void FATR FORT_DMULT(int *, double *, double*);
+#endif
 
   if (strncmp(op,"+",1) == 0){
     if(n>63) FORT_DADD(&n,x,work);
@@ -942,9 +947,13 @@ static void ddoop2(int n, char *op, double *x, double* work, double* work2)
 #   define FORT_DADD2 fort_dadd2_
 #   define FORT_DMULT2 fort_dmult2_
 #endif
+#ifdef NOFORT
+extern void FORT_DADD2(int *, double *, double*, double *);
+extern void FORT_DMULT2(int *, double *, double*, double *);
+#else
 extern void FATR FORT_DADD2(int *, double *, double*,double*);
 extern void FATR FORT_DMULT2(int *, double *, double*,double*);
-
+#endif
   if (strncmp(op,"+",1) == 0){
     if(n>63) FORT_DADD2(&n,x,work,work2);
     else while(n--) *x++ = *work++ + *work2++;
@@ -1378,6 +1387,12 @@ int selected=0;
         if(*(long*)x > *(long*)work) selected=1;
      }else
         if(*(long*)x < *(long*)work) selected=1;
+     break;
+  case ARMCI_FLOAT:
+     if(strncmp(op,"min",3) == 0){ 
+        if(*(float*)x > *(float*)work) selected=1;
+     }else
+        if(*(float*)x < *(float*)work) selected=1;
      break;
   default:
      if(strncmp(op,"min",3) == 0){

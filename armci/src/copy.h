@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.40 2002-09-04 19:32:00 d3h325 Exp $ */
+/* $Id: copy.h,v 1.41 2002-09-06 16:13:02 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -11,7 +11,7 @@
 #include <c_asm.h>
 #endif
 
-#if defined(NOFORT) || defined(HITACHI)
+#if defined(NOFORT) || defined(HITACHI) || defined(CRAY_T3E)
 #  define MEMCPY
 #endif
 
@@ -111,10 +111,10 @@ void FATR DCOPY1D(void*, void*, int*);
         else shmem_put((long*)(dst),(long*)(src),(int)(n)/sizeof(long),armci_me)
 
 #      define armci_put(src,dst,n,proc) \
-              shmem_int_put((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc))
+              shmem_put32((void *)(dst),(void *)(src),(int)(n)/4,(proc))
 
-#      define armci_get(src,dst,n,proc)\
-              shmem_get((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc))
+#      define armci_get(src,dst,n,proc) \
+              shmem_get32((void *)(dst),(void *)(src),(int)(n)/4,(proc))
 
 #elif  defined(HITACHI)
 
