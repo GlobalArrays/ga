@@ -69,9 +69,6 @@ extern void ga_error();
 #elif defined(KSR)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)512*1024)
-#elif defined(DECOSF)
-#  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)4*1024)
 #elif defined(HPUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)64*1024)
@@ -80,7 +77,7 @@ extern void ga_error();
 #  define _SHMMAX ((unsigned long)8*1024) /* kernel default (4MB) increased */
 #elif defined(SHMMAX)
 #  undef _SHMMAX
-#  define _SHMMAX ((unsigned long)SHMMAX)
+#  define _SHMMAX (((unsigned long)SHMMAX)>>10)
 #endif
 
 #define MAX_REGIONS 120
