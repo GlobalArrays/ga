@@ -89,14 +89,14 @@ ifdef LAPI2
 EXTRA_LIBS = -L/u2/d3h325/lapi_vector_beta
 endif
 
-EXTRA_LIBS += -lxlf90 -lxlf -lm
+EXTRA_LIBS += -lxlf90_r -lxlf -lm
 
-EXTRA_LIBS_11 = \
+EXTRA_LIBS__ += \
    -bnso -bI:/usr/lib/syscalls.exp -L$(LIBLAPIDIR) $(LIBHAL) $(LIBLAPI) \
           -bI:/usr/lib/threads.exp /usr/lpp/ssp/css/libtb3/libmpci_r.a \
           -bI:/usr/lpp/ssp/css/libus/fs_ext.exp \
           /usr/lpp/ppe.poe/lib/libppe_r.a  -lm \
-          -bl:/tmp/new.map -lpthreads -lxlf90 -lxlf -lm
+          -bl:/tmp/new.map -lpthreads -lxlf90_r -lxlf -lm
    LIBMPI = -lmpi_r
 endif
 
@@ -112,8 +112,8 @@ endif
 
 #LIBS += $(BLAS) -llinalg $(BLAS)
 
-ifdef USE_ARMCI
-	LIBCOM += -larmci
+ifndef OLD_GA
+  LIBCOM += -larmci
 endif
 
 ifdef USE_MPI

@@ -49,7 +49,7 @@ ifeq ($(TARGET),LAPI)
   GA_CORE += lapi.o
 endif
 
-ifdef USE_ARMCI
+ifndef OLD_GA
   GA_CORE = global.armci.o global.util.o global.patch.o \
 	    collect.o decomp.o capi.o global.nalg.o global.npatch.o
 else
@@ -92,15 +92,12 @@ GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #
 # GA_UTIL = ffflush.o fill.o ga_summarize.o hsort.scat.o\
 #           DP.o fort.o fops.2d.o
-ifdef USE_ARMCI
-   GA_UTIL = ffflush.o fill.o hsort.scat.o DP.o fort.o fops.2d.o
-else
+ifdef OLD_GA 
    GA_UTIL = ffflush.o fill.o ga_summarize.o hsort.scat.o\
              DP.o fort.o fops.2d.o
-endif
-
-ifndef USE_ARMCI
-  OBJ_FRAGILE = $(GA_SYNC) $(GA_HANDLER) $(IPC)
+else
+   GA_UTIL = ffflush.o fill.o hsort.scat.o DP.o fort.o fops.2d.o
+   OBJ_FRAGILE = $(GA_SYNC) $(GA_HANDLER) $(IPC)
 endif
 
 OBJ = $(GA_CORE) $(GA_ALG) $(GA_UTIL) $(EXTRA) $(OBJ_FRAGILE)

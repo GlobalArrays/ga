@@ -1,9 +1,5 @@
 # Makefile.h, Wed Jan 25 13:01:15 PST 1995 
 #
-# Define TARGET to be the machine you wish to build for
-# choose one of :
-# SUN,SOLARIS,SGI,SGITFP,IBM,KSR,SP,CRAY-T3D,CRAY-T3E,
-# IPSC,DELTA,PARAGON,DECOSF,LAPI, LINUX
 # Specify message-passing library to be used with GA. The current choices
 # are: TCGMSG or MPI. For MPI, please refer to global.doc for 
 # configuration info.
@@ -405,7 +401,7 @@ ifeq ($(TARGET),SP)
  GLOB_DEFINES = -DSP -DEXTNAME -DAIX
 #
 #enable workaround for an MPL rcvncall bug on SMP nodes in PSSP3.1
-ifndef USE_ARMCI
+ifdef OLD_GA 
 GLOB_DEFINES += -DMPL_SMP_BUG
 endif
 #
