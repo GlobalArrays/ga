@@ -1,6 +1,3 @@
-/* --------------------------------------------------- *\
-   $Id: elio.c,v 1.29 1997-07-10 23:19:44 d3e129 Exp $
-\* --------------------------------------------------- */
 /**********************************************************************\
  ELementary I/O (ELIO) disk operations for Chemio libraries   
  Authors: Jarek Nieplocha (PNNL) and Jace Mogill (ANL)
@@ -28,20 +25,43 @@
 #endif
 
 
+#if defined(AIO) || defined(PARAGON) || defined(CRAY_T3E)
+#   define ASYNC
+#endif
 
 #ifdef FFIO
-#  define WRITE ffwrite
-#  define READ  ffread
-#  define CLOSE ffclose
-#  define SEEK  ffseek
-#  define OPEN  ffopens
+#  define WRITE  ffwrite
+#  define WRITEA ffwritea
+#  define READ   ffread
+#  define READA  ffreada
+#  define CLOSE  ffclose
+#  define SEEK   ffseek
+#  define OPEN   ffopens
+#  define DEFARG FULL
 #else
-#  define WRITE write
-#  define READ  read
-#  define CLOSE close
-#  define SEEK  lseek
-#  define OPEN  open
+#  define WRITE  write
+#  define WRITEA writea
+#  define READ   read
+#  define READA  reada
+#  define CLOSE  close
+#  define SEEK   lseek
+#  define OPEN   open
+#  define DEFARG 0
 #endif
+
+
+/* structure to emulate control block in Posiz AIO */
+#if defined (CRAY_T3E)
+#   if defined(FFIO)
+       typedef struct { struct ffsw stat; int filedes; }io_status_t;
+#   else 
+#      include <sys/iosw.h>
+       typedef struct { struct iosw stat; int filedes; }io_status_t;
+#   endif
+    io_status_t cb_fout[MAX_AIO_REQ];
+    io_status_t *cb_fout_arr[MAX_AIO_REQ];
+#endif
+
 
 #if defined(AIO)
 #   include <aio.h>
@@ -66,7 +86,7 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
 
 
 /****************************** Internal Macros *****************************/
-#if defined(AIO) || defined(PARAGON)
+#if defined(ASYNC)
 #  define AIO_LOOKUP(aio_i) {\
       aio_i = 0;\
       while(aio_req[aio_i] != NULL_AIO && aio_i < MAX_AIO_REQ) aio_i++;\
@@ -130,7 +150,7 @@ Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
 
 
 
-void elio_set_cb(Fd_t fd, off_t offset, int reqn, void *buf, Size_t bytes)
+int elio_set_cb(Fd_t fd, off_t offset, int reqn, void *buf, Size_t bytes)
 {
 #if defined(AIO)
     cb_fout[reqn].aio_offset = offset;
@@ -147,7 +167,14 @@ void elio_set_cb(Fd_t fd, off_t offset, int reqn, void *buf, Size_t bytes)
         cb_fout[reqn].aio_fildes    = fd->fd;
 #     endif
 #   endif
+#elif defined(PARAGON) || defined(CRAY_T3E)
+        if(offset != SEEK(fd->fd, offset, SEEK_SET))return (SEEKFAIL);
 #endif
+#if  defined(CRAY_T3E)
+        cb_fout_arr[reqn] = cb_fout+reqn;
+        cb_fout[reqn].filedes    = fd->fd;
+#endif
+    return ELIO_OK;
 }
 
 
@@ -157,6 +184,7 @@ int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request
 {
   Size_t stat;
   int    aio_i;
+  int    rc;
 
   int pablo_code = PABLO_elio_awrite;
   PABLO_start( pablo_code );
@@ -165,17 +193,21 @@ int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request
   AIO_LOOKUP(aio_i);
 
   if(aio_i >= MAX_AIO_REQ){
-#     if defined(DEBUG) && (defined(AIO) || defined(PARAGON))
+#     if defined(DEBUG) && defined(ASYNC)
          fprintf(stderr, "elio_awrite: Warning- asynch overflow\n");
 #     endif
       SYNC_EMULATE(write);
   } else {
       *req_id = (io_request_t) aio_i;
-      elio_set_cb(fd, offset, aio_i, (void*) buf, bytes);
+      if((rc=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
+                                                 ELIO_ERROR(rc,0);
+
 #if defined(PARAGON)
-      if(offset != SEEK(fd->fd, offset, SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
       *req_id = _iwrite(fd->fd, buf, bytes);
       stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
+#elif defined(CRAY_T3E)
+      rc = WRITEA(fd->fd, (char*)buf, bytes, &cb_fout[aio_i].stat, DEFARG);
+      stat = (rc < 0)? -1 : 0; 
 #elif defined(KSR) && defined(AIO)
       stat = awrite(fd->fd, buf, bytes, cb_fout+aio_i);
 #elif defined(AIX) && defined(AIO)
@@ -269,6 +301,7 @@ int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * re
 {
   Size_t stat;
   int    aio_i;
+  int    rc; 
 
   int pablo_code = PABLO_elio_aread;
   PABLO_start( pablo_code );
@@ -277,18 +310,21 @@ int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * re
   AIO_LOOKUP(aio_i);
 
   if(aio_i >= MAX_AIO_REQ){
-#     if defined(DEBUG) && (defined(AIO) || defined(PARAGON))
+#     if defined(DEBUG) && defined(ASYNC)
          fprintf(stderr, "elio_read: Warning- asynch overflow\n");
 #     endif
       SYNC_EMULATE(read);
   } else {
 
      *req_id = (io_request_t) aio_i;
-      elio_set_cb(fd, offset, aio_i, buf, bytes);
+      if((stat=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
+                                                 ELIO_ERROR((int)stat,0);
 #if defined(PARAGON)
-      if(offset != lseek(fd->fd, offset, SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
       *req_id = _iread(fd->fd, buf, bytes);
       stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
+#elif defined(CRAY_T3E)
+      rc = READA(fd->fd, buf, bytes, &cb_fout[aio_i].stat, DEFARG);
+      stat = (rc < 0)? -1 : 0;
 #elif defined(KSR) && defined(AIO)
       stat = aread(fd->fd, buf, bytes, cb_fout+aio_i);
 #elif defined(AIX) && defined(AIO)
@@ -310,7 +346,7 @@ int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * re
 int elio_wait(io_request_t *req_id)
 {
   int  aio_i=0;
-#ifdef AIO
+#ifdef ASYNC
   int  rc;
 #endif
 
@@ -321,8 +357,26 @@ int elio_wait(io_request_t *req_id)
 
 #if defined(PARAGON)
       iowait(*req_id);
-#elif defined(AIO)
-#  if defined(AIX)
+
+#elif defined(AIO) || defined(CRAY_T3E)
+
+#  if defined(CRAY_T3E)
+
+#     if defined(FFIO)
+      {
+         struct ffsw dumstat, *prdstat=&(cb_fout[*req_id].stat);
+         fffcntl(cb_fout[*req_id].filedes, FC_RECALL, prdstat, &dumstat);
+         if (FFSTAT(*prdstat) == FFERR) ELIO_ERROR(SUSPFAIL,0);
+      }
+#     else
+      {
+         struct iosw *statlist[1];
+         statlist[0] = &(cb_fout[*req_id]).stat);
+         recall(cb_fout[*req_id].filedes, 1, statlist); 
+      }
+#     endif
+
+#  elif defined(AIX)
 
       do {    /* I/O can be interrupted on SP through rcvncall ! */
            rc =(int)aio_suspend(1, cb_fout_arr+(int)*req_id);
@@ -335,13 +389,15 @@ int elio_wait(io_request_t *req_id)
 #  endif
       if(rc ==-1) ELIO_ERROR(SUSPFAIL,0);
 
-#  ifndef KSR
+#  if defined(DECOSF)
       /* on DEC aio_return is required to clean internal data structures */
       if(aio_return(cb_fout+(int)*req_id) == -1) ELIO_ERROR(RETUFAIL,0);
 #  endif
 #endif
+
       while(aio_req[aio_i] != *req_id && aio_i < MAX_AIO_REQ) aio_i++;
       if(aio_i >= MAX_AIO_REQ) ELIO_ERROR(HANDFAIL, aio_i);
+
       aio_req[aio_i] = NULL_AIO;
       *req_id = ELIO_DONE;
    }
@@ -370,8 +426,24 @@ int elio_probe(io_request_t *req_id, int* status)
 #if defined(PARAGON)
       if( iodone(*req_id)== (long) 0) errval = INPROGRESS;
       else errval = 0;
-#elif defined(AIO)
-#  if defined(KSR)
+
+#elif defined(AIO) || defined(CRAY_T3E)
+
+#  if defined(CRAY_T3E)
+
+#     if defined(FFIO)
+      {
+         struct ffsw dumstat, *prdstat=&(cb_fout[*req_id].stat);
+         fffcntl(cb_fout[*req_id].filedes, FC_ASPOLL, prdstat, &dumstat);
+         errval = (FFSTAT(*prdstat) == 0) ? INPROGRESS: 0;
+      }
+#     else
+
+         errval = ( IO_DONE(cb_fout[*req_id]).stat) == 0)? INPROGRESS: 0;
+
+#     endif
+
+#  elif defined(KSR)
       errval = cb_fout[(int)*req_id].aio_errno;
 #  elif defined(AIX)
       errval = aio_error(cb_fout[(int)*req_id].aio_handle);
@@ -383,6 +455,7 @@ int elio_probe(io_request_t *req_id, int* status)
       case 0: 
           while(aio_req[aio_i] != *req_id && aio_i < MAX_AIO_REQ) aio_i++;
           if(aio_i >= MAX_AIO_REQ) ELIO_ERROR(HANDFAIL, aio_i);
+
 	  *req_id = ELIO_DONE; 
 	  *status = ELIO_DONE;
 	  aio_req[aio_i] = NULL_AIO;
@@ -478,7 +551,8 @@ Fd_t  elio_open(const char* fname, int type, int mode)
     struct ffsw ffstat;
     long pparts, sparts, cbits, cblocks;
     extern long _MPP_MY_PE;
-    char *ffio_str="bufa:128:4"; /* 4 intern I/O buffers 128*4096 bytes each */ 
+    char *ffio_str="cache:256"; /*  intern I/O buffer/cache 256*4096 bytes */ 
+                                /*  JN: we do not want read-ahead write-behind*/
 
     if(cray_part_info(dirname,&pparts,&sparts) != ELIO_OK){
                    free(fd);
@@ -488,12 +562,12 @@ Fd_t  elio_open(const char* fname, int type, int mode)
     ptype |= ( O_BIG | O_PLACE | O_RAW );
     cbits = (sparts != 0) ? 1 : 0;
 
-    if(( pparts != 1)&&(sparts != 0)) {
+    if( sparts != 0) {
 
       /* stripe is set so we only select secondary partitions with cbits */
       if(mode == ELIO_SHARED){
          cbits = ~((~0L)<<MIN(32,sparts)); /* use all secondary partitions */
-         cblocks = 32;
+         cblocks = 100;
       }else{
          cbits = 1 << (_MPP_MY_PE%sparts);  /* round robin over s part */
       }
@@ -503,10 +577,12 @@ Fd_t  elio_open(const char* fname, int type, int mode)
      }
 
      
+     printf ("parts=%d cbits = %X\n",sparts,cbits);
+
      if(mode == ELIO_SHARED)
-      fd->fd = OPEN(fname, ptype, FOPEN_MODE, cbits, cblocks, &ffstat,ffio_str);
+      fd->fd = OPEN(fname, ptype, FOPEN_MODE, cbits, cblocks, &ffstat,NULL);
      else
-      fd->fd = OPEN(fname, ptype, FOPEN_MODE, cbits,  &ffstat,ffio_str);
+      fd->fd = OPEN(fname, ptype, FOPEN_MODE, 0L, 0,  &ffstat,ffio_str);
 
   }
 #else
@@ -621,7 +697,7 @@ int elio_delete(const char* filename)
 void elio_init(void)
 {
   if(first_elio_init) {
-#     if defined(AIO) || defined(PARAGON)
+#     if defined(ASYNC)
            int i;
            for(i=0; i < MAX_AIO_REQ; i++)
 	     aio_req[i] = NULL_AIO;
