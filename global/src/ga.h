@@ -75,6 +75,20 @@ extern void NGA_Scale_patch(int g_a, int lo[], int hi[], void *alpha);
 extern void NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[],
                           void * beta,  int g_b, int blo[], int bhi[],
                           int g_c, int clo[], int chi[]);
+
+extern void NGA_Print_patch(int g_a, int lo[], int hi[], int pretty);
+extern void GA_Print(int g_a);
+extern void GA_Diag(int g_a, int g_s, int g_v, void *eval);
+extern void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval);
+extern void GA_Diag_std(int g_a, int g_v, void *eval);
+extern void GA_Lu_solve(char tran, int g_a, int g_b);
+extern int GA_Llt_solve(int g_a, int g_b);
+extern int GA_Solve(int g_a, int g_b);
+extern int GA_Spd_invert(int g_a);
+extern void GA_Summarize(int verbose);
+extern void GA_Symmetrize(int g_a);
+extern void GA_Transpose(int g_a, int g_b);
+
 extern int  GA_Valid_handle(int g_a);
 
 #define GA_Initialize ga_initialize_
