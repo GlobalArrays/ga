@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.23 2004-04-01 18:07:44 vinod Exp $ */
+/* $Id: signaltrap.c,v 1.24 2004-06-28 17:39:20 manoj Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -142,7 +142,7 @@ SigType SigChldHandler(sig)
 
 # if defined(LINUX)
   ret = wait(&ustatus);
-  if((ret == 0) || ((ret = -1) && (errno == ECHILD))) { return; }
+  if((ret == 0) || ((ret == -1) && (errno == ECHILD))) { return; }
 # else
   (void) wait(&ustatus); 
 # endif  
