@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.14 1996-07-19 20:05:40 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.15 1996-07-26 16:27:55 d3g681 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -275,6 +275,7 @@ extern void Error();
     if (ga_nnodes_() > 1) Error(error_buffer, icode);
     else{
       fprintf(FOUT,"%s %ld\n",error_buffer,icode);
+      perror("system message:");
       fflush(FOUT);
       exit(1);
     }

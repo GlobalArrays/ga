@@ -9,7 +9,7 @@ c
 #ifdef USE_SUMMA
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.20 1996-07-19 20:05:29 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.21 1996-07-26 16:27:53 d3g681 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -26,7 +26,7 @@ c
 #endif
       subroutine GA_DGEMM(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.20 1996-07-19 20:05:29 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.21 1996-07-26 16:27:53 d3g681 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -93,6 +93,10 @@ C     number of tasks.
 C
       chunk_cube = Dble(K)*Dble(M)*Dble(N) / (Min_tasks * NProc)
       Max_chunk = Int( Chunk_cube ** (1.0d0/3.0d0) )
+c
+c     RJH ... if chunks are too small then communication costs swap computation
+c
+      if (max_chunk .lt. 64) max_chunk = 64
 C
 C     If there is room to increase the chunk size without impacting
 C     load balance, do it.
@@ -109,9 +113,9 @@ C
 C
          Max_Chunk = Min( Max_Chunk, Int(Sqrt(DBLE(Mem_Avail/3))) )
 C
-         IChunk = Max_Chunk
-         JChunk = Max_Chunk
-         KChunk = Max_Chunk
+         IChunk = min(m,Max_Chunk)
+         JChunk = min(n,Max_Chunk)
+         KChunk = min(k,Max_Chunk)
       EndIf
 
       status = .true.
