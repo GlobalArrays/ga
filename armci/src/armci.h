@@ -300,7 +300,7 @@ extern void ARMCI_SET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 
 extern void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 
-#define ARMCI_INIT_HANDLE(hdl) ((double *)((hdl)->data))[0]=0; \
-  ((double *)((hdl)->data))[1]=0; 
+#define ARMCI_INIT_HANDLE(hdl) do {((double *)((hdl)->data))[0]=0; \
+  ((double *)((hdl)->data))[1]=0; }while(0)
 
 #endif /* _ARMCI_H */
