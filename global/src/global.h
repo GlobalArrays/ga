@@ -122,6 +122,9 @@ extern void FATR ga_proc_topology_ ARGS_((Integer *g_a, Integer *proc,  Integer 
 extern void FATR ga_sort_permut_ ARGS_((Integer* g_a, Integer* index, Integer* i, Integer* j, Integer* nv));
 #undef ARGS_
 
+extern void FATR ga_print_distribution_(Integer *g_a);
+extern Integer FATR ga_ndim_(Integer *g_a);
+
 extern logical nga_create_irreg(
         Integer type,    /* MA type */
         Integer ndim,    /* number of dimensions */
@@ -131,7 +134,6 @@ extern logical nga_create_irreg(
         Integer nblock[], /* number of blocks for each dimension in map */
         Integer *g_a);    /* array handle (output) */
 
-extern Integer ga_ndim_(Integer *g_a);
 extern void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi);
 extern void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi);
 extern void FATR  nga_inquire_(Integer *g_a, Integer *type, Integer *ndim,Integer *dims); 
