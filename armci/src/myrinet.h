@@ -27,7 +27,7 @@ if((_cntr)->done==ARMCI_GM_SENDING){\
   while((_cntr)->done==ARMCI_GM_SENDING)\
   MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);\
   if((_cntr)->done == ARMCI_GM_FAILED)\
-       armci_die("armci_client_send_complete: failed code=",(_cntr)->done);}
+       armci_die("ARMCI_NB_WAIT: failed code=",(_cntr)->done);}
 #endif
 
 #define GM_STRONG_TYPES 0 
@@ -94,7 +94,7 @@ int flag;\
 while((_cntr).done==ARMCI_GM_SENDING)\
 MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);\
 if((_cntr).done == ARMCI_GM_FAILED)\
-       armci_die("armci_client_send_complete: failed code=",(_cntr).done);}\
+       armci_die("CLEAR_SEND_BUF_FIELD: failed code=",(_cntr).done);}\
 
 
 #define MULTIPLE_SND_BUFS 
@@ -105,7 +105,7 @@ if((_cntr).done == ARMCI_GM_FAILED)\
 #  define FREE_SEND_BUFFER _armci_buf_release  
 #else
 #  define GET_SEND_BUFFER(x)(char*)(((armci_gm_context_t*)MessageSndBuffer)+1);\
-        armci_client_send_complete((armci_gm_context_t*)MessageSndBuffer)
+        armci_client_send_complete((armci_gm_context_t*)MessageSndBuffer,"GET_SEND_BUFFER")
 #  define FREE_SEND_BUFFER(x) 
 #endif
 
@@ -152,7 +152,7 @@ extern void armci_gm_freebuf(void *ptr);
 extern char* armci_gm_get_send_buf(int bufsize);
 extern void armci_gm_free_send_buf(void *ptr);
 extern char* armci_gm_getbuf(size_t size);
-extern void armci_client_send_complete(armci_gm_context_t*);
+extern void armci_client_send_complete(armci_gm_context_t*,char *);
 extern void  armci_check_context_for_complete(int);
 extern void armci_gm_fence_init();
 extern void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag,void *mhloc,void *mhrem);

@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.72 2003-09-11 16:03:17 vinod Exp $
+/* $Id: myrinet.c,v 1.73 2004-07-28 10:51:54 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -158,7 +158,9 @@ static int armci_gm_num_send_tokens=0;
 static int armci_gm_num_receive_tokens=0;
 
 GM_ENTRY_POINT char * _gm_get_kernel_build_id(struct gm_port *p);
-
+#if defined(__ia64__)
+extern void _armci_ia64_mb();
+#endif
 /*\
  * function to get the next available context for non-blocking RDMA. We limit
  * the number of uncompleted non-blocking RDMA sends to 8.
@@ -178,7 +180,7 @@ armci_gm_context_t *retcontext;
        avail=0;
     }
     if(armci_gm_nbcontext_array[avail].tag!=0){
-       armci_client_send_complete(armci_gm_nbcontext_array+avail);
+       armci_client_send_complete(armci_gm_nbcontext_array+avail,"armci_gm_get_next_context");
     }
     armci_gm_nbcontext_array[avail].tag=nbtag;
     retcontext= (armci_gm_nbcontext_array+avail);
@@ -685,7 +687,7 @@ void armci_client_send_callback_direct(struct gm_port *port, void *context,gm_st
 }
 
 /* client trigers gm_unknown, so that callback func can be executed */
-void armci_client_send_complete(armci_gm_context_t* context)
+void armci_client_send_complete(armci_gm_context_t* context,char *st)
 {
     MPI_Status status;
     int flag;
@@ -693,8 +695,14 @@ void armci_client_send_complete(armci_gm_context_t* context)
     /* blocking: wait til the send is done by calling the callback */
     while(context->done == ARMCI_GM_SENDING) 
         MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
-    if(context->done == ARMCI_GM_FAILED)
+    if(context->done == ARMCI_GM_FAILED){
+       printf("\n%d:armci_client_send_complete called from %s\n",armci_me,st);
+       fflush(stdout);
        armci_die("armci_client_send_complete: failed code=",context->done);
+    }
+#if defined(__ia64__)
+    _armci_ia64_mb();   
+#endif
 }
 
 void armci_client_to_client_direct_send(int p, void *src_buf, void *dst_buf, int len)
@@ -702,7 +710,7 @@ void armci_client_to_client_direct_send(int p, void *src_buf, void *dst_buf, int
     int s           = armci_clus_id(p);
     int serv_mpi_id = armci_clus_info[s].master;
 
-    armci_client_send_complete(armci_gm_client_context);
+    armci_client_send_complete(armci_gm_client_context,"armci_client_to_client_direct_send");
     armci_gm_client_context->done = ARMCI_GM_SENDING;
     gm_directed_send_with_callback(proc_gm->port, src_buf,
                (gm_remote_ptr_t)(gm_up_t)dst_buf, len, GM_LOW_PRIORITY,
@@ -732,7 +740,7 @@ void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void*
                 proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
                 armci_client_send_callback_direct, context);
     if(!nbtag)
-       armci_client_send_complete(context);
+       armci_client_send_complete(context,"armci_client_direct_send ");
 
     /* blocking: wait until send is done by calling the callback */
 }
@@ -764,7 +772,7 @@ void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
 
     /* blocking: wait until get is done by calling the callback */
     if(!nbtag)
-       armci_client_send_complete(context);
+       armci_client_send_complete(context,"armci_client_direct_get");
 #else
     armci_die("armci_client_direct_get:gm_get not available",0);
 #endif
@@ -931,7 +939,9 @@ char *armci_ReadFromDirect(int proc, request_header_t * msginfo, int len)
 
     /* reset tail ack */
     *tail = ARMCI_GM_CLEAR;
-
+#if defined(__ia64__)
+    _armci_ia64_mb();   
+#endif
     return(buf);
 }
 
@@ -1396,14 +1406,14 @@ int i;
     if(armci_nclus==1) return;
     /*three sends that need to be cleared viz.. */
     /* 1)sends using client_send_context, */
-    armci_client_send_complete(armci_gm_client_context);
+    armci_client_send_complete(armci_gm_client_context,"armci_client_clear_outstanding_sends");
 
     /* 2)sends using context in buffers and */
     _armci_buf_clear_all();
 
     /* 3)the sends using non-blocking context array */
     for(i=0;i<MAX_PENDING;i++)
-       armci_client_send_complete(armci_gm_nbcontext_array+i);
+       armci_client_send_complete(armci_gm_nbcontext_array+i,"armci_client_clear_outstanding_sends");
 }
 
 /*\ sends notification to client that data in direct send was transfered/put
@@ -1495,6 +1505,9 @@ void armci_call_data_server()
               tag = gm_ntohc(event->recv.tag);
               length = gm_ntohl(event->recv.length);
               buf = (char *)gm_ntohp(event->recv.buffer);
+#if          defined(__ia64__)
+              _armci_ia64_mb();
+#            endif
               armci_data_server(buf);
 #           ifdef ACK_FENCE
               armci_send_pendingop_ack(0);
