@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.1 2001-05-08 17:30:38 edo Exp $
+# $Id: GNUmakefile,v 1.2 2001-05-08 17:42:12 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -52,7 +52,7 @@ ifeq ($(TARGET),INTERIX)
 endif
 
 ifeq ($(TARGET),LAPI)
-   LIB_DEFINES =  -DEXTNAME -DSHMEM -DAIX -DIBM -DLAPI -DNOTIFY_SENDER
+   LIB_DEFINES =  -DSHMEM  -DNOTIFY_SENDER
     EXTRA = lapi_putget.o memalign.o async_send_lapi.o signals.o
   TESTOBJ = test.o
 LIBLAPIDIR = /usr/lpp/ssp/css/lib
@@ -67,7 +67,7 @@ LIBLAPIDIR = /usr/lpp/ssp/css/lib
 endif
 
 ifeq ($(TARGET),LAPI64)
-   LIB_DEFINES = -O -DEXTNAME -DSHMEM -DAIX -DIBM -DLAPI -DNOTIFY_SENDER
+   LIB_DEFINES = -O -DSHMEM  -DNOTIFY_SENDER
     EXTRA = lapi_putget.o memalign.o async_send_lapi.o signals.o
   TESTOBJ = test.o
     FLIBS = -lxlf90 -lxlf
@@ -76,7 +76,7 @@ endif
 
 
 ifeq ($(TARGET),CRAY-T3E)
-  LIB_DEFINES = -DCRAY_T3D   -DCRAY_T3E -DCRAY -DSHMEM
+  LIB_DEFINES = -DCRAY -DSHMEM
     EXTRA = t3d.o snd_rcv_probe.o
 
  OBJ_CORE = pbegin.o queues.o  usleep.o mitob.o mdtob.o\
