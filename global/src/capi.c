@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.72 2004-01-13 18:12:04 d3g293 Exp $ */
+/* $Id: capi.c,v 1.73 2004-02-26 21:13:00 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -864,7 +864,9 @@ void NGA_Distribution_no_handle(int ndim, const int dims[], const int nblock[], 
      Integer _nblock[MAXDIM];
      COPYINDEX_C2F(dims, _dims, ndim);
      COPYINDEX_C2F(nblock, _nblock, ndim);
-     nga_distribution_no_handle_(&_ndim, _dims, _nblock, mapc, &p, _ga_lo, _ga_hi);
+     COPYINDEX_C2F(mapc, _ga_map_capi, ndim);
+     nga_distribution_no_handle_(&_ndim, _dims, _nblock, _ga_map_capi,
+                                 &p, _ga_lo, _ga_hi);
      COPYINDEX_F2C(_ga_lo,lo, ndim);
      COPYINDEX_F2C(_ga_hi,hi, ndim);
 }
