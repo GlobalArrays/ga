@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/wrap.c,v 1.4 2002-02-14 18:04:46 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/wrap.c,v 1.5 2002-02-14 20:59:07 edo Exp $ */
 #include <stdlib.h>
 #include "sndrcv.h"
 #include "sndrcvP.h"
@@ -98,7 +98,7 @@ void wrap_rcv(wrap_type, buf, wrap_lenbuf, wrap_lenmes, wrap_nodeselect, wrap_no
      sync= (long) *wrap_sync;
      
      (void)  RCV_(&type, buf, &lenbuf, &lenmes, &nodeselect, &nodefrom, &sync);
-     lenmes= (long) *wrap_lenmes;
+     lenmes= (Integer) *wrap_lenmes;
      return;
      }
 
