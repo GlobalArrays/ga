@@ -2,13 +2,13 @@
 #include <string.h>
 #include "sndrcv.h"
 
-#define MAX_PROCESS 1024
+#define MAX_PROCESS 4096
 #define TYPE_NXTVAL 33333
 
 extern MPI_Comm TCGMSG_Comm;
 extern int      SR_parallel;
 extern int      SR_single_cluster;
-extern Integer      DEBUG_;
+extern Integer  DEBUG_;
 extern int       _tcg_initialized;
 
 #ifdef  EXT_INT
