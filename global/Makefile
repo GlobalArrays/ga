@@ -36,6 +36,9 @@ LU_SOLVE =
 #
 GA_TRACE = 
 
+SUBDIRS     = src testing trace da X
+MAKESUBDIRS = for dir in $(SUBDIRS); do $(MAKE)  -C $$dir $@ || exit 1 ; done
+
 ifndef TARGET 
        TARGET = $(CUR_TARGET)
 endif
@@ -65,8 +68,7 @@ $(TESTS):	$(LIBRARY)
 all: $(TESTS)
 
 clean:
-	$(RM) *.a events *.o core
-	(cd ./src; $(MAKE) clean)
-	(cd ./testing; $(MAKE) realclean)
-	(cd ./trace; $(MAKE) clean)
-	(cd ./X; $(MAKE) clean)
+	$(MAKESUBDIRS) $^
+
+cleanstamp:
+	$(MAKESUBDIRS) $^
