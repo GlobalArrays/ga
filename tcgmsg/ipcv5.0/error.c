@@ -8,6 +8,12 @@ extern void perror(const char *);
 extern void exit(int);
 extern void ZapChildren(void);
 
+#ifdef CRAY_T3D
+#  define DEV stdout
+#else
+#  define DEV stderr
+#endif
+
 void Error(const char *string, long integer)
 {
   (void) signal(SIGINT, SIG_IGN);
@@ -15,15 +21,15 @@ void Error(const char *string, long integer)
 
   (void) fflush(stdout);
   if (TCGMSG_caught_sigint) {
-    (void) fprintf(stderr,"%2ld: interrupt\n",NODEID_());
+    (void) fprintf(DEV,"%2ld: interrupt\n",NODEID_());
   }
   else {
-    (void) fprintf(stderr,"%2ld: %s %ld (%#lx).\n", NODEID_(), string,
+    (void) fprintf(DEV,"%3ld: %s %ld (%#lx).\n", NODEID_(), string,
 		   integer,integer);
     if (errno != 0)
       perror("system error message");
   }
-  (void) fflush(stderr);
+  (void) fflush(DEV);
 
   /* Shut down the sockets and remove shared memory and semaphores to
      propagate an error condition to anyone that is trying to communicate
