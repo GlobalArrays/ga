@@ -1,0 +1,7 @@
+!include ..\config\NTmakefile.h
+
+all:
+	cd src & nmake -nologo
+
+clean:
+	!cd src &nmake -nologo clean
