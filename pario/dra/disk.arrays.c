@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.68 2003-02-10 22:38:34 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.69 2003-02-14 18:59:34 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -43,7 +43,7 @@
 
 /*  buffer size --- adjust to be a multiplicity of the
     striping factor in a parallel filesystem */
-#ifdef SP
+#if defined(SP) || defined(LINUX64)
 #define DRA_DBL_BUF_SIZE 131072
 #else
 #define DRA_DBL_BUF_SIZE 100000 
@@ -1079,14 +1079,14 @@ Integer   handle = ds_chunk.handle+DRA_OFFSET;
 Integer   ioprocs = dai_io_procs(ds_chunk.handle);
 Integer   iome    = dai_io_nodeid(ds_chunk.handle);
     
-    if(INDEPFILES(ds_chunk.handle) || DRA[handle].numfiles > 1){
+/*    if(INDEPFILES(ds_chunk.handle) || DRA[handle].numfiles > 1){ */
 
       /* compute cardinal number for the current chunk */
       nsect_to_blockM(ds_chunk, &_dra_turn);
 
-    }else{
+/*    }else{
       _dra_turn++;
-    }
+    } */
 
     return ((_dra_turn%ioprocs) == iome);
 }
@@ -2992,7 +2992,7 @@ int       retval, ndim = DRA[handle].ndim, i;
 
     /* If we are writing out to multiple files then we need to consider
        chunk boundaries along last dimension */
-    if(INDEPFILES(ds_chunk->handle) || DRA[handle].numfiles > 1)
+/*    if(INDEPFILES(ds_chunk->handle) || DRA[handle].numfiles > 1) */
       if(ds_chunk->lo[ndim-1] && DRA[handle].chunk[ndim-1]>1) 
          ds_chunk->lo[ndim-1] -= (ds_chunk->lo[ndim-1] -1) %
            DRA[handle].chunk[ndim-1];
@@ -3017,7 +3017,8 @@ int       retval, ndim = DRA[handle].ndim, i;
 
     /* Again, if we are writing out to multiple files then we need to consider
        chunk boundaries along last dimension */
-    if(INDEPFILES(ds_chunk->handle) || DRA[handle].numfiles > 1) { 
+/*    if(INDEPFILES(ds_chunk->handle) || DRA[handle].numfiles > 1) {  */
+      if (1) {
          Integer nlo;
          Integer hi_temp =  ds_chunk->lo[ndim-1] +
            DRA[handle].chunk[ndim-1] -1;
@@ -3027,7 +3028,7 @@ int       retval, ndim = DRA[handle].ndim, i;
          /*this line was absent from older version on bonnie that worked */
          nlo = 2*(ndim-1);
          if(ds_chunk->lo[ndim-1] < list[nlo]) ds_chunk->lo[ndim-1] = list[nlo]; 
-    }
+    } 
     /*
     for (i=0; i<ndim; i++) {
       printf("ds_chunk.hi[%d] = %d\n", i, ds_chunk->hi[i]);
