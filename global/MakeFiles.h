@@ -28,10 +28,10 @@ ifeq ($(VERSION),SHMEM)
      ifneq ($(TARGET),CRAY-T3D)
           IPC = shmem.o signal.o shmalloc.o
      endif
-     GA_CORE = global.shm.o global.common.o  global.ma.o global.patch.o $(IPC)
+     GA_CORE = global.shm.o global.common.o  global.ma.o global.patch.o DP.o $(IPC)
 else
      GA_CORE = global.common.o global.tcgmsg.o ma_addressing.o hsort.scat.o\
-               global.patch.o  
+               global.patch.o  DP.o 
      ifeq ($(TARGET),$(findstring $(TARGET),$(INTERRUPT_AVAILABLE)))
           GA_HANDLER = ga_handler.o
      endif
