@@ -52,7 +52,7 @@ GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #
 #                 Utility Routines
 #
-GA_EXTRA_COMMON = ffflush.o ifill.o dfill.o 
+GA_EXTRA_COMMON = ffflush.o ifill.o dfill.o ga_summarize.o
 ifneq ($(VERSION),SHMEM)
      GA_EXTRA = lenstr.o icopy.o dcopy.o 
 endif
