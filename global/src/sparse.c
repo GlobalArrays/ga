@@ -481,8 +481,8 @@ void ga_unpack_(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
 
 
-#define N 1000
-int workR[N], workL[N];
+#define NWORK 2000
+int workR[NWORK], workL[NWORK];
 
 /*\ compute offset for each of n bins for the given processor to contribute its
  *  elements, number of which for each bin is specified in x
@@ -493,7 +493,7 @@ int root, up, left, right;
 int len, lenmes, tag=32100, i, me=armci_msg_me();
 
     if(!x)armci_die("armci_bin_offset: NULL pointer", n);
-    if(n>N)armci_die("armci_bin_offset: >N", n);
+    if(n>NWORK)armci_die("armci_bin_offset: >NWORK", n);
     len = sizeof(int)*n;
 
     armci_msg_bintree(scope, &root, &up, &left, &right);
@@ -603,8 +603,6 @@ Integer dims[2], nproc=ga_nnodes_(),chunk[2];
                        buf[0] =bin; buf[1] =bin; break;
               }
 
-printf("%d: bin %d proc=%d stat %d\n",ga_nodeid_(),bin,p,stat); fflush(stdout);
-
               if(stat>1)break; /* found last bin on that processor */
           }
           
@@ -699,7 +697,11 @@ Integer type, ndim, nbin;
        all_bin_contrib[selected-1]++;
     }
 
-    gai_bin_offset(SCOPE_ALL, all_bin_contrib, (int)nbin, offset);
+    /* process bins in chunks to match available buffer space */
+    for(i=0; i<nbin; i+=NWORK){
+        int cnbin = ((i+NWORK)<nbin) ? NWORK: nbin -i;
+        gai_bin_offset(SCOPE_ALL, all_bin_contrib+i, cnbin, offset+i);
+    }
 
     for(i=0; i< *n; ){
        Integer lo, hi;
@@ -709,7 +711,9 @@ Integer type, ndim, nbin;
        nga_get_(g_off,&selected,&selected, &lo, &selected);
        lo += offset[selected-1]+1;
        hi = lo + elems -1;
+/*
        printf("%d: elems=%d lo=%d sel=%d off=%d contrib=%d nbin=%d\n",ga_nodeid_(), elems, lo, selected,offset[selected-1],all_bin_contrib[0],nbin);
+*/
        nga_put_(g_bin, &lo, &hi, values+i, &selected); 
        i+=elems;
     }
