@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.72 2002-09-21 17:45:08 vinod Exp $
+# $Id: makefile.h,v 1.73 2002-11-27 00:33:50 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -100,18 +100,26 @@ ifeq ($(TARGET),SOLARIS64)
   else
      COPT_REN = -xarch=v9 -dalign
   endif
+
   ifeq ($(_FC),frt)
-     FOPT_REN = -Kfast -KV9FMADD -CcdII8 -CcdLL8
+#    Fujitsu SPARC systems (thanks to Herbert Fruchtl)
+     FOPT_REN = -Kfast -KV9FMADD
+     ifdef USE_INTEGER4
+       FOPT_REN += -KV9FMADD -CcdLL8 -CcdRR8
+     else
+       FOPT_REN += -KV9FMADD -CcdLL8 -CcdII8 -CcdRR8
+     endif
      CMAIN = -Dmain=MAIN__
   else
      FOPT_REN = -xarch=v9 -dalign
-ifdef USE_INTEGER4
-     FOPT_REN += -xtypemap=real:64,double:64,integer:32
-else
-     FOPT_REN += -xtypemap=real:64,double:64,integer:64
-endif
+     ifdef USE_INTEGER4
+       FOPT_REN += -xtypemap=real:64,double:64,integer:32
+     else
+       FOPT_REN += -xtypemap=real:64,double:64,integer:64
+     endif
      FLD_REN = -xs
   endif
+
   ifdef LARGE_FILES
         LOC_LIBS += $(shell getconf LFS_LIBS)
   endif
@@ -143,10 +151,15 @@ endif
 #64-bit VPP5000
 ifeq ($(TARGET),FUJITSU-VPP64)
            FC = frt
-     FOPT_REN = -Sw -CcdII8 -CcdLL8
+     FOPT_REN = -Sw
  GLOB_DEFINES = -DFUJITSU
-        CDEFS = -DEXT_INT
         CMAIN = -Dmain=MAIN__
+ ifdef USE_INTEGER4
+    FOPT_REN += -CcdLL8
+ else
+        CDEFS = -DEXT_INT
+     FOPT_REN += -CcdLL8 -CcdII8
+ endif
 endif
 #
 
