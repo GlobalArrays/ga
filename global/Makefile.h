@@ -60,9 +60,10 @@ endif
 ifeq ($(TARGET),LINUX)
 
 ifdef USE_F2C
+#    Linux with f2c (using f77 script)
     EXPLICITF = TRUE
 else
-#    Linux with g77
+#    Linux with g77 --------------  Now the default build 11/97
      FOPT_REN = -fno-second-underscore
            FC = g77
 endif
