@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.85 2004-08-09 23:16:19 manoj Exp $ */
+/* $Id: base.c,v 1.86 2004-08-11 22:53:27 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2460,7 +2460,7 @@ void FATR ga_fill_(Integer *g_a, void* val)
 int i,elems,handle=GA_OFFSET + (int)*g_a;
 char *ptr;
 int local_sync_begin,local_sync_end;
-Integer grp_id, grp_me;
+Integer grp_id;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_FILL,__FILE__,__LINE__);
@@ -2477,8 +2477,13 @@ Integer grp_id, grp_me;
    ga_check_handleM(g_a, "ga_fill");
    gam_checktype(GA[handle].type);
    elems = (int)GA[handle].size/GA[handle].elemsize;
-   grp_me = PGRP_LIST[GA[handle].p_handle].map_proc_list[GAme];
-   ptr = GA[handle].ptr[grp_me];
+   
+   /* Bruce..Please CHECK if this is correct */
+   if (grp_id >= 0){  
+      Integer grp_me = PGRP_LIST[GA[handle].p_handle].map_proc_list[GAme];
+      ptr = GA[handle].ptr[grp_me];
+   }
+   else  ptr = GA[handle].ptr[GAme];
 
    switch (GA[handle].type){
    case C_DCPL: 
