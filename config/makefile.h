@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.70 2002-09-04 21:04:00 manoj Exp $
+# $Id: makefile.h,v 1.71 2002-09-17 16:46:18 vinod Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -444,6 +444,22 @@ endif
 #
 #................................ CRAY ..................................
 # covers also J90 and SV1
+#
+ifeq ($(TARGET),CRAY-SV1)
+     ifeq ($(FOPT), -O)
+         FOPT = -O1
+     endif
+     COPT_REN = -htaskprivate
+           FC = f90
+          CPP = cpp -P -N
+     FCONVERT = $(CPP) $(CPP_FLAGS)  $< | sed '/^\#/D'  > $*.f
+
+ GLOB_DEFINES = -DCRAY_YMP -D_MULTIP_ -DCRAY_SV1
+     FOPT_REN = -dp -ataskcommon
+     HAS_BLAS = yes
+      LIBBLAS =
+    EXPLICITF = TRUE
+endif
 #
 ifeq ($(TARGET),CRAY-YMP)
      ifeq ($(FOPT), -O)
