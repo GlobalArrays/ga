@@ -164,7 +164,7 @@ Integer     index_a, index_b;
 #endif
 
    GA_POP_NAME;
-   ga_sync_();
+/*   ga_sync_();*/
 
    return (sum);
 }
@@ -255,10 +255,9 @@ Integer     index_a, index_b;
 #endif
 
    GA_POP_NAME;
-   ga_sync_();
+/*   ga_sync_();*/
 
    *retval = sum;
-/*   return (sum);*/
 }
 
   

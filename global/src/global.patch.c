@@ -1,4 +1,4 @@
-/*$Id: global.patch.c,v 1.16 1996-07-30 21:26:29 d3h325 Exp $*/
+/*$Id: global.patch.c,v 1.17 1996-09-04 16:47:58 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
@@ -345,7 +345,6 @@ DoublePrecision  sum[2];
    for(i=0;i<len;i++) retval[i]=sum[i];
 
    if(temp_created) ga_destroy_(&g_B);
-   else ga_sync_();
 
    GA_POP_NAME;
 }

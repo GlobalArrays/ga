@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.29 1996-08-22 21:55:58 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.30 1996-09-04 16:47:57 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -611,7 +611,7 @@ Integer nblock1, nblock2;
 
       if(!GAinitialized) ga_error("GA not initialized ", 0);
 
-      ga_sync_();
+/*      ga_sync_();*/ /* syncing in ga_create_irreg too */
 
       if(*type != MT_F_DBL && *type != MT_F_INT &&  *type != MT_F_DCPL)
          ga_error("ga_create: type not yet supported ",  *type);
