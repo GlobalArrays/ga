@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.18 2000-09-12 18:43:29 d3h325 Exp $ */
+/* $Id: memory.c,v 1.19 2000-10-11 19:58:36 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -25,8 +25,8 @@ int nproc = armci_clus_info[armci_clus_me].nslave;
       if(armci_me ==i){
         printf("%d master =%d nproc=%d off=%d\n",armci_me, 
                armci_master,nproc, off);
-        printf("%d:bytes=%d mptr=%ld s=%d ",armci_me, bytes, myptr,size);
-        for(j = 0; j< armci_nproc; j++)printf(" %ld",ptr_arr[j]);
+        printf("%d:bytes=%d mptr=%p s=%d ",armci_me, bytes, myptr,size);
+        for(j = 0; j< armci_nproc; j++)printf(" %p",ptr_arr[j]);
         printf("\n"); fflush(stdout);
       }
       armci_msg_barrier();
@@ -47,7 +47,7 @@ static void armci_master_exp_attached_ptr(void* ptr)
 \*/
 void armci_shmem_malloc(void *ptr_arr[],int bytes)
 {
-    void *myptr, *ptr;
+    void *myptr=NULL, *ptr=NULL;
     long idlist[SHMIDLEN];
     long size=0, offset=0;
     long *size_arr;
@@ -94,7 +94,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
        if(size)armci_master_exp_attached_ptr(myptr);
 
        if(DEBUG_){
-         printf("%d:armci_malloc addr me=%ld size=%ld\n",armci_me,myptr,size); 
+         printf("%d:armci_malloc addr mptr=%p size=%ld\n",armci_me,myptr,size);
          fflush(stdout);
        }
     }
@@ -111,7 +111,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
         */
        if(size) armci_set_mem_offset(myptr);
        if(DEBUG_){
-          printf("%d:armci_malloc attached addr me=%ld ref=%ld size=%ld\n",
+          printf("%d:armci_malloc attached addr mptr=%p ref=%p size=%ld\n",
                  armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }

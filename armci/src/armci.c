@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.37 2000-09-12 18:43:50 d3h325 Exp $ */
+/* $Id: armci.c,v 1.38 2000-10-11 19:58:36 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -209,7 +209,6 @@ void armci_init_memlock()
 static void armci_check_shmmax()
 {
   long mylimit, limit;
-  int root = armci_clus_info[0].master;
   mylimit = limit = (long) armci_max_region();
   armci_msg_bcast_scope(SCOPE_MASTERS, &limit, sizeof(long), 0);
   if(mylimit != limit){
