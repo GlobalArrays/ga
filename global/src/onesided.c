@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.37 2003-04-07 20:22:22 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.38 2003-04-11 15:43:50 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -286,9 +286,15 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
 #define gam_Loc_ptr(proc, g_handle,  subscript, ptr_loc)                      \
 {                                                                             \
 Integer _offset=0, _d, _w, _factor=1, _last=GA[g_handle].ndim-1;              \
-Integer _lo[MAXDIM], _hi[MAXDIM];                                             \
+Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
                                                                               \
       ga_ownsM(g_handle, proc, _lo, _hi);                                     \
+      _p_handle = GA[g_handle].p_handle;                                      \
+      if (_p_handle < 0) {                                                    \
+        _iproc = proc;                                                        \
+      } else {                                                                \
+        _iproc = P_LIST[_p_handle].inv_map_proc_list[proc];                   \
+      }                                                                       \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
       for(_d=0; _d < _last; _d++)            {                                \
           _w = GA[g_handle].width[_d];                                        \
@@ -297,7 +303,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                             \
       }                                                                       \
       _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])      \
                * _factor;                                                     \
-      *(ptr_loc) =  GA[g_handle].ptr[proc]+_offset*GA[g_handle].elemsize;     \
+      *(ptr_loc) =  GA[g_handle].ptr[_iproc]+_offset*GA[g_handle].elemsize;   \
 }
 
 #define ga_check_regionM(g_a, ilo, ihi, jlo, jhi, string){                     \
@@ -1004,6 +1010,7 @@ void ga_scatter_acc_local(Integer g_a, Void *v,Integer *i,Integer *j,
 void **ptr_src, **ptr_dst;
 char *ptr_ref;
 Integer ldp, item_size, ilo, ihi, jlo, jhi, type;
+Integer handle,p_handle,iproc;
 armci_giov_t desc;
 register Integer k, offset;
 int rc;
@@ -1011,13 +1018,20 @@ int rc;
   if (nv < 1) return;
 
   GA_PUSH_NAME("ga_scatter_local");
+  handle = GA_OFFSET + g_a;
+  p_handle = GA[handle].p_handle;
 
   ga_distribution_(&g_a, &proc, &ilo, &ihi, &jlo, &jhi);
 
   /* get address of the first element owned by proc */
-  gaShmemLocation(proc, g_a, ilo, jlo, &ptr_ref, &ldp);
+  if (p_handle < 0) {
+    iproc = proc;
+  } else {
+    iproc = P_LIST[p_handle].map_proc_list[proc];
+  }
+  gaShmemLocation(iproc, g_a, ilo, jlo, &ptr_ref, &ldp);
 
-  type = GA[GA_OFFSET + g_a].type;
+  type = GA[handle].type;
   item_size = GAsizeofM(type);
 
   ptr_src = gai_malloc((int)nv*2*sizeof(void*));
@@ -1318,7 +1332,7 @@ Integer *int_ptr;
 
   first = 0;
   do {
-      proc  = int_ptr[first];
+      proc = int_ptr[first];
       nelem = 0;
 
       /* count entries for proc from "first" to last */
@@ -1493,10 +1507,15 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */  
         for(k=0; k<(*nv); k++){
-            ptr_dst[map[proc[k]]][count[proc[k]]] = ((char*)v) + k * item_size;
-            gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
-                        ptr_src[map[proc[k]]]+count[proc[k]]);
-            count[proc[k]]++;
+            if (p_handle < 0) {
+              iproc = proc[k];
+            } else {
+              iproc = P_LIST[p_handle].map_proc_list[proc[k]];
+            }
+            ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
+            gam_Loc_ptr(iproc, handle,  (subscript+k*ndim),
+                        ptr_src[map[iproc]]+count[iproc]);
+            count[iproc]++;
         }
         
         /* source and destination pointers are ready for all processes */
@@ -1526,10 +1545,15 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */
         for(k=0; k<(*nv); k++){
-            ptr_src[map[proc[k]]][count[proc[k]]] = ((char*)v) + k * item_size;
-            gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
-                        ptr_dst[map[proc[k]]]+count[proc[k]]);
-            count[proc[k]]++;
+            if (p_handle < 0) {
+              iproc = proc[k];
+            } else {
+              iproc = P_LIST[p_handle].map_proc_list[proc[k]];
+            }
+            ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
+            gam_Loc_ptr(iproc, handle,  (subscript+k*ndim),
+                        ptr_dst[map[iproc]]+count[iproc]);
+            count[iproc]++;
         }
 
         /* source and destination pointers are ready for all processes */
@@ -1562,10 +1586,15 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */
         for(k=0; k<(*nv); k++){
-            ptr_src[map[proc[k]]][count[proc[k]]] = ((char*)v) + k * item_size;
-            gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
-                        ptr_dst[map[proc[k]]]+count[proc[k]]);
-            count[proc[k]]++;
+            if (p_handle < 0) {
+              iproc = proc[k];
+            } else {
+              iproc = P_LIST[p_handle].map_proc_list[proc[k]];
+            }
+            ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
+            gam_Loc_ptr(iproc, handle,  (subscript+k*ndim),
+                        ptr_dst[map[iproc]]+count[iproc]);
+            count[iproc]++;
         }
 
         /* source and destination pointers are ready for all processes */
