@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.44 2004-01-12 16:36:22 d3g293 Exp $ */
+/* $Id: matmul.c,v 1.45 2004-01-13 17:41:09 d3g293 Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -1262,6 +1262,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0) need_scaling =0;}
    else if( *(float*)beta ==0) need_scaling =0;
 
+   ga_mask_sync_(&ZERO_I, &ZERO_I);
    if(need_scaling) ga_scale_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
    else  ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
 
