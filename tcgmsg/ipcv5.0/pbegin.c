@@ -107,7 +107,9 @@ void PBEGIN_(int argc, char **argv)
   
 #if defined(SYSV) || defined(MMAP)
   TCGMSG_shmem_size = (long) (TCGMSG_nnodes * TCGMSG_nnodes * sizeof(ShmemBuf));
+  TCGMSG_shmem_size += 64;
   TCGMSG_shmem = CreateSharedRegion(&TCGMSG_shmem_id, &TCGMSG_shmem_size);
+  nxtval_shmem = (long*)(((char*)(TCGMSG_shmem))+TCGMSG_shmem_size-64); 
 #else
   TCGMSG_shmem_size = (long)(TCGMSG_nnodes * sizeof(ShmemBuf));
   TCGMSG_shmem = (char *) TCGMSG_receive_buffer;

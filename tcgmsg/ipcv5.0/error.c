@@ -41,7 +41,7 @@ void Error(const char *string, long integer)
   DeleteSharedRegion(TCGMSG_shmem_id);
 #endif
 
-  abort();
+  exit(1);
 }
 
 void PARERR_(code)

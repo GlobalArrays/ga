@@ -1,12 +1,48 @@
 #include "tcgmsgP.h"
+long *nxtval_shmem;
 
 
 #define LEN 2
 long nxtval_counter=0;
 #define INCR 1                 /* increment for NXTVAL */
 #define BUSY -1L               /* indicates somebody else updating counter*/
-#define LOCK
-#define UNLOCK
+
+
+#if defined(__i386__) && defined(__GNUC__)
+#   define TESTANDSET testandset
+#   define LOCK if(nproc>1)acquire_spinlock((int*)(nxtval_shmem+1))
+#   define UNLOCK if(nproc>1)release_spinlock((int*)(nxtval_shmem+1))
+
+static inline int testandset(int *spinlock)
+{
+  int ret;
+  __asm__ __volatile__("xchgl %0, %1"
+        : "=r"(ret), "=m"(*spinlock)
+        : "0"(1), "m"(*spinlock));
+
+  return ret;
+}
+
+static void acquire_spinlock(int *mutex)
+{
+int loop=0, maxloop =100;
+   while (TESTANDSET(mutex)){
+      loop++;
+      if(loop==maxloop){ usleep(1); loop=0; }
+  }
+}
+
+static release_spinlock(int *mutex)
+{
+   *mutex =0;
+}
+
+#endif
+
+#ifndef LOCK
+#   define LOCK  if(nproc>1)Error("nxtval: sequential version with silly mproc ", (Integer) *mproc);
+#   define UNLOCK
+#endif
 
 
 Integer NXTVAL_(mproc)
@@ -24,10 +60,9 @@ Integer NXTVAL_(mproc)
   long shmem_swap();
   long local;
   long sync_type= INTERNAL_SYNC_TYPE;
+  long nproc=  NNODES_(); 
+  long server=nproc-1; 
 
-  int  server = (int)NNODES_() -1;         /* id of server process */
-
-  if (NNODES_()==1) {
      if (DEBUG_) {
        (void) printf("%2ld: nxtval: mproc=%ld\n",NODEID_(), *mproc);
        (void) fflush(stdout);
@@ -40,28 +75,12 @@ Integer NXTVAL_(mproc)
            SYNCH_(&sync_type);
      }
      if (*mproc > 0) {
-/* Cray T3D/E
-           while((local = shmem_swap(&nxtval_counter, BUSY, server)) == BUSY);
-           shmem_swap(&nxtval_counter, (local+INCR), server);
-*/
            LOCK;
              local = nxtval_counter;
              nxtval_counter += INCR;
            UNLOCK;
      }
-   } else {
-     /* Not running in parallel ... just do a simulation */
-     static int count = 0;
-     if (*mproc == 1)
-       return count++;
-     else if (*mproc == -1) {
-       count = 0;
-      return 0;
-    }
-    else
-      Error("nxtval: sequential version with silly mproc ", (Integer) *mproc);
-  }
 
-  return (Integer)local;
+     return (Integer)local;
 }
 

@@ -34,6 +34,9 @@
 #endif
 
 extern void USleep(long);
+#if defined(SYSV) || defined(MMAP)
+extern long *nxtval_shmem;
+#endif
 
 EXTERN long DEBUG_;
 EXTERN long TCGMSG_nodeid;	/* The id of this process */
