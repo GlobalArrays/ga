@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.9 1999-11-10 01:53:45 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.10 1999-11-15 21:30:35 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -447,7 +447,8 @@ void armci_server_ipc(request_header_t* msginfo, void* descr,
       server_alloc_memlock(ptr);
    }
 
-   armci_set_mem_offset(ptr);
+   /* compute offset if we are are really allocating new memory */
+   if(size>0)armci_set_mem_offset(ptr);
    
    if(msginfo->datalen != sizeof(long)+sizeof(int))
       armci_die("armci_server_ipc: bad msginfo->datalen ",msginfo->datalen);

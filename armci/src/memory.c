@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.8 1999-11-10 01:58:02 d3h325 Exp $ */
+/* $Id: memory.c,v 1.9 1999-11-15 21:30:35 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -87,7 +87,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
        if(!myptr && size>0 )armci_die("armci_malloc: could not create", size);
 
        /* place its address at begining of attached region for others to see */
-       armci_master_exp_attached_ptr(myptr);
+       if(size)armci_master_exp_attached_ptr(myptr);
 
        if(DEBUG_){
          printf("%d:armci_malloc addr me=%d\n",armci_me,myptr); fflush(stdout);
