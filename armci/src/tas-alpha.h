@@ -20,6 +20,10 @@ not, write to the Free Software Foundation, Inc., 675 Mass Ave,
 Cambridge, MA 02139, USA.  */
 
 
+#ifdef __GNUC__
+
+/************* gcc ******************/
+
 /* Spinlock implementation; required.  */
 static inline long testandset(int *spinlock)
 {
@@ -45,3 +49,33 @@ static inline long testandset(int *spinlock)
   asm volatile("mb" : : : "memory"); \
   *spinlock = 0
 
+#else
+
+/************* Compaq compiler ******************/
+
+#include <c_asm.h>
+
+/* Spinlock implementation; required.  */
+static inline long testandset(int *spinlock)
+{
+  long ret, temp = 0;
+
+  ret = asm ("1:\
+	         ldl_l %v0,(%a1);\
+	    	 bne %v0 ,2f;\
+	    	 or $31,1,%a0;\
+	    	 stl_c %a0,(%a1);\
+	    	 beq %a0,1b;\
+	      2:\
+   	         mb;"
+	    ,temp, spinlock );
+
+  return ret;
+}
+
+/* Spinlock release; default is just set to zero.  */
+#define RELEASE_SPINLOCK(spinlock) \
+  asm ("mb"); \
+  *spinlock = 0
+
+#endif
