@@ -356,10 +356,10 @@ c     overlapping accumulate
       endif
 c
       call ga_zero(g_b)
-      call ga_acc(g_b, 1, n/2, 1, n/2, 1d0, 1, 1d0)
+      call ga_acc(g_b, n/2, n/2, n/2, n/2, 1d0, 1, 1d0)
       call ga_sync()
       if (me.eq.0) then
-         call ga_get(g_b, 1, n/2, 1, n/2, b(1,1), 1)
+         call ga_get(g_b, n/2, n/2, n/2, n/2, b(1,1), 1)
          x = abs(b(1,1) -1d0*nproc)
          if(x.gt. 1d-10)then
             write(6,*)'val=',b(1,1),' expected=',nproc, x
@@ -489,7 +489,7 @@ c
 c
       call ga_sync()
       if (me .eq. 0) then
-         write(6,*) '> Checking scatter/gather (slow)... '
+         write(6,*) '> Checking scatter/gather (might be slow)... '
          call ffflush(6)
       endif
       call ga_sync()
@@ -815,6 +815,49 @@ c
          write(6,*)
       endif
 c
+c
+c
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) '> checking ga_fence'
+         write(6,*)
+         call ffflush(6)
+      endif
+c
+      call ga_zero(g_a)
+c
+c***  use ga_read_inc and elements g_a(1:2,1) to implement a lock
+c***  compute g_a(:,n) = sum (1(:)) for P processors
+c     
+      if(n.lt.2)call ga_error('insufficient n to test ga_fence',n)
+      call my_lock(g_a)
+c          get original values  g_a(:,n)
+           call ga_get(g_a, 1,n, n,n, b,n)
+c          add my contribution
+           do i =1,n
+              b(i,1)= b(i,1)+1
+           enddo
+c
+c          need to use fence to assure that coms complete before leaving
+c          Critical Section
+c
+           call ga_init_fence()
+                call ga_put(g_a, 1,n, n,n, b,n)
+           call ga_fence()
+      call my_unlock(g_a)
+c
+      call ga_sync()
+      if (me.eq.0) then
+         call ga_get(g_a, 1,n, n,n, b,n)
+         do i =1,n
+              if(b(i,1).ne. nproc) call ga_error('fence failed',i)
+         enddo
+         write(6,*)
+         write(6,*) ' ga_fence is OK'
+         write(6,*)
+      endif 
+c
+c
       if (me.eq.0) then
          write(6,*)
          write(6,*) '> checking ga_locate_region'
@@ -976,3 +1019,44 @@ c
       call ffflush(6)
 c
       end
+
+
+      
+      subroutine my_lock(g_b)
+      implicit none
+#include "global.fh"
+      integer g_b, val, flag, i
+      logical first_time
+      double precision  dummy 
+      common /lock/ val 
+      common /dum/ dummy
+      data first_time /.true./
+c
+c     this awkward initialization is to avoid a weird problem 
+C     with block data on SUN
+      if(first_time)then
+        first_time = .false.
+        dummy = .0
+      endif
+c
+      val = ga_read_inc(g_b,1,1, 1)
+10    call ga_get(g_b, 2,2,1,1, flag, 1)
+           if(flag.eq.val) return 
+c
+c          to reduce memory stress,  wait a while before retrying
+           do i = 1, 100
+              dummy = dummy + .1 
+           enddo 
+      goto 10
+      end
+
+
+      subroutine my_unlock(g_b)
+      implicit none
+#include "global.fh"
+      integer g_b, val
+      common /lock/ val
+c
+      call ga_put(g_b, 2,2,1,1, val+1, 1) 
+      end
+

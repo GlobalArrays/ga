@@ -13,7 +13,7 @@ To reduce data caching, each time a different section of the matrix is accessed.
 
 machine: Cray T3D
 name: h4p.nersc.gov
-options: -O1 -h inline3, readahead on
+options: -O1 -h inline3, readahead on, -DFLUSHCACHE
 note: lack of cache coherency degrades latency of "local" get
 date: Thu Dec 28 13:49:40 PST 1995
 
@@ -47,6 +47,44 @@ date: Thu Dec 28 13:49:40 PST 1995
 233928    4 0.733E-02 0.32E+02MB/s 0.211E-02 0.11E+03MB/s 0.122E-01 0.19E+02MB/s
 524288    1 0.161E-01 0.32E+02MB/s 0.461E-02 0.11E+03MB/s 0.263E-01 0.20E+02MB/s
 996872    1 0.296E-01 0.34E+02MB/s 0.843E-02 0.12E+03MB/s 0.485E-01 0.21E+02MB/s
+
+
+machine: Cray T3D
+name: h4p.nersc.gov
+options: -O3 -h inline3, readahead on, implicit (automatic) cache invalidation
+note: lack of cache coherency degrades latency of "local" get
+date: Mon Mar 25 10:32:42 PST 1996
+
+
+                     ACCESS [  1: 355,  1: 355]
+ bytes  loop         get                    put                 accumulate
+     8  841 0.227E-04 0.35E+00MB/s 0.170E-04 0.47E+00MB/s 0.270E-04 0.30E+00MB/s
+    72 1936 0.255E-04 0.28E+01MB/s 0.189E-04 0.38E+01MB/s 0.289E-04 0.25E+01MB/s
+   128 2500 0.269E-04 0.48E+01MB/s 0.197E-04 0.65E+01MB/s 0.301E-04 0.43E+01MB/s
+   648 1024 0.361E-04 0.18E+02MB/s 0.261E-04 0.25E+02MB/s 0.426E-04 0.15E+02MB/s
+  2048  361 0.579E-04 0.35E+02MB/s 0.360E-04 0.57E+02MB/s 0.754E-04 0.27E+02MB/s
+  7200  121 0.121E-03 0.59E+02MB/s 0.759E-04 0.95E+02MB/s 0.226E-03 0.32E+02MB/s
+ 32768   25 0.371E-03 0.88E+02MB/s 0.347E-03 0.95E+02MB/s 0.573E-03 0.57E+02MB/s
+ 66248    9 0.695E-03 0.95E+02MB/s 0.668E-03 0.99E+02MB/s 0.969E-03 0.68E+02MB/s
+131072    4 0.129E-02 0.10E+03MB/s 0.125E-02 0.10E+03MB/s 0.175E-02 0.75E+02MB/s
+233928    4 0.220E-02 0.11E+03MB/s 0.216E-02 0.11E+03MB/s 0.277E-02 0.84E+02MB/s
+524288    1 0.384E-02 0.14E+03MB/s 0.382E-02 0.14E+03MB/s 0.591E-02 0.89E+02MB/s
+996872    1 0.687E-02 0.15E+03MB/s 0.680E-02 0.15E+03MB/s 0.106E-01 0.94E+02MB/s
+  
+                     ACCESS [356: 710,356: 710]
+ bytes  loop         get                    put                 accumulate
+     8  841 0.244E-04 0.33E+00MB/s 0.187E-04 0.43E+00MB/s 0.347E-04 0.23E+00MB/s
+    72 1936 0.304E-04 0.24E+01MB/s 0.210E-04 0.34E+01MB/s 0.471E-04 0.15E+01MB/s
+   128 2500 0.333E-04 0.38E+01MB/s 0.221E-04 0.58E+01MB/s 0.542E-04 0.24E+01MB/s
+   648 1024 0.611E-04 0.11E+02MB/s 0.317E-04 0.20E+02MB/s 0.106E-03 0.61E+01MB/s
+  2048  361 0.120E-03 0.17E+02MB/s 0.494E-04 0.41E+02MB/s 0.213E-03 0.96E+01MB/s
+  7200  121 0.321E-03 0.22E+02MB/s 0.111E-03 0.65E+02MB/s 0.579E-03 0.12E+02MB/s
+ 32768   25 0.121E-02 0.27E+02MB/s 0.364E-03 0.90E+02MB/s 0.229E-02 0.14E+02MB/s
+ 66248    9 0.235E-02 0.28E+02MB/s 0.671E-03 0.99E+02MB/s 0.403E-02 0.16E+02MB/s
+131072    4 0.443E-02 0.30E+02MB/s 0.125E-02 0.11E+03MB/s 0.847E-02 0.15E+02MB/s
+233928    4 0.758E-02 0.31E+02MB/s 0.210E-02 0.11E+03MB/s 0.134E-01 0.17E+02MB/s
+524288    1 0.166E-01 0.32E+02MB/s 0.451E-02 0.12E+03MB/s 0.297E-01 0.18E+02MB/s
+996872    1 0.303E-01 0.33E+02MB/s 0.838E-02 0.12E+03MB/s 0.533E-01 0.19E+02MB/s
 ................................................................................
 
 machine: KSR-2
