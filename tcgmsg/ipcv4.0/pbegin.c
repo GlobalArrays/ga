@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.13 2000-10-12 22:43:46 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.14 2000-10-13 20:55:39 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -145,7 +145,6 @@ void PBEGIN_(argc, argv)
 #ifdef SHMEM
   long *flags;
 #endif
-  long on = 1;
 
   if(SR_initialized)Error("TCGMSG initialized already???",-1);
   else SR_initialized=1;

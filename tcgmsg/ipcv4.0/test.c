@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.6 1999-08-10 23:27:31 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.7 2000-10-13 20:55:40 d3h325 Exp $ */
 
 #include <stdio.h>
 #if !defined(SEQUENT) && !defined(CONVEX)
@@ -111,7 +111,7 @@ static void TestGlobals()
     long i;
     
     if (me == 0) {
-      printf("Test length = %d ... ", len);
+      printf("Test length = %ld ... ", len);
       fflush(stdout);
     }
 
@@ -409,7 +409,7 @@ void RingTest()
       else
         rate = 0.0;
       rate = rate * nloops;
-      printf("len=%6ld bytes, nloop=%4ld, used=%8.4f s, rate=%8.4f Mb/s (0x%x, 0x%x)\n",
+      printf("len=%6ld bytes, nloop=%4d, used=%8.4f s, rate=%8.4f Mb/s (0x%x, 0x%x)\n",
 	     lenbuf, nloops, used, rate, sum, sum2);
       (void) fflush(stdout);
     }

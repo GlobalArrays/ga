@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.17 2000-10-12 22:43:46 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.18 2000-10-13 20:55:40 d3h325 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -58,9 +58,9 @@ void PrintProcInfo()
   for (i=0; i<NNODES_(); i++)
     (void) fprintf(stderr,"[%ld] = {\n\
      clusid = %-8ld    slaveid = %-8ld      local = %-8ld\n\
-       sock = %-8d      shmem = %-8x shmem_size = %-8ld\n\
-   shmem_id = %-8ld     buffer = %-8x     buflen = %-8ld\n\
-     header = %-8x      semid = %-8ld   sem_read = %-8ld\n\
+       sock = %-8d      shmem = %-8p shmem_size = %-8ld\n\
+   shmem_id = %-8ld     buffer = %-8p     buflen = %-8ld\n\
+     header = %-8p      semid = %-8ld   sem_read = %-8ld\n\
 sem_written = %-8ld      n_rcv = %-8ld     nb_rcv = %-8ld\n\
       t_rcv = %-8ld      n_snd = %-8ld     nb_snd = %-8ld\n\
       t_snd = %-8ld,     peeked = %-8ld}\n",
@@ -79,11 +79,11 @@ sem_written = %-8ld      n_rcv = %-8ld     nb_rcv = %-8ld\n\
 		   SR_proc_info[i].sem_read,
 		   SR_proc_info[i].sem_written,
 		   SR_proc_info[i].n_rcv,
-		   SR_proc_info[i].nb_rcv,
-		   SR_proc_info[i].t_rcv,
+   	   (long)  SR_proc_info[i].nb_rcv,
+	   (long)  SR_proc_info[i].t_rcv,
 		   SR_proc_info[i].n_snd,
-		   SR_proc_info[i].nb_snd,
-		   SR_proc_info[i].t_snd,
+	   (long)  SR_proc_info[i].nb_snd,
+	   (long)  SR_proc_info[i].t_snd,
 		   SR_proc_info[i].peeked);
 		   
   (void) fflush(stderr);
@@ -130,9 +130,7 @@ static void Await(p, value)
 {
   int nspin = 0;
   if (DEBUG_) {
-    printf("%2ld: Await p=%x, value=%d\n", NODEID_(), p, value);
-    fflush(stdout);
-    printf("%2ld: Await *p=%d\n", NODEID_(), *p);
+    printf("%2ld: Await p=%p, value=%ld\n", NODEID_(), p, value);
     fflush(stdout);
   }
 
@@ -688,8 +686,6 @@ long PROBE_(type, node)
        This may be an expensive operation but fairness seems important.
        */
 {
-  static long  next_node = 0;
-  
   long  nproc = NNODES_();
   long  me = NODEID_();
   int i, proclo, prochi;

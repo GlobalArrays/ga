@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.9 2000-09-30 19:04:20 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.10 2000-10-13 20:55:39 d3h325 Exp $ */
 
 #include <stdio.h>
 
@@ -116,7 +116,7 @@ void PrintClusInfo()
   
   clus_to_print = SR_parallel ? SR_n_clus+1: SR_n_clus;
 
-  printf("No. Clusters: %d\n", SR_n_clus);
+  printf("No. Clusters: %ld\n", (long)SR_n_clus);
   for (i=0; i<clus_to_print; i++)
     (void) printf("Cluster %ld {\n  user = %s\n  host = %s\n  nslave = %ld\n\
   image = %s\n  workdir = %s\n  masterid = %ld}\n",
@@ -127,7 +127,7 @@ void PrintClusInfo()
 		  SR_clus_info[i].image,
 		  SR_clus_info[i].workdir,
 		  SR_clus_info[i].masterid);
-  printf("SR_clus_info = %d size=%d\n",(long) SR_clus_info, sizeof(struct cluster_info_struct));
+  printf("SR_clus_info = %ld size=%d\n",(long) SR_clus_info, (int)sizeof(struct cluster_info_struct));
   (void) fflush(stdout);
 }
 

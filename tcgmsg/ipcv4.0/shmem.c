@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/shmem.c,v 1.12 2000-05-10 23:07:24 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/shmem.c,v 1.13 2000-10-13 20:55:40 d3h325 Exp $ */
 
 /*
   This stuff attempts to provide a simple interface to temporary shared
@@ -204,7 +204,7 @@ char *CreateSharedRegion(id, size)
 
   /* Attach to the region */
 
-  if ( (int) (temp = shmat((int) *id, (char *) NULL, 0)) == -1)
+  if ( (long) (temp = shmat((int) *id, (char *) NULL, 0)) == -1L)
     Error("CreateSharedRegion: failed to attach to shared region", (long) 0);
 
   return temp;
@@ -230,7 +230,7 @@ char *AttachSharedRegion(id, size)
 {
   char *temp;
 
-  if ( (int) (temp = shmat((int) id, (char *) NULL, 0)) == -1)
+  if ( (long) (temp = shmat((int) id, (char *) NULL, 0)) == -1L)
     Error("AttachSharedRegion: failed to attach to shared region", (long) 0);
 
   return temp;

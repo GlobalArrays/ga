@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.9 1999-11-20 03:15:06 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.10 2000-10-13 20:55:40 d3h325 Exp $ */
 
 #include <signal.h>
 #include "sndrcvP.h"
@@ -67,17 +67,17 @@ void SigchldHandler(sig)
 #endif
      int sig;
 {
-  int status, pid;
+  int status;
   
 #if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
   union wait ustatus;
 #endif
 
 #if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
-  pid = wait(&ustatus);
+  (void) wait(&ustatus);
   status = ustatus.w_status;
 #else
-  pid = wait(&status);
+  (void) wait(&status);
 #endif
   SR_caught_sigint = 1;
   Error("Child process terminated prematurely, status=",(long) status);
