@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/globalop.c,v 1.4 1995-02-24 02:17:19 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/globalop.c,v 1.5 2001-04-24 01:34:25 edo Exp $ */
 
 #include "sndrcv.h"
 #include "msgtypesc.h"
@@ -285,6 +285,7 @@ struct char_desc {
 #endif
 
 /*ARGSUSED*/
+#if defined(CRAY) || defined(CRAY)
 #ifdef ARDENT
 void dgop_(ptype, x, pn, arg)
      long *ptype, *pn;
@@ -302,21 +303,14 @@ void dgop_(ptype, x, pn, arg)
 {
   char *op = _fcdtocp(arg);
   int len_op = _fcdlen(arg);
-#endif
-#if !defined(ARDENT) && !defined(CRAY)
-void dgop_(ptype, x, pn, op, len_op)
-     long *ptype, *pn;
-     double *x;
-     char *op;
-     int len_op;
-{
 #endif
   DGOP_(ptype, x, pn, op);
 }
-
+#endif
 /* This crap to handle FORTRAN character strings */
 
 /*ARGSUSED*/
+#if defined(CRAY) || defined(CRAY)
 #ifdef ARDENT
 void igop_(ptype, x, pn, arg)
      long *ptype, *pn;
@@ -327,21 +321,16 @@ void igop_(ptype, x, pn, arg)
   int len_op = arg->len;
 #endif
 #if defined(CRAY)
-void igop_(ptype, x, pn, arg)
-     long *ptype, *pn;
+void igop_(wrap_ptype, x, wrap_pn, arg)
+     Integer *wrap_ptype, *wrap_pn;
      long *x;
      _fcd arg;
 {
+  long ptype, pn;
+  ptype = (long) *ptype;
   char *op = _fcdtocp(arg);
   int len_op = _fcdlen(arg);
 #endif
-#if !defined(ARDENT) && !defined(CRAY)
-void igop_(ptype, x, pn, op, len_op)
-     long *ptype, *pn;
-     long *x;
-     char *op;
-     int len_op;
-{
-#endif
   IGOP_(ptype, x, pn, op);
 }
+#endif

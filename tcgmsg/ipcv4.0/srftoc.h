@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srftoc.h,v 1.8 1999-08-12 00:56:28 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srftoc.h,v 1.9 2001-04-24 01:34:25 edo Exp $ */
 
 #ifndef SRFTOC_H_
 #define SRFTOC_H_
@@ -57,70 +57,63 @@
 #else
 
 #if (defined(AIX) || defined(NEXT) || defined(HPUX)) && !defined(EXTNAME)
-#define NICEFTN_     niceftn
-#define NODEID_      nodeid
-#define NNODES_      nnodes
-#define MTIME_       mtime
-#define TCGTIME_     tcgtime
-#define SND_         snd
-#define RCV_         rcv
-#define BRDCST_      brdcst
-#define SYNCH_       synch
-#define PBEGINF_     pbeginf
-#define PBGINF_      pbginf
-#define PEND_        pend
-#define SETDBG_      setdbg
-#define NXTVAL_      nxtval
+#define NICEFTN_     niceftn 
+#define wrap_nodeid  nodeid 
+#define wrap_probe   probe 
+#define wrap_nnodes  nnodes
+#define wrap_mtime   mtime 
+#define TCGTIME_     tcgtime 
+#define wrap_snd     snd 
+#define wrap_rcv     rcv  
+#define wrap_brdcst  brdcst 
+#define wrap_synch   synch 
+#define PBEGINF_     pbeginf  
+#define PBGINF_      pbginf 
+#define PEND_        pend 
+#define wrap_setdbg  setdbg 
+#define wrap_nxtval  nxtval
 #define PBFTOC_      pbftoc
-#define PARERR_      parerr
-#define LLOG_        llog
-#define STATS_       stats
-#define WAITCOM_     waitcom
-#define MITOD_       mitod
-#define MDTOI_       mdtoi
-#define MDTOB_       mdtob
-#define MITOB_       mitob
-#define DRAND48_     drand48
-#define SRAND48_     srand48
-#define PFCOPY_      pfcopy
-#define dgop_        dgop
-#define igop_        igop
-#define DGOP_        dgop
-#define IGOP_        igop
-#define TCGREADY_    tcgready
+#define wrap_parerr  parerr 
+#define LLOG_        llog 
+#define STATS_       stats 
+#define wrap_waitcom waitcom
+#define wrap_mitod   mitod 
+#define wrap_mdtoi   mdtoi 
+#define wrap_mdtob   mdtob 
+#define wrap_mitob   mitob 
+#define DRAND48_     drand48 
+#define SRAND48_     srand48 
+#define wrap_pfcopy  pfcopy 
+#define TCGREADY_    tcgready //no need of fortran interface ?
 #else
-#define NICEFTN_     niceftn_
-#define NODEID_      nodeid_
-#define PROBE_       probe_
-#define NNODES_      nnodes_
-#define MTIME_       mtime_
-#define TCGTIME_     tcgtime_
-#define SND_         snd_
-#define RCV_         rcv_
-#define BRDCST_      brdcst_
-#define SYNCH_       synch_
-#define PBEGINF_     pbeginf_
-#define PBGINF_      pbginf_
-#define PEND_        pend_
-#define SETDBG_      setdbg_
-#define NXTVAL_      nxtval_
+#define NICEFTN_     niceftn_ 
+#define wrap_nodeid  nodeid_ 
+#define wrap_probe   probe_ 
+#define wrap_nnodes  nnodes_
+#define wrap_mtime   mtime_ 
+#define TCGTIME_     tcgtime_ 
+#define wrap_snd     snd_ 
+#define wrap_rcv     rcv_  
+#define wrap_brdcst  brdcst_ 
+#define wrap_synch   synch_ 
+#define PBEGINF_     pbeginf_  
+#define PBGINF_      pbginf_ 
+#define PEND_        pend_ 
+#define wrap_setdbg  setdbg_ 
+#define wrap_nxtval  nxtval_
 #define PBFTOC_      pbftoc_
-#define PARERR_      parerr_
-#define LLOG_        llog_
-#define STATS_       stats_
-#define WAITCOM_     waitcom_
-#define MITOD_       mitod_
-#define MDTOI_       mdtoi_
-#define MDTOB_       mdtob_
-#define MITOB_       mitob_
-#define DRAND48_     drand48_
-#define SRAND48_     srand48_
-#define PFCOPY_      pfcopy_
-#define TCGREADY_    tcgready_
-#if defined(SP1) || defined(SP) || defined(LAPI)
-#define DGOP_        dgop_
-#define IGOP_        igop_
-#endif
+#define wrap_parerr  parerr_ 
+#define LLOG_        llog_ 
+#define STATS_       stats_ 
+#define wrap_waitcom waitcom_
+#define wrap_mitod   mitod_ 
+#define wrap_mdtoi   mdtoi_ 
+#define wrap_mdtob   mdtob_ 
+#define wrap_mitob   mitob_ 
+#define DRAND48_     drand48_ 
+#define SRAND48_     srand48_ 
+#define wrap_pfcopy  pfcopy_ 
+#define TCGREADY_    tcgready_ //no need of fortran interface ?
 #endif
 
 #endif
