@@ -1,10 +1,11 @@
-/* $Id: matmul.h,v 1.12 2003-11-06 01:20:33 manoj Exp $ */
+/* $Id: matmul.h,v 1.13 2004-01-12 16:36:23 d3g293 Exp $ */
 #ifndef _MATMUL_H_
 #define _MATMUL_H_
 
 #include "ga.h"
 #include "global.h"
 #include "globalp.h"
+#include "message.h"
 #include "base.h"
 
 #include <math.h>

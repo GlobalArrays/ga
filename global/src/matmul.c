@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.43 2003-12-18 23:25:10 manoj Exp $ */
+/* $Id: matmul.c,v 1.44 2004-01-12 16:36:22 d3g293 Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -1229,7 +1229,17 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
        Integer avail = ga_memory_avail(atype);
-       ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+       if (ga_is_mirrored_(g_a)) {
+         fflush(stdout);
+         if (sizeof(Integer)/sizeof(int) > 1)
+           armci_msg_gop_scope(SCOPE_NODE, &avail, 1, "min", ARMCI_LONG);
+         else
+           armci_msg_gop_scope(SCOPE_NODE, &avail, 1, "min", ARMCI_INT);
+         fflush(stdout);
+       } else {
+         fflush(stdout);
+         ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+       }
        if(avail<MINMEM && ga_nodeid_()==0) ga_error("NotEnough memory",avail);
        elems = (Integer)(avail*0.9); /* Donot use every last drop */
        
