@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.27 2003-03-21 19:53:15 d3h325 Exp $ */
+/* $Id: vector.c,v 1.28 2003-10-22 21:29:10 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -508,7 +508,7 @@ int ARMCI_AccV( int op,              /* oeration code */
     ORDER(op,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
 
-#   if defined(ACC_COPY)
+#   if defined(ACC_COPY) && !defined(ACC_SMP)
        if(armci_me != proc) direct=0;
 #   endif
 
@@ -659,6 +659,7 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
     else return 0;
 }
 
+
 int ARMCI_NbAccV( int op,              /* oeration code */
                 void *scale,         /*scaling factor for accumulate */
                 armci_giov_t darr[], /* descriptor array */
@@ -698,7 +699,7 @@ int ARMCI_NbAccV( int op,              /* oeration code */
       nb_handle = armci_set_implicit_handle(op, proc);
 
 
-#   if defined(ACC_COPY)
+#   if defined(ACC_COPY) && !defined(ACC_SMP)
        if(armci_me != proc) direct=0;
 #   endif
 
