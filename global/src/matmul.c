@@ -501,11 +501,16 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
        i1 = *cilo + taskListA[currA].hi[0];
        j0 = *cjlo + taskListB[currB].lo[1];
        j1 = *cjlo + taskListB[currB].hi[1];
+
+#ifdef _NBACC
+       /* NB Accumulate disabled temporarily */
        if(irregular) if(currA!=me) ga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
+#endif
 
        if(currA < max_tasks) {
-	  /* for regular distribution */
-	  if(!irregular) {
+#ifdef _NBACC
+	  if(!irregular) {	  /* for regular distribution */
+#endif
 	     if (single_task_flag != SET) {
 		switch(atype) {
 		   case C_FLOAT:
@@ -526,6 +531,7 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
 		}
 	     }
 	  }
+#ifdef _NBACC
 	  else {
 	     if(atype == C_FLOAT)
 		ga_nbacc_(g_c, &i0, &i1, &j0, &j1, (float *)c,
@@ -535,7 +541,7 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
 			  &cdim, (DoublePrecision*)&ONE, &gNbhdlC[shiftC]);
 	  }
        }
-
+#endif
        
        if(get_new_B == TRUE) do_put = UNSET; /* Thereafter, accumulate */ 
       
@@ -548,7 +554,9 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
     }
    
     if(irregular) {
+#ifdef _NBACC
        ga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
+#endif
        GA_Destroy(g_t);
     }
 }
