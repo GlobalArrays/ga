@@ -683,9 +683,15 @@ void Accum();
 
 #ifdef KSR
      if(nproc>1) LOCK(ptr_dst);
+#endif
+
+#ifdef KSR     
      Accum(*alpha, ptr_src, ptr_dst, nelem);
 #else
-     for (i = 0; i< nelem; i++) *(ptr_dst +i) += *alpha*  *(ptr_src +i); 
+     for (i = 0; i< nelem; i++) *(ptr_dst +i) += *alpha*  *(ptr_src +i);
+#endif
+
+#ifdef KSR     
      if(nproc>1) UNLOCK(ptr_dst);
 #endif
    }
