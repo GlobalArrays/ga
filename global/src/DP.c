@@ -1,4 +1,4 @@
-/* $Id: DP.c,v 1.13 2002-01-29 20:03:32 vinod Exp $ */
+/* $Id: DP.c,v 1.14 2003-02-18 00:24:32 manoj Exp $ */
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
@@ -61,9 +61,9 @@ Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer ilos, ihis, jlos, jhis;
 Integer ilod, ihid, jlod, jhid, corr, nelem;
 Integer me= ga_nodeid_(), index, ld, i,j;
-Integer indexT, handleT, ldT;
+Integer ldT;
 char transp;
-
+DoublePrecision *dbl_ptrA, *dbl_ptrB;
 
    ga_check_handle(g_a, "ga_copy_patch_dp");
    ga_check_handle(g_b, "ga_copy_patch_dp");
@@ -95,10 +95,11 @@ char transp;
 
    if(patch_intersect(ailo, aihi, ajlo, ajhi, &ilos, &ihis, &jlos, &jhis)){
       ga_access_(g_a, &ilos, &ihis, &jlos, &jhis, &index, &ld);
-
+      
       nelem = (ihis-ilos+1)*(jhis-jlos+1);
       index --;     /* fortran to C conversion */
-
+      dbl_ptrA = DBL_MB + index;
+      
       if ( transp == 'n' ) {
 	  corr  = *bilo - *ailo;
 	  ilod  = ilos + corr; 
@@ -107,20 +108,18 @@ char transp;
 	  jlod  = jlos + corr; 
 	  jhid  = jhis + corr;
       } else {
-	  /* If this is a transpose copy, we need local scratch space */
-	  if ( !MA_push_get(MT_F_DBL, nelem, "ga_copy_patch_dp",
-			    &handleT, &indexT))
-	      ga_error(" ga_copy_patch_dp: MA failed ", 0L);
+	/* If this is a transpose copy, we need local scratch space */
+	dbl_ptrB = (DoublePrecision*) ga_malloc(nelem,MT_F_DBL,"copypatch_dp");
 
 	  /* Copy from the source into this local array, transposed */
 	  ldT = jhis-jlos+1;
 	  
 	  for(j=0; j< jhis-jlos+1; j++)
 	      for(i=0; i< ihis-ilos+1; i++)
-		  *(DBL_MB+indexT + i*ldT + j) = *(DBL_MB+index + j*ld + i);
+		  *(dbl_ptrB + i*ldT + j) = *(dbl_ptrA + j*ld + i);
 
 	  /* Now we can reset index to point to the transposed stuff */
-	  index = indexT;
+	  dbl_ptrA = dbl_ptrB;
 	  ld = ldT;
 
 	  /* And finally, figure out what the destination indices are */
@@ -133,10 +132,10 @@ char transp;
       }
 	  
       /* Put it where it belongs */
-      ga_put_(g_b, &ilod, &ihid, &jlod, &jhid, DBL_MB + index, &ld);
+      ga_put_(g_b, &ilod, &ihid, &jlod, &jhid, dbl_ptrA, &ld);
 
       /* Get rid of local memory if we used it */
-      if( transp == 't') MA_pop_stack(handleT);
+      if( transp == 't') ga_free(dbl_ptrB);
   }
 }
 
@@ -168,10 +167,10 @@ Integer iloA, ihiA, jloA, jhiA, indexA, ldA;
 Integer iloB, ihiB, jloB, jhiB, indexB, ldB;
 Integer g_A = *g_a;
 Integer me= ga_nodeid_(), i, j, temp_created=0;
-Integer handleB, corr, nelem;
+Integer corr, nelem;
 char    transp, transp_a, transp_b;
 DoublePrecision  sum = 0.;
-
+DoublePrecision *dbl_ptrB;
 
    ga_check_handle(g_a, "ga_ddot_patch_dp");
    ga_check_handle(g_b, "ga_ddot_patch_dp");
@@ -219,24 +218,23 @@ DoublePrecision  sum = 0.;
          /* all the data is local */
          ga_access_(g_b, &iloB, &ihiB, &jloB, &jhiB, &indexB, &ldB);
          indexB--;
+	 dbl_ptrB = DBL_MB+indexB;
       }else{
          /* data is remote -- get it to temp storage*/
          temp_created =1;
-         if(!MA_push_get(MT_F_DBL,nelem, "ddot_dp_b", &handleB, &indexB))
-             ga_error(" ga_ddot_patch_dp: MA failed ", 0L);
-         /* no need to adjust index (indexB--;) -- we got it from MA*/
+	 dbl_ptrB = (DoublePrecision*)ga_malloc(nelem, MT_F_DBL, "ddot_dp_b");
 
          ldB   = ihiB-iloB+1; 
-         ga_get_(g_b, &iloB, &ihiB, &jloB, &jhiB, DBL_MB+indexB, &ldB);
+         ga_get_(g_b, &iloB, &ihiB, &jloB, &jhiB, dbl_ptrB, &ldB);
       }
 
       sum = 0.;
       for(j=0; j< jhiA-jloA+1; j++)
           for(i=0; i< ihiA-iloA+1; i++)
              sum += *(DBL_MB+indexA + j*ldA + i) * 
-                    *(DBL_MB+indexB + j*ldB + i);
+                    *(dbl_ptrB + j*ldB + i);
 
-      if(temp_created)MA_pop_stack(handleB);
+      if(temp_created) ga_free(dbl_ptrB);
    }
    return sum;
 }
