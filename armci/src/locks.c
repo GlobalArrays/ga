@@ -1,4 +1,4 @@
-/* $Id: locks.c,v 1.6 2000-04-17 22:31:38 d3h325 Exp $ */
+/* $Id: locks.c,v 1.7 2000-06-23 22:22:06 d3h325 Exp $ */
 #define _LOCKS_C_
 #include "locks.h"
 #include "armcip.h"
@@ -17,7 +17,11 @@ void CreateInitLocks(int num_locks, lockset_t *plockid)
 void *ptr;
 int size=num_locks*sizeof(PAD_LOCK_T);
 
-  ptr = Create_Shared_Region(plockid->idlist,size,&plockid->off);
+  if(ARMCI_Uses_shm())
+     ptr = Create_Shared_Region(plockid->idlist,size,&plockid->off);
+  else
+     ptr = malloc(size);
+
   if(!ptr) armci_die("Failed to create spinlocks",size);
   _armci_int_mutexes = (PAD_LOCK_T*)ptr;
 

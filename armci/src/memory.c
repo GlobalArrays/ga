@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.14 2000-06-14 22:49:57 d3h325 Exp $ */
+/* $Id: memory.c,v 1.15 2000-06-23 22:22:06 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -278,7 +278,7 @@ int ARMCI_Uses_shm()
       if(armci_nproc >1) uses= 1;
 #   endif
 #endif
-/*    fprintf(stderr,"uses shmem %d\n",uses);*/
+    if(DEBUG_) fprintf(stderr,"uses shmem %d\n",uses);
     return uses;
 }
 
