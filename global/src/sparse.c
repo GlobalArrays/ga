@@ -409,13 +409,13 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
      /* stuff data selected by sbit into(pack) or from(unpack) buffer */
      if(pack){
 
-        gai_copy_sbit(type, ptr, hip-lop+1 , buf, ia+first, pack,counter); /* pack data to buf */
+        gai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter); /* pack data to buf */
         nga_put_(g_b, &dst_lo, &dst_hi,  buf, &counter); /* put it into destination array */
 
      }else{
 
         nga_get_(g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer*/
-        gai_copy_sbit(type, ptr, hip-lop+1 , buf, ia+first, pack,counter);  /* copy data to array*/
+        gai_copy_sbit(type, ptr, hip-lop+1-first , buf, ia+first, pack,counter);  /* copy data to array*/
 
      }
 
