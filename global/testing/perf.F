@@ -1,4 +1,4 @@
-c $Id: perf.F,v 1.7 2003-09-17 23:36:19 d3h325 Exp $
+c $Id: perf.F,v 1.8 2005-01-12 02:07:10 manoj Exp $
 c------------------------------------------------------------------------
 c Program perf.x is used to test performance of GA put, get, accumulate  |
 c It has to be executed on four processors.                              |
@@ -29,6 +29,9 @@ c***  Intitialize the GA package
       call ga_initialize()
       if(ga_nnodes().ne.4 .and. ga_nodeid().eq.0)
      $   call ga_error('Program requires 4 GA processes',ga_nnodes())
+c
+c***  enables MA to use ARMCI memory
+      call set_ma_use_armci_mem()
 c
 c***  Initialize the MA package
       heap = 900000
