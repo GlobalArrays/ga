@@ -1,7 +1,11 @@
                      Documentation for Global Arrays
 
-Supercomputing94.ps.Z 	the original SC'94 paper describing GA
-user.pdf                User's Manual documentation for GA 3.0 
+user.pdf                User's Manual for GA 3.0 in Adobe PDF format. 
+Supercomputing94.pdf 	the original SC'94 paper describing GA
+
+You need to use Acrobat Reader version at least 3.0 to view and print these
+documents. This program is available for free from 
+http://www.adobe.com/prodindex/acrobat/readstep.html
 
 More documentation  is available at the GA homepage:
 http://www.emsl.pnl.gov:2080/docs/global
