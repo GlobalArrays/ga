@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.20 2002-01-22 20:05:11 vinod Exp $ */
+/* $Id: onesided.c,v 1.21 2002-01-22 21:24:55 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -890,7 +890,6 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     Integer *ilo, *ihi, *jlo, *jhi, *ldp, *owner;
     char **ptr_ref;
     
-printf("\n in scatter \n");fflush(stdout);
     if (*nv < 1) return;
     
     ga_check_handleM(g_a, "ga_scatter");
@@ -955,7 +954,6 @@ printf("\n in scatter \n");fflush(stdout);
     item_size = GAsizeofM(type);
     GAbytes.scatot += (double)item_size**nv ;
     GAbytes.scaloc += (double)item_size* nelem[owner[GAme]];
-printf("\n in scatter \n");fflush(stdout);
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
     for(k=1; k<naproc; k++) {
         ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
