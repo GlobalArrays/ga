@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.23 2000-10-13 23:04:33 d3h325 Exp $ */
+/* $Id: test.c,v 1.24 2001-01-18 01:53:01 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -51,6 +51,10 @@
 # define DIM3 6
 # define DIM4 5
 # define DIM5 4
+#elif defined(__alpha__)
+# define DIM3 8
+# define DIM4 5
+# define DIM5 6
 #else
 # define DIM3 8
 # define DIM4 9
