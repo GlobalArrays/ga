@@ -3,9 +3,11 @@
            CC = cc
           FLD = $(FC)
           CLD = $(FLD)
+           M4 = /usr/bin/m4
           CXX = CC
-         FOPT = -g
-         COPT = -g
+         FOPT = -O
+         COPT = -O
+         NOPT = -g
            AR = ar
            AS = as
        RANLIB = @echo
@@ -13,7 +15,7 @@
         SHELL = /bin/sh
            MV = /bin/mv
            RM = /bin/rm
-      RMFLAGS = -f
+      RMFLAGS = -r
       INSTALL = @echo
       ARFLAGS = rcv
     EXPLICITF = FALSE
