@@ -1,2 +1,4 @@
-	integer nodeid, nnodes, mitob, mdtob, nxtval
-	external nodeid, nnodes, mitob, mdtob, nxtval
+      double precision tcgtime
+      integer nodeid, nnodes, mitob, mdtob, nxtval
+      external nodeid, nnodes, mitob, mdtob, nxtval
+      external tcgtime
