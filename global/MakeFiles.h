@@ -50,7 +50,8 @@ endif
 
 ifndef OLD_GA
   GA_CORE = global.armci.o global.util.o collect.o decomp.o capi.o \
-	    global.nalg.o global.npatch.o ga_trace.o global.periodic.o
+	    global.nalg.o global.npatch.o ga_trace.o global.periodic.o\
+            sparse.o select.o
 else
 ifdef IWAY
   GA_CORE += iway.o net.o
