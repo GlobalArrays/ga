@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.25 2000-10-19 22:52:33 d3h325 Exp $ */
+/* $Id: capi.c,v 1.26 2000-11-07 00:52:11 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -288,6 +288,13 @@ void NGA_Distribution(int g_a, int iproc, int lo[], int hi[])
      COPYINDEX_F2C(_ga_hi,hi, ndim);
 }
 
+void NGA_Select_elem(int g_a, char* op, void* val, int* index)
+{
+     Integer a=(Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     nga_select_elem_(&a, op, val, _ga_lo);
+     COPYINDEX_F2C(_ga_lo,index,ndim);
+}
 
 int GA_Compare_distr(int g_a, int g_b)
 {

@@ -54,7 +54,8 @@ HISTORY
   version 3.1   November 6th, 2000
               * ports to 64-bit IBM, HP, Sun, Fujitsu, Linux/Alpha platforms
               * new operations: periodic version of put,get,accumulate
-              * more new operations nga_scatter_acc, nga_select_elem, ga_nblock
+                    nga_scatter_acc, nga_select_elem, ga_nblock
+                    nga_select_elem
               * restructured makefiles to simplify changes and enable
                 export of make definitions to application makefiles
               * new platforms supported by ARMCI (and thus GA)

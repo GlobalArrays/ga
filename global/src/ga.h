@@ -106,6 +106,7 @@ extern int GA_Solve(int g_a, int g_b);
 extern int GA_Spd_invert(int g_a);
 extern void GA_Summarize(int verbose);
 extern void GA_Symmetrize(int g_a);
+extern void NGA_Select_elem(int g_a, char* op, void* val, int *index);
 extern void GA_Transpose(int g_a, int g_b);
 extern int  GA_Ndim(int g_a);
 
