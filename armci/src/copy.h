@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.70 2004-09-15 17:01:35 vinod Exp $ */
+/* $Id: copy.h,v 1.71 2004-10-12 22:06:15 edo Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -138,9 +138,11 @@ void FATR DCOPY13(int*, int*, int*, void*, int*, int*, void*, int*);
 #      define ARMCI_NB_PUT(src,dst,n,proc,phandle)\
               *(phandle)=elan_put(elan_base->state,src,dst,n,proc)
 */
+#ifdef DOELAN4
 extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, ELAN_EVENT **phandle);
 #      define ARMCI_NB_PUT(src,dst,n,proc,phandle)\
               armci_elan_put_with_tracknotify(src,dst,n,proc,phandle)
+#endif
 			                      
 #      define ARMCI_NB_GET(src,dst,n,proc,phandle)\
               *(phandle)=elan_get(elan_base->state,src,dst,n,proc)
