@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.52 2003-03-05 00:33:29 d3g293 Exp $ */
+/* $Id: capi.c,v 1.53 2003-03-06 20:09:51 vinod Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -547,12 +547,12 @@ void NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[],
 
 int NGA_NbWait(ga_nbhdl_t nbhandle)
 {
-    nga_wait_internal((Integer *)nbhandle);
+    return(nga_wait_internal((Integer *)nbhandle));
 }
 
 int GA_NbWait(ga_nbhdl_t nbhandle)
 {
-    nga_wait_internal((Integer *)nbhandle);
+    return(nga_wait_internal((Integer *)nbhandle));
 }
 
 void NGA_Strided_put(int g_a, int lo[], int hi[], int skip[],
