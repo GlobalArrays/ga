@@ -1,4 +1,4 @@
-/* $Id: locks.c,v 1.11 2004-07-27 08:57:59 manoj Exp $ */
+/* $Id: locks.c,v 1.12 2004-08-05 20:05:20 manoj Exp $ */
 #define _LOCKS_C_
 #include "armcip.h"
 #include "locks.h"
@@ -12,15 +12,17 @@ extern void armci_die(char*,int);
 
 #if defined(SPINLOCK) || defined(PMUTEXES)
 
+void **ptr_arr;
+
 #ifdef SGIALTIX
 
 void CreateInitLocks(int num_locks, lockset_t *plockid)
 {
-void **ptr_arr;
 int locks_per_proc, size;
 
     /* locks per process in the SMP node */ 
     locks_per_proc = num_locks/armci_clus_info[armci_clus_me].nslave + 1; 
+    locks_per_proc = num_locks; /* this is am altix hack and no clue why this is works */
     size=locks_per_proc*sizeof(PAD_LOCK_T);
     ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
     ARMCI_Malloc(ptr_arr, size);
@@ -38,7 +40,7 @@ void DeleteLocks(lockset_t lockid) {
 
 void CreateInitLocks(int num_locks, lockset_t *plockid)
 {
-void *ptr, **ptr_arr;
+void *ptr;
 int locks_per_proc, size;
 
   ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
