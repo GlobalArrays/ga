@@ -351,6 +351,7 @@ endif
 #
 #.............................. SP .........................................
 #
+
 ifeq ($(TARGET),SP)
 #
 # SP-2 and SP-2.5 under AIX 4.X (allows some latency optimizations) 
@@ -371,6 +372,11 @@ endef
      FOPT_REN = -qEXTNAME
   CUR_VERSION = DISMEM
     EXPLICITF = TRUE
+ifeq ($(NWCHEM_TARGET_CPU),604)
+        FC += -qarch=604
+        CC += -qarch=ppc
+endif
+
 endif
  
 #......................... older SP systems .....................
@@ -391,6 +397,10 @@ else
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
       FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
 endif
+ifeq ($(NWCHEM_TARGET_CPU),604)
+	FC += -qarch=604 -qtune=604
+	CC += -qarch=ppc -qtune=604
+endif
 
        RANLIB = ranlib
      FOPT_REN = -qEXTNAME
@@ -402,7 +412,7 @@ endif
 #
 ifeq ($(TARGET),LAPI)
 #
-           FC = mpxlf_r
+           FC = mpxlf_r -qnohpf
            CC = mpcc_r
           FLD = $(CC)
        RANLIB = ranlib
@@ -412,21 +422,31 @@ ifeq ($(TARGET),LAPI)
 ifndef USE_MPI
  GLOB_DEFINES += -DTCGMSG
 endif
+
 OPT3 = -O3 -qstrict -qcompact -qarch=com -qtune=pwr2
  ifeq ($(FOPT),-O)
+ifeq ($(NWCHEM_TARGET_CPU),604)
+     OPT3 = -O3 -qstrict -qcompact -qarch=com
+	FC += -qarch=604 -qtune=604 -qthreaded
+	CC += -qarch=ppc -qtune=604
+         FOPT = -O3 -qstrict -qcompact
+else
          FOPT = -O3 -qstrict -qcompact -qarch=com -qtune=pwr2
- endif
- ifeq ($(COPT),-O)
+endif
+endif
+ifeq ($(COPT),-O)
+ifeq ($(NWCHEM_TARGET_CPU),604)
+         COPT = -O -qcompact -qarch=ppc -qtune=604
+else
          COPT = -O -qcompact -qarch=com -qtune=pwr2
- endif
+endif
+endif
 
      FOPT_REN = -qEXTNAME
 #     FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
     EXPLICITF = TRUE
   CUR_VERSION = SHMEM
 endif
-
-
 #
 #.............................. IBM .........................................
 #
