@@ -32,7 +32,11 @@ c
       nproc = ga_nnodes()
       me = ga_nodeid()
 c
-      heap = (size(1)+2)*(size(2)+2)*34/nproc
+      if (ga_uses_ma()) then
+        heap = (size(1)+2)*(size(2)+2)*34/nproc
+      else
+        heap = 100000
+      endif
       stack = 50000
 c
       if (.not.ma_init(MT_DBL, stack, heap))
