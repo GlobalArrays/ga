@@ -9,8 +9,6 @@ typedef struct {
     int bytes;
 } armci_giov_t;
 
-
-
 extern int ARMCI_Init(void);    /* initialize ARMCI */
 
 extern int ARMCI_Put(void *src, void* dst, int bytes, int proc);
@@ -103,6 +101,12 @@ extern int ARMCI_PutValueDouble(double src,/* value in a register to put     */
 				int proc   /* remote process (or) ID         */
 				);
 
+extern int ARMCI_GetValue(void *src, /* source starting addr to put    */
+			  void *dst, /* dest starting addr to put data */
+			  int proc,  /* remote process (or) ID         */
+			  int bytes /* size of the data               */
+			  );
+
 extern int ARMCI_Malloc(void* ptr_arr[], int bytes);
 extern int ARMCI_Free(void *ptr);
 extern int ARMCI_Same_node(int proc);
@@ -170,6 +174,7 @@ extern char *mp_group_name;
 /*\ the request structure for non-blocking api. 
 \*/
 typedef struct{
+    int data[4];
 #if defined(_AIX) 
 #   if defined(__64BIT__)
     double dummy[27]; /*lapi_cntr_t is 200 bytes, using 216 just to be safe*/ 
@@ -179,7 +184,6 @@ typedef struct{
 #else
     double dummy;
 #endif
-    int data[4];
 } armci_req_t;
 /*\ the request structure for non-blocking api. 
 \*/
@@ -244,6 +248,49 @@ extern int ARMCI_NbAccV( int op,       /* operation code */
                 armci_hdl_t nb_handle /*armci_non-blocking request handle*/
               );
 
+extern int ARMCI_NbPutValueInt(int src,   /* value in a register to put     */
+			       void *dst, /* dest starting addr to put data */
+			       int proc,  /* remote process (or) ID         */
+			       armci_hdl_t nb_handle /*armci_non-blocking 
+						       request handle       */
+			       );
+
+extern int ARMCI_NbPutValueLong(long src,  /* value in a register to put     */
+				void *dst, /* dest starting addr to put data */
+				int proc,  /* remote process (or) ID         */
+				armci_hdl_t nb_handle /*armci_non-blocking 
+							request handle       */
+				);
+
+extern int ARMCI_NbPutValueFloat(float src,/* value in a register to put     */
+				 void *dst,/* dest starting addr to put data */
+				 int proc, /* remote process (or) ID         */
+				 armci_hdl_t nb_handle /*armci_non-blocking 
+							 request handle      */
+				 );
+
+extern int ARMCI_NbPutValueDouble(double src,/* value in a register to put   */
+				  void *dst,/* dest starting addr to put data*/
+				  int proc,   /* remote process (or) ID      */
+				  armci_hdl_t nb_handle /*armci_non-blocking 
+							  request handle     */
+				  );
+
+extern int ARMCI_NbGetValue(void *src, /* src starting addr   */
+			    void *dst, /* dest starting addr */
+			    int proc,  /* remote process (or) ID      */
+			    int bytes, /* size of the data type */
+			    armci_hdl_t nb_handle /*armci_non-blocking 
+						    request handle     */
+			    );
+
 extern int ARMCI_Wait(armci_hdl_t nb_handle); /*non-blocking request handle*/
+
+extern void ARMCI_SET_AGGREGATE_HANDLE(armci_hdl_t nb_handle);
+
+extern void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t nb_handle);
+
+#define ARMCI_INIT_HANDLE(hdl) ((double *)((hdl)->data))[0]=0; \
+  ((double *)((hdl)->data))[1]=0; 
 
 #endif /* _ARMCI_H */

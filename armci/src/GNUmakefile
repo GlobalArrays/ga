@@ -2,7 +2,7 @@
          COPT = -O
 
 OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o\
- memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o
+ memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o
 
 OBJ_FRAGILE = message.o
 

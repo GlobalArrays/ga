@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.60 2002-12-22 04:25:49 vinod Exp $ */
+/* $Id: armci.c,v 1.61 2002-12-23 20:49:55 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -382,7 +382,6 @@ int ARMCI_Same_node(int proc)
    return direct;
 }
 
-
 /*\ blocks the calling process until a nonblocking operation represented
  *  by the user handle completes
 \*/
@@ -390,8 +389,13 @@ int ARMCI_Wait(armci_hdl_t usr_hdl){
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
 int direct=SAMECLUSNODE(nb_handle->proc);
-
-    if(direct)return(success);
+    if(nb_handle) {
+      if(nb_handle->agg_flag) {
+	armci_agg_complete(nb_handle, UNSET);
+	return (success);
+      }
+    }
+   if(direct)return(success);
     if(nb_handle){
 #     ifdef ARMCI_NB_WAIT
         if(nb_handle->tag==0){
@@ -412,8 +416,17 @@ int direct=SAMECLUSNODE(nb_handle->proc);
     return(success);
 }
 
-
 static unsigned int _armci_nb_tag=0;
 unsigned int _armci_get_next_tag(){
     return((++_armci_nb_tag));
+}
+
+void ARMCI_SET_AGGREGATE_HANDLE(armci_hdl_t nb_handle) { 
+      ((armci_ihdl_t)(nb_handle))->agg_flag = 1;
+      ((armci_ihdl_t)(nb_handle))->proc = -1;
+}
+ 
+void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t nb_handle) {
+      ((armci_ihdl_t)(nb_handle))->agg_flag = 0;
+      ((armci_ihdl_t)(nb_handle))->proc = -1;
 }

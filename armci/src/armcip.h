@@ -296,5 +296,38 @@ extern void armci_set_shmem_limit(unsigned long shmemlimit);
 #define SIXTYFOUR 64
 #define ALIGN64ADD(buf) (SIXTYFOUR-(((ssize_t)(buf))%SIXTYFOUR))
 
+#define SET   1
+#define UNSET 0
+
+#define AGG_INIT_NB_HANDLE(op_type, p, nb_handle)  { \
+    if(nb_handle->proc < 0) {                 \
+      nb_handle->tag  = GET_NEXT_NBTAG();     \
+      nb_handle->op   = op_type;              \
+      nb_handle->proc = p;                    \
+      nb_handle->bufid= NB_NONE;              \
+    }                                         \
+    else if(nb_handle->op != op_type)         \
+      armci_die("ARMCI_NbXXX: AGG_INIT_NB_HANDLE(): Aggregate Failed, Invalid non-blocking handle", nb_handle->op);             \
+    else if(nb_handle->proc != p)          \
+      armci_die("ARMCI_NbXXX: AGG_INIT_NB_HANDLE(): Aggregate Failed, Invalid non-blocking handle", p);                      \
+    }
+
+extern int armci_agg_save_strided_descriptor(void *src_ptr, 
+					     int src_stride_arr[],
+					     void* dst_ptr, 
+					     int dst_stride_arr[],
+					     int count[], 
+					     int stride_levels, int proc,
+					     int op, armci_ihdl_t nb_handle);
+     
+extern int armci_agg_save_giov_descriptor(armci_giov_t darr[], int len, 
+					   int proc, int op, 
+					   armci_ihdl_t nb_handle);
+
+extern int armci_agg_save_descriptor(void *src, void *dst, int bytes, 
+				      int proc, int op, int is_registered_put,
+				      armci_ihdl_t nb_handle);
+
+extern void armci_agg_complete(armci_ihdl_t nb_handle, int condition);
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.23 2002-12-19 21:33:41 vinod Exp $ */
+/* $Id: vector.c,v 1.24 2002-12-23 20:49:56 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -545,22 +545,29 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
     }
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
-
-
-    /*ORDER(PUT,proc);  ensure ordering */
-    UPDATE_FENCE_INFO(proc);
-
+    
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
-/*set tag and op in the nb handle*/
-    if(nb_handle){
-      nb_handle->tag = GET_NEXT_NBTAG();
-      nb_handle->op  = PUT;
-      nb_handle->proc= proc;
-      nb_handle->bufid=NB_NONE;
-    }
 
+    /* aggregate put */
+    if(nb_handle && nb_handle->agg_flag == SET) {
+      if(!direct) 
+	return armci_agg_save_giov_descriptor(darr, len, proc, PUT, nb_handle);
+    }
+    else {
+      
+      /*ORDER(PUT,proc);  ensure ordering */
+      UPDATE_FENCE_INFO(proc);
+      
+      /*set tag and op in the nb handle*/
+      if(nb_handle){
+	nb_handle->tag = GET_NEXT_NBTAG();
+	nb_handle->op  = PUT;
+	nb_handle->proc= proc;
+	nb_handle->bufid=NB_NONE;
+      }
+    }
 
     if(direct)
          rc = armci_copy_vector(PUT, darr, len, proc);
@@ -600,19 +607,26 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
-    /*ORDER(GET,proc);  ensure ordering */
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
-
-    if(nb_handle){
-      nb_handle->tag = GET_NEXT_NBTAG();
-      nb_handle->op  = GET;
-      nb_handle->proc= proc;
-      nb_handle->bufid=NB_NONE;
+    
+    /* aggregate get */
+    if(nb_handle && nb_handle->agg_flag == SET) {
+      if(!direct)
+	return armci_agg_save_giov_descriptor(darr, len, proc, GET, nb_handle);
     }
-
-    if(direct)
+    else {
+      /* ORDER(GET,proc); ensure ordering */      
+      if(nb_handle){
+	nb_handle->tag = GET_NEXT_NBTAG();
+	nb_handle->op  = GET;
+	nb_handle->proc= proc;
+	nb_handle->bufid=NB_NONE;
+      }
+    }
+    
+    if(direct) 
        rc = armci_copy_vector(GET, darr, len, proc);
     else{
 #if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 

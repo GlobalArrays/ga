@@ -42,7 +42,8 @@ extern void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol)
 \*/
 typedef struct{
    unsigned int tag;
-   int bufid;
+   short int bufid;
+   short int agg_flag;
    int op;
    int proc;
 #ifdef NB_CMPL_T

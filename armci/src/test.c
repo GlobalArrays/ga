@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.33 2002-12-22 03:34:56 vinod Exp $ */
+/* $Id: test.c,v 1.34 2002-12-23 20:49:56 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -542,6 +542,8 @@ int idx1=0, idx2=0, idx3=0;
        c[ndim] = malloc(sizeof(double)*elems);
        assert(c[ndim]);
        init(a[ndim], ndim, elems, dimsA);
+       ARMCI_INIT_HANDLE(hdl_put+ndim);
+       ARMCI_INIT_HANDLE(hdl_get+ndim);
     }
     ARMCI_AllFence();
     MP_BARRIER();
@@ -576,7 +578,7 @@ int idx1=0, idx2=0, idx3=0;
        idx3 = Index(ndim, nloC[ndim], dimsA);
        for(j=0;j<ndim;j++)count[j]=nhiA[ndim][j]-nloA[ndim][j]+1;
        count[0]   *= sizeof(double); 
-       
+
        if(ndim==1){
          (void)ARMCI_NbPut((double*)a[ndim]+idx1,(double*)b[ndim][proc]+idx2,
                            count[0], proc, (hdl_put+ndim));
@@ -744,6 +746,7 @@ int lenpergiov;
          dsc[j].dst_ptr_array = &pdst[kcold];
          dsc[j].ptr_array_len = PTR_ARR_LEN;
        }
+       ARMCI_INIT_HANDLE(hdl_put+i);
        if((rc=ARMCI_NbPutV(dsc,GIOV_ARR_LEN,dstproc,hdl_put+i)))
          ARMCI_Error("putv failed",rc);
     }
@@ -779,6 +782,7 @@ int lenpergiov;
          dsc[j].dst_ptr_array = &pdst[kcold];
          dsc[j].ptr_array_len = PTR_ARR_LEN;
        }
+       ARMCI_INIT_HANDLE(hdl_get+dstproc);
        if((rc=ARMCI_NbGetV(dsc,GIOV_ARR_LEN,dstproc,hdl_get+dstproc)))
          ARMCI_Error("putv failed",rc);
     }
@@ -1364,74 +1368,250 @@ void test_memlock()
 
 void test_rput()
 {
-  int i, elems = nproc;
-  int *idst[MAXPROC];
-  long *ldst[MAXPROC];
-  float *fdst[MAXPROC];
-  double *ddst[MAXPROC];
+    int i, elems = nproc, one=1;
+    int *idst[MAXPROC], idst_get[MAXPROC], *isrc_get[MAXPROC];
+    long *ldst[MAXPROC], ldst_get[MAXPROC], *lsrc_get[MAXPROC];
+    float *fdst[MAXPROC], fdst_get[MAXPROC], *fsrc_get[MAXPROC];
+    double *ddst[MAXPROC], ddst_get[MAXPROC], *dsrc_get[MAXPROC];
 
-  create_array((void**)idst, sizeof(int),1, &elems);
-  create_array((void**)ldst, sizeof(long),1, &elems);
-  create_array((void**)fdst, sizeof(float),1, &elems);
-  create_array((void**)ddst, sizeof(double),1, &elems); 
-  
-  for(i=0; i<elems; i++) {
-    idst[me][i]=0; ldst[me][i]=0; fdst[me][i]=0.0; ddst[me][i]=0.0;
-  }
+    create_array((void**)idst, sizeof(int),1, &elems);
+    create_array((void**)ldst, sizeof(long),1, &elems);
+    create_array((void**)fdst, sizeof(float),1, &elems);
+    create_array((void**)ddst, sizeof(double),1, &elems);     
+    create_array((void**)isrc_get, sizeof(int),1, &one);
+    create_array((void**)lsrc_get, sizeof(long),1, &one);
+    create_array((void**)fsrc_get, sizeof(float),1, &one);
+    create_array((void**)dsrc_get, sizeof(double),1, &one); 
+    
+    for(i=0; i<elems; i++) {
+      idst[me][i]=0; ldst[me][i]=0; fdst[me][i]=0.0; ddst[me][i]=0.0;
+      idst_get[i]=0; ldst_get[i]=0; fdst_get[i]=0.0; ddst_get[i]=0.0;      
+    }
+    isrc_get[me][0]=100*(me+1); lsrc_get[me][0]=100*(me+1);
+    fsrc_get[me][0]=100.01*(me+1); dsrc_get[me][0]=100.001*(me+1);
 
-  MP_BARRIER();
-  for(i=0; i<nproc; i++) {
-    ARMCI_PutValueInt(10*(me+1), (void *)&idst[i][me], i);
-    ARMCI_PutValueLong((long)10*(me+1), (void *)&ldst[i][me], i);
-    ARMCI_PutValueFloat(10.01*(me+1), (void *)&fdst[i][me], i);
-    ARMCI_PutValueDouble(10.001*(me+1), (void *)&ddst[i][me], i);
-  }
-  
-  ARMCI_AllFence();
-  MP_BARRIER();
-  
-  if(me==0)printf("int data type: ");
-  for(i=0; i<elems; i++) {
-    if(idst[me][i]!=10*(i+1)) 
-      ARMCI_Error("Integer register-originated put failed", 0);
-  }
+    
+    MP_BARRIER();
+    for(i=0; i<nproc; i++) {
+      ARMCI_PutValueInt(10*(me+1), (void *)&idst[i][me], i);
+      ARMCI_PutValueLong((long)10*(me+1), (void *)&ldst[i][me], i);
+      ARMCI_PutValueFloat(10.01*(me+1), (void *)&fdst[i][me], i);
+      ARMCI_PutValueDouble(10.001*(me+1), (void *)&ddst[i][me], i);
+    }
 
-  if(me==0)printf("OK\nlong data type: ");
-  for(i=0; i<elems; i++) {
-    if(ldst[me][i]!=10*(i+1))
-      ARMCI_Error("Long register-originated put failed", 0);
-  }
-  if(me==0)printf("OK\nfloat data type: ");
-  for(i=0; i<elems; i++) {
-    if( ABS(fdst[me][i]-10.01*(i+1)) > 0.1)
-      ARMCI_Error("Float register-originated put failed", 0);
-  }
-  if(me==0)printf("OK\ndouble data type: ");
-  for(i=0; i<elems; i++) {
-    if(ABS(ddst[me][i]-10.001*(i+1)) > 0.1)
-      ARMCI_Error("Double register-originated put failed",0);
-  }
-  if(me==0){printf("OK\n"); fflush(stdout);}
+    for(i=0; i<nproc; i++) {
+      ARMCI_GetValue(isrc_get[i], (void *)&idst_get[i], i, sizeof(int));
+      ARMCI_GetValue(lsrc_get[i], (void *)&ldst_get[i], i, sizeof(long));
+      ARMCI_GetValue(fsrc_get[i], (void *)&fdst_get[i], i, sizeof(float));
+      ARMCI_GetValue(dsrc_get[i], (void *)&ddst_get[i], i, sizeof(double));
+    }
+    
+    ARMCI_AllFence();
+    MP_BARRIER();
+    
+    if(me==0)printf("int data type: ");
+    for(i=0; i<elems; i++) {
+      if(idst[me][i]!=10*(i+1))
+	ARMCI_Error("Integer register-originated put failed", 0);
+      if(idst_get[i]!=100*(i+1))
+	ARMCI_Error("Integer register-originated get failed", 0);
+    }
+    
+    if(me==0)printf("OK\nlong data type: ");
+    for(i=0; i<elems; i++) {
+      if(ldst[me][i]!=10*(i+1))
+	ARMCI_Error("Long register-originated put failed", 0);
+      if(ldst_get[i]!=100*(i+1))
+	ARMCI_Error("Long register-originated get failed", 0);
+    }
+    if(me==0)printf("OK\nfloat data type: ");
+    for(i=0; i<elems; i++) {
+      if( ABS(fdst[me][i]-10.01*(i+1)) > 0.1)
+	ARMCI_Error("Float register-originated put failed", 0);
+      if( ABS(fdst_get[i]-100.01*(i+1)) > 0.1)
+	ARMCI_Error("Float register-originated get failed", 0);
+    }
+    if(me==0)printf("OK\ndouble data type: ");
+    for(i=0; i<elems; i++) {
+      if(ABS(ddst[me][i]-10.001*(i+1)) > 0.1)
+	ARMCI_Error("Double register-originated put failed",0);
+      if(ABS(ddst_get[i]-100.001*(i+1)) > 0.1)
+	ARMCI_Error("Double register-originated get failed",0);
+    }
+    if(me==0){printf("OK\n"); fflush(stdout);}
+    
+    ARMCI_AllFence();
+    MP_BARRIER();
+    
+    
+    destroy_array((void **)idst);
+    destroy_array((void **)ldst);
+    destroy_array((void **)fdst);
+    destroy_array((void **)ddst);
 
-  ARMCI_AllFence();
-  MP_BARRIER();
-
-  
-  destroy_array((void **)idst);
-  destroy_array((void **)ldst);
-  destroy_array((void **)fdst);
-  destroy_array((void **)ddst);
+    destroy_array((void **)isrc_get);
+    destroy_array((void **)lsrc_get);
+    destroy_array((void **)fsrc_get);
+    destroy_array((void **)dsrc_get);
 }
 
 
+#define MAXPROC       256
+#define MAXELEMS      6400
+#define NUMAGG        20   /* NUMAGG < MAXELEMS/10 */
+#define MAX_REQUESTS  320 /* MAXELEMS/NUMAGG */
+#define DUMMY         50
 
+void test_aggregate() {
+  
+    int i, j, k, rc, bytes, elems[2] = {MAXPROC, MAXELEMS};
+    double *ddst_put[MAXPROC];
+    double *ddst_get[MAXPROC];
+    double *dsrc[MAXPROC];
+    armci_req_t usr_hdl_put[MAXPROC];
+    armci_req_t usr_hdl_get[MAXPROC];
+    armci_giov_t darr;
+    void *src_ptr[MAX_REQUESTS], *dst_ptr[MAX_REQUESTS];
+    int start = 0, end = 0;
+        
+    create_array((void**)ddst_put, sizeof(double),2, elems);
+    create_array((void**)ddst_get, sizeof(double),2, elems);
+    create_array((void**)dsrc, sizeof(double),1, &elems[1]);
+    
+    for(i=0; i<elems[1]; i++) dsrc[me][i]=i*1.001*(me+1);
+    for(i=0; i<elems[0]*elems[1]; i++) {
+      ddst_put[me][i]=0.0;
+      ddst_get[me][i]=0.0;
+    }
+    
+    MP_BARRIER();
+    for(i=0; i<nproc; i++) ARMCI_INIT_HANDLE(&usr_hdl_put[i]);
+    for(i=0; i<nproc; i++) ARMCI_INIT_HANDLE(&usr_hdl_get[i]);
+    for(i=0; i<nproc; i++) ARMCI_SET_AGGREGATE_HANDLE(&usr_hdl_put[i]);
+    for(i=0; i<nproc; i++) ARMCI_SET_AGGREGATE_HANDLE(&usr_hdl_get[i]);    
+
+    /* Testing aggregate put */
+    for(i=0; i<nproc; i++) {
+
+      start = 0; end = DUMMY*NUMAGG; 
+      for(j=start; j<end; j++) {  
+	bytes = sizeof(double);
+	ARMCI_NbPutValueDouble(dsrc[me][j], &ddst_put[i][me*elems[1]+j], i, 
+			       &usr_hdl_put[i]);
+      }
+      
+      start = end; end = start + DUMMY*NUMAGG;
+      for(j=start, k=0; j<end; j+=NUMAGG, k++) {
+	src_ptr[k] = (void *)&dsrc[me][j];
+	dst_ptr[k] = (void *)&ddst_put[i][me*elems[1]+j];
+      }
+      darr.src_ptr_array = src_ptr;
+      darr.dst_ptr_array = dst_ptr;
+      darr.bytes = NUMAGG*sizeof(double);
+      darr.ptr_array_len = k;
+      if((rc=ARMCI_NbPutV(&darr, 1, i, &usr_hdl_put[i])))
+	ARMCI_Error("armci_nbputv failed\n",rc);
+
+      start = end; end = start + DUMMY*NUMAGG;
+      for(j=start; j<end; j+=NUMAGG) {  
+	bytes = sizeof(double)*NUMAGG;
+	if((rc=ARMCI_NbPutS(&dsrc[me][j], NULL, &ddst_put[i][me*elems[1]+j], NULL, 
+			    &bytes, 0, i, &usr_hdl_put[i])))
+	  ARMCI_Error("armci_nbputs failed\n",rc);
+      }
+ 
+      start = end; end = elems[1]; 
+      for(j=start; j<end; j+=NUMAGG) {  
+	bytes = sizeof(double)*NUMAGG;
+	if((rc=ARMCI_NbPut(&dsrc[me][j], &ddst_put[i][me*elems[1]+j], bytes,
+			   i, &usr_hdl_put[i])))
+	  ARMCI_Error("armci_nbput failed\n",rc);
+      }
+
+    }
+    
+    for(i=0; i<nproc; i++) ARMCI_Wait(&usr_hdl_put[i]);
+
+    /* Testing aggregate get */
+    for(i=0; i<nproc; i++) {
+      
+      start = 0; end = DUMMY*NUMAGG; 
+      for(j=start; j<end; j++) {  
+	bytes = sizeof(double);
+	ARMCI_NbGetValue(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], i, bytes,
+			 &usr_hdl_get[i]);
+      }
+
+      start = end; end = start + DUMMY*NUMAGG;
+      for(j=start, k=0; j<end; j+=NUMAGG, k++) {
+	src_ptr[k] = (void *)&dsrc[i][j];
+	dst_ptr[k] = (void *)&ddst_get[me][i*elems[1]+j];
+      }
+      darr.src_ptr_array = src_ptr;
+      darr.dst_ptr_array = dst_ptr;
+      darr.bytes = NUMAGG*sizeof(double);
+      darr.ptr_array_len = k;
+      if((rc=ARMCI_NbGetV(&darr, 1, i, &usr_hdl_get[i])))
+	ARMCI_Error("armci_nbgetv failed\n", rc);
+
+      start = end; end = start + DUMMY*NUMAGG;
+      for(j=start; j<end; j+=NUMAGG) {  
+	bytes = sizeof(double)*NUMAGG;
+	if((rc=ARMCI_NbGetS(&dsrc[i][j], NULL, &ddst_get[me][i*elems[1]+j], NULL, 
+			    &bytes, 0, i, &usr_hdl_get[i])))
+	  ARMCI_Error("armci_nbputs failed\n",rc);
+      }
+
+      start = end; end = elems[1];
+      for(j=start; j<end; j+=NUMAGG) {  
+	bytes = sizeof(double)*NUMAGG;
+	if((rc=ARMCI_NbGet(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], bytes,
+			   i, &usr_hdl_get[i])))
+	  ARMCI_Error("armci_nbget failed\n",rc);
+      }
+    }
+
+    for(i=0; i<nproc; i++) ARMCI_Wait(&usr_hdl_get[i]);
+        
+    
+    MP_BARRIER();
+    ARMCI_AllFence();
+    MP_BARRIER();
+    
+    for(i=0; i<nproc; i++) {
+      for(j=0; j<elems[1]; j++) {
+	if( ABS(ddst_put[me][i*elems[1]+j]-j*1.001*(i+1)) > 0.1) {
+	  ARMCI_Error("aggregate put failed...1", 0);
+	}
+      }
+    }
+    MP_BARRIER();
+    if(me==0) printf("  aggregate put ..O.K.\n"); fflush(stdout);
+
+    for(i=0; i<nproc; i++) {
+      for(j=0; j<elems[1]; j++) {
+	if( ABS(ddst_get[me][i*elems[1]+j]-j*1.001*(i+1)) > 0.1) {
+	  ARMCI_Error("aggregate get failed...1", 0);
+	}
+      }
+    }
+    MP_BARRIER();
+    if(me==0) printf("  aggregate get ..O.K.\n"); fflush(stdout);
+    
+    ARMCI_AllFence();
+    MP_BARRIER();
+    
+    if(me==0){printf("O.K.\n"); fflush(stdout);}
+    destroy_array((void **)ddst_put);
+    destroy_array((void **)ddst_get);
+    destroy_array((void **)dsrc);
+}
 
 
 /* we need to rename main if linking with frt compiler */
 #ifdef FUJITSU_FRT
 #define main MAIN__
 #endif
-
 
 int main(int argc, char* argv[])
 {
@@ -1468,7 +1648,6 @@ int main(int argc, char* argv[])
         ARMCI_AllFence();
         MP_BARRIER();
 
-#if 1
         if(me==0){
            printf("\nTesting non-blocking gets and puts\n");
            fflush(stdout);
@@ -1478,23 +1657,15 @@ int main(int argc, char* argv[])
         ARMCI_AllFence();
         MP_BARRIER();
 
-#endif
-        
         if(me==0){
            printf("\nTesting non-blocking vector gets and puts\n");
            fflush(stdout);
            sleep(1);
         }
         test_vec_small();
-
-        if(me==0){
-           printf("\nTesting register-originated puts\n");
-           fflush(stdout);
-           sleep(1);
-        }
-        test_rput(); 
         ARMCI_AllFence();
         MP_BARRIER();
+
 
         if(me==0){
            printf("\nTesting atomic accumulate\n");
@@ -1535,7 +1706,6 @@ int main(int argc, char* argv[])
 
         test_fetch_add();
 
-
         ARMCI_AllFence();
         MP_BARRIER();
 
@@ -1544,6 +1714,28 @@ int main(int argc, char* argv[])
            fflush(stdout);
         }
         test_swap();
+        ARMCI_AllFence();
+        MP_BARRIER();
+
+        if(me==0){
+           printf("\nTesting register-originated put and get\n");
+           fflush(stdout);
+           sleep(1);
+        }
+        test_rput(); 
+        ARMCI_AllFence();
+        MP_BARRIER();
+
+
+	if(me==0){
+	  printf("\nTesting aggregate put/get requests\n");
+	  fflush(stdout);
+	}
+	test_aggregate();
+	
+	ARMCI_AllFence();
+	MP_BARRIER();
+
 
         MP_BARRIER();
         /*test_memlock();*/
@@ -1557,4 +1749,3 @@ int main(int argc, char* argv[])
     MP_FINALIZE();
     return(0);
 }
-

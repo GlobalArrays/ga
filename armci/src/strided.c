@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.56 2002-12-19 21:33:40 vinod Exp $ */
+/* $Id: strided.c,v 1.57 2002-12-23 20:49:56 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -46,9 +46,9 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
         /* data is in local/shared memory -- can use memcpy */
 
         if(count==1 && bytes <THRESH1D){
-            
+	  
             armci_copy(src_ptr, dst_ptr, bytes); 
-            
+
         }else {
             
             if(bytes < THRESH){ /* low-latency copy for small data segments */        
@@ -783,7 +783,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
                 )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
-    int rc, direct=1;
+    int rc=0, direct=1;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
     if(count[0]<0)return FAIL3;
@@ -796,19 +796,29 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
        vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
 #endif
 
-    /*ORDER(PUT,proc);  ensure ordering */
-    UPDATE_FENCE_INFO(proc);
-
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
 
-    /*set tag and op in the nb handle*/
-    if(nb_handle){
-      nb_handle->tag = GET_NEXT_NBTAG();
-      nb_handle->op  = PUT;
-      nb_handle->proc= proc;
-      nb_handle->bufid=NB_NONE;
+    /* aggregate put */
+    if(nb_handle && nb_handle->agg_flag == SET) {
+      if(!direct) 
+	return armci_agg_save_strided_descriptor(src_ptr, src_stride_arr, 
+						 dst_ptr, dst_stride_arr, 
+						 count, stride_levels, proc, 
+						 PUT, nb_handle);
+    }
+    else {
+      /*ORDER(PUT,proc);  ensure ordering */
+      UPDATE_FENCE_INFO(proc);
+      
+      /*set tag and op in the nb handle*/
+      if(nb_handle){
+	nb_handle->tag = GET_NEXT_NBTAG();
+	nb_handle->op  = PUT;
+	nb_handle->proc= proc;
+	nb_handle->bufid=NB_NONE;
+      }
     }
 
 #ifndef LAPI2
@@ -825,9 +835,15 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     }
     else
 #endif 
-       rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr,
-                       dst_ptr,dst_stride_arr,count,stride_levels, 0,nb_handle);
-
+      {
+	if(stride_levels == 0)
+          armci_copy_2D(PUT, proc, src_ptr, dst_ptr, count[0], 1, count[0],
+                        count[0]);
+        else 
+	  rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr,
+				 dst_ptr,dst_stride_arr,count,stride_levels, 0,nb_handle);
+      }
+    
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
@@ -836,7 +852,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 
     if(rc) return FAIL6;
     else return 0;
-
+    
 }
 
 
@@ -852,15 +868,12 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                 )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
-    int rc,direct=1;
+    int rc=0,direct=1;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
     if(count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
-    
-
-     /*ORDER(GET,proc);  ensure ordering */
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -869,14 +882,26 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(stride_levels) /* reduce stride_levels for trivial cases */
        for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;
 
-/*set tag and op in the nb handle*/
-    if(nb_handle){
-       nb_handle->tag = GET_NEXT_NBTAG();
-       nb_handle->op  = GET;
-       nb_handle->proc= proc;
-       nb_handle->bufid=NB_NONE;
+    /* aggregate get */
+    if(nb_handle && nb_handle->agg_flag == SET) {
+      if(!direct) 
+	return armci_agg_save_strided_descriptor(src_ptr, src_stride_arr,
+						 dst_ptr, dst_stride_arr, 
+						 count, stride_levels, proc, 
+						 GET, nb_handle);
     }
-
+    else {
+      /* ORDER(GET,proc); ensure ordering */
+      
+      /*set tag and op in the nb handle*/
+      if(nb_handle){
+	nb_handle->tag = GET_NEXT_NBTAG();
+	nb_handle->op  = GET;
+	nb_handle->proc= proc;
+	nb_handle->bufid=NB_NONE;
+      }
+    }
+    
 #ifndef LAPI2
     if(!direct){
 
@@ -940,7 +965,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
        if(armci_me != proc) direct=0;
 #   endif
  
-    /*set tag and op in the nb handle*/
+/*set tag and op in the nb handle*/
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = optype;
@@ -950,7 +975,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 
     if(direct)
       rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
-                           dst_stride_arr, count, stride_levels,1,NULL);
+			    dst_stride_arr, count, stride_levels,1,NULL);
     else
       rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
                     dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,nb_handle);
@@ -969,116 +994,238 @@ int ARMCI_NbAccS( int  optype,            /* operation */
              (nb)->op  = (o); (nb)->proc= (p);\
              (nb)->bufid=NB_NONE;}
 
-
-/*\ nonblocking contiguous/1D PUT
-\*/
 int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
 {
+
     int rc=0, direct;
     armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
-
+    
     if(src == NULL || dst == NULL) return FAIL;
-
+        
     direct =SAMECLUSNODE(proc);
-    if(direct) { 
-       /*armci_wait needs proc to compute direct*/
-       INIT_NB_HANDLE(nb_handle,PUT,proc);
-       armci_copy(src,dst,bytes);
+
+    /* aggregate put */
+    if(nb_handle && nb_handle->agg_flag == SET) {
+      if(direct) { armci_copy(src,dst,bytes); return 0; }
+      else
+	return armci_agg_save_descriptor(src,dst,bytes,proc,PUT,0,nb_handle); 
+    }
+
+    if(direct) {
+      /*armci_wait needs proc to compute direct*/
+      INIT_NB_HANDLE(nb_handle,PUT,proc);
+      armci_copy(src,dst,bytes);
     }else{
 #     ifdef ARMCI_NB_PUT
-           /*set tag and op in the nb handle*/
-           INIT_NB_HANDLE(nb_handle,PUT,proc);
-
-           UPDATE_FENCE_STATE(proc, PUT, 1);
-
-           ARMCI_NB_PUT(src, dst, bytes, proc, &nb_handle->cmpl_info);
+      /*set tag and op in the nb handle*/
+      INIT_NB_HANDLE(nb_handle,PUT,proc);
+      
+      UPDATE_FENCE_STATE(proc, PUT, 1);
+      
+      ARMCI_NB_PUT(src, dst, bytes, proc, &nb_handle->cmpl_info);
 #     else
-           return ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+      return ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
-    } 
+    }
     return(rc);
 }
 
 
-/*\ nonblocking contiguous/1D GET
-\*/
 int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
 {
 
     int rc=0, direct;
     armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
-
+    
     if(src == NULL || dst == NULL) return FAIL;
-
+    
     direct =SAMECLUSNODE(proc);
+
+    /* aggregate get */
+    if(nb_handle && nb_handle->agg_flag == SET) {
+      if(direct) { armci_copy(src,dst,bytes); return 0; }
+      else
+	return armci_agg_save_descriptor(src,dst,bytes,proc,GET,0,nb_handle);
+    }
+
     if(direct) {
-       /*armci_wait needs proc to compute direct*/
-       INIT_NB_HANDLE(nb_handle,PUT,proc);
-       armci_copy(src,dst,bytes);
+      /*armci_wait needs proc to compute direct*/
+      INIT_NB_HANDLE(nb_handle,PUT,proc);
+      armci_copy(src,dst,bytes);
     }else{
 #     ifdef ARMCI_NB_GET
-           /*set tag and op in the nb handle*/
-           INIT_NB_HANDLE(nb_handle,GET,proc);
-
-           ARMCI_NB_GET(src, dst, bytes, proc, &nb_handle->cmpl_info);
+      /*set tag and op in the nb handle*/
+      INIT_NB_HANDLE(nb_handle,GET,proc);
+      
+      ARMCI_NB_GET(src, dst, bytes, proc, &nb_handle->cmpl_info);
 #     else
-           return ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+      return ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
-    } 
+    }
     return(rc);
 }
 
 
-
-static void _armci_rem_put_value(void *src, void *dst, int proc, int bytes) {
-  
-    if(src == NULL || dst == NULL) 
-       armci_die("_armci_rem_put_value: Invalid buffer", FAIL);
-    if(bytes<0) armci_die("_armci_rem_put_value: Invalid buffer length",FAIL3);
-    if(proc<0) armci_die("_armci_rem_put_value: Invalid Process id", FAIL5);
-  
-    ORDER(PUT,proc); /* ensure ordering */
+static void _armci_rem_value(int op, void *src, void *dst, int proc, 
+			     int bytes, armci_ihdl_t nb_handle) {  
+    int rc=0, pv=0;
     
-#ifndef REMOTE_OP
-    UPDATE_FENCE_STATE(proc, PUT, 1);
-#  ifdef LAPI
-    SET_COUNTER(ack_cntr, 1);
-#  endif
-    armci_put(src, dst, bytes, proc);
+    if(nb_handle) {
+      if(nb_handle->agg_flag == SET) {
+	if(op==PUT) pv = 1;
+	(void)armci_agg_save_descriptor(src,dst,bytes,proc,op,pv,nb_handle);
+	return;
+      }
+      else {
+	if(op==PUT) UPDATE_FENCE_INFO(proc); 
+	
+	/*set tag and op in the nb handle*/
+	if(nb_handle){
+	  nb_handle->tag = GET_NEXT_NBTAG();
+	  nb_handle->op  = op;
+	  nb_handle->proc= proc;
+	  nb_handle->bufid=NB_NONE;
+	}
+      }
+    }
+    else
+      ORDER(op,proc); /* ensure ordering */
+    
+#ifdef REMOTE_OP
+    rc = armci_rem_strided(op, NULL, proc, src, NULL, dst, NULL,
+			   &bytes, 0, NULL, 0, nb_handle);
+    if(rc) armci_die("ARMCI_Value: armci_rem_strided incomplete", FAIL6);
 #else
-    armci_rem_strided(PUT, NULL, proc, src, NULL, dst, NULL,
-		      &bytes, 0, NULL, 0, NULL);
+    
+    if(op==PUT) {
+      UPDATE_FENCE_STATE(proc, PUT, 1);
+#     ifdef LAPI
+      SET_COUNTER(ack_cntr, 1);
+#     endif
+      armci_put(src, dst, bytes, proc);
+    }
+    else {
+#     ifdef LAPI
+      SET_COUNTER(get_cntr, 1);
+#     endif
+      armci_get(src, dst, bytes, proc);
+    }
+    
+    /* deal with non-blocking loads and stores */
+# if defined(LAPI) || defined(_ELAN_PUTGET_H)
+#   ifdef LAPI
+    if(!nb_handle)
+#   endif
+      {
+	if(proc != armci_me){
+          if(op == GET){
+	    WAIT_FOR_GETS; /* wait for data arrival */
+          }else {
+            WAIT_FOR_PUTS; /* data must be copied out*/
+          }
+	}
+      }
+# endif
 #endif
 }
 
 #define CHK_ERR(dst, proc)       \
-    if(dst==NULL) armci_die("ARMCI_PutValue():NULL pointer passed",FAIL);  \
-    if(proc<0) armci_die("ARMCI_PutValue():Invalid process rank", proc);
+    if(dst==NULL) armci_die("ARMCI_PutValue: NULL pointer passed",FAIL);  \
+    if(proc<0) armci_die("ARMCI_PutValue: Invalid process rank", proc);
 
-int ARMCI_PutValueInt(int src, void *dst, int proc) {
+#define CHK_ERR_GET(src, dst, proc, bytes)       \
+    if(src==NULL || dst==NULL) armci_die("ARMCI_GetValue: NULL pointer passed",FAIL);  \
+    if(proc<0) armci_die("ARMCI_GetValue: Invalid process rank", proc); \
+    if(bytes<0) armci_die("ARMCI_GetValue: Invalid size", bytes);
+
+/** 
+ * Register-Originated Put.
+ */
+int ARMCI_PutValueInt(int src, void *dst, int proc) 
+{
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(int *)dst = src;
-    else _armci_rem_put_value(&src, dst, proc, sizeof(int));
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(int), NULL);
     return 0;
 }
 
-int ARMCI_PutValueLong(long src, void *dst, int proc) {
+int ARMCI_PutValueLong(long src, void *dst, int proc) 
+{
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(long *)dst = src;
-    else _armci_rem_put_value(&src, dst, proc, sizeof(long));
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(long), NULL);
     return 0;
 }
 
-int ARMCI_PutValueFloat(float src, void *dst, int proc) {
+int ARMCI_PutValueFloat(float src, void *dst, int proc) 
+{
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(float *)dst = src;
-    else _armci_rem_put_value(&src, dst, proc, sizeof(float));
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(float), NULL);
     return 0;
 }
 
-int ARMCI_PutValueDouble(double src, void *dst, int proc) {
+int ARMCI_PutValueDouble(double src, void *dst, int proc) 
+{
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(double *)dst = src;
-    else _armci_rem_put_value(&src, dst, proc, sizeof(double));
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(double), NULL);
+    return 0;
+}
+
+/**
+ * Non-Blocking register-originated put.
+ */
+int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t usr_hdl) 
+{
+    CHK_ERR(dst, proc);
+    if( SAMECLUSNODE(proc) ) *(int *)dst = src;
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(int), (armci_ihdl_t)usr_hdl);
+    return 0;
+}
+
+int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t usr_hdl) 
+{
+    CHK_ERR(dst, proc);
+    if( SAMECLUSNODE(proc) ) *(long *)dst = src;
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(long), (armci_ihdl_t)usr_hdl);
+    return 0;
+}
+
+int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t usr_hdl)
+{
+    CHK_ERR(dst, proc);
+    if( SAMECLUSNODE(proc) ) *(float *)dst = src;
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(float), (armci_ihdl_t)usr_hdl);
+    return 0;
+}
+
+int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t usr_hdl)
+{
+    CHK_ERR(dst, proc);
+    if( SAMECLUSNODE(proc) ) *(double *)dst = src;
+    else _armci_rem_value(PUT, &src, dst, proc, sizeof(double), (armci_ihdl_t)usr_hdl);
+    return 0;
+}
+
+/**
+ * Register-Originated Get.
+ */
+int ARMCI_GetValue(void *src, void *dst, int proc, int bytes) 
+{
+    CHK_ERR_GET(src, dst, proc, bytes);
+    if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
+    else _armci_rem_value(GET, src, dst, proc, bytes, NULL);
+    return 0;
+}
+
+/**
+ * Non-Blocking register-originated get.
+ */
+int ARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t usr_hdl) 
+{
+    CHK_ERR_GET(src, dst, proc, bytes);
+    if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
+    else _armci_rem_value(GET, src, dst, proc, bytes, (armci_ihdl_t)usr_hdl);
     return 0;
 }
