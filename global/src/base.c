@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.101 2004-11-05 21:14:27 d3g293 Exp $ */
+/* $Id: base.c,v 1.102 2004-11-05 22:04:43 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -3211,7 +3211,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
   int *blocks, *map, *dims, *width;
   Integer i, j, index[MAXDIM], itmp, ndim;
   Integer nelem, count, type, atype;
-  char *zptr, *bptr, *nptr;
+  char *zptr, *bptr, *nptr, *eptr;
   Integer bytes, total;
   int local_sync_begin, local_sync_end;
 
@@ -3269,6 +3269,10 @@ void FATR ga_merge_mirrored_(Integer *g_a)
            the gap. */
         nelem *= GAsizeof(type);
         bptr = GA[handle].ptr[ga_cluster_procid_(&inode, &i)];
+        if (nelem > 0) {
+          eptr = bptr;
+          eptr += nelem;
+        }
         bptr += nelem;
         if (i<nprocs-1) {
           j = i+1;
@@ -3281,7 +3285,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
         }
       }
       /* find total number of bytes containing global array */
-      total = (long)bptr - (long)zptr;
+      total = (long)eptr - (long)zptr;
       total /= GAsizeof(type);
       /*convert from C data type to ARMCI type */
       switch(type) {
