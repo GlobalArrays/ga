@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.66 2003-05-22 17:11:40 edo Exp $ */
+/* $Id: shmem.c,v 1.67 2003-05-22 19:21:56 edo Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -261,12 +261,16 @@ static int armci_shmalloc_try(long size)
  */
 #define PAGE (16*65536L)
 #define LBOUND  1048576L
+#if defined(MULTI_CTX) && defined(QUADRICS)
+#define UBOUND 256*LBOUND
+#else
 #define UBOUND 512*LBOUND
+#endif
 
 static long get_user_shmmax()
 {
 char *uval;
-long x;
+long x=0;
      uval = getenv("ARMCI_DEFAULT_SHMMAX"); 
      if(uval != NULL){
        sscanf(uval,"%ld",&x);
@@ -291,6 +295,8 @@ long lower_bound=0;
      if(!x) x = upper_bound;
      else upper_bound =x;
      
+     printf("%d: x = %ld upper_bound=%ld\n",armci_me, x, upper_bound); fflush(stdout);
+
      for(i=1;;i++){
         long step;
         rc = armci_test_allocate(x);
@@ -408,7 +414,7 @@ void armci_shmem_init()
    }
    if(tp!=pagesize)armci_die("armci_shmem_init:pagesize pow 2",pagesize);
 #endif
-   if(DEBUG_) printf("page size =%d log=%d\n",pagesize,logpagesize);
+   if(DEBUG_) {printf("page size =%d log=%d\n",pagesize,logpagesize); fflush(stdout); }
 
 #endif
 
@@ -824,8 +830,8 @@ long nsize = size;
      alloc_regions++;
   }
 
-  /* for smaller request we attach to default SHMMAX size */
-  if(size > MinShmem*SHM_UNIT) size = id[IDLOC];
+  /* we need to use the actual shared memory segment not user req size */ 
+  size = id[IDLOC];
 
   /* attach if not attached yet */
   if(!region_list[reg].attached){
