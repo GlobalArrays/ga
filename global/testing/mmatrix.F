@@ -20,9 +20,9 @@ c vector boxes lack arithmetic precision
 #include "tcgmsg.fh"
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
-      parameter (nmax = 300, DIM = 2, MAXPROC = 2000)
+      parameter (nmax = 1025, DIM = 2, MAXPROC = 2000)
       parameter (nloop = 50)
-      integer ndim, nprocs, tprocs, pdims(7), type, dcnt, g_a, maxval
+      integer ndim, nprocs, tprocs, pdims(7), type, dcnt, maxval
       integer g_a, g_b, g_c, g_aa, g_bb, g_cc, iproc
       integer inode, tnodes, p_m, ix, iy, xinc, yinc
       integer i, j, k, l, ii, jj, dims(7), mdim, ndims(7)
@@ -98,6 +98,7 @@ c
         write(6,*) '*'
         write(6,*) '*  Number of processors: ',tprocs
         write(6,*) '*  Number of processors/node : ',nprocs
+        write(6,*) '*  Matrix dimension : ',mdim
         write(6,*) '*'
       endif
 c
@@ -112,30 +113,6 @@ c
       end do
       type = MT_DBL
       p_m = ga_mirror_config()
-      status = nga_create_config(type, ndim, dims,"a", chunk, p_m, g_a)
-      if (status.and.me.eq.0) then
-        write(6,*) '*'
-        write(6,*) '* Global array A creation was successful'
-        write(6,*) '*'
-      elseif (.not.status) then
-        write(6,*) 'Global array creation failure on ',me
-      endif
-      status = nga_create_config(type, ndim, dims,"b", chunk, p_m, g_b)
-      if (status.and.me.eq.0) then
-        write(6,*) '*'
-        write(6,*) '* Global array B creation was successful'
-        write(6,*) '*'
-      elseif (.not.status) then
-        write(6,*) 'Global array creation failure on ',me
-      endif
-      status = nga_create_config(type, ndim, dims,"c", chunk, p_m, g_c)
-      if (status.and.me.eq.0) then
-        write(6,*) '*'
-        write(6,*) '* Global array C creation was successful'
-        write(6,*) '*'
-      elseif (.not.status) then
-        write(6,*) 'Global array creation failure on ',me
-      endif
       status = nga_create(type, ndim, dims,"aa", chunk, g_aa)
       if (status.and.me.eq.0) then
         write(6,*) '*'
@@ -160,13 +137,40 @@ c
       elseif (.not.status) then
         write(6,*) 'Global array creation failure on ',me
       endif
+#define MIRROR 1
+#if MIRROR
+      status = nga_create_config(type, ndim, dims,"a", chunk, p_m, g_a)
+      if (status.and.me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '* Global array A creation was successful'
+        write(6,*) '*'
+      elseif (.not.status) then
+        write(6,*) 'Global array creation failure on ',me
+      endif
+      status = nga_create_config(type, ndim, dims,"b", chunk, p_m, g_b)
+      if (status.and.me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '* Global array B creation was successful'
+        write(6,*) '*'
+      elseif (.not.status) then
+        write(6,*) 'Global array creation failure on ',me
+      endif
+      status = nga_create_config(type, ndim, dims,"c", chunk, p_m, g_c)
+      if (status.and.me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '* Global array C creation was successful'
+        write(6,*) '*'
+      elseif (.not.status) then
+        write(6,*) 'Global array creation failure on ',me
+      endif
+#endif
 c
 c      initialize a and b matrices
 c
       k = 0
       l = 7
-      do i = 1, mdim
-        do j = 1, mdim
+      do j = 1, mdim
+        do i = 1, mdim
           k =  k+1
           k = mod(k,29)
           a(i,j) = dble(k)
@@ -178,19 +182,24 @@ c
 c
 c      initialize global arrays
 c
+#if MIRROR
       if (iproc.eq.0) then
         call nga_put(g_a,lo,hi,a,ld)
         call nga_put(g_b,lo,hi,b,ld)
+      endif
+      call ga_zero(g_c)
+#endif
+      if (me.eq.0) then
         call nga_put(g_aa,lo,hi,a,ld)
         call nga_put(g_bb,lo,hi,b,ld)
       endif
-      call ga_zero(g_c)
       call ga_zero(g_cc)
       if (me.eq.0) then
         write(6,*) '*'
         write(6,*) '* Initialized global arrays with data'
         write(6,*) '*'
       endif
+      call ga_sync()
 c
 c      work out which chunk of matrix c this node is responsible
 c      for
@@ -203,8 +212,9 @@ c
       t6 = 0.0d00
       t7 = 0.0d00
       do iloop = 1, nloop
-        call ga_zero(g_c)
         call ga_zero(g_cc)
+#if MIRROR
+        call ga_zero(g_c)
         start = util_timer()
         start1 = util_timer()
         ix = mod(inode,ndims(1))
@@ -280,18 +290,34 @@ c      if (me.eq.0) write(6,*) 'Completed partial multiply'
         call nga_put(g_c,lo3,hi3,tc,ld)
         t6 = t6 + util_timer() - start1
 c      if (me.eq.0) write(6,*) 'Copied partial multiply to GA'
-c        call ga_mask_sync(.true.,.false.)
+        call ga_mask_sync(.true.,.false.)
         start1 = util_timer()
         call ga_merge_mirrored(g_c) 
         t7 = t7 + util_timer() - start1
         t1 = t1 + util_timer() - start
+#else
+        do i = 1, mdim
+          do j = 1, mdim
+            tat(j,i) = a(i,j)
+          end do
+        end do
+        do i = 1, mdim
+          do j = 1, mdim
+            c(i,j) = 0.0d00
+            do k = 1, mdim
+              c(i,j) = c(i,j) + tat(k,i)*b(k,j)
+            end do
+          end do
+        end do
+#endif
 c
 c   do a conventional ga matrix multiply
 c
         alpha = 1.0
         beta = 0.0
+        call ga_sync()
         start = util_timer()
-#define DGEMM 0
+#define DGEMM 1
 #if DGEMM
         call ga_dgemm('n','n',mdim,mdim,mdim,alpha,g_aa,g_bb,beta,g_cc)
 #else
@@ -314,7 +340,9 @@ c
 c
 c   check to see if matrix operations agree
 c
+#if MIRROR
         call nga_get(g_c,lo,hi,c,ld)
+#endif
 #if DGEMM
         call nga_get(g_cc,lo,hi,tc,ld)
 #endif
