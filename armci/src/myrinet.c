@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.38 2001-12-04 21:48:28 vinod Exp $
+/* $Id: myrinet.c,v 1.39 2001-12-05 01:13:50 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -534,7 +534,7 @@ void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len)
 /* computing process start initial communication with all the servers */
 void armci_client_connect_to_servers()
 {
-    int server_mpi_id, size, i;
+    int server_mpi_id, i;
     /* make sure that server thread is ready */
     if(armci_me == armci_master) while(!armci_gm_server_ready) usleep(10);
     armci_msg_barrier();
@@ -940,7 +940,7 @@ int armci_gm_server_init()
 #endif
 
     /* get my node id */
-    status = gm_get_node_id(serv_gm->rcv_port, &(serv_gm->node_id));
+    status = gm_get_node_id(serv_gm->rcv_port,(unsigned int *) (&(serv_gm->node_id)));
     if(status != GM_SUCCESS)armci_die("Could not get GM node id",0);
     if(DEBUG_)printf("%d(server): node id is %d\n", armci_me, serv_gm->node_id);
 
@@ -1028,7 +1028,7 @@ void armci_server_initial_connection()
  
     for(i=0;i<armci_nproc;i++){
         serv_gm->port_map[i] = server_init_struct[i].port_id ;
-        serv_gm->proc_ack_ptr[i] = server_init_struct[i].ack;
+        serv_gm->proc_ack_ptr[i] = (long)server_init_struct[i].ack;
     }
     /*for(i=0;i<armci_nproc;i++){
         fprintf(stderr,"\nin here%d is s_i_stuct ack ",server_init_struct[i].ack);
