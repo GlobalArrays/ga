@@ -84,6 +84,7 @@ extern int ARMCI_AccV( int op,       /* operation code */
 
 extern int ARMCI_Malloc(void* ptr_arr[], int bytes);
 extern int ARMCI_Free(void *ptr);
+extern int ARMCI_Same_node(int proc);
 
 extern void ARMCI_Finalize();    /* terminate ARMCI */
 extern void ARMCI_Error(char *msg, int code);

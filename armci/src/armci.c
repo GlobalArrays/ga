@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.46 2002-02-26 15:29:19 vinod Exp $ */
+/* $Id: armci.c,v 1.47 2002-03-21 19:36:45 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -339,3 +339,11 @@ int i;
     if(_armci_dummy_work>(double)armci_msg_nproc())_armci_dummy_work=DUMMY_INIT;
 }
   
+
+/*\ returns 1 if specified process resides on the same smp node as calling process
+\*/
+int ARMCI_Same_node(int proc)
+{
+   int direct=SAMECLUSNODE(proc);
+   return direct;
+}
