@@ -348,5 +348,8 @@ extern int get_armci_region_local_hndl(void *loc, int node, ARMCI_MEMHDL_T **loc
 extern void armci_region_exchange(void *start, long size);
 extern void cpu_yield();
 
+#ifdef ALLOW_PIN
+extern void armci_global_region_exchange(void *, long); 
+#endif
 
 #endif

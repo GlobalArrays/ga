@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.18 2003-08-21 06:59:40 d3h325 Exp $ */
+/* $Id: fence.c,v 1.19 2004-03-31 02:17:17 manoj Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -97,9 +97,6 @@ extern void** memlock_table_array;
 
 void ARMCI_AllFence()
 {
-#if defined(LAPI) || defined(CLUSTER)
-     int p;
-#endif
 #ifdef GA_USE_VAMPIR
      vampir_begin(ARMCI_ALLFENCE,__FILE__,__LINE__);
 #endif
@@ -109,7 +106,7 @@ void ARMCI_AllFence()
 #if defined(GM) && !defined(ACK_FENCE)
      _armci_amina_allfence(); 
 #else
-     for(p=0;p<armci_nproc;p++)ARMCI_Fence(p);
+     { int p; for(p=0;p<armci_nproc;p++)ARMCI_Fence(p); }
 #endif
 #endif
 #ifdef GA_USE_VAMPIR

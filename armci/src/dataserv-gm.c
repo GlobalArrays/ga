@@ -1,4 +1,4 @@
-/* $Id: dataserv-gm.c,v 1.12 2003-10-22 22:12:18 d3h325 Exp $ */
+/* $Id: dataserv-gm.c,v 1.13 2004-03-31 02:17:17 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "myrinet.h"
@@ -57,7 +57,7 @@ int loop=0;
           loop %=1000000;
           if(loop==0){cpu_yield();
             if(DEBUG_){
-               printf("%d: client last(%p)=%ld ack(%p)=%ld off=%d\n",
+               printf("%d: client last(%p)=%d ack(%p)=%ld off=%d\n",
                       armci_me,last,*last,ack,*ack,(char*)last - (char*)ptr);
                fflush(stdout);
             }

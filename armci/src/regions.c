@@ -1,4 +1,4 @@
-/* $Id: regions.c,v 1.5 2004-03-29 19:12:08 vinod Exp $ interface to keep track of memory regions accross the cluster */
+/* $Id: regions.c,v 1.6 2004-03-31 02:17:17 manoj Exp $ interface to keep track of memory regions accross the cluster */
 /* 
  * armci_region_init - allocates list of regions, initialization
  * armci_region_register_shm - registers shared memory on the current node
@@ -416,9 +416,6 @@ void armci_region_exchange(void *start, long size)
 \*/
 void armci_global_region_exchange(void *start, long size)
 {
-    int foundclus=0, foundserv=0, i,loc=0;
-    armci_region_t *reg=NULL;
-    armci_reglist_t *reglist=NULL,*clreglist=NULL;
 #ifdef REGIONS_REQUIRE_MEMHDL
     ARMCI_MEMHDL_T *hdlarr;
      
@@ -430,44 +427,49 @@ void armci_global_region_exchange(void *start, long size)
     armci_region_exchange(start,size);
 
 #ifdef REGIONS_REQUIRE_MEMHDL
-
-    foundclus=armci_region_clus_found(armci_clus_me, start,size);
-    foundserv=armci_region_serv_found(armci_clus_me, start,size);
-    if(foundclus==-1){
-       foundclus = armci_region_loc_found(start,size);
-       loc=1;
-    }
-
-    if(foundclus!=-1 && foundserv==-1){
-       reglist = (serv_regions+armci_clus_me); 
-       if(loc)
-         clreglist = &(loc_regions_arr); 
-       else
-         clreglist = (clus_regions+armci_clus_me); 
-       armci_serv_register_req((clreglist->list+foundclus)->start,((char *)(clreglist->list+foundclus)->end-(char *)((clreglist->list+foundclus)->start)),&((reglist->list+reglist->n)->memhdl));
-       (void)armci_region_record((clreglist->list+foundclus)->start,(clreglist->list+foundclus)->end,reglist);
+    {
+      int foundclus=0, foundserv=0, i,loc=0;
+      armci_reglist_t *reglist=NULL,*clreglist=NULL;      
+      armci_region_t *reg=NULL;
+      
+      foundclus=armci_region_clus_found(armci_clus_me, start,size);
+      foundserv=armci_region_serv_found(armci_clus_me, start,size);
+      if(foundclus==-1){
+	foundclus = armci_region_loc_found(start,size);
+	loc=1;
+      }
+      
+      if(foundclus!=-1 && foundserv==-1){
+	reglist = (serv_regions+armci_clus_me); 
+	if(loc)
+	  clreglist = &(loc_regions_arr); 
+	else
+	  clreglist = (clus_regions+armci_clus_me); 
+	armci_serv_register_req((clreglist->list+foundclus)->start,((char *)(clreglist->list+foundclus)->end-(char *)((clreglist->list+foundclus)->start)),&((reglist->list+reglist->n)->memhdl));
+	(void)armci_region_record((clreglist->list+foundclus)->start,(clreglist->list+foundclus)->end,reglist);
 #if 0
-       printf("\n%d:serv recording %p from %d n=%d \n",armci_me,(clreglist->list+foundclus)->start,armci_clus_me,reglist->n);fflush(stdout);
+	printf("\n%d:serv recording %p from %d n=%d \n",armci_me,(clreglist->list+foundclus)->start,armci_clus_me,reglist->n);fflush(stdout);
 #endif
-       foundserv=armci_region_serv_found(armci_clus_me, start,size);
-       reg = (serv_regions+armci_clus_me)->list+foundserv; 
-    }
-    if(reg)
-       armci_copy(&reg->memhdl,&hdlarr[armci_clus_me],sizeof(ARMCI_MEMHDL_T));
-
-    i = armci_nclus*sizeof(ARMCI_MEMHDL_T)/sizeof(int);
-    armci_msg_gop_scope(SCOPE_ALL,hdlarr,i,"+",ARMCI_INT);
-    for(i=0; i<armci_nclus; i++){
-       armci_reglist_t *r=serv_regions+i;
-       armci_reglist_t *rc=clus_regions+i;
-       if(i==armci_clus_me) continue;
-       if((rc->list+r->n)->start){
+	foundserv=armci_region_serv_found(armci_clus_me, start,size);
+	reg = (serv_regions+armci_clus_me)->list+foundserv; 
+      }
+      if(reg)
+	armci_copy(&reg->memhdl,&hdlarr[armci_clus_me],sizeof(ARMCI_MEMHDL_T));
+      
+      i = armci_nclus*sizeof(ARMCI_MEMHDL_T)/sizeof(int);
+      armci_msg_gop_scope(SCOPE_ALL,hdlarr,i,"+",ARMCI_INT);
+      for(i=0; i<armci_nclus; i++){
+	armci_reglist_t *r=serv_regions+i;
+	armci_reglist_t *rc=clus_regions+i;
+	if(i==armci_clus_me) continue;
+	if((rc->list+r->n)->start){
 #if 0
-       printf("\n%d:serv recording %p from %d n=%d \n",armci_me,(rc->list+r->n)->start,i,r->n);fflush(stdout);
+	  printf("\n%d:serv recording %p from %d n=%d \n",armci_me,(rc->list+r->n)->start,i,r->n);fflush(stdout);
 #endif
-         armci_copy(&hdlarr[i],&(r->list+r->n)->memhdl,sizeof(ARMCI_MEMHDL_T));
-         armci_region_record((rc->list+r->n)->start,(rc->list+r->n)->end,r);
-       }
+	  armci_copy(&hdlarr[i],&(r->list+r->n)->memhdl,sizeof(ARMCI_MEMHDL_T));
+	  armci_region_record((rc->list+r->n)->start,(rc->list+r->n)->end,r);
+	}
+      }
     }
 #endif
 }
