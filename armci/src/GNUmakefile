@@ -42,12 +42,13 @@ endif
 #let compiler to choose the appropriate MPI lib
 ifeq ($(TARGET),LAPI)
      OBJ += lapi.o request.o
-     OBJ += shmalloc.o signaltrap.o shmem.o
-     LIB_DEFINES = -DSYSV
      MPI_LIB_NAME =
 ifdef LAPI2
      LIB_DEFINES = -DLAPI2
      EXTRA_LIBS += /u2/d3h325/lapi_vector_beta/liblapi_r_dbg.a
+else
+     OBJ += shmalloc.o signaltrap.o shmem.o
+     LIB_DEFINES = -DSYSV
 endif
      
 endif

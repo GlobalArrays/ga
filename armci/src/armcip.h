@@ -52,6 +52,7 @@
 
 #define BUFSIZE  (BUFSIZE_DBL * sizeof(double))
 
+/* note opcodes must be lower than ARMCI_ACC_OFF !!! */
 #define PUT 1
 #define GET 3
 #define RMW 5
