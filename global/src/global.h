@@ -77,6 +77,10 @@ extern logical FATR ga_memory_limited_ ARGS_(( void));
 extern void ga_copy_patch ARGS_((char *, Integer *, Integer *, Integer *,                                        Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *, Integer *));
 extern DoublePrecision ga_ddot_patch ARGS_((Integer *, char*, Integer *,                                                   Integer *, Integer *, Integer *,                                                Integer *, char*, Integer *,
                                            Integer *, Integer *, Integer *));
+extern float ga_sdot_patch ARGS_((Integer *, char*, Integer *,
+                                  Integer *, Integer *, Integer *,
+                         Integer *, char*, Integer *,
+                                           Integer *, Integer *, Integer *));
 extern DoubleComplex ga_zdot_patch ARGS_((Integer *, char*, Integer *,                                                   Integer *, Integer *, Integer *,                                                Integer *, char*, Integer *,
                                            Integer *, Integer *, Integer *));
 extern void FATR ga_fill_patch_  ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, Void *));
