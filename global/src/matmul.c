@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.31 2003-10-22 23:34:35 manoj Exp $ */
+/* $Id: matmul.c,v 1.32 2003-10-23 09:19:05 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -8,7 +8,13 @@
 
 #include "matmul.h"
 
-#define _GA_ACCESS_PTR 0
+/* some optimization macros */
+#define KCHUNK_OPTIMIZATION 0 /* This Opt performing well only for m=1000;n=1000'k=2000 kinda cases and not for the opposite*/
+
+/* OPTIMIZATIONS FLAGS. To unset an optimization, replace SET by UNSET) */
+static short int CYCLIC_DISTR_OPT_FLAG  = 1;
+static short int CONTIG_CHUNKS_OPT_FLAG = 1;
+static short int DIRECT_ACCESS_OPT_FLAG = 1;
 
 static int max3(int ichunk, int jchunk, int kchunk) {
   if(ichunk>jchunk) return MAX(ichunk,kchunk);
@@ -20,7 +26,7 @@ static void GET_BLOCK(Integer *g_x, task_list_t *chunk, void *buf,
 		      Integer *dim_next, Integer *nbhdl) {
 
     Integer i0, i1, j0, j1;
-    
+
     if(*trans == 'n' || *trans == 'N') {
        *dim_next = chunk->dim[0];
        i0= *xilo+chunk->lo[0]; i1= *xilo+chunk->hi[0];
@@ -31,7 +37,7 @@ static void GET_BLOCK(Integer *g_x, task_list_t *chunk, void *buf,
        i0= *xjlo+chunk->lo[1]; i1= *xjlo+chunk->hi[1];
        j0= *xilo+chunk->lo[0]; j1= *xilo+chunk->hi[0];
     }
-    
+
     ga_nbget_(g_x, &i0, &i1, &j0, &j1, buf, dim_next, nbhdl);
 }
 
@@ -66,7 +72,7 @@ static void
 gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB, 
 		  Integer istart, Integer jstart, Integer kstart, 
 		  Integer iend, Integer jend, Integer kend, Integer Ichunk, 
-		  Integer Jchunk, Integer Kchunk, int *max_tasks) {
+		  Integer Jchunk, Integer Kchunk, int *max_tasks, Integer *g_a) {
     
     int ii, jj;
     short int do_put;
@@ -105,20 +111,36 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
        }
     }
     *max_tasks = ii;
+
+    if(CYCLIC_DISTR_OPT_FLAG) { /* should not be called for irregular matmul */
+       int prow, pcol, offset, me = ga_nodeid_();
+       prow = GA[GA_OFFSET + *g_a].nblock[0];
+       pcol = GA[GA_OFFSET + *g_a].nblock[1];
+       offset = (me/prow + me%prow) % pcol;
+       for(jj=0, ilo = istart; ilo <= iend; jj++, ilo += Ichunk)
+	  taskListA[jj].do_put = UNSET;
+       for(jj=0, ilo = istart; ilo <= iend; jj++, ilo += Ichunk) 
+	  taskListA[jj+offset].do_put = SET;
+    }
 }
 
 static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
 			       Integer *Kchunk,Integer *elems,Integer atype, 
-			       Integer m,Integer n,Integer k, short int nbuf) {
+			       Integer m,Integer n,Integer k, short int nbuf,
+			       short int memory_flag) {
     double temp;
     Integer min_tasks = MINTASKS; /* Increase tasks if there is load imbalance.
-			      This controls the granularity of chunks */
-    Integer  max_chunk, nproc=ga_nnodes_();
+				     This controls the granularity of chunks */
+    Integer  max_chunk, nproc=ga_nnodes_(), tmpa, tmpb, tmpc;
+
+    tmpa = *Ichunk;
+    tmpb = *Jchunk;
+    tmpc = *Kchunk;
     
     if(irregular) {
        temp = (k*(double)(m*(double)n)) / (min_tasks * nproc);
        max_chunk = (Integer)pow(temp, (1.0/3.0) );
-       if (max_chunk < MIN_CHUNK_SIZE) max_chunk = MIN_CHUNK_SIZE;
+       if (max_chunk < MIN_CHUNK_SIZE) max_chunk = MIN_CHUNK_SIZE;  
     }
     else
        max_chunk = (Integer) max3(*Ichunk, *Jchunk, *Kchunk);
@@ -132,8 +154,11 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
       *elems = (Integer)(avail*0.9); /* Donot use every last drop */
       
       /* MAX: get the maximum chunk (or, block) size i.e  */
-      max_chunk=MIN(max_chunk, (Integer)(sqrt( (double)((*elems-nbuf*NUM_MATS)/(nbuf*NUM_MATS)))));
-      
+      max_chunk=MIN(max_chunk, (Integer)(sqrt( (double)((*elems-nbuf*NUM_MATS)/NUM_MATS))));
+
+      if(!irregular && memory_flag==SET) 
+	 max_chunk = *Ichunk = *Jchunk = *Kchunk = BLOCK_SIZE;
+    
       if(irregular) {
 	 /* NOTE:enable this part for regular cases, if later 
 	    part of the code is buggy or inefficient */
@@ -153,23 +178,63 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
 	    *Ichunk = MIN(*Ichunk,(Integer)temp);
 	    *Jchunk = MIN(*Jchunk,(Integer)temp);
 	 }
-	 else { 
-	    *Ichunk = MIN(m,max_chunk);
-	    *Jchunk = MIN(n,max_chunk);
-	    *Kchunk = MIN(k,max_chunk);
-	 }
+	 else *Ichunk = *Jchunk = *Kchunk = max_chunk;
       }
     }
     else 
        *Ichunk = *Jchunk = *Kchunk = CHUNK_SIZE/nbuf;
 
+    /* Try to use 1-d data transfer & take advantage of zero-copy protocol */
+    if(!irregular) {
+       if(*Ichunk > tmpa && *Jchunk > tmpb) {
+	  *Ichunk = tmpa;
+	  *Jchunk = tmpb;
+	  *Kchunk = MIN(*Ichunk,*Jchunk);
+       }
+       else if(CONTIG_CHUNKS_OPT_FLAG) { /* select a contiguous piece */
+	  int i=1;/* i should be >=1 , to avoid divide by zero error */
+	  temp = max_chunk*max_chunk;
+	  if(temp > tmpa) {
+	     *Ichunk = tmpa;
+	     *Jchunk = (Integer)(temp/(*Ichunk));
+	     if(*Jchunk < tmpb) {
+		while(tmpb/i > *Jchunk) ++i;
+		*Jchunk = tmpb/i;
+	     }
+	     else *Jchunk = tmpb;
+	     *Kchunk = MIN(*Ichunk, *Jchunk);
+	  }
+       }
+    }
+
     /* Total elements "NUM_MAT" extra elems for safety - just in case */
-    *elems = (*Ichunk)*(*Kchunk) + (*Kchunk)*(*Jchunk) + (*Ichunk)*(*Jchunk);
-    *elems += NUM_MATS*sizeof(DoubleComplex)/GAsizeofM(atype);
-    *elems *= nbuf;
+    *elems = ( nbuf*(*Ichunk)*(*Kchunk) + nbuf*(*Kchunk)*(*Jchunk) + 
+	       (*Ichunk)*(*Jchunk) );
+    *elems += nbuf*NUM_MATS*sizeof(DoubleComplex)/GAsizeofM(atype);
 }
 
+static DoubleComplex* 
+gai_get_armci_memory(Integer Ichunk, Integer Jchunk, Integer Kchunk,
+		     short int nbuf, Integer atype) {
 
+    DoubleComplex *tmp = NULL;
+    Integer elems;
+
+    elems = (Integer) pow((double)BLOCK_SIZE,(double)2);
+    elems = nbuf*elems + nbuf*elems + elems; /* A,B,C temporary buffers */
+    
+    /* add extra elements for safety */
+    elems += nbuf*NUM_MATS*sizeof(DoubleComplex)/GAsizeofM(atype);
+
+    /* allocate temporary storage using ARMCI_Malloc */
+    if( (Integer) (((double)nbuf)*(Ichunk* Kchunk) + 
+		   ((double)nbuf)*(Kchunk* Jchunk) + 
+		   Ichunk* Jchunk ) < elems) {
+       tmp=(DoubleComplex*)ARMCI_Malloc_local(elems*GAsizeofM(atype));
+    }
+    return tmp;
+}
+	  
 /************************************
  * Sequential DGEMM 
  *      i.e. BLAS dgemm Routines
@@ -273,8 +338,9 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
     short int do_put=UNSET, single_task_flag=UNSET;
     DoubleComplex ONE;
     float ONE_F = 1.0;
-
     ONE.real =1.; ONE.imag =0.; 
+
+    GA_PUSH_NAME("ga_matmul_shmem");
 
     /* to skip accumulate and exploit data locality:
        get chunks according to "C" matrix distribution*/
@@ -283,14 +349,14 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
     jstart = loC[1]-1; jend = hiC[1]-1;
     kstart = 0       ; kend = *ajhi-*ajlo;
 
-#if _GA_ACCESS_PTR /* disable, if you don't wanna use access_ptr. Program will still work */
-    /* check if there is only one task. If so, then it is contiguous */
-    if( (iend-istart+1 <= Ichunk) && (jend-jstart+1 <= Jchunk) &&
-	(kend-kstart+1 <= Kchunk) ) {
-       single_task_flag = SET;
-       nga_access_ptr(g_c, loC, hiC, &c, ld);
+    if(DIRECT_ACCESS_OPT_FLAG) {
+       /* check if there is only one task. If so, then it is contiguous */
+       if( (iend-istart+1 <= Ichunk) && (jend-jstart+1 <= Jchunk) &&
+	   (kend-kstart+1 <= Kchunk) ) {
+	  single_task_flag = SET;
+	  nga_access_ptr(g_c, loC, hiC, &c, ld);
+       }
     }
-#endif
 
     /* loop through columns of g_c patch */
     for(jlo = jstart; jlo <= jend; jlo += Jchunk) { 
@@ -364,18 +430,19 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
 	  do_put = UNSET; /* In the second loop, accumulate should be done */
        }
     }
+    GA_POP_NAME;
 }
 
 
 
 
-static void gai_nb_matmul(transa, transb, alpha, beta, atype,
-			  g_a, ailo, aihi, ajlo, ajhi,
-			  g_b, bilo, bihi, bjlo, bjhi,
-			  g_c, cilo, cihi, cjlo, cjhi,
-			  Ichunk, Kchunk, Jchunk, a_ar,b_ar,c_ar, 
-			  need_scaling, irregular) 
-
+static void gai_matmul_regular(transa, transb, alpha, beta, atype,
+			       g_a, ailo, aihi, ajlo, ajhi,
+			       g_b, bilo, bihi, bjlo, bjhi,
+			       g_c, cilo, cihi, cjlo, cjhi,
+			       Ichunk, Kchunk, Jchunk, a_ar,b_ar,c_ar, 
+			       need_scaling, irregular) 
+     
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
      Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
@@ -390,13 +457,17 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
     Integer get_new_B, i, i0, i1, j0, j1;
     Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
     Integer n, m, k, adim, bdim, cdim, adim_next, bdim_next;
-    int g_t, max_tasks=0, shiftA=0, shiftB=0, shiftC=0;
+    Integer loC[2]={1,1}, hiC[2]={1,1}, ld[2];
+    int g_t, max_tasks=0, shiftA=0, shiftB=0;
     int currA, nextA, currB, nextB; /* "current" and "next" task Ids */
     task_list_t taskListA[MAX_CHUNKS], taskListB[MAX_CHUNKS]; 
     short int do_put=UNSET, single_task_flag=UNSET;
     DoubleComplex ONE, *a, *b, *c;
     float ONE_F = 1.0;
- 
+    int offset=0;
+
+    GA_PUSH_NAME("ga_matmul_regular");
+
     ONE.real =1.; ONE.imag =0.;
    
     m = *aihi - *ailo +1;
@@ -405,29 +476,23 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
     a = a_ar[0];
     b = b_ar[0];
     c = c_ar[0];
+
+    if(irregular) ga_error("irregular flag set", 0L);
     
     /*****************************************************************
      * Task list: Collect information of all chunks. Matmul using 
-     * Non-blocking call and/or irregular distribution needs this list 
-     * (for irregular case, we have to do dynamic load balancing).
+     * Non-blocking call needs this list 
      *****************************************************************/
     g_t = set_task_id(irregular, nproc);
-    if(irregular) {
-       gai_get_task_list(taskListA, taskListB, 0, 0, 0, m-1, n-1, k-1,
-			 Ichunk, Jchunk, Kchunk, &max_tasks);
-       currA = nextA = me;
-       if(!need_scaling) ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);   
-    }
-    else {
-       Integer loC[2]={1,1}, hiC[2]={1,1}, ld[2];
-       /* to skip accumulate and exploit data locality:
-	  get chunks according to "C" matrix distribution*/
-       nga_distribution_(g_c, &me, loC, hiC);
-       gai_get_task_list(taskListA, taskListB, loC[0]-1, loC[1]-1, 0, hiC[0]-1,
-			 hiC[1]-1, k-1, Ichunk, Jchunk, Kchunk, &max_tasks);
-       currA = nextA = 0;
 
-#  if _GA_ACCESS_PTR /*disable,if you don't wanna use access_ptr.Program will still work*/
+    /* to skip accumulate and exploit data locality:
+       get chunks according to "C" matrix distribution*/
+    nga_distribution_(g_c, &me, loC, hiC);
+    gai_get_task_list(taskListA, taskListB, loC[0]-1, loC[1]-1, 0, hiC[0]-1,
+		      hiC[1]-1, k-1, Ichunk, Jchunk, Kchunk, &max_tasks,g_a);
+    currA = nextA = 0;
+    
+    if(DIRECT_ACCESS_OPT_FLAG) {
        /* check if there is only one task. If so, then it is contiguous */
        if(max_tasks == 1) {
 	  if( !((hiC[0]-loC[0]+1 <= Ichunk) && (hiC[1]-loC[1]+1 <= Jchunk) &&
@@ -436,9 +501,16 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
 	  single_task_flag = SET;
 	  nga_access_ptr(g_c, loC, hiC, &c, ld);
        }
-#  endif
     }
 
+    if(CYCLIC_DISTR_OPT_FLAG) {
+       int prow,pcol;
+       prow = GA[GA_OFFSET + *g_a].nblock[0];
+       pcol = GA[GA_OFFSET + *g_a].nblock[1];
+       offset = (me/prow + me%prow) % pcol;
+       currA = nextA = nextA + offset;
+    }
+    
     /*************************************************
      * Do the setup & issue non-blocking calls to get 
      * the first block/chunk I'm gonna work 
@@ -446,18 +518,19 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
     shiftA=0; shiftB=0;
     if(nextA < max_tasks) {
        currB = nextB = taskListA[currA].chunkBId;
+
        GET_BLOCK(g_a, &taskListA[nextA], a_ar[shiftA], transa, 
 		 ailo, ajlo, &adim_next, &gNbhdlA[shiftA]);
+
        GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb,
 		 bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
+
        adim=adim_next; bdim=bdim_next;
        get_new_B = TRUE;
     }
 
     /*************************************************************
      * Main Parallel DGEMM Loop.
-     * For irregular distribution, it does Dynamic Load Balancing.
-     *   (Loop till you are done with all blocks/tasks )
      *************************************************************/
     while(nextA < max_tasks) {
        currA = nextA;
@@ -468,20 +541,16 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
        kdim = taskListA[currA].dim[1];
        bdim=bdim_next;
       
-       if(irregular) {
-	  switch(atype) {
-	     case C_FLOAT: for(i=0; i<idim*jdim; i++) *(((float*)c)+i)=0; break;
-	     case C_DBL: for(i=0; i<idim*jdim; i++) *(((double*)c)+i)=0; break;
-	     default: for(i=0; i<idim*jdim; i++) { c[i].real=0;c[i].imag=0;}
-	  }
-       }
-       else { /* For regular distr, if beta=0.0 (i.e.if need_scaling=UNSET),
-		 then for first shot we can do put, instead of accumulate */
-	  if(need_scaling == UNSET) do_put = taskListA[currA].do_put; 
-       }
+       /* if beta=0.0 (i.e.if need_scaling=UNSET), then for first shot,
+	  we can do put, instead of accumulate */
+       if(need_scaling == UNSET) do_put = taskListA[currA].do_put; 
 
        nextA = gai_nxtask(irregular, g_t); /* get the next task id */
 
+       if(CYCLIC_DISTR_OPT_FLAG && nextA < max_tasks) 
+	  nextA = (offset+nextA) % max_tasks;
+
+       
        /* ---- WAIT till we get the current A & B block ---- */
        a = a_ar[shiftA];
        WAIT_GET_BLOCK(&gNbhdlA[shiftA]);
@@ -495,15 +564,17 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
        if(nextA < max_tasks) {
 	  GET_BLOCK(g_a, &taskListA[nextA], a_ar[(shiftA+1)%2], transa, 
 		    ailo, ajlo, &adim_next, &gNbhdlA[(shiftA+1)%2]);
+
 	  nextB = taskListA[nextA].chunkBId;
 	  if(currB != nextB) {
 	     shiftB=((shiftB+1)%2);
+
 	     GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb, 
 		       bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
 	  }
        }
        if(currB != nextB) get_new_B = TRUE;
-      
+
        /* Do the sequential matrix multiply - i.e.BLAS dgemm */
        GAI_DGEMM(atype, transa, transb, idim, jdim, kdim, alpha, 
 		 a, adim, b, bdim, c, cdim);
@@ -514,61 +585,35 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
        j0 = *cjlo + taskListB[currB].lo[1];
        j1 = *cjlo + taskListB[currB].hi[1];
 
-#ifdef _NBACC
-       /* NB Accumulate disabled temporarily */
-       if(irregular) if(currA!=me) ga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
-#endif
-
        if(currA < max_tasks) {
-#ifdef _NBACC
-	  if(!irregular) {	  /* for regular distribution */
-#endif
-	     if (single_task_flag != SET) {
-		switch(atype) {
-		   case C_FLOAT:
-		      if(do_put==SET) /* Note:do_put is UNSET, if beta!=0.0*/
-			 ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
-		      else
-			 ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
-				 &cdim, &ONE_F);
-		      break;
-		   default:
-		      if(do_put==SET) /* i.e.beta ==0.0 */
-			 ga_put_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
-				 &cdim);
-		      else
-			 ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
-				 &cdim,(DoublePrecision*)&ONE);
-		      break;
-		}
+	  if (single_task_flag != SET) {
+	     switch(atype) {
+		case C_FLOAT:
+		   if(do_put==SET) /* Note:do_put is UNSET, if beta!=0.0*/
+		      ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
+		   else
+		      ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
+			      &cdim, &ONE_F);
+		   break;
+		default:
+		   if(do_put==SET) /* i.e.beta ==0.0 */
+		      ga_put_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
+			      &cdim);
+		   else
+		      ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
+			      &cdim,(DoublePrecision*)&ONE);
+		   break;
 	     }
 	  }
-#ifdef _NBACC
-	  else {
-	     if(atype == C_FLOAT)
-		ga_nbacc_(g_c, &i0, &i1, &j0, &j1, (float *)c,
-			  &cdim, &ONE_F, &gNbhdlC[shiftC]);
-	     else
-		ga_nbacc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c,
-			  &cdim, (DoublePrecision*)&ONE, &gNbhdlC[shiftC]);
-	  }
        }
-#endif
        
        /* shift next buffer..toggles between 0 and 1: as we use 2 buffers, 
 	  one for computation and the other for communication (overlap) */
        shiftA = ((shiftA+1)%2); 
-       shiftC = ((shiftC+1)%2); 
        adim = adim_next;
-       c = c_ar[shiftC];
     }
    
-    if(irregular) {
-#ifdef _NBACC
-       ga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
-#endif
-       GA_Destroy(g_t);
-    }
+    GA_POP_NAME;
 }
 
 
@@ -600,6 +645,8 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     DoubleComplex ONE, *a, *b, *c;
     float ONE_F = 1.0;
  
+    GA_PUSH_NAME("ga_matmul_irreg");
+
     ONE.real =1.; ONE.imag =0.;
    
     m = *aihi - *ailo +1;
@@ -756,6 +803,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
 		  &cdim_prev, (DoublePrecision*)&ONE);
     }
     /* ----------------------------------------- */
+    GA_POP_NAME;
 }
 
 
@@ -785,19 +833,19 @@ void ga_matmul(transa, transb, alpha, beta,
 #endif
     Integer adim1, adim2, bdim1, bdim2, cdim1, cdim2, dims[2];
     Integer atype, btype, ctype, rank, me= ga_nodeid_(), nproc = ga_nnodes_();
-    Integer n, m, k;
-    Integer Ichunk, Kchunk, Jchunk;
-
-    int local_sync_begin,local_sync_end;
-    short int irregular=UNSET, need_scaling=SET, use_NB_matmul = SET;
+    Integer n, m, k, Ichunk, Kchunk, Jchunk, ZERO_I = 0, inode, iproc;
+    Integer loA[2]={0,0}, hiA[2]={0,0};
+    Integer loB[2]={0,0}, hiB[2]={0,0};
     Integer loC[2]={0,0}, hiC[2]={0,0};
-    Integer ZERO_I = 0, inode, iproc;
+    int local_sync_begin,local_sync_end;
+    short int need_scaling=SET,use_NB_matmul=SET;
+    short int irregular=UNSET, memory_flag=UNSET;
     
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)ga_sync_();
 
-    GA_PUSH_NAME("ga_matmul_patch");
+    GA_PUSH_NAME("ga_matmul");
 
     /**************************************************
      * Do All Sanity Checks 
@@ -878,6 +926,8 @@ void ga_matmul(transa, transb, alpha, beta,
 
     /* to skip accumulate and exploit data locality:
        get chunks according to "C" matrix distribution*/
+    nga_distribution_(g_a, &me, loA, hiA);
+    nga_distribution_(g_b, &me, loB, hiB);
     nga_distribution_(g_c, &me, loC, hiC);
 
 #ifdef STATBUF /* Using static memory */
@@ -889,31 +939,50 @@ void ga_matmul(transa, transb, alpha, beta,
        {
 	  Integer elems, factor=sizeof(DoubleComplex)/GAsizeofM(atype);
 	  short int nbuf=1;
-	  DoubleComplex *tmp;
+	  DoubleComplex *tmp = NULL;
 
-	  Ichunk = hiC[0]-loC[0]+1;
-	  Jchunk = hiC[1]-loC[1]+1;
-	  Kchunk = k;
+	  Ichunk = MIN( (hiC[0]-loC[0]+1), (hiA[0]-loA[0]+1) );
+	  Jchunk = MIN( (hiC[1]-loC[1]+1), (hiB[1]-loB[1]+1) );
+	  Kchunk = MIN( (hiA[1]-loA[1]+1), (hiB[0]-loB[0]+1) );
 
-	  /* If non-blocking, we need 2 temporary buffers for each matrix */
+#if KCHUNK_OPTIMIZATION /*works great for m=1000,n=1000,k=4000 kinda cases*/
+	  nga_distribution_(g_a, &me, loC, hiC);
+	  Kchunk = hiC[1]-loC[1]+1;
+	  nga_distribution_(g_b, &me, loC, hiC);
+	  Kchunk = MIN(Kchunk, (hiC[0]-loC[0]+1));
+#endif
+	  /* If non-blocking, we need 2 temporary buffers for A and B matrix */
 	  if(use_NB_matmul) nbuf = 2; 
-     
+	  
+	  if(!irregular) {
+	     tmp = a_ar[0] =a=gai_get_armci_memory(Ichunk,Jchunk,Kchunk,
+						   nbuf, atype);
+	     if(tmp != NULL) memory_flag = SET;
+	  }
+	  
 	  /* get ChunkSize (i.e.BlockSize), that fits in temporary buffer */
 	  gai_get_chunk_size(irregular, &Ichunk, &Jchunk, &Kchunk, &elems, 
-			     atype, m, n, k, nbuf);
+			     atype, m, n, k, nbuf, memory_flag);
+	  
+	  if(tmp == NULL) { /* try once again from armci for new chunk sizes */
+	     tmp = a_ar[0] =a=gai_get_armci_memory(Ichunk,Jchunk,Kchunk,
+						   nbuf, atype);
+	     if(tmp != NULL) memory_flag = SET;
+	  }
 
-	  /* Allocate temporary storage */
-	  tmp = a_ar[0] = a =(DoubleComplex*) ga_malloc(elems,atype,
-							"GA mulmat bufs");
+	  if(tmp == NULL) { /*if armci malloc fails again, then get from MA */
+	     tmp = a_ar[0] = a =(DoubleComplex*) ga_malloc(elems,atype,
+							   "GA mulmat bufs");
+	  }
+
 	  if(use_NB_matmul) tmp = a_ar[1] = a_ar[0] + (Ichunk*Kchunk)/factor+1;
-     
+	  
 	  tmp = b_ar[0] = b = tmp + (Ichunk*Kchunk)/factor + 1;
 	  if(use_NB_matmul) tmp = b_ar[1] = b_ar[0] + (Kchunk*Jchunk)/factor+1;
 	  
 	  c_ar[0] = c = tmp + (Kchunk*Jchunk)/factor + 1;
-	  if(use_NB_matmul) c_ar[1] = c_ar[0] + (Ichunk*Jchunk)/factor + 1;
        }
-#endif
+#endif  
        
        /** check if there is a need for scaling the data. 
 	   Note: if beta=0, then need_scaling=0  */
@@ -951,17 +1020,18 @@ void ga_matmul(transa, transb, alpha, beta,
 			      Ichunk, Kchunk, Jchunk, a_ar, b_ar, c_ar,
 			      need_scaling, irregular);
 	  else
-	     gai_nb_matmul(transa, transb, alpha, beta, atype,
-			   g_a, ailo, aihi, ajlo, ajhi,
-			   g_b, bilo, bihi, bjlo, bjhi,
-			   g_c, cilo, cihi, cjlo, cjhi,
-			   Ichunk, Kchunk, Jchunk, a_ar, b_ar, c_ar, 
-			   need_scaling, irregular);
+	     gai_matmul_regular(transa, transb, alpha, beta, atype,
+				g_a, ailo, aihi, ajlo, ajhi,
+				g_b, bilo, bihi, bjlo, bjhi,
+				g_c, cilo, cihi, cjlo, cjhi,
+				Ichunk, Kchunk, Jchunk, a_ar, b_ar, c_ar, 
+				need_scaling, irregular);
        }
 	     
 #ifndef STATBUF
        a = a_ar[0];
-       ga_free(a);
+       if(memory_flag == SET) ARMCI_Free_local(a);
+       else ga_free(a);
 #endif
    
        GA_POP_NAME;   
@@ -1814,3 +1884,4 @@ SET_GEMM_INDICES;
 	     g_b, &bilo, &bihi, &bjlo, &bjhi,
 	     g_c, &cilo, &cihi, &cjlo, &cjhi);
 }
+
