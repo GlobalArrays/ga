@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.50 2004-03-09 07:55:11 manoj Exp $ */
+/* $Id: matmul.c,v 1.51 2004-03-24 21:52:13 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -42,33 +42,6 @@ static void GET_BLOCK(Integer *g_x, task_list_t *chunk, void *buf,
     }
 
     ga_nbget_(g_x, &i0, &i1, &j0, &j1, buf, dim_next, nbhdl);
-}
-
-static int gai_nxtask(int irregular, int g_t) {
-    if(irregular) {
-       int subscript = 0;
-       return NGA_Read_inc(g_t, &subscript, 1);
-    }
-    else {
-       return (++gTaskId);
-    }
-}
-
-static int set_task_id(short int irregular, Integer nproc) {
-    if(irregular) {
-       int g_t, ihi, ilo, value=1;  
-       g_t = NGA_Create(C_INT, 1, &value, "Atomic Task", NULL);
-       if(!g_t) ga_error("Task array creation failed", 0L);
-       if(!ga_nodeid_()) {  /* Initialize the task array */
-	  value=(int)nproc; 
-	  ilo = ihi = 0; 
-	  NGA_Put(g_t,&ilo,&ihi,&value,&ihi); 
-       }
-       ga_sync_();
-       return g_t;
-    }
-    else gTaskId=0; /* Note: this is a static variable */
-    return 0;
 }
 
 static short int
@@ -508,7 +481,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     short int do_put=UNSET, single_task_flag=UNSET, chunks_left=0;
     DoubleComplex ONE, *a, *b, *c;
     float ONE_F = 1.0;
-    int offset=0;
+    int offset=0, gTaskId=0;
 
     GA_PUSH_NAME("ga_matmul_regular");
     if(irregular) ga_error("irregular flag set", 0L);
@@ -535,7 +508,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 	* Task list: Collect information of all chunks. Matmul using 
 	* Non-blocking call needs this list 
 	*****************************************************************/
-       g_t = set_task_id(irregular, nproc);
+       gTaskId=0;
        
        /* to skip accumulate and exploit data locality:
 	  get chunks according to "C" matrix distribution*/
@@ -600,7 +573,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
 	     we can do put, instead of accumulate */
 	  if(need_scaling == UNSET) do_put = taskListA[currA].do_put; 
 	  
-	  nextA = gai_nxtask(irregular, g_t); /* get the next task id */
+	  nextA = ++gTaskId; /* get the next task id */
 	  
 	  if(CYCLIC_DISTR_OPT_FLAG && nextA < max_tasks) 
 	     nextA = (offset+nextA) % max_tasks;

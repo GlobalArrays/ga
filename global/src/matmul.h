@@ -1,4 +1,4 @@
-/* $Id: matmul.h,v 1.13 2004-01-12 16:36:23 d3g293 Exp $ */
+/* $Id: matmul.h,v 1.14 2004-03-24 21:52:13 manoj Exp $ */
 #ifndef _MATMUL_H_
 #define _MATMUL_H_
 
@@ -67,7 +67,7 @@ extern void FATR ZGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
 #define SET   1
 #define UNSET 0
 
-static int gTaskId=0, _gai_matmul_patch_flag = 0; 
+static int _gai_matmul_patch_flag = 0; 
 Integer gNbhdlA[2], gNbhdlB[2], gNbhdlC[2];/* for A and B matrix */
 typedef struct {
   int lo[2]; /* 2 elements: ilo and klo */
