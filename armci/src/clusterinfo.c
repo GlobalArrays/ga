@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.9 1999-11-17 18:46:05 bjohnson Exp $ */
+/* $Id: clusterinfo.c,v 1.10 1999-11-18 18:22:56 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -14,8 +14,10 @@
 #endif
 #include "message.h"
 #include "armcip.h"
+
 #ifdef WIN32
-extern int FATR gethostname(char *, int);
+   /* this is where gethostbyname is declared */
+#  include <winsock.h>
 #endif
 
 /* DEBUG_HACK enables to simulate cluster environment on a single workstation.
