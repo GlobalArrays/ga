@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.75 2003-09-26 22:09:30 manoj Exp $ */
+/* $Id: strided.c,v 1.76 2003-09-29 09:37:16 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -27,6 +27,23 @@ else\
 #  endif
 #endif
 
+#define PREPROCESS_STRIDED(tmp_count) {\
+ tmp_count=0;\
+ if(stride_levels) \
+    for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;\
+ if(stride_levels&&(count[0]==src_stride_arr[0]&&count[0]==dst_stride_arr[0])){\
+      tmp_count=seg_count[1];\
+      count = seg_count+1;\
+      seg_count[1] = seg_count[0] * seg_count[1];\
+      stride_levels --;\
+      src_stride_arr ++;  dst_stride_arr++ ;\
+ }\
+}
+
+#define POSTPROCESS_STRIDED(tmp_count) if(tmp_count)seg_count[1]=tmp_count
+ 
+
+   
 
 
 #ifndef REGIONS_REQUIRE_MEMHDL 
@@ -483,13 +500,14 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 		int src_stride_arr[], /* array of strides at source */
 		void* dst_ptr,        /* pointer to 1st segment at destination*/
 		int dst_stride_arr[], /* array of strides at destination */
-		int count[],          /* number of segments at each stride 
+		int seg_count[],      /* number of segments at each stride 
                                          levels: count[0]=bytes*/
 		int stride_levels,    /* number of stride levels */
                 int proc              /* remote process(or) ID */
                 )
 {
     int rc=0, direct=1;
+    int *count=seg_count, tmp_count=0;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
     if(count[0]<0)return FAIL3;
@@ -503,22 +521,24 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #endif
 
     ORDER(PUT,proc); /* ensure ordering */
+    PREPROCESS_STRIDED(tmp_count);
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
+
     /* use direct protocol for remote access when performance is better */
 #   if (defined(LAPI) && !defined(LAPI2)) 
       if(!direct)
          if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
 #   endif
 
-
 #ifndef LAPI2
     if(!direct){
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
        if( !stride_levels && ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],NULL,0,mhloc,mhrem);
+         POSTPROCESS_STRIDED(tmp_count);
          return 0;
        }
 #    endif
@@ -554,6 +574,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
     vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
 #endif
 
+    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 
@@ -569,7 +590,7 @@ int ARMCI_PutS_flag(
 		int src_stride_arr[], /* array of strides at source */
 		void* dst_ptr,        /* pointer to 1st segment at destination*/
 		int dst_stride_arr[], /* array of strides at destination */
-		int count[],          /* number of segments at each stride 
+		int seg_count[],          /* number of segments at each stride 
                                          levels: count[0]=bytes*/
 		int stride_levels,    /* number of stride levels */
                 int *flag,            /* pointer to remote flag */
@@ -579,6 +600,7 @@ int ARMCI_PutS_flag(
                 )
 {
     int rc, direct=1;
+    int *count=seg_count, tmp_count;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
     if(count[0]<0)return FAIL3;
@@ -592,6 +614,7 @@ int ARMCI_PutS_flag(
 #endif
 
     ORDER(PUT,proc); /* ensure ordering */
+    PREPROCESS_STRIDED(tmp_count);
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -631,6 +654,7 @@ int ARMCI_PutS_flag(
     vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
 #endif
 
+    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 
@@ -642,17 +666,17 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
-		int byte_count[],       /* number of segments at each stride 
+		int seg_count[],       /* number of segments at each stride 
 					   levels: count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
                 int proc                /* remote process(or) ID */
                 )
 {
     int rc,direct=1;
-    int *count=byte_count, tmp_count;
+    int *count=seg_count, tmp_count=0;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
-    if(byte_count[0]<0)return FAIL3;
+    if(seg_count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
     
@@ -663,21 +687,10 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #endif
 
     ORDER(GET,proc); /* ensure ordering */
+    PREPROCESS_STRIDED(tmp_count);
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
-
-    if(stride_levels) /* reduce stride_levels for trivial cases */
-       for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;
-
-    /* shrinking 2-d to 1-d, if 2-d is contiguous.To be extended for N-d's*/
-    if(stride_levels==1 && (count[0]==src_stride_arr[0] &&
-                            count[0]==dst_stride_arr[0])) {
-      count = &tmp_count;
-      tmp_count = byte_count[0] * byte_count[1];
-      stride_levels = 0;
-      src_stride_arr =  dst_stride_arr = NULL;
-    }
 
     /* use direct protocol for remote access when performance is better */
 #   if (defined(LAPI) && !defined(LAPI2))
@@ -696,6 +709,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
          ARMCI_REM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
+         POSTPROCESS_STRIDED(tmp_count);
          return 0;
        }
 #     endif
@@ -735,6 +749,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     vampir_end(ARMCI_GETS,__FILE__,__LINE__);
 #endif
 
+    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 }
@@ -748,13 +763,14 @@ int ARMCI_AccS( int  optype,            /* operation */
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
-		int count[],            /* number of segments at each stride 
+		int seg_count[],        /* number of segments at each stride 
                                            levels: count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
                 int proc                /* remote process(or) ID */
                 )
 {
     int rc, direct=1;
+    int *count=seg_count, tmp_count=0;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
     if(src_stride_arr == NULL || dst_stride_arr ==NULL) return FAIL2;
@@ -769,6 +785,7 @@ int ARMCI_AccS( int  optype,            /* operation */
 #endif
 
     ORDER(optype,proc); /* ensure ordering */
+    PREPROCESS_STRIDED(tmp_count);
     direct=SAMECLUSNODE(proc);
 
 #   if defined(ACC_COPY) && !defined(ACC_SMP)
@@ -788,6 +805,7 @@ int ARMCI_AccS( int  optype,            /* operation */
     vampir_end(ARMCI_ACCS,__FILE__,__LINE__);
 #endif
 
+    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 }
@@ -913,14 +931,15 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 		int src_stride_arr[], /* array of strides at source */
 		void* dst_ptr,        /* pointer to 1st segment at destination*/
 		int dst_stride_arr[], /* array of strides at destination */
-		int count[],          /* number of segments at each stride 
+		int seg_count[],      /* number of segments at each stride 
                                          levels: count[0]=bytes*/
 		int stride_levels,    /* number of stride levels */
                 int proc,             /* remote process(or) ID */
-                armci_hdl_t* usr_hdl /* armci non-blocking call handle*/
+                armci_hdl_t* usr_hdl  /* armci non-blocking call handle*/
                 )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
+    int *count=seg_count, tmp_count=0;
     int rc=0, direct=1;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
@@ -937,16 +956,19 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
+    PREPROCESS_STRIDED(tmp_count);
 
     /* aggregate put */
     if(nb_handle && nb_handle->agg_flag == SET) {
-      if(!direct) 
-	return armci_agg_save_strided_descriptor(src_ptr, src_stride_arr, 
+      if(!direct){ 
+	rc= armci_agg_save_strided_descriptor(src_ptr, src_stride_arr, 
 						 dst_ptr, dst_stride_arr, 
 						 count, stride_levels, proc, 
 						 PUT, nb_handle);
-    }
-    else {
+        POSTPROCESS_STRIDED(tmp_count);
+        return(rc);
+      }
+    } else {
       /*ORDER(PUT,proc);  ensure ordering */
       UPDATE_FENCE_INFO(proc);
       
@@ -969,6 +991,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],
                                   (void **)(&nb_handle->cmpl_info),
                                   nb_handle->tag,mhloc,mhrem);
+         POSTPROCESS_STRIDED(tmp_count);
          return 0;
        }
 #     endif
@@ -980,13 +1003,13 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
        else
 #  endif
        rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,dst_ptr,
-                  dst_stride_arr, count, stride_levels, NULL, -1, -1, -1,nb_handle);
+                  dst_stride_arr, count, stride_levels,NULL,-1,-1,-1,nb_handle);
     }
     else
 #endif 
       {
 	rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr,
-			       dst_ptr,dst_stride_arr,count,stride_levels, 0,nb_handle);
+		       dst_ptr,dst_stride_arr,count,stride_levels, 0,nb_handle);
       }
     
 #ifdef GA_USE_VAMPIR
@@ -995,6 +1018,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
 #endif
 
+    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
     
@@ -1005,7 +1029,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
-		int byte_count[],       /* number of segments at each stride 
+		int seg_count[],        /* number of segments at each stride 
                                            levels: byte_count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
                 int proc,               /* remote process(or) ID */
@@ -1014,39 +1038,29 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int rc=0,direct=1;
-    int *count=byte_count, tmp_count;
+    int *count=seg_count, tmp_count=0;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
-    if(byte_count[0]<0)return FAIL3;
+    if(seg_count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
+    PREPROCESS_STRIDED(tmp_count);
 
-    
-    if(stride_levels) /* reduce stride_levels for trivial cases */
-       for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;
-    
-    /* shrinking 2-d to 1-d, if 2-d is contiguous.To be extended for N-d's*/
-    if(stride_levels==1 && (count[0]==src_stride_arr[0] &&
-			    count[0]==dst_stride_arr[0])) {
-       count = &tmp_count;
-       tmp_count = byte_count[0] * byte_count[1];
-       stride_levels = 0;
-       src_stride_arr =  dst_stride_arr = NULL;
-    }
-    
     /* aggregate get */
     if(nb_handle && nb_handle->agg_flag == SET) {
-      if(!direct) 
-	return armci_agg_save_strided_descriptor(src_ptr, src_stride_arr,
-						 dst_ptr, dst_stride_arr, 
-						 count, stride_levels, proc, 
-						 GET, nb_handle);
-    }
-    else {
+      if(!direct){ 
+	rc= armci_agg_save_strided_descriptor(src_ptr, src_stride_arr,
+					 dst_ptr, dst_stride_arr, 
+					 count, stride_levels, proc, 
+					 GET, nb_handle);
+        POSTPROCESS_STRIDED(tmp_count);
+        return(rc);
+      }
+    } else {
       /* ORDER(GET,proc); ensure ordering */
       
       /*set tag and op in the nb handle*/
@@ -1066,6 +1080,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
          ARMCI_NBREM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
+         POSTPROCESS_STRIDED(tmp_count);
          return 0;
        }
 #     endif
@@ -1093,15 +1108,17 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        /* avoid LAPI_GetV */
        if(stride_levels==1 && count[0]>320 && !direct) 
                ARMCI_REM_GET(proc,src_ptr,src_stride_arr,dst_ptr,
-                                dst_stride_arr, count, stride_levels, nb_handle);
+                               dst_stride_arr, count, stride_levels, nb_handle);
        else
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
                              dst_stride_arr,count, stride_levels,0,nb_handle);
 
+    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 }
+
 
 int ARMCI_NbAccS( int  optype,            /* operation */
                 void *scale,            /* scale factor x += scale*y */
@@ -1109,7 +1126,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
-		int count[],            /* number of segments at each stride 
+		int seg_count[],        /* number of segments at each stride 
                                            levels: count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
                 int proc,               /* remote process(or) ID */
@@ -1117,6 +1134,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
                 )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
+    int *count=seg_count, tmp_count=0;
     int rc, direct=1;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
@@ -1125,17 +1143,15 @@ int ARMCI_NbAccS( int  optype,            /* operation */
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-
-    /*ORDER(optype,proc);  ensure ordering */
     UPDATE_FENCE_INFO(proc);
-
+    PREPROCESS_STRIDED(tmp_count);
     direct=SAMECLUSNODE(proc);
 
 #   if defined(ACC_COPY) && !defined(ACC_SMP)
        if(armci_me != proc) direct=0;
 #   endif
  
-/*set tag and op in the nb handle*/
+    /*set tag and op in the nb handle*/
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = optype;
@@ -1153,6 +1169,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
       rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
                     dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,nb_handle);
 
+    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 }
