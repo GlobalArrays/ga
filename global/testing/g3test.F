@@ -22,7 +22,7 @@ c vector boxes lack arithmetic precision
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 20, DIM = 3, nwidth = 2, MAXPROC = 2000)
       parameter (nloop = 1)
-      integer ndim, nproc, pdims(7), type, dcnt, g_a, maxval
+      integer ndim, nproc, pdims(7), type, dcnt, g_a, g_b, maxval
       integer i, j, k, dims(7), width(7), map(2*nmax)
       integer lo(7), hi(7), ld(7)
       integer lo2(7), hi2(7), ld2(7)
@@ -33,7 +33,7 @@ c vector boxes lack arithmetic precision
       double precision t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13
       double precision t14,t15,t16,t17,t18,t19,t20,t21,tmp
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
-      parameter (heap=30*30*30*4, fudge=100, stack=100*100)
+      parameter (heap=25*25*25*4, fudge=100, stack=100*100)
 c     
 c***  Intitialize a message passing library
 c
@@ -124,12 +124,19 @@ c
 
       type = MT_INT
       status = nga_create_ghosts_irreg (type, ndim, dims, width,
-     +        "test_array", map, pdims, g_a)
+     +        "test_array_a", map, pdims, g_a)
+      status = nga_create_ghosts_irreg (type, ndim, dims, width,
+     +        "test_array_b", map, pdims, g_b)
       if (status.and.me.eq.0) then
         write(6,*) '*'
         write(6,*) '* Global array creation was successful'
         write(6,*) '*'
       elseif (.not.status) then
+        write(6,*) 'Global array creation failure on ',me
+      endif
+      status = nga_create_irreg (type, ndim, dims,"test_array_b",
+     +         map, pdims, g_b)
+      if (.not.status) then
         write(6,*) 'Global array creation failure on ',me
       endif
 c
@@ -173,14 +180,25 @@ c
         if (hi(i).lt.lo(i)) safe_put = .false.
       end do
       if (has_data(me).and.safe_put) call nga_put(g_a, lo, hi, a, ld)
+      call ga_copy(g_a,g_b)
+      if (has_data(me)) call nga_access_ghosts(g_a, dims3,
+     +    index3, ld3)
+      do i = 1, ndim
+        lo2(i) = lo(i) - width(i)
+        hi2(i) = hi(i) + width(i)
+        ld2(i) = ld(i) + 2*width(i)
+      end do
+      call ga_sync
+      safe_get = .true.
 c
-c      go to 123
       if (me.eq.0) write(6,*) '*'
       if (me.eq.0) write(6,*) '* Starting update 1'
       if (me.eq.0) write(6,*) '*'
       t1 = 0.0d00
       t2 = 0.0d00
       t3 = 0.0d00
+      call ga_zero(g_a)
+      call ga_copy(g_b,g_a)
       do i = 1, nloop
         start = util_timer()
         call ga_ghost_barrier
@@ -195,6 +213,15 @@ c      go to 123
       t1 = t1/dble(nloop)
       t2 = t2/dble(nloop)
       t3 = t3/dble(nloop)
+      if (me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '*   Testing results of update 1'
+        write(6,*) '*'
+        call ffflush(6)
+      endif
+      if (has_data(me).and.safe_get)
+     +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
+      call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
 
       if (me.eq.0) write(6,*) '*'
       if (me.eq.0) write(6,*) '* Starting update 2'
@@ -202,6 +229,8 @@ c      go to 123
       t4 = 0.0d00
       t5 = 0.0d00
       t6 = 0.0d00
+      call ga_zero(g_a)
+      call ga_copy(g_b,g_a)
       do i = 1, nloop
         start = util_timer()
         call ga_ghost_barrier
@@ -216,6 +245,15 @@ c      go to 123
       t4 = t4/dble(nloop)
       t5 = t5/dble(nloop)
       t6 = t6/dble(nloop)
+      if (me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '*   Testing results of update 2'
+        write(6,*) '*'
+        call ffflush(6)
+      endif
+      if (has_data(me).and.safe_get)
+     +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
+      call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
 
       t7 = 0.0d00
       t8 = 0.0d00
@@ -223,6 +261,8 @@ c      go to 123
       if (me.eq.0) write(6,*) '*'
       if (me.eq.0) write(6,*) '* Starting update 3'
       if (me.eq.0) write(6,*) '*'
+      call ga_zero(g_a)
+      call ga_copy(g_b,g_a)
       do i = 1, nloop
         start = util_timer()
         call ga_ghost_barrier
@@ -237,6 +277,15 @@ c      go to 123
       t7 = t7/dble(nloop)
       t8 = t8/dble(nloop)
       t9 = t9/dble(nloop)
+      if (me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '*   Testing results of update 3'
+        write(6,*) '*'
+        call ffflush(6)
+      endif
+      if (has_data(me).and.safe_get)
+     +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
+      call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
 
       t10 = 0.0d00
       t11 = 0.0d00
@@ -244,6 +293,8 @@ c      go to 123
       if (me.eq.0) write(6,*) '*'
       if (me.eq.0) write(6,*) '* Starting update 4'
       if (me.eq.0) write(6,*) '*'
+      call ga_zero(g_a)
+      call ga_copy(g_b,g_a)
       do i = 1, nloop
         start = util_timer()
         call ga_ghost_barrier
@@ -258,14 +309,25 @@ c      go to 123
       t10 = t10/dble(nloop)
       t11 = t11/dble(nloop)
       t12 = t12/dble(nloop)
+      if (me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '*   Testing results of update 4'
+        write(6,*) '*'
+        call ffflush(6)
+      endif
+      if (has_data(me).and.safe_get)
+     +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
+      call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
 
-  123 continue
+c  123 continue
       t13 = 0.0d00
       t14 = 0.0d00
       t15 = 0.0d00
       if (me.eq.0) write(6,*) '*'
       if (me.eq.0) write(6,*) '* Starting update 5'
       if (me.eq.0) write(6,*) '*'
+      call ga_zero(g_a)
+      call ga_copy(g_b,g_a)
       do i = 1, nloop
         start = util_timer()
         call ga_ghost_barrier
@@ -280,6 +342,15 @@ c      go to 123
       t13 = t13/dble(nloop)
       t14 = t14/dble(nloop)
       t15 = t15/dble(nloop)
+      if (me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '*   Testing results of update 5'
+        write(6,*) '*'
+        call ffflush(6)
+      endif
+      if (has_data(me).and.safe_get)
+     +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
+      call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
 
       t16 = 0.0d00
       t17 = 0.0d00
@@ -287,6 +358,8 @@ c      go to 123
       if (me.eq.0) write(6,*) '*'
       if (me.eq.0) write(6,*) '* Starting update 6'
       if (me.eq.0) write(6,*) '*'
+      call ga_zero(g_a)
+      call ga_copy(g_b,g_a)
       do i = 1, nloop
         start = util_timer()
         call ga_ghost_barrier
@@ -301,6 +374,15 @@ c      go to 123
       t16 = t16/dble(nloop)
       t17 = t17/dble(nloop)
       t18 = t18/dble(nloop)
+      if (me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '*   Testing results of update 6'
+        write(6,*) '*'
+        call ffflush(6)
+      endif
+      if (has_data(me).and.safe_get)
+     +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
+      call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
 
       write(6,*) 'Update finished on processor ',me
       if (me.eq.0) then
@@ -312,14 +394,6 @@ c      go to 123
 c
 c     get patch with ghost cells
 c
-      do i = 1, ndim
-        lo2(i) = lo(i) - width(i)
-        hi2(i) = hi(i) + width(i)
-        ld2(i) = ld(i) + 2*width(i)
-      end do
-      call ga_sync
-      safe_get = .true.
-
       t19 = 0.0d00
       t20 = 0.0d00
       t21 = 0.0d00
@@ -338,18 +412,6 @@ c
       t19 = t19/dble(nloop)
       t20 = t20/dble(nloop)
       t21 = t21/dble(nloop)
-
-      if (me.eq.0) then
-        write(6,*) '*'
-        write(6,*) '*   Performing nga_access_ghosts'
-        write(6,*) '*'
-        call ffflush(6)
-      endif
-      if (has_data(me)) call nga_access_ghosts(g_a, dims3,
-     +    index3, ld3)
-      call ga_sync
-      call atest(int_mb(index3),dims3,ld3(1),b,nmax+2*nwidth,has_data)
-      call ga_sync
 c
       tmp = t2
       call ga_dgop(3,tmp,1,'+')
@@ -488,6 +550,7 @@ c
       integer i, j, k, l, nproc
       logical has_data(0:1999), check_data
 
+      isok = .true.
       nproc = ga_nnodes()
       check_data = .true.
       do l = 1, nproc
@@ -501,11 +564,12 @@ c
             end do
           end do
           if (check_data) then
-            write(6,*) '*'
-            write(6,*) '*   Data from nga_access_ghosts and'
-            write(6,*) '*   nga_periodic_get is the same on'
-            write(6,*) '*   processor ',l-1
-            write(6,*) '*'
+            if (ga_nodeid().eq.0) then
+              write(6,*) '*'
+              write(6,*) '*   Data from nga_access_ghosts and'
+              write(6,*) '*   nga_periodic_get is the same'
+              write(6,*) '*'
+            endif
           else
             write(6,*) '*'
             write(6,*) '*   Data from nga_access_ghosts and'
