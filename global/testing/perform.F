@@ -2,7 +2,6 @@
 c***
 c***  Last modification: Fri Jan 13 12:13:27 PST 1995
 c***
-C$Id: perform.F,v 1.2 1995-02-02 23:14:23 d3g681 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"
@@ -17,7 +16,7 @@ c
 c***  Intitialize the GA package
       call ga_initialize()
 c
-      if(ga_nnodes().ne.4)
+      if(ga_nnodes().ne.4 .and. ga_nodeid().eq.0)
      $   call ga_error('Must be run with 4 GA processes',ga_nnodes())
 c
       call testit()

@@ -1,36 +1,41 @@
       program test
-C$Id: test.F,v 1.3 1995-02-02 23:14:24 d3g681 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"
 #include "tcgmsg.fh"
-      integer heap, stack, fudge
+      integer heap, stack, fudge, ma_heap
       logical status
-      parameter (heap=100*100*2, fudge=10240, stack=100)
+      parameter (heap=100*100*4, fudge=100, stack=100)
 c     
-c     Intitialize the TCGMSG package
+c***  Intitialize the TCGMSG package
 c
       call pbeginf
 c     call setdbg(1)            ! Turn TCGMSG debugging on/off
 c
-c     Initialize the MA package
+c***  Initialize the MA package
 c
-      status = ma_init(MT_DBL, stack, 2*heap/nnodes() + fudge)
+      ma_heap = heap/nnodes() + fudge
+      status = ma_init(MT_DBL, stack, ma_heap)
       if (.not. status) print *, 'ma_init failed' 
-c
-c     Intitialize the GA package
 c
       if(nodeid().eq.0)then
         print *, 'using ',nnodes(), ' process(es)'
-         call ffflush(6)
+        call ffflush(6)
       endif
-      call ga_initialize()
+c
+c***  Initialize GA
+c
+c     There are 2 choices: ga_initialize or ga_initialize_ltd.
+c     In the first case, there is no explicit limit on memory usage.
+c     In the second, user can set limit (per processor) in bytes.
+c
+      call ga_initialize_ltd(mdtob(ma_heap))
       if(ga_nodeid().eq.0)then
          print *,' GA initialized'
          call ffflush(6)
       endif
 c
-c     Check support for double precision arrays
+c***  Check support for double precision arrays
 c
       if (nodeid().eq.0) then
          write(6,*)
@@ -41,7 +46,7 @@ c
 
       call check_dbl()
 c
-c     Check support for integer arrays (limited !)
+c***  Check support for integer arrays
 c
       if (nodeid().eq.0) then
          write(6,*)
@@ -52,12 +57,15 @@ c
 
       call check_int()
 c
-c     Tidy up the global array package
+c***  Check memory management 
+c
+      call check_mem(mdtob(ma_heap*ga_nnodes()))
+c
+c***  Tidy up the GA package
 c
       call ga_terminate()
 c
-c
-c     Tidy up after TCGMSG
+c***  Tidy up after TCGMSG
 c
       call pend()
 c
@@ -867,3 +875,86 @@ c
 c     
       end
 
+
+      subroutine check_mem(mem_size)
+      implicit none
+      integer mem_size
+#include "mafdecls.h"
+#include "global.fh"
+#include "tcgmsg.fh"
+c
+      integer n,nmax,left,need, me,procs,g_a, g_b 
+      logical status
+c
+      if(.not. ga_memory_limited())return
+      me = ga_nodeid()
+      procs = ga_nnodes()
+      nmax = int(dsqrt(dble(mem_size/mitob(1))))
+      left =  mem_size/procs - ga_inquire_memory()
+      n = nmax/2
+      need = mdtob(n*n)/procs
+c
+      if(me.eq.0)then
+        write(6,*)' '
+        if(ga_uses_ma())then
+           write(6,*)' CHECKING GA MEMORY RESTRICTIONS (MA used)'
+        else
+           write(6,*)' CHECKING GA MEMORY RESTRICTIONS (MA not used)'
+        endif
+        write(6,*)' '
+        write(6,*)' '
+        call print_mem_info(n,left, need, mem_size/procs)
+      endif
+c
+      status = ga_create(MT_DBL, n, n, 'a', 1, 1, g_a)
+c
+      if(me.eq.0) then
+        if(status) then
+              write(6,*) '  success'
+        else
+              write(6,*) '  failure'
+        endif
+        call ffflush(6)
+      endif
+c
+      n = nmax
+      left =  mem_size/procs - ga_inquire_memory()
+      need = mdtob(n*n)/procs
+      if(me.eq.0)then
+        call print_mem_info(n,left, need, mem_size/procs)
+      endif
+c
+      status = ga_create(MT_DBL, n, n, 'b', 1, 1, g_b)
+c
+      if(me.eq.0) then
+        if(status) then
+              write(6,*) '  success'
+        else
+              write(6,*) '  failure'
+        endif
+        write(6,*)' '
+        write(6,*)' '
+        call ffflush(6)
+      endif
+      end
+
+     
+
+      subroutine print_mem_info(n,left, need, total)
+      implicit none
+      integer n,left, need, total
+c
+      write(6,*)' '
+      if(left - need .ge. 0) then
+        write(6,1)n,n 
+1       format('> Creating array ',i4,' by ',i4,' -- should succeed')
+      else
+        write(6,2)n,n 
+2       format('> Creating array ',i4,' by ',i4,' -- should fail')
+      endif
+      write(6,3) need, left, total
+3     format('  (need ',i7,' and  ',i7,' out of ',i7,' bytes are left)')
+      write(6,*)' '
+      call ffflush(6)
+c
+      end

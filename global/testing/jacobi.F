@@ -4,7 +4,6 @@
 *     Global Arrays are used to store and access U and exact solution vectors 
 *     J.N., 06.01.94, works with GA 1.2
 *
-C$Id: jacobi.F,v 1.2 1995-02-02 23:14:20 d3g681 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"
