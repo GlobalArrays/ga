@@ -18,6 +18,33 @@ extern void Busy(int);
 #      define COPY_FROM_REMOTE(src, dest, n, fromnode) copyfrom(src, dest, n)
 #      define COPY_TO_LOCAL(src, dest, n) copyto(src, dest, n)
 #      define COPY_FROM_LOCAL(src, dest, n) copyfrom(src, dest, n)
+#elif defined(CRAY_T3E)
+#      include <mpp/shmem.h>
+#      ifdef FLUSHCACHE
+#            define FLUSH_CACHE           shmem_udcflush()
+#            define FLUSH_CACHE_LINE(x)   shmem_udcflush_line((long*)(x))
+#      else
+#            define FLUSH_CACHE 
+#            define FLUSH_CACHE_LINE(x)  
+#      endif
+
+/* T3E has nondeterministic routing, this is safer with shmem_quiet */
+#      define COPY_TO_REMOTE(src, dest, n, node){ \
+              shmem_put((long*)(dest),(long*)(src),(int) ((n)>>3),(node));\
+              shmem_quiet(); \
+              }
+
+#      define COPY_FROM_REMOTE(src, dest, n, node) \
+              shmem_get((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
+
+#      define COPY_TO_LOCAL(src, dest, n)\
+              (void)memcpy(dest, src, (size_t) n)
+/*              (void) copyto(src, dest, (long) n)*/
+
+#      define COPY_FROM_LOCAL(src, dest, n)\
+              (void)memcpy(dest, src, (size_t) n)
+/*              (void) copyfrom(src, dest, (long) n)*/
+
 #elif defined(CRAY_T3D)
 #      include <mpp/shmem.h>
 #      ifdef FLUSHCACHE
@@ -28,8 +55,9 @@ extern void Busy(int);
 #            define FLUSH_CACHE_LINE(x)  
 #      endif
 
-#      define COPY_TO_REMOTE(src, dest, n, node) \
-              shmem_put((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
+#      define COPY_TO_REMOTE(src, dest, n, node){ \
+              shmem_put((long*)(dest),(long*)(src),(int) ((n)>>3),(node));\
+              }
 
 #      define COPY_FROM_REMOTE(src, dest, n, node) \
               shmem_get((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
@@ -188,7 +216,14 @@ long async_send(SendQEntry *entry)
   /* Copy over the header information include buffer full flag */
 
   info[3] = entry->buffer_number;
+#ifdef CRAY_T3E
+  COPY_TO_REMOTE(info, sendbuf->info, 3*sizeof(long), node);
+  shmem_quiet();
+  shmem_long_p(&sendbuf->info[3],info[3], node);
+  shmem_quiet();
+#else
   COPY_TO_REMOTE(info, sendbuf->info, sizeof(info), node);
+#endif
 
   return (long) (entry->written == entry->lenbuf);
 }
