@@ -50,7 +50,7 @@ LIBS = $(CORE_LIBS) $(LINALG) $(LIBCOM) $(LIBTRACE)
 # main program in C requires extra effort to provide Fortran libs
 # Highly system dependent !!!
 
-ifneq ($(MSG_COMMS), MPI)
+ifeq ($(MSG_COMMS), MPI)
   COPT_REN += -I../../tcgmsg/ipcv4.0
   P_FILE = no
 endif
@@ -108,7 +108,7 @@ ifeq ($(P_FILE),YES)
     endif
 
     %.x : %.o $(LIBDIR)/libglobal.a
-	$(FC) $(FLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) 
+	$(FC) $(FLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS)
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
 	$(INSTALL)
 else
