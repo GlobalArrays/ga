@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.39 2003-11-05 18:52:33 manoj Exp $ */
+/* $Id: matmul.c,v 1.40 2003-11-05 22:11:32 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -966,6 +966,11 @@ void ga_matmul(transa, transb, alpha, beta,
 	GA[GA_OFFSET + *g_b].irreg == 1 ||
 	GA[GA_OFFSET + *g_a].irreg == 1 ||
 	_gai_matmul_patch_flag == SET) irregular = SET;
+
+    /* even ga_dgemm is called, m,n & k might not match GA dimensions */
+    nga_inquire_internal_(g_c, &ctype, &rank, dims);
+    if(dims[0] != m || dims[1] != n) irregular = SET; /* C matrix dims */
+    
     if(!irregular) {
        if((adim1=GA_Cluster_nnodes()) > 1) use_NB_matmul = SET;
        else {
@@ -978,9 +983,6 @@ void ga_matmul(transa, transb, alpha, beta,
 #    endif
     }
 
-    nga_inquire_internal_(g_c, &ctype, &rank, dims);
-    if(dims[0] != m || dims[1] != n) irregular = SET; /* C matrix dims */
-    
     /****************************************************************
      * Get the memory (i.e.static or dynamic) for temporary buffers 
      ****************************************************************/
@@ -1017,6 +1019,10 @@ void ga_matmul(transa, transb, alpha, beta,
           if(Ichunk<=0) Ichunk = 1;
           if(Jchunk<=0) Jchunk = 1;
           if(Kchunk<=0) Kchunk = 1;
+
+	  if(Ichunk/Kchunk > GA_ASPECT_RATIO || 
+	     Jchunk/Kchunk > GA_ASPECT_RATIO) irregular = SET;
+	  
 
 	  /* If non-blocking, we need 2 temporary buffers for A and B matrix */
 	  if(use_NB_matmul) nbuf = 2; 
