@@ -202,7 +202,7 @@ endif
 #................................. IBM SP and workstations ...................
 
 ifeq ($(TARGET),LAPI)
-         IBM  = 1
+         IBM_ = 1
           CC  = mpcc_r
       LINK.f  = mpcc_r -lc_r -lxlf -lxlf90 -lm
 GLOB_DEFINES += -DSP
@@ -211,16 +211,16 @@ endif
 ifeq ($(TARGET),IBM)
 # IBM RS/6000 under AIX
 #
-         IBM  = 1
+         IBM_  = 1
         CDEFS = -DEXTNAME
 endif
 
-ifdef IBM
+ifdef IBM_
      ifeq ($(FOPT), -O)
          FOPT = -O3 -qstrict -qarch=com -qtune=auto
      endif
      ifeq ($(COPT), -O)
-         COPT = -v -O3 -Q -qstrict -qarch=com -qtune=auto
+         COPT = -O3 -Q -qstrict -qarch=com -qtune=auto
      endif
            FC = xlf
 GLOB_DEFINES  += -DAIX
