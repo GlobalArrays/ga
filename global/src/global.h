@@ -234,7 +234,8 @@ extern logical ga_update3_ghosts(Integer *g_a);
 extern logical ga_update4_ghosts(Integer *g_a);
 extern logical ga_update5_ghosts(Integer *g_a);
 extern logical ga_update6_ghosts(Integer *g_a);
-extern logical nga_update_ghost_dir(Integer *g_a, Integer *idim, Integer *idir,
+extern logical nga_update_ghost_dir(Integer *g_a, Integer *idim, 
+Integer *idir,
                                 logical *flag);
 
 extern void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi);
@@ -342,7 +343,7 @@ extern void FATR ga_add_constant_(Integer *g_a, void *);
 extern void FATR ga_abs_value_(Integer *);
 extern void FATR ga_recip_(Integer *g_a);
 extern void FATR ga_abs_value_patch_ (Integer *, Integer *, Integer *);
-extern void FATR nga_add_constant_patch_(Integer *, Integer *, Integer *, 
+extern void FATR ga_add_constant_patch_(Integer *, Integer *, Integer *, 
 					 void *);
 
 extern void FATR ga_recip_patch_(Integer *g_a, Integer *lo, Integer *hi);
