@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.54 2002-12-03 02:05:39 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.55 2002-12-21 16:08:20 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -137,6 +137,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 static  unsigned long MinShmem = _SHMMAX;  
 static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
 static  int create_call=0;
+static  char *armci_elan_starting_address = (char*)0;
 
 #ifdef  SHMMAX_SEARCH_NO_FORK
 static  char *ptr_search_no_fork = (char*)0;
@@ -161,7 +162,9 @@ static  int id_search_no_fork=0;
 #include <elan3/elan3.h>
 
 #ifdef __ia64__
-#define ALLOC_MUNMAP_ALIGN 1024*1024*1024
+#define ALLOC_MUNMAP_ALIGN 1024*1024
+#else
+#define ALLOC_MUNMAP_ALIGN 64*1024
 #endif
 
 #if 0
@@ -178,15 +181,25 @@ char *tmp;
 unsigned long iptr;
 size_t bytes = size+pagesize-1;
  
-    tmp = ALGN_MALLOC(bytes, getpagesize());
-    if(tmp){
+    if(armci_elan_starting_address){
+       tmp = armci_elan_starting_address;
+       armci_elan_starting_address += size; 
+#      ifdef ALLOC_MUNMAP_ALIGN
+         armci_elan_starting_address += ALLOC_MUNMAP_ALIGN;
+#      endif
+       if(DEBUG_) {printf("%d: address for shm attachment is %p size=%ld\n",
+                         armci_me,tmp,(long)size); fflush(stdout); }
+    } else {
+      tmp = ALGN_MALLOC(bytes, getpagesize());
+      if(tmp){
         iptr = (unsigned long)tmp + pagesize-1;
         iptr >>= logpagesize; iptr <<= logpagesize;
         if(DEBUG_) printf("%d:unmap ptr=%p->%p size=%d pagesize=%d\n",armci_me, 
                           tmp,(char*)iptr,(int)size,pagesize);
         tmp = (char*)iptr;
         if(munmap(tmp, size) == -1) armci_die("munmap failed",0);
-    }else armci_die("alloc_munmap: malloc failed",(int)size);
+      }else armci_die("alloc_munmap: malloc failed",(int)size);
+    }
     return tmp;
 }
 #endif
@@ -349,17 +362,29 @@ void armci_shmem_init()
 
 #if defined(QUADRICS)
 #   if defined(__ia64__) || defined(__alpha)
+
+      /* this is to determine size of Elan Main memory allocator for munmap */
       long x;
       char *uval;
       uval = getenv("LIBELAN_ALLOC_SIZE");
       if(uval != NULL){
-       sscanf(uval,"%ld",&x);
-       if((x>80000000) && (x< 4*1024*1024*1024L)){ 
-         max_alloc_munmap = (x>>20) - 72;
-         printf("%d: max_alloc_munmap is %ld\n",armci_me,max_alloc_munmap);
-         fflush(stdout);
+        sscanf(uval,"%ld",&x);
+        if((x>80000000) && (x< 4*1024*1024*1024L)){ 
+          max_alloc_munmap = (x>>20) - 72;
+          if(DEBUG_){
+            printf("%d: max_alloc_munmap is %ld\n",armci_me,max_alloc_munmap);
+            fflush(stdout);
+          }
         }
       }
+
+      /* an alternative approach is to use MMAP area where we get
+         the address from the Elan environment variable in qsnetlibs 1.4+  */
+      uval = getenv("LIBELAN3_MMAPBASE");
+      if(uval != NULL){
+         sscanf(uval,"%p",&armci_elan_starting_address);
+      }
+
 #   endif
 #   if defined(__ia64__)
        /* need aligment on 1MB boundary rather than the actual pagesize */
@@ -397,7 +422,7 @@ void armci_shmem_init()
 
 #       if defined(ALLOC_MUNMAP)
            /* need to cap down for special memory allocator */
-           if(x>max_alloc_munmap) x=max_alloc_munmap;
+           if(x>max_alloc_munmap && !armci_elan_starting_address) x=max_alloc_munmap;
 #       endif
 
         if(DEBUG_) printf("%d: shmem_init: mbytes max segment size \n",x);fflush(stdout);
