@@ -28,19 +28,29 @@ Integer GA_proc_id;       /* process id of current process --
                            */
 Integer GA_n_proc;        /* No. of processes */
 Integer GA_n_clus;        /* No. of clusters */
-Integer GA_clus_id;       /* Logical id of current cluster */
+Integer GA_clus_id=0;     /* Logical id of current cluster */
 
 int SR_caught_sigint;     /* for compatibility with TCGMSG interface only */
 
 #define MAX_PROC 1024     /* max no. processes used in data server model */
 #define DEBUG 0
 
+MPI_Comm GA_MPI_COMM;
+
+
+/*\ returns communicator for GA compute processes
+\*/
+void ga_mpi_communicator(GA_COMM)
+MPI_Comm *GA_COMM;
+{
+/* MPI_COMM_WORLD is a constant */
+*GA_COMM = GA_MPI_COMM;
+}
 
 
 /*\ Creates communicator for GA compute processes
 \*/
-void ga_mpi_communicator(GA_COMM)
-MPI_Comm *GA_COMM;
+void gai_setup_cluster()
 {
 MPI_Comm MSG_COMM;
 
@@ -59,17 +69,19 @@ MPI_Comm MSG_COMM;
         int i, *data_servers = (int*)malloc(GA_n_clus*sizeof(int)); 
 
         if(!data_servers)ga_error("ga_mpi_communicator: malloc failed",0);
-        for(i=0; i < GA_n_clus; i++)
+        for(i=0; i < GA_n_clus; i++){
            data_servers[i] = GA_clus_info[i].masterid+GA_clus_info[i].nslave-1;
+        }
       
         /* exclude data server processes from the group */ 
         MPI_Comm_group(MSG_COMM, &MSG_GROUP); 
         MPI_Group_excl(MSG_GROUP, (int)GA_n_clus, data_servers, &GA_GROUP);
-        MPI_Comm_create(MSG_COMM, GA_GROUP, GA_COMM);
+        MPI_Comm_create(MSG_COMM, GA_GROUP, &GA_MPI_COMM);
+        free(data_servers);
 
     } else{
 
-        *GA_COMM = MSG_COMM;
+        GA_MPI_COMM = MSG_COMM;
 
     }
 }
@@ -152,6 +164,14 @@ char *names;
         ga_msg_brdcst(type, &GA_n_clus, len, root);
         len = (sizeof(Integer)+HOSTNAME_LEN)*GA_n_clus;
         ga_msg_brdcst(type, GA_clus_info, len, root);
+
+        /* now determine current cluster node id by comparing me to masterid */
+        GA_clus_id= GA_n_clus-1;
+        for(i =0; i< GA_n_clus-1; i++)
+           if(me < GA_clus_info[i+1].masterid){
+              GA_clus_id=i;
+              break;
+           }
      }
 #    else
         MPI_Comm ga_comm;
@@ -186,6 +206,7 @@ void init_msg_interface()
   if(ga_msg_nodeid_()==0 && DEBUG)
     for(i=0;i<GA_n_clus;i++)
        printf("%s cluster:%d nodes:%d\n", GA_clus_info[i].hostname,i, GA_clus_info[i].nslave );
+
 }
 
 

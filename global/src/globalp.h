@@ -143,4 +143,5 @@ extern Integer ga_read_inc_local(Integer g_a, Integer i, Integer j, Integer inc,
                                  Integer proc);
 
 extern void ga_check_req_balance();
+extern void gai_setup_cluster();
 #endif

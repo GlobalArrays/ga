@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.50 1998-04-18 01:03:09 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.51 1999-01-08 01:23:36 d3h325 Exp $*/
 /* 
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -551,6 +551,7 @@ long *msg_buf;
 
     /* selected processes now become data servers */
 #ifdef DATA_SERVER
+    gai_setup_cluster(); 
        if(ClusterMode) if(GAme <0) ga_SERVER(0, MessageRcv);
 #elif defined(IWAY)
     if(ClusterMode) if(GAme <0) ga_server_handler();

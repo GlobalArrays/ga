@@ -62,4 +62,6 @@ void init_msg_interface()
 #endif
 }
 
-
+void gai_setup_cluster()
+{
+}
