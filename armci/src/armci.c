@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.75 2003-08-01 00:09:59 manoj Exp $ */
+/* $Id: armci.c,v 1.76 2003-08-01 01:06:40 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -290,6 +290,13 @@ int ARMCI_Init()
     armci_init_lapi();
 #endif
 #ifdef QUADRICS
+    {
+#   ifdef DECOSF
+       char *tmp = getenv("SHMEM_SMP_ENABLE");
+       if(tmp == NULL || strcmp((const char *)tmp,"0"))
+	  armci_die("WARNING: On Tru64 (Compaq Alphaserver) it might be required to set the Quadrics environment variable SHMEM_SMP_ENABLE=0 as a work around for shmem_fadd problem.", 0);
+#   endif
+    }
     shmem_init();
     /*printf("after shmem_init\n"); */
 #endif
