@@ -36,8 +36,8 @@ machdep:
 			./port "$(MACHINE)" $$file ; \
 			done \
 		done
-	chmod -f a+x examples/demo
-	chmod -f a+x makep
+	chmod a+x examples/demo
+	chmod a+x makep
 
 clean:
 	for dir in $(SUBDIRS); do \
