@@ -13,20 +13,20 @@ int semget(),semctl();
 struct sembuf sops;
 int semaphoreID;
 
-#if defined(ARDENT) || defined(ENCORE) || defined(SEQUENT) || \
-    defined(ULTRIX) || defined(AIX)    || defined(HPUX) || defined(KSR)
-union semun {
-   long val;
-   struct semid_ds *buf;
-   ushort *array;
-};
-#elif !defined(LINUX) && !defined(SUN) && !defined(SGI)
-union semun {
-   int val;
-   struct semid_ds *buf;
-   ushort *array;
-};
+/* follows LINUX semctl manpage */
+#if (defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)) ||\
+    (defined(SGI) && !defined(_NO_XOPEN4)) || defined(SUN)
+    /* union semun is defined by including <sys/sem.h> */
+#   else
+    /* according to X/OPEN we have to define it ourselves */
+    union semun {
+            int val;                    /* value for SETVAL */
+            struct semid_ds *buf;       /* buffer for IPC_STAT, IPC_SET */
+            unsigned short int *array;  /* array for GETALL, SETALL */
+            struct seminfo *__buf;      /* buffer for IPC_INFO */
+    };
 #endif
+
 
 
 int SemGet(num_sem)
