@@ -8,6 +8,7 @@
 c
 c
       program test
+      implicit none
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
