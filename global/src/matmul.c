@@ -68,11 +68,12 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
 		  Integer Jchunk, Integer Kchunk, int *max_tasks) {
     
     int ii, jj;
+    short int do_put;
     Integer ilo, ihi, jlo, jhi, klo, khi, get_new_B;
     
     for(ii=jj=0, jlo = jstart; jlo <= jend; jlo += Jchunk) {
        jhi = MIN(jend, jlo+Jchunk-1);
-       
+       do_put = SET;/* for first shot we can do put, instead of accumulate */
        for(klo = kstart; klo <= kend; klo += Kchunk) {
 	  khi = MIN(kend, klo+Kchunk-1); 
 	  get_new_B = TRUE;
@@ -83,6 +84,7 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
 	     taskListA[ii].dim[1] = khi - klo + 1;
 	     taskListA[ii].lo[0]  = ilo; taskListA[ii].hi[0] = ihi;
 	     taskListA[ii].lo[1]  = klo; taskListA[ii].hi[1] = khi;
+	     taskListA[ii].do_put = do_put;
 	     if(get_new_B) { /* B matrix */
 		ihi = MIN(iend, ilo+Ichunk-1);
 		taskListB[jj].dim[0] = khi - klo + 1; 
@@ -96,8 +98,9 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
 	     else taskListA[ii].chunkBId = taskListA[ii-1].chunkBId;
 	     ++ii;
 	     if(ii > MAX_CHUNKS)
-	       ga_error("ga_matmul_patch(): # of chunks > MAX_CHUNKS(640)",0L);
+	       ga_error("ga_matmul_patch(): # of chunks > MAX_CHUNKS(1024)",0L);
 	  }
+	  do_put = UNSET;
        }
     }
     *max_tasks = ii;
@@ -155,7 +158,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     }
     else 
        *Ichunk = *Jchunk = *Kchunk = CHUNK_SIZE/nbuf;
-    
+
     /* Total elements "NUM_MAT" extra elems for safety - just in case */
     *elems = (*Ichunk)*(*Kchunk) + (*Kchunk)*(*Jchunk) + (*Ichunk)*(*Jchunk);
     *elems += NUM_MATS*sizeof(DoubleComplex)/GAsizeofM(atype);
@@ -269,9 +272,6 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
 
     ONE.real =1.; ONE.imag =0.; 
 
-    /* if beta=0.0, then for first shot we can do put, instead of accumulate */
-    if(need_scaling == UNSET) do_put = SET;
-   
     /* to skip accumulate and exploit data locality:
        get chunks according to "C" matrix distribution*/
     nga_distribution_(g_c, &me, loC, hiC);
@@ -287,12 +287,15 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
        nga_access_ptr(g_c, loC, hiC, &c, ld);
     }
 #endif
-   
+
     /* loop through columns of g_c patch */
     for(jlo = jstart; jlo <= jend; jlo += Jchunk) { 
        jhi  = MIN(jend, jlo+Jchunk-1);
        jdim = jhi - jlo +1;
      
+       /* if beta=0,then for first shot we can do put,instead of accumulate */
+       if(need_scaling == UNSET) do_put = SET;
+   
        /* loop cols of g_a patch : loop rows of g_b patch*/
        for(klo = kstart; klo <= kend; klo += Kchunk) { 
 	  khi = MIN(kend, klo+Kchunk-1);
@@ -392,10 +395,6 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
  
     ONE.real =1.; ONE.imag =0.;
    
-    /* For regular distribution:If beta=0.0 (i.e.if need_scaling=UNSET), 
-       then for first shot we can do put, instead of accumulate */
-    if(!irregular && need_scaling == UNSET) do_put = SET;  
-   
     m = *aihi - *ailo +1;
     n = *bjhi - *bjlo +1;
     k = *ajhi - *ajlo +1;
@@ -465,12 +464,17 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
        kdim = taskListA[currA].dim[1];
        bdim=bdim_next;
       
-       if(irregular)
+       if(irregular) {
 	  switch(atype) {
 	     case C_FLOAT: for(i=0; i<idim*jdim; i++) *(((float*)c)+i)=0; break;
 	     case C_DBL: for(i=0; i<idim*jdim; i++) *(((double*)c)+i)=0; break;
 	     default: for(i=0; i<idim*jdim; i++) { c[i].real=0;c[i].imag=0;}
 	  }
+       }
+       else { /* For regular distr, if beta=0.0 (i.e.if need_scaling=UNSET),
+		 then for first shot we can do put, instead of accumulate */
+	  if(need_scaling == UNSET) do_put = taskListA[currA].do_put; 
+       }
 
        nextA = gai_nxtask(irregular, g_t); /* get the next task id */
 
@@ -547,8 +551,6 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
        }
 #endif
        
-       if(get_new_B == TRUE) do_put = UNSET; /* Thereafter, accumulate */ 
-      
        /* shift next buffer..toggles between 0 and 1: as we use 2 buffers, 
 	  one for computation and the other for communication (overlap) */
        shiftA = ((shiftA+1)%2); 
