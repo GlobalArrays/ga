@@ -1,11 +1,131 @@
------------------------------------------------------------------------
 
-		GA++: C++ bindings for Global Arrays
-				v0.1
-
------------------------------------------------------------------------
+GA++: C++ Bindings for Global Arrays
 
 
-GA++  provides a C++ interface to global arrays (GA) libraries. This is 
+Overview:
+--------
+
+GA++  provides a C++ interface to global arrays (GA) libraries. This is
 the first beta release. Here is the doxygen documentation of GA++:
 http://www.emsl.pnl.gov:2080/docs/global/ga++/index.html
+
+The GA C++ bindings are a layer built directly on top of the GA C bindings. GA++ provides new names for the C bindings of GA functions (For example, GA_Add_patch() is renamed as addPatch()).
+
+
+GA++ classes:
+------------
+
+All GA classes (GAServices, GlobalArray) are declared within the scope of GA namespace.
+
+Namespace issue: 
+Although namespace is part of ANSI C++ standard, not all C++ compilers support namespaces (A non-instantiable GA class is provided for implementations using compilers without namespace). (Note: define the variable _GA_USENAMESPACE_ as 0 in ga++.h if your compiler doesnot support namespaces.)
+
+namespace GA {
+	  class GAServices;
+	  class GlobalArray;
+};
+
+Current implementation has no derived classes (no (virtual) inheritance), templates or exception handling. Eventually, more object oriented functionalities will be added, and standard library facilities will be used without affecting the performance.
+
+Initialization and Termination:
+------------------------------
+GA namespace has the following static functions for initialization and termination of Global Arrays.
+
+GA::Initialize(): 
+Initialize Global Arrays, allocates and initializes internal data structures in Global Arrays. This is a collective operation. 
+
+GA::Terminate(): 
+Delete all active arrays and destroy internal data structures. This is a collective operation. 
+
+namespace GA {
+	  _GA_STATIC_ void Initialize(int argc, char *argv[], size_t limit = 0);
+
+	  _GA_STATIC_ void Initialize(int argc, char *argv[], unsigned long heapSize, unsigned long stackSize, int type, size_t limit = 0);
+
+	  _GA_STATIC_ void Terminate();
+};
+
+	Example:
+		#include <iostream.h>
+		#include "ga++.h"
+			
+		int 
+		main(int argc, char **argv) {
+
+			 GA::Initialize(argc, argv, 0);
+			 cout << "Hello World\n";
+			 GA::Terminate();
+		}
+			 
+
+GAServices:
+----------
+GAServices class has member functions that does all the global operations (non-array operations) like Process Information (number of processes, process id, ..), Inter-process Synchronization (sync, lock, broadcast, reduce,..), etc,. 
+
+SERVICES Object:
+---------------
+GA namespace has a global "SERVICES" object (of type "GAServices"), which can be used to invoke the non-array operations. To call the functions (for example, sync()), we invoke them on this SERVICES object (for example, GA::SERVICES.sync()). As this object is in the global address space, the functions can be invoked from anywhere inside the program (provided the ga++.h is included in that file/program).
+
+	     Example:
+		#include <iostream.h>
+		#include "ga++.h"
+		#define N 10	
+		int 
+		main(int argc, char **argv) {
+
+			 // initialize
+			 int heap  = 200000;
+			 int stack = 200000;
+			 double value = 5.0;	 
+			 GA::Initialize(argc, argv, heap, stack, MT_DBL, 0);
+			 
+			 // process information
+			 int me    = GA::SERVICES.nodeid();
+			 int nproc = GA::SERVICES.nodes();
+
+
+			 // sync operation invoked thru' SERVICES object
+			 GA::SERVICES.sync();
+			 
+			 // create a regular 2-dimensional 10x10 double array(A) 
+			 int dims[2]={N,N};
+			 GA::GlobalArray *g_a = GA::SERVICES.createGA(C_DBL, 2, dims, (char *)"A", NULL);
+			 
+			 // create a regular 2-dimensional 10x10 double array(B) 
+			 GA::GlobalArray g_b(C_DBL, 2, dims, (char *)"B", NULL);
+			 
+			 // create a regular 2-dimensional 10x10 double array(C) 
+			 GA::GlobalArray g_c(g_b, (char *)"C");
+			 
+			 g_a->fill(&value);
+			 value = 4.0; g_b.fill(&value);
+			 g_c.zero();
+			 
+			 // C = A - B
+			 double alpha = 1.0, beta = -1.0;
+			 g_c.add(&alpha, g_a, &beta, &g_b);  /* C = A - B */
+			 
+			 // print array C.
+			 g_c.print();
+			 
+			 g_a->destroy();
+			 g_b.destroy();
+			 g_c.destroy();
+			 
+			 // terminate
+			 GA::Terminate();
+		}
+
+
+Global Array:
+------------
+GlobalArray class has member functions that does: 
+        Array operations, 
+        One-sided(get/put), 
+        Collective array operations, 
+        Utility operations , etc,. 
+
+
+Note:
+In order to built GA++, environment variable GA_C_CORE should be defined as follows and then 'make':
+	setenv GA_C_CORE y
