@@ -351,6 +351,6 @@ ifeq (CRAY,$(findstring CRAY,$(TARGET)))
 endif
 
 ifeq ($(TARGET),LINUX)
-tas-i386.o:
-	gcc -c tas-i386.c
+%.o:    %.gcc
+	gcc -x c -c $*.gcc
 endif
