@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.15 2001-12-04 22:20:30 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.16 2001-12-22 00:15:44 d3h325 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1377,16 +1377,13 @@ Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* (int) *nv);
 }
 
 
+
 /*\ GATHER OPERATION elements from the global array into v
 \*/
 void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
                       Integer *nv)
 {
-    register Integer k;
-    Integer kk;
-    Integer pindex, phandle, item_size;
-    Integer proc;
-
+    Integer k, kk, proc, item_size;
     Integer *aproc, naproc; /* active processes and numbers */
     Integer *map;           /* map the active processes to allocated space */
     char *buf1, *buf2;
@@ -1397,7 +1394,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     void ***ptr_src, ***ptr_dst; 
     void **ptr_org; /* the entire pointer array */
     armci_giov_t desc;
-    Integer *ilo, *ihi, *jlo, *jhi, *ldp;
+    Integer *ilo, *ihi, *jlo, *jhi, *ldp, *owner;
     char **ptr_ref;
     
     if (*nv < 1) return;
@@ -1406,17 +1403,15 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     GA_PUSH_NAME("ga_gather");
     GAstat.numgat++;
 
-    if(!MA_push_get(MT_F_INT, *nv, "ga_gather--p", &phandle, &pindex))
-        ga_error("MA failed ", *g_a);
-
     /* allocate temp memory */
-    buf1 = gai_malloc((int)GAnproc *4 *  (sizeof(Integer)));
+    buf1 = gai_malloc((int)(GAnproc *4  + *nv)*  (sizeof(Integer)));
     if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
     
-    count = (Integer *)buf1;
-    nelem = (Integer *)(buf1 + GAnproc * sizeof(Integer));
-    aproc = (Integer *)(buf1 + 2 * GAnproc * sizeof(Integer));
-    map = (Integer *)(buf1 + 3 * GAnproc * sizeof(Integer));
+    owner = (Integer *)buf1; 
+    count = owner+ *nv;
+    nelem = count + GAnproc;
+    aproc = count + 2 * GAnproc;
+    map =   count + 3 * GAnproc;
    
     /* initialize the counters and nelem */
     for(kk=0; kk<GAnproc; kk++) {
@@ -1425,11 +1420,11 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     
     /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
     for(k=0; k< *nv; k++) {
-        if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
+        if(! ga_locate_(g_a, i+k, j+k, owner+k)){
             sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
             ga_error(err_string, *g_a);
         }
-        nelem[INT_MB[pindex+k]]++;
+        nelem[owner[k]]++;
     }
 
     naproc = 0;
@@ -1464,7 +1459,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     
     item_size = GA[GA_OFFSET + *g_a].elemsize;
     GAbytes.gattot += (double)item_size**nv;
-    GAbytes.gatloc += (double)item_size * nelem[INT_MB[pindex+GAme]];
+    GAbytes.gatloc += (double)item_size * nelem[owner[GAme]];
 
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
     for(k=1; k<naproc; k++) {
@@ -1474,7 +1469,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     
     for(k=0; k<(*nv); k++){
         Integer this_count;
-        proc = INT_MB[pindex+k]; 
+        proc = owner[k]; 
         this_count = count[proc]; 
         count[proc]++;
         proc = map[proc]; 
@@ -1505,12 +1500,8 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
 
     gai_free(buf2);
     gai_free(buf1);
-
-    if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
-    GA_POP_NAME;
 }
       
-           
 
 
 
