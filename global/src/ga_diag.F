@@ -162,8 +162,10 @@ c
 c***     allocate a,b, and z arrays
 c     
          status = .true.
-         status = status .and. ma_push_get(mt_dbl,myelem,'a',ha,adra)
-         status = status .and. ma_push_get(mt_dbl,elemz,'z',hz,adrz)
+         status = status .and.
+     $        ma_push_get(mt_dbl,myelem,'ga_diag_std:a',ha,adra)
+         status = status .and.
+     $        ma_push_get(mt_dbl,elemz,'ga_diag_std:z',hz,adrz)
          if (.not. status)
      $        call errquit('ga_diag_std: insufficient mem 2',
      $        myelem+elemz)
@@ -438,9 +440,12 @@ c
 c        allocate a,b, and z arrays
 c     
          status = .true. 
-         status = status .and. ma_push_get(mt_dbl,myelem,'a',ha,adra)
-         status = status .and. ma_push_get(mt_dbl,myelem,'b',hb,adrb)
-         status = status .and. ma_push_get(mt_dbl,elemz,'z',hz,adrz)
+         status = status .and.
+     $        ma_push_get(mt_dbl,myelem,'ga_diag:a',ha,adra)
+         status = status .and.
+     $        ma_push_get(mt_dbl,myelem,'ga_diag:b',hb,adrb)
+         status = status .and.
+     $        ma_push_get(mt_dbl,elemz,'ga_diag:z',hz,adrz)
          if (.not. status) call errquit('ga_diag: memory?', myelem)
 c
 c        load the fock (A) and overlap (S) matrices 
