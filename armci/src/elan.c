@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.20 2003-04-10 20:45:46 vinod Exp $ */
+/* $Id: elan.c,v 1.21 2003-05-15 16:11:51 edo Exp $ */
 #include <elan/elan.h>
 #include <elan3/elan3.h>
 #include <stdio.h>
@@ -548,4 +548,14 @@ int i;
 
 #endif
 #endif
+
+#ifdef MULTI_CTX
+void armci_checkMapped(void *buffer, size_t size)
+{
+	printf("Checking %p %p\n",buffer,size);
+  if ( ! elan_addMapping(elan_base->state, buffer, size ) )
+	  armci_die("Error, can't add elan mapping",0);
+}
+#endif
+
 

@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.70 2003-03-27 02:08:55 d3h325 Exp $
+#$Id: GNUmakefile,v 1.71 2003-05-15 16:11:51 edo Exp $
          FOPT = -O
          COPT = -O
 
@@ -82,7 +82,11 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
 # shared memory causes problems for shmem: NO_SHM disables use of shared memory
 # only one of the two lines below can be uncommented
 #   LIB_DEFINES += -DNO_SHM
+ifdef ELAN_MULTI_CONTEXT
+    LIB_DEFINES +=  -DMULTI_CTX -DACC_SMP
+else
     LIB_DEFINES += -DALLOC_MUNMAP -DACC_SMP
+endif
     OBJ += elan.o
     LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT # -DELAN_ACC
     OBJ += spawn.o ds-shared.o request.o buffers.o

@@ -12,6 +12,12 @@ extern char* armci_shmem_reg_ptr(int i);
 #define FIELD_NUM 0x1
 #endif
 
+#if defined(QUADRICS) && defined(MULTI_CTX)
+#define POST_ALLOC_CHECK(temp,size) armci_checkMapped(temp,size);
+#else
+#define POST_ALLOC_CHECK(temp,size) ;
+#endif
+
 #define MAX_REGIONS 64 
 
 #if defined(WIN32)

@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.62 2003-03-27 02:08:56 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.63 2003-05-15 16:11:51 edo Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -622,6 +622,7 @@ char *temp = (char*)0, *pref_addr=(char*)0;
            shmem_errmsg(size);
            armci_die("AttachSharedRegion:failed to attach",(long)idlist[1+ir]);
          }
+	 POST_ALLOC_CHECK(temp,MinShmem*SHM_UNIT)
 
          region_list[reg].addr = temp; 
          region_list[reg].attached = 1;
@@ -721,6 +722,7 @@ size_t sz;
              armci_die("allocate: failed to attach to shared region",  0L);
          }
        }
+       POST_ALLOC_CHECK(temp,MinShmem*SHM_UNIT)
 
        region_list[alloc_regions].addr = temp;
        region_list[alloc_regions].id = id;
@@ -833,6 +835,7 @@ static char *temp;
         printf("%d:attached: id=%d address=%p\n",armci_me,(int)*id, temp);
         fflush(stdout);
     }
+    POST_ALLOC_CHECK(temp,MinShmem*SHM_UNIT)
     region_list[reg].addr = temp; 
     region_list[reg].attached = 1;
 
@@ -901,6 +904,7 @@ size_t sz = (size_t)size;
        }
 
     }
+    POST_ALLOC_CHECK(temp,sz)
 
     region_list[alloc_regions].addr = temp;
     region_list[alloc_regions].id = id;
