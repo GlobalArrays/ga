@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.98 2004-01-01 05:52:17 edo Exp $
+# $Id: makefile.h,v 1.99 2004-02-11 21:41:51 vinod Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -84,7 +84,7 @@ ifeq ($(TARGET),SOLARIS)
      ifdef LARGE_FILES
         LOC_LIBS += $(shell getconf LFS_LIBS)
      endif
- GLOB_DEFINES += -D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1
+ GLOB_DEFINES += -D_XOPEN_SOURCE_EXTENDED=1
 endif
 #
 #    64-bit version
@@ -128,7 +128,8 @@ ifeq ($(TARGET),SOLARIS64)
         LOC_LIBS += $(shell getconf LFS_LIBS)
   endif
  GLOB_DEFINES = -DSOLARIS -DSOLARIS64
- GLOB_DEFINES += -D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1
+#GLOB_DEFINES += -D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1
+ GLOB_DEFINES += -D_XOPEN_SOURCE_EXTENDED=1
 
 ifdef USE_INTEGER4
 else
