@@ -1,4 +1,4 @@
-c $Id: testspd.F,v 1.7 2000-05-25 01:09:21 d3h325 Exp $
+c $Id: testspd.F,v 1.8 2004-11-12 22:19:10 edo Exp $
 c***********************************************************************
 c* Source : testllt
 c* Scope  : test LLT SCALAPACK routines
@@ -43,6 +43,7 @@ c**** get number of nodes and calculate memory allocation
       
       hsize = 6*SIZE*SIZE + 3*SIZE
       ssize = 3*SIZE*SIZE + 3*SIZE 
+      nproc=ga_nnodes()
       
       hsize = (hsize/nproc) + 1
       ssize = (ssize/nproc) + 1 + 3*256*256
@@ -223,7 +224,8 @@ c***********************************************************************
             
 #include "mafdecls.fh"
 #include "global.fh"
-
+      integer ga_cholesky
+      external ga_cholesky
 c****
       character*1 uplo
 c****      
