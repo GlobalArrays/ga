@@ -1,7 +1,6 @@
-#$Id: makefile,v 1.12 1995-11-07 20:39:24 apsmith Exp $
+#$Id: makefile,v 1.13 1995-11-16 20:38:21 d3g681 Exp $
 
 # Tiny makefile wrapper
-
 
 include ../config/makefile.h
 
