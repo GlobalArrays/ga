@@ -70,6 +70,7 @@ endif
 # Linux 2.0.28 running g77
 #
 ifeq ($(TARGET),LINUX)
+           FC = g77
          FOPT = -O -fno-second-underscore
     MAKEFLAGS = -j 1
  GLOB_DEFINES = -DLINUX
