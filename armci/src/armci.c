@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.42 2002-01-28 20:16:50 d3h325 Exp $ */
+/* $Id: armci.c,v 1.43 2002-01-29 23:17:33 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -48,8 +48,10 @@ int armci_clus_first, armci_clus_last;
 int _armci_initialized=0;
 int _armci_terminating =0;
 thread_id_t armci_usr_tid;
+#ifndef HITACHI
 double armci_internal_buffer[BUFSIZE_DBL];
-#if defined(SYSV) || defined(WIN32) || defined(MMAP)
+#endif
+#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
 #   include "locks.h"
     lockset_t lockid;
 #endif
@@ -57,7 +59,7 @@ double armci_internal_buffer[BUFSIZE_DBL];
 
 void ARMCI_Cleanup()
 {
-#if defined(SYSV) || defined(WIN32) || defined(MMAP)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP) 
     Delete_All_Regions();
 #if !defined(LAPI) 
     DeleteLocks(lockid);
@@ -150,12 +152,15 @@ void ARMCI_Error(char *msg, int code)
 
 void armci_allocate_locks()
 {
-#if defined(SYSV) || defined(WIN32) || defined(MMAP)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP) 
     if(armci_nproc == 1)return;    
     if(armci_master==armci_me)CreateInitLocks(NUM_LOCKS, &lockid);
     armci_msg_clus_brdcst(&lockid, sizeof(lockid));
     if(armci_master != armci_me)InitLocks(NUM_LOCKS, lockid);
+#elif defined(HITACHI)
+    armcill_allocate_locks(NUM_LOCKS);
 #endif
+    
 }
 
 

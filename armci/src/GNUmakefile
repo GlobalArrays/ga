@@ -33,6 +33,11 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(USE_PTHREADS)))
      EXTRA_LIBS += -lpthread
 endif
 
+ifeq ($(TARGET),HITACHI)
+     LIB_DEFINES += -DCLUSTER
+     OBJ += shmalloc.o signaltrap.o winshmem.o
+endif
+
 ifeq ($(TARGET),$(findstring $(TARGET),$(SHMEM)))
      LIB_DEFINES += -DSYSV
      OBJ += shmalloc.o signaltrap.o shmlimit.o shmem.o 

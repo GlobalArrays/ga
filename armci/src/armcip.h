@@ -17,9 +17,6 @@
 #if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
 #define CLUSTER 
 
-#if defined(LAPI) || defined(CLUSTER)
-#  include "request.h"
-#endif
 
 
 #ifdef SERVER_THREAD
@@ -51,6 +48,9 @@ extern thread_id_t armci_usr_tid;
 #  define SERVER_CONTEXT (armci_me<0)
 #endif
 
+#if defined(LAPI) || defined(CLUSTER)
+#  include "request.h"
+#endif
 /* min amount of data in strided request to be sent in a single TCP/IP message*/
 #ifdef SOCKETS
 #  define TCP_PAYLOAD 128 
@@ -70,7 +70,8 @@ extern thread_id_t armci_usr_tid;
 # include <strings.h>
 #endif
 
-#if defined (CRAY_T3E) || defined(FUJITSU) || (defined(QUADRICS) && !defined(ELAN))
+#if defined (CRAY_T3E) || defined(FUJITSU) || (defined(QUADRICS) && !defined(ELAN))\
+			|| defined(HITACHI)
 #define ACC_COPY
 #endif
 
@@ -95,14 +96,17 @@ extern thread_id_t armci_usr_tid;
                            EXTRA_MSG_BUFLEN_DBL)
 #endif
 
-/* packing algorithm for double complex numbers requires even number */
-#ifdef MSG_BUFLEN_DBL
-#  define BUFSIZE_DBL (MSG_BUFLEN_DBL - RESERVED_BUFLEN)
-#else
-#  define BUFSIZE_DBL 32768
+#if defined(HITACHI)
+#  define BUFSIZE  ((0x50000- RESERVED_BUFLEN) * sizeof(double))
+#else   
+   /* packing algorithm for double complex numbers requires even number */
+#  ifdef MSG_BUFLEN_DBL
+#    define BUFSIZE_DBL (MSG_BUFLEN_DBL - RESERVED_BUFLEN)
+#  else
+#    define BUFSIZE_DBL 32768
+#  endif
+#  define BUFSIZE  (BUFSIZE_DBL * sizeof(double))
 #endif
-
-#define BUFSIZE  (BUFSIZE_DBL * sizeof(double))
 
 /* note opcodes must be lower than ARMCI_ACC_OFF !!! */
 #define PUT 1
@@ -117,7 +121,7 @@ extern thread_id_t armci_usr_tid;
 #define VECTOR  2
 
 extern  int armci_me, armci_nproc;
-extern  double armci_internal_buffer[BUFSIZE_DBL];
+extern  double *armci_internal_buffer;
 
 extern void armci_shmem_init();
 extern void armci_die(char *msg, int code);
@@ -196,7 +200,7 @@ extern void armci_init_fence();
 #  define ORDER(op,proc)\
         if( proc == armci_me || ( ACC(op) && ACC(PENDING_OPER(proc))) );\
         else  FENCE_NODE(proc)
-#elif defined(CLUSTER) && !defined(QUADRICS)
+#elif defined(CLUSTER) && !defined(QUADRICS) && !defined(HITACHI)
 #  define ORDER(op,proc)\
         if(!SAMECLUSNODE(proc) && op != GET )_armci_fence_arr[proc]=1
 #else

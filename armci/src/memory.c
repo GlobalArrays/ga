@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.24 2002-01-25 22:51:23 d3h325 Exp $ */
+/* $Id: memory.c,v 1.25 2002-01-29 23:17:33 vinod Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -8,8 +8,12 @@
 #define USE_MALLOC 
 #define USE_SHMEM_
 
-#if defined(SYSV) || defined(WIN32) || defined(MMAP)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
 #include "shmem.h"
+
+#if !defined(USE_SHMEM) && defined(HITACHI)
+#    define USE_SHMEM 
+#endif
 
 #if !(defined(LAPI)||defined(QUADRICS)||defined(SERVER_THREAD)) ||defined(USE_SHMEM)
 #define RMA_NEEDS_SHMEM  
@@ -107,7 +111,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
        if(!myptr)armci_die("armci_malloc: could not attach", (int)(size>>10));
 
        /* now every process in a SMP node needs to find out its offset
-        * w.r.t. master - this offset is ncessary to use memlock table
+        * w.r.t. master - this offset is necessary to use memlock table
         */
        if(size) armci_set_mem_offset(myptr);
        if(DEBUG_){
@@ -115,6 +119,10 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
                  armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }
+
+#ifdef HITACHI
+    armci_register_shmem(myptr,size,idlist+1,idlist);
+#endif
 
 #   if defined(DATA_SERVER)
 
@@ -187,7 +195,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
       /* overwrite entries for local cluster node with ptr_ref_arr */
       bcopy((char*)ptr_ref_arr, (char*)(ptr_arr+armci_master), nproc*sizeof(void*)); 
 
-      /* armci_print_ptr(ptr_arr, bytes, size, myptr, off);*/
+      /* armci_print_ptr(ptr_arr, bytes, size, myptr, offset); */
 
 #   endif
 
@@ -286,7 +294,7 @@ int ARMCI_Uses_shm()
 {
     int uses=0;
 
-#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP) ||defined(HITACHI)) && !defined(NO_SHM)
 #   ifdef RMA_NEEDS_SHMEM
       if(armci_nproc >1) uses= 1; /* always unless serial mode */
 #   else

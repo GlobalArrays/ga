@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.13 2001-07-02 23:14:32 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.14 2002-01-29 23:17:33 vinod Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -28,7 +28,7 @@
 #define DEBUG_HACK____
 #define CLUSNODES 2
 
-#define DEBUG 0
+#define DEBUG  0
 #define MAX_HOSTNAME 80
 #define CHECK_NODE_NAMES 
 
@@ -42,6 +42,27 @@
 /*** stores cluster configuration ***/
 armci_clus_t *armci_clus_info;
 
+#ifdef HITACHI
+#include <hmpp/nalloc.h>
+# define GETHOSTNAME sr_gethostname
+ndes_t _armci_group;
+
+static int sr_gethostname(char *name, int len)
+{
+int no;
+pid_t ppid;
+
+   if(hmpp_nself (&_armci_group,&no,&ppid,0,NULL) <0)
+     return -1;
+
+   if(len<6)armci_die("len too small",len);
+   if(no>1024)armci_die("expected node id <1024",no);
+   sprintf(name,"n%d",no);
+   return 0;
+}
+#else
+# define GETHOSTNAME gethostname
+#endif
 
 static char* merge_names(char *name)
 {
@@ -138,6 +159,9 @@ static void process_hostlist(char *names)
                  fprintf(stderr,"PVM");
 #              endif
                fprintf(stderr,"\nmessage-passing job startup configuration.\n\n");
+#ifdef HITACHI
+               fprintf(stderr,"On Hitachi it can be done by setting environment variable MPIR_RANK_NO_ROUND, for example\n  setenv MPIR_RANK_NO_ROUND yes\n\n");
+#endif
                sleep(1);
                armci_die("Cannot run: improper task to host mapping!",0); 
           }
@@ -212,7 +236,7 @@ void armci_init_clusinfo()
     fflush(stdout);
   }else{
     limit = MAX_HOSTNAME-1;
-    rc = gethostname(name, limit);
+    rc = GETHOSTNAME(name, limit);
     if(rc < 0)armci_die("armci: gethostname failed",rc);
   }
 
@@ -296,3 +320,4 @@ int from, to, found, c;
 
     return (found);
 }
+

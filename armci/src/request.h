@@ -2,13 +2,14 @@
 #define _REQUEST_H_
 
 /********  client buffer managment ops ****************************/
+#ifndef HITACHI 
 extern void  _armci_buf_init();
 extern char* _armci_buf_get(int size, int operation, int to);
 extern void  _armci_buf_release(void *buf);
 extern int   _armci_buf_to_index(void *buf);
 extern char* _armci_buf_ptr_from_id(int id);
 extern void  _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node);
-
+#endif
 
 #ifdef LAPI
 #  include "lapidefs.h"
@@ -52,11 +53,15 @@ unsigned int   bytes:20;      /* number of bytes requested */
          msg_tag_t tag;       /* message tag for response to this request */
 }request_header_t;
 
-
+/*
 #ifndef MSG_BUFLEN_DBL
+# if defined(HITACHI)
+#  define MSG_BUFLEN_DBL 0x50000
+# else
 #  define MSG_BUFLEN_DBL 50000
+# endif
 #endif
-
+*/
 #define MSG_BUFLEN  sizeof(double)*MSG_BUFLEN_DBL
 extern  char* MessageRcvBuffer;
 extern  char* MessageSndBuffer;
@@ -137,7 +142,7 @@ extern void armci_send_data(request_header_t* msginfo, void *data);
 extern int armci_server_unlock_mutex(int mutex, int p, int tkt, msg_tag_t* tag);
 extern void armci_rcv_vector_data(int p, request_header_t* msginfo, armci_giov_t dr[], int len);
 
-#ifndef LAPI
+#if !defined(LAPI) && !defined(HITACHI)
 extern void armci_wait_for_server();
 extern void armci_start_server();
 extern void armci_transport_cleanup();

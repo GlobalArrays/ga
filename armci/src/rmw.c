@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.14 2002-01-28 20:16:51 d3h325 Exp $ */
+/* $Id: rmw.c,v 1.15 2002-01-29 23:17:34 vinod Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -16,9 +16,13 @@ long _a_ltemp;
 
 void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
-    int lock = proc%NUM_LOCKS;
+#if defined(CLUSTER)
+    int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
+#else
+    int lock = 0;
+#endif
+    NATIVE_LOCK(lock,proc);
 
-    NATIVE_LOCK(lock);
     switch (op) {
       case ARMCI_FETCH_AND_ADD:
                 armci_get(prem,ploc,sizeof(int),proc);
@@ -44,7 +48,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
     }
 
     ARMCI_Fence(proc); /* we need fence before unlocking */
-    NATIVE_UNLOCK(lock);
+    NATIVE_UNLOCK(lock,proc);
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.31 2001-06-28 20:32:48 edo Exp $ */
+/* $Id: copy.h,v 1.32 2002-01-29 23:17:33 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -11,7 +11,7 @@
 #include <c_asm.h>
 #endif
 
-#ifdef NOFORT
+#if defined(NOFORT) || defined(HITACHI)
 #  define MEMCPY
 #endif
 
@@ -67,7 +67,7 @@
 #elif defined(LINUX) || defined(HPUX64) || defined(DECOSF)
 #     define DCOPY2D	dcopy2d_n_
 #     define DCOPY1D	dcopy1d_n_
-#elif defined(CRAY)  || defined(WIN32)
+#elif defined(CRAY)  || defined(WIN32) || defined(HITACHI)
 #     define DCOPY2D    DCOPY2D_N
 #     define DCOPY1D    DCOPY1D_N
 #else
@@ -100,6 +100,21 @@ void FATR DCOPY1D(void*, void*, int*);
 
 #      define armci_get(src,dst,n,proc)\
               shmem_get((long*)(dst),(long*)(src),(int)(n)/sizeof(long),(proc))
+
+#elif  defined(HITACHI)
+
+        extern void armcill_put(void *src, void *dst, int bytes, int proc);
+        extern void armcill_get(void *src, void *dst, int bytes, int proc);
+
+#      define armci_put(src,dst,n,proc) \
+            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
+               armci_copy(src,dst,n);\
+            } else { armcill_put((src), (dst),(n),(proc));}
+
+#      define armci_get(src,dst,n,proc)\
+            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
+               armci_copy(src,dst,n);\
+            } else { armcill_get((src), (dst),(n),(proc));}
 
 #elif  defined(FUJITSU)
 
@@ -215,6 +230,15 @@ void FATR DCOPY1D(void*, void*, int*);
 
 #   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
            CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
+
+#elif defined(HITACHI)
+
+    extern void armcill_put2D(int proc, int bytes, int count,
+                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
+    extern void armcill_get2D(int proc, int bytes, int count,
+                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
+#   define armci_put2D armcill_put2D
+#   define armci_get2D armcill_get2D
 
 #else
 #   define armci_put2D(proc,bytes,count,src_ptr,src_stride,dst_ptr,dst_stride){\
