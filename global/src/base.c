@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.75 2004-04-16 01:39:39 manoj Exp $ */
+/* $Id: base.c,v 1.76 2004-04-17 05:45:00 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -44,6 +44,9 @@
 
 #ifdef GA_USE_VAMPIR
 #include "ga_vampir.h"
+#endif
+#ifdef GA_PROFILE
+#include "ga_profile.h"
 #endif
 /*#define AVOID_MA_STORAGE 1*/ 
 #define DEBUG 0
@@ -412,16 +415,9 @@ int bytes;
 
     GAinitialized = 1;
 
-#if GA_PROFILE 
-    {
-       int i,j;
-       if(ga_nodeid_()==0) {printf("\nProfiling Get/Put ON\n");fflush(stdout);}
-       for(i=0; i<GA_PROFILE_MAX; i++) 
-	  for(j=0; j<2; j++)  /* initialize to zero */
-	     get_profile[i][j] = put_profile[i][j] = acc_profile[i][j] = 0;
-    }
+#ifdef GA_PROFILE 
+    ga_profile_init();
 #endif
-
 #ifdef GA_USE_VAMPIR
     vampir_end(GA_INITIALIZE,__FILE__,__LINE__);
 #endif
@@ -2202,22 +2198,11 @@ extern double t_dgop, n_dgop, s_dgop;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(!GAinitialized) return;
 
-#if GA_PROFILE
-    if(ga_nodeid_() == 0) { /* process 0's profile only */
-       int i;
-       printf("\n\nCONTIGUOUS:\nRANK\t #Gets\t #puts\t #accs\t RANGE\n\n");
-       for(i=0; i< GA_PROFILE_MAX; i++)
-	  printf("%d\t %d\t %d\t %d\t (%d-%d)\n", ga_nodeid_(),get_profile[i][0], put_profile[i][0], acc_profile[i][0],1<<i,1<<(i+1));
-       printf("%d\t %d\t %d\t %d\t (>%d)\n",ga_nodeid_(),get_profile[i][0], put_profile[i][0], acc_profile[i][0], 1<<GA_PROFILE_MAX);
-       printf("\n\nNON-CONTIGUOUS:\nRANK\t #Gets\t #puts\t #accs\t RANGE\n\n");
-       for(i=0; i< GA_PROFILE_MAX; i++)
-	  printf("%d\t %d\t %d\t %d\t (%d-%d)\n", ga_nodeid_(),get_profile[i][1], put_profile[i][1], acc_profile[i][1],1<<i,1<<(i+1));
-       printf("%d\t %d\t %d\t %d\t (>%d)\n",ga_nodeid_(),get_profile[i][1], put_profile[i][1], acc_profile[i][1], 1<<GA_PROFILE_MAX);
-    }
-#endif
-
 #ifdef GA_USE_VAMPIR
     vampir_begin(GA_TERMINATE,__FILE__,__LINE__);
+#endif
+#ifdef GA_PROFILE 
+    ga_profile_terminate();
 #endif
     for (i=0;i<_max_global_array;i++){
           handle = i - GA_OFFSET ;

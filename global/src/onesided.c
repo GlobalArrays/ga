@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.52 2004-04-16 01:39:39 manoj Exp $ */
+/* $Id: onesided.c,v 1.53 2004-04-17 05:45:00 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -52,6 +52,9 @@
 
 #ifdef GA_USE_VAMPIR
 #include "ga_vampir.h"
+#endif
+#ifdef GA_PROFILE
+#include "ga_profile.h"
 #endif
 
 int    ProcListPerm[MAX_NPROC];            /* permuted list of processes */
@@ -291,29 +294,6 @@ Integer _d, _factor;\
           }\
 }
 
-#if GA_PROFILE
-#define GA_PROFILE_PUT 1
-#define GA_PROFILE_GET 2
-#define GA_PROFILE_ACC 3
-void ga_profile_comms(long bytes, int ndim, Integer *lo, Integer *hi, 
-		      int comm_type) {
-    int i, count=0, index2=0;
-    int index= (int) (log((double)bytes)/log(2.0));
-    if(index>=GA_PROFILE_MAX) index=GA_PROFILE_MAX;
-
-    /* check contiguous or non-contiguous */
-    for(i=0; i<ndim; i++) if(hi[0]-lo[0]) count++;
-    if(count>1) index2=1; /* i.e. non-contiguous */
-
-    switch(comm_type) {
-       case GA_PROFILE_PUT: put_profile[index][index2]++; break;
-       case GA_PROFILE_GET: get_profile[index][index2]++; break;
-       case GA_PROFILE_ACC: acc_profile[index][index2]++; break;
-       default: ga_error("GA_PROFILE: Invalid communication type", 0L);
-    }
-}
-#endif /* GA_PROFILE */
-
 /*\ A routine to wait for a non-blocking call to complete
 \*/
 void FATR nga_nbwait_(Integer *nbhandle) 
@@ -360,8 +340,8 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       if(nbhandle)ga_init_nbhandle(nbhandle);
       else ga_init_nbhandle(&ga_nbhandle);
 
-#if GA_PROFILE
-      ga_profile_comms((long)size*elems, ndim, lo, hi, GA_PROFILE_PUT);
+#ifdef GA_PROFILE
+      ga_profile_start((long)size*elems, ndim, lo, hi, GA_PROFILE_PUT);
 #endif
       
       gaPermuteProcList(np);
@@ -443,6 +423,9 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 
       GA_POP_NAME;
+#ifdef GA_PROFILE
+      ga_profile_stop();
+#endif
 #ifdef GA_USE_VAMPIR
       vampir_end(NGA_NBPUT,__FILE__,__LINE__);
 #endif
@@ -582,8 +565,8 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       if(nbhandle)ga_init_nbhandle(nbhandle);
       else ga_init_nbhandle(&ga_nbhandle);
 
-#if GA_PROFILE
-      ga_profile_comms((long)size*elems, ndim, lo, hi, GA_PROFILE_GET);
+#ifdef GA_PROFILE
+      ga_profile_start((long)size*elems, ndim, lo, hi, GA_PROFILE_GET);
 #endif
       
       gaPermuteProcList(np);
@@ -671,6 +654,9 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
       
       GA_POP_NAME;
+#ifdef GA_PROFILE
+      ga_profile_stop();
+#endif
 #ifdef GA_USE_VAMPIR
       vampir_end(NGA_GET,__FILE__,__LINE__);
 #endif
@@ -794,8 +780,8 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       if(nbhandle)ga_init_nbhandle(nbhandle);
       else ga_init_nbhandle(&ga_nbhandle);
 
-#if GA_PROFILE
-      ga_profile_comms((long)size*elems, ndim, lo, hi, GA_PROFILE_ACC);
+#ifdef GA_PROFILE
+      ga_profile_start((long)size*elems, ndim, lo, hi, GA_PROFILE_ACC);
 #endif
       
       gaPermuteProcList(np);
@@ -881,6 +867,9 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #endif
       
       GA_POP_NAME;
+#ifdef GA_PROFILE
+      ga_profile_stop();
+#endif
 #ifdef GA_USE_VAMPIR
       vampir_end(NGA_ACC,__FILE__,__LINE__);
 #endif
