@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.39 2001-12-05 01:13:50 vinod Exp $
+/* $Id: myrinet.c,v 1.40 2001-12-21 17:19:29 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -404,7 +404,7 @@ int armci_gm_proc_mem_free()
 /* initialization of client process/thread */
 int armci_gm_client_init()
 {
-    int status,i;
+    int status,i,intcount;
     client_init_struct = (armci_gm_client_init_t *)(calloc(armci_nclus, sizeof(armci_gm_client_init_t))); 
     /* allocate gm data structure for computing process */
     proc_gm->node_map = (int *)calloc(armci_nproc, sizeof(int));
@@ -431,16 +431,17 @@ int armci_gm_client_init()
        client_init_struct[armci_clus_me].ack = (long *)serv_gm->ack;
        /* publish port id of local server thread to other smp nodes */
        client_init_struct[armci_clus_me].port_id =  serv_gm->port_id;
-       armci_msg_gop_scope(SCOPE_MASTERS,(int *)(client_init_struct), 2*armci_nclus,"+", ARMCI_INT);
+       intcount = armci_nclus *sizeof(armci_gm_client_init_t)/sizeof(int); 
+       armci_msg_gop_scope(SCOPE_MASTERS,(int *)(client_init_struct), intcount,"+", ARMCI_INT);
     }
  
     /* master makes port ids of server processes available to other tasks */
-    armci_msg_bcast_scope(SCOPE_NODE,(int *)(client_init_struct), 2*armci_nclus*sizeof(int),
+    armci_msg_bcast_scope(SCOPE_NODE,(int *)(client_init_struct), intcount*sizeof(int),
                           armci_master);
- 
     for(i=0;i<armci_nclus;i++){
+        
         proc_gm->port_map[i] = client_init_struct[i].port_id;
-        /*fprintf(stderr,"\n%d = %d   %d ",client_init_struct[i].port_id, proc_gm->port_map[i],i);*/
+        /*fprintf(stderr,"%d: portmap for me \n%d = %d   %d ",armci_me,client_init_struct[i].port_id, proc_gm->port_map[i],i);*/
     }
  
 #endif
@@ -456,7 +457,8 @@ int armci_gm_client_init()
  
     server_init_struct = (armci_gm_client_init_t *)(calloc(armci_nproc, sizeof(armci_gm_client_init_t)));    server_init_struct[armci_me].port_id = gm_get_port_id(proc_gm->port);
     server_init_struct[armci_me].ack = proc_gm->ack;
-    armci_msg_igop((int*)(server_init_struct), 2*armci_nproc, "+");
+    intcount = armci_nproc*sizeof(armci_gm_client_init_t)/sizeof(int);
+    armci_msg_igop((int*)(server_init_struct), intcount, "+");
     /* query GM for number of tokens available */
     armci_gm_num_receive_tokens = gm_num_receive_tokens(proc_gm->port);
     armci_gm_num_send_tokens = gm_num_send_tokens(proc_gm->port);
@@ -631,7 +633,6 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     int serv_mpi_id = armci_clus_info[s].master;
     request_header_t *msginfo = (request_header_t *)vbuf;
     armci_gm_context_t *context = ((armci_gm_context_t *)buf)-1;
-
     /* set the message tag */
     msginfo->tag.data_ptr = buf + sizeof(request_header_t) - sizeof(long);
     msginfo->tag.ack = ARMCI_GM_CLEAR;
@@ -641,7 +642,6 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     gm_send_with_callback(proc_gm->port, buf, size, len, GM_LOW_PRIORITY,
                           proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
                           armci_client_send_callback, context);
-
 #ifndef MULTIPLE_SEND_BUFS
 /*     armci_client_send_complete(context);
 */
