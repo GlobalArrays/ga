@@ -1,4 +1,4 @@
-/* $Id: datatypes.c,v 1.6 2002-01-24 18:04:06 d3g293 Exp $
+/* $Id: datatypes.c,v 1.7 2002-08-02 18:50:06 d3h325 Exp $
  * conversion of MA identifiers between C to Fortran data types 
  * Note that ga_type_c2f(MT_F_INT) == MT_F_INT 
  */
@@ -17,7 +17,7 @@ int ctype;
 #       endif
                 break;
    case MT_F_REAL: 
-#       if defined(CRAY) || defined(NEC) 
+#       if defined(CRAY) || defined(NEC) || defined(SOLARIS64)
                 ctype = C_DBL;
 #       else
                 ctype = C_FLOAT;
@@ -30,7 +30,7 @@ int ctype;
 		ctype = C_DCPL;
                 break;
    case MT_F_SCPL: 
-#       if defined(CRAY) || defined(NEC)
+#       if defined(CRAY) || defined(NEC) || defined(SOLARIS64)
 		ctype = C_DCPL;
 #       else
 		ctype = C_SCPL;
@@ -55,7 +55,7 @@ int ftype;
                 ftype = (sizeof(long) != sizeof(Integer))? -1: MT_F_INT;
                 break;
    case C_FLOAT:
-#       if defined(CRAY) || defined(NEC)
+#       if defined(CRAY) || defined(NEC) || defined(SOLARIS64)
                 ftype = -1;
 #       else
                 ftype = MT_F_REAL; 
@@ -68,7 +68,7 @@ int ftype;
                 ftype = MT_F_DCPL;
                 break;
    case C_SCPL:
-#       if defined(CRAY) || defined(NEC)
+#       if defined(CRAY) || defined(NEC) || defined(SOLARIS64)
                 ftype = -1;
 #       else
                 ftype = MT_F_SCPL;

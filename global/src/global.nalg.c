@@ -384,18 +384,24 @@ DoublePrecision sum;
         return sum;
 }
 
+
+#if defined(CRAY) || defined(NEC) || defined(SOLARIS64)
+DoublePrecision FATR ga_sdot_(g_a, g_b)
+        Integer *g_a, *g_b;
+{
+DoublePrecision sum;
+        gai_dot(C_DBL, g_a, g_b, &sum);
+        return sum;
+}            
+#else
 float FATR ga_sdot_(g_a, g_b)
         Integer *g_a, *g_b;
 {
-#if defined(CRAY) || defined(NEC)
-DoublePrecision sum;
-        gai_dot(C_DBL, g_a, g_b, &sum);
-#else 
 float sum;
         gai_dot(C_FLOAT, g_a, g_b, &sum);
-#endif
         return sum;
 }            
+#endif
 
 /*\ DoubleComplex ga_zdot - C version
 \*/ 
