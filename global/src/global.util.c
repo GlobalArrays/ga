@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.19 1997-02-01 00:26:59 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.20 1997-12-13 01:21:50 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -243,17 +243,15 @@ void ga_print_(g_a)
 void ga_print_stats_()
 {
 int i;
-long *stat_arr = (long*) &GAstat;
-if(stat_arr != &GAstat.numcre) ga_error("ga_print_stats: alignemnt problem",0);
-
+     GAstat_arr = (long*)&GAstat;
      printf("\n                         GA Statistics for process %4d\n",ga_nodeid_());
      printf("                         ------------------------------\n\n");
      printf("       create   destroy   get      put      acc     scatter   gather  read&inc\n");
 
      printf("calls: ");
      for(i=0;i<8;i++) 
-        if(stat_arr[i] < 9999) printf("%4ld     ",stat_arr[i]);
-        else                   printf("%.2e ",(double)stat_arr[i]);
+        if(GAstat_arr[i] < 9999) printf("%4ld     ",GAstat_arr[i]);
+        else                   printf("%.2e ",(double)GAstat_arr[i]);
      printf("\n");
 
      printf("bytes total:             %.2e %.2e %.2e %.2e %.2e %.2e\n",

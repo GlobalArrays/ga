@@ -1,5 +1,5 @@
-/*$Id: global.core.c,v 1.47 1997-11-18 00:19:54 pritchrd Exp $*/
-/*
+/*$Id: global.core.c,v 1.48 1997-12-13 01:21:48 d3h325 Exp $*/
+/* 
  * module: global.core.c
  * author: Jarek Nieplocha
  * last major change date: Mon Dec 19 19:03:38 CST 1994
@@ -53,7 +53,7 @@
 /*#define CHECK_MA yes */
 
 /* uncomment line below to verify if MA base address is alligned wrt datatype*/ 
-#ifndef LINUX
+#if !(defined(LINUX) || defined(CRAY_YMP))
 #define CHECK_MA_ALGN 1
 #endif
 
@@ -165,7 +165,7 @@ void ga_clean_resources()
 /*\ CHECK GA HANDLE and if it's wrong TERMINATE
  *  Fortran version
 \*/
-#ifdef CRAY_T3D
+#ifdef CRAY
 void ga_check_handle_(g_a, fstring)
      Integer *g_a;
      _fcd fstring;
@@ -179,7 +179,7 @@ void ga_check_handle_(g_a, fstring,slen)
 char  buf[FLEN];
 
     if( GA_OFFSET + (*g_a) < 0 || GA_OFFSET + (*g_a) >= max_global_array){
-#ifdef CRAY_T3D
+#ifdef CRAY
       f2cstring(_fcdtocp(fstring), _fcdlen(fstring), buf, FLEN);
 #else
       f2cstring(fstring, slen, buf, FLEN);
@@ -188,7 +188,7 @@ char  buf[FLEN];
       ga_error(" invalid global array handle ", (*g_a));
     }
     if( ! (GA[GA_OFFSET + (*g_a)].actv) ){
-#ifdef CRAY_T3D
+#ifdef CRAY
       f2cstring(_fcdtocp(fstring), _fcdlen(fstring), buf, FLEN);
 #else
       f2cstring(fstring, slen, buf, FLEN);
@@ -251,6 +251,9 @@ void TrapSigChld(), TrapSigInt(), TrapSigHup(),TrapSigXcpu();
 #endif
 #endif
 }
+
+
+
 
 /*\  parent process restores the original handlers 
 \*/
@@ -537,7 +540,7 @@ long *msg_buf;
 #     endif
 
       if(DEBUG)
-        printf("%d INT_MB=%ld(%lx) DBL_MB=%ld(%lx) DCPL_MB=%d(%lx)\n",
+        printf("%d INT_MB=%d(%x) DBL_MB=%ld(%lx) DCPL_MB=%d(%lx)\n",
                 GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB);
     }
 
@@ -746,7 +749,7 @@ Integer nblock1, nblock2;
 /*\ CREATE A GLOBAL ARRAY
  *  Fortran version
 \*/
-#ifdef CRAY_T3D
+#ifdef CRAY
 logical ga_create_(type, dim1, dim2, array_name, chunk1, chunk2, g_a)
      Integer *type, *dim1, *dim2, *chunk1, *chunk2, *g_a;
      _fcd array_name;
@@ -758,7 +761,7 @@ logical ga_create_(type, dim1, dim2, array_name, chunk1, chunk2, g_a, slen)
 #endif
 {
 char buf[FNAM];
-#ifdef CRAY_T3D
+#ifdef CRAY
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
@@ -797,18 +800,11 @@ Void    *ptr;
 {
 Integer  ga_handle = g_a + GA_OFFSET;
 
-#  if defined (CRAY_T3D) || defined(LAPI)
-     Integer i, len = sizeof(Void*);
-     Integer mtype = GA_TYPE_BRD;
-     GA[ga_handle].ptr[GAme] = ptr;
+   GA[ga_handle].ptr[0] = ptr;
 
-     /* need pointers on all procs to support global addressing */
-     for(i=0; i < GAnproc; i++) ga_brdcst_(&mtype, GA[ga_handle].ptr+i,&len,&i);
-
-#  else
-     GA[ga_handle].ptr[0] = ptr;
-
-#    ifdef SYSV 
+#  ifdef SHMEM
+     /* true shared memory */
+#    ifdef SYSV
      {
        Integer ilo, ihi, jlo, jhi, nelem, ganode, clust_node;
        Integer item_size=GAsizeofM(GA[ga_handle].type);
@@ -818,10 +814,30 @@ Integer  ga_handle = g_a + GA_OFFSET;
            ganode = clust_node-1 + GAmaster; /* previous ganode */
            ga_distribution_(&g_a, &ganode, &ilo, &ihi, &jlo, &jhi);
            nelem = (ihi-ilo+1)*(jhi-jlo+1);
-           GA[ga_handle].ptr[clust_node] = 
+           GA[ga_handle].ptr[clust_node] =
                           GA[ga_handle].ptr[clust_node-1] + nelem*item_size;
        }
      }
+
+#    else
+     /* global address space */
+     {
+       Integer i, len = sizeof(Void*);
+       Integer mtype = GA_TYPE_BRD;
+       GA[ga_handle].ptr[GAme] = ptr;
+
+       /* need pointers on all procs to support global addressing */
+       /* on YMP we need to adjust them w.r.t. local address base */
+#ifdef CRAY_YMP
+       GA[ga_handle].ptr[GAme] = (char*)((int)ptr - (int)DBL_MB);
+#endif
+       for(i=0; i<GAnproc; i++) ga_brdcst_(&mtype, GA[ga_handle].ptr+i,&len,&i);
+#ifdef CRAY_YMP
+       for(i=0; i<GAnproc; i++)
+          GA[ga_handle].ptr[i] = (char*)((int)GA[ga_handle].ptr[i]+(int)DBL_MB);
+#endif
+     }
+
 #    endif
 #  endif
 }
@@ -1153,7 +1169,6 @@ int heap_status;
       }
 #     endif
 
-
       if(status){
          GAstat.curmem += GA[ga_handle].size;
          GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
@@ -1169,7 +1184,7 @@ int heap_status;
 /*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
  *  Fortran version
 \*/
-#ifdef CRAY_T3D
+#ifdef CRAY
 logical ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
                          map2, nblock2, g_a)
      Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a;
@@ -1183,7 +1198,7 @@ logical ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
 #endif
 {
 char buf[FNAM];
-#ifdef CRAY_T3D
+#ifdef CRAY
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
@@ -1350,7 +1365,7 @@ long **ptr_ptr_long,*ptr_long;
 /*\ DUPLICATE A GLOBAL ARRAY
  *  Fortran version
 \*/
-#ifdef CRAY_T3D
+#ifdef CRAY
 logical ga_duplicate_(g_a, g_b, array_name)
      Integer *g_a, *g_b;
      _fcd array_name;
@@ -1362,7 +1377,7 @@ logical ga_duplicate_(g_a, g_b, array_name, slen)
 #endif
 {
 char buf[FNAM];
-#ifdef CRAY_T3D
+#ifdef CRAY
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
@@ -1941,7 +1956,7 @@ Integer ilop, ihip, jlop, jhip, offset, localop, size, rows,cols;
 #endif
 }
 
-#ifdef CRAY_T3D
+#ifdef _CRAYMPP
 
 /****** Howard's version of ga_acc_1d_local ***********************/
 
@@ -2115,7 +2130,7 @@ int      work_done=0;
 #  define LEN_BUF (LEN_DBL_BUF * sizeof(DoublePrecision))
    DoublePrecision acc_buffer[LEN_DBL_BUF], *pbuffer;
    Integer buflen,  bytes, handle, index;
-#ifdef CRAY_T3D
+#ifdef _CRAYMPP
    Integer jstop,jstart,jstop_b,jstart_b;
    Integer jlo_proc,loc,jproc,j,wait_cycles=0;
    Integer *ptr_lock_list;
@@ -2158,7 +2173,7 @@ int      work_done=0;
             }
           }
        }
-#      ifdef CRAY_T3D
+#      ifdef _CRAYMPP
          /* we have a fine-grain locking from Howard Pritchard */
          ga_ptr = &GA[GA_OFFSET + g_a];
          jproc = proc/ga_ptr->nblock[0];
@@ -2181,19 +2196,22 @@ int      work_done=0;
 #      else
          if(proc != GAme){
             LOCK(g_a, proc, ptr_dst);
+
             ga_acc_1d_local(type, alpha, rows, cols, ptr_dst, ldp, ptr_src, ld,
                                                       pbuffer, buflen, proc);
 #           ifdef CRAY_T3E
               shmem_quiet();
 #           endif
+
             UNLOCK(g_a, proc, ptr_dst);
+
             work_done =1;
          }
 #      endif
 
        if((bytes >LEN_BUF)&&(proc != GAme)) MA_pop_stack(handle);
 
-       if(proc == GAme) FLUSH_CACHE; /* cache coherency problem on T3D */
+       if(proc == GAme) FLUSH_CACHE; /* cache coherency problem on T3D/YMP */
 
 #  endif
 
@@ -2482,7 +2500,7 @@ void ga_inquire_(g_a,  type, dim1, dim2)
 /*\ INQUIRE NAME OF A GLOBAL ARRAY
  *  Fortran version
 \*/
-#ifdef CRAY_T3D
+#ifdef CRAY
 void ga_inquire_name_(g_a, array_name)
       Integer *g_a;
       _fcd    array_name;
@@ -2735,7 +2753,7 @@ register Integer k, offset;
      ptr_dst = ptr_ref + item_size * offset;
      ptr_src = ((char*)v) + k*item_size; 
 
-#if  defined(CRAY_T3D) || defined(LAPI)
+#    if defined(SHMEM) && !defined(SYSV)
            CopyElemTo(ptr_src, ptr_dst, item_size/sizeof(Integer), proc);
 #    else
            Copy(ptr_src, ptr_dst, item_size);
@@ -2948,7 +2966,7 @@ register Integer k, offset;
      ptr_src = ptr_ref + item_size * offset;
      ptr_dst = ((char*)v) + k*item_size; 
 
-#if  defined(CRAY_T3D) || defined(LAPI)
+#    if defined(SHMEM) && !defined(SYSV)
         CopyElemFrom(ptr_src, ptr_dst, item_size/sizeof(Integer), proc);
 #    else
         Copy(ptr_src, ptr_dst, item_size);
@@ -3124,7 +3142,7 @@ Integer first, BufLimit, proc, localop;
 Integer ga_read_inc_local(g_a, i, j, inc, proc)
         Integer g_a, i, j, inc, proc;
 {
-Integer *ptr, ldp, value;
+Integer *ptr, ldp, value, lval;
 
 #ifndef LAPI
    GA_PUSH_NAME("ga_read_inc_local");
@@ -3133,7 +3151,7 @@ Integer *ptr, ldp, value;
    /* get a address of the g_a(i,j) element */
    gaShmemLocation(proc, g_a, i, j, (char**)&ptr, &ldp);
 
-#  ifdef CRAY_T3D
+#  ifdef _CRAYMPP
         { long lval;
           while ( (lval = shmem_swap((long*)ptr, INVALID, proc) ) == INVALID);
           value = (Integer) lval;
@@ -3152,8 +3170,17 @@ Integer *ptr, ldp, value;
    }
 #  else
         if(GAnproc>1)LOCK(g_a, proc, ptr);
-          value = *ptr;
-          (*ptr) += inc;
+
+#         if defined(SHMEM) && !defined(SYSV)
+             CopyElemFrom(ptr, &value, 1, proc);
+             lval = value + inc;
+             CopyElemTo(&lval,ptr,1, proc);
+#         else
+             value = *ptr;
+             lval = value +inc;
+             (*ptr) = lval;
+#         endif
+
         if(GAnproc>1)UNLOCK(g_a, proc, ptr);
 #  endif
 

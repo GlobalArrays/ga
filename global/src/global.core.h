@@ -147,7 +147,7 @@ int  GA_stack_size=0;
                    V(((proc)-GAmaster)%ARR_SEM+RESERVED_LOCKS)
 #      endif
 #else
-#      if defined(CRAY_T3D)
+#      if defined(_CRAYMPP)
 #          include <limits.h>
 #          include <mpp/shmem.h>
 #          define INVALID (long)(_INT_MIN_64 +1)
@@ -167,6 +167,17 @@ int  GA_stack_size=0;
 #          define COLS_PER_LOCK            16
 #          define LOG2_COLS_PER_LOCK       4
 
+#       elif defined(CRAY_YMP)
+#          include <mpp/shmem.h>
+#          include <tfork.h>
+#          define  NUM_LOCK 16
+           lock_t  ga_ar_lock[NUM_LOCK]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+           lock_t  cri_l=0;
+#          pragma  _CRI common ga_ar_lock,cri_l
+
+#          define LOCK(g_a, proc, x)     t_lock(&cri_l) 
+#          define UNLOCK(g_a, proc, x)   t_unlock(&cri_l) 
+#          define NATIVEbarrier barrier
 #       elif defined(FUJITSU)
 #          define MUTEX(g_a)  SEM_BASE + (g_a+GA_OFFSET)%NUM_SEM
 #          define LOCK(g_a,proc, x)   NATIVE_LOCK(proc,MUTEX(g_a))
@@ -256,6 +267,7 @@ Integer *NumRecReq = &local_buf_req;/* # received requests by data server */
                                     /* overwritten by shmem buf ptr if needed */
 struct ga_stat_t GAstat = {0,0,0,0,0,0,0,0,0,0,0};
 struct ga_bytes_t GAbytes ={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
+long   *GAstat_arr;  
 
     
 #ifdef CRAY_T3D

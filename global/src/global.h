@@ -12,8 +12,14 @@
 #ifdef TRUE 
 #undef TRUE
 #endif
+#ifdef CRAY_YMP
+#include <fortran.h>
+#define FALSE _btol(0)
+#define TRUE  _btol(1)
+#else
 #define FALSE (logical) 0
 #define TRUE  (logical) 1
+#endif
 
 #include "c.names.h"
 #ifdef CRAY_T3D

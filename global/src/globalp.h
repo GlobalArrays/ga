@@ -111,6 +111,10 @@ struct ga_bytes_t{
          double scatot;
          double scaloc;
 };
+
+#define STAT_AR_SZ sizeof(ga_stat_t)/sizeof(long)
+
+extern long   *GAstat_arr;  
 extern struct ga_stat_t GAstat;
 extern struct ga_bytes_t GAbytes;
 extern char *GA_name_stack[NAME_STACK_LEN];    /* stack for names of GA ops */ 
