@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.6 2001-08-29 16:58:47 d3g293 Exp $ */
+/* $Id: base.c,v 1.7 2001-09-04 17:14:09 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1233,8 +1233,7 @@ void FATR nga_distribution_no_handle_(Integer *ndim, Integer *dims,
 
 /*\ Check to see if array has ghost cells.
 \*/
-logical ga_has_ghosts_(g_a)
-Integer *g_a;
+logical FATR ga_has_ghosts_(Integer* g_a)
 {
       int h_a = (int)*g_a + GA_OFFSET;
       return GA[h_a].ghosts;
