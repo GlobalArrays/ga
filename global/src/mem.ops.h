@@ -185,7 +185,7 @@ Integer rrows, ldd, lds;
 
 
 /***************** 2D copy between local and shared/global memory ***********/
-#if defined(CRAY_T3D) || defined(KSR) || defined(FUJITSU)
+#if defined(CRAY_T3D) || defined(KSR)
     /* special copy routines for moving words */
 #   define Copy2DTo(type, proc, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
     Integer item_size=GAsizeofM(type), j;\
@@ -208,6 +208,30 @@ Integer rrows, ldd, lds;
           pd += item_size* *ld_dst;\
       }\
     }
+
+#elif defined(FUJITSU)
+#   define Copy2DTo(type, proc, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
+    if(proc==GAme){\
+      Copy2D(type, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst);\
+      }\
+    else {\
+      int item_size=GAsizeofM(type);\
+      int bytes =  *rows * item_size; \
+      CopyPatchTo((ptr_src),(ld_src*item_size),(ptr_dst),(ld_dst*item_size),(*cols),bytes,(proc));\
+    }\
+  }
+
+#   define Copy2DFrom(type, proc, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
+    if(proc==GAme){\                                                                                                         
+      Copy2D(type, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst);\
+      }\
+    else {\
+      int item_size = GAsizeofM(type);\
+      int bytes = item_size* *rows;\
+      CopyPatchFrom((ptr_src),(ld_src*item_size),(ptr_dst),(ld_dst*item_size),(*cols),bytes,(proc));\
+    }\
+  }
+
 
 #elif defined(LAPI)
 #   define Copy2DTo(type, proc, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
