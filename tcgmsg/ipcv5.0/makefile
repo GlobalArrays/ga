@@ -53,6 +53,25 @@ ifeq ($(MACHINE),CRAY-T3D)
             random.o
 endif
 
+ifeq ($(MACHINE),CRAY-T3E)
+     LINT = cclint
+       FC = f90
+ INCLUDES = -I.
+  DEFINES = -DCRAY_T3D -DCRAY -DSHMEM
+# -DFLUSHCACHE
+   FFLAGS =  -O jump,scalar1 -d p
+#  CFLAGS = -g $(DEFINES) $(INCLUDES) -Wl"-Drdahead=on"
+   CFLAGS = -O3 -h inline3 $(DEFINES) $(INCLUDES) -hjump
+     LOPT = 
+# -happrentice
+#   LIBS  = -lapp
+    EXTRA = t3d.o snd_rcv_probe.o
+
+ OBJ_CORE = pbegin.o queues.o  usleep.o mitob.o mdtob.o\
+            async_send.o mtime.o memalign.o drand48.o busy.o \
+            random.o
+endif
+
      JOBJ = fexit.o timer.o getmem.o mxv_fortran.o
 #..........................................................................
 
