@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.6 1999-11-02 00:50:26 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.7 1999-11-13 05:41:18 bjohnson Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -14,6 +14,9 @@
 #endif
 #include "message.h"
 #include "armcip.h"
+#ifdef WIN32
+#include "winsock2.h"
+#endif
 
 /* DEBUG_HACK enables to simulate cluster environment on a single workstation.
  * CLUSNODES is the number of processes assigned to each cluster node.
