@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.1 2001-07-30 22:52:34 d3h325 Exp $ */
+/* $Id: onesided.c,v 1.2 2001-08-17 20:57:55 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -191,6 +191,8 @@ void gai_free(void *ptr)
 {                                                                              \
 Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
 Integer _lo[2], _hi[2];                                                        \
+Integer _iw = GA[g_handle].width[0];                                           \
+Integer _jw = GA[g_handle].width[1];                                           \
                                                                                \
       ga_ownsM(g_handle, (proc),_lo,_hi);                                      \
       _ilo = _lo[0]; _ihi=_hi[0];                                              \
@@ -201,13 +203,13 @@ Integer _lo[2], _hi[2];                                                        \
                  "gaShmemLocation", proc, (_i),(_j), _ilo, _ihi, _jlo, _jhi);  \
           ga_error(err_string, g_a );                                          \
       }                                                                        \
-      offset = ((_i) - _ilo) + (_ihi-_ilo+1)*((_j)-_jlo);                      \
+      offset = ((_i)-_ilo+_iw) + (_ihi-_ilo+1+2*_iw)*((_j)-_jlo+_jw);          \
                                                                                \
       /* find location of the proc in current cluster pointer array */         \
-      proc_place =  proc;                                             \
+      proc_place =  proc;                                                      \
       *(ptr_loc) = GA[g_handle].ptr[proc_place] +                              \
                    offset*GAsizeofM(GA[g_handle].type);                        \
-      *(_pld) = _ihi-_ilo+1;                                                   \
+      *(_pld) = _ihi-_ilo+1+2*_iw;                                             \
 }
 
 
@@ -222,38 +224,46 @@ Integer _d;                                                                    \
       }\
 }
 
-
+/*\ Return pointer (ptr_loc) to location in memory of element with subscripts
+ *  (subscript). Also return physical dimensions of array in memory in ld.
+\*/
 #define gam_Location(proc, g_handle,  subscript, ptr_loc, ld)                  \
 {                                                                              \
-Integer _offset=0, _d, _factor=1, _last=GA[g_handle].ndim-1;                   \
+Integer _offset=0, _d, _w, _factor=1, _last=GA[g_handle].ndim-1;               \
 Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
                                                                                \
       ga_ownsM(g_handle, proc, _lo, _hi);                                      \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
-      if(_last==0) ld[0]=_hi[0]- _lo[0]+1;\
+      if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*GA[g_handle].width[0];             \
       for(_d=0; _d < _last; _d++)            {                                 \
-          _offset += (subscript[_d]-_lo[_d]) * _factor;                        \
-          ld[_d] = _hi[_d] - _lo[_d]+1;                                        \
+          _w = GA[g_handle].width[_d];                                         \
+          _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                     \
+          ld[_d] = _hi[_d] - _lo[_d]+1+2*_w;                                   \
           _factor *= ld[_d];                                                   \
       }                                                                        \
-      _offset += (subscript[_last]-_lo[_last]) * _factor;                      \
+      _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])       \
+               * _factor;                                                      \
       *(ptr_loc) =  GA[g_handle].ptr[proc]+_offset*GA[g_handle].elemsize;      \
 }
 
 
-
+/*\ Just return pointer (ptr_loc) to location in memory of element with
+ *  subscripts (subscript).
+\*/
 #define gam_Loc_ptr(proc, g_handle,  subscript, ptr_loc)                      \
 {                                                                             \
-Integer _offset=0, _d, _factor=1, _last=GA[g_handle].ndim-1;                  \
+Integer _offset=0, _d, _w, _factor=1, _last=GA[g_handle].ndim-1;              \
 Integer _lo[MAXDIM], _hi[MAXDIM];                                             \
                                                                               \
       ga_ownsM(g_handle, proc, _lo, _hi);                                     \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
       for(_d=0; _d < _last; _d++)            {                                \
-          _offset += (subscript[_d]-_lo[_d]) * _factor;                       \
-          _factor *= _hi[_d] - _lo[_d]+1;                                     \
+          _w = GA[g_handle].width[_d];                                        \
+          _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                    \
+          _factor *= _hi[_d] - _lo[_d]+1+2*_w;                                \
       }                                                                       \
-      _offset += (subscript[_last]-_lo[_last]) * _factor;                     \
+      _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])      \
+               * _factor;                                                     \
       *(ptr_loc) =  GA[g_handle].ptr[proc]+_offset*GA[g_handle].elemsize;     \
 }
 
@@ -283,6 +293,8 @@ Integer   _mloc = p* ndim *2;\
           *phi  = *plo + ndim;\
 }
 
+/* Count total number of elmenents in array based on values of ndim, lo,
+   and hi */
 #define gam_CountElems(ndim, lo, hi, pelems){\
 int _d;\
      for(_d=0,*pelems=1; _d< ndim;_d++)  *pelems *= hi[_d]-lo[_d]+1;\
@@ -293,7 +305,8 @@ int _d;\
           for(_d=0; _d< ndim;_d++) count[_d] = (int)(hi[_d]-lo[_d])+1;\
 }
 
-
+/* compute index of point subscripted by plo relative to point
+   subscripted by lo, for a block with dimensions dims */
 #define gam_ComputePatchIndex(ndim, lo, plo, dims, pidx){\
 Integer _d, _factor;\
           *pidx = plo[0] -lo[0];\
@@ -436,12 +449,21 @@ int proc, ndim;
 
       GA_PUSH_NAME("nga_get");
 
+      /* Locate the processors containing some portion of the patch
+         specified by lo and hi and return the results in _ga_map,
+         GA_proclist, and np. GA_proclist contains a list of processors
+         containing some portion of the patch, _ga_map contains
+         the lower and upper indices of the portion of the patch held
+         by a given processor, and np contains the total number of
+         processors that contain some portion of the patch.
+      */
       if(!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np ))
           ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
 
       size = GA[handle].elemsize;
       ndim = GA[handle].ndim;
 
+      /* get total size of patch */
       gam_CountElems(ndim, lo, hi, &elems);
       GAbytes.gettot += (double)size*elems;
       GAstat.numget++;
@@ -454,20 +476,33 @@ int proc, ndim;
           char *pbuf, *prem;
 
           p = (Integer)ProcListPerm[idx];
+          /* Find portion of patch held by processor p and return
+             the result in plo and phi. Also get actual processor
+             index corresponding to p and store the result in proc. */
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
           proc = (int)GA_proclist[p];
 
+          /* get pointer prem to location indexed by plo. Also get
+             leading physical dimensions in memory in ldrem */
           gam_Location(proc,handle, plo, &prem, ldrem);
 
-          /* find the right spot in the user buffer */
+          /* find the right spot in the user buffer for the point
+             subscripted by plo given that the corner of the user
+             buffer is subscripted by lo */
           gam_ComputePatchIndex(ndim,lo, plo, ld, &idx_buf);
           pbuf = size*idx_buf + (char*)buf;
 
+          /* compute number of elements in each dimension and store the
+             result in count */
           gam_ComputeCount(ndim, plo, phi, count);
 
-          /* scale number of rows by element size */
+          /* Scale first element in count by element size. The ARMCI_GetS
+             routine uses this convention to figure out memory sizes.*/
           count[0] *= size; 
 
+          /* Return strides for memory containing global array on remote
+             processor indexed by proc (stride_rem) and for local buffer
+             buf (stride_loc) */
           gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
 #ifdef PERMUTE_PIDS

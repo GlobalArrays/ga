@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.32 2001-08-07 20:04:14 d3h325 Exp $ */
+/* $Id: capi.c,v 1.33 2001-08-17 20:57:55 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -6,6 +6,7 @@
 
 Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM], _ga_work[MAXDIM];
 Integer _ga_dims[MAXDIM], _ga_map_capi[MAX_NPROC];
+Integer _ga_width[MAXDIM];
 
 Integer _ga_alo[MAXDIM], _ga_ahi[MAXDIM];
 Integer _ga_blo[MAXDIM], _ga_bhi[MAXDIM];
@@ -116,6 +117,58 @@ int NGA_Create_irreg(int type,int ndim,int dims[],char *name,int block[],int map
 #endif
 
     st = nga_create_irreg(type, (Integer)ndim, _ga_dims, name, ptr, _ga_work, &g_a);
+
+    if(st==TRUE) return (int) g_a;
+    else return 0;
+}
+
+int NGA_Create_ghosts_irreg(int type,int ndim,int dims[],int width[],char *name,
+    int block[],int map[])
+{
+    Integer *ptr, g_a;
+    logical st;
+    int d, base_map=0, base_work, b;
+    if(ndim>MAXDIM)return 0;
+
+    COPYC2F(dims,_ga_dims, ndim);
+    COPYC2F(block,_ga_work, ndim);
+    COPYC2F(width,_ga_width, ndim);
+
+    /* copy might swap only order of dimensions for blocks in map */
+#ifdef  USE_FAPI
+        base_work = 0;
+#else
+        base_work =MAX_NPROC;
+#endif
+
+    for(d=0; d<ndim; d++){
+#ifndef  USE_FAPI
+        base_work -= block[d];
+        if(base_work <0)GA_Error("GA C api: error in block",d);
+#endif
+        for(b=0; b<block[d]; b++){
+
+            _ga_map_capi[base_work + b] = (Integer)map[base_map +b]; /*****/
+#ifdef BASE_0
+            _ga_map_capi[base_work + b]++;
+#endif
+        }
+        base_map += block[d];
+
+#ifdef  USE_FAPI
+        base_work += block[d];
+        if(base_work >MAX_NPROC)GA_Error("GA (c): error in block",base_work);
+#endif
+     }
+
+#ifdef  USE_FAPI
+     ptr = _ga_map_capi;
+#else
+     ptr = _ga_map_capi + base_work;
+#endif
+
+    st = nga_create_ghosts_irreg(type, (Integer)ndim, _ga_dims, _ga_width, name, ptr,
+        _ga_work, &g_a);
 
     if(st==TRUE) return (int) g_a;
     else return 0;

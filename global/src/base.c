@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.2 2001-07-31 00:15:55 d3h325 Exp $ */
+/* $Id: base.c,v 1.3 2001-08-17 20:57:55 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -477,8 +477,133 @@ void gai_print_subscript(char *pre,int ndim, Integer subscript[], char* post)
         }
 }
 
+void gai_init_struct(handle)
+Integer handle;
+{
+     if(!GA[handle].ptr){
+        int len = (int)MIN(GAnproc, MAX_PTR);
+        GA[handle].ptr = (char**)malloc(len*sizeof(char**));
+     }
+     if(!GA[handle].mapc){
+        int len = (int)MAPLEN;
+        GA[handle].mapc = (int*)malloc(len*sizeof(int*));
+     }
+     if(!GA[handle].ptr)ga_error("malloc failed: ptr:",0);
+     if(!GA[handle].mapc)ga_error("malloc failed: mapc:",0);
+}
+
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
+ *   -- IRREGULAR DISTRIBUTION
+ *  This is the master routine. All other creation routines are derived
+ *  from this one.
+\*/
+logical nga_create_ghosts_irreg(
+        Integer type,     /* MA type */ 
+        Integer ndim,     /* number of dimensions */
+        Integer dims[],   /* array of dimensions */
+        Integer width[],  /* width of boundary cells for each dimension */
+        char *array_name, /* array name */
+        Integer map[],    /* decomposition map array */ 
+        Integer nblock[], /* number of blocks for each dimension in map */
+        Integer *g_a)     /* array handle (output) */
+{
+
+Integer  hi[MAXDIM];
+Integer  mem_size, nelem, mem_size_proc;
+Integer  i, ga_handle, status, maplen=0;
+
+      ga_sync_();
+      GA_PUSH_NAME("nga_create_ghosts_irreg");
+
+      if(!GAinitialized) ga_error("GA not initialized ", 0);
+      if(!ma_address_init) gai_ma_address_init();
+
+      gam_checktype(type);
+      gam_checkdim(ndim, dims);
+      for(i=0; i< ndim; i++)
+         if(nblock[i]>dims[i]) 
+            ga_error("number of blocks must be <= corresponding dimension",i);
+      for(i=0; i< ndim; i++)
+         if(width[i]<0) 
+            ga_error("Boundary widths must be >= 0",i);
+
+      GAstat.numcre ++;
+
+      /*** Get next free global array handle ***/
+      ga_handle =-1; i=0;
+      do{
+          if(!GA[i].actv) ga_handle=i;
+          i++;
+      }while(i<_max_global_array && ga_handle==-1);
+      if( ga_handle == -1)
+          ga_error(" too many arrays ", (Integer)_max_global_array);
+      *g_a = (Integer)ga_handle - GA_OFFSET;
+
+      /*** fill in Global Info Record for g_a ***/
+      gai_init_struct(ga_handle);
+      GA[ga_handle].type = (int)type;
+      GA[ga_handle].actv = 1;
+      strcpy(GA[ga_handle].name, array_name);
+      GA[ga_handle].ndim    = (int) ndim;
+
+      GA[ga_handle].ghosts = 0;
+      for( i = 0; i< ndim; i++){
+         GA[ga_handle].dims[i] = (int)dims[i];
+         GA[ga_handle].nblock[i] = (int)nblock[i];
+         GA[ga_handle].scale[i] = (double)nblock[i]/(double)dims[i];
+         GA[ga_handle].width[i] = (int)width[i];
+         if (width[i] > 0) GA[ga_handle].ghosts = 1;
+         maplen += nblock[i];
+      } 
+      for(i = 0; i< maplen; i++)GA[ga_handle].mapc[i] = (int)map[i];
+      GA[ga_handle].mapc[maplen] = -1;
+      GA[ga_handle].elemsize = GAsizeofM(type);
+      /*** determine which portion of the array I am supposed to hold ***/
+      nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
+      for( i = 0, nelem=1; i< ndim; i++){
+           GA[ga_handle].chunk[i] = (int)(hi[i]-GA[ga_handle].lo[i]+1);
+           nelem *= (int)(hi[i]-GA[ga_handle].lo[i]+1+2*width[i]);
+      }
+      mem_size = nelem * GA[ga_handle].elemsize;
+      GA[ga_handle].id = INVALID_MA_HANDLE;
+      GA[ga_handle].size = mem_size;
+      /* if requested, enforce limits on memory consumption */
+      if(GA_memory_limited) GA_total_memory -= mem_size;
+      /* check if everybody has enough memory left */
+      if(GA_memory_limited){
+         status = (GA_total_memory >= 0) ? 1 : 0;
+         ga_igop(GA_TYPE_GSM, &status, 1, "*");
+      }else status = 1;
+/*      fprintf(stderr,"%d, elems=%d size=%d status=%d\n",GAme,nelem,mem_size,status);*/
+/*      ga_sync_();*/
+      if(status){
+          status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
+                                 (int)type, &GA[ga_handle].id);
+      }else{
+          GA[ga_handle].ptr[GAme]=NULL;
+      }
+/*      fprintf(stderr,"Memory on %d is located at %u\n",
+              GAme,GA[ga_handle].ptr[GAme]); */
+      ga_sync_();
+
+      if(status){
+         GAstat.curmem += GA[ga_handle].size;
+         GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
+         status = TRUE;
+      }else{
+         ga_destroy_(g_a);
+         status = FALSE;
+      }
+
+      GA_POP_NAME;
+      return status;
+}
 
 
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY
+ *  Allow machine to choose location of array boundaries on individual
+ *  processors.
+\*/
 logical nga_create(Integer type,
                    Integer ndim,
                    Integer dims[],
@@ -487,13 +612,15 @@ logical nga_create(Integer type,
                    Integer *g_a)
 {
 Integer pe[MAXDIM], *pmap[MAXDIM], *map;
-Integer d, i;
+Integer d, i, width[MAXDIM];
 Integer blk[MAXDIM];
 logical status;
 /*
-extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Integer pedims[]);
+extern void ddb(Integer ndims, Integer dims[], Integer npes,
+Integer blk[], Integer pedims[]);
 */
-extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Integer bias, Integer blk[], Integer pedims[]);
+extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
+            Integer bias, Integer blk[], Integer pedims[]);
 
       GA_PUSH_NAME("nga_create");
       if(!GAinitialized) ga_error("GA not initialized ", 0);
@@ -523,6 +650,7 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
         int p;
 
         pmap[d] = map;
+        width[d] = 0;
 
         /* RJH ... don't leave some nodes without data if possible
          but respect the users block size */
@@ -559,14 +687,16 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
          }
          fflush(stdout);
       }
-      status = nga_create_irreg(type, ndim, dims, array_name, mapALL, pe, g_a);
+      status = nga_create_ghosts_irreg(type, ndim, dims, width, array_name,
+               mapALL, pe, g_a);
       GA_POP_NAME;
       return status;
 }
 
-
-      
-
+/*\ CREATE A 2-DIMENSIONAL GLOBAL ARRAY
+ *  Allow machine to choose location of array boundaries on individual
+ *  processors.
+\*/
 logical ga_create(type, dim1, dim2, array_name, chunk1, chunk2, g_a)
      Integer *type, *dim1, *dim2, *chunk1, *chunk2, *g_a;
      char *array_name;
@@ -592,8 +722,116 @@ logical status;
     return status;
 }
 
+/*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
+ *  User can specify location of array boundaries on individual
+ *  processors.
+\*/
+logical nga_create_irreg(
+        Integer type,     /* MA type */ 
+        Integer ndim,     /* number of dimensions */
+        Integer dims[],   /* array of dimensions */
+        char *array_name, /* array name */
+        Integer map[],    /* decomposition map array */ 
+        Integer nblock[], /* number of blocks for each dimension in map */
+        Integer *g_a)     /* array handle (output) */
+{
 
-/*\ CREATE A GLOBAL ARRAY
+Integer  d,width[MAXDIM];
+logical status;
+
+      for (d=0; d<ndim; d++) width[d] = 0;
+      status = nga_create_ghosts_irreg(type, ndim, dims, width,
+          array_name, map, nblock, g_a);
+      return status;
+}
+
+/*\ CREATE A 2-DIMENSIONAL GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
+ *  User can specify location of array boundaries on individual
+ *  processors.
+\*/
+logical ga_create_irreg(type, dim1, dim2, array_name, map1, nblock1, map2,
+                        nblock2, g_a)
+      Integer *type, *dim1, *dim2, *map1, *nblock1, *map2, *nblock2, *g_a;
+      char *array_name;
+     /*
+      * array_name    - a unique character string [input]
+      * type          - MA type [input]
+      * dim1/2        - array(dim1,dim2) as in FORTRAN [input]
+      * nblock1       - no. of blocks first dimension is divided into [input]
+      * nblock2       - no. of blocks second dimension is divided into [input]
+      * map1          - no. ilo in each block [input]
+      * map2          - no. jlo in each block [input]
+      * g_a           - Integer handle for future references [output]
+      */
+{
+Integer  ndim, dims[MAXDIM], width[MAXDIM], nblock[MAXDIM], *map;
+Integer  i;
+logical status;
+
+
+      if(*type != MT_F_DBL  && *type != MT_F_INT &&  
+         *type != MT_F_DCPL && *type != MT_F_REAL)
+         ga_error("ga_create_irreg: type not yet supported ",  *type);
+      else if( *dim1 <= 0 )
+         ga_error("ga_create_irreg: array dimension1 invalid ",  *dim1);
+      else if( *dim2 <= 0)
+         ga_error("ga_create_irreg: array dimension2 invalid ",  *dim2);
+      else if(*nblock1 <= 0)
+         ga_error("ga_create_irreg: nblock1 <=0  ",  *nblock1);
+      else if(*nblock2 <= 0)
+         ga_error("ga_create_irreg: nblock2 <=0  ",  *nblock2);
+      else if(*nblock1 * *nblock2 > GAnproc)
+         ga_error("ga_create_irreg: too many blocks ",*nblock1 * *nblock2);
+
+      if(GAme==0&& DEBUG){
+        fprintf(stderr," array:%d map1:\n", (int)*g_a);
+        for (i=0;i<*nblock1;i++)fprintf(stderr," %ld |",map1[i]);
+        fprintf(stderr," \n array:%d map2:\n",(int) *g_a);
+        for (i=0;i<*nblock2;i++)fprintf(stderr," %ld |",map2[i]);
+        fprintf(stderr,"\n\n");
+      }
+      ndim = 2;
+      dims[0] = *dim1;
+      dims[1] = *dim2;
+      width[0] = 0;
+      width[1] = 0;
+      nblock[0] = *nblock1;
+      nblock[1] = *nblock2;
+      map = mapALL;
+      for(i=0;i< *nblock1; i++) map[i] = (int)map1[i];
+      for(i=0;i< *nblock2; i++) map[i+ *nblock1] = (int)map2[i];
+      status = nga_create_ghosts_irreg(*type, ndim, dims, width,
+          array_name, mapALL, nblock, g_a);
+      return status;
+
+}
+
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLSi
+ * -- IRREGULAR DISTRIBUTION
+ *  Fortran version
+\*/
+#if defined(CRAY) || defined(WIN32)
+logical FATR nga_create_ghosts_irreg_(Integer *type, Integer *ndim,
+    Integer *dims, Integer width[],
+    _fcd array_name, Integer map[], Integer block[], Integer *g_a)
+#else
+logical FATR nga_create_ghosts_irreg_(Integer *type, Integer *ndim,
+    Integer *dims, Integer width[], char* array_name, Integer map[],
+    Integer block[], Integer *g_a, int slen)
+#endif
+{
+char buf[FNAM];
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
+#else
+      f2cstring(array_name ,slen, buf, FNAM);
+#endif
+
+  return (nga_create_ghosts_irreg(*type, *ndim,  dims, width, buf, map,
+        block, g_a));
+}
+
+/*\ CREATE A 2-DIMENSIONAL GLOBAL ARRAY
  *  Fortran version
 \*/
 #if defined(CRAY) || defined(WIN32)
@@ -618,7 +856,7 @@ char buf[FNAM];
 }
 
 
-/*\ CREATE A GLOBAL ARRAY
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY
  *  Fortran version
 \*/
 #if defined(CRAY) || defined(WIN32)
@@ -639,6 +877,35 @@ char buf[FNAM];
   return (nga_create(*type, *ndim,  dims, buf, chunk, g_a));
 }
 
+/*\ CREATE A 2-DIMENSIONAL GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
+ *  Fortran version
+\*/
+#if defined(CRAY) || defined(WIN32)
+logical FATR ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
+                         map2, nblock2, g_a)
+     Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a;
+     _fcd array_name;
+#else
+logical FATR ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
+                         map2, nblock2, g_a, slen)
+     Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a;
+     char *array_name;
+     int slen;
+#endif
+{
+char buf[FNAM];
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
+#else
+      f2cstring(array_name ,slen, buf, FNAM);
+#endif
+  return( ga_create_irreg(type, dim1, dim2, buf, map1, nblock1,
+                         map2, nblock2, g_a));
+}
+
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
+ *  Fortran version
+\*/
 #if defined(CRAY) || defined(WIN32)
 logical FATR nga_create_irreg_(Integer *type, Integer *ndim, Integer *dims,
                  _fcd array_name, Integer map[], Integer block[], Integer *g_a)
@@ -657,25 +924,6 @@ char buf[FNAM];
 
   return (nga_create_irreg(*type, *ndim,  dims, buf, map, block, g_a));
 }
-
-
-
-
-void gai_init_struct(handle)
-Integer handle;
-{
-     if(!GA[handle].ptr){
-        int len = (int)MIN(GAnproc, MAX_PTR);
-        GA[handle].ptr = (char**)malloc(len*sizeof(char**));
-     }
-     if(!GA[handle].mapc){
-        int len = (int)MAPLEN;
-        GA[handle].mapc = (int*)malloc(len*sizeof(int*));
-     }
-     if(!GA[handle].ptr)ga_error("malloc failed: ptr:",0);
-     if(!GA[handle].mapc)ga_error("malloc failed: mapc:",0);
-}
-
 
 #ifdef PERMUTE_PIDS
 char* ptr_array[MAX_NPROC];
@@ -857,292 +1105,22 @@ Integer ga_handle;
 
 /*\ RETURN COORDINATES OF A GA PATCH ASSOCIATED WITH PROCESSOR proc
 \*/
-void FATR nga_distribution_no_handle_(Integer *ndim, Integer *dims, Integer *nblock, Integer *mapc, Integer *proc, Integer *lo, Integer * hi)
+void FATR nga_distribution_no_handle_(Integer *ndim, Integer *dims,
+        Integer *nblock, Integer *mapc, Integer *proc, Integer *lo,
+        Integer * hi)
 {
    ga_ownsM_no_handle(*ndim, dims, nblock, mapc, *proc, lo, hi);
 }
 
 
-/*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
+/*\ Check to see if array has ghost cells.
 \*/
-logical nga_create_irreg(
-        Integer type,     /* MA type */ 
-        Integer ndim,     /* number of dimensions */
-        Integer dims[],   /* array of dimensions */
-        char *array_name, /* array name */
-        Integer map[],    /* decomposition map array */ 
-        Integer nblock[], /* number of blocks for each dimension in map */
-        Integer *g_a)     /* array handle (output) */
+logical ga_has_ghosts(g_a)
+Integer *g_a;
 {
-
-Integer  hi[MAXDIM];
-Integer  mem_size, nelem, mem_size_proc;
-Integer  i, ga_handle, status, maplen=0;
-
-      ga_sync_();
-      GA_PUSH_NAME("nga_create_irreg");
-
-      if(!GAinitialized) ga_error("GA not initialized ", 0);
-      if(!ma_address_init) gai_ma_address_init();
-
-      gam_checktype(type);
-      gam_checkdim(ndim, dims);
-      for(i=0; i< ndim; i++)
-         if(nblock[i]>dims[i]) 
-            ga_error("number of blocks must be <= corresponding dimension",i);
-
-      GAstat.numcre ++;
-
-      /*** Get next free global array handle ***/
-      ga_handle =-1; i=0;
-      do{
-          if(!GA[i].actv) ga_handle=i;
-          i++;
-      }while(i<_max_global_array && ga_handle==-1);
-      if( ga_handle == -1)
-          ga_error(" too many arrays ", (Integer)_max_global_array);
-      *g_a = (Integer)ga_handle - GA_OFFSET;
-
-      /*** fill in Global Info Record for g_a ***/
-      gai_init_struct(ga_handle);
-      GA[ga_handle].type = (int)type;
-      GA[ga_handle].actv = 1;
-      strcpy(GA[ga_handle].name, array_name);
-      GA[ga_handle].ndim    = (int) ndim;
-
-      for( i = 0; i< ndim; i++){
-         GA[ga_handle].dims[i] = (int)dims[i];
-         GA[ga_handle].nblock[i] = (int)nblock[i];
-         GA[ga_handle].scale[i] = (double)nblock[i]/(double)dims[i];
-         maplen += nblock[i];
-      } 
-      for(i = 0; i< maplen; i++)GA[ga_handle].mapc[i] = (int)map[i];
-      GA[ga_handle].mapc[maplen] = -1;
-      GA[ga_handle].elemsize = GAsizeofM(type);
-      /*** determine which portion of the array I am supposed to hold ***/
-      nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
-      for( i = 0, nelem=1; i< ndim; i++){
-           GA[ga_handle].chunk[i] = (int)(hi[i]-GA[ga_handle].lo[i]+1);
-           nelem *= GA[ga_handle].chunk[i];
-      }
-      mem_size = mem_size_proc =  nelem * GA[ga_handle].elemsize;
-      GA[ga_handle].id = INVALID_MA_HANDLE;
-      GA[ga_handle].size = mem_size_proc;
-      /* if requested, enforce limits on memory consumption */
-      if(GA_memory_limited) GA_total_memory -= mem_size_proc;
-      /* check if everybody has enough memory left */
-      if(GA_memory_limited){
-         status = (GA_total_memory >= 0) ? 1 : 0;
-         ga_igop(GA_TYPE_GSM, &status, 1, "*");
-      }else status = 1;
-/*      fprintf(stderr,"%d, elems=%d size=%d status=%d\n",GAme,nelem,mem_size,status);*/
-/*      ga_sync_();*/
-      if(status){
-          status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
-                                 (int)type, &GA[ga_handle].id);
-      }else{
-          GA[ga_handle].ptr[GAme]=NULL;
-      }
-      ga_sync_();
-
-      if(status){
-         GAstat.curmem += GA[ga_handle].size;
-         GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
-         status = TRUE;
-      }else{
-         ga_destroy_(g_a);
-         status = FALSE;
-      }
-
-      GA_POP_NAME;
-      return status;
+      int h_a = (int)*g_a + GA_OFFSET;
+      return GA[h_a].ghosts;
 }
-
-
-
-/*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
-\*/
-logical ga_create_irreg(type, dim1, dim2, array_name, map1, nblock1,
-                         map2, nblock2, g_a)
-     Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a;
-     char *array_name;
-     /*
-      * array_name    - a unique character string [input]
-      * type          - MA type [input]
-      * dim1/2        - array(dim1,dim2) as in FORTRAN [input]
-      * nblock1       - no. of blocks first dimension is divided into [input]
-      * nblock2       - no. of blocks second dimension is divided into [input]
-      * map1          - no. ilo in each block [input]
-      * map2          - no. jlo in each block [input]
-      * g_a           - Integer handle for future references [output]
-      */
-{
-Integer  ilo, ihi, jlo, jhi;
-Integer  mem_size, nelem, mem_size_proc;
-Integer  i, ga_handle, status;
-
-      if(!GAinitialized) ga_error("GA not initialized ", 0);
-
-      ga_sync_();
-      if(!ma_address_init) gai_ma_address_init();
-
-      GAstat.numcre ++; 
-
-      if(*type != MT_F_DBL  && *type != MT_F_INT &&  
-         *type != MT_F_DCPL && *type != MT_F_REAL)
-         ga_error("ga_create_irreg: type not yet supported ",  *type);
-      else if( *dim1 <= 0 )
-         ga_error("ga_create_irreg: array dimension1 invalid ",  *dim1);
-      else if( *dim2 <= 0)
-         ga_error("ga_create_irreg: array dimension2 invalid ",  *dim2);
-      else if(*nblock1 <= 0)
-         ga_error("ga_create_irreg: nblock1 <=0  ",  *nblock1);
-      else if(*nblock2 <= 0)
-         ga_error("ga_create_irreg: nblock2 <=0  ",  *nblock2);
-      else if(*nblock1 * *nblock2 > GAnproc)
-         ga_error("ga_create_irreg: too many blocks ",*nblock1 * *nblock2);
-
-      if(GAme==0&& DEBUG){
-        fprintf(stderr," array:%d map1:\n", (int)*g_a);
-        for (i=0;i<*nblock1;i++)fprintf(stderr," %ld |",map1[i]);
-        fprintf(stderr," \n array:%d map2:\n",(int) *g_a);
-        for (i=0;i<*nblock2;i++)fprintf(stderr," %ld |",map2[i]);
-        fprintf(stderr,"\n\n");
-      }
-
-      /*** Get next free global array handle ***/
-      ga_handle =-1; i=0;
-      do{
-          if(!GA[i].actv) ga_handle=i;
-          i++;
-      }while(i<_max_global_array && ga_handle==-1);
-      if( ga_handle == -1)
-          ga_error("ga_create: too many arrays ", (Integer)_max_global_array);
-      *g_a = (Integer)ga_handle - GA_OFFSET;
-
-      /*** fill in Global Info Record for g_a ***/
-      gai_init_struct(ga_handle);
-      GA[ga_handle].type = (int)*type;
-      GA[ga_handle].actv = 1;
-      strcpy(GA[ga_handle].name, array_name);
-      GA[ga_handle].ndim    = 2;
-      GA[ga_handle].dims[0] = (int)*dim1;
-      GA[ga_handle].dims[1] = (int)*dim2;
-      GA[ga_handle].nblock[0] = (int) *nblock1;
-      GA[ga_handle].nblock[1] = (int) *nblock2;
-      GA[ga_handle].scale[0] = (double)*nblock1/(double)*dim1;
-      GA[ga_handle].scale[1] = (double)*nblock2/(double)*dim2;
-      GA[ga_handle].elemsize = GAsizeofM(*type);
-
-      /* Copy distribution maps, map1 & map2, into mapc:
-       * . since nblock1*nblock2<=GAnproc,  mapc[GAnproc+1] suffices
-       *   to pack everything into it;
-       * . the dimension of block i is given as: MAX(mapc[i+1]-mapc[i],dim1/2)
-       */
-      for(i=0;i< *nblock1; i++) GA[ga_handle].mapc[i] = (int)map1[i];
-      for(i=0;i< *nblock2; i++) GA[ga_handle].mapc[i+ *nblock1] = (int)map2[i];
-      GA[ga_handle].mapc[*nblock1 + *nblock2] = -1; /* end of block marker */
-
-      if(GAme ==0 && DEBUG){
-         fprintf(stderr,"\nmapc %ld elem\n", *nblock1 + *nblock2);
-         for(i=0;i<1+*nblock1+ *nblock2;i++)
-             fprintf(stderr,"%d,",GA[ga_handle].mapc[i]);
-         fprintf(stderr,"\n\n");
-      }
-
-
-      /*** determine which portion of the array I am supposed to hold ***/
-      ga_distribution_(g_a, &GAme, &ilo, &ihi, &jlo, &jhi);
-      GA[ga_handle].chunk[0] = (int) (ihi-ilo+1);
-      GA[ga_handle].chunk[1] = (int) (jhi-jlo+1);
-      GA[ga_handle].lo[0] = ilo;
-      GA[ga_handle].lo[1] = jlo;
-      nelem = (ihi-ilo+1)*(jhi-jlo+1);
-
-      mem_size = mem_size_proc =  nelem * GA[ga_handle].elemsize;
-      GA[ga_handle].id = INVALID_MA_HANDLE;
-
-      /* on shmem platforms, we use avg mem_size per processor in cluster */
-      GA[ga_handle].size = mem_size_proc;
-
-      /* if requested, enforce limits on memory consumption */
-      if(GA_memory_limited) GA_total_memory -= mem_size_proc; 
-
-
-      /* check if everybody has enough memory left */
-      if(GA_memory_limited){
-         status = (GA_total_memory >= 0) ? 1 : 0;
-         ga_igop(GA_TYPE_GSM, &status, 1, "*");
-      }else status = 1;
- 
-      if(status){
-          status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
-                               (int)*type, &GA[ga_handle].id);
-      }else{
-          GA[ga_handle].ptr[GAme]=NULL;
-      }
-
-      ga_sync_();
-
-#     ifdef GA_CREATE_INDEF
-      if(status){
-         Integer one = 1;
-         if (GAme == 0) fprintf(stderr,"Initializing GA array%ld\n",*g_a);
-         if(*type == MT_F_DBL){ 
-             double bad = DBL_MAX;
-             ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
-         } else if (*type == MT_F_INT) {
-             Integer bad = (Integer) INT_MAX;
-             ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
-         } else if (*type == MT_F_DCPL) {
-             DoubleComplex bad = {DBL_MAX, DBL_MAX};
-             ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
-          } else if (*type == MT_F_REAL) {
-             float bad = FLT_MAX;
-             ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad); 
-         } else {
-             ga_error("ga_create_irreg: type not yet supported ",  *type);
-         }
-      }
-#     endif
-
-      if(status){
-         GAstat.curmem += GA[ga_handle].size;
-         GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
-         return(TRUE);
-      }else{
-         ga_destroy_(g_a);
-         return(FALSE);
-      }
-}
-
-
-/*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
- *  Fortran version
-\*/
-#if defined(CRAY) || defined(WIN32)
-logical FATR ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
-                         map2, nblock2, g_a)
-     Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a;
-     _fcd array_name;
-#else
-logical FATR ga_create_irreg_(type, dim1, dim2, array_name, map1, nblock1,
-                         map2, nblock2, g_a, slen)
-     Integer *type, *dim1, *dim2, *map1, *map2, *nblock1, *nblock2, *g_a;
-     char *array_name;
-     int slen;
-#endif
-{
-char buf[FNAM];
-#if defined(CRAY) || defined(WIN32)
-      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
-#else
-      f2cstring(array_name ,slen, buf, FNAM);
-#endif
-  return( ga_create_irreg(type, dim1, dim2, buf, map1, nblock1,
-                         map2, nblock2, g_a));
-}
-
 
 Integer FATR ga_ndim_(Integer *g_a)
 {
@@ -1600,7 +1578,7 @@ Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
    ndim = GA[ga_handle].ndim;
 
    for(d=0, *owner=-1; d< ndim; d++) 
-       if(subscript[d]< 1 || subscript[d]>GA[ga_handle].dims[d])return FALSE;
+       if(subscript[d]< 1 || subscript[d]>GA[ga_handle].dims[d]) return FALSE;
 
    for(d = 0, dpos = 0; d< ndim; d++){
        findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d],
@@ -1625,6 +1603,24 @@ logical FATR nga_locate_region_( Integer *g_a,
                                  Integer *map,
                                  Integer *proclist,
                                  Integer *np)
+/*    g_a      [input]  global array handle
+      lo       [input]  lower indices of patch in global array
+      hi       [input]  upper indices of patch in global array
+      map      [output] list of lower and upper indices for portion of
+                        patch that exists on each processor containing a
+                        portion of the patch. The map is constructed so
+                        that for a D dimensional global array, the first
+                        D elements are the lower indices on the first
+                        processor in proclist, the next D elements are
+                        the upper indices of the first processor in
+                        proclist, the next D elements are the lower
+                        indices for the second processor in proclist, and
+                        so on.
+      proclist [output] list of processors containing some portion of the
+                        patch
+      np       [output] total number of processors containing a portion
+                        of the patch
+*/
 {
 int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
 Integer  proc, owner, i, ga_handle;
@@ -1639,14 +1635,16 @@ Integer  d, dpos, ndim, elems;
 
    ndim = GA[ga_handle].ndim;
 
-   /* find "processor coordinates" for the top corner */
+   /* find "processor coordinates" for the top left corner and store them
+    * in ProcT */
    for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
        findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
                  GA[ga_handle].scale[d], (int)lo[d], &procT[d]);
        dpos += GA[ga_handle].nblock[d];
    }
 
-   /* find "processor coordinates" for the right bottom corner */
+   /* find "processor coordinates" for the right bottom corner and store
+    * them in procB */
    for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
        findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
                  GA[ga_handle].scale[d], (int)hi[d], &procB[d]);
@@ -1655,18 +1653,24 @@ Integer  d, dpos, ndim, elems;
 
    *np = 0;
 
+   /* Find total number of processors containing data and return the
+    * result in elems. Also find the lowest "processor coordinates" of the
+    * processor block containing data and return these in proc_subscript.
+   */
    ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,GA[ga_handle].nblock);
 
    for(i= 0; i< elems; i++){ 
       Integer _lo[MAXDIM], _hi[MAXDIM];
       Integer  offset;
 
-      /* convert i to owner processor id */
+      /* convert i to owner processor id using the current values in
+       proc_subscript */
       ga_ComputeIndexM(&proc, ndim, proc_subscript, GA[ga_handle].nblock); 
       owner = GA_Proc_list ? GA_Proc_list[proc]: proc;
+      /* get range of global array indices that are owned by owner */
       ga_ownsM(ga_handle, owner, _lo, _hi);
 
-      offset = *np *(ndim*2); /* location in mapc to put patch range */
+      offset = *np *(ndim*2); /* location in map to put patch range */
 
       for(d = 0; d< ndim; d++)
               map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
@@ -1674,6 +1678,8 @@ Integer  d, dpos, ndim, elems;
               map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
       proclist[i] = owner;
+      /* Update to proc_subscript so that it corresponds to the next
+       * processor in the block of processors containing the patch */
       ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].nblock);
       (*np)++;
    }

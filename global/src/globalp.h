@@ -147,6 +147,7 @@ typedef struct {
        int  dims[MAXDIM];       /* global array dimensions              */
        int  chunk[MAXDIM];      /* chunking                             */
        int  nblock[MAXDIM];     /* number of blocks per dimension       */
+       int  width[MAXDIM];      /* boundary cells per dimension         */
        double scale[MAXDIM];    /* nblock/dim (precomputed)             */
        char **ptr;              /* arrays of pointers to remote data    */
        int  *mapc;              /* block distribution map               */
@@ -155,6 +156,7 @@ typedef struct {
        Integer lo[MAXDIM];      /* top/left corner in local patch       */
        Integer size;            /* size of local data in bytes          */
        int elemsize;            /* sizeof(datatype)                     */
+       int ghosts;              /* flag indicating presence of ghosts   */
        long lock;               /* lock                                 */
        long id;                 /* ID of shmem region / MA handle       */
        char name[FNAM+1];       /* array name                           */
