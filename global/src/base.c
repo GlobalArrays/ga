@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.64 2004-01-02 20:41:21 d3g293 Exp $ */
+/* $Id: base.c,v 1.65 2004-01-13 17:03:17 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -810,6 +810,11 @@ Integer FATR ga_pgroup_get_mirror_()
   return 0;
 }
 
+Integer FATR ga_pgroup_get_world_()
+{
+  return -1;
+}
+
 /*\ Return a new global array handle
 \*/
 Integer ga_create_handle_()
@@ -833,6 +838,7 @@ Integer ga_create_handle_()
   GA[ga_handle].mapc[0] = -1;
   GA[ga_handle].irreg = 0;
   GA[ga_handle].ghosts = 0;
+  GA[ga_handle].corner_flag = -1;
   GA_POP_NAME;
   return g_a;
 }
@@ -1112,6 +1118,14 @@ logical ga_allocate_( Integer *g_a)
   if (ga_cluster_nnodes_() == 1) {
     GA[ga_handle].p_handle = -1;
   }
+  /* set corner flag, if it has not already been set and set up message
+     passing data */
+  if (GA[ga_handle].corner_flag == -1) {
+    i = 1;
+  } else {
+    i = GA[ga_handle].corner_flag;
+  }
+  ga_set_ghost_corner_flag_(g_a, &i);
 
   for( i = 0; i< ndim; i++){
      GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
@@ -1277,23 +1291,6 @@ logical nga_create_ghosts_config(Integer type,
   GA_POP_NAME;
   return status;
 }
-
-logical nga_create_ghosts_nocorner(Integer type,
-                   Integer ndim,
-                   Integer dims[],
-                   Integer width[],
-                   char* array_name,
-                   Integer chunk[],
-                   Integer *g_a)
-{
-  Integer p_handle = ga_pgroup_get_default_();
-  logical status;
-  status = nga_create_ghosts_config(type, ndim, dims, width, array_name,
-                  chunk, p_handle, g_a);
-  if(ga_has_ghosts_(g_a))nga_set_neighbor_ghost_info(g_a);
-  return status;
-}
-
 
 logical nga_create_ghosts(Integer type,
                    Integer ndim,
@@ -1600,29 +1597,6 @@ char buf[FNAM];
 
   return (nga_create_ghosts_config(*type, *ndim,  dims, width, buf, chunk,
                    *p_handle, g_a));
-}
-
-
-/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
- *  Fortran version
-\*/
-#if defined(CRAY) || defined(WIN32)
-logical FATR nga_create_ghosts_nocorner_(Integer *type, Integer *ndim, Integer *dims,
-                   Integer *width, _fcd array_name, Integer *chunk, Integer *g_a)
-#else
-logical FATR nga_create_ghosts_nocorner_(Integer *type, Integer *ndim, Integer *dims,
-                   Integer *width, char* array_name, Integer *chunk, Integer *g_a,
-                   int slen)
-#endif
-{
-char buf[FNAM];
-#if defined(CRAY) || defined(WIN32)
-      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
-#else
-      f2cstring(array_name ,slen, buf, FNAM);
-#endif
-
-  return(nga_create_ghosts_nocorner(*type, *ndim,  dims, width,buf, chunk, g_a));
 }
 
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
