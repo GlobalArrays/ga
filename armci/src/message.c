@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.7 1999-11-02 00:52:21 d3h325 Exp $ */
+/* $Id: message.c,v 1.8 1999-11-02 19:01:31 d3h325 Exp $ */
 #include "message.h"
 #include "armcip.h"
 
@@ -105,8 +105,10 @@ void armci_msg_brdcst(void* buffer, int len, int root)
 #  elif defined(PVM)
       armci_msg_bcast(buffer, len, root);
 #  else
+   {
       long ttag=ARMCI_TAG, llen=len, rroot=root;
       BRDCST_(&ttag, buffer, &llen, &rroot);
+   }
 #  endif
 }
 
