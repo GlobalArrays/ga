@@ -140,11 +140,9 @@ int  elio_stat(char *fname, stat_t *statinfo)
 #     endif
 
       /* get block size */
-#     ifdef SOLARIS
-    	  bsize = (int) ufs_statfs.f_frsize;
-#     else
-	  bsize = (int) ufs_statfs.f_bsize;
-#     endif
+       bsize = (int) ufs_statfs.f_frsize;
+      /* on some older systems it was f_bsize */
+      /* bsize = (int) ufs_statfs.f_bsize; */
 #   endif
     
     /* translate number of availabell blocks into kilobytes */
