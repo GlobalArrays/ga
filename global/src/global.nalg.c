@@ -510,8 +510,8 @@ int i;
 
 void FATR ga_transpose_(Integer *g_a, Integer *g_b)
 {
-int me = ga_nodeid_();
-int nproc = ga_nnodes_(); 
+Integer me = ga_nodeid_();
+Integer nproc = ga_nnodes_(); 
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 Integer lo[2],hi[2];
 
