@@ -299,7 +299,7 @@ void test_io_dbl()
   tt0 = tcgtime_();
   if (NDRA_Read_section(FALSE, g_b, glo, ghi, d_b, dlo, dhi, &req) != 0)
     GA_Error("NDRA_Read_section failed:",0);
-  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",&req);
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
   tt1 = tcgtime_() - tt0;
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
@@ -369,7 +369,10 @@ void test_io_dbl()
   tt0 = tcgtime_();
   if (NDRA_Write_section(TRUE,g_c,glo,ghi,d_c,dlo,dhi,&req) != 0)
     GA_Error("NDRA_Write_section (transpose) failed: ",0);
-  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",&req);
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
+  isize = 1;
+  for (i=0; i<ndim; i++) isize *= (ghi[i]-glo[i]+1);
+  mbytes = 1.e-6 * (double)(isize*sizeof(double));
   tt1 = tcgtime_() - tt0;
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
@@ -389,7 +392,7 @@ void test_io_dbl()
   tt0 = tcgtime_();
   if (NDRA_Read_section(TRUE,g_c,glo,ghi,d_c,dlo,dhi,&req) != 0)
     GA_Error("NDRA_Read_section (transpose) failed: ",0);
-  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",&req);
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
   tt1 = tcgtime_() - tt0;
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
