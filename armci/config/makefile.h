@@ -120,6 +120,12 @@ endif
 
 #---------------------------- Sun or Fujitsu Sparc/Solaris ----------------
 ifeq ($(TARGET),SOLARIS)
+  ifeq ($(_CC),mpifcc)
+       _CC = fcc
+  endif
+  ifeq ($(_FC),mpifrt)
+       _FC = frt
+  endif
   ifeq ($(_FC),f77)
       FOPT_REN = -dalign
   endif
@@ -137,6 +143,12 @@ endif
 # 64-bit
 ifeq ($(TARGET),SOLARIS64)
 #
+  ifeq ($(_CC),mpifcc)
+       _CC = fcc
+  endif
+  ifeq ($(_FC),mpifrt)
+       _FC = frt
+  endif
   ifeq ($(_FC),frt)
      FOPT_REN = -fw -Kfast -KV9FMADD
   else
