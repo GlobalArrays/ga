@@ -1,5 +1,5 @@
 #include "sf.h"
-#ifdef CRAY_T3D
+#ifdef CRAY
 #      include <fortran.h>
 #endif
  
