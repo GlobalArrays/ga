@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.63 2003-05-15 16:11:51 edo Exp $ */
+/* $Id: shmem.c,v 1.64 2003-05-16 21:43:56 edo Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -69,6 +69,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #endif
 
 #define SHM_UNIT (1024)
+#define IDLOC (SHMIDLEN - 3)
 
 
 /* Need to determine the max shmem segment size. There are 2 alternatives:
@@ -481,7 +482,8 @@ long sz=(long)size;
 static struct shm_region_list{
    char     *addr;
    long     id;
-   int      attached;
+   long     sz;
+   long     attached;
 }region_list[MAX_REGIONS];
 static int alloc_regions=0;
 static long occup_blocks=0;
@@ -622,7 +624,7 @@ char *temp = (char*)0, *pref_addr=(char*)0;
            shmem_errmsg(size);
            armci_die("AttachSharedRegion:failed to attach",(long)idlist[1+ir]);
          }
-	 POST_ALLOC_CHECK(temp,MinShmem*SHM_UNIT)
+	 POST_ALLOC_CHECK(temp,MinShmem*SHM_UNIT);
 
          region_list[reg].addr = temp; 
          region_list[reg].attached = 1;
@@ -722,7 +724,7 @@ size_t sz;
              armci_die("allocate: failed to attach to shared region",  0L);
          }
        }
-       POST_ALLOC_CHECK(temp,MinShmem*SHM_UNIT)
+       POST_ALLOC_CHECK(temp,MinShmem*SHM_UNIT);
 
        region_list[alloc_regions].addr = temp;
        region_list[alloc_regions].id = id;
@@ -775,6 +777,7 @@ char *Attach_Shared_Region(id, size, offset)
 {
 int reg, found, shmflag=0;
 static char *temp;
+long nsize = size;
 
 #if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
   shmflag= SHM_SGI_ANYADDR;
@@ -788,6 +791,7 @@ static char *temp;
              armci_me, create_call++, size,*id);
       fflush(stdout);
   }
+
 
   /* under Linux we can get valid id=0 */
 #ifndef LINUX
@@ -818,11 +822,14 @@ static char *temp;
      alloc_regions++;
   }
 
+  /* for smaller request we attach to default SHMMAX size */
+  if(size > MinShmem*SHM_UNIT) size = id[IDLOC];
+
   /* attach if not attached yet */
   if(!region_list[reg].attached){
 
 #   ifdef ALLOC_MUNMAP
-       char *pref_addr = alloc_munmap((size_t) (MinShmem*SHM_UNIT));
+       char *pref_addr = alloc_munmap((size_t) (size));
 #   else
        char *pref_addr = (char*)0;
 #   endif
@@ -835,7 +842,7 @@ static char *temp;
         printf("%d:attached: id=%d address=%p\n",armci_me,(int)*id, temp);
         fflush(stdout);
     }
-    POST_ALLOC_CHECK(temp,MinShmem*SHM_UNIT)
+    POST_ALLOC_CHECK(temp,size);
     region_list[reg].addr = temp; 
     region_list[reg].attached = 1;
 
@@ -904,11 +911,12 @@ size_t sz = (size_t)size;
        }
 
     }
-    POST_ALLOC_CHECK(temp,sz)
+    POST_ALLOC_CHECK(temp,sz);
 
     region_list[alloc_regions].addr = temp;
     region_list[alloc_regions].id = id;
     region_list[alloc_regions].attached=1;
+    region_list[alloc_regions].sz=sz;
     alloc_regions++;
 
     if(DEBUG2_){
@@ -973,12 +981,13 @@ int  reg, refreg=0,nreg;
 
     if(STAMP) *((int*)temp) = alloc_regions-1;
     *offset = (long) (temp - region_list[refreg].addr);
+    id[IDLOC]=region_list[reg].sz; /* elan post check */
     occup_blocks++;
   
     if(DEBUG_){ 
-      printf("%d:CreateShmReg:reg=%d id=%ld off=%ld ptr=%p adr=%p s=%d n=%d\n",
+      printf("%d:CreateShmReg:reg=%d id=%ld off=%ld ptr=%p adr=%p s=%d n=%d sz=%ld\n",
            armci_me,reg,region_list[reg].id,*offset,region_list[reg].addr,
-           temp,(int)size,nreg);
+           temp,(int)size,nreg,id[IDLOC]);
       fflush(stdout);
     }
 
