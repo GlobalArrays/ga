@@ -1,7 +1,7 @@
 # Makefile.h, Thu May 26 15:01:41 PDT 1994
 #
 # Define TARGET to be the machine you wish to build for
-# (one of SUN, SGI, IBM, KSR, SP1, CRAY-T3D, IPSC, PARAGON)
+# (one of SUN, SGI, SGITFP, IBM, KSR, SP1, CRAY-T3D, IPSC, PARAGON)
 #
 # Define VERSION of memory 
 # (SHMEM/DISMEM) - on some machines you can have either
@@ -87,13 +87,25 @@ ifeq ($(TARGET),SGI)
 #
 # SGI running IRIX
 #
-         HOME = /usr/people/jaroslaw
-          SRC = $(HOME)/scf/src
 #
        RANLIB = echo
       FLD_REN = -v -Wl,-U
  GLOB_DEFINES = -DSGI
 endif
+
+#................................ SGI Power Challenge .......................
+#
+ifeq ($(TARGET),SGITFP)
+#
+# SGI running IRIX6.0
+#
+#
+       RANLIB = echo
+        CDEFS = -DEXT_INT
+     FOPT_REN = -i8
+ GLOB_DEFINES = -DSGI -DSGITFP 
+endif
+
 
 #................................ IPSC ......................................
 #
