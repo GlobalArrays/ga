@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.24 2000-06-08 22:49:33 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.25 2000-06-09 17:27:38 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -648,10 +648,19 @@ int  reg, nreg;
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
+<<<<<<< shmem.c
+      if(DEBUG_)
+           printf("allocation unit: %dK, max shmem:%dK\n",MinShmem,MaxShmem);
+=======
       if(DEBUG_)
            printf("%d:allocation unit: %dK, max shmem:%dK\n",armci_me,MinShmem,MaxShmem);
+>>>>>>> 1.24
       shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
+<<<<<<< shmem.c
+      id[SHMIDLEN-1]=MinShmem;
+=======
       id[SHMIDLEN-2]=MinShmem;
+>>>>>>> 1.24
   }
 
 
@@ -703,9 +712,13 @@ static char *temp;
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
+<<<<<<< shmem.c
+      MinShmem= id[SHMIDLEN-1];
+=======
       MinShmem= id[SHMIDLEN-2];
       if(DEBUG_)
          printf("%d:allocation unit: %dK\n",armci_me,MinShmem);
+>>>>>>> 1.24
   }
 
   /* search region_list for the current shmem id */
@@ -720,6 +733,15 @@ static char *temp;
 
   /* attach if not attached yet */
   if(!region_list[reg].attached){
+<<<<<<< shmem.c
+#   ifdef ALLOC_MUNMAP
+       char *pref_addr = alloc_munmap((size_t) (MinShmem*SHM_UNIT));
+#   else
+       char *pref_addr = (char*)0;
+#   endif
+    if ( (long) (temp = shmat((int) *id, pref_addr, 0)) == -1L){
+       fprintf(stderr,"%d:attach error:id=%ld off=%ld\n",armci_me,*id,offset);
+=======
 #   ifdef ALLOC_MUNMAP
        char *pref_addr = alloc_munmap((size_t) (MinShmem*SHM_UNIT));
 #   else
@@ -727,6 +749,7 @@ static char *temp;
 #   endif
     if ( (long) (temp = shmat((int) *id, pref_addr, 0)) == -1L){
        fprintf(stderr,"%d:attach error:id=%ld off=%ld seg=%d\n",armci_me,*id,offset,MinShmem);
+>>>>>>> 1.24
        shmem_errmsg(MinShmem*1024);
        armci_die("Attach_Shared_Region:failed to attach to segment id=",*id);
     }
