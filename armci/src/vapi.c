@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.18 2004-07-21 18:42:48 vinod Exp $************************************************ 
+/* $Id: vapi.c,v 1.19 2004-09-14 18:18:01 vinod Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.
@@ -1628,7 +1628,7 @@ char *tmp,*tmp0;
                           &mr_out);
     armci_check_status(DEBUG_INIT, rc,"client register snd vbuf");
     /*printf("\n%d(c):my lkey=%d",armci_me,mr_out.l_key);fflush(stdout);*/
-    if(!client_memhandle.memhndl)armci_die("client got null handle for vbuf",0);
+    if(!client_memhandle.memhndl)armci_die("client got null handle for vbuf",total);
 
     client_memhandle.lkey = mr_out.l_key;
     client_memhandle.rkey = mr_out.r_key;
