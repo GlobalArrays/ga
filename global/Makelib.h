@@ -36,7 +36,7 @@ ifeq ($(TARGET),CRAY-T3D)
 #
 #
 
-       LIBCOM = ../../tcgmsg/ipcv5.0/libtcgmsg.a 
+       LIBCOM = ../../../tcgmsg/ipcv5.0/libtcgmsg.a 
 endif
 
 

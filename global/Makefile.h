@@ -58,7 +58,7 @@ ifeq ($(TARGET),CRAY-T3D)
 #
        LIBSMA = ../../../libsma
            FC = cf77
-          CPP = /lib/cpp
+          CPP = /lib/cpp -N
          FOPT = -O1 
        RANLIB = echo
 #GLOB_INCLUDES = -I../../ma -I$(LIBSMA)
