@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.42 2001-03-23 21:31:50 d3h325 Exp $
+# $Id: makefile.h,v 1.43 2001-04-24 01:31:23 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -262,6 +262,18 @@ ifeq ($(TARGET),DECOSF)
      FOPT_REN = -i8 -fpe2 -check nounderflow -check nopower -check nooverflow
         CDEFS = -DEXT_INT
        RANLIB = ranlib
+        CLIBS = -lfor -lots -lm
+          CLD = $(CC)
+endif
+#
+#................................ Compaq/DEC ALPHA with 32-bit integer.........
+# we use a historical name
+#
+ifeq ($(TARGET),DECOSF32)
+     FOPT_REN = -i4 -fpe2 -check nounderflow -check nopower -check nooverflow
+        CDEFS = #-DEXT_INT
+       RANLIB = ranlib
+ GLOB_DEFINES = -DDECOSF
         CLIBS = -lfor -lots -lm
           CLD = $(CC)
 endif

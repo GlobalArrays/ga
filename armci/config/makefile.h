@@ -281,6 +281,12 @@ ifeq ($(TARGET),DECOSF)
           CLD = cc
      FOPT_REN = -fpe2 -check nounderflow -check nopower -check nooverflow
 endif
+#----------------------------- DEC/Compaq ---------------------------------
+ifeq ($(TARGET),DECOSF32)
+          CLD = cc
+     FOPT_REN = -fpe2 -check nounderflow -check nopower -check nooverflow
+ GLOB_DEFINES = -DDECOSF
+endif
 
 #------------------------------- Crays ------------------------------------
 
