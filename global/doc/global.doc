@@ -236,6 +236,15 @@ distribute to other US Government contractors.
   call ga_terminate()             ! tidy up global arrays
   call MPI_Finalize()             ! tidy up MPI
   stop                            ! exit program
+  call MPI_Initialize()           ! start MPI
+  status = ma_init(..)            ! start memory allocator if required
+  call ga_initialize()            ! start global arrays
+
+  .... do work
+
+  call ga_terminate()             ! tidy up global arrays
+  call MPI_Finalize()             ! tidy up MPI
+  stop                            ! exit program
 
 
   The ma_init call looks like
@@ -900,12 +909,12 @@ distribute to other US Government contractors.
       Return the list of the GA processes id that 'own' the data.
       If i/j are out of bounds .FALSE. is returned, otherwise .TRUE..
         
-        map(2,*)    -  ilo'
-        map(3,*)    -  ihi'
-        map(4,*)    -  jlo'
-        map(5,*)    -  jhi'
+        map(1,*)    -  ilo'
+        map(2,*)    -  ihi'
+        map(3,*)    -  jlo'
+        map(4,*)    -  jhi'
 
-      specify coordinates of a subpatch 'held' by the process map(1,*)
+      specify coordinates of a subpatch 'held' by the process map(5,*)
 
       -------------------------------------------------------------------
       subroutine ga_inquire(g_a, type, dim1, dim2)

@@ -84,12 +84,12 @@
 <H2> <A name="ga_duplicate"> GA_DUPLICATE </A> </H2>
 <listing>
       logical function ga_duplicate(g_a, g_b, array_name)
-      integer *g_a, *g_b;
-      char *array_name;
+      integer         g_a, g_b;
+      character*(*)   array_name;
 
-      array_name    - a character string [input]
+      array_name    - a character string                 [input]
       g_a           - Integer handle for reference array [input]
-      g_b           - Integer handle for new array [output]
+      g_b           - Integer handle for new array       [output]
 </listing>
 <P>
  Creates a new array by applying all the properties of another
@@ -105,7 +105,7 @@
       integer g_a     [input]
 </listing>
 <P>
-  Deallocates the array and frees any associated resources
+  Deallocates the array and frees any associated resources.
 
 </P>
 
@@ -115,7 +115,7 @@
       subroutine ga_terminate()
 </listing>
 <P>
- Delete all active arrays and destroy internal data structures
+ Delete all active arrays and destroy internal data structures.
 
 </P>
 <HR>
@@ -137,7 +137,7 @@
       integer g_a                         [input]
 </listing>
 <P>
-  Zeroes the contents of the array and behaves like
+  Zeroes the contents of the array and behaves like:
 
 <listing>
          ga_sync()        ! Barrier to ensure all processes in ga_zero
@@ -162,6 +162,21 @@
 </listing>
 
 <HR>
+<H2> <A name="ga_zdot"> GA_ZDOT </A> </H2>
+<listing>
+      double complex function ga_zdot(g_a, g_b)
+
+      integer g_a, g_b                    [input]
+</listing>
+<P>
+      Computes the element-wise dot product of the two arrays which
+      must be double complex, the same shape and identically aligned.
+</P>
+
+<listing>
+         ga_zdot = SUM_ij a(i,j)*b(i,j)
+</listing>
+<HR>
 
 <H2> <A name="ga_ddot_patch"> GA_DDOT_PATCH </A> </H2>
 <listing>
@@ -181,6 +196,24 @@
 </P>
 <HR>
 
+<H2> <A name="ga_zdot_patch"> GA_ZDOT_PATCH </A> </H2>
+<listing>
+      double complex function ga_zdot_patch(g_a, ta, ailo, aihi, ajlo, ajhi,
+                                            g_b, tb, bilo, bihi, bjlo, bjhi)
+
+      integer     g_a, g_b                   [input]
+      integer     ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
+      integer     bilo, bihi, bjlo, bjhi     [input] g_b patch coordinates
+      character*1 ta, tb                     [input] transpose flags
+
+</listing>
+<P>
+      Computes the element-wise dot product of the two (possibly transposed)
+      patches which must be double complex and have the same number of
+      elements.
+</P>
+<HR>
+
 <H2> <A name="ga_matmul_patch"> GA_MATMUL_PATCH </A> </H2>
 <listing>
      subroutine ga_matmul_patch(transa, transb, alpha, beta,
@@ -191,7 +224,7 @@
      integer g_a, ailo, aihi, ajlo, ajhi;    [input]  patch of g_a
      integer g_b, bilo, bihi, bjlo, bjhi;    [input]  patch of g_b
      integer g_c, cilo, cihi, cjlo, cjhi;    [input]  patch of g_c 
-     double precision      alpha, beta;      [input]
+     double precision/complex alpha, beta;   [input]
      character*1    transa, transb;          [input]
 
 </listing>
@@ -210,104 +243,87 @@
 </listing>
 <P>
       Valid values for transpose arguments:  'n', 'N', 't', 'T'.
+      It works for both double precision and double complex data tape.
 </P>
-
 <HR>
 
-<H2> <A name="ga_dscal"> GA_DSCAL </A> </H2>
+<H2> <A name="ga_scale"> GA_SCALE </A> </H2>
 <listing>
-      subroutine ga_dscal(g_a, s)
+      subroutine ga_scale(g_a, s)
  
       integer g_a                         [input]
-      double precision s                  [input]
+      double precision/complex/integer s  [input]
 
 </listing>
 <P>
- Scales the double precision array by the constant s.
+ Scales an array by the constant s.
 </P>
 <HR>
 
-<H2> <A name="ga_dscal_patch"> GA_DSCAL_PATCH </A> </H2>
+<H2> <A name="ga_scale_patch"> GA_SCALE_PATCH </A> </H2>
 <listing>
-      subroutine ga_dscal_patch(g_a, ailo, aihi, ajlo, ajhi, s)
+      subroutine ga_scale_patch(g_a, ailo, aihi, ajlo, ajhi, s)
 
       integer g_a                         [input]
-      double precision s                  [input]
+      double precision/complex/integer s  [input]
       integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
 </listing>
 <P>
-  Scales the patch of double precision array by the constant s.
+  Scales a patch of an array by the constant s.
 
 </P>
 <HR>
 
-<H2> <A name="ga_dadd"> GA_DADD </A> </H2>
+<H2> <A name="ga_add"> GA_ADD </A> </H2>
 <listing>
-      subroutine ga_dadd(alpha, g_a, beta, g_b, g_c)
+      subroutine ga_add(alpha, g_a, beta, g_b, g_c)
 
       integer g_a, g_b, g_c               [input]
       double precision alpha, beta        [input]
 </listing>
 <P>
-  The double precision arrays (which must be the same shape and
+  The arrays (which must be the same shape and
       identically aligned) are added together element-wise
 
 <listing>
-           c = alpha * a  +  beta * b
+           c = alpha * a  +  beta * b.
 </listing>
 <P>
 
       The result (c) may replace one of the input arrays (a/b).
 </P>
 <HR>
-<H2> <A name="ga_dadd_patch"> GA_DADD_PATCH </A> </H2>
+<H2> <A name="ga_add_patch"> GA_ADD_PATCH </A> </H2>
 <listing>
-      subroutine ga_dadd_patch (alpha, g_a, ailo, aihi, ajlo, ajhi,
-                                beta,  g_b, bilo, bihi, bjlo, bjhi,
-                                       g_c, cilo, cihi, cjlo, cjhi)
+      subroutine ga_add_patch (alpha, g_a, ailo, aihi, ajlo, ajhi,
+                               beta,  g_b, bilo, bihi, bjlo, bjhi,
+                                      g_c, cilo, cihi, cjlo, cjhi)
 
-      integer g_a, g_b, g_c               [input]
-      double precision alpha, beta        [input]
-      integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
-      integer  bilo, bihi, bjlo, bjhi     [input] g_b patch coordinates
-      integer  cilo, cihi, cjlo, cjhi     [input] g_c patch coordinates
+      integer g_a, g_b, g_c                        [input]
+      double precision/complex/integer alpha, beta [input]
+      integer  ailo, aihi, ajlo, ajhi              [input] g_a patch coordinates
+      integer  bilo, bihi, bjlo, bjhi              [input] g_b patch coordinates
+      integer  cilo, cihi, cjlo, cjhi              [input] g_c patch coordinates
 
 </listing>
 <P>
-   Patches of double precision arrays (which must have the same number 
+   Patches of arrays (which must have the same number 
       of elements) are added together element-wise.
 
 </P>
 
 <HR>
-<H2> <A name="ga_dfill_patch"> GA_DFILL_PATCH </A> </H2>
+<H2> <A name="ga_fill_patch"> GA_FILL_PATCH </A> </H2>
 <listing>
-      subroutine ga_dfill_patch(g_a, ailo, aihi, ajlo, ajhi, s)
+      subroutine ga_fill_patch(g_a, ailo, aihi, ajlo, ajhi, s)
 
       integer g_a                         [input]
-      double precision s                  [input]
+      double precision/complex/integer s  [input]
       integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
 
 </listing>
 <P>
-
-      Fills the patch of double precision array with value s.
-
-</P>
-<HR>
-
-<H2> <A name="ga_ifill_patch"> GA_IFILL_PATCH </A> </H2>
-<listing>
-      subroutine ga_ifill_patch(g_a, ailo, aihi, ajlo, ajhi, s)
-
-      integer g_a                         [input]
-      integer s                           [input]
-      integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
-
-</listing>
-<P>
- Fills the patch of integer array with value s.
-
+      Fills the patch of an array with value s. Type of s and array must match.
 </P>
 <HR>
 
@@ -370,7 +386,7 @@
 <listing>
       subroutine ga_diag_reuse(control, g_a, g_s, g_v, eval)
 
-      integer control           [input]   ! control flag 
+      integer control           [input]   ! Control flag 
       integer g_a               [input]   ! Matrix to diagonalize
       integer g_s               [input]   ! Metric
       integer g_v               [output]  ! Global matrix to return evecs
@@ -505,7 +521,7 @@
 
 </listing>
 <P>
-   Copies elements in a patch of one array into another one. The
+      Copies elements in a patch of one array into another one. The
       patches of arrays must have the same number of elements.
 
 </P>
@@ -515,10 +531,10 @@
 <listing>
       subroutine ga_get(g_a, ilo, ihi, jlo, jhi, buf, ld)
 
-      integer g_a                         [input]
-      integer ilo, ihi, jlo, jhi          [input]
-      integer/double precision buf        [output]
-      integer ld                          [input]
+      integer g_a                          [input]
+      integer ilo, ihi, jlo, jhi           [input]
+      double precision/complex/integer buf [output]
+      integer ld                           [input]
 
 </listing>
 <P>
@@ -537,10 +553,10 @@ Performs the equivalent of the following Fortran-90.  Array
 <listing>
       subroutine ga_put(g_a, ilo, ihi, jlo, jhi, buf, ld)
 
-      integer g_a                         [input]
-      integer ilo, ihi, jlo, jhi          [input]
-      integer/double precision buf        [input]
-      integer ld                          [input]
+      integer g_a                          [input]
+      integer ilo, ihi, jlo, jhi           [input]
+      double precision/complex/integer buf [output]
+      integer ld                           [input]
 
 </listing>
 <P>
@@ -561,14 +577,15 @@ Performs the equivalent of the following Fortran-90.  Array
 
       integer g_a                         [input]
       integer ilo, ihi, jlo, jhi          [input]
-      double precision buf                [input]
+      double precision/complex buf        [input]
       integer ld                          [input]
-      double precision alpha              [input]
+      double precision/complex alpha      [input]
 
 </listing>
 <P>
   Performs the equivalent of the following Fortran-90.  Array
-      bounds are always checked and only double precision is supported.
+      bounds are always checked. Double precision/complex types
+      are supported.
       The operation is atomic.
 <listing>
 
@@ -593,7 +610,7 @@ Performs the equivalent of the following Fortran-90.  Array
 
 </listing>
 <P>
-    If proc doesn't 'have' any data the range is returned as
+    If process iproc does not 'have' any data, the range is returned as
        [0, -1] for the i and [0,-1] for the j dimensions.
 
 </P>
@@ -630,8 +647,8 @@ Performs the equivalent of the following Fortran-90.  Array
       intended for writing new GA operations. Call to ga_access should
       normally follow a call to <A href="#ga_distribution">ga_distribution</A> that returns
       coordinates of the patch associated with a processor. You need to
-      make sure that coordinates of the patch are valid (test values
-      returned from ga_distribution.
+      make sure that the coordinates of the patch are valid (test values
+      returned from ga_distribution).
 
 <P>
       Your code should include a MA include file,  mafdecls.h. 
@@ -699,7 +716,7 @@ Performs the equivalent of the following Fortran-90.  Array
 </listing>
 
 <P>
-      NOTE: see restrictions for <A href="#ga_access">ga_access</A>
+      NOTE: see restrictions specified for <A href="#ga_access">ga_access</A>
 
 </P>
 
@@ -715,7 +732,7 @@ Performs the equivalent of the following Fortran-90.  Array
     Releases access to the data. It must be used if the data was 
       accessed for writing.
 
-      NOTE: see restrictions for <A href="#ga_access">ga_access</A>
+      NOTE: see restrictions specified for <A href="#ga_access">ga_access</A>.
 </P>
 <HR>
 
@@ -819,7 +836,7 @@ Performs the equivalent of the following Fortran-90.  Array
 <listing>
       subroutine ga_inquire(g_a, type, dim1, dim2)
 
-      integer g_a                         [input]
+      integer g_a                        [input]
       integer type                       [output]
       integer dim1                       [output]
       integer dim2                       [output]
@@ -845,7 +862,7 @@ Performs the equivalent of the following Fortran-90.  Array
 <listing>
       subroutine ga_inquire_name(g_a, array_name)
 
-      integer g_a                         [input]
+      integer g_a                        [input]
       character*(*) array_name           [output]
 
 </listing>
@@ -946,6 +963,28 @@ Performs the equivalent of the following Fortran-90.  Array
      Prints an entire g_a array to the standard output.
 </P>
 <HR>
+
+
+<H2> <A name="ga_print_stats"> GA_PRINT_STATS </A> </H2>
+<listing>
+      subroutine ga_print_stats()
+
+
+</listing>
+
+<P>
+      This non-collective (MIMD) operation prints information about:
+<ul>
+     <li> number of calls to the GA create/duplicate, destroy, get, put, 
+          scatter, gather, and read_and_inc operations
+     <li> total amount of data moved in the GA primitive operations
+     <li> amount of data moved in GA primitive operations to logicaly remote locations
+     <li> maximum memory consumption in global arrays, and
+     <li> number of requests serviced in the interrupt-driven implementations
+       by the calling process.
+</ul>
+<HR>
+          
 <H2> <A name="ga_check_handle"> GA_CHECK_HANDLE </A> </H2>
 <listing>
       subroutine ga_check_handle(g_a, string)
@@ -957,6 +996,64 @@ Performs the equivalent of the following Fortran-90.  Array
   Check that the global array handle g_a is valid ... if not
       call <A href="#ga_error">ga_error</A> with the string provided and some more info.
  
+</P>
+
+<HR>
+<H2> <A name="ga_init_fence"> GA_INIT_FENCE </A> </H2>
+<listing>
+      subroutine ga_init_fence()
+
+</listing>
+<P>
+      Initializes tracing of completion status of data movement operations.
+</P>
+
+<HR>
+<H2> <A name="ga_fence"> GA_FENCE </A> </H2>
+<listing>
+      subroutine ga_fence()
+
+</listing>
+<P>
+
+      Blocks the calling process until all the data transfers
+      corresponding to GA operations called after <A
+      href="#ga_init_fence">ga_init_fence</A> complete. For example,
+      since <A href="#ga_put">ga_put</A> might return before the data
+      reaches the final destination ga_init_fence and ga_fence allow
+      process to wait until the data is actually moved:
+
+<listing>
+           call ga_init_fence()
+           call ga_put(g_a, ...)
+           call ga_fence()
+</listing>
+
+<P>
+      ga_fence must be called after ga_fence_init. A barrier, ga_sync,
+      assures completion of all data transfers and implicitly cancels
+      outstanding ga_init_fence. ga_init_fence and ga_fence must be used
+      in pairs, multiple calls to ga_fence require the same number
+      of corresponding ga_init_fence calls. ga_init_fence/ga_fence
+      pairs can be nested.
+
+<P>
+      ga_fence works for multiple GA operations. For example:
+
+<listing>
+           call ga_init_fence()
+           call ga_put(g_a, ...)
+           call ga_scatter(g_a, ...)
+           call ga_put(g_b, ...)
+           call ga_fence()
+</listing>
+
+<P>
+      The calling process will be blocked until data movements initiated
+      by two calls to ga_put and one ga_scatter complete.
+
+<P>
+      This is a non-collective operation.
 </P>
 
 <HR>
@@ -981,10 +1078,10 @@ Performs the equivalent of the following Fortran-90.  Array
    integer function ga_nnodes()
 </listing>
 <P>
- Returns the number of GA compute (user) processes.
+ Returns the number of the GA compute (user) processes.
 
-      NOTE: the number GA processes might not be the same as the number
-      message-passing nodes.
+      NOTE: the number of the GA processes might not be the same as the number
+      of the message-passing nodes.
 
    
 </P>
