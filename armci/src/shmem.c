@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.45 2001-12-04 21:26:14 vinod Exp $ */
+/* $Id: shmem.c,v 1.46 2001-12-05 00:30:31 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -134,6 +134,7 @@ static  int logpagesize=0;
 
 static  unsigned long MinShmem = _SHMMAX;  
 static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
+static  int create_call=0;
 
 #ifdef  SHMMAX_SEARCH_NO_FORK
 static  char *ptr_search_no_fork = (char*)0;
@@ -505,6 +506,11 @@ char *Attach_Shared_Region(idlist, size, offset)
 int ir, reg,  found, first;
 char *temp = (char*)0, *pref_addr=(char*)0;
 
+  if(DEBUG_){
+      printf("%d:AttachSharedRegion %d:size=%ld\n",armci_me,create_call++,size);
+      fflush(stdout);
+  }
+
   if(alloc_regions>=MAX_REGIONS)
        armci_die("Attach_Shared_Region: too many regions ",0L);
 
@@ -717,6 +723,12 @@ static char *temp;
   if(alloc_regions>=MAX_REGIONS)
        armci_die("Attach_Shared_Region: to many regions ",0);
 
+  if(DEBUG_){
+      printf("%d:AttachSharedRegion %d:size=%ld id=%ld\n",
+             armci_me, create_call++, size,*id);
+      fflush(stdout);
+  }
+
   /* under Linux we can get valid id=0 */
 #ifndef LINUX
   if(!*id) armci_die("Attach_Shared_Region: shmem ID=0 ",(int)*id);
@@ -801,7 +813,7 @@ size_t sz = (size_t)size;
     }
 
     if( alloc_regions >= MAX_REGIONS)
-       armci_die("Create_Shared_Region: to many regions already allocated ",0);
+       armci_die("Create_Shared_Region:allocate:too many regions allocated ",0);
 
     last_allocated = alloc_regions;
 
@@ -857,6 +869,11 @@ int  reg, refreg=0,nreg;
     if(alloc_regions>=MAX_REGIONS)
        armci_die("Create_Shared_Region: to many regions ",0);
 
+    if(DEBUG_){
+      printf("%d:CreateSharedRegion %d:size=%ld\n",armci_me,create_call++,size);
+      fflush(stdout);
+    }
+
     /*initialization: 1st allocation request */
     if(!alloc_regions){
        for(reg=0;reg<MAX_REGIONS;reg++){
@@ -864,9 +881,11 @@ int  reg, refreg=0,nreg;
           region_list[reg].attached=0;
           region_list[reg].id=0;
        }
-       if(DEBUG_)
-          printf("%d:allocation unit: %ldK, max shmem:%ldK\n",
+       if(DEBUG_){
+          printf("%d:1st CreateSharedRegion: allocation unit:%ldK,shmax:%ldK\n",
                  armci_me,MinShmem,MaxShmem);
+          fflush(stdout);
+       }
        shmalloc_request((size_t)MinShmem, (size_t)MaxShmem);
        id[SHMIDLEN-2]=MinShmem;
     }
