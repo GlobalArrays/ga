@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.13 1995-11-16 20:38:21 d3g681 Exp $
+#$Id: makefile,v 1.14 1996-01-02 18:50:04 d3h325 Exp $
 
 # Tiny makefile wrapper
 
@@ -12,16 +12,20 @@ USES_BLAS = src/ga_solve_seq.F src/ga_dgemm.F src/ga_dgemm_seq.F
 # alternative but to do the make every time
 #
 
+export LIBDIR CNFDIR
+
 global_stamp:	include_stamp 
 	$(MAKE) -f makefile.GA TARGET=$(TARGET)\
 		DIAG=PAR
-	cp -p libglobal.a $(LIBDIR)
 
 include_stamp:	src/global.fh
 	cp src/global.fh da/da.fh src/global.h src/types.f2c.h\
 		src/c.names.h src/cray.names.h $(INCDIR) 
 	touch include_stamp
 
+%.x:
+	$(MAKE) -f makefile.GA TARGET=$(TARGET) DIAG=PAR $@
+	
 realclean clean:	
 	/bin/rm -f include_stamp
 	-$(MAKE) -f makefile.GA clean

@@ -17,7 +17,7 @@
           CXX = CC
          FOPT = -O
          COPT = -O
-GLOB_INCLUDES = -I../../ma -I.
+GLOB_INCLUDES = -I../../ma
            AR = ar
            AS = as
        RANLIB = @echo
@@ -25,30 +25,43 @@ GLOB_INCLUDES = -I../../ma -I.
         SHELL = /bin/sh
            MV = /bin/mv
            RM = /bin/rm
+      RMFLAGS = -r
       INSTALL = @echo 
        P_FILE = YES
       ARFLAGS = rcv
     EXPLICITF = FALSE
-    MAKEFLAGS = -j 4
+    MAKEFLAGS = -j 1
   CUR_VERSION = SHMEM
+        MKDIR = mkdir
 
 
 ifeq ($(GA_TRACE), YES)
     DEF_TRACE = -DGA_TRACE
 endif
 
-GLOB_DEFINES = -D$(TARGET)
+ifdef OPTIMIZE
+         FOPT = -O
+         COPT = -O
+endif
+
+ifdef USE_MPI
+  ifeq ($(MSG_COMMS),MPI)
+       LIBRARY_STAMP = MPI
+  else 
+       LIBRARY_STAMP = MPI-TCG
+  endif
+endif
 
 #
 #................................ LINUX ....................................
 # IBM ThinkPad running Linux 1.2.13
 #
 ifeq ($(TARGET),LINUX)
-          CPP = gcc -E -nostdinc -undef -P 
     MAKEFLAGS = -j 1
     EXPLICITF = TRUE
  GLOB_DEFINES = -DLINUX
 endif
+
 #
 #................................ SUN ......................................
 #
@@ -57,7 +70,7 @@ ifeq ($(TARGET),SUN)
 # Sun running SunOS
 #
 #          CC = gcc
-     FOPT_REN = -Nl100 -fast -dalign
+     FOPT_REN = -Nl100 -dalign
        RANLIB = ranlib
      WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
 		-Wwrite-strings
@@ -105,10 +118,10 @@ ifeq ($(TARGET),CRAY-T3D)
          FOPT = -O1
  endif
  ifeq ($(COPT),-O)
-         COPT = -O2
+         COPT = -O2 -h inline3
  endif
-     FOPT_REN = -Ccray-t3d -Wf"-dp -ojump"
-     COPT_REN = -h inline3 -hjump
+     FOPT_REN = -Ccray-t3d -Wf-dp
+#    COPT_REN = -h inline3 
       FLD_REN = -Wl"-Drdahead=on -Ddalign=64"
       CLD_REN = -Wl"-Drdahead=on -Ddalign=64"
  GLOB_DEFINES = -DCRAY_T3D
@@ -125,7 +138,6 @@ ifeq ($(TARGET),KSR)
      COPT_REN = -qdiv
  GLOB_DEFINES = -DKSR
         CDEFS = -DEXT_INT
-#    USE_SUMMA = yes
 endif
 
 #................................ SGI ......................................
@@ -208,7 +220,6 @@ ifeq ($(INTEL),YES)
      COPT_REN += -Knoieee -Mquad -Mreentrant
  GLOB_DEFINES += -DNX
   CUR_VERSION = DISMEM
-    EXPLICITF = TRUE
 endif
  
 #.............................. SP1 .........................................
@@ -228,7 +239,7 @@ else
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
-      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm
+      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy
 endif
 
 #   mpxlf fails with parallel make
@@ -249,7 +260,7 @@ ifeq ($(TARGET),IBM)
        RANLIB = ranlib
  GLOB_DEFINES = -DEXTNAME -DAIX
      FOPT_REN = -qEXTNAME 
-      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm
+      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy
     EXPLICITF = TRUE
 endif
 
@@ -260,11 +271,17 @@ endif
 ifndef VERSION
        VERSION = $(CUR_VERSION)
 endif
+
 ifeq ($(VERSION),SHMEM)
  GLOB_DEFINES += -DSHMEM
 endif
+
 ifdef USE_MPI
- GLOB_INCLUDES += -I$(MPI_LOC)/include 
+ ifndef MPI_INCLUDE
+     MPI_INCLUDE = 'You must define location of MPI include files'
+     CC = @echo
+ endif
+ GLOB_INCLUDES += -I$(MPI_INCLUDE)
  ifeq ($(MSG_COMMS),MPI)
     GLOB_DEFINES += -DMPI
  endif
@@ -277,6 +294,10 @@ endif
        FLDOPT = $(FOPT) $(FOPT_REN) $(FLD_REN)
        CLDOPT = $(COPT) $(COPT_REN) $(CLD_REN)
      CXXFLAGS = $(CFLAGS)
+
+#.SUFFIXES:	
+#.SUFFIXES:	.o .s .F .f .c
+
 
 ifeq ($(EXPLICITF),TRUE)
 #
@@ -295,16 +316,6 @@ ifeq ($(EXPLICITF),TRUE)
 	$(FC) $(FOPT) $(FOPT_REN) -c $*.f
 
 .F.f:	
-ifeq ($(TARGET),LINUX)
-	(/bin/cp $*.F /tmp/$$$$.c; \
-		$(CPP) $(INCLUDES) $(DEFINES) /tmp/$$$$.c | \
-			sed '/^$$/d' > $*.f; \
-				/bin/rm -f /tmp/$$$$.c) || exit 1
-else
+	@echo Converting $*.F '->' $*.f
 	$(CPP) $(INCLUDES) $(DEFINES) < $*.F | sed '/^#/D' > $*.f
 endif
-
-.c.o:
-	$(CC) $(CFLAGS) -c $*.c
-endif
-

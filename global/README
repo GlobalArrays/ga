@@ -34,7 +34,7 @@ version 2.1     selection of message-passing (TCGMSG or MPI) library
                 new operations: ga_mpi_communicator and ga_proc_topology;
                 performance optimizations;
                 alternative C interface and C test programs;
-                port to Sun Solaris.
+                port to Sun Solaris and PC running Linux.
 
 version 2.0     support for networks of multiprocessors (SMP);
 		(tightly) integrated shared and distributed memory versions;
@@ -95,10 +95,10 @@ Dependencies on other software:
 
 
   To build the GA toolkit compatible with MPI, you need to define
-  environmental variable USE_MPI and MPI_LOC which should point to the
-  location of the MPI library and include directories. Additionaly, if
-  the TCGMSG-MPI library is not needed, the make/environmental variable
-  MSG_COMMS should be defined as MSG_COMMS = MPI.
+  environmental variable USE_MPI,  MPI_LIB and MPI_INCLUDE  which should 
+  point to the location of the MPI library and include directories. 
+  Additionaly, if the TCGMSG-MPI library is not needed, the make/environmental 
+  variable MSG_COMMS should be defined as MSG_COMMS = MPI.
   Note that some fortran test programs are using certain TCGMSG utility
   functions (for example, equivalent of C sizeof operator) and therefore
   will not built without TCGMSG or TCGMSG-MPI library.

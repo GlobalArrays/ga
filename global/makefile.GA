@@ -17,6 +17,7 @@
 # All programs are built in ./testing subdirectory. 
 # TARGET might be one of:
 #      SUN, SGI, SGITFP, IBM, DECOSF, KSR, SP1, CRAY-T3D, IPSC, DELTA, PARAGON
+#      SOLARIS, LINUX
 #
 #........................................................................
 
@@ -39,18 +40,24 @@ ifndef TARGET
        TARGET = $(CUR_TARGET)
 endif
 
+ifndef LIBDIR
+     LIBDIR = ../lib/$(TARGET)
+endif
 
-   LIBRARY = libglobal.a
+
+   LIBRARY = $(LIBDIR)/libglobal.a
+
+
    TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x perform.x testc.x\
              ga-mpi.x
 
 
-export DIAG TARGET VERSION LU_SOLVE GA_TRACE
+export DIAG TARGET VERSION LU_SOLVE GA_TRACE MSG_COMMS
 
 .PHONY: $(LIBRARY)
 
 $(LIBRARY): 
-	(echo TARGET is $(TARGET); cd ./src; $(MAKE) all || exit 1;) 
+	(echo TARGET is $(TARGET); cd ./src; $(MAKE) || exit 1;) 
 
 $(TESTS):	$(LIBRARY)
 	(cd ./testing; $(MAKE) $@  || exit 1;)
