@@ -227,6 +227,7 @@ int armci_agg_save_giov_descriptor(armci_giov_t dscr[], int len, int proc,
 	darr->ptr_array_len += ptr_array_len;
 
 	ptr_array_len = dscr[i].ptr_array_len - ptr_array_len;
+	if(ptr_array_len <0) armci_die("agg_save_giov_descr failed", 0L);
       } while(k < darr[i].ptr_array_len);
     }
     return 0;
@@ -274,6 +275,7 @@ int armci_agg_save_strided_descriptor(void *src_ptr, int src_stride_arr[],
       darr->bytes          = count[0];
       darr->ptr_array_len += ptr_array_len;      
       ptr_array_len = total1D - ptr_array_len;
+      if(ptr_array_len <0) armci_die("agg_save_strided_descr failed", 0L);
     } while(num1D < total1D);
 
     return 0;
@@ -282,7 +284,7 @@ int armci_agg_save_strided_descriptor(void *src_ptr, int src_stride_arr[],
 
 void armci_agg_complete(armci_ihdl_t nb_handle, int condition) {
     int i, index=0, rc;
-    
+
     /* get the buffer index for this handle */
     for(i=ulist.size-1; i>=0; i--) {
       index = ulist.index[i];
@@ -302,18 +304,20 @@ void armci_agg_complete(armci_ihdl_t nb_handle, int condition) {
     if(aggr[index]->request_len) {
       switch(nb_handle->op) {
 #ifdef LAPI
-      armci_req_t usr_hdl;
+	armci_hdl_t usr_hdl;
       case PUT:
+	ARMCI_INIT_HANDLE(&usr_hdl);       
 	if((rc=ARMCI_NbPutV(aggr[index]->darr, aggr[index]->request_len, 
-			    nb_handle->proc, (armci_hdl_t)&usr_hdl)))
+			    nb_handle->proc, (armci_hdl_t*)&usr_hdl)))
 	  ARMCI_Error("armci_agg_complete: nbputv failed",rc);
-	ARMCI_Wait((armci_hdl_t)&usr_hdl);
+	ARMCI_Wait((armci_hdl_t*)&usr_hdl);
 	break;
       case GET:
+	ARMCI_INIT_HANDLE(&usr_hdl);       
 	if((rc=ARMCI_NbGetV(aggr[index]->darr, aggr[index]->request_len, 
-			    nb_handle->proc, (armci_hdl_t)&usr_hdl)))
+			    nb_handle->proc, (armci_hdl_t*)&usr_hdl)))
 	  ARMCI_Error("armci_agg_complete: nbgetv failed",rc);  
-	ARMCI_Wait((armci_hdl_t)&usr_hdl);
+	ARMCI_Wait((armci_hdl_t*)&usr_hdl);
 	break;
 #else
       case PUT:

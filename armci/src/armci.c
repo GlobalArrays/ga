@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.63 2002-12-31 05:04:59 manoj Exp $ */
+/* $Id: armci.c,v 1.64 2003-03-07 23:37:03 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -386,7 +386,7 @@ int ARMCI_Same_node(int proc)
 /*\ blocks the calling process until a nonblocking operation represented
  *  by the user handle completes
 \*/
-int ARMCI_Wait(armci_hdl_t usr_hdl){
+int ARMCI_Wait(armci_hdl_t* usr_hdl){
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
 int direct=SAMECLUSNODE(nb_handle->proc);
@@ -426,7 +426,7 @@ armci_ihdl_t armci_set_implicit_handle (int op, int proc) {
  
   int i=count%ARMCI_MAX_IMPLICIT;
   if(hdl_flag[i]=='1')
-    ARMCI_Wait((armci_hdl_t)&armci_inb_handle[i]);
+    ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
  
   armci_inb_handle[i].tag   = GET_NEXT_NBTAG();
   armci_inb_handle[i].op    = op;
@@ -445,7 +445,7 @@ int ARMCI_WaitAll (void) {
   if(count) {
     for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
       if(hdl_flag[i] == '1') {
-        ARMCI_Wait((armci_hdl_t)&armci_inb_handle[i]);
+        ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
         hdl_flag[i]='0';
       }
     }
@@ -460,7 +460,7 @@ int ARMCI_WaitProc (int proc) {
   if(count) {
     for(i=0; i<ARMCI_MAX_IMPLICIT; i++) {
       if(hdl_flag[i]=='1' && armci_inb_handle[i].proc==proc) {
-        ARMCI_Wait((armci_hdl_t)&armci_inb_handle[i]);
+        ARMCI_Wait((armci_hdl_t*)&armci_inb_handle[i]);
         hdl_flag[i]='0';
       }
     }
@@ -473,12 +473,12 @@ unsigned int _armci_get_next_tag(){
     return((++_armci_nb_tag));
 }
 
-void ARMCI_SET_AGGREGATE_HANDLE(armci_hdl_t nb_handle) { 
+void ARMCI_SET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle) { 
       ((armci_ihdl_t)(nb_handle))->agg_flag = 1;
       ((armci_ihdl_t)(nb_handle))->proc = -1;
 }
  
-void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t nb_handle) {
+void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle) {
       ((armci_ihdl_t)(nb_handle))->agg_flag = 0;
       ((armci_ihdl_t)(nb_handle))->proc = -1;
 }

@@ -1,4 +1,4 @@
-/* $Id: perf_aggr.c,v 1.2 2003-03-01 00:23:22 manoj Exp $ */
+/* $Id: perf_aggr.c,v 1.3 2003-03-07 23:37:04 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -169,10 +169,10 @@ void test_aggregate() {
     double *ddst_put[MAXPROC];
     double *ddst_get[MAXPROC];
     double *dsrc[MAXPROC];
-    armci_req_t aggr_hdl_put[MAXPROC];
-    armci_req_t aggr_hdl_get[MAXPROC];
-    armci_req_t hdl_put[MAXELEMS];
-    armci_req_t hdl_get[MAXELEMS];
+    armci_hdl_t aggr_hdl_put[MAXPROC];
+    armci_hdl_t aggr_hdl_get[MAXPROC];
+    armci_hdl_t hdl_put[MAXELEMS];
+    armci_hdl_t hdl_get[MAXELEMS];
     armci_giov_t darr;
     void *src_ptr[MAX_REQUESTS], *dst_ptr[MAX_REQUESTS];
     int start = 0, end = 0;

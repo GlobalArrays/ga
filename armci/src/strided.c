@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.60 2003-02-12 23:21:59 vinod Exp $ */
+/* $Id: strided.c,v 1.61 2003-03-07 23:37:04 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -786,7 +786,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
                                          levels: count[0]=bytes*/
 		int stride_levels,    /* number of stride levels */
                 int proc,             /* remote process(or) ID */
-                armci_hdl_t usr_hdl /* armci non-blocking call handle*/
+                armci_hdl_t* usr_hdl /* armci non-blocking call handle*/
                 )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
@@ -869,7 +869,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                                            levels: count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
                 int proc,               /* remote process(or) ID */
-                armci_hdl_t usr_hdl  /* armci non-blocking call handle*/
+                armci_hdl_t* usr_hdl  /* armci non-blocking call handle*/
                 )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
@@ -950,7 +950,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
                                            levels: count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
                 int proc,               /* remote process(or) ID */
-                armci_hdl_t usr_hdl  /* armci non-blocking call handle*/
+                armci_hdl_t* usr_hdl  /* armci non-blocking call handle*/
                 )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
@@ -1005,7 +1005,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
              (nb)->bufid=NB_NONE;}\
              else { (nb)=armci_set_implicit_handle(o, p); (nb)->tag=0; }
 
-int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
+int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 {
 
     int rc=0, direct;
@@ -1042,7 +1042,7 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
 }
 
 
-int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
+int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 {
 
     int rc=0, direct;
@@ -1226,7 +1226,7 @@ int ARMCI_PutValueDouble(double src, void *dst, int proc)
 /**
  * Non-Blocking register-originated put.
  */
-int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t usr_hdl) 
+int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t* usr_hdl) 
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(int *)dst = src;
@@ -1234,7 +1234,7 @@ int ARMCI_NbPutValueInt(int src, void *dst, int proc, armci_hdl_t usr_hdl)
     return 0;
 }
 
-int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t usr_hdl) 
+int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t* usr_hdl) 
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(long *)dst = src;
@@ -1242,7 +1242,7 @@ int ARMCI_NbPutValueLong(long src, void *dst, int proc, armci_hdl_t usr_hdl)
     return 0;
 }
 
-int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t usr_hdl)
+int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t* usr_hdl)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(float *)dst = src;
@@ -1250,7 +1250,7 @@ int ARMCI_NbPutValueFloat(float src, void *dst, int proc, armci_hdl_t usr_hdl)
     return 0;
 }
 
-int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t usr_hdl)
+int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t* usr_hdl)
 {
     CHK_ERR(dst, proc);
     if( SAMECLUSNODE(proc) ) *(double *)dst = src;
@@ -1272,7 +1272,7 @@ int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t usr_hdl)
  /**
   * Non-Blocking register-originated get.
   */
- int ARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t usr_hdl) 
+ int ARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t* usr_hdl) 
  {
      CHK_ERR_GET(src, dst, proc, bytes);
      if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }

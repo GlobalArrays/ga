@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.25 2002-12-31 05:04:59 manoj Exp $ */
+/* $Id: vector.c,v 1.26 2003-03-07 23:37:04 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -528,7 +528,7 @@ int ARMCI_AccV( int op,              /* oeration code */
 int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
                 int proc, /* remote process(or) ID */
-                armci_hdl_t usr_hdl  /*non-blocking request handle*/
+                armci_hdl_t* usr_hdl  /*non-blocking request handle*/
               )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
@@ -591,7 +591,7 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
                 int proc, /* remote process(or) ID */
-                armci_hdl_t usr_hdl  /*non-blocking request handle*/
+                armci_hdl_t* usr_hdl  /*non-blocking request handle*/
               )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
@@ -652,7 +652,7 @@ int ARMCI_NbAccV( int op,              /* oeration code */
                 armci_giov_t darr[], /* descriptor array */
                 int len,             /* length of descriptor array */
                 int proc,            /* remote process(or) ID */
-                armci_hdl_t usr_hdl  /*non-blocking request handle*/
+                armci_hdl_t* usr_hdl  /*non-blocking request handle*/
               )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;

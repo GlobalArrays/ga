@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.36 2003-03-06 05:59:36 vinod Exp $ */
+/* $Id: test.c,v 1.37 2003-03-07 23:37:04 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -529,7 +529,7 @@ int elems=1,elems1=1;
 int i,j, proc,ndim,rc;
 void *b[MAXDIMS+1][MAXPROC];
 void *a[MAXDIMS+1], *c[MAXDIMS+1];
-armci_req_t hdl_put[MAXDIMS+1],hdl_get[MAXDIMS+1];
+armci_hdl_t hdl_put[MAXDIMS+1],hdl_get[MAXDIMS+1];
 int idx1=0, idx2=0, idx3=0;
     /* create shared and local arrays */
     for(ndim=1;ndim<=MAXDIMS;ndim++){
@@ -693,7 +693,7 @@ void **psrc; /*arrays of pointers to be used by giov_t*/
 void **pdst; 
 void *getsrc[MAXPROC]; /*to allocate mem via armci_malloc*/
 void *putdst[MAXPROC]; /*to allocate mem via armci_malloc*/
-armci_req_t hdl_put[MAXPROC],hdl_get[MAXPROC];
+armci_hdl_t hdl_put[MAXPROC],hdl_get[MAXPROC];
 int i=0,j=0,k=0,kc=0,kcold=0,rc,dstproc,dst=0;
 int lenpergiov;
 
@@ -1467,8 +1467,8 @@ void test_aggregate() {
     double *ddst_put[MAXPROC];
     double *ddst_get[MAXPROC];
     double *dsrc[MAXPROC];
-    armci_req_t usr_hdl_put[MAXPROC];
-    armci_req_t usr_hdl_get[MAXPROC];
+    armci_hdl_t usr_hdl_put[MAXPROC];
+    armci_hdl_t usr_hdl_get[MAXPROC];
     armci_giov_t darr;
     void *src_ptr[MAX_REQUESTS], *dst_ptr[MAX_REQUESTS];
     int start = 0, end = 0;
@@ -1615,7 +1615,7 @@ void test_implicit() {
     armci_giov_t darr;
     void *src_ptr[MAX_REQUESTS], *dst_ptr[MAX_REQUESTS];
     int start = 0, end = 0;
-    armci_req_t usr_hdl[MAXPROC];
+    armci_hdl_t usr_hdl[MAXPROC];
     
     create_array((void**)ddst_put, sizeof(double),2, elems);
     create_array((void**)ddst_get, sizeof(double),2, elems);
