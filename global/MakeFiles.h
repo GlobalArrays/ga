@@ -64,6 +64,7 @@ else
 endif
 endif
 
+
   GA_OBJ = $(GA_CORE) $(GA_SYNC) $(GA_HANDLER) $(IPC)
 
 #
@@ -100,4 +101,7 @@ else
    GA_UTIL = ffflush.o fill.o hsort.scat.o DP.o fort.o fops.2d.o
 endif
 
-OBJ = $(GA_CORE) $(GA_ALG) $(GA_UTIL) $(EXTRA) $(OBJ_FRAGILE)
+# trace lib was moved in
+  GA_TRA = ga_trace.o
+
+OBJ = $(GA_CORE) $(GA_ALG) $(GA_UTIL) $(EXTRA) $(OBJ_FRAGILE) $(GA_TRA)

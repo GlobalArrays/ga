@@ -35,6 +35,8 @@ GLOB_INCLUDES = -I../../include
        LINK.f = $(FLD)
        LINK.c = $(CLD)
 
+     GA_TRACE = YES
+
 ifeq ($(GA_TRACE), YES)
     DEF_TRACE = -DGA_TRACE
 endif
