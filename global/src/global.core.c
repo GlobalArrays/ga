@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.55 1999-07-13 23:08:05 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.56 1999-07-28 00:28:55 d3h325 Exp $*/
 /* 
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -145,6 +145,13 @@ Integer GAsizeof(type)
      case MT_F_DCPL : return (sizeof(DoubleComplex));
           default   : return 0; 
   }
+}
+
+
+
+Integer ga_ndim_(Integer* g_a)
+{
+ return (Integer)2;
 }
 
 
