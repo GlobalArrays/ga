@@ -59,12 +59,12 @@ endif
 #
 ifeq ($(TARGET),LINUX)
 
-ifdef USE_G77
+ifdef USE_F2C
+    EXPLICITF = TRUE
+else
 #    Linux with g77
      FOPT_REN = -fno-second-underscore
            FC = g77
-else
-    EXPLICITF = TRUE
 endif
  GLOB_DEFINES = -DLINUX
           CPP = gcc -E -nostdinc -undef -P
