@@ -130,7 +130,7 @@ Int NXTVAL_(mproc)
      /* Not running in parallel ... just do a simulation */
      static int count = 0;
      if (*mproc == 1)
-       return (count+=INCR);
+       return count++;
      else if (*mproc == -1) {
        count = 0;
       return 0;
