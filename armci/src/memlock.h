@@ -1,4 +1,4 @@
-/* $Id: memlock.h,v 1.17 2003-10-22 22:12:21 d3h325 Exp $ */
+/* $Id: memlock.h,v 1.18 2004-09-21 17:26:23 manoj Exp $ */
 #ifndef _MEMLOCK_H_
 #define _MEMLOCK_H_ 
 
@@ -9,6 +9,14 @@ typedef struct{
     void *start;
     void *end;
 } memlock_t;
+
+/* SGI Altix Stuff */
+typedef struct {
+  void *seg_addr;  /* master's starting address of the segment */
+  size_t seg_size;
+  size_t tile_size;
+  size_t mem_offset;
+}armci_memoffset_t;
 
 extern void** memlock_table_array;
 extern int *armci_use_memlock_table;

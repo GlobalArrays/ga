@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.18 2004-08-04 22:42:46 manoj Exp $ */
+/* $Id: memlock.c,v 1.19 2004-09-21 17:26:23 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -43,6 +43,10 @@ void **memlock_table_array;
 #endif
 static memlock_t table[MAX_SLOTS];
 
+#define MAX_SEGS 512
+armci_memoffset_t armci_memoffset_table[MAX_SEGS];
+static short int seg_count=0;
+static short int new_seg=0;
 
 
 /*\ simple locking scheme that ignores addresses
@@ -164,10 +168,36 @@ void armci_lockmem(void *start, void *end, int proc)
 	pstart = shmem_ptr(pstart,armci_me);
 	pend = shmem_ptr(pend,armci_me);
      }
+     /* In SGI Altix  processes are attached to a shmem region at different
+	addresses. Addresses written to memlock table must be adjusted to 
+	the node master
+      */
+     {
+	int i, seg_id=-1;
+	size_t tile_size,offset;
+	void *start_addr, *end_addr, *tmp[4];
+	for(i=0; i<seg_count; i++) {
+	   tile_size = armci_memoffset_table[i].tile_size;
+	   start_addr = (void*) ((char*)armci_memoffset_table[i].seg_addr +
+				 proc*tile_size);
+	   end_addr = (void*) ((char*)start_addr +
+			       armci_memoffset_table[i].seg_size);
+	   tmp[2*i]   = start_addr;
+	   tmp[2*i+1] = end_addr;
+	   /* CHECK: because of too much "span" in armci_lockmem_patch in 
+	    * strided.c, it is not possible to have condition as (commented):*/
+	   /*if(pstart>=start_addr && pend<=end_addr) {seg_id=i; break;}*/
+	   if(pstart >= start_addr && pstart <= end_addr) {seg_id=i; break;}
+	}
+	if(seg_id==-1) armci_die("armci_lockmem: Invalid segment", seg_id);
+
+	offset = armci_memoffset_table[seg_id].mem_offset;
+	pstart = ((char*)pstart + offset);
+	pend = ((char*)pend + offset);
+     }
 #endif
 
      while(1){
-
         NATIVE_LOCK(lock,proc);
 
         armci_get(memlock_table, table, sizeof(table), proc);
@@ -182,9 +212,8 @@ void armci_lockmem(void *start, void *end, int proc)
 
               /* remember a free slot to store address range */
               avail = slot;  
-
+	      
             }else{
-           
               /*check for conflict: overlap between stored and current range*/
               if(  (pstart >= table[slot].start && pstart <= table[slot].end)
                  || (pend >= table[slot].start && pend <= table[slot].end) ){
@@ -199,7 +228,7 @@ void armci_lockmem(void *start, void *end, int proc)
             }
        }
         
-       if(avail != -1 && !conflict)break;
+       if(avail != -1 && !conflict) break;
 
        NATIVE_UNLOCK(lock,proc);
        armci_waitsome( ++turn );
@@ -282,3 +311,53 @@ void armci_set_mem_offset(void *ptr)
       }
    }
 }
+
+#ifdef SGIALTIX
+/* SGI Altix Stuff */ 
+static void armci_altix_gettilesize(void *ptr, void **ptr_arr,
+                                    size_t *tile_size) {
+    int i;
+    size_t diff=0;
+    for(i=0; i<armci_nproc; i++) {
+      ptr_arr[i]=shmem_ptr(ptr,i);
+      if(i>0) diff = (size_t)((char*)ptr_arr[i]-(char*)ptr_arr[i-1]);
+      if(i>1 && diff!=*tile_size)
+	armci_die("armci_memoffset_table_newentry:Inconsistent tile size",
+		  armci_me);
+      *tile_size = diff;
+    }
+}
+
+void armci_memoffset_table_newentry(void *ptr, size_t seg_size) {
+ 
+    void **ptr_arr;
+    void *master_addr = NULL;
+    size_t tile_size=0, offset=0;
+
+    if(!ptr) armci_die("armci_memoffset_table_newentry : null ptr",0);
+ 
+    if(seg_count >= MAX_SEGS) /* CHECK: make it dynamic */
+       armci_die("armci_altix_allocate: Increase MAX_SEGS > 512", armci_me);
+ 
+    if(armci_me == armci_master) master_addr = shmem_ptr(ptr, armci_me);
+    armci_msg_brdcst(&master_addr, sizeof(void*), armci_master);
+ 
+    ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
+    armci_altix_gettilesize(ptr, ptr_arr, &tile_size);
+    offset = (size_t)((char*)master_addr -  (char*)ptr_arr[armci_master]);
+ 
+    /* enter in memoffset table */
+    armci_memoffset_table[seg_count].seg_addr   = ptr_arr[armci_master];
+    armci_memoffset_table[seg_count].seg_size   = seg_size;
+    armci_memoffset_table[seg_count].tile_size  = tile_size;
+    armci_memoffset_table[seg_count].mem_offset = offset;
+
+#if DEBUG_
+    printf("%d: addr=%p seg_size=%ld tile_size=%ld offset=%ld\n", armci_me,
+	   ptr_arr[armci_master], seg_size, tile_size, offset);
+#endif
+ 
+    ++seg_count;
+    free(ptr_arr);
+}
+#endif

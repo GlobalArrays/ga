@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.46 2004-09-08 00:42:13 manoj Exp $ */
+/* $Id: memory.c,v 1.47 2004-09-21 17:26:23 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -44,15 +44,16 @@ static context_t ctx_localmem;
 static  context_t altix_ctx_shmem;
 static  context_t altix_ctx_shmem_grp;
 static  size_t altix_pagesize;
+extern void armci_memoffset_table_newentry(void *ptr, size_t seg_size);
  
-void *armci_altix_allocate(size_t size)
+void *armci_altix_allocate(size_t bytes)
 {
     void *ptr, *sptr;
-    size_t bytes = size;
  
     sptr=ptr= shmalloc(bytes);
     if(sptr == NULL) armci_die("armci_altix_allocate: shmalloc failed\n",
 			       armci_me);
+    armci_memoffset_table_newentry(ptr, bytes);
 #if 0
     if(ptr){  /* touch each page to establish ownership */
        int i;
