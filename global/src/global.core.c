@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.10 1995-03-29 23:40:29 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.11 1995-08-23 22:30:58 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -281,7 +281,7 @@ void ga_initialize_()
 {
 Integer nnodes_(), nodeid_(), type, i;
 Integer buf_size, bar_size;
-Integer *msg_buf = (Integer*)MessageRcv->buffer;
+long *msg_buf = (long*)MessageRcv->buffer;
 
     if(GAinitialized) return;
 
@@ -689,7 +689,7 @@ Void    **pptr;
 char    *array_name;
 {
 #ifdef SYSV
-   Integer *msg_buf = (Integer*)MessageRcv->buffer;
+   long *msg_buf = (long*)MessageRcv->buffer, bytes=(long)mem_size;
 #else
    Integer handle, index;
 #endif
@@ -718,9 +718,9 @@ char    *array_name;
                *pptr  = malloc((int)mem_size);
             }else {
                /* cluster master uses Snd buffer */
-               msg_buf = (Integer*)MessageSnd->buffer;
+               msg_buf = (long*)MessageSnd->buffer;
                /* cluster master creates shared memory */
-               *pptr = Create_Shared_Region(msg_buf+1,&mem_size,msg_buf);
+               *pptr = Create_Shared_Region(msg_buf+1,&bytes,msg_buf);
             }
          }
 
@@ -729,7 +729,7 @@ char    *array_name;
                                       cluster_master, CLUST_GRP);
 
          if(MPme != cluster_master)
-                    *pptr =  Attach_Shared_Region(msg_buf+1,mem_size, msg_buf);
+                    *pptr =  Attach_Shared_Region(msg_buf+1, bytes, msg_buf);
 
          *id = (*pptr) ? 1 :0;
 
@@ -1076,7 +1076,7 @@ Integer i, handle;
 
 #   ifdef SYSV
       if(GAnproc == 1 && USE_MALLOC){
-         free(barrier);
+         free((char*)barrier);
          GAinitialized = 0;
          return;
       }
@@ -1203,25 +1203,20 @@ void ga_put_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
    Integer g_a, ilo, ihi, jlo, jhi,  ld, offset, proc;
    Void *buf;
 {
-char     *ptr_src, *ptr_dst, *ptr;
-Integer  j,  item_size, nbytes, ldp, elem;
+char     *ptr_glob, *ptr_loc;
+Integer  ld_glob, rows, cols, type;
 
    GA_PUSH_NAME("ga_put_local");
-   item_size = (int) GAsizeofM(GA[GA_OFFSET + g_a].type);
-   elem = ihi - ilo +1;
-   nbytes = item_size * elem;
 
-   gaShmemLocation(proc, g_a, ilo, jlo, &ptr, &ldp);
-   for (j = 0;  j < jhi-jlo+1;  j++){
-        ptr_src = (char *)buf  + item_size* (j*ld + offset );
-        ptr_dst = (char *)ptr  + item_size* j *ldp;
-#       ifdef CRAY_T3D
-              if(proc==GAme) Copy(ptr_src, ptr_dst, nbytes);
-              else CopyTo(ptr_src, ptr_dst, elem, proc);
-#       else
-              CopyTo(ptr_src, ptr_dst, nbytes);
-#       endif
-   }
+   type = GA[GA_OFFSET + g_a].type;
+   rows = ihi - ilo +1;
+   cols = jhi - jlo +1;
+
+   gaShmemLocation(proc, g_a, ilo, jlo, &ptr_glob, &ld_glob);
+   ptr_loc = (char *)buf  + GAsizeofM(type) * offset;
+
+   Copy2DTo(type, proc, &rows, &cols, ptr_loc, &ld, ptr_glob, &ld_glob);    
+
    GA_POP_NAME;
 }
 
@@ -1234,23 +1229,21 @@ void ga_put_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
    Void *buf;
 {
 char     *ptr_src, *ptr_dst;
-register Integer  j,  item_size, nbytes, elem, msglen;
+Integer  type, rows, cols, msglen;
 
    if(proc<0)ga_error(" ga_put_remote: invalid process ",proc);
 
-   item_size =  GAsizeofM(GA[GA_OFFSET + g_a].type);
-   elem = ihi - ilo +1;
-   nbytes = item_size * elem;
+   type = GA[GA_OFFSET + g_a].type;
+   rows = ihi - ilo +1;
+   cols = jhi - jlo +1;
 
    /* Copy patch [ilo:ihi, jlo:jhi] into MessageBuffer */
    ptr_dst = (char*)MessageSnd->buffer;
-   for (j = 0;  j < jhi-jlo+1;  j++){
-        ptr_src = (char *)buf  + item_size* (j*ld + offset );
-        Copy(ptr_src, ptr_dst, nbytes);
-        ptr_dst += nbytes; 
-   }
+   ptr_src = (char *)buf  + GAsizeofM(type)* offset;
 
-   msglen = nbytes*(jhi-jlo+1);
+   Copy2D(type, &rows, &cols, ptr_src, &ld, ptr_dst, &rows); 
+
+   msglen = rows*cols*GAsizeofM(type);
    ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, GA[GA_OFFSET + g_a].type, GA_OP_PUT,
               proc, DataServer(proc));
 }
@@ -1329,27 +1322,22 @@ void ga_get_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
    Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
    Void *buf;
 {
-char     *ptr_src, *ptr_dst, *ptr;
-Integer  j,  item_size, nbytes, elem, ldp;
+char     *ptr_glob, *ptr_loc;
+Integer  ld_glob, rows, cols, type;
 
    GA_PUSH_NAME("ga_get_local");
-   item_size = (int) GAsizeofM(GA[GA_OFFSET + g_a].type);
-   elem = ihi - ilo +1;
-   nbytes = item_size * elem;
 
-   gaShmemLocation(proc, g_a, ilo, jlo, &ptr, &ldp);
+   type = GA[GA_OFFSET + g_a].type;
+   rows = ihi - ilo +1;
+   cols = jhi - jlo +1;
 
+   gaShmemLocation(proc, g_a, ilo, jlo, &ptr_glob, &ld_glob);
+
+   ptr_loc = (char *)buf  + GAsizeofM(type) * offset;
    if(proc==GAme) FLUSH_CACHE;
-   for (j = 0;  j < jhi-jlo+1;  j++){
-       ptr_dst = (char *)buf  + item_size* (j*ld + offset );
-       ptr_src = (char*)ptr + item_size* j *ldp;
-#      ifdef CRAY_T3D
-         if(proc==GAme) Copy(ptr_src, ptr_dst, nbytes);
-         else CopyFrom(ptr_src, ptr_dst, elem, proc);
-#      else
-          CopyFrom(ptr_src, ptr_dst, nbytes);
-#      endif
-   }
+
+   Copy2DFrom(type, proc, &rows, &cols, ptr_glob, &ld_glob, ptr_loc, &ld);
+
    GA_POP_NAME;
 }
 
@@ -1362,13 +1350,13 @@ void ga_get_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
    Void *buf;
 {
 char     *ptr_src, *ptr_dst;
-Integer  j,  item_size, nbytes, elem, to, from, len, msglen=0;
+Integer  type, rows, cols, len, to, from, msglen=0;
 
    if(proc<0)ga_error(" get_remote: invalid process ",proc);
-   item_size =  GAsizeofM(GA[GA_OFFSET + g_a].type);
-   elem = ihi - ilo +1;
-   nbytes = item_size * elem;
-   msglen = nbytes*(jhi-jlo+1);
+   type = GA[GA_OFFSET + g_a].type;
+   rows = ihi - ilo +1;
+   cols = jhi - jlo +1;
+   msglen = rows*cols*GAsizeofM(type);
 
    to = DataServer(proc);
 #  if defined(NX) || defined(SP1)
@@ -1380,14 +1368,11 @@ Integer  j,  item_size, nbytes, elem, to, from, len, msglen=0;
       ga_rcv_msg(GA_TYPE_GET, MessageSnd->buffer, msglen, &len, to, &from,SYNC);
 #  endif
 
-
    /* Copy patch [ilo:ihi, jlo:jhi] from MessageBuffer */
    ptr_src = (char*)MessageSnd->buffer;
-   for (j = 0;  j < jhi-jlo+1;  j++){
-        ptr_dst = (char *)buf  + item_size* (j*ld + offset );
-        Copy(ptr_src, ptr_dst, nbytes);
-        ptr_src += nbytes;
-   }
+   ptr_dst = (char *)buf  + GAsizeofM(type)* offset;
+
+   Copy2D(type, &rows, &cols, ptr_src, &rows, ptr_dst, &ld);  
 
 }
 
@@ -1461,37 +1446,6 @@ Integer ilop, ihip, jlop, jhip, offset;
 
 
 
-#ifdef KSR
-#  define accumulate(alpha, rows, cols, A, ald, B, bld)\
-   {\
-   Integer c;\
-      void Accum(DoublePrecision, DoublePrecision*, DoublePrecision*, Integer);\
-      /* A and B are Fortran arrays! */\
-      for(c=0;c<(cols);c++)\
-           Accum((alpha), (B) + c*(bld), (A) + c*(ald), (rows));\
-   }
-#else
-#  define accumulate(alpha, rows, cols, A, ald, B, bld)\
-   {\
-   register Integer c,r;\
-      /* A and B are Fortran arrays! */\
-      for(c=0;c<(cols);c++)\
-           for(r=0;r<(rows);r++)\
-                *((A) +c*(ald) + r) += (alpha) * *((B) + c*(bld) +r);\
-   }
-#endif
-
-
-
-void acc_column(alpha, a, b,n)
-Integer n;
-DoublePrecision alpha, *a, *b;
-{
-  int i;
-  for (i=0;i<n;i++) a[i] += alpha* b[i];
-}
-
-
 /*\ local accumulate 
 \*/
 void ga_acc_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
@@ -1499,7 +1453,7 @@ void ga_acc_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
    DoublePrecision alpha, *buf;
 {
 char     *ptr_src, *ptr_dst;
-Integer  item_size, ldp;
+Integer  item_size, ldp, rows, cols;
 #ifdef CRAY_T3D
 #  define LEN_ACC_BUF 100
    DoublePrecision acc_buffer[LEN_ACC_BUF], *pbuffer, *ptr;
@@ -1525,9 +1479,9 @@ Integer  item_size, ldp;
               ptr_dst = (char *)ptr  + item_size* j *ldp;
               ptr_src = (char *)buf  + item_size* (j*ld + offset );
    
-              CopyFrom(ptr_dst, pbuffer, elem, proc);
+              CopyElemFrom(ptr_dst, pbuffer, elem, proc);
               acc_column(alpha, pbuffer, ptr_src, elem );
-              CopyTo(pbuffer, ptr_dst, elem, proc);
+              CopyElemTo(pbuffer, ptr_dst, elem, proc);
            }
         UNLOCK(g_a, proc, ptr_dst);
         if(elem>LEN_ACC_BUF) MA_pop_stack(handle);
@@ -1539,8 +1493,10 @@ Integer  item_size, ldp;
      FLUSH_CACHE;
 #  endif
      ptr_src = (char *)buf   + item_size * offset;
+     rows = ihi - ilo +1;
+     cols = jhi-jlo+1;
      if(GAnproc>1) LOCK(g_a, proc, ptr_dst);
-       accumulate(alpha, ihi - ilo +1, jhi-jlo+1, (DoublePrecision*)ptr_dst,
+       accumulate(alpha, rows, cols, (DoublePrecision*)ptr_dst,
                   ldp, (DoublePrecision*)ptr_src, ld );
      if(GAnproc>1) UNLOCK(g_a, proc, ptr_dst);
    GA_POP_NAME;
@@ -1554,25 +1510,23 @@ void ga_acc_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
    DoublePrecision alpha, *buf;
 {
 char     *ptr_src, *ptr_dst;
-register Integer  j,  item_size, nbytes, elem, msglen;
+Integer  type, rows, cols, msglen;
 
    if(proc<0)ga_error(" acc_remote: invalid process ",proc);
-   item_size =  GAsizeofM(GA[GA_OFFSET + g_a].type);
-   elem = ihi - ilo +1;
-   nbytes = item_size * elem;
+   type = GA[GA_OFFSET + g_a].type;
+   rows = ihi - ilo +1;
+   cols = jhi - jlo +1;
 
    /* Copy patch [ilo:ihi, jlo:jhi] into MessageBuffer */
    ptr_dst = (char*)MessageSnd->buffer;
-   for (j = 0;  j < jhi-jlo+1;  j++){
-        ptr_src = (char *)buf  + item_size* (j*ld + offset );
-        Copy(ptr_src, ptr_dst, nbytes);
-        ptr_dst += nbytes;
-   }
+   ptr_src = (char *)buf  + GAsizeofM(type)* offset;
+
+   Copy2D(type, &rows, &cols, ptr_src, &ld, ptr_dst, &rows);
 
    /* append alpha at the end */
-   *(DoublePrecision*)ptr_dst = alpha; 
+   *((DoublePrecision*)ptr_dst + rows*cols) = alpha; 
 
-   msglen = nbytes*(jhi-jlo+1)+item_size;  /* plus alpha */
+   msglen = rows*cols*GAsizeofM(type)+sizeof(DoublePrecision); /* plus alpha */
    ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, GA[GA_OFFSET + g_a].type, GA_OP_ACC,
               proc, DataServer(proc));
 }
@@ -1975,9 +1929,8 @@ register Integer k, offset;
      ptr_dst = ptr_ref + item_size * offset;
      ptr_src = ((char*)v) + k*item_size; 
 
-#    ifdef CRAY_T3D
-           if(proc==GAme) Copy(ptr_src, ptr_dst, item_size);
-           else CopyTo(ptr_src, ptr_dst, 1, proc);
+#ifdef CRAY_T3D
+           CopyElemTo(ptr_src, ptr_dst, 1, proc);
 #    else
            Copy(ptr_src, ptr_dst, item_size);
 #    endif
@@ -2101,6 +2054,8 @@ register Integer k, offset;
   if (nv < 1) return;
   GA_PUSH_NAME("ga_gather_local");
 
+  if(proc==GAme) FLUSH_CACHE;
+
   ga_distribution_(&g_a, &proc, &ilo, &ihi, &jlo, &jhi);
 
   /* get a address of the first element owned by proc */
@@ -2121,10 +2076,7 @@ register Integer k, offset;
      ptr_dst = ((char*)v) + k*item_size; 
 
 #    ifdef CRAY_T3D
-        if(proc==GAme){
-              FLUSH_CACHE_LINE(ptr_dst);
-              Copy(ptr_src, ptr_dst, item_size);
-        }else CopyTo(ptr_src, ptr_dst, 1, proc);
+        CopyElemFrom(ptr_src, ptr_dst, 1, proc);
 #    else
         Copy(ptr_src, ptr_dst, item_size);
 #    endif

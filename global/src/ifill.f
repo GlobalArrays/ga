@@ -1,5 +1,4 @@
       subroutine ifill(n,val,a,ia)
-C$Id: ifill.f,v 1.2 1995-02-02 23:13:40 d3g681 Exp $
       implicit integer (a-z)
       dimension a(*)
 c

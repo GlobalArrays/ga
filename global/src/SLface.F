@@ -10,7 +10,6 @@
 ****************************************************************************
 
       subroutine SLinit
-C$Id: SLface.F,v 1.3 1995-02-02 23:13:05 d3g681 Exp $
       implicit none
 c
 #include "slface.fh"
@@ -76,7 +75,7 @@ c
       integer numroc
 c
       np_or_q = numroc(dim, nb, mypcord, 0, npnum)
-      if(np_or_q .lt. 1)then    ! this processor does not have any data 
+      if(np_or_q .lt. 1)then    ! this processor des not have any data 
          lo =  0
          hi = -1
          return

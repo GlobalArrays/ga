@@ -6,7 +6,6 @@ c      C routines called: ma__get_ptr() and ma_diff()             :
 c.................................................................. 
 c
        subroutine ma__base_address(type, address)
-C$Id: global.ma.F,v 1.3 1995-02-02 23:13:31 d3g681 Exp $
        implicit none
 #include "mafdecls.h"
        Integer type

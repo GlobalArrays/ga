@@ -2,7 +2,6 @@
 c
 c     Cholesky factorization G&VL: alg. 6.6.1
 c
-C$Id: ga_cholesky.old.F,v 1.2 1995-02-02 23:13:11 d3g681 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"

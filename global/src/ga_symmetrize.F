@@ -5,7 +5,6 @@ c     diag(A) remains unchanged
 c 
 c     J. Nieplocha 08.22.93
 c
-C$Id: ga_symmetrize.F,v 1.5 1995-02-02 23:13:21 d3g681 Exp $
       implicit none
 #include "mafdecls.h" 
 #include "global.fh"

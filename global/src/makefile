@@ -1,4 +1,3 @@
-#$Id: makefile,v 1.7 1995-02-02 23:13:44 d3g681 Exp $
 # Global Array library (shared and distributed memory version)
 #
 # Type "make libglobal.a" to create the GA library

@@ -1,5 +1,4 @@
       subroutine dfill(n,val,a,ia)
-C$Id: dfill.f,v 1.2 1995-02-02 23:13:08 d3g681 Exp $
       implicit real*8 (a-h,o-z)
       dimension a(*)
 c

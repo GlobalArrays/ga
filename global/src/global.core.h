@@ -78,7 +78,7 @@ char err_string[ ERR_STR_LEN];         /* string for extended error reporting */
 char *GA_name_stack[NAME_STACK_LEN];   /* stack for storing names of GA ops */ 
 int  GA_stack_size=0;
 
-/********************** MACROS ******************************/
+/**************************** MACROS ************************************/
 #define allign_size(n) \
         (((n)%ALLIGN_SIZE) ? (n)+ALLIGN_SIZE - (n)%ALLIGN_SIZE: (n))
 
@@ -118,7 +118,7 @@ int  GA_stack_size=0;
                            (type)==MT_F_INT? sizeof(Integer): 0)
 
 
-/*********** Shared Memory, Mutual Exclusion & Memory Copy Co.  *********/
+/**************** Shared Memory and Mutual Exclusion Co.  **************/
 #ifdef SYSV
        /* SHARED MEMORY */
        PRIVATE static  volatile int    barrier_size;
@@ -126,8 +126,14 @@ int  GA_stack_size=0;
        PRIVATE static  long            shmSIZE, shmID;
        PRIVATE static  DoublePrecision *shmBUF;
 #      ifdef KSR
-#          include "global.KSR.h"
-#          define SUBPAGE 128              /* subpage size on KSR */
+           /* lock entire block owned by proc
+            * Note that this to work in data server mode we need use
+            * (proc - cluster_master) instead of proc
+            */
+#          define LOCK(g_a, proc, x)    _gspwt(GA[GA_OFFSET + g_a].ptr[(proc)])
+#          define UNLOCK(g_a, proc, x)    _rsp(GA[GA_OFFSET + g_a].ptr[(proc)])
+#          define UNALIGNED(x)    (((unsigned long) (x)) % sizeof(long))
+           typedef __align128 unsigned char subpage[128];
 #          define PAGE_SIZE  128
 #      else
 #          define PAGE_SIZE  4096
@@ -135,28 +141,28 @@ int  GA_stack_size=0;
 #          include "semaphores.h"
 #          define NUM_SEM  SEMMSL
 #          define ARR_SEM  (NUM_SEM -1) /* num of sems for locking arrays */
-#          define MUTEX    ARR_SEM    /* semid  for synchronization */
+#          define MUTEX    ARR_SEM      /* semid  for synchronization */
 #          define LOCK(g_a,proc, x)\
                   P(((proc)-cluster_master)%ARR_SEM)
 #          define UNLOCK(g_a,proc, x)\
                    V(((proc)-cluster_master)%ARR_SEM)
 #      endif
 #else
-#        ifdef CRAY_T3D
-#            include <limits.h>
-#            include <mpp/shmem.h>
-#            define INVALID (long)(_INT_MIN_64 +1)
-#            define LOCK_AND_GET(x, y, proc) \
-                while( ((x) = shmem_swap((long*)(y),INVALID,(proc)))== INVALID)
-#            define UNLOCK_AND_PUT(x, y, proc) shmem_swap((long*)(y),(x),(proc))
+#      ifdef CRAY_T3D
+#          include <limits.h>
+#          include <mpp/shmem.h>
+#          define INVALID (long)(_INT_MIN_64 +1)
+#          define LOCK_AND_GET(x, y, proc) \
+              while( ((x) = shmem_swap((long*)(y),INVALID,(proc)))== INVALID)
+#          define UNLOCK_AND_PUT(x, y, proc) shmem_swap((long*)(y),(x),(proc))
 
-#            define LOCK(g_a, proc, x) \
-                while( shmem_swap(&GA[GA_OFFSET +g_a].lock,INVALID,(proc))\
-                       == INVALID)
+#          define LOCK(g_a, proc, x) \
+              while( shmem_swap(&GA[GA_OFFSET +g_a].lock,INVALID,(proc))\
+                     == INVALID)
 
-#            define UNLOCK(g_a, proc, x)\
-                   shmem_swap(&GA[GA_OFFSET +g_a].lock, 1, (proc))
-#        elif defined(NX) || defined(SP1)
+#          define UNLOCK(g_a, proc, x)\
+                 shmem_swap(&GA[GA_OFFSET +g_a].lock, 1, (proc))
+#      elif defined(NX) || defined(SP1)
 #            include "interrupt.h"
              extern Integer in_handler;
              long oldmask;
@@ -169,23 +175,10 @@ int  GA_stack_size=0;
 #              define UNLOCK(g_a,proc, x) \
                     { if( in_handler == 0) ga_mask(oldmask, &oldmask) }
 #            endif
-#        endif
+#      endif
 #endif
 
-/* MEMORY COPY */
-#ifdef CRAY_T3D
-       /*#          define Copy(src,dst,n)          memcpy((dst),(src),(n))*/
-       /*            memcpy on this sytem is slow */
-#      define Copy(src,dst,n)          copyto((src), (dst),(n))
-#      define CopyTo(src,dst,n,proc)   \
-                  shmem_put((long*) (dst), (long*)(src), (n), (proc)) 
-#      define CopyFrom(src,dst,n,proc) \
-                  shmem_get((long*) (dst), (long*)(src), (n), (proc)) 
-#elif !defined(KSR)
-#      define Copy(src,dst,n)      memcpy((dst),(src),(n))
-#      define CopyTo(src,dst,n)    memcpy((dst),(src),(n))
-#      define CopyFrom(src,dst,n)  memcpy((dst),(src),(n))
-#endif
+#include "mem.ops.h"
 /************************************************************************/
 
 /* cache coherency ? */
@@ -195,6 +188,12 @@ int  GA_stack_size=0;
 #else
 #       define FLUSH_CACHE shmem_udcflush()
 #       define FLUSH_CACHE_LINE(x)   shmem_udcflush_line((long*)(x))
+#endif
+
+
+#ifdef KSR
+        int    KSRbarrier_mem_req();
+        void   KSRbarrier(), KSRbarrier_init(int, int, int, char*);
 #endif
 
 
@@ -234,7 +233,7 @@ static Integer GA_memory_limited = 0;
 # define ARGS_(s) ()
 #endif
 
-extern void strcpy       ARGS_((char*, char*));
+extern char* strcpy      ARGS_((char*, char*));
 extern void srand        ARGS_((Integer));
 extern void srandom      ARGS_((Integer));
 extern char *malloc      ARGS_((int));
@@ -260,7 +259,6 @@ extern void ga_sort_scat_dbl_ ARGS_((Integer*,DoublePrecision*,Integer*,        
 extern void ga_sort_scat_int_ ARGS_((Integer*,Integer*,Integer*,Integer*,                                            Integer*));
 extern void ga_sort_gath_ ARGS_((Integer*, Integer*, Integer*, Integer*));
 
-extern void strcpy ARGS_((char*,char*));
 extern void free ARGS_((Void*));
 
 #undef ARGS_

@@ -1,4 +1,3 @@
-/*$Id: barrier.KSR.c,v 1.2 1995-02-02 23:13:06 d3g681 Exp $*/
 /****************************************************************\ 
  Fast barriers for the KSR. 
  The dynamic f-way algorithm by Grunwald & Vajracharya.

@@ -1,4 +1,3 @@
-/*$Id: shmem.c,v 1.5 1995-02-02 23:13:54 d3g681 Exp $*/
 /* System V shared memory allocation and managment for GAs:
  *
  * Interface:

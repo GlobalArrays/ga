@@ -1,4 +1,3 @@
-/*$Id: semaphores.h,v 1.5 1995-02-02 23:13:50 d3g681 Exp $*/
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>

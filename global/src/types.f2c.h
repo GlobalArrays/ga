@@ -1,4 +1,3 @@
-/*$Id: types.f2c.h,v 1.3 1995-02-02 23:14:00 d3g681 Exp $*/
 /* file types.f2c.h */
 
 #ifndef _matypes_h

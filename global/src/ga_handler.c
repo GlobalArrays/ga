@@ -1,4 +1,3 @@
-/*$Id: ga_handler.c,v 1.4 1995-02-02 23:13:17 d3g681 Exp $*/
 #if defined(NX) || defined(SP1)
 
 #include "global.h"

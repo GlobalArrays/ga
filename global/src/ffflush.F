@@ -1,5 +1,4 @@
       subroutine ffflush(unit)
-C$Id: ffflush.F,v 1.3 1995-02-02 23:13:09 d3g681 Exp $
       integer unit
 c
 #ifdef CRAY_T3D

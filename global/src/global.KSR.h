@@ -1,4 +1,3 @@
-/*$Id: global.KSR.h,v 1.4 1995-02-02 23:13:23 d3g681 Exp $*/
 /* lock entire block owned by proc 
  * Note that this to work in data server mode we need use 
  * (proc - cluster_master) instead of proc
