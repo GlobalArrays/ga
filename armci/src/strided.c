@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.21 2000-05-09 17:47:17 jju Exp $ */
+/* $Id: strided.c,v 1.22 2000-05-09 19:58:12 edo Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -428,9 +428,11 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        /* larger strided or 1-D reqests, buffer not used to send data 
         * we can bypass the packetization step and send request directly
         */
-       if((count[0]> LONG_GET_THRESHOLD) && armci_gm_bypass) {
 #        ifdef GM
+       if((count[0]> LONG_GET_THRESHOLD) && armci_gm_bypass) {
            bypass= armci_pin_memory(dst_ptr,dst_stride_arr,count,stride_levels);
+#else
+       if((count[0]> LONG_GET_THRESHOLD)) {
 #        endif
          rc = armci_rem_strided(GET, NULL, proc, src_ptr, src_stride_arr,
                           dst_ptr, dst_stride_arr, count, stride_levels,bypass);
