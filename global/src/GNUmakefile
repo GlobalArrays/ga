@@ -23,7 +23,8 @@ GA_CORE = base.o onesided.o ghosts.o global.util.o collect.o decomp.o \
             capi.o global.nalg.o global.npatch.o ga_trace.o datatypes.o
 
 # extra interfaces
-GA_EXTRA = global.periodic.o sparse.o select.o ghosts.o DP.o hsort.scat.o
+GA_EXTRA = global.periodic.o sparse.o select.o ghosts.o DP.o hsort.scat.o \
+		ga_solve_seq.o
 ifdef GA_USE_VAMPIR
    GA_EXTRA += ga_vampir.o
 endif
@@ -31,7 +32,7 @@ endif
 # Linear Algebra
   GA_LIN_ALG = matmul.o ga_symmetr.o  elem_alg.o matrix.o xgemm.o fort.o
 ifndef GA_C_CORE
-  GA_LIN_ALG += rsg.o ga_diag_seq.o ga_solve_seq.o 
+  GA_LIN_ALG += rsg.o ga_diag_seq.o
 #  GA_EXTRA += fort.o
 endif
 
