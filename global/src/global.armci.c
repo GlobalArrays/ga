@@ -399,7 +399,7 @@ void *gai_malloc(int bytes)
        mbuf_used++;
     }else{
         Integer handle, idx, elems = (bytes+sizeof(double)-1)/sizeof(double)+1; 
-        if(MA_push_get(MT_DBL, elems, "temp", &handle, &idx)){
+        if(MA_push_get(MT_DBL, elems, "GA malloc temp", &handle, &idx)){
             MA_get_pointer(handle, &ptr);
             *((Integer*)ptr)= handle;
             ptr = ((double*)ptr)+ 1;  /*needs sizeof(double)>=sizeof(Integer) */
@@ -673,6 +673,7 @@ int i;
     for(i=0;i<GAnproc;i++){
        ptr_arr[i] = adjust[i] + (char*)ptr_arr[i];
     }
+    gai_free(adjust);
 
 #endif
     return status;
