@@ -3,6 +3,9 @@
 #include "globalp.h"
 #include "../../armci/src/message.h"
   
+#if defined(CRAY)
+#  include <fortran.h>
+#endif
 
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\
@@ -13,7 +16,8 @@ int _i;\
 }
 
 
-void FATR nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
+/* note that there is FATR - on windows and cray we call this though a wrapper below */
+void nga_select_elem_(Integer *g_a, char* op, void* val, Integer *subscript)
 {
 Integer ndim, type, me, elems, ind=0, i;
 Integer lo[MAXDIM],hi[MAXDIM],dims[MAXDIM],ld[MAXDIM-1];
@@ -24,7 +28,6 @@ struct  info_t{
 int     participate=0;
 
    ga_sync_();
-
    me = ga_nodeid_();
 
    ga_check_handle(g_a, "ga_select_elem");
@@ -149,6 +152,12 @@ int     participate=0;
    }
 
    for(i = 0; i < ndim; i++) subscript[i]=info.subscr[i];
-
    GA_POP_NAME;
 }
+
+#if defined(CRAY) || defined(WIN32)  
+void FATR NGA_SELECT_ELEM(Integer *g_a, _fcd op, void* val, Integer *subscript)
+{
+     nga_select_elem_(g_a,_fcdtocp(op), val, subscript);
+}
+#endif

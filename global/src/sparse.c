@@ -234,7 +234,6 @@ register Integer i;
         if(lop < *lo)lop = *lo;
         if(hip > *hi)hip = *hi;
         off = lop - *lo;
-
         nga_access_ptr(g_a, &lop, &hip, &ptr, &ld);
         
         switch (type){

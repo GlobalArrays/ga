@@ -210,7 +210,6 @@
 #define  nga_print_patch_          NGA_PRINT_PATCH
 #define  nga_zero_patch_           NGA_ZERO_PATCH
 
-#define  nga_select_elem_          NGA_SELECT_ELEM
 #define  ga_patch_enum_            GA_PATCH_ENUM
 
 #define  gai_dot_patch_            GAI_DOT_PATCH
