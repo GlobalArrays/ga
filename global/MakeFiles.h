@@ -58,6 +58,20 @@ else
   GA_CORE += tcgmsg.o
 endif
 
+ifdef USE_SUMMA
+  SUMMA_OBJ = ga_summa_layout.o    summa_abt2.o \
+              ga_summa_layout2.o   ga_summa_to_ga.o \
+              summa_atb.o          summa_ab.o \
+              summa_atb2.o         ga_create3.o \
+              ga_summa.o           summa_ab2.o \
+              ga_summa_alloc.o     ga_summa_c.o \
+              summa_abt.o          ga_summa_cc.o
+
+  VPATH += summa
+  GLOB_INCLUDES += -I../../tcgmsg/ipcv4.0
+   GLOB_DEFINES += -DUSE_SUMMA
+endif
+
 GA_OBJ = $(GA_CORE) $(GA_SYNC) $(GA_HANDLER) $(IPC)
 
 #

@@ -32,9 +32,7 @@ include ../MakeFiles.h
 
    LIBRARY = ../libglobal.a
 
-
-OBJ = $(GA_OBJ) $(GA_ALG) $(GA_UTIL)
-
+OBJ = $(GA_OBJ) $(GA_ALG) $(GA_UTIL) $(SUMMA_OBJ)
 
 all: $(GA_SYNC) $(LIBRARY)
 

@@ -125,6 +125,7 @@ ifeq ($(TARGET),KSR)
      COPT_REN = -qdiv
  GLOB_DEFINES = -DKSR
         CDEFS = -DEXT_INT
+    USE_SUMMA = yes
 endif
 
 #................................ SGI ......................................

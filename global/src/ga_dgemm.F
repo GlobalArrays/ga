@@ -6,9 +6,27 @@
 c     ijk loops rearanged into ikj
 c     Thu Aug 25 14:08:17 PDT 1994, JN
 c
+#ifdef USE_SUMMA
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.18 1995-10-17 08:53:32 d3g681 Exp $
+C$Id: ga_dgemm.F,v 1.19 1995-11-19 19:41:09 d3g681 Exp $
+      implicit none
+      Character*1        transa, transb
+      Integer            m, n, k
+      Double precision   alpha, beta
+      Integer            g_a, g_b, g_c
+c
+c     ga_summa calls ga_ga_dgemm to handle cases it does not cover
+c
+      call ga_summa(transa, transb, m, n, k, alpha, g_a, 
+     $     g_b, beta, g_c)
+c
+      end
+#define GA_DGEMM ga_ga_dgemm
+#endif
+      subroutine GA_DGEMM(transa, transb, m, n, k, alpha, g_a, 
+     $     g_b, beta, g_c)
+C$Id: ga_dgemm.F,v 1.19 1995-11-19 19:41:09 d3g681 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
