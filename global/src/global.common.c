@@ -109,6 +109,7 @@ Integer me= ga_nodeid_(), index, ld;
            ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, DBL_MB+index-1, &ld);
       else
            ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, INT_MB+index-1, &ld);
+      ga_release_(g_a, &ilo, &ihi, &jlo, &jhi);
    }
 
 #ifdef GA_TRACE
@@ -328,7 +329,7 @@ void ga_brdcst_(type, buf, len, originator)
        factor *= 2; rem = me%factor;
        if(rem){
               to = me - rem;
-              /*fprintf(stderr,"%d rcv %d to %d\n",me,*type,to);*/
+              fprintf(stderr,"%d rcv %d to %d\n",me,*type,to);
               rcv_(type, buf, len, &lenmes,  &to, &to, &sync);
               break;
        }
@@ -343,12 +344,12 @@ void ga_brdcst_(type, buf, len, originator)
        if(!rem && me != factor){
               to = me + factor;
               if( to < nproc ) {
-                 /*fprintf(stderr,"%d snd down %d to %d\n",me,*type,to);*/
+                 fprintf(stderr,"%d snd down %d to %d\n",me,*type,to);
                  snd_(type, buf, len, &to, &sync);
               }
        }
      } while( factor > 1 );
-     /*fprintf(stderr,"%d broadcast done \n",me);*/
+     fprintf(stderr,"%d broadcast done \n",me);
 #else
      /* use TCGMSG as a wrapper to a more efficient native implementation
       * of  broadcast 
