@@ -429,8 +429,9 @@ ifeq ($(TARGET),NEC)
          FOPT = -Cvopt -Wf"-pvctl nomsg"
      endif
      ifeq ($(COPT), -O)
-         COPT = -O nomsg -pvctl,nomsg
+         COPT = -O nomsg -hnovector,nomulti -pvctl,nomsg
      endif
+#    COPT_REN = -hsize_t64
      EXTRA_LIBS += -li90sx
 endif
 
