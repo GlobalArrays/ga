@@ -11,14 +11,9 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
-c#define CHECK1
-c#define CHECK2
-c#define CHECK3
-c#define CHECK4
-c#define CHECK5
-c#define CHECK6
-c#define CHECK7
+#define USE_CORNERS
 
+#define PRINT_VAL
 c#define NEW_API
 
       program main
@@ -42,6 +37,7 @@ c#define NEW_API
       double precision t19,t20,t21,t22,t23,t24
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
       parameter (heap=60*60*4, fudge=100, stack=100*100)
+      logical corner_flag
 c     
 c***  Intitialize a message passing library
 c
@@ -50,6 +46,11 @@ c
       call mpi_init(ierr)
 #else
       call pbeginf
+#endif
+#ifdef USE_CORNERS
+      corner_flag = .true.
+#else
+      corner_flag = .false.
 #endif
 c
 c***  Initialize GA
@@ -165,22 +166,9 @@ c
         do j = 1, ndim
           if (lo(j).eq.0.and.hi(j).eq.-1) has_data(i) = .false.
         end do
-c        if (me.eq.i) then
-c          write(6,*) '*'
-c          write(6,*) '* Distribution on processor ',i
-c          write(6,*) '*'
-c          write(6,110) lo(1), hi(1)
-c          write(6,110) lo(2), hi(2)
-c  110     format(2i10)
-c        endif
         call ffflush(6)
         call ga_sync
       end do
-c
-c  Find some parameters for g_a
-c
-      if (has_data(me)) call nga_access_ghosts(g_a, dims3,
-     +    index3, ld3)
 c
 c     initialize g_a
 c
@@ -197,24 +185,49 @@ c
       end do
       if (has_data(me).and.safe_put) call nga_put(g_a, lo, hi, a, ld)
 c
-c   print out values of a
+c     get patch with ghost cells
 c
-#if 0
-      do k = 0, nproc-1
-        call ga_sync
-        if (k.eq.me.and.has_data(me).and.maxval.lt.10000) then
-          write(6,*)
-          write(6,*) 'Initial data on processor ',k
-          write(6,*)
-          do i = 1, min(hi(1)-lo(1)+1,10)
-            write (6,101) (a(i,j),j=1,min(hi(2)-lo(2)+1,10))
-          end do
-          call ffflush(6)
-        endif
+      do i = 1, ndim
+        lo2(i) = lo(i) - width(i)
+        hi2(i) = hi(i) + width(i)
+        ld2(i) = ld(i) + 2*width(i)
       end do
-  101 format(10x,10i5)
+      call ga_sync
       call ffflush(6)
-#endif
+      safe_get = .true.
+c      do i = 1, ndim
+c        if (hi2(i)-lo2(i).ge.dims(i)) safe_get = .false.
+c      end do
+
+      t19 = 0.0d00
+      t20 = 0.0d00
+      t21 = 0.0d00
+      do i = 1, nloop
+        start = util_timer()
+        call ga_ghost_barrier
+        t19 = t19 + util_timer() - start
+        start = util_timer()
+        if (has_data(me).and.safe_get)
+     +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
+        t20 = t20 + util_timer() - start
+        start = util_timer()
+        call ga_ghost_barrier
+        t21 = t21 + util_timer() - start
+      end do
+      t19 = t19/dble(nloop)
+      t20 = t20/dble(nloop)
+      t21 = t21/dble(nloop)
+
+  102 format(14i5)
+      if (me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '*   Performing nga_access_ghosts'
+        write(6,*) '*'
+        call ffflush(6)
+      endif
+      if (has_data(me)) call nga_access_ghosts(g_a, dims3,
+     +    index3, ld3)
+      call ga_sync
 
 c      go to 131
       if (me.eq.0) then
@@ -240,9 +253,13 @@ c      go to 131
       t1 = t1/dble(nloop)
       t2 = t2/dble(nloop)
       t3 = t3/dble(nloop)
-#ifdef CHECK1
-      go to 132
+#ifdef PRINT_VAL
+      if (maxval.lt.10000)
+     +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+     +           nmax+2*nwidth,has_data,nwidth,corner_flag,1)
+      call ga_sync
 
       if (me.eq.0) then
         write(6,*)
@@ -267,9 +284,13 @@ c      go to 131
       t4 = t4/dble(nloop)
       t5 = t5/dble(nloop)
       t6 = t6/dble(nloop)
-#ifdef CHECK2
-      go to 132
+#ifdef PRINT_VAL
+      if (maxval.lt.10000)
+     +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+     +           nmax+2*nwidth,has_data,nwidth,corner_flag,2)
+      call ga_sync
 
       if (me.eq.0) then
         write(6,*)
@@ -294,9 +315,13 @@ c      go to 131
       t7 = t7/dble(nloop)
       t8 = t8/dble(nloop)
       t9 = t9/dble(nloop)
-#ifdef CHECK3
-      go to 132
+#ifdef PRINT_VAL
+      if (maxval.lt.10000)
+     +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+     +           nmax+2*nwidth,has_data,nwidth,corner_flag,3)
+      call ga_sync
 
       if (me.eq.0) then
         write(6,*)
@@ -307,7 +332,7 @@ c      go to 131
       t11 = 0.0d00
       t12 = 0.0d00
       call ga_sync
-      call ga_set_ghost_corner_flag(g_a,.true.)
+      call ga_set_ghost_corner_flag(g_a,corner_flag)
 c
       status = ga_set_update4_info(g_a)
       do i = 1, nloop
@@ -325,9 +350,13 @@ c
       t10 = t10/dble(nloop)
       t11 = t11/dble(nloop)
       t12 = t12/dble(nloop)
-#ifdef CHECK4
-      go to 132
+#ifdef PRINT_VAL
+      if (maxval.lt.10000)
+     +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+     +           nmax+2*nwidth,has_data,nwidth,corner_flag,4)
+      call ga_sync
 
       if (me.eq.0) then
         write(6,*)
@@ -338,7 +367,7 @@ c
       t14 = 0.0d00
       t15 = 0.0d00
       call ga_sync
-      call ga_set_ghost_corner_flag(g_a,.true.)
+      call ga_set_ghost_corner_flag(g_a,corner_flag)
 c
       status = ga_set_update5_info(g_a)
       do i = 1, nloop
@@ -358,9 +387,13 @@ c     write(6,*) 'completed ga_update5_ghosts'
       t13 = t13/dble(nloop)
       t14 = t14/dble(nloop)
       t15 = t15/dble(nloop)
-#ifdef CHECK5
-      go to 132
+#ifdef PRINT_VAL
+      if (maxval.lt.10000)
+     +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+     +           nmax+2*nwidth,has_data,nwidth,corner_flag,5)
+      call ga_sync
 
       if (me.eq.0) then
         write(6,*)
@@ -386,9 +419,13 @@ c     write(6,*) 'completed ga_update5_ghosts'
       t16 = t16/dble(nloop)
       t17 = t17/dble(nloop)
       t18 = t18/dble(nloop)
-#ifdef CHECK6
-      go to 132
+#ifdef PRINT_VAL
+      if (maxval.lt.10000)
+     +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
 #endif
+      call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
+     +           nmax+2*nwidth,has_data,nwidth,corner_flag,6)
+      call ga_sync
 
       if (me.eq.0) then
         write(6,*)
@@ -414,102 +451,22 @@ c     write(6,*) 'completed ga_update5_ghosts'
       t22 = t22/dble(nloop)
       t23 = t23/dble(nloop)
       t24 = t24/dble(nloop)
-#ifdef CHECK7
-      go to 132
-#endif
-
-      if (me.eq.0) then
-        write(6,*) '*'
-        write(6,*) '*   Completed update successfully'
-        write(6,*) '*'
-        call ffflush(6)
-      endif
-c
-c     get patch with ghost cells
-c
-  132 continue
-      do i = 1, ndim
-        lo2(i) = lo(i) - width(i)
-        hi2(i) = hi(i) + width(i)
-        ld2(i) = ld(i) + 2*width(i)
-      end do
-      call ga_sync
-      call ffflush(6)
-#if 0
-      do i = 0, nproc-1
-        if (i.eq.me) then
-          write(6,*) '*'
-          write(6,*) 'ghost patch dimensions on processor ',i
-          write(6,*) '*'
-          do j = 1, ndim
-            write(6,*) 'lo(',j,') = ',lo2(j)
-            write(6,*) 'hi(',j,') = ',hi2(j)
-            write(6,*) 'ld(',j,') = ',ld2(j)
-          end do
-          write(6,*) '*'
-        endif
-        call ga_sync
-        call ffflush(6)
-      end do
-#endif
-      safe_get = .true.
-c      do i = 1, ndim
-c        if (hi2(i)-lo2(i).ge.dims(i)) safe_get = .false.
-c      end do
-
-      t19 = 0.0d00
-      t20 = 0.0d00
-      t21 = 0.0d00
-      do i = 1, nloop
-        start = util_timer()
-        call ga_ghost_barrier
-        t19 = t19 + util_timer() - start
-        start = util_timer()
-        if (has_data(me).and.safe_get)
-     +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
-        t20 = t20 + util_timer() - start
-        start = util_timer()
-        call ga_ghost_barrier
-        t21 = t21 + util_timer() - start
-      end do
-      t19 = t19/dble(nloop)
-      t20 = t20/dble(nloop)
-      t21 = t21/dble(nloop)
-
-c      if (me.eq.0.and.maxval.lt.10000) then
-c        write(6,*) '*'
-c        write(6,*) '*   Write out contents of local patch using'
-c        write(6,*) '*   nga_periodic_get'
-c        write(6,*) '*'
-c        call ffflush(6)
-c      endif
-c      do k = 0, nproc-1
-c        call ga_sync
-c        if (me.eq.k.and.has_data(me).and.maxval.lt.10000) then
-c          write(6,*) '*'
-c          write(6,*) '*    Data on processor ',k
-c          write(6,*) '*'
-c          do i = 1, min(hi2(1)-lo2(1)+1,12)
-c            write (6,102) (b(i,j),j=1,min(hi2(2)-lo2(2)+1,12))
-c          end do
-c          call ffflush(6)
-c        endif
-c      end do
-  102 format(14i5)
-      if (me.eq.0) then
-        write(6,*) '*'
-        write(6,*) '*   Performing nga_access_ghosts'
-        write(6,*) '*'
-        call ffflush(6)
-      endif
-      if (has_data(me)) call nga_access_ghosts(g_a, dims3,
-     +    index3, ld3)
-      call ga_sync
+#ifdef PRINT_VAL
       if (maxval.lt.10000)
      +      call aprint(int_mb(index3),dims3(1),dims3(2),ld3,has_data)
+#endif
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
-     +           nmax+2*nwidth,has_data,nwidth)
+     +           nmax+2*nwidth,has_data,nwidth,corner_flag,7)
       call ga_sync
+
+      if (me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '*   Completed updates successfully'
+        write(6,*) '*'
+        call ffflush(6)
+      endif
+      call ga_sync
+c
       tmp = t2
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
@@ -694,50 +651,63 @@ c
       return
       end
 c
-      subroutine atest(a,nrow,ncol,ld,b,ld2,has_data,nwidth)
+      subroutine atest(a,nrow,ncol,ld,b,ld2,has_data,nwidth,
+     +                 check_corner, idx)
 #include "global.fh"
       integer ld
       integer a(ld,*), b(ld2,*)
-      integer i, j, k, nproc
+      integer i, j, k, nproc, me, idx
       logical has_data(0:1999), check_data
       logical check_corner
 
-      check_corner = .true.
-
       nproc = ga_nnodes()
+      me = ga_nodeid()
       check_data = .true.
-      do k = 1, nproc
-        call ga_sync
-        if (k-1.eq.ga_nodeid().and.has_data(k-1)) then
-          do i = 1, nrow
-            do j = 1, ncol
-              if (.not.check_corner.and.(.not.
-     +            ((i.le.nwidth.and.j.le.nwidth).or.
-     +             (i.le.nwidth.and.j.gt.ncol-nwidth).or.
-     +             (i.gt.nrow-nwidth.and.j.le.nwidth).or.
-     +             (i.gt.nrow-nwidth.and.j.gt.ncol-nwidth)))) then
-                if (a(i,j).ne.b(i,j)) check_data = .false.
-              else if (check_corner) then
-                if (a(i,j).ne.b(i,j)) check_data = .false.
-              endif
-            end do
+      call ga_sync
+      if (has_data(me)) then
+        do i = 1, nrow
+          do j = 1, ncol
+            if (.not.check_corner.and.(.not.
+     +          ((i.le.nwidth.and.j.le.nwidth).or.
+     +           (i.le.nwidth.and.j.gt.ncol-nwidth).or.
+     +           (i.gt.nrow-nwidth.and.j.le.nwidth).or.
+     +           (i.gt.nrow-nwidth.and.j.gt.ncol-nwidth)))) then
+              if (a(i,j).ne.b(i,j)) check_data = .false.
+            else if (check_corner) then
+              if (a(i,j).ne.b(i,j)) check_data = .false.
+            endif
           end do
-          if (check_data) then
-            write(6,*) '*'
-            write(6,*) '*   Data from nga_access_ghosts and'
-            write(6,*) '*   nga_periodic_get is the same on'
-            write(6,*) '*   processor ',k-1
-            write(6,*) '*'
-          else
-            write(6,*) '*'
-            write(6,*) '*   Data from nga_access_ghosts and'
-            write(6,*) '*   nga_periodic_get is NOT the same on'
-            write(6,*) '*   processor ',k-1
-            write(6,*) '*'
-          endif
-        endif
-        call ffflush(6)
-      enddo
+        end do
+      else
+        check_data = .false.
+      endif
+      if (check_data) then
+        i = 1
+      else
+        i = 0
+      endif
+      call ga_igop(1,i,1,'+')
+      if (i.ne.nproc) then
+        check_data = .false.
+      else
+        check_data = .true.
+      endif
+      if (check_data.and.me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '*   Data from nga_access_ghosts and'
+        write(6,*) '*   nga_periodic_get is the same on'
+        write(6,100) idx
+  100   format(    ' *   all processors for update ',i1)
+        write(6,*) '*'
+      else if (.not.check_data) then
+        write(6,*) '*'
+        write(6,*) '*   Data from nga_access_ghosts and'
+        write(6,*) '*   nga_periodic_get is NOT the same on'
+        write(6,200) me,idx
+  200   format(    ' *   processor ',i2,' for update ',i1)
+        write(6,*) '*'
+      endif
+      call ffflush(6)
 c
       return
       end
