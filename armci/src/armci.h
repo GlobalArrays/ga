@@ -181,7 +181,7 @@ extern int armci_domain_id(armci_domain_t domain, int glob_proc_id);
 extern int armci_domain_glob_proc_id(armci_domain_t domain, int id, int loc_proc_id);
 extern int armci_domain_my_id(armci_domain_t domain);
 extern int armci_domain_count(armci_domain_t domain);
-
+extern int armci_domain_same_id(armci_domain_t domain, int proc);
 
 
 /* PVM group

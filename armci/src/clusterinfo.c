@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.24 2004-03-30 18:40:53 manoj Exp $ */
+/* $Id: clusterinfo.c,v 1.25 2004-04-01 01:27:38 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -444,4 +444,8 @@ int armci_domain_my_id(armci_domain_t domain)
     return(armci_clus_me);
 }
 
-
+int armci_domain_same_id (armci_domain_t domain, int proc)
+{
+  int rc = SAMECLUSNODE(proc);
+  return(rc);
+}
