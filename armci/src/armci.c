@@ -3,7 +3,6 @@
 #  include "lapidefs.h"
 #endif
 #include <errno.h>
-#include <mpi.h>
 #include "armcip.h"
 #include "copy.h"
 #include "memlock.h"

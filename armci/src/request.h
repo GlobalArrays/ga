@@ -30,6 +30,8 @@ extern  char* MessageSndBuffer;
 #  define GET_SEND_BUFFER
 #endif
 
+#define GA_SEND_REPLY(tag, buf, len, p) armci_sock_send(p,buf,len)
+
 extern void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra);
 extern int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,
                             int proc);

@@ -1,16 +1,20 @@
 #include "message.h"
 #include "armcip.h"
 
+#ifdef CRAY
+char *mp_group_name = (char *)NULL;
+#else
+char *mp_group_name = "mp_working_group";
+#endif
 
 long lwork[BUF_SIZE];
-
 
 void armci_msg_barrier()
 {
 #  ifdef MPI
      MPI_Barrier(MPI_COMM_WORLD);
 #  elif defined(PVM)
-
+     pvm_barrier(mp_group_name, armci_nproc);
 #  else
      long tag=ARMCI_TAG;
      SYNCH_(&tag);
@@ -30,6 +34,8 @@ int armci_msg_me()
      int me;
      MPI_Comm_rank(MPI_COMM_WORLD, &me);
      return(me);
+#  elif defined(PVM)
+       return(pvm_getinst(mp_group_name,pvm_mytid()));
 #  else
      return (int)NODEID_();
 #  endif
@@ -42,6 +48,8 @@ int armci_msg_nproc()
      int nproc;
      MPI_Comm_size(MPI_COMM_WORLD, &nproc);
      return nproc;
+#  elif defined(PVM)
+     return(pvm_gsize(mp_group_name));
 #  else
      return (int)NNODES_();
 #  endif
@@ -51,16 +59,45 @@ void armci_msg_abort(int code)
 {
 #  ifdef MPI
      MPI_Abort(MPI_COMM_WORLD,code);
+#  elif defined(PVM)
+     char error_msg[25];
+     sprintf(error_msg, "ARMCI aborting [%d]", code);
+     pvm_halt();
 #  else
      Error("ARMCI aborting",(long)code);
 #  endif
 }
 
+/*\ root broadcasts to everyone else
+\*/
+void armci_msg_bcast(void *buf, int len, int root)
+{
+    int up, left, right, index, Root=0;
+    int tag=ARMCI_TAG, lenmes;
+    
+    if(root !=Root){
+        int msglen;
+        
+        if(armci_me == root) armci_msg_snd(ARMCI_TAG, buf,len, Root);
+        if(armci_me ==Root) armci_msg_rcv(ARMCI_TAG, buf, len, &msglen, root);
+    }
+    
+    index = armci_me - Root;
+    up    = (index-1)/2 + Root; if( up < Root) up = -1;
+    left  = 2*index + 1 + Root; if(left >= Root+armci_nproc) left = -1;
+    right = 2*index + 2 + Root; if(right >= Root+armci_nproc)right = -1;
+    
+    if(armci_me != Root) armci_msg_rcv(tag, buf, len, &lenmes, up);
+    if (left > -1)  armci_msg_snd(tag, buf, len, left);
+    if (right > -1) armci_msg_snd(tag, buf, len, right);
+}
 
 void armci_msg_brdcst(void* buffer, int len, int root)
 {
 #  ifdef MPI
       MPI_Bcast(buffer, len, MPI_CHAR, root, MPI_COMM_WORLD);
+#  elif defined(PVM)
+      armci_msg_bcast(buffer, len, root);
 #  else
       long ttag=ARMCI_TAG, llen=len, rroot=root;
       BRDCST_(&ttag, buffer, &llen, &rroot);
@@ -72,6 +109,8 @@ void armci_msg_snd(int tag, void* buffer, int len, int to)
 {
 #  ifdef MPI
       MPI_Send(buffer, len, MPI_CHAR, to, tag, MPI_COMM_WORLD);
+#  elif defined(PVM)
+      pvm_psend(pvm_gettid(mp_group_name, to), tag, buffer, len, PVM_BYTE);
 #  else
       long ttag=tag, llen=len, tto=to, block=1;
       SND_(&ttag, buffer, &llen, &tto, &block);
@@ -85,10 +124,14 @@ void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from)
       MPI_Status status;
       MPI_Recv(buffer, buflen, MPI_CHAR, from, tag, MPI_COMM_WORLD, &status);
       MPI_Get_count(&status, MPI_CHAR, msglen);
+#  elif defined(PVM)
+      int src, rtag;
+      pvm_precv(pvm_gettid(mp_group_name, from), tag, buffer, buflen, PVM_BYTE,
+                &src, &rtag, msglen);
 #  else
       long ttag=tag, llen=buflen, mmsglen, ffrom=from, sender, block=1;
       RCV_(&ttag, buffer, &llen, &mmsglen, &ffrom, &sender, &block);
-      *msglen = (int)*mmsglen;
+      *msglen = (int)mmsglen;
 #  endif
 }
 
@@ -282,3 +325,18 @@ long *origx =x;
      armci_msg_brdcst(origx, len,0 );
 }
 
+#ifdef PVM
+/* set the group name if using PVM */
+void ARMCI_PVM_Init(char *mpgroup)
+{
+#ifdef CRAY
+    mp_group_name = (char *)NULL;
+#else
+    if(mpgroup != NULL) {
+/*        free(mp_group_name); */
+        mp_group_name = (char *)malloc(25 * sizeof(char));
+        strcpy(mp_group_name, mpgroup);
+    }
+#endif
+}
+#endif

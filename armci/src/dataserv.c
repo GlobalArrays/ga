@@ -146,6 +146,16 @@ int stat;
 }
 
 
+/*\ write data to socket associated with process "to"
+\*/
+void armci_sock_send(int to, void* data, int len)
+{
+int stat;
+
+    stat = armci_WriteToSocket(AR_sock[to], data, len);
+    if(stat<0)armci_die("armci_sock_send:write failed",stat);
+}
+
 
 /*\ control message to the server, e.g.: ATTACH to shmem, return ptr etc.
 \*/

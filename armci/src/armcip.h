@@ -4,6 +4,7 @@
 #define _ARMCI_P_H
 #include <stdlib.h> 
 #include "armci.h"
+#include "message.h"
 
 #ifdef SYSV
 #  define CLUSTER 
@@ -56,6 +57,8 @@
 #define RMW 5
 #define STRIDED 7
 #define VECTOR  8
+#define LOCK   20
+#define UNLOCK 21
 
 extern  int armci_me, armci_nproc;
 extern  double armci_internal_buffer[BUFSIZE_DBL];

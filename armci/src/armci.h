@@ -93,4 +93,15 @@ extern void ARMCI_Cleanup(void);
 #define ARMCI_ACC_CPL 14
 #define ARMCI_ACC_DCP 15
 #define ARMCI_ACC_LNG 16
-#endif
+
+/* PVM group
+ * On CrayT3E: the default group is the global group which is (char *)NULL
+ *             It is the only working group.
+ * On Workstations: the default group is "mp_working_group". User can set
+ *                  the group name by calling the ARMCI_PVM_init (defined
+ *                  in message.c) and passing the group name to the library.
+ */
+
+extern char *mp_group_name;
+
+#endif /* _ARMCI_H */

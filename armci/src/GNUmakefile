@@ -2,10 +2,17 @@
          COPT = -O
 
 OBJ= armci.o memory.o fcopy.o fence.o rmw.o faccumulate.o acc.o\
- memlock.o pack.o strided.o vector.o clusterinfo.o message.o
+ memlock.o pack.o strided.o vector.o clusterinfo.o message.o mutex.o
 
 #reference to the MPI library name, overwritten by LIBMPI environment variable
 MPI_LIB_NAME = -lmpi
+
+#reference to the PVM library name, overwritten by LIBPVM environment variable
+ifeq ($(TARGET),CRAY-T3E)
+     PVM_LIB_NAME = -lpvm3
+else
+     PVM_LIB_NAME = -lgpvm3 -lpvm3
+endif
 
 INTERRUPT_AVAILABLE = SP1 SP PARAGON LAPI
 SYSTEM_V = SUN SGI SGI_N32 SGI64 HPUX SOLARIS IBM DECOSF CONVEX LINUX
@@ -45,29 +52,59 @@ endif
      
 endif
 
-
 ifneq ($(TARGET),$(findstring $(TARGET),$(ONESIDED_AVAILABLE)))
      LIB_DEFINES += -DSHMEM
 endif
 
-ifdef MPI_INCLUDE
-LIB_INCLUDES += -I$(MPI_INCLUDE)
+
+#
+# settings dependent on selection of the message-passing library
+#
+ifeq ($(MSG_COMMS),PVM)
+#........................... settings for PVM ....................
+ifdef PVM_INCLUDE
+  LIB_INCLUDES += -I$(PVM_INCLUDE)
 endif
-ifdef MPI_LIB
-LIBS += -L$(MPI_LIB)
+ifdef PVM_LIB
+  LIBS += -L$(PVM_LIB)
+endif
+ifdef LIBPVM
+  PVM_LIB_NAME = $(LIBPVM)
+endif
+LIBS += $(PVM_LIB_NAME)
+LIB_DEFINES += -DPVM
+#........................... end of PVM section ..................
+else
+  ifeq ($(MSG_COMMS),TCGMSG)
+    ifdef TCG_INCLUDE
+      LIB_INCLUDES += -I$(TCG_INCLUDE)
+    endif
+    ifdef TCG_LIB
+      LIBS += -L$(TCG_LIB) -ltcgmsg
+    endif
+    LIB_DEFINES += -DTCG
+  else
+#.............. MPI is the default library for ARMCI ..................
+    ifdef MPI_INCLUDE
+      LIB_INCLUDES += -I$(MPI_INCLUDE)
+    endif
+    ifdef MPI_LIB
+      LIBS += -L$(MPI_LIB)
+    endif
+    ifdef LIBMPI
+      MPI_LIB_NAME = $(LIBMPI)
+    endif
+    LIBS += $(MPI_LIB_NAME)
+    LIB_DEFINES += -DMPI
+  endif
+#........................... end of MPI section ..................
 endif
 
-ifdef LIBMPI
-  MPI_LIB_NAME = $(LIBMPI)
-endif
-
-
-LIBS += $(MPI_LIB_NAME)
 
 LIBRARY = libarmci.a
 HARDCLEAN = yes
 
-# include NT files to clean when needed
+#add some extra Microsoft VC files to clean if any left 
 NTSTUFF = *.ilk *.exe *.ncb
 LIB_TARGETS = *.x $(NTSTUFF)
 LIB_DISTRIB = ../lib

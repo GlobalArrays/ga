@@ -12,10 +12,10 @@ extern void armci_msg_clus_igop(long *x, int n, char* op, int logint);
 extern void armci_msg_igop(long *x, int n, char* op, int logint);
 extern void armci_exchange_address(void *ptr_ar[], int n);
 extern void armci_msg_barrier();
-extern void armci_msg_barrier();
 extern int  armci_msg_me();
 extern int  armci_msg_nproc();
 extern void armci_msg_abort(int code);
+
 
 #if defined(PVM)
 #   include <pvm3.h>

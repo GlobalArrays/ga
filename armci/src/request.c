@@ -16,12 +16,61 @@ char* MessageSndBuffer = (char*)_armci_snd_buf;
 
 
 
-/*\  request RMW from server
+/*\ send request to server to LOCK MUTEX
+\*/
+void armci_rem_lock(int mutex, int proc, int *ticket)      
+{
+request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
+char *buf = (char*)(msginfo+1);
+
+    GET_SEND_BUFFER;
+
+    msginfo->dscrlen = msginfo->datalen = msginfo->bytes   =0;
+    msginfo->from  = armci_me;
+    msginfo->to    = proc;
+    msginfo->operation = LOCK;
+    msginfo->format  = mutex;
+
+    armci_send_req(proc);
+
+    msginfo->datalen = sizeof(int); /* receive ticket from server */
+    armci_rcv_data(proc);
+
+    GETBUF(buf, int, *ticket);
+}
+
+
+/*\ send request to server to UNLOCK MUTEX
+\*/
+void armci_rem_unlock(int mutex, int proc, int ticket)
+{
+request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
+char *buf = (char*)(msginfo+1);
+
+    GET_SEND_BUFFER;
+
+    msginfo->dscrlen = 0; 
+    msginfo->datalen = msginfo->bytes   =sizeof(ticket);
+    msginfo->from  = armci_me;
+    msginfo->to    = proc;
+    msginfo->operation = UNLOCK;
+    msginfo->format  = mutex;
+
+    ADDBUF(buf, int, ticket);
+
+    armci_send_req(proc);
+}
+    
+    
+
+/*\ send RMW request to server
 \*/
 void armci_rem_rmw(int op, int *ploc, int *prem, int extra, int proc)
 {
 request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
 char *buf = (char*)(msginfo+1);
+
+    GET_SEND_BUFFER;
 
     msginfo->dscrlen = sizeof(void*);
     msginfo->from  = armci_me;

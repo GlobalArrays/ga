@@ -7,14 +7,21 @@
 #  define sleep(x) Sleep(1000*(x))
 #endif
 
-/* ARMCI is message-passing ambivalent -  we define macros for common MP calls*/
+/* ARMCI is impartial to message-passing libs - we handle them with MP macros */
 #if defined(PVM)
 #   include <pvm3.h>
-#   define MP_INIT(arc,argv) 
+#   ifdef CRAY
+#     define MPGROUP         (char *)NULL
+#     define MP_INIT(arc,argv)
+#   else
+#     define MPGROUP           "mp_working_group"
+#     define MP_INIT(arc,argv) pvm_init(arc, argv)
+#   endif
 #   define MP_FINALIZE()     pvm_exit()
-#   define MP_BARRIER()      pvm_barrier("",-1)
-#   define MP_MYID(pid)      *(pid)   = pvm_getinst("",pvm_mytid())
-#   define MP_PROCS(pproc)   *(pproc) = (int)pvm_getinst("")
+#   define MP_BARRIER()      pvm_barrier(MPGROUP,-1)
+#   define MP_MYID(pid)      *(pid)   = pvm_getinst(MPGROUP,pvm_mytid())
+#   define MP_PROCS(pproc)   *(pproc) = (int)pvm_gsize(MPGROUP)
+    void pvm_init(int argc, char *argv[]);
 #elif defined(TCG)
 #   include <sndrcv.h>
     long tcg_tag =30000;
@@ -27,7 +34,7 @@
 #   include <mpi.h>
 #   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
 #   define MP_FINALIZE()     MPI_Finalize()
-#   define MP_INIT(arc,argv) MPI_Init((argc),(argv))
+#   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
 #   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
 #   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
 #endif
@@ -87,6 +94,40 @@ void* work[MAXPROC]; /* work array for propagating addresses */
 
 
 
+#ifdef PVM
+void pvm_init(int argc, char *argv[])
+{
+    int mytid, mygid, ctid[MAXPROC];
+    int np, i;
+
+    mytid = pvm_mytid();
+    if((argc != 2) && (argc != 1)) goto usage;
+    if(argc == 1) np = 1;
+    if(argc == 2)
+        if((np = atoi(argv[1])) < 1) goto usage;
+    if(np > MAXPROC) goto usage;
+
+    mygid = pvm_joingroup(MPGROUP);
+
+    if(np > 1)
+        if (mygid == 0) 
+            i = pvm_spawn(argv[0], argv+1, 0, "", np-1, ctid);
+
+    while(pvm_gsize(MPGROUP) < np) sleep(1);
+
+    /* sync */
+    pvm_barrier(MPGROUP, np);
+    
+    printf("PVM initialization done!\n");
+    
+    return;
+
+usage:
+    fprintf(stderr, "usage: %s <nproc>\n", argv[0]);
+    pvm_exit();
+    exit(-1);
+}
+#endif
 
 /*\ generate random range for a section of multidimensional array 
 \*/
@@ -176,8 +217,8 @@ int i,j;
 \*/
 void init(double *a, int ndim, int elems, int dims[])
 {
-	int idx[MAXDIMS];
-	int i,dim;
+  int idx[MAXDIMS];
+  int i,dim;
 
  	for(i=0; i<elems; i++){
 		int Index = i;
@@ -394,15 +435,6 @@ void test_dim(int ndim)
 	    new_range(ndim, dimsB, loA, hiA, loB, hiB);
 	    new_range(ndim, dimsA, loA, hiA, loC, hiC);
 
-/*
-            if(ndim==2){
-                loA[0]=loB[0]=loC[0]=0;
-                hiA[0]=hiB[0]=hiC[0]=4;
-                loA[1]=loB[1]=loC[1]=0;
-                hiA[1]=hiB[1]=hiC[1]=2;
-            }
-*/
-
             proc=nproc-1-me;
 
             if(me==0){
@@ -415,7 +447,6 @@ void test_dim(int ndim)
 	    idx2 = Index(ndim, loB, dimsB);
 	    idx3 = Index(ndim, loC, dimsA);
 
-/*            idx1 = 1; idx2=0; idx3 = 0;*/
 	    for(j=0;j<ndim;j++)count[j]=hiA[j]-loA[j]+1;
 
 	    count[0]   *= sizeof(double); /* convert range to bytes at stride level zero */
@@ -545,6 +576,7 @@ void test_acc(int ndim)
             (void)ARMCI_AccS(ARMCI_ACC_DBL,&alpha,(double*)a + idx1, strideA, (double*)b[proc] + idx2, strideB, count, ndim-1, proc);
         }
 
+	sleep(1);
         ARMCI_AllFence();
         MP_BARRIER();
 
@@ -962,19 +994,21 @@ int main(int argc, char* argv[])
 {
     int ndim;
 
-    MP_INIT(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    MPI_Comm_rank(MPI_COMM_WORLD, &me);
+    MP_INIT(argc, argv);
+    MP_PROCS(&nproc);
+    MP_MYID(&me);
 
+/*    printf("nproc = %d, me = %d\n", nproc, me);*/
+    
     if(nproc>MAXPROC && me==0)
        ARMCI_Error("Test works for up to %d processors\n",MAXPROC);
 
     if(me==0){
-       printf("ARMCI test program (%d MPI processes)\n",nproc); 
+       printf("ARMCI test program (%d processes)\n",nproc); 
        fflush(stdout);
        sleep(4);
     }
-
+    
     ARMCI_Init();
 
 /*
@@ -983,7 +1017,7 @@ int main(int argc, char* argv[])
            printf("\nTesting strided gets and puts\n");
            printf("(Only std output for process 0 is printed)\n\n"); 
            fflush(stdout);
-           sleep(4);
+           sleep(1);
         }
 
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
@@ -993,7 +1027,7 @@ int main(int argc, char* argv[])
         if(me==0){
            printf("\nTesting atomic accumulate\n");
            fflush(stdout);
-           sleep(4);
+           sleep(1);
         }
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_acc(ndim); 
         ARMCI_AllFence();
@@ -1003,7 +1037,7 @@ int main(int argc, char* argv[])
         if(me==0){
            printf("\nTesting Vector Interface using triangular patches of a 2-D array\n\n");
            fflush(stdout);
-           sleep(3);
+           sleep(1);
         }
 
         test_vector();
@@ -1013,7 +1047,7 @@ int main(int argc, char* argv[])
         if(me==0){
            printf("\nTesting Accumulate with Vector Interface\n\n");
            fflush(stdout);
-           sleep(3);
+           sleep(1);
         }
         test_vector_acc();
 
@@ -1024,7 +1058,7 @@ int main(int argc, char* argv[])
            printf("\nTesting atomic fetch&add\n");
            printf("(Std Output for all processes is printed)\n\n"); 
            fflush(stdout);
-           sleep(3);
+           sleep(1);
         }
         MP_BARRIER();
 
@@ -1040,3 +1074,4 @@ int main(int argc, char* argv[])
     MP_FINALIZE();
     return(0);
 }
+
