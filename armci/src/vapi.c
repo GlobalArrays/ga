@@ -19,8 +19,8 @@
 /*our incude*/
 #include "armci-vapi.h"
 #define DEBUG_INIT 0
-#define DEBUG_SERVER 1
-#define DEBUG_CLN 1
+#define DEBUG_SERVER 0
+#define DEBUG_CLN 0
 #define DIRTMP_BUF_LEN 4096
 static char *dirtmp_buf;
 /* The device name is "InfiniHost0" */
