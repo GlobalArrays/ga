@@ -2,13 +2,13 @@
                    Agregate Remote Memory Copy Interface
              http://www.emsl.pnl.gov:2080/docs/parsoft/armci
 
-Implementation status as of January, 2001:
+Status as of November, 2001:
 
 A. Supported Platforms
    1. shared-memory systems: SUN Solaris, SGI, IBM, Linux, DEC, HP, Cray SV1,
-      and Windows NT/95
+      and Windows NT/95/2000
    2. distributed-memory systems: Cray T3E, IBM SP(TARGET=LAPI), FUJITSU VX/VPP 
-   3. clusters of workstations (sockets, Myrinet, VIA, Qudarics supported)
+   3. clusters of workstations (sockets, Myrinet, VIA, Quadrics)
 
 Notes: 
    1. TARGET=SGI generates a MIPS-4 64-bit code with 32-bit address space 
@@ -18,10 +18,15 @@ Notes:
       Tested with MPI vendor implementations in addition to MPICH and WMPI (NT).
       Tested with PVM 3.4 on SGI and Cray PVM on the T3E only (doc/README.PVM).
       Tested TCGMSG by developers of the  NWChem package on many platforms.
-   4. GNU make is required on Unix. For command line build on Windows, 
-      simply call MS nmake instead of GNU make.
+   4. GNU make is REQUIRED on Unix. For command line build on Windows, 
+      Microsof nmake instead of GNU make should be used.
    5. As a general rule, 64-bit versions can be built by appending to
       64 to the TARGET name (HPUX, SOLARIS, LINUX64(alpha), IBM, LAPI, FUJITSU)
+   6. The default setup, assumes that you have a Fortran compiler available
+      if addition to the C compiler. Fortran code is used for fast
+      memory copy and some other numerically intensive primitives.
+      ARMCI can also be built w/o Fortan compiler available, but performance
+      of some operations might not be as good. 
 
 C. Documentation and examples
    1. Limited documentation is in files ./doc/armci.pdf
@@ -37,16 +42,26 @@ D. How to build it?
         setenv MPI_LIB /msrc/dist/mpi/mpich/lib/IRIX/ch_shmem
         setenv MPI_INCLUDE /msrc/dist/mpi/mpich/include
 
-      An alternative solution is to call "make CC=mpicc" in Step 3 &4.
+      An alternative solution is to call "make CC=mpicc" in Step 3 &4
+      where mpicc is a wrapper the C compiler provided by some implementations
+      of MPI.
 
    3. Type "make" in ./src to build libarmci.a which goes into armci/lib/$TARGET
    4. Type "make test.x" to build the example program. 
 
-   NOTE: for workstation clusters with special networks, ARMCI_NETWORK
-         muste be set (GM,VIA,QUADRICS) to specify the protocol.
+   NOTES
+         1. for workstation clusters with special networks, ARMCI_NETWORK
+         must be set (GM,VIA,QUADRICS) to specify the native protocol.
+         For example, on a cluster with Myrinet set before calling make
+         setenv ARMCI_NETWORK GM
+         If ARMCI this option is skipped, ARMCI will try to use TCP/IP
+         sockets instead of GM. If ARMCI_NETWORK is not set and MPICH-GM
+         is used, ARMCI will crash in the initialization due to the
+         the fork problem in GM. 
+      
 
 E. Platform specific issues
    see http://www.emsl.pnl.gov:2080/docs/global/support.html
 
-F. Contact info
+F. Contact info for bugs, questions, etc
    email: parsoft-support@emsl.pnl.gov
