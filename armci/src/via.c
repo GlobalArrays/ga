@@ -17,6 +17,9 @@
 #define DEBUG0 0
 #define DEBUG1 0
 #define PAUSE_ON_ERROR__ 
+#ifndef VIP_ERROR_NOT_SUPPORTED
+#   define VIP_ERROR_NOT_SUPPORTED -33333
+#endif
 
 /* Giganet/Emulex cLAN is the default */
 #ifndef VIADEV_NAME
