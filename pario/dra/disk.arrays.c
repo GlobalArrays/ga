@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.24 2001-02-28 21:57:59 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.25 2001-03-13 23:05:29 d3h325 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1051,7 +1051,7 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
      Integer index, ldd = gs_a.ihi - gs_a.ilo + 1, one=1;
      Integer atype, cols, rows, elemsize, ilo, ihi, jlo, jhi;
      Integer istart, iend, jstart, jend;
-     void (*f)(Integer*,Integer*,Integer*,Integer*,Integer*,void*,Integer*); 
+     void  (FATR *f)(Integer*,Integer*,Integer*,Integer*,Integer*,void*,Integer*); 
      char *buf = (char*)buffer;
 
      if(op==LOAD) f = ga_get_;
