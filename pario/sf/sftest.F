@@ -58,7 +58,7 @@ c     everybody writes chunk of data
             rc = sf_write(handle,  8*dble(i-1), 
      &           8*dble(min(dimnsn,(end-i+1))), buffer(1,curid), 
      &           idlist(curid))
-            if (rc.ne.0)call perror('write failed',rc)
+            if (rc.ne.0)call parerr('write failed',rc)
 
          enddo
       endif
@@ -82,7 +82,7 @@ c     everybody reads different chunk of data
 c           read and test data chunk by chunk
             rc = sf_read(handle, 8*dble(i-1),
      .           8*dble(min(dimnsn,(end-i+1))), buffer, idlist(1))
-            if (rc.ne.0)call perror('read failed',rc)
+            if (rc.ne.0)call parerr('read failed',rc)
             rc=sf_wait(idlist(1))
 c
             do j = 1,min(dimnsn,(end-i+1))

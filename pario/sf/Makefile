@@ -4,9 +4,9 @@
 #
 
  LIB_DISTRIB = ../../lib
-     LIBRARY = libsf.a
+     LIBRARY = libchemio.a
  LIB_TARGETS = *.x *.p
-         OBJ = shared.files.o fortran.o
+         OBJ = sf_fortran.o shared.files.o
      HEADERS = sf.h sf.fh
 LIB_INCLUDES = -I../elio
 
@@ -32,7 +32,7 @@ include ../../config/makelib.h
 
  COPT    = -g
  FOPT    = -g
-LOC_LIBS = -L$(LIBDIR) -lsf -lelio $(COM_LIB)
+LOC_LIBS = -L$(LIBDIR) -lchemio -lglobal -lma -lblas  $(COM_LIB)
 
 ifeq ($(TARGET), DECOSF)
   LOC_LIBS += -laio -lpthreads 
@@ -45,7 +45,7 @@ endif
 	if [ -f $(basename $@).c ]; then\
 		$(CC) $(CLDOPT) -o $@ $< $(LOC_LIBS) $(CLIBS);\
 	else\
-		$(FC) $(FLDOPT) -o $@ $< $(LOC_LIBS);\
+		$(FC) $(FOPT_REN) $(FLDOPT) -o $@ $< $(LOC_LIBS);\
 	fi
 
 # *.p file is required for tcgmsg `parallel' command to run your program
