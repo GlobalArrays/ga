@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.31 2004-04-09 22:20:41 manoj Exp $ */
+/* $Id: elan.c,v 1.32 2004-04-10 00:42:36 manoj Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -713,10 +713,6 @@ void armci_checkMapped(void *buffer, size_t size)
 int armci_enable_alpha_hack() {
   int enable=0;
 #if defined(DECOSF) && defined(QUADRICS)
-#  if defined(REGION_ALLOC)
-     return enable;
-#  endif
-
 #  ifdef QSNETLIBS_VERSION 
 #    if QSNETLIBS_VERSION_CODE > QSNETLIBS_VERSION(1,4,0) 
        int nnodes = atoi((const char *)getenv("RMS_NNODES"));
