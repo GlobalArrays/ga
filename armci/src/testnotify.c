@@ -1,7 +1,9 @@
-/* $Id: testnotify.c,v 1.2 2003-08-21 07:00:33 d3h325 Exp $ */
+/* $Id: testnotify.c,v 1.3 2003-08-21 21:17:43 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+
+#define DEBUG__ 
 
 #ifdef WIN32
 #  include <windows.h>
@@ -379,6 +381,11 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
      rc = ARMCI_Malloc(a, bytes);
      assert(rc==0);
      
+#ifdef DEBUG_
+     printf("%d after malloc ndim=%d b=%d ptr=%p\n",me,ndim,(int) bytes,a[me]);
+     fflush(stdout);
+#endif
+
      assert(a[me]);
      bzero(a[me],bytes);
 }
@@ -419,7 +426,7 @@ int i,j, proc=1,Idx=1,idx=0;
 void *b[MAXPROC], *a[MAXPROC];
 int left = (me+nproc-1) % nproc;
 int right = (me+1) % nproc;
-int loopcnt=1, less=2;
+int loopcnt=1, less=2, strl; /* less>1 takes a partial plane */
 
 
     /* create shared and local arrays */
@@ -436,7 +443,7 @@ int loopcnt=1, less=2;
     }
     count[0]*=sizeof(double);
 
-    for(i=0; i<ndim-2; i++)Idx *= dimsB[i];
+    for(i=0; i<ndim-1; i++)Idx *= dimsB[i];
 
     ARMCI_Barrier();
     if(me==0){
@@ -448,6 +455,7 @@ int loopcnt=1, less=2;
 
     ARMCI_Barrier();
     loopcnt = (ndim>1)? dimsB[ndim-1] : 1;
+    strl    = (ndim>1)? ndim-2: 0; /* strides of the subpatch to transfer */
 
     for(i=0;i<loopcnt;i++){
         int lc, rc,wc;
@@ -455,16 +463,24 @@ int loopcnt=1, less=2;
         if(me==0){
 
           ARMCI_PutS((double*)a[me]+idx, stride, 
-                     (double*)b[left]+idx, stride, count, ndim-1, left);
+                     (double*)b[left]+idx, stride, count, strl, left);
+#if DEBUG_ 
+          printf("%d-%d: ps=%p pd=%p i=%d idx=%d count=%d\n",me,left,(double*)
+              a[me]+idx, (double*)b[left]+idx,i, idx,count[0]); fflush(stdout); 
+#endif
           lc=armci_notify(left);
           rc = armci_notify_wait(right,&wc); 
 
         } else{
 
+
           rc = armci_notify_wait(right,&wc); 
           ARMCI_PutS((double*)b[me]+idx, stride, 
-                     (double*)b[left]+idx, stride, count, ndim-1, left);
-
+                     (double*)b[left]+idx, stride, count, strl, left);
+#if DEBUG_ 
+          printf("%d: ps=%p pd=%p i=%d idx=%d count=%d\n",me,(double*)b[me]+idx,
+                      (double*)b[left]+idx,i, idx,count[0]); fflush(stdout); 
+#endif
           lc=armci_notify(left);
         }
 
@@ -509,7 +525,7 @@ int main(int argc, char* argv[])
         }
         MP_BARRIER();
         
-        for(ndim=1; ndim<MAXDIMS; ndim++) test_notify(ndim);
+        for(ndim=1; ndim<=MAXDIMS; ndim++) test_notify(ndim);
         MP_BARRIER();
 
     ARMCI_Finalize();

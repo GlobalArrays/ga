@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.79 2003-08-21 07:00:33 d3h325 Exp $ */
+/* $Id: armci.c,v 1.80 2003-08-21 21:17:43 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -584,6 +584,11 @@ extern int armci_inotify_proc(int);
 #else
    armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
    pnotify->sent++;
+    if(SAMECLUSNODE(proc)){
+#ifdef MEM_FENCE
+       MEM_FENCE;
+#endif
+   }
    ARMCI_Put(&pnotify->sent,&(_armci_notify_arr[proc]+armci_me)->received, 
              sizeof(pnotify->sent),proc);
    return(pnotify->sent);

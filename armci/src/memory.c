@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.36 2003-08-21 07:00:33 d3h325 Exp $ */
+/* $Id: memory.c,v 1.37 2003-08-21 21:17:43 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -26,6 +26,13 @@ static context_t ctx_localmem;
 #include "armci_vampir.h"
 #endif
 
+void kr_check_local()
+{
+#if 0
+kr_malloc_print_stats(&ctx_localmem);
+#endif
+kr_malloc_verify(&ctx_localmem);
+}
 
 void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
 {
