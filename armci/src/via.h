@@ -50,7 +50,7 @@ typedef struct {
 extern char * armci_via_client_mem_alloc(int);
 #define BUF_ALLOCATE(_size) armci_via_client_mem_alloc(_size)
 
-#define CLIENT_BUF_BYPASS_ 
+#define CLIENT_BUF_BYPASS 
 #define LONG_GET_THRESHOLD 10000
 #define LONG_GET_THRESHOLD_STRIDED 20000000
 #define _armci_bypass 1
