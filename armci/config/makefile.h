@@ -49,6 +49,9 @@ ifeq ($(FC),xlf)
      FOPT_REN = -q32  -qextname
 GLOB_DEFINES += -DXLFLINUX -DEXTNAME
 endif
+ifeq ($(CC),xlc)      
+   EXTRA_OBJ += tas.o
+endif
 
 endif
 
