@@ -8,7 +8,7 @@
 #  include "via.h"
    typedef int msg_tag_t;
 #else
-   typedef int msg_tag_t;
+   typedef long msg_tag_t;
 #endif
 
 

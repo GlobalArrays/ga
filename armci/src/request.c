@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.19 2000-11-01 20:55:29 d3h325 Exp $ */
+/* $Id: request.c,v 1.20 2000-12-06 01:38:38 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -237,7 +237,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
 
     /* fill vector descriptor */
     buf += sizeof(request_header_t);
-    ADDBUF(buf,int,len); /* number of sets */
+    ADDBUF(buf,long,len); /* number of sets */
     for(s=0;s<len;s++){
 
         bytes += darr[s].ptr_array_len * darr[s].bytes;
@@ -520,13 +520,14 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 void armci_server_vector( request_header_t *msginfo, 
                           char *dscr, char* buf, int buflen)
 {
-    int  len,proc;
+    int  proc;
+    long  len;
     void *scale;
     int  i,s;
     char *sbuf = buf;
 
     /* unpack descriptor record */
-    GETBUF(dscr, int, len);
+    GETBUF(dscr, long ,len);
     
     /* get scale for accumulate, adjust buf to point to data */
     scale = buf;
@@ -574,7 +575,10 @@ void armci_server_vector( request_header_t *msginfo,
         GETBUF(dscr, int, bytes);
         ptr = (void**)dscr; dscr += parlen*sizeof(char*);
         for(s=0; s< parlen; s++){
+/*
           armci_copy(buf, ptr[s], bytes);
+*/
+          bcopy(buf, ptr[s], (size_t)bytes);
           buf += bytes;
         }
       }

@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.14 2000-11-01 22:53:02 d3h325 Exp $ */
+/* $Id: signaltrap.c,v 1.15 2000-12-06 01:38:38 d3h325 Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -177,6 +177,10 @@ SigType SigBusHandler(sig)
      int sig;
 {
   AR_caught_sig= sig;
+#ifdef PAUSE_ON_ERROR
+  fprintf(stderr,"%d(%d): Bus Error ... pausing\n",
+          armci_me, getpid() );pause();
+#endif
   Error("Bus error, status=",(int) sig);
 }
 
