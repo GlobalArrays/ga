@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.12 2003-03-28 01:26:12 vinod Exp $ */
+/* $Id: fence.c,v 1.13 2003-04-02 23:16:58 vinod Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -112,3 +112,33 @@ void ARMCI_AllFence()
 #endif
 }
 
+void ARMCI_Barrier()
+{
+#ifdef GM
+int buf;
+long type=ARMCI_TAG;
+    /*first step is to make sure all the sends are complete */
+    armci_client_clear_outstanding_sends();
+
+    /*now do the barrier */
+#  ifdef MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#  else
+    SYNCH_(&type);
+#  endif
+
+   /*master sends a message to the server on the same node, waits for response*/
+    if(armci_me==armci_master)
+       armci_rem_ack(armci_clus_me);
+
+    /*a local barrier*/
+    armci_msg_gop_scope(SCOPE_NODE,&buf,1,"+",ARMCI_INT);
+#else
+    ARMCI_AllFence();
+#  ifdef MPI
+    MPI_Bcast(buffer, (int)len, MPI_CHAR, (int)root, MPI_COMM_WORLD);
+#  else
+    BRDCST_(&type, buffer, &len, &root);
+#  endif
+#endif
+}

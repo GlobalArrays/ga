@@ -164,4 +164,5 @@ extern void armci_client_send_complete(armci_gm_context_t*);
 extern void  armci_check_context_for_complete(int);
 extern void armci_gm_fence_init();
 extern void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag);
+extern void armci_client_clear_outstanding_sends();
 #endif /* MYRINET_H */

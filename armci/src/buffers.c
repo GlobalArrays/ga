@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.22 2003-03-27 21:39:05 d3h325 Exp $    **/
+/* $Id: buffers.c,v 1.23 2003-04-02 23:16:58 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -622,4 +622,19 @@ BUF_INFO_T *_armci_buf_to_bufinfo(void *buf){
         armci_die("armci_buf_to_index: bad pointer",0);
         return(0);
    }
+}
+
+/*\function to clear all buffers
+\*/
+void _armci_buf_clear_all()
+{
+int i; 
+    for(i=0;i<MAX_BUFS;i++){
+       if(_armci_buf_state->table[i].op || _armci_buf_state->table[i].first)
+         CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[i].field,_armci_buf_state->table[i].snd,_armci_buf_state->table[i].rcv,_armci_buf_state->table[i].to,_armci_buf_state->table[i].op);
+    }
+    for(i=0;i<MAX_SMALL_BUFS;i++){
+       if(_armci_buf_state->table[i].op || _armci_buf_state->table[i].first)
+         CLEAR_SEND_BUF_FIELD(_armci_buf_state->smallbuf[i].field,_armci_buf_state->table[i].snd,_armci_buf_state->table[i].rcv,_armci_buf_state->table[i].to,_armci_buf_state->table[i].op);
+    }
 }

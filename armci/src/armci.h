@@ -11,6 +11,7 @@ typedef struct {
 extern int armci_notify(int proc);
 extern int armci_notify_wait(int proc,int *pval);
 extern int ARMCI_Init(void);    /* initialize ARMCI */
+extern void ARMCI_Barrier(void);    /* ARMCI Barrier*/
 
 extern int ARMCI_Put(void *src, void* dst, int bytes, int proc);
 extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc);

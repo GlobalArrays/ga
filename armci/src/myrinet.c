@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.62 2003-03-29 00:18:43 vinod Exp $
+/* $Id: myrinet.c,v 1.63 2003-04-02 23:16:58 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -797,15 +797,6 @@ void armci_client_send_ack(int p, int success)
                                                          sizeof(long),NULL,0);
 }
 
-void armci_client_send_ack_seq(int p, int success)
-{
-     int cluster = armci_clus_id(p);
-     long *pflag = proc_gm->tmp;
-     *pflag= (success)? ARMCI_GM_READY : ARMCI_GM_FAILED;
-     armci_client_direct_send(p, pflag, proc_gm->serv_ack_ptr[cluster],
-                                                         sizeof(long),NULL,0);
-}
-
 void  armci_check_context_for_complete(int idx){
     MPI_Status status;
     int flag;
@@ -817,10 +808,10 @@ void  armci_check_context_for_complete(int idx){
        armci_die("armci_client_send_complete: failed code=",context_array[idx].done);
 } 
 
+
 /*\ send request message to server and wait for completion
  *  assumption: the buffer is pinned and most probably is MessageSndBuffer
 \*/
-
 int armci_send_req_msg(int proc, void *vbuf, int len)
 {
     char *buf     = (char*)vbuf;
@@ -1385,6 +1376,23 @@ void armci_server_send_ack(request_header_t* msginfo)
 }
 
 
+/*\ to be used to clear all outstanding sends that this client might have
+ * for now, even the non-blocking sends are completed
+\*/
+void armci_client_clear_outstanding_sends()
+{
+int i;
+    /*three sends that need to be cleared viz.. */
+    /* 1)sends using client_send_context, */
+    armci_client_send_complete(armci_gm_client_context);
+
+    /* 2)sends using context in buffers and */
+    _armci_buf_clear_all();
+
+    /* 3)the sends using non-blocking context array */
+    for(i=0;i<MAX_PENDING;i++)
+       armci_client_send_complete(armci_gm_nbcontext_array+i);
+}
 
 /*\ sends notification to client that data in direct send was transfered/put
  *  into the client buffer
