@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.68 2003-04-02 21:05:34 d3h325 Exp $ */
+/* $Id: strided.c,v 1.69 2003-04-04 22:13:10 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -303,10 +303,7 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
 #  ifdef LAPI2 
     /*even 1D armci_nbput has to use different origin counters for 1D */
     if(!ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
-       !nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD) &&
-      /*line below is a temporary and a problem specific solution that has
-      to be changed/fixed as soon as possible*/
-       !(count[0]<2048 && count[0]>1000 && count[1]>222)) 
+       !nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD)) 
        armci_lapi_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
                          dst_stride_arr,count,stride_levels,nb_handle);
     else
@@ -440,6 +437,12 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 
 #ifndef LAPI2
     if(!direct){
+#    ifdef ALLOW_PIN /*if we can pin, we do*/
+       if( !stride_levels && armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+         armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],NULL,0);
+         return 0;
+       }
+#    endif
 #if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
        if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
            rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
@@ -599,7 +602,12 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 
 #ifndef LAPI2
     if(!direct){
-
+#     ifdef ALLOW_PIN
+       if( !stride_levels && armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+         armci_rem_get(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
+         return 0;
+       }
+#     endif
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS))
        /* for larger strided or 1D reqests buffering can be avoided to send data
         * we can try to bypass the packetization step and send request directly
@@ -855,6 +863,14 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 
 #ifndef LAPI2
     if(!direct){
+#     ifdef ALLOW_PIN
+       if( !stride_levels && armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+         armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],
+                                  (void **)(&nb_handle->cmpl_info),
+                                  nb_handle->tag);
+         return 0;
+       }
+#     endif
 #  if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)
        if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
            rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
@@ -934,7 +950,12 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     
 #ifndef LAPI2
     if(!direct){
-
+#     ifdef ALLOW_PIN
+       if( !stride_levels && armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+         armci_rem_get(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
+         return 0;
+       }
+#     endif
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS))
        /* for larger strided or 1D reqests buffering can be avoided to send data
         * we can try to bypass the packetization step and send request directly
@@ -1111,6 +1132,17 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
       
       ARMCI_NB_GET(src, dst, bytes, proc, &nb_handle->cmpl_info);
 #     else
+#       ifdef ALLOW_PIN
+       if( armci_region_both_found(dst,src,bytes,armci_clus_id(proc))){
+         INIT_NB_HANDLE(nb_handle,PUT,proc);
+	 nb_handle->tag = GET_NEXT_NBTAG();
+	 nb_handle->op  = GET;
+	 nb_handle->proc= proc;
+	 nb_handle->bufid=NB_NONE;
+         armci_rem_get(proc, src,NULL,dst,NULL,&bytes, 0, nb_handle);
+         return 0;
+       }else
+#       endif
       return ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
     }
