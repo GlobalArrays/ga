@@ -1,3 +1,6 @@
+#ifndef _GA_SERVICES_H
+#define _GA_SERVICES_H
+
 /**              
  * GAServices : Global Arrays Services class.
  * 
@@ -475,3 +478,4 @@ class GAServices {
 };
 
 
+#endif // _GA_SERVICES_H 
