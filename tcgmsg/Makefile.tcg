@@ -36,7 +36,7 @@ machdep:
 			./port "$(MACHINE)" $$file ; \
 			done \
 		done
-	chmod a+x examples/demo
+	chmod -f a+x examples/demo
 	chmod -f a+x makep
 
 clean:
