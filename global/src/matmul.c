@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.53 2004-03-24 22:45:18 manoj Exp $ */
+/* $Id: matmul.c,v 1.54 2004-04-01 20:04:21 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -6,7 +6,8 @@
  *
  *===========================================================*/
 
-#include "stdlib.h"
+#include <stdlib.h>
+#include <string.h>
 #include "matmul.h"
 
 #define DEBUG_ 0 /*set 1, to verify the correctness of parallel matrix mult.*/
@@ -350,7 +351,7 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
     Integer me = ga_nodeid_();
     Integer get_new_B, loC[2]={0,0}, hiC[2]={0,0}, ld[2];
     Integer i0, i1, j0, j1;
-    Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, adim, bdim, cdim;
+    Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, adim, bdim=0, cdim;
     int istart, jstart, kstart, iend, jend, kend;
     short int do_put=UNSET, single_task_flag=UNSET;
     DoubleComplex ONE;
@@ -470,13 +471,13 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
      short int need_scaling, irregular;
 {
   
-    Integer me= ga_nodeid_(), nproc=ga_nnodes_();
-    Integer get_new_B, i0, i1, j0, j1;
+    Integer me= ga_nodeid_();
+    Integer get_new_B=TRUE, i0, i1, j0, j1;
     Integer idim, jdim, kdim;
-    Integer k, adim, bdim, cdim, adim_next, bdim_next;
+    Integer k, adim=0, bdim, cdim, adim_next, bdim_next;
     Integer loC[2]={1,1}, hiC[2]={1,1}, ld[2];
     int max_tasks=0, shiftA=0, shiftB=0;
-    int currA, nextA, currB, nextB; /* "current" and "next" task Ids */
+    int currA, nextA, currB, nextB=0; /* "current" and "next" task Ids */
     task_list_t taskListA[MAX_CHUNKS], taskListB[MAX_CHUNKS], state; 
     short int do_put=UNSET, single_task_flag=UNSET, chunks_left=0;
     DoubleComplex ONE, *a, *b, *c;
@@ -667,8 +668,9 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     Integer me= ga_nodeid_(), nproc=ga_nnodes_();
     Integer get_new_B, i, i0, i1, j0, j1;
     Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim, ijk=0;
-    Integer n, m, k, adim, bdim, cdim;
-    Integer idim_prev, jdim_prev, kdim_prev, adim_prev, bdim_prev, cdim_prev;
+    Integer n, m, k, adim, bdim=0, cdim;
+    Integer idim_prev=0, jdim_prev=0, kdim_prev=0;
+    Integer adim_prev=0, bdim_prev=0, cdim_prev=0;
     task_list_t taskListC; 
     short int compute_flag=0, shiftA=0, shiftB=0;
     DoubleComplex ONE, *a, *b, *c;
@@ -1013,10 +1015,10 @@ void ga_matmul(transa, transb, alpha, beta,
     DoubleComplex a_ar[2][ICHUNK*KCHUNK], b_ar[2][ICHUNK*KCHUNK],
       c_ar[2][ICHUNK*KCHUNK];
 #else
-    DoubleComplex *a, *b, *c, *a_ar[2], *b_ar[2], *c_ar[2];
+    DoubleComplex *a=NULL, *b, *c, *a_ar[2], *b_ar[2], *c_ar[2];
 #endif
-    Integer adim1, adim2, bdim1, bdim2, cdim1, cdim2, dims[2];
-    Integer atype, btype, ctype, rank, me= ga_nodeid_(), nproc = ga_nnodes_();
+    Integer adim1=0, adim2=0, bdim1=0, bdim2=0, cdim1=0, cdim2=0, dims[2];
+    Integer atype, btype, ctype, rank, me= ga_nodeid_();
     Integer n, m, k, Ichunk, Kchunk, Jchunk;
     Integer loA[2]={0,0}, hiA[2]={0,0};
     Integer loB[2]={0,0}, hiB[2]={0,0};
@@ -1283,7 +1285,7 @@ void ga_matmul_mirrored(transa, transb, alpha, beta,
 #else
    DoubleComplex *a, *b, *c;
 #endif
-Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2, dims[2], rank;
+Integer atype, btype, ctype, adim1=0, adim2=0, bdim1=0, bdim2=0, cdim1=0, cdim2=0, dims[2], rank;
 Integer me= ga_nodeid_(), nproc;
 Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
