@@ -1,4 +1,4 @@
-/* $Id: lapi.c,v 1.13 2001-12-05 23:18:40 d3h325 Exp $ */
+/* $Id: lapi.c,v 1.14 2001-12-07 00:44:33 d3h325 Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>
@@ -10,6 +10,7 @@
 
 #define DEBUG_ 0
 #define ERROR(str,val) armci_die((str),(val))
+#define BUF_TO_EVBUF(buf) ((lapi_cmpl_t*)(((char*)buf) - sizeof(lapi_cmpl_t)))
 
 
 int lapi_max_uhdr_data_sz; /* max  data payload */
@@ -174,10 +175,10 @@ request_header_t *msginfo = (request_header_t *)uhdr;
 void armci_send_req(int proc, request_header_t* msginfo, int len)
 {
 int msglen = sizeof(request_header_t);
-lapi_cntr_t *pcmpl_cntr, *pcntr = &buf_cntr.cntr;
+lapi_cntr_t *pcmpl_cntr, *pcntr = &(BUF_TO_EVBUF(msginfo)->cntr);
 int rc;
 
-      msginfo->tag.cntr= &buf_cntr.cntr;
+      msginfo->tag.cntr= pcntr;
       msginfo->tag.buf = msginfo+1;
 
       if(msginfo->operation==GET || msginfo->operation==LOCK){
@@ -185,12 +186,12 @@ int rc;
          if(lapi_max_uhdr_data_sz < msginfo->dscrlen){
 
             msginfo->dscrlen = -msginfo->dscrlen; /* no room for descriptor */
-            pcntr = NULL; /* GET(descr) from CH will increment buf_cntr */
+            pcntr = NULL; /* GET(descr) from CH will increment buf cntr */
 
          }else msglen += msginfo->dscrlen;
 
             pcmpl_cntr=NULL; /* don't trace completion status for load ops */
-            SET_COUNTER(buf_cntr,1); /* expect data to arrive into same buf*/
+            SET_COUNTER(*(lapi_cmpl_t*)pcntr,1);/*data to arrive into same buf*/
 
       }else if (msginfo->operation==UNLOCK){
 
@@ -203,7 +204,7 @@ int rc;
 
             msginfo->datalen = -msginfo->datalen;
             msginfo->dscrlen = -msginfo->dscrlen;
-            pcntr = NULL; /* GET/LOCK from CH will increment buf_cntr */
+            pcntr = NULL; /* GET/LOCK from CH will increment buf cntr */
 
          }else msglen += msginfo->dscrlen+msginfo->datalen;
 
@@ -216,7 +217,7 @@ int rc;
                   UPDATE_FENCE_STATE(msginfo->to, msginfo->operation, 1);
 
       if((rc=LAPI_Amsend(lapi_handle,(uint)msginfo->to,armci_header_handler,
-                         MessageSndBuffer, msglen, NULL, 0, 
+                         msginfo, msglen, NULL, 0, 
                          NULL, pcntr, pcmpl_cntr))) armci_die("AM failed",rc);
 
       if(DEBUG_) fprintf(stderr,"%d sending req=%d to %d\n",
@@ -257,11 +258,8 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo, char *bdata,
 
 char* armci_rcv_data(int proc, request_header_t *msginfo)
 {
-/*     fprintf(stderr,"%d: receiving cntr=%d val=%d\n", armci_me, buf_cntr.cntr, buf_cntr.val);*/
-     CLEAR_COUNTER(buf_cntr);
-
-/*     fprintf(stderr,"%d received %lf\n",armci_me, *((double*)MessageSndBuffer));*/
-
+lapi_cmpl_t *pcntr=BUF_TO_EVBUF(msginfo);
+     CLEAR_COUNTER((*pcntr));
      return (char*)(msginfo+1);
 }
 
@@ -272,7 +270,8 @@ char* armci_rcv_data(int proc, request_header_t *msginfo)
 void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
                         void *ptr, int strides, int stride_arr[], int count[])
 {
-     CLEAR_COUNTER(buf_cntr);
+lapi_cmpl_t *pcntr=BUF_TO_EVBUF(msginfo);
+     CLEAR_COUNTER((*pcntr));
      armci_read_strided(ptr, strides, stride_arr, count, (char*)(msginfo+1));
 }
 
@@ -295,6 +294,7 @@ void armci_init_lapi()
 {
 int rc, p;
 int lapi_max_uhdr_sz;
+lapi_cmpl_t *pcntr;
 
 #ifndef TCGMSG
     rc = LAPI_Init(&lapi_handle, &lapi_info);
@@ -335,6 +335,11 @@ int lapi_max_uhdr_sz;
      rc = LAPI_Setcntr(lapi_handle, &get_cntr.cntr, 0); 
      if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (get)",rc);
      get_cntr.val = 0;
+     pcntr = (lapi_cmpl_t*)MessageSndBuffer;
+     rc = LAPI_Setcntr(lapi_handle, &pcntr->cntr, 0); 
+     if(rc) ERROR("armci_init_lapi: LAPI_Setcntr failed (bufcntr)",rc);
+     pcntr->val = 0;
+     
 
 #if  !defined(LAPI2)
 

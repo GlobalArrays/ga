@@ -40,6 +40,7 @@ extern void armci_init_lapi(void);  /* initialize LAPI data structures*/
 extern void armci_term_lapi(void);  /* destroy LAPI data structures */
 extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI send */
 
+#define EXTRA_MSG_BUFLEN_DBL  (sizeof(lapi_cmpl_t)>>3)
 #define MAX_CHUNKS_SHORT_GET  9
 #define SHORT_ACC_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
 #define SHORT_PUT_THRESHOLD (6 * lapi_max_uhdr_data_sz) 

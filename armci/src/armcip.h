@@ -6,6 +6,11 @@
 #include "armci.h"
 #include "message.h"
 
+#if defined(LAPI) || defined(CLUSTER)
+#  include "request.h"
+#endif
+
+
 #ifdef WIN32
 #include <windows.h>
 #define sleep(x) Sleep(100*(x))
@@ -43,10 +48,6 @@ extern thread_id_t armci_usr_tid;
 #  define SERVER_CONTEXT (armci_usr_tid != THREAD_ID_SELF())
 #else
 #  define SERVER_CONTEXT (armci_me<0)
-#endif
-
-#if defined(LAPI) || defined(CLUSTER)
-#  include "request.h"
 #endif
 
 /* min amount of data in strided request to be sent in a single TCP/IP message*/

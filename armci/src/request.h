@@ -49,11 +49,11 @@ extern  char* MessageRcvBuffer;
 extern  char* MessageSndBuffer;
 
 #ifdef LAPI
-#  define REQ_TAG {MessageSndBuffer + sizeof(request_header_t), &buf_cntr.cntr }
-#  define GET_SEND_BUFFER(_size) MessageSndBuffer;CLEAR_COUNTER(buf_cntr); SET_COUNTER(buf_cntr,1);
+#  define GET_SEND_BUFFER(_size)(MessageSndBuffer+sizeof(lapi_cmpl_t));\
+          CLEAR_COUNTER(*((lapi_cmpl_t*)MessageSndBuffer));\
+          SET_COUNTER(*((lapi_cmpl_t*)MessageSndBuffer),1);
 #  define GA_SEND_REPLY armci_lapi_send
 #else
-#  define REQ_TAG 32000
 #  ifdef SOCKETS
 #    define GA_SEND_REPLY(tag, buf, len, p) armci_sock_send(p,buf,len)
 #  else
