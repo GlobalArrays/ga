@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.5 2001-12-04 22:20:30 d3g293 Exp $ */
+/*$Id: base.h,v 1.6 2002-01-16 19:58:01 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -106,10 +106,14 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
   char *str= "cannot locate region: ";                               \
   sprintf(err_string, str);                                          \
   _l = strlen(str);                                                  \
-  for(_d=0; _d< ndim; _d++){                                         \
-    sprintf(err_string+_l, "%ld:%ld",lo[_d],hi[_d]);                 \
+  sprintf(err_string+_l, "[%ld:%ld ",lo[_d],hi[_d]);                 \
+  _l=strlen(err_string);                                             \
+  for(_d=0; _d< ndim-1; _d++){                                         \
+    sprintf(err_string+_l, ",%ld:%ld ",lo[_d],hi[_d]);               \
     _l=strlen(err_string);                                           \
   }                                                                  \
+  sprintf(err_string+_l, "]",lo[_d],hi[_d]);                         \
+  _l=strlen(err_string);                                             \
   ga_error(err_string, val);                                         \
 }
 
