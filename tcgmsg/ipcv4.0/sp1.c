@@ -36,7 +36,7 @@
 #define TYPE_NXTVAL_REPLY 32769	/* Type for NXTVAL response */
 #define SYNC_TYPE 32770		/* Type for synchronization */
 
-long mperrno=-1;       /* EUI error code, for some reason not in current EUIH
+/* int mperrno=-1;       /* EUI error code, for some reason not in current EUIH
                           remove the statement when found/fixed */
 
 #define DEBUG_ DEBUG
@@ -46,7 +46,7 @@ static long DEBUG=0;           /* debug flag ... see setdbg */
 
 static long dontcare, allmsg, nulltask,allgrp; /*values for EUI/EUIH wildcards*/
 static long nxtval_buffer[NXTVAL_BUF_SIZE];    /* Used by handler for nxtval */
-static void nxtval_handler();
+static void nxtval_handler(int *);
 static long nxtval_server;
 
 static volatile long n_in_msg_q = 0;    /* No. in the message q */
@@ -69,7 +69,7 @@ extern char *memalign();
 
 /* global variables to implement interrupt safe synchronization */
 char sync[MAXPROC];
-long sync_msgid[MAXPROC];
+int sync_msgid[MAXPROC];
 #endif
 
 
@@ -88,6 +88,17 @@ mpc_probe(node, type, bytes)
 #endif
 
 
+
+/*\ Return number of the calling process ... at the moment this is
+ *  just the same as the EUIH task numbering in allgrp
+\*/
+long NODEID_()
+{
+  int numtask, taskid, r;
+  r= mpc_environ(&numtask, &taskid);
+  return (taskid);
+}
+
 /*\ Error handler
 \*/
 void Error(string, code)
@@ -103,28 +114,16 @@ void Error(string, code)
   (void) fflush(stdout);
   (void) fflush(stderr);
 
-  mpc_stopall(code);
+  mpc_stopall(1);
+  exit(1);
 }
-
-
-
-/*\ Return number of the calling process ... at the moment this is
- *  just the same as the EUIH task numbering in allgrp
-\*/
-long NODEID_()
-{
-long numtask, taskid, r;
-  r= mpc_environ(&numtask, &taskid);
-  return (taskid);
-}
-
 
 
 /*\ Return number of USER tasks/processes (in allgrp).
 \*/
 long NNODES_()
 {
-long numtask, taskid, r;
+  int numtask, taskid, r;
   r= mpc_environ(&numtask, &taskid);
   return (numtask);
 }
@@ -144,13 +143,12 @@ void SND_(type, buf, lenbuf, node, sync)
   long *sync     = flag for sync(1) or async(0) communication (input)
 */
 {
-  long status, msgid;
-  long me = NODEID_();
-  long ttype = *type;
-
+  int status, msgid;
+  int me = NODEID_();
+  int ttype = *type;
 
   if (DEBUG) {
-    (void)printf("SND_: node %ld sending to %ld, len=%ld, type=%ld, sync=%ld\n",
+    (void)printf("SND_: node %d sending to %ld, len=%ld, type=%ld, sync=%ld\n",
 		  me, *node, *lenbuf, *type, *sync);
     (void) fflush(stdout);
   }
@@ -209,7 +207,7 @@ void SND_(type, buf, lenbuf, node, sync)
 \*/
 void wildcards()
 {
-long buf[4], qtype, nelem, status;
+  int buf[4], qtype, nelem, status;
 
 	qtype = 3;
 	nelem = 4;
@@ -341,7 +339,7 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 
 long PROBE_(long *type, long *node)
 {
-long ttype, nbytes, nnode, rc ;
+  int ttype, nbytes, nnode, rc ;
   
   nnode =  (*node < 0) ? dontcare : *node; 
   ttype = *type;
@@ -356,15 +354,16 @@ long ttype, nbytes, nnode, rc ;
 
 
 
-static long requesting_node;     /* interrupting processor */
-static long int_rcv_id;
+static int requesting_node;     /* interrupting processor */
+static int int_rcv_id;
 
 void PBEGIN_()
 {
   char workdir[256], *eventfile;
   long start = MTIME_();
-  static long type = SYNC_TYPE, htype = TYPE_NXTVAL, msgid,node;
-  static long newflag, oldflag, len_buf,status;
+  static int type = SYNC_TYPE, htype = TYPE_NXTVAL, msgid,node;
+  static int newflag, oldflag, status;
+  static size_t len_buf;
   void SYNCH_();
   DEBUG = 0;
 
@@ -486,7 +485,7 @@ void SYNCH_(type)
      long *type;
 {
 #ifdef INTR_SAFE
-    static long ttype = SYNC_TYPE,node,inode, status;
+    static int ttype = SYNC_TYPE,node,inode, status;
 
     /* Dumb synchronization ... all send to 0 then 0 responds */
  
@@ -524,13 +523,13 @@ long NXTVAL_(mproc)
   mproc = 0 ... indicates to server that I am about to terminate
 */
 {
-static  long buf[1];
-static  long lenbuf = sizeof(buf);
-static  long lenmes, nodefrom, nodeto;
-static  long sync = 1;
-static  long msgid, status, type;
-static  long rtype  = TYPE_NXTVAL_REPLY;   /* reply message type */
-static  long  ret_val;
+static  int buf[1];
+static  int lenbuf = sizeof(buf);
+static  int lenmes, nodefrom, nodeto;
+static  int sync = 1;
+static  int msgid, status, type;
+static  int rtype  = TYPE_NXTVAL_REPLY;   /* reply message type */
+static  int  ret_val;
 
   buf[0] = *mproc;
 
@@ -637,8 +636,7 @@ void WAITCOM_(nodesel)
 
 /*\ Interrupt handler
 \*/
-static void nxtval_handler(pid)
-       int *pid;
+static void nxtval_handler(int *pid)
 {
 static long cnt     = 0;          /* actual counter */
 volatile static int ndone = 0;   /* no. finished for this loop */
