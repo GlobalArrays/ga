@@ -250,11 +250,12 @@ void ga_snd_req(g_a, ilo,ihi,jlo,jhi, nbytes, data_type, oper, proc, to)
               ga_nodeid_(), oper, to);
     NumSndReq++; /* count requests sent */
 
-    if(GA_fence_set && (oper == GA_OP_PUT || oper == GA_OP_ACC || 
-                        oper == GA_OP_DST || oper == GA_OP_RDI))
-                        fence_array[to]=1;
+#if !(defined(CRAY_T3D) || defined(CONVEX) || defined(KSR))
+      if(GA_fence_set && (oper == GA_OP_PUT || oper == GA_OP_ACC || 
+                          oper == GA_OP_DST || oper == GA_OP_RDI))
+                          fence_array[to]=1;
 }
-
+#   endif
 
 
 #include "mem.ops.h"
