@@ -13,11 +13,11 @@
 
 void do_work()
 {
-int ONE=1, ZERO=0;   /* useful constants */
+int ONE=1 ;   /* useful constants */
 int g_a, g_b;
 int n=N, type=MT_F_DBL;
 int me=GA_Nodeid(), nproc=GA_Nnodes();
-int col, i, row;
+int i, row;
 int dims[2]={N,N};
 int lo[2], hi[2];
 
