@@ -2,7 +2,7 @@
 #define _mafdecls_fh
 
 !
-!     $Id: mafdecls.fh,v 1.8 2000-07-04 11:27:03 d3g001 Exp $
+!     $Id: mafdecls.fh,v 1.9 2000-07-18 20:05:02 d3h325 Exp $
 !
 
 !
@@ -116,19 +116,44 @@
 !     variables
 !
 
+#ifdef HPUX
+#  define HP_SHARED_COMMON_
+#endif
+
 !     common blocks
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_byte/
+#endif
       common /mbc_byte/		byte_mb(2)
       character*1		byte_mb
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_int/
+#endif
       common /mbc_int/		int_mb(2)
       integer			int_mb
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_log/
+#endif
       common /mbc_log/		log_mb(2)
       logical			log_mb
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_real/
+#endif
       common /mbc_real/		real_mb(2)
       real			real_mb
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_dbl/
+#endif
       common /mbc_dbl/		dbl_mb(2)
       double precision		dbl_mb
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_scpl/
+#endif
       common /mbc_scpl/		scpl_mb(2)
       complex			scpl_mb
+#ifdef HP_SHARED_COMMON
+*$HP$ shared_common /mbc_dcpl/
+#endif
       common /mbc_dcpl/		dcpl_mb(2)
       double complex		dcpl_mb
 
