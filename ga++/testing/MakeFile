@@ -1,0 +1,28 @@
+
+LOC_INCLUDES = -I..\..\include -I$(MPI_INCLUDE)
+OBJDIR=.\obj
+LIB_DISTRIB = ..\..\lib\win32
+
+TESTUTIL = $(OBJDIR)\util.obj
+
+!IFDEF GA_C_CORE
+LOC_DEFINES = -DGA_C_CORE
+!ENDIF
+
+#CLINK = libf.lib
+
+all: testc.exe
+
+$(TESTUTIL): $(OBJDIR)
+
+
+!INCLUDE ..\..\config\NTmakefile.h
+!INCLUDE ..\..\config\NTmakelib.h
+
+LIBS = $(LIB_DISTRIB)\ga++.lib  $(LIB_DISTRIB)\global.lib  $(LIB_DISTRIB)\tcgmsg-mpi.lib\
+ $(LIB_DISTRIB)\ma.lib  $(LIB_DISTRIB)\linalg.lib $(LIB_DISTRIB)\armci.lib $(MPI) wsock32.lib 
+
+FOPT = $(FOPT) /Z7
+ngatest.exe: $(OBJDIR) $(OBJDIR)\ngatest.obj $(OBJDIR)\util.obj
+	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\ngatest.obj $(OBJDIR)\util.obj $(LIBS)
+
