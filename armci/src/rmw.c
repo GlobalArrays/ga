@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.6 2000-06-03 00:38:57 d3h325 Exp $ */
+/* $Id: rmw.c,v 1.7 2000-06-03 01:09:31 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -60,20 +60,7 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
 #endif
 
     switch (op) {
-#   ifdef _CRAYMPP
-      /************** here sizeof(long)= sizeof(int) **************/
-      case ARMCI_FETCH_AND_ADD:
-      case ARMCI_FETCH_AND_ADD_LONG:
-          while ( (lval = shmem_swap((long*)prem, INVALID, proc) ) == INVALID);
-          *(int*)ploc   = lval;
-          (void) shmem_swap((long*)prem, (lval + extra), proc);
-        break;
-      case ARMCI_SWAP:
-      case ARMCI_SWAP_LONG:
-          *(int*)ploc = shmem_swap((long*)prem, (long*)ploc,  proc); 
-        break;
-#   elif defined(QUADRICS)
-      /************** here sizeof(long) != sizeof(int) **************/
+#   if defined(QUADRICS) || defined(_CRAYMPP)
       case ARMCI_FETCH_AND_ADD:
           while ( (ival = shmem_int_swap(prem, INT_MAX, proc) ) == INT_MAX);
           (void) shmem_int_swap(prem, ival +extra, proc);
@@ -85,10 +72,10 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
           *(long*)ploc   = lval;
         break;
       case ARMCI_SWAP:
-          *(int*)ploc = shmem_int_swap((int*)prem, (int*)ploc,  proc); 
+          *(int*)ploc = shmem_int_swap((int*)prem, *(int*)ploc,  proc); 
         break;
       case ARMCI_SWAP_LONG:
-          *(long*)ploc = shmem_swap((long*)prem, (long*)ploc,  proc); 
+          *(long*)ploc = shmem_swap((long*)prem, *(long*)ploc,  proc); 
         break;
 #   elif defined(LAPI)
       /************** here sizeof(long)= sizeof(int) **************/
