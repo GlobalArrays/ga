@@ -33,7 +33,7 @@ ifeq ($(TARGET),SP)
     CFLAGS = -g $(DEFINES)
  LINTFLAGS = -u -a -wkD $(DEFINES)
      EXTRA = strdup.o strtok.o
-   OBJ  = sp1.o evon.o evlog.o checkbyte.o mtime.o \
+   LIBOBJ  = sp1.o evon.o evlog.o checkbyte.o mtime.o \
              memalign.o random.o drand48.o mitob.o mdtob.o \
              mdtoi.o mitod.o llog.o $(EXTRA)
 endif
@@ -46,7 +46,7 @@ ifeq ($(TARGET),SP1)
     CFLAGS = -g $(DEFINES)
  LINTFLAGS = -u -a -wkD $(DEFINES)
      EXTRA = strdup.o strtok.o
-   OBJ  = sp1.o evon.o evlog.o checkbyte.o mtime.o \
+   LIBOBJ  = sp1.o evon.o evlog.o checkbyte.o mtime.o \
              memalign.o random.o drand48.o mitob.o mdtob.o \
              mdtoi.o mitod.o llog.o $(EXTRA)
 endif
@@ -80,7 +80,7 @@ ifeq ($(INTEL),yes)
     FC     = if77
     AR     = ar860
     RANLIB = echo $*
-      OBJ  = ipsc.o globalop.o evon.o evlog.o checkbyte.o \
+      LIBOBJ  = ipsc.o globalop.o evon.o evlog.o checkbyte.o \
              memalign.o random.o drand48.o mitob.o mdtob.o \
              mdtoi.o mitod.o llog.o
 endif
@@ -293,8 +293,8 @@ NO_PARALLEL = DELTA PARAGON SP1 SP
 
 
 
-ifndef OBJ
-OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
+ifndef LIBOBJ
+LIBOBJ =  brdcst.o    nodeid.o    setdbg.o                          \
           checkbyte.o llog.o      nxtval.o    shmem.o     synch.o   \
           cluster.o   memalign.o  signals.o                         \
           usleep.o    srmover.o   pbegin.o    snd.o       waitall.o \
@@ -311,14 +311,6 @@ OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
 
 endif
 
-.SUFFIXES:	
-.SUFFIXES: .o .f .c .s
-
-.f.o:
-	$(FC) -c $(FFLAGS) $*.f
-.c.o:
-	$(CC) $(CFLAGS) -c $*.c
-
 
 ifeq ($(TARGET),KSR)
 # need optimization for this but everything else breaks with it
@@ -331,10 +323,16 @@ endif
 ifndef BINDIR
        BINDIR = .
 endif
-ifndef LIBDIR
-       LIBDIR = .
+
+#ifndef LIBDIR
+#       LIBDIR = .
+#endif
+
+ifndef CNFDIR
+       CNFDIR = .
 endif
 
+OBJ := $(LIBOBJ)
 LIB_DISTRIB = ../../lib
 LIBRARY = libtcgmsg.a
 LIB_TARGETS = $(BINDIR)/parallel *.x *.x testf.? core events events.??? log.???\
@@ -342,7 +340,7 @@ LIB_TARGETS = $(BINDIR)/parallel *.x *.x testf.? core events events.??? log.???\
 include ../../config/makelib.h
 
 
-LD_LIBES = $(LIBRARY_PATH) $(LIBS)
+LOADLIBES = $(LIBRARY_PATH) $(LIBS)
 #......................... make targets ........................
 #
 ifeq ($(TARGET),$(findstring $(TARGET),$(NO_PARALLEL)))
@@ -353,23 +351,22 @@ endif
 
 everything:     all $(BINDIR)/parallel parse toplot
 
-hello.x:	hello.o $(LIBRARY_PATH)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)	
-	$(RM) hello.o
+hello.x: $(LIBRARY_PATH)
+	$(CC) $(CFLAGS) -o $@ hello.c  $(LOADLIBES)
 
 
 ifneq ($(TARGET),$(findstring $(TARGET),$(NO_PARALLEL)))
   ifeq ($(TARGET),IPSC)
 #       IPSC ... parallel must be built on the front end machine!
-	$(BINDIR)/parallel:       para.ipsc.o
+	$(BINDIR)/parallel:
 		echo TARGET BINDIR
-		cc -g -o $@ para.ipsc.o -host
+		cc -g -o $@ para.ipsc.c -host
 		echo Don't forget to copy parallel into bin directory
-	para.ipsc.o:    para.ipsc.c
-		cc -c -g para.ipsc.c
   else
         $(BINDIR)/parallel:	 $(LIBRARY_PATH)
+		$(CC) $(CFLAGS) -o $@ parallel.c $(LOADLIBES)
 		@echo ">>>" $@ "is used to run TCGMSG programs"
+		
   endif
 else
 .PHONY:
@@ -378,18 +375,19 @@ else
 endif
 
 
-test.x:	test.o checkbyte.o $(LIBRARY_PATH) $(BINDIR)/parallel
-	$(CC) $(CFLAGS) -o $@ test.o $(LIBRARY_PATH) $(LIBS)
-	$(RM) test.o checkbyte.o 
+test.x:	$(LIBRARY_PATH) $(BINDIR)/parallel
+	$(CC) $(CFLAGS) -c checkbyte.c
+	$(CC) $(CFLAGS) -o $@ test.c $(LOADLIBES)
+	$(RM) checkbyte.o
 
-testf.x:	testf.o $(LIBRARY_PATH)
-	$(FC) $(FFLAGS) -o $@ $^ $(LIBS)
-	$(RM) testf.o
+testf.x: msgtypesf.h testf.f.proto $(LIBRARY_PATH) $(BINDIR)/parallel
+	./port "$(TARGET)" testf.f.proto
+	$(FC) $(FFLAGS) -o $@ testf.f $(LOADLIBES)
 
-parse:	parse.o strdup.o
-	$(CC) -O -o $@ parse.o strdup.o
-parse.o:	parse.c
+parse:	parse.o 
 	$(CC) -O -c parse.c
+	$(CC) -O -o $@ parse.c strdup.o
+	$(RM) strdup.o
 
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(NO_TOPLOT)))
@@ -397,19 +395,14 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(NO_TOPLOT)))
        toplot:
 		@echo "No toplot on this system"
 else
-       toplot:	toplot.o strdup.o
-		$(CC) -g -o $@ toplot.o strdup.o -lplot
-		$(RM) toplot.o
-       toplot.o:	toplot.c
-		$(CC) -O -c toplot.c
+       toplot:	strdup.o
+		$(CC) -g -o $@ toplot.c strdup.o -lplot
 endif
 
+testpf.x: $(LIBRARY_PATH)
+	$(FC) $(FFLAGS) -o $@ testpf.c $(LIBRARY_PATH) $(LIBS)
 
-testpf.x:	testpf.o $(LIBRARY_PATH)
-	$(FC) $(FFLAGS) -o $@ testpf.o $(LIBRARY_PATH) $(LIBS)
-	$(RM) testpf.o
-
-$(OBJ) parallel.o test.o testf.o:	$(INCLUDES)
+$(LIBOBJ) parallel.o test.o testf.o:	$(INCLUDES)
 
 testf.o:	msgtypesf.h
 $(patsubst %,$(LIBRARY_PATH)(%),globalop.o):	msgtypesc.h
