@@ -31,20 +31,11 @@ MAKEFILES
  - GNUmakefile: Unix makefile
  - MakeFile:    Windows makefile
 
- - Makefile.h:  definitions & include symbols 
- - MakeFiles.h: files to be compiled depending on the TARGET machine
-                and VERSION of memory (shared or distributed)
- - Makelib.h:   specification of libraries to be linked with when test
-                programs are built
-
    The user needs to specify TARGET in the GNUmakefile or on the
    command line when calling make. The library and test programs
-   should be built by calling make in the current directory. The
-   appropriate value of VERSION will be determined automatically.
-
-   Valid TARGET is one of: SUN, SOLARIS, SGI, SGI_N32, SGITFP, DECOSF,
-                           IBM, LAPI (IBM SP), CRAY-T3E, HPUX, LINUX,
-                           FUJITSU-VPP
+   should be built by calling make in the current directory.
+   The list of valid target platforms is printed by make when
+   called in the directory above.
 
 
 BUILDING GA
@@ -79,6 +70,10 @@ BUILDING GA
    Since there are certain interdependencies between blacs and
    blacsF77cinit, some system might require specification of -lblacs
    twice to fix the unresolved external symbols from these libs.
+
+   Under Linux, LINUX_DBL_UNDERSCORE can be set to link with Scalapack 
+   libraries compiled by g77 to facilitate single or double undercores in
+   the fortran names.
 
    To build the library, type "make" or "gmake".
 
