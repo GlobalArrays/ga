@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.40 2003-08-01 00:35:17 d3h325 Exp $ */
+/* $Id: test.c,v 1.41 2003-09-23 17:00:42 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -753,7 +753,7 @@ int lenpergiov;
     if(me==0){
        printf("\n\tNow veryfying the vector put data for correctness");
     }
-    for(i=0;i<nproc;i++)if(i!=me)ARMCI_Wait(hdl_put+dstproc);
+    for(i=0;i<nproc;i++)if(i!=me)ARMCI_Wait(hdl_put+i);
     sleep(1);
     MP_BARRIER();
     ARMCI_AllFence();/*every one syncs after put */
