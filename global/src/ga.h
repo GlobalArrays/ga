@@ -191,6 +191,7 @@ extern void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
 #define GA_Fence  ga_fence_
 #define GA_Nodeid (int)ga_nodeid_
 #define GA_Nnodes (int)ga_nnodes_
+#define ga_nbhdl_t Integer *
 
 extern int GA_Cluster_nnodes();
 extern int GA_Cluster_nodeid();

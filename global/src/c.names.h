@@ -34,6 +34,8 @@
 #define  ga_fill_patch_            GA_FILL_PATCH
 #define  ga_gather_                GA_GATHER
 #define  ga_get_                   GA_GET
+#define  ga_nbwait_                GA_NBWAIT
+#define  ga_nbget_                 GA_NBGET
 #define  ga_has_ghosts_            GA_HAS_GHOSTS
 #define  ga_idot_                  GA_IDOT
 #define  ga_igop_                  GA_IGOP
@@ -73,6 +75,7 @@
 #define  ga_print_stats_           GA_PRINT_STATS
 #define  ga_proc_topology_         GA_PROC_TOPOLOGY
 #define  ga_put_                   GA_PUT
+#define  ga_nbput_                 GA_NBPUT
 #define  ga_read_inc_              GA_READ_INC
 #define  ga_release_               GA_RELEASE
 #define  ga_release_update_        GA_RELEASE_UPDATE
@@ -125,6 +128,8 @@
 #define  nga_fill_patch_           NGA_FILL_PATCH
 #define  nga_gather_               NGA_GATHER
 #define  nga_get_                  NGA_GET
+#define  nga_nbwait_               NGA_NBWAIT
+#define  nga_nbget_                NGA_NBGET
 #define  nga_idot_patch_           NGA_IDOT_PATCH
 #define  nga_inquire_              NGA_INQUIRE
 #define  nga_locate_               NGA_LOCATE
@@ -135,6 +140,7 @@
 #define  nga_periodic_put_         NGA_PERIODIC_PUT
 #define  nga_print_patch_          NGA_PRINT_PATCH
 #define  nga_put_                  NGA_PUT
+#define  nga_nbput_                NGA_NBPUT
 #define  nga_strided_put_          NGA_STRIDED_PUT
 #define  nga_read_inc_             NGA_READ_INC
 #define  nga_release_              NGA_RELEASE
@@ -216,6 +222,8 @@
 #define  ga_fill_patch_            ga_fill_patch__          
 #define  ga_gather_                ga_gather__              
 #define  ga_get_                   ga_get__                 
+#define  ga_nbwait_                ga_nbwait__                 
+#define  ga_nbget_                 ga_nbget__                 
 #define  ga_has_ghosts_            ga_has_ghosts__          
 #define  ga_idot_                  ga_idot__                
 #define  ga_igop_                  ga_igop__                
@@ -255,6 +263,7 @@
 #define  ga_print_stats_           ga_print_stats__         
 #define  ga_proc_topology_         ga_proc_topology__       
 #define  ga_put_                   ga_put__                 
+#define  ga_nbput_                 ga_nbput__                 
 #define  ga_read_inc_              ga_read_inc__            
 #define  ga_reinit_handler_        ga_reinit_handler__      
 #define  ga_release_               ga_release__             
@@ -308,6 +317,8 @@
 #define  nga_fill_patch_           nga_fill_patch__         
 #define  nga_gather_               nga_gather__             
 #define  nga_get_                  nga_get__                
+#define  nga_nbwait_               nga_nbwait__                
+#define  nga_nbget_                nga_nbget__                
 #define  nga_idot_patch_           nga_idot_patch__         
 #define  nga_inquire_              nga_inquire__            
 #define  nga_locate_               nga_locate__             
@@ -318,6 +329,7 @@
 #define  nga_periodic_put_         nga_periodic_put__  
 #define  nga_print_patch_          nga_print_patch__        
 #define  nga_put_                  nga_put__                
+#define  nga_nbput_                nga_nbput__                
 #define  nga_strided_put_          nga_strided_put__                
 #define  nga_read_inc_             nga_read_inc__           
 #define  nga_release_              nga_release__            

@@ -80,6 +80,9 @@ extern void FATR ga_init_fence_   ARGS_(( void));
 extern void FATR ga_fence_   ARGS_(( void));
 extern void FATR ga_get_     ARGS_((Integer*, Integer*, Integer*, Integer*,
       Integer*, Void*, Integer* ));
+extern void FATR ga_nbget_   ARGS_((Integer*, Integer*, Integer*, Integer*,
+      Integer*, Void*, Integer*, Integer* ));
+extern void FATR ga_nbwait_  ARGS_((Integer*));
 extern void ga_dgop ARGS_((Integer, DoublePrecision*, Integer, char* ));
 extern void ga_fgop     ARGS_((Integer, float*, Integer, char* ));
 extern void ga_igop     ARGS_((Integer, Integer*, Integer, char* ));
@@ -94,6 +97,8 @@ extern void FATR ga_list_nodeid_ ARGS_((Integer*, Integer* ));
 extern void FATR ga_num_data_servers_ ARGS_((Integer* ));
 extern void FATR ga_put_  ARGS_((Integer*, Integer*, Integer*, Integer*,
       Integer*, Void*, Integer* ));
+extern void FATR ga_nbput_ ARGS_((Integer*, Integer*, Integer*, Integer*,
+      Integer*, Void*, Integer*, Integer* ));
 extern void FATR ga_release_ ARGS_((Integer*, Integer*, Integer*, Integer*,
       Integer*));
 extern void FATR ga_release_update_ ARGS_((Integer*, Integer*, Integer*,
@@ -271,10 +276,15 @@ extern void FATR nga_distribution_(Integer *g_a, Integer *proc,
                                    Integer *lo, Integer *hi);
 extern void FATR nga_put_(Integer *g_a, Integer *lo, Integer *hi, 
                           void *buf, Integer *ld);
+extern void FATR nga_nbput_(Integer *g_a, Integer *lo, Integer *hi, 
+                            void *buf, Integer *ld, Integer *nbhdl);
 extern void FATR nga_strided_put_(Integer *g_a, Integer *lo, Integer *hi, 
                                   Integer *skip, void *buf, Integer *ld);
 extern void FATR nga_get_(Integer *g_a, Integer *lo, Integer *hi, 
                           void *buf, Integer *ld);
+extern void FATR nga_nbget_(Integer *g_a, Integer *lo, Integer *hi, 
+                          void *buf, Integer *ld, Integer *nbhdl);
+extern void FATR nga_nbwait_(Integer *nbhdl);
 extern void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi,
                           void *buf, Integer *ld, void *alpha);
 extern void FATR nga_scatter_(Integer *g_a, void* v, Integer subscr[], 

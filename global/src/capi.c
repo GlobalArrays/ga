@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.49 2002-12-17 22:43:36 d3g293 Exp $ */
+/* $Id: capi.c,v 1.50 2003-02-03 16:49:25 vinod Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -350,7 +350,18 @@ void NGA_Get(int g_a, int lo[], int hi[], void* buf, int ld[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_get_(&a, _ga_lo, _ga_hi, buf, _ga_work);
+    nga_get_common(&a, _ga_lo, _ga_hi, buf, _ga_work,NULL);
+}
+
+void NGA_NbGet(int g_a, int lo[], int hi[], void* buf, int ld[],
+               ga_nbhdl_t nbhandle)
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+    COPYC2F(ld,_ga_work, ndim-1);
+    nga_get_common(&a, _ga_lo, _ga_hi, buf, _ga_work,(Integer *)nbhandle);
 }
 
 void NGA_Put(int g_a, int lo[], int hi[], void* buf, int ld[])
@@ -360,8 +371,29 @@ void NGA_Put(int g_a, int lo[], int hi[], void* buf, int ld[])
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
-    nga_put_(&a, _ga_lo, _ga_hi, buf, _ga_work);
+    nga_put_common(&a, _ga_lo, _ga_hi, buf, _ga_work,(Integer *)NULL);
 }    
+
+void NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[],
+               ga_nbhdl_t nbhandle)
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+    COPYC2F(ld,_ga_work, ndim-1);
+    nga_put_common(&a, _ga_lo, _ga_hi, buf, _ga_work,(Integer *)nbhandle);
+}
+
+int NGA_NbWait(ga_nbhdl_t nbhandle)
+{
+    nga_wait_internal((Integer *)nbhandle);
+}
+
+int GA_NbWait(ga_nbhdl_t nbhandle)
+{
+    nga_wait_internal((Integer *)nbhandle);
+}
 
 void NGA_Strided_put(int g_a, int lo[], int hi[], int skip[],
                      void* buf, int ld[])

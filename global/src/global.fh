@@ -60,3 +60,4 @@
       external ga_sdot, ga_sdot_patch, nga_sdot_patch
       external ga_cluster_nprocs, ga_cluster_nodeid, ga_cluster_nnodes
       external ga_cluster_procid
+#define ga_nbhdl_t integer

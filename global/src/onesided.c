@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.28 2002-12-18 15:47:25 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.29 2003-02-03 16:49:25 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -328,20 +328,35 @@ Integer _d, _factor;\
           }\
 }
 
-/*\ PUT AN N-DIMENSIONAL PATCH OF DATA INTO A GLOBAL ARRAY
+/*\ A routine to wait for a non-blocking call to complete
 \*/
-void FATR nga_put_(Integer *g_a, 
+void FATR nga_nbwait_(Integer *nbhandle) 
+{
+    nga_wait_internal((Integer *)nbhandle);
+} 
+
+/*\ A routine to wait for a non-blocking call to complete
+\*/
+void FATR ga_nbwait_(Integer *nbhandle) 
+{
+    nga_wait_internal((Integer *)nbhandle);
+} 
+
+/*\ A common routine called by both non-blocking and blocking GA put calls.
+\*/
+void nga_put_common(Integer *g_a, 
                    Integer *lo,
                    Integer *hi,
                    void    *buf,
-                   Integer *ld)
+                   Integer *ld,
+                   Integer *nbhandle)
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size;
 int proc, ndim;
 
 #ifdef GA_USE_VAMPIR
-      vampir_begin(NGA_PUT,__FILE__,__LINE__);
+      vampir_begin(NGA_NBPUT,__FILE__,__LINE__);
 #endif
       GA_PUSH_NAME("nga_put");
 
@@ -355,7 +370,7 @@ int proc, ndim;
       GAbytes.puttot += (double)size*elems;
       GAstat.numput++;
       GAstat.numput_procs += np;
-
+      if(nbhandle)ga_init_nbhandle(nbhandle);
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
           Integer ldrem[MAXDIM];
@@ -391,16 +406,48 @@ int proc, ndim;
              gam_CountElems(ndim, plo, phi, &elems);
              GAbytes.putloc += (double)size*elems;
           }
-          ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1, proc);
+
+          /*casting what ganb_get_armci_handle function returns to armci_hdl is 
+            very crucial here as on 64 bit platforms, pointer is 64 bits where 
+            as temporary in only 32 bits*/ 
+          if(nbhandle) 
+            ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1, 
+                         proc,(armci_hdl_t)get_armci_nbhandle(nbhandle));
+          else
+            ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,proc);
 
       }
 
       GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
-      vampir_end(NGA_PUT,__FILE__,__LINE__);
+      vampir_end(NGA_NBPUT,__FILE__,__LINE__);
 #endif
 }
 
+
+/*\ (NON-BLOCKING) PUT AN N-DIMENSIONAL PATCH OF DATA INTO A GLOBAL ARRAY
+\*/
+void FATR nga_nbput_(Integer *g_a, 
+                   Integer *lo,
+                   Integer *hi,
+                   void    *buf,
+                   Integer *ld,
+                   Integer *nbhandle)
+{
+    nga_put_common(g_a,lo,hi,buf,ld,nbhandle); 
+}
+
+
+/*\ PUT AN N-DIMENSIONAL PATCH OF DATA INTO A GLOBAL ARRAY
+\*/
+void FATR nga_put_(Integer *g_a, 
+                   Integer *lo,
+                   Integer *hi,
+                   void    *buf,
+                   Integer *ld)
+{
+    nga_put_common(g_a,lo,hi,buf,ld,NULL); 
+}
 
 
 void FATR  ga_put_(g_a, ilo, ihi, jlo, jhi, buf, ld)
@@ -420,7 +467,36 @@ Integer lo[2], hi[2];
    lo[1]=*jlo;
    hi[0]=*ihi;
    hi[1]=*jhi;
-   nga_put_(g_a, lo, hi, buf, ld);
+   nga_put_common(g_a, lo, hi, buf, ld,NULL);
+
+#ifdef GA_TRACE
+   trace_etime_();
+   op_code = GA_OP_PUT; 
+   trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
+#endif
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_PUT,__FILE__,__LINE__);
+#endif
+}
+
+void FATR  ga_nbput_(g_a, ilo, ihi, jlo, jhi, buf, ld, nbhdl)
+   Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld, *nbhdl;
+   Void  *buf;
+{
+Integer lo[2], hi[2];
+
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_PUT,__FILE__,__LINE__);
+#endif
+#ifdef GA_TRACE
+   trace_stime_();
+#endif
+
+   lo[0]=*ilo;
+   lo[1]=*jlo;
+   hi[0]=*ihi;
+   hi[1]=*jhi;
+   nga_put_common(g_a, lo, hi, buf, ld,nbhdl);
 
 #ifdef GA_TRACE
    trace_etime_();
@@ -433,14 +509,14 @@ Integer lo[2], hi[2];
 }
 
 
-
-/*\ GET AN N-DIMENSIONAL PATCH OF DATA FROM A GLOBAL ARRAY
+/*\ A common routine called by both non-blocking and blocking GA Get calls.
 \*/
-void FATR nga_get_(Integer *g_a,
+void FATR nga_get_common(Integer *g_a,
                    Integer *lo,
                    Integer *hi,
                    void    *buf,
-                   Integer *ld)
+                   Integer *ld,
+                   Integer *nbhandle)
 {
       /* g_a:   Global array handle
          lo[]:  Array of lower indices of patch of global array
@@ -477,6 +553,8 @@ int proc, ndim;
       GAbytes.gettot += (double)size*elems;
       GAstat.numget++;
       GAstat.numget_procs += np;
+
+      if(nbhandle)ga_init_nbhandle(nbhandle);
 
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
@@ -522,7 +600,11 @@ int proc, ndim;
              gam_CountElems(ndim, plo, phi, &elems);
              GAbytes.getloc += (double)size*elems;
           }
-          ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1, proc);
+          if(nbhandle) 
+            ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
+                         proc,(armci_hdl_t)get_armci_nbhandle(nbhandle));
+          else
+            ARMCI_GetS(prem,stride_rem, pbuf,stride_loc, count, ndim -1, proc);
       }
 
       GA_POP_NAME;
@@ -531,6 +613,24 @@ int proc, ndim;
 #endif
 }
 
+void FATR nga_get_(Integer *g_a,
+                   Integer *lo,
+                   Integer *hi,
+                   void    *buf,
+                   Integer *ld)
+{
+    nga_get_common(g_a,lo,hi,buf,ld,(Integer *)NULL);
+}
+
+void FATR nga_nbget_(Integer *g_a,
+                   Integer *lo,
+                   Integer *hi,
+                   void    *buf,
+                   Integer *ld,
+                   Integer *nbhandle)
+{
+    nga_get_common(g_a,lo,hi,buf,ld,nbhandle);
+}
 
 void FATR  ga_get_(g_a, ilo, ihi, jlo, jhi, buf, ld)
    Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld;
@@ -549,7 +649,7 @@ Integer lo[2], hi[2];
    lo[1]=*jlo;
    hi[0]=*ihi;
    hi[1]=*jhi;
-   nga_get_(g_a, lo, hi, buf, ld);
+   nga_get_common(g_a, lo, hi, buf, ld,(Integer *)NULL);
 
 #ifdef GA_TRACE
    trace_etime_();
@@ -561,6 +661,35 @@ Integer lo[2], hi[2];
 #endif
 }
 
+
+void FATR  ga_nbget_(g_a, ilo, ihi, jlo, jhi, buf, ld,nbhdl)
+   Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld, *nbhdl;
+   Void  *buf;
+{
+Integer lo[2], hi[2];
+
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_GET,__FILE__,__LINE__);
+#endif
+#ifdef GA_TRACE
+   trace_stime_();
+#endif
+
+   lo[0]=*ilo;
+   lo[1]=*jlo;
+   hi[0]=*ihi;
+   hi[1]=*jhi;
+   nga_get_common(g_a, lo, hi, buf, ld,nbhdl);
+
+#ifdef GA_TRACE
+   trace_etime_();
+   op_code = GA_OP_GET;
+   trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
+#endif
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_GET,__FILE__,__LINE__);
+#endif
+}
 
 
 /*\ ACCUMULATE OPERATION FOR A N-DIMENSIONAL PATCH OF GLOBAL ARRAY
