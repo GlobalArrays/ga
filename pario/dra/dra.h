@@ -1,6 +1,14 @@
 /******************* header file for Disk Arrays *****************/
 
-#include "file.modes.h"
+/* used to be file.modes.h */
+#include "chemio.h"
+#define  DRA_RW ELIO_RW
+#define  DRA_R  ELIO_R
+#define  DRA_W  ELIO_W
+
+
+
+
 #define  DRA_REQ_INVALID -333
 
 #define DRA_create           dra_create

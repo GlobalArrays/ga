@@ -71,7 +71,7 @@ int onoff;
 Size_t elio_write(fd, offset, buf, bytes)
      Fd_t         fd;
      off_t        offset;
-     Void        *buf;
+     const Void        *buf;
      Size_t       bytes;
 {
 Size_t stat, bytes_to_write = bytes;
@@ -138,7 +138,7 @@ void elio_set_cb(fd, offset, reqn, buf, bytes)
 int elio_awrite(fd, offset, buf, bytes, req_id)
      Fd_t         fd;
      off_t        offset;
-     Void         *buf;
+     const Void   *buf;
      Size_t        bytes;
      io_request_t *req_id;
 {
@@ -178,7 +178,29 @@ int elio_awrite(fd, offset, buf, bytes, req_id)
   return(stat);
 }
 
+int elio_truncate(Fd_t fd, off_t length)
+/*
+  Truncate the file at the specified length.
+  */
+{
+    (void) lseek(fd->fd, 0L, SEEK_SET);
+    if (ftruncate(fd->fd, length))
+	return ELIO_FAIL;
+    else {
+	return ELIO_OK;
+    }
+}
 
+int elio_length(Fd_t fd, off_t *length)
+/*
+ Return in length the length of the file
+  */
+{
+    if ((*length = lseek(fd->fd, (off_t) 0, SEEK_END)) != -1)
+	return ELIO_OK;
+    else
+	return ELIO_FAIL;
+}
 
 /*\ Blocking Read - returns number of bytes read or -1 if failed
 \*/
@@ -326,41 +348,47 @@ int          *status;
   int    errval;
   int    aio_i = 0;
      
-   PABLO_start(PABLO_elio_probe);
-   if(*req_id != ELIO_DONE){
-
+  PABLO_start(PABLO_elio_probe);
+  if(*req_id == ELIO_DONE){
+      *status = ELIO_DONE;
+  }
+  else {
+      
 #if defined(PARAGON)
-       if( iodone(*req_id)== (long) 0) errval = INPROGRESS;
-       else errval = 0;
+      if( iodone(*req_id)== (long) 0) errval = INPROGRESS;
+      else errval = 0;
 #elif defined(KSR)
-       errval = cb_fout[(int)*req_id].aio_errno;
+      errval = cb_fout[(int)*req_id].aio_errno;
 #elif defined(AIX)
-       errval = aio_error(cb_fout[(int)*req_id].aio_handle);
+      errval = aio_error(cb_fout[(int)*req_id].aio_handle);
 #elif defined(AIO)
-       errval = aio_error(cb_fout+(int)*req_id);
+      errval = aio_error(cb_fout+(int)*req_id);
 #endif
-       switch (errval) {
-       case 0:           while(aio_req[aio_i] != *req_id && aio_i < MAX_AIO_REQ) aio_i++;
-			 if(aio_i >= MAX_AIO_REQ)
-			   ELIO_ERROR("elio_probe: id %d not in table", 1);
-			 *req_id = ELIO_DONE; 
-	                 *status = ELIO_DONE;
-			 aio_req[aio_i] = NULL_AIO;
-			 break;
-       case INPROGRESS:  *status = ELIO_PENDING; 
-			 break;
-       default:          ELIO_ERROR("problem in elio_probe",errval);
-       }
-   }
-   PABLO_end(PABLO_elio_probe);
-   return ELIO_OK;
+      switch (errval) {
+      case 0: 
+          while(aio_req[aio_i] != *req_id && aio_i < MAX_AIO_REQ) aio_i++;
+	  if(aio_i >= MAX_AIO_REQ)
+	      ELIO_ERROR("elio_probe: id %d not in table", 1);
+	  *req_id = ELIO_DONE; 
+	  *status = ELIO_DONE;
+	  aio_req[aio_i] = NULL_AIO;
+	  break;
+      case INPROGRESS:
+	  *status = ELIO_PENDING; 
+	  break;
+      default:
+          return ELIO_FAIL; /* Problem */
+      }
+  }
+  PABLO_end(PABLO_elio_probe);
+  return ELIO_OK;
 }
 
 
 /*\ Noncollective File Open
 \*/
 Fd_t  elio_open(fname, type)
-char* fname;
+const char* fname;
 int   type;
 {
   Fd_t fd=NULL;
@@ -378,24 +406,38 @@ int   type;
                    break;
      case ELIO_RW: ptype = O_CREAT | O_RDWR;
                    break;
-     default:      ELIO_ABORT("elio_open: mode incorrect", 0);
+     default:      
+	 return (Fd_t) 0;
+	 /* ELIO_ABORT("elio_open: mode incorrect", 0); */
    }
 
 
-   if( (fd = (Fd_t ) malloc(sizeof(fd_struct)) ) == NULL)
-     ELIO_ABORT("elio_open: Unable to malloc Fd_t structure\n", 1);
+  if( (fd = (Fd_t ) malloc(sizeof(fd_struct)) ) == NULL) {
+      return (Fd_t) 0;
+      /* ELIO_ABORT("elio_open: Unable to malloc Fd_t structure\n", 1); */
+  }
 
-   if( elio_dirname(fname, dirname, ELIO_FILENAME_MAX) != ELIO_OK) 
-      ELIO_ABORT("elio_open: could not determine directory path", -1);
+  if( elio_dirname(fname, dirname, ELIO_FILENAME_MAX) != ELIO_OK) {
+      free(fd);
+      return (Fd_t) 0;
+      /* ELIO_ABORT("elio_open: could not determine directory path", -1); */
+  }
 
-   if( elio_stat(dirname, &statinfo) != ELIO_OK) 
-      ELIO_ABORT("elio_open: stat problem", -1);
+  if( elio_stat(dirname, &statinfo) != ELIO_OK) {
+      free(fd);
+      return (Fd_t) 0;
+      /* ELIO_ABORT("elio_open: stat problem", -1); */
+  }
 
-   fd->fs = statinfo.fs;
-
-   fd->fd = open(fname, ptype, FOPEN_MODE );
-   if( (int)fd->fd == -1) ELIO_ABORT("elio_open failed",0);
-
+  fd->fs = statinfo.fs;
+  
+  fd->fd = open(fname, ptype, FOPEN_MODE );
+  if( (int)fd->fd == -1) {
+      free(fd);
+      return (Fd_t) 0;
+      /* ELIO_ABORT("elio_open failed",0); */
+  }
+  
    PABLO_end(PABLO_elio_open);
    return(fd);
 }
@@ -405,7 +447,7 @@ int   type;
 /*\ Collective File Open
 \*/
 Fd_t  elio_gopen(fname, type)
-char* fname;
+const char* fname;
 int   type;
 {
   Fd_t fd=NULL;
@@ -456,22 +498,24 @@ int   type;
 
 /*\ Close File
 \*/
-void elio_close(fd)
+int elio_close(fd)
 Fd_t fd;
 {
    PABLO_start(PABLO_elio_close);
 
-   if(close(fd->fd)==-1) ELIO_ABORT("elio_close failed:",0);
+   if(close(fd->fd)==-1) return 1;
    free(fd);
 
    PABLO_end(PABLO_elio_close);
+
+   return ELIO_OK;
 }
 
 
 /*\ Delete File
 \*/
 int elio_delete(filename)
-char  *filename;
+const char  *filename;
 {
     int rc;
 

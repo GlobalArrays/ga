@@ -18,5 +18,4 @@
 #define   CHEMIO_OK      ELIO_OK 
 #define   CHEMIO_FAIL    ELIO_FAIL 
 
-
 #endif

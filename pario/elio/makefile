@@ -1,30 +1,23 @@
-#$Id: makefile,v 1.4 1996-09-17 22:21:55 d3h325 Exp $
+#$Id: makefile,v 1.5 1996-09-26 00:01:39 d3g681 Exp $
 #
-# ChemIO makefile for making ELIO
-#
-#   Written by Jace A Mogill
-#              12 June 1996
-#	       Argonne National Laboratory
-#
-#
+#  Initial version Jace A Mogill (12 June 1996), ANL
 
- LIB_DISTRIB = ../../lib
-     LIBRARY = libelio.a
-
+     LIBRARY = libchemio.a
          OBJ = elio.o stat.o
-     HEADERS = elio.h chemio.h
+     HEADERS = chemio.h
 
 ifdef PABLO
-   LIB_CDEFS = -DPABLO
+   LIB_DEFINES = -DPABLO
 endif
 
 ifdef NOPIOFS
-   LIB_CDEFS += -DNOPIOFS
+   LIB_DEFINES = -DNOPIOFS
 endif
 
 include ../../config/makefile.h
 include ../../config/makelib.h
 
-$(OBJ) : $(HEADERS)
+$(LIBRARY_PATH)(elio.o):	./elio.h ./eliop.h ./chemio.h
 
-$(patsubst %,$(LIBRARY_PATH)(%),$(OBJ)):  $(HEADERS)
+# DO NOT EDIT BENEATH THIS LINE ... GENERATED AUTOMATICALLY
+$(LIBRARY_PATH)(stat.o):	./eliop.h ./chemio.h 

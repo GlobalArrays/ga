@@ -28,39 +28,28 @@ typedef long io_request_t;   /* asynchronous I/O request type */
 #  endif
 #endif
 
+#define   ELIO_UFS	0	/* Unix filesystem type */
+#define   ELIO_PFS      1	/* PFS Intel parallel filesystem type */
+#define   ELIO_PIOFS    2	/* IBM SP parallel filesystem type */
 
-/********************** ELIO function prototypes *****************************/
-#if defined(__STDC__) || defined(__cplusplus)
-# define _ARGS_(s) s
-#else
-# define _ARGS_(s) ()
-#endif
-
-extern Size_t elio_read     _ARGS_((Fd_t fd, off_t offset, Void *buf,
-                                    Size_t bytes)); 
-extern int    elio_aread    _ARGS_((Fd_t fd, off_t offset, Void *buf,
-                                    Size_t bytes, io_request_t *req_id));
-extern Size_t elio_write    _ARGS_((Fd_t fd, off_t offset, Void *buf,
-                                    Size_t bytes)); 
-extern int    elio_awrite   _ARGS_((Fd_t fd, off_t offset, Void *buf,
-                                    Size_t bytes, io_request_t *req_id));
-extern int    elio_wait     _ARGS_((io_request_t *id));
-extern int    elio_probe    _ARGS_((io_request_t *id, int* status));
-extern int    elio_delete   _ARGS_((char *filename));
-extern Fd_t   elio_open     _ARGS_((char *fname, int type));
-extern Fd_t   elio_gopen    _ARGS_((char *fname, int type));
-extern void   elio_close    _ARGS_((Fd_t fd));
-extern int    elio_stat     _ARGS_((char *fname, stat_t *statinfo));
-extern int    elio_dirname  _ARGS_((char *fname, char *statinfo, int len));
-       void   elio_init     _ARGS_(());
-
-#undef _ARGS_
-
-/* constants to indicate filesystem type */
-#define FS_UFS		0     /* Unix filesystem type */
-#define FS_PFS		1     /* PFS Intel parallel filesystem type */
-#define FS_PIOFS	2     /* IBM SP parallel filesystem type */
-
+extern Size_t elio_read(Fd_t fd, off_t offset, Void *buf, Size_t bytes); 
+extern int    elio_aread(Fd_t fd, off_t offset, Void *buf,
+                         Size_t bytes, io_request_t *req_id);
+extern Size_t elio_write(Fd_t fd, off_t offset, const Void *buf, 
+                         Size_t bytes); 
+extern int    elio_awrite(Fd_t fd, off_t offset, const Void *buf,
+                          Size_t bytes, io_request_t *req_id);
+extern int    elio_wait(io_request_t *id);
+extern int    elio_probe(io_request_t *id, int* status);
+extern int    elio_delete(const char *filename);
+extern Fd_t   elio_open(const char *fname, int type);
+extern Fd_t   elio_gopen(const char *fname, int type);
+extern int    elio_close(Fd_t fd);
+extern int    elio_stat(char *fname, stat_t *statinfo);
+extern int    elio_dirname(const char *fname, char *statinfo, int len);
+       void   elio_init(void);
+int elio_truncate(Fd_t fd, off_t length);
+int elio_length(Fd_t fd, off_t *length);
 
 /**************************** Error Macro ******************************/
 /* ELIO defines error macro called in case of error

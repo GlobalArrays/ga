@@ -5,7 +5,7 @@
 #include "global.h"
 #include "drap.h"
 #include "dra.h"
-#include "math.h"
+#include <math.h>
 #include "macommon.h"
 
 /************************** constants ****************************************/

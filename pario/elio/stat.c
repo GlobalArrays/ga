@@ -1,9 +1,11 @@
 #include "eliop.h"
+#include "chemio.h"
 
 /*\ determines directory path for a given file
 \*/
 int elio_dirname(fname, dirname, len)
-char *fname, *dirname;
+const char *fname;
+char *dirname;
 int len;
 {
 int flen;
@@ -51,9 +53,9 @@ stat_t *statinfo;
    if(statpfs(fname, &estatbuf, statpfsbuf, bufsz) == 0)
      {
        if(estatbuf.f_type == MOUNT_PFS)
-         statinfo->fs = FS_PFS;
+         statinfo->fs = ELIO_PFS;
        else if(estatbuf.f_type == MOUNT_UFS || estatbuf.f_type == MOUNT_NFS)
-         statinfo->fs = FS_UFS;
+         statinfo->fs = ELIO_UFS;
        else
          ELIO_ERROR("elio_stat: Unable to determine filesystem type\n", 1);
        /*blocks avail - block=1KB */ 
@@ -76,7 +78,7 @@ stat_t *statinfo;
         /* JN: piofsioctl does not tell if piofs_stat.name even points to PIOFS fs */
         /* we assume that if # of server nodes is > 1 we use PIOFS */  
         if(piofs_stat.f_nodes > 1){      /* number of server nodes        */
-           statinfo->fs = FS_PIOFS;
+           statinfo->fs = ELIO_PIOFS;
            statinfo->avail =  piofs_stat.f_bavail;
            bsize = piofs_stat.f_bsize; 
         }
@@ -87,7 +89,7 @@ stat_t *statinfo;
    if(statinfo->fs == -1) {
        if(stat(fname, &ufs_stat) != 0)
 	 ELIO_ERROR("elio_stat: Not able to stat UFS filesystem\n", 1);
-       else statinfo->fs = FS_UFS;
+       else statinfo->fs = ELIO_UFS;
 
        /* only regular or directory files are OK */
        if(!S_ISREG(ufs_stat.st_mode) && !S_ISDIR(ufs_stat.st_mode))
@@ -108,7 +110,7 @@ stat_t *statinfo;
 #            else
                 statinfo->avail = ufs_statfs.f_bavail;
 #            endif
-             bsize = ufs_statfs.f_bsize;
+             bsize = ufs_statfs.f_frsize;
    }
 
    switch (bsize) {
