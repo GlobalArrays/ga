@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.3 2002-01-08 22:58:05 d3h325 Exp $    **/
+/* $Id: buffers.c,v 1.4 2002-01-11 16:49:16 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -207,7 +207,7 @@ void _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node)
     nlast = nfirst+armci_clus_info[node].nslave-1;
 
     if((_armci_buf_state->table[index].to<(unsigned int) nfirst) || 
-       (_armci_buf_state->table[index].to<(unsigned int) nlast))
+       (_armci_buf_state->table[index].to>(unsigned int) nlast))
         armci_die2("_armci_buf_ensure_one_outstanding_op_per_node: bad to",node,
                 (int)_armci_buf_state->table[index].to);
 
