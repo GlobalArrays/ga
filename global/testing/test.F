@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.60 2004-11-05 19:57:20 d3g293 Exp $
+c $Id: test.F,v 1.61 2004-11-06 00:35:36 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -15,7 +15,7 @@ c vector boxes lack arithmetic precision
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 
 
 c#define NEW_API
-#define MIRROR
+c#define MIRROR
 c#define GA3
 c#define NGA_GATSCAT
 
