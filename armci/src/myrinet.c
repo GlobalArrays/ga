@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.56 2003-03-11 19:18:15 manoj Exp $
+/* $Id: myrinet.c,v 1.57 2003-03-20 01:37:24 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -461,7 +461,8 @@ void armci_gm_fence_init()
     if(!armci_gm_fence_arr)armci_die("malloc failed for ARMCI fence array",0);
     if(ARMCI_Malloc((void**)armci_gm_fence_arr, armci_nclus*sizeof(ops_t)))
              armci_die("failed to allocate ARMCI fence array",0);
-    */
+    printf("\n%d:successfully malloc'd shared memory\n",armci_me);*/
+    
 
 /****************************verify-wait code*******************************/
     /*allocate an array for verify sequence array */
@@ -1323,21 +1324,28 @@ int client=armci_gm_req_from;
 
     if(armci_gm_req_op!=PUT && !ACC(armci_gm_req_op))return;
 
-    *p_ack=++(serv_gm->ops_done_ar[client]);
-    verify_wait->recv_verify_smp_arr[armci_gm_req_to][client]=*p_ack;
+    if(donothing){
+       *p_ack=++(serv_gm->ops_done_ar[client]);
+       verify_wait->recv_verify_smp_arr[armci_gm_req_to][client]=*p_ack;
+       return;
+    }
     if(DEBUG_){
       printf("%d: sening ack %d to %p on %d op=%d\n",armci_me,*p_ack,remptr,
              client,armci_gm_req_op);
       fflush(stdout);
     }
-    if(donothing)return;
+
+    if(armci_serv_pendingop_complete() == ARMCI_GM_FAILED)
+          armci_die(" failed sending data to client", client);
     armci_gm_serv_pendingop_context->done = ARMCI_GM_SENDING;
+
+    *p_ack=++(serv_gm->ops_done_ar[client]);
+    verify_wait->recv_verify_smp_arr[armci_gm_req_to][client]=*p_ack;
+
     gm_directed_send_with_callback(serv_gm->snd_port, p_ack,
         (gm_remote_ptr_t)(gm_up_t)(remptr), sizeof(ops_t),
         GM_LOW_PRIORITY, serv_gm->node_map[client], serv_gm->port_map[client],
         armci_serv_callback, armci_gm_serv_pendingop_context);
-    if(armci_serv_pendingop_complete() == ARMCI_GM_FAILED)
-          armci_die(" failed sending data to client", client);
 
 }
 
