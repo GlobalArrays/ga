@@ -1318,7 +1318,7 @@ Integer handle = *d_a+DRA_OFFSET;
 
         dai_check_handleM(*d_a,"dra_delete");
         dai_delete_param(DRA[handle].fname,*d_a);
-        if(dai_file_master(d_a))elio_delete(DRA[handle].fname);
+        if(dai_file_master(*d_a))elio_delete(DRA[handle].fname);
         dai_release_handle(d_a); 
 
         ga_sync_();
