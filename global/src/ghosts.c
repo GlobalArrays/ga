@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.39 2004-03-25 20:18:38 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.40 2004-03-31 16:53:34 vinod Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1149,7 +1149,7 @@ logical FATR ga_set_update4_info_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
-  cache = GA[handle].cache;
+  cache = (char *)GA[handle].cache;
   corner_flag = GA[handle].corner_flag;
 
   /* initialize range increments and get array dimensions */
@@ -1431,7 +1431,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   if (!ga_has_ghosts_(g_a)) return TRUE;
 
   ndim = GA[handle].ndim;
-  cache = GA[handle].cache;
+  cache = (char *)GA[handle].cache;
   elemsize = GA[handle].elemsize;
   for (i=0; i<ndim; i++) {
     width[i] = (Integer)GA[handle].width[i];
@@ -2532,7 +2532,7 @@ logical ga_update5_ghosts_(Integer *g_a)
   rcv_ptr = ga_malloc(buflen, GA[handle].type, rcv_name);
 #endif
  
-  cache = GA[handle].cache;
+  cache = (char *)GA[handle].cache;
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) return TRUE;
 
@@ -2704,7 +2704,7 @@ logical ga_set_update5_info_(Integer *g_a)
 
   ndim = GA[handle].ndim;
   size = GA[handle].elemsize;
-  cache = GA[handle].cache;
+  cache = (char *)GA[handle].cache;
   corner_flag = GA[handle].corner_flag;
 
   nga_distribution_(g_a,&GAme,lo_loc,hi_loc); 
