@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.8 1999-11-16 00:48:41 d3g681 Exp $ */
+/* $Id: clusterinfo.c,v 1.9 1999-11-17 18:46:05 bjohnson Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -14,11 +14,10 @@
 #endif
 #include "message.h"
 #include "armcip.h"
-/*
-  #ifdef WIN32
-  #include "winsock2.h"
-  #endif
-*/
+#ifdef WIN32
+extern int FATR gethostname(char *, int);
+#endif
+
 /* DEBUG_HACK enables to simulate cluster environment on a single workstation.
  * CLUSNODES is the number of processes assigned to each cluster node.
  * Must define NO_SHMMAX_SEARCH in shmem.c to prevent depleting shared memory
