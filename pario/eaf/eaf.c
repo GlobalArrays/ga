@@ -10,8 +10,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.c,v $
-CVS: $Date: 1996-08-01 22:54:33 $
-CVS: $Revision: 1.4 $
+CVS: $Date: 1996-08-05 15:38:04 $
+CVS: $Revision: 1.5 $
 CVS: $State: Exp $
 ******************************************************************************/
 
@@ -169,7 +169,7 @@ int   type;
   if(first_eaf_init) EAF_InitC();
   
   fd = elio_open(fname, type);
-  while(i< EAF_MAX_FILES && eaf_fd[i] != NULL_FD) i++;
+  while(i< EAF_MAX_FILES && eaf_fd[i] != NULL) i++;
   eaf_fd[i] = fd;
   if((eaf_fname[i]=(char*) malloc(strlen(fname)+1)) == NULL)
     EAF_ABORT("EAF_OpenSF: Unable to malloc scratch file name", 1);
@@ -198,7 +198,7 @@ Fd_t  fd;
     {
       if(elio_delete(eaf_fname[i]) != NULL)
 	EAF_ABORT("EAF_Close: Unable to delete scratch file on close.",1);
-      eaf_fd[i] = NULL_FD;
+      eaf_fd[i] = NULL;
       free(eaf_fname[i]);
     } 
 }
@@ -220,7 +220,10 @@ void EAF_InitC()
       first_eaf_init = 0;
       /* Initialize Scratch File table */
       for(i=0; i < EAF_MAX_FILES; i++)
-	eaf_fd[i] = NULL_FD;
+	{
+	  fd_table[i] = NULL;
+	  eaf_fd[i] = NULL;
+	};
     };
 }
 
@@ -239,7 +242,7 @@ void EAF_TerminateC()
   /* NOTE:  This is currently restricted to Scratch files  */
   while(i < EAF_MAX_FILES)
     {
-      if(eaf_fd[i] != NULL_FD)
+      if(eaf_fd[i] != NULL)
 	{
 	  fprintf(stderr,"Terminating with SF |%s| still open\n", eaf_fname[i]);
 	  EAF_CloseC(eaf_fd[i]);

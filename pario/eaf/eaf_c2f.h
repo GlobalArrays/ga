@@ -11,8 +11,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf_c2f.h,v $
-CVS: $Date: 1996-07-27 23:20:42 $
-CVS: $Revision: 1.3 $
+CVS: $Date: 1996-08-05 15:38:13 $
+CVS: $Revision: 1.4 $
 CVS: $State: Exp $
 ******************************************************************************/
 
@@ -103,14 +103,24 @@ typedef int                     eaf_fort_strlen_t;
 
 #endif
 
+
 /* .  .  .  .  .  .  .  .  .  Common type definitions  .  .  .  .  .  .  .  */
-typedef Fd_t                    eaf_fort_fd_t;        /* Changed from uint */
+
+#ifdef EXT_INT
+#define Integer long
+#else
+#define Integer int
+#endif 
+
+typedef unsigned Integer         eaf_fort_fd_t;        /* Fortran only sees
+							  integer file handl*/
 typedef eaf_fort_int_t           eaf_fort_mode_t;
 typedef eaf_fort_int_t           eaf_fort_oflags_t;
 typedef Size_t                   eaf_fort_size_t;      /* Now using ELIO size */
 typedef eaf_fort_int_t           eaf_fort_status_t;
 typedef eaf_fort_int_t           eaf_fort_whence_t;
 typedef io_request_t             eaf_fort_req_t;       /* Added for asynch */
+
 
 #include "c2f.h"
 

@@ -11,8 +11,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf_c2f.c,v $
-CVS: $Date: 1996-07-27 23:20:42 $
-CVS: $Revision: 1.3 $
+CVS: $Date: 1996-08-05 15:38:10 $
+CVS: $Revision: 1.4 $
 CVS: $State: Exp $
 ******************************************************************************/
 #define EAF_FILENAME_MAX ELIO_FILENAME_MAX
@@ -33,7 +33,7 @@ CVS: $State: Exp $
 \*/
 eaf_fort_status_t      EAF_Close(eaf_fort_fd_t *fort_fd)
 {
-  EAF_CloseC(*fort_fd);
+  EAF_CloseC(fd_table[*fort_fd]);
   return (eaf_fort_status_t) EAF_STAT_OK;
 }
 
@@ -52,6 +52,8 @@ eaf_fort_fd_t        EAF_OpenPersist(eaf_fort_char_t *fn,
 				 eaf_fort_int_t  *type,
 				 eaf_fort_strlen_t fn_len)
 {
+  Integer      ffd=0;       /* Index into array of C struct pointers --
+			       This is Fortran's FD value                  */
   char         tmp_fn[EAF_FILENAME_MAX];
   char        *tmp_str;
 
@@ -70,7 +72,16 @@ eaf_fort_fd_t        EAF_OpenPersist(eaf_fort_char_t *fn,
     *tmp_str = 0;
   };
 
-  return( (eaf_fort_fd_t) EAF_OpenPersistC(tmp_fn, *type) );
+
+  while(ffd<EAF_MAX_FILES && fd_table[ffd]!=NULL) ffd++;
+  if(ffd<EAF_MAX_FILES)
+    {
+      fd_table[ffd]=EAF_OpenPersistC(tmp_fn, *type);
+      return((eaf_fort_fd_t) ffd);
+    }
+  else
+    EAF_ABORT("EAF_OpenPersist: No space in C's (Fd_t) fd_table[]",1);
+  
 }
 
 
@@ -87,6 +98,8 @@ eaf_fort_fd_t        EAF_OpenScratch(eaf_fort_char_t *fn,
 				 eaf_fort_int_t  *type,
 				 eaf_fort_strlen_t fn_len)
 {
+  Integer      ffd=0;     /* Index into array of C struct pointers --
+		      	     This is Fortran's FD value                  */
   char         tmp_fn[EAF_FILENAME_MAX];
   char        *tmp_str;
 
@@ -104,7 +117,15 @@ eaf_fort_fd_t        EAF_OpenScratch(eaf_fort_char_t *fn,
     *tmp_str = 0;
   }
 
-  return( (eaf_fort_fd_t) EAF_OpenScratchC(tmp_fn, *type) );
+  while(ffd<EAF_MAX_FILES && fd_table[ffd]!=NULL) ffd++;
+  if(ffd<EAF_MAX_FILES)
+    {
+      fd_table[ffd]=EAF_OpenScratchC(tmp_fn, *type);
+      return((eaf_fort_fd_t) ffd);
+    }
+  else
+    EAF_ABORT("EAF_OpenPersist: No space in C's (Fd_t) fd_table[]",1);
+
 }
 
 
@@ -119,7 +140,7 @@ eaf_fort_size_t         EAF_Write(eaf_fort_fd_t   *fort_fd,
 				   Void            *buf,
 				   eaf_fort_size_t *fort_size)
 {
-  return( EAF_WriteC(*fort_fd, *fort_offset, buf, *fort_size) );
+  return( EAF_WriteC(fd_table[*fort_fd], *fort_offset, buf, *fort_size) );
 }
 
 
@@ -135,7 +156,7 @@ eaf_fort_status_t         EAF_AWrite(eaf_fort_fd_t   *fort_fd,
 				      eaf_fort_size_t *fort_size,
 				      eaf_fort_req_t  *req_id)
 {
-  return( EAF_AWriteC(*fort_fd, *fort_offset, buf, *fort_size, req_id) );
+  return( EAF_AWriteC(fd_table[*fort_fd], *fort_offset, buf, *fort_size, req_id) );
 }
 
 
@@ -150,11 +171,7 @@ eaf_fort_size_t         EAF_Read(eaf_fort_fd_t   *fort_fd,
 				  Void            *buf,
 				  eaf_fort_size_t *fort_size)
 {
-  Size_t        b_read;
-
-  b_read = EAF_ReadC(*fort_fd, *fort_offset, buf, *fort_size);
-
-  return (eaf_fort_size_t) b_read;
+  return (eaf_fort_size_t) EAF_ReadC(fd_table[*fort_fd], *fort_offset, buf, *fort_size);
 }
 
 
@@ -170,11 +187,7 @@ eaf_fort_status_t         EAF_ARead(eaf_fort_fd_t   *fort_fd,
 				     eaf_fort_size_t *fort_size,
 				     eaf_fort_req_t  *req_id)
 {
-  int    stat;
-  
-  stat = EAF_AReadC(*fort_fd, *fort_offset, buf, *fort_size, req_id);
-  
-  return (eaf_fort_status_t) stat;
+  return (eaf_fort_status_t) EAF_AReadC(fd_table[*fort_fd], *fort_offset, buf, *fort_size, req_id);
 }
 
 
@@ -186,11 +199,7 @@ eaf_fort_status_t         EAF_ARead(eaf_fort_fd_t   *fort_fd,
 \*/
 eaf_fort_status_t          EAF_Wait(eaf_fort_req_t  *id)
 {
-  int    stat;
-  
-  stat = EAF_WaitC(id);
-  
-  return (eaf_fort_status_t) stat;
+  return (eaf_fort_status_t) EAF_WaitC(id);
 }
 
 
@@ -203,10 +212,6 @@ eaf_fort_status_t          EAF_Wait(eaf_fort_req_t  *id)
 eaf_fort_status_t          EAF_Probe(eaf_fort_req_t   *id,
 				      eaf_fort_status_t  *stat)
 {
-  int   ret_stat;
-  
-  ret_stat = EAF_ProbeC(id, stat);
-  
-  return (eaf_fort_status_t) ret_stat;
+  return (eaf_fort_status_t) EAF_ProbeC(id, stat);
 }
 
