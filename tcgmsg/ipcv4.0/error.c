@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/error.c,v 1.7 1995-10-11 23:46:23 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/error.c,v 1.8 1996-07-19 19:37:48 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <setjmp.h>
@@ -34,7 +34,7 @@ void Error(string, integer)
 
   (void) fflush(stdout);
   if (SR_caught_sigint) {
-    (void) fprintf(stderr,"%3ld: interrupt\n",NODEID_());
+    (void) fprintf(stderr,"%3ld: interrupt(%d)\n",NODEID_(), SR_caught_sigint);
     (void) fflush(stderr);
   }
   else {
@@ -55,7 +55,7 @@ void Error(string, integer)
      propagate an error condition to anyone that is trying to communicate
      with me */
 
-  ZapChildren();  /* send interrupt to children which should trap it
+   ZapChildren();  /* send interrupt to children which should trap it
 		     and call Error in the handler */
 
 #ifdef SHMEM
@@ -64,9 +64,9 @@ void Error(string, integer)
 #endif
   (void) DeleteSharedRegion(SR_proc_info[NODEID_()].shmem_id);
 #endif
-  ShutdownAll();    /* Close sockets for machines with static kernel */
+  ShutdownAll();         /* Close sockets for machines with static kernel */
 
-  abort(); 
+/*  abort(); */
 
   if (SR_exit_on_error)
     exit(1);

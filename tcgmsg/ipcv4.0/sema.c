@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.9 1996-06-28 21:36:08 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.10 1996-07-19 19:37:51 d3h325 Exp $ */
 
 /*
   These routines simplify the interface to semaphores for use in mutual
@@ -658,9 +658,9 @@ long SemSetCreate(long n_sem, long value)
 
 long SemSetDestroyAll()
 {
-  usdetach (arena_ptr);
+/*  usdetach (arena_ptr);*/
   arena_ptr = 0;
-  if((int)unlink(arena_name)==-1)Error("SemSetDestroyAll: unlink failed",0);
+  unlink(arena_name);
   return 0;
 }
 
@@ -752,7 +752,7 @@ long SemSetDestroyAll()
 
 double __tcgmsg_fred__=0.0;
 
-Dummy()
+void Dummy()
 {
   int n = 200;			/* This seems optimal */
   while(n--)
