@@ -2,9 +2,19 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
-static struct sembuf sops;
-static int semaphoreID;
+/* how many semaphores are available ? */
+#ifndef SEMMSL
+#   ifdef AIX
+#         define SEMMSL 8094
+#   else
+#         define SEMMSL 25 
+#   endif
+#endif
+
+extern struct sembuf sops;
+extern int semaphoreID;
 int semop();
+#define ALL_SEMS -1
 
 #define P_      -1
 #define V_       1

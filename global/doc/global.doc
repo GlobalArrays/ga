@@ -59,7 +59,7 @@ distribute to other US Government contractors.
       ga_create        ... create an array (integer or double precision)
       ga_create_irreg  ... create an array with irregular distribution
                            (integer or double precision)
-      ga_duplicate     ... create an array following refernce array 
+      ga_duplicate     ... create an array following a reference array 
       ga_destroy       ... destroy an array
       ga_terminate     ... destroy all existing arrays and delete internal
                            data structures  
@@ -100,9 +100,8 @@ distribute to other US Government contractors.
       ga_put           ... write to a patch of an array
       ga_acc           ... accumulate into a patch of an array (double
                            precision only)
-      ga_dscatter      ... scatter elements into an array (double 
-                           precision only)
-      ga_dgather       ... gather elements from an array (double precision only)
+      ga_dscatter      ... scatter elements into an array
+      ga_dgather       ... gather elements from an array
       ga_read_inc      ... atomically read and increment the value of
                            a single array element (integers only)
       ga_locate        ... determine which process 'holds' an array element
@@ -141,45 +140,52 @@ distribute to other US Government contractors.
       by appropriate insertion of ga_sync calls)
 
 
-  Status of current implementation
+  Status of current implementation (version 2.0)
   --------------------------------
   
-  There are three platforms that GA work on: 
+  There are two platforms that GA work on: 
 
-  1) Network of workstations, using the data-server/compute_node model
-     where each user's process (compute-node) is coupled with additional
-     process (data-server) that services requests for the data.
-     It is recommended that each pair of data-server and compute_node
-     is executing on the same workstation (2 processes on a workstation).
-     Lower half of processes specified in the TCGMSG *.p file are considered
-     to be compute nodes, and the upper half the data servers. Therefore,
-     the number of processes has to be even. Any i-th compute process
-     is associated with the i+P/2 data server process. 
+  1) Network of (possibly multiprocessor) workstations, using the
+     data-server/compute_nodes model where each machine needs an
+     additional process (data-server) that services requests for the
+     data. Therefore, number of processes specified in the TCGMSG *.p
+     file minus one are considered to be compute nodes, and remaining
+     ones are the data servers. Data servers use shared memory to
+     access the data on local machine.
+
+     Example .p file for one 4-processor and one 8-processor workstations:
+
+         d3h325 coho 4 /usr/people/d3h325/g/global/testing/test.x /tmp
+         d3h325 bohr 8 /usr/people/d3h325/g/global/testing/test.x /tmp
+
+     defines 10 compute processes and 2 data-servers (one on coho and 
+     one on bohr).
+
+     Single (possibly multiprocessor) machines with shared memory
+     like:  the KSR-2, workstations, and even Cray T3D are really a
+     special case of 1).  The shared memory implementation uses TCGMSG
+     (in the future MPI) to fork all the processes (except for the 
+     Cray T3D) and implement ga_brdcst and ga_dgop. There are no data server
+     processes; therefore, all the specified processes/processors are
+     used for computations.
+
 
   2) True message passing MPP architectures with interrupt communication
      available: the Intel IPSC, Delta, Paragon with the NX, and the IBM SP-1
-     with the EUIH message passing library. 
-
-  3) Shared memory machines like: the KSR-2, SGI, SUN, and the IBM RS/6000 
-     workstations.
-
-  The shared memory implementation uses TCGMSG to fork all the processes
-  and implement ga_brdcst and ga_dgop (might change someday). There are
-  no data server processes; therefore, all the processes specified in *.p 
-  file are used for computations. 
+     with the EUIH or MPL message passing library. 
 
 
   Your program should look like
   -----------------------------
 
   call pbeginf()                  ! start TCGMSG
-  status = ma_init(..)            ! start memory allocate if required
+  status = ma_init(..)            ! start memory allocator if required
   call ga_initialize()            ! start global arrays
 
   .... do work
 
-  call ga_terminate               ! tidy up global arrays
-  call pend                       ! tidy up tcgmsg
+  call ga_terminate()             ! tidy up global arrays
+  call pend()                     ! tidy up tcgmsg
   stop                            ! exit program
 
   The ma_init call looks like
@@ -684,10 +690,9 @@ distribute to other US Government contractors.
       double precision v(n)               [input]
       integer i(n), j(n), n               [input]
 
-      Scatters the array elements into the array, only double
-      precision being supported.  The contents of the input arrays (v,
-      i, j) are preserved, but their contents might be (consistently)
-      shuffled on returned.
+      Scatters the array elements into the array.  The contents of the
+      input arrays (v, i, j) are preserved, but their contents might be
+      (consistently) shuffled on returned.
 
               do k = 1, nv
                  a(i(k),j(k)) = v(k)
@@ -700,9 +705,8 @@ distribute to other US Government contractors.
       double precision v(n)               [output]
       integer i(n), j(n), n               [input]
 
-      Gathers the array elements from the array, only double
-      precision being supported.  The contents of the input arrays 
-      (v, i, j) are preserved.
+      Gathers the array elements from the array. The contents of the
+      input arrays (v, i, j) are preserved.
 
               do k = 1, nv
                  v(k) = a(i(k),j(k))
@@ -862,14 +866,14 @@ distribute to other US Government contractors.
    C language interface 
    --------------------
 
-   Subroutines and functions listed above can be called from C
+   Subroutines and functions listed above can be also called from C
    programs.  It is required to add an underscore at the end of the
-   routine names and include "global.c.h" file. The GA routines that 
-   require a character (string) argument have both C (no underscore 
-   suffix) and Fortran (NOT TO BE USED BY C PROGRAMS) versions, for example, 
-   ga_error, ga_check_handle or ga_inquire_name. The reason for having 
-   two separate versions was to avoid Fortran to C character string 
-   conversion.
+   routine names and include "global.c.h" file. The GA routines that
+   require a character (string) argument have both C (no underscore
+   suffix) and Fortran (NOT TO BE USED BY C PROGRAMS) versions, for
+   example, ga_error, ga_check_handle or ga_inquire_name. The reason
+   for having two separate versions was to avoid sometimes painful
+   Fortran to C character string conversion.
 
    GA arguments are passed by pointers. For an example on how
    to use GAs in C programs, see implementation of GA operations in
@@ -893,3 +897,10 @@ distribute to other US Government contractors.
    GA routines operate on DoublePrecision and Integer data. 
    Identifiers for these data types (MT_F_DBL and MT_F_INT)
    are defined in macommon.h that is located in the MA directory.
+
+   Compiler Flags
+   --------------
+
+   Look at compiler flags in file Makefile.h to make sure that
+   Fortran and C compiler flags are consitent with flags used
+   to compile your application.

@@ -36,7 +36,7 @@ c
       integer ilo, ihi, jlo, jhi, klo, khi, ichunk, jchunk, kchunk
       integer idim, jdim, kdim, adim, bdim, cdim, ijk, me, nproc
 #ifdef DATA_SERVER
-      parameter (ichunk=500, jchunk=500, kchunk=500)
+      parameter (ichunk=256, jchunk=256, kchunk=256)
 #else
 c     parameter (ichunk=64, jchunk=64, kchunk=64)
       parameter (ichunk=128, jchunk=128, kchunk=128)

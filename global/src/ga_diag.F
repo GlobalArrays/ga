@@ -3,6 +3,7 @@
 #include "mafdecls.h"
 #include "global.fh"
 #include "tcgmsg.fh"
+#include "diag.fh"
       integer g_a               ! matrix to diagonalize
       integer g_v               ! global matrix to return evecs
       double precision eval(*)  ! local array to return evals
@@ -43,6 +44,8 @@ c
       integer dimA1, dimA2, typeA
       integer dimV1, dimV2, typeV
 c
+      integer hls, adrls        ! list of TCG nodes
+c
       integer Elem
       Elem(istart,iend,n)=((iend-istart+1)*(2*n-istart-iend+2))/2
 c
@@ -70,8 +73,8 @@ c
 c
       n = dimA1
       if (n .lt. 64) then
-         call ga_diag_std_seq(g_a,  g_v, eval)
-         return
+             call ga_diag_std_seq(g_a,  g_v, eval)
+             return
       endif
 c
       call ga_sync()
@@ -79,24 +82,22 @@ c
       pan = 1                   !panel size
       npan = n/pan
 c
-      if (n .lt. 350) then
-         proc = min(8,ga_nnodes())
-      else if (n .lt. 700) then
-         proc = min(16,ga_nnodes())
-      else if (n .lt. 1000) then
-         proc = min(20,ga_nnodes())
-      else if (n .lt. 2000) then
-         proc = min(128,ga_nnodes())
-      else
-         proc = min(256,ga_nnodes())
+      if (n .lt. SIZE1) then
+         proc = min(PROC1, ga_nnodes())
+      else if (n .lt. SIZE2) then
+         proc = min(PROC2,ga_nnodes())
+      else if (n .lt. SIZE3) then
+         proc = min(PROC3,ga_nnodes())
+      else 
+         proc = min(PROC4,ga_nnodes())
       endif
 c
       proc = min((npan-1)/2+1,proc)
 c
-c         print *,myproc,' participate in eig: ',proc
-c         call ffflush(6)
       oactive = myproc .lt. proc
       if (oactive) then
+*         print *,myproc,' participate in eig: ',proc
+*         call ffflush(6)
 c     
 c        allocate map arrays
 c
@@ -105,6 +106,13 @@ c
          status = status .and. ma_push_get(mt_int,n,'mapz',hmz,adrmz)
          if (.not. status)
      $        call ga_error('ga_diag_std: insufficient memory 1', n)
+c
+c        allocate and setup list of TCG nodes
+         if( .not. ma_push_get(mt_int, proc,'list',hls,adrls))
+     $        call ga_error('ga_diag_std: insufficient memory 1b', n)
+         call ga_list_nodeid(int_mb(adrls), proc)
+         print *,myproc,'list ', (int_mb(adrls+k),k=0,proc-1)
+         call ffflush(6)
 c         
 c        determine distribution of a,b, and z
 c     
@@ -119,8 +127,8 @@ c
             istart = (ipan - 1)*pan + 1
             iend   = istart + pan - 1
             do k = istart, iend
-               int_mb(-1+adrma+k) = iproc
-               int_mb(-1+adrmz+k) = iproc
+               int_mb(-1+adrma+k) = int_mb(adrls+iproc)
+               int_mb(-1+adrmz+k) = int_mb(adrls+iproc)
             enddo
             if(iproc .eq. myproc)then
                myelem = myelem + elem(istart,iend,n)
@@ -137,8 +145,8 @@ c
             istart = (ipan - 1)*pan + 1
             iend   = istart + pan - 1
             do k = istart, iend
-               int_mb(-1+adrma+k) = iproc
-               int_mb(-1+adrmz+k) = iproc
+               int_mb(-1+adrma+k) = int_mb(adrls+iproc)
+               int_mb(-1+adrmz+k) = int_mb(adrls+iproc)
             enddo
             if(iproc .eq. myproc)then
                myelem = myelem + elem(istart,iend,n)
@@ -152,8 +160,8 @@ c
          istart = (npan - 1)*pan + 1
          iend   = n
          do k = istart, iend
-            int_mb(-1+adrma+k) = iproc
-            int_mb(-1+adrmz+k) = iproc
+            int_mb(-1+adrma+k) = int_mb(adrls+iproc)
+            int_mb(-1+adrmz+k) = int_mb(adrls+iproc)
          enddo
          mycol = mypanel * pan
          if(iproc .eq. myproc)then
@@ -177,7 +185,7 @@ c***     load the fock (A) matrix
 c
          istart = 0
          do k = 1, n
-            if( int_mb(-1+adrma+k) .eq. myproc) then
+            if( int_mb(-1+adrma+k) .eq. int_mb(adrls + myproc))then
                myelem = n-k+1
                call ga_get(g_a,k,n,k,k,dbl_mb(adra+istart),1)
                istart = istart + myelem
@@ -187,16 +195,13 @@ c
 c***     allocate some memory for std eigensolver 
 c
 *
-* temporary patch following george's reccomendation to use 6n
+* temporary patch following george reccomendation to use 6n
 *
          if (.not. ma_push_get(mt_int,6*n,'iscratch',his,adris))
      $        call ga_error('ga_diag_std: insufficient mem 3', 6*n)
          call fmemreq(1,n,int_mb(adrma),int_mb(adrma),int_mb(adrmz),
      &        isize, rsize, ptr_size,int_mb(adris))
          status = ma_pop_stack(his)
-
-         isize = isize * 4
-
          if(.not. ma_push_get(mt_int,isize,'iscratch',his,adris))
      &        call ga_error('ga_diag_std allocator',1)
          if(.not. ma_push_get(mt_dbl,rsize,'scratch',hsc,adrsc))
@@ -212,14 +217,32 @@ c
 c***  calling PEIGS parallel eigensolver
 c
       if (oactive) then
+          print *,myproc,' participate in eig: ',proc
+          call ffflush(6)
+*        if(myproc.eq.0)then
+*          print *,myproc,'map a ', (int_mb(adrma +k),k=0,n-1)
+*          print *,myproc,'a ', (dbl_mb(adra +k),k=0,5)
+*          print *,myproc,'map z ', (int_mb(adrmz +k),k=0,n-1)
+*          print *, ' '
+*          call ffflush(6)
+*        endif
+*        call ga_sync()
+*        if(myproc.eq.1)then
+*          print *,myproc,'map a ', (int_mb(adrma +k),k=0,n-1)
+*          print *,myproc,'a ', (dbl_mb(adra +k),k=0,3)
+*          print *,myproc,'map z ', (int_mb(adrmz +k),k=0,n-1)
+*          call ffflush(6)
+*        endif
          call pdspev(  n, dbl_mb(adra), int_mb(adrma),
      &        dbl_mb(adrz), int_mb(adrmz),  
      &        eval,  
      &        int_mb(adris), isize,  
      &        dbl_mb(adrip), ptr_size,  
      &        dbl_mb(adrsc), rsize, info)  
+          print *,myproc,'out: participate in eig: ',proc
+          call ffflush(6)
          if (info .ne. 0)
-     $        call ga_error('ga_diag_std: info non-zero ', info)
+     $        call ga_error('ga_diag_std: ... info non-zero ', myproc)
       endif
 c     
       call ga_sync()            ! To reduce message buffering problems      
@@ -229,7 +252,7 @@ c
       if (oactive) then
          istart = 0
          do k = 1, n
-            if( int_mb(-1+adrmz+k) .eq. myproc) then
+            if( int_mb(-1+adrmz+k) .eq. int_mb(adrls + myproc))then
                call ga_put(g_v,1,n,k,k,dbl_mb(adrz+istart),1)
                istart = istart + n
             endif
@@ -243,6 +266,7 @@ c
          status = status .and. ma_pop_stack(his)
          status = status .and. ma_pop_stack(hz)
          status = status .and. ma_pop_stack(ha)
+         status = status .and. ma_pop_stack(hls)
          status = status .and. ma_pop_stack(hmz)
          status = status .and. ma_pop_stack(hma)
          if (.not. status) call ga_error('ga_diag_std: ma_pop',0)
@@ -271,6 +295,7 @@ c
 #include "mafdecls.h"
 #include "global.fh"
 #include "tcgmsg.fh"
+#include "diag.fh"
       integer g_a               ! matrix to diagonalize
       integer g_s               ! metric
       integer g_v               ! global matrix to return evecs
@@ -319,6 +344,9 @@ c
       integer dimS1, dimS2, typeS
       integer dimV1, dimV2, typeV
 c
+      integer hls, adrls        ! list of TCG nodes
+c
+c
       integer Elem
       Elem(istart,iend,n)=((iend-istart+1)*(2*n-istart-iend+2))/2
 c
@@ -359,16 +387,14 @@ c
       pan = 1                   !panel size
       npan = n/pan
 c
-      if (n .lt. 350) then
-         proc = min(8,ga_nnodes())
-      else if (n .lt. 700) then
-         proc = min(16,ga_nnodes())
-      else if (n .lt. 1000) then
-         proc = min(20,ga_nnodes())
-      else if (n .lt. 2000) then
-         proc = min(128,ga_nnodes())
+      if (n .lt. SIZE1) then
+         proc = min(PROC1, ga_nnodes())
+      else if (n .lt. SIZE2) then
+         proc = min(PROC2,ga_nnodes())
+      else if (n .lt. SIZE3) then
+         proc = min(PROC3,ga_nnodes())
       else
-         proc = min(256,ga_nnodes())
+         proc = min(PROC4,ga_nnodes())
       endif
 c
       proc = min(npan/2,proc)
@@ -386,6 +412,14 @@ c
          status = status .and. ma_push_get(mt_int,n,'mapz',hmz,adrmz)
          if (.not. status)
      $        call ga_error('ga_diag: insufficient memory 1', n)
+c
+c        allocate and setup list of TCG nodes
+         if( .not. ma_push_get(mt_int, proc,'list',hls,adrls))
+     $        call ga_error('ga_diag: insufficient memory 1b', n)
+         call ga_list_nodeid(int_mb(adrls), proc)
+         print *,myproc,'list ', (int_mb(adrls+k),k=0,proc-1)
+         call ffflush(6)
+c         
 c         
 c        determine distribution of a,b, and z
 c     
@@ -400,9 +434,9 @@ c
             istart = (ipan - 1)*pan + 1
             iend   = istart + pan - 1
             do k = istart, iend
-               int_mb(-1+adrma+k) = iproc
-               int_mb(-1+adrmb+k) = iproc
-               int_mb(-1+adrmz+k) = iproc
+               int_mb(-1+adrma+k) = int_mb(adrls+iproc)
+               int_mb(-1+adrmb+k) = int_mb(adrls+iproc)
+               int_mb(-1+adrmz+k) = int_mb(adrls+iproc)
             enddo
             if(iproc .eq. myproc)then
                myelem = myelem + elem(istart,iend,n)
@@ -419,9 +453,9 @@ c
             istart = (ipan - 1)*pan + 1
             iend   = istart + pan - 1
             do k = istart, iend
-               int_mb(-1+adrma+k) = iproc
-               int_mb(-1+adrmb+k) = iproc
-               int_mb(-1+adrmz+k) = iproc
+               int_mb(-1+adrma+k) = int_mb(adrls+iproc)
+               int_mb(-1+adrmb+k) = int_mb(adrls+iproc)
+               int_mb(-1+adrmz+k) = int_mb(adrls+iproc)
             enddo
             if(iproc .eq. myproc)then
                myelem = myelem + elem(istart,iend,n)
@@ -435,9 +469,9 @@ c
          istart = (npan - 1)*pan + 1
          iend   = n
          do k = istart, iend
-            int_mb(-1+adrma+k) = iproc
-            int_mb(-1+adrmb+k) = iproc
-            int_mb(-1+adrmz+k) = iproc
+            int_mb(-1+adrma+k) = int_mb(adrls+iproc)
+            int_mb(-1+adrmb+k) = int_mb(adrls+iproc)
+            int_mb(-1+adrmz+k) = int_mb(adrls+iproc)
          enddo
          mycol = mypanel * pan
          if(iproc .eq. myproc)then
@@ -461,7 +495,7 @@ c        load the fock (A) and overlap (S) matrices
 c
          istart = 0
          do k = 1, n
-            if( int_mb(-1+adrma+k) .eq. myproc) then
+            if( int_mb(-1+adrma+k) .eq. int_mb(adrls + myproc))then
                myelem = n-k+1
                call ga_get(g_a,k,n,k,k,dbl_mb(adra+istart),1)
                call ga_get(g_s,k,n,k,k,dbl_mb(adrb+istart),1)
@@ -472,7 +506,7 @@ c
 c        allocate some memory for eigensolver 
 c
 *
-* temporary patch following george's reccomendation to use 6n
+* temporary patch following george reccomendation to use 6n
 *
          if (.not. ma_push_get(mt_int,6*n,'iscratch',his,adris))
      $        call ga_error('ga_diag: memory 2?', 6*n)
@@ -495,6 +529,8 @@ c
 c***  calling PEIGS parallel eigensolver
 c
       if (oactive) then
+          print *,myproc,' participate in eig: ',proc
+          call ffflush(6)
          call pdspgv( 1, n, dbl_mb(adra), int_mb(adrma),
      &        dbl_mb(adrb), int_mb(adrmb),  
      &        dbl_mb(adrz), int_mb(adrmz),  
@@ -502,6 +538,8 @@ c
      &        int_mb(adris), isize,  
      &        dbl_mb(adrip), ptr_size,  
      &        dbl_mb(adrsc), rsize, info)  
+          print *,myproc,'out: participate in eig: ',proc
+          call ffflush(6)
          if (info .ne. 0)
      $        call ga_error('ga_diag: info non-zero ', info)
       endif
@@ -513,7 +551,7 @@ c
       if (oactive) then
          istart = 0
          do k = 1, n
-            if( int_mb(-1+adrmz+k) .eq. myproc) then
+            if( int_mb(-1+adrmz+k) .eq. int_mb(adrls + myproc))then
                call ga_put(g_v,1,n,k,k,dbl_mb(adrz+istart),1)
                istart = istart + n
             endif
@@ -528,6 +566,7 @@ c
          status = status .and. ma_pop_stack(hz) 
          status = status .and. ma_pop_stack(hb) 
          status = status .and. ma_pop_stack(ha) 
+         status = status .and. ma_pop_stack(hls)
          status = status .and. ma_pop_stack(hmz) 
          status = status .and. ma_pop_stack(hmb) 
          status = status .and. ma_pop_stack(hma)
@@ -556,6 +595,7 @@ c
 #include "mafdecls.h"
 #include "global.fh"
 #include "tcgmsg.fh"
+#include "diag.fh"
       integer reuse             ! allows to reuse factorized g_s   
                                 !     0  first time,
                                 !    >0  following calls 
@@ -611,6 +651,9 @@ c
       integer dimS1, dimS2, typeS
       integer dimV1, dimV2, typeV
 c
+      integer hls, adrls        ! list of TCG nodes
+c
+c
       integer Elem
       Elem(istart,iend,n)=((iend-istart+1)*(2*n-istart-iend+2))/2
 c~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -625,7 +668,7 @@ c
       call ga_check_handle(g_s, 'ga_diag: s')
       call ga_check_handle(g_v, 'ga_diag: v')
 c
-c...  unless it is the first call, check if g_s hasn't changed 
+c...  unless it is the first call, check if g_s has not changed 
 c  
       if(first_time)then
          g_ps = g_s
@@ -684,7 +727,7 @@ c
        return
       endif
 c
-c...  set the flag for George's eigensolver (orthogonal to reuse)
+c...  set the flag for George eigensolver (orthogonal to reuse)
 c
       if(reuse.eq.0) then
          eig_flag = 1
@@ -696,16 +739,15 @@ c***  for smaller problems use fewer processors (performance reasons)
 c
       pan = 1                   !panel size
       npan = n/pan
-      if (n .lt. 350) then
-         proc = min(8,ga_nnodes())
-      else if (n .lt. 700) then
-         proc = min(16,ga_nnodes())
-      else if (n .lt. 1000) then
-         proc = min(20,ga_nnodes())
-      else if (n .lt. 2000) then
-         proc = min(128,ga_nnodes())
-      else
-         proc = min(256,ga_nnodes())
+c
+      if (n .lt. SIZE1) then
+         proc = min(PROC1, ga_nnodes())
+      else if (n .lt. SIZE2) then
+         proc = min(PROC2,ga_nnodes())
+      else if (n .lt. SIZE3) then
+         proc = min(PROC3,ga_nnodes())
+      else if (n .lt. SIZE4) then
+         proc = min(PROC4,ga_nnodes())
       endif
 c
       proc = min((npan-1)/2+1,proc)
@@ -723,6 +765,12 @@ c
 
          status = ma_push_get(mt_int,n,'mapz',hmz,adrmz)
          if(.not.status)call ga_error('ga_diag: mapc not allocated ',0)
+c
+c        allocate and setup list of TCG nodes
+         if( .not. ma_push_get(mt_int, proc,'list',hls,adrls))
+     $        call ga_error('ga_diag_std: insufficient memory 1b', n)
+         call ga_list_nodeid(int_mb(adrls), proc)
+c         
 c         
 c***     determine distribution of a,b, and z
 c     
@@ -737,9 +785,9 @@ c
             istart = (ipan - 1)*pan + 1
             iend   = istart + pan - 1
             do k = istart, iend
-               int_mb(-1+adrma+k) = iproc
-               if(first_time)int_mb(-1+adrmb+k) = iproc
-               int_mb(-1+adrmz+k) = iproc
+               int_mb(-1+adrma+k) = int_mb(adrls+iproc)
+               if(first_time)int_mb(-1+adrmb+k) = int_mb(adrls+iproc)
+               int_mb(-1+adrmz+k) = int_mb(adrls+iproc)
             enddo
             if(iproc .eq. myproc)then
                myelem = myelem + elem(istart,iend,n)
@@ -756,9 +804,9 @@ c
             istart = (ipan - 1)*pan + 1
             iend   = istart + pan - 1
             do k = istart, iend
-               int_mb(-1+adrma+k) = iproc
-               if(first_time)int_mb(-1+adrmb+k) = iproc
-               int_mb(-1+adrmz+k) = iproc
+               int_mb(-1+adrma+k) = int_mb(adrls+iproc)
+               if(first_time)int_mb(-1+adrmb+k) = int_mb(adrls+iproc)
+               int_mb(-1+adrmz+k) = int_mb(adrls+iproc)
             enddo
             if(iproc .eq. myproc)then
                myelem = myelem + elem(istart,iend,n)
@@ -772,9 +820,9 @@ c
          istart = (npan - 1)*pan + 1
          iend   = n
          do k = istart, iend
-            int_mb(-1+adrma+k) = iproc
-            if(first_time)int_mb(-1+adrmb+k) = iproc
-            int_mb(-1+adrmz+k) = iproc
+            int_mb(-1+adrma+k) = int_mb(adrls+iproc)
+            if(first_time)int_mb(-1+adrmb+k) = int_mb(adrls+iproc)
+            int_mb(-1+adrmz+k) = int_mb(adrls+iproc)
          enddo
          mycol = mypanel * pan
          if(iproc .eq. myproc)then
@@ -796,7 +844,7 @@ c***     load the fock (A) and overlap (S) matrices
 c
          istart = 0
          do k = 1, n
-            if( int_mb(-1+adrma+k) .eq. myproc) then
+            if( int_mb(-1+adrma+k) .eq. int_mb(adrls + myproc))then
                myelem = n-k+1
                call ga_get(g_a,k,n,k,k,dbl_mb(adra+istart),1)
                if(first_time)
@@ -808,7 +856,7 @@ c
 c***     allocate some scratch memory for eigensolver 
 c
 *
-* temporary patch following george's reccomendation to use 6n
+* temporary patch following george reccomendation to use 6n
 *
          status = ma_push_get(mt_int,6*n,'iscratch',his,adris)
          if (.not. status) call ga_error('ga_reuse: 6*n', 6*n)
@@ -849,7 +897,7 @@ c
       if (oactive) then
          istart = 0
          do k = 1, n
-            if( int_mb(-1+adrmz+k) .eq. myproc) then
+            if( int_mb(-1+adrmz+k) .eq. int_mb(adrls + myproc))then
                call ga_put(g_v,1,n,k,k,dbl_mb(adrz+istart),1)
                istart = istart + n
             endif
@@ -863,6 +911,7 @@ c
          status = status .and. ma_pop_stack(his) 
          status = status .and. ma_pop_stack(hz) 
          status = status .and. ma_pop_stack(ha) 
+         status = status .and. ma_pop_stack(hls)
          status = status .and. ma_pop_stack(hmz) 
          status = status .and. ma_pop_stack(hma) 
          if (.not. status) call ga_error('ga_reuse: ma_pop?', 0)

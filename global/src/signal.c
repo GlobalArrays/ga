@@ -8,27 +8,30 @@
 
 #include <signal.h>
 
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
+#   define SigType  int
+#else
+#   define SigType  void
+#endif
+
+
+#ifndef SIG_ERR
+#   define SIG_ERR         (SigType (*)())-1
+#endif
+
 #if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
-    defined(IBM) || defined(NEXT)
+    defined(AIX) || defined(NEXT)
 #include <sys/wait.h>
 #endif
 
 extern void ga_error();
 
-#ifdef TCGMSG
 extern int SR_caught_sigint;
-#else
-int SR_caught_sigint;
-#endif
 
 
 
 /*********************** SIGINT *************************************/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigIntHandler(sig, code, scp, addr)
-#else
-void SigIntHandler(sig, code, scp, addr)
-#endif
+SigType SigIntHandler(sig, code, scp, addr)
      int sig, code;
      struct sigcontext *scp;
      char *addr;
@@ -44,23 +47,14 @@ void TrapSigInt()
   manner not possible just by killing everyone
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGINT, SigIntHandler) == (int (*)()) -1)
+  if ( signal(SIGINT, SigIntHandler) == SIG_ERR)
     ga_error("TrapSigInt: error from signal setting SIGINT",(long) SIGINT);
-#else
-  if ( signal(SIGINT, SigIntHandler) == (void (*)()) -1)
-    ga_error("TrapSigInt: error from signal setting SIGINT",(long) SIGINT);
-#endif
 }
 
 
 
 /*********************** SIGCHLD *************************************/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigChldHandler(sig, code, scp, addr)
-#else
-void SigChldHandler(sig, code, scp, addr)
-#endif
+SigType SigChldHandler(sig, code, scp, addr)
      int sig, code;
      struct sigcontext *scp;
      char *addr;
@@ -86,26 +80,16 @@ void TrapSigChld()
   Trap SIGCHLD so that can tell if children die unexpectedly.
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGCHLD, SigChldHandler) == (int (*)()) -1)
+  if ( signal(SIGCHLD, SigChldHandler) == SIG_ERR)
     ga_error("TrapSigChld: error from signal setting SIGCHLD",
 		  (long) SIGCHLD);
-#else
-  if ( signal(SIGCHLD, SigChldHandler) == (void (*)()) -1)
-    ga_error("TrapSigChld: error from signal setting SIGCHLD",
-		  (long) SIGCHLD);
-#endif
 }
 
 
 
 
 /*********************** SIGBUS *************************************/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigBusHandler(sig, code, scp, addr)
-#else
-void SigBusHandler(sig, code, scp, addr)
-#endif
+SigType SigBusHandler(sig, code, scp, addr)
      int sig, code;
      struct sigcontext *scp;
      char *addr;
@@ -119,26 +103,16 @@ void TrapSigBus()
   Trap SIGBUS 
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGBUS, SigBusHandler) == (int (*)()) -1)
+  if ( signal(SIGBUS, SigBusHandler) == SIG_ERR)
     ga_error("TrapSigBus: error from signal setting SIGBUS",
                   (long) SIGBUS);
-#else
-  if ( signal(SIGBUS, SigBusHandler) == (void (*)()) -1)
-    ga_error("TrapSigBus: error from signal setting SIGBUS",
-                  (long) SIGBUS);
-#endif
 }
 
 
 
 
 /*********************** SIGFPE *************************************/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigFpeHandler(sig, code, scp, addr)
-#else
-void SigFpeHandler(sig, code, scp, addr)
-#endif
+SigType SigFpeHandler(sig, code, scp, addr)
      int sig, code;
      struct sigcontext *scp;
      char *addr;
@@ -152,26 +126,16 @@ void TrapSigFpe()
   Trap SIGFPE
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGFPE, SigFpeHandler) == (int (*)()) -1)
+  if ( signal(SIGFPE, SigFpeHandler) == SIG_ERR)
     ga_error("TrapSigFpe: error from signal setting SIGFPE",
                   (long) SIGFPE);
-#else
-  if ( signal(SIGFPE, SigFpeHandler) == (void (*)()) -1)
-    ga_error("TrapSigFpe: error from signal setting SIGFPE",
-                  (long) SIGFPE);
-#endif
 }
 
 
 
 
 /*********************** SIGILL *************************************/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigIllHandler(sig, code, scp, addr)
-#else
-void SigIllHandler(sig, code, scp, addr)
-#endif
+SigType SigIllHandler(sig, code, scp, addr)
      int sig, code;
      struct sigcontext *scp;
      char *addr;
@@ -185,26 +149,16 @@ void TrapSigIll()
   Trap SIGILL
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGILL, SigIllHandler) == (int (*)()) -1)
+  if ( signal(SIGILL, SigIllHandler) == SIG_ERR)
     ga_error("TrapSigIll: error from signal setting SIGILL",
                   (long) SIGILL);
-#else
-  if ( signal(SIGILL, SigIllHandler) == (void (*)()) -1)
-    ga_error("TrapSigIll: error from signal setting SIGILL",
-                  (long) SIGILL);
-#endif
 }
 
 
 
 
 /*********************** SIGSEGV *************************************/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigSegvHandler(sig, code, scp, addr)
-#else
-void SigSegvHandler(sig, code, scp, addr)
-#endif
+SigType SigSegvHandler(sig, code, scp, addr)
      int sig, code;
      struct sigcontext *scp;
      char *addr;
@@ -218,26 +172,16 @@ void TrapSigSegv()
   Trap SIGSEGV
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGSEGV, SigSegvHandler) == (int (*)()) -1)
+  if ( signal(SIGSEGV, SigSegvHandler) == SIG_ERR)
     ga_error("TrapSigSegv: error from signal setting SIGSEGV",
                   (long) SIGSEGV);
-#else
-  if ( signal(SIGSEGV, SigSegvHandler) == (void (*)()) -1)
-    ga_error("TrapSigSegv: error from signal setting SIGSEGV",
-                  (long) SIGSEGV);
-#endif
 }
 
 
 
 
 /*********************** SIGSYS *************************************/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigSysHandler(sig, code, scp, addr)
-#else
-void SigSysHandler(sig, code, scp, addr)
-#endif
+SigType SigSysHandler(sig, code, scp, addr)
      int sig, code;
      struct sigcontext *scp;
      char *addr;
@@ -251,25 +195,15 @@ void TrapSigSys()
   Trap SIGSYS
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGSYS, SigSysHandler) == (int (*)()) -1)
+  if ( signal(SIGSYS, SigSysHandler) == SIG_ERR)
     ga_error("TrapSigSys: error from signal setting SIGSYS",
                   (long) SIGSYS);
-#else
-  if ( signal(SIGSYS, SigSysHandler) == (void (*)()) -1)
-    ga_error("TrapSigSys: error from signal setting SIGSYS",
-                  (long) SIGSYS);
-#endif
 }
 
 
 
 /*********************** SIGTRAP *************************************/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigTrapHandler(sig, code, scp, addr)
-#else
-void SigTrapHandler(sig, code, scp, addr)
-#endif
+SigType SigTrapHandler(sig, code, scp, addr)
      int sig, code;
      struct sigcontext *scp;
      char *addr;
@@ -283,25 +217,15 @@ void TrapSigTrap()
   Trap SIGTRAP
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGTRAP, SigTrapHandler) == (int (*)()) -1)
+  if ( signal(SIGTRAP, SigTrapHandler) == SIG_ERR)
     ga_error("TrapSigTrap: error from signal setting SIGTRAP",
                   (long) SIGTRAP);
-#else
-  if ( signal(SIGTRAP, SigTrapHandler) == (void (*)()) -1)
-    ga_error("TrapSigTrap: error from signal setting SIGTRAP",
-                  (long) SIGTRAP);
-#endif
 }
 
 
 
 /*********************** SIGHUP *************************************/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigHupHandler(sig, code, scp, addr)
-#else
-void SigHupHandler(sig, code, scp, addr)
-#endif
+SigType SigHupHandler(sig, code, scp, addr)
      int sig, code;
      struct sigcontext *scp;
      char *addr;
@@ -315,25 +239,15 @@ void TrapSigHup()
   Trap SIGHUP
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGHUP, SigHupHandler) == (int (*)()) -1)
+  if ( signal(SIGHUP, SigHupHandler) == SIG_ERR)
     ga_error("TrapSigHup: error from signal setting SIGHUP",
                   (long) SIGHUP);
-#else
-  if ( signal(SIGHUP, SigHupHandler) == (void (*)()) -1)
-    ga_error("TrapSigHup: error from signal setting SIGHUP",
-                  (long) SIGHUP);
-#endif
 }
 
 
 
 /*********************** SIGTERM *************************************/
-#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
-int SigTermHandler(sig, code, scp, addr)
-#else
-void SigTermHandler(sig, code, scp, addr)
-#endif
+SigType SigTermHandler(sig, code, scp, addr)
      int sig, code;
      struct sigcontext *scp;
      char *addr;
@@ -347,14 +261,28 @@ void TrapSigTerm()
   Trap SIGTERM
 */
 {
-#if defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)
-  if ( signal(SIGTERM, SigTermHandler) == (int (*)()) -1)
+  if ( signal(SIGTERM, SigTermHandler) == SIG_ERR)
     ga_error("TrapSigTerm: error from signal setting SIGTERM",
                   (long) SIGTERM);
-#else
-  if ( signal(SIGTERM, SigTermHandler) == (void (*)()) -1)
-    ga_error("TrapSigTerm: error from signal setting SIGTERM",
-                  (long) SIGTERM);
-#endif
 }
 
+
+/*********************** SIGIOT *************************************/
+SigType SigIotHandler(sig, code, scp, addr)
+     int sig, code;
+     struct sigcontext *scp;
+     char *addr;
+{
+  SR_caught_sigint = 1;
+  ga_error("IOT signal was sent, status=",(long) code);
+}
+
+void TrapSigIot()
+/*
+  Trap SIGIOT
+*/
+{
+      if ( signal(SIGIOT, SigIotHandler) == SIG_ERR)
+          ga_error("TrapSigIot: error from signal setting SIGIOT",
+                    (long) SIGIOT);
+}

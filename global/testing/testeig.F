@@ -1,0 +1,276 @@
+      program test
+      implicit none
+#include "mafdecls.h"
+#include "global.fh"
+#include "tcgmsg.fh"
+c     
+c     Intitialize the TCGMSG package
+c
+c
+       call pbeginf
+c
+#ifdef PAR_DIAG
+       call mxinit()   ! PEIGS needs mxinit
+#endif
+c
+c     Initialize the MA package
+c
+      if (.not. ma_init(MT_DBL, 180000, 180000))
+     $     call parerr(1)
+c
+c     Intitialize the GA package
+c
+      call ga_initialize()
+c
+c***  initialize PEIGS
+c
+      call testit()
+      call ga_terminate()
+c
+c     call mxend()
+      call pend()
+      end
+
+
+c-----------------
+
+      subroutine testit()
+      implicit none
+#include "mafdecls.h"
+#include "global.fh"
+#include "tcgmsg.fh"
+c     
+      integer n
+      parameter (n = 100)
+      double precision a(n,n), b(n,n), c(n,n), evals(n)
+      double precision eva(n), evb(n)
+      integer g_a,g_b,g_c,g_d
+      integer  i, j, index(n),ind(n)
+      integer nproc, me
+      double precision dsin, sum
+      logical status
+c     
+      nproc = ga_nnodes()
+      me    = ga_nodeid()
+c     
+c***  a() is a local copy of what the global array should start as
+c
+      do j = 1, n
+         do i = 1, n
+            a(i,j) = 1d0 * (i+j)  
+            b(i,j) = DSIN(1d0* (i+j))   
+	    if(i.eq.j) then
+               b(i,j) = 2d0 *n
+               a(i,j) = i
+            endif
+	    if(i.le.j)then
+               c(i,j) = a(i,j)
+            else
+               c(i,j) = 0d0
+            endif
+         enddo
+      enddo
+c
+c***  Create global arrays
+c
+      if (.not. ga_create(MT_DBL, n, n, 'A', 1, 1, g_a))
+     $     call ga_error(' ga_create failed ',2)
+      if (.not. ga_create(MT_DBL, n, n, 'B', 1, 1, g_b))
+     $     call ga_error(' ga_create failed ',2)
+      if (.not. ga_create(MT_DBL, n, n, 'C', 1, 1, g_c))
+     $     call ga_error(' ga_create failed ',2)
+      if (.not. ga_create(MT_DBL, n, n, 'D', 1, 1, g_d))
+     $     call ga_error(' ga_create failed ',2)
+c     
+c***  Fill in arrays A & B
+c
+      if (me .eq. 0) then
+c        write(6,21) 
+ 21      format(/' filling in ... ')
+c        call ffflush(6)
+         do j = 1, n
+	    call ga_put(g_a, 1,n, j,j, a(1,j),n)
+	    call ga_put(g_b, 1,n, j,j, b(1,j),n)
+	    call ga_put(g_c, 1,n, j,j, c(1,j),n)
+         enddo
+c	print *,'A'
+        do j = 1, n
+c      	  call GA_GET(g_a, 1,n, j,j, eva,1)
+c         write(6,'(10e8.2)')(eva(i),i=1,n)
+        enddo
+      endif
+c
+c***  check symmetrization
+c
+      if (me .eq. 0) then
+        print *,' '
+ 	print *,'>checking ga_symmetrize '
+        print *,' '
+        call ffflush(6)
+      endif
+      call ga_symmetrize(g_c)
+c
+      call GA_GET(g_c,  1,n, 1,n,c,n)
+      do j = ga_nodeid()+1, n, ga_nnodes()
+         do i = j+1, n
+            if(c(i,j).ne.c(j,i))then
+                 print *, me, ' symmetrize ',i,j,c(i,j),c(j,i)
+                 call ffflush(6)
+                 call ga_error('exiting',-1)
+            endif
+         enddo
+      enddo
+      call ga_sync()
+      if (me .eq. 0) then
+        print *,' '
+        print *,' ga_symmetrize is OK'
+        print *,' '
+        call ffflush(6)
+      endif
+
+c
+c***  check symmetrization 
+c
+      if (me .eq. 0) then
+ 	print *,' '
+        print *,'>checking ga_transpose '
+ 	print *,' '
+        call ffflush(6)
+      endif
+c
+      call ga_transpose(g_c,g_d)
+*     call ga_print(g_c)
+*     call ga_print(g_d)
+      call GA_GET(g_d,  1,n, 1,n,a,n)
+      do j = ga_nodeid()+1, n, ga_nnodes()
+         call GA_GET(g_d,  1,n, j,j, a,n)
+         do i = 1, n
+            if(a(i,1).ne.c(j,i))then
+                 print *, me, ' transpose ',i,j,a(i,1),c(j,i) 
+                 call ffflush(6)
+                 call ga_error('exiting',-1)
+            endif
+         enddo
+      enddo
+      call ga_sync()
+      if (me .eq. 0) then
+ 	print *,' '
+ 	print *,' ga_transpose is OK'
+ 	print *,' '
+        call ffflush(6)
+      endif
+c
+c
+c***  solve the eigenproblem
+      if (me .eq. 0)then
+ 	print *,' '
+        write(6,*) '>checking the generalized eigensolver ... '
+ 	print *,' '
+        call ffflush(6)
+      endif
+      call ga_sync()
+#ifndef PAR_DIAG
+      call ga_diag_seq(g_a,g_b,g_c,evals)
+#else
+      call ga_diag(g_a,g_b,g_c,evals)
+#endif
+      if (me .eq. 0) then
+ 	print *,' '
+ 	print *,' checking multiplication'
+ 	print *,' '
+        call ffflush(6)
+      endif
+c
+      call ga_sync()
+      call ga_dgemm('t','n',n,n,n, 1d0, g_c, g_a, 0d0, g_d)
+      call ga_dgemm('n','n',n,n,n, 1d0, g_d, g_c, 0d0, g_a)
+c
+      call ga_sync()
+      if (me .eq. 0) then
+         do j = 1, n
+	    call GA_GET(g_a, j,j, j,j, eva(j),1)
+         enddo
+      endif
+
+      call ga_sync()
+      call ga_dgemm('t','n',n,n,n, 1d0, g_c, g_b, 0d0, g_d)
+      call ga_sync()
+      call ga_dgemm('n','n',n,n,n, 1d0, g_d, g_c, 0d0, g_b)
+c
+      call ga_sync()
+      if (me .eq. 0) then
+         do j = 1, n
+	    call GA_GET(g_b, j,j, j,j, evb(j),1)
+         enddo
+         write(6,*)'  j   lambda      eva      evb      eva/evb' 
+         write(6,*)'  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^' 
+         call ffflush(6)
+         do j = 1, n
+            if(ABS(evals(j) - eva(j)/evb(j)).gt.1d-5)
+     &         write(6,'(i4,1h_,6(e10.3,1h,))')
+     @            j,evals(j), eva(j), evb(j),eva(j)/evb(j)
+         enddo
+         write(6,*)'       OK         OK       OK        OK' 
+         call ffflush(6)
+      endif
+      if (me .eq. 0) then
+ 	print *,' '
+ 	print *,'  eigensolver & multiplication are OK'
+ 	print *,' '
+ 	print *,' '
+        call ffflush(6)
+      endif
+c
+c..................................................................
+c
+c***  solve the std eigenproblem
+      if (me .eq. 0)then
+        print *,' '
+        write(6,*) '>checking the standard eigensolver ... '
+        print *,' '
+        call ffflush(6)
+      endif
+      do j =1,n
+         index(j)=j
+         ind(j)=j
+      enddo
+
+      call ga_sync()
+#ifdef PAR_DIAG
+      call ga_diag_std(g_a,g_c,evals)
+#else
+      call ga_diag_std_seq(g_a,g_c,evals)
+#endif
+c
+      call ga_sync()
+
+      call ga_zero(g_b)
+      
+      call ga_dgemm('n','n',n,n,n, 1d0, g_a, g_c, 0d0, g_d) ! d := a*c
+c
+c
+      if (me .eq. 0) call ga_dscatter(g_b, evals, index, ind, n)
+
+      call ga_sync()
+      call ga_dgemm('n','n',n,n,n, 1d0, g_c, g_b, 0d0, g_a) ! a := c*b
+ 
+      call ga_sync()
+      call ga_dadd(1d0, g_d, -1d0, g_a, g_c)
+      sum = ga_ddot(g_c,g_c)
+      if (me .eq. 0) then
+        print *,' '
+        if(dsqrt(sum)/n.lt.1d-11)then
+           print *, ' std eigensolver is OK '
+        else
+           print *, ' test failed: norm = ', dsqrt(sum)/n
+        endif
+        print *,' '
+        call ffflush(6)
+      endif
+c     status =  MA_summarize_allocated_blocks()
+      status =  ga_destroy(g_d)
+      status =  ga_destroy(g_c)
+      status =  ga_destroy(g_b)
+      status =  ga_destroy(g_a)
+      end
+

@@ -1,5 +1,5 @@
-#define LOCK(x)      _gspwt(x)
-#define UNLOCK(x)       _rsp(x)
+#define LOCK(g_a, proc, x)      _gspwt(x)
+#define UNLOCK(g_a, proc, x)       _rsp(x)
 #define UNALIGNED(x)    (((unsigned long) (x)) % sizeof(long))
 typedef __align128 unsigned char subpage[128];
 

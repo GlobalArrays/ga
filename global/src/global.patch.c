@@ -31,8 +31,7 @@ extern Integer         *INT_MB;
 
 /*\ check if dimensions of two patches are divisible 
 \*/
-static logical patches_conforming(ailo, aihi, ajlo, ajhi,
-                                  bilo, bihi, bjlo, bjhi)
+logical patches_conforming(ailo, aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi)
      Integer *ailo, *aihi, *ajlo, *ajhi;
      Integer *bilo, *bihi, *bjlo, *bjhi;
 {
@@ -177,32 +176,53 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
         if(atype != MT_F_DBL )
         ga_error("ga_copy_patch: it can be done only for DoublePrecision ",0L);
 
-         if(!MA_push_get(MT_F_INT,nelem, "i", &ihandle, &iindex))
+         if(!MA_push_get(MT_F_INT, nelem, "i", &ihandle, &iindex))
             ga_error(" ga_copy_patch: MA failed ", 0L);
-         if(!MA_push_get(MT_F_INT,nelem, "j", &jhandle, &jindex))
+         if(!MA_push_get(MT_F_INT, nelem, "j", &jhandle, &jindex))
             ga_error(" ga_copy_patch: MA failed ", 0L);
-         if(!MA_push_get(MT_F_DBL,nelem, "v", &vhandle, &vindex))
+         if(!MA_push_get(atype, nelem, "v", &vhandle, &vindex))
             ga_error(" ga_copy_patch: MA failed ", 0L);
 
          base = 0;
-         if (*trans == 'n' || *trans == 'N')  
-           for(j = jlos, jj=0; j <= jhis; j++, jj++)
-             for(i = ilos, ii =0; i <= ihis; i++, ii++){
-                 DEST_INDICES(i, j, *ailo, *ajlo, (*aihi- *ailo +1), 
-                           INT_MB[base+iindex], INT_MB[base+jindex],
-                           *bilo, *bjlo, (*bihi - *bilo +1) );
-                 DBL_MB[base+vindex] = DBL_MB[index+ ld*jj + ii];
-                 base++;
-             }
-         else
-           for(j = jlos, jj=0; j <= jhis; j++, jj++)
-             for(i = ilos, ii =0; i <= ihis; i++, ii++){
-                 DEST_INDICES(j, i, *ajlo, *ailo, (*ajhi - *ajlo +1),
-                              INT_MB[base+iindex], INT_MB[base+jindex],
-                              *bilo, *bjlo, (*bihi - *bilo +1) );
-                 DBL_MB[base+vindex] = DBL_MB[index+ ld*jj + ii];
-                 base++;
-             }
+         if(atype == MT_F_DBL ){
+           if (*trans == 'n' || *trans == 'N')  
+             for(j = jlos, jj=0; j <= jhis; j++, jj++)
+               for(i = ilos, ii =0; i <= ihis; i++, ii++){
+                   DEST_INDICES(i, j, *ailo, *ajlo, (*aihi- *ailo +1), 
+                             INT_MB[base+iindex], INT_MB[base+jindex],
+                             *bilo, *bjlo, (*bihi - *bilo +1) );
+                   DBL_MB[base+vindex] = DBL_MB[index+ ld*jj + ii];
+                   base++;
+               }
+           else
+             for(j = jlos, jj=0; j <= jhis; j++, jj++)
+               for(i = ilos, ii =0; i <= ihis; i++, ii++){
+                   DEST_INDICES(j, i, *ajlo, *ailo, (*ajhi - *ajlo +1),
+                                INT_MB[base+iindex], INT_MB[base+jindex],
+                                *bilo, *bjlo, (*bihi - *bilo +1) );
+                   DBL_MB[base+vindex] = DBL_MB[index+ ld*jj + ii];
+                   base++;
+               }
+         }else{
+           if (*trans == 'n' || *trans == 'N')
+             for(j = jlos, jj=0; j <= jhis; j++, jj++)
+               for(i = ilos, ii =0; i <= ihis; i++, ii++){
+                   DEST_INDICES(i, j, *ailo, *ajlo, (*aihi- *ailo +1),
+                             INT_MB[base+iindex], INT_MB[base+jindex],
+                             *bilo, *bjlo, (*bihi - *bilo +1) );
+                   INT_MB[base+vindex] = INT_MB[index+ ld*jj + ii];
+                   base++;
+               }
+           else
+             for(j = jlos, jj=0; j <= jhis; j++, jj++)
+               for(i = ilos, ii =0; i <= ihis; i++, ii++){
+                   DEST_INDICES(j, i, *ajlo, *ailo, (*ajhi - *ajlo +1),
+                                INT_MB[base+iindex], INT_MB[base+jindex],
+                                *bilo, *bjlo, (*bihi - *bilo +1) );
+                   INT_MB[base+vindex] = INT_MB[index+ ld*jj + ii];
+                   base++;
+               }
+         }
 
          ga_release_(g_a, &ilos, &ihis, &jlos, &jhis);
          ga_dscatter_(g_b, DBL_MB+vindex, INT_MB+iindex, INT_MB+jindex, &nelem);

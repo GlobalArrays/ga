@@ -45,7 +45,7 @@ extern void ga_error();
 #include <errno.h>
 #include <stdio.h>
 
-#if !defined(SGI) && !defined(KSR)
+#if !defined(SGI) && !defined(KSR) && !defined(DECOSF)
 extern char *shmat();
 #endif
 
@@ -58,18 +58,20 @@ extern char *shmat();
 #define _SHMMAX need to know the limits for this machine
 
 #ifdef SUN
-#undef _SHMMAX
-#define _SHMMAX (1024)  /* memory in KB */
-#endif
-
-#if defined(SGI) || defined(IBM)
-#undef _SHMMAX
-#define _SHMMAX ((unsigned long)228*1024)
-#endif
-
-#ifdef KSR
-#undef _SHMMAX
-#define _SHMMAX ((unsigned long)512*1024)
+#  undef _SHMMAX
+#  define _SHMMAX (1024)  /* memory in KB */
+#elif defined(SGI) || defined(AIX)
+#  undef _SHMMAX
+#  define _SHMMAX ((unsigned long)228*1024)
+#elif defined(KSR)
+#  undef _SHMMAX
+#  define _SHMMAX ((unsigned long)512*1024)
+#elif defined(DECOSF)
+#  undef _SHMMAX
+#  define _SHMMAX ((unsigned long)4*1024)
+#elif defined(SHMAX)
+#  undef _SHMMAX
+#  define _SHMMAX SHMMAX
 #endif
 
 #define MAX_REGIONS 100
@@ -414,7 +416,7 @@ long ga_nodeid_();
 
   /* attach if not attached yet */
   if(!region_list[reg].attached){
-   if ( (int) (temp = shmat((int) *id, (char *)NULL, 0)) == -1){
+   if ( (long) (temp = shmat((int) *id, (char *)NULL, 0)) == -1L){
        fprintf(stderr, " err: id= %d  off=%d \n",*id, *offset);
        ga_error("Attach_Shared_Region: failed to attach ",(long)id);
     }
@@ -441,20 +443,20 @@ char *allocate(size)
      long size;
 {
 char * temp;
-int id;
+long id;
 
     if( alloc_regions >= MAX_REGIONS)
        ga_error("Create_Shared_Region: to many regions already allocated ",0L);
 
     last_allocated = alloc_regions;
-    if ( (int)(id = shmget(IPC_PRIVATE, (int) size,
-                     (int) (IPC_CREAT | 00600))) < 0 ){
+    if ( (id = (long)shmget(IPC_PRIVATE, (int) size,
+                     (int) (IPC_CREAT | 00600))) < 0L ){
        perror((char*)0);
        fprintf(stderr,"id=%d size=%d\n",id, (int) size);
        ga_error("allocate: failed to create shared region ",(long)id);
     }
 
-    if ( (int)(temp = shmat((int) id, (char *) NULL, 0)) == -1){
+    if ( (long)(temp = shmat((int) id, (char *) NULL, 0)) == -1L){
        perror((char*)0);
        ga_error("allocate: failed to attach to shared region",  temp);
     }

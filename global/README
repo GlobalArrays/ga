@@ -29,16 +29,24 @@ distribute to other US Government contractors.
 
 What is new ?
 ~~~~~~~~~~~~
-version 1.3.1   port to CRAY-T3D
-                new operation ga_summarize  
-                improved ga_dgemm
+
+version 2.0     support for networks of multiprocessors (SMP);
+		integrated shared and distributed memory versions;
+		ga_scatter/gather supports integers;
+		different numbering of global array handles (< 0);
+		and other internal improvements, like randomization
+		of remote operations. 	
+
+version 1.3.1   port to CRAY-T3D;
+                new operation ga_summarize;
+                improved ga_dgemm.
 
 version 1.3	introduced patch versions of ga_ddot, ga_dscal, ga_dadd;
 		also ga_matmul_patch, ga_ifill_patch, ga_dfill_patch, and
 		ga_duplicate. 
                 ga_copy_patch now has a transpose argument.
 
-version 1.2     integrated shared and distributed memory versions of GAs
+version 1.2     (loosely) integrated shared and distributed memory versions
 
 
 
@@ -78,7 +86,7 @@ Dependencies on other software:
 - if you want to use tracing, libtrace.a (built in ./trace) will be required;
   also DGA_TRACE define symbol should be specified for CC and FC compilers.
 
-
+
 Makefiles:
 ~~~~~~~~~
 
@@ -86,8 +94,8 @@ In addition to makefile there are three more files included in makefiles
 located in the subdirectories: Makefile.h  (definitions & include symbols),
 MakeFiles.h (file names to be compiled depending on the TARGET machine and
 VERSION of memory (shared or distributed), and Makelib.h (specification of
-libraries to be linked with when test programs ar build).
-The user needs to specify TARGET & VERSION in the ./makefile or on the 
+libraries to be linked with when test programs are built).
+The user needs to specify TARGET in the ./makefile or on the 
 command line when calling make. The library and test programs should be
 built by calling make in the current directory. 
 
@@ -98,45 +106,63 @@ Valid VERSION names:    SHMEM, DISMEM
 Test Programs:
 ~~~~~~~~~~~~~
 
-      - Programs: test, testsolve, testeig, testpatch are available to test 
-        this software. 
+      - Programs: test.x, testsolve.x, testeig.x, testpatch.x are
+        available to test this software.
 
-      - An example program that uses GA is called jacobix. The Jacobi
+      - An example program that uses GA is called jacobi.x. The Jacobi
         iterative method is used to solve a system of linear equations
         generated in the solution process of a partial differential 
         equation by the finite differences method. 
 
       - You might have to modify Makelib.h to provide pointers to
         the ScaLAPACK and Co., and PEIGS libraries in order to use parallel
-        versions of eigensolver and linear equation solver in testeig
+        versions of eigensolver and linear equation solver in testeig.x
         test program. 
 
       - To run test programs you need to use TCGMSG to fork the
 	processes on the shared memory and (network of) workstations;
-	you need to prepare *.p files (see testing/makefile), to
 	execute them you should use 'parallel' program -- built in
-	tcgmsg/ipcv4.0. (For a single processor execution 'parallel' is
-	not required if you have a version > 4.03 of TCGMSG.  For
-	parallel execution, 'parallel' is not needed when running on
-	the Intel, and the IBM SP1 machines.)
+	tcgmsg/ipcv4.0 -- for example: 
+ 
+              parallel testing/test.x
+
+	assuming that test.x is already built, parallel is accessible
+	(you might copy it into your "bin" directory), and you are
+	still in the current (g/global/) directory.
+
+        For a single processor execution 'parallel' is
+	not required if you have a version > 4.03 of TCGMSG; run it as: 
+             
+              testing/test.x
+
+        or under control of your favorite debugger. 
 
 
+        On MPP like T3D, IBM SP, and Intel machines, use appropriate
+        system command to specify the number of processors, load and 
+        run the programs. For example, to run on four processors of
+        the Cray T3D use:
+
+              mppexec testing/test.x -npes 4
+
+
+
 
 Documentation:
 ~~~~~~~~~~~~~
 
         An ASCII version of GA documentation is located in doc/global.doc. 
 
-Remarks: 
-~~~~~~~
+IMPORTANT: 
+~~~~~~~~~
 
-      - you need GNU make (version > 3.67) to build this software
+      - you need GNU make (version > 3.68) to build this software
 
 
-How to contact the authors:
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Contact for suggestions, comments and bug report:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Jarek Nieplocha <j_nieplocha@pnl.gov> 
-Pacific Northwest Laboratory, 
-MSIN: K1-87
-Richland, WA 99352 
+Jarek Nieplocha
+email: <j_nieplocha@pnl.gov> 
+phone: (509) 372-4469
+mail: Pacific Northwest Laboratory, MSIN: K1-87, Richland, WA 99352 

@@ -28,7 +28,14 @@ void     ga_symmetrize_(), ga_print_(),        ga_distribution_(),
 	 ga_dadd_patch_(), ga_dscal_patch_(),  ga_dfill_patch_(), 
 	 ga_ifill_patch_();
 
+void     ga_sort_scat_int_(), ga_sort_scat_dbl_(), ga_sort_gath_();
+
+/* collective comm routines for cluster management */
+void     ga_brdcst_clust(),   ga_igop_clust(),     ga_dgop_clust();
+
 Integer  ga_nnodes_(),     ga_nodeid_(),       ga_read_inc_();
+Integer  nnodes_(),        nodeid_();
+void     waitcom_();
 
 logical  ga_create(),      ga_create_irreg(), ga_destroy_() ; 
 logical  ga_duplicate_(),  ga_locate_region_();
@@ -50,6 +57,7 @@ void     ga_error();
 #define     GA_TYPE_DCJ 32760 - 11
 #define     GA_TYPE_DSC 32760 - 12
 #define     GA_TYPE_RDI 32760 - 13
+#define     GA_TYPE_DGT 32760 - 14
 #define     GA_TYPE_GOP 32760 - 29
 #define     GA_TYPE_BRD 32760 - 30
 
@@ -59,8 +67,9 @@ void     ga_error();
 #define     GA_OP_PUT 4          /* Put				*/
 #define     GA_OP_ACC 5          /* Accumulate			*/
 #define     GA_OP_DES 6          /* Destroy			*/
-#define     GA_OP_ZER 7          /* Zero			*/
-#define     GA_OP_DDT 8          /* Double precision dot product*/
+#define     GA_OP_DUP 7          /* Duplicate			*/
+#define     GA_OP_ZER 8          /* Zero			*/
+#define     GA_OP_DDT 9          /* Double precision dot product*/
 #define     GA_OP_DST 10         /* Double precision scatter	*/
 #define     GA_OP_DGT 11         /* Double precision gather	*/
 #define     GA_OP_DSC 12         /* Double precision scale	*/

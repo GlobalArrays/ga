@@ -69,7 +69,7 @@ c
 
       subroutine ga__add(nrow, ncol, A, lda, B, ldb, alpha)
 c
-c     A := alpha * (A + B')
+c     A := alpha * (A + B^)
 c
       implicit none
       Integer nrow, ncol, lda, ldb

@@ -1,38 +1,35 @@
 # Global Array library (shared and distributed memory version)
 #
 #      "make ipc.clean"   to create a utility to clean IPC resources 
-#      "make test"        to create a test program for GAs 
-#      "make testsolve"   to create a test program for linear equation solver 
+#      "make test.x"      to create a test program for GAs 
+#      "make testsolve.x" to create a test program for linear equation solver 
 #                         based on LU factorization
-#      "make testeig"     to create a test program for GA eigensolver,
+#      "make testeig.x"   to create a test program for GA eigensolver,
 #                         matrix multiply, and symmetrization 
-#      "make testpatch"   to create a test program for GA patch operations
+#      "make patch.x"     to create a test program for GA patch operations
 #      "make clean"       clean
 #      "make realclean"   even cleaner    
 #
 #........................................................................
 
-ifndef MACHINE
+ifndef TARGET
 error:
-	@echo "MACHINE machine [SUN,SGI,IBM,SP1,IPSC,PARAGON,KSR] not defined "
+	@echo "TARGET machine not defined "
+	@echo "-- one of [SUN,SGI,SGITFP,IBM,DECOSF,SP1,IPSC,DELTA,PARAGON,KSR,CRAY-T3D]"
 	exit
 endif
 
-ifndef VERSION
-error1:
-	@echo " memory VERSION [SHMEM/DISMEM] not defined "
-	exit
-endif
-
-ifeq (DIAG, PAR)
+ifeq ($(DIAG), PAR)
      DIAG_DEF = -DPAR_DIAG
 endif
-ifeq (LU_SOLVE, PAR)
+
+ifeq ($(LU_SOLVE), PAR)
      LU_SOLVE_DEF = -DPAR_LU
 endif
 
 LOC_INCLUDES = -I../src
-LOC_DEFINES  = -D$(VERSION) $(DIAG_DEF) $(LU_SOLVE_DEF)
+LOC_DEFINES  = $(DIAG_DEF) $(LU_SOLVE_DEF)
+
 
 include ../Makefile.h
 include ../Makelib.h
@@ -44,67 +41,41 @@ ifeq ($(GA_TRACE),YES)
    LIBTRACE= ../trace/libtrace.a
 endif
 
-       OBJ =  $(GA_OBJ) $(GA_ALG) $(GA_UTIL) 
+
+
+#
+# build test programs and .p files if needed
+#
+
+.PRECIOUS: %.o
+
+ifeq ($(P_FILE),YES)
+    ifeq ($(EXPLICITF),FALSE)
+        .SUFFIXES : 
+        .SUFFIXES : .F .o .x
+
+        %.o : %.F
+	   $(FC) $(FFLAGS) -c $*.F 
+        %.o : %.c
+	   $(CC) $(CFLAGS) -DSYSV -c $*.c 
+    endif
+
+    %.x : %.o $(LIBRARY)
+	$(FC) $(FLDOPT) -o $@ $< $(LIBS) $(LIBCOM) 
+	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
+	$(INSTALL) $@ 
+else
+    %.x : %.o $(LIBRARY)
+	$(FC) $(FLDOPT) -o $@ $< $(LIBS) $(LIBCOM) 
+	$(INSTALL) $@ 
+endif
 
 
 ipc.clean:	ipc.clean.o
-	$(CC) -o $@ ipc.clean.o
+	$(CC) -o $@  ipc.clean.o
 
-#
-# test programs
-
-test:  stest.o  $(LIBRARY)
-	$(FC) $(FLDOPT) -o $@ stest.o $(LIBS) $(LIBCOM) 
-	$(INSTALL) 
-
-testpatch:  stestpatch.o  $(LIBRARY)
-	$(FC) $(FLDOPT) -o $@ stestpatch.o $(LIBS) $(LIBCOM) 
-	$(INSTALL) 
-
-jacobix:  jacobi.o  $(LIBRARY)
-	$(FC) $(FLDOPT) -o $@ jacobi.o $(LIBS) $(LIBCOM) $(LIBTRACE) 
-	$(INSTALL) 
-
-testeig: stesteig.o  $(LIBRARY) 
-	$(FC) $(FLDOPT) -o $@ stesteig.o  $(LIBS) $(LIBCOM) 
-	$(INSTALL) 
-
-test.p:
-	echo "`whoami` `hostname` 4 `pwd`/test /tmp" > test.p
-testpatch.p:
-	echo "`whoami` `hostname` 4 `pwd`/testpatch /tmp" > testpatch.p
-testeig.p:
-	echo "`whoami` `hostname` 4 `pwd`/testeig /tmp" > testeig.p
-jacobix.p:
-	echo "`whoami` `hostname` 4 `pwd`/jacobix /tmp" > jacobix.p
-
-testsolve:  stestsolve.o  $(LIBRARY)
-	$(FC) $(FLDOPT) -o $@ stestsolve.o \
-        $(SCALAPACK) $(LIBS) $(LIBCOM)
-	$(INSTALL) 
-
-testsolve.p:
-	echo "`whoami` `hostname` 4 `pwd`/testsolve /tmp" > testsolve.p
-
-testget:  stestget.o  $(LIBRARY)
-	$(FC) $(FLDOPT) -o $@ stestget.o $(LIBS) $(LIBCOM) 
-	$(INSTALL) 
-
-testget.p:
-	echo "`whoami` `hostname` 4 `pwd`/testget /tmp" > testget.p
-
-testchol: stestchol.o $(LIBRARY) 
-	$(FC) $(FLDOPT) -o  $@   stestchol.o $(LIBS) $(LIBCOM)
-	$(INSTALL) 
-
-testchol.p:
-	echo "`whoami` `hostname` 4 `pwd`/testchol /tmp" > $@
-
-#
 
 clean:   
-	rm -f *.o *.a core mppcore *.p ./test*  ipc.clean event* jacobix
+	rm -f *.o *.a core mppcore *.p *.x  ipc.clean event* 
 
-realclean:
-	rm -f *.o *.a core mppcore *.p ./test* ipc.clean event* jacobix
-
+realclean: clean

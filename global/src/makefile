@@ -6,33 +6,24 @@
 
 ifndef TARGET
 error:
-	@echo "TARGET machine [SUN,SGI,IBM,SP1,IPSC,PARAGON,KSR,CRAY-T3D] not defined "
-	exit
-endif
-
-ifndef VERSION
-error1:
-	@echo " memory VERSION [SHMEM/DISMEM] not defined "
+	@echo "TARGET machine [SUN,SGI,SGITFP,IBM,DECOSF,SP1,IPSC,PARAGON,KSR,CRAY-T3D] not defined "
 	exit
 endif
 
 INTERRUPT_AVAILABLE = SP1 IPSC DELTA PARAGON
 
+include ../Makefile.h
+
 ifeq ($(VERSION),SHMEM)
   ifneq ($(TARGET),CRAY-T3D)
-    LOC_DEFINES = -DSHMEM -DSYSV -DTCGMSG
-  else
-    LOC_DEFINES = -DSHMEM
+    LOC_DEFINES = -DSYSV -DDATA_SERVER
   endif
 else
-  ifeq ($(TARGET),$(findstring $(TARGET),$(INTERRUPT_AVAILABLE)))
-       LOC_DEFINES = -DTCGMSG 
-  else
-       LOC_DEFINES = -DTCGMSG -DDATA_SERVER
+  ifneq ($(TARGET),$(findstring $(TARGET),$(INTERRUPT_AVAILABLE)))
+       LOC_DEFINES = -DDATA_SERVER
   endif
 endif
 
-include ../Makefile.h
 include ../Makelib.h
 include ../MakeFiles.h
 
@@ -42,12 +33,14 @@ include ../MakeFiles.h
 OBJ = $(GA_OBJ) $(GA_ALG) $(GA_UTIL)
 
 
+all: $(GA_SYNC) $(LIBRARY)
+
 $(LIBRARY):  $(OBJ) $(EXTRA)
 	$(RM) -f $@
 	$(AR) $(ARFLAGS) $@ $(OBJ) $(EXTRA) 
 	$(RANLIB) $@
 
-$(GA_SYNC): 
+$(GA_SYNC): $(GA_SYNC:.o=.c)
 	cc -g $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) -c  $(GA_SYNC:.o=.c)
 
 $(OBJ):  $(TARGET).$(VERSION).stamp 
@@ -56,6 +49,8 @@ $(TARGET).$(VERSION).stamp:
 	$(RM) -f *.o *.a core *.*.stamp
 	echo "" > $(TARGET).$(VERSION).stamp
 
+#clean *.o  and crap left by SP1 MPL
 clean:
-	$(RM) -f *.o *.a core *.*.stamp
+	$(RM) -f *.o *.a core *.*.stamp mputil.mp*
+
 

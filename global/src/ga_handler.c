@@ -1,63 +1,62 @@
 #if defined(NX) || defined(SP1)
-extern void ga_server_( long *);	/* FORTRAN routine */
 
-#define GA_TYPE_REQ 32759L	/* MUST match globalp.h */
+#include "global.c.h"
+#include "message.h"
+#include "interrupt.h"
+#include <stdio.h>
 
-void ga_init_handler_(double*, long*);
+
+long htype = GA_TYPE_REQ;
+void ga_init_handler(char*, long);
+extern void ga_SERVER(long);
 
 
 
 #ifdef NX 
-extern long masktrap(long);
 
 void ga_handler(long type, long count, long node, long pid)
 {
   long oldmask;
-  oldmask = masktrap(1);
+  ga_mask(1L, &oldmask);
 
-  ga_server_(&node);
+  ga_SERVER(node);
 
-  ga_reinit_handler_();
+  ga_init_handler((char*) MessageRcv, (long)TOT_MSG_SIZE );
 
-  oldmask = masktrap(oldmask);
+  ga_mask(oldmask, &oldmask);
 }
 
-static long  htype=GA_TYPE_REQ;
 
-void ga_init_handler_(buffer, lenbuf)         /* Also called from FORTRAN */
-double *buffer;
-long   *lenbuf;
+void ga_init_handler(char *buffer, long lenbuf) /*Also called in ga_initialize*/
 {
-  hrecv(htype, (char *) buffer, *lenbuf, ga_handler);
+  hrecv(htype, buffer, lenbuf, ga_handler); 
 }
 
 
 
 #elif defined(SP1)
+/******************** SP interrupt receive stuff *************/
 
+static long  requesting_node;
+static long  msgid; 
+static long  have_wildcards=0; 
+static long  dontcare, allmsg, nulltask,allgrp; /*values of MPL/EUIH wildcards*/
 
-/******************** SP1 interrupt receive stuff *************/
-
-extern long   lockrnc(long*,long *);
-extern long   rcvncall(char*,long *, long*,long*,long*,void*());
-extern long   mpc_wait(long*,long *);
-static long   requesting_node;
-static long dontcare, allmsg, nulltask,allgrp; /*values for EUI/EUIH wildcards*/
-#include <stdio.h>
 
 /*\ gets values of EUI wildcards
 \*/
 void wildcards()
 {
 long buf[4], qtype, nelem, status;
-        qtype = 3; nelem = 4;
-        status = mpc_task_query(buf,nelem,qtype);
-        if(status==-1) Error("wildcards: mpc_task_query error", -1L);
+     qtype = 3; nelem = 4;
+     status = mpc_task_query(buf,nelem,qtype);
+     if(status==-1) ga_error("wildcards: mpc_task_query error", -1L);
 
-        dontcare = buf[0];
-        allmsg   = buf[1];
-        nulltask = buf[2];
-        allgrp   = buf[3];
+     dontcare = buf[0];
+     allmsg   = buf[1];
+     nulltask = buf[2];
+     allgrp   = buf[3];
+     have_wildcards=1; 
 }
 
 
@@ -69,27 +68,25 @@ long msglen;
   mpc_wait(pid, &msglen);
 
   /* fprintf(stderr,"in handler: msg from %d\n",requesting_node); */
-  ga_server_(&requesting_node);
-  ga_reinit_handler_();  /* ask fortran to reinitialize handler */ 
-                         /* -- we don't know the buffer address */
+  ga_SERVER(requesting_node);
+  ga_init_handler(MessageRcv, TOT_MSG_SIZE );
   /* fprintf(stderr,"leaving handler\n"); */
 }
 
 
 
-static long  htype=GA_TYPE_REQ, msgid; 
 
-void ga_init_handler_(buffer, lenbuf)         /* Also called from FORTRAN */
-double *buffer;
-long   *lenbuf;
+void ga_init_handler(buffer, lenbuf)   /* Also called in ga_initialize */
+char *buffer;
+long lenbuf;
 {
 static long status; 
 
-  wildcards();
+  if( ! have_wildcards) wildcards();
 
   requesting_node = dontcare;
 
-  status=rcvncall(buffer, lenbuf, &requesting_node,
+  status=mp_rcvncall(buffer, &lenbuf, &requesting_node,
                      &htype, &msgid, ga_handler);
 }
 
@@ -102,7 +99,7 @@ void fake_work_() /* something to call while syncing */
 
 #else
 
-This file should only be linked in under NX or EUIH (SP1)
+This file should only be linked in under NX or EUIH/MPL
 
 #endif
  

@@ -57,18 +57,15 @@ static logical patch_intersect(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
  *  . identical shapes 
  *  . copy by column order - Fortran convention
 \*/
-void ga_copy_patch_dp_(t_a, g_a, ailo, aihi, ajlo, ajhi,
+void ga_copy_patch_dp_(g_a, ailo, aihi, ajlo, ajhi,
                    g_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
-     char *t_a;
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer ilos, ihis, jlos, jhis;
 Integer ilod, ihid, jlod, jhid, corr, nelem;
 Integer me= ga_nodeid_(), index, ld, i,j;
-Integer indexT, handleT, ldT;
-char transp;
 
 
    ga_check_handle(g_a, "ga_copy_patch_dp");
@@ -79,8 +76,8 @@ char transp;
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != MT_F_DBL ))
-      ga_error("ga_copy_patch_dp: wrong types ", 0L);
+   if(atype != btype )
+        ga_error("ga_copy_patch_dp: array type mismatch ", 0L);
 
    /* check if patch indices and dims match */
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
@@ -93,57 +90,24 @@ char transp;
       ( (*bjhi - *bjlo + 1)  != (*ajhi - *ajlo + 1)) )
        ga_error(" ga_copy_patch_dp: shapes two of patches do not match ", 0L);
 
-    /* is transpose operation required ? */
-   transp = (*t_a == 'n' || *t_a =='N')? 'n' : 't';
-
    /* now find out cordinates of a patch of g_a that I own */
    ga_distribution_(g_a, &me, &ilos, &ihis, &jlos, &jhis);
 
    if(patch_intersect(ailo, aihi, ajlo, ajhi, &ilos, &ihis, &jlos, &jhis)){
       ga_access_(g_a, &ilos, &ihis, &jlos, &jhis, &index, &ld);
-
       nelem = (ihis-ilos+1)*(jhis-jlos+1);
       index --;     /* fortran to C conversion */
-
-      if ( transp == 'n' ) {
-	  corr  = *bilo - *ailo;
-	  ilod  = ilos + corr; 
-	  ihid  = ihis + corr;
-	  corr  = *bjlo - *ajlo;
-	  jlod  = jlos + corr; 
-	  jhid  = jhis + corr;
-      } else {
-	  /* If this is a transpose copy, we need local scratch space */
-	  if ( !MA_push_get(MT_F_DBL, nelem, "ga_copy_patch_dp",
-			    &handleT, &indexT))
-	      ga_error(" ga_copy_patch_dp: MA failed ", 0L);
-
-	  /* Copy from the source into this local array, transposed */
-	  ldT = jhis-jlos+1;
-	  
-	  for(j=0; j< jhis-jlos+1; j++)
-	      for(i=0; i< ihis-ilos+1; i++)
-		  *(DBL_MB+indexT + i*ldT + j) = *(DBL_MB+index + j*ld + i);
-
-	  /* Now we can reset index to point to the transposed stuff */
-	  index = indexT;
-	  ld = ldT;
-
-	  /* And finally, figure out what the destination indices are */
-	  corr  = *bilo - *ajlo;
-	  ilod  = jlos + corr; 
-	  ihid  = jhis + corr;
-	  corr  = *bjlo - *ailo;
-	  jlod  = ilos + corr; 
-	  jhid  = ihis + corr;
-      }
-	  
-      /* Put it where it belongs */
-      ga_put_(g_b, &ilod, &ihid, &jlod, &jhid, DBL_MB + index, &ld);
-
-      /* Get rid of local memory if we used it */
-      if( transp == 't') MA_pop_stack(handleT);
-  }
+      corr  = *bilo - *ailo;
+      ilod  = ilos + corr; 
+      ihid  = ihis + corr;
+      corr  = *bjlo - *ajlo;
+      jlod  = jlos + corr; 
+      jhid  = jhis + corr;
+      if(atype == MT_F_DBL) 
+          ga_put_(g_b, &ilod, &ihid, &jlod, &jhid, DBL_MB + index, &ld);
+      else
+          ga_put_(g_b, &ilod, &ihid, &jlod, &jhid, INT_MB + index, &ld);
+   }
 }
 
 

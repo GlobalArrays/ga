@@ -53,6 +53,7 @@ c
          call ga_error('ga_lu_solve: wrong type(s) of A and/or B ', 1)
       endif
 c
+      call ga_sync()
       oactive = me.eq.0
       if (oactive) then
 c

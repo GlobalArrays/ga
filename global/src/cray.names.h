@@ -31,6 +31,7 @@
 #define  ga_initialize_            GA_INITIALIZE
 #define  ga_inquire_               GA_INQUIRE
 #define  ga_inquire_name_          GA_INQUIRE_NAME
+#define  ga_list_nodeid_           GA_LIST_NODEID
 #define  ga_locate_                GA_LOCATE
 #define  ga_locate_region_         GA_LOCATE_REGION
 #define  ga_mask_                  GA_MASK
@@ -48,8 +49,8 @@
 #define  ga_sort_scat2_            GA_SORT_SCAT2
 #define  ga_sync_                  GA_SYNC
 #define  ga_terminate_             GA_TERMINATE
-#define  ga_verify_handle_         GA_VERIFY_HANDLE
 #define  ga_zero_                  GA_ZERO
+#define  ga_verify_handle_         GA_VERIFY_HANDLE
 
 #define  nnodes_                   NNODES 
 #define  nodeid_                   NODEID 
@@ -58,10 +59,11 @@
 #define  igop_                     IGOP 
 #define  rcv_                      RCV 
 #define  snd_                      SND 
+#define  pend_                     PEND 
+#define  waitcom_                  WAITCOM
+#define  tcgtime_                  TCGTIME 
 #define  ma__base_address_         MA__BASE_ADDRESS 
 #define  ma__sizeof_               MA__SIZEOF
 #define  ma__get_ptr_              MA__GET_PTR
 #define  ma__diff_                 MA__DIFF
 #define  dgemm_                    DGEMM
-
-
