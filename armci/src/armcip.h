@@ -214,4 +214,7 @@ extern void armci_shmem_init();
 extern void armci_set_shmem_limit(unsigned long shmemlimit);
 #endif
 
+/* myrinet bypass */
+extern int armci_gm_bypass;
+
 #endif
