@@ -47,8 +47,8 @@ int* GA_Proc_list = NULL;
 int* GA_inv_Proc_list=NULL;
 static global_array_t GA[MAX_ARRAYS]; 
 static int max_global_array = MAX_ARRAYS;
-Integer *map;       /* used in get/put/acc */
-Integer *proclist;
+static Integer *map;       /* used in get/put/acc */
+static Integer *GA_proclist;
 extern Integer in_handler;                   /* set in interrupt handler*/
 
 

@@ -322,8 +322,8 @@ Integer  i;
 
     map = (Integer*)malloc((GAnproc*2*MAXDIM +1)*sizeof(Integer));
     if(!map) ga_error("ga_init:malloc failed (map)",0);
-    proclist = (Integer*)malloc(GAnproc*sizeof(Integer)); 
-    if(!proclist) ga_error("ga_init:malloc failed (proclist)",0);
+    GA_proclist = (Integer*)malloc(GAnproc*sizeof(Integer)); 
+    if(!GA_proclist) ga_error("ga_init:malloc failed (proclist)",0);
     fence_array = calloc(GAnproc,1);
     if(!fence_array) ga_error("ga_init:calloc failed",0);
 
@@ -1242,7 +1242,7 @@ extern double t_dgop, n_dgop, s_dgop;
     GA_total_memory = -1; /* restore "unlimited" memory usage status */
     GA_memory_limited = 0;
     free(map);
-    free(proclist);
+    free(GA_proclist);
 
     ARMCI_Finalize();
     GAinitialized = 0;
@@ -1457,7 +1457,7 @@ Integer  idx, elems, ndim, size, type, ld0;
       GAbytes.puttot += (double)size*elems;
       GAstat.numput++;
 
-      if(!nga_locate_region_(g_a, lo, hi, map, proclist, &np ))
+      if(!nga_locate_region_(g_a, lo, hi, map, GA_proclist, &np ))
           ga_RegionError(ndim, lo, hi, *g_a);
 
       gaPermuteProcList(np);
@@ -1469,7 +1469,7 @@ Integer  idx, elems, ndim, size, type, ld0;
 
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
-          proc = proclist[p];
+          proc = GA_proclist[p];
 
           gam_Location(proc,handle, plo, &prem, ldrem); 
 
@@ -1552,7 +1552,7 @@ Integer  idx, elems, ndim, size, type, ld0;
       GAbytes.gettot += (double)size*elems;
       GAstat.numget++;
 
-      if(!nga_locate_region_(g_a, lo, hi, map, proclist, &np ))
+      if(!nga_locate_region_(g_a, lo, hi, map, GA_proclist, &np ))
           ga_RegionError(ndim, lo, hi, *g_a);
       gaPermuteProcList(np);
       for(idx=0; idx< np; idx++){
@@ -1563,7 +1563,7 @@ Integer  idx, elems, ndim, size, type, ld0;
 
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
-          proc = proclist[p];
+          proc = GA_proclist[p];
 
           gam_Location(proc,handle, plo, &prem, ldrem);
 
@@ -1649,7 +1649,7 @@ int optype;
       GAbytes.acctot += (double)size*elems;
       GAstat.numacc++;
 
-      if(!nga_locate_region_(g_a, lo, hi, map, proclist, &np ))
+      if(!nga_locate_region_(g_a, lo, hi, map, GA_proclist, &np ))
           ga_RegionError(ndim, lo, hi, *g_a);
 
       gaPermuteProcList(np);
@@ -1661,7 +1661,7 @@ int optype;
 
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
-          proc = proclist[p];
+          proc = GA_proclist[p];
 
           gam_Location(proc,handle, plo, &prem, ldrem);
 
@@ -2832,7 +2832,7 @@ logical FATR ga_locate_region_(g_a, ilo, ihi, jlo, jhi, mapl, np )
    lo[0]=*ilo; lo[1]=*jlo;
    hi[0]=*ihi; hi[1]=*jhi;
 
-   status = nga_locate_region_(g_a,lo,hi,map, proclist, np);
+   status = nga_locate_region_(g_a,lo,hi,map, GA_proclist, np);
 
    /* need to swap elements (ilo,jlo,ihi,jhi) -> (ilo,ihi,jlo,jhi) */
    for(p = 0; p< *np; p++){
@@ -2840,7 +2840,7 @@ logical FATR ga_locate_region_(g_a, ilo, ihi, jlo, jhi, mapl, np )
      mapl[p][1] = map[4*p + 2];
      mapl[p][2] = map[4*p + 1];
      mapl[p][3] = map[4*p + 3];
-     mapl[p][4] = proclist[p];
+     mapl[p][4] = GA_proclist[p];
    } 
 
    return status;
