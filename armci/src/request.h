@@ -152,4 +152,12 @@ extern void armci_server_goodbye(request_header_t* msginfo);
 extern void armci_server_ipc(request_header_t* msginfo, void* descr,
                              void* buffer, int buflen);
 
+#ifdef PIPE_BUFSIZE
+extern void armci_pipe_prep_receive_strided(request_header_t *msginfo,char *buf,
+                       int strides, int stride_arr[], int count[], int bufsize);
+extern void armci_pipe_receive_strided(request_header_t* msginfo, void *ptr,
+                                int stride_arr[], int count[], int strides);
+extern void armci_pipe_send_req(int proc, void *buf, int bytes);
+#endif
+
 #endif

@@ -21,6 +21,12 @@ extern void armci_via_wait_ack();
 #  define MAX_BUFLEN (MSG_BUFLEN+EXTRA_MSG_BUFLEN)
 #endif
 
-#define GET_SEND_BUFFER(_size) MessageSndBuffer;if(!armci_long_buf_free)armci_via_wait_ack()
+#define GET_SEND_BUFFER_(_size) MessageSndBuffer;if(!armci_long_buf_free)armci_via_wait_ack()
+extern char* armci_getbuf(int size);
+extern void armci_relbuf(void *buf);
+
+#define GET_SEND_BUFFER(_size) armci_getbuf(_size)
+#define FREE_SEND_BUFFER(x) armci_relbuf(x)
+
 
 #endif
