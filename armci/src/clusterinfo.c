@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.29 2005-01-24 09:01:38 manoj Exp $ */
+/* $Id: clusterinfo.c,v 1.30 2005-01-24 09:21:07 manoj Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -318,7 +318,7 @@ int i;
 void armci_init_clusinfo()
 {
   char name[MAX_HOSTNAME], *merged;
-  int  i, len, limit, rc;
+  int  len, limit, rc;
   char *tmp;
 
   if((tmp =getenv("ARMCI_HOSTNAME")) == NULL){
