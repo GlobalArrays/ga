@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.54 2003-03-10 22:56:36 d3h325 Exp $
+/* $Id: myrinet.c,v 1.55 2003-03-11 01:25:06 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -462,7 +462,6 @@ void armci_gm_fence_init()
              armci_die("failed to allocate ARMCI fence array",0);
     */
 
-
 /****************************verify-wait code*******************************/
     /*allocate an array for verify sequence array */
     if(!(verify_wait->verify_seq_ar=(int*)calloc(armci_nproc,sizeof(int))))
@@ -474,14 +473,15 @@ void armci_gm_fence_init()
     verify_wait->recv_verify_arr = (int**)malloc(armci_nproc*sizeof(int*));
     if(!verify_wait->recv_verify_arr)armci_die("malloc fail-recv_verify_arr",0);
     bzero(verify_wait->recv_verify_arr ,armci_nproc*sizeof(ops_t*));
-#if 0
-    verify_wait->recv_verify_arr[armci_me]=(int *)malloc(armci_nproc*sizeof(int));
+#if 1
+    verify_wait->recv_verify_arr[armci_me]=(int *)malloc(armci_nproc*2*sizeof(int));
     armci_exchange_address((void **)verify_wait->recv_verify_arr ,armci_nproc);
 #else
     if(ARMCI_Malloc((void**)verify_wait->recv_verify_arr, armci_nproc*sizeof(int)))
              armci_die("failed to allocate ARMCI fence array",0);
 #endif
 /************************End verify-wait code*******************************/
+    /*printf("\n%d:in fence init",armci_me);fflush(stdout);*/
 
 }
 
@@ -577,6 +577,9 @@ int armci_gm_client_init()
         armci_die("malloc failed for ARMCI ops_pending_ar",0);
     armci_pin_contig(armci_gm_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
     bzero(armci_gm_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
+
+    armci_pin_contig(verify_wait->recv_verify_arr[armci_me],armci_nproc*sizeof(int));
+    bzero(verify_wait->recv_verify_arr[armci_me],armci_nproc*sizeof(int));
     return TRUE;
 }
 
@@ -611,6 +614,20 @@ void armci_client_send_complete(armci_gm_context_t* context)
        armci_die("armci_client_send_complete: failed code=",context->done);
 }
 
+void armci_client_to_client_direct_send(int p, void *src_buf, void *dst_buf, int len)
+{
+    int s           = armci_clus_id(p);
+    int serv_mpi_id = armci_clus_info[s].master;
+
+    armci_gm_client_context->done = ARMCI_GM_SENDING;
+    gm_directed_send_with_callback(proc_gm->port, src_buf,
+               (gm_remote_ptr_t)(gm_up_t)dst_buf, len, GM_LOW_PRIORITY,
+                proc_gm->node_map[serv_mpi_id], server_init_struct[p].port_id, 
+                armci_client_send_callback_direct, armci_gm_client_context);
+
+    /* blocking: wait until send is done by calling the callback */
+    armci_client_send_complete(armci_gm_client_context);
+}
 
 /*\ direct send to server 
 \*/
@@ -1164,10 +1181,6 @@ int armci_gm_server_init()
 void armci_server_initial_connection()
 {
     int i;
-    /*pin verify array via server recv port so that MPI ports are left out of
-      the recv scene*/ 
-    armci_pin_contigs(verify_wait->recv_verify_arr[armci_me],armci_nproc*sizeof(int));
-    bzero(verify_wait->recv_verify_arr[armci_me],armci_nproc*sizeof(int));
     /* notify client thread that we are ready to take requests */
     armci_gm_server_ready = 1;
     /* receive the initial connection from all computing processes,
@@ -1671,7 +1684,7 @@ int *remptr = verify_wait->recv_verify_arr[proc]+armci_me;
     }
     else {
        *(proc_gm->itmp) = verify_wait->verify_seq_ar[proc]++;
-       armci_client_direct_send(proc,proc_gm->itmp,remptr,sizeof(int));
+       armci_client_to_client_direct_send(proc,proc_gm->itmp,remptr,sizeof(int));
        if(DEBUG_){
          printf("\n%d: sending %d to %d at %p\n",armci_me,*(proc_gm->itmp),
                  proc,remptr);
