@@ -18,6 +18,8 @@
           CLD = $(CC)
           _FC = $(notdir $(FC))
           _CC = $(notdir $(CC))
+      COPT_NO = -g
+      FOPT_NO = -g
 
 #-------------------------- Cygwin/Cygnus: GNU on Windows ------------
 ifeq ($(TARGET),CYGNUS) 
@@ -148,9 +150,10 @@ ifeq  ($(_CPU),ia64)
      FOPT =  -O3 -hlo -ftz -pad
    endif
   endif
-#  ifeq ($(_CC),gcc)
+  ifeq ($(_CC),gcc)
+      COPT_NO = -g -O0
 #     COPT= -O3
-#  endif
+  endif
   ifeq ($(_CC),ecc)
      COPT_REN= -w1 #-fno-alias    
   endif
@@ -512,8 +515,12 @@ else
 endif
 
        INCLUDES += $(LIB_INCLUDES)
-
        CPP_FLAGS += $(INCLUDES) $(FDEFINES)
+
+ifdef FRAGILE
+       FOPT= $(FOPT_NO)
+       COPT= $(COPT_NO)
+endif
 
        FFLAGS = $(FOPT) $(FOPT_REN)
        CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) $(LIB_CDEFS)

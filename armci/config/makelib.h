@@ -46,12 +46,12 @@ endif
 
 LIBRARY_PATH := $(LIBDIR)/$(LIBRARY)
 
-OBJECTS := $(OBJ) $(OBJ_OPTIMIZE)
+OBJECTS := $(OBJ) $(OBJ_FRAGILE)
 
  LIBOBJ := $(patsubst %,$(LIBRARY_PATH)(%),$(OBJECTS))
- LIBOBJ_OPT := $(patsubst %,$(LIBRARY_PATH)(%),$(OBJ_OPTIMIZE))
+ LIBOBJ_NOPT := $(patsubst %,$(LIBRARY_PATH)(%),$(OBJ_FRAGILE))
 
-$(LIBRARY_PATH): $(LIBDIR) $(SYMBOL_STAMP).stamp  $(LIBOBJ) $(LIBOBJ_OPT)
+$(LIBRARY_PATH): $(LIBDIR) $(SYMBOL_STAMP).stamp  $(LIBOBJ) $(LIBOBJ_NOPT)
 	$(RANLIB) $@
 
 $(SYMBOL_STAMP).stamp:
@@ -60,11 +60,11 @@ $(SYMBOL_STAMP).stamp:
 	fi
 	echo "" > $(SYMBOL_STAMP).stamp
 
-ifdef OBJ_OPTIMIZE
-ifndef OPTIMIZE
-.PHONY: $(LIBOBJ_OPT)
-$(LIBOBJ_OPT):
-	@$(MAKE) OPTIMIZE="Yes"
+ifdef OBJ_FRAGILE
+ifndef FRAGILE
+.PHONY: $(LIBOBJ_NOPT)
+$(LIBOBJ_NOPT):
+	@$(MAKE) FRAGILE="Yes"
 endif
 endif
 
@@ -97,7 +97,7 @@ ifdef HARDCLEAN
 	-$(RM) -f $(LIBRARY_PATH)
 else
 	if [ -f $(LIBRARY_PATH) ] ; then \
-		$(AR) d $(LIBRARY_PATH) $(OBJ) $(OBJ_OPTIMIZE) ; \
+		$(AR) d $(LIBRARY_PATH) $(OBJ) $(OBJ_FRAGILE) ; \
 		if [ `$(AR) t $(LIBRARY_PATH) | wc | awk ' {print $$1;}'` -eq 0 ] ; then \
 			$(RM) -f $(LIBRARY_PATH) ; \
 		fi ; \
