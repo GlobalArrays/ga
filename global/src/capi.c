@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.73 2004-02-26 21:13:00 d3g293 Exp $ */
+/* $Id: capi.c,v 1.74 2004-03-30 17:12:15 edo Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -395,7 +395,7 @@ void GA_Set_pgroup(int g_a, int p_handle)
 {
   Integer aa, pp;
   aa = (Integer)g_a;
-  pp = (Integer)pp;
+  pp = (Integer)p_handle;
   ga_set_pgroup_(&aa, &pp);
 }
 
