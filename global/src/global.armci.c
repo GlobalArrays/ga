@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.30 1999-11-13 05:45:18 bjohnson Exp $ */
+/* $Id: global.armci.c,v 1.31 1999-11-18 01:06:56 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -1753,9 +1753,11 @@ Integer  ow,i;
 void FATR nga_access_(Integer* g_a, Integer lo[], Integer hi[],
                       Integer* index, Integer ld[])
 {
-char *ptr;
+char     *ptr;
 Integer  handle = GA_OFFSET + *g_a;
 Integer  ow,i;
+unsigned long    elemsize;
+unsigned long    lref, lptr;
 
    GA_PUSH_NAME("nga_access");
    if(!nga_locate_(g_a,lo,&ow))ga_error("locate top failed",0);
@@ -1772,46 +1774,41 @@ Integer  ow,i;
    gam_Location(ow,handle, lo, &ptr, ld);
 
    /*
-    * return patch address as the distance in bytes from the reference address
+    * return patch address as the distance elements from the reference address
     *
     * .in Fortran we need only the index to the type array: dbl_mb or int_mb
     *  that are elements of COMMON in the the mafdecls.h include file
     * .in C we need both the index and the pointer
     */
 
+   elemsize = (unsigned long)GA[handle].elemsize;
+
    /* compute index and check if it is correct */
    switch (GA[handle].type){
      case MT_F_DBL:
-        *index = (Integer) (ptr - (char*)DBL_MB);
-        if(ptr != ((char*)DBL_MB)+ *index ){
-               ga_error("ga_access: MA addressing problem dbl - index",handle);
-        }
+        *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
+        lref = (unsigned long)DBL_MB;
         break;
 
      case MT_F_DCPL:
-        *index = (Integer) (ptr - (char*)DCPL_MB);
-        if(ptr != ((char*)DCPL_MB)+ *index ){
-              ga_error("ga_access: MA addressing problem dcpl - index",handle);
-        }
+        *index = (Integer) ((DoubleComplex*)ptr - DCPL_MB);
+        lref = (unsigned long)DCPL_MB;
         break;
 
      case MT_F_INT:
-        *index = (Integer) (ptr - (char*)INT_MB);
-        if(ptr != ((char*)INT_MB) + *index) {
-               ga_error("ga_access: MA addressing problem int - index",handle);
-        }
+        *index = (Integer) ((Integer*)ptr - INT_MB);
+        lref = (unsigned long)INT_MB;
         break;
    }
 
    /* check the allignment */
-   if(*index % GA[handle].elemsize){
-       fprintf(stderr,"index=%ld size=%ld off =%ld\n",
-              (long)*index, (long)GA[handle].elemsize,(long)*index%GA[handle].elemsize);
-       ga_error(" ga_access: base address misallignment ",(long)index);
+   lptr = (unsigned long)ptr;
+   if( lptr%elemsize != lref%elemsize ){ 
+       printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",GAme,lptr,lptr%elemsize,
+                                                    lref,lref%elemsize);
+       ga_error("nga_access: MA addressing problem: base address misallignment",
+                 handle);
    }
-
-   /* adjust index according to the data type */
-   *index /= GA[handle].elemsize;
 
    /* adjust index for Fortran addressing */
    (*index) ++ ;

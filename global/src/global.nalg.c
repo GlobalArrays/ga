@@ -309,45 +309,46 @@ void FATR gai_zdot_(g_a, g_b, retval)
  
 void FATR ga_scale_(Integer *g_a, void* alpha)
 {
-Integer ndim, type, me, index, elems;
+Integer ndim, type, me, elems;
 register Integer i;
+void *ptr;
 
    ga_sync_();
 
    me = ga_nodeid_();
 
-   ga_check_handle(g_a, "ga_zero");
-   GA_PUSH_NAME("ga_zero");
+   ga_check_handle(g_a, "ga_scale");
+   GA_PUSH_NAME("ga_scale");
 
    nga_inquire_(g_a, &type, &ndim, dims);
    nga_distribution_(g_a, &me, lo, hi);
 
-   if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0 ||
-       DCPL_MB == (DoubleComplex*)0) ga_error("null pointer for base array",0L);
-
    if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
-      nga_access_(g_a, lo, hi, &index, ld);
+      nga_access_ptr(g_a, lo, hi, &ptr, ld);
       GET_ELEMS(ndim,lo,hi,ld,&elems);
 
-      index --;  /* Fortran to C correction of starting address */
-
       switch (type){
+        Integer *ia;
+        DoublePrecision *da;
+        DoubleComplex *ca, scale;
+
         case MT_F_INT:
-           for(i=0;i<elems;i++) INT_MB[index+ i ]  *= *(Integer*)alpha;
+           ia = (Integer*)ptr;
+           for(i=0;i<elems;i++) ia[i]  *= *(Integer*)alpha;
            break;
         case MT_F_DCPL:
+           ca = (DoubleComplex*)ptr;
+           scale= *(DoubleComplex*)alpha;
            for(i=0;i<elems;i++){
-                DoubleComplex elem = DCPL_MB[index + i];
-                DoubleComplex scale= *(DoubleComplex*)alpha;
-                DCPL_MB[index  + i].real =
-                        scale.real*elem.real  - elem.imag * scale.imag;
-                DCPL_MB[index  + i].imag =
-                        scale.imag*elem.real  + elem.imag * scale.real;
+               DoubleComplex val = ca[i]; 
+               ca[i].real = scale.real*val.real  - val.imag * scale.imag;
+               ca[i].imag = scale.imag*val.real  + val.imag * scale.real;
            }
            break;
         case MT_F_DBL:
-           for(i=0;i<elems;i++) DBL_MB[index+ i] *= *(DoublePrecision*)alpha;
+           da = (DoublePrecision*)ptr;
+           for(i=0;i<elems;i++) da[i] *= *(DoublePrecision*)alpha;
            break;
         default: ga_error(" wrong data type ",type);
       }
@@ -368,7 +369,7 @@ void FATR ga_add_(void *alpha, Integer* g_a,
 {
 Integer  ndim, type, typeC, me, elems=0, elemsb=0, elemsa=0;
 register Integer i;
-Integer index_a, index_b, index_c;
+void *ptr_a, *ptr_b, *ptr_c;
 
  Integer andim, adims[MAXDIM];
  Integer bndim, bdims[MAXDIM];
@@ -397,32 +398,32 @@ Integer index_a, index_b, index_c;
    nga_inquire_(g_c,  &typeC, &ndim, dims);
    nga_distribution_(g_c, &me, lo, hi);
    if (  lo[0]>0 ){
-     nga_access_(g_c, lo, hi, &index_c, ld);
+     nga_access_ptr(g_c, lo, hi, &ptr_c, ld);
      GET_ELEMS(ndim,lo,hi,ld,&elems);
    }
 
    if(*g_a == *g_c){
-     index_a = index_c;
+     ptr_a  = ptr_c;
      elemsa = elems;
    }else { 
      nga_inquire_(g_a,  &type, &ndim, dims);
      if(type != typeC) ga_error("types not consistent", *g_a);
      nga_distribution_(g_a, &me, lo, hi);
      if (  lo[0]>0 ){
-       nga_access_(g_a, lo, hi, &index_a, ld);
+       nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
        GET_ELEMS(ndim,lo,hi,ld,&elemsa);
      }
    }
 
    if(*g_b == *g_c){
-     index_b = index_c;
+     ptr_b  = ptr_c;
      elemsb = elems;
    }else {
      nga_inquire_(g_b,  &type, &ndim, dims);
      if(type != typeC) ga_error("types not consistent", *g_b);
      nga_distribution_(g_b, &me, lo, hi);
      if (  lo[0]>0 ){
-       nga_access_(g_b, lo, hi, &index_b, ld);
+       nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
        GET_ELEMS(ndim,lo,hi,ld,&elemsb);
      }
    }
@@ -432,36 +433,38 @@ Integer index_a, index_b, index_c;
 
    if (  lo[0]>0 ){
 
-       index_a --;  /* Fortran to C correction of starting address */ 
-       index_b --;  /* Fortran to C correction of starting address */ 
-       index_c --;  /* Fortran to C correction of starting address */ 
-
        /* operation on the "local" piece of data */
        switch(type){
+         Integer *ia, *ib, *ic;
+         DoublePrecision *da,*db,*dc;
          case MT_F_DBL:
+                  da = (DoublePrecision *)ptr_a;
+                  db = (DoublePrecision *)ptr_b;
+                  dc = (DoublePrecision *)ptr_c;
                   for(i=0; i<elems; i++)
-                      DBL_MB[index_c + i]  =
-                         *(DoublePrecision*)alpha * DBL_MB[index_a + i] +
-                         *(DoublePrecision*)beta  * DBL_MB[index_b + i];
+                      dc[i] = *(DoublePrecision*)alpha *da[i] +
+                              *(DoublePrecision*)beta * db[i];
               break;
          case MT_F_DCPL:
                   for(i=0; i<elems; i++){
-                     DoubleComplex a = DCPL_MB[index_a + i];
-                     DoubleComplex b = DCPL_MB[index_b + i];
+                     DoubleComplex a = ((DoubleComplex*)ptr_a)[i];
+                     DoubleComplex b = ((DoubleComplex*)ptr_b)[i];
+                     DoubleComplex *ac = (DoubleComplex*)ptr_c;
                      DoubleComplex x= *(DoubleComplex*)alpha;
                      DoubleComplex y= *(DoubleComplex*)beta;
                      /* c = x*a + y*b */
-                     DCPL_MB[index_c + i].real = x.real*a.real - 
-                             x.imag*a.imag + y.real*b.real - y.imag*b.imag;
-                     DCPL_MB[index_c + i].imag = x.real*a.imag + 
-                             x.imag*a.real + y.real*b.imag + y.imag*b.real;
+                     ac[i].real = x.real*a.real - 
+                              x.imag*a.imag + y.real*b.real - y.imag*b.imag;
+                     ac[i].imag = x.real*a.imag + 
+                              x.imag*a.real + y.real*b.imag + y.imag*b.real;
                   }
               break;
          case MT_F_INT:
-                  for(i=0; i<elems; i++)
-                      INT_MB[index_c + i]  =
-                         *(Integer*)alpha * INT_MB[index_a + i] +
-                         *(Integer*)beta  * INT_MB[index_b + i];
+                  ia = (Integer*)ptr_a;
+                  ib = (Integer*)ptr_b;
+                  ic = (Integer*)ptr_c;
+                  for(i=0; i<elems; i++) 
+                      ic[i] = *(Integer*)alpha *ia[i] + *(Integer*)beta *ib[i];
        }
 
        /* release access to the data */
