@@ -1,4 +1,4 @@
-c $Id: pg2test.F,v 1.2 2004-08-17 13:44:00 edo Exp $
+c $Id: pg2test.F,v 1.3 2004-08-18 11:09:55 edo Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -50,6 +50,10 @@ c     In the second, user can set limit (per processor) in bytes.
 c
       call ga_initialize()
       nproc = ga_nnodes()
+      if(nproc .ne. 8) then
+         write(*,*) 'nproc =', nproc
+         call ga_error('failed: need atleast 8 processors',10)
+      endif
       me = ga_nodeid()
 c
 c***  Initialize the MA package
@@ -111,6 +115,7 @@ c      else
 c        write(6,*) 'You must run test on more nodes'
 c      endif
 c
+      call ga_pgroup_set_default(ga_pgroup_get_world())
 c***  Check if memory limits are enforced 
 c
 c      call check_mem(util_mdtob(ma_heap*ga_nnodes()))
@@ -118,7 +123,7 @@ c
 c***  Tidy up the GA package
 c
       call ga_sync()
-      write(6,*) 'Calling ga_terminate'
+      write(0,*) 'Calling ga_terminate'
       call ga_terminate()
 c
 c***  Tidy up after message-passing library

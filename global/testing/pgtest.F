@@ -1,4 +1,4 @@
-c $Id: pgtest.F,v 1.2 2004-08-17 13:44:00 edo Exp $
+c $Id: pgtest.F,v 1.3 2004-08-18 11:09:50 edo Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -47,6 +47,10 @@ c     In the second, user can set limit (per processor) in bytes.
 c
       call ga_initialize()
       nproc = ga_nnodes()
+      if(nproc .ne. 8) then
+         write(*,*) 'nproc =', nproc
+         call ga_error('failed: need atleast 8 processors',10)
+      endif
       me = ga_nodeid()
 c
 c***  Initialize the MA package
