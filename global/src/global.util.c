@@ -236,11 +236,7 @@ extern void Error();
     }
     fprintf(stderr,"%s %ld",string,icode);
     fflush(stderr);
-#   if defined(SUN) || defined(SGI)
-       abort();
-#   else
-       exit(1);
-#   endif
+    exit(1);
 }
 
 
