@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.25 1999-10-29 00:43:08 jju Exp $ */
+/* $Id: global.armci.c,v 1.26 1999-10-31 17:46:34 jju Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2242,6 +2242,10 @@ extern void ga_sort_permutation();
 void FATR nga_sort_permut_(Integer* g_a, Integer index[], 
                            Integer* subscr_arr, Integer *nv)
 {
+    /* The new implementation doesn't change the order of the elements
+     * They are identical
+     */
+    /*
 Integer pindex, phandle;
 
   if (*nv < 1) return;
@@ -2251,67 +2255,119 @@ Integer pindex, phandle;
 
   gai_sort_proc(g_a, subscr_arr, nv, index, INT_MB+pindex);
   if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+    */
 }
 
 
 /*\ SCATTER OPERATION elements of v into the global array
 \*/
-void FATR  ga_scatter_(g_a, v, i, j, nv)
-     Integer *g_a, *nv, *i, *j;
-     Void *v;
+void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
+                       Integer *nv)
 {
-register Integer k;
-Integer pindex, phandle, item_size;
-Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
+    register Integer k;
+    Integer kk;
+    Integer pindex, phandle, item_size;
+    Integer proc, type=GA[GA_OFFSET + *g_a].type;
 
-  if (*nv < 1) return;
+    Integer *count;   /* counters for each process */
+    Integer *nelem;   /* number of elements for each process */
+    /* source and destination pointers for each process */
+    void ***ptr_src, ***ptr_dst; 
+    void **ptr_org; /* the entire pointer array */
+    armci_giov_t desc;
+    Integer *ilo, *ihi, *jlo, *jhi, *ldp;
+    char **ptr_ref;
+    
+    if (*nv < 1) return;
+    
+    ga_check_handleM(g_a, "ga_scatter");
+    GA_PUSH_NAME("ga_scatter");
+    GAstat.numsca++;
+    
+    if(!MA_push_get(MT_F_INT,*nv, "ga_scatter--p", &phandle, &pindex))
+        ga_error("MA alloc failed ", *g_a);
 
-  ga_check_handleM(g_a, "ga_scatter");
-  GA_PUSH_NAME("ga_scatter");
-  GAstat.numsca++;
+    /* allocate temp memory */
+    count = gai_malloc(GAnproc * sizeof(Integer));
+    nelem = gai_malloc(GAnproc * sizeof(Integer));
+    ptr_src = gai_malloc(GAnproc * sizeof(void **));
+    ptr_dst = gai_malloc(GAnproc * sizeof(void **));
+    ptr_org = gai_malloc(2*(*nv)*sizeof(void *));
+    ilo = gai_malloc(GAnproc * sizeof(Integer));
+    ihi = gai_malloc(GAnproc * sizeof(Integer));
+    jlo = gai_malloc(GAnproc * sizeof(Integer));
+    jhi = gai_malloc(GAnproc * sizeof(Integer));
+    ldp = gai_malloc(GAnproc * sizeof(Integer));
+    ptr_ref = gai_malloc(GAnproc * sizeof(char *));
+    
+    if(count == NULL || nelem == NULL || ptr_src == NULL || ptr_dst == NULL ||
+       ptr_org == NULL || ilo == NULL || ihi == NULL ||
+       jlo == NULL || jhi == NULL || ptr_ref == NULL || ldp == NULL)
+        ga_error("gai_malloc failed", GAnproc);
 
-  if(!MA_push_get(MT_F_INT,*nv, "ga_scatter--p", &phandle, &pindex))
-            ga_error("MA alloc failed ", *g_a);
+    /* initialize the counters and nelem */
+    for(kk=0; kk<GAnproc; kk++) {
+        count[kk] = 0; nelem[kk] = 0;
+        ga_distribution_(g_a, &kk,
+                         &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
+        
+        /* get address of the first element owned by proc */
+        gaShmemLocation(kk, *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),&(ldp[kk]));
+    }
+    
+    /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
+    for(k=0; k< *nv; k++) {
+        if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
+            sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
+            ga_error(err_string,*g_a);
+        }
+        nelem[INT_MB[pindex+k]]++;
+    }
+    
+    /* determine limit for message size --  v,i, & j will travel together */
+    item_size = GAsizeofM(type);
+    GAbytes.scatot += (double)item_size**nv ;
+    GAbytes.gatloc += (double)item_size* nelem[GAme];
 
-  /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
-  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
-         sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
-         ga_error(err_string,*g_a);
-  }
+    ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
+    for(k=1; k<GAnproc; k++) {
+        ptr_src[k] = ptr_src[k-1] + nelem[k-1];
+        ptr_dst[k] = ptr_dst[k-1] + nelem[k-1];
+    }
 
-  /* determine limit for message size --  v,i, & j will travel together */
-  item_size = GAsizeofM(type);
-  GAbytes.scatot += (double)item_size**nv ;
+    for(k=0; k<(*nv); k++){
+        proc = INT_MB[pindex+k];
+        ptr_src[proc][count[proc]] = ((char*)v) + k * item_size;
+        if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
+           j[k] < jlo[proc] || j[k] > jhi[proc]){
+            sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
+                 proc, i[k], j[k], ilo[proc], ihi[proc], jlo[proc], jhi[proc]);
+            ga_error(err_string, *g_a);
+        }
+        ptr_dst[proc][count[proc]] = ptr_ref[proc] + item_size *
+            ((j[k] - jlo[proc])* ldp[proc] + i[k] - ilo[proc]);
+        count[proc]++;
+    }
+    
+    /* source and destination pointers are ready for all processes */
+    for(k=0; k<GAnproc; k++) {
+        desc.bytes = item_size;
+        desc.src_ptr_array = ptr_src[k];
+        desc.dst_ptr_array = ptr_dst[k];
+        desc.ptr_array_len = nelem[k];
+        
+        ARMCI_GetV(&desc, 1, k);
+    }
 
-  /* Sort the entries by processor */
-  ga_sort_scat(nv, (DoublePrecision*)v, i, j, INT_MB+pindex, type );
+    gai_free(ptr_ref);
+    gai_free(ldp);
+    gai_free(jhi); gai_free(jlo); gai_free(ihi); gai_free(ilo); 
+    gai_free(ptr_org);
+    gai_free(ptr_dst); gai_free(ptr_src);
+    gai_free(nelem); gai_free(count);
 
-  /* go through the list again executing scatter for each processor */
-
-  first = 0;
-  do { 
-      proc  = INT_MB[pindex+first]; 
-      nelem = 0;
-
-      /* count entries for proc from "first" to last */
-      for(k=first; k< *nv; k++){
-        if(proc == INT_MB[pindex+k]) nelem++;
-        else break;
-      }
-
-      if(proc == GAme){
-             GAbytes.scaloc += (double)item_size* nelem ;
-      }
-
-      ga_scatter_acc_local(*g_a, ((char*)v)+item_size*first, i+first, 
-                        j+first, nelem, NULL, proc);
-      first += nelem;
-
-  }while (first< *nv);
-
-  if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
-
-  GA_POP_NAME;
+    if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+    GA_POP_NAME;
 }
       
 
@@ -2383,6 +2439,11 @@ Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
 void FATR  ga_sort_permut_(g_a, index, i, j, nv)
      Integer *g_a, *nv, *i, *j, *index;
 {
+    /* The new implementation doesn't change the order of the elements
+     * They are identical
+     */
+
+#if 0
 register Integer k;
 Integer pindex, phandle;
 extern void ga_sort_permutation();
@@ -2401,6 +2462,7 @@ extern void ga_sort_permutation();
   /* Sort the entries by processor */
   ga_sort_permutation(nv, index, INT_MB+pindex);
   if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+#endif
 }
 
 
@@ -2662,57 +2724,112 @@ Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* *nv);
 
 /*\ GATHER OPERATION elements from the global array into v
 \*/
-void FATR  ga_gather_(g_a, v, i, j, nv)
-     Integer *g_a, *nv, *i, *j;
-     Void *v;
+void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
+                      Integer *nv)
 {
-register Integer k, nelem;
-Integer pindex, phandle, item_size;
-Integer first, proc;
+    register Integer k;
+    Integer kk;
+    Integer pindex, phandle, item_size;
+    Integer proc;
 
-  if (*nv < 1) return;
+    Integer *count;   /* counters for each process */
+    Integer *nelem;   /* number of elements for each process */
+    /* source and destination pointers for each process */
+    void ***ptr_src, ***ptr_dst; 
+    void **ptr_org; /* the entire pointer array */
+    armci_giov_t desc;
+    Integer *ilo, *ihi, *jlo, *jhi, *ldp;
+    char **ptr_ref;
+    
+    if (*nv < 1) return;
 
-  ga_check_handleM(g_a, "ga_gather");
-  GA_PUSH_NAME("ga_gather");
-  GAstat.numgat++;
+    ga_check_handleM(g_a, "ga_gather");
+    GA_PUSH_NAME("ga_gather");
+    GAstat.numgat++;
 
-  if(!MA_push_get(MT_F_INT, *nv, "ga_gather--p", &phandle, &pindex))
-            ga_error("MA failed ", *g_a);
+    if(!MA_push_get(MT_F_INT, *nv, "ga_gather--p", &phandle, &pindex))
+        ga_error("MA failed ", *g_a);
 
-  /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
-  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
-       sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
-       ga_error(err_string,*g_a);
-  }
+        /* allocate temp memory */
+    count = gai_malloc(GAnproc * sizeof(Integer));
+    nelem = gai_malloc(GAnproc * sizeof(Integer));
+    ptr_src = gai_malloc(GAnproc * sizeof(void **));
+    ptr_dst = gai_malloc(GAnproc * sizeof(void **));
+    ptr_org = gai_malloc(2*(*nv)*sizeof(void *));
+    ilo = gai_malloc(GAnproc * sizeof(Integer));
+    ihi = gai_malloc(GAnproc * sizeof(Integer));
+    jlo = gai_malloc(GAnproc * sizeof(Integer));
+    jhi = gai_malloc(GAnproc * sizeof(Integer));
+    ldp = gai_malloc(GAnproc * sizeof(Integer));
+    ptr_ref = gai_malloc(GAnproc * sizeof(char *));
+    
+    if(count == NULL || nelem == NULL || ptr_src == NULL || ptr_dst == NULL ||
+       ptr_org == NULL || ilo == NULL || ihi == NULL ||
+       jlo == NULL || jhi == NULL || ptr_ref == NULL || ldp == NULL)
+        ga_error("gai_malloc failed", GAnproc);
 
-  /* Sort the entries by processor */
-  ga_sort_gath_(nv, i, j, INT_MB+pindex);
+    /* initialize the counters and nelem */
+    for(kk=0; kk<GAnproc; kk++) {
+        count[kk] = 0; nelem[kk] = 0;
+        ga_distribution_(g_a, &kk,
+                         &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
+        
+        /* get address of the first element owned by proc */
+        gaShmemLocation(kk, *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),&(ldp[kk]));
+    }
+
+    /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
+    for(k=0; k< *nv; k++) {
+        if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
+            sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
+            ga_error(err_string, *g_a);
+        }
+        nelem[INT_MB[pindex+k]]++;
+    }
    
-  item_size = GA[GA_OFFSET + *g_a].elemsize;
-  GAbytes.gattot += (double)item_size**nv;
+    item_size = GA[GA_OFFSET + *g_a].elemsize;
+    GAbytes.gattot += (double)item_size**nv;
+    GAbytes.gatloc += (double)item_size* nelem[GAme];
 
-  /* go through the list again executing gather for each processor */
-  first = 0;
-  do {
-      proc  = INT_MB[pindex+first];
-      nelem = 0;
+    ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
+    for(k=1; k<GAnproc; k++) {
+        ptr_src[k] = ptr_src[k-1] + nelem[k-1];
+        ptr_dst[k] = ptr_dst[k-1] + nelem[k-1];
+    }
 
-      /* count entries for proc from "first" to last */
-      for(k=first; k< *nv; k++){
-        if(proc == INT_MB[pindex+k]) nelem++;
-        else break;
-      }
+    for(k=0; k<(*nv); k++){
+        proc = INT_MB[pindex+k];
+        ptr_dst[proc][count[proc]] = ((char*)v) + k * item_size;
+        if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
+           j[k] < jlo[proc] || j[k] > jhi[proc]){
+            sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
+                 proc, i[k], j[k], ilo[proc], ihi[proc], jlo[proc], jhi[proc]);
+            ga_error(err_string, *g_a);
+        }
+        ptr_src[proc][count[proc]] = ptr_ref[proc] + item_size *
+            ((j[k] - jlo[proc])* ldp[proc] + i[k] - ilo[proc]);
+        count[proc]++;
+    }
+    
+    /* source and destination pointers are ready for all processes */
+    for(k=0; k<GAnproc; k++) {
+        desc.bytes = item_size;
+        desc.src_ptr_array = ptr_src[k];
+        desc.dst_ptr_array = ptr_dst[k];
+        desc.ptr_array_len = nelem[k];
+        
+        ARMCI_GetV(&desc, 1, k);
+    }
 
-      if(proc == GAme) GAbytes.gatloc += (double)item_size* nelem;
+    gai_free(ptr_ref);
+    gai_free(ldp);
+    gai_free(jhi); gai_free(jlo); gai_free(ihi); gai_free(ilo); 
+    gai_free(ptr_org);
+    gai_free(ptr_dst); gai_free(ptr_src);
+    gai_free(nelem); gai_free(count);
 
-      ga_gather_local(*g_a, ((char*)v)+item_size*first, i+first, j+first,
-                       nelem, proc);
-      first += nelem; 
-
-  }while (first< *nv);
-
-  if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
-  GA_POP_NAME;
+    if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+    GA_POP_NAME;
 }
       
            
