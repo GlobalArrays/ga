@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.10 1999-11-20 02:02:08 d3h325 Exp $ */
+/* $Id: message.c,v 1.11 1999-11-20 02:20:41 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCG)
@@ -375,7 +375,7 @@ void armci_msg_gop(void *x, int n, char* op, int type)
 {
 int root, up, left, right, index, nproc,size;
 int tag=ARMCI_TAG;
-int ndo, len, lenmes, orign =n, bufsize;
+int ndo, len, lenmes, orign =n, ratio;
 void *origx =x;
 
     if(!x)armci_die("armci_msg_igop: NULL pointer", n);
@@ -390,9 +390,9 @@ void *origx =x;
 	else if(type==ARM_LONG) size = sizeof(long);
     else size = sizeof(double);
 
-    bufsize = BUF_SIZE*sizeof(double)/size;
+    ratio = sizeof(double)/size;
     
-    while ((ndo = (n<=BUF_SIZE) ? n : BUF_SIZE)) {
+    while ((ndo = (n<=BUF_SIZE*ratio) ? n : BUF_SIZE*ratio)) {
          len = lenmes = ndo*size;
 
          if (left > -1) {
