@@ -172,7 +172,7 @@ c
 c
 c   print out values of a
 c
-#if 1
+#if 0
       do k = 0, nproc-1
         call ga_sync
         if (k.eq.me.and.has_data(me).and.maxval.lt.10000) then
@@ -189,7 +189,12 @@ c
       call ffflush(6)
 #endif
 
-      go to 123
+c      go to 123
+      if (me.eq.0) then
+        write(6,*)
+        write(6,*) 'Testing update 1'
+        write(6,*)
+      endif
       t1 = 0.0d00
       do i = 1, nloop
         start = util_timer()
@@ -199,6 +204,11 @@ c
       end do
       t1 = t1/dble(nloop)
 
+      if (me.eq.0) then
+        write(6,*)
+        write(6,*) 'Testing update 2'
+        write(6,*)
+      endif
       t4 = 0.0d00
       t8 = 0.0d00
       do i = 1, nloop
@@ -213,6 +223,11 @@ c
       t4 = t4/dble(nloop)
       t8 = t8/dble(nloop)
 
+      if (me.eq.0) then
+        write(6,*)
+        write(6,*) 'Testing update 3'
+        write(6,*)
+      endif
       t5 = 0.0d00
       t9 = 0.0d00
       do i = 1, nloop
@@ -227,6 +242,11 @@ c
       t5 = t5/dble(nloop)
       t9 = t9/dble(nloop)
 
+      if (me.eq.0) then
+        write(6,*)
+        write(6,*) 'Testing update 4'
+        write(6,*)
+      endif
   122 continue
       t6 = 0.0d00
       do i = 1, nloop
@@ -238,6 +258,11 @@ c
       t6 = t6/dble(nloop)
 
 c      go to 123
+      if (me.eq.0) then
+        write(6,*)
+        write(6,*) 'Testing update 5'
+        write(6,*)
+      endif
       t7 = 0.0d00
       call ga_sync
       do i = 1, nloop
@@ -250,6 +275,11 @@ c      go to 123
       t7 = t7/dble(nloop)
   123 continue
 
+      if (me.eq.0) then
+        write(6,*)
+        write(6,*) 'Testing update 6'
+        write(6,*)
+      endif
       t10 = 0.0d00
       call ga_sync
       do i = 1, nloop
