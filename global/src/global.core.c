@@ -303,7 +303,7 @@ Integer *msg_buf = (Integer*)MessageRcv->buffer;
     ga_brdcst_clust(type, msg_buf, SHMID_BUF_SIZE, cluster_master, 
                     ALL_CLUST_GRP);
 
-    fprintf(stderr,"GAme=%d\n",GAme);
+    if(DEBUG) fprintf(stderr,"GAme=%d\n",GAme);
 
     if(nodeid_() != cluster_master){
         /* remaining processors atach to the shared memory */
