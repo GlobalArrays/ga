@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.37 2001-02-23 23:41:21 d3h325 Exp $
+# $Id: makefile.h,v 1.38 2001-02-28 01:43:39 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -64,7 +64,8 @@ ifeq ($(TARGET),SOLARIS)
      FOPT_REN = -dalign
  endif
  ifeq ($(_FC),frt)
-      FOPT_REN += -fw -Kfast -KV8PFMADD
+     FOPT_REN += -fw -Kfast -KV8PFMADD
+     CMAIN = -Dmain=MAIN__
  endif
  ifeq ($(_CC),fcc)
       COPT_REN += -Kfast -KV8PFMADD
@@ -74,17 +75,28 @@ ifeq ($(TARGET),SOLARIS)
      endif
 endif
 #
+#    64-bit version
 ifeq ($(TARGET),SOLARIS64)
            M4 = /usr/ccs/bin/m4
-      FLD_REN = -xs
+  ifeq ($(_CC),fcc)
+     COPT_REN = -Kfast -KV9FMADD
+  else
      COPT_REN = -xarch=v9 -dalign
+  endif
+  ifeq ($(_FC),frt)
+     FOPT_REN = -dalign -xarch=v9 -CcdII8
+     CMAIN = -Dmain=MAIN__
+  else
      FOPT_REN = -xarch=v9 -dalign -xtypemap=real:64,double:64,integer:64
-     ifdef LARGE_FILES
+     FLD_REN = -xs
+  endif
+  ifdef LARGE_FILES
         LOC_LIBS += $(shell getconf LFS_LIBS)
-     endif
+  endif
  GLOB_DEFINES = -DSOLARIS -DSOLARIS64
         CDEFS = -DEXT_INT
 endif
+#
 #obsolete: SunOS 4.X
 ifeq ($(TARGET),SUN)
            CC = gcc

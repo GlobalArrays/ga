@@ -120,21 +120,37 @@ endif
 
 #---------------------------- Sun or Fujitsu Sparc/Solaris ----------------
 ifeq ($(TARGET),SOLARIS)
-#     COPT_REN = -dalign
-#     FOPT_REN = -dalign
-ifeq ($(_FC),frt)
+  ifeq ($(_FC),f77)
+      FOPT_REN = -dalign
+  endif
+  ifeq ($(_CC),cc)
+      COPT_REN = -dalign
+  endif
+  ifeq ($(_FC),frt)
       FOPT_REN += -fw -Kfast -KV8PFMADD
-endif
-ifeq ($(_CC),fcc)
+  endif
+  ifeq ($(_CC),fcc)
       COPT_REN += -Kfast -KV8PFMADD
-endif
+  endif
 endif
 #
+# 64-bit
 ifeq ($(TARGET),SOLARIS64)
-     COPT_REN = -xarch=v9
-     FOPT_REN = -xarch=v9
+#
+  ifeq ($(_FC),frt)
+     FOPT_REN = -fw -Kfast -KV9FMADD
+  else
+     FOPT_REN = -dalign -xarch=v9
+  endif
+  ifeq ($(_CC),fcc)
+     COPT_REN = -Kfast -KV9FMADD
+  else
+     COPT_REN = -dalign -xarch=v9
+  endif
+#
  GLOB_DEFINES += -DSOLARIS
 endif
+#
 #
 #obsolete SunOS 4.X
 ifeq ($(TARGET),SUN)
