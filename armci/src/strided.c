@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.28 2000-10-13 23:04:16 d3h325 Exp $ */
+/* $Id: strided.c,v 1.29 2000-10-13 23:40:52 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -435,9 +435,9 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
         * we can bypass the packetization step and send request directly
         */
         if((count[0]> LONG_GET_THRESHOLD) ||
-           (stride_levels && count[0]>LONG_GET_THRESHOLD_STRIDED)) {
+                      (stride_levels && count[0]>LONG_GET_THRESHOLD_STRIDED)) {
+         int bypass=0;
 #        ifdef GM
-            int bypass=0;
             if(armci_gm_bypass)
                 bypass= armci_pin_memory(dst_ptr,dst_stride_arr,count,
                                          stride_levels);
@@ -451,7 +451,10 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #        endif
        }else
 
+#ifdef CLIENT_BUF_BYPASS
 PINFAIL:   /* use the standard request with packing */
+#endif
+
 #endif
            rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
                        dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
