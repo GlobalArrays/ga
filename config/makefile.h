@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.65 2002-04-10 22:49:12 edo Exp $
+# $Id: makefile.h,v 1.66 2002-05-16 18:47:01 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -164,6 +164,35 @@ ifeq ($(TARGET),HITACHI)
 	   CC = mpicc
 	   FC = mpif90 -hf77
  GLOB_DEFINES = -DHITACHI
+endif
+#
+#................................ APPLE ....................................
+# MAC running MAC X or higher
+#
+ifeq ($(TARGET),MACX)
+           CC = gcc
+           FC = g77
+       RANLIB = ranlib
+ GLOB_DEFINES += -DLINUX
+
+ifneq (,$(findstring mpif,$(_FC)))
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; exit } ' )
+endif
+ifneq (,$(findstring mpicc,$(_CC)))
+         _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
+endif
+ifeq ($(_CC),gcc)
+   ifeq ($(COPT),-O)
+     COPT_REN += -funroll-loops $(OPT_ALIGN)
+   endif
+endif
+#
+ifeq ($(_FC),g77)
+   ifeq ($(FOPT),-O)
+      FOPT_REN += -funroll-loops $(OPT_ALIGN)
+   endif
+endif
+
 endif
 #
 #................................ LINUX ....................................

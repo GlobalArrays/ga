@@ -2,7 +2,7 @@
 #define _memcpy_h
 
 /* 
- * $Id: memcpy.h,v 1.4 2002-04-02 01:36:22 edo Exp $
+ * $Id: memcpy.h,v 1.5 2002-05-16 18:47:01 d3h325 Exp $
  */
 
 /* 
@@ -13,7 +13,9 @@
  * This file should only be included by internal C files.
  */
 
+#ifndef MACX
 #include <malloc.h>
+#endif
 
 /**
  ** constants

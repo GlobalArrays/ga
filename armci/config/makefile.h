@@ -35,6 +35,15 @@ ifeq ($(TARGET),CYGWIN)
      EXTRA_OBJ = winshmem.o signaltrap.o shmalloc.o
 endif
 
+#-------------------------- Mac X ------------
+ifeq ($(TARGET),MACX)
+       RANLIB = ranlib
+           FC = g77
+           CC = gcc
+ GLOB_DEFINES+= -DSHMEM -DMMAP -DDATA_SERVER
+     EXTRA_OBJ = winshmem.o signaltrap.o shmalloc.o dataserv.o spawn.o \
+                 dataserv.o sockets.o request.o ds-shared.o buffers.o async.o
+endif
 
 #-------------------------- INTERIX 2.2.5 on Windows ------------
 ifeq ($(TARGET),INTERIX) 
