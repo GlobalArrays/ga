@@ -25,6 +25,14 @@ divert(-1)
   define(m4_n_6dim, 5)
   define(m4_n_7dim, 4)
   define(m4_n_8dim, 3)
+  # define(m4_n_1dim, 2000)
+  # define(m4_n_2dim, 100)
+  # define(m4_n_3dim, 20)
+  # define(m4_n_4dim, 10)
+  # define(m4_n_5dim, 5)
+  # define(m4_n_6dim, 4)
+  # define(m4_n_7dim, 3)
+  # define(m4_n_8dim, 2)
 
   # to access n value
   define(m4_n_val, m4_n_$1dim)
@@ -50,6 +58,9 @@ divert(-1)
   define(m4_func_NGA_ACC, testit_NGA_ACC_$1$2())
   define(m4_func_NGA_SCATTER, testit_NGA_SCATTER_$1$2())
   define(m4_func_NGA_GATHER, testit_NGA_GATHER_$1$2())
+  define(m4_func_NGA_PERIODIC_PUT, testit_NGA_PERIODIC_PUT_$1$2())
+  define(m4_func_NGA_PERIODIC_GET, testit_NGA_PERIODIC_GET_$1$2())
+  define(m4_func_NGA_PERIODIC_ACC, testit_NGA_PERIODIC_ACC_$1$2())
   define(m4_func_NGA_FILL_PATCH, testit_NGA_FILL_PATCH_$1$2())
   define(m4_func_NGA_COPY_PATCH, testit_NGA_COPY_PATCH_$1$2())
   define(m4_func_NGA_SCALE_PATCH, testit_NGA_SCALE_PATCH_$1$2())
@@ -123,6 +134,12 @@ include(`ngatest/ndim_NGA_ACC.src')')
 include(`ngatest/ndim_NGA_SCATTER.src')')
 	    ifelse(m4_test_NGA_GATHER, `yes', `
 include(`ngatest/ndim_NGA_GATHER.src')')
+	    ifelse(m4_test_NGA_PERIODIC_PUT, `yes', `
+include(`ngatest/ndim_NGA_PERIODIC_PUT.src')')
+	    ifelse(m4_test_NGA_PERIODIC_GET, `yes', `
+include(`ngatest/ndim_NGA_PERIODIC_GET.src')')
+	    ifelse(m4_test_NGA_PERIODIC_ACC, `yes', `
+include(`ngatest/ndim_NGA_PERIODIC_ACC.src')')
 	    ifelse(m4_test_NGA_FILL_PATCH, `yes', `
 include(`ngatest/ndim_NGA_FILL_PATCH.src')')
 	    ifelse(m4_test_NGA_COPY_PATCH, `yes', `
@@ -167,6 +184,12 @@ include(`ngatest/ndim_NGA_ACC.src')')
 include(`ngatest/ndim_NGA_SCATTER.src')')
 	    ifelse(m4_test_NGA_GATHER, `yes', `
 include(`ngatest/ndim_NGA_GATHER.src')')
+	    ifelse(m4_test_NGA_PERIODIC_PUT, `yes', `
+include(`ngatest/ndim_NGA_PERIODIC_PUT.src')')
+	    ifelse(m4_test_NGA_PERIODIC_GET, `yes', `
+include(`ngatest/ndim_NGA_PERIODIC_GET.src')')
+	    ifelse(m4_test_NGA_PERIODIC_ACC, `yes', `
+include(`ngatest/ndim_NGA_PERIODIC_ACC.src')')
 	    ifelse(m4_test_NGA_FILL_PATCH, `yes', `
 include(`ngatest/ndim_NGA_FILL_PATCH.src')')
 	    ifelse(m4_test_NGA_COPY_PATCH, `yes', `
@@ -211,6 +234,12 @@ include(`ngatest/ndim_NGA_ACC.src')')
 include(`ngatest/ndim_NGA_SCATTER.src')')
 	    ifelse(m4_test_NGA_GATHER, `yes', `
 include(`ngatest/ndim_NGA_GATHER.src')')
+	    ifelse(m4_test_NGA_PERIODIC_PUT, `yes', `
+include(`ngatest/ndim_NGA_PERIODIC_PUT.src')')
+	    ifelse(m4_test_NGA_PERIODIC_GET, `yes', `
+include(`ngatest/ndim_NGA_PERIODIC_GET.src')')
+	    ifelse(m4_test_NGA_PERIODIC_ACC, `yes', `
+include(`ngatest/ndim_NGA_PERIODIC_ACC.src')')
 	    ifelse(m4_test_NGA_FILL_PATCH, `yes', `
 include(`ngatest/ndim_NGA_FILL_PATCH.src')')
 	    ifelse(m4_test_NGA_COPY_PATCH, `yes', `
