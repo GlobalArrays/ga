@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.3 2003-07-03 23:14:34 d3h325 Exp $ */
+/* $Id: kr_malloc.c,v 1.4 2003-07-30 23:29:21 d3h325 Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 
@@ -15,8 +15,9 @@ extern void armci_die();
  * DEFAULT_MAX_NALLOC: Maximum number of units that can get i.e.128MB 
  * (if unit size=64bytes, then max units=128MB/64 = 2*1024*1024)
  */
-#define DEFAULT_NALLOC     (128*1024)  
-#define DEFAULT_MAX_NALLOC (1024*1024*2) 
+#define DEFAULT_NALLOC       (128*1024)  
+#define DEFAULT_NALLOC_ALIGN 1024  
+#define DEFAULT_MAX_NALLOC   (1024*1024*2) 
 
 /* mutual exclusion defs go here */
 #define  LOCKIT 
@@ -77,7 +78,7 @@ static Header *morecore(size_t nu, context_t *ctx) {
 
 #if 1
     /* 07/03 ctx->nalloc is now the minimum # units we ask from OS */
-    nu = DEFAULT_NALLOC*((nu-1)/DEFAULT_NALLOC+1);
+    nu = DEFAULT_NALLOC_ALIGN*((nu-1)/DEFAULT_NALLOC_ALIGN+1);
     if(nu < ctx->nalloc) nu = ctx->nalloc; 
 #else
     nu = ctx->nalloc*((nu-1)/ctx->nalloc+1); /* nu must by a multiplicity of nalloc */
