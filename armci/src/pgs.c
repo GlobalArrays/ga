@@ -1,9 +1,9 @@
-/* $Id: pgs.c,v 1.6 2004-08-10 06:23:57 vinod Exp $ 
+/* $Id: pgs.c,v 1.7 2004-08-10 22:05:01 d3h325 Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
 
-#ident	"@(#)$Id: pgs.c,v 1.6 2004-08-10 06:23:57 vinod Exp $"
+#ident	"@(#)$Id: pgs.c,v 1.7 2004-08-10 22:05:01 d3h325 Exp $"
 
 #define BINLOAD 1
 
@@ -21,6 +21,7 @@
 #include <elan4/dma.h>
 #include <elan4/registers.h>
 #include "pgs_thread.h"
+#include <stdlib.h>
 
 extern void armci_die();
 extern int armci_me;
@@ -387,7 +388,7 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 	int sz;
 	extern int armci_msg_me();
 
-	sprintf(file_name, "/tmp/PGS1234%d.so", armci_msg_me()); 
+	sprintf(file_name, "/tmp/PGS%d.so", getpid()); 
 	fp = fopen((const char*)file_name, "w");
 	if(fp==NULL)armci_die("cannot open so file",-1);
 	sz = fwrite(bin_data, 1, BIN_DATA_ELEMS, fp);
