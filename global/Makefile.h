@@ -39,7 +39,7 @@ ifeq ($(TARGET),SUN)
 #
 #
 #          CC = gcc
-     FOPT_REN = -Nl100
+     FOPT_REN = -Nl100 -dalign
 GLOB_INCLUDES = -I../../ma
      WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
 		-Wwrite-strings
