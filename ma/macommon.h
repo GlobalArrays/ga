@@ -60,6 +60,8 @@
 #define f2c_sizeof_overhead_			F2C_SIZEOF_OVERHEAD
 #define f2c_summarize_allocated_blocks_		F2C_SUMMARIZE_ALLOCATED_BLOCKS
 #define f2c_verify_allocator_stuff_		F2C_VERIFY_ALLOCATOR_STUFF
+#define f2c_set_numalign_                       F2C_SET_NUMALIGN
+#define f2c_get_numalign_                       F2C_GET_NUMALIGN
 #endif
 
 #endif

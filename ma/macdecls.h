@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.6 1998-05-26 20:15:20 d3h325 Exp $
+ * $Id: macdecls.h,v 1.7 1999-10-19 01:01:07 d3g681 Exp $
  */
 
 /* 
@@ -62,6 +62,8 @@ extern Integer MA_sizeof();
 extern Integer MA_sizeof_overhead();
 extern void MA_summarize_allocated_blocks();
 extern Boolean MA_verify_allocator_stuff();
+extern Boolean MA_set_numalign();
+extern Boolean MA_get_numalign();
 
 /**
  ** variables

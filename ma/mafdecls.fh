@@ -2,7 +2,7 @@
 #define _mafdecls_fh
 
 c
-c     $Id: mafdecls.fh,v 1.4 1997-02-26 20:39:21 d3h325 Exp $
+c     $Id: mafdecls.fh,v 1.5 1999-10-19 01:01:07 d3g681 Exp $
 c
 
 c
@@ -78,6 +78,8 @@ c     subroutine MA_print_stats
       integer MA_sizeof_overhead
 c     subroutine MA_summarize_allocated_blocks
       logical MA_verify_allocator_stuff
+      logical MA_set_numalign
+      logical MA_get_numalign
 
       external MA_alloc_get
       external MA_allocate_heap
@@ -102,6 +104,8 @@ c     subroutine MA_summarize_allocated_blocks
       external MA_sizeof_overhead
       external MA_summarize_allocated_blocks
       external MA_verify_allocator_stuff
+      external MA_set_numalign
+      external MA_get_numalign
 #endif /* MAF_INTERNAL */
 
 c

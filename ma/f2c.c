@@ -1,5 +1,5 @@
 /*
- * $Id: f2c.c,v 1.7 1999-05-27 16:31:12 d3h325 Exp $
+ * $Id: f2c.c,v 1.8 1999-10-19 01:01:06 d3g681 Exp $
  */
 
 /*
@@ -504,3 +504,17 @@ public Boolean FATR f2c_verify_allocator_stuff_()
 {
     return MA_verify_allocator_stuff();
 }
+
+public Boolean FATR f2c_set_numalign_(Integer *numalign)
+{
+  return MA_set_numalign((int) *numalign);
+}
+
+public Boolean FATR f2c_get_numalign_(Integer *numalign)
+{
+  int n;
+  Boolean status = MA_get_numalign(&n);
+  *numalign = n;
+  return status;
+}
+

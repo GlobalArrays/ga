@@ -1,5 +1,5 @@
 c
-c     $Id: maf.F,v 1.9 1999-05-27 16:31:13 d3h325 Exp $
+c     $Id: maf.F,v 1.10 1999-10-19 01:01:07 d3g681 Exp $
 c
 
 c
@@ -543,6 +543,23 @@ c     --------------------------------------------------------------- c
       endif
 
       return
+      end
+
+      logical function MA_set_numalign (numalign)
+      implicit none
+#include "maf2c.fh"
+      integer numalign
+      
+      MA_set_numalign = (f2c_set_numalign(numalign) .eq. MA_TRUE)
+
+      end
+      logical function MA_get_numalign (numalign)
+      implicit none
+#include "maf2c.fh"
+      integer numalign
+      
+      MA_get_numalign = (f2c_get_numalign(numalign) .eq. MA_TRUE)
+
       end
 
 #undef MAF_INTERNAL

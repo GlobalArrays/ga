@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.19 1999-05-27 16:31:12 d3h325 Exp $
+ * $Id: ma.c,v 1.20 1999-10-19 01:01:07 d3g681 Exp $
  */
 
 /*
@@ -296,6 +296,8 @@ public MA_LongDoubleComplex	ma_cb_ldcpl[2];	/* MT_C_LDCPL */
 
 
 private int trace = 0;		/* If true print push/pop/alloc/free */
+
+private int NUMALIGN = 0;       /* User requested power of two alignment */
 
 /**
  ** macros
@@ -609,6 +611,37 @@ private void balloc_after(ar, address, client_space, nbytes)
     B_client_space = p2b(A_client_space);
 
     /*
+     * To align client space according to overall alignment of absolute
+     * address on user requested 2^NUMALIGN boundary.
+     * Note that if the base arrays are not aligned accordingly then
+     * this alignement request is not satisfiable and will be quietly
+     * ignored.
+     */
+
+    if (NUMALIGN > 0) {
+      unsigned long mask = (1<<NUMALIGN)-1;
+      int diff = ((unsigned long) B_client_space) & mask;
+      
+      /* Check that the difference is a multiple of the type size.
+       * If so, then we can shift the client space which is already
+       * aligned to satisfy this requirement.
+       */
+
+      if (diff) {
+	diff = (1<<NUMALIGN) - diff;
+	if ((diff % ma_sizeof[datatype]) == 0 ) {
+	  /*printf("bafter realigned diff=%d\n",diff);*/
+	  A_client_space = b2p(B_client_space + diff);
+	  B_client_space = p2b(A_client_space);
+	}	
+	/*	else {
+	  printf("did not realign diff=%d typelen=%d mod=%d\n",
+		 diff, ma_sizeof[datatype], (diff % ma_sizeof[datatype]));
+		 }*/
+      }
+    }
+
+    /*
      * To ensure that the AD is properly aligned:
      *
      *	L(block) % ALIGNMENT == 0
@@ -692,6 +725,36 @@ private void balloc_before(ar, address, client_space, nbytes)
     B_client_space = B_address - L_gap2 - sizeof(Guard) - L_client_space;
     A_client_space = b2p(B_client_space);
     B_client_space = p2b(A_client_space);
+
+    /*
+     * To align client space according to overall alignment of absolute
+     * address on user requested 2^NUMALIGN boundary.
+     * Note that if the base arrays are not aligned accordingly then
+     * this alignement request is not satisfiable and will be quietly
+     * ignored.
+     */
+
+    if (NUMALIGN > 0) {
+      unsigned long mask = (1<<NUMALIGN)-1;
+      int diff = ((unsigned long) B_client_space) & mask;
+      
+      /* Check that the difference is a multiple of the type size.
+       * If so, then we can shift the client space which is already
+       * aligned to satisfy this requirement.
+       */
+
+      if (diff) {
+	if ((diff % ma_sizeof[datatype]) == 0 ) {
+	  /* printf("bbefore realigned diff=%d\n",diff); */
+	  A_client_space = b2p(B_client_space - diff);
+	  B_client_space = p2b(A_client_space);
+	}	
+	/*	else {
+	  printf("did not realign diff=%d typelen=%d mod=%d\n",
+		 diff, ma_sizeof[datatype], (diff % ma_sizeof[datatype]));
+		 }*/
+      }
+    }
 
     /*
      * To ensure that the AD is properly aligned:
@@ -3052,4 +3115,21 @@ public Pointer MA_get_mbase(datatype)
     datatype = mt_import(datatype);
 
     return ma_base[datatype];
+}
+
+public Boolean MA_set_numalign(int numalign)
+{
+  if ((numalign < 0) || (numalign > 30)) {
+    (void)sprintf(ma_ebuf,"invalid alignment requested");
+    ma_error(EL_Nonfatal, ET_External, "MA_set_numalign", ma_ebuf);
+    return MA_FALSE;
+  }
+  NUMALIGN = numalign;
+  return MA_TRUE;
+}
+
+public Boolean MA_get_numalign(int *numalign)
+{
+  *numalign = NUMALIGN;
+  return MA_TRUE;
 }
