@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.32 2001-09-11 18:17:21 d3h325 Exp $
+/* $Id: myrinet.c,v 1.33 2001-09-13 22:58:24 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -124,7 +124,7 @@ armci_gm_serv_t *serv_gm = &__armci_serv_gm_struct;
 char *MessageSndBuffer;
 char *MessageRcvBuffer;
 
-int armci_gm_bypass = 0;
+int _armci_bypass = 0;
 static int armci_gm_server_ready = 0;
 static int armci_gm_num_send_tokens=0;
 static int armci_gm_num_receive_tokens=0;
@@ -436,11 +436,11 @@ int armci_gm_client_init()
         strncpy(gm_version, _gm_get_kernel_build_id(proc_gm->port), 3);
         /*printf("GM version is %s\n",gm_version);*/
         gm_version[3] = '\0';
-        if(strcmp(gm_version, "1.0") == 0) armci_gm_bypass = FALSE;
-        else if(strcmp(gm_version, "1.1") == 0) armci_gm_bypass = FALSE;
-        else armci_gm_bypass = TRUE;
+        if(strcmp(gm_version, "1.0") == 0) _armci_bypass = FALSE;
+        else if(strcmp(gm_version, "1.1") == 0) _armci_bypass = FALSE;
+        else _armci_bypass = TRUE;
     }
-    armci_msg_brdcst(&armci_gm_bypass, sizeof(int), 0);
+    armci_msg_brdcst(&_armci_bypass, sizeof(int), 0);
 #endif
     
     ((armci_gm_context_t*)MessageSndBuffer)->done=ARMCI_GM_CLEAR;

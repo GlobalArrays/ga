@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.34 2001-09-12 23:57:18 d3h325 Exp $ */
+/* $Id: strided.c,v 1.35 2001-09-13 22:58:25 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -13,8 +13,8 @@ else\
       armci_acc_2D(op, scale, proc, src, dst, bytes, count, src_stride,dst_stride,lockit) 
 
 /* macro supports run-time selection of request sending scheme */
-#ifdef GM
-#define CAN_REQUEST_DIRECTLY armci_gm_bypass
+#ifdef CLIENT_BUF_BYPASS
+#define CAN_REQUEST_DIRECTLY _armci_bypass
 #else
 #define CAN_REQUEST_DIRECTLY 1
 #endif

@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.25 2001-09-04 18:29:23 d3h325 Exp $ */
+/* $Id: request.c,v 1.26 2001-09-13 22:58:25 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -444,7 +444,7 @@ int armci_rem_strided(int op, void* scale, int proc,
     bufsize += bytes+sizeof(void*)+2*sizeof(int)*(stride_levels+1)
                +2*sizeof(double) + 8; /* +scale+alignment */
 #   ifdef CLIENT_BUF_BYPASS
-      if(flag && armci_gm_bypass) bufsize -=bytes; /* we are not sending data*/
+      if(flag && _armci_bypass) bufsize -=bytes; /* we are not sending data*/
 #   endif
     buf = buf0= GET_SEND_BUFFER(bufsize);
     msginfo = (request_header_t*)buf;
@@ -469,7 +469,7 @@ int armci_rem_strided(int op, void* scale, int proc,
                                        buf += (1+stride_levels)*sizeof(int);
 
 #   ifdef CLIENT_BUF_BYPASS
-      if(flag && armci_gm_bypass){
+      if(flag && _armci_bypass){
          /* to bypass the client MessageSnd buffer in get we need to add source
             pointer and stride info - server will put data directly there */
          ADDBUF(buf,void*,dst_ptr);

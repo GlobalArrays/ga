@@ -248,7 +248,7 @@ extern void armci_set_shmem_limit(unsigned long shmemlimit);
 
 /* myrinet bypass */
 #ifdef CLIENT_BUF_BYPASS
-  extern int armci_gm_bypass;
+  extern int _armci_bypass;
 #endif
 
 #define ALIGN_PTR_LONG(type, x) if( ((long)(x)) % sizeof(long)) { long _y = (long)(x);\
