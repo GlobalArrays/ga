@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.28 2003-02-18 00:29:41 manoj Exp $ */
+/* $Id: ghosts.c,v 1.29 2003-03-05 21:58:55 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2484,4 +2484,70 @@ void FATR ga_ghost_barrier_()
 #else
   armci_msg_barrier();
 #endif
+}
+/*\ UPDATE THE GHOST CELLS ON A PROCESSOR IN A SPECIFIC DIRECTION
+ *  USING NON-BLOCKING GET CALLS
+\*/
+void FATR nga_nbget_ghost_dir_(Integer *g_a,
+                               Integer *mask,
+                               Integer *nbhandle)
+{
+  Integer handle = GA_OFFSET + *g_a;
+  Integer lo_loc[MAXDIM], hi_loc[MAXDIM], lo_rem[MAXDIM], hi_rem[MAXDIM];
+  Integer subscript[MAXDIM], ld[MAXDIM];
+  Integer i, ndim, dim, width;
+  char *ptr_loc;
+  GA_PUSH_NAME("nga_nbget_ghost_dir");
+  ndim = GA[handle].ndim;
+  /* check mask to see that it corresponds to a valid direction */
+  for (i=0; i<ndim; i++) {
+    if (abs(mask[i]) != 0 && abs(mask[i]) != 1)
+      ga_error("nga_nbget_ghost_dir: invalid mask entry", mask[i]);
+  }
+
+  /* get range of data on local processor */
+  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+
+  /* locate data on remote processor */
+  for (i=0; i<ndim; i++) {
+    dim = GA[handle].dims[i];
+    width = GA[handle].width[i];
+    if (mask[i] == 1) {
+      if (hi_loc[i] == dim) {
+        lo_rem[i] = 1;
+        hi_rem[i] = width;
+      } else {
+        lo_rem[i] = hi_loc[i]+1;
+        hi_rem[i] = hi_loc[i]+width;
+      }
+    } else if (mask[i] == -1) {
+      if (lo_loc[i] == 1) {
+        lo_rem[i] = dim - width + 1;
+        hi_rem[i] = dim;
+      } else {
+        lo_rem[i] = lo_loc[i] - width;
+        hi_rem[i] = lo_loc[i] - 1;
+      }
+    } else {
+      lo_rem[i] = lo_loc[i];
+      hi_rem[i] = hi_loc[i];
+    }
+  }
+  
+  /* Get pointer to data destination on local block. Start by
+     by finding subscript to origin of destination block */
+  for (i=0; i<ndim; i++) {
+    if (mask[i] == 1) {
+      subscript[i] = hi_loc[i]-lo_loc[i]+1+GA[handle].width[i];
+    } else if (mask[i] == -1) {
+      subscript[i] = 0;
+    } else {
+      subscript[i] = GA[handle].width[i];
+    }
+    ld[i] = hi_loc[i]-lo_loc[i]+1+2*GA[handle].width[i];
+  }
+  gam_LocationWithGhosts(GAme, handle, subscript, &ptr_loc, ld);
+  /* get data */
+  nga_get_common(g_a,lo_rem,hi_rem,ptr_loc,ld,nbhandle);  
+  GA_POP_NAME;
 }
