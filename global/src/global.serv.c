@@ -419,6 +419,11 @@ Integer ga_read_inc_local();
          GA_PUSH_NAME("ga_server"); /*not thread-safe */
 #     endif
 
+#if defined(SP) && !defined(LAPI) && defined(MPL_SMP_BUG)
+      /* mpl rcncall does not set source task id on SMP nodes in PSSP 3.1 */
+      from = message->from;
+#endif
+
 #     if   defined(SOCKCONNECT) && defined(IWAY) && !defined(SHMEM)
           /* adjust process number for msg sender -- from is set by NX/MPL */
           from += cluster_master;

@@ -29,7 +29,9 @@ ifeq ($(TARGET),SP)
         FC = mpxlf
         CC = mpcc
     FFLAGS = -g -qEXTNAME
-   DEFINES = -DSP1 -DAIX -DEXTNAME  
+   DEFINES = -DSP1 -DAIX -DEXTNAME
+#enable workaround for a bug in MPL under PSSP 3.1 on SMP nodes
+   DEFINES += -DMPL_SMP_BUG
     CFLAGS = -g $(DEFINES)
  LINTFLAGS = -u -a -wkD $(DEFINES)
      EXTRA = strdup.o strtok.o

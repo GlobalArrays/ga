@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <mpproto.h>
-
+ 
 #include "srftoc.h"
 
 
@@ -13,14 +13,23 @@
  * we can improve performance of NXTVAL server by 10 -100% factor 
  */
 
-#ifdef POST_MULT_RCV
-#define NXTVAL_BUF_SIZE MAXPROC
+#ifdef MPL_SMP_BUG 
+#  define HLEN 2
 #else
-#define NXTVAL_BUF_SIZE 1 
+#  define HLEN 1
 #endif
 
-#define INCR 1                 /* increment for NXTVAL */
-#define TYPE_NXTVAL 32768      /* Type of messages for next value    */
+#ifdef POST_MULT_RCV
+#  ifdef MPL_SMP_BUG 
+#    define HLEN workaround does not work 
+#  endif
+#  define NXTVAL_BUF_SIZE MAXPROC
+#else
+#  define NXTVAL_BUF_SIZE HLEN 
+#endif
+
+#define INCR 1                  /* increment for NXTVAL */
+#define TYPE_NXTVAL 32768       /* Type of messages for next value    */
 #define TYPE_NXTVAL_REPLY 32769	/* Type for NXTVAL response */
 #define SYNC_TYPE 32770		/* Type for synchronization */
 
@@ -80,7 +89,7 @@ static long int_rcv_id;
 void install_nxtval()
 {
 int  nodes, mynode;
-int len_buf = sizeof(nxtval_buffer[0]);
+int len_buf = HLEN*sizeof(long);
 int status, htype=TYPE_NXTVAL, oldflag, newflag;
 
   wildcards();
@@ -133,7 +142,7 @@ long NXTVAL_(mproc)
   mproc = 0 ... indicates to server that I am about to terminate
 */
 {
-static  long buf[1];
+static  long buf[HLEN];
 static  long lenbuf = sizeof(buf);
 static  long lenmes, nodefrom, nodeto;
 static  long sync = 1;
@@ -142,6 +151,9 @@ static  long rtype  = TYPE_NXTVAL_REPLY;   /* reply message type */
 static  long  ret_val;
 
   buf[0] = *mproc;
+#ifdef MPL_SMP_BUG
+  buf[1] = NODEID_();
+#endif
 
   if (DEBUG_) {
     (void) printf("nxtval: me=%d, mproc=%d\n",NODEID_(), *mproc);
@@ -192,7 +204,7 @@ static  long rtype  = TYPE_NXTVAL_REPLY;   /* reply message type */
 static  long mproc;                  /* no. of processes running loop */
 static  long nval;                   /* no. of values requested */
 static  long sync   = 1;             /* all info goes synchronously */
-static  long lenbuf = sizeof(nxtval_buffer[0]);    /* length of buffer */
+static  long lenbuf = HLEN*sizeof(long);    /* length of buffer */
 static  long status, htype = TYPE_NXTVAL, id;
 static  long new=1, old;
 static  size_t  msglen;
@@ -200,6 +212,11 @@ static  size_t  msglen;
   mpc_wait(pid, &msglen);
   if (msglen != lenbuf) 
     Error("NextValueServer: lenmsg != lenbuf", msglen);
+
+  /* source task id not set by buggy MPL rcvncall on SMP nodes */
+#ifdef MPL_SMP_BUG
+  requesting_node = nxtval_buffer[1];
+#endif
 
 #ifdef POST_MULT_RCV
   mproc = nxtval_buffer[requesting_node];

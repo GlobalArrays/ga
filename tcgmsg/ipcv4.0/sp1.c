@@ -26,9 +26,19 @@
  */
 
 #ifdef POST_MULT_RCV
-#define NXTVAL_BUF_SIZE MAXPROC
+#  define NXTVAL_BUF_SIZE MAXPROC
+#  ifdef  MPL_SMP_BUG
+#    define HLEN workaround does not work 
+#  else  
+#    define HLEN sizeof(long)
+#  endif
 #else
-#define NXTVAL_BUF_SIZE 1 
+#  define NXTVAL_BUF_SIZE 2 
+#  ifdef  MPL_SMP_BUG
+#    define HLEN 2*sizeof(long)
+#  else  
+#    define HLEN sizeof(long)
+#  endif
 #endif
 
 #define INCR 1                 /* increment for NXTVAL */
@@ -39,10 +49,12 @@
 /* int mperrno=-1;*/   /* EUI error code, for some reason not in current EUIH
                           remove the statement when found/fixed */
 
-#define DEBUG_ DEBUG
 static long DEBUG=0;           /* debug flag ... see setdbg */
+#define DEBUG_ 0 
 
 /* Global variables */
+static long resp_nxtval;       /*used bypass message passing for nxtval server */
+static long ack_nxtval=0;
 
 static long dontcare, allmsg, nulltask,allgrp; /*values for EUI/EUIH wildcards*/
 static long nxtval_buffer[NXTVAL_BUF_SIZE];    /* Used by handler for nxtval */
@@ -382,7 +394,7 @@ void PBEGIN_()
   /* Register the handler for NXTVAL service */
 
   nxtval_server = NNODES_() - 1;
-  len_buf = sizeof(nxtval_buffer[0]);
+  len_buf = HLEN;
 
   if (NODEID_() == nxtval_server)
 #ifdef POST_MULT_RCV
@@ -515,6 +527,11 @@ void SYNCH_(type)
 
 
 
+long static getval(long* addr)
+{
+ return *addr;
+}
+
 
 /*\ Get next value of shared counter.
 \*/
@@ -527,15 +544,20 @@ long NXTVAL_(mproc)
   mproc = 0 ... indicates to server that I am about to terminate
 */
 {
-static  int buf[1];
+static  int buf[2];
 static  int lenbuf = sizeof(buf);
 static  int lenmes, nodefrom, nodeto;
 static  int sync = 1;
 static  int msgid, status, type;
 static  int rtype  = TYPE_NXTVAL_REPLY;   /* reply message type */
 static  int  ret_val;
+        int me = NODEID_();
 
   buf[0] = *mproc;
+#ifdef MPL_SMP_BUG
+  buf[1] = me;
+  ack_nxtval=0;
+#endif
 
   if (DEBUG_) {
     (void) printf("nxtval: me=%d, mproc=%d\n",NODEID_(), *mproc);
@@ -545,27 +567,31 @@ static  int  ret_val;
 
     type = TYPE_NXTVAL_REPLY;
     nodefrom = nxtval_server;
+
+
     status = mpc_recv((char*)buf, lenbuf, &nodefrom, &type, &msgid);
     if(status < -1) Error("NXTVAL: recv failed ", -1);
 
-    if (DEBUG_) 
-       fprintf(stderr,"nxtval: me=%d, waiting for reply type=%d from=%d\n",
-         NODEID_(),type,nodefrom); 
+    if (DEBUG_){ 
+         fprintf(stderr,"nxtval: me=%d, waiting for reply type=%d from=%d\n",
+           NODEID_(),type,nodefrom); 
+    }
 
     type = TYPE_NXTVAL;
     status = mpc_bsend((char*)buf, lenbuf, nxtval_server, type);
     if(status < -1) Error("NXTVAL: send failed ", -1);
 
-    while((status=mpc_status(msgid)) == -1);  /* spin using nonblocking probe */
-    if(status < -1) Error("NXTVAL: invalid message ID ", msgid);
+    while((status=mpc_status(msgid)) == -1);  /* spin using nonblocking probe*/
+      if(status < -1) Error("NXTVAL: invalid message ID ", msgid);
+    
 
     ret_val = buf[0];
   
-  if (DEBUG_) 
-   fprintf(stderr,"nxtval: me=%d, got reply, nextval= %d \n",
-     NODEID_(),ret_val); 
+    if (DEBUG_) 
+     fprintf(stderr,"nxtval: me=%d, got reply, nextval= %d \n",
+       NODEID_(),ret_val); 
 
-  return(ret_val);
+    return(ret_val);
 }
 
 
@@ -663,7 +689,7 @@ void WAITCOM_(nodesel)
 
 
 
-/*\ Interrupt handler
+/*\ Interrupt handler for NXTVAL
 \*/
 static void nxtval_handler(int *pid)
 {
@@ -676,7 +702,7 @@ static  int rtype  = TYPE_NXTVAL_REPLY;   /* reply message type */
 static  int mproc;                  /* no. of processes running loop */
 static  int nval;                   /* no. of values requested */
 static  int sync   = 1;             /* all info goes synchronously */
-static  int lenbuf = sizeof(nxtval_buffer[0]);    /* length of buffer */
+static  int lenbuf = HLEN;          /* length of buffer */
 static  int status, htype = TYPE_NXTVAL, id;
 static  int new=1, old;
 static  size_t msglen;
@@ -685,6 +711,11 @@ static  size_t msglen;
   if (msglen != lenbuf) 
     Error("NextValueServer: lenmsg != lenbuf", msglen);
 
+/* under PSSP 3.1 on SMP nodes source task id cannot be relied upon */
+#ifdef MPL_SMP_BUG
+ requesting_node = nxtval_buffer[1];
+#endif
+
 #ifdef POST_MULT_RCV
   mproc = nxtval_buffer[requesting_node];
 #else
@@ -692,9 +723,11 @@ static  size_t msglen;
 #endif
 
   nval  = INCR;
+
   if (DEBUG_) {
     (void) printf("NVS: from=%d  mproc=%d, counter=%d, ndone=%d\n",
                     requesting_node, mproc, cnt, ndone);
+    fflush(stdout);
   }
 
   if (mproc == 0)
@@ -716,6 +749,12 @@ static  size_t msglen;
       /*  all processes have finished so release them */
       while (ndone--) {
         long nodeto = done_list[ndone];
+        
+  if (DEBUG_) {
+     printf("NVS: from=%d releasing %d \n", requesting_node, nodeto);
+     fflush(stdout);
+  } 
+
         status = mpc_bsend((char*) &cnt, sizeof(cnt), nodeto, rtype);
       }
       cnt = 0;
@@ -733,6 +772,11 @@ static  size_t msglen;
 #endif
   if(status == -1)
       Error("NXTVAL handler: rcvncall failed:  mperrno error code ", mperrno);
+
+  if (DEBUG_) {
+     printf("NVS: from=%d out of handler \n", requesting_node);
+     fflush(stdout);
+  } 
 
 }
 

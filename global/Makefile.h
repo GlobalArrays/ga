@@ -400,6 +400,12 @@ ifeq ($(TARGET),SP)
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP -DEXTNAME -DAIX
+#
+#enable workaround for an MPL rcvncall bug on SMP nodes in PSSP3.1
+ifndef USE_ARMCI
+GLOB_DEFINES += -DMPL_SMP_BUG
+endif
+#
       FLD_REN = -b rename:.dgemm_,.dgemm -b rename:.zgemm_,.zgemm
 
 # need to strip symbol table to alleviate a bug in AIX 4.1 ld

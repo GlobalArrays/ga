@@ -281,6 +281,8 @@ ifdef IBM-SP
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
+#enable workaround for a bug in MPL under PSSP 3.1 on SMP nodes
+GLOB_DEFINES += -DMPL_SMP_BUG
 #   mpxlf fails with parallel make
     MAKEFLAGS = -j 1
        RANLIB = ranlib
