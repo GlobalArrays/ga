@@ -314,7 +314,7 @@ c
       t14 = 0.0d00
       t15 = 0.0d00
       call ga_sync
-      call ga_set_ghost_corner_flag(.false.)
+      call ga_set_ghost_corner_flag(.true.)
 c
       call ga_set_update5_info(g_a)
       do i = 1, nloop
@@ -323,7 +323,9 @@ c
         call ga_ghost_barrier
         t13 = t13 + util_timer() - start
         start = util_timer()
+c     write(6,*) 'got to ga_update5_ghosts'
         status = ga_update5_ghosts(g_a)
+c     write(6,*) 'completed ga_update5_ghosts'
         t14 = t14 + util_timer() - start
         start = util_timer()
         call ga_ghost_barrier
