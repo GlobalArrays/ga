@@ -1,7 +1,8 @@
-#$Id: makefile,v 1.5 1996-09-26 00:01:39 d3g681 Exp $
+#$Id: makefile,v 1.6 1996-09-26 20:50:04 d3h325 Exp $
 #
 #  Initial version Jace A Mogill (12 June 1996), ANL
 
+ LIB_DISTRIB = ../../lib
      LIBRARY = libchemio.a
          OBJ = elio.o stat.o
      HEADERS = chemio.h

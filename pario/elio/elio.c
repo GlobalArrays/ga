@@ -13,7 +13,7 @@
 #define  MAX_ATTEMPTS 10
 
 
-#if  defined(AIX) || defined(DECOSF) || defined(SGITFP) || defined(notKSR)
+#if  defined(AIX) || defined(DECOSF) || defined(SGI) || defined(notKSR)
 #   define AIO 1
 #   include <aio.h>
 #   if defined(KSR)||defined(AIX)
@@ -309,7 +309,8 @@ io_request_t *req_id;
 #elif defined(KSR)
       if((int)iosuspend(1, cb_fout_arr+(int)*req_id) ==-1)
 	ELIO_ERROR("elio_wait: suspend error",0);
-#elif defined(AIX)
+#elif defined(AIO)
+#  if defined(AIX)
 
       /* I/O can be interrupted on SP through rcvncall ! */
       do {
@@ -317,7 +318,7 @@ io_request_t *req_id;
       } while(rc == -1 && errno == EINTR); 
       if(rc  == -1) ELIO_ERROR("elio_wait:  suspend error",0);
 
-#elif defined(AIO)
+#  else
 
       if((int)aio_suspend(cb_fout_arr+(int)*req_id, 1, NULL) != 0)
 	      ELIO_ERROR("elio_wait: suspend error",0);
@@ -325,6 +326,7 @@ io_request_t *req_id;
       /* only on DEC aio_return is required to clean internal data structures */
       if(aio_return(cb_fout+(int)*req_id) == -1)
 	      ELIO_ERROR("elio_wait: suspend error",0);
+#  endif
 #endif
       while(aio_req[aio_i] != *req_id && aio_i < MAX_AIO_REQ) aio_i++;
       if(aio_i >= MAX_AIO_REQ)
@@ -357,12 +359,14 @@ int          *status;
 #if defined(PARAGON)
       if( iodone(*req_id)== (long) 0) errval = INPROGRESS;
       else errval = 0;
-#elif defined(KSR)
-      errval = cb_fout[(int)*req_id].aio_errno;
-#elif defined(AIX)
-      errval = aio_error(cb_fout[(int)*req_id].aio_handle);
 #elif defined(AIO)
+#  if defined(KSR)
+      errval = cb_fout[(int)*req_id].aio_errno;
+#  elif defined(AIX)
+      errval = aio_error(cb_fout[(int)*req_id].aio_handle);
+#  else
       errval = aio_error(cb_fout+(int)*req_id);
+#  endif
 #endif
       switch (errval) {
       case 0: 

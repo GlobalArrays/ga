@@ -122,10 +122,11 @@ int  elio_stat(fname, statinfo)
     case 4096: statinfo->avail *=4; break;
     case 8192: statinfo->avail *=8; break;
     default:   { 
-	double factor = ((double)bsize)/1024.0, avail;
-	avail = statinfo->avail * factor;
-	statinfo->avail = (long) avail;
-    }
+		double avail;
+		double factor = ((double)bsize)/1024.0;
+		avail = statinfo->avail * factor;
+		statinfo->avail = (long) avail;
+               }
     }
     
 #endif
