@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.48 2002-12-18 18:25:33 vinod Exp $ */
+/* $Id: request.c,v 1.49 2002-12-23 22:16:23 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -107,9 +107,9 @@ void armci_save_strided_dscr(char **bptr, void *rem_ptr,int rem_stride_arr[],
 {
 int i;
 char *bufptr=*bptr;
-BUF_INFO_T *info=BUF_TO_BUFINFO(*bptr);
-
+BUF_INFO_T *info;
     if(is_nb){    
+       info=BUF_TO_BUFINFO(*bptr);
        bufptr = (info->dscr);
     }
     *(void**)bufptr = rem_ptr;         bufptr += sizeof(void*);

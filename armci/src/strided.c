@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.57 2002-12-23 20:49:56 manoj Exp $ */
+/* $Id: strided.c,v 1.58 2002-12-23 22:16:23 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -1091,7 +1091,7 @@ static void _armci_rem_value(int op, void *src, void *dst, int proc,
     else
       ORDER(op,proc); /* ensure ordering */
     
-#ifdef REMOTE_OP
+#if defined(REMOTE_OP) && !defined(QUADRICS)
     rc = armci_rem_strided(op, NULL, proc, src, NULL, dst, NULL,
 			   &bytes, 0, NULL, 0, nb_handle);
     if(rc) armci_die("ARMCI_Value: armci_rem_strided incomplete", FAIL6);
