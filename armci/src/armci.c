@@ -182,3 +182,32 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     if(rc) return FAIL6;
     else return 0;
 }
+
+
+int ARMCI_AccS( int  optype,            /* operation */
+                void *scale,            /* scale factor x += scale*y */
+                void *src_ptr,          /* pointer to 1st segment at source*/ 
+		int src_stride_arr[],   /* array of strides at source */
+		void* dst_ptr,          /* pointer to 1st segment at destination*/
+		int dst_stride_arr[],   /* array of strides at destination */
+		int count[],            /* number of segments at each stride levels: count[0]=bytes*/
+		int stride_levels,      /* number of stride levels */
+                int proc                /* remote process(or) ID */
+                )
+{
+    int rc;
+
+    if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
+    if(src_stride_arr == NULL || dst_stride_arr ==NULL) return FAIL2;
+    if(count[0]<0)return FAIL3;
+    if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
+    if(proc<0)return FAIL5;
+
+    rc = armci_op_strided( optype, scale, proc, src_ptr, src_stride_arr, 
+                               dst_ptr, dst_stride_arr,
+                               count, stride_levels);
+
+    if(rc) return FAIL6;
+    else return 0;
+
+}
