@@ -38,9 +38,11 @@ version 2.2   . added support for double complex datatype;
                 functions has been renamed to: ga_scale, ga_scale_patch,
                 ga_add, ga_add_patch, ga_fill_patch;
               . new functions: ga_fence and ga_init_fence, ga_zdot,
-                and ga_zdot_patch;
+                and ga_zdot_patch, ga_print_stats;
+              . new interface functions to ScaLAPACK: ga_cholesky, ga_llt_solve,
+                ga_spd_invert, ga_solve
               . several configuration parameters are exposed to the user in 
-                global/src/config.h to allow customization.
+                global/src/config.h to allow customization of the package.
 
 version 2.1   . selection of message-passing (TCGMSG or MPI) library
               . new operations: ga_mpi_communicator and ga_proc_topology;
@@ -78,7 +80,7 @@ doc      - documents
 trace    - source code for tracing library
 X        - source code for GA visualization program
 
-
+
 Dependencies on other software:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -87,36 +89,60 @@ Dependencies on other software:
   fork processes, implement broadcast, ga_dgop;
 
 - MA (memory allocator by Greg Thomas) include files are used to implement 
-  MA-like addressing (no libma.a library is required to use GA operations
-  on the shared memory platforms, except for ga_diag and ga_symmetrize that 
-  still depend on MA, but you need to include mafdecls.h in your code if 
-  you want to use ga_access in Fortran);
+  MA-like addressing;
 
 - GA eigensolver, ga_diag, is a wrapper for the eigensolver from PEIGS library;
-  (Please contact George Fann <gi_fann@pnl.gov> for PEIGS)
+  (Please contact George Fann <gi_fann@pnl.gov> about PEIGS)
 
 - BLAS library is required for the eigensolver and ga_dgemm;
 
 - LAPACK library is required for the eigensolver;
 
-- SCALAPACK, PBBLAS, and BLACS libraries are required for ga_lu_solve;
-  (Please contact George Fann <gi_fann@pnl.gov> for port of BLACS to TCGMSG.) 
+- MPI, SCALAPACK, PBBLAS, and BLACS libraries are required for ga_lu_solve,
+  ga_cholesky, ga_llt_solve, ga_spd_invert, ga_solve. If you do not install
+  these libs, the named operations will not be available. Please see note below
+  on how to build BLACS compatible with GA.
 
-- if you want to use tracing, libtrace.a (built in ./trace) will be required;
-  also DGA_TRACE define symbol should be specified for C and Fortran compilers.
+- if you'd like to use tracing, an additonal library libtrace.a is required,
+  and DGA_TRACE define flag should be specified for C and Fortran compilers.
 
 
   To build the GA toolkit compatible with MPI, you need to define
-  environmental variable USE_MPI,  MPI_LIB and MPI_INCLUDE  which should 
-  point to the location of the MPI library and include directories. 
-  Additionaly, if the TCGMSG-MPI library is not needed, the make/environmental 
-  variable MSG_COMMS should be defined as MSG_COMMS = MPI.
-  Note that some fortran test programs are using certain TCGMSG utility
-  functions (for example, equivalent of C sizeof operator) and therefore
-  will not built without TCGMSG or TCGMSG-MPI library.
+  environmental variable USE_MPI,  MPI_LIB and MPI_INCLUDE  which
+  should point to the location of the MPI library and include
+  directories.  Additionaly, if the TCGMSG-MPI library is not needed,
+  the make/environmental variable MSG_COMMS should be defined as
+  MSG_COMMS = MPI.  Note that some fortran GA test programs use certain
+  TCGMSG utility functions (for example, equivalent of C sizeof
+  operator) and therefore will not built without TCGMSG or TCGMSG-MPI library.
 
+  Interface routines to ScaLAPACK are only available with MPI, and
+  of course with ScaLAPACK. The user is required to define environment
+  variables USE_SCALAPACK, and location of ScaLAPACK & Co. libraries
+  in variable SCALAPACK. An example:
 
+  setenv USE_SCALAPACK y
+  setenv SCALAPACK '-L/msrc/proj/scalapack/LIB/rs6000 -lscalapack -lpblas -ltools -lblacsF77cinit -lblacs'
+  setenv USE_MPI y
+   
+  Since there are certain interdependencies between blacs and
+  blacsF77cinit, some system might require specification of -lblacs
+  twice to fix the unresolved external symbols from these libs.
+
+  On machines that do not have 'native' implementation of TCGMSG-MPI nxtval
+  operation (see README in tcgmsg-mpi directory), it is required to modify 
+  a BLACS file blacs_pinfo_.c to substitute MPI_COMM_WORLD with the
+  communicator returned from ga_mpi_communicator routine.
+  This is an excerpt form the modified file:
+
+#ifdef GA
+      ga_mpi_communicator(&BI_MPI_COMM_WORLD);
+      BI_F77_MPI_COMM_WORLD = (int *)&BI_MPI_COMM_WORLD;
+#endif
+      BI_MPI_Comm_size(BI_MPI_COMM_WORLD, &BI_Np, ierr);
+      BI_MPI_Comm_rank(BI_MPI_COMM_WORLD, &BI_Iam, ierr);
 
+
 Makefiles:
 ~~~~~~~~~
 
@@ -130,9 +156,9 @@ command line when calling make. The library and test programs should be
 built by calling make in the current directory. The appropriate value
 of VERSION will be determined automatically. 
 
-Valid TARGET is one of: SUN, SGI, IBM, KSR, IPSC, PARAGON, SP1 
-Valid VERSION names:    SHMEM, DISMEM
-           
+Valid TARGET is one of: SUN, SOLARIS, SGI, SGITFP (Power Challenge),
+        DECOSF, IBM, KSR, SP1, SP, CRAY-T3D, CONVEX-SPP,IPSC, DELTA, PARAGON,
+        LINUX, HPUX 
 
 Test Programs:
 ~~~~~~~~~~~~~
@@ -140,17 +166,19 @@ Test Programs:
       - Programs: test.x, testsolve.x, testeig.x, testpatch.x are
         available to test this software.
 
-      - An example program that uses GA is called jacobi.x. The Jacobi
+      - Program testspd.x would work only with ScaLAPACK and TCGMSG-MPI
+        interface.
+
+      - Another example program that uses GA is called jacobi.x. The Jacobi
         iterative method is used to solve a system of linear equations
         generated in the solution process of a partial differential 
         equation by the finite differences method. 
 
       - You might have to modify Makelib.h to provide pointers to
-        the ScaLAPACK and Co., and PEIGS libraries in order to use parallel
-        versions of eigensolver and linear equation solver in testeig.x
-        test program. 
+	the PEIGS library in order to use parallel versions of
+	eigensolver in testeig.x test program.
 
-      - To run test programs you need to use TCGMSG to fork the
+      - To run test programs with TCGMSG that creates the GA
 	processes on the shared memory and (network of) workstations;
 	execute them you should use 'parallel' program -- built in
 	tcgmsg/ipcv4.0 -- for example: 
@@ -162,12 +190,11 @@ Test Programs:
 	still in the current (g/global/) directory.
 
         For a single processor execution 'parallel' is
-	not required if you have a version > 4.03 of TCGMSG; run it as: 
+	not required and the program can be run as: 
              
               testing/test.x
 
         or under control of your favorite debugger. 
-
 
         On MPP like T3D, IBM SP, and Intel machines, use appropriate
         system command to specify the number of processors, load and 
@@ -175,8 +202,6 @@ Test Programs:
         the Cray T3D use:
 
               mppexec testing/test.x -npes 4
-
-
 
 
 Documentation:
@@ -196,4 +221,4 @@ Contact for suggestions, comments and bug report:
 Jarek Nieplocha
 email: <j_nieplocha@pnl.gov> 
 phone: (509) 372-4469
-mail: Pacific Northwest Laboratory, MSIN: K1-87, Richland, WA 99352 
+mail: Pacific Northwest National Laboratory, MSIN: K1-87, Richland, WA 99352 
