@@ -142,13 +142,20 @@ endif
 #................................ HP  ....................................
 ifeq ($(TARGET),HPUX)
 # free HP cc compiler is not up to the job
+# /opt/ansic/bin/cc or gcc with -O break (EA)
      FOPT_REN = +ppu
-         CPP  = /lib/cpp -P
-           FC = fort77
-           CC = cc
+     CPP  = /lib/cpp -P
+     FC = fort77
+#    CC = gcc
+     CC = cc
+#    COPT =-fthread-jumps -fdefer-pop -fdelayed-branch -fomit-frame-pointer -finline-functions -ffast-math -finline-functions -fstrength-reduce -fschedule-insns
+     COPT = -Aa -D_HPUX_SOURCE +e -g
+     FOPT = -g
+     NOPT =
      COPT_REN = -Ae
- GLOB_DEFINES = -DHPUX -DEXTNAME
-    EXPLICITF = TRUE
+     GLOB_DEFINES = -DHPUX -DEXTNAME
+#     EXPLICITF = TRUE
+     EXPLICITF = FALSE
 endif
 #
 #................................ CRAY-T3E ..................................

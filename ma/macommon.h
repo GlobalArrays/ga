@@ -1,5 +1,5 @@
 /*
- $Id: macommon.h,v 1.8 1997-12-14 20:05:57 d3g681 Exp $
+ $Id: macommon.h,v 1.9 1998-01-28 00:08:41 d3h449 Exp $
  */
 
 #ifndef _macommon_h
@@ -66,7 +66,8 @@
 #define f2c_verify_allocator_stuff_		F2C_VERIFY_ALLOCATOR_STUFF
 #endif /* _CRAY */
 
-#ifdef __hpux
+/* EA says do NOT need because of f77 +ppu */
+/*#ifdef __hpux
 #define ma_set_sizes_				ma_set_sizes
 #define f2c_alloc_get_				f2c_alloc_get
 #define f2c_allocate_heap_			f2c_allocate_heap
@@ -93,6 +94,6 @@
 #define f2c_sizeof_overhead_			f2c_sizeof_overhead
 #define f2c_summarize_allocated_blocks_		f2c_summarize_allocated_blocks
 #define f2c_verify_allocator_stuff_		f2c_verify_allocator_stuff
-#endif /* __hpux */
+#endif*/ /* __hpux */
 
 #endif /* _macommon_h */
