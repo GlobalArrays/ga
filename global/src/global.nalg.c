@@ -15,7 +15,6 @@
 /* work arrays used in all routines */
 static Integer dims[MAXDIM], ld[MAXDIM-1];
 static Integer lo[MAXDIM],hi[MAXDIM];
-static Integer one_arr[MAXDIM]={1,1,1,1,1,1,1};
 
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\
@@ -74,64 +73,6 @@ register Integer i;
 }
 
 
-
-/*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
-\*/
-void FATR ga_copy_(Integer *g_a, Integer *g_b)
-{
-Integer  ndim, ndimb, type, typeb, me, elems=0, elemsb=0;
-Integer dimsb[MAXDIM];
-void *ptr_a, *ptr_b;
-
-   me = ga_nodeid_();
-
-   GA_PUSH_NAME("ga_copy");
-
-   if(*g_a == *g_b) ga_error("arrays have to be different ", 0L);
-
-   nga_inquire_(g_a,  &type, &ndim, dims);
-   nga_inquire_(g_b,  &typeb, &ndimb, dimsb);
-
-   if(type != typeb) ga_error("types not the same", *g_b);
-
-   if(!ga_compare_distr_(g_a,g_b))
-
-      nga_copy_patch_(g_a, one_arr, dims, g_b, one_arr, dimsb);
-
-   else {
-
-     ga_sync_();
-
-     nga_distribution_(g_a, &me, lo, hi);
-     if(lo[0]>0){
-        nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-        GET_ELEMS(ndim,lo,hi,ld,&elems);
-     }
-
-     nga_distribution_(g_b, &me, lo, hi);
-     if(lo[0]>0){
-        nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-        GET_ELEMS(ndim,lo,hi,ld,&elemsb);
-     }
-  
-     if(elems!= elemsb)ga_error("inconsistent number of elements",elems-elemsb);
-
-     if(elems>0){
-        ARMCI_Copy(ptr_a, ptr_b, (int)elems*GAsizeofM(type));
-        nga_release_(g_a,lo,hi);
-        nga_release_(g_b,lo,hi);
-     }
-
-     ga_sync_();
-   }
-
-   GA_POP_NAME;
-}
-
-
-
-/*\ internal version of dot product
-\*/
 void gai_dot(int Type, Integer *g_a, Integer *g_b, void *value)
 {
 Integer  ndim, type, me, elems=0, elemsb=0;
@@ -140,8 +81,8 @@ register Integer i;
 Integer isum=0;
 DoubleComplex zsum ={0.,0.};
 
- Integer andim, adims[MAXDIM], alo[MAXDIM], ahi[MAXDIM];
- Integer bndim, bdims[MAXDIM], blo[MAXDIM], bhi[MAXDIM];
+ Integer andim, adims[MAXDIM], alo[MAXDIM];
+ Integer bndim, bdims[MAXDIM], blo[MAXDIM];
 
    me = ga_nodeid_();
 
@@ -152,10 +93,10 @@ DoubleComplex zsum ={0.,0.};
        nga_inquire_(g_a, &type, &andim, adims);
        nga_inquire_(g_b, &type, &bndim, bdims);
 
-       for(i=0; i<andim; i++) { alo[i] = 1; ahi[i] = adims[i]; }
-       for(i=0; i<bndim; i++) { blo[i] = 1; bhi[i] = bdims[i]; }
+       for(i=0; i<andim; i++) alo[i] = 1;
+       for(i=0; i<bndim; i++) blo[i] = 1;
 
-       ngai_dot_patch(g_a, 'n', alo, ahi, g_b, 'n', blo, bhi, value);
+       ngai_dot_patch(g_a, 'n', alo, adims, g_b, 'n', blo, bdims, value);
        
        GA_POP_NAME;
        return;
@@ -336,9 +277,9 @@ Integer  ndim, type, typeC, me, elems=0, elemsb=0, elemsa=0;
 register Integer i;
 Integer index_a, index_b, index_c;
 
- Integer andim, adims[MAXDIM], alo[MAXDIM], ahi[MAXDIM];
- Integer bndim, bdims[MAXDIM], blo[MAXDIM], bhi[MAXDIM];
- Integer cndim, cdims[MAXDIM], clo[MAXDIM], chi[MAXDIM];
+ Integer andim, adims[MAXDIM], alo[MAXDIM];
+ Integer bndim, bdims[MAXDIM], blo[MAXDIM];
+ Integer cndim, cdims[MAXDIM], clo[MAXDIM];
  
 
    me = ga_nodeid_();
@@ -352,12 +293,12 @@ Integer index_a, index_b, index_c;
        nga_inquire_(g_b, &type, &bndim, bdims);
        nga_inquire_(g_b, &type, &cndim, cdims);
 
-       for(i=0; i<andim; i++) { alo[i] = 1; ahi[i] = adims[i]; }
-       for(i=0; i<bndim; i++) { blo[i] = 1; bhi[i] = bdims[i]; }
-       for(i=0; i<cndim; i++) { clo[i] = 1; chi[i] = cdims[i]; }
+       for(i=0; i<andim; i++) alo[i] = 1;
+       for(i=0; i<bndim; i++) blo[i] = 1;
+       for(i=0; i<cndim; i++) clo[i] = 1;
 
-       nga_add_patch_(alpha, g_a, alo, ahi, beta, g_b, blo, bhi,
-                      g_c, clo, chi);
+       nga_add_patch_(alpha, g_a, alo, adims, beta, g_b, blo, bdims,
+                      g_c, clo, cdims);
        
        GA_POP_NAME;
        return;
