@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.56 2003-09-26 00:38:40 edo Exp $ */
+/* $Id: copy.h,v 1.57 2003-09-26 03:56:48 edo Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -14,7 +14,7 @@
 #if defined(NOFORT) || defined(HITACHI) || defined(CRAY_T3E)
 #  define MEMCPY
 #endif
-#if defined(LINUX64) || defined(SGIALTIX)
+#if defined(LINUX64) && defined(SGIALTIX)
 /* fastbcopy from Wayne Vieira and Gerardo Cisneros */
 #define MEMCPY
 #define armci_copy(src, dst, len) _fastbcopy(src, dst, len)
