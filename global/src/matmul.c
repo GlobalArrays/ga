@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.12 2003-02-04 11:50:27 manoj Exp $*/
+/*$Id: matmul.c,v 1.13 2003-02-05 05:55:24 manoj Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -40,11 +40,7 @@
 #else
    /* min acceptable amount of memory (in elements) and default chunk size */
 #  define MINMEM 64
-#  ifdef DATA_SERVER
-#    define CHUNK_SIZE 256
-#  else
-#    define CHUNK_SIZE 128
-#  endif
+#  define CHUNK_SIZE 128
 #endif
 
 #define VECTORCHECK(rank,dims,dim1,dim2, ilo, ihi, jlo, jhi) \
@@ -154,7 +150,10 @@ int local_sync_begin,local_sync_end;
    if( (*cjhi - *cjlo +1) != n) ga_error(" b & c dims error",n);
    if( (*bihi - *bilo +1) != k) ga_error(" a & b dims error",k);
    
-   chunk_cube = ((double)(k*m*n)) / (min_tasks * nproc);
+
+   /* In 32-bit platforms, k*m*n might exceed the "long" range(2^31), 
+      eg:k=m=n=1600. So casting the temporary value to "double" helps */
+   chunk_cube = (k*(double)(m*n)) / (min_tasks * nproc);
    max_chunk = (Integer)pow(chunk_cube, (DoublePrecision)(1.0/3.0) );
    if (max_chunk < 32) max_chunk = 32;
 
@@ -205,7 +204,7 @@ int local_sync_begin,local_sync_end;
 
    if(need_scaling) ga_scale_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
    else  ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
-   
+
    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
        jhi = MIN(n-1, jlo+Jchunk-1);
        jdim= jhi - jlo +1;
@@ -483,7 +482,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    if( (bihi - bilo +1) != k) ga_error(" a & b dims error",k);
 
    
-   chunk_cube = ((double)(k*m*n)) / (min_tasks * nproc);
+   chunk_cube = (k*(double)(m*n)) / (min_tasks * nproc);
    max_chunk = (Integer)pow(chunk_cube, (DoublePrecision)(1.0/3.0) );
    if (max_chunk < 32) max_chunk = 32;
    
