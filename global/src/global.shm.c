@@ -307,9 +307,13 @@ double sqrt();
 
       /* figure out chunking */
       if(*chunk1 <= 1 && *chunk2 <= 1){
-        nprocx= (int)sqrt((double)nproc);
-        for(i=nprocx;i>0&& (nproc%i);i--);
-        nprocx =i; nprocy=nproc/nprocx;
+        if(*dim1 == 1)      { nprocx =1; nprocy=nproc;}
+        else if(*dim2 == 1) { nprocy =1; nprocx=nproc;}
+        else {
+           nprocx= (int)sqrt((double)nproc);
+           for(i=nprocx;i>0&& (nproc%i);i--);
+           nprocx =i; nprocy=nproc/nprocx;
+        }
 
         fchunk1 = (int) MAX(1, *dim1/nprocx);
         fchunk2 = (int) MAX(1, *dim2/nprocy);
