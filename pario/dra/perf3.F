@@ -11,6 +11,16 @@ c
 #  define FNAME1  BASE_NAME1
 #endif
 
+#define MULTFILES 1
+
+#ifdef SOLARIS
+#  if MULTFILES
+#    define USEMULTFILES 1
+#  endif
+#else
+#  define USEMULTFILES 1
+#endif
+
       program io
 #include "mafdecls.fh"
 #include "global.fh"
@@ -29,8 +39,8 @@ c
       call pbeginf 
       call ga_initialize()
       if(.not. ga_uses_ma())then
-         stack = 10000 
-         heap  = 10000 
+         stack = 100000 
+         heap  = 100000 
       endif
 c
       if(ma_init(MT_F_DBL, stack, heap) ) then
@@ -71,6 +81,10 @@ c
       integer me, nproc
       integer index, ld(ndim), chunk(ndim)
       integer iran
+#if USEMULTFILES
+      integer ilen
+      character*80 filename, filename1
+#endif
       logical status
       external  drand
       intrinsic int, dble
@@ -116,10 +130,21 @@ c.......................................................................
       do i = 1, ndim
         reqdims(i) = n
       end do
+#if USEMULTFILES
+      ilen = len(FNAME)
+      filename(1:ilen) = FNAME
+      write(filename(ilen+1:ilen+1),200) me
+  200 format(i1)
+      if(ndra_create(MT_DBL, ndim, dims, 'A',
+     &      filename, 
+     &      DRA_RW, reqdims, d_a).ne.0)
+     $   CALL ga_error('ndra_create failed: ',0)
+#else
       if(ndra_create(MT_DBL, ndim, dims, 'A',
      &      FNAME, 
      &      DRA_RW, reqdims, d_a).ne.0)
      $   CALL ga_error('ndra_create failed: ',0)
+#endif
 c
       if(me.eq.0) print *, 'alligned blocking write'
       if (me.eq.0)call ffflush(6)
@@ -151,10 +176,20 @@ c
         dims(i) = m
         reqdims(i) = n
       end do
-      if(ndra_create(MT_DBL, ndim, dims, 'A',
+#ifdef USEMULTFILES
+      ilen = len(FNAME1)
+      filename1(1:ilen) = FNAME1
+      write(filename1(ilen+1:ilen+1),200) me
+      if(ndra_create(MT_DBL, ndim, dims, 'B',
+     &      filename1,
+     &      DRA_RW, reqdims, d_b).ne.0)
+     $   CALL ga_error('ndra_create failed: ',0)
+#else
+      if(ndra_create(MT_DBL, ndim, dims, 'B',
      &      FNAME1,
      &      DRA_RW, reqdims, d_b).ne.0)
      $   CALL ga_error('ndra_create failed: ',0)
+#endif
 c
       if(me.eq.0) print *, 'non alligned blocking write'
       if (me.eq.0)call ffflush(6)
@@ -191,9 +226,15 @@ c
 c
       if (me.eq.0) print *,' '
       if (me.eq.0) print *,'opening disk array'
+#ifdef USEMULTFILES
+      if(dra_open(filename,
+     &            DRA_R, d_a).ne.0)
+     &            call ga_error('dra_open failed',0)
+#else
       if(dra_open(FNAME,
      &            DRA_R, d_a).ne.0)
      &            call ga_error('dra_open failed',0)
+#endif
       if(me.eq.0) print *, 'alligned blocking read'
       if (me.eq.0)call ffflush(6)
       tt0 = tcgtime()
@@ -218,9 +259,15 @@ c.......................................................................
 c
       if (me.eq.0) print *,' '
       if (me.eq.0) print *,'opening disk array'
+#ifdef USEMULTFILES
+      if(dra_open(filename1,
+     &            DRA_R, d_b).ne.0)
+     &            call ga_error('dra_open failed',0)
+#else
       if(dra_open(FNAME1,
      &            DRA_R, d_b).ne.0)
      &            call ga_error('dra_open failed',0)
+#endif
       if(me.eq.0) print *, 'non alligned blocking read'
       if (me.eq.0)call ffflush(6)
       tt0 = tcgtime()
