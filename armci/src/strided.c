@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.79 2003-12-09 16:59:15 vinod Exp $ */
+/* $Id: strided.c,v 1.80 2003-12-10 08:23:32 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -634,7 +634,7 @@ int ARMCI_PutS_flag_dir(
        remf.ptr = flag;
        h.exthdr = &remf;
        h.len = sizeof(remf);
-#if 1
+#ifdef ALLOW_PIN
        if(stride_levels==1 &&
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){ 
          for(i=0;i<count[1];i++){
