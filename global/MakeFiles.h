@@ -6,7 +6,7 @@
 #........................................................................
 #
 #
-INTERRUPT_AVAILABLE = SP1 IPSC DELTA PARAGON
+INTERRUPT_AVAILABLE = SP1 SP IPSC DELTA PARAGON
 NATIVE LOCKS = SGITFP SGI64 CONVEX-SPP
 
 #                  Synchronization
@@ -77,7 +77,7 @@ GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #
 #                 Utility Routines
 #
-GA_UTIL = ffflush.o ifill.o dfill.o ga_summarize.o hsort.scat.o global.ma.o\
+GA_UTIL = ffflush.o fill.o ga_summarize.o hsort.scat.o global.ma.o\
           DP.o fops.2d.o
 
 OBJ_FRAGILE = $(GA_SYNC) $(GA_HANDLER) $(IPC)

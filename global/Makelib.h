@@ -15,23 +15,10 @@ ifneq ($(MSG_COMMS),MPI)
   endif
 endif
 
-#............................... LINUX .........................................
-ifeq ($(TARGET),LINUX)
-endif
 
 #................................ SUN ..........................................
-ifeq ($(TARGET),SUN)
-endif
 ifeq ($(TARGET),SOLARIS)
        EXTRA_LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
-endif
-#................................ DEC ..........................................
-ifeq ($(TARGET),DECOSF)
-endif
-#................................ CRAY-T3D .....................................
-#
-ifeq ($(TARGET),CRAY-T3D)
-#
 endif
 #................................ KSR ......................................
 #
@@ -110,3 +97,4 @@ ifeq (LU_SOLVE, PAR)
 endif
 
 LINALG += $(BLAS) -llinalg $(BLAS)
+

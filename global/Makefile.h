@@ -266,21 +266,17 @@ ifeq ($(TARGET),SP)
 # SP-2 and SP-2.5 under AIX 4.X (allows some latency optimizations) 
 
        P_FILE = NO
-ifdef EUIH
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP -DEXTNAME -DAIX
       FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
-endif
 
 # need to strip symbol table to alleviate a bug in AIX ld
 define AIX4_RANLIB
-  ranlib @^
+  ranlib $@
   strip
 endef
 
-#   mpxlf fails with parallel make
-    MAKEFLAGS = -j 1
        RANLIB = $(AIX4_RANLIB) 
      FOPT_REN = -qEXTNAME
   CUR_VERSION = DISMEM
@@ -303,7 +299,7 @@ else
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
-      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dco
+      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
 endif
 
 #   mpxlf fails with parallel make
