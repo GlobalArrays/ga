@@ -37,12 +37,11 @@ c
 c
 c     allocate scratch space
 c     
-         status = 
-     $        ma_push_get(MT_DBL, n*n, 'a', l_a, k_a) .and.
-     $        ma_push_get(MT_DBL, n*n, 's', l_s, k_s) .and.
-     $        ma_push_get(MT_DBL, n*n, 'v', l_v, k_v) .and.
-     $        ma_push_get(MT_DBL, n, 'fv1', l_fv1, k_fv1) .and.
-     $        ma_push_get(MT_DBL, n, 'fv2', l_fv2, k_fv2)
+         status=ma_push_get(MT_DBL, n*n, 'a', l_a, k_a)
+         status=status.and.ma_push_get(MT_DBL, n*n, 's', l_s, k_s)
+         status=status.and.ma_push_get(MT_DBL, n*n, 'v', l_v, k_v)
+         status=status.and.ma_push_get(MT_DBL, n, 'fv1', l_fv1, k_fv1)
+         status=status.and.ma_push_get(MT_DBL, n, 'fv2', l_fv2, k_fv2)
          if (.not. status)
      $        call errquit('ga_diag_seq: insufficient memory', n)
 c     
@@ -122,11 +121,10 @@ c
 c
 c     allocate scratch space
 c     
-         status = 
-     $        ma_push_get(MT_DBL, n*n, 'a', l_a, k_a) .and.
-     $        ma_push_get(MT_DBL, n*n, 'v', l_v, k_v) .and.
-     $        ma_push_get(MT_DBL, n, 'fv1', l_fv1, k_fv1) .and.
-     $        ma_push_get(MT_DBL, n, 'fv2', l_fv2, k_fv2)
+         status=ma_push_get(MT_DBL, n*n, 'a', l_a, k_a)
+         status=status.and.ma_push_get(MT_DBL, n*n, 'v', l_v, k_v)
+         status=status.and.ma_push_get(MT_DBL, n, 'fv1', l_fv1, k_fv1)
+         status=status.and.ma_push_get(MT_DBL, n, 'fv2', l_fv2, k_fv2)
          if (.not. status)
      $        call errquit('ga_diag_std_seq: insufficient memory', n)
 c     
