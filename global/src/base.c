@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.106 2004-11-30 10:19:32 manoj Exp $ */
+/* $Id: base.c,v 1.107 2004-12-01 22:19:32 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1278,9 +1278,10 @@ logical ga_allocate_( Integer *g_a)
   GAstat.numcre ++;
 
   GA[ga_handle].actv = 1;
-  /* If only one processor is being used, set proc list to default value */
-  if (ga_cluster_nnodes_() == 1) {
-    GA[ga_handle].p_handle = GA_Default_Proc_Group;
+  /* If only one processor is being used and array is mirrored,
+   * set proc list to world group */
+  if (ga_cluster_nnodes_() == 1 && GA[ga_handle].p_handle == 0) {
+    GA[ga_handle].p_handle = ga_pgroup_get_world_();
   }
   /* set corner flag, if it has not already been set and set up message
      passing data */
