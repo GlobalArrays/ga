@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.62 2002-12-02 23:59:47 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.63 2002-12-03 17:08:32 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -80,7 +80,7 @@
 
 #define CLIENT_TO_SERVER 2
 
-/*#define DRA_DBLE_BUFFER */
+/* #define DRA_DBLE_BUFFER */
 
 #ifdef PARAGON
 #  define DRA_NUM_IOPROCS  64
@@ -143,7 +143,7 @@ buffer_t _dra_buffer_state[2];
    _dra_buffer_state[0].buffer = (char*)_dra_dbl_buffer;
    _dra_buffer_state[1].buffer = (char*)_dra_dbl_buffer_2;
 #  else
-   _dra_buffer_state.buffer = (char*)_dra_dbl_buffer;
+   _dra_buffer_state[0].buffer = (char*)_dra_dbl_buffer;
 #  endif
 #endif
  
@@ -420,7 +420,7 @@ int i;
                 MA_get_pointer(_handle_buffer, &_dra_buffer_state[0].buffer); 
             else
                 dai_error("dra_init: ma_alloc_get failed",DRA_DBL_BUF_SIZE); 
-#ifdef DRA_DBL_BUFFER
+#ifdef DRA_DBLE_BUFFER
             if(MA_alloc_get(MT_C_DBL, DRA_DBL_BUF_SIZE+ALIGN-1, "DRA buf 1", 
               &_handle_buffer, &_idx_buffer))
                 MA_get_pointer(_handle_buffer, &_dra_buffer_state[1].buffer); 
@@ -1682,6 +1682,8 @@ int        ibuf;
 #ifdef DRA_DBLE_BUFFER
               ibuf = _dra_buffer_index;
               _dra_buffer_index = 1 - ibuf;
+              _dra_buffer_index = 0;
+              ibuf = 1;
 #else
               _dra_buffer_index = 0;
               ibuf = 1;
@@ -1767,6 +1769,8 @@ int   ibuf;
 #ifdef DRA_DBLE_BUFFER
               ibuf = _dra_buffer_index;
               _dra_buffer_index = 1 - ibuf;
+              _dra_buffer_index = 0;
+              ibuf = 1;
 #else
               _dra_buffer_index = 0;
               ibuf = 1;
