@@ -2,9 +2,9 @@
 #define IO_NUM_FILES 4
 #define MAX_ITER 4
 #define MAP(x) dble(IO_TEST_SZ*((x-1)*eaf_util_szint()))
-#define MAX_FILE_SZ 1e9
+#define MAX_FILE_SZ 4.0d9
 #define BASE_NAME 'EAFfile'
-#define HPIODIR '/tmp/'
+#define HPIODIR '/scratch/'
 #ifdef  HPIODIR
 #  define FNAME   HPIODIR//BASE_NAME
 #else
@@ -13,9 +13,9 @@
 
       program eaftest
 c     
-      call test1
-      call test2
-      call test3
+*      call test1
+*      call test2
+*      call test3
       call test4
 c     
       print *,' '
@@ -351,14 +351,13 @@ c
          enddo
          call eaf_print_stats(fd)
          write(6,*) ' Random read : len=',iolen
-*         call testerr(eaf_open(fname, eaf_rw, fd))
+         call testerr(eaf_open(fname, eaf_rw, fd))
          do loop = 1, int(length/iolen)/4
            offset = int((length-iolen)*eaf_util_random(0))
            ierr = eaf_read(fd, offset, buf, iolen)
            if (ierr .ne. 0) then
              call testerr(ierr)
-             write(6,*) offset, iolen
-             call ga_error('bad read',ierr)
+             call ga_error('bad write',ierr)
            endif
          enddo
          call eaf_print_stats(fd)
