@@ -91,12 +91,13 @@ extern void ARMCI_Unlock(int mutex, int proc);
 #define FAIL8 -8
 #define ARMCI_FETCH_AND_ADD 88
 #define ARMCI_FETCH_AND_ADD_LONG 89
-#define ARMCI_ACC_INT 11
-#define ARMCI_ACC_DBL 12
-#define ARMCI_ACC_FLT 13
-#define ARMCI_ACC_CPL 14
-#define ARMCI_ACC_DCP 15
-#define ARMCI_ACC_LNG 16
+#define ARMCI_ACC_OFF 100
+#define ARMCI_ACC_INT (ARMCI_ACC_OFF + 1)
+#define ARMCI_ACC_DBL (ARMCI_ACC_OFF + 2)
+#define ARMCI_ACC_FLT (ARMCI_ACC_OFF + 3)
+#define ARMCI_ACC_CPL (ARMCI_ACC_OFF + 4)
+#define ARMCI_ACC_DCP (ARMCI_ACC_OFF + 5)
+#define ARMCI_ACC_LNG (ARMCI_ACC_OFF + 6)
 
 /* PVM group
  * On CrayT3E: the default group is the global group which is (char *)NULL
