@@ -1,4 +1,4 @@
-/* $Id: perf_aggr.c,v 1.3 2003-03-07 23:37:04 manoj Exp $ */
+/* $Id: perf_aggr.c,v 1.4 2003-04-01 06:05:27 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -262,17 +262,6 @@ void test_aggregate() {
       
       
       /* **************** GET **************** */    
-      /* register get */
-      start_time=MP_TIMER();
-      start = 0; end = elems[1]; 
-      for(i=1; i<nproc; i++) {
-	for(j=start; j<end; j++) {  
-	  ARMCI_NbGetValue(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], i, 
-			   bytes, &hdl_get[j]);
-	}
-	for(j=start; j<end; j++) ARMCI_Wait(&hdl_get[j]);
-      }
-      printf("%d: Register Get time   = %.2e\n", me, MP_TIMER()-start_time);
       
       /* vector get */
       start_time=MP_TIMER();
@@ -307,8 +296,8 @@ void test_aggregate() {
       start_time=MP_TIMER();
       for(i=1; i<nproc; i++) {
 	for(j=start; j<end; j++) {  
-	  ARMCI_NbGetValue(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], i, bytes,
-			   &aggr_hdl_get[i]);
+	  ARMCI_NbGet(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], bytes,
+		      i, &aggr_hdl_get[i]);
 	}
       }
       for(i=0; i<nproc; i++) ARMCI_Wait(&aggr_hdl_get[i]);
