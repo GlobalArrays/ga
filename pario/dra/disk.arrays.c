@@ -150,7 +150,7 @@ Integer _dra_turn=0;
 /*\ maximum number of processes that could perform I/O
  *  (could be different than number of current processes)
 \*/
-Integer dai_max_io_procs()
+Integer dai_max_io_procs(void)
 {
         return DRA_NUM_IOPROCS;
 }
@@ -158,8 +158,7 @@ Integer dai_max_io_procs()
 
 /*\ determines if write operation to a disk array is allowed
 \*/
-Integer dai_write_allowed(d_a)
-        Integer d_a;
+Integer dai_write_allowed(Integer d_a)
 {
 Integer handle = d_a+DRA_OFFSET;
         if(DRA[handle].mode == DRA_W || DRA[handle].mode == DRA_RW) return 1;
@@ -169,8 +168,7 @@ Integer handle = d_a+DRA_OFFSET;
 
 /*\ determines if read operation from a disk array is allowed
 \*/
-Integer dai_read_allowed(d_a)
-        Integer d_a;
+Integer dai_read_allowed(Integer d_a)
 {
 Integer handle = d_a+DRA_OFFSET;
         if(DRA[handle].mode == DRA_R || DRA[handle].mode == DRA_RW) return 1;
@@ -180,7 +178,7 @@ Integer handle = d_a+DRA_OFFSET;
 
 /*\  number of processes that could perform I/O
 \*/
-Integer dai_io_procs()
+Integer dai_io_procs(void)
 {
         /* this one of many possibilities -- depends on the system */
         return( MIN( ga_nnodes_(), dai_max_io_procs()));
@@ -190,7 +188,7 @@ Integer dai_io_procs()
 /*\  rank of calling process in group of processes that could perform I/O
  *   a negative value means that this process doesn't do I/O
 \*/
-Integer dai_io_nodeid()
+Integer dai_io_nodeid(void)
 {
 Integer me = ga_nodeid_();
 
@@ -204,7 +202,7 @@ Integer me = ga_nodeid_();
 
 /*\ determines if I/O process participates in file management (create/delete)
 \*/
-Integer dai_io_manage()
+Integer dai_io_manage(void)
 {
         Integer me = dai_io_nodeid();
 
@@ -221,8 +219,7 @@ Integer dai_io_manage()
 
 /*\ select one master process for each file associated with d_a
 \*/
-Integer dai_file_master(d_a)
-        Integer d_a;
+Integer dai_file_master(Integer d_a)
 {
 #ifdef INDEPFILES
        if(dai_io_nodeid()<0)  /* each I/O process has its own file */
@@ -238,10 +235,8 @@ Integer dai_file_master(d_a)
 
 /*\  registers callback function associated with completion of asynch. I/O
 \*/
-void dai_callback(op, transp, gs_a, ds_a, ds_chunk, ld, req)
-section_t gs_a, ds_a, ds_chunk;
-int op, transp;
-Integer ld, req;
+void dai_callback(int op, int transp, section_t gs_a, section_t ds_a, 
+                  section_t ds_chunk, Integer ld, Integer req)
 {
         if(Requests[req].callback==ON) dai_error("DRA: callback not cleared",0);
         Requests[req].callback = ON;
@@ -288,9 +283,7 @@ int i;
 
 /*\ correct chunk size to fit the buffer and introduce allignment
 \*/
-void dai_correct_chunking(a, b, prod, ratio)
-   Integer *a, *b, prod;
-   double ratio;
+void dai_correct_chunking(Integer* a, Integer* b, Integer prod, double ratio)
 {
 #define EPS_SEARCH 100
 
@@ -318,8 +311,8 @@ double  ch_ratio = da/db;
 /*\ compute chunk parameters for layout of arrays on the disk
  *   ---- a very simple algorithm to be refined later ----
 \*/
-void dai_chunking(elem_size, block1, block2, dim1, dim2, chunk1, chunk2)
-Integer elem_size, block1, block2, *chunk1, *chunk2, dim1, dim2;
+void dai_chunking(Integer elem_size, Integer block1, Integer block2, 
+                  Integer dim1, Integer dim2, Integer *chunk1, Integer *chunk2)
 {
 Integer patch_size;
   
@@ -369,7 +362,7 @@ Integer patch_size;
 
 /*\ get a new handle for disk array 
 \*/
-Integer dai_get_handle()
+Integer dai_get_handle(void)
 {
 Integer dra_handle =-1, candidate = 0;
 
@@ -387,8 +380,7 @@ Integer dra_handle =-1, candidate = 0;
 
 /*\ release handle -- makes array inactive
 \*/
-void dai_release_handle(handle)
-        Integer *handle;
+void dai_release_handle(Integer *handle)
 {
      DRA[*handle+DRA_OFFSET].actv =0;
      *handle = 0;
@@ -398,9 +390,7 @@ void dai_release_handle(handle)
 
 /*\ find offset in file for (ilo,ihi) element
 \*/
-void dai_file_location(ds_a, offset)
-        section_t ds_a;
-        off_t *offset;
+void dai_file_location(section_t ds_a, off_t* offset)
 {
 Integer row_blocks, handle=ds_a.handle+DRA_OFFSET, offelem, cur_ld, part_chunk1;
 
@@ -445,11 +435,11 @@ Integer row_blocks, handle=ds_a.handle+DRA_OFFSET, offelem, cur_ld, part_chunk1;
                         
 /*\ write aligned block of data from memory buffer to d_a
 \*/
-void dai_put(ds_a, buf, ld, id)
-        section_t    ds_a;
-        Void         *buf;
-        Integer      ld;
-        io_request_t *id;
+void dai_put(
+        section_t    ds_a,
+        Void         *buf,
+        Integer      ld,
+        io_request_t *id)
 {
 Integer handle = ds_a.handle + DRA_OFFSET, elem;
 off_t   offset;
@@ -471,8 +461,7 @@ Size_t  bytes;
 
 /*\ write zero at EOF
 \*/
-void dai_zero_eof(d_a)
-        Integer d_a;
+void dai_zero_eof(Integer d_a)
 {
 Integer handle = d_a+DRA_OFFSET, nelem;
 off_t offset;
@@ -524,11 +513,7 @@ Size_t  bytes;
 
 /*\ read aligned block of data from d_a to memory buffer
 \*/
-void dai_get(ds_a, buf, ld, id)
-        section_t    ds_a;
-        Void         *buf;
-        Integer      ld;
-        io_request_t *id;
+void dai_get(section_t ds_a, Void *buf, Integer ld, io_request_t *id)
 {
 Integer handle = ds_a.handle + DRA_OFFSET, elem;
 off_t   offset;
@@ -552,8 +537,7 @@ void    dai_clear_buffer();
 
 
 
-void dai_assign_request_handle(request)
-Integer *request;
+void dai_assign_request_handle(Integer* request)
 {
  int      i;
  
@@ -705,8 +689,7 @@ Integer handle;
 
 /*\ CLOSE AN ARRAY AND SAVE IT ON THE DISK
 \*/
-Integer dra_close_(d_a)
-        Integer *d_a;                       /* input:DRA handle*/ 
+Integer dra_close_(Integer* d_a) /* input:DRA handle*/ 
 {
 Integer handle = *d_a+DRA_OFFSET;
 int rc;
@@ -727,10 +710,14 @@ int rc;
 
 /*\ decompose [ilo:ihi, jlo:jhi] into aligned and unaligned DRA subsections
 \*/ 
-void dai_decomp_section(ds_a, aligned, na, cover,unaligned,nu)
-        section_t ds_a;
-        Integer aligned[][4], unaligned[][4], cover[][4];
-        int *na, *nu; /* input/output args */
+void dai_decomp_section(
+/*ds_a, aligned, na, cover,unaligned,nu)*/
+        section_t ds_a,
+        Integer aligned[][4], 
+        int *na,
+        Integer cover[][4],
+        Integer unaligned[][4], 
+        int *nu) 
 {
 Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
               
@@ -855,8 +842,8 @@ Integer ilo, ihi, jlo, jhi;
  *     iinc increment for i
  *     oinc increment for o
  */
-int dai_next2d(i, imin, imax, iinc, o, omin, omax, oinc)
-Integer *i, imin, imax, iinc, *o, omin, omax, oinc;
+int dai_next2d(Integer* i, Integer imin, Integer imax, Integer iinc, 
+               Integer* o, Integer omin, Integer omax, Integer oinc)
 {
     int retval;
     if (*o == 0  || *i == 0) {
@@ -877,10 +864,7 @@ Integer *i, imin, imax, iinc, *o, omin, omax, oinc;
 
 /*\ compute next chunk of array to process
 \*/
-int dai_next_chunk(req, list, ds_chunk)
-    Integer req;
-    Integer list[];
-    section_t *ds_chunk;
+int dai_next_chunk(Integer req, Integer* list, section_t* ds_chunk)
 {
 Integer   handle = ds_chunk->handle+DRA_OFFSET;
 int       retval;
@@ -912,8 +896,7 @@ int       retval;
 }
 
 
-int dai_myturn(ds_chunk)
-        section_t ds_chunk;
+int dai_myturn(section_t ds_chunk)
 {
 Integer   ioprocs=dai_io_procs(), iome = dai_io_nodeid();
     
@@ -950,17 +933,13 @@ double *buf;  /*<<<<<*/
 }
 
 static Integer mode_move=0;
-void dra_set_mode_(val)
-Integer *val;
+void dra_set_mode_(Integer* val)
 {
   mode_move = *val;
 }
 
-void ga_move(op, trans, gs_a, ds_a, ds_chunk, buffer, ldb)
-section_t gs_a, ds_a, ds_chunk;
-void *buffer;
-Integer ldb;
-int op, trans;
+void ga_move(int op, int trans, section_t gs_a, section_t ds_a, 
+             section_t ds_chunk, void* buffer, Integer ldb)
 {
     if(!trans && (gs_a.ilo- gs_a.ihi ==  ds_a.ilo- ds_a.ihi) ){
         /*** straight copy possible if there's no reshaping or transpose ***/
@@ -1066,8 +1045,7 @@ int op, trans;
 
 /*\  executes callback function associated with completion of asynch. I/O
 \*/
-void dai_exec_callback(request)
-request_t *request;
+void dai_exec_callback(request_t *request)
 {
 args_t   *arg;
 
@@ -1081,8 +1059,7 @@ args_t   *arg;
 
 /*\ wait until buffer space associated with request is avilable
 \*/
-void dai_wait(req0)
-Integer req0;
+void dai_wait(Integer req0)
 {
 Integer req;
  
@@ -1378,10 +1355,7 @@ section_t d_sect, g_sect;
 
 /*\ READ g_a FROM d_a
 \*/
-Integer dra_read_(g_a, d_a, request)
-        Integer *g_a;
-        Integer *d_a;
-        Integer *request;
+Integer dra_read_(Integer* g_a, Integer* d_a, Integer* request)
 {
 Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
 logical transp = FALSE;
@@ -1408,8 +1382,7 @@ Integer ilo, ihi, jlo, jhi;
 
 /*\ WAIT FOR COMPLETION OF DRA OPERATION ASSOCIATED WITH request
 \*/ 
-Integer dra_wait_(request)
-        Integer *request;                  /*input*/
+Integer dra_wait_(Integer* request)
 {
         if(*request == DRA_REQ_INVALID) return(ELIO_OK);
 
@@ -1425,9 +1398,9 @@ Integer dra_wait_(request)
 
 /*\ TEST FOR COMPLETION OF DRA OPERATION ASSOCIATED WITH request
 \*/
-Integer dra_probe_(request, status)
-        Integer *request;                  /*input*/
-        Integer *status;                   /*output*/
+Integer dra_probe_(
+        Integer *request,                  /*input*/
+        Integer *status)                   /*output*/
 {
 Integer done,  type=GA_TYPE_GSM;
 char *op="*";
@@ -1495,8 +1468,7 @@ Integer handle=*d_a+DRA_OFFSET;
 
 /*\ DELETE DISK ARRAY  -- relevant file(s) gone
 \*/
-Integer dra_delete_(d_a)
-        Integer *d_a;                      /*input:DRA handle */
+Integer dra_delete_(Integer* d_a)            /*input:DRA handle */
 {
 Integer handle = *d_a+DRA_OFFSET;
 

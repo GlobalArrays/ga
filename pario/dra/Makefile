@@ -56,7 +56,7 @@ DA_LIBS = -L$(LIBDIR) -ldra -lchemio $(CORE_LIBS) $(LINALG) $(BLAS) $(LIBCOM) $(
 
 LIB_DISTRIB = ../../lib
 LIB_TARGETS = *.x *.p
-LIBRARY = libdra.a
+LIBRARY = libchemio.a
 
 include ../../config/makelib.h
 

@@ -1,4 +1,4 @@
-/****************** some operations on sections of 2D arrays ************/
+/******************  operations on sections of 2D arrays ************/
 
 
 #include "global.h"       /* used only to define datatypes */
@@ -10,9 +10,9 @@
 
 /*\ check if two patches are conforming (dimensions are divisible)
 \*/
-logical dai_patches_conforming(ailo, aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi)
-     Integer *ailo, *aihi, *ajlo, *ajhi;
-     Integer *bilo, *bihi, *bjlo, *bjhi;
+logical dai_patches_conforming(
+        Integer* ailo, Integer* aihi, Integer* ajlo, Integer* ajhi, 
+        Integer* bilo, Integer* bihi, Integer* bjlo, Integer* bjhi)
 {
 Integer mismatch;
 Integer adim1, bdim1, adim2, bdim2;
@@ -30,9 +30,9 @@ Integer adim1, bdim1, adim2, bdim2;
 
 /*\ check if patches are identical
 \*/
-logical dai_comp_patch(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
-     Integer *ilo, *ihi, *jlo, *jhi;
-     Integer *ilop, *ihip, *jlop, *jhip;
+logical dai_comp_patch(
+        Integer* ilo, Integer* ihi, Integer* jlo, Integer* jhi, 
+        Integer* ilop, Integer* ihip, Integer* jlop, Integer* jhip)
 {
    if(*ihip != *ihi || *ilop != *ilo || *jhip != *jhi || *jlop != *jlo)
         return(FALSE);
@@ -43,9 +43,9 @@ logical dai_comp_patch(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
 /*\ check if patches have a nontrivial intersection
  *        if yes, find the intersection and update [ilop:ihip, jlop:jhip]
 \*/
-logical dai_patch_intersect(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
-     Integer ilo, ihi, jlo, jhi;
-     Integer *ilop, *ihip, *jlop, *jhip;
+logical dai_patch_intersect(
+        Integer ilo, Integer ihi, Integer jlo, Integer jhi,
+        Integer* ilop, Integer* ihip, Integer* jlop, Integer* jhip)
 {
      /* check consistency of patch coordinates */
      if( ihi < ilo || jhi < jlo)     return FALSE; /* inconsistent */
@@ -67,8 +67,7 @@ logical dai_patch_intersect(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
  *        if yes, find the intersection and update [ilop:ihip, jlop:jhip]
  *        section format
 \*/
-logical dai_section_intersect(sref, sadj)
-     section_t sref, *sadj; 
+logical dai_section_intersect(section_t sref, section_t *sadj)
 {
      /* check consistency of patch coordinates */
      if( sref.ihi < sref.ilo || sref.jhi < sref.jlo)     
