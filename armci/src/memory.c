@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.21 2000-12-04 23:32:17 d3h325 Exp $ */
+/* $Id: memory.c,v 1.22 2000-12-11 18:06:18 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -264,12 +264,16 @@ int ARMCI_Free(void *ptr)
       if(armci_nproc > 1)
 #   endif
       if(ARMCI_Uses_shm()){
-          if(armci_me==armci_master){
+         if(armci_me==armci_master){
+#          ifdef RMA_NEEDS_SHMEM
+            Free_Shmem_Ptr(0,0,ptr);
+#          else
             if(armci_clus_info[armci_clus_me].nslave>1) Free_Shmem_Ptr(0,0,ptr);
             else free(ptr);
-          }
-          ptr = NULL;
-          return 0;
+#          endif
+         }
+         ptr = NULL;
+         return 0;
       }
 #endif
         free(ptr);
