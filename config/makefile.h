@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.117 2005-01-14 03:49:46 manoj Exp $
+# $Id: makefile.h,v 1.118 2005-01-14 03:53:57 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -367,6 +367,9 @@ ifeq ($(FC),ifort)
 endif
 
 ifeq ($(CC),ecc)
+     COPT_REN += -fno-alias  -ftz
+endif
+ifeq ($(CC),icc)
      COPT_REN += -fno-alias  -ftz
 endif
 ifeq ($(CC),gcc) 
