@@ -17,15 +17,25 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
       logical status
+c
+c***  Intitialize a message passing library
+c
+#ifdef MPI
+      call mpi_init
+#else
       call pbeginf
-      status = ma_init(MT_DBL, 50000, 90000/nnodes())
-      if (.not. status) print *, 'ma_init failed'
+#endif
+c
       call ga_initialize()
       if(ga_nodeid().eq.0)then
          print *,' GA initialized'
          call ffflush(6)
+      endif
+c
+      status = ma_init(MT_DBL, 50000, 90000/ga_nnodes())
+      if (.not. status)call ga_error( 'ma_init failed', -1)
+      if(ga_nodeid().eq.0)then
          print *,' '
          print *,'CHECKING PATCH OPERATIONS FOR DOUBLES '
          print *,' '
@@ -40,7 +50,12 @@ c
       call zpatch_test()
 c 
       call ga_terminate()
-      call pend
+c
+#ifdef MPI
+      call mpi_finalize()
+#else
+      call pend()
+#endif
       end
 
 
@@ -49,7 +64,6 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c
       integer n,m
       parameter (n = 128)
@@ -77,7 +91,6 @@ c
 c
 c***  Create a global array
 c
-c     call setdbg(1)
       status = ga_create(MT_DBL, n, n, 'a', 0, 0, g_a)
       if (.not. status) then
          write(6,*) ' ga_create failed'
@@ -488,7 +501,6 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c
       integer n,m
       parameter (n = 128)
@@ -517,7 +529,6 @@ c
 c
 c***  Create a global array
 c
-c     call setdbg(1)
       status = ga_create(MT_DCPL, n, n, 'a', 0, 0, g_a)
       if (.not. status) then
          write(6,*) ' ga_create failed'

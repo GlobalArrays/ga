@@ -6,23 +6,33 @@ c***
 #include "mafdecls.fh"
 #include "global.fh"
       integer heap
-c     
-      call pbeginf ! intitialize TCGMSG
 c
-c***  Initialize the MA package
-      heap = 450000
-      if (.not. ma_init(MT_DBL, heap,heap)) call parerr(1)
+c***  Intitialize a message passing library
+c
+#ifdef MPI
+      call mpi_init
+#else
+      call pbeginf
+#endif
 c
 c***  Intitialize the GA package
       call ga_initialize()
-c
       if(ga_nnodes().ne.4 .and. ga_nodeid().eq.0)
-     $   call ga_error('Must be run with 4 GA processes',ga_nnodes())
+     $   call ga_error('Program requires 4 GA processes',ga_nnodes())
+c
+c***  Initialize the MA package
+      heap = 450000
+      if (.not. ma_init(MT_DBL, heap,heap))
+     $     call ga_error('ma init failed',2*heap)
 c
       call testit()
       call ga_terminate()
 c
+#ifdef MPI
+      call mpi_finalize()
+#else
       call pend()
+#endif
       end
 
 
@@ -32,8 +42,6 @@ c-----------------
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
-c     
 c
       integer n, nn, num_chunks
       parameter (n = 710, nn = n*n/4, num_chunks=12)
@@ -49,7 +57,7 @@ c
       me = ga_nodeid()
 c
 c***  Create global array
-      if (.not. ga_create(MT_DBL, n, n, 'a', 1, 1, g_a))
+      if (.not. ga_create(MT_DBL, n, n, 'a', 0, 0, g_a))
      $     call ga_error(' ga_create failed ',1)
 c     
       do loop=1,nn
@@ -85,8 +93,9 @@ c     enddo
       subroutine TestPutGetAcc
      &          (g_a, n, chunk, num_chunks, buf, ilo, ihi, jlo,jhi)
       implicit none
-#include "tcgmsg.fh"
 #include "global.fh"
+#include "testutil.fh"
+c
       integer num_chunks, chunk(num_chunks)
       integer n, ilo, ihi, jlo,jhi,g_a
       double precision buf(*), tg, tp, ta
@@ -107,7 +116,7 @@ c
       call ga_sync()
 c
       do loop = 1, num_chunks
-        bytes = mdtob(1)*chunk(loop)*chunk(loop) ! how much data is accessed
+        bytes = util_mdtob(1)*chunk(loop)*chunk(loop) !how much data is accessed
         jump  =  n/(60*loop) ! jump distance between consecutive patches
 c
 c       everybody touches own data 
@@ -150,13 +159,17 @@ c
      &       time_acc(g_a, is, ie, js, je, buf, chunk, jump, count)
 c
       implicit none
+#include "global.fh"
+#include "testutil.fh"
+c
+
       integer g_a, chunk, jump, count, is, js, ie, je
 c
       integer ilo, ihi, jlo, jhi
-      double precision tcgtime, seconds, buf 
+      double precision  seconds, buf 
 c
       count = 0
-      seconds = tcgtime()
+      seconds = util_timer()
 c
 c       distance between consecutive patches increased by jump
 c       to destroy locality of reference
@@ -168,7 +181,7 @@ c       to destroy locality of reference
               call ga_acc(g_a, ilo, ihi, jlo, jhi, buf, chunk, 1d0)
            enddo
         enddo
-      seconds = tcgtime() - seconds
+      seconds = util_timer() - seconds
 c
       time_acc = seconds/count
       end
@@ -178,13 +191,16 @@ c
      &       time_get(g_a, is, ie, js, je, buf, chunk, jump, count)
 c
       implicit none
+#include "global.fh"
+#include "testutil.fh"
+c
       integer g_a, chunk, jump, count, is, js, ie, je
 c
       integer ilo, ihi, jlo, jhi
-      double precision tcgtime, seconds, buf
+      double precision  seconds, buf
 c
       count = 0
-      seconds = tcgtime()
+      seconds = util_timer()
 c
 c       distance between consecutive patches increased by jump
 c       to destroy locality of reference
@@ -196,7 +212,7 @@ c       to destroy locality of reference
               call ga_get(g_a, ilo, ihi, jlo, jhi, buf, chunk)
            enddo
         enddo
-      seconds = tcgtime() - seconds
+      seconds = util_timer() - seconds
 c
       time_get = seconds/count
       end
@@ -207,13 +223,16 @@ c
      &       time_put(g_a, is, ie, js, je, buf, chunk, jump, count)
 c
       implicit none
+#include "global.fh"
+#include "testutil.fh"
+c
       integer g_a, chunk, jump, count, is, js, ie, je
 c
       integer ilo, ihi, jlo, jhi
-      double precision tcgtime, seconds, buf
+      double precision  seconds, buf
 c
       count = 0
-      seconds = tcgtime()
+      seconds = util_timer()
 c
 c       distance between consecutive patches increased by jump
 c       to destroy locality of reference
@@ -225,7 +244,7 @@ c       to destroy locality of reference
               call ga_put(g_a, ilo, ihi, jlo, jhi, buf, chunk)
            enddo
         enddo
-      seconds = tcgtime() - seconds
+      seconds = util_timer() - seconds
 c
       time_put = seconds/count
       end

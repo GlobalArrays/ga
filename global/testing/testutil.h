@@ -6,6 +6,10 @@
 #define init_array_   INIT_ARRAY
 #define scale_patch_  SCALE_PATCH
 #define compare_patches_  COMPARE_PATCHES
+#define util_mitob_   UTIL_MITOB
+#define util_mdtob_   UTIL_MDTOB
+#define util_drand_   UTIL_DRAND
+#define util_timer_   UTIL_TIMER
 #endif
 extern void get_range( int ndim, int dims[], int lo[], int hi[]);
 extern void new_range(int ndim, int dims[], int lo[], int hi[],

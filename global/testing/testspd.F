@@ -21,17 +21,23 @@ c***********************************************************************
       
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 
 c****
       integer nproc
       integer hsize, ssize
-      
-c**** Initialize TCGMSG package
+c
+c***  Intitialize a message passing library
+c
+#ifdef MPI
+      call mpi_init
+#else
       call pbeginf
-
+#endif
+c
+c**** Initialize GA package
+      call ga_initialize()
+c
 c**** get number of nodes and calculate memory allocation      
-      nproc = nnodes()
       
       hsize = 6*SIZE*SIZE + 3*SIZE
       ssize = 3*SIZE*SIZE + 3*SIZE 
@@ -41,19 +47,19 @@ c**** get number of nodes and calculate memory allocation
     
 c**** Initialize MA package
       if (.not. ma_init(MT_DBL, ssize, hsize))
-     &     call parerr(1)
-
-c**** Initialize GA package
-      call ga_initialize()
-      
+     $    call ga_error("ma init failed",ssize+hsize)
+ 
 c**** Do Core Tests
       call ctests(UPLO)
 
 c**** Exit from the GA package
       call ga_terminate()
-
-c**** Exit from the TCGMSG package
+c
+#ifdef MPI
+      call mpi_finalize()
+#else
       call pend()
+#endif
       end
 
       
@@ -65,7 +71,6 @@ c***********************************************************************
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"      
 c****
       integer me
       integer nproc
@@ -94,7 +99,6 @@ c***********************************************************************
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"            
 c****
       character*(*) header
 c****
@@ -119,7 +123,6 @@ c***********************************************************************
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"                  
 c****      
       character*(*) msg
       double precision dval
@@ -150,7 +153,6 @@ c***********************************************************************
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"                  
 c****      
       integer irc
       integer ierc
@@ -189,7 +191,6 @@ c***********************************************************************
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"                  
 c****      
       character*(*) msg
       integer ival
@@ -220,7 +221,6 @@ c***********************************************************************
             
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 
 c****
       character*1 uplo

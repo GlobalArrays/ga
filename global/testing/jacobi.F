@@ -10,9 +10,17 @@
       integer heap, stack
       data heap,stack /2*40000/
 c
-      call pbeginf                                           ! fork processes
-      if (.not. ma_init(MT_DBL, heap, stack)) call parerr(1) ! initialize MA
+c***  Intitialize a message passing library
+c
+#ifdef MPI
+      call mpi_init
+#else
+      call pbeginf
+#endif
+c
       call ga_initialize()                                   ! initialize GAs 
+      if (.not. ma_init(MT_DBL, heap, stack))                ! initialize MA
+     $    call ga_error("ma init failed",heap+stack)
 #ifdef GA_TRACE
       call trace_init(10000)				     ! initialize trace
 #endif
@@ -21,7 +29,12 @@ c
       call trace_end(ga_nodeid())			     ! end trace
 #endif
       call ga_terminate()                                    ! terminate GAs 
-      call pend()                                            ! terminate TCGMSG
+c
+#ifdef MPI
+      call mpi_finalize()
+#else
+      call pend()
+#endif
       end
 
 

@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include "global.h"
-#include "sndrcv.h"
-#include "msgtypesc.h"
 #include "macommon.h"
+#ifdef MPI
+#include <mpi.h>
+#else
+#include "sndrcv.h"
+#endif
 
 #define N 100            /* dimension of matrices */
 
@@ -14,7 +17,6 @@ Integer g_a, g_b;
 Integer n=N, type=MT_F_DBL;
 Integer me=GA_nodeid(), nproc=GA_nnodes();
 Integer col, i, row;
-extern double drand48();
 
 /* Note: on all current platforms DoublePrecision == double */
 DoublePrecision buf[N], err, alpha, beta;
@@ -36,7 +38,7 @@ DoublePrecision buf[N], err, alpha, beta;
      /* fill in matrix A with random values in range 0.. 1 */ 
      for(col=1+me; col<=n; col+= nproc){
          /* each process works on a different column in MIMD style */
-         for(i=0; i<n; i++) buf[i]=(DoublePrecision)drand48();
+         for(i=0; i<n; i++) buf[i]=drand48();
          GA_put(&g_a, &ONE, &n, &col, &col, buf, &n);
      }
 
@@ -87,22 +89,33 @@ char **argv;
 Integer heap=20000, stack=20000;
 Integer me, nproc;
 
+#ifdef MPI
+    MPI_Init(argc, argv);                       /* initialize MPI */
+#else
     PBEGIN_(argc, argv);                        /* initialize TCGMSG */
-    me=NODEID_(); 
-    nproc=NNODES_();
+#endif
+
+    GA_initialize();                            /* initialize GA */
+    me=GA_nodeid(); 
+    nproc=GA_nnodes();
     if(me==0) printf("Using %ld processes\n",(long)nproc);
 
     heap /= nproc;
     stack /= nproc;
     if(! MA_init((Integer)MT_F_DBL, stack, heap)) 
-       ERROR_("MA_init failed",stack+heap);     /* initialize memory allocator*/ 
-    GA_initialize();                           /* initialize GA */
+       GA_error("MA_init failed",stack+heap);  /* initialize memory allocator*/ 
     
     do_work();
 
     if(me==0)printf("Terminating ..\n");
     GA_terminate();
+
+#ifdef MPI
+    MPI_Finalize();
+#else
     PEND_();
+#endif
+
     return 0;
 }
 

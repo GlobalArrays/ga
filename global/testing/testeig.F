@@ -2,33 +2,41 @@
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
+      integer heap, stack
 c     
-c     Intitialize the TCGMSG package
 c
+c***  Intitialize a message passing library
 c
-       call pbeginf
+#ifdef MPI
+      call mpi_init
+#else
+      call pbeginf
+#endif
 c
+c***  initialize PEIGS
 #ifdef PAR_DIAG
        call mxinit()   ! PEIGS needs mxinit
 #endif
-c
-c     Initialize the MA package
-c
-      if (.not. ma_init(MT_DBL, 180000, 180000))
-     $     call parerr(1)
 c
 c     Intitialize the GA package
 c
       call ga_initialize()
 c
-c***  initialize PEIGS
+c     Initialize the MA package
+c
+      heap = 190000
+      stack= 190000
+      if (.not. ma_init(MT_DBL, heap, stack))
+     $    call ga_error("ma init failed",heap+stack)
 c
       call testit()
       call ga_terminate()
 c
-c     call mxend()
+#ifdef MPI
+      call mpi_finalize()
+#else
       call pend()
+#endif
       end
 
 
@@ -38,7 +46,6 @@ c-----------------
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c     
       integer n
       parameter (n = 100)

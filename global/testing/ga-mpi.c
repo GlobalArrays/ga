@@ -18,17 +18,11 @@
 #include <stdlib.h>
 #include "global.h"
 #include "macommon.h"
-#include "mpi.h"
-
-#ifdef MPI
-#   define ERROR_(str,code){\
-           fprintf(stderr,"%s",(str)); MPI_Abort(MPI_COMM_WORLD,(int)code);\
-    }
-#else
-/*  include files for the TCGMSG-MPI library */
-#   include "sndrcv.h"
-#   include "msgtypesc.h"
+#include <mpi.h>
+#ifndef MPI
+#include "sndrcv.h"
 #endif
+
 
 #define N 100           /* dimension of matrices */
 
@@ -165,32 +159,21 @@ char **argv;
 Integer heap=20000, stack=20000;
 Integer me, nproc;
 
-#   ifdef MPI
+#ifdef MPI
+    MPI_Init(argc, argv);                       /* initialize MPI */
+#else
+    PBEGIN_(argc, argv);                        /* initialize TCGMSG */
+#endif
 
-      int myid, numprocs;
-      MPI_Init(&argc, &argv);
-      MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
-      MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-      me = (Integer)myid;
-      nproc = (Integer)numprocs;
-
-#   else
-
-      PBEGIN_(argc, argv);                        /* initialize TCGMSG */
-      me=NODEID_(); 
-      nproc=NNODES_();
-
-#   endif
-
+    GA_initialize();                            /* initialize GA */
+    me=GA_nodeid();
+    nproc=GA_nnodes();
     if(me==0) printf("Using %ld processes\n",(long)nproc);
 
     heap /= nproc;
     stack /= nproc;
     if(! MA_init((Integer)MT_F_DBL, stack, heap)) 
-       ERROR_("MA_init failed",stack+heap);     /* initialize memory allocator*/ 
-    MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
-    GA_initialize();                           /* initialize GA */
-    
+       GA_error("MA_init failed",stack+heap);   /* initialize memory allocator*/ 
     do_work();
 
     if(me==0)printf("Terminating ..\n");

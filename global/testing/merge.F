@@ -6,19 +6,34 @@ c
 #include "global.fh"
 #include "tcgmsg.fh"
       logical status
+c
+c***  Intitialize a message passing library
+c
+#ifdef MPI
+      call mpi_init
+#else
       call pbeginf
-      status = ma_init(MT_DBL, 50000, 50000/nnodes())
-      if (.not. status) print *, 'ma_init failed'
+#endif
+c
+c***  Intitialize the GA package
       call ga_initialize()
       if(ga_nodeid().eq.0)then
          print *,' GA initialized'
          call ffflush(6)
       endif
+c
+      status = ma_init(MT_DBL, 50000, 50000/ga_nnodes())
+      if (.not. status)call ga_error('ma init failed',-1)
  
       call merge_test()
  
       call ga_terminate()
-      call pend
+
+#ifdef MPI
+      call mpi_finalize()
+#else
+      call pend()
+#endif
       end
 
 
@@ -27,7 +42,6 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c
       integer n,m
       parameter (n = 200)

@@ -1,4 +1,4 @@
-c vector guys somehow lack arithmetic precision 
+c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-11
 #elif defined(FUJITSU)
@@ -12,15 +12,18 @@ c vector guys somehow lack arithmetic precision
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
-      integer heap, stack, fudge, ma_heap, me
+#include "testutil.fh"
+      integer heap, stack, fudge, ma_heap, me, nproc
       logical status
       parameter (heap=100*100*4, fudge=100, stack=100*100)
 c     
-c***  Intitialize the TCGMSG package
+c***  Intitialize a message passing library
 c
+#ifdef MPI
+      call mpi_init
+#else
       call pbeginf
-c     call setdbg(1)            ! Turn TCGMSG debugging on/off
+#endif
 c
 c***  Initialize GA
 c
@@ -28,29 +31,33 @@ c     There are 2 choices: ga_initialize or ga_initialize_ltd.
 c     In the first case, there is no explicit limit on memory usage.
 c     In the second, user can set limit (per processor) in bytes.
 c
-      ma_heap = heap/nnodes() + fudge 
-      call ga_initialize_ltd(mdtob(ma_heap))
+      call ga_initialize()
+      nproc = ga_nnodes()
+      me = ga_nodeid()
+c     we can also use GA_set_memory_limit BEFORE first ga_create call
+c
+      ma_heap = heap/nproc + fudge 
+      call GA_set_memory_limit(util_mdtob(ma_heap))
+c
       if(ga_nodeid().eq.0)then
          print *,' GA initialized '
          call ffflush(6)
       endif
-      me = ga_nodeid()
-c     call PROC_REMAP()
 c
 c***  Initialize the MA package
 c     MA must be initialized before any global array is allocated
 c
       status = ma_init(MT_DCPL, stack, ma_heap)
-      if (.not. status) print *, 'ma_init failed'
+      if (.not. status) call ga_error('ma_init failed',-1) 
 c
       if(me.eq.0)then
-        print *, 'using ',nnodes(), ' process(es)'
+        print *, 'using ', nproc, ' process(es)'
         call ffflush(6)
       endif
 c
 c***  Check support for double precision arrays
 c
-      if (nodeid().eq.0) then
+      if (me.eq.0) then
          write(6,*)
          write(6,*) ' CHECKING DOUBLES  '
          write(6,*)
@@ -61,7 +68,7 @@ c
 c
 c***  Check support for double precision complex arrays
 c
-      if (nodeid().eq.0) then
+      if (me.eq.0) then
          write(6,*)
          write(6,*) ' CHECKING DOUBLE COMPLEX  '
          write(6,*)
@@ -72,7 +79,7 @@ c
 c
 c***  Check support for integer arrays
 c
-      if (nodeid().eq.0) then
+      if (me.eq.0) then
          write(6,*)
          write(6,*) ' CHECKING INTEGERS  '
          write(6,*)
@@ -81,20 +88,25 @@ c
 
       call check_int()
 c
-c***  Check memory management 
+c***  Check if memory limits are enforced 
 c
-      call check_mem(mdtob(ma_heap*ga_nnodes()))
+      call check_mem(util_mdtob(ma_heap*ga_nnodes()))
+c
+      if(me.eq.0) call ga_print_stats()
+      if(me.eq.0) print *,' ' 
+      if(me.eq.0) print *,'All tests succesful ' 
 c
 c***  Tidy up the GA package
 c
-      if(ga_nodeid().eq.0)call ga_print_stats()
-      if (ga_nodeid().eq.0) print *,' ' 
-      if (ga_nodeid().eq.0) print *,'All tests succesful ' 
       call ga_terminate()
 c
-c***  Tidy up after TCGMSG
+c***  Tidy up after message-passing library
 c
+#ifdef MPI
+      call mpi_finalize()
+#else
       call pend()
+#endif
 c
       end
 
@@ -103,7 +115,7 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
+#include "testutil.fh"
 c     
       integer n,m
       parameter (n = 100)
@@ -117,10 +129,10 @@ c
       parameter (maxloop = 100)
       integer maxproc
       parameter (maxproc = 128)
-      double precision drand, crap, sum1, sum2, x
+      double precision crap, sum1, sum2, x
       double precision nwords
       intrinsic int
-      iran(i) = int(drand(0)*real(i)) + 1
+      iran(i) = int(util_drand(0)*real(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -149,6 +161,11 @@ c     call setdbg(1)
          call ffflush(6)
          call ga_error('... exiting ',0)
       endif
+c
+c     check if handle is valid. be quiet unless error
+C
+      if(.not.ga_valid_handle(g_a)) call ga_error("invalid handle",g_a)
+c
       call ga_distribution(g_a,me,ilo, ihi, jlo, jhi)
       call ga_sync()
 c     
@@ -246,7 +263,7 @@ c
 c
       nwords = 0
 c
-      crap = drand(nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -303,10 +320,10 @@ c
       endif
       call ga_sync()
 c     
-      crap = drand(12345)       ! Same seed for each process
+      crap = util_drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-c           b(i,j) = drand(0)
+c           b(i,j) = util_drand(0)
             b(i,j) = i+j 
          enddo
       enddo
@@ -315,7 +332,7 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-c           x = drand(0)
+c           x = util_drand(0)
             x = 10.
             ilo = i
             ihi = min(i+inc-1, n)
@@ -393,10 +410,10 @@ c
       endif
 c
 c
-      crap = drand(12345)       ! Everyone has same seed
+      crap = util_drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
-            b(i,j) = drand(0)
+            b(i,j) = util_drand(0)
             a(i,j) = 0.1d0*a(i,j) + 0.9d0*b(i,j)
          enddo
       enddo
@@ -427,11 +444,11 @@ c
  19      format(/'> Checking ddot ...')
          call ffflush(6)
       endif
-      crap = drand(12345)       ! Everyone has same seed
+      crap = util_drand(12345)       ! Everyone has same seed
       sum1 = 0.0d0
       do j = 1, n
          do i = 1, n
-            b(i,j) = drand(0)
+            b(i,j) = util_drand(0)
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
@@ -509,7 +526,7 @@ c
       endif
       call ga_sync()
 c
-      crap = drand(nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
       do j = 1, 10 
        call ga_sync()
        itmp = iran(nproc)-1
@@ -545,7 +562,7 @@ c
 
       do j = 1,10 
        call ga_sync()
-       if(me.eq.iran(nnodes())-1) then
+       if(me.eq.iran(ga_nnodes())-1) then
          do loop = 1,m
            ilo = iran(n)
            jlo = iran(n)
@@ -586,7 +603,7 @@ c     scatter-acc available in GA ver. 3.0
          write(6,*)
       endif
 c
-      crap = drand(1234)
+      crap = util_drand(1234)
       call ga_zero(g_a)
 c
       do j = 1, n
@@ -661,7 +678,7 @@ c-----------------------------------------------------------------
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
+#include "testutil.fh"
 c
       integer n,m
       parameter (n = 60)
@@ -675,11 +692,11 @@ c
       parameter (maxloop = 100)
       integer maxproc
       parameter (maxproc = 128)
-      double precision drand, crap, real
+      double precision crap, real
       double precision nwords, error
       double complex   x, sum1, sum2, factor
       intrinsic int
-      iran(i) = int(drand(0)*real(i)) + 1
+      iran(i) = int(util_drand(0)*real(i)) + 1
 c
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -797,7 +814,7 @@ c
 c
       nwords = 0
 c
-      crap = drand(nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -851,10 +868,10 @@ c
       endif
       call ga_sync()
 c
-      crap = drand(12345)       ! Same seed for each process
+      crap = util_drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(drand(0),drand(1))
+            b(i,j) = cmplx(util_drand(0),util_drand(1))
          enddo
       enddo
 c
@@ -862,7 +879,7 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-c           x = cmplx(drand(0),0.333d0)
+c           x = cmplx(util_drand(0),0.333d0)
 c           x = cmplx(0.333d0,0)
             x = cmplx(0,0)
             ilo = i
@@ -985,7 +1002,7 @@ c
       endif
       call ga_sync()
 c
-      crap = drand(nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
       do j = 1, 10
        call ga_sync()
        itmp = iran(nproc)-1
@@ -1057,10 +1074,10 @@ c
          call ffflush(6)
       endif
       call ga_get(g_a, 1, n, 1, n, a, n)
-      crap = drand(12345)       ! Everyone has same seed
+      crap = util_drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(drand(0), drand(1))
+            b(i,j) = cmplx(util_drand(0), util_drand(1))
             a(i,j) = (0.1d0,-.1d0)*a(i,j) + (.9d0,-.9d0)*b(i,j)
          enddo
       enddo
@@ -1091,11 +1108,11 @@ c
  19      format(/'> Checking zdot ...')
          call ffflush(6)
       endif
-      crap = drand(12345)       ! Everyone has same seed
+      crap = util_drand(12345)       ! Everyone has same seed
       sum1 = (0.0d0,0.d0)
       do j = 1, n
          do i = 1, n
-            b(i,j) = cmplx(drand(0), drand(1))
+            b(i,j) = cmplx(util_drand(0), util_drand(1))
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
@@ -1130,7 +1147,7 @@ c-----------------------------------------------------------------
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
+#include "testutil.fh"
 c     
       integer n
       parameter (n = 128)
@@ -1144,11 +1161,10 @@ c
       integer maxproc
       parameter (maxproc = 128)
       integer map(5,maxproc), found, np,k
-      double precision drand, crap, sum1, real
+      double precision crap, sum1, real
       integer buf
       intrinsic int
-      external drand
-      iran(i) = int(drand(0)*real(i)) + 1
+      iran(i) = int(util_drand(0)*real(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -1258,7 +1274,7 @@ c
 c
       nwords = 0
 c
-      crap = drand(nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -1328,7 +1344,7 @@ c
       endif
       call ga_sync()
 c
-      crap = drand(nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
       inc =5 
 c     every processor will be operating on somebody elses data
 c
@@ -1513,7 +1529,7 @@ c
       integer mem_size
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
+#include "testutil.fh"
 c
       integer n,nmax,left,need, me,procs,g_a, g_b 
       logical status
@@ -1521,10 +1537,10 @@ c
       if(.not. ga_memory_limited())return
       me = ga_nodeid()
       procs = ga_nnodes()
-      nmax = int(dsqrt(dble(mem_size/mitob(1))))
+      nmax = int(dsqrt(dble(mem_size/util_mitob(1))))
       left =  mem_size/procs - ga_inquire_memory()
       n = nmax/2
-      need = mdtob(n*n)/procs
+      need = util_mdtob(n*n)/procs
 c
       if(me.eq.0)then
         write(6,*)' '
@@ -1551,7 +1567,7 @@ c
 c
       n = nmax
       left =  mem_size/procs - ga_inquire_memory()
-      need = mdtob(n*n)/procs
+      need = util_mdtob(n*n)/procs
       if(me.eq.0)then
         call print_mem_info(n,left, need, mem_size/procs)
       endif

@@ -12,7 +12,7 @@ all: test.exe testc.exe patch.exe
 !INCLUDE ..\..\config\NTmakelib.h
 
 LIBS =  $(LIB_DISTRIB)\global.lib  $(LIB_DISTRIB)\tcgmsg-mpi.lib\
- $(LIB_DISTRIB)\ma.lib  $(LIB_DISTRIB)\linalg.lib ..\..\armci\lib\win32\armci.lib $(MPI) wsock32.lib
+ $(LIB_DISTRIB)\ma.lib  $(LIB_DISTRIB)\linalg.lib $(LIB_DISTRIB)\armci.lib $(MPI) wsock32.lib
 
 CLINK = libf.lib
 

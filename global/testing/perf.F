@@ -10,24 +10,34 @@ c
 #include "mafdecls.fh"
 #include "global.fh"
       integer heap
-c     
-      call pbeginf ! intitialize TCGMSG
 c
-c***  Initialize the MA package
-      heap = 900000
-      if (.not. ma_init(MT_DBL, heap,heap)) call parerr(1)
+c***  Intitialize a message passing library
+c
+#ifdef MPI
+      call mpi_init
+#else
+      call pbeginf
+#endif
 c
 c***  Intitialize the GA package
       call ga_initialize()
-c
       if(ga_nnodes().ne.4 .and. ga_nodeid().eq.0)
      $   call ga_error('Program requires 4 GA processes',ga_nnodes())
+c
+c***  Initialize the MA package
+      heap = 900000
+      if (.not. ma_init(MT_DBL, heap,heap)) 
+     $     call ga_error('ma init failed',2*heap) 
 c
       call test2D()
       call test1D()
       call ga_terminate()
 c
+#ifdef MPI
+      call mpi_finalize()
+#else
       call pend()
+#endif
       end
 
 
@@ -35,7 +45,6 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c     
 c
       integer n, nn, num_chunks
@@ -91,8 +100,9 @@ c     enddo
       subroutine TestPutGetAcc1
      &      (g_a, n, chunk, num_chunks, buf, ilo, ihi, jlo,jhi, local)
       implicit none
-#include "tcgmsg.fh"
 #include "global.fh"
+#include "testutil.fh"
+c
       integer num_chunks, chunk(num_chunks)
       integer n, ilo, ihi, jlo,jhi,g_a
       double precision buf(*), tg, tp, ta
@@ -120,7 +130,7 @@ c
       call ga_sync()
 c
       do loop = 1, num_chunks
-        bytes = mdtob(1)*chunk(loop) ! how much data is accessed
+        bytes = util_mdtob(1)*chunk(loop) ! how much data is accessed
         jump  =  n/(6000*loop) ! jump distance between consecutive patches
         if(loop.eq.num_chunks)jump=0
 c
@@ -167,12 +177,15 @@ c
      &   time_acc1(g_a, is, ie, js, je, buf, chunk, jump, count, local)
 c
       implicit none
+#include "global.fh"
+#include "testutil.fh"
+c
       integer g_a, chunk, jump, count, is, js, ie, je
       logical local 
       integer rows, indx, shifti(3)
 c
       integer ilo, ihi, jlo, jhi
-      double precision tcgtime, seconds, buf 
+      double precision seconds, buf 
 c
       count = 0
       rows = ie - is + 1
@@ -182,7 +195,7 @@ c
       jlo = js
       jhi = je
 
-      seconds = tcgtime()
+      seconds = util_timer()
 c
 c       distance between consecutive patches increased by jump
 c       to destroy locality of reference
@@ -197,7 +210,7 @@ c       to destroy locality of reference
      $                       jlo, jhi,  buf, chunk, 1d0)
            endif
         enddo
-      seconds = tcgtime() - seconds
+      seconds = util_timer() - seconds
 c
       time_acc1 = seconds/count
       end
@@ -207,12 +220,15 @@ c
      &    time_get1(g_a, is, ie, js, je, buf, chunk, jump, count, local)
 c
       implicit none
+#include "global.fh"
+#include "testutil.fh"
+c
       integer g_a, chunk, jump, count, is, js, ie, je
       integer rows, indx, shifti(3)
       logical local
 c
       integer ilo, ihi, jlo, jhi
-      double precision tcgtime, seconds, buf
+      double precision seconds, buf
 c
       count = 0
       rows = ie - is + 1
@@ -222,7 +238,7 @@ c
       jlo = js
       jhi = je
 
-      seconds = tcgtime()
+      seconds = util_timer()
 c
 c       distance between consecutive patches increased by jump
 c       to destroy locality of reference
@@ -237,7 +253,7 @@ c       to destroy locality of reference
      $                       jlo, jhi,  buf, chunk)
               endif
         enddo
-      seconds = tcgtime() - seconds
+      seconds = util_timer() - seconds
 c
       time_get1 = seconds/count
       end
@@ -248,12 +264,15 @@ c
      &   time_put1(g_a, is, ie, js, je, buf, chunk, jump, count, local)
 c
       implicit none
+#include "global.fh"
+#include "testutil.fh"
+c
       integer g_a, chunk, jump, count, is, js, ie, je
       integer rows, indx, shifti(3), shiftj(3)
       logical local
 c
       integer ilo, ihi, jlo, jhi
-      double precision tcgtime, seconds, buf
+      double precision  seconds, buf
 c
       count = 0
       rows = ie - is + 1
@@ -263,7 +282,7 @@ c
       jlo = js
       jhi = je
 
-      seconds = tcgtime()
+      seconds = util_timer()
 c
 c       distance between consecutive patches increased by jump
 c       to destroy locality of reference
@@ -278,7 +297,7 @@ c       to destroy locality of reference
      $                       jlo, jhi,  buf, chunk)
               endif
         enddo
-      seconds = tcgtime() - seconds
+      seconds = util_timer() - seconds
 c
       time_put1 = seconds/count
       end
@@ -292,8 +311,6 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
-c     
 c
       integer n, nn, num_chunks
       parameter (n = 1024, nn = n*n/4, num_chunks=16)
@@ -345,8 +362,9 @@ c     enddo
       subroutine TestPutGetAcc
      &      (g_a, n, chunk, num_chunks, buf, ilo, ihi, jlo,jhi, local)
       implicit none
-#include "tcgmsg.fh"
 #include "global.fh"
+#include "testutil.fh"
+c
       integer num_chunks, chunk(num_chunks)
       integer n, ilo, ihi, jlo,jhi,g_a
       double precision buf(*), tg, tp, ta
@@ -374,7 +392,7 @@ c
       call ga_sync()
 c
       do loop = 1, num_chunks
-        bytes = mdtob(1)*chunk(loop)*chunk(loop) ! how much data is accessed
+        bytes = util_mdtob(1)*chunk(loop)*chunk(loop) !how much data is accessed
         jump  =  n/(60*loop) ! jump distance between consecutive patches
         if(loop.eq.num_chunks)jump=0
 c
@@ -421,12 +439,15 @@ c
      &   time_acc(g_a, is, ie, js, je, buf, chunk, jump, count, local)
 c
       implicit none
+#include "global.fh"
+#include "testutil.fh"
+c
       integer g_a, chunk, jump, count, is, js, ie, je
       logical local 
       integer rows, cols, indx, shifti(3), shiftj(3)
 c
       integer ilo, ihi, jlo, jhi
-      double precision tcgtime, seconds, buf 
+      double precision  seconds, buf 
 c
       count = 0
       rows = ie - is + 1
@@ -438,7 +459,7 @@ c
       shiftj(2) = cols
       shiftj(3) = cols
 
-      seconds = tcgtime()
+      seconds = util_timer()
 c
 c       distance between consecutive patches increased by jump
 c       to destroy locality of reference
@@ -457,7 +478,7 @@ c       to destroy locality of reference
               endif
            enddo
         enddo
-      seconds = tcgtime() - seconds
+      seconds = util_timer() - seconds
 c
       time_acc = seconds/count
       end
@@ -467,12 +488,15 @@ c
      &    time_get(g_a, is, ie, js, je, buf, chunk, jump, count, local)
 c
       implicit none
+#include "global.fh"
+#include "testutil.fh"
+c
       integer g_a, chunk, jump, count, is, js, ie, je
       integer rows, cols, indx, shifti(3), shiftj(3)
       logical local
 c
       integer ilo, ihi, jlo, jhi
-      double precision tcgtime, seconds, buf
+      double precision  seconds, buf
 c
       count = 0
       rows = ie - is + 1
@@ -484,7 +508,7 @@ c
       shiftj(2) = cols
       shiftj(3) = cols
 
-      seconds = tcgtime()
+      seconds = util_timer()
 c
 c       distance between consecutive patches increased by jump
 c       to destroy locality of reference
@@ -503,7 +527,7 @@ c       to destroy locality of reference
               endif
            enddo
         enddo
-      seconds = tcgtime() - seconds
+      seconds = util_timer() - seconds
 c
       time_get = seconds/count
       end
@@ -514,12 +538,15 @@ c
      &   time_put(g_a, is, ie, js, je, buf, chunk, jump, count, local)
 c
       implicit none
+#include "global.fh"
+#include "testutil.fh"
+c
       integer g_a, chunk, jump, count, is, js, ie, je
       integer rows, cols, indx, shifti(3), shiftj(3)
       logical local
 c
       integer ilo, ihi, jlo, jhi
-      double precision tcgtime, seconds, buf
+      double precision  seconds, buf
 c
       count = 0
       rows = ie - is + 1
@@ -531,7 +558,7 @@ c
       shiftj(2) = cols
       shiftj(3) = cols
 
-      seconds = tcgtime()
+      seconds = util_timer()
 c
 c       distance between consecutive patches increased by jump
 c       to destroy locality of reference
@@ -550,7 +577,7 @@ c       to destroy locality of reference
               endif
            enddo
         enddo
-      seconds = tcgtime() - seconds
+      seconds = util_timer() - seconds
 c
       time_put = seconds/count
       end
@@ -558,17 +585,20 @@ c
 
       subroutine my_sleep(seconds)
       implicit none
-      double precision tcgtime, ts, te, work
+#include "global.fh"
+#include "testutil.fh"
+c
+      double precision  ts, te, work
       integer seconds, loop
       common  /sleep_block/ work
 c
-      ts = tcgtime()
+      ts = util_timer()
       work = 0.
 100   continue
          do loop= 1, 500
             work = work + 1.
          enddo
-         te = tcgtime()
+         te = util_timer()
       if(te - ts .lt. real(seconds)) goto 100
 *     print *, work, ts, te 
       end

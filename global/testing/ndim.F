@@ -4,12 +4,14 @@
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
-c     
-c     Intitialize the TCGMSG package
 c
+c***  Intitialize a message passing library
 c
+#ifdef MPI
+      call mpi_init
+#else
       call pbeginf
+#endif
 c
 c     Initialize the MA package
 c
@@ -28,7 +30,13 @@ c
       if(ga_nodeid().eq.0)print *,' All tests succesful'
       call ga_terminate()
 c
+c***  Tidy up after message-passing library
+c
+#ifdef MPI
+      call mpi_finalize()
+#else
       call pend()
+#endif
       end
 
 
@@ -428,7 +436,6 @@ c     iran(range) = range/2
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c     
       integer n
       parameter (n = 5)

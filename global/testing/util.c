@@ -2,9 +2,13 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "macdecls.h"
-#include "typesf2c.h"
 #include "testutil.h"
-#include "ga.h"
+
+#ifdef MPI
+#  include <mpi.h>
+#else
+#  include <sndrcv.h>
+#endif
 
 #define MAXDIM 10
 #define BASE 100
@@ -163,34 +167,6 @@ void update_subscript(int ndim, int subscript[], int lo[], int hi[], int dims[])
 }
 
 
-void print_distribution(int g_a)
-{
-int ndim, i, proc, type, nproc=GA_Nnodes();
-int dims[MAXDIM], lo[MAXDIM], hi[MAXDIM];
-char msg[100];
-
-    NGA_Inquire(g_a, &type, &ndim, dims);
-    printf("Array handle=%d name:'%s' ",g_a,GA_Inquire_name(g_a));
-    printf("data type:");
-    switch(type){
-      case MT_F_DBL: printf("double"); break;
-      case MT_F_INT: printf("integer"); break;
-      case MT_F_DCPL: printf("double complex"); break;
-      default: printf("ERROR");
-    }
-    printf(" dimensions:");
-    for(i=0; i<ndim-1; i++)printf("%dx",dims[i]);
-    printf("%d\n",dims[ndim-1]);
-/*    printf("Array Distribution:\n");*/
-
-    /* now everybody prints array range it owns */
-    for(proc = 0; proc < nproc; proc++){
-        NGA_Distribution(g_a,proc,lo,hi);
-        sprintf(msg,"proc=%d\t owns array section: ",proc);
-        print_range(msg,ndim,lo,hi,"\n");
-    }
-    fflush(stdout);
-}
 
 int compare_patches(int me, double eps, int ndim, double *array1, 
                      int lo1[], int hi1[], int dims1[],
@@ -407,4 +383,65 @@ char msg[100];
     f2c_copy_indices(HI2, hi2, (int)*ndim2);
     f2c_copy_indices(LO2, lo2, (int)*ndim2);
     print_range(msg,(int)*ndim2, lo2, hi2, "\n");
+}
+
+
+/*
+ * Return the no. of bytes that n doubles occupy
+ */
+Integer FATR util_mdtob_(Integer *n)
+{
+  if (*n < 0)
+    ga_error("util_MDTOB_: negative argument",*n);
+
+  return (Integer) (*n * sizeof(double));
+}
+
+
+/*
+ * Return the no. of bytes that n ints=Integers occupy
+ */
+Integer FATR util_mitob_(Integer *n)
+{
+  if (*n < 0)
+    ga_error("util_MITOB_: negative argument",*n);
+
+  return (Integer) (*n * sizeof(Integer));
+}
+
+
+double _util_ran(unsigned int flag)
+{
+  static unsigned long seed = 76521;
+
+  if(flag != 0) seed = flag;
+  seed = seed *1812433253 + 12345;
+
+  return ((double) (seed & 0x7fffffff)) * 4.6566128752458e-10;
+}
+
+
+double FATR util_drand_(Integer* flag)
+{
+/* on YMP/J90 need to use thread safe version of rand */
+    unsigned long fflag = (unsigned long)*flag;
+#ifdef CRAY_YMP
+
+  return _util_ran((unsigned int)fflag);
+
+#else
+
+  if (fflag) srand((unsigned) fflag);
+  return ((double) rand()) * 4.6566128752458e-10;
+
+#endif
+}
+
+double FATR util_timer_()
+{
+#ifdef MPI
+       return MPI_Wtime();
+#else
+       return TCGTIME_();
+#endif
 }

@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi.h>
 #include "macdecls.h"
 #include "ga.h"
+#ifdef MPI
+#include <mpi.h>
+#else
+#include "sndrcv.h"
+#endif
 
 /* utilities for GA test programs */
 #include "testutil.h"
@@ -211,24 +215,21 @@ char **argv;
 Integer heap=20000, stack=20000;
 int me, nproc;
 
+#ifdef MPI
+    MPI_Init(argc, argv);                       /* initialize MPI */
+#else
+    PBEGIN_(argc, argv);                        /* initialize TCGMSG */
+#endif
 
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    MPI_Comm_rank(MPI_COMM_WORLD,&me);
+    GA_initialize();                           /* initialize GA */
+
+    nproc = GA_Nnodes();
+    me = GA_Nodeid();
 
     if(me==0) printf("Using %d processes\n\n",nproc);
 
-    if(!MA_init((Integer)MT_F_DBL, stack/nproc, heap/nproc)) {
-
-       if(me==0)printf("MA_init failed %d",stack+heap);   
-
-    }else{
-
-      MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
-
-      printf("init %d\n",me); fflush(stdout);
-      GA_initialize();                           /* initialize GA */
-      printf("Init %d\n",me); fflush(stdout);
+    if(!MA_init((Integer)MT_F_DBL, stack/nproc, heap/nproc))
+       GA_Error("MA_init failed bytes= %d",stack+heap);   
 
 #ifdef PERMUTE
       {
@@ -242,15 +243,19 @@ int me, nproc;
       }
 #endif
 
-      if(GA_Uses_fapi())GA_Error("Program runs with C API only",0);
+    if(GA_Uses_fapi())GA_Error("Program runs with C API only",0);
     
-      do_work();
+    do_work();
 
-      if(me==0)printf("\nSuccess\n\n");
-      GA_Terminate();
-    }
+    if(me==0)printf("\nSuccess\n\n");
+    GA_Terminate();
 
+#ifdef MPI
     MPI_Finalize();
+#else
+    PEND_();
+#endif
+
     return 0;
 }
 
