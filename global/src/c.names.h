@@ -115,6 +115,7 @@
 #define  ga_init_fence_            GA_INIT_FENCE
 #define  ga_initialize_ltd_        GA_INITIALIZE_LTD
 #define  ga_inquire_               GA_INQUIRE
+#define  nga_inquire_              NGA_INQUIRE
 #define  ga_inquire_name_          GA_INQUIRE_NAME
 #define  ga_inquire_memory_        GA_INQUIRE_MEMORY
 #define  ga_list_nodeid_           GA_LIST_NODEID
