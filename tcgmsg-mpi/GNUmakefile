@@ -66,7 +66,7 @@ endif
 
 ifeq ($(TARGET),CRAY-SV1)
 pbeginf.o:
-	$(CC) $(COPT) -htaskprivate $(INCLUDES) $(DEFINES) -g -c pbeginf.c
+	$(CC) $(COPT) $(INCLUDES) $(DEFINES) -g -c pbeginf.c
 endif
 
 ifdef GA_USE_VAMPIR
