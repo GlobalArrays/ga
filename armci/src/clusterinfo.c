@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.21 2003-09-24 04:19:39 vinod Exp $ */
+/* $Id: clusterinfo.c,v 1.22 2003-09-25 00:11:44 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -289,7 +289,7 @@ static void print_clus_info()
 int i;
 
   if(PRINT_CLUSTER_INFO && armci_nclus >1 && armci_me ==0){
-#ifdef DATA_SERVER
+#if defined(DATA_SERVER) || defined(SERVER_THREAD)
      printf("ARMCI configured for %d cluster nodes. Network protocol is '%s'.\n",
             armci_nclus, network_protocol);
 #else
