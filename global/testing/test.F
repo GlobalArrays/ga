@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.26 1999-07-28 17:34:44 d3h325 Exp $
+c $Id: test.F,v 1.27 1999-07-30 01:06:34 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-11
@@ -119,7 +119,7 @@ c
 #include "testutil.fh"
 c     
       integer n,m
-      parameter (n = 100)
+      parameter (n = 120)
       parameter (m = 2*n)
       double precision a(n,n), b(n,n), v(m),w(m)
       integer iv(m), jv(m)
@@ -210,7 +210,7 @@ c
       endif
       call ga_sync()
 c
-      inc = (n-1)/10 + 1
+      inc = (n-1)/20 + 1
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
@@ -329,7 +329,7 @@ c           b(i,j) = util_drand(0)
          enddo
       enddo
 c
-      inc = (n-1)/10 + 1
+      inc = (n-1)/20 + 1
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
@@ -767,7 +767,7 @@ c
       endif
       call ga_sync()
 c
-      inc = (n-1)/10 + 1
+      inc = (n-1)/20 + 1
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
@@ -876,7 +876,7 @@ c
          enddo
       enddo
 c
-      inc = (n-1)/10 + 1
+      inc = (n-1)/20 + 1
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
@@ -1223,7 +1223,7 @@ c
       endif
       call ga_sync()
 c
-      inc = (n-1)/10 + 1
+      inc = (n-1)/20 + 1
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
