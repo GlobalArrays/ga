@@ -1,0 +1,14 @@
+                     Documentation for Global Arrays
+
+You will find here:
+
+Supercomputing94.ps.Z 	original SC'94 paper describing GA
+UserGuide.html		preliminary User Guide in HTML
+ga.ops.html		documentation for all GA operations in HTML
+global.doc		documentation in ASCII
+ga.index.html		alphabetical reference index of for the GA operations 
+                        with links to the documentation (GA programmers make 
+                        bookmark in their browsers to this file)
+
+More information is available through links in the GA homepage:
+http://www.emsl.pnl.gov:2080/docs/global/ga.html.

@@ -1,419 +1,480 @@
+<!DOCTYPE HTML PUBLIC "-//SQ//DTD HTML 2.0 HoTMetaL + extensions//EN">
 <HTML><HEAD><TITLE> Global Array Documentation </TITLE></HEAD>
-<BODY bgcolor=aqua>
+<BODY BGCOLOR="aqua">
 
-<p>
-   Globally addressable arrays have been developed to simplify writing
-   portable scientific software for both shared and distributed memory
-   computers.  Programming convenience, code extensibility and 
-   maintainability are gained by adopting the shared memory programming 
-   model.
-</p>
+<H1 ALIGN="center">Global Arrays User Guide</H1>
 
-<p>
-   From the user perspective, a global array can be used as it was stored 
-   in the shared memory. Details of the data distribution, addressing and
-   communication are encapsulated in the global array objects. However, 
-   the information on the actual data distribution can be obtained and 
-   taken advantage of whenever data locality is important.
-</P>
-<p>
- Currently support is limited to 2-D double precision, double complex
-   or integer arrays with block distribution, at most one block per
-   array per processor.
-</P>
-
-<hr>
 <OL>
-<LI><a href="#s1">Basic Operations</a>
-    <ul>
-      <LI> Operations that are globally collective 
-    <ul>
-       <LI>Collective elementary operations 
-       <LI>Linear algebra operations 
-       <LI>Other collective utility operations 
-       <LI>Operations to support portability between implementations 
-    </ul>
-<LI> Non-Collective Operations
-    <ul>
-       <LI>Elementary operations 
-      <LI> Operations intended to support writing new functions 
-      <LI> Other utility operations 
-    </ul>
-    </ul>
+<LI><A HREF="#sModel">Global Arrays Programming Model</A></LI>
+<LI><A HREF="#sOps">Basic Operations</A>     <UL>
+     
+<LI> <A HREF="#sOps.1">Operations that are globally collective</A>      <UL>
+      
+<LI><A HREF="#sOps.1.1">Collective elementary operations</A></LI>
+<LI><A HREF="#sOps.1.2">Linear algebra operations</A>         </LI>
+<LI><A HREF="#sOps.1.3">Other collective utility operations</A>         </LI>
+<LI><A HREF="#sOps.1.4">Operations to support portability between
+implementations</A>      </LI>
+</UL></LI>
+<LI> <A HREF="#sOps.2">Non-Collective Operations</A>     <UL>
+      
+<LI><A HREF="#sOps.2.1">Elementary operations </A>       </LI>
+<LI> <A HREF="#sOps.2.2">Operations intended to support writing new functions</A>
+       </LI>
+<LI> <A HREF="#sOps.2.3">Other utility operations</A>      </LI>     </UL></LI> 
+</UL></LI>
+<LI><A HREF="#sStat">Status of Current Implementation</A> </LI>
 
-<LI><a href="#s2">Status of Current Implementation</a>
-<LI><a href="#s3">How Your Program Should Look Like</a>
-    <ul>
-        <LI><a href="#s3.1">Compiler Flags</a>
-    </ul>
-<LI><a href="#s4">Message-Passing in GA Programs</a>
-<LI><a href="#s5">C Language Interface</a>
-</ol>
+<UL>
+<LI> <A HREF="#sStat.1">Supported Platforms</A>
+<LI> <A HREF="#sStat.2">Selection of message-passing library</A>
+<LI> <A HREF="#sStat.3">Interface to ScaLAPACK</A></LI>
+<LI><A HREF="#sStat.4">Compiler Flags</A>     </LI>
+</UL></LI>
 
-<hr>
+<LI><A HREF="#sLook">How Your Program Should Look Like</A>     
+<LI><A HREF="#sMsg">Message-Passing in GA Programs</A>
+</LI>
+<LI><A HREF="#sInt">C Language Interface</A>
+</LI> 
+</OL>
+<HR> 
 
-<h1 align=center><a name="s1"> Basic Operations</a> </h1>
-
-<h2> Operations that are globally collective </h2>
-
- <p>
- Operations must be simultaneously invoked by all processes as if 
- in SIMD mode.
- </P>
-
-<h3>Collective  elementary operations </h3>
-
- <TABLE>
- <TR><TD>    <A href="ga.ops.html#ga_initialize">ga_initialize</A>     <TD> initialize global array internal structures 
- <TR><TD>    <A href="ga.ops.html#ga_initialize_ltd">ga_initialize_ltd</A> <TD> initialize global arrays and set memory usage
- limits
- <TR><TD>    <A href="ga.ops.html#ga_create">ga_create</A>         <TD> create an array
- <TR><TD>    <A href="ga.ops.html#ga_create_irreg">ga_create_irreg</A>   <TD> create an array with irregular distribution
- <TR><TD>    <A href="ga.ops.html#ga_duplicate">ga_duplicate</A>      <TD> create an array following a reference array
- <TR><TD>    <A href="ga.ops.html#ga_destroy">ga_destroy</A>        <TD> destroy  an array
- <TR><TD>    <A href="ga.ops.html#ga_terminate">ga_terminate</A>      <TD> destroy all existing arrays and delete internal data structures  
- <TR><TD>     <A href="ga.ops.html#ga_sync">ga_sync</A>           <TD> synchronize processes (a barrier)
- </TABLE>
-
-<h3> Linear algebra operations </h3>
-
- <TABLE>
- <TR><TD>     <A href="ga.ops.html#ga_zero">ga_zero</A>           <TD> zero an array
-
- <TR><TD>     <A href="ga.ops.html#ga_ddot">ga_ddot</A>           <TD> dot product of two arrays (doubles only)
- <TR><TD>     <A href="ga.ops.html#ga_zdot">ga_zdot</A>           <TD> dot product of two arrays (double complex only)
- <TR><TD>     <A href="ga.ops.html#ga_scale">ga_scale</A>          <TD> scale the elements in an array by a constant
- <TR><TD>     <A href="ga.ops.html#ga_add">ga_add</A>            <TD> scale and add two arrays to put result in a third
-                            (may overwrite one of the other two)
- <TR><TD>     <A href="ga.ops.html#ga_copy">ga_copy</A>           <TD> copy one array into another
- <TR><TD>     <A href="ga.ops.html#ga_dgemm">ga_dgemm</A>          <TD> BLAS-like matrix multiply 
- <TR><TD>     <A href="ga.ops.html#ga_ddot_patch">ga_ddot_patch</A>     <TD> dot product of two patches (doubles only)
- <TR><TD>     <A href="ga.ops.html#ga_zdot_patch">ga_zdot_patch</A>     <TD> dot product of two patches (double complex only)
- <TR><TD>     <A href="ga.ops.html#ga_scale_patch">ga_scale_patch</A>    <TD> scale the elements in an array by a constant
-                            (patch version)
- <TR><TD>     <A href="ga.ops.html#ga_add_patch">ga_add_patch</A>      <TD> scale and add two arrays to put result in a third
-                            (patch version)
- <TR><TD>     <A href="ga.ops.html#ga_matmul_patch">ga_matmul_patch</A>   <TD> matrix multiply (patch version)
-
- <TR><TD>     <A href="ga.ops.html#ga_diag">ga_diag</A>           
-     <TD> real symmetric generalized eigensolver (sequential version also 
-          exists)<TD> <A href ="#peigs">*</A>
- <TR><TD>    <A href="ga.ops.html#ga_diag_reuse">ga_diag_reuse</A>
-     <TD> a version of <A href="ga.ops.html#ga_diag">ga_diag</A> 
-          for repeated use <TD> <A href="#peigs">*</A>   
- <TR><TD>     <A href="ga.ops.html#ga_diag_std">ga_diag_std</A>       
-     <TD> standard real symmetric eigensolver (sequential version also exists)
-     <TD> <A href ="#peigs">*</A>
- <TR><TD>     <A href="ga.ops.html#ga_symmetrize">ga_symmetrize</A>     <TD> symmetrize a matrix
- <TR><TD>     <A href="ga.ops.html#ga_transpose">ga_transpose</A>      <TD> transpose a matrix
- <TR><TD>     <A href="ga.ops.html#ga_lu_solve">ga_lu_solve</A>       
-     <TD> solve system of linear equations based on LU factorization 
-          (sequential version also exists) <TD> <A href ="#scalapack">**</A>
- <TR><TD>     <A href="ga.ops.html#ga_copy_patch">ga_copy_patch</A>     <TD> copy data from a patch of one global array
-                            into another array
- </TABLE>
-
-<h3> Other collective utility operations </h3>
- <TABLE>
- <TR><TD>     <A href="ga.ops.html#ga_fill_patch">ga_fill_patch</A>     <TD> fill a patch of array with value
-<TR><TD>      <A href="ga.ops.html#ga_summarize">ga_summarize</A>      <TD> print information about already allocated arrays
- <TR><TD>     <A href="ga.ops.html#ga_print_patch">ga_print_patch</A>    <TD> print a patch of an array to the screen 
- <TR><TD>     <A href="ga.ops.html#ga_print">ga_print</A>          <TD> print an entire array to the screen
- <TR><TD>     <A href="ga.ops.html#ga_compare_distr">ga_compare_distr</A>  <TD> compare distributions of two global arrays
- <TR><TD>       <A href="ga.ops.html#ga_summarize">ga_summarize</A>      <TD> prints summary info about allocated arrays
- </TABLE>
+<H1 ALIGN="center"><A NAME="sModel">Global Arrays Programming Model</A></H1>
+<P>
+   Globally addressable arrays have been developed to simplify writing
+portable scientific software for both shared and distributed memory
+computers.  Programming convenience, code extensibility and     maintainability
+are gained by adopting the shared memory programming     model.
+</P>
+<P>
+  From the user perspective, a global array can be used as it was stored     in
+the shared memory. Details of the data distribution, addressing and
+communication are encapsulated in the global array objects. However,     the
+information on the actual data distribution and locality can be obtained and     taken
+advantage of whenever data locality is important.
+</P>
+<P>
+ Currently support is limited to 2-D double precision, double complex    or
+integer arrays with block distribution, at most one block per  array per
+processor.
+</P>
 
 
-<h3>Operations to support portability between implementations </h3>
+<P>
+   The GA memory consistency is only guaranteed for
+</P>
+<OL TYPE="i">
 
-<table>
- <TR><TD>      <A href="ga.ops.html#ga_dgop">ga_dgop</A>           <TD> reduce operation (double precision)
- <TR><TD>     <A href="ga.ops.html#ga_igop">ga_igop</A>           <TD> reduce operation (integer)
- <TR><TD>     <A href="ga.ops.html#ga_brdcst">ga_brdcst</A>         <TD> broadcast operation
-</table>
+<LI>      Multiple read operations (as the data does not change)     </LI>
+<LI>      Multiple accumulate operations (as addition is commutative)
+</LI>
+<LI>      Multiple disjoint put operations (as there is only one writer
+        for each element)
+</LI>
+</OL>
+<P>
+   The application has to worry about everything else (usually by  appropriate
+insertion of  <A HREF="ga.ops.html#ga_sync">ga_sync</A> (barrier) calls).
+</P>
 
 
-<H2> Non-Collective Operations </H2>
-
-<p> These operations  may be invoked by any process in task parallel MIMD style </p>
-
-<h3> Elementary operations </h3>
+<H1 ALIGN="center"><A NAME="sOps"> Basic Operations</A> </H1> 
+<H2> <A NAME="sOps.1"></A>Operations that are globally collective </H2>  
+<P>
+ Operations must be simultaneously invoked by all processes as if   in SIMD
+mode.  </P> 
+<H3><A NAME="sOps.1.1"></A>Collective  elementary operations </H3>  
 <TABLE>
-  <TR><TD> <A href="ga.ops.html#ga_get">ga_get</A>            <TD> read from a patch of an array
-<TR><TD>      <A href="ga.ops.html#ga_put">ga_put</A>            <TD> write to a patch of an array
- <TR><TD>     <A href="ga.ops.html#ga_acc">ga_acc</A>            <TD> accumulate into a patch of an array (double
-                            precision or complex only)
-<TR><TD>      <A href="ga.ops.html#ga_scatter">ga_scatter</A>        <TD> scatter elements into an array
-<TR><TD>      <A href="ga.ops.html#ga_gather">ga_gather</A>         <TD> gather elements from an array
-<TR><TD>      <A href="ga.ops.html#ga_read_inc">ga_read_inc</A>       <TD> atomically read and increment the value of
-                            a single integer array element
-<TR><TD>      <A href="ga.ops.html#ga_locate">ga_locate</A>         <TD> determine which process 'holds' an array element
-<TR><TD>      <A href="ga.ops.html#ga_locate_region">ga_locate_region</A>  <TD> determine which process 'holds' an array section
-    <TR><TD>   <A href="ga.ops.html#ga_distribution">ga_distribution</A>   <TD> find coordinates of the array patch that is 'held' by a processor 
-<TR><TD>      <A href="ga.ops.html#ga_error">ga_error</A>          <TD> print error message and terminate the program 
- <TR><TD>     <A href="ga.ops.html#ga_init_fence">ga_init_fence</A>     <TD> traces completion of data movement operations 
- <TR><TD>     <A href="ga.ops.html#ga_fence">ga_fence</A>          <TD> blocks until the initiated communication completes 
- <TR><TD>    <A href="ga.ops.html#ga_nodeid">ga_nodeid</A>         <TD> find requesting compute process ID
- <TR><TD>      <A href="ga.ops.html#ga_nnodes">ga_nnodes</A>         <TD> find number of compute processes
+ <TR><TD COLSTART="1">    <A HREF="ga.ops.html#ga_initialize">ga_initialize</A>
+    </TD><TD COLSTART="2"> initialize global array internal structures   </TD></TR><TR
+><TD COLSTART="1">    <A HREF="ga.ops.html#ga_initialize_ltd">ga_initialize_ltd</A>
+</TD><TD COLSTART="2"> initialize global arrays and set memory usage  limits 
+</TD></TR><TR><TD COLSTART="1">    <A HREF="ga.ops.html#ga_create">ga_create</A>
+        </TD><TD COLSTART="2"> create an array  </TD></TR><TR><TD COLSTART="1">
+   <A HREF="ga.ops.html#ga_create_irreg">ga_create_irreg</A>   </TD><TD
+COLSTART="2"> create an array with irregular distribution  </TD></TR><TR><TD
+COLSTART="1">    <A HREF="ga.ops.html#ga_duplicate">ga_duplicate</A>     
+</TD><TD COLSTART="2"> create an array following a reference array  </TD></TR><TR><TD
+ COLSTART="1">    <A HREF="ga.ops.html#ga_destroy">ga_destroy</A>        </TD><TD
+COLSTART="2"> destroy  an array  </TD></TR><TR><TD COLSTART="1">   
+<A HREF="ga.ops.html#ga_terminate">ga_terminate</A>      </TD><TD COLSTART="2">
+destroy all existing arrays and delete internal data structures    </TD></TR><TR><TD
+ COLSTART="1">     <A HREF="ga.ops.html#ga_sync">ga_sync</A>           </TD><TD
+COLSTART="2"> synchronize processes (a barrier)  </TD> 
+</TR>
+</TABLE>
 
-</table>
+<H3> <A NAME="sOps.1.2"></A>Linear algebra operations </H3>  
+<TABLE>
+ <TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_zero">ga_zero</A>         
+ </TD><TD COLSTART="2"> zero an array   </TD><TD COLSTART="3"></TD></TR><TR><TD
+COLSTART="1">     <A HREF="ga.ops.html#ga_ddot">ga_ddot</A>           </TD><TD
+COLSTART="2"> dot product of two arrays (doubles only)  </TD><TD COLSTART="3"></TD></TR>
+<TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_zdot">ga_zdot</A>          
+</TD><TD COLSTART="2"> dot product of two arrays (double complex only)  </TD><TD
+COLSTART="3"></TD></TR><TR><TD COLSTART="1">    
+<A HREF="ga.ops.html#ga_scale">ga_scale</A>          </TD><TD COLSTART="2">
+scale the elements in an array by a constant  </TD><TD COLSTART="3"></TD></TR><TR><TD
+ COLSTART="1">     <A HREF="ga.ops.html#ga_add">ga_add</A>            </TD><TD
+COLSTART="2"> scale and add two arrays to put result in a third                
+            (may overwrite one of the other two)  </TD><TD COLSTART="3"></TD></TR><TR
+><TD COLSTART="1">     <A HREF="ga.ops.html#ga_copy">ga_copy</A>          
+</TD><TD COLSTART="2"> copy one array into another  </TD><TD COLSTART="3"></TD></TR>
+<TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_dgemm">ga_dgemm</A>        
+ </TD><TD COLSTART="2"> BLAS-like matrix multiply   </TD><TD COLSTART="3"></TD></TR>
+<TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_ddot_patch">ga_ddot_patch</A>
+    </TD><TD COLSTART="2"> dot product of two patches (doubles only)  </TD><TD
+COLSTART="3"></TD></TR><TR><TD COLSTART="1">    
+<A HREF="ga.ops.html#ga_zdot_patch">ga_zdot_patch</A>     </TD><TD COLSTART="2">
+dot product of two patches (double complex only)  </TD><TD COLSTART="3"></TD></TR><TR
+><TD COLSTART="1">     <A HREF="ga.ops.html#ga_scale_patch">ga_scale_patch</A>
+   </TD><TD COLSTART="2"> scale the elements in an array by a constant         
+                   (patch version)  </TD><TD COLSTART="3"></TD></TR><TR><TD
+COLSTART="1">     <A HREF="ga.ops.html#ga_add_patch">ga_add_patch</A>     
+</TD><TD COLSTART="2"> scale and add two arrays to put result in a third       
+                     (patch version)  </TD><TD COLSTART="3"></TD></TR><TR><TD
+COLSTART="1">     <A HREF="ga.ops.html#ga_matmul_patch">ga_matmul_patch</A>  
+</TD><TD COLSTART="2"> matrix multiply (patch version)   </TD><TD COLSTART="3"></TD></TR>
+<TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_diag">ga_diag</A>          
+      </TD><TD COLSTART="2"> real symmetric generalized eigensolver (sequential
+version also            exists)</TD><TD COLSTART="3"> <A HREF="#peigs">*</A> 
+</TD></TR><TR><TD COLSTART="1">    <A HREF="ga.ops.html#ga_diag_reuse">ga_diag_reuse</A>
+     </TD><TD COLSTART="2"> a version of <A HREF="ga.ops.html#ga_diag">ga_diag</A>
+           for repeated use </TD><TD COLSTART="3"> <A HREF="#peigs">*</A>    
+</TD></TR><TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_diag_std">ga_diag_std</A>
+            </TD><TD COLSTART="2"> standard real symmetric eigensolver
+(sequential version also exists)      </TD><TD COLSTART="3"> <A HREF="#peigs">*</A>
+ </TD></TR><TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_symmetrize">ga_symmetrize</A>
+    </TD><TD COLSTART="2"> symmetrize a matrix  </TD><TD COLSTART="3"></TD></TR><TR
+><TD COLSTART="1">     <A HREF="ga.ops.html#ga_transpose">ga_transpose</A>   
+  </TD><TD COLSTART="2"> transpose a matrix  </TD>
 
-<h3> Operations intended to support writing new functions </h3>
+<TD COLSTART="3"></TD></TR><TR><TD COLSTART="1">     
+<A HREF="ga.ops.html#ga_lu_solve">ga_lu_solve</A>          
+  </TD><TD COLSTART="2"> solve system of linear equations based on LU factorization
+            (sequential version also exists) 
+</TD><TD COLSTART="3"> <A HREF="#scalapack">**</A>  
 
-<table>
-    <TR><TD>   <A href="ga.ops.html#ga_access">ga_access</A>         <TD> access 'local' elements of global array
-    <TR><TD>   <A href="ga.ops.html#ga_release">ga_release</A>        <TD> relinquish access to 'local' data
-    <TR><TD>   <A href="ga.ops.html#ga_release_update">ga_release_update</A> <TD> relinquish access after data were updated 
-    <TR><TD>  <A href="ga.ops.html#ga_check_handle">ga_check_handle</A>   <TD> verify that a GA handle is valid
-</table>
+<TD COLSTART="3"></TD></TR><TR><TD COLSTART="1">
+<A HREF="ga.ops.html#ga_llt_solve">ga_llt_solve</A>
+  </TD><TD COLSTART="2"> solve system of linear equations with SPD coeffcient matrix based on Cholesky factorization
+</TD><TD COLSTART="3"> <A HREF="#scalapack">**</A>
+
+<TD COLSTART="3"></TD></TR><TR><TD COLSTART="1">
+<A HREF="ga.ops.html#ga_solve">ga_solve</A>
+  </TD><TD COLSTART="2"> solve system of linear equations trying first Cholesky and then LU factorization
+</TD><TD COLSTART="3"> <A HREF="#scalapack">**</A>
+
+<TD COLSTART="3"></TD></TR><TR><TD COLSTART="1">
+<A HREF="ga.ops.html#ga_spd_invert">ga_spd_invert</A>
+  </TD><TD COLSTART="2"> inverts an SPD matrix
+</TD><TD COLSTART="3"> <A HREF="#scalapack">**</A>
+
+<TD COLSTART="3"></TD></TR><TR><TD COLSTART="1">
+<A HREF="ga.ops.html#ga_cholesky">ga_cholesky</A>
+  </TD><TD COLSTART="2"> performs Cholesky factorization of an SPD matrix
+</TD><TD COLSTART="3"> <A HREF="#scalapack">**</A>
+
+</TD></TR><TR><TD COLSTART="1">    
+<A HREF="ga.ops.html#ga_copy_patch">ga_copy_patch</A>     </TD><TD COLSTART="2">
+copy data from a patch of one global array                             into
+another array  </TD><TD COLSTART="3"></TD> 
+</TR>
+</TABLE>
+<H3> <A NAME="sOps.1.3"></A>Other collective utility operations </H3> 
+<TABLE>
+ <TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_fill_patch">ga_fill_patch</A>
+    </TD><TD COLSTART="2"> fill a patch of array with value
+</TD></TR><TR><TD COLSTART="1">      <A HREF="ga.ops.html#ga_summarize">ga_summarize</A>
+     </TD><TD COLSTART="2"> print information about already allocated arrays 
+</TD></TR><TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_print_patch">ga_print_patch</A>
+   </TD><TD COLSTART="2"> print a patch of an array to the screen   </TD></TR><TR><TD
+ COLSTART="1">     <A HREF="ga.ops.html#ga_print">ga_print</A>          </TD><TD
+COLSTART="2"> print an entire array to the screen  </TD></TR><TR><TD
+COLSTART="1">     <A HREF="ga.ops.html#ga_compare_distr">ga_compare_distr</A> 
+</TD><TD COLSTART="2"> compare distributions of two global arrays  </TD></TR><TR><TD
+ COLSTART="1">       <A HREF="ga.ops.html#ga_summarize">ga_summarize</A>     
+</TD><TD COLSTART="2"> prints summary info about allocated arrays  </TD>  
+</TR>
+</TABLE>
+<H3><A NAME="sOps.1.4"></A>Operations to support portability between
+implementations </H3> 
+<TABLE>
+ <TR><TD COLSTART="1">      <A HREF="ga.ops.html#ga_dgop">ga_dgop</A>        
+  </TD><TD COLSTART="2"> reduce operation (double precision)  </TD></TR><TR><TD
+COLSTART="1">     <A HREF="ga.ops.html#ga_igop">ga_igop</A>           </TD><TD
+COLSTART="2"> reduce operation (integer)  </TD></TR><TR><TD COLSTART="1">    
+<A HREF="ga.ops.html#ga_brdcst">ga_brdcst</A>         </TD><TD COLSTART="2">
+broadcast operation
+</TD>  
+</TR>
+</TABLE>
+<H2> <A NAME="sOps.2"></A>Non-Collective Operations </H2> 
+<P> These operations  may be invoked by any process in task-parallel MIMD style
+</P> 
+<H3> <A NAME="sOps.2.1"></A>Elementary operations </H3>
+<TABLE>
+  <TR><TD COLSTART="1"> <A HREF="ga.ops.html#ga_get">ga_get</A>           
+</TD><TD COLSTART="2"> read from a patch of an array
+</TD></TR><TR><TD COLSTART="1">      <A HREF="ga.ops.html#ga_put">ga_put</A> 
+          </TD><TD COLSTART="2"> write to a patch of an array  </TD></TR><TR><TD
+COLSTART="1">     <A HREF="ga.ops.html#ga_acc">ga_acc</A>            </TD><TD
+COLSTART="2"> accumulate into a patch of an array (double                      
+      precision or complex only)
+</TD></TR><TR><TD COLSTART="1">      <A HREF="ga.ops.html#ga_scatter">ga_scatter</A>
+       </TD><TD COLSTART="2"> scatter elements into an array
+</TD></TR><TR><TD COLSTART="1">      <A HREF="ga.ops.html#ga_gather">ga_gather</A>
+        </TD><TD COLSTART="2"> gather elements from an array
+</TD></TR><TR><TD COLSTART="1">      <A HREF="ga.ops.html#ga_read_inc">ga_read_inc</A>
+      </TD><TD COLSTART="2"> atomically read and increment the value of        
+                    a single integer array element
+</TD></TR><TR><TD COLSTART="1">      <A HREF="ga.ops.html#ga_locate">ga_locate</A>
+        </TD><TD COLSTART="2"> determine which process 'holds' an array element
+</TD></TR><TR><TD COLSTART="1">      <A HREF="ga.ops.html#ga_locate_region">ga_locate_region</A>
+ </TD><TD COLSTART="2"> determine which process 'holds' an array section    
+</TD></TR><TR><TD COLSTART="1">   <A HREF="ga.ops.html#ga_distribution">ga_distribution</A>
+  </TD><TD COLSTART="2"> find coordinates of the array patch that is 'held' by
+a processor 
+</TD></TR><TR><TD COLSTART="1">      <A HREF="ga.ops.html#ga_error">ga_error</A>
+         </TD><TD COLSTART="2"> print error message and terminate the program  
+</TD></TR><TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_init_fence">ga_init_fence</A>
+    </TD><TD COLSTART="2"> traces completion of data movement operations  
+</TD></TR><TR><TD COLSTART="1">     <A HREF="ga.ops.html#ga_fence">ga_fence</A>
+         </TD><TD COLSTART="2"> blocks until the initiated communication
+completes   </TD></TR><TR><TD COLSTART="1">   
+<A HREF="ga.ops.html#ga_nodeid">ga_nodeid</A>         </TD><TD COLSTART="2">
+find requesting compute process ID  </TD></TR><TR><TD COLSTART="1">     
+<A HREF="ga.ops.html#ga_nnodes">ga_nnodes</A>         </TD><TD COLSTART="2">
+find number of compute processes 
+</TD> 
+</TR>
+</TABLE>
+<H3> <A NAME="sOps.2.2"></A>Operations intended to support writing new functions
+</H3> 
+<TABLE>
+    <TR><TD COLSTART="1">   <A HREF="ga.ops.html#ga_access">ga_access</A>    
+    </TD><TD COLSTART="2"> access 'local' elements of global array     </TD></TR><TR
+><TD COLSTART="1">   <A HREF="ga.ops.html#ga_release">ga_release</A>       
+</TD><TD COLSTART="2"> relinquish access to 'local' data     </TD></TR><TR><TD
+COLSTART="1">   <A HREF="ga.ops.html#ga_release_update">ga_release_update</A>
+</TD><TD COLSTART="2"> relinquish access after data were updated      </TD></TR><TR
+><TD COLSTART="1">  <A HREF="ga.ops.html#ga_check_handle">ga_check_handle</A>
+  </TD><TD COLSTART="2"> verify that a GA handle is valid
+</TD>  
+</TR>
+</TABLE>
+<H3> <A NAME="sOps.2.3"></A>Other utility operations </H3> 
+<TABLE>
+  <TR><TD COLSTART="1">      <A HREF="ga.ops.html#ga_inquire">ga_inquire</A> 
+      </TD><TD COLSTART="2"> find the type and dimensions of the array  </TD></TR><TR
+><TD COLSTART="1">       <A HREF="ga.ops.html#ga_inquire_name">ga_inquire_name</A>
+  </TD><TD COLSTART="2"> find the name of the array   </TD></TR><TR><TD
+COLSTART="1">      <A HREF="ga.ops.html#ga_inquire_memory">ga_inquire_memory</A>
+</TD><TD COLSTART="2"> find the amount of memory in active arrays   </TD></TR><TR><TD
+ COLSTART="1">       <A HREF="ga.ops.html#ga_memory_avail">ga_memory_avail</A>
+  </TD><TD COLSTART="2"> find the amount of memory left for GA   </TD></TR><TR><TD
+ COLSTART="1">       <A HREF="ga.ops.html#ga_uses_ma">ga_uses_ma</A>       
+</TD><TD COLSTART="2"> finds if memory in global arrays comes from MA          
+                   (memory allocator)   </TD></TR><TR><TD COLSTART="1">     
+<A HREF="ga.ops.html#ga_memory_limited">ga_memory_limited</A> </TD><TD
+COLSTART="2"> finds if limits were set for memory usage in global arrays  </TD></TR>
+<TR><TD COLSTART="1">       <A HREF="ga.ops.html#ga_proc_topology">ga_proc_topology</A>
+ </TD><TD COLSTART="2"> finds block coordinates for the array section          
+                  held by a processor   </TD></TR><TR><TD COLSTART="1">     
+<A HREF="ga.ops.html#ga_list_nodeid">ga_list_nodeid</A>    </TD><TD
+COLSTART="2"> returns message-passing process id for GA processes  </TD></TR><TR><TD
+ COLSTART="1">     <A HREF="ga.ops.html#ga_print_stats">ga_print_stats</A>    
+     </TD><TD COLSTART="2"> prints misc. execution statistics to the screen 
+</TD> 
+</TR>
+</TABLE>
 
 
-<h3> Other utility operations </h3>
-
-<table>
-  <TR><TD>      <A href="ga.ops.html#ga_inquire">ga_inquire</A>        <TD> find the type and dimensions of the array
- <TR><TD>       <A href="ga.ops.html#ga_inquire_name">ga_inquire_name</A>   <TD> find the name of the array
-  <TR><TD>      <A href="ga.ops.html#ga_inquire_memory">ga_inquire_memory</A> <TD> find the amount of memory in active arrays 
- <TR><TD>       <A href="ga.ops.html#ga_memory_avail">ga_memory_avail</A>   <TD> find the amount of memory left for GA 
- <TR><TD>       <A href="ga.ops.html#ga_uses_ma">ga_uses_ma</A>        <TD> finds if memory in global arrays comes from MA 
-                            (memory allocator)
-  <TR><TD>      <A href="ga.ops.html#ga_memory_limited">ga_memory_limited</A> <TD> finds if limits were set for memory usage in global arrays
- <TR><TD>       <A href="ga.ops.html#ga_proc_topology">ga_proc_topology</A>  <TD> finds block coordinates for the array section
-                            held by a processor
-  <TR><TD>      <A href="ga.ops.html#ga_list_nodeid">ga_list_nodeid</A>    <TD> returns message-passing process id for GA processes
- <TR><TD>     <A href="ga.ops.html#ga_print_stats">ga_print_stats</A>          <TD> prints misc. execution statistics to the screen
-
-</table>
-
-<p>
-
-  Note that consistency is only guaranteed for
-
-</p>
-
-<ol type=i>
-
-    <LI>      Multiple read operations (as the data does not change)
-    <LI>      Multiple accumulate operations (as addition is commutative) 
-    <LI>      Multiple disjoint put operations (as there is only one writer 
-               for each element)
-</ol>
-
-<p>
-   The application has to worry about everything else (usually by
-      appropriate insertion of <A href="ga.ops.html#ga_sync">ga_sync</A> calls)
-</p>
-
-<h1 align=center> <a name="s2"> Status of Current Implementation</a> (version 2.2) </h1>
-
-<p>
-
- There are two classes of platforms that GA work on: 
-
-</P>
-
-<H2> Network of (possibly multiprocessor) machines </h2>
-
+<H1 ALIGN="center"> <A NAME="sStat"> Status of Current Implementation</A>
+(version 2.2) </H1>  
+<H2><A NAME="sStat.1">Supported Platforms</A></H2>
 <P>
-
- using the data-server/compute-nodes model where each machine needs an
-     additional process (data-server) that services requests for the
-     data. Therefore, number of processes specified in the TCGMSG *.p
-     file minus one are considered to be compute nodes, and remaining
-     ones are the data servers. Data servers use shared memory to
-     access the data on local machine.
+  There are two classes of platforms that GA work on:  
+</P>
+<H3>Network of  shared-memory machines</H3>
+<P>
+  The implementation uses   data-server/compute-node model where each machine
+needs an   additional process (data-server) that services requests for the  
+data. Therefore,  the number of processes started by the user on each machine minus
+one are considered to be compute nodes, and remaining  ones are the data
+servers. Data servers use shared memory to  access the data on local
+machine.
 </P>
 <P>
-
-     Example .p file for one 4-processor and one 8-processor workstations:
-
-</P>
-
-<pre>
+      For example, the TCGMSG .p file describing the process configuration for one 4-processor and one 8-processor workstations: 
+</P> 
+<PRE>
 
          d3h325 coho 4 /usr/people/d3h325/g/global/testing/test.x /tmp
          d3h325 bohr 8 /usr/people/d3h325/g/global/testing/test.x /tmp
 
-</pre>
-
+</PRE> 
 <P>
-
- defines 10 compute processes and 2 data-servers (one on coho and 
-     one on bohr).
-
-
-</P>
-
+  defines 10 compute processes and 2 data-servers (one on <TT>coho</TT> and    
+  one on
+<TT>bohr</TT>).  
+</P> 
 <P>
- Single (possibly multiprocessor) machines with shared memory
-     like:  the KSR-2, workstations, and even Cray T3D are in fact a
-     special case of 1).  The shared memory implementation uses TCGMSG
-     (in the future MPI) to fork all the processes (except for the Cray
-     T3D) and implement ga_brdcst and <A
-     href="ga.ops.html#ga_dgop">ga_dgop</A>. There are no data server
-     processes; therefore, all the specified processes/processors are
-     used for computations.
-
-</P>
-
-<H2> True message-passing MPP architectures </h2>
-
+ Single (possibly multiprocessor) machines with shared  or globally-addressable
+memory      like:  the KSR-2, workstations, and even Cray T3D are in fact a  
+special case of 1).  The  System V shared memory implementation uses TCGMSG   or
+MPI to fork all the processes  and implement <A HREF="ga.ops.html%23ga_brdcst">ga_brdcst</A>
+and <A HREF="ga.ops.html#ga_dgop">ga_dgop</A>. There are no data server 
+processes; therefore, all the specified processes/processors are      used for
+computations. 
+</P> 
+<H3> Message-passing distributed-memory MPP architectures </H3> 
 <P>
-
- with interrupt communication
-     available: the Intel IPSC, Delta, Paragon with the NX, and the IBM SP-1/2
-     with the EUIH or MPL message passing library. 
-
+  The implementation uses interrupt-driven communication   on the Intel
+IPSC/XXX, Delta, Paragon with the NX, and the IBM SP with the MPL message
+passing library.  There are no data-server processes: all processes execute
+application code. 
 </P>
-
+<H2><A NAME="sStat.2">Selection of message-passing library</A></H2> 
 <P>
-  Starting with version 2.1, Global Arrays works with either TCGMSG or
-  MPI message-passing librarries.  TCGMSG still is and going to be the
-  default library for a while until MPI implementations mature. There are 
-  two possible interfaces between GA and MPI:
-
-</P>
-
+  Starting with version 2.1, Global Arrays works with either TCGMSG or   MPI
+message-passing libraries.  That means that GA applications can use either of
+these libraries. Selection of the message-passing library takes place when GA is
+built. TCGMSG is included with the GA distribution package and selected by
+default. </P>
+<P>There are   three  possible configurations for running  GA with the
+message-passing libraries: 
+</P> 
 <OL>
-
 <LI>
- TCGMSG emulation library, TCGMSG-MPI, that implements functionality
-        of TCGMSG using MPI and other techniques. In this mode, message-
-        passing library is initialized using TCGMSG PBEGIN(F) which
-        internally calls MPI_Initialize. In this mode, TCGMSG-MPI might
-        'steal' one process from the application to implement NXTVAL
-        operation. To enable this mode, define environmental variable
-        USE_MPI and MPI_LIB and MPI_INCLUDE which should point to the 
-        location of the MPI library and include directories. 
+ with TCGMSG</LI>
+<LI> with TCGMSG emulation library:  TCGMSG-MPI, that implements functionality 
+  of TCGMSG using MPI. In this mode, message- passing library is initialized
+using TCGMSG <EM>PBEGIN(F)</EM> call which   internally refernces
+<EM>MPI_Initialize</EM>. Please note that TCGMSG-MPI might  'steal' one process
+from the application to implement  TCGMSG <EM>NXTVAL</EM>  operation. To enable
+this mode, define environmental variable        <EM>USE_MPI</EM>. </LI>
 <LI>
- Direct MPI-GA interface. In this mode, GA program should contain 
-        MPI initialization calls instead PBEGIN(F).
+ directly with MPI. In this mode, GA program should contain  MPI initialization
+calls instead PBEGIN(F). 
+</LI> 
+</OL>  
+<P>For MPI versions, the optional  environmental variables <EM>MPI_LIB</EM>
+and <EM>MPI_INCLUDE</EM> are used to point to the  location of the MPI library
+and include directories if they are not in the standard system location(s).   GA
+programs are started with the mechanism that   any other MPI programs use on the
+given platform. </P>  
 
-</OL>
+<H2> <A NAME="sStat.3">Interface to ScaLAPACK</A> </H2> 
 
-<P>
+<p>
+  Interface routines to ScaLAPACK are only available with MPI, and
+  of course with ScaLAPACK. The user is required to define environment
+  variables USE_SCALAPACK, and location of ScaLAPACK & Co. libraries
+  in variable SCALAPACK. 
 
- In both the cases, GA programs are started with the mechanism that
-  any other MPI programs use on the given platform. In particular,
-  neither the TCGMSG parallel command nor .p file is used.
+<p>
+  Since there are certain interdependencies between blacs and
+  blacsF77cinit, some system might require specification of -lblacs
+  on link command twice to fix the unresolved external symbols from these libs.
 
+<p>
+  On machines that do not have 'native' implementation of TCGMSG-MPI nxtval
+  operation (see README in tcgmsg-mpi directory), it is required to modify
+  a BLACS file blacs_pinfo_.c to substitute MPI_COMM_WORLD with the
+  communicator returned from ga_mpi_communicator routine.
 </p>
 
-<H1 align=center> <a name="s3">How Your Program Should Look Like</a> </h1>
 
-<H3> with TCGMSG or TCGMSG-MPI (GA-MPI interface 1) library: </h3>
 
+<H2> <A NAME="sStat.4">Compiler Flags</A> </H2> 
+<P>
+ Please refer to compiler flags in file Makefile.h to make sure that    Fortran
+and C compiler flags are consistent with flags use   to    compile your
+application. This may be critical when fortran compiler    flags are used to
+change default length of integer datatype.
+</P> 
+
+<H1 ALIGN="center"> <A NAME="sLook">How Your Program Should Look Like</A> </H1> 
+<H3> When GA runs with TCGMSG or TCGMSG-MPI </H3> 
 <PRE>
 
 
   call pbeginf()                  ! start TCGMSG
   status = ma_init(..)            ! start memory allocator if required
-  call <A href="ga.ops.html#ga_initialize">ga_initialize</A>()            ! start global arrays
+  call <A HREF="ga.ops.html#ga_initialize">ga_initialize</A>()            ! start global arrays
 
   .... do work
 
-  call <A href="ga.ops.html#ga_terminate">ga_terminate</A>()             ! tidy up global arrays
+  call <A HREF="ga.ops.html#ga_terminate">ga_terminate</A>()             ! tidy up global arrays
   call pend()                     ! tidy up tcgmsg
   stop                            ! exit program
 
-</pre>
-
-<H3> with MPI  (GA-MPI interface 2) library: </h3>
-
+</PRE> 
+<H3> When GA runs with MPI</H3> 
 <PRE>
 
   call MPI_Initialize()           ! start MPI
   status = ma_init(..)            ! start memory allocator if required
-  call <A href="ga.ops.html#ga_initialize">ga_initialize</A>()            ! start global arrays
+  call <A HREF="ga.ops.html#ga_initialize">ga_initialize</A>()            ! start global arrays
 
   .... do work
 
-  call <A href="ga.ops.html#ga_terminate">ga_terminate</A>()             ! tidy up global arrays
+  call <A HREF="ga.ops.html#ga_terminate">ga_terminate</A>()             ! tidy up global arrays
   call MPI_Finalize()             ! tidy up MPI
   stop                            ! exit program
 
 
-</pre>
-
+</PRE> 
 <P>
-
- The ma_init call looks like
-
-
-</p>
-
+  The ma_init call looks like : 
+</P> 
 <PRE>
 
   status = ma_init(type, stack_size, heap_size)
 
-</pre>
-
+</PRE> 
 <P>
-
-  and it basically just goes to the OS and gets stack_size+heap_size
-  elements of size type.  On distributed memory platforms, if you
-  allocate a global array of size N elements, you need to ensure that
-  the call to ma_init gets at least N/(no. of GA processes) elements
-  per process. 
-
-
-</P>
-
-<h3> <a name="s3.1">Compiler Flags</a> </h3>
-
+   and it basically just goes to the OS and gets stack_<EM>size+heap</EM>_size 
+ elements of size <EM>type</EM>.  On distributed memory platforms, if you  
+allocate a global array of size <EM>N</EM> elements, you need to ensure that  
+the call to ma_init gets at least
+<EM>N/(no. of GA processes)</EM> elements   per process.   
+</P>    
+<H1 ALIGN="center"> <A NAME="sMsg"> Message-Passing in GA Programs</A> </H1> 
 <P>
- Please refer to compiler flags in file Makefile.h to make sure that
-   Fortran and C compiler flags are consistent with flags use   to
-   compile your application. This may be critical when fortran compiler
-   flags are used to change default length of integer datatype.
-</p>
-
-
-<h1 align=center> <a name="s4"> Message-Passing in GA Programs</a> </h1>
-
-<P>
-
-There are two issues to be aware of when using message-passing in GA
-  programs:
-
-</p>
-
-<ol>
-
+ There are two issues to be aware of when using message-passing in GA  
+programs: 
+</P> 
+<OL>
 <LI>
-
- Process count and numbering. In the network environment,
-       some message-passing processes are hiden from the application
-       when GA is initialized. This will cause that <A
-       href="ga.ops.html#ga_nodeid">ga_nodeid</A>() and <A
-       href="ga.ops.html#ga_nnodes">ga_nnodes</A>() return values
-       inconsistent with the process rank/count values obtained from
-       the message-passing library. The GA routine <A
-       href="ga.ops.html#ga_list_nodeid">ga_list_nodeid</A>() could be
-       used to transform GA process ID/rank into the message-passing
-       process ID/rank. In addition, with MPI library, C-language
-       routine <A href="ga.ops.html#ga_mpi_communicator">ga_mpi_communicator</A>
-       provides communicator for the GA processes.  This operation is
-       unavailable if the original TCGMSG library is used. <A
-       href="ga.ops.html#ga_mpi_communicator">ga_mpi_communicator</A>
-       cannot be called from Fortran since there is no mechanism in MPI
-       for passing handles between C and Fortran. Contact MPI Forum for
-       fixing this problem !
-
+  <B>Process count and numbering</B>. In the network environment,        some
+message-passing processes are hiden from the application        when GA is
+initialized. This will cause that <A HREF="ga.ops.html#ga_nodeid">ga_nodeid</A>()
+and <A HREF="ga.ops.html#ga_nnodes">ga_nnodes</A>() return values       
+inconsistent with the process rank/count values obtained from        the
+message-passing library. The GA routine <A HREF="ga.ops.html#ga_list_nodeid">ga_list_nodeid</A>()
+could be        used to transform GA process ID/rank into the message-passing   
+    process ID/rank. In addition, with MPI library, C-language        routine
+<A HREF="ga.ops.html#ga_mpi_communicator">ga_mpi_communicator</A>       
+provides communicator for the GA processes.  This operation is       
+unavailable if the original TCGMSG library is used.
+<A HREF="ga.ops.html#ga_mpi_communicator">ga_mpi_communicator</A>        cannot
+be called from Fortran since there is no mechanism in MPI        for passing
+handles between C and Fortran. Contact MPI Forum for        fixing this problem
+! 
+</LI>
 <LI>
-
- Synchronization. The current implementation of interrupt-receive
-       on the IBM SP requires that in order to avoid deadlock, GA
-       application must synchronize (<A
-       href="ga.ops.html#ga_sync">ga_sync</A>()) before and after
-       message-passing communication calls. This means that GA and
-       message-passing communication must be separated into different
-       phases.
-
-     
-</ol>
-
-<pre>
+  <B>Synchronization</B>. The current implementation of interrupt-receive      
+ on the IBM SP requires that in order to avoid deadlock, GA        application
+must synchronize (<A HREF="ga.ops.html#ga_sync">ga_sync</A>()) before and after
+       message-passing communication calls. This means that GA and       
+message-passing communication must be separated into different        phases.   
+   
+</LI> 
+</OL>
+<PRE>
 
            GA communication phase
 
@@ -426,82 +487,66 @@ There are two issues to be aware of when using message-passing in GA
            GA communication phase
                ...
         
-</pre>
-
-<H1 align=center> <a name="s5"> C Language  Interface</a> </H1>
-
+</PRE> 
+<H1 ALIGN="center"> <A NAME="sInt"> C Language  Interface</A> </H1> 
 <P>
-   Subroutines and functions listed above can be also called from C
-   programs.  The GA C language interface is rather minimalistic in
-   style.  There are two APIs (mixing allowed):
-
-<ol>
-<li>
-   C routine names are derived by adding an underscore at the end of the
-   operation names and including "global.h" header file. The GA routines that
-   require a character (string) argument have both C (no underscore
-   suffix) and Fortran (NOT TO BE USED BY C PROGRAMS) versions, for
-   example, <A href="ga.ops.html#ga_error">ga_error</A>, <A
-   href="ga.ops.html#ga_check_handle">ga_check_handle</A> or <A
-   href="ga.ops.html#ga_inquire_name">ga_inquire_name</A>. The reason
-   for having two separate versions is to avoid sometimes painful
-   Fortran to C character string conversion.
-
-<li>
-  For convenience purposes, starting with version 2.1, global.h header
-   file defines names for C routines as having GA_ prefix and no
-   underscore suffix, for example the C version of <A
-   href="ga.ops.html#ga_error">ga_error</A> is <A
-   href="ga.ops.html#ga_error">GA_error</A>. In addition,  see testc.c
-   or ga-mpi.c for the actual code examples. For the debugging purpose,
-   the programmer should be still aware of the actual naming convention
-   as described in the first API above.  
-</ol>
-
+   Subroutines and functions listed above can be also called from C    programs.
+ The GA C language interface is rather minimalistic in    style.  There are two
+APIs (mixing allowed): 
+</P>
+<OL>
+<LI>
+   C routine names are derived by adding an underscore at the end of the   
+operation names and including <EM>global.h</EM> header file. The GA routines
+that    require a character (string) argument have both C (no underscore   
+suffix) and Fortran (NOT TO BE USED BY C PROGRAMS) versions, for    example,
+<A HREF="ga.ops.html#ga_error">ga_error</A>,
+<A HREF="ga.ops.html#ga_check_handle">ga_check_handle</A> or
+<A HREF="ga.ops.html#ga_inquire_name">ga_inquire_name</A>. The reason    for
+having two separate versions is to avoid sometimes painful    Fortran to C
+character string conversion. 
+</LI>
+<LI>
+  For convenience purposes, starting with version 2.1, <EM>global.h</EM> header
+   file defines names for C routines as having GA_ prefix and no    underscore
+suffix, for example the C version of <A HREF="ga.ops.html#ga_error">ga_error</A>
+is
+<A HREF="ga.ops.html#ga_error">GA_error</A>. Please refer to the included with
+the distribution package programs  <EM>testc.c</EM>    or
+<EM>ga-mpi.c</EM> for the actual code examples. For the debugging purpose,   
+the programmer should be still aware of the actual naming convention    as
+described in the first API above.  
+</LI> 
+</OL>
 <P>
-
-  GA arguments are passed by pointers. For an example on how
-   to use GAs in C programs, see implementation of GA operations in
-   global.alg.c file, where some other GA routines are called.
-
-
-</p>
-
+   GA arguments are passed by pointers. For an example on how    to use GAs in C
+programs, see implementation of GA operations in    <EM>global.alg.c</EM> file,
+where some other GA routines are called.  
+</P> 
 <P>
-
- See "global.alg.c" for examples on how to use  <A href="ga.ops.html#ga_access">ga_access</A> in C.
-
+  See  file <EM>global.alg.c</EM> for examples on how to use 
+<A HREF="ga.ops.html#ga_access">ga_access</A> in C. 
 </P>
 <P>
-
-  For portability purposes, it is recommended to use in your C program 
-   DoublePrecision and Integer data types defined in "types.f2c.h" 
-   (included in "global.h" file).
-
-</p>
+   For portability purposes, it is recommended to use in your C program    
+DoublePrecision and Integer data types defined in file <EM>types.f2c.h</EM>   
+(included in <EM>global.h</EM> file). 
+</P>
 <P>
-
-  <A href="ga.ops.html#ga_access">ga_access</A> returns an index that
-  is used to reference the data with
-   respect to the data base arrays. This index corresponds to the
-   Fortran addressing convention so to use it in C, you need to
-   decrement it by one, for example DBL_MB[--index] provides value of
-   the first element.
-
-</p>
-
+   <A HREF="ga.ops.html#ga_access">ga_access</A> returns an index that   is
+used to reference the data with    respect to the data base arrays. This index
+corresponds to the    Fortran addressing convention so to use it in C, you need
+to    decrement it by one, for example <EM>DBL_MB[--index]</EM> provides value
+of    the first element. 
+</P> 
 <P>
-
- GA routines operate on DoublePrecision and Integer data. 
-   Identifiers for these data types (MT_F_DBL and MT_F_INT)
-   are defined in macommon.h that is located in the MA directory.
-</p>
-
-<hr>
-<pre>
-<A name="peigs">*</A>  - interface to PEIGS
-<A name="scalapack">**</A> - interface to ScaLAPACK
-</pre>
-
-
-      </BODY></HTML>
+  GA routines operate on DoublePrecision and Integer data.     Identifiers for
+these data types (<EM>MT_F_DBL</EM> and <EM>MT_F_INT</EM>)    are defined in
+file  <EM>macommon.h</EM> that is located in the MA directory.
+</P> 
+<HR>
+<p>Footnotes:</p>
+<PRE>
+<A NAME="peigs">*</A>  - interface to PEIGS
+<A NAME="scalapack">**</A> - interface to ScaLAPACK
+</PRE>         </BODY></HTML>

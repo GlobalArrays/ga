@@ -439,7 +439,7 @@
 
       character trans           [input]          ! transpose or not transpose 
       integer g_a               [input]          ! coefficient matrix
-      integer g_b               [output/output]  ! rhs matrix
+      integer g_b               [output/output]  ! rhs/solution matrix
 
 </listing>
 <P>
@@ -452,6 +452,127 @@
       Array g_b is overwritten by the solution matrix X.
 </P>
 <HR>
+
+
+<H2> <A name="ga_cholesky"> GA_CHOLESKY </A> </H2>
+<listing>
+      integer function ga_cholesky(uplo, g_a)
+      character uplo            [input]           ! lower/upper triangle
+      integer g_a               [input/output]    ! matrix
+
+</listing>
+<P>
+      Computes Cholesky factorization for an SPD matrix. The result
+      overwrites the original matrix.
+
+      The input flag uplo ('L' or 'U') determines if lower or upper
+      triangular matrix is created.
+
+<P>
+      It returns
+<pre>
+            = 0 : successful exit
+            > 0 : the leading minor of this order
+                  is not positive definite and the
+                  factorization could not be completed
+</pre>
+<HR>
+
+
+
+<H2> <A name="ga_spd_invert"> GA_SPD_INVERT </A> </H2>
+<listing>
+      integer function ga_spd_invert(g_a)
+      integer g_a               [input/output]    ! matrix
+
+</listing>
+<P>
+      It computes the inverse of a  double precision
+      using the Cholesky factorization of a NxN double
+      precision symmetric positive definite global array A.
+
+      On successful exit A will contain the inverse.
+
+<P>
+      It returns
+<pre>
+            = 0 : successful exit
+            > 0 : the leading minor of this order is not positive
+                  definite and the factorization could not be completed
+            < 0 : it returns the index i of the (i,i)
+                  element of the factor L/U that is zero and
+                  the inverse could not be computed
+</pre>
+<HR>
+
+
+
+<H2> <A name="ga_llt_solve"> GA_LLT_SOLVE </A> </H2>
+<listing>
+      integer function ga_llt_solve(g_a, g_b)
+      integer g_a               [input]          ! coefficient matrix
+      integer g_b               [output/output]  ! rhs/solution matrix
+
+</listing>
+<P>
+      Solves a system of linear equations
+<pre>
+               A * X = B
+
+</pre>
+<P>
+      using the Cholesky factorization of an NxN double precision
+      symmetric positive definite matrix A (stored in g_a).
+
+      On successful exit B will contain the solution X.
+
+<P>
+      It returns
+<pre>
+            = 0 : successful exit
+            > 0 : the leading minor of this order is not positive
+                  definite and the factorization could
+                  not be completed
+</pre>
+<HR>
+
+
+
+<H2> <A name="ga_solve"> GA_SOLVE </A> </H2>
+<listing>
+      integer function ga_solve(g_a, g_b)
+      integer g_a               [input]          ! coefficient matrix
+      integer g_b               [output/output]  ! rhs/solution matrix
+
+</listing>
+<P>
+      Solves a system of linear equations
+<pre>
+               A * X = B
+
+</pre>
+<P>
+      It first will call the Cholesky factorization routine and, if
+      sucessfully, will solve the system with the Cholesky solver. If
+      Cholesky will be not be able to factorize A, then it will call
+      the LU factorization routine and will solve the system with
+      forward/backward substitution.
+
+      On exit B will contain the solution X.
+
+<P>
+      It returns
+<pre>
+            = 0 : Cholesky factoriztion was succesful
+            > 0 : the leading minor of this order
+                  is not positive definite, Cholesky factorization
+                  could not be completed and LU factoriztion was used
+</pre>
+<HR>
+
+
+
+
 
 <H2> <A name="ga_dgemm"> GA_DGEMM </A> </H2>
 <listing>
