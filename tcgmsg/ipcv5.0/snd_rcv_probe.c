@@ -1,11 +1,21 @@
 #include "srftoc.h"
 #include "tcgmsg.h"
 #include "tcgmsgP.h"
+#include <stdlib.h>
 
 extern long MatchShmMessage();
+extern void msg_wait();
 extern long DEBUG_;
 
-static msgids[MAX_PROC];
+#define INVALID_NODE -3333      /* used to stamp completed msg in the queue */
+#define MAX_Q_LEN MAX_PROC           /* Maximum no. of outstanding messages */
+static  volatile long n_in_msg_q = 0;   /* actual no. in the message q */
+static  struct msg_q_struct{
+  long   msg_id;
+  long   node;
+  long   type;
+} msg_q[MAX_Q_LEN];
+
 
 long ProbeNode(type, node)
      long *type, *node;
@@ -115,7 +125,6 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 
   /* wait for a matching message */
   if(node==-1)   while(ProbeNode(type, &node) == 0);
-/*  fprintf(stderr,"me=%d out of ProbeNode %d\n",me, node);*/
   msg_rcv(ttype, buf, *lenbuf, lenmes, node); 
   *nodefrom = node;  
 
@@ -144,7 +153,6 @@ void SND_(type, buf, lenbuf, node, sync)
 {
   long status, msgid;
   long me = NODEID_();
-  void msg_wait();
   long msg_async_snd();
 
   if (DEBUG_) {
@@ -155,8 +163,17 @@ void SND_(type, buf, lenbuf, node, sync)
 
   if (*sync)
     msg_wait(msg_async_snd(*type, buf, *lenbuf, *node));
-  else
-    msgids[*node] = msg_async_snd(*type, buf, *lenbuf, *node);
+
+  else {
+
+    if (n_in_msg_q >= MAX_Q_LEN)
+      Error("SND: overflowing async Q limit", n_in_msg_q);
+
+    msg_q[n_in_msg_q].msg_id = msg_async_snd(*type, buf, *lenbuf, *node);
+    msg_q[n_in_msg_q].node   = *node;
+    msg_q[n_in_msg_q].type   = *type;
+    n_in_msg_q++;
+  }
 
   if (DEBUG_) {
       (void) printf("SND: me=%ld, to=%ld, len=%ld \n",
@@ -165,20 +182,53 @@ void SND_(type, buf, lenbuf, node, sync)
   }
 }
 
+
+int compare_msg_q_entries(const void* entry1, const void* entry2)
+{
+    /* nodes are nondistiguishable unless one of them is INVALID_NODE */
+    if( ((struct msg_q_struct*)entry1)->node ==
+        ((struct msg_q_struct*)entry2)->node)                 return 0;
+    if( ((struct msg_q_struct*)entry1)->node == INVALID_NODE) return 1;
+    if( ((struct msg_q_struct*)entry2)->node == INVALID_NODE) return -1;
+    return 0;
+}
+
+
 void WAITCOM_(nodesel)
      long *nodesel;
 /*
-  Wait for all messages (send/receive) to complete between
-  this node and node *nodesel or everyone if *nodesel == -1.
-*/
+ * Wait for all messages (send/receive) to complete between
+ * this node and node *nodesel or everyone if *nodesel == -1.
+ */
 {
-  if (*nodesel == -1) {
-    long node;
-    for (node=0; node<TCGMSG_nnodes; node++)
-      WAITCOM_(&node);
+  long i, status, nbytes, found = 0;
+
+  for (i=0; i<n_in_msg_q; i++) if(*nodesel==msg_q[i].node || *nodesel ==-1){
+
+    if (DEBUG_) {
+      (void) printf("WAITCOM: %ld waiting for msgid %ld, #%ld\n",NODEID_(),
+                    msg_q[i].msg_id, i);
+      (void) fflush(stdout);
+    }
+
+    msg_wait(msg_q[i].msg_id);
+
+    msg_q[i].node = INVALID_NODE;
+    found = 1;
+
+  }else if(msg_q[i].node == INVALID_NODE)Error("WAITCOM: invalid node entry",i);
+
+  /* tidy up msg_q if there were any messages completed  */
+  if(found){
+
+    /* sort msg queue only to move the completed msg entries to the end*/
+    /* comparison tests against the INVALID_NODE key */
+    qsort(msg_q, n_in_msg_q, sizeof(struct msg_q_struct),compare_msg_q_entries);
+
+    /* update msg queue length, = the number of outstanding msg entries left*/
+    for(i = 0; i< n_in_msg_q; i++)if(msg_q[i].node == INVALID_NODE) break;
+    if(i == n_in_msg_q) Error("WAITCOM: inconsitency in msg_q update", i);
+    n_in_msg_q = i;
+
   }
-  else if (msgids[*nodesel]) {
-    msg_wait(msgids[*nodesel]);
-    msgids[*nodesel] = 0;
-  }
-}  
+}
