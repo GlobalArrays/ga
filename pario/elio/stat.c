@@ -68,7 +68,7 @@ int  elio_stat(char *fname, stat_t *statinfo)
 	    ELIO_ERROR(STATFAIL, 1);
 
 #   if defined(PIOFS)
-        fprintf(stderr,"filesystem %d\n",ufs_stat.st_vfstype);
+    /*fprintf(stderr,"filesystem %d\n",ufs_stat.st_vfstype);*/
         /* according to /etc/vfs, "9" means piofs */
         if(ufs_stat.st_vfstype == 9) statinfo->fs = ELIO_PIOFS;
         else
