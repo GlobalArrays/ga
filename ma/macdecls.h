@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.4 1997-02-26 20:39:18 d3h325 Exp $
+ * $Id: macdecls.h,v 1.5 1997-12-09 02:13:58 d3g681 Exp $
  */
 
 /* 
@@ -36,6 +36,7 @@
  ** function types
  **/
 
+extern void    MA_trace();
 extern Boolean MA_alloc_get();
 extern Boolean MA_allocate_heap();
 extern Boolean MA_chop_stack();

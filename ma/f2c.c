@@ -1,5 +1,5 @@
 /*
- * $Id: f2c.c,v 1.5 1997-02-26 20:39:15 d3h325 Exp $
+ * $Id: f2c.c,v 1.6 1997-12-09 02:13:56 d3g681 Exp $
  */
 
 /*
@@ -339,6 +339,12 @@ public void f2c_print_stats_(printroutines)
 {
     MA_print_stats(*printroutines);
 }
+
+public void f2c_trace_(Integer *value)
+{
+    MA_trace(*value);
+}
+
 
 /* ------------------------------------------------------------------------- */
 /*

@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.13 1997-03-03 23:25:23 d3g681 Exp $
+ * $Id: ma.c,v 1.14 1997-12-09 02:13:57 d3g681 Exp $
  */
 
 /*
@@ -294,6 +294,10 @@ public MA_SingleComplex		ma_cb_scpl[2];	/* MT_C_SCPL */
 public MA_DoubleComplex		ma_cb_dcpl[2];	/* MT_C_DCPL */
 public MA_LongDoubleComplex	ma_cb_ldcpl[2];	/* MT_C_LDCPL */
 
+
+private int trace = 0;		/* If true print push/pop/alloc/free */
+
+/*
 /**
  ** macros
  **/
@@ -1711,6 +1715,14 @@ public void MAi_summarize_allocated_blocks(index_base)
  ** public routines
  **/
 
+/*
+  Control tracing of MA allocations
+  */
+public void MA_trace(Integer value)
+{
+    trace = value;
+}
+
 /* ------------------------------------------------------------------------- */
 /*
  * Convenience function that combines MA_allocate_heap and MA_get_index.
@@ -1757,6 +1769,9 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_allocate_heap]++;
 #endif /* STATS */
+
+    if (trace) 
+	(void) printf("ma: allocating \"%s\"(%d)\n", name, (int) nelem);
 
 #ifdef VERIFY
     if (ma_auto_verify && !MA_verify_allocator_stuff())
@@ -1942,6 +1957,9 @@ public Boolean MA_free_heap(memhandle)
     /* verify memhandle and convert to AD */
     if (!mh2ad(memhandle, &ad, BL_Heap, "MA_free_heap"))
         return MA_FALSE;
+
+    if (trace) 
+	(void) printf("ma: freeing \"%s\"\n", ad->name);
 
     /* delete block from used list */
     if (list_delete(ad, &ma_hused) != ad)
@@ -2466,6 +2484,9 @@ public Boolean MA_pop_stack(memhandle)
     if (!mh2ad(memhandle, &ad, BL_StackTop, "MA_pop_stack"))
         return MA_FALSE;
 
+    if (trace) 
+	(void) printf("ma: popping \"%s\"\n", ad->name);
+
     /* delete block from used list */
     if (list_delete(ad, &ma_sused) != ad)
     {
@@ -2599,6 +2620,9 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_push_stack]++;
 #endif /* STATS */
+
+    if (trace) 
+	(void) printf("ma: pushing \"%s\"(%d)\n", name, (int) nelem);
 
 #ifdef VERIFY
     if (ma_auto_verify && !MA_verify_allocator_stuff())

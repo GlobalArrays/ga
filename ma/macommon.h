@@ -1,5 +1,5 @@
 /*
- $Id: macommon.h,v 1.6 1997-11-04 10:01:03 d3e129 Exp $
+ $Id: macommon.h,v 1.7 1997-12-09 02:13:59 d3g681 Exp $
  */
 
 #ifndef _macommon_h
@@ -37,6 +37,7 @@
 #define MT_NUMTYPES	(MT_LAST - MT_FIRST + 1)
 
 #ifdef _CRAY
+#define f2c_trace_                              F2_TRACE
 #define ma_set_sizes_				MA_SET_SIZES
 #define f2c_alloc_get_				F2C_ALLOC_GET
 #define f2c_allocate_heap_			F2C_ALLOCATE_HEAP
