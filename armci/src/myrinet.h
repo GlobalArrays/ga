@@ -28,7 +28,7 @@
 #   define LONG_GET_THRESHOLD 66248
 #   define LONG_GET_THRESHOLD_STRIDED 3000
 # else
-#   define LONG_GET_THRESHOLD 266248
+#   define LONG_GET_THRESHOLD 1000000
 #   define LONG_GET_THRESHOLD_STRIDED 30000 
 # endif
 #define INTERLEAVE_GET_THRESHOLD 66248
@@ -49,9 +49,9 @@ typedef struct {
 #define GET_SEND_BUFFER armci_gm_getbuf
 #define FREE_SEND_BUFFER armci_gm_freebuf
 #else
-#define GET_SEND_BUFFER(x) (char*)(((armci_gm_context_t*)MessageSndBuffer)+1);
-/*        armci_client_send_complete((armci_gm_context_t*)MessageSndBuffer);
-*/
+#define GET_SEND_BUFFER(x) (char*)(((armci_gm_context_t*)MessageSndBuffer)+1);\
+        armci_client_send_complete((armci_gm_context_t*)MessageSndBuffer);
+
 #define FREE_SEND_BUFFER(x) 
 #endif
 

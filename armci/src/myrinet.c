@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.29 2001-06-08 23:23:17 d3h325 Exp $
+/* $Id: myrinet.c,v 1.30 2001-06-09 00:47:13 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -605,7 +605,8 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
                           armci_client_send_callback, context);
 
 #ifndef MULTIPLE_SEND_BUFS
-     armci_client_send_complete(context);
+/*     armci_client_send_complete(context);
+*/
 #endif
 
     return 0;
