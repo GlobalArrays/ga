@@ -195,8 +195,10 @@ void PEND_(void)
 #ifdef SYSV 
   if (TCGMSG_nodeid == 0 && TCGMSG_nnodes > 1) {
     int status;
+    int rc;
     status = WaitAll(TCGMSG_nnodes-1);       /* Wait for demise of children */
-    DeleteSharedRegion(TCGMSG_shmem_id);
+    rc=DeleteSharedRegion(TCGMSG_shmem_id);
+    printf("DeleteSharedMem returned %d\n",rc);
     if (status) exit(1);
   }
 #endif

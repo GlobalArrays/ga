@@ -63,7 +63,7 @@ EXTERN long TCGMSG_caught_sigint; /* True if SIGINT was trapped */
 #elif defined(LAPI)
 #     define SHMEM_BUF_SIZE (3*4096  - RESERVED)
 #else
-#     define SHMEM_BUF_SIZE (4*8192  - RESERVED)
+#     define SHMEM_BUF_SIZE (8*8192  - RESERVED)
 #endif
 
 typedef struct {

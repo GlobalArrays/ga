@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.30 2000-05-25 01:09:21 d3h325 Exp $
+c $Id: test.F,v 1.31 2000-08-23 16:59:06 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-11
@@ -77,7 +77,7 @@ c
          call ffflush(6)
       endif
 
-      call check_complex()
+*     call check_complex()
 c
 c***  Check support for integer arrays
 c
@@ -685,7 +685,6 @@ c
 c     
       end
 
-
 c-----------------------------------------------------------------
       subroutine check_complex()
       implicit none
@@ -894,7 +893,8 @@ c
          do i = 1, n, inc
 c           x = cmplx(util_drand(0),0.333d0)
 c           x = cmplx(0.333d0,0)
-            x = cmplx(0,0)
+*           x = cmplx(0d0,0d0)
+            x = 0 
             ilo = i
             ihi = min(i+inc-1, n)
             if(ihi.eq.n-1)ihi=n

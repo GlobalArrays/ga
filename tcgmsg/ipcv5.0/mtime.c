@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/mtime.c,v 1.3 1995-01-28 23:12:35 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/mtime.c,v 1.4 2000-08-23 16:59:06 d3h325 Exp $ */
 
 #include <stdio.h>
 #include "srftoc.h"
@@ -12,7 +12,7 @@ double TCGTIME_();
   return (long) (TCGTIME_()*100.0);
 }
 
-#if !(defined(KSR) || defined(ALLIANT) || defined(CRAY_T3D))
+#if !(defined(KSR) || defined(ALLIANT) || defined(CRAY_T3D)) 
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -23,7 +23,11 @@ static unsigned firstusec=0;    /* Reference for timer */
 void MtimeReset()               /* Sets timer reference */
 {
   struct timeval tp;
+#ifdef __INTERIX
+  char tzp[10];
+#else
   struct timezone tzp;
+#endif
   
   (void) gettimeofday(&tp,&tzp);
 
@@ -40,7 +44,11 @@ double TCGTIME_()
   double low, high;
 
   struct timeval tp;
+#ifdef __INTERIX
+  char tzp[10];
+#else
   struct timezone tzp;
+#endif
 
   if (firstcall) {
     MtimeReset();

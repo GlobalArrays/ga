@@ -55,6 +55,13 @@ ifeq ($(MACHINE),CYGNUS)
     EXTRA =  error.o busy.o async_send.o nxtval.shm.o memalign.o pbeginf.o synch.o
 endif
 
+ifeq ($(MACHINE),INTERIX)
+       CC = gcc
+       FC = g77
+   CFLAGS =  -O -DINTERIX -DSHMEM -DSYSV
+    EXTRA = $(OBJ_SYSV) 
+endif
+
 ifeq ($(MACHINE),LAPI)
        FC = mpxlf
        CC = mpcc_r

@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.32 2000-08-01 22:37:33 d3h325 Exp $
+# $Id: makefile.h,v 1.33 2000-08-23 16:59:05 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -184,6 +184,15 @@ ifeq ($(TARGET),CYGNUS)
      COPT_REN = -malign-double
        RANLIB = ranlib
 endif
+#
+ifeq ($(TARGET),INTERIX)
+           FC = g77
+           CC = gcc
+     FOPT_REN = -fno-second-underscore
+    FOPT_REN += -Wno-globals
+     COPT_REN = -malign-double
+endif
+#
 #
 #................................ HP  ....................................
 ifeq ($(TARGET),HPUX)

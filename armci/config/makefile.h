@@ -24,6 +24,14 @@ ifeq ($(TARGET),CYGNUS)
      COPT_REN = -malign-double
  GLOB_DEFINES+= -DLINUX
 endif
+
+#-------------------------- INTERIX 2.2.5 on Windows ------------
+ifeq ($(TARGET),INTERIX) 
+           FC = g77
+           CC = gcc
+     FOPT_REN = -fno-second-underscore
+     COPT_REN = -malign-double
+endif
  
 #------------------------------- Linux -------------------------------
 ifeq ($(TARGET),LINUX)

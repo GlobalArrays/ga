@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/shmem.c,v 1.2 1994-12-30 20:56:09 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/shmem.c,v 1.3 2000-08-23 16:59:06 d3h325 Exp $ */
 
 /*
   This stuff attempts to provide a simple interface to temporary shared
@@ -182,16 +182,15 @@ char *AttachSharedRegion(id, size)
 
 
 #endif
-   /* Bizarre sequent has sysv semaphores but proprietary shmem */
-   /* Encore has sysv shmem but is limited to total of 16384bytes! */
-#if defined(SYSV) && !defined(SEQUENT) && !defined(ENCORE)
+
+#if defined(SYSV)
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#ifndef SGI
+#ifdef SUN
 extern int shmget(key_t, int, int);
 extern int shmdt(void *);
 extern int shmctl(int, int, struct shmid_ds *);
