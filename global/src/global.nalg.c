@@ -171,10 +171,10 @@ void *ptr_a;
 void gai_dot(int Type, Integer *g_a, Integer *g_b, void *value)
 {
 Integer  ndim, type, me, elems=0, elemsb=0;
-Integer  index_a, index_b; 
 register Integer i;
 Integer isum=0;
 DoubleComplex zsum ={0.,0.};
+void *ptr_a, *ptr_b;
 
  Integer andim, adims[MAXDIM];
  Integer bndim, bdims[MAXDIM];
@@ -200,41 +200,41 @@ DoubleComplex zsum ={0.,0.};
    if(type != Type) ga_error("type not correct", *g_a);
    nga_distribution_(g_a, &me, lo, hi);
    if(lo[0]>0){
-      nga_access_(g_a, lo, hi, &index_a, ld);
+      nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
       GET_ELEMS(ndim,lo,hi,ld,&elems);
    }
 
    if(*g_a == *g_b){
-     index_b = index_a;
      elemsb = elems;
    }else {  
      nga_inquire_(g_b,  &type, &ndim, dims);
      if(type != Type) ga_error("type not correct", *g_b);
      nga_distribution_(g_b, &me, lo, hi);
      if(lo[0]>0){
-        nga_access_(g_b, lo, hi, &index_b, ld);
+	nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
         GET_ELEMS(ndim,lo,hi,ld,&elemsb);
      }
    }
 
    if(elems!= elemsb)ga_error("inconsistent number of elements",elems-elemsb); 
 
-      index_a --;  /* Fortran to C correction of starting address */ 
-      index_b --;  /* Fortran to C correction of starting address */ 
 
       /* compute "local" contribution to the dot product */
       switch (type){
-
+	Integer *ia, *ib;
+	DoublePrecision *da,*db;
         case MT_F_INT:
+           ia = (Integer*)ptr_a;
+           ib = (Integer*)ptr_b;
            for(i=0;i<elems;i++) 
-                 isum += INT_MB[index_a + i]  * INT_MB[index_b + i];
+                 isum += ia[i]  * ib[i];
            *(Integer*)value = isum; 
            break;
 
         case MT_F_DCPL:
            for(i=0;i<elems;i++){
-               DoubleComplex a = DCPL_MB[index_a + i];
-               DoubleComplex b = DCPL_MB[index_b + i];
+               DoubleComplex a = ((DoubleComplex*)ptr_a)[i];
+               DoubleComplex b = ((DoubleComplex*)ptr_b)[i];
                zsum.real += a.real*b.real  - b.imag * a.imag;
                zsum.imag += a.imag*b.real  + b.imag * a.real;
            }
@@ -242,8 +242,10 @@ DoubleComplex zsum ={0.,0.};
            break;
 
         case MT_F_DBL:
+           da = (DoublePrecision *)ptr_a;
+           db = (DoublePrecision *)ptr_b;
            for(i=0;i<elems;i++) 
-                 zsum.real += DBL_MB[index_a + i]  * DBL_MB[index_b + i];
+                 zsum.real += da[i]  * db[i];
            *(DoublePrecision*)value = zsum.real; 
            break;
         default: ga_error(" wrong data type ",type);
