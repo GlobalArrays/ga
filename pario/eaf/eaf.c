@@ -249,7 +249,7 @@ int eaf_aread(int fd, eaf_off_t offset, void *buf, size_t bytes,
     if(!rc){
 	*req_id = req;
 	file[fd].naread++;
-	file[fd].nb_aread++;
+	file[fd].nb_aread += bytes;
     }
     return rc;
 }
