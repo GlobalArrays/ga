@@ -180,8 +180,9 @@ endif
 
 
 ifeq ($(TARGET),SGI)
-# 32-bit systems running IRIX 6.X
-    FFLAGS = -O2
+# 32-bit systems
+    FFLAGS = -O2 -32
+    CFLAGS = -O -32 $(DEFINES)
    DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DPARTIALSPIN
  LINTFLAGS =  $(DEFINES) -u
     RANLIB = echo $*
