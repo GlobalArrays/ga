@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.24 1998-05-07 18:32:06 d3e129 Exp $
+#$Id: makefile,v 1.25 1998-05-08 19:05:53 d3e129 Exp $
 
 # Tiny makefile wrapper
 
@@ -45,9 +45,9 @@ include_stamp:	src/global.fh
 realclean clean:	
 	/bin/rm -f include_stamp
 	-$(MAKE) -f Makefile clean
-ifeq ($(TARGET),SP)
-	-$(MAKE) -f Makefile TARGET=LAPI LIBDIR=$(ALTDIR) clean
-endif
+#ifeq ($(TARGET),SP)
+#	-$(MAKE) -f Makefile TARGET=LAPI LIBDIR=$(ALTDIR) clean
+#endif
 
 depend:
 	echo No dependencies in global
