@@ -189,6 +189,10 @@ endif
 
 #.............................. IBM SP .....................................
 #
+ifeq ($(MACHINE),SP)
+      MACHINE = SP1
+endif
+
 ifeq ($(MACHINE),SP1)
 # IBM SP-x 
 #
