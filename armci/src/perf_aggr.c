@@ -1,4 +1,4 @@
-/* $Id: perf_aggr.c,v 1.1 2003-02-28 20:22:36 manoj Exp $ */
+/* $Id: perf_aggr.c,v 1.2 2003-03-01 00:23:22 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -192,7 +192,7 @@ void test_aggregate() {
 
     /* only proc 0 does the work */
     if(me == 0) {
-      printf("Transferring %d doubles (Not an array of %d doubles)\n\n", MAXELEMS, MAXELEMS);
+      printf("Transferring %d doubles (Not an array of %d doubles)\nTime in seconds.\n\n", MAXELEMS, MAXELEMS);
       
       /* initializing non-blocking handles */
       for(i=0; i<elems[1]; i++) ARMCI_INIT_HANDLE(&hdl_put[i]);
