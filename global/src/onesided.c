@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.9 2001-09-11 15:18:04 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.10 2001-10-01 16:57:45 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1822,6 +1822,7 @@ void FATR ga_update_ghosts_(Integer *g_a)
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) return;
 
+  ga_sync_();
   GA_PUSH_NAME("ga_update_ghosts");
 
   size = GA[handle].elemsize;
@@ -2251,6 +2252,7 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
     }
   }
 
+  ga_sync_();
   GA_PUSH_NAME("ga_update2_ghosts");
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
@@ -2376,6 +2378,7 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
           ndim - 1, proc_rem);
   }
 
+  ga_sync_();
   GA_POP_NAME;
   return TRUE;
 }
