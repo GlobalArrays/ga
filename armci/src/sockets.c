@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.12 1999-11-24 01:34:46 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.13 1999-11-24 23:43:46 d3h325 Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -44,6 +44,7 @@ typedef int soclen_t;
 extern int armci_me, armci_nproc;
 #define DEBUG_ 0
 #define CONNECT_TRIALS 4 
+#define MAX_INTR_NO_DATA 8
 
 
 int armci_PollSocket(int sock)
@@ -171,7 +172,8 @@ int armci_ReadFromSocket(int sock, void* buffer, int lenbuf)
    Read from the socket until we get all we want.
 */
 {
-   int nread, status;
+
+   int nread, status, nintr=0;
    char *buf = (char*)buffer;
 
    status = lenbuf;
@@ -182,10 +184,18 @@ again:
      /* on linux 0 can be returned if socket is closed  by sender */ 
      if(nread < 0 || ((nread ==  0) && errno ) ){
        if (errno == EINTR){
+
          if(DEBUG_){
            fprintf(stderr,"%d:interrupted in recv\n",armci_me);
 	 }
+
+         /* retry a few times if nread==0 */
+         if(nread==0) nintr++; 
+         else nintr=0;
+         if(nintr>MAX_INTR_NO_DATA) return -1; /* the socket must be closed */
+
          goto again;
+
        }else {
          if(DEBUG_){
            (void) fprintf(stderr,"sock=%d, pid=%d, nread=%d, len=%d\n",
