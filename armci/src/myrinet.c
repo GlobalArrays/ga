@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.64 2003-04-03 18:51:31 vinod Exp $
+/* $Id: myrinet.c,v 1.65 2003-04-03 19:35:03 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -780,8 +780,7 @@ void armci_client_send_ack(int p, int success)
 }
 
 static int get_corrected_size(size){
-    if(size<6)return 6;
-    else if(size<11)return 11;
+    if(size<11)return 11;
     else if(size<15)return 15;
     else if(size<18)return 18;
     else if(size<19)return 19;
@@ -876,7 +875,7 @@ static int get_size_for_index(int index)
     /*when changing any of the below, dont forget to change the total returned
      * in the line below! Also, modify get_corrected_size function accordingly*/
 
-    if(index==-1)return 94;        /*to get the number of buffers */
+    if(index==-1)return 94;         /*to get the total number of buffers */
     else if(index<64)return(11);    /*64 buffers of size 11 and length 2040*/
     else if(index<84)return(15);    /*20 buffers of size 15 and length 32760*/
     else if(index<92)return(18);    /* 8 buffers of size 18 and length 262136*/
