@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.23 2001-04-03 21:20:26 d3h325 Exp $
+/* $Id: myrinet.c,v 1.24 2001-04-16 22:52:42 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -46,6 +46,7 @@
 
 #define DEBUG_ 0
 #define DEBUG_INIT_ 0
+#define STATIC_PORTS__
 
 #define FALSE  0
 #define TRUE   1
@@ -65,12 +66,14 @@
 
 /***************/
 
+
 /* data structure of computing process */
 typedef struct {
-    unsigned int node_id;   /* my node id */
-    int *node_map;          /* other's node id */
-    struct gm_port *port;   /* my port */
-    long *ack;              /* acknowledgment for server */
+    unsigned int node_id;    /* my node id */
+    int *node_map;           /* other's node id */
+    int *port_map;           /* servers port to send request to */
+    struct gm_port *port;    /* my port */
+    long *ack;               /* acknowledgment for server */
     long *tmp;
     long **serv_ack_ptr;     /* keep the pointers of server ack buffer */
     void **serv_buf_ptr;     /* keep the pointers of server MessageRcvBuffer */
@@ -79,11 +82,11 @@ typedef struct {
 /* data structure of server thread */
 typedef struct {
     int node_id;            /* my node id */
+    int port_id;            /* my port id */
     int *node_map;          /* other's node id */
+    int *port_map;          /* other's port id. server only */
     struct gm_port *rcv_port;   /* server receive port */
     struct gm_port *snd_port;   /* server receive port */
-    int port_id;            /* my port id */
-    int *port_map;          /* other's port id. server only */
     void **dma_buf;         /* dma memory for regular send */
     long *ack;              /* ack for each computing process */
     long *direct_ack;
@@ -184,7 +187,10 @@ int armci_pin_contig(void *ptr, int bytes)
     else port = proc_gm->port;
     status = gm_register_memory(port, (char *)ptr, bytes);
     if(status == GM_SUCCESS) return TRUE;
-    else return FALSE;
+    printf("%d:  pinning failed %d\n",armci_me, bytes);
+    fflush(stdout);
+
+    return FALSE;
 }
 
 void armci_unpin_contig(void *ptr, int bytes)
@@ -250,6 +256,8 @@ int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
         status = gm_register_memory(port, (char *)ptr+idx, count[0]);
         if(status != GM_SUCCESS) {
             armci_unpin_memory(ptr, stride_arr, count, strides);
+            printf("%d: strided pinning 2 failed %d\n",armci_me, sizes);
+            fflush(stdout);
             return FALSE;
         }
         pin_in_segment++;
@@ -322,7 +330,7 @@ void armci_unpin_memory(void *ptr, int stride_arr[], int count[], int strides)
 
 
 /* pre-allocate required memory at start up*/
-int armci_gm_proc_mem_alloc()
+int armci_gm_client_mem_alloc()
 {
 char *tmp;
 
@@ -359,60 +367,64 @@ int armci_gm_proc_mem_free()
     return TRUE;
 }
 
-/* initialization of computing process */
-int armci_gm_proc_init()
+
+/* initialization of client process/thread */
+int armci_gm_client_init()
 {
-    int status;
+    int status,i;
     
     /* allocate gm data structure for computing process */
     proc_gm->node_map = (int *)calloc(armci_nproc, sizeof(int));
-    if(proc_gm->node_map == NULL) {
-        fprintf(stderr, "%d: Error allocate proc data structure.\n", armci_me);
-        return FALSE;
-    }
+    if(!proc_gm->node_map) armci_die("Error allocating proc data structure",0);
+
+    proc_gm->port_map = (int*)calloc(armci_nclus, sizeof(int));
+    if(!proc_gm->port_map)armci_die("error allocating serv port map",0);
 
     /* use existing MPI port to save ports */
     proc_gm->port = gmpi_gm_port;
 
     /* get my node id */
     status = gm_get_node_id(proc_gm->port, &(proc_gm->node_id));
-    if(status != GM_SUCCESS) {
-        fprintf(stderr, "%d: Could not get node id\n", armci_me);
-        return FALSE;
-    }
-
+    if(status != GM_SUCCESS)armci_die("Could not get GM node id",0); 
     if(DEBUG_INIT_) printf("%d: node id is %d\n", armci_me, proc_gm->node_id);
 
     /* broadcast my node id to other processes */
     proc_gm->node_map[armci_me] = proc_gm->node_id;
     armci_msg_igop(proc_gm->node_map, armci_nproc, "+");
 
+#if 1
+    if(armci_me==armci_master){
+       for(i=0; i<armci_nproc; i++) serv_gm->node_map[i] = proc_gm->node_map[i];
+
+       /* publish port id of local server thread to other smp nodes */
+       proc_gm->port_map[armci_clus_me] = serv_gm->port_id;
+       armci_msg_gop_scope(SCOPE_MASTERS,proc_gm->port_map, armci_nclus, 
+                           "+", ARMCI_INT);
+    }
+
+    /* master makes port ids of server processes available to other tasks */
+    armci_msg_bcast_scope(SCOPE_NODE,proc_gm->port_map, armci_nclus*sizeof(int),
+                          armci_master);
+#endif
+
     /* allow direct send */
     status = gm_allow_remote_memory_access(proc_gm->port);
-    if(status != GM_SUCCESS) {
-        fprintf(stderr, "%d: PROC could not enable direct sends\n", armci_me);
-        return FALSE;
-    }
+    if(status != GM_SUCCESS) armci_die("could not enable direct sends",0);
 
     /* memory preallocation for computing process */
-    if(!armci_gm_proc_mem_alloc()) {
-        fprintf(stderr, "%d: PROC failed allocating memory\n",
-                armci_me);
-        return FALSE;
-    }
+    if(!armci_gm_client_mem_alloc()) armci_die(" client mem alloc failed ",0); 
 
 #ifdef CLIENT_BUF_BYPASS
-
     /* get the gm version number and set bypass flag: need GM >1.1 */
     if(armci_me == 0) {
         char gm_version[8];
         strncpy(gm_version, _gm_get_kernel_build_id(proc_gm->port), 3);
+        /*printf("GM version is %s\n",gm_version);*/
         gm_version[3] = '\0';
         if(strcmp(gm_version, "1.0") == 0) armci_gm_bypass = FALSE;
         else if(strcmp(gm_version, "1.1") == 0) armci_gm_bypass = FALSE;
         else armci_gm_bypass = TRUE;
     }
-
     armci_msg_brdcst(&armci_gm_bypass, sizeof(int), 0);
 #endif
     
@@ -420,27 +432,11 @@ int armci_gm_proc_init()
 }
 
 
-/* call back func of gm_send_with_callback */
+/* callback func of gm_send_with_callback */
 void armci_proc_callback(struct gm_port *port, void *context,gm_status_t status)
 {
-    if(status == GM_SUCCESS)
-        ((armci_gm_context_t *)context)->done = ARMCI_GM_SENT;
+    if(status==GM_SUCCESS) ((armci_gm_context_t*)context)->done = ARMCI_GM_SENT;
     else ((armci_gm_context_t *)context)->done = ARMCI_GM_FAILED;
-}
-
-
-/* NOT USED client trigers gm_unknown, so that callback func can be executed */
-void armci_send_buffer_ready()
-{
-    MPI_Status status;
-    int flag;
-    
-    /* blocking: wait til the send is done by calling the callback */
-    while(armci_gm_context->done == ARMCI_GM_SENDING) 
-        MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
-
-    if(armci_gm_context->done == ARMCI_GM_FAILED)
-        armci_die(" last send failed", armci_me);
 }
 
 
@@ -457,31 +453,32 @@ int armci_client_send_complete()
     return(armci_gm_context->done);
 }
 
-/* direct send to server */
+/*\ direct send to server 
+\*/
 void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len)
 {
+    int s           = armci_clus_id(p);
+    int serv_mpi_id = armci_clus_info[s].master;
 
     armci_gm_context->done = ARMCI_GM_SENDING;
-
     gm_directed_send_with_callback(proc_gm->port, src_buf,
-           (gm_remote_ptr_t)(gm_up_t)dst_buf, len, GM_LOW_PRIORITY,
-           proc_gm->node_map[p], ARMCI_GM_SERVER_RCV_PORT,
-           armci_proc_callback, armci_gm_context);
+               (gm_remote_ptr_t)(gm_up_t)dst_buf, len, GM_LOW_PRIORITY,
+                proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
+                armci_proc_callback, armci_gm_context);
 
-    /* blocking: wait til the send is done by calling the callback */
+    /* blocking: wait until send is done by calling the callback */
     if(armci_client_send_complete() == ARMCI_GM_FAILED)
-        armci_die(" failed sending msg to server", p);
+             armci_die(" failed sending msg to server", p);
 }
 
 
 /* computing process start initial communication with all the servers */
 void armci_client_connect_to_servers()
 {
-    int i;
-    int server_mpi_id, size;
+    int server_mpi_id, size, i;
  
     /* make sure that server thread is ready */
-    if(armci_me == armci_master) while(!armci_gm_server_ready) usleep(100);
+    if(armci_me == armci_master) while(!armci_gm_server_ready) usleep(10);
     armci_msg_barrier();
 
     /* make initial conection to the server, not the server in this node */
@@ -494,20 +491,16 @@ void armci_client_connect_to_servers()
             ((long *)(MessageSndBuffer))[3] = (long)(proc_gm->ack);
             ((long *)(MessageSndBuffer))[4] = ARMCI_GM_CLEAR;
 
-            /* currently the tag is not used, just set some dummy number */
-            /* armci_gm_context->tag = 100 + armci_me; */
-            
             /* wait til the last sending done, either successful or failed */
             while(armci_gm_context->done == ARMCI_GM_SENDING);
-            armci_gm_context->done = ARMCI_GM_SENDING;
 
             size = gm_min_size_for_length(3*sizeof(long));
             
+            armci_gm_context->done = ARMCI_GM_SENDING;
             gm_send_with_callback(proc_gm->port,
                     MessageSndBuffer+sizeof(long), size, 3*sizeof(long),
                     GM_LOW_PRIORITY, proc_gm->node_map[server_mpi_id],
-                    ARMCI_GM_SERVER_RCV_PORT, armci_proc_callback, 
-                    armci_gm_context);
+                    proc_gm->port_map[i], armci_proc_callback,armci_gm_context);
 
             /* blocking: wait til the send is done by calling the callback */
             if(armci_client_send_complete() == ARMCI_GM_FAILED)
@@ -534,8 +527,8 @@ void armci_client_connect_to_servers()
                 fflush(stdout);
             }
             
-           armci_client_direct_send(server_mpi_id, MessageSndBuffer,
-                                    proc_gm->serv_ack_ptr[i], sizeof(long));
+            armci_client_direct_send(server_mpi_id, MessageSndBuffer,
+                                     proc_gm->serv_ack_ptr[i], sizeof(long));
 
             if(DEBUG_INIT_) fprintf(stderr, "%d: connected to server %d\n",
                                     armci_me, server_mpi_id);
@@ -568,7 +561,6 @@ long status;
     return 1;
 }
 
-
 void armci_client_send_ack(int p, int success)
 {
      int cluster = armci_clus_id(p);
@@ -584,21 +576,19 @@ void armci_client_send_ack(int p, int success)
 \*/
 int armci_send_req_msg(int proc, void *vbuf, int len)
 {
-    int size;
-    char *buf = (char*)vbuf;
-    request_header_t *msginfo = (request_header_t *)buf;
-
-    armci_gm_context->done = ARMCI_GM_SENDING;
+    char *buf     = (char*)vbuf;
+    int size      = gm_min_size_for_length(len);
+    int s         = armci_clus_id(proc);
+    int serv_mpi_id = armci_clus_info[s].master;
+    request_header_t *msginfo = (request_header_t *)vbuf;
 
     /* set the message tag */
-    msginfo->tag.data_ptr = (void *)(buf + sizeof(request_header_t)
-                                     - sizeof(long));
+    msginfo->tag.data_ptr = buf + sizeof(request_header_t) - sizeof(long);
     msginfo->tag.ack = ARMCI_GM_CLEAR;
 
-    size = gm_min_size_for_length(len);
-
+    armci_gm_context->done = ARMCI_GM_SENDING;
     gm_send_with_callback(proc_gm->port, buf, size, len, GM_LOW_PRIORITY,
-                          proc_gm->node_map[proc], ARMCI_GM_SERVER_RCV_PORT,
+                          proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
                           armci_proc_callback, armci_gm_context);
 
     if(armci_client_send_complete() == ARMCI_GM_FAILED) return 1;
@@ -710,8 +700,7 @@ int armci_gm_serv_mem_free()
 void armci_serv_callback(struct gm_port *port, void *context, 
 			 gm_status_t status)
 {
-    if(status == GM_SUCCESS)
-        ((armci_gm_context_t *)context)->done = ARMCI_GM_SENT;
+    if(status==GM_SUCCESS) ((armci_gm_context_t*)context)->done = ARMCI_GM_SENT;
     else ((armci_gm_context_t *)context)->done = ARMCI_GM_FAILED;
 }
 
@@ -766,6 +755,24 @@ int armci_serv_ack_complete()
 }
 
 
+
+static int port_id=1,board_id=0;
+static int armci_get_free_port(int ports, int boards, struct gm_port **p)
+{
+
+   for(; board_id<boards; board_id++){
+      for(; port_id<ports; port_id++){
+         if(GM_SUCCESS == gm_open(p,board_id,port_id,"try",GM_API_VERSION_1_1))
+                          return port_id;
+      }
+      port_id=0; /*start from 0 on next board */
+   }
+   return(-1);     
+}
+          
+        
+          
+
 /* initialization of server thread */
 int armci_gm_server_init() 
 {
@@ -789,34 +796,38 @@ int armci_gm_server_init()
                      armci_me, ARMCI_GM_SERVER_RCV_PORT,ARMCI_GM_SERVER_RCV_DEV,
                              ARMCI_GM_SERVER_SND_PORT, ARMCI_GM_SERVER_SND_DEV);
 
-    /* opening gm rcv port for requests */
     serv_gm->rcv_port = NULL; serv_gm->snd_port = NULL;
-    status = gm_open(&(serv_gm->rcv_port), ARMCI_GM_SERVER_RCV_DEV,
-                     ARMCI_GM_SERVER_RCV_PORT, "gm_pt", GM_API_VERSION_1_1);
-    if(status != GM_SUCCESS) {
-        fprintf(stderr,"%d:Couldnot open rcv port status:%d\n",armci_me,status);
-        return FALSE;
-    }
 
+#ifdef STATIC_PORTS
     /* opening gm port for sending data back to clients */
     status = gm_open(&(serv_gm->snd_port), ARMCI_GM_SERVER_SND_DEV,
                      ARMCI_GM_SERVER_SND_PORT, "gm_pt", GM_API_VERSION_1_1);
-    if(status != GM_SUCCESS) {
-        fprintf(stderr,"%d:Couldnot open snd port status:%d\n",armci_me,status);
-        return FALSE;
-    }
+    if(status != GM_SUCCESS) 
+                 armci_die("did not get rcv port",ARMCI_GM_SERVER_SND_DEV);
+
+    /* opening gm rcv port for requests */
+    serv_gm->port_id  = ARMCI_GM_SERVER_RCV_PORT; 
+    status = gm_open(&(serv_gm->rcv_port), ARMCI_GM_SERVER_RCV_DEV,
+                     ARMCI_GM_SERVER_RCV_PORT, "gm_pt", GM_API_VERSION_1_1);
+    if(status != GM_SUCCESS) 
+                 armci_die("did not get rcv port",ARMCI_GM_SERVER_RCV_DEV);
+#else
+    status= armci_get_free_port(12, 2, &(serv_gm->snd_port));  
+    if(DEBUG_INIT_)printf("%d server got snd port %d \n",armci_me,status);
+    if(status!=-1) status= armci_get_free_port(12, 2, &(serv_gm->rcv_port));  
+    if(DEBUG_INIT_)printf("%d server got rcv port %d \n",armci_me,status);
+    serv_gm->port_id = status;
+#endif
 
     /* get my node id */
-    /* server node id should be the same as the master process.
-     * at this point the initialization of master process should
-     * have been done. so copy directly
-     */
-    serv_gm->node_id = proc_gm->node_id;
+    status = gm_get_node_id(serv_gm->rcv_port, &(serv_gm->node_id));
+    if(status != GM_SUCCESS)armci_die("Could not get GM node id",0);
+    if(DEBUG_)printf("%d(server): node id is %d\n", armci_me, serv_gm->node_id);
 
-    if(DEBUG_)printf("%d(server): node id is %d\n", armci_me, proc_gm->node_id);
-
+#if 0
     for(i=0; i<armci_nproc; i++)
         serv_gm->node_map[i] = proc_gm->node_map[i];
+#endif
 
     /* allow direct send */
     status = gm_allow_remote_memory_access(serv_gm->rcv_port);
@@ -840,8 +851,8 @@ int armci_gm_server_init()
 
     /* set message size on server */
     min_mesg_size = ARMCI_GM_MIN_MESG_SIZE;
-    min_mesg_length = gm_max_length_for_size(min_mesg_size);
     max_mesg_size = gm_min_size_for_length(MSG_BUFLEN);
+    min_mesg_length = gm_max_length_for_size(min_mesg_size);
     max_mesg_length = MSG_BUFLEN;
     
     if(DEBUG_INIT_) {
@@ -982,9 +993,8 @@ void armci_server_direct_send(int dst, char *src_buf, char *dst_buf, int len,
     }
     else {
         gm_directed_send(serv_gm->snd_port, src_buf,
-               (gm_remote_ptr_t)(gm_up_t)(dst_buf),
-               len, GM_LOW_PRIORITY, serv_gm->node_map[dst],
-               serv_gm->port_map[dst]);
+               (gm_remote_ptr_t)(gm_up_t)(dst_buf), len,
+               GM_LOW_PRIORITY, serv_gm->node_map[dst], serv_gm->port_map[dst]);
     }
 }
 
@@ -1136,11 +1146,11 @@ void armci_transport_cleanup()
 
 void armci_init_connections()
 {
-    if(!armci_gm_proc_init())
-        armci_die("GM:client connection initialization failed", 0L);
-
     if(armci_me == armci_master) {
         if(!armci_gm_server_init())
             armci_die("GM:server connection initialization failed", 0L);
     }
+    if(!armci_gm_client_init())
+        armci_die("GM:client connection initialization failed", 0L);
+
 }

@@ -82,12 +82,16 @@ Notes:
 
     GM Port Usage:
 
-    The current ARMCI implementation uses two GM ports:
+    The current ARMCI implementation uses two GM ports. 
+    If STATIC_PORTS is defined, they are called
         ARMCI_GM_SERVER_RCV_PORT
         ARMCI_GM_SERVER_SND_PORT
     The default port numbers are 5 and 6, set in the file armci/src/myrinet.h. 
     Users can choose different ports by editing the definition, depending on 
     the system settings and at least not conflicting with the ports used by MPI.
+
+    If STATIC_PORTS is NOT defined, ARMCI will search for first two available
+    ports on up to two myrinet boards. 
 
 3. Test run 
 

@@ -24,6 +24,7 @@ extern void armci_msg_snd(int tag, void* buffer, int len, int to);
 extern void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from);
 extern int  armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen);
 
+extern void armci_msg_gop_scope(int scope, void *x, int n, char* op, int type);
 extern void armci_msg_igop(int *x, int n, char* op);
 extern void armci_msg_lgop(long *x, int n, char* op);
 extern void armci_msg_fgop(float *x, int n, char* op);

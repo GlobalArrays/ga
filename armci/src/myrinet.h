@@ -20,8 +20,8 @@
 
 #define CLIENT_BUF_BYPASS 
 #ifdef __i386__
-#define LONG_GET_THRESHOLD 66248
-#define LONG_GET_THRESHOLD_STRIDED 3000 
+#define LONG_GET_THRESHOLD 266248
+#define LONG_GET_THRESHOLD_STRIDED 30000 
 #define INTERLEAVE_GET_THRESHOLD 66248
 #else
 #define LONG_GET_THRESHOLD 524288
@@ -29,7 +29,7 @@
 #define INTERLEAVE_GET_THRESHOLD 524288 
 #endif
 
-/* below are two ports used by ARMCI and their boards */
+/* two ports used by ARMCI and their boards iff STATIC_PORTS defined */
 #define ARMCI_GM_SERVER_RCV_PORT 5
 #define ARMCI_GM_SERVER_RCV_DEV 0
 #define ARMCI_GM_SERVER_SND_PORT 6
