@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.45 2003-09-03 17:11:21 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.46 2003-10-01 21:17:28 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -952,9 +952,11 @@ Integer  ow,i,p_handle;
 
    GA_PUSH_NAME("nga_access_ptr");
    if (!nga_locate_(g_a,lo,&ow)) ga_error("locate top failed",0);
-   if (ow != GAme) ga_error("cannot access top of the patch",ow);
+   if ((GA_Cluster_proc_nodeid(ow) != GA_Cluster_nodeid()) && (ow != GAme)) 
+      ga_error("cannot access top of the patch",ow);
    if (!nga_locate_(g_a,hi, &ow)) ga_error("locate bottom failed",0);
-   if (ow != GAme) ga_error("cannot access bottom of the patch",ow);
+   if ((GA_Cluster_proc_nodeid(ow) != GA_Cluster_nodeid()) && (ow != GAme))
+      ga_error("cannot access bottom of the patch",ow);
 
    for (i=0; i<GA[handle].ndim; i++)
        if(lo[i]>hi[i]) {
@@ -986,9 +988,11 @@ unsigned long    lref, lptr;
 #endif
    GA_PUSH_NAME("nga_access");
    if(!nga_locate_(g_a,lo,&ow))ga_error("locate top failed",0);
-   if(ow != GAme) ga_error("cannot access top of the patch",ow);
+   if ((GA_Cluster_proc_nodeid(ow) != GA_Cluster_nodeid()) && (ow != GAme)) 
+      ga_error("cannot access top of the patch",ow);
    if(!nga_locate_(g_a,hi, &ow))ga_error("locate bottom failed",0);
-   if(ow != GAme) ga_error("cannot access bottom of the patch",ow);
+   if ((GA_Cluster_proc_nodeid(ow) != GA_Cluster_nodeid()) && (ow != GAme)) 
+      ga_error("cannot access bottom of the patch",ow);
 
    for (i=0; i<GA[handle].ndim; i++)
        if(lo[i]>hi[i]) {
