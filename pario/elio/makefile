@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.12 1997-04-16 16:51:26 d3g681 Exp $
+#$Id: makefile,v 1.13 1997-05-23 00:25:39 d3h325 Exp $
 #
 #  Initial version Jace A Mogill (12 June 1996), ANL
 
@@ -11,15 +11,10 @@ ifdef PABLO
    LIB_DEFINES = -DPABLO
 endif
 
-NOPIOFS = 1
-
-ifdef NOPIOFS
-   LIB_DEFINES = -DNOPIOFS
-endif
 
 #under AIX, there are problems with AIO and large files
 ifdef LARGE_FILES
-  NOAIO = 1
+NOAIO = 1
 LIB_DEFINES += $(shell uname -a | awk \
               '{ if ($$1 == "AIX" && ($$4 > 4 || ($$4 == 4 && $$3 > 1)))\
                print "-D_LARGE_FILES -D_LARGE_FILE_API" }')
@@ -35,4 +30,4 @@ include ../../config/makefile.h
 include ../../config/makelib.h
 
 $(LIBRARY_PATH)(elio.o):	./elio.h ./eliop.h ./chemio.h
-
+$(LIBRARY_PATH)(stat.o):	./elio.h ./eliop.h ./chemio.h

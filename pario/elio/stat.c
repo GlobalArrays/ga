@@ -34,13 +34,8 @@ int  elio_stat(char *fname, stat_t *statinfo)
 #else
     struct  STATVFS   ufs_statfs;
 #endif
-#if defined(PIOFS)
-    piofs_statfs_t piofs_stat;
-    int filedes=0; /* manpage for piofs_stat at PNNL says that it is ignored */
-#endif
     
     PABLO_start(PABLO_elio_stat); 
-    statinfo->fs = -1;
     
 #if defined(PARAGON)
     bufsz = sizeof(struct statpfs) + SDIRS_INIT_SIZE;
@@ -69,50 +64,41 @@ int  elio_stat(char *fname, stat_t *statinfo)
     return(ELIO_OK);
 #else
     
-#if defined(PIOFS)
-    strcpy(piofs_stat.name, fname);
-    if(piofsioctl(filedes, PIOFS_STATFS, &piofs_stat) == 0){
-        /*piofsioctl does not tell if piofs_stat.name even points to PIOFS fs */
-        /* we assume that if # of server nodes is > 1 we use PIOFS */  
-        if(piofs_stat.f_nodes > 1){      /* number of server nodes        */
-	    statinfo->fs = ELIO_PIOFS;
-	    statinfo->avail =  piofs_stat.f_bavail;
-	    bsize = piofs_stat.f_bsize; 
-        }
-    }/* if not using PIOFS then still needs to check JFS */
-#endif
-    
-    /* we checked for parallel filesystems, now try others if still needed */ 
-    if(statinfo->fs == -1) {
-	if(stat(fname, &ufs_stat) != 0)
+    if(stat(fname, &ufs_stat) != 0)
 	    ELIO_ERROR(STATFAIL, 1);
 
-	statinfo->fs = ELIO_UFS;
+#   if defined(PIOFS)
+        fprintf(stderr,"filesystem %d\n",ufs_stat.st_vfstype);
+        /* according to /etc/vfs, "9" means piofs */
+        if(ufs_stat.st_vfstype == 9) statinfo->fs = ELIO_PIOFS;
+        else
+#   endif
+
+    statinfo->fs = ELIO_UFS;
 	
-	/* only regular or directory files are OK */
-	if(!S_ISREG(ufs_stat.st_mode) && !S_ISDIR(ufs_stat.st_mode))
+    /* only regular or directory files are OK */
+    if(!S_ISREG(ufs_stat.st_mode) && !S_ISDIR(ufs_stat.st_mode))
 	    ELIO_ERROR(TYPEFAIL, 1);
 	
-#if defined(CRAY)
+#   if defined(CRAY)
 	if(statfs(fname, &ufs_statfs, sizeof(ufs_statfs), 0) != 0)
-#else
+#   else
         if(STATVFS(fname, &ufs_statfs) != 0)
-#endif
+#   endif
 		ELIO_ERROR(STATFAIL,1);
 	
-#if defined(CRAY)
+#   if defined(CRAY)
         /* f_bfree == f_bavail -- naming changes */
         statinfo->avail = (long) ufs_statfs.f_bfree;
-#else
+#   else
 	statinfo->avail = (long) ufs_statfs.f_bavail;
-#endif
+#   endif
 
-#ifdef SOLARIS
+#   ifdef SOLARIS
 	bsize = (int) ufs_statfs.f_frsize;
-#else
+#   else
 	bsize = (int) ufs_statfs.f_bsize;
-#endif
-    }
+#   endif
     
     switch (bsize) {
     case 512:  statinfo->avail /=2; break;
