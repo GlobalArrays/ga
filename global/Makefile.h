@@ -74,6 +74,21 @@ GLOB_INCLUDES = -I../../ma
  GLOB_DEFINES = -DSGI
 endif
 
+#................................ SGITFP ......................................
+#
+ifeq ($(TARGET),SGITFP)
+#
+# SGI running IRIX
+#
+#
+        CDEFS = -DEXT_INT
+       FOPT   = -i8 -d8 -O 
+       RANLIB = echo
+      FLD_REN = -i8 -d8 -v -Wl,-U
+GLOB_INCLUDES = -I../../ma
+ GLOB_DEFINES = -DSGITFP -DSGI
+endif
+
 #................................ IPSC ......................................
 #
 ifeq ($(TARGET),IPSC)

@@ -78,6 +78,25 @@ ifeq ($(TARGET),SGI)
 endif
 
 
+#................................ SGITFP ......................................
+#
+ifeq ($(TARGET),SGITFP)
+#
+# SGI running IRIX
+#
+    FLD_REN = -d8 -i8 -v -Wl,-U 
+       LIBS = ../libglobal.a \
+              ../../ma/libma.a\
+              ../../lapack_blas/liblapack_blas.a\
+              ../../ma/libma.a\
+              -lblas
+
+     LIBCOM = ../../tcgmsg/ipcv4.0/libtcgmsg.a 
+  SCALAPACK = $(SRC1)/scalapack/scalapack.a $(SRC1)/scalapack/pbblas.a\
+              $(SRC1)/scalapack/blacs.a $(SRC1)/scalapack/SLtools.a
+endif
+
+
 #................................ IPSC ......................................
 #
 ifeq ($(TARGET),IPSC)
