@@ -335,8 +335,12 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
     Integer idx, n1dim;
     Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
     Integer me= ga_nodeid_();
+    int local_sync_begin,local_sync_end;
     
-    ga_sync_();
+    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+    if(local_sync_begin)ga_sync_();
+
     ga_check_handle(g_a, "gai_oper_elem");
 
     GA_PUSH_NAME("gai_oper_elem");
@@ -416,7 +420,7 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
         nga_release_update_(g_a, loA, hiA);
      }
     GA_POP_NAME;
-    ga_sync_();
+    if(local_sync_end)ga_sync_();
 }
 
 
@@ -450,6 +454,7 @@ void ga_abs_value_(Integer *g_a)
         lo[ndim-1]=1;
         ndim--;
     }
+    _ga_sync_begin = 1; /*just to be on the safe side*/
     gai_oper_elem(g_a, lo, hi, NULL, OP_ABS);
 }
 
@@ -463,6 +468,7 @@ void ga_add_constant_(Integer *g_a, void *alpha)
         lo[ndim-1]=1;
         ndim--;
     }
+    _ga_sync_begin = 1; /*just to be on the safe side*/
     gai_oper_elem(g_a, lo, hi, alpha, OP_ADD_CONST);
 }
 
@@ -476,6 +482,7 @@ void ga_recip_(Integer *g_a)
         lo[ndim-1]=1; 
         ndim--;
     }
+    _ga_sync_begin = 1; /*just to be on the safe side*/
     gai_oper_elem(g_a, lo, hi, NULL, OP_RECIP);
 }    
 
@@ -722,8 +729,11 @@ Integer op; /* operation to be perform between g_a and g_b */
     Integer g_A = *g_a, g_B = *g_b;
     Integer me= ga_nodeid_(), A_created=0, B_created=0;
     char *tempname = "temp", notrans='n';
+    int local_sync_begin,local_sync_end;
 
-    ga_sync_();
+    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+    if(local_sync_begin)ga_sync_();
     ga_check_handle(g_a, "gai_elem2_patch_");
     GA_PUSH_NAME("ngai_elem2_patch_");
 
@@ -899,7 +909,7 @@ Integer op; /* operation to be perform between g_a and g_b */
     if(B_created) ga_destroy_(&g_B);
     
     GA_POP_NAME;
-    ga_sync_();
+    if(local_sync_end)ga_sync_();
 }
 
 void ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c){
@@ -924,6 +934,7 @@ void ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c){
         bndim--;
         cndim--;
     }
+    _ga_sync_begin = 1; /*just to be on the safe side*/
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_MULT);
 
 }
@@ -952,6 +963,7 @@ void ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c){
         cndim--;
     }
 
+    _ga_sync_begin = 1; /*just to be on the safe side*/
   ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_DIV);
  
 }
@@ -982,6 +994,7 @@ void ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c){
         cndim--;
     }
 
+    _ga_sync_begin = 1; /*just to be on the safe side*/
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_MAX);
 
 }
@@ -1010,6 +1023,7 @@ void ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c){
         cndim--;
     }
  
+    _ga_sync_begin = 1; /*just to be on the safe side*/
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_MIN);
  
 }
@@ -1055,8 +1069,12 @@ Integer op; /*operation to be perform on g_a*/
     Integer idx, n1dim;
     Integer atotal;
     Integer me= ga_nodeid_();
+    int local_sync_begin,local_sync_end;
  
-    ga_sync_();
+    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+    if(local_sync_begin)ga_sync_();
+
     ga_check_handle(g_a, "gai_elem3_patch_");
     GA_PUSH_NAME("ngai_elem3_patch_");
  
@@ -1133,7 +1151,7 @@ Integer op; /*operation to be perform on g_a*/
     }
  
     GA_POP_NAME;
-    ga_sync_();
+    if(local_sync_end)ga_sync_();
 }
 
 static Integer FATR has_negative_elem(g_a, alo, ahi)
@@ -1230,7 +1248,8 @@ void ga_step_max2_patch_(g_xx,xxlo,xxhi, g_vv,vvlo,vvhi, g_xxll,xxlllo,xxllhi, g
      Integer g_C, *g_c=&g_C;
      double alpha = 1.0, beta = -1.0;
      double  result1, result2;
-
+     
+        _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
      
      	/*duplicatecate an array c to hold the temparary result */
      	ga_duplicate(g_xx, &g_C, "TempC");
@@ -1282,6 +1301,7 @@ void ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
      /* double result = -1; */
      Integer *g_c;
      Integer g_C;
+     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
      if(*g_a == *g_b)
 	*result = 1.0;

@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.42 2002-08-01 15:55:28 d3g293 Exp $*/
+/*$Id: global.util.c,v 1.43 2002-08-22 22:22:13 vinod Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -441,8 +441,11 @@ Integer ndim, i, proc, type, nproc=ga_nnodes_();
 Integer dims[MAXDIM], lo[MAXDIM], hi[MAXDIM];
 char msg[100];
 char *name;
+int local_sync_begin,local_sync_end;
 
-    ga_sync_();
+    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+    if(local_sync_begin)ga_sync_();
 
     if(ga_nodeid_() ==0){
       nga_inquire_internal_(&g_a, &type, &ndim, dims);
@@ -485,7 +488,7 @@ char *name;
       fflush(stdout);
     }
 
-    ga_sync_();
+    if(local_sync_end)ga_sync_();
 }
 
 
@@ -526,6 +529,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
     Integer lop[MAXDIM], hip[MAXDIM];
     long lbuf[BUFSIZE], lbuf_2d[BUFSIZE*BUFSIZE];
     Integer done, status_2d, status_3d;
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     ga_sync_();
     ga_check_handle(g_a, "nga_print");
 

@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.15 2002-08-19 21:59:39 vinod Exp $ */
+/* $Id: collect.c,v 1.16 2002-08-22 22:21:22 vinod Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -39,6 +39,7 @@ void FATR ga_brdcst_(type, buf, len, originator)
      Integer *type, *len, *originator;
      Void *buf;
 {
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     ga_msg_brdcst(*type,buf,*len,*originator);
 }
 
@@ -85,6 +86,7 @@ void ga_dgop(type, x, n, op)
      DoublePrecision *x;
      char *op;
 {
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
             armci_msg_dgop(x, (int)n, op);
 #else
@@ -122,6 +124,7 @@ void ga_lgop(type, x, n, op)
      long *x;
      char *op;
 {
+        _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 	armci_msg_lgop(x, (int)n, op);
 }
 
@@ -129,6 +132,7 @@ void ga_igop(type, x, n, op)
      Integer type, n, *x;
      char *op;
 {
+            _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
 #   ifdef EXT_INT
             armci_msg_lgop(x, (int)n, op);
@@ -171,6 +175,7 @@ void ga_fgop(type, x, n, op)
      float *x;
      char *op;
 {
+            _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
             armci_msg_fgop(x, (int)n, op);
 }
  

@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.22 2002-08-21 15:16:42 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.23 2002-08-22 22:21:22 vinod Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2263,19 +2263,16 @@ logical FATR nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
 
   int ijx;
   char *ptr, *iptr;
+  int local_sync_begin,local_sync_end;
+
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 
   /* if global array has no ghost cells, just return */
-  if (!ga_has_ghosts_(g_a)) {
-    _ga_sync_begin = 1;
-    _ga_sync_end = 1;
+  if (!ga_has_ghosts_(g_a)) 
     return TRUE;
-  }
-  if(_ga_sync_begin) {
-    ga_sync_();
-  } else {
-    _ga_sync_begin = 1;
-  }
-
+  
+  if(local_sync_begin)ga_sync_();
   idim = *pdim;
   idir = *pdir;
   flag = *pflag;
@@ -2296,14 +2293,10 @@ logical FATR nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
     for (np = 0; np < GA[handle].nblock[idx]; np++) {
       if (np < GA[handle].nblock[idx] - 1) {
         if (GA[handle].mapc[ipx+1]-GA[handle].mapc[ipx]+1<width[idx]) {
-          _ga_sync_begin = 1;
-          _ga_sync_end = 1;
           return FALSE;
         }
       } else {
         if (GA[handle].dims[idx]-GA[handle].mapc[ipx]+1<width[idx]) {
-          _ga_sync_begin = 1;
-          _ga_sync_end = 1;
           return FALSE;
         }
       }
@@ -2441,11 +2434,7 @@ logical FATR nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   }
 
   GA_POP_NAME;
-  if(_ga_sync_end) {
-    ga_sync_();
-  } else {
-    _ga_sync_end = 1;
-  }
+  if(local_sync_end)ga_sync_();
   return TRUE;
 }
 
@@ -2456,11 +2445,11 @@ void FATR ga_update_ghosts_(Integer *g_a)
   /* Wrapper program for ghost cell update operations. If optimized
      update operation fails then use slow but robust version of
      update operation */
-   if(_ga_sync_begin) {
-     ga_sync_();
-   } else {
-     _ga_sync_begin = 1;
-   }
+   int local_sync_begin,local_sync_end;
+
+   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+   if(local_sync_begin)ga_sync_();
 
 #ifdef CRAY_T3D
    if (!ga_update5_ghosts_(g_a)) {
@@ -2470,11 +2459,7 @@ void FATR ga_update_ghosts_(Integer *g_a)
      ga_update1_ghosts_(g_a);
    }
 
-   if(_ga_sync_end) {
-     ga_sync_();
-   } else {
-     _ga_sync_end = 1;
-   }
+   if(local_sync_end)ga_sync_();
 }
 
 /* Utility function for ga_update6_ghosts routine */

@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.3 2002-08-16 20:05:43 vinod Exp $*/
+/*$Id: matmul.c,v 1.4 2002-08-22 22:22:13 vinod Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -78,11 +78,15 @@ Integer Ichunk, Kchunk, Jchunk;
 DoubleComplex ONE, ZERO;
 int need_scaling=1;
 float ONE_F = 1.0;
+int local_sync_begin,local_sync_end;
 
    ONE.real =1.; ZERO.real =0.;
    ONE.imag =0.; ZERO.imag =0.;
 
-   ga_sync_();
+   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+   if(local_sync_begin)ga_sync_();
+
    GA_PUSH_NAME("ga_matmul_patch");
 
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
@@ -266,7 +270,7 @@ float ONE_F = 1.0;
 #endif
  
    GA_POP_NAME;
-   ga_sync_();
+   if(local_sync_end)ga_sync_();
 }
 
 
@@ -352,11 +356,15 @@ Integer adims[GA_MAX_DIM],bdims[GA_MAX_DIM],cdims[GA_MAX_DIM],tmpld[GA_MAX_DIM];
 Integer *tmplo = adims, *tmphi =bdims; 
 DoubleComplex ONE, ZERO;
 float ONE_F = 1.0;
+int local_sync_begin,local_sync_end;
 
    ONE.real =1.; ZERO.real =0.;
    ONE.imag =0.; ZERO.imag =0.;
    
-   ga_sync_();
+   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+   if(local_sync_begin)ga_sync_();
+
    GA_PUSH_NAME("nga_matmul_patch");
 
    nga_inquire_internal_(g_a, &atype, &arank, adims);
@@ -572,7 +580,7 @@ float ONE_F = 1.0;
 #endif
  
    GA_POP_NAME;
-   ga_sync_();
+   if(local_sync_end)ga_sync_(); 
 }
 
 
@@ -647,6 +655,7 @@ void ga_dgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
   /**
    * ga_summa calls ga_ga_dgemm to handle cases it does not cover
    */
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   ga_summa_(transa, transb, m, n, k, alpha, g_a, g_b, beta, g_c);
 }
 #  define GA_DGEMM ga_ga_dgemm_

@@ -85,8 +85,12 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
   double da, db, dc, dm;
   long la, lb, lc, lm;
   DoubleComplex za, zb, zc, zm;
+  int local_sync_begin,local_sync_end;
 
-  ga_sync_ ();
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
   GA_PUSH_NAME ("ga_median_patch_");
 
   nga_inquire_ (g_a, &atype, &andim, adims);
@@ -380,7 +384,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
   if (m_temp_created)
     ga_destroy_ (&g_M);
   GA_POP_NAME;
-  ga_sync_ ();
+  if(local_sync_end)ga_sync_();
 }
 
 
@@ -422,7 +426,7 @@ ga_median_ (Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m){
         mlo[mndim-1]=1;
         mndim--;
     }
-
+    _ga_sync_begin = 1;
     ga_median_patch_(g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi);
 
 }
@@ -451,8 +455,12 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
 
   Integer ndim, dims[MAXDIM]; 
   Integer ga_type = GA_TYPE_GSM;
+  int local_sync_begin,local_sync_end;
 
-  ga_sync_ ();
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
   ga_check_handle (g_a, "ga_norm_infinity_");
   GA_PUSH_NAME ("ga_norm_infinity_");
 
@@ -678,8 +686,12 @@ ga_norm1_ (Integer * g_a, double *nm)
   Integer ndim, dims[MAXDIM]; 
 
   Integer ga_type = GA_TYPE_GSM;
+  int local_sync_begin,local_sync_end;
 
-  ga_sync_ ();
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
   ga_check_handle (g_a, "ga_norm1_");
   GA_PUSH_NAME ("ga_norm1_");
 
@@ -895,8 +907,12 @@ ga_get_diagonal_ (Integer * g_a, Integer * g_v)
   long *la;
   DoubleComplex *dca;
   Integer andim, adims[2];
+  int local_sync_begin,local_sync_end;
 
-  ga_sync_ ();
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
   ga_check_handle (g_a, "ga_get_diagonal_");
   ga_check_handle (g_v, "ga_get_diagonal_");
   GA_PUSH_NAME ("ga_get_diagonal_");
@@ -1014,7 +1030,7 @@ ga_get_diagonal_ (Integer * g_a, Integer * g_v)
 	}
     }
   GA_POP_NAME;
-  ga_sync_ ();
+  if(local_sync_end)ga_sync_();
 }
 
 
@@ -1033,8 +1049,12 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
   long *la;
   DoubleComplex *dca;
   Integer andim, adims[2];
+  int local_sync_begin,local_sync_end;
 
-  ga_sync_ ();
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
   ga_check_handle (g_a, "ga_add_diagonal_");
   ga_check_handle (g_v, "ga_add_diagonal_");
   GA_PUSH_NAME ("ga_add_diagonal_");
@@ -1151,7 +1171,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
 	}
     }
   GA_POP_NAME;
-  ga_sync_ ();
+  if(local_sync_end)ga_sync_();
 }
 
 
@@ -1169,8 +1189,12 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
   long *la;
   DoubleComplex *dca;
   Integer andim, adims[2];
+  int local_sync_begin,local_sync_end;
 
-  ga_sync_ ();
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
   ga_check_handle (g_a, "ga_set_diagonal_");
   ga_check_handle (g_v, "ga_set_diagonal_");
   GA_PUSH_NAME ("ga_set_diagonal_");
@@ -1287,7 +1311,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
 	}
     }
   GA_POP_NAME;
-  ga_sync_ ();
+  if(local_sync_begin)ga_sync_();
 }
 
 
@@ -1304,8 +1328,12 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
   double *da;
   long *la;
   DoubleComplex *dca;
+  int local_sync_begin,local_sync_end;
 
-  ga_sync_ ();
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
   ga_check_handle (g_a, "ga_shift_diagonal_");
   GA_PUSH_NAME ("ga_shift_diagonal_");
 
@@ -1377,7 +1405,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
 	}
     }
   GA_POP_NAME;
-  ga_sync_ ();
+  if(local_sync_end)ga_sync_();
 }
 
 #if 0 
@@ -1397,8 +1425,12 @@ ga_zero_diagonal_(Integer * g_a)
   double *da;
   long *la;
   DoubleComplex *dca;
+  int local_sync_begin,local_sync_end;
 
-  ga_sync_ ();
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
   GA_PUSH_NAME ("ga_zero_diagonal_");
 
   ga_inquire (g_a, &type, &dim1, &dim2);
@@ -1470,7 +1502,7 @@ ga_zero_diagonal_(Integer * g_a)
 	}
     }
   GA_POP_NAME;
-  ga_sync_ ();
+  if(local_sync_end)ga_sync_();
 }
 
 
@@ -1488,8 +1520,12 @@ ga_scale_rows_(Integer *g_a, Integer *g_v)
   long *la;
   DoubleComplex *dca;
   Integer andim, adims[2];
+  int local_sync_begin,local_sync_end;
 
-  ga_sync_ ();
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
   ga_check_handle (g_a, "ga_scale_rows_");
   ga_check_handle (g_v, "ga_scale_rows_");
   GA_PUSH_NAME ("ga_scale_rows_");
@@ -1605,7 +1641,7 @@ ga_scale_rows_(Integer *g_a, Integer *g_v)
 	}
     }
   GA_POP_NAME;
-  ga_sync_ ();
+  if(local_sync_end)ga_sync_();
 }
 
 
@@ -1628,8 +1664,12 @@ ga_scale_cols_(Integer *g_a, Integer *g_v)
   long *la;
   DoubleComplex *dca;
   Integer andim, adims[2];
+  int local_sync_begin,local_sync_end;
 
-  ga_sync_ ();
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  if(local_sync_begin)ga_sync_();
+
   ga_check_handle (g_a, "ga_scale_cols_");
   ga_check_handle (g_v, "ga_scale_cols_");
   GA_PUSH_NAME ("ga_scale_cols_");
@@ -1745,7 +1785,7 @@ ga_scale_cols_(Integer *g_a, Integer *g_v)
 	}
     }
   GA_POP_NAME;
-  ga_sync_ ();
+  if(local_sync_end)ga_sync_();
 }
 
 

@@ -43,12 +43,15 @@ void FATR ga_zero_(Integer *g_a)
 Integer ndim, type, me, elems;
 void *ptr;
 register Integer i;
+int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_ZERO,__FILE__,__LINE__);
 #endif
 
-   ga_sync_();
+   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+   if(local_sync_begin)ga_sync_();
 
    me = ga_nodeid_();
 
@@ -101,8 +104,8 @@ register Integer i;
    } 
 
 
+   if(local_sync_end)ga_sync_();
    GA_POP_NAME;
-   ga_sync_();
 #ifdef GA_USE_VAMPIR
    vampir_end(GA_ZERO,__FILE__,__LINE__);
 #endif
@@ -180,11 +183,15 @@ void FATR ga_copy_(Integer *g_a, Integer *g_b)
 Integer  ndim, ndimb, type, typeb, me = ga_nodeid_();
 Integer dimsb[MAXDIM],i;
 void *ptr_a;
+int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_COPY,__FILE__,__LINE__);
 #endif
-   ga_sync_();
+
+   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+   if(local_sync_begin)ga_sync_();
 
    GA_PUSH_NAME("ga_copy");
 
@@ -206,7 +213,7 @@ void *ptr_a;
       nga_put_(g_b, lo, hi, ptr_a, ld);
    }
    
-   ga_sync_();
+   if(local_sync_end)ga_sync_();
 
    GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
@@ -228,9 +235,10 @@ DoubleComplex zsum ={0.,0.};
 float fsum=0.0;
 void *ptr_a, *ptr_b;
 
- Integer andim, adims[MAXDIM];
- Integer bndim, bdims[MAXDIM];
+Integer andim, adims[MAXDIM];
+Integer bndim, bdims[MAXDIM];
 
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    me = ga_nodeid_();
 
    GA_PUSH_NAME("ga_dot");
@@ -441,11 +449,15 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
 Integer ndim, type, me, elems;
 register Integer i;
 void *ptr;
+int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_SCALE,__FILE__,__LINE__);
 #endif
-   ga_sync_();
+
+   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+   if(local_sync_begin)ga_sync_();
 
    me = ga_nodeid_();
 
@@ -506,7 +518,7 @@ void *ptr;
    }
 
    GA_POP_NAME;
-   ga_sync_();
+   if(local_sync_end)ga_sync_(); 
 #ifdef GA_USE_VAMPIR
    vampir_end(GA_SCALE,__FILE__,__LINE__);
 #endif
@@ -521,6 +533,7 @@ void FATR ga_add_(void *alpha, Integer* g_a,
 Integer  ndim, type, typeC, me, elems=0, elemsb=0, elemsa=0;
 register Integer i;
 void *ptr_a, *ptr_b, *ptr_c;
+int local_sync_begin,local_sync_end;
 
  Integer andim, adims[MAXDIM];
  Integer bndim, bdims[MAXDIM];
@@ -530,6 +543,10 @@ void *ptr_a, *ptr_b, *ptr_c;
    vampir_begin(GA_ADD,__FILE__,__LINE__);
 #endif
    me = ga_nodeid_();
+
+   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+
 
    GA_PUSH_NAME("ga_add");
 
@@ -649,7 +666,7 @@ void *ptr_a, *ptr_b, *ptr_c;
 
 
    GA_POP_NAME;
-   ga_sync_();
+   if(local_sync_end)ga_sync_();
 #ifdef GA_USE_VAMPIR
    vampir_end(GA_ADD,__FILE__,__LINE__);
 #endif
@@ -696,6 +713,7 @@ Integer me = ga_nodeid_();
 Integer nproc = ga_nnodes_(); 
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 Integer lo[2],hi[2];
+int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
     vampir_begin(GA_TRANSPOSE,__FILE__,__LINE__);
@@ -703,7 +721,9 @@ Integer lo[2],hi[2];
 
     GA_PUSH_NAME("ga_transpose");
     
-    ga_sync_();
+    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+    if(local_sync_begin)ga_sync_();
 
     if(*g_a == *g_b) ga_error("arrays have to be different ", 0L);
 
@@ -748,7 +768,7 @@ Integer lo[2],hi[2];
        if(!MA_pop_stack(handle))ga_error("Ma_pop_stack failed for tmp",0);
     }
 
-    ga_sync_();
+    if(local_sync_end)ga_sync_();
     GA_POP_NAME;
 
 #ifdef GA_USE_VAMPIR

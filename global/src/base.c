@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.22 2002-08-02 18:59:37 manoj Exp $ */
+/* $Id: base.c,v 1.23 2002-08-22 22:21:22 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -544,6 +544,7 @@ Integer  hi[MAXDIM];
 Integer  mem_size, nelem;
 Integer  i, ga_handle, status, maplen=0;
 
+      _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
       ga_sync_();
       GA_PUSH_NAME("nga_create_ghosts_irreg");
 
@@ -1327,11 +1328,16 @@ char     **save_ptr;
 Integer  mem_size, mem_size_proc;
 Integer  i, ga_handle, status;
 int      *save_mapc;
+int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
       vampir_begin(GA_DUPLICATE,__FILE__,__LINE__);
 #endif
-      ga_sync_();
+
+
+      local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+      _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+      if(local_sync_begin)ga_sync_();
 
       GAstat.numcre ++; 
 
@@ -1508,11 +1514,16 @@ char buf[FNAM];
 logical FATR ga_destroy_(Integer *g_a)
 {
 Integer ga_handle = GA_OFFSET + *g_a;
+int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
     vampir_begin(GA_DESTROY,__FILE__,__LINE__);
 #endif
-    ga_sync_();
+
+    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+    if(local_sync_begin)ga_sync_();
+
     GAstat.numdes ++; /*regardless of array status we count this call */
 
     /* fails if handle is out of range or array not active */
@@ -1568,7 +1579,7 @@ void FATR  ga_terminate_()
 Integer i, handle;
 extern double t_dgop, n_dgop, s_dgop;
 
-
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(!GAinitialized) return;
 
 #ifdef GA_USE_VAMPIR
@@ -1617,13 +1628,18 @@ void FATR ga_fill_(Integer *g_a, void* val)
 {
 int i,elems,handle=GA_OFFSET + (int)*g_a;
 char *ptr;
+int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_TERMINATE,__FILE__,__LINE__);
 #endif
 
    GA_PUSH_NAME("ga_fill");
-   ga_sync_();
+
+   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
+   if(local_sync_begin)ga_sync_();
+
 
    ga_check_handleM(g_a, "ga_fill");
    gam_checktype(GA[handle].type);
@@ -1649,7 +1665,9 @@ char *ptr;
    default:
         ga_error("type not supported",GA[handle].type);
    }
-   ga_sync_();
+
+   if(local_sync_end)ga_sync_();
+
    GA_POP_NAME;
  
 #ifdef GA_USE_VAMPIR
@@ -1999,6 +2017,7 @@ int h_a =(int)*g_a + GA_OFFSET;
 int h_b =(int)*g_b + GA_OFFSET;
 int i;
 
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    GA_PUSH_NAME("ga_compare_distr");
    ga_check_handleM(g_a, "distribution a");
    ga_check_handleM(g_b, "distribution b");
@@ -2028,7 +2047,7 @@ int myshare;
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_CREATE_MUTEXES,__FILE__,__LINE__);
 #endif
-
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if (*num <= 0 || *num > MAX_MUTEXES) return(FALSE);
    if(num_mutexes) ga_error("mutexes already created",num_mutexes);
 
@@ -2112,6 +2131,7 @@ int m,p;
 
 logical FATR ga_destroy_mutexes_()
 {
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(num_mutexes<1) ga_error("mutexes destroyed",0);
 
 #ifdef GA_USE_VAMPIR
@@ -2233,6 +2253,21 @@ logical FATR ga_valid_handle_(Integer *g_a)
 
 int gai_getval(int *ptr) { return *ptr;}
 
+/*\ A function that helps user avoid syncs that he thinks are unnecessary
+    inside a collective call.
+\*/
+
+/*
+       Mask flags have to be reset in every collective call. Even if that
+       collective call doesnt do any sync at all.
+       If masking only the beginning sync is possible, make sure to
+       clear even the _sync_end mask to avoid a mask intended for this
+       collective_function_call to be carried to next collective_function_call
+       or to a collective function called by this function.
+       Similarly, make sure to use two copy mask values to local variables
+       and reset the global mask variables to avoid carring the mask to a
+       collective call inside the current collective call.
+*/
 void FATR ga_mask_sync_(Integer *begin, Integer *end)
 {
   if (*begin) _ga_sync_begin = 1;
