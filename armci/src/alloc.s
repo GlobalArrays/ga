@@ -62,7 +62,6 @@ $$13:
 	.align 4
 	.file 1 "alloc.c"
 	.loc 1 34
- #     34 void armci_init_alloc(size_t reserve_bytes, int slaves)
 	.globl  armci_init_alloc
 	.ent 	armci_init_alloc
 	.loc 1 34
@@ -75,12 +74,6 @@ armci_init_alloc:
 L$27:
 	lda	$sp, -272($sp)
 	.loc 1 40
- #     35 {
- #     36 struct addressconf config[AC_N_AREAS];
- #     37 armci_alloc_t *pinfo = & info;
- #     38 char *ptr;
- #     39 int rc;
- #     40 size_t pagesize=getpagesize();
 	ldq	$27, getpagesize($gp)!literal!2										   # 000040
 	.loc 1 34
 	stq	$26, ($sp)												   # 000034
@@ -98,8 +91,6 @@ L$27:
 	jsr	$26, ($27), getpagesize!lituse_jsr!2									   # 000040
 	ldah	$gp, ($26)!gpdisp!3
 	.loc 1 42
- #     41 
- #     42     if(MAX_SMP_SLAVES<slaves) ARMCI_Error("smp count too large",slaves);
 	cmple	$10, 64, $1												   # 000042
 	.loc 1 40
 	stq	$0, 32($sp)												   # 000040
@@ -117,7 +108,6 @@ L$27:
 	lda	$gp, ($gp)!gpdisp!6
 L$28:
 	.loc 1 43
- #     43     if(slaves<1) ARMCI_Error("smp count bad",slaves);
 	bgt	$10, L$33												   # 000043
 	mov	$10, $17
 	ldq	$27, ARMCI_Error($gp)!literal!7
@@ -128,8 +118,6 @@ L$28:
 	lda	$gp, ($gp)!gpdisp!9
 L$33:
 	.loc 1 45
- #     44 
- #     45     rc = getaddressconf(config, sizeof(config));
 	lda	$16, 40($sp)												   # 000045
 	mov	224, $17
 	ldq	$27, getaddressconf($gp)!literal!10
@@ -138,7 +126,6 @@ L$33:
 	mov	$0, $17
 	lda	$gp, ($gp)!gpdisp!11
 	.loc 1 46
- #     46     if(rc<0)ARMCI_Error("getaddressconf failed",rc);
 	bge	$0, L$35												   # 000046
 	ldq	$27, ARMCI_Error($gp)!literal!12
 	ldq	$16, $$4+104($gp)!literal!13
@@ -148,14 +135,8 @@ L$33:
 	lda	$gp, ($gp)!gpdisp!14
 L$35:
 	.loc 1 48
- #     47 
- #     48     pinfo->base = (char*) config[AC_MMAP_DATA].ac_base;
 	ldq	$0, 216($sp)												   # 000048
 	.loc 1 52
- #     49     /*pinfo->base = 0x30000000000;*/
- #     50     if(DEBUG)printf("******armci_base_map = %p \n",pinfo->base);
- #     51 
- #     52     bzero(offsets,sizeof(offsets));
 	mov	512, $17												   # 000052
 	ldq	$27, bzero($gp)!literal!15
 	.loc 1 37
@@ -168,9 +149,6 @@ L$35:
 	jsr	$26, ($27), bzero!lituse_jsr!15
 	ldah	$gp, ($26)!gpdisp!17
 	.loc 1 55
- #     53 
- #     54 
- #     55     if(reserve_bytes%pagesize) reserve_bytes=RESERVE_BYTES;
 	mov	$9, $16													   # 000055
 	ldq	$17, 32($sp)
 	mov	1, $2
@@ -183,7 +161,6 @@ L$35:
 	ldah	$gp, ($26)!gpdisp!19
 	cmovne	$0, $2, $9
 	.loc 1 56
- #     56     pinfo->reserved = reserve_bytes/slaves;
 	mov	$10, $17												   # 000056
 	.loc 1 55
 	lda	$gp, ($gp)!gpdisp!19											   # 000055
@@ -193,14 +170,8 @@ L$35:
 	jsr	$26, ($27), _OtsDivide64Unsigned!lituse_jsr!20
 	ldah	$gp, ($26)!gpdisp!21
 	.loc 1 59
- #     57 
- #     58     /* roundup size to reserve per peer */
- #     59     pinfo->reserved >>= 22;
 	srl	$0, 22, $0												   # 000059
 	.loc 1 62
- #     60     pinfo->reserved <<= 22;
- #     61 
- #     62     pinfo->ptr = (char*) shmem_reserve(pinfo->base, reserve_bytes, 0);
 	ldq	$16, ($11)												   # 000062
 	mov	$9, $17
 	.loc 1 56
@@ -218,7 +189,6 @@ L$35:
 	ldah	$gp, ($26)!gpdisp!23
 	stq	$0, 8($11)
 	.loc 1 63
- #     63     if(!pinfo->ptr)ARMCI_Error(">shmem_reserve failed",0);
 	clr	$17													   # 000063
 	.loc 1 62
 	lda	$gp, ($gp)!gpdisp!23											   # 000062
@@ -231,9 +201,6 @@ L$35:
 	ldah	$gp, ($26)!gpdisp!26
 	lda	$gp, ($gp)!gpdisp!26
 	.loc 1 66
- #     64 
- #     65     if(DEBUG)printf("reserved address = %p\n",pinfo->ptr);
- #     66 }
 L$36:															   # 000066
 	ldq	$26, ($sp)
 	ldq	$9, 8($sp)
@@ -246,8 +213,6 @@ L$36:															   # 000066
 	unop
 	.loc 1 34
 	.loc 1 68
- #     67 
- #     68 char *armci_region_getcore(size_t bytes)
 	.globl  armci_region_getcore
 	.ent 	armci_region_getcore
 	.loc 1 68
@@ -260,12 +225,8 @@ armci_region_getcore:
 L$39:
 	lda	$sp, -16($sp)
 	.loc 1 71
- #     69 {
- #     70      if (armci_reserve_bytes==0){
- #     71          armci_reserve_bytes =1;
 	mov	1, $7													   # 000071
 	.loc 1 72
- #     72          armci_init_alloc(-1,armci_clus_last-armci_clus_first+1);
 	ldq	$6, armci_clus_first($gp)!literal!28									   # 000072
 	ldq	$5, armci_clus_last($gp)!literal!29
 	.loc 1 70
@@ -292,17 +253,14 @@ L$39:
 	addl	$5, 1, $17
 	bsr	$26, L$27
 	.loc 1 73
- #     73      }
 L$40:															   # 000073
 	.loc 1 74
- #     74      return malloc(bytes);
 	ldq	$27, malloc($gp)!literal!31										   # 000074
 	ldq	$16, 8($sp)
 	unop
 	jsr	$26, ($27), malloc!lituse_jsr!31
 	ldah	$gp, ($26)!gpdisp!32
 	.loc 1 75
- #     75 }
 	ldq	$26, ($sp)												   # 000075
 	lda	$sp, 16($sp)
 	.loc 1 74
@@ -315,9 +273,6 @@ L$40:															   # 000073
 	unop
 	.loc 1 68
 	.loc 1 78
- #     76 
- #     77 
- #     78 void exchange_info(int n, long *info)
 	.globl  exchange_info
 	.ent 	exchange_info
 	.loc 1 78
@@ -329,11 +284,8 @@ exchange_info:
 	unop
 L$18:
 	.loc 1 79
- #     79 {
 	sextl	$16, $21												   # 000079
 	.loc 1 81
- #     80 int i;
- #     81      for(i=0; i< n; i++)
 	ble	$21, L$42												   # 000081
 	.loc 1 78
 	lda	$sp, -48($sp)												   # 000078
@@ -351,7 +303,6 @@ L$18:
 	sextl	$16, $10
 	mov	$17, $9
 	.loc 1 82
- #     82          if(i!=(armci_me-armci_master)){
 	ldq	$13, armci_me($gp)!literal!34										   # 000082
 	ldq	$12, armci_master($gp)!literal!35
 	unop
@@ -362,8 +313,6 @@ L$23:															   # 000081
 	ldl	$3, ($13)												   # 000082
 	ldl	$4, ($12)
 	.loc 1 84
- #     83            //printf("%d i=%d puting %ld\n",armci_me, i, info[armci_me]);
- #     84            shmem_put(info+armci_me-armci_master,info+armci_me-armci_master,1,i)
 	mov	1, $18													   # 000084
 	mov	$11, $19
 	ldq	$27, shmem_put($gp)!literal!36
@@ -385,15 +334,12 @@ L$23:															   # 000081
 	ldah	$gp, ($26)!gpdisp!37
 	lda	$gp, ($gp)!gpdisp!37
 	.loc 1 86
- #     85 ;
- #     86          }
 L$25:															   # 000086
 	.loc 1 81
 	addl	$11, 1, $11												   # 000081
 	cmplt	$11, $10, $0
 	bne	$0, L$23
 	.loc 1 87
- #     87 }
 	ldq	$26, ($sp)												   # 000087
 	ldq	$9, 8($sp)
 	ldq	$10, 16($sp)
@@ -408,9 +354,6 @@ L$42:
 	unop
 	.loc 1 78
 	.loc 1 90
- #     88 
- #     89 
- #     90 int armci_region_register(int p, void **pinout, long pid, size_t bytes)
 	.globl  armci_region_register
 	.ent 	armci_region_register
 	.loc 1 90
@@ -422,25 +365,10 @@ armci_region_register:
 	unop
 L$7:
 	.loc 1 98
- #     91 {
- #     92 int i;
- #     93 void *end,*ptr,*save=*pinout;
- #     94 armci_alloc_t *pinfo = & info;
- #     95 char *ref = (char*)0x140000000;
- #     96 size_t rgn_size, map_size=0;
- #     97 
- #     98      if(!*pinout)return 0;
 	ldq	$3, ($17)												   # 000098
 	.loc 1 91
 	sextl	$16, $23												   # 000091
 	.loc 1 105
- #     99 
- #    100 #if 0
- #    101      printf("%d: trying to map for peer=%d pid=%ld bytes=%ld %p\n",armci_me, p,
- #    102  pid, bytes, *pinout);
- #    103 #endif
- #    104 
- #    105      if(MAX_SMP_SLAVES<p) ARMCI_Error("smp count too large",p);
 	ldq	$27, ARMCI_Error($gp)!literal!39									   # 000105
 	unop
 	.loc 1 98
@@ -472,10 +400,6 @@ L$7:
 	lda	$gp, ($gp)!gpdisp!41
 L$11:
 	.loc 1 109
- #    106      if(!offsets[p]){
- #    107 
- #    108         /* map memory allocated by others in my address space */
- #    109         rgn_size = ((char*)*pinout)+bytes-ref+getpagesize();
 	ldq	$2, 56($sp)												   # 000109
 	.loc 1 106
 	ldq	$12, $$1$info+32($gp)!literal!42									   # 000106
@@ -493,21 +417,11 @@ L$11:
 	subq	$1, $11, $11
 	jsr	$26, ($27), getpagesize!lituse_jsr!43
 	.loc 1 112
- #    110 
- #    111         /* allign size on 4MB boundary (an overkill) */
- #    112         map_size = rgn_size +4*1024*1024*1024L -1;
 	mov	-1, $1													   # 000112
 	.loc 1 109
 	ldah	$gp, ($26)!gpdisp!44											   # 000109
 	addq	$11, $0, $19
 	.loc 1 118
- #    113         map_size >>= 22;
- #    114         map_size <<= 22;
- #    115 
- #    116         if(armci_me==0)
- #    117 	   if(DEBUG)printf("%d i=%d> before =%p %p reserved=%ld size=%ld bytes=%ld pid=%ld\n",armci_me,p, pinfo->ptr, *pinout, m
- # ap_size,rgn_size, bytes, pid); 
- #    118         end = shmem_map(pinfo->ptr, ref, map_size,rgn_size, pid, &ptr);
 	mov	5, $17													   # 000118
 	.loc 1 112
 	zapnot	$1, 15, $1												   # 000112
@@ -531,7 +445,6 @@ L$11:
 	jsr	$26, ($27), shmem_map!lituse_jsr!45
 	ldah	$gp, ($26)!gpdisp!46
 	.loc 1 119
- #    119         if(!end) ARMCI_Error("failed:end=",0);
 	clr	$17													   # 000119
 	.loc 1 118
 	lda	$gp, ($gp)!gpdisp!46											   # 000118
@@ -545,33 +458,18 @@ L$11:
 	lda	$gp, ($gp)!gpdisp!49
 L$15:
 	.loc 1 121
- #    120         /* offsets[p] = (((char*)*pinout) -ref);*/
- #    121         offsets[p] = pinfo->ptr - ref;
 	ldq	$0, -24($12)												   # 000121
 	mov	5, $1
 	sll	$1, 30, $1
 	subq	$0, $1, $0
 	stq	$0, ($10)
 	.loc 1 124
- #    122 
- #    123 
- #    124      }
 L$13:															   # 000124
 	.loc 1 126
- #    125  /**pinout = pinfo->ptr + offsets[p];*/
- #    126      *pinout = offsets[p] + (char*)*pinout;
 	ldq	$3, ($9)												   # 000126
 	ldq	$10, ($10)
 	addq	$3, $10, $3
 	.loc 1 134
- #    127      pinfo->ptr += map_size;
- #    128 #if 0
- #    129      if(armci_me==0)printf("%d: peer=%d pid=%ld ptr=%p mapped to %p off=%ld\n",
- #    130                             armci_me, p, pid, save, *pinout,offsets[p]);
- #    131 #endif
- #    132 
- #    133      return 0;
- #    134 }
 	ldq	$26, ($sp)												   # 000134
 	ldq	$10, 16($sp)
 	.loc 1 133
@@ -603,9 +501,6 @@ L$44:
 	unop
 	.loc 1 90
 	.loc 1 137
- #    135 
- #    136 
- #    137 void armci_region_fixup(int proc, void **pinout)
 	.globl  armci_region_fixup
 	.ent 	armci_region_fixup
 	.loc 1 137
@@ -619,18 +514,12 @@ armci_region_fixup:
 	.prologue 1
 L$2:
 	.loc 1 138
- #    138 {
 	sextl	$16, $16												   # 000138
 	.loc 1 140
- #    139 int p = proc -armci_clus_first;
- #    140     if(armci_me == proc) return;
 	ldq	$4, armci_me($gp)!literal!51										   # 000140
 	.loc 1 139
 	ldq	$3, armci_clus_first($gp)!literal!52									   # 000139
 	.loc 1 143
- #    141     if(DEBUG)
- #    142 	printf("%d: fixup p=%d peer=%d %p ->>> %p\n",armci_me, proc, p, *pinout, (char*)*pinout-offsets[p]);
- #    143     *pinout = (char*)*pinout - offsets[p];
 	ldq	$6, $$1$info+32($gp)!literal!53										   # 000143
 	lda	$6, ($6)!lituse_base!53
 	.loc 1 140
@@ -650,7 +539,6 @@ L$2:
 	subq	$5, $3, $3
 	stq	$3, ($17)
 	.loc 1 144
- #    144 }
 L$5:															   # 000144
 	unop
 	ret	($26)
