@@ -1,10 +1,13 @@
-/* $Id: vector.c,v 1.14 2002-06-20 23:10:30 vinod Exp $ */
+/* $Id: vector.c,v 1.15 2002-07-17 18:05:33 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
 #include "memlock.h"
 #include <stdio.h>
 
+#ifdef GA_USE_VAMPIR
+#include "armci_vampir.h"
+#endif
 
 typedef struct {
     float real;
@@ -339,6 +342,10 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 {
     int rc, i,direct=1;
 
+#ifdef GA_USE_VAMPIR
+    int tot=0;
+    for(i=0;i<len;i++) tot+=darr[i].bytes;
+#endif
 
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
@@ -348,6 +355,12 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
     }
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
+
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_PUTV,__FILE__,__LINE__);
+    if (armci_me != proc)
+       (void) VT_log_sendmsg(armci_me,proc,tot,ARMCI_PUTV,0);
+#endif
 
     ORDER(PUT,proc); /* ensure ordering */
 #ifndef QUADRICS
@@ -370,6 +383,13 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
          rc = armci_pack_vector(PUT, NULL, darr, len, proc);
 #endif    
     }
+
+#ifdef GA_USE_VAMPIR
+    if (armci_me != proc)
+       (void) VT_log_recvmsg(proc,armci_me,tot,ARMCI_PUTV,0);
+    vampir_end(ARMCI_PUTV,__FILE__,__LINE__);
+#endif
+
     if(rc) return FAIL6;
     else return 0;
 
@@ -383,6 +403,11 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 {
     int rc, i,direct=1;
 
+#ifdef GA_USE_VAMPIR
+    int tot=0;
+    for(i=0;i<len;i++) tot+=darr[i].bytes;
+#endif
+
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
       if(darr[i].src_ptr_array==NULL ||darr[i].dst_ptr_array==NULL)return FAIL2;
@@ -391,6 +416,12 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     }
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
+
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_GETV,__FILE__,__LINE__);
+    if (armci_me != proc)
+       (void) VT_log_sendmsg(proc,armci_me,tot,ARMCI_GETV,0);
+#endif
 
     ORDER(GET,proc); /* ensure ordering */
 #ifndef QUADRICS
@@ -413,6 +444,13 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
        rc = armci_pack_vector(GET, NULL, darr, len, proc);
 #endif   
     }
+
+#ifdef GA_USE_VAMPIR
+    if (armci_me != proc)
+       (void) VT_log_recvmsg(armci_me,proc,tot,ARMCI_GETV,0);
+    vampir_end(ARMCI_GETV,__FILE__,__LINE__);
+#endif
+
     if(rc) return FAIL6;
     else return 0;
 }
@@ -429,6 +467,11 @@ int ARMCI_AccV( int op,              /* oeration code */
 {
     int rc, i,direct=1;
 
+#ifdef GA_USE_VAMPIR
+    int tot=0;
+    for(i=0;i<len;i++) tot+=darr[i].bytes;
+#endif
+
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
       if(darr[i].src_ptr_array==NULL ||darr[i].dst_ptr_array==NULL)return FAIL2;
@@ -437,6 +480,12 @@ int ARMCI_AccV( int op,              /* oeration code */
     }
 
     if(proc<0 || proc >= armci_nproc)return FAIL5;
+
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_ACCV,__FILE__,__LINE__);
+    if (armci_me != proc)
+       (void) VT_log_sendmsg(armci_me,proc,tot,ARMCI_ACCV,0);
+#endif
 
     ORDER(op,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
@@ -449,6 +498,12 @@ int ARMCI_AccV( int op,              /* oeration code */
          rc = armci_acc_vector( op, scale, darr, len, proc);
     else
          rc = armci_pack_vector(op, scale, darr, len, proc);
+
+#ifdef GA_USE_VAMPIR
+    if (armci_me != proc)
+       (void) VT_log_recvmsg(proc,armci_me,tot,ARMCI_ACCV,0);
+    vampir_end(ARMCI_ACCV,__FILE__,__LINE__);
+#endif
 
     if(rc) return FAIL6;
     else return 0;

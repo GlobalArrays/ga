@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.27 2002-06-20 23:10:30 vinod Exp $ */
+/* $Id: memory.c,v 1.28 2002-07-17 18:05:33 vinod Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -17,6 +17,10 @@
 
 #if !(defined(LAPI)||defined(QUADRICS)||defined(SERVER_THREAD)) ||defined(USE_SHMEM)
 #define RMA_NEEDS_SHMEM  
+#endif
+
+#ifdef GA_USE_VAMPIR
+#include "armci_vampir.h"
 #endif
 
 void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
@@ -225,7 +229,9 @@ void armci_shmem_malloc(void* ptr_arr[], int bytes)
 int ARMCI_Malloc(void *ptr_arr[],int bytes)
 {
     void *ptr;
-
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_MALLOC,__FILE__,__LINE__);
+#endif
     if(DEBUG_)
        fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, bytes);
 #ifdef USE_MALLOC
@@ -233,6 +239,9 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
       ptr = malloc(bytes);
       if(bytes) if(!ptr) armci_die("armci_malloc:malloc failed",bytes);
       ptr_arr[armci_me] = ptr;
+#ifdef GA_USE_VAMPIR
+      vampir_end(ARMCI_MALLOC,__FILE__,__LINE__);
+#endif
       return (0);
     }
 #endif
@@ -250,7 +259,9 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
       /* now combine individual addresses into a single array */
       armci_exchange_address(ptr_arr, armci_nproc);
     }
-
+#ifdef GA_USE_VAMPIR
+      vampir_end(ARMCI_MALLOC,__FILE__,__LINE__);
+#endif
     return(0);
 }
 
@@ -262,7 +273,9 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 int ARMCI_Free(void *ptr)
 {
     if(!ptr)return 1;
-
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_FREE,__FILE__,__LINE__);
+#endif
 #if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
 #   ifdef USE_MALLOC
       if(armci_nproc > 1)
@@ -277,11 +290,17 @@ int ARMCI_Free(void *ptr)
 #          endif
          }
          ptr = NULL;
+#ifdef GA_USE_VAMPIR
+         vampir_end(ARMCI_FREE,__FILE__,__LINE__);
+#endif
          return 0;
       }
 #endif
         free(ptr);
         ptr = NULL;
+#ifdef GA_USE_VAMPIR
+        vampir_end(ARMCI_FREE,__FILE__,__LINE__);
+#endif
         return 0;
 }
 

@@ -93,6 +93,11 @@ else
   endif
 endif
 
+ifdef GA_USE_VAMPIR
+   OBJ += armci_vampir.o
+   LIB_INCLUDES += -I../../include
+endif
+
 LIB_DEFINES += $(MP_DEFINES) $(COMM_DEFINES)
 LIB_INCLUDES += $(COMM_INCLUDES) $(MP_INCLUDES)
 EXTRA_LIBS += $(MP_LIBS) $(COMM_LIBS)

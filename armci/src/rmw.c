@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.16 2002-03-13 17:13:33 vinod Exp $ */
+/* $Id: rmw.c,v 1.17 2002-07-17 18:05:33 vinod Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -8,6 +8,10 @@
 #ifndef CRAY
 /* manpages for shmem_fadd exist on the T3E but library code does not */
 #define SHMEM_FADD 
+#endif
+
+#ifdef GA_USE_VAMPIR
+#include "armci_vampir.h"
 #endif
 
 /* global scope to prevent compiler optimization of volatile code */
@@ -69,6 +73,10 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
 #elif defined(_CRAYMPP) || defined(QUADRICS)
     int  ival;
     long lval;
+#endif
+
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_RMW,__FILE__,__LINE__);
 #endif
 
 #if defined(LAPI64) && defined(RMWBROKEN)
@@ -175,6 +183,9 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 #   endif
       default: armci_die("rmw: operation not supported",op);
     }
+#ifdef GA_USE_VAMPIR
+    vampir_end(ARMCI_RMW,__FILE__,__LINE__);
+#endif
 
     return 0;
 }

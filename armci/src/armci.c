@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.48 2002-05-17 20:18:13 d3h325 Exp $ */
+/* $Id: armci.c,v 1.49 2002-07-17 18:05:33 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -41,6 +41,10 @@
 #include "shmem.h"
 #include "signaltrap.h"
 
+#ifdef GA_USE_VAMPIR
+#include "armci_vampir.h"
+#endif
+
 /* global variables */
 int armci_me, armci_nproc;
 int armci_clus_me, armci_nclus, armci_master;
@@ -62,6 +66,9 @@ double armci_internal_buffer[BUFSIZE_DBL];
 
 void ARMCI_Cleanup()
 {
+#ifdef GA_USE_VAMPIR
+  vampir_begin(ARMCI_CLEANUP,__FILE__,__LINE__);
+#endif
 #if (defined(SYSV) || defined(WIN32) || defined(MMAP))&& !defined(HITACHI) 
     Delete_All_Regions();
 #if !defined(LAPI) 
@@ -79,6 +86,9 @@ void ARMCI_Cleanup()
 #ifndef WIN32
     ARMCI_RestoreSignals();
 #endif
+#endif
+#ifdef GA_USE_VAMPIR
+  vampir_end(ARMCI_CLEANUP,__FILE__,__LINE__);
 #endif
 }
 
@@ -242,6 +252,11 @@ int ARMCI_Init()
 {
     _armci_initialized++;
     if(_armci_initialized>1)return 0;
+#ifdef GA_USE_VAMPIR
+    vampir_init(NULL,NULL,__FILE__,__LINE__);
+    armci_vampir_init(__FILE__,__LINE__);
+    vampir_begin(ARMCI_INIT,__FILE__,__LINE__);
+#endif
 
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
@@ -286,7 +301,9 @@ int ARMCI_Init()
 /*    fprintf(stderr,"%d ready \n",armci_me);*/
     armci_msg_barrier();
     armci_msg_gop_init();
-    
+#ifdef GA_USE_VAMPIR
+    vampir_end(ARMCI_INIT,__FILE__,__LINE__);
+#endif    
     return 0;
 }
 
@@ -295,6 +312,10 @@ void ARMCI_Finalize()
 {
     _armci_initialized--;
     if(_armci_initialized)return;
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_FINALIZE,__FILE__,__LINE__);
+#endif
+
     _armci_terminating =1;;
     armci_msg_barrier();
     if(armci_me==armci_master) ARMCI_ParentRestoreSignals();
@@ -308,6 +329,10 @@ void ARMCI_Finalize()
 
     ARMCI_Cleanup();
     armci_msg_barrier();
+#ifdef GA_USE_VAMPIR
+    vampir_end(ARMCI_FINALIZE,__FILE__,__LINE__);
+    vampir_finalize(__FILE__,__LINE__);
+#endif
 }
 
 
@@ -324,7 +349,13 @@ void ARMCI_Set_shmem_limit(unsigned long shmemlimit)
 
 void ARMCI_Copy(void *src, void *dst, int n)
 {
+#ifdef GA_USE_VAMPIR
+ vampir_begin(ARMCI_COPY,__FILE__,__LINE__);
+#endif
  armci_copy(src,dst,n);
+#ifdef GA_USE_VAMPIR
+ vampir_end(ARMCI_COPY,__FILE__,__LINE__);
+#endif
 }
 
 

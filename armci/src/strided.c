@@ -1,10 +1,13 @@
-/* $Id: strided.c,v 1.41 2002-06-20 23:10:30 vinod Exp $ */
+/* $Id: strided.c,v 1.42 2002-07-17 18:05:33 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
 #include "memlock.h"
 #include <stdio.h>
 
+#ifdef GA_USE_VAMPIR
+#include "armci_vampir.h"
+#endif
 
 #define ARMCI_OP_2D(op, scale, proc, src, dst, bytes, count, src_stride, dst_stride,lockit)\
 if(op == GET || op ==PUT)\
@@ -402,6 +405,12 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_PUTS,__FILE__,__LINE__);
+    if (armci_me != proc)
+       (void) VT_log_sendmsg(armci_me,proc,count[0],ARMCI_PUTS,0);
+#endif
+
     ORDER(PUT,proc); /* ensure ordering */
 
 #ifndef QUADRICS
@@ -435,6 +444,12 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
        rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
                               dst_ptr, dst_stride_arr, count, stride_levels, 0);
 
+#ifdef GA_USE_VAMPIR
+    if (armci_me != proc)
+       (void) VT_log_recvmsg(proc,armci_me,count[0],ARMCI_PUTS,0);
+    vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
+#endif
+
     if(rc) return FAIL6;
     else return 0;
 
@@ -465,6 +480,12 @@ int ARMCI_PutS_flag(
     if(count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
+
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_PUTS,__FILE__,__LINE__);
+    if (armci_me != proc)
+       (void) VT_log_sendmsg(armci_me,proc,count[0],ARMCI_PUTS,0);
+#endif
 
     ORDER(PUT,proc); /* ensure ordering */
 
@@ -500,6 +521,12 @@ int ARMCI_PutS_flag(
        armci_put(&val,flag,sizeof(int),proc); 
     }
 
+#ifdef GA_USE_VAMPIR
+    if (armci_me != proc)
+       (void) VT_log_recvmsg(proc,armci_me,count[0],ARMCI_PUTS,0);
+    vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
+#endif
+
     if(rc) return FAIL6;
     else return 0;
 
@@ -523,6 +550,12 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
     
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_GETS,__FILE__,__LINE__);
+    if (armci_me != proc)
+       (void) VT_log_sendmsg(proc,armci_me,count[0],ARMCI_GETS,0);
+#endif
+
     ORDER(GET,proc); /* ensure ordering */
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -567,6 +600,12 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, 
                                dst_ptr, dst_stride_arr, count, stride_levels,0);
 
+#ifdef GA_USE_VAMPIR
+    if (armci_me != proc)
+       (void) VT_log_recvmsg(armci_me,proc,count[0],ARMCI_GETS,0);
+    vampir_end(ARMCI_GETS,__FILE__,__LINE__);
+#endif
+
     if(rc) return FAIL6;
     else return 0;
 }
@@ -593,6 +632,12 @@ int ARMCI_AccS( int  optype,            /* operation */
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_ACCS,__FILE__,__LINE__);
+    if (armci_me != proc)
+       (void) VT_log_sendmsg(armci_me,proc,count[0],ARMCI_ACCS,0);
+#endif
+
     ORDER(optype,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
 
@@ -606,6 +651,12 @@ int ARMCI_AccS( int  optype,            /* operation */
     else
       rc = armci_pack_strided(optype, scale, proc, src_ptr, src_stride_arr, 
                       dst_ptr,dst_stride_arr,count,stride_levels,NULL,-1,-1,-1);
+
+#ifdef GA_USE_VAMPIR
+    if (armci_me != proc)
+       (void) VT_log_recvmsg(proc,armci_me,count[0],ARMCI_ACCS,0);
+    vampir_end(ARMCI_ACCS,__FILE__,__LINE__);
+#endif
 
     if(rc) return FAIL6;
     else return 0;
