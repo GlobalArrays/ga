@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.32 2003-04-09 17:32:34 vinod Exp $ */
+/* $Id: pack.c,v 1.33 2003-07-30 19:06:00 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -96,7 +96,7 @@ int armci_pack_strided(int op, void* scale, int proc,
 #  endif
 #endif
 
-#if (defined(GM) || defined(VIA)) 
+#if (defined(GM) || defined(VIA) || defined(VAPI))
     /*we cant assume that the entire available buffer will be used for data, 
       fact that the header and descriptor also go in the same buffer should be
       considered while packing.
