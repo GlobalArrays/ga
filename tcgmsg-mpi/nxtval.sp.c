@@ -193,8 +193,9 @@ static  long mproc;                  /* no. of processes running loop */
 static  long nval;                   /* no. of values requested */
 static  long sync   = 1;             /* all info goes synchronously */
 static  long lenbuf = sizeof(nxtval_buffer[0]);    /* length of buffer */
-static  long status, htype = TYPE_NXTVAL, msglen, id;
+static  long status, htype = TYPE_NXTVAL, id;
 static  long new=1, old;
+static  size_t  msglen;
 
   mpc_wait(pid, &msglen);
   if (msglen != lenbuf) 

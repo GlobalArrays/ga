@@ -1,26 +1,46 @@
 #
 # Makefile for TCGMSG library on top of MPI
 #
+# Author: Jarek Nieplocha
+# August 1995
+
+#Either MACHINE or TARGET platform must be defined
 
 ifndef MACHINE
-error:
-	@echo "You must define MACHINE"
-	exit
+ifdef TARGET
+   MACHINE = $(TARGET)
+else
+        ERRMSG = "You must define MACHINE\\n"
 endif
+endif
+
+ifndef MPI_LIB
+        ERRMSG +=  "You must define location of MPI library(ies) -- MPI_LIB\\n"
+endif
+
+ifndef MPI_INCLUDE
+	ERRMSG += "You must define location of MPI include files -- MPI_INCLUDE"
+endif
+
 
 # On some platforms NXVAL can be implemented using non-portable "native"
 # services. To enable use of such an implementation, you need to uncomment
 # the following line: 
 USE_NATIVE_NXTVAL=1
 
-
 # You need to specify MACHINE target and location of MPI include files and
 # library -- MPI_LOC
 #
 
-ifndef MPI_LOC
-  MPI_LOC = /usr/local/mpi/mpich
+LIBRARY = libtcgmsg-mpi.a
+LIB_DISTRIB = ../lib
+
+# name of MPI library
+ifndef LIBMPI
+  LIBMPI  = libmpi.a
 endif
+
+
 
            FC = f77
            CC = cc
@@ -33,30 +53,33 @@ endif
         SHELL = /bin/sh
            MV = /bin/mv
            RM = /bin/rm
-      ARFLAGS = rcv
-GLOB_INCLUDES = -I$(MPI_LOC)/include
+      ARFLAGS = r
+    MAKEFLAGS = -j 1
+        MKDIR = mkdir
+GLOB_INCLUDES = -I$(MPI_INCLUDE)
  GLOB_DEFINES = -D$(MACHINE)
 
   
-OBJ_CORE =\
-    checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
-    collect.o	misc.o		p2p.o		pfilecopy.o\
-    evlog.o	evon.o		random.o
-
 #
 #.................................. SUN ....................................
 #
 ifeq ($(MACHINE),SUN)
      FOPT_REN = -Nl100
        RANLIB = ranlib
-      MPI_LIB = $(MPI_LOC)/lib/sun4/ch_p4
 endif
+
 #................................ SOLARIS ..................................
 #
 ifeq ($(MACHINE),SOLARIS)
         CDEFS = -DSUNF77_2
-      MPI_LIB = $(MPI_LOC)/lib/solaris/ch_shmem
    EXTRA_LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
+endif
+
+#................................ LINUX ....................................
+#
+ifeq ($(MACHINE),LINUX)
+     FOPT_REN = -Nl100
+       RANLIB = ranlib
 endif
 
 #................................ DEC ALPHA ................................
@@ -68,24 +91,22 @@ ifeq ($(MACHINE),DECOSF)
        RANLIB = ranlib
         CDEFS = -DEXT_INT
      FOPT_REN = -i8
-      MPI_LIB = $(MPI_LOC)/lib/dec/ch_p4
 endif
+
 #................................ CRAY-T3D ..................................
 #
 ifeq ($(MACHINE),CRAY-T3D)
 #
            FC = cf77
+         FOPT = -g
           CPP = /mpp/lib/mppcpp
      FOPT_REN = -Ccray-t3d -Wf-dp
-      FLD_REN = -Wl"-Drdahead=on -Ddalign=64"
-      CLD_REN = -Wl"-Drdahead=on -Ddalign=64"
  GLOB_DEFINES = -DCRAY_T3D
-      MPI_LIB = $(MPI_LOC)/lib/cray_t3d/t3d
     EXTRA_OBJ = memalign.o
-         FOPT = -g
    NXTVAL_OBJ = nxtval.t3d.o
  NXTVAL_AVAIL = yes
 endif
+
 #................................ KSR ......................................
 #
 ifeq ($(MACHINE),KSR)
@@ -97,6 +118,7 @@ ifeq ($(MACHINE),KSR)
         CDEFS = -DEXT_INT
    EXTRA_LIBS = -lrpc -para
 endif
+
 #................................ SGI ......................................
 #
 ifeq ($(MACHINE),SGI)
@@ -104,26 +126,27 @@ ifeq ($(MACHINE),SGI)
 # SGI running IRIX 5.XX
 #
  GLOB_DEFINES = -DSGI
-      MPI_LIB = $(MPI_LOC)/lib/IRIX/ch_shmem
+   MPI_DEVICE = lib/IRIX/ch_shmem
 endif
-#................................ SGI Power Challenge .......................
+
+#............................. SGI Power Challenge ..........................
+#
+# SGI running IRIX6.XX 
+# (Fortran integer size equivalent to C long)
 #
 ifeq ($(MACHINE),SGITFP)
         CDEFS = -DEXT_INT
      FOPT_REN = -i8 -64
  GLOB_DEFINES = -DSGI64 -DSGI
-      MPI_LIB = $(MPI_LOC)/lib/IRIX/ch_shmem
 endif
 
 ifeq ($(MACHINE),SGI64)
 #
-# SGI running IRIX6.XX
+# SGI running IRIX6.XX with native Fortran integer sizes
 #
-#       CDEFS = -DEXT_INT
-#    FOPT_REN = -i8 -64 
  GLOB_DEFINES = -DSGI64 -DSGI
-      MPI_LIB = $(MPI_LOC)/lib/IRIX/ch_shmem
 endif
+
 #................................ Intel Paragon .............................
 #
 ifeq ($(MACHINE),PARAGON)
@@ -133,7 +156,6 @@ ifeq ($(MACHINE),PARAGON)
      FOPT_REN += -Knoieee -Mreentrant
      COPT_REN += -Knoieee -Mreentrant
 
-       MPI_LIB = $(MPI_LOC)/lib/paragon/ch_nx
      EXTRA_OBJ = memalign.o
     NXTVAL_OBJ = nxtval.nx.o
     EXTRA_LIBS = -nx
@@ -143,7 +165,8 @@ endif
 #.............................. IBM SP .....................................
 #
 ifeq ($(MACHINE),SP1)
-
+# IBM SP-x 
+#
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
@@ -151,7 +174,6 @@ ifeq ($(MACHINE),SP1)
     MAKEFLAGS = -j 1
        RANLIB = ranlib
      FOPT_REN = -qEXTNAME
-      MPI_LIB = $(MPI_LOC)/lib/rs6000/ch_eui
    NXTVAL_OBJ = nxtval.sp.o
     EXTRA_OBJ = memalign.o
  NXTVAL_AVAIL = yes
@@ -167,11 +189,12 @@ ifeq ($(MACHINE),IBM)
        RANLIB = ranlib
  GLOB_DEFINES = -DEXTNAME -DAIX
      FOPT_REN = -qEXTNAME
-      MPI_LIB = $(MPI_LOC)/lib/rs6000/ch_p4
     EXTRA_OBJ = memalign.o
 endif
 
 #...........................................................................
+
+
 ifneq ($(NXTVAL_AVAIL),yes)
  GLOB_DEFINES += -DNXTVAL_SERVER
     NXTVAL_OBJ = nxtval.o
@@ -182,58 +205,50 @@ else
  endif
 endif
 
-      DEFINES = $(GLOB_DEFINES) $(LOC_DEFINES) $(DEF_TRACE)
+      DEFINES = $(GLOB_DEFINES) $(LOC_DEFINES)
      INCLUDES = $(GLOB_INCLUDES) $(LOC_INCLUDES)
        FFLAGS = $(FOPT) $(FOPT_REN) $(INCLUDES) $(DEFINES)
-       CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS)
+       CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES)
        FLDOPT = $(FOPT) $(FLD_REN)
        CLDOPT = $(COPT) $(CLD_REN)
 
-      OBJ = $(OBJ_CORE) $(EXTRA_OBJ) $(NXTVAL_OBJ) 
+OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
+      collect.o		misc.o		p2p.o		pfilecopy.o\
+      evlog.o		evon.o		random.o
 
-     LIBS = $(MPI_LIB)/libmpi.a $(EXTRA_LIBS)
-     JOBJ = fexit.o timer.o getmem.o mxv_fortran.o
+      OBJ += $(EXTRA_OBJ) $(NXTVAL_OBJ) 
 
-  EXECS = test.x testf.x hello
+# This include file specifies how and where the library should be built
+# LIBRARY_PATH  is the library location
 
-LIBRARY=libtcgmsg.a
+include ../config/makelib.h
+
+LIBS = $(MPI_LIB)/$(LIBMPI) $(EXTRA_LIBS)
 
 all:	test.x testf.x
 
-libtcgmsg.a:	$(OBJ) 
-	/bin/rm -f $@ 
-	$(AR) $(ARFLAGS) $@ $(OBJ) 
-	$(RANLIB) $@ 
-	@echo
-	@echo TCGMSG-MPI is built for $(MACHINE)
-	@echo
 
-clean:
-	/bin/rm -f *.o $(EXECS) *.x core $(LIBRARY) PI* *core  mputil.*
-
-realclean:	clean
-	/bin/rm -f *~ \#* 
-
-$(OBJ): tcgmsgP.h 
-
-.f.o:
-	$(FC) -c $(FFLAGS)  $*.f
-
-.c.o:
-	$(CC) $(CFLAGS) -c $*.c
-
-test.x:	test.o $(LIBRARY)
+test.x:	test.o $(LIBRARY_PATH)
 	$(CC)  $(CLDOPT) -o $@ $^ $(LIBS)
 
-testf.x: testf.o $(LIBRARY)
+testf.x: testf.o $(LIBRARY_PATH)
 	$(FC)  $(FLDOPT) -o $@ $^ $(LIBS)
 
-hello.x: hello.o $(LIBRARY)
+hello.x: hello.o $(LIBRARY_PATH)
 	$(CC)  $(CLDOPT) -o $@ $^ $(LIBS)
 
-test_arcv.x: test_arcv.o $(LIBRARY)
+test_arcv.x: test_arcv.o $(LIBRARY_PATH)
 	$(FC)  $(FLDOPT) -o $@ $^ $(LIBS)
 
-test_asyn.x: test_asyn.o $(LIBRARY)
+test_asyn.x: test_asyn.o $(LIBRARY_PATH)
 	$(CC)  $(CLDOPT) -o $@ $^ $(LIBS)
 
+$(patsubst %,$(LIBRARY_PATH)(%),$(OBJ))      : tcgmsgP.h
+$(patsubst %,$(LIBRARY_PATH)(%),evon.o)      : evlog.h
+$(patsubst %,$(LIBRARY_PATH)(%),evlog.o)     : evlog.h
+$(patsubst %,$(LIBRARY_PATH)(%),pfilecopy.o) : msgtypesc.h
+tcgmsgP.h: srftoc.h
+sndrcv.h: msgtypesc.h
+srftoc.h: types.h
+srftoc.h: sndrcv.h
+test.o hello.o: sndrcv.h
