@@ -1101,6 +1101,29 @@ BUF_INFO_T *info;
     }
 }
 
+static inline void armci_vapi_post_send(int isclient,int con_offset,
+                                        VAPI_sr_desc_t *snd_dscr,char *from)
+{
+VAPI_ret_t rc=VAPI_CQ_EMPTY;
+vapi_nic_t *nic;
+armci_connect_t *con;
+
+    if(!isclient){
+       nic = CLN_nic;
+       con = CLN_con+con_offset;
+    }
+    else{
+       nic = SRV_nic;
+       con = SRV_con+con_offset;
+    }
+    if(snd_dscr->sg_lst_p->len>100)
+       rc = VAPI_post_sr(nic->handle,con->qp,snd_dscr);
+    else
+       rc = EVAPI_post_inline_sr(nic->handle,con->qp,snd_dscr);
+     
+    armci_check_status(DEBUG_INIT, rc, from);
+}
+
 
 int armci_send_req_msg(int proc, void *buf, int bytes)
 {
@@ -1131,8 +1154,7 @@ VAPI_wc_desc_t *pdscr=&pdscr1;
     armci_init_vapibuf_send(snd_dscr, ssg_lst,buf, 
                             bytes, &client_memhandle);
 
-    rc = VAPI_post_sr(SRV_nic->handle,(SRV_con+cluster)->qp,snd_dscr);
-    armci_check_status(DEBUG_INIT, rc,"client post send");
+    armci_vapi_post_send(1,cluster,snd_dscr,"send_req_msg:post_send");
 
     if(DEBUG_CLN){
        printf("%d:client sent REQ=%d %d bytes serv=%d qp=%d remqp=%d id =%d lkey=%d\n",
@@ -1157,8 +1179,8 @@ int clus = armci_clus_id(p);
     armci_init_vbuf_srdma(&dirdscr->descr,&dirdscr->sg_entry,src_buf,dst_buf,
                           len,lochdl,remhdl);
 
-    rc = VAPI_post_sr(SRV_nic->handle,(SRV_con+clus)->qp,&(dirdscr->descr));
-    armci_check_status(DEBUG_CLN, rc,"client_send_direct, send");
+    armci_vapi_post_send(1,clus,&(dirdscr->descr),
+                         "client_direct_send:post_send");
 
     if(!nbtag)
        armci_client_send_complete(&(dirdscr->descr),"armci_client_direct_send");
@@ -1190,6 +1212,7 @@ int clus = armci_clus_id(p);
 
     rc = VAPI_post_sr(SRV_nic->handle,(SRV_con+clus)->qp,&(dirdscr->descr));
     armci_check_status(DEBUG_CLN, rc,"client_get_direct, get");
+    
 
     if(!nbtag)
        armci_client_send_complete(&(dirdscr->descr),"armci_client_direct_get");
