@@ -139,8 +139,11 @@ int  elio_stat(char *fname, stat_t *statinfo)
           statinfo->avail = (long) ufs_statfs.f_bavail;
 #     endif
 
-      /* get block size */
+      /* get block size, fail if bszie is still 0 */
        bsize = (int) ufs_statfs.f_frsize;
+       if(bsize==0)bsize =(int) ufs_statfs.f_bsize; 
+       if(bsize==0) ELIO_ERROR(STATFAIL, 1);
+
       /* on some older systems it was f_bsize */
       /* bsize = (int) ufs_statfs.f_bsize; */
 #   endif
