@@ -2,23 +2,25 @@
 
 /*include file that contains some common constants, also include by fortran */
 #include "chemio.h" 
-
+#include <sys/types.h>
+#include <stdio.h>
 
 /*********************** type definitions for ELIO interface *****************/
 typedef struct {
   int   fd;
   int   fs;
-} Fd_t;                      /* file descriptor type definition */
+} fd_struct;                      /* file descriptor type definition */
+typedef fd_struct* Fd_t;
 typedef long io_request_t;   /* asynchronous I/O request type */
 typedef long Size_t;         /* size of I/O request type */ 
 
 
 #ifndef _VOID_DEFINED_
 #  define _VOID_DEFINED_ 1 
-#  if !defined(__STDC__) || !defined(__cplusplus)
-      typedef char Void;
-#  else
+#  if defined(__STDC__) || defined(__cplusplus)
       typedef void Void;
+#  else
+      typedef char Void;
 #  endif
 #endif
 
@@ -30,20 +32,20 @@ typedef long Size_t;         /* size of I/O request type */
 # define _ARGS_(s) ()
 #endif
 
-extern Size_t elio_read     _ARGS_((Fd_t *fd, off_t offset, Void *buf,
+extern Size_t elio_read     _ARGS_((Fd_t fd, off_t offset, Void *buf,
                                     Size_t bytes)); 
-extern int    elio_aread    _ARGS_((Fd_t *fd, off_t offset, Void *buf,
+extern int    elio_aread    _ARGS_((Fd_t fd, off_t offset, Void *buf,
                                     Size_t bytes, io_request_t *req_id));
-extern Size_t elio_write    _ARGS_((Fd_t *fd, off_t offset, Void *buf,
+extern Size_t elio_write    _ARGS_((Fd_t fd, off_t offset, Void *buf,
                                     Size_t bytes)); 
-extern int    elio_awrite   _ARGS_((Fd_t *fd, off_t offset, Void *buf,
+extern int    elio_awrite   _ARGS_((Fd_t fd, off_t offset, Void *buf,
                                     Size_t bytes, io_request_t *req_id));
 extern int    elio_wait     _ARGS_((io_request_t *id));
 extern int    elio_probe    _ARGS_((io_request_t *id, int* status));
 extern int    elio_delete   _ARGS_((char *filename));
-extern Fd_t  *elio_open     _ARGS_((char *fname, int type));
-extern Fd_t  *elio_gopen    _ARGS_((char *fname, int type));
-extern void   elio_close    _ARGS_((Fd_t *fd));
+extern Fd_t   elio_open     _ARGS_((char *fname, int type));
+extern Fd_t   elio_gopen    _ARGS_((char *fname, int type));
+extern void   elio_close    _ARGS_((Fd_t fd));
 extern int    elio_stat     _ARGS_((char *fname));
        void   elio_init     _ARGS_(());
        void   elio_terminate _ARGS_(());

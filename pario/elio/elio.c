@@ -3,7 +3,6 @@
 \**********************************************************************/
 
 #include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -84,7 +83,7 @@ int onoff;
 /*\ Blocking Write - returns number of bytes written or -1 if failed
 \*/
 Size_t elio_write(fd, offset, buf, bytes)
-     Fd_t        *fd;
+     Fd_t         fd;
      off_t        offset;
      Void        *buf;
      Size_t       bytes;
@@ -106,7 +105,7 @@ int    attempt=0;
              stat = write(fd->fd, buf, bytes_to_write);
              if(stat < bytes_to_write && stat >= -1){
                 bytes_to_write -= stat;
-                buf += stat;   /* advance pointer by # bytes written */
+                buf = stat + (char*)buf; /*advance pointer by # bytes written */
              }else
                 bytes_to_write = 0;
              attempt++;
@@ -124,7 +123,7 @@ int    attempt=0;
 
 
 void elio_set_cb(fd, offset, reqn, buf, bytes)
-     Fd_t  *fd;
+     Fd_t  fd;
      off_t  offset;
      int    reqn;
      Void  *buf;
@@ -166,8 +165,8 @@ void elio_set_cb(fd, offset, reqn, buf, bytes)
 /*\ Asynchronous Write: returns 0 if succeded or -1 if failed
 \*/
 int elio_awrite(fd, offset, buf, bytes, req_id)
-     Fd_t         *fd;
-     off_t         offset;
+     Fd_t         fd;
+     off_t        offset;
      Void         *buf;
      Size_t        bytes;
      io_request_t *req_id;
@@ -219,7 +218,7 @@ int elio_awrite(fd, offset, buf, bytes, req_id)
 /*\ Blocking Read - returns number of bytes read or -1 if failed
 \*/
 Size_t elio_read(fd, offset, buf, bytes)
-Fd_t        *fd;
+Fd_t         fd;
 off_t        offset;
 Void        *buf;
 Size_t       bytes;
@@ -241,7 +240,7 @@ int    attempt=0;
              stat = read(fd->fd, buf, bytes_to_read);
              if(stat < bytes_to_read && stat >= -1){
                 bytes_to_read -= stat;
-                buf += stat;   /* advance pointer by # bytes read */
+                buf = stat + (char*)buf; /*advance pointer by # bytes written */
              }else
                 bytes_to_read = 0;
              attempt++;
@@ -261,7 +260,7 @@ int    attempt=0;
 /*\ Asynchronous Read: returns 0 if succeded or -1 if failed
 \*/
 int elio_aread(fd, offset, buf, bytes, req_id)
-Fd_t         *fd;
+Fd_t          fd;
 off_t         offset;
 Void         *buf;
 Size_t        bytes;
@@ -288,7 +287,7 @@ io_request_t *req_id;
 #if defined(PARAGON)
       if(offset != lseek(fd->fd, offset, SEEK_SET))
 	ELIO_ABORT("elio_aread: seek broken:",0);
-      *req_id = _iread(fd->fd, buf, bytes);
+       req_id = _iread(fd->fd, buf, bytes);
       stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
 #elif defined(KSR) && defined(AIO)
       stat = aread(fd->fd, buf, bytes, cb_fout+aio_i);
@@ -473,28 +472,28 @@ char *fname;
 
 /*\ Noncollective File Open
 \*/
-Fd_t * elio_open(fname, type)
+Fd_t  elio_open(fname, type)
 char* fname;
 int   type;
 {
-  Fd_t *fd;
+  Fd_t fd;
   int ptype;
 
-  PABLO_start(PABLO_elio_open); 
+  PABLO_start(PABLO_elio_open);
   if(first_elio_init) elio_init();
-  
+ 
    switch(type){
-     case ELIO_W:  ptype = O_CREAT | O_TRUNC | O_WRONLY;     
+     case ELIO_W:  ptype = O_CREAT | O_TRUNC | O_WRONLY;
                    break;
-     case ELIO_R:  ptype = O_RDONLY;     
+     case ELIO_R:  ptype = O_RDONLY;
                    break;
-     case ELIO_RW: ptype = O_CREAT | O_RDWR;     
+     case ELIO_RW: ptype = O_CREAT | O_RDWR;
                    break;
      default:      ELIO_ABORT("elio_open: mode incorrect", 0);
    }
 
 
-   if( (fd = (Fd_t *) malloc(sizeof(Fd_t)) ) == NULL)
+   if( (fd = (Fd_t ) malloc(sizeof(fd_struct)) ) == NULL)
      ELIO_ABORT("elio_open: Unable to malloc Fd_t structure\n", 1);
 
    fd->fs = elio_stat(fname);
@@ -512,11 +511,11 @@ int   type;
 
 /*\ Collective File Open
 \*/
-Fd_t * elio_gopen(fname, type)
+Fd_t  elio_gopen(fname, type)
 char* fname;
 int   type;
 {
-  Fd_t *fd;
+  Fd_t fd;
 
   PABLO_start(PABLO_elio_gopen);
   if(first_elio_init) elio_init();
@@ -535,7 +534,7 @@ int   type;
         default:      ELIO_ABORT("elio_open: mode incorrect", 0);
       }
 
-     if( (fd = (Fd_t *) malloc(sizeof(Fd_t)) ) == NULL)
+     if( (fd = (Fd_t ) malloc(sizeof(fd_struct)) ) == NULL)
        ELIO_ABORT("elio_open: Unable to malloc Fd_t structure\n", 1);
 
       fd->fs = FS_PFS;
@@ -556,7 +555,7 @@ int   type;
 /*\ Close File
 \*/
 void elio_close(fd)
-Fd_t *fd;
+Fd_t fd;
 {
    PABLO_start(PABLO_elio_close);
 

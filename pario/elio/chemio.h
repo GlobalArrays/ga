@@ -10,8 +10,8 @@
 #define   ELIO_PENDING  1
 #define   ELIO_ERROR    2
 
-#define   ELIO_OK       10
-#define   ELIO_FAIL     11
+#define   ELIO_OK       0
+#define   ELIO_FAIL     1
 
 
 #endif
