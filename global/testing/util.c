@@ -431,8 +431,13 @@ double FATR util_drand_(Integer* flag)
 
 #else
 
+#ifdef LINUX
+  if (fflag) srandom((unsigned) fflag);
+  return ((double) random()) * 4.6566128752458e-10;
+#else
   if (fflag) srand((unsigned) fflag);
   return ((double) rand()) * 4.6566128752458e-10;
+#endif
 
 #endif
 }
