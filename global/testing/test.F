@@ -76,6 +76,7 @@ c
 c
 c***  Tidy up the GA package
 c
+      if(ga_nodeid().eq.0)call ga_print_stats()
       call ga_terminate()
 c
 c***  Tidy up after TCGMSG
@@ -1312,7 +1313,10 @@ c
       if (me.eq.0) then
          call ga_get(g_a, 1,n, n,n, b,n)
          do i =1,n
-              if(b(i,1).ne. nproc) call ga_error('fence failed',i)
+              if(b(i,1).ne. nproc)then
+                  print *, 'mismatch',b(i,1),nproc
+                  call ga_error('fence failed',i)
+              endif
          enddo
          write(6,*)
          write(6,*) ' ga_fence is OK'
@@ -1459,6 +1463,7 @@ c
         write(6,*)' '
         call ffflush(6)
       endif
+      status = ga_destroy(g_a)
       end
 
      
