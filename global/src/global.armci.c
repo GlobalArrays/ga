@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.55 2001-07-10 15:54:22 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.56 2001-07-30 18:36:26 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -65,6 +65,12 @@
 
 char *fence_array;
 static int GA_fence_set=0;
+typedef struct {
+long id;
+long type;
+long size;
+long dummy;
+} getmem_t;
 
 /*\ SYNCHRONIZE ALL THE PROCESSES
 \*/
@@ -810,7 +816,7 @@ char *ptr = (char*)0;
      *id   = (long)handle;
 
      /*
-            printf("MA DBL_MB=%ld ptr=%ld index=%d\n",DBL_MB, ptr,index);
+            printf("bytes=%d ptr=%ld index=%d\n",bytes, ptr,index);
             fflush(stdout);
      */
 
@@ -824,7 +830,72 @@ char *ptr = (char*)0;
 }
 
 
+/*\ externalized version of gai_getmem to facilitate two-step array creation
+\*/
+void *GA_Getmem(int type, int nelem)
+{
+char **ptr_arr=(char**)0;
+int  rc,i;
+long id;
+int bytes = nelem *  GAsizeofM(type);
+int extra=sizeof(getmem_t)+GAnproc*sizeof(char*);
+char *end,*myptr;
+Integer status;
 
+     if(GA_memory_limited){
+         GA_total_memory -= bytes+extra;
+         status = (GA_total_memory >= 0) ? 1 : 0;
+         ga_igop(GA_TYPE_GSM, &status, 1, "*");
+         if(!status)GA_total_memory +=bytes+extra;
+     }else status = 1;
+
+     if(status) ptr_arr=(char**)gai_malloc(GAnproc*sizeof(char**));
+     if(!ptr_arr) ga_error("ga_getmem: failed to allocate ptr array",0);
+     rc= gai_getmem("ga_getmem", ptr_arr,(Integer)bytes+extra, type, &id);
+     if(rc)ga_error("ga_getmem: failed to allocate memory",bytes+extra);
+
+     myptr = ptr_arr[GAme];  
+
+     /* make sure that remote memory addresses point to user memory */
+     for(i=0; i<GAnproc; i++)ptr_arr[i] += extra;
+
+#ifndef AVOID_MA_STORAGE
+     if(ARMCI_Uses_shm()) 
+#endif
+        id += extra; /* id is used to store offset */
+
+     /* stuff the type and id info at the beginning */
+     ((getmem_t*)myptr)->id = id;
+     ((getmem_t*)myptr)->type = type;
+     ((getmem_t*)myptr)->size = bytes+extra;
+
+     /* add ptr info */
+     memcpy(myptr+sizeof(getmem_t),ptr_arr,(size_t)GAnproc*sizeof(char**));
+
+     gai_free(ptr_arr);
+     return (void*)(myptr+extra);
+}
+
+
+void GA_Freemem(void *ptr)
+{
+int extra = sizeof(getmem_t)+GAnproc*sizeof(char*); 
+getmem_t *info = (getmem_t *)((char*)ptr - extra);
+char **ptr_arr = (char**)(info+1);
+
+#ifndef AVOID_MA_STORAGE
+    if(ARMCI_Uses_shm()){
+#endif
+      /* make sure that we free original (before address alignment) pointer */
+      ARMCI_Free(ptr_arr[GAme] - info->id);
+#ifndef AVOID_MA_STORAGE
+    }else{
+      if(info->id != INVALID_MA_HANDLE) MA_free_heap(info->id);
+    }
+#endif
+
+    if(GA_memory_limited) GA_total_memory += info->size;
+}
 
 /*\ RETURN COORDINATES OF A GA PATCH ASSOCIATED WITH PROCESSOR proc
 \*/
@@ -1234,6 +1305,62 @@ int      *save_mapc;
       }
 }
 
+/*\ DUPLICATE A GLOBAL ARRAY -- memory comes from user
+ *  -- new array g_b will have properties of g_a
+\*/
+int GA_Assemble_duplicate(int g_a, char* array_name, void* ptr)
+{
+char     **save_ptr;
+int   i, ga_handle, status;
+int      *save_mapc;
+int extra = sizeof(getmem_t)+GAnproc*sizeof(char*);
+getmem_t *info = (getmem_t *)((char*)ptr - extra);
+char **ptr_arr = (char**)(info+1);
+int g_b;
+
+
+      ga_sync_();
+
+      GAstat.numcre ++;
+
+      ga_check_handleM(&g_a,"ga_assemble_duplicate");
+
+      /* find a free global_array handle for g_b */
+      ga_handle =-1; i=0;
+      do{
+        if(!GA[i].actv) ga_handle=i;
+        i++;
+      }while(i<max_global_array && ga_handle==-1);
+      if( ga_handle == -1)
+          ga_error("ga_assemble_duplicate: too many arrays ", 
+                                           (Integer)max_global_array);
+      g_b = ga_handle - GA_OFFSET;
+
+      gai_init_struct(ga_handle);
+
+      /*** copy content of the data structure ***/
+      save_ptr = GA[ga_handle].ptr;
+      save_mapc = GA[ga_handle].mapc;
+      GA[ga_handle] = GA[GA_OFFSET + g_a];
+      strcpy(GA[ga_handle].name, array_name);
+      GA[ga_handle].ptr = save_ptr;
+      GA[ga_handle].mapc = save_mapc;
+      for(i=0;i<MAPLEN; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ g_a].mapc[i];
+
+      /* get ptrs and datatype from user memory */
+      gam_checktype(info->type);
+      GA[ga_handle].type = info->type;
+      GA[ga_handle].size = info->size;
+      GA[ga_handle].id = info->id;
+      memcpy(GA[ga_handle].ptr,ptr_arr,(size_t)GAnproc*sizeof(char**));
+
+      GAstat.curmem += GA[ga_handle].size;
+      GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
+
+      ga_sync_();
+
+      return(g_b);
+}
 
 
 /*\ DUPLICATE A GLOBAL ARRAY

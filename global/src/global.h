@@ -25,6 +25,9 @@ extern "C" {
 # define ARGS_(s) ()
 #endif
 
+extern void *GA_Getmem(int type, int nelem);
+extern void GA_Freemem(void* ptr);
+extern int GA_Assemble_duplicate(int g_a, char *name, void *ptr);
 extern void    FATR ga_set_memory_limit_ ARGS_((Integer *mem_limit));
 extern logical FATR ga_valid_handle_ ARGS_((Integer *g_a));
 extern Integer FATR ga_nnodes_   ARGS_(( void));
