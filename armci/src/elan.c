@@ -7,7 +7,7 @@
 
 #define DEBUG_ 0
 
-#ifdef _ELAN_QUEUE_H
+#ifdef ELAN
 static int armci_server_terminating=0;
 static ELAN_MAIN_QUEUE *mq;
 static int armci_request_from=-1;
@@ -194,4 +194,73 @@ void armci_transport_cleanup() {}
 void armci_client_connect_to_servers(){}
 void armci_server_initial_connection(){}
 
+#endif
+
+
+#ifdef _ELAN_LOCK_H
+
+#define MAX_LOCKS 4
+static ELAN_LOCK *my_locks, *all_locks;
+static int num_locks=0;
+
+/*\ allocate and initialize num locks on each processor (collective call)
+\*/
+void armcill_allocate_locks(int num)
+{
+   char *buf;
+   int i,elems;
+   long mod;
+
+   if(MAX_LOCKS<num)armci_die2("too many locks",MAX_LOCKS,num);
+   num_locks = num;
+
+   /* allocate memory to hold lock info for all the processors */
+   buf = malloc(armci_nproc*num *sizeof(ELAN_LOCK) + ELAN_LOCK_ALIGN);
+   if(!buf) armci_die("armcill_init_locks: malloc failed",0);
+
+   mod = ((long)buf) %ELAN_LOCK_ALIGN;
+   all_locks = (ELAN_LOCK*)(buf +ELAN_LOCK_ALIGN-mod); 
+   if(((long)all_locks) %ELAN_LOCK_ALIGN) 
+        armci_die2("lock alligment failed",mod,ELAN_LOCK_ALIGN);
+   bzero(all_locks,armci_nproc*num *sizeof(ELAN_LOCK));
+
+   /* initialize local locks */
+   my_locks = all_locks + armci_me * num;
+   for(i=0; i<num; i++)
+       elan_lockInit(elan_base->state, my_locks+i, ELAN_LOCK_NORMAL);
+
+   /* now we use all-reduce to exchange locks info among everybody */
+   elems = (num*armci_nproc*sizeof(ELAN_LOCK))/sizeof(long);
+   if((num*sizeof(ELAN_LOCK))%sizeof(long)) 
+       armci_die("armcill_init_locks: size mismatch",sizeof(ELAN_LOCK));
+   armci_msg_lgop((long*)all_locks,elems,"+");
+#if 0
+   if(armci_me == 0){
+     for(i=0; i<num*armci_nproc; i++) printf("%d:(%d) master=%d type=%d\n",i,elems,(all_locks+i)->lp_master, (all_locks+i)->lp_type);
+   }
+#endif
+   armci_msg_barrier();
+}
+
+
+void armcill_lock(int m, int proc)
+{
+ELAN_LOCK *rem_locks = (ELAN_LOCK*)(all_locks + proc*num_locks);
+
+   if(m<0 || m>= num_locks) armci_die2("armcill_lock: bad lock id",m,num_locks);
+   if(proc<0 || proc>= armci_nproc) armci_die("armcill_lock: bad proc id",proc);
+
+   elan_lockLock(elan_base->state, rem_locks + m, ELAN_LOCK_BUSY);
+}
+
+void armcill_unlock(int m, int proc)
+{
+ELAN_LOCK *rem_locks = (ELAN_LOCK*)(all_locks + proc*num_locks);
+
+   if(m<0 || m>= num_locks) armci_die2("armcill_unlock:bad lockid",m,num_locks);
+   if(proc<0 || proc>=armci_nproc)armci_die("armcill_unlock: bad proc id",proc);
+
+   elan_lockUnLock(elan_base->state, rem_locks + m);
+}
+     
 #endif
