@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.70 2004-01-14 19:53:06 sohirata Exp $*/
+/*$Id: disk.arrays.c,v 1.71 2004-03-31 23:12:51 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1075,7 +1075,6 @@ int       retval;
 
 int dai_myturn(section_t ds_chunk)
 {
-Integer   handle = ds_chunk.handle+DRA_OFFSET;
 Integer   ioprocs = dai_io_procs(ds_chunk.handle);
 Integer   iome    = dai_io_nodeid(ds_chunk.handle);
     
@@ -1137,7 +1136,7 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
                 section_t ds_chunk, void* buffer, Integer ldb)
 {
      Integer index, ldd = gs_a.hi[0] - gs_a.lo[0] + 1, one=1;
-     Integer atype, cols, rows, elemsize, ilo, ihi, jlo, jhi;
+     Integer atype, cols, rows, elemsize, ilo, ihi;
      Integer istart, iend, jstart, jend;
      void  (FATR *f)(Integer*,Integer*,Integer*,Integer*,Integer*,void*,Integer*); 
      char *buf = (char*)buffer;
@@ -1558,11 +1557,12 @@ int ibuf;
 
         ibuf = Requests[req0].ibuf;
         for(req=0; req<MAX_REQ; req++)
-          if (Requests[req].num_pending && Requests[req].ibuf == ibuf)
+          if (Requests[req].num_pending && Requests[req].ibuf == ibuf) {
              if (elio_wait(&_dra_buffer_state[Requests[req].ibuf].id)==ELIO_OK)
                  dai_exec_callback(Requests + req);
              else
                  dai_error("dai_wait: DRA internal error",0);
+          }
 }
 
 /*\ wait until buffer space ibuf is avilable
@@ -2519,7 +2519,6 @@ Integer ndra_create_config(
         Integer *d_a)                      /*output:DRA handle*/
 {
 Integer handle, elem_size, ctype, i;
-Integer nfile,nioproc;
 
         /* convert Fortran to C data type */
         ctype = (Integer)ga_type_f2c((int)(*type));
@@ -2715,7 +2714,7 @@ void ndai_decomp_section(
         Integer unaligned[][2*MAXDIM],    /*[output]: Indices of unaligned subsections.*/
         int *nu)                          /*[output]: Number of unaligned subsections.*/
 {
-  Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
+  Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, chunk_units;
   Integer i, j, idir, ndim = DRA[handle].ndim;
   Integer off_low[MAXDIM], off_hi[MAXDIM];
   Integer cover_lo[MAXDIM], cover_hi[MAXDIM];
