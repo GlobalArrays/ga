@@ -6,6 +6,9 @@ ifeq ($(OSNAME),AIX)
      LIB_DEFINES += $(shell oslevel | awk -F. \
                       '{ if ($$1 > 5 || ($$1 == 5 && $$2 > 1))\
                       print "-DAIX52" }')
+ifdef USE_OLDAIO
+     LIB_DEFINES += -D_AIO_AIX_SOURCE
+endif
 endif
 
 #under AIX, there can be problems with AIO and large files

@@ -83,7 +83,6 @@
 #define ELIO_FSYNC _commit
 #else
 #include <unistd.h>
-wrong
 #define ELIO_FSYNC fsync
 #endif
 
@@ -372,8 +371,10 @@ int elio_awrite(Fd_t fd, Off_t doffset, const void* buf, Size_t bytes, io_reques
        stat = (rc < 0)? -1 : 0; 
 #    elif defined(KSR)
        stat = awrite(fd->fd, buf, bytes, cb_fout+aio_i);
-#    elif (defined(AIX) && !defined(AIX52))
+#    elif defined(AIX) 
+#       if !defined(AIX52) && !defined(_AIO_AIX_SOURCE)
        stat = aio_write(fd->fd, cb_fout + aio_i);
+#       endif
 #    else
        stat = aio_write(cb_fout+aio_i);
 #    endif
@@ -608,8 +609,10 @@ int elio_aread(Fd_t fd, Off_t doffset, void* buf, Size_t bytes, io_request_t * r
           stat = (rc < 0)? -1 : 0;
 #       elif defined(KSR)
           stat = aread(fd->fd, buf, bytes, cb_fout+aio_i);
-#       elif (defined(AIX) && !defined(AIX52))
+#       elif defined(AIX)
+#if    !defined(AIX52) && !defined(_AIO_AIX_SOURCE)
           stat = aio_read(fd->fd, cb_fout+aio_i);
+#endif
 #       else
           stat = aio_read(cb_fout+aio_i);
 #       endif
@@ -667,11 +670,13 @@ int elio_wait(io_request_t *req_id)
        }
 #      endif
 
-#  elif (defined(AIX) && !defined(AIX52))
+#  elif defined(AIX) 
+#if    !defined(AIX52) && !defined(_AIO_AIX_SOURCE)
 
       do {    /* I/O can be interrupted on SP through rcvncall ! */
            rc =(int)aio_suspend(1, cb_fout_arr+(int)*req_id);
       } while(rc == -1 && errno == EINTR); 
+#endif
 
 #  elif defined(KSR)
       rc = iosuspend(1, cb_fout_arr+(int)*req_id);
