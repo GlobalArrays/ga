@@ -133,3 +133,4 @@ static void nxtval_handler(msgtype, msglen, requesting_node, pid)
   oldmask = masktrap(oldmask);
 }
 
+void finalize_nxtval(){};

@@ -186,7 +186,7 @@ ifeq ($(MACHINE),SGI_N32)
 # SGI running IRIX 6.XX on 64-bit MIPS-4 processors
 #
  GLOB_DEFINES += -DSGI -n32 -DSGIUS
-   NXTVAL_OBJ = nxtval.sgius.o
+   NXTVAL_OBJ = nxtval.sgius.o clustercheck.o
  NXTVAL_AVAIL = yes
 endif
 
@@ -198,6 +198,7 @@ ifeq ($(MACHINE),SGITFP)
      COPT_REN = -64
      FOPT_REN = -i8 -64
  GLOB_DEFINES = -DSGI64 -DSGI -DSGIUS
+   NXTVAL_OBJ = nxtval.sgius.o clustercheck.o
  NXTVAL_AVAIL = yes
 endif
 
@@ -208,6 +209,7 @@ ifeq ($(MACHINE),SGI64)
  GLOB_DEFINES = -DSGI64 -DSGI -DSGIUS
      COPT_REN = -64
      FOPT_REN = -64
+   NXTVAL_OBJ = nxtval.sgius.o clustercheck.o
  NXTVAL_AVAIL = yes
 endif
 
@@ -265,6 +267,32 @@ ifeq ($(MACHINE),IBM)
     EXTRA_OBJ = memalign.o
 endif
 
+#.............................. LAPI .........................................
+#
+ifeq ($(MACHINE),LAPI)
+       FC = mpxlf
+       CC = mpcc_r
+   RANLIB = ranlib
+      FLD = $(CC)
+ FOPT_REN = -qEXTNAME
+ COPT_REN = -DEXTNAME -DAIX
+    FLIBS =  -lxlf90 -lxlf
+LIBLAPIDIR = /usr/lpp/ssp/css/lib
+   LIBHAL = -lhal_r
+  LIBLAPI = -llapi_r
+  LIBMPI  = -lmpi_r
+
+   NXTVAL_OBJ = nxtval.lapi.o
+    EXTRA_OBJ = memalign.o
+ NXTVAL_AVAIL = yes
+
+  LDLIBS = -L$(LIBLAPIDIR) $(LIBHAL) $(LIBLAPI) -bnso \
+          -bI:/usr/lib/threads.exp -lppe_r \
+          -bI:/usr/lpp/ssp/css/libus/fs_ext.exp \
+          -bI:/usr/lib/syscalls.exp  -lm \
+          -lppe -bl:new.map
+endif
+
 #...........................................................................
 
 
@@ -275,8 +303,6 @@ else
  ifndef USE_NATIVE_NXTVAL
    GLOB_DEFINES += -DNXTVAL_SERVER
       NXTVAL_OBJ = nxtval.o
- else
-    EXTRA_OBJ += clustercheck.o
  endif
 endif
 
