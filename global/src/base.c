@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.87 2004-08-13 21:36:01 vinod Exp $ */
+/* $Id: base.c,v 1.88 2004-08-17 23:02:28 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -832,7 +832,7 @@ void FATR ga_pgroup_set_default_(Integer *grp)
     /* force a hang if default group is not being set correctly */
     if (local_sync_begin || local_sync_end) {
        def_grp = (Integer)GA_Default_Proc_Group;
-       ga_pgroup_sync_(&def_grp);
+       /* ga_pgroup_sync_(&def_grp); */ /* BRUCE: please check this */
        ga_pgroup_sync_(grp);
     }
     GA_Default_Proc_Group = (int)(*grp);
@@ -1893,10 +1893,12 @@ int status=0;
 char *base;
 long diff, item_size;  
 Integer *adjust;
-int i, nproc;
+int i, nproc,grp_me=GAme;
 
-    if (grp_id > 0)
-       nproc = PGRP_LIST[grp_id].map_nproc;
+    if (grp_id > 0) {
+       nproc  = PGRP_LIST[grp_id].map_nproc;
+       grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
+    }
     else
        nproc = GAnproc; 
  
@@ -1951,10 +1953,10 @@ int i, nproc;
     /* we need storage for GAnproc*sizeof(Integer) -- _ga_map is bigger */
     adjust = (Integer*)_ga_map;
 
-    diff = (ABS( base - (char *) ptr_arr[GAme])) % item_size; 
+    diff = (ABS( base - (char *) ptr_arr[grp_me])) % item_size; 
     for(i=0;i<nproc;i++)adjust[i]=0;
-    adjust[GAme] = (diff > 0) ? item_size - diff : 0;
-    *adj = adjust[GAme];
+    adjust[grp_me] = (diff > 0) ? item_size - diff : 0;
+    *adj = adjust[grp_me];
 
     if (grp_id > 0)
        ga_pgroup_igop(grp_id,GA_TYPE_GSM, adjust, nproc, "+");
