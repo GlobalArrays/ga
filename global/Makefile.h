@@ -16,8 +16,8 @@
           FLD = $(FC)
           CLD = $(FLD)
           CXX = CC
-         FOPT = -g
-         COPT = -g
+         FOPT = -O
+         COPT = -O
 	 NOPT = -g
 GLOB_INCLUDES = -I../../ma
            AR = ar
