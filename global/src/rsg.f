@@ -1,4 +1,4 @@
-c $Id: rsg.f,v 1.5 2002-08-02 18:59:39 manoj Exp $
+c $Id: rsg.f,v 1.6 2004-03-30 22:34:00 manoj Exp $
       subroutine rsg(nm,n,a,b,w,matz,z,fv1,fv2,ierr)
 c
       integer n,nm,ierr,matz
@@ -910,7 +910,7 @@ c     .......... set error -- b is not positive definite ..........
       end
 
 
-c $Id: rsg.f,v 1.5 2002-08-02 18:59:39 manoj Exp $
+c $Id: rsg.f,v 1.6 2004-03-30 22:34:00 manoj Exp $
 c
 c JN: the original file has been slightly modified
 c JN: renamed pythag to pythag000 to avoid multiply defined symbol also in rsg.f
@@ -1443,7 +1443,9 @@ c                eigenvalue after 30 iterations ..........
  1000 ierr = l
  1001 return
       end
-      double precision function pythag000(a,b) ! JN: multiply defined in rsg.f 
+
+c     JN: multiply defined in rsg.f
+      double precision function pythag000(a,b) 
       double precision a,b
 c
 c     finds dsqrt(a**2+b**2) without overflow or destructive underflow
