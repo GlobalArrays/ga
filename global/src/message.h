@@ -1,4 +1,4 @@
-/*$Id: message.h,v 1.5 1995-04-10 17:02:36 d3h325 Exp $*/
+/*$Id: message.h,v 1.6 1995-08-31 21:53:24 d3h325 Exp $*/
 
 /* flags to specify blocking/nonblocking communication in TCGMSG */
 #define SYNC  1
@@ -12,7 +12,8 @@
 
 /* constants for send and receive buffers to handle remote requests */
 #if defined(NX) || defined(SP1)
-#   define MSG_BUF_SIZE    98304
+/*#   define MSG_BUF_SIZE      262152 */
+#   define MSG_BUF_SIZE    122840 
 #else
 #   define MSG_BUF_SIZE    16384
 #endif

@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.9 1995-08-23 22:31:04 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.10 1995-08-31 21:53:21 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha

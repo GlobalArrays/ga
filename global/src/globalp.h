@@ -43,6 +43,8 @@
 #define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
 
 #define NAME_STACK_LEN 10
+#define PAGE_SIZE  4096
+
 extern char *GA_name_stack[NAME_STACK_LEN];    /* stack for names of GA ops */ 
 extern int  GA_stack_size;
 #define  GA_PUSH_NAME(name) (GA_name_stack[GA_stack_size++] = (name)) 

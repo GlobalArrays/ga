@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.11 1995-08-23 22:30:58 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.12 1995-08-31 21:53:15 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -281,9 +281,20 @@ void ga_initialize_()
 {
 Integer nnodes_(), nodeid_(), type, i;
 Integer buf_size, bar_size;
-long *msg_buf = (long*)MessageRcv->buffer;
+long *msg_buf;
 
     if(GAinitialized) return;
+
+   /* initialize msg buffers */
+    MessageSnd = (struct message_struct*)allign_page(MessageSnd);
+    MessageRcv = (struct message_struct*)allign_page(MessageRcv);
+#   ifdef PARAGON
+       /* wire down buffer memory pages */ 
+       mcmsg_wire(MessageRcv,MSG_BUF_SIZE+PAGE_SIZE);
+       mcmsg_wire(MessageSnd,MSG_BUF_SIZE+PAGE_SIZE);
+#   endif
+
+    msg_buf = (long*)MessageRcv->buffer;
 
     ClustInfoInit(); /* learn about process configuration */
     if(ClusterMode){
@@ -1244,7 +1255,7 @@ Integer  type, rows, cols, msglen;
    Copy2D(type, &rows, &cols, ptr_src, &ld, ptr_dst, &rows); 
 
    msglen = rows*cols*GAsizeofM(type);
-   ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, GA[GA_OFFSET + g_a].type, GA_OP_PUT,
+   ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_PUT,
               proc, DataServer(proc));
 }
 
@@ -1351,28 +1362,36 @@ void ga_get_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
 {
 char     *ptr_src, *ptr_dst;
 Integer  type, rows, cols, len, to, from, msglen=0;
+int      need_copy;
 
    if(proc<0)ga_error(" get_remote: invalid process ",proc);
    type = GA[GA_OFFSET + g_a].type;
    rows = ihi - ilo +1;
    cols = jhi - jlo +1;
    msglen = rows*cols*GAsizeofM(type);
-
    to = DataServer(proc);
+
+   /* this stuff is to avoid buffering if possible */
+   need_copy=cols-1; /* true only if cols > 1 */
+   if(need_copy)
+      ptr_src = (char*)MessageSnd;  /* data arrives to message buffer */
+   else
+      ptr_src = (char *)buf + GAsizeofM(type)* offset;/*arrives to user buffer*/
+
 #  if defined(NX) || defined(SP1)
-      ga_rcv_msg(GA_TYPE_GET, MessageSnd->buffer, msglen, &len, to,&from,ASYNC);
-      ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, GA[GA_OFFSET + g_a].type, GA_OP_GET,proc,to);
+      ga_rcv_msg(GA_TYPE_GET, ptr_src, msglen, &len, to,&from,ASYNC);
+      ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_GET,proc,to);
       waitcom_(&to); /* TCGMSG */
 #  else
-      ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, GA[GA_OFFSET + g_a].type, GA_OP_GET,proc,to);
-      ga_rcv_msg(GA_TYPE_GET, MessageSnd->buffer, msglen, &len, to, &from,SYNC);
+      ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_GET,proc,to);
+      ga_rcv_msg(GA_TYPE_GET, ptr_src, msglen, &len, to, &from,SYNC);
 #  endif
 
-   /* Copy patch [ilo:ihi, jlo:jhi] from MessageBuffer */
-   ptr_src = (char*)MessageSnd->buffer;
-   ptr_dst = (char *)buf  + GAsizeofM(type)* offset;
-
-   Copy2D(type, &rows, &cols, ptr_src, &rows, ptr_dst, &ld);  
+   if(need_copy){
+      /* Copy patch [ilo:ihi, jlo:jhi] from MessageBuffer */
+      ptr_dst = (char *)buf  + GAsizeofM(type)* offset;
+      Copy2D(type, &rows, &cols, ptr_src, &rows, ptr_dst, &ld);  
+   }
 
 }
 
@@ -1420,6 +1439,12 @@ Integer ilop, ihip, jlop, jhip, offset;
             Integer TmpSize = MSG_BUF_SIZE/GAsizeofM(GA[GA_OFFSET + *g_a].type);
             Integer ilimit  = MIN(TmpSize, ihip-ilop+1);
             Integer jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
+
+#           if defined(PARAGON)||defined(SP1)
+              /* this limits column chunking to 1 for larger number of rows */
+              /**** it is an optimization only -- comment out if fails ******/
+              if(ilimit > 2048) jlimit  = 1;
+#           endif
 
             for(jlo_chunk = jlop; jlo_chunk <= jhip; jlo_chunk += jlimit){
                jhi_chunk  = MIN(jhip, jlo_chunk+jlimit-1);
@@ -1527,7 +1552,7 @@ Integer  type, rows, cols, msglen;
    *((DoublePrecision*)ptr_dst + rows*cols) = alpha; 
 
    msglen = rows*cols*GAsizeofM(type)+sizeof(DoublePrecision); /* plus alpha */
-   ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, GA[GA_OFFSET + g_a].type, GA_OP_ACC,
+   ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_ACC,
               proc, DataServer(proc));
 }
 

@@ -83,7 +83,7 @@ endif
 
 #...........................................................................
 
-LIBS += $(BLAS) ../../lapack_blas/liblapack.a
+LIBS += ../../lapack_blas/liblapack.a $(BLAS)
 
 ifeq (LU_SOLVE, PAR)
   SCALAPACK = $(SRC1)/scalapack/scalapack.a $(SRC1)/scalapack/pbblas.a\

@@ -3,7 +3,7 @@ c     Thu Aug 25 14:08:17 PDT 1994, JN
 c
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.13 1995-06-13 00:25:29 gg502 Exp $
+C$Id: ga_dgemm.F,v 1.14 1995-08-31 21:53:12 d3h325 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -81,7 +81,7 @@ C        three chunks, and the result includes only the first one.
 C
          Mem_Avail = MA_Inquire_Avail( MT_DBL )
      $      - 2 * MA_SizeOf_Overhead( MT_DBL )
-	 Mem_Avail = 0.9 * Mem_Avail ! Don't use every last drop!
+	 Mem_Avail = 0.9 * Mem_Avail ! Do not use every last drop!
          Call GA_IGOp(42, Mem_Avail, mitob(1), 'min')
 C
          Max_Chunk = Min( Max_Chunk, Int(Sqrt(DBLE(Mem_Avail/3))) )

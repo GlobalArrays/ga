@@ -79,8 +79,12 @@ char *GA_name_stack[NAME_STACK_LEN];   /* stack for storing names of GA ops */
 int  GA_stack_size=0;
 
 /**************************** MACROS ************************************/
-#define allign_size(n) \
-        (((n)%ALLIGN_SIZE) ? (n)+ALLIGN_SIZE - (n)%ALLIGN_SIZE: (n))
+
+#define allign__(n, SIZE) \
+        (((n)%SIZE) ? (n)+SIZE - (n)%SIZE: (n))
+
+#define allign_size(n) allign__((long)(n), ALLIGN_SIZE)
+#define allign_page(n) allign__((long)(n), PAGE_SIZE)
 
 #define ga_check_handleM(g_a, string) \
 {\
@@ -134,9 +138,7 @@ int  GA_stack_size=0;
 #          define UNLOCK(g_a, proc, x)    _rsp(GA[GA_OFFSET + g_a].ptr[(proc)])
 #          define UNALIGNED(x)    (((unsigned long) (x)) % sizeof(long))
            typedef __align128 unsigned char subpage[128];
-#          define PAGE_SIZE  128
 #      else
-#          define PAGE_SIZE  4096
            /* define LOCK OPERATIONS using SYSV semaphores */
 #          include "semaphores.h"
 #          define NUM_SEM  SEMMSL

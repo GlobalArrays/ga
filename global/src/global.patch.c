@@ -1,4 +1,4 @@
-/*$Id: global.patch.c,v 1.11 1995-08-23 22:31:02 d3h325 Exp $*/
+/*$Id: global.patch.c,v 1.12 1995-08-31 21:53:20 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"

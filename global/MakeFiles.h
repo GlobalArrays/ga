@@ -22,6 +22,9 @@ ifeq ($(VERSION),SHMEM)
 else
      ifeq ($(INTEL),YES)
             EXTRA = memcpy.i860.o
+        ifeq ($(TARGET),PARAGON)
+            EXTRA += fops.2d.parag.o bcopy.o
+        endif
      endif
 endif
 
@@ -54,9 +57,9 @@ GA_OBJ = $(GA_CORE) $(GA_SYNC) $(GA_HANDLER) $(IPC)
 GA_ALG_BLAS = global.alg.o ga_dgemm.o ga_symmetrize.o ga_diag_seq.o rsg.o\
               rs-mod.o ga_solve_seq.o ga_transpose.o ga_cholesky.o 
 #
-ifeq ($(DIAG),PAR)
-     GA_ALG_DIAG = ga_diag.o rsg.o
-endif
+#ifeq ($(DIAG),PAR)
+     GA_ALG_DIAG = ga_diag.o 
+#endif
 #
 ifeq ($(LU_SOLVE),PAR)
      GA_ALG_SOLVE= SLface.o ga_solve.o 

@@ -42,8 +42,9 @@
 #define ACK   0
    
 /* send & receive buffers alligned on sizeof(double) boundary  */
-double _snd_dbl_buf[MSG_BUF_DBL_SIZE];
-double _rcv_dbl_buf[MSG_BUF_DBL_SIZE];
+#define ALGN_EXTRA PAGE_SIZE/sizeof(double) -1
+double _snd_dbl_buf[MSG_BUF_DBL_SIZE+ALGN_EXTRA];
+double _rcv_dbl_buf[MSG_BUF_DBL_SIZE+ALGN_EXTRA];
 struct message_struct *MessageSnd = (struct message_struct*)_snd_dbl_buf,
                       *MessageRcv = (struct message_struct*)_rcv_dbl_buf;
 
