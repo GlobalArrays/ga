@@ -1,5 +1,5 @@
 c
-c     $Id: maf.F,v 1.12 2000-07-04 11:27:03 d3g001 Exp $
+c     $Id: maf.F,v 1.13 2002-09-14 05:40:30 d3g001 Exp $
 c
 
 c
@@ -325,6 +325,40 @@ c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
 
+      integer function MA_inquire_heap_check_stack (datatype)
+
+      implicit none
+
+      integer datatype
+
+#include "maf2c.fh"
+
+      MA_inquire_heap_check_stack =
+     $    f2c_inquire_heap_check_stack(datatype)
+
+      return
+      end
+
+c     --------------------------------------------------------------- c
+c     --------------------------------------------------------------- c
+
+      integer function MA_inquire_heap_no_partition (datatype)
+
+      implicit none
+
+      integer datatype
+
+#include "maf2c.fh"
+
+      MA_inquire_heap_no_partition =
+     $    f2c_inquire_heap_no_partition(datatype)
+
+      return
+      end
+
+c     --------------------------------------------------------------- c
+c     --------------------------------------------------------------- c
+
       integer function MA_inquire_stack (datatype)
 
       implicit none
@@ -334,6 +368,40 @@ c     --------------------------------------------------------------- c
 #include "maf2c.fh"
 
       MA_inquire_stack = f2c_inquire_stack(datatype)
+
+      return
+      end
+
+c     --------------------------------------------------------------- c
+c     --------------------------------------------------------------- c
+
+      integer function MA_inquire_stack_check_heap (datatype)
+
+      implicit none
+
+      integer datatype
+
+#include "maf2c.fh"
+
+      MA_inquire_stack_check_heap =
+     $    f2c_inquire_stack_check_heap(datatype)
+
+      return
+      end
+
+c     --------------------------------------------------------------- c
+c     --------------------------------------------------------------- c
+
+      integer function MA_inquire_stack_no_partition (datatype)
+
+      implicit none
+
+      integer datatype
+
+#include "maf2c.fh"
+
+      MA_inquire_stack_no_partition =
+     $    f2c_inquire_stack_no_partition(datatype)
 
       return
       end

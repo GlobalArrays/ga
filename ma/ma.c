@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.28 2002-04-02 01:36:19 edo Exp $
+ * $Id: ma.c,v 1.29 2002-09-14 05:40:30 d3g001 Exp $
  */
 
 /*
@@ -306,6 +306,12 @@ private Integer ma_numalign = 0;
  ** macros
  **/
 
+/* minimum of two values */
+#ifdef min
+#undef min
+#endif
+#define min(a, b)	(((b) < (a)) ? (b) : (a))
+
 /* maximum of two values */
 #ifdef max
 #undef max
@@ -384,7 +390,11 @@ typedef enum
     FID_MA_init_memhandle_iterator,
     FID_MA_inquire_avail,
     FID_MA_inquire_heap,
+    FID_MA_inquire_heap_check_stack,
+    FID_MA_inquire_heap_no_partition,
     FID_MA_inquire_stack,
+    FID_MA_inquire_stack_check_heap,
+    FID_MA_inquire_stack_no_partition,
     FID_MA_pop_stack,
     FID_MA_print_stats,
     FID_MA_push_get,
@@ -432,7 +442,11 @@ private char *ma_routines[] =
     "MA_init_memhandle_iterator",
     "MA_inquire_avail",
     "MA_inquire_heap",
+    "MA_inquire_heap_check_stack",
+    "MA_inquire_heap_no_partition",
     "MA_inquire_stack",
+    "MA_inquire_stack_check_heap",
+    "MA_inquire_stack_no_partition",
     "MA_pop_stack",
     "MA_print_stats",
     "MA_push_get",
@@ -2601,7 +2615,12 @@ public Integer MA_inquire_avail(Integer datatype)
 /*
  * Return the maximum number of datatype elements that can currently
  * be allocated in the heap, in a single allocation request,
- * with respect to the partition defined at initialization.
+ * honoring the partition defined at initialization.
+ *
+ * This routine does not check the stack.  Therefore, if the stack
+ * has overgrown the partition, the answer returned by this routine
+ * might be incorrect, i.e., there might be less memory available
+ * than this routine indicates.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -2663,8 +2682,154 @@ public Integer MA_inquire_heap(Integer datatype)
 /* ------------------------------------------------------------------------- */
 /*
  * Return the maximum number of datatype elements that can currently
+ * be allocated in the heap, in a single allocation request,
+ * honoring the partition defined at initialization.
+ *
+ * This routine does check the stack.  Therefore, whether or not the stack
+ * has overgrown the partition, the answer returned by this routine
+ * will be correct, i.e., there will be at least the memory available
+ * that this routine indicates.
+ *
+ * Note that this might not be the largest piece of memory available;
+ * the space between the heap and the stack may be larger.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Integer MA_inquire_heap_check_stack(Integer datatype)
+{
+    long	gap_length;	/* # of bytes between heap and partition */
+    Integer	nelem_gap;	/* max elements containable in gap */
+    Integer	nelem_frag;	/* max elements containable in any frag */
+
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_inquire_heap_check_stack]++;
+#endif /* STATS */
+
+#ifdef VERIFY
+    if (ma_auto_verify && !MA_verify_allocator_stuff())
+        return DONTCARE;
+#endif /* VERIFY */
+
+    /* verify initialization */
+    if (!ma_initialized)
+    {
+        (void)sprintf(ma_ebuf,
+            "MA not yet initialized");
+        ma_error(EL_Nonfatal, ET_External, "MA_inquire_heap_check_stack", ma_ebuf);
+        return (Integer)0;
+    }
+
+    /* verify datatype */
+    if (!mt_valid(datatype))
+    {
+        (void)sprintf(ma_ebuf,
+            "invalid datatype: %ld",
+            (long)datatype);
+        ma_error(EL_Fatal, ET_External, "MA_inquire_heap_check_stack", ma_ebuf);
+        return DONTCARE;
+    }
+
+    /* convert datatype to internal (index-suitable) value */
+    datatype = mt_import(datatype);
+
+    /*
+     * compute the # of elements for which space is available
+     */
+
+    /* try space between heap and partition or heap and stack */
+    gap_length = min((long)(ma_partition - ma_hp), (long)(ma_sp - ma_hp));
+    if (gap_length > 0)
+        nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
+    else
+        nelem_gap = 0;
+
+    /* try heap fragments */
+    nelem_frag = ma_max_heap_frag_nelem(datatype, nelem_gap);
+
+    /* success */
+    return max(nelem_gap, nelem_frag);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Return the maximum number of datatype elements that can currently
+ * be allocated in the heap, in a single allocation request,
+ * ignoring the partition defined at initialization.
+ *
+ * This routine does check the stack.  Therefore, whether or not the stack
+ * has overgrown the partition, the answer returned by this routine
+ * will be correct, i.e., there will be at least the memory available
+ * that this routine indicates.
+ *
+ * Note that this will be the largest piece of memory available.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Integer MA_inquire_heap_no_partition(Integer datatype)
+{
+    long	gap_length;	/* # of bytes between heap and partition */
+    Integer	nelem_gap;	/* max elements containable in gap */
+    Integer	nelem_frag;	/* max elements containable in any frag */
+
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_inquire_heap_no_partition]++;
+#endif /* STATS */
+
+#ifdef VERIFY
+    if (ma_auto_verify && !MA_verify_allocator_stuff())
+        return DONTCARE;
+#endif /* VERIFY */
+
+    /* verify initialization */
+    if (!ma_initialized)
+    {
+        (void)sprintf(ma_ebuf,
+            "MA not yet initialized");
+        ma_error(EL_Nonfatal, ET_External, "MA_inquire_heap_no_partition", ma_ebuf);
+        return (Integer)0;
+    }
+
+    /* verify datatype */
+    if (!mt_valid(datatype))
+    {
+        (void)sprintf(ma_ebuf,
+            "invalid datatype: %ld",
+            (long)datatype);
+        ma_error(EL_Fatal, ET_External, "MA_inquire_heap_no_partition", ma_ebuf);
+        return DONTCARE;
+    }
+
+    /* convert datatype to internal (index-suitable) value */
+    datatype = mt_import(datatype);
+
+    /*
+     * compute the # of elements for which space is available
+     */
+
+    /* try space between heap and stack */
+    gap_length = (long)(ma_sp - ma_hp);
+    if (gap_length > 0)
+        nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
+    else
+        nelem_gap = 0;
+
+    /* try heap fragments */
+    nelem_frag = ma_max_heap_frag_nelem(datatype, nelem_gap);
+
+    /* success */
+    return max(nelem_gap, nelem_frag);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Return the maximum number of datatype elements that can currently
  * be allocated in the stack, in a single allocation request,
- * with respect to the partition defined at initialization.
+ * honoring the partition defined at initialization.
+ *
+ * This routine does not check the heap.  Therefore, if the heap
+ * has overgrown the partition, the answer returned by this routine
+ * might be incorrect, i.e., there might be less memory available
+ * than this routine indicates.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -2712,6 +2877,143 @@ public Integer MA_inquire_stack(Integer datatype)
     gap_length = (long)(ma_sp - ma_partition);
     if (gap_length > 0)
         nelem_gap = ma_nelem(ma_partition, (ulongi)gap_length, datatype);
+    else
+        nelem_gap = 0;
+
+    /* success */
+    return nelem_gap;
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Return the maximum number of datatype elements that can currently
+ * be allocated in the stack, in a single allocation request,
+ * honoring the partition defined at initialization.
+ *
+ * This routine does check the heap.  Therefore, whether or not the heap
+ * has overgrown the partition, the answer returned by this routine
+ * will be correct, i.e., there will be at least the memory available
+ * that this routine indicates.
+ *
+ * Note that this might not be the largest piece of memory available;
+ * the space between the heap and the stack may be larger.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Integer MA_inquire_stack_check_heap(Integer datatype)
+{
+    long	gap_length;	/* # of bytes between partition and stack */
+    Integer	nelem_gap;	/* max elements containable in gap */
+
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_inquire_stack_check_heap]++;
+#endif /* STATS */
+
+#ifdef VERIFY
+    if (ma_auto_verify && !MA_verify_allocator_stuff())
+        return DONTCARE;
+#endif /* VERIFY */
+
+    /* verify initialization */
+    if (!ma_initialized)
+    {
+        (void)sprintf(ma_ebuf,
+            "MA not yet initialized");
+        ma_error(EL_Nonfatal, ET_External, "MA_inquire_stack_check_heap", ma_ebuf);
+        return (Integer)0;
+    }
+
+    /* verify datatype */
+    if (!mt_valid(datatype))
+    {
+        (void)sprintf(ma_ebuf,
+            "invalid datatype: %ld",
+            (long)datatype);
+        ma_error(EL_Fatal, ET_External, "MA_inquire_stack_check_heap", ma_ebuf);
+        return DONTCARE;
+    }
+
+    /* convert datatype to internal (index-suitable) value */
+    datatype = mt_import(datatype);
+
+    /*
+     * compute the # of elements for which space is available
+     */
+
+    /* try space between partition and stack or heap and stack */
+    gap_length = min((long)(ma_sp - ma_partition), (long)(ma_sp - ma_hp));
+    if (gap_length > 0)
+        nelem_gap = ma_nelem(ma_partition, (ulongi)gap_length, datatype);
+    else
+        nelem_gap = 0;
+
+    /* success */
+    return nelem_gap;
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Return the maximum number of datatype elements that can currently
+ * be allocated in the stack, in a single allocation request,
+ * ignoring the partition defined at initialization.
+ *
+ * This routine does check the heap.  Therefore, whether or not the heap
+ * has overgrown the partition, the answer returned by this routine
+ * will be correct, i.e., there will be at least the memory available
+ * that this routine indicates.
+ *
+ * Note that this might not be the largest piece of memory available;
+ * the heap may contain deallocated blocks that are larger.
+ *
+ * This routine is equivalent to MA_inquire_avail.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Integer MA_inquire_stack_no_partition(Integer datatype)
+{
+    long	gap_length;	/* # of bytes between heap and partition */
+    Integer	nelem_gap;	/* max elements containable in gap */
+    Integer	nelem_frag;	/* max elements containable in any frag */
+
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_inquire_stack_no_partition]++;
+#endif /* STATS */
+
+#ifdef VERIFY
+    if (ma_auto_verify && !MA_verify_allocator_stuff())
+        return DONTCARE;
+#endif /* VERIFY */
+
+    /* verify initialization */
+    if (!ma_initialized)
+    {
+        (void)sprintf(ma_ebuf,
+            "MA not yet initialized");
+        ma_error(EL_Nonfatal, ET_External, "MA_inquire_stack_no_partition", ma_ebuf);
+        return (Integer)0;
+    }
+
+    /* verify datatype */
+    if (!mt_valid(datatype))
+    {
+        (void)sprintf(ma_ebuf,
+            "invalid datatype: %ld",
+            (long)datatype);
+        ma_error(EL_Fatal, ET_External, "MA_inquire_stack_no_partition", ma_ebuf);
+        return DONTCARE;
+    }
+
+    /* convert datatype to internal (index-suitable) value */
+    datatype = mt_import(datatype);
+
+    /*
+     * compute the # of elements for which space is available
+     */
+
+    /* try space between heap and stack */
+    gap_length = (long)(ma_sp - ma_hp);
+    if (gap_length > 0)
+        nelem_gap = ma_nelem(ma_hp, (ulongi)gap_length, datatype);
     else
         nelem_gap = 0;
 

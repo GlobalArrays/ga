@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.2 2000-11-04 01:40:09 d3h325 Exp $
+# $Id: GNUmakefile,v 1.3 2002-09-14 05:40:29 d3g001 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -24,4 +24,7 @@ testc.x: testc.o string-util.o $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^
 
 test-coalesce.x: test-coalesce.o $(LIBRARY_PATH)
+	$(CC) $(CFLAGS) -o $@ $^
+
+test-inquire.x: test-inquire.o $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^

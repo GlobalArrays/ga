@@ -2,7 +2,7 @@
 #define _mafdecls_fh
 
 !
-!     $Id: mafdecls.fh,v 1.10 2000-07-24 23:39:54 d3h325 Exp $
+!     $Id: mafdecls.fh,v 1.11 2002-09-14 05:40:30 d3g001 Exp $
 !
 
 !
@@ -68,7 +68,11 @@
       logical MA_init_memhandle_iterator
       integer MA_inquire_avail
       integer MA_inquire_heap
+      integer MA_inquire_heap_check_stack
+      integer MA_inquire_heap_no_partition
       integer MA_inquire_stack
+      integer MA_inquire_stack_check_heap
+      integer MA_inquire_stack_no_partition
       logical MA_pop_stack
 !     subroutine MA_print_stats
       logical MA_push_get
@@ -96,7 +100,11 @@
       external MA_init_memhandle_iterator
       external MA_inquire_avail
       external MA_inquire_heap
+      external MA_inquire_heap_check_stack
+      external MA_inquire_heap_no_partition
       external MA_inquire_stack
+      external MA_inquire_stack_check_heap
+      external MA_inquire_stack_no_partition
       external MA_pop_stack
       external MA_print_stats
       external MA_push_get

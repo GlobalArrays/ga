@@ -2,7 +2,7 @@
 #define _maf2c_fh
 
 c
-c     $Id: maf2c.fh,v 1.5 2000-07-04 11:27:03 d3g001 Exp $
+c     $Id: maf2c.fh,v 1.6 2002-09-14 05:40:30 d3g001 Exp $
 c
 
 c
@@ -41,7 +41,11 @@ c
       integer f2c_init_memhandle_iterator
       integer f2c_inquire_avail
       integer f2c_inquire_heap
+      integer f2c_inquire_heap_check_stack
+      integer f2c_inquire_heap_no_partition
       integer f2c_inquire_stack
+      integer f2c_inquire_stack_check_heap
+      integer f2c_inquire_stack_no_partition
       integer f2c_pop_stack
 c     void f2c_print_stats
       integer f2c_push_get
@@ -73,7 +77,11 @@ c     void f2c_trace
       external f2c_init_memhandle_iterator
       external f2c_inquire_avail
       external f2c_inquire_heap
+      external f2c_inquire_heap_check_stack
+      external f2c_inquire_heap_no_partition
       external f2c_inquire_stack
+      external f2c_inquire_stack_check_heap
+      external f2c_inquire_stack_no_partition
       external f2c_pop_stack
       external f2c_print_stats
       external f2c_push_get

@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.14 2002-03-28 20:39:45 d3g293 Exp $
+ * $Id: macdecls.h,v 1.15 2002-09-14 05:40:30 d3g001 Exp $
  */
 
 /* 
@@ -80,7 +80,11 @@ extern Boolean MA_initialized();
 extern Boolean MA_init_memhandle_iterator( Integer *ithandle);
 extern Integer MA_inquire_avail(Integer datatype);
 extern Integer MA_inquire_heap(Integer datatype);
+extern Integer MA_inquire_heap_check_stack(Integer datatype);
+extern Integer MA_inquire_heap_no_partition(Integer datatype);
 extern Integer MA_inquire_stack(Integer datatype);
+extern Integer MA_inquire_stack_check_heap(Integer datatype);
+extern Integer MA_inquire_stack_no_partition(Integer datatype);
 extern Boolean MA_pop_stack(Integer memhandle);
 extern void MA_print_stats(Boolean printroutines);
 extern Boolean MA_push_get(
@@ -122,7 +126,11 @@ extern Boolean MA_initialized();
 extern Boolean MA_init_memhandle_iterator();
 extern Integer MA_inquire_avail();
 extern Integer MA_inquire_heap();
+extern Integer MA_inquire_heap_check_stack();
+extern Integer MA_inquire_heap_no_partition();
 extern Integer MA_inquire_stack();
+extern Integer MA_inquire_stack_check_heap();
+extern Integer MA_inquire_stack_no_partition();
 extern Boolean MA_pop_stack();
 extern void MA_print_stats();
 extern Boolean MA_push_get();

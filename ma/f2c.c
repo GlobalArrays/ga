@@ -1,5 +1,5 @@
 /*
- * $Id: f2c.c,v 1.10 2000-07-04 11:27:02 d3g001 Exp $
+ * $Id: f2c.c,v 1.11 2002-09-14 05:40:30 d3g001 Exp $
  */
 
 /*
@@ -335,10 +335,58 @@ public Integer FATR f2c_inquire_heap_(datatype)
  */
 /* ------------------------------------------------------------------------- */
 
+public Integer FATR f2c_inquire_heap_check_stack_(datatype)
+    Integer	*datatype;
+{
+    return MA_inquire_heap_check_stack(*datatype);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * 
+ */
+/* ------------------------------------------------------------------------- */
+
+public Integer FATR f2c_inquire_heap_no_partition_(datatype)
+    Integer	*datatype;
+{
+    return MA_inquire_heap_no_partition(*datatype);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * 
+ */
+/* ------------------------------------------------------------------------- */
+
 public Integer FATR f2c_inquire_stack_(datatype)
     Integer	*datatype;
 {
     return MA_inquire_stack(*datatype);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * 
+ */
+/* ------------------------------------------------------------------------- */
+
+public Integer FATR f2c_inquire_stack_check_heap_(datatype)
+    Integer	*datatype;
+{
+    return MA_inquire_stack_check_heap(*datatype);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * 
+ */
+/* ------------------------------------------------------------------------- */
+
+public Integer FATR f2c_inquire_stack_no_partition_(datatype)
+    Integer	*datatype;
+{
+    return MA_inquire_stack_no_partition(*datatype);
 }
 
 /* ------------------------------------------------------------------------- */
