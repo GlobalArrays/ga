@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.26 2002-12-17 22:43:36 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.27 2002-12-17 23:15:00 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1877,5 +1877,218 @@ void FATR nga_strided_put_(Integer *g_a,
   GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
   vampir_end(NGA_STRIDED_PUT,__FILE__,__LINE__);
+#endif
+}
+
+/*\ GET AN N-DIMENSIONAL PATCH OF STRIDED DATA FROM A GLOBAL ARRAY
+\*/
+void FATR nga_strided_get_(Integer *g_a, 
+                   Integer *lo,
+                   Integer *hi,
+                   Integer *skip,
+                   void    *buf,
+                   Integer *ld)
+{
+  /* g_a:    Global Array handle
+     lo[]:   Array of lower indices of patch of global array
+     hi[]:   Array of upper indices of patch of global array
+     skip[]: Array of skips for each dimension
+     buf[]:  Local buffer that patch will be copied from
+     ld[]:   ndim-1 physical dimensions of local buffer */
+  Integer p, np, handle = GA_OFFSET + *g_a;
+  Integer idx, elems, size, nstride;
+  int i, proc, ndim;
+
+#ifdef GA_USE_VAMPIR
+  vampire_begin(NGA_STRIDED_GET,__FILE__,__LINE__);
+#endif
+
+  size = GA[handle].elemsize;
+  ndim = GA[handle].ndim;
+
+  /* check values of skips to make sure they are legitimate */
+  for (i = 0; i<ndim; i++) {
+    if (skip[i]<1) {
+      ga_error("nga_strided_get: Invalid value of skip along coordinate ",i);
+    }
+  }
+
+  GA_PUSH_NAME("nga_strided_get");
+
+  /* Locate the processors containing some portion of the patch
+     specified by lo and hi and return the results in _ga_map,
+     GA_proclist, and np. GA_proclist contains the list of processors
+     containing some portion of the patch, _ga_map contains the
+     lower and upper indices of the portion of the total patch held by
+     a given processor, and np contains the total number of processors
+     that contain some portion of the patch. */
+  if (!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+
+  /* Loop over all processors containing a portion of patch */
+  gaPermuteProcList(np);
+  for (idx=0; idx<np; idx++) {
+    Integer ldrem[MAXDIM];
+    int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
+    Integer idx_buf, *plo, *phi;
+    char *pbuf, *prem;
+
+    p = (Integer)ProcListPerm[idx];
+    /* find visible portion of patch held by processor p and return
+       the result in plo and phi. Also, get actual processor index
+       corresponding to p and store the result in proc. */
+    gam_GetRangeFromMap(p, ndim, &plo, &phi);
+    proc = (int)GA_proclist[p];
+
+    /* Correct ranges to account for skips in original patch. If no
+       data is left in patch jump to next processor in loop. */
+    if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
+      continue;
+
+    /* get pointer prem in remote buffer to location indexed by plo.
+       Also get leading physical dimensions of remote buffer in memory
+       in ldrem */
+    gam_Location(proc, handle, plo, &prem, ldrem);
+
+    /* get pointer in local buffer to point indexed by plo given that
+       the corner of the buffer corresponds to the point indexed by lo */
+    gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
+    pbuf = size*idx_buf + (char*)buf;
+
+    /* Compute number of elements in each stride region and compute the
+       number of stride regions. Store the results in count and nstride */
+    if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
+      continue;
+
+    /* Scale first element in count by element size. The ARMCI_PutS routine
+       uses this convention to figure out memory sizes. */
+    count[0] *= size;
+
+    /* Calculate strides in memory for remote processor indexed by proc and
+       local buffer */ 
+    gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
+                          skip);
+
+#ifdef PERMUTE_PIDS
+    if (GA_Proc_List) proc = GA_inv_Proc_list[proc];
+#endif
+    ARMCI_GetS(prem, stride_rem, pbuf, stride_loc, count, nstride-1, proc);
+  }
+  GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+  vampir_end(NGA_STRIDED_GET,__FILE__,__LINE__);
+#endif
+}
+
+/*\ ACCUMULATE OPERATION FOR AN N-DIMENSIONAL PATCH OF STRIDED DATA OF A
+ *  GLOBAL ARRAY
+ *                g_a += alpha * strided_patch
+\*/
+void FATR nga_strided_acc_(Integer *g_a, 
+                   Integer *lo,
+                   Integer *hi,
+                   Integer *skip,
+                   void    *buf,
+                   Integer *ld,
+                   void    *alpha)
+{
+  /* g_a:    Global Array handle
+     lo[]:   Array of lower indices of patch of global array
+     hi[]:   Array of upper indices of patch of global array
+     skip[]: Array of skips for each dimension
+     buf[]:  Local buffer that patch will be copied from
+     ld[]:   ndim-1 physical dimensions of local buffer
+     alpha:  muliplicative scale factor */
+  Integer p, np, handle = GA_OFFSET + *g_a;
+  Integer idx, elems, size, nstride, type;
+  int i, optype, proc, ndim;
+
+#ifdef GA_USE_VAMPIR
+  vampire_begin(NGA_STRIDED_ACC,__FILE__,__LINE__);
+#endif
+
+  size = GA[handle].elemsize;
+  ndim = GA[handle].ndim;
+  type = GA[handle].type;
+
+  /* check values of skips to make sure they are legitimate */
+  for (i = 0; i<ndim; i++) {
+    if (skip[i]<1) {
+      ga_error("nga_strided_acc: Invalid value of skip along coordinate ",i);
+    }
+  }
+
+  GA_PUSH_NAME("nga_strided_acc");
+
+  /* Locate the processors containing some portion of the patch
+     specified by lo and hi and return the results in _ga_map,
+     GA_proclist, and np. GA_proclist contains the list of processors
+     containing some portion of the patch, _ga_map contains the
+     lower and upper indices of the portion of the total patch held by
+     a given processor, and np contains the total number of processors
+     that contain some portion of the patch. */
+  if (!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np))
+      ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+
+  if (type == C_DBL) optype = ARMCI_ACC_DBL;
+  else if (type == C_FLOAT) optype = ARMCI_ACC_FLT;
+  else if (type == C_DCPL) optype = ARMCI_ACC_DCP;
+  else if (size == sizeof(int)) optype = ARMCI_ACC_INT;
+  else if (size == sizeof(long)) optype = ARMCI_ACC_LNG;
+  else ga_error("nga_strided_acc: type not supported",type);
+
+  /* Loop over all processors containing a portion of patch */
+  gaPermuteProcList(np);
+  for (idx=0; idx<np; idx++) {
+    Integer ldrem[MAXDIM];
+    int stride_rem[2*MAXDIM], stride_loc[2*MAXDIM], count[2*MAXDIM];
+    Integer idx_buf, *plo, *phi;
+    char *pbuf, *prem;
+
+    p = (Integer)ProcListPerm[idx];
+    /* find visible portion of patch held by processor p and return
+       the result in plo and phi. Also, get actual processor index
+       corresponding to p and store the result in proc. */
+    gam_GetRangeFromMap(p, ndim, &plo, &phi);
+    proc = (int)GA_proclist[p];
+
+    /* Correct ranges to account for skips in original patch. If no
+       data is left in patch jump to next processor in loop. */
+    if (!gai_correct_strided_patch((Integer)ndim, lo, skip, plo, phi))
+      continue;
+
+    /* get pointer prem in remote buffer to location indexed by plo.
+       Also get leading physical dimensions of remote buffer in memory
+       in ldrem */
+    gam_Location(proc, handle, plo, &prem, ldrem);
+
+    /* get pointer in local buffer to point indexed by plo given that
+       the corner of the buffer corresponds to the point indexed by lo */
+    gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
+    pbuf = size*idx_buf + (char*)buf;
+
+    /* Compute number of elements in each stride region and compute the
+       number of stride regions. Store the results in count and nstride */
+    if (!gai_ComputeCountWithSkip(ndim, plo, phi, skip, count, &nstride))
+      continue;
+
+    /* Scale first element in count by element size. The ARMCI_PutS routine
+       uses this convention to figure out memory sizes. */
+    count[0] *= size;
+
+    /* Calculate strides in memory for remote processor indexed by proc and
+       local buffer */ 
+    gai_SetStrideWithSkip(ndim, size, ld, ldrem, stride_rem, stride_loc,
+                          skip);
+
+#ifdef PERMUTE_PIDS
+    if (GA_Proc_List) proc = GA_inv_Proc_list[proc];
+#endif
+    ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
+               nstride-1, proc);
+  }
+  GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+  vampir_end(NGA_STRIDED_GET,__FILE__,__LINE__);
 #endif
 }
