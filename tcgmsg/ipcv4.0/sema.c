@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.13 2000-06-16 19:10:24 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.14 2000-09-22 01:25:08 edo Exp $ */
 
 /*
   These routines simplify the interface to semaphores for use in mutual
@@ -101,7 +101,7 @@ static int sem_set_id_list[MAX_SEM_SETS];
 static int num_sem_set = 0;
 
 #if defined(SGITFP) || defined(SGI64) || defined(KSR) || defined(SOLARIS)
-#   define MAX_N_SEM 128 
+#   define MAX_N_SEM 512 
 #else
 #   define MAX_N_SEM 40
 #endif
@@ -615,7 +615,7 @@ long SemSetDestroyAll()
 
 #include <stdio.h>
 #include <unistd.h>  
-#define MAX_SEMA 128
+#define MAX_SEMA 512
 static volatile int *val;
 #define NAME_LEN 200
 
@@ -644,6 +644,9 @@ long SemSetCreate(long n_sem, long value)
    (void) usconfig(CONF_ARENATYPE, US_SHAREDONLY);
 #endif
    (void) usconfig(CONF_INITUSERS, (unsigned int)SR_clus_info[SR_clus_id].nslave );
+#ifdef SGI
+    (void) usconfig(CONF_INITSIZE, 1024*1024);
+#endif
 
   if (!(arena_ptr = usinit(arena_name)))
     Error("SemSetCreate: failed to create arena", 0L);
