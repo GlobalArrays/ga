@@ -450,7 +450,7 @@ Fd_t  elio_gopen(const char* fname, int type)
                       break;
         case ELIO_RW: ptype = O_CREAT | O_RDWR;
                       break;
-        default:      ELIO_ERROR_NULL("elio_open: mode incorrect", 0);
+        default:      ELIO_ERROR_NULL(MODEFAIL, 0);
       }
 
       if((fd = (Fd_t ) malloc(sizeof(fd_struct)) ) == NULL)
