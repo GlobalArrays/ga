@@ -37,6 +37,7 @@ FFLAGS = $(FOPT) -Fo"$(OBJDIR)/" -c
 
 #path and name of MPI library
 MPI_LIB_NAME=Cvwmpi.lib
+#MPI_LIB_NAME=mpich.lib
 LIBS = $(MPI_LIB)\$(MPI_LIB_NAME) wsock32.lib $(MTLIB)
 
 #################
@@ -62,6 +63,7 @@ COBJ =  "$(OBJDIR)\winshmem.obj" \
         "$(OBJDIR)\ds-shared.obj"\
         "$(OBJDIR)\buffers.obj"\
         "$(OBJDIR)\async.obj"\
+        "$(OBJDIR)\aggregate.obj"\
         "$(OBJDIR)\sockets.obj"
 
 !ifndef NOFORT
