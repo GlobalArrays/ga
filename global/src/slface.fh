@@ -1,0 +1,3 @@
+      integer iam, nnodes,nprow,npcol, myrow, mycol
+      logical init
+      common /SLface/ iam, nnodes, nprow,npcol, myrow, mycol, init

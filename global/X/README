@@ -1,0 +1,40 @@
+                     xregion -- GA visualization tool
+
+
+xregion displays transitional access patterns for a two-dimensional
+array.  Both sampling time for the animation and slowdown factor can be
+specified to animate long- and short- lasting events. At the end of
+animation, a cumulative time lost due to contention in access to
+individual array elements is displayed. The color coding (from white to
+navy) reflect access contention level for the animation, and the access
+contention integral for the final display.
+
+The usage:
+~~~~~~~~~ 
+xregion <grid_size> <scale> <filename> <num_events> [max_integr] 
+        [Xtoolkit options]
+
+where:
+
+                   mandatory arguments
+grid_size        - number of pixels in each direction
+scale            - number of pixels per array element 
+filename         - name of the input file (data processed by 'adjust' program)
+num_events       - the number of events to be read and processed from filename
+	           (might be specified larger than teh actual number records)
+
+	           optional arguments
+max_integr       - maximum value of access collision integral - used to limit
+	           the range of interest for the access contention
+Xtoolkit options - Xtoolkit options
+
+
+xregion is a wrapper script that specifies my color preferences for xregion0.
+
+The program was tested on the SUN platform only !
+It is a 16-bit display version. 
+
+
+Example:
+~~~~~~~
+xregion 100 4 adjust.ed 50

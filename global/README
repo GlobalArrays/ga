@@ -1,0 +1,139 @@
+                        GLOBAL ARRAYS LIBRARY
+
+
+
+DISCLAIMER
+
+This material was prepared as an account of work sponsored by an
+agency of the United States Government.  Neither the United States
+Government nor the United States Department of Energy, nor Battelle,
+nor any of their employees, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
+ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY,
+COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT,
+SOFTWARE, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT
+INFRINGE PRIVATELY OWNED RIGHTS.
+
+
+
+ACKNOWLEDGMENT
+
+This software and its documentation were produced with United States
+Government support under Contract Number DE-AC06-76RLO-1830 awarded by
+the United States Department of Energy.  The United States Government
+retains a paid-up non-exclusive, irrevocable worldwide license to
+reproduce, prepare derivative works, perform publicly and display
+publicly by or for the US Government, including the right to
+distribute to other US Government contractors.
+
+
+
+What is new ?
+~~~~~~~~~~~~
+
+version 1.3	introduced patch versions of ga_ddot, ga_dscal, ga_dadd;
+		also ga_matmul_patch, ga_ifill_patch, ga_dfill_patch, and
+		ga_duplicate. 
+                ga_copy_patch now has a transpose argument.
+
+version 1.2     integrated shared and distributed memory versions of GAs
+
+
+
+Directory Structure:
+~~~~~~~~~~~~~~~~~~~
+
+src      - source code for GA library
+testing  - test codes
+doc      - documents
+trace    - source code for tracing library
+X        - source code for GA visualization program
+
+
+Dependencies on other software:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- TCGMSG: more or less extensive support is required. For example, TCGMSG is 
+  used on some platforms to fork processes, implement broadcast and ga_dgop;
+
+- MA (memory allocator by Greg Thomas) include files are used to implement 
+  MA-like addressing (no libma.a library is required to use GA operations
+  on the shared memory platforms, except for ga_diag and ga_symmetrize that 
+  still depend on MA, but you need to include mafdecls.h in your code if 
+  you want to use ga_access in Fortran);
+
+- GA eigensolver, ga_diag, is a wrapper for the eigensolver from PEIGS library;
+  (Please contact George Fann <d3g270@pnl.gov> for PEIGS)
+
+- BLAS library is required for the eigensolver and ga_dgemm;
+
+- LAPACK library is required for the eigensolver;
+
+- SCALAPACK, PBBLAS, and BLACS libraries are required for ga_lu_solve;
+  (Please contact George Fann <d3g270@pnl.gov> for the current port of BLACS 
+   to TCGMSG.) 
+
+- if you want to use tracing, libtrace.a (built in ./trace) will be required;
+  also DGA_TRACE define symbol should be specified for CC and FC compilers.
+
+
+Makefiles:
+~~~~~~~~~
+
+In addition to makefile there are three more files included in makefiles 
+located in the subdirectories: Makefile.h  (definitions & include symbols),
+MakeFiles.h (file names to be compiled depending on the TARGET machine and
+VERSION of memory (shared or distributed), and Makelib.h (specification of
+libraries to be linked with when test programs ar build).
+The user needs to specify TARGET & VERSION in the ./makefile or on the 
+command line when calling make. The library and test programs should be
+built by calling make in the current directory. 
+
+Valid TARGET is one of: SUN, SGI, IBM, KSR, IPSC, PARAGON, SP1 
+Valid VERSION names:    SHMEM, DISMEM
+           
+
+Test Programs:
+~~~~~~~~~~~~~
+
+      - Programs: test, testsolve, testeig, testpatch are available to test 
+        this software. 
+
+      - An example program that uses GA is called jacobix. The Jacobi
+        iterative method is used to solve a system of linear equations
+        generated in the solution process of a partial differential 
+        equation by the finite differences method. 
+
+      - You might have to modify Makelib.h to provide pointers to
+        the ScaLAPACK and Co., and PEIGS libraries in order to use parallel
+        versions of eigensolver and linear equation solver in testeig
+        test program. 
+
+      - To run test programs you need to use TCGMSG to fork the
+	processes on the shared memory and (network of) workstations;
+	you need to prepare *.p files (see testing/makefile), to
+	execute them you should use 'parallel' program -- built in
+	tcgmsg/ipcv4.0. (For a single processor execution 'parallel' is
+	not required if you have a version > 4.03 of TCGMSG.  For
+	parallel execution, 'parallel' is not needed when running on
+	the Intel, and the IBM SP1 machines.)
+
+
+
+Documentation:
+~~~~~~~~~~~~~
+
+        An ASCII version of GA documentation is located in doc/global.doc. 
+
+Remarks: 
+~~~~~~~
+
+      - you need GNU make (version > 3.67) to build this software
+
+
+How to contact the authors:
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Jarek Nieplocha <j_nieplocha@pnl.gov> 
+Pacific Northwest Laboratory, 
+MSIN: K1-87
+Richland, WA 99352 

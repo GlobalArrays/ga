@@ -1,0 +1,132 @@
+c
+c     PRIVATE include file for the global array routines
+c
+c     Applications should only require to include global.h
+c
+      double precision pscl     ! Scale factor for virtual proc. map
+      integer ttyp              ! Data type of array
+      integer dims              ! Dimensions of global array
+      integer ldim              ! Dimensions of local chunk of array
+      integer pdim              ! Dimensions of virtual processor array
+      integer chnk              ! Chunk size in each dimension
+      integer hand              ! Memory allocater handle to local chunk
+      integer indx              ! Memory allocater index to local chunk
+      integer mapc              ! Info on what each processor holds
+      logical actv              ! Boolean, true if array is active
+      character*32 name         ! Name of array
+      double precision tmp_local ! Buffer for local process (NOT server)
+      double precision tmp_recv ! Buffer for receiving data (Server only)
+      integer ijtmp_recv        ! Buffer for receiving data (Server only)
+      integer tag_from          ! Last tag received from remote process
+      integer tag_to            ! Last tag sent to remote process
+      integer me                ! ID of local process
+      integer nproc             ! Total no. of processes
+      integer nserver           ! No. of server (TCGMSG) processes
+      logical oserver           ! True if this process serves data
+                                ! (may also be a compute process!)
+c
+      integer max_global_array  ! Parameter ... max. no. of arrays
+      integer tmpsize           ! Parameter ... size of remote access buffer
+      integer itmpsize          !
+      integer max_nproc         ! Parameter ... max. no. of processes
+c
+c     
+      logical sync_wait		! variable to spin on when synchronizing (SP1)
+      integer proc_waiting      ! number of snchronization requests (SP1)
+      integer sync_server	! synchronization server (SP1)
+      integer in_handler        ! set to one when in interrupt handler
+      logical busy		! interrupt trap mask
+
+      integer header_size	! message header size
+      double precision header_local  ! Buffer for local process (NOT server)
+      double precision header_recv   ! Buffer for receiving data (Server only)
+  
+
+c
+c     if the latency on a remote request is 0.5ms and the transfer rate
+c     is 8 Mbytes/s then tmpsize=10000 is such that latency is only 2% 
+c     of overall cost
+c
+      parameter (max_global_array=32, max_nproc=256)
+      parameter (tmpsize=125000)
+      parameter (itmpsize= tmpsize)
+      parameter (header_size=11)
+c
+#ifdef DATA_SERVER
+      integer access_handle(max_global_array)     ! MA handle to access patch
+      integer access_index(max_global_array)      ! MA index  to access patch
+      common  /access_common/ access_handle, access_index
+#endif
+c
+      common /i_global_common/
+     $     pscl(2, max_global_array),
+     $     ttyp(max_global_array),
+     $     actv(max_global_array),
+     $     hand(max_global_array),
+     $     indx(max_global_array),
+     $     dims(2, max_global_array),
+     $     ldim(2, max_global_array),
+     $     pdim(2, max_global_array),
+     $     chnk(2, max_global_array),
+     $     mapc(4, 0:max_nproc-1, max_global_array),
+     $     tag_from(max_nproc), tag_to(max_nproc),
+     $     me, nproc, nserver, oserver
+      common /c_global_common/
+     $     name(max_global_array)
+c
+c      lets hope that the memory in this common is contiguous
+      common /d_global_common/
+     $     header_local(header_size), tmp_local(tmpsize), 
+     $     header_recv(header_size), tmp_recv(tmpsize),
+     $     ijtmp_recv(itmpsize)
+c
+      integer sync, syn_msgid
+      common /sp1_common/ sync_wait,proc_waiting,sync_server,in_handler,
+     $                    busy, sync(max_nproc), syn_msgid(max_nproc)
+c
+      double precision req_sent, req_recv      ! used for sync on paragon
+      common /paragon_common/ req_sent, req_recv
+c
+      integer GA_TYPE_REQ, GA_TYPE_GET, GA_TYPE_SYN, GA_TYPE_PUT,
+     $     GA_TYPE_ACC, GA_TYPE_GSM, GA_TYPE_ACK, GA_TYPE_ADD,
+     $     GA_TYPE_DCV, GA_TYPE_DCI, GA_TYPE_DCJ, GA_TYPE_DSC,
+     $     GA_TYPE_RDI, GA_TYPE_DGT, GA_TYPE_GOP, GA_TYPE_BRD
+      integer GA_OP_GET, GA_OP_END, GA_OP_CRE, GA_OP_PUT,
+     $     GA_OP_ACC, GA_OP_DES, GA_OP_ZER, GA_OP_DDT, GA_OP_ADD,
+     $     GA_OP_DST, GA_OP_DGT, GA_OP_DSC, GA_OP_COP, GA_OP_RDI,
+     $     GA_OP_DUP
+c
+      parameter(
+     $     GA_TYPE_REQ=32760 - 1, ! MUST match with ga_handler.c
+     $     GA_TYPE_GET=32760 - 2,
+     $     GA_TYPE_SYN=32760 - 3,
+     $     GA_TYPE_PUT=32760 - 4,
+     $     GA_TYPE_ACC=32760 - 5,
+     $     GA_TYPE_GSM=32760 - 6,
+     $     GA_TYPE_ACK=32760 - 7,
+     $     GA_TYPE_ADD=32760 - 8,
+     $     GA_TYPE_DCV=32760 - 9,
+     $     GA_TYPE_DCI=32760 - 10,
+     $     GA_TYPE_DCJ=32760 - 11,
+     $     GA_TYPE_DSC=32760 - 12,
+     $     GA_TYPE_RDI=32760 - 13,
+     $     GA_TYPE_DGT=32760 - 14,
+     $     GA_TYPE_GOP=32760 - 29,  ! global operation
+     $     GA_TYPE_BRD=32760 - 30,  ! broadcast
+     $     GA_OP_GET=1,         ! Get 
+     $     GA_OP_END=2,         ! Terminate
+     $     GA_OP_CRE=3,         ! Create
+     $     GA_OP_PUT=4,         ! Put
+     $     GA_OP_ACC=5,         ! Accumulate
+     $     GA_OP_DES=6,         ! Destroy
+     $     GA_OP_ZER=7,         ! Zero
+     $     GA_OP_DDT=8,         ! Double precision dot product
+     $     GA_OP_DUP=9,         ! Duplicate array
+     $     GA_OP_DST=10,        ! Double precision scatter
+     $     GA_OP_DGT=11,        ! Double precision gather
+     $     GA_OP_DSC=12,        ! Double precision scale
+     $     GA_OP_COP=13,        ! Copy
+     $     GA_OP_ADD=14,        ! Double precision add
+     $     GA_OP_RDI=15)        ! Integer read and increment
+c
+
