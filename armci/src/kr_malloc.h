@@ -10,11 +10,17 @@
 #endif
  
 #define ALIGNMENT (1 << LOG_ALIGN)
+
+#define KR_CTX_SHMEM     1
+#define KR_CTX_LOCALMEM  2
  
 union header{
   struct {
     unsigned valid1;            /* Token to check if is not overwritten */
     union header *ptr;          /* next block if on free list */
+    int shmid;                  /* next block's shared memory id  */
+    long shmoffset;             /* next block's shmem offset */
+    size_t shmsize;             /* next block's shared memory segment size */
     size_t size;                /* size of this block*/
     unsigned valid2;            /* Another token acting as a guard */
   } s;
@@ -35,6 +41,12 @@ typedef struct malloc_context {
   long nfrags;                  /* No. of fragments divided into */
   long nmcalls;                 /* No. of calls to _armci_alloc() */
   long nfcalls;                 /* No. of calls to memfree */
+  int ctx_type;                 /* context id. 
+				   -1 represents ctx_local context.
+				   otherwise, it is ctx_shmem context. */
+  int shmid;                    /* first free block's (i.e.freep) shmem id */
+  long shmoffset;               /* first free block's shmem offset */
+  size_t shmsize;               /* first free block's shmem total size */
   Header base;                  /* empty list to get started */
   Header *freep;                /* start of free list */
   Header *usedp;                /* start of used list */

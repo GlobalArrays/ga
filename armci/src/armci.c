@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.85 2004-04-09 22:07:53 manoj Exp $ */
+/* $Id: armci.c,v 1.86 2004-06-28 17:45:18 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -291,8 +291,7 @@ extern void armci_region_shm_malloc(void *ptr_arr[], size_t bytes);
 
 int ARMCI_Init()
 {
-    _armci_initialized++;
-    if(_armci_initialized>1)return 0;
+    if(_armci_initialized>0) return 0;
 #ifdef GA_USE_VAMPIR
     vampir_init(NULL,NULL,__FILE__,__LINE__);
     armci_vampir_init(__FILE__,__LINE__);
@@ -445,6 +444,7 @@ int ARMCI_Init()
 #ifdef GA_USE_VAMPIR
     vampir_end(ARMCI_INIT,__FILE__,__LINE__);
 #endif    
+    _armci_initialized++;
     return 0;
 }
 

@@ -29,4 +29,6 @@ extern void armci_nattach_preallocate_info(int* segments, int *segsize);
 #define SHMIDLEN (MAX_REGIONS + 2)
 #endif
 
+#define IDLOC (SHMIDLEN - 3)
+
 #endif

@@ -214,6 +214,16 @@ typedef struct{
 
 #define armci_req_t armci_hdl_t
 
+typedef struct {
+    double dummy[8];
+} ARMCI_Group;
+ 
+void ARMCI_Group_create(int n, int *pid_list, ARMCI_Group *group);
+int ARMCI_Group_rank(ARMCI_Group *group, int *rank);
+void ARMCI_Group_size(ARMCI_Group *group, int *size);
+int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,ARMCI_Group *group);
+int ARMCI_Free_group(void *ptr, ARMCI_Group *group);
+
 extern int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* nb_handle);
 
 extern int ARMCI_NbPutS(          /* strided put */

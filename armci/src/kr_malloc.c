@@ -1,6 +1,9 @@
-/* $Id: kr_malloc.c,v 1.6 2004-02-25 05:54:00 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.7 2004-06-28 17:45:19 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
+#include "armcip.h" /* for DEBUG purpose only. remove later */
+#include "shmem.h"
+#include "locks.h"
 
 #define DEBUG 0
 
@@ -20,13 +23,18 @@ extern void armci_die();
 #define DEFAULT_MAX_NALLOC   (1024*1024*16) 
 
 /* mutual exclusion defs go here */
-#define  LOCKIT 
-#define  UNLOCKIT 
+#define  LOCKIT(p)   NAT_LOCK(0,p)
+#define  UNLOCKIT(p) NAT_UNLOCK(0,p)
+#define LOCKED   100
+#define UNLOCKED 101
+static int lock_mode=UNLOCKED;
 
 static int do_verify = 0;	/* Flag for automatic heap verification */
 
 #define VALID1  0xaaaaaaaa	/* For validity check on headers */
 #define VALID2  0x55555555
+
+#define USEDP 0
 
 static void kr_error(char *s, unsigned long i, context_t *ctx) {
 char string[256];
@@ -66,7 +74,7 @@ static Header *morecore(size_t nu, context_t *ctx) {
     
     if ((cp =(char *)(*ctx->alloc_fptr)((size_t)nu * sizeof(Header))) == (char *)NULL)
       return (Header *) NULL;
-    
+
     ctx->total += nu;   /* Have just got nu more units */
     ctx->nchunk++;      /* One more chunk */
     ctx->nfrags++;      /* Currently one more frag */
@@ -76,12 +84,12 @@ static Header *morecore(size_t nu, context_t *ctx) {
     up->s.size = nu;
     up->s.valid1 = VALID1;
     up->s.valid2 = VALID2;
-    
+
     /* Insert into linked list of blocks in use so that kr_free works
        ... for debug only */
     up->s.ptr = ctx->usedp;
     ctx->usedp = up;
-    
+
     kr_free((char *)(up+1), ctx);  /* Try to join into the free list */
     return ctx->freep;
 }
@@ -108,82 +116,278 @@ void kr_malloc_init(size_t usize, /* unit size in bytes */
     ctx->alloc_fptr = alloc_fptr;
     ctx->freep = NULL;
     ctx->usedp = NULL;
+    ctx->shmid = -1;
+    ctx->shmoffset = 0;
+    ctx->shmsize   = 0;
     do_verify = debug;
 }
 
 
-char *kr_malloc(size_t nbytes, context_t *ctx) {
+static char *kr_malloc_local(size_t nbytes, context_t *ctx) {
     Header *p, *prevp;
     size_t nunits;
     char *return_ptr;
+
+    /* If first time in need to initialize the free list */
+
+    if ((prevp = ctx->freep) == NULL) {
+
+       if (sizeof(Header) != ALIGNMENT)
+	  kr_error("Alignment is not valid", (unsigned long) ALIGNMENT, ctx);
+
+       ctx->total  = 0;  /* Initialize statistics */
+       ctx->nchunk = 0;
+       ctx->inuse  = 0;
+       ctx->nfrags = 0;
+       ctx->maxuse = 0;
+       ctx->nmcalls= 0;
+       ctx->nfcalls= 0;
+
+       ctx->base.s.ptr = ctx->freep = prevp = &(ctx->base);  /* Initialize linke\
+								d list */
+       ctx->base.s.size = 0;
+       ctx->base.s.valid1 = VALID1;
+       ctx->base.s.valid2 = VALID2;
+    }
+
+    ctx->nmcalls++;
+
+    if (do_verify)
+       kr_malloc_verify(ctx);
+
+    /* Rather than divide make the alignment a known power of 2 */
+
+    nunits = ((nbytes + sizeof(Header) - 1)>>LOG_ALIGN) + 1;
+
+    for (p=prevp->s.ptr; ; prevp = p, p = p->s.ptr) {
+
+       if (p->s.size >= nunits) {        /* Big enuf */
+	  if (p->s.size == nunits)        /* exact fit */
+	     prevp->s.ptr = p->s.ptr;
+	  else {                  /* allocate tail end */
+	     p->s.size -= nunits;
+	     p += p->s.size;
+	     p->s.size = nunits;
+	     p->s.valid1 = VALID1;
+	     p->s.valid2 = VALID2;
+	     ctx->nfrags++;  /* Have just increased the fragmentation */
+	  }
+
+	  /* Insert into linked list of blocks in use ... for debug only */
+	  p->s.ptr = ctx->usedp;
+	  ctx->usedp = p;
+
+	  ctx->inuse += nunits;  /* Record usage */
+	  if (ctx->inuse > ctx->maxuse)
+	     ctx->maxuse = ctx->inuse;
+	  ctx->freep = prevp;
+	  return_ptr = (char *) (p+1);
+	  break;
+       }
+
+       if (p == ctx->freep) {       /* wrapped around the free list */
+	  if ((p = morecore(nunits, ctx)) == (Header *) NULL) {
+	     return_ptr = (char *) NULL;
+	     break;
+	  }
+       }
+    }
+
+    return return_ptr;
+
+}
+
+
+static void kr_free_local(char *ap, context_t *ctx) {
+    Header *bp, *p, **up;
+
+    ctx->nfcalls++;
+
+
+    if (do_verify)
+       kr_malloc_verify(ctx);
+
+    /* only do something if pointer is not NULL */
+
+    if ( ap ) {
+
+       bp = (Header *) ap - 1;  /* Point to block header */
+
+       if (bp->s.valid1 != VALID1 || bp->s.valid2 != VALID2)
+	  kr_error("kr_free_local: pointer not from kr_malloc_local",
+		   (unsigned long) ap, ctx);
+
+       ctx->inuse -= bp->s.size; /* Decrement memory ctx->usage */
+
+       /* Extract the block from the used linked list
+	  ... for debug only */
+
+       for (up=&(ctx->usedp); ; up = &((*up)->s.ptr)) {
+	  if (!*up)
+	     kr_error("kr_free_local: block not found in used list\n",
+		      (unsigned long) ap, ctx);
+	  if (*up == bp) {
+	     *up = bp->s.ptr;
+	     break;
+	  }
+       }
+
+       /* Join the memory back into the free linked list */
+
+       for (p=ctx->freep; !(bp > p && bp < p->s.ptr); p = p->s.ptr)
+	  if (p >= p->s.ptr && (bp > p || bp < p->s.ptr))
+	     break; /* Freed block at start or end of arena */
+
+       if (bp + bp->s.size == p->s.ptr) {/* join to upper neighbour */
+	  bp->s.size += p->s.ptr->s.size;
+	  bp->s.ptr = p->s.ptr->s.ptr;
+	  ctx->nfrags--;                 /* Lost a fragment */
+       } else
+	  bp->s.ptr = p->s.ptr;
+
+       if (p + p->s.size == bp) { /* Join to lower neighbour */
+	  p->s.size += bp->s.size;
+	  p->s.ptr = bp->s.ptr;
+	  ctx->nfrags--;          /* Lost a fragment */
+       } else
+	  p->s.ptr = bp;
+
+       ctx->freep = p;
+
+    } /* end if on ap */
+}
+
+static 
+Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize) {
+    long idlist[SHMIDLEN];
+    Header *p = NULL;
+
+    idlist[1] = (long)shmid;
+    idlist[0] = shmoffset;
+    idlist[IDLOC+1] = shmsize;/* check idlist in CreateShmem????*/
+
+    if(!(p=(Header*)Attach_Shared_Region(idlist+1, shmsize, idlist[0])))
+       armci_die("kr_malloc:could not attach",(int)(p->s.shmsize>>10));
+#if DEBUG
+    printf("%d: armci_shmem_get_ptr: %d %ld %ld\n", armci_me, idlist[1], idlist[0], shmsize); fflush(stdout);
+#endif
+    return p;
+}
+
+/* get the legitimate pointer */
+static 
+Header *get_ptr(context_t *ctx, Header *p) {
+    if(ctx->ctx_type == KR_CTX_LOCALMEM || p->s.shmid == -1) return p->s.ptr;
+    else if(ctx->ctx_type == KR_CTX_SHMEM) 
+       return armci_shmem_get_ptr(p->s.shmid, p->s.shmoffset, p->s.shmsize);
+    else kr_error("Invalid context type", (unsigned long)0, ctx);
+    return NULL;
+}
+
+char *kr_malloc(size_t nbytes, context_t *ctx) {
+    Header *p, *prevp;
+    size_t nunits, prev_shmsize=0;
+    char *return_ptr;
+    int prev_shmid=-1;
+    long prev_shmoffset=0;
+    context_t tmp;
+
+    if(ctx->ctx_type == KR_CTX_LOCALMEM) return kr_malloc_local(nbytes,ctx);
     
-    LOCKIT;
-    
+    if(_armci_initialized && lock_mode==UNLOCKED) {
+       LOCKIT(armci_master); lock_mode=LOCKED; 
+    }
+
+    tmp = *ctx;
+
     /* If first time in need to initialize the free list */ 
-    
     if ((prevp = ctx->freep) == NULL) { 
       
       if (sizeof(Header) != ALIGNMENT)
 	kr_error("Alignment is not valid", (unsigned long) ALIGNMENT, ctx);
       
-      ctx->total  = 0;  /* Initialize statistics */
-      ctx->nchunk = 0;
-      ctx->inuse  = 0;
-      ctx->nfrags = 0;
-      ctx->maxuse = 0;
-      ctx->nmcalls= 0;
-      ctx->nfcalls= 0;
+      ctx->total  = 0; /* Initialize statistics */
+      ctx->nchunk = ctx->inuse   = ctx->maxuse  = 0;  
+      ctx->nfrags = ctx->nmcalls = ctx->nfcalls = 0;
       
-      ctx->base.s.ptr = ctx->freep = prevp = &(ctx->base);  /* Initialize linked list */
+      /* Initialize linked list */
+      ctx->base.s.ptr = ctx->freep = prevp = &(ctx->base);
       ctx->base.s.size = 0;
+      ctx->base.s.shmid     = -1;
+      ctx->base.s.shmoffset = 0;
+      ctx->base.s.shmsize   = 0;
       ctx->base.s.valid1 = VALID1;
       ctx->base.s.valid2 = VALID2;
+      tmp.ctx_type = KR_CTX_LOCALMEM; /* 1st time, there is no shmem ctx */
     }
-    
+    else {
+       prev_shmid     = ctx->shmid;
+       prev_shmoffset = ctx->shmoffset;
+       prev_shmsize   = ctx->shmsize;
+       prevp = ctx->freep = armci_shmem_get_ptr(ctx->shmid, ctx->shmoffset,
+						ctx->shmsize);
+    }
+
     ctx->nmcalls++;
     
-    if (do_verify)
-      kr_malloc_verify(ctx);
+    if (do_verify)  kr_malloc_verify(ctx);
     
     /* Rather than divide make the alignment a known power of 2 */
-    
     nunits = ((nbytes + sizeof(Header) - 1)>>LOG_ALIGN) + 1;
-    
-    for (p=prevp->s.ptr; ; prevp = p, p = p->s.ptr) {
-      
+
+    for (p=get_ptr(&tmp,prevp); ; prevp = p, p = get_ptr(&tmp, p)) {
+
       if (p->s.size >= nunits) {	/* Big enuf */
-	if (p->s.size == nunits)	/* exact fit */
+	if (p->s.size == nunits) {	/* exact fit */
 	  prevp->s.ptr = p->s.ptr;
+	  prevp->s.shmid     = p->s.shmid;
+	  prevp->s.shmoffset = p->s.shmoffset;
+	  prevp->s.shmsize   = p->s.shmsize;
+	}
 	else {			/* allocate tail end */
-	  p->s.size -= nunits;
-	  p += p->s.size;
-	  p->s.size = nunits;
-	  p->s.valid1 = VALID1;
-	  p->s.valid2 = VALID2;
-	  ctx->nfrags++;  /* Have just increased the fragmentation */
+	   p->s.size -= nunits;
+	   p += p->s.size;
+	   p->s.size = nunits;
+	   p->s.valid1 = VALID1;
+	   p->s.valid2 = VALID2;
+	   ctx->nfrags++;  /* Have just increased the fragmentation */
 	}
 	
+#if USEDP
 	/* Insert into linked list of blocks in use ... for debug only */
 	p->s.ptr = ctx->usedp;
 	ctx->usedp = p;
+#endif
 	
 	ctx->inuse += nunits;  /* Record usage */
 	if (ctx->inuse > ctx->maxuse)
 	  ctx->maxuse = ctx->inuse;
 	ctx->freep = prevp;
+	ctx->shmid     = prev_shmid;
+	ctx->shmoffset = prev_shmoffset;
+	ctx->shmsize   = prev_shmsize;
 	return_ptr = (char *) (p+1);
 	break;
       }
+
+      prev_shmid     = prevp->s.shmid;
+      prev_shmoffset = prevp->s.shmoffset;
+      prev_shmsize   = prevp->s.shmsize;
       
       if (p == ctx->freep)	{	/* wrapped around the free list */
 	if ((p = morecore(nunits, ctx)) == (Header *) NULL) {
 	  return_ptr = (char *) NULL;
 	  break;
 	}
+	prev_shmid     = ctx->shmid;
+	prev_shmoffset = ctx->shmoffset;
+	prev_shmsize   = ctx->shmsize;
       }
     }
     
-    UNLOCKIT;
+    if(_armci_initialized && lock_mode==LOCKED) {
+       UNLOCKIT(armci_master); lock_mode=UNLOCKED;
+    }
 
     return return_ptr;
     
@@ -191,12 +395,19 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
 
 
 void kr_free(char *ap, context_t *ctx) {
-    Header *bp, *p, **up;
-    
-    LOCKIT;
+    Header *bp, *p, **up, *nextp;
+    int shmid=-1;
+    long shmoffset=0;
+    size_t shmsize=0;
+    context_t tmp;
+
+    if(ctx->ctx_type == KR_CTX_LOCALMEM) { kr_free_local(ap,ctx); return; }
+
+    if(_armci_initialized && lock_mode==UNLOCKED) {
+       LOCKIT(armci_master); lock_mode=LOCKED;
+    }
     
     ctx->nfcalls++;
-    
     
     if (do_verify)
       kr_malloc_verify(ctx);
@@ -213,6 +424,7 @@ void kr_free(char *ap, context_t *ctx) {
       
       ctx->inuse -= bp->s.size; /* Decrement memory ctx->usage */
       
+#if USEDP
       /* Extract the block from the used linked list
 	 ... for debug only */
       
@@ -225,33 +437,79 @@ void kr_free(char *ap, context_t *ctx) {
 	  break;
 	}
       }
-      
+#endif
+
+      tmp = *ctx;
+      if(ctx->shmid==-1) { /* At start, store shmem info in context */
+	 armci_get_shmem_info((char*)bp, &ctx->shmid, &ctx->shmoffset,
+			      &ctx->shmsize);
+	 ctx->base.s.shmid     = ctx->shmid; 
+	 
+	 /* CHECK - offset */
+	 ctx->base.s.shmoffset = ctx->shmsize - 4 * sizeof(Header) +
+	   sizeof(void*) + ((void*)&(ctx->base) - (void*)ctx);
+	 ctx->shmoffset = ctx->base.s.shmoffset;
+	 ctx->base.s.shmsize   = ctx->shmsize;
+	 tmp.ctx_type = KR_CTX_LOCALMEM;
+      }
+      else ctx->freep = armci_shmem_get_ptr(ctx->shmid, ctx->shmoffset,
+					    ctx->shmsize);
+
+      shmid     = ctx->shmid;
+      shmoffset = ctx->shmoffset;
+      shmsize   = ctx->shmsize;
+
       /* Join the memory back into the free linked list */
-      
-      for (p=ctx->freep; !(bp > p && bp < p->s.ptr); p = p->s.ptr)
-	if (p >= p->s.ptr && (bp > p || bp < p->s.ptr))
-	  break; /* Freed block at start or end of arena */
-      
-      if (bp + bp->s.size == p->s.ptr) {/* join to upper neighbour */
-	bp->s.size += p->s.ptr->s.size;
-	bp->s.ptr = p->s.ptr->s.ptr;
+      p = ctx->freep;
+      nextp = get_ptr(&tmp,p);
+
+      for ( ; !(bp > p && bp < nextp); p=nextp, nextp=get_ptr(&tmp,p)) {
+	 if (p >= nextp && (bp > p || bp < nextp))
+	    break; /* Freed block at start or end of arena */
+	 nextp = get_ptr(&tmp,p);
+	 shmid     = p->s.shmid;
+	 shmoffset = p->s.shmoffset;
+	 shmsize   = p->s.shmsize;
+      }
+
+      if (bp + bp->s.size == nextp) {/* join to upper neighbour */
+	bp->s.size += nextp->s.size;
+	bp->s.ptr = nextp->s.ptr;
 	ctx->nfrags--;                 /* Lost a fragment */
-      } else
-	bp->s.ptr = p->s.ptr;
-      
+	bp->s.shmid     = nextp->s.shmid;
+	bp->s.shmoffset = nextp->s.shmoffset;
+	bp->s.shmsize   = nextp->s.shmsize;	   
+      } else {
+	 bp->s.ptr = nextp;
+	 bp->s.shmid     = p->s.shmid;
+	 bp->s.shmoffset = p->s.shmoffset;
+	 bp->s.shmsize   = p->s.shmsize;	   
+      }
+
       if (p + p->s.size == bp) { /* Join to lower neighbour */
-	p->s.size += bp->s.size;
-	p->s.ptr = bp->s.ptr;
-	ctx->nfrags--;          /* Lost a fragment */
-      } else
-	p->s.ptr = bp;
+	 p->s.size += bp->s.size;
+	 p->s.ptr = bp->s.ptr;
+	 ctx->nfrags--;          /* Lost a fragment */
+	 p->s.shmid     = bp->s.shmid;
+	 p->s.shmoffset = bp->s.shmoffset;
+	 p->s.shmsize   = bp->s.shmsize;
+      } else {
+	 p->s.ptr = bp;
+	 armci_get_shmem_info((char*)bp, &p->s.shmid, &p->s.shmoffset,
+			      &p->s.shmsize);
+      }
       
       ctx->freep = p;
-      
+      ctx->shmid     = shmid;
+      ctx->shmoffset = shmoffset;
+      ctx->shmsize   = shmsize;
     } /* end if on ap */
     
-    UNLOCKIT;
+    if(_armci_initialized && lock_mode==LOCKED) {
+       UNLOCKIT(armci_master); lock_mode=UNLOCKED;
+    }
 }
+
 
 /*
   Print to standard output the usage statistics.
@@ -281,8 +539,10 @@ void kr_malloc_print_stats(context_t *ctx) {
 void kr_malloc_verify(context_t *ctx) {
     Header *p;
     
-    LOCKIT;
-    
+    if(_armci_initialized && lock_mode==UNLOCKED) {
+       LOCKIT(armci_master); lock_mode=LOCKED;
+    }
+
     if ( ctx->freep ) {
       
       /* Check the used list */
@@ -313,7 +573,9 @@ void kr_malloc_verify(context_t *ctx) {
       }
     } /* end if */
     
-    UNLOCKIT;
+    if(_armci_initialized && lock_mode==LOCKED) {
+       UNLOCKIT(armci_master); lock_mode=UNLOCKED;
+    }
 }
 
 /**

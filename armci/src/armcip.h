@@ -156,6 +156,7 @@ extern thread_id_t armci_usr_tid;
 #define VECTOR  2
 
 extern  int armci_me, armci_nproc;
+extern int _armci_initialized;
 #ifdef HITACHI
    extern int sr8k_server_ready;
    extern  double *armci_internal_buffer;
@@ -353,5 +354,49 @@ extern void cpu_yield();
 #ifdef ALLOW_PIN
 extern void armci_global_region_exchange(void *, long); 
 #endif
+
+/* -------------------- ARMCI Groups ---------------------- */
+/* data structure that caches a group's attribute */
+#if 1
+typedef int ARMCI_Datatype;
+ 
+extern int ATTR_KEY; /* attribute key */
+ 
+typedef struct {
+  armci_clus_t *grp_clus_info;
+  int grp_me;              /* my group id */
+  int grp_nclus;           /* number of cluster nodes */
+  int grp_clus_me;         /* my cluster node id */
+  int mem_offset;          /* memory offset */
+}armci_grp_attr_t;
+ 
+#include "mpi.h"
+ 
+#ifdef MPI
+typedef MPI_Comm ARMCI_Comm;
+typedef struct {
+  MPI_Comm icomm;
+  MPI_Group igroup;
+  armci_grp_attr_t grp_attr;
+}ARMCI_iGroup;
+ 
+#endif
+armci_grp_attr_t *ARMCI_Group_getattr(ARMCI_Group *grp);
+#endif
+ 
+extern void armci_msg_group_igop(int *x, int n, char* op,ARMCI_Group *group);
+extern void armci_msg_group_lgop(long *x, int n, char* op,ARMCI_Group *group);
+extern void armci_msg_group_fgop(float *x, int n, char* op,ARMCI_Group *group);
+extern void armci_msg_group_dgop(double *x, int n,char* op,ARMCI_Group *group);
+extern void armci_msg_group_bcast_scope(int scope, void *buf, int len,
+                                        int root, ARMCI_Group *group);
+extern void armci_msg_group_barrier(ARMCI_Group *group);
+extern void armci_msg_group_gop_scope(int scope, void *x, int n, char* op,
+                                      int type, ARMCI_Group *group);
+extern void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
+                                  int grp_clus_nproc,ARMCI_Group *mastergroup);
+extern void armci_exchange_address_grp(void *ptr_arr[], int n, ARMCI_Group *group);
+ 
+/* -------------------------------------------------------- */
 
 #endif
