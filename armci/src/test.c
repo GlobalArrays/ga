@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.27 2002-11-06 13:58:36 vinod Exp $ */
+/* $Id: test.c,v 1.28 2002-12-03 18:49:24 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -1150,6 +1150,57 @@ void test_memlock()
         free(a);
 }
 
+void test_rput()
+{
+  int i, elems = nproc;
+  int *idst[MAXPROC];
+  long *ldst[MAXPROC];
+  float *fdst[MAXPROC];
+  double *ddst[MAXPROC];
+
+  create_array((void**)idst, sizeof(int),1, &elems);
+  create_array((void**)ldst, sizeof(long),1, &elems);
+  create_array((void**)fdst, sizeof(float),1, &elems);
+  create_array((void**)ddst, sizeof(double),1, &elems); 
+  
+  for(i=0; i<elems; i++) {
+    idst[me][i]=0; ldst[me][i]=0; fdst[me][i]=0.0; ddst[me][i]=0.0;
+  }
+
+  MP_BARRIER();
+  for(i=0; i<nproc; i++) {
+    ARMCI_PutValueInt(10*(me+1), (void *)&idst[i][me], i);
+    ARMCI_PutValueLong((long)10*(me+1), (void *)&ldst[i][me], i);
+    ARMCI_PutValueFloat(10.01*(me+1), (void *)&fdst[i][me], i);
+    ARMCI_PutValueDouble(10.001*(me+1), (void *)&ddst[i][me], i);
+  }
+  
+  ARMCI_AllFence();
+  MP_BARRIER();
+  
+  for(i=0; i<elems; i++) {
+    if(idst[me][i]!=10*(i+1)) 
+      ARMCI_Error("Integer registered put failed", 0);
+    if(ldst[me][i]!=10*(i+1)) 
+      ARMCI_Error("Long registered put failed", 0);
+    if(ABS(ddst[me][i]-10.001*(i+1)) > 0.1) 
+      ARMCI_Error("Double registered put failed",0);
+    if( ABS(fdst[me][i]-10.01*(i+1)) > 0.1) 
+      ARMCI_Error("Float registered put failed", 0);
+  }
+  
+  ARMCI_AllFence();
+  MP_BARRIER();
+
+  if(me==0){printf("O.K.\n"); fflush(stdout);}
+  
+  destroy_array((void **)idst);
+  destroy_array((void **)ldst);
+  destroy_array((void **)fdst);
+  destroy_array((void **)ddst);
+}
+
+
 
 
 
@@ -1183,6 +1234,7 @@ int main(int argc, char* argv[])
 /*
        if(me==1)armci_die("process 1 committing suicide",1);
 */
+
         if(me==0){
            printf("\nTesting strided gets and puts\n");
            printf("(Only std output for process 0 is printed)\n\n"); 
@@ -1203,7 +1255,17 @@ int main(int argc, char* argv[])
         test_nbdim(); 
         ARMCI_AllFence();
         MP_BARRIER();
+
 #endif
+        if(me==0){
+           printf("\nTesting registered puts\n");
+           fflush(stdout);
+           sleep(1);
+        }
+        test_rput(); 
+        ARMCI_AllFence();
+        MP_BARRIER();
+
         if(me==0){
            printf("\nTesting atomic accumulate\n");
            fflush(stdout);
