@@ -45,7 +45,7 @@ extern void ga_error();
 #include <errno.h>
 #include <stdio.h>
 
-#if !defined(SGI) && !defined(KSR) && !defined(DECOSF) && !defined(SOLARIS)
+#if defined(SUN)
   extern char *shmat();
 #endif
 
@@ -60,7 +60,7 @@ extern void ga_error();
 #if defined(SUN)||defined(SOLARIS)
 #  undef _SHMMAX
 #  define _SHMMAX (1024)  /* memory in KB */
-#elif defined(SGI) || defined(AIX)
+#elif defined(SGI) || defined(AIX) || defined(HPUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)228*1024)
 #elif defined(KSR)
