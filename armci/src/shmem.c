@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.68 2003-05-22 19:29:48 edo Exp $ */
+/* $Id: shmem.c,v 1.69 2003-06-27 06:08:44 nwchem Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -53,7 +53,7 @@
 #include "kr_malloc.h"
 #include "shmlimit.h"
 
-#ifdef   ALLOC_MUNMAP
+#if   defined(ALLOC_MUNMAP)  || defined(MULTI_CTX)
 #include <sys/mman.h>
 #include <unistd.h>
 static  size_t pagesize=0;
@@ -206,6 +206,17 @@ size_t bytes = size+pagesize-1;
 }
 #endif
 
+#ifdef MULTI_CTX
+#define ALLOC_MUNMAP 1
+static char* alloc_munmap(size_t size)
+{
+    static caddr_t start = (caddr_t)0x2000000040000000;
+    caddr_t base = start;
+    printf ("hello from alloc_munmap, %p %p\n",base,start);
+    start += size;
+    return base;
+}
+#endif /* ELAN_MULTI_CONTEXT */
 
 /*\ test is a shared memory region of a specified size can be allocated
  *  return 0 (no) or 1 (yes)
@@ -370,7 +381,7 @@ void armci_shmem_init()
 
 #ifdef ALLOC_MUNMAP
 
-#if defined(QUADRICS) && !defined(DECOSF) && !defined(__alpha)
+#if defined(QUADRICS) && !defined(DECOSF) && !defined(__alpha) && !defined(MULTI_CTX)
 #   if defined(__ia64__) || defined(__alpha)
 
       /* this is to determine size of Elan Main memory allocator for munmap */
@@ -430,7 +441,7 @@ void armci_shmem_init()
           armci_die("no usable amount of shared memory available: only got \n",
           (int)LBOUND);
 
-#       if defined(ALLOC_MUNMAP)
+#       if defined(ALLOC_MUNMAP) && !defined(MULTI_CTX)
            /* need to cap down for special memory allocator */
            if(x>max_alloc_munmap && !armci_elan_starting_address) x=max_alloc_munmap;
 #       endif
