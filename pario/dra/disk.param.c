@@ -32,8 +32,7 @@ int dai_file_config(char* filename)
 
 char param_filename[MAX_HD_NAME_LEN];
 Integer len;
-Integer gop_type, orig=0, one=1;
-char dummy[HDLEN], sum='+';
+char  sum='+';
 Integer me=ga_nodeid_();
 Integer nproc = ga_nnodes_();
 Integer status;
