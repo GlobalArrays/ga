@@ -1,4 +1,4 @@
-c $Id: jacobi.F,v 1.8 2000-05-25 01:09:19 d3h325 Exp $
+c $Id: jacobi.F,v 1.9 2003-06-24 19:01:59 d3h325 Exp $
       program jacobi 
 *
 *     Jacobi iterative method for solving Uxx + Uyy = 1 on [0,1]x[0,1] area
@@ -19,7 +19,7 @@ c
       call pbeginf
 #endif
 c
-      heap = 40000
+      heap = 80000
       stack = heap
       call ga_initialize()                                   ! initialize GAs 
       if (.not. ma_init(MT_DBL, heap, stack))                ! initialize MA
