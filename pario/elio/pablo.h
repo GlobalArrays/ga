@@ -20,18 +20,9 @@
 #  define PABLO_elio_close	710009
 #  define PABLO_elio_set_cb	710010
 #  define PABLO_elio_delete	710011
-#  define PABLO_elio_init	710012
+#  define PABLO_elio_truncate	710012
+#  define PABLO_elio_length	710014
 
-#  define PABLO_eaf_writec	720000
-#  define PABLO_eaf_awritec	720001
-#  define PABLO_eaf_readc	720002
-#  define PABLO_eaf_areadc	720003
-#  define PABLO_eaf_waitc	720004
-#  define PABLO_eaf_probec	720005
-#  define PABLO_eaf_openpc	720006
-#  define PABLO_eaf_opensc	720007
-#  define PABLO_eaf_closec	720008
-#  define PABLO_eaf_init	720009
 
 #if defined(PABLO)
 #  define PABLO_init		initIOTrace

@@ -9,7 +9,7 @@ int elio_dirname(const char *fname, char *dirname, int len)
     size_t flen;
     
     if(len< (flen =strlen(fname))) 
-	ELIO_ERROR("elio_strip_fname: fname too long",flen);
+	ELIO_ERROR(LONGFAIL,flen);
     
     while(fname[flen] != '/' && flen >0 ) flen--;
     if(flen==0)strcpy(dirname,".");
@@ -45,7 +45,7 @@ int  elio_stat(char *fname, stat_t *statinfo)
 #if defined(PARAGON)
     bufsz = sizeof(struct statpfs) + SDIRS_INIT_SIZE;
     if( (statpfsbuf = (struct statpfs *) malloc(bufsz)) == NULL)
-        ELIO_ERROR("elio_stat: Unable to malloc struct statpfs\n", 1);
+        ELIO_ERROR(ALOCFAIL,1);
     if(statpfs(fname, &estatbuf, statpfsbuf, bufsz) == 0)
 	{
 	    if(estatbuf.f_type == MOUNT_PFS)
@@ -53,17 +53,18 @@ int  elio_stat(char *fname, stat_t *statinfo)
 	    else if(estatbuf.f_type == MOUNT_UFS || estatbuf.f_type == MOUNT_NFS)
 		statinfo->fs = ELIO_UFS;
 	    else
-		ELIO_ERROR("elio_stat: Unable to determine filesystem type\n", 1);
+		ELIO_ERROR(FTYPFAIL, 1);
+
 	    /*blocks avail - block=1KB */ 
 	    etos(estatbuf.f_bavail, str_avail);
 	    if(strlen(str_avail)==10)
 		fprintf(stderr,"elio_stat: possible ext. type conversion problem\n");
 	    if((bsize=strlen(str_avail))>10)
-		ELIO_ERROR("elio_stat: ext. type conversion problem",(long)bsize);
+		ELIO_ERROR(CONVFAIL,(long)bsize);
 	    statinfo->avail = atoi(str_avail);
 	} 
     else
-	ELIO_ERROR("elio_stat: Unable to to stat path.\n",1);
+	ELIO_ERROR(STATFAIL,1);
     free(statpfsbuf);
     return(ELIO_OK);
 #else
@@ -84,20 +85,20 @@ int  elio_stat(char *fname, stat_t *statinfo)
     /* we checked for parallel filesystems, now try others if still needed */ 
     if(statinfo->fs == -1) {
 	if(stat(fname, &ufs_stat) != 0)
-	    ELIO_ERROR("elio_stat: Not able to stat UFS filesystem\n", 1);
+	    ELIO_ERROR(STATFAIL, 1);
 
 	statinfo->fs = ELIO_UFS;
 	
 	/* only regular or directory files are OK */
 	if(!S_ISREG(ufs_stat.st_mode) && !S_ISDIR(ufs_stat.st_mode))
-	    ELIO_ERROR("elio_stat: incorrect file/device type", -1L);
+	    ELIO_ERROR(TYPEFAIL, 1);
 	
 #if defined(CRAY)
 	if(statfs(fname, &ufs_statfs, sizeof(ufs_statfs), 0) != 0)
 #else
         if(STATVFS(fname, &ufs_statfs) != 0)
 #endif
-		ELIO_ERROR("elio_stat:unable statfs UFS filesystem",-1);
+		ELIO_ERROR(STATFAIL,1);
 	
 #if defined(CRAY)
         /* f_bfree == f_bavail -- naming changes */

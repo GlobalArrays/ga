@@ -1,3 +1,6 @@
+#ifndef  ELIOP_H
+#define  ELIOP_H
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,6 +47,8 @@ extern void ga_error(char*, long);
 
 extern int                   _elio_Errors_Fatal;
 extern void                  elio_init(void);
+extern int                   elio_pending_error;
+
 
 #if !defined(PRINT_AND_ABORT)
 #   if defined(SUN) && !defined(SOLARIS)
@@ -66,10 +71,56 @@ extern void                  elio_init(void);
  * The requirement is that PRINT_AND_ABORT is defined before
  * including ELIO header file - this file
  */
-#define ELIO_ABORT PRINT_AND_ABORT
 
-#define ELIO_ERROR(msg, val) { \
- if(! _elio_Errors_Fatal) return(ELIO_FAIL);\
- else PRINT_AND_ABORT(msg, val);\
+#define ELIO_ERROR_NULL(code, val){\
+ PABLO_end(pablo_code);\
+ if(! _elio_Errors_Fatal){\
+     elio_pending_error= code;\
+     return NULL;\
+ }\
+ if( _elio_Errors_Fatal)\
+     PRINT_AND_ABORT(errtable[code-OFFSET], val);\
 }
 
+#define ELIO_ERROR(code, val) { \
+ PABLO_end(pablo_code);\
+ if(! _elio_Errors_Fatal) return(code);\
+ else PRINT_AND_ABORT(errtable[code-OFFSET], val);\
+}
+
+
+/* error codes and messages */
+
+#define ERRLEN 24
+#define OFFSET    (-2000)
+#define SEEKFAIL  (OFFSET + 0)
+#define WRITFAIL  (OFFSET + 1)
+#define AWRITFAIL (OFFSET + 2)
+#define READFAIL  (OFFSET + 3)
+#define AREADFAIL (OFFSET + 4)
+#define SUSPFAIL  (OFFSET + 5)
+#define HANDFAIL  (OFFSET + 6)
+#define MODEFAIL  (OFFSET + 7)
+#define DIRFAIL   (OFFSET + 8)
+#define STATFAIL  (OFFSET + 9)
+#define OPENFAIL  (OFFSET + 10)
+#define ALOCFAIL  (OFFSET + 11)
+#define UNSUPFAIL (OFFSET + 12)
+#define DELFAIL   (OFFSET + 13)
+#define CLOSFAIL  (OFFSET + 14)
+#define INTRFAIL  (OFFSET + 15)
+#define RETUFAIL  (OFFSET + 16)
+#define LONGFAIL  (OFFSET + 17)
+#define FTYPFAIL  (OFFSET + 18)
+#define CONVFAIL  (OFFSET + 19)
+#define TYPEFAIL  (OFFSET + 20)
+#define PROBFAIL  (OFFSET + 21)
+#define TRUNFAIL  (OFFSET + 22)
+#define UNKNFAIL  (OFFSET + 23)
+
+extern  char *errtable[ERRLEN];
+
+#define ELIO_FILENAME_MAX 1024
+#define SDIRS_INIT_SIZE 1024
+
+#endif

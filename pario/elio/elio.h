@@ -1,10 +1,16 @@
 /* file name: elio.h  to be included by all apps that use ELIO */
 
 
-/*include file that contains some common constants, also include by fortran */
+/*include file that contains some common constants, also included by fortran */
 #include "chemio.h" 
 #include <sys/types.h>
 #include <stdio.h>
+
+#define   ELIO_UFS	     0	/* Unix filesystem type */
+#define   ELIO_PFS           1	/* PFS Intel parallel filesystem type */
+#define   ELIO_PIOFS         2	/* IBM SP parallel filesystem type */
+#define   ELIO_PENDING_ERR -44  /* error code for failing elio_(g)open */
+
 
 /*********************** type definitions for ELIO interface *****************/
 typedef long Size_t;         /* size of I/O request type */ 
@@ -20,10 +26,7 @@ typedef fd_struct* Fd_t;
 typedef long io_request_t;   /* asynchronous I/O request type */
 
 
-#define   ELIO_UFS	0	/* Unix filesystem type */
-#define   ELIO_PFS      1	/* PFS Intel parallel filesystem type */
-#define   ELIO_PIOFS    2	/* IBM SP parallel filesystem type */
-
+/********************** prototypes for elio functions ***********************/
 extern Size_t elio_read(Fd_t fd, off_t offset, void *buf, Size_t bytes); 
 extern int    elio_aread(Fd_t fd, off_t offset, void *buf,
                          Size_t bytes, io_request_t *req_id);
@@ -41,8 +44,5 @@ extern int    elio_stat(char *fname, stat_t *statinfo);
 extern int    elio_dirname(const char *fname, char *statinfo, int len);
 extern int    elio_truncate(Fd_t fd, off_t length);
 extern int    elio_length(Fd_t fd, off_t *length);
+extern void   elio_errmsg(int code, char *msg);
 
-
-/************** this stuff is exported because EAF uses it **************/
-#define ELIO_FILENAME_MAX 1024
-#define SDIRS_INIT_SIZE 1024
