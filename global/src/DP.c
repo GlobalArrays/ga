@@ -1,5 +1,5 @@
-#include "globalp.h"
 #include "global.h"
+#include "globalp.h"
 #include "macommon.h"
 
 
