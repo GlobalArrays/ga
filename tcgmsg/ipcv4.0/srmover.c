@@ -1,4 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srmover.c,v 1.1.1.1 1994-03-29 06:44:50 d3g681 Exp $ */
+/*$Id: srmover.c,v 1.2 1995-02-02 23:25:52 d3g681 Exp $*/
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srmover.c,v 1.2 1995-02-02 23:25:52 d3g681 Exp $ */
 
 #if defined(SEQUENT) || defined(CONVEX)
 #define memcpy(a ,b ,c) bcopy((b), (a), (c))

@@ -1,4 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/strtok.c,v 1.1.1.1 1994-03-29 06:44:51 d3g681 Exp $ */
+/*$Id: strtok.c,v 1.2 1995-02-02 23:25:56 d3g681 Exp $*/
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/strtok.c,v 1.2 1995-02-02 23:25:56 d3g681 Exp $ */
 
 /*
   Primitive version of strtok for alliant etc who don't have it.

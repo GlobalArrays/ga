@@ -1,4 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/defglobals.h,v 1.1.1.1 1994-03-29 06:44:46 d3g681 Exp $ */
+/*$Id: defglobals.h,v 1.2 1995-02-02 23:24:56 d3g681 Exp $*/
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/defglobals.h,v 1.2 1995-02-02 23:24:56 d3g681 Exp $ */
 
 #ifndef SNDRCVP
 #include "sndrcvP.h"

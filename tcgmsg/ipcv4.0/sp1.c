@@ -1,3 +1,4 @@
+/*$Id: sp1.c,v 1.2 1995-02-02 23:25:50 d3g681 Exp $*/
 /*\
  *       TCGMSG INTERFACE FOR THE IBM SP-1      
  *

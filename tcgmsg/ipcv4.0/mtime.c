@@ -1,4 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/mtime.c,v 1.1.1.1 1994-03-29 06:44:53 d3g681 Exp $ */
+/*$Id: mtime.c,v 1.2 1995-02-02 23:25:21 d3g681 Exp $*/
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/mtime.c,v 1.2 1995-02-02 23:25:21 d3g681 Exp $ */
 
 #include <stdio.h>
 #include "sndrcv.h"

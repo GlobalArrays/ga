@@ -1,4 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srftoc.h,v 1.2 1994-12-30 20:52:30 d3h325 Exp $ */
+/*$Id: srftoc.h,v 1.3 1995-02-02 23:25:51 d3g681 Exp $*/
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/srftoc.h,v 1.3 1995-02-02 23:25:51 d3g681 Exp $ */
 
 #ifndef SRFTOC_H_
 #define SRFTOC_H_

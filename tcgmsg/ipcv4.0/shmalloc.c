@@ -1,3 +1,4 @@
+/*$Id: shmalloc.c,v 1.2 1995-02-02 23:25:38 d3g681 Exp $*/
 
 /*
   Memory management routines from ANSI K&R C, modified to manage

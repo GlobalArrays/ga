@@ -1,4 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parse.c,v 1.1.1.1 1994-03-29 06:44:48 d3g681 Exp $ */
+/*$Id: parse.c,v 1.2 1995-02-02 23:25:30 d3g681 Exp $*/
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parse.c,v 1.2 1995-02-02 23:25:30 d3g681 Exp $ */
 
 #include <stdio.h>
 

@@ -1,4 +1,5 @@
       subroutine mxv(a,ncol,b,nrow,c)
+C$Id: mxv_fortran.f,v 1.2 1995-02-02 23:24:21 d3g681 Exp $
       implicit double precision (a-h, o-z)
       dimension a(ncol, nrow), b(nrow), c(ncol)
       parameter (nchunk = 127)

@@ -1,4 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.2 1994-06-01 14:33:43 d3g681 Exp $ */
+/*$Id: pbegin.c,v 1.3 1995-02-02 23:25:31 d3g681 Exp $*/
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.3 1995-02-02 23:25:31 d3g681 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>

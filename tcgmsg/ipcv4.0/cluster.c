@@ -1,4 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.2 1994-12-30 20:52:11 d3h325 Exp $ */
+/*$Id: cluster.c,v 1.3 1995-02-02 23:24:54 d3g681 Exp $*/
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.3 1995-02-02 23:24:54 d3g681 Exp $ */
 
 #include <stdio.h>
 

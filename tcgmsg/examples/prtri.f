@@ -2,6 +2,7 @@
 c
 c     ----- print out a real triangular matrix -----
 c
+C$Id: prtri.f,v 1.2 1995-02-02 23:24:24 d3g681 Exp $
       implicit double precision (a-h, o-z)
       dimension d(*),dd(6)
       iw = 6

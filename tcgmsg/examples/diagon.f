@@ -1,4 +1,5 @@
       subroutine orthv2(n, v, s, work1, work2)
+C$Id: diagon.f,v 1.2 1995-02-02 23:24:07 d3g681 Exp $
       implicit none
       integer n
       double precision v(n,n), s(n,n), work1(n), work2(n)

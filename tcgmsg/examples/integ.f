@@ -1,4 +1,5 @@
       double precision function exprjh(x)
+C$Id: integ.f,v 1.2 1995-02-02 23:24:14 d3g681 Exp $
       double precision x
 c     
 c     dumb solution to underflow problems on sun

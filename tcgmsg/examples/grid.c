@@ -1,3 +1,4 @@
+/*$Id: grid.c,v 1.2 1995-02-02 23:24:11 d3g681 Exp $*/
 #include <stdio.h>
 #include <math.h>
 

@@ -1,4 +1,5 @@
       program scf
+C$Id: scf.f,v 1.2 1995-02-02 23:24:27 d3g681 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
       include 'msgtypesf.h'

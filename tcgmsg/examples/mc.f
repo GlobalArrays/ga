@@ -1,4 +1,5 @@
       program he
+C$Id: mc.f,v 1.2 1995-02-02 23:24:16 d3g681 Exp $
       implicit double precision (a-h, o-z)
       include 'msgtypesf.h'
       parameter (maxpt=512)

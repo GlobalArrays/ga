@@ -1,3 +1,4 @@
+/*$Id: cscf.h,v 1.3 1995-02-02 23:23:54 d3g681 Exp $*/
 c
 c     include file defining common /cscf/
 c

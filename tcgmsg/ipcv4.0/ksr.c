@@ -1,3 +1,4 @@
+/*$Id: ksr.c,v 1.2 1995-02-02 23:25:11 d3g681 Exp $*/
 #include <stdio.h>
 #include <pthread.h>
 #include "sndrcv.h"

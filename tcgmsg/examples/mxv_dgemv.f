@@ -1,4 +1,5 @@
       subroutine mxv(a,ncol,b,nrow,c)
+C$Id: mxv_dgemv.f,v 1.2 1995-02-02 23:24:20 d3g681 Exp $
       implicit double precision (a-h, o-z)
       double precision a(ncol, nrow), b(nrow), c(ncol)
       parameter (ilen=500, jlen=60)

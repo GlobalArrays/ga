@@ -1,4 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.1.1.1 1994-03-29 06:44:47 d3g681 Exp $ */
+/*$Id: farg.h,v 1.2 1995-02-02 23:25:05 d3g681 Exp $*/
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.2 1995-02-02 23:25:05 d3g681 Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate

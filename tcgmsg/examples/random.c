@@ -1,3 +1,4 @@
+/*$Id: random.c,v 1.2 1995-02-02 23:24:25 d3g681 Exp $*/
 double random_(seed)
      unsigned long *seed;
 {

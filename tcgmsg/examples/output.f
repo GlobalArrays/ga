@@ -21,6 +21,7 @@ c columns.
 c author;  nelson h.f. beebe, quantum theory project, university of
 c          florida, gainesville
 c.......................................................................
+C$Id: output.f,v 1.2 1995-02-02 23:24:22 d3g681 Exp $
       implicit double precision (a-h,o-z)
       integer rowlow,rowhi,collow,colhi,rowdim,coldim,begin,kcol
       dimension z(rowdim,coldim)

@@ -1,4 +1,5 @@
       program main
+C$Id: jacobi.f,v 1.2 1995-02-02 23:24:15 d3g681 Exp $
       implicit double precision (a-h, o-z)
       dimension q(1)
       include 'msgtypesf.h'

@@ -1,3 +1,4 @@
+/*$Id: ksr.h,v 1.2 1995-02-02 23:25:12 d3g681 Exp $*/
 #ifndef _KSRTCGMSG_H
 #define _KSRTCGMSG_H
 

@@ -1,4 +1,5 @@
       block data
+C$Id: blkdat60.f,v 1.2 1995-02-02 23:23:50 d3g681 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 c

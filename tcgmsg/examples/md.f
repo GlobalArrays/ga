@@ -14,6 +14,7 @@ c
 c      parameter (mm = 13, lenpdf = 256)
 c      parameter (mm = 8, lenpdf = 256)
 c      parameter (mm = 6, lenpdf = 256)
+C$Id: md.f,v 1.2 1995-02-02 23:24:18 d3g681 Exp $
       parameter (mm = 4, lenpdf = 256)
 c      parameter (mm = 3, lenpdf = 256)
       parameter (npart = 4*mm*mm*mm)

@@ -1,4 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.1.1.1 1994-03-29 06:44:53 d3g681 Exp $ */
+/*$Id: sndrcvP.h,v 1.2 1995-02-02 23:25:46 d3g681 Exp $*/
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.2 1995-02-02 23:25:46 d3g681 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
