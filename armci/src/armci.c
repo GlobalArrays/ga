@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.74 2003-07-30 19:02:33 vinod Exp $ */
+/* $Id: armci.c,v 1.75 2003-08-01 00:09:59 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -280,6 +280,13 @@ int ARMCI_Init()
     cmpl_proc=-1;
 #endif
 #ifdef LAPI
+    {
+       char *tmp1 = getenv("RT_GRQ"), tmp2 = getenv("AIXTHREAD_SCOPE");
+       if(tmp1 == NULL || strcmp((const char *)tmp1,"ON")) 
+	  armci_die("Armci_Init: environment variable RT_GRQ not set. It should be set as RT_GRQ=ON, to restore original thread scheduling LAPI relies upon",0);
+       if(tmp2 == NULL || strcmp((const char *)tmp2,"S")) 
+	  armci_die("Armci_Init: environment variable AIXTHREAD_SCOPE=S should be set to assure correct operation of LAPI", 0);
+    }
     armci_init_lapi();
 #endif
 #ifdef QUADRICS
