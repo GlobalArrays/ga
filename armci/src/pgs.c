@@ -1,9 +1,9 @@
-/* $Id: pgs.c,v 1.4 2004-04-16 20:37:39 d3h325 Exp $ 
+/* $Id: pgs.c,v 1.5 2004-06-14 18:31:40 d3h325 Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
 
-#ident	"@(#)$Id: pgs.c,v 1.4 2004-04-16 20:37:39 d3h325 Exp $"
+#ident	"@(#)$Id: pgs.c,v 1.5 2004-06-14 18:31:40 d3h325 Exp $"
 
 #include <stdlib.h>
 
@@ -265,7 +265,10 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
      * and running pgs_thread
      */
     if ((pgsrail->pr_cmdq = elan4_alloc_cmdq(rail->rail_ctx, 
-                                             pgsrail->pr_alloc, CQ_Size8K,
+#if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,7,0)
+                                             pgsrail->pr_alloc, 
+#endif
+                                             CQ_Size8K,
 					     CQ_ThreadStartEnableBit |
 					     CQ_WriteEnableBit |
 					     CQ_DmaStartEnableBit | 
@@ -280,7 +283,11 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 #define PGS_CMDQ_WORK_PER_QSLOT 10
     {
 	unsigned cqsize = elan4_cqsize_inputq_ctrlflow (0, PGS_CMDQ_WORK_PER_QSLOT, nSlots);
-	if ((tcmdq = elan4_alloc_cmdq(rail->rail_ctx, pgsrail->pr_alloc, cqsize, CQ_EnableAllBits, NULL)) == NULL)
+	if ((tcmdq = elan4_alloc_cmdq(rail->rail_ctx,
+#if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,7,0)
+                                      pgsrail->pr_alloc, 
+#endif
+                                      cqsize, CQ_EnableAllBits, NULL)) == NULL)
 	    elan_exception (pgsstate->elan_state, ELAN_EINTERNAL,
 			    "pgs_init: failed to allocate thread command queue on rail(rail %p)\n", rail);
 
@@ -560,7 +567,8 @@ RELEASE_LH (PGS_REQDESC *r)
     pgsrail->pr_freeDescs = r;
 }
 
-#define PGSSIZE 128
+#define PUTSIZE 512 
+#define GETSIZE 512 
 
 ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_arr, 
                  int *dst_stride_arr, u_int *count, u_int strides, u_int destvp)
@@ -589,7 +597,7 @@ ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_arr,
     }
 #endif
 
-    if(count[0] <= PGSSIZE && strides==1 ){ /* use linked elan_puts */
+    if(count[0] <= PUTSIZE && strides==1 ){ /* use linked elan_puts */
       int i;
       char *ps =    (char*)src;
       char *pd =    (char*)dst;
@@ -692,7 +700,7 @@ ELAN_EVENT *elan_getss (void *pgs, void *src, void *dst, int *src_stride_arr, in
     }
 #endif
 
-    if(count[0] <= PGSSIZE && strides==1 ){ /* use linked elan_puts */
+    if(count[0] <= GETSIZE && strides==1 ){ /* use linked elan_puts */
       int i;
       char *ps =    (char*)src;
       char *pd =    (char*)dst;
