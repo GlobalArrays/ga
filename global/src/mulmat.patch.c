@@ -1,4 +1,4 @@
-/*$Id: mulmat.patch.c,v 1.3 2001-11-28 01:32:58 d3h325 Exp $*/
+/*$Id: mulmat.patch.c,v 1.4 2001-11-30 17:54:30 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -29,6 +29,17 @@
 #endif
 
 
+#ifdef STATBUF
+#  define C_CHUNK  92 
+#  define D_CHUNK  64
+#  define ICHUNK C_CHUNK
+#  define JCHUNK C_CHUNK
+#  define KCHUNK C_CHUNK
+#else
+   /* min acceptable and max amount of memory (in elements) */
+#  define MINMEM 64
+#  define MAXMEM 110592  /*     3*192x192  */
+#endif
 
 /*\ MATRIX MULTIPLICATION for patches 
  *  
@@ -53,16 +64,8 @@ void ga_matmul_patch(transa, transb, alpha, beta,
 {
 #ifdef STATBUF
   /* approx. sqrt(2) ratio in chunk size to use the same buffer space */
-#  define C_CHUNK  92 
-#  define D_CHUNK  64
-#  define ICHUNK C_CHUNK
-#  define JCHUNK C_CHUNK
-#  define KCHUNK C_CHUNK
    DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
 #else
-   /* min acceptable and max amount of memory (in elements) */
-#  define MINMEM 400
-#  define MAXMEM 110592  /*     3*192x192  */
    DoubleComplex *a, *b, *c;
    Integer handle, idx;
 #endif
@@ -264,17 +267,8 @@ void nga_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
 		      Integer *g_c, Integer clo[], Integer chi[])
 {
 #ifdef STATBUF
-  /* approx. sqrt(2) ratio in chunk size to use the same buffer space */
-#  define C_CHUNK  92 
-#  define D_CHUNK  64
-#  define ICHUNK C_CHUNK
-#  define JCHUNK C_CHUNK
-#  define KCHUNK C_CHUNK
    DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
 #else
-   /* min acceptable and max amount of memory (in elements) */
-#  define MINMEM 64 
-#  define MAXMEM 110592  /*     3*192x192  */
    DoubleComplex *a, *b, *c;
    Integer handle, idx;
 #endif
@@ -485,17 +479,16 @@ void nga_matmul_patch_(transa, transb, alpha, beta, g_a, alo, ahi,
 
 #if defined(CRAY) || defined(WIN32)
      _fcd   transa, transb;
-{    nga_matmul_patch(_fcdtocp(transa), _fcdtocp(transb), alpha, beta,
-                      g_a, ailo, aihi, ajlo, ajhi,
-                      g_b, bilo, bihi, bjlo, bjhi,
-                      g_c, cilo, cihi, cjlo, cjhi);}
+{    
+     nga_matmul_patch(_fcdtocp(transa), _fcdtocp(transb), alpha, beta, g_a, alo, ahi,
+                      g_b, blo, bhi, g_c, clo, chi);
 #else
      char    *transa, *transb;
 {    
 	nga_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
                          g_b, blo, bhi, g_c, clo, chi);
-}
 #endif
+}
 
 void FATR ga_matmul_patch_(transa, transb, alpha, beta,
                       g_a, ailo, aihi, ajlo, ajhi,
