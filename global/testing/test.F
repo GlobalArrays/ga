@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.34 2000-10-13 22:28:17 d3h325 Exp $
+c $Id: test.F,v 1.35 2000-11-04 01:47:15 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -1772,3 +1772,59 @@ c     call ga_register_proclist(proc,nproc)
       end
       
       
+      subroutine util_dfill(n,val,a,ia)
+      implicit none
+      double precision  a(*), val
+      integer n, ia, i
+c
+c     initialise double precision array to scalar value
+c
+      if (ia.eq.1) then
+         do 10 i = 1, n
+            a(i) = val
+ 10      continue
+      else
+         do 20 i = 1,(n-1)*ia+1,ia
+            a(i) = val
+ 20      continue
+      endif
+c
+      end
+
+      subroutine util_ifill(n,val,a,ia)
+      implicit none
+      integer n, ia, i, a(*),val
+c
+c     initialise integer array to scalar value
+c
+      if (ia.eq.1) then
+         do 10 i = 1, n
+            a(i) = val
+ 10      continue
+      else
+         do 20 i = 1,(n-1)*ia+1,ia
+            a(i) = val
+ 20      continue
+      endif
+c
+      end
+
+      subroutine util_qfill(n,val,a,ia)
+      implicit none
+      double  complex  a(*), val
+      integer n, ia, i
+c
+c     initialise double complex array to scalar value
+c
+      if (ia.eq.1) then
+         do 10 i = 1, n
+            a(i) = val
+ 10      continue
+      else
+         do 20 i = 1,(n-1)*ia+1,ia
+            a(i) = val
+ 20      continue
+      endif
+c
+      end
+

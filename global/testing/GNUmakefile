@@ -63,7 +63,8 @@ ifdef USE_MPI
   P_FILE = no
 endif
 
-TESTUTIL=util.o
+TESTUTILC = util.o
+TESTUTIL= $(TESTUTILC) ffflush.o
 
 FOPT= $(NOPT)
 COPT= $(NOPT)
@@ -78,14 +79,14 @@ ifeq ($(P_FILE),YES)
 %.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a $(LIBDIR)/libarmci.a  $(EXTRA)
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
 	if [ -f $(basename $@).c ]; then\
-		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(CLIBS);\
+		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTILC) $(LIBS) $(CLIBS);\
 	else\
 		$(LINK.f) $(FLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(FLIBS);\
         fi
 else
 %.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a  $(LIBDIR)/libarmci.a $(EXTRA)
 	if [ -f $(basename $@).c ]; then\
-		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(CLIBS);\
+		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTILC) $(LIBS) $(CLIBS);\
 	else\
 		$(LINK.f) $(FLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(FLIBS);\
         fi
