@@ -53,7 +53,7 @@ Purpose:
 
 /*\ median routine
 \*/
-void
+void FATR
 ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
      Integer *g_a, *alo, *ahi;	/* patch of g_a */
      Integer *g_b, *blo, *bhi;	/* patch of g_b */
@@ -389,7 +389,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
 
 
 
-void
+void FATR
 ga_median_ (Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m){
 
 
@@ -432,7 +432,7 @@ ga_median_ (Integer * g_a, Integer * g_b, Integer * g_c, Integer * g_m){
 }
 
 
-void
+void FATR
 ga_norm_infinity_ (Integer * g_a, double *nm)
 {
   Integer dim1, dim2, type, size, nelem;
@@ -663,7 +663,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   buf = NULL;
 }
 
-void
+void FATR
 ga_norm1_ (Integer * g_a, double *nm)
 {
   Integer dim1, dim2, type, size, nelem;
@@ -894,7 +894,7 @@ ga_norm1_ (Integer * g_a, double *nm)
   buf = NULL;
 }
 
-void
+void FATR
 ga_get_diagonal_ (Integer * g_a, Integer * g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type, nelem, size;
@@ -1023,7 +1023,6 @@ ga_get_diagonal_ (Integer * g_a, Integer * g_v)
 
 	  /*free the memory */
 	  free (buf);
-	  buf == NULL;
 
 	  /* release access to the data */
 	  ga_release_update_ (g_a, &iloA, &ihiA, &jloA, &jhiA);
@@ -1036,7 +1035,7 @@ ga_get_diagonal_ (Integer * g_a, Integer * g_v)
 
 
 
-void
+void FATR
 ga_add_diagonal_ (Integer * g_a, Integer * g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type, nelem, size;
@@ -1164,7 +1163,6 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
 
 	  /*free the memory */
 	  free (buf);
-	  buf == NULL;
 
 	  /* release access to the data */
 	  ga_release_update_ (g_a, &iloA, &ihiA, &jloA, &jhiA);
@@ -1176,7 +1174,7 @@ ga_add_diagonal_ (Integer * g_a, Integer * g_v)
 
 
 
-void
+void FATR
 ga_set_diagonal_ (Integer * g_a, Integer * g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type, nelem, size;
@@ -1236,7 +1234,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
 
 
       if (hi[0] >= lo[0])	/*make sure the equality symbol is there!!! */
-	{			/* we got a block containing diagonal elements */
+	{			/* we got a block containing diagonal elements*/
 
 	  /*allocate a buffer for the given vector g_v */
 	  size = GAsizeof (type);
@@ -1246,8 +1244,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
 	  buf = malloc (nelem * size);
 	  if (buf == NULL)
 	    ga_error
-	      ("ga_set_diagonal_:failed to allocate memory for the local buffer.",
-	       0);
+	      ("ga_set_diagonal_:failed to allocate memory for local buffer",0);
 
 	  /* get the vector from the global array to the local memory buffer */
 	  nga_get_ (g_v, &vlo, &vhi, buf, &vhi);
@@ -1304,7 +1301,6 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
 
 	  /*free the memory */
 	  free (buf);
-	  buf == NULL;
 
 	  /* release access to the data */
 	  ga_release_update_ (g_a, &iloA, &ihiA, &jloA, &jhiA);
@@ -1316,7 +1312,7 @@ ga_set_diagonal_ (Integer * g_a, Integer * g_v)
 
 
 
-void
+void FATR
 ga_shift_diagonal_ (Integer * g_a, void *c)
 {
   Integer dim1, dim2, type;
@@ -1408,13 +1404,7 @@ ga_shift_diagonal_ (Integer * g_a, void *c)
   if(local_sync_end)ga_sync_();
 }
 
-#if 0 
-void
-ga_set_diagonal_to_zero_ (Integer * g_a)
-#else
-void
-ga_zero_diagonal_(Integer * g_a)
-#endif
+void FATR ga_zero_diagonal_(Integer * g_a)
 {
   Integer dim1, dim2, type;
   Integer iloA, ihiA, jloA, jhiA, index, ld, lo[2], hi[2];
@@ -1507,8 +1497,7 @@ ga_zero_diagonal_(Integer * g_a)
 
 
 
-void
-ga_scale_rows_(Integer *g_a, Integer *g_v)
+void FATR ga_scale_rows_(Integer *g_a, Integer *g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type, nelem, size;
   Integer vlo, vhi, iloA, ihiA, jloA, jhiA, index, ld, lo[2], hi[2];
@@ -1634,7 +1623,6 @@ ga_scale_rows_(Integer *g_a, Integer *g_v)
 
 	  /*free the memory */
 	  free (buf);
-	  buf == NULL;
 
 	  /* release access to the data */
 	  ga_release_update_ (g_a, &iloA, &ihiA, &jloA, &jhiA);
@@ -1651,8 +1639,7 @@ ga_scale_rows_(Integer *g_a, Integer *g_v)
  
 
 
-void
-ga_scale_cols_(Integer *g_a, Integer *g_v)
+void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type, nelem, size;
   Integer vlo, vhi, iloA, ihiA, jloA, jhiA, index, ld, lo[2], hi[2];
@@ -1778,7 +1765,6 @@ ga_scale_cols_(Integer *g_a, Integer *g_v)
 
 	  /*free the memory */
 	  free (buf);
-	  buf == NULL;
 
 	  /* release access to the data */
 	  ga_release_update_ (g_a, &iloA, &ihiA, &jloA, &jhiA);

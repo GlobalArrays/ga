@@ -427,24 +427,24 @@ static void FATR gai_oper_elem(Integer *g_a, Integer *lo, Integer *hi, void *sca
 
 
 
-void ga_abs_value_patch_(Integer *g_a, Integer *lo, Integer *hi)
+void FATR ga_abs_value_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
     gai_oper_elem(g_a, lo, hi, NULL, OP_ABS);
 }
 
-void ga_recip_patch_(Integer *g_a, Integer *lo, Integer *hi)
+void FATR ga_recip_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
     gai_oper_elem(g_a, lo, hi, NULL, OP_RECIP);
 
 }
 
-void ga_add_constant_patch_(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
+void FATR ga_add_constant_patch_(Integer *g_a, Integer *lo, Integer *hi, void *alpha)
 {
     gai_oper_elem(g_a, lo, hi, alpha, OP_ADD_CONST);
 
 }
 
-void ga_abs_value_(Integer *g_a)
+void FATR ga_abs_value_(Integer *g_a)
 {
    Integer type, ndim;
    Integer lo[MAXDIM],hi[MAXDIM];
@@ -458,7 +458,7 @@ void ga_abs_value_(Integer *g_a)
     gai_oper_elem(g_a, lo, hi, NULL, OP_ABS);
 }
 
-void ga_add_constant_(Integer *g_a, void *alpha)
+void FATR ga_add_constant_(Integer *g_a, void *alpha)
 {
    Integer type, ndim;
    Integer lo[MAXDIM],hi[MAXDIM];
@@ -472,7 +472,7 @@ void ga_add_constant_(Integer *g_a, void *alpha)
     gai_oper_elem(g_a, lo, hi, alpha, OP_ADD_CONST);
 }
 
-void ga_recip_(Integer *g_a)
+void FATR ga_recip_(Integer *g_a)
 {        
    Integer type, ndim;
    Integer lo[MAXDIM],hi[MAXDIM];
@@ -912,7 +912,7 @@ Integer op; /* operation to be perform between g_a and g_b */
     if(local_sync_end)ga_sync_();
 }
 
-void ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c){
+void FATR ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c){
  
    Integer atype, andim;
    Integer btype, bndim;
@@ -940,7 +940,7 @@ void ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c){
 }
 
 
-void ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c){
+void FATR ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c){
  
    Integer atype, andim;
    Integer btype, bndim;
@@ -971,7 +971,7 @@ void ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c){
  
 
 
-void ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c){
+void FATR ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c){
 
    Integer atype, andim;
    Integer btype, bndim;
@@ -1000,7 +1000,7 @@ void ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c){
 }
 
  
-void ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c){
+void FATR ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c){
  
    Integer atype, andim;
    Integer btype, bndim;
@@ -1028,34 +1028,34 @@ void ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c){
  
 }
  
-void ga_elem_multiply_patch_(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
+void FATR ga_elem_multiply_patch_(Integer *g_a,Integer *alo,Integer *ahi,Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_MULT);
 
 }
 
-void ga_elem_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+void FATR ga_elem_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_DIV);
 
 }
 
-void ga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+void FATR ga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_MAX);
 
 }
 
-void ga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+void FATR ga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
 
     ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_MIN);
 
 }
 
-static void FATR ngai_elem3_patch_(g_a, alo, ahi, op)
+static void ngai_elem3_patch_(g_a, alo, ahi, op)
 Integer *g_a, *alo, *ahi;    /* patch of g_a */
 Integer op; /*operation to be perform on g_a*/
 /*do some preprocess jobs for stepMax and stepMax2*/
@@ -1154,7 +1154,7 @@ Integer op; /*operation to be perform on g_a*/
     if(local_sync_end)ga_sync_();
 }
 
-static Integer FATR has_negative_elem(g_a, alo, ahi)
+static Integer has_negative_elem(g_a, alo, ahi)
 Integer *g_a, *alo, *ahi;    /* patch of g_a */
 /*returned value: 1=found; 0 = not found*/
 {
@@ -1237,12 +1237,13 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
     return 0; /*negative element is not found in g_a*/
 }
 
-void ga_step_max2_patch_(g_xx,xxlo,xxhi, g_vv,vvlo,vvhi, g_xxll,xxlllo,xxllhi, g_xxuu,xxuulo,xxuuhi, result) 
-     Integer *g_xx, *xxlo, *xxhi;    /* patch of g_xx */
-     Integer *g_vv, *vvlo, *vvhi;    /* patch of g_vv */
-     Integer *g_xxll, *xxlllo, *xxllhi;    /* patch of g_xxll */
-     Integer *g_xxuu, *xxuulo, *xxuuhi;    /* patch of g_xxuu */
-     double *result;
+
+void FATR ga_step_max2_patch_(
+     Integer *g_xx, Integer *xxlo, Integer *xxhi,    /* patch of g_xx */
+     Integer *g_vv, Integer *vvlo, Integer *vvhi,    /* patch of g_vv */
+     Integer *g_xxll, Integer *xxlllo, Integer *xxllhi,    /* patch of g_xxll */
+     Integer *g_xxuu, Integer *xxuulo, Integer *xxuuhi,    /* patch of g_xxuu */
+     double *result)
 {
      Integer index;
      Integer g_C, *g_c=&g_C;
@@ -1288,7 +1289,7 @@ void ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result, op)
 #else
 #endif
 
-void ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result) 
+void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result) 
      Integer *g_a, *alo, *ahi;    /* patch of g_a */
      Integer *g_b, *blo, *bhi;    /* patch of g_b */
      double *result;
@@ -1330,7 +1331,7 @@ void ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
 }
 
 
-void ga_step_max_(Integer *g_a, Integer *g_b, double *retval)
+void FATR ga_step_max_(Integer *g_a, Integer *g_b, double *retval)
 {
    Integer atype, andim;
    Integer btype, bndim;
@@ -1353,7 +1354,7 @@ void ga_step_max_(Integer *g_a, Integer *g_b, double *retval)
 #endif
 }
 
-void ga_step_max2_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, Integer *g_xxuu,  double *retval)
+void FATR ga_step_max2_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, Integer *g_xxuu,  double *retval)
 {
    Integer xxtype, xxndim;
    Integer vvtype, vvndim;

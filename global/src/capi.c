@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.44 2002-08-21 14:43:02 d3g293 Exp $ */
+/* $Id: capi.c,v 1.45 2002-08-23 20:45:03 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -1467,7 +1467,11 @@ void GA_Median_patch(int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi, i
     ga_median_patch_(&a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi, &c, _ga_clo, _ga_chi, &m, _ga_mlo, _ga_mhi);
 }
 
+#ifdef WIN32
+#include <armci.h>
+#else
 #include <../../armci/src/armci.h>
+#endif
 
 int GA_Cluster_nnodes()
 {

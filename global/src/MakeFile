@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.21 2002-08-02 18:59:37 manoj Exp $
+#	$Id: MakeFile,v 1.22 2002-08-23 20:45:03 d3h325 Exp $
 #
 
 OBJDIR=.\obj
@@ -22,18 +22,18 @@ OBJ      = $(OBJDIR)\base.obj \
         $(OBJDIR)\fort.obj \
         $(OBJDIR)\rsg.obj \
         $(OBJDIR)\capi.obj \
-        $(OBJDIR)\rs-mod.obj \
         $(OBJDIR)\ga_symmetr.obj\
         $(OBJDIR)\ga_diag_seq.obj\
         $(OBJDIR)\ga_solve_seq.obj\
-        $(OBJDIR)\ga_dgemm.obj\
         $(OBJDIR)\peigstubs.obj\
         $(OBJDIR)\sclstubs.obj\
         $(OBJDIR)\datatypes.obj\
         $(OBJDIR)\sparse.obj \
         $(OBJDIR)\select.obj \
         $(OBJDIR)\DP.obj \
-        $(OBJDIR)\elem.alg.obj
+        $(OBJDIR)\xgemm.obj \
+        $(OBJDIR)\matrix.obj \
+        $(OBJDIR)\elem_alg.obj
 	
 
 

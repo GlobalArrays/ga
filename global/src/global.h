@@ -347,47 +347,46 @@ extern void FATR nga_add_constant_patch_(Integer *, Integer *, Integer *,
 
 extern void FATR ga_recip_patch_(Integer *g_a, Integer *lo, Integer *hi);
 
-extern void ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c);
-extern void ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c);
-extern void ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c);
-extern void ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c);
-extern void ga_elem_multiply_patch_(Integer *g_a,Integer *alo,Integer *ahi, 
+extern void FATR ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c);
+extern void FATR ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c);
+extern void FATR ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c);
+extern void FATR ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c);
+extern void FATR ga_elem_multiply_patch_(Integer *g_a,Integer *alo,Integer *ahi, 
 				    Integer *g_b,Integer *blo,Integer *bhi,
 				    Integer *g_c,Integer *clo,Integer *chi);
-extern void ga_elem_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+extern void FATR ga_elem_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi,
 				  Integer *g_b,Integer *blo,Integer *bhi,
 				  Integer *g_c,Integer *clo,Integer *chi);
-extern void ga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+extern void FATR ga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
 				   Integer *g_b,Integer *blo,Integer *bhi,
 				   Integer *g_c,Integer *clo,Integer *chi);
-extern void ga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+extern void FATR ga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
 				   Integer *g_b,Integer *blo,Integer *bhi,
 				   Integer *g_c,Integer *clo,Integer *chi);
-extern void ga_step_max_patch_(Integer *g_a, Integer *alo, Integer *ahi, 
+extern void FATR ga_step_max_patch_(Integer *g_a, Integer *alo, Integer *ahi, 
 			       Integer *g_b,  Integer *blo, Integer *bhi, 
 			       double *step);
-extern void ga_step_max_(Integer *g_a, Integer *g_b, double *step);
-extern void ga_step_max2_patch_(Integer *g_xx, Integer *xxlo, Integer *xxhi, 
+extern void FATR ga_step_max_(Integer *g_a, Integer *g_b, double *step);
+extern void FATR ga_step_max2_patch_(Integer *g_xx, Integer *xxlo,Integer *xxhi,
 				Integer *g_vv, Integer *vvlo, Integer *vvhi, 
 				Integer *g_xxll, Integer *xxlllo, 
 				Integer *xxllhi, Integer *g_xxuu, 
 				Integer *xxuulo, Integer *xxuuhi, 
 				double *result);
-extern void ga_step_max2_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, 
+extern void FATR ga_step_max2_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, 
 			  Integer *g_xxuu, double *step2);
 
-/*Added by Limin for matrix operations */
-extern void ga_shift_diagonal_(Integer *g_a, void *c);
-extern void ga_set_diagonal_(Integer *g_a, Integer *g_v);
-extern void ga_zero_diagonal_(Integer *g_a);
-extern void ga_add_diagonal_(Integer *g_a, Integer *g_v);
-extern void ga_get_diagonal_(Integer *g_a, Integer *g_v);
-extern void ga_scale_rows_(Integer *g_a, Integer *g_v);
-extern void ga_scale_cols_(Integer *g_a, Integer *g_v);
-extern void ga_norm1_(Integer *g_a, double *nm);
-extern void ga_norm_infinity_(Integer *g_a, double *nm);
-extern void ga_median_(Integer *g_a, Integer *g_b, Integer *g_c, Integer *g_m);
-extern void ga_median_patch_(Integer *g_a, Integer *alo, Integer *ahi, 
+extern void FATR ga_shift_diagonal_(Integer *g_a, void *c);
+extern void FATR ga_set_diagonal_(Integer *g_a, Integer *g_v);
+extern void FATR ga_zero_diagonal_(Integer *g_a);
+extern void FATR ga_add_diagonal_(Integer *g_a, Integer *g_v);
+extern void FATR ga_get_diagonal_(Integer *g_a, Integer *g_v);
+extern void FATR ga_scale_rows_(Integer *g_a, Integer *g_v);
+extern void FATR ga_scale_cols_(Integer *g_a, Integer *g_v);
+extern void FATR ga_norm1_(Integer *g_a, double *nm);
+extern void FATR ga_norm_infinity_(Integer *g_a, double *nm);
+extern void FATR ga_median_(Integer *g_a, Integer *g_b, Integer *g_c, Integer *g_m);
+extern void FATR ga_median_patch_(Integer *g_a, Integer *alo, Integer *ahi, 
 			     Integer *g_b, Integer *blo, Integer *bhi, 
 			     Integer *g_c, Integer *clo, Integer *chi, 
 			     Integer *g_m, Integer *mlo, Integer *mhi);
@@ -397,7 +396,7 @@ extern void ga_median_patch_(Integer *g_a, Integer *alo, Integer *ahi,
 #endif
 
 extern DoubleComplex   *DCPL_MB;
-extern DoublePrecision          *DBL_MB;
+extern DoublePrecision *DBL_MB;
 extern Integer             *INT_MB;
 extern float           *FLT_MB;
 #endif 

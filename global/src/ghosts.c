@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.23 2002-08-22 22:21:22 vinod Exp $ */
+/* $Id: ghosts.c,v 1.24 2002-08-23 20:45:04 d3h325 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -3101,7 +3101,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   return TRUE;
 }
 
-void ga_ghost_barrier_()
+void FATR ga_ghost_barrier_()
 {
 #ifdef LAPI
   int signal = 1, n = 1;
