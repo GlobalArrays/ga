@@ -22,7 +22,7 @@
 #endif
 
 #ifdef SYSV
-#  define RESERVED_LOCKS  2        /* reserved for barrier and ga_lock */
+#  define RESERVED_LOCKS  1        /* reserved for barrier */
 #endif
 
 

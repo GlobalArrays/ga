@@ -117,7 +117,7 @@ int  GA_stack_size=0;
            long   lockID;
 #          define LOCK(g_a,proc, x)  NATIVE_LOCK((proc)-GAmaster+RESERVED_LOCKS)
 #          define UNLOCK(g_a,proc,x) NATIVE_UNLOCK((proc)-GAmaster+RESERVED_LOCKS)
-#          define MUTEX 1
+#          define MUTEX 0
            /* P & V compatible with binary sem ops */
 #          define P(s)  NATIVE_LOCK((s))
 #          define V(s)  NATIVE_UNLOCK((s)) 
@@ -128,13 +128,13 @@ int  GA_stack_size=0;
 #          define LOCK(g_a,proc, x)  NATIVE_LOCK((proc)-GAmaster+RESERVED_LOCKS)
 #          define UNLOCK(g_a,proc,x) NATIVE_UNLOCK((proc)-GAmaster+RESERVED_LOCKS)
 #          define NUM_SEM 1
-#          define MUTEX 1
+#          define MUTEX 0
 #      else
            /* define LOCK OPERATIONS using SYSV semaphores */
 #          include "semaphores.h"
 #          define NUM_SEM  MIN(1+RESERVED_LOCKS,SEMMSL) /* min num semaphores */
 #          define ARR_SEM  (NUM_SEM -RESERVED_LOCKS)  /* num of sems for locking arrays */
-#          define MUTEX    1             /* semid  for synchronization */
+#          define MUTEX    0             /* semid  for synchronization */
 #          define LOCK(g_a,proc, x)\
                   P(((proc)-GAmaster)%ARR_SEM+RESERVED_LOCKS)
 #          define UNLOCK(g_a,proc, x)\
