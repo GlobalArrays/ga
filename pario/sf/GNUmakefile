@@ -4,7 +4,7 @@
 #
 
  LIB_DISTRIB = ../../lib
-     LIBRARY = libchemio.a
+     LIBRARY = libpario.a
  LIB_TARGETS = *.x *.p
          OBJ = sf_fortran.o shared.files.o
      HEADERS = sf.h sf.fh

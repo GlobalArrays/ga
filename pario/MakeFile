@@ -7,9 +7,10 @@ COMPLIBS = elio.lib eaf.lib dra.lib sf.lib
 all: $(SUBDIRS)
 	!cd $** & nmake -nologo
 	cd $(LIBDIR)
-	$(AR) /out:chemio.lib $(COMPLIBS)  
+	$(AR) /out:pario.lib $(COMPLIBS)  
 	-del $(COMPLIBS)
 	
 	
 clean: $(SUBDIRS)
 	!cd $** & nmake -nologo clean
+	-@erase /q $(LIBDIR)\pario.lib

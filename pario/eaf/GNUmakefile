@@ -1,7 +1,7 @@
-#$Id: GNUmakefile,v 1.2 1999-08-25 20:04:24 edo Exp $
+#$Id: GNUmakefile,v 1.3 1999-11-19 00:21:33 d3h325 Exp $
 
           OBJ = eaf.o eaf_f2c.o
-      LIBRARY = libchemio.a
+      LIBRARY = libpario.a
   LIB_DISTRIB = ../../lib
       HEADERS = eaf.fh eaf.h
   LIB_DEFINES = -DEAF_STATS

@@ -1,9 +1,9 @@
-#$Id: GNUmakefile,v 1.2 1999-08-25 20:04:30 edo Exp $
+#$Id: GNUmakefile,v 1.3 1999-11-19 00:21:33 d3h325 Exp $
 #
 #  Initial version Jace A Mogill (12 June 1996), ANL
 
  LIB_DISTRIB = ../../lib
-     LIBRARY = libchemio.a
+     LIBRARY = libpario.a
          OBJ = elio.o stat.o
      HEADERS = chemio.h elio.h
 
