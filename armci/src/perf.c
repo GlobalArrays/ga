@@ -27,81 +27,96 @@
 #define MAXPROC 10
 
 #define CHUNK_NUM 28
+
+#define CHECK_RESULT 0
+
 int chunk[CHUNK_NUM] = {1,3,4,6,9,12,16,20,24,30,40,48,52,64,78,91,104,
                         128,142,171,210,256,300,353,400,440,476,512};
 
-void fill_array(double *arr, int count, int which);
-void check_result(double *src_buf, double *dst_buf,
-                 int *stride, int *count, int stride_levels, int proc);
+char check_type[15];
 
-double time_get(double *src_buf, double *dst_buf,
-                int chunk, int loop, int proc, int levels)
+void fill_array(double *arr, int count, int which);
+void check_result(double *src_buf, double *dst_buf, int *stride, int *count,
+                  int stride_levels);
+void acc_array(double scale, double *array1, double *array2, int *stride,
+               int *count, int stride_levels);
+
+double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
+                int proc, int levels)
 {
     int i, bal = 0;
     
     int stride[2];
     int count[2];
     int stride_levels = levels;
-
+    double *tmp_buf, *tmp_buf_ptr;
+    
     double start_time, stop_time, total_time = 0;
 
     stride[0] = SIZE * sizeof(double);
     count[0] = chunk * sizeof(double); count[1] = chunk;
+
+    if(CHECK_RESULT) {
+        tmp_buf = (double *)malloc(SIZE * SIZE * sizeof(double));
+        assert(tmp_buf != NULL);
+
+        fill_array(tmp_buf, SIZE*SIZE, proc);
+        tmp_buf_ptr = tmp_buf;
+    }
     
     for(i=0; i<loop; i++) {
         start_time = MPI_Wtime();
-
-        ARMCI_GetS(src_buf, stride, dst_buf, stride,
-                   count, stride_levels, proc);
-
+        
+        ARMCI_GetS(src_buf, stride, dst_buf, stride, count, stride_levels,
+                   proc);
+        
         stop_time = MPI_Wtime();
         total_time += (stop_time - start_time);
 
-        /* test result: only once */
-        if(i == 0) {
-            double *buf;
-            buf = (double *)malloc(SIZE * SIZE * sizeof(double));
-            assert(buf != NULL);
-            fill_array(buf, SIZE*SIZE, proc);
-
-            ARMCI_PutS(buf, stride, src_buf, stride, count,
-                       stride_levels, proc);
-            ARMCI_GetS(src_buf, stride, dst_buf, stride, count,
-                       stride_levels, proc);
-            
-            check_result(buf, dst_buf, stride, count, stride_levels, proc);
-            free(buf);
+        if(CHECK_RESULT) {
+            sprintf(check_type, "ARMCI_GetS:");
+            check_result(tmp_buf_ptr, dst_buf, stride, count, stride_levels);
         }
         
         /* prepare next src and dst ptrs: avoid cache locality */
         if(bal == 0) {
             src_buf += chunk * (loop - i - 1);
             dst_buf += chunk * (loop - i - 1);
+            if(CHECK_RESULT) tmp_buf_ptr += chunk * (loop - i - 1);
             bal = 1;
         } else {
             src_buf -= chunk * (loop - i - 1);
             dst_buf -= chunk * (loop - i - 1);
+            if(CHECK_RESULT) tmp_buf_ptr -= chunk * (loop - i - 1);
             bal = 0;
         }
     }
-    
+
+    if(CHECK_RESULT) free(tmp_buf);
+
     return(total_time/loop);
 }
 
-double time_put(double *src_buf, double *dst_buf,
-                int chunk, int loop, int proc, int levels)
+double time_put(double *src_buf, double *dst_buf, int chunk, int loop,
+                int proc, int levels)
 {
     int i, bal = 0;
 
     int stride[2];
     int count[2];
     int stride_levels = levels;
+    double *tmp_buf;
 
     double start_time, stop_time, total_time = 0;
 
     stride[0] = SIZE * sizeof(double);
     count[0] = chunk * sizeof(double); count[1] = chunk;
 
+    if(CHECK_RESULT) {
+        tmp_buf = (double *)malloc(SIZE * SIZE * sizeof(double));
+        assert(tmp_buf != NULL);
+    }
+    
     for(i=0; i<loop; i++) {
         start_time = MPI_Wtime();
 
@@ -110,6 +125,14 @@ double time_put(double *src_buf, double *dst_buf,
 
         stop_time = MPI_Wtime();
         total_time += (stop_time - start_time);
+
+        if(CHECK_RESULT) {
+            ARMCI_GetS(dst_buf, stride, tmp_buf, stride, count,
+                       stride_levels, proc);
+
+            sprintf(check_type, "ARMCI_PutS:");
+            check_result(tmp_buf, src_buf, stride, count, stride_levels);
+        }
         
         /* prepare next src and dst ptrs: avoid cache locality */
         if(bal == 0) {
@@ -122,26 +145,43 @@ double time_put(double *src_buf, double *dst_buf,
             bal = 0;
         }
     }
+
+    if(CHECK_RESULT) free(tmp_buf);
     
     return(total_time/loop);
 }
 
-double time_acc(double *src_buf, double *dst_buf,
-                int chunk, int loop, int proc, int levels)
+double time_acc(double *src_buf, double *dst_buf, int chunk, int loop,
+                int proc, int levels)
 {
     int i, bal = 0;
 
     int stride[2];
     int count[2];
     int stride_levels = levels;
-
+    double *before_buf, *after_buf;
+    
     double start_time, stop_time, total_time = 0;
 
     stride[0] = SIZE * sizeof(double);
     count[0] = chunk * sizeof(double); count[1] = chunk;
 
+    if(CHECK_RESULT) {
+        before_buf = (double *)malloc(SIZE * SIZE * sizeof(double));
+        assert(before_buf != NULL);
+        after_buf = (double *)malloc(SIZE * SIZE * sizeof(double));
+        assert(after_buf != NULL);
+    }
+    
     for(i=0; i<loop; i++) {
         double scale = (double)i;
+
+        if(CHECK_RESULT) {
+            ARMCI_GetS(dst_buf, stride, before_buf, stride, count,
+                       stride_levels, proc);
+
+            acc_array(scale, before_buf, src_buf, stride, count,stride_levels);
+        }
         
         start_time = MPI_Wtime();
 
@@ -151,6 +191,14 @@ double time_acc(double *src_buf, double *dst_buf,
         stop_time = MPI_Wtime();
         total_time += (stop_time - start_time);
 
+        if(CHECK_RESULT) {
+            ARMCI_GetS(dst_buf, stride, after_buf, stride, count,
+                       stride_levels, proc);
+            
+            sprintf(check_type, "ARMCI_AccS:");
+            check_result(after_buf, before_buf, stride, count, stride_levels);
+        }
+        
         /* prepare next src and dst ptrs: avoid cache locality */
         if(bal == 0) {
             src_buf += chunk * (loop - i - 1);
@@ -162,6 +210,8 @@ double time_acc(double *src_buf, double *dst_buf,
             bal = 0;
         }
     }
+
+    if(CHECK_RESULT) { free(before_buf); free(after_buf); }
     
     return(total_time/loop);
 }
@@ -172,7 +222,7 @@ void test_1D()
     int src, dst;
     int ierr;
     double *buf;
-    void *ptr[MAXPROC];
+    void *ptr[MAXPROC], *get_ptr[MAXPROC];
 
     /* find who I am and the dst process */
     src = armci_me;
@@ -181,15 +231,16 @@ void test_1D()
     if(armci_me == 0) {
         buf = (double *)malloc(SIZE * SIZE * sizeof(double));
         assert(buf != NULL);
-        
-        fill_array(buf, SIZE*SIZE, armci_me*10);
     }
     
     ierr = ARMCI_Malloc(ptr, (SIZE * SIZE * sizeof(double)));
     assert(ierr == 0); assert(ptr[armci_me]);
+    ierr = ARMCI_Malloc(get_ptr, (SIZE * SIZE * sizeof(double)));
+    assert(ierr == 0); assert(get_ptr[armci_me]);
 
     /* ARMCI - initialize the data window */
     fill_array(ptr[armci_me], SIZE*SIZE, armci_me);
+    fill_array(get_ptr[armci_me], SIZE*SIZE, armci_me);
     
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -217,14 +268,17 @@ void test_1D()
             
             for(dst=1; dst<armci_nclus; dst++) {
                 /* strided get */
-                t_get += time_get((double *)(ptr[dst]), (double *)buf,
+                fill_array(buf, SIZE*SIZE, armci_me*10);
+                t_get += time_get((double *)(get_ptr[dst]), (double *)buf,
                                   chunk[i]*chunk[i], loop, dst, 0);
                 
                 /* strided put */
+                fill_array(buf, SIZE*SIZE, armci_me*10);
                 t_put += time_put((double *)buf, (double *)(ptr[dst]),
                                   chunk[i]*chunk[i], loop, dst, 0);
                 
                 /* strided acc */
+                fill_array(buf, SIZE*SIZE, armci_me*10);
                 t_acc += time_acc((double *)buf, (double *)(ptr[dst]),
                                   chunk[i]*chunk[i], loop, dst, 0);
             }
@@ -248,7 +302,9 @@ void test_1D()
     MPI_Barrier(MPI_COMM_WORLD);
     
     /* cleanup */
+    ARMCI_Free(get_ptr[armci_me]);
     ARMCI_Free(ptr[armci_me]);
+    
     if(armci_me == 0) free(buf);
 }
 
@@ -258,7 +314,7 @@ void test_2D()
     int src, dst;
     int ierr;
     double *buf;
-    void *ptr[MAXPROC];
+    void *ptr[MAXPROC], *get_ptr[MAXPROC];
 
     /* find who I am and the dst process */
     src = armci_me;
@@ -267,15 +323,16 @@ void test_2D()
     if(armci_me == 0) {
         buf = (double *)malloc(SIZE * SIZE * sizeof(double));
         assert(buf != NULL);
-        
-        fill_array(buf, SIZE*SIZE, armci_me*10);
     }
     
     ierr = ARMCI_Malloc(ptr, (SIZE * SIZE * sizeof(double)));
     assert(ierr == 0); assert(ptr[armci_me]);
+    ierr = ARMCI_Malloc(get_ptr, (SIZE * SIZE * sizeof(double)));
+    assert(ierr == 0); assert(get_ptr[armci_me]);
     
     /* ARMCI - initialize the data window */
     fill_array(ptr[armci_me], SIZE*SIZE, armci_me);
+    fill_array(get_ptr[armci_me], SIZE*SIZE, armci_me);
 
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -303,14 +360,17 @@ void test_2D()
 
             for(dst=1; dst<armci_nclus; dst++) {
                 /* strided get */
-                t_get += time_get((double *)(ptr[dst]), (double *)buf,
+                fill_array(buf, SIZE*SIZE, armci_me*10);
+                t_get += time_get((double *)(get_ptr[dst]), (double *)buf,
                                  chunk[i], loop, dst, 1);
  
                 /* strided put */
+                fill_array(buf, SIZE*SIZE, armci_me*10);
                 t_put += time_put((double *)buf, (double *)(ptr[dst]),
                                  chunk[i], loop, dst, 1);
                 
                 /* strided acc */
+                fill_array(buf, SIZE*SIZE, armci_me*10);
                 t_acc += time_acc((double *)buf, (double *)(ptr[dst]),
                                  chunk[i], loop, dst, 1);
             }
@@ -333,6 +393,7 @@ void test_2D()
     else sleep(4);
     
     /* cleanup */
+    ARMCI_Free(get_ptr[armci_me]);
     ARMCI_Free(ptr[armci_me]);
     free(buf);
 }
@@ -388,10 +449,49 @@ void fill_array(double *arr, int count, int which)
     for(i=0; i<count; i++) arr[i] = i * 8.23 + which * 2.89;
 }
 
-void check_result(double *src_buf, double *dst_buf,
-                int *stride, int *count, int stride_levels, int proc)
+void check_result(double *src_buf, double *dst_buf, int *stride, int *count,
+                  int stride_levels)
 {
     int i, j, size;
+    long idx;
+    int n1dim;  /* number of 1 dim block */
+    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
+
+    /* number of n-element of the first dimension */
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++)
+        n1dim *= count[i];
+
+    /* calculate the destination indices */
+    bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+    for(i=2; i<=stride_levels; i++) {
+        bvalue[i] = 0;
+        bunit[i] = bunit[i-1] * count[i-1];
+    }
+
+    for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            idx += bvalue[j] * stride[j-1];
+            if((i+1) % bunit[j] == 0) bvalue[j]++;
+            if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
+        }
+        
+        size = count[0] / sizeof(double);
+        for(j=0; j<size; j++)
+            if(((double *)((char *)src_buf+idx))[j] !=
+               ((double *)((char *)dst_buf+idx))[j])
+                fprintf(stdout,"Error: %s comparison failed: (%d) (%f : %f)\n",
+                        check_type, j, ((double *)((char *)src_buf+idx))[j],
+                        ((double *)((char *)dst_buf+idx))[j]);
+    }
+}
+
+/* array1 = array1 + array2 * scale */
+void acc_array(double scale, double *array1, double *array2, int *stride,
+               int *count, int stride_levels)
+{
+        int i, j, size;
     long idx;
     int n1dim;  /* number of 1 dim block */
     int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
@@ -418,10 +518,8 @@ void check_result(double *src_buf, double *dst_buf,
 
         size = count[0] / sizeof(double);
         for(j=0; j<size; j++)
-            if(((double *)((char *)src_buf+idx))[j] !=
-               ((double *)((char *)dst_buf+idx))[j])
-                fprintf(stdout, "Error: comparison failed: (%d) (%f : %f)\n",
-                        j, ((double *)((char *)src_buf+idx))[j],
-                        ((double *)((char *)dst_buf+idx))[j]);
+            ((double *)((char *)array1+idx))[j] +=
+                ((double *)((char *)array2+idx))[j] * scale;
+
     }
 }
