@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.7 1999-11-16 00:50:15 d3g681 Exp $
+#	$Id: MakeFile,v 1.8 1999-11-16 01:06:57 d3h325 Exp $
 #
 
 OBJDIR=.\obj
@@ -28,13 +28,13 @@ OBJ      = "$(OBJDIR)\global.armci.obj" \
         $(OBJDIR)\capi.obj \
         $(OBJDIR)\rs-mod.obj \
         $(OBJDIR)\ga_symmetr.obj\
+        $(OBJDIR)\ga_summarize.obj \
         $(OBJDIR)\ga_diag_seq.obj\
         $(OBJDIR)\ga_solve_seq.obj\
         $(OBJDIR)\ga_dgemm.obj\
         $(OBJDIR)\ga_dgemm_seq.obj\
         $(OBJDIR)\ga_transpose.obj \
         $(OBJDIR)\DP.obj
-# A dupliucate  $(OBJDIR)\ga_summarize.obj 
 
 
 LOC_DEFINES = -DARMCI
