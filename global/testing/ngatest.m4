@@ -25,4 +25,4 @@ divert(-1)
   # Double, and Double Complex data types, respectively.
   define(m4_test_NGA_DOT_PATCH, `yes')
 divert
-include(`ngatest_src/ndim.src')
+include(`ngatest/ngatest.def')
