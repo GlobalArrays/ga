@@ -1,4 +1,4 @@
-c $Id: mulmatpatch.F,v 1.1 2001-11-28 01:34:44 d3h325 Exp $
+c $Id: mulmatpatch.F,v 1.2 2002-01-05 06:36:48 windus Exp $
 #if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
@@ -167,6 +167,58 @@ c
          call nga_put(g_a1,alo,ahi,a(1,j),bufld) 
          call nga_put(g_b1,blo,bhi,b(1,j),bufld)
       enddo
+c
+      call ga_sync()
+      alo(1) = ailo
+      ahi(1) = ailo+1
+c     ahi(1) = ailo+n/2
+      alo(dim) = ajlo
+      ahi(dim) = ajlo
+c     ahi(dim) = ajlo+n/3
+      blo(1) = bilo
+      bhi(1) = bilo
+c     bhi(1) = bilo+n/3
+      blo(dim) = bjlo
+      bhi(dim) = bjlo
+c     bhi(dim) = bjlo+n/2
+      clo(1) = bilo
+      chi(1) = bilo+1
+c     chi(1) = bilo+n/2
+      clo(dim) = bjlo
+      chi(dim) = bjlo
+c     chi(dim) = bjlo+n/2
+c
+      call nga_matmul_patch('n','n', 1d0, 0d0, 
+     $                      g_a1, alo, ahi,
+     $                      g_b1, blo, bhi,
+     $                      g_c1, clo, chi)
+      call xgemm('n','n',2,2,1,1d0,a(ailo,ajlo), n,
+     $            b(bilo,bjlo),n, 0d0, c, n)
+c     call xgemm('n','n',n/2+1,n/2+1,n/3+1,1d0,a(ailo,ajlo), n,
+c    $            b(bilo,bjlo),n, 0d0, c, n)
+c
+      bufld(1) = n/2 + 1
+      call nga_get(g_c1,clo,chi,buf,bufld)
+      base = 0
+      do j = 1, 1
+         if(Mod(j,nproc).eq.me) then
+            do i = 1, 2
+               base = base+1
+               if(ABS(buf(base)- c(i,j)).gt.1d-8) then
+                  print *,me, ' error ',i,j, buf(base), c(i,j)
+                  call ga_error('exiting ...',0)
+               endif
+            enddo
+         else
+            base = base +n/2+1
+         endif
+      enddo
+c
+      call ga_sync()
+      if (me .eq. 0) then
+         write(6,*)'  a*b: OK '
+         call ffflush(6)
+      endif
 c
       call ga_sync()
       alo(1) = ailo
