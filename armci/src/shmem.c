@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.83 2004-12-09 00:42:10 manoj Exp $ */
+/* $Id: shmem.c,v 1.84 2004-12-09 00:44:04 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -911,6 +911,8 @@ int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
     return 1;
 }
 
+Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize) 
+{
 /* returns, address of the shared memory region based on shmid, offset.
  * (i.e. return_addr = stating address of shmid + offset)*/
     long idlist[SHMIDLEN];
