@@ -183,12 +183,12 @@ int  GA_stack_size=0;
 /************************************************************************/
 
 /* cache coherency in shared memory copy operations */
-#ifndef CRAY_T3D
-#       define  FLUSH_CACHE
-#       define  FLUSH_CACHE_LINE(x) 
-#else
+#if defined(CRAY_T3D) && defined(FLUSHCACHE)
 #       define FLUSH_CACHE shmem_udcflush()
 #       define FLUSH_CACHE_LINE(x)   shmem_udcflush_line((long*)(x))
+#else
+#       define  FLUSH_CACHE
+#       define  FLUSH_CACHE_LINE(x) 
 #endif
 
 

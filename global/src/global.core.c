@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.20 1996-03-20 01:04:37 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.21 1996-03-25 19:59:39 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -482,6 +482,10 @@ long *msg_buf;
        ga_mask(0L, &oldmask);
     }
 #   endif
+
+#if defined(CRAY_T3D) && !defined(FLUSHCACHE)
+    shmem_set_cache_inv();
+#endif
 
     /* synchronize, and then we are ready to do real work */
 #   ifdef KSR
@@ -1615,6 +1619,7 @@ Integer  item_size, ldp, rows, cols;
               acc_column(alpha, pbuffer, ptr_src, elem );
               CopyElemTo(pbuffer, ptr_dst, elem, proc);
            }
+           /* _remote_write_barrier(); Howard's func.*/
         UNLOCK(g_a, proc, ptr_dst);
         if(elem>LEN_ACC_BUF) MA_pop_stack(handle);
         GA_POP_NAME;
@@ -1629,6 +1634,10 @@ Integer  item_size, ldp, rows, cols;
      if(GAnproc>1) LOCK(g_a, proc, ptr_dst);
        accumulate(alpha, rows, cols, (DoublePrecision*)ptr_dst,
                   ldp, (DoublePrecision*)ptr_src, ld );
+#      if defined(CRAY_T3D)
+        /* flush write buffer before unlocking */
+        _memory_barrier();
+#      endif
      if(GAnproc>1) UNLOCK(g_a, proc, ptr_dst);
    GA_POP_NAME;
 }
