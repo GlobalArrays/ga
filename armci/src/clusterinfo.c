@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.27 2004-04-13 21:24:36 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.28 2004-07-27 08:57:59 manoj Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -79,6 +79,12 @@ pid_t ppid;
    if(no>1024)armci_die("expected node id <1024",no);
    sprintf(name,"n%d",no);
    return 0;
+}
+#elif defined(SGIALTIX)
+# define GETHOSTNAME altix_gethostname
+static int altix_gethostname(char *name, int len) {
+    sprintf(name,"altix");
+    return 0;
 }
 #else
 # define GETHOSTNAME gethostname

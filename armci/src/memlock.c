@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.15 2002-09-04 18:24:09 d3h325 Exp $ */
+/* $Id: memlock.c,v 1.16 2004-07-27 08:57:59 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -104,6 +104,10 @@ int i=factor*100000;
    }
 }
    
+#define SGIALTIX
+#ifdef SGIALTIX
+#include <mpp/shmem.h>
+#endif
 
 /*\ acquire exclusive LOCK to MEMORY area <pstart,pend> owned by process "proc"
  *   . only one area can be locked at a time by the calling process
@@ -128,6 +132,7 @@ void armci_lockmem(void *start, void *end, int proc)
        return;
      }
 
+#  ifndef SGIALTIX
      /* when processes are attached to a shmem region at different addresses,
       * addresses written to memlock table must be adjusted to the node master
       */
@@ -135,6 +140,7 @@ void armci_lockmem(void *start, void *end, int proc)
         start = armci_mem_offset + (char*)start;
         end   = armci_mem_offset + (char*)end;
      }
+#  endif
 #endif
 
      if(DEBUG_){
@@ -152,6 +158,13 @@ void armci_lockmem(void *start, void *end, int proc)
 #else
      pstart=start;
      pend =end;
+#endif
+
+#ifdef SGIALTIX
+     if (proc == armci_me) {
+	pstart = shmem_ptr(pstart,armci_me);
+	pend = shmem_ptr(pend,armci_me);
+     }
 #endif
 
      while(1){

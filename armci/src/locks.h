@@ -1,7 +1,7 @@
 #ifndef _ARMCI_LOCKS_H_
 #define _ARMCI_LOCKS_H_
 #include <sys/types.h>
-#define MAX_LOCKS 128 
+#define MAX_LOCKS 1024
 #define NUM_LOCKS MAX_LOCKS 
 
 #ifndef EXTERN
@@ -50,9 +50,21 @@
 
 #if defined(SPINLOCK) 
 
+# ifdef SGIALTIX
+/*
+#  define NAT_LOCK(x,p) armci_acquire_spinlock((LOCK_T*)(((void**)_armci_int_mutexes)[]))
+#  define NAT_UNLOCK(x,p) armci_release_spinlock((LOCK_T*)(((void**)_armci_int_mutexes)[x]))
+*/
+#  define NAT_LOCK(x,p) \
+    armci_acquire_spinlock((LOCK_T*)( ((PAD_LOCK_T*)(((void**)_armci_int_mutexes)[p]))+x ))
+#  define NAT_UNLOCK(x,p) \
+    armci_release_spinlock((LOCK_T*)( ((PAD_LOCK_T*)(((void**)_armci_int_mutexes)[p]))+x ))
+   EXTERN PAD_LOCK_T *_armci_int_mutexes;
+# else
 #  define NAT_LOCK(x,p) armci_acquire_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
 #  define NAT_UNLOCK(x,p) armci_release_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
    EXTERN PAD_LOCK_T *_armci_int_mutexes;
+# endif
 
 #elif defined(PMUTEXES)
 

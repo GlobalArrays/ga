@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.43 2004-07-21 23:57:58 manoj Exp $ */
+/* $Id: memory.c,v 1.44 2004-07-27 08:57:59 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -25,6 +25,95 @@ static context_t ctx_localmem;
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
 #endif
+
+/****************************************************************************
+ * Memory Allocator called by kr_malloc on SGI Altix to get more core from OS
+ */
+#ifdef SGIALTIX
+
+#include <mpp/shmem.h>
+#include <unistd.h>
+ 
+#define SHM_UNIT 1024
+#define DEF_UNITS (64)
+#define MAX_SEGS  512
+
+#define _SHMMAX_ALTIX     32*1024  /* 32 MB */
+#define _SHMMAX_ALTIX_GRP 512*1024 /* 512 MB */
+
+static  context_t altix_ctx_shmem;
+static  context_t altix_ctx_shmem_grp;
+static  size_t altix_pagesize;
+ 
+void *armci_altix_allocate(size_t size)
+{
+    void *ptr, *sptr;
+    size_t bytes = size;
+ 
+    sptr=ptr= shmalloc(bytes);
+ 
+#if 0
+    if(ptr){  /* touch each page to establish ownership */
+       int i;
+       for(i=0; i< bytes/altix_pagesize; i++){
+	  *(double*)ptr=0.;
+	  ((char*)ptr) += altix_pagesize;
+       }
+    }
+#endif
+    return sptr;
+}
+ 
+void armci_altix_shm_init()
+{
+    altix_pagesize = getpagesize();
+    kr_malloc_init(SHM_UNIT, _SHMMAX_ALTIX, _SHMMAX_ALTIX, 
+		   armci_altix_allocate, 0, &altix_ctx_shmem);
+    kr_malloc_init(SHM_UNIT, _SHMMAX_ALTIX_GRP, _SHMMAX_ALTIX_GRP, 
+		   armci_altix_allocate, 0, &altix_ctx_shmem_grp);
+    /* allocate a huge segment for groups. When kr_malloc() is called for 
+     the first time for this altix_ctx_shmem_grp context with some minimal
+     size of 8 bytes, a huge segment of size (SHM_UNIT*_SHMMAX_ALTIX_GRP) 
+     will be created */
+    {
+       void *ptr;
+       ptr=kr_malloc((size_t)8, &altix_ctx_shmem_grp);
+       if(ptr==NULL) 
+	  armci_die("armci_altix_shm_init(): kr_malloc failed", armci_me);
+    }
+}
+
+void armci_altix_shm_malloc(void *ptr_arr[], armci_size_t bytes)
+{
+    long size=bytes;
+    void *ptr;
+    int i;
+    armci_msg_lgop(&size,1,"max");
+    ptr=kr_malloc((size_t)size, &altix_ctx_shmem);
+    bzero(ptr_arr,(armci_nproc)*sizeof(void*));
+    ptr_arr[armci_me] = ptr;
+    for(i=0; i< armci_nproc; i++) if(i!=armci_me) ptr_arr[i]=shmem_ptr(ptr,i);
+}
+
+void armci_altix_shm_malloc_group(void *ptr_arr[], armci_size_t bytes, 
+				  ARMCI_Group *group) {
+    long size=bytes;
+    void *ptr;
+    int i,grp_me, grp_nproc;
+    armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
+
+    ARMCI_Group_size(group, &grp_nproc);
+    ARMCI_Group_rank(group, &grp_me);
+    armci_msg_group_lgop(&size,1,"max",group);
+    ptr=kr_malloc((size_t)size, &altix_ctx_shmem_grp);
+    if(size!=0 && ptr==NULL)
+       armci_die("armci_altix_shm_malloc_group(): kr_malloc failed for groups. Increase _SHMMAX_ALTIX_GRP", armci_me);
+    bzero(ptr_arr,(grp_nproc)*sizeof(void*));
+    ptr_arr[grp_me] = ptr;
+    for(i=0; i< grp_nproc; i++) if(i!=grp_me) ptr_arr[i]=shmem_ptr(ptr,i);
+}
+#endif /* end ifdef SGIALTIX */
+/* ------------------ End Altix memory allocator ----------------- */
 
 void kr_check_local()
 {
@@ -367,7 +456,11 @@ int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
     }
 #endif
 
+#ifdef SGIALTIX
+    if( ARMCI_Uses_shm() ) armci_altix_shm_malloc(ptr_arr,bytes);
+#else
     if( ARMCI_Uses_shm() ) armci_shmem_malloc(ptr_arr,bytes);
+#endif
     else {
       /* on distributed-memory systems just malloc & collect all addresses */
       ptr = kr_malloc(bytes, &ctx_localmem);
@@ -401,37 +494,45 @@ int ARMCI_Free(void *ptr)
     vampir_begin(ARMCI_FREE,__FILE__,__LINE__);
 #endif
 
-#ifdef REGION_ALLOC
-    kr_free(ptr, &ctx_region_shmem);
-#else
+#ifndef SGIALTIX
+#  ifdef REGION_ALLOC
+     kr_free(ptr, &ctx_region_shmem);
+#  else
 
-#  if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
-#     ifdef USE_MALLOC
-        if(armci_nproc > 1)
-#     endif
-      if(ARMCI_Uses_shm()){
-         if(armci_me==armci_master){
-#          ifdef RMA_NEEDS_SHMEM
-            Free_Shmem_Ptr(0,0,ptr);
-#          else
-            if(armci_clus_info[armci_clus_me].nslave>1) Free_Shmem_Ptr(0,0,ptr);
-            else kr_free(ptr, &ctx_localmem);
-#          endif
-         }
-         ptr = NULL;
-#        ifdef GA_USE_VAMPIR
-                 vampir_end(ARMCI_FREE,__FILE__,__LINE__);
-#        endif
-         return 0;
-      }
-#  endif
-        kr_free(ptr, &ctx_localmem);
+#    if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
+#       ifdef USE_MALLOC
+          if(armci_nproc > 1)
+#       endif
+	     if(ARMCI_Uses_shm()){
+		if(armci_me==armci_master){
+#               ifdef RMA_NEEDS_SHMEM
+		   Free_Shmem_Ptr(0,0,ptr);
+#               else
+		   if(armci_clus_info[armci_clus_me].nslave>1) 
+		      Free_Shmem_Ptr(0,0,ptr);
+		   else kr_free(ptr, &ctx_localmem);
+#               endif
+		}
+		ptr = NULL;
+#               ifdef GA_USE_VAMPIR
+		vampir_end(ARMCI_FREE,__FILE__,__LINE__);
+#               endif
+		return 0;
+	     }
+#    endif
+     kr_free(ptr, &ctx_localmem);
+#  endif /* REGION_ALLOC */
+#else
+     /* Altix */
+     if( ARMCI_Uses_shm() ) kr_free(ptr, &altix_ctx_shmem);
+     else kr_free(ptr, &ctx_localmem);
 #endif
-        ptr = NULL;
+
+     ptr = NULL;
 #ifdef GA_USE_VAMPIR
-        vampir_end(ARMCI_FREE,__FILE__,__LINE__);
+     vampir_end(ARMCI_FREE,__FILE__,__LINE__);
 #endif
-        return 0;
+     return 0;
 }
 
 
@@ -698,8 +799,13 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
     }
 #endif
     
-    if( ARMCI_Uses_shm_grp(grp_me, grp_nproc, grp_attr->grp_nclus) ) 
-       armci_shmem_malloc_group(ptr_arr,bytes,group);
+    if( ARMCI_Uses_shm_grp(grp_me, grp_nproc, grp_attr->grp_nclus) ) {
+#      ifdef SGIALTIX
+          armci_altix_shm_malloc_group(ptr_arr,bytes,group);
+#      else   
+          armci_shmem_malloc_group(ptr_arr,bytes,group);
+#      endif
+    }
     else {
        /* on distributed-memory systems just malloc & collect all addresses */
        ptr = kr_malloc(bytes, &ctx_localmem);
@@ -745,6 +851,7 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
     vampir_begin(ARMCI_FREE_GROUP,__FILE__,__LINE__);
 #endif
 
+#ifndef SGIALTIX
 #ifdef REGION_ALLOC
     kr_free(ptr, &ctx_region_shmem);
 #else
@@ -782,6 +889,13 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 #   endif
     kr_free(ptr, &ctx_localmem);
 #endif /* ifdef REGION_ALLOC */
+#else /* SGI Altix */
+    if(ARMCI_Uses_shm_grp(grp_me, grp_nproc, grp_attr->grp_nclus))
+       kr_free(ptr, &altix_ctx_shmem_grp);
+    else kr_free(ptr, &ctx_localmem);
+       
+#endif /* SGIALTIX */
+
     ptr = NULL;
 #ifdef GA_USE_VAMPIR
     vampir_end(ARMCI_FREE_GROUP,__FILE__,__LINE__);

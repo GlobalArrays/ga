@@ -1,4 +1,4 @@
-/* $Id: locks.c,v 1.10 2002-09-25 00:42:28 d3h325 Exp $ */
+/* $Id: locks.c,v 1.11 2004-07-27 08:57:59 manoj Exp $ */
 #define _LOCKS_C_
 #include "armcip.h"
 #include "locks.h"
@@ -12,26 +12,45 @@ extern void armci_die(char*,int);
 
 #if defined(SPINLOCK) || defined(PMUTEXES)
 
+#ifdef SGIALTIX
+
 void CreateInitLocks(int num_locks, lockset_t *plockid)
 {
-void *ptr;
-int size=num_locks*sizeof(PAD_LOCK_T);
+void **ptr_arr;
+int locks_per_proc, size;
 
-  if(ARMCI_Uses_shm())
-     ptr = Create_Shared_Region(plockid->idlist,size,&plockid->off);
-  else
-     ptr = malloc(size);
+    /* locks per process in the SMP node */ 
+    locks_per_proc = num_locks/armci_clus_info[armci_clus_me].nslave + 1; 
+    size=locks_per_proc*sizeof(PAD_LOCK_T);
+    ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
+    ARMCI_Malloc(ptr_arr, size);
+    _armci_int_mutexes = (PAD_LOCK_T*) ptr_arr;
+    bzero((char*)ptr_arr[armci_me],size);
+}
 
-#if 0
-  printf("%d: allocated lock array %d s=%d p=%p\n",armci_me,num_locks,size,ptr);
-  fflush(stdout);
-#endif
+void DeleteLocks(lockset_t lockid) { 
+    void **ptr_arr = (void**)_armci_int_mutexes;
+    ARMCI_Free(ptr_arr[armci_me]);
+    _armci_int_mutexes = (PAD_LOCK_T*)0; 
+}
 
-  if(!ptr) armci_die("Failed to create spinlocks",size);
-  _armci_int_mutexes = (PAD_LOCK_T*)ptr;
+#else
+
+void CreateInitLocks(int num_locks, lockset_t *plockid)
+{
+void *ptr, **ptr_arr;
+int locks_per_proc, size;
+
+  ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
+  locks_per_proc = (num_locks*armci_nclus)/armci_nproc + 1;
+  size=locks_per_proc*sizeof(PAD_LOCK_T);
+  ARMCI_Malloc(ptr_arr, size);
+  _armci_int_mutexes = (PAD_LOCK_T*) ptr_arr[armci_master];
+  
+  if(!_armci_int_mutexes) armci_die("Failed to create spinlocks",size);
 
 #ifdef PMUTEXES
-  {
+  if(armci_me == armci_master) {
        int i;
        pthread_mutexattr_t pshared;
        if(pthread_mutexattr_init(&pshared))
@@ -41,26 +60,23 @@ int size=num_locks*sizeof(PAD_LOCK_T);
             armci_die("armci_allocate_locks: could not set PROCESS_SHARED",0);
 #      endif
 
-       for(i=0; i< num_locks; i++){
+       for(i=0; i< locks_per_proc*armci_clus_info[armci_clus_me].nslave; i++){
              if(pthread_mutex_init(_armci_int_mutexes+i,&pshared))
                 armci_die("armci_allocate_locks: could not init mutex",i);
        }
   }
 #else
 
-       bzero((char*)_armci_int_mutexes,size);
+  bzero((char*)ptr_arr[armci_me],size);
 #endif
 } 
 
-
 void InitLocks(int num_locks, lockset_t lockid)
 {
-void *ptr;
-int size=num_locks*sizeof(LOCK_T);
-
-  ptr=Attach_Shared_Region(lockid.idlist,size,lockid.off);
-  if(!ptr) armci_die("Failed to initialize spinlocks",size);
-  _armci_int_mutexes = (PAD_LOCK_T*)ptr;
+    /* what are you doing here ? 
+       All processes should've called CreateInitLocks().
+       Check preprocessor directtives and see lock allocation in armci_init */
+    armci_die("InitLocks(): what are you doing here ?",armci_me);
 }
 
 
@@ -68,7 +84,7 @@ void DeleteLocks(lockset_t lockid)
 {
   _armci_int_mutexes = (PAD_LOCK_T*)0;
 }
-
+#endif
 
 
 /********************* all SGI systems ****************/

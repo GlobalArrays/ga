@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.10 2004-07-23 00:40:30 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.11 2004-07-27 08:57:59 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -19,7 +19,7 @@ static void kr_free_shmem(char *ap, context_t *ctx);
 /**
  * DEFAULT_NALLOC: No. of units of length ALIGNMENT to get in every 
  * request to the system for memory (8MB/64 => 128*1024units)
- * DEFAULT_MAX_NALLOC: Maximum number of units that can get i.e.128MB 
+ * DEFAULT_MAX_NALLOC: Maximum number of units that can get i.e.1GB 
  * (if unit size=64bytes, then max units=1024MB/64 = 16*1024*1024)
  */
 #define DEFAULT_NALLOC       (128*1024)  

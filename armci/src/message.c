@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.54 2004-06-29 22:57:36 manoj Exp $ */
+/* $Id: message.c,v 1.55 2004-07-27 08:57:59 manoj Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -126,12 +126,12 @@ void armci_msg_gop_init()
   memory from malloc because of a problem with cc on SV1
 */
     if(work==NULL)_allocate_mem_for_work();
-#if defined(SYSV) || defined(MMAP) || defined(WIN32)
+#if !defined(SGIALTIX) && defined(SYSV) || defined(MMAP) || defined(WIN32)
     if(ARMCI_Uses_shm()){
        char *tmp;
+       void **ptr_arr;
        double *work;
        int size = sizeof(bufstruct);
-       long idlist[SHMIDLEN];
        int bytes = size * armci_clus_info[armci_clus_me].nslave;
 #ifdef LAPI
        void armci_msg_barr_init();
@@ -139,13 +139,11 @@ void armci_msg_gop_init()
 #endif
        bytes += size*2; /* extra for brdcst */
 
-       if(armci_me == armci_master ){
-            tmp = Create_Shared_Region(idlist+1, bytes+128,idlist);
-            armci_msg_clus_brdcst(idlist, SHMIDLEN*sizeof(long));
-       }else{
-            armci_msg_clus_brdcst(idlist, SHMIDLEN*sizeof(long));
-            tmp = Attach_Shared_Region(idlist+1,bytes+128,idlist[0]);
-       }
+       ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
+       if(armci_me==armci_master) bytes += 128;
+       else bytes=0;
+       ARMCI_Malloc(ptr_arr, bytes);
+       tmp = (char*)ptr_arr[armci_master];
 
        if(DEBUG_){
           printf("%d: allocate gop buffer %p %d\n",armci_me,tmp,bytes);
@@ -226,20 +224,18 @@ int i;
 void armci_msg_barr_init(){
 #if defined(SYSV) || defined(MMAP) || defined(WIN32)
     int size=sizeof(barrier_struct)*armci_clus_info[armci_clus_me].nslave;
-    long idlist[SHMIDLEN];
     char *tmp;
+    void **ptr_arr;
     barr_switch=0;
     /*First allocate space for flags*/
-    if(armci_me==armci_master){
-       tmp = Create_Shared_Region(idlist+1, size+128,idlist);
-       armci_msg_clus_brdcst(idlist, SHMIDLEN*sizeof(long));
-       size=2*sizeof(int);
-    }
-    else{
-       armci_msg_clus_brdcst(idlist, SHMIDLEN*sizeof(long));
-       tmp = Attach_Shared_Region(idlist+1,size+128,idlist[0]);
-       size=2*sizeof(int);
-    }
+
+    ptr_arr = (void**)malloc(armci_nproc*sizeof(void*));
+    if(armci_me==armci_master) size = size+128;
+    else size=0;
+    ARMCI_Malloc(ptr_arr, size);
+    tmp = (char*)ptr_arr[armci_master];
+    size=2*sizeof(int);
+
     if(!tmp)armci_die("allocate barr shm failed",0);
     _bar_buff=(barrier_struct *)tmp;
 

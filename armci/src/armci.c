@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.91 2004-07-21 00:29:59 manoj Exp $ */
+/* $Id: armci.c,v 1.92 2004-07-27 08:57:59 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -210,9 +210,13 @@ void armci_allocate_locks()
        armcill_allocate_locks(NUM_LOCKS);
 #elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
        if(armci_nproc == 1)return;    
+#  if defined(SPINLOCK) || defined(PMUTEXES) 
+       CreateInitLocks(NUM_LOCKS, &lockid);
+#  else
        if(armci_master==armci_me)CreateInitLocks(NUM_LOCKS, &lockid);
        armci_msg_clus_brdcst(&lockid, sizeof(lockid));
        if(armci_master != armci_me)InitLocks(NUM_LOCKS, lockid);
+#  endif
 #endif
     
 }
@@ -362,7 +366,14 @@ int ARMCI_Init()
 
 #if defined(SYSV) || defined(WIN32)
     /* init shared/K&R memory */
-    if(ARMCI_Uses_shm() ) armci_shmem_init();
+    if(ARMCI_Uses_shm() ) {
+#      ifdef SGIALTIX
+          armci_altix_shm_init();
+#      else
+          armci_shmem_init();
+#      endif
+    }
+
 #   if defined(QUADRICS) && !defined(NO_SHM)
        if(armci_me == armci_master)armci_check_shmmax();
 #   endif
