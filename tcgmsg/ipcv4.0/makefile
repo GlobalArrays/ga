@@ -163,30 +163,21 @@ ifeq ($(TARGET),LINUX)
 # f77 usage of argc&argv inside f2c is (xargc & xargv).
 # -DPLOT option removed for linux. 
 #
-   DEFINES = -DLINUX -DSYSV -DSHMEM  -DNOSPIN
+   DEFINES = -DLINUX -DSYSV -DSHMEM -DNOSPIN
 ifeq ($(FC),pgf77)
-    FC = pgf77 -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
-    DEFINES += -DPGLINUX
-else
-    FC = g77 -fno-second-underscore 
+       PGLINUX = 1
+endif
+ifeq ($(FC),pgf90)
+       PGLINUX = 1
+endif
+ifdef PGLINUX
+       FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
+       DEFINES += -DPGLINUX
 endif
  LINTFLAGS = $(DEFINES) -u
       LIBS = -lc
      EXTRA = strdup.o strtok.o
 endif
-
-ifeq ($(TARGET),PGLINUX)
-# PC80x86 Linux pl10. with pgf
-# f77 usage of argc&argv inside f2c is (xargc & xargv).
-# -DPLOT option removed for linux. 
-        FC = pgf77 -fno-second-underscore 
-        CC = gcc
-   DEFINES = -DLINUX -DPGLINUX -DSYSV -DSHMEM  -DNOSPIN
- LINTFLAGS = $(DEFINES) -u
-      LIBS = -lc
-     EXTRA = strdup.o strtok.o
-endif
-
 
 ifeq ($(TARGET),SGI-OLD)
 # 32-bit systems running IRIX 5.3 and older

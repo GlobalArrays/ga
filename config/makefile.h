@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.19 2000-05-08 22:53:33 jju Exp $
+# $Id: makefile.h,v 1.20 2000-05-09 00:37:39 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -93,7 +93,9 @@ endif
 # IBM PC running Linux
 #
 ifeq ($(TARGET),LINUX)
-           CC=gcc
+           CC = gcc
+          CPP = gcc -E -nostdinc -undef -P
+       RANLIB = ranlib
  GLOB_DEFINES = -DLINUX
 ifndef USE_F77
 #    Linux with g77
@@ -134,19 +136,23 @@ ifeq ($(FC),g77)
    endif
 endif     
 #
-# portland group compilers
-ifeq ($(FC),pgf77)
-# linux with Portland Group Compiler
-       FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
+# Portland Group compilers
 # for pentium
 # FOPT_REN  += -tp p5  
 # for Pentium Pro or Pentium II
 # FOPT_REN  += -tp p6
-       GLOB_DEFINES += -DPGLINUX
-       MAKEFLAGS += FC=pgf77
+#
+ifeq ($(FC),pgf77)
+       PGLINUX = 1 
 endif
-          CPP = gcc -E -nostdinc -undef -P
-       RANLIB = ranlib
+ifeq ($(FC),pgf90)
+       PGLINUX = 1 
+endif
+ifdef PGLINUX
+       FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
+       GLOB_DEFINES += -DPGLINUX
+endif
+
 endif
 #
 #............................. CYGNUS on Windows ..........................
