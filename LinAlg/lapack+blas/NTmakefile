@@ -1,0 +1,22 @@
+OBJDIR=.\obj
+OBJ_OPTIMIZE = $(OBJDIR)\dblas.obj\
+  $(OBJDIR)\dgetf2.obj\
+  $(OBJDIR)\dgetrf.obj\
+  $(OBJDIR)\dgetrs.obj\
+  $(OBJDIR)\dlacpy.obj\
+  $(OBJDIR)\dlaset.obj\
+  $(OBJDIR)\dlaswp.obj\
+  $(OBJDIR)\ilaenv.obj\
+  $(OBJDIR)\lsame.obj\
+  $(OBJDIR)\xerbla.obj\
+  $(OBJDIR)\zaxpy.obj\
+  $(OBJDIR)\zgemm.obj
+
+
+INCDIR = ..\..\include
+
+LIBRARY = linalg.lib
+LIB_DISTRIB = ..\..\lib\win32
+
+!INCLUDE ..\..\config\NTmakefile.h
+!INCLUDE ..\..\config\NTmakelib.h

@@ -1,0 +1,9 @@
+This directory contains a subset of LAPACK and BLAS subroutines that are 
+needed to run GA test programs.
+
+Type
+
+ make TARGET= xxx
+
+where xxx is the machine name.
+
