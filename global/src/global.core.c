@@ -432,7 +432,7 @@ long *msg_buf;
 #   endif
 #   if defined(SGIUS)
        ga_brdcst_clust(type, (char*)lock_array,
-                      (cluster_nodes+1)*sizeof(ulock_t*), cluster_master,
+                      (cluster_nodes+RESERVED_LOCKS)*sizeof(ulock_t*), cluster_master,
                        ALL_CLUST_GRP);
 #   endif
 
@@ -1772,6 +1772,7 @@ Integer  type;
    /* prepare request data */
    type = GA[GA_OFFSET + g_a].type;
    ptr_src = (char *)buf  + GAsizeofM(type)* offset;
+
    if(type==MT_F_DBL)
      *(DoublePrecision*)MessageSnd->alpha= *(DoublePrecision*)alpha; 
    else if(type==MT_F_DCPL) 
@@ -1826,9 +1827,8 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
 
        }else{
          /* number of messages determined by message-buffer size */
-         /* alpha will be appended at the end of message */
 
-         Integer TmpSize = (MSG_BUF_SIZE - GAsizeofM(type))/GAsizeofM(type);
+         Integer TmpSize = MSG_BUF_SIZE/GAsizeofM(type);
          Integer ilimit  = MIN(TmpSize, ihip-ilop+1);
          Integer jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
          Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk;
