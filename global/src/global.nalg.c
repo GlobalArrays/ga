@@ -371,7 +371,7 @@ DoubleComplex sum;
         return sum;
 }
 
-#if defined(CRAY) || defined(WIN32)
+#if defined(CRAY) || defined(WIN32) ||defined(HITACHI)
 # define gai_zdot_ GAI_ZDOT
 #elif defined(F2C2_)
 # define gai_zdot_ gai_zdot__

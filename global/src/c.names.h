@@ -1,7 +1,7 @@
 #ifndef  C_NAMES_H
 #define  C_NAMES_H
 
-#if defined(CRAY) || defined(WIN32)
+#if defined(CRAY) || defined(WIN32) || defined(HITACHI)
 
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
