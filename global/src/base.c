@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.100 2004-11-05 19:40:06 d3g293 Exp $ */
+/* $Id: base.c,v 1.101 2004-11-05 21:14:27 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1273,20 +1273,6 @@ logical ga_allocate_( Integer *g_a)
       GA[ga_handle].mapc[i] = (int)mapALL[i];
     }
     GA[ga_handle].mapc[maplen] = -1;
-  } else {
-    /* Check to make sure that the number of blocks is consistent
-       with the number of processors */
-    nprocs = 1;
-    for (i=0; i<ndim; i++) {
-      nprocs *= GA[ga_handle].nblock[i];
-    }
-    if (p_handle >= 0) {
-      if (nprocs !=  PGRP_LIST[p_handle].map_nproc)
-        ga_error("Number of blocks does not match number of processors",nprocs);
-    } else {
-      if (nprocs !=  GAnproc)
-        ga_error("Number of blocks does not match number of processors",nprocs);
-    }
   }
 
   GAstat.numcre ++;
