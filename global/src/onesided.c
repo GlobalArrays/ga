@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.21 2002-01-22 21:24:55 vinod Exp $ */
+/* $Id: onesided.c,v 1.22 2002-03-19 17:34:32 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -241,7 +241,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
       for(_d=0; _d < _last; _d++)            {                                 \
           _w = GA[g_handle].width[_d];                                         \
           _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                     \
-          ld[_d] = _hi[_d] - _lo[_d]+1+2*_w;                                   \
+          ld[_d] = _hi[_d] - _lo[_d] + 1 + 2*_w;                               \
           _factor *= ld[_d];                                                   \
       }                                                                        \
       _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])       \
@@ -302,7 +302,7 @@ Integer   _mloc = p* ndim *2;\
 Integer _d, _factor;\
           *pidx = plo[0] -lo[0];\
           for(_d= 0,_factor=1; _d< ndim -1; _d++){\
-             _factor *= dims[_d];\
+             _factor *= (dims[_d]);\
              *pidx += _factor * (plo[_d+1]-lo[_d+1]);\
           }\
 }
@@ -345,7 +345,7 @@ int proc, ndim;
           gam_Location(proc,handle, plo, &prem, ldrem); 
 
           /* find the right spot in the user buffer */
-          gam_ComputePatchIndex(ndim,lo, plo, ld, &idx_buf);
+          gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
           pbuf = size*idx_buf + (char*)buf;        
 
           gam_ComputeCount(ndim, plo, phi, count); 
@@ -408,6 +408,12 @@ void FATR nga_get_(Integer *g_a,
                    void    *buf,
                    Integer *ld)
 {
+      /* g_a:   Global array handle
+         lo[]:  Array of lower indices of patch of global array
+         hi[]:  Array of upper indices of patch of global array
+         buf[]: Local buffer that array patch will be copied into
+         ld[]:  Array of physical ndim-1 dimensions of local buffer */
+
 Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size;
 int proc, ndim;
@@ -441,8 +447,8 @@ int proc, ndim;
           char *pbuf, *prem;
 
           p = (Integer)ProcListPerm[idx];
-          /* Find portion of patch held by processor p and return
-             the result in plo and phi. Also get actual processor
+          /* Find  visible portion of patch held by processor p and
+             return the result in plo and phi. Also get actual processor
              index corresponding to p and store the result in proc. */
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
           proc = (int)GA_proclist[p];
@@ -454,7 +460,7 @@ int proc, ndim;
           /* find the right spot in the user buffer for the point
              subscripted by plo given that the corner of the user
              buffer is subscripted by lo */
-          gam_ComputePatchIndex(ndim,lo, plo, ld, &idx_buf);
+          gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
           pbuf = size*idx_buf + (char*)buf;
 
           /* compute number of elements in each dimension and store the
