@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.67 2003-02-07 02:34:22 edo Exp $*/
+/*$Id: disk.arrays.c,v 1.68 2003-02-10 22:38:34 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -2465,33 +2465,33 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
   }
   *number_of_files = numfiles;
   *io_procs = numioprocs;
-  if (*number_of_files > ga_cluster_nnodes_()) {
+  if (*number_of_files > ga_nnodes_()) {
     if (ga_nodeid_() == 0) {
-      printf("WARNING: Number of files requested exceeds\n");
-      printf("number of IO nodes. Value is reset to number of IO nodes: %d\n",
-              ga_cluster_nnodes_());
+      printf("WARNING: Number of files requested exceeds number of\n");
+      printf("processors. Value is reset to number of processors: %d\n",
+              ga_nnodes_());
     }
-    *number_of_files = ga_cluster_nnodes_();
+    *number_of_files = ga_nnodes_();
   }
   if (*io_procs > 1 && *number_of_files > 1) {
     if (*io_procs != *number_of_files) {
       if (ga_nodeid_() == 0) {
-        printf("WARNING: Number of IO processors is not\n");
-        printf("equal to number of files requested. Number of IO processors\n");
+        printf("WARNING: Number of IO processors is not equal to the\n");
+        printf("number of files requested. Number of IO processors\n");
         printf("is reset to number of files: %d\n",*number_of_files);
       }
       *io_procs = *number_of_files;
     }
   }
   if (*number_of_files == 1) {
-    if (*io_procs > ga_cluster_nnodes_()) {
+    if (*io_procs > ga_nnodes_()) {
       if (ga_nodeid_() == 0) {
         printf("WARNING: Number of requested IO processors\n");
-        printf("exceeds number of available IO processors. Number of IO\n");
-        printf("processors reset to number of available IO processors %d\n",
-               ga_cluster_nnodes_());
+        printf("exceeds number of available processors. Number of IO\n");
+        printf("processors reset to the number of available processors %d\n",
+               ga_nnodes_());
       }
-      *io_procs = ga_cluster_nnodes_();
+      *io_procs = ga_nnodes_();
     }
   }
   if (*number_of_files > *io_procs) {
