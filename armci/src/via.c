@@ -104,7 +104,7 @@ typedef struct {
   char buf[MAX_BUFLEN];
 }vbuf_long_t;
 
-#define MAX_BUFS 4
+#define MAX_BUFS 2
 reqbuf_t client_buf_pool[MAX_BUFS];
 
 static vbuf_t *serv_buf_arr, *spare_serv_buf;
@@ -390,6 +390,10 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
      armci_check_status(DEBUG0, rc,"server register recv vbuf");
 
      if(!serv_memhandle)armci_die("server got null handle for vbuf",0);
+     if(DEBUG1){
+        printf("%d: registered server memory %p %dbytes memhandle=%d\n",
+               armci_me, serv_buf_arr, bytes, serv_memhandle); fflush(stdout);
+     }
 }
 
 static void armci_print_attr(nic_t *nic)
@@ -566,7 +570,7 @@ request_header_t *msginfo;
        msginfo = (request_header_t*)vbuf->buf;
        armci_ack_proc= c= msginfo->from; 
 
-       if(DEBUG2){
+       if(DEBUG1){
          printf("%d(s):got REQUEST %d from %d\n",armci_me,msginfo->operation,c);         fflush(stdout);
        }
 
@@ -728,13 +732,14 @@ void armci_client_connect_to_servers()
 {
 VIP_MEM_ATTRIBUTES mattr;
 VIP_RETURN rc;
-int i, mod, bytes, extra = MAX_DESCR*sizeof(VIP_DESCRIPTOR)+SIXTYFOUR;
-char *tmp;
+int i, mod, bytes, total, extra = MAX_DESCR*sizeof(VIP_DESCRIPTOR)+SIXTYFOUR;
+char *tmp,*tmp0;
 
    /* allocate memory for the msg buffers-must be alligned on 64byte bnd */
    bytes = sizeof(vbuf_long_t);
-   tmp = malloc(bytes + extra+ SIXTYFOUR);
-   if(!tmp) armci_die("failed to malloc recv vbufs",bytes);
+   total = bytes + extra+ SIXTYFOUR;
+   tmp0  = tmp = malloc(total);
+   if(!tmp) armci_die("failed to malloc client bufs",total);
 
    /* stamp the last byte */
    client_tail= tmp + extra+ bytes+SIXTYFOUR-1;
@@ -763,10 +768,20 @@ char *tmp;
    }
      
    /* lock allocated memory */
-   rc = VipRegisterMem(SRV_nic->handle,client_buf,bytes,
-                       &mattr,&client_memhandle);
+   rc = VipRegisterMem(SRV_nic->handle, tmp0, total, &mattr,&client_memhandle);
    armci_check_status(DEBUG0, rc,"client register snd vbuf");
    if(!client_memhandle)armci_die("client got null handle for vbuf",0);
+
+   if(DEBUG2){
+        printf("%d: registered client memory %p %dbytes b=%p memhandle=%d\n",
+                armci_me,tmp0, total, MessageSndBuffer, client_memhandle);
+        printf("%d: client bufs= %p %p %p %p size=%d\n",armci_me,
+                client_buf_pool[0].buf,client_buf_pool[1].buf,
+                client_buf_pool[2].buf,client_buf_pool[3].buf, 
+                (sizeof(vbuf_ext_t)));
+        fflush(stdout);
+   
+   }
 
    /* connect to data server on each cluster node*/
 #ifdef PEER_CONNECTION
@@ -784,7 +799,7 @@ VIP_RETURN rc;
 VIP_DESCRIPTOR *cmpl_dscr;
 vbuf_ext_t *evbuf = (vbuf_ext_t*)client_buf_pool[b].buf;
 
-    if(DEBUG2){
+    if(DEBUG1){
        printf("%d(c): completing %d snd=%d rcv=%d  buf=%p\n",armci_me,b,
               client_buf_pool[b].snd,client_buf_pool[b].rcv,evbuf->buf);
        fflush(stdout);
@@ -838,10 +853,17 @@ static int avail=0;
          avail %= MAX_BUFS;
          if(client_buf_pool[avail].snd) armci_complete_buf_index(avail);
       }
-      if(DEBUG2){
+      if(DEBUG1){
          printf("%d(c) GETBUF size=%d %d %p\n",armci_me,size,avail,
                client_buf_pool[avail].buf); fflush(stdout);
       }
+#if 0
+      if(size > 15000){printf("%d: size=%d %d %p %p\n",armci_me,
+                       size,avail,client_buf_pool[avail].buf,
+                       ((vbuf_ext_t*)client_buf_pool[avail].buf)->buf);
+                      fflush(stdout);
+      } 
+#endif
       return(((vbuf_ext_t*)client_buf_pool[avail].buf)->buf);
      
 }
@@ -910,7 +932,7 @@ int i, outstanding;
   if( !outstanding) return;
   if( outstanding<0) armci_die("armci_serv_clear_sends: error",outstanding);
 
-  if(DEBUG2){
+  if(DEBUG1){
      printf("%d CLEARING DESCRIPTORS %d %p\n",armci_me,outstanding,dp);fflush(stdout);
   }
 
@@ -995,7 +1017,7 @@ VIP_MEM_HANDLE *pmhandle;
 
      dp->avail--;
      arg->buf+=bytes;
-     if(DEBUG2)if(arg->buf > client_tail)
+     if(DEBUG1)if(arg->buf > client_tail)
                armci_die("overwriting end of buf",arg->buf-client_tail);
 }
 
@@ -1028,7 +1050,7 @@ descr_pool_t *dp;
         }
     }
 
-    if(DEBUG2){ printf("%d:extracting pipe received data from %d %d vi=%p\n",
+    if(DEBUG1){ printf("%d:extracting pipe received data from %d %d vi=%p\n",
                armci_me,arg->proc,arg->count,dp->vi); fflush(stdout);
     }
 
@@ -1049,14 +1071,13 @@ descr_pool_t *dp;
   
     /* copy data to the user buffer identified by ptr */
     armci_read_strided(ptr, strides, stride_arr, count, buf);
-    if(DEBUG2 ){ printf("%d(c): extracting: data (%p,%p) first=%f\n",armci_me,
+    if(DEBUG1 ){ printf("%d(c): extracting: data (%p,%p) first=%f\n",armci_me,
                 pdscr,buf,((double*)buf)[0]); fflush(stdout);
     }
 
     arg->count++;
     dp->avail++;
-    if(DEBUG2){
-      if((char*)buf>client_buf_pool[1].buf)armci_die("out end of buf",count[0]);
+    if(DEBUG1){
       if(*client_tail != CLIENT_STAMP){
          printf("%d:stamp corrupted %d tail=%p cur buf %p,%p %p %p %p %d %d\n",
                 armci_me, *client_tail, client_tail, buf,
@@ -1096,9 +1117,9 @@ descr_pool_t *dp;
         }
      }
 
-     if(DEBUG2){ printf("%d:SENDING pipe data %d to %d %p (%p,%p)\n",armci_me,
-                 arg->count, arg->proc, dp,&client_descr_pool,&serv_descr_pool);
-                 fflush(stdout);
+     if(DEBUG1){ printf("%d(s):SENDING pipe data %d to %d %p (%p,%p) vi=%p\n",
+                 armci_me, arg->count, arg->proc, dp,&client_descr_pool,
+                 &serv_descr_pool,dp->vi); fflush(stdout);
      }
 
      if(!dp->avail)
@@ -1119,7 +1140,7 @@ descr_pool_t *dp;
      rc = VipPostSend(dp->vi, pdesc, *pmhandle);
      armci_check_status(DEBUG0, rc,"pipe data sent");
 
-     if(DEBUG2){ printf("%d:  out of send %d bytes=%d first=%f\n",armci_me,
+     if(DEBUG1){ printf("%d(s): out of send %d bytes=%d first=%f\n",armci_me,
                arg->count,bytes,((double*)arg->buf)[0]); fflush(stdout);
      }
 
@@ -1146,7 +1167,7 @@ VIP_DESCRIPTOR *pdscr;
      rc=VipRecvWait((SRV_con+armci_long_buf_taken_srv)->vi,VIP_INFINITE,&pdscr);
      armci_check_status(DEBUG0, rc,"client wait_ack out of recv wait");
 
-     if(DEBUG2){printf("%d(c) client got ack for req dscr=%p\n",armci_me,pdscr);
+     if(DEBUG1){printf("%d(c) client got ack for req dscr=%p\n",armci_me,pdscr);
                 fflush(stdout);
      }
 }
@@ -1176,7 +1197,7 @@ vbuf_ext_t* evbuf=BUF_TO_EVBUF(buf);
     rc = VipPostSend((SRV_con+cluster)->vi, &evbuf->snd_dscr, client_memhandle);
     armci_check_status(DEBUG0, rc,"client sent data to server");
 
-    if(DEBUG2){ printf("%d:client sent PIPE GET req %dbytes to server vi=%p\n",
+    if(DEBUG1){ printf("%d:client sent PIPE GET req %dbytes to server vi=%p\n",
                        armci_me,bytes,(SRV_con+cluster)->vi); fflush(stdout);
     }
 }
@@ -1209,7 +1230,7 @@ vbuf_ext_t* evbuf=BUF_TO_EVBUF(buf);
     rc = VipPostSend((SRV_con+cluster)->vi, &evbuf->snd_dscr, client_memhandle);
     armci_check_status(DEBUG0, rc,"client sent data to server");
 
-    if(DEBUG2){ printf("%d:client sent pipe REQ %dbytes to server vi=%p\n",
+    if(DEBUG1){ printf("%d:client sent REQ %dbytes to server vi=%p\n",
                        armci_me,bytes,(SRV_con+cluster)->vi); fflush(stdout);
     }
     return 0;
@@ -1226,7 +1247,7 @@ int i, mybufid=0, cluster = armci_clus_id(proc);
 vbuf_ext_t* evbuf=BUF_TO_EVBUF(msginfo);
 char *dataptr = GET_DATA_PTR(evbuf->buf);
 
-    if(DEBUG2){ printf("%d(c):read direct %d vi=%p\n",armci_me,
+    if(DEBUG1){ printf("%d(c):read direct %d vi=%p\n",armci_me,
                 (int)msginfo->datalen,(SRV_con+cluster)->vi); fflush(stdout);
     }
     for(i=0; i< MAX_BUFS; i++){
@@ -1281,7 +1302,7 @@ VIP_DESCRIPTOR *cmpl_dscr;
     if(cmpl_dscr !=&serv_buf->snd_dscr)
        armci_die("sending data to client-different descriptor completed",bytes);
 
-    if(DEBUG2){ printf("%d:SERVER sent %dbytes to %d vi=%p\n",armci_me,bytes,
+    if(DEBUG1){ printf("%d:SERVER sent %dbytes to %d vi=%p\n",armci_me,bytes,
                 proc,(CLN_con+proc)->vi); fflush(stdout);
     }
 }
