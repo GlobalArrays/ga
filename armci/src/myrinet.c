@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.73 2004-07-28 10:51:54 vinod Exp $
+/* $Id: myrinet.c,v 1.74 2005-03-17 01:34:13 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -84,6 +84,7 @@ typedef struct{
 }armci_verify_wait_t;
 armci_verify_wait_t __armci_verify_wait_struct;
 armci_verify_wait_t *verify_wait = &__armci_verify_wait_struct;
+armci_gm_context_t **notify_gmc_arr;
 /***************/
 
 /* data structure of computing process */
@@ -546,6 +547,20 @@ void armci_gm_fence_init()
     if(ARMCI_Malloc((void**)verify_wait->recv_verify_smp_arr, 
                     armci_nproc*sizeof(int)))
        armci_die("failed to allocate ARMCI fence array",0);
+    /*create and initialize some nonblocking descriptors for doing notify*/
+#if 0
+    notify_nbdscr_arr = malloc(sizeof(armci_hdl_t)*armci_nproc);
+    for(i=0;i<armci_nproc;i++){
+      ARMCI_INIT_HANDLE(notify_nbdscr_arr[i]);
+      INIT_NB_HANDLE((notify_nbdscr_arr+i),PUT,i);
+      (notify_nbdscr_arr+i)->op  = PUT;
+      (notify_nbdscr_arr+i)->proc= proc;
+      (notify_nbdscr_arr+i)->bufid=NB_NONE;
+    }
+#endif
+    notify_gmc_arr = ARMCI_Malloc_local(sizeof(armci_gm_context_t *)*armci_nproc);
+    bzero(notify_gmc_arr,sizeof(armci_gm_context_t *)*armci_nproc);
+
 /************************End verify-wait code*******************************/
     /*printf("\n%d:in fence init",armci_me);fflush(stdout);*/
 
@@ -1820,6 +1835,7 @@ void armci_gm_fence(int p)
 int armci_inotify_proc(int proc)
 {
 int *remptr = verify_wait->recv_verify_arr[proc]+2*armci_me;
+int tag;
     if(SAMECLUSNODE(proc)){
 #ifdef MEM_FENCE
        MEM_FENCE;
@@ -1836,7 +1852,11 @@ int *remptr = verify_wait->recv_verify_arr[proc]+2*armci_me;
        armci_client_to_client_direct_send(proc,proc_gm->itmp,remptr,
 		                          2*sizeof(int));
 #else
-       armci_client_direct_send(proc,proc_gm->itmp,remptr,2*sizeof(int),NULL,0,
+       tag = GET_NEXT_NBTAG();
+       if (notify_gmc_arr[proc])
+         if(notify_gmc_arr[proc]->done == ARMCI_GM_SENDING)
+           armci_client_send_complete(notify_gmc_arr[proc],"armci_inotify_proc");
+       armci_client_direct_send(proc,proc_gm->itmp,remptr,2*sizeof(int),&notify_gmc_arr[proc],tag,
                                 NULL,NULL);
 #endif
        if(DEBUG_NOTIFY){
