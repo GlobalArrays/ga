@@ -8,9 +8,11 @@
 #include <mpp/shmem.h>
 #include "srftoc.h"
 
-#define MAXPROC 512 
+#define MAXPROC 512
 
 long pSync[_SHMEM_BCAST_SYNC_SIZE];  /* workspace needed for shmem system routines */
+long rSync[_SHMEM_REDUCE_SYNC_SIZE];  /* workspace needed for shmem system routines */
+#pragma _CRI cache_align pSync,rSync
 
 #ifdef EVENTLOG
 #include "evlog.h"
@@ -108,6 +110,7 @@ void t3d_gops_init()
   int node;
 
   for(node=0;node<_SHMEM_BCAST_SYNC_SIZE;node++)pSync[node] = _SHMEM_SYNC_VALUE;
+  for(node=0;node<_SHMEM_REDUCE_SYNC_SIZE;node++)rSync[node] = _SHMEM_SYNC_VALUE;
 }
 
 
@@ -217,7 +220,8 @@ void STATS_()
 #define GOP_BUF_SIZE  GOP_WORK_SIZE
 
 static double gop_work[GOP_WORK_SIZE];
-static double gop_buf[GOP_BUF_SIZE];
+static double gop_target_buf[GOP_BUF_SIZE];
+static double gop_source_buf[GOP_BUF_SIZE];
 
 
 
@@ -284,7 +288,8 @@ void DGOP_(ptype, x, pn, op)
      char *op;
 {
   double *work = gop_work;
-  double *y    = gop_buf;
+  double *target    = gop_target_buf;
+  double *source    = gop_source_buf;
   long nleft  = *pn;
   long buflen = MIN(nleft,GOP_BUF_SIZE); /* Try to get even sized buffers */
   long nbuf   = (nleft-1) / buflen + 1;
@@ -304,19 +309,22 @@ void DGOP_(ptype, x, pn, op)
   while (nleft) {
     long ndo = MIN(nleft, buflen);
 
-    MEMCPY(y,x,ndo*sizeof(double)); 
+    MEMCPY(source,x,ndo*sizeof(double)); 
+    barrier();
+
     if (strncmp(op,"+",1) == 0)
-      shmem_double_sum_to_all(y, x, ndo, 0, 0, procs, work, pSync);
+      shmem_double_sum_to_all(target, source, ndo, 0, 0, procs, work, rSync);
     else if (strncmp(op,"*",1) == 0)
-      shmem_double_prod_to_all(y, x, ndo, 0, 0, procs, work, pSync);
+      shmem_double_prod_to_all(target, source, ndo, 0, 0, procs, work, rSync);
     else if (strncmp(op,"max",3) == 0 || strncmp(op,"absmax",6) == 0)
-      shmem_double_max_to_all(y, x, ndo, 0, 0, procs, work, pSync);
+      shmem_double_max_to_all(target, source, ndo, 0, 0, procs, work, rSync);
     else if (strncmp(op,"min",3) == 0 || strncmp(op,"absmin",6) == 0)
-      shmem_double_min_to_all(y, x, ndo, 0, 0, procs, work, pSync);
+      shmem_double_min_to_all(target, source, ndo, 0, 0, procs, work, rSync);
     else
       Error("DGOP: unknown operation requested", (long) *pn);
 
-    MEMCPY(x,y,ndo*sizeof(double));
+    MEMCPY(x,target,ndo*sizeof(double));
+
     nleft -= ndo; x+= ndo;
   }
 }
@@ -328,7 +336,8 @@ void IGOP_(ptype, x, pn, op)
      char *op;
 {
   int *work  = (int*) gop_work;
-  int *y     = (int*) gop_buf;
+  int *target     = (int*) gop_target_buf;
+  int *source     = (int*) gop_source_buf;
   int nleft  = *pn;
   int buflen = MIN(nleft,GOP_BUF_SIZE); /* Try to get even sized buffers */
   int nbuf   = (nleft-1) / buflen + 1;
@@ -348,21 +357,23 @@ void IGOP_(ptype, x, pn, op)
   while (nleft) {
     int ndo = MIN(nleft, buflen);
 
-    MEMCPY(y,x,ndo*sizeof(int)); 
+    MEMCPY(source,x,ndo*sizeof(int)); 
+    barrier();
+
     if (strncmp(op,"+",1) == 0)
-      shmem_int_sum_to_all(y, x, ndo, 0, 0, procs, work, pSync);
+      shmem_int_sum_to_all(target, source, ndo, 0, 0, procs, work, rSync);
     else if (strncmp(op,"*",1) == 0)
-      shmem_int_prod_to_all(y, x, ndo, 0, 0, procs, work, pSync);
+      shmem_int_prod_to_all(target, source, ndo, 0, 0, procs, work, rSync);
     else if (strncmp(op,"max",3) == 0 || strncmp(op,"absmax",6) == 0)
-      shmem_int_max_to_all(y, x, ndo, 0, 0, procs, work, pSync);
+      shmem_int_max_to_all(target, source, ndo, 0, 0, procs, work, rSync);
     else if (strncmp(op,"min",3) == 0 || strncmp(op,"absmax",6) == 0)
-      shmem_int_min_to_all(y, x, ndo, 0, 0, procs, work, pSync);
+      shmem_int_min_to_all(target, source, ndo, 0, 0, procs, work, rSync);
     else if (strncmp(op,"or",2) == 0)
-      shmem_int_or_to_all(y, x, ndo, 0, 0, procs, work, pSync);
+      shmem_int_or_to_all(target, source, ndo, 0, 0, procs, work, rSync);
     else
       Error("IGOP: unknown operation requested", (long) *pn);
 
-    MEMCPY(x,y,ndo*sizeof(int));
+    MEMCPY(x,target,ndo*sizeof(int));
     nleft -= ndo; x+= ndo;
   }
 }
