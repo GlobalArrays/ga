@@ -1,4 +1,4 @@
-/* $Id: sr8k.c,v 1.4 2002-02-26 15:29:19 vinod Exp $
+/* $Id: sr8k.c,v 1.5 2002-03-13 17:09:35 vinod Exp $
  *
  * Hitachi SR8000 specific code 
  *
@@ -40,19 +40,22 @@ typedef struct{
 
 char *directbuffer;
 rcv_field_info_t *client_rcv_field_info;
-rcv_field_info_t *temp_client_rcv_field_info;
 int *client_ready_flag;
 int _sr8k_vector_req=0;
 int *client_pending_op_count, *server_pending_op_count;
+int *server_smallbuf_pending_count,*client_smallbuf_pending_count;
 char *serverpendingopflag;
 int clientpendingopbufdesc;
-
+int *_sr8k_smallbuf_insync;
+int *_sr8k_largebuf_insync;
 double *armci_clientmap_common_buffer;
 char *client_ack_buf;
 client_auth_t *client_auths;
 int *server_ready_flag; 
 static long reg_idlist[MAX_REGIONS]; /* keys for rdma/shmem segments on this node */
+static long creg_idlist[MAX_REGIONS];
 static int  reg_num=0;          /* number of rdma/shmem segments on this node */
+static int  creg_num=0;
 static reg_auth_t *rem_reg_list;/* info about rdma segments on every node */
 static reg_auth_t **rem_reg;    /* info about rdma segments on every node */
 static long *reg_id;            /* buffer to exchange info about new segments */
@@ -77,7 +80,6 @@ int sr8k_server_ready=0;
 
 #define BUF_TO_TCWD(bu) ((int *)((int *)bu-1))
 
-#define DO_SYNC 0
 
 /**TCW manipulation routines****************************************/
 
@@ -126,6 +128,12 @@ void armci_rdma_kick_tcw_put(int tcwd)
     if ( (rc=combuf_kick_tcw(tcwd, COMBUF_SEND_NOBLOCK)) != COMBUF_SUCCESS)
         armci_die("combuf_kick_tcw failed",rc);
 }
+void armci_rdma_kick_tcw_block(int tcwd)
+{
+    int rc ;
+    if ( (rc=combuf_kick_tcw(tcwd,0)) != COMBUF_SUCCESS)
+        armci_die("combuf_kick_tcw failed",rc);
+}
 
 void armci_rdma_put_wait(int tcwd, char *flag)
 {
@@ -134,7 +142,7 @@ void armci_rdma_put_wait(int tcwd, char *flag)
 }
 
       /**** Routines for GET ****/
-
+#if 0
 static int armci_rdma_make_gtcw(Cb_size_t soff, int src_dsc, 
                                 Cb_size_t doff, int dst_dsc, int bytes)
 {
@@ -160,13 +168,6 @@ static void armci_rdma_kick_tcw_get(int tcwd)
         armci_die("combuf_kick_tcw failed",rc);
 }
 
-static void armci_rdma_get_wait(int desc)
-{
-    int rc;
-    unsigned int recd;
-    if ((rc=combuf_spin_wait(desc,-1,&recd)) != COMBUF_SUCCESS)
-	                          armci_die("combuf_spin_wait failed",rc);
-}
 
       /**** Other routines ****/
 
@@ -175,6 +176,15 @@ static void armci_rdma_free_tcw(int tcwd)
     int rc;
     if ((rc=combuf_free_tcw(tcwd)) != COMBUF_SUCCESS)
         armci_die("combuf_free_tcw failed",rc);
+}
+#endif
+
+static void armci_rdma_get_wait(int desc)
+{
+    int rc;
+    unsigned int recd;
+    if ((rc=combuf_spin_wait(desc,-1,&recd)) != COMBUF_SUCCESS)
+	                          armci_die("combuf_spin_wait failed",rc);
 }
 
 
@@ -191,6 +201,7 @@ void armci_init_sr8k()
      int rc;
      Cb_object_t oid,coid;
      int i, bytes = armci_nclus*MAX_REGIONS*sizeof(reg_auth_t);
+	int client_bytes = armci_nproc*MAX_REGIONS*sizeof(reg_auth_t);
      long key;
      Cb_opt_region options;
 	double *client_buffers;
@@ -208,6 +219,7 @@ void armci_init_sr8k()
      if(!proc_reg)armci_die("proc_reg: malloc failed",0);
      bzero(proc_reg,armci_nclus*sizeof(int));
      
+     
      /* setup pointers for each smp cluster node */
      for(i = 0; i<armci_nclus; i++)rem_reg[i] = rem_reg_list + MAX_REGIONS*i;
 
@@ -220,8 +232,8 @@ void armci_init_sr8k()
 
      bytes = ROUND_UP_PAGE(BUFSIZE+FLAGSIZE+2*(LGET+FLAGSIZE));
      key   = BUF_KEY + armci_me-armci_master;
-     if(combuf_object_get(key, (Cb_size_t)bytes, COMBUF_OBJECT_CREATE, &oid)
-                       != COMBUF_SUCCESS) armci_die("combufget-1 buf failed",0);
+     if((rc=combuf_object_get(key, (Cb_size_t)bytes, COMBUF_OBJECT_CREATE, &oid))
+                       != COMBUF_SUCCESS) armci_die("combufget-1 buf failed",rc);
      if(combuf_map(oid, 0, (Cb_size_t)bytes, 0, (char**)&armci_internal_buffer)
                        != COMBUF_SUCCESS) armci_die("combuf map for buf failed",0);
      /* store the range of addresses taken by local buffer in rdma memory */
@@ -241,7 +253,6 @@ void armci_init_sr8k()
      memset(&options,0, sizeof(options));
      options.flag.addr = getbuf[0]+LGET;   /* set up the spin_wait flag */
      options.flag.size = FLAGSIZE;
-	if(DEBUG0)printf("\n%d:creating field key= %d\n",armci_me,(BUF_KEY + armci_me-armci_master));
 
      if( (rc=combuf_create_field(oid, getbuf[0], LGET, CLIENT_GETBUF_FIELDNUM,
                             &options, COMBUF_CHECK_FLAG, &descs[0])) != COMBUF_SUCCESS)
@@ -254,7 +265,7 @@ void armci_init_sr8k()
 	/*we now create client buffers and fields for them*/
 	bytes = ROUND_UP_PAGE(SMALL_MSG_SIZE*SMALL_BUFS_PER_PROCESS +FLAGSIZE*SMALL_BUFS_PER_PROCESS);
 	key = CLIENT_SMALLBUF_KEY+armci_me;	
-	temp_client_rcv_field_info = (rcv_field_info_t *)malloc(sizeof(rcv_field_info_t)*armci_nproc);
+
 	if((rc=combuf_object_get(key, (Cb_size_t)bytes, COMBUF_OBJECT_CREATE, &coid))
 			!= COMBUF_SUCCESS) armci_die("combufget buf failed",rc);
 	if((rc=combuf_map(coid, 0, (Cb_size_t)bytes, 0, (char**)&client_buffers))
@@ -268,7 +279,7 @@ void armci_init_sr8k()
 		options.flag.addr = client_buf_array[i]+SMALL_MSG_SIZE;   
      	options.flag.size = FLAGSIZE;
      	if((rc=combuf_create_field(coid, client_buf_array[i], SMALL_MSG_SIZE, fn+i,
-                            &options, COMBUF_CHECK_FLAG, &client_buf_desc_array[i])) != COMBUF_SUCCESS)
+                           /*&options*/0,0/*COMBUF_CHECK_FLAG*/, &client_buf_desc_array[i])) != COMBUF_SUCCESS)
 			armci_die("combuf create field for buf failed",rc);
 		
 	}	
@@ -279,15 +290,15 @@ void armci_init_sr8k()
 
 /*\ registers new rdma area - called in every call to ARMCI_Malloc
 \*/
-void armci_register_shmem(void *my_ptr, long size, long *idlist, long off)
+void armci_register_shmem(void *my_ptr, long size, long *idlist, long off,void *sptr)
 {
-     int i,dst,found=0;
+     int i=0,dst,found=0,cfound=0;
      long id = idlist[2];
      long reg_size=0;
 
      if(DEBUG0){printf("%d: registering id=%ld size=%ld\n",armci_me,id,size);
                 fflush(stdout);}
-     if(!reg_num) armci_init_sr8k();
+     //if(!reg_num) armci_init_sr8k();
 
      /* find if we allocated a new region, and if yes how much memory */
      if(size){
@@ -306,8 +317,10 @@ void armci_register_shmem(void *my_ptr, long size, long *idlist, long off)
      }
 
      if(DEBUG0){
-        printf("%d: regist id=%ld found=%d size=%ld\n",armci_me,id,found,reg_size);
-        fflush(stdout);}
+        printf("%d: regist id=%ld found=%d size=%ld reg_num=%d\n",\
+			armci_me,id,found,reg_size,reg_num);
+        fflush(stdout);
+	}
 
      bzero(reg_id,3*armci_nclus*sizeof(long));
 
@@ -315,7 +328,11 @@ void armci_register_shmem(void *my_ptr, long size, long *idlist, long off)
      if(armci_me==armci_master){
         if(!found && size){
            reg_id[3*armci_clus_me]=id;
+#if 0
            reg_id[3*armci_clus_me+1]=(long)armci_shmem_reg_ptr(i);
+#else
+           reg_id[3*armci_clus_me+1]=(long)((char *)sptr-off);
+#endif
            reg_id[3*armci_clus_me+2]=reg_size;
         }
         /* master processes exchange region data */
@@ -324,8 +341,8 @@ void armci_register_shmem(void *my_ptr, long size, long *idlist, long off)
 
      /* make the data available within each cluster smp node */
      armci_msg_clus_brdcst(reg_id,3*armci_nclus*sizeof(long));
-
-     dst = armci_clus_me; 
+     
+	dst = armci_clus_me; 
      for(i = 0; i < armci_nclus; i++){
          void *ptr;
          long len;
@@ -386,6 +403,7 @@ void armci_register_shmem(void *my_ptr, long size, long *idlist, long off)
 
 /*\ find shmem region corresponding to dst address
 \*/
+
 int armci_find_shmem( int node, char *ptr, Cb_size_t *off)
 {
     char *ps,*pe;
@@ -440,6 +458,53 @@ unsigned int ev;
     return ev;
 }
 
+/*\ loop to wait for ack's
+\*/
+#define DEBUGACK 0
+int ackcount;
+void _sr8k_wait_for_ack(int node){
+	int rc;
+	unsigned int recvd;
+	if(!_sr8k_largebuf_insync[node])
+		while(server_pending_op_count[node]!=client_pending_op_count[node]){
+			rc=combuf_spin_wait(clientpendingopbufdesc,10,&recvd);
+			if(DEBUGACK)printf("\n%d:wait_largebuf_ack expected=%d actual=%d\n",armci_me,client_pending_op_count[node],server_pending_op_count[node]);   
+		}
+	_sr8k_largebuf_insync[node]=1;
+	if(!_sr8k_smallbuf_insync[node])
+    	while(server_smallbuf_pending_count[node]!=client_smallbuf_pending_count[node]){
+           rc=combuf_spin_wait(clientpendingopbufdesc,10,&recvd); 
+			if(DEBUGACK)printf("\n%d:wait_smallbuf_ack actual=%d expected=%d\n",armci_me,server_smallbuf_pending_count[node],client_smallbuf_pending_count[node]);   
+          }
+
+	_sr8k_smallbuf_insync[node]=1;
+	if(DEBUGACK)printf("\n%d:OUT of buf ack\n",armci_me);
+}
+
+void _sr8k_wait_smallbuf_ack(int node){
+	int rc;
+	unsigned int recvd;
+	if(_sr8k_smallbuf_insync[node])return;
+	while(server_smallbuf_pending_count[node]!=client_smallbuf_pending_count[node]){
+    		rc=combuf_spin_wait(clientpendingopbufdesc,10,&recvd);
+			if(DEBUGACK)printf("\n%d:wait_smallbuf_ack actual=%d expected=%d\n",armci_me,server_smallbuf_pending_count[node],client_smallbuf_pending_count[node]);   
+	}
+	_sr8k_smallbuf_insync[node]=1;
+	if(DEBUGACK)printf("\n%d:OUT of smallbuf ack\n",armci_me);
+}
+void _sr8k_wait_largebuf_ack(int node){
+	int rc;
+	unsigned int recvd;
+	if(_sr8k_largebuf_insync[node])return;
+	if(DEBUGACK)printf("\n%d:IN largebuf ack\n",armci_me);
+	while(server_pending_op_count[node]!=client_pending_op_count[node]){
+		rc=combuf_spin_wait(clientpendingopbufdesc,10,&recvd);
+		if(DEBUGACK)printf("\n%d:wait_largebuf_ack expected=%d actual=%d\n",armci_me,client_pending_op_count[node],server_pending_op_count[node]);   
+	}
+	_sr8k_largebuf_insync[node]=1;	
+	if(DEBUGACK)printf("\n%d:OUT of largebuf ack.....\n",armci_me);
+}
+
 /*\ basic get operation from combuf desc field at specified offset
  *  (non-blocking)
 \*/
@@ -489,12 +554,7 @@ int found =0, i, node = armci_clus_id(proc);
 int master = armci_clus_info[node].master;
 char *ptr=(char*)dst;
 int desc, tcwd;
-int rc;
-unsigned int recvd;
-	if(DO_SYNC){
-		while(server_pending_op_count[node]!=client_pending_op_count[node])
-			rc=combuf_spin_wait(clientpendingopbufdesc,-1,&recvd);
-	}
+	_sr8k_wait_for_ack(node);	
     if(DEBUG0){
        printf("%d:put s=%p d=%p p=%d\n",armci_me,src,dst,proc); fflush(stdout);}
 
@@ -561,12 +621,7 @@ int found =0, i, node = armci_clus_id(proc);
 int master = armci_clus_info[node].master;
 char *ptr=(char*)src;
 int desc;
-int rc;
-unsigned int recvd;
-	if(DO_SYNC){
-		while(server_pending_op_count[node]!=client_pending_op_count[node])
-			rc=combuf_spin_wait(clientpendingopbufdesc,-1,&recvd);
-	}
+	 _sr8k_wait_for_ack(node);
     if(DEBUG0){
        printf("%d:get s=%p d=%p p=%d\n",armci_me,src,dst,proc); fflush(stdout);}
 
@@ -640,9 +695,9 @@ unsigned int recvd;
 void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
                                                    void* dst_ptr,int dst_stride)
 {
-int _j;
+int _j,node = armci_clus_id(proc);
 char *ps=src_ptr, *pd=dst_ptr;
-
+  _sr8k_wait_for_ack(node);
   if (2*bytes > BUFSIZE) {
 
     /* 
@@ -720,11 +775,15 @@ void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
 {
 int _j;
 char *ps=src_ptr, *pd=dst_ptr;
+    if(DEBUG0){
+       printf("%d:get s=%p d=%p p=%d\n",armci_me,src_ptr,dst_ptr,proc); fflush(stdout);}
       for (_j = 0;  _j < count;  _j++){
           armcill_get(ps, pd, bytes, proc);
           ps += src_stride;
           pd += dst_stride;
       }
+    if(DEBUG0){
+       printf("%d:get s=%p d=%p p=%d\n",armci_me,src_ptr,dst_ptr,proc); fflush(stdout);}
 }
 
 
@@ -737,31 +796,28 @@ static sr8k_mutex_t *_mutex_array;
 sr8k_mutex_t *_server_mutex_array;
 
 void server_set_mutex_array(char *tmp){
-int rc,size,auth,i,dst;
+int rc,size,auth,i,dst,nproc=armci_clus_info[armci_clus_me].nslave;
 Cb_object_t oid;
 Cb_node_rt remote;
 char *temp;
 	size = ROUND_UP_PAGE(sizeof(sr8k_mutex_t)*armci_nclus);
-	 if((rc=combuf_object_get(MUTEX_ARRAY_KEY, (Cb_size_t)size, 0, &oid))
-                       != COMBUF_SUCCESS) armci_die("creat combufget fail",rc);
-      if((rc=combuf_map(oid, 0, (Cb_size_t)size, COMBUF_COMMON_USE, &temp))
-                       != COMBUF_SUCCESS) armci_die("combuf map failed",rc);
+	if((rc=combuf_object_get(MUTEX_ARRAY_KEY, (Cb_size_t)size, 0, &oid))
+    		!= COMBUF_SUCCESS) armci_die("creat combufget fail",rc);
+    if((rc=combuf_map(oid, 0, (Cb_size_t)size, COMBUF_COMMON_USE, &temp))
+			!= COMBUF_SUCCESS) armci_die("combuf map failed",rc);
 
 	_server_mutex_array = (sr8k_mutex_t*)temp;
-	dst = armci_clus_me;	
-	for(i=0;i<armci_nclus;i++){
-	dst++;dst%=armci_nclus;
-	bzero( &remote, sizeof(remote) );
-     remote.type = CB_NODE_RELATIVE;
-     remote.ndes = _armci_group;
-     remote.node = dst;
-	_mutex_array[dst].off = _server_mutex_array[dst].off;
-/*potential problem ..has to be modified to take in a static key*/
-/*****************************************************************************************/
-	rc = combuf_target( (Cb_node *)&remote, sizeof(remote), 1961, 0, -1, &auth);
-/*****************************************************************************************/
-         if(rc != COMBUF_SUCCESS) armci_die("combuf_target:",rc);
-	_mutex_array[dst].desc = auth;
+	dst = armci_clus_me;
+	for(i=0;i<armci_nclus;i++){	
+    	bzero( &remote, sizeof(remote));
+    	remote.type = CB_NODE_RELATIVE;
+    	remote.ndes = _armci_group;
+		dst++;dst%=armci_nclus;
+    	remote.node = dst;
+		rc = combuf_target( (Cb_node *)&remote, sizeof(remote), 1961, 0, -1, &auth);
+		if(rc != COMBUF_SUCCESS)armci_die("combuf_target:",rc);
+    	_mutex_array[dst].off  = _server_mutex_array[armci_clus_me].off; 
+    	_mutex_array[dst].desc = auth;
 	}
 }
 /*\ allocate the specified number of mutexes on the current SMP node
@@ -772,24 +828,11 @@ int bytes = num*sizeof(int);
 char *ptr;
 void *myptr;
 Cb_object_t oid;
-int **locks = (int**)malloc(armci_nproc*sizeof(int*));
-void **ptr_arr=(void **)malloc(armci_nproc*sizeof(void*));
-int rc,i,size;
+int nproc = armci_clus_info[armci_clus_me].nslave;
+int rc,i,size,auth,dst;
 long idlist[SHMIDLEN];
+Cb_node_rt remote;
 
-    if(armci_me != armci_master)bytes=0;
-	size = ROUND_UP_PAGE(sizeof(sr8k_mutex_t)*armci_nclus);
-	if(armci_me==armci_master){			
-		if(combuf_object_get(MUTEX_ARRAY_KEY, (Cb_size_t)size, COMBUF_OBJECT_CREATE, &oid)
-                       != COMBUF_SUCCESS) armci_die("attaching combufget fail",0);
-     	if(combuf_map(oid, 0, (Cb_size_t)size, COMBUF_COMMON_USE, &ptr)
-                       != COMBUF_SUCCESS) armci_die("combuf map failed",0);
-		_server_mutex_array = (sr8k_mutex_t*)ptr;
-   	 }
-	_mutex_array = (sr8k_mutex_t *)malloc(sizeof(sr8k_mutex_t)*armci_nclus);
-    if(!_mutex_array)
-         armci_die("armcill_allocate_locks: malloc failed",armci_nclus);
-    if(!locks) armci_die("armcill_allocate_locks: malloc 2 failed",armci_nproc);
 	if(armci_me==armci_master){
 		myptr=Create_Shared_Region(idlist+1, bytes, idlist);	
 	}
@@ -797,34 +840,43 @@ long idlist[SHMIDLEN];
 	if(armci_me != armci_master){
 		myptr=Attach_Shared_Region(idlist+1, bytes, idlist[0]);
 	}
-	ptr_arr[armci_me]=myptr;
-    armci_register_shmem(myptr,size,idlist+1,idlist);
-	locks[armci_me]=(int *)myptr;
-	armci_msg_barrier();
-	armci_exchange_address(ptr_arr, armci_nproc);	
-	if(DEBUG0)for(i=0;i<armci_nproc;i++){printf("\n%d:mpptr[%d]=%p\n",armci_me,i,ptr_arr[i]);fflush(stdout);}
-     ptr_arr[armci_me]=myptr;
-    if(bytes)bzero(locks[armci_me],bytes);
-
-    for(i=0; i< armci_nclus; i++){
-        char *ps = (char*)ptr_arr[armci_clus_info[i].master];
-        _mutex_array[i].off  = ps - rem_reg[i][0].ptr;
-        _mutex_array[i].desc = rem_reg[i][0].gauth;
-	   if(armci_me==armci_master){
-			_server_mutex_array[i].off  = ps - rem_reg[i][0].ptr;
-			_server_mutex_array[i].desc = rem_reg[i][0].gauth;
-	   }
-        if(DEBUG0){printf("%d:allocate %d locks %p,%p %p %p %d i=%d\n",armci_me,num,
-                   locks[0],locks[1], ps, rem_reg[i][0].ptr,rem_reg[i][0].size,i);
-                   fflush(stdout);
-                  }
-        if(_mutex_array[i].off > rem_reg[i][0].size) /*verify if in 1st region*/
-                           armci_die2("armcill_allocate_locks:offset error",rem_reg[i][0].size,_mutex_array[i].off);
-    }
-    armci_msg_barrier();
+	
+	if(armci_me==armci_master){			
+		size = ROUND_UP_PAGE(sizeof(sr8k_mutex_t)*armci_nclus);
+		if(combuf_object_get(MUTEX_ARRAY_KEY, (Cb_size_t)size,\
+			 	COMBUF_OBJECT_CREATE, &oid)!= COMBUF_SUCCESS)
+			armci_die("attaching combufget fail",0);
+     	if(combuf_map(oid, 0, (Cb_size_t)size, COMBUF_COMMON_USE, &ptr)
+                       != COMBUF_SUCCESS) armci_die("combuf map failed",0);
+		_server_mutex_array = (sr8k_mutex_t*)ptr;
+   	}
+	_mutex_array = (sr8k_mutex_t *)malloc(sizeof(sr8k_mutex_t)*armci_nclus);
+    if(!_mutex_array)
+         armci_die("armcill_allocate_locks: malloc failed",armci_nclus);
+	/*get authorization to do local swap*/
+	dst = armci_clus_me;
+	for(i=0;i<armci_nclus;i++){	
+    	bzero( &remote, sizeof(remote));
+    	remote.type = CB_NODE_RELATIVE;
+    	remote.ndes = _armci_group;
+		dst++;dst%=armci_nclus;
+    	remote.node = dst;
+		rc = combuf_target( (Cb_node *)&remote, sizeof(remote), 1961, 0, -1, &auth);
+		if(rc != COMBUF_SUCCESS)armci_die("combuf_target:",rc);
+    	_mutex_array[dst].off  = idlist[0];
+    	_mutex_array[dst].desc = auth;
+		if(armci_me==armci_master){
+			_server_mutex_array[dst].off  = idlist[0];
+			_server_mutex_array[dst].desc = 0;
+		}
+    	if(DEBUG0){
+			printf("%d:allocate %d locks %p \n",armci_me,num,myptr);fflush(stdout);
+		}
+    	if(_mutex_array[0].off >armci_shmem_reg_size(0,idlist[3])) 
+			armci_die("armcill_allocate_locks:offset error",_mutex_array[i].off);
+	}
+	armci_msg_clus_brdcst(idlist, SHMIDLEN*sizeof(long));
 }
-
-
 
 /*\ lock specified mutex on node where process proc is running
 \*/
@@ -833,13 +885,15 @@ void armcill_lock(int mutex, int proc)
 #if 1
 int desc,node = armci_clus_id(proc);
 Cb_size_t off;
-
+	//if(node!=armci_clus_me)armci_die("only local locks are implementer",node);
     off = _mutex_array[node].off + mutex*sizeof(int);
     desc = _mutex_array[node].desc;
     if(DEBUG0){
-      printf("%d: lock %d on %d off=%d\n",armci_me,mutex,proc, off);fflush(stdout);}
-//    while(combuf_swap(desc,off,1));
-    while(combuf_cswap(desc,off,1,0,2)); /* wait 2ms for condition to be met*/ 
+		printf("%d: lock %d on %d off=%d desc=%d\n",armci_me,mutex,proc, off,desc);
+		fflush(stdout);
+	}
+    while(combuf_swap(desc,off,1));
+    /*while(combuf_cswap(desc,off,1,0,-1));*/ /* wait 2ms for condition to be met*/ 
 #endif
 }
 
@@ -851,80 +905,99 @@ void armcill_unlock(int mutex, int proc)
 #if 1
 int desc,node = armci_clus_id(proc);
 Cb_size_t off;
-
+	//if(node!=armci_clus_me)armci_die("only local locks are implementer",node);
     off = _mutex_array[node].off + mutex*sizeof(int);
     desc = _mutex_array[node].desc;
     combuf_swap(desc,off,0);
+    if(DEBUG0){
+      printf("%d: unlock %d on %d off=%d desc=%d\n",armci_me,mutex,proc, off,desc);fflush(stdout);}
 #endif
 }
 
 
 char *client_direct_buffer;
 char **client_directbuf_flag;
-/*Here we create the common area that is used by the client and server to communicate. This
- *common area contains  an array of structures called rcv_field_info_t each of which holds
- *a pointer, an authorization,size and a key for each of the server buffers created.
- *We also create an array of similar structures for the client node. A structure array created
- *for the client is only updated by the client and similarly, a structure array created for the 
- *server is only updated by server. The common area also contains two integers each of which is 
- *used as a ready flag
-*/ 
+
 void armci_init_connections(){
 int size,rc;
 Cb_object_t moid;
 Cb_opt_region options;
 int mykey = CLIENT_SERV_COMMON_CB_KEY;
-size = ROUND_UP_PAGE(sizeof(rcv_field_info_t)*(armci_nproc+armci_nclus)+(armci_nproc+1)*sizeof(int));
+	armci_init_sr8k();
+	size = ROUND_UP_PAGE(sizeof(rcv_field_info_t)*(armci_nproc+armci_nclus)\
+			+(armci_nproc+1)*sizeof(int));
 	if(armci_me==armci_master){
-		if(rc=(combuf_object_get(mykey, (Cb_size_t)size,COMBUF_OBJECT_CREATE,&moid))
-                       != COMBUF_SUCCESS) armci_die("armci_init_connection-1 combufget buf failed",rc);
-    		if((rc=combuf_map(moid, 0, (Cb_size_t)size, COMBUF_COMMON_USE, (char**)&armci_clientmap_common_buffer))
-                       != COMBUF_SUCCESS) armci_die("combuf map int amrci_init_connection-1 for buf failed",rc);
+		if(rc=(combuf_object_get(mykey, (Cb_size_t)size,COMBUF_OBJECT_CREATE,\
+				   &moid))!= COMBUF_SUCCESS) 
+			armci_die("armci_init_connection-1 combufget buf failed",rc);
+    	if((rc=combuf_map(moid, 0, (Cb_size_t)size, COMBUF_COMMON_USE,\
+				    (char**)&armci_clientmap_common_buffer))!= COMBUF_SUCCESS)
+				armci_die("combufmap init_connection-1 failed",rc);
 	}
 	armci_msg_barrier();
 	if(armci_me!=armci_master){
-		if((rc=combuf_object_get(mykey, (Cb_size_t)size,0,&moid))
-                       != COMBUF_SUCCESS) armci_die("armci_init_connection-3 combufget buf failed",rc);
-    		if((rc=combuf_map(moid, 0, (Cb_size_t)size, COMBUF_COMMON_USE, (char**)&armci_clientmap_common_buffer))
-                       != COMBUF_SUCCESS) armci_die("combuf map int amrci_init_connection-2 for buf failed",rc);
+		if((rc=combuf_object_get(mykey, (Cb_size_t)size,0,&moid))!= COMBUF_SUCCESS) 
+			armci_die("armci_init_connection-3 combufget buf failed",rc);
+    	if((rc=combuf_map(moid, 0, (Cb_size_t)size, COMBUF_COMMON_USE,\
+			(char**)&armci_clientmap_common_buffer))!= COMBUF_SUCCESS) 
+			armci_die("combuf map int amrci_init_connection-2 for buf failed",rc);
 
 	}
 	server_ready_flag = (int *)armci_clientmap_common_buffer;
 	client_ready_flag = (int *)armci_clientmap_common_buffer+1;
  	serv_rcv_field_info = (rcv_field_info_t *)((int *)armci_clientmap_common_buffer+armci_nproc+1);
 	client_rcv_field_info = serv_rcv_field_info + armci_nclus;	
-	
+	_sr8k_smallbuf_insync=(int*)calloc(sizeof(int),armci_nclus);	
+	if(!_sr8k_smallbuf_insync)armci_die("malloc for _sr8k_smallbuf_insync failed",0);
+	_sr8k_largebuf_insync=(int*)calloc(sizeof(int),armci_nclus);	
+	if(!_sr8k_largebuf_insync)armci_die("malloc for _sr8k_largebuf_insync failed",0);
 	_armci_buf_init(); /*initialize the request buffers(not used for small messages)*/
 }
+
+
 char **client_send_buffer;
+int *client_send_bufdesc;
 int clientgetdirectbufdesc;
 char *clientgetdirectbufflag;
+
+
 char *_sr8k_armci_buf_init(int size){
 int rc,i,bufextsize,origsize;
 Cb_object_t moid;
 char *returnbuf;
 Cb_opt_region options;
 	client_directbuf_flag = (char **)malloc(sizeof(char *)*numofbuffers);
-     client_send_buffer = (char **)malloc(sizeof(char *)*numofbuffers);
+    client_send_buffer = (char **)malloc(sizeof(char *)*numofbuffers);
+	client_send_bufdesc = (int *)malloc(sizeof(int)*numofbuffers);
+	client_pending_op_count=(int *)malloc(sizeof(int)*armci_nproc);
+	client_smallbuf_pending_count=(int *)malloc(sizeof(int)*armci_nproc);
+    if(!client_directbuf_flag || !client_send_buffer || ! client_send_bufdesc
+        || !client_pending_op_count || !client_smallbuf_pending_count)
+        armci_die("_sr8k_armci_buf_init: malloc failed",0);
+
 	origsize=size;
-	size=ROUND_UP_PAGE(size+(numofbuffers+1)*FLAGSIZE+armci_nproc*sizeof(int));
+	size=ROUND_UP_PAGE(size+(numofbuffers+1)*FLAGSIZE+2*armci_nproc*sizeof(int));
 	if(rc=(combuf_object_get(CLIENT_DIRECTBUF_KEY+armci_me, (Cb_size_t)size,COMBUF_OBJECT_CREATE,&moid))
                        != COMBUF_SUCCESS) armci_die("_sr8k_armci_buf_init combufget buf failed",rc);
-     if((rc=combuf_map(moid, 0, (Cb_size_t)size,COMBUF_COMMON_USE,(char**)&client_direct_buffer))
+    if((rc=combuf_map(moid, 0, (Cb_size_t)size,COMBUF_COMMON_USE,(char**)&client_direct_buffer))
                        != COMBUF_SUCCESS) armci_die("combuf map int amrci_init_connection-1 for buf failed",rc);
 
+     if(!client_direct_buffer)  armci_die("_sr8k_armci_buf_init: map failed",0);
 
 	/*create a field to communicate pending send/acc counts*/
 	server_pending_op_count=(int *)(client_direct_buffer+origsize+(numofbuffers+1)*FLAGSIZE);
+	server_smallbuf_pending_count=server_pending_op_count+armci_nproc;
 	memset(&options, 0, sizeof(options));
-     options.flag.addr = client_direct_buffer+origsize+numofbuffers*FLAGSIZE;
-     serverpendingopflag = options.flag.addr;
-     options.flag.size = FLAGSIZE;
-     if((rc=combuf_create_field(moid,(client_direct_buffer+origsize+(numofbuffers+1)*FLAGSIZE),(Cb_size_t)(armci_nproc*sizeof(int)),
+    options.flag.addr = client_direct_buffer+origsize+numofbuffers*FLAGSIZE;
+    serverpendingopflag = options.flag.addr;
+    options.flag.size = FLAGSIZE;
+    if((rc=combuf_create_field(moid,(client_direct_buffer+origsize+(numofbuffers+1)*FLAGSIZE),(Cb_size_t)(2*armci_nproc*sizeof(int)),
                     CLIENT_PENDING_OP_FIELDNUM,&options,COMBUF_CHECK_FLAG,&clientpendingopbufdesc)) != COMBUF_SUCCESS)
         armci_die("combuf create field for pending op count",rc);
-	client_pending_op_count=(int *)malloc(sizeof(int)*armci_nclus);
-	for(i=0;i<armci_nproc;i++){client_pending_op_count[i]=0;server_pending_op_count[i]=0;}
+	for(i=0;i<armci_nproc;i++){
+		client_pending_op_count[i]=0;server_pending_op_count[i]=0;
+		client_smallbuf_pending_count[i]=0;server_smallbuf_pending_count[i]=0;
+	}
 
 
 	/*create one large field out of the whole client buffer to be used when doing a get*/
@@ -941,11 +1014,12 @@ Cb_opt_region options;
 	bufextsize = (origsize-64)/numofbuffers;
 	for(i=0;i<numofbuffers;i++){
 		memset(&options, 0, sizeof(options));
-     	options.flag.addr =  returnbuf+origsize-64+i*FLAGSIZE; /*NOTusing buf_pad_t as flag for allignment issues*/
+     	options.flag.addr =  returnbuf+origsize-64+i*FLAGSIZE; 
+		/*NOTusing buf_pad_t as flag for allignment issues*/
 		client_directbuf_flag[i]= options.flag.addr;
      	options.flag.size = FLAGSIZE;
   		if((rc=combuf_create_field(moid,(returnbuf+i*bufextsize+sizeof(BUFID_PAD_T)+sizeof(BUF_EXTRA_FIELD_T)),(Cb_size_t)(MSG_BUFLEN_SMALL),
-                    CLIENT_DIRECTBUF_FIELDNUM+armci_me+i,&options, COMBUF_CHECK_FLAG,&cbufdesc)) != COMBUF_SUCCESS)
+                    CLIENT_DIRECTBUF_FIELDNUM+armci_me+i,/*&options*/0,0/*COMBUF_CHECK_FLAG*/,&client_send_bufdesc[i])) != COMBUF_SUCCESS)
 		armci_die("_sr8k_armci_buf_init combuf_create_fieldfailed",rc);
 		*((int *)(returnbuf+i*bufextsize+sizeof(BUFID_PAD_T)))=-1;
 		client_send_buffer[i] = (returnbuf+i*bufextsize+sizeof(BUFID_PAD_T)+sizeof(BUF_EXTRA_FIELD_T));
@@ -960,7 +1034,8 @@ int i;
 int count;
 	/*we need to reset buffers after every get*/
 	if(DEBUG0)printf("\n%d: in _sr8k_armci_buf_release \n",armci_me);
-	if((char *)buf == client_buf_array[0] && ((request_header_t *)buf)->operation==GET && ((request_header_t *)buf)->format==STRIDED){
+	if((char *)buf == client_buf_array[0]){ 
+	  if(((request_header_t *)buf)->operation==GET && ((request_header_t *)buf)->format==STRIDED){
 		count= ((request_header_t *)buf)->bytes+sizeof(request_header_t);
 		count=count/MSG_BUFLEN_SMALL+(count%MSG_BUFLEN_SMALL)?1:0;
 		
@@ -968,134 +1043,198 @@ int count;
 			*((int *)(client_send_buffer[i]-sizeof(BUF_EXTRA_FIELD_T))) = -1;
 			*((BUFID_PAD_T *)(client_send_buffer[i]-sizeof(BUF_EXTRA_FIELD_T)-sizeof(BUFID_PAD_T))) = 0;
 		}
-		_armci_buf_release(client_send_buffer[0]);
-	} 
+	   _armci_buf_release(client_send_buffer[0]);
+	  } 
+	  else {
+	  	
+	  }
+	}
 	else 
 		_armci_buf_release(buf);
 
 }
+char *_sr8k_get_client_small_buf(int *tcwd,int dst){
+	_sr8k_wait_smallbuf_ack(dst);
+	*tcwd=client_auths[dst].small_buf_tcwd[0];
+	client_smallbuf_pending_count[dst]++;
+	_sr8k_smallbuf_insync[dst]=0;	
+	return(client_buf_array[0]);
+}
+
+int _sr8k_using_smallbuf;
+char *_sr8k_armci_getbuf_ptr;
+long _sr8k_armci_getbuf_ofs;
+
 char *_sr8k_armci_buf_get(int size, int op,int proc){
 char *tmp;	
-int b_ind;
-  if(!_sr8k_vector_req){
+int b_ind,dst,rc;
+unsigned int recvd;
+#if defined(PIPE_BUFSIZE___)
+	if(!_sr8k_vector_req)
 	if(op==GET && size>2*PIPE_MIN_BUFSIZE){
-		tmp = _armci_buf_get(size<700000?700000:size,op,proc);
-		tmp = client_buf_array[0];
-		current_clientbuf_tcwd=-9999;
+		tmp = _armci_buf_get(size,op,proc);
+        _sr8k_armci_getbuf_ptr=tmp;
+        _sr8k_armci_getbuf_ofs=(tmp-client_direct_buffer);
+    	tmp = _sr8k_get_client_small_buf(&current_clientbuf_tcwd,armci_clus_id(proc));
+  		return(tmp);
+    }
+#endif
+	if(size<SMALL_MSG_SIZE){
+		if(proc<0)proc=-proc+SOFFSET;  
+		_sr8k_using_smallbuf=1;
+		tmp = _sr8k_get_client_small_buf(&current_clientbuf_tcwd,armci_clus_id(proc));  
 	}
 	else{
 		tmp = _armci_buf_get(size,op,proc);
-		b_ind = _sr8k_buffer_index;
-		if(proc<0)proc=-proc+SOFFSET;
-		if(DEBUG0){printf("\n%d:_sr8k_armci_buf_get got ptr=%p current_clientbuf_tcwd=%d,b_ind=%d dst=%d \n",
-			armci_me,tmp,current_clientbuf_tcwd,b_ind,proc); fflush(stdout);}
-		current_clientbuf_tcwd=client_auths[armci_clus_id(proc)].large_buf_tcwd[b_ind];	
-		if(DEBUG0)printf("\n%d:_sr8k_armci_buf_get got ptr=%p current_clientbuf_tcwd=%d,b_ind=%d dst=%d \n",
-			armci_me,tmp,current_clientbuf_tcwd,b_ind,armci_clus_id(proc)); 
-		*((int *)(tmp-sizeof(BUF_EXTRA_FIELD_T))) = current_clientbuf_tcwd;	
-	}
-  }
-  else {
-          tmp = _armci_buf_get(size,op,proc);
-		b_ind = _sr8k_buffer_index;
+          b_ind = _sr8k_buffer_index;
+		_sr8k_using_smallbuf=0;	
           if(proc<0)proc=-proc+SOFFSET;
           current_clientbuf_tcwd=client_auths[armci_clus_id(proc)].large_buf_tcwd[b_ind];
-          if(DEBUG0)printf("\n%d:_sr8k_armci_buf_get got ptr=%p current_clientbuf_tcwd=%d,b_ind=%d dst=%d \n",armci_me,tmp,current_clientbuf_tcwd,b_ind,armci_clus_id(proc));
-          
-		_sr8k_vector_req=0;
-  }
-  return(tmp);
+          *((int *)(tmp-sizeof(BUF_EXTRA_FIELD_T))) = current_clientbuf_tcwd;
+	}	
+     _sr8k_armci_getbuf_ptr=tmp;
+     _sr8k_armci_getbuf_ofs=(tmp-client_direct_buffer);
+	if(DEBUG0){printf("\n%d: got buf %p  _sr8k_buffer_ind=%d size=%d op=%d\n",armci_me,tmp,_sr8k_buffer_index,size,op);fflush(stdout);}
+     return(tmp);
 }
 
-int _sr8k_buffer_index;
-int buf_index=0;char *previousflag;int previousbuf=-1;char *previousbufptr;
+int _sr8k_buffer_index,_sr8k_pipeget_req=0;
+int buf_index=0;
+int previousbuf=-1;
+
 int armci_send_req_msg(int proc, void *buf, int bytes){
 int dst,tcwd,i,rc;
 unsigned int recvd;
 request_header_t *msginfo=(request_header_t *)buf;
 	dst = armci_clus_id(proc);	
-	msginfo->tag.data_ptr = (client_direct_buffer);
-	msginfo->tag.ack=0;
-	if(msginfo->operation==GET && msginfo->format==STRIDED){
-		tcwd=client_auths[dst].small_buf_tcwd[0];
+	if(DEBUG0)printf("\n%d in send_req bytes=%d op=%d ackcount=%d to %d\n",armci_me,bytes,msginfo->operation,client_pending_op_count[dst],dst);
+	if(msginfo->operation==ACK){
+		client_smallbuf_pending_count[dst]--;
+		for(i=0;i<armci_nclus;i++){
+			_sr8k_wait_for_ack(i);
+		}
+		return(0);
 	}
-	else
-		tcwd=current_clientbuf_tcwd;
-	if(msginfo->operation==PUT || ACC(msginfo->operation)){
-		//buf_index = *((int*)((char *)buf-sizeof(BUF_EXTRA_FIELD_T)-sizeof(BUFID_PAD_T)));
-		buf_index = _sr8k_buffer_index;	
+	tcwd=current_clientbuf_tcwd;
+	buf_index = _sr8k_buffer_index;	
+	if(!_sr8k_pipeget_req && msginfo->operation==GET){
+		_sr8k_wait_largebuf_ack(dst);
+		if(!_sr8k_using_smallbuf)
+			_sr8k_wait_smallbuf_ack(dst);
+	}
+	if((msginfo->operation==PUT || ACC(msginfo->operation))&&bytes>SMALL_MSG_SIZE){
 		if(previousbuf!=-1){
 			_armci_buf_ensure_one_outstanding_op_per_proc(buf,proc);
-			//_armci_buf_complete_index(previousbuf,0);
-			//armci_rdma_put_wait(previousbuf,previousflag);	
-			//*((int *)((char *)previousbufptr-sizeof(BUF_EXTRA_FIELD_T)))=-1;
 		}
-		previousflag=client_directbuf_flag[buf_index];
-		previousbuf=_sr8k_buffer_index;previousbufptr=(char *)buf;
-		//_armci_buf_ensure_one_outstanding_op_per_proc(buf,proc);
-		if(DO_SYNC){
-		while(client_pending_op_count[dst]!=server_pending_op_count[dst])
-			rc=combuf_spin_wait(clientpendingopbufdesc,10,&recvd);
-		}
+		previousbuf=_sr8k_buffer_index;
 		client_pending_op_count[dst]++;
+		_sr8k_largebuf_insync[dst]=0;
 		msginfo->tag.ack=client_pending_op_count[dst];
-		while(combuf_cswap(client_auths[armci_clus_id(proc)].get_auth,((SMALL_MSG_SIZE*SMALL_MSG_NUM)+buf_index*(LARGE_MSG_SIZE/4)),10+armci_me,0,2));
 	}
-	if(DEBUG1){printf("\n%d: kicking TCW %d largetcw[dst]0]=%d to dst=%d bufind j=%d tagdata_ptr=%p sending it to=%d, bufptr=%p",armci_me,tcwd,client_auths[dst].large_buf_tcwd[0],dst,buf_index,client_direct_buffer,msginfo->to,buf);fflush(stdout);}
-	//combuf_cswap(client_auths[dst].get_auth,bytes,0,1,2);
-	armci_rdma_modify_tcw_partial(tcwd,bytes);
-	armci_rdma_kick_tcw_put(tcwd);
-	if(msginfo->operation==GET && msginfo->format==STRIDED){
-		armci_rdma_put_wait(client_auths[dst].small_buf_tcwd[0],client_buf_flags[0]);
-		previousbuf=-1;
-	}
-	if(msginfo->operation==ACK){
-		for(i=0;i<armci_nclus;i++){
-			if(DEBUG0){printf("\n%d:for i=%d server_pending_op_count=%d client_pending=%d\n",armci_me,i,server_pending_op_count[i],client_pending_op_count[i]);fflush(stdout);}
-			while(server_pending_op_count[i]!=client_pending_op_count[i]){
-				rc=combuf_spin_wait(clientpendingopbufdesc,10,&recvd);
-			}
-                        if(DEBUG0){printf("\n%d:for i=%d server_pending_op_count=%d client_pending=%d\n",armci_me,i,server_pending_op_count[i],client_pending_op_count[i]);fflush(stdout);}
-
-
+	if(bytes>SMALL_MSG_SIZE||(_sr8k_pipeget_req)){
+#if 0
+		while((rc=combuf_cswap(client_auths[armci_clus_id(proc)].get_auth,((SMALL_MSG_SIZE*SMALL_MSG_NUM)+buf_index*(LARGE_MSG_SIZE/4)),10+armci_me,0,0))){
+			printf("\n%d in send_req waiting for swap rc=%d\n",armci_me,rc);
+			armci_util_spin(10000+armci_me*armci_me*100,NULL);	
 		}
+#endif
+        while(combuf_swap(client_auths[armci_clus_id(proc)].get_auth,((SMALL_MSG_SIZE*SMALL_MSG_NUM)+buf_index*(LARGE_MSG_SIZE/4)),1));
+
 	}
+	armci_rdma_modify_tcw_partial(tcwd,bytes);
+	armci_rdma_kick_tcw_block(tcwd);
 	return(0);
 }
 
+int _sr8k_armci_wait_some =20;
+double _sr8k_armci_fake_work=99.0;
+
+long check_flag(long*buf){
+	return(*buf);
+}
+
+void armci_wait_long_flag_updated(long *buf, int val)
+{
+    long res;
+    long spin =0;
+
+    res = check_flag(buf);
+    while(res != (long)val){
+       for(spin=0; spin<_sr8k_armci_wait_some; spin++)_sr8k_armci_fake_work+=0.001;
+       res = check_flag(buf);
+    }
+    _sr8k_armci_fake_work =99.0;
+}
+
+void armci_wait_long_flag_updated_clear(long *buf, int val)
+{
+    armci_wait_long_flag_updated(buf,val);
+    *buf = 0L;
+}
+
+
 char * armci_ReadFromDirect(int proc,request_header_t *msginfo, int datalen){
-char a;
+long *ack;
 int rc;unsigned int recvd;
-	if(DEBUG2){printf("\n%d:armci_ReadFromDirect not implemented yet\n",armci_me);fflush(stdout);}
-	rc=combuf_spin_wait(client_buf_desc_array[0],-1,&recvd);
- if(DEBUG2){printf("\n%d: in armci_readfrom got %d   %p\n",armci_me,*(int*)client_buf_array[0],client_buf_array[0]);fflush(stdout);}	
-	return(client_buf_array[0]);
+	if(DEBUG2){printf("\n%d:armci_ReadFromDirect op=%d bytes=%d\n",armci_me,msginfo->operation,(msginfo->bytes+sizeof(request_header_t)));fflush(stdout);}
+	if(msginfo->operation==ACK)return((char*)msginfo);
+	if((msginfo->bytes+sizeof(request_header_t))<SMALL_MSG_SIZE){
+		ack=(long*)((char *)(msginfo+1)+msginfo->dscrlen+msginfo->datalen);
+		rc=combuf_block_wait(client_buf_desc_array[0],-1,&recvd);
+		if(rc!=COMBUF_SUCCESS)armci_die("wait failed",rc);
+		armci_wait_long_flag_updated_clear(ack,1);
+		msginfo->datalen=datalen;
+		return(client_buf_array[0]+(sizeof(request_header_t)+msginfo->dscrlen));
+	}
+	else{
+		rc=combuf_block_wait(client_send_bufdesc[_sr8k_buffer_index],-1,&recvd);
+		if(rc!=COMBUF_SUCCESS)armci_die("armci_ReadFromDirect:wait fail",rc);
+		ack=(long*)((char *)(msginfo+1)+msginfo->dscrlen+msginfo->datalen);
+		armci_wait_long_flag_updated_clear(ack,1);	
+		return((char *)(msginfo+1)+msginfo->dscrlen);
+	}
 }
 extern char* serverbuffer;
+extern int _sr8k_server_buffer_index;
 void  armci_WriteToDirect(int proc,request_header_t *msginfo, void* data){
 	char *buf;
 	int auth,rc;
+	long *ack;
 	Cb_node_rt remote;
      int dst=armci_clus_id(proc);
 	static Cb_msg msg;unsigned int ev;
-	buf = directbuffer+4;
      remote.type = CB_NODE_RELATIVE;
      remote.ndes = _armci_group;
      remote.node = dst;
-	if(DEBUG2){printf("\n%d: in armci_WriteToDirect-1 sending to %d\n",armci_me,dst);fflush(stdout);}
- 	rc = combuf_get_sendright( (Cb_node *)&remote, sizeof(remote),
-                                    CLIENT_SMALLBUF_KEY+proc, CLIENT_SMALLBUF_FIELDNUM, -1, &auth);
-    if(rc != COMBUF_SUCCESS){
-    	 printf("%d:failed\n",armci_me);fflush(stdout);sleep(1);
-    	armci_die("armci_readfromdirect combuf_get_sendright:",rc);
-    }
-	armci_copy(data, buf, msginfo->datalen);
-	memset(&msg, 0, sizeof(msg));
-     msg.data.addr = buf;
-	msg.data.size = msginfo->datalen;
-	if(DEBUG2){printf("\n%d: in armci_WriteToDirect writing%d   %p\n",armci_me,*((int*)buf),buf);fflush(stdout);}
-	rc = combuf_send(&msg,auth, 0, 0, &ev); 
-	if (rc != COMBUF_SUCCESS) armci_die("armci_WriteToDirect combuf_send failed",rc);	
+	if(DEBUG2){printf("\n%d: in armci_WriteToDirect-1 sending bytes=%d to %d op=%d\n",armci_me,msginfo->datalen,dst,msginfo->operation);fflush(stdout);}
+	if(msginfo->bytes+sizeof(request_header_t)<SMALL_MSG_SIZE){
+		if(msginfo->operation==ATTACH || msginfo->operation==ARMCI_SWAP\
+		  || msginfo->operation==ARMCI_SWAP_LONG || msginfo->operation==ARMCI_FETCH_AND_ADD\
+	       || msginfo->operation==ARMCI_FETCH_AND_ADD_LONG/* || msginfo->operation==LOCK\
+		  || msginfo->operation==UNLOCK*/){
+			armci_copy(data,(msginfo+1),msginfo->datalen);
+			data=(msginfo+1);
+		}
+		ack=(long*)((char *)(data)+msginfo->datalen);
+		*ack=1L;
+		auth = server_auths[proc].put_auths[0];
+		memset(&msg, 0, sizeof(msg));
+		msg.data.addr = (char *)data;
+  		msg.data.size = msginfo->datalen+sizeof(long);
+		rc = combuf_send(&msg,auth,(sizeof(request_header_t)+msginfo->dscrlen), 0, &ev);
+  		if (rc != COMBUF_SUCCESS) armci_die("armci_WriteToDirect combuf_send failed",rc);
+	}
+	else{
+		if(DEBUG2){printf("\n%d: in armci_WriteToDirect-1 sending to %d nobuf\n",armci_me,dst);fflush(stdout);}
+		auth = server_auths[proc].lbuf_put_auths[_sr8k_server_buffer_index-SMALL_MSG_NUM];
+		ack=(long*)((char *)(data)+msginfo->datalen);
+		*ack=1L;
+		memset(&msg, 0, sizeof(msg));
+          msg.data.addr = (char *)data;
+          msg.data.size = msginfo->datalen+sizeof(long);
+          rc = combuf_send(&msg,auth,(sizeof(request_header_t)+msginfo->dscrlen), 0, &ev);
+          if (rc != COMBUF_SUCCESS) armci_die("armci_WriteToDirect combuf_send failed",rc);
+	}
 }
 /*Sequence of steps
  * 1.Masters wait for the data server on their node to finish creating fields
@@ -1110,6 +1249,7 @@ void  armci_WriteToDirect(int proc,request_header_t *msginfo, void* data){
 void armci_client_connect_to_servers(){
 int i,j,dst,field_num,auth,rc;
 	client_auths = (client_auth_t *)malloc(sizeof(client_auth_t)*armci_nclus);
+	if(!client_auths)armci_die("armci_client_connect_to_servers malloc failed",0);
 	if(armci_me==armci_master){
 		/*step 1 */
 		if(DEBUG0){printf("\n%d:about to wait for server_ready_flag\n",armci_me);fflush(stdout);}
@@ -1132,7 +1272,8 @@ int i,j,dst,field_num,auth,rc;
 		remote.type = CB_NODE_RELATIVE;
          	remote.ndes = _armci_group;
         	remote.node = dst;
-/*Every process gets authorizations for two large fields, these two large fields are common
+/*Every process gets authorizations for two large fields, these two large 
+ *fields are common
  *to all the processes. In addition to that, each process gets authorizations to a few small
  *fields that are to be used exclusively for that process. Field numbers of these fields are
  *always in sequence and fixed. This reduces the size of the serv_rcv_field_info struct needed.
@@ -1209,27 +1350,6 @@ void armci_server_direct_send(int proc, char *srcbuf,int dstoffset, int bytes_ac
 }
 
 
-int __armci_wait_some =20;
-double __armci_fake_work=99.0;
-long check_flag(long *buf)
-{
-    return(*buf);
-}
-/* check memory */
-
-void armci_wait_long_flag_updated(long *buf, int val)
-{
-    long res;
-    long spin =0;
- 
-    res = check_flag(buf);
-    while(res != (long)val){
-       for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work+=0.001;
-       res = check_flag(buf);
-    }
-    __armci_fake_work =99.0;
-}
-
 
 static void armci_pipe_advance_buf(int strides, int count[],
                                    char **buf, long **ack, int *bytes )
@@ -1246,7 +1366,6 @@ int i, extra;
  
 /*\ prepost buffers for receiving data from server (pipeline)
 \*/
-static int dummycount=0;
 void armcill_pipe_post_bufs(void *ptr, int stride_arr[], int count[],
                             int strides, void* argvoid)
 {
@@ -1254,11 +1373,14 @@ int bytes;
 buf_arg_t *arg = (buf_arg_t*)argvoid;
 long *ack;
 	/*we want to use pipe get buf */	
-	if(arg->count==0)dummycount=0;
-	if(dummycount==0) {
-		arg->buf_posted = client_direct_buffer;
+	if(arg->count==0){
+		int dscrlen=((request_header_t*)_sr8k_armci_getbuf_ptr)->dscrlen;
+		arg->buf_posted = _sr8k_armci_getbuf_ptr+sizeof(request_header_t)+dscrlen;
+		((request_header_t*)_sr8k_armci_getbuf_ptr)->tag.ack=_sr8k_armci_getbuf_ofs\
+				+sizeof(request_header_t)+dscrlen;
+		((request_header_t*)_sr8k_armci_getbuf_ptr)->tag.data_ptr=_sr8k_armci_getbuf_ptr\
+				+sizeof(request_header_t)+dscrlen;
 		if(DEBUG2){printf("\ndeed-done count=%d\n",arg->count);fflush(stdout);}
-		dummycount=1;
 	} 
      armci_pipe_advance_buf(strides, count, &arg->buf_posted, &ack, &bytes);
  
@@ -1281,13 +1403,14 @@ buf_arg_t *arg = (buf_arg_t*)argvoid;
  
      /* for first chunk, wait for the request message to complete */
      if(!arg->count) {
-		arg->buf_posted = client_direct_buffer;
+		int dscrlen=((request_header_t*)_sr8k_armci_getbuf_ptr)->dscrlen;
+		arg->buf_posted = _sr8k_armci_getbuf_ptr+sizeof(request_header_t)+dscrlen;
 		if(DEBUG2){printf("\ndeed-done int extracting count=%d\n",arg->count);fflush(stdout);}
      }
  
      armci_pipe_advance_buf(strides, count, &arg->buf_posted, &ack, &bytes);
  
-     if(DEBUG2){ printf("%d:extracting pipe  data from %d %d b=%d %p ack=%p\n",
+     if(DEBUG2){printf("%d:extracting pipe  data from %d %d b=%d %p ack=%p\n",
             armci_me,arg->proc,arg->count,bytes,arg->buf_posted,ack); fflush(stdout);
      }
 //	rc=combuf_spin_wait(clientgetdirectbufdesc,-1,&rcvd);	
@@ -1311,69 +1434,63 @@ buf_arg_t *arg = (buf_arg_t*)argvoid;
 long *ack;
 	if(!arg->count){
 		/*first send, reset the destination offset*/
-		if(DEBUG2){printf("\n********resetting destionation offset*********\n");fflush(stdout);}
-		dst_offset = 0;
+		if(DEBUG2){printf("\n*****resetting destionation offset****\n");fflush(stdout);}
+		dst_offset = _sr8k_armci_getbuf_ofs;
 	} 
-    	dst_offset+=ALIGN64ADD(arg->buf_posted);
+    dst_offset+=ALIGN64ADD(arg->buf_posted);
 	armci_pipe_advance_buf(strides, count, &arg->buf_posted, &ack, &bytes);
-     armci_pipe_advance_buf(strides, count, &arg->buf, &ack, &bytes);
-     bytes_ack = bytes+sizeof(long);
+    armci_pipe_advance_buf(strides, count, &arg->buf, &ack, &bytes);
+    bytes_ack = bytes+sizeof(long);
  
-     if(DEBUG2){ printf("%d:SENDING pipe data=%p %d to %d %p buf[0]=%f b=%d %p)\n",armci_me,
-                 data,arg->count, arg->proc, arg->buf,((double *)arg->buf)[0], bytes, ack); fflush(stdout);
+	if(DEBUG2){ 
+		printf("%d:SENDING pipe data=%p %d to %d %p buf[0]=%f b=%d %p)\n",armci_me,
+                 data,arg->count, arg->proc, arg->buf,((double *)arg->buf)[0], bytes, ack); 
+		fflush(stdout);
      }
  
      /* copy data to buffer */
-	if(DEBUG2){printf("\nbuf = %p buf[0]=%f data= %p bytes=%d \n",arg->buf,((double *)arg->buf)[0],data,bytes); fflush(stdout);}
-     armci_write_strided(data, strides, stride_arr, count, arg->buf);
-     *ack=1;
+    armci_write_strided(data, strides, stride_arr, count, arg->buf);
+    *ack=1;
 
-if(DEBUG2){printf("\nbuf = %p buf[0]=%f data= %p bytes=%d auth=%dposting at %p\n",arg->buf,((double *)arg->buf)[0],data,bytes,server_auths[arg->proc].clientgetbuf_auth,(arg->buf_posted+dst_offset));fflush(stdout);}
-	//armci_rdma_put_wait(server_auths[arg->proc].clientgetbuf_tcwd,((char *)flag_array+SMALL_MSG_NUM*FLAGSIZE));
-     armci_server_direct_send(arg->proc, arg->buf, dst_offset, bytes_ack);
+    armci_server_direct_send(arg->proc, arg->buf, dst_offset, bytes_ack);
  
-     if(DEBUG2){ printf("%d:  out of send %d bytes=%d first=%f\n",armci_me,
+    if(DEBUG2){ printf("%d:  out of send %d bytes=%d first=%f\n",armci_me,
                arg->count,bytes,((double*)arg->buf)[0]); fflush(stdout);
-     }
+    }
  
-     arg->buf += bytes+sizeof(long);        /* advance pointer for next chunk */
-     arg->buf_posted += bytes+sizeof(long); /* advance pointer for next chunk */
+    arg->buf += bytes+sizeof(long);        /* advance pointer for next chunk */
+    arg->buf_posted += bytes+sizeof(long); /* advance pointer for next chunk */
 	dst_offset += bytes+sizeof(long);      /* advance destination offser*/
-     arg->count++;
-if(DEBUG2){printf("\n 2-reached here\n");fflush(stdout);}
+    arg->count++;
 }
 
+//extern void armci_util_spin(int n,void *notused);
  
 void armci_pipe_send_req(int proc, void *vbuf, int len)
 {
-int rc;unsigned int recvd;
+int rc,k=0;
+unsigned int recvd;
 int dst=armci_clus_id(proc);
-		while(server_pending_op_count[dst]!=client_pending_op_count[dst])
-			rc=combuf_spin_wait(clientpendingopbufdesc,-1,&recvd);
-	while(combuf_cswap(client_auths[armci_clus_id(proc)].server_large_getbuf_auth,0,10+armci_me,0,2)); /* wait 2ms for condition to be met*/ 
+	//((request_header_t*)vbuf)->tag.data_ptr = _sr8k_armci_getbuf_ptr;
+	//((request_header_t*)vbuf)->tag.ack=_sr8k_armci_getbuf_ofs;
+	if(_sr8k_using_smallbuf)k=-1;
+	_sr8k_wait_largebuf_ack(dst);
+	while(server_smallbuf_pending_count[dst]!=(client_smallbuf_pending_count[dst]+k))
+          rc=combuf_spin_wait(clientpendingopbufdesc,-1,&recvd); 
+	rc=-1;
+#if 0
+	ackcount=0;
+	while((rc=combuf_cswap(client_auths[armci_clus_id(proc)].server_large_getbuf_auth,0,10+armci_me,0,0))) {
+		printf("\n%d: in cswap value at server=%d\n",armci_me,rc);
+		armci_util_spin(10000+armci_me*armci_me*100,NULL);	
+		ackcount++;
+		if(ackcount==10000)armci_die("cswap not completing",ackcount);
+	}
+	ackcount=0;
+#endif
+	if(!_sr8k_using_smallbuf)
+		_sr8k_pipeget_req=1;
  	armci_send_req_msg(proc, vbuf, len);
-
+	_sr8k_pipeget_req=0;
 }
-int armci_sr8k_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,int flag){
-	_sr8k_vector_req=1;	
-	if(op==GET||op==PUT)
-	return(armci_copy_vector(op,darr,len,proc));
-	return(armci_rem_vector(op, scale, darr,len,proc,0));
-}
-
-int armci_sr8k_rem_strided(int op, void* scale, int proc,
-                       void *src_ptr, int src_stride_arr[],
-                       void* dst_ptr, int dst_stride_arr[],
-                       int count[], int stride_levels, int flag)
-{
-int size;
-	if(DEBUG0)printf("\n in armci_sr8k_rem_strided with count[0]=%d and op=%d\n",count[0],op); 
-	if((!stride_levels || count[0]<240)&&!ACC(op))
-		 return(armci_op_strided(op, scale, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr, count, stride_levels, flag));
-	else
-		return(armci_rem_strided(op, scale, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr, count, stride_levels, flag));
-}
-
 

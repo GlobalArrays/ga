@@ -11,14 +11,17 @@
 #define SMALL_MSG_SIZE PAGE_SIZE
 #define SMALL_MSG_NUM armci_nproc
 #define LARGE_MSG_SIZE 819200
-#define STRIDED_GET_BUFLEN (200704-4096)*4
+#define STRIDED_GET_BUFLEN (200704-4096)*4 /*MSG_BUFLEN_SMALL-PAGE_SIZE*/
 #define LARGE_MSG_NUM 1
 #define SMALL_BUFS_PER_PROCESS 1
 #define ROUND_UP_PAGE(size)  ((size + (PAGE_SIZE-1)) & ~(PAGE_SIZE-1))
 #define NOOPTION        0
 #define NOFLAG          0
 #define NOATOMIC        0
-
+#define LONG_GET_THRESHOLD 4096
+#define LONG_GET_THRESHOLD_STRIDED 20000000
+#define LONG_PUT_THRESHOLD 2047
+#define MAX_CHUNKS_SHORT_GET 3
 extern int armci_sr8krem_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
@@ -58,7 +61,7 @@ extern char *directbuffer_flag;
 #define SERV_FIELD_NUM 3000
 #define SERV_FIELD_NUM_FOR_LARGE_BUF 4000
 #define CLIENT_PENDING_OP_FIELDNUM 6000
-extern char *_sr8k_armci_getbuf_get(int,int,int);
+extern char *_sr8k_armci_buf_get(int,int,int);
 extern char *_sr8k_armci_buf_init(int);
 extern void _sr8k_armci_buf_release(void *);
 /***scope in tuning***/
@@ -67,7 +70,7 @@ extern void _sr8k_armci_buf_release(void *);
 #define FLAGSIZE 8
 
 /*stuff for get pipeline*/
-#define PIPE_BUFSIZE  (8*2048 -128)
+#define PIPE_BUFSIZE  100*(8*2048 -128)
 #define PIPE_MIN_BUFSIZE 2048
 #define PIPE_MEDIUM_BUFSIZE (4*8192)
 
@@ -94,8 +97,8 @@ armci_rdma_put_wait((*((int *)((char *)(&(_fld))-sizeof(BUFID_PAD_T)))), client_
 	(_fld)=-1;\
 	}\
 */
-#define CLEAR_SEND_BUF_FIELD(_fld, _s, _r,_t) if((_fld)!=-1){\
-armci_rdma_put_wait(idx,client_directbuf_flag[idx]);(_fld)=-1;}
+#define CLEAR_SEND_BUF_FIELD(_fld, _s, _r,_t) if((_fld)!=-1)(_fld)=-1;/*if((_fld)!=-1){\
+armci_rdma_put_wait(idx,client_directbuf_flag[idx]);(_fld)=-1;}*/
 extern double *armci_clientmap_common_buffer; 
 extern int *server_ready_flag;
 extern int *client_ready_flag;
@@ -130,6 +133,7 @@ typedef struct {
 typedef struct {
 	int put_auths[SMALL_BUFS_PER_PROCESS];
 	int put_tcwd[SMALL_BUFS_PER_PROCESS];
+	int lbuf_put_auths[4];
 	int get_auth;
 	int get_tcwd;
 	int clientgetbuf_auth;
