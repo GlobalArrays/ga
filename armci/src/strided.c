@@ -1,13 +1,10 @@
-/* $Id: strided.c,v 1.23 2000-05-09 21:13:44 jju Exp $ */
+/* $Id: strided.c,v 1.24 2000-05-31 17:51:05 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
 #include "memlock.h"
 #include <stdio.h>
 
-#if defined(SGI_N32) || defined(SGI) || defined(FUJITSU) ||defined(HPUX)
-#   define PTR_ALIGN  
-#endif
 
 #define ARMCI_OP_2D(op, scale, proc, src, dst, bytes, count, src_stride, dst_stride,lockit)\
 if(op == GET || op ==PUT)\

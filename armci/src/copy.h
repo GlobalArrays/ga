@@ -7,6 +7,10 @@
 #define MEMCPY
 #endif
 
+#if defined(SGI) || defined(FUJITSU) || defined(HPUX)
+#   define PTR_ALIGN
+#endif
+
 /* macros to ensure ordering of consecutive puts or gets following puts */
 #if defined(LAPI)
 
@@ -32,32 +36,39 @@
 
 
 #define THRESH 32
-#define THRESH1D 1000
+#define THRESH1D 512 
 #define ALIGN_SIZE sizeof(double)
 
+/********* interface to fortran 1D and 2D memory copy functions ***********/
 /* dcopy2d_u_ uses explicit unrolled loops to depth 4 */
-#if defined(AIX)
-#    define DCOPY2D	dcopy2d_u
-#elif defined(LINUX)  || defined(HPUX64)
-#    define DCOPY2D	dcopy2d_n_
-#elif !defined(CRAY) && !defined(WIN32)
-#    define DCOPY2D	dcopy2d_u_
+#if   defined(AIX)
+#     define DCOPY2D	dcopy2d_u
+#     define DCOPY1D	dcopy1d_u
+#elif defined(LINUX) || defined(HPUX64)
+#     define DCOPY2D	dcopy2d_n_
+#     define DCOPY1D	dcopy1d_n_
+#elif defined(CRAY)  || defined(WIN32)
+#     define DCOPY2D    DCOPY2D_N
+#     define DCOPY1D    DCOPY1D_N
 #else
-#    define DCOPY2D	DCOPY2D_U
+#     define DCOPY2D	dcopy2d_u_
+#     define DCOPY1D	dcopy1d_u_
 #endif
 void FATR DCOPY2D(int*, int*, void*, int*, void*, int*); 
+void FATR DCOPY1D(void*, void*, int*); 
+
 
 /***************************** 1-Dimensional copy ************************/
 
 #if defined(QUADRICS)
 #      define armci_put(src,dst,n,proc)\
-              if(proc==armci_me){\
-                 armci_copy(src,dst,n);\
-              } else { shmem_int_put((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
+           if(proc==armci_me){\
+              armci_copy(src,dst,n);\
+           } else { shmem_int_put((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
 #      define armci_get(src,dst,n,proc) \
-              if(proc==armci_me){\
-                 armci_copy(src,dst,n);\
-              } else { shmem_int_get((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
+          if(proc==armci_me){\
+             armci_copy(src,dst,n);\
+          } else { shmem_int_get((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
 
 #elif defined(CRAY_T3E)
 #      define armci_copy(src,dst,n)\
@@ -69,11 +80,6 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 
 #      define armci_get(src,dst,n,proc)\
               shmem_get((long*)(dst),(long*)(src),(int)(n)/sizeof(long),(proc))
-
-#elif defined(CRAY)
-
-#      define armci_put(src,dst,n,proc)  memcpy((dst),(src),(n))
-#      define armci_get(src,dst,n,proc) memcpy((dst),(src),(n)) 
 
 #elif  defined(FUJITSU)
 
@@ -114,7 +120,19 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 #endif
                                                  
 #ifndef armci_copy
-#      define armci_copy(src,dst,n)     memcpy((dst), (src), (n))
+# ifdef PTR_ALIGN
+#   define armci_copy(src,dst,n)     \
+     do if( ((n) < THRESH1D)   || ((n)%ALIGN_SIZE) || \
+            ((unsigned long)(src)%ALIGN_SIZE) ||\
+            ((unsigned long)(dst)%ALIGN_SIZE)) memcpy((dst),(src),(n));\
+        else{ int _bytes=(n)/sizeof(double); DCOPY1D((src),(dst),&_bytes);}\
+     while (0)
+# else
+#   define armci_copy(src,dst,n)     \
+     do if( ((n) < THRESH1D) || ((n)%ALIGN_SIZE) ) memcpy((dst), (src), (n));\
+          else{ int _bytes=(n)/sizeof(double); DCOPY1D((src),(dst),&_bytes);}\
+     while (0)
+# endif
 #endif
 
 /****************************** 2D Copy *******************/
