@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.37 2002-01-30 01:14:27 d3h325 Exp $ */
+/* $Id: capi.c,v 1.38 2002-03-01 23:33:59 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -226,19 +226,33 @@ void GA_Zero(int g_a)
 }
 
 
-Integer GA_Idot(int g_a, int g_b)
+int GA_Idot(int g_a, int g_b)
 {
+    int value;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    return (Integer)ga_idot_(&a,&b);
+    gai_dot(C_INT, &a, &b, &value);
+    return value;
+}
+
+
+long GA_Ldot(int g_a, int g_b)
+{
+    long value;
+    Integer a=(Integer)g_a;
+    Integer b=(Integer)g_b;
+    gai_dot(C_LONG, &a, &b, &value);
+    return value;
 }
 
      
 double GA_Ddot(int g_a, int g_b)
 {
+    double value;
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    return (double)ga_ddot_(&a,&b);
+    gai_dot(C_DBL, &a, &b, &value);
+    return value;
 }
 
 
