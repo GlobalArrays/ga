@@ -25,7 +25,7 @@ endif
 GA_EXTRA = global.periodic.o sparse.o select.o
 
 # utility 
-GA_UTIL = ffflush.o fill.o hsort.scat.o DP.o fort.o fops.2d.o
+GA_UTIL = DP.o fort.o hsort.scat.o
 
 # Linear Algebra
 GA_LIN_ALG = mulmat.patch.o ga_dgemm.o ga_symmetr.o ga_diag_seq.o rsg.o\

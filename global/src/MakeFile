@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.14 2000-10-31 00:08:24 d3h325 Exp $
+#	$Id: MakeFile,v 1.15 2000-11-04 01:46:30 d3h325 Exp $
 #
 
 OBJDIR=.\obj
@@ -7,11 +7,6 @@ OBJDIR=.\obj
 #on NT we use MPI
 USE_MPI=y
 
-#!IFDEF USE_MPI
-#EXTRA_OBJ =  mpi.obj
-#!ELSE 
-#EXTRA_OBJ =  tcgmsg.obj
-#!ENDIF
 
 OBJ      = $(OBJDIR)\global.armci.obj \
         $(OBJDIR)\collect.obj \
@@ -20,8 +15,6 @@ OBJ      = $(OBJDIR)\global.armci.obj \
         $(OBJDIR)\mulmat.patch.obj \
         $(OBJDIR)\hsort.scat.obj \
         $(OBJDIR)\global.nalg.obj \
-        $(OBJDIR)\ffflush.obj \
-        $(OBJDIR)\fill.obj \
         $(OBJDIR)\decomp.obj \
         $(OBJDIR)\fort.obj \
         $(OBJDIR)\rsg.obj \
