@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.69 2003-02-14 18:59:34 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.70 2004-01-14 19:53:06 sohirata Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -366,7 +366,7 @@ Integer FATR dra_init_(
         DoublePrecision *max_memory)      /* input */
 {
 #define DEF_MAX_ARRAYS 16
-#define MAX_ARRAYS 1024
+#define MAX_ARRAYS 131072
 int i;
         ga_sync_();
 
