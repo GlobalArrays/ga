@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.32 2000-09-12 18:43:50 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.33 2000-09-13 22:31:05 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -30,8 +30,8 @@
 #ifdef SYSV
 
  
-#define DEBUG_ 1
-#define DEBUG1 1
+#define DEBUG_ 0
+#define DEBUG1 0
 
 /* For debugging purposes at the beginning of the shared memory region
  * creator process can write a stamp which then is read by attaching processes
