@@ -16,9 +16,9 @@
 
 static usc_time_t *tlog, tt0, tt1;
 
-static unsigned long int current, MAX_EVENTS=0; 
+static unsigned  long current, MAX_EVENTS=0; 
   
-static unsigned int *indlog, ihandle, thandle; 
+static unsigned long *indlog, ihandle, thandle; 
 
 usc_time_t usc_MD_clock();
 
@@ -27,9 +27,9 @@ usc_time_t usc_MD_clock();
 
 
 void trace_init_(n)
-int *n; /* max number of events to be traced */
+long *n; /* max number of events to be traced */
 {
-int index,err;
+long index,err;
 
   if(*n<=0){
     printf("trace_init>>  invalid max number of events: %d\n",*n);
@@ -50,7 +50,7 @@ int index,err;
                  printf("trace_init>> null pointer: 1\n");
                  err ++;
   }
-  if(!MA_push_get(MT_INT, *n*6, "indexLog", &ihandle, &index)){
+  if(!MA_push_get(MT_LONGINT, *n*6, "indexLog", &ihandle, &index)){
                  printf("trace_init>> failed to allocate memory 2\n");
                  err ++;
   }
@@ -63,21 +63,33 @@ int index,err;
   usc_init();
 }
 
+double tcgtime_();
 
 void  trace_stime_()
 {
+#ifdef KSR
+double t = tcgtime_();
+tt0 = (unsigned long)1e6*t;
+#else
 tt0 =  usc_MD_clock();
+#endif
+
 } 
 
 
 void  trace_etime_()
 {
+#ifdef KSR
+double t = tcgtime_();
+tt1 = (unsigned long)1e6*t;
+#else
 tt1 =  usc_MD_clock();
+#endif
 }
 
 
 void trace_genrec_(ga, ilo, ihi, jlo, jhi, op)
-int *ga, *ilo, *ihi, *jlo, *jhi, *op;
+long *ga, *ilo, *ihi, *jlo, *jhi, *op;
 {
    if(current >=  MAX_EVENTS)return;
 
@@ -95,7 +107,7 @@ int *ga, *ilo, *ihi, *jlo, *jhi, *op;
 
 
 void trace_end_(proc)
-int *proc; /* processor number */
+long *proc; /* processor number */
 {
 FILE *fout;
 char fname[10];
