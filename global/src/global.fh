@@ -48,4 +48,4 @@ cDEC$ ENDIF
 c
 c     n-dim GA
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg
-      external nga_ddot_patch, nga_zdot_patch
+      external nga_ddot_patch, nga_zdot_patch, nga_idot_patch
