@@ -88,10 +88,12 @@ static  int parent_pid=-1;  /* process id of process 0 "parent" */
 
 extern void armci_die(char*,int);
 
+/* not done here yet */
+void armci_shmem_init(){};
 
 /*\ application can reset the upper limit for memory allocation
 \*/
-void Set_Shmem_Limit(unsigned long shmemlimit) /* comes in bytes */ 
+void armci_set_shmem_limit(unsigned long shmemlimit) /* comes in bytes */ 
 {
      unsigned long kbytes;
      kbytes = (shmemlimit + SHM_UNIT -1)/SHM_UNIT;

@@ -30,6 +30,7 @@
 
 
 #define DEBUG_ 0
+#define DEBUG1 0
 #define STAMP 0
 
 extern void armci_die();
@@ -51,13 +52,23 @@ extern void armci_die();
   extern char *shmat();
 #endif
 
+#define MAX_REGIONS 120
+#define SHM_UNIT (1024)
 
+
+/* Need to determine the max shmem segment size. There are 2 alternatives:
+ * 1. use predefined SHMMAX if available or set some reasonable values, or
+ * 2. trial-and-error search for a max value (default)
+ */
+/*#define NO_SHMMAX_SEARCH*/
+
+#ifdef NO_SHMMAX_SEARCH
 /* Limits for the largest shmem segment are in Kilobytes to avoid passing
  * Gigavalues to shmalloc
  * the limit for the KSR is lower than SHMMAX in sys/param.h because
  * shmat would fail -- SHMMAX cannot be trusted (a bug)
  */
-#define _SHMMAX need to know the limits for this machine
+#define _SHMMAX need to know the SHMMAX limit for this machine
 
 #if defined(SUN)||defined(SOLARIS)
 #  undef _SHMMAX
@@ -81,18 +92,109 @@ extern void armci_die();
 #  undef _SHMMAX
 #  define _SHMMAX (((unsigned long)SHMMAX)>>10)
 #endif
+   static  unsigned long MinShmem = _SHMMAX;  
+   static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
+#else
 
-#define MAX_REGIONS 120
-#define SHM_UNIT (1024)
+   static  unsigned long MinShmem;  
+   static  unsigned long MaxShmem;
 
-static  unsigned long MinShmem = _SHMMAX;  
-static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
+#endif
 
 
-/*\ application can reset the upper limit for memory allocation
+int armci_test_allocate(long size)
+{
+   char *ptr;
+   long id = (long)shmget(IPC_PRIVATE, (size_t) size, (int) (IPC_CREAT |00600));
+   if (id <0L) return 0;
+
+   /* attach to segment */
+   ptr =  shmat((int) id, (char *) NULL, 0);
+
+   /* delete segment id */
+   if(shmctl( (int) id, IPC_RMID,(struct shmid_ds *)NULL))
+      fprintf(stderr,"failed to remove shm id=%d\n",id);
+
+   /* test pointer */
+   if (((long)ptr) == -1L) return 0;
+   else return 1;
+}
+
+
+/* parameters that define range and granularity of search for shm segment size
+ * UBOUND is chosen to be < 2GB to avoid overflowing on 32-bit systems
+ * smaller PAGE gives more accurate results but with more search steps
+ * LBOUND  is set to minimum amount for our purposes
+ */
+#define PAGE (16*65536L)
+#define LBOUND  1048576L
+#define UBOUND 255*LBOUND
+
+/*\ determine the max shmem segment size using bisection
 \*/
-void Set_Shmem_Limit(shmemlimit)
-unsigned long shmemlimit; /* comes in bytes */
+int armci_shmem_test()
+{
+long x,i,rc;
+long upper_bound=UBOUND;
+long lower_bound=0;
+
+     x = UBOUND;
+     for(i=1;;i++){
+        long step;
+        rc = armci_test_allocate(x);
+        if(DEBUG_) printf("test %d size=%ld bytes status=%d\n",i,x,rc);
+        if(rc){
+          lower_bound = x;
+          step = (upper_bound -x)>>1;
+          if(step < PAGE) break;
+          x += step;
+        }else{
+          upper_bound = x;
+          step = (x-lower_bound)>>1;
+          if(step<PAGE) break;
+          x -= step;
+        }
+        /* round it up to a full base-2 MB */
+        x += 1048576L -1L;
+        x >>=20;
+        x <<=20; 
+      }
+
+      if(!lower_bound){
+          /* try if can get LBOUND - necessary if search starts from UBOUND */
+          lower_bound=LBOUND;
+          rc = armci_test_allocate(lower_bound);
+          if(!rc) return(0);
+      }
+
+      if(DEBUG_) printf("%ld bytes segment size, %d calls \n",lower_bound,i);
+      return (int)( lower_bound>>20); /* return shmmax in mb */
+}
+
+
+void armci_shmem_init()
+{
+#ifndef NO_SHMMAX_SEARCH
+        int x;
+        x =armci_child_shmem_init();
+        if(x<1)
+          armci_die("no usable amount (%d bytes) of shared memory available\n",
+          (int)LBOUND);
+
+        if(DEBUG_) printf("GOT %d kbytes segment size \n",x<<10);fflush(stdout);
+        MinShmem = (long)x; /* make sure it is in kb */ 
+        MaxShmem = MAX_REGIONS*MinShmem;
+#else
+
+      /* nothing to do here - limits were given */
+
+#endif
+}
+
+
+/*\ application can reset the upper limit (bytes) for memory allocation
+\*/
+void armci_set_shmem_limit(unsigned long shmemlimit)
 {
      unsigned long kbytes;
      kbytes = (shmemlimit + SHM_UNIT -1)/SHM_UNIT;
@@ -313,6 +415,10 @@ char *temp, *ftemp, *pref_addr, *valloc();
 int id, newreg, i;
 long sz;
 
+    if(DEBUG1){
+       printf("Shmem allocate size %ld bytes\n",size); fflush(stdout);
+    }
+
     newreg = (size+(SHM_UNIT*MinShmem)-1)/(SHM_UNIT*MinShmem);
     if( (alloc_regions + newreg)> MAX_REGIONS)
        armci_die("allocate: to many regions already allocated ",(long)newreg);
@@ -477,6 +583,10 @@ char *allocate(size)
 {
 char * temp;
 long id;
+
+    if(DEBUG1){
+       printf("Shmem allocate size %ld bytes\n",size); fflush(stdout);
+    }
 
     if( alloc_regions >= MAX_REGIONS)
        armci_die("Create_Shared_Region: to many regions already allocated ",0L);

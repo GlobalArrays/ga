@@ -2,8 +2,9 @@
 #include <assert.h>
 #include "armcip.h"
 #include "message.h"
-
+ 
 #define DEBUG 0
+#define USE_MALLOC 
 
 #if defined(SYSV) || defined(WIN32)
 #include "shmem.h"
@@ -173,12 +174,14 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 
     if(DEBUG)
        fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, bytes);
+#ifdef USE_MALLOC
     if(armci_nproc == 1) {
       ptr = malloc(bytes);
       assert(ptr);
       ptr_arr[armci_me] = ptr;
       return (0);
     }
+#endif
 
     assert(sizeof(long) == sizeof(void*)); /* is it ever false? - yes, WIN64 */
 
@@ -208,7 +211,7 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 /*\ shared memory is released to shmalloc only on process 0
  *  with data server malloc cannot be used
 \*/
-int ARMCI_Free(void *ptr)
+int ARMCI_Free00(void *ptr)
 {
 #if defined(SYSV) || defined(WIN32)
 
@@ -233,4 +236,24 @@ int ARMCI_Free(void *ptr)
 
     ptr = NULL;
     return 0;
+}
+
+
+int ARMCI_Free(void *ptr)
+{
+    if(!ptr)return 1;
+
+#if defined(SYSV) || defined(WIN32) 
+#   ifdef USE_MALLOC
+      if(armci_nproc > 1)
+#   endif
+      {
+          if(armci_me==armci_master) Free_Shmem_Ptr( 0, 0, ptr);
+          ptr = NULL;
+          return 0;
+      }
+#endif
+        free(ptr);
+        ptr = NULL;
+        return 0;
 }

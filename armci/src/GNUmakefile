@@ -22,7 +22,7 @@ NATIVE_LOCKS = SGI SGI_N32 SGI64 SGITFP CONVEX WIN32 CRAY-YMP
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
      LIB_DEFINES += -DSYSV
-     OBJ += shmalloc.o signaltrap.o dataserv.o request.o sockets.o
+     OBJ += shmalloc.o signaltrap.o dataserv.o request.o sockets.o shmlimit.o
  ifeq ($(TARGET),$(findstring $(TARGET),$(USE_POSIX)))
      OBJ += winshmem.o
  else
@@ -47,7 +47,7 @@ ifdef LAPI2
      LIB_DEFINES = -DLAPI2
      EXTRA_LIBS += /u2/d3h325/lapi_vector_beta/liblapi_r_dbg.a
 else
-     OBJ += shmalloc.o signaltrap.o shmem.o
+     OBJ += shmalloc.o signaltrap.o shmem.o shmlimit.o
      LIB_DEFINES = -DSYSV
 endif
      
@@ -118,7 +118,7 @@ LIBS += $(EXTRA_LIBS)
 %.x:%.c  $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-test.x: test.o $(LIBRARY_PATH)
+test0.x: test.o $(LIBRARY_PATH)
 	$(LINK.c) $(CFLAGS) -o $@ $^ $(LIBS)
 
 ipctest.x: $(LIBRARY_PATH)

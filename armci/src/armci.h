@@ -80,6 +80,8 @@ extern int ARMCI_Create_mutexes(int num);
 extern int ARMCI_Destroy_mutexes(void);
 extern void ARMCI_Lock(int mutex, int proc);
 extern void ARMCI_Unlock(int mutex, int proc);
+extern void ARMCI_Set_shm_limit(unsigned long shmemlimit);
+extern int ARMCI_Uses_shm();
 
 #define FAIL  -1
 #define FAIL2 -2

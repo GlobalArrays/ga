@@ -108,6 +108,30 @@ void armci_allocate_locks()
 #endif
 
 
+void ARMCI_Set_shm_limit(unsigned long shmemlimit)
+{
+#if defined(SYSV) || defined(WIN32)
+#define EXTRASHM  1024   /* extra shmem used internally in ARMCI */
+unsigned long limit;
+    limit = armci_clus_info[armci_clus_me].nslave * shmemlimit + EXTRASHM;
+    armci_set_shmem_limit(limit);
+#endif
+}
+
+
+int ARMCI_Uses_shm()
+{
+    if(!armci_initialized)armci_die("ARMCI not yet initialized",0);
+
+#if defined(SYSV) || defined(WIN32)
+    if(armci_nproc >1) return 1;
+    else
+#endif
+    return 0;
+}
+
+
+
 int ARMCI_Init()
 {
     int rc;
@@ -136,9 +160,11 @@ int ARMCI_Init()
 
 #if defined(SYSV) || defined(WIN32)
 
-    /* allocate locks */
-    if (armci_nproc > 1)
+    /* allocate locks and init shared memory */
+    if (armci_nproc > 1){
       armci_allocate_locks();
+      if(armci_master == armci_me) armci_shmem_init();
+    }
 
 #endif
 
@@ -424,3 +450,13 @@ int ARMCI_AccV( int op,              /* oeration code */
     if(rc) return FAIL6;
     else return 0;
 }
+
+
+#if !(defined(SYSV) || defined(WIN32))
+void ARMCI_Set_shmem_limit(unsigned long shmemlimit)
+{
+   /* not applicable here
+    * aborting would  make user's life harder
+    */
+}
+#endif

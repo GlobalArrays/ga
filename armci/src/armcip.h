@@ -65,6 +65,7 @@
 extern  int armci_me, armci_nproc;
 extern  double armci_internal_buffer[BUFSIZE_DBL];
 
+extern void armci_shmem_init();
 extern void armci_die(char *msg, int code);
 extern void armci_die2(char *msg, int code1, int code2);
 extern int armci_op_strided(int op, void* scale, int proc,void *src_ptr, 
