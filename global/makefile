@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.8 1995-02-02 23:12:54 d3g681 Exp $
+#$Id: makefile,v 1.9 1995-04-01 00:16:30 d3h325 Exp $
 
 # Tiny makefile wrapper
 
@@ -15,7 +15,7 @@ USES_BLAS = src/ga_solve_seq.F src/ga_dgemm.F src/ga_dgemm_seq.F
 
 global_stamp:	include_stamp 
 	$(MAKE) -f makefile.GA TARGET=$(TARGET)\
-		DIAG=PAR LU_SOLVE=PAR
+		DIAG=PAR
 	cp -p libglobal.a $(LIBDIR)
 
 include_stamp:	src/global.fh
