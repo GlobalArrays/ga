@@ -27,14 +27,16 @@ extern void ga_error(char*, long);
 #if defined(CRAY)
 #        include <sys/statfs.h>
 #        define  STATVFS statfs
-#elif defined(KSR)
+#elif defined(KSR) || defined(__FreeBSD__)
+#        include <sys/param.h>
 #        include <sys/mount.h>
 #        define  STATVFS statfs
+#        define NO_F_FRSIZE 
 #elif defined(WIN32)
 #        define  STATVFS _stat 
 #        define  S_ISDIR(mode) ((mode&S_IFMT) == S_IFDIR)
 #        define  S_ISREG(mode) ((mode&S_IFMT) == S_IFREG)
-#elif defined(CYGNUS) || defined(LINUX)
+#elif defined(CYGNUS) ||  defined(LINUX)
 #        include <sys/vfs.h>
 #        define  STATVFS statfs
 #        define NO_F_FRSIZE 
