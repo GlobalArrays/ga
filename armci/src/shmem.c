@@ -1,13 +1,12 @@
-/* $Id: shmem.c,v 1.60 2003-03-21 19:41:08 manoj Exp $ */
+/* $Id: shmem.c,v 1.61 2003-03-21 20:46:08 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
  * ~~~~~~~~~
  *  char *Create_Shared_Region(long *idlist, long size, long *offset)
  *       . to be called by just one process. 
- *       . calls kr_malloc, a modified by Robert Harrison version of malloc-like
- *         memory allocator from K&R.kr_malloc inturn calls armci_allocate() that
- *         does shmget() and shmat(). 
+ *       . calls kr_malloc,  malloc-like memory allocator from the K&R book. 
+ *         kr_malloc inturn calls armci_allocate() that does shmget() and shmat(). 
  *       . idlist might be just a pointer to integer or a true array in the
  *         MULTIPLE_REGIONS versions (calling routine has to take care of it) 
  *  char *Attach_Shared_Region(long *idlist, long size, long offset)
