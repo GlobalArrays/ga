@@ -4,6 +4,22 @@
 #include "macdecls.h"
 #include <string.h>
 
+#ifdef FALSE
+#undef FALSE
+#endif
+#ifdef TRUE
+#undef TRUE
+#endif
+#ifdef CRAY_YMP
+#include <fortran.h>
+#define FALSE _btol(0)
+#define TRUE  _btol(1)
+#else
+#define FALSE (logical) 0
+#define TRUE  (logical) 1
+#endif
+
+
 /************************** common constants ***********************************/
 #define DRA_OFFSET     5000                    /* DRA handle offset            */
 #define DRA_BRD_TYPE  30000                    /* msg type for DRA broadcast   */
