@@ -1,4 +1,4 @@
-c $Id: scalapack.F,v 1.5 2004-11-16 00:53:05 edo Exp $
+c $Id: scalapack.F,v 1.6 2004-11-16 20:18:04 edo Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
@@ -266,7 +266,6 @@ c
       integer mpB, nqB          ! number of rows/cols of B held by the processor
       integer info
       integer me
-      integer nwork
       integer n,lda, ldb, elemA, elemB
       integer numroc
 
@@ -1168,7 +1167,6 @@ c
       integer mpB, nqB          ! rows/cols of B held by the processor
 c
       integer me
-      integer nwork
       integer lda, ldb
       integer elemA,elemB
       integer numroc
@@ -1359,16 +1357,7 @@ c
      3        int_mb(adriwork), liwork, int_mb(adrfail),
      4        int_mb(adrclustr), dbl_mb(adrgaps), info)
 c     
-c
-#ifdef DEBUG
-         if ( me . eq. 0 ) then
-            do iii = 1, n
-               write(*,*) iii, eval(iii)
-            enddo
-         endif
-#endif
-         
-c     
+
          if (nz .ne. n ) then
             if ( info .ne. 0 ) then
                if ( info .gt. 0 ) then
@@ -1452,7 +1441,6 @@ c
       integer mps, nqs          ! rows/cols of B held by the processor
 c
       integer me
-      integer nwork
       integer lda, ldb, lds, elemA, elemB, elems
       integer numroc
       
@@ -1671,13 +1659,6 @@ c
 c     
 c     
 c
-#ifdef DEBUG
-         if ( me . eq. 0 ) then
-            do iii = 1, n
-               write(*,*) iii, eval(iii)
-            enddo
-         endif
-#endif
          
 c     
          if (nz .ne. n ) then
@@ -1713,6 +1694,222 @@ c
          if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
          if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
       endif
+c     
+      call ga_sync()
+      return
+      end
+c
+c     interface to pdsyevd (divide&conquer)
+c
+      subroutine ga_pdsyevd(g_a, g_b, eval)
+      implicit none
+#include "mafdecls.fh"
+#include "global.fh"
+#include "scalapack.fh"
+c     
+      integer g_a               ! matrix A
+      integer g_b               ! matrix B
+c
+c all eigenvalues are real
+c
+      double precision eval(*)
+c     
+c~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+c
+      logical status
+c
+      character*1 jobz, uplo
+c
+      integer ha, adra          !A
+      integer hb, adrb          !B
+c
+c
+      logical oactive           ! true iff this process participates
+      integer dimA1, dimA2, typeA
+      integer dimB1, dimB2, typeB
+c
+      integer mpA, nqA          ! rows/cols of A held by the processor
+      integer mpB, nqB          ! rows/cols of B held by the processor
+c
+      integer me
+      integer lda, ldb
+      integer elemA,elemB
+      integer numroc
+      
+      integer nb                ! block size
+      integer descA(9), descB(9) !descriptor for scalapack
+      
+c     
+      integer liwork,hiwork, adriwork
+      integer lcwork,hcwork, adrcwork
+c
+      integer nn,nq, np,trilwmin,iarow,iacol
+      integer n
+      integer info
+
+      double precision pdlamch
+      integer iceil,indxg2p
+      external pdlamch,iceil,indxg2p
+c     
+c     processor dependent; machine dependent
+c     
+      data nb/64/
+c     
+c***  check environment
+c     
+      me     = ga_nodeid()
+c     
+c***  check GA info for input arrays
+c     
+      call ga_check_handle(g_a, 'ga_pdsyevd: a')
+      call ga_check_handle(g_b, 'ga_pdsyevd: b')
+c     
+      call ga_inquire(g_a, typeA, dimA1, dimA2)
+      call ga_inquire(g_b, typeB, dimB1, dimB2)
+      if(dimA1.ne.dima2) call ga_error(
+     %     'ga_pdsyevd: matrix A not square ',0)
+      n=dima1
+      if(dimb1.ne.dimb2) call ga_error(
+     %     'ga_pdsyevd: matrix B not square ',0)
+      if(dimb1.ne.n) call ga_error(
+     %     'ga_pdsyevd: size matrix B and B differ ',0)
+      
+
+c     
+c     
+c***  initialize SL interface
+c     
+      call SLinit()
+c     
+c***  find SBS format parameters
+c     
+c     
+      mpA = numroc(dimA1, nb, myrow, 0, nprow)
+      nqA = numroc(dimA2, nb, mycol, 0, npcol)
+c     
+      mpB = numroc(dimB1, nb, myrow, 0, nprow)
+      nqB = numroc(dimB2, nb, mycol, 0, npcol) 
+c     
+c     
+      lda = max(1,mpA)
+      ldb = max(1,mpB)
+c     
+c     
+c     let scalapack check for errors
+c     
+c     should check to see if this is a compute node
+c     check to see how this works in the new data server model
+c     
+      oactive = .true.
+      if ( mpA*nqA .eq. 0 ) oactive = .false.
+      if ( mpB*nqB .eq. 0 ) oactive = .false.
+c     
+      call ga_sync()
+c     
+c     
+      elemA= mpA*nqA
+      status = .true.
+      if(elemA.ne.0)status =
+     $     ma_push_get(MT_DBL,elemA,'a',ha,adra)
+      if(.not.status) 
+     &     call ga_error('ga_pdsyevd: mem alloc failed A ', -1)
+c     
+      elemB= mpB*nqB
+c     
+      if(elemB.ne.0)status =
+     $     ma_push_get(MT_DBL,elemB,'b',hb,adrb)
+      if(.not.status) 
+     &     call ga_error('ga_pdsyevd: mem alloc failed B ', -1)
+c     
+c     
+c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
+c     
+         
+      call ga_to_SL(g_a, dimA1, dimA2, nb, nb,
+     $     dbl_mb(adrA), lda, mpA, nqA)
+c     
+      call ga_to_SL(g_b, dimB1, dimB2, nb,nb,
+     $     dbl_mb(adrB), ldb, mpB, nqB)
+c     
+c***  fill SCALAPACK matrix descriptors
+c     
+      call descinit(descA, dimA1, dimA2, nb, nb, 0, 0,
+     $     iSLctxt, lda, info)
+      if(info.ne.0) call ga_error(' ga_pdsyevd: descinit A failed ',
+     .     -info)
+c     
+      call descinit(descB, dimB1, dimB2, nb, nb, 0, 0,
+     .     iSLctxt, ldb, info)
+      if(info.ne.0) call ga_error(' ga_pdsyevd: descinit B failed ',
+     .     -info)
+c     
+      jobz = 'V'
+      uplo = 'L'
+c     
+c     ability to deal with orthonormality ; let's just
+c     have the regular scalapack stuff for the moment
+c     
+      liwork = 7*n + 8*npcol +2
+      if(liwork.ne.0)status =
+     $     ma_push_get(MT_INT, liwork ,'iwork',hiwork,adriwork)
+      if(.not.status) 
+     &     call ga_error('ga_pdsyevd: mem alloc failed iwork  ', -1)
+c     
+      nn = max(n, nb, 2)
+      IAROW = INDXG2P( 1, nb, MYROW, DESCA( 7 ), NPROW )
+      IACOL = INDXG2P( 1, nb, MYCOL, DESCA( 8 ), NPCOL )
+            
+      np = numroc(n, nb, myrow, iarow, nprow)
+      nq = numroc(n, nb, mycol, iacol, npcol)
+c     
+c     
+c     
+          TRILWMIN = 3*N + MAX( NB*( NP+1 ), 3*NB )
+          lcwork = MAX( 1+6*N+2*NP*NQ, TRILWMIN ) + 2*N
+          lcwork=max(lcwork,8192)
+
+
+c     
+      if(lcwork.ne.0)
+     $     status = ma_push_get(MT_DBL, lcwork ,
+     $     'cwork',hcwork,adrcwork)
+      if(.not.status) 
+     &     call ga_error('ga_pdsyevd: mem alloc failed cwork  ', -1)
+c     
+c     
+c     
+      call pdsyevd(jobz, uplo,
+     1     n, dbl_mb(adrA), 1, 1, descA,
+     1     eval, dbl_mb(adrB), 1, 1, 
+     2     descB, dbl_mb(adrcwork), lcwork,
+     2     int_mb(adriwork), liwork, info)
+c     
+      if ( info .ne. 0 ) then
+         if ( info .gt. 0 ) then
+            call ga_error(' ga_pdsyevd: argument is illegal ', info)
+         else
+            call ga_error(
+     $           ' ga_pdsyevd: eigenvectors failed to converge ',
+     $           info)
+         endif
+      endif
+c     
+c     
+c     
+c***  copy solution matrix back to g_c
+c     
+      call ga_from_SL(g_b, dimA1, dimB2,
+     $     nb, nb, dbl_mb(adrB),
+     &     mpB, ldb, nqB)
+c     
+c     
+c     
+c***  deallocate work/SL arrays
+c     
+      if ( lcwork .ne. 0 ) status = ma_pop_stack(hcwork)
+      if ( liwork .ne. 0 ) status = ma_pop_stack(hiwork)
+      if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
+      if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
 c     
       call ga_sync()
       return
