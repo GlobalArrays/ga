@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.82 2003-10-22 22:12:17 d3h325 Exp $ */
+/* $Id: armci.c,v 1.83 2003-12-11 19:40:13 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -113,7 +113,7 @@ void armci_notify_init()
         (armci_notify_t**)malloc(armci_nproc*sizeof(armci_notify_t*));
   if(!_armci_notify_arr)armci_die("armci_notify_ini:malloc failed",armci_nproc);
 
-  if(rc=ARMCI_Malloc((void **)_armci_notify_arr, bytes)) 
+  if((rc=ARMCI_Malloc((void **)_armci_notify_arr, bytes))) 
         armci_die(" armci_notify_init: armci_malloc failed",bytes); 
   bzero(_armci_notify_arr[armci_me], bytes);
 }

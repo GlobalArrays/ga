@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.80 2003-12-10 08:23:32 vinod Exp $ */
+/* $Id: strided.c,v 1.81 2003-12-11 19:40:13 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -587,7 +587,9 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 /*\ function offers the same functionality as regular PutS and sets remote flag
 \*/  
 static int *valflagarr=NULL;
+#ifdef ALLOW_PIN
 static armci_hdl_t nbhdlarr1[1000];
+#endif
 
 int ARMCI_PutS_flag_dir( 
                 void *src_ptr,        /* pointer to 1st segment at source*/ 
@@ -603,7 +605,7 @@ int ARMCI_PutS_flag_dir(
                 int proc              /* remote process(or) ID */
                 )
 {
-    int rc, direct=1,i;
+    int rc, direct=1;
     int *count=seg_count, tmp_count;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
@@ -635,29 +637,34 @@ int ARMCI_PutS_flag_dir(
        h.exthdr = &remf;
        h.len = sizeof(remf);
 #ifdef ALLOW_PIN
-       if(stride_levels==1 &&
-         ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){ 
-         for(i=0;i<count[1];i++){
-            ARMCI_INIT_HANDLE(&nbhdlarr1[i%1000]);
-            ARMCI_NbPut(src_ptr,dst_ptr,count[0],proc,&nbhdlarr1[i%1000]);
-            src_ptr +=src_stride_arr[0];
-            dst_ptr +=dst_stride_arr[0];
-         }
-         valflagarr[proc]=val;
-         ARMCI_NbPut(valflagarr+proc,flag,4,proc,&nbhdlarr1[i%1000]);
+       {
+	  int i=0;
+	  if(stride_levels==1 &&
+	     ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],
+				     armci_clus_id(proc))){ 
+	     for(i=0;i<count[1];i++){
+		ARMCI_INIT_HANDLE(&nbhdlarr1[i%1000]);
+		ARMCI_NbPut(src_ptr,dst_ptr,count[0],proc,&nbhdlarr1[i%1000]);
+		src_ptr +=src_stride_arr[0];
+		dst_ptr +=dst_stride_arr[0];
+	     }
+	     valflagarr[proc]=val;
+	     ARMCI_NbPut(valflagarr+proc,flag,4,proc,&nbhdlarr1[i%1000]);
 #  if 0
-         for(i=0;i<count[1];i++){
-            ARMCI_Wait(&nbhdlarr1[i%1000]);
-         }
+	     for(i=0;i<count[1];i++){
+		ARMCI_Wait(&nbhdlarr1[i%1000]);
+	     }
 #  endif
-         return 0;
-       }
-       if(stride_levels==0 &&
-         ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){ 
-          ARMCI_INIT_HANDLE(&nbhdlarr1[i%1000]);
-          ARMCI_NbPut(src_ptr,dst_ptr,count[0],proc,&nbhdlarr1[i%1000]);
-          valflagarr[proc]=val;
-          ARMCI_NbPut(valflagarr+proc,flag,4,proc,&nbhdlarr1[i%1000]);
+	     return 0;
+	  }
+	  if(stride_levels==0 &&
+	     ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],
+				     armci_clus_id(proc))){ 
+	     ARMCI_INIT_HANDLE(&nbhdlarr1[i%1000]);
+	     ARMCI_NbPut(src_ptr,dst_ptr,count[0],proc,&nbhdlarr1[i%1000]);
+	     valflagarr[proc]=val;
+	     ARMCI_NbPut(valflagarr+proc,flag,4,proc,&nbhdlarr1[i%1000]);
+	  }
        }
 #endif
         
