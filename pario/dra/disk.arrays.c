@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.19 1999-10-26 20:09:41 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.20 2000-07-17 20:58:16 d3h325 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -222,7 +222,7 @@ Integer dai_io_procs(Integer d_a)
 Integer num;
 
         /* this one of many possibilities -- depends on the system */
-#ifdef CRAY_T3D
+#ifdef _CRAYMPP
         num = DRA_NUM_IOPROCS;
 #else
         num = (INDEPFILES(d_a)) ? INFINITE_NUM_PROCS: DRA_NUM_IOPROCS; 
