@@ -1,6 +1,7 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/sndrcv.h,v 1.3 1999-08-12 00:55:27 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/sndrcv.h,v 1.4 2000-11-07 00:04:27 d3h325 Exp $ */
 
 #include "srftoc.h"
+
 
 #include "msgtypesc.h"
 
@@ -13,6 +14,41 @@
   srftoc.h contains macros which define the names of c routines
   accessible from FORTRAN and vice versa
 */
+
+#ifdef __cplusplus
+extern "C" {
+
+extern long NODEID_();
+extern long NNODES_();
+extern long MTIME_();
+extern double TCGTIME_();
+extern void SND_(long *type, char *buf, long *lenbuf, long *node, long *sync);
+extern void RCV_(long *type, char *buf, long *lenbuf, long *lenmes, 
+                 long *nodeselect, long * nodefrom, long *sync);
+
+extern long PROBE_(long *type, long *node);
+extern void BRDCST_(long *type, char *buf, long *lenbuf, long *originator);
+extern void DGOP_(long *type, double *x, long *n, char *op);
+extern void IGOP_(long *type,   long *x, long *n, char *op);
+extern void PBEGIN_(int argc, char **argv);
+extern void PEND_();
+extern void Error(char* str, long code);
+extern void SETDBG_(long *value);
+extern long NXTVAL_(long *mproc);
+extern long MDTOB_(long *n);
+extern long MITOB_(long *n);
+extern long MDTOI_(long *n);
+extern long MITOD_(long *n);
+extern void PFILECOPY_(long *type, long *node0, char *filename);
+extern long TCGREADY_();
+extern double DRAND48_();
+extern void SRAND48_(long *seed);
+extern void LLOG_();
+extern void STATS_();
+extern void SYNCH_(long *type)
+extern void WAITCOM_(long *node);
+}
+#else
 
 /*
   long NODEID_() returns logical node no. of current process.
@@ -196,9 +232,8 @@ extern long MITOD_();
 extern void PFILECOPY_();
 extern void PFCOPY_();
 
-
 /*
- TCGREADY tells if TCGMSG was already initialized (1) or not (0)
+ TCGREADY tells if TCGMSG was already initialized (1) or not (0) 
 */
 extern long TCGREADY_();
 
@@ -210,4 +245,7 @@ extern void RemoteConnect();
 extern void PrintProcInfo();
 extern void MtimeReset();
 extern void USleep();
+
+#endif
+
 #endif
