@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.84 2004-12-09 00:44:04 manoj Exp $ */
+/* $Id: shmem.c,v 1.85 2005-02-09 21:21:25 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -680,10 +680,10 @@ int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
     return 0;
 }
 
-Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize) 
+Header *armci_get_shmem_ptr(int shmid, long shmoffset, size_t shmsize) 
 {
     /* manoj: CHECK */
-    armci_die("armci_shmem_get_ptr: Fix Me",0L);
+    armci_die("armci_get_shmem_ptr: Fix Me",0L);
     return NULL;
 }
 
@@ -911,7 +911,7 @@ int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
     return 1;
 }
 
-Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize) 
+Header *armci_get_shmem_ptr(int shmid, long shmoffset, size_t shmsize) 
 {
 /* returns, address of the shared memory region based on shmid, offset.
  * (i.e. return_addr = stating address of shmid + offset)*/
@@ -925,7 +925,7 @@ Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize)
     if(!(p=(Header*)Attach_Shared_Region(idlist+1, shmsize, idlist[0])))
        armci_die("kr_malloc:could not attach",(int)(p->s.shmsize>>10));
 #if DEBUG_
-    printf("%d: armci_shmem_get_ptr: %d %ld %ld %p\n",
+    printf("%d: armci_get_shmem_ptr: %d %ld %ld %p\n",
            armci_me, idlist[1], idlist[0], shmsize, p);
     fflush(stdout);    
 #endif

@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.16 2004-12-09 00:42:10 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.17 2005-02-09 21:21:25 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -346,11 +346,11 @@ void kr_malloc_verify(context_t *ctx) {
 
 extern int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
 				size_t *shmsize);
-extern Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize);
+extern Header *armci_get_shmem_ptr(int shmid, long shmoffset, size_t shmsize);
 
 /* returns, address of the shared memory region based on shmid, offset.
  * (i.e. return_addr = stating address of shmid + offset) */
-#define SHM_PTR(hdr) armci_shmem_get_ptr((hdr)->s.shmid, (hdr)->s.shmoffset, (hdr)->s.shmsize)
+#define SHM_PTR(hdr) armci_get_shmem_ptr((hdr)->s.shmid, (hdr)->s.shmoffset, (hdr)->s.shmsize)
 
 /*
  * kr_malloc_shmem: memory allocator for shmem context (i.e ctx_shmem)
@@ -392,7 +392,7 @@ static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
     prev_shmid     = ctx->shmid;
     prev_shmoffset = ctx->shmoffset;
     prev_shmsize   = ctx->shmsize;
-    prevp = ctx->freep = armci_shmem_get_ptr(ctx->shmid, ctx->shmoffset,
+    prevp = ctx->freep = armci_get_shmem_ptr(ctx->shmid, ctx->shmoffset,
                                              ctx->shmsize);
 
     ctx->nmcalls++;
@@ -512,7 +512,7 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
          return;
       }
 
-      ctx->freep = armci_shmem_get_ptr(ctx->shmid, ctx->shmoffset,
+      ctx->freep = armci_get_shmem_ptr(ctx->shmid, ctx->shmoffset,
                                        ctx->shmsize);
 
       shmid     = ctx->shmid;
