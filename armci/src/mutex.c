@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.10 1999-10-18 18:52:42 d3h325 Exp $ */
+/* $Id: mutex.c,v 1.11 1999-11-20 01:41:56 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -61,7 +61,7 @@ int *mutex_count = (int*)armci_internal_buffer;
 
         /* find out how many mutexes everybody allocated */
         mutex_count[armci_me]=num;
-        armci_msg_igop(mutex_count, armci_nproc, "+", 0);
+        armci_msg_igop(mutex_count, armci_nproc, "+");
 	for(p=totcount=0; p< armci_nproc; p++)totcount+=mutex_count[p];
 
         tickets = calloc(totcount,sizeof(int));

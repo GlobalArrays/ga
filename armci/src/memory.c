@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.9 1999-11-15 21:30:35 d3h325 Exp $ */
+/* $Id: memory.c,v 1.10 1999-11-20 01:41:57 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -69,7 +69,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
 
     /* combine all memory requests into size_arr  */
     size_arr[armci_me] = bytes;
-    armci_msg_igop(size_arr, armci_nproc, "+",1);
+    armci_msg_lgop(size_arr, armci_nproc, "+");
 
     /* determine aggregate request size on the cluster node */
     for(i=0, size=0; i< nproc; i++) size += size_arr[i+armci_master];

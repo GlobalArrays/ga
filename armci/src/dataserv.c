@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.10 1999-11-15 21:30:35 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.11 1999-11-20 01:41:57 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -719,7 +719,7 @@ void armci_client_code()
    */
 
   nall = armci_nclus*armci_nproc;
-  armci_msg_igop((long*)AR_port,nall,"+",0);
+  armci_msg_igop(AR_port,nall,"+");
   
   /*using port number create socket & connect to data server in each clus node*/
   for(c=0; c< armci_nclus; c++){
