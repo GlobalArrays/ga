@@ -206,6 +206,7 @@ void *ptr_a, *ptr_b;
 
    if(*g_a == *g_b){
      elemsb = elems;
+     ptr_b = ptr_a;
    }else {  
      nga_inquire_(g_b,  &type, &ndim, dims);
      if(type != Type) ga_error("type not correct", *g_b);
