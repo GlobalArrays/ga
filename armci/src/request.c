@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.18 2000-10-20 18:22:40 d3h325 Exp $ */
+/* $Id: request.c,v 1.19 2000-11-01 20:55:29 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -23,21 +23,24 @@
 void armci_rem_lock(int mutex, int proc, int *ticket)      
 {
 request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
+int *ibuf = (int*)(msginfo+1);
  
     GET_SEND_BUFFER;
 
-    msginfo->datalen = msginfo->dscrlen= 0;
+    msginfo->datalen = sizeof(int);
+    msginfo->dscrlen = 0;
     msginfo->from  = armci_me;
     msginfo->to    = proc;
     msginfo->operation = LOCK;
     msginfo->format  = mutex;
 
+    *ibuf = mutex;
+
     msginfo->bytes = msginfo->datalen + msginfo->dscrlen;
 
     armci_send_req(proc);
 
-    msginfo->datalen = sizeof(int); /* receive ticket from server */
-
+    /* receive ticket from server */
     *ticket = *(int*)armci_rcv_data(proc);
     
     if(DEBUG_)fprintf(stderr,"%d receiving ticket %d\n",armci_me, *ticket);
@@ -46,9 +49,12 @@ request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
 
 void armci_server_lock(request_header_t *msginfo)
 {
-    int mutex = msginfo->format;
-    int proc  = msginfo->from;
-    int ticket;
+int *ibuf = (int*)(msginfo+1);
+int proc  = msginfo->from;
+int mutex;
+int ticket;
+
+    mutex = *(int*)ibuf;
 
     /* acquire lock on behalf of requesting process */
     ticket = armci_server_lock_mutex(mutex, proc, msginfo->tag);
@@ -68,7 +74,7 @@ void armci_server_lock(request_header_t *msginfo)
 void armci_rem_unlock(int mutex, int proc, int ticket)
 {
 request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
-char *buf = (char*)(msginfo+1);
+int *ibuf = (int*)(msginfo+1);
 
     GET_SEND_BUFFER;
 
@@ -79,7 +85,7 @@ char *buf = (char*)(msginfo+1);
     msginfo->operation = UNLOCK;
     msginfo->format  = mutex;
 
-    ADDBUF(buf, int, ticket);
+    *ibuf = ticket;
 
     if(DEBUG_)fprintf(stderr,"%d sending unlock\n",armci_me);
     armci_send_req(proc);
@@ -136,7 +142,7 @@ void *buffer;
     msginfo->dscrlen = sizeof(void*);
     msginfo->from  = armci_me;
     msginfo->to    = proc; 
-    msginfo->format  = msginfo->operation = op;
+    msginfo->operation = op;
     msginfo->datalen = sizeof(int); /* extra */
 
     ADDBUF(buf, void*, prem); /* pointer is shipped as descriptor */
@@ -347,7 +353,11 @@ int armci_rem_strided(int op, void* scale, int proc,
          for(i=0;i<stride_levels;i++)((int*)buf)[i] = dst_stride_arr[i];
                                        buf += stride_levels*sizeof(int);
          msginfo->bypass=1;
-      }else msginfo->bypass=0;
+         msginfo->pinned=0; /* if set then pin is done before sending req*/
+      }else{
+         msginfo->bypass=0;
+         msginfo->pinned=0;
+      }
 #   endif
 
 
@@ -396,9 +406,14 @@ int armci_rem_strided(int op, void* scale, int proc,
 #      ifdef CLIENT_BUF_BYPASS
          if(msginfo->bypass){
 
+             if(!msginfo->pinned) armci_send_req(proc);
+
              if(!armci_pin_memory(dst_ptr,dst_stride_arr,count, stride_levels))
                                          return 1; /* failed:cannot do bypass */
-             armci_send_req(proc);
+
+             if(msginfo->pinned) armci_send_req(proc);
+             else armci_client_send_ack(proc, 1);
+
              armci_rcv_strided_data_bypass(proc, msginfo->datalen,
                                            dst_ptr, stride_levels);
              armci_unpin_memory(dst_ptr,dst_stride_arr,count, stride_levels);

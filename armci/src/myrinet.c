@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.17 2000-10-20 00:05:01 d3h325 Exp $
+/* $Id: myrinet.c,v 1.18 2000-11-01 20:55:28 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -36,7 +36,6 @@
 #include <assert.h>
 #include <string.h>
 
-
 #include <sys/mman.h>
 
 #include "myrinet.h"
@@ -69,9 +68,10 @@ typedef struct {
     unsigned int node_id;   /* my node id */
     int *node_map;          /* other's node id */
     struct gm_port *port;   /* my port */
-    long *ack;          /* acknowledgment for server */
-    long *serv_ack_ptr;     /* keep the pointers of server ack buffer */
-    long *serv_buf_ptr;     /* keep the pointers of server MessageRcvBuffer */
+    long *ack;              /* acknowledgment for server */
+    long *tmp;
+    long **serv_ack_ptr;     /* keep the pointers of server ack buffer */
+    void **serv_buf_ptr;     /* keep the pointers of server MessageRcvBuffer */
 } armci_gm_proc_t;
 
 /* data structure of server thread */
@@ -83,7 +83,7 @@ typedef struct {
     int port_id;            /* my port id */
     int *port_map;          /* other's port id. server only */
     void **dma_buf;         /* dma memory for regular send */
-    long *ack;          /* ack for each computing process */
+    long *ack;              /* ack for each computing process */
     long *direct_ack;
     long *proc_buf_ptr;     /* keep the pointers of client MessageSndBuffer */
     long *proc_ack_ptr;
@@ -147,6 +147,27 @@ extern long check_flag(long*);
     *buf = ARMCI_GM_CLEAR;
     __armci_fake_work =99.0;
 }
+
+
+/*\ wait until flag is not ARMCI_GM_CLEAR and return its value
+\*/
+long wait_flag_not_clear(long *buf)
+{
+extern long check_flag(long*);
+
+    long res;
+    long spin =0;
+
+    res = check_flag(buf);
+    while(res == ARMCI_GM_CLEAR){
+       for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work*=1.001;
+       res = check_flag(buf);
+    }
+    *buf = ARMCI_GM_CLEAR;
+    __armci_fake_work =99.0;
+    return res;
+}
+
 
 static int pin_in_block;   /* indicate pin memory in one large block or not */
 static int pin_in_segment; /* when pining segment by segment, serves as
@@ -297,26 +318,29 @@ void armci_unpin_memory(void *ptr, int stride_arr[], int count[], int strides)
                            COMPUTING PROCESS                            
  *********************************************************************/
 
+
 /* pre-allocate required memory at start up*/
 int armci_gm_proc_mem_alloc()
 {
+char *tmp;
+
     /* allocate buf keeping the pointers of server ack buf */
-    proc_gm->serv_ack_ptr = (long *)calloc(armci_nclus, sizeof(long));
+    proc_gm->serv_ack_ptr = (long **)calloc(armci_nclus, sizeof(long*));
     if(!proc_gm->serv_ack_ptr) return FALSE;
 
     /* allocate buf keeping the pointers of server MessageRcvBuffer */
-    proc_gm->serv_buf_ptr = (long *)calloc(armci_nclus, sizeof(long));
+    proc_gm->serv_buf_ptr = (void **)calloc(armci_nclus, sizeof(void*));
     if(!proc_gm->serv_buf_ptr) return FALSE;
     
     /* allocate send buffer */
     MessageSndBuffer = (char *)gm_dma_malloc(proc_gm->port, MSG_BUFLEN);
     if(MessageSndBuffer == 0) return FALSE;
 
-    proc_gm->ack = (long *)gm_dma_malloc(proc_gm->port, sizeof(long));
-    if(proc_gm->ack == 0) return FALSE;
-
-    armci_foo = (char *)gm_dma_malloc(proc_gm->port, 2097152);
-    if(!armci_foo) return FALSE;
+    tmp = gm_dma_malloc(proc_gm->port, 2*sizeof(long));
+    if(!tmp)return FALSE;
+    
+    proc_gm->ack = (long*)tmp;
+    proc_gm->tmp = (long*)(tmp + sizeof(long)); 
 
     return TRUE;
 }
@@ -364,8 +388,7 @@ int armci_gm_proc_init()
     /* allow direct send */
     status = gm_allow_remote_memory_access(proc_gm->port);
     if(status != GM_SUCCESS) {
-        fprintf(stderr, "%d: PROC could not enable direct sends\n",
-                armci_me);
+        fprintf(stderr, "%d: PROC could not enable direct sends\n", armci_me);
         return FALSE;
     }
 
@@ -412,8 +435,7 @@ void armci_send_buffer_ready()
     
     /* blocking: wait til the send is done by calling the callback */
     while(armci_gm_context->done == ARMCI_GM_SENDING) 
-        MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
-                   &flag, &status);
+        MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
 
     if(armci_gm_context->done == ARMCI_GM_FAILED)
         armci_die(" last send failed", armci_me);
@@ -431,6 +453,22 @@ int armci_client_send_complete()
         MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
 
     return(armci_gm_context->done);
+}
+
+/* direct send to server */
+void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len)
+{
+
+    armci_gm_context->done = ARMCI_GM_SENDING;
+
+    gm_directed_send_with_callback(proc_gm->port, src_buf,
+           (gm_remote_ptr_t)(gm_up_t)dst_buf, len, GM_LOW_PRIORITY,
+           proc_gm->node_map[p], ARMCI_GM_SERVER_RCV_PORT,
+           armci_proc_callback, armci_gm_context);
+
+    /* blocking: wait til the send is done by calling the callback */
+    if(armci_client_send_complete() == ARMCI_GM_FAILED)
+        armci_die(" failed sending msg to server", p);
 }
 
 
@@ -480,8 +518,8 @@ void armci_client_connect_to_servers()
             wait_flag_updated((long *)MessageSndBuffer, ARMCI_GM_COMPLETE);
             wait_flag_updated((long *)MessageSndBuffer+4, ARMCI_GM_COMPLETE);
             
-            proc_gm->serv_ack_ptr[i] = ((long *)MessageSndBuffer)[1];
-            proc_gm->serv_buf_ptr[i] = ((long *)MessageSndBuffer)[2];
+            proc_gm->serv_ack_ptr[i] = (long*)((long *)MessageSndBuffer)[1];
+            proc_gm->serv_buf_ptr[i] = (void*)((long *)MessageSndBuffer)[2];
             
             /* send back the ack to server */
             ((long *)MessageSndBuffer)[0] = ARMCI_GM_ACK;
@@ -489,21 +527,13 @@ void armci_client_connect_to_servers()
 
             if(DEBUG_INIT_) {
                 printf("%d:rcvd 1 msg from server %d\n",armci_me,server_mpi_id);
-                printf("%d: sending back ack to server %d at %ld\n",
+                printf("%d: sending back ack to server %d at %p\n",
                         armci_me, server_mpi_id, proc_gm->serv_ack_ptr[i]);
                 fflush(stdout);
             }
             
-            gm_directed_send_with_callback(proc_gm->port, MessageSndBuffer,
-                     (gm_remote_ptr_t)(gm_up_t)(proc_gm->serv_ack_ptr[i]),
-                     sizeof(long), GM_LOW_PRIORITY,
-                     proc_gm->node_map[server_mpi_id], 
-                     ARMCI_GM_SERVER_RCV_PORT, armci_proc_callback, 
-                     armci_gm_context);
-
-            /* blocking: wait til the send is done by calling the callback */
-            if(armci_client_send_complete() == ARMCI_GM_FAILED)
-                armci_die(" failed sending ack to server", server_mpi_id);
+           armci_client_direct_send(server_mpi_id, MessageSndBuffer,
+                                    proc_gm->serv_ack_ptr[i], sizeof(long));
 
             if(DEBUG_INIT_) fprintf(stderr, "%d: connected to server %d\n",
                                     armci_me, server_mpi_id);
@@ -513,12 +543,37 @@ void armci_client_connect_to_servers()
 }
 
 
-
 /*\ wait until flag is updated indicated that bypass transfer is done
 \*/
 void armci_wait_for_data_bypass()
 {
    wait_flag_updated((long *)(proc_gm->ack), ARMCI_GM_COMPLETE);
+}
+
+
+/*\ wait until ack is set by client: on failure return 1  
+\*/
+int armci_wait_pin_client(int proc)
+{
+long status;
+
+    if(proc <0 || proc >= armci_nproc)armci_die("armci_wait_pin_client:p",proc);
+
+    status = wait_flag_not_clear(serv_gm->ack +proc);
+    if(status == ARMCI_GM_READY) return 0;
+    if(status == ARMCI_GM_FAILED) return 1;
+    armci_die("armci_wait_pin_client:unexpected value",(int)status);
+    return 1;
+}
+
+
+void armci_client_send_ack(int p, int success)
+{
+     int cluster = armci_clus_id(p);
+     long *pflag = proc_gm->tmp;
+     *pflag= (success)? ARMCI_GM_READY : ARMCI_GM_FAILED;
+     armci_client_direct_send(p, pflag, proc_gm->serv_ack_ptr[cluster], 
+                                                         sizeof(long));
 }
 
 
@@ -548,25 +603,6 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     else return 0;
 }
 
-
-/* not used */
-void armci_client_direct_send(int dst, char *src_buf, char *dst_buf, int len,
-                              int dst_port_id)
-{
-    /* check the last send complete or not */
-    if(armci_client_send_complete() == ARMCI_GM_FAILED)
-        armci_die(" last send failed", dst);
-    armci_gm_context->done = ARMCI_GM_SENDING;
-    
-    gm_directed_send_with_callback(proc_gm->port, src_buf,
-           (gm_remote_ptr_t)(gm_up_t)(dst_buf),
-           len, GM_LOW_PRIORITY, proc_gm->node_map[dst], dst_port_id,
-           armci_proc_callback, armci_gm_context);
-
-    /* blocking: wait til the send is done by calling the callback */
-    if(armci_client_send_complete() == ARMCI_GM_FAILED)
-        armci_die(" failed sending msg to server", dst);
-}
 
 
 /* check if data is available in the buffer
@@ -622,9 +658,11 @@ int armci_gm_serv_mem_alloc()
     serv_gm->ack = (long *)gm_dma_malloc(serv_gm->rcv_port,
                                              armci_nproc*sizeof(long));
     if(serv_gm->ack == 0) return FALSE;
+    for(i=0; i<armci_nproc; i++)serv_gm->ack[i]=ARMCI_GM_CLEAR;
 
     serv_gm->direct_ack = (long*)gm_dma_malloc(serv_gm->snd_port, sizeof(long));
     if(serv_gm->direct_ack == 0) return FALSE;
+    *serv_gm->ack = ARMCI_GM_CLEAR;
     
     /* allocate recv buffer */
     MessageRcvBuffer = (char *)gm_dma_malloc(serv_gm->snd_port, MSG_BUFLEN);
@@ -1052,9 +1090,7 @@ void armci_call_data_server()
         }
     }
     
-    if(DEBUG_) { printf("%d(server): done! closing ...\n",armci_me);
-        fflush(stdout);
-    }
+    if(DEBUG_) {printf("%d(server): done! closing\n",armci_me); fflush(stdout);}
 }
 
 
@@ -1074,8 +1110,7 @@ void armci_transport_cleanup()
     else {
 #if 0
         if(!armci_gm_proc_mem_free()) 
-            armci_die("computing process  memory deallocate memory failed",
-                      armci_me);
+            armci_die("computing process  memory deallocate memory failed",0);
 #endif   
         free(proc_gm->node_map);
     }

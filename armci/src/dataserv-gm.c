@@ -90,14 +90,14 @@ void armci_rcv_req(void *mesg,
 void armci_send_contig_bypass(int proc, request_header_t *msginfo,
                               void *src_ptr, void *rem_ptr, int bytes)
 {
-     int to = msginfo->from;
 #if 0
+     int to = msginfo->from;
      extern char *armci_foo;
      armci_server_direct_send(to,armci_foo,rem_ptr,bytes,ARMCI_GM_NONBLOCKING);
      armci_server_send_ack(to);
-#else
+#endif
 
-#ifdef PINALL
+#if 0
      if(armci_pin_contig(src_ptr,bytes)){
        armci_server_direct_send(to,src_ptr,rem_ptr,bytes,ARMCI_GM_NONBLOCKING);
        armci_server_send_ack(to);
@@ -105,6 +105,7 @@ void armci_send_contig_bypass(int proc, request_header_t *msginfo,
      }else armci_die("send_contig_bypass failed", bytes);
 #endif
 
+#if 0
      int chunk=bytes>>1;
      int half = chunk>>2;
      int left=bytes;
@@ -112,6 +113,10 @@ void armci_send_contig_bypass(int proc, request_header_t *msginfo,
      while(left>0){ 
        if(!armci_pin_contig(sptr,chunk))
            armci_die("send_contig_bypass failed",chunk);
+                if(msginfo->pinned==0){ /* wait until client data is pinned */
+                   if(armci_wait_pin_client(to))return; /*abandon this request*/
+                   else msginfo->pinned=1;
+                }
        armci_server_direct_send(to,sptr,rptr,chunk,ARMCI_GM_NONBLOCKING);
        left -= chunk;
        sptr += chunk;
@@ -144,7 +149,6 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
     int msg_threshold;
 
     msg_threshold = MIN(msg_buflen, INTERLEAVE_GET_THRESHOLD);
-    
     buf = loc_buf; buflen = msg_buflen;
     
     if(DEBUG1){
@@ -152,13 +156,6 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
         fflush(stdout);
     }
  
-#if 0
-    if(stride_levels==0 && count[0] >800000){
-       armci_send_contig_bypass(proc,msginfo, loc_ptr, rem_ptr, count[0]);
-       return;
-    }
-#endif
-
     /* number of n-element of the first dimension */
     n1dim = 1;
     for(i=1; i<=stride_levels; i++) n1dim *= count[i];
@@ -197,6 +194,14 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
                 else len = msglen;
                 
                 armci_copy(src_ptr, buf, len);
+
+#ifdef CLIENT_BUF_BYPASS 
+                if(msginfo->pinned==0){ /* wait until client data is pinned */
+                   if(armci_wait_pin_client(to))return; /*abandon this request*/
+                   else msginfo->pinned=1;
+                }
+#endif
+
                 armci_server_direct_send(to, buf, dst_ptr, len, ARMCI_GM_NONBLOCKING);
                 msglen -= len;
                 src_ptr += len; dst_ptr += len;
@@ -215,12 +220,19 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
             int msg_size = count[0] /2;
 
             armci_serv_send_nonblocking_complete(1);
-            
             armci_copy(src_ptr, buf, msg_size);
+
+#ifdef CLIENT_BUF_BYPASS
+            if(msginfo->pinned==0){ /* wait until client data is pinned */
+                 if(armci_wait_pin_client(to)) return;/* abandon this request */
+                 else msginfo->pinned=1;
+            }
+#endif
+
             armci_server_direct_send(to, buf, dst_ptr, msg_size, ARMCI_GM_NONBLOCKING);
             src_ptr += msg_size; dst_ptr += msg_size; buf += msg_size;
-            
             armci_copy(src_ptr, buf, msg_size);
+
             armci_server_direct_send(to, buf, dst_ptr, msg_size, ARMCI_GM_NONBLOCKING);
             buf = loc_buf;
         } else
@@ -228,6 +240,14 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
         /* SMALL SEGMENTS */
         {
             armci_copy(src_ptr, buf, count[0]);
+
+#ifdef CLIENT_BUF_BYPASS 
+            if(msginfo->pinned==0){ /* wait until client data is pinned */
+                 if(armci_wait_pin_client(to)) return;/* abandon this request */
+                 else msginfo->pinned=1;
+            }
+#endif
+
             armci_server_direct_send(to, buf, dst_ptr,
                                          count[0], ARMCI_GM_NONBLOCKING);
 

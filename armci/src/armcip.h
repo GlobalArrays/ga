@@ -94,9 +94,11 @@ extern thread_id_t armci_usr_tid;
 #define RMW 5
 #define LOCK   20
 #define UNLOCK 21
+#define ACK (ARMCI_ACC_OFF -1)
+
+/* must fit in two bits, see msginfo->format in request.h */
 #define STRIDED 1
 #define VECTOR  2
-#define ACK (ARMCI_ACC_OFF -1)
 
 extern  int armci_me, armci_nproc;
 extern  double armci_internal_buffer[BUFSIZE_DBL];

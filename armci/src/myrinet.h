@@ -24,8 +24,8 @@
 
 #define CLIENT_BUF_BYPASS 
 #define LONG_GET_THRESHOLD 66248
-#define LONG_GET_THRESHOLD_STRIDED 2048 
-#define INTERLEAVE_GET_THRESHOLD 102400
+#define LONG_GET_THRESHOLD_STRIDED 3000 
+#define INTERLEAVE_GET_THRESHOLD 66248
 #define INTERLEAVE_GET_THRESHOLD_ LONG_GET_THRESHOLD
 
 /* below are two ports used by ARMCI and their boards */
@@ -60,6 +60,8 @@ extern void armci_data_server(void *msg);
 extern void armci_serv_send_nonblocking_complete(int max_outstanding);
 extern void armci_call_data_server();
 extern void armci_wait_for_data_bypass();
+extern int  armci_wait_pin_client(int);
+extern void armci_client_send_ack(int p, int success);
 
 
 #endif /* MYRINET_H */
