@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.14 2002-01-29 23:28:01 vinod Exp $ */
+/* $Id: memlock.c,v 1.15 2002-09-04 18:24:09 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -55,6 +55,11 @@ void armci_lockmem_(void *pstart, void *pend, int proc)
     int lock = 0;
 #endif
 
+    if(DEBUG_){
+      printf("%d: armci_lockmem_ proc=%d lock=%d\n",armci_me,proc,lock);
+      fflush(stdout);
+    }
+
     NATIVE_LOCK(lock,proc);
 #   ifdef LAPI
     {
@@ -62,6 +67,10 @@ void armci_lockmem_(void *pstart, void *pend, int proc)
        kevin_ok=0;
     }
 #   endif
+    if(DEBUG_){
+      printf("%d: armci_lockmem_ done\n",armci_me);
+      fflush(stdout);
+    }
 }
 
 void armci_unlockmem_(int proc)
