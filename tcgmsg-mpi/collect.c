@@ -45,7 +45,7 @@ long n;
 
   while (nleft) {
     int root = 0; 
-    int ierr  ;
+    int ierr = MPI_SUCCESS;
     int ndo = MIN(nleft, buflen);
 
     if (strncmp(op,"+",1) == 0)
@@ -102,7 +102,7 @@ long n;
 
   while (nleft) {
     int root = 0; 
-    int ierr  ;
+    int ierr = MPI_SUCCESS;
     int ndo = MIN(nleft, buflen);
 
     if (strncmp(op,"+",1) == 0)
