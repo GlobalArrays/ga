@@ -1,6 +1,6 @@
 # Makelib.h, 01.26.94
 #
-# TARGET is one of (SUN, SGI, IBM, KSR, SP1)
+# TARGET is one of (SUN, SGI, SGITFP, IBM, KSR, SP1, T3D)
 #
 #
 # If you want to build test programs for GA, you also need to provide
@@ -48,6 +48,11 @@ ifeq ($(TARGET),KSR)
 #
        SRC1 = /home5/d3h325
         SRC = $(SRC1)/scf/src
+
+       LIBS = ../libglobal.a \
+              ../../ma/libma.a\
+              ../../lapack_blas/liblapack_blas.a -lksrblas
+
 
      LIBCOM = $(SRC)/tcgmsg/ipcv4.0/libtcgmsg.a  -lrpc -para 
 endif
