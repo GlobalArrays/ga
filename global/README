@@ -6,7 +6,7 @@ DEPENDENCIES ON OTHER SOFTWARE
  - ARMCI - one-sided communication library used by GA as its run-time system
    This s/w is new in release 3.0
 
- - TCGMSG or MPI: more or less extensive support is required. For
+ - MPI or TCGMSG: more or less extensive run-time support is required. For
    example, a message-passing library is used on some platforms to
    fork processes, implement broadcast, ga_dgop;
 
@@ -25,14 +25,11 @@ DEPENDENCIES ON OTHER SOFTWARE
    you do not install these libs, the named operations will not be
    available.
 
- - if you'd like to use tracing, an additonal library libtrace.a is
-   required, and -DGA_TRACE define flag should be specified for C and
-   Fortran compilers.
 
 MAKEFILES
 
  - GNUmakefile: Unix makefile
- - MakeFile:    NT makefile
+ - MakeFile:    Windows makefile
 
  - Makefile.h:  definitions & include symbols 
  - MakeFiles.h: files to be compiled depending on the TARGET machine
@@ -46,8 +43,8 @@ MAKEFILES
    appropriate value of VERSION will be determined automatically.
 
    Valid TARGET is one of: SUN, SOLARIS, SGI, SGI_N32, SGITFP, DECOSF,
-                           IBM, KSR, SP1, SP, CRAY-T3D, HPUX,
-                           CONVEX-SPP,IPSC, DELTA, PARAGON, LINUX
+                           IBM, LAPI (IBM SP), CRAY-T3E, HPUX, LINUX,
+                           FUJITSU-VPP
 
 
 BUILDING GA
@@ -88,11 +85,10 @@ BUILDING GA
 
 TEST PROGRAMS
 
- - Programs: test.x, testsolve.x, testeig.x, testpatch.x, and
-             ngatest.x are available to test this software.
+ - Programs: test.x, testsolve.x, testeig.x, patch.x, ndim.x, ntestc.x 
+             and ngatest.x are available to test this software.
 
- - Program testspd.x should work only with the ScaLAPACK and TCGMSG-MPI
-   interface.
+ - Program testspd.x should work only with the ScaLAPACK and MPI
 
  - Another example program that uses GA is called jacobi.x. The Jacobi
    iterative method is used to solve a system of linear equations
@@ -129,7 +125,8 @@ TEST PROGRAMS
 
 DOCUMENTATION
 
-   An HTML version of GA documentation is located in doc/. 
+   The documentation is located in doc/ and on the web:
+   http://www.emsl.pnl.gov:2080/docs/global 
 
 CONTACT
 

@@ -24,27 +24,20 @@ ACKNOWLEDGMENT
 
 
 GENERAL NOTES
-
-  Version 3.0 of Global Arrsys Library
-
+  Version 3.0 of Global Arrays Library:
   - supports a wide variety of platforms, from supercomputer, such as
     IBM SP and CRAY T3E, to Linux clusters and Windows NT.
- 
   - supports arbitrary dimensional array operations. 
-
-  - supports common communication libraries: MPI, TCG-MSG.
-
+  - supports multiple message-passing libraries: MPI, TCGMSG.
   - provides C and Fortran interface to the library.
-
   - provides interface routines to ScaLAPACK
 
 
 SUPPORTED PLATFORMS
-
-  * IBM SP, CRAY T3E/J90, SGI Origin, Fujitsu
-  * Cluster of workstations: Solaris, IRIX, AIX, HPUX, Digital Unix
-  * Linux cluster
-  * Window NT
+  * IBM SP, CRAY T3E & J90, SGI Origin, Fujitsu
+  * Cluster of workstations/servers: Solaris, IRIX, AIX, HPUX, Digital Unix
+  * Linux clustes/servers
+  * Windows NT
 
 
 DIRECTORY STRUCTURE
@@ -52,22 +45,31 @@ DIRECTORY STRUCTURE
   src      - source code for GA library
   testing  - test codes
   doc      - documents
-  trace    - source code for tracing library
+  trace    - programs for processing of the GA trace files 
   X        - source code for GA visualization program
 
 
 HISTORY
-
-  version 3.0 * support for n-dimensional arrays (n<=7)
+  version 3.0, November 15th, 1999:
+              * support for n-dimensional arrays (n<=7)
               * added n-dimensional testing program: ngatest.x;
-	      * updated utility tools: ga_print, ga_summarize, which
-	        support n-dimensional operations;
-	      * improved interoperability with MPI on clusters of
-	        workstations
-	      * ports to Cray J90 and Windows NT (single machine)
+              * updated utility tools: ga_print, ga_summarize, which
+                support n-dimensional operations;
+              * improved interoperability with MPI on clusters of
+                workstations
+              * ports to Cray J90 and Windows NT (single machine)
               * ga_create uses default distribution for block size <1
                 rather than <2 (the old scheme can be restored see
                 OLD_DEFAULT_BLK in src/GNUmakefile)
+              * added a new, easier-to-use C interface (see ntestc.c) 
+              * added User's Manual
+
+  version 2.4 * port to IBM SP running LAPI active messages
+                (significant performance improvement).
+                Version >=2.3 of the IBM PSSP parallel environment  and
+                threaded version of MPI are required to run with LAPI.
+              * port to Fujitsu VX-4 and VPP-700.
+              * minor platform specific updates. 
 
   version 2.3 * added lock operations: ga_lock, ga_unlock,
                 ga_create_mutex, ga_destroy_mutex
