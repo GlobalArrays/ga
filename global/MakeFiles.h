@@ -7,7 +7,7 @@
 #
 #
 INTERRUPT_AVAILABLE = SP1 SP IPSC DELTA PARAGON
-NATIVE LOCKS = SGITFP SGI64 CONVEX-SPP
+NATIVE LOCKS = SGITFP SGI64 SGI_N32 CONVEX-SPP
 
 #                  Synchronization
 #
@@ -16,7 +16,7 @@ ifeq ($(VERSION),SHMEM)
           GA_SYNC = barrier.KSR.o
           EXTRA = ksrcopy.o
      else
-       ifneq ($(TARGET),CRAY-T3D)
+       ifneq (CRAY,$(findstring CRAY,$(TARGET)))
             GA_SYNC =  semaphores.o
        endif
      endif
@@ -35,7 +35,7 @@ endif
 #                Core Routines of GAs
 #
 ifeq ($(VERSION),SHMEM)
-     ifneq ($(TARGET),CRAY-T3D)
+     ifneq (CRAY,$(findstring CRAY,$(TARGET)))
           IPC = shmem.o shmalloc.o signal.o
      endif
 else
