@@ -20,7 +20,7 @@ void test(id, l_fnum, l_iter)
     for(iter = 0; iter <= l_iter; iter++)
       {
 /*	fprintf(stderr, "Probing  id[%d][%d]=%d\n", fnum, iter, id[fnum][iter]); */
-	if(!EAF_ProbeC(&id[fnum][iter], &stat))
+	if(EAF_ProbeC(&id[fnum][iter], &stat))
 	  {
 	    fprintf(stderr, "Bad probe of write fnum=%d   iter %d\n", fnum, iter);
 	    exit(1);

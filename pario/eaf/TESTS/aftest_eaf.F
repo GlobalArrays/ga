@@ -2,6 +2,12 @@
 cjqm#include "chemio.h"
 #include "eaf.fh"
 
+
+/*  This define just got added because the size declarations were removed from
+    eaf.fh, but the test codes still use them.
+*/    
+#define EAF_SZ_INT 4
+
 #define IO_TEST_SZ (1024*1024/128)
 #define IO_NUM_FILES 4
 #define MAX_ITER 4
