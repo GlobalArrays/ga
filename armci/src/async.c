@@ -1,4 +1,4 @@
-/* $Id: async.c,v 1.2 2002-01-08 21:56:49 vinod Exp $ */
+/* $Id: async.c,v 1.3 2002-10-22 21:49:37 vinod Exp $ */
 /* data structures and interfaces for handling asynchronous requests 
  */
 
@@ -112,7 +112,7 @@ strided_dscr_t *dscr;
                           dscr->stride_levels, dscr->stride_arr,dscr->count);
 }
 
-
+#if 0 /*this function has been added in armci.c*/
 int ARMCI_Wait(int req_id)
 {
 int dsc_id = REQ_TO_DSC_ID(req_id);
@@ -140,3 +140,4 @@ void *buf;
 
    return 0;
 }
+#endif

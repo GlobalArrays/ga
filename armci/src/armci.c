@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.51 2002-09-20 19:11:54 d3h325 Exp $ */
+/* $Id: armci.c,v 1.52 2002-10-22 21:49:37 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -382,4 +382,14 @@ int ARMCI_Same_node(int proc)
 {
    int direct=SAMECLUSNODE(proc);
    return direct;
+}
+
+int ARMCI_Wait(armci_hdl_t nb_handle){
+int success=0;
+    if(nb_handle){
+#     ifdef COMPLETE_HANDLE
+       COMPLETE_HANDLE(nb_handle,(&success));
+#     endif
+    }
+    return(success);
 }
