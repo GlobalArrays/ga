@@ -11,8 +11,8 @@
 #
            FC = f77
            CC = cc
-         FOPT = -g
-         COPT = -g
+         FOPT = -O
+         COPT = -O
            AR = ar
        RANLIB = ranlib
           CPP = /usr/lib/cpp
