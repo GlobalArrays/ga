@@ -147,10 +147,10 @@ void FATR PFCOPY_(type, node0, fname, len)
 
   char *filename;
 
-/*#ifdef DEBUG */
+#ifdef DEBUG 
   (void) printf("me=%d, type=%d, node0=%d, fname=%x, fname=%.8s, len=%d\n",
 		NODEID_(), *type, *node0, fname, fname, len);
-/*#endif */
+#endif 
 
   /* Strip trailing blanks off the file name */
 

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/pfilecopy.c,v 1.1 2000-04-05 21:50:24 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/pfilecopy.c,v 1.2 2000-10-03 23:28:07 d3h325 Exp $ */
 
 #include <stdio.h>
 
@@ -148,10 +148,10 @@ void PFCOPY_(type, node0, fname, len)
 
   char *filename;
 
-/*#ifdef DEBUG */
+#ifdef DEBUG 
   (void) printf("me=%d, type=%d, node0=%d, fname=%x, fname=%.8s, len=%d\n",
 		NODEID_(), *type, *node0, fname, fname, len);
-/*#endif */
+#endif 
 
   /* Strip trailing blanks off the file name */
 
