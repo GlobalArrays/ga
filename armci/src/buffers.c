@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.21 2003-03-27 17:39:46 vinod Exp $    **/
+/* $Id: buffers.c,v 1.22 2003-03-27 21:39:05 d3h325 Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -562,7 +562,7 @@ int i=0;
 \*/
 void _armci_buf_test_nb_request(int bufid,unsigned int tag, int *retcode) 
 {
-int i,retval=0;
+int i;
     if(bufid == NB_NONE) *retcode=0;
     else if(bufid == NB_MULTI) {
        for(i=0;i<MAX_BUFS;i++){ 
