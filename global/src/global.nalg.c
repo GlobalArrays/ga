@@ -75,7 +75,7 @@ register Integer i;
 
 void gai_dot(int Type, Integer *g_a, Integer *g_b, void *value)
 {
-Integer  ndim, type, me, elems, elemsb;
+Integer  ndim, type, me, elems=0, elemsb=0;
 Integer  sum =0, index_a, index_b, len=1; 
 register Integer i;
 Integer isum=0;
@@ -94,8 +94,10 @@ DoubleComplex zsum ={0.,0.};
    nga_inquire_(g_a,  &type, &ndim, dims);
    if(type != Type) ga_error("type not correct", *g_a);
    nga_distribution_(g_a, &me, lo, hi);
-   nga_access_(g_a, lo, hi, &index_a, ld);
-   GET_ELEMS(ndim,lo,hi,ld,&elems);
+   if(lo[0]>0){
+      nga_access_(g_a, lo, hi, &index_a, ld);
+      GET_ELEMS(ndim,lo,hi,ld,&elems);
+   }
 
    if(*g_a == *g_b){
      index_b = index_a;
@@ -104,8 +106,10 @@ DoubleComplex zsum ={0.,0.};
      nga_inquire_(g_b,  &type, &ndim, dims);
      if(type != Type) ga_error("type not correct", *g_b);
      nga_distribution_(g_b, &me, lo, hi);
-     nga_access_(g_b, lo, hi, &index_b, ld);
-     GET_ELEMS(ndim,lo,hi,ld,&elemsb);
+     if(lo[0]>0){
+        nga_access_(g_b, lo, hi, &index_b, ld);
+        GET_ELEMS(ndim,lo,hi,ld,&elemsb);
+     }
    }
 
    if(elems!= elemsb)ga_error("inconsistent number of elements",elems-elemsb); 
@@ -243,7 +247,7 @@ register Integer i;
 void FATR ga_add_(void *alpha, Integer* g_a, 
                   void* beta, Integer* g_b, Integer* g_c)
 {
-Integer  ndim, type, typeC, me, elems, elemsb, elemsa;
+Integer  ndim, type, typeC, me, elems=0, elemsb=0, elemsa=0;
 register Integer i;
 Integer index_a, index_b, index_c;
 
@@ -265,8 +269,10 @@ Integer index_a, index_b, index_c;
 
    nga_inquire_(g_c,  &typeC, &ndim, dims);
    nga_distribution_(g_c, &me, lo, hi);
-   nga_access_(g_c, lo, hi, &index_c, ld);
-   GET_ELEMS(ndim,lo,hi,ld,&elems);
+   if (  lo[0]>0 ){
+     nga_access_(g_c, lo, hi, &index_c, ld);
+     GET_ELEMS(ndim,lo,hi,ld,&elems);
+   }
 
    if(*g_a == *g_c){
      index_a = index_c;
@@ -275,8 +281,10 @@ Integer index_a, index_b, index_c;
      nga_inquire_(g_a,  &type, &ndim, dims);
      if(type != typeC) ga_error("types not consistent", *g_a);
      nga_distribution_(g_a, &me, lo, hi);
-     nga_access_(g_a, lo, hi, &index_a, ld);
-     GET_ELEMS(ndim,lo,hi,ld,&elemsa);
+     if (  lo[0]>0 ){
+       nga_access_(g_a, lo, hi, &index_a, ld);
+       GET_ELEMS(ndim,lo,hi,ld,&elemsa);
+     }
    }
 
    if(*g_b == *g_c){
@@ -286,8 +294,10 @@ Integer index_a, index_b, index_c;
      nga_inquire_(g_b,  &type, &ndim, dims);
      if(type != typeC) ga_error("types not consistent", *g_b);
      nga_distribution_(g_b, &me, lo, hi);
-     nga_access_(g_b, lo, hi, &index_b, ld);
-     GET_ELEMS(ndim,lo,hi,ld,&elemsb);
+     if (  lo[0]>0 ){
+       nga_access_(g_b, lo, hi, &index_b, ld);
+       GET_ELEMS(ndim,lo,hi,ld,&elemsb);
+     }
    }
 
    if(elems!= elemsb)ga_error("inconsistent number of elements a",elems-elemsb);
