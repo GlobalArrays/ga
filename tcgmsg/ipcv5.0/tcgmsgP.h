@@ -36,7 +36,14 @@ EXTERN long TCGMSG_caught_sigint; /* True if SIGINT was trapped */
    multiple of page sizes. Structure of this buffer is exploited
    in T3D code. */
 
-#define SHMEM_BUF_SIZE (8192  - 4*sizeof(long))
+#ifdef CRAY_T3E
+#     define SHMEM_BUF_SIZE (16384  - 4*sizeof(long))
+#elif defined(CRAY_T3D)
+#     define SHMEM_BUF_SIZE (8192  - 4*sizeof(long))
+#else
+#     define SHMEM_BUF_SIZE (32768  - 4*sizeof(long))
+#endif
+
 typedef struct {
   long info[4];                 /* 0=type, 1=length, 2=tag, 3=full */
   char buf[SHMEM_BUF_SIZE];	/* Message buffer */
