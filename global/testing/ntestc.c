@@ -69,7 +69,7 @@ double *buf;
 
      /* print info about array we got */
      NGA_Inquire(g_a, &type, &ndim, adims);
-     if(me==0)print_distribution(g_a);
+     GA_Print_distribution(g_a);
 
      GA_Sync();
      /* duplicate array A with ga_create irreg rather than ga_duplicate
@@ -124,7 +124,7 @@ double *buf;
      if(me==0)printf("OK\n\n");
      free(proclist); free(regions); free(map);
      
-     if(me==0)print_distribution(g_b);
+     GA_Print_distribution(g_b);
 
      GA_Sync();
 
@@ -212,7 +212,7 @@ int main(argc, argv)
 int argc;
 char **argv;
 {
-Integer heap=20000, stack=20000;
+Integer heap=300000, stack=300000;
 int me, nproc;
 
 #ifdef MPI
