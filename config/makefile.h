@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.121 2005-01-22 02:25:10 manoj Exp $
+# $Id: makefile.h,v 1.122 2005-01-24 09:33:37 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -247,7 +247,7 @@ ifeq ($(TARGET),LINUX)
                  awk ' /sparc/ { print "sparc" }; /i*86/ { print "x86" } ' )
 
 ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { pgfcount++}; END {if(pgfcount)print "pgf77"} ' )
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { pgfcount++}; END {if(pgfcount)print "pgf77"}; /ifc/ { print "ifc" ; exit }; /ifort/ { print "ifort" ; exit } ' )
 endif
 ifneq (,$(findstring mpicc,$(_CC)))
          _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ {gcccount++}; END {if(gcccount)print "gcc"} ' )
