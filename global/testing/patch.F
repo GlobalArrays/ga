@@ -1,4 +1,4 @@
-c $Id: patch.F,v 1.17 2000-09-12 18:29:47 d3h325 Exp $
+c $Id: patch.F,v 1.18 2000-09-12 18:45:32 d3h325 Exp $
 #if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
@@ -517,7 +517,6 @@ c
       integer g_a, g_b, g_c 
       integer rows, cols, loop
       logical status, dist_same 
-      double precision drand
       iran(i) = int(util_drand(0)*real(i)) + 1
       dist_same = .false.
 c
