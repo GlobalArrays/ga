@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.77 2003-10-21 05:21:29 d3h325 Exp $
+#$Id: GNUmakefile,v 1.78 2003-10-21 05:35:53 d3h325 Exp $
          FOPT = -O
          COPT = -O
 
@@ -90,7 +90,7 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
 # only one of the two lines below can be uncommented
 #   LIB_DEFINES += -DNO_SHM
 ifdef DOELAN4
-    LIB_DEFINES += -DDOELAN4 -DACC_SMP
+    LIB_DEFINES += -DACC_SMP
 else
 ifdef LIBELAN_NATTACH
     LIB_DEFINES +=  -DMULTI_CTX -DACC_SMP
