@@ -1,5 +1,5 @@
       subroutine ga_diag_std(g_a, g_v, eval)
-C$Id: ga_diag.F,v 1.14 1995-02-02 23:13:14 d3g681 Exp $
+C$Id: ga_diag.F,v 1.15 1995-05-07 20:16:27 d3h325 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"
@@ -39,7 +39,7 @@ c
       integer hsc, adrsc
       integer hip, adrip
 c
-      external fmemreq, pdspev
+      external  pdspev
 c
       logical oactive           ! true iff this process participates
       integer dimA1, dimA2, typeA
@@ -337,7 +337,7 @@ c
       integer hip, adrip
 c
       double precision drand
-      external memreq, pdspgv, drand
+      external pdspgv, drand
       intrinsic mod
 c
       logical oactive           ! true iff this process participates
@@ -644,7 +644,7 @@ c
       integer hip, adrip
 c
       double precision drand
-      external memreq, pdspgv, drand
+      external pdspgv, drand
       intrinsic mod
 c
       logical oactive           ! true iff this process participates
