@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.44 2002-06-05 15:14:46 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.45 2002-06-19 18:12:42 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -2141,6 +2141,7 @@ long offelem;
             }
             /* add fractional offset for current block */
             nelem = 1;
+            nblock_to_indicesM(index,ndim,block_dims,CR);
             for (i=0; i<ndim-1; i++) {
               if (index[i]<block_dims[i]-1) {
                 nelem *= (long)DRA[handle].chunk[i];
