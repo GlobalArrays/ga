@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.82 2004-06-29 20:37:02 d3g293 Exp $ */
+/* $Id: base.c,v 1.83 2004-06-29 22:39:18 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -905,13 +905,13 @@ int FATR ga_pgroup_create_(Integer *list, Integer *count)
   PGRP_LIST[pgrp_handle].parent = GA_Default_Proc_Group;
   PGRP_LIST[pgrp_handle].mirrored = 0;
   PGRP_LIST[pgrp_handle].map_nproc = tmp_count;
-#ifdef USE_MPI
+#ifdef MPI
   ARMCI_Group_create(tmp_count, tmp2_list, &PGRP_LIST[pgrp_handle].group);
 #endif
  
  
   GA_POP_NAME;
-#ifdef USE_MPI
+#ifdef MPI
   return pgrp_handle;
 #else
   return ga_pgroup_get_default_();
@@ -935,7 +935,7 @@ Integer FATR ga_pgroup_get_world_()
   return -1;
 }
 
-#ifdef USE_MPI
+#ifdef MPI
 ARMCI_Group* ga_get_armci_group_(int grp_id)
 {
   return &PGRP_LIST[grp_id].group;
@@ -1916,12 +1916,12 @@ int i, nproc;
        bzero(ptr_array,nproc*sizeof(char*));
        /* use ARMCI_Malloc_group for groups if proc group is not world group
 	  or mirror group */
-#ifdef USE_MPI
+#  ifdef MPI
        if (grp_id > 0)
 	  status = ARMCI_Malloc_group((void**)ptr_array, bytes,
 				      &PGRP_LIST[grp_id].group);
        else
-#endif
+#  endif
 	  status = ARMCI_Malloc((void**)ptr_array, bytes);
        for(i=0;i<nproc;i++)ptr_arr[i] = ptr_array[GA_inv_Proc_list[i]];
     }else
@@ -1929,11 +1929,11 @@ int i, nproc;
        
     /* use ARMCI_Malloc_group for groups if proc group is not world group
        or mirror group */
-#ifdef USE_MPI
+#ifdef MPI
     if (grp_id > 0) {
        status = ARMCI_Malloc_group((void**)ptr_arr, (armci_size_t)bytes,
 				   &PGRP_LIST[grp_id].group);
-    } else {
+    } else
 #endif
       status = ARMCI_Malloc((void**)ptr_arr, (armci_size_t)bytes);
     if(status) return status;
@@ -2364,7 +2364,7 @@ int local_sync_begin;
     if(ARMCI_Uses_shm()){
 #endif
       /* make sure that we free original (before address allignment) pointer */
-#ifdef USE_MPI
+#ifdef MPI
       if (GA[ga_handle].p_handle > 0){
 	 int grp_me = PGRP_LIST[GA[ga_handle].p_handle].map_proc_list[GAme];
 	 ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,

@@ -445,12 +445,12 @@ Integer bndim, bdims[MAXDIM];
    if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
      armci_msg_gop_scope(SCOPE_NODE,value,alen,"+",atype);
    } else {
-#ifdef USE_MPI
+#ifdef MPI
      extern ARMCI_Group* ga_get_armci_group_(int);
 #endif
      if (a_grp == -1) {
        armci_msg_gop_scope(SCOPE_ALL,value,alen,"+",atype);
-#ifdef USE_MPI
+#ifdef MPI
      } else {
        armci_msg_group_gop_scope(SCOPE_ALL,value,alen,"+",atype,
            ga_get_armci_group_((int)a_grp));
