@@ -84,8 +84,8 @@ ifeq ($(_CPU),786)
 endif
 ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
-          COPT = -O2
-     COPT_REN += -Wall -finline-functions -funroll-loops $(OPT_ALIGN)
+          COPT = -O2 -finline-functions -funroll-loops
+     COPT_REN += -Wall $(OPT_ALIGN)
    endif
 else
    EXTRA_OBJ += tas.o
