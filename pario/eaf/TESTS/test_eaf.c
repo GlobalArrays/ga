@@ -14,7 +14,7 @@ main()
   char fname[120];
   int  fnum, sz, iter;
   int  i;
-  Fd_t *fd[IO_NUM_FILES];
+  Fd_t fd[IO_NUM_FILES];
   
 /*  EAF_Init(); */
   

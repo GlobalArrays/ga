@@ -58,7 +58,8 @@ cjqm	endif
 	      stop 1
 	    endif
 	    write(0,*) "Submitted EAF_AWriteF  fnum=", fnum,
-     $         "   iter=",iter,"  stat=",stat
+     $         "   iter=",iter,"  stat=",stat,
+     $         "   aio=",aio(fnum, iter)
 	  enddo
 	enddo
 

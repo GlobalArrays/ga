@@ -39,7 +39,7 @@ main()
   char fname[120];
   int  fnum, sz, iter;
   int  i;
-  Fd_t *fd[IO_NUM_FILES];
+  Fd_t fd[IO_NUM_FILES];
   io_request_t id[IO_NUM_FILES][MAX_ITER];
   int  stat;
   
