@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.5 2003-10-31 22:48:52 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.6 2004-02-25 05:54:00 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 
@@ -13,11 +13,11 @@ extern void armci_die();
  * DEFAULT_NALLOC: No. of units of length ALIGNMENT to get in every 
  * request to the system for memory (8MB/64 => 128*1024units)
  * DEFAULT_MAX_NALLOC: Maximum number of units that can get i.e.128MB 
- * (if unit size=64bytes, then max units=128MB/64 = 2*1024*1024)
+ * (if unit size=64bytes, then max units=1024MB/64 = 16*1024*1024)
  */
 #define DEFAULT_NALLOC       (128*1024)  
 #define DEFAULT_NALLOC_ALIGN 1024  
-#define DEFAULT_MAX_NALLOC   (1024*1024*2) 
+#define DEFAULT_MAX_NALLOC   (1024*1024*16) 
 
 /* mutual exclusion defs go here */
 #define  LOCKIT 
@@ -44,9 +44,9 @@ static Header *morecore(size_t nu, context_t *ctx) {
 #if DEBUG
     (void) printf("morecore 1: Getting %ld more units of length %d nalloc=%d\n",
 		  (long)nu, sizeof(Header),ctx->nalloc);
+    (void) fflush(stdout);
 #endif
 
-    (void) fflush(stdout);
     if (ctx->total >= ctx->max_nalloc)
       return (Header *) NULL;   /* Enforce upper limit on core usage */
 
