@@ -1,16 +1,15 @@
 #include "eliop.h"
 #include "chemio.h"
 
-int elio_dirname(fname, dirname, len)
-    const char *fname;
-    char *dirname;
-    int len;
-/* determines directory path for a given file */
+ 
+/*\ determines directory path for a given file
+\*/
+int elio_dirname(const char *fname, char *dirname, int len)
 {
-    int flen;
+    size_t flen;
     
     if(len< (flen =strlen(fname))) 
-	ELIO_ERROR("elio_strip_fname: fname too long",(long)flen);
+	ELIO_ERROR("elio_strip_fname: fname too long",flen);
     
     while(fname[flen] != '/' && flen >0 ) flen--;
     if(flen==0)strcpy(dirname,".");
@@ -20,10 +19,9 @@ int elio_dirname(fname, dirname, len)
 }
 
 
-int  elio_stat(fname, statinfo)
-    char   *fname;
-    stat_t *statinfo;
-/* Stat a file (or path) to determine it's filesystem info */
+/*\ Stat a file (or path) to determine it's filesystem info
+\*/
+int  elio_stat(char *fname, stat_t *statinfo)
 {
     struct  stat      ufs_stat;
     int bsize;
@@ -87,7 +85,8 @@ int  elio_stat(fname, statinfo)
     if(statinfo->fs == -1) {
 	if(stat(fname, &ufs_stat) != 0)
 	    ELIO_ERROR("elio_stat: Not able to stat UFS filesystem\n", 1);
-	else statinfo->fs = ELIO_UFS;
+
+	statinfo->fs = ELIO_UFS;
 	
 	/* only regular or directory files are OK */
 	if(!S_ISREG(ufs_stat.st_mode) && !S_ISDIR(ufs_stat.st_mode))
@@ -96,22 +95,21 @@ int  elio_stat(fname, statinfo)
 #if defined(CRAY)
 	if(statfs(fname, &ufs_statfs, sizeof(ufs_statfs), 0) != 0)
 #else
-	    if(STATVFS(fname, &ufs_statfs) != 0)
+        if(STATVFS(fname, &ufs_statfs) != 0)
 #endif
 		ELIO_ERROR("elio_stat:unable statfs UFS filesystem",-1);
 	
-	    else {
 #if defined(CRAY)
-                /* f_bfree == f_bavail -- naming changes */
-                statinfo->avail = ufs_statfs.f_bfree;
+        /* f_bfree == f_bavail -- naming changes */
+        statinfo->avail = (long) ufs_statfs.f_bfree;
 #else
-		statinfo->avail = ufs_statfs.f_bavail;
+	statinfo->avail = (long) ufs_statfs.f_bavail;
 #endif
-	    }
+
 #ifdef SOLARIS
-	bsize = ufs_statfs.f_frsize;
+	bsize = (int) ufs_statfs.f_frsize;
 #else
-	bsize = ufs_statfs.f_bsize;
+	bsize = (int) ufs_statfs.f_bsize;
 #endif
     }
     
@@ -124,7 +122,7 @@ int  elio_stat(fname, statinfo)
     default:   { 
 		double avail;
 		double factor = ((double)bsize)/1024.0;
-		avail = statinfo->avail * factor;
+		avail = factor * (double)statinfo->avail;
 		statinfo->avail = (long) avail;
                }
     }

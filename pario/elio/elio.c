@@ -34,9 +34,9 @@
 #   define INPROGRESS 1            /* I wish this didn't have to be here */
 #endif
 
-static int            aio_req[MAX_AIO_REQ]; /* array for AIO requests */
+static long           aio_req[MAX_AIO_REQ]; /* array for AIO requests */
 static int            first_elio_init = 1;  /* intialization status */
-int                   _elio_Errors_Fatal=1; /* sets mode of handling errors */
+int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
 
 
 /****************************** Internal Macros *****************************/
@@ -50,7 +50,7 @@ int                   _elio_Errors_Fatal=1; /* sets mode of handling errors */
 #endif
 
 
-#define SYNC_EMMULATE(op) \
+#define SYNC_EMULATE(op) \
   if( elio_ ## op (fd, offset, buf, bytes) != bytes ) \
     { \
        *req_id = ELIO_DONE; \
@@ -66,20 +66,16 @@ int                   _elio_Errors_Fatal=1; /* sets mode of handling errors */
 /*****************************************************************************/
 
 
-void elio_errors_fatal(onoff)
-int onoff;
+void elio_errors_fatal(int onoff)
 {
     _elio_Errors_Fatal = onoff;
 }
  
 
+
 /*\ Blocking Write - returns number of bytes written or -1 if failed
 \*/
-Size_t elio_write(fd, offset, buf, bytes)
-     Fd_t         fd;
-     off_t        offset;
-     const Void        *buf;
-     Size_t       bytes;
+Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
 {
 Size_t stat, bytes_to_write = bytes;
 int    attempt=0;
@@ -114,12 +110,7 @@ int    attempt=0;
 
 
 
-void elio_set_cb(fd, offset, reqn, buf, bytes)
-     Fd_t  fd;
-     off_t  offset;
-     int    reqn;
-     Void  *buf;
-     Size_t bytes;
+void elio_set_cb(Fd_t fd, off_t offset, int reqn, void *buf, Size_t bytes)
 {
 #if defined(AIO)
     cb_fout[reqn].aio_offset = offset;
@@ -142,12 +133,7 @@ void elio_set_cb(fd, offset, reqn, buf, bytes)
 
 /*\ Asynchronous Write: returns 0 if succeded or -1 if failed
 \*/
-int elio_awrite(fd, offset, buf, bytes, req_id)
-     Fd_t         fd;
-     off_t        offset;
-     const Void   *buf;
-     Size_t        bytes;
-     io_request_t *req_id;
+int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request_t * req_id)
 {
   Size_t stat;
   int    aio_i;
@@ -161,10 +147,10 @@ int elio_awrite(fd, offset, buf, bytes, req_id)
 #     if defined(DEBUG) && (defined(AIO) || defined(PARAGON))
          fprintf(stderr, "elio_awrite: Warning- asynch overflow\n");
 #     endif
-      SYNC_EMMULATE(write);
+      SYNC_EMULATE(write);
   } else {
       *req_id = (io_request_t) aio_i;
-      elio_set_cb(fd, offset, aio_i, buf, bytes);
+      elio_set_cb(fd, offset, aio_i, (void*) buf, bytes);
 #if defined(PARAGON)
       if(offset != lseek(fd->fd, offset, SEEK_SET))
                    ELIO_ERROR("elio_awrite: seek broken:",0);
@@ -182,7 +168,7 @@ int elio_awrite(fd, offset, buf, bytes, req_id)
   if(stat ==-1) ELIO_ERROR("elio_awrite: failed", aio_i);
 
   PABLO_end(PABLO_elio_awrite);
-  return(stat);
+  return((int)stat);
 }
 
 int elio_truncate(Fd_t fd, off_t length)
@@ -211,11 +197,7 @@ int elio_length(Fd_t fd, off_t *length)
 
 /*\ Blocking Read - returns number of bytes read or -1 if failed
 \*/
-Size_t elio_read(fd, offset, buf, bytes)
-Fd_t         fd;
-off_t        offset;
-Void        *buf;
-Size_t       bytes;
+Size_t elio_read(Fd_t fd, off_t  offset, void* buf, Size_t bytes)
 {
 Size_t stat, bytes_to_read = bytes;
 int    attempt=0;
@@ -252,12 +234,7 @@ int    attempt=0;
 
 /*\ Asynchronous Read: returns 0 if succeded or -1 if failed
 \*/
-int elio_aread(fd, offset, buf, bytes, req_id)
-Fd_t          fd;
-off_t         offset;
-Void         *buf;
-Size_t        bytes;
-io_request_t *req_id;
+int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * req_id)
 {
   Size_t stat;
   int    aio_i;
@@ -271,7 +248,7 @@ io_request_t *req_id;
 #     if defined(DEBUG) && (defined(AIO) || defined(PARAGON))
          fprintf(stderr, "elio_read: Warning- asynch overflow\n");
 #     endif
-      SYNC_EMMULATE(read);
+      SYNC_EMULATE(read);
   } else {
 
      *req_id = (io_request_t) aio_i;
@@ -293,14 +270,13 @@ io_request_t *req_id;
   if(stat ==-1) ELIO_ERROR("elio_aread: failed", 0);
 
   PABLO_end(PABLO_elio_aread);
-  return(stat);
+  return((int)stat);
 }
 
 
 /*\ Wait for asynchronous I/O operation to complete. Invalidate id.
 \*/
-int elio_wait(req_id)
-io_request_t *req_id;
+int elio_wait(io_request_t *req_id)
 {
   int  aio_i=0;
 #ifdef AIX
@@ -350,9 +326,7 @@ io_request_t *req_id;
 
 /*\ Check if asynchronous I/O operation completed. If yes, invalidate id.
 \*/
-int elio_probe(req_id, status)
-io_request_t *req_id;
-int          *status;
+int elio_probe(io_request_t *req_id, int* status)
 {
   int    errval;
   int    aio_i = 0;
@@ -398,9 +372,7 @@ int          *status;
 
 /*\ Noncollective File Open
 \*/
-Fd_t  elio_open(fname, type)
-const char* fname;
-int   type;
+Fd_t  elio_open(const char* fname, int type)
 {
   Fd_t fd=NULL;
   stat_t statinfo;
@@ -457,9 +429,7 @@ int   type;
 
 /*\ Collective File Open
 \*/
-Fd_t  elio_gopen(fname, type)
-const char* fname;
-int   type;
+Fd_t  elio_gopen(const char* fname, int type)
 {
   Fd_t fd=NULL;
 
@@ -509,8 +479,7 @@ int   type;
 
 /*\ Close File
 \*/
-int elio_close(fd)
-Fd_t fd;
+int elio_close(Fd_t fd)
 {
    PABLO_start(PABLO_elio_close);
 
@@ -527,8 +496,7 @@ Fd_t fd;
 
 /*\ Delete File
 \*/
-int elio_delete(filename)
-const char  *filename;
+int elio_delete(const char* filename)
 {
     int rc;
 
@@ -544,7 +512,7 @@ const char  *filename;
 
 /*\ Initialize ELIO
 \*/
-void elio_init()
+void elio_init(void)
 {
   if(first_elio_init) {
 #     if defined(AIO) || defined(PARAGON)
