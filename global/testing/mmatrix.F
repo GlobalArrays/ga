@@ -113,7 +113,7 @@ c
         ld(i) = nmax
       end do
       type = MT_DBL
-      p_m = ga_mirror_config()
+      p_m = ga_pgroup_get_mirror()
       status = nga_create(type, ndim, dims,"aa", chunk, g_aa)
       if (status.and.me.eq.0) then
         write(6,*) '*'
