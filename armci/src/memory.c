@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.6 1999-07-28 00:47:58 d3h325 Exp $ */
+/* $Id: memory.c,v 1.7 1999-10-14 00:18:50 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -39,8 +39,8 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
     long size=0, offset=0;
     long *size_arr;
     void **ptr_ref_arr;
-    int root=0, i,cn, len;
-    int nproc = armci_clus_info[armci_clus_me].nslave;
+    int  i,cn, len;
+    int  nproc = armci_clus_info[armci_clus_me].nslave;
 
     bzero(ptr_arr,armci_nproc*sizeof(void*));
 
@@ -170,8 +170,6 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
 int ARMCI_Malloc(void *ptr_arr[],int bytes)
 {
     void *ptr;
-    void **addr;
-
 
     if(DEBUG)
        fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, bytes);

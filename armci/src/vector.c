@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.8 1999-08-16 18:53:13 jju Exp $ */
+/* $Id: vector.c,v 1.9 1999-10-14 00:18:51 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -144,8 +144,10 @@ void armci_scatter_acc(int op, void *scale, armci_giov_t dsc,
 }
 
 
-#define PWORKLEN 2048
-static void *pwork[PWORKLEN];  /* work array of pointers */
+#ifdef ACC_COPY
+#  define PWORKLEN 2048
+   static void *pwork[PWORKLEN];  /* work array of pointers */
+#endif
 
 int armci_acc_vector(int op,             /* operation code */
                     void *scale,         /* pointer to scale factor in accumulate */

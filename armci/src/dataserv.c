@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.5 1999-09-02 18:28:58 jju Exp $ */
+/* $Id: dataserv.c,v 1.6 1999-10-14 00:18:50 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -36,7 +36,7 @@ int hdrlen = sizeof(request_header_t);
 int dscrlen = ((request_header_t*)MessageSndBuffer)->dscrlen;
 int datalen = ((request_header_t*)MessageSndBuffer)->datalen;
 int cluster = armci_clus_id(proc);
-int stat, len;
+int stat;
 int bytes;
 
     if(((request_header_t*)MessageSndBuffer)->operation == GET)
@@ -45,7 +45,7 @@ int bytes;
       bytes = ((request_header_t*)MessageSndBuffer)->bytes + hdrlen;
 
      if(DEBUG_){
-        printf("%d sending req=%d to (%d,%d,%d) dscrlen=%d datalen=%d bytes=%d\n",
+        printf("%d sending req=%d to (%d,%d,%d) dsclen=%d datlen=%d bytes=%d\n",
                armci_me,
                ((request_header_t*)MessageSndBuffer)->operation,
                ((request_header_t*)MessageSndBuffer)->to,
@@ -182,7 +182,6 @@ void armci_serv_attach_req(void *info, int ilen, long size, void* resp,int rlen)
 {
 request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
 char *buf;
-int stat;
 
     msginfo->from  = armci_me;
     msginfo->to    = SOFFSET - armci_master; /*server id derived from master*/
@@ -383,7 +382,7 @@ int up=1;
 
     /* server main loop; wait for and service requests until QUIT requested */
     for(;;){ 
-      int i, p, from, to;
+      int i, p;
       nready = armci_WaitSock(AR_sock, armci_nproc, readylist);
 
       for(i = 0; i < armci_nproc; i++){

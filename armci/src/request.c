@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.5 1999-07-28 00:48:00 d3h325 Exp $ */
+/* $Id: request.c,v 1.6 1999-10-14 00:18:51 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -22,7 +22,6 @@ char* MessageSndBuffer = (char*)_armci_snd_buf;
 void armci_rem_lock(int mutex, int proc, int *ticket)      
 {
 request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
-char *buffer = (char*)(msginfo+1);
 
     GET_SEND_BUFFER;
 
@@ -435,15 +434,12 @@ void armci_server_vector( request_header_t *msginfo,
                           char *dscr, char* buf, int buflen)
 {
     int  len,proc;
-    void *buf_ptr, *loc_ptr;
     void *scale;
-    int  rc, i,s;
-    armci_riov_t *rdarr;
+    int  i,s;
     char *sbuf = buf;
 
     /* unpack descriptor record */
     GETBUF(dscr, int, len);
-    rdarr = (armci_riov_t*)dscr;
     
     /* get scale for accumulate, adjust buf to point to data */
     scale = buf;

@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.8 1999-09-10 23:26:24 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.9 1999-10-14 00:18:51 d3h325 Exp $ */
 /**************************************************************************
  This code was derived from the TCGMSG sockets.c by Robert Harrison
  *************************************************************************/
@@ -84,7 +84,6 @@ int armci_WaitSock(int *socklist, int num, int *ready)
 
   int sock,maxsock;
   fd_set dset;
-  struct timeval timelimit;
   int nready;
 
   if(num<0) armci_die("armci_WaitSock: num <0",num);

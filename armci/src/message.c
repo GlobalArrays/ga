@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.5 1999-07-28 00:47:58 d3h325 Exp $ */
+/* $Id: message.c,v 1.6 1999-10-14 00:18:51 d3h325 Exp $ */
 #include "message.h"
 #include "armcip.h"
 
@@ -371,7 +371,7 @@ void armci_msg_dgop(double *x, int n, char* op)
 {
 int root, up, left, right, index, nproc,size=sizeof(double);
 int tag=ARMCI_TAG;
-int ndo, len, lenmes, orign =n, bufsize;
+int ndo, len, lenmes, orign =n;
 double *origx =x;
 
     root  = 0;
@@ -380,8 +380,6 @@ double *origx =x;
     up    = (index-1)/2 + root; if( up < root) up = -1;
     left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
     right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
-
-    bufsize = BUF_SIZE;
 
     while ((ndo = (n<=BUF_SIZE) ? n : BUF_SIZE)) {
          len = lenmes = ndo*size;

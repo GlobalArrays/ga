@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.11 1999-09-10 23:24:21 d3h325 Exp $ */
+/* $Id: strided.c,v 1.12 1999-10-14 00:18:51 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -252,7 +252,7 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
                      int count[], int stride_levels, int lockit)
 {
     char *src = (char*)src_ptr, *dst=(char*)dst_ptr;
-    int s2, s3, s4, sn;
+    int s2, s3;
 
     int i, j;
     int total_of_2D;
