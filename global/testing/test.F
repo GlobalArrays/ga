@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.37 2001-05-08 00:16:03 d3h325 Exp $
+c $Id: test.F,v 1.38 2001-05-08 00:46:32 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -96,17 +96,16 @@ c
       call check_int()
 c
 c
-c***  Check support for Float arrays
+c***  Check support for single precision
 c
       if (me.eq.0) then
          write(6,*)
-         write(6,*) ' CHECKING FLOAT  '
+         write(6,*) ' CHECKING SINGLE PRECISION  '
          write(6,*)
          call ffflush(6)
       endif
  
       call check_flt() 
-c
 c     
       if (me.eq.0) then
          write(6,*)
@@ -1842,7 +1841,6 @@ c
          call ffflush(6)
       endif                           
 c
-c
       crap = util_drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
@@ -1869,11 +1867,11 @@ CCC               call ga_error('... exiting ',0)
       endif
       call ga_sync()
 c
-c     Check the fdot function
+c     Check the sdot function
 c
       if (me .eq. 0) then
          write(6,19)
- 19      format(/'> Checking fdot ...')
+ 19      format(/'> Checking sdot ...')
          call ffflush(6)
       endif
       crap = util_drand(12345)       ! Everyone has same seed
@@ -1893,10 +1891,10 @@ c
       if(MISMATCHF(sum1, sum2))then
          write(6,*) ' fdot wrong ', sum1, sum2
          call ffflush(6)
-CCC         call ga_error('... exiting ',0)
+            call ga_error('... exiting ',0)
       else if (me.eq.0) then
          write(6,*)
-         write(6,*) ' fdot is OK '
+         write(6,*) ' sdot is OK '
          write(6,*)
       endif
 c
