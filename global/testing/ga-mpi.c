@@ -4,7 +4,7 @@
 * author:  Jarek Nieplocha
 * purpose: This program demonstrates interface between GA and MPI. 
 *          For a given square matrix, it creates a vector that contains maximum
-*          elements for each matrix column. MPI group communication is used.
+*          elements for each matrix row. MPI group communication is used.
 *
 * notes:   The program can run in two modes:
 *          1. Using TCGMSG calls available through the TCGMSG-MPI library
@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "global.h"
+#include "ga.h"
 #include "macommon.h"
 #include <mpi.h>
 #ifndef MPI
@@ -29,118 +29,110 @@
 
 void do_work()
 {
-Integer ONE=1, ZERO=0;   /* useful constants */
+int ONE=1, ZERO=0;   /* useful constants */
 int g_a, g_b;
-Integer n=N, type=MT_F_DBL;
-Integer me=GA_nodeid(), nproc=GA_nnodes();
-Integer col, i, j;
+int n=N, ndim=2,type=MT_F_DBL,dims[2]={N,N},coord[2];
+int me=GA_Nodeid(), nproc=GA_Nnodes();
+int row, i, j;
+ int lo[2], hi[2];
 
 /* Note: on all current platforms DoublePrecision = double */
-DoublePrecision buf[N], *max_col;
+DoublePrecision buf[N], *max_row;
 
-MPI_Comm GA_COMM, COL_COMM;
-Integer *region_list, reg_proc;
-Integer ilo,ihi, jlo,jhi, maidx, ld, prow, pcol;
-int     *proc_list, root=0, grp_me=-1;
+MPI_Comm ROW_COMM;
+int ilo,ihi, jlo,jhi, ld, prow, pcol;
+int root=0, grp_me=-1;
 
      if(me==0)printf("Creating matrix A\n");
-     /* create matrix A */
-     if(! GA_create(&type, &n, &n, "A", &ZERO, &ZERO, &g_a))
-          GA_error("create failed: A",n); 
+     dims[0]=n; dims[1]=n;
+     g_a = NGA_Create(type, ndim, dims, "A", NULL);
+     if(!g_a) GA_Error("create failed: A",n); 
      if(me==0)printf("OK\n");
-
+     
      if(me==0)printf("Creating matrix B\n");
-     if(! GA_create(&type, &n, &ONE, "B", &ZERO, &ZERO, &g_b))
-          GA_error("create failed: B",n); 
+     dims[0]=n;
+     g_b = NGA_Create(type, 1, dims, "B", NULL);
+     if(!g_b) GA_Error("create failed: B",n); 
      if(me==0)printf("OK\n");
-
-     GA_zero(g_a);   /* zero the matrix */
-
+     
+     GA_Zero(g_a);   /* zero the matrix */
+     
      if(me==0)printf("Initializing matrix A\n");
      /* fill in matrix A with values: A(i,j) = (i+j) */ 
-     for(col=1+me; col<=n; col+= nproc){
-         /*
-          * siple load balancing: 
-          * each process works on a different column in MIMD style 
-          */ 
-          for(i=0; i<n; i++) buf[i]=(DoublePrecision)(i+col+1); 
-          GA_put(&g_a, &ONE, &n, &col, &col, buf, &n); 
+     for(row=me; row<n; row+= nproc){
+	/**
+	 * simple load balancing: 
+	 * each process works on a different row in MIMD style 
+	 */ 
+	for(i=0; i<n; i++) buf[i]=(DoublePrecision)(i+row+1); 
+	lo[0]=hi[0]=row;
+	lo[1]=ZERO;  hi[1]=n-1; 
+	NGA_Put(g_a, lo, hi, buf, &n); 
      }
-
-     /* GA_print(&g_a);*/
-
-
-     GA_distribution(&g_a, &me, &ilo, &ihi, &jlo, &jhi);
-
-     region_list = (Integer*)malloc(5*nproc*sizeof(Integer));
-     if (!region_list) GA_error("malloc 1 failed",nproc);
-
-     proc_list = (int*)malloc(nproc*sizeof(int));
-     if (!proc_list) GA_error("malloc 2 failed",nproc);
-
-     GA_sync(); 
-     if(jhi-jlo+1 >0){
-        max_col = (DoublePrecision*)malloc(sizeof(DoublePrecision)*(jhi-jlo+1));
-        if (!max_col) GA_error("malloc 3 failed",(jhi-jlo+1));
      
-
-        /* get the list of processors that own this block column A[:,jlo:jhi] */
-        GA_locate_region(&g_a, &ONE, &n, &jlo, &jhi, (Integer (*)[5])region_list, &reg_proc);
-        for(i=0; i< reg_proc; i++) proc_list[i] = (int) region_list[5*i];
+     /* GA_print(&g_a);*/
+     NGA_Distribution(g_a, me, lo, hi);
+     ilo=lo[0]; ihi=hi[0];
+     jlo=lo[1]; jhi=hi[1];
+     
+     GA_Sync(); 
+     if(ihi-ilo+1 >0){
+        max_row=(DoublePrecision*)malloc(sizeof(DoublePrecision)*(ihi-ilo+1));
+        if (!max_row) GA_Error("malloc 3 failed",(ihi-ilo+1));
      }
+     NGA_Proc_topology(g_a, me, coord);  /* block coordinates */
+     prow = coord[0];
+     pcol = coord[1];
 
-     GA_mpi_communicator(&GA_COMM); /* get MPI communicator for GA processes */
-     GA_proc_topology(&g_a, &me, &prow, &pcol);  /* block coordinates */
-
-
-     if(me==0)printf("Splitting communicator according to distribution of A\n");
-
-     /* GA on SP1 requires synchronization before and after message-passing !!*/
-     GA_sync(); 
+     if(me==0)printf("Splitting comm according to distribution of A\n");
+     
+     /* GA on SP1 requires synchronization before & after message-passing !!*/
+     GA_Sync(); 
+     
+     if(me==0)printf("Computing max row elements\n");
+     /* create communicator for processes that 'own' A[:,jlo:jhi] */
+     MPI_Barrier(MPI_COMM_WORLD);
+     if(pcol < 0 || prow <0)
+	MPI_Comm_split(MPI_COMM_WORLD,MPI_UNDEFINED,MPI_UNDEFINED, &ROW_COMM);
+     else
+	MPI_Comm_split(MPI_COMM_WORLD, (int)pcol, (int)prow, &ROW_COMM);
+     
+     if(ROW_COMM != MPI_COMM_NULL){
+	double *ptr;
+	MPI_Comm_rank(ROW_COMM, &grp_me);
+	
+	/* each process computes max elements in the block it 'owns' */
+	lo[0]=ilo; hi[0]=ihi;
+	lo[1]=jlo; hi[1]=jhi;
+	NGA_Access(g_a, lo, hi, &ptr, &ld);
+	for(i=0; i<ihi-ilo+1; i++){
+	   for(j=0; j<jhi-jlo+1; j++)
+	      if(max_row[i] < ptr[i*ld + j]){
+		 max_row[i] = ptr[i*ld + j];
+	      }
+	}
+	MPI_Reduce(max_row, buf, ihi-ilo+1, MPI_DOUBLE, MPI_MAX,
+		   root, ROW_COMM);
+	
+     }else fprintf(stderr,"process %d not participating\n",me);
+     GA_Sync(); 
+     
+     /* processes with rank=root in ROW_COMM put results into g_b */
+     ld = 1;
+     if(grp_me == root) {
+	lo[0]=ilo;  hi[0]=ihi;
+	NGA_Put(g_b, lo, hi, buf, &ld); 
+     }
         
-        if(me==0)printf("Computing max column elements\n");
-        /* create communicator for processes that 'own' A[:,jlo:jhi] */
-          MPI_Barrier(GA_COMM);
-        if(pcol < 0 || prow <0)
-           MPI_Comm_split(GA_COMM, MPI_UNDEFINED, MPI_UNDEFINED, &COL_COMM);
-        else
-           MPI_Comm_split(GA_COMM, (int)pcol, (int)prow, &COL_COMM);
-        
-        if(COL_COMM != MPI_COMM_NULL){
-           MPI_Comm_rank(COL_COMM, &grp_me);
-
-           /* each process computes max elements in the block it 'owns' */
-           GA_access(&g_a, &ilo, &ihi, &jlo, &jhi, &maidx, &ld);
-           maidx --; /* Fortran-C indexing conversion */
-           for(j=0; j<jhi-jlo+1; j++){
-               max_col[j] = 0.;  /* all matrix elements are positive */
-               for(i=0; i<ihi-ilo+1; i++)
-                   if(max_col[j] < DBL_MB[maidx +j*ld + i]){
-                      max_col[j] = DBL_MB[maidx +j*ld + i];
-                   }
-                 
-           }
-
-           MPI_Reduce(max_col, buf, jhi-jlo+1, MPI_DOUBLE, MPI_MAX,
-                      root, COL_COMM);
-        
-       
-       }else fprintf(stderr,"process %d not participating\n",me);
-     GA_sync(); 
-
-     /* processes with rank=root in COL_COMM put results into g_b */
-     ld = jhi-jlo+1;
-     if(grp_me == root)
-          GA_put(&g_b, &jlo, &jhi,  &ONE, &ONE, buf, &ld); 
-        
-     GA_sync(); 
+     GA_Sync();
 
      if(me==0)printf("Checking the result\n");
      if(me==0){
-        GA_get(&g_b, &ONE, &n, &ONE, &ONE, buf, &n); 
-        for(i=0; i< n; i++)if(buf[i] != (double)n+i+1){
-            fprintf(stderr,"error:%d max=%lf should be:%ld\n",i,buf[i],n+i+1);
-            GA_error("terminating...",0);
+	lo[0]=ZERO; hi[0]=n-1;
+        NGA_Get(g_b, lo, hi, buf, &n); 
+        for(i=0; i< n; i++)if(buf[i] != (double)n+i){
+            fprintf(stderr,"error:%d max=%lf should be:%ld\n",i,buf[i],n+i);
+            GA_Error("terminating...",0);
         }
      }
      
@@ -156,8 +148,8 @@ int main(argc, argv)
 int argc;
 char **argv;
 {
-Integer heap=20000, stack=20000;
-Integer me, nproc;
+int heap=20000, stack=20000;
+int me, nproc;
 
 #ifdef MPI
     MPI_Init(&argc, &argv);                       /* initialize MPI */
@@ -167,13 +159,13 @@ Integer me, nproc;
 
     GA_Initialize();                            /* initialize GA */
     me=GA_Nodeid();
-    nproc=GA_nnodes();
+    nproc=GA_Nnodes();
     if(me==0) printf("Using %ld processes\n",(long)nproc);
 
     heap /= nproc;
     stack /= nproc;
-    if(! MA_init((Integer)MT_F_DBL, stack, heap)) 
-       GA_error("MA_init failed",stack+heap);   /* initialize memory allocator*/ 
+    if(! MA_init((int)MT_F_DBL, stack, heap)) 
+       ga_error("MA_init failed",stack+heap);   /* initialize memory allocator*/ 
     do_work();
 
     if(me==0)printf("Terminating ..\n");
