@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.18 2000-06-14 18:52:39 d3h325 Exp $ */
+/* $Id: message.c,v 1.19 2000-06-14 22:49:57 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -12,6 +12,9 @@
 #include "message.h"
 #include "armcip.h"
 #include "copy.h"
+#include <stdio.h>
+
+#define DEBUG_ 0
 
 #ifdef CRAY
 char *mp_group_name = (char *)NULL;
@@ -38,11 +41,6 @@ void armci_msg_barrier()
 #  endif
 }
 
-
-void armci_exchange_address(void *ptr_ar[], int n)
-{
-  armci_msg_lgop((long*)ptr_ar, n, "+");
-}
 
 
 int armci_msg_me()
@@ -375,7 +373,7 @@ static void ddoop(int n, char* op, double* x, double* work)
 
 /*\ combine array of longs/ints accross all processes
 \*/
-void armci_msg_gop(int scope, void *x, int n, char* op, int type)
+void armci_msg_gop_scope(int scope, void *x, int n, char* op, int type)
 {
 int root, up, left, right, size;
 int tag=ARMCI_TAG;
@@ -417,9 +415,7 @@ void *origx =x;
 
      /* Now, root broadcasts the result down the binary tree */
      len = orign*size;
-
-     if(scope == SCOPE_NODE) armci_msg_clus_brdcst(origx, len );
-     else armci_msg_brdcst(origx, len,0 );
+     armci_msg_bcast_scope(scope, origx, len, root);
 }
 
 
@@ -464,13 +460,16 @@ int ndo, len, lenmes, ratio;
 }
 
 
+
 static void armci_msg_reduce(void *x, int n, char* op, int type)
 {
+    if(DEBUG_)printf("%d reduce  %d\n",armci_me, n);
+    /* intra-node operation */
+    armci_msg_reduce_scope(SCOPE_NODE, x, n, op, type);
+
     /* inter-node operation between masters */
     if(armci_nclus>1)armci_msg_reduce_scope(SCOPE_MASTERS, x, n, op, type);
 
-    /* intra-node operation */
-    armci_msg_reduce_scope(SCOPE_NODE, x, n, op, type);
 }
 
 
@@ -483,7 +482,7 @@ int size, root=0;
      else size = sizeof(double);
 
      armci_msg_reduce(x, n, op, type);
-     armci_msg_bcast(x, size, root);
+     armci_msg_bcast(x, size*n, root);
 }
 
 
@@ -569,15 +568,15 @@ int len, lenmes, min;
 
 /*\ combine array of longs/ints/doubles accross all processes
 \*/
-#if 1
+#if 0
 void armci_msg_igop(int *x, int n, char* op)
-{ armci_msg_gop(SCOPE_ALL,x, n, op, ARMCI_INT); }
+{ armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_INT); }
 
 void armci_msg_lgop(long *x, int n, char* op)
-{ armci_msg_gop(SCOPE_ALL,x, n, op, ARMCI_LONG); }
+{ armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_LONG); }
 
 void armci_msg_dgop(double *x, int n, char* op)
-{ armci_msg_gop(SCOPE_ALL,x, n, op, ARMCI_DOUBLE); }
+{ armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_DOUBLE); }
 #else
 void armci_msg_igop(int *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_INT); }
 void armci_msg_lgop(long *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_LONG); }
@@ -588,13 +587,25 @@ void armci_msg_dgop(double *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI
 /*\ add array of longs/ints within the same cluster 
 \*/
 void armci_msg_clus_igop(int *x, int n, char* op)
-{ armci_msg_gop(SCOPE_NODE,x, n, op, ARMCI_INT); }
+{ armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_INT); }
 
 void armci_msg_clus_lgop(long *x, int n, char* op)
-{ armci_msg_gop(SCOPE_NODE,x, n, op, ARMCI_INT); }
+{ armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_INT); }
 
-void armci_msg_clus_dgop(double *x, int n, char* op)
-{ armci_msg_gop(SCOPE_NODE,x, n, op, ARMCI_DOUBLE); }
+void armci_msg_clus_dgop_scope(double *x, int n, char* op)
+{ armci_msg_gop_scope(SCOPE_NODE,x, n, op, ARMCI_DOUBLE); }
+
+
+
+void armci_exchange_address(void *ptr_ar[], int n)
+{
+  int ratio = sizeof(void*)/sizeof(int);
+/*
+  armci_msg_lgop((long*)ptr_ar, n, "+");
+*/
+  if(DEBUG_)printf("%d: exchanging %ld ratio=%d\n",armci_me,(long)ptr_ar[armci_me],ratio);
+  armci_msg_gop2(ptr_ar, n*ratio, "+",ARMCI_INT);
+}
 
 
 #ifdef PVM

@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.34 2000-06-14 00:57:55 d3h325 Exp $ */
+/* $Id: armci.c,v 1.35 2000-06-14 22:49:57 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -162,7 +162,7 @@ unsigned long limit;
 }
 
 
-
+ 
 /*\ allocate and initialize memory locking data structure
 \*/
 void armci_init_memlock()

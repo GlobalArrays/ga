@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.13 2000-05-05 00:28:48 d3h325 Exp $ */
+/* $Id: memory.c,v 1.14 2000-06-14 22:49:57 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -215,13 +215,11 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 #ifdef USE_MALLOC
     if(armci_nproc == 1) {
       ptr = malloc(bytes);
-      assert(ptr);
+      if(bytes) if(!ptr) armci_die("armci_malloc:malloc failed",bytes);
       ptr_arr[armci_me] = ptr;
       return (0);
     }
 #endif
-
-    assert(sizeof(long) == sizeof(void*)); /* is it ever false? - yes, WIN64 */
 
 #if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
 
