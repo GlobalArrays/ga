@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.46 1997-11-08 00:01:54 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.47 1997-11-18 00:19:54 pritchrd Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -220,7 +220,7 @@ void TrapSigInt(), TrapSigChld(),
      TrapSigIll(), TrapSigSegv(),
      TrapSigSys(), TrapSigTrap(),
      TrapSigHup(), TrapSigTerm(),
-     TrapSigIot();
+     TrapSigIot(), TrapSigXcpu();
 
      TrapSigBus();
      TrapSigFpe();
@@ -231,6 +231,7 @@ void TrapSigInt(), TrapSigChld(),
      TrapSigTerm();
 #ifdef SGI
      TrapSigIot();
+     TrapSigXcpu();
 #endif
 #endif
 }
@@ -241,10 +242,13 @@ void TrapSigInt(), TrapSigChld(),
 void gaParentTrapSignals()
 {
 #ifdef SYSV
-void TrapSigChld(), TrapSigInt(), TrapSigHup();
+void TrapSigChld(), TrapSigInt(), TrapSigHup(),TrapSigXcpu();
      TrapSigChld();
      TrapSigInt();
      TrapSigHup();
+#ifdef SGI
+     TrapSigXcpu();
+#endif
 #endif
 }
 
