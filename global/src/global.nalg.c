@@ -76,7 +76,7 @@ register Integer i;
 void gai_dot(int Type, Integer *g_a, Integer *g_b, void *value)
 {
 Integer  ndim, type, me, elems=0, elemsb=0;
-Integer  sum =0, index_a, index_b, len=1; 
+Integer  sum =0, index_a, index_b; 
 register Integer i;
 Integer isum=0;
 DoubleComplex zsum ={0.,0.};
@@ -114,8 +114,6 @@ DoubleComplex zsum ={0.,0.};
 
    if(elems!= elemsb)ga_error("inconsistent number of elements",elems-elemsb); 
 
-   if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
-
       index_a --;  /* Fortran to C correction of starting address */ 
       index_b --;  /* Fortran to C correction of starting address */ 
 
@@ -135,7 +133,6 @@ DoubleComplex zsum ={0.,0.};
                zsum.real += a.real*b.real  - b.imag * a.imag;
                zsum.imag += a.imag*b.real  + b.imag * a.real;
            }
-           len =2;
            *(DoubleComplex*)value = zsum; 
            break;
 
@@ -148,12 +145,17 @@ DoubleComplex zsum ={0.,0.};
       }
    
       /* release access to the data */
-      nga_release_(g_a, lo, hi);
-      if(*g_a != *g_b)nga_release_(g_b, lo, hi);
-   }
+      if(elems>0){
+         nga_release_(g_a, lo, hi);
+         if(*g_a != *g_b)nga_release_(g_b, lo, hi);
+      }
 
-   if(Type == MT_F_INT)ga_igop((Integer)GA_TYPE_GSM,(Integer*)value, len, "+");
-   else ga_dgop((Integer)GA_TYPE_GSM, (DoublePrecision*)value, len, "+"); 
+
+   if(Type == MT_F_INT)ga_igop((Integer)GA_TYPE_GSM,(Integer*)value, 1, "+");
+   else if(Type == MT_F_DBL) 
+     ga_dgop((Integer)GA_TYPE_GSM, (DoublePrecision*)value, 1, "+"); 
+   else
+     ga_dgop((Integer)GA_TYPE_GSM, (DoublePrecision*)value, 2, "+"); 
     
    GA_POP_NAME;
 
