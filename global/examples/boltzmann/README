@@ -33,3 +33,5 @@ remaining parameters are:
    rho0: initial uniform density of fluid in cavity
 
    uxbc: velocity of lid
+
+The executable name is boltz.x
