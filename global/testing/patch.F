@@ -1,4 +1,4 @@
-c $Id: patch.F,v 1.20 2001-05-31 17:19:23 llt Exp $
+c $Id: patch.F,v 1.21 2002-10-15 23:35:52 vinod Exp $
 #if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
@@ -785,7 +785,7 @@ c***
       beta = (0d0,0d0)
       do j = ajlo, ajlo+n/3
             do i = ailo, ailo+n/2
-               beta = beta + a(i,j)**2
+               beta = beta + a(i,j)*a(i,j)
             enddo
       enddo
       if(ABS(beta*val- alpha)/abs(alpha).gt.1d-6) then
