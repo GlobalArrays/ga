@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.89 2004-07-20 17:51:14 manoj Exp $ */
+/* $Id: armci.c,v 1.90 2004-07-20 18:07:23 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -546,7 +546,7 @@ int direct=SAMECLUSNODE(nb_handle->proc);
     }
 #ifdef ARMCI_PROFILE
     /* to avoid event overlapping, start profiling after aggregate calls */
-    armci_profile_start(ARMCI_PROFILE_NOTIFY_WAIT);
+    armci_profile_start(ARMCI_PROFILE_WAIT);
 #endif
 
     if(nb_handle){
