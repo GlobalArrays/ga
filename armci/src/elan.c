@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.28 2004-03-29 19:06:24 manoj Exp $ */
+/* $Id: elan.c,v 1.29 2004-03-30 18:38:18 manoj Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -715,7 +715,6 @@ int armci_enable_alpha_hack() {
 #  ifdef QSNETLIBS_VERSION 
 #    if QSNETLIBS_VERSION_CODE > QSNETLIBS_VERSION(1,4,0) 
        int nnodes = atoi((const char *)getenv("RMS_NNODES"));
-       printf("nnodes = %d\n", nnodes);
        if(nnodes > 1) enable=1;
 #    endif
 #  endif
