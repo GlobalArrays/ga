@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.16 2002-12-11 00:43:34 vinod Exp $    **/
+/* $Id: buffers.c,v 1.17 2002-12-17 13:02:55 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -393,14 +393,14 @@ int i=0;
     if(bufid == NB_NONE) *retcode=0;
     else if(bufid == NB_MULTI) {
        for(i=0;i<MAX_BUFS;i++){ 
-         if(tag==_armci_buf_state->buf[i].id.tag && 
+         if(tag && tag==_armci_buf_state->buf[i].id.tag && 
             _armci_buf_state->table[i].first==i)
            _armci_buf_complete_index(i,1); 
        }
        *retcode=0;
     }
     else {
-       if(tag==_armci_buf_state->buf[bufid].id.tag &&
+       if(tag && tag==_armci_buf_state->buf[bufid].id.tag &&
             _armci_buf_state->table[i].first==i)
          _armci_buf_complete_index(bufid,1);
        *retcode=0;
