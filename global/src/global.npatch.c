@@ -175,7 +175,7 @@ void nga_copy_patch(char *trans,
     ga_sync_();
     
     GA_PUSH_NAME("nga_copy_patch");
-    
+
     nga_inquire_internal_(g_a, &atype, &andim, adims);
     nga_inquire_internal_(g_b, &btype, &bndim, bdims);
     
@@ -195,6 +195,8 @@ void nga_copy_patch(char *trans,
     for(i=0; i<bndim; i++)
         if(blo[i] <= 0 || bhi[i] > bdims[i])
             ga_error("g_b indices out of range ", 0L);
+
+
     
     /* check if numbers of elements in two patches match each other */
     atotal = 1; btotal = 1;
@@ -212,7 +214,7 @@ void nga_copy_patch(char *trans,
         
         /* calculate the number of elements in the patch that I own */
         nelem = 1; for(i=0; i<andim; i++) nelem *= (his[i] - los[i] + 1);
-
+	
         for(i=0; i<andim; i++) ald[i] = ahi[i] - alo[i] + 1;
         for(i=0; i<bndim; i++) bld[i] = bhi[i] - blo[i] + 1;
 
@@ -221,14 +223,14 @@ void nga_copy_patch(char *trans,
             base += los[i] * factor;
             factor *= ld[i];
         }
-
+	
         /*** straight copy possible if there's no reshaping or transpose ***/
         if((*trans == 'n' || *trans == 'N') &&
            ngai_test_shape(alo, ahi, blo, bhi, andim, bndim)) { 
-            /* find source[lo:hi] --> destination[lo:hi] */
-            ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
-            ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-            nga_put_(g_b, lod, hid, src_data_ptr, ld);
+	  /* find source[lo:hi] --> destination[lo:hi] */
+	  ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
+	  ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
+	  nga_put_(g_b, lod, hid, src_data_ptr, ld);
         }
         /*** due to generality of this transformation scatter is required ***/
         else{
@@ -254,7 +256,7 @@ void nga_copy_patch(char *trans,
                 else bunit[i] = bunit[i-1] * (his[i-1] - los[i-1] + 1);
             }
 
-            /* source indices */
+	    /* source indices */
             for(i=0; i<nelem; i++) {
                 for(j=0; j<andim; j++){
                     src_idx_ptr[i*andim+j] = bvalue[j];
@@ -268,7 +270,7 @@ void nga_copy_patch(char *trans,
                     if(bvalue[j] > his[j]) bvalue[j] = los[j];
                 }
             }
-
+	    
             /* index factor: reshaping without transpose */
             factor_idx1[0] = 1;
             for(j=1; j<andim; j++) 
@@ -283,8 +285,8 @@ void nga_copy_patch(char *trans,
             factor_data[0] = 1;
             for(j=1; j<andim; j++) 
                 factor_data[j] = factor_data[j-1] * ld[j-1];
-            
-            /* destination indices */
+            	    
+	    /* destination indices */
             for(i=0; i<nelem; i++) {
                 /* linearize the n-dimensional indices to one dimension */
                 idx = 0;
@@ -304,8 +306,8 @@ void nga_copy_patch(char *trans,
                  * indices of destination
                  */
                 for(j=0; j<bndim; j++) {
-                    dst_idx_ptr[i*bndim+j] = idx % bld[j] + blo[j];
-                    idx /= bld[j];
+                    dst_idx_ptr[i*bndim+j] = idx % bld[j] + blo[j]; 
+		    idx /= bld[j];
                 }
                 
                 /* move the data block to create a new block */
@@ -317,15 +319,15 @@ void nga_copy_patch(char *trans,
                 /* adjust the postion
                  * base: starting address of the first element */
                 idx -= base;
-
+	    
                 /* move the element to the temporary location */
                 switch(atype) {
                     case C_DBL: ((double*)tmp_ptr)[i] =
                                        ((double*)src_data_ptr)[idx]; 
                     break;
-                    case C_INT: ((int *)tmp_ptr)[i] =
-                                       ((int *)src_data_ptr)[idx];
-                    break;
+                    case C_INT:
+		      ((int *)tmp_ptr)[i] = ((int *)src_data_ptr)[idx];
+		      break;
                     case C_DCPL:((DoubleComplex *)tmp_ptr)[i] =
                                        ((DoubleComplex *)src_data_ptr)[idx];
                     break;
@@ -336,8 +338,8 @@ void nga_copy_patch(char *trans,
 				       ((long *)src_data_ptr)[idx];	
                 }
             }
-
-            nga_release_(g_a, los, his);
+	    
+	    nga_release_(g_a, los, his);
             nga_scatter_(g_b, tmp_ptr, dst_idx_ptr, &nelem);
             if (!MA_pop_stack(dst_hdl) || !MA_pop_stack(src_hdl) ||
                 !MA_pop_stack(vhandle)) ga_error("MA_pop_stack failed",0);
@@ -1215,7 +1217,7 @@ DoublePrecision *alpha, *beta;
                 break;
             default: ga_error(" wrong data type ",atype);
         }
-        
+      
         /* release access to the data */
         nga_release_       (&g_A, loC, hiC);
         nga_release_       (&g_B, loC, hiC); 

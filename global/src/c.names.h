@@ -144,6 +144,35 @@
 #define  nga_zdot_patch_           NGA_ZDOT_PATCH
 #define  nga_zero_patch_           NGA_ZERO_PATCH
 #define  ngai_dot_patch_           NGAI_DOT_PATCH
+#define  ga_abs_value_             GA_ABS_VALUE
+#define  ga_add_constant_	   GA_ADD_CONSTANT 
+#define  ga_recip_                 GA_RECIP 
+#define  ga_elem_multiply_	   GA_ELEM_MULTIPLY  
+#define  ga_elem_divide_	   GA_ELEM_DIVIDE  
+#define  ga_step_max_	           GA_STEP_MAX  
+#define  ga_step_max2_	           GA_STEP_MAX2  
+#define  ga_step_max_patch_	   GA_STEP_MAX_PATCH  
+#define  ga_step_max2_patch_	   GA_STEP_MAX2_PATCH  
+#define  ga_elem_maximum_	   GA_ELEM_MAXIMUM  
+#define  ga_elem_minimum_	   GA_ELEM_MINIMUM  
+#define  ga_aba_value_patch_       GA_ABS_VALUE_PATCH
+#define  ga_add_constant_patch_	   GA_ADD_CONSTANT_PATCH
+#define  ga_recip_patch_ 	   GA_RECIP
+#define  ga_elem_multiply_patch_   GA_ELEM_MULTIPLY_PATCH	
+#define  ga_elem_divide_patch_     GA_ELEM_DIVIDE_PATCH	
+#define  ga_elem_maxumum_patch_    GA_ELEM_MAXIMUM_PATCH	
+#define  ga_elem_minumum_patch_    GA_ELEM_MINIMUM_PATCH	
+#define  ga_shift_diagonal_        GA_SHIFT_DIAGONAL
+#define  ga_set_diagonal_          GA_SET_DIAGONAL
+#define  ga_zero_diagonal_         GA_ZERO_DIAGONAL
+#define  ga_add_diagonal_          GA_ADD_DIAGONAL
+#define  ga_get_diagonal_          GA_GET_DIAGONAL
+#define  ga_scale_rows_            GA_SCALE_ROWS
+#define  ga_scale_cols_            GA_SCALE_COLS
+#define  ga_norm1_          	   GA_NORM1
+#define  ga_norm_infinity_         GA_NORM_INFINITY
+#define  ga_median_         	   GA_MEDIAN
+#define  ga_median_patch_          GA_MEDIAN_PATCH
 #define  ga_cluster_nodeid_        GA_CLUSTER_NODEID 
 #define  ga_cluster_nnodes_        GA_CLUSTER_NNODES
 #define  ga_cluster_nprocs_        GA_CLUSTER_NPROCS
@@ -294,6 +323,35 @@
 #define  nga_zdot_patch_           nga_zdot_patch__         
 #define  nga_zero_patch_           nga_zero_patch__         
 #define  ngai_dot_patch_           ngai_dot_patch__         
+#define  ga_abs_value_             ga_abs_value__
+#define  ga_add_constant_	   ga_add_constant__ 
+#define  ga_recip_                 ga_recip__ 
+#define  ga_elem_multiply_	   ga_elem_multiply__  
+#define  ga_elem_divide_	   ga_elem_divide__  
+#define  ga_step_max_	           ga_step_max__ 
+#define  ga_step_max2_	           ga_step_max2__ 
+#define  ga_step_max_patch_	   ga_step_max_patch__ 
+#define  ga_step_max2_patch_	   ga_step_max2_patch__ 
+#define  ga_elem_maximum_	   ga_elem_maximum__  
+#define  ga_elem_minimum_	   ga_elem_minimum__  
+#define  ga_aba_value_patch_       ga_abs_value_patch__
+#define  ga_add_constant_patch_	   ga_add_constant_patch__
+#define  ga_recip_patch_ 	   ga_recip__
+#define  ga_elem_multiply_patch_   ga_elem_multiply_patch__	
+#define  ga_elem_divide_patch_     ga_elem_divide_patch__	
+#define  ga_elem_maxumum_patch_    ga_elem_maximum_patch__	
+#define  ga_elem_minumum_patch_    ga_elem_minimum_patch__	
+#define  ga_shift_diagonal_        ga_shift_diagonal__
+#define  ga_set_diagonal_          ga_set_diagonal__
+#define  ga_zero_diagonal_         ga_zero_diagonal__
+#define  ga_add_diagonal_          ga_add_diagonal__
+#define  ga_get_diagonal_          ga_get_diagonal__
+#define  ga_scale_rows_	           ga_scale_rows__		
+#define  ga_scale_cols_	           ga_scale_cols__		
+#define  ga_norm1_          	   ga_norm1__
+#define  ga_norm_infinity_         ga_norm_infinity__
+#define  ga_median_         	   ga_median__
+#define  ga_median_patch_          ga_median_patch__
 #define  ga_cluster_nodeid_        ga_cluster_nodeid__ 
 #define  ga_cluster_nnodes_        ga_cluster_nnodes__
 #define  ga_cluster_nprocs_        ga_cluster_nprocs__
@@ -303,3 +361,5 @@
 
 
 #endif
+
+

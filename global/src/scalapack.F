@@ -1,6 +1,404 @@
-#ifdef GA_USE_VAMPIR
-#include "ga_vampir.fh"
-#endif
+c $Id: scalapack.F,v 1.1 2002-08-02 18:59:39 manoj Exp $
+****************************************************************************
+* GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
+*                                                                          *
+* common variables:                                                        *
+*     nnodes        - number of processors                                 *
+*     iam           - my processor number                                  *
+*     nprow/ npcol  - number of processor rows/cols in virtual proc. grid  *
+*     myrow/mycol   - cordinates of my processor in virtual proc. grid     *
+*                                                                          *
+c***************************************************************************
+c* 04/12/96  GVT  Changed the code to adapt to a new version of ScaLAPACK
+c*           Giuseppe Vitillaro peppe@unipg.it
+c***************************************************************************
+      block data SLblock
+      implicit none
+c
+#include "scalapack.fh"
+      data init /.false./
+      end
+
+
+
+      subroutine SLinit
+      implicit none
+      integer  icontxt
+c
+#include "scalapack.fh"
+      external blacs_pinfo, blacs_get, blacs_gridinit, blacs_gridinfo
+c
+      if(init)return
+c
+c**** call ga_sync before to enter in BLACS and after
+      call ga_sync()
+c     
+      call blacs_pinfo(iam, nnodes)
+c
+      call FindGrid(nnodes, nprow, npcol)
+c
+      call blacs_get (0, 0, icontxt)
+      igctxt = icontxt
+c
+      icontxt = igctxt
+      call blacs_gridinit(icontxt, 'R', nprow, npcol)
+      iSLctxt = icontxt
+c
+      call blacs_gridinfo(iSLctxt, nprow, npcol, myrow, mycol)
+c
+      init=.true.
+c
+      call ga_sync()
+c    
+      end
+
+
+
+      subroutine FindGrid(nnodes, nprow, npcol)
+c
+c***  determine nprow, npcol from nnodes
+c***  solution is searched in the neighborhood of the square grid 
+c
+      implicit none
+      integer nnodes, nprow, npcol,i 
+c
+      npcol = int(sqrt(dble(nnodes)))
+      do i = npcol, 1, -1 
+         if(mod(nnodes,i).eq.0) goto 1
+      enddo
+1     continue
+      npcol = i
+      nprow = nnodes/npcol
+      end
+
+
+
+      subroutine blockpos(m, nb, idxb, pos)
+c
+c***  for m row/col find SL block num and its position within that block 
+c
+      implicit none
+#include "scalapack.fh"
+c
+      integer m, nb, idxb, pos
+      integer T
+c
+      T = nb * nnodes
+      idxb = m/T
+      pos = Mod(Mod(m,T),nb)
+      end 
+
+
+
+      subroutine blockplace(mypcord, npnum, dim, nb, lo,hi) 
+c
+c***  calculates range of indexes in the SBS array for data
+c***  that the given processor holds (called for rows & cols)
+c
+      implicit none
+c
+      integer  dim, nb,lo, hi
+      integer  np_or_q, npnum, mypcord 
+      integer totblocks, minblocksproc, extrablocks, corr,BlocksBeforeMe 
+      integer numroc
+c
+      np_or_q = numroc(dim, nb, mypcord, 0, npnum)
+      if(np_or_q .lt. 1)then    ! this processor des not have any data 
+         lo =  0
+         hi = -1
+         return
+      endif
+c
+      totblocks    = (dim +nb-1)/nb
+      minblocksproc = totblocks/npnum
+      extrablocks  = Mod(totblocks,npnum) 
+c
+      if(extrablocks .le.  mypcord)then
+         BlocksBeforeMe = minblocksproc * mypcord + extrablocks 
+         if(extrablocks.gt.0)then       ! check if there are extra blocks
+            corr = Mod(dim,nb)
+            if(corr.ne.0)then           ! partial block might be among them
+               BlocksBeforeMe = BlocksBeforeMe -1
+            endif
+         endif
+      else
+         BlocksBeforeMe = minblocksproc * mypcord + mypcord 
+      endif
+      lo = 1  + BlocksBeforeMe * nb + corr
+      hi = lo + np_or_q -1
+      end
+
+
+
+
+      subroutine ga_to_SL(g_a, dim1, dim2, nbr, nbc, s_a, lda, np, nq)
+c
+c***  transforms a GA to SL format
+c***  reference: Dongarra et al, 'A look at scalable dense lin. alg. libs'
+c
+      implicit none
+#include "scalapack.fh"
+      integer g_a, nbr, nbc, lda, np, nq, dim1, dim2
+      double  precision  s_a(lda,nq)
+      integer row, col, tcol, trow, rbase, cbase
+      integer pcol, prow
+
+c***  Synchronize at the beginning
+      call ga_sync()
+c    
+      rbase = 1
+      cbase = 1
+c
+      Trow = nbr * nprow
+      Tcol = nbc * npcol
+c     
+      do col  = 1, dim2, nbc
+         pcol = mod(col,Tcol)/nbc        ! processor column that holds "col"
+         if(mycol.eq.pcol) then
+            do row  = 1, dim1, nbr
+               prow = mod(row,Trow)/nbr  ! processor row that holds "row"
+               if(myrow.eq.prow) then
+                  if(rbase.gt.np .or. cbase .gt. nq) then
+                     call ga_error(' ga_to_SL: rows/cols error ',0)
+                  endif
+                  call ga_get(g_a,row,min(row+nbr -1,dim1),col,
+     &                    min(col+nbc -1,dim2), s_a(rbase,cbase), lda) 
+                  rbase = rbase + nbr
+               endif
+            enddo
+            rbase = 1
+            cbase = cbase + nbc
+         endif
+      enddo
+
+c**** ... and at the end
+      call ga_sync()
+      end
+
+
+
+      subroutine ga_from_SL(g_a, dim1, dim2, nbr, nbc, s_a, lda, np, nq)
+c
+c***  transforms a matrix from SL to GA format
+c***  reference: Dongarra et al, 'A look at scalable dense lin. alg. libs'
+c
+      implicit none
+#include "scalapack.fh"
+      integer g_a, nbr, nbc, lda, np, nq, dim1, dim2
+      double  precision s_a(lda,nq)
+      integer row, col, tcol, trow, rbase, cbase
+      integer pcol, prow
+c
+c**** Syncronize at the beginning
+      call ga_sync()
+c   
+      rbase = 1
+      cbase = 1
+c
+      Trow = nbr * nprow
+      Tcol = nbc * npcol
+c
+      do col  = 1, dim2, nbc
+         pcol = mod(col,Tcol)/nbc        ! processor column that holds "col"
+         if(mycol.eq.pcol) then
+            do row  = 1, dim1, nbr
+               prow = mod(row,Trow)/nbr  ! processor row that holds "row"
+               if(myrow.eq.prow) then
+                  if(rbase.gt.np .or. cbase .gt. nq)
+     &               call ga_error(' ga_from_SL: rows/cols error ',0)
+                  call ga_put(g_a,row,min(row+nbr-1,dim1),col,
+     &                    min(col+nbc-1,dim2), s_a(rbase,cbase), lda) 
+                  rbase = rbase + nbr
+               endif
+            enddo
+            rbase = 1
+            cbase = cbase + nbc
+         endif
+      enddo
+
+c**** ... and at the end
+      call ga_sync()
+      end
+
+
+c**********************************************************************
+c* Source : ga_lu_solve
+c* Scope  : LU factorization
+c*
+c* 02/16/94  Jarek Nieplocha 
+c* 04/12/96  GVT  Adapted the code to the new version of ScaLAPACK
+c*           Giuseppe Vitillaro peppe@unipg.it
+c**********************************************************************      
+c
+c length of scalapack array descriptor
+# define DSCLEN 10
+c
+      subroutine ga_lu_solve(trans,g_a, g_b)
+      implicit none
+#include "mafdecls.fh"
+#include "global.fh"
+#include "scalapack.fh"
+c
+      character*1 trans         ! transpose or not  
+      integer g_a               ! coefficient matrix A 
+      integer g_b               ! rhs matrix, B, overwritten on exit by
+                                ! the solution vector, X
+c
+c     solve the set of linear equations 
+c
+c           AX = B
+c
+c     with possibly multiple rhs stored as columns of matrix B
+c
+c     the matrix A is not destroyed
+c
+c~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+c
+      logical status
+c
+      integer ha, adra          !A
+      integer hb, adrb          !B
+      integer hi, adri          !ipiv
+c
+c
+      logical oactive           ! true iff this process participates
+      integer dimA1, dimA2, typeA
+      integer dimB1, dimB2, typeB
+c
+      integer mpA, nqA          ! number of rows/cols of A held by the processor
+      integer mpB, nqB          ! number of rows/cols of B held by the processor
+      integer info
+      integer me
+      integer nwork
+      integer n,lda, ldb, elemA, elemB
+      integer numroc
+
+      integer descA(DSCLEN), descB(DSCLEN) ! descriptors for distr. matrixes A,B
+      integer nb                           ! block size for A and rhs
+      data nb /64/
+c
+c***  check environment
+c
+      me     = ga_nodeid()
+c
+c***  check GA info for input arrays
+c
+      call ga_check_handle(g_a, 'ga_lu_solve: a')
+      call ga_check_handle(g_b, 'ga_lu_solve: b')
+      call ga_inquire(g_a, typeA, dimA1, dimA2)
+      call ga_inquire(g_b, typeB, dimB1, dimB2)
+c
+      if (dimA1 .ne. dimA2) then
+         call ga_error('ga_lu_solve: g_a must be square matrix ', 1)
+      else if(dimA1 .ne. dimB1) then
+         call ga_error('ga_lu_solve: dims of A and B do not match ',1)
+      endif
+c
+      n = dimA1
+c
+c***  initialize SL interface
+c 
+      call SLinit()
+c
+c***  find SBS format parameters
+c
+      mpA = numroc(n, nb,myrow, 0, nprow)
+      nqA = numroc(n, nb,mycol, 0, npcol)
+      mpB = numroc(dimB1, nb,myrow, 0, nprow)
+      nqB = numroc(dimB2, nb,mycol, 0, npcol) 
+      lda = max(1,mpA)
+      ldb = max(1,mpB)
+
+      oactive = .true.
+      if (oactive) then
+c
+c***     allocate A,B and ipiv arrays
+c     
+         elemA= mpA*nqA
+         status = .true.
+         if(elemA.ne.0)status = ma_push_get(MT_DBL,elemA,'a',ha,adra)
+         if(.not.status) 
+     &       call ga_error('ga_lu_solve: mem alloc failed A ', -1)
+c
+         elemB= mpB*nqB
+         if(elemB.ne.0)status = ma_push_get(MT_DBL,elemB,'b',hb,adrb)
+         if(.not.status) 
+     &       call ga_error('ga_lu_solve: mem alloc failed B ', -1)
+c
+         status = ma_push_get(MT_INT,mpA+nb,'ipiv',hi,adri)
+         if(.not.status) 
+     &       call ga_error('ga_lu_solve: mem alloc failed ipiv ', -1)
+c
+c
+c***     copy g_a to A and g_b to B using the SBS SL format 
+c
+         call ga_to_SL(g_a, n, n, nb, nb, dbl_mb(adrA), lda, mpA,nqA)
+         call ga_to_SL(g_b, n,dimB2, nb,nb, dbl_mb(adrB), ldb, mpB, nqB)
+c     
+c***     fill SCALAPACK matrices descriptors
+c
+	 call descinit(descA, dimA1, dimA2, nb, nb, 0, 0, 
+     &                 iSLctxt, lda, info)
+         if(info.ne.0) call ga_error(' ga_lu_solve: descinit A failed ',
+     &                               -info)
+         call descinit(descB, dimB1, dimB2, nb, nb, 0, 0, 
+     &                 iSLctxt, ldb, info)
+         if(info.ne.0) call ga_error(' ga_lu_solve: descinit B failed ',
+     &                               -info)
+c
+c***     LU factorization
+c
+         call ga_sync()
+	 call pdgetrf(n, n, dbl_mb(adrA), 1, 1, descA, 
+     &                int_mb(adrI), info)
+         call ga_sync()
+c
+c
+         if(info.eq.0)then
+c
+c***        solve: forward/backward substitution
+c
+            call pdgetrs(trans, n, dimB2, dbl_mb(adrA), 1, 1, descA,
+     &                   int_mb(adrI), dbl_mb(adrB), 1, 1, descB, info)
+            if(info.eq.0)then
+c
+c***           copy solution matrix back to g_b
+c
+               call ga_from_SL(g_b, dimB1, dimB2, nb, nb, dbl_mb(adrb),
+     &                         mpB, ldb, nqB)
+            else
+               call ga_error(' ga_lu_solve: pdgetrs failed ', -info)
+            endif
+c
+         else
+            call ga_error(' ga_lu_solve: pdgetrf failed ', -info)
+         endif
+c
+c***     deallocate work/SL arrays
+c
+         status = ma_pop_stack(hi)
+         if(elemB.ne.0) status = status .and. ma_pop_stack(hb)
+         if(elemA.ne.0) status = status .and. ma_pop_stack(ha)
+         if(.not.status)
+     &       call ga_error('ga_lu_solve:ma_pop_stack failed',0)
+      endif
+c
+      call ga_sync()
+      end
+
+c     alt entry point for C that avoids char args
+c
+	subroutine ga_lu_solve_alt(tr, g_a, g_b)
+	implicit none
+        integer g_a, g_b, tr
+        if(tr.eq.0) then
+           call ga_lu_solve('n',g_a, g_b) 
+        else
+           call ga_lu_solve('y',g_a, g_b) 
+        endif
+        end
+
+
 c**********************************************************************
 c* Source : ga_llt
 c* Scope  : interface between GA and LLT SCALAPACK routines
@@ -34,9 +432,6 @@ c****
       integer i, j, hBUF, adrBUF
 
 c**** Check Environment
-#ifdef GA_USE_VAMPIR
-      call vampir_begin_galinalg(GA_ZEROUL,__FILE__,__LINE__)
-#endif
       nproc = ga_nnodes()
       me    = ga_nodeid()
       
@@ -80,9 +475,6 @@ c****       case U: make zero the lower triangle
 c
       status = ma_pop_stack(hBUF)
       call ga_sync()
-#ifdef GA_USE_VAMPIR
-      call vampir_end_galinalg(GA_ZEROUL,__FILE__,__LINE__)
-#endif
       end
 
 
@@ -108,9 +500,6 @@ c****
       integer i, j, hBUF, adrBUF, idx      
 
 c**** Check Environment
-#ifdef GA_USE_VAMPIR
-      call vampir_begin_galinalg(GA_SYMUL,__FILE__,__LINE__)
-#endif
       nproc = ga_nnodes()
       me    = ga_nodeid()
       
@@ -166,9 +555,6 @@ c****                and over the diag is 2 times
       
       status = ma_pop_stack(hBUF)
       call ga_symmetrize(g_A)
-#ifdef GA_USE_VAMPIR
-      call vampir_end_galinalg(GA_SYMUL,__FILE__,__LINE__)
-#endif
       end
 
       
@@ -192,13 +578,7 @@ c*
 c***********************************************************************
       integer function ga_cholesky(uplo, g_a)
       integer ga_llt_f
-#ifdef GA_USE_VAMPIR
-      call vampir_begin_galinalg(GA_CHOLESKY,__FILE__,__LINE__)
-#endif
       ga_cholesky = ga_llt_f(uplo, g_A, -1)
-#ifdef GA_USE_VAMPIR
-      call vampir_end_galinalg(GA_CHOLESKY,__FILE__,__LINE__)
-#endif
       end
 
 
@@ -234,7 +614,7 @@ c***********************************************************************
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "slface.fh"
+#include "scalapack.fh"
 c****
       character*1 uplo         ! (input) 'U' or 'L'
       integer     g_A          ! (input/output)
@@ -352,7 +732,7 @@ c***********************************************************************
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "slface.fh"
+#include "scalapack.fh"
 c****
       character*1 uplo         ! (input) 'U' or 'L'
       integer     g_A          ! (input)
@@ -376,9 +756,6 @@ c
       data nb /NB/
 c
 c**** Check the Environment
-#ifdef GA_USE_VAMPIR
-      call vampir_begin_galinalg(GA_LLT_S,__FILE__,__LINE__)
-#endif
       me = ga_nodeid()
       
 c**** Check GA info for input array F, B
@@ -467,9 +844,6 @@ c**** between ga_llt_f and ga_llt_s beside A and B
       if (elemA.ne.0) status = ma_pop_stack(hA)
 c
       call ga_sync()
-#ifdef GA_USE_VAMPIR
-      call vampir_end_galinalg(GA_LLT_S,__FILE__,__LINE__)
-#endif
       end
 
 
@@ -502,7 +876,7 @@ c***********************************************************************
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "slface.fh"
+#include "scalapack.fh"
 c****
       character*1 uplo         ! (input) 'U' or 'L'
       integer     g_A          ! (input/output)
@@ -522,9 +896,6 @@ c****
       data nb /NB/
 c
 c**** Check Environment
-#ifdef GA_USE_VAMPIR
-      call vampir_begin_galinalg(GA_LLT_I,__FILE__,__LINE__)
-#endif
       nproc = ga_nnodes()
       me = ga_nodeid()
 
@@ -603,9 +974,6 @@ c**** between ga_llt_f and ga_llt_i
       if(elemA.ne.0) status = ma_pop_stack(hA)
 c
       call ga_sync()
-#ifdef GA_USE_VAMPIR
-      call vampir_end_galinalg(GA_LLT_I,__FILE__,__LINE__)
-#endif
       end
 
       
@@ -642,9 +1010,6 @@ c***********************************************************************
       integer     ga_llt_f
 c
 c**** call the Cholesky factorization routine
-#ifdef GA_USE_VAMPIR
-      call vampir_begin_galinalg(GA_LLT_SOLVE,__FILE__,__LINE__)
-#endif
       hsA  = 0
       uplo = 'L'
       irc  = ga_llt_f(uplo, g_A, hsA)
@@ -659,9 +1024,6 @@ c****    call the ga_llt_s internal interface
 c****    if the factorization is not OK just return the error
          ga_llt_solve = irc
       endif
-#ifdef GA_USE_VAMPIR
-      call vampir_end_galinalg(GA_LLT_SOLVE,__FILE__,__LINE__)
-#endif
       end
 
 
@@ -699,9 +1061,6 @@ c
 c**** call the Cholesky factorization routine
       hsA  = 0
       uplo = 'L' 
-#ifdef GA_USE_VAMPIR
-      call vampir_begin_galinalg(GA_SPD_INVERT,__FILE__,__LINE__)
-#endif
       ircF = ga_llt_f(uplo, g_A, hsA)
 c
 c**** check if the factorization is OK
@@ -718,9 +1077,6 @@ c****    call the ga_llt_i internal interface
 c****    if the factorization is not OK just return the error
          ga_spd_invert = ircF
       endif
-#ifdef GA_USE_VAMPIR
-      call vampir_end_galinalg(GA_SPD_INVERT,__FILE__,__LINE__)
-#endif
       end
 
 c***********************************************************************
@@ -762,9 +1118,6 @@ c***********************************************************************
       integer     ga_llt_solve
 c
 c**** Call Cholesky solver as the first try      
-#ifdef GA_USE_VAMPIR
-      call vampir_begin_galinalg(GA_SOLVE,__FILE__,__LINE__)
-#endif
       ga_solve = ga_llt_solve(g_A, g_B)
       if (ga_solve.eq.0) then
 c****    if Cholesky was succcesully just return 
@@ -772,7 +1125,4 @@ c****    if Cholesky was succcesully just return
 c****    else if Cholesky failed
          call ga_lu_solve('N', g_A, g_B)
       endif
-#ifdef GA_USE_VAMPIR
-      call vampir_end_galinalg(GA_SOLVE,__FILE__,__LINE__)
-#endif
       end

@@ -12,6 +12,44 @@ extern "C" {
 #include <sys/types.h>
 #include "global.h"
 
+
+extern void GA_Abs_value(int g_a); 
+extern void GA_Add_constant(int g_a, void* alpha);
+extern void GA_Recip(int g_a);
+extern void GA_Elem_multiply(int g_a, int g_b, int g_c);
+extern void GA_Elem_divide(int g_a, int g_b, int g_c);
+extern void GA_Elem_maximum(int g_a, int g_b, int g_c);
+extern void GA_Elem_minimum(int g_a, int g_b, int g_c);
+extern void GA_Abs_value_patch(int g_a, int *lo, int *hi);
+extern void GA_Add_constant_patch(int g,int *lo,int *hi,void *alpha);
+extern void GA_Recip_patch(int g_a,int *lo, int *hi);
+extern void GA_Step_max(int g_a, int g_b, double *step);
+extern void GA_Step_max2(int g_xx, int g_vv, int g_xxll, int g_xxuu, double *step2);
+extern void GA_Step_max_patch(int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi, double *step);
+extern void GA_Step_max2_patch(int g_xx, int *xxlo, int *xxhi, int g_vv, int *vvlo, int *vvhi, int g_xxll, int *xxlllo, int *xxllhi, int g_xxuu, int *xxuulo, int *xxuuhi, double *step2);
+extern void GA_Elem_multiply_patch(int g_a,int *alo,int *ahi,
+				     	int g_b,int *blo,int *bhi,int g_c,int *clo,int *chi);
+extern void GA_Elem_divide_patch(int g_a,int *alo,int *ahi,
+				     	int g_b,int *blo,int *bhi,int g_c,int *clo,int *chi);
+extern void GA_Elem_maximum_patch(int g_a,int *alo,int *ahi,
+				     	int g_b,int *blo,int *bhi,int g_c,int *clo,int *chi);
+extern void GA_Elem_minimum_patch(int g_a,int *alo,int *ahi,
+				     	int g_b,int *blo,int *bhi,int g_c,int *clo,int *chi);
+
+
+/*Added by Limin for matrix operations*/
+extern void GA_Shift_diagonal(int g_a, void *c);
+extern void GA_Set_diagonal(int g_a, int g_v);
+extern void GA_Zero_diagonal(int g_a);
+extern void GA_Add_diagonal(int g_a, int g_v);
+extern void GA_Get_diagonal(int g_a, int g_v);
+extern void GA_Scale_rows(int g_a, int g_v);
+extern void GA_Scale_cols(int g_a, int g_v);
+extern void GA_Norm1(int g_a, double *nm);
+extern void GA_Norm_infinity(int g_a, double *nm);
+extern void GA_Median(int g_a, int g_b, int g_c, int g_m);
+extern void GA_Median_patch(int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi, int g_c, int *clo, int *chi, int g_m, int *mlo, int *mhi);
+
 extern void GA_Initialize(void);
 extern void GA_Initialize_ltd(size_t limit);
 extern int NGA_Create(int type,int ndim,int dims[], char *name, int chunk[]);
@@ -71,6 +109,11 @@ extern int GA_Nodeid();
 extern int GA_Nnodes();
 extern void GA_Dgemm(char ta, char tb, int m, int n, int k, 
                      double alpha, int g_a, int g_b, double beta, int g_c );
+extern void GA_Zgemm(char ta, char tb, int m, int n, int k, 
+                     DoubleComplex alpha, int g_a, int g_b, 
+		     DoubleComplex beta, int g_c );
+extern void GA_Sgemm(char ta, char tb, int m, int n, int k, 
+                     float alpha, int g_a, int g_b, float beta, int g_c );
 extern void GA_Copy_patch(char ta,int g_a, int ailo, int aihi,int ajlo,int ajhi,
                              int g_b, int bilo, int bihi, int bjlo,int bjhi);
 extern void GA_Brdcst(void *buf, int lenbuf, int root);
@@ -115,11 +158,18 @@ extern int  GA_Ndim(int g_a);
 
 extern int  GA_Valid_handle(int g_a);
 extern void GA_Nblock(int g_a, int *nblock);
-
+extern void GA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
+                            int g_a, int ailo, int aihi, int ajlo, int ajhi,
+                            int g_b, int bilo, int bihi, int bjlo, int bjhi,
+                            int g_c, int cilo, int cihi, int cjlo, int cjhi);
+extern void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
+			     int g_a, int alo[], int ahi[], 
+			     int g_b, int blo[], int bhi[], 
+			     int g_c, int clo[], int chi[]) ;
 #define GA_Initialize ga_initialize_
 #define GA_Terminate ga_terminate_
 #define GA_Sync ga_sync_
-#define GA_Error(str,code) ga_error((str),(Integer)(code))
+#define GA_Error(str,code) ga_error((str),(int)(code))
 #define GA_Inquire_memory (size_t)ga_inquire_memory_
 #define GA_Memory_avail (size_t)ga_memory_avail_
 #define GA_Uses_ma (int)ga_uses_ma_

@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.20 2002-01-30 01:14:27 d3h325 Exp $
+#	$Id: MakeFile,v 1.21 2002-08-02 18:59:37 manoj Exp $
 #
 
 OBJDIR=.\obj
@@ -32,7 +32,9 @@ OBJ      = $(OBJDIR)\base.obj \
         $(OBJDIR)\datatypes.obj\
         $(OBJDIR)\sparse.obj \
         $(OBJDIR)\select.obj \
-        $(OBJDIR)\DP.obj
+        $(OBJDIR)\DP.obj \
+        $(OBJDIR)\elem.alg.obj
+	
 
 
 LOC_DEFINES = -DARMCI

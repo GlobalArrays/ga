@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.21 2002-07-17 17:31:33 vinod Exp $ */
+/* $Id: base.c,v 1.22 2002-08-02 18:59:37 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1281,6 +1281,7 @@ Integer ga_handle;
    ga_check_handleM(g_a, "nga_distribution");
    ga_handle = (GA_OFFSET + *g_a);
    ga_ownsM(ga_handle, *proc, lo, hi);
+
 }
 
 

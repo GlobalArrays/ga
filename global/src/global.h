@@ -24,14 +24,14 @@ extern "C" {
 #else
 # define ARGS_(s) ()
 #endif
-
+  
 #define C_DBL MT_C_DBL
 #define C_INT MT_C_INT
 #define C_FLOAT MT_C_FLOAT
 #define C_DCPL MT_C_DCPL
 #define C_LONG MT_C_LONGINT
 #define C_SCPL MT_C_SCPL
-
+  
 extern void *GA_Getmem(int type, int nelem);
 extern void GA_Freemem(void* ptr);
 extern int GA_Assemble_duplicate(int g_a, char *name, void *ptr);
@@ -128,16 +128,17 @@ extern void FATR ga_add_patch_   ARGS_((DoublePrecision *, Integer *,
       Integer *, Integer *, Integer *, Integer *,
       DoublePrecision *, Integer *, Integer *, Integer *, Integer *, Integer *,
       Integer *, Integer *, Integer *, Integer *, Integer *  ));
-extern void ga_matmul_patch  ARGS_((char *, char *, DoublePrecision *,
-      DoublePrecision *, Integer *, Integer *, Integer *, Integer *, Integer *,
+extern void ga_matmul_patch  ARGS_((char *, char *, void *,
+      void *, Integer *, Integer *, Integer *, Integer *, Integer *,
       Integer *, Integer *, Integer *, Integer *, Integer *, Integer *,
       Integer *, Integer *, Integer *, Integer*));
 
-extern void nga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
-		      Integer *g_a, Integer alo[], Integer ahi[], 
-                      Integer *g_b, Integer blo[], Integer bhi[], 
-		      Integer *g_c, Integer clo[], Integer chi[]);
-
+extern void nga_matmul_patch ARGS_((char *transa, char *transb, 
+			     Void *alpha, Void *beta, 
+			     Integer *g_a, Integer alo[], Integer ahi[], 
+			     Integer *g_b, Integer blo[], Integer bhi[], 
+			     Integer *g_c, Integer clo[], Integer chi[]));
+  
 extern void FATR ga_copy_   ARGS_((Integer *, Integer *));
 extern void      ga_print_file ARGS_((FILE *, Integer *));
 extern void FATR ga_print_  ARGS_((Integer *));
@@ -175,6 +176,11 @@ extern Integer FATR ga_spd_invert_ ARGS_((Integer *));
 
 extern void ga_dgemm ARGS_((char *, char *, Integer *, Integer *, Integer *,
       DoublePrecision *, Integer *, Integer *, DoublePrecision *, Integer *));
+extern void ga_zgemm ARGS_((char *, char *, Integer *, Integer *, Integer *,
+      DoubleComplex *, Integer *, Integer *, DoubleComplex *, Integer *));
+extern void ga_sgemm ARGS_((char *, char *, Integer *, Integer *, Integer *,
+      float *, Integer *, Integer *, float *, Integer *));
+
 extern void FATR ga_diag_ ARGS_((Integer *, Integer *, Integer *,
       DoublePrecision *));
 extern void FATR ga_proc_topology_ ARGS_((Integer *g_a, Integer *proc,
@@ -335,9 +341,56 @@ extern void nga_select_elem_(Integer *g_a, char* op, void* val,
 extern void FATR ga_add_constant_(Integer *g_a, void *);
 extern void FATR ga_abs_value_(Integer *);
 extern void FATR ga_recip_(Integer *g_a);
-extern void FATR ga_abs_value_patch_ (Integer *,  Integer *, Integer *);
-extern void FATR nga_add_constant_patch_(Integer *, Integer *, Integer *, void *);
+extern void FATR ga_abs_value_patch_ (Integer *, Integer *, Integer *);
+extern void FATR nga_add_constant_patch_(Integer *, Integer *, Integer *, 
+					 void *);
 
+extern void FATR ga_recip_patch_(Integer *g_a, Integer *lo, Integer *hi);
+
+extern void ga_elem_multiply_(Integer *g_a, Integer *g_b, Integer *g_c);
+extern void ga_elem_divide_(Integer *g_a, Integer *g_b, Integer *g_c);
+extern void ga_elem_maximum_(Integer *g_a, Integer *g_b, Integer *g_c);
+extern void ga_elem_minimum_(Integer *g_a, Integer *g_b, Integer *g_c);
+extern void ga_elem_multiply_patch_(Integer *g_a,Integer *alo,Integer *ahi, 
+				    Integer *g_b,Integer *blo,Integer *bhi,
+				    Integer *g_c,Integer *clo,Integer *chi);
+extern void ga_elem_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+				  Integer *g_b,Integer *blo,Integer *bhi,
+				  Integer *g_c,Integer *clo,Integer *chi);
+extern void ga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+				   Integer *g_b,Integer *blo,Integer *bhi,
+				   Integer *g_c,Integer *clo,Integer *chi);
+extern void ga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+				   Integer *g_b,Integer *blo,Integer *bhi,
+				   Integer *g_c,Integer *clo,Integer *chi);
+extern void ga_step_max_patch_(Integer *g_a, Integer *alo, Integer *ahi, 
+			       Integer *g_b,  Integer *blo, Integer *bhi, 
+			       double *step);
+extern void ga_step_max_(Integer *g_a, Integer *g_b, double *step);
+extern void ga_step_max2_patch_(Integer *g_xx, Integer *xxlo, Integer *xxhi, 
+				Integer *g_vv, Integer *vvlo, Integer *vvhi, 
+				Integer *g_xxll, Integer *xxlllo, 
+				Integer *xxllhi, Integer *g_xxuu, 
+				Integer *xxuulo, Integer *xxuuhi, 
+				double *result);
+extern void ga_step_max2_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, 
+			  Integer *g_xxuu, double *step2);
+
+/*Added by Limin for matrix operations */
+extern void ga_shift_diagonal_(Integer *g_a, void *c);
+extern void ga_set_diagonal_(Integer *g_a, Integer *g_v);
+extern void ga_zero_diagonal_(Integer *g_a);
+extern void ga_add_diagonal_(Integer *g_a, Integer *g_v);
+extern void ga_get_diagonal_(Integer *g_a, Integer *g_v);
+extern void ga_scale_rows_(Integer *g_a, Integer *g_v);
+extern void ga_scale_cols_(Integer *g_a, Integer *g_v);
+extern void ga_norm1_(Integer *g_a, double *nm);
+extern void ga_norm_infinity_(Integer *g_a, double *nm);
+extern void ga_median_(Integer *g_a, Integer *g_b, Integer *g_c, Integer *g_m);
+extern void ga_median_patch_(Integer *g_a, Integer *alo, Integer *ahi, 
+			     Integer *g_b, Integer *blo, Integer *bhi, 
+			     Integer *g_c, Integer *clo, Integer *chi, 
+			     Integer *g_m, Integer *mlo, Integer *mhi);
 
 #ifdef __cplusplus
 }

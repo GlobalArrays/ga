@@ -64,7 +64,7 @@ int     participate=0;
               for(i=0;i<elems;i++){ if(ival < ia[i]) {ival=ia[i];ind=i; } }
 
            info.v.lval = (long) ival;
-           break;
+	   break;
 
         case C_DCPL:
            ca = (DoubleComplex*)ptr;
@@ -131,7 +131,6 @@ int     participate=0;
           ind /= elems;
       }
    } 
-
    /* calculate global result */
    if(type==C_INT || type==C_LONG){ 
       int size = sizeof(double) + sizeof(Integer)*(int)ndim;
