@@ -409,7 +409,7 @@ endif
 
 # LOC_LIBS defines extra libraries required to build test programs 
 
-LIBS = -L$(LIB_DISTRIB)/$(TARGET) -lchemio -lglobal -lma -llinalg $(LOC_LIBS)
+LIBS = -L$(LIB_DISTRIB)/$(TARGET) -lpario -lglobal -lma -llinalg $(LOC_LIBS)
 ifeq ($(HAS_BLAS),yes)
       LIBS += $(LIBBLAS)
 endif
