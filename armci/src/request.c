@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.28 2001-12-22 00:43:58 d3h325 Exp $ */
+/* $Id: request.c,v 1.29 2001-12-27 21:57:08 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -248,7 +248,7 @@ int bufsize = sizeof(request_header_t)+sizeof(long)+sizeof(void*);
     msginfo->from  = armci_me;
     msginfo->to    = proc; 
     msginfo->operation = op;
-    msginfo->datalen = sizeof(int); /* extra */
+    msginfo->datalen = sizeof(long);
 
     buf = (char*)(msginfo+1);
     ADDBUF(buf, void*, prem); /* pointer is shipped as descriptor */
@@ -265,13 +265,11 @@ int bufsize = sizeof(request_header_t)+sizeof(long)+sizeof(void*);
 
     msginfo->bytes   = msginfo->datalen+msginfo->dscrlen ;
 
+    if(DEBUG_){
+        printf("%d sending RMW request %d to %d\n",armci_me,op,proc);
+        fflush(stdout);
+    }
     armci_send_req(proc, msginfo, bufsize);
-
-    /* need to adjust datalen for long datatype version */
-    if(op==ARMCI_FETCH_AND_ADD || op== ARMCI_SWAP)
-        msginfo->datalen = sizeof(int);
-    else
-        msginfo->datalen = sizeof(long);
 
     buffer = armci_rcv_data(proc,msginfo);  /* receive response */
 
@@ -297,26 +295,22 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
         printf("%d server: executing RMW from %d\n",armci_me,msginfo->from);
         fflush(stdout);
      }
+     if(msginfo->datalen != sizeof(long))
+          armci_die2("armci_server_rmw: bad datalen=",msginfo->datalen,op);
 
      /* for swap operations *pextra has the  value to swap
       * for fetc&add it carries the increment argument
       */
-
      switch(op){
      case ARMCI_SWAP:
         iold = *(int*) pextra;
      case ARMCI_FETCH_AND_ADD:
-        if(msginfo->datalen != sizeof(int))
-          armci_die("armci_server_rmw: bad datalen=",msginfo->datalen);
         pold = &iold;
-        msginfo->datalen = sizeof(int);
         break;
 
      case ARMCI_SWAP_LONG:
         lold = *(long*) pextra;
      case ARMCI_FETCH_AND_ADD_LONG:
-        if(msginfo->datalen != sizeof(long))
-          armci_die("armci_server_rmw: long bad datalen=",msginfo->datalen);
         pold = &lold;
         break;
 
