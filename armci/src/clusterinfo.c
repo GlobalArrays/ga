@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.12 2000-11-01 20:52:45 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.13 2001-07-02 23:14:32 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -222,7 +222,11 @@ void armci_init_clusinfo()
      /* in some cases (e.g.,SP) when name is used to determine
       * cluster structure but not to establish communication
       * we can truncate hostnames to save memory */
-     limit = HOSTNAME_LEN-2;
+     limit = HOSTNAME_LEN-1;
+     for(i=0; i<len; i++){
+         if(name[i] =='.')break; /*we are not truncating 1st part of hostname*/
+         if(i==limit)armci_die("Please increase HOSTNAME_LEN in ARMCI >",i+1);
+     }
      if(len>limit)name[limit]='\0';
      len =limit;
 #else
