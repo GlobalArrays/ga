@@ -443,7 +443,10 @@ Size_t *avail;
 #  if defined(SP) || defined(SP1)
    strcpy(piofs_stat.name, tmp_pathname);
    if(piofsioctl(i, PIOFS_STATFS, &piofs_stat) == 0)
-     ret_fs = FS_PIOFS;
+     {
+       *avail = piofs_stat->f_bsize * piofs_stat->f_bavail;
+       ret_fs = FS_PIOFS;
+     }
 #  endif
    if(ret_fs == -1)
      {
