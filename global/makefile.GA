@@ -44,7 +44,7 @@ export TARGET VERSION DIAG LU_SOLVE GA_TRACE
 .PHONY: $(LIBRARY)
 
 $(LIBRARY): 
-	(cd ./src; $(MAKE) -j 20 || exit 1;) 
+	(cd ./src; $(MAKE) -j 8 || exit 1;) 
 
 $(TESTS):	$(LIBRARY)
 	(cd ./testing; $(MAKE) $@  || exit 1;)
