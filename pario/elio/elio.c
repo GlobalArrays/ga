@@ -1,7 +1,30 @@
 /**********************************************************************\
- ELementary I/O (ELIO) disk operations for Chemio libraries   
+ ELementary I/O (ELIO) disk operations for parallel I/O libraries   
  Authors: Jarek Nieplocha (PNNL) and Jace Mogill (ANL)
 \**********************************************************************/
+
+/* DISCLAIMER
+ *
+ * This material was prepared as an account of work sponsored by an
+ * agency of the United States Government.  Neither the United States
+ * Government nor the United States Department of Energy, nor Battelle,
+ * nor any of their employees, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
+ * ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY,
+ * COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT,
+ * SOFTWARE, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT
+ * INFRINGE PRIVATELY OWNED RIGHTS.
+ *
+ *
+ * ACKNOWLEDGMENT
+ *
+ * This software and its documentation were produced with United States
+ * Government support under Contract Number DE-AC06-76RLO-1830 awarded by
+ * the United States Department of Energy.  The United States Government
+ * retains a paid-up non-exclusive, irrevocable worldwide license to
+ * reproduce, prepare derivative works, perform publicly and display
+ * publicly by or for the US Government, including the right to
+ * distribute to other US Government contractors.
+ */
 
 #ifdef CRAY_T3E
 #define FFIO 1
@@ -123,8 +146,10 @@ Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
 {
   Size_t stat, bytes_to_write = bytes;
 
+#ifdef PABLO
   int pablo_code = PABLO_elio_write;
   PABLO_start( pablo_code );
+#endif
   
   if(offset != SEEK(fd->fd,offset,SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
   
@@ -142,7 +167,9 @@ Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
 
   /* Only get here if all has gone OK */
   
+#ifdef PABLO
   PABLO_end(pablo_code);
+#endif
   
   return bytes;
 }
@@ -187,8 +214,10 @@ int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request
   int    aio_i;
   int    rc;
 
+#ifdef PABLO
   int pablo_code = PABLO_elio_awrite;
   PABLO_start( pablo_code );
+#endif
 
   *req_id = ELIO_DONE;
 
@@ -229,7 +258,9 @@ int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request
 
   if(stat ==-1) ELIO_ERROR(AWRITFAIL, 0);
 
+#ifdef PABLO
   PABLO_end(pablo_code);
+#endif
 
   return((int)stat);
 }
@@ -243,8 +274,10 @@ int elio_truncate(Fd_t fd, off_t length)
 #   define ftruncate _chsize 
 #endif
 
+#ifdef PABLO
     int pablo_code = PABLO_elio_truncate;
     PABLO_start( pablo_code );
+#endif
 
     (void) SEEK(fd->fd, 0L, SEEK_SET);
     if (ftruncate(fd->fd, length))
@@ -252,7 +285,9 @@ int elio_truncate(Fd_t fd, off_t length)
     else {
 	return ELIO_OK;
     }
+#ifdef PABLO
     PABLO_end(pablo_code);
+#endif
 }
 
 
@@ -260,15 +295,19 @@ int elio_truncate(Fd_t fd, off_t length)
 \*/
 int elio_length(Fd_t fd, off_t *length)
 {
+#ifdef PABLO
     int pablo_code = PABLO_elio_length;
     PABLO_start( pablo_code );
+#endif
 
     if ((*length = SEEK(fd->fd, (off_t) 0, SEEK_END)) != -1)
 	return ELIO_OK;
     else
 	return SEEKFAIL;
 
+#ifdef PABLO
     PABLO_end(pablo_code);
+#endif
 }
 
 
@@ -280,8 +319,10 @@ Size_t elio_read(Fd_t fd, off_t  offset, void* buf, Size_t bytes)
 Size_t stat, bytes_to_read = bytes;
 int    attempt=0;
 
+#ifdef PABLO
   int pablo_code = PABLO_elio_read;
   PABLO_start( pablo_code );
+#endif
 
   if(offset != SEEK(fd->fd,offset,SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
   
@@ -302,7 +343,9 @@ int    attempt=0;
   
   /* Only get here if all went OK */
   
+#ifdef PABLO
   PABLO_end(pablo_code);
+#endif
   
   return bytes;
 }
@@ -316,8 +359,10 @@ int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * re
   Size_t stat;
   int    aio_i;
 
+#ifdef PABLO
   int pablo_code = PABLO_elio_aread;
   PABLO_start( pablo_code );
+#endif
 
   *req_id = ELIO_DONE;
 
@@ -332,8 +377,6 @@ int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * re
         SYNC_EMULATE(read);
 
     } else {
-
-       int    rc; 
 
        *req_id = (io_request_t) aio_i;
         if((stat=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
@@ -362,7 +405,10 @@ int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * re
 
     if(stat ==-1) ELIO_ERROR(AWRITFAIL, 0);
 
+#ifdef PABLO
     PABLO_end(pablo_code);
+#endif
+
     return((int)stat);
 }
 
@@ -374,8 +420,10 @@ int elio_wait(io_request_t *req_id)
   int  aio_i=0;
   int  rc=0;
 
+#ifdef PABLO
   int pablo_code = PABLO_elio_wait;
   PABLO_start( pablo_code );
+#endif
 
   if(*req_id != ELIO_DONE ) { 
 
@@ -425,7 +473,10 @@ int elio_wait(io_request_t *req_id)
       *req_id = ELIO_DONE;
    }
 
+#ifdef PABLO
    PABLO_end(pablo_code);
+#endif
+
    return ELIO_OK;
 }
 
@@ -438,8 +489,10 @@ int elio_probe(io_request_t *req_id, int* status)
   int    errval=-1;
   int    aio_i = 0;
      
+#ifdef PABLO
   int pablo_code = PABLO_elio_probe;
   PABLO_start( pablo_code );
+#endif
 
   if(*req_id == ELIO_DONE){
       *status = ELIO_DONE;
@@ -488,7 +541,11 @@ int elio_probe(io_request_t *req_id, int* status)
           return PROBFAIL;
       }
   }
+
+#ifdef PABLO
   PABLO_end(pablo_code);
+#endif
+
   return ELIO_OK;
 }
 
@@ -534,8 +591,10 @@ Fd_t  elio_open(const char* fname, int type, int mode)
   int ptype, rc;
   char dirname[ELIO_FILENAME_MAX];
 
+#ifdef PABLO
   int pablo_code = PABLO_elio_open;
   PABLO_start( pablo_code );
+#endif
 
   if(first_elio_init) elio_init();
 
@@ -618,7 +677,10 @@ Fd_t  elio_open(const char* fname, int type, int mode)
                    ELIO_ERROR_NULL(OPENFAIL, 0);
   }
   
+#ifdef PABLO
   PABLO_end(pablo_code);
+#endif
+
   return(fd);
 }
 
@@ -630,8 +692,10 @@ Fd_t  elio_gopen(const char* fname, int type)
 {
   Fd_t fd=NULL;
 
+#ifdef PABLO
   int pablo_code = PABLO_elio_gopen;
   PABLO_start( pablo_code );
+#endif
 
 # if defined(PARAGON)
   if(first_elio_init) elio_init();
@@ -678,7 +742,10 @@ Fd_t  elio_gopen(const char* fname, int type)
       ELIO_ERROR_NULL(UNSUPFAIL,0);
 #  endif
 
+#ifdef PABLO
    PABLO_end(pablo_code);
+#endif
+
    return(fd);
 }
 
@@ -687,13 +754,17 @@ Fd_t  elio_gopen(const char* fname, int type)
 \*/
 int elio_close(Fd_t fd)
 {
-    int pablo_code = PABLO_elio_close;
+#ifdef PABLO
+    pablo_code = PABLO_elio_close;
     PABLO_start( pablo_code );
+#endif
 
     if(CLOSE(fd->fd)==-1) ELIO_ERROR(CLOSFAIL, 0);
     free(fd);
 
+#ifdef PABLO
     PABLO_end(pablo_code);
+#endif
     return ELIO_OK;
 }
 
@@ -704,13 +775,17 @@ int elio_delete(const char* filename)
 {
     int rc;
 
+#ifdef PABLO
     int pablo_code = PABLO_elio_delete;
     PABLO_start( pablo_code );
+#endif
 
     rc = unlink(filename);
     if(rc ==-1) ELIO_ERROR(DELFAIL,0);
 
+#ifdef PABLO
     PABLO_end(pablo_code);
+#endif
     return(ELIO_OK);
 }
 
