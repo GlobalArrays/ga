@@ -126,7 +126,7 @@ void trace_genrec_(long *ga, long *ilo, long *ihi, long *jlo, long *jhi,
         if(!has_record) {
             galog[ganum++] = *ga;
             
-            sprintf(fname, "distri.%d", *ga);
+            sprintf(fname, "distrib.%d", *ga);
             fout = fopen(fname,"w");
             
             NGA_Inquire(*ga, &type, &ndim, dims);
