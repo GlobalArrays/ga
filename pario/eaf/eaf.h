@@ -10,8 +10,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.h,v $
-CVS: $Date: 1996-07-27 23:20:41 $
-CVS: $Revision: 1.3 $
+CVS: $Date: 1996-08-01 22:54:42 $
+CVS: $Revision: 1.4 $
 CVS: $State: Exp $
 ******************************************************************************/
 #if defined(__STDC__) || defined(__cplusplus)
@@ -39,7 +39,9 @@ extern void   EAF_CloseC     _ARGS_((Fd_t fd));
 #undef _ARGS_
 
 /******************************************************************/
-#define EAF_MAX_FILES 20
+#define  EAF_MAX_FILES ELIO_MAX_FILES
+#define  NULL_FD 987654
+
 static Fd_t eaf_fd[EAF_MAX_FILES];
 static char *eaf_fname[EAF_MAX_FILES];
 static int   first_eaf_init = 1;
@@ -69,6 +71,8 @@ extern void fflush();
 
 #define EAF_ABORT(msg, val) \
 { \
-  elio_terminate(); \
+  fprintf(stderr, "EAF Fatal -- Exiting with %d\n", val ); \
+  fprintf(stderr, "EAF Fatal -- Msg: %s\n", msg ); \
+  EAF_TerminateC(); \
   PRINT_AND_ABORT(msg, val); \
 }
