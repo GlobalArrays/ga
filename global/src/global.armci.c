@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.54 2001-06-01 21:01:19 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.55 2001-07-10 15:54:22 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -1382,6 +1382,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
                                                                                \
       ga_ownsM(g_handle, proc, _lo, _hi);                                      \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
+      if(_last==0) ld[0]=_hi[0]- _lo[0]+1;\
       for(_d=0; _d < _last; _d++)            {                                 \
           _offset += (subscript[_d]-_lo[_d]) * _factor;                        \
           ld[_d] = _hi[_d] - _lo[_d]+1;                                        \
