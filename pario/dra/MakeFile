@@ -24,5 +24,5 @@ LIBS = /MT $(LIB_DISTRIB)\pario.lib\
  $(LIB_DISTRIB)\ma.lib  $(LIB_DISTRIB)\linalg.lib\
  $(LIB_DISTRIB)\armci.lib $(MPI) wsock32.lib
 
-#test.exe: $(OBJDIR)\test.obj 
+#test.exe: $(OBJDIR)\test.obj  $(OBJDIR)\ffflush.obj
 #        $(FC) $(FOPT) /Fetest.exe $** $(LIBS)
