@@ -75,15 +75,15 @@ extern void ga_error();
 #elif defined(HPUX)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)64*1024)
-#elif defined(LINUX)
+#elif defined(LINUX_1)
 #  undef _SHMMAX
 #  define _SHMMAX ((unsigned long)8*1024) /* kernel default (4MB) increased */
-#elif defined(SHMAX)
+#elif defined(SHMMAX)
 #  undef _SHMMAX
-#  define _SHMMAX SHMMAX
+#  define _SHMMAX ((unsigned long)SHMMAX)
 #endif
 
-#define MAX_REGIONS 100
+#define MAX_REGIONS 120
 #define SHM_UNIT (1024)
 
 static  unsigned long MinShmem = _SHMMAX;  
