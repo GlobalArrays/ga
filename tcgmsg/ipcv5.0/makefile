@@ -121,8 +121,8 @@ all:	 $(LIBRARY_PATH) test.x
 testf:  testf.o $(LIBRARY_PATH)
 	$(FLD) $(LOPT) -o $@ $^ $(LIBS) $(FLIBS)
 
-test.x:	$(TESTOBJ) checkbyte.o $(LIBRARY_PATH)
-	$(CC) $(CFLAGS) $(LOPT) -o $@ $^ $(LIBS)
+test.x:	$(TESTOBJ)  $(LIBRARY_PATH)
+	$(CC) $(CFLAGS) checkbyte.c $(LOPT) -o $@ $^ $(LIBS)
 
 hello.x: hello.o $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) $(LOPT) -o $@ $^ $(LIBS)
