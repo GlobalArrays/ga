@@ -357,7 +357,7 @@ int    attempt=0;
 int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * req_id)
 {
   Size_t stat;
-  int    aio_i;
+  int    aio_i, rc;
 
 #ifdef PABLO
   int pablo_code = PABLO_elio_aread;
