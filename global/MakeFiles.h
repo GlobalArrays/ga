@@ -57,7 +57,7 @@ GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #
 #                 Utility Routines
 #
-GA_UTIL = ffflush.o ifill.o dfill.o ga_summarize.o
+GA_UTIL = ffflush.o ifill.o dfill.o ga_summarize.o DP.o
 
 ifeq ($(TARGET),CRAY-T3D)
    GA_UTIL += memcpy.t3d.o
