@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.20 2000-06-07 01:12:46 d3h325 Exp $ */
+/* $Id: test.c,v 1.21 2000-06-09 19:48:51 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -925,6 +925,49 @@ void test_fetch_add()
 }
 
 
+#define LOCKED -1
+void test_swap()
+{
+    int rc, bytes, i, val, times =0,whatever=-8999;
+    int *arr[MAXPROC];
+
+    /* shared variable is located on processor 0 */
+    bytes = me == 0 ? sizeof(int) : 0;
+
+    rc = ARMCI_Malloc((void**)arr,bytes);
+    assert(rc==0);
+    MP_BARRIER();
+
+    if(me == 0) *arr[0] = 0;  /* initialization */
+
+    MP_BARRIER();
+    for(i = 0; i< LOOP; i++){
+          val = LOCKED;
+          do{
+            rc = ARMCI_Rmw(ARMCI_SWAP, &val, arr[0], whatever, 0);
+            assert(rc==0);
+          }while (val == LOCKED); 
+          val++;
+          rc = ARMCI_Rmw(ARMCI_SWAP, &val, arr[0], whatever, 0);
+          assert(rc==0);
+    }
+
+
+    ARMCI_AllFence();
+    MP_BARRIER();
+
+    if(me == 0){
+       printf("The final value is %d, should be %d.\n\n",*arr[0],LOOP*nproc); 
+       fflush(stdout);
+       if( *arr[0] != LOOP*nproc) ARMCI_Error("failed ...",*arr[0]);
+    }
+
+    ARMCI_Free(arr[me]);
+}
+
+
+
+
 void test_memlock()
 {
         int dim,elems,bytes;
@@ -1079,6 +1122,16 @@ int main(int argc, char* argv[])
         test_fetch_add();
 
 
+        ARMCI_AllFence();
+        MP_BARRIER();
+
+        if(me==0){
+           printf("\nTesting atomic swap\n");
+           fflush(stdout);
+        }
+        test_swap();
+
+        MP_BARRIER();
         /*test_memlock();*/
 
         MP_BARRIER();
