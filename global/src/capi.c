@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.76 2004-04-07 16:14:55 baxter Exp $ */
+/* $Id: capi.c,v 1.77 2004-06-28 17:47:53 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -399,6 +399,13 @@ void GA_Set_pgroup(int g_a, int p_handle)
   ga_set_pgroup_(&aa, &pp);
 }
 
+int GA_Get_pgroup(int g_a)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    return (int)ga_get_pgroup_(&aa);
+}
+
 void GA_Set_ghosts(int g_a, int width[])
 {
     Integer aa, *ptr, ndim;
@@ -484,6 +491,15 @@ int GA_Allocate(int g_a)
   Integer aa;
   aa = (Integer)g_a;
   return (int)ga_allocate_(&aa);
+}
+
+int GA_Pgroup_create(int *list, int count)
+{
+    Integer acount = (Integer)count;
+    int i;
+    for (i=0; i<count; i++)
+       _ga_map_capi[i] = (Integer)list[i];
+    return (int)ga_pgroup_create_(_ga_map_capi,&acount);
 }
 
 void GA_Update_ghosts(int g_a)
@@ -1034,6 +1050,15 @@ void GA_Brdcst(void *buf, int lenbuf, int root)
   ga_msg_brdcst(type, buf, len, orig);
 }
    
+void GA_Pgroup_brdcst(int grp_id, void *buf, int lenbuf, int root)
+{
+    Integer type=GA_TYPE_BRD;
+    Integer len = (Integer)lenbuf;
+    Integer orig = (Integer)root;
+    Integer grp = (Integer)grp_id;
+    ga_pgroup_brdcst_(&grp, &type, buf, &len, &orig);
+}
+
 void GA_Dgop(double x[], int n, char *op)
 {
   Integer type=GA_TYPE_GOP;
@@ -1061,6 +1086,38 @@ void GA_Fgop(float x[], int n, char *op)
   Integer len = (Integer)n;
   ga_fgop(type, x, len, op);
 }       
+
+void GA_Pgroup_dgop(int grp_id, double x[], int n, char *op)
+{
+    Integer type=GA_TYPE_GOP;
+    Integer len = (Integer)n;
+    Integer grp = (Integer)grp_id;
+    ga_pgroup_dgop(grp, type, x, len, op);
+}
+ 
+void GA_Pgroup_lgop(int grp_id, long x[], int n, char *op)
+{
+    Integer type=GA_TYPE_GOP;
+    Integer len = (Integer)n;
+    Integer grp = (Integer)grp_id;
+    ga_pgroup_lgop(grp, type, x, len, op);
+}
+ 
+void GA_Pgroup_igop(int grp_id, Integer x[], int n, char *op)
+{
+    Integer type=GA_TYPE_GOP;
+    Integer len = (Integer)n;
+    Integer grp = (Integer)grp_id;
+    ga_pgroup_igop(grp, type, x, len, op);
+}
+ 
+void GA_Pgroup_fgop(int grp_id, float x[], int n, char *op)
+{
+    Integer type=GA_TYPE_GOP;
+    Integer len = (Integer)n;
+    Integer grp = (Integer)grp_id;
+    ga_pgroup_fgop(grp, type, x, len, op);
+}
 
 /*********** to do *******/
 /*

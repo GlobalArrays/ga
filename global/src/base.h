@@ -1,8 +1,9 @@
-/*$Id: base.h,v 1.27 2004-04-17 05:45:00 manoj Exp $ */
+/*$Id: base.h,v 1.28 2004-06-28 17:47:53 manoj Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
 extern Integer *GA_proclist;
+extern int GA_Default_Proc_Group;
 extern int* GA_Proc_list;
 extern int* GA_inv_Proc_list;
 extern int** GA_Update_Flags;
@@ -12,11 +13,16 @@ extern short int _ga_irreg_flag;
 #define FNAM        31              /* length of array names   */
 #define CACHE_SIZE  512             /* size of the cache inside GA DS*/
 
+typedef int ARMCI_Datatype;
+#include "armci.h"
 typedef struct {
        int mirrored;
        int map_nproc;
+       int actv;
+       int parent;
        int *map_proc_list;
        int *inv_map_proc_list;
+       ARMCI_Group group;
 } proc_list_t;
 
 typedef struct {
@@ -59,7 +65,7 @@ extern proc_list_t *_proc_list_main_data_structure;
  *on SV1.
 \*/
 extern global_array_t *GA;
-extern proc_list_t *P_LIST;
+extern proc_list_t *PGRP_LIST;
 
 
 #define ERR_STR_LEN 256               /* length of string for error reporting */
@@ -162,10 +168,10 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
                                                                               \
       ga_ownsM(g_handle, proc, _lo, _hi);                                     \
       _p_handle = GA[g_handle].p_handle;                                      \
-      if (_p_handle < 0) {                                                    \
+      if (_p_handle != 0) {                                                   \
         _iproc = proc;                                                        \
       } else {                                                                \
-        _iproc = P_LIST[_p_handle].inv_map_proc_list[proc];                   \
+        _iproc = PGRP_LIST[_p_handle].inv_map_proc_list[proc];                \
       }                                                                       \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
       for(_d=0; _d < _last; _d++)            {                                \

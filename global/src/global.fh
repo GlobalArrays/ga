@@ -7,6 +7,7 @@
       parameter (ga_max_dim = 7)
 !
       integer ga_nnodes, ga_nodeid, ga_read_inc
+      integer ga_pgroup_nnodes, ga_pgroup_nodeid
       integer ga_spd_invert, ga_solve, ga_llt_solve
       integer ga_inquire_memory, ga_memory_avail
       logical ga_create, ga_destroy, ga_locate, ga_create_irreg
@@ -27,6 +28,7 @@
       logical ga_has_ghosts
       integer ga_create_handle
       logical ga_allocate
+      integer ga_pgroup_create
       double precision ga_ddot, ga_ddot_patch
       double complex   ga_zdot, ga_zdot_patch
       double complex   nga_zdot_patch
@@ -48,6 +50,7 @@
 !
       external ga_create, ga_destroy, ga_ddot, ga_locate
       external ga_nnodes, ga_nodeid, ga_read_inc, ga_create_irreg
+      external ga_pgroup_nnodes, ga_pgroup_nodeid
       external ga_ddot_patch, ga_compare_distr, ga_duplicate
       external ga_inquire_memory, ga_uses_ma, ga_memory_limited
       external ga_memory_avail
@@ -66,6 +69,7 @@
       external nga_update_ghost_dir
       external ga_create_handle
       external ga_allocate
+      external ga_pgroup_create
       external ga_has_ghosts
       external ga_pgroup_get_default, ga_pgroup_get_mirror
       external ga_pgroup_get_world

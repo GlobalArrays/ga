@@ -32,7 +32,7 @@ extern "C" {
 #define C_LONG MT_C_LONGINT
 #define C_SCPL MT_C_SCPL
   
-extern void *GA_Getmem(int type, int nelem);
+extern void *GA_Getmem(int type, int nelem, int grp_id);
 extern void GA_Freemem(void* ptr);
 extern int GA_Assemble_duplicate(int g_a, char *name, void *ptr);
 extern void    FATR ga_set_memory_limit_ ARGS_((Integer *mem_limit));
@@ -42,6 +42,8 @@ extern void    FATR ga_ghost_barrier_ ARGS_((void));
 extern logical FATR ga_has_ghosts_ ARGS_((Integer *g_a));
 extern Integer FATR ga_nnodes_   ARGS_(( void));
 extern Integer FATR ga_nodeid_   ARGS_(( void));
+extern Integer FATR ga_pgroup_nnodes_   ARGS_((Integer *grp_id));
+extern Integer FATR ga_pgroup_nodeid_   ARGS_((Integer *grp_id));
 extern Integer FATR ga_inquire_memory_  ARGS_(( void));
 extern Integer FATR ga_memory_avail_ ARGS_(( void));
 extern Integer FATR ga_read_inc_ ARGS_((Integer*, Integer*, Integer*,
@@ -71,6 +73,7 @@ extern void  FATR ga_nbacc_   ARGS_((Integer*, Integer*, Integer*, Integer*,
 extern void FATR ga_access_ ARGS_((Integer*, Integer*, Integer*, Integer*,
       Integer*, Integer*, Integer* ));
 extern void FATR ga_brdcst_ ARGS_((Integer*, Void*, Integer*, Integer* ));
+extern void FATR ga_pgroup_brdcst_ ARGS_((Integer*, Integer*, Void*, Integer*, Integer* ));
 extern void FATR ga_gather_ ARGS_((Integer*, Void*, Integer*, Integer*,
       Integer* ));
 extern void FATR ga_distribution_ ARGS_((Integer*, Integer*, Integer*,
@@ -86,9 +89,13 @@ extern void FATR ga_nbget_   ARGS_((Integer*, Integer*, Integer*, Integer*,
       Integer*, Void*, Integer*, Integer* ));
 extern void FATR ga_nbwait_  ARGS_((Integer*));
 extern void ga_dgop ARGS_((Integer, DoublePrecision*, Integer, char* ));
+extern void ga_pgroup_dgop ARGS_((Integer, Integer, DoublePrecision*, Integer, char* ));
 extern void ga_fgop     ARGS_((Integer, float*, Integer, char* ));
+extern void ga_pgroup_fgop     ARGS_((Integer, Integer, float*, Integer, char* ));
 extern void ga_igop     ARGS_((Integer, Integer*, Integer, char* ));
+extern void ga_pgroup_igop     ARGS_((Integer, Integer, Integer*, Integer, char* ));
 extern void ga_lgop    ARGS_((Integer, long*,Integer, char* ));
+extern void ga_pgroup_lgop    ARGS_((Integer, Integer, long*,Integer, char* ));
 extern void FATR ga_initialize_ ARGS_(( void));
 extern void FATR ga_initialize_ltd_ ARGS_(( Integer* ));
 extern void FATR ga_inquire_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
@@ -287,6 +294,7 @@ extern void ga_set_irreg_flag(Integer *g_a, logical flag);
 extern void ga_set_ghost_corner_flag(Integer *g_a, logical flag);
 extern Integer nga_get_dimension(Integer *g_a);
 extern logical ga_allocate(Integer *g_a);
+extern Integer ga_pgroup_create(Integer list[], Integer *count);
 
 extern void ga_update_ghosts(Integer *g_a);
 extern void ga_update1_ghosts(Integer *g_a);

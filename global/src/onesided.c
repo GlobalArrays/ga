@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.53 2004-04-17 05:45:00 manoj Exp $ */
+/* $Id: onesided.c,v 1.54 2004-06-28 17:47:53 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -76,6 +76,36 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 /***************************************************************************/
 
 /*\ SYNCHRONIZE ALL THE PROCESSES
+  \*/
+void FATR ga_pgroup_sync_(Integer *grp_id)
+{
+#ifdef CHECK_MA
+    Integer status;
+#endif
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_PGROUP_SYNC,__FILE__,__LINE__);
+#endif
+ 
+    if (*grp_id > 0) {
+       ARMCI_AllFence();
+       ga_msg_pgroup_sync_(grp_id);
+       if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+       GA_fence_set=0;
+    } else {
+       ARMCI_AllFence();
+       ga_msg_sync_();
+       if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+       GA_fence_set=0;
+    }
+#ifdef CHECK_MA
+    status = MA_verify_allocator_stuff();
+#endif
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_PGROUP_SYNC,__FILE__,__LINE__);
+#endif
+}
+
+/*\ SYNCHRONIZE ALL THE PROCESSES
 \*/
 void FATR ga_sync_()
 {
@@ -85,10 +115,17 @@ Integer status;
 #ifdef GA_USE_VAMPIR
        vampir_begin(GA_SYNC,__FILE__,__LINE__);
 #endif
-
-       ARMCI_Barrier();
-       if(GA_fence_set)bzero(fence_array,(int)GAnproc);
-       GA_fence_set=0;
+       
+       if (GA_Default_Proc_Group == -1) {
+	  ARMCI_AllFence();
+	  ga_msg_sync_();
+	  if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+	  GA_fence_set=0;
+       } else {
+	  ARMCI_AllFence();
+	  ga_msg_sync_();
+	  if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+       }
 #ifdef CHECK_MA
        status = MA_verify_allocator_stuff();
 #endif
@@ -219,10 +256,10 @@ Integer _jw = GA[g_handle].width[1];                                           \
                                                                                \
       ga_ownsM(g_handle, (proc),_lo,_hi);                                \
       _p_handle = GA[g_handle].p_handle;                                       \
-      if (_p_handle < 0) {                                                     \
+      if (_p_handle != 0) {                                                    \
         proc_place =  proc;                                                    \
       } else {                                                                 \
-        proc_place = P_LIST[_p_handle].inv_map_proc_list[proc];                \
+        proc_place = PGRP_LIST[_p_handle].inv_map_proc_list[proc];                \
       }                                                                        \
       _ilo = _lo[0]; _ihi=_hi[0];                                              \
       _jlo = _lo[1]; _jhi=_hi[1];                                              \
@@ -261,10 +298,10 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
       _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])       \
                * _factor;                                                      \
       _p_handle = GA[g_handle].p_handle;                                       \
-      if (_p_handle < 0) {                                                     \
+      if (_p_handle != 0) {                                                    \
         _pinv = proc;                                                          \
       } else {                                                                 \
-        _pinv = P_LIST[_p_handle].inv_map_proc_list[proc];                     \
+        _pinv = PGRP_LIST[_p_handle].inv_map_proc_list[proc];                     \
       }                                                                        \
       *(ptr_loc) =  GA[g_handle].ptr[_pinv]+_offset*GA[g_handle].elemsize;     \
 }
@@ -325,10 +362,23 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #ifdef GA_USE_VAMPIR
       vampir_begin(NGA_NBPUT,__FILE__,__LINE__);
 #endif
-      GA_PUSH_NAME("nga_put");
+      GA_PUSH_NAME("nga_put_common");
 
       if(!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np ))
           ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+
+      /* If default proc group is not world group, translate indices in
+         GA_proclist to world group indices */
+      if (GA_Default_Proc_Group != -1) {
+	 Integer tmp_list[MAX_NPROC];
+	 for (idx=0; idx<np; idx++) {
+	    tmp_list[idx] = GA_proclist[idx];
+	 }
+	 for (idx=0; idx<np; idx++) {
+          GA_proclist[idx]
+            = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[tmp_list[idx]];
+	    }
+      }
 
       size = GA[handle].elemsize;
       ndim = GA[handle].ndim;
@@ -356,7 +406,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 	  
 	  p = (Integer)ProcListPerm[idx];
 	  proc = (int)GA_proclist[p];
-	  if(p_handle>=0)  proc = (int)P_LIST[p_handle].map_proc_list[proc];
+	  if(p_handle>=0)  proc = (int)PGRP_LIST[p_handle].map_proc_list[proc];
 #ifdef PERMUTE_PIDS
 	  if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
@@ -370,7 +420,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 	    gam_GetRangeFromMap(p, ndim, &plo, &phi);
 	    proc = (int)GA_proclist[p];
 	    if (p_handle >= 0) {
-	      proc = (int)P_LIST[p_handle].map_proc_list[proc];
+	      proc = (int)PGRP_LIST[p_handle].map_proc_list[proc];
 	    }
 	    
 	    gam_Location(proc,handle, plo, &prem, ldrem); 
@@ -540,7 +590,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       vampir_begin(NGA_GET,__FILE__,__LINE__);
 #endif
 
-      GA_PUSH_NAME("nga_get");
+      GA_PUSH_NAME("nga_get_common");
 
       /* Locate the processors containing some portion of the patch
          specified by lo and hi and return the results in _ga_map,
@@ -552,6 +602,19 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       */
       if(!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np ))
           ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+
+      /* If default proc group is not world group, translate indices in
+         GA_proclist to world group indices */
+      if (GA_Default_Proc_Group != -1) {
+	 Integer tmp_list[MAX_NPROC];
+	 for (idx=0; idx<np; idx++) {
+	    tmp_list[idx] = GA_proclist[idx];
+	 }
+	 for (idx=0; idx<np; idx++) {
+          GA_proclist[idx]
+            = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[tmp_list[idx]];
+	    }
+      }
 
       size = GA[handle].elemsize;
       ndim = GA[handle].ndim;
@@ -581,7 +644,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 	  
 	  p = (Integer)ProcListPerm[idx];
 	  proc = (int)GA_proclist[p];
-	  if(p_handle>=0)  proc = (int)P_LIST[p_handle].map_proc_list[proc];
+	  if(p_handle>=0)  proc = (int)PGRP_LIST[p_handle].map_proc_list[proc];
 #ifdef PERMUTE_PIDS
 	  if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
@@ -599,7 +662,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 	    gam_GetRangeFromMap(p, ndim, &plo, &phi);
 	    proc = (int)GA_proclist[p];
 	    if (p_handle >= 0) {
-	      proc = (int)P_LIST[p_handle].map_proc_list[proc];
+	      proc = (int)PGRP_LIST[p_handle].map_proc_list[proc];
 	    }
 	    
 	    /* get pointer prem to location indexed by plo. Also get
@@ -756,10 +819,23 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #ifdef GA_USE_VAMPIR
       vampir_begin(NGA_ACC,__FILE__,__LINE__);
 #endif
-      GA_PUSH_NAME("nga_acc");
+      GA_PUSH_NAME("nga_acc_common");
 
       if(!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np ))
           ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+
+      /* If default proc group is not world group, translate indices in
+         GA_proclist to world group indices */
+      if (GA_Default_Proc_Group != -1) {
+	 Integer tmp_list[MAX_NPROC];
+	 for (idx=0; idx<np; idx++) {
+	    tmp_list[idx] = GA_proclist[idx];
+	 }
+	 for (idx=0; idx<np; idx++) {
+          GA_proclist[idx]
+            = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[tmp_list[idx]];
+	    }
+      }
 
       size = GA[handle].elemsize;
       type = GA[handle].type;
@@ -796,7 +872,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 
 	  p = (Integer)ProcListPerm[idx];
 	  proc = (int)GA_proclist[p];
-	  if(p_handle>=0)  proc = (int)P_LIST[p_handle].map_proc_list[proc];
+	  if(p_handle>=0)  proc = (int)PGRP_LIST[p_handle].map_proc_list[proc];
 #ifdef PERMUTE_PIDS
 	  if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
@@ -810,7 +886,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 	    gam_GetRangeFromMap(p, ndim, &plo, &phi);
 	    proc = (int)GA_proclist[p];
 	    if (p_handle >= 0) {
-	      proc = (int)P_LIST[p_handle].map_proc_list[proc];
+	      proc = (int)PGRP_LIST[p_handle].map_proc_list[proc];
 	    }
 	    
 	    gam_Location(proc,handle, plo, &prem, ldrem);
@@ -967,9 +1043,13 @@ Integer  ow,i,p_handle;
 
    GA_PUSH_NAME("nga_access_ptr");
    if (!nga_locate_(g_a,lo,&ow)) ga_error("locate top failed",0);
+   if (GA_Default_Proc_Group != -1)
+      ow = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[ow];
    if ((GA_Cluster_proc_nodeid(ow) != GA_Cluster_nodeid()) && (ow != GAme)) 
       ga_error("cannot access top of the patch",ow);
    if (!nga_locate_(g_a,hi, &ow)) ga_error("locate bottom failed",0);
+   if (GA_Default_Proc_Group != -1)
+      ow = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[ow];
    if ((GA_Cluster_proc_nodeid(ow) != GA_Cluster_nodeid()) && (ow != GAme))
       ga_error("cannot access bottom of the patch",ow);
 
@@ -980,7 +1060,7 @@ Integer  ow,i,p_handle;
 
    p_handle = GA[handle].p_handle;
    if (p_handle >= 0) {
-     ow = P_LIST[p_handle].map_proc_list[ow];
+     ow = PGRP_LIST[p_handle].map_proc_list[ow];
    }
    gam_Location(ow,handle, lo, &lptr, ld);
    *(char**)ptr = lptr; 
@@ -1003,9 +1083,13 @@ unsigned long    lref=0, lptr;
 #endif
    GA_PUSH_NAME("nga_access");
    if(!nga_locate_(g_a,lo,&ow))ga_error("locate top failed",0);
+   if (GA_Default_Proc_Group != -1)
+      ow = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[ow];
    if ((GA_Cluster_proc_nodeid(ow) != GA_Cluster_nodeid()) && (ow != GAme)) 
       ga_error("cannot access top of the patch",ow);
    if(!nga_locate_(g_a,hi, &ow))ga_error("locate bottom failed",0);
+   if (GA_Default_Proc_Group != -1)
+      ow = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[ow];
    if ((GA_Cluster_proc_nodeid(ow) != GA_Cluster_nodeid()) && (ow != GAme)) 
       ga_error("cannot access bottom of the patch",ow);
 
@@ -1014,7 +1098,9 @@ unsigned long    lref=0, lptr;
            ga_RegionError(GA[handle].ndim, lo, hi, *g_a);
        }
 
-
+   
+   if (GA_Default_Proc_Group != -1)
+      ow = PGRP_LIST[GA_Default_Proc_Group].map_proc_list[ow];
    gam_Location(ow,handle, lo, &ptr, ld);
 
    /*
@@ -1147,7 +1233,7 @@ int rc=0;
   if (p_handle < 0) {
     iproc = proc;
   } else {
-    iproc = P_LIST[p_handle].map_proc_list[proc];
+    iproc = PGRP_LIST[p_handle].map_proc_list[proc];
   }
   gaShmemLocation(iproc, g_a, ilo, jlo, &ptr_ref, &ldp);
 
@@ -1282,7 +1368,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     if (p_handle < 0) {
       nproc = GAnproc;
     } else {
-      nproc = P_LIST[p_handle].map_nproc;
+      nproc = PGRP_LIST[p_handle].map_nproc;
     }
     
     /* allocate temp memory */
@@ -1306,10 +1392,17 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
             sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
             ga_error(err_string,*g_a);
         }
-        if (p_handle < 0) {
-          iproc = owner[k];
-        } else {
-          iproc = P_LIST[p_handle].map_proc_list[owner[k]];
+        if (p_handle != 0) {
+	   iproc = owner[k];
+	   if (p_handle != GA_Default_Proc_Group) {
+	      if (GA_Default_Proc_Group > 0) {
+		 iproc = PGRP_LIST[GA_Default_Proc_Group]
+		   .inv_map_proc_list[iproc];
+	      }
+	      iproc = PGRP_LIST[p_handle].map_proc_list[iproc];
+	   }
+	} else {
+          iproc = PGRP_LIST[p_handle].map_proc_list[owner[k]];
         }
         nelem[iproc]++;
     }
@@ -1338,10 +1431,17 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     ldp = jhi + naproc;
 
     for(kk=0; kk<naproc; kk++) {
-        if (p_handle < 0) {
+        if (p_handle != 0) {
           iproc = aproc[kk];
+	  if (p_handle != GA_Default_Proc_Group) {
+	     iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
+	     if (GA_Default_Proc_Group > 0) {
+              iproc = PGRP_LIST[GA_Default_Proc_Group]
+                .map_proc_list[iproc];
+	     }
+          }
         } else {
-          iproc = P_LIST[p_handle].inv_map_proc_list[aproc[kk]];
+          iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[kk]];
         }
         ga_distribution_(g_a, &iproc,
                          &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
@@ -1356,8 +1456,10 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     GAbytes.scatot += (double)item_size**nv ;
     if (p_handle < 0) {
       iproc = owner[GAme];
+    } else if (p_handle == 0) {
+       iproc = PGRP_LIST[p_handle].map_proc_list[owner[GAme]];
     } else {
-      iproc = P_LIST[p_handle].map_proc_list[owner[GAme]];
+       iproc = owner[PGRP_LIST[p_handle].map_proc_list[GAme]];
     }
     GAbytes.scaloc += (double)item_size* nelem[iproc];
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
@@ -1368,10 +1470,17 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     
     for(k=0; k<(*nv); k++){
         Integer this_count;
-        if (p_handle < 0) {
+        if (p_handle != 0) {
           proc = owner[k];
+	  if (p_handle != GA_Default_Proc_Group) {
+	     if (GA_Default_Proc_Group > 0) {
+              proc = PGRP_LIST[GA_Default_Proc_Group]
+                .inv_map_proc_list[proc];
+	     }
+	     proc = PGRP_LIST[p_handle].map_proc_list[proc];
+          }
         } else {
-          proc = P_LIST[p_handle].map_proc_list[owner[k]];
+	   proc = PGRP_LIST[p_handle].map_proc_list[owner[k]];
         }
         this_count = count[proc]; 
         count[proc]++;
@@ -1400,7 +1509,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         if (p_handle < 0) {
           iproc = aproc[k];
         } else {
-          iproc = P_LIST[p_handle].inv_map_proc_list[aproc[k]];
+          iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[k]];
         }
         
         rc = ARMCI_PutV(&desc, 1, (int)iproc);
@@ -1552,7 +1661,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     if (p_handle < 0) {
       nproc = GAnproc;
     } else {
-      nproc = P_LIST[p_handle].map_nproc;
+      nproc = PGRP_LIST[p_handle].map_nproc;
     }
 
     /* allocate temp memory */
@@ -1576,10 +1685,16 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             gai_print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
             ga_error("failed -element:",k);
         }
-        if (p_handle < 0) {
+        if (p_handle != 0) {
           iproc = proc[k];
+	  if (p_handle != GA_Default_Proc_Group) {
+	     if (GA_Default_Proc_Group > 0) {
+		iproc = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[iproc];
+		  }
+	     iproc = PGRP_LIST[p_handle].map_proc_list[iproc];
+          }
         } else {
-          iproc = P_LIST[p_handle].map_proc_list[proc[k]];
+	   iproc = PGRP_LIST[p_handle].map_proc_list[proc[k]];
         }
         nelem[iproc]++;
     }
@@ -1629,14 +1744,26 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */  
         for(k=0; k<(*nv); k++){
-            if (p_handle < 0) {
+            if (p_handle != 0) {
               iproc = proc[k];
+              if (p_handle != GA_Default_Proc_Group) {
+                if (GA_Default_Proc_Group > 0) {
+                  iproc = PGRP_LIST[GA_Default_Proc_Group]
+                        .inv_map_proc_list[iproc];
+                }
+                iproc = PGRP_LIST[p_handle].map_proc_list[iproc];
+              }
             } else {
-              iproc = P_LIST[p_handle].map_proc_list[proc[k]];
+              iproc = PGRP_LIST[p_handle].map_proc_list[proc[k]];
             }
             ptr_dst[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            gam_Loc_ptr(iproc, handle,  (subscript+k*ndim),
-                        ptr_src[map[iproc]]+count[iproc]);
+            if (p_handle != 0) {
+              gam_Loc_ptr(iproc, handle,  (subscript+k*ndim),
+                          ptr_src[map[iproc]]+count[iproc]);
+            } else {
+              gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
+                          ptr_src[map[iproc]]+count[iproc]);
+            }
             count[iproc]++;
         }
         
@@ -1652,7 +1779,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             if (p_handle < 0) {
               iproc = aproc[k];
             } else {
-              iproc = P_LIST[p_handle].inv_map_proc_list[aproc[k]];
+              iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[k]];
             }
             rc=ARMCI_GetV(&desc, 1, (int)iproc);
             if(rc) ga_error("gather failed in armci",rc);
@@ -1667,14 +1794,26 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */
         for(k=0; k<(*nv); k++){
-            if (p_handle < 0) {
+            if (p_handle != 0) {
               iproc = proc[k];
+              if (p_handle != GA_Default_Proc_Group) {
+                if (GA_Default_Proc_Group > 0) {
+                  iproc = PGRP_LIST[GA_Default_Proc_Group]
+                        .inv_map_proc_list[iproc];
+                }
+                iproc = PGRP_LIST[p_handle].map_proc_list[iproc];
+              }
             } else {
-              iproc = P_LIST[p_handle].map_proc_list[proc[k]];
+              iproc = PGRP_LIST[p_handle].map_proc_list[proc[k]];
             }
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            gam_Loc_ptr(iproc, handle,  (subscript+k*ndim),
-                        ptr_dst[map[iproc]]+count[iproc]);
+            if (p_handle != 0) {
+              gam_Loc_ptr(iproc, handle,  (subscript+k*ndim),
+                          ptr_dst[map[iproc]]+count[iproc]);
+            } else {
+              gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
+                          ptr_dst[map[iproc]]+count[iproc]);
+            }
             count[iproc]++;
         }
 
@@ -1691,7 +1830,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             if (p_handle < 0) {
               iproc = aproc[k];
             } else {
-              iproc = P_LIST[p_handle].inv_map_proc_list[aproc[k]];
+              iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[k]];
             }
             if(GA_fence_set) fence_array[iproc]=1;
 
@@ -1708,14 +1847,26 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */
         for(k=0; k<(*nv); k++){
-            if (p_handle < 0) {
+            if (p_handle != 0) {
               iproc = proc[k];
+              if (p_handle != GA_Default_Proc_Group) {
+                if (GA_Default_Proc_Group > 0) {
+                  iproc = PGRP_LIST[GA_Default_Proc_Group]
+                        .inv_map_proc_list[iproc];
+                }
+                iproc = PGRP_LIST[p_handle].map_proc_list[iproc];
+              }
             } else {
-              iproc = P_LIST[p_handle].map_proc_list[proc[k]];
+              iproc = PGRP_LIST[p_handle].map_proc_list[proc[k]];
             }
             ptr_src[map[iproc]][count[iproc]] = ((char*)v) + k * item_size;
-            gam_Loc_ptr(iproc, handle,  (subscript+k*ndim),
-                        ptr_dst[map[iproc]]+count[iproc]);
+            if (p_handle != 0) {
+              gam_Loc_ptr(iproc, handle,  (subscript+k*ndim),
+                          ptr_dst[map[iproc]]+count[iproc]);
+            } else {
+              gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
+                          ptr_dst[map[iproc]]+count[iproc]);
+            }
             count[iproc]++;
         }
 
@@ -1731,7 +1882,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             if (p_handle < 0) {
               iproc = aproc[k];
             } else {
-              iproc = P_LIST[p_handle].inv_map_proc_list[aproc[k]];
+              iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[k]];
             }
             if(GA_fence_set) fence_array[iproc]=1;
             
@@ -1886,7 +2037,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     if (p_handle < 0) {
       nproc = GAnproc;
     } else {
-      nproc = P_LIST[p_handle].map_nproc;
+      nproc = PGRP_LIST[p_handle].map_nproc;
     }
 
     /* allocate temp memory */
@@ -1910,10 +2061,17 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
             sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
             ga_error(err_string, *g_a);
         }
-        if (p_handle < 0) {
+        if (p_handle != 0) {
           iproc = owner[k];
+          if (p_handle != GA_Default_Proc_Group) {
+            if (GA_Default_Proc_Group > 0) {
+              iproc = PGRP_LIST[GA_Default_Proc_Group]
+                    .inv_map_proc_list[iproc];
+            }
+            iproc = PGRP_LIST[p_handle].map_proc_list[iproc];
+          }
         } else {
-          iproc = P_LIST[p_handle].map_proc_list[owner[k]];
+          iproc = PGRP_LIST[p_handle].map_proc_list[owner[k]];
         }
         nelem[iproc]++;
     }
@@ -1941,10 +2099,17 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     ldp = jhi + naproc;
 
     for(kk=0; kk<naproc; kk++) {
-        if (p_handle < 0) {
+        if (p_handle != 0) {
           iproc = aproc[kk];
+          if (p_handle != GA_Default_Proc_Group) {
+            iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
+            if (GA_Default_Proc_Group > 0) {
+              iproc = PGRP_LIST[GA_Default_Proc_Group]
+                    .map_proc_list[iproc];
+            }
+          }
         } else {
-          iproc = P_LIST[p_handle].inv_map_proc_list[aproc[kk]];
+          iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[kk]];
         }
         ga_distribution_(g_a, &iproc,
                          &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
@@ -1952,14 +2117,21 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         /* get address of the first element owned by proc */
         gaShmemLocation(aproc[kk], *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),
                         &(ldp[kk]));
+
+        /*gaShmemLocation(iproc, *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),
+                        &(ldp[kk])); */
     }
     
     item_size = GA[GA_OFFSET + *g_a].elemsize;
     GAbytes.gattot += (double)item_size**nv;
+    /*This stuff is probably completely wrong. Doesn't affect performance,
+     * just statistics. */
     if (p_handle < 0) {
-      iproc = owner[k];
+      iproc = owner[GAme];
+    } else if (p_handle == 0) {
+      iproc = PGRP_LIST[p_handle].map_proc_list[owner[GAme]];
     } else {
-      iproc = P_LIST[p_handle].map_proc_list[owner[k]];
+      iproc = owner[PGRP_LIST[p_handle].map_proc_list[GAme]];
     }
     GAbytes.gatloc += (double)item_size * nelem[iproc];
 
@@ -1971,10 +2143,17 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     
     for(k=0; k<(*nv); k++){
         Integer this_count;
-        if (p_handle < 0) {
+        if (p_handle != 0) {
           proc = owner[k];
+          if (p_handle != GA_Default_Proc_Group) {
+            if (GA_Default_Proc_Group > 0) {
+              proc = PGRP_LIST[GA_Default_Proc_Group]
+                    .inv_map_proc_list[proc];
+            }
+            proc = PGRP_LIST[p_handle].map_proc_list[proc];
+          }
         } else {
-          proc = P_LIST[p_handle].map_proc_list[owner[k]];
+          proc = PGRP_LIST[p_handle].map_proc_list[owner[k]];
         }
         this_count = count[proc]; 
         count[proc]++;
@@ -1984,8 +2163,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
            j[k] < jlo[proc] || j[k] > jhi[proc]){
           sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)><[%ld:%ld,%ld:%ld]",
-                 (int)proc,(long)i[k],(long)j[k],(long)ilo[proc],
-                 (long)ihi[proc],(long)jlo[proc], (long)jhi[proc]);
+                 (int)proc,i[k],j[k],ilo[proc],ihi[proc],jlo[proc], jhi[proc]);
             ga_error(err_string, *g_a);
         }
         ptr_src[proc][this_count] = ptr_ref[proc] + item_size *
@@ -2002,7 +2180,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         if (p_handle < 0) {
           iproc = aproc[k];
         } else {
-          iproc = P_LIST[p_handle].inv_map_proc_list[aproc[k]]; 
+          iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[k]]; 
         }
         rc=ARMCI_GetV(&desc, 1, (int)iproc);
         if(rc) ga_error("gather failed in armci",rc);
@@ -2023,7 +2201,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
 \*/
 Integer FATR nga_read_inc_(Integer* g_a, Integer* subscript, Integer* inc)
 {
-Integer *ptr, ldp[MAXDIM], proc, handle=GA_OFFSET+*g_a;
+Integer *ptr, ldp[MAXDIM], proc, handle=GA_OFFSET+*g_a, p_handle;
 int optype,ivalue;
 long lvalue;
 void *pval;
@@ -2032,18 +2210,28 @@ void *pval;
     vampir_begin(NGA_READ_INC,__FILE__,__LINE__);
 #endif
     ga_check_handleM(g_a, "nga_read_inc");
-    GA_PUSH_NAME("ga_read_inc");
+    GA_PUSH_NAME("nga_read_inc");
 
     if(GA[handle].type!=C_INT && GA[handle].type!=C_LONG) ga_error("type must be integer",GA[handle].type);
 
     GAstat.numrdi++;
     GAbytes.rditot += (double)sizeof(Integer);
+    p_handle = GA[handle].p_handle;
 
     /* find out who owns it */
     nga_locate_(g_a, subscript, &proc);
-
+    if (p_handle != GA_Default_Proc_Group) {
+      if (GA_Default_Proc_Group > 0) {
+        proc = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[proc];
+      }
+      proc = PGRP_LIST[p_handle].map_proc_list[proc];
+    }
     /* get an address of the g_a(subscript) element */
     gam_Location(proc, handle,  subscript, (char**)&ptr, ldp);
+    if (p_handle != -1) {   
+       proc=PGRP_LIST[GA[handle].p_handle].inv_map_proc_list[proc];
+       /*printf("\n%d:proc=%d",GAme,proc);fflush(stdout);*/
+    }
 
     if(GA[handle].type==C_INT){
        optype = ARMCI_FETCH_AND_ADD;
@@ -2241,6 +2429,19 @@ void FATR nga_strided_put_(Integer *g_a,
   if (!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np))
       ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
 
+   /* If default proc group is not world group, translate indices in
+      GA_proclist to world group indices */
+   if (GA_Default_Proc_Group != -1) {
+     Integer tmp_list[MAX_NPROC];
+     for (idx=0; idx<np; idx++) {
+       tmp_list[idx] = GA_proclist[idx];
+     }
+     for (idx=0; idx<np; idx++) {
+       GA_proclist[idx]
+         = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[tmp_list[i]];
+     }
+   }
+
   /* Loop over all processors containing a portion of patch */
   gaPermuteProcList(np);
   for (idx=0; idx<np; idx++) {
@@ -2340,6 +2541,19 @@ void FATR nga_strided_get_(Integer *g_a,
      that contain some portion of the patch. */
   if (!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np))
       ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+
+  /* If default proc group is not world group, translate indices in
+     GA_proclist to world group indices */
+  if (GA_Default_Proc_Group != -1) {
+    Integer tmp_list[MAX_NPROC];
+    for (idx=0; idx<np; idx++) {
+      tmp_list[idx] = GA_proclist[idx];
+    }
+    for (idx=0; idx<np; idx++) {
+      GA_proclist[idx]
+        = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[tmp_list[i]];
+    }
+  }
 
   /* Loop over all processors containing a portion of patch */
   gaPermuteProcList(np);
@@ -2445,6 +2659,19 @@ void FATR nga_strided_acc_(Integer *g_a,
      that contain some portion of the patch. */
   if (!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np))
       ga_RegionError(ga_ndim_(g_a), lo, hi, *g_a);
+
+  /* If default proc group is not world group, translate indices in
+     GA_proclist to world group indices */
+  if (GA_Default_Proc_Group != -1) {
+    Integer tmp_list[MAX_NPROC];
+    for (idx=0; idx<np; idx++) {
+      tmp_list[idx] = GA_proclist[idx];
+    }
+    for (idx=0; idx<np; idx++) {
+      GA_proclist[idx]
+        = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[tmp_list[i]];
+    }
+  }
 
   if (type == C_DBL) optype = ARMCI_ACC_DBL;
   else if (type == C_FLOAT) optype = ARMCI_ACC_FLT;

@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.46 2003-10-16 19:22:23 d3g681 Exp $*/
+/*$Id: global.util.c,v 1.47 2004-06-28 17:47:53 manoj Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -60,15 +60,17 @@ void ga_file_print_patch(file, g_a, ilo, ihi, jlo, jhi, pretty)
 #define BUFSIZE 6
 #define FLEN 80 
 Integer i, j,jj, dim1, dim2, type, jmax, ld=1, bufsize ;
+Integer a_grp;
 int ibuf[BUFSIZE];
 DoublePrecision  dbuf[BUFSIZE];
 float fbuf[BUFSIZE]; 
 long lbuf[BUFSIZE]; 
 char *name;
 
-  ga_sync_();
+  a_grp = ga_get_pgroup_(g_a);
+  ga_pgroup_sync_(&a_grp);
   ga_check_handle(g_a, "ga_print");
-  if(ga_nodeid_() == 0){
+  if(ga_pgroup_nodeid_(&a_grp) == 0){
 
      ga_inquire_internal_(g_a,  &type, &dim1, &dim2);
 /*     name[FLEN-1]='\0';*/
@@ -195,7 +197,7 @@ char *name;
     }
   }
        
-  ga_sync_();
+  ga_pgroup_sync_(&a_grp);
 }
 
 /*\ PRINT g_a[ilo:ihi, jlo:jhi]

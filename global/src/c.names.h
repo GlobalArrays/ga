@@ -9,6 +9,7 @@
 #define  ga_add_                   GA_ADD
 #define  ga_add_patch_             GA_ADD_PATCH
 #define  ga_brdcst_                GA_BRDCST
+#define  ga_pgroup_brdcst_         GA_PGROUP_BRDCST
 #define  ga_check_handle_          GA_CHECK_HANDLE
 #define  ga_compare_distr_         GA_COMPARE_DISTR
 #define  ga_copy_                  GA_COPY
@@ -22,6 +23,7 @@
 #define  ga_destroy_               GA_DESTROY
 #define  ga_destroy_mutexes_       GA_DESTROY_MUTEXES
 #define  ga_dgop_                  GA_DGOP
+#define  ga_pgroup_dgop_           GA_PGROUP_DGOP
 #define  ga_diag_                  GA_DIAG
 #define  ga_diag_reuse_            GA_DIAG_REUSE
 #define  ga_diag_seq_              GA_DIAG_SEQ
@@ -42,6 +44,7 @@
 #define  ga_pgroup_get_mirror_     GA_PGROUP_GET_MIRROR
 #define  ga_idot_                  GA_IDOT
 #define  ga_igop_                  GA_IGOP
+#define  ga_pgroup_igop_           GA_PGROUP_IGOP
 #define  ga_init_fence_            GA_INIT_FENCE
 #define  ga_initialize_            GA_INITIALIZE
 #define  ga_initialize_ltd_        GA_INITIALIZE_LTD
@@ -69,6 +72,8 @@
 #define  ga_net_nodeid_            GA_NET_NODEID
 #define  ga_nnodes_                GA_NNODES
 #define  ga_nodeid_                GA_NODEID
+#define  ga_pgroup_nnodes_         GA_PGROUP_NNODES
+#define  ga_pgroup_nodeid_         GA_PGROUP_NODEID
 #define  ga_pack_                  GA_PACK
 #define  ga_patch_enum_            GA_PATCH_ENUM
 #define  ga_print_                 GA_PRINT
@@ -90,6 +95,7 @@
 #define  ga_scatter_acc_           GA_SCATTER_ACC
 #define  ga_sdot_                  GA_SDOT
 #define  ga_set_memory_limit_      GA_SET_MEMORY_LIMIT
+#define  ga_pgroup_sgop_           GA_PGROUP_SGOP
 #define  ga_sgop_                  GA_SGOP
 #define  ga_solve_                 GA_SOLVE
 #define  ga_sort_scat2_            GA_SORT_SCAT2
@@ -149,11 +155,13 @@
 #define  ga_set_array_name_        GA_SET_ARRAY_NAME
 #define  ga_set_ghosts_            GA_SET_GHOSTS
 #define  ga_set_pgroup_            GA_SET_PGROUP
+#define  ga_get_pgroup_            GA_GET_PGROUP
 #define  ga_set_irreg_distr_       GA_SET_IRREG_DISTR
 #define  ga_set_irreg_flag_        GA_SET_IRREG_FLAG
 #define  ga_set_ghost_corner_flag_ GA_SET_GHOST_CORNER_FLAG
 #define  ga_get_dimension_         GA_GET_DIMENSION
 #define  ga_allocate_              GA_ALLOCATE
+#define  ga_pgroup_create_         GA_PGROUP_CREATE
 #define  nga_ddot_patch_           NGA_DDOT_PATCH
 #define  nga_distribution_         NGA_DISTRIBUTION
 #define  nga_fill_patch_           NGA_FILL_PATCH
@@ -231,6 +239,7 @@
 #define  ga_add_                   ga_add__                 
 #define  ga_add_patch_             ga_add_patch__           
 #define  ga_brdcst_                ga_brdcst__              
+#define  ga_pgroup_brdcst_         ga_pgroup_brdcst__
 #define  ga_check_handle_          ga_check_handle__        
 #define  ga_compare_distr_         ga_compare_distr__       
 #define  ga_copy_                  ga_copy__                
@@ -244,6 +253,7 @@
 #define  ga_destroy_               ga_destroy__             
 #define  ga_destroy_mutexes_       ga_destroy_mutexes__     
 #define  ga_dgop_                  ga_dgop__                
+#define  ga_pgroup_dgop_           ga_pgroup_dgop__ 
 #define  ga_diag_                  ga_diag__                
 #define  ga_diag_reuse_            ga_diag_reuse__          
 #define  ga_diag_seq_              ga_diag_seq__
@@ -264,6 +274,7 @@
 #define  ga_pgroup_get_mirror_     ga_pgroup_get_mirror__                
 #define  ga_idot_                  ga_idot__                
 #define  ga_igop_                  ga_igop__                
+#define  ga_pgroup_igop_           ga_pgroup_igop__ 
 #define  ga_init_fence_            ga_init_fence__          
 #define  ga_initialize_            ga_initialize__          
 #define  ga_initialize_ltd_        ga_initialize_ltd__      
@@ -291,6 +302,8 @@
 #define  ga_net_nodeid_            ga_net_nodeid__          
 #define  ga_nnodes_                ga_nnodes__              
 #define  ga_nodeid_                ga_nodeid__              
+#define  ga_pgroup_nnodes_         ga_pgroup_nnodes__
+#define  ga_pgroup_nodeid_         ga_pgroup_nodeid__
 #define  ga_pack_                  ga_pack__
 #define  ga_patch_enum_            ga_patch_enum__          
 #define  ga_print_                 ga_print__               
@@ -314,6 +327,7 @@
 #define  ga_sdot_                  ga_sdot__                
 #define  ga_set_memory_limit_      ga_set_memory_limit__    
 #define  ga_sgop_                  ga_sgop__                
+#define  ga_pgroup_sgop_           ga_pgroup_sgop__ 
 #define  ga_solve_                 ga_solve__
 #define  ga_sort_scat2_            ga_sort_scat2__          
 #define  ga_spd_invert_            ga_spd_invert__
@@ -371,12 +385,14 @@
 #define  ga_set_chunk_             ga_set_chunk__
 #define  ga_set_array_name_        ga_set_array_name__
 #define  ga_set_ghosts_            ga_set_ghosts__
-#define  ga_set_pgroup_       ga_set_pgroup__
+#define  ga_set_pgroup_            ga_set_pgroup__
+#define  ga_get_pgroup_            ga_get_pgroup__
 #define  ga_set_irreg_distr_       ga_set_irreg_distr__
 #define  ga_set_irreg_flag_        ga_set_irreg_flag__
 #define  ga_set_ghost_corner_flag_ ga_set_ghost_corner_flag__
 #define  ga_get_dimension_         ga_get_dimension__
 #define  ga_allocate_              ga_allocate__
+#define  ga_pgroup_create_         ga_pgroup_create__ 
 #define  nga_ddot_patch_           nga_ddot_patch__         
 #define  nga_distribution_         nga_distribution__       
 #define  nga_fill_patch_           nga_fill_patch__         

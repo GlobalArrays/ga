@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.80 2004-06-24 02:55:48 vinod Exp $ */
+/* $Id: base.c,v 1.81 2004-06-28 17:47:52 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -42,6 +42,7 @@
 #include "macdecls.h"
 #include "armci.h"
 
+
 #ifdef GA_USE_VAMPIR
 #include "ga_vampir.h"
 #endif
@@ -61,7 +62,7 @@
 global_array_t *_ga_main_data_structure;
 global_array_t *GA;
 proc_list_t *_proc_list_main_data_structure;
-proc_list_t *P_LIST;
+proc_list_t *PGRP_LIST;
 static int GAinitialized = 0;
 int _ga_sync_begin = 1;
 int _ga_sync_end = 1;
@@ -69,6 +70,7 @@ int _max_global_array = MAX_ARRAYS;
 Integer *GA_proclist;
 int* GA_Proc_list = NULL;
 int* GA_inv_Proc_list=NULL;
+int GA_Default_Proc_Group = -1;
 
 /* MA addressing */
 DoubleComplex   *DCPL_MB;           /* double precision complex base address */
@@ -325,6 +327,7 @@ int bytes;
     vampir_begin(GA_INITIALIZE,__FILE__,__LINE__);
 #endif
 
+    GA_Default_Proc_Group = -1;
     /* zero in pointers in GA array */
     _ga_main_data_structure
        = (global_array_t *)malloc(sizeof(global_array_t)*MAX_ARRAYS);
@@ -335,12 +338,13 @@ int bytes;
     if(!_proc_list_main_data_structure)
        ga_error("ga_init:malloc proc_list failed",0);
     GA = _ga_main_data_structure;
-    P_LIST = _proc_list_main_data_structure;
+    PGRP_LIST = _proc_list_main_data_structure;
     for(i=0;i<MAX_ARRAYS; i++) {
        GA[i].ptr  = (char**)0;
        GA[i].mapc = (int*)0;
-       P_LIST[i].map_proc_list = (int*)0;
-       P_LIST[i].inv_map_proc_list = (int*)0;
+       PGRP_LIST[i].map_proc_list = (int*)0;
+       PGRP_LIST[i].inv_map_proc_list = (int*)0;
+       PGRP_LIST[i].actv = 0;
     }
 
     bzero(&GAstat,sizeof(GAstat));
@@ -378,19 +382,21 @@ int bytes;
 
     ARMCI_Init(); /* initialize GA run-time library */
     /* Create proc list for mirrored arrays */
-    P_LIST[0].map_proc_list = (int*)malloc(GAnproc*sizeof(int)*2);
-    P_LIST[0].inv_map_proc_list = P_LIST[0].map_proc_list + GAnproc;
-    for (i=0; i<GAnproc; i++) P_LIST[0].map_proc_list[i] = -1;
-    for (i=0; i<GAnproc; i++) P_LIST[0].inv_map_proc_list[i] = -1;
+    PGRP_LIST[0].map_proc_list = (int*)malloc(GAnproc*sizeof(int)*2);
+    PGRP_LIST[0].inv_map_proc_list = PGRP_LIST[0].map_proc_list + GAnproc;
+    for (i=0; i<GAnproc; i++) PGRP_LIST[0].map_proc_list[i] = -1;
+    for (i=0; i<GAnproc; i++) PGRP_LIST[0].inv_map_proc_list[i] = -1;
     nnode = ga_cluster_nodeid_();
     nproc = ga_cluster_nprocs_((Integer*)&nnode);
     zero = 0;
     j = ga_cluster_procid_((Integer*)&nnode, (Integer*)&zero);
-    P_LIST[0].map_nproc = nproc;
-    P_LIST[0].mirrored = 1;
+    PGRP_LIST[0].parent = -1;
+    PGRP_LIST[0].actv = 1;
+    PGRP_LIST[0].map_nproc = nproc;
+    PGRP_LIST[0].mirrored = 1;
     for (i=0; i<nproc; i++) {
-      P_LIST[0].map_proc_list[i+j] = i;
-      P_LIST[0].inv_map_proc_list[i] = i+j;
+       PGRP_LIST[0].map_proc_list[i+j] = i;
+       PGRP_LIST[0].inv_map_proc_list[i] = i+j;
     }
 
     /* assure that GA will not alocate more shared memory than specified */
@@ -549,7 +555,7 @@ logical FATR ga_is_mirrored_(Integer *g_a)
   Integer handle = GA_OFFSET + *g_a;
   Integer p_handle = GA[handle].p_handle;
   if (p_handle >= 0) {
-    if (P_LIST[p_handle].mirrored) ret = TRUE;
+     if (PGRP_LIST[p_handle].mirrored) ret = TRUE;
   }
   return ret;
 }
@@ -568,6 +574,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
   Integer  index[MAXDIM], subscript[MAXDIM];
   Integer  handle = GA_OFFSET + *g_a;
   Integer  type, size, id;
+  int Save_default_group;
   char     *fptr, *lptr;
 
   /* find total number of elements */
@@ -577,6 +584,10 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
 
   /* If array is mirrored, evaluate first and last indices */
   if (ga_is_mirrored_(g_a)) {
+    /* If default group is not world group, change default group to world group
+       temporarily */
+    Save_default_group = GA_Default_Proc_Group;
+    GA_Default_Proc_Group = -1;
     nnodes = ga_cluster_nnodes_();
     inode = ga_cluster_nodeid_();
     nproc = ga_cluster_nprocs_(&inode);
@@ -752,18 +763,19 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
       subscript[0] = ilast+1;
       /* BJP printf("p[%d] subscript[%d]: %d\n",GAme,0,subscript[0]); */
       i = nga_locate_(g_a, subscript, &id);
-      id = P_LIST[GA[handle].p_handle].map_proc_list[id];
+      id = PGRP_LIST[GA[handle].p_handle].map_proc_list[id];
       gam_Loc_ptr(id, handle, subscript, &lptr);
       size = 0;
     } else {
-      id = P_LIST[GA[handle].p_handle].map_proc_list[id];
+      id = PGRP_LIST[GA[handle].p_handle].map_proc_list[id];
       gam_Loc_ptr(id, handle, GA[handle].last, &lptr);
     }
     for (i=0; i<ndim; i++) index[i] = (Integer)GA[handle].first[i];
     i = nga_locate_(g_a, index, &id);
-    id = P_LIST[GA[handle].p_handle].map_proc_list[id];
+    id = PGRP_LIST[GA[handle].p_handle].map_proc_list[id];
     gam_Loc_ptr(id, handle, GA[handle].first, &fptr);
     GA[handle].shm_length = lptr - fptr + size;
+    GA_Default_Proc_Group = Save_default_group;
   } else {
     for (i=0; i<ndim; i++) {
       GA[handle].first[i] = 0;
@@ -803,11 +815,108 @@ void gai_init_struct(int handle)
      GA[handle].ndim = -1;
 }
 
+/*\ SIMPLE FUNCTION TO SET DEFAULT PROCESSOR GROUP
+  \*/
+void FATR ga_pgroup_set_default_(Integer *grp)
+{
+    int local_sync_begin,local_sync_end;
+    Integer def_grp;
+ 
+    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
+ 
+    /* force a hang if default group is not being set correctly */
+    if (local_sync_begin || local_sync_end) {
+       def_grp = (Integer)GA_Default_Proc_Group;
+       ga_pgroup_sync_(&def_grp);
+       ga_pgroup_sync_(grp);
+    }
+    GA_Default_Proc_Group = (int)(*grp);
+}
+ 
+int FATR ga_pgroup_create_(Integer *list, Integer *count)
+{
+    Integer pgrp_handle, i, j, nprocs, itmp;
+    Integer tmp_list[MAX_NPROC], parent;
+    int tmp2_list[MAX_NPROC], tmp_count;
+ 
+    GA_PUSH_NAME("ga_pgroup_create_");
+    /*** Get next free process group handle ***/
+    pgrp_handle =-1; i=0;
+    do{
+       if(!PGRP_LIST[i].actv) pgrp_handle=i;
+       i++;
+    }while(i<_max_global_array && pgrp_handle==-1);
+    if( pgrp_handle == -1)
+       ga_error(" Too many process groups ", (Integer)_max_global_array);
+ 
+    /* Check list for validity (no duplicates and no out of range entries) */
+    nprocs = GAnproc;
+    for (i=0; i<*count; i++) {
+       if (list[i] <0 || list[i] >= nprocs)
+	  ga_error(" invalid element in list ", list[i]);
+       for (j=i+1; j<*count; j++) {
+	  if (list[i] == list[j])
+	     ga_error(" Duplicate elements in list ", list[i]);
+       }
+    }
+ 
+    /* Allocate memory for arrays containg processor maps and initialize
+       values */
+  PGRP_LIST[pgrp_handle].map_proc_list
+    = (int*)malloc(GAnproc*sizeof(int)*2);
+  PGRP_LIST[pgrp_handle].inv_map_proc_list
+    = PGRP_LIST[pgrp_handle].map_proc_list + GAnproc;
+  for (i=0; i<GAnproc; i++)
+     PGRP_LIST[pgrp_handle].map_proc_list[i] = -1;
+  for (i=0; i<GAnproc; i++)
+     PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = -1;
+ 
+  /* Remap elements in list to absolute processor indices (if necessary)*/
+  if (GA_Default_Proc_Group != -1) {
+     parent = GA_Default_Proc_Group;
+     for (i=0; i<*count; i++) {
+	tmp2_list[i] = (int)PGRP_LIST[parent].inv_map_proc_list[list[i]];
+     }
+  } else {
+     for (i=0; i<*count; i++) {
+	tmp2_list[i] = (int)list[i];
+     }
+  }
+  /* use a simple sort routine to reorder list into assending order */
+  for (j=1; j<*count; j++) {
+     itmp = tmp2_list[j];
+     i = j-1;
+     while(i>=0  && tmp2_list[i] > itmp) {
+	tmp2_list[i+1] = tmp2_list[i];
+	i--;
+     }
+     tmp2_list[i+1] = itmp;
+  }
+ 
+  tmp_count = (int)(*count);
+  /* Create proc list maps */
+  for (i=0; i<*count; i++) {
+     j = tmp2_list[i];
+     PGRP_LIST[pgrp_handle].map_proc_list[j] = i;
+     PGRP_LIST[pgrp_handle].inv_map_proc_list[i] = j;
+  }
+  PGRP_LIST[pgrp_handle].actv = 1;
+  PGRP_LIST[pgrp_handle].parent = GA_Default_Proc_Group;
+  PGRP_LIST[pgrp_handle].mirrored = 0;
+  PGRP_LIST[pgrp_handle].map_nproc = tmp_count;
+  ARMCI_Group_create(tmp_count, tmp2_list, &PGRP_LIST[pgrp_handle].group);
+ 
+ 
+  GA_POP_NAME;
+  return pgrp_handle;
+}
+
 /*\ SIMPLE FUNCTIONS TO RECOVER STANDARD PROCESSOR LISTS
 \*/
 Integer FATR ga_pgroup_get_default_()
 {
-  return -1;
+  return GA_Default_Proc_Group;
 }
 
 Integer FATR ga_pgroup_get_mirror_()
@@ -818,6 +927,11 @@ Integer FATR ga_pgroup_get_mirror_()
 Integer FATR ga_pgroup_get_world_()
 {
   return -1;
+}
+
+ARMCI_Group* ga_get_armci_group_(int grp_id)
+{
+  return &PGRP_LIST[grp_id].group;
 }
 
 /*\ Return a new global array handle
@@ -838,7 +952,7 @@ Integer ga_create_handle_()
 
   /*** fill in Global Info Record for g_a ***/
   gai_init_struct(ga_handle);
-  GA[ga_handle].p_handle = -1;
+  GA[ga_handle].p_handle = GA_Default_Proc_Group;
   GA[ga_handle].name[0] = '\0';
   GA[ga_handle].mapc[0] = -1;
   GA[ga_handle].irreg = 0;
@@ -934,6 +1048,22 @@ void ga_set_pgroup_(Integer *g_a, Integer *p_handle)
   GA_POP_NAME;
 }
 
+Integer ga_get_pgroup_(Integer *g_a)
+{
+    Integer ga_handle = *g_a + GA_OFFSET;
+    return (Integer)GA[ga_handle].p_handle;
+}
+ 
+Integer ga_get_pgroup_size_(Integer *grp_id)
+{
+    int p_handle = (int)(*grp_id);
+    if (p_handle > 0) {
+       return (Integer)PGRP_LIST[p_handle].map_nproc;
+    } else {
+       return GAnproc;
+    }
+}
+
 /*\ Add ghost cells to a new global array
 \*/
 void ga_set_ghosts_(Integer *g_a, Integer *width)
@@ -1020,6 +1150,7 @@ logical ga_allocate_( Integer *g_a)
   Integer dims[MAXDIM], chunk[MAXDIM];
   Integer pe[MAXDIM], *pmap[MAXDIM], *map;
   Integer blk[MAXDIM];
+  Integer me_local;
 #ifdef GA_USE_VAMPIR
   vampir_begin(GA_ALLOCATE,__FILE__,__LINE__);
 #endif
@@ -1027,14 +1158,15 @@ logical ga_allocate_( Integer *g_a)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
   if (GA[ga_handle].ndim == -1)
     ga_error("Insufficient data to create global array",0);
-  ga_sync_();
+
+  p_handle = (Integer)GA[ga_handle].p_handle;
+  ga_pgroup_sync_(&p_handle);
   GA_PUSH_NAME("ga_allocate");
 
   if(!GAinitialized) ga_error("GA not initialized ", 0);
   if(!ma_address_init) gai_ma_address_init();
 
   ndim = GA[ga_handle].ndim;
-  p_handle = GA[ga_handle].p_handle;
   for (i=0; i<ndim; i++) width[i] = GA[ga_handle].width[i];
 
   /* The data distribution has not been specified by the user. Create
@@ -1058,14 +1190,19 @@ logical ga_allocate_( Integer *g_a)
  
     if (GAme==0 && DEBUG )
       for (d=0;d<ndim;d++) fprintf(stderr,"b[%ld]=%ld\n",(long)d,(long)blk[d]);
-    ga_sync_();
+    ga_pgroup_sync_(&p_handle);
 
     /* ddb(ndim, dims, GAnproc, blk, pe);*/
-    if (p_handle >= 0 && P_LIST[p_handle].mirrored) {
-      ddb_h2(ndim, dims, P_LIST[p_handle].map_nproc, 0.0,
-             (Integer)0, blk, pe);
+    if (p_handle >= 0) {
+       ddb_h2(ndim, dims, PGRP_LIST[p_handle].map_nproc, 0.0,
+	      (Integer)0, blk, pe);
     } else {
-      ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
+       if (GA_Default_Proc_Group > 0) {
+	  ddb_h2(ndim, dims, PGRP_LIST[GA_Default_Proc_Group].map_nproc, 0.0,
+		 (Integer)0, blk, pe);
+       } else {
+	  ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
+       }
     }
 
     for(d=0, map=mapALL; d< ndim; d++){
@@ -1125,16 +1262,29 @@ logical ga_allocate_( Integer *g_a)
   GA[ga_handle].actv = 1;
   /* If only one node is being used, set proc list to default value */
   if (ga_cluster_nnodes_() == 1) {
-    GA[ga_handle].p_handle = -1;
+    GA[ga_handle].p_handle = GA_Default_Proc_Group;
   }
-  GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
-
+  /* set corner flag, if it has not already been set and set up message
+     passing data */
+  if (GA[ga_handle].corner_flag == -1) {
+     i = 1;
+  } else {
+     i = GA[ga_handle].corner_flag;
+  }
+  ga_set_ghost_corner_flag_(g_a, &i);
+ 
   for( i = 0; i< ndim; i++){
      GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
-                            / (double)GA[ga_handle].dims[i];
-  } 
+       / (double)GA[ga_handle].dims[i];
+  }
+  GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
   /*** determine which portion of the array I am supposed to hold ***/
-  nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
+  if (GA_Default_Proc_Group > 0) {
+     me_local = (Integer)PGRP_LIST[GA_Default_Proc_Group].map_proc_list[GAme];
+     nga_distribution_(g_a, &me_local, GA[ga_handle].lo, hi);
+  } else {
+     nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
+  }
   for( i = 0, nelem=1; i< ndim; i++){
        GA[ga_handle].chunk[i] = (int)(hi[i]-GA[ga_handle].lo[i]+1);
        nelem *= (int)(hi[i]-GA[ga_handle].lo[i]+1+2*width[i]);
@@ -1147,12 +1297,20 @@ logical ga_allocate_( Integer *g_a)
   /* check if everybody has enough memory left */
   if(GA_memory_limited){
      status = (GA_total_memory >= 0) ? 1 : 0;
-     ga_igop(GA_TYPE_GSM, &status, 1, "*");
+     if (p_handle > 0) {
+	ga_pgroup_igop(p_handle,GA_TYPE_GSM, &status, 1, "*");
+     } else {
+	if (GA_Default_Proc_Group > 0) {
+	   ga_pgroup_igop(GA_Default_Proc_Group,GA_TYPE_GSM, &status, 1, "*");
+	} else {
+	   ga_igop(GA_TYPE_GSM, &status, 1, "*");
+	}
+     }
   }else status = 1;
 
   if (status) {
     status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
-                             GA[ga_handle].type, &GA[ga_handle].id);
+                             GA[ga_handle].type, &GA[ga_handle].id, p_handle);
   } else {
     GA[ga_handle].ptr[GAme]=NULL;
   }
@@ -1160,16 +1318,7 @@ logical ga_allocate_( Integer *g_a)
   /* If array is mirrored, evaluate first and last indices */
   ngai_get_first_last_indices(g_a);
 
-  /* set corner flag, if it has not already been set and set up message
-     passing data */
-  if (GA[ga_handle].corner_flag == -1) {
-    i = 1;
-  } else {
-    i = GA[ga_handle].corner_flag;
-  }
-
-  ga_set_ghost_corner_flag_(g_a, &i);
-  ga_sync_();
+  ga_pgroup_sync_(&p_handle);
   if (status) {
     GAstat.curmem += GA[ga_handle].size;
     GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
@@ -1724,15 +1873,21 @@ char* ptr_array[MAX_NPROC];
 /*\ get memory alligned w.r.t. MA base
  *  required on Linux as g77 ignores natural data alignment in common blocks
 \*/ 
-int gai_get_shmem(char **ptr_arr, Integer bytes, int type, long *adj)
+int gai_get_shmem(char **ptr_arr, Integer bytes, int type, long *adj,
+		  int grp_id)
 {
 int status=0;
 #ifndef _CHECK_MA_ALGN
 char *base;
 long diff, item_size;  
 Integer *adjust;
-int i;
+int i, nproc;
 
+    if (grp_id > 0)
+       nproc = PGRP_LIST[grp_id].map_nproc;
+    else
+       nproc = GAnproc; 
+ 
     /* need to enforce proper, natural allignment (on size boundary)  */
     switch (ga_type_c2f(type)){
       case MT_F_DBL:   base =  (char *) DBL_MB; break;
@@ -1750,13 +1905,26 @@ int i;
     *adj = 0;
 #ifdef PERMUTE_PIDS
     if(GA_Proc_list){
-      bzero(ptr_array,GAnproc*sizeof(char*));
-      status = ARMCI_Malloc((void**)ptr_array, bytes);
-      for(i=0;i<GAnproc;i++)ptr_arr[i] = ptr_array[GA_inv_Proc_list[i]]; 
+       bzero(ptr_array,nproc*sizeof(char*));
+       /* use ARMCI_Malloc_group for groups if proc group is not world group
+	  or mirror group */
+       if (grp_id > 0)
+	  status = ARMCI_Malloc_group((void**)ptr_array, bytes,
+				      &PGRP_LIST[grp_id].group);
+       else
+	  status = ARMCI_Malloc((void**)ptr_array, bytes);
+       for(i=0;i<nproc;i++)ptr_arr[i] = ptr_array[GA_inv_Proc_list[i]];
     }else
 #endif
-
-    status = ARMCI_Malloc((void**)ptr_arr, (armci_size_t)bytes);
+       
+    /* use ARMCI_Malloc_group for groups if proc group is not world group
+       or mirror group */
+    if (grp_id > 0) {
+       status = ARMCI_Malloc_group((void**)ptr_arr, (armci_size_t)bytes,
+				   &PGRP_LIST[grp_id].group);
+    } else {
+       status = ARMCI_Malloc((void**)ptr_arr, (armci_size_t)bytes);
+    }
     if(status) return status;
 
 #ifndef _CHECK_MA_ALGN
@@ -1767,13 +1935,16 @@ int i;
     adjust = (Integer*)_ga_map;
 
     diff = (ABS( base - (char *) ptr_arr[GAme])) % item_size; 
-    for(i=0;i<GAnproc;i++)adjust[i]=0;
+    for(i=0;i<nproc;i++)adjust[i]=0;
     adjust[GAme] = (diff > 0) ? item_size - diff : 0;
     *adj = adjust[GAme];
 
-    ga_igop(GA_TYPE_GSM, adjust, GAnproc, "+");
+    if (grp_id > 0)
+       ga_pgroup_igop(grp_id,GA_TYPE_GSM, adjust, nproc, "+");
+    else
+       ga_igop(GA_TYPE_GSM, adjust, nproc, "+");
     
-    for(i=0;i<GAnproc;i++){
+    for(i=0;i<nproc;i++){
        ptr_arr[i] = adjust[i] + (char*)ptr_arr[i];
     }
 
@@ -1782,16 +1953,17 @@ int i;
 }
 
 
-int gai_getmem(char* name, char **ptr_arr, Integer bytes, int type, long *id)
+int gai_getmem(char* name, char **ptr_arr, Integer bytes, int type, long *id,
+	       int grp_id)
 {
 Integer handle = INVALID_MA_HANDLE, index;
 Integer nelem, item_size = GAsizeofM(type);
 char *ptr = (char*)0;
 
 #ifdef AVOID_MA_STORAGE
-   return gai_get_shmem(ptr_arr, bytes, type, id);
+   return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
 #else
-   if(ARMCI_Uses_shm()) return gai_get_shmem(ptr_arr, bytes, type, id);
+   if(ARMCI_Uses_shm()) return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
    else{
      nelem = bytes/item_size + 1;
      if(bytes)
@@ -1816,7 +1988,7 @@ char *ptr = (char*)0;
 
 /*\ externalized version of gai_getmem to facilitate two-step array creation
 \*/
-void *GA_Getmem(int type, int nelem)
+void *GA_Getmem(int type, int nelem, int grp_id)
 {
 char **ptr_arr=(char**)0;
 int  rc,i;
@@ -1835,7 +2007,7 @@ Integer status;
      }else status = 1;
 
      ptr_arr=(char**)_ga_map; /* need memory GAnproc*sizeof(char**) */
-     rc= gai_getmem("ga_getmem", ptr_arr,(Integer)bytes+extra, type, &id);
+     rc= gai_getmem("ga_getmem", ptr_arr,(Integer)bytes+extra, type, &id, grp_id);
      if(rc)ga_error("ga_getmem: failed to allocate memory",bytes+extra);
 
      myptr = ptr_arr[GAme];  
@@ -1885,15 +2057,20 @@ char **ptr_arr = (char**)(info+1);
 void FATR nga_distribution_(Integer *g_a, Integer *proc, Integer *lo, Integer *
 hi)
 {
-Integer ga_handle, p_handle, lproc;
+Integer ga_handle, p_handle, lproc, tproc;
 
    ga_check_handleM(g_a, "nga_distribution");
    ga_handle = (GA_OFFSET + *g_a);
    p_handle = GA[ga_handle].p_handle;
-   if (p_handle < 0) {
-     lproc = *proc;
+   if (GA_Default_Proc_Group != -1) {
+      tproc = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[*proc];
    } else {
-     lproc = P_LIST[p_handle].map_proc_list[*proc];
+      tproc = *proc;
+   }
+   if (p_handle < 0) {
+     lproc = tproc;
+   } else {
+     lproc = PGRP_LIST[p_handle].map_proc_list[*proc];
    }
    ga_ownsM(ga_handle, lproc, lo, hi);
 
@@ -1943,6 +2120,7 @@ Integer  mem_size, mem_size_proc;
 Integer  i, ga_handle, status;
 int      *save_mapc;
 int local_sync_begin,local_sync_end;
+Integer grp_id;
 
 #ifdef GA_USE_VAMPIR
       vampir_begin(GA_DUPLICATE,__FILE__,__LINE__);
@@ -1951,7 +2129,8 @@ int local_sync_begin,local_sync_end;
 
       local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
       _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-      if(local_sync_begin)ga_sync_();
+      grp_id = ga_get_pgroup_(g_a);
+      if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
       GAstat.numcre ++; 
 
@@ -1987,17 +2166,24 @@ int local_sync_begin,local_sync_end;
       /* check if everybody has enough memory left */
       if(GA_memory_limited){
          status = (GA_total_memory >= 0) ? 1 : 0;
-         ga_igop(GA_TYPE_GSM, &status, 1, "*");
+	 if (grp_id > 0) {
+	    int istatus = (int)status;
+	    ga_pgroup_igop((int)grp_id,GA_TYPE_GSM, &status, 1, "*");
+	    status = (Integer)status;
+         } else {
+	    ga_igop(GA_TYPE_GSM, &status, 1, "*");
+         }
       }else status = 1;
 
       if(status)
           status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
-                               (int)GA[ga_handle].type, &GA[ga_handle].id);
+                               (int)GA[ga_handle].type, &GA[ga_handle].id,
+			       (int)grp_id);
       else{
           GA[ga_handle].ptr[GAme]=NULL;
       }
 
-      if(local_sync_end)ga_sync_();
+      if(local_sync_end)ga_pgroup_sync_(&grp_id);
 
 #     ifdef GA_CREATE_INDEF
       if(status){
@@ -2127,7 +2313,7 @@ char buf[FNAM];
 \*/
 logical FATR ga_destroy_(Integer *g_a)
 {
-Integer ga_handle = GA_OFFSET + *g_a;
+Integer ga_handle = GA_OFFSET + *g_a, p_handle;
 int local_sync_begin;
 
 #ifdef GA_USE_VAMPIR
@@ -2136,7 +2322,8 @@ int local_sync_begin;
 
     local_sync_begin = _ga_sync_begin; 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_();
+    p_handle = GA[ga_handle].p_handle;
+    if(local_sync_begin)ga_pgroup_sync_(&p_handle);
 
     GAstat.numdes ++; /*regardless of array status we count this call */
     /* fails if handle is out of range or array not active */
@@ -2166,7 +2353,13 @@ int local_sync_begin;
     if(ARMCI_Uses_shm()){
 #endif
       /* make sure that we free original (before address allignment) pointer */
-      ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
+      if (GA[ga_handle].p_handle > 0){
+	 int grp_me = PGRP_LIST[GA[ga_handle].p_handle].map_proc_list[GAme];
+	 ARMCI_Free_group(GA[ga_handle].ptr[grp_me] - GA[ga_handle].id,
+			  &PGRP_LIST[GA[ga_handle].p_handle].group);
+      }
+      else
+	 ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
 #ifndef AVOID_MA_STORAGE
     }else{
       if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
@@ -2248,6 +2441,7 @@ void FATR ga_fill_(Integer *g_a, void* val)
 int i,elems,handle=GA_OFFSET + (int)*g_a;
 char *ptr;
 int local_sync_begin,local_sync_end;
+Integer grp_id;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_FILL,__FILE__,__LINE__);
@@ -2257,7 +2451,8 @@ int local_sync_begin,local_sync_end;
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
-   if(local_sync_begin)ga_sync_();
+   grp_id = ga_get_pgroup_(g_a);
+   if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
 
    ga_check_handleM(g_a, "ga_fill");
@@ -2285,7 +2480,7 @@ int local_sync_begin,local_sync_end;
         ga_error("type not supported",GA[handle].type);
    }
 
-   if(local_sync_end)ga_sync_();
+   if(local_sync_end)ga_pgroup_sync_(&grp_id);
 
    GA_POP_NAME;
  
@@ -2487,10 +2682,13 @@ Integer p_handle;
 /*   printf("p[%d] computed index: %d\n",(int)GAme,(int)proc); */
    p_handle = GA[ga_handle].p_handle;
    if (p_handle >= 0) {
-     proc = P_LIST[p_handle].inv_map_proc_list[proc];
+      proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
    }
    *owner = GA_Proc_list ? GA_Proc_list[proc]: proc;
-
+   if (GA_Default_Proc_Group != -1) {
+      *owner = PGRP_LIST[GA_Default_Proc_Group].map_proc_list[*owner];
+   }
+   
    return TRUE;
 }
 
@@ -2581,7 +2779,7 @@ Integer  d, dpos, ndim, elems, p_handle;
       if (p_handle < 0) {
         owner = proc;
       } else {
-        owner = P_LIST[p_handle].inv_map_proc_list[proc];
+	owner = PGRP_LIST[p_handle].inv_map_proc_list[proc];
       }
       proclist[i] = owner;
       /* Update to proc_subscript so that it corresponds to the next
@@ -2589,6 +2787,18 @@ Integer  d, dpos, ndim, elems, p_handle;
       ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].nblock);
       (*np)++;
    }
+
+   /* Remap processor list (if necessary)*/
+   if (GA_Default_Proc_Group != -1) {
+      Integer tmp_list[MAX_NPROC];
+      for (i=0; i<*np; i++) {
+	 tmp_list[i] = proclist[i];
+      }
+      for (i=0; i<*np; i++) {
+	 proclist[i] = PGRP_LIST[GA_Default_Proc_Group].map_proc_list[tmp_list[i]];
+      }
+   }
+
    return(TRUE);
 }
     
@@ -2628,15 +2838,36 @@ int i, n;
 
 Integer FATR ga_nodeid_()
 {
-  return ((Integer)GAme);
+    if (GA_Default_Proc_Group > 0) {
+       return (Integer)PGRP_LIST[GA_Default_Proc_Group].map_proc_list[GAme];
+    } else {
+       return ((Integer)GAme);
+    }
+}
+
+Integer FATR ga_pgroup_nodeid_(Integer *grp)
+{
+    if (*grp >= 0) {
+       return (Integer)PGRP_LIST[(int)(*grp)].map_proc_list[GAme];
+    } else {
+       return GAme;
+    }
 }
 
 
 Integer FATR ga_nnodes_()
 {
-  return ((Integer)GAnproc);
+    if (GA_Default_Proc_Group > 0) {
+       return (Integer)PGRP_LIST[GA_Default_Proc_Group].map_nproc;
+    } else {
+       return ((Integer)GAnproc);
+    }
 }
 
+Integer FATR ga_pgroup_nnodes_(Integer *grp)
+{
+    return (Integer)PGRP_LIST[(int)(*grp)].map_nproc;
+}
 
 
 /*\ COMPARE DISTRIBUTIONS of two global arrays
@@ -3352,6 +3583,7 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   char  *bptr, *nptr, *fptr;
   Integer bytes;
   Integer ilast,inext,id;
+  int Save_default_group;
   int local_sync_begin, local_sync_end;
 
   /* declarations for message exchanges */
@@ -3368,6 +3600,12 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   if (local_sync_begin) ga_sync_();
   /* don't perform update if node is not mirrored */
   if (!ga_is_mirrored_(g_a)) return;
+  
+  /* If default group is not world group, change default group to world group
+     temporarily */
+  Save_default_group = GA_Default_Proc_Group;
+  GA_Default_Proc_Group = -1;
+
   GA_PUSH_NAME("ga_fast_merge_mirrored");
 
   inode = ga_cluster_nodeid_();
@@ -3465,7 +3703,7 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
       for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].first[i];
       i = nga_locate_(g_a, index, &id);
       i = id;
-      id = P_LIST[GA[handle].p_handle].map_proc_list[id];
+      id = PGRP_LIST[GA[handle].p_handle].map_proc_list[id];
       gam_Loc_ptr(id, handle, GA[handle].first, &fptr);
       for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].last[i];
       slength = GA[handle].shm_length;
@@ -3587,6 +3825,8 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   } else {
     ga_merge_mirrored_(g_a);
   }
+
+  GA_Default_Proc_Group = Save_default_group;
   if (local_sync_end) ga_sync_();
   GA_POP_NAME;
 }

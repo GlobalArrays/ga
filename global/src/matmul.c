@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.55 2004-05-07 19:04:46 manoj Exp $ */
+/* $Id: matmul.c,v 1.56 2004-06-28 17:47:53 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -123,10 +123,12 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
     if(more_chunks_left) CYCLIC_DISTR_OPT_FLAG = UNSET;
 
     if(CYCLIC_DISTR_OPT_FLAG) { /* should not be called for irregular matmul */
-       int prow, pcol, offset, me = ga_nodeid_();
+       int prow, pcol, offset, grp_me;
+       Integer a_grp = ga_get_pgroup_(g_a);
+       grp_me = (int)ga_pgroup_nodeid_(&a_grp);
        prow = GA[GA_OFFSET + *g_a].nblock[0];
        pcol = GA[GA_OFFSET + *g_a].nblock[1];
-       offset = (me/prow + me%prow) % pcol;
+       offset = (grp_me/prow + grp_me%prow) % pcol;
        for(jj=0, ilo = istart; ilo <= iend; jj++, ilo += Ichunk)
 	  taskListA[jj].do_put = UNSET;
        for(jj=0, ilo = istart; ilo <= iend; jj++, ilo += Ichunk)
@@ -139,7 +141,7 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
 static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
 			       Integer *Kchunk,Integer *elems,Integer atype, 
 			       Integer m,Integer n,Integer k, short int nbuf,
-			       short int memory_flag) {
+			       short int memory_flag, Integer a_grp) {
     double temp;
     Integer min_tasks = MINTASKS; /* Increase tasks if there is load imbalance.
 				     This controls the granularity of chunks */
@@ -157,12 +159,12 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     else
        max_chunk = (Integer) max3(*Ichunk, *Jchunk, *Kchunk);
 
-    ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+    ga_pgroup_igop(a_grp, GA_TYPE_GOP, &avail, (Integer)1, "min");
     
     if ( max_chunk > CHUNK_SIZE/nbuf) {
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
-      if(avail<MINMEM && ga_nodeid_()==0) ga_error("NotEnough memory",avail);
+      if(avail<MINMEM && ga_pgroup_nodeid_(&a_grp)==0) ga_error("NotEnough memory",avail);
       *elems = (Integer)(avail*0.9); /* Donot use every last drop */
       
       /* MAX: get the maximum chunk (or, block) size i.e  */
@@ -533,10 +535,12 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
        }
        
        if(CYCLIC_DISTR_OPT_FLAG) {
-	  int prow,pcol;
+	  int prow,pcol,grp_me;
+	  Integer a_grp=ga_get_pgroup_(g_a);
+          grp_me = (int)ga_pgroup_nodeid_(&a_grp);
 	  prow = GA[GA_OFFSET + *g_a].nblock[0];
 	  pcol = GA[GA_OFFSET + *g_a].nblock[1];
-	  offset = (me/prow + me%prow) % pcol;
+	  offset = (grp_me/prow + grp_me%prow) % pcol;
 	  currA = nextA = nextA + offset;
        }
        
@@ -675,6 +679,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     short int compute_flag=0, shiftA=0, shiftB=0;
     DoubleComplex ONE, *a, *b, *c;
     float ONE_F = 1.0;
+    Integer grp_me, a_grp = ga_get_pgroup_(g_a);
  
     GA_PUSH_NAME("ga_matmul_irreg");
     ONE.real =1.; ONE.imag =0.;
@@ -690,6 +695,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
     b = b_ar[0];
     c = c_ar[0];
     
+    grp_me = ga_pgroup_nodeid_(&a_grp);
     if(!need_scaling) ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
 
     compute_flag=0;     /* take care of the last chunk */
@@ -708,7 +714,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
 	   
 	  for(ilo = 0; ilo < m; ilo+=Ichunk){ /* loop thru rows of g_c patch */
 	        
-	     if(ijk%nproc == me){
+	     if(ijk%nproc == grp_me){
 
 		ihi = MIN(m-1, ilo+Ichunk-1);
 		idim= cdim = ihi - ilo +1;
@@ -1026,6 +1032,8 @@ void ga_matmul(transa, transb, alpha, beta,
     int local_sync_begin,local_sync_end;
     short int need_scaling=SET,use_NB_matmul=SET;
     short int irregular=UNSET, memory_flag=UNSET;
+    Integer a_grp=ga_get_pgroup_(g_a), b_grp=ga_get_pgroup_(g_b);
+    Integer c_grp=ga_get_pgroup_(g_c);
 
 #ifdef GA_USE_VAMPIR
   vampir_begin(GA_MATMUL,__FILE__,__LINE__);
@@ -1038,9 +1046,12 @@ void ga_matmul(transa, transb, alpha, beta,
 
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_();
+    if(local_sync_begin)ga_pgroup_sync_(&a_grp);
 
     GA_PUSH_NAME("ga_matmul");
+
+    if (a_grp != b_grp || a_grp != c_grp)
+       ga_error("Arrays must be defined on same group",0L);
 
     /**************************************************
      * Do All Sanity Checks 
@@ -1162,7 +1173,7 @@ void ga_matmul(transa, transb, alpha, beta,
 	     Integer irreg=0;
 	     if(Ichunk/Kchunk > GA_ASPECT_RATIO || 
 		Jchunk/Kchunk > GA_ASPECT_RATIO) irreg = SET;
-	     ga_igop(GA_TYPE_GOP, &irreg, (Integer)1, "max");   
+	     ga_pgroup_igop(a_grp, GA_TYPE_GOP, &irreg, (Integer)1, "max");   
 	     if(irreg==SET) irregular = SET;
 	  }
 	  
@@ -1177,7 +1188,7 @@ void ga_matmul(transa, transb, alpha, beta,
 	  
 	  /* get ChunkSize (i.e.BlockSize), that fits in temporary buffer */
 	  gai_get_chunk_size(irregular, &Ichunk, &Jchunk, &Kchunk, &elems, 
-			     atype, m, n, k, nbuf, memory_flag);
+			     atype, m, n, k, nbuf, memory_flag, a_grp);
 	  
 	  if(tmp == NULL) { /* try once again from armci for new chunk sizes */
 	     tmp = a_ar[0] =a=gai_get_armci_memory(Ichunk,Jchunk,Kchunk,
@@ -1250,16 +1261,18 @@ void ga_matmul(transa, transb, alpha, beta,
 #endif
        
 #if DEBUG_
-       ga_sync_();       
+       Integer grp_me;
+       grp_me = ga_pgroup_nodeid_(&a_grp);
+       ga_pgroup_sync_(&a_grp);
        if(me==0) check_result(1, transa, transb, alpha, beta, atype,
 			      g_a, ailo, aihi, ajlo, ajhi,
 			      g_b, bilo, bihi, bjlo, bjhi,
 			      g_c, cilo, cihi, cjlo, cjhi);
-       ga_sync_();
+       ga_pgroup_sync_(&a_grp);
 #endif
        
        GA_POP_NAME;   
-       if(local_sync_end)ga_sync_();
+       if(local_sync_end)ga_pgroup_sync_(&a_grp);
 #ifdef GA_USE_VAMPIR
   vampir_end(GA_MATMUL,__FILE__,__LINE__);
 #endif

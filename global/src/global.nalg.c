@@ -11,6 +11,7 @@
 #include "message.h"
 #include "global.h"
 #include "globalp.h"
+#include "armci.h"
 
 #ifdef GA_USE_VAMPIR
 #include "ga_vampir.h"
@@ -41,7 +42,7 @@ int _i;\
 
 void FATR ga_zero_(Integer *g_a)
 {
-Integer ndim, type, me, elems;
+Integer ndim, type, me, elems, p_handle;
 void *ptr;
 register Integer i;
 int local_sync_begin,local_sync_end;
@@ -52,7 +53,8 @@ int local_sync_begin,local_sync_end;
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)ga_sync_();
+   p_handle = ga_get_pgroup_(g_a);
+   if(local_sync_begin) ga_pgroup_sync_(&p_handle);
 
    me = ga_nodeid_();
 
@@ -105,7 +107,7 @@ int local_sync_begin,local_sync_end;
    } 
 
 
-   if(local_sync_end)ga_sync_();
+   if(local_sync_end)ga_pgroup_sync_(&p_handle);
    GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
    vampir_end(GA_ZERO,__FILE__,__LINE__);
@@ -183,8 +185,9 @@ void FATR ga_copy_(Integer *g_a, Integer *g_b)
 {
 Integer  ndim, ndimb, type, typeb, me = ga_nodeid_();
 Integer dimsb[MAXDIM],i;
+Integer a_grp, b_grp, anproc, bnproc;
 void *ptr_a, *ptr_b;
-int local_sync_begin,local_sync_end;
+int local_sync_begin,local_sync_end,use_put;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_COPY,__FILE__,__LINE__);
@@ -193,7 +196,24 @@ int local_sync_begin,local_sync_end;
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)ga_sync_();
+   a_grp = ga_get_pgroup_(g_a);
+   b_grp = ga_get_pgroup_(g_b);
+   anproc = ga_get_pgroup_size_(&a_grp);
+   bnproc = ga_get_pgroup_size_(&b_grp);
+   if (anproc <= bnproc) {
+     use_put = 1;
+   } else {
+     use_put = 0;
+   }
+   /*if (a_grp != b_grp)
+     ga_error("Both arrays must be defined on same group",0L); */
+   if(local_sync_begin) {
+     if (anproc <= bnproc) {
+       ga_pgroup_sync_(&a_grp);
+     } else {
+       ga_pgroup_sync_(&b_grp);
+     }
+   }
 
    if(*g_a == *g_b) ga_error("arrays have to be different ", 0L);
 
@@ -211,11 +231,20 @@ int local_sync_begin,local_sync_end;
      /* Both global arrays are mirrored or both global arrays are not mirrored.
         Copy operation is straightforward */
 
-     nga_distribution_(g_a, &me, lo, hi);
+     if (use_put) {
+       nga_distribution_(g_a, &me, lo, hi);
+     } else {
+       nga_distribution_(g_b, &me, lo, hi);
+     }
 
      if(lo[0]>0){
-        nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-        nga_put_(g_b, lo, hi, ptr_a, ld);
+       if (use_put) {
+          nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+          nga_put_(g_b, lo, hi, ptr_a, ld);
+       } else {
+          nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
+          nga_get_(g_a, lo, hi, ptr_b, ld);
+       }
      }
    
    } else {
@@ -239,7 +268,13 @@ int local_sync_begin,local_sync_end;
      }
    }
 
-   if(local_sync_end)ga_sync_();
+   if(local_sync_end) {
+     if (anproc <= bnproc) {
+       ga_pgroup_sync_(&a_grp);
+     } else {
+       ga_pgroup_sync_(&b_grp);
+     }
+   }
    GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
    vampir_end(GA_COPY,__FILE__,__LINE__);
@@ -260,6 +295,7 @@ DoubleComplex zsum ={0.,0.};
 float fsum=0.0;
 void *ptr_a, *ptr_b;
 int alen;
+Integer a_grp, b_grp;
 
 Integer andim, adims[MAXDIM];
 Integer bndim, bdims[MAXDIM];
@@ -268,6 +304,10 @@ Integer bndim, bdims[MAXDIM];
    me = ga_nodeid_();
 
    GA_PUSH_NAME("ga_dot");
+   a_grp = ga_get_pgroup_(g_a);
+   b_grp = ga_get_pgroup_(g_b);
+   if (a_grp != b_grp)
+     ga_error("Both arrays must be defined on same group",0L);
 
    if(ga_compare_distr_(g_a,g_b) == FALSE ||
       ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b)) {
@@ -282,7 +322,7 @@ Integer bndim, bdims[MAXDIM];
        return;
    }
    
-   ga_sync_();
+   ga_pgroup_sync_(&a_grp);
    nga_inquire_internal_(g_a,  &type, &ndim, dims);
    if(type != Type) ga_error("type not correct", *g_a);
    nga_distribution_(g_a, &me, lo, hi);
@@ -392,7 +432,13 @@ Integer bndim, bdims[MAXDIM];
    if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
      armci_msg_gop_scope(SCOPE_NODE,value,alen,"+",atype);
    } else {
-     armci_msg_gop_scope(SCOPE_ALL,value,alen,"+",atype);
+     extern ARMCI_Group* ga_get_armci_group_(int);
+     if (a_grp == -1) {
+       armci_msg_gop_scope(SCOPE_ALL,value,alen,"+",atype);
+     } else {
+       armci_msg_group_gop_scope(SCOPE_ALL,value,alen,"+",atype,
+           ga_get_armci_group_((int)a_grp));
+     }
    }
     
    GA_POP_NAME;
@@ -487,7 +533,7 @@ void FATR gai_zdot_(g_a, g_b, retval)
  
 void FATR ga_scale_(Integer *g_a, void* alpha)
 {
-Integer ndim, type, me, elems;
+Integer ndim, type, me, elems, grp_id;
 register Integer i;
 void *ptr;
 int local_sync_begin,local_sync_end;
@@ -498,7 +544,8 @@ int local_sync_begin,local_sync_end;
 
    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)ga_sync_();
+   grp_id = ga_get_pgroup_(g_a);
+   if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
    me = ga_nodeid_();
 
@@ -559,7 +606,7 @@ int local_sync_begin,local_sync_end;
    }
 
    GA_POP_NAME;
-   if(local_sync_end)ga_sync_(); 
+   if(local_sync_end)ga_pgroup_sync_(&grp_id); 
 #ifdef GA_USE_VAMPIR
    vampir_end(GA_SCALE,__FILE__,__LINE__);
 #endif
@@ -574,6 +621,7 @@ void FATR ga_add_(void *alpha, Integer* g_a,
 Integer  ndim, type, typeC, me, elems=0, elemsb=0, elemsa=0;
 register Integer i;
 void *ptr_a, *ptr_b, *ptr_c;
+Integer a_grp, b_grp, c_grp;
 int local_sync_begin,local_sync_end;
 
  Integer andim, adims[MAXDIM];
@@ -590,6 +638,11 @@ int local_sync_begin,local_sync_end;
 
 
    GA_PUSH_NAME("ga_add");
+   a_grp = ga_get_pgroup_(g_a);
+   b_grp = ga_get_pgroup_(g_b);
+   c_grp = ga_get_pgroup_(g_c);
+   if (a_grp != b_grp || b_grp != c_grp)
+     ga_error("All three arrays must be on same group for ga_add",0L);
 
    if((ga_compare_distr_(g_a,g_b) == FALSE) ||
       (ga_compare_distr_(g_a,g_c) == FALSE) ||
@@ -609,7 +662,7 @@ int local_sync_begin,local_sync_end;
        return;
    }
 
-   ga_sync_();
+   ga_pgroup_sync_(&a_grp);
    nga_inquire_internal_(g_c,  &typeC, &ndim, dims);
    nga_distribution_(g_c, &me, lo, hi);
    if (  lo[0]>0 ){
@@ -707,7 +760,7 @@ int local_sync_begin,local_sync_end;
 
 
    GA_POP_NAME;
-   if(local_sync_end)ga_sync_();
+   if(local_sync_end)ga_pgroup_sync_(&a_grp);
 #ifdef GA_USE_VAMPIR
    vampir_end(GA_ADD,__FILE__,__LINE__);
 #endif

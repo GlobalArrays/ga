@@ -72,12 +72,14 @@ extern void GA_Set_data(int g_a, int ndim, int dims[], int type);
 extern void GA_Set_chunk(int g_a, int chunk[]);
 extern void GA_Set_array_name(int g_a, char *name);
 extern void GA_Set_pgroup(int g_a, int p_handle);
+extern int GA_Get_pgroup(int g_a);
 extern void GA_Set_ghosts(int g_a, int width[]);
 extern void GA_Set_irreg_distr(int g_a, int map[], int block[]);
 extern void GA_Set_irreg_flag(int g_a, int flag);
 extern void GA_Set_ghost_corner_flag(int g_a, int flag);
 extern int GA_Get_dimension(int g_a);
 extern int GA_Allocate(int g_a);
+extern int GA_Pgroup_create(int *list, int count);
 extern void GA_Update_ghosts(int g_a);
 extern void GA_Merge_mirrored(int g_a);
 extern void GA_Fast_merge_mirrored(int g_a);
@@ -152,6 +154,8 @@ extern void GA_Lock(int mutex);
 extern void GA_Unlock(int mutex);
 extern int GA_Nodeid();
 extern int GA_Nnodes();
+extern int GA_Pgroup_nodeid(int grp_id);
+extern int GA_Pgroup_nnodes(int grp_id);
 extern void GA_Dgemm(char ta, char tb, int m, int n, int k, 
                      double alpha, int g_a, int g_b, double beta, int g_c );
 extern void GA_Zgemm(char ta, char tb, int m, int n, int k, 
@@ -162,9 +166,13 @@ extern void GA_Sgemm(char ta, char tb, int m, int n, int k,
 extern void GA_Copy_patch(char ta,int g_a, int ailo, int aihi,int ajlo,int ajhi,
                              int g_b, int bilo, int bihi, int bjlo,int bjhi);
 extern void GA_Brdcst(void *buf, int lenbuf, int root);
+extern void GA_Pgroup_brdcst(int grp, void *buf, int lenbuf, int root);
 extern void GA_Dgop(double x[], int n, char *op);
+extern void GA_Pgroup_dgop(int grp, double x[], int n, char *op);
 extern void GA_Lgop(long x[], int n, char *op);
+extern void GA_Pgroup_lgop(int grp, long x[], int n, char *op);
 extern void GA_Igop(Integer x[], int n, char *op);
+extern void GA_Pgroup_igop(int grp, Integer x[], int n, char *op);
 
 extern void NGA_Copy_patch(char trans, int g_a, int alo[], int ahi[],
                            int g_b, int blo[], int bhi[]);
@@ -224,8 +232,14 @@ extern void NGA_Matmul_patch(char transa, char transb, void* alpha, void *beta,
 #define GA_Fence  ga_fence_
 #define GA_Nodeid (int)ga_nodeid_
 #define GA_Nnodes (int)ga_nnodes_
+#define GA_Pgroup_nodeid (int)ga_pgroup_nodeid_
+#define GA_Pgroup_nnodes (int)ga_pgroup_nnodes_
 #define ga_nbhdl_t Integer
 
+extern int GA_Cluster_nnodes();
+extern int GA_Cluster_nodeid();
+extern int GA_Cluster_nprocs(int x);
+extern int GA_Cluster_procid(int x, int y);
 extern void GA_Register_stack_memory(void * (*ext_alloc)(), 
 				     void (*ext_free)());
 
