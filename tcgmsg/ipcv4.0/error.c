@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/error.c,v 1.5 1995-02-24 02:17:15 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/error.c,v 1.6 1995-03-29 23:55:51 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <setjmp.h>
@@ -34,16 +34,21 @@ void Error(string, integer)
 
   (void) fflush(stdout);
   if (SR_caught_sigint) {
-    (void) fprintf(stderr,"%2ld: interrupt\n",NODEID_());
+    (void) fprintf(stderr,"%3ld: interrupt\n",NODEID_());
+    (void) fflush(stderr);
   }
   else {
-    (void) fprintf(stderr,"%2ld: %s %ld (%#lx).\n", NODEID_(), string,
+    (void) fprintf(stdout,"%3ld: %s %ld (%#lx).\n", NODEID_(), string,
+		   integer,integer);
+    (void) fflush(stdout);
+    (void) fprintf(stderr,"%3ld: %s %ld (%#lx).\n", NODEID_(), string,
 		   integer,integer);
     if (errno != 0)
       perror("system error message");
     if (DEBUG_)
       PrintProcInfo();
   }
+  (void) fflush(stdout);
   (void) fflush(stderr);
 
   /* Shut down the sockets and remove shared memory and semaphores to
