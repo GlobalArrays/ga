@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.7 1999-11-24 23:51:51 d3h325 Exp $ */
+/* $Id: signaltrap.c,v 1.8 2000-03-27 21:25:26 d3h325 Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -115,18 +115,14 @@ SigType SigChldHandler(sig)
 #endif
      int sig;
 {
-  int status, pid;
+  int status;
   
 #if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
   union wait ustatus;
-#endif
-
-
-#if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
-  pid = wait(&ustatus);
+  (void) wait(&ustatus);
   status = ustatus.w_status;
 #else
-  pid = wait(&status);
+  (void)wait(&status);
 #endif
       AR_caught_sigchld=1;
       AR_caught_sig= sig;
