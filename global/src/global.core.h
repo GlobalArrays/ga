@@ -48,7 +48,6 @@ static int max_global_array = MAX_ARRAYS;
 Integer map[MAX_NPROC][5];               /* used in get/put/acc */
 
 
-
 #ifdef  CRAY_T3D
 #define ALLIGN_SIZE      32 
 #else
@@ -209,7 +208,7 @@ static Integer MPme, MPnproc;
 
 static int GAinitialized = 0;
 int ProcListPerm[MAX_NPROC];            /* permuted list of processes */
-Integer local_buf_req;
+Integer local_buf_req=0;
 Integer *NumRecReq = &local_buf_req;/* # received requests by data server */
                                     /* overwritten by shmem buf ptr if needed */
     

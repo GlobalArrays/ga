@@ -14,7 +14,7 @@
       external ga_ddot_patch, ga_compare_distr, ga_duplicate
       external ga_scatter, ga_gather, ga_get, ga_put
       external ga_inquire_memory, ga_uses_ma, ga_memory_limited
-      external ga_memory_avail
+      external ga_memory_avail, ga_init_fence, ga_fence
 #ifdef IWAY
       external ga_net_nnodes, ga_net_nodeid
 #endif

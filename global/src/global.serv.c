@@ -65,6 +65,11 @@ Integer cluster_server=-1;
 Integer ClusterMode=0;
 Integer cluster_nodes=0;
 
+#if !(defined(KSR) || defined(CONVEX) || defined(CRAY_T3D))
+    char fence_array[MAX_NPROC];
+#endif
+int GA_fence_set;
+
 
 /*\ determines cluster structure according to *.p file
  *  through TCGMSG GA_clus_info
@@ -244,6 +249,10 @@ void ga_snd_req(g_a, ilo,ihi,jlo,jhi, nbytes, data_type, oper, proc, to)
     if(DEBUG0)fprintf(stderr,"GAme=%d sending request %d to server %d done\n",
               ga_nodeid_(), oper, to);
     NumSndReq++; /* count requests sent */
+
+    if(GA_fence_set && (oper == GA_OP_PUT || oper == GA_OP_ACC || 
+                        oper == GA_OP_DST || oper == GA_OP_RDI))
+                        fence_array[to]=1;
 }
 
 
@@ -261,7 +270,7 @@ void ga_snd_req(g_a, ilo,ihi,jlo,jhi, nbytes, data_type, oper, proc, to)
 void ga_SERVER(from)
      Integer from;
 {
-Integer msglen, ld, offset = 0, rdi_val, elem_size, nelem, toproc;
+Integer msglen, ld, offset = 0, rdi_val, elem_size, nelem, toproc,ack;
 char    *piindex, *pjindex, *pvalue;
 
 void    ga_get_local(), ga_put_local(), ga_acc_local(), ga_scatter_local(),
@@ -276,7 +285,7 @@ Integer ga_read_inc_local();
 #ifdef DATA_SERVER
    if(DEBUG) fprintf(stderr, "data server %d ready\n",ga_msg_nodeid_());
    do {
-      Integer len, ack;
+      Integer len;
       len = TOT_MSG_SIZE; /* MSG_BUF_SIZE + MSG_HEADER_SIZE */ 
       ga_msg_rcv(GA_TYPE_REQ, (char*)MessageRcv, len, &msglen, -1, &from);
       if(ACK) ga_msg_snd(GA_TYPE_ACK, &ack, sizeof(ack), from);
@@ -456,6 +465,14 @@ Integer ga_read_inc_local();
                               pend_();
 #                           endif
                             exit(0);
+
+          case GA_OP_ACK:   /* acknowledge completion of previous requests */
+                            /* Note that since messages are not overtaking,
+                             * all requests from the client must be already done
+                             */
+                            ga_msg_snd(GA_TYPE_ACK, &ack, 0, from);
+                            break;                          
+
                  default:   ga_error("ga_server: unknown request",ga_nodeid_());
       }
 
@@ -468,6 +485,51 @@ Integer ga_read_inc_local();
    in_handler = 0;
 #endif
     if(DEBUG)fprintf(stderr,"leaving handler %d\n",ga_msg_nodeid_()); 
+}
+
+
+/*\ initialize tracing of request completion
+\*/
+void ga_init_fence_()
+{
+    Integer proc;
+    GA_fence_set=1;
+#if defined(KSR) || defined(CONVEX) || defined(CRAY_T3D)
+#else
+# ifdef SYSV
+       proc = GA_n_clus-1;
+#   else
+       proc = ga_nnodes_()-1;
+# endif
+    for(;proc>=0; proc --) fence_array[proc]=0;
+#endif
+}
+
+
+/*\ wait until requests intiated by calling process are completed
+\*/
+void ga_fence_()
+{
+    Integer proc;
+    if(!GA_fence_set)ga_error("ga_fence: fence not initialized",0);
+    GA_fence_set=0;
+#if defined(CRAY_T3D)
+    shmem_quiet();
+#elif defined(CONVEX) || defined(KSR)
+    return;
+#else
+#   if defined(SYSV)
+       proc = GA_n_clus-1;
+#   else
+       proc = ga_nnodes_()-1;
+#   endif
+    for(;proc >= 0; proc--) if(fence_array[proc]){
+       Integer dummy;
+       fence_array[proc]=0;
+       ga_snd_req(0, 0, 0, 0, 0, 0, 0, GA_OP_ACK, 0, proc);
+       ga_msg_rcv(GA_TYPE_ACK, &dummy, 0, &dummy, proc, &dummy);
+    }
+#endif
 }
 
 

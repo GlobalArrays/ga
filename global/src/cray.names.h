@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.13 1996-01-02 18:41:18 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.14 1996-03-27 20:25:53 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -14,6 +14,7 @@
 #define  ga_ddot_patch_            GA_DDOT_PATCH
 #define  ga_destroy_               GA_DESTROY
 #define  ga_dfill_patch_           GA_DFILL_PATCH
+#define  ga_fence_                 GA_FENCE
 #define  ga_gather_                GA_GATHER
 #define  ga_dgop_                  GA_DGOP
 #define  ga_distribution_          GA_DISTRIBUTION
@@ -26,6 +27,7 @@
 #define  ga_ifill_patch_           GA_IFILL_PATCH
 #define  ga_igop_                  GA_IGOP
 #define  ga_initialize_            GA_INITIALIZE
+#define  ga_init_fence_            GA_INIT_FENCE
 #define  ga_initialize_ltd_        GA_INITIALIZE_LTD
 #define  ga_inquire_               GA_INQUIRE
 #define  ga_inquire_name_          GA_INQUIRE_NAME

@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.21 1996-03-25 19:59:39 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.22 1996-03-27 20:25:55 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -86,8 +86,10 @@ void gaCentralBarrier()
 void ga_sync_()
 {
 void   ga_wait_server();
-       if (GAme < 0) return;
+       extern int GA_fence_set;
 
+       GA_fence_set=0;
+       if (GAme < 0) return;
 #ifdef CONVEX
        ga_msg_sync_();
 #elif defined(CRAY_T3D) || defined(KSR)
@@ -2341,7 +2343,7 @@ Integer first, BufLimit, proc;
   /* determine limit for message size --                               *
    * --  i,j will travel together in the request;  v will be sent back * 
    * --  due to limited buffer space (i,j,v) will occupy the same buf  * 
-   *     when server executes ga_gather_local                         */
+   *     when server executes ga_gather_local                          */
 
   item_size = GAsizeofM(GA[GA_OFFSET + *g_a].type);
   BufLimit   = MSG_BUF_SIZE/(2*sizeof(Integer)+item_size);
@@ -2489,6 +2491,7 @@ Integer ga_nnodes_()
 {
   return ((Integer)GAnproc);
 }
+
 
 
 /*********************** other utility routines *************************/

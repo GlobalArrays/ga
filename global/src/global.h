@@ -41,12 +41,14 @@ extern void  ga_acc_   ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*, 
 extern void ga_access_ ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Integer*, Integer* ));
 extern void ga_brdcst_ ARGS_((Integer*, Void*, Integer*, Integer* ));
 extern void ga_gather_ ARGS_((Integer*, Void*, Integer*, Integer*, Integer* ));
-extern void ga_dgop ARGS_((Integer, DoublePrecision*, Integer, char* ));
+extern void ga_dgop    ARGS_((Integer, DoublePrecision*, Integer, char* ));
 extern void ga_distribution_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer*, Integer* ));
 extern void ga_scatter_ ARGS_((Integer*, Void*, Integer*, Integer*, Integer*));
-extern void ga_error ARGS_((char*, Integer));
-extern void ga_get_  ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Void*, Integer* ));
-extern void ga_igop  ARGS_((Integer, Integer*, Integer, char* ));
+extern void ga_error    ARGS_((char*, Integer));
+extern void ga_init_fence_   ARGS_(( void));
+extern void ga_fence_   ARGS_(( void));
+extern void ga_get_     ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Void*, Integer* ));
+extern void ga_igop     ARGS_((Integer, Integer*, Integer, char* ));
 extern void ga_initialize_ ARGS_(( void));
 extern void ga_initialize_ltd_ ARGS_(( Integer* ));
 extern void ga_inquire_ ARGS_((Integer*, Integer*, Integer*, Integer* ));

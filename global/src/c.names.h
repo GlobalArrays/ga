@@ -24,11 +24,13 @@
 #define  GA_dscal_patch            ga_dscal_patch_
 #define  GA_duplicate              ga_duplicate
 #define  GA_error                  ga_error_
+#define  GA_fence                  ga_fence_
 #define  GA_gather                 ga_gather_
 #define  GA_get                    ga_get_
 #define  GA_ifill_patch            ga_ifill_patch_
 #define  GA_igop                   ga_igop_
 #define  GA_initialize             ga_initialize_
+#define  GA_init_fence             ga_init_fence_
 #define  GA_initialize_ltd         ga_initialize_ltd_
 #define  GA_inquire                ga_inquire_
 #define  GA_inquire_memory         ga_inquire_memory_

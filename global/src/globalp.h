@@ -52,6 +52,7 @@
 #define     GA_OP_COP 13         /* Copy                        */
 #define     GA_OP_ADD 14         /* Double precision add        */
 #define     GA_OP_RDI 15         /* Integer read and increment  */
+#define     GA_OP_ACK 16         /* acknowledgment              */
 
 
 #ifdef GA_TRACE
