@@ -1655,7 +1655,8 @@ c
 #include "global.fh"
       integer proc(100),nproc,i
       nproc = ga_nnodes()
-      if(nproc>100)call ga_error("remap requires<=100 processes",nproc)
+      if(nproc.gt.100)
+     $   call ga_error("remap requires<=100 processes",nproc)
       do i = 1, nproc
          proc(i) = nproc-i
       enddo

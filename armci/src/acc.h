@@ -14,6 +14,8 @@
 #    define C_ACCUMULATE_2D     c_accumulate_2d_u_
 #    define Z_ACCUMULATE_2D     z_accumulate_2d_u_
 #    define F_ACCUMULATE_2D     f_accumulate_2d_u_
+#elif defined(WIN32)
+#    define L_ACCUMULATE_2D     I_ACCUMULATE_2D
 #endif
 
 #ifdef CRAY

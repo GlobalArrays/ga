@@ -81,7 +81,7 @@ Integer status;
 
 /*\ wait until requests intiated by calling process are completed
 \*/
-void ga_fence_()
+void FATR ga_fence_()
 {
     int proc;
     if(GA_fence_set<1)ga_error("ga_fence: fence not initialized",0);
@@ -92,7 +92,7 @@ void ga_fence_()
 
 /*\ initialize tracing of request completion
 \*/
-void ga_init_fence_()
+void FATR ga_init_fence_()
 {
     int proc;
     GA_fence_set++;
@@ -1004,9 +1004,7 @@ Integer ga_ndim_(Integer *g_a)
 /*\ DUPLICATE A GLOBAL ARRAY
  *  -- new array g_b will have properties of g_a
 \*/
-logical ga_duplicate(g_a, g_b, array_name)
-     Integer *g_a, *g_b;
-     char *array_name;
+logical ga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
      /*
       * array_name    - a character string [input]
       * g_a           - Integer handle for reference array [input]
@@ -1372,7 +1370,7 @@ int _i;\
 void FATR nga_put_(Integer *g_a, 
                    Integer *lo,
                    Integer *hi,
-                   Void    *buf,
+                   void    *buf,
                    Integer *ld)
 {
 Integer  p, np, proc, handle=GA_OFFSET + *g_a;
@@ -1836,15 +1834,14 @@ Integer ow;
 
 /*\ RELEASE ACCESS TO A PATCH OF A GLOBAL ARRAY
 \*/
-void FATR  ga_release_(g_a, ilo, ihi, jlo, jhi)
-     Integer *g_a, *ilo, *ihi, *jlo, *jhi;
+void FATR  ga_release_(Integer *g_a, 
+                       Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi)
 {}
 
 
 /*\ RELEASE ACCESS TO A PATCH OF A GLOBAL ARRAY
 \*/
-void FATR  nga_release_(g_a, lo, hi)
-     Integer *g_a, *lo, *hi;
+void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi)
 {}
 
 
@@ -1857,8 +1854,7 @@ void FATR  ga_release_update_(g_a, ilo, ihi, jlo, jhi)
 
 /*\ RELEASE ACCESS & UPDATE A PATCH OF A GLOBAL ARRAY
 \*/
-void FATR  nga_release_update_(g_a, lo, hi)
-     Integer *g_a, *lo, *hi;
+void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi)
 {}
 
 

@@ -29,7 +29,10 @@ LIBS = $(MPI_LIB)\$(MPI_LIB_NAME)
 OBJ =   "$(OBJDIR)\winshmem.obj" \
         "$(OBJDIR)\shmalloc.obj" \
         "$(OBJDIR)\rmw.obj" \
+        "$(OBJDIR)\clusterinfo.obj" \
         "$(OBJDIR)\memory.obj" \
+        "$(OBJDIR)\mutex.obj" \
+        "$(OBJDIR)\message.obj" \
         "$(OBJDIR)\locks.obj" \
         "$(OBJDIR)\fence.obj" \
         "$(OBJDIR)\fcopy.obj" \
@@ -64,6 +67,8 @@ $(OBJDIR)/test.obj: $(OBJDIR) armci.h
 test.exe: $(OBJDIR)/test.obj $(LIBRARY_PATH)
 	$(CC) $(COPT) -Fe$@ $** $(LIBS)
 
+#	-@erase /q  $(OBJDIR)\* *.exe $(PRJDIR)\*.idb $(PRJDIR)\*.pch $(PRJDIR)\*.pdb  $(LIBRARY_PATH)
 clean:
-	-@erase *.exe $(OBJDIR)\*.obj $(OBJDIR)\*.for $(PRJDIR)\*.idb $(PRJDIR)\*.pch $(PRJDIR)\*.pdb  $(LIBRARY_PATH)
+	-@erase /q  $(OBJDIR)\* *.exe  $(LIBRARY_PATH)
 	-@rmdir $(OBJDIR)
+	-@erase /q  $(PRJDIR)\*.idb $(PRJDIR)\*.pch $(PRJDIR)\*.pdb

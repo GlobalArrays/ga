@@ -3,7 +3,7 @@
       integer g_a, g_b
       external gai_dot
       ga_zdot = (0.,0.)
-      call gai_dot(g_a,g_b,ga_zdot)
+      call gai_zdot(g_a,g_b,ga_zdot)
       end
 
 

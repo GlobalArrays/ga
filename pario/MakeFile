@@ -5,11 +5,11 @@ LIBDIR = ..\lib\win32
 COMPLIBS = eaf.lib dra.lib sf.lib
 
 all: $(SUBDIRS)
-	!cd $** & nmake -nologo /f NTmakefile 
+	!cd $** & nmake -nologo
 	cd $(LIBDIR)
 	$(AR) /out:chemio.lib $(COMPLIBS)  
 	-del $(COMPLIBS)
 	
 	
 clean: $(SUBDIRS)
-	!cd $** & nmake -nologo /f NTmakefile clean
+	!cd $** & nmake -nologo clean

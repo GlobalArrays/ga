@@ -1,6 +1,10 @@
 #ifndef _GA_H_
 #define _GA_H_
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include <sys/types.h>
 #include "global.h"
 

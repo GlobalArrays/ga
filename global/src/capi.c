@@ -120,7 +120,7 @@ int GA_Duplicate(int g_a, char* array_name)
 {
     logical st;
     Integer a=(Integer)g_a, b;
-    st = ga_duplicate_(&a, &b, array_name);
+    st = ga_duplicate(&a, &b, array_name);
     if(st==TRUE) return (int) b;
     else return 0;
 }
@@ -154,7 +154,7 @@ DoubleComplex GA_Zdot(int g_a, int g_b)
 {
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    return ga_zdot_(&a,&b);
+    return ga_zdot(&a,&b);
 }
 
 

@@ -1,7 +1,7 @@
 #include "armcip.h"
 #include <stdio.h>
 
-#if !defined(ACC_COPY) && !defined(CRAY_YMP)
+#if !defined(ACC_COPY) && !defined(CRAY_YMP) && !defined(WIN32)
 #   define REMOTE_OP 
 #endif
 

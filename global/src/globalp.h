@@ -134,20 +134,7 @@ extern void c2fstring( char*, char*, Integer);
 extern void ga_clean_resources( void);
 
 
-#ifdef ARMCI
-extern Integer ga_ndim_(Integer *g_a);
-
-extern logical FATR nga_locate_(Integer *g_a, 
-                                Integer* subscript, 
-                                Integer* owner);
-
-extern logical FATR nga_locate_region_( Integer *g_a,
-                                        Integer *lo,
-                                        Integer *hi,
-                                        Integer *map,
-                                        Integer *proclist,
-                                        Integer *np);
-#else
+#ifndef ARMCI
 extern void ga_put_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo, 
                          Integer jhi, void* buf, Integer offset, Integer ld, 
                          Integer proc);

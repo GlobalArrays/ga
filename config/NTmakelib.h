@@ -22,4 +22,5 @@ $(STAMP): $(HEADERS)
 clean:
 	-@erase /q $(STAMP) *.exe *.ilk *.pdb $(OBJDIR)\*.*  $(LIBRARY_PATH)
 	-@if exist "$(OBJDIR)" rmdir "$(OBJDIR)"
+	-@if exist "*.stamp" erase /q "*.stamp"
 	

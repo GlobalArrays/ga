@@ -180,8 +180,20 @@ DoublePrecision sum;
 }
 
 
-/*DoubleComplex ga_zdot_(g_a, g_b)*/
-void FATR gai_dot_(g_a, g_b, retval)
+/*\ DoubleComplex ga_zdot - C version
+\*/ 
+DoubleComplex ga_zdot(Integer *g_a, Integer *g_b)
+{
+DoubleComplex sum;
+        gai_dot(MT_F_DCPL, g_a, g_b, &sum);
+        return sum;
+}
+
+
+#if defined(CRAY) || defined(WIN32)
+# define gai_zdot_ GAI_ZDOT
+#endif
+void FATR gai_zdot_(g_a, g_b, retval)
         Integer *g_a, *g_b;
         DoubleComplex *retval;  
 {

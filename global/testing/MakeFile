@@ -22,6 +22,9 @@ test.exe: $(OBJDIR) $(OBJDIR)\test.obj
 patch.exe: $(OBJDIR) $(OBJDIR)\patch.obj
 	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\patch.obj $(LIBS)
 
+ndim.exe: $(OBJDIR) $(OBJDIR)\ndim.obj $(OBJDIR)\util.obj
+	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\ndim.obj $(OBJDIR)\util.obj  $(LIBS)
+
 perf.exe: $(OBJDIR) $(OBJDIR)\perf.obj
 	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\perf.obj $(LIBS)
 

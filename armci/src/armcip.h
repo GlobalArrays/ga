@@ -23,6 +23,7 @@
      int _i;\
      for(_i=0; _i< (len); _i++)((char*)(a))[_i]=0;\
    }
+#  define bcopy(a,b,len) memcpy(b,a,len)
 #else
 # include <strings.h>
 #endif

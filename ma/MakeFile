@@ -13,7 +13,10 @@ OBJ          = $(OBJDIR)\string-util.obj \
 HEADERS      = macommon.h      \
                matypes.h       \
                macdecls.h      \
-               mafdecls.fh
+               mafdecls.fh \
+               typesf2c.h \
+               winf2c.h \
+               winutil.h
 
 
 LOC_DEFINES = -DVERIFY -DSTATS
