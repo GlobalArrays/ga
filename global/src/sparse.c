@@ -8,40 +8,51 @@ static void gai_combine_val(int type, void *ptr, int n, void* val, int add)
 {
     int i;
 
-        switch (type){
-          Integer *ia;
-          DoublePrecision *da;
-          DoubleComplex *ca;
+    switch (type){
+       Integer *ia;
+       DoublePrecision *da;
+       DoubleComplex *ca;
 
-          case MT_F_INT:
-             ia = (Integer*)ptr;
-             if(add)
-			   for(i=0; i< n; i++) ia[i] += *(Integer*)val; 
-			 else
-			   for(i=0; i< n; i++) ia[i] = *(Integer*)val; 
-             break;
-          case MT_F_DCPL:
-             ca = (DoubleComplex*)ptr;
-             if(add)
-               for(i=0; i< n; i++){
-                   ca[i].real += ((DoubleComplex*)val)->real; 
-                   ca[i].imag += ((DoubleComplex*)val)->imag; 
-               }
-			 else
-               for(i=0; i< n; i++){
-                   ca[i].real = ((DoubleComplex*)val)->real; 
-                   ca[i].imag = ((DoubleComplex*)val)->imag; 
-               }
-             break;
-          case MT_F_DBL:
-             da = (double*)ptr;
-             if(add)
-               for(i=0; i< n; i++) da[i] += *(double*)val; 
-			 else
+       case MT_F_INT:
+            ia = (Integer*)ptr;
+            if(add) for(i=0; i< n; i++) {
+                    if(i==0) 
+                       ia[i] += *(Integer*)val; 
+                    else
+                       ia[i] = ia[i-1] + *(Integer*)val; 
+            }
+            else
+                    for(i=0; i< n; i++) ia[i] = *(Integer*)val; 
+            break;
+       case MT_F_DCPL:
+            ca = (DoubleComplex*)ptr;
+            if(add) for(i=0; i< n; i++){
+                    if(i==0) {
+                       ca[i].real += ((DoubleComplex*)val)->real; 
+                       ca[i].imag += ((DoubleComplex*)val)->imag; 
+                    }  else {
+                       ca[i].real = ca[i-1].real + ((DoubleComplex*)val)->real; 
+                       ca[i].imag = ca[i-1].imag + ((DoubleComplex*)val)->imag; 
+                    }
+                }
+            else
+                for(i=0; i< n; i++){
+                    ca[i].real = ((DoubleComplex*)val)->real; 
+                    ca[i].imag = ((DoubleComplex*)val)->imag; 
+                }
+            break;
+       case MT_F_DBL:
+            da = (double*)ptr;
+            if(add) for(i=0; i< n; i++) {
+                    if(i==0) 
+                       da[i] += *(double*)val; 
+                    else
+                       da[i] = da[i-1] + *(double*)val; 
+            } else
                for(i=0; i< n; i++) da[i] = *(double*)val; 
-             break;
-          default: ga_error("ga_scan/add:wrong data type",type);
-        }
+            break;
+       default: ga_error("ga_scan/add:wrong data type",type);
+       }
 }
 
 static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
@@ -56,14 +67,14 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
           case MT_F_INT:
              ia1 = (Integer*)ptr1;
              ia2 = (Integer*)ptr2;
-			 ia2[0] = ia1[0] +  *(Integer*)val; 
+             ia2[0] = ia1[0] +  *(Integer*)val; 
              for(i=1; i< n; i++) ia2[i] = ia2[i-1]+ia1[i];
              break;
           case MT_F_DCPL:
              ca1 = (DoubleComplex*)ptr1;
              ca2 = (DoubleComplex*)ptr2;
-			 ca2->real = ca1->real +  ((DoubleComplex*)val)->real; 
-			 ca2->imag = ca1->imag +  ((DoubleComplex*)val)->imag; 
+             ca2->real = ca1->real +  ((DoubleComplex*)val)->real; 
+             ca2->imag = ca1->imag +  ((DoubleComplex*)val)->imag; 
              for(i=1; i< n; i++){
                    ca2[i].real = ca2[i-1].real + ca1[i].real;
                    ca2[i].imag = ca2[i-1].imag + ca1[i].imag;
@@ -72,7 +83,7 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
           case MT_F_DBL:
              da1 = (double*)ptr1;
              da2 = (double*)ptr2;
-			 da2[0] = da1[0] +  *(double*)val; 
+             da2[0] = da1[0] +  *(double*)val; 
              for(i=1; i< n; i++) da2[i] = da2[i-1]+da1[i];
              break;
           default: ga_error("ga_add_val:wrong data type",type);
@@ -92,16 +103,16 @@ static void gai_copy_sbit(int type, void *a, int n, void *b, Integer *sbit, int 
          case MT_F_INT:
              is = (Integer*)a; id = (Integer*)b;
              for(i=0; i< n; i++) if(sbit[i]) { 
-					 *id = is[i]; id++;
-					 cnt++;
-			 }
+                     *id = is[i]; id++;
+                     cnt++;
+          }
              break;
           case MT_F_DCPL:
              cs = (DoubleComplex*)a; cd = (DoubleComplex*)b;
              for(i=0; i< n; i++)if(sbit[i]){
                  cd->real  = cs[i].real; cd->imag  = cs[i].imag; cd ++;
-				 cnt++;
-			 }
+                 cnt++;
+         }
              break;
           case MT_F_DBL:
              ds = (double*)a; dd = (double*)b;
@@ -126,10 +137,10 @@ static void gai_copy_sbit(int type, void *a, int n, void *b, Integer *sbit, int 
              break;
           default: ga_error("ga_copy_sbit:wrong data type",type);
         }
-	    if(cnt!=mx){
-				printf("\nga_copy_sbit: cnt=%d should be%d\n",cnt,mx);
-				ga_error("ga_copy_sbit mismatch",0);
-		}
+    if(cnt!=mx){
+        printf("\nga_copy_sbit: cnt=%d should be%d\n",cnt,mx);
+        ga_error("ga_copy_sbit mismatch",0);
+    }
 }
 
 
@@ -205,7 +216,7 @@ register Integer i;
 
 
 static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit, 
-    	   Integer* lo, Integer* hi, int add)
+           Integer* lo, Integer* hi, int add)
 {
    Integer *lim=NULL, handle, idx, nproc, me;
    Integer lop, hip, ndim, dims, type;
@@ -279,7 +290,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
        i = 0;
        for(k=lop; k<= hip; ){ 
            int indx=i, one=1;
-		   int elemsize = GAsizeofM(type);
+           int elemsize = GAsizeofM(type);
            
            /* find where sbit changes */ 
            for(; i< hip-lop; indx=++i) if(ip[i+1]) {i++; break;}
@@ -292,7 +303,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
            /* assign it to "elems" elements of B */
            gai_combine_val(type, ptr_b, elems, buf,add); 
 
-		   ptr_b = (char*)ptr_b + elems*elemsize;
+           ptr_b = (char*)ptr_b + elems*elemsize;
            k += elems;
            startp = k;
        }
@@ -310,16 +321,16 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
 
 void ga_scan_copy_(Integer* g_a, Integer* g_b, Integer* g_sbit,
-				           Integer* lo, Integer* hi)
+                           Integer* lo, Integer* hi)
 {       
-		gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 0);
+        gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 0);
 }
 
 
 void ga_scan_add_(Integer* g_a, Integer* g_b, Integer* g_sbit,
-				           Integer* lo, Integer* hi)
+                           Integer* lo, Integer* hi)
 {       
-		gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 1);
+        gai_scan_copy_add(g_a, g_b, g_sbit, lo, hi, 1);
 }
 
 
@@ -403,7 +414,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
      }else{
 
-        nga_get_(g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer */
+        nga_get_(g_b, &dst_lo, &dst_hi,  buf, &counter); /* get data to buffer*/
         gai_copy_sbit(type, ptr, hip-lop+1 , buf, ia+first, pack,counter);  /* copy data to array*/
 
      }
