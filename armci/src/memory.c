@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.42 2004-06-29 22:57:36 manoj Exp $ */
+/* $Id: memory.c,v 1.43 2004-07-21 23:57:58 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -244,12 +244,12 @@ void *reg_malloc(size_t size)
 
 /* public constructor to initialize the kr_malloc context */
 void armci_krmalloc_init_localmem() {
-  ctx_localmem.ctx_type = KR_CTX_LOCALMEM;
 #ifdef ALLOW_PIN
   kr_malloc_init(0, 0, 0, reg_malloc, 0, &ctx_localmem);
 #else
   kr_malloc_init(0, 0, 0, malloc, 0, &ctx_localmem);
 #endif
+  ctx_localmem.ctx_type = KR_CTX_LOCALMEM;
 }
 
 /**
