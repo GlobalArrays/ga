@@ -62,8 +62,7 @@ ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt
      FOPT_REN = -Sw
  GLOB_DEFINES = -DFUJITSU
-   EXTRA_LIBS = /usr/local/lib/libmp2.a -L/opt/tools/lib/ -lgen  -lpx -lelf
- -Wl,-J,-P -L/usr/lang/lib -lblasvp
+   EXTRA_LIBS = /usr/local/lib/libmp.a -L/opt/tools/lib/ -lgen  -lpx -lelf -Wl,-J,-P -L/usr/lang/lib -lblasvp -lcvp
 endif
 
 ifeq ($(TARGET),SOLARIS)
