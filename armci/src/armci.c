@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.55 2002-11-06 13:58:36 vinod Exp $ */
+/* $Id: armci.c,v 1.56 2002-12-03 16:42:52 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -360,19 +360,17 @@ void ARMCI_Copy(void *src, void *dst, int n)
 #endif
 }
 
-
-/*\ busy wait 
- *  n represents number of time delay units   
- *  notused is useful to fool compiler by passing address of sensitive variable 
-\*/
-#define DUMMY_INIT 1.0001
-double _armci_dummy_work=DUMMY_INIT;
-void armci_util_spin(int n, void *notused)
+extern void cpu_yield();
+void armci_util_wait_int(volatile int *p, int val, int maxspin)
 {
-int i;
-    for(i=0; i<n; i++)
-        if(armci_msg_me()>-1)  _armci_dummy_work *=DUMMY_INIT; 
-    if(_armci_dummy_work>(double)armci_msg_nproc())_armci_dummy_work=DUMMY_INIT;
+int count=0;
+extern void cpu_yield();
+       while(*p != val)
+            if((++count)<maxspin) armci_util_spin(count,(int *)p);
+            else{
+               cpu_yield();
+               count =0;
+            }
 }
   
 
