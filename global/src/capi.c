@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.24 2000-09-21 20:42:58 d3h325 Exp $ */
+/* $Id: capi.c,v 1.25 2000-10-19 22:52:33 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -829,3 +829,11 @@ extern void gai_print_distribution(int fstyle, Integer g_a);
 void NGA_Release_update(int g_a, int lo[], int hi[])
 {
 }
+
+
+int GA_Ndim(int g_a)
+{
+    Integer a = (Integer)g_a;
+    return (int)ga_ndim_(&a);
+}
+

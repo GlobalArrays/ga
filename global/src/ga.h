@@ -107,6 +107,7 @@ extern int GA_Spd_invert(int g_a);
 extern void GA_Summarize(int verbose);
 extern void GA_Symmetrize(int g_a);
 extern void GA_Transpose(int g_a, int g_b);
+extern int  GA_Ndim(int g_a);
 
 extern int  GA_Valid_handle(int g_a);
 
