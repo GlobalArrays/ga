@@ -85,7 +85,11 @@ LIBLAPIDIR = /usr/lpp/ssp/css/lib
 # LIBCOM := -ltimer $(LIBCOM)
      BLAS = -lesslp2
 
-EXTRA_LIBS = -lxlf90 -lxlf -lm
+ifdef LAPI2
+EXTRA_LIBS = -L/u2/d3h325/lapi_vector_beta
+endif
+
+EXTRA_LIBS += -lxlf90 -lxlf -lm
 
 EXTRA_LIBS_11 = \
    -bnso -bI:/usr/lib/syscalls.exp -L$(LIBLAPIDIR) $(LIBHAL) $(LIBLAPI) \
