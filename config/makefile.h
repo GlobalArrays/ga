@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.112 2004-10-28 20:08:24 manoj Exp $
+# $Id: makefile.h,v 1.113 2004-12-08 02:44:22 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -294,6 +294,20 @@ else
          GLOB_DEFINES+= -DIFCV8
        endif	
        FLD_REN += -Vaxlib
+   endif
+   ifneq (,$(findstring ifort,$(_FC)))
+       ifeq ($(FOPT),-O)
+           FOPT_REN = -O3 -prefetch -w -cm
+       endif
+       GLOB_DEFINES += -DIFCLINUX
+       _IFCV8= $(shell ifc -v  2>&1|egrep 8|awk ' /8\./  {print "Y"}')
+       ifeq ($(_IFCV8),Y)
+         GLOB_DEFINES+= -DIFCV8
+       endif	
+       FLD_REN += -Vaxlib
+       ifeq ($(LINK.c),$(FC))
+          CLD_REN += -nofor_main
+       endif
    endif
    ifeq ($(FC),xlf)
      FOPT_REN = -q32  -qEXTNAME
