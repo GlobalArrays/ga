@@ -117,9 +117,22 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-    rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
-                               dst_ptr, dst_stride_arr,
-                               count, stride_levels, 0);
+    ORDER(PUT,proc); /* ensure ordering */
+
+#   ifdef REMOTE_OP
+      if(armci_me != proc
+#      ifdef LAPI
+             && stride_levels>0 && count[0]< LONG_PUT_THRESHOLD
+#      endif
+       )
+
+       rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
+                       dst_ptr, dst_stride_arr, count, stride_levels, -1, -1);
+      else
+#   endif
+
+       rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
+                              dst_ptr, dst_stride_arr, count, stride_levels, 0);
 
     if(rc) return FAIL6;
     else return 0;
@@ -142,9 +155,21 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-    rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, 
-                               dst_ptr, dst_stride_arr,
-                               count, stride_levels,0);
+    ORDER(GET,proc); /* ensure ordering */
+
+#   ifdef REMOTE_OP
+      if(armci_me != proc 
+#      ifdef LAPI
+             && stride_levels>0 && count[0]< LONG_GET_THRESHOLD 
+#      endif
+       )
+       rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+                       dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
+      else
+#   endif
+       rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, 
+                               dst_ptr, dst_stride_arr, count, stride_levels,0);
+
     if(rc) return FAIL6;
     else return 0;
 
@@ -218,15 +243,17 @@ int ARMCI_AccS( int  optype,            /* operation */
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-#   if defined(ACC_COPY) || defined(REMOTE_ACC)
+    ORDER(optype,proc); /* ensure ordering */
+
+#   if defined(ACC_COPY) || defined(REMOTE_OP)
     if(armci_me != proc)
        rc = armci_pack_strided(optype, scale, proc, src_ptr, src_stride_arr, 
                                dst_ptr, dst_stride_arr,count,stride_levels,-1,-1);
     else  
 #   endif
-    rc = armci_op_strided( optype, scale, proc, src_ptr, src_stride_arr, 
-                               dst_ptr, dst_stride_arr,
-                               count, stride_levels,1);
+ 
+       rc = armci_op_strided( optype, scale, proc, src_ptr, src_stride_arr, 
+                           dst_ptr, dst_stride_arr, count, stride_levels,1);
 
     if(rc) return FAIL6;
     else return 0;
@@ -259,4 +286,3 @@ int ARMCI_AccV( int op,              /* oeration code */
     else return 0;
 
 }
-

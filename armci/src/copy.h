@@ -68,15 +68,21 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 #      define armci_copy(src,dst,n)           memcpy((dst),(src),(n))
 
 #      define armci_put(src,dst,n,proc)\
+              if(proc==armci_me){\
+                 armci_copy(src,dst,n);\
+              } else {\
               if(LAPI_Put(lapi_handle, (uint)proc, (uint)n, (dst), (src),\
                  NULL, &ack_cntr.cntr, &cmpl_arr[proc].cntr))\
-                  ARMCI_Error("LAPI_put failed",0)
+                  ARMCI_Error("LAPI_put failed",0); else; }
 
        /**** this copy is nonblocking and requires fence to complete!!! ****/
-#      define armci_get(src,dst,n,proc)\
+#      define armci_get(src,dst,n,proc) \
+              if(proc==armci_me){\
+                 armci_copy(src,dst,n);\
+              } else {\
               if(LAPI_Get(lapi_handle, (uint)proc, (uint)n, (src), (dst), \
                  NULL, &get_cntr.cntr))\
-                 ARMCI_Error("LAPI_Get failed",0)
+                 ARMCI_Error("LAPI_Get failed",0);else;}
 
 #else
 

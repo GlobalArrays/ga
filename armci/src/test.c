@@ -243,6 +243,7 @@ void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
 			print_subscript("ERROR: a",ndim,subscr1,msg);
 			sprintf(msg,"%lf\n",patch2[idx2]);
 			print_subscript(" b",ndim,subscr2,msg);
+                        fflush(stdout);
                         sleep(1);
 			assert(0);
 		}
@@ -361,6 +362,8 @@ void test_dim(int ndim)
         }
         sleep(1);
 
+        ARMCI_AllFence();
+        MPI_Barrier(MPI_COMM_WORLD);
 	for(i=0;i<LOOP;i++){
 	    int idx1, idx2, idx3;
 	    get_range(ndim, dimsA, loA, hiA);
@@ -510,6 +513,7 @@ void test_acc(int ndim)
                fflush(stdout);
         }
 
+        ARMCI_AllFence();
         MPI_Barrier(MPI_COMM_WORLD);
         for(i=0;i<TIMES*nproc;i++){ 
 
@@ -517,6 +521,7 @@ void test_acc(int ndim)
             (void)ARMCI_AccS(ARMCI_ACC_DBL,&alpha,(double*)a + idx1, strideA, (double*)b[proc] + idx2, strideB, count, ndim-1, proc);
         }
 
+        ARMCI_AllFence();
         MPI_Barrier(MPI_COMM_WORLD);
 
         /* copy my patch into local array c */
@@ -933,7 +938,7 @@ int main(int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
     if(nproc>MAXPROC && me==0)ARMCI_Error("Test works for up to %d processors\n",MAXPROC);
     if(me==0){
-       printf("%ARMCI test program (%d MPI processes)\n",nproc); 
+       printf("ARMCI test program (%d MPI processes)\n",nproc); 
        fflush(stdout);
        sleep(4);
     }
@@ -950,6 +955,7 @@ int main(int argc, char* argv[])
         }
 
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
+        ARMCI_AllFence();
         MPI_Barrier(MPI_COMM_WORLD);
 
         if(me==0){
@@ -958,6 +964,7 @@ int main(int argc, char* argv[])
            sleep(4);
         }
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_acc(ndim); 
+        ARMCI_AllFence();
         MPI_Barrier(MPI_COMM_WORLD);
 
 
@@ -969,6 +976,7 @@ int main(int argc, char* argv[])
 
         test_vector();
 
+        ARMCI_AllFence();
         MPI_Barrier(MPI_COMM_WORLD);
 
         if(me==0){
@@ -978,6 +986,7 @@ int main(int argc, char* argv[])
         }
         test_vector_acc();
 
+        ARMCI_AllFence();
         MPI_Barrier(MPI_COMM_WORLD);
 
         if(me==0){

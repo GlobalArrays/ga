@@ -2,6 +2,7 @@
 #include "locks.h"
 #include "copy.h"
 #include "memlock.h"
+#include <stdio.h>
 
 #define INVALID_VAL -9999999
 static int locked_slot=INVALID_VAL;
@@ -66,7 +67,8 @@ void armci_lockmem(void *start, void *end, int proc)
 
         NATIVE_LOCK(lock);
 
-        armci_get(memlock_table, table, sizeof(table), proc);
+/*        armci_get(memlock_table, table, sizeof(table), proc);*/
+        armci_copy(memlock_table, table, sizeof(table));
         
         /* inspect the table */
         conflict = 0; avail =-1;
@@ -138,9 +140,21 @@ void armci_lockmem_(void *pstart, void *pend, int proc)
 {
     locked_proc =proc;
     NATIVE_LOCK(proc);
+#   ifdef LAPI
+    {
+       extern int kevin_ok;
+       kevin_ok=0;
+    }
+#   endif
 }
 
 void armci_unlockmem_()
 {
-                  NATIVE_UNLOCK(locked_proc);
+    NATIVE_UNLOCK(locked_proc);
+#   ifdef LAPI
+    {
+       extern int kevin_ok;
+       kevin_ok=1;
+    }
+#   endif
 }

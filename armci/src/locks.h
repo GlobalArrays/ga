@@ -69,13 +69,24 @@
 
 #elif defined(CYGNUS)
 
-typedef int lockset_t;
+   typedef int lockset_t;
 #  define NATIVE_LOCK(x) if(armci_nproc>1)armci_die("does not run in parallel",0) 
 #  define NATIVE_UNLOCK(x) if(armci_nproc>1)armci_die("does not run in parallel",0)  
 
+#elif defined(LAPI)
+
+#  include <pthread.h>
+   typedef int lockset_t;
+   extern pthread_mutex_t _armci_mutex_thread;
+#  define NATIVE_LOCK(x)   pthread_mutex_lock(&_armci_mutex_thread)
+#  define NATIVE_UNLOCK(x) pthread_mutex_unlock(&_armci_mutex_thread)
+
+
 #else
 
-typedef int lockset_t;
+   typedef int lockset_t;
+#  define NATIVE_LOCK(x) 
+#  define NATIVE_UNLOCK(x) 
 
 #endif
 

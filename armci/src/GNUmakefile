@@ -1,8 +1,8 @@
          FOPT = -O
-         COPT = -O
+         COPT = -g
 
 OBJ= armci.o memory.o fcopy.o fence.o rmw.o faccumulate.o\
- memlock.o pack.o strided.o vector.o
+ memlock.o pack.o strided.o vector.o server.o
 
 MPI_LIB_NAME = -lmpi
 INTERRUPT_AVAILABLE = SP1 SP PARAGON LAPI
@@ -32,7 +32,7 @@ endif
 
 #let compiler to choose the appropriate MPI lib
 ifeq ($(TARGET),LAPI)
-     OBJ += lapi.o
+     OBJ += lapi.o server.o
      MPI_LIB_NAME =
 endif
 
@@ -76,9 +76,11 @@ $(patsubst %,$(LIBRARY_PATH)(%),memory.o): armci.h armcip.h locks.h shmem.h
 $(patsubst %,$(LIBRARY_PATH)(%),shmem.o):  shmem.h shmalloc.h
 $(patsubst %,$(LIBRARY_PATH)(%),shmalloc.o):   shmalloc.h
 $(patsubst %,$(LIBRARY_PATH)(%),locks.o):   locks.h
+$(patsubst %,$(LIBRARY_PATH)(%),lapi.o):   lapidefs.h
 $(patsubst %,$(LIBRARY_PATH)(%),rmw.o):   locks.h
 $(patsubst %,$(LIBRARY_PATH)(%),memlock.o):   memlock.h locks.h
 $(patsubst %,$(LIBRARY_PATH)(%),semaphores.o):   semaphores.h
 locks.h: semaphores.h
+armcip.h: message.h lapidefs.h
 
 %.x: %.c

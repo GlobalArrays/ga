@@ -8,7 +8,7 @@ extern int lapi_max_uhdr_data_sz; /* max data payload in AM header */
 typedef struct{
 	lapi_cntr_t cntr;	/* counter to trace completion of stores */
 	int val;		/* number of pending LAPI store ops */
-	int oper;		/* code for last GA store operation */
+	int oper;		/* code for last ARMCI store operation */
 }lapi_cmpl_t;
 
 
@@ -31,9 +31,9 @@ extern lapi_cmpl_t  get_cntr;	/* lapi_get counter    */
 extern lapi_cmpl_t  hdr_cntr;	/* AM header buffer counter  */
 extern int intr_status;
 
-extern void armci_init_lapi(void);  /* initialize LAPI and related data struct*/
-extern void armci_term_lapi(void);  /* destroy LAPI related data structures */
-extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI version of send */
+extern void armci_init_lapi(void);  /* initialize LAPI data structures*/
+extern void armci_term_lapi(void);  /* destroy LAPI data structures */
+extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI send */
 
 #define SHORT_ACC_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
 #define SHORT_PUT_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
@@ -58,26 +58,21 @@ extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI version of send
           LAPI_Probe(lapi_handle);\
 }
 
-
 #define CLEAR_COUNTER(counter) if((counter).val) {\
 int _val_;\
-        if(LAPI_Waitcntr(lapi_handle, &(counter).cntr, (counter).val, &_val_))\
+    if(LAPI_Waitcntr(lapi_handle,&(counter).cntr, (counter).val, &_val_))\
              armci_die("LAPI_Waitcntr failed",-1);\
-        if(_val_ != 0) armci_die("CLEAR_COUNTER: nonzero",_val_);\
-        (counter).val = 0;  \
+    if(_val_ != 0) armci_die("CLEAR_COUNTER: nonzero",_val_);\
+    (counter).val = 0;  \
 }
 
-#define CLEAR_COUNTER2(counter) if((counter).val){\
-        if(LAPI_Waitcntr(lapi_handle, &(counter).cntr, (counter).val, NULL))\
-             armci_die("LAPI_Waitcntr failed",-1);\
-        (counter).val = 0;  \
-}
 
 #define SET_COUNTER(counter, value) (counter).val += (value)
 
-#define FENCE_NODE(p) CLEAR_COUNTER(cmpl_arr[(p)]) 
+#define FENCE_NODE(p) CLEAR_COUNTER(cmpl_arr[(p)])
+
 #define UPDATE_FENCE_STATE(p, opcode, nissued)\
-{\
+{/* if((opcode)==0)armci_die("op code 0 - buffer overwritten?",(p));*/\
   cmpl_arr[(p)].val += (nissued);\
   cmpl_arr[(p)].oper = (opcode);\
 }

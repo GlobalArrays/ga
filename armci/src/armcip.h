@@ -3,6 +3,10 @@
 #   define _ARMCI_P_H
 #   include <stdlib.h> 
 #   include "armci.h"
+#ifdef LAPI
+#   include "message.h"
+#   define REMOTE_OP
+#endif
 
 #ifdef WIN32
 
@@ -14,7 +18,7 @@
 # include <strings.h>
 #endif
 
-#if defined (CRAY_T3E) || defined(WIN32)
+#if defined (CRAY_T3E)
 #define ACC_COPY
 #endif
 
@@ -26,16 +30,23 @@
 # endif
 #endif
 
+#define MAX_PROC 8096
+#define MAX_STRIDE_LEVEL 8
+
 /* packing algorithm for double complex numbers requires even number */
-#define BUFSIZE_DBL 16384
-/*#define BUFSIZE_DBL 8 */
+#ifdef MSG_BUFLEN_DBL
+#  define BUFSIZE_DBL (MSG_BUFLEN_DBL - sizeof(request_header_t)/sizeof(double)\
+                       - 3*MAX_STRIDE_LEVEL)
+#else
+#  define BUFSIZE_DBL 16384
+#endif
+
 #define BUFSIZE  (BUFSIZE_DBL * sizeof(double))
 
-#define MAX_PROC 8096
-#define MAX_STRIDE_LEVEL 10
-
 #define PUT 1
-#define GET 2
+#define GET 3
+#define STRIDED 7
+#define VECTOR  8
 
 extern  int armci_me, armci_nproc;
 extern  double armci_internal_buffer[BUFSIZE_DBL];
@@ -58,6 +69,10 @@ extern int armci_acc_vector(int op, /* operation code */
                 int proc  /* remote process(or) ID */
               );
 
+extern int armci_rem_strided(int op, void* scale, int proc,void *src_ptr,
+                        int src_stride_arr[],
+                       void* dst_ptr, int dst_stride_arr[],
+                       int count[], int stride_levels, int lockit);
 
 extern int armci_pack_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
@@ -77,4 +92,13 @@ extern int armci_acc_copy_strided(int optype, void* scale, int proc,
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
 #define ACC(op)  (((op)-ARMCI_ACC_INT)>=0)
+
+#ifdef LAPI
+#define ORDER(op,proc)\
+        if( proc == armci_me || ( ACC(op) && ACC(PENDING_OPER(proc))) );\
+        else  FENCE_NODE(proc)
+#else
+#define ORDER(op,proc) if(proc != armci_me) FENCE_NODE(proc) 
+#endif
+        
 #endif

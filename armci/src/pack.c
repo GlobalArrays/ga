@@ -76,9 +76,15 @@ int armci_pack_strided(int op, void* scale, int proc,
         int dst_stride, src_stride;
 
         
-        if(nb == chunk) /* take shortcut when whole patch fits in the buffer */
+        if(nb == chunk){ /* take shortcut when whole patch fits in the buffer */
+#ifdef REMOTE_OP
+           return( armci_rem_strided(op, scale, proc, src_ptr, src_stride_arr,
+                          dst_ptr, dst_stride_arr, count, stride_levels, 1));
+#else
            return(armci_op_strided(op, scale, proc, src_ptr, src_stride_arr,
-                                   dst_ptr, dst_stride_arr,count, stride_levels,1));
+                          dst_ptr, dst_stride_arr,count, stride_levels,1));
+#endif
+        }
 
         if(fit_level){
            dst_stride = dst_stride_arr[fit_level -1];
@@ -92,8 +98,13 @@ int armci_pack_strided(int op, void* scale, int proc,
            src = (char*)src_ptr + src_stride* sn;
            dst = (char*)dst_ptr + dst_stride* sn;
            count[fit_level] = MIN(nb, chunk-sn); /*modify count for this level*/
+#ifdef REMOTE_OP
+           rc = armci_rem_strided( op, scale, proc, src, src_stride_arr,
+                                   dst, dst_stride_arr, count, fit_level, 1);
+#else
            rc = armci_op_strided(op, scale, proc, src, src_stride_arr,
                                  dst, dst_stride_arr, count, fit_level,1);
+#endif
            if(rc) break;
         }
         count[fit_level] = chunk; /* restore original count */
@@ -108,3 +119,38 @@ int armci_pack_strided(int op, void* scale, int proc,
     }
     return rc;
 }
+
+
+/* how much space is needed to move data + reduced descriptor ? */
+int armci_vector_bytes( armci_giov_t darr[], int len)
+{
+int i, bytes=0;
+    for(i=0; i<len; i++){                                   
+        bytes += darr[i].ptr_array_len * (darr[i].bytes + sizeof(void*));
+        bytes += 2*sizeof(int); /* ptr_array_len + bytes */
+    }
+    return bytes;
+}
+
+
+int armci_pack_vector(armci_giov_t darr[], int len, int proc)
+{
+armci_giov_t *ndarr;
+int bytes=0, i, set;
+
+    if(BUFSIZE < armci_vector_bytes( darr, len)){
+       bytes=0;
+       i=0;
+       set = 0;
+       while(bytes < BUFSIZE){
+         int cur_set_bytes = 2*sizeof(int);
+         cur_set_bytes += darr[i].ptr_array_len* (darr[i].bytes+ sizeof(void*));
+         
+       }
+    }
+    /*** not finished ***/
+}
+            
+            
+       
+        

@@ -5,8 +5,6 @@
 #include <stdio.h>
 
 
-
-
 typedef struct {
     float real;
     float imag;
@@ -63,7 +61,7 @@ static void armci_lockmem_scatter(void *ptr_array[], int len, int bytes, int pro
               pmax = MAX(ptr_array[i],pmax);
      }
      pmax =  bytes-1 + (char*)pmax;
-     armci_lockmem(pmin, pmax, proc);
+     ARMCI_LOCKMEM(pmin, pmax, proc);
 
 /*    printf("%d: locked %ld-%ld bytes=%d\n",armci_me,pmin,pmax,
      1+(char*)pmax -(char*)pmin);fflush(stdout); */  
@@ -138,7 +136,7 @@ void armci_scatter_acc(int op, void *scale, armci_giov_t dsc,
       default: armci_die("ARMCI vector accumulate: operation not supported",op);
       }
 
-      if(lockit) armci_unlockmem();
+      if(lockit) ARMCI_UNLOCKMEM();
 }
 
 
@@ -170,8 +168,8 @@ int armci_acc_vector(int op,             /* operation code */
                /* for large segments use strided implementation */
                for(j=0; j< dr.ptr_array_len; j++){
                    rc = armci_acc_copy_strided(op, scale,proc, 
-                              dr.src_ptr_array[j], NULL, dr.dst_ptr_array[j], NULL,
-                              &dr.bytes, 0);
+                           dr.src_ptr_array[j], NULL, dr.dst_ptr_array[j],NULL,
+                           &dr.bytes, 0);
                    if(rc)return(rc);
                }
 
@@ -200,7 +198,7 @@ int armci_acc_vector(int op,             /* operation code */
 
                    /* get data to the local buffer */
                    rc = armci_copy_vector(GET, &dl, 1, proc);
-                   if(rc){ armci_unlockmem(); return(rc);}
+                   if(rc){ ARMCI_UNLOCKMEM(); return(rc);}
 
                    /* update source array for accumulate */
                    dl.src_ptr_array = dr.src_ptr_array +j;
@@ -216,10 +214,10 @@ int armci_acc_vector(int op,             /* operation code */
                    rc = armci_copy_vector(PUT, &dl, 1, proc);
                    FENCE_NODE(proc);
 
-                   if(rc){ armci_unlockmem(); return(rc);}
+                   if(rc){ ARMCI_UNLOCKMEM(); return(rc);}
                }
 
-               armci_unlockmem();
+               ARMCI_UNLOCKMEM();
            }
        }/*endfor*/
     }
