@@ -358,10 +358,10 @@ distribute to other US Government contractors.
      character*1    transa, transb;          [input]
 
       ga_matmul_patch is a patch version of ga_dgemm: 
-         C[cilo:cihi,cjlo:cjhi] := alpha*op( A[ailo:aihi,ajlo:ajhi] )*
-                                  op( B[bilo:bihi,bjlo:bjhi] ) +
-                                  beta*C[cilo:cihi,cjlo:cjhi],
-      where  op( X ) is one of
+         C[cilo:cihi,cjlo:cjhi] := alpha* AA[ailo:aihi,ajlo:ajhi] *
+                                   BB[bilo:bihi,bjlo:bjhi] ) +
+                                   beta*C[cilo:cihi,cjlo:cjhi],
+      where  AA = op(A), BB = op(B), and op( X ) is one of
          op( X ) = X   or   op( X ) = X',
 
       Valid values for transpose arguments:  'n', 'N', 't', 'T'.
