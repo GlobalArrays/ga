@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.46 2002-11-13 00:10:32 vinod Exp $ */
+/* $Id: message.c,v 1.47 2002-11-13 19:53:46 edo Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -20,7 +20,6 @@
 #endif
 
 #define DEBUG_ 0
-
 #if defined(SYSV) || defined(MMAP) ||defined (WIN32)
 #    include "shmem.h"
 #endif
@@ -35,7 +34,7 @@ static float *fwork = NULL;
 static int _armci_gop_init=0;   /* tells us if we have a buffers allocated  */
 static int _armci_gop_shmem =0; /* tells us to use shared memory for gops */
 extern void armci_util_spin(int,void*);
-extern void armci_util_wait_int(volatile int *p, int val, int maxspin);
+extern void armci_util_wait_int(volatile int *, int , int );
 
 typedef struct {
         union {
@@ -186,13 +185,13 @@ void cpu_yield()
 #endif
 }
 
-#if 0
-void armci_util_wait_int(int *p, int val, int maxspin)
+#if 1
+void armci_util_wait_int(volatile int *p, int val, int maxspin)
 {
 int count=0;
 
        while(*p != val)
-            if((++count)<maxspin) armci_util_spin(count,p);
+            if((++count)<maxspin) armci_util_spin(count,(int *)p);
             else{ 
                cpu_yield();
                count =0; 
