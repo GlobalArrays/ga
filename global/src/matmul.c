@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.5 2002-08-24 00:05:08 vinod Exp $*/
+/*$Id: matmul.c,v 1.6 2002-08-29 22:42:19 manoj Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -47,10 +47,11 @@
                     else { dim1=1; dim2=dims[0];}} \
   else ga_error("rank must be atleast 1",rank); 
 
-static int max(int ichunk, int jchunk, int kchunk) {
+static int max3(int ichunk, int jchunk, int kchunk) {
   if(ichunk>jchunk) return MAX(ichunk,kchunk);
   else return MAX(jchunk, kchunk);
 } 
+
 
 /*\ MATRIX MULTIPLICATION for patches 
  *  
@@ -170,7 +171,7 @@ int local_sync_begin,local_sync_end;
      
      Ichunk = Jchunk = Kchunk = (Integer)(sqrt( (double)((elems-2)/3) ));
 
-     if ( max_chunk > max(Ichunk, Jchunk, Kchunk) ) {
+     if ( max_chunk > max3(Ichunk, Jchunk, Kchunk) ) {
        max_chunk = MIN(max_chunk, Ichunk); 
        Ichunk = MIN(m,max_chunk);
        Jchunk = MIN(n,max_chunk);
@@ -491,7 +492,7 @@ int local_sync_begin,local_sync_end;
      
      Ichunk = Kchunk = Jchunk = (Integer) sqrt((double)(elems-2)/3.0);
      
-     if ( max_chunk > max(Ichunk, Jchunk, Kchunk) ) {
+     if ( max_chunk > max3(Ichunk, Jchunk, Kchunk) ) {
        max_chunk = MIN(max_chunk, Ichunk); 
        Ichunk = MIN(m,max_chunk);
        Jchunk = MIN(n,max_chunk);
@@ -508,7 +509,7 @@ int local_sync_begin,local_sync_end;
    }
 #endif
 
-  
+ 
    if(atype==C_DCPL){if((((DoubleComplex*)beta)->real == 0) &&
 	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
    else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0)need_scaling =0;}
