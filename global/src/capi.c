@@ -1,7 +1,8 @@
-/* $Id: capi.c,v 1.21 2000-02-18 02:20:05 jju Exp $ */
+/* $Id: capi.c,v 1.22 2000-03-10 23:41:54 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM], _ga_work[MAXDIM];
 Integer _ga_dims[MAXDIM], _ga_map[MAX_NPROC];

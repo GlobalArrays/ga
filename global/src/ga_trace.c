@@ -11,6 +11,7 @@
 
 #include <macdecls.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "ga.h"
 
 #ifndef MPI
