@@ -28,6 +28,7 @@
 #    define F_ACCUMULATE_2D     f_accumulate_2d_
 #elif defined(WIN32)
 #    define L_ACCUMULATE_2D     I_ACCUMULATE_2D
+#    define L_ACCUMULATE_1D     I_ACCUMULATE_1D
 #endif
 
 #if defined(CRAY) && !defined(__crayx1)
@@ -50,6 +51,7 @@
 #    define F_ACCUMULATE_1D     f_accumulate_1d_ 
 #elif defined(WIN32)
 #    define L_ACCUMULATE_2D     I_ACCUMULATE_2D
+#    define L_ACCUMULATE_1D     I_ACCUMULATE_1D
 #endif
 
 
