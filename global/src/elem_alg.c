@@ -28,8 +28,12 @@ Modified 3/2004 By Doug Baxter to increase robustness.
 #include "globalp.h"
 #include <math.h>
 
+#ifndef GA_HALF_MAX_INT 
+#define GA_HALF_MAX_INT ((((int)1) << ((int)(8*sizeof(int))-2)) - 1)
+#endif
+
 #ifndef GA_INFINITY_I
-#define GA_INFINITY_I 2147483647
+#define GA_INFINITY_I (GA_HALF_MAX_INT + GA_HALF_MAX_INT + 1)
 /* 
   Original value below.
   Seemed too small arbitrarily.
@@ -38,7 +42,7 @@ Modified 3/2004 By Doug Baxter to increase robustness.
 #endif
 
 #ifndef GA_NEGATIVE_INFINITY_I
-#define GA_NEGATIVE_INFINITY_I -2147483637
+#define GA_NEGATIVE_INFINITY_I (- GA_INFINITY_I)
 
 
 /* 
@@ -48,15 +52,19 @@ Modified 3/2004 By Doug Baxter to increase robustness.
 */
 #endif
 
+#ifndef GA_HALF_MAX_LONG
+#define GA_HALF_MAX_LONG ((((long)1) << ((int)(8*sizeof(long))-2)) - 1)
+#endif
+
 #ifndef GA_INFINITY_L
-#define GA_INFINITY_L 9223372036854775807
+#define GA_INFINITY_L (GA_HALF_MAX_LONG + GA_HALF_MAX_LONG + 1)
 /* Original value was
 #define GA_INFINITY_L 100000
 */
 #endif
 
 #ifndef GA_NEGATIVE_INFINITY_L
-#define GA_NEGATIVE_INFINITY_L -9223372036854775807
+#define GA_NEGATIVE_INFINITY_L (- GA_INFINITY_L)
 #endif
 /* 
   Original value was:
@@ -293,7 +301,7 @@ static void do_recip(void *ptr, int nelem, int type)
     a floating point exception (FPE) when division by zero
     occurs. The ga_error message seems to be the
     moral equivalent of that.
-    I have comment out the Infinity returs and returned 
+    I have commented out the Infinity returns and returned 
     to the ga_error calls. Also on the commented out 
     infinity value returns I have been more specific in
     the INFINITY type returned (the trailing _*).
@@ -340,12 +348,20 @@ static void do_recip(void *ptr, int nelem, int type)
 	       */		     
 		x1 = ca[i].real;
 		x2 = ca[i].imag;
+		/*
+		printf(" do_recip i = %d, x1 = %le, x2 = %le\n",
+		       i,x1,x2);
+		*/
 		magr = ABS(x1);
 		magi = ABS(x2);
+		/*
+		printf(" do_recip i = %d, magr = %le, magi = %le\n",
+		       i,magr,magi);
+		*/
 		if (magr >= magi) {
-		  if (magr != 0.0) {
+		  if (magr != ((double)0.0)) {
 		    c = x2/x1;
-		    d = 1.0/((1.0 + c*c)*x1);
+		    d = ((double)1.0)/((((double)1.0) + (c*c))*x1);
 		    ca[i].real = d;
 		    ca[i].imag = -c*d;
 		  } else {
@@ -353,16 +369,20 @@ static void do_recip(void *ptr, int nelem, int type)
 		  }
 		} else {
 		  c = x1/x2;
-		  d = 1.0/((1.0 + c*c)*x2);
+		  d = ((double)1.0)/((((double)1.0) + (c*c))*x2);
 		  ca[i].real = c*d;
 		  ca[i].imag = -d;
 		}
+		/*
+		printf(" do_recip ca[%d].real = %le, ca[%d].imag = %le\n",
+		       i,ca[i].real,i,ca[i].imag);
+		*/
 	      }
               break;
          case C_DBL:
               da = (double *) ptr;
               for(i=0;i<nelem;i++)
-                  if(da[i]!=0.0) da[i]= (double)1/da[i];
+                  if(da[i]!=0.0) da[i]= ((double)1.0)/da[i];
   		     else
 		   ga_error("zero value at index",i); 
 		    /* 
@@ -372,7 +392,7 @@ static void do_recip(void *ptr, int nelem, int type)
          case C_FLOAT:
               fa = (float *)ptr;
               for(i=0;i<nelem;i++)
-                  if(fa[i]!=0.0) fa[i]= (float)1/fa[i];
+                  if(fa[i]!=0.0) fa[i]= ((float)1.0)/fa[i];
                      else
 		   ga_error("zero value at index",i); 
          	   /*
@@ -382,7 +402,7 @@ static void do_recip(void *ptr, int nelem, int type)
 	case C_LONG:
               la = (long *)ptr;
               for(i=0;i<nelem;i++)
-                  if(la[i]!=0.0) la[i]= (long)1/la[i];
+                  if(la[i]!=0.0) la[i]= ((long)1)/la[i];
                      else
                   ga_error("zero value at index",i); 
 	          /*
@@ -1463,18 +1483,21 @@ static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
  
                     switch(atype){
                         case C_DBL:
-                        /*double is the only type that is handled for Tao/GA project*/
-                        tempA=((double*)A_ptr)+idx;
-                        break;
+			  tempA=((double*)A_ptr)+idx;
+			  break;
                         case C_DCPL:
-                        tempA=((DoubleComplex*)A_ptr)+idx;
+			  ga_error(" ngai_elem3_patch_: wrong data type ",atype);                        
+			  break;
                         case C_INT:
-                        tempA=((int*)A_ptr)+idx;
+			  tempA=((int*)A_ptr)+idx;
+			  break;
                         case C_FLOAT:
-                        tempA=((float*)A_ptr)+idx;
+			  tempA=((float*)A_ptr)+idx;
+			  break;
                         case C_LONG:
-                        tempA=((long *)A_ptr)+idx;
- 
+			  tempA=((long *)A_ptr)+idx;
+			  break;
+			  
                        default: ga_error(" ngai_elem3_patch_: wrong data type ",atype);
                    }
 
