@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.93 2004-10-06 21:27:54 manoj Exp $ */
+/* $Id: base.c,v 1.94 2004-10-20 17:27:20 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -125,6 +125,7 @@ int  GA_stack_size=0;
 #define ga_ComputeIndexM(_index, _ndim, _subscript, _dims)                     \
 {                                                                              \
   Integer  _i, _factor=1;                                                      \
+  _Pragma("_CRI novector");                                         \
   for(_i=0,*(_index)=0; _i<_ndim; _i++){                                       \
       *(_index) += _subscript[_i]*_factor;                                     \
       if(_i<_ndim-1)_factor *= _dims[_i];                                      \
@@ -137,6 +138,7 @@ int  GA_stack_size=0;
 #define ga_UpdateSubscriptM(_ndim, _subscript, _lo, _hi, _dims)\
 {                                                                              \
   Integer  _i;                                                                 \
+  _Pragma("_CRI novector");                                         \
   for(_i=0; _i<_ndim; _i++){                                                   \
        if(_subscript[_i] < _hi[_i]) { _subscript[_i]++; break;}                \
        _subscript[_i] = _lo[_i];                                               \
@@ -150,6 +152,7 @@ int  GA_stack_size=0;
 {                                                                              \
   Integer  _i;                                                                 \
   *_elems = 1;                                                                 \
+  _Pragma("_CRI novector");                                         \
   for(_i=0; _i<_ndim; _i++){                                                   \
        *_elems *= _hi[_i]-_lo[_i] +1;                                          \
        _subscript[_i] = _lo[_i];                                               \
@@ -549,6 +552,7 @@ void FATR  ga_initialize_ltd_(Integer *mem_limit)
 {\
 int _d;\
     if(ndim<1||ndim>MAXDIM) ga_error("unsupported number of dimensions",ndim);\
+  _Pragma("_CRI novector");                                         \
     for(_d=0; _d<ndim; _d++)\
          if(dims[_d]<1)ga_error("wrong dimension specified",dims[_d]);\
 }
@@ -2722,7 +2726,6 @@ Integer p_handle;
 }
 
 
-
 /*\ LOCATE PROCESSORS/OWNERS OF THE SPECIFIED PATCH OF A GLOBAL ARRAY
 \*/
 logical FATR nga_locate_region_( Integer *g_a,
@@ -2757,7 +2760,9 @@ Integer  d, dpos, ndim, elems, p_handle;
    ga_check_handleM(g_a, "nga_locate_region");
 
    ga_handle = GA_OFFSET + *g_a;
-
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
    for(d = 0; d< GA[ga_handle].ndim; d++)
        if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
@@ -2765,6 +2770,9 @@ Integer  d, dpos, ndim, elems, p_handle;
 
    /* find "processor coordinates" for the top left corner and store them
     * in ProcT */
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
    for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
        findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
                  GA[ga_handle].scale[d], (int)lo[d], &procT[d]);
@@ -2773,6 +2781,9 @@ Integer  d, dpos, ndim, elems, p_handle;
 
    /* find "processor coordinates" for the right bottom corner and store
     * them in procB */
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
    for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
        findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
                  GA[ga_handle].scale[d], (int)hi[d], &procB[d]);
@@ -2800,8 +2811,14 @@ Integer  d, dpos, ndim, elems, p_handle;
 
       offset = *np *(ndim*2); /* location in map to put patch range */
 
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
       for(d = 0; d< ndim; d++)
               map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
+#ifdef __crayx1
+#pragma _CRI novector
+#endif
       for(d = 0; d< ndim; d++)
               map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
@@ -2830,7 +2847,10 @@ Integer  d, dpos, ndim, elems, p_handle;
 
    return(TRUE);
 }
-    
+#ifdef __crayx1
+#pragma _CRI inline nga_locate_region_
+#endif
+
 
 /*\ returns in nblock array the number of blocks each dimension is divided to
 \*/

@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.47 2004-06-28 17:47:53 manoj Exp $*/
+/*$Id: global.util.c,v 1.48 2004-10-20 17:27:20 vinod Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -217,6 +217,11 @@ void FATR ga_print_stats_()
 {
 int i;
      GAstat_arr = (long*)&GAstat;
+#ifdef __crayx1
+#ifdef NO_GA_STATS
+     printf("\tNOTE:GA stats have been disabled on x1 for some GA calls, to enable them comment the line LIB_DEFINES += -DNO_GA_STATS in global/src/GNUmakefile under the GA directory");
+#endif
+#endif
      printf("\n                         GA Statistics for process %4d\n",(int)ga_nodeid_());
      printf("                         ------------------------------\n\n");
      printf("       create   destroy   get      put      acc     scatter   gather  read&inc\n");

@@ -63,6 +63,9 @@ endif
     GA_EXTRA += ga_profile.o
     LIB_DEFINES += -DGA_PROFILE
   endif
+  ifeq ($(TARGET), cray-sv2)
+    LIB_DEFINES += -DNO_GA_STATS
+  endif
   LIB_INCLUDES += -I../../armci/src -I$(INCDIR)
 
 #we USE_MPI requires us to acces MPI headers to handle ga_mpi_communicator

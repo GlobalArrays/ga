@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.30 2004-06-29 22:39:18 d3g293 Exp $ */
+/*$Id: base.h,v 1.31 2004-10-20 17:27:20 vinod Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -12,7 +12,9 @@ extern short int _ga_irreg_flag;
 
 #define FNAM        31              /* length of array names   */
 #define CACHE_SIZE  512             /* size of the cache inside GA DS*/
-
+#ifndef __crayx1
+#define _Pragma(_pragf)
+#endif
 typedef int ARMCI_Datatype;
 #include "armci.h"
 typedef struct {
@@ -93,12 +95,16 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 {                                                                              \
    Integer _loc, _nb, _d, _index, _dim=ndim,_dimstart=0, _dimpos;              \
    for(_nb=1, _d=0; _d<_dim; _d++)_nb *= nblock[_d];                           \
-   if(proc > _nb - 1 || proc<0)for(_d=0; _d<_dim; _d++){                       \
+   if(proc > _nb - 1 || proc<0){                                               \
+      _Pragma("_CRI novector");                                               \
+           for(_d=0; _d<_dim; _d++){                                           \
          lo[_d] = (Integer)0;                                                  \
-         hi[_d] = (Integer)-1;                                                 \
-   }else{                                                                      \
+         hi[_d] = (Integer)-1;}                                                \
+   }                                                                           \
+   else{                                                                       \
          _index = proc;                                                        \
          if(GA_inv_Proc_list) _index = GA_inv_Proc_list[proc];                 \
+      _Pragma("_CRI novector");                                               \
          for(_d=0; _d<_dim; _d++){                                             \
              _loc = _index% nblock[_d];                                        \
              _index  /= nblock[_d];                                            \
@@ -123,7 +129,8 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 #define gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc){\
   int _i;                                                            \
   stride_rem[0]= stride_loc[0] = (int)size;                          \
-  for(_i=0;_i<ndim-1;_i++){                                            \
+  _Pragma("_CRI novector");                                         \
+  for(_i=0;_i<ndim-1;_i++){                                          \
     stride_rem[_i] *= (int)ldrem[_i];                                \
     stride_loc[_i] *= (int)ld[_i];                                   \
       stride_rem[_i+1] = stride_rem[_i];                             \
@@ -135,11 +142,13 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
       lo, and hi */
 #define gam_CountElems(ndim, lo, hi, pelems){                        \
   int _d;                                                            \
+  _Pragma("_CRI novector");                                         \
   for(_d=0,*pelems=1; _d< ndim;_d++)  *pelems *= hi[_d]-lo[_d]+1;    \
 }
 
 #define gam_ComputeCount(ndim, lo, hi, count){                       \
   int _d;                                                            \
+  _Pragma("_CRI novector");                                         \
   for(_d=0; _d< ndim;_d++) count[_d] = (int)(hi[_d]-lo[_d])+1;       \
 }
 
@@ -151,6 +160,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
   _l = strlen(str);                                                  \
   sprintf(err_string+_l, "[%ld:%ld ",(long)lo[_d],(long)hi[_d]);     \
   _l=strlen(err_string);                                             \
+  _Pragma("_CRI novector");                                         \
   for(_d=0; _d< ndim-1; _d++){                                       \
     sprintf(err_string+_l, ",%ld:%ld ",(long)lo[_d],(long)hi[_d]);   \
     _l=strlen(err_string);                                           \
@@ -176,6 +186,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
         _iproc = PGRP_LIST[_p_handle].inv_map_proc_list[proc];                \
       }                                                                       \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
+  _Pragma("_CRI novector");                                         \
       for(_d=0; _d < _last; _d++)            {                                \
           _w = GA[g_handle].width[_d];                                        \
           _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                    \
@@ -201,6 +212,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
 #define gaCheckSubscriptM(subscr, lo, hi, ndim)                                \
 {                                                                              \
 Integer _d;                                                                    \
+  _Pragma("_CRI novector");                                         \
    for(_d=0; _d<  ndim; _d++)                                                  \
       if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
         sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \

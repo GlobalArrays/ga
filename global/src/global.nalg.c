@@ -63,7 +63,6 @@ int local_sync_begin,local_sync_end;
 
    nga_inquire_internal_(g_a, &type, &ndim, dims);
    nga_distribution_(g_a, &me, lo, hi);
-
    if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
  
       if (ga_has_ghosts_(g_a)) {
@@ -105,7 +104,6 @@ int local_sync_begin,local_sync_end;
       /* release access to the data */
       nga_release_update_(g_a, lo, hi);
    } 
-
 
    if(local_sync_end)ga_pgroup_sync_(&p_handle);
    GA_POP_NAME;

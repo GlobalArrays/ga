@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.57 2004-07-21 21:10:15 manoj Exp $ */
+/* $Id: onesided.c,v 1.58 2004-10-20 17:27:20 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -289,6 +289,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
       ga_ownsM(g_handle, proc, _lo, _hi);                                      \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
       if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*GA[g_handle].width[0];             \
+      _Pragma("_CRI shortloop");                                               \
       for(_d=0; _d < _last; _d++)            {                                 \
           _w = GA[g_handle].width[_d];                                         \
           _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                     \
@@ -325,6 +326,7 @@ Integer   _mloc = p* ndim *2;\
 #define gam_ComputePatchIndex(ndim, lo, plo, dims, pidx){\
 Integer _d, _factor;\
           *pidx = plo[0] -lo[0];\
+          _Pragma("_CRI shortloop");\
           for(_d= 0,_factor=1; _d< ndim -1; _d++){\
              _factor *= (dims[_d]);\
              *pidx += _factor * (plo[_d+1]-lo[_d+1]);\
@@ -347,6 +349,9 @@ void FATR ga_nbwait_(Integer *nbhandle)
 
 /*\ A common routine called by both non-blocking and blocking GA put calls.
 \*/
+#ifdef __crayx1
+#pragma _CRI inline nga_locate_region_
+#endif
 void nga_put_common(Integer *g_a, 
                    Integer *lo,
                    Integer *hi,
@@ -379,16 +384,20 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
             = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[tmp_list[idx]];
 	    }
       }
-
       size = GA[handle].elemsize;
       ndim = GA[handle].ndim;
 
+#ifndef NO_GA_STATS
       gam_CountElems(ndim, lo, hi, &elems);
       GAbytes.puttot += (double)size*elems;
       GAstat.numput++;
       GAstat.numput_procs += np;
+#endif
+
       if(nbhandle)ga_init_nbhandle(nbhandle);
+#ifndef __crayx1
       else ga_init_nbhandle(&ga_nbhandle);
+#endif
 
 #ifdef GA_PROFILE
       ga_profile_start((int)handle, (long)size*elems, ndim, lo, hi, 
@@ -398,7 +407,10 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       gaPermuteProcList(np);
       p_handle = GA[handle].p_handle;
 
+#ifndef __crayx1
       for(loop=0; loop<num_loops; loop++) {
+        _Pragma("_CRI novector");
+#endif
 	for(idx=0; idx<np; idx++){
           Integer ldrem[MAXDIM];
           int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
@@ -413,17 +425,17 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #endif
 	  
 	  /* check if it is local to SMP */
-          cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)proc);
 
+#ifndef __crayx1
+          cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)proc);
 	  if(loop==0) cond = !cond;
-	  
 	  if(cond) {
+#endif
 	    gam_GetRangeFromMap(p, ndim, &plo, &phi);
 	    proc = (int)GA_proclist[p];
 	    if (p_handle >= 0) {
 	      proc = (int)PGRP_LIST[p_handle].map_proc_list[proc];
 	    }
-	    
 	    gam_Location(proc,handle, plo, &prem, ldrem); 
 	    
 	    /* find the right spot in the user buffer */
@@ -441,18 +453,20 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #ifdef PERMUTE_PIDS
 	    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
-	    
+
+#ifndef NO_GA_STATS	    
 	    if(proc == GAme){
 	      gam_CountElems(ndim, plo, phi, &elems);
 	      GAbytes.putloc += (double)size*elems;
 	    }
+#endif
 	    
-	    /*casting what ganb_get_armci_handle function returns to armci_hdl is 
-	      very crucial here as on 64 bit platforms, pointer is 64 bits where 
-	      as temporary in only 32 bits*/ 
 	    if (p_handle >= 0) {
 	      proc = (int)GA_proclist[p];
 	    }
+#ifdef __crayx1
+            ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
+#else
 	    if(nbhandle) 
 	      ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,
 			   proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
@@ -469,9 +483,11 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 	    }
 	  } /* end if(cond) */
 	}
+#endif
       }
-      
+#ifndef __crayx1
       if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
+#endif
 
       GA_POP_NAME;
 #ifdef GA_PROFILE
@@ -481,7 +497,6 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       vampir_end(NGA_NBPUT,__FILE__,__LINE__);
 #endif
 }
-
 
 /*\ (NON-BLOCKING) PUT AN N-DIMENSIONAL PATCH OF DATA INTO A GLOBAL ARRAY
 \*/
@@ -513,20 +528,17 @@ void FATR  ga_put_(g_a, ilo, ihi, jlo, jhi, buf, ld)
    Void  *buf;
 {
 Integer lo[2], hi[2];
-
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_PUT,__FILE__,__LINE__);
 #endif
 #ifdef GA_TRACE
    trace_stime_();
 #endif
-
    lo[0]=*ilo;
    lo[1]=*jlo;
    hi[0]=*ihi;
    hi[1]=*jhi;
    nga_put_common(g_a, lo, hi, buf, ld,NULL);
-
 #ifdef GA_TRACE
    trace_etime_();
    op_code = GA_OP_PUT; 
@@ -536,6 +548,9 @@ Integer lo[2], hi[2];
    vampir_end(GA_PUT,__FILE__,__LINE__);
 #endif
 }
+
+#pragma _CRI inline ga_put_
+#pragma _CRI inline nga_put_common
 
 void FATR  ga_nbput_(g_a, ilo, ihi, jlo, jhi, buf, ld, nbhdl)
    Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld, *nbhdl;
@@ -621,13 +636,17 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       ndim = GA[handle].ndim;
 
       /* get total size of patch */
+#ifndef NO_GA_STATS
       gam_CountElems(ndim, lo, hi, &elems);
       GAbytes.gettot += (double)size*elems;
       GAstat.numget++;
       GAstat.numget_procs += np;
+#endif
 
       if(nbhandle)ga_init_nbhandle(nbhandle);
+#ifndef __crayx1
       else ga_init_nbhandle(&ga_nbhandle);
+#endif
 
 #ifdef GA_PROFILE
       ga_profile_start((int)handle, (long)size*elems, ndim, lo, hi,
@@ -637,7 +656,10 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       gaPermuteProcList(np);
       p_handle = GA[handle].p_handle;
 
+#ifndef __crayx1
       for(loop=0; loop<num_loops; loop++) {
+        _Pragma("_CRI novector");
+#endif
 	for(idx=0; idx< np; idx++){
 	  Integer ldrem[MAXDIM];
 	  int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
@@ -652,11 +674,11 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #endif
 	  
 	  /* check if it is local to SMP */
+#ifndef __crayx1
           cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)proc);
-
 	  if(loop==0) cond = !cond;
-	  
 	  if(cond) {
+#endif
 	    
 	    /* Find  visible portion of patch held by processor p and
 	       return the result in plo and phi. Also get actual processor
@@ -693,13 +715,20 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #ifdef PERMUTE_PIDS
 	    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
+
+#ifndef NO_GA_STATS	    
 	    if(proc == GAme){
 	      gam_CountElems(ndim, plo, phi, &elems);
 	      GAbytes.getloc += (double)size*elems;
 	    }
+#endif
+
 	    if (p_handle >= 0) {
 	      proc = (int)GA_proclist[p];
 	    }
+#ifdef __crayx1
+            ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
+#else
 	    if(nbhandle) 
 	      ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
 			   proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
@@ -714,9 +743,12 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 	    }
 	  } /* end if(cond) */
 	}
+#endif
       }
       
+#ifndef __crayx1
       if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
+#endif
       
       GA_POP_NAME;
 #ifdef GA_PROFILE
@@ -735,6 +767,7 @@ void FATR nga_get_(Integer *g_a,
 {
     nga_get_common(g_a,lo,hi,buf,ld,(Integer *)NULL);
 }
+
 
 void FATR nga_nbget_(Integer *g_a,
                    Integer *lo,
@@ -775,6 +808,8 @@ Integer lo[2], hi[2];
 #endif
 }
 
+#pragma _CRI inline ga_get_
+#pragma _CRI inline nga_get_common
 
 void FATR  ga_nbget_(g_a, ilo, ihi, jlo, jhi, buf, ld,nbhdl)
    Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld, *nbhdl;
@@ -850,10 +885,12 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       else if(type==C_LONG)optype= ARMCI_ACC_LNG;
       else ga_error("type not supported",type);
 
+#ifndef NO_GA_STATS
       gam_CountElems(ndim, lo, hi, &elems);
       GAbytes.acctot += (double)size*elems;
       GAstat.numacc++;
       GAstat.numacc_procs += np;
+#endif
 
       if(nbhandle)ga_init_nbhandle(nbhandle);
       else ga_init_nbhandle(&ga_nbhandle);
@@ -909,10 +946,12 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #ifdef PERMUTE_PIDS
 	    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
+#ifndef NO_GA_STATS
 	    if(proc == GAme){
 	      gam_CountElems(ndim, plo, phi, &elems);
 	      GAbytes.accloc += (double)size*elems;
 	    }
+#endif
 	    
 	    if (p_handle >= 0) {
 	      proc = (int)GA_proclist[p];
