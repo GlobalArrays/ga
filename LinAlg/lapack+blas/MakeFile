@@ -1,4 +1,8 @@
 OBJDIR=.\obj
+
+!IFDEF GA_C_CORE
+OBJ_OPTIMIZE = $(OBJDIR)\dummy.obj
+!ELSE
 OBJ_OPTIMIZE = $(OBJDIR)\dblas.obj\
   $(OBJDIR)\dgetf2.obj\
   $(OBJDIR)\dgetrf.obj\
@@ -11,7 +15,7 @@ OBJ_OPTIMIZE = $(OBJDIR)\dblas.obj\
   $(OBJDIR)\xerbla.obj\
   $(OBJDIR)\zaxpy.obj\
   $(OBJDIR)\zgemm.obj
-
+!ENDIF
 
 INCDIR = ..\..\include
 
