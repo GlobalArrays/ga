@@ -517,9 +517,26 @@ int armci_gm_serv_mem_alloc()
     int i;
     int armci_gm_max_msg_size = gm_min_size_for_length(MSG_BUFLEN);
     
+    /********************** get local unregistered memory *******************/
     /* allocate dma buffer for low priority */
     serv_gm->dma_buf = (void **)malloc(armci_gm_max_msg_size * sizeof(void *));
-    
+
+    /* allocate buf for keeping the pointers of client MessageSndbuffer */
+    serv_gm->proc_buf_ptr = (long *)calloc(armci_nproc, sizeof(long));
+    if(!serv_gm->proc_buf_ptr) return FALSE;
+
+    /* allocate server send call back context */
+    armci_gm_serv_context = (armci_gm_context_t *)malloc(1 *
+                             sizeof(armci_gm_context_t));
+    if(armci_gm_serv_context == NULL) return FALSE;
+
+    armci_serv_ack_context = (armci_gm_context_t *)malloc(1 *
+                              sizeof(armci_gm_context_t));
+    if(armci_serv_ack_context == NULL) return FALSE;
+    armci_serv_ack_context->done = ARMCI_GM_SENT;
+
+
+    /********************** get registered memory **************************/
     for(i=ARMCI_GM_MIN_MESG_SIZE; i<=armci_gm_max_msg_size; i++) {
         serv_gm->dma_buf[i] = (char *)gm_dma_malloc(serv_gm->rcv_port,
                                         gm_max_length_for_size(i));
@@ -542,23 +559,10 @@ int armci_gm_serv_mem_alloc()
     serv_gm->proc_ack_ptr = (long *)gm_dma_malloc(serv_gm->snd_port,
                                                   armci_nproc*sizeof(long));
     if(serv_gm->proc_ack_ptr == 0) return FALSE;
-    
-    /* allocate buf for keeping the pointers of client MessageSndbuffer */
-    serv_gm->proc_buf_ptr = (long *)calloc(armci_nproc, sizeof(long));
-    if(!serv_gm->proc_buf_ptr) return FALSE;
-
-    /* allocate server send call back context */
-    armci_gm_serv_context = (armci_gm_context_t *)malloc(1 * 
-	                     sizeof(armci_gm_context_t));
-    if(armci_gm_serv_context == NULL) return FALSE;
-
-    armci_serv_ack_context = (armci_gm_context_t *)malloc(1 * 
-                              sizeof(armci_gm_context_t));
-    if(armci_serv_ack_context == NULL) return FALSE;
-    armci_serv_ack_context->done = ARMCI_GM_SENT;
 
     return TRUE;
 }
+
 
 /* deallocate the preallocated memory used by gm */
 int armci_gm_serv_mem_free()
