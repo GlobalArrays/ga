@@ -6,10 +6,6 @@
 #include "armci.h"
 #include "message.h"
 
-#if defined(LAPI) || defined(CLUSTER)
-#  include "request.h"
-#endif
-
 
 #ifdef WIN32
 #include <windows.h>
@@ -20,6 +16,11 @@
 
 #if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
 #define CLUSTER 
+
+#if defined(LAPI) || defined(CLUSTER)
+#  include "request.h"
+#endif
+
 
 #ifdef SERVER_THREAD
 #  define SERVER_NODE(c) (armci_clus_info[(c)].master);
