@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.7 1999-07-29 21:36:48 jju Exp $ */
+/* $Id: capi.c,v 1.8 1999-07-29 22:02:09 jju Exp $ */
 #include "ga.h"
 #include "globalp.h"
 
@@ -547,7 +547,6 @@ void GA_Print(int g_a)
     Integer a=(Integer)g_a;
     ga_print_(&a);
 }
-<<<<<<< capi.c
 
 void GA_Diag(int g_a, int g_s, int g_v, void *eval)
 {
