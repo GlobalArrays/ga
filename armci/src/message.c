@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.33 2002-02-28 21:53:26 d3h325 Exp $ */
+/* $Id: message.c,v 1.34 2002-03-07 01:17:22 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -426,7 +426,7 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
 
     /* intra-node operation */
 #if 1
-    if(_armci_gop_shmem && nslave<17)
+    if(_armci_gop_shmem && nslave<17 && root==armci_master)
      armci_smp_bcast(buf, len);
     else
 #endif
