@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.9 1999-10-14 00:18:51 d3h325 Exp $ */
+/* $Id: mutex.c,v 1.10 1999-10-18 18:52:42 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -312,6 +312,9 @@ int len=sizeof(int);
 
 void ARMCI_Lock(int mutex, int proc)        
 {
+#if defined(SERVER_LOCK)
+int direct;
+#endif
 
         if(DEBUG)fprintf(stderr,"%d enter lock\n",armci_me);
 

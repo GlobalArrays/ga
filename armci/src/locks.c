@@ -1,4 +1,4 @@
-/* $Id: locks.c,v 1.4 1999-07-28 00:47:57 d3h325 Exp $ */
+/* $Id: locks.c,v 1.5 1999-10-18 18:52:42 d3h325 Exp $ */
 #include "locks.h"
 #include "armcip.h"
 #ifndef WIN32
@@ -81,7 +81,7 @@ void DeleteLocks(lockset_t lockid)
 #endif
 
 /***************** Convex/HP Exemplar ****************/
-#ifdef CONVEX
+#if defined(CONVEX)
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/cnx_mman.h>
