@@ -19,7 +19,10 @@
 #define eaf_stat_ EAF_STAT
 #define eaf_eof_ EAF_EOF
 #define eaf_error_ EAF_ERROR
+#define eaf_print_stats_ EAF_PRINT_STATS
+#define eaf_errmsg_ EAF_ERRMSG
 #endif
+
 
 static int fortchar_to_string(const char *f, int flen, char *buf, 
 			      const int buflen)
@@ -146,10 +149,10 @@ logical eaf_eof_(Integer *code)
 }
 
 #if defined(CRAY) || defined(CRAY_T3D)
-int eaf_open_(fcd *f, Integer *type, Integer *fd)
+int eaf_open_(_fcd f, Integer *type, Integer *fd)
 {
     char *fname = _fcdtocp(f);
-    int flen = _fcdtolen(f);
+    int flen = _fcdlen(f);
 #else
 int eaf_open_(const char *fname, Integer *type, Integer *fd, int flen)
 {
@@ -167,14 +170,14 @@ int eaf_open_(const char *fname, Integer *type, Integer *fd, int flen)
 }
 
 #ifdef CRAY
-Integer eaf_delete_(fcd f)
+Integer eaf_delete_(_fcd f)
 {
     char *fname = _fcdtocp(f);
-    int flen = _fcdtolen(f);
+    int flen = _fcdlen(f);
 #else
 Integer eaf_delete_(const char *fname, int flen)
-#endif
 {
+#endif
     char buf[1024];
 
     if (!fortchar_to_string(fname, flen, buf, sizeof(buf)))
@@ -184,12 +187,12 @@ Integer eaf_delete_(const char *fname, int flen)
 }
 
 #ifdef CRAY
-Integer eaf_stat_(fcd p, Integer *avail_kb, fcd fst)
-    char *path = _fcdtocp(p);
-    int pathlen = _fcdtolen(p);
-    char *fstype = _fcdtocp(fst);
-    int fslen = _fcdtolen(fst);
+Integer eaf_stat_(_fcd p, Integer *avail_kb, _fcd fst)
 {
+    char *path = _fcdtocp(p);
+    int pathlen = _fcdlen(p);
+    char *fstype = _fcdtocp(fst);
+    int fslen = _fcdlen(fst);
 #else
 Integer eaf_stat_(const char *path, int *avail_kb, char *fstype, 
 		  int pathlen, int fslen)
@@ -215,10 +218,10 @@ Integer eaf_stat_(const char *path, int *avail_kb, char *fstype,
 }
     
 #ifdef CRAY
-void eaf_errmsg_(Integer *code,  fcd m)
+void eaf_errmsg_(Integer *code,  _fcd m)
 {
     char *msg = _fcdtocp(m);
-    int msglen = _fcdtolen(m);
+    int msglen = _fcdlen(m);
 #else
 void eaf_errmsg_(Integer *code, char *msg, int msglen)
 {
