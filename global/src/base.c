@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.91 2004-09-15 18:50:27 d3g293 Exp $ */
+/* $Id: base.c,v 1.92 2004-09-24 00:55:00 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1135,7 +1135,7 @@ void ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
 
 /*\ Overide the irregular data distribution flag on a new global array
 \*/
-void ga_set_irreg_flag_(Integer *g_a, logical *flag)
+void FATR ga_set_irreg_flag_(Integer *g_a, logical *flag)
 {
   Integer ga_handle = *g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_irreg");
