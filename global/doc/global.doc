@@ -192,8 +192,8 @@ distribute to other US Government contractors.
 
   Starting with version 2.1, Global Arrays works with either TCGMSG or
   MPI message-passing librarries.  TCGMSG still is and going to be the
-  default library until MPI implementations mature. There are two
-  possible interfaces between GA and MPI:
+  default library for a while until MPI implementations mature. There are 
+  two possible interfaces between GA and MPI:
 
      1. TCGMSG emulation library, TCGMSG-MPI, that implements functionality
         of TCGMSG using MPI and other techniques. In this mode, message-
@@ -201,8 +201,8 @@ distribute to other US Government contractors.
         internally calls MPI_Initialize. In this mode, TCGMSG-MPI might
         'steal' one process from the application to implement NXTVAL
         operation. To enable this mode, define environmental variable
-        USE_MPI and MPI_LOC which should point to the location of the
-        MPI library and include directories. 
+        USE_MPI and MPI_LIB and MPI_INCLUDE which should point to the 
+        location of the MPI library and include directories. 
 
      2. Direct MPI-GA interface. In this mode, GA program should contain 
         MPI initialization calls instead PBEGIN(F).

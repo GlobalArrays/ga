@@ -750,10 +750,13 @@ Performs the equivalent of the following Fortran-90.  Array
       Scatters the array (integer or double) elements into the array.
       The contents of the input arrays (v, i, j) are preserved, but
       their contents might be (consistently) shuffled on return.
-
-              do k = 1, nv
-                 a(i(k),j(k)) = v(k)     enddo
 </P>
+
+<listing>
+      do k = 1, nv
+             a(i(k),j(k)) = v(k)    
+      enddo
+</listing>
 <HR>
 
 <H2> <A name="ga_error"> GA_ERROR </A> </H2>
@@ -802,14 +805,14 @@ Performs the equivalent of the following Fortran-90.  Array
       If i/j are out of bounds .FALSE. is returned, otherwise .TRUE..
 </P>
 <listing>
-        map(2,*)    -  ilo'
-        map(3,*)    -  ihi'
-        map(4,*)    -  jlo'
-        map(5,*)    -  jhi'
+        map(1,*)    -  ilo
+        map(2,*)    -  ihi
+        map(3,*)    -  jlo
+        map(4,*)    -  jhi
 
 </listing>
 <P>
-      specify coordinates of a subpatch 'held' by the process map(1,*)
+      specify coordinates of a subpatch 'held' by the process map(5,*)
 <HR>
 
 <H2> <A name="ga_inquire"> GA_INQUIRE </A> </H2>
