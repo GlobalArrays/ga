@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.8 1999-07-29 22:02:09 jju Exp $ */
+/* $Id: capi.c,v 1.9 1999-10-11 23:16:11 jju Exp $ */
 #include "ga.h"
 #include "globalp.h"
 
@@ -251,13 +251,21 @@ void NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[])
      COPYF2C(_ga_work,ld, ndim-1);
 }
 
+void NGA_Release(int g_a, int lo[], int hi[])
+{
+     Integer a=(Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
+     COPYINDEX_C2F(lo,_ga_lo,ndim);
+     COPYINDEX_C2F(hi,_ga_hi,ndim);
+
+     nga_release_(&a,_ga_lo, _ga_hi);
+}
 
 int NGA_Locate(int g_a, int subscript[])
 {
     logical st;
     Integer a=(Integer)g_a, owner;
     Integer ndim = ga_ndim_(&a);
-    int i; 
     COPYINDEX_C2F(subscript,_ga_lo,ndim);
 
     st = nga_locate_(&a,_ga_lo,&owner);
@@ -387,17 +395,50 @@ void GA_Igop(Integer x[], int n, char *op)
 void GA_Print_patch(int g_a,int ilo,int ihi,int jlo,int jhi,int pretty)
 void GA_Copy_patch(ta,int g_a, int ailo, int aihi, int ajlo, int ajhi,
                              int g_b, int bilo, int bihi, int bjlo,int bjhi)
+*/
 void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
 {
+    int idx, i;
+    Integer a = (Integer)g_a;
+    Integer nv = (Integer)n;
+    Integer ndim = ga_ndim_(&a);
+    Integer *_subs_array;
+    _subs_array = (Integer *)malloc(n * ndim * sizeof(Integer));
+    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
+    for(idx=0; idx<n; idx++)
+        for(i=0; i<ndim; i++)
+            _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
+    
+    nga_scatter_(&a, v, _subs_array , &nv);
+    
+    free(_subs_array);
 }
 
-void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
+void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
 {
+    int idx, i;
+    Integer a = (Integer)g_a;
+    Integer nv = (Integer)n;
+    Integer ndim = ga_ndim_(&a);
+    Integer *_subs_array;
+    _subs_array = (Integer *)malloc(n * ndim * sizeof(Integer));
+    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
+
+    /* adjust the indices for fortran interface */
+    for(idx=0; idx<n; idx++)
+        for(i=0; i<ndim; i++)
+            _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
+    
+    nga_gather_(&a, v, _subs_array , &nv);
+    
+    free(_subs_array);
 }
 
 void GA_Dgemm(char ta, char tb, int m, int n, int k,
               double alpha, int g_a, int g_b, double beta, int g_c )
-*/
+{
+
+}
 
 /* Patch related */
 
