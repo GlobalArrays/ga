@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.36 2002-03-22 00:26:33 d3h325 Exp $ */
+/* $Id: message.c,v 1.37 2002-03-22 22:14:22 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -603,7 +603,7 @@ static void ldoop2(int n, char *op, long *x, long* work, long* work2)
     }
   else if (strncmp(op,"or",2) == 0)
     while(n--) {
-      *x |= *work;
+      *x = *work | *work2;
       x++; work++; work2++;
     }
   else
@@ -683,7 +683,7 @@ static void idoop2(int n, char *op, int *x, int* work, int* work2)
     }
   else if (strncmp(op,"or",2) == 0)
     while(n--) {
-      *x |= *work;
+      *x = *work | *work2;
       x++; work++; work2++;
     }
   else
@@ -1011,7 +1011,7 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
        armci_util_wait_int(&GOP_BUF(armci_me)->a.flag, EMPTY, 100);
 
 #if 1
-       if(left==-1 && right==-1) armci_copy(x,GOP_BUF(armci_me)->array,len);
+        if(left<0 && right<0) armci_copy(x,GOP_BUF(armci_me)->array,len);
 
        /*  version oblivious to the order of data arrival */
        {
