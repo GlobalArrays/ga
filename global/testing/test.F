@@ -107,7 +107,7 @@ c
       double precision drand, crap, sum1, sum2, x
       double precision nwords
       intrinsic int
-      iran(i) = int(drand(0)*dfloat(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -589,11 +589,11 @@ c
       parameter (maxloop = 100)
       integer maxproc
       parameter (maxproc = 128)
-      double precision drand, crap
+      double precision drand, crap, real
       double precision nwords, error
       double complex   x, sum1, sum2
       intrinsic int
-      iran(i) = int(drand(0)*dfloat(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -603,8 +603,8 @@ c     a() is a local copy of what the global array should start as
 c
       do j = 1, n
          do i = 1, n
-            a(i,j) = dcmplx(dble(i-1), dble((j-1)*n))
-            b(i,j) = dcmplx(-1d0,1d0)
+            a(i,j) = cmplx(dble(i-1), dble((j-1)*n))
+            b(i,j) = cmplx(-1d0,1d0)
          enddo
       enddo
 c
@@ -768,7 +768,7 @@ c
       crap = drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-            b(i,j) = dcmplx(drand(0),drand(1))
+            b(i,j) = cmplx(drand(0),drand(1))
          enddo
       enddo
 c
@@ -776,7 +776,7 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-            x = dcmplx(drand(0),0.333d0)
+            x = cmplx(drand(0),0.333d0)
             ilo = i
             ihi = min(i+inc-1, n)
             if(ihi.eq.n-1)ihi=n
@@ -969,7 +969,7 @@ c
       crap = drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
-            b(i,j) = dcmplx(drand(0), drand(1))
+            b(i,j) = cmplx(drand(0), drand(1))
             a(i,j) = (0.1d0,-.1d0)*a(i,j) + (.9d0,-.9d0)*b(i,j)
          enddo
       enddo
@@ -1004,7 +1004,7 @@ c
       sum1 = (0.0d0,0.d0)
       do j = 1, n
          do i = 1, n
-            b(i,j) = dcmplx(drand(0), drand(1))
+            b(i,j) = cmplx(drand(0), drand(1))
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
@@ -1053,11 +1053,11 @@ c
       integer maxproc
       parameter (maxproc = 128)
       integer map(5,maxproc), found, np,k
-      double precision drand, crap, sum1
+      double precision drand, crap, sum1, real
       integer buf
       intrinsic int
       external drand
-      iran(i) = int(drand(0)*dfloat(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()

@@ -55,7 +55,7 @@ c
       integer g_a, g_b, g_c 
       integer rows, cols, loop
       logical status, dist_same 
-      iran(i) = int(drand(0)*dfloat(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -79,7 +79,7 @@ c     call setdbg(1)
          call ga_error('... exiting ',0)
       endif
 c
-#if   defined(CRAY_T3D) || defined(AIX)
+#if   defined(CRAY_T3D) || defined(AIX) || defined(SGI)
       if(dist_same) then
 #else
       if(dist_same.eq. .true.) then
@@ -500,7 +500,7 @@ c
       integer rows, cols, loop
       logical status, dist_same 
       double precision drand
-      iran(i) = int(drand(0)*dfloat(i)) + 1
+      iran(i) = int(drand(0)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -508,8 +508,8 @@ c
 c
       do j = 1, n
          do i = 1, n
-            a(i,j) = dcmplx(dble(i-1), dble((j-1)*n))
-            b(i,j) = dcmplx(dble(i+j),1d0)
+            a(i,j) = cmplx(dble(i-1), dble((j-1)*n))
+            b(i,j) = cmplx(dble(i+j),1d0)
          enddo
       enddo
 c
@@ -524,7 +524,7 @@ c     call setdbg(1)
          call ga_error('... exiting ',0)
       endif
 c
-#if   defined(CRAY_T3D) || defined(AIX)
+#if   defined(CRAY_T3D) || defined(AIX) || defined(SGI)
       if(dist_same) then
 #else
       if(dist_same.eq. .true.) then
