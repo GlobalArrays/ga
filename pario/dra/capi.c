@@ -71,8 +71,9 @@ int NDRA_Create(int type, int ndim, int dims[], char *name, char* filename,
 int NDRA_Inquire(int d_a, int *type, int *ndim, int dims[], char *name,
     char* filename)
 {
-   Integer  ttype, nndim, status;
-   status = ndra_inquire(&d_a, &ttype, &nndim, _da_dims, name, filename);
+   Integer  dd_a, ttype, nndim, status;
+   dd_a = (Integer)d_a;
+   status = ndra_inquire(&dd_a, &ttype, &nndim, _da_dims, name, filename);
    COPYF2C(_da_dims, dims, nndim);
    *type = (Integer)ttype;
    *ndim = (Integer)nndim;
@@ -170,6 +171,7 @@ int DRA_Open(char* filename, int mode, int *d_a)
 {
   Integer mmode, dd_a, status;
   mmode = (Integer)mode;
+  printf ("DRA_Open: DRA handle is %d\n", *d_a);
   status = dra_open(filename, &mode, &dd_a);
   *d_a = (int)dd_a;
   return (int)status;
@@ -209,6 +211,7 @@ int DRA_Delete(int d_a)
 int DRA_Close(int d_a)
 {
   Integer dd_a, status;
+  printf ("DRA_Close: DRA handle is %d\n", d_a);
   dd_a = (Integer)d_a;
   status = dra_close_(&dd_a);
   return (int)status;

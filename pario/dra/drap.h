@@ -35,11 +35,11 @@ typedef struct{                               /* stores basic DRA info */
         Integer dims[MAXDIM];                 /* array dimensions */
         Integer chunk[MAXDIM];                /* data layout chunking */
         Integer layout;                       /* date layout type */
-        Integer type;                         /* data type */
+        int type;                         /* data type */
+        int mode;                         /* file/array access permissions */
         char    name[DRA_MAX_NAME+8];         /* array name */
         char    fname[DRA_MAX_FNAME+8];       /* metafile name */
         Integer actv;                         /* is array active ? */ 
-        Integer mode;                         /* file/array access permissions */
         Integer indep;                        /* shared/independent files ? */
         Fd_t      fd;                         /* ELIO meta-file descriptor */
 } disk_array_t;

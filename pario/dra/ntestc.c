@@ -168,16 +168,22 @@ float ran0(long *idum)
   if (*idum < 0) *idum += IM;
   ans=AM*(*idum);
   *idum ^= MASK;
-  return ans;
+  if(ans<0)return -ans;
+  else return ans;
 }
 
 int iran(int i, long *idum)
 {
-  return (int)(((float)i)*ran0(idum));
+  float fr = ran0(idum);
+  if(fr<0)printf("problem %f\n",fr);
+#if 1
+  return (int) (i * fr);
+#else
+  return (int) ((i-1) * fr)+1;
+#endif
 }
 
-void swap(i,j)
-Integer *i, *j;
+void swap(int *i,int *j)
 {
   int a;
   a = *i;

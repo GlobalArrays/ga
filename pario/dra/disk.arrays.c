@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.39 2002-03-15 16:25:30 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.40 2002-03-27 19:24:14 d3h325 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -136,7 +136,7 @@ int     Dra_num_serv=DRA_NUM_IOPROCS;
 }
         
 #define dai_check_rangeM(_lo, _hi, _dim, _err_msg)                         \
-        if(_lo < 1   || _lo > _dim ||_hi < _lo || _hi > _dim)             \
+        if(_lo < (Integer)1   || _lo > _dim ||_hi < _lo || _hi > _dim)     \
         dai_error(_err_msg, _dim)
  
 #define ga_get_sectM(sect, _buf, _ld)\
@@ -190,7 +190,7 @@ char dummy_fname[DRA_MAX_FNAME];
 
 /*\ determines if write operation to a disk array is allowed
 \*/
-Integer dai_write_allowed(Integer d_a)
+int dai_write_allowed(Integer d_a)
 {
 Integer handle = d_a+DRA_OFFSET;
         if(DRA[handle].mode == DRA_W || DRA[handle].mode == DRA_RW) return 1;
@@ -200,7 +200,7 @@ Integer handle = d_a+DRA_OFFSET;
 
 /*\ determines if read operation from a disk array is allowed
 \*/
-Integer dai_read_allowed(Integer d_a)
+int dai_read_allowed(Integer d_a)
 {
 Integer handle = d_a+DRA_OFFSET;
         if(DRA[handle].mode == DRA_R || DRA[handle].mode == DRA_RW) return 1;
@@ -686,8 +686,8 @@ Integer handle, elem_size;
         DRA[handle].dims[0] = *dim1;
         DRA[handle].dims[1] = *dim2;
         DRA[handle].ndim = 2;
-        DRA[handle].type = (Integer)ga_type_f2c((int)*type);
-        DRA[handle].mode = *mode;
+        DRA[handle].type = ga_type_f2c((int)*type);
+        DRA[handle].mode = (int)*mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
         strncpy(DRA[handle].name, name, DRA_MAX_NAME );
 
@@ -700,15 +700,15 @@ Integer handle, elem_size;
            if (INDEPFILES(*d_a)) {
 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
-             DRA[handle].fd = elio_open(dummy_fname,*mode, ELIO_PRIVATE);
+             DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
 
            }else{
 
               /* collective open supported only on Paragon */
 #             ifdef PARAGON
-                 DRA[handle].fd = elio_gopen(DRA[handle].fname,*mode); 
+                 DRA[handle].fd = elio_gopen(DRA[handle].fname,(int)*mode); 
 #             else
-                 DRA[handle].fd = elio_open(DRA[handle].fname,*mode, ELIO_SHARED); 
+                 DRA[handle].fd = elio_open(DRA[handle].fname,(int)*mode, ELIO_SHARED); 
 #             endif
            }
 
@@ -753,7 +753,7 @@ Integer handle;
              dai_error("dra_open: too many disk arrays ", _max_disk_array);
         *d_a = handle - DRA_OFFSET;
 
-        DRA[handle].mode = *mode;
+        DRA[handle].mode = (int)*mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
 
         if(dai_read_param(DRA[handle].fname, *d_a))return((Integer)-1);
@@ -765,15 +765,15 @@ Integer handle;
            if (INDEPFILES(*d_a)) {
 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
-             DRA[handle].fd = elio_open(dummy_fname,*mode, ELIO_PRIVATE);
+             DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
 
            }else{
 
               /* collective open supported only on Paragon */
 #             ifdef PARAGON
-                 DRA[handle].fd = elio_gopen(DRA[handle].fname,*mode);
+                 DRA[handle].fd = elio_gopen(DRA[handle].fname,(int)*mode);
 #             else
-                 DRA[handle].fd = elio_open(DRA[handle].fname,*mode, ELIO_SHARED);
+                 DRA[handle].fd = elio_open(DRA[handle].fname,(int)*mode, ELIO_SHARED);
 #             endif
            }
 
@@ -933,7 +933,7 @@ Integer ilo, ihi, jlo, jhi;
              dai_error("dra_write: write not allowed to this array",*d_a);
 
         ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
-        if(DRA[handle].type != gtype)dai_error("dra_write: type mismatch",gtype);
+        if(DRA[handle].type != (int)gtype)dai_error("dra_write: type mismatch",gtype);
         if(DRA[handle].dims[0] != gdim1)dai_error("dra_write: dim1 mismatch",gdim1);
         if(DRA[handle].dims[1] != gdim2)dai_error("dra_write: dim2 mismatch",gdim2);
 
@@ -1157,8 +1157,8 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
 
          Integer ihandle, jhandle, vhandle, iindex, jindex, vindex;
          Integer pindex, phandle;
-         Integer type = DRA[ds_a.handle+DRA_OFFSET].type, nelem;
-         Integer i, j, ii, jj, base;  
+         int type = DRA[ds_a.handle+DRA_OFFSET].type;
+         Integer i, j, ii, jj, base,nelem;  
          char    *base_addr;
 
 #        define ITERATOR_2D(i,j, base, ds_chunk)\
@@ -1330,8 +1330,8 @@ void nga_move(int op,             /*[input] flag for read or write */
 
       Integer ihandle, jhandle, vhandle, iindex, jindex, vindex;
       Integer pindex, phandle;
-      Integer type = DRA[ds_a.handle+DRA_OFFSET].type, nelem;
-      Integer i, j, ii, jj, base;  
+      int type = DRA[ds_a.handle+DRA_OFFSET].type;
+      Integer i, j, ii, jj, base,nelem;  
       char    *base_addr;
 
 #     define ITERATOR_2D(i,j, base, ds_chunk)\
@@ -1459,7 +1459,7 @@ void dai_transfer_unlgn(int opcode, int transp,
                         section_t ds_a, section_t gs_a, Integer req)
 {
 Integer   chunk_ld,  next, offset;
-Integer   type = DRA[ds_a.handle+DRA_OFFSET].type;
+int   type = DRA[ds_a.handle+DRA_OFFSET].type;
 section_t ds_chunk, ds_unlg;
 char      *buffer; 
 
@@ -1611,7 +1611,7 @@ section_t d_sect, g_sect;
    dai_check_handleM(*d_a,"dra_write_sect");
    ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
    if(!dai_write_allowed(*d_a))dai_error("dra_write_sect: write not allowed",*d_a);
-   if(DRA[handle].type != gtype)dai_error("dra_write_sect: type mismatch",gtype);
+   if(DRA[handle].type != (int)gtype)dai_error("dra_write_sect: type mismatch",gtype);
    dai_check_rangeM(*gilo,*gihi, gdim1, "dra_write_sect: g_a dim1 error");
    dai_check_rangeM(*gjlo,*gjhi, gdim2, "dra_write_sect: g_a dim2 error");
    dai_check_rangeM(*dilo,*dihi,DRA[handle].dims[0],"dra_write_sect:d_a dim1 error");
@@ -1680,7 +1680,7 @@ section_t d_sect, g_sect;
    dai_check_handleM(*d_a,"dra_read_sect");
    if(!dai_read_allowed(*d_a))dai_error("dra_read_sect: read not allowed",*d_a);
    ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
-   if(DRA[handle].type != gtype)dai_error("dra_read_sect: type mismatch",gtype);
+   if(DRA[handle].type != (int)gtype)dai_error("dra_read_sect: type mismatch",gtype);
    dai_check_rangeM(*gilo, *gihi, gdim1, "dra_read_sect: g_a dim1 error");
    dai_check_rangeM(*gjlo, *gjhi, gdim2, "dra_read_sect: g_a dim2 error");
    dai_check_rangeM(*dilo, *dihi,DRA[handle].dims[0],"dra_read_sect:d_a dim1 error");
@@ -1737,7 +1737,7 @@ Integer ilo, ihi, jlo, jhi;
         dai_check_handleM(*d_a,"dra_read");
         if(!dai_read_allowed(*d_a))dai_error("dra_read: read not allowed",*d_a);
         ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
-        if(DRA[handle].type != gtype)dai_error("dra_read: type mismatch",gtype);
+        if(DRA[handle].type != (int)gtype)dai_error("dra_read: type mismatch",gtype);
         if(DRA[handle].dims[0] != gdim1)dai_error("dra_read: dim1 mismatch",gdim1);
         if(DRA[handle].dims[1] != gdim2)dai_error("dra_read: dim2 mismatch",gdim2);
 
@@ -1826,7 +1826,7 @@ Integer handle=*d_a+DRA_OFFSET;
 
         dai_check_handleM(*d_a,"dra_inquire");
 
-        *type = DRA[handle].type;
+        *type = (Integer)DRA[handle].type;
         *dim1 = DRA[handle].dims[0];
         *dim2 = DRA[handle].dims[1];
         strcpy(name, DRA[handle].name);
@@ -2275,8 +2275,8 @@ Integer handle, elem_size, i;
        /* complete initialization */
         for (i=0; i<*ndim; i++) DRA[handle].dims[i] = dims[i];
         DRA[handle].ndim = *ndim;
-        DRA[handle].type = (Integer)ga_type_f2c((int)*type);
-        DRA[handle].mode = *mode;
+        DRA[handle].type = ga_type_f2c((int)*type);
+        DRA[handle].mode = (int)*mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
         strncpy(DRA[handle].name, name, DRA_MAX_NAME );
 
@@ -2289,15 +2289,15 @@ Integer handle, elem_size, i;
            if (INDEPFILES(*d_a)) {
 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
-             DRA[handle].fd = elio_open(dummy_fname,*mode, ELIO_PRIVATE);
+             DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
 
            }else{
 
               /* collective open supported only on Paragon */
 #           ifdef PARAGON
-              DRA[handle].fd = elio_gopen(DRA[handle].fname,*mode); 
+              DRA[handle].fd = elio_gopen(DRA[handle].fname,(int)*mode); 
 #           else
-              DRA[handle].fd = elio_open(DRA[handle].fname,*mode, ELIO_SHARED); 
+              DRA[handle].fd = elio_open(DRA[handle].fname,(int)*mode, ELIO_SHARED); 
 #           endif
            }
 
@@ -2739,7 +2739,7 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
                         )
 {
   Integer   chunk_ld[MAXDIM],  next, offset, i, j;
-  Integer   type = DRA[ds_a.handle+DRA_OFFSET].type;
+  int   type = DRA[ds_a.handle+DRA_OFFSET].type;
   Integer   ndim = DRA[ds_a.handle+DRA_OFFSET].ndim;
   section_t ds_chunk, ds_unlg;
   char      *buffer; 
@@ -2957,7 +2957,7 @@ section_t d_sect, g_sect;
    dai_check_handleM(*d_a,"ndra_write_sect");
    nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
    if(!dai_write_allowed(*d_a))dai_error("ndra_write_sect: write not allowed",*d_a);
-   if(DRA[handle].type != gtype)dai_error("ndra_write_sect: type mismatch",gtype);
+   if(DRA[handle].type != (int)gtype)dai_error("ndra_write_sect: type mismatch",gtype);
    if(DRA[handle].ndim != ndim)dai_error("ndra_write_sect: dimension mismatch", ndim);
    for (i=0; i<ndim; i++) dai_check_rangeM(glo[i], ghi[i], gdims[i],
        "ndra_write_sect: g_a dim error");
@@ -3042,7 +3042,7 @@ Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
              dai_error("ndra_write: write not allowed to this array",*d_a);
 
         nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
-        if(DRA[handle].type != gtype)dai_error("ndra_write: type mismatch",gtype);
+        if(DRA[handle].type != (int)gtype)dai_error("ndra_write: type mismatch",gtype);
         if(DRA[handle].ndim != ndim)dai_error("ndra_write: dimension mismatch",ndim);
         for (i=0; i<ndim; i++) {
           if(DRA[handle].dims[i] != gdims[i])
@@ -3081,7 +3081,7 @@ section_t d_sect, g_sect;
    dai_check_handleM(*d_a,"ndra_read_sect");
    if(!dai_read_allowed(*d_a))dai_error("ndra_read_sect: read not allowed",*d_a);
    nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
-   if(DRA[handle].type != gtype)dai_error("ndra_read_sect: type mismatch",gtype);
+   if(DRA[handle].type != (int)gtype)dai_error("ndra_read_sect: type mismatch",gtype);
    if(DRA[handle].ndim != ndim)dai_error("ndra_read_sect: dimension mismatch", ndim);
    for (i=0; i<ndim; i++) dai_check_rangeM(glo[i], ghi[i], gdims[i],
        "ndra_write_sect: g_a dim error");
@@ -3173,7 +3173,7 @@ Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
         dai_check_handleM(*d_a,"ndra_read");
         if(!dai_read_allowed(*d_a))dai_error("ndra_read: read not allowed",*d_a);
         nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
-        if(DRA[handle].type != gtype)dai_error("ndra_read: type mismatch",gtype);
+        if(DRA[handle].type != (int)gtype)dai_error("ndra_read: type mismatch",gtype);
         if(DRA[handle].ndim != ndim)dai_error("ndra_read: dimension mismatch",ndim);
         for (i=0; i<ndim; i++) {
           if(DRA[handle].dims[i] != gdims[i])
@@ -3202,7 +3202,7 @@ Integer handle=*d_a+DRA_OFFSET;
 
         dai_check_handleM(*d_a,"dra_inquire");
 
-        *type = DRA[handle].type;
+        *type = (Integer)DRA[handle].type;
         *ndim = DRA[handle].ndim;
         dims = DRA[handle].dims;
         strcpy(name, DRA[handle].name);
