@@ -23,5 +23,5 @@ extern int *armci_use_memlock_table;
 
 extern void ARMCI_LOCKMEM(void *pstart, void *pend, int proc);
 extern void ARMCI_UNLOCKMEM(int proc);
-
+#define MEMLOCK_SHMEM_FLAG 
 #endif
