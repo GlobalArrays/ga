@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.72 2004-04-01 15:57:03 d3g293 Exp $ */
+/* $Id: base.c,v 1.73 2004-04-15 22:00:23 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2241,7 +2241,7 @@ char *ptr;
 int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
-   vampir_begin(GA_TERMINATE,__FILE__,__LINE__);
+   vampir_begin(GA_FILL,__FILE__,__LINE__);
 #endif
 
    GA_PUSH_NAME("ga_fill");
@@ -2281,7 +2281,7 @@ int local_sync_begin,local_sync_end;
    GA_POP_NAME;
  
 #ifdef GA_USE_VAMPIR
-   vampir_end(GA_TERMINATE,__FILE__,__LINE__);
+   vampir_end(GA_FILL,__FILE__,__LINE__);
 #endif
 }
 
