@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.9 2002-02-19 16:12:30 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.10 2002-02-19 16:57:22 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1759,6 +1759,7 @@ int ARMCI_PutS_flag(
    * been completed. */
   bytes = sizeof(int);
   ARMCI_Put(&val, flag, bytes, proc);
+  return 1;
 }
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND PUT CALLS
@@ -2002,8 +2003,8 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
 
       /* Put local data on remote processor */
       ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          ndim - 1, (void*)(GA_Update_Flags[proc_rem]+msgcnt), signal,
-          proc_rem);
+          (int)(ndim - 1), (void*)(GA_Update_Flags[proc_rem]+msgcnt),
+          signal, (int)proc_rem);
       msgcnt++;
 
       /* Perform update in positive direction. Start by getting rough
@@ -2125,8 +2126,8 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
 
       /* Put local data on remote processor */
       ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          ndim - 1, (void*)(GA_Update_Flags[proc_rem]+msgcnt), signal,
-          proc_rem);
+          (int)(ndim - 1), (void*)(GA_Update_Flags[proc_rem]+msgcnt),
+          signal, (int)proc_rem);
       msgcnt++;
     }
     /* check to make sure that all messages have been recieved before
