@@ -1294,7 +1294,7 @@ extern void armci_util_wait_int(volatile int *,int,int);
        }
        else{
          int *flg = (int *)(dataptr+len);
-         while(armci_util_int_getval(flg) == ARMCI_VAPI_COMPLETE){
+         while(armci_util_int_getval(flg) != ARMCI_VAPI_COMPLETE){
            loop++;
            loop %=100000;
            if(loop==0){
@@ -1363,6 +1363,10 @@ int *last;
       printf("%d(s):write to direct sent %d to %d at %p\n",armci_me,
              bytes,proc,(char *)msginfo->tag.data_ptr);
       fflush(stdout);
+    }
+    if(msginfo->operation!=GET){
+       *(int *)((char *)buf+bytes)=ARMCI_VAPI_COMPLETE;
+       bytes+=sizeof(int);
     }
     armci_send_data_to_client(proc,buf,bytes,msginfo->tag.data_ptr);
     /*if(msginfo->dscrlen >= (bytes-sizeof(int)))
