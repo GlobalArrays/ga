@@ -73,8 +73,8 @@ void FATR DCOPY1D(void*, void*, int*);
           } else { shmem_int_get((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
 
 #elif defined(CRAY_T3E)
-#      define armci_copy(src,dst,n)\
-        if((n)<128 || n%sizeof(long) ) memcpy((dst),(src),(n));\
+#      define armci_copy_disabled(src,dst,n)\
+        if((n)<256 || n%sizeof(long) ) memcpy((dst),(src),(n));\
         else shmem_put((long*)(dst),(long*)(src),(int)(n)/sizeof(long),armci_me)
 
 #      define armci_put(src,dst,n,proc) \
