@@ -134,7 +134,7 @@ char dummy[HDLEN];
   /* process 0 broadcasts data to everybody else                           */
   /* for 6 Integers there shouldn't be alignement padding in the structure */
   /* the integers are followed by array name */
-  len = (2+2*ndim)*sizeof(Integer)+sizeof(int)+DRA_MAX_NAME+1;
+  len = (2+2*MAXDIM)*sizeof(Integer)+2*sizeof(int)+DRA_MAX_NAME+8;
   ga_brdcst_(&brd_type, DRA + dra_hndl, &len, &orig);
   
   return(rc);
