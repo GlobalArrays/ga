@@ -78,7 +78,7 @@ c
 c***  Create a global array
 c
 c     call setdbg(1)
-      status = ga_create(MT_DBL, n, n, 'a', 1, 1, g_a)
+      status = ga_create(MT_DBL, n, n, 'a', 0, 0, g_a)
       if (.not. status) then
          write(6,*) ' ga_create failed'
          call ffflush(6)
@@ -93,9 +93,9 @@ c
          if(.not.ga_compare_distr(g_a, g_c))
      $           call ga_error("g_c distribution different",0) 
       else
-         status = ga_create(MT_DBL, n, n, 'b', 1, n, g_b)
+         status = ga_create(MT_DBL, n, n, 'b', 0, n, g_b)
          if (.not. status) call ga_error('ga_create failed:b',0) 
-         status = ga_create(MT_DBL, n, n, 'c', n, 1, g_c)
+         status = ga_create(MT_DBL, n, n, 'c', n, 0, g_c)
          if (.not. status) call ga_error('ga_create failed:c',0) 
       endif
 c
@@ -518,7 +518,7 @@ c
 c***  Create a global array
 c
 c     call setdbg(1)
-      status = ga_create(MT_DCPL, n, n, 'a', 1, 1, g_a)
+      status = ga_create(MT_DCPL, n, n, 'a', 0, 0, g_a)
       if (.not. status) then
          write(6,*) ' ga_create failed'
          call ffflush(6)
@@ -533,9 +533,9 @@ c
          if(.not.ga_compare_distr(g_a, g_c))
      $           call ga_error("g_c distribution different",0) 
       else
-         status = ga_create(MT_DCPL, n, n, 'b', 1, n, g_b)
+         status = ga_create(MT_DCPL, n, n, 'b', 0, n, g_b)
          if (.not. status) call ga_error('ga_create failed:b',0) 
-         status = ga_create(MT_DCPL, n, n, 'c', n, 1, g_c)
+         status = ga_create(MT_DCPL, n, n, 'c', n, 0, g_c)
          if (.not. status) call ga_error('ga_create failed:c',0) 
       endif
 c

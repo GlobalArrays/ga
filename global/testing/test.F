@@ -45,7 +45,7 @@ c
          print *,' GA initialized '
          call ffflush(6)
       endif
-      call PROC_REMAP()
+c     call PROC_REMAP()
 c
 c***  Check support for double precision arrays
 c
@@ -68,7 +68,6 @@ c
       endif
 
       call check_complex()
-
 c
 c***  Check support for integer arrays
 c
