@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.12 2000-04-17 22:31:39 d3h325 Exp $ */
+/* $Id: mutex.c,v 1.13 2000-10-11 19:35:32 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -293,7 +293,7 @@ int len=sizeof(int);
      }
 
      /* send Ticket to a process waiting for mutex */
-     if(p != NOBODY)
+     if(p != NOBODY){
         if(p == armci_me)armci_die("server_unlock: cannot unlock self",0);
         else {
 
@@ -305,6 +305,7 @@ int len=sizeof(int);
           return p;
 
         }
+     }
 
      return -1; /* nobody is waiting */
 }

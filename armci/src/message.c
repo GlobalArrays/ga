@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.22 2000-09-13 19:36:54 d3h325 Exp $ */
+/* $Id: message.c,v 1.23 2000-10-11 19:36:24 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -567,9 +567,10 @@ int len, lenmes, min;
         }
     }
 
-    if (armci_me != root)
+    if (armci_me != root){
        if(contribute) armci_msg_snd(tag, x, len, up);
        else armci_msg_snd(tag, x, 0, up); /* send 0 bytes */
+    }
 
     /* Now, root broadcasts the result down the binary tree */
     armci_msg_bcast_scope(scope, x, n, root);
