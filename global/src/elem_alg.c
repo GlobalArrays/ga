@@ -881,7 +881,7 @@ Integer op; /* operation to be perform between g_a and g_b */
 
                        default: ga_error(" wrong data type ",atype);
                    }   
-                   switch(op){
+                   switch((int)op){
                         case OP_ELEM_MULT:
                           do_multiply(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
                            break;
@@ -894,7 +894,9 @@ Integer op; /* operation to be perform between g_a and g_b */
                         case  OP_ELEM_MIN:
                            do_minimum(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
                            break;
-                        default: ga_error(" wrong operation ",op);
+                        default: 
+			   printf("op : OP_ELEM_MULT = %d:%d\n", op, OP_ELEM_MULT);
+			  ga_error(" wrong operation ",op);
                    }
         }
         
