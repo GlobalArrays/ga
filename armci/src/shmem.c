@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.47 2002-01-08 21:56:50 vinod Exp $ */
+/* $Id: shmem.c,v 1.48 2002-05-10 01:01:14 edo Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -28,7 +28,7 @@
  */
 
 #ifdef SYSV
-
+ 
  
 #define DEBUG_ 0
 #define DEBUG1 0
@@ -157,6 +157,11 @@ static  int id_search_no_fork=0;
 #ifdef QUADRICS
 #include <elan/elan.h>
 #include <elan3/elan3.h>
+
+#ifdef __ia64__
+#define ALLOC_MUNMAP_ALIGN 1024*1024*1024
+#endif
+
 #if 0
 extern void* elan_base;
 extern void   *elan3_allocMain(void*, int, int);
@@ -169,18 +174,21 @@ static char* alloc_munmap(size_t size)
 {
 char *tmp;
 unsigned long iptr;
-    tmp = ALGN_MALLOC(size+pagesize-1, pagesize);
+size_t bytes = size+pagesize-1;
+ 
+    tmp = ALGN_MALLOC(bytes, pagesize);
     if(tmp){
         iptr = (unsigned long)tmp;
         iptr >>= logpagesize; iptr <<= logpagesize;
-        if(DEBUG_)
-           printf("%d:unmap ptr=%d->%d size=%d\n",armci_me, tmp,iptr,(int)size);
+        if(DEBUG_) printf("%d:unmap ptr=%p->%p size=%d pagesize=%d\n",armci_me, 
+                          tmp,iptr,(int)size,pagesize);
         tmp = (char*)iptr;
         if(munmap(tmp, size) == -1) armci_die("munmap failed",0);
     }else armci_die("alloc_munmap: malloc failed",(int)size);
     return tmp;
 }
 #endif
+
 
 /*\ test is a shared memory region of a specified size can be allocated
  *  return 0 (no) or 1 (yes)
@@ -336,6 +344,12 @@ void armci_shmem_init()
 {
 
 #ifdef ALLOC_MUNMAP
+
+#if defined(QUADRICS) && defined(__ia64__)
+   /* need aligment on 1MB boundary rather than the actual pagesize */
+   pagesize = 1024*1024;
+   logpagesize = 20;
+#else
    /* determine log2(pagesize) needed for address alignment */
    int tp=512;
    logpagesize = 9;
@@ -347,7 +361,8 @@ void armci_shmem_init()
         logpagesize++;
    }
    if(tp!=pagesize)armci_die("armci_shmem_init:pagesize pow 2",pagesize);
-   if(DEBUG_)printf("page size =%d log=%d\n",pagesize,logpagesize);
+#endif
+   if(DEBUG_) printf("page size =%d log=%d\n",pagesize,logpagesize);
 
 #endif
 
