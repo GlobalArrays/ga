@@ -6,14 +6,15 @@
 #                         based on LU factorization
 #      "make testeig"     to create a test program for GA eigensolver,
 #                         matrix multiply, and symmetrization 
+#      "make testpatch"   to create a test program for GA patch operations
 #      "make clean"       clean
 #      "make realclean"   even cleaner    
 #
 #........................................................................
 
-ifndef TARGET
+ifndef MACHINE
 error:
-	@echo "TARGET machine [SUN,SGI,IBM,SP1,IPSC,PARAGON,KSR] not defined "
+	@echo "MACHINE machine [SUN,SGI,IBM,SP1,IPSC,PARAGON,KSR] not defined "
 	exit
 endif
 
@@ -79,7 +80,7 @@ jacobix.p:
 
 testsolve:  stestsolve.o  $(LIBRARY)
 	$(FC) $(FLDOPT) -o $@ stestsolve.o \
-        $(LIBRARY) $(SCALAPACK) $(LIBS) $(LIBCOM)
+        $(SCALAPACK) $(LIBS) $(LIBCOM)
 	$(INSTALL) 
 
 testsolve.p:
@@ -102,8 +103,8 @@ testchol.p:
 #
 
 clean:   
-	rm -f *.o *.a core *.p ./test*  ipc.clean event* jacobix
+	rm -f *.o *.a core mppcore *.p ./test*  ipc.clean event* jacobix
 
 realclean:
-	rm -f *.o *.a core *.p ./test* ipc.clean event* jacobix
+	rm -f *.o *.a core mppcore *.p ./test* ipc.clean event* jacobix
 
