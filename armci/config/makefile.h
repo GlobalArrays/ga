@@ -77,7 +77,7 @@ endif
 ifeq ($(TARGET),LINUX64)
      FC = fort
      FOPT_REN = -assume no2underscore -fpe3 -check nooverflow
-     FOPT_REN+= -assume accuracy_sensitive -checknopower -check nounderflow
+     FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
      
 #    COPT_REN = -g3  
      CC = ccc
