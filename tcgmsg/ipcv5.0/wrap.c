@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/wrap.c,v 1.1 2001-05-08 17:42:12 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/wrap.c,v 1.2 2001-05-12 01:10:39 edo Exp $ */
 
 #include "sndrcv.h"
 #include "typesf2c.h"
@@ -8,7 +8,6 @@
 #define BUF_SIZE  10000
 #define IBUF_SIZE (BUF_SIZE * sizeof(DoublePrecision)/sizeof(Integer)) 
 DoublePrecision _gops_work[BUF_SIZE];
-long one=1;
 
 #define MAX(a,b) (((a) >= (b)) ? (a) : (b))
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
@@ -249,6 +248,7 @@ void wrap_igop(type, x, n, op)
      long me=NODEID_(), nproc=NNODES_(), len, lenmes, from, root=0;
      Integer *work = (Integer*)_gops_work, *origx = x;
      long ndo, up, left, right, np=*n, orign =*n;
+long one=1;
 
      /* determine location in the binary tree */
      up    = (me-1)/2;    if(up >= nproc)       up = -1;
