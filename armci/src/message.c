@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.20 2000-06-15 00:47:30 d3h325 Exp $ */
+/* $Id: message.c,v 1.21 2000-06-16 19:20:51 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -22,7 +22,8 @@ char *mp_group_name = (char *)NULL;
 char *mp_group_name = "mp_working_group";
 #endif
 
-#define BUF_SIZE  2048
+/* global operations are use buffer size of BUF_SIZE doubles */ 
+#define BUF_SIZE  (4*2048)
 #define INFO_BUF_SIZE  (BUF_SIZE*sizeof(BUF_SIZE) - sizeof(double))
 static double work[BUF_SIZE];
 static long *lwork = (long*)work;
