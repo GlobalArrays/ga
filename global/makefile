@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.20 1997-03-25 16:50:25 d3g681 Exp $
+#$Id: makefile,v 1.21 1997-10-15 16:34:38 d3h325 Exp $
 
 # Tiny makefile wrapper
 
@@ -24,7 +24,7 @@ global_stamp:	include_stamp
 		DIAG=PAR
 
 include_stamp:	src/global.fh
-	cp src/global.fh da/da.fh src/global.h src/types.f2c.h\
+	cp src/global.fh src/global.h src/types.f2c.h\
 		src/c.names.h src/cray.names.h $(INCDIR) 
 	touch include_stamp
 
