@@ -55,42 +55,43 @@ distribute to other US Government contractors.
    a) Operations that are globally synchronous ... i.e. must
       be simultaneously invoked by all processes as if in SIMD mode.
 
-      ga_initialize   ... initialize global array internal structures 
-      ga_create       ... create an array (integer or double precision)
-      ga_create_irreg ... create an array with irregular distribution
-                          (integer or double precision)
-      ga_destroy      ... destroy an array
-      ga_terminate    ... destroy all existing arrays and delete internal
-                          data structures  
-      ga_sync         ... synchronize processes (a barrier)
-      ga_zero         ... zero an array
-      ga_ddot         ... dot product of two arrays (doubles only)
-      ga_dscal        ... scale the elements in an array by a constant
-                          (doubles only)
-      ga_dadd         ... scale and add two arrays to put result in a third
-                          (may overwrite one of the other two, doubles only)
-      ga_copy         ... copy one array into another
-      ga_dgemm        ... BLAS-like matrix multiply 
-      ga_ddot_patch   ... dot product of two arrays (doubles only)
-                          (patch version)
-      ga_dscal_patch  ... scale the elements in an array by a constant
-                          (patch version)
-      ga_dadd_patch   ... scale and add two arrays to put result in a third
-                          (patch version)
-      ga_copy_patch   ... copy one array into another (patch version)
-      ga_ifill_patch  ... fill a patch of array with value (integer version)
-      ga_dfill_patch  ... fill a patch of array with value (DP version)
-      ga_mulmat_patch ... matrix multiply (patch version)
-      ga_diag         ... real symmetric generalized eigensolver 
-      ga_diag_reuse   ... a version of ga_diag for repeated use    
-      ga_diag_std     ... standard real symmetric eigensolver 
-      ga_symmetrize   ... symmetrize a matrix
-      ga_transpose    ... transpose a matrix
-      ga_lu_solve     ... solve system of linear equations based on LU 
-                          factorization 
-      ga_print_patch  ... print a patch of an array to the screen 
-      ga_print        ... print an entire array to the screen
-      ga_copy_patch   ... copy data from a patch of one global array
+      ga_initialize    ... initialize global array internal structures 
+      ga_create        ... create an array (integer or double precision)
+      ga_create_irreg  ... create an array with irregular distribution
+                           (integer or double precision)
+      ga_destroy       ... destroy an array
+      ga_terminate     ... destroy all existing arrays and delete internal
+                           data structures  
+      ga_sync          ... synchronize processes (a barrier)
+      ga_zero          ... zero an array
+      ga_ddot          ... dot product of two arrays (doubles only)
+      ga_dscal         ... scale the elements in an array by a constant
+                           (double precision data only)
+      ga_dadd          ... scale and add two arrays to put result in a third
+                           (may overwrite one of the other two, doubles only)
+      ga_copy          ... copy one array into another
+      ga_dgemm         ... BLAS-like matrix multiply 
+      ga_ddot_patch    ... dot product of two arrays (doubles only)
+                           (patch version)
+      ga_dscal_patch   ... scale the elements in an array by a constant
+                           (patch version)
+      ga_dadd_patch    ... scale and add two arrays to put result in a third
+                           (patch version)
+      ga_copy_patch    ... copy one array into another (patch version)
+      ga_ifill_patch   ... fill a patch of array with value (integer version)
+      ga_dfill_patch   ... fill a patch of array with value (DP version)
+      ga_mulmat_patch  ... matrix multiply (patch version)
+      ga_diag          ... real symmetric generalized eigensolver 
+      ga_diag_reuse    ... a version of ga_diag for repeated use    
+      ga_diag_std      ... standard real symmetric eigensolver 
+      ga_symmetrize    ... symmetrize a matrix
+      ga_transpose     ... transpose a matrix
+      ga_lu_solve      ... solve system of linear equations based on LU 
+                           factorization 
+      ga_print_patch   ... print a patch of an array to the screen 
+      ga_print         ... print an entire array to the screen
+      ga_copy_patch    ... copy data from a patch of one global array
+      ga_compare_distr ... compare distributions of two global arrays
 
    b) Operations that may be invoked by any process in true MIMD style
 
@@ -293,15 +294,17 @@ distribute to other US Government contractors.
          ga_ddot = sum(i,j) a(i,j)*b(i,j)
 
       -------------------------------------------------------------------
-      double precision function ga_ddot_patch(g_a, ailo, aihi, ajlo, ajhi,
-                                              g_b, bilo, bihi, bjlo, bjhi) 
+      double precision function ga_ddot_patch(g_a, ta, ailo, aihi, ajlo, ajhi,
+                                              g_b, tb, bilo, bihi, bjlo, bjhi) 
 
-      integer g_a, g_b                    [input]
-      integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
-      integer  bilo, bihi, bjlo, bjhi     [input] g_b patch coordinates
+      integer     g_a, g_b                   [input]
+      integer     ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
+      integer     bilo, bihi, bjlo, bjhi     [input] g_b patch coordinates
+      character*1 ta, tb                     [input] transpose flags
 
-      Computes the element-wise dot product of the two patches which
-      must be double precision and have the same number of elements. 
+      Computes the element-wise dot product of the two (possibly transposed)
+      patches which must be double precision and have the same number of 
+      elements. 
 
       -------------------------------------------------------------------
       subroutine ga_dscal(g_a, s)
@@ -401,7 +404,7 @@ distribute to other US Government contractors.
       Values of the control flag:
              value       action/purpose
    
-              0          first call to the eigensolver
+              0          indicates first call to the eigensolver
              >0          consecutive calls (reuses factored g_s)
              <0          only erases factorized g_s; g_v and eval unchanged
                          (should be called after previous use if another 
@@ -411,7 +414,7 @@ distribute to other US Government contractors.
       The input matrices are not destroyed.
 
       -------------------------------------------------------------------
-      subroutine ga_diag_std(g_a, g_s, g_v, eval)
+      subroutine ga_diag_std(g_a, g_v, eval)
 
       integer g_a               [input]   ! Matrix to diagonalize
       integer g_v               [output]  ! Global matrix to return evecs
@@ -547,6 +550,7 @@ distribute to other US Government contractors.
        g_a             - array handle [input]
        iproc           - process number [input]
        ilo/ihi/jlo/jhi - range held by process iproc [output]
+
        If proc doesn't 'have' any data the range is returned as
        [0, -1] for the i and [0,-1] for the j dimensions.
 
@@ -554,6 +558,14 @@ distribute to other US Government contractors.
        local to the data server process and not the compute processes.
        Thus, you probably do not want to use this routine unless U
        understand what is going on in some detail.
+
+      -------------------------------------------------------------------
+      logical function ga_compare_distr(g_a, g_b)
+
+      integer g_a, g_b                   [input]
+
+      Compares distributions of two global arrays. Returns .TRUE. if
+      distributions are identical.
 
       -------------------------------------------------------------------
       subroutine ga_access(g_a, ilo, ihi, jlo, jhi, index, ld)
@@ -767,7 +779,8 @@ distribute to other US Government contractors.
 
       g_b has to have dimensions conforming to the size of the patch
 
-      NOTE: available only on the shared memory platforms and might disappear
+      NOTE: available only on the shared memory platforms and might 
+            disappear
             
       -------------------------------------------------------------------
       subroutine ga_print_patch(g_a,ilo,ihi,jlo,jhi,pretty)
@@ -842,13 +855,13 @@ distribute to other US Government contractors.
    In case of Fortran routines that require a character string
    (ga_create_, for example), one extra argument has to be added at the
    end of the argument list. It is a length of the string (as returned
-   by strlen()) and it must be a value not a pointer. All the other
-   Fortran arguments are passed by pointers. For an example on how to
-   use GAs in C programs, see implementation of GA operations in
+   by strlen()) and it must be passed by a value not a pointer. All the 
+   other Fortran arguments are passed by pointers. For an example on how
+   to use GAs in C programs, see implementation of GA operations in
    global.alg.c file, where some other GA routines are called.
 
-   To use ga_access, two external symbols (base arrays) have to be
-   declared:
+   To use ga_access, two external symbols (pointers to base arrays) have 
+   to be declared:
 
    extern DoublePrecision *DBL_MB; 
    extern Integer         *INT_MB;
@@ -862,6 +875,6 @@ distribute to other US Government contractors.
    Fortran addressing convention so to use it in C, you need to
    decrement it by one.
 
-   Some GA routines that operate on  DoublePrecision and Integer data 
-   objects. Identifiers for these data types (MT_F_DBL and MT_F_INT)
+   Some GA routines operate on  DoublePrecision and Integer data. 
+   Identifiers for these data types (MT_F_DBL and MT_F_INT)
    are defined in macommon.h that is located in the MA directory.
