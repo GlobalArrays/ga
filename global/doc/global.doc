@@ -59,6 +59,7 @@ distribute to other US Government contractors.
       ga_create        ... create an array (integer or double precision)
       ga_create_irreg  ... create an array with irregular distribution
                            (integer or double precision)
+      ga_duplicate     ... create an array following refernce array 
       ga_destroy       ... destroy an array
       ga_terminate     ... destroy all existing arrays and delete internal
                            data structures  
@@ -253,6 +254,15 @@ distribute to other US Government contractors.
        map2          - jlo for each block [input]
  
        g_a           - integer handle for future references [output]
+
+      -------------------------------------------------------------------
+      logical function ga_duplicate(g_a, g_b, array_name)
+      integer *g_a, *g_b;
+      char *array_name;
+
+      array_name    - a character string [input]
+      g_a           - Integer handle for reference array [input]
+      g_b           - Integer handle for new array [output]
 
       -------------------------------------------------------------------
       logical function ga_destroy(g_a)
