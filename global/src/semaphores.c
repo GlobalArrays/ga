@@ -78,6 +78,7 @@ void SemInit(id,value)
 /*  release semaphore(s) */
 void SemDel()
 {
-    (void) semctl(semaphoreID,0,IPC_RMID, (union semun*)NULL);
+    union semun dummy;
+    (void) semctl(semaphoreID,0,IPC_RMID, dummy);
 }
 
