@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.38 2003-03-10 21:25:35 manoj Exp $ */
+/* $Id: test.c,v 1.39 2003-03-24 18:00:33 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -1400,10 +1400,10 @@ void test_rput()
     }
 
     for(i=0; i<nproc; i++) {
-      ARMCI_GetValue(isrc_get[i], (void *)&idst_get[i], i, sizeof(int));
-      ARMCI_GetValue(lsrc_get[i], (void *)&ldst_get[i], i, sizeof(long));
-      ARMCI_GetValue(fsrc_get[i], (void *)&fdst_get[i], i, sizeof(float));
-      ARMCI_GetValue(dsrc_get[i], (void *)&ddst_get[i], i, sizeof(double));
+      idst_get[i] = ARMCI_GetValueInt(isrc_get[i], i);
+      ldst_get[i] = ARMCI_GetValueLong(lsrc_get[i], i);
+      fdst_get[i] = ARMCI_GetValueFloat(fsrc_get[i], i);
+      ddst_get[i] = ARMCI_GetValueDouble(dsrc_get[i], i);
     }
     
     ARMCI_AllFence();
@@ -1535,13 +1535,6 @@ void test_aggregate() {
     for(i=0; i<nproc; i++) {
       
       start = 0; end = DUMMY*NUMAGG; 
-      for(j=start; j<end; j++) {  
-	bytes = sizeof(double);
-	ARMCI_NbGetValue(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], i, bytes,
-			 &usr_hdl_get[i]);
-      }
-
-      start = end; end = start + DUMMY*NUMAGG;
       for(j=start, k=0; j<end; j+=NUMAGG, k++) {
 	src_ptr[k] = (void *)&dsrc[i][j];
 	dst_ptr[k] = (void *)&ddst_get[me][i*elems[1]+j];
@@ -1672,13 +1665,6 @@ void test_implicit() {
     for(i=0; i<nproc; i++) {
 
       start = 0; end = DUMMY*NUMAGG; 
-      for(j=start; j<end; j++) {  
-	bytes = sizeof(double);
-	ARMCI_NbGetValue(&dsrc[i][j], &ddst_get[me][i*elems[1]+j], i, bytes,
-			 NULL);
-      }
-
-      start = end; end = start + DUMMY*NUMAGG;
       for(j=start, k=0; j<end; j+=NUMAGG, k++) {
 	src_ptr[k] = (void *)&dsrc[i][j];
 	dst_ptr[k] = (void *)&ddst_get[me][i*elems[1]+j];

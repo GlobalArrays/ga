@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.61 2003-03-07 23:37:04 manoj Exp $ */
+/* $Id: strided.c,v 1.62 2003-03-24 18:00:33 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -1258,24 +1258,65 @@ int ARMCI_NbPutValueDouble(double src, void *dst, int proc, armci_hdl_t* usr_hdl
      return 0;
  }
 
- /**
-  * Register-Originated Get.
-  */
- int ARMCI_GetValue(void *src, void *dst, int proc, int bytes) 
- {
-     CHK_ERR_GET(src, dst, proc, bytes);
-     if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
-     else _armci_rem_value(GET, src, dst, proc, bytes);
-     return 0;
- }
-
- /**
-  * Non-Blocking register-originated get.
-  */
- int ARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t* usr_hdl) 
- {
-     CHK_ERR_GET(src, dst, proc, bytes);
-     if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
-     else _armci_nb_rem_value(GET, src, dst, proc, bytes, (armci_ihdl_t)usr_hdl);
-     return 0;
+#if 1
+/** 
+ * Register-Originated Get.
+ */
+int ARMCI_GetValueInt(void *src, int proc) 
+{
+    int dst;
+    if( SAMECLUSNODE(proc) ) return *(int *)src;
+    else _armci_rem_value(GET, src, &dst, proc, sizeof(int));
+    return dst;
 }
+
+long ARMCI_GetValueLong(void *src, int proc) 
+{
+    long dst;
+    if( SAMECLUSNODE(proc) ) return *(long *)src;
+    else _armci_rem_value(GET, src, &dst, proc, sizeof(long));
+    return dst;
+}
+
+float ARMCI_GetValueFloat(void *src, int proc) 
+{
+    float dst;
+    if( SAMECLUSNODE(proc) ) return *(float *)src;
+    else _armci_rem_value(GET, src, &dst, proc, sizeof(float));
+    return dst;
+}
+
+double ARMCI_GetValueDouble(void *src, int proc) 
+{
+    double dst;
+    if( SAMECLUSNODE(proc) ) return *(double *)src;
+    else _armci_rem_value(GET, src, &dst, proc, sizeof(double));
+    return dst;
+}
+
+#endif
+
+#if 0
+/**
+ * Register-Originated Get.
+ */
+int ARMCI_GetValue(void *src, void *dst, int proc, int bytes) 
+{
+    CHK_ERR_GET(src, dst, proc, bytes);
+    if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
+    else _armci_rem_value(GET, src, dst, proc, bytes);
+    return 0;
+}
+
+/**
+ * Non-Blocking register-originated get.
+ */
+int ARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t* usr_hdl) 
+{
+    CHK_ERR_GET(src, dst, proc, bytes);
+    if( SAMECLUSNODE(proc) ) { armci_copy(src, dst, bytes); }
+    else _armci_nb_rem_value(GET, src, dst, proc, bytes, (armci_ihdl_t)usr_hdl);
+    return 0;
+}
+#endif
+

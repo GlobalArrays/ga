@@ -102,11 +102,11 @@ extern int ARMCI_PutValueDouble(double src,/* value in a register to put     */
 				int proc   /* remote process (or) ID         */
 				);
 
-extern int ARMCI_GetValue(void *src, /* source starting addr to put    */
-			  void *dst, /* dest starting addr to put data */
-			  int proc,  /* remote process (or) ID         */
-			  int bytes /* size of the data               */
-			  );
+extern int ARMCI_GetValueInt(void *src, int proc);
+extern long ARMCI_GetValueLong(void *src, int proc);
+extern float ARMCI_GetValueFloat(void *src, int proc);     
+extern double ARMCI_GetValueDouble(void *src, int proc);     
+
 
 extern int ARMCI_Malloc(void* ptr_arr[], int bytes);
 extern int ARMCI_Free(void *ptr);
@@ -277,14 +277,6 @@ extern int ARMCI_NbPutValueDouble(double src,/* value in a register to put   */
 				  armci_hdl_t* nb_handle /*armci_non-blocking 
 							  request handle     */
 				  );
-
-extern int ARMCI_NbGetValue(void *src, /* src starting addr   */
-			    void *dst, /* dest starting addr */
-			    int proc,  /* remote process (or) ID      */
-			    int bytes, /* size of the data type */
-			    armci_hdl_t* nb_handle /*armci_non-blocking 
-						    request handle     */
-			    );
 
 extern int ARMCI_Wait(armci_hdl_t* nb_handle); /*non-blocking request handle*/
 
