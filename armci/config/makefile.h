@@ -283,7 +283,7 @@ ifdef CRAY
          FOPT = -O2
      endif
      ifeq ($(COPT), -O)
-         COPT = -O1 -hinline 3
+         COPT = -O1 -hinline3
      endif
 endif
 
