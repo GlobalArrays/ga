@@ -109,7 +109,7 @@ unsigned long time;
      if(flag == 1){ 
        cur_col = ++Patches[loc][0];
        if(cur_col>p){
-         printf("%d -- Error in collision number. Record: %\n",cur_col,j);
+         printf("%d -- Error in collision number. Record: %d\n",cur_col,j);
          exit(3);
        }
        Col[cur_col-1]++;
@@ -117,7 +117,7 @@ unsigned long time;
      }else{
        cur_col = Patches[loc][0]--;
        if(cur_col<0){
-         printf("%d -- Error in collision number. Record: %\n",cur_col,j);
+         printf("%d -- Error in collision number. Record: %d\n",cur_col,j);
          exit(3);
        }
        Col[cur_col-1] --;

@@ -2,9 +2,8 @@
 
 
 The library contains tracing routines for GA operations. The GA library
-has to be created with tracing enabled. Specify TARGET when making
-libtrace.a library. In addition, there are two programs: 'adjust' that
-processes and integrates the trace files into a single one, and
+has to be created with tracing enabled. There are two programs: 'adjust' 
+that processes and integrates the trace files into a single one, and
 'collisions' that analyses this file with respect to the overlapping
 access to sections of GA arrays. The output from 'adjust' can be used
 as an input to the GA visualization program 'xregion'.  The trace
