@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.56 2002-09-20 16:02:57 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.57 2002-09-30 18:56:43 d3h325 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1927,11 +1927,15 @@ Integer handle=*d_a+DRA_OFFSET;
 Integer FATR dra_delete_(Integer* d_a)            /*input:DRA handle */
 {
 Integer handle = *d_a+DRA_OFFSET;
+int rc;
 
         ga_sync_();
 
         dai_check_handleM(*d_a,"dra_delete");
         dai_delete_param(DRA[handle].fname,*d_a);
+
+        if(dai_io_manage(*d_a)) if(ELIO_OK != (rc=elio_close(DRA[handle].fd)))
+                            dai_error("dra_close: close failed",rc);
 
         if(dai_file_master(*d_a))
           if(INDEPFILES(*d_a)){ 

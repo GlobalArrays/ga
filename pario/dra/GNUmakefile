@@ -38,9 +38,9 @@ FOPT    = -g
 #
 %.x : %.o $(TESTUTIL) $(LIBRARY_PATH)  $(EXTRA)
 	if [ -f $(basename $@).c ]; then\
-		$(LINK.c) $(CLDOPT) -o $@ $< $(LIBRARY_PATH) $(LIBS) $(CLIBS);\
+		$(LINK.c) $(NOPT) $(CLDOPT) -o $@ $< $(LIBRARY_PATH) $(LIBS) $(CLIBS);\
 	else\
-		$(LINK.f) $(FOPT_REN) $(FLDOPT) -o $@ $< $(TESTUTIL) $(LIBRARY_PATH) $(LIBS) $(FLIBS);\
+		$(LINK.f) $(NOPT) $(FOPT_REN) $(FLDOPT) -o $@ $< $(TESTUTIL) $(LIBRARY_PATH) $(LIBS) $(FLIBS);\
 	fi
 
 # *.p file is required for tcgmsg `parallel' command to run your program
