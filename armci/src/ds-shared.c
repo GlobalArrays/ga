@@ -1,4 +1,4 @@
-/* $Id: ds-shared.c,v 1.24 2003-03-06 00:58:31 vinod Exp $ */
+/* $Id: ds-shared.c,v 1.25 2003-07-18 05:43:14 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "message.h"
@@ -356,7 +356,7 @@ msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize,ACK,destproc);
     msginfo->datalen =sizeof(int);
 
     if(DEBUG_){
-        printf("%d client: sending ACK to %d c=%d\n",armci_me,msginfo->to,clus);
+       printf("%d(c):sending ACK to %d clus=%d\n",armci_me,msginfo->to,clus);
         fflush(stdout);
     }
 
@@ -400,7 +400,7 @@ void armci_send_data(request_header_t* msginfo, void *data)
 {
     int to = msginfo->from;
 
-#if defined(VIA) || defined(GM)
+#if defined(VIA) || defined(GM) || defined(VAPI)
     /* if the data is in the pinned buffer: MessageRcvBuffer */
     if((data > (void *)MessageRcvBuffer) &&
        (data < (void *)(MessageRcvBuffer + MSG_BUFLEN)))
