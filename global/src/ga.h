@@ -47,6 +47,8 @@ extern char* GA_Inquire_name(int g_a);
 extern size_t GA_Memory_avail(void);
 extern int GA_Uses_ma(void);
 extern int GA_Memory_limited(void);
+extern void GA_Set_memory_limit(size_t limit);
+extern int NGA_Create(int type,int ndim,int dims[], char *name, int chunk[]);
 extern void GA_Proc_topology(int g_a, int proc, int *prow, int *pcol);
 extern void GA_Print_patch(int g_a,int ilo,int ihi,int jlo,int jhi,int pretty);
 extern void GA_Print_stats(void);
