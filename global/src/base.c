@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.32 2003-02-24 22:51:04 manoj Exp $ */
+/* $Id: base.c,v 1.33 2003-02-25 16:54:46 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2517,10 +2517,11 @@ logical FATR ga_merge_mirrored_(Integer *g_a)
   Integer inode, nprocs, nnodes, zero, zproc;
   int *blocks, *map, *dims, *width;
   Integer i, j, index[MAXDIM], itmp, ndim;
-  Integer nelem, count, type, size;
+  Integer nelem, count, type, size, atype;
   char *zptr, *bptr, *nptr;
-  int bytes, total;
+  Integer bytes, total;
 
+  GA_PUSH_NAME("ga_merge_mirrored");
   /* don't perform update if node is not mirrored */
   if (!ga_is_mirrored_(g_a)) return FALSE;
 
@@ -2561,7 +2562,7 @@ logical FATR ga_merge_mirrored_(Integer *g_a)
       for (j=0; j<ndim; j++) {
         if (index[j] < (Integer)blocks[j]-1) {
           nelem *= (Integer)(map[index[j]+1+count] - map[index[j]+count]
-                 + 1 + 2*width[j]);
+                 + 2*width[j]);
         } else {
           nelem *= (Integer)(dims[j] - map[index[j]+count] + 1 + 2*width[j]);
         }
@@ -2574,18 +2575,29 @@ logical FATR ga_merge_mirrored_(Integer *g_a)
       nelem *= GAsizeof(type);
       bptr = GA[handle].ptr[ga_cluster_procid_(&inode, &i)];
       bptr += nelem;
-      if (i<nprocs-1 && bptr != nptr) {
+      if (i<nprocs-1) {
         j = i+1;
         nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
-        bytes = (int)(nptr - bptr);
-        bzero(bptr, bytes);
+        if (bptr != nptr) {
+          bytes = (Integer)nptr - (Integer)bptr;
+          bzero(bptr, bytes);
+        }
       }
-      /* find total number of bytes containing global array */
-      if (i == nprocs-1) {
-        total = (int)(bptr - zptr);
-      }
-      /* now that gap data has been zeroed, do a global sum on data */
-      armci_msg_gop_scope(SCOPE_MASTERS, zptr, total, "+", type);
     }
-  }
+    /* find total number of bytes containing global array */
+    total = (Integer)bptr - (Integer)zptr;
+    total /= GAsizeof(type);
+    /*convert from C data type to ARMCI type */
+    switch(type) {
+      case C_FLOAT: atype=ARMCI_FLOAT; break;
+      case C_DBL: atype=ARMCI_DOUBLE; break;
+      case C_LONG: atype=ARMCI_LONG; break;
+      case C_INT: atype=ARMCI_INT; break;
+      case C_DCPL: atype=ARMCI_DOUBLE; break;
+      default: ga_error("type not supported",type);
+    }
+    /* now that gap data has been zeroed, do a global sum on data */
+    armci_msg_gop_scope(SCOPE_MASTERS, zptr, total, "+", atype);
+  } 
+  GA_POP_NAME;
 }
