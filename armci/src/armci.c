@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.77 2003-08-01 01:30:39 manoj Exp $ */
+/* $Id: armci.c,v 1.78 2003-08-20 22:41:07 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -65,6 +65,13 @@ double armci_internal_buffer[BUFSIZE_DBL];
 #include <elan/elan.h>
 #endif
 
+typedef struct{
+  long sent;
+  int received;
+  int waited;
+}armci_notify_t;
+
+armci_notify_t **_armci_notify_arr;
 
 void ARMCI_Cleanup()
 {
@@ -92,6 +99,20 @@ void ARMCI_Cleanup()
 #ifdef GA_USE_VAMPIR
   vampir_end(ARMCI_CLEANUP,__FILE__,__LINE__);
 #endif
+}
+
+
+void armci_notify_init()
+{
+  int rc,bytes=sizeof(armci_notify_t)*armci_nproc;
+
+  _armci_notify_arr=
+        (armci_notify_t**)malloc(armci_nproc*sizeof(armci_notify_t*));
+  if(!_armci_notify_arr)armci_die("armci_notify_ini:malloc failed",armci_nproc);
+
+  if(rc=ARMCI_Malloc((void **)_armci_notify_arr, bytes)) 
+        armci_die(" armci_notify_init: armci_malloc failed",bytes); 
+  bzero(_armci_notify_arr[armci_me], bytes);
 }
 
 
@@ -274,7 +295,7 @@ int ARMCI_Init()
 
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
-	armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
+    armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
 
 #ifdef _CRAYMPP
     cmpl_proc=-1;
@@ -294,7 +315,7 @@ int ARMCI_Init()
 #   ifdef DECOSF
        char *tmp = getenv("SHMEM_SMP_ENABLE");
        if(tmp == NULL || strcmp((const char *)tmp,"0"))
-	  armci_die("WARNING: On Tru64 (Compaq Alphaserver) it might be required to set the Quadrics environment variable SHMEM_SMP_ENABLE=0 as a work around for shmem_fadd problem.", 0);
+	  printf("WARNING: On Tru64 (Compaq Alphaserver) it might be required to set the Quadrics environment variable SHMEM_SMP_ENABLE=0 as a work around for shmem_fadd problem.\n");
 #   endif
     }
     shmem_init();
@@ -369,6 +390,9 @@ int ARMCI_Init()
 
     armci_msg_barrier();
     armci_init_memlock(); /* allocate data struct for locking memory areas */
+#ifndef GM
+    armci_notify_init();
+#endif
     armci_msg_barrier();
     armci_msg_gop_init();
 
@@ -557,17 +581,33 @@ int armci_notify(int proc)
 extern int armci_inotify_proc(int);
    return(armci_inotify_proc(proc));
 #else
-   return(0);
+   armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
+   pnotify->sent++;
+   ARMCI_Put(&pnotify->sent,&(_armci_notify_arr[proc]+armci_me)->received, 
+             sizeof(pnotify->sent),proc);
+   return(pnotify->sent);
 #endif
 }
 
+
+/*\ blocks until received count becomes >= waited count
+ *  return received count and store waited count in *pval
+\*/
 int armci_notify_wait(int proc,int *pval)
 {
 #ifdef GM
 extern int armci_inotify_wait(int,int*);
    return(armci_inotify_wait(proc,pval));
 #else
-   return(0);
+   long loop=0;
+   armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
+   pnotify->waited++;
+   while( pnotify->waited > pnotify->received) { 
+       if(++loop == 1000) { loop=0;cpu_yield(); }
+       armci_util_spin(loop, pnotify);
+   }
+   *pval = pnotify->waited; 
+   return(pnotify->received);
 #endif
 }
 
