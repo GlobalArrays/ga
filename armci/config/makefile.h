@@ -218,7 +218,7 @@ endif
 
 ifdef IBM_
      ifeq ($(FOPT), -O)
-         FOPT = -O3 -qstrict -qarch=com -qtune=auto
+         FOPT = -O4 -qarch=com
      endif
      ifeq ($(COPT), -O)
          COPT = -O3 -Q -qstrict -qarch=com -qtune=auto
