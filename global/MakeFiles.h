@@ -72,14 +72,19 @@ endif
 #
 GA_ALG_BLAS = ga_dgemm.o ga_symmetr.o ga_diag_seq.o rsg.o\
               rs-mod.o ga_solve_seq.o ga_transpose.o 
-#
-#ifeq ($(DIAG),PAR)
+
+ifeq ($(DIAG),PAR)
      GA_ALG_DIAG = ga_diag.o 
-#endif
-#
+else
+     GA_ALG_DIAG = peigstubs.o
+endif
+
 ifdef USE_SCALAPACK
      GA_ALG_SOLVE= SLface.o ga_solve.o ga_spd.o
+else
+     GA_ALG_SOLVE= sclstubs.o
 endif
+
 GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #
 #
