@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.5 1994-10-07 19:41:23 d3g681 Exp $
+ * $Id: ma.c,v 1.6 1995-03-31 01:41:45 d3g681 Exp $
  */
 
 /*
@@ -1422,6 +1422,7 @@ private Boolean mh2ad(memhandle, adout, location, caller)
             (void)sprintf(ma_ebuf,
                 "memhandle %ld (name: '%s') not top of stack",
                 (long)memhandle, ad->name);
+	    MA_summarize_allocated_blocks(); /* RJH */
             ma_error(EL_Nonfatal, ET_External, caller, ma_ebuf);
             return MA_FALSE;
         }
