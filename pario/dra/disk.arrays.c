@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.49 2002-08-07 20:36:42 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.50 2002-08-08 20:53:18 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -223,6 +223,7 @@ Integer num;
 #endif
 */
         num = ga_cluster_nnodes_();
+       /* printf("ga_cluster_nnodes %d\n",num); */
 
         return( MIN( ga_nnodes_(), num));
 }
@@ -240,7 +241,10 @@ Integer zero = 0;
        /* again, one of many possibilities: 
         * if proc id beyond I/O procs number, negate it
         */
-        if(me != ga_cluster_procid_(&nodeid, &zero)) me = -me;
+        if(me != ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
+        else me = -1;
+        /*printf("ga_cluster_procid %d\n",me);*/
+        /*if (me >= dai_io_procs(d_a)) me = -me;*/
         return (me);
 }
 
