@@ -22,30 +22,31 @@ c
       call pbeginf
 c     call setdbg(1)            ! Turn TCGMSG debugging on/off
 c
-c***  Initialize the MA package
-c
-      ma_heap = heap/nnodes() + fudge 
-      status = ma_init(MT_DCPL, stack, ma_heap)
-      if (.not. status) print *, 'ma_init failed' 
-c
-      me = nodeid()
-      if(nodeid().eq.0)then
-        print *, 'using ',nnodes(), ' process(es)'
-        call ffflush(6)
-      endif
-c
 c***  Initialize GA
 c
 c     There are 2 choices: ga_initialize or ga_initialize_ltd.
 c     In the first case, there is no explicit limit on memory usage.
 c     In the second, user can set limit (per processor) in bytes.
 c
+      ma_heap = heap/nnodes() + fudge 
+      me = ga_nodeid()
       call ga_initialize_ltd(mdtob(ma_heap))
       if(ga_nodeid().eq.0)then
          print *,' GA initialized '
          call ffflush(6)
       endif
 c     call PROC_REMAP()
+c
+c***  Initialize the MA package
+c     MA must be initialized before any global array is allocated
+c
+      status = ma_init(MT_DCPL, stack, ma_heap)
+      if (.not. status) print *, 'ma_init failed'
+c
+      if(me.eq.0)then
+        print *, 'using ',nnodes(), ' process(es)'
+        call ffflush(6)
+      endif
 c
 c***  Check support for double precision arrays
 c
