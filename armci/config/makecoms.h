@@ -67,6 +67,10 @@ ifeq ($(TARGET),FUJITSU-VPP64)
    COMM_LIBS = -lmp -lgen -lpx -lelf -Wl,-J,-P
 endif
    
+ifeq ($(TARGET),FUJITSU-AP)
+   COMM_LIBS = -L/opt/FSUNaprun/lib -lmpl -lelf -lgen
+endif
+
 ifeq ($(TARGET),CRAY-YMP)
    COMM_LIBS = $(LIBCM)
 endif

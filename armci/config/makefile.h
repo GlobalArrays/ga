@@ -79,7 +79,7 @@ ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt
      FOPT_REN = -Sw -KA32
      COPT_REN = -x100 -KA32
- GLOB_DEFINES = -DFUJITSU
+ GLOB_DEFINES = -DFUJITSU -DVPP_STRIDED_READ -DVPP_STRIDED_WRITE
 #   EXTRA_LIBS = /usr/local/lib/libmp.a -L/opt/tools/lib/ -lgen  -lpx -lelf -Wl,-J,-P
 endif
 
@@ -87,7 +87,17 @@ ifeq ($(TARGET),FUJITSU-VPP64)
            FC = frt
      FOPT_REN = -Sw
      COPT_REN = -x100
- GLOB_DEFINES = -DFUJITSU -DFUJITSU64
+ GLOB_DEFINES = -DFUJITSU -DFUJITSU64 
+#disable if broken
+ GLOB_DEFINES += -DVPP_STRIDED_READ -DVPP_STRIDED_WRITE
+endif
+
+#AP3000 running Solaris on Sparc
+ifeq ($(TARGET),FUJITSU-AP)
+           FC = frt
+           CC = fcc
+#     FOPT_REN = 
+ GLOB_DEFINES = -DFUJITSU
 endif
 
 #---------------------------- Sun -------------------------------------

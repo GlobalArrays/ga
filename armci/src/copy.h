@@ -50,7 +50,6 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 /***************************** 1-Dimensional copy ************************/
 
 #if defined(QUADRICS)
-#      define armci_copy(src,dst,n)           memcpy((dst),(src),(n))
 #      define armci_put(src,dst,n,proc)\
               if(proc==armci_me){\
                  armci_copy(src,dst,n);\
@@ -73,15 +72,15 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 
 #elif defined(CRAY)
 
-#      define armci_copy(src,dst,n)           memcpy((dst),(src),(n))
-
 #      define armci_put(src,dst,n,proc)  memcpy((dst),(src),(n))
 #      define armci_get(src,dst,n,proc) memcpy((dst),(src),(n)) 
 
 #elif  defined(FUJITSU)
 
 #      include "fujitsu-vpp.h"
-#      define armci_copy(src,dst,n)     _MmCopy((char*)(dst), (char*)(src), (n))
+#      ifndef __sparc
+#         define armci_copy(src,dst,n)  _MmCopy((char*)(dst), (char*)(src), (n))
+#      endif
 #      define armci_put  CopyTo
 #      define armci_get  CopyFrom
 
@@ -89,7 +88,6 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 
 #      include <lapi.h>
        extern lapi_handle_t lapi_handle;
-#      define armci_copy(src,dst,n)           memcpy((dst),(src),(n))
 
 #      define armci_put(src,dst,n,proc)\
               if(proc==armci_me){\
@@ -110,12 +108,15 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 
 #else
 
-#      define armci_copy(src,dst,n)     memcpy((dst), (src), (n))
 #      define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))
 #      define armci_put(src,dst,n,p)    armci_copy((src),(dst),(n))
 
 #endif
                                                  
+#ifndef armci_copy
+#      define armci_copy(src,dst,n)     memcpy((dst), (src), (n))
+#endif
+
 /****************************** 2D Copy *******************/
 
 

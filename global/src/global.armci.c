@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.41 2000-05-17 01:15:06 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.42 2000-05-22 22:44:53 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -1310,7 +1310,7 @@ Integer FATR ga_verify_handle_(g_a)
  
 
 
-#define gaShmemLocation(proc, g_a, _i, _j, ptr_loc, ld)                        \
+#define gaShmemLocation(proc, g_a, _i, _j, ptr_loc, _pld)                      \
 {                                                                              \
 Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
 Integer _lo[2], _hi[2];                                                        \
@@ -1330,7 +1330,7 @@ Integer _lo[2], _hi[2];                                                        \
       proc_place =  proc;                                             \
       *(ptr_loc) = GA[g_handle].ptr[proc_place] +                              \
                    offset*GAsizeofM(GA[g_handle].type);                        \
-      *(ld) = _ihi-_ilo+1;                                                     \
+      *(_pld) = _ihi-_ilo+1;                                                   \
 }
 
 

@@ -1,14 +1,17 @@
-***************************************************************************
+***********************************************************************
 *     accumulate operation for the following datatypes:
-*                real, double precision, complex, double complex, integer
+*            real, double precision, complex, double complex, integer
 *
 *     WARNING: This file must be compiled WITH optimization under AIX.
 *              IBM fortran compilers generate bad code with -g option. 
 *
-*     Two versions of each routine is provided: unrolled and unrolled loops.
-*     We cannot use cpp preprocessing because it is not available on NT
+*     Two versions of each routine are provided: 
+*         original and unrolled loops.
 *
-*----------------------- original loop versions ---------------------------
+***********************************************************************
+
+
+*----------------------- original loop versions ----------------------
 
       subroutine d_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols
@@ -75,7 +78,7 @@
 
 
 *
-*-----------------------------  loops unrolled ---------------------------------
+*-----------------------------  loops unrolled ----------------------
 *
       subroutine d_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
       integer rows, cols

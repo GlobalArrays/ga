@@ -24,7 +24,7 @@ SYSTEM_V = SUN SOLARIS SOLARIS64 SGI SGI_N32 SGI64 SGITFP
 SYSTEM_V += HPUX HPUX64 IBM IBM64 DECOSF LINUX LINUX64
 SHMEM    = $(SYSTEM_V) LAPI
 SOCKETS  = $(SYSTEM_V)
-ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP
+ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP FUJITSU-AP
 #USE_PTHREADS = LINUX SGI_N32 SOLARIS
 #USE_POSIX = IBM
 
@@ -105,7 +105,7 @@ $(LIBRARY_PATH)(rmw.o): 	./locks.h ./copy.h ./armcip.h
 $(LIBRARY_PATH)(request.o):     ./request.h ./memlock.h ./copy.h ./armcip.h 
 $(LIBRARY_PATH)(pack.o):        ./armcip.h ./request.h
 $(LIBRARY_PATH)(mutex.o):       ./request.h ./copy.h ./armcip.h 
-$(LIBRARY_PATH)(message.o):     ./message.h ./armcip.h 
+$(LIBRARY_PATH)(message.o):     ./message.h ./armcip.h  ./copy.h
 $(LIBRARY_PATH)(memory.o):      ./shmem.h ./message.h ./armcip.h 
 $(LIBRARY_PATH)(memlock.o):     ./memlock.h ./locks.h ./copy.h ./armcip.h 
 $(LIBRARY_PATH)(locks.o):       ./locks.h ./armcip.h 
