@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/srftoc.h,v 1.7 2002-02-26 15:47:52 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/srftoc.h,v 1.8 2002-08-22 22:18:03 d3h325 Exp $ */
 
 #ifndef SRFTOC_H_
 #define SRFTOC_H_
@@ -119,7 +119,7 @@
 #define wrap_mitob   mitob 
 #define wrap_pfcopy  pfcopy 
 
-#elif defined(F2C2_)
+#elif defined(F2C2__)
 #define NICEFTN_     niceftn__ 
 #define TCGTIME_     tcgtime__ 
 #define PBEGINF_     pbeginf__  
