@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.47 2002-07-24 22:27:06 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.48 2002-08-01 15:57:37 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -215,11 +215,14 @@ Integer dai_io_procs(Integer d_a)
 Integer num;
 
         /* this one of many possibilities -- depends on the system */
+/*
 #ifdef _CRAYMPP
         num = DRA_NUM_IOPROCS;
 #else
         num = (INDEPFILES(d_a)) ? INFINITE_NUM_PROCS: DRA_NUM_IOPROCS; 
 #endif
+*/
+        num = ga_cluster_nnodes_();
 
         return( MIN( ga_nnodes_(), num));
 }
@@ -231,11 +234,13 @@ Integer num;
 Integer dai_io_nodeid(Integer d_a)
 {
 Integer me = ga_nodeid_();
+Integer nodeid = ga_cluster_nodeid_();
+Integer zero = 0;
 
        /* again, one of many possibilities: 
         * if proc id beyond I/O procs number, negate it
         */
-        if(me >= dai_io_procs(d_a)) me = -me;
+        if(me != ga_cluster_procid_(&nodeid, &zero)) me = -me;
         return (me);
 }
 
