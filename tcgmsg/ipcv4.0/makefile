@@ -314,6 +314,14 @@ ifeq ($(TARGET),CRAY)
 #     LIBS = -lbsd -lnet -lrpc
 endif
 
+ifeq ($(TARGET),CRAY-YMP)
+        FC = cf77
+   DEFINES = -DCRAY  -DGOTXDR
+    CFLAGS = -g $(DEFINES)
+ LINTFLAGS = $(DEFINES) -u
+    RANLIB = echo $*
+endif
+
 
 ifeq ($(TARGET),ENCORE)
 #ENCORE ... note that testf.f compiles incorrectly with -O
