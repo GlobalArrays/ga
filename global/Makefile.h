@@ -146,6 +146,7 @@ ifeq ($(TARGET),HPUX)
          CPP  = /lib/cpp -P
            FC = fort77
            CC = cc
+     COPT_REN = -Ae
  GLOB_DEFINES = -DHPUX -DEXTNAME
     EXPLICITF = TRUE
 endif
