@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.55 2003-08-25 20:27:47 vinod Exp $ */
+/* $Id: copy.h,v 1.56 2003-09-26 00:38:40 edo Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -14,6 +14,15 @@
 #if defined(NOFORT) || defined(HITACHI) || defined(CRAY_T3E)
 #  define MEMCPY
 #endif
+#if defined(LINUX64) || defined(SGIALTIX)
+/* fastbcopy from Wayne Vieira and Gerardo Cisneros */
+#define MEMCPY
+#define armci_copy(src, dst, len) _fastbcopy(src, dst, len)
+#define memcpy(dst, src, len)  _fastbcopy(src, dst, len)
+#define bcopy(src, dst, len) _fastbcopy(src, dst, len)
+#endif
+
+
 
 #if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined (DECOSF) || defined(__ia64__)
 #   define PTR_ALIGN
