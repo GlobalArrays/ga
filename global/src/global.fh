@@ -39,6 +39,7 @@ cDEC$ IF DEFINED(fix_this_stupid_compiler)
       external ga_scatter, ga_gather, ga_get, ga_put
       external ga_scale_patch, ga_add_patch
       external ga_copy_patch, ga_print_patch, ga_fill_patch
+      external ga_zero_patch
 #ifdef WIN32
 cDEC$ ENDIF
 #endif
