@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.51 2001-05-09 18:41:09 d3h325 Exp $
+# $Id: makefile.h,v 1.52 2001-06-28 00:12:59 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -192,6 +192,10 @@ else
        FOPT_REN = -O3 -prefetch 
        GLOB_DEFINES += -DIFCLINUX
    endif
+   ifneq (,$(findstring icc,$(_CC)))
+       FOPT_REN = -O3 -prefetch 
+       GLOB_DEFINES += -DIFCLINUX
+   endif
 endif
 
 endif
@@ -204,7 +208,7 @@ ifeq ($(TARGET),LINUX64)
            CC = ccc
            FC = fort
        RANLIB = echo
-GLOB_DEFINES += -DLINUX -DLINUX64 
+GLOB_DEFINES += -DLINUX 
      FOPT_REN = -assume no2underscore -align_dcommons -fpe3 -check nooverflow 
     FOPT_REN +=-assume accuracy_sensitive -check nopower -check nounderflow
 ifdef USE_INTEGER4
@@ -216,6 +220,40 @@ GLOB_DEFINES += -DEXT_INT
 endif
           CLD = $(CC)
         CLIBS = -lfor
+endif
+
+#
+#................................ LINUXIA64 ....................................
+# IA64 running Linux
+#
+ifeq ($(TARGET),LINUXIA64)
+GLOB_DEFINES += -DLINUX 
+       RANLIB = echo
+ifneq (,$(findstring efc,$(_FC)))
+    GLOB_DEFINES += -DIFCLINUX
+    FOPT_REN = 
+endif
+ifneq (,$(findstring sgif90,$(_FC)))
+# FOPT and COPT = -O breaks in global.armci.c with sgi pro64 0.13
+        FOPT= -O0
+     FOPT_REN =  -macro_expand 
+   GLOB_DEFINES += -DSGILINUX
+FOPT_REN +=   -Wl,--relax  -Wl,-Bstatic 
+endif
+ifneq (,$(findstring sgicc,$(_CC)))
+        COPT = -O0
+endif
+ifeq ($(_CC),ecc)
+GLOB_DEFINES +=  -DIFCLINUX
+        COPT=-O
+endif
+
+ifdef USE_INTEGER4
+    FOPT_REN += -i4
+else
+GLOB_DEFINES += -DEXT_INT
+FOPT_REN +=  -i8 
+endif
 endif
 
 #............................. CYGNUS on Windows ..........................

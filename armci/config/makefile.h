@@ -103,6 +103,19 @@ ifeq ($(TARGET),LINUX64)
    GLOB_DEFINES += -DLINUX
    EXTRA_OBJ = tas.o
 endif
+#-----------------Linux 64-bit on Itanium with SGI compilers --
+ifeq ($(TARGET),LINUXIA64)
+ifeq ($(_FC),sgif90)
+     FC = sgif90
+     FOPT_REN = -macro_expand 
+endif
+ifeq ($(_FC),efc)
+FOPT =  -O3 -hlo -pad
+FOPT_REN= -w1
+GLOB_DEFINES= -DIFCLINUX 
+endif
+   GLOB_DEFINES += -DLINUX
+endif
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt
