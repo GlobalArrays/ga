@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.3 2001-08-24 18:33:09 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.4 2001-08-29 15:57:28 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -701,9 +701,7 @@ Integer ndim = GA[handle].ndim;
 
    GA_PUSH_NAME("nga_access_ghost_ptr");
 
-   ga_sync_();
    nga_distribution_(g_a, &GAme, lo, hi);
-   ga_sync_();
 
    for (i=0; i < ndim; i++) {
      dims[i] = 0;
@@ -1732,17 +1730,94 @@ Integer  value, subscript[2];
 \*/
 void FATR nga_update_(Integer *g_a)
 {
-  Integer idx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
-  Integer size, ndim, nwidth, increment[MAXDIM];
+  Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
+  Integer size, ndim, nwidth, offset, slice, increment[MAXDIM];
   Integer width[MAXDIM];
-  Integer dims[MAXDIM];
+  Integer dims[MAXDIM], imax;
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
   Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
   Integer lo_rem[MAXDIM], hi_rem[MAXDIM];
+  Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
+  Integer slo_rem[MAXDIM], shi_rem[MAXDIM];
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   char *ptr_loc, *ptr_rem;
+  logical hasData = TRUE;
+
+  /* This routine makes use of the shift algorithm to update data in the
+   * ghost cells bounding the local block of visible data. The shift
+   * algorithm starts by updating the blocks of data along the first
+   * dimension by grabbing a block of data that is width[0] deep but
+   * otherwise matches the  dimensions of the data residing on the
+   * calling processor. The update of the second dimension, however,
+   * grabs a block that is width[1] deep in the second dimension but is
+   * ldim0 + 2*width[0] in the first dimensions where ldim0 is the
+   * size of the visible data along the first dimension. The remaining
+   * dimensions are left the same. For the next update, the width of the
+   * second dimension is also increased by 2*width[1] and so on. This
+   * algorith makes use of the fact that data for the dimensions that
+   * have already been updated is available on each processor and can be
+   * used in the updates of subsequent dimensions. The total number of
+   * separate updates is 2*ndim, an update in the negative and positive
+   * directions for each dimension.
+   *
+   * To perform the update, this routine makes use of several copies of
+   * indices marking the upper and lower limits of data. Indices
+   * beginning with the character "p" are relative indices marking the
+   * location of the data set relative to the origin the local patch of
+   * the global array, all other indices are in absolute coordinates and
+   * mark locations in the total global array. The indices used by this
+   * routine are described below.
+   *
+   *       lo_loc[], hi_loc[]: The lower and upper indices of the visible
+   *       block of data held by the calling processor.
+   *
+   *       lo_rem[], hi_rem[]: The lower and upper indices of the block
+   *       of data on a remote processor or processors that is needed to
+   *       fill in the calling processors ghost cells. These indices are
+   *       NOT corrected for wrap-around (periodic) boundary conditions
+   *       so they can be negative or greater than the array dimension
+   *       values held in dims[].
+   *
+   *       slo_rem[], shi_rem[]: Similar to lo_rem[] and hi_rem[], except
+   *       that these indices have been corrected for wrap-around
+   *       boundary conditions. If lo_rem[] and hi_rem[] cross a global
+   *        array boundary, as opposed to being entirely located on one
+   *       side or the other of the array, then two sets of slo_rem[] and
+   *       shi_rem[] will be created. One set will correspond to the
+   *       block of data on one side of the global array boundary and the
+   *       other set will correspond to the remaining block. This
+   *       situation will only occur if the value of the ghost cell width
+   *       is greater than the dimension of the visible global array
+   *       data on a single processor.
+   *
+   *       thi_rem[], thi_rem[]: The lower and upper indices of the visible
+   *       data on a remote processor.
+   *
+   *       plo_loc[], phi_loc[]: The indices of the local data patch that
+   *       is going to be updated.
+   *
+   *       plo_rem[], phi_rem[]: The indices of the data patch on the
+   *       remote processor that will be used to update the data on the
+   *       calling processor. Note that the dimensions of the patches
+   *       represented by plo_loc[], plo_rem[] and plo_loc[], phi_loc[]
+   *       must be the same.
+   *
+   * For the case where the width of the ghost cells is more than the
+   * width of the visible data held on a processor, special problems
+   * arise. It now takes several updates to fill in one block of boundary
+   * data and it is now necessary to keep track of where each of these
+   * blocks of data go in the ghost cell region. To do this two extra
+   * variables are needed. These are offset and slice. Slice is equal to
+   * the width of the visible data along the dimension being updated
+   * minus one coming from the remote processor. Offset is the amount
+   * that this data must be moved inward from the lower boundary of the
+   * ghost cell region. Another variable that is also used to handle
+   * this case is imax. If this variable is set to 2, then this means
+   * that the block of data that is needed to update the ghost cells
+   * crosses a global array boundary and the block needs to be broken
+   * up into two pieces. */
 
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) return;
@@ -1767,223 +1842,347 @@ void FATR nga_update_(Integer *g_a)
     increment[idx] = 0;
     width[idx] = GA[handle].width[idx];
     dims[idx] = GA[handle].dims[idx];
+    if (lo_loc[idx] == 0 && hi_loc[idx] == -1) hasData = FALSE;
   }
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
     nwidth = width[idx];
 
-    /* Do not bother with update if nwidth is zero */
-    if (nwidth == 0) continue;
+    /* Do not bother with update if nwidth is zero or processor has
+       no data */
+    if (nwidth != 0 && hasData) {
 
-    /* Perform update in negative direction. Start by getting rough
-       estimate of block of needed data*/
-    if (DEBUG) {
-      fprintf(stderr,"\n\np[%d] Update in negative direction\n",(int)GAme);
-    }
-    for (i = 0; i < ndim; i++) {
-      if (i == idx) {
-        lo_rem[i] = lo_loc[i] - nwidth;
-        hi_rem[i] = lo_loc[i] - 1;
-        /* wrap boundary conditions around if data limits go past
-           end of global array */
-        if (lo_rem[i] < 1) {
-          lo_rem[i] = dims[i] - nwidth + 1;
-          hi_rem[i] = dims[i];
-        }
-      } else {
-        lo_rem[i] = lo_loc[i];
-        hi_rem[i] = hi_loc[i];
-      }
+      /* Perform update in negative direction. Start by getting rough
+         estimate of block of needed data*/
       if (DEBUG) {
-        fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
-            (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
-        fprintf(stderr,"p[%d] lo_loc(%d) %d hi_loc(%d) %d\n",
-            (int)GAme,(int)i+1,(int)lo_loc[i],(int)i+1,(int)hi_loc[i]);
+        fprintf(stderr,"\np[%d] Update in negative direction\n\n",(int)GAme);
       }
-    }
-
-    /* locate processor with this data */
-    if (!nga_locate_region_(g_a, lo_rem, hi_rem, _ga_map,
-        GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
-        lo_rem, hi_rem, *g_a);
-
-    if (np > 1) {
-      /* Boundary data is distributed across more than one
-         processor. Special steps need to be taken.
-      */
-      fprintf(stderr,"More than 1 remote processor on proc %d\n",(int)GAme);
-    }
-
-    /* Get actual coordinates of desired chunk of remote
-       data as well as the actual coordinates of the local chunk
-       of data that will receive the remote data (these
-       coordinates take into account the presence of ghost
-       cells). Start by finding out what data is actually held by
-       remote processor. */
-    proc_rem = GA_proclist[0];
-    nga_distribution_(g_a, &proc_rem, lo_rem, hi_rem);
-    if (DEBUG) {
-      fprintf(stderr,"p[%d] Checking second step\n",(int)GAme);
-    }
-    for (i = 0; i < ndim; i++) {
-      if (increment[i] == 0) {
+      for (i = 0; i < ndim; i++) {
         if (i == idx) {
-          plo_rem[i] = hi_rem[i] - lo_rem[i] + 1;
-          phi_rem[i] = hi_rem[i] - lo_rem[i] + width[i];
-          plo_loc[i] = 0;
-          phi_loc[i] = width[i] - 1;
+          lo_rem[i] = lo_loc[i] - nwidth;
+          hi_rem[i] = lo_loc[i] - 1;
+          /* Check to see if we will need to update ghost cells using
+             one or two major patches of the global array. */
+          if (lo_rem[i] < 1) {
+            if (hi_rem[i] > 0) {
+              imax = 2;
+            } else {
+              imax = 1;
+            }
+          } else {
+            imax = 1;
+          }
         } else {
-          plo_rem[i] = width[i];
-          phi_rem[i] = hi_rem[i] - lo_rem[i] + width[i];
-          plo_loc[i] = width[i];
-          phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+          lo_rem[i] = lo_loc[i];
+          hi_rem[i] = hi_loc[i];
         }
-      } else {
-        plo_rem[i] = 0;
-        phi_rem[i] = hi_rem[i] - lo_rem[i] + increment[i];
-        plo_loc[i] = 0;
-        phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
-      }
-      if (DEBUG) {
-        fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
-            (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
-        fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
-            (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
-      }
-    }
-
-    /* Get pointer to local data buffer and remote data
-       buffer as well as lists of leading dimenstions */
-    gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
-    gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
-    if (DEBUG) {
-      for (i=0; i<ndim-1; i++) {
-        fprintf(stderr,"p[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-            (int)ld_loc[i]);
-        fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
-            (int)ld_rem[i]);
-      }
-    }
-
-    /* Evaluate strides on local and remote processors */
-    gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
-        stride_loc);
-
-    /* Compute the number of elements in each dimension and store
-       result in count. Scale the first element in count by the
-       element size. */
-    gam_ComputeCount(ndim, plo_rem, phi_rem, count);
-    count[0] *= size;
-      
-    /* get remote data */
-    ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
-        ndim - 1, proc_rem);
-
-    /* Perform update in positive direction. Start by getting rough
-       estimate of block of needed data*/
-    if (DEBUG) {
-      fprintf(stderr,"\n\np[%d] Update in positive direction\n",(int)GAme);
-    }
-    for (i = 0; i < ndim; i++) {
-      if (i == idx) {
-        lo_rem[i] = hi_loc[i] + 1;
-        hi_rem[i] = hi_loc[i] + nwidth;
-        /* wrap boundary conditions around if data limits go past
-           end of global array */
-        if (hi_rem[i] > dims[i]) {
-          lo_rem[i] = 1;
-          hi_rem[i] = nwidth;
+        if (DEBUG) {
+          fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
+              (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
         }
-      } else {
-        lo_rem[i] = lo_loc[i];
-        hi_rem[i] = hi_loc[i];
       }
+
+      for (inx = 0; inx < imax; inx++) {
+        /* Check to see if boundary is being updated in one patch or two,
+           adjust lower boundary accordingly. */
+        if (DEBUG) {
+          fprintf(stderr,"\n Value of inx is %d\n\n",inx);
+        }
+        for (i=0; i<ndim; i++) {
+          if (imax == 2 && i == idx) {
+            if (inx == 0) {
+              slo_rem[i] = 1;
+              shi_rem[i] = hi_rem[i];
+            } else {
+              slo_rem[i] = lo_rem[i] + dims[i];
+              shi_rem[i] = dims[i];
+            }
+          } else if (i == idx) {
+            if (lo_rem[i] < 1) {
+              slo_rem[i] = dims[i] - nwidth + 1;
+              shi_rem[i] = dims[i];
+            } else {
+              slo_rem[i] = lo_rem[i];
+              shi_rem[i] = hi_rem[i];
+            }
+          } else {
+            slo_rem[i] = lo_rem[i];
+            shi_rem[i] = hi_rem[i];
+          }
+          if (DEBUG) {
+            fprintf(stderr,"p[%d] slo_rem(%d) %d shi_rem(%d) %d"
+                "  i=%d idx=%d imax=%d\n",(int)GAme,(int)i+1,
+                (int)slo_rem[i],(int)i+1,(int)shi_rem[i],(int)i,
+                (int)idx,(int)imax);
+          }
+        }
+        /* locate processor with this data */
+        if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
+            GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+            tlo_rem, thi_rem, *g_a);
+
+        if (DEBUG) {
+          fprintf(stderr,"\np[%d] Value of np is %d Value of imax is %d\n",
+              (int)GAme,(int)np,(int)imax);
+        }
+        for (ipx = 0; ipx < np; ipx++) {
+          /* Get actual coordinates of desired chunk of remote
+             data as well as the actual coordinates of the local chunk
+             of data that will receive the remote data (these
+             coordinates take into account the presence of ghost
+             cells). Start by finding out what data is actually held by
+             remote processor. */
+          proc_rem = GA_proclist[ipx];
+          nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+          if (DEBUG) {
+            fprintf(stderr,"\np[%d] Checking second step\n",(int)GAme);
+          }
+          for (i = 0; i < ndim; i++) {
+            if (increment[i] == 0) {
+              if (i == idx) {
+                if (np == 1 && imax == 1) {
+                  plo_rem[i] = thi_rem[i] - tlo_rem[i] + 1;
+                  phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
+                  plo_loc[i] = 0;
+                  phi_loc[i] = width[i] - 1;
+                } else {
+                  if (tlo_rem[i] >= slo_rem[i]) {
+                    offset = tlo_rem[i] - lo_rem[i];
+                    slice = thi_rem[i] - tlo_rem[i];
+                  } else {
+                    offset = 0;
+                    slice = thi_rem[i] - slo_rem[i];
+                  }
+                  if (offset < 0) offset = offset + dims[i];
+                  if (offset >= dims[i]) offset = offset - dims[i];
+                  plo_rem[i] = thi_rem[i] - tlo_rem[i] + width[i] - slice;
+                  phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
+                  plo_loc[i] = offset;
+                  phi_loc[i] = offset + slice;
+                }
+              } else {
+                plo_rem[i] = width[i];
+                phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
+                plo_loc[i] = width[i];
+                phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+              }
+            } else {
+              plo_rem[i] = 0;
+              phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
+              plo_loc[i] = 0;
+              phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+            }
+            if (DEBUG) {
+              if (i == idx && (np > 1 || imax > 1)) {
+                fprintf(stderr,"\np[%d] offset %d slice %d increment(%d) %d\n",
+                    (int)GAme,(int)offset,(int)slice,(int)i+1,(int)increment[i]);
+              } else {
+                fprintf(stderr,"\n");
+              }
+              fprintf(stderr,"p[%d] tlo_rem(%d) %d thi_rem(%d) %d\n",
+                  (int)GAme,(int)i+1,(int)tlo_rem[i],(int)i+1,(int)thi_rem[i]);
+              fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
+                  (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
+              fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
+                  (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
+            }
+          }
+
+          /* Get pointer to local data buffer and remote data
+             buffer as well as lists of leading dimenstions */
+          gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+          gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
+          if (DEBUG) {
+            for (i=0; i<ndim-1; i++) {
+              fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
+                  (int)ld_loc[i]);
+              fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
+                  (int)ld_rem[i]);
+            }
+          }
+
+          /* Evaluate strides on local and remote processors */
+          gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
+              stride_loc);
+
+          /* Compute the number of elements in each dimension and store
+             result in count. Scale the first element in count by the
+             element size. */
+          gam_ComputeCount(ndim, plo_rem, phi_rem, count);
+          count[0] *= size;
+ 
+          /* get remote data */
+          ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
+              ndim - 1, proc_rem);
+        }
+      }
+
+      /* Perform update in positive direction. Start by getting rough
+         estimate of block of needed data*/
       if (DEBUG) {
-        fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
-            (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
-        fprintf(stderr,"p[%d] lo_loc(%d) %d hi_loc(%d) %d\n",
-            (int)GAme,(int)i+1,(int)lo_loc[i],(int)i+1,(int)hi_loc[i]);
+        fprintf(stderr,"\np[%d] Update in positive direction\n\n",(int)GAme);
       }
-    }
-
-    /* locate processor with this data */
-    if (!nga_locate_region_(g_a, lo_rem, hi_rem, _ga_map,
-        GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
-        lo_rem, hi_rem, *g_a);
-
-    if (np > 1) {
-      /* Boundary data is distributed across more than one
-         processor. Special steps need to be taken.
-      */
-      fprintf(stderr,"More than 1 remote processor on proc %d\n",(int)GAme);
-    }
-
-    /* Get actual coordinates of desired chunk of remote
-       data as well as the actual coordinates of the local chunk
-       of data that will receive the remote data (these
-       coordinates take into account the presence of ghost
-       cells). Start by finding out what data is actually held by
-       remote processor. */
-    proc_rem = GA_proclist[0];
-    nga_distribution_(g_a, &proc_rem, lo_rem, hi_rem);
-    if (DEBUG) {
-      fprintf(stderr,"p[%d] Checking second step\n",(int)GAme);
-    }
-    for (i = 0; i < ndim; i++) {
-      if (increment[i] == 0) {
+      for (i = 0; i < ndim; i++) {
         if (i == idx) {
-          plo_rem[i] = width[i];
-          phi_rem[i] = 2*width[i] - 1;
-          plo_loc[i] = hi_loc[i] - lo_loc[i] + 1 + width[i];
-          phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i];
+          lo_rem[i] = hi_loc[i] + 1;
+          hi_rem[i] = hi_loc[i] + nwidth;
+          /* Check to see if we will need to update ghost cells using
+             one or two major patches of the global array. */
+          if (hi_rem[i] > dims[i]) {
+            if (lo_rem[i] <= dims[i]) {
+              imax = 2;
+            } else {
+              imax = 1;
+            }
+          } else {
+            imax = 1;
+          }
         } else {
-          plo_rem[i] = width[i];
-          phi_rem[i] = hi_rem[i] - lo_rem[i] + width[i];
-          plo_loc[i] = width[i];
-          phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+          lo_rem[i] = lo_loc[i];
+          hi_rem[i] = hi_loc[i];
         }
-      } else {
-        plo_rem[i] = 0;
-        phi_rem[i] = hi_rem[i] - lo_rem[i] + increment[i];
-        plo_loc[i] = 0;
-        phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+        if (DEBUG) {
+          fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
+              (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
+        }
       }
-      if (DEBUG) {
-        fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
-            (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
-        fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
-            (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
+
+      for (inx = 0; inx < imax; inx++) {
+        /* Check to see if boundary is being updated in one patch or two,
+           adjust lower boundary accordingly. */
+        if (DEBUG) {
+          fprintf(stderr,"\n Value of inx is %d\n\n",inx);
+        }
+        for (i=0; i<ndim; i++) {
+          if (imax == 2 && i == idx) {
+            if (inx == 0) {
+              slo_rem[i] = lo_rem[i];
+              shi_rem[i] = dims[i];
+            } else {
+              slo_rem[i] = 1;
+              shi_rem[i] = hi_rem[i] - dims[i];
+            }
+          } else if (i == idx) {
+            if (hi_rem[i] > dims[i]) {
+              slo_rem[i] = 1;
+              shi_rem[i] = nwidth;
+            } else {
+              slo_rem[i] = lo_rem[i];
+              shi_rem[i] = hi_rem[i];
+            }
+          } else {
+            slo_rem[i] = lo_rem[i];
+            shi_rem[i] = hi_rem[i];
+          }
+          if (DEBUG) {
+            fprintf(stderr,"p[%d] slo_rem(%d) %d shi_rem(%d) %d"
+                "  i=%d idx=%d imax=%d\n",(int)GAme,(int)i+1,
+                (int)slo_rem[i],(int)i+1,(int)shi_rem[i],(int)i,
+                (int)idx,(int)imax);
+          }
+        }
+        /* locate processor with this data */
+        if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
+            GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+            slo_rem, shi_rem, *g_a);
+
+        if (DEBUG) {
+          fprintf(stderr,"\np[%d] Value of np is %d Value of imax is %d\n",
+              (int)GAme,(int)np,(int)imax);
+        }
+        for (ipx = 0; ipx < np; ipx++) {
+          /* Get actual coordinates of desired chunk of remote
+             data as well as the actual coordinates of the local chunk
+             of data that will receive the remote data (these
+             coordinates take into account the presence of ghost
+             cells). Start by finding out what data is actually held by
+             remote processor. */
+          proc_rem = GA_proclist[ipx];
+          nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+          if (DEBUG) {
+            fprintf(stderr,"\np[%d] Checking second step\n",(int)GAme);
+          }
+          for (i = 0; i < ndim; i++) {
+            if (increment[i] == 0) {
+              if (i == idx) {
+                if (np == 1 && imax == 1) {
+                  plo_rem[i] = width[i];
+                  phi_rem[i] = 2*width[i] - 1;
+                  plo_loc[i] = hi_loc[i] - lo_loc[i] + 1 + width[i];
+                  phi_loc[i] = hi_loc[i] - lo_loc[i] + 2*width[i];
+                } else {
+                  offset = tlo_rem[i] - hi_loc[i] - 1;
+                  if (thi_rem[i] <= shi_rem[i]) {
+                    slice = thi_rem[i] - tlo_rem[i];
+                  } else {
+                    slice = shi_rem[i] - tlo_rem[i];
+                  }
+                  if (offset < 0) offset = offset + dims[i];
+                  if (offset >= dims[i]) offset = offset - dims[i];
+                  plo_rem[i] = width[i];
+                  phi_rem[i] = width[i] + slice;
+                  plo_loc[i] = hi_loc[i] - lo_loc[i] + width[i] + 1 + offset;
+                  phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i] + 1
+                    + offset + slice;
+                }
+              } else {
+                plo_rem[i] = width[i];
+                phi_rem[i] = thi_rem[i] - tlo_rem[i] + width[i];
+                plo_loc[i] = width[i];
+                phi_loc[i] = hi_loc[i] - lo_loc[i] + width[i];
+              }
+            } else {
+              plo_rem[i] = 0;
+              phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
+              plo_loc[i] = 0;
+              phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
+            }
+            if (DEBUG) {
+              if (i == idx && (np > 1 || imax > 1)) {
+                fprintf(stderr,"\np[%d] offset %d slice %d increment(%d) %d\n",
+                    (int)GAme,(int)offset,(int)slice,(int)i+1,(int)increment[i]);
+              } else {
+                fprintf(stderr,"\n");
+              }
+              fprintf(stderr,"p[%d] tlo_rem(%d) %d thi_rem(%d) %d\n",
+                  (int)GAme,(int)i+1,(int)tlo_rem[i],(int)i+1,(int)thi_rem[i]);
+              fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
+                  (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
+              fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
+                  (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
+            }
+          }
+
+          /* Get pointer to local data buffer and remote data
+             buffer as well as lists of leading dimenstions */
+          gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+          gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
+          if (DEBUG) {
+            for (i=0; i<ndim-1; i++) {
+              fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
+                  (int)ld_loc[i]);
+              fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
+                  (int)ld_rem[i]);
+            }
+          }
+
+          /* Evaluate strides on local and remote processors */
+          gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
+              stride_loc);
+
+          /* Compute the number of elements in each dimension and store
+             result in count. Scale the first element in count by the
+             element size. */
+          gam_ComputeCount(ndim, plo_rem, phi_rem, count);
+          count[0] *= size;
+ 
+          /* get remote data */
+          ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
+              ndim - 1, proc_rem);
+        }
       }
     }
-
-    /* Get pointer to local data buffer and remote data
-       buffer as well as lists of leading dimenstions */
-    gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
-    gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
-    if (DEBUG) {
-      for (i=0; i<ndim-1; i++) {
-        fprintf(stderr,"p[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-            (int)ld_loc[i]);
-        fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
-            (int)ld_rem[i]);
-      }
-    }
-
-    /* Evaluate strides on local and remote processors */
-    gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
-        stride_loc);
-
-    /* Compute the number of elements in each dimension and store
-       result in count. Scale the first element in count by the
-       element size. */
-    gam_ComputeCount(ndim, plo_rem, phi_rem, count);
-    count[0] *= size;
-    
-    /* get remote data */
-    ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
-        ndim - 1, proc_rem);
-
     /* synchronize all processors and update increment array */
     ga_sync_();
     increment[idx] = 2*nwidth;
