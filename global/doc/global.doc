@@ -129,8 +129,8 @@ distribute to other US Government contractors.
 
       ga_inquire        ... find the type and dimensions of the array
       ga_inquire_name   ... find the name of the array
-      ga_inquire_memory ... find the ammount of memory in active arrays 
-      ga_memory_avail   ... find the ammount of memory left for GA 
+      ga_inquire_memory ... find the amount of memory in active arrays 
+      ga_memory_avail   ... find the amount of memory left for GA 
       ga_summarize      ... prints summary info about allocated arrays
       ga_uses_ma        ... finds if memory in arrays comes from MA 
                             (memory allocator)
@@ -223,7 +223,7 @@ distribute to other US Government contractors.
 
       -------------------------------------------------------------------
       subroutine ga_initialize_ltd(limit)
-      integer limit  - ammount of memory in bytes per process [input]
+      integer limit  - amount of memory in bytes per process [input]
 
       allocate and initialize internal data structures for global arrays
       and set limit for memory used in global arrays
@@ -673,7 +673,7 @@ distribute to other US Government contractors.
 
       NOTE:
 
-      You have to worry about mutal exclusion in simultaneous overlapping
+      You have to worry about mutual exclusion in simultaneous overlapping
       access to the data by multiple processors (critical sections are not 
       protected). 
 
@@ -760,7 +760,7 @@ distribute to other US Government contractors.
       integer     code                    [input]
 
       Called in case of an error. Print an error message + an integer
-      value that is itended to be the error code. Releases some system
+      value that is intended to be the error code. Releases some system
       resources.
 
       -------------------------------------------------------------------
@@ -812,13 +812,13 @@ distribute to other US Government contractors.
       -------------------------------------------------------------------
       integer function ga_inquire_memory()
 
-      returns ammount of memory (in bytes) used in allocated global arrays
+      returns amount of memory (in bytes) used in allocated global arrays
       on the calling processor
 
       -------------------------------------------------------------------
       integer function ga_memory_avail()
 
-      Returns ammout of memory left for allocation of new global arrays on
+      Returns amount of memory left for allocation of new global arrays on
       the calling processor. Returned value < 0 means that no limit was set. 
 
       -------------------------------------------------------------------
@@ -879,7 +879,7 @@ distribute to other US Government contractors.
 
       Prints a patch of g_a array to the standard output.  If pretty has
       the value 0 then output is printed in a dense fashion.  If pretty
-      has the value 1 then output is formatted and rows/columns labelled.
+      has the value 1 then output is formatted and rows/columns labeled.
 
       -------------------------------------------------------------------
       subroutine ga_print(g_a)
@@ -944,5 +944,5 @@ distribute to other US Government contractors.
    --------------
 
    Look at compiler flags in file Makefile.h to make sure that
-   Fortran and C compiler flags are consitent with flags used
+   Fortran and C compiler flags are consistent with flags used
    to compile your application.
