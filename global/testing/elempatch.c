@@ -299,10 +299,12 @@ fill_func3 (int nelem, int type, void *buf)
 int
 test_fun (int type, int dim, int OP)
 {
-  double resultx,resulti,resultl,resultf,resultd,resulta;
-  double boundminx,boundmini,boundminl,boundminf,boundmind,boundmina;
-  double boundmaxx,boundmaxi,boundmaxl,boundmaxf,boundmaxd,boundmaxa;
-  double wolfeminx,wolfemini,wolfeminl,wolfeminf,wolfemind,wolfemina;
+  void *boundminx,*boundmaxx,*wolfeminx;
+  double boundmind,boundmaxd,wolfemind,aboundmind,aboundmaxd,awolfemind;
+  long boundminl,boundmaxl,wolfeminl,aboundminl,aboundmaxl,awolfeminl;
+  float boundminf,boundmaxf,wolfeminf,aboundminf,aboundmaxf,awolfeminf;
+  Integer boundmini,boundmaxi,wolfemini,aboundmini,aboundmaxi,awolfemini;
+
   int ONE = 1, ZERO = 0;	/* useful constants */
   int g_a, g_b, g_c, g_d, g_e;
   int g_f, g_g, g_h, g_i, g_j;
@@ -368,30 +370,17 @@ test_fun (int type, int dim, int OP)
   double ad = 1.0, bd = -1.0;
   DoubleComplex adc, bdc;
   double x1, x2, x3, x4;
+  void    *resultx;
+  long    resultl,aresultl;
+  double  resultd,aresultd;
+  float   resultf,aresultf;
+  Integer resulti,aresulti;
 
   adc.real = 1.0;
   adc.imag = 0.0;
   bdc.real = -1.0;
   bdc.imag = 0.0;
 
-  boundmina = 0.0;
-  boundmind = 0.0;
-  boundminf = 0.0;
-  boundmini = 0.0;
-  boundminl = 0.0;
-  boundminx = 0.0;
-  wolfemina = 0.0;
-  wolfemind = 0.0;
-  wolfeminf = 0.0;
-  wolfemini = 0.0;
-  wolfeminl = 0.0;
-  wolfeminx = 0.0;
-  boundmaxa = 0.0;
-  boundmaxd = 0.0;
-  boundmaxf = 0.0;
-  boundmaxi = 0.0;
-  boundmaxl = 0.0;
-  boundmaxx = 0.0;
   needs_scaled_result = 0;
 
   dcval.real = -sin (3.0);
@@ -495,6 +484,10 @@ test_fun (int type, int dim, int OP)
       val2 = &ival2;
       val5 = &ival5;
       vresult = &ivresult;
+      resultx = &resulti;
+      boundminx = &boundmini;
+      boundmaxx = &boundmaxi;
+      wolfeminx = &wolfemini;
       break;
     case C_DCPL:
       val = &dcval;
@@ -511,18 +504,30 @@ test_fun (int type, int dim, int OP)
       val2 = &dval2;
       val5 = &dval5;
       vresult = &dvresult;
+      resultx = &resultd;
+      boundminx = &boundmind;
+      boundmaxx = &boundmaxd;
+      wolfeminx = &wolfemind;
       break;
     case C_FLOAT:
       val = &fval;
       val2 = &fval2;
       val5 = &fval5;
       vresult = &fvresult;
+      resultx = &resultf;
+      boundminx = &boundminf;
+      boundmaxx = &boundmaxf;
+      wolfeminx = &wolfeminf;
       break;
     case C_LONG:
       val = &lval;
       val2 = &lval2;
       val5 = &lval5;
       vresult = &lvresult;
+      resultx = &resultl;
+      boundminx = &boundminl;
+      boundmaxx = &boundmaxl;
+      wolfeminx = &wolfeminl;
       break;
     default:
       ga_error ("wrong data type.", type);
@@ -913,7 +918,7 @@ test_fun (int type, int dim, int OP)
       if (type != C_DCPL) {
       	/*NGA_Fill_patch (g_b, lo, hi, val2);*/
       	GA_Abs_value_patch (g_b, lo, hi);
-      	GA_Step_max_patch (g_b, lo, hi, g_j, lo, hi, &resultx);
+      	GA_Step_max_patch (g_b, lo, hi, g_j, lo, hi, resultx);
 	/*
 	printf(" GA_Stepmax_patch type = %d, resultx = %le\n",type,resultx);
 	fflush(stdout);
@@ -923,10 +928,10 @@ test_fun (int type, int dim, int OP)
       	  here to determine the minimum g_j value, but for
       	  now we set it to -2.
       	*/
-      	resulti = (double)((int)(ABS(ival2)/ABS(ival)));
-      	resultd = ABS(dval2/dval);
-      	resultf = (double) ((float)ABS(fval2/fval));
-      	resultl = (double) ((long)(ABS(lval2)/ABS(lval)));
+      	aresulti = ((int)(ABS(ival2)/ABS(ival))) - resulti;
+      	aresultd = ABS(dval2/dval) - resultd;
+      	aresultf = ((float)ABS(fval2/fval)) - resultf;
+      	aresultl = ((long)(ABS(lval2)/ABS(lval))) - resultl;
       }
       break;
 
@@ -939,7 +944,7 @@ test_fun (int type, int dim, int OP)
       	GA_Abs_value_patch (g_a, lo, hi);
       	/*GA_Abs_value_patch (g_j, lo, hi);*/
       	NGA_Fill_patch(g_c, lo, hi, val5);
-      	GA_Step_bound_info_patch (g_b,lo,hi, g_j,lo,hi, g_a,lo,hi, g_c,lo,hi, &boundminx,&wolfeminx,&boundmaxx);
+      	GA_Step_bound_info_patch (g_b,lo,hi, g_j,lo,hi, g_a,lo,hi, g_c,lo,hi, boundminx,wolfeminx,boundmaxx);
 	/*
 	printf(" GA_Stepmax2_patch type = %d, resultx = %le\n",type,resultx);
 	fflush(stdout);
@@ -948,21 +953,33 @@ test_fun (int type, int dim, int OP)
           This is currently hardwired. would need to change if 
           val, val2 or val5 change.
       	*/
-      	wolfemini = (double)((int)(((int)1)/((int)2)));
-      	wolfemind = (double)(((double)1.0)/((double)2.0));
-      	wolfeminf = (double)(((float)1.0)/((float)2.0));
-      	wolfeminl = (double)((long)(((long)1)/((long)2)));
-	boundmini = wolfemini;
-	boundmind = wolfemind;
-	boundminf = wolfeminf;
-	boundminl = wolfeminl;
-	boundmaxi = (double)(GA_INFINITY_I);
-	boundmaxd = GA_INFINITY_D;
-	boundmaxf = (double)((float)GA_INFINITY_F);
-	boundmaxl = (double)(GA_INFINITY_L);
+	switch (type)
+	  {
+	  case C_INT:
+	    awolfemini = ((int)(((int)1)/((int)2))) - wolfemini;
+	    aboundmini = ((int)(((int)1)/((int)2))) - boundmini;
+	    aboundmaxi = (Integer)GA_INFINITY_I - boundmaxi;
+	    break;
+	  case C_DBL:
+	    awolfemind = (((double)1.0)/((double)2.0)) - wolfemind;
+	    aboundmind = (((double)1.0)/((double)2.0)) - boundmind;
+	    aboundmaxd = (double)GA_INFINITY_D - boundmaxd;
+	    break;
+	  case C_FLOAT:
+	    awolfeminf = (((float)1.0)/((float)2.0))   - wolfeminf;
+	    aboundminf = (((float)1.0)/((float)2.0))   - boundminf;
+	    aboundmaxf = (float)GA_INFINITY_F - boundmaxf;
+	    break;
+	  case C_LONG:
+	    awolfeminl = ((long)(((long)1)/((long)2))) - wolfeminl; 
+	    aboundminl = ((long)(((long)1)/((long)2))) - boundminl; 
+	    aboundmaxl = (long)GA_INFINITY_L - boundmaxl;
+	    break;
+	  default:
+	    ga_error ("GA_step_bound_info wrong data type.", type);
+	  }
       }
       break;
-    
     default:
       GA_Error ("test_function: wrong operation.", OP);
     }
@@ -971,9 +988,6 @@ test_fun (int type, int dim, int OP)
     case C_INT:
       alpha = &ai;
       beta = &bi;
-      wolfemina = wolfemini-wolfeminx;
-      boundmina = boundmini-boundminx;
-      boundmaxa = boundmaxi-boundmaxx;
       break;
     case C_DCPL:
       alpha = &adc;
@@ -983,23 +997,14 @@ test_fun (int type, int dim, int OP)
     case C_DBL:
       alpha = &ad;
       beta = &bd;
-      wolfemina = wolfemind-wolfeminx;
-      boundmina = boundmind-boundminx;
-      boundmaxa = boundmaxd-boundmaxx;
       break;
     case C_FLOAT:
       alpha = &af;
       beta = &bf;
-      wolfemina = wolfeminf-wolfeminx;
-      boundmina = boundminf-boundminx;
-      boundmaxa = boundmaxf-boundmaxx;
       break;
     case C_LONG:
       alpha = &al;
       beta = &bl;
-      wolfemina = wolfeminl-wolfeminx;
-      boundmina = boundminl-boundminx;
-      boundmaxa = boundmaxl-boundmaxx;
       break;
     default:
       ga_error ("wrong data type.", type);
@@ -1014,8 +1019,8 @@ test_fun (int type, int dim, int OP)
       NGA_Add_patch (alpha, g_h, lo, hi, beta, g_i, lo, hi, g_j, lo, hi);
       NGA_Add_patch (alpha, g_m, lo, hi, beta, g_n, lo, hi, g_n, lo, hi);
     }
-  }
-  else {
+  } else {
+ 
     /*
       Unary operation.
     */
@@ -1141,22 +1146,118 @@ test_fun (int type, int dim, int OP)
     if (type == C_DCPL) {
       result = 0;
     } else {
-      if (wolfemina == ((double)0.0)) {
-	result = 0;
+      if (OP == OP_STEP_MAX) {
+	/* Step_max */
+	switch (type) 
+	  {
+	  case C_INT:
+	    if (aresulti == (Integer)0) {
+	      result = 0;
+	    } else {
+	      result = 1;
+	    }
+	    break;
+	  case C_DBL:
+	    if (aresultd == (double)0.0) {
+	      result = 0;
+	    } else {
+	      result = 1;
+	    }
+	    break;
+	  case C_FLOAT:
+	    if (aresultf == (float)0.0) {
+	      result = 0;
+	    } else {
+	      result = 1;
+	    }
+	    break;
+	  case C_LONG:
+	    if (aresultl == (long)0) {
+	      result = 0;
+	    } else {
+	      result = 1;
+	    }
+	    break;
+	  default:
+	    ga_error ("Stepmax op, wrong data type.", type);
+	  }
       } else {
-	result = 1;
+	/* OP = 8 so Step_bound_info */
+	switch (type) 
+	  {
+	  case C_INT:
+	    if (awolfemini == ((Integer)0)) {
+	      result = 0;
+	    } else {
+	      result = 1;
+	    }
+	    if (aboundmini == ((Integer)0)) {
+	      result2 = 0;
+	    } else {
+	      result2 = 1;
+	    }
+	    if (aboundmaxi == ((Integer)0)) {
+	      result3 = 0;
+	    } else {
+	      result3 = 1;
+	    }
+	    break;
+	  case C_DBL:
+	    if (awolfemind == ((double)0.0)) {
+	      result = 0;
+	    } else {
+	      result = 1;
+	    }
+	    if (aboundmind == ((double)0.0)) {
+	      result2 = 0;
+	    } else {
+	      result2 = 1;
+	    }
+	    if (aboundmaxd == ((double)0.0)) {
+	      result3 = 0;
+	    } else {
+	      result3 = 1;
+	    }
+	    break;
+	  case C_FLOAT:
+	    if (awolfeminf == ((float)0.0)) {
+	      result = 0;
+	    } else {
+	      result = 1;
+	    }
+	    if (aboundminf == ((float)0.0)) {
+	      result2 = 0;
+	    } else {
+	      result2 = 1;
+	    }
+	    if (aboundmaxf == ((float)0.0)) {
+	      result3 = 0;
+	    } else {
+	      result3 = 1;
+	    }
+	    break;
+	  case C_LONG:
+	    if (awolfeminl == ((long)0)) {
+	      result = 0;
+	    } else {
+	      result = 1;
+	    }
+	    if (aboundminl == ((long)0)) {
+	      result2 = 0;
+	    } else {
+	      result2 = 1;
+	    }
+	    if (aboundmaxl == ((long)0)) {
+	      result3 = 0;
+	    } else {
+	      result3 = 1;
+	    }
+	    break;
+	  default:
+	    ga_error ("Stepmax op, wrong data type.", type);
+	  }
+	result = result | result2 | result3;
       }
-      if (boundmina == ((double)0.0)) {
-	result2 = 0;
-      } else {
-	result2 = 1;
-      }
-      if (boundmaxa == ((double)0.0)) {
-	result3 = 0;
-      } else {
-	result3 = 1;
-      }
-      result = result | result2 | result3;
     }
   }
   if (me == 0)
