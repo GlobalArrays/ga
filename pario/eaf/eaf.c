@@ -214,7 +214,7 @@ int eaf_write(int fd, eaf_off_t offset, const void *buf, size_t bytes)
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
-    rc = elio_write(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes);
+    rc = elio_write(file[fd].elio_fd, (Off_t) offset, buf, (Size_t) bytes);
     if (rc != bytes){
         if(rc < 0) return((int)rc); /* rc<0 means ELIO detected error */
  	else return EAF_ERR_WRITE;
@@ -243,7 +243,7 @@ int eaf_awrite(int fd, eaf_off_t offset, const void *buf, size_t bytes,
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
-    rc = elio_awrite(file[fd].elio_fd, (off_t)offset, buf, (Size_t)bytes, &req);
+    rc = elio_awrite(file[fd].elio_fd, (Off_t)offset, buf, (Size_t)bytes, &req);
     if(!rc){
 	*req_id = req;
 	file[fd].nawrite++;
@@ -264,7 +264,7 @@ int eaf_read(int fd, eaf_off_t offset, void *buf, size_t bytes)
     
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
     
-    rc = elio_read(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes);
+    rc = elio_read(file[fd].elio_fd, (Off_t) offset, buf, (Size_t) bytes);
     if (rc != bytes){
         if(rc < 0) return((int)rc); /* rc<0 means ELIO detected error */
         else return EAF_ERR_READ;
@@ -292,7 +292,7 @@ int eaf_aread(int fd, eaf_off_t offset, void *buf, size_t bytes,
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
-    rc = elio_aread(file[fd].elio_fd, (off_t) offset, buf, (Size_t)bytes, &req);
+    rc = elio_aread(file[fd].elio_fd, (Off_t) offset, buf, (Size_t)bytes, &req);
 
     if(!rc){
 	*req_id = req;
@@ -341,11 +341,21 @@ int eaf_delete(const char *fname)
   does not exist, return 0.  Otherwise return non-zero.
   */
 {
+  /*
     if (access(fname, F_OK) == 0)
 	if (unlink(fname))
 	    return EAF_ERR_UNLINK;
 
+    return EAF_OK; 
+*/
+
+  /* Now that ELIO files can have extents must call its
+     routine to delete files */
+
+  if (elio_delete(fname) == ELIO_OK)
     return EAF_OK;
+  else
+    return EAF_ERR_UNLINK;
 }
 
 int eaf_stat(const char *path, int *avail_kb, char *fstype, int fslen)
@@ -464,13 +474,13 @@ int eaf_truncate(int fd, eaf_off_t length)
         return ELIO_PENDING_ERR;
     }
 #else
-    if(elio_truncate(file[fd].elio_fd, (off_t)length)) return EAF_ERR_TRUNCATE;
+    if(elio_truncate(file[fd].elio_fd, (Off_t)length)) return EAF_ERR_TRUNCATE;
 #endif
 
     return EAF_OK;
 
 
-/*  return elio_truncate(file[fd].elio_fd, (off_t) length);*/
+/*  return elio_truncate(file[fd].elio_fd, (Off_t) length);*/
 }
 
 
@@ -480,7 +490,7 @@ int eaf_length(int fd, eaf_off_t *length)
   Return 0 on success, nonzero on failure.
   */
 {
-    off_t len;
+    Off_t len;
     int rc;
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
