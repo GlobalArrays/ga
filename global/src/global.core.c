@@ -1868,6 +1868,7 @@ adj_item_size = item_size/sizeof(Integer);
 #endif
 /*****************************/
 
+#if defined(SHMEM) && !defined(SYSV)
 
 /*\local accumulate using intermediate buffer in local memory 
 \*/
@@ -1899,6 +1900,7 @@ char *ptr_dst, *ptr_src;
           CopyElemTo(buf, ptr_dst, words, proc);
        }
 }
+#endif
 
 
 
