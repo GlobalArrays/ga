@@ -187,13 +187,14 @@ endif
       LIBS = -lc
      EXTRA = strdup.o strtok.o
 endif
+
 ifeq ($(TARGET),LINUX64)
 # LINUX 64-bit on Alpha using DEC compilers
 # LINUX64 define used in pbeginf and shmem
        FC = fort
    FFLAGS = -i8
        CC = ccc
-   DEFINES = -DLINUX -DLINUX64 -DSYSV -DSHMEM -DTIMINGS -DNOSPIN -DEXT_INT
+   DEFINES = -DLINUX -DLINUX64 -DCOMPAQ_FORT -DSYSV -DSHMEM -DTIMINGS -DNOSPIN
     CFLAGS = -O $(DEFINES)
      EXTRA = strdup.o strtok.o
  LINTFLAGS = $(DEFINES) -u
@@ -255,6 +256,16 @@ endif
 ifeq ($(TARGET),HPUX)
     FFLAGS = -O +ppu
    DEFINES = -DHPUX -DEXTNAME -DSYSV -DSHMEM  -DNOSPIN
+ LINTFLAGS = $(DEFINES) -bhu
+    RANLIB = @echo $*
+     EXTRA = hpuxargs.o
+endif
+
+ifeq ($(TARGET),HPUX64)
+        FC = f90
+   DEFINES = -DHPUX64 -DHPUX -DEXTNAME -DSYSV -DSHMEM  -DNOSPIN
+    FFLAGS = -O +DA2.0W +ppu +i8
+    CFLAGS = -O +DA2.0W -Ae $(DEFINES)
  LINTFLAGS = $(DEFINES) -bhu
     RANLIB = @echo $*
      EXTRA = hpuxargs.o

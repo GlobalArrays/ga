@@ -12,8 +12,11 @@
 
 #define SIZE 550
 #define MAXPROC 8
-
 #define CHUNK_NUM 28
+
+#ifndef ABS
+#define ABS(a) ((a)>0? (a): -(a))
+#endif
 
 int CHECK_RESULT=0;
 
@@ -474,8 +477,8 @@ void check_result(double *src_buf, double *dst_buf, int *stride, int *count,
         
         size = count[0] / sizeof(double);
         for(j=0; j<size; j++)
-            if(((double *)((char *)src_buf+idx))[j] !=
-               ((double *)((char *)dst_buf+idx))[j])
+            if(ABS(((double *)((char *)src_buf+idx))[j] - 
+               ((double *)((char *)dst_buf+idx))[j]) > 0.000001 )
                 fprintf(stdout,"Error: %s comparison failed: (%d) (%f : %f)\n",
                         check_type, j, ((double *)((char *)src_buf+idx))[j],
                         ((double *)((char *)dst_buf+idx))[j]);

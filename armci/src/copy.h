@@ -7,7 +7,6 @@
 #define MEMCPY
 #endif
 
-
 /* macros to ensure ordering of consecutive puts or gets following puts */
 #if defined(LAPI)
 

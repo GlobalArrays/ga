@@ -115,16 +115,28 @@ ifeq ($(TARGET),HPUX)
 #          CC = gcc
            FC = fort77
            AS = cc -c
-          CPP = /lib/cpp
     ifeq ($(FOPT),-O)
-         FOPT = -O1
+         FOPT = -O3
     endif
      FOPT_REN = +ppu
      COPT_REN = -Ae
        CDEFS += -DEXTNAME
-    EXTRA_OBJ = tas-parisc.o
+#   EXTRA_OBJ = tas-parisc.o
 endif
-
+#
+ifeq ($(TARGET),HPUX64)
+           FC = f90
+           AS = cc -c
+    ifeq ($(FOPT),-O)
+         FOPT = -O3
+    endif
+     FOPT_REN = +DA2.0W +ppu
+     COPT_REN = +DA2.0W -Ae 
+       CDEFS += -DEXTNAME
+GLOB_DEFINES += -DHPUX
+endif
+#
+#
 ifeq ($(TARGET),CONVEX-SPP)
            FC = fc
           CPP = /lib/cpp

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.7 2000-02-08 19:02:46 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.8 2000-05-10 23:07:24 d3h325 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
@@ -51,6 +51,9 @@
 #endif
 #ifdef SEQUENT
 #define SHMEM_BUF_SIZE 16384
+#endif
+#ifdef HPUX
+#define SHMEM_BUF_SIZE 262144
 #endif
 #ifdef KSR_NATIVE
 #include "ksr.h"

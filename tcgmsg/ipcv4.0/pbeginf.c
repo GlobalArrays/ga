@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.6 2000-05-10 17:59:06 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.7 2000-05-10 23:07:24 d3h325 Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -23,7 +23,7 @@ void PBEGINF_()
 */
 {
   extern char *strdup();
-#if defined(SUNF77_2) || (defined(CONVEX) && defined (HPUX))||(defined(LINUX64))
+#if defined(SUNF77_2)|| (defined(CONVEX)&&defined(HPUX))|| defined(COMPAQ_FORT)
   extern int iargc_();
   extern void getarg_();
   int argc = iargc_() + 1;
@@ -40,10 +40,13 @@ void PBEGINF_()
   char *argv[256], arg[256];
 
   for (i=0; i<argc; i++) {
-#if defined(SUNF77_2) || (defined(CONVEX) && defined (HPUX))||defined(LINUX64)
+#if defined(SUNF77_2)|| (defined(CONVEX)&&defined(HPUX))|| defined(COMPAQ_FORT)
     getarg_(&i, arg, maxlen);
     for(len = maxlen-2; len && (arg[len] == ' '); len--);
     len++;
+#elif defined(HPUX64)
+    long ii=i, lmax=maxlen;
+    len = hpargv_(&ii, arg, &lmax);
 #else
     len = hpargv_(&i, arg, &maxlen);
 #endif

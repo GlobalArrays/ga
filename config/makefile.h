@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.23 2000-05-10 18:28:05 edo Exp $
+# $Id: makefile.h,v 1.24 2000-05-10 23:07:24 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -194,6 +194,19 @@ ifeq ($(TARGET),HPUX)
  GLOB_DEFINES = -DHPUX -DEXTNAME
 #   EXPLICITF = TRUE
      FCONVERT = $(CPP) $(CPP_FLAGS)  $< | sed '/^\#/D'  > $*.f
+endif
+#
+ifeq ($(TARGET),HPUX64)
+# 64-bit version
+           FC = f90
+    ifeq ($(FOPT),-O)
+         FOPT = -O1
+    endif
+     FOPT_REN = +DA2.0W +ppu +i8
+     COPT_REN = +DA2.0W -Ae
+        FLIBS = -lU77
+ GLOB_DEFINES+= -DHPUX -DEXTNAME
+        CDEFS = -DEXT_INT
 endif
 #
 #................................ Compaq/DEC ALPHA .............................
@@ -452,7 +465,7 @@ endif
 # linear algebra, ARMCI, message-passing library, and any lower level libs
 #
 # core libs
-LIBS = -L$(LIB_DISTRIB)/$(TARGET) -lglobal -lma
+LIBS = -L$(LIB_DISTRIB)/$(TARGET) -lglobal -lma 
 #
 #linear algebra
 ifdef USE_SCALAPACK
@@ -481,4 +494,6 @@ endif
 ifdef COMM_LIBS
   LIBS += $(COMM_LIBS)
 endif
+
+LIBS += -lm
 #........................... End ..............................................

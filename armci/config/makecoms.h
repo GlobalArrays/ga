@@ -71,7 +71,3 @@ ifeq ($(TARGET),CRAY-YMP)
    COMM_LIBS = $(LIBCM)
 endif
 
-ifeq ($(TARGET),HPUX)
-   COMM_LIBS = -lm
-endif
-
