@@ -136,8 +136,8 @@ endif
 ifeq ($(TARGET),SGI_N32)
        RANLIB = echo
  GLOB_DEFINES = -DSGI -DSGI_N32
-     COPT_REN = -n32
-     FOPT_REN = -n32 
+     COPT_REN = -n32 -mips4
+     FOPT_REN = -n32 -mips4
      HAS_BLAS = yes
 endif
 
