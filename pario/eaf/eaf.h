@@ -1,93 +1,55 @@
-/******************************************************************************
-Source File:    eaf.h
+#ifndef EAF_H 
+#define EAH_H
 
-Description:    General header for C bindings
-  
-Author:         Jace A Mogill
+/* This section used by both C and Fortran */
 
-Date Created:   16 May 1996
+#define   EAF_RW -1
+#define   EAF_W  -2
+#define   EAF_R  -3
 
-Modifications:
+#ifndef EAF_FORTRAN
 
-CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.h,v $
-CVS: $Date: 1996-09-17 22:12:19 $
-CVS: $Revision: 1.7 $
-CVS: $State: Exp $
-******************************************************************************/
-#if defined(__STDC__) || defined(__cplusplus)
-# define _ARGS_(s) s
-#else
-# define _ARGS_(s) ()
+/* This section used by only C */
+
+/* This to ensure size_t is defined */
+#include <stdio.h>
+
+typedef long eaf_off_t;
+
+int eaf_write(int fd, eaf_off_t offset, const void *buf, size_t bytes);
+
+int eaf_awrite(int fd, eaf_off_t offset, const void *buf, size_t bytes,
+	       int *req_id);
+
+int eaf_read(int fd, eaf_off_t offset, void *buf, size_t bytes);
+
+int eaf_aread(int fd, eaf_off_t offset, void *buf, size_t bytes, 
+	      int *req_id);
+
+int eaf_wait(int fd, int id);
+
+int eaf_probe(int id, int *status);
+
+int eaf_open(const char *fname, int type, int *fd);
+
+int eaf_close(int fd);
+
+int eaf_delete(const char *fname);
+
+int eaf_length(int fd, eaf_off_t *length);
+
+int eaf_stat(const char *path, int *avail_kb, char *fstype, int fslen);
+
+int eaf_eof(int code);
+
+void eaf_errmsg(int code, char *msg);
+
+void eaf_print_stats(int fd);
+
+int eaf_truncate(int fd, eaf_off_t length);
+
+int eaf_length(int fd, eaf_off_t *length);
+
+
 #endif
-
-extern Size_t EAF_ReadC     _ARGS_((Fd_t fd, off_t offset, Void *buf,
-                                    Size_t bytes)); 
-extern int    EAF_AReadC    _ARGS_((Fd_t fd, off_t offset, Void *buf,
-                                    Size_t bytes, io_request_t *req_id));
-extern Size_t EAF_WriteC    _ARGS_((Fd_t fd, off_t offset, Void *buf,
-                                    Size_t bytes)); 
-extern int    EAF_AWriteC   _ARGS_((Fd_t fd, off_t offset, Void *buf,
-                                    Size_t bytes, io_request_t *req_id));
-extern int    EAF_WaitC     _ARGS_((io_request_t *id));
-extern int    EAF_ProbeC    _ARGS_((io_request_t *id, int* status));
-extern Fd_t   EAF_OpenScratchC    _ARGS_((char *fname, int type));
-extern Fd_t   EAF_OpenPersistC    _ARGS_((char *fname, int type));
-extern int    EAF_CloseC     _ARGS_((Fd_t fd));
-       void   EAF_InitC      _ARGS_(());
-       void   EAF_TerminateC _ARGS_(());
-       void   eaf_err        _ARGS_((char *func, char *fname));
-
-#undef _ARGS_
-
-/******************************************************************/
-#define  EAF_MAX_FILES 16
-
-static Fd_t eaf_fd[EAF_MAX_FILES];
-static char *eaf_fname[EAF_MAX_FILES];
-static int   first_eaf_init = 1;
-/* . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .*/
-static Fd_t    fd_table[EAF_MAX_FILES];/* The pointers to the Fd structure
-                                          pointer can't be passed to Fortran
-                                          as an integer, so we save an array
-                                          of the pointers, and give Fortran
-                                          the integer index into that array */
-
-
-
-/**************************** Error Macro ******************************/
-/* ELIO defines error macro called in case of error
- * the macro can also use user-provided error routine PRINT_AND_ABORT
- * defined as macro to do some cleanup in the application before
- * aborting
- * The requirement is that PRINT_AND_ABORT is defined before
- * including ELIO header file - this file
- */
-#if !defined(PRINT_AND_ABORT)
-#if defined(SUN) && !defined(SOLARIS)
-extern int fprintf();
-extern void fflush();
 #endif
-
-#define PRINT_AND_ABORT(msg, val) \
-{ \
-  fprintf(stderr, "EAF fatal error: %s %d\n", msg, (int) val); \
-  fprintf(stdout, "EAF fatal error: %s %d\n", msg, (int) val); \
-  fflush(stdout);\
-  exit(val); \
-}
-#endif
-
-#define EAF_ABORT(msg, val) \
-{ \
-  fprintf(stderr, "EAF Fatal -- Exiting with %d\n", val ); \
-  fprintf(stderr, "EAF Fatal -- Msg: %s\n", msg ); \
-  EAF_TerminateC(); \
-  PRINT_AND_ABORT(msg, val); \
-}
-
-
-#define EAF_ERR(_func, _fname, _code) \
-{ \
-    eaf_err(_func, _fname); \
-    return( _code ); \
-}

@@ -1,278 +1,429 @@
-/******************************************************************************
-Source File:    eaf.c
-
-Description:    General EAF library
-
-Author:         Jace A Mogill
-
-Date Created:   16 May 1996
-
-Modifications:
-
-CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.c,v $
-CVS: $Date: 1996-09-17 22:12:18 $
-CVS: $Revision: 1.7 $
-CVS: $State: Exp $
-******************************************************************************/
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <limits.h>
+#ifdef EAF_STATS
+#include <sys/types.h>
+#include <sys/time.h>
+#endif
 #include "elio.h"
 #include "eaf.h"
+#include "eafP.h"
 
-/*\
-|*|      Blocking Write
-|*| 
-|*|      Returns:
-|*|                Number of bytes written
-|*|                -1 if failed
-\*/
-Size_t EAF_WriteC(fd, offset, buf, bytes)
-Fd_t         fd;
-off_t        offset;
-Void        *buf;
-Size_t       bytes;
+#ifdef OPEN_MAX
+#define EAF_MAX_FILES OPEN_MAX
+#else
+#define EAF_MAX_FILES 64
+#endif
+
+static struct {
+    char *fname;		/* Filename --- if non-null is active*/
+    Fd_t elio_fd;		/* ELIO file descriptor */
+    int nwait;			/* #waits */
+    int nwrite;			/* #synchronous writes */
+    int nread;			/* #synchronous reads */
+    int nawrite;		/* #asynchronous writes */
+    int naread;			/* #asynchronous reads */
+    double nb_write;		/* #synchronous bytes written */
+    double nb_read;		/* #synchronous bytes read */
+    double nb_awrite;		/* #asynchronous bytes written */
+    double nb_aread;		/* #asynchronous bytes read */
+    double t_write;		/* Wall seconds synchronous writing */
+    double t_read;		/* Wall seconds synchronous reading */
+    double t_wait;		/* Wall seconds waiting */
+} file[EAF_MAX_FILES];
+
+static int valid_fd(int fd)
+{
+    return ( (fd >= 0) && (fd < EAF_MAX_FILES) && (file[fd].fname) );
+}
+
+static double wall_time()
+/*
+  Return wall_time in seconds as cheaply and as accurately as possible
+  */
+{
+#ifdef EAF_STATS
+  static int firstcall = 1;
+  static unsigned firstsec, firstusec;
+  double low, high;
+  struct timeval tp;
+  struct timezone tzp;
+
+  if (firstcall) {
+      (void) gettimeofday(&tp,&tzp);
+      firstusec = tp.tv_usec;
+      firstsec  = tp.tv_sec;
+      firstcall = 0;
+  }
+
+  (void) gettimeofday(&tp,&tzp);
+
+  low = (double) (tp.tv_usec>>1) - (double) (firstusec>>1);
+  high = (double) (tp.tv_sec - firstsec);
+
+  return high + 1.0e-6*(low+low);
+#else
+  return 0.0;
+#endif
+}
+
+int eaf_open(const char *fname, int type, int *fd)
+/*
+  Open the named file returning the EAF file descriptor in fd.
+  Return 0 on success, non-zero on failure
+  */
+{
+    int i=0;
+
+    while ((i<EAF_MAX_FILES) && file[i].fname) /* Find first empty slot */
+	i++;
+    if (i == EAF_MAX_FILES) return EAF_ERR_MAX_OPEN;
+	
+    if (!(file[i].fname = strdup(fname)))
+	return EAF_ERR_MEMORY;
+
+    if (!(file[i].elio_fd = elio_open(fname, type))) {
+	free(file[i].fname);
+	file[i].fname = 0;
+	return EAF_ERR_OPEN;
+    }
+
+    file[i].nwait = file[i].nread = file[i].nwrite = 
+	file[i].naread = file[i].nawrite = 0;
+    file[i].nb_read = file[i].nb_write = file[i].nb_aread = 
+	file[i].nb_awrite = file[i].t_read = file[i].t_write = 
+	file[i].t_wait = 0.0;
+
+    *fd = i;
+    return EAF_OK;
+}
+
+void eaf_print_stats(int fd)
+/*
+  Print performance statistics for this file to standard output
+  */
+{
+    eaf_off_t len;
+    double mbr, mbw;
+    if (!valid_fd(fd)) return;
+
+    if (eaf_length(fd, &len)) len = -1;
+
+    printf("\n");
+    printf("------------------------------------------------------------\n");
+    printf("EAF file %d: name=\"%s\" size=%lu bytes\n", 
+	   fd, file[fd].fname, (unsigned long) len);
+    printf("------------------------------------------------------------\n");
+    printf("               write      read    awrite     aread      wait\n");
+    printf("               -----      ----    ------     -----      ----\n");
+    printf("     calls: %8d  %8d  %8d  %8d  %8d\n", 
+	   file[fd].nwrite, file[fd].nread, file[fd].nawrite, 
+	   file[fd].naread, file[fd].nwait);
+    printf("   data(b): %.2e  %.2e  %.2e  %.2e\n",
+	   file[fd].nb_write, file[fd].nb_read, file[fd].nb_awrite, 
+	   file[fd].nb_aread);
+    printf("   time(s): %.2e  %.2e                      %.2e\n",
+	   file[fd].t_write, file[fd].t_read, file[fd].t_wait);
+    mbr = 0.0;
+    mbw = 0.0;
+    if (file[fd].t_write) mbw = file[fd].nb_write/(1e6*file[fd].t_write);
+    if (file[fd].t_read) mbr = file[fd].nb_read/(1e6*file[fd].t_read);
+	
+    printf("rate(mb/s): %.2e  %.2e\n", mbw, mbr);
+    printf("------------------------------------------------------------\n\n");
+    fflush(stdout);
+}
+
+int eaf_close(int fd)
+/*
+  Close the EAF file and return 0 on success, non-zero on failure
+  */
+{
+    if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
+    
+    free(file[fd].fname);
+    file[fd].fname = 0;
+
+    if (elio_close(file[fd].elio_fd))
+	return EAF_ERR_CLOSE;
+    else
+	return EAF_OK;
+}
+
+int eaf_write(int fd, eaf_off_t offset, const void *buf, size_t bytes)
+/*
+  Write the buffer to the file at the specified offset.
+  Return 0 on success, non-zero on failure
+  */
 {    
-  return( elio_write(fd, offset, buf, bytes) );
+    double start = wall_time();
+    if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
+
+    if (elio_write(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes)
+	!= bytes)
+	return EAF_ERR_WRITE;
+    else {
+	file[fd].nwrite++;
+	file[fd].nb_write += bytes;
+	file[fd].t_write += wall_time() - start;
+
+	return EAF_OK;
+    }
 }
 
-
-
-
-/*\
-|*|      Asynchronous Write
-|*| 
-|*|      Returns:
-|*|                 0 on success
-|*|                -1 if failed
-\*/
-int EAF_AWriteC(fd, offset, buf, bytes, req_id)
-Fd_t         fd;
-off_t        offset;
-Void        *buf;
-Size_t       bytes;
-io_request_t *req_id;
+int eaf_awrite(int fd, eaf_off_t offset, const void *buf, size_t bytes,
+	       int *req_id)
+/*
+  Initiate an asynchronous write of the buffer to the file at the
+  specified offset.  Return in *req_id the ID of the request for
+  subsequent use in eaf_wait/probe.  The buffer may not be reused until
+  the operation has completed.
+  Return 0 on success, non-zero on failure
+  */
 {
-  return (elio_awrite(fd, offset, buf, bytes, req_id));
+    io_request_t req;
+
+    if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
+
+    if (elio_awrite(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes,
+		     &req)) {
+	*req_id = -1;
+	return EAF_ERR_AWRITE;
+    }
+    else {
+	*req_id = req;
+	file[fd].nawrite++;
+	file[fd].nb_awrite += bytes;
+	return EAF_OK;
+    }
 }
 
-
-
-
-/*\
-|*|      Blocking Read
-|*| 
-|*|      Returns:
-|*|                Number of bytes written
-|*|                -1 if failed
-\*/
-Size_t EAF_ReadC(fd, offset, buf, bytes)
-Fd_t         fd;
-off_t        offset;
-Void        *buf;
-Size_t       bytes;
+int eaf_read(int fd, eaf_off_t offset, void *buf, size_t bytes)
+/*
+  Read the buffer from the specified offset in the file.
+  Return 0 on success, non-zero on failure
+  */
 {
-  return(elio_read(fd, offset, buf, bytes));
-}
+    double start = wall_time();
+    
+    if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
+    
+    if (elio_read(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes)
+	!= bytes)
+	return EAF_ERR_READ;
+    else {
+	file[fd].nread++;
+	file[fd].nb_read += bytes;
+	file[fd].t_read += wall_time() - start;
+	return EAF_OK;
+    }
+}    
 
-
-
-
-/*\
-|*|      Asynchronous Write
-|*| 
-|*|      Returns:
-|*|                 0 on success
-|*|                -1 if failed
-\*/
-int EAF_AReadC(fd, offset, buf, bytes, req_id)
-Fd_t          fd;
-off_t         offset;
-Void         *buf;
-Size_t        bytes;
-io_request_t *req_id;
+int eaf_aread(int fd, eaf_off_t offset, void *buf, size_t bytes, 
+	      int *req_id)
+/*
+  Initiate an asynchronous read of the buffer from the file at the
+  specified offset.  Return in *req_id the ID of the request for
+  subsequent use in eaf_wait/probe.  The buffer may not be reused until
+  the operation has completed.
+  Return 0 on success, non-zero on failure
+  */
 {
-  return (elio_aread(fd, offset, buf, bytes, req_id));
+    io_request_t req;
+
+    if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
+
+    if (elio_aread(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes,
+		     &req)) {
+	*req_id = -1;
+	return EAF_ERR_AREAD;
+    }
+    else {
+	*req_id = req;
+	file[fd].naread++;
+	file[fd].nb_aread++;
+	return EAF_OK;
+    }
 }
 
-
-
-
-/*\
-|*|      Block waiting for asyncronous IO <id>
-|*| 
-|*|      Returns:
-|*|                 0 on success
-|*|                 Invalidated <id>
-\*/
-int EAF_WaitC(id)
-io_request_t *id;
+int eaf_wait(int fd, int req_id)
+/*
+  Wait for the I/O operation referred to by req_id to complete.
+  Return 0 on success, non-zero on failure
+  */
 {
-  return (elio_wait(id));
+    double start = wall_time();
+    int code;
+
+    io_request_t req = req_id;
+    if (elio_wait(&req)) 
+	code = EAF_ERR_WAIT;
+    else
+	code = EAF_OK;
+
+    file[fd].t_wait += wall_time() - start;
+    file[fd].nwait++;
+
+    return code;
 }
 
-
-
-
-
-/*\
-|*|      Test asyncronous IO <id> for completion
-|*| 
-|*|      Returns:
-|*|                 0 if pending, 1 if completed
-|*|                 Invalidated <id>
-\*/
-int EAF_ProbeC(id, status)
-io_request_t *id;
-int          *status;
+int eaf_probe(int req_id, int *status)
+/*
+ *status returns 0 if the I/O operation reffered to by req_id
+  is complete, 1 otherwise. 
+  Return 0 on success, non-zero on failure.
+  */
 {
-  return (elio_probe(id, status));
+    io_request_t req = req_id;
+
+    if (elio_probe(&req, status))
+	return EAF_ERR_PROBE;
+    else {
+	*status = !(*status == ELIO_DONE);
+	return EAF_OK;
+    }
 }
 
-
-
-
-/*\
-|*|      (Noncollective) Persistent File Open
-|*| 
-|*|      Returns:
-|*|                 File descriptor
-\*/
-Fd_t  EAF_OpenPersistC(fname, type)
-char* fname;
-int   type;
+int eaf_delete(const char *fname)
+/*
+  Delete the named file.  If the delete succeeds, or the file
+  does not exist, return 0.  Otherwise return non-zero.
+  */
 {
-  if(first_eaf_init) EAF_InitC();
+    if (access(fname, F_OK) == 0)
+	if (unlink(fname))
+	    return EAF_ERR_UNLINK;
 
-  return (elio_open(fname, type));
+    return EAF_OK;
 }
 
+int eaf_stat(const char *path, int *avail_kb, char *fstype, int fslen)
+/*
+  Return in *avail_kb and *fstype the amount of free space (in Kb)
+  and filesystem type (currenly UFS, PFS, or PIOFS) of the filesystem
+  associated with path.  Path should be either a filename, or a directory
+  name ending in a slash (/).  fslen should specify the size of the
+  buffer pointed to by fstype.
 
-
-
-/*\
-|*|      (Noncollective) Scratch File Open
-|*| 
-|*|      Returns:
-|*|                 File descriptor
-\*/
-Fd_t  EAF_OpenScratchC(fname, type)
-char *fname;
-int   type;
+  Return 0 on success, non-zero on failure.
+  */
 {
-  Fd_t  fd;
-  int   i=0;
-  
-  if(first_eaf_init) EAF_InitC();
-  
-  fd = elio_open(fname, type);
-  while(i< EAF_MAX_FILES && eaf_fd[i] != NULL) i++;
-  eaf_fd[i] = fd;
-  if((eaf_fname[i]=(char*) malloc(strlen(fname)+1)) == NULL)
-    EAF_ERR("EAF_OpenSF: Unable to malloc scratch file name", fname, (Fd_t) -1);
-  strcpy(eaf_fname[i], fname);
+ char dirname[PATH_MAX];
+ stat_t statinfo;
 
-  return(fd);
+ if (elio_dirname(path, dirname, sizeof(dirname)))
+     return EAF_ERR_STAT;
+
+ if (elio_stat(dirname, &statinfo))
+     return EAF_ERR_STAT;
+
+ if (fslen < 6)
+     return EAF_ERR_TOO_SHORT;
+
+ *avail_kb = statinfo.avail;
+ if (statinfo.fs == ELIO_UFS)
+     strcpy(fstype, "UFS");
+ else if (statinfo.fs == ELIO_PFS)
+     strcpy(fstype, "PFS");
+ else if (statinfo.fs == ELIO_PIOFS)
+     strcpy(fstype, "PIOFS");
+ else
+     strcpy(fstype, "UNKNOWN");
+
+ return EAF_OK;
 }
 
-  
-
-
-
-/*\
-|*|      Close File <fd>
-|*|          If the <fd> is in the scratch file (eaf_fd) table
-|*|          also unlink/delete it.
-\*/
-int  EAF_CloseC(fd)
-Fd_t  fd;
+int eaf_eof(int code)
+/*
+  Return 0 if code corresponds to EOF, or non-zero.
+  */
 {
-  int i=0;
-  int r;
- 
-  elio_close(fd);
-  while(i< EAF_MAX_FILES && eaf_fd[i] != fd) i++;
-  if(eaf_fd[i] == fd && i < EAF_MAX_FILES)
-    {
-      if(elio_delete(eaf_fname[i]) != NULL)
-	EAF_ERR("EAF_Close: Unable to delete scratch file on close.",
-		NULL, -1);
-      eaf_fd[i] = NULL;
-      free(eaf_fname[i]);
-    } 
-  return( CHEMIO_OK);
+    return !(code == EAF_EOF);
 }
 
-
-
-
-
-/*\
-|*|      Initialize EAF
-|*| 
-\*/
-void EAF_InitC()
+void eaf_errmsg(int code, char *msg)
+/*
+  Return in msg (assumed to hold up to 80 characters)
+  a description of the error code obtained from an EAF call,
+  or an empty string if there is no such code
+  */
 {
-  int i;
-
-  if(first_eaf_init)
-    {
-      first_eaf_init = 0;
-      /* Initialize Scratch File table */
-      for(i=0; i < EAF_MAX_FILES; i++)
-	{
-	  fd_table[i] = NULL;
-	  eaf_fd[i] = NULL;
-	};
-    };
+    if (code == EAF_OK) 
+	(void) strcpy(msg, "OK");
+    else if (code == EAF_EOF) 
+	(void) strcpy(msg, "end of file");
+    else if (code == EAF_ERR_MAX_OPEN)
+	(void) strcpy(msg, "too many open files");
+    else if (code == EAF_ERR_MEMORY)
+	(void) strcpy(msg, "memory allocation failed");
+    else if (code == EAF_ERR_OPEN)
+	(void) strcpy(msg, "failed opening file");
+    else if (code == EAF_ERR_CLOSE)
+	(void) strcpy(msg, "failed closing file");
+    else if (code == EAF_ERR_INVALID_FD)
+	(void) strcpy(msg, "invalid file descriptor");
+    else if (code == EAF_ERR_WRITE)
+	(void) strcpy(msg, "write failed");
+    else if (code == EAF_ERR_AWRITE)
+	(void) strcpy(msg, "asynchronous write failed");
+    else if (code == EAF_ERR_READ)
+	(void) strcpy(msg, "read failed");
+    else if (code == EAF_ERR_AREAD)
+	(void) strcpy(msg, "asynchronous read failed");
+    else if (code == EAF_ERR_WAIT)
+	(void) strcpy(msg, "wait failed");
+    else if (code == EAF_ERR_PROBE)
+	(void) strcpy(msg, "probe failed");
+    else if (code == EAF_ERR_UNLINK)
+	(void) strcpy(msg, "unlink failed");
+    else if (code == EAF_ERR_UNIMPLEMENTED)
+	(void) strcpy(msg, "unimplemented operation");
+    else if (code == EAF_ERR_STAT)
+	(void) strcpy(msg, "stat failed");
+    else if (code == EAF_ERR_TOO_SHORT)
+	(void) strcpy(msg, "an argument string/buffer is too short");
+    else if (code == EAF_ERR_TOO_LONG)
+	(void) strcpy(msg, "an argument string/buffer is too long");
+    else if (code == EAF_ERR_NONINTEGER_OFFSET)
+	(void) strcpy(msg, "offset is not an integer");
+    else if (code == EAF_ERR_TRUNCATE)
+	(void) strcpy(msg, "truncate failed");
+    else 
+	*msg = 0;
 }
 
-
-
-
-/*\
-|*|
-|*|  Terminate EAF
-\*/
-void EAF_TerminateC()
+int eaf_truncate(int fd, eaf_off_t length)
+/*
+  Truncate the file to the specified length.
+  Return 0 on success, non-zero otherwise.
+  */
 {
-  int i=0;
-  
-  /* Close all files that I know about */
-  /* NOTE:  This is currently restricted to Scratch files  */
-  while(i < EAF_MAX_FILES)
-    {
-      if(eaf_fd[i] != NULL)
-	{
-	  fprintf(stderr,"Terminating with SF |%s| still open\n", eaf_fname[i]);
-	  EAF_CloseC(eaf_fd[i]);
-	}
-      i++;
-    };
+    if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
+
+    if (elio_truncate(file[fd].elio_fd, (off_t) length))
+	return EAF_ERR_TRUNCATE;
+    else
+	return EAF_OK;
 }
 
-
-
-/*\ Error handling routine
-\*/
-void eaf_err(char *func, char *fname)
+int eaf_length(int fd, eaf_off_t *length)
+/*
+  Return in length the length of the file.  
+  Return 0 on success, nonzero on failure.
+  */
 {
-  fprintf(stderr, "EAF: Error in routine %s", func);
-  if(fname != NULL)
-    fprintf(stderr, " on file: |%s|", fname);
-  perror("\nEAF: ");
+    off_t len;
+
+    if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
+
+    if (elio_length(file[fd].elio_fd, &len))
+	return EAF_ERR_LENGTH;
+    else {
+	*length = (eaf_off_t) len;
+	return EAF_OK;
+    }
 }
 
-
-
-
-int EAF_Stat(path, statinfo)
-char *path;
-stat_t *statinfo;
-{
- char dirname[ELIO_FILENAME_MAX];
-
- if(strlen(path)>ELIO_FILENAME_MAX) 
-    EAF_ERR("eaf_stat: internal param. LEN too small", path, ELIO_FILENAME_MAX);
-
- elio_dirname(path, dirname, ELIO_FILENAME_MAX);
- return(elio_stat(dirname, statinfo));
-}
+	
