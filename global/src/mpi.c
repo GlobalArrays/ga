@@ -37,7 +37,8 @@ int SR_caught_sigint;     /* for compatibility with TCGMSG interface only */
 #define MAX_PROC 1024     /* max no. processes used in data server model */
 #define DEBUG 0
 
-MPI_Comm GA_MPI_COMM=MPI_COMM_WORLD;
+MPI_Comm GA_MPI_COMM;
+static comm_init=0;
 
 
 /*\ returns communicator for GA compute processes
@@ -46,7 +47,8 @@ void ga_mpi_communicator(GA_COMM)
 MPI_Comm *GA_COMM;
 {
 /* MPI_COMM_WORLD is a constant */
-*GA_COMM = GA_MPI_COMM;
+if(comm_init) *GA_COMM = GA_MPI_COMM;
+else *GA_COMM = MPI_COMM_WORLD;
 }
 
 
@@ -86,6 +88,7 @@ MPI_Comm MSG_COMM;
         GA_MPI_COMM = MSG_COMM;
 
     }
+    comm_init =1;
 }
 
 
