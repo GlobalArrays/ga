@@ -26,7 +26,7 @@ extern void TrapSigint(void);
 extern void TrapSigchld(void);
 extern int WaitAll(long);
 
-#if !(defined(KSR) || defined(CRAY) || defined(LINUX) || defined(CYGWIN) ||defined(MACX))
+#if !(defined(KSR) || defined(CRAY) || defined(LINUX) || defined(CYGWIN) ||defined(MACX) || defined(DECOSF))
 extern void bzero(char *, int);
 #endif
 extern pid_t getpid(void), fork(void);
