@@ -48,7 +48,7 @@ endif
 # object files for the library and test program(s)
 #
 OBJ_LIB = disk.arrays.o disk.param.o patch.util.o fortran.o
-OBJ_TST = global.unsup.o shared.files.o
+OBJ_TST = global.unsup.o
 OBJ     = $(OBJ_LIB) $(OBJ_TST)
 
 DA_LIBS = -L$(LIBDIR) -ldra -lelio $(CORE_LIBS) $(LINALG) $(BLAS) $(LIBCOM) $(DA_EXTRA_LIBS)
