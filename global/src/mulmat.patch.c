@@ -1,4 +1,4 @@
-/*$Id: mulmat.patch.c,v 1.4 2001-11-30 17:54:30 d3h325 Exp $*/
+/*$Id: mulmat.patch.c,v 1.5 2001-12-20 20:09:05 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -359,9 +359,9 @@ DoubleComplex ONE;
    if( (cjhi - cjlo +1) != n) ga_error(" b & c dims error",n);
    if( (bihi - bilo +1) != k) ga_error(" a & b dims error",k);
 
-   if((atype=MT_F_DCPL) && (((DoubleComplex*)beta)->real == 0) &&
+   if((atype==MT_F_DCPL) && (((DoubleComplex*)beta)->real == 0) &&
 	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0; 
-   else if((atype=MT_F_DBL) && (*(DoublePrecision*)beta) == 0) need_scaling =0;
+   else if((atype==MT_F_DBL) && (*(DoublePrecision*)beta) == 0) need_scaling =0;
    else if( *(float*)beta ==0) need_scaling =0;
 		   
 #ifdef DEBUG_
