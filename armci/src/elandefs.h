@@ -27,7 +27,7 @@ extern int armcill_testbuf(ELAN_EVENT** handle);
         if(!((request_header_t*)(&(_field)+1))->inbuf) while(((request_header_t*)(&(_field)+1))->tag) armci_util_spin(100,&(_field)+1); else
 #define TEST_SEND_BUF_FIELD(_field, _s, _r,_t,_o,_ret) *_ret=armcill_testbuf(&_field)
 
-#define LONG_PUT_THRESHOLD 12800
-#define PACKPUT 8
+#define LONG_PUT_THRESHOLD 128
+#define PACKPUT 32 
 
 #endif

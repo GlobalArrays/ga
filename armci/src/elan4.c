@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.2 2004-08-12 18:28:50 d3h325 Exp $ */
+/* $Id: elan4.c,v 1.3 2004-08-12 22:35:53 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +23,7 @@ static void *zero=(void*)0;
 extern void *pgs_init (ELAN_STATE *state, void *qMem);
 extern void * pgs_ds_init (ELAN_STATE *state, void *qMem, void *dsqMem, int max);
 
-static int _ELAN_SLOTSIZE=1000;
+static int _ELAN_SLOTSIZE=700;
 static int server_can_poll=0;
 
 #define VCALLS 1
@@ -128,8 +128,8 @@ void armci_clearbflag(int which)
 static ELAN_EVENT *event_getbflag=NULL;
 static long _bidx=0;
 
-#define BFLAG_PATH_SIZE (_ELAN_SLOTSIZE-sizeof(request_header_t))
-#define BFLAG_PATH_SIZE_ 4000
+#define BFLAG_PATH_SIZE_ (_ELAN_SLOTSIZE-sizeof(request_header_t))
+#define BFLAG_PATH_SIZE 4000
 
 int armcill_getbidx(int size, int proc, SERV_BUF_IDX_T *bufidx)
 {
@@ -137,7 +137,7 @@ int armcill_getbidx(int size, int proc, SERV_BUF_IDX_T *bufidx)
     if(size > BFLAG_PATH_SIZE){ 
     int cluster = armci_clus_id(proc);
     int proc_serv = armci_clus_info[cluster].master;
-    event_getbflag = elan_getbflag(_pgsstate,proc_serv,0,MAX_BUFS,1,bufidx);
+    event_getbflag = elan_getbflag(_pgsstate,proc_serv,0,MAX_BUFS,0,bufidx);
     return 1;
   } 
 #endif
@@ -149,12 +149,12 @@ int armcill_getbidx(int size, int proc, SERV_BUF_IDX_T *bufidx)
 void armci_init_connections()
 {
 ELAN_QUEUE *q, *qs;
-int nslots=armci_nproc+512, slotsize;
+int nslots=armci_nproc+256, slotsize;
 int R=0;
 int i;
 char *enval;
   
-    _ELAN_SLOTSIZE = elan_queueMaxSlotSize(elan_base->state);
+    //_ELAN_SLOTSIZE = elan_queueMaxSlotSize(elan_base->state);
     slotsize=_ELAN_SLOTSIZE;
 
     if ((q = elan_gallocQueue(elan_base, elan_base->allGroup)) == NULL)
@@ -344,7 +344,7 @@ request_header_t *msginfo = (request_header_t *)mesg;
     armci_request_from = msginfo->from;
     armci_request_to = msginfo->to;
 
-    if(DEBUG_) {
+    if(DEBUG_ ) {
        printf("%d(server): got %d req (dscrlen=%d datalen=%d) from %d %p\n",
               armci_me, msginfo->operation, msginfo->dscrlen,
               msginfo->datalen, msginfo->from,msginfo->tag); fflush(stdout);
