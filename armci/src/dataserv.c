@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.22 2002-01-08 22:58:05 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.23 2002-01-09 18:56:41 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "copy.h"
@@ -35,6 +35,7 @@ int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,struct iove
     for(k=0;k<num_xmit;k++){
        if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
        else iovlength=max_iovec;
+       iov+=j;  
        for(j=0;j<iovlength;j++){
            if(dim2==0){dim1+=1;dim2=darr[dim1].ptr_array_len;}
            iov[j].iov_base = darr[dim1].dst_ptr_array[darr[dim1].ptr_array_len-dim2];
@@ -44,7 +45,6 @@ int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,struct iove
         if(DEBUG1){printf("\n%d:armci_RecvVectorFromSocket recving iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);} 
        n+=armci_ReadVFromSocket(sock,iov,j,totalsize);
        if(DEBUG1){printf("\n%d:armci_RecvVectorFromSocket recved  iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
-       iov+=j;  
        totalsize=0;
     }
     return(n);
@@ -64,6 +64,7 @@ int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,struct iovec 
     for(k=0;k<num_xmit;k++){
        if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
        else iovlength=max_iovec;
+       iov+=j; 
        for(j=0;j<iovlength;j++){
            if(dim2==0){dim1++;dim2=darr[dim1].ptr_array_len;}
            iov[j].iov_base = darr[dim1].src_ptr_array[darr[dim1].ptr_array_len-dim2];
@@ -73,7 +74,6 @@ int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,struct iovec 
               if(DEBUG1){printf("\n%d:armci_SendVectorToSocket sending iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
        n+=armci_WriteVToSocket(sock,iov,j,totalsize);
               if(DEBUG1){printf("\n%d:armci_SendVectorToSocket done se iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
-       iov+=j;
        totalsize = 0;
     }
     return(n);
@@ -363,25 +363,24 @@ int bytes,i,j,stat;
 void **ptr;
 char *dscr;
 long len;
-    
+armci_giov_t *mydarr;
     bytes = msginfo->dscrlen;
-    if(DEBUG_){printf("\n in armci_tcp_read_vector_data reading bytes=%d infonext=%p\n",bytes,(msginfo+1));fflush(stdout);}
+    if(DEBUG1){printf("\n in armci_tcp_read_vector_data reading bytes=%d infonext=%p\n",bytes,(msginfo+1));fflush(stdout);}
     stat = armci_ReadFromSocket(CLN_sock[p],(MessageRcvBuffer+sizeof(request_header_t)),bytes);
  
     if(stat<0)armci_die("armci_tcp_read_vector_data: read of data failed",stat);	
     dscr=(MessageRcvBuffer+sizeof(request_header_t)); 
     ptr=(void**)dscr;
     vdscr=(void *)dscr;
+    mydarr = (armci_giov_t *)(dscr+bytes);  
     GETBUF(dscr, long ,len);
     if(len!=0){
-    	 armci_giov_t *mydarr;
-         mydarr = (armci_giov_t *)(dscr+bytes);  
 	 for(i=0;i<len;i++){
 	    GETBUF(dscr, int, mydarr[i].ptr_array_len);
 	    GETBUF(dscr, int, mydarr[i].bytes);
             mydarr[i].dst_ptr_array=(void**)dscr;dscr+=mydarr[i].ptr_array_len*sizeof(char*);  
          }
-         j=armci_RecvVectorFromSocket(CLN_sock[p],mydarr,len,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen+bytes) );
+         j=armci_RecvVectorFromSocket(CLN_sock[p],mydarr,len,(struct iovec *)((char*)(msginfo+1)+bytes) );
     }	  
     
     
@@ -403,7 +402,8 @@ int stride_levels, *stride_arr,*count,stat;
     stride_levels = *(int*)dscr;   dscr += sizeof(int);
     stride_arr = (int*)dscr;       dscr += stride_levels*sizeof(int);
     count = (int*)dscr;            dscr += sizeof(int*); 
-    armci_RecvStridedFromSocket( CLN_sock[p],ptr,stride_arr,count,stride_levels,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );
+    armci_RecvStridedFromSocket( CLN_sock[p],ptr,stride_arr,count,stride_levels,(struct iovec *)dscr);
+  /*  armci_RecvStridedFromSocket( CLN_sock[p],ptr,stride_arr,count,stride_levels,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );*/
 }
 #endif
 
@@ -418,6 +418,7 @@ int bytes;
 
     stat =armci_ReadFromSocket(CLN_sock[p],MessageRcvBuffer,hdrlen);
     if(stat<0) armci_die("armci_rcv_req: failed to receive header ",p);
+     *(void**)phdr = msginfo;  
 #if defined(USE_SOCKET_VECTOR_API)
     if(msginfo->operation == PUT && msginfo->datalen==0){
         if(msginfo->format==STRIDED)  
@@ -429,6 +430,7 @@ int bytes;
         return;
     }
 #endif
+    *buflen = MSG_BUFLEN - hdrlen; 
     if (msginfo->operation == GET)
       bytes = msginfo->dscrlen; 
     else{

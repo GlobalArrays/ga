@@ -20,7 +20,6 @@ extern int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,stru
 extern int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,struct iovec *iov);
 extern int armci_ReadVFromSocket(int sock,struct iovec *iov, int iovlength, int totalsize);
 extern int armci_WriteVToSocket (int sock,struct iovec *iov, int iovlength, int totalsize);
-extern int armci_direct_vector(request_header_t *msginfo , armci_giov_t darr[], int len, int proc);
 #endif
 extern void armci_ListenSockAll(int* socklist, int num);
 extern void armci_AcceptSockAll(int* socklist, int num);

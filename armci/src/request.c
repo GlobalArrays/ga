@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.31 2002-01-08 22:58:05 d3h325 Exp $ */
+/* $Id: request.c,v 1.32 2002-01-09 18:56:41 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -346,7 +346,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
 #if defined(USE_SOCKET_VECTOR_API) 
     if(flag){
         int totaliovecs=0;
-        if(op==PUT)bufsize-=bytes; 
+        /*if(op==PUT)*/bufsize-=bytes; 
         for(s=0; s<len; s++)
 	    totaliovecs+=darr[s].ptr_array_len;
         buf = buf0= GET_SEND_BUFFER((bufsize+sizeof(struct iovec)*totaliovecs),op,proc);
@@ -458,14 +458,20 @@ int armci_rem_strided(int op, void* scale, int proc,
 #   ifdef CLIENT_BUF_BYPASS
       if(flag && _armci_bypass) bufsize -=bytes; /* we are not sending data*/
 #   endif
-#if defined(USE_SOCKET_VECTOR_API) 
+    
+
     if(flag){
+#if defined(USE_SOCKET_VECTOR_API) 
 	bufsize = sizeof(request_header_t)+sizeof(void*)+2*sizeof(int)*(stride_levels+1)+2*sizeof(double) + 8;
 	
         buf = buf0= GET_SEND_BUFFER((bufsize+sizeof(struct iovec)*bytes/count[0]),op,proc);
+#else
+        if(op==GET)bufsize -=bytes;
+         buf = buf0= GET_SEND_BUFFER(bufsize,op,proc);
+#endif
     }
     else
-#endif
+    
     buf = buf0= GET_SEND_BUFFER(bufsize,op,proc);
     msginfo = (request_header_t*)buf;
 
@@ -477,11 +483,13 @@ int armci_rem_strided(int op, void* scale, int proc,
        rem_stride_arr = dst_stride_arr;
     }
      
-    msginfo->datalen=bytes;
+    msginfo->datalen=bytes;  
+#if defined(USE_SOCKET_VECTOR_API) 
     /*****for making put use readv/writev is sockets*****/
     if(op==PUT && flag)
        msginfo->datalen=0;
     /* fill strided descriptor */
+#endif
                                        buf += sizeof(request_header_t);
     *(void**)buf = rem_ptr;            buf += sizeof(void*);
     *(int*)buf = stride_levels;        buf += sizeof(int);

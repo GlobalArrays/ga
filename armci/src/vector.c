@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.11 2002-01-08 21:56:50 vinod Exp $ */
+/* $Id: vector.c,v 1.12 2002-01-09 18:56:41 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -364,7 +364,7 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
     if(direct)
          rc = armci_copy_vector(PUT, darr, len, proc);
     else{
-#if defined(DATA_SERVER) && defined(SOCKETS)  
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)  
        rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1);
 #else	 
          rc = armci_pack_vector(PUT, NULL, darr, len, proc);
@@ -407,7 +407,7 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     if(direct)
        rc = armci_copy_vector(GET, darr, len, proc);
     else{
-#if defined(DATA_SERVER) && defined(SOCKETS)        	
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)       	
        rc = armci_rem_vector(GET, NULL, darr, len, proc,1);
 #else
        rc = armci_pack_vector(GET, NULL, darr, len, proc);
