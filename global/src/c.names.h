@@ -103,6 +103,7 @@
 #define  ga_summarize_             GA_SUMMARIZE
 #define  ga_symmetrize_            GA_SYMMETRIZE
 #define  ga_sync_                  GA_SYNC
+#define  ga_pgroup_sync_           GA_PGROUP_SYNC
 #define  ga_terminate_             GA_TERMINATE
 #define  ga_transpose_             GA_TRANSPOSE
 #define  ga_unlock_                GA_UNLOCK
@@ -334,6 +335,7 @@
 #define  ga_summarize_             ga_summarize__           
 #define  ga_symmetrize_            ga_symmetrize__          
 #define  ga_sync_                  ga_sync__                
+#define  ga_pgroup_sync_           ga_pgroup_sync__                
 #define  ga_terminate_             ga_terminate__           
 #define  ga_transpose_             ga_transpose__           
 #define  ga_unlock_                ga_unlock__              

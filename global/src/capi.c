@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.77 2004-06-28 17:47:53 manoj Exp $ */
+/* $Id: capi.c,v 1.78 2004-12-08 02:40:50 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -1057,6 +1057,12 @@ void GA_Pgroup_brdcst(int grp_id, void *buf, int lenbuf, int root)
     Integer orig = (Integer)root;
     Integer grp = (Integer)grp_id;
     ga_pgroup_brdcst_(&grp, &type, buf, &len, &orig);
+}
+
+void GA_Pgroup_sync(int grp_id)
+{
+    Integer grp = (Integer)grp_id;
+    ga_pgroup_sync_(&grp);
 }
 
 void GA_Dgop(double x[], int n, char *op)

@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.62 2004-11-05 19:44:26 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.63 2004-12-08 02:40:50 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -69,6 +69,9 @@ Integer *_ga_map;       /* used in get/put/acc */
 
 extern void ga_sort_scat(Integer*,Void*,Integer*,Integer*,Integer*, Integer);
 extern void ga_sort_gath_(Integer*, Integer*, Integer*, Integer*);
+extern void ga_msg_sync_();
+extern void ga_msg_pgroup_sync_(Integer *grp_id);
+
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
 extern armci_hdl_t* get_armci_nbhandle(Integer *);
@@ -566,8 +569,10 @@ Integer lo[2], hi[2];
 #endif
 }
 
-#pragma _CRI inline ga_put_
-#pragma _CRI inline nga_put_common
+#ifdef __crayx1 
+#  pragma _CRI inline ga_put_
+#  pragma _CRI inline nga_put_common
+#endif
 
 void FATR  ga_nbput_(g_a, ilo, ihi, jlo, jhi, buf, ld, nbhdl)
    Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld, *nbhdl;
@@ -836,8 +841,10 @@ Integer lo[2], hi[2];
 #endif
 }
 
-#pragma _CRI inline ga_get_
-#pragma _CRI inline nga_get_common
+#ifdef __crayx1 
+#  pragma _CRI inline ga_get_
+#  pragma _CRI inline nga_get_common
+#endif
 
 void FATR  ga_nbget_(g_a, ilo, ihi, jlo, jhi, buf, ld,nbhdl)
    Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld, *nbhdl;

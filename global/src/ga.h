@@ -167,6 +167,7 @@ extern void GA_Copy_patch(char ta,int g_a, int ailo, int aihi,int ajlo,int ajhi,
                              int g_b, int bilo, int bihi, int bjlo,int bjhi);
 extern void GA_Brdcst(void *buf, int lenbuf, int root);
 extern void GA_Pgroup_brdcst(int grp, void *buf, int lenbuf, int root);
+extern void GA_Pgroup_sync(int grp_id);
 extern void GA_Dgop(double x[], int n, char *op);
 extern void GA_Pgroup_dgop(int grp, double x[], int n, char *op);
 extern void GA_Lgop(long x[], int n, char *op);

@@ -113,6 +113,7 @@ extern void FATR ga_release_ ARGS_((Integer*, Integer*, Integer*, Integer*,
 extern void FATR ga_release_update_ ARGS_((Integer*, Integer*, Integer*,
       Integer*, Integer* ));
 extern void FATR ga_sync_ ARGS_(( void));
+extern void FATR ga_pgroup_sync_ ARGS_((Integer*));
 extern void FATR ga_terminate_ ARGS_(( void));
 extern logical FATR ga_uses_ma_ ARGS_(( void));
 extern logical FATR ga_memory_limited_ ARGS_(( void));

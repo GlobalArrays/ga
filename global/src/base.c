@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.107 2004-12-01 22:19:32 d3g293 Exp $ */
+/* $Id: base.c,v 1.108 2004-12-08 02:40:50 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -117,6 +117,12 @@ Integer mapALL[MAX_NPROC+1];
 
 char *GA_name_stack[NAME_STACK_LEN];  /* stack for storing names of GA ops */
 int  GA_stack_size=0;
+
+/* Function prototypes */
+extern void gai_init_onesided();
+int gai_getmem(char* name, char **ptr_arr, Integer bytes, int type, long *id,
+               int grp_id);
+
 
 /*************************************************************************/
 

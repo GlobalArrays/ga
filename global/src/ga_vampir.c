@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.c,v 1.9 2004-08-17 07:50:03 manoj Exp $ */
+/* $Id: ga_vampir.c,v 1.10 2004-12-08 02:40:50 manoj Exp $ */
 #include "ga_vampir.h"
 
 void ga_vampir_init() {
@@ -82,6 +82,8 @@ void ga_vampir_init() {
     vampir_symdef(GA_SPD_INVERT,             "GA_Spd_invert",              "GA",__FILE__,__LINE__);
     vampir_symdef(GA_SUMMARIZE,              "GA_Summarize",               "GA",__FILE__,__LINE__);
     vampir_symdef(GA_SYNC,                   "GA_Sync",
+        "GA_COLLECTIVE",__FILE__,__LINE__);
+    vampir_symdef(GA_PGROUP_SYNC,            "GA_Pgroup_sync",
         "GA_COLLECTIVE",__FILE__,__LINE__);
     vampir_symdef(GA_TERMINATE,              "GA_Terminate",               "GA",__FILE__,__LINE__);
     vampir_symdef(GA_TRANSPOSE,              "GA_Transpose",
