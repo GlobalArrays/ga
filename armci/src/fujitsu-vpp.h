@@ -5,6 +5,7 @@
  * Organization: Pacific Northwest National Laboratory, Richland, WA 99552
  * Date:         08.21.1997
  * History:      11.27.1997 added optimized 2-D array copy macros
+ *               03.10.2000 Both strided operations made optional
  *
  * Notes:
  *     1. This file contains calls to an undisclosed Fujitsu MPlib library and
