@@ -13,7 +13,7 @@
 #define DIM1 5
 #define DIM2 3
 #ifdef SOLARIS
-/* shared memory shortage in default system configuration */
+/* Solaris has shared memory shortages in default system configuration */
 # define DIM3 4
 # define DIM4 4
 # define DIM5 3
@@ -41,13 +41,14 @@
 
 #define BASE 100.
 #define MAXPROC 128
-#define TIMES 1
+#define TIMES 10
 
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
 #define MAX(a,b) (((a) >= (b)) ? (a) : (b))
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define ABS(a) (((a) <0) ? -(a) : (a))
 
 /***************************** global data *******************/
 int me, nproc;
@@ -192,11 +193,12 @@ void update_subscript(int ndim, int subscript[], int lo[], int hi[], int dims[])
 
 	
 
-void compare_patches(int ndim, double *patch1, int lo1[], int hi1[], int dims1[],
+void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[], int dims1[],
 					           double *patch2, int lo2[], int hi2[], int dims2[])
 {
 	int i,j, elems=1;	
 	int subscr1[MAXDIMS], subscr2[MAXDIMS];
+        double diff,max;
 
 	for(i=0;i<ndim;i++){   /* count # of elements & verify consistency of both patches */
 		int diff = hi1[i]-lo1[i];
@@ -224,11 +226,15 @@ void compare_patches(int ndim, double *patch1, int lo1[], int hi1[], int dims1[]
 		idx2 -= offset2;
 		
 
-		if(patch1[idx1] != patch2[idx2]){
-			char msg[32];
-			sprintf(msg,"%f",patch1[idx1]);
+                diff = patch1[idx1] - patch2[idx2];
+                max  = MAX(ABS(patch1[idx1]),ABS(patch2[idx2]));
+                if(max == 0. || max <eps) max = 1.; 
+
+		if(eps < ABS(diff)/max){
+			char msg[48];
+			sprintf(msg,"%lf",patch1[idx1]);
 			print_subscript("ERROR: a",ndim,subscr1,msg);
-			sprintf(msg,"%f\n",patch2[idx2]);
+			sprintf(msg,"%lf\n",patch2[idx2]);
 			print_subscript(" b",ndim,subscr2,msg);
 			assert(0);
 		}
@@ -272,7 +278,7 @@ void scale_patch(double alpha, int ndim, double *patch1, int lo1[], int hi1[], i
 		}
 		idx1 -= offset1;
 
-		patch1[idx1] = alpha;
+		patch1[idx1] *= alpha;
 		update_subscript(ndim, subscr1, lo1,hi1, dims1);
 	}	
 }
@@ -382,7 +388,7 @@ void test_dim(int ndim)
              * consectutive operations targeting the same process are ordered */
 	    (void)ARMCI_GetS((double*)b[proc] + idx2, strideB, (double*)c + idx3, strideA,  count, ndim-1, proc);
             
-            compare_patches(ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx3, loC, hiC, dimsA);
+            compare_patches(0., ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx3, loC, hiC, dimsA);
 
     
         }
@@ -483,12 +489,10 @@ void test_acc(int ndim)
 
         MPI_Barrier(MPI_COMM_WORLD);
 
-	scale = alpha;
         for(i=0;i<TIMES*nproc;i++){
 
             proc=proclist[i%nproc];
             (void)ARMCI_AccS(ARMCI_ACC_DBL,&alpha,(double*)a + idx1, strideA, (double*)b[proc] + idx2, strideB, count, ndim-1, proc);
-            scale *= alpha;
         }
 
         MPI_Barrier(MPI_COMM_WORLD);
@@ -496,12 +500,18 @@ void test_acc(int ndim)
          /* copy my patch into local array c */
 	(void)ARMCI_GetS((double*)b[me] + idx2, strideB, (double*)c + idx1, strideA,  count, ndim-1, proc);
 
-        /* sum of geometric series:  (1-q^(n+1))/(1-q) */
-        scale = (1 - scale)/(1-alpha); 
+        scale = alpha*TIMES*nproc; 
 
         scale_patch(scale, ndim, (double*)a+idx1, loA, hiA, dimsA);
         
-        compare_patches(ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx1, loC, hiC, dimsA);
+        compare_patches(.0001, ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx1, loA, hiA, dimsA);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        if(0==me){
+            printf(" OK\n\n");
+            fflush(stdout);
+        }
 
         free(c);
         destroy_array(b);
@@ -643,7 +653,7 @@ void test_vector()
             
 	    idx1 = Index(ndim, loA, dimsA);
 	    idx3 = Index(ndim, loC, dimsA);
-            compare_patches(ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx3, loC, hiC, dimsA);
+            compare_patches(0., ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx3, loC, hiC, dimsA);
     
         }
 
@@ -736,9 +746,6 @@ int main(int argc, char* argv[])
 
     ARMCI_Init();
 
-        test_acc(1);
-        MPI_Barrier(MPI_COMM_WORLD);
-
         if(me==0){
            printf("\nTesting strided gets and puts\n");
            printf("(Only std output for process 0 is printed)\n\n"); 
@@ -746,8 +753,18 @@ int main(int argc, char* argv[])
            sleep(4);
         }
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
-
         MPI_Barrier(MPI_COMM_WORLD);
+
+
+        if(me==0){
+           printf("\nTesting atomic accumulate\n");
+           fflush(stdout);
+           sleep(4);
+        }
+        for(ndim=1; ndim<= MAXDIMS; ndim++) test_acc(ndim);
+        MPI_Barrier(MPI_COMM_WORLD);
+
+
         if(me==0){
            printf("\nTesting Vector Interface using triangular patches of a 2-D array\n\n");
            fflush(stdout);

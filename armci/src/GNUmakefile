@@ -1,7 +1,7 @@
          FOPT = -O
          COPT = -O
 
-OBJ = armci.o   copy.o   memory.o   fcopy.o  fence.o rmw.o
+OBJ = armci.o   copy.o   memory.o   fcopy.o  fence.o rmw.o acc.o faccumulate.o
 
 MPI_LIB_NAME = -lmpi
 INTERRUPT_AVAILABLE = SP1 SP PARAGON LAPI
@@ -76,5 +76,7 @@ $(patsubst %,$(LIBRARY_PATH)(%),shmem.o):  shmem.h shmalloc.h
 $(patsubst %,$(LIBRARY_PATH)(%),shmalloc.o):   shmalloc.h
 $(patsubst %,$(LIBRARY_PATH)(%),locks.o):   locks.h
 $(patsubst %,$(LIBRARY_PATH)(%),rmw.o):   locks.h
+$(patsubst %,$(LIBRARY_PATH)(%),acc.o):   acc.h
+$(patsubst %,$(LIBRARY_PATH)(%),copy.o):   acc.h
 $(patsubst %,$(LIBRARY_PATH)(%),semaphores.o):   semaphores.h
 locks.h: semaphores.h

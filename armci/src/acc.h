@@ -2,17 +2,17 @@
 #define _ACC_H_
 
 #if defined(AIX)
-#    define I_ACCUMULATE_2D	i_accumulate2d_u
-#    define D_ACCUMULATE_2D	d_accumulate2d_u
-#    define C_ACCUMULATE_2D	c_accumulate2d_u
-#    define Z_ACCUMULATE_2D	z_accumulate2d_u
-#    define F_ACCUMULATE_2D	f_accumulate2d_u
+#    define I_ACCUMULATE_2D	i_accumulate_2d_u
+#    define D_ACCUMULATE_2D	d_accumulate_2d_u
+#    define C_ACCUMULATE_2D	c_accumulate_2d_u
+#    define Z_ACCUMULATE_2D	z_accumulate_2d_u
+#    define F_ACCUMULATE_2D	f_accumulate_2d_u
 #elif !defined(CRAY) && !defined(WIN32)
-#    define I_ACCUMULATE_2D	i_accumulate2d_u_
-#    define D_ACCUMULATE_2D	d_accumulate2d_u_
-#    define C_ACCUMULATE_2D	c_accumulate2d_u_
-#    define Z_ACCUMULATE_2D	z_accumulate2d_u_
-#    define F_ACCUMULATE_2D	f_accumulate2d_u_
+#    define I_ACCUMULATE_2D	i_accumulate_2d_u_
+#    define D_ACCUMULATE_2D	d_accumulate_2d_u_
+#    define C_ACCUMULATE_2D	c_accumulate_2d_u_
+#    define Z_ACCUMULATE_2D	z_accumulate_2d_u_
+#    define F_ACCUMULATE_2D	f_accumulate_2d_u_
 #endif
 
 void I_ACCUMULATE_2D(); 
