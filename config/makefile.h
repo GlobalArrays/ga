@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.82 2003-07-30 18:36:57 manoj Exp $
+# $Id: makefile.h,v 1.83 2003-08-01 00:36:07 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -554,7 +554,7 @@ ifeq ($(TARGET),CRAY-T3E)
  GLOB_DEFINES = -DCRAY_T3D -DCRAY_T3E
     EXPLICITF = TRUE
 endif
-#................................. NEC SX-5 ..................................
+
 ifeq ($(TARGET),NEC)
 #
      FC = f90
@@ -564,9 +564,13 @@ ifeq ($(TARGET),NEC)
      ifeq ($(COPT), -O)
          COPT = -O nomsg -pvctl,nomsg
      endif
+     CLD = $(FC) -size_t64
+     LINK.c = $(CLD)
+     FLD_REN  = -size_t64
+#     COPT_REN = -hsize_t64
      FOPT_REN = -ew
-     CDEFS    = -DEXT_INT
-     CLIBS    = -li90sx
+     CDEFS    = -hsize_t64 -DEXT_INT
+     CLIBS    = -li90sxe
 endif
 #
 #.............................. IBM .........................................
