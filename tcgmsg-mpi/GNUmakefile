@@ -355,7 +355,7 @@ OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
 
       OBJ += $(EXTRA_OBJ) $(NXTVAL_OBJ) 
 
-HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h
+HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h tcgmsg.fh
 
 # This include file specifies how and where the library should be built
 # LIBRARY_PATH  is the library location
