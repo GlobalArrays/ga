@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.51 2003-07-31 00:39:55 d3h325 Exp $
+c $Id: test.F,v 1.52 2003-07-31 19:27:39 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -15,7 +15,8 @@ c vector boxes lack arithmetic precision
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 
 
 c#define MIRROR
-#define GA3
+c#define GA3
+c#define NGA_GATSCAT
 
       program main
       implicit none
@@ -172,15 +173,22 @@ c
       parameter (n = 128)
       parameter (m = 2*n)
       double precision a(n,n), b(n,n), v(m),w(m)
-      integer iv(m), jv(m), ijv(2,m)
-      logical status, lsame
-      integer g_a, g_b, g_c
+#ifdef MIRROR
+      logical lsame
+      integer g_c, p_mirror
+      integer ndim, dims(2), chunk(2)
+      integer alo(2), blo(2), ahi(2), bhi(2)
+#endif
+      integer iv(m), jv(m)
+#ifdef NGA_GATSCAT
+      integer ijv(2,m)
+#endif
+      logical status
+      integer g_a, g_b
       integer iran, i,j, loop,nloop,maxloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, ii, jj
       parameter (maxloop = 100)
       integer maxproc
-      integer ndim, dims(2), chunk(2), p_mirror
-      integer alo(2), blo(2), ahi(2), bhi(2)
       parameter (maxproc = 128)
       double precision crap, sum1, sum2, x
       double precision nwords
@@ -1014,15 +1022,16 @@ c
       parameter (n = 60)
       parameter (m = 2*n)
       double complex a(n,n), b(n,n), v(m),w(m)
+#ifdef MIRROR
+      integer ndim, dims(2), chunk(2), p_mirror
+#endif
       integer iv(m), jv(m)
-      integer ijv(2,m)
       logical status
       integer g_a, g_b
       integer iran, i,j, loop,nloop,maxloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, ii, jj, nnodes
       parameter (maxloop = 100)
       integer maxproc
-      integer ndim, dims(2), chunk(2), p_mirror
       parameter (maxproc = 128)
       double precision crap, real
       double precision nwords
@@ -1978,9 +1987,9 @@ c---------------------------------------------------------------------
       parameter (n =10) 
       parameter (m=2*n)
       real a(n,n), b(n,n), v(m), w(m)
-      integer iv(m), jv(m), ijv(m)
-      logical status, lsame
-      integer g_a, g_b, g_c
+      integer iv(m), jv(m)
+      logical status
+      integer g_a, g_b
       integer iran, i, j, loop, nloop, maxloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, ii, jj, nnodes
       double precision nwords
