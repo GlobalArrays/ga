@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.9 1999-11-02 00:51:30 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.10 1999-11-10 01:28:14 d3h325 Exp $ */
 /* System V shared memory allocation and managment for GAs:
  *
  * Interface:
@@ -32,6 +32,13 @@
 
 #define DEBUG_ 0
 #define DEBUG1 0
+
+/* For debugging purposes at the beginnig of the shared memory region
+ * creator process can write a stamp which then is read by attaching processes
+ * NOTE: on clusters we cannot use it since anymore since ARMCI node master
+ * uses it since Nov 99 to write the value of address it attached at
+ * This feature is used in the memlock table.
+ */
 #define STAMP 0
 
 extern void armci_die();
