@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.48 2003-03-07 17:00:54 vinod Exp $
+/* $Id: myrinet.c,v 1.49 2003-03-08 00:37:52 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -77,10 +77,10 @@ extern void armci_buf_free(char *ap);
 extern void armci_init_buf_alloc(size_t len, void* buffer);
 #endif
 
-typedef unsigned short int ops_t;
+typedef int ops_t;
 ops_t** armci_gm_fence_arr;
 
-
+int** armci_gm_verify_arr;
 /***************/
 
 /* data structure of computing process */
@@ -93,6 +93,8 @@ typedef struct {
     long *tmp;
     long **serv_ack_ptr;     /* keep the pointers of server ack buffer */
     ops_t *ops_pending_ar;
+    int *verify_seq_ar;
+    int *wait_seq_ar;
 } armci_gm_proc_t;
 
 /* data structure of server thread */
@@ -523,6 +525,25 @@ int armci_gm_client_init()
              armci_die("failed to allocate ARMCI fence array",0);
     armci_pin_contig(armci_gm_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
     bzero(armci_gm_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
+
+
+
+
+/****************************verify-wait code*******************************/
+    /*allocate an array for verify sequence array */
+    if(!(proc_gm->verify_seq_ar=(int*)calloc(armci_nproc,sizeof(int))))
+        armci_die("malloc failed for ARMCI verify_seq_ar",0);
+    /*allocate an array for wait sequence array*/
+    if(!(proc_gm->wait_seq_ar=(int*)calloc(armci_nproc,sizeof(int))))
+        armci_die("malloc failed for ARMCI wait_seq_ar",0);
+
+    armci_gm_verify_arr = (int**)malloc(armci_nproc*sizeof(int*));
+    if(!armci_gm_verify_arr)armci_die("malloc failed for ARMCI verify array",0);
+    if(ARMCI_Malloc((void**)armci_gm_verify_arr, armci_nproc*sizeof(int)))
+             armci_die("failed to allocate ARMCI fence array",0);
+    armci_pin_contig(armci_gm_verify_arr[armci_me],armci_nproc*sizeof(int));
+    bzero(armci_gm_verify_arr[armci_me],armci_nproc*sizeof(int));
+/************************End verify-wait code*******************************/
     return TRUE;
 }
 
@@ -691,11 +712,18 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     msginfo->tag.ack = ARMCI_GM_CLEAR;
     context->done = ARMCI_GM_SENDING;
 
+    /*for fence operation*/
+    if(msginfo->operation==PUT || ACC(msginfo->operation))
+       proc_gm->ops_pending_ar[s]++;
+
     /* flow control */
-    if(msginfo->operation==PUT || ACC(msginfo->operation))proc_gm->ops_pending_ar[s]++;
     _armci_buf_ensure_one_outstanding_op_per_node(buf, s ); 
 
-    if(DEBUG_)fprintf(stderr,":%d: armci_send_req_msg op is %d sending buffer %d\n",armci_me,msginfo->operation,pipelinebufferindex);
+    if(DEBUG_){
+       printf("%d: armci_send_req_msg op is %d sending ack=%d to %d\n",armci_me,
+               msginfo->operation,proc_gm->ops_pending_ar[s],proc);
+       fflush(stdout);
+    }
     MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status); 
     gm_send_with_callback(proc_gm->port, buf, size, len, GM_LOW_PRIORITY,
                           proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
@@ -1237,7 +1265,12 @@ int client=armci_gm_req_from;
     if(armci_gm_req_op!=PUT && !ACC(armci_gm_req_op))return;
 
     *p_ack=++(serv_gm->ops_done_ar[client]);
-    /*printf("%d: sening ack %d to %p on %d\n",armci_me,*p_ack,p_ack,client);fflush(stdout);*/
+    if(DEBUG_){
+      printf("%d: sening ack %d to %p on %d op=%d\n",armci_me,*p_ack,remptr,
+             client,armci_gm_req_op);
+      fflush(stdout);
+    }
+    armci_gm_serv_pendingop_context->done = ARMCI_GM_SENDING;
     gm_directed_send_with_callback(serv_gm->snd_port, p_ack,
         (gm_remote_ptr_t)(gm_up_t)(remptr), sizeof(ops_t),
         GM_LOW_PRIORITY, serv_gm->node_map[client], serv_gm->port_map[client],
@@ -1283,7 +1316,7 @@ void armci_call_data_server()
               length = gm_ntohl(event->recv.length);
               buf = (char *)gm_ntohp(event->recv.buffer);
               armci_data_server(buf);
-              /*armci_send_pendingop_ack();*/ 
+              armci_send_pendingop_ack();
               gm_provide_receive_buffer_with_tag(serv_gm->rcv_port, buf,
                                                  size, GM_LOW_PRIORITY, tag);
     
@@ -1568,7 +1601,7 @@ void armci_gm_fence(int p)
 {
     long loop=0;
     int cluster = armci_clus_id(p);
-    ops_t *buf = armci_gm_fence_arr[armci_me] + cluster;
+    ops_t *buf=armci_gm_fence_arr[armci_me] + cluster;
     long res = proc_gm->ops_pending_ar[cluster] - armci_check_int_val(buf);
 
 #if 0

@@ -236,7 +236,11 @@ extern void armci_init_fence();
         if(!SAMECLUSNODE(proc) && op != GET )_armci_fence_arr[proc]=1
 #  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))_armci_fence_arr[proc_]=1
 #else
-#  define ORDER(op,proc) if(proc != armci_me) FENCE_NODE(proc) 
+#  ifdef GM
+#   define ORDER(op,proc)
+#  else
+#   define ORDER(op,proc) if(proc != armci_me) FENCE_NODE(proc)
+#  endif 
 #  define UPDATE_FENCE_INFO(proc_)
 #endif
         

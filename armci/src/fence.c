@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.7 2002-09-21 17:43:00 vinod Exp $ */
+/* $Id: fence.c,v 1.8 2003-03-08 00:37:52 vinod Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -26,7 +26,7 @@ void ARMCI_Fence(int proc)
  if (armci_me != proc)
         vampir_start_comm(proc,armci_me,0,ARMCI_FENCE);
 #endif
-#ifdef DATA_SERVER
+#if defined(DATA_SERVER) && !defined(GM)
      if(_armci_fence_arr[proc] && (armci_nclus >1)){
          
            int cluster = armci_clus_id(proc);

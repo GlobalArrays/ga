@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.46 2002-12-17 13:01:33 vinod Exp $ */
+/* $Id: copy.h,v 1.47 2003-03-08 00:37:52 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -51,8 +51,12 @@
 #     define UPDATE_FENCE_STATE(p, op, nissued) if((op)==PUT) cmpl_proc=(p);
 #   endif
 #else
-
-#   define FENCE_NODE(p)
+#   ifdef GM
+     extern void armci_gm_fence(int p);
+#    define FENCE_NODE(p) armci_gm_fence(p)
+#   else
+#    define FENCE_NODE(p)
+#   endif   
 #   define UPDATE_FENCE_STATE(p, op, nissued)
 
 #endif
