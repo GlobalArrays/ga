@@ -1,4 +1,4 @@
-// $Id: x86copy.gcc,v 1.4 2001-06-07 22:14:37 d3h325 Exp $
+// $Id: x86copy.gcc,v 1.5 2001-06-21 18:04:57 d3h325 Exp $
 // memory copy implementation derived from examples 3 and 4 at
 // http://www.sgi.com/developers/library/resources/asc_cpu.html
 //
@@ -300,7 +300,8 @@ void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid)
 
     residual = (int)n % 64;
     if(residual != 0) memcpy(dst, src, residual);
-    asm_memcpy3((char*)dst+residual, (char*)src+residual, n - residual);
+    if(n>=64)
+       asm_memcpy3((char*)dst+residual, (char*)src+residual, n - residual);
 
 #else EX4
 
@@ -309,7 +310,8 @@ void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid)
     if(residual != 0){
        int res64 = residual%64;
        if(res64 != 0) memcpy(dst, src, res64);
-       asm_memcpy3((char*)dst+res64, (char*)src+res64, residual - res64);
+       if(residual >= 64)
+          asm_memcpy3((char*)dst+res64, (char*)src+res64, residual - res64);
     }
 
     if(n>=2048)
