@@ -1,4 +1,14 @@
-/* $Id: message.c,v 1.8 1999-11-02 19:01:31 d3h325 Exp $ */
+/* $Id: message.c,v 1.9 1999-11-20 01:43:07 d3h325 Exp $ */
+#if defined(PVM)
+#   include <pvm3.h>
+#elif defined(TCG)
+#   include <sndrcv.h>
+#else
+#   ifndef MPI
+#      define MPI
+#   endif
+#   include <mpi.h>
+#endif
 #include "message.h"
 #include "armcip.h"
 
@@ -8,8 +18,13 @@ char *mp_group_name = (char *)NULL;
 char *mp_group_name = "mp_working_group";
 #endif
 
+#define BUF_SIZE  2048
 static double work[BUF_SIZE];
 static long *lwork = (long*)work;
+
+#define ARM_INT -99
+#define ARM_LONG -101
+#define ARM_DOUBLE -307
 
 void armci_msg_barrier()
 {
@@ -26,7 +41,7 @@ void armci_msg_barrier()
 
 void armci_exchange_address(void *ptr_ar[], int n)
 {
-  armci_msg_igop((long*)ptr_ar, n, "+", 1);
+  armci_msg_lgop((long*)ptr_ar, n, "+");
 }
 
 
@@ -144,6 +159,32 @@ void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from)
 }
 
 
+int armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen)
+{
+#if defined(MPI)
+      int ierr;
+      MPI_Status status;
+
+      ierr = MPI_Recv(buffer, buflen, MPI_CHAR, MPI_ANY_SOURCE, tag,
+             MPI_COMM_WORLD, &status);
+      if(ierr != MPI_SUCCESS) armci_die("armci_msg_rcvany: Recv failed ", tag);
+
+      ierr = MPI_Get_count(&status, MPI_CHAR, msglen);
+      if(ierr != MPI_SUCCESS) armci_die("armci_msg_rcvany: count failed ", tag);
+      return (int)status.MPI_SOURCE;
+#  elif defined(PVM)
+      int src, rtag;
+      pvm_precv(-1, tag, buffer, buflen, PVM_BYTE, &src, &rtag, msglen);
+      return(pvm_getinst(mp_group_name,src));
+#  else
+      long ttag=tag, llen=buflen, mmsglen, ffrom=-1, sender, block=1;
+      RCV_(&ttag, buffer, &llen, &mmsglen, &ffrom, &sender, &block);
+      *msglen = (int)mmsglen;
+      return (int)sender;
+#  endif
+}
+
+
 /*\ cluster master broadcasts to everyone else in the same cluster
 \*/
 void armci_msg_clus_brdcst(void *buf, int len)
@@ -241,7 +282,7 @@ static void idoop(int n, char *op, int *x, int* work)
       x++; work++;
     }
   else
-    armci_die("ldoop: unknown operation requested", n);
+    armci_die("idoop: unknown operation requested", n);
 }
 
 
@@ -311,6 +352,7 @@ long *origx =x;
          }
          if (right > -1) {
            armci_msg_rcv(tag, lwork, len, &lenmes, right);
+
            if(longint)ldoop(ndo, op, x, lwork);
            else idoop(ndo, op, (int*)x, (int*)lwork);
          }
@@ -329,12 +371,12 @@ long *origx =x;
 
 /*\ combine array of longs/ints accross all processes
 \*/
-void armci_msg_igop(long *x, int n, char* op, int longint)
+void armci_msg_gop(void *x, int n, char* op, int type)
 {
-int root, up, left, right, index, nproc,size=sizeof(long);
+int root, up, left, right, index, nproc,size;
 int tag=ARMCI_TAG;
 int ndo, len, lenmes, orign =n, bufsize;
-long *origx =x;
+void *origx =x;
 
     if(!x)armci_die("armci_msg_igop: NULL pointer", n);
     root  = 0;
@@ -344,22 +386,27 @@ long *origx =x;
     left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
     right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
 
-    bufsize = BUF_SIZE;
-    if(!longint) size =sizeof(int);
-    bufsize *= sizeof(double)/size;
+    if(type==ARM_INT) size = sizeof(int);
+	else if(type==ARM_LONG) size = sizeof(long);
+    else size = sizeof(double);
 
+    bufsize = BUF_SIZE*sizeof(double)/size;
+    
     while ((ndo = (n<=BUF_SIZE) ? n : BUF_SIZE)) {
          len = lenmes = ndo*size;
 
          if (left > -1) {
            armci_msg_rcv(tag, lwork, len, &lenmes, left);
-           if(longint)ldoop(ndo, op, x, lwork);
-           else idoop(ndo, op, (int*)x, (int*)lwork);
+           if(type==ARM_INT) idoop(ndo, op, (int*)x, (int*)work);
+           else if(type==ARM_LONG) ldoop(ndo, op, (long*)x, (long*)work);
+           else ddoop(ndo, op, (double*)x, work);
          }
+
          if (right > -1) {
            armci_msg_rcv(tag, lwork, len, &lenmes, right);
-           if(longint)ldoop(ndo, op, x, lwork);
-           else idoop(ndo, op, (int*)x, (int*)lwork);
+           if(type==ARM_INT) idoop(ndo, op, (int*)x, (int*)work);
+           else if(type==ARM_LONG) ldoop(ndo, op, (long*)x, (long*)work);
+           else ddoop(ndo, op, (double*)x, work);
          }
          if (armci_me != root) armci_msg_snd(tag, x, len, up);
 
@@ -373,44 +420,18 @@ long *origx =x;
 }
 
 
-/*\ add array of doubles accross all processes
+/*\ combine array of longs/ints/doubles accross all processes
 \*/
+void armci_msg_igop(int *x, int n, char* op)
+{ armci_msg_gop(x, n, op, ARM_INT); }
+
+void armci_msg_lgop(long *x, int n, char* op)
+{ armci_msg_gop(x, n, op, ARM_LONG); }
+
 void armci_msg_dgop(double *x, int n, char* op)
-{
-int root, up, left, right, index, nproc,size=sizeof(double);
-int tag=ARMCI_TAG;
-int ndo, len, lenmes, orign =n;
-double *origx =x;
+{ armci_msg_gop(x, n, op, ARM_DOUBLE); }
 
-    if(!x)armci_die("armci_msg_dgop: NULL pointer", n);
-    root  = 0;
-    nproc = armci_nproc;
-    index = armci_me - root;
-    up    = (index-1)/2 + root; if( up < root) up = -1;
-    left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
-    right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
 
-    while ((ndo = (n<=BUF_SIZE) ? n : BUF_SIZE)) {
-         len = lenmes = ndo*size;
-
-         if (left > -1) {
-           armci_msg_rcv(tag, work, len, &lenmes, left);
-           ddoop(ndo, op, x, work);
-         }
-         if (right > -1) {
-           armci_msg_rcv(tag, work, len, &lenmes, right);
-           ddoop(ndo, op, x, work);
-         }
-         if (armci_me != root) armci_msg_snd(tag, x, len, up);
-
-         n -=ndo;
-         x +=ndo;
-     }
-
-     /* Now, root broadcasts the result down the binary tree */
-     len = orign*size;
-     armci_msg_brdcst(origx, len,0 );
-}
 
 #ifdef PVM
 /* set the group name if using PVM */
