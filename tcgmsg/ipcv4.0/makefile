@@ -335,6 +335,8 @@ endif
 
 #...................................................................
 
+INCDIR = ../../include
+
 ifndef BINDIR
        BINDIR = .
 endif
@@ -352,6 +354,7 @@ LIB_DISTRIB = ../../lib
 LIBRARY = libtcgmsg.a
 LIB_TARGETS = $(BINDIR)/parallel *.x *.x testf.? core events events.??? log.???\
                parse toplot TAGS *.log *~ *.o *.p *.log msgtf.h msgtypesf.h #*#
+HEADERS = msgtypesf.h msgtypesc.h sndrcv.h srftoc.h ../tcgmsg.fh
 include ../../config/makelib.h
 
 
