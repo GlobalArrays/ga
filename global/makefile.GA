@@ -1,11 +1,14 @@
 # Global Array library (shared and distributed memory version)
 #
 # Type "make libglobal.a" to create the GA library
-#      "make test.x"      to create a test program for GAs 
+#      "make test.x"      to create a test program for GA 
+#      "make patch.x"     to create a test program for patch ops in GA 
 #      "make testsolve.x" to create a test program for linear equation solver 
 #                         based on LU factorization
 #      "make testeig.x"   to create a test program for GA eigensolver,
 #                         matrix multiply, and symmetrization 
+#      "make perform.x"   to create a program testing performance of GA
+#                         primitives: get, put & accumulate,
 #      "make clean"       clean
 #
 # TARGET might be one of:
@@ -36,7 +39,7 @@ endif
 
 
    LIBRARY = libglobal.a
-   TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x  testget.x
+   TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x  testget.x perform.x
 
 
 export DIAG TARGET VERSION LU_SOLVE GA_TRACE
@@ -44,7 +47,7 @@ export DIAG TARGET VERSION LU_SOLVE GA_TRACE
 .PHONY: $(LIBRARY)
 
 $(LIBRARY): 
-	(echo TARGET is $(TARGET); cd ./src; $(MAKE) -j1 || exit 1;) 
+	(echo TARGET is $(TARGET); cd ./src; $(MAKE) all || exit 1;) 
 
 $(TESTS):	$(LIBRARY)
 	(cd ./testing; $(MAKE) $@  || exit 1;)

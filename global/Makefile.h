@@ -1,21 +1,21 @@
-# Makefile.h, Thu May 26 15:01:41 PDT 1994
+# Makefile.h, Wed Jan 25 13:01:15 PST 1995 
 #
 # Define TARGET to be the machine you wish to build for
 # (one of SUN, SGI, SGITFP, IBM, KSR, SP1, CRAY-T3D, IPSC, DELTA, PARAGON)
 #
-# Define VERSION of memory 
-# (SHMEM/DISMEM) - on some machines you can have either
-#
+# Define VERSION of memory (SHMEM/DISMEM) - or accept machine default
 #
 # common definitions (overwritten later if required)
 #
            FC = f77
            CC = cc
+          CXX = CC
          FOPT = -O
          COPT = -O
-GLOB_INCLUDES = -I../../ma -I.
+GLOB_INCLUDES = -I../../ma
            AR = ar
-       RANLIB = echo
+           AS = as
+       RANLIB = @echo
           CPP = /usr/lib/cpp
         SHELL = /bin/sh
            MV = /bin/mv
@@ -39,10 +39,8 @@ ifeq ($(TARGET),SUN)
 #
 # Sun running SunOS
 #
-#
 #          CC = gcc
      FOPT_REN = -Nl100
-     COPT_REN = 
        RANLIB = ranlib
      WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
 		-Wwrite-strings
@@ -56,14 +54,11 @@ ifeq ($(TARGET),DECOSF)
 #
 # DEC ALPHA running OSF/1
 #
-#
        RANLIB = ranlib
         CDEFS = -DEXT_INT
      FOPT_REN = -i8
  GLOB_DEFINES = -DDECOSF
 endif
-
-
 
 #
 #................................ CRAY-T3D ..................................
@@ -75,15 +70,20 @@ ifeq ($(TARGET),CRAY-T3D)
        LIBSMA = ../../../libsma
            FC = cf77
           CPP = /mpp/lib/mppcpp
-         FOPT = -g 
        P_FILE = NO
-#GLOB_INCLUDES = -I../../ma -I$(LIBSMA)
-     FOPT_REN = -Ccray-t3d -Wf-dp -Wl"-Drdahead=on" 
-     COPT_REN = -Wl"-Drdahead=on" 
+ ifeq ($(FOPT),-O)
+         FOPT = -O1
+ endif
+ ifeq ($(COPT),-O)
+         COPT = -O3
+ endif
+     FOPT_REN = -Ccray-t3d -Wf-dp
+     COPT_REN = -h inline3 
+      FLD_REN = -Wl"-Drdahead=on -Ddalign=64"
+      CLD_REN = -Wl"-Drdahead=on -Ddalign=64"
  GLOB_DEFINES = -DCRAY_T3D
     EXPLICITF = TRUE
 endif
-
 
 #................................ KSR ......................................
 #
@@ -92,6 +92,7 @@ ifeq ($(TARGET),KSR)
 # KSR-2 running OSF 1.2.0.7
 #
      FOPT_REN = -r8
+     COPT_REN = -qdiv
  GLOB_DEFINES = -DKSR
         CDEFS = -DEXT_INT
 endif
@@ -114,12 +115,11 @@ ifeq ($(TARGET),SGITFP)
 # SGI running IRIX6.0
 #
 #
-         COPT = -g
+#        COPT = -g
         CDEFS = -DEXT_INT
      FOPT_REN = -d8 -i8 -64 -mips4 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000 
- GLOB_DEFINES = -DSGI -DSGITFP
+ GLOB_DEFINES = -DSGI -DSGI64
 endif
-
 
 #............................. IPSC/DELTA/PARAGON .............................
 #
@@ -127,12 +127,10 @@ ifeq ($(TARGET),IPSC)
 #
 # IPSC running NX
 #
-
+        INTEL = YES
      FOPT_REN = -node
      COPT_REN = -node
- GLOB_DEFINES = -DNX
-        INTEL = YES
-      INSTALL = @echo "See TCGMSG README file on how to run program"
+      INSTALL = @echo "See TCGMSG README file on how to run program "
 endif
 #
 #....................
@@ -141,12 +139,11 @@ ifeq ($(TARGET),DELTA)
 #
 # DELTA running NX
 #
-
         INTEL = YES
      FOPT_REN = -node
      COPT_REN = -node
- GLOB_DEFINES = -DNX
-      INSTALL = rcp $* delta1: 
+ GLOB_DEFINES = -DDELTA
+      INSTALL = rcp $@ delta2: 
 endif
 #
 #....................
@@ -157,8 +154,8 @@ ifeq ($(TARGET),PARAGON)
 #
         INTEL = YES
      FOPT_REN = -nx
-     COPT_REN = -nx
- GLOB_DEFINES = -DPARAGON -DNX
+     COPT_REN = -nx -Msafeptr
+ GLOB_DEFINES = -DPARAGON
 endif
 #
 ifeq ($(INTEL),YES)
@@ -168,9 +165,14 @@ ifeq ($(INTEL),YES)
            FC = if77
            CC = icc
            AR = ar860
+           AS = as860
        P_FILE = NO
+ ifeq ($(COPT),-O)
+         COPT = -O3
+ endif
      FOPT_REN += -Knoieee -Mquad -Mreentrant -Mrecursive
-     COPT_REN += -Knoieee
+     COPT_REN += -Knoieee -Mquad -Mreentrant
+ GLOB_DEFINES += -DNX
   CUR_VERSION = DISMEM
     EXPLICITF = TRUE
 endif
@@ -182,7 +184,6 @@ ifeq ($(TARGET),SP1)
 # IBM SP1 under EUIH or MPL 
 
        P_FILE = NO
-
 ifdef EUIH
          EUIH = /usr/lpp/euih/eui
            FC = xlf
@@ -225,13 +226,13 @@ ifeq ($(VERSION),SHMEM)
  GLOB_DEFINES += -DSHMEM
 endif
 
-      DEFINES = $(GLOB_DEFINES)  $(LOC_DEFINES) $(DEF_TRACE)
+      DEFINES = $(GLOB_DEFINES) $(LOC_DEFINES) $(DEF_TRACE)
      INCLUDES = $(GLOB_INCLUDES) $(LOC_INCLUDES)
        FFLAGS = $(FOPT) $(FOPT_REN) $(INCLUDES) $(DEFINES)
        CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS)
        FLDOPT = $(FOPT) $(FLD_REN)
        CLDOPT = $(COPT) $(CLD_REN)
-
+     CXXFLAGS = $(CFLAGS)
 
 ifeq ($(EXPLICITF),TRUE)
 #
@@ -243,11 +244,11 @@ ifeq ($(EXPLICITF),TRUE)
 
 .F.o:	
 	$(MAKE) $*.f
-	$(FC) -c $(FOPT) $(FOPT_REN)  $*.f
+	$(FC) $(FOPT) $(FOPT_REN) -c $*.f
 	$(RM) -f $*.f
 
 .f.o:
-	$(FC) -c $(FOPT) $(FOPT_REN)  $*.f
+	$(FC) $(FOPT) $(FOPT_REN) -c $*.f
 
 .F.f:	
 	$(CPP) $(INCLUDES) $(DEFINES) < $*.F | sed '/^#/D' > $*.f

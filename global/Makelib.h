@@ -33,7 +33,7 @@ ifeq ($(TARGET),KSR)
         SRC = /home5/d3h325
 
        LIBS +=  -lksrblas
-#    LIBCOM = $(SRC)/tcgmsg/ipcv4.0/libtcgmsg.a
+     LIBCOM = $(SRC)/tcgmsg/ipcv4.0/libtcgmsg.a
      LIBCOM += -lrpc -para
 endif
 
