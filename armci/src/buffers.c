@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.7 2002-03-13 18:10:48 vinod Exp $    **/
+/* $Id: buffers.c,v 1.8 2002-10-22 21:48:39 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -18,33 +18,19 @@
 
 #define ALIGN64ADD(buf) (SIXTYFOUR-(((ssize_t)(buf))%SIXTYFOUR))
 /* the following symbols should be defined if needed in protocol specific
-   header file:  BUF_EXTRA_FIELD, BUFID_PAD_T, BUF_ALLOCATE 
+   header file:  BUF_EXTRA_FIELD, BUF_ALLOCATE 
 */
 
-
-#ifndef BUFID_PAD_T
-#   define BUFID_PAD_T double
-#endif
-#ifndef  BUF_EXTRA_FIELD_T
-#  define        SIZE_BUF_EXTRA_FIELD 0 
-#  define BUF_TO_EBUF(buf) (buf_ext_t*)(((char*)buf) - sizeof(BUFID_PAD_T) -\
-                                      SIZE_BUF_EXTRA_FIELD)
-#else
-#  define BUF_TO_EBUF(buf) (buf_ext_t*)(((char*)buf) - sizeof(BUFID_PAD_T) -\
-				      sizeof(BUF_EXTRA_FIELD_T))
-#endif
 #ifndef BUF_ALLOCATE
 #   define BUF_ALLOCATE malloc
 #endif
+
 #if defined(DATA_SERVER) && defined(SOCKETS)  
 #define MAX_BUFS  1
 #else
 #define MAX_BUFS  4
 #endif
 
-#ifdef HITACHI
-int numofbuffers=MAX_BUFS;
-#endif
 #ifndef MSG_BUFLEN_SMALL
 #define MSG_BUFLEN_SMALL (MSG_BUFLEN >>0) 
 #endif
@@ -52,12 +38,6 @@ int numofbuffers=MAX_BUFS;
 #define RIGHT_GUARD 22.22e22
 #define CLEAR_TABLE_SLOT(idx) *((int*)(_armci_buf_state->table+(idx))) =0
 
-#ifdef STORE_BUFID
-#   define BUF_TO_BUFINDEX(buf) (BUF_TO_EBUF((buf)))->id.bufid
-#else
-#  define BUF_TO_BUFINDEX(buf)\
-          ((BUF_TO_EBUF((buf)))- _armci_buffers)/sizeof(buf_ext_t)
-#endif
 
 /* we allow multiple buffers (up to 15) per single request
  * adjacent buffers can be coalesced into a large one
@@ -72,19 +52,51 @@ typedef struct {
   unsigned int to:12;    /* serv/proc to which request was sent, 4096 possible*/
 }buf_state_t;
 
+/*******structures copied from async.c for storing cmpl dscr for nb req*******/
+#define UBUF_LEN 112
+typedef struct {
+  void *ptr;
+  int  stride_levels;
+  int  stride_arr[8];
+  int  count[8];
+}strided_dscr_t;
+
+typedef struct {
+  int segments;
+  int len;
+  void *ptrs[14];
+}vector_dscr_t;
+
+typedef struct {
+  unsigned int tag;              /* request id */
+  int bufid;              /* communication buffer id */
+  union {                 /* 8 bytes for alignment reason */
+        void *dscrbuf;
+        double pad;
+  }ptr;
+  union {
+      char buf[UBUF_LEN];
+      strided_dscr_t strided;
+      vector_dscr_t vector;
+  }dscr;
+}buf_info_t;
+/****************************************************************************/
+
+#ifndef BUFID_PAD_T
+#define BUFID_PAD_T buf_info_t
+#endif
+
 /* message send buffer data structure */
 typedef struct {
 #ifdef STORE_BUFID
-  union {
-    int bufid;
-    BUFID_PAD_T pad;
-  }id;
+  buf_info_t id;
 #endif
 # ifdef BUF_EXTRA_FIELD_T
         BUF_EXTRA_FIELD_T field;
 # endif
   char buffer[MSG_BUFLEN_SMALL];
 } buf_ext_t;
+
 
 /* we keep table and buffer pointer together for better locality */
 typedef struct {
@@ -96,6 +108,24 @@ typedef struct {
   int pad;
   double right_guard;       /* stamp to verify if array was corrupted */
 } reqbuf_pool_t;            
+
+
+#ifdef STORE_BUFID
+#   define BUF_TO_BUFINDEX(buf) (BUF_TO_EBUF((buf)))->id.bufid
+#else
+#  define BUF_TO_BUFINDEX(buf)\
+          ((BUF_TO_EBUF((buf)))- _armci_buffers)/sizeof(buf_ext_t)
+#endif
+
+#ifndef  BUF_EXTRA_FIELD_T
+#  define        SIZE_BUF_EXTRA_FIELD 0 
+#  define BUF_TO_EBUF(buf) (buf_ext_t*)(((char*)buf) - sizeof(BUFID_PAD_T) -\
+                                      SIZE_BUF_EXTRA_FIELD)
+#else
+#  define BUF_TO_EBUF(buf) (buf_ext_t*)(((char*)buf) - sizeof(BUFID_PAD_T) -\
+				      sizeof(BUF_EXTRA_FIELD_T))
+#endif
+
 
 
 buf_ext_t *_armci_buffers;        /* these are the actual buffers */
@@ -132,6 +162,10 @@ int  extra= ALIGN64ADD(tmp);
      _armci_buf_state->right_guard = RIGHT_GUARD;
      _armci_buf_state->avail =0;
      _armci_buf_state->buf = _armci_buffers; 
+/*   Should the following be enabled as a sanity check?
+     if(BUF_TO_EBUF(_armci_buf_state->buf[0].buffer)!=_armci_buf_state->buf)
+        armci_die("buffers.c, internal structure alignment problem",0);
+*/
 }
 
 
@@ -317,10 +351,6 @@ int count=1, i;
     INIT_SEND_BUF(_armci_buf_state->buf[avail].field,_armci_buf_state->table[avail].snd,_armci_buf_state->table[avail].rcv);
 #endif
 
-#ifdef HITACHI
-	PASSBUFID(_armci_buf_state->buf[avail].id.bufid);
-#endif
-
 #ifdef HISTORY
     history[h].size=size;
     history[h].op=operation;
@@ -379,4 +409,23 @@ char *_armci_buf_ptr_from_id(int id)
               armci_die2("armci_buf_ptr_from_id: bad id",id,MAX_BUFS);
 
   return(_armci_buf_state->buf[id].buffer);
+}
+
+/*\function called from armci_wait to wait for non-blocking ops
+\*/
+void armci_complete_nb_request(armci_hdl_t nb_handle, int *retcode) {
+int i=0;
+    if(nb_handle->bufid == NB_NONE) *retcode=0;
+    else if(nb_handle->bufid == NB_MULTI) {
+       for(i=0;i<MAX_BUFS;i++){ 
+         if(nb_handle->tag==_armci_buf_state->buf[i].id.tag)
+           _armci_buf_complete_index(i,1); 
+       }
+       *retcode=0;
+    }
+    else {
+       if(nb_handle->tag==_armci_buf_state->buf[i].id.tag)
+         _armci_buf_complete_index(nb_handle->bufid,1);
+       *retcode=0;
+    } 
 }

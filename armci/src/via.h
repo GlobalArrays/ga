@@ -34,7 +34,7 @@ extern void armci_via_wait_ack();
 #endif
 
 typedef struct {
-    char padd[64];
+    char padd[128];
 } buf_pad_t;
 #define BUFID_PAD_T buf_pad_t
 
