@@ -3,9 +3,9 @@
 extern int armci_long_buf_free, armci_long_buf_taken_srv;
 extern void armci_via_wait_ack();
 
-#define PIPE_BUFSIZE  (15*4096)
+#define PIPE_BUFSIZE  (8*4096)
 #define PIPE_MIN_BUFSIZE 8192
-#define PIPE_MEDIUM_BUFSIZE (4*8192)
+#define PIPE_MEDIUM_BUFSIZE (2*8192)
 
 /* we need buffer size to be 64-byte alligned */
 #define EXTRA_MSG_BUFLEN_DBL  128 

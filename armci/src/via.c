@@ -584,9 +584,11 @@ request_header_t *msginfo;
            need_ack=0;
        }else need_ack=1;
 
+
        armci_data_server(vbuf);
 
-       armci_serv_clear_sends(); /* for now we complete all pending sends */
+       if ((msginfo->operation==GET)&&(PIPE_MIN_BUFSIZE<msginfo->datalen))
+          armci_serv_clear_sends(); /* for now we complete all pending sends */
       
        /* flow control: send ack for this request since no response was sent */
        if(need_ack &&(armci_ack_proc != NONE)) SERVER_SEND_ACK(armci_ack_proc);
@@ -919,12 +921,13 @@ int i, outstanding;
     if(DEBUG0){ printf("%d CLEARING %d %p\n",armci_me,i, dp->descr+i);                          fflush(stdout);
     }
 
-#if 1
+#if 0
     rc = VipSendWait(dp->vi, VIP_INFINITE, &pdscr);
-#else
     do{ rc = VipSendDone(dp->vi, &pdscr); }while(rc==VIP_NOT_DONE);
 #endif
 
+    rc = VipSendDone(dp->vi, &pdscr); 
+    if(rc==VIP_NOT_DONE) rc = VipSendWait(dp->vi, VIP_INFINITE, &pdscr); 
     armci_check_status(DEBUG0, rc,"wait & clear send to complete");
 
     /* make sure the right descriptor in send work queue completed */
