@@ -1,3 +1,4 @@
+/*$Id: interrupt.h,v 1.2 1995-02-02 23:13:41 d3g681 Exp $*/
 #ifdef NX 
 
 extern long masktrap(long);

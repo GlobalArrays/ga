@@ -1,3 +1,4 @@
+#$Id: MakeFiles.h,v 1.12 1995-02-02 23:12:50 d3g681 Exp $
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # makefile.files.h -- specifies files for the GA library depending 
 #                     on TARGET and VERSION 

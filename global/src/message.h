@@ -1,3 +1,4 @@
+/*$Id: message.h,v 1.3 1995-02-02 23:13:46 d3g681 Exp $*/
 
 /* flags to specify blocking/nonblocking communication in TCGMSG */
 #define SYNC  1

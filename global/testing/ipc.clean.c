@@ -1,3 +1,4 @@
+/*$Id: ipc.clean.c,v 1.2 1995-02-02 23:14:19 d3g681 Exp $*/
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>

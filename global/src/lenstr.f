@@ -1,4 +1,5 @@
       integer function lenstr(a)
+C$Id: lenstr.f,v 1.2 1995-02-02 23:13:43 d3g681 Exp $
       implicit none
       character*(*) a
       integer i

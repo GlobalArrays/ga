@@ -1,4 +1,5 @@
       integer ga_mask, ga_nnodes, ga_nodeid, ga_read_inc
+C$Id: global.fh,v 1.4 1995-02-02 23:13:29 d3g681 Exp $
       logical ga_create, ga_destroy, ga_locate, ga_create_irreg
       logical ga_compare_distr, ga_duplicate
       double precision ga_ddot, ga_ddot_patch

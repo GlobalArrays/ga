@@ -1,3 +1,4 @@
+/*$Id: global.h,v 1.2 1995-02-02 23:13:30 d3g681 Exp $*/
 /* file global.h */
 
 #include "types.f2c.h"

@@ -1,3 +1,4 @@
+/*$Id: shmalloc.h,v 1.2 1995-02-02 23:13:53 d3g681 Exp $*/
 #ifndef SHMALLOC_H
 #define SHMALLOC_H
 

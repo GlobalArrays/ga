@@ -1,3 +1,4 @@
+/*$Id: semaphores.c,v 1.3 1995-02-02 23:13:49 d3g681 Exp $*/
 #include "semaphores.h"
 #include <stdio.h>
 

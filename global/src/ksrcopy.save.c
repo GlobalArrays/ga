@@ -1,3 +1,4 @@
+/*$Id: ksrcopy.save.c,v 1.3 1995-02-02 23:13:42 d3g681 Exp $*/
 void CopyTo(src0,dest0,n)
 double *src0, *dest0;
 long n;

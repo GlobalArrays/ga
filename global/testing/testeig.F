@@ -1,4 +1,5 @@
       program test
+C$Id: testeig.F,v 1.3 1995-02-02 23:14:27 d3g681 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"

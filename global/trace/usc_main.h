@@ -1,3 +1,4 @@
+/*$Id: usc_main.h,v 1.2 1995-02-02 23:14:42 d3g681 Exp $*/
 /*
  * USC_MAIN.H  (Private header file for the Microsecond Clock package)
  *

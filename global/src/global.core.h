@@ -1,3 +1,4 @@
+/*$Id: global.core.h,v 1.3 1995-02-02 23:13:28 d3g681 Exp $*/
 /*Wed Jan 25 10:25:49 PST 1995*/
   
 #ifdef SUN

@@ -1,3 +1,4 @@
+/*$Id: collisions.c,v 1.2 1995-02-02 23:14:35 d3g681 Exp $*/
 #include <stdio.h>
 #include "/msrc/files/home/d3h325/include/mem2.h"
 

@@ -1,3 +1,4 @@
+/*$Id: tcgmsg.h,v 1.2 1995-02-02 23:13:59 d3g681 Exp $*/
 struct cluster_info_struct {
   char *user;                     /* user name */
   char *hostname;                 /* hostname */

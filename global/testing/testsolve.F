@@ -1,4 +1,5 @@
       program test
+C$Id: testsolve.F,v 1.2 1995-02-02 23:14:29 d3g681 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"

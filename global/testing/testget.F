@@ -2,6 +2,7 @@
 c***
 c***  Last modification: Tue Oct  4 13:27:10 PDT 1994
 c***
+C$Id: testget.F,v 1.3 1995-02-02 23:14:28 d3g681 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"

@@ -1,3 +1,4 @@
+/*$Id: global.alg.c,v 1.4 1995-02-02 23:13:24 d3g681 Exp $*/
 /*************************************************************************\
  Purpose:   File global.alg.c contains a set of linear algebra routines 
             that operate on global arrays in the SPMD mode. 

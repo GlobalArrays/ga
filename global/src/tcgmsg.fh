@@ -1,4 +1,5 @@
       integer nnodes, nodeid, mdtob, mitob, nxtval
+C$Id: tcgmsg.fh,v 1.2 1995-02-02 23:13:57 d3g681 Exp $
       double precision tcgtime
       external nnodes, nodeid, mdtob, mitob, tcgtime, nxtval
       

@@ -1,3 +1,4 @@
+/*$Id: global.util.c,v 1.6 1995-02-02 23:13:37 d3g681 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha

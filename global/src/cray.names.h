@@ -1,3 +1,4 @@
+/*$Id: cray.names.h,v 1.5 1995-02-02 23:13:07 d3g681 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST

@@ -1,3 +1,4 @@
+/*$Id: globalp.h,v 1.5 1995-02-02 23:13:38 d3g681 Exp $*/
  
 #define     GA_TYPE_REQ 32760 - 1
 #define     GA_TYPE_GET 32760 - 2

@@ -1,4 +1,5 @@
        real a(10000)
+C$Id: test.f,v 1.2 1995-02-02 23:14:39 d3g681 Exp $
        integer i
        call trace_init(1000)
        do k = 1,10

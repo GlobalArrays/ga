@@ -1,3 +1,4 @@
+/*$Id: global.msg.c,v 1.3 1995-02-02 23:13:33 d3g681 Exp $*/
 /*
  * module: global.msg.c
  * author: Jarek Nieplocha

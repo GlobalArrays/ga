@@ -1,3 +1,4 @@
+/*$Id: signal.c,v 1.3 1995-02-02 23:13:55 d3g681 Exp $*/
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *

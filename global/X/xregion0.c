@@ -1,3 +1,4 @@
+/*$Id: xregion0.c,v 1.2 1995-02-02 23:12:59 d3g681 Exp $*/
 /*
  * A visualization program for GAs
  *

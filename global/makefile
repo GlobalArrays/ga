@@ -1,3 +1,4 @@
+#$Id: makefile,v 1.8 1995-02-02 23:12:54 d3g681 Exp $
 
 # Tiny makefile wrapper
 

@@ -1,3 +1,4 @@
+#$Id: makefile,v 1.6 1995-02-02 23:14:21 d3g681 Exp $
 # Global Array library (shared and distributed memory version)
 #
 #      "make test.x"      to create a test program for GA 

@@ -1,3 +1,4 @@
+#$Id: makefile,v 1.3 1995-02-02 23:12:57 d3g681 Exp $
 #Specify location for X Windows 
 
     LOC = /msrc/apps/X11R5

@@ -1,4 +1,5 @@
       subroutine ga_lu_solve_seq(trans,g_a, g_b)
+C$Id: ga_solve_seq.F,v 1.4 1995-02-02 23:13:19 d3g681 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"

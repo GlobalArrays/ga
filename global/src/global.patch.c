@@ -1,3 +1,4 @@
+/*$Id: global.patch.c,v 1.8 1995-02-02 23:13:35 d3g681 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"

@@ -1,3 +1,4 @@
+/*$Id: memcpy.t3d.c,v 1.2 1995-02-02 23:13:45 d3g681 Exp $*/
 #include <stdio.h>
 #include <memory.h>
 

@@ -1,3 +1,4 @@
+# $Id: Makelib.h,v 1.8 1995-02-02 23:12:53 d3g681 Exp $
 # Makelib.h, 01.26.94
 #
 # TARGET is one of (SUN, SGI, SGITFP, IBM, KSR, SP1, T3D)

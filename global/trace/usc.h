@@ -1,3 +1,4 @@
+/*$Id: usc.h,v 1.2 1995-02-02 23:14:41 d3g681 Exp $*/
 /*
  * USC.H  (Public header file for the Microsecond Clock package)
  *     This header file has to be included by an application using

@@ -1,3 +1,4 @@
+/*$Id: DP.c,v 1.6 1995-02-02 23:13:03 d3g681 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"

@@ -2,6 +2,7 @@
 #include "mafdecls.h"
 #include "global.fh"
 #include "tcgmsg.fh"
+C$Id: patch.F,v 1.2 1995-02-02 23:14:22 d3g681 Exp $
       logical status
       call pbeginf
       status = ma_init(MT_DBL, 50000, 50000/nnodes())

@@ -5,6 +5,7 @@ c     A remains unchanged
 c 
 c     J. Nieplocha 05.17.94
 c
+C$Id: ga_transpose.F,v 1.4 1995-02-02 23:13:22 d3g681 Exp $
       implicit none
 #include "mafdecls.h" 
 #include "global.fh"

@@ -1,4 +1,5 @@
       subroutine ga_summarize(verbose)
+C$Id: ga_summarize.F,v 1.7 1995-02-02 23:13:20 d3g681 Exp $
       implicit none
 #include "global.fh"
 #include "mafdecls.h"
@@ -29,7 +30,7 @@ c
  1    format(/' Summary of allocated global arrays '/
      $        ' ----------------------------------'/)
 c
-      do g_a = 0, 99
+      do g_a = -1000,-900
          active = ga_verify_handle(g_a)
          if (active .eq. 1) then
 c

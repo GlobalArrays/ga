@@ -10,6 +10,7 @@
 ****************************************************************************
 
       subroutine SLinit
+C$Id: SLface.F,v 1.3 1995-02-02 23:13:05 d3g681 Exp $
       implicit none
 c
 #include "slface.fh"

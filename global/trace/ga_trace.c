@@ -1,3 +1,4 @@
+/*$Id: ga_trace.c,v 1.3 1995-02-02 23:14:37 d3g681 Exp $*/
  /***********************************************************************\
  * Tracing and Timing functions for the GA routines:                     *
  *   trace_init       - initialization                                   *

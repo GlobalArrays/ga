@@ -1,5 +1,6 @@
       subroutine ga_dgemm_seq(transa, transb, m, n, k, alpha, g_a, g_b, 
      $     beta, g_c )
+C$Id: ga_dgemm_seq.F,v 1.7 1995-02-02 23:13:13 d3g681 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"

@@ -1,3 +1,4 @@
+#$Id: Makefile.h,v 1.22 1995-02-02 23:12:51 d3g681 Exp $
 # Makefile.h, Wed Jan 25 13:01:15 PST 1995 
 #
 # Define TARGET to be the machine you wish to build for

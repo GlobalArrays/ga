@@ -1,3 +1,4 @@
+#$Id: makefile,v 1.2 1995-02-02 23:14:38 d3g681 Exp $
 include ../Makefile.h
 
 LIBM = ../../ma/libma.a

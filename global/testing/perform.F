@@ -2,6 +2,7 @@
 c***
 c***  Last modification: Fri Jan 13 12:13:27 PST 1995
 c***
+C$Id: perform.F,v 1.2 1995-02-02 23:14:23 d3g681 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"

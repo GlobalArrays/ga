@@ -3,6 +3,7 @@ c     Thu Aug 25 14:08:17 PDT 1994, JN
 c
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
+C$Id: ga_dgemm.F,v 1.11 1995-02-02 23:13:12 d3g681 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k

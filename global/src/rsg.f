@@ -1,5 +1,6 @@
       subroutine rsg(nm,n,a,b,w,matz,z,fv1,fv2,ierr)
 c
+C$Id: rsg.f,v 1.2 1995-02-02 23:13:48 d3g681 Exp $
       integer n,nm,ierr,matz
       double precision a(nm,n),b(nm,n),w(n),z(nm,n),fv1(n),fv2(n)
 c
