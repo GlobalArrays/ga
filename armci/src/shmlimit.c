@@ -1,4 +1,4 @@
-/* $Id: shmlimit.c,v 1.10 2000-05-24 23:13:36 d3h325 Exp $ */
+/* $Id: shmlimit.c,v 1.11 2000-05-26 18:27:06 d3h325 Exp $ */
 /*
  * This code is used to test shared memory limits within
  * a separately forked child process.
@@ -97,8 +97,8 @@ int armci_child_shmem_init()
     }else{
 
        pid_t rc;
-
        int val;
+
 #ifdef PIPE_AFTER_FORK_BUG
        /* due to a bug in OSF1 V4.0/1229/alpha first item read is garbage */
        for(i=0;i<2;i++)
@@ -108,14 +108,11 @@ int armci_child_shmem_init()
 
 #ifdef SOLARIS
        while(!child_finished());
-#else
-
-       if(!armci_shmlimit_caught_sigchld)
 #endif
-       {
+
 again:   rc = wait (&status);
          if(rc == -1 && errno == EINTR) goto again;
-       }
+
        if (!WIFEXITED(status)) armci_die("ARMCI: child did not return rc",0);
        x = WEXITSTATUS(status);
     }
@@ -128,5 +125,4 @@ again:   rc = wait (&status);
     if(DEBUG_)
        printf("%d:in parent: x=%d y=%d\n",armci_me,x,y);fflush(stdout);sleep(1);
     return y;
-
 }
