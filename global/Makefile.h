@@ -58,11 +58,22 @@ endif
 #................................ LINUX ....................................
 # IBM ThinkPad running Linux 1.2.13
 #
-ifeq ($(TARGET),LINUX)
+ifeq ($(TARGET),LINUX_F2C)
     MAKEFLAGS = -j 1
     EXPLICITF = TRUE
  GLOB_DEFINES = -DLINUX
           CPP = gcc -E -nostdinc -undef -P
+       RANLIB = ranlib
+endif
+#
+#................................ LINUX ....................................
+# Linux 2.0.28 running g77
+#
+ifeq ($(TARGET),LINUX)
+         FOPT = -O -fno-second-underscore
+    MAKEFLAGS = -j 1
+ GLOB_DEFINES = -DLINUX
+          CPP = g77 -E -nostdinc -undef -P
        RANLIB = ranlib
 endif
 #
