@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.34 2002-03-07 01:17:22 d3h325 Exp $ */
+/* $Id: message.c,v 1.35 2002-03-21 23:34:14 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -611,13 +611,24 @@ static void idoop(int n, char *op, int *x, int* work)
 
 static void ddoop(int n, char* op, double* x, double* work)
 {
-  if (strncmp(op,"+",1) == 0)
-    while(n--)
-      *x++ += *work++;
-  else if (strncmp(op,"*",1) == 0)
-    while(n--)
-      *x++ *= *work++;
-  else if (strncmp(op,"max",3) == 0)
+#if defined(CRAY)  || defined(WIN32) || defined(HITACHI)
+#elif defined(AIX)
+#   define FORT_DADD fort_dadd
+#   define FORT_DMULT fort_dmult
+#else
+#   define FORT_DADD fort_dadd_
+#   define FORT_DMULT fort_dmult_
+#endif
+extern void FATR FORT_DADD(int *, double *, double*);
+extern void FATR FORT_DMULT(int *, double *, double*);
+
+  if (strncmp(op,"+",1) == 0){
+    if(n>63) FORT_DADD(&n,x,work);
+    else while(n--) *x++ += *work++;
+  }else if (strncmp(op,"*",1) == 0){
+    if(n>63) FORT_DMULT(&n,x,work);
+    else while(n--) *x++ *= *work++;
+  }else if (strncmp(op,"max",3) == 0)
     while(n--) {
       *x = MAX(*x, *work);
       x++; work++;

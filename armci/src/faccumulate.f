@@ -207,4 +207,37 @@
       enddo
       end
 
+c---------- operations used in armci gops --------------
+c
+      subroutine fort_dadd(n, x, work)
+      integer n,i
+      double precision x(n), work(n)
+      do i= 1,n
+         x(i) = x(i) + work(i)
+      enddo
+      end
 
+      subroutine fort_dadd2(n, x, work, work2)
+      integer n,i
+      double precision x(n), work(n), work2(n)
+      do i= 1,n
+         x(i) = work(i) + work2(i)
+      enddo
+      end
+
+
+      subroutine fort_dmult(n, x, work)
+      integer n,i
+      double precision x(n), work(n)
+      do i= 1,n
+         x(i) = x(i) * work(i)
+      enddo
+      end
+
+      subroutine fort_dmult2(n, x, work,work2)
+      integer n,i
+      double precision x(n), work(n)
+      do i= 1,n
+         x(i) = work(i)*work2(i)
+      enddo
+      end
