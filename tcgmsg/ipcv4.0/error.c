@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/error.c,v 1.1.1.1 1994-03-29 06:44:53 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/error.c,v 1.2 1994-12-30 20:52:14 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <setjmp.h>
@@ -60,6 +60,8 @@ void Error(string, integer)
   (void) DeleteSharedRegion(SR_proc_info[NODEID_()].shmem_id);
 #endif
   ShutdownAll();    /* Close sockets for machines with static kernel */
+
+  abort(); 
 
   if (SR_exit_on_error)
     exit(1);

@@ -1,5 +1,5 @@
 #
-# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.4 1994-09-08 20:46:10 d3e129 Exp $
+# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.5 1994-12-30 20:52:08 d3h325 Exp $
 #
 # for events and debugging with events add  -DEVENTLOG to the DEFINES definition
 # for the given machine
@@ -7,6 +7,36 @@
     TOPDIR = TOP_LEVEL_DIRECTORY
     LIBDIR = $(TOPDIR)/ipcv4.0
      SHELL = /bin/sh
+IF SP1 SP1GA
+#IBM SP-1 with MPL message passing library
+# SP1GA forces special sync operation
+##... AIX 3.2 with -qEXTNAME ... recommended choice.
+## You MUST Compile ALL FORTRAN with -qEXTNAME to use this option.
+## see also comments for IBM RS/6000
+##
+#.... this is for EUIH ...........
+#       FC = mpl_xlf
+#       CC = mpl_cc
+#     EUIH = /usr/lpp/euih/eui
+# INCLUDES = -I/usr/lpp/euih/eui
+#     LIBS = -bnso -bI:/lib/syscalls.exp -bI:/usr/lpp/euih/eui/eui.exp -e main
+#.................................
+        FC = mpxlf_rnc
+    FFLAGS = -g -qEXTNAME
+        CC = mpcc_rnc
+IF SP1GA
+   DEFINES = -DSP1 -DAIX -DEXTNAME  -DTIMINGS -DINTR_SAFE
+ELSE
+   DEFINES = -DSP1 -DAIX -DEXTNAME  -DTIMINGS
+ENDIF
+    CFLAGS = -g $(DEFINES) $(INCLUDES)
+ LINTFLAGS = -u -a -wkD $(DEFINES)
+     EXTRA = strdup.o strtok.o
+
+   LIBOBJ = sp1.o evon.o evlog.o checkbyte.o mtime.o \
+            memalign.o random.o drand48.o mitob.o mdtob.o \
+            mdtoi.o mitod.o llog.o $(EXTRA)
+ENDIF SP1 SP1GA
 IF IPSC DELTA PARAGON
 # Intel iPSC-i860, Touchstone Delta and Paragon
 .SUFFIXES:	
@@ -24,43 +54,52 @@ IF IPSC DELTA PARAGON
 IF DELTA
    DEFINES = -DIPSC -DDELTA 
    INSTALL = rcp "$@" delta1: &
-   CFLAGS = -i860 -g -Knoieee $(DEFINES)
-   FFLAGS = -i860 -O2 -Knoieee
+   CFLAGS = -i860 -g -Knoieee -node $(DEFINES)
+   FFLAGS = -i860 -O2 -Knoieee -node
 ELSEIF PARAGON
    DEFINES = -DIPSC -DPARAGON 
    INSTALL = echo "$@" is built
-   CFLAGS = -nx -g -Knoieee $(DEFINES)
-   FFLAGS = -nx -O2 -Knoieee
+   CFLAGS = -nx -g -Knoieee -nx $(DEFINES)
+   FFLAGS = -nx -O2 -Knoieee -nx
 ELSE
    DEFINES = -DIPSC 
    INSTALL = echo "$@" is built
-   CFLAGS = -i860 -g -Knoieee $(DEFINES)
-   FFLAGS = -i860 -O2 -Knoieee
+   CFLAGS = -i860 -g -Knoieee -nx $(DEFINES)
+   FFLAGS = -i860 -O2 -Knoieee -nx
 ENDIF
+   LIBOBJ = ipsc.o globalop.o evon.o evlog.o checkbyte.o \
+            memalign.o random.o drand48.o mitob.o mdtob.o \
+            mdtoi.o mitod.o llog.o
+
+ENDIF IPSC DELTA PARAGON
+IF IPSC DELTA PARAGON SP1 SP1GA
 
 all:	libtcgmsg.a test.x testf.x hello.x hello.p test.p testf.p
 
-everything:	all parallel parse toplot
+IF SP1 DELTA PARAGON SP1GA
+# no front end code
+
+everything:     all  parse toplot
+ELSE
+# IPSC ... parallel must be built on the front end machine!
+
+everything:     all parallel parse toplot
+
+parallel:       para.ipsc.o
+	cc -g -o parallel para.ipsc.o -host
+	echo Don't forget to copy parallel into bin directory
+
+para.ipsc.o:    para.ipsc.c
+	cc -c -g para.ipsc.c
+ENDIF SP1 DELTA PARAGON SP1GA
 
 clean:
 	/bin/rm -f *.o core libtcgmsg.a test.x testf.x hello.x
 	/bin/rm -f parse toplot TAGS parallel a.out
 
 realclean:	clean
-	/bin/rm -f Makefile *~ *.p *.log msgtypesf.h #*#
+	/bin/rm -f Makefile *~ *.p *.log msgtypesf.h 
 
-IF DELTA PARAGON
-parallel:
-	echo No front end required for paragon
-ELSE
-# parallel must be built on the front end machine!
-parallel:	para.ipsc.o
-	cc -g -o parallel para.ipsc.o -host
-	echo Don't forget to copy parallel into bin directory
-
-para.ipsc.o:	para.ipsc.c
-	cc -c -g para.ipsc.c
-ENDIF DELTA
 
 parse:	parse.o
 	cc -O -o $@ parse.o
@@ -72,23 +111,20 @@ toplot:	toplot.o
 toplot.o:	toplot.c
 	cc -O -c toplot.c
 
-   LIBOBJ = ipsc.o globalop.o evon.o evlog.o checkbyte.o \
-            memalign.o random.o drand48.o mitob.o mdtob.o \
-            mdtoi.o mitod.o llog.o
 libtcgmsg.a:	$(LIBOBJ)
 	/bin/rm -f $@
 	$(AR) cr $@ $(LIBOBJ)
 
 test.x:	test.o libtcgmsg.a
-	$(CC) -o test.x $(CFLAGS) test.o libtcgmsg.a -node
+	$(CC) -o test.x $(CFLAGS) test.o libtcgmsg.a
 	$(INSTALL)
 
 testf.x:	testf.o libtcgmsg.a
-	$(FC) -o testf.x $(FFLAGS) testf.o libtcgmsg.a -node
+	$(FC) -o testf.x $(FFLAGS) testf.o libtcgmsg.a
 	$(INSTALL)
 
 hello.x:	hello.o libtcgmsg.a
-	$(CC) $(CFLAGS) -o $@ hello.o libtcgmsg.a -node
+	$(CC) $(CFLAGS) -o $@ hello.o libtcgmsg.a
 	$(INSTALL)
 
 testf.o:	msgtypesf.h
@@ -103,7 +139,8 @@ test.p:
 testf.p:
 	echo '0 $$ testf.x .' > testf.p
 
-
+# ENDIF IPSC DELTA PARAGON SP1 SP1GA
+#
 ELSE
 IF CONVEX
         FC = fc
@@ -173,7 +210,7 @@ IF ENCORE
      EXTRA = strdup.o strtok.o
 ENDIF ENCORE
 IF IBM
-#IBM RISC 6000 ... AIX 3.1 with -qEXTNAME ... recommended choice.
+#IBM RISC 6000 ... AIX  with -qEXTNAME ... recommended choice.
 ## You MUST Compile ALL FORTRAN with -qEXTNAME to use this option.
 ##
 ## This is the first of two possible configurations for AIX.
@@ -283,7 +320,7 @@ IF SGITFP
    DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS  -DNOSPIN
     CFLAGS = -O  $(DEFINES)
  LINTFLAGS = -I/usr/include/bsd -I/usr/include/sun $(DEFINES) -u
-      LIBS = -lmalloc -lbsd -lrpcsvc 
+      LIBS = -lmalloc 
      EXTRA = strdup.o strtok.o
 ENDIF SGI
 IF KSR
@@ -425,7 +462,7 @@ hello.x:	hello.o libtcgmsg.a
 parallel:	parallel.o libtcgmsg.a
 	$(CC) $(CFLAGS) -o $@ parallel.o libtcgmsg.a $(LIBS)
 
-test.x:	test.o checkbyte.o libtcgmsg.a
+test.x:	test.o checkbyte.o libtcgmsg.a parallel
 	$(CC) $(CFLAGS) -o $@ test.o libtcgmsg.a $(LIBS)
 
 testf.x:	testf.o libtcgmsg.a
@@ -513,4 +550,4 @@ IF CONVEX
 sprintf.o:      /usr/lib/libc.a
 	ar x /usr/lib/libc.a sprintf.o
 ENDIF CONVEX
-ENDIF IPSC DELTA
+ENDIF IPSC DELTA SP1

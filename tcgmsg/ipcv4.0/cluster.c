@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.1.1.1 1994-03-29 06:44:46 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.2 1994-12-30 20:52:11 d3h325 Exp $ */
 
 #include <stdio.h>
 
@@ -111,6 +111,7 @@ void PrintClusInfo()
 		  SR_clus_info[i].swtchport,
 #endif
 		  SR_clus_info[i].masterid);
+  printf("SR_clus_info = %d size=%d\n",(long) SR_clus_info, sizeof(struct cluster_info_struct));
   (void) fflush(stdout);
 }
 

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.1.1.1 1994-03-29 06:44:54 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.2 1994-12-30 20:52:24 d3h325 Exp $ */
 
 
 #include <stdio.h>
@@ -131,7 +131,7 @@ int ReadFromSocket(sock, buf, lenbuf)
    status = lenbuf;
    while (lenbuf > 0) {
 again:
-     if ( (nread = recv(sock, buf, (int) lenbuf, 0)) <= 0) {
+     if ( (nread = recv(sock, buf, (int) lenbuf, 0)) < 0) {
        if (errno == EINTR)
          goto again;
        else {
