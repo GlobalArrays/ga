@@ -1,5 +1,8 @@
 /* file global.h */
 
+#ifndef GLOBAL_H
+#define GLOBAL_H
+
 #include "types.f2c.h"
 
 
@@ -110,3 +113,4 @@ extern DoubleComplex   *DCPL_MB;
 extern DoublePrecision *DBL_MB;
 extern Integer         *INT_MB;
 
+#endif 
