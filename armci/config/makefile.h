@@ -457,7 +457,8 @@ ifeq ($(TARGET),IBM64)
 endif
 
 ifdef LAPI_
-         _CPU = $(shell lsattr -El proc0 | awk ' /POWER4/ { print "PWR4" };')
+         _CPU = $(shell lsattr -El `lsdev -C -c processor -F name | head -1` | awk ' /POWER4/ { print "PWR4" };')
+
           CC  = mpcc_r
       LINK.f  = mpcc_r -lc_r -lxlf -lxlf90 -lm
     EXTRA_OBJ = lapi.o request.o buffers.o
