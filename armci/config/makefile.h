@@ -107,7 +107,7 @@ endif
 #-----------------Linux 64-bit on Itanium with Intel compilers --
 ifeq ($(TARGET),LINUX64)
    GLOB_DEFINES += -DLINUX
-         _CPU = $(shell uname)
+         _CPU = $(shell uname -m)
 ifeq  ($(_CPU),ia64)
      FC=efc
      CC=ecc
