@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.71 2004-03-31 23:12:51 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.72 2004-04-01 03:30:32 manoj Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -639,7 +639,7 @@ Off_t offset;
 
         if(INDEPFILES(d_a) || DRA[handle].numfiles > 1) {
 
-          Integer   CR, i, nblocks; 
+          Integer   CR=0, i, nblocks; 
           section_t ds_a;
           /* number of processors that do io */
           Integer   ioprocs=dai_io_procs(d_a); 
@@ -1075,6 +1075,7 @@ int       retval;
 
 int dai_myturn(section_t ds_chunk)
 {
+    /*Integer   handle = ds_chunk.handle+DRA_OFFSET; */
 Integer   ioprocs = dai_io_procs(ds_chunk.handle);
 Integer   iome    = dai_io_nodeid(ds_chunk.handle);
     
@@ -1102,7 +1103,7 @@ Integer ld, rows,cols;
 double *buf;  /*<<<<<*/
 {
    int i,j;
-   printf("\n ld=%ld rows=%ld cols=%ld\n",ld,rows,cols);
+   printf("\n ld=%ld rows=%ld cols=%ld\n",(long)ld,(long)rows,(long)cols);
  
    for (i=0; i<rows; i++){
    for (j=0; j<cols; j++)
@@ -1557,12 +1558,12 @@ int ibuf;
 
         ibuf = Requests[req0].ibuf;
         for(req=0; req<MAX_REQ; req++)
-          if (Requests[req].num_pending && Requests[req].ibuf == ibuf) {
+	  if (Requests[req].num_pending && Requests[req].ibuf == ibuf) {
              if (elio_wait(&_dra_buffer_state[Requests[req].ibuf].id)==ELIO_OK)
                  dai_exec_callback(Requests + req);
              else
                  dai_error("dai_wait: DRA internal error",0);
-          }
+	  }
 }
 
 /*\ wait until buffer space ibuf is avilable
@@ -2068,7 +2069,7 @@ int rc;
         if(dai_io_manage(*d_a)) if(ELIO_OK != (rc=elio_close(DRA[handle].fd)))
                             dai_error("dra_close: close failed",rc);
 
-        if(dai_file_master(*d_a))
+        if(dai_file_master(*d_a)) {
           if(INDEPFILES(*d_a) || DRA[handle].numfiles > 1){ 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              elio_delete(dummy_fname);
@@ -2077,6 +2078,7 @@ int rc;
              elio_delete(DRA[handle].fname);
 
           }
+	}
 
         dai_release_handle(d_a); 
 
@@ -2290,7 +2292,7 @@ void ndai_file_location(section_t ds_a, Off_t* offset)
 Integer handle=ds_a.handle+DRA_OFFSET, ndim, i, j;
 Integer blocks[MAXDIM], part_chunk[MAXDIM], cur_ld[MAXDIM];
 long par_block[MAXDIM];
-long offelem;
+long offelem=0;
 
      
         ndim = DRA[handle].ndim;
@@ -2405,7 +2407,7 @@ Off_t offset;
 
         if(INDEPFILES(d_a) || DRA[handle].numfiles > 1) {
 
-          Integer   CR, i, nblocks; 
+          Integer   CR=0, i, nblocks; 
           section_t ds_a;
           /* number of processors that do io */
           Integer   ioprocs=dai_io_procs(d_a); 

@@ -107,3 +107,78 @@ extern void dai_delete_param(char* filename, Integer d_a);
 extern int dai_file_config(char* filename);
 extern logical dai_section_intersect(section_t sref, section_t* sadj);
 extern int  drai_get_num_serv(void);
+
+extern Integer dra_create(Integer *type, Integer *dim1, Integer *dim2, 
+			  char *name, char *filename, Integer *mode, 
+			  Integer *reqdim1, Integer *reqdim2, Integer *d_a);
+
+extern Integer ndra_create(Integer *type, Integer *ndim, Integer dims[], 
+			   char *name, char *filename, Integer *mode, 
+			   Integer reqdims[], Integer *d_a);
+
+extern Integer dra_open(char *filename, Integer *mode, Integer *d_a);
+
+extern Integer dra_inquire(Integer *d_a, Integer *type, Integer *dim1, 
+			   Integer *dim2, char *name, char *filename);
+
+extern Integer ndra_inquire(Integer *d_a, Integer *type, Integer *ndim,
+			    Integer dims[],char *name,char *filename);
+
+extern Integer ndra_create_config(Integer *type, Integer *ndim, Integer dims[],
+				  char *name, char *filename, Integer *mode, 
+				  Integer reqdims[], Integer *numfiles, 
+				  Integer *numioprocs,   Integer *d_a);
+
+extern Integer FATR dra_terminate_();
+
+extern Integer FATR dra_init_(
+		       Integer *max_arrays,              /* input */
+		       DoublePrecision *max_array_size,  /* input */
+		       DoublePrecision *tot_disk_space,  /* input */
+		       DoublePrecision *max_memory);     /* input */
+
+extern Integer FATR dra_probe_(
+	  Integer *request,                  /*input*/
+	  Integer *status);                   /*output*/
+     
+extern Integer FATR ndra_write_(
+          Integer *g_a,                      /*input:GA handle*/
+	  Integer *d_a,                      /*input:DRA handle*/
+	  Integer *request);                 /*output: handle to async oper.*/
+
+extern Integer FATR ndra_write_section_(
+	  logical *transp,                   /*input:transpose operator*/
+	  Integer *g_a,                      /*input:GA handle*/
+	  Integer glo[],                     /*input*/
+	  Integer ghi[],                     /*input*/
+	  Integer *d_a,                      /*input:DRA handle*/
+	  Integer dlo[],                     /*input*/
+	  Integer dhi[],                     /*input*/
+	  Integer *request);                 /*output: async. request id*/
+
+extern Integer FATR ndra_read_(Integer* g_a, Integer* d_a, Integer* request);
+
+extern Integer FATR ndra_read_section_(
+          logical *transp,                   /*input:transpose operator*/
+	  Integer *g_a,                      /*input:GA handle*/
+	  Integer glo[],                     /*input*/
+	  Integer ghi[],                     /*input*/
+	  Integer *d_a,                      /*input:DRA handle*/
+	  Integer dlo[],                     /*input*/
+	  Integer dhi[],                     /*input*/
+	  Integer *request);                  /*output: request id*/
+     
+extern void FATR dra_print_internals_(Integer *d_a);
+
+extern void FATR dra_set_debug_(logical *flag);
+
+extern void FATR dra_set_default_config_(Integer *numfiles, 
+					 Integer *numioprocs);
+
+extern Integer FATR dra_delete_(Integer* d_a);
+
+extern Integer FATR dra_close_(Integer* d_a);
+
+extern void dra_flick_();
+
+extern Integer FATR dra_wait_(Integer* request);
