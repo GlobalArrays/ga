@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.70 2003-07-10 19:19:28 d3h325 Exp $ */
+/* $Id: strided.c,v 1.71 2003-07-25 23:09:07 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -649,8 +649,13 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
-       if( !stride_levels && armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+       if( !stride_levels && 
+         armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+#ifdef   HAS_RDMA_GET
+         armci_client_direct_get(proc, src_ptr, dst_ptr,  count[0], NULL, 0);
+#else
          armci_rem_get(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
+#endif
          return 0;
        }
 #     endif
@@ -783,7 +788,12 @@ int ARMCI_Get(void *src, void* dst, int bytes, int proc)
 #if 0
        printf("direct get s=%p d=%p %d bytes to %d\n",src,dst,bytes,proc); fflush(stdout);
 #endif
-       armci_rem_get(proc, src,NULL,dst,NULL,&bytes, 0, NULL);
+#ifdef HAS_RDMA_GET
+
+         armci_client_direct_get(proc, src, dst,  bytes, NULL, 0);
+#else
+         armci_rem_get(proc, src,NULL,dst,NULL,&bytes, 0, NULL);
+#endif
        return 0;
     }  else
 #endif
@@ -1007,8 +1017,14 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
-       if( !stride_levels && armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+       if( !stride_levels && 
+         armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+#ifdef HAS_RDMA_GET
+         armci_client_direct_get(proc, src_ptr, dst_ptr, count[0],
+                                (void**)(&nb_handle->cmpl_info),nb_handle->tag);
+#else
          armci_rem_get(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
+#endif
          return 0;
        }
 #     endif
@@ -1195,7 +1211,15 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 	 nb_handle->op  = GET;
 	 nb_handle->proc= proc;
 	 nb_handle->bufid=NB_NONE;
+#ifdef HAS_RDMA_GET
+         
+         armci_client_direct_get(proc, src, dst, bytes,
+                                  (void **)(&nb_handle->cmpl_info),
+                                  nb_handle->tag);
+#else
          armci_rem_get(proc, src,NULL,dst,NULL,&bytes, 0, nb_handle);
+#endif
+
          return 0;
        }else
 #       endif

@@ -32,6 +32,12 @@ if((_cntr)->done==ARMCI_GM_SENDING){\
 
 #define GM_STRONG_TYPES 0 
 #include "gm.h"
+
+#ifdef GM_API_VERSION_2_0  
+#define GM2
+#define HAS_RDMA_GET  
+#endif
+
 /* in GM 1.4 memory registration got so slow we cannot use 0-copy protocols
  * we are disabling it for medium messages by changing thresholds */
 #if defined(GM_MAX_DEFAULT_MESSAGE_SIZE) && !defined(GM_ENABLE_PROGRESSION)
@@ -43,20 +49,12 @@ if((_cntr)->done==ARMCI_GM_SENDING){\
 extern int _armci_bypass;
 #define CLIENT_BUF_BYPASS 
 #define NEEDS_PINNING 
-#ifdef __i386__
-# ifdef GM_1_2
-#   define LONG_GET_THRESHOLD 66248
-#   define LONG_GET_THRESHOLD_STRIDED 3000
-# else
-#   define LONG_GET_THRESHOLD 100000000
-#   define LONG_GET_THRESHOLD_STRIDED 30000000 
-# endif
-#define INTERLEAVE_GET_THRESHOLD 66248
-#else
-#define LONG_GET_THRESHOLD 524288
-#define LONG_GET_THRESHOLD_STRIDED 30000 
-#define INTERLEAVE_GET_THRESHOLD 524288 
-#endif
+
+/* the 3 thresholds are set to be so large to prevent dynamic registration
+   from occuring ever in practice JN 07/03 */
+#define LONG_GET_THRESHOLD 2000000000
+#define LONG_GET_THRESHOLD_STRIDED 2000000000 
+#define INTERLEAVE_GET_THRESHOLD 662480000
 
 #define PIPE_BUFSIZE  (8*1024 -128)
 #define PIPE_MIN_BUFSIZE 1024 
@@ -143,6 +141,7 @@ extern int armci_pin_memory(void *ptr, int stride_arr[], int count[], int lev);
 extern void armci_unpin_memory(void *ptr,int stride_arr[],int count[],int lev);
 extern int armci_serv_send_complete();
 extern void armci_server_direct_send(int p,char *src,char *dst,int len,int typ);
+extern void armci_server_direct_get(int p,char *src,char *dst,int len,int typ);
 extern void armci_data_server(void *msg);
 extern void armci_serv_send_nonblocking_complete(int max_outstanding);
 extern void armci_wait_for_data_bypass();
@@ -156,5 +155,8 @@ extern void armci_client_send_complete(armci_gm_context_t*);
 extern void  armci_check_context_for_complete(int);
 extern void armci_gm_fence_init();
 extern void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag);
+#ifdef HAS_RDMA_GET
+extern void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag);
+#endif
 extern void armci_client_clear_outstanding_sends();
 #endif /* MYRINET_H */

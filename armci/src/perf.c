@@ -2,7 +2,7 @@
  *    Author: Jialin Ju, PNNL
  */
 
-/* $Id: perf.c,v 1.17 2003-04-14 17:58:44 d3h325 Exp $ */
+/* $Id: perf.c,v 1.18 2003-07-25 23:09:07 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -353,7 +353,7 @@ void test_1D()
                    latency_put, bandwidth_put, latency_acc, bandwidth_acc);
         }
     }
-    else sleep(5);
+    else sleep(3);
     
     ARMCI_AllFence();
     MP_BARRIER();
@@ -380,12 +380,18 @@ void test_2D()
     /* find who I am and the dst process */
     src = me;
     
-    /* memory allocation */
+#ifdef MALLOC_LOC
+    if(me == 0) {
+        buf = (double *)ARMCI_Malloc_local(SIZE * SIZE * sizeof(double));
+        assert(buf != NULL);
+    }
+#else
     if(me == 0) {
         buf = (double *)malloc(SIZE * SIZE * sizeof(double));
         assert(buf != NULL);
     }
-    
+#endif
+
     ierr = ARMCI_Malloc(ptr, (SIZE * SIZE * sizeof(double)));
     assert(ierr == 0); assert(ptr[me]);
     ierr = ARMCI_Malloc(get_ptr, (SIZE * SIZE * sizeof(double)));
@@ -452,7 +458,7 @@ void test_2D()
                        latency_put, bandwidth_put, latency_acc, bandwidth_acc);
         }
     }
-    else sleep(5);
+    else sleep(3);
     
     ARMCI_AllFence();
     MP_BARRIER();
@@ -461,7 +467,12 @@ void test_2D()
     ARMCI_Free(get_ptr[me]);
     ARMCI_Free(ptr[me]);
 
-    if(me==0)free(buf);
+#ifdef MALLOC_LOC
+    if(me == 0) ARMCI_Free_local(buf);
+#else
+    if(me == 0) free(buf);
+#endif
+
 }
 
     

@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.68 2003-06-16 19:51:25 vinod Exp $
+/* $Id: myrinet.c,v 1.69 2003-07-25 23:09:07 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -570,8 +570,26 @@ int armci_gm_client_init()
     if(status != GM_SUCCESS)armci_die("Could not get GM node id",0);
     if(DEBUG_INIT_) printf("%d: node id is %d\n", armci_me, proc_gm->node_id);
     /* broadcast my node id to other processes */
+
+#ifdef GM2
+    /* has to convert GM local node id to the global one */
+    status = gm_node_id_to_global_id (proc_gm->port,proc_gm->node_id,
+                                      proc_gm->node_map+armci_me);
+    if(status != GM_SUCCESS)armci_die("Could not convert GM local node id",0);  
+#else
     proc_gm->node_map[armci_me] = proc_gm->node_id;
+#endif
+
     armci_msg_igop(proc_gm->node_map, armci_nproc, "+");
+
+#ifdef GM2
+    /* has to convert received global node ids to local ids */
+    for(i=0; i<armci_nproc; i++){
+        status = gm_global_id_to_node_id (proc_gm->port,proc_gm->node_map[i],
+                                                        proc_gm->node_map+i);
+        if(status != GM_SUCCESS)armci_die("Could not convert GM node id",i);
+    }
+#endif
  
     if(armci_me==armci_master){
        for(i=0; i<armci_nproc; i++) serv_gm->node_map[i] = proc_gm->node_map[i];
@@ -717,6 +735,40 @@ void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void*
        armci_client_send_complete(context);
 
     /* blocking: wait until send is done by calling the callback */
+}
+
+/*\ RDMA get 
+\*/
+void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
+                                              void** contextptr,int nbtag)
+{
+
+#ifdef GM2
+    int s           = armci_clus_id(p);
+    int serv_mpi_id = armci_clus_info[s].master;
+    armci_gm_context_t *context;
+
+    if(nbtag)
+       *contextptr = context = armci_gm_get_next_context(nbtag);
+    else{
+       context = armci_gm_client_context;
+       proc_gm->rdmaop_pending_ar[s]++;
+    }
+
+
+    context->done = ARMCI_GM_SENDING;
+    gm_get(proc_gm->port, (gm_remote_ptr_t)(gm_up_t)src_buf, dst_buf, len, 
+                GM_LOW_PRIORITY,
+                proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s],
+                armci_client_send_callback_direct, context);
+
+    /* blocking: wait until get is done by calling the callback */
+    if(!nbtag)
+       armci_client_send_complete(context);
+#else
+    armci_die("armci_client_direct_get:gm_get not available",0);
+#endif
+
 }
 
 
