@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.41 2004-03-31 20:35:46 vinod Exp $ */
+/* $Id: ghosts.c,v 1.42 2004-03-31 23:15:59 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -861,13 +861,12 @@ void get_remote_block_pos(Integer idx, Integer ndim, Integer *lo_loc,
 \*/
 logical FATR ga_update3_ghosts_(Integer *g_a)
 {
-  Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
+  Integer idx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer size, ndim, nwidth, increment[MAXDIM];
   Integer width[MAXDIM];
   Integer dims[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
   Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
-  Integer lo_rem[MAXDIM], hi_rem[MAXDIM];
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
   Integer slo_rem[MAXDIM], shi_rem[MAXDIM];
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
@@ -1090,10 +1089,9 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
 \*/
 logical FATR ga_set_update4_info_(Integer *g_a)
 {
-  Integer *proc_rem;
-  Integer idx, ipx, idir, i, np, handle=GA_OFFSET + *g_a;
+  Integer idx, idir, i, np, handle=GA_OFFSET + *g_a;
   Integer size, buflen, buftot, *bufsize, ndim, increment[MAXDIM];
-  Integer *proc_rem_snd, *proc_rem_rcv, pmax;
+  Integer *proc_rem_snd, *proc_rem_rcv;
   Integer *length;
   Integer width[MAXDIM], dims[MAXDIM], index[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
@@ -1105,7 +1103,6 @@ logical FATR ga_set_update4_info_(Integer *g_a)
   int *stride_snd, *stride_rcv, *count,cache_size;
   int corner_flag;
   char **ptr_snd, **ptr_rcv, *cache;
-  char send_name[32], rcv_name[32];
   char *current;
 
   /* This routine sets the arrays that are used to transfer data using
@@ -1390,17 +1387,11 @@ logical FATR ga_set_update4_info_(Integer *g_a)
 \*/
 logical FATR ga_update4_ghosts_(Integer *g_a)
 {
-  Integer idx, ipx, i, handle=GA_OFFSET + *g_a;
+  Integer idx, i, handle=GA_OFFSET + *g_a;
   Integer *size, bufsize, buflen, ndim, elemsize;
   Integer *proc_rem_snd, *proc_rem_rcv, pmax;
   Integer msgcnt, *length, msglen;
   Integer index[MAXDIM], width[MAXDIM];
-  Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
-  Integer plo_snd[MAXDIM], phi_snd[MAXDIM];
-  Integer lo_rcv[MAXDIM], hi_rcv[MAXDIM];
-  Integer slo_rcv[MAXDIM], shi_rcv[MAXDIM];
-  Integer plo_rcv[MAXDIM], phi_rcv[MAXDIM];
-  Integer ld_loc[MAXDIM];
   int *stride_snd, *stride_rcv, *count;
   char **ptr_snd, **ptr_rcv, *cache, *current;
   char send_name[32], rcv_name[32];
@@ -1599,7 +1590,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
 \*/
 logical FATR ga_update44_ghosts_(Integer *g_a)
 {
-  Integer idx, ipx, idir, i, np, handle=GA_OFFSET + *g_a;
+  Integer idx, idir, i, np, handle=GA_OFFSET + *g_a;
   Integer size, buflen, buftot, bufsize, ndim, increment[MAXDIM];
   Integer proc_rem_snd, proc_rem_rcv, pmax;
   Integer msgcnt, length, msglen;
@@ -2038,19 +2029,18 @@ int ARMCI_PutS_flag__(
 \*/
 logical FATR ga_update55_ghosts_(Integer *g_a)
 {
-  Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
+  Integer idx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer size, ndim, nwidth, increment[MAXDIM];
   Integer width[MAXDIM];
   Integer dims[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
   Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
-  Integer lo_rem[MAXDIM], hi_rem[MAXDIM];
   Integer slo_rem[MAXDIM], shi_rem[MAXDIM];
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
-  int msgcnt, bytes;
+  int msgcnt;
   char *ptr_loc, *ptr_rem;
 
   /* This routine makes use of the shift algorithm to update data in the
@@ -2308,7 +2298,6 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   Integer size, ndim, i, itmp, idim, idir;
   Integer width[MAXDIM], dims[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
-  Integer tlo_loc[MAXDIM], thi_loc[MAXDIM];
   Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
@@ -2317,8 +2306,6 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
   char *ptr_loc, *ptr_rem;
 
-  int ijx;
-  char *ptr, *iptr;
   int local_sync_begin,local_sync_end;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -2492,7 +2479,7 @@ logical ga_update5_ghosts_(Integer *g_a)
   int *stride_loc, *stride_rem,*count;
   int msgcnt, bytes, corner_flag, proc_rem;
   char *ptr_loc, *ptr_rem,*cache;
-  int local_sync_begin,local_sync_end,scope;
+  int local_sync_begin,local_sync_end;
 #ifdef USE_MP_NORTHSOUTH
   char send_name[32], rcv_name[32];
   void *snd_ptr, *rcv_ptr;
@@ -2652,12 +2639,11 @@ logical ga_set_update5_info_(Integer *g_a)
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
   Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
-  Integer lo_rem[MAXDIM], hi_rem[MAXDIM];
   Integer slo_rem[MAXDIM], shi_rem[MAXDIM];
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   int *stride_loc, *stride_rem,*count;
-  int msgcnt, bytes, idx, corner_flag;
+  int idx, corner_flag;
   char **ptr_loc, **ptr_rem,*cache;
   Integer handle = GA_OFFSET + *g_a;
   int scope,cache_size;
@@ -2892,7 +2878,7 @@ double waitformixedflags (int flag1, int flag2, int *ptr1, int *ptr2) {
 \*/
 logical FATR ga_update6_ghosts_(Integer *g_a)
 {
-  Integer idx, ipx, idir, i, np, handle=GA_OFFSET + *g_a;
+  Integer idx, idir, i, np, handle=GA_OFFSET + *g_a;
   Integer size, buflen, buftot, bufsize, ndim, increment[MAXDIM];
   Integer proc_rem_snd, proc_rem_rcv, pmax;
   Integer msgcnt, length, msglen;
@@ -2906,8 +2892,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   Integer plo_rcv[MAXDIM], phi_rcv[MAXDIM];
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   int stride_snd[MAXDIM], stride_rcv[MAXDIM],count[MAXDIM];
-  int stride_loc[MAXDIM], stride_rem[MAXDIM];
-  int bytes, flag1, flag2, sprocflag, rprocflag;
+  int stride_rem[MAXDIM];
+  int flag1, flag2, sprocflag, rprocflag;
   char *ptr_snd, *ptr_rcv;
   char *ptr_loc, *ptr_rem;
   char send_name[32], rcv_name[32];
@@ -3645,6 +3631,7 @@ logical ga_set_ghost_info_(Integer *g_a)
     return ga_set_update4_info_(g_a);
 #endif
   }
+  return TRUE;
 }
 
 /*\ SET FLAG ON WHETHER OR NOT TO UPDATE GHOST CELL CORNER DATA
