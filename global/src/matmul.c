@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.32 2003-10-23 09:19:05 manoj Exp $ */
+/* $Id: matmul.c,v 1.33 2003-10-23 14:43:18 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -11,10 +11,10 @@
 /* some optimization macros */
 #define KCHUNK_OPTIMIZATION 0 /* This Opt performing well only for m=1000;n=1000'k=2000 kinda cases and not for the opposite*/
 
-/* OPTIMIZATIONS FLAGS. To unset an optimization, replace SET by UNSET) */
-static short int CYCLIC_DISTR_OPT_FLAG  = 1;
-static short int CONTIG_CHUNKS_OPT_FLAG = 1;
-static short int DIRECT_ACCESS_OPT_FLAG = 1;
+/* Optimization flags: Initialized everytime in ga_matmul() */
+static short int CYCLIC_DISTR_OPT_FLAG  = SET;
+static short int CONTIG_CHUNKS_OPT_FLAG = SET;
+static short int DIRECT_ACCESS_OPT_FLAG = SET;
 
 static int max3(int ichunk, int jchunk, int kchunk) {
   if(ichunk>jchunk) return MAX(ichunk,kchunk);
@@ -68,24 +68,53 @@ static int set_task_id(short int irregular, Integer nproc) {
     return 0;
 }
 
-static void 
+static short int
 gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB, 
-		  Integer istart, Integer jstart, Integer kstart, 
-		  Integer iend, Integer jend, Integer kend, Integer Ichunk, 
-		  Integer Jchunk, Integer Kchunk, int *max_tasks, Integer *g_a) {
+		  task_list_t *state, Integer istart, Integer jstart,
+		  Integer kstart, Integer iend, Integer jend, Integer kend, 
+		  Integer Ichunk, Integer Jchunk, Integer Kchunk, 
+		  int *max_tasks, Integer *g_a) {
     
-    int ii, jj;
-    short int do_put;
+    int ii, jj, nloops=0;
+    short int do_put, more_chunks_left=0, recovery=0;
     Integer ilo, ihi, jlo, jhi, klo, khi, get_new_B;
+    Integer jstart_=jstart, kstart_=kstart;
     
-    for(ii=jj=0, jlo = jstart; jlo <= jend; jlo += Jchunk) {
+    if(state->lo[0] != -1) recovery = 1;
+
+    nloops = (iend-istart+1)/Ichunk + ( ((iend-istart+1)%Ichunk)?1:0 );
+    if(nloops>MAX_CHUNKS) GA_Error("Increase MAX_CHUNKS value in matmul.h",0L);
+
+    if(recovery) jstart_ = state->lo[0]; /* recovering the previous state */
+    for(ii=jj=0, jlo = jstart_; jlo <= jend; jlo += Jchunk) {
        jhi = MIN(jend, jlo+Jchunk-1);
-       do_put = SET;/* for first shot we can do put, instead of accumulate */
-       for(klo = kstart; klo <= kend; klo += Kchunk) {
+
+       if(recovery) {
+	  do_put = state->do_put;
+	  kstart_ =  state->lo[1];
+       }
+       else do_put = SET; /* for 1st shot we can put, instead of accumulate */
+       
+       for(klo = kstart_; klo <= kend; klo += Kchunk) {
 	  khi = MIN(kend, klo+Kchunk-1); 
 	  get_new_B = TRUE;
 	  
-	  for(ilo = istart; ilo <= iend; ilo += Ichunk){ 
+	  /* set it back after the first loop */
+	  recovery = 0;
+	  jstart_ = jstart;
+	  kstart_ = kstart;
+	  
+	  /* save CURRENT STATE. Saving state before "i" loop helps to avoid 
+	     tracking get_new_B, which is hassle in ga_matmul_regular() */
+	  if(ii+nloops >= MAX_CHUNKS) {
+	     more_chunks_left = 1;
+	     state->lo[0]  = jlo;
+	     state->lo[1]  = klo;
+	     state->do_put   = do_put;
+	     break;
+	  }
+	  
+	  for(ilo = istart; ilo <= iend; ilo += Ichunk){ 	     
 	     ihi = MIN(iend, ilo+Ichunk-1);
 	     taskListA[ii].dim[0] = ihi - ilo + 1; 
 	     taskListA[ii].dim[1] = khi - klo + 1;
@@ -104,13 +133,17 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
 	     }
 	     else taskListA[ii].chunkBId = taskListA[ii-1].chunkBId;
 	     ++ii;
-	     if(ii > MAX_CHUNKS)
-	       ga_error("ga_matmul_patch(): # of chunks > MAX_CHUNKS(1024)",0L);
 	  }
+	  if (more_chunks_left) break;
 	  do_put = UNSET;
        }
+       if (more_chunks_left) break;
     }
+
     *max_tasks = ii;
+
+    /* Optimization disabled if chunks exceeds buffer space */
+    if(more_chunks_left) CYCLIC_DISTR_OPT_FLAG = UNSET;
 
     if(CYCLIC_DISTR_OPT_FLAG) { /* should not be called for irregular matmul */
        int prow, pcol, offset, me = ga_nodeid_();
@@ -119,9 +152,11 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
        offset = (me/prow + me%prow) % pcol;
        for(jj=0, ilo = istart; ilo <= iend; jj++, ilo += Ichunk)
 	  taskListA[jj].do_put = UNSET;
-       for(jj=0, ilo = istart; ilo <= iend; jj++, ilo += Ichunk) 
+       for(jj=0, ilo = istart; ilo <= iend; jj++, ilo += Ichunk)
 	  taskListA[jj+offset].do_put = SET;
     }
+
+    return more_chunks_left;
 }
 
 static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
@@ -460,158 +495,167 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     Integer loC[2]={1,1}, hiC[2]={1,1}, ld[2];
     int g_t, max_tasks=0, shiftA=0, shiftB=0;
     int currA, nextA, currB, nextB; /* "current" and "next" task Ids */
-    task_list_t taskListA[MAX_CHUNKS], taskListB[MAX_CHUNKS]; 
-    short int do_put=UNSET, single_task_flag=UNSET;
+    task_list_t taskListA[MAX_CHUNKS], taskListB[MAX_CHUNKS], state; 
+    short int do_put=UNSET, single_task_flag=UNSET, chunks_left=0;
     DoubleComplex ONE, *a, *b, *c;
     float ONE_F = 1.0;
     int offset=0;
 
     GA_PUSH_NAME("ga_matmul_regular");
+    if(irregular) ga_error("irregular flag set", 0L);
 
-    ONE.real =1.; ONE.imag =0.;
-   
+    ONE.real =1.; ONE.imag =0.;   
     m = *aihi - *ailo +1;
     n = *bjhi - *bjlo +1;
     k = *ajhi - *ajlo +1;
-    a = a_ar[0];
-    b = b_ar[0];
-    c = c_ar[0];
+    state.lo[0] = -1; /* just for first do-while loop */
 
-    if(irregular) ga_error("irregular flag set", 0L);
-    
-    /*****************************************************************
-     * Task list: Collect information of all chunks. Matmul using 
-     * Non-blocking call needs this list 
-     *****************************************************************/
-    g_t = set_task_id(irregular, nproc);
+    do {
 
-    /* to skip accumulate and exploit data locality:
-       get chunks according to "C" matrix distribution*/
-    nga_distribution_(g_c, &me, loC, hiC);
-    gai_get_task_list(taskListA, taskListB, loC[0]-1, loC[1]-1, 0, hiC[0]-1,
-		      hiC[1]-1, k-1, Ichunk, Jchunk, Kchunk, &max_tasks,g_a);
-    currA = nextA = 0;
-    
-    if(DIRECT_ACCESS_OPT_FLAG) {
-       /* check if there is only one task. If so, then it is contiguous */
-       if(max_tasks == 1) {
-	  if( !((hiC[0]-loC[0]+1 <= Ichunk) && (hiC[1]-loC[1]+1 <= Jchunk) &&
-		(k <= Kchunk))) 
-	     ga_error("Invalid task list", 0L);
-	  single_task_flag = SET;
-	  nga_access_ptr(g_c, loC, hiC, &c, ld);
-       }
-    }
-
-    if(CYCLIC_DISTR_OPT_FLAG) {
-       int prow,pcol;
-       prow = GA[GA_OFFSET + *g_a].nblock[0];
-       pcol = GA[GA_OFFSET + *g_a].nblock[1];
-       offset = (me/prow + me%prow) % pcol;
-       currA = nextA = nextA + offset;
-    }
-    
-    /*************************************************
-     * Do the setup & issue non-blocking calls to get 
-     * the first block/chunk I'm gonna work 
-     *************************************************/
-    shiftA=0; shiftB=0;
-    if(nextA < max_tasks) {
-       currB = nextB = taskListA[currA].chunkBId;
-
-       GET_BLOCK(g_a, &taskListA[nextA], a_ar[shiftA], transa, 
-		 ailo, ajlo, &adim_next, &gNbhdlA[shiftA]);
-
-       GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb,
-		 bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
-
-       adim=adim_next; bdim=bdim_next;
-       get_new_B = TRUE;
-    }
-
-    /*************************************************************
-     * Main Parallel DGEMM Loop.
-     *************************************************************/
-    while(nextA < max_tasks) {
-       currA = nextA;
-       currB = taskListA[currA].chunkBId;
-      
-       idim = cdim = taskListA[currA].dim[0];
-       jdim = taskListB[currB].dim[1];
-       kdim = taskListA[currA].dim[1];
-       bdim=bdim_next;
-      
-       /* if beta=0.0 (i.e.if need_scaling=UNSET), then for first shot,
-	  we can do put, instead of accumulate */
-       if(need_scaling == UNSET) do_put = taskListA[currA].do_put; 
-
-       nextA = gai_nxtask(irregular, g_t); /* get the next task id */
-
-       if(CYCLIC_DISTR_OPT_FLAG && nextA < max_tasks) 
-	  nextA = (offset+nextA) % max_tasks;
-
+       /* Inital Settings */
+       a = a_ar[0];
+       b = b_ar[0];
+       c = c_ar[0];
+       do_put = single_task_flag = UNSET;
+       offset = 0;
        
-       /* ---- WAIT till we get the current A & B block ---- */
-       a = a_ar[shiftA];
-       WAIT_GET_BLOCK(&gNbhdlA[shiftA]);
-       if(get_new_B){/*Avoid rereading B if it is same patch as last time*/
-	  get_new_B = FALSE;
-	  b = b_ar[shiftB];
-	  WAIT_GET_BLOCK(&gNbhdlB[shiftB]);
-       }
-
-       /* ---- GET the next A & B block ---- */
-       if(nextA < max_tasks) {
-	  GET_BLOCK(g_a, &taskListA[nextA], a_ar[(shiftA+1)%2], transa, 
-		    ailo, ajlo, &adim_next, &gNbhdlA[(shiftA+1)%2]);
-
-	  nextB = taskListA[nextA].chunkBId;
-	  if(currB != nextB) {
-	     shiftB=((shiftB+1)%2);
-
-	     GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb, 
-		       bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
-	  }
-       }
-       if(currB != nextB) get_new_B = TRUE;
-
-       /* Do the sequential matrix multiply - i.e.BLAS dgemm */
-       GAI_DGEMM(atype, transa, transb, idim, jdim, kdim, alpha, 
-		 a, adim, b, bdim, c, cdim);
-
-       /* Non-blocking Accumulate Operation. Note: skip wait in 1st loop*/
-       i0 = *cilo + taskListA[currA].lo[0];
-       i1 = *cilo + taskListA[currA].hi[0];
-       j0 = *cjlo + taskListB[currB].lo[1];
-       j1 = *cjlo + taskListB[currB].hi[1];
-
-       if(currA < max_tasks) {
-	  if (single_task_flag != SET) {
-	     switch(atype) {
-		case C_FLOAT:
-		   if(do_put==SET) /* Note:do_put is UNSET, if beta!=0.0*/
-		      ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
-		   else
-		      ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
-			      &cdim, &ONE_F);
-		   break;
-		default:
-		   if(do_put==SET) /* i.e.beta ==0.0 */
-		      ga_put_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
-			      &cdim);
-		   else
-		      ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
-			      &cdim,(DoublePrecision*)&ONE);
-		   break;
+       /*****************************************************************
+	* Task list: Collect information of all chunks. Matmul using 
+	* Non-blocking call needs this list 
+	*****************************************************************/
+       g_t = set_task_id(irregular, nproc);
+       
+       /* to skip accumulate and exploit data locality:
+	  get chunks according to "C" matrix distribution*/
+       nga_distribution_(g_c, &me, loC, hiC);
+       chunks_left=gai_get_task_list(taskListA, taskListB, &state,loC[0]-1,
+				     loC[1]-1, 0, hiC[0]-1, hiC[1]-1, k-1,
+				     Ichunk,Jchunk,Kchunk, &max_tasks,g_a);
+       currA = nextA = 0;
+       
+       if(chunks_left) { /* then turn OFF this optimization */
+	  if(DIRECT_ACCESS_OPT_FLAG) {
+	     /* check if there is only one task.If so,then it is contiguous */
+	     if(max_tasks == 1) {
+		if( !((hiC[0]-loC[0]+1 <= Ichunk) &&(hiC[1]-loC[1]+1 <=Jchunk)
+		      && (k <= Kchunk))) 
+		   ga_error("Invalid task list", 0L);
+		single_task_flag = SET;
+		nga_access_ptr(g_c, loC, hiC, &c, ld);
 	     }
 	  }
        }
        
-       /* shift next buffer..toggles between 0 and 1: as we use 2 buffers, 
-	  one for computation and the other for communication (overlap) */
-       shiftA = ((shiftA+1)%2); 
-       adim = adim_next;
-    }
+       if(CYCLIC_DISTR_OPT_FLAG) {
+	  int prow,pcol;
+	  prow = GA[GA_OFFSET + *g_a].nblock[0];
+	  pcol = GA[GA_OFFSET + *g_a].nblock[1];
+	  offset = (me/prow + me%prow) % pcol;
+	  currA = nextA = nextA + offset;
+       }
+       
+       /*************************************************
+	* Do the setup & issue non-blocking calls to get 
+	* the first block/chunk I'm gonna work 
+	*************************************************/
+       shiftA=0; shiftB=0;
+       if(nextA < max_tasks) {
+	  currB = nextB = taskListA[currA].chunkBId;
+	  
+	  GET_BLOCK(g_a, &taskListA[nextA], a_ar[shiftA], transa, 
+		    ailo, ajlo, &adim_next, &gNbhdlA[shiftA]);
+	  
+	  GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb,
+		    bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
+	  
+	  adim=adim_next; bdim=bdim_next;
+	  get_new_B = TRUE;
+       }
+       
+       /*************************************************************
+	* Main Parallel DGEMM Loop.
+	*************************************************************/
+       while(nextA < max_tasks) {
+	  currA = nextA;
+	  currB = taskListA[currA].chunkBId;
+	  
+	  idim = cdim = taskListA[currA].dim[0];
+	  jdim = taskListB[currB].dim[1];
+	  kdim = taskListA[currA].dim[1];
+	  bdim=bdim_next;
+	  
+	  /* if beta=0.0 (i.e.if need_scaling=UNSET), then for first shot,
+	     we can do put, instead of accumulate */
+	  if(need_scaling == UNSET) do_put = taskListA[currA].do_put; 
+	  
+	  nextA = gai_nxtask(irregular, g_t); /* get the next task id */
+	  
+	  if(CYCLIC_DISTR_OPT_FLAG && nextA < max_tasks) 
+	     nextA = (offset+nextA) % max_tasks;
+	  
+	  
+	  /* ---- WAIT till we get the current A & B block ---- */
+	  a = a_ar[shiftA];
+	  WAIT_GET_BLOCK(&gNbhdlA[shiftA]);
+	  if(get_new_B){/*Avoid rereading B if it is same patch as last time*/
+	     get_new_B = FALSE;
+	     b = b_ar[shiftB];
+	     WAIT_GET_BLOCK(&gNbhdlB[shiftB]);
+	  }
+	  
+	  /* ---- GET the next A & B block ---- */
+	  if(nextA < max_tasks) {
+	     GET_BLOCK(g_a, &taskListA[nextA], a_ar[(shiftA+1)%2], transa, 
+		       ailo, ajlo, &adim_next, &gNbhdlA[(shiftA+1)%2]);
+	     
+	     nextB = taskListA[nextA].chunkBId;
+	     if(currB != nextB) {
+		shiftB=((shiftB+1)%2);
+		
+		GET_BLOCK(g_b, &taskListB[nextB], b_ar[shiftB], transb, 
+			  bilo, bjlo, &bdim_next, &gNbhdlB[shiftB]);
+	     }
+	  }
+	  if(currB != nextB) get_new_B = TRUE;
+	  
+	  /* Do the sequential matrix multiply - i.e.BLAS dgemm */
+	  GAI_DGEMM(atype, transa, transb, idim, jdim, kdim, alpha, 
+		    a, adim, b, bdim, c, cdim);
+	  
+	  /* Non-blocking Accumulate Operation. Note: skip wait in 1st loop*/
+	  i0 = *cilo + taskListA[currA].lo[0];
+	  i1 = *cilo + taskListA[currA].hi[0];
+	  j0 = *cjlo + taskListB[currB].lo[1];
+	  j1 = *cjlo + taskListB[currB].hi[1];
+	  
+	  if(currA < max_tasks) {
+	     if (single_task_flag != SET) {
+		switch(atype) {
+		   case C_FLOAT:
+		      if(do_put==SET) /* Note:do_put is UNSET, if beta!=0.0*/
+			 ga_put_(g_c, &i0, &i1, &j0, &j1, (float *)c, &cdim);
+		      else
+			 ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
+				 &cdim, &ONE_F);
+		      break;
+		   default:
+		      if(do_put==SET) /* i.e.beta ==0.0 */
+			 ga_put_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
+				 &cdim);
+		      else
+			 ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
+				 &cdim,(DoublePrecision*)&ONE);
+		      break;
+		}
+	     }
+	  }
+	  
+	  /* shift next buffer..toggles between 0 and 1: as we use 2 buffers, 
+	     one for computation and the other for communication (overlap) */
+	  shiftA = ((shiftA+1)%2); 
+	  adim = adim_next;
+       }
+    } while(chunks_left);
    
     GA_POP_NAME;
 }
@@ -841,6 +885,11 @@ void ga_matmul(transa, transb, alpha, beta,
     short int need_scaling=SET,use_NB_matmul=SET;
     short int irregular=UNSET, memory_flag=UNSET;
     
+    /* OPTIMIZATIONS FLAGS. To unset an optimization, replace SET by UNSET) */
+    CYCLIC_DISTR_OPT_FLAG  = SET;
+    CONTIG_CHUNKS_OPT_FLAG = SET;
+    DIRECT_ACCESS_OPT_FLAG = SET;
+
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)ga_sync_();
