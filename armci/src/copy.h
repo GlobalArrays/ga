@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.64 2004-04-22 22:08:58 manoj Exp $ */
+/* $Id: copy.h,v 1.65 2004-04-30 21:18:38 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -42,7 +42,7 @@
 
 #   include "lapidefs.h"
 
-#elif defined(_CRAYMPP) || defined(QUADRICS)
+#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1)
 #ifdef CRAY
 #   include <mpp/shmem.h>
 #else
