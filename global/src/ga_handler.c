@@ -1,4 +1,4 @@
-#if defined(NX) || defined(SP1)
+#if defined(NX) || defined(SP1) || defined(SP)
 
 #include "global.h"
 #include "globalp.h"
@@ -33,7 +33,7 @@ void ga_init_handler(char *buffer, long lenbuf) /*Also called in ga_initialize*/
 
 
 
-#elif defined(SP1)
+#elif defined(SP1)||defined(SP)
 /******************** SP interrupt receive stuff *************/
 
 static long  requesting_node;
@@ -64,10 +64,17 @@ static void ga_handler(int *pid)
 {
 size_t msglen;
 
-  mpc_wait(pid, &msglen);
+# ifdef SP1
+    mpc_wait(pid, &msglen);
+# endif
 
   /* fprintf(stderr,"in handler: msg from %d\n",requesting_node); */
   ga_SERVER(requesting_node);
+
+# ifdef SP
+    mpc_wait(pid, &msglen); /*under AIX4 version of MPL can wait after handler*/ 
+# endif
+
   ga_init_handler((char*)MessageRcv, TOT_MSG_SIZE );
   /* fprintf(stderr,"leaving handler\n"); */
 }

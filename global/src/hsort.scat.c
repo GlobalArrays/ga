@@ -1,7 +1,81 @@
+/**************************************************************************\
+ 
+ Sort routines for scatter and gather.
+ scatter requires sorting of index and value arrays.
+ gather requires sorting of index arrays only.
+
+\**************************************************************************/
+
+  
 #include "types.f2c.h"
+#include "macommon.h"
+extern void ga_error();
 
 #define GT(a,b) (*(a) > *(b))
 #define GE(a,b) (*(a) >= *(b))
+
+
+#define INDEX_SORT(base,pn,SWAP){\
+  unsigned gap, g;\
+  Integer *p, *q, n=*pn;\
+  Integer *hi, *base0=base - 1;\
+\
+  gap = n >>1;\
+  hi = base0 + gap + gap;\
+  if (n & 1) hi ++;\
+\
+  for ( ; gap != 1; gap--) {\
+    for (p = base0 + (g = gap) ; (q = p + g) <= hi ; p = q) {\
+      g += g;\
+      if (q != hi && GT(q+1, q)) {\
+        q++;\
+        g++;\
+      }\
+      if (GE(p,q)) break;\
+      SWAP(p , q);\
+    }\
+  }\
+\
+  for ( ; hi != base ; hi--) {\
+    p = base;\
+    for (g = 1 ; (q = p + g) <= hi ; p = q) {\
+      g += g;\
+      if (q != hi && GT(q+1,q)) {\
+        q++;\
+        g++;\
+      }\
+      if (GE(p,q)) break;\
+      SWAP(p, q);\
+    }\
+    SWAP(base, hi);\
+  }\
+}
+
+
+
+
+void ga_sort_scat_dcpl_(pn, v, i, j, base)
+     Integer *pn;
+     DoubleComplex *v;
+     Integer *i;
+     Integer *j;
+     Integer *base;
+{
+
+  if (*pn < 2) return;
+
+#  define SWAP(a,b) { \
+    Integer ltmp; \
+    DoubleComplex dtmp; \
+    int ia = a - base; \
+    int ib = b - base; \
+    ltmp=*a; *a=*b; *b=ltmp; \
+    dtmp=v[ia]; v[ia]=v[ib]; v[ib]=dtmp; \
+    ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
+    ltmp=j[ia]; j[ia]=j[ib]; j[ib]=ltmp; \
+  }
+  INDEX_SORT(base,pn,SWAP);
+}
 
 
 
@@ -12,57 +86,21 @@ void ga_sort_scat_dbl_(pn, v, i, j, base)
      Integer *j;
      Integer *base;
 {
-  Integer *p, *q, *base0=base - 1, *hi, n=*pn;
+  
+  if (*pn < 2) return;
 
-  unsigned gap , g;
-  if (n < 2)
-    return;
-  
-  gap = n >>1;
-  hi = base0 + gap + gap;
-  if (n & 1)
-    hi ++;
-  
-#define SWAP(a,b) { \
-  Integer ltmp; \
-  DoublePrecision dtmp; \
-  int ia = a - base; \
-  int ib = b - base; \
-  ltmp=*a; *a=*b; *b=ltmp; \
-  dtmp=v[ia]; v[ia]=v[ib]; v[ib]=dtmp; \
-  ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
-  ltmp=j[ia]; j[ia]=j[ib]; j[ib]=ltmp; \
-}
-
-  for ( ; gap != 1; gap--) {
-    for (p = base0 + (g = gap) ; (q = p + g) <= hi ; p = q) {
-      g += g;
-      if (q != hi && GT(q+1, q)) {
-	q++;
-	g++;
-      }
-      if (GE(p,q))
-	break;
-      
-      SWAP(p , q);
-    }
+#  undef SWAP  
+#  define SWAP(a,b) { \
+    Integer ltmp; \
+    DoublePrecision dtmp; \
+    int ia = a - base; \
+    int ib = b - base; \
+    ltmp=*a; *a=*b; *b=ltmp; \
+    dtmp=v[ia]; v[ia]=v[ib]; v[ib]=dtmp; \
+    ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
+    ltmp=j[ia]; j[ia]=j[ib]; j[ib]=ltmp; \
   }
-  
-  for ( ; hi != base ; hi--) {
-    p = base;
-    for (g = 1 ; (q = p + g) <= hi ; p = q) {
-      g += g;
-      if (q != hi && GT(q+1,q)) {
-	q++;
-	g++;
-      }
-      if (GE(p,q))
-	break;
-      
-      SWAP(p, q);
-    }
-    SWAP(base, hi);
-  }
+  INDEX_SORT(base,pn,SWAP);
 }
 
 
@@ -73,57 +111,39 @@ void ga_sort_scat_int_(pn, v, i, j, base)
      Integer *j;
      Integer *base;
 {
-  Integer *p, *q, *base0=base - 1, *hi, n=*pn;
 
-  unsigned gap , g;
-  if (n < 2)
-    return;
-  
-  gap = n >>1;
-  hi = base0 + gap + gap;
-  if (n & 1)
-    hi ++;
-#undef SWAP  
-#define SWAP(a,b) { \
-  Integer ltmp; \
-  Integer dtmp; \
-  int ia = a - base; \
-  int ib = b - base; \
-  ltmp=*a; *a=*b; *b=ltmp; \
-  dtmp=v[ia]; v[ia]=v[ib]; v[ib]=dtmp; \
-  ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
-  ltmp=j[ia]; j[ia]=j[ib]; j[ib]=ltmp; \
+  if (*pn < 2) return;
+
+#  undef SWAP  
+#  define SWAP(a,b) { \
+    Integer ltmp; \
+    Integer dtmp; \
+    int ia = a - base; \
+    int ib = b - base; \
+    ltmp=*a; *a=*b; *b=ltmp; \
+    dtmp=v[ia]; v[ia]=v[ib]; v[ib]=dtmp; \
+    ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
+    ltmp=j[ia]; j[ia]=j[ib]; j[ib]=ltmp; \
+  }
+  INDEX_SORT(base,pn,SWAP);
 }
 
-  for ( ; gap != 1; gap--) {
-    for (p = base0 + (g = gap) ; (q = p + g) <= hi ; p = q) {
-      g += g;
-      if (q != hi && GT(q+1, q)) {
-	q++;
-	g++;
-      }
-      if (GE(p,q))
-	break;
-      
-      SWAP(p , q);
-    }
-  }
-  
-  for ( ; hi != base ; hi--) {
-    p = base;
-    for (g = 1 ; (q = p + g) <= hi ; p = q) {
-      g += g;
-      if (q != hi && GT(q+1,q)) {
-	q++;
-	g++;
-      }
-      if (GE(p,q))
-	break;
-      
-      SWAP(p, q);
-    }
-    SWAP(base, hi);
-  }
+
+
+void ga_sort_scat(pn, v, i, j, base, type)
+     Integer *pn;
+     Void    *v;
+     Integer *i;
+     Integer *j;
+     Integer *base;
+     Integer type;
+{ 
+   switch (type){
+     case MT_F_DBL:  ga_sort_scat_dbl_(pn, (DoublePrecision*)v, i,j,base);break;
+     case MT_F_DCPL: ga_sort_scat_dcpl_(pn, (DoubleComplex*)v, i,j,base); break;
+     case MT_F_INT:  ga_sort_scat_int_(pn, (Integer*)v, i, j, base); break;
+     default:        ga_error("ERROR:ga_sort_scat: wrong type",type);
+   } 
 }
 
 
@@ -134,55 +154,17 @@ void ga_sort_gath_(pn, i, j, base)
      Integer *j;
      Integer *base;
 {
-  Integer *p, *q, *base0=base - 1, *hi, n=*pn;
 
-  unsigned gap , g;
-  if (n < 2)
-    return;
+  if (*pn < 2) return;
   
-  gap = n >>1;
-  hi = base0 + gap + gap;
-  if (n & 1)
-    hi ++;
-  
-#undef SWAP  
-#define SWAP(a,b) { \
-  Integer ltmp; \
-  int ia = a - base; \
-  int ib = b - base; \
-  ltmp=*a; *a=*b; *b=ltmp; \
-  ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
-  ltmp=j[ia]; j[ia]=j[ib]; j[ib]=ltmp; \
-}
-
-  for ( ; gap != 1; gap--) {
-    for (p = base0 + (g = gap) ; (q = p + g) <= hi ; p = q) {
-      g += g;
-      if (q != hi && GT(q+1, q)) {
-	q++;
-	g++;
-      }
-      if (GE(p,q))
-	break;
-      
-      SWAP(p , q);
-    }
+#  undef SWAP  
+#  define SWAP(a,b) { \
+    Integer ltmp; \
+    int ia = a - base; \
+    int ib = b - base; \
+    ltmp=*a; *a=*b; *b=ltmp; \
+    ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
+    ltmp=j[ia]; j[ia]=j[ib]; j[ib]=ltmp; \
   }
-  
-  for ( ; hi != base ; hi--) {
-    p = base;
-    for (g = 1 ; (q = p + g) <= hi ; p = q) {
-      g += g;
-      if (q != hi && GT(q+1,q)) {
-	q++;
-	g++;
-      }
-      if (GE(p,q))
-	break;
-      
-      SWAP(p, q);
-    }
-    SWAP(base, hi);
-  }
+  INDEX_SORT(base,pn,SWAP);
 }
-

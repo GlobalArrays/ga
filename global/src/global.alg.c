@@ -8,6 +8,7 @@
 
  Developed: 01.16.94 by Jarek Nieplocha
  Modified:  04.28.94 -- changed base arrays addressing
+ Modified:  06.11.96 -- added support for complex datatype
 \************************************************************************/
 
  
@@ -39,22 +40,35 @@ Integer index;
    ga_inquire_(g_a, &type, &dim1, &dim2);
    ga_distribution_(g_a, &me, &ilo, &ihi, &jlo, &jhi);
 
-   if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
+   if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0 )
+                  ga_error("null pointer for base array",0L);
+   if (DCPL_MB == (DoubleComplex*)0 )
                   ga_error("null pointer for base array",0L);
 
    if (  ihi>0 && jhi>0 ){
       ga_access_(g_a, &ilo, &ihi, &jlo, &jhi,  &index, &ld);
       index --;  /* Fortran to C correction of starting address */ 
 
-      if(type==MT_F_DBL){
-         for(j=0; j<jhi-jlo+1; j++)
-            for(i=0; i<ihi-ilo+1; i++)
-                 DBL_MB[index +j*ld + i]  = 0.; 
-      }else if(type==MT_F_INT){
-         for(j=0; j<jhi-jlo+1; j++)
-            for(i=0; i<ihi-ilo+1; i++)
-                 INT_MB[index +j*ld + i ]  = 0; 
-      }else ga_error(" wrong data type ",0L);
+      switch (type){
+        case MT_F_INT:
+           for(j=0; j<jhi-jlo+1; j++)
+              for(i=0; i<ihi-ilo+1; i++)
+                   INT_MB[index +j*ld + i ]  = 0; 
+           break;
+        case MT_F_DCPL:
+           for(j=0; j<jhi-jlo+1; j++)
+              for(i=0; i<ihi-ilo+1; i++){
+                   DCPL_MB[index +j*ld + i].real  = 0.; 
+                   DCPL_MB[index +j*ld + i].imag  = 0.; 
+              }
+           break;
+        case MT_F_DBL:
+           for(j=0; j<jhi-jlo+1; j++)
+              for(i=0; i<ihi-ilo+1; i++)
+                   DBL_MB[index +j*ld + i]  = 0.; 
+           break;
+        default: ga_error(" wrong data type ",type);
+      }
 
       /* release access to the data */
       ga_release_update_(g_a, &ilo, &ihi, &jlo, &jhi);
@@ -69,8 +83,6 @@ Integer index;
    GA_POP_NAME;
    ga_sync_();
 }
-
-
 
 
 DoublePrecision ga_ddot_(g_a, g_b)
@@ -104,7 +116,7 @@ Integer     index_a, index_b;
    if (adim1!=bdim1 || adim2 != bdim2)
             ga_error("arrays not conformant", 0L);
 
-   if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
+   if (DBL_MB == (DoublePrecision*)0 )
                   ga_error(" null pointer for base array",0L);
 
    ga_distribution_(g_a, &me, &ailo, &aihi, &ajlo, &ajhi);
@@ -158,9 +170,100 @@ Integer     index_a, index_b;
 }
  
 
+/*DoubleComplex ga_zdot_(g_a, g_b)*/
+void gai_dot_(g_a, g_b, retval)
+        Integer *g_a, *g_b;
+        DoubleComplex *retval;
+{
+Integer  atype, adim1, adim2, btype, bdim1, bdim2, ald, bld;
+Integer  ailo,aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi;
+register Integer i,j;
+Integer  type,len, me;
+DoubleComplex  sum;
+Integer     index_a, index_b;
+
+   ga_sync_();
+
+#ifdef GA_TRACE
+       trace_stime_();
+#endif
+
+   me = ga_nodeid_();
+
+   ga_check_handle(g_a, "ga_ddot");
+   ga_check_handle(g_b, "ga_ddot");
+
+   GA_PUSH_NAME("ga_ddot");
+   ga_inquire_(g_a,  &atype, &adim1, &adim2);
+   ga_inquire_(g_b,  &btype, &bdim1, &bdim2);
+
+   if(atype != btype || atype != MT_F_DCPL)
+        ga_error("types not correct", 0L);
+
+   if (adim1!=bdim1 || adim2 != bdim2)
+            ga_error("arrays not conformant", 0L);
+
+   if (DCPL_MB == (DoubleComplex*)0 )
+                  ga_error(" null pointer for base array",0L);
+
+   ga_distribution_(g_a, &me, &ailo, &aihi, &ajlo, &ajhi);
+   ga_distribution_(g_b, &me, &bilo, &bihi, &bjlo, &bjhi);
+
+   if (ailo!=bilo || aihi != bihi || ajlo!=bjlo || ajhi != bjhi){
+         /*
+         fprintf(stderr,"\nme =%d: %d-%d %d-%d vs %d-%d %d-%d dim:%dx%d\n",me,
+                ailo,aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi,adim1,adim2);
+         */
+         ga_error("distributions not identical",0L);
+   }
+
+   sum.real = 0.;
+   sum.imag = 0.;
+   if (  aihi>0 && ajhi>0 ){
+       ga_access_(g_a, &ailo, &aihi, &ajlo, &ajhi,  &index_a, &ald);
+       if(g_a == g_b){
+          index_b = index_a; bld =ald;
+       }else
+       ga_access_(g_b, &bilo, &bihi, &bjlo, &bjhi,  &index_b, &bld);
+
+       index_a --;  /* Fortran to C correction of starting address */
+       index_b --;  /* Fortran to C correction of starting address */
+
+
+       /* compute "local" contribution to the dot product */
+       for(j=0; j<ajhi-ajlo+1; j++)
+          for(i=0; i<aihi-ailo+1; i++){
+                  DoubleComplex a = DCPL_MB[index_a +j*ald + i];
+                  DoubleComplex b = DCPL_MB[index_b +j*bld + i];
+                  sum.real += a.real*b.real  - b.imag * a.imag;
+                  sum.imag += a.imag*b.real  + b.imag * a.real;
+
+       }
+       /* release access to the data */
+       ga_release_(g_a, &ailo, &aihi, &ajlo, &ajhi);
+       ga_release_(g_b, &bilo, &bihi, &bjlo, &bjhi);
+   }
+
+   type = GA_TYPE_GSM; len =2; /* take advantage of DoubleComplex layout */
+   ga_dgop_(&type, &sum, &len, "+",1); 
+
+#ifdef GA_TRACE
+   trace_etime_();
+   op_code = GA_OP_DDT;
+   trace_genrec_(g_a, &ailo, &aihi, &ajlo, &ajhi, &op_code);
+   if(g_a != g_b) trace_genrec_(g_b, &bilo, &bihi, &bjlo, &bjhi, &op_code);
+#endif
+
+   GA_POP_NAME;
+   ga_sync_();
+
+   *retval = sum;
+/*   return (sum);*/
+}
+
   
  
-void ga_dscal_(g_a, alpha)
+void ga_scale_(g_a, alpha)
         Integer *g_a;
         DoublePrecision *alpha;
 {
@@ -176,14 +279,13 @@ Integer index;
 
    me = ga_nodeid_();
 
-   GA_PUSH_NAME("ga_dscal");
+   GA_PUSH_NAME("ga_scale");
    ga_inquire_(g_a, &type, &dim1, &dim2);
-
-   if(type != MT_F_DBL)
-        ga_error("type not correct", 0L);
 
    if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
                   ga_error("null pointer for base array", 0L);
+   if (DCPL_MB == (DoubleComplex*)0 )
+                  ga_error("null pointer for base array",0L);
 
    ga_distribution_(g_a, &me, &ilo, &ihi, &jlo, &jhi);
 
@@ -193,9 +295,28 @@ Integer index;
 
   
       /* scale local part of g_a */
-      for(j=0; j<jhi-jlo+1; j++)
-         for(i=0; i<ihi-ilo+1; i++)
-             DBL_MB[index +j*ld + i]  *= *alpha; 
+      switch(type){
+         case MT_F_DBL:
+              for(j=0; j<jhi-jlo+1; j++)
+                 for(i=0; i<ihi-ilo+1; i++)
+                     DBL_MB[index +j*ld + i]  *= *(DoublePrecision*)alpha;
+              break;
+         case MT_F_DCPL:
+              for(j=0; j<jhi-jlo+1; j++)
+                 for(i=0; i<ihi-ilo+1; i++){
+                     DoubleComplex elem = DCPL_MB[index +j*ld + i];
+                     DoubleComplex scale= *(DoubleComplex*)alpha;
+                     DCPL_MB[index +j*ld + i].real = 
+                             scale.real*elem.real  - elem.imag * scale.imag; 
+                     DCPL_MB[index +j*ld + i].imag = 
+                             scale.imag*elem.real  + elem.imag * scale.real;
+                 }
+              break;
+         case MT_F_INT:
+              for(j=0; j<jhi-jlo+1; j++)
+                 for(i=0; i<ihi-ilo+1; i++)
+                     INT_MB[index +j*ld + i]  *= *(Integer*)alpha;
+      }
 
       /* release access to the data */
       ga_release_update_(g_a, &ilo, &ihi, &jlo, &jhi);
@@ -214,9 +335,9 @@ Integer index;
 
 
 
-void ga_dadd_(alpha, g_a, beta, g_b,g_c)
+void ga_add_(alpha, g_a, beta, g_b,g_c)
         Integer *g_a, *g_b, *g_c;
-        DoublePrecision *alpha, *beta;
+        Void *alpha, *beta;
 {
 Integer atype, adim1, adim2, ald;
 Integer btype, bdim1, bdim2, bld;
@@ -241,19 +362,20 @@ Integer index_a, index_b, index_c;
    ga_check_handle(g_b, "ga_dadd");
    ga_check_handle(g_c, "ga_dadd");
 
-   GA_PUSH_NAME("ga_dadd");
+   GA_PUSH_NAME("ga_add");
    ga_inquire_(g_a,  &atype, &adim1, &adim2);
    ga_inquire_(g_b,  &btype, &bdim1, &bdim2);
    ga_inquire_(g_c,  &ctype, &cdim1, &cdim2);
 
-   if(atype != btype || atype != ctype || atype != MT_F_DBL)
-        ga_error("types not correct", 0L);
+   if(atype != btype || atype != ctype) ga_error("type mismatch ", 0L);
 
    if (adim1!=bdim1 || adim2 != bdim2 || adim1!=cdim1 || adim2 != cdim2)
             ga_error("arrays not conformant", 0L);
 
    if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
                   ga_error(": null pointer for base array",0L);
+   if (DCPL_MB == (DoubleComplex*)0 )
+                  ga_error("null pointer for base array",0L);
 
    ga_distribution_(g_a, &me, &ailo, &aihi, &ajlo, &ajhi);
    ga_distribution_(g_b, &me, &bilo, &bihi, &bjlo, &bjhi);
@@ -282,11 +404,34 @@ Integer index_a, index_b, index_c;
        index_c --;  /* Fortran to C correction of starting address */ 
 
        /* operation on the "local" piece of data */
-       for(j=0; j<ajhi-ajlo+1; j++)
-          for(i=0; i<aihi-ailo+1; i++){
-              DBL_MB[index_c +j*cld + i]  =
-                 *alpha * DBL_MB[index_a +j*ald + i]  +
-                 *beta  * DBL_MB[index_b +j*bld + i];
+       switch(atype){
+         case MT_F_DBL:
+              for(j=0; j<ajhi-ajlo+1; j++)
+                  for(i=0; i<aihi-ailo+1; i++)
+                      DBL_MB[index_c +j*cld + i]  =
+                         *(DoublePrecision*)alpha * DBL_MB[index_a +j*ald + i] +
+                         *(DoublePrecision*)beta  * DBL_MB[index_b +j*bld + i];
+              break;
+         case MT_F_DCPL:
+              for(j=0; j<ajhi-ajlo+1; j++)
+                  for(i=0; i<aihi-ailo+1; i++){
+                     DoubleComplex a = DCPL_MB[index_a +j*ald + i];
+                     DoubleComplex b = DCPL_MB[index_b +j*bld + i];
+                     DoubleComplex x= *(DoubleComplex*)alpha;
+                     DoubleComplex y= *(DoubleComplex*)beta;
+                     /* c = x*a + y*b */
+                     DCPL_MB[index_c +j*cld + i].real = x.real*a.real - 
+                             x.imag*a.imag + y.real*b.real - y.imag*b.imag;
+                     DCPL_MB[index_c +j*cld + i].imag = x.real*a.imag + 
+                             x.imag*a.real + y.real*b.imag + y.imag*b.real;
+                  }
+              break;
+         case MT_F_INT:
+              for(j=0; j<ajhi-ajlo+1; j++)
+                  for(i=0; i<aihi-ailo+1; i++)
+                      INT_MB[index_c +j*cld + i]  =
+                         *(Integer*)alpha * INT_MB[index_a +j*ald + i] +
+                         *(Integer*)beta  * INT_MB[index_b +j*bld + i];
        }
 
        /* release access to the data */

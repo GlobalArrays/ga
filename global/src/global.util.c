@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.13 1996-03-20 01:04:40 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.14 1996-07-19 20:05:40 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -63,12 +63,13 @@ Integer me= ga_nodeid_(), index, ld;
    ga_check_handle(g_a, "ga_copy");
    ga_check_handle(g_b, "ga_copy");
 
-   if(*g_a == *g_b) ga_error("ga_copy: arrays have to different ", 0L);
+   if(*g_a == *g_b) ga_error("ga_copy: arrays have to be different ", 0L);
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != MT_F_DBL && atype != MT_F_INT))
+   if(atype != btype || (atype != MT_F_DBL && atype != MT_F_INT &&
+                         atype != MT_F_DCPL))
                ga_error("ga_copy: wrong types ", 0L);
 
    if(adim1 != bdim1 || adim2!=bdim2 )
@@ -78,10 +79,14 @@ Integer me= ga_nodeid_(), index, ld;
 
    if (  ihi>0 && jhi>0 ){
       ga_access_(g_a, &ilo, &ihi, &jlo, &jhi,  &index, &ld);
-      if(atype == MT_F_DBL)
-           ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, DBL_MB+index-1, &ld);
-      else
+      switch (atype){
+        case MT_F_DBL:
+           ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, DBL_MB+index-1, &ld); break;
+        case MT_F_DCPL:
+           ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, DCPL_MB+index-1, &ld); break;
+        case MT_F_INT:
            ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, INT_MB+index-1, &ld);
+      }
       ga_release_(g_a, &ilo, &ihi, &jlo, &jhi);
    }
 
@@ -108,7 +113,7 @@ void ga_print_patch_(g_a, ilo, ihi, jlo, jhi, pretty)
 #define DEV stdout
 #define BUFSIZE 6
 #define FLEN 80 
-Integer i, j,jj, dim1, dim2, type, ibuf[BUFSIZE], jmax, ld=1 ;
+Integer i, j,jj, dim1, dim2, type, ibuf[BUFSIZE], jmax, ld=1, bufsize ;
 DoublePrecision  dbuf[BUFSIZE];
 char name[FLEN];
 
@@ -128,70 +133,95 @@ char name[FLEN];
      fprintf(DEV,"\n global array: %s[%d:%d,%d:%d],  handle: %d \n",
              name, *ilo, *ihi, *jlo, *jhi, (int)*g_a);
 
+     bufsize = (type==MT_F_DCPL)? BUFSIZE/2 : BUFSIZE;
+
+
      if (!*pretty) {
        for (i=*ilo; i <*ihi+1; i++){
-         for (j=*jlo; j <*jhi+1; j+=BUFSIZE){
-	   jmax = MIN(j+BUFSIZE-1,*jhi);
-	   if(type == MT_F_INT){
-	     ga_get_(g_a, &i, &i, &j, &jmax, ibuf, &ld);
-	     for(jj=0; jj<(jmax-j+1); jj++)
-	       fprintf(DEV," %8d",ibuf[jj]);
-	     
-	   }else if(type == MT_F_DBL){
-	     ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
-	     for(jj=0; jj<(jmax-j+1); jj++)
-	       fprintf(DEV," %12.6f",dbuf[jj]);
-	     
-	   }else ga_error("ga_print: wrong type",0);
-	   
-	 }
-	 fprintf(DEV,"\n");
+         for (j=*jlo; j <*jhi+1; j+=bufsize){
+           jmax = MIN(j+bufsize-1,*jhi);
+           switch(type){
+              case MT_F_INT:
+                   ga_get_(g_a, &i, &i, &j, &jmax, ibuf, &ld);
+                   for(jj=0; jj<(jmax-j+1); jj++)
+                     fprintf(DEV," %8d",ibuf[jj]);
+                   break;
+
+              case MT_F_DBL:
+                   ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
+                   for(jj=0; jj<(jmax-j+1); jj++)
+                     fprintf(DEV," %12.6f",dbuf[jj]);
+                   break;
+
+              case MT_F_DCPL:
+                   ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
+                   for(jj=0; jj<(jmax-j+1); jj+=2)
+                     fprintf(DEV," %12.6f,%12.6f",dbuf[jj], dbuf[jj+1]);
+                   break;
+              default: ga_error("ga_print: wrong type",0);
+           }
+         }
+         fprintf(DEV,"\n");
        }
        fflush(DEV);
-     }
-     else {
-       for (j=*jlo; j<*jhi+1; j+=BUFSIZE){
-	 jmax = MIN(j+BUFSIZE-1,*jhi);
-	 fprintf(DEV, "\n"); fprintf(DEV, "\n");
 
-	 /* Print out column headers */
+     } else {
 
-	 fprintf(DEV, "      ");
-	 if (type == MT_F_INT) {
-	   for (jj=j; jj<=jmax; jj++)
-	     fprintf(DEV, "%6d  ", jj);
-	   fprintf(DEV,"\n      ");
-	   for (jj=j; jj<=jmax; jj++)
-	     fprintf(DEV," -------");
-	 }
-	 else {
-	   for (jj=j; jj<=jmax; jj++)
-	     fprintf(DEV,"%8d    ", jj);
-	   fprintf(DEV,"\n      ");
-	   for (jj=j; jj<=jmax; jj++)
-	     fprintf(DEV," -----------");
-	 }
-	 fprintf(DEV,"\n");
-	   
-	 for (i=*ilo; i <*ihi+1; i++){
-	   fprintf(DEV,"%4i  ",i);
-	   if(type == MT_F_INT){
-	     ga_get_(g_a, &i, &i, &j, &jmax, ibuf, &ld);
-	     for(jj=0; jj<(jmax-j+1); jj++)
-	       fprintf(DEV,"%8d",ibuf[jj]);
-	     
-	   }else if(type == MT_F_DBL){
-	     ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
-	     for(jj=0; jj<(jmax-j+1); jj++)
-	       fprintf(DEV,"%12.6f",dbuf[jj]);
-	     
-	   }else ga_error("ga_print: wrong type",0);
-	   fprintf(DEV,"\n");
-	 }
-       }
-       fflush(DEV);
-     }
-   }
+        for (j=*jlo; j<*jhi+1; j+=bufsize){
+        jmax = MIN(j+bufsize-1,*jhi);
+
+           fprintf(DEV, "\n"); fprintf(DEV, "\n");
+
+           /* Print out column headers */
+
+           fprintf(DEV, "      ");
+           switch(type){
+              case MT_F_INT:
+                   for (jj=j; jj<=jmax; jj++) fprintf(DEV, "%6d  ", jj);
+                   fprintf(DEV,"\n      ");
+                   for (jj=j; jj<=jmax; jj++) fprintf(DEV," -------");
+                   break;
+              case MT_F_DCPL:
+                   for (jj=j; jj<=jmax; jj++) fprintf(DEV,"%20d    ", jj);
+                   fprintf(DEV,"\n      ");
+                   for (jj=j; jj<=2*jmax; jj++) fprintf(DEV," -----------");
+                   break;
+              case MT_F_DBL:
+                   for (jj=j; jj<=jmax; jj++) fprintf(DEV,"%8d    ", jj);
+                   fprintf(DEV,"\n      ");
+                   for (jj=j; jj<=jmax; jj++) fprintf(DEV," -----------");
+           }
+           fprintf(DEV,"\n");
+
+           for(i=*ilo; i <*ihi+1; i++){
+              fprintf(DEV,"%4i  ",i);
+
+              switch(type){
+                 case MT_F_INT:
+                      ga_get_(g_a, &i, &i, &j, &jmax, ibuf, &ld);
+                      for(jj=0; jj<(jmax-j+1); jj++)
+                        fprintf(DEV," %8d",ibuf[jj]);
+                      break;
+
+                 case MT_F_DBL:
+                      ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
+                      for(jj=0; jj<(jmax-j+1); jj++)
+                        fprintf(DEV," %12.6f",dbuf[jj]);
+                      break;
+
+                 case MT_F_DCPL:
+	              ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
+	              for(jj=0; jj<(jmax-j+1); jj+=2)
+	                fprintf(DEV," %12.6f,%12.6f",dbuf[jj], dbuf[jj+1]);
+                      break;
+                 default: ga_error("ga_print: wrong type",0);
+	     }
+	     fprintf(DEV,"\n");
+         }
+         fflush(DEV);
+      }
+    }
+  }
        
   ga_sync_();
 }

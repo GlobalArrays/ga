@@ -16,7 +16,7 @@
 #define DEBUG1 0 
 #define SYNC   1
 
-#if defined SP1
+#if defined SP1 || defined(SP)
 #  include <mpproto.h>
 #elif defined(NX)
 #  if defined(PARAGON)
@@ -107,7 +107,7 @@ Integer ga_msg_probe(type, from)
 #    if defined(NX)
         if (iprobe(-1L))if(infotype()==type)return (1);
         return (0);
-#    elif defined(SP1)
+#    elif defined(SP1) || defined(SP)
      {
        int node, rc, ttype = type, nbytes;
 
@@ -192,7 +192,7 @@ void ga_msg_snd(type, buffer, bytes, to)
 
         csend(type, buffer, bytes, to, 0);
 
-#    elif defined(SP1)
+#    elif defined(SP1) || defined(SP)
      {
         /* need to avoid blocking calls that disable interrupts */
         int status, msgid;
@@ -292,7 +292,7 @@ void ga_msg_rcv(type, buffer, buflen, msglen, from, whofrom)
            }
 #       endif
 
-#    elif defined(SP1)
+#    elif defined(SP1) || defined(SP)
      {
         /* need to avoid blocking calls that disable interrupts */
         int status, msgid, ffrom, ttype=type; 
@@ -379,7 +379,7 @@ msgid_t msgid;
            msgid = irecv(type, buffer, buflen); /* cannot receive by sender */
 #       endif
 
-#    elif defined(SP1)
+#    elif defined(SP1) || defined(SP)
      {
         int status;
         static int ffrom, ttype; /*  MPL writes upon message arrival */
@@ -428,7 +428,7 @@ Integer *whofrom, *msglen;
 /*        *msglen = infocount();*/
 /*        *whofrom = infonode();*/
 
-#    elif defined(SP1)
+#    elif defined(SP1) || defined(SP)
      {
         int status;
         while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
@@ -508,7 +508,7 @@ Void*   buffer;
 
 
 
-#ifdef SP1
+#if defined(SP1) || defined(SP)
 
 /* This paranoia is required to assure that there is always posted receive 
  * for synchronization message. MPL (and EUIH) "in order message delivery"
@@ -569,8 +569,9 @@ void ga_msg_sync_()
        fflush(stdout);
    }
 
-#  if defined SP1
+#  if defined(SP1) || defined(SP)
    {
+      int i_on;
       /* on SP sync needs extra care to avoid conflict with rcvncall */
       Integer group_participate();
       if(first_time){
@@ -585,9 +586,16 @@ void ga_msg_sync_()
         first_time =0;
       }
 
+#     ifdef SP
+              i_on = mpc_queryintr();
+              mpc_disableintr();
+#     endif
       /* one sync should be enough but it is not -- this code needs more work!*/
       sp_sync();
       sp_sync();
+#     ifdef SP
+              if(i_on) mpc_enableintr();
+#     endif
    }
 #  elif defined IWAY
    {
@@ -771,7 +779,7 @@ void ga_brdcst_(type, buf, len, originator)
         /* use TCGMSG as a wrapper to native implementation of broadcast */
         Integer gtype,gfrom,glen;
         gtype =(long) *type; gfrom =(long) *originator; glen =(long) *len;
-#       ifdef SP1
+#       if defined(SP1)|| defined(SP)
             ga_sync_();
             /*            brdcst_(&gtype,buf,&glen,&gfrom);*/
             ga_msg_brdcst(gtype, buf, glen, gfrom);
@@ -857,7 +865,7 @@ void ga_dgop(type, x, n, op)
 #       endif
      } else {
         /* use TCGMSG as a wrapper to native implementation of global ops */
-#       ifdef SP1
+#       if defined(SP1) || defined(SP)
             ga_msg_sync_();
 #       endif
 #       ifdef MPI
@@ -865,7 +873,7 @@ void ga_dgop(type, x, n, op)
 #       else
             dgop_(&type, x, &n, op, (Integer)strlen(op));
 #       endif
-#       ifdef SP1
+#       if defined(SP1) || defined(SP)
             ga_msg_sync_();
 #       endif
      }
@@ -969,7 +977,7 @@ void ga_igop(type, x, n, op)
 #       endif
      } else {
         /* use TCGMSG as a wrapper to native implementation of global ops */
-#       ifdef SP1
+#       if defined(SP1) || defined(SP)
             ga_msg_sync_();
 #       endif
 #       ifdef MPI
@@ -977,7 +985,7 @@ void ga_igop(type, x, n, op)
 #       else
             igop_(&type, x, &n, op, (Integer)strlen(op));
 #       endif
-#       ifdef SP1
+#       if defined(SP1) || defined(SP)
             ga_msg_sync_();
 #       endif
      }

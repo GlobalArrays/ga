@@ -68,7 +68,7 @@ Integer cluster_nodes=0;
 #if !(defined(KSR) || defined(CONVEX) || defined(CRAY_T3D))
     char fence_array[MAX_NPROC];
 #endif
-int GA_fence_set;
+int GA_fence_set=0;
 
 
 /*\ determines cluster structure according to *.p file
@@ -355,7 +355,7 @@ Integer ga_read_inc_local();
                                MessageRcv->ilo, MessageRcv->ihi,
                                MessageRcv->jlo, MessageRcv->jhi,
                                MessageRcv->buffer, offset, ld, toproc,
-                               *(DoublePrecision*)(MessageRcv->buffer+msglen)); 
+                               (DoublePrecision*)(MessageRcv->buffer+msglen)); 
                                /* alpha is at the end*/
                             break;
 
@@ -446,14 +446,14 @@ Integer ga_read_inc_local();
 
                               /* duplicate can fail due to memory limits */
                               if(!ga_duplicate(&g_a, &g_b, array_name))
-                                  fprintf(stderr,"ga_server:duplicate failed\n",
+                                  fprintf(stderr,"duplicate failed\n",
                                            ga_nodeid_());
                             }
                             break;                          
 
           case GA_OP_DES:   /* destroy an array */
                             if (! ga_destroy_(&MessageRcv->g_a))
-                                  ga_error("ga_server: destroy failed", 
+                                  fprintf(stderr,"ga_server:destroy failed%d\n",
                                             MessageRcv->g_a);
                             break;                          
 
@@ -494,7 +494,7 @@ Integer ga_read_inc_local();
 void ga_init_fence_()
 {
     Integer proc;
-    GA_fence_set=1;
+    GA_fence_set++;
 #if defined(KSR) || defined(CONVEX) || defined(CRAY_T3D)
 #else
 # ifdef SYSV
@@ -502,7 +502,8 @@ void ga_init_fence_()
 #   else
        proc = ga_nnodes_()-1;
 # endif
-    for(;proc>=0; proc --) fence_array[proc]=0;
+    /* initialize array if fence has not been initialized  */
+    if(GA_fence_set==1)for(;proc>=0; proc --) fence_array[proc]=0;
 #endif
 }
 
@@ -512,8 +513,8 @@ void ga_init_fence_()
 void ga_fence_()
 {
     Integer proc;
-    if(!GA_fence_set)ga_error("ga_fence: fence not initialized",0);
-    GA_fence_set=0;
+    if(GA_fence_set<1)ga_error("ga_fence: fence not initialized",0);
+    GA_fence_set--;
 #if defined(CRAY_T3D)
     shmem_quiet();
 #elif defined(CONVEX) || defined(KSR)

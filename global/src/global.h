@@ -68,19 +68,21 @@ extern logical ga_memory_limited_ ARGS_(( void));
 extern void ga_copy_patch ARGS_((char *, Integer *, Integer *, Integer *,                                        Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *, Integer *));
 extern DoublePrecision ga_ddot_patch ARGS_((Integer *, char*, Integer *,                                                   Integer *, Integer *, Integer *,                                                Integer *, char*, Integer *,
                                            Integer *, Integer *, Integer *));
-extern void ga_ifill_patch_  ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *));
-extern void ga_dfill_patch_  ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, DoublePrecision *));
-extern void ga_dscal_patch_  ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, DoublePrecision *));
-extern void ga_dadd_patch_   ARGS_((DoublePrecision *, Integer *,                                                   Integer *, Integer *, Integer *, Integer *,                                     DoublePrecision *, Integer *,                                                   Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *, Integer *, Integer *,                                     Integer *  ));
+extern DoubleComplex ga_zdot_patch ARGS_((Integer *, char*, Integer *,                                                   Integer *, Integer *, Integer *,                                                Integer *, char*, Integer *,
+                                           Integer *, Integer *, Integer *));
+extern void ga_fill_patch_  ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, Void *));
+extern void ga_scale_patch_  ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, DoublePrecision *));
+extern void ga_add_patch_   ARGS_((DoublePrecision *, Integer *,                                                   Integer *, Integer *, Integer *, Integer *,                                     DoublePrecision *, Integer *,                                                   Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *, Integer *, Integer *,                                     Integer *  ));
 extern void ga_matmul_patch  ARGS_((char *, char *,                                                                 DoublePrecision *, DoublePrecision *,                                           Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *, Integer *,                                                Integer *, Integer *, Integer *, Integer *, 
                                     Integer *, Integer *, Integer *, Integer*));
 
 extern void ga_copy_   ARGS_((Integer *, Integer *));
 extern void ga_print_  ARGS_((Integer *));
 extern void ga_zero_   ARGS_((Integer *));
-extern void ga_dscal_  ARGS_((Integer *, DoublePrecision *));
-extern void ga_dadd_   ARGS_((DoublePrecision *, Integer *, DoublePrecision *,                                Integer *, Integer *));
+extern void ga_scale_  ARGS_((Integer *, DoublePrecision *));
+extern void ga_add_   ARGS_((Void *, Integer *, Void *,                                Integer *, Integer *));
 extern DoublePrecision ga_ddot_ ARGS_((Integer *, Integer *));
+extern DoublePrecision ga_zdot_ ARGS_((Integer *, Integer *));
 extern void ga_print_patch_ ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *));
 
 extern void ga_summarize     ARGS_((logical*));
@@ -102,6 +104,7 @@ extern void ga_proc_topology_ ARGS_((Integer *g_a, Integer *proc,  Integer *pr,\
 #undef ARGS_
 
 
+extern DoubleComplex   *DCPL_MB;
 extern DoublePrecision *DBL_MB;
 extern Integer         *INT_MB;
 

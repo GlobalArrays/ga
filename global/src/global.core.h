@@ -49,15 +49,14 @@ Integer map[MAX_NPROC][5];               /* used in get/put/acc */
 
 
 #ifdef  CRAY_T3D
-#define ALLIGN_SIZE      32 
+#       define ALLIGN_SIZE      32 
 #else
-#define ALLIGN_SIZE      128
+#       define ALLIGN_SIZE      128
 #endif
 
 #define ERR_STR_LEN 200
-char err_string[ ERR_STR_LEN];         /* string for extended error reporting */
-
-char *GA_name_stack[NAME_STACK_LEN];   /* stack for storing names of GA ops */ 
+char err_string[ ERR_STR_LEN];        /* string for extended error reporting */
+char *GA_name_stack[NAME_STACK_LEN];  /* stack for storing names of GA ops */ 
 int  GA_stack_size=0;
 
 /**************************** MACROS ************************************/
@@ -162,7 +161,7 @@ int  GA_stack_size=0;
 #          define UNLOCK(g_a, proc, x)\
                  shmem_swap(&GA[GA_OFFSET +g_a].lock, 1, (proc))
 #          define NATIVEbarrier barrier
-#      elif defined(NX) || defined(SP1)
+#      elif defined(NX) || defined(SP1) || defined(SP)
 #            include "interrupt.h"
              extern Integer in_handler;
              long oldmask;
@@ -198,6 +197,7 @@ int  GA_stack_size=0;
 
 
 /* MA addressing */
+DoubleComplex   *DCPL_MB;           /* double precision complex base address */
 DoublePrecision *DBL_MB;            /* double precision base address */
 Integer         *INT_MB;            /* integer base address */
 
@@ -244,8 +244,7 @@ extern long Delete_All_Regions ARGS_(( void));
 
 extern Integer MA_push_get ARGS_((Integer, Integer, char*, Integer*, Integer*));
 extern Integer MA_pop_stack ARGS_((Integer));
-extern void ga_sort_scat_dbl_ ARGS_((Integer*,DoublePrecision*,Integer*,                                             Integer*,Integer*));
-extern void ga_sort_scat_int_ ARGS_((Integer*,Integer*,Integer*,Integer*,                                            Integer*));
+extern void ga_sort_scat ARGS_((Integer*,Void*,Integer*,Integer*,Integer*, Integer));
 extern void ga_sort_gath_ ARGS_((Integer*, Integer*, Integer*, Integer*));
 
 

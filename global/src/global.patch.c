@@ -1,10 +1,11 @@
-/*$Id: global.patch.c,v 1.14 1995-11-22 23:07:08 d3g681 Exp $*/
+/*$Id: global.patch.c,v 1.15 1996-07-19 20:05:38 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
 
 #ifdef KSR
 #  define dgemm_ sgemm_
+#  define zgemm_ cgemm_
 #endif
 
 #ifdef CRAY_T3D
@@ -119,11 +120,17 @@ Integer ilos, ihis, jlos, jhis;
 Integer ilod, ihid, jlod, jhid;
 Integer me= ga_nodeid_(), index, ld, i,j;
 Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj; 
+char*   base_addr;
+Integer byte_index;
 
+#        define ITERATOR_2D   for(j = jlos, jj=0; j <= jhis; j++, jj++)\
+                         for(i = ilos, ii =0; i <= ihis; i++, ii++)
+#        define COPY_2D(ADDR_BASE) ADDR_BASE[base+vindex]= \
+                                   ADDR_BASE[index+ ld*jj + ii]
    ga_sync_();
 
    GA_PUSH_NAME("ga_copy_patch");
-   if(*g_a == *g_b) ga_error(" arrays have to different ", 0L);
+   if(*g_a == *g_b) ga_error(" arrays have to be different ", 0L);
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
@@ -140,6 +147,13 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
    if ((*bihi - *bilo + 1) * (*bjhi - *bjlo + 1) !=
        (*aihi - *ailo + 1) * (*ajhi - *ajlo + 1))
        ga_error(" capacities two of patches do not match ", 0L);
+
+   /* set the address of base for each datatype */
+   switch(atype){
+         case  MT_F_DBL: base_addr = (char*) DBL_MB; break;
+         case  MT_F_INT: base_addr = (char*) INT_MB; break;
+         case  MT_F_DCPL: base_addr = (char*) DCPL_MB;
+   }
 
    /* now find out cordinates of a patch of g_a that I own */
    ga_distribution_(g_a, &me, &ilos, &ihis, &jlos, &jhis);
@@ -159,7 +173,8 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
          DEST_INDICES(ihis, jhis, *ailo, *ajlo, (*aihi - *ailo +1),
                       ihid, jhid, *bilo, *bjlo, (*bihi - *bilo +1) );
 
-         ga_put_(g_b, &ilod, &ihid, &jlod, &jhid, DBL_MB+index, &ld); 
+         byte_index = index *  GAsizeofM(atype); 
+         ga_put_(g_b, &ilod, &ihid, &jlod, &jhid, base_addr+byte_index, &ld); 
 
       }else{
         /*** due to generality of this transformation scatter is required ***/
@@ -172,48 +187,36 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
             ga_error(" MA failed-v ", 0L);
 
          base = 0;
-         if(atype == MT_F_DBL ){
-           if (*trans == 'n' || *trans == 'N')  
-             for(j = jlos, jj=0; j <= jhis; j++, jj++)
-               for(i = ilos, ii =0; i <= ihis; i++, ii++){
-                   DEST_INDICES(i, j, *ailo, *ajlo, (*aihi- *ailo +1), 
-                             INT_MB[base+iindex], INT_MB[base+jindex],
-                             *bilo, *bjlo, (*bihi - *bilo +1) );
-                   DBL_MB[base+vindex] = DBL_MB[index+ ld*jj + ii];
-                   base++;
-               }
-           else
-             for(j = jlos, jj=0; j <= jhis; j++, jj++)
-               for(i = ilos, ii =0; i <= ihis; i++, ii++){
-                   DEST_INDICES(j, i, *ajlo, *ailo, (*ajhi - *ajlo +1),
-                                INT_MB[base+iindex], INT_MB[base+jindex],
-                                *bilo, *bjlo, (*bihi - *bilo +1) );
-                   DBL_MB[base+vindex] = DBL_MB[index+ ld*jj + ii];
-                   base++;
-               }
-         }else{
-           if (*trans == 'n' || *trans == 'N')
-             for(j = jlos, jj=0; j <= jhis; j++, jj++)
-               for(i = ilos, ii =0; i <= ihis; i++, ii++){
-                   DEST_INDICES(i, j, *ailo, *ajlo, (*aihi- *ailo +1),
-                             INT_MB[base+iindex], INT_MB[base+jindex],
-                             *bilo, *bjlo, (*bihi - *bilo +1) );
-                   INT_MB[base+vindex] = INT_MB[index+ ld*jj + ii];
-                   base++;
-               }
-           else
-             for(j = jlos, jj=0; j <= jhis; j++, jj++)
-               for(i = ilos, ii =0; i <= ihis; i++, ii++){
-                   DEST_INDICES(j, i, *ajlo, *ailo, (*ajhi - *ajlo +1),
-                                INT_MB[base+iindex], INT_MB[base+jindex],
-                                *bilo, *bjlo, (*bihi - *bilo +1) );
-                   INT_MB[base+vindex] = INT_MB[index+ ld*jj + ii];
-                   base++;
-               }
+
+#        define  COPY_2D_TRANSP(ADDR_BASE)\
+           if (*trans == 'n' || *trans == 'N')\
+              ITERATOR_2D {\
+                   DEST_INDICES(i, j, *ailo, *ajlo, *aihi- *ailo+1,\
+                        INT_MB[base+iindex],\
+                        INT_MB[base+jindex], *bilo, *bjlo, (*bihi - *bilo +1));\
+                   COPY_2D(ADDR_BASE);\
+                   base++; }\
+           else\
+              ITERATOR_2D {\
+                   DEST_INDICES(j,i, *ajlo, *ailo, *ajhi - *ajlo +1,\
+                        INT_MB[base+iindex],\
+                        INT_MB[base+jindex], *bilo, *bjlo, (*bihi - *bilo +1));\
+                   COPY_2D(ADDR_BASE);\
+                   base++; }
+
+         switch(atype){
+         case MT_F_DBL:  COPY_2D_TRANSP(DBL_MB); break; 
+         case MT_F_INT:  COPY_2D_TRANSP(INT_MB); break; 
+         case MT_F_DCPL: COPY_2D_TRANSP(DCPL_MB);
          }
+#        undef ITERATOR_2D
+#        undef COPY_2D
+#        undef COPY_2D_TRANSP
 
          ga_release_(g_a, &ilos, &ihis, &jlos, &jhis);
-         ga_scatter_(g_b, DBL_MB+vindex, INT_MB+iindex, INT_MB+jindex, &nelem);
+         byte_index = vindex *  GAsizeofM(atype); 
+         ga_scatter_(g_b, base_addr+byte_index, 
+                     INT_MB+iindex, INT_MB+jindex, &nelem);
          MA_pop_stack(vhandle);
          MA_pop_stack(jhandle);
          MA_pop_stack(ihandle);
@@ -240,17 +243,14 @@ void ga_copy_patch_(trans, g_a, ailo, aihi, ajlo, ajhi,
 #endif
 
 
-
-/*\ compute DOT PRODUCT of two patches
- *
- *          . different shapes and distributions allowed but not recommended
- *          . the same number of elements required
+/*\ generic dot product routine
 \*/
-DoublePrecision ga_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                              g_b, t_b, bilo, bihi, bjlo, bjhi)
+void gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                   g_b, t_b, bilo, bihi, bjlo, bjhi, retval)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
      char    *t_a, *t_b;                          /* transpose operators */
+     DoublePrecision *retval;
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer iloA, ihiA, jloA, jhiA, indexA, ldA;
@@ -259,18 +259,19 @@ Integer g_A = *g_a, g_B = *g_b;
 Integer me= ga_nodeid_(), i, j, temp_created=0;
 Integer type = GA_TYPE_GSM, len = 1;
 char *tempname = "temp", transp, transp_a, transp_b;
-DoublePrecision  sum = 0.;
+DoublePrecision  sum[2];
 
    ga_sync_();
-   GA_PUSH_NAME("ga_ddot_patch");
+   GA_PUSH_NAME("gai_dot_patch");
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != MT_F_DBL )) ga_error(" wrong types ", 0L); 
+   if(atype != btype ) ga_error(" type mismatch ", 0L);
+   if((atype != MT_F_DBL ) && (atype != MT_F_DCPL)) ga_error(" wrong type", 0L);
 
-  /* check if patch indices and g_a dims match */ 
-   if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2) 
+  /* check if patch indices and g_a dims match */
+   if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
       ga_error(" g_a indices out of range ", *g_a);
 
    /* check if patch indices and g_b dims match */
@@ -284,9 +285,9 @@ DoublePrecision  sum = 0.;
 
    /* is transpose operation required ? */
    /* -- only if for one array transpose operation requested*/
-   transp_a = (*t_a == 'n' || *t_a =='N')? 'n' : 't'; 
-   transp_b = (*t_b == 'n' || *t_b =='N')? 'n' : 't'; 
-   transp   = (transp_a == transp_b)? 'n' : 't'; 
+   transp_a = (*t_a == 'n' || *t_a =='N')? 'n' : 't';
+   transp_b = (*t_b == 'n' || *t_b =='N')? 'n' : 't';
+   transp   = (transp_a == transp_b)? 'n' : 't';
 
    /* compare patches and distributions of g_a and g_b */
    if( !(comp_patch(*ailo, *aihi, *ajlo, *ajhi, *bilo, *bihi, *bjlo, *bjhi) &&
@@ -296,22 +297,24 @@ DoublePrecision  sum = 0.;
           *        - create a temp array that matches distribution of g_a
           *        - copy & reshape patch of g_b into g_B
           */
-         if (!ga_duplicate_(g_a, &g_B, tempname, sizeof(tempname))) 
-            ga_error("ga_ddot_patch: dup failed", 0L);
-           
+         if (!ga_duplicate_(g_a, &g_B, tempname, sizeof(tempname)))
+            ga_error(" duplicate failed", 0L);
+
          ga_copy_patch(&transp, g_b, bilo, bihi, bjlo, bjhi,
-                               &g_B, ailo, aihi, ajlo, ajhi);  
+                               &g_B, ailo, aihi, ajlo, ajhi);
          temp_created = 1;
    }
 
    /* since patches and distributions of g_A and g_B match each other dot them*/
- 
+
    /* find out coordinates of patches of g_A and g_B that I own */
    ga_distribution_(&g_A, &me, &iloA, &ihiA, &jloA, &jhiA);
    ga_distribution_(&g_B, &me, &iloB, &ihiB, &jloB, &jhiB);
 
    if( ! comp_patch(iloA, ihiA, jloA, jhiA, iloB, ihiB, jloB, jhiB))
-         ga_error(" patches mismatch ",0); 
+         ga_error(" patches mismatch ",0);
+
+   sum[0] = 0.; sum[1] = 0.;
 
    /*  determine subsets of my patches to access  */
    if (patch_intersect(ailo, aihi, ajlo, ajhi, &iloA, &ihiA, &jloA, &jhiA)){
@@ -320,59 +323,132 @@ DoublePrecision  sum = 0.;
        indexA --; indexB--;   /* Fortran to C correction of starting address */
 
       /* compute "local" contribution to the dot product */
-       for(j=0; j < jhiA - jloA+1; j++)
-          for(i=0; i< ihiA - iloA +1; i++)
-             sum += DBL_MB[indexA +j*ldA + i]  *
-                    DBL_MB[indexB +j*ldB + i];
+       if(atype == MT_F_DCPL)
+          for(j=0; j < jhiA - jloA+1; j++) for(i=0; i< ihiA - iloA +1; i++){
+                  DoubleComplex a = DCPL_MB[indexA +j*ldA + i];
+                  DoubleComplex b = DCPL_MB[indexB +j*ldB + i];
+                  sum[0] += a.real*b.real  - b.imag * a.imag;
+                  sum[1] += a.imag*b.real  + b.imag * a.real;
+
+          }
+       else
+          for(j=0; j < jhiA - jloA+1; j++) for(i=0; i< ihiA - iloA +1; i++)
+              sum[0] += DBL_MB[indexA +j*ldA + i] * DBL_MB[indexB +j*ldB + i];
 
        /* release access to the data */
         ga_release_(&g_A, &iloA, &ihiA, &jloA, &jhiA);
-        ga_release_(&g_B, &iloA, &ihiA, &jloA, &jhiA); 
+        ga_release_(&g_B, &iloA, &ihiA, &jloA, &jhiA);
    }
 
-   ga_dgop_(&type, &sum, &len, "+",1);
-   ga_sync_();
+   len = (atype == MT_F_DCPL) ? 2 : 1; 
+   ga_dgop_(&type, sum, &len, "+",1);
+   for(i=0;i<len;i++) retval[i]=sum[i];
+
    if(temp_created) ga_destroy_(&g_B);
+   else ga_sync_();
+
+   GA_POP_NAME;
+}
+
+
+
+/*\ compute Double Precision DOT PRODUCT of two patches
+ *
+ *          . different shapes and distributions allowed but not recommended
+ *          . the same number of elements required
+\*/
+DoublePrecision ga_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                              g_b, t_b, bilo, bihi, bjlo, bjhi)
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+     char    *t_a, *t_b;                          /* transpose operators */
+{
+Integer atype, btype, adim1, adim2, bdim1, bdim2;
+DoublePrecision  sum = 0.;
+
+   ga_sync_();
+   GA_PUSH_NAME("ga_ddot_patch");
+
+   ga_inquire_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_(g_b, &btype, &bdim1, &bdim2);
+
+   if(atype != btype || (atype != MT_F_DBL )) ga_error(" wrong types ", 0L);
+
+   gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                 g_b, t_b, bilo, bihi, bjlo, bjhi, &sum);
 
    GA_POP_NAME;
    return (sum);
 }
 
 
+/*\ compute Double Complex DOT PRODUCT of two patches
+ *
+ *          . different shapes and distributions allowed but not recommended
+ *          . the same number of elements required
+\*/
+DoubleComplex ga_zdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                            g_b, t_b, bilo, bihi, bjlo, bjhi)
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+     char    *t_a, *t_b;                          /* transpose operators */
+{
+Integer atype, btype, adim1, adim2, bdim1, bdim2;
+DoubleComplex  sum;
+
+   ga_sync_();
+   GA_PUSH_NAME("ga_zdot_patch");
+
+   ga_inquire_(g_a, &atype, &adim1, &adim2);
+   ga_inquire_(g_b, &btype, &bdim1, &bdim2);
+
+   if(atype != btype || (atype != MT_F_DCPL )) ga_error(" wrong types ", 0L);
+
+   gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                 g_b, t_b, bilo, bihi, bjlo, bjhi, (DoublePrecision*)&sum);
+
+   GA_POP_NAME;
+   return (sum);
+}
+
 
 /*\ compute DOT PRODUCT of two patches
  *  Fortran interface
 \*/
-DoublePrecision ga_ddot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                               g_b, t_b, bilo, bihi, bjlo, bjhi)
+void gai_dot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                    g_b, t_b, bilo, bihi, bjlo, bjhi, retval)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+     DoublePrecision *retval;
 
 #ifdef CRAY_T3D
      _fcd   t_a, t_b;                          /* transpose operators */
-{ return ga_ddot_patch(g_a, _fcdtocp(t_a), ailo, aihi, ajlo, ajhi,
-                       g_b, _fcdtocp(t_b), bilo, bihi, bjlo, bjhi);}
+{  gai_dot_patch(g_a, _fcdtocp(t_a), ailo, aihi, ajlo, ajhi,
+                 g_b, _fcdtocp(t_b), bilo, bihi, bjlo, bjhi, retval);}
 #else 
      char    *t_a, *t_b;                          /* transpose operators */
-{ return ga_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                       g_b, t_b, bilo, bihi, bjlo, bjhi);}
+{ gai_dot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                g_b, t_b, bilo, bihi, bjlo, bjhi, retval);}
 #endif
 
 
-/*\ FILL IN ARRAY WITH VALUE  (integer version) 
+
+
+/*\ FILL IN ARRAY WITH VALUE 
 \*/
-void ga_ifill_patch_(g_a, ilo, ihi, jlo, jhi, val)
-     Integer *g_a, *ilo, *ihi, *jlo, *jhi, *val;
+void ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val)
+     Integer *g_a, *ilo, *ihi, *jlo, *jhi;
+     Void    *val;
 {
 Integer dim1, dim2, type;
 Integer iloA, ihiA, jloA, jhiA, index, ld;
 Integer me= ga_nodeid_(), i, j;
 
    ga_sync_();
-   GA_PUSH_NAME("ga_ifill_patch");
+   GA_PUSH_NAME("ga_fill_patch");
 
    ga_inquire_(g_a,  &type, &dim1, &dim2);
-   if(type != MT_F_INT) ga_error(" wrong array type ", 0L);
+
    ga_distribution_(g_a, &me, &iloA, &ihiA, &jloA, &jhiA);
 
    /*  determine subset of my patch to access  */
@@ -380,48 +456,29 @@ Integer me= ga_nodeid_(), i, j;
        ga_access_(g_a, &iloA, &ihiA, &jloA, &jhiA, &index, &ld);
        index --;  /* Fortran to C correction of starting address */
 
-       for(j=0; j<jhiA-jloA+1; j++)
-            for(i=0; i<ihiA-iloA+1; i++)
-                 INT_MB[index +j*ld + i ]  = *val;
+      switch (type){
+        case MT_F_INT:
+           for(j=0; j<jhiA-jloA+1; j++)
+              for(i=0; i<ihiA-iloA+1; i++)
+                   INT_MB[index +j*ld + i ]  = *(Integer*)val;
+           break;
+        case MT_F_DCPL:
+           for(j=0; j<jhiA-jloA+1; j++)
+              for(i=0; i<ihiA-iloA+1; i++){
+                   DCPL_MB[index +j*ld + i].real  = (*(DoubleComplex*)val).real;
+                   DCPL_MB[index +j*ld + i].imag  = (*(DoubleComplex*)val).imag;
+              }
+           break;
+        case MT_F_DBL:
+           for(j=0; j<jhiA-jloA+1; j++)
+              for(i=0; i<ihiA-iloA+1; i++)
+                   DBL_MB[index +j*ld + i]  = *(DoublePrecision*)val;
+           break;
+        default: ga_error(" wrong data type ",type);
+      }
 
-       /* release access to the data */
-        ga_release_update_(g_a, &iloA, &ihiA, &jloA, &jhiA);
-   }
-
-   GA_POP_NAME;
-   ga_sync_();
-}
-
-
-
-/*\ FILL IN ARRAY WITH VALUE  (DP version)
-\*/
-void ga_dfill_patch_(g_a, ilo, ihi, jlo, jhi, val)
-     Integer *g_a, *ilo, *ihi, *jlo, *jhi; 
-     DoublePrecision     *val;
-{
-Integer dim1, dim2, type;
-Integer iloA, ihiA, jloA, jhiA, index, ld;
-Integer me= ga_nodeid_(), i, j;
-
-   ga_sync_();
-   GA_PUSH_NAME("ga_dfill_patch");
-
-   ga_inquire_(g_a,  &type, &dim1, &dim2);
-   if(type != MT_F_DBL) ga_error("wrong array type ", *g_a);
-   ga_distribution_(g_a, &me, &iloA, &ihiA, &jloA, &jhiA);
-
-   /*  determine subset of my patch to access  */
-   if (patch_intersect(ilo, ihi, jlo, jhi, &iloA, &ihiA, &jloA, &jhiA)){
-       ga_access_(g_a, &iloA, &ihiA, &jloA, &jhiA, &index, &ld);
-       index --;  /* Fortran to C correction of starting address */
-
-       for(j=0; j<jhiA-jloA+1; j++)
-            for(i=0; i<ihiA-iloA+1; i++)
-                 DBL_MB[index +j*ld + i ]  = *val;
-
-       /* release access to the data */
-        ga_release_update_(g_a, &iloA, &ihiA, &jloA, &jhiA);
+      /* release access to the data */
+       ga_release_update_(g_a, &iloA, &ihiA, &jloA, &jhiA);
    }
    GA_POP_NAME;
    ga_sync_();
@@ -431,7 +488,7 @@ Integer me= ga_nodeid_(), i, j;
 
 /*\ SCALE ARRAY 
 \*/
-void ga_dscal_patch_(g_a, ilo, ihi, jlo, jhi, alpha)
+void ga_scale_patch_(g_a, ilo, ihi, jlo, jhi, alpha)
      Integer *g_a, *ilo, *ihi, *jlo, *jhi;
      DoublePrecision     *alpha;
 {
@@ -440,10 +497,9 @@ Integer iloA, ihiA, jloA, jhiA, index, ld, i, j;
 Integer me= ga_nodeid_();
 
    ga_sync_();
-   GA_PUSH_NAME("ga_dscal_patch");
+   GA_PUSH_NAME("ga_scal_patch");
 
    ga_inquire_(g_a,  &type, &dim1, &dim2);
-   if(type != MT_F_DBL) ga_error("wrong array type ", *g_a);
    ga_distribution_(g_a, &me, &iloA, &ihiA, &jloA, &jhiA);
 
    /*  determine subset of my patch to access  */
@@ -451,12 +507,33 @@ Integer me= ga_nodeid_();
        ga_access_(g_a, &iloA, &ihiA, &jloA, &jhiA, &index, &ld);
        index --;  /* Fortran to C correction of starting address */
 
-       for(j=0; j<jhiA-jloA+1; j++)
-            for(i=0; i<ihiA-iloA+1; i++)
-                 DBL_MB[index +j*ld + i ]  *= *alpha;
+      /* scale local part of g_a */
+      switch(type){
+         case MT_F_DBL:
+              for(j=0; j<jhiA-jloA+1; j++)
+                 for(i=0; i<ihiA-iloA+1; i++)
+                     DBL_MB[index +j*ld + i]  *= *(DoublePrecision*)alpha;
+              break;
+         case MT_F_DCPL:
+              for(j=0; j<jhiA-jloA+1; j++)
+                 for(i=0; i<ihiA-iloA+1; i++){
+                     DoubleComplex elem = DCPL_MB[index +j*ld + i];
+                     DoubleComplex scale= *(DoubleComplex*)alpha;
+                     DCPL_MB[index +j*ld + i].real =
+                             scale.real*elem.real  - elem.imag * scale.imag;
+                     DCPL_MB[index +j*ld + i].imag =
+                             scale.imag*elem.real  + elem.imag * scale.real;
+                 }
+              break;
+         case MT_F_INT:
+              for(j=0; j<jhiA-jloA+1; j++)
+                 for(i=0; i<ihiA-iloA+1; i++)
+                     INT_MB[index +j*ld + i]  *= *(Integer*)alpha;
+      }
 
-       /* release access to the data */
-        ga_release_update_(g_a, &iloA, &ihiA, &jloA, &jhiA);
+      /* release access to the data */
+      ga_release_update_(g_a, &iloA, &ihiA, &jloA, &jhiA);
+
    }
    GA_POP_NAME;
    ga_sync_();
@@ -465,7 +542,7 @@ Integer me= ga_nodeid_();
 
 /*\  SCALED ADDITION of two patches
 \*/
-void ga_dadd_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
+void ga_add_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
                     beta,  g_b, bilo, bihi, bjlo, bjhi,
                            g_c, cilo, cihi, cjlo, cjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
@@ -483,14 +560,13 @@ Integer nelem;
 char *tempname = "temp", notrans='n';
 
    ga_sync_();
-   GA_PUSH_NAME("ga_dadd_patch");
+   GA_PUSH_NAME("ga_add_patch");
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
    ga_inquire_(g_c, &ctype, &cdim1, &cdim2);
 
-   if(atype != btype || atype != ctype || atype != MT_F_DBL)
-               ga_error(" types mismatch ", 0L); 
+   if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L); 
 
   /* check if patch indices and dims match */ 
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2) 
@@ -557,10 +633,35 @@ char *tempname = "temp", notrans='n';
        indexA--; indexB--; indexC--;    /* Fortran to C correction of indices*/
 
       /* compute "local" add */
-       for(j=0; j < jhiC - jloC+1; j++)
-          for(i=0; i< ihiC - iloC +1; i++)
-             DBL_MB[indexC +j*ldC + i] = *alpha * DBL_MB[indexA +j*ldA + i]  +
-                                         *beta  * DBL_MB[indexB +j*ldB + i];
+       switch(atype){
+         case MT_F_DBL:
+              for(j=0; j < jhiC - jloC+1; j++)
+                 for(i=0; i< ihiC - iloC +1; i++)
+                      DBL_MB[indexC +j*ldC + i]  =
+                         *(DoublePrecision*)alpha * DBL_MB[indexA +j*ldA + i] +
+                         *(DoublePrecision*)beta  * DBL_MB[indexB +j*ldB + i];
+              break;
+         case MT_F_DCPL:
+              for(j=0; j < jhiC - jloC+1; j++)
+                 for(i=0; i< ihiC - iloC +1; i++){
+                     DoubleComplex a = DCPL_MB[indexA +j*ldA + i];
+                     DoubleComplex b = DCPL_MB[indexB +j*ldB + i];
+                     DoubleComplex x= *(DoubleComplex*)alpha;
+                     DoubleComplex y= *(DoubleComplex*)beta;
+                     /* c = x*a + y*b */
+                     DCPL_MB[indexC +j*ldC + i].real = x.real*a.real -
+                             x.imag*a.imag + y.real*b.real - y.imag*b.imag;
+                     DCPL_MB[indexC +j*ldC + i].imag = x.real*a.imag +
+                             x.imag*a.real + y.real*b.imag + y.imag*b.real;
+                  }
+              break;
+         case MT_F_INT:
+              for(j=0; j < jhiC - jloC+1; j++)
+                 for(i=0; i< ihiC - iloC +1; i++)
+                      INT_MB[indexC +j*ldC + i]  =
+                         *(Integer*)alpha * INT_MB[indexA +j*ldA + i] +
+                         *(Integer*)beta  * INT_MB[indexB +j*ldB + i];
+       }
 
        /* release access to the data */
         ga_release_       (&g_A, &iloC, &ihiC, &jloC, &jhiC);
@@ -594,19 +695,23 @@ void ga_matmul_patch(transa, transb, alpha, beta,
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
      Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
-     DoublePrecision      *alpha, *beta;
+     DoublePrecision    *alpha, *beta;
      char    *transa, *transb;
 {
-#define Ichunk 128
-#define Jchunk 128
-#define Kchunk 128
-DoublePrecision a[Ichunk*Kchunk], b[Kchunk*Jchunk], c[Ichunk*Jchunk];
+#define ICHUNK 64
+#define JCHUNK 64
+#define KCHUNK 64
+DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
 Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2;
 Integer me= ga_nodeid_(), nproc=ga_nnodes_();
 Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim;
-DoublePrecision ONE = 1.;
+Integer Ichunk, Kchunk, Jchunk;
+DoubleComplex ONE;
+
+   ONE.real =1.;
+   ONE.imag =0.;
 
    ga_sync_();
    GA_PUSH_NAME("ga_matmul_patch");
@@ -615,8 +720,14 @@ DoublePrecision ONE = 1.;
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
    ga_inquire_(g_c, &ctype, &cdim1, &cdim2);
 
-   if(atype != btype || atype != ctype || atype != MT_F_DBL)
-               ga_error(" types mismatch ", 0L);
+   if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
+   if(atype != MT_F_DCPL && atype != MT_F_DBL) ga_error(" type error",atype);
+
+   if(atype ==  MT_F_DBL){
+      Ichunk=2*ICHUNK, Kchunk=2*KCHUNK, Jchunk=2*JCHUNK;
+   }else{
+      Ichunk=ICHUNK; Kchunk=KCHUNK; Jchunk=JCHUNK;
+   }
 
   /* check if patch indices and dims match */
    if (*transa == 'n' || *transa == 'N'){
@@ -644,8 +755,8 @@ DoublePrecision ONE = 1.;
    if( (*cjhi - *cjlo +1) != n) ga_error(" b & c dims error",n);
    if( (*bihi - *bilo +1) != k) ga_error(" a & b dims error",k);
 
-   if(*beta) ga_dscal_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
-   else      ga_dfill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
+   if(*beta) ga_scale_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
+   else      ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
   
    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
        jhi = MIN(n-1, jlo+Jchunk-1);
@@ -656,7 +767,10 @@ DoublePrecision ONE = 1.;
            for(klo = 0; klo < k; klo += Kchunk){    /* loop cols of g_a patch */
                                                     /* loop rows of g_b patch */
                if(ijk%nproc == me){
-                  for (i = 0; i < idim*jdim; i++) c[i]=0.;
+                  if(atype ==  MT_F_DBL)
+                     for (i = 0; i < idim*jdim; i++) *(((double*)c)+i)=0;
+                  else
+                     for (i = 0; i < idim*jdim; i++){ c[i].real=0;c[i].imag=0;}
                   khi = MIN(k-1, klo+Kchunk-1);
                   kdim= khi - klo +1;
                   if (*transa == 'n' || *transa == 'N'){ 
@@ -681,6 +795,7 @@ DoublePrecision ONE = 1.;
                      j0= *bilo+klo; j1= *bilo+khi;
                      ga_get_(g_b, &i0, &i1, &j0, &j1, b, &jdim);
                   }
+   if(atype ==  MT_F_DBL){
 #                 ifdef CRAY_T3D
                     SGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
                           alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
@@ -688,8 +803,18 @@ DoublePrecision ONE = 1.;
                     dgemm_(transa, transb, &idim, &jdim, &kdim,
                            alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
 #                 endif
+   }else{
+#                 ifdef CRAY_T3D
+                    CGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
+                          alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
+#                 else
+                    zgemm_(transa, transb, &idim, &jdim, &kdim,
+                           alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
+#                 endif
+   }
                   i0= *cilo+ilo; i1= *cilo+ihi;   j0= *cjlo+jlo; j1= *cjlo+jhi;
-                  ga_acc_(g_c, &i0, &i1, &j0, &j1, c, &cdim, &ONE);
+                  ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
+                                            &cdim, (DoublePrecision*)&ONE);
                }
                ijk++;
           }

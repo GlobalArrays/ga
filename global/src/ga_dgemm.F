@@ -9,7 +9,7 @@ c
 #ifdef USE_SUMMA
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.19 1995-11-19 19:41:09 d3g681 Exp $
+C$Id: ga_dgemm.F,v 1.20 1996-07-19 20:05:29 d3h325 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -26,7 +26,7 @@ c
 #endif
       subroutine GA_DGEMM(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.19 1995-11-19 19:41:09 d3g681 Exp $
+C$Id: ga_dgemm.F,v 1.20 1996-07-19 20:05:29 d3h325 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -126,7 +126,7 @@ c
       if (beta .eq. 0.0d0) then
          call ga_zero(g_c)
       else
-         call ga_dscal(g_c, beta)
+         call ga_scale(g_c, beta)
       endif
 c
       ijk = 0
@@ -147,7 +147,7 @@ C
                   ihi = min(m, ilo+ichunk-1)
                   idim = ihi - ilo + 1
                   cdim = idim
-                  call dfill(idim*jdim, 0.0d0, dbl_mb(k_c), 1)
+                  call util_dfill(idim*jdim, 0.0d0, dbl_mb(k_c), 1)
                   if (transa.eq.'n' .or. transa.eq.'N') then
                      adim = idim
                      call ga_get(g_a, ilo, ihi, klo, khi,

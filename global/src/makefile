@@ -41,7 +41,7 @@ $(OBJ_FRAGILE): %.o : %.c
 	$(CC) $(NOPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) -c $<
 
 $(patsubst %,$(LIBRARY_PATH)(%),$(GA_CORE))     : globalp.h global.h
-$(patsubst %,$(LIBRARY_PATH)(%),global.core.o)  : global.core.h message.h
+$(patsubst %,$(LIBRARY_PATH)(%),global.core.o)  : global.core.h message.h mem.ops.h
 $(patsubst %,$(LIBRARY_PATH)(%),global.serv.o)  : message.h mem.ops.h
 $(patsubst %,$(LIBRARY_PATH)(%),global.msg.o)   : message.h
 $(patsubst %,$(LIBRARY_PATH)(%),global.alg.o)   : globalp.h global.h

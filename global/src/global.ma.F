@@ -15,6 +15,8 @@ c
           call ga_ma_get_ptr(address, dbl_mb(1))
        else if(type .eq. MT_INT) then
           call ga_ma_get_ptr(address, int_mb(1))
+       else if(type .eq. MT_DCPL) then
+          call ga_ma_get_ptr(address, dcpl_mb(1))
        else if(type .eq. MT_BYTE)then
           call ga_ma_get_ptr(address, byte_mb(1))
        else if(type .eq. MT_REAL) then
@@ -23,8 +25,6 @@ c
           call ga_ma_get_ptr(address, log_mb(1))
        else if(type .eq. MT_SCPL) then
           call ga_ma_get_ptr(address, scpl_mb(1))
-       else if(type .eq. MT_DCPL) then
-          call ga_ma_get_ptr(address, dcpl_mb(1))
        else
           call ga_error('ga_ma_base_address: wrong type',type)
        endif
@@ -40,6 +40,8 @@ c
           ga_ma_sizeof = ga_ma_diff(dbl_mb(1), dbl_mb(2))
        else if(type .eq. MT_INT) then
           ga_ma_sizeof = ga_ma_diff(int_mb(1), int_mb(2))
+       else if(type .eq. MT_DCPL) then
+          ga_ma_sizeof = ga_ma_diff(dcpl_mb(1), dcpl_mb(2))
        else if(type .eq. MT_BYTE)then
           ga_ma_sizeof = ga_ma_diff(byte_mb(1), byte_mb(2))
        else if(type .eq. MT_REAL) then
@@ -48,7 +50,5 @@ c
           ga_ma_sizeof = ga_ma_diff(log_mb(1), log_mb(2))
        else if(type .eq. MT_SCPL) then
           ga_ma_sizeof = ga_ma_diff(scpl_mb(1), scpl_mb(2))
-       else if(type .eq. MT_DCPL) then
-          ga_ma_sizeof = ga_ma_diff(dcpl_mb(1), dcpl_mb(2))
        endif
        end

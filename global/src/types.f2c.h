@@ -22,3 +22,9 @@ typedef Integer logical;
    typedef char Void;
 #endif
 
+
+typedef struct{
+        DoublePrecision real;
+        DoublePrecision imag;
+}DoubleComplex;
+

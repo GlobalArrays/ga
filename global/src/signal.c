@@ -93,8 +93,13 @@ SigType SigChldHandler(sig)
 #else
   pid = wait(&status);
 #endif
+<<<<<<< signal.c
+  SR_caught_sigint = 2;
+  ERROR("Child process terminated prematurely, status=",(long) status);
+=======
   SR_caught_sigint = 1;
   ERROR("Child process terminated prematurely, status=",(long) status);
+>>>>>>> 1.7
 }
 
 void TrapSigChld()
@@ -130,8 +135,13 @@ SigType SigBusHandler(sig)
 #endif
      int sig;
 {
+<<<<<<< signal.c
+  SR_caught_sigint = 3;
+  ERROR("Bus error, status=",(long) sig);
+=======
   SR_caught_sigint = 1;
   ERROR("Bus error, status=",(long) sig);
+>>>>>>> 1.7
 }
 
 void TrapSigBus()
@@ -157,8 +167,13 @@ SigType SigFpeHandler(sig)
 #endif
      int sig;
 {
+<<<<<<< signal.c
+  SR_caught_sigint = 4;
+  ERROR("Floating Point Exception error, status=",(long) sig);
+=======
   SR_caught_sigint = 1;
   ERROR("Floating Point Exception error, status=",(long) sig);
+>>>>>>> 1.7
 }
 
 void TrapSigFpe()
@@ -184,8 +199,13 @@ SigType SigIllHandler(sig)
 #endif
      int sig;
 {
+<<<<<<< signal.c
+  SR_caught_sigint = 5;
+  ERROR("Illegal Instruction error, status=",(long) sig);
+=======
   SR_caught_sigint = 1;
   ERROR("Illegal Instruction error, status=",(long) sig);
+>>>>>>> 1.7
 }
 
 void TrapSigIll()
@@ -211,8 +231,13 @@ SigType SigSegvHandler(sig)
 #endif
      int sig;
 {
+<<<<<<< signal.c
+  SR_caught_sigint = 6;
+  ERROR("Segmentation Violation error, status=",(long) sig);
+=======
   SR_caught_sigint = 1;
   ERROR("Segmentation Violation error, status=",(long) sig);
+>>>>>>> 1.7
 }
 
 void TrapSigSegv()
@@ -238,8 +263,13 @@ SigType SigSysHandler(sig)
 #endif
      int sig;
 {
+<<<<<<< signal.c
+  SR_caught_sigint = 7;
+  ERROR("Bad Argument To System Call error, status=",(long) sig);
+=======
   SR_caught_sigint = 1;
   ERROR("Bad Argument To System Call error, status=",(long) sig);
+>>>>>>> 1.7
 }
 
 void TrapSigSys()
@@ -266,8 +296,13 @@ SigType SigTrapHandler(sig)
 #endif
      int sig;
 {
+<<<<<<< signal.c
+  SR_caught_sigint = 8;
+  ERROR("Trace Trap error, status=",(long) sig);
+=======
   SR_caught_sigint = 1;
   ERROR("Trace Trap error, status=",(long) sig);
+>>>>>>> 1.7
 }
 
 void TrapSigTrap()
@@ -292,8 +327,13 @@ SigType SigHupHandler(sig)
 #endif
      int sig;
 {
+<<<<<<< signal.c
+  SR_caught_sigint = 9;
+  ERROR("Hangup error, status=",(long) sig);
+=======
   SR_caught_sigint = 1;
   ERROR("Hangup error, status=",(long) sig);
+>>>>>>> 1.7
 }
 
 void TrapSigHup()
@@ -328,8 +368,13 @@ SigType SigTermHandler(sig)
 #endif
      int sig;
 {
+<<<<<<< signal.c
+  SR_caught_sigint = 10;
+  ERROR("Terminate signal was sent, status=",(long) sig);
+=======
   SR_caught_sigint = 1;
   ERROR("Terminate signal was sent, status=",(long) sig);
+>>>>>>> 1.7
 }
 
 void TrapSigTerm()
@@ -353,8 +398,13 @@ SigType SigIotHandler(sig)
 #endif
      int sig;
 {
+<<<<<<< signal.c
+  SR_caught_sigint = 11;
+  ERROR("IOT signal was sent, status=",(long) sig);
+=======
   SR_caught_sigint = 1;
   ERROR("IOT signal was sent, status=",(long) sig);
+>>>>>>> 1.7
 }
 
 void TrapSigIot()

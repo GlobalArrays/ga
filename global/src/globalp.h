@@ -46,11 +46,11 @@
 #define     GA_OP_DUP 7          /* Duplicate                   */
 #define     GA_OP_ZER 8          /* Zero                        */
 #define     GA_OP_DDT 9          /* Double precision dot product*/
-#define     GA_OP_DST 10         /* Double precision scatter    */
-#define     GA_OP_DGT 11         /* Double precision gather     */
-#define     GA_OP_DSC 12         /* Double precision scale      */
+#define     GA_OP_DST 10         /* scatter                     */
+#define     GA_OP_DGT 11         /* gather                      */
+#define     GA_OP_DSC 12         /* scale                       */
 #define     GA_OP_COP 13         /* Copy                        */
-#define     GA_OP_ADD 14         /* Double precision add        */
+#define     GA_OP_ADD 14         /* add                         */
 #define     GA_OP_RDI 15         /* Integer read and increment  */
 #define     GA_OP_ACK 16         /* acknowledgment              */
 
@@ -65,7 +65,8 @@
 #define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
 
 #define GAsizeofM(type)  ( (type)==MT_F_DBL? sizeof(DoublePrecision): \
-                           (type)==MT_F_INT? sizeof(Integer): 0)
+                           (type)==MT_F_INT? sizeof(Integer): \
+                           (type)==MT_F_DCPL? sizeof(DoubleComplex):0)
 
 #define NAME_STACK_LEN 10
 #define PAGE_SIZE  4096

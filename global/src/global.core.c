@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.25 1996-05-20 18:01:46 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.26 1996-07-19 20:05:32 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -116,9 +116,10 @@ Integer GAsizeof(type)
         Integer type;
 {
   switch (type) {
-     case MT_F_DBL : return (sizeof(DoublePrecision));
-     case MT_F_INT : return (sizeof(Integer));
-          default  : return 0; 
+     case MT_F_DBL  : return (sizeof(DoublePrecision));
+     case MT_F_INT  : return (sizeof(Integer));
+     case MT_F_DCPL : return (sizeof(DoubleComplex));
+          default   : return 0; 
   }
 }
 
@@ -209,7 +210,9 @@ void TrapSigInt(), TrapSigChld(),
      TrapSigSys();
      TrapSigTrap();
      TrapSigTerm();
-/*     TrapSigIot();*/
+#ifdef SGI
+     TrapSigIot();
+#endif
 #endif
 }
 
@@ -247,7 +250,7 @@ void RestoreSigChld(), RestoreSigInt(), RestoreSigHup();
   if((nproc) ==1) ProcListPerm[0]=0; \
   else{\
     int _i, iswap, temp;\
-    if((nproc) > GAnproc) ga_error("permute_proc: (nproc) error ", (nproc));\
+    if((nproc) > GAnproc) ga_error("permute_proc: error ", (nproc));\
 \
     /* every process generates different random sequence */\
     (void)srand((unsigned)GAme); \
@@ -455,7 +458,7 @@ long *msg_buf;
      *
      * MA include files: macommon.h, macdecls.h and mafdecls.h
      *
-     * DBL_MB and INT_MB are assigned adresses of their counterparts
+     * DBL_MB, DCPL_MB, and INT_MB are assigned adresses of their counterparts
      *    (of the same name in MA mafdecls.h file) by calling Fortran
      *    ga_ma_base_address_() routine that calls C ga_ma_get_ptr_ to copy
      *    pointers
@@ -467,6 +470,9 @@ long *msg_buf;
       dtype = MT_F_INT;
       ga_ma_base_address_(&dtype, (Void**)&INT_MB);
       if(!INT_MB)ga_error("ga_initialize: wrong int pointer ", 2L);
+      dtype = MT_F_DCPL;
+      ga_ma_base_address_(&dtype, (Void**)&DCPL_MB);
+      if(!DCPL_MB)ga_error("ga_initialize: wrong dcmpl pointer ", 3L);
     }
 
     /* selected processes now become data servers */
@@ -477,12 +483,15 @@ long *msg_buf;
 #endif
 
     /* enable interrupts on machines with interrupt receive */
-#   if defined(SP1) || defined (NX)
+#   if defined(SP1) || defined(SP) || defined (NX)
     {
        long oldmask;
        ga_init_handler(MessageRcv, TOT_MSG_SIZE );
        ga_mask(0L, &oldmask);
     }
+#      ifdef SP
+          mpc_setintrdelay(1);
+#      endif
 #   endif
 
 #if defined(CRAY_T3D) && !defined(FLUSHCACHE)
@@ -599,7 +608,7 @@ Integer nblock1, nblock2;
 
       ga_sync_();
 
-      if(*type != MT_F_DBL && *type != MT_F_INT)
+      if(*type != MT_F_DBL && *type != MT_F_INT &&  *type != MT_F_DCPL)
          ga_error("ga_create: type not yet supported ",  *type);
       else if( *dim1 <= 0 )
          ga_error("ga_create: array dimension1 invalid ",  *dim1);
@@ -754,7 +763,8 @@ char    *array_name;
 {
 #ifdef SYSV
    long *msg_buf = (long*)MessageRcv->buffer, bytes=(long)mem_size;
-   int adjust;
+   int adjust, diff, item_size;
+   char *base;
 #else
    Integer handle, index;
 #endif
@@ -767,11 +777,6 @@ char    *array_name;
 
    *id   = 1;
 
-#  ifdef LINUX
-     mem_size += 7;               /* Worst case alignment error */
-     bytes = (long) mem_size;
-#  endif
-
 #  ifndef SYSV
          /*............. allocate local memory ...........*/
 
@@ -781,6 +786,9 @@ char    *array_name;
          *id   = handle;
 #  else
          /*............. allocate shared memory ..........*/
+
+         mem_size += 15;               /* Worst case alignment error */
+         bytes = (long) mem_size;
 
          if(MPme == cluster_master){
             if(GAnproc == 1 && USE_MALLOC){
@@ -801,28 +809,17 @@ char    *array_name;
          if(MPme != cluster_master)
                     *pptr =  Attach_Shared_Region(msg_buf+1, bytes, msg_buf);
 
-         *id = (*pptr) ? 1 :0;
+	 /* need to enforce proper, natural allignment (on size boundary)  */
+         base = (type == MT_F_DBL)? (char *) DBL_MB: ((type == MT_F_DCPL)?
+                                    (char *) DCPL_MB: (char *) INT_MB);
 
-#        ifdef LINUX
-	    /* need to enforce proper allignment */
+         item_size = GAsizeofM(type);
+         diff = (ABS( base - (char *) *pptr)) % item_size; 
+         adjust = (diff > 0) ? item_size - diff : 0;
 
-            if (type == MT_F_DBL) {
-              char *base = (char *) DBL_MB;
-              int diff = (abs(base - (char *) *pptr)) % sizeof(DoublePrecision);
-              adjust = (diff > 0) ? sizeof(DoublePrecision) - diff : 0;
-            }
-            else if (type == MT_F_INT) {
-              char *base = (char *) INT_MB;
-              int diff = (abs(base - (char *) *pptr)) % sizeof(Integer);
-              int adjust = (diff > 0) ? sizeof(Integer) - diff : 0;
-            }
-            if (DEBUG)
-            fprintf(stderr,"align:DBL=%lx,INT=%lx,adjust=%lx,old=%lx,new=%lx\n",
-                   DBL_MB, INT_MB, adjust, *pptr, *pptr+adjust);
+         *id = adjust;          /* Id kludged to hold adjust */
+         *pptr = (Void *) (adjust + (char *) *pptr);
 
-            *id = adjust;          /* Id kludged to hold adjust */
-            *pptr = (void *) (adjust + (char *) *pptr);
-#        endif
 #  endif
 
    if(DEBUG)fprintf(stderr,"me=%d ga__alloc_mem:ptr=%d id=%d\n",GAme,*pptr,*id);
@@ -861,7 +858,7 @@ Integer  i, ga_handle, status;
 
       ga_sync_();
 
-      if(*type != MT_F_DBL && *type != MT_F_INT)
+      if(*type != MT_F_DBL && *type != MT_F_INT &&  *type != MT_F_DCPL)
          ga_error("ga_create_irreg: type not yet supported ",  *type);
       else if( *dim1 <= 0 )
          ga_error("ga_create_irreg: array dimension1 invalid ",  *dim1);
@@ -949,6 +946,7 @@ Integer  i, ga_handle, status;
       }else
           status = 0;
 
+      if(!status) GA[ga_handle].actv=0; /* no memory allocated */
 
       ga_igop(GA_TYPE_GOP, &status, 1, &op); /* check if everybody succeded */
 
@@ -1064,6 +1062,7 @@ Integer  i, ga_handle, status;
       else
           status = 0;
 
+      if(!status) GA[ga_handle].actv=0; /* no memory allocated */
       ga_igop(GA_TYPE_GOP, &status, 1, &op); /* check if everybody succeded */
 
       /* determine pointers to individual blocks*/
@@ -1121,26 +1120,20 @@ logical ga_destroy_(g_a)
 Integer ga_handle = GA_OFFSET + *g_a;
 
     ga_sync_();
-    if(GA[ga_handle].actv==0) return TRUE;       
+
+    /* fails if handle is out of range or array not active */
+    if(ga_handle < 0 || ga_handle >= max_global_array) return FALSE;
+    if(GA[ga_handle].actv==0) return FALSE;       
  
 #   ifdef SYSV 
       if(GAnproc == 1 && USE_MALLOC){
-#        ifdef LINUX
             free(GA[ga_handle].ptr[0]-GA[ga_handle].id);   /* Id = adjust */
-#        else
-            free(GA[ga_handle].ptr[0]);
-#        endif
       }else{
          if(MPme == cluster_master){
             /* Now, deallocate shared memory */
             if(GA[ga_handle].ptr[0]){
-#              ifdef LINUX
                      Free_Shmem_Ptr(GA[ga_handle].id, GA[ga_handle].size,
                                     GA[ga_handle].ptr[0]-GA[ga_handle].id);
-#              else
-                     Free_Shmem_Ptr(GA[ga_handle].id, GA[ga_handle].size, 
-                                    GA[ga_handle].ptr[0]);
-#              endif
                GA[ga_handle].ptr[0]=NULL;
             }
             if(ClusterMode) 
@@ -1481,7 +1474,7 @@ msgid_t  msgid_snd, msgid_rcv;
    else
       ptr_src = (char *)buf + GAsizeofM(type)* offset;/*arrives to user buffer*/
 
-#  if defined(NX) || defined(SP1)
+#  if defined(NX) || defined(SP1) || defined(SP)
       len = expected_len;
       msgid_rcv = ga_msg_ircv(GA_TYPE_GET,  ptr_src, expected_len, to);
       ga_snd_req(g_a, ilo,ihi,jlo,jhi, (Integer)0, type, GA_OP_GET,proc,to);
@@ -1546,6 +1539,9 @@ Integer ilop, ihip, jlop, jhip, offset;
             Integer TmpSize;
             Integer ilimit;
             Integer jlimit;
+#           ifdef SP
+               int i_on;
+#           endif
 #           if defined(IWAY) && defined(SP1)
                TmpSize = IWAY_MSG_BUF_SIZE/GAsizeofM(GA[GA_OFFSET + *g_a].type);
 #           else
@@ -1554,12 +1550,16 @@ Integer ilop, ihip, jlop, jhip, offset;
             ilimit  = MIN(TmpSize, ihip-ilop+1);
             jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
 
-#           if defined(PARAGON)||defined(SP1)
+#           if defined(PARAGON)||defined(SP1) || defined(SP)
               /* this limits column chunking to 1 for larger number of rows */
               /**** it is an optimization only -- comment out if fails ******/
               if(ilimit > 2048) jlimit  = 1;
 #           endif
 
+#           ifdef SP
+              i_on = mpc_queryintr();
+              mpc_disableintr();
+#           endif
             for(jlo_chunk = jlop; jlo_chunk <= jhip; jlo_chunk += jlimit){
                jhi_chunk  = MIN(jhip, jlo_chunk+jlimit-1);
                for( ilo_chunk = ilop; ilo_chunk<= ihip; ilo_chunk += ilimit){
@@ -1571,6 +1571,9 @@ Integer ilop, ihip, jlop, jhip, offset;
 
                }
             }
+#           ifdef SP
+              if(i_on) mpc_enableintr();
+#           endif
 
           }
       }
@@ -1589,26 +1592,27 @@ Integer ilop, ihip, jlop, jhip, offset;
 \*/
 void ga_acc_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
    Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
-   DoublePrecision alpha, *buf;
+   DoublePrecision *alpha, *buf;
 {
 char     *ptr_src, *ptr_dst;
-Integer  item_size, ldp, rows, cols;
+Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
 #ifdef CRAY_T3D
 #  define LEN_ACC_BUF 100
    DoublePrecision acc_buffer[LEN_ACC_BUF], *pbuffer, *ptr;
-   Integer j, elem, handle, index;
+   Integer j, elem, words, handle, index;
 #endif
 
    GA_PUSH_NAME("ga_acc_local"); 
-   item_size =  GAsizeofM(GA[GA_OFFSET + g_a].type);
+   item_size =  GAsizeofM(type);
    gaShmemLocation(proc, g_a, ilo, jlo, &ptr_dst, &ldp);
 
 #  ifdef CRAY_T3D
      elem = ihi - ilo +1;
+     words = elem*item_size/8;
      if(proc != GAme){
         ptr = (DoublePrecision *) ptr_dst;
-        if(elem>LEN_ACC_BUF){
-            if(!MA_push_get(MT_F_DBL,elem, "ga_acc_temp", &handle, &index))
+        if(words>LEN_ACC_BUF){
+            if(!MA_push_get(MT_F_DBL, words, "ga_acc_temp", &handle, &index))
                 ga_error("allocation of ga_acc buffer failed ",GAme);
             MA_get_pointer(handle, &pbuffer);
         }else pbuffer = acc_buffer;
@@ -1618,13 +1622,16 @@ Integer  item_size, ldp, rows, cols;
               ptr_dst = (char *)ptr  + item_size* j *ldp;
               ptr_src = (char *)buf  + item_size* (j*ld + offset );
    
-              CopyElemFrom(ptr_dst, pbuffer, elem, proc);
-              acc_column(alpha, pbuffer, ptr_src, elem );
-              CopyElemTo(pbuffer, ptr_dst, elem, proc);
+              CopyElemFrom(ptr_dst, pbuffer, words, proc);
+              if(type== MT_F_DBL)
+                 dacc_column(alpha, pbuffer, ptr_src, elem );
+              else
+                 zacc_column(alpha, pbuffer, ptr_src, elem );
+              CopyElemTo(pbuffer, ptr_dst, words, proc);
            }
            /* _remote_write_barrier(); Howard's func.*/
         UNLOCK(g_a, proc, ptr_dst);
-        if(elem>LEN_ACC_BUF) MA_pop_stack(handle);
+        if(words>LEN_ACC_BUF) MA_pop_stack(handle);
         GA_POP_NAME;
         return;
      }
@@ -1635,8 +1642,13 @@ Integer  item_size, ldp, rows, cols;
      rows = ihi - ilo +1;
      cols = jhi-jlo+1;
      if(GAnproc>1) LOCK(g_a, proc, ptr_dst);
-       accumulate(alpha, rows, cols, (DoublePrecision*)ptr_dst,
-                  ldp, (DoublePrecision*)ptr_src, ld );
+       if(type == MT_F_DBL){
+          accumulate(alpha, rows, cols, (DoublePrecision*)ptr_dst, ldp, 
+                                        (DoublePrecision*)ptr_src, ld );
+       }else{
+          zaccumulate(alpha, rows, cols, (DoubleComplex*)ptr_dst, ldp, 
+                                         (DoubleComplex*)ptr_src, ld );
+       }
 #      if defined(CRAY_T3D)
         /* flush write buffer before unlocking */
         _memory_barrier();
@@ -1650,7 +1662,7 @@ Integer  item_size, ldp, rows, cols;
 \*/
 void ga_acc_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
    Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
-   DoublePrecision alpha, *buf;
+   DoublePrecision *alpha, *buf;
 {
 char     *ptr_src, *ptr_dst;
 Integer  type, rows, cols, msglen;
@@ -1667,9 +1679,11 @@ Integer  type, rows, cols, msglen;
    Copy2D(type, &rows, &cols, ptr_src, &ld, ptr_dst, &rows);
 
    /* append alpha at the end */
-   *((DoublePrecision*)ptr_dst + rows*cols) = alpha; 
+   ptr_dst += rows*cols*GAsizeofM(type);
+   if(type==MT_F_DBL)*(DoublePrecision*)ptr_dst= *alpha; 
+   else *(DoubleComplex*)ptr_dst= *(DoubleComplex*)alpha;
 
-   msglen = rows*cols*GAsizeofM(type)+sizeof(DoublePrecision); /* plus alpha */
+   msglen = rows*cols*GAsizeofM(type) + GAsizeofM(type); /* plus alpha */
    ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_ACC,
               proc, DataServer(proc));
 }
@@ -1684,7 +1698,7 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
    DoublePrecision *buf, *alpha;
 {
    Integer p, np, proc, idx;
-   Integer ilop, ihip, jlop, jhip, offset;
+   Integer ilop, ihip, jlop, jhip, offset, type = GA[GA_OFFSET + *g_a].type;
 
 #ifdef GA_TRACE
    trace_stime_();
@@ -1698,7 +1712,7 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
           ga_error(err_string, *g_a);
    }
 
-   if (GA[GA_OFFSET + *g_a].type != MT_F_DBL) 
+   if (type != MT_F_DBL && type !=  MT_F_DCPL) 
                        ga_error(" ga_acc: type not supported ",*g_a);
 
    gaPermuteProcList(np); /* prepare permuted list of indices */
@@ -1715,14 +1729,13 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
 
           offset = (jlop - *jlo)* *ld + ilop - *ilo;
           ga_acc_local(*g_a, ilop, ihip, jlop, jhip, buf, offset, *ld,
-                       proc, *alpha);
+                       proc, alpha);
 
        }else{
          /* number of messages determined by message-buffer size */
          /* alpha will be appended at the end of message */
 
-         Integer TmpSize = (MSG_BUF_SIZE - GAsizeofM(GA[GA_OFFSET + *g_a].type))
-                         /  GAsizeofM(GA[GA_OFFSET + *g_a].type);
+         Integer TmpSize = (MSG_BUF_SIZE - GAsizeofM(type))/GAsizeofM(type);
          Integer ilimit  = MIN(TmpSize, ihip-ilop+1);
          Integer jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
          Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk;
@@ -1734,7 +1747,7 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
                   ihi_chunk = MIN(ihip, ilo_chunk+ilimit-1);
                   offset = (jlo_chunk - *jlo)* *ld + ilo_chunk - *ilo;
                   ga_acc_remote(*g_a, ilo_chunk, ihi_chunk,
-                         jlo_chunk, jhi_chunk, buf, offset, *ld, proc, *alpha);
+                         jlo_chunk, jhi_chunk, buf, offset, *ld, proc, alpha);
 
             }
          }
@@ -1793,16 +1806,21 @@ Integer  item_size, proc_place, handle = GA_OFFSET + *g_a;
      case MT_F_DBL: 
         *index = (Integer) (ptr - (char*)DBL_MB);
         if(ptr != ((char*)DBL_MB)+ *index ){ 
-             printf("ga_access: ptr=%x base=%x <> index=%d array=%x\n",
-                      ptr, DBL_MB, *index, ((char*)DBL_MB) + *index  );
-              ga_error("ga_access: problem with MA addressing - index",handle);
+               ga_error("ga_access: MA addressing problem dbl - index",handle);
+        }
+        break;
+
+     case MT_F_DCPL:
+        *index = (Integer) (ptr - (char*)DCPL_MB);
+        if(ptr != ((char*)DCPL_MB)+ *index ){
+               ga_error("ga_access: MA addressing problem dcpl - index",handle);
         }
         break;
 
      case MT_F_INT:
         *index = (Integer) (ptr - (char*)INT_MB);
         if(ptr != ((char*)INT_MB) + *index) {
-          ga_error("ga_access: problem with MA addressing - index",handle);
+               ga_error("ga_access: MA addressing problem int - index",handle);
         }
         break;
 
@@ -2106,7 +2124,7 @@ register Integer k, offset;
      ptr_src = ((char*)v) + k*item_size; 
 
 #ifdef CRAY_T3D
-           CopyElemTo(ptr_src, ptr_dst, 1, proc);
+           CopyElemTo(ptr_src, ptr_dst, item_size/8, proc);
 #    else
            Copy(ptr_src, ptr_dst, item_size);
 #    endif
@@ -2151,7 +2169,7 @@ void ga_scatter_(g_a, v, i, j, nv)
 {
 register Integer k;
 Integer pindex, phandle, item_size;
-Integer first, nelem, BufLimit, proc;
+Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
 
 
   if (*nv < 1) return;
@@ -2160,7 +2178,7 @@ Integer first, nelem, BufLimit, proc;
   GA_PUSH_NAME("ga_scatter");
 
   if(!MA_push_get(MT_F_INT,*nv, "ga_scatter--p", &phandle, &pindex))
-            ga_error("MA failed ", *g_a);
+            ga_error("MA alloc failed ", *g_a);
 
   /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
   for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
@@ -2169,14 +2187,11 @@ Integer first, nelem, BufLimit, proc;
   }
 
   /* determine limit for message size --  v,i, & j will travel together */
-  item_size = GAsizeofM(GA[GA_OFFSET + *g_a].type);
+  item_size = GAsizeofM(type);
   BufLimit   = MSG_BUF_SIZE/(2*sizeof(Integer)+item_size);
 
   /* Sort the entries by processor */
-  if(GA[GA_OFFSET + *g_a].type ==MT_F_DBL){
-     ga_sort_scat_dbl_(nv, (DoublePrecision*)v, i, j, INT_MB+pindex);
-  }else
-     ga_sort_scat_int_(nv, (Integer*)v, i, j, INT_MB+pindex);
+  ga_sort_scat(nv, (DoublePrecision*)v, i, j, INT_MB+pindex, type );
    
   /* go through the list again executing scatter for each processor */
 
@@ -2255,7 +2270,7 @@ register Integer k, offset;
      ptr_dst = ((char*)v) + k*item_size; 
 
 #    ifdef CRAY_T3D
-        CopyElemFrom(ptr_src, ptr_dst, 1, proc);
+        CopyElemFrom(ptr_src, ptr_dst, item_size/8, proc);
 #    else
         Copy(ptr_src, ptr_dst, item_size);
 #    endif
@@ -2293,7 +2308,7 @@ msgid_t  msgid;
      expected_len += MSG_HEADER_SIZE;
 # endif
 
-# if defined(NX) || defined(SP1)
+# if defined(NX) || defined(SP1) || defined(SP)
      len = expected_len;
      msgid = ga_msg_ircv(GA_TYPE_DGT, MessageSnd, expected_len, to);
      ga_snd_req(g_a, nv, 0,0,0, msglen, GA[handle].type, GA_OP_DGT, proc, to);
@@ -2375,11 +2390,18 @@ Integer first, BufLimit, proc;
 
         Integer last = first + nelem -1;
         Integer range, chunk;
+#       ifdef SP
+              int i_on = mpc_queryintr();
+              mpc_disableintr();
+#       endif
         for(range = first; range <= last; range += BufLimit){
             chunk = MIN(BufLimit, last -range+1);
             ga_gather_remote(*g_a, ((char*)v)+item_size*range, i+range, j+range,
                               chunk, proc);
         }
+#       ifdef SP
+              if(i_on) mpc_enableintr();
+#       endif
       }
 
       first += nelem;
@@ -2432,7 +2454,7 @@ msgid_t  msgid;
 
    to = DataServer(proc);
    bytes = MSG_HEADER_SIZE; /* for iway needs header */
-#  if defined(NX) || defined(SP1)
+#  if defined(NX) || defined(SP1) || defined(SP)
       len = bytes;
       msgid = ga_msg_ircv(GA_TYPE_RDI, MessageSnd, bytes, to);
       ga_snd_req(g_a, i, inc, j, 0, bytes, GA[handle].type, GA_OP_RDI,proc, to);
@@ -2468,7 +2490,14 @@ Integer  value, proc;
     if(gaDirectAccess(proc)){
         value = ga_read_inc_local(*g_a, *i, *j, *inc, proc);
     }else{
+#       ifdef SP
+              int i_on = mpc_queryintr();
+              mpc_disableintr();
+#       endif
         value = ga_read_inc_remote(*g_a, *i, *j, *inc, proc);
+#       ifdef SP
+              if(i_on) mpc_enableintr();
+#       endif
     }
 
 #  ifdef GA_TRACE

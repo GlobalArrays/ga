@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.14 1996-03-27 20:25:53 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.15 1996-07-19 20:05:27 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -8,23 +8,19 @@
 #define  ga_copy_patch_            GA_COPY_PATCH
 #define  ga_create_                GA_CREATE
 #define  ga_create_irreg_          GA_CREATE_IRREG
-#define  ga_dadd_                  GA_DADD
-#define  ga_dadd_patch_            GA_DADD_PATCH
+#define  ga_add_                   GA_ADD
+#define  ga_add_patch_             GA_ADD_PATCH
 #define  ga_ddot_                  GA_DDOT
-#define  ga_ddot_patch_            GA_DDOT_PATCH
+#define  ga_zdot_                  GA_ZDOT
 #define  ga_destroy_               GA_DESTROY
-#define  ga_dfill_patch_           GA_DFILL_PATCH
 #define  ga_fence_                 GA_FENCE
 #define  ga_gather_                GA_GATHER
 #define  ga_dgop_                  GA_DGOP
 #define  ga_distribution_          GA_DISTRIBUTION
-#define  ga_dscal_                 GA_DSCAL
-#define  ga_dscal_patch_           GA_DSCAL_PATCH
-#define  ga_scatter_               GA_SCATTER
 #define  ga_duplicate_             GA_DUPLICATE
 #define  ga_error_                 GA_ERROR
 #define  ga_get_                   GA_GET
-#define  ga_ifill_patch_           GA_IFILL_PATCH
+#define  ga_fill_patch_            GA_FILL_PATCH
 #define  ga_igop_                  GA_IGOP
 #define  ga_initialize_            GA_INITIALIZE
 #define  ga_init_fence_            GA_INIT_FENCE
@@ -52,6 +48,9 @@
 #define  ga_server_                GA_SERVER
 #define  ga_sort_scat2_            GA_SORT_SCAT2
 #define  ga_sync_                  GA_SYNC
+#define  ga_scale_                 GA_SCALE
+#define  ga_scale_patch_           GA_SCALE_PATCH
+#define  ga_scatter_               GA_SCATTER
 #define  ga_terminate_             GA_TERMINATE
 #define  ga_uses_ma_               GA_USES_MA
 #define  ga_zero_                  GA_ZERO
@@ -61,6 +60,9 @@
 #define  ga_proc_topology_         GA_PROC_TOPOLOGY
 #define  ga_symmetrize_            GA_SYMMETRIZE
 #define  ga_transpose_             GA_TRANSPOSE
+
+#define  gai_dot_patch_            GAI_DOT_PATCH
+#define  gai_dot_                  GAI_DOT
 
 #define  synch_                    SYNCH 
 #define  nnodes_                   NNODES 

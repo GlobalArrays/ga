@@ -4,7 +4,7 @@ extern long masktrap(long);
 #define ga_mask(new, old) {*(old) = masktrap((new));}
 
 
-#elif defined(SP1)
+#elif defined(SP1) || defined(SP)
 
 #ifdef EUIH
 #  include "mpctof.c"
