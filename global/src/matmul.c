@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.34 2003-10-23 17:39:50 manoj Exp $ */
+/* $Id: matmul.c,v 1.35 2003-10-23 17:41:29 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -967,8 +967,8 @@ void ga_matmul(transa, transb, alpha, beta,
        if((adim1=GA_Cluster_nnodes()) > 1) use_NB_matmul = SET;
        else {
 	  use_NB_matmul = UNSET;
-	  CONTIG_CHUNKS_OPT_FLAG = SET;
-	  DIRECT_ACCESS_OPT_FLAG = SET;
+	  CONTIG_CHUNKS_OPT_FLAG = UNSET;
+	  DIRECT_ACCESS_OPT_FLAG = UNSET;
        }
 #    if defined(__crayx1) || defined(NEC)
        use_NB_matmul = UNSET;
