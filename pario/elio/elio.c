@@ -541,7 +541,7 @@ void elio_errmsg(int code, char *msg)
      }
      else if(code == ELIO_PENDING_ERR) code = elio_pending_error;
 
-     if(code<OFFSET || code >OFFSET+ERRLEN) (void) strcpy(msg, ">invalid code");
+     if(code<OFFSET || code >OFFSET+ERRLEN) *msg=(char)0;
      else (void) strcpy(msg, errtable[-OFFSET + code]);
 }
       
