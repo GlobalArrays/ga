@@ -273,7 +273,7 @@ void *ptr_a, *ptr_b;
            ib = (int*)ptr_b;
            for(i=0;i<elems;i++) 
                  isum += ia[i]  * ib[i];
-           *(Integer*)value = isum; 
+           *(int*)value = isum; 
            break;
 
         case C_DCPL:
@@ -335,7 +335,7 @@ void *ptr_a, *ptr_b;
 Integer FATR ga_idot_(g_a, g_b)
         Integer *g_a, *g_b;
 {
-Integer sum;
+Integer sum,ndim,type;
         gai_dot(C_INT, g_a, g_b, &sum);
         return sum;
 }

@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.14 2002-01-18 22:33:51 vinod Exp $ */
+/* $Id: base.c,v 1.15 2002-01-19 00:40:05 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1542,7 +1542,7 @@ char *ptr;
         for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
         break;
    case C_DBL:  
-        for(i=0; i<elems;i++)((DoublePrecision*)ptr)[i]=*(double*)val;
+        for(i=0; i<elems;i++)((double*)ptr)[i]=*(double*)val;
         break;
    case C_INT:  
         for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*)val;

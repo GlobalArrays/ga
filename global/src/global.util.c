@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.37 2002-01-18 19:52:12 vinod Exp $*/
+/*$Id: global.util.c,v 1.38 2002-01-19 00:40:05 vinod Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -58,7 +58,8 @@ void ga_file_print_patch(file, g_a, ilo, ihi, jlo, jhi, pretty)
 {
 #define BUFSIZE 6
 #define FLEN 80 
-Integer i, j,jj, dim1, dim2, type, ibuf[BUFSIZE], jmax, ld=1, bufsize ;
+Integer i, j,jj, dim1, dim2, type, jmax, ld=1, bufsize ;
+int ibuf[BUFSIZE];
 DoublePrecision  dbuf[BUFSIZE];
 float fbuf[BUFSIZE]; 
 long lbuf[BUFSIZE]; 
@@ -518,7 +519,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
     char *name;
     Integer ndim, dims[MAXDIM], ld[MAXDIM];
     Integer bufsize;
-    Integer ibuf[BUFSIZE], ibuf_2d[BUFSIZE*BUFSIZE];
+    int ibuf[BUFSIZE], ibuf_2d[BUFSIZE*BUFSIZE];
     DoublePrecision dbuf[BUFSIZE], dbuf_2d[BUFSIZE*BUFSIZE];
     float fbuf[BUFSIZE], fbuf_2d[BUFSIZE*BUFSIZE];
     Integer lop[MAXDIM], hip[MAXDIM];

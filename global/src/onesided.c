@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.18 2002-01-18 19:52:13 vinod Exp $ */
+/* $Id: onesided.c,v 1.19 2002-01-19 00:40:05 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -671,7 +671,7 @@ unsigned long    lref, lptr;
    /* compute index and check if it is correct */
    switch (GA[handle].type){
      case C_DBL:
-        *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
+        *index = (Integer) ((double*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;
         break;
 
@@ -681,7 +681,7 @@ unsigned long    lref, lptr;
         break;
 
      case C_INT:
-        *index = (Integer) ((Integer*)ptr - INT_MB);
+        *index = (Integer) ((int*)ptr - INT_MB);
         lref = (unsigned long)INT_MB;
         break;
 
