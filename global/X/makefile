@@ -4,7 +4,7 @@
   XLIBS = -L$(LOC)/lib -lXaw -lXmu -lXt -lX11 -lXau -lXdmcp -lXext
 
 #
- CFLAGS =  -O -DSUN -dalign -I$(LOC)/include
+ CFLAGS =  -O -I$(LOC)/include
 
 xregion0:	xregion0.o
 	cc $(CFLAGS) -o xregion0 xregion0.o $(XLIBS) -lm
