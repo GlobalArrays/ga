@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.15 1999-11-02 23:52:32 d3h325 Exp $ */
+/* $Id: test.c,v 1.16 1999-11-20 01:38:16 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -1008,7 +1008,7 @@ int main(int argc, char* argv[])
     if(me==0){
        printf("ARMCI test program (%d processes)\n",nproc); 
        fflush(stdout);
-       sleep(4);
+       sleep(1);
     }
     
     ARMCI_Init();
@@ -1069,9 +1069,10 @@ int main(int argc, char* argv[])
 /*        test_memlock();*/
 
         MP_BARRIER();
-	if(me==0)printf("All tests passed\n"); fflush(stdout);
-    sleep(5);
+	if(me==0){printf("All tests passed\n"); fflush(stdout);}
+    sleep(2);
 
+    MP_BARRIER();
     ARMCI_Finalize();
     MP_FINALIZE();
     return(0);
