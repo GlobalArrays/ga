@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.26 2002-09-17 17:03:52 vinod Exp $ */
+/* $Id: ghosts.c,v 1.27 2002-11-15 23:25:38 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -41,7 +41,6 @@
 #include "armci.h"
 #include "macdecls.h"
 
-#define DEBUG 0
 #define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
@@ -337,12 +336,6 @@ void FATR ga_update1_ghosts_(Integer *g_a)
   ptr_loc = GA[handle].ptr[GAme];
   /* obtain range of data that is held by local processor */
   nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
-  if (DEBUG) {
-    fprintf(stderr,"p[%d] lo(1) %d hi(1) %d\n",(int)GAme,
-        (int)lo_loc[0],(int)hi_loc[0]);
-    fprintf(stderr,"p[%d] lo(2) %d hi(2) %d\n",(int)GAme,
-        (int)lo_loc[1],(int)hi_loc[1]);
-  }
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
@@ -361,9 +354,6 @@ void FATR ga_update1_ghosts_(Integer *g_a)
 
       /* Perform update in negative direction. Start by getting rough
          estimate of block of needed data*/
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in negative direction\n\n",(int)GAme);
-      }
       for (i = 0; i < ndim; i++) {
         if (i == idx) {
           lo_rem[i] = lo_loc[i] - nwidth;
@@ -383,18 +373,11 @@ void FATR ga_update1_ghosts_(Integer *g_a)
           lo_rem[i] = lo_loc[i];
           hi_rem[i] = hi_loc[i];
         }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
-        }
       }
 
       for (inx = 0; inx < imax; inx++) {
         /* Check to see if boundary is being updated in one patch or two,
            adjust lower boundary accordingly. */
-        if (DEBUG) {
-          fprintf(stderr,"\n Value of inx is %d\n\n",(int)inx);
-        }
         for (i=0; i<ndim; i++) {
           if (imax == 2 && i == idx) {
             if (inx == 0) {
@@ -416,22 +399,12 @@ void FATR ga_update1_ghosts_(Integer *g_a)
             slo_rem[i] = lo_rem[i];
             shi_rem[i] = hi_rem[i];
           }
-          if (DEBUG) {
-            fprintf(stderr,"p[%d] slo_rem(%d) %d shi_rem(%d) %d"
-                "  i=%d idx=%d imax=%d\n",(int)GAme,(int)i+1,
-                (int)slo_rem[i],(int)i+1,(int)shi_rem[i],(int)i,
-                (int)idx,(int)imax);
-          }
         }
         /* locate processor with this data */
         if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
             GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
             slo_rem, shi_rem, *g_a);
 
-        if (DEBUG) {
-          fprintf(stderr,"\np[%d] Value of np is %d Value of imax is %d\n",
-              (int)GAme,(int)np,(int)imax);
-        }
         for (ipx = 0; ipx < np; ipx++) {
           /* Get actual coordinates of desired chunk of remote
              data as well as the actual coordinates of the local chunk
@@ -441,9 +414,6 @@ void FATR ga_update1_ghosts_(Integer *g_a)
              remote processor. */
           proc_rem = GA_proclist[ipx];
           nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
-          if (DEBUG) {
-            fprintf(stderr,"\np[%d] Checking second step\n",(int)GAme);
-          }
           for (i = 0; i < ndim; i++) {
             if (increment[i] == 0) {
               if (i == idx) {
@@ -479,34 +449,12 @@ void FATR ga_update1_ghosts_(Integer *g_a)
               plo_loc[i] = 0;
               phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
             }
-            if (DEBUG) {
-              if (i == idx && (np > 1 || imax > 1)) {
-                fprintf(stderr,"\np[%d] offset %d slice %d increment(%d) %d\n",
-                    (int)GAme,(int)offset,(int)slice,(int)i+1,(int)increment[i]);
-              } else {
-                fprintf(stderr,"\n");
-              }
-              fprintf(stderr,"p[%d] tlo_rem(%d) %d thi_rem(%d) %d\n",
-                  (int)GAme,(int)i+1,(int)tlo_rem[i],(int)i+1,(int)thi_rem[i]);
-              fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
-                  (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
-              fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
-                  (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
-            }
           }
 
           /* Get pointer to local data buffer and remote data
              buffer as well as lists of leading dimenstions */
           gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
           gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
-          if (DEBUG) {
-            for (i=0; i<ndim-1; i++) {
-              fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-                  (int)ld_loc[i]);
-              fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
-                  (int)ld_rem[i]);
-            }
-          }
 
           /* Evaluate strides on local and remote processors */
           gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
@@ -526,9 +474,6 @@ void FATR ga_update1_ghosts_(Integer *g_a)
 
       /* Perform update in positive direction. Start by getting rough
          estimate of block of needed data*/
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in positive direction\n\n",(int)GAme);
-      }
       for (i = 0; i < ndim; i++) {
         if (i == idx) {
           lo_rem[i] = hi_loc[i] + 1;
@@ -548,18 +493,11 @@ void FATR ga_update1_ghosts_(Integer *g_a)
           lo_rem[i] = lo_loc[i];
           hi_rem[i] = hi_loc[i];
         }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
-        }
       }
 
       for (inx = 0; inx < imax; inx++) {
         /* Check to see if boundary is being updated in one patch or two,
            adjust lower boundary accordingly. */
-        if (DEBUG) {
-          fprintf(stderr,"\n Value of inx is %d\n\n",(int)inx);
-        }
         for (i=0; i<ndim; i++) {
           if (imax == 2 && i == idx) {
             if (inx == 0) {
@@ -581,22 +519,12 @@ void FATR ga_update1_ghosts_(Integer *g_a)
             slo_rem[i] = lo_rem[i];
             shi_rem[i] = hi_rem[i];
           }
-          if (DEBUG) {
-            fprintf(stderr,"p[%d] slo_rem(%d) %d shi_rem(%d) %d"
-                "  i=%d idx=%d imax=%d\n",(int)GAme,(int)i+1,
-                (int)slo_rem[i],(int)i+1,(int)shi_rem[i],(int)i,
-                (int)idx,(int)imax);
-          }
         }
         /* locate processor with this data */
         if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
             GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
             slo_rem, shi_rem, *g_a);
 
-        if (DEBUG) {
-          fprintf(stderr,"\np[%d] Value of np is %d Value of imax is %d\n",
-              (int)GAme,(int)np,(int)imax);
-        }
         for (ipx = 0; ipx < np; ipx++) {
           /* Get actual coordinates of desired chunk of remote
              data as well as the actual coordinates of the local chunk
@@ -606,9 +534,6 @@ void FATR ga_update1_ghosts_(Integer *g_a)
              remote processor. */
           proc_rem = GA_proclist[ipx];
           nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
-          if (DEBUG) {
-            fprintf(stderr,"\np[%d] Checking second step\n",(int)GAme);
-          }
           for (i = 0; i < ndim; i++) {
             if (increment[i] == 0) {
               if (i == idx) {
@@ -644,34 +569,12 @@ void FATR ga_update1_ghosts_(Integer *g_a)
               plo_loc[i] = 0;
               phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
             }
-            if (DEBUG) {
-              if (i == idx && (np > 1 || imax > 1)) {
-                fprintf(stderr,"\np[%d] offset %d slice %d increment(%d) %d\n",
-                    (int)GAme,(int)offset,(int)slice,(int)i+1,(int)increment[i]);
-              } else {
-                fprintf(stderr,"\n");
-              }
-              fprintf(stderr,"p[%d] tlo_rem(%d) %d thi_rem(%d) %d\n",
-                  (int)GAme,(int)i+1,(int)tlo_rem[i],(int)i+1,(int)thi_rem[i]);
-              fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
-                  (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
-              fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
-                  (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
-            }
           }
 
           /* Get pointer to local data buffer and remote data
              buffer as well as lists of leading dimenstions */
           gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
           gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
-          if (DEBUG) {
-            for (i=0; i<ndim-1; i++) {
-              fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-                  (int)ld_loc[i]);
-              fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
-                  (int)ld_rem[i]);
-            }
-          }
 
           /* Evaluate strides on local and remote processors */
           gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
@@ -695,6 +598,34 @@ void FATR ga_update1_ghosts_(Integer *g_a)
   }
 
   GA_POP_NAME;
+}
+
+/*\ UTILITY FUNCTION TO MAKE SURE GHOST CELLS WIDTHS ARE
+ *  LESS THAN VISIBLE DATA WIDTHS
+\*/
+logical gai_check_ghost_distr(Integer *g_a)
+{
+  Integer handle=GA_OFFSET + *g_a;
+  Integer idx, ndim, np, ipx;
+  ndim = GA[handle].ndim;
+  ipx = 0;
+  for (idx = 0; idx < ndim; idx++) {
+    for (np = 0; np < GA[handle].nblock[idx]; np++) {
+      if (np < GA[handle].nblock[idx] - 1) {
+        if (GA[handle].mapc[ipx+1]-GA[handle].mapc[ipx]+1
+            <GA[handle].width[idx]) {
+          return FALSE;
+        }
+      } else {
+        if (GA[handle].dims[idx]-GA[handle].mapc[ipx]+1
+            <GA[handle].width[idx]) {
+          return FALSE;
+        }
+      }
+      ipx++;
+    }
+  }
+  return TRUE;
 }
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING PUT CALLS
@@ -731,42 +662,13 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
   /* Check to make sure that global array is well-behaved (all processors
      have data and the width of the data in each dimension is greater than
      the corresponding value in width[]). */
-  ipx = 0;
-  for (idx = 0; idx < ndim; idx++) {
-    for (np = 0; np < GA[handle].nblock[idx]; np++) {
-      if (np < GA[handle].nblock[idx] - 1) {
-        if (GA[handle].mapc[ipx+1]-GA[handle].mapc[ipx]+1<width[idx]) {
-          if (DEBUG) {
-            fprintf(stderr,"ERR1 p[%d]  ipx = %d mapc[%d] = %d\n",
-                (int)GAme,(int)ipx,(int)ipx,GA[handle].mapc[ipx]);
-          }
-          return FALSE;
-        }
-      } else {
-        if (GA[handle].dims[idx]-GA[handle].mapc[ipx]+1<width[idx]) {
-          if (DEBUG) {
-            fprintf(stderr,"ERR2 p[%d] dims[%d] = %d  ipx = %d mapc[%d] = %d\n",
-                (int)GAme,(int)idx,GA[handle].dims[idx],
-                (int)ipx,(int)ipx,GA[handle].mapc[ipx]);
-          }
-          return FALSE;
-        }
-      }
-      ipx++;
-    }
-  }
+  if (!gai_check_ghost_distr(g_a)) return FALSE;
 
   GA_PUSH_NAME("ga_update2_ghosts");
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
   /* obtain range of data that is held by local processor */
   nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
-  if (DEBUG) {
-    fprintf(stderr,"p[%d] lo(1) %d hi(1) %d\n",(int)GAme,
-        (int)lo_loc[0],(int)hi_loc[0]);
-    fprintf(stderr,"p[%d] lo(2) %d hi(2) %d\n",(int)GAme,
-        (int)lo_loc[1],(int)hi_loc[1]);
-  }
 
   /* evaluate total number of PUT operations that will be required */
   ntot = 1;
@@ -792,13 +694,6 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
       if (mask[idx] != 0 && width[idx] == 0) mask0 = TRUE;
     }
     if (mask0) continue;
-    if (DEBUG) {
-      fprintf(stderr,"\n");
-      for (idx=0; idx<ndim; idx++) {
-        fprintf(stderr,"p[%d] ipx = %d  mask[%d] = %d\n",
-            (int)GAme,(int)ipx,(int)idx,(int)mask[idx]);
-      }
-    }
     /* Now that mask has been determined, find data that is to be moved
      * and identify processor to which it is going. Wrap boundaries
      * around, if necessary */
@@ -830,14 +725,6 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
         }
       } else {
         fprintf(stderr,"Illegal mask value found\n");
-      }
-      if (DEBUG) {
-        fprintf(stderr,"p[%d] ipx = %d tlo_loc[%d] = %d thi_loc[%d] = %d\n",
-            (int)GAme,(int)ipx,(int)idx,(int)tlo_loc[idx],(int)idx,
-            (int)thi_loc[idx]);
-        fprintf(stderr,"p[%d] ipx = %d tlo_rem[%d] = %d thi_rem[%d] = %d\n",
-            (int)GAme,(int)ipx,(int)idx,(int)tlo_rem[idx],(int)idx,
-            (int)thi_rem[idx]);
       }
     }
     /* Locate remote processor to which data must be sent */
@@ -889,6 +776,76 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
 
   GA_POP_NAME;
   return TRUE;
+}
+
+/*\ GET INDICES ON REMOTE BLOCK IN NEGATIVE DIRECTION FOR UPDATE
+\*/
+void get_remote_block_neg(Integer idx, Integer ndim, Integer *lo_loc,
+                          Integer *hi_loc, Integer *slo_rem, Integer *shi_rem,
+                          Integer *dims, Integer *width)
+{
+  Integer i, lo_rem[MAXDIM], hi_rem[MAXDIM];
+  /*Start by getting rough idea of where data needs to go. */
+  for (i = 0; i < ndim; i++) {
+    if (i == idx) {
+      lo_rem[i] = lo_loc[i] - width[i];
+      hi_rem[i] = lo_loc[i] - 1;
+    } else {
+      lo_rem[i] = lo_loc[i];
+      hi_rem[i] = hi_loc[i];
+    }
+  }
+
+  /* Account for boundaries, if necessary. */
+  for (i=0; i<ndim; i++) {
+    if (i == idx) {
+      if (lo_rem[i] < 1) {
+        slo_rem[i] = dims[i] - width[i] + 1;
+        shi_rem[i] = dims[i];
+      } else {
+        slo_rem[i] = lo_rem[i];
+        shi_rem[i] = hi_rem[i];
+      }
+    } else {
+      slo_rem[i] = lo_rem[i];
+      shi_rem[i] = hi_rem[i];
+    }
+  }
+}
+
+/*\ GET INDICES ON REMOTE BLOCK IN POSITIVE DIRECTION FOR UPDATE
+\*/
+void get_remote_block_pos(Integer idx, Integer ndim, Integer *lo_loc,
+                          Integer *hi_loc, Integer *slo_rem, Integer *shi_rem,
+                          Integer *dims, Integer *width)
+{
+  Integer i, lo_rem[MAXDIM], hi_rem[MAXDIM];
+  /* Start by getting rough idea of where data needs to go. */
+  for (i = 0; i < ndim; i++) {
+    if (i == idx) {
+      lo_rem[i] = hi_loc[i] + 1;
+      hi_rem[i] = hi_loc[i] + width[i];
+    } else {
+      lo_rem[i] = lo_loc[i];
+      hi_rem[i] = hi_loc[i];
+    }
+  }
+
+  /* Account for boundaries, if necessary. */
+  for (i=0; i<ndim; i++) {
+    if (i == idx) {
+      if (hi_rem[i] > dims[i]) {
+        slo_rem[i] = 1;
+        shi_rem[i] = width[i];
+      } else {
+        slo_rem[i] = lo_rem[i];
+        shi_rem[i] = hi_rem[i];
+      }
+    } else {
+      slo_rem[i] = lo_rem[i];
+      shi_rem[i] = hi_rem[i];
+    }
+  }
 }
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND PUT CALLS
@@ -982,21 +939,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
   /* Check to make sure that global array is well-behaved (all processors
      have data and the width of the data in each dimension is greater
      than the corresponding value in width[]. */
-  ipx = 0;
-  for (idx = 0; idx < ndim; idx++) {
-    for (np = 0; np < GA[handle].nblock[idx]; np++) {
-      if (np < GA[handle].nblock[idx] - 1) {
-        if (GA[handle].mapc[ipx+1]-GA[handle].mapc[ipx]+1 < width[idx]) {
-          return FALSE;
-        }
-      } else {
-        if (GA[handle].dims[idx]-GA[handle].mapc[ipx]+1 < width[idx]) {
-          return FALSE;
-        }
-      }
-      ipx++;
-    }
-  }
+  if (!gai_check_ghost_distr(g_a)) return FALSE;
 
   GA_PUSH_NAME("ga_update3_ghosts");
 
@@ -1012,55 +955,14 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
     /* Do not bother with update if nwidth is zero */
     if (nwidth != 0) {
 
-      /* Perform update in negative direction. Start by getting rough
-         idea of where data needs to go. */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in negative direction\n\n",(int)GAme);
-      }
-      for (i = 0; i < ndim; i++) {
-        if (i == idx) {
-          lo_rem[i] = lo_loc[i] - width[i];
-          hi_rem[i] = lo_loc[i] - 1;
-        } else {
-          lo_rem[i] = lo_loc[i];
-          hi_rem[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
-        }
-      }
-
-      /* Account for boundaries, if necessary. */
-      for (i=0; i<ndim; i++) {
-        if (i == idx) {
-          if (lo_rem[i] < 1) {
-            slo_rem[i] = dims[i] - width[i] + 1;
-            shi_rem[i] = dims[i];
-          } else {
-            slo_rem[i] = lo_rem[i];
-            shi_rem[i] = hi_rem[i];
-          }
-        } else {
-          slo_rem[i] = lo_rem[i];
-          shi_rem[i] = hi_rem[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] slo_rem(%d) %d shi_rem(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rem[i],(int)i+1,(int)shi_rem[i],(int)i,
-              (int)idx);
-        }
-      }
+      /* Perform update in negative direction. */
+      get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
+                           dims, width);
       /* locate processor with this data */
       if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rem, shi_rem, *g_a);
 
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Value of np is %d\n",
-            (int)GAme,(int)np);
-      }
       /* Get actual coordinates of desired location of remote
          data as well as the actual coordinates of the local chunk
          of data that will be sent to remote processor (these
@@ -1088,29 +990,12 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
           plo_loc[i] = 0;
           phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
         }
-        if (DEBUG) {
-          fprintf(stderr,"\n");
-          fprintf(stderr,"p[%d] tlo_rem(%d) %d thi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)tlo_rem[i],(int)i+1,(int)thi_rem[i]);
-          fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
-          fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
-        }
       }
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
       gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
       gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
-      if (DEBUG) {
-        for (i=0; i<ndim-1; i++) {
-          fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_loc[i]);
-          fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_rem[i]);
-        }
-      }
 
       /* Evaluate strides on local and remote processors */
       gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
@@ -1126,59 +1011,14 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           (int)(ndim - 1), (int)proc_rem);
 
-      /* Perform update in positive direction. Start by getting rough
-         idea of where data needs to go. */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in positive direction\n\n",(int)GAme);
-      }
-      for (i = 0; i < ndim; i++) {
-        if (i == idx) {
-          lo_rem[i] = hi_loc[i] + 1;
-          hi_rem[i] = hi_loc[i] + nwidth;
-        } else {
-          lo_rem[i] = lo_loc[i];
-          hi_rem[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
-        }
-      }
-
-      /* Check to see if boundary is being updated in one patch or two,
-         adjust lower boundary accordingly. */
-      if (DEBUG) {
-        fprintf(stderr,"\n Value of inx is %d\n\n",(int)inx);
-      }
-      for (i=0; i<ndim; i++) {
-        if (i == idx) {
-          if (hi_rem[i] > dims[i]) {
-            slo_rem[i] = 1;
-            shi_rem[i] = width[i];
-          } else {
-            slo_rem[i] = lo_rem[i];
-            shi_rem[i] = hi_rem[i];
-          }
-        } else {
-          slo_rem[i] = lo_rem[i];
-          shi_rem[i] = hi_rem[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] slo_rem(%d) %d shi_rem(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rem[i],(int)i+1,(int)shi_rem[i],(int)i,
-              (int)idx);
-        }
-      }
+      /* Perform update in positive direction */
+      get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
+                           dims, width);
       /* locate processor with this data */
       if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rem, shi_rem, *g_a);
 
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Value of np is %d\n",
-            (int)GAme,(int)np);
-      }
       /* Get actual coordinates of desired chunk of remote
          data as well as the actual coordinates of the local chunk
          of data that will receive the remote data (these
@@ -1187,9 +1027,6 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
          remote processor. */
       proc_rem = GA_proclist[0];
       nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Checking second step\n",(int)GAme);
-      }
       for (i = 0; i < ndim; i++) {
         if (increment[i] == 0) {
           if (i == idx) {
@@ -1209,29 +1046,12 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
           plo_loc[i] = 0;
           phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
         }
-        if (DEBUG) {
-          fprintf(stderr,"\n");
-          fprintf(stderr,"p[%d] tlo_rem(%d) %d thi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)tlo_rem[i],(int)i+1,(int)thi_rem[i]);
-          fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
-          fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
-        }
       }
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
       gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
       gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
-      if (DEBUG) {
-        for (i=0; i<ndim-1; i++) {
-          fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_loc[i]);
-          fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_rem[i]);
-        }
-      }
 
       /* Evaluate strides on local and remote processors */
       gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
@@ -1347,21 +1167,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   /* Check to make sure that global array is well-behaved (all processors
      have data and the width of the data in each dimension is greater
      than the corresponding value in width[]. */
-  ipx = 0;
-  for (idx = 0; idx < ndim; idx++) {
-    for (np = 0; np < GA[handle].nblock[idx]; np++) {
-      if (np < GA[handle].nblock[idx] - 1) {
-        if (GA[handle].mapc[ipx+1]-GA[handle].mapc[ipx]+1 < width[idx]) {
-          return FALSE;
-        }
-      } else {
-        if (GA[handle].dims[idx]-GA[handle].mapc[ipx]+1 < width[idx]) {
-          return FALSE;
-        }
-      }
-      ipx++;
-    }
-  }
+  if (!gai_check_ghost_distr(g_a)) return FALSE;
 
   GA_PUSH_NAME("ga_update4_ghosts");
   msgcnt = 0;
@@ -1401,46 +1207,9 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
     /* Do not bother with update if nwidth is zero */
     if (width[idx] != 0) {
 
-      /* Find parameters for message in negative direction. Start by
-       * finding processor to which data will be sent. */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in negative direction\n\n",(int)GAme);
-      }
-      for (i = 0; i < ndim; i++) {
-        if (i == idx) {
-          lo_rcv[i] = lo_loc[i] - width[i];
-          hi_rcv[i] = lo_loc[i] - 1;
-        } else {
-          lo_rcv[i] = lo_loc[i];
-          hi_rcv[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rcv(%d) %d hi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rcv[i],(int)i+1,(int)hi_rcv[i]);
-        }
-      }
-
-      /* Account for boundaries, if necessary. */
-      for (i=0; i<ndim; i++) {
-        if (i == idx) {
-          if (lo_rcv[i] < 1) {
-            slo_rcv[i] = dims[i] - width[i] + 1;
-            shi_rcv[i] = dims[i];
-          } else {
-            slo_rcv[i] = lo_rcv[i];
-            shi_rcv[i] = hi_rcv[i];
-          }
-        } else {
-          slo_rcv[i] = lo_rcv[i];
-          shi_rcv[i] = hi_rcv[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] Data sent to\n slo_rcv(%d) %d shi_rcv(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rcv[i],(int)i+1,(int)shi_rcv[i],(int)i,
-              (int)idx);
-        }
-      }
+      /* Perform update in negative direction. */
+      get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
+                           dims, width);
       /* locate processor with this data */
       if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
@@ -1448,9 +1217,6 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
       proc_rem_snd = GA_proclist[0];
 
       /* Find processor from which data will be recieved */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in negative direction\n\n",(int)GAme);
-      }
       for (i = 0; i < ndim; i++) {
         if (i == idx) {
           lo_rcv[i] = hi_loc[i] + 1;
@@ -1458,10 +1224,6 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
         } else {
           lo_rcv[i] = lo_loc[i];
           hi_rcv[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rcv(%d) %d hi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rcv[i],(int)i+1,(int)hi_rcv[i]);
         }
       }
 
@@ -1478,12 +1240,6 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
         } else {
           slo_rcv[i] = lo_rcv[i];
           shi_rcv[i] = hi_rcv[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] Data recieved from\n slo_rcv(%d) %d shi_rcv(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rcv[i],(int)i+1,(int)shi_rcv[i],(int)i,
-              (int)idx);
         }
       }
       /* locate processor with this data */
@@ -1514,25 +1270,12 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
           plo_snd[i] = 0;
           phi_snd[i] = hi_loc[i] - lo_loc[i] + increment[i];
         }
-        if (DEBUG) {
-          fprintf(stderr,"\n");
-          fprintf(stderr,"p[%d] plo_rcv(%d) %d phi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_rcv[i],(int)i+1,(int)phi_rcv[i]);
-          fprintf(stderr,"p[%d] plo_snd(%d) %d phi_snd(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_snd[i],(int)i+1,(int)phi_snd[i]);
-        }
       }
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
       gam_LocationWithGhosts(GAme, handle, plo_snd, &ptr_snd, ld_loc);
       gam_LocationWithGhosts(GAme, handle, plo_rcv, &ptr_rcv, ld_loc);
-      if (DEBUG) {
-        for (i=0; i<ndim-1; i++) {
-          fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_loc[i]);
-        }
-      }
 
       /* Evaluate strides for send and recieve */
       gam_setstride(ndim, size, ld_loc, ld_loc, stride_rcv,
@@ -1594,46 +1337,9 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
       /* copy data back into global array */
       armci_read_strided(ptr_rcv, (int)ndim-1, stride_rcv, count, rcv_ptr);
 
-      /* Find parameters for message in positive direction. Start by
-       * finding processor to which data will be sent. */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in positive direction\n\n",(int)GAme);
-      }
-      for (i = 0; i < ndim; i++) {
-        if (i == idx) {
-          lo_rcv[i] = hi_loc[i] + 1;
-          hi_rcv[i] = hi_loc[i] + width[i];
-        } else {
-          lo_rcv[i] = lo_loc[i];
-          hi_rcv[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rcv(%d) %d hi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rcv[i],(int)i+1,(int)hi_rcv[i]);
-        }
-      }
-
-      /* Account for boundaries, if necessary. */
-      for (i=0; i<ndim; i++) {
-        if (i == idx) {
-          if (hi_rcv[i] > dims[i]) {
-            slo_rcv[i] = 1;
-            shi_rcv[i] = width[i];
-          } else {
-            slo_rcv[i] = lo_rcv[i];
-            shi_rcv[i] = hi_rcv[i];
-          }
-        } else {
-          slo_rcv[i] = lo_rcv[i];
-          shi_rcv[i] = hi_rcv[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] Data sent to\n slo_rcv(%d) %d shi_rcv(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rcv[i],(int)i+1,(int)shi_rcv[i],(int)i,
-              (int)idx);
-        }
-      }
+      /* Find parameters for message in positive direction. */
+      get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
+                           dims, width);
       /* locate processor with this data */
       if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
@@ -1641,9 +1347,6 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
       proc_rem_snd = GA_proclist[0];
 
       /* Find processor from which data will be recieved */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in positive direction\n\n",(int)GAme);
-      }
       for (i = 0; i < ndim; i++) {
         if (i == idx) {
           lo_rcv[i] = lo_loc[i] - width[i];
@@ -1651,10 +1354,6 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
         } else {
           lo_rcv[i] = lo_loc[i];
           hi_rcv[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rcv(%d) %d hi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rcv[i],(int)i+1,(int)hi_rcv[i]);
         }
       }
 
@@ -1671,12 +1370,6 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
         } else {
           slo_rcv[i] = lo_rcv[i];
           shi_rcv[i] = hi_rcv[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] Data recieved from\n slo_rcv(%d) %d shi_rcv(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rcv[i],(int)i+1,(int)shi_rcv[i],(int)i,
-              (int)idx);
         }
       }
       /* locate processor with this data */
@@ -1706,25 +1399,12 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
           plo_snd[i] = 0;
           phi_snd[i] = hi_loc[i] - lo_loc[i] + increment[i];
         }
-        if (DEBUG) {
-          fprintf(stderr,"\n");
-          fprintf(stderr,"p[%d] plo_rcv(%d) %d phi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_rcv[i],(int)i+1,(int)phi_rcv[i]);
-          fprintf(stderr,"p[%d] plo_snd(%d) %d phi_snd(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_snd[i],(int)i+1,(int)phi_snd[i]);
-        }
       }
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
       gam_LocationWithGhosts(GAme, handle, plo_snd, &ptr_snd, ld_loc);
       gam_LocationWithGhosts(GAme, handle, plo_rcv, &ptr_rcv, ld_loc);
-      if (DEBUG) {
-        for (i=0; i<ndim-1; i++) {
-          fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_loc[i]);
-        }
-      }
 
       /* Evaluate strides for send and recieve */
       gam_setstride(ndim, size, ld_loc, ld_loc, stride_rcv,
@@ -1850,8 +1530,8 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
   Integer dims[MAXDIM];
   Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
   Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
-  Integer lo_rem[MAXDIM], hi_rem[MAXDIM];
   Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
+  Integer lo_rem[MAXDIM], hi_rem[MAXDIM];
   Integer slo_rem[MAXDIM], shi_rem[MAXDIM];
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
@@ -1936,21 +1616,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
   /* Check to make sure that global array is well-behaved (all processors
      have data and the width of the data in each dimension is greater
      than the corresponding value in width[]. */
-  ipx = 0;
-  for (idx = 0; idx < ndim; idx++) {
-    for (np = 0; np < GA[handle].nblock[idx]; np++) {
-      if (np < GA[handle].nblock[idx] - 1) {
-        if (GA[handle].mapc[ipx+1]-GA[handle].mapc[ipx]+1 < width[idx]) {
-          return FALSE;
-        }
-      } else {
-        if (GA[handle].dims[idx]-GA[handle].mapc[ipx]+1 < width[idx]) {
-          return FALSE;
-        }
-      }
-      ipx++;
-    }
-  }
+  if (!gai_check_ghost_distr(g_a)) return FALSE;
 
   GA_PUSH_NAME("ga_update5_ghosts");
 
@@ -1968,55 +1634,14 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
     /* Do not bother with update if nwidth is zero */
     if (nwidth != 0) {
 
-      /* Perform update in negative direction. Start by getting rough
-         idea of where data needs to go. */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in negative direction\n\n",(int)GAme);
-      }
-      for (i = 0; i < ndim; i++) {
-        if (i == idx) {
-          lo_rem[i] = lo_loc[i] - width[i];
-          hi_rem[i] = lo_loc[i] - 1;
-        } else {
-          lo_rem[i] = lo_loc[i];
-          hi_rem[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
-        }
-      }
-
-      /* Account for boundaries, if necessary. */
-      for (i=0; i<ndim; i++) {
-        if (i == idx) {
-          if (lo_rem[i] < 1) {
-            slo_rem[i] = dims[i] - width[i] + 1;
-            shi_rem[i] = dims[i];
-          } else {
-            slo_rem[i] = lo_rem[i];
-            shi_rem[i] = hi_rem[i];
-          }
-        } else {
-          slo_rem[i] = lo_rem[i];
-          shi_rem[i] = hi_rem[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] slo_rem(%d) %d shi_rem(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rem[i],(int)i+1,(int)shi_rem[i],(int)i,
-              (int)idx);
-        }
-      }
+      /* Perform update in negative direction. */
+      get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
+                           dims, width);
       /* locate processor with this data */
       if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rem, shi_rem, *g_a);
 
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Value of np is %d\n",
-            (int)GAme,(int)np);
-      }
       /* Get actual coordinates of desired location of remote
          data as well as the actual coordinates of the local chunk
          of data that will be sent to remote processor (these
@@ -2044,29 +1669,12 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
           plo_loc[i] = 0;
           phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
         }
-        if (DEBUG) {
-          fprintf(stderr,"\n");
-          fprintf(stderr,"p[%d] tlo_rem(%d) %d thi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)tlo_rem[i],(int)i+1,(int)thi_rem[i]);
-          fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
-          fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
-        }
       }
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
       gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
       gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
-      if (DEBUG) {
-        for (i=0; i<ndim-1; i++) {
-          fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_loc[i]);
-          fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_rem[i]);
-        }
-      }
 
       /* Evaluate strides on local and remote processors */
       gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
@@ -2091,59 +1699,14 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
 #endif
       msgcnt++;
 
-      /* Perform update in positive direction. Start by getting rough
-         idea of where data needs to go. */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in positive direction\n\n",(int)GAme);
-      }
-      for (i = 0; i < ndim; i++) {
-        if (i == idx) {
-          lo_rem[i] = hi_loc[i] + 1;
-          hi_rem[i] = hi_loc[i] + nwidth;
-        } else {
-          lo_rem[i] = lo_loc[i];
-          hi_rem[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rem(%d) %d hi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rem[i],(int)i+1,(int)hi_rem[i]);
-        }
-      }
-
-      /* Check to see if boundary is being updated in one patch or two,
-         adjust lower boundary accordingly. */
-      if (DEBUG) {
-        fprintf(stderr,"\n Value of inx is %d\n\n",(int)inx);
-      }
-      for (i=0; i<ndim; i++) {
-        if (i == idx) {
-          if (hi_rem[i] > dims[i]) {
-            slo_rem[i] = 1;
-            shi_rem[i] = width[i];
-          } else {
-            slo_rem[i] = lo_rem[i];
-            shi_rem[i] = hi_rem[i];
-          }
-        } else {
-          slo_rem[i] = lo_rem[i];
-          shi_rem[i] = hi_rem[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] slo_rem(%d) %d shi_rem(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rem[i],(int)i+1,(int)shi_rem[i],(int)i,
-              (int)idx);
-        }
-      }
+      /* Perform update in positive direction. */
+      get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
+                           dims, width);
       /* locate processor with this data */
       if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
           slo_rem, shi_rem, *g_a);
 
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Value of np is %d\n",
-            (int)GAme,(int)np);
-      }
       /* Get actual coordinates of desired chunk of remote
          data as well as the actual coordinates of the local chunk
          of data that will receive the remote data (these
@@ -2152,9 +1715,6 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
          remote processor. */
       proc_rem = GA_proclist[0];
       nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Checking second step\n",(int)GAme);
-      }
       for (i = 0; i < ndim; i++) {
         if (increment[i] == 0) {
           if (i == idx) {
@@ -2174,29 +1734,12 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
           plo_loc[i] = 0;
           phi_loc[i] = hi_loc[i] - lo_loc[i] + increment[i];
         }
-        if (DEBUG) {
-          fprintf(stderr,"\n");
-          fprintf(stderr,"p[%d] tlo_rem(%d) %d thi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)tlo_rem[i],(int)i+1,(int)thi_rem[i]);
-          fprintf(stderr,"p[%d] plo_rem(%d) %d phi_rem(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_rem[i],(int)i+1,(int)phi_rem[i]);
-          fprintf(stderr,"p[%d] plo_loc(%d) %d phi_loc(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_loc[i],(int)i+1,(int)phi_loc[i]);
-        }
       }
 
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
       gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
       gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
-      if (DEBUG) {
-        for (i=0; i<ndim-1; i++) {
-          fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_loc[i]);
-          fprintf(stderr,"p[%d]   ld_rem[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_rem[i]);
-        }
-      }
 
       /* Evaluate strides on local and remote processors */
       gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
@@ -2308,12 +1851,6 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   ptr_loc = GA[handle].ptr[GAme];
   /* obtain range of data that is held by local processor */
   nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
-  if (DEBUG) {
-    fprintf(stderr,"p[%d] lo(1) %d hi(1) %d\n",(int)GAme,
-        (int)lo_loc[0],(int)hi_loc[0]);
-    fprintf(stderr,"p[%d] lo(2) %d hi(2) %d\n",(int)GAme,
-        (int)lo_loc[1],(int)hi_loc[1]);
-  }
 
   /* evaluate total number of GET operations */
   ntot = 1;
@@ -2368,11 +1905,6 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
       } else {
         fprintf(stderr,"Illegal mask value found\n");
       }
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] ipx = %d tlo_rem[%d] = %d thi_rem[%d] = %d\n",
-            (int)GAme,(int)ipx,(int)idx,(int)tlo_rem[idx],(int)idx,
-            (int)thi_rem[idx]);
-      }
     }
     /* Locate remote processor to which data must be sent */
     if (!nga_locate_region_(g_a, tlo_rem, thi_rem, _ga_map,
@@ -2402,14 +1934,6 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
         phi_loc[idx] = hi_loc[idx]-lo_loc[idx]+2*width[idx];
         plo_rem[idx] = width[idx];
         phi_rem[idx] = 2*width[idx]-1;
-      }
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] plo_loc[%d] = %d phi_loc[%d] = %d\n",
-            (int)GAme,(int)idx,(int)plo_loc[idx],(int)idx,
-            (int)phi_loc[idx]);
-        fprintf(stderr,"p[%d] plo_rem[%d] = %d phi_rem[%d] = %d\n",
-            (int)GAme,(int)idx,(int)plo_rem[idx],(int)idx,
-            (int)phi_rem[idx]);
       }
     }
     /* Get pointer to local data buffer and remote data
@@ -2579,21 +2103,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   /* Check to make sure that global array is well-behaved (all processors
      have data and the width of the data in each dimension is greater
      than the corresponding value in width[]. */
-  ipx = 0;
-  for (idx = 0; idx < ndim; idx++) {
-    for (np = 0; np < GA[handle].nblock[idx]; np++) {
-      if (np < GA[handle].nblock[idx] - 1) {
-        if (GA[handle].mapc[ipx+1]-GA[handle].mapc[ipx]+1 < width[idx]) {
-          return FALSE;
-        }
-      } else {
-        if (GA[handle].dims[idx]-GA[handle].mapc[ipx]+1 < width[idx]) {
-          return FALSE;
-        }
-      }
-      ipx++;
-    }
-  }
+  if (!gai_check_ghost_distr(g_a)) return FALSE;
 
   GA_PUSH_NAME("ga_update6_ghosts");
   msgcnt = 0;
@@ -2637,46 +2147,9 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
     /* Do not bother with update if nwidth is zero */
     if (width[idx] != 0) {
 
-      /* Find parameters for message in negative direction. Start by
-       * finding processor to which data will be sent. */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in negative direction\n\n",(int)GAme);
-      }
-      for (i = 0; i < ndim; i++) {
-        if (i == idx) {
-          lo_rcv[i] = lo_loc[i] - width[i];
-          hi_rcv[i] = lo_loc[i] - 1;
-        } else {
-          lo_rcv[i] = lo_loc[i];
-          hi_rcv[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rcv(%d) %d hi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rcv[i],(int)i+1,(int)hi_rcv[i]);
-        }
-      }
-
-      /* Account for boundaries, if necessary. */
-      for (i=0; i<ndim; i++) {
-        if (i == idx) {
-          if (lo_rcv[i] < 1) {
-            slo_rcv[i] = dims[i] - width[i] + 1;
-            shi_rcv[i] = dims[i];
-          } else {
-            slo_rcv[i] = lo_rcv[i];
-            shi_rcv[i] = hi_rcv[i];
-          }
-        } else {
-          slo_rcv[i] = lo_rcv[i];
-          shi_rcv[i] = hi_rcv[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] Data sent to\n slo_rcv(%d) %d shi_rcv(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rcv[i],(int)i+1,(int)shi_rcv[i],(int)i,
-              (int)idx);
-        }
-      }
+      /* Perform update in negative direction. */
+      get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
+                           dims, width);
       /* locate processor with this data */
       if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
@@ -2686,9 +2159,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       proc_rem_snd = GA_proclist[0];
 
       /* Find processor from which data will be received */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in negative direction\n\n",(int)GAme);
-      }
       for (i = 0; i < ndim; i++) {
         if (i == idx) {
           lo_rcv[i] = hi_loc[i] + 1;
@@ -2696,10 +2166,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
         } else {
           lo_rcv[i] = lo_loc[i];
           hi_rcv[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rcv(%d) %d hi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rcv[i],(int)i+1,(int)hi_rcv[i]);
         }
       }
 
@@ -2716,12 +2182,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
         } else {
           slo_rcv[i] = lo_rcv[i];
           shi_rcv[i] = hi_rcv[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] Data recieved from\n slo_rcv(%d) %d shi_rcv(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rcv[i],(int)i+1,(int)shi_rcv[i],(int)i,
-              (int)idx);
         }
       }
       /* locate processor with this data */
@@ -2760,13 +2220,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           plo_rem[i] = 0;
           phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
         }
-        if (DEBUG) {
-          fprintf(stderr,"\n");
-          fprintf(stderr,"p[%d] plo_rcv(%d) %d phi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_rcv[i],(int)i+1,(int)phi_rcv[i]);
-          fprintf(stderr,"p[%d] plo_snd(%d) %d phi_snd(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_snd[i],(int)i+1,(int)phi_snd[i]);
-        }
       }
 
       /* Get pointer to local data buffer and remote data
@@ -2774,12 +2227,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       gam_LocationWithGhosts(GAme, handle, plo_snd, &ptr_snd, ld_loc);
       gam_LocationWithGhosts(GAme, handle, plo_rcv, &ptr_rcv, ld_loc);
       gam_LocationWithGhosts(proc_rem_snd, handle, plo_rem, &ptr_rem, ld_rem);
-      if (DEBUG) {
-        for (i=0; i<ndim-1; i++) {
-          fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_loc[i]);
-        }
-      }
 
       /* Evaluate strides for send and receive */
       gam_setstride(ndim, size, ld_loc, ld_loc, stride_rcv,
@@ -2860,46 +2307,9 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
         armci_read_strided(ptr_rcv, (int)ndim-1, stride_rcv, count, rcv_ptr);
       }
 
-      /* Find parameters for message in positive direction. Start by
-       * finding processor to which data will be sent. */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in positive direction\n\n",(int)GAme);
-      }
-      for (i = 0; i < ndim; i++) {
-        if (i == idx) {
-          lo_rcv[i] = hi_loc[i] + 1;
-          hi_rcv[i] = hi_loc[i] + width[i];
-        } else {
-          lo_rcv[i] = lo_loc[i];
-          hi_rcv[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rcv(%d) %d hi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rcv[i],(int)i+1,(int)hi_rcv[i]);
-        }
-      }
-
-      /* Account for boundaries, if necessary. */
-      for (i=0; i<ndim; i++) {
-        if (i == idx) {
-          if (hi_rcv[i] > dims[i]) {
-            slo_rcv[i] = 1;
-            shi_rcv[i] = width[i];
-          } else {
-            slo_rcv[i] = lo_rcv[i];
-            shi_rcv[i] = hi_rcv[i];
-          }
-        } else {
-          slo_rcv[i] = lo_rcv[i];
-          shi_rcv[i] = hi_rcv[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] Data sent to\n slo_rcv(%d) %d shi_rcv(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rcv[i],(int)i+1,(int)shi_rcv[i],(int)i,
-              (int)idx);
-        }
-      }
+      /* Find parameters for message in positive direction. */
+      get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rcv, shi_rcv,
+                           dims, width);
       /* locate processor with this data */
       if (!nga_locate_region_(g_a, slo_rcv, shi_rcv, _ga_map,
           GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
@@ -2908,9 +2318,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       proc_rem_snd = GA_proclist[0];
 
       /* Find processor from which data will be recieved */
-      if (DEBUG) {
-        fprintf(stderr,"\np[%d] Update in positive direction\n\n",(int)GAme);
-      }
       for (i = 0; i < ndim; i++) {
         if (i == idx) {
           lo_rcv[i] = lo_loc[i] - width[i];
@@ -2918,10 +2325,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
         } else {
           lo_rcv[i] = lo_loc[i];
           hi_rcv[i] = hi_loc[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] lo_rcv(%d) %d hi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)lo_rcv[i],(int)i+1,(int)hi_rcv[i]);
         }
       }
 
@@ -2938,12 +2341,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
         } else {
           slo_rcv[i] = lo_rcv[i];
           shi_rcv[i] = hi_rcv[i];
-        }
-        if (DEBUG) {
-          fprintf(stderr,"p[%d] Data recieved from\n slo_rcv(%d) %d shi_rcv(%d) %d"
-              "  i=%d idx=%d\n",(int)GAme,(int)i+1,
-              (int)slo_rcv[i],(int)i+1,(int)shi_rcv[i],(int)i,
-              (int)idx);
         }
       }
       /* locate processor with this data */
@@ -2982,13 +2379,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           plo_rem[i] = 0;
           phi_rem[i] = thi_rem[i] - tlo_rem[i] + increment[i];
         }
-        if (DEBUG) {
-          fprintf(stderr,"\n");
-          fprintf(stderr,"p[%d] plo_rcv(%d) %d phi_rcv(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_rcv[i],(int)i+1,(int)phi_rcv[i]);
-          fprintf(stderr,"p[%d] plo_snd(%d) %d phi_snd(%d) %d\n",
-              (int)GAme,(int)i+1,(int)plo_snd[i],(int)i+1,(int)phi_snd[i]);
-        }
       }
 
       /* Get pointer to local data buffer and remote data
@@ -2996,12 +2386,6 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
       gam_LocationWithGhosts(GAme, handle, plo_snd, &ptr_snd, ld_loc);
       gam_LocationWithGhosts(GAme, handle, plo_rcv, &ptr_rcv, ld_loc);
       gam_LocationWithGhosts(proc_rem_snd, handle, plo_rem, &ptr_rem, ld_rem);
-      if (DEBUG) {
-        for (i=0; i<ndim-1; i++) {
-          fprintf(stderr,"\np[%d]   ld_loc[%d] = %d\n",(int)GAme,(int)i,
-              (int)ld_loc[i]);
-        }
-      }
 
       /* Evaluate strides for send and recieve */
       gam_setstride(ndim, size, ld_loc, ld_loc, stride_rcv,
