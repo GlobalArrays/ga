@@ -109,24 +109,28 @@ endif
 ifeq ($(TARGET),LINUX64)
    GLOB_DEFINES += -DLINUX
          _CPU = $(shell uname -m)
+
 ifeq  ($(_CPU),ia64)
      FC=efc
      CC=ecc
-ifeq ($(_FC),sgif90)
+  ifeq ($(_FC),sgif90)
      FOPT_REN = -macro_expand 
+  endif
+  ifeq ($(_FC),efc)
+     FOPT =  -O3 -hlo -pad
+     FOPT_REN= -w1 -cm -w90
+  endif
+  ifeq ($(_CC),ecc)
+     EXTRA_OBJ = tas.o
+  endif
 endif
-ifeq ($(_FC),efc)
-FOPT =  -O3 -hlo -pad
-FOPT_REN= -w1 -cm -w90
-endif
-endif
+
 ifeq  ($(_CPU),alpha)
      FC = fort
      CC = ccc
      FOPT_REN = -assume no2underscore -fpe3 -check nooverflow
      FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
 endif
-     EXTRA_OBJ = tas.o
    
 endif
 #----------------------------- Fujitsu ------------------------------
