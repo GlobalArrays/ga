@@ -16,6 +16,7 @@
  GLOB_DEFINES = -D$(TARGET)
           CLD = $(CC)
 
+#-------------------------- Cygwin/Cygnus: GNU on Windows ------------
 ifeq ($(TARGET),CYGNUS) 
            FC = g77
            CC = gcc
@@ -24,20 +25,28 @@ ifeq ($(TARGET),CYGNUS)
  GLOB_DEFINES+= -DLINUX
 endif
  
-
+#------------------------------- Linux -------------------------------
 ifeq ($(TARGET),LINUX)
      FOPT_REN = -fno-second-underscore
            FC = g77
            CC = gcc
+ifeq ($(TARGET_CPU),POWERPC)
+#    no special optimization flags
+else
+  ifeq ($(CC),gcc)
+       COPT_REN = -malign-double
+  endif
+  ifeq ($(FC),g77)
+      FOPT_REN += -malign-double
+  endif
+endif
 ifeq ($(CC),gcc)
-     COPT_REN = -malign-double
    ifeq ($(COPT),-O)
          COPT = -O2
     COPT_REN += -finline-functions -funroll-loops
    endif
 endif
 ifeq ($(FC),g77)
-       FOPT_REN += -malign-double
    ifeq ($(FOPT),-O)
          FOPT = -O3
     FOPT_REN += -funroll-loops -fomit-frame-pointer
@@ -52,19 +61,12 @@ endif
        RANLIB = ranlib
 endif
 
-ifeq ($(TARGET),SUN)
-           CC = gcc
-     FOPT_REN = -Nl100 -dalign
-       RANLIB = ranlib
-endif
-
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt
      FOPT_REN = -Sw -KA32
      COPT_REN = -x100 -KA32
  GLOB_DEFINES = -DFUJITSU
-   EXTRA_LIBS = -lmp -lgen -lpx -lelf -Wl,-J,-P
 #   EXTRA_LIBS = /usr/local/lib/libmp.a -L/opt/tools/lib/ -lgen  -lpx -lelf -Wl,-J,-P
 endif
 
@@ -73,14 +75,24 @@ ifeq ($(TARGET),FUJITSU-VPP64)
      FOPT_REN = -Sw
      COPT_REN = -x100
  GLOB_DEFINES = -DFUJITSU -DFUJITSU64
-   EXTRA_LIBS = -lmp -lgen -lpx -lelf -Wl,-J,-P
-#  -L/usr/lang/lib64 -lblasvp
 endif
 
-#----------------------------Sun ------------------------------
+#---------------------------- Sun -------------------------------------
 ifeq ($(TARGET),SOLARIS)
-     FLD_REN  = -xs
-   EXTRA_LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
+#     COPT_REN = -dalign
+#     FOPT_REN = -dalign
+endif
+ifeq ($(TARGET),SOLARIS64)
+     COPT_REN = -xarch=v9
+     FOPT_REN = -xarch=v9
+ GLOB_DEFINES += -DSOLARIS
+endif
+#
+#obsolete SunOS 4.X
+ifeq ($(TARGET),SUN)
+           CC = gcc
+     FOPT_REN = -Nl100
+       RANLIB = ranlib
 endif
 
 #----------------------------- HP/Convex ------------------------------
@@ -89,12 +101,14 @@ ifeq ($(TARGET),HPUX)
 # use gcc if cc breaks
 #          CC = gcc
            FC = fort77
+           AS = cc -c
           CPP = /lib/cpp
     ifeq ($(FOPT),-O)
          FOPT = -O1
     endif
      FOPT_REN = +ppu
      COPT_REN = -Ae -DEXTNAME
+    EXTRA_OBJ = tas-parisc.o
 endif
 
 ifeq ($(TARGET),CONVEX-SPP)
@@ -114,11 +128,10 @@ ifeq ($(TARGET),CONVEX-SPP)
  GLOB_DEFINES = -DCONVEX
 endif
 
-
 #----------------------------- SGI ---------------------------------
 ifeq ($(TARGET),SGI)
-    COPT_REN = -32
-    FOPT_REN = -32
+#    COPT_REN = -32
+#    FOPT_REN = -32
     SGI = yes
 endif
 
@@ -155,6 +168,9 @@ GLOB_DEFINES += -DSGI
 ifneq ($(TARGET_CPU),R4000)
     COPT_REN += -mips4
     FOPT_REN += -mips4
+else
+     COPT_REN = -32
+     FOPT_REN = -32
 endif
 
 ifdef TARGET_CPU
@@ -176,7 +192,6 @@ endif
 ifeq ($(TARGET),DECOSF)
           CLD = cc
 endif
-
 
 #------------------------------- Crays ------------------------------------
 
@@ -219,6 +234,7 @@ ifeq ($(TARGET),LAPI)
          IBM_ = 1
           CC  = mpcc_r
       LINK.f  = mpcc_r -lc_r -lxlf -lxlf90 -lm
+    EXTRA_OBJ = lapi.o request.o
 GLOB_DEFINES += -DSP
 endif
 
@@ -231,7 +247,10 @@ endif
 
 ifdef IBM_
      ifeq ($(FOPT), -O)
-         FOPT = -O4 -qarch=com
+         FOPT = -O4 -qarch=com -qstrict
+     else
+#        without this flag xlf_r creates nonreentrant code
+         FOPT += -qnosave
      endif
      ifeq ($(COPT), -O)
          COPT = -O3 -Q -qstrict -qarch=com -qtune=auto
@@ -240,19 +259,7 @@ ifdef IBM_
 GLOB_DEFINES  += -DAIX
 endif
 
-#...........................
-
-ifeq ($(TARGET),PARAGON)
-     FOPT_REN = -nx
-     COPT_REN = -nx -Msafeptr
-           FC = if77
-           CC = icc
-           AR = ar860
-           AS = as860
-     FOPT_REN += -Knoieee -Mquad -Mreentrant -Mrecursive
-     COPT_REN += -Knoieee -Mquad -Mreentrant
- GLOB_DEFINES += -DNX
-endif
+#...................... common definitions .......................
 
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)
 
