@@ -6,7 +6,7 @@ OBJDIR =.\obj
 PRJDIR =.\NTprojects
 LIBRARY_PATH = $(LIBDIR)\$(LIBRARY)
 
-DEFINES =-DWIN32
+DEFINES =-DWIN32 -DSERVER_THREAD
 INCLUDES =-I$(MPI_INCLUDE)
 
 AR = link.exe -lib 
@@ -42,7 +42,9 @@ OBJ =   "$(OBJDIR)\winshmem.obj" \
         "$(OBJDIR)\armci.obj" \
         "$(OBJDIR)\vector.obj"\
         "$(OBJDIR)\pack.obj"\
-        "$(OBJDIR)\memlock.obj"
+        "$(OBJDIR)\memlock.obj"\
+        "$(OBJDIR)\dataserv.obj"\
+        "$(OBJDIR)\sockets.obj"
 
 $(LIBRARY_PATH): $(LIBDIR) $(OBJ)
 	$(AR) @<<
