@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.36 2000-07-25 00:03:25 d3h325 Exp $ */
+/* $Id: armci.c,v 1.37 2000-09-12 18:43:50 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -232,7 +232,7 @@ int ARMCI_Init()
     armci_me = armci_msg_me();
 	armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
 
-#ifdef CRAY
+#ifdef _CRAYMPP
     cmpl_proc=-1;
 #endif
 #ifdef LAPI

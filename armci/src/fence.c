@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.4 2000-05-05 00:28:48 d3h325 Exp $ */
+/* $Id: fence.c,v 1.5 2000-09-12 18:43:50 d3h325 Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -38,7 +38,7 @@ void ARMCI_Fence(int proc)
 
 void ARMCI_AllFence()
 {
-#ifdef CRAY
+#ifdef _CRAYMPP
      if(cmpl_proc != -1) FENCE_NODE(cmpl_proc);
 #elif defined(LAPI) || defined(CLUSTER)
      int p;

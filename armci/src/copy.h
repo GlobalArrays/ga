@@ -17,7 +17,7 @@
 
 #   include "lapidefs.h"
 
-#elif defined(CRAY) || defined(QUADRICS)
+#elif defined(_CRAYMPP) || defined(QUADRICS)
 #ifdef CRAY
 #   include <mpp/shmem.h>
 #else
