@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.33 2001-05-31 00:11:23 d3h325 Exp $ */
+/* $Id: strided.c,v 1.34 2001-09-12 23:57:18 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -444,6 +444,9 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
+
+    if(stride_levels) /* reduce stride_levels for trivial cases */
+       for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;
 
     /* use direct protocol for remote access when performance is better */
 #   if defined(LAPI) && !defined(LAPI2)
