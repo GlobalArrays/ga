@@ -480,6 +480,12 @@ extern void FATR ga_median_patch_(Integer *g_a, Integer *alo, Integer *ahi,
 			     Integer *g_c, Integer *clo, Integer *chi, 
 			     Integer *g_m, Integer *mlo, Integer *mhi);
 
+extern int GA_Cluster_nnodes();         
+extern int GA_Cluster_nodeid();
+extern int GA_Cluster_nprocs(int x);
+extern int GA_Cluster_procid(int x, int y);
+extern int GA_Cluster_proc_nodeid(int proc);
+
 #ifdef __cplusplus
 }
 #endif

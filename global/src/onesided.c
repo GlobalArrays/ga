@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.48 2003-12-31 01:06:25 d3h325 Exp $ */
+/* $Id: onesided.c,v 1.49 2004-04-01 01:33:45 d3h325 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -83,8 +83,7 @@ Integer status;
        vampir_begin(GA_SYNC,__FILE__,__LINE__);
 #endif
 
-       ARMCI_AllFence();
-       ga_msg_sync_();
+       ARMCI_Barrier();
        if(GA_fence_set)bzero(fence_array,(int)GAnproc);
        GA_fence_set=0;
 #ifdef CHECK_MA
@@ -227,7 +226,8 @@ Integer _jw = GA[g_handle].width[1];                                           \
                                                                                \
       if((_i)<_ilo || (_i)>_ihi || (_j)<_jlo || (_j)>_jhi){                    \
        sprintf(err_string,"%s:p=%ld invalid i/j (%ld,%ld)><(%ld:%ld,%ld:%ld)", \
-                 "gaShmemLocation", proc, (_i),(_j), _ilo, _ihi, _jlo, _jhi);  \
+                 "gaShmemLocation", (long)proc, (long)(_i),(long)(_j),         \
+                             (long)_ilo, (long)_ihi, (long)_jlo, (long)_jhi);  \
           ga_error(err_string, g_a );                                          \
       }                                                                        \
       offset = ((_i)-_ilo+_iw) + (_ihi-_ilo+1+2*_iw)*((_j)-_jlo+_jw);          \
@@ -265,18 +265,6 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
       }                                                                        \
       *(ptr_loc) =  GA[g_handle].ptr[_pinv]+_offset*GA[g_handle].elemsize;     \
 }
-
-#define ga_check_regionM(g_a, ilo, ihi, jlo, jhi, string){                     \
-   if (*(ilo) <= 0 || *(ihi) > GA[GA_OFFSET + *(g_a)].dims[0] ||               \
-       *(jlo) <= 0 || *(jhi) > GA[GA_OFFSET + *(g_a)].dims[1] ||               \
-       *(ihi) < *(ilo) ||  *(jhi) < *(jlo)){                                   \
-       sprintf(err_string,"%s:req(%ld:%ld,%ld:%ld) out of range (1:%ld,1:%ld)",\
-               string, *(ilo), *(ihi), *(jlo), *(jhi),                         \
-               GA[GA_OFFSET + *(g_a)].dims[0], GA[GA_OFFSET + *(g_a)].dims[1]);\
-       ga_error(err_string, *(g_a));                                           \
-   }                                                                           \
-}
-
 
 
 #define gam_GetRangeFromMap0(p, ndim, plo, phi, proc){\
@@ -328,7 +316,7 @@ void nga_put_common(Integer *g_a,
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size, p_handle, ga_nbhandle;
-int proc, ndim, loop, cond, counter=0;
+int proc, ndim, loop, cond;
 int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 
 #ifdef GA_USE_VAMPIR
@@ -367,7 +355,8 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #endif
 	  
 	  /* check if it is local to SMP */
-	  cond = (armci_clus_id((int)GAme) == armci_clus_id(proc)) ? 1 : 0;
+          cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)proc);
+
 	  if(loop==0) cond = !cond;
 	  
 	  if(cond) {
@@ -411,6 +400,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 			   proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
 	    else {
 #if 0
+              int counter=0;
 	      if((loop==0 && counter==(int)np-1) || loop==1)
 		ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
 	      else {
@@ -587,7 +577,8 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #endif
 	  
 	  /* check if it is local to SMP */
-	  cond = (armci_clus_id((int)GAme) == armci_clus_id(proc)) ? 1 : 0;
+          cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)proc);
+
 	  if(loop==0) cond = !cond;
 	  
 	  if(cond) {
@@ -746,7 +737,7 @@ void FATR nga_acc_common(Integer *g_a,
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size, type, p_handle, ga_nbhandle;
-int optype, proc, loop, ndim, cond;
+int optype=-1, proc, loop, ndim, cond;
 int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 
 #ifdef GA_USE_VAMPIR
@@ -794,7 +785,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 #endif
 	  
 	  /* check if it is local to SMP */
-	  cond = (armci_clus_id((int)GAme) == armci_clus_id(proc)) ? 1 : 0;
+          cond = armci_domain_same_id(ARMCI_DOMAIN_SMP,(int)proc);
 	  if(loop==0) cond = !cond;
 	  
 	  if(cond) {
@@ -985,7 +976,7 @@ char     *ptr;
 Integer  handle = GA_OFFSET + *g_a;
 Integer  ow,i;
 unsigned long    elemsize;
-unsigned long    lref, lptr;
+unsigned long    lref=0, lptr;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(NGA_ACCESS,__FILE__,__LINE__);
@@ -1122,7 +1113,7 @@ Integer ldp, item_size, ilo, ihi, jlo, jhi, type;
 Integer handle,p_handle,iproc;
 armci_giov_t desc;
 register Integer k, offset;
-int rc;
+int rc=0;
 
   if (nv < 1) return;
 
@@ -1145,12 +1136,13 @@ int rc;
 
   ptr_src = gai_malloc((int)nv*2*sizeof(void*));
   if(ptr_src==NULL)ga_error("gai_malloc failed",nv);
-  else ptr_dst=ptr_src+ nv;
+  ptr_dst=ptr_src+ nv;
 
   for(k=0; k< nv; k++){
      if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
        sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)>< [%ld:%ld,%ld:%ld]",
-               (int)proc, i[k], j[k], ilo, ihi, jlo, jhi); 
+               (int)proc, (long)i[k], (long)j[k], (long)ilo, 
+               (long)ihi, (long)jlo, (long)jhi); 
        ga_error(err_string,g_a);
      }
 
@@ -1170,7 +1162,7 @@ int rc;
 #endif
 
   if(alpha != NULL) {
-    int optype;
+    int optype=-1;
     if(type==C_DBL) optype= ARMCI_ACC_DBL;
     else if(type==C_DCPL)optype= ARMCI_ACC_DCP;
     else if(type==C_INT)optype= ARMCI_ACC_INT;
@@ -1291,7 +1283,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     /* find proc that owns the (i,j) element; store it in temp:  */
     for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, owner+k)){
-            sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
+            sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
             ga_error(err_string,*g_a);
         }
         if (p_handle < 0) {
@@ -1369,7 +1361,8 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
            j[k] < jlo[proc] || j[k] > jhi[proc]){
           sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)><[%ld:%ld,%ld:%ld]",
-             (int)proc, i[k], j[k], ilo[proc], ihi[proc], jlo[proc], jhi[proc]);
+             (int)proc, (long)i[k], (long)j[k], (long)ilo[proc], 
+             (long)ihi[proc], (long)jlo[proc], (long)jhi[proc]);
             ga_error(err_string, *g_a);
         }
         ptr_dst[proc][this_count] = ptr_ref[proc] + item_size *
@@ -1426,7 +1419,7 @@ Integer *int_ptr;
 
   /* find proc that owns the (i,j) element; store it in temp: int_ptr */
   for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, int_ptr+k)){
-         sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
+         sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
          ga_error(err_string,*g_a);
   }
 
@@ -1708,7 +1701,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
 
         /* source and destination pointers are ready for all processes */
         for(k=0; k<naproc; k++) {
-            int rc;
+            int rc=0;
             
             desc.bytes = (int)item_size;
             desc.src_ptr_array = ptr_src[k];
@@ -1723,7 +1716,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
             if(GA_fence_set) fence_array[iproc]=1;
             
             if(alpha != NULL) {
-                int optype;
+                int optype=-1;
                 if(type==C_DBL) optype= ARMCI_ACC_DBL;
                 else if(type==C_DCPL)optype= ARMCI_ACC_DCP;
                 else if(type==C_INT)optype= ARMCI_ACC_INT;
@@ -1894,7 +1887,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     /* find proc that owns the (i,j) element; store it in temp: */
     for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, owner+k)){
-            sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
+            sprintf(err_string,"invalid i/j=(%ld,%ld)", (long)i[k], (long)j[k]);
             ga_error(err_string, *g_a);
         }
         if (p_handle < 0) {
@@ -1971,7 +1964,8 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
            j[k] < jlo[proc] || j[k] > jhi[proc]){
           sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)><[%ld:%ld,%ld:%ld]",
-                 (int)proc,i[k],j[k],ilo[proc],ihi[proc],jlo[proc], jhi[proc]);
+                 (int)proc,(long)i[k],(long)j[k],(long)ilo[proc],
+                 (long)ihi[proc],(long)jlo[proc], (long)jhi[proc]);
             ga_error(err_string, *g_a);
         }
         ptr_src[proc][this_count] = ptr_ref[proc] + item_size *
@@ -2403,7 +2397,7 @@ void FATR nga_strided_acc_(Integer *g_a,
      alpha:  muliplicative scale factor */
   Integer p, np, handle = GA_OFFSET + *g_a;
   Integer idx, size, nstride, type;
-  int i, optype, proc, ndim;
+  int i, optype=-1, proc, ndim;
 
 #ifdef GA_USE_VAMPIR
   vampir_begin(NGA_STRIDED_ACC,__FILE__,__LINE__);

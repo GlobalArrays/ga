@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.70 2004-03-31 23:44:49 d3g293 Exp $ */
+/* $Id: base.c,v 1.71 2004-04-01 01:33:40 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -299,9 +299,8 @@ Integer  off_dbl, off_int, off_dcpl, off_flt;
 
 #   endif
 
-    if(DEBUG)
-       printf("%d INT_MB=%ld(%lx) DBL_MB=%ld(%lx) DCPL_MB=%ld(%lx) FLT_MB=%ld(%lx)\n",
-          (int)GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB, FLT_MB,FLT_MB);
+    if(DEBUG) printf("%d INT_MB=%p DBL_MB=%p DCPL_MB=%p FLT_MB=%p\n",
+                     (int)GAme, INT_MB,DBL_MB, DCPL_MB, FLT_MB);
 }
 
 
@@ -776,7 +775,7 @@ void gai_print_subscript(char *pre,int ndim, Integer subscript[], char* post)
 
         printf("%s [",pre);
         for(i=0;i<ndim;i++){
-                printf("%ld",subscript[i]);
+                printf("%ld",(long)subscript[i]);
                 if(i==ndim-1)printf("] %s",post);
                 else printf(",");
         }
@@ -1052,8 +1051,7 @@ logical ga_allocate_( Integer *g_a)
     for(d=0; d<ndim; d++)if(dims[d]==1)blk[d]=1;
  
     if (GAme==0 && DEBUG )
-      for (d=0;d<ndim;d++)
-        fprintf(stderr,"b[%ld]=%ld\n",d,blk[d]);
+      for (d=0;d<ndim;d++) fprintf(stderr,"b[%ld]=%ld\n",(long)d,(long)blk[d]);
     ga_sync_();
 
     /* ddb(ndim, dims, GAnproc, blk, pe);*/
@@ -1099,8 +1097,8 @@ logical ga_allocate_( Integer *g_a)
       gai_print_subscript("blocks ",(int)ndim, blk,"\n");
       printf("decomposition map\n");
       for(d=0; d< ndim; d++){
-        printf("dim=%ld: ",d); 
-        for (i=0;i<pe[d];i++)printf("%ld ",pmap[d][i]);
+        printf("dim=%ld: ",(long)d); 
+        for (i=0;i<pe[d];i++)printf("%ld ",(long)pmap[d][i]);
         printf("\n"); 
       }
       fflush(stdout);
@@ -1429,9 +1427,9 @@ logical status;
 
       if(GAme==0&& DEBUG){
         fprintf(stderr," array:%d map1:\n", (int)*g_a);
-        for (i=0;i<*nblock1;i++)fprintf(stderr," %ld |",map1[i]);
+        for (i=0;i<*nblock1;i++)fprintf(stderr," %ld |",(long)map1[i]);
         fprintf(stderr," \n array:%d map2:\n",(int) *g_a);
-        for (i=0;i<*nblock2;i++)fprintf(stderr," %ld |",map2[i]);
+        for (i=0;i<*nblock2;i++)fprintf(stderr," %ld |",(long)map2[i]);
         fprintf(stderr,"\n\n");
       }
       ndim = 2;

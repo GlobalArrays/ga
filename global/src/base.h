@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.22 2004-03-31 22:25:04 d3h325 Exp $ */
+/*$Id: base.h,v 1.23 2004-04-01 01:33:42 d3h325 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -141,10 +141,10 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
   sprintf(err_string, str);                                          \
   _d=0;                                                              \
   _l = strlen(str);                                                  \
-  sprintf(err_string+_l, "[%ld:%ld ",lo[_d],hi[_d]);                 \
+  sprintf(err_string+_l, "[%ld:%ld ",(long)lo[_d],(long)hi[_d]);     \
   _l=strlen(err_string);                                             \
   for(_d=0; _d< ndim-1; _d++){                                       \
-    sprintf(err_string+_l, ",%ld:%ld ",lo[_d],hi[_d]);               \
+    sprintf(err_string+_l, ",%ld:%ld ",(long)lo[_d],(long)hi[_d]);   \
     _l=strlen(err_string);                                           \
   }                                                                  \
   sprintf(err_string+_l, "]");                                       \
@@ -183,8 +183,9 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
        *(jlo) <= 0 || *(jhi) > GA[GA_OFFSET + *(g_a)].dims[1] ||               \
        *(ihi) < *(ilo) ||  *(jhi) < *(jlo)){                                   \
        sprintf(err_string,"%s:req(%ld:%ld,%ld:%ld) out of range (1:%ld,1:%ld)",\
-               string, *(ilo), *(ihi), *(jlo), *(jhi),                         \
-               GA[GA_OFFSET + *(g_a)].dims[0], GA[GA_OFFSET + *(g_a)].dims[1]);\
+               string, (long)*(ilo), (long)*(ihi), (long)*(jlo), (long)*(jhi), \
+               (long)GA[GA_OFFSET + *(g_a)].dims[0],                           \
+               (long)GA[GA_OFFSET + *(g_a)].dims[1]);                          \
        ga_error(err_string, *(g_a));                                           \
    }                                                                           \
 }
@@ -195,7 +196,7 @@ Integer _d;                                                                    \
    for(_d=0; _d<  ndim; _d++)                                                  \
       if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
         sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \
-                  subscr[_d],  lo[_d],  hi[_d]);                               \
+                  (long)subscr[_d],  (long)lo[_d],  (long)hi[_d]);             \
           ga_error(err_string, _d);                                            \
       }\
 }

@@ -203,4 +203,6 @@ extern void FATR ga_free(void *ptr);
 
 extern Integer ga_memory_avail(Integer datatype);
 
+extern void ga_init_nbhandle(Integer *nbhandle);
+extern int nga_wait_internal(Integer *nbhandle);
 #endif
