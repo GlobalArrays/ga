@@ -183,7 +183,7 @@ void LJ_FG(int taskId, double *x_i, double *x_j, double *f,
   int i, j, start_x, start_y, tempA, tempB;
   int start_i, end_i, start_j, *end_j;
   int sign_x, sign_y, sign_z;
-  double xx, yy, zz, rij, temp,r2,r6,r12;
+  double xx, yy, zz, rij, temp,r2,r6,r12, xtmp, ytmp, ztmp;
   
   b_x = btopo[taskId].x;
   b_y = btopo[taskId].y;
@@ -204,12 +204,15 @@ void LJ_FG(int taskId, double *x_i, double *x_j, double *f,
   }
   
   /* Calculating Force exerted on 'i' by 'j' */
-  for(i=start_i; i< end_i; i++)
+  for(i=start_i; i< end_i; i++) {
+    xtmp = x_i[NDIM*i];
+    ytmp = x_i[NDIM*i+1];
+    ztmp = x_i[NDIM*i+2];
     for(j=start_j; j< *end_j; j++) {
       
-      xx = x_i[NDIM*i]   - x_j[NDIM*j];
-      yy = x_i[NDIM*i+1] - x_j[NDIM*j+1];
-      zz = x_i[NDIM*i+2] - x_j[NDIM*j+2];
+      xx = xtmp - x_j[NDIM*j];
+      yy = ytmp - x_j[NDIM*j+1];
+      zz = ztmp - x_j[NDIM*j+2];
 
       sign_x = xx > 0.0 ? 1 : -1;
       sign_y = yy > 0.0 ? 1 : -1;
@@ -240,6 +243,7 @@ void LJ_FG(int taskId, double *x_i, double *x_j, double *f,
       grad[tempB+1] -= yy*temp;
       grad[tempB+2] -= zz*temp;
     }
+  }
 }
 
 
