@@ -136,10 +136,14 @@ int     participate=0;
       }
    } 
    /* calculate global result */
-   if(type==C_INT || type==C_LONG){ 
+   if(type==C_INT){
       int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
       *(Integer*)val = info.v.lval;
+   }else if(type==C_LONG){
+      int size = sizeof(double) + sizeof(Integer)*(int)ndim;
+      armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
+      *(long*)val = info.v.lval;
    }else if(type==C_DBL){
       int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);

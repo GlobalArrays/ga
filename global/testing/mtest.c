@@ -237,8 +237,8 @@ void  test_scale_cols (int g_a, int g_v)
   switch (type)
     {
     case C_INT:
-      max = (void *)&lmax;
-      min = (void *)&lmin;
+      max = (void *)&imax;
+      min = (void *)&imin;
       break;
     case C_DCPL:
       max = (void *)&dcmax;
@@ -270,7 +270,7 @@ void  test_scale_cols (int g_a, int g_v)
     case C_INT:
       if (me == 0)
 	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
 	    printf ("not ok.\n");
 	  else
 	    printf ("ok.\n");
@@ -527,8 +527,8 @@ test_scale_rows (int g_a, int g_v)
   switch (type)
     {
     case C_INT:
-      max = (void *) &lmax;
-      min = (void *) &lmin;
+      max = (void *) &imax;
+      min = (void *) &imin;
       break;
     case C_DCPL:
       max = (void *) &dcmax;
@@ -560,7 +560,7 @@ test_scale_rows (int g_a, int g_v)
     case C_INT:
       if (me == 0)
 	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
 	    printf ("not ok.\n");
 	  else
 	    printf ("ok.\n");
@@ -769,8 +769,8 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
   switch (type)
     {
     case C_INT:
-      max = (void *)&lmax;
-      min = (void *)&lmin;
+      max = (void *)&imax;
+      min = (void *)&imin;
       break;
     case C_DCPL:
       max = (void *)&dcmax;
@@ -802,7 +802,7 @@ test_median_patch (int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi,
     case C_INT:
       if (me == 0)
 	{
-	  if (MISMATCHED (lmax, lmin) || (lmax != 0) || (lmin != 0))
+	  if (MISMATCHED (imax, imin) || (imax != 0) || (imin != 0))
 	    printf ("not ok.\n");
 	  else
 	    printf ("ok.\n");
