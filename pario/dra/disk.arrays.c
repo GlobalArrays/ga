@@ -15,6 +15,7 @@
 #define DRA_BUF_SIZE     (DRA_DBL_BUF_SIZE*sizeof(DoublePrecision)) 
 #define DRA_INT_BUF_SIZE (DRA_BUF_SIZE/sizeof(Integer))
 
+#define DRA_FAIL  (Integer)1
 #define COLUMN    1
 #define ROW       0
 #define ON        1
@@ -251,7 +252,7 @@ void dai_callback(int op, int transp, section_t gs_a, section_t ds_a,
 
 
 
-/*\ INITIALIZE DISK ARRAY DRATA STRUCTURES
+/*\ INITIALIZE DISK ARRAY DATA STRUCTURES
 \*/
 Integer dra_init_(max_arrays, max_array_size, tot_disk_space, max_memory)
         Integer *max_arrays;              /* input */
@@ -265,7 +266,7 @@ int i;
         ga_sync_();
 
         if(*max_arrays<-1 || *max_arrays> MAX_ARRAYS)
-           dai_error("dra_init:max number of disk arrays incorrect",*max_arrays);
+           dai_error("dra_init: incorrect max number of arrays",*max_arrays);
         _max_disk_array = (*max_arrays==-1) ? DEF_MAX_ARRAYS: *max_arrays;
 
         DRA = (disk_array_t*)malloc(sizeof(disk_array_t)**max_arrays);
@@ -1404,7 +1405,7 @@ int  stat;
 
         if(*request == DRA_REQ_INVALID){ *status = ELIO_DONE; return(ELIO_OK); }
 
-        if(elio_probe(&Requests[*request].id, &stat)!=ELIO_OK)return(ELIO_FAIL);
+        if(elio_probe(&Requests[*request].id, &stat)!=ELIO_OK)return(DRA_FAIL);
         *status = (Integer) stat;
         
         done = (*status==ELIO_DONE)? 1: 0;

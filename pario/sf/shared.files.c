@@ -3,6 +3,7 @@
 
 #define _max_shared_files 10
 #define SF_OFFSET 3000
+#define SF_FAIL (Integer)1
 
 typedef struct{
         Integer handle;
@@ -120,7 +121,7 @@ io_request_t id;
  status = elio_write(SF[handle].fd, (off_t)*offset, buffer,(Size_t)*bytes);
                 *req_id = (Integer)ELIO_DONE;
         if(status != (int)*bytes)
-              return((Integer)ELIO_FAIL);
+              return((Integer)SF_FAIL);
         else
               return((Integer)ELIO_OK);
 */
@@ -173,6 +174,6 @@ int status, fail=0;
            if(status != ELIO_OK) fail++;
            list[i] = (Integer)id;
         }
-        if (fail)return((Integer)ELIO_FAIL);
+        if (fail)return((Integer)SF_FAIL);
         else     return((Integer)ELIO_OK);
 }
