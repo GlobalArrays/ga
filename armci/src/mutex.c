@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.20 2002-09-05 19:57:27 d3h325 Exp $ */
+/* $Id: mutex.c,v 1.21 2003-01-21 17:51:45 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -13,6 +13,10 @@
 #endif
 
 double _dummy_work_=0.;
+#ifdef LAPI /*fix to if cmpl handler for a pending unlock runs after destroy*/
+int mymutexcount;
+double _dummy_server_work_=0.;
+#endif
 static int num_mutexes=0, *tickets; 
 
 typedef struct {
@@ -93,7 +97,9 @@ int *mutex_count = (int*)armci_internal_buffer;
         }
 
         num_mutexes= totcount;
-
+#ifdef LAPI
+        mymutexcount = num;
+#endif
         armci_msg_barrier();
 
         if(DEBUG)
@@ -120,11 +126,26 @@ void armci_serv_mutex_close()
 
 int ARMCI_Destroy_mutexes()
 {
+#ifdef LAPI /*fix to if cmpl handler for a pending unlock runs after destroy*/
+     int proc, mutex, i,factor=0;
+#endif
      if(num_mutexes==0)armci_die("armci_destroy_mutexes: not created",0);
-     num_mutexes=0;
      if(armci_nproc == 1) return(0);
 
      armci_msg_barrier();
+
+#ifdef LAPI /*fix to if cmpl handler for a pending unlock runs after destroy*/
+     for(proc=0;proc<armci_nproc;proc++){
+          for(mutex=0;mutex<mymutexcount;mutex++){
+            _dummy_server_work_ = 0.; /* must be global to fool the compiler */
+            while(!armci_mutex_free(mutex,proc)){
+              for(i=0; i<  SPINMAX *factor; i++) _dummy_server_work_ += 1.;
+	      factor+=1;
+            }
+	  } 
+     }
+#endif
+     num_mutexes=0;
 
 #    if defined(SERVER_LOCK)
         armci_serv_mutex_close();
