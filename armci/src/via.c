@@ -8,6 +8,7 @@
 #endif
 
 #include "armcip.h" 
+#include "copy.h" 
 
 #define VIPL095  
 #include <vipl.h>
@@ -17,9 +18,14 @@
 #define DEBUG1 0
 #define PAUSE_ON_ERROR__ 
 
-#define VIADEV_NAME "/dev/clanvi0"
+/* Giganet/Emilex cLAN is the default */
+#ifndef VIADEV_NAME
+#   define VIADEV_NAME "/dev/clanvi0"
+#endif
+
 #define ADDR_LEN 6
 #define SIXTYFOUR 64
+#define FOURTY 40
 #define NONE -1
 #define GET_DATA_PTR(buf) (sizeof(request_header_t) + (char*)buf)
 
@@ -39,6 +45,9 @@ static nic_t nic_arr[2];
 static nic_t *SRV_nic= nic_arr;
 static nic_t *CLN_nic= nic_arr+1;
 
+int _s=-1, _c=-1;
+int armci_via_server_ready=0;
+int armci_via_client_ready=0;
 
 struct cb_args {
     pthread_cond_t *cond;
@@ -49,11 +58,14 @@ struct cb_args {
 typedef struct {
    VIP_NET_ADDRESS *rem;
    VIP_NET_ADDRESS *loc;
-   char st_remote[40];
-   char st_local[40];
+   char st_remote[FOURTY];
+   char st_local[FOURTY];
    VIP_VI_HANDLE vi;
 } armci_connect_t;
 
+typedef struct {
+   char st_host[FOURTY];
+}armci_hostaddr_t;
 
 typedef struct {
   VIP_DESCRIPTOR dscr;
@@ -125,10 +137,35 @@ void armci_rcv_req(void *mesg,
 }
 
 
+static char *via_err_msg(VIP_RETURN rc)
+{
+  switch (rc) {
+     case VIP_SUCCESS: return ("VIP_SUCCESS");break;
+     case VIP_NOT_DONE: return ("VIP_NOT_DONE");break;
+     case VIP_INVALID_PARAMETER: return ("VIP_INVALID_PARAMETER");break;
+     case VIP_ERROR_RESOURCE: return ("VIP_ERROR_RESOURCE");break;
+     case VIP_TIMEOUT: return ("VIP_TIMEOUT");break;
+     case VIP_REJECT: return ("VIP_REJECT");break;
+     case VIP_INVALID_RELIABILITY_LEVEL: return ("VIP_INVALID_RELIABILITY_LEVEL");break;
+     case VIP_INVALID_MTU: return ("VIP_INVALID_MTU");break;
+     case VIP_INVALID_QOS: return ("VIP_INVALID_QOS");break;
+     case VIP_INVALID_PTAG: return ("VIP_INVALID_PTAG");break;
+     case VIP_INVALID_RDMAREAD: return ("VIP_INVALID_RDMAREAD");break;
+     case VIP_DESCRIPTOR_ERROR: return ("VIP_DESCRIPTOR_ERROR");break;
+     case VIP_INVALID_STATE: return ("VIP_INVALID_STATE");break;
+     case VIP_ERROR_NAMESERVICE: return ("VIP_ERROR_NAMESERVICE");break;
+     case VIP_NO_MATCH: return ("VIP_NO_MATCH");break;
+     case VIP_NOT_REACHABLE: return ("VIP_NOT_REACHABLE");break;
+     case VIP_ERROR_NOT_SUPPORTED: return ("VIP_ERROR_NOT_SUPPORTED");break;
+     default: return ("");
+  }
+}
+ 
+
 
 static void armci_check_status(int debug, VIP_RETURN rc, char *msg)
 {
-#define BLEN 80
+#define BLEN 100 
 
      if(rc != VIP_SUCCESS){
 
@@ -142,7 +179,7 @@ static void armci_check_status(int debug, VIP_RETURN rc, char *msg)
           
         fprintf(stderr,"%d in check FAILURE %s\n",armci_me,msg);
         assert(strlen(msg)<BLEN-20);
-        sprintf(buf,"ARMCI(via):failure: %s code ",msg);
+        sprintf(buf,"ARMCI(via):failure:%s:%s code %d %d ",via_err_msg(rc),msg,_s,_c);
 #       ifdef  PAUSE_ON_ERROR
           printf("%d(%d): Error from VIPL: %s - pausing\n",
                  armci_me, getpid(), msg);
@@ -215,7 +252,7 @@ VIP_VI_ATTRIBUTES vattr;
 }
     
 
-void armci_make_netaddr(VIP_NET_ADDRESS *pnaddr, char* hostname, discrim_t dm)
+void armci_make_netaddr_(VIP_NET_ADDRESS *pnaddr, char* hostname, discrim_t dm)
 {
 VIP_RETURN rc;
 char *p = (char*)pnaddr;
@@ -226,6 +263,24 @@ char *p = (char*)pnaddr;
     pnaddr->HostAddressLen = SRV_nic->attr.NicAddressLen;  
     p = pnaddr->HostAddress + SRV_nic->attr.NicAddressLen;
     pnaddr->DiscriminatorLen = sizeof(discrim_t);
+    *(discrim_t*)p = dm;
+}
+
+void armci_make_netaddr(VIP_NET_ADDRESS *pnaddr, char* hostname)
+{
+VIP_RETURN rc;
+
+    rc = VipNSGetHostByName(SRV_nic->handle,hostname,pnaddr,0);
+    armci_check_status(DEBUG0, rc,"get host name address");
+
+    pnaddr->HostAddressLen = SRV_nic->attr.NicAddressLen;
+    pnaddr->DiscriminatorLen = sizeof(discrim_t);
+}
+
+
+void armci_netaddr_dm(VIP_NET_ADDRESS *pnaddr, discrim_t dm)
+{
+char *p = (char*)(  pnaddr->HostAddress + SRV_nic->attr.NicAddressLen);
     *(discrim_t*)p = dm;
 }
 
@@ -272,6 +327,7 @@ void armci_init_connections()
 VIP_RETURN rc;
 int c,s;
 int *AR_base;
+armci_hostaddr_t *host_addr;
     
     /* get base for connection descriptor - we use process id */
     AR_base = (int*)malloc(armci_nproc * sizeof(int));
@@ -280,10 +336,14 @@ int *AR_base;
     AR_base[armci_me]=(int)getpid();
     armci_msg_igop(AR_base,armci_nproc,"+"); /*exchange it globally */
 
+    host_addr = (armci_hostaddr_t*)malloc(armci_nclus*sizeof(armci_hostaddr_t));
+    if(!host_addr)armci_die("malloc failed for host_addr",0);
+    bzero(host_addr,armci_nclus*sizeof(armci_hostaddr_t));
+
     /* initialize nic connection for talking to servers */
     armci_init_nic(SRV_nic,0,0);
 
-    /* for pier network address we need name service */
+    /* for peer network address we need name service */
     rc = VipNSInit(SRV_nic->handle, NULL);
     armci_check_status(DEBUG0, rc,"init name service");
 
@@ -291,22 +351,35 @@ int *AR_base;
     SRV_con=(armci_connect_t*)malloc(sizeof(armci_connect_t)*armci_nclus);
     if(!SRV_con)armci_die("cannot allocate SRV_con",armci_nclus);
 
+    for(s=0; s< armci_nclus; s++){
+          VIP_NET_ADDRESS *addr = (VIP_NET_ADDRESS *)(host_addr+s)->st_host;
+          armci_make_netaddr(addr, armci_clus_info[s].hostname);
+    }
+
     for(s=0; s< armci_nclus; s++)if(armci_clus_me != s){
        discrim_t dm;
        int cluster = s;
        int master  = armci_clus_info[cluster].master;
        armci_connect_t *con = SRV_con + s;
 
+       dm = MAKE_DISCRIMINATOR(AR_base[master], armci_me);
+       if(DEBUG_)printf("%d:discriminator(%d)=%f\n",armci_me,master,dm);
+
        con->loc = (void*)con->st_local;
        con->rem = (void*)con->st_remote;
        con->vi  = armci_create_vi(SRV_nic);
 
-       dm = MAKE_DISCRIMINATOR(AR_base[master], armci_me);
-       if(DEBUG_)printf("%d:discriminator(%d)=%f\n",armci_me,master,dm);
-       armci_make_netaddr(con->loc, armci_clus_info[armci_clus_me].hostname,dm);
-       armci_make_netaddr(con->rem, armci_clus_info[cluster].hostname, dm);
-       
+#if 0
+       armci_make_netaddr(con->loc, armci_clus_info[armci_clus_me].hostname);
+       armci_make_netaddr(con->rem, armci_clus_info[cluster].hostname);
+#else
+       armci_copy((host_addr+armci_clus_me)->st_host, con->st_local, FOURTY);
+       armci_copy((host_addr+cluster)->st_host, con->st_remote, FOURTY);
+#endif
+       armci_netaddr_dm(con->loc,dm);
+       armci_netaddr_dm(con->rem,dm);
     }
+
     if(DEBUG_) printf("%d: connections ready for client\n",armci_me);
 
     /* ............ masters also set up connections for clients ......... */
@@ -317,6 +390,7 @@ int *AR_base;
 
        /* master initializes nic connection for talking to clients */
        armci_init_nic(CLN_nic,0,clients);
+
 
        /* allocate and initialize connection structs */
        CLN_con=(armci_connect_t*)malloc(sizeof(armci_connect_t)*armci_nproc);
@@ -333,11 +407,18 @@ int *AR_base;
 
           dm = MAKE_DISCRIMINATOR(AR_base[armci_me], c);
           if(DEBUG_)printf("%d(s):discriminator(%d)=%f\n",armci_me,c,dm);
-
-          armci_make_netaddr(con->loc, armci_clus_info[armci_clus_me].hostname, dm);
-          armci_make_netaddr(con->rem, armci_clus_info[cluster].hostname, dm);
+#if 0
+          armci_make_netaddr(con->loc, armci_clus_info[armci_clus_me].hostname);
+          armci_make_netaddr(con->rem, armci_clus_info[cluster].hostname);
+#else
+          armci_copy((host_addr+armci_clus_me)->st_host, con->st_local, FOURTY);
+          armci_copy((host_addr+cluster)->st_host, con->st_remote, FOURTY);
+#endif
+          armci_netaddr_dm(con->loc,dm);
+          armci_netaddr_dm(con->rem,dm);
    
        }
+
        if(DEBUG_) printf("%d: connections ready for server\n",armci_me);
 
        armci_server_alloc_bufs(); /* get receive buffers for server thread */
@@ -346,6 +427,7 @@ int *AR_base;
 
     if(DEBUG_) printf("%d: all connections ready \n",armci_me);
     /* cleanup we do not need that anymore */
+    free(host_addr); 
     free(AR_base); 
     rc = VipNSShutdown(SRV_nic->handle);
     armci_check_status(DEBUG0, rc,"shut down name service");
@@ -415,6 +497,96 @@ int c;
 }
 
 
+#ifdef PEER_CONNECTION
+static void via_connect_peer(armci_connect_t *con_arr, int num, int serv)
+{
+int n;
+armci_connect_t *con;
+VIP_RETURN rc;
+
+     /* post connection requests */
+     for(n = 0; n < num; n++){
+
+         if(serv){ if(SAMECLUSNODE(n))    continue;} 
+         else    { if(n == armci_clus_me) continue;}
+
+         con = con_arr + n;
+
+         rc = VipConnectPeerRequest(con->vi,con->loc, con->rem, VIP_INFINITE);
+         armci_check_status(DEBUG0, rc,"peer connect request");
+     }
+
+     /* wait for all connections to be established */
+     for(n = 0; n < num; n++){
+         VIP_VI_ATTRIBUTES rattrs;
+
+         if(serv){ if(SAMECLUSNODE(n))    continue;} 
+         else    { if(n == armci_clus_me) continue;}
+
+         con = con_arr + n;
+         if(serv)_c=n;
+         else _s=n;
+
+         rc = VipConnectPeerWait(con->vi, &rattrs);
+         armci_check_status(DEBUG1, rc," connect wait");
+     }
+}
+#else
+
+static void via_connect_server()
+{
+int c,start,i;
+VIP_RETURN rc;
+
+     /* start from master task on next node */
+     c = (armci_clus_me+1)%armci_nclus;
+     start = armci_clus_info[c].master;
+
+     for(i = 0; i < (armci_nproc-armci_clus_info[armci_clus_me].nslave); i++){
+         VIP_VI_ATTRIBUTES rattrs;
+         VIP_CONN_HANDLE con_hndl;
+         armci_connect_t *con;
+
+         c = (start+i)%armci_nproc; /* wrap up */
+         con = CLN_con + c;
+         rc = VipConnectWait(CLN_nic->handle,con->loc,VIP_INFINITE,con->rem,
+                             &rattrs,&con_hndl);
+         armci_check_status(DEBUG0, rc,"server connect wait");
+
+         rc = VipConnectAccept(con_hndl, con->vi);
+         armci_check_status(DEBUG1, rc,"server connect wait");
+     }
+}
+
+static void via_connect_client()
+{
+int s,i,start;
+VIP_RETURN rc;
+
+   /* start from from server on my_node -1 */
+   start = (armci_clus_me==0)? armci_nclus-1 : armci_clus_me-1;
+
+   for(i=0; i< armci_nclus-1; i++){
+      armci_connect_t *con;
+      VIP_VI_ATTRIBUTES rattrs;
+  
+      s = (start -i)%armci_nclus;
+      if(s<0) s+=armci_nclus;
+      con = SRV_con + s;
+
+again:
+      rc = VipConnectRequest(con->vi,con->loc, con->rem, VIP_INFINITE, &rattrs);
+      if (rc == VIP_NO_MATCH) {
+            usleep(10);
+            goto again;
+      }
+      armci_check_status(DEBUG1, rc,"client connect request");
+   }
+}
+#endif
+
+
+
 void armci_server_initial_connection()
 {
 int c, ib;
@@ -435,18 +607,14 @@ VIP_RETURN rc;
         ib++;
      }
 
+     armci_via_server_ready=1;
+
      /* establish connections with compute processes/clients */
-     for(c = 0; c < armci_nproc; c++)if(!SAMECLUSNODE(c)){
-         VIP_VI_ATTRIBUTES rattrs;
-         VIP_CONN_HANDLE con_hndl;
-         armci_connect_t *con = CLN_con + c;
-         rc = VipConnectWait(CLN_nic->handle,con->loc,VIP_INFINITE,con->rem,
-                             &rattrs,&con_hndl);   
-         armci_check_status(DEBUG0, rc,"server connect wait");
-         
-         rc = VipConnectAccept(con_hndl, con->vi);
-         armci_check_status(DEBUG1, rc,"server connect wait");
-     }
+#ifdef PEER_CONNECTION
+     via_connect_peer(CLN_con, armci_nproc, 1);
+#else
+     via_connect_server();
+#endif
 
      if(DEBUG1){
        printf("%d: server connected to all clients\n",armci_me); fflush(stdout);
@@ -454,11 +622,12 @@ VIP_RETURN rc;
 }
 
 
+
 void armci_client_connect_to_servers()
 {
 VIP_MEM_ATTRIBUTES mattr;
 VIP_RETURN rc;
-int s, mod, bytes;
+int mod, bytes;
 char *tmp;
 
    /* allocate memory for the msg buffers-must be alligned on 64byte bnd */
@@ -476,26 +645,19 @@ char *tmp;
    mattr.EnableRdmaWrite = VIP_FALSE;
    mattr.EnableRdmaRead  = VIP_FALSE;
      
-   /* lock it */
+   /* lock allocated memory */
    rc = VipRegisterMem(SRV_nic->handle,client_buf,bytes,
                        &mattr,&client_memhandle);
    armci_check_status(DEBUG0, rc,"client register snd vbuf");
    if(!client_memhandle)armci_die("client got null handle for vbuf",0);
 
-
    /* connect to data server on each cluster node*/
-   for(s=0; s< armci_nclus; s++)if(armci_clus_me != s){
-      armci_connect_t *con = SRV_con + s;
-      VIP_VI_ATTRIBUTES rattrs;
+#ifdef PEER_CONNECTION
+   via_connect_peer(SRV_con, armci_nclus, 0);
+#else
+   via_connect_client();
+#endif
 
-again:
-      rc = VipConnectRequest(con->vi,con->loc, con->rem, VIP_INFINITE, &rattrs);
-      if (rc == VIP_NO_MATCH) {
-            usleep(10000);
-            goto again;
-      }
-      armci_check_status(DEBUG1, rc,"client connect request");
-   }
 }
 
 
