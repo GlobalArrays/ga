@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.39 2001-02-28 18:18:41 d3h325 Exp $
+# $Id: makefile.h,v 1.40 2001-02-28 20:00:24 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -96,8 +96,7 @@ ifeq ($(TARGET),SOLARIS64)
      COPT_REN = -xarch=v9 -dalign
   endif
   ifeq ($(_FC),frt)
-     FOPT_REN = -Kfast -KV9FMADD -CcdII8
-#               -CcdLL8
+     FOPT_REN = -Kfast -KV9FMADD -CcdII8 -CcdLL8
      CMAIN = -Dmain=MAIN__
   else
      FOPT_REN = -xarch=v9 -dalign -xtypemap=real:64,double:64,integer:64
@@ -131,7 +130,7 @@ endif
 #64-bit VPP5000
 ifeq ($(TARGET),FUJITSU-VPP64)
            FC = frt
-     FOPT_REN = -Sw -CcdII8
+     FOPT_REN = -Sw -CcdII8 -CcdLL8
  GLOB_DEFINES = -DFUJITSU
         CDEFS = -DEXT_INT
         CMAIN = -Dmain=MAIN__
