@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.29 2000-05-05 00:28:47 d3h325 Exp $ */
+/* $Id: armci.c,v 1.30 2000-05-31 17:50:12 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -24,6 +24,8 @@
  */
 
 #define  EXTERN
+#define MEMLOCK_SHMEM_FLAG  
+
 #include <stdio.h>
 #ifdef LAPI
 #  include "lapidefs.h"
@@ -35,8 +37,6 @@
 #include "shmem.h"
 #include "signaltrap.h"
 
-#define MEMLOCK_SHMEM_FLAG  
-
 /* global variables */
 int armci_me, armci_nproc;
 int armci_clus_me, armci_nclus, armci_master;
@@ -44,9 +44,7 @@ int armci_clus_first, armci_clus_last;
 int _armci_initialized=0;
 int _armci_terminating =0;
 thread_id_t armci_usr_tid;
-
 double armci_internal_buffer[BUFSIZE_DBL];
-
 #if defined(SYSV) || defined(WIN32)
 #   include "locks.h"
     lockset_t lockid;
@@ -103,7 +101,6 @@ static void armci_abort(int code)
 
 void armci_die(char *msg, int code)
 {
-   
     if(_armci_terminating)return;
     else _armci_terminating=1;
 
@@ -143,33 +140,15 @@ void ARMCI_Error(char *msg, int code)
 }
 
 
-#if defined(SYSV) || defined(WIN32)
 void armci_allocate_locks()
 {
-    
-#if defined(LAPI_)
-
-    int rc, bytes;
-    _armci_int_mutexes = (lockset_t**) malloc(armci_nproc*sizeof(lockset_t*));
-    if(!_armci_int_mutexes) armci_die("failed to allocate  ARMCI mutexes",0);
-
-    if(armci_master == armci_me) bytes = NUM_LOCKS*sizeof(lockset_t);
-    else bytes =0;
-
-    rc = ARMCI_Malloc((void**)_armci_int_mutexes, bytes);
-    if(rc) armci_die("failed to allocate ARMCI mutex array",rc);
-
-    if(armci_master == armci_me)
-         bzero(_armci_int_mutexes[armci_me],sizeof(lockset_t)*NUM_LOCKS);
-
-#else
+#if defined(SYSV) || defined(WIN32)
+    if(armci_nproc == 1)return;    
     if(armci_master==armci_me)CreateInitLocks(NUM_LOCKS, &lockid);
     armci_msg_clus_brdcst(&lockid, sizeof(lockid));
     if(armci_master != armci_me)InitLocks(NUM_LOCKS, lockid);
 #endif
 }
-
-#endif
 
 
 void ARMCI_Set_shm_limit(unsigned long shmemlimit)
@@ -227,28 +206,21 @@ void armci_init_memlock()
 
 
 
-
 int ARMCI_Init()
 {
-
     _armci_initialized++;
-/*    fprintf(stderr,"%d armci initialized %d\n",armci_msg_me(),_armci_initialized);
-*/
     if(_armci_initialized>1)return 0;
 
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
 	armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
 
-
 #ifdef CRAY
     cmpl_proc=-1;
 #endif
-
 #ifdef LAPI
     armci_init_lapi();
 #endif
-
 #ifdef QUADRICS
     shmem_init();
 #endif
@@ -262,23 +234,19 @@ int ARMCI_Init()
     armci_init_fence();
 
 #if defined(SYSV) || defined(WIN32)
-
     /* init shared memory */
-    if(ARMCI_Uses_shm())
-      if(armci_master == armci_me) armci_shmem_init();
-
-    /* allocate locks */
-    if (armci_nproc > 1) armci_allocate_locks();
-
+    if(ARMCI_Uses_shm() && armci_master == armci_me) armci_shmem_init();
 #endif
 
-#if defined(DATA_SERVER)
-    if(armci_nclus >1) armci_start_server();
-#endif
+    /* allocate locks: we need to do it before server is started */
+    armci_allocate_locks();
+#   if defined(DATA_SERVER)
+       if(armci_nclus >1) armci_start_server();
+#   endif
 
     armci_msg_barrier();
 
-    armci_init_memlock();
+    armci_init_memlock(); /* allocate data struct for locking memory areas */
 
 /*    fprintf(stderr,"%d ready \n",armci_me);*/
 
@@ -306,6 +274,7 @@ void ARMCI_Finalize()
     armci_msg_barrier();
 }
 
+
 #if !(defined(SYSV) || defined(WIN32))
 void ARMCI_Set_shmem_limit(unsigned long shmemlimit)
 {
@@ -314,6 +283,8 @@ void ARMCI_Set_shmem_limit(unsigned long shmemlimit)
     */
 }
 #endif
+
+
 
 void ARMCI_Copy(void *src, void *dst, int n)
 {
