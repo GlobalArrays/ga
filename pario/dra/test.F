@@ -17,7 +17,7 @@ c
       integer stack, heap
       double precision max_sz, max_disk, max_mem 
       data max_arrays, max_sz, max_disk, max_mem /10,1d8,1d10, 1d6/
-      data stack, heap /40000, 40000/
+      data stack, heap /80000, 80000/
 c
       call pbeginf 
       if(ma_init(MT_F_DBL, stack, heap) ) then
@@ -89,6 +89,7 @@ c
       enddo
 c
       if(me.eq.0) print *, 'Creating Disk Array ',n,' x',n
+      if (me.eq.0) print *,'file base', FNAME
       if(dra_create(MT_INT, n, n, 'A', FNAME, 
      &   DRA_RW,    n, 1, d_a).ne.0)
      $   CALL ga_error('dra_create failed: ',0)

@@ -20,7 +20,7 @@ c
       integer stack, heap
       double precision max_sz, max_disk, max_mem 
       data max_arrays, max_sz, max_disk, max_mem /10,1d8,1d10, 1d6/
-#if   defined(IBM)
+#if   defined(IBM)|| defined(CRAY_T3E)
       data stack, heap /3000000, 2000000/
 #else
       data stack, heap /1200000, 800000/

@@ -37,6 +37,8 @@
 #ifdef PARAGON
 #  define DRA_NUM_IOPROCS  64
 #  define DRA_NUM_FILE_MGR INFINITE_NUM_PROCS
+#elif defined(CRAY_T3E)
+#  define DRA_NUM_IOPROCS 1
 #elif defined(CRAY_T3D)
 #  define DRA_NUM_IOPROCS 16 
 #elif defined(SP1)|| defined(SP)
@@ -277,6 +279,7 @@ int i;
            dai_error("dra_init: incorrect max number of arrays",*max_arrays);
         _max_disk_array = (*max_arrays==-1) ? DEF_MAX_ARRAYS: *max_arrays;
 
+        if(!dai_io_nodeid()) printf("DRA I/O processors %d\n",dai_io_procs());
 
         DRA = (disk_array_t*)malloc(sizeof(disk_array_t)**max_arrays);
         if(!DRA) dai_error("dra_init: memory alocation failed\n",0);
@@ -639,7 +642,11 @@ Integer handle, elem_size;
 #          ifdef PARAGON
                  DRA[handle].fd = elio_gopen(DRA[handle].fname,*mode); 
 #          else
-                 DRA[handle].fd = elio_open(DRA[handle].fname,*mode); 
+#             ifdef INDEPFILES
+                 DRA[handle].fd = elio_open(DRA[handle].fname,*mode, ELIO_PRIVATE); 
+#             else
+                 DRA[handle].fd = elio_open(DRA[handle].fname,*mode, ELIO_SHARED); 
+#             endif
 #          endif
            if(DRA[handle].fd->fd==-1)dai_error("dra_create: failed to open file",0);
         }
@@ -689,9 +696,13 @@ Integer handle;
              sprintf(DRA[handle].fname+len,"%d",dai_io_nodeid());
 #          endif
 #          ifdef PARAGON
-                 DRA[handle].fd = elio_gopen(DRA[handle].fname,*mode); 
+                 DRA[handle].fd = elio_gopen(DRA[handle].fname,*mode);
 #          else
-                 DRA[handle].fd = elio_open(DRA[handle].fname,*mode); 
+#             ifdef INDEPFILES
+                 DRA[handle].fd = elio_open(DRA[handle].fname,*mode, ELIO_PRIVATE); 
+#             else
+                 DRA[handle].fd = elio_open(DRA[handle].fname,*mode, ELIO_SHARED);
+#             endif
 #          endif
            if(DRA[handle].fd->fd ==-1) dai_error("dra_open failed",ga_nodeid_());  
         }
@@ -895,8 +906,6 @@ int       retval;
 
 #   ifdef INDEPFILES
       if(ds_chunk->jlo && DRA[handle].chunk2>1) ds_chunk->jlo -= (ds_chunk->jlo -1) % DRA[handle].chunk2;
-/*this line was absent from older version on bonnie that worked */
-/*      if(ds_chunk->jlo < list[ JLO ]) ds_chunk->jlo = list[ JLO ]; */
 #   endif
     
     retval = dai_next2d(&ds_chunk->ilo, list[ ILO ], list[ IHI ],
@@ -913,6 +922,9 @@ int       retval;
          Integer jhi_temp =  ds_chunk->jlo + DRA[handle].chunk2 -1;
          jhi_temp -= jhi_temp % DRA[handle].chunk2;
          ds_chunk->jhi = MIN(ds_chunk->jhi, jhi_temp); 
+
+         /*this line was absent from older version on bonnie that worked */
+         if(ds_chunk->jlo < list[ JLO ]) ds_chunk->jlo = list[ JLO ]; 
      }
 #   endif
 
