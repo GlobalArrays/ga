@@ -21,7 +21,7 @@
 GLOB_INCLUDES = -I../../ma
            AR = ar
            AS = as
-       RANLIB = @echo
+       RANLIB = echo
           CPP = /usr/lib/cpp
         SHELL = /bin/sh
            MV = /bin/mv
