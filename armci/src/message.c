@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.14 2000-05-01 23:18:03 d3h325 Exp $ */
+/* $Id: message.c,v 1.15 2000-06-01 21:37:21 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -226,16 +226,10 @@ int armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen)
 \*/
 void armci_msg_clus_brdcst(void *buf, int len)
 {
-int root, up, left, right, index, nproc;
+int root, up, left, right;
 int tag=ARMCI_TAG, lenmes;
 
-    root  = armci_clus_info[armci_clus_me].master;
-    nproc = armci_clus_info[armci_clus_me].nslave;
-    index = armci_me - root;
-    up    = (index-1)/2 + root; if( up < root) up = -1;
-    left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
-    right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
-
+    armci_msg_bintree(SCOPE_NODE, &root, &up, &left, &right);
     if(armci_me != root) armci_msg_rcv(tag, buf, len, &lenmes, up);
     if (left > -1)  armci_msg_snd(tag, buf, len, left);
     if (right > -1) armci_msg_snd(tag, buf, len, right);
@@ -363,27 +357,15 @@ static void ddoop(int n, char* op, double* x, double* work)
 \*/
 void armci_msg_gop(int scope, void *x, int n, char* op, int type)
 {
-int root, up, left, right, index, nproc,size;
+int root, up, left, right, size;
 int tag=ARMCI_TAG;
 int ndo, len, lenmes, orign =n, ratio;
 void *origx =x;
 
+
     if(!x)armci_die("armci_msg_gop: NULL pointer", n);
-    if(scope == SCOPE_NODE){
-       root  = armci_clus_info[armci_clus_me].master;
-       nproc = armci_clus_info[armci_clus_me].nslave;
-       index = armci_me - root;
-       up    = (index-1)/2 + root; if( up < root) up = -1;
-       left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
-       right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
-    }else{
-       root  = 0;
-       nproc = armci_nproc;
-       index = armci_me - root;
-       up    = (index-1)/2 + root; if( up < root) up = -1;
-       left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
-       right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
-    }
+
+    armci_msg_bintree(scope, &root, &up, &left, &right);
 
     if(type==ARMCI_INT) size = sizeof(int);
 	else if(type==ARMCI_LONG) size = sizeof(long);
