@@ -14,7 +14,7 @@
 
 
 /* max number of global arrays */
-#define MAX_ARRAYS  128             
+#define MAX_ARRAYS  256             
 
 /* max number of mutexes */
 #define MAX_MUTEXES 32768
