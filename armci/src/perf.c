@@ -2,6 +2,7 @@
  *    Author: Jialin Ju, PNNL
  */
 
+/* $Id: perf.c,v 1.12 2001-06-01 23:27:20 edo Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,12 +13,7 @@
 #include <unistd.h>
 #endif
 #include <math.h>
-#if defined(TCGMSG)
-#include "sndrcv.h"
-static  int type_syn = 32;
-#else
-#include <mpi.h>
-#endif
+#include <mp3.h>
 #include "armci.h"
 
 #define SIZE 550
@@ -51,21 +47,13 @@ static double _tt0=0.0;
 double Timer()
 {
 #define DELTA 0.000001
-#if defined(TCGMSG)
-   double t=TCGTIME_();
-#else
-  double t=MPI_Wtime();
-#endif
+  double t=MP_TIMER();
   if(t<=_tt0 + DELTA) _tt0 += DELTA;
   else _tt0 = t;
   return _tt0;
 }
 
-#if defined(TCGMSG)
-#define TIMER TCGTIME_
-#else
-#define TIMER MPI_Wtime
-#endif
+#define TIMER MP_TIMER
 
 
 double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
@@ -292,11 +280,7 @@ void test_1D()
     /* ARMCI - initialize the data window */
     fill_array(ptr[me], SIZE*SIZE, me);
     fill_array(get_ptr[me], SIZE*SIZE, me);
-#if defined(TCGMSG)
-  SYNCH_(&type_syn);
-#else    
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    MP_BARRIER();
     
     /* only the proc 0 does the work */
     if(me == 0) {
@@ -356,11 +340,7 @@ void test_1D()
     else sleep(5);
     
     ARMCI_AllFence();
-#if defined(TCGMSG)
-  SYNCH_(&type_syn);
-#else    
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    MP_BARRIER();
     
     /* cleanup */
     ARMCI_Free(get_ptr[me]);
@@ -395,11 +375,7 @@ void test_2D()
     fill_array(ptr[me], SIZE*SIZE, me);
     fill_array(get_ptr[me], SIZE*SIZE, me);
 
-#if defined(TCGMSG)
-  SYNCH_(&type_syn);
-#else    
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    MP_BARRIER();
     
     /* only the proc 0 doest the work */
     /* print the title */
@@ -459,11 +435,7 @@ void test_2D()
     else sleep(5);
     
     ARMCI_AllFence();
-#if defined(TCGMSG)
-  SYNCH_(&type_syn);
-#else    
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    MP_BARRIER();
 
     /* cleanup */
     ARMCI_Free(get_ptr[me]);
@@ -476,38 +448,23 @@ void test_2D()
 int main(int argc, char **argv)
 {
 
-#if defined(TCGMSG)    
-  PBEGIN_(argc, argv);
-    nproc = NNODES_();
-    me = NODEID_();
-#else
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &me);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-#endif
+  MP_INIT(argc,argv);
+  MP_MYID(&me);
+  MP_PROCS(&nproc);
 
     if(nproc < 2) {
         if(me == 0)
             fprintf(stderr,
                     "USAGE: 2 <= processes < %d\n", nproc);
-#if defined(TCGMSG)
-	SYNCH_(&type_syn);
-	PEND_();
-#else    
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Finalize();
-#endif
+        MP_BARRIER();
+        MP_FINALIZE();
         exit(0);
     }
     
     /* initialize ARMCI */
     ARMCI_Init();
 
-#if defined(TCGMSG)
-  SYNCH_(&type_syn);
-#else    
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    MP_BARRIER();
     
     /* test 1 dimension array */
     test_1D();
@@ -515,11 +472,7 @@ int main(int argc, char **argv)
     /* test 2 dimension array */
     test_2D();
 
-#if defined(TCGMSG)
-  SYNCH_(&type_syn);
-#else    
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    MP_BARRIER();
     if(me == 0){
        if(warn_accuracy) 
           printf("\n\nWARNING: Your MPI timer does not have sufficient accuracy for this test (%d)\n",warn_accuracy);
@@ -528,25 +481,13 @@ int main(int argc, char **argv)
     }
 
     CHECK_RESULT=1;
-#if defined(TCGMSG)
-  SYNCH_(&type_syn);
-#else    
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    MP_BARRIER();
     test_1D();
     if(me == 0) printf("OK\n");
-#if defined(TCGMSG)
-  SYNCH_(&type_syn);
-#else    
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    MP_BARRIER();
     test_2D();
     if(me == 0) printf("OK\n\n\nTests Completed.\n");
-#if defined(TCGMSG)
-  SYNCH_(&type_syn);
-#else    
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    MP_BARRIER();
 
     /* done */
     ARMCI_Finalize();
