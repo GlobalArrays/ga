@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.26 2001-03-22 21:46:19 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.27 2001-12-11 19:56:29 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -148,41 +148,41 @@ int     Dra_num_serv=DRA_NUM_IOPROCS;
 }
 
 #define ga_get_sectM(sect, _buf, _ld)\
-   ga_get_(&sect.handle, &sect.ilo, &sect.ihi, &sect.jlo, &sect.jhi, _buf, &_ld)
+   ga_get_(&sect.handle, &sect.lo[0], &sect.hi[0], &sect.lo[1], &sect.hi[1], _buf, &_ld)
 
 #define ga_put_sectM(sect, _buf, _ld)\
-   ga_put_(&sect.handle, &sect.ilo, &sect.ihi, &sect.jlo, &sect.jhi, _buf, &_ld)
+   ga_put_(&sect.handle, &sect.lo[0], &sect.hi[0], &sect.lo[1], &sect.hi[1], _buf, &_ld)
 
 #define fill_sectionM(sect, _hndl, _ilo, _ihi, _jlo, _jhi) \
 { \
         sect.handle = _hndl;\
-        sect.ilo    = _ilo;\
-        sect.ihi    = _ihi;\
-        sect.jlo    = _jlo;\
-        sect.jhi    = _jhi;\
+        sect.lo[0]    = _ilo;\
+        sect.hi[0]    = _ihi;\
+        sect.lo[1]    = _jlo;\
+        sect.hi[1]    = _jhi;\
 }
 
 #define sect_to_blockM(ds_a, CR)\
 {\
       Integer   hndl = (ds_a).handle+DRA_OFFSET;\
-      Integer   br   = ((ds_a).ilo-1)/DRA[hndl].chunk1;\
-      Integer   bc   = ((ds_a).jlo-1)/DRA[hndl].chunk2;\
-      Integer   R    = (DRA[hndl].dim1 + DRA[hndl].chunk1 -1)/DRA[hndl].chunk1;\
+      Integer   br   = ((ds_a).lo[0]-1)/DRA[hndl].chunk[0];\
+      Integer   bc   = ((ds_a).lo[1]-1)/DRA[hndl].chunk[1];\
+      Integer   R    = (DRA[hndl].dims[0] + DRA[hndl].chunk[0] -1)/DRA[hndl].chunk[0];\
                *(CR) = bc * R + br;\
 }
 
 #define block_to_sectM(ds_a, CR)\
 {\
       Integer   hndl = (ds_a)->handle+DRA_OFFSET;\
-      Integer   R    = (DRA[hndl].dim1 + DRA[hndl].chunk1 -1)/DRA[hndl].chunk1;\
+      Integer   R    = (DRA[hndl].dims[0] + DRA[hndl].chunk[0]-1)/DRA[hndl].chunk[0];\
       Integer   br = (CR)%R;\
       Integer   bc = ((CR) - br)/R;\
-      (ds_a)->  ilo= br * DRA[hndl].chunk1 +1;\
-      (ds_a)->  jlo= bc * DRA[hndl].chunk2 +1;\
-      (ds_a)->  ihi= (ds_a)->ilo + DRA[hndl].chunk1;\
-      (ds_a)->  jhi= (ds_a)->jlo + DRA[hndl].chunk2;\
-      if( (ds_a)->ihi > DRA[hndl].dim1) (ds_a)->ihi = DRA[hndl].dim1;\
-      if( (ds_a)->jhi > DRA[hndl].dim2) (ds_a)->jhi = DRA[hndl].dim2;\
+      (ds_a)->  lo[0]= br * DRA[hndl].chunk[0] +1;\
+      (ds_a)->  lo[1]= bc * DRA[hndl].chunk[1] +1;\
+      (ds_a)->  hi[0]= (ds_a)->lo[0] + DRA[hndl].chunk[0];\
+      (ds_a)->  hi[1]= (ds_a)->lo[1] + DRA[hndl].chunk[1];\
+      if( (ds_a)->hi[0] > DRA[hndl].dims[0]) (ds_a)->hi[0] = DRA[hndl].dims[0];\
+      if( (ds_a)->hi[1] > DRA[hndl].dims[1]) (ds_a)->hi[1] = DRA[hndl].dims[1];\
 }
       
 #define INDEPFILES(x) (DRA[(x)+DRA_OFFSET].indep)
@@ -286,7 +286,7 @@ void dai_callback(int op, int transp, section_t gs_a, section_t ds_a,
         Requests[req].callback = ON;
         Requests[req].args.op = op;
         Requests[req].args.transp = transp;
-        Requests[req].args.ld = ld;
+        Requests[req].args.ld[0] = ld;
         Requests[req].args.gs_a = gs_a;
         Requests[req].args.ds_a = ds_a;
         Requests[req].args.ds_chunk = ds_chunk;
@@ -381,6 +381,14 @@ double  ch_ratio = da/db;
 \*/
 void dai_chunking(Integer elem_size, Integer block1, Integer block2, 
                   Integer dim1, Integer dim2, Integer *chunk1, Integer *chunk2)
+/*   elem_size:     Size of stored data [input]
+     block1:        Estimated size of request in dimension 1 [input]
+     block2:        Estimated size of request in dimension 2 [input]
+     dim1:          Size of DRA in dimension 1 [input]
+     dim2:          Size of DRA in dimension 2 [input]
+     chunk1:        Data block size in dimension 1? [output]
+     chunk2:        Data block size in dimension 2? [output]
+*/
 {
 Integer patch_size;
   
@@ -392,17 +400,17 @@ Integer patch_size;
 
         }else if(block1 <= 0){
           *chunk2 = block2;
-          *chunk1 = MAX(1, DRA_BUF_SIZE/(elem_size**chunk2));
+          *chunk1 = MAX(1, DRA_BUF_SIZE/(elem_size* (*chunk2)));
         }else if(block2 <= 0){
           *chunk1 = block1;
-          *chunk2 = MAX(1, DRA_BUF_SIZE/(elem_size**chunk1));
+          *chunk2 = MAX(1, DRA_BUF_SIZE/(elem_size* (*chunk1)));
         }else{
           *chunk1 = block1;
           *chunk2 = block2;
         }
 
         /* need to correct chunk size to fit chunk1 x chunk2 request in buffer*/
-        patch_size = *chunk1* *chunk2*elem_size;
+        patch_size = (*chunk1)* (*chunk2)*elem_size;
           
         if (patch_size > DRA_BUF_SIZE){
              
@@ -462,13 +470,13 @@ void dai_file_location(section_t ds_a, Off_t* offset)
 {
 Integer row_blocks, handle=ds_a.handle+DRA_OFFSET, offelem, cur_ld, part_chunk1;
 
-        if((ds_a.ilo-1)%DRA[handle].chunk1)
-            dai_error("dai_file_location: not alligned ??",ds_a.ilo);
+        if((ds_a.lo[0]-1)%DRA[handle].chunk[0])
+            dai_error("dai_file_location: not alligned ??",ds_a.lo[0]);
 
-        row_blocks  = (ds_a.ilo-1)/DRA[handle].chunk1;/* # row blocks from top*/
-        part_chunk1 = DRA[handle].dim1%DRA[handle].chunk1;/*dim1 in part block*/
-        cur_ld      = (row_blocks == DRA[handle].dim1 / DRA[handle].chunk1) ? 
-                       part_chunk1: DRA[handle].chunk1;
+        row_blocks  = (ds_a.lo[0]-1)/DRA[handle].chunk[0];/* # row blocks from top*/
+        part_chunk1 = DRA[handle].dims[0]%DRA[handle].chunk[0];/*dim1 in part block*/
+        cur_ld      = (row_blocks == DRA[handle].dims[0] / DRA[handle].chunk[0]) ? 
+                       part_chunk1: DRA[handle].chunk[0];
 
         /* compute offset (in elements) */
 
@@ -481,19 +489,19 @@ Integer row_blocks, handle=ds_a.handle+DRA_OFFSET, offelem, cur_ld, part_chunk1;
            
            sect_to_blockM(ds_a, &CR); 
 
-           R    = (DRA[handle].dim1 + DRA[handle].chunk1 -1)/DRA[handle].chunk1;
+           R    = (DRA[handle].dims[0] + DRA[handle].chunk[0]-1)/DRA[handle].chunk[0];
            for(i = R -1; i< CR; i+=R) if(i%ioprocs == iome)num_part_block++;
 
-           if(!part_chunk1) part_chunk1=DRA[handle].chunk1;
-           offelem = ((CR/ioprocs - num_part_block)*DRA[handle].chunk1 +
-                     num_part_block * part_chunk1 ) * DRA[handle].chunk2;
+           if(!part_chunk1) part_chunk1=DRA[handle].chunk[0];
+           offelem = ((CR/ioprocs - num_part_block)*DRA[handle].chunk[0] +
+                     num_part_block * part_chunk1 ) * DRA[handle].chunk[1];
 
            /* add offset within block */
-           offelem += ((ds_a.jlo-1) %DRA[handle].chunk2)*cur_ld; 
+           offelem += ((ds_a.lo[1]-1) %DRA[handle].chunk[1])*cur_ld; 
         } else {
 
-           offelem = row_blocks  * DRA[handle].dim2 * DRA[handle].chunk1;
-           offelem += (ds_a.jlo -1)*cur_ld;
+           offelem = row_blocks  * DRA[handle].dims[1] * DRA[handle].chunk[0];
+           offelem += (ds_a.lo[1]-1)*cur_ld;
 
         }
 
@@ -517,10 +525,10 @@ Size_t  bytes;
         /* find location in a file where data should be written */
         dai_file_location(ds_a, &offset);
         
-        if((ds_a.ihi - ds_a.ilo + 1) != ld) dai_error("dai_put: bad ld",ld); 
+        if((ds_a.hi[0] - ds_a.lo[0] + 1) != ld) dai_error("dai_put: bad ld",ld); 
 
         /* since everything is aligned, write data to disk */
-        elem = (ds_a.ihi - ds_a.ilo + 1) * (ds_a.jhi - ds_a.jlo + 1);
+        elem = (ds_a.hi[0] - ds_a.lo[0] + 1) * (ds_a.hi[1] - ds_a.lo[1] + 1);
         bytes= (Size_t) elem * dai_sizeofM(DRA[handle].type);
         if( ELIO_OK != elio_awrite(DRA[handle].fd, offset, buf, bytes, id ))
                        dai_error("dai_put failed", ds_a.handle);
@@ -536,19 +544,23 @@ Integer handle = d_a+DRA_OFFSET, nelem;
 Off_t offset;
 Size_t  bytes;
 
-        if(DRA[handle].type == MT_F_DBL)*(DoublePrecision*)_dra_buffer = 0.;
-        if(DRA[handle].type == MT_F_INT)*(Integer*)_dra_buffer = 0;
+        if(DRA[handle].type == MT_F_DBL) *(DoublePrecision*)_dra_buffer = 0.;
+        if(DRA[handle].type == MT_F_INT) *(Integer*)_dra_buffer = 0;
 
         if(INDEPFILES(d_a)) {
 
           Integer   CR, i, nblocks; 
           section_t ds_a;
+          /* number of processors that do io */
           Integer   ioprocs=dai_io_procs(d_a); 
+          /* node id of current process (if it does io) */
           Integer   iome = dai_io_nodeid(d_a);
 
-          /* total number of blocks in the array */
-          nblocks = ((DRA[handle].dim1 + DRA[handle].chunk1-1)/DRA[handle].chunk1)
-                  * ((DRA[handle].dim2 + DRA[handle].chunk2-1)/DRA[handle].chunk2);
+          /* total number of blocks in the disk resident array */
+          nblocks = ((DRA[handle].dims[0]
+                  + DRA[handle].chunk[0]-1)/DRA[handle].chunk[0])
+                  * ((DRA[handle].dims[1]
+                  + DRA[handle].chunk[1]-1)/DRA[handle].chunk[1]);
           fill_sectionM(ds_a, d_a, 0, 0, 0, 0); 
 
           /* search for the last block for each I/O processor */
@@ -560,7 +572,7 @@ Size_t  bytes;
 
           block_to_sectM(&ds_a, CR); /* convert block number to section */
           dai_file_location(ds_a, &offset);
-          nelem = (ds_a.ihi - ds_a.ilo +1)*(ds_a.jhi - ds_a.jlo +1) -1; 
+          nelem = (ds_a.hi[0] - ds_a.lo[0] +1)*(ds_a.hi[1] - ds_a.lo[1] +1) -1; 
           offset += nelem * dai_sizeofM(DRA[handle].type);
 
 #         ifdef DEBUG
@@ -568,7 +580,7 @@ Size_t  bytes;
 #         endif
         } else {
 
-          nelem = DRA[handle].dim1*DRA[handle].dim2 - 1;
+          nelem = DRA[handle].dims[0]*DRA[handle].dims[1] - 1;
           offset = nelem * dai_sizeofM(DRA[handle].type);
         }
 
@@ -595,9 +607,9 @@ void    dai_clear_buffer();
           dai_clear_buffer();
 #       endif
 
-        if((ds_a.ihi - ds_a.ilo + 1) != ld) dai_error("dai_get: bad ld",ld); 
+        if((ds_a.hi[0] - ds_a.lo[0] + 1) != ld) dai_error("dai_get: bad ld",ld); 
         /* since everything is aligned, read data from disk */
-        elem = (ds_a.ihi - ds_a.ilo + 1) * (ds_a.jhi - ds_a.jlo + 1);
+        elem = (ds_a.hi[0] - ds_a.lo[0] + 1) * (ds_a.hi[1] - ds_a.lo[1] + 1);
         bytes= (Size_t) elem * dai_sizeofM(DRA[handle].type);
         rc= elio_aread(DRA[handle].fd, offset, buf, bytes, id );
         if(rc !=  ELIO_OK) dai_error("dai_get failed", rc);
@@ -661,14 +673,15 @@ Integer handle, elem_size;
        /* determine disk array decomposition */ 
         elem_size = dai_sizeofM(*type);
         dai_chunking( elem_size, *reqdim1, *reqdim2, *dim1, *dim2, 
-                    &DRA[handle].chunk1, &DRA[handle].chunk2);
+                    &DRA[handle].chunk[0], &DRA[handle].chunk[1]);
 
        /* determine layout -- by row or column */
         DRA[handle].layout = COLUMN;
 
        /* complete initialization */
-        DRA[handle].dim1 = *dim1;
-        DRA[handle].dim2 = *dim2;
+        DRA[handle].dims[0] = *dim1;
+        DRA[handle].dims[1] = *dim2;
+        DRA[handle].ndim = 2;
         DRA[handle].type = *type;
         DRA[handle].mode = *mode;
         strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
@@ -767,7 +780,7 @@ Integer handle;
 
 #       ifdef DEBUG
              printf("\n%d:OPEN chunking=(%d,%d) type=%d buf=%d\n",
-                   ga_nodeid_(),DRA[handle].chunk1, DRA[handle].chunk2, 
+                   ga_nodeid_(),DRA[handle].chunk[0], DRA[handle].chunk[1], 
                    DRA[handle].type, DRA_DBL_BUF_SIZE);
              fflush(stdout);
 #       endif
@@ -824,8 +837,8 @@ Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
         * 'cover' instead of 'unaligned' subsections
         */
         
-        aligned[a][ ILO ] = ds_a.ilo; aligned[a][ IHI ] = ds_a.ihi;
-        aligned[a][ JLO ] = ds_a.jlo; aligned[a][ JHI ] = ds_a.jhi;
+        aligned[a][ ILO ] = ds_a.lo[0]; aligned[a][ IHI ] = ds_a.hi[0];
+        aligned[a][ JLO ] = ds_a.lo[1]; aligned[a][ JHI ] = ds_a.hi[1];
 
         switch   (DRA[handle].layout){
         case COLUMN : /* need to check row alignment only */
@@ -833,24 +846,24 @@ Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
                  algn_flag = ON; /* has at least one aligned subsection */
 
                  /* top of section */
-                 off = (ds_a.ilo -1) % DRA[handle].chunk1; 
+                 off = (ds_a.lo[0] -1) % DRA[handle].chunk[0]; 
                  if(off){ 
 
                         if(MAX_UNLG<= u) 
                            dai_error("dai_decomp_sect:insufficient nu",u);
 
-                        chunk_units = (ds_a.ilo -1) / DRA[handle].chunk1;
+                        chunk_units = (ds_a.lo[0] -1) / DRA[handle].chunk[0];
                         
-                        cover[u][ ILO ] = chunk_units*DRA[handle].chunk1 + 1;
-                        cover[u][ IHI ] = MIN(cover[u][ ILO ] + 
-                                          DRA[handle].chunk1-1, DRA[handle].dim1);
+                        cover[u][ ILO ] = chunk_units*DRA[handle].chunk[0] + 1;
+                        cover[u][ IHI ] = MIN(cover[u][ ILO ] + DRA[handle].chunk[0]-1,
+                                          DRA[handle].dims[0]);
 
-                        unaligned[u][ ILO ] = ds_a.ilo;
-                        unaligned[u][ IHI ] = MIN(ds_a.ihi,cover[u][ IHI ]);
-                        unaligned[u][ JLO ] = cover[u][ JLO ] = ds_a.jlo;
-                        unaligned[u][ JHI ] = cover[u][ JHI ] = ds_a.jhi;
+                        unaligned[u][ ILO ] = ds_a.lo[0];
+                        unaligned[u][ IHI ] = MIN(ds_a.hi[0],cover[u][ IHI ]);
+                        unaligned[u][ JLO ] = cover[u][ JLO ] = ds_a.lo[1];
+                        unaligned[u][ JHI ] = cover[u][ JHI ] = ds_a.hi[1];
 
-                        if(cover[u][ IHI ] < ds_a.ihi){
+                        if(cover[u][ IHI ] < ds_a.hi[0]){
                            /* cover subsection ends above ihi */
                            if(MAX_ALGN<=a)
                               dai_error("dai_decomp_sect: na too small",a);
@@ -863,24 +876,24 @@ Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
                  }
 
                  /* bottom of section */
-                 off = ds_a.ihi % DRA[handle].chunk1; 
-                 if(off && (ds_a.ihi != DRA[handle].dim1) && (algn_flag == ON)){
+                 off = ds_a.hi[0] % DRA[handle].chunk[0]; 
+                 if(off && (ds_a.hi[0] != DRA[handle].dims[0]) && (algn_flag == ON)){
 
                         if(MAX_UNLG<=u) 
                            dai_error("dai_decomp_sect:insufficient nu",u); 
-                        chunk_units = ds_a.ihi / DRA[handle].chunk1;
+                        chunk_units = ds_a.hi[0] / DRA[handle].chunk[0];
  
-                        cover[u][ ILO ] = chunk_units*DRA[handle].chunk1 + 1;
-                        cover[u][ IHI ] = MIN(cover[u][ ILO ] +
-                                          DRA[handle].chunk1-1, DRA[handle].dim1);
+                        cover[u][ ILO ] = chunk_units*DRA[handle].chunk[0] + 1;
+                        cover[u][ IHI ] = MIN(cover[u][ ILO ] + DRA[handle].chunk[0]-1,
+                                          DRA[handle].dims[0]);
 
                         unaligned[u][ ILO ] = cover[u][ ILO ];
-                        unaligned[u][ IHI ] = ds_a.ihi;
-                        unaligned[u][ JLO ] = cover[u][ JLO ] = ds_a.jlo;
-                        unaligned[u][ JHI ] = cover[u][ JHI ] = ds_a.jhi;
+                        unaligned[u][ IHI ] = ds_a.hi[0];
+                        unaligned[u][ JLO ] = cover[u][ JLO ] = ds_a.lo[1];
+                        unaligned[u][ JHI ] = cover[u][ JHI ] = ds_a.hi[1];
 
                         aligned[a][ IHI ] = MAX(1,unaligned[u][ ILO ]-1);
-                        algn_flag=(DRA[handle].chunk1 == DRA[handle].dim1)?OFF:ON;
+                        algn_flag=(DRA[handle].chunk[0] == DRA[handle].dims[0])?OFF:ON;
                         u++;
                  }
                  *nu = (int)u;
@@ -917,12 +930,12 @@ Integer ilo, ihi, jlo, jhi;
 
         ga_inquire_(g_a, &gtype, &gdim1, &gdim2);
         if(DRA[handle].type != gtype)dai_error("dra_write: type mismatch",gtype);
-        if(DRA[handle].dim1 != gdim1)dai_error("dra_write: dim1 mismatch",gdim1);
-        if(DRA[handle].dim2 != gdim2)dai_error("dra_write: dim2 mismatch",gdim2);
+        if(DRA[handle].dims[0] != gdim1)dai_error("dra_write: dim1 mismatch",gdim1);
+        if(DRA[handle].dims[1] != gdim2)dai_error("dra_write: dim2 mismatch",gdim2);
 
         /* right now, naive implementation just calls dra_write_section */
-        ilo = 1; ihi = DRA[handle].dim1; 
-        jlo = 1; jhi = DRA[handle].dim2; 
+        ilo = 1; ihi = DRA[handle].dims[0]; 
+        jlo = 1; jhi = DRA[handle].dims[1]; 
         return(dra_write_section_(&transp, g_a, &ilo, &ihi, &jlo, &jhi,
                                           d_a, &ilo, &ihi, &jlo, &jhi,request));
 }
@@ -961,25 +974,25 @@ Integer   handle = ds_chunk->handle+DRA_OFFSET;
 int       retval;
 
     if(INDEPFILES(ds_chunk->handle))
-      if(ds_chunk->jlo && DRA[handle].chunk2>1) 
-         ds_chunk->jlo -= (ds_chunk->jlo -1) % DRA[handle].chunk2;
+      if(ds_chunk->lo[1] && DRA[handle].chunk[1]>1) 
+         ds_chunk->lo[1] -= (ds_chunk->lo[1] -1) % DRA[handle].chunk[1];
     
-    retval = dai_next2d(&ds_chunk->ilo, list[ ILO ], list[ IHI ],
-                                        DRA[handle].chunk1,
-                        &ds_chunk->jlo, list[ JLO ], list[ JHI ],
-                                        DRA[handle].chunk2);
+    retval = dai_next2d(&ds_chunk->lo[0], list[ ILO ], list[ IHI ],
+                                        DRA[handle].chunk[0],
+                        &ds_chunk->lo[1], list[ JLO ], list[ JHI ],
+                                        DRA[handle].chunk[1]);
     if(!retval) return(retval);
 
-    ds_chunk->ihi = MIN(list[ IHI ], ds_chunk->ilo + DRA[handle].chunk1 -1);
-    ds_chunk->jhi = MIN(list[ JHI ], ds_chunk->jlo + DRA[handle].chunk2 -1);
+    ds_chunk->hi[0] = MIN(list[ IHI ], ds_chunk->lo[0] + DRA[handle].chunk[0] -1);
+    ds_chunk->hi[1] = MIN(list[ JHI ], ds_chunk->lo[1] + DRA[handle].chunk[1] -1);
 
     if(INDEPFILES(ds_chunk->handle)) { 
-         Integer jhi_temp =  ds_chunk->jlo + DRA[handle].chunk2 -1;
-         jhi_temp -= jhi_temp % DRA[handle].chunk2;
-         ds_chunk->jhi = MIN(ds_chunk->jhi, jhi_temp); 
+         Integer jhi_temp =  ds_chunk->lo[1] + DRA[handle].chunk[1] -1;
+         jhi_temp -= jhi_temp % DRA[handle].chunk[1];
+         ds_chunk->hi[1] = MIN(ds_chunk->hi[1], jhi_temp); 
 
          /*this line was absent from older version on bonnie that worked */
-         if(ds_chunk->jlo < list[ JLO ]) ds_chunk->jlo = list[ JLO ]; 
+         if(ds_chunk->lo[1] < list[ JLO ]) ds_chunk->lo[1] = list[ JLO ]; 
     }
 
     return 1;
@@ -1048,7 +1061,7 @@ void dra_set_mode_(Integer* val)
 void ga_move_1d(int op, section_t gs_a, section_t ds_a,
                 section_t ds_chunk, void* buffer, Integer ldb)
 {
-     Integer index, ldd = gs_a.ihi - gs_a.ilo + 1, one=1;
+     Integer index, ldd = gs_a.hi[0] - gs_a.lo[0] + 1, one=1;
      Integer atype, cols, rows, elemsize, ilo, ihi, jlo, jhi;
      Integer istart, iend, jstart, jend;
      void  (FATR *f)(Integer*,Integer*,Integer*,Integer*,Integer*,void*,Integer*); 
@@ -1061,21 +1074,21 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
      elemsize = MA_sizeof(atype, 1, MT_C_CHAR);
 
      /* find where in global array the first dra chunk element in buffer goes*/
-     index = ds_chunk.ilo - ds_a.ilo;
-     istart = index%ldd + gs_a.ilo; 
-     jstart = index/ldd + gs_a.jlo;
+     index = ds_chunk.lo[0] - ds_a.lo[0];
+     istart = index%ldd + gs_a.lo[0]; 
+     jstart = index/ldd + gs_a.lo[1];
      
      /* find where in global array the last dra chunk element in buffer goes*/
-     index = ds_chunk.ihi - ds_a.ilo;
-     iend = index%ldd + gs_a.ilo; 
-     jend = index/ldd + gs_a.jlo;
+     index = ds_chunk.hi[0] - ds_a.lo[0];
+     iend = index%ldd + gs_a.lo[0]; 
+     jend = index/ldd + gs_a.lo[1];
      
      /* we have up to 3 rectangle chunks corresponding to gs_chunk 
        .|' incomplete first column, full complete middle column, and
            incomplete last column */
-     if(istart != gs_a.ilo || jstart==jend ){
+     if(istart != gs_a.lo[0] || jstart==jend ){
         ilo = istart; 
-        ihi = gs_a.ihi; 
+        ihi = gs_a.hi[0]; 
         if(jstart==jend) ihi=iend;
         f(&gs_a.handle, &ilo, &ihi, &jstart, &jstart, buf, &one); 
         buf += elemsize*(ihi -ilo+1);
@@ -1083,16 +1096,16 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
         jstart++;
      }
 
-     if(iend != gs_a.ihi) jend--;
+     if(iend != gs_a.hi[0]) jend--;
 
      if(jstart <= jend) { 
-        f(&gs_a.handle, &gs_a.ilo, &gs_a.ihi, &jstart, &jend, buf, &ldd);
+        f(&gs_a.handle, &gs_a.lo[0], &gs_a.hi[0], &jstart, &jend, buf, &ldd);
         buf += elemsize*ldd*(jend-jstart+1); 
      } 
 
-     if(iend != gs_a.ihi){
+     if(iend != gs_a.hi[0]){
         jend++; /* Since decremented above */  
-        f(&gs_a.handle, &gs_a.ilo, &iend, &jend, &jend, buf, &one);
+        f(&gs_a.handle, &gs_a.lo[0], &iend, &jend, &jend, buf, &one);
      }
 }
 
@@ -1100,24 +1113,24 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
 void ga_move(int op, int trans, section_t gs_a, section_t ds_a, 
              section_t ds_chunk, void* buffer, Integer ldb)
 {
-    if(!trans && (gs_a.ilo- gs_a.ihi ==  ds_a.ilo- ds_a.ihi) ){
+    if(!trans && (gs_a.lo[0]- gs_a.hi[0] ==  ds_a.lo[0]- ds_a.hi[0]) ){
         /*** straight copy possible if there's no reshaping or transpose ***/
 
         /* determine gs_chunk corresponding to ds_chunk */
         section_t gs_chunk = gs_a;
-        dai_dest_indicesM(ds_chunk.ilo, ds_chunk.jlo, ds_a.ilo, ds_a.jlo, 
-                ds_a.ihi-ds_a.ilo+1, &gs_chunk.ilo, &gs_chunk.jlo, 
-                gs_a.ilo, gs_a.jlo,   gs_a.ihi -     gs_a.ilo + 1);
-        dai_dest_indicesM(ds_chunk.ihi, ds_chunk.jhi,  ds_a.ilo,ds_a.jlo, 
-                ds_a.ihi-ds_a.ilo+1, &gs_chunk.ihi, &gs_chunk.jhi,
-                gs_a.ilo, gs_a.jlo,   gs_a.ihi -     gs_a.ilo + 1);
+        dai_dest_indicesM(ds_chunk.lo[0], ds_chunk.lo[1], ds_a.lo[0], ds_a.lo[1], 
+                ds_a.hi[0]-ds_a.lo[0]+1, &gs_chunk.lo[0], &gs_chunk.lo[1], 
+                gs_a.lo[0], gs_a.lo[1],   gs_a.hi[0] - gs_a.lo[0] + 1);
+        dai_dest_indicesM(ds_chunk.hi[0], ds_chunk.hi[1], ds_a.lo[0], ds_a.lo[1], 
+                ds_a.hi[0]-ds_a.lo[0]+1, &gs_chunk.hi[0], &gs_chunk.hi[1],
+                gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);
 
         /* move data */
         if(op==LOAD) ga_get_sectM(gs_chunk, buffer, ldb);
         else         ga_put_sectM(gs_chunk, buffer, ldb);
     
 #ifdef MOVE1D_ENABLED
-    }else if(!trans && (ds_a.jlo==ds_a.jhi) ){
+    }else if(!trans && (ds_a.lo[1]==ds_a.hi[1]) ){
 
         /* for a 1-dim section (column) some optimization possible */
         ga_move_1d(op, gs_a, ds_a, ds_chunk, buffer, ldb);        
@@ -1132,8 +1145,8 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
          char    *base_addr;
 
 #        define ITERATOR_2D(i,j, base, ds_chunk)\
-                for(j = ds_chunk.jlo, base=0, jj=0; j<= ds_chunk.jhi; j++,jj++)\
-                  for(i = ds_chunk.ilo, ii=0; i<= ds_chunk.ihi; i++,ii++,base++)
+                for(j = ds_chunk.lo[1], base=0, jj=0; j<= ds_chunk.hi[1]; j++,jj++)\
+                  for(i = ds_chunk.lo[0], ii=0; i<= ds_chunk.hi[0]; i++,ii++,base++)
 
 #        define COPY_SCATTER(ADDR_BASE, TYPE, ds_chunk)\
 		ITERATOR_2D(i,j, base, ds_chunk) \
@@ -1141,7 +1154,7 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
 
 #        define COPY_GATHER(ADDR_BASE, TYPE, ds_chunk)\
                 for(i=0; i< nelem; i++){\
-                   Integer ldc = ds_chunk.ihi - ds_chunk.ilo+1;\
+                   Integer ldc = ds_chunk.hi[0] - ds_chunk.lo[0]+1;\
                    base = INT_MB[pindex+i]; jj = base/ldc; ii = base%ldc;\
                    ((TYPE*)buffer)[ldb*jj + ii] = ADDR_BASE[i+vindex];\
                 }
@@ -1155,7 +1168,8 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
 
          if(ga_nodeid_()==0) printf("DRA warning: using scatter/gather\n");
 
-         nelem = (ds_chunk.ihi-ds_chunk.ilo+1)*(ds_chunk.jhi-ds_chunk.jlo+1);
+         nelem = (ds_chunk.hi[0]-ds_chunk.lo[0]+1)
+               * (ds_chunk.hi[1]-ds_chunk.lo[1]+1);
          if(!MA_push_get(MT_F_INT, nelem, "i_", &ihandle, &iindex))
                          dai_error("DRA move: MA failed-i ", 0L);
          if(!MA_push_get(MT_F_INT, nelem, "j_", &jhandle, &jindex))
@@ -1172,15 +1186,15 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
     
          if(trans==TRANS) 
            ITERATOR_2D(i,j, base, ds_chunk) {
-              dai_dest_indicesM(j, i, ds_a.ilo, ds_a.jlo,  ds_a.ihi-ds_a.ilo+1, 
+              dai_dest_indicesM(j, i, ds_a.lo[0], ds_a.lo[1], ds_a.hi[0]-ds_a.lo[0]+1, 
                                 INT_MB+base+iindex, INT_MB+base+jindex,
-                                gs_a.ilo, gs_a.jlo,  gs_a.ihi -  gs_a.ilo + 1);
+                                gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);
            }
          else
            ITERATOR_2D(i,j, base, ds_chunk) {
-              dai_dest_indicesM(i, j, ds_a.ilo, ds_a.jlo,  ds_a.ihi-ds_a.ilo+1, 
+              dai_dest_indicesM(i, j, ds_a.lo[0], ds_a.lo[1], ds_a.hi[0]-ds_a.lo[0]+1, 
                                 INT_MB+base+iindex, INT_MB+base+jindex,
-                                gs_a.ilo, gs_a.jlo,  gs_a.ihi -  gs_a.ilo + 1);
+                                gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);
            }
 
         /* move data */
@@ -1218,7 +1232,7 @@ args_t   *arg;
         request->callback = OFF;
         arg = &request->args;
         ga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk,
-               _dra_buffer, arg->ld);
+               _dra_buffer, arg->ld[0]);
 }
 
 
@@ -1259,7 +1273,7 @@ char      *buffer;
 
    for(next = 0; next < Requests[req].nu; next++){
 
-      ds_chunk.ilo = ds_chunk.jlo = 0; /* init */
+      ds_chunk.lo[0] = ds_chunk.lo[1] = 0; /* init */
       while(dai_next_chunk(req, Requests[req].list_cover[next],&ds_chunk)){
 
           if(dai_myturn(ds_chunk)){
@@ -1267,22 +1281,22 @@ char      *buffer;
               dai_wait(req); /* needs free buffer to proceed */
 
              /*find corresponding to chunk of 'cover' unaligned sub-subsection*/
-              ds_unlg.ilo = Requests[req].list_unlgn[next][ ILO ];
-              ds_unlg.ihi = Requests[req].list_unlgn[next][ IHI ];
-              ds_unlg.jlo = Requests[req].list_unlgn[next][ JLO ];
-              ds_unlg.jhi = Requests[req].list_unlgn[next][ JHI ];
+              ds_unlg.lo[0] = Requests[req].list_unlgn[next][ ILO ];
+              ds_unlg.hi[0] = Requests[req].list_unlgn[next][ IHI ];
+              ds_unlg.lo[1] = Requests[req].list_unlgn[next][ JLO ];
+              ds_unlg.hi[1] = Requests[req].list_unlgn[next][ JHI ];
 
               if(!dai_section_intersect(ds_chunk, &ds_unlg))
                   dai_error("dai_transfer_unlgn: inconsistent cover",0);
 
              /* copy data from disk to DRA buffer */
-              chunk_ld =  ds_chunk.ihi - ds_chunk.ilo + 1;
+              chunk_ld =  ds_chunk.hi[0] - ds_chunk.lo[0] + 1;
               dai_get(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
               elio_wait(&Requests[req].id); 
 
              /* determine location in the buffer where GA data should be */
-              offset  = (ds_unlg.jlo - ds_chunk.jlo)*chunk_ld + 
-                         ds_unlg.ilo - ds_chunk.ilo;
+              offset  = (ds_unlg.lo[1] - ds_chunk.lo[1])*chunk_ld + 
+                         ds_unlg.lo[0] - ds_chunk.lo[0];
               buffer  = (char*)_dra_buffer;
               buffer += offset * dai_sizeofM(type);
 
@@ -1306,9 +1320,10 @@ char      *buffer;
 
 #             ifdef DEBUG
                 fprintf(stderr,"%d transf unlg g[%d:%d,%d:%d]-d[%d:%d,%d:%d]\n",
-                   dai_io_nodeid(), gs_chunk.ilo, gs_chunk.ihi, gs_chunk.jlo, 
-                   gs_chunk.jhi,
-                   ds_unlg.ilo,  ds_unlg.ihi,  ds_unlg.jlo,  ds_unlg.jhi);
+                   dai_io_nodeid(), gs_chunk.lo[0], gs_chunk.hi[0],
+                   gs_chunk.lo[1], gs_chunk.hi[1],
+                   ds_unlg.lo[0], ds_unlg.hi[0],
+                   ds_unlg.lo[1], ds_unlg.hi[1]);
 #             endif
           }
       }
@@ -1327,14 +1342,14 @@ section_t ds_chunk = ds_a;
 
    for(next = 0; next < Requests[req].na; next++){
 
-      ds_chunk.ilo = ds_chunk.jlo = 0; /* init */
+      ds_chunk.lo[0] = ds_chunk.lo[1] = 0; /* init */
       while(dai_next_chunk(req, Requests[req].list_algn[next], &ds_chunk)){
 
           if(dai_myturn(ds_chunk)){
 
               dai_wait(req); /* needs free buffer to proceed */
 
-              chunk_ld =  ds_chunk.ihi - ds_chunk.ilo + 1;
+              chunk_ld =  ds_chunk.hi[0] - ds_chunk.lo[0] + 1;
 
               switch (opcode){
 
@@ -1363,9 +1378,10 @@ section_t ds_chunk = ds_a;
 
 #             ifdef DEBUG
                 fprintf(stderr,"%d transf algn g[%d:%d,%d:%d]-d[%d:%d,%d:%d]\n",
-                   dai_io_nodeid(), gs_chunk.ilo, gs_chunk.ihi, gs_chunk.jlo, 
-                   gs_chunk.jhi,
-                   ds_chunk.ilo,  ds_chunk.ihi,  ds_chunk.jlo,  ds_chunk.jhi);
+                   dai_io_nodeid(), gs_chunk.lo[0], gs_chunk.hi[0],
+                   gs_chunk.lo[1], gs_chunk.hi[1],
+                   ds_chunk.lo[0], ds_chunk.hi[0],
+                   ds_chunk.lo[1], ds_chunk.hi[1]);
 #             endif
           }
       }
@@ -1403,8 +1419,8 @@ section_t d_sect, g_sect;
    if(DRA[handle].type != gtype)dai_error("dra_write_sect: type mismatch",gtype);
    dai_check_rangeM(*gilo,*gihi, gdim1, "dra_write_sect: g_a dim1 error");
    dai_check_rangeM(*gjlo,*gjhi, gdim2, "dra_write_sect: g_a dim2 error");
-   dai_check_rangeM(*dilo,*dihi,DRA[handle].dim1,"dra_write_sect:d_a dim1 error");
-   dai_check_rangeM(*djlo,*djhi,DRA[handle].dim2,"dra_write_sect:d_a dim2 error");
+   dai_check_rangeM(*dilo,*dihi,DRA[handle].dims[0],"dra_write_sect:d_a dim1 error");
+   dai_check_rangeM(*djlo,*djhi,DRA[handle].dims[1],"dra_write_sect:d_a dim2 error");
 
    /* check if numbers of elements in g_a & d_a sections match */
    if ((*dihi - *dilo + 1) * (*djhi - *djlo + 1) !=
@@ -1472,8 +1488,8 @@ section_t d_sect, g_sect;
    if(DRA[handle].type != gtype)dai_error("dra_read_sect: type mismatch",gtype);
    dai_check_rangeM(*gilo, *gihi, gdim1, "dra_read_sect: g_a dim1 error");
    dai_check_rangeM(*gjlo, *gjhi, gdim2, "dra_read_sect: g_a dim2 error");
-   dai_check_rangeM(*dilo, *dihi,DRA[handle].dim1,"dra_read_sect:d_a dim1 error");
-   dai_check_rangeM(*djlo, *djhi,DRA[handle].dim2,"dra_read_sect:d_a dim2 error");
+   dai_check_rangeM(*dilo, *dihi,DRA[handle].dims[0],"dra_read_sect:d_a dim1 error");
+   dai_check_rangeM(*djlo, *djhi,DRA[handle].dims[1],"dra_read_sect:d_a dim2 error");
 
    /* check if numbers of elements in g_a & d_a sections match */
    if ((*dihi - *dilo + 1) * (*djhi - *djlo + 1) !=
@@ -1527,12 +1543,12 @@ Integer ilo, ihi, jlo, jhi;
         if(!dai_read_allowed(*d_a))dai_error("dra_read: read not allowed",*d_a);
         ga_inquire_(g_a, &gtype, &gdim1, &gdim2);
         if(DRA[handle].type != gtype)dai_error("dra_read: type mismatch",gtype);
-        if(DRA[handle].dim1 != gdim1)dai_error("dra_read: dim1 mismatch",gdim1);
-        if(DRA[handle].dim2 != gdim2)dai_error("dra_read: dim2 mismatch",gdim2);
+        if(DRA[handle].dims[0] != gdim1)dai_error("dra_read: dim1 mismatch",gdim1);
+        if(DRA[handle].dims[1] != gdim2)dai_error("dra_read: dim2 mismatch",gdim2);
 
         /* right now, naive implementation just calls dra_read_section */
-        ilo = 1; ihi = DRA[handle].dim1;
-        jlo = 1; jhi = DRA[handle].dim2;
+        ilo = 1; ihi = DRA[handle].dims[0];
+        jlo = 1; jhi = DRA[handle].dims[1];
         return(dra_read_section_(&transp, g_a, &ilo, &ihi, &jlo, &jhi,
                                          d_a, &ilo, &ihi, &jlo, &jhi, request));
 }
@@ -1616,8 +1632,8 @@ Integer handle=*d_a+DRA_OFFSET;
         dai_check_handleM(*d_a,"dra_inquire");
 
         *type = DRA[handle].type;
-        *dim1 = DRA[handle].dim1;
-        *dim2 = DRA[handle].dim2;
+        *dim1 = DRA[handle].dims[0];
+        *dim2 = DRA[handle].dims[1];
         strcpy(name, DRA[handle].name);
         strcpy(filename, DRA[handle].fname);
  

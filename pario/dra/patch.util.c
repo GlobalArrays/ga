@@ -70,20 +70,20 @@ logical dai_patch_intersect(
 logical dai_section_intersect(section_t sref, section_t *sadj)
 {
      /* check consistency of patch coordinates */
-     if( sref.ihi < sref.ilo || sref.jhi < sref.jlo)     
+     if( sref.hi[0] < sref.lo[0] || sref.hi[1] < sref.lo[1])     
                                   return FALSE; /* inconsistent */
-     if( sadj->ihi < sadj->ilo || sadj->jhi < sadj->jlo) 
+     if( sadj->hi[0] < sadj->lo[0] || sadj->hi[1] < sadj->lo[1]) 
                                   return FALSE; /* inconsistent */
 
      /* find the intersection and update (ilop: ihip, jlop: jhip) */
-     if( sref.ihi < sadj->ilo || sadj->ihi < sref.ilo) 
+     if( sref.hi[0] < sadj->lo[0] || sadj->hi[0] < sref.lo[0]) 
                                   return FALSE; /* don't intersect */
-     if( sref.jhi < sadj->jlo || sadj->jhi < sref.jlo) 
+     if( sref.hi[1] < sadj->lo[1] || sadj->hi[1] < sref.lo[1]) 
                                   return FALSE; /* don't intersect */
-     sadj->ilo = MAX(sref.ilo,sadj->ilo);
-     sadj->ihi = MIN(sref.ihi,sadj->ihi);
-     sadj->jlo = MAX(sref.jlo,sadj->jlo);
-     sadj->jhi = MIN(sref.jhi,sadj->jhi);
+     sadj->lo[0] = MAX(sref.lo[0],sadj->lo[0]);
+     sadj->hi[0] = MIN(sref.hi[0],sadj->hi[0]);
+     sadj->lo[1] = MAX(sref.lo[1],sadj->lo[1]);
+     sadj->hi[1] = MIN(sref.hi[1],sadj->hi[1]);
 
      return(TRUE);
 }

@@ -3,6 +3,7 @@
 #include "elio.h"
 #include "macdecls.h"
 #include <string.h>
+#define MAXDIM 7
 
 #ifdef FALSE
 #undef FALSE
@@ -30,10 +31,10 @@
 
 /************************* common data structures **************************/
 typedef struct{                               /* stores basic DRA info */
-        Integer dim1, dim2;                   /* array dimensions */
-        Integer chunk1, chunk2;               /* data layout chunking */
+        Integer ndim;                         /* dimension of array */
+        Integer dims[MAXDIM];                 /* array dimensions */
+        Integer chunk[MAXDIM];                /* data layout chunking */
         Integer type;                         /* data type */
-        Integer layout;                       /* data layout type */
         char    name[DRA_MAX_NAME+8];         /* array name */
         char    fname[DRA_MAX_FNAME+8];       /* metafile name */
         Integer actv;                         /* is array active ? */ 
@@ -47,17 +48,15 @@ typedef struct{                               /* stores basic DRA info */
 
 typedef struct{                   /* object describing DRA/GA section */
         Integer handle;
-        Integer ilo;
-        Integer ihi;
-        Integer jlo;
-        Integer jhi;
+        Integer lo[MAXDIM];
+        Integer hi[MAXDIM];
 }section_t;
 
 
 typedef struct{                  /* structure stores arguments for callback f */
         int op;
         int transp;
-        Integer ld;
+        Integer ld[MAXDIM];
         section_t gs_a;
         section_t ds_a;
         section_t ds_chunk;

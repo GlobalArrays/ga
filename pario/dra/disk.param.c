@@ -102,9 +102,9 @@ char dummy[HDLEN];
     if((fd=fopen(param_filename,"r"))){
 
       if(!fscanf(fd,"%ld", &input))  dai_error("dai_read_param:dim1",0);
-      DRA[dra_hndl].dim1 = (Integer) input;
+      DRA[dra_hndl].dims[0] = (Integer) input;
       if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:dim2",0);
-      DRA[dra_hndl].dim2 = (Integer) input;
+      DRA[dra_hndl].dims[1] = (Integer) input;
 
       if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:type",0);
       DRA[dra_hndl].type = (Integer) input;
@@ -112,9 +112,9 @@ char dummy[HDLEN];
       DRA[dra_hndl].layout = (Integer) input;
 
       if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk1",0);
-      DRA[dra_hndl].chunk1 = (Integer) input;
+      DRA[dra_hndl].chunk[0] = (Integer) input;
       if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk2",0);
-      DRA[dra_hndl].chunk2 = (Integer) input;
+      DRA[dra_hndl].chunk[1] = (Integer) input;
 
       fgets(dummy,HDLEN,fd); /*advance to next line*/
       if(!fgets(DRA[dra_hndl].name,DRA_MAX_NAME,fd))dai_error("dai_read_param:name",0);
@@ -162,17 +162,17 @@ Integer me=ga_nodeid_(), dra_hndl=d_a+DRA_OFFSET;
     if(! (fd = fopen(param_filename,"w")) )
                                 dai_error("dai_write_param:open failed",0);
 
-    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].dim1)) 
+    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].dims[0])) 
                                 dai_error("dai_write_param:dim1",0);
-    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].dim2)) 
+    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].dims[1])) 
                                 dai_error("dai_write_param:dim2",0);
     if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].type)) 
                                 dai_error("dai_write_param:type",0);
     if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].layout))
                                 dai_error("dai_write_param:layout",0);
-    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].chunk1))
+    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].chunk[0]))
                                 dai_error("dai_write_param:chunk1",0);
-    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].chunk2))
+    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].chunk[1]))
                                 dai_error("dai_write_param:chunk2",0);
     if(!fprintf(fd,"\n%s\n",DRA[dra_hndl].name))
                                 dai_error("dai_write_param:name",0);
