@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.12 2001-10-25 21:06:39 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.13 2001-10-30 00:26:17 d3h325 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -50,7 +50,8 @@
 #define BYTE_ADDRESSABLE_MEMORY
 #endif
 
-int ProcListPerm[MAX_NPROC];            /* permuted list of processes */
+int    ProcListPerm[MAX_NPROC];            /* permuted list of processes */
+static global_array_t *GA = _ga_main_data_structure;
 
 
 /*uncomment line below to verify consistency of MA in every sync */

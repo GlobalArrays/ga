@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.9 2001-10-29 19:55:12 d3h325 Exp $ */
+/* $Id: base.c,v 1.10 2001-10-30 00:26:17 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -50,7 +50,8 @@
 #define MAPLEN  (MIN(GAnproc, MAX_NPROC) +MAXDIM)
 #define FLEN        80              /* length of Fortran strings */
 
-global_array_t GA[MAX_ARRAYS];
+global_array_t _ga_main_data_structure[MAX_ARRAYS];
+static global_array_t *GA = _ga_main_data_structure;
 static int GAinitialized = 0;
 int _max_global_array = MAX_ARRAYS;
 Integer *GA_proclist;
@@ -312,7 +313,9 @@ int bytes;
        GA[i].ptr  = (char**)0;
        GA[i].mapc = (int*)0;
     }
+
     GAnproc = (Integer)armci_msg_nproc();
+    GA = _ga_main_data_structure;
 
 #ifdef PERMUTE_PIDS
     ga_sync_();

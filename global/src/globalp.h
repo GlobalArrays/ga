@@ -141,28 +141,6 @@ extern void ga_clean_resources( void);
 extern void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
                            Integer *ld, void *alpha, Integer op_code);
 
-#define FNAM        31              /* length of array names   */
-typedef struct {
-       int  ndim;               /* number of dimensions                 */
-       int  dims[MAXDIM];       /* global array dimensions              */
-       int  chunk[MAXDIM];      /* chunking                             */
-       int  nblock[MAXDIM];     /* number of blocks per dimension       */
-       int  width[MAXDIM];      /* boundary cells per dimension         */
-       double scale[MAXDIM];    /* nblock/dim (precomputed)             */
-       char **ptr;              /* arrays of pointers to remote data    */
-       int  *mapc;              /* block distribution map               */
-       int type;                /* type of array                        */
-       int  actv;               /* activity status                      */
-       Integer lo[MAXDIM];      /* top/left corner in local patch       */
-       Integer size;            /* size of local data in bytes          */
-       int elemsize;            /* sizeof(datatype)                     */
-       int ghosts;              /* flag indicating presence of ghosts   */
-       long lock;               /* lock                                 */
-       long id;                 /* ID of shmem region / MA handle       */
-       char name[FNAM+1];       /* array name                           */
-} global_array_t;
-
-
 #define FLUSH_CACHE
 #ifdef  CRAY_T3D
 #       define ALLIGN_SIZE      32

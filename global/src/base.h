@@ -1,11 +1,34 @@
-/*$Id: base.h,v 1.3 2001-10-29 19:55:13 d3h325 Exp $ */
+/*$Id: base.h,v 1.4 2001-10-30 00:26:17 d3h325 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
 extern Integer *GA_proclist;
 extern int* GA_Proc_list;
 extern int* GA_inv_Proc_list;
-extern global_array_t GA[MAX_ARRAYS]; 
+extern int** GA_Update_Flags;
+
+#define FNAM        31              /* length of array names   */
+typedef struct {
+       int  ndim;               /* number of dimensions                 */
+       int  type;               /* data type int array                  */
+       int  actv;               /* activity status                      */
+       int  size;               /* size of local data in bytes          */
+       int  elemsize;           /* sizeof(datatype)                     */
+       int  ghosts;             /* flag indicating presence of ghosts   */
+       long lock;               /* lock                                 */
+       long id;                 /* ID of shmem region / MA handle       */
+       int  dims[MAXDIM];       /* global array dimensions              */
+       int  chunk[MAXDIM];      /* chunking                             */
+       int  nblock[MAXDIM];     /* number of blocks per dimension       */
+       int  width[MAXDIM];      /* boundary cells per dimension         */
+       Integer lo[MAXDIM];      /* top/left corner in local patch       */
+       double scale[MAXDIM];    /* nblock/dim (precomputed)             */
+       char **ptr;              /* arrays of pointers to remote data    */
+       int  *mapc;              /* block distribution map               */
+       char name[FNAM+1];       /* array name                           */
+} global_array_t;
+
+extern global_array_t _ga_main_data_structure[MAX_ARRAYS]; 
 #define ERR_STR_LEN 256               /* length of string for error reporting */
 static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 
