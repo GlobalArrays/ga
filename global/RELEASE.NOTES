@@ -51,6 +51,11 @@ DIRECTORY STRUCTURE
 
 
 HISTORY
+  version 3.2Beta   March 20th, 2002
+              * support for ghost cells
+              * port to Linux64/Itanium and Cygwin 
+              * support two underscores in fortran names on Linux/Cygwin
+                (enabled by setting F2C_TWO_UNDERSCORES)
   version 3.1   November 6th, 2000
               * ports to 64-bit IBM, HP, Sun, Fujitsu, Linux/Alpha platforms
               * new operations: periodic version of put,get,accumulate
