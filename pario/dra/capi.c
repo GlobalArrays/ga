@@ -191,11 +191,11 @@ void DRA_Set_debug(logical flag)
   return;
 }
 
-void DRA_Internals(int d_a)
+void DRA_Print_internals(int d_a)
 {
   Integer dd_a;
   dd_a = (Integer)d_a;
-  dra_internals_(&dd_a);
+  dra_print_internals_(&dd_a);
   return;
 }
 

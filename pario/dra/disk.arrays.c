@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.45 2002-06-19 18:12:42 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.46 2002-06-19 21:01:13 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -3225,7 +3225,7 @@ Integer handle=*d_a+DRA_OFFSET;
 
 /*\ PRINT OUT INTERNAL PARAMETERS OF DRA
 \*/
-void FATR dra_internals_(Integer *d_a)
+void FATR dra_print_internals_(Integer *d_a)
 {
   Integer i;
   Integer *dims, *chunks;
