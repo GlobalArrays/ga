@@ -1,4 +1,4 @@
-/* $Id: lapi.c,v 1.8 1999-07-28 00:47:56 d3h325 Exp $ */
+/* $Id: lapi.c,v 1.9 1999-10-29 18:46:08 d3h325 Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>
@@ -225,17 +225,51 @@ int rc;
 }
       
 
+
+/*\ client sends strided data + request to server
+\*/
+void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
+                        void *ptr, int strides, int stride_arr[], int count[])
+{
+
+    armci_write_strided(ptr, strides, stride_arr, count, bdata);
+    armci_send_req(proc);
+}
+
+
+/*\ server sends data back to client
+\*/
 void armci_send_data(request_header_t* msginfo, char *data)
 {
 /*     fprintf(stderr,"%d: sending %d bytes (%lf) to %d adr=(%x,%x)\n",armci_me, msginfo->datalen, *(double*)data, msginfo->from, msginfo->tag.buf, MessageSndBuffer);*/
      armci_lapi_send(msginfo->tag, data, msginfo->datalen, msginfo->from);
 }
 
+
+/*\ server sends strided data back to client
+\*/
+void armci_send_strided_data(int proc,  request_header_t *msginfo, char *bdata,
+                        void *ptr, int strides, int stride_arr[], int count[])
+{
+     armci_write_strided(ptr, strides, stride_arr, count, bdata);
+     armci_lapi_send(msginfo->tag, bdata, msginfo->datalen, msginfo->from);
+}
+
+
 void armci_rcv_data(int proc)
 {
 /*     fprintf(stderr,"%d: receiving cntr=%d val=%d\n", armci_me, buf_cntr.cntr, buf_cntr.val);*/
      CLEAR_COUNTER(buf_cntr);
 /*     fprintf(stderr,"%d received %lf\n",armci_me, *((double*)MessageSndBuffer));*/
+}
+
+/*\ client receives strided data from server
+\*/
+void armci_rcv_strided_data(int proc, char *buf, int datalen,
+                        void *ptr, int strides, int stride_arr[], int count[])
+{
+     CLEAR_COUNTER(buf_cntr);
+     armci_read_strided(ptr, strides, stride_arr, count, buf);
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.6 1999-10-14 00:18:51 d3h325 Exp $ */
+/* $Id: request.c,v 1.7 1999-10-29 18:46:08 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -80,6 +80,7 @@ char *buf = (char*)(msginfo+1);
 
     ADDBUF(buf, int, ticket);
 
+    if(DEBUG_)fprintf(stderr,"%d sending unlock\n",armci_me);
     armci_send_req(proc);
 }
     
@@ -283,7 +284,6 @@ int armci_rem_strided(int op, void* scale, int proc,
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, int lockit)
 {
-    int  buf_stride_arr[MAX_STRIDE_LEVEL+1];
     char *buf = MessageSndBuffer;
     request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
     int  rc, i;
@@ -301,10 +301,6 @@ int armci_rem_strided(int op, void* scale, int proc,
        rem_ptr = dst_ptr;
        rem_stride_arr = dst_stride_arr;
     }
-
-    buf_stride_arr[0]=count[0];
-    for(i=0; i< stride_levels; i++) 
-        buf_stride_arr[i+1]= buf_stride_arr[i]*count[i+1];
 
     for(i=0, msginfo->datalen=1;i<=stride_levels;i++)msginfo->datalen*=count[i];
     
@@ -325,7 +321,6 @@ int armci_rem_strided(int op, void* scale, int proc,
     buf = (char*)adr;
 
     /* fill message header */
-    msginfo->dscrlen = buf - MessageSndBuffer - sizeof(request_header_t);
     msginfo->from  = armci_me;
     msginfo->to    = proc;
     msginfo->operation  = op;
@@ -349,28 +344,27 @@ int armci_rem_strided(int op, void* scale, int proc,
                *(float*)buf = *(float*)scale; slen = sizeof(float); break;
     default: slen=0;
     }
-/*    if(ACC(op))*/
-/*      fprintf(stderr,"%d in server len=%d alpha=(%d,%d)\n",*/
-/*              armci_me, slen, ((double*)buf)[0],((double*)buf)[1]); */
+	
+	/*
+	if(ACC(op)) fprintf(stderr,"%d in client len=%d alpha=%lf)\n",
+	             armci_me, buf - (char*)msginfo , ((double*)buf)[0]); 
+	*/
+
     buf += slen;
-    msginfo->datalen += slen;
+    msginfo->dscrlen = buf - MessageSndBuffer - sizeof(request_header_t);
     msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
 
-    /* for put and accumulate copy data into buffer */
-    if(op != GET)
-       if(rc = armci_op_strided(GET, scale, armci_me, src_ptr, src_stride_arr,
-               buf, buf_stride_arr, count, stride_levels, 0))
-               armci_die("rem_strided: put to buf failed",rc);
-       
-    armci_send_req(proc);
-
     if(op == GET){
-       armci_rcv_data(proc);
-       if(rc = armci_op_strided(GET, scale, armci_me, 
-               MessageSndBuffer, buf_stride_arr, 
-               dst_ptr, dst_stride_arr, count, stride_levels, 0))
-               armci_die("rem_strided: get from buf failed",rc);
-    }
+
+       armci_send_req(proc);
+	   armci_rcv_strided_data(proc, MessageSndBuffer, msginfo->datalen,
+				     dst_ptr, stride_levels, dst_stride_arr, count);
+
+    } else
+       /* for put and accumulate send data */
+       armci_send_strided(proc,msginfo, buf, 
+                          src_ptr, stride_levels, src_stride_arr, count); 
+
     return 0;
 }
 
@@ -380,32 +374,41 @@ int armci_rem_strided(int op, void* scale, int proc,
 void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 {
     int  buf_stride_arr[MAX_STRIDE_LEVEL+1];
-    int  *loc_stride_arr; 
+    int  *loc_stride_arr,slen; 
     int  *count, stride_levels;
     void *buf_ptr, *loc_ptr;
     void *scale;
+	char *dscr_save = dscr;
     int  rc, i,proc;
 
     /* unpack descriptor record */
     loc_ptr = *(void**)dscr;           dscr += sizeof(void*);
     stride_levels = *(int*)dscr;       dscr += sizeof(int);
     loc_stride_arr = (int*)dscr;       dscr += stride_levels*sizeof(int);
-    count = (int*)dscr;
+    count = (int*)dscr;                
 
     /* compute stride array for buffer */
     buf_stride_arr[0]=count[0];
     for(i=0; i< stride_levels; i++)
         buf_stride_arr[i+1]= buf_stride_arr[i]*count[i+1];
-    
+
     /* get scale for accumulate, adjust buf to point to data */
-    scale = buf;
     switch(msginfo->operation){
-    case ARMCI_ACC_INT:     buf += sizeof(int); break;
-    case ARMCI_ACC_DCP:     buf += 2*sizeof(double); break;
-    case ARMCI_ACC_DBL:     buf += sizeof(double); break;
-    case ARMCI_ACC_CPL:     buf += 2*sizeof(float); break;
-    case ARMCI_ACC_FLT:     buf += sizeof(float); break;
+    case ARMCI_ACC_INT:     slen = sizeof(int); break;
+    case ARMCI_ACC_DCP:     slen = 2*sizeof(double); break;
+    case ARMCI_ACC_DBL:     slen = sizeof(double); break;
+    case ARMCI_ACC_CPL:     slen = 2*sizeof(float); break;
+    case ARMCI_ACC_FLT:     slen = sizeof(float); break;
+	default:				slen=0;
     }
+
+	scale = dscr_save+ (msginfo->dscrlen - slen);
+	/*
+	if(ACC(msginfo->operation))
+	      fprintf(stderr,"%d in server len=%d slen=%d alpha=%lf\n", armci_me,
+						 msginfo->dscrlen, slen, *(double*)scale); 
+	*/
+
 
     buf_ptr = buf; /*  data in buffer */
 
@@ -413,11 +416,16 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     if(msginfo->operation == GET){
     
+       armci_send_strided_data(proc, msginfo, buf, 
+                          loc_ptr, stride_levels, loc_stride_arr, count); 
+
+	   /*
        if(rc = armci_op_strided(GET, scale, proc, loc_ptr, loc_stride_arr,
                buf_ptr, buf_stride_arr, count, stride_levels, 0))
                armci_die("server_strided: get to buf failed",rc);
 
        armci_send_data(msginfo, buf);
+	   */
 
     } else{
 

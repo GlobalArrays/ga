@@ -36,7 +36,13 @@ extern  char* MessageSndBuffer;
 #  endif
 #endif
 
-
+extern void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
+                         void *ptr, int strides, int stride_arr[], int count[]);
+void armci_rcv_strided_data(int proc, char *buf, int datalen,
+                        void *ptr, int strides, int stride_arr[], int count[]);
+extern void armci_send_strided_data(int proc,  request_header_t *msginfo, 
+            char *bdata, void *ptr, int strides, int stride_arr[], int count[]);
+extern void armci_send_req(int proc);
 extern void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra);
 extern int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,
                             int proc);

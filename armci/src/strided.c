@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.13 1999-10-18 18:52:20 d3h325 Exp $ */
+/* $Id: strided.c,v 1.14 1999-10-29 18:46:09 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -301,8 +301,12 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
           }
           break;
           
-      default: /* N-dimentional */ 
+      default: /* N-dimensional */ 
       {
+		  /* stride_levels is not the same as ndim. it is ndim-1
+		   * For example a 10x10x10... array, suppose the datatype is byte
+		   * the stride_arr is 10, 10x10, 10x10x10 ....
+		   */
           index[2] = 0; unit[2] = 1; total_of_2D = count[2];
           for(j=3; j<=stride_levels; j++) {
               index[j] = 0; unit[j] = unit[j-1] * count[j-1];
@@ -474,3 +478,74 @@ int ARMCI_AccS( int  optype,            /* operation */
     if(rc) return FAIL6;
     else return 0;
 }
+
+
+void armci_write_strided(void *ptr, int stride_levels, int stride_arr[],
+                   int count[], char *buf)
+{
+    int i, j;
+    long idx;    /* index offset of current block position to ptr */
+    int n1dim;  /* number of 1 dim block */
+    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL],
+        baseld[MAX_STRIDE_LEVEL];
+
+    /* number of n-element of the first dimension */
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++)
+        n1dim *= count[i];
+
+    /* calculate the destination indices */
+    bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+    for(i=2; i<=stride_levels; i++) {
+        bvalue[i] = 0;
+        bunit[i] = bunit[i-1] * count[i-1];
+    }
+
+    for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            idx += bvalue[j] * stride_arr[j-1];
+            if((i+1) % bunit[j] == 0) bvalue[j]++;
+            if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
+        }
+
+    memcpy(buf, ((char*)ptr)+idx, count[0]);
+    buf += count[0];
+    }
+}
+
+
+void armci_read_strided(void *ptr, int stride_levels, int stride_arr[],
+                        int count[], char *buf)
+{
+    int i, j;
+    long idx;    /* index offset of current block position to ptr */
+    int n1dim;  /* number of 1 dim block */
+    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL],
+        baseld[MAX_STRIDE_LEVEL];
+
+    /* number of n-element of the first dimension */
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++)
+        n1dim *= count[i];
+
+    /* calculate the destination indices */
+    bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+    for(i=2; i<=stride_levels; i++) {
+        bvalue[i] = 0;
+        bunit[i] = bunit[i-1] * count[i-1];
+    }
+
+    for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            idx += bvalue[j] * stride_arr[j-1];
+            if((i+1) % bunit[j] == 0) bvalue[j]++;
+            if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
+        }
+
+    memcpy(((char*)ptr)+idx, buf, count[0]);
+    buf += count[0];
+    }
+}
+

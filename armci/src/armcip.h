@@ -68,9 +68,12 @@ extern  double armci_internal_buffer[BUFSIZE_DBL];
 extern void armci_shmem_init();
 extern void armci_die(char *msg, int code);
 extern void armci_die2(char *msg, int code1, int code2);
+extern void armci_write_strided(void *ptr, int stride_levels, 
+                                int stride_arr[], int count[], char *buf);
+extern void armci_read_strided(void *ptr, int stride_levels, 
+                               int stride_arr[], int count[], char *buf);
 extern int armci_op_strided(int op, void* scale, int proc,void *src_ptr, 
-			int src_stride_arr[],  
-		       void* dst_ptr, int dst_stride_arr[], 
+			int src_stride_arr[],  void* dst_ptr, int dst_stride_arr[], 
                        int count[], int stride_levels, int lockit);
 extern int armci_copy_vector(int op, /* operation code */
                 armci_giov_t darr[], /* descriptor array */

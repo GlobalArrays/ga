@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.6 1999-10-14 00:18:50 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.7 1999-10-29 18:46:07 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -17,6 +17,7 @@
 #define QUIT 33
 #define ATTACH 34
 #define SOFFSET -1000
+#define PAYLOAD 120
 
 extern int AR_ready_sigchld;
 int *AR_sock;
@@ -46,16 +47,101 @@ int bytes;
 
      if(DEBUG_){
         printf("%d sending req=%d to (%d,%d,%d) dsclen=%d datlen=%d bytes=%d\n",
-               armci_me,
-               ((request_header_t*)MessageSndBuffer)->operation,
+               armci_me, ((request_header_t*)MessageSndBuffer)->operation,
                ((request_header_t*)MessageSndBuffer)->to,
                cluster,proc,dscrlen,datalen,bytes);
         fflush(stdout);
      }
-    stat = armci_WriteToSocket(AR_sock[cluster], MessageSndBuffer, 
-                 bytes);
+    stat = armci_WriteToSocket(AR_sock[cluster], MessageSndBuffer, bytes);
     if(stat<0)armci_die("armci_send_req:write failed",stat);
 }
+
+
+void armci_write_strided_sock(void *ptr, int stride_levels, int stride_arr[], 
+				   int count[], int fd)
+{
+    int i, j, stat;
+    long idx;    /* index offset of current block position to ptr */
+    int n1dim;  /* number of 1 dim block */
+    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL], 
+	    baseld[MAX_STRIDE_LEVEL];
+
+    /* number of n-element of the first dimension */
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++)
+        n1dim *= count[i];
+
+    /* calculate the destination indices */
+    bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+    for(i=2; i<=stride_levels; i++) {
+        bvalue[i] = 0;
+        bunit[i] = bunit[i-1] * count[i-1];
+    }
+
+    for(i=0; i<n1dim; i++) {
+        idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            idx += bvalue[j] * stride_arr[j-1];
+            if((i+1) % bunit[j] == 0) bvalue[j]++;
+            if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
+        }
+
+	    /* memcpy(buf, ((char*)ptr)+idx, count[0]); */
+	    /* buf += count[0]; */
+        stat = armci_WriteToSocket(fd, ((char*)ptr)+idx, count[0]);
+        if(stat<0)armci_die("armci_write_strided_sock:write failed",stat);
+    }
+}
+
+
+
+
+/*\ client sends strided data + request to server
+\*/
+void armci_send_strided(int proc, request_header_t *msginfo, char *bdata, 
+                        void *ptr, int strides, int stride_arr[], int count[])
+{
+int hdrlen = sizeof(request_header_t);
+int dscrlen = msginfo->dscrlen;
+int datalen = msginfo->datalen;
+int cluster = armci_clus_id(proc);
+int stat;
+int bytes;
+
+    if(DEBUG_){
+      printf("%d:armci_send_strided: op=%d to=%d bytes= %d \n",armci_me,
+					  msginfo->operation,proc,datalen);
+      fflush(stdout);
+    }
+
+    bytes = msginfo->bytes + hdrlen;
+    if(DEBUG_){
+        printf("%d sending str req=%d to(%d,%d,%d) dslen=%d dlen=%d bytes=%d\n",
+               armci_me, msginfo->operation, msginfo->to,
+               cluster,proc,dscrlen,datalen,bytes);
+        fflush(stdout);
+    }
+
+    if(count[0] <  PAYLOAD){
+
+      /* for small contiguous blocks copy into a buffer before sending */
+      armci_write_strided(ptr, strides, stride_arr, count, bdata);
+
+      stat = armci_WriteToSocket(AR_sock[cluster], msginfo, bytes);
+      if(stat<0)armci_die("armci_send_strided:write failed",stat);
+
+    }else{
+
+      /* we write header + data descriptor */
+      bytes = hdrlen + dscrlen;
+      stat = armci_WriteToSocket(AR_sock[cluster], msginfo, bytes);
+      if(stat<0)armci_die("armci_send_strided:write failed",stat);
+
+      /* for larger blocks write directly to socket thus avoiding memcopy */
+      armci_write_strided_sock(ptr, strides, stride_arr,count,AR_sock[cluster]);
+    }
+}
+
 
 
 /*\ server receives request
@@ -68,7 +154,10 @@ int stat;
 int bytes;
 
     stat =armci_ReadFromSocket(AR_sock[p],MessageRcvBuffer,hdrlen);
-    if(stat<0)armci_die("armci_rcv_req: failed to receive header ",stat);
+    if(stat<0){
+			fflush(stdout); sleep(1);
+			armci_die("armci_rcv_req: failed to receive header ",stat);
+	}
 
     if(DEBUG_){
       printf("%d(server):got %d req from %d len=(%d,%d,%d)\n",
@@ -114,6 +203,7 @@ int bytes;
        *(void**)pdescr = NULL;
     }
     
+    /* buffer not used for large strided get requests */
     if(msginfo->datalen>0 && msginfo->operation != GET){
 
        if(msginfo->datalen > MSG_BUFLEN -hdrlen -msginfo->dscrlen)
@@ -123,13 +213,8 @@ int bytes;
        *buflen -= msginfo->datalen;
 
     }
-/*        if (msginfo->operation == GET){
-        printf("%d received GET datalen=%d\n",armci_me,
-                                 msginfo->datalen);
-        fflush(stdout);
-       }
-*/
 }
+
 
 
 /*\ client receives data from server
@@ -140,6 +225,10 @@ int cluster = armci_clus_id(proc);
 int datalen = ((request_header_t*)MessageSndBuffer)->datalen;
 int stat;
 
+    if(DEBUG_){
+      printf("%d:armci_rcv_data:  bytes= %d \n",armci_me,datalen);
+      fflush(stdout);
+    }
     if(datalen == 0) armci_die("armci_rcv_data: no data to receive",datalen); 
     if(datalen > MSG_BUFLEN)
        armci_die("armci_rcv_data:data overflowing rcv buffer",datalen);
@@ -151,6 +240,36 @@ int stat;
       fflush(stdout);
     }
 }
+
+
+/*\ client receives strided data from server
+\*/
+void armci_rcv_strided_data(int proc, char *buf, int datalen, 
+                        void *ptr, int strides, int stride_arr[], int count[])
+{
+int cluster = armci_clus_id(proc);
+int stat;
+
+    if(DEBUG_){
+      printf("%d:armci_rcv_strided_data:  from \n",armci_me,proc);
+      fflush(stdout);
+    }
+    if(datalen > MSG_BUFLEN)
+       armci_die("armci_rcv_data:data overflowing rcv buffer",datalen);
+
+    stat =armci_ReadFromSocket(AR_sock[cluster],buf,datalen);
+    if(stat<0)armci_die("armci_rcv_data: read failed",stat);
+	
+       armci_read_strided(ptr, strides, stride_arr, count, buf);
+	
+
+    if(DEBUG_){
+      printf("%d:armci_rcv_data: got %d bytes \n",armci_me,datalen);
+      fflush(stdout);
+    }
+}
+
+
 
 
 /*\ server response - send data to client
@@ -165,6 +284,33 @@ int stat;
 }
 
 
+
+/*\ server sends strided data back to client 
+\*/
+void armci_send_strided_data(int proc,  request_header_t *msginfo, char *bdata, 
+                        void *ptr, int strides, int stride_arr[], int count[])
+{
+int to = msginfo->from;
+int datalen = msginfo->datalen;
+
+    if(count[0] < PAYLOAD){
+       int stat;
+
+       /* for small contiguous blocks copy into a buffer before sending */
+       armci_write_strided(ptr, strides, stride_arr, count, bdata);
+
+       stat = armci_WriteToSocket(AR_sock[to], bdata, datalen);
+       if(stat<0)armci_die("armci_send_strided_data:write failed",stat);
+
+    }else{
+
+       /* for larger blocks write directly to socket thus avoiding memcopy */
+       armci_write_strided_sock(ptr, strides, stride_arr, count, AR_sock[to]);
+    }
+}
+
+
+
 /*\ write data to socket associated with process "to"
 \*/
 void armci_sock_send(int to, void* data, int len)
@@ -174,6 +320,7 @@ int stat;
     stat = armci_WriteToSocket(AR_sock[to], data, len);
     if(stat<0)armci_die("armci_sock_send:write failed",stat);
 }
+
 
 
 /*\ control message to the server, e.g.: ATTACH to shmem, return ptr etc.
@@ -291,7 +438,6 @@ void armci_server_goodbye(request_header_t* msginfo)
      }
 
      armci_CleanupSockets();
-/*     sleep(1);*/
 
 #ifdef MPI
         MPI_Finalize();
@@ -596,6 +742,5 @@ void armci_start_server()
 
    } else 
      armci_client_code();
-
 }
 
