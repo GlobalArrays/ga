@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.109 2004-09-02 17:08:37 edo Exp $
+# $Id: makefile.h,v 1.110 2004-09-06 22:17:04 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -286,10 +286,10 @@ else
    endif
    ifneq (,$(findstring ifc,$(_FC)))
        ifeq ($(FOPT),-O)
-           FOPT_REN = -O3 -prefetch
+           FOPT_REN = -O3 -prefetch -w -cm
        endif
        GLOB_DEFINES += -DIFCLINUX
-       _IFCV8= $(shell ifc -v  2>&1|egrep 8|awk ' /8./  {print "Y"}')
+       _IFCV8= $(shell ifc -v  2>&1|egrep 8|awk ' /8\./  {print "Y"}')
        ifeq ($(_IFCV8),Y)
          GLOB_DEFINES+= -DIFCV8
        endif	
@@ -330,7 +330,7 @@ ifeq  ($(_CPU),ia64)
            CC = gcc
      CLD_REN =   -Wl,--relax  -Wl,-Bstatic 
 ifeq ($(FC),efc)
-       _IFCV8= $(shell efc -V  2>&1|egrep -v Inte|egrep -v efc |egrep 8|awk ' /8./  {print "Y"}')
+       _IFCV8= $(shell efc -V  2>&1|egrep -v Inte|egrep -v efc |egrep 8|awk ' /8\./  {print "Y"}')
        ifeq ($(_IFCV8),Y)
          GLOB_DEFINES+= -DIFCV8
        endif	
