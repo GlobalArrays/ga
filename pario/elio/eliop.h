@@ -1,6 +1,11 @@
 #ifndef  ELIOP_H
 #define  ELIOP_H
 
+#ifdef WIN32
+#include <io.h>
+#include "winutil.h"
+#endif
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,12 +32,21 @@ extern void ga_error(char*, long);
 #elif defined(KSR)
 #        include <sys/mount.h>
 #        define  STATVFS statfs
+#elif defined(WIN32)
+#        define  STATVFS _stat 
+#        define  S_ISDIR(mode) ((mode&S_IFMT) == S_IFDIR)
+#        define  S_ISREG(mode) ((mode&S_IFMT) == S_IFREG)
 #elif !defined(PARAGON)
 #        include <sys/statvfs.h>
 #        define  STATVFS statvfs
 #endif
 
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
+
 #include <fcntl.h>
 #if defined(PARAGON)
 #  include <sys/mount.h>

@@ -3,12 +3,17 @@
  Authors: Jarek Nieplocha (PNNL) and Jace Mogill (ANL)
 \**********************************************************************/
 
-#ifdef CRAY_T3E
+#ifdef CRAY_T3E____
 #define FFIO 1
 #endif
 
 #include "eliop.h"
 
+#if defined(SUN)||defined(SOLARIS)||defined(WIN32)||defined(LINUX)
+#   ifndef NOAIO
+#      define NOAIO
+#   endif
+#endif
 
 /****************** Internal Constants and Parameters **********************/
 
@@ -18,16 +23,10 @@
 #define  MAX_ATTEMPTS 10
 
 
-#if  defined(AIX) || defined(DECOSF) || defined(SGITFP) || defined(SGI64)
-#    ifndef NOAIO
-#       define AIO 1
-#    endif
+#ifndef NOAIO
+#   define AIO 1
 #endif
 
-
-#if defined(AIO) || defined(PARAGON) || defined(CRAY_T3E)
-#   define ASYNC
-#endif
 
 #ifdef FFIO
 #  define WRITE  ffwrite
@@ -51,7 +50,7 @@
 
 
 /* structure to emulate control block in Posix AIO */
-#if defined (CRAY_T3E)
+#if defined (CRAY)
 #   if defined(FFIO)
        typedef struct { struct ffsw stat; int filedes; }io_status_t;
 #   else 
@@ -60,10 +59,8 @@
 #   endif
     io_status_t cb_fout[MAX_AIO_REQ];
     io_status_t *cb_fout_arr[MAX_AIO_REQ];
-#endif
 
-
-#if defined(AIO)
+#elif defined(AIO)
 #   include <aio.h>
 #   if defined(KSR)||defined(AIX)
 #      define INPROGRESS EINPROG
@@ -75,9 +72,10 @@
     const
 #endif
            struct aiocb   *cb_fout_arr[MAX_AIO_REQ];
+#endif
 
-#else
-#   define INPROGRESS 1            /* I wish this didn't have to be here */
+#ifndef INPROGRESS
+#   define INPROGRESS 1
 #endif
 
 static long           aio_req[MAX_AIO_REQ]; /* array for AIO requests */
@@ -86,7 +84,7 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
 
 
 /****************************** Internal Macros *****************************/
-#if defined(ASYNC)
+#if defined(AIO)
 #  define AIO_LOOKUP(aio_i) {\
       aio_i = 0;\
       while(aio_req[aio_i] != NULL_AIO && aio_i < MAX_AIO_REQ) aio_i++;\
@@ -95,9 +93,6 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
 #  define AIO_LOOKUP(aio_i) aio_i = MAX_AIO_REQ
 #endif
 
-/* JN 12.31.97: 
- * fixed stat returning -1 instead of error code from elio_read/write 
- */
 #define SYNC_EMULATE(op) *req_id = ELIO_DONE; \
   if((stat= elio_ ## op (fd, offset, buf, bytes)) != bytes ){ \
        ELIO_ERROR(stat,0);  \
@@ -154,26 +149,28 @@ Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
 int elio_set_cb(Fd_t fd, off_t offset, int reqn, void *buf, Size_t bytes)
 {
 #if defined(AIO)
-    cb_fout[reqn].aio_offset = offset;
-    cb_fout_arr[reqn] = cb_fout+reqn;
-#   if defined(KSR)
-      cb_fout[reqn].aio_whence = SEEK_SET;
+#   if defined(PARAGON) || defined(CRAY)
+       if(offset != SEEK(fd->fd, offset, SEEK_SET))return (SEEKFAIL);
+#      if  defined(CRAY)
+           cb_fout_arr[reqn] = cb_fout+reqn;
+           cb_fout[reqn].filedes    = fd->fd;
+#      endif
 #   else
-      cb_fout[reqn].aio_buf    = buf;
-      cb_fout[reqn].aio_nbytes = bytes;
-#     if defined(AIX)
-        cb_fout[reqn].aio_whence = SEEK_SET;
-#     else
-        cb_fout[reqn].aio_sigevent.sigev_notify = SIGEV_NONE;
-        cb_fout[reqn].aio_fildes    = fd->fd;
-#     endif
+       cb_fout[reqn].aio_offset = offset;
+       cb_fout_arr[reqn] = cb_fout+reqn;
+#      if defined(KSR)
+         cb_fout[reqn].aio_whence = SEEK_SET;
+#      else
+         cb_fout[reqn].aio_buf    = buf;
+         cb_fout[reqn].aio_nbytes = bytes;
+#        if defined(AIX)
+           cb_fout[reqn].aio_whence = SEEK_SET;
+#        else
+           cb_fout[reqn].aio_sigevent.sigev_notify = SIGEV_NONE;
+           cb_fout[reqn].aio_fildes    = fd->fd;
+#        endif
+#      endif
 #   endif
-#elif defined(PARAGON) || defined(CRAY_T3E)
-        if(offset != SEEK(fd->fd, offset, SEEK_SET))return (SEEKFAIL);
-#endif
-#if  defined(CRAY_T3E)
-        cb_fout_arr[reqn] = cb_fout+reqn;
-        cb_fout[reqn].filedes    = fd->fd;
 #endif
     return ELIO_OK;
 }
@@ -191,33 +188,42 @@ int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request
   PABLO_start( pablo_code );
 
   *req_id = ELIO_DONE;
-  AIO_LOOKUP(aio_i);
 
-  if(aio_i >= MAX_AIO_REQ){
+#ifdef AIO
+   AIO_LOOKUP(aio_i);
+
+   /* blocking io when request table is full */
+   if(aio_i >= MAX_AIO_REQ){
 #     if defined(DEBUG) && defined(ASYNC)
          fprintf(stderr, "elio_awrite: Warning- asynch overflow\n");
 #     endif
       SYNC_EMULATE(write);
-  } else {
+   } else {
       *req_id = (io_request_t) aio_i;
       if((rc=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
                                                  ELIO_ERROR(rc,0);
 
-#if defined(PARAGON)
-      *req_id = _iwrite(fd->fd, buf, bytes);
-      stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
-#elif defined(CRAY_T3E) && defined(AIO)
-      rc = WRITEA(fd->fd, (char*)buf, bytes, &cb_fout[aio_i].stat, DEFARG);
-      stat = (rc < 0)? -1 : 0; 
-#elif defined(KSR) && defined(AIO)
-      stat = awrite(fd->fd, buf, bytes, cb_fout+aio_i);
-#elif defined(AIX) && defined(AIO)
-      stat = aio_write(fd->fd, cb_fout+aio_i);
-#elif defined(AIO)
-      stat = aio_write(cb_fout+aio_i);
+#    if defined(PARAGON)
+       *req_id = _iwrite(fd->fd, buf, bytes);
+       stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
+#    elif defined(CRAY)
+       rc = WRITEA(fd->fd, (char*)buf, bytes, &cb_fout[aio_i].stat, DEFARG);
+       stat = (rc < 0)? -1 : 0; 
+#    elif defined(KSR)
+       stat = awrite(fd->fd, buf, bytes, cb_fout+aio_i);
+#    elif defined(AIX)
+       stat = aio_write(fd->fd, cb_fout+aio_i);
+#    else
+       stat = aio_write(cb_fout+aio_i);
+#    endif
+     aio_req[aio_i] = *req_id;
+  }
+
+#else
+      /* call blocking write when AIO not available */
+      SYNC_EMULATE(write);
 #endif
-      aio_req[aio_i] = (int) *req_id;
-    }
+
   if(stat ==-1) ELIO_ERROR(AWRITFAIL, aio_i);
 
   PABLO_end(pablo_code);
@@ -230,6 +236,10 @@ int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request
 \*/
 int elio_truncate(Fd_t fd, off_t length)
 {
+#ifdef WIN32
+#   define ftruncate _chsize 
+#endif
+
     int pablo_code = PABLO_elio_truncate;
     PABLO_start( pablo_code );
 
@@ -274,7 +284,7 @@ int    attempt=0;
   
   while (bytes_to_read) {
     stat = READ(fd->fd, buf, bytes_to_read);
-    if (stat == 0) {
+    if(stat==0){
       ELIO_ERROR(EOFFAIL, stat);
     } else if ((stat == -1) && ((errno == EINTR) || (errno == EAGAIN))) {
       ; /* interrupted read should be restarted */
@@ -284,9 +294,10 @@ int    attempt=0;
     } else {
       ELIO_ERROR(READFAIL, stat);
     }
-  };
+    attempt++;
+  }
   
-  /* Only get here if all has gone OK */
+  /* Only get here if all went OK */
   
   PABLO_end(pablo_code);
   
@@ -301,43 +312,55 @@ int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * re
 {
   Size_t stat;
   int    aio_i;
-  int    rc; 
 
   int pablo_code = PABLO_elio_aread;
   PABLO_start( pablo_code );
 
   *req_id = ELIO_DONE;
-  AIO_LOOKUP(aio_i);
 
-  if(aio_i >= MAX_AIO_REQ){
-#     if defined(DEBUG) && defined(ASYNC)
-         fprintf(stderr, "elio_read: Warning- asynch overflow\n");
-#     endif
-      SYNC_EMULATE(read);
-  } else {
+#ifdef AIO
+    AIO_LOOKUP(aio_i);
 
-     *req_id = (io_request_t) aio_i;
-      if((stat=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
+    /* blocking io when request table is full */
+    if(aio_i >= MAX_AIO_REQ){
+#       if defined(DEBUG)
+           fprintf(stderr, "elio_read: Warning- asynch overflow\n");
+#       endif
+        SYNC_EMULATE(read);
+
+    } else {
+
+       int    rc; 
+
+       *req_id = (io_request_t) aio_i;
+        if((stat=elio_set_cb(fd, offset, aio_i, (void*) buf, bytes)))
                                                  ELIO_ERROR((int)stat,0);
-#if defined(PARAGON)
-      *req_id = _iread(fd->fd, buf, bytes);
-      stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
-#elif defined(CRAY_T3E) && defined(AIO)
-      rc = READA(fd->fd, buf, bytes, &cb_fout[aio_i].stat, DEFARG);
-      stat = (rc < 0)? -1 : 0;
-#elif defined(KSR) && defined(AIO)
-      stat = aread(fd->fd, buf, bytes, cb_fout+aio_i);
-#elif defined(AIX) && defined(AIO)
-      stat = aio_read(fd->fd, cb_fout+aio_i);
-#elif defined(AIO)
-      stat = aio_read(cb_fout+aio_i);
-#endif
-     aio_req[aio_i] = *req_id;
+#       if defined(PARAGON)
+          *req_id = _iread(fd->fd, buf, bytes);
+          stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
+#       elif defined(CRAY)
+          rc = READA(fd->fd, buf, bytes, &cb_fout[aio_i].stat, DEFARG);
+          stat = (rc < 0)? -1 : 0;
+#       elif defined(KSR)
+          stat = aread(fd->fd, buf, bytes, cb_fout+aio_i);
+#       elif defined(AIX)
+          stat = aio_read(fd->fd, cb_fout+aio_i);
+#       else
+          stat = aio_read(cb_fout+aio_i);
+#       endif
+        aio_req[aio_i] = *req_id;
     }
-  if(stat ==-1) ELIO_ERROR(AWRITFAIL, 0);
+#else
 
-  PABLO_end(pablo_code);
-  return((int)stat);
+    /* call blocking write when AIO not available */
+    SYNC_EMULATE(read);
+
+#endif
+
+    if(stat ==-1) ELIO_ERROR(AWRITFAIL, 0);
+
+    PABLO_end(pablo_code);
+    return((int)stat);
 }
 
 
@@ -346,35 +369,32 @@ int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * re
 int elio_wait(io_request_t *req_id)
 {
   int  aio_i=0;
-#ifdef ASYNC
   int  rc;
-#endif
 
   int pablo_code = PABLO_elio_wait;
   PABLO_start( pablo_code );
 
   if(*req_id != ELIO_DONE ) { 
 
-#if defined(PARAGON)
-      iowait(*req_id);
+#    ifdef AIO
+#      if defined(PARAGON)
+          iowait(*req_id);
 
-#elif defined(AIO) || defined(CRAY_T3E)
+#    elif defined(CRAY)
 
-#  if defined(CRAY_T3E)
-
-#     if defined(FFIO)
-      {
-         struct ffsw dumstat, *prdstat=&(cb_fout[*req_id].stat);
-         fffcntl(cb_fout[*req_id].filedes, FC_RECALL, prdstat, &dumstat);
-         if (FFSTAT(*prdstat) == FFERR) ELIO_ERROR(SUSPFAIL,0);
-      }
-#     else
-      {
-         struct iosw *statlist[1];
-         statlist[0] = &(cb_fout[*req_id]).stat);
-         recall(cb_fout[*req_id].filedes, 1, statlist); 
-      }
-#     endif
+#      if defined(FFIO)
+       {
+          struct ffsw dumstat, *prdstat=&(cb_fout[*req_id].stat);
+          fffcntl(cb_fout[*req_id].filedes, FC_RECALL, prdstat, &dumstat);
+          if (FFSTAT(*prdstat) == FFERR) ELIO_ERROR(SUSPFAIL,0);
+       }
+#      else
+       {
+          struct iosw *statlist[1];
+          statlist[0] = &(cb_fout[*req_id].stat);
+          recall(cb_fout[*req_id].filedes, 1, statlist); 
+       }
+#      endif
 
 #  elif defined(AIX)
 
@@ -420,16 +440,14 @@ int elio_probe(io_request_t *req_id, int* status)
 
   if(*req_id == ELIO_DONE){
       *status = ELIO_DONE;
-  }
-  else {
+  } else {
       
-#if defined(PARAGON)
-      if( iodone(*req_id)== (long) 0) errval = INPROGRESS;
-      else errval = 0;
+#ifdef AIO
+#    if defined(PARAGON)
+        if( iodone(*req_id)== (long) 0) errval = INPROGRESS;
+        else errval = 0;
 
-#elif defined(AIO) || defined(CRAY_T3E)
-
-#  if defined(CRAY_T3E)
+#    elif defined(CRAY)
 
 #     if defined(FFIO)
       {
@@ -439,17 +457,17 @@ int elio_probe(io_request_t *req_id, int* status)
       }
 #     else
 
-         errval = ( IO_DONE(cb_fout[*req_id]).stat) == 0)? INPROGRESS: 0;
+         errval = ( IO_DONE(cb_fout[*req_id].stat) == 0)? INPROGRESS: 0;
 
 #     endif
 
-#  elif defined(KSR)
+#   elif defined(KSR)
       errval = cb_fout[(int)*req_id].aio_errno;
-#  elif defined(AIX)
+#   elif defined(AIX)
       errval = aio_error(cb_fout[(int)*req_id].aio_handle);
-#  else
+#   else
       errval = aio_error(cb_fout+(int)*req_id);
-#  endif
+#   endif
 #endif
       switch (errval) {
       case 0: 
@@ -529,6 +547,9 @@ Fd_t  elio_open(const char* fname, int type, int mode)
                    ELIO_ERROR_NULL(MODEFAIL, type);
    }
 
+#ifdef WIN32
+   ptype |= O_BINARY;
+#endif
 
   if((fd = (Fd_t ) malloc(sizeof(fd_struct)) ) == NULL) 
                    ELIO_ERROR_NULL(ALOCFAIL, 0);

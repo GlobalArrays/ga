@@ -11,13 +11,48 @@ int elio_dirname(const char *fname, char *dirname, int len)
     if(len<= (flen =strlen(fname))) 
 	ELIO_ERROR(LONGFAIL,flen);
     
+#ifdef WIN32
+    while(fname[flen] != '/' && fname[flen] != '\\' && flen >0 ) flen--;
+#else
     while(fname[flen] != '/' && flen >0 ) flen--;
+#endif
+
     if(flen==0)strcpy(dirname,".");
     else {strncpy(dirname, fname, flen); dirname[flen]=(char)0;}
     
     return(ELIO_OK);
 }
 
+#ifdef WIN32
+#include <direct.h>
+#include <stdlib.h>
+
+/*\ determine drive name given the file path name
+\*/ 
+char* elio_drivename(const char* fname)
+{
+
+         static char path[_MAX_PATH];
+         static char drive[_MAX_DRIVE];
+         
+         if( _fullpath(path,fname,_MAX_PATH) == NULL) return NULL;
+         _splitpath(path, drive, NULL, NULL, NULL);
+         return(drive);
+}
+
+void  get_avail_space(int dev, long *avail, int* bsize)
+{
+      static char drive[4]="A:\\";
+      int sectors, cfree, ctotal;
+      drive[0]= dev + 'A';
+
+      GetDiskFreeSpace(drive, &sectors, bsize, &cfree, &ctotal);
+      *avail = sectors*cfree;
+}
+
+#endif
+         
+         
 
 /*\ Stat a file (or path) to determine it's filesystem info
 \*/
@@ -61,7 +96,7 @@ int  elio_stat(char *fname, stat_t *statinfo)
     else
 	ELIO_ERROR(STATFAIL,1);
     free(statpfsbuf);
-    return(ELIO_OK);
+
 #else
     
     if(stat(fname, &ufs_stat) != 0)
@@ -87,24 +122,32 @@ int  elio_stat(char *fname, stat_t *statinfo)
 #   endif
 		ELIO_ERROR(STATFAIL,1);
 	
-#if defined(CRAY)
-        /* f_bfree == f_bavail -- naming changes */
+#   if defined(WIN32)
 
-        if(ufs_statfs.f_secnfree != 0) /* check for secondary partition */
-           statinfo->avail = (long) ufs_statfs.f_secnfree;
-        else
-           statinfo->avail = (long) ufs_statfs.f_bfree;
-#else
-        statinfo->avail = (long) ufs_statfs.f_bavail;
-#endif
-
-
-#   ifdef SOLARIS
-	bsize = (int) ufs_statfs.f_frsize;
+       get_avail_space(ufs_statfs.st_dev, &(statinfo->avail), &bsize);
+      
 #   else
-	bsize = (int) ufs_statfs.f_bsize;
+      /* get number of available blocks */
+#     if defined(CRAY)
+          /* f_bfree == f_bavail -- naming changes */
+
+          if(ufs_statfs.f_secnfree != 0) /* check for secondary partition */
+             statinfo->avail = (long) ufs_statfs.f_secnfree;
+          else
+             statinfo->avail = (long) ufs_statfs.f_bfree;
+#     else
+          statinfo->avail = (long) ufs_statfs.f_bavail;
+#     endif
+
+      /* get block size */
+#     ifdef SOLARIS
+    	  bsize = (int) ufs_statfs.f_frsize;
+#     else
+	  bsize = (int) ufs_statfs.f_bsize;
+#     endif
 #   endif
     
+    /* translate number of availabell blocks into kilobytes */
     switch (bsize) {
     case 512:  statinfo->avail /=2; break;
     case 1024: break;
