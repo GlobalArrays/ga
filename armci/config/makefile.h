@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.113 2005-02-22 18:46:55 manoj Exp $
+#$Id: makefile.h,v 1.114 2005-02-22 22:47:08 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -81,80 +81,110 @@ endif
 #
 #              GNU compilers 
 ifeq ($(_CPU),ppc)
-        CDEFS += -DPPC
+    CDEFS += -DPPC
 endif
 ifeq ($(_CPU),x86)
-ifneq ($(ARMCI_NETWORK),MELLANOX)
-     OPT_ALIGN = -malign-double
-endif
+    ifneq ($(ARMCI_NETWORK),MELLANOX)
+       OPT_ALIGN = -malign-double
+    endif
 endif
 ifeq ($(_CPU),686)
-ifneq ($(ARMCI_NETWORK),MELLANOX)
-     OPT_ALIGN = -malign-double -march=pentiumpro
-else
-     OPT_ALIGN = -march=pentiumpro 
-endif
-        CDEFS += -DCOPY686
+    ifneq ($(ARMCI_NETWORK),MELLANOX)
+       OPT_ALIGN = -malign-double -march=pentiumpro
+    else
+       OPT_ALIGN = -march=pentiumpro 
+    endif
+    CDEFS += -DCOPY686
     EXTRA_OBJ += x86copy.o
 endif
 ifeq ($(_CPU),786)
-ifneq ($(ARMCI_NETWORK),MELLANOX)
-     OPT_ALIGN = -malign-double -march=pentiumpro
-else
-     OPT_ALIGN = -march=pentiumpro 
-endif
-#        CDEFS += -DCOPY686
+    ifneq ($(ARMCI_NETWORK),MELLANOX)
+       OPT_ALIGN = -malign-double -march=pentiumpro
+    else
+       OPT_ALIGN = -march=pentiumpro 
+    endif
+#   CDEFS += -DCOPY686
     EXTRA_OBJ += x86copy.o
 endif
+ifeq ($(_CC),icc)
+    ifeq ($(COPT),-O)
+        COPT = -O3
+        COPT_REN = -prefetch 
+    endif
+endif
+ifeq ($(_CC),xlc)
+    COPT_REN = -q32  -qlanglvl=extended
+endif
 ifeq ($(_CC),gcc)
-   ifeq ($(COPT),-O)
-          COPT = -O2 -finline-functions -funroll-loops
-     COPT_REN += -Wall $(OPT_ALIGN)
-   endif
+    ifeq ($(COPT),-O)
+       COPT = -O2 -finline-functions -funroll-loops
+       COPT_REN += -Wall $(OPT_ALIGN)
+    endif
 else
-   EXTRA_OBJ += tas.o
+    EXTRA_OBJ += tas.o
 endif
 #
 #           g77
 ifeq ($(_FC),g77)
-   ifeq ($(FOPT),-O)
-         FOPT = -O3
-    FOPT_REN += -funroll-loops -fomit-frame-pointer $(OPT_ALIGN)
-   endif
+    ifeq ($(FOPT),-O)
+       FOPT = -O3
+       FOPT_REN += -funroll-loops -fomit-frame-pointer $(OPT_ALIGN)
+    endif
 else
-#
-#             PGI fortran compiler on intel
+#  PGI fortran compiler on intel
    ifneq (,$(findstring pgf,$(_FC)))
        FOPT_REN = -Mvect  -Munroll -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
-ifeq ($(_CPU),686)
-       FOPT_REN +=  -tp p6
-endif
+       ifeq ($(_CPU),686)
+          FOPT_REN +=  -tp p6
+       endif
    endif
+#  Intel fortran compiler (<= version 7)
    ifneq (,$(findstring ifc,$(_FC)))
        FOPT=-O4 -prefetch -unroll -ip
-ifeq ($(_CPU),k7)
-       FOPT_REN = -xM 
-endif
-ifeq ($(_CPU),686)
-       FOPT_REN = -xK -tpp6
-endif
-ifeq ($(_CPU),786)
-       FOPT_REN = -xW -tpp7
-endif
+       ifeq ($(_CPU),k7)
+          FOPT_REN = -xM 
+       endif
+       ifeq ($(_CPU),686)
+          FOPT_REN = -xK -tpp6
+       endif
+       ifeq ($(_CPU),786)
+          FOPT_REN = -xW -tpp7
+       endif
    endif
-   ifeq ($(_CC),xlc)
-     COPT_REN = -q32  -qlanglvl=extended
-     CDEFS += -DXLCLINUX
-   endif
-   ifeq ($(_FC),xlf)
-     FOPT_REN = -q32  -qEXTNAME
-     endif
+#  Intel fortran compiler (>= version 8)
+   ifneq (,$(findstring ifort,$(_FC)))
+       FOPT=-O4 -prefetch -unroll -ip
+       ifeq ($(_CPU),k7)
+          FOPT_REN = -xM 
+       endif
+       ifeq ($(_CPU),686)
+          FOPT_REN = -xK -tpp6
+       endif
+       ifeq ($(_CPU),786)
+          FOPT_REN = -xW -tpp7
+       endif
+       ifeq ($(LINK.c),$(FC))
+          CLD_REN += -nofor_main
+       endif
    endif
 
+#  IBM fortran compiler
+   ifeq ($(_CC),xlc)
+       COPT_REN = -q32  -qlanglvl=extended
+       CDEFS += -DXLCLINUX
+   endif
+   ifeq ($(_FC),xlf)
+       FOPT_REN = -q32  -qEXTNAME
+   endif
 endif
-#-----------------Linux 64-bit on DEC/Compaq Alpha with DEC compilers --
-#-----------------Linux 64-bit on Itanium with Intel compilers --
-#-----------------Linux 64-bit on Optern with GNU compilers --
+
+endif # end of LINUX
+
+#------------------------------- Linux64 -------------------------------
+#
+# Linux 64-bit on DEC/Compaq Alpha with DEC compilers
+# Linux 64-bit on Itanium with Intel compilers
+# Linux 64-bit on Optern with GNU compilers
 ifeq ($(TARGET),LINUX64)
    GLOB_DEFINES += -DLINUX
          _CPU = $(shell uname -m)
@@ -163,30 +193,47 @@ ifneq (,$(findstring mpicc,$(_CC)))
          _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
 endif
 
+#
+#-----------------------------------
+# LINUX 64 CPU Specific Setup: IA64
+#-----------------------------------
+# IA64, only Intel fortran compiler supported 
 ifeq  ($(_CPU),ia64)
      FC=efc
      CC=gcc
-# _SGIALTIX= $(shell /bin/rpm -q -i sgi-mpt  2>&1| head -n 1|egrep Reloc|awk ' /Rel/  {print "Y"}')
-# _SGIALTIX= $(shell /bin/rpm -q --last sgi-mpt  2>&1| head -n 1|egrep Reloc|awk ' /20/  {print "Y"}')
- _SGIALTIX= $(shell if [ -r /proc/sgi_sn/system_serial_number ]; then /bin/echo Y; fi)
+  _SGIALTIX= $(shell if [ -r /proc/sgi_sn/system_serial_number ]; then /bin/echo Y; fi)
   ifeq ($(_SGIALTIX),Y)
    GLOB_DEFINES += -DSGIALTIX
   endif
   ifeq ($(_FC),sgif90)
      FOPT_REN = -macro_expand 
   endif
-  ifeq ($(_FC),efc)
-   GLOB_DEFINES += -DIFCLINUX
-   FOPT_REN= -w -cm -w90 #-align 
-#
-#  for IA64 only. gcc 3.x cannot find the symbols modsi3 and divsi3 in IA64.
-#  lib1funs-ia64 includes these symbols.
-#   EXTRA_OBJ += funcs-ia64.o
 
-   ifeq ($(FOPT),-O)
-     FOPT =  -O3 -hlo -ftz -pad
-   endif
+  # Intel Compiler version <= 7
+  ifeq ($(_FC),efc)
+     _IFCV8= $(shell efc -v  2>&1|egrep "Version "|head -1|awk ' /8\./  {print "Y";exit}; /9./ {print "Y"; exit}')
+     ifeq ($(_IFCV8),Y)
+        FC = ifort
+     endif
+     GLOB_DEFINES += -DIFCLINUX
+     FOPT_REN= -w -cm -w90 #-align 
+#     for IA64 only. gcc 3.x cannot find the symbols modsi3 and divsi3 in IA64.
+#     lib1funs-ia64 includes these symbols.
+#     EXTRA_OBJ += funcs-ia64.o
+     ifeq ($(FOPT),-O)
+        FOPT =  -O3 -hlo -ftz -pad
+     endif
   endif
+
+  # Intel Compiler version >= 8
+  ifeq ($(_FC),ifort)
+     GLOB_DEFINES += -DIFCLINUX
+     FOPT_REN= -w -cm -w90 #-align 
+     ifeq ($(FOPT),-O)
+        FOPT =  -O3 -hlo -ftz -pad
+     endif
+  endif
+
   ifeq ($(_CC),gcc)
       COPT_NO = -g -O0
       COPT= -O0 -g
@@ -195,19 +242,27 @@ ifeq  ($(_CPU),ia64)
   ifeq ($(_CC),ecc)
      COPT_REN= -w1 #-fno-alias    
   endif
+  ifeq ($(_CC),icc)
+     COPT_REN= -w1 #-fno-alias    
+  endif 
+
   GLOB_DEFINES += -DNEED_MEM_SYNC
 endif
 
+#-----------------------------------
+# LINUX 64 CPU Specific Setup: Alpha
+#-----------------------------------
 ifeq  ($(_CPU),alpha)
      FC = fort
      CC = ccc
      FOPT_REN = -assume no2underscore -fpe3 -check nooverflow
      FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
 endif
-     EXTRA_OBJ += tas.o
 
-   
-endif
+#
+#-------------------------------------
+# LINUX 64 CPU Specific Setup: Opteron
+#-------------------------------------
 ifeq  ($(_CPU),x86_64)
   _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /Path/ { print "pathf90" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90"} ')
   ifeq ($(_FC),pgf90)
@@ -224,6 +279,11 @@ ifeq  ($(_CPU),x86_64)
         FOPT_REN  = -O3 -OPT:Ofast 
   endif
 endif
+
+#
+#-------------------------------------
+# LINUX 64 CPU Specific Setup: power4
+#-------------------------------------
 ifeq  ($(_CPU),ppc64)
   FC=xlf
   CC=/opt/cross/bin/powerpc64-linux-gcc
@@ -239,6 +299,10 @@ ifeq  ($(_CPU),ppc64)
      FOPT = -O4 -qarch=auto -qstrict
   endif
 endif
+
+   EXTRA_OBJ += tas.o
+endif # end of LINUX64
+
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt
