@@ -779,15 +779,15 @@ void ga_matmul_mirrored(transa, transb, alpha, beta,
      void    *alpha, *beta;
      char    *transa, *transb;
 {
-#ifdef STATBUF
+
+    #ifdef STATBUF
   /* approx. sqrt(2) ratio in chunk size to use the same buffer space */
    DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
 #else
    DoubleComplex *a, *b, *c;
-   Integer handle, idx;
 #endif
 Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2, dims[2], rank;
-Integer me= ga_nodeid_(), nproc=ga_nnodes_();
+Integer me= ga_nodeid_(), nproc;
 Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim;
@@ -797,14 +797,13 @@ DoubleComplex ONE, ZERO;
 DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
 int need_scaling=1;
+Integer ZERO_I = 0, inode, iproc;
 float ONE_F = 1.0, ZERO_F = 0.0;
 double ZERO_D = 0.0;
-Integer ZERO_I = 0, inode, iproc; 
 Integer get_new_B;
 int local_sync_begin,local_sync_end;
- int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
+int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
- 
    ONE.real =1.; ZERO.real =0.;
    ONE.imag =0.; ZERO.imag =0.;
 
@@ -816,7 +815,7 @@ int local_sync_begin,local_sync_end;
 
    /* Check to make sure all global arrays are of the same type */
    if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
-         ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
+        ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
      ga_error_("Processors do not match for all arrays",ga_nnodes_());
    }
    if (ga_is_mirrored_(g_a)) {
@@ -886,31 +885,29 @@ int local_sync_begin,local_sync_end;
       * Find out how much memory we can grab.  It will be used in
       * three chunks, and the result includes only the first one.
       */
-     Integer avail = MA_inquire_avail(atype), used, elems;
-     ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
-     if(avail < MINMEM && ga_nodeid_() == 0)
-       ga_error("Not enough memory for buffers",avail);
-     elems = (Integer)(avail*0.9);/*Do not use entire mem. avail*/
-     if(MA_push_get(atype, elems, "GA mulmat bufs", &handle, &idx))
-       MA_get_pointer(handle, &a);
-     else ga_error("ma_alloc_get failed",avail);
      
+     Integer elems, factor = sizeof(DoubleComplex)/GAsizeofM(atype);
      Ichunk = Jchunk = Kchunk = CHUNK_SIZE;
-
-     if ( max_chunk > Ichunk) { 
-       max_chunk = MIN(max_chunk, (Integer)(sqrt( (double)((elems-4)/3))) );
+     
+     if ( max_chunk > Ichunk) {       
+       /*if memory if very limited, performance degrades for large matrices
+	 as chunk size is very small, which leads to communication overhead)*/
+       Integer avail = ga_memory_avail(atype);
+       ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+       if(avail<MINMEM && ga_nodeid_()==0) ga_error("NotEnough memory",avail);
+       elems = (Integer)(avail*0.9); /* Donot use every last drop */
+       
+       max_chunk=MIN(max_chunk, (Integer)(sqrt( (double)((elems-EXTRA)/3))));
        Ichunk = MIN(m,max_chunk);
        Jchunk = MIN(n,max_chunk);
        Kchunk = MIN(k,max_chunk);
      }
-     used = Ichunk * Kchunk;
-     if(atype == C_FLOAT)  used = 1+used/4;/*(sizeof(DCplx)/sizeof(float));*/
-     else if(atype ==  C_DBL) used = 1+used/2;
-     b = a+ used;
-     used = Kchunk*Jchunk;
-     if(atype == C_FLOAT) used = 1+used/4; /*(sizeof(DCplx)/sizeof(float));*/
-     else if(atype ==  C_DBL) used = 1+used/2; 
-     c = b+ used;
+     else /* "EXTRA" elems for safety - just in case */
+       elems = 3*Ichunk*Jchunk + EXTRA*factor;
+     
+     a = (DoubleComplex*) ga_malloc(elems, atype, "GA mulmat bufs");
+     b = a + (Ichunk*Kchunk)/factor + 1; 
+     c = b + (Kchunk*Jchunk)/factor + 1;
    }
 #endif
 
@@ -936,7 +933,7 @@ int local_sync_begin,local_sync_end;
 	 
 	 for(ilo = 0; ilo < m; ilo += Ichunk){ /*loop through rows of g_c patch */
 	   
-	   if(ijk%nproc == me){
+	   if(ijk%nproc == iproc){
 
 	     ihi = MIN(m-1, ilo+Ichunk-1);
 	     idim= cdim = ihi - ilo +1;
@@ -1047,11 +1044,12 @@ int local_sync_begin,local_sync_end;
    }
    
 #ifndef STATBUF
-   if(!MA_pop_stack(handle)) ga_error("MA_pop_stack failed",0);
+   ga_free(a);
 #endif
 
    GA_POP_NAME;
    if(local_sync_end)ga_sync_();
+
 }
 
 
@@ -1434,6 +1432,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
  *  Fortran interface
 \*/
 void FATR nga_matmul_patch_(transa, transb, alpha, beta, g_a, alo, ahi, 
+
                        g_b, blo, bhi, g_c, clo, chi)
 
                       void *alpha, *beta;
