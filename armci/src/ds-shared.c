@@ -8,10 +8,26 @@
 #define DEBUG_ 0
 #define DEBUG1 1
 
-extern void armci_rcv_req(void *mesg,
-                          void *phdr, void *pdescr, void *pdata, int *buflen);
 
-extern void armci_flow_ack(int proc);
+
+/*\ client initialization
+\*/
+void armci_client_code()
+{
+   if(DEBUG_){
+       printf("in client after fork %d(%d)\n",armci_me,getpid());
+       fflush(stdout);
+   }
+
+   armci_client_connect_to_servers();
+   armci_msg_barrier();
+
+   if(DEBUG_){
+      printf("%d client connected to all %d servers\n",armci_me, armci_nclus-1);
+      fflush(stdout);
+   }
+}
+
 
 /*\ client sends request to server
 \*/
@@ -22,7 +38,6 @@ int dscrlen = ((request_header_t*)MessageSndBuffer)->dscrlen;
 int datalen = ((request_header_t*)MessageSndBuffer)->datalen;
 int operation = ((request_header_t*)MessageSndBuffer)->operation;
 int cluster = armci_clus_id(proc);
-int stat;
 int bytes;
 
     if(((request_header_t*)MessageSndBuffer)->operation == GET)
@@ -212,7 +227,6 @@ void armci_send_data(request_header_t* msginfo, void *data)
 }
 
 
-
 /*\ server sends strided data back to client
 \*/
 void armci_send_strided_data(int proc,  request_header_t *msginfo,
@@ -241,7 +255,6 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
 }
 
 
-
 /*\ server sends ACK to client
 \*/
 void armci_server_ack(request_header_t* msginfo)
@@ -258,7 +271,7 @@ void armci_server_ack(request_header_t* msginfo)
 }
 
 
-/* main routine for data server process in a cluster environment
+/*  main routine for data server process in a cluster environment
  *  the process is blocked until message arrives from
  *  the clients and services the requests
  */
@@ -312,11 +325,18 @@ void armci_data_server(void *mesg)
               armci_die2("armci_data_serv: unknown format code",
                          msginfo->format, msginfo->from);
     }
-
-#ifdef VIA__
-    if(msginfo->operation != GET && msginfo->operation != ACK) 
-       armci_flow_ack(from);
-#endif
-
 }
 
+
+/*\ initialize connection and start server thread/processes
+\*/
+void armci_start_server()
+{
+    armci_init_connections();
+
+    if(armci_me == armci_master) {
+        armci_create_server_thread(armci_server_code);
+    }
+
+    armci_client_code();
+}

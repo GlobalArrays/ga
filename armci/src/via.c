@@ -226,7 +226,7 @@ char *p = (char*)pnaddr;
 }
 
 
-void armci_create_connections()
+void armci_init_connections()
 {
 VIP_RETURN rc;
 int c,s;
@@ -440,18 +440,12 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
 }
 
 
-
-void armci_client_code()
+void armci_client_connect_to_servers()
 {
 VIP_MEM_ATTRIBUTES mattr;
 VIP_RETURN rc;
 int s, mod, bytes;
 char *tmp;
-
-   if(DEBUG1){
-       printf("in client after fork %d(%d)\n",armci_me,getpid());
-       fflush(stdout);
-   }
 
    /* allocate memory for the msg buffers-must be alligned on 64byte bnd */
    bytes = sizeof(vbuf_long_t);
@@ -488,32 +482,8 @@ again:
       }
       armci_check_status(DEBUG1, rc,"client connect request");
    }
-
-   armci_msg_barrier();
-
-   if(DEBUG1){
-      printf("%d client connected to all %d servers\n",armci_me, armci_nclus-1);
-      fflush(stdout);
-   }
-
-   sleep(1);
 }
 
-
-
-void armci_start_server()
-{
-   /* create via connections accross the cluster */
-   armci_create_connections();
-
-   if(armci_me == armci_master){
-
-      armci_create_server_thread( armci_server_code );
-   }
-   
-   armci_client_code();
-
-}
 
 
 /******************* this code implements armci data transfers ***************/
@@ -561,7 +531,6 @@ VIP_DESCRIPTOR *pdscr;
        printf("%d client got ack for req\n",armci_me);fflush(stdout);
      }
 }
-
 
 
 

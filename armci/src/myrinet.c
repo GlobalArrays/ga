@@ -319,8 +319,9 @@ int armci_client_send_complete()
     return(armci_gm_context->done);
 }
 
+
 /* computing process start initial communication with all the servers */
-void armci_client_create_connection_gm()
+void armci_client_connect_to_servers()
 {
     int i;
     int server_mpi_id, size;
@@ -399,6 +400,14 @@ void armci_client_create_connection_gm()
         }
     }
 }
+
+
+void armci_client_create_connection_gm()
+{
+     armci_client_connect_to_servers();
+}
+
+
 
 /* used regular gm_send_with_call_back to send message
  * assumption: the buffer is pinned and most probably is MessageSndBuffer
@@ -1001,3 +1010,14 @@ void armci_transport_cleanup()
     }
 }
  
+
+void armci_init_connections()
+{
+    if(!armci_gm_proc_init())
+        armci_die("GM:client connection initialization failed", 0L);
+
+    if(armci_me == armci_master) {
+        if(!armci_gm_server_init())
+            armci_die("GM:server connection initialization failed", 0L);
+    }
+}

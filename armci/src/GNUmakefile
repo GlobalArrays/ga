@@ -43,7 +43,8 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
 endif
 
 ifeq ($(ARMCI_NETWORK),GM)
-  OBJ += dataserv-myri.o myrinet.o spawn.o request.o
+#  OBJ += dataserv-myri.o myrinet.o spawn.o request.o
+  OBJ += dataserv-gm.o ds-shared.o myrinet.o spawn.o request.o
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
 endif
 
