@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.9 2000-10-12 22:43:46 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.10 2000-10-12 23:02:36 d3g681 Exp $ */
 
 
 #include <stdio.h>
@@ -62,7 +62,7 @@ again:
 			 (struct timeval *) NULL);
   if (nready < 0) {
     if (errno == EINTR) {
-      fprintf(stderr,"wait in sockets got interrupted\n");
+      /*fprintf(stderr,"wait in sockets got interrupted\n");*/
       goto again;
     }
     else {
