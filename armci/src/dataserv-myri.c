@@ -109,7 +109,7 @@ char *armci_rcv_data(int proc)
         armci_die("armci_rcv_data:data overflowing rcv buffer",datalen);
 
     /* buf = header ack + data(len = datalen) + tail ack */
-    buf = armci_ReadFromDirect(MessageSndBuffer, datalen);
+    buf = armci_ReadFromDirect((request_header_t*)MessageSndBuffer, datalen);
 
     if(DEBUG_){
         printf("%d:armci_rcv_data: got %d bytes \n",armci_me,datalen);
@@ -169,7 +169,7 @@ void armci_rcv_strided_data(int proc, char *buf, int datalen, void *ptr,
         armci_die("armci_rcv_strided_data: not the right buffer", 0L);
     
     /* for small data segments minimize number of system calls */
-    databuf = armci_ReadFromDirect(MessageSndBuffer, datalen);
+    databuf = armci_ReadFromDirect((request_header_t*)MessageSndBuffer, datalen);
     
     armci_read_strided(ptr, strides, stride_arr, count, databuf);
     

@@ -477,10 +477,10 @@ void armci_client_direct_send(int dst, char *src_buf, char *dst_buf, int len,
  * assume the buf is pinned and is inside MessageSndBuffer
  * format buf = hdr ack + data + tail ack
  */
-char *armci_ReadFromDirect(char *buf, int len)
+char *armci_ReadFromDirect(request_header_t * msginfo, int len)
 {
     int msglen;    
-    request_header_t  *msginfo = (request_header_t *)buf;
+    char *buf = (char*) msginfo;
 
     /* check the header ack */
     wait_flag_updated(&(msginfo->tag.ack), ARMCI_GM_COMPLETE);
@@ -875,10 +875,10 @@ void armci_server_direct_send(int dst, char *src_buf, char *dst_buf, int len,
  *                                         ^
  *                                         buf (= len)
  */
-void armci_WriteToDirect(int dst, request_header_t *msginfo, char *buf)
+void armci_WriteToDirect(int dst, request_header_t *msginfo, void *buffer)
 {
     int status;
-    
+    char *buf = (char*)buffer; 
     char *ptr = buf - sizeof(long);
 
     /* adjust the dst pointer */

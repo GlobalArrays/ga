@@ -109,7 +109,9 @@ extern armci_gm_context_t *armci_gm_serv_context;
 extern armci_gm_context_t *armci_serv_ack_context;
 
 extern void armci_gm_cleanup();
+/*
 extern char *armci_ReadFromDirect(char *buf, int len);
+*/
 
 extern int armci_pin_memory(void *ptr, int stride_arr[], int count[],
                             int strides);
