@@ -6,13 +6,28 @@
 #include <stdio.h>
 
 /*********************** type definitions for ELIO interface *****************/
+/*
+GA, DRA and other libs use -DEXT_INT flag to switch definition of
+Integer data type from int to long:
+
+If you adopt it in EAF, we can use the same flags.
+
+Jarek
+*/
+#ifdef EXT_INT
+typedef long Integer;
+#else
+typedef int Integer;
+#endif 
+
 typedef struct {
   int   fd;
   int   fs;
 } fd_struct;                      /* file descriptor type definition */
-typedef fd_struct* Fd_t;
-typedef long io_request_t;   /* asynchronous I/O request type */
-typedef long Size_t;         /* size of I/O request type */ 
+typedef fd_struct *elio_fd_t;/* Internal filedescriptor type  */
+typedef int  Fd_t;           /* File descriptor handle type used by apps */
+typedef Integer io_request_t;   /* asynchronous I/O request type */
+typedef Integer Size_t;         /* size of I/O request type */ 
 
 
 #ifndef _VOID_DEFINED_
@@ -85,4 +100,7 @@ extern void fflush();
 
 /************** this stuff is exported because EAF uses it **************/
 #define ELIO_FILENAME_MAX 1024
+#define ELIO_MAX_FILES    64
 #define SDIRS_INIT_SIZE 1024
+
+
