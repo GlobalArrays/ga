@@ -244,7 +244,6 @@ static Integer GA_memory_limited = 0;
 # define ARGS_(s) ()
 #endif
 
-extern char* strcpy      ARGS_((char*, char*));
 extern void srand        ARGS_((Integer));
 extern void srandom      ARGS_((Integer));
 extern char *malloc      ARGS_((int));
@@ -262,7 +261,6 @@ extern long Detach_Shared_Region ARGS_((long id, long size, char *addr));
 extern long Delete_Shared_Region ARGS_((long id));
 extern long Delete_All_Regions ARGS_(( void));
 
-extern Void* memcpy ARGS_((Void*, Void*, Integer));
 extern double sqrt ARGS_((double));
 extern Integer MA_push_get ARGS_((Integer, Integer, char*, Integer*, Integer*));
 extern Integer MA_pop_stack ARGS_((Integer));

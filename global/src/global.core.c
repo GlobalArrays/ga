@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.15 1995-10-20 22:50:13 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.16 1995-11-02 18:32:46 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -32,6 +32,7 @@
 
  
 #include <stdio.h>
+#include <string.h>
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
