@@ -18,15 +18,11 @@ ifdef USE_MPI
   P_FILE = no
 endif
 
-all: lennard.x
-
-BINARIES = lennard.o
-
-%.x :  $(BINARIES) $(LIBDIR)/libglobal.a $(LIBDIR)/libarmci.a  $(EXTRA)
+%.x :  %.o $(LIBDIR)/libglobal.a $(LIBDIR)/libarmci.a  $(EXTRA)
 ifeq ($(P_FILE),YES)
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
 endif
-	$(LINK.f) $(NOPT) $(FLDOPT) -o $@ $(BINARIES) $(LIBS) $(FLIBS);
+	$(LINK.f) $(NOPT) $(FLDOPT) -o $@ $< $(LIBS) $(FLIBS);
 
 %.p:
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
