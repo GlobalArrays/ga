@@ -23,16 +23,14 @@ error:
 	exit
 endif
 
-ifeq ($(DIAG), PAR)
-     DIAG_DEF = -DPAR_DIAG
-endif
-
-ifeq ($(LU_SOLVE), PAR)
-     LU_SOLVE_DEF = -DPAR_LU
-endif
-
 LOC_INCLUDES = -I../src
-LOC_DEFINES  = $(DIAG_DEF) $(LU_SOLVE_DEF)
+ifeq ($(DIAG), PAR)
+     LOC_DEFINES += -DPAR_DIAG
+endif
+ifdef USE_SCALAPACK
+     LOC_DEFINES += -DSCALAPACK
+endif
+
 LIB_DISTRIB  = ../../lib
 LIB_TARGETS = *.x *.p
 
@@ -54,8 +52,13 @@ LIBS = $(CORE_LIBS) $(LINALG) $(LIBCOM) $(LIBTRACE)
 
 ifneq ($(MSG_COMMS), MPI)
   COPT_REN += -I../../tcgmsg/ipcv4.0
+  P_FILE = no
 endif
 
+# no need to build TCGMSG file when GA runs with MPI
+ifdef USE_MPI
+  P_FILE = no
+endif
 
 FOPT= $(NOPT)
 COPT= $(NOPT)

@@ -101,7 +101,7 @@ c
         print *,' '
         call ffflush(6)
       endif
-#ifndef PAR_LU
+#ifndef SCALAPACK
       call ga_lu_solve_seq('n', g_a, g_b)
 #else
       call ga_lu_solve('n', g_a, g_b)
@@ -124,7 +124,7 @@ c
         call ffflush(6)
       endif
 c
-#ifndef PAR_LU
+#ifndef SCALAPACK
       call ga_lu_solve_seq('n', g_a, g_e)
 #else
       call ga_lu_solve('n', g_a, g_e)
