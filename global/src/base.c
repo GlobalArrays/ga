@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.60 2003-11-06 18:57:22 d3g293 Exp $ */
+/* $Id: base.c,v 1.61 2003-11-14 16:15:30 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -637,7 +637,9 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     }
     ifirst = ifirst - icnt;
     /* find dimensions of data on block nfirst */
-    np = nproc*inode+nfirst;
+    np = 0;
+    for (i=0; i<inode; i++) np += ga_cluster_nprocs_(&i);
+    np += nfirst;
     nga_distribution_(g_a, &np, lo, hi);
     for (i=0; i<ndim; i++) {
       subscript[i] = ifirst%(hi[i] - lo[i] + 1);
@@ -674,7 +676,9 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     }
     ilast = ilast - icnt;
     /* find dimensions of data on block nfirst */
-    np = nproc*inode+nlast;
+    np = 0;
+    for (i=0; i<inode; i++) np += ga_cluster_nprocs_(&i);
+    np += nlast;
     nga_distribution_(g_a, &np, lo, hi);
     for (i=0; i<ndim; i++) {
       subscript[i] = ilast%(hi[i] - lo[i] + 1);
@@ -3339,7 +3343,6 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   int dummy=1, LnB, powof2nodes;
   int groupA, groupB, sizeB;
   void armci_util_wait_int(volatile int *,int,int);
-  double rdummy,rrdummy;
   Integer one = 1;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -3381,8 +3384,7 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
       groupB = 0;
     }
   }
-  /*printf("p[%d] new_nnodes: %d sizeB: %d\n",GAme,new_nnodes,sizeB);
-  if (groupA) printf("p[%d] Group A\n",GAme);
+  /*if (groupA) printf("p[%d] Group A\n",GAme);
   if (groupB) printf("p[%d] Group B\n",GAme);*/
 
   zproc = ga_cluster_procid_(&inode, &zero);
@@ -3447,23 +3449,18 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
       i = nga_locate_(g_a, index, &id);
       i = id;
       id = P_LIST[GA[handle].p_handle].map_proc_list[id];
-      nga_get_(g_a,index,index,&rdummy,&one);
       gam_Loc_ptr(id, handle, GA[handle].first, &fptr);
       for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].last[i];
       slength = GA[handle].shm_length;
       if(nnodes>1){
-        int iinode = inode;
-        if (iinode < sizeB)
-          iinode = (Integer)inode/2;
-        else
-          iinode = (Integer)(inode-sizeB);
-        if(!powof2nodes && inode <new_nnodes && groupA) {
+        if(!powof2nodes && inode < 2*sizeB && groupA) {
           ilast = inode + 1;
           next_nodel = ga_cluster_procid_(&ilast, &zero);
         } else if (groupB) {
           ilast = inode - 1;
           next_nodel = ga_cluster_procid_(&ilast, &zero);
         }
+        ilast = ((int)pow(2,(LnB-1)))^inode;
         /*printf("p[%d] Value of next nodel: %d\n",GAme,next_nodel);*/
         /*three step exchange if num of nodes is not pow of 2*/
         /*divide _nodes_ into two sets, first set "pow2" will have a power of 
@@ -3476,12 +3473,11 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
          *      :pair node.
          *if num of nodes a pow of 2, only step 2 executed
          */
-        if(last>inode && groupA){ /*the pow2 set of procs*/
+        if(/*ilast>inode &&*/ groupA){ /*the pow2 set of procs*/
           /* Use actual index of processor you are recieving from in group B
            * and perform first exchange (for non-power of 2) */
           if(!powof2nodes && inode < 2*sizeB){ /*step 1*/
             dstn = (char *)&rlength;
-            /*printf("p[%d] Recieving (1) data from %d\n",GAme,next_nodel);*/
             armci_msg_rcv(armci_tag, dstn,4,NULL,next_nodel);
             if (GAme > next_nodel) {
               dstn = fptr - rlength;
@@ -3489,7 +3485,6 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
               dstn = fptr + slength;
             }
             armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_nodel);
-            /*printf("p[%d] Recieved (1) data from %d\n",GAme,next_nodel);*/
             if (GAme > next_nodel)
               fptr -= rlength;
             slength += rlength;
@@ -3502,7 +3497,6 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
           }
           /*LnB=1;*/ /*BJP*/
           for(i=0;i<LnB-1;i++){ /*step 2*/
-            /*printf("p[%d] Executing power of 2 loop\n",GAme);*/
             next=((int)pow(2,i))^new_inode;
             if(next>=0 && next<new_nnodes){
               /* Translate back from relative_next_node to actual_next_node */
@@ -3546,10 +3540,8 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
               /* Use actual index of processor that you already recieved from
                * and that you will be sending to in group B*/
           if(!powof2nodes && inode < 2*sizeB){ /*step 3*/
-            /*printf("p[%d] Sending (2) data to %d\n",GAme,next_nodel); */
             srcp = GA[handle].ptr[GAme];
             armci_msg_snd(armci_tag, srcp,nsize,next_nodel);
-            /*printf("p[%d] Sent (2) data to %d\n",GAme,next_nodel); */
           }
         }
         else if (groupB) {
@@ -3561,10 +3553,8 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
             armci_msg_snd(armci_tag, srcp,4,next_nodel);
             srcp = fptr;
             armci_msg_snd(armci_tag, srcp,slength,next_nodel);
-            /*printf("p[%d] Sent (1) data to %d\n",GAme,next_nodel);*/
             dstn = GA[handle].ptr[GAme];
             rlength = nsize;
-            /*printf("p[%d] Recieving (2) data from %d\n",GAme,next_nodel);*/
             armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_nodel);
             /*printf("p[%d] Recieved (2) data from %d\n",GAme,next_nodel);*/
           }
