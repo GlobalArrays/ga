@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.55 2002-12-18 18:25:33 vinod Exp $ */
+/* $Id: strided.c,v 1.56 2002-12-19 21:33:40 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -797,6 +797,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #endif
 
     /*ORDER(PUT,proc);  ensure ordering */
+    UPDATE_FENCE_INFO(proc);
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -931,6 +932,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 
 
     /*ORDER(optype,proc);  ensure ordering */
+    UPDATE_FENCE_INFO(proc);
 
     direct=SAMECLUSNODE(proc);
 

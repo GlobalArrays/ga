@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.22 2002-12-17 13:03:42 vinod Exp $ */
+/* $Id: vector.c,v 1.23 2002-12-19 21:33:41 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -548,6 +548,8 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 
 
     /*ORDER(PUT,proc);  ensure ordering */
+    UPDATE_FENCE_INFO(proc);
+
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
@@ -653,6 +655,7 @@ int ARMCI_NbAccV( int op,              /* oeration code */
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
     /* ORDER(op,proc);  ensure ordering */
+    UPDATE_FENCE_INFO(proc);
     direct=SAMECLUSNODE(proc);
 
     if(nb_handle){
