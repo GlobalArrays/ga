@@ -109,9 +109,9 @@ c
       rc = sf_destroy(handle)
       if(me.eq.0)then
         write(*,*)' '
-        write(*,*)'test passed ', 40*dimnsn,' bytes'
-        write(*,*) 40e-6*dimnsn/ttw,' MB/s write rate'
-        write(*,*) 40e-6*dimnsn/ttr,' MB/s read rate'
+        write(*,*)'test passed ', 8*maxid*dimnsn,' bytes'
+        write(*,*) 8.0e-6*maxid*dimnsn/ttw,' MB/s write rate'
+        write(*,*) 8.0e-6*maxid*dimnsn/ttr,' MB/s read rate'
         write(*,*)' '
       endif
 c
