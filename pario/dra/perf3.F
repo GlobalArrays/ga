@@ -1,8 +1,8 @@
 c
 c FNAME - filename for test program
 c
-#define BASE_NAME  'da.try'
-#define BASE_NAME1 'da1.try'
+#define BASE_NAME  '/gpfs2/d3g293/da.try'
+#define BASE_NAME1 '/gpfs2/d3g293/da1.try'
 #ifdef  HPIODIR
 #  define FNAME   HPIODIR//BASE_NAME
 #  define FNAME1  HPIODIR//BASE_NAME1
@@ -127,7 +127,7 @@ c
      $   CALL ga_error('ndra_write failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       tt1 = tcgtime() -tt0
-      mbytes = 1e-6*mdtob(n*n)
+      mbytes = 1e-6*mdtob(n*n*n)
       if (me.eq.0)then
           write(6,100)mbytes,tt1,mbytes/tt1
       endif
@@ -170,7 +170,7 @@ c
 
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       tt1 = tcgtime() -tt0
-      mbytes = 1e-6*mdtob(n*n)
+      mbytes = 1e-6*mdtob(n*n*n)
       if (me.eq.0)then
           write(6,100)mbytes,tt1,mbytes/tt1
       endif
