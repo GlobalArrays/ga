@@ -891,6 +891,14 @@ char     op[]="*", *ptr = NULL;
 Integer  ilo, ihi, jlo, jhi;
 Integer  mem_size, nelem, mem_size_proc;
 Integer  i, ga_handle, status;
+/* Howard */
+#ifdef _CRAYMPP
+Integer ncols,maxcols=0,*ptr_Integer,j,nlocks;
+long **ptr_ptr_long,*ptr_long;
+char opadd='+';
+int heap_status;
+#endif
+
 
       if(!GAinitialized) ga_error("GA not initialized ", 0);
 
@@ -1024,6 +1032,44 @@ Integer  i, ga_handle, status;
         }
 #     endif
 
+#ifdef _CRAYMPP
+
+/* construct lock arrays for columns of local array */
+
+      status=1;
+      ncols = maxcols;
+
+      nlocks = (ncols + COLS_PER_LOCK - 1)/COLS_PER_LOCK;
+      for(i=0;i<MAX_NPROC;i++) GA[ga_handle].newlock[i] = 0;
+      ptr_long = (long *)shmalloc(nlocks*sizeof(long));
+      if(ptr_long==NULL){
+         status = 0;
+         ga_igop(GA_TYPE_SYN, &status, 1, op);
+         ga_error("ga_create_irreg: malloc failure for ptr_long",status);
+      }
+      ga_igop(GA_TYPE_SYN, &status, 1, op);
+      GA[ga_handle].newlock[GAme]=ptr_long;
+
+
+      for(i=0;i<nlocks;i++) GA[ga_handle].newlock[GAme][i] = 1;
+
+      ptr_Integer = (Integer *)malloc(nlocks*sizeof(Integer));
+      if(ptr_Integer==NULL){
+         status = 0;
+         ga_igop(GA_TYPE_SYN, &status, 1, op);
+         ga_error("ga_create_irreg: malloc failure for ptr_Integer",status);
+      }
+      ga_igop(GA_TYPE_SYN, &status, 1, op);
+      GA[ga_handle].lock_list=ptr_Integer;
+
+      for(i=0;i<nlocks;i++) GA[ga_handle].lock_list[i]=0;
+
+/* learn where my fellow pes malloced their arrays - this avoids shmalloc */
+
+      ga_igop(GA_TYPE_SYN, (Integer *)GA[ga_handle].newlock, GAnproc, &opadd);
+
+
+#endif
       ga_sync_();
 
       if(status){
@@ -1082,6 +1128,14 @@ char     op[]="*", *ptr = NULL, **save_ptr;
 Integer  mem_size, mem_size_proc, nelem;
 Integer  i, ga_handle, status;
 int      *save_mapc;
+/*Howard */
+#ifdef CRAY_T3D
+char opadd='+';
+Integer ncols,maxcols=0,*ptr_Integer,nlocks;
+Integer ilo,ihi,jlo,jhi;
+long **ptr_ptr_long,*ptr_long;
+#endif
+
 
       ga_sync_();
 
@@ -1145,6 +1199,48 @@ int      *save_mapc;
                            GAme, cluster_server);
         }
 #     endif
+
+#ifdef _CRAYMPP
+
+/* construct lock arrays for columns of local array */
+
+      for(i=0;i<GAnproc;i++){
+          ga_distribution_(g_a,&i,&ilo,&ihi,&jlo,&jhi);
+          ncols = jhi-jlo+1;
+          if(ncols > maxcols) maxcols = ncols;
+      }
+
+      status=1;
+      nlocks = (maxcols + COLS_PER_LOCK - 1)/COLS_PER_LOCK;
+      for(i=0;i<MAX_NPROC;i++) GA[ga_handle].newlock[i] = 0;
+      ptr_long = (long *)shmalloc(nlocks*sizeof(long));
+      if(ptr_long==NULL){
+         status = 0;
+         ga_igop(GA_TYPE_SYN, &status, 1, op);
+         ga_error("ga_duplicate: malloc failure for ptr_long",status);
+      }
+      ga_igop(GA_TYPE_SYN, &status, 1, op);
+      GA[ga_handle].newlock[GAme]=ptr_long;
+
+      for(i=0;i<nlocks;i++) GA[ga_handle].newlock[GAme][i]  = 1;
+
+      ptr_Integer = (Integer *)malloc(nlocks*sizeof(Integer));
+      if(ptr_Integer==NULL){
+         status = 0;
+         ga_igop(GA_TYPE_SYN, &status, 1, op);
+         ga_error("ga_create_irreg: malloc failure for ptr_Integer",status);
+      }
+      ga_igop(GA_TYPE_SYN, &status, 1, op);
+      GA[ga_handle].lock_list=ptr_Integer;
+
+      for(i=0;i<nlocks;i++) GA[ga_handle].lock_list[i] = 0;
+
+/* learn where my fellow pes malloced their arrays - this avoids shmalloc */
+
+      ga_igop(GA_TYPE_SYN, (Integer *)GA[ga_handle].newlock, GAnproc, &opadd);
+
+#endif
+
 
       ga_sync_();
 
@@ -1222,6 +1318,13 @@ Integer ga_handle = GA_OFFSET + *g_a;
     if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
     GA[ga_handle].actv = 0;     
     GAstat.curmem -= GA[ga_handle].size;
+#ifdef _CRAYMPP
+
+    free(GA[ga_handle].lock_list);
+    shfree(GA[ga_handle].newlock[GAme]);
+
+#endif
+
     return(TRUE);
 }
 
@@ -1642,6 +1745,126 @@ Integer ilop, ihip, jlop, jhip, offset;
 
 
 #ifdef CRAY_T3D
+
+/******Howard***********************/
+
+
+/*\local accumulate using intermediate buffer in local memory  (fine grain)
+\*/
+void ga_acc_1d_local_fg(Integer type, void* alpha, Integer rows, Integer cols, 
+                void* pglobal, Integer ldg, void *plocal, Integer ldl, 
+                void* buf, Integer buflen, Integer proc, Integer *lock_list, 
+                Integer jfirst, Integer jlast,global_array_t *ga_ptr)
+{
+Integer item_size = GAsizeofM(type), elem, words, j, istart, iend,jj,jlock,jmax,jmin;
+char *ptr_dst, *ptr_src;
+  
+Integer ncols=cols,adj_item_size;     
+
+adj_item_size = item_size/sizeof(Integer);
+
+ while(ncols > 0) {
+
+   for (j = jfirst;  j <= jlast;  j++){
+
+/* try to get the lock for this column */
+
+       jlock = j>>LOG2_COLS_PER_LOCK;
+
+/* have I done this block of columns ? */
+
+       if(lock_list[jlock] == 0) continue; 
+
+       if(shmem_swap(&ga_ptr->newlock[proc][jlock],INVALID,proc) ==INVALID) continue; 
+
+/* have the lock - now work fast! */
+
+       jmax =  MIN(j+COLS_PER_LOCK-j%COLS_PER_LOCK-1,jlast);
+       jmin = MAX(jfirst,j-j%COLS_PER_LOCK);
+
+       if(proc != GAme) {
+
+         for(jj=jmin;jj<=jmax;jj++){
+
+            for( istart = 0;  istart < rows;  istart += buflen){
+
+                 iend   = MIN(istart + buflen, rows);
+                 elem   = iend - istart;
+                 words  = elem*adj_item_size;
+
+                 ptr_dst = (char *)pglobal  + item_size* (istart + (jj-jfirst) *ldg);
+                 ptr_src = (char *)plocal   + item_size* (istart + (jj-jfirst) *ldl);
+       
+                 CopyElemFrom(ptr_dst, buf, words, proc);
+                 switch (type){
+                     case MT_F_DBL:
+                        dacc_column((double *)alpha,(double *)buf, (double *)ptr_src, elem ); break;
+                     case MT_F_DCPL:
+                        zacc_column((DoubleComplex *)alpha, (DoubleComplex *)buf, (DoubleComplex *)ptr_src, elem ); break;
+                     case MT_F_INT:
+                        iacc_column((Integer *)alpha, (Integer *)buf, (Integer *)ptr_src, elem ); break;
+                  }
+                 CopyElemTo(buf, ptr_dst, words, proc);
+            }                                               /* end loop over column element blocks */
+
+         }                                                  /* end loop  over columns in lock block */
+
+       }else{
+
+           ptr_dst = (char *)pglobal  + item_size* ((jmin-jfirst) *ldg);
+           ptr_src = (char *)plocal   + item_size* ((jmin-jfirst) *ldl);
+
+           switch(type) {
+
+               case(MT_F_DBL):
+
+                  accumulate((DoublePrecision *)alpha, rows, jmax-jmin+1, (DoublePrecision*)ptr_dst, ldg,
+                            (DoublePrecision*)ptr_src, ldl );
+                   break;
+
+                case(MT_F_DCPL):
+
+                   zaccumulate((DoubleComplex *)alpha, rows, jmax-jmin+1, (DoubleComplex*)ptr_dst, ldg,
+                                (DoubleComplex*)ptr_src, ldl );
+                   break;
+
+                case(MT_F_INT):
+
+                    iaccumulate((Integer *)alpha, rows, jmax-jmin+1, (Integer*)ptr_dst, ldg,
+                                (Integer*)ptr_src, ldl );
+                    break;
+
+                default:
+
+                   ga_error(" acc_local: unknown math type",type);
+                   break;
+            }
+
+        }
+
+/* decrement the ncols value */
+ 
+      ncols -= jmax-jmin+1;
+
+/* set the lock_list element to zero again */
+
+      lock_list[jlock] = 0; 
+
+/* wait for quietness */
+
+      shmem_quiet();
+
+/* unlock the processor for others */
+
+      shmem_swap(&ga_ptr->newlock[proc][jlock],1,proc); 
+
+   }  /* end loop over columns */
+
+ }  /*  end while loop  over columns*/
+
+}
+
+/*****************************/
 /*\local accumulate using intermediate buffer in local memory 
 \*/
 void ga_acc_1d_local(Integer type, void* alpha, Integer rows, Integer cols, 
@@ -1689,6 +1912,10 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
 #  define LEN_BUF (LEN_DBL_BUF * sizeof(DoublePrecision))
    DoublePrecision acc_buffer[LEN_DBL_BUF], *pbuffer;
    Integer buflen,  bytes, handle, index;
+   Integer jstop,jstart,jstop_b,jstart_b;
+   Integer jlo_proc,loc,jproc,j,wait_cycles=0;
+   Integer *ptr_lock_list;
+   long swaperand=INVALID,tswap;
 #endif
 
    GA_PUSH_NAME("ga_acc_local"); 
@@ -1700,9 +1927,12 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
    cols = jhi - jlo +1;
 
 #  ifdef CRAY_T3D
+
+     ga_ptr = &GA[GA_OFFSET + g_a];
+
+     bytes = rows*item_size;
      if(proc != GAme){
 
-        bytes = rows*item_size;
         buflen  = MIN(bytes,LEN_BUF)/item_size;
         pbuffer = acc_buffer;
 
@@ -1719,19 +1949,30 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
             }
         }
 
-        LOCK(g_a, proc, ptr_dst);
-            ga_acc_1d_local(type, alpha, rows, cols, ptr_dst, ldp, ptr_src, ld, 
-                                                      pbuffer, buflen, proc);
-#           ifdef CRAY_T3E
-              shmem_quiet();
-#           endif
-        UNLOCK(g_a, proc, ptr_dst);
 
-        if(bytes >LEN_BUF) MA_pop_stack(handle);
-        GA_POP_NAME;
-        return;
-     }
-     FLUSH_CACHE; /* cache coherency problem on T3D */
+       jproc = proc/ga_ptr->nblock[0];
+       loc = jproc + ga_ptr->nblock[0];
+       jlo_proc = ga_ptr->mapc[loc];
+       jstart = jlo - jlo_proc;
+       jstart_b = jstart>>LOG2_COLS_PER_LOCK;
+       jstop = jhi - jlo_proc;
+       jstop_b = jstop>>LOG2_COLS_PER_LOCK;
+
+       /*  set the column work list to 1 */
+       ptr_lock_list = ga_ptr->lock_list;
+       for(j=jstart_b;j<=jstop_b;j++) ptr_lock_list[j] = 1;
+
+       ga_acc_1d_local_fg(type, alpha, rows, cols, ptr_dst,
+                           ldp, ptr_src, ld,pbuffer, buflen,
+                           proc, ptr_lock_list, jstart,jstop,ga_ptr);
+
+       if((bytes >LEN_BUF)&&(proc != GAme)) MA_pop_stack(handle);
+
+
+       if(proc == GAme) FLUSH_CACHE; /* cache coherency problem on T3D */
+       return;
+   }
+
 #  endif
 
      if(GAnproc>1) LOCK(g_a, proc, ptr_dst);

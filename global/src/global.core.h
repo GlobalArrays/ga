@@ -40,6 +40,10 @@ typedef struct {
        Integer size;            /* size of local data in bytes          */
        long lock;               /* lock                                 */
        long id;			/* ID of shmem region / MA handle       */
+#ifdef _CRAYMPP
+       long *newlock[MAX_NPROC]; /* pointer to pointer to locks */
+       Integer *lock_list;        /* pointer to vector of column markers */
+#endif
        char name[FNAM+1];       /* array name                           */
 } global_array_t;
 
@@ -156,6 +160,11 @@ int  GA_stack_size=0;
 #          define UNLOCK(g_a, proc, x)\
                  shmem_swap(&GA[GA_OFFSET +g_a].lock, 1, (proc))
 #          define NATIVEbarrier barrier
+
+           /* constants for Howard's fine-grain accumulate */
+#          define COLS_PER_LOCK            16
+#          define LOG2_COLS_PER_LOCK       4
+
 #      elif defined(NX) || defined(SP1) || defined(SP)
 #            include "interrupt.h"
              long oldmask;
