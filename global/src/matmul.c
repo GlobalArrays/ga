@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.7 2002-09-12 08:19:18 edo Exp $*/
+/*$Id: matmul.c,v 1.8 2002-09-30 17:27:58 manoj Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -97,9 +97,11 @@ DoubleComplex ONE, ZERO;
 DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
 int need_scaling=1;
-float ONE_F = 1.0;
+float ONE_F = 1.0, ZERO_F = 0.0;
+double ZERO_D = 0.0;
 Integer get_new_B;
 int local_sync_begin,local_sync_end;
+ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
    ONE.real =1.; ZERO.real =0.;
    ONE.imag =0.; ZERO.imag =0.;
@@ -256,13 +258,16 @@ int local_sync_begin,local_sync_end;
 	       get_new_B = FALSE; /* Until J or K change again */
 	     }
 	     
+	     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
+	     adim_t=adim; bdim_t=bdim; cdim_t=cdim;
+	     
 #	   if (defined(CRAY) || defined(WIN32)) && !defined(GA_C_CORE)
 	     switch(atype) {
 	     case C_FLOAT:
-	       xb_sgemm(transa, transb, &idim, &jdim, &kdim,
-			(float *)alpha, (float *)a, &adim, (float *)b, &bdim, 
-			&ZERO,  (float *)c, &cdim);
-	       break;		    
+	       xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			(float *)alpha, (float *)a, &adim_t, (float *)b, 
+			&bdim_t, &ZERO_F,  (float *)c, &cdim_t);
+	       break;
 	     case C_DBL:
 	       DGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
 		     alpha, (double*)a, &adim, (double*)b, &bdim, &ONE, 
@@ -278,15 +283,15 @@ int local_sync_begin,local_sync_end;
 #          else 
 	     switch(atype) {
 	     case C_FLOAT:
-	       xb_sgemm(transa, transb, &idim, &jdim, &kdim,
-			(float *)alpha, (float *)a, &adim, (float *)b, &bdim, 
-			&ZERO,  (float *)c, &cdim);
+	       xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			(float *)alpha, (float *)a, &adim_t, (float *)b, 
+			&bdim_t, &ZERO_F,  (float *)c, &cdim_t);
 	       break;
 	     case C_DBL:
 #            ifdef GA_C_CORE
-	       xb_dgemm(transa, transb, &idim, &jdim, &kdim,
-			alpha, (double *)a, &adim, (double *)b, &bdim, 
-			&ZERO,  (double *)c, &cdim);
+	       xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			alpha, (double *)a, &adim_t, (double *)b, &bdim_t, 
+			&ZERO_D,  (double *)c, &cdim_t);
 #            else
 	       dgemm_(transa, transb, &idim, &jdim, &kdim,
 		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
@@ -294,9 +299,9 @@ int local_sync_begin,local_sync_end;
 	       break;
 	     case C_DCPL:
 #            ifdef GA_C_CORE
-	       xb_zgemm(transa, transb, &idim, &jdim, &kdim,
-			(DoubleComplex *)alpha, a, &adim, b, &bdim, 
-			&ZERO,  c, &cdim);
+	       xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			(DoubleComplex *)alpha, a, &adim_t, b, &bdim_t, 
+			&ZERO,  c, &cdim_t);
 #            else
 	       zgemm_(transa, transb, &idim, &jdim, &kdim,
 		      (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE, c, 
@@ -411,12 +416,13 @@ Integer cilo, cihi, cjlo, cjhi;    /* 2d plane of g_c */
 Integer adims[GA_MAX_DIM],bdims[GA_MAX_DIM],cdims[GA_MAX_DIM],tmpld[GA_MAX_DIM];
 Integer *tmplo = adims, *tmphi =bdims; 
 DoubleComplex ONE, ZERO;
-float ONE_F = 1.0;
+float ONE_F = 1.0, ZERO_F = 0.0;
+double ZERO_D = 0.0;
 Integer get_new_B;
 DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
 int local_sync_begin,local_sync_end;
-
+int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
    ONE.real =1.; ZERO.real =0.;
    ONE.imag =0.; ZERO.imag =0.;
@@ -585,13 +591,16 @@ int local_sync_begin,local_sync_end;
 	       nga_get_(g_b,tmplo,tmphi,b,tmpld);
 	       get_new_B = FALSE;
 	     }
-	     
+
+	     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
+	     adim_t=adim; bdim_t=bdim; cdim_t=cdim;
+
 #	     if (defined(CRAY) || defined(WIN32)) && !defined(GA_C_CORE)
 		  switch(atype) {
 		  case C_FLOAT:
-		    xb_sgemm(transa, transb, &idim, &jdim, &kdim,
-			     (float *)alpha, (float *)a, &adim, (float *)b, &bdim, 
-			     &ZERO,  (float *)c, &cdim);
+		    xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			     (float *)alpha, (float *)a, &adim_t, (float *)b, 
+			     &bdim_t, &ZERO_F,  (float *)c, &cdim_t);
 		    break;		    
 		  case C_DBL:
                     DGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
@@ -608,15 +617,16 @@ int local_sync_begin,local_sync_end;
 #            else 
 		  switch(atype) {
 		  case C_FLOAT:
-		    xb_sgemm(transa, transb, &idim, &jdim, &kdim,
-			     (float *)alpha, (float *)a, &adim, (float *)b, &bdim, 
-			     &ZERO,  (float *)c, &cdim);
+		    xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			     (float *)alpha, (float *)a, &adim_t, (float *)b, &bdim_t, 
+			     &ZERO_F,  (float *)c, &cdim_t);
 		    break;
 		  case C_DBL:
 #                 ifdef GA_C_CORE
-		    xb_dgemm(transa, transb, &idim, &jdim, &kdim,
-			     alpha, (double *)a, &adim, (double *)b, &bdim, 
-			     &ZERO,  (double *)c, &cdim);
+		    
+		    xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			     alpha, (double *)a, &adim_t, (double *)b, &bdim_t, 
+			     &ZERO_D,  (double *)c, &cdim_t);
 #                 else
 		    dgemm_(transa, transb, &idim, &jdim, &kdim,
 			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
@@ -624,9 +634,9 @@ int local_sync_begin,local_sync_end;
 		    break;
 		  case C_DCPL:
 #                 ifdef GA_C_CORE
-		    xb_zgemm(transa, transb, &idim, &jdim, &kdim,
-			     (DoubleComplex *)alpha, a, &adim, b, &bdim, 
-			     &ZERO,  c, &cdim);
+		    xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			     (DoubleComplex *)alpha, a, &adim_t, b, &bdim_t, 
+			     &ZERO,  c, &cdim_t);
 #                 else
 		    zgemm_(transa, transb, &idim, &jdim, &kdim,
 			   (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE, c, 
@@ -779,7 +789,6 @@ void FATR GA_DGEMM(char *transa, char *transb, Integer *m, Integer *n, Integer *
 {
 SET_GEMM_INDICES;
 #endif
-
 
   ga_matmul_patch (transa, transb, alpha, beta,
                       g_a, &ailo, &aihi, &ajlo, &ajhi,
