@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.47 2004-09-21 17:26:23 manoj Exp $ */
+/* $Id: memory.c,v 1.48 2004-10-28 23:30:19 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -243,10 +243,18 @@ void armci_shmem_malloc(void *ptr_arr[], armci_size_t bytes)
                ptr_ref_arr[armci_clus_me]=myptr;
 
 #            else
-               /* ask data server process to attach to the region and get ptr */
-               armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size, 
-                                     &ptr, sizeof(void*));
-               ptr_ref_arr[armci_clus_me]= ptr; /* from server*/
+               /* ask dataserver process to attach to the region and get
+                * ptr*/
+               {
+                  extern int _armci_server_started;
+                  if(_armci_server_started) {
+                     armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size,
+                                           &ptr, sizeof(void*));
+                     ptr_ref_arr[armci_clus_me]= ptr; /* from server*/
+                  }
+                  else /* server not yet started */
+                     ptr_ref_arr[armci_clus_me]=myptr;
+               }
 
                if(DEBUG_){
                  printf("%d:addresses server=%p myptr=%p\n",armci_me,ptr,myptr);

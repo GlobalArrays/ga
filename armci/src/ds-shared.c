@@ -17,6 +17,7 @@
 #     define SERV 2
 #endif
 
+int _armci_server_started=0;
 
 /**************************** pipelining for medium size msg ***********/
 #ifdef PIPE_BUFSIZE
@@ -661,6 +662,7 @@ void armci_start_server()
     }
 
     armci_client_code();
+    _armci_server_started=1;
 }
 
 
