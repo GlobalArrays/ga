@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.31 2002-02-26 15:29:20 vinod Exp $ */
+/* $Id: message.c,v 1.32 2002-02-28 21:32:31 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -35,27 +35,19 @@ static float *fwork = (float*)work;
 static int _armci_gop_init=0;   /* tells us if we have a buffers allocated  */
 static int _armci_gop_shmem =0; /* tells us to use shared memory for gops */
 extern void armci_util_spin(int,void*);
-# ifdef HITACHI
-typedef struct {
-	int flag;
-	int dummy[31];
-	int flag2;
-	int dummy2[31];
-        double array[BUF_SIZE];
-} bufstruct;
-#else
+
 typedef struct {
         union {
            int flag;
            double dummy[16];
-        };
+        }a;
         union {
-           int flag2;
-           double dummy2[16];
-        };
+           int flag;
+           double dummy[16];
+        }b;
         double array[BUF_SIZE];
 } bufstruct;
-#endif
+
 static  bufstruct *_gop_buffer; 
 
 #define GOP_BUF(p)  (_gop_buffer+((p)-armci_master))
@@ -98,8 +90,8 @@ void armci_msg_gop_init()
        if(!tmp) armci_die("armci_msg_init: shm malloc failed\n",size);
        _gop_buffer = ( bufstruct *) tmp;
        work = GOP_BUF(armci_me)->array; /* each process finds its place */
-       GOP_BUF(armci_me)->flag=EMPTY;   /* initially buffer is empty */
-       GOP_BUF(armci_me)->flag2=EMPTY;  /* initially buffer is empty */
+       GOP_BUF(armci_me)->a.flag=EMPTY;   /* initially buffer is empty */
+       GOP_BUF(armci_me)->b.flag=EMPTY;  /* initially buffer is empty */
        _armci_gop_shmem = 1;
      }
 #endif
@@ -249,10 +241,12 @@ void armci_msg_bcast_scope(int scope, void *buf, int len, int root)
 static void cpu_yield()
 {
 #if defined(SYSV) || defined(MMAP) || defined(WIN32)
-#if defined(_POSIX_PRIORITY_SCHEDULING) && !defined(HITACHI)
-               sched_yield();
+#ifdef SOLARIS
+               yield();
 #elif defined(WIN32)
                Sleep(1);
+#elif _POSIX_PRIORITY_SCHEDULING
+               sched_yield();
 #else
                usleep(1);
 #endif
@@ -294,22 +288,22 @@ static int bufid=0;
        if(armci_me==root){
 #if 0     
           for(i=armci_clus_first; i <= armci_clus_last; i++)
-                if(i!=root)armci_util_wait_int(&GOP_BUF(i)->flag2, EMPTY, 100);
+                if(i!=root)armci_util_wait_int(&GOP_BUF(i)->b.flag, EMPTY, 100);
           armci_copy(x,GOP_BUF(armci_clus_last+bufid+1)->array,len);
           for(i=armci_clus_first; i <= armci_clus_last; i++)
-                if(i!=root) GOP_BUF(i)->flag2=FULL;
+                if(i!=root) GOP_BUF(i)->b.flag=FULL;
 #else          
           armci_copy(x,GOP_BUF(armci_clus_last+bufid+1)->array,len);
           for(i=armci_clus_first; i <= armci_clus_last; i++)
                 if(i!=root){ 
-                  armci_util_wait_int(&GOP_BUF(i)->flag2, EMPTY, 100);
-                  GOP_BUF(i)->flag2=FULL;
+                  armci_util_wait_int(&GOP_BUF(i)->b.flag, EMPTY, 100);
+                  GOP_BUF(i)->b.flag=FULL;
                 } 
 #endif            
        }else{     
-           armci_util_wait_int(&GOP_BUF(armci_me)->flag2 , FULL, 100);
+           armci_util_wait_int(&GOP_BUF(armci_me)->b.flag , FULL, 100);
            armci_copy(GOP_BUF(armci_clus_last+bufid+1)->array,x,len);
-           GOP_BUF(armci_me)->flag2  = EMPTY;
+           GOP_BUF(armci_me)->b.flag  = EMPTY;
        }
 
        n -=ndo;
@@ -338,28 +332,28 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
        len = ndo;
       
        if (left >-1)
-         armci_util_wait_int(&GOP_BUF(left)->flag , EMPTY, 100);
+         armci_util_wait_int(&GOP_BUF(left)->a.flag , EMPTY, 100);
 
        if (right >-1 )
-         armci_util_wait_int(&GOP_BUF(right)->flag , EMPTY, 100);
+         armci_util_wait_int(&GOP_BUF(right)->a.flag , EMPTY, 100);
 
        if(armci_me == root){
-           armci_util_wait_int(&GOP_BUF(armci_me)->flag , EMPTY, 100);
+           armci_util_wait_int(&GOP_BUF(armci_me)->a.flag , EMPTY, 100);
            armci_copy(x,GOP_BUF(armci_me)->array,len);
        } else {
-           armci_util_wait_int(&GOP_BUF(armci_me)->flag , FULL, 100);
+           armci_util_wait_int(&GOP_BUF(armci_me)->a.flag , FULL, 100);
            armci_copy(GOP_BUF(up)->array,GOP_BUF(armci_me)->array,len);
        }
 
        if (left >-1)
-           GOP_BUF(left)->flag =FULL;
+           GOP_BUF(left)->a.flag =FULL;
 
        if (right >-1 )
-           GOP_BUF(right)->flag =FULL;
+           GOP_BUF(right)->a.flag =FULL;
 
        if (armci_me != root ){
            armci_copy(GOP_BUF(up)->array,x,len);
-           GOP_BUF(armci_me)->flag=EMPTY;
+           GOP_BUF(armci_me)->a.flag=EMPTY;
        }
 
        n -=ndo;
@@ -388,27 +382,27 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
        /* we should be able to get rid of this copy */
        if(armci_me == root){
            armci_copy(x,GOP_BUF(armci_me)->array,len);
-           GOP_BUF(armci_me)->flag = FULL;
+           GOP_BUF(armci_me)->a.flag = FULL;
        }          
                
-       armci_util_wait_int(&GOP_BUF(armci_me)->flag, FULL, 100);
+       armci_util_wait_int(&GOP_BUF(armci_me)->a.flag, FULL, 100);
                   
        /*  this version assumes a specific order of data arrival */
        if (left >-1) { 
-         armci_util_wait_int(&GOP_BUF(left)->flag, EMPTY, 100);
+         armci_util_wait_int(&GOP_BUF(left)->a.flag, EMPTY, 100);
          armci_copy(GOP_BUF(armci_me)->array,GOP_BUF(left)->array,len);
-         GOP_BUF(left)->flag = FULL;
+         GOP_BUF(left)->a.flag = FULL;
        }       
                       
        if (right >-1 ) {
-         armci_util_wait_int(&GOP_BUF(right)->flag, EMPTY, 100);
+         armci_util_wait_int(&GOP_BUF(right)->a.flag, EMPTY, 100);
          armci_copy(GOP_BUF(armci_me)->array, GOP_BUF(right)->array,len);
-         GOP_BUF(right)->flag = FULL;
+         GOP_BUF(right)->a.flag = FULL;
        }
        
        if (armci_me != root ){
            armci_copy(GOP_BUF(armci_me)->array,x,len);
-           GOP_BUF(armci_me)->flag=EMPTY;
+           GOP_BUF(armci_me)->a.flag=EMPTY;
        }
        
        n -=ndo;
@@ -813,7 +807,7 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
     while ((ndo = (n<=BUF_SIZE*ratio) ? n : BUF_SIZE*ratio)) {
        len = lenmes = ndo*size;
 
-       armci_util_wait_int(&GOP_BUF(armci_me)->flag, EMPTY, 100);
+       armci_util_wait_int(&GOP_BUF(armci_me)->a.flag, EMPTY, 100);
        armci_copy(x,GOP_BUF(armci_me)->array,len);
 
 #if 1
@@ -826,17 +820,17 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
           
           while(need_left || need_right){
                from =-1;
-               if(need_left && GOP_BUF(left)->flag == FULL){
+               if(need_left && GOP_BUF(left)->a.flag == FULL){
                   from =left;
                   need_left =0;
-               }else if(need_right && GOP_BUF(right)->flag == FULL) {
+               }else if(need_right && GOP_BUF(right)->a.flag == FULL) {
                   from =right;
                   need_right =0;
                }
                if(from != -1){
                   b = GOP_BUF(from);
                   gop(type, ndo, op, GOP_BUF(armci_me)->array, b->array);
-                  b->flag = EMPTY;
+                  b->a.flag = EMPTY;
                }else  if((++count)<maxspin) armci_util_spin(count,_gop_buffer);
                       else{cpu_yield();count =0; }
           }
@@ -845,19 +839,19 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
                
        /*  this version requires a specific order of data arrival */
        if (left >-1) {
-         while(GOP_BUF(left)->flag != FULL) cpu_yield();
+         while(GOP_BUF(left)->a.flag != FULL) cpu_yield();
          gop(type, ndo, op, GOP_BUF(armci_me)->array, GOP_BUF(left)->array);
-         GOP_BUF(left)->flag = EMPTY;
+         GOP_BUF(left)->a.flag = EMPTY;
        }
        if (right >-1 ) {
-         while(GOP_BUF(right)->flag != FULL) cpu_yield();
+         while(GOP_BUF(right)->a.flag != FULL) cpu_yield();
          gop(type, ndo, op, GOP_BUF(armci_me)->array, GOP_BUF(right)->array);
-         GOP_BUF(right)->flag = EMPTY;
+         GOP_BUF(right)->a.flag = EMPTY;
        }
 #endif
 
        if (armci_me != root ) {
-           GOP_BUF(armci_me)->flag=FULL;
+           GOP_BUF(armci_me)->a.flag=FULL;
        }else
            /* NOTE:  this copy can be eliminated in a cluster configuration */
            armci_copy(GOP_BUF(armci_me)->array,x,len);
