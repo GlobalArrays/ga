@@ -29,6 +29,7 @@
 
 
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -57,20 +58,54 @@ GM_ENTRY_POINT char * _gm_get_kernel_build_id(struct gm_port *p);
                         UTILITY FUNCTIONS                            
  *********************************************************************/
 
+int __armci_wait_some =20;
+double __armci_fake_work=99.0;
+
 /* check memory */
 void wait_flag_updated(long *buf, int val)
 {
+extern long check_flag(long*);
+
     long res;
+    long spin =0;
 
     res = check_flag(buf);
-    while(res != (long)val) res = check_flag(buf);
+    while(res != (long)val){
+       for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work*=1.001;
+       res = check_flag(buf);
+    }
     *buf = ARMCI_GM_CLEAR;
+    __armci_fake_work =99.0;
 }
 
 int pin_in_block;    /* indicate pin the memory in one large block or not */
 int pin_in_segment;  /* in the case of pining segment by segment, serves as
                       * counter how many segments have been pinned so far
                       */
+int armci_pin_contig(void *ptr, int bytes)
+{
+    gm_status_t status;
+    struct gm_port *port;
+    if(SERVER_CONTEXT) port = serv_gm->snd_port;
+    else port = proc_gm->port;
+    status = gm_register_memory(port, (char *)ptr, bytes);
+    if(status == GM_SUCCESS) return TRUE;
+    else return FALSE;
+}
+
+void armci_unpin_contig(void *ptr, int bytes)
+{
+    gm_status_t status;
+    struct gm_port *port;
+
+    if(SERVER_CONTEXT) port = serv_gm->snd_port;
+    else port = proc_gm->port;
+
+    status = gm_deregister_memory(port, (char *)ptr, bytes);
+    if(status != GM_SUCCESS)
+       armci_die(" unpinning cont memory failed", armci_me);
+}
+
 
 int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
 {
@@ -199,7 +234,7 @@ int armci_gm_proc_mem_alloc()
 
     proc_gm->ack_buf = (long *)gm_dma_malloc(proc_gm->port, sizeof(long));
     if(proc_gm->ack_buf == 0) return FALSE;
-    
+
     return TRUE;
 }
 
@@ -220,7 +255,6 @@ int armci_gm_proc_mem_free()
 /* initialization of computing process */
 int armci_gm_proc_init()
 {
-    int i;
     int status;
     
     /* allocate gm data structure for computing process */
@@ -359,9 +393,8 @@ void armci_client_connect_to_servers()
                 armci_die(" failed to make connection with server",0);
 
             if(DEBUG_INIT_)
-                fprintf(stderr,
-                        "%d: sent 1st msg to server %d waiting reply at %d\n",
-                        armci_me, server_mpi_id, MessageSndBuffer);
+                fprintf(stderr,"%d:sent 1 msg to server %d at %X\n",
+                        armci_me, server_mpi_id, (int)MessageSndBuffer);
 
             /* wait til the serv_ack_ptr has been updated */
             wait_flag_updated((long *)MessageSndBuffer, ARMCI_GM_COMPLETE);
@@ -373,10 +406,10 @@ void armci_client_connect_to_servers()
             /* send back the ack to server */
             ((long *)MessageSndBuffer)[0] = ARMCI_GM_ACK;
             armci_gm_context->done = ARMCI_GM_SENDING;
+
             if(DEBUG_INIT_) {
-                fprintf(stdout, "%d: rcvd first msg from server %d.\n",
-                        armci_me, server_mpi_id);
-                fprintf(stdout, "%d: sending back ack to server %d at %d\n",
+                printf("%d:rcvd 1 msg from server %d\n",armci_me,server_mpi_id);
+                printf("%d: sending back ack to server %d at %ld\n",
                         armci_me, server_mpi_id, proc_gm->serv_ack_ptr[i]);
                 fflush(stdout);
             }
@@ -414,7 +447,6 @@ void armci_client_create_connection_gm()
 void armci_dma_send_gm(int dst, char *buf, int len)
 {
     int size;
-    int stat;
     request_header_t *msginfo = (request_header_t *)buf;
     
     /* prepare the callback context */
@@ -438,10 +470,10 @@ void armci_dma_send_gm(int dst, char *buf, int len)
 
 /*\ similar to armci_dma_send_gm but waits for completion
 \*/
-int armci_send_req_msg(int proc, char *buf, int len)
+int armci_send_req_msg(int proc, void *vbuf, int len)
 {
     int size;
-    int stat;
+    char *buf = (char*)vbuf;
     request_header_t *msginfo = (request_header_t *)buf;
 
     armci_gm_context->done = ARMCI_GM_SENDING;
@@ -487,7 +519,6 @@ void armci_client_direct_send(int dst, char *src_buf, char *dst_buf, int len,
  */
 char *armci_ReadFromDirect(request_header_t * msginfo, int len)
 {
-    int msglen;    
     char *buf = (char*) msginfo;
 
     /* check the header ack */
@@ -622,6 +653,8 @@ int armci_serv_send_complete()
     return(armci_gm_serv_context->done);
 }
 
+/*\ block until the number of outstanding nonblocking messages <= specified val
+\*/
 void armci_serv_send_nonblocking_complete(int max_outstanding)
 {
     gm_recv_event_t *event;
@@ -763,7 +796,6 @@ int armci_gm_server_init()
 /* server start communication with all the computing processes */
 void armci_server_initial_connection_gm()
 {
-    int i;
     gm_recv_event_t *event;
     unsigned int size, length;
     char *buf;
@@ -795,8 +827,7 @@ void armci_server_initial_connection_gm()
               /* receiving the remote mpi id and addr of serv_ack_ptr */
               rid = (int)(((long *)buf)[0]);
               if(DEBUG_INIT_) 
-                  fprintf(stdout,
-                   "%d(server): received init mesg from %d, size=%d, len=%d\n",
+                 printf( "%d(serv): recv init mesg from %d, size=%d, len=%d\n",
                           armci_me, rid, size, length);
               
               serv_gm->proc_buf_ptr[rid] = ((long *)buf)[1];
@@ -805,7 +836,7 @@ void armci_server_initial_connection_gm()
               serv_gm->port_map[rid] = gm_ntohc(event->recv.sender_port_id);
 
               /* send server ack buffer and MessageRcvBuffer ptr to client */
-              serv_gm->ack_buf[rid] != ARMCI_GM_CLEAR;
+              serv_gm->ack_buf[rid] = ARMCI_GM_CLEAR;
               ((long *)MessageRcvBuffer)[0] = ARMCI_GM_COMPLETE;
               ((long *)MessageRcvBuffer)[1] =
                   (long)(&(serv_gm->ack_buf[rid]));
@@ -826,8 +857,7 @@ void armci_server_initial_connection_gm()
 
               /* wait the client send back the ack */
               if(DEBUG_INIT_)
-                  fprintf(stdout,
-                     "%d(server): sent msg to %d (@%d), expecting ack at %d\n",
+                 printf("%d(serv): sent msg to %d (@%ld),expecting ack at %p\n",
                           armci_me, rid, serv_gm->proc_buf_ptr[rid],
                           &(serv_gm->ack_buf[rid]));
 
@@ -889,7 +919,6 @@ void armci_server_direct_send(int dst, char *src_buf, char *dst_buf, int len,
  */
 void armci_WriteToDirect(int dst, request_header_t *msginfo, void *buffer)
 {
-    int status;
     char *buf = (char*)buffer; 
     char *ptr = buf - sizeof(long);
 
@@ -918,8 +947,6 @@ void armci_WriteToDirect(int dst, request_header_t *msginfo, void *buffer)
 /* server inform the client the send is complete */
 void armci_InformClient(int dst, void *buf, long flag)
 {
-    int srid = armci_clus_id(dst);
-    
     *(long *)buf = flag;
 
     armci_serv_ack_context->done = ARMCI_GM_SENDING;
@@ -934,8 +961,28 @@ void armci_InformClient(int dst, void *buf, long flag)
         armci_die(" failed sending data to client", dst);
 }
 
+
+/*\ sends notification to client that data in direct send was transfered/put
+ *  into the client buffer
+\*/
+void armci_server_send_ack(int client)
+{
+    long *p_ack = serv_gm->direct_ack;
+
+    armci_serv_ack_context->done = ARMCI_GM_SENDING;
+    *p_ack = ARMCI_GM_COMPLETE;
+
+    gm_directed_send_with_callback(serv_gm->snd_port, p_ack,
+        (gm_remote_ptr_t)(gm_up_t)(serv_gm->proc_ack_ptr[client]),
+        sizeof(long), GM_LOW_PRIORITY, serv_gm->node_map[client],
+        serv_gm->port_map[client], armci_serv_callback, armci_serv_ack_context);
+
+    if(armci_serv_ack_complete() == ARMCI_GM_FAILED)
+        armci_die(" failed sending data to client", client);
+}
+
 /* the main data server loop: accepting events and pass it to data server
- * code to be porcessed
+ * code to be porcessed -- this is handler for GM specific requests
  */
 void armci_data_server_gm()
 {
@@ -983,7 +1030,7 @@ void armci_data_server_gm()
     }
     
     if(DEBUG_) {
-        fprintf(stdout, "%d(server): done! closing ...\n");
+        printf("%d(server): done! closing ...\n",armci_me);
         fflush(stdout);
     }
 }
