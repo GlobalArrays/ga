@@ -357,7 +357,7 @@ extern void armci_global_region_exchange(void *, long);
 
 /* -------------------- ARMCI Groups ---------------------- */
 /* data structure that caches a group's attribute */
-#if 1
+#ifdef MPI
 typedef int ARMCI_Datatype;
  
 extern int ATTR_KEY; /* attribute key */
@@ -372,7 +372,6 @@ typedef struct {
  
 #include "mpi.h"
  
-#ifdef MPI
 typedef MPI_Comm ARMCI_Comm;
 typedef struct {
   MPI_Comm icomm;
@@ -380,9 +379,7 @@ typedef struct {
   armci_grp_attr_t grp_attr;
 }ARMCI_iGroup;
  
-#endif
 armci_grp_attr_t *ARMCI_Group_getattr(ARMCI_Group *grp);
-#endif
  
 extern void armci_msg_group_igop(int *x, int n, char* op,ARMCI_Group *group);
 extern void armci_msg_group_lgop(long *x, int n, char* op,ARMCI_Group *group);
@@ -396,7 +393,7 @@ extern void armci_msg_group_gop_scope(int scope, void *x, int n, char* op,
 extern void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
                                   int grp_clus_nproc,ARMCI_Group *mastergroup);
 extern void armci_exchange_address_grp(void *ptr_arr[], int n, ARMCI_Group *group);
- 
+#endif /* ifdef MPI */ 
 /* -------------------------------------------------------- */
 
 #endif

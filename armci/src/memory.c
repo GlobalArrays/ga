@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.41 2004-06-28 17:45:19 manoj Exp $ */
+/* $Id: memory.c,v 1.42 2004-06-29 22:57:36 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -298,6 +298,7 @@ void armci_region_shm_malloc(void *ptr_arr[], size_t bytes)
        else if(ptr_arr[i+armci_clus_first])armci_region_register(i,ptr_arr+i+armci_clus_first,reg_pids[i], bytes);
 }
 
+#ifdef MPI
 void armci_region_shm_malloc_grp(void *ptr_arr[], size_t bytes, ARMCI_Group *group)
 {
     long size=bytes;
@@ -330,6 +331,7 @@ void armci_region_shm_malloc_grp(void *ptr_arr[], size_t bytes, ARMCI_Group *gro
 	  armci_region_register(p,ptr_arr+i+grp_clus_first,reg_pids[p], bytes);
        }
 }
+#endif /* ifdef MPI */
 #endif
 
 
@@ -448,7 +450,7 @@ int ARMCI_Uses_shm()
     return uses;
 }
 
-
+#ifdef MPI
 /********************************************************************
  * Group Memory Allocation on shared memory systems for ARMCI Groups
 \*/
@@ -787,3 +789,4 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
     return 0;
 }
 /********************************************************************/
+#endif

@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.53 2004-06-28 17:45:19 manoj Exp $ */
+/* $Id: message.c,v 1.54 2004-06-29 22:57:36 manoj Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -380,40 +380,6 @@ void armci_msg_barrier()
 }
 /***********************End Barrier Code*************************************/
 
-#  ifdef MPI
-void armci_msg_group_barrier(ARMCI_Group *group)
-{
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
-    MPI_Barrier((MPI_Comm)(igroup->icomm));
-}
-void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
-                           int grp_clus_nproc, ARMCI_Group *mastergroup) {
-    ARMCI_iGroup *igroup = (ARMCI_iGroup *)mastergroup;
-    int i, *pid_list, root=0;
-    MPI_Group group_world;
-    MPI_Group group;
-    MPI_Comm comm;
-    void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm);
- 
-    /* create a communicator for the processes with in a node */
-    pid_list = (int *)malloc(grp_clus_nproc*sizeof(int));
-    for(i=0; i<grp_clus_nproc; i++)  pid_list[i] = grp_master+i;
- 
-    MPI_Comm_group((MPI_Comm)(igroup->icomm), &group_world);
-    MPI_Group_incl(group_world, grp_clus_nproc, pid_list, &group);
- 
-    MPI_Comm_create((MPI_Comm)(igroup->icomm), (MPI_Group)group,
-                    (MPI_Comm*)&comm);
- 
-    /* Broadcast within the node (for this sub group of processes) */
-    ARMCI_Bcast_(buf, len, root, comm);
- 
-    free(pid_list);
-    MPI_Comm_free(&comm);     /* free the temporary communicator */
-    MPI_Group_free(&group);
-}
- 
-#  endif
 
 int armci_msg_me()
 {
@@ -476,53 +442,6 @@ void armci_msg_abort(int code)
    _exit(1);
 }
 
-/* to avoid warning */
-extern int ARMCI_Absolute_id(ARMCI_Group *group,int group_rank);
- 
-void armci_msg_group_bintree(int scope, int* Root, int *Up, int *Left, int *Right,
-			     ARMCI_Group *group)
-{
-    int root, up, left, right, index, nproc,grp_clus_me,grp_me,grp_master,grp_nproc;
-    armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
-    grp_me = grp_attr->grp_me;
-    grp_clus_me = grp_attr->grp_clus_me;
-    grp_master = grp_attr->grp_clus_info[grp_clus_me].master;
-    ARMCI_Group_size(group, &grp_nproc);
-    if(scope == SCOPE_NODE){
-       root  = grp_attr->grp_clus_info[grp_clus_me].master;
-       nproc = grp_attr->grp_clus_info[grp_clus_me].nslave;
-       index = grp_me - root;
-       up    = (index-1)/2 + root; if( up < root) up = -1;
-       left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
-       right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
-    }else if(scope ==SCOPE_MASTERS){
-       root  = grp_attr->grp_clus_info[0].master;
-       nproc = grp_attr->grp_nclus;
-       if(grp_me != grp_master){up = -1; left = -1; right = -1; }
-       else{
-	  index = grp_clus_me - root;
-	  up    = (index-1)/2 + root;
-	  up = ( up < root)? -1: grp_attr->grp_clus_info[up].master;
-	  left = 2*index + 1 + root;
-	  left =( left >= root+nproc)?-1:grp_attr->grp_clus_info[left].master;
-	  right= 2*index + 2 + root;
-	  right=( right>=root+nproc)?-1:grp_attr->grp_clus_info[right].master;
-       }
-    }else{
-       root  = 0;
-       nproc = grp_nproc;
-       index = grp_me - root;
-       up    = (index-1)/2 + root; if( up < root) up = -1;
-       left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
-       right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
-    }
-    
-    *Up = (up==-1)?up:ARMCI_Absolute_id(group,up);
-    *Left = (left==-1)?left:ARMCI_Absolute_id(group,left);
-    *Right = (right==-1)?right:ARMCI_Absolute_id(group,right);
-    *Root = (root==-1)?root:ARMCI_Absolute_id(group,root);
-}
-
 void armci_msg_bintree(int scope, int* Root, int *Up, int *Left, int *Right)
 {
 int root, up, left, right, index, nproc;
@@ -559,30 +478,6 @@ int root, up, left, right, index, nproc;
     *Left = left;
     *Right = right;
     *Root = root;
-}
-
-void armci_msg_group_bcast_scope(int scope, void *buf, int len, int root,
-				 ARMCI_Group *group)
-{
-    int up, left, right, Root;
-    int grp_me;
-    if(!buf)armci_die("armci_msg_bcast: NULL pointer", len);
- 
-    if(!group)armci_msg_bcast_scope(scope,buf,len,root);
-    else grp_me = ((ARMCI_iGroup *)group)->grp_attr.grp_me;
-    armci_msg_group_bintree(scope, &Root, &up, &left, &right,group);
- 
-    if(root !=Root){
-       if(armci_me == root) armci_msg_snd(ARMCI_TAG, buf,len, Root);
-       if(armci_me ==Root) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, root);
-    }
- 
-    /* printf("%d: scope=%d left=%d right=%d up=%d\n",armci_me, scope,
-       left, right, up);*/
- 
-    if(armci_me != Root && up!=-1) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, up);
-				     if (left > -1)  armci_msg_snd(ARMCI_TAG, buf, len, left);
-				     if (right > -1) armci_msg_snd(ARMCI_TAG, buf, len, right);
 }
 
 /*\ root broadcasts to everyone else
@@ -1203,59 +1098,6 @@ static void fdoop2(int n, char *op, float *x, float* work, float* work2)
     armci_die("fdoop2: unknown operation requested", n);
 }
 
-void
-armci_msg_group_gop_scope(int scope, void *x, int n, char* op, int type,
-			  ARMCI_Group *group)
-{
-    int root, up, left, right, size;
-    int tag=ARMCI_TAG,grp_me;
-    int ndo, len, lenmes, orign =n, ratio;
-    void *origx =x;
- 
-    if(!group)armci_msg_gop_scope(scope,x,n,op,type);
-    else grp_me = ((ARMCI_iGroup *)group)->grp_attr.grp_me;
-    if(!x)armci_die("armci_msg_gop: NULL pointer", n);
-    if(work==NULL)_allocate_mem_for_work();
- 
-    armci_msg_group_bintree(scope, &root, &up, &left, &right,group);
- 
-    if(type==ARMCI_INT) size = sizeof(int);
-    else if(type==ARMCI_LONG) size = sizeof(long);
-    else if(type==ARMCI_FLOAT) size = sizeof(float);
-    else size = sizeof(double);
- 
-    ratio = sizeof(double)/size;
- 
-    while ((ndo = (n<=BUF_SIZE*ratio) ? n : BUF_SIZE*ratio)) {
-       len = lenmes = ndo*size;
- 
-       if (left > -1) {
-	  armci_msg_rcv(tag, lwork, len, &lenmes, left);
-	  if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
-	  else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
-	  else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
-	  else ddoop(ndo, op, (double*)x, work);
-       }
- 
-       if (right > -1) {
-	  armci_msg_rcv(tag, lwork, len, &lenmes, right);
-	  if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
-	  else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
-	  else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
-	  else ddoop(ndo, op, (double*)x, work);
-       }
-       if (armci_me != root && up!=-1) armci_msg_snd(tag, x, len, up);
- 
-       n -=ndo;
-       x = len + (char*)x;
-    }
- 
-    /* Now, root broadcasts the result down the binary tree */
-    len = orign*size;
-    armci_msg_group_bcast_scope(scope, origx, len, root,group);
-}
-
-
 /*\ combine array of longs/ints accross all processes
 \*/
 void armci_msg_gop_scope(int scope, void *x, int n, char* op, int type)
@@ -1651,21 +1493,8 @@ int len, lenmes, min;
 }
 
 
-
 /*\ combine array of longs/ints/doubles accross all processes
 \*/
-
-void armci_msg_group_igop(int *x, int n, char* op, ARMCI_Group *group)
-{ armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_INT,group); }
- 
-void armci_msg_group_lgop(long *x, int n, char* op,ARMCI_Group *group)
-{ armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_LONG,group); }
- 
-void armci_msg_group_fgop(float *x, int n, char* op,ARMCI_Group *group)
-{ armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_FLOAT,group); }
- 
-void armci_msg_group_dgop(double *x, int n, char* op,ARMCI_Group *group)
-{ armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_DOUBLE,group); }
 
 #if defined(NEC)
 
@@ -1716,6 +1545,167 @@ void armci_exchange_address(void *ptr_ar[], int n)
   armci_msg_gop2(ptr_ar, n*ratio, "+",ARMCI_INT);
 }
 
+/**
+ * ********************* Begin ARMCI Groups Code ****************************
+ * NOTE: This part is MPI dependent (i.e. ifdef MPI)
+ */
+#  ifdef MPI
+void armci_msg_group_barrier(ARMCI_Group *group)
+{
+    ARMCI_iGroup *igroup = (ARMCI_iGroup *)group;
+    MPI_Barrier((MPI_Comm)(igroup->icomm));
+}
+void armci_grp_clus_brdcst(void *buf, int len, int grp_master,
+                           int grp_clus_nproc, ARMCI_Group *mastergroup) {
+    ARMCI_iGroup *igroup = (ARMCI_iGroup *)mastergroup;
+    int i, *pid_list, root=0;
+    MPI_Group group_world;
+    MPI_Group group;
+    MPI_Comm comm;
+    void ARMCI_Bcast_(void *buffer, int len, int root, ARMCI_Comm comm);
+ 
+    /* create a communicator for the processes with in a node */
+    pid_list = (int *)malloc(grp_clus_nproc*sizeof(int));
+    for(i=0; i<grp_clus_nproc; i++)  pid_list[i] = grp_master+i;
+ 
+    MPI_Comm_group((MPI_Comm)(igroup->icomm), &group_world);
+    MPI_Group_incl(group_world, grp_clus_nproc, pid_list, &group);
+ 
+    MPI_Comm_create((MPI_Comm)(igroup->icomm), (MPI_Group)group,
+                    (MPI_Comm*)&comm);
+ 
+    /* Broadcast within the node (for this sub group of processes) */
+    ARMCI_Bcast_(buf, len, root, comm);
+ 
+    free(pid_list);
+    MPI_Comm_free(&comm);     /* free the temporary communicator */
+    MPI_Group_free(&group);
+}
+ 
+
+/* to avoid warning */
+extern int ARMCI_Absolute_id(ARMCI_Group *group,int group_rank);
+ 
+void armci_msg_group_bintree(int scope, int* Root, int *Up, int *Left, int *Right,
+			     ARMCI_Group *group)
+{
+    int root, up, left, right, index, nproc,grp_clus_me,grp_me,grp_master,grp_nproc;
+    armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
+    grp_me = grp_attr->grp_me;
+    grp_clus_me = grp_attr->grp_clus_me;
+    grp_master = grp_attr->grp_clus_info[grp_clus_me].master;
+    ARMCI_Group_size(group, &grp_nproc);
+    if(scope == SCOPE_NODE){
+       root  = grp_attr->grp_clus_info[grp_clus_me].master;
+       nproc = grp_attr->grp_clus_info[grp_clus_me].nslave;
+       index = grp_me - root;
+       up    = (index-1)/2 + root; if( up < root) up = -1;
+       left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
+       right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
+    }else if(scope ==SCOPE_MASTERS){
+       root  = grp_attr->grp_clus_info[0].master;
+       nproc = grp_attr->grp_nclus;
+       if(grp_me != grp_master){up = -1; left = -1; right = -1; }
+       else{
+	  index = grp_clus_me - root;
+	  up    = (index-1)/2 + root;
+	  up = ( up < root)? -1: grp_attr->grp_clus_info[up].master;
+	  left = 2*index + 1 + root;
+	  left =( left >= root+nproc)?-1:grp_attr->grp_clus_info[left].master;
+	  right= 2*index + 2 + root;
+	  right=( right>=root+nproc)?-1:grp_attr->grp_clus_info[right].master;
+       }
+    }else{
+       root  = 0;
+       nproc = grp_nproc;
+       index = grp_me - root;
+       up    = (index-1)/2 + root; if( up < root) up = -1;
+       left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
+       right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
+    }
+    
+    *Up = (up==-1)?up:ARMCI_Absolute_id(group,up);
+    *Left = (left==-1)?left:ARMCI_Absolute_id(group,left);
+    *Right = (right==-1)?right:ARMCI_Absolute_id(group,right);
+    *Root = (root==-1)?root:ARMCI_Absolute_id(group,root);
+}
+
+void armci_msg_group_bcast_scope(int scope, void *buf, int len, int root,
+				 ARMCI_Group *group)
+{
+    int up, left, right, Root;
+    int grp_me;
+    if(!buf)armci_die("armci_msg_bcast: NULL pointer", len);
+ 
+    if(!group)armci_msg_bcast_scope(scope,buf,len,root);
+    else grp_me = ((ARMCI_iGroup *)group)->grp_attr.grp_me;
+    armci_msg_group_bintree(scope, &Root, &up, &left, &right,group);
+ 
+    if(root !=Root){
+       if(armci_me == root) armci_msg_snd(ARMCI_TAG, buf,len, Root);
+       if(armci_me ==Root) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, root);
+    }
+ 
+    /* printf("%d: scope=%d left=%d right=%d up=%d\n",armci_me, scope,
+       left, right, up);*/
+ 
+    if(armci_me != Root && up!=-1) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, up);
+				     if (left > -1)  armci_msg_snd(ARMCI_TAG, buf, len, left);
+				     if (right > -1) armci_msg_snd(ARMCI_TAG, buf, len, right);
+}
+
+void
+armci_msg_group_gop_scope(int scope, void *x, int n, char* op, int type,
+			  ARMCI_Group *group)
+{
+    int root, up, left, right, size;
+    int tag=ARMCI_TAG,grp_me;
+    int ndo, len, lenmes, orign =n, ratio;
+    void *origx =x;
+ 
+    if(!group)armci_msg_gop_scope(scope,x,n,op,type);
+    else grp_me = ((ARMCI_iGroup *)group)->grp_attr.grp_me;
+    if(!x)armci_die("armci_msg_gop: NULL pointer", n);
+    if(work==NULL)_allocate_mem_for_work();
+ 
+    armci_msg_group_bintree(scope, &root, &up, &left, &right,group);
+ 
+    if(type==ARMCI_INT) size = sizeof(int);
+    else if(type==ARMCI_LONG) size = sizeof(long);
+    else if(type==ARMCI_FLOAT) size = sizeof(float);
+    else size = sizeof(double);
+ 
+    ratio = sizeof(double)/size;
+ 
+    while ((ndo = (n<=BUF_SIZE*ratio) ? n : BUF_SIZE*ratio)) {
+       len = lenmes = ndo*size;
+ 
+       if (left > -1) {
+	  armci_msg_rcv(tag, lwork, len, &lenmes, left);
+	  if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
+	  else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+	  else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
+	  else ddoop(ndo, op, (double*)x, work);
+       }
+ 
+       if (right > -1) {
+	  armci_msg_rcv(tag, lwork, len, &lenmes, right);
+	  if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
+	  else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+	  else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
+	  else ddoop(ndo, op, (double*)x, work);
+       }
+       if (armci_me != root && up!=-1) armci_msg_snd(tag, x, len, up);
+ 
+       n -=ndo;
+       x = len + (char*)x;
+    }
+ 
+    /* Now, root broadcasts the result down the binary tree */
+    len = orign*size;
+    armci_msg_group_bcast_scope(scope, origx, len, root,group);
+}
+
 void armci_exchange_address_grp(void *ptr_arr[], int n, ARMCI_Group *group)
 {
     int ratio = sizeof(void*)/sizeof(int);
@@ -1727,6 +1717,24 @@ void armci_exchange_address_grp(void *ptr_arr[], int n, ARMCI_Group *group)
     armci_msg_group_gop_scope(SCOPE_ALL, ptr_arr, n*ratio,
 			      "+", ARMCI_INT, group);
 }
+
+/*\ combine array of longs/ints/doubles accross all processes
+\*/
+void armci_msg_group_igop(int *x, int n, char* op, ARMCI_Group *group)
+{ armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_INT,group); }
+ 
+void armci_msg_group_lgop(long *x, int n, char* op,ARMCI_Group *group)
+{ armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_LONG,group); }
+ 
+void armci_msg_group_fgop(float *x, int n, char* op,ARMCI_Group *group)
+{ armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_FLOAT,group); }
+ 
+void armci_msg_group_dgop(double *x, int n, char* op,ARMCI_Group *group)
+{ armci_msg_group_gop_scope(SCOPE_ALL,x, n, op, ARMCI_DOUBLE,group); }
+
+#  endif /* ifdef MPI */
+/*********************** End ARMCI Groups Code ****************************/
+
 
 #ifdef PVM
 /* set the group name if using PVM */

@@ -1,10 +1,9 @@
-#$Id: GNUmakefile,v 1.81 2004-06-28 17:45:18 manoj Exp $
+#$Id: GNUmakefile,v 1.82 2004-06-29 22:57:36 manoj Exp $
          FOPT = -O
          COPT = -O
 
 OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o kr_malloc.o\
- memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o rtinfo.o\
- groups.o
+ memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o rtinfo.o
 
 OBJ_FRAGILE = message.o
 
@@ -23,6 +22,10 @@ endif
 #defines communication libs and symbols
 include ../config/makemp.h
 include ../config/makecoms.h
+
+ifeq ($(MSG_COMMS),MPI)
+  OBJ += groups.o
+endif
 
 SYSTEM_V = SUN SOLARIS SOLARIS64 SGI SGI_N32 SGI64 SGITFP 
 SYSTEM_V += HPUX HPUX64 IBM IBM64 DECOSF LINUX LINUX64 INTERIX NEC
