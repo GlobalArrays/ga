@@ -26,10 +26,13 @@ error:
 endif
 
 ifeq ($(DIAG), PAR)
-     LOC_DEFINES += -DPAR_DIAG
+     LIB_DEFINES += -DPAR_DIAG
 endif
 ifdef USE_SCALAPACK
-     LOC_DEFINES += -DSCALAPACK
+     LIB_DEFINES += -DSCALAPACK
+endif
+ifeq ($(MSG_COMMS), MPI)
+     LIB_DEFINES += -DMPI
 endif
 
 LIB_DISTRIB  = ../../lib
@@ -103,7 +106,7 @@ endif
 .PHONY: clean
 clean:
 	-$(RM) -f *.o *.p *.exe *.obj *core *stamp mputil.* *trace *.x *events*
-	-$(RM) -f ngatest.F
+	-$(RM) -f ngatest.F nga-*.F
 
 .PHONY: realclean
 realclean:      clean
