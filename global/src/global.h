@@ -220,8 +220,8 @@ extern void FATR nga_add_patch_(DoublePrecision *alpha, Integer *g_a,
                     Integer *alo, Integer *ahi, DoublePrecision *beta,
                     Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c,
                     Integer *clo, Integer *chi);
-extern int FATR ga_type_c2f(int type);
-extern int FATR ga_type_f2c(int type);
+extern int ga_type_c2f(int type);
+extern int ga_type_f2c(int type);
 extern void ga_type_gop(int type, void *x, int n, char* op);
 
 #ifdef __cplusplus

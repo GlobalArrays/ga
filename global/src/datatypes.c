@@ -1,11 +1,11 @@
-/* $Id: datatypes.c,v 1.2 2001-06-29 00:49:59 edo Exp $
+/* $Id: datatypes.c,v 1.3 2001-06-29 18:06:57 d3h325 Exp $
  * conversion of MA identifiers between C to Fortran data types 
  * Note that ga_type_c2f(MT_F_INT) == MT_F_INT 
  */
 
 #include <macdecls.h>
 
-int FATR ga_type_f2c(int type)
+int ga_type_f2c(int type)
 {
 int ctype;
    switch(type){
@@ -43,7 +43,7 @@ int ctype;
 }
 
 
-int FATR ga_type_c2f(int type)
+int ga_type_c2f(int type)
 {
 int ftype;
    switch(type){
