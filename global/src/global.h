@@ -153,8 +153,8 @@ extern void FATR ga_fill_   ARGS_((Integer *, void *));
 extern void FATR ga_scale_  ARGS_((Integer *, void *));
 extern void FATR ga_add_   ARGS_((Void *, Integer *, Void *, Integer *,
       Integer *));
-extern Integer FATR ga_default_config ARGS_();
-extern Integer FATR ga_mirror_config ARGS_();
+extern Integer FATR ga_default_config ();
+extern Integer FATR ga_mirror_config ();
 extern Integer FATR ga_idot_ ARGS_((Integer *, Integer *));
 extern float FATR ga_fdot_ ARGS_((Integer *, Integer *));            
 extern DoublePrecision FATR ga_ddot_ ARGS_((Integer *, Integer *));
