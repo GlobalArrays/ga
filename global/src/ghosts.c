@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.7 2002-01-23 02:22:41 vinod Exp $ */
+/* $Id: ghosts.c,v 1.8 2002-01-29 21:51:12 d3h325 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2317,7 +2317,7 @@ logical FATR ga_update_ghost_dir_(Integer *g_a, Integer *pdim, Integer *pdir,
   }
 
   GA_POP_NAME;
-  return;
+  return TRUE;
 }
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM
