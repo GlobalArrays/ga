@@ -1,6 +1,6 @@
 #if defined(LINUX) || defined(CYGWIN)
 
-#if defined(PPC)
+#if defined(PPC) && !defined(XLCLINUX)
 #include "tas-ppc.h"
 #define SPINLOCK  
 #define TESTANDSET(x) (! __compare_and_swap((long int *)(x),0,1)) 

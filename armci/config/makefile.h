@@ -131,8 +131,14 @@ ifeq ($(_CPU),786)
        FOPT_REN = -xW -tpp7
 endif
    endif
-endif
-
+   ifeq ($(_CC),xlc)
+     COPT_REN = -q32  -qlanglvl=extended
+     CDEFS += -DXLCLINUX
+   endif
+   ifeq ($(_FC),xlf)
+     FOPT_REN = -q32  -qEXTNAME
+     endif
+   endif
 
 endif
 #-----------------Linux 64-bit on DEC/Compaq Alpha with DEC compilers --
@@ -199,19 +205,18 @@ ifeq  ($(_CPU),x86_64)
   endif
 endif
 ifeq  ($(_CPU),ppc64)
+  FC=xlf
+  CC=/opt/cross/bin/powerpc64-linux-gcc
   GLOB_DEFINES += -DNEED_MEM_SYNC
+  COPT=-O3
+  COPT_REN +=  -funroll-loops
   ifeq ($(_CC),xlc)
+  GLOB_DEFINES += -DXLCLINUX
      COPT_REN = -q64  -qlanglvl=extended
   endif
   ifeq ($(_FC),xlf)
      FOPT_REN = -q64 -qEXTNAME
-  endif
-
-  ifeq ($(_FC),gcc)
-        COPT_REN  += -m64 -maix64
-  endif
-  ifeq ($(_FC),g77)
-        FOPT_REN  += -m64 -maix64 -funroll-loops -fstrength-reduce 
+     FOPT = -O4 -qarch=auto -qstrict
   endif
 endif
 #----------------------------- Fujitsu ------------------------------

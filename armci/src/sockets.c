@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.21 2002-01-10 19:09:13 vinod Exp $ */
+/* $Id: sockets.c,v 1.22 2004-01-01 05:56:50 edo Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -38,6 +38,8 @@
 #  else
      typedef size_t soclen_t;
 #  endif
+#elif defined(XLCLINUX)
+typedef socklen_t soclen_t;
 #else
 typedef int soclen_t;
 #endif
