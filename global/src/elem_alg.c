@@ -1804,7 +1804,7 @@ void FATR ga_step_bound_info_patch_(
      Integer *g_vv, Integer *vvlo, Integer *vvhi,    /* patch of g_vv */
      Integer *g_xxll, Integer *xxlllo, Integer *xxllhi,    /* patch of g_xxll */
      Integer *g_xxuu, Integer *xxuulo, Integer *xxuuhi,    /* patch of g_xxuu */
-     double *boundmin, double* wolfemin, double *boundmax)
+     void *boundmin, void* wolfemin, void *boundmax)
 {
      double  result1,result2;
      double  dresult,dresult2;
@@ -1846,6 +1846,7 @@ void FATR ga_step_bound_info_patch_(
      Integer compatible2;
      Integer compatible3;
      void *sresult;
+     void *sresult2;
      void *alpha,*beta;
      int local_sync_begin,local_sync_end;
      int i;
@@ -1945,6 +1946,7 @@ void FATR ga_step_bound_info_patch_(
 	    due to the strange implementation if nga_select_elem_.
 	 */
 	 sresult = &iresult;
+	 sresult2 = &iresult2;
 	 alpha    = &ialpha;
 	 beta     = &ibeta;
 	 break;
@@ -1954,16 +1956,19 @@ void FATR ga_step_bound_info_patch_(
 	 break;
        case C_DBL:
 	 sresult = &dresult;
+	 sresult2 = &dresult2;
 	 alpha    = &dalpha;
 	 beta     = &dbeta;
 	 break;
        case C_FLOAT:
 	 sresult = &fresult;
+	 sresult2 = &fresult2;
 	 alpha    = &falpha;
 	 beta     = &fbeta;
 	 break;
        case C_LONG:
 	 sresult = &lresult;
+	 sresult2 = &lresult2;
 	 alpha    = &lalpha;
 	 beta     = &lbeta;
 	 break;
@@ -2052,29 +2057,28 @@ void FATR ga_step_bound_info_patch_(
      /* Then, compute (xx-xl)/vv */
      ga_elem_stepb_divide_patch_(&g_Q, xxlo, xxhi, &g_R, vvlo, vvhi, &g_R, xxlo, xxhi); 
      /* Then, we will select the minimum of the array g_t*/ 
-     nga_select_elem_(&g_R, "min", sresult, &index[0]); 
+     nga_select_elem_(&g_R, "min", sresult2, &index[0]); 
      switch (xxtype)
        {
        case C_INT:
-	 result2 = (double)(iresult);
+	 *(Integer*)wolfemin = ABS(MIN(iresult,iresult2));
 	 break;
        case C_DCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
        case C_DBL:
-	 result2 = dresult;
+	 *(double*)wolfemin = ABS(MIN(dresult,dresult2));
 	 break;
        case C_FLOAT:
-	 result2 = (double)fresult;
+	 *(float*)wolfemin = ABS(MIN(fresult,fresult2));
 	 break;
        case C_LONG:
-	 result2 = (double)lresult;
+	 *(long*)wolfemin =  ABS(MIN(lresult,lresult2));
 	 break;
        default:
 	 ga_error ("Ga_step_bound_info_patch_: result2 set: wrong data type.", xxtype);
        }
-     *wolfemin = ABS(MIN(result1,result2));
      /* 
        Now set T to be the elementwise minimum of R and T. 
        So, T is infinity only where ever g_vv is zero.
@@ -2117,25 +2121,24 @@ void FATR ga_step_bound_info_patch_(
 	 /* This should be iresult but is lresult because of
 	    the strange implementation of nga_select_elem.
 	 */
-           result1 = (double)(iresult);
+           *(Integer*)boundmin = iresult;
            break;
        case C_DCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
        case C_DBL:
-	 result1 = dresult;
+	 *(double*)boundmin = dresult;
 	 break;
        case C_FLOAT:
-	 result1 = (double)fresult;
+	 *(float*)boundmin = fresult;
 	 break;
        case C_LONG:
-	 result1 = (double)lresult;
+	 *(long*)boundmin = lresult;
 	 break;
        default:
 	 ga_error ("Ga_step_bound_info_patch_: result set: wrong data type.", xxtype);
        }
-     *boundmin = result1;
      /* 
        Then, we will select the maximum of the array g_t, that will
        be boundmax .
@@ -2147,25 +2150,24 @@ void FATR ga_step_bound_info_patch_(
 	 /* This should be iresult but is lresult because of
 	    the strange implementation of nga_select_elem.
 	 */
-           result2 = (double)(iresult);
+           *(Integer*)boundmax = iresult;
            break;
        case C_DCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
 		   xxtype);
 	 break;
        case C_DBL:
-	 result2 = dresult;
+	 *(double*)boundmax = dresult;
 	 break;
        case C_FLOAT:
-	 result2 = (double)fresult;
+	 *(float*)boundmax = fresult;
 	 break;
        case C_LONG:
-	 result2 = (double)lresult;
+	 *(long*)boundmax = lresult;
 	 break;
        default:
 	 ga_error ("Ga_step_bound_info_patch_: result set: wrong data type.", xxtype);
        }
-     *boundmax = result2;
      ga_destroy_(&g_Q); 
      ga_destroy_(&g_R); 
      ga_destroy_(&g_S); 
@@ -2184,7 +2186,7 @@ void ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result, op)
 void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result) 
      Integer *g_a, *alo, *ahi;    /* patch of g_a */
      Integer *g_b, *blo, *bhi;    /* patch of g_b */
-     double *result;
+     void *result;
 #if 0
      Integer op; /* operations */
 #endif
@@ -2279,15 +2281,34 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
        default:
 	 ga_error ("Ga_step_max_patch_: wrong data type.", atype);
        }
-     if(*g_a == *g_b)
+     if(*g_a == *g_b) {
        /* It used to say 1, but if ga and gb are the same, and 
 	  ga is nonnegative then any number of multiples of gb
 	  can be added to ga still leaving it nonnegative.
          *result = (double)1.0;
        */
-	*result = GA_INFINITY_D;
-     else
-     {
+	switch (atype)
+	  {
+	  case C_INT:
+	    *(Integer*)result = GA_INFINITY_I;
+	    break;
+	  case C_DCPL:
+	    ga_error ("Ga_step_max_patch_: unavailable for complex datatype.", 
+		      atype);
+	    break;
+	  case C_DBL:
+	    *(double*)result = GA_INFINITY_D;
+	    break;
+	  case C_FLOAT:
+	    *(float*)result = GA_INFINITY_F;
+	    break;
+	  case C_LONG:
+	    *(long*)result = GA_INFINITY_L;
+	    break;
+	  default:
+	    ga_error ("Ga_step_max_patch_: wrong data type.", atype);
+	  }
+     } else {
      	/*Now look at each element of the array g_a. 
           If an element of g_a is negative, then simply return */ 
      	if(has_negative_elem(g_a, alo, ahi) == 1)
@@ -2312,33 +2333,32 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
 	switch (atype)
 	  {
 	  case C_INT:
-	    *result = (double)iresult;
+	    *(Integer*)result = ABS(iresult);
 	    break;
 	  case C_DCPL:
-	    ga_error ("Ga_step_max_patch_: unavalable for complex datatype.", 
+	    ga_error ("Ga_step_max_patch_: unavailable for complex datatype.", 
 		      atype);
 	    break;
 	  case C_DBL:
-	    *result = dresult;
+	    *(double*)result = ABS(dresult);
 	    break;
 	  case C_FLOAT:
-	    *result = (double)fresult;
+	    *(float*)result = ABS(fresult);
 	    break;
 	  case C_LONG:
-	    *result = (double)lresult;
+	    *(long*)result = ABS(lresult);
 	    break;
 	  default:
 	    ga_error ("Ga_step_max_patch_: wrong data type.", atype);
 	  }
 	ga_destroy_ (&g_C);
      }
-     *result = ABS(*result);
     GA_POP_NAME;
     if(local_sync_end)ga_sync_();
 }
 
 
-void FATR ga_step_max_(Integer *g_a, Integer *g_b, double *retval)
+void FATR ga_step_max_(Integer *g_a, Integer *g_b, void *retval)
 {
    Integer atype, andim;
    Integer btype, bndim;
@@ -2361,7 +2381,7 @@ void FATR ga_step_max_(Integer *g_a, Integer *g_b, double *retval)
 #endif
 }
 
-void FATR ga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, Integer *g_xxuu,  double *boundmin, double *wolfemin, double *boundmax)
+void FATR ga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, Integer *g_xxuu,  void *boundmin, void *wolfemin, void *boundmax)
 {
    Integer xxtype, xxndim;
    Integer vvtype, vvndim;
