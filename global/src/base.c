@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.69 2004-03-31 21:07:28 d3g293 Exp $ */
+/* $Id: base.c,v 1.70 2004-03-31 23:44:49 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -839,6 +839,7 @@ Integer ga_create_handle_()
   GA[ga_handle].irreg = 0;
   GA[ga_handle].ghosts = 0;
   GA[ga_handle].corner_flag = -1;
+  GA[ga_handle].cache = NULL;
   GA_POP_NAME;
   return g_a;
 }
@@ -2147,6 +2148,8 @@ int local_sync_begin;
 #endif
        return FALSE;
     }
+    if (GA[ga_handle].cache)
+      free(GA[ga_handle].cache);
     GA[ga_handle].actv = 0;     
     if(GA[ga_handle].ptr[GAme]==NULL){
 #ifdef GA_USE_VAMPIR
