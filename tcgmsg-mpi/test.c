@@ -1,5 +1,10 @@
+/*
+ * $Id: test.c,v 1.9 2003-11-06 07:02:52 edo Exp $
+ */
+
 
 #include <stdio.h>
+extern char *memalign();
 #include <stdlib.h>
 #if !defined(SEQUENT) && !defined(CONVEX)
 #include <memory.h>
@@ -7,6 +12,7 @@
 
 #include "sndrcv.h"
 /*#include "evlog.h"*/
+
 
 extern unsigned char CheckByte();
 #if defined(SUN)
