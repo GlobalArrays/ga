@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.66 2003-04-03 19:48:21 vinod Exp $
+/* $Id: myrinet.c,v 1.67 2003-04-03 22:28:02 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -157,6 +157,10 @@ static int armci_gm_num_receive_tokens=0;
 
 GM_ENTRY_POINT char * _gm_get_kernel_build_id(struct gm_port *p);
 
+/*\
+ * function to get the next available context for non-blocking RDMA. We limit
+ * the number of uncompleted non-blocking RDMA sends to 8.
+\*/
 #define MAX_PENDING 8
 static armci_gm_context_t armci_gm_nbcontext_array[MAX_PENDING];
 armci_gm_context_t *armci_gm_get_next_context(int nbtag)
@@ -813,7 +817,7 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
        proc_gm->ops_pending_ar[s]++;
 
     /* flow control */
-    _armci_buf_ensure_one_outstanding_op_per_node(buf, s ); 
+    _armci_buf_ensure_one_outstanding_op_per_node(buf, s );
 
     if(DEBUG_){
        printf("%d: armci_send_req_msg op is %d sending ack=%d to %d\n",armci_me,
@@ -1167,7 +1171,7 @@ int armci_gm_server_init()
     }
 
     /* provide the extra set of buffers for short messages */
-    if(DEBUG_);{
+    if(DEBUG_){
        printf("provided (%d,%d) buffers, rcv tokens=%d\n",
                idx,gm_min_size_for_length(get_size_for_index(idx-1)),
                gm_num_receive_tokens(serv_gm->rcv_port));
