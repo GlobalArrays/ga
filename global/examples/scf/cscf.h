@@ -1,10 +1,16 @@
 c
 c     include file defining common /cscf/
 c
-c     natom    = no. of atoms             (constant parameter)
-c     nbfn     = no. of basis functions   (constant parameter)
-c     nnbfn    = nbfn*(nbfn+1)/2          (constant parameter)
-c     nocc     = no. of occupied orbitals (constant parameter)
+c     constant parameters are set in cscf, parameters are set
+c     after reading input.
+c
+c     maxatom  = maximum no. of atoms     (constant parameter)
+c     maxnbfn  = maximum no. of bas. fnct.(constant parameter)
+c     maxnnbfn = maxnbfn*(maxnbfn+1)/2    (constant parameter)
+c     natom    = no. of atoms             (parameter)
+c     nbfn     = no. of basis functions   (parameter)
+c     nnbfn    = nbfn*(nbfn+1)/2          (parameter)
+c     nocc     = no. of occupied orbitals (parameter)
 c     mxiter   = maximim no. of iterations(constant parameter)
 c     tol      = convergence criterion    (constant parameter)
 c     pi       = a familiar constant      (constant parameter)
@@ -42,3 +48,18 @@ c
      $     nocc, nbfn, nnbfn
       double precision enrep, q, ax, ay, az, x, y, z, expnt, rnorm
 c      integer iky, icut1, icut2, icut3, natom, nocc, nbfn, nnbfn
+c
+c    Global array parameters used in calculations:
+c
+c    ichunk:    chunk size for distributing workload
+c
+c    g_counter: global array used to assign next task
+c    g_dens:    global array used to store density matrix
+c    g_fock:    global array used to store fock matrix
+c    g_schwarz: global array used to store schwarz matrix
+c    g_work:    global array used to store work matrix
+c
+      parameter (ichunk = 10)
+      common /g_arrays/
+     $     g_counter, g_dens, g_fock, g_schwarz, g_work
+      integer g_counter, g_dens, g_fock, g_schwarz, g_work
