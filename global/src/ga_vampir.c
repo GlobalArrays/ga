@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.c,v 1.3 2003-06-21 02:59:29 edo Exp $ */
+/* $Id: ga_vampir.c,v 1.4 2003-06-21 03:30:42 edo Exp $ */
 #include "ga_vampir.h"
 
 void ga_vampir_init() {
@@ -82,6 +82,7 @@ void ga_vampir_init() {
     vampir_symdef(NGA_COPY_PATCH,            "NGA_Copy_patch",             "GA",__FILE__,__LINE__);
     vampir_symdef(NGA_CREATE,                "NGA_Create",                 "GA",__FILE__,__LINE__);
     vampir_symdef(NGA_CREATE_IRREG,          "NGA_Create_irreg",           "GA",__FILE__,__LINE__);
+    vampir_symdef(NGA_CREATE_IRREG_CONFIG,          "NGA_Create_irreg_config",           "GA",__FILE__,__LINE__);
     vampir_symdef(NGA_DDOT_PATCH,            "NGA_Ddot_patch",             "GA",__FILE__,__LINE__);
     vampir_symdef(NGA_DISTRIBUTION,          "NGA_Distribution",           "GA",__FILE__,__LINE__);
     vampir_symdef(NGA_FILL_PATCH,            "NGA_Fill_patch",             "GA",__FILE__,__LINE__);
