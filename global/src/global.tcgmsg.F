@@ -772,7 +772,7 @@ c
      $     array_name, hand(g_a), indx(g_a))) then
          write(6,*) ' ga_create_irreg: failed to allocate memory',
      $        array_name, ldim(1,g_a), ldim(2,g_a)
-         call ga_error('exiting ',0)
+         return
       endif 
 c
 c     Initialize the array to garbage 
@@ -840,6 +840,7 @@ c
       character*(*) array_name
       integer g_a, g_b
 c
+      ga_duplicate = .false.
       integer iproc, i
       logical overbose, oterse
       integer lenstr, int
@@ -914,9 +915,9 @@ c
          continue
       else if (.not.ma_alloc_get(ttyp(g_b), ldim(1,g_b)*ldim(2,g_b),
      $     array_name, hand(g_b), indx(g_b))) then
-         write(6,*) ' ga_create_irreg: failed to allocate memory',
+         write(6,*) ' ga_duplicate: failed to allocate memory',
      $        array_name, ldim(1,g_b), ldim(2,g_b)
-         call ga_error('exiting ',0)
+         return
       endif 
 c
 c     Initialize the array to garbage 
@@ -932,6 +933,7 @@ c
       endif
 c
       actv(g_b) = .true.
+      ga_duplicate = .true.
       call ga_sync()
 c
       end
