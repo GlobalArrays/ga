@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.124 2005-02-22 18:47:00 manoj Exp $
+# $Id: makefile.h,v 1.125 2005-02-22 22:46:15 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -265,23 +265,24 @@ ifeq ($(_CPU),786)
 endif
 ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
-          COPT = -O2
-     COPT_REN +=  -funroll-loops $(OPT_ALIGN)
+      COPT = -O2
+      COPT_REN +=  -funroll-loops $(OPT_ALIGN)
    endif
 endif
    ifneq (,$(findstring icc,$(_CC)))
        ifeq ($(COPT),-O)
-           COPT_REN = -O3 -prefetch 
+           COPT = -O3
+           COPT_REN = -prefetch 
        endif
    endif
    ifeq ($(CC),xlc)
-     COPT_REN = -q32  -qlanglvl=extended
+       COPT_REN = -q32  -qlanglvl=extended
    endif
 #
 #           g77
 ifeq ($(_FC),g77)
    ifeq ($(FOPT),-O)
-           FOPT = -O2
+      FOPT = -O2
       FOPT_REN += -funroll-loops -fomit-frame-pointer $(OPT_ALIGN)
    endif
 else
@@ -294,7 +295,8 @@ else
    endif
    ifneq (,$(findstring ifc,$(_FC)))
        ifeq ($(FOPT),-O)
-           FOPT_REN = -O3 -prefetch -w -cm
+           FOPT = -O3
+           FOPT_REN = -prefetch -w -cm
        endif
        GLOB_DEFINES += -DIFCLINUX
        _IFCV8= $(shell ifc -v  2>&1|egrep "Version "|head -1|awk ' /8\./  {print "Y";exit}; /9./ {print "Y"; exit}')
@@ -305,7 +307,8 @@ else
    endif
    ifneq (,$(findstring ifort,$(_FC)))
        ifeq ($(FOPT),-O)
-           FOPT_REN = -O3 -prefetch -w -cm
+           FOPT = -O3
+           FOPT_REN = -prefetch -w -cm
        endif
        GLOB_DEFINES += -DIFCLINUX
        _IFCV8= $(shell ifc -v  2>&1|egrep 8|awk ' /8\./  {print "Y"}')
