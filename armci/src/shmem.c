@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.51 2002-09-25 00:44:41 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.52 2002-10-15 03:06:21 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -81,7 +81,7 @@ static  int logpagesize=0;
 #if defined(GM)
 #   define SHMMAX_SEARCH_NO_FORK 
 #endif
-#if defined(LAPI) || defined(IBM) || defined(SHMMAX_SEARCH_NO_FORK)
+#if defined(LAPI) || defined(AIX) || defined(SHMMAX_SEARCH_NO_FORK)
 #   define NO_SHMMAX_SEARCH
 #endif
 
