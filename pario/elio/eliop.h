@@ -8,7 +8,7 @@
 #include <sys/stat.h>
 
 
-/*#define PRINT_AND_ABORT(msg, val) ga_error(msg, (long)val)*/
+#define PRINT_AND_ABORT(msg, val) ga_error(msg, (long)val)
 #ifndef GLOBAL_H
 extern void ga_error(char*, long);
 #endif
