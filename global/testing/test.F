@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.38 2001-05-08 00:46:32 d3h325 Exp $
+c $Id: test.F,v 1.39 2001-05-09 22:17:50 llt Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -1560,7 +1560,7 @@ c---------------------------------------------------------------------
 #include "global.fh"
 #include "testutil.fh"
       integer n, m
-      parameter (n =128) 
+      parameter (n =10) 
       parameter (m=2*n)
       real a(n,n), b(n,n), v(m), w(m)
       integer iv(m), jv(m)
@@ -1713,7 +1713,7 @@ c
 c     
          nwords = nwords + (ihi-ilo+1)*(jhi-jlo+1)
 c
-         call util_ifill(n*n, 0.0d0, b, 1)
+         call util_rfill(n*n, 0.0, b, 1)
          call ga_get(g_a, ilo, ihi, jlo, jhi, b(ilo, jlo), n)
 c
          if (me .eq. 0 .and. mod(loop-1, max(1,nloop/20)).eq.0) then
@@ -1744,6 +1744,7 @@ c
 c
 c     Each node accumulates into disjoint sections of the array
 c
+      call ga_print (g_a,1)
       if (me .eq. 0) then
          write(6,9)
  9       format(/'> Checking accumulate ... ')
@@ -1788,6 +1789,9 @@ c
             do jj = jlo, jhi
                do ii = ilo, ihi
                   a(ii,jj) = a(ii,jj) + x * b(ii,jj)
+                  if (ii .eq. 2) then
+                    print*, 'a: ', a(ii,jj), ' ', jj
+                   endif
                enddo
             enddo
          enddo
@@ -1795,8 +1799,22 @@ c
       call ga_sync()                       
 c
 c     All nodes check all of a
-c
+c>>>>>>
+      do j =1,5
+        do i=1,5
+          print*, 'a:', a(i,j), ' b:', b(i,j)
+        end do
+      end do
+c>>>>>
       call ga_get(g_a, 1, n, 1, n, b, n)
+c>>>>>      call ga_print(g_a, 1)
+      print*, 'AFTER ga_get'
+      do j =1,5
+        do i=1,5
+          print*, 'a:', a(i,j), ' b:', b(i,j)
+        end do
+      end do
+
       do j = 1, n
          do i = 1, n
             if(MISMATCHF(b(i,j),a(i,j)))then
@@ -1806,6 +1824,7 @@ c
             endif
          enddo
       enddo
+c>>>>>      write(6,*) a(2,1), ' ', b(2,1)
       if (me.eq.0) then
          write(6,*)
          write(6,*) ' disjoint ga_acc is OK'
@@ -2356,7 +2375,27 @@ c
       enddo
 c     call ga_register_proclist(proc,nproc)
       end
+
       
+      subroutine util_rfill(n,val,a,ia)
+      implicit none
+      real  a(*), val
+      integer n, ia, i
+c
+c     initialise real array to scalar value
+c
+      if (ia.eq.1) then
+         do 10 i = 1, n
+            a(i) = val
+ 10      continue
+      else
+         do 20 i = 1,(n-1)*ia+1,ia
+            a(i) = val
+ 20      continue
+      endif
+c
+      end
+
       
       subroutine util_dfill(n,val,a,ia)
       implicit none
