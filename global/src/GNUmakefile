@@ -29,10 +29,10 @@ ifdef GA_USE_VAMPIR
 endif
 
 # Linear Algebra
-  GA_LIN_ALG = matmul.o ga_symmetr.o elem_alg.o matrix.o xgemm.o
+  GA_LIN_ALG = matmul.o ga_symmetr.o  elem_alg.o matrix.o xgemm.o fort.o
 ifndef GA_C_CORE
   GA_LIN_ALG += rsg.o ga_diag_seq.o ga_solve_seq.o 
-  GA_EXTRA += fort.o
+#  GA_EXTRA += fort.o
 endif
 
 # ga_transpose.o
