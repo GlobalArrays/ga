@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.50 2004-04-07 23:05:49 manoj Exp $ */
+/* $Id: onesided.c,v 1.51 2004-04-16 00:53:16 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -336,6 +336,14 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       GAstat.numput_procs += np;
       if(nbhandle)ga_init_nbhandle(nbhandle);
       else ga_init_nbhandle(&ga_nbhandle);
+
+#if GA_PROFILE
+      {
+	 int index= (int) (log((double)size*elems)/log(2.0));
+	 if(index>=GA_PROFILE_MAX) index=GA_PROFILE_MAX;
+	 put_profile[index]++;
+      }
+#endif
       
       gaPermuteProcList(np);
       p_handle = GA[handle].p_handle;
@@ -555,6 +563,14 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       if(nbhandle)ga_init_nbhandle(nbhandle);
       else ga_init_nbhandle(&ga_nbhandle);
 
+#if GA_PROFILE
+      {
+	 int index= (int) (log((double)size*elems)/log(2.0));
+	 if(index>=GA_PROFILE_MAX) index=GA_PROFILE_MAX;
+	 get_profile[index]++;
+      }
+#endif
+      
       gaPermuteProcList(np);
       p_handle = GA[handle].p_handle;
 
@@ -763,6 +779,14 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
       if(nbhandle)ga_init_nbhandle(nbhandle);
       else ga_init_nbhandle(&ga_nbhandle);
 
+#if GA_PROFILE
+      {
+	 int index= (int) (log((double)size*elems)/log(2.0));
+	 if(index>=GA_PROFILE_MAX) index=GA_PROFILE_MAX;
+	 acc_profile[index]++;
+      }
+#endif
+      
       gaPermuteProcList(np);
       p_handle = GA[handle].p_handle;
 

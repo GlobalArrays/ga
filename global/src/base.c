@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.73 2004-04-15 22:00:23 manoj Exp $ */
+/* $Id: base.c,v 1.74 2004-04-16 00:53:16 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -411,6 +411,14 @@ int bytes;
     MA_set_error_callback(ARMCI_Error);
 
     GAinitialized = 1;
+
+#if GA_PROFILE 
+    {
+       int i; /* initialize to zero */
+       if(ga_nodeid_()==0) {printf("\nProfiling Get/Put ON\n");fflush(stdout);}
+       for(i=0;i<GA_PROFILE_MAX;i++) get_profile[i]=put_profile[i]=acc_profile[i]=0;
+    }
+#endif
 
 #ifdef GA_USE_VAMPIR
     vampir_end(GA_INITIALIZE,__FILE__,__LINE__);
@@ -2191,6 +2199,16 @@ extern double t_dgop, n_dgop, s_dgop;
 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(!GAinitialized) return;
+
+#if GA_PROFILE
+    if(ga_nodeid_() == 0) {
+       int i;
+       printf("\n\nRANK\t #Gets\t #puts\t #accs\t RANGE\n\n");
+       for(i=0; i< GA_PROFILE_MAX; i++)
+	  printf("%d\t %d\t %d\t %d\t (%d-%d)\n", ga_nodeid_(),get_profile[i], put_profile[i], acc_profile[i],1<<i,1<<(i+1));
+       printf("%d\t %d\t %d\t %d\t (>%d)\n",ga_nodeid_(),get_profile[i], put_profile[i], acc_profile[i], 1<<GA_PROFILE_MAX);
+    }
+#endif
 
 #ifdef GA_USE_VAMPIR
     vampir_begin(GA_TERMINATE,__FILE__,__LINE__);

@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.23 2004-04-01 01:33:42 d3h325 Exp $ */
+/*$Id: base.h,v 1.24 2004-04-16 00:53:16 manoj Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -200,3 +200,11 @@ Integer _d;                                                                    \
           ga_error(err_string, _d);                                            \
       }\
 }
+
+#define GA_PROFILE 0
+#if GA_PROFILE
+#define GA_PROFILE_MAX 20
+int get_profile[GA_PROFILE_MAX+1];
+int put_profile[GA_PROFILE_MAX+1];
+int acc_profile[GA_PROFILE_MAX+1];
+#endif
