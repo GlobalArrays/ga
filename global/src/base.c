@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.44 2003-07-08 16:21:55 edo Exp $ */
+/* $Id: base.c,v 1.45 2003-07-23 14:44:41 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -532,6 +532,177 @@ int _d;\
          if(dims[_d]<1)ga_error("wrong dimension specified",dims[_d]);\
 }
 
+/*\ utility function to tell whether or not an array is mirrored
+\*/
+logical FATR ga_is_mirrored_(Integer *g_a)
+{
+  Integer ret = FALSE;
+  Integer handle = GA_OFFSET + *g_a;
+  Integer p_handle = GA[handle].p_handle;
+  if (p_handle >= 0) {
+    if (P_LIST[p_handle].mirrored) ret = TRUE;
+  }
+  return ret;
+}
+
+
+/*\ UTILITY FUNCTION TO LOCATE THE BOUNDING INDICES OF A CONTIGUOUS CHUNK OF
+ *  SHARED MEMORY FOR A MIRRORED ARRAY
+\*/
+void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
+{
+
+  Integer  lo[MAXDIM], hi[MAXDIM];
+  Integer  nelems, nnodes, inode, nproc;
+  Integer  ifirst, ilast, nfirst, nlast, icnt, np;
+  Integer  i, j, itmp, icheck, ndim, map_offset[MAXDIM];
+  Integer  index[MAXDIM], subscript[MAXDIM];
+  Integer  handle = GA_OFFSET + *g_a;
+
+  /* find total number of elements */
+  ndim = GA[handle].ndim;
+  nelems = 1;
+  for (i=0; i<ndim; i++) nelems *= GA[handle].dims[i];
+
+  /* If array is mirrored, evaluate first and last indices */
+  if (ga_is_mirrored_(g_a)) {
+    nnodes = ga_cluster_nnodes_();
+    inode = ga_cluster_nodeid_();
+    nproc = ga_cluster_nprocs_(&inode);
+    ifirst = (int)((double)(inode*nelems)/((double)nnodes));
+    if (inode != nnodes-1) {
+      ilast = (int)((double)((inode+1)*nelems)/((double)nnodes))-1;
+    } else {
+      ilast = nelems-1;
+    }
+    /* ifirst and ilast correspond to offsets in shared memory. Find the
+       actual indices of the data elements corresponding to these offsets */
+    for (i = 0; i<ndim; i++) {
+      map_offset[i] = 0;
+      for (j = 0; j<i; j++) {
+        map_offset[i] += GA[handle].nblock[j];
+      }
+    }
+    icnt = 0;
+    nfirst = -1;
+    nlast = -1;
+    for (i = 0; i<nproc; i++) {
+      /* find block indices corresponding to proc i */
+      nga_proc_topology_(g_a, &i, index);
+      nelems = 1;
+      for (j = 0; j<ndim; j++) {
+        if (index[j] < GA[handle].nblock[j]-1) {
+          
+          itmp = (GA[handle].mapc[map_offset[j]+index[j]+1]
+               - GA[handle].mapc[map_offset[j]+index[j]]);
+          nelems *= itmp;
+        } else {
+          itmp = (GA[handle].dims[j]
+               - GA[handle].mapc[map_offset[j]+index[j]] + 1);
+          nelems *= itmp;
+        }
+      }
+      icnt += nelems;
+      if (nfirst == -1 && ifirst < icnt) {
+        nfirst = i;
+      }
+      if (nlast == -1 && ilast < icnt) {
+        nlast = i;
+      }
+    }
+    /* Adjust indices corresponding to start and end of block of
+       shared memory so that it can be decomposed into large
+       rectangular blocks of the global array. Start by
+       adusting the lower index */
+    icnt = 0;
+    for (i = 0; i<nfirst; i++) {
+      nga_proc_topology_(g_a, &i, index);
+      nelems = 1;
+      for (j = 0; j<ndim; j++) {
+        if (index[j] < GA[handle].nblock[j]-1) {
+          nelems *= (GA[handle].mapc[map_offset[j]+index[j]+1]
+                 - GA[handle].mapc[map_offset[j]+index[j]]);
+        } else {
+          nelems *= (GA[handle].dims[j]
+                 - GA[handle].mapc[map_offset[j]+index[j]] + 1);
+        }
+      }
+      icnt += nelems;
+    }
+    ifirst = ifirst - icnt;
+    /* find dimensions of data on block nfirst */
+    np = nproc*inode+nfirst;
+    nga_distribution_(g_a, &np, lo, hi);
+    for (i=0; i<ndim; i++) {
+      subscript[i] = ifirst%(hi[i] - lo[i] + 1);
+      ifirst /= (hi[i] - lo[i] + 1);
+    }
+    /* adjust value of ifirst */
+    nga_proc_topology_(g_a, &nfirst, index);
+    ifirst = subscript[ndim-1];
+    for (i=0; i<ndim-1; i++) {
+      subscript[i] = 0;
+    }
+    /* Finally, evaluate absolute indices of first data point */
+    for (i=0; i<ndim; i++) {
+      GA[handle].first[i] = GA[handle].mapc[map_offset[i]+index[i]]
+                          + subscript[i];
+    }
+    /* adjust upper bound */
+    if (nlast > nfirst) {
+      icnt = 0;
+      for (i = 0; i<nlast; i++) {
+        nga_proc_topology_(g_a, &i, index);
+        nelems = 1;
+        for (j = 0; j<ndim; j++) {
+          if (index[j] < GA[handle].nblock[j]-1) {
+            nelems *= (GA[handle].mapc[map_offset[j]+index[j]+1]
+                   - GA[handle].mapc[map_offset[j]+index[j]]);
+          } else {
+            nelems *= (GA[handle].dims[j]
+                   - GA[handle].mapc[map_offset[j]+index[j]] + 1);
+          }
+        }
+        icnt += nelems;
+      }
+    }
+    ilast = ilast - icnt;
+    /* find dimensions of data on block nfirst */
+    np = nproc*inode+nlast;
+    nga_distribution_(g_a, &np, lo, hi);
+    for (i=0; i<ndim; i++) {
+      subscript[i] = ilast%(hi[i] - lo[i] + 1);
+      ilast /= (hi[i] - lo[i] + 1);
+    }
+    /* adjust value of ilast */
+    icheck = 1;
+    nga_proc_topology_(g_a, &nlast, index);
+    for (i=0; i<ndim-1; i++) {
+      if (index[i] < GA[handle].nblock[i]-1) {
+        itmp = GA[handle].mapc[map_offset[i]+index[i]+1]
+             - GA[handle].mapc[map_offset[i]+index[i]];
+      } else {
+        itmp = GA[handle].dims[i]
+             - GA[handle].mapc[map_offset[i]+index[i]] + 1;
+      }
+      if (subscript[i] < itmp-1) icheck = 0;
+      subscript[i] = itmp-1;
+    }
+    if (!icheck) {
+      subscript[ndim-1]--;
+    }
+    /* Finally, evaluate absolute indices of last data point */
+    for (i=0; i<ndim; i++) {
+      GA[handle].last[i] = GA[handle].mapc[map_offset[i]+index[i]]
+                          + subscript[i];
+    }
+  } else {
+    for (i=0; i<ndim; i++) {
+      GA[handle].first[i] = 0;
+      GA[handle].last[i] = -1;
+    }
+  }
+}
 
 /*\ print subscript of ndim dimensional array with two strings before and after
 \*/
@@ -590,8 +761,8 @@ logical nga_create_ghosts_irreg_config(
         Integer *g_a)     /* array handle (output) */
 {
 
-Integer  hi[MAXDIM];
-Integer  mem_size, nelem;
+Integer  lo[MAXDIM], hi[MAXDIM];
+Integer  mem_size, nelem, nnodes;
 Integer  i, ga_handle, status, maplen=0;
 #ifdef GA_USE_VAMPIR
       vampir_begin(NGA_CREATE_GHOSTS_IRREG_CONFIG,__FILE__,__LINE__);
@@ -681,10 +852,13 @@ Integer  i, ga_handle, status, maplen=0;
           GA[ga_handle].ptr[GAme]=NULL;
       }
 
+      /* If array is mirrored, evaluate first and last indices */
+      ngai_get_first_last_indices(g_a);
+
 /*      printf("Memory on %d is located at %u\n",
               GAme,GA[ga_handle].ptr[GAme]); fflush(stdout);*/
-      ga_sync_();
 
+      ga_sync_();
       if(status){
          GAstat.curmem += GA[ga_handle].size;
          GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
@@ -2503,19 +2677,6 @@ void FATR ga_mask_sync_(Integer *begin, Integer *end)
   else _ga_sync_end = 0;
 }
 
-/*\ utility function to tell whether or not an array is mirrored
-\*/
-logical FATR ga_is_mirrored_(Integer *g_a)
-{
-  Integer ret = FALSE;
-  Integer handle = GA_OFFSET + *g_a;
-  Integer p_handle = GA[handle].p_handle;
-  if (p_handle >= 0) {
-    if (P_LIST[p_handle].mirrored) ret = TRUE;
-  }
-  return ret;
-}
-
 /*\ merge all copies of a mirrored array by adding them together
 \*/
 void FATR ga_merge_mirrored_(Integer *g_a)
@@ -2779,4 +2940,175 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
   }
   if (local_sync_end) ga_sync_();
   GA_POP_NAME;
+}
+
+/*\ get number of distinct patches corresponding to a contiguous shared
+ *  memory segment
+\*/
+Integer FATR nga_num_shmem_seg_(Integer *g_a)
+{
+  Integer handle = *g_a + GA_OFFSET;
+  Integer i, j, ndim, map_offset[MAXDIM];
+  Integer index[MAXDIM];
+  int *first, *last, *nblock;
+  Integer lower[MAXDIM], upper[MAXDIM];
+  int *mapc, *dims;
+  Integer istart = 0, nproc, inode;
+  Integer ret = 0, icheck, np;
+  if (!ga_is_mirrored_(g_a)) return ret;
+  GA_PUSH_NAME("nga_num_shmem_set");
+  mapc = GA[handle].mapc;
+  ndim = GA[handle].ndim;
+  first = GA[handle].first;
+  last = GA[handle].last;
+  nblock = GA[handle].nblock;
+  dims = GA[handle].dims;
+  for (i=0; i<ndim; i++) {
+    map_offset[i] = 0;
+    for (j=0; j<i; j++) {
+      map_offset[i] += nblock[j];
+    }
+  }
+  inode = ga_cluster_nodeid_();
+  nproc = ga_cluster_nprocs_(&inode);
+  /* loop over all data blocks on this node to find out how many
+   * separate data blocks correspond to this segment of shared
+   * memory */
+  for (i=0; i<nproc; i++) {
+    np = nproc*inode + i;
+    nga_distribution_(g_a,&np,lower,upper);
+    icheck = 1;
+    /* see if processor corresponds to block of array data
+     * that contains start of shared memory segment */
+    if (!istart) {
+      for (j=0; j<ndim; j++) {
+        if (!(first[j] >= lower[j] && first[j] <= upper[j])) {
+          icheck = 0;
+          break;
+        }
+      }
+    }
+    if (icheck && !istart) {
+      istart = 1;
+    }
+    icheck = 1;
+    for (j=0; j<ndim; j++) {
+      if (!(last[j] >= lower[j] && last[j] <= upper[j])) {
+        icheck = 0;
+        break;
+      }
+    }
+    if (istart) ret++;
+    if (istart && icheck) {
+      GA_POP_NAME;
+      return ret;
+    }
+  }
+  GA_POP_NAME;
+  return ret;
+}
+
+/*\ Get patch corresponding to one of the blocks of data
+ *  identified using nga_num_shmem_seg_
+\*/
+void FATR nga_get_shmem_block_(Integer *g_a,
+                               Integer *npatch,
+                               Integer *lo,
+                               Integer *hi)
+{
+  Integer handle = *g_a + GA_OFFSET;
+  Integer i, j, ndim, map_offset[MAXDIM];
+  Integer index[MAXDIM];
+  int *first, *last, *nblock;
+  Integer lower[MAXDIM], upper[MAXDIM];
+  int *mapc, *dims;
+  Integer istart = 0, nproc, inode;
+  Integer ret = 0, icheck, np;
+  Integer iblock=0;
+  if (!ga_is_mirrored_(g_a)) {
+    for (j=0; j<ndim; j++) {
+      lo[j] = 0;
+      hi[j] = -1;
+    }
+    return;
+  }
+  GA_PUSH_NAME("nga_get_shmem_block");
+  mapc = GA[handle].mapc;
+  ndim = GA[handle].ndim;
+  first = GA[handle].first;
+  last = GA[handle].last;
+  nblock = GA[handle].nblock;
+  dims = GA[handle].dims;
+  for (i=0; i<ndim; i++) {
+    map_offset[i] = 0;
+    for (j=0; j<i; j++) {
+      map_offset[i] += nblock[j];
+    }
+  }
+  inode = ga_cluster_nodeid_();
+  nproc = ga_cluster_nprocs_(&inode);
+  /* loop over all data blocks on this node to find out how many
+   * separate data blocks correspond to this segment of shared
+   * memory */
+  for (i=0; i<nproc; i++) {
+    np = nproc*inode + i;
+    nga_distribution_(g_a,&np,lower,upper);
+    icheck = 1;
+    /* see if processor corresponds to block of array data
+     * that contains start of shared memory segment */
+    if (!istart) {
+      for (j=0; j<ndim; j++) {
+        if (!(first[j] >= lower[j] && first[j] <= upper[j])) {
+          icheck = 0;
+          break;
+        }
+      }
+    }
+    if (icheck && !istart) {
+      istart = 1;
+    }
+    icheck = 1;
+    for (j=0; j<ndim; j++) {
+      if (!(last[j] >= lower[j] && last[j] <= upper[j])) {
+        icheck = 0;
+        break;
+      }
+    }
+    if (istart && ret == *npatch) {
+      if (!icheck) {
+        if (ret == 0) {
+          for (j=0; j<ndim; j++) {
+            lo[j] = first[j];
+            hi[j] = upper[j];
+          }
+        } else {
+          for (j=0; j<ndim; j++) {
+            lo[j] = lower[j];
+            hi[j] = upper[j];
+          }
+        }
+      } else if (icheck) {
+        if (ret == 0) {
+          for (j=0; j<ndim; j++) {
+            lo[j] = first[j];
+            hi[j] = last[j];
+          }
+        } else {
+          for (j=0; j<ndim; j++) {
+            lo[j] = lower[j];
+            hi[j] = last[j];
+          }
+        }
+      }
+      GA_POP_NAME;
+      return;
+    }
+    if (istart) ret++;
+  }
+  for (j=0; j<ndim; j++) {
+    lo[j] = 0;
+    hi[j] = -1;
+  }
+  GA_POP_NAME;
+  return;
 }

@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.12 2003-03-06 20:09:10 vinod Exp $ */
+/*$Id: base.h,v 1.13 2003-07-23 14:44:41 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -29,6 +29,8 @@ typedef struct {
        int  chunk[MAXDIM];      /* chunking                             */
        int  nblock[MAXDIM];     /* number of blocks per dimension       */
        int  width[MAXDIM];      /* boundary cells per dimension         */
+       int  first[MAXDIM];      /* (Mirrored only) first local element  */
+       int  last[MAXDIM];       /* (Mirrored only) last local element   */
        Integer lo[MAXDIM];      /* top/left corner in local patch       */
        double scale[MAXDIM];    /* nblock/dim (precomputed)             */
        char **ptr;              /* arrays of pointers to remote data    */

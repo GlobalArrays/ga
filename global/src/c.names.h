@@ -112,6 +112,9 @@
 #define  ga_update_ghosts_         GA_UPDATE_GHOSTS
 #define  ga_merge_mirrored_        GA_MERGE_MIRRORED
 #define  nga_merge_distr_patch_    NGA_MERGE_DISTR_PATCH
+#define  ga_is_mirrored_           GA_IS_MIRRORED
+#define  nga_num_shmem_seg_        NGA_NUM_SHMEM_SEG
+#define  nga_get_shmem_block_      NGA_GET_SHMEM_BLOCK
 #define  ga_uses_ma_               GA_USES_MA
 #define  ga_valid_handle_          GA_VALID_HANDLE
 #define  ga_verify_handle_         GA_VERIFY_HANDLE
@@ -314,6 +317,9 @@
 #define  ga_update_ghosts_         ga_update_ghosts__     
 #define  ga_merge_mirrored_        ga_merge_mirrored__     
 #define  nga_merge_distr_patch_    nga_merge_distr_patch__     
+#define  ga_is_mirrored_           ga_is_mirrored__     
+#define  nga_num_shmem_seg_        ga_num_shmem_seg__     
+#define  nga_get_shmem_block_      ga_get_shmem_block__     
 #define  ga_uses_ma_               ga_uses_ma__             
 #define  ga_valid_handle_          ga_valid_handle__        
 #define  ga_verify_handle_         ga_verify_handle__    

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.57 2003-04-22 18:57:17 d3g293 Exp $ */
+/* $Id: capi.c,v 1.58 2003-07-23 14:44:42 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -355,6 +355,31 @@ void GA_Merge_mirrored(int g_a)
 {
     Integer a=(Integer)g_a;
     ga_merge_mirrored_(&a);
+}
+
+int GA_Is_mirrored(int g_a)
+{
+    Integer a=(Integer)g_a;
+    return (int)ga_is_mirrored_(&a);
+}
+
+int NGA_Num_shmem_seg(int g_a)
+{
+    Integer a=(Integer)g_a;
+    return (int)nga_num_shmem_seg_(&a);
+}
+
+void NGA_Get_shmem_block(int g_a, int nblock, int *lo, int *hi)
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    Integer nn=(Integer)nblock;
+
+    nga_num_shmem_seg_(&a, &nn, _ga_alo, _ga_ahi);
+
+    COPYINDEX_F2C(_ga_lo, lo, ndim);
+    COPYINDEX_F2C(_ga_hi, hi, ndim);
+    return;
 }
 
 void NGA_Merge_distr_patch(int g_a, int *alo, int *ahi,

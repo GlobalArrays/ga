@@ -71,6 +71,9 @@ extern void GA_Update_ghosts(int g_a);
 extern void GA_Merge_mirrored(int g_a);
 extern void NGA_Merge_distr_patch(int g_a, int alo[], int ahi[],
                                   int g_b, int blo[], int bhi[]);
+extern int GA_Is_mirrored(int g_a);
+extern int NGA_Num_shmem_seg(int g_a);
+extern void NGA_Get_shmem_block(int g_a, int nblock, int lo[], int hi[]);
 extern int NGA_Update_ghost_dir(int g_a, int dimension, int idir, int flag);
 extern void NGA_NbGet_ghost_dir(int g_a, int mask[], Integer handle);
 extern int GA_Has_ghosts(int g_a);
