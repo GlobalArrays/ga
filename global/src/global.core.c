@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.36 1997-02-24 19:18:44 d3h325 Exp $*/
+/*eId: global.core.c,v 1.36 1997/02/24 19:18:44 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha

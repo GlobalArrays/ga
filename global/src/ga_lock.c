@@ -51,7 +51,7 @@ Integer type=MT_F_INT, nproc = ga_nnodes_(), indx;
           MA_get_pointer(Whandle, &blocked);
 
 #       endif
-        /* add 1 for simplicity since locks are numbered from 1 */
+        /* one extra element to make indexing consistent with GA */
         if(!MA_alloc_get(MT_F_INT, *num+1, "GA lock next", &Nhandle,&indx))
                  ERROR("ga_create_mutexes:error allocating memory for lock",1);
         MA_get_pointer(Nhandle, &next);

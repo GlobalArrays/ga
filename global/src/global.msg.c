@@ -956,7 +956,7 @@ void ga_dgop(type, x, n, op)
 #       ifdef MPI
             ga_dgop_clust(type, x, n, op, ALL_GRP);
 #       else
-            dgop_(&type, x, &n, op, (Integer)strlen(op));
+            dgop_(&type, x, &n, op);
 #       endif
 #       if defined(SP1) || defined(SP)
             ga_msg_sync_();
@@ -1043,7 +1043,6 @@ void ga_igop(type, x, n, op)
      char *op;
 {
      void igop_();
-
      if(ClusterMode){
 #       ifdef IWAY
            ga_sync_();
@@ -1062,7 +1061,7 @@ void ga_igop(type, x, n, op)
 #       ifdef MPI
             ga_igop_clust(type, x, n, op, ALL_GRP);
 #       else
-            igop_(&type, x, &n, op, (Integer)strlen(op));
+            igop_(&type, x, &n, op);
 #       endif
 #       if defined(SP1) || defined(SP)
             ga_msg_sync_();
