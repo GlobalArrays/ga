@@ -33,9 +33,9 @@ ifeq ($(MACHINE),CRAY-T3D)
        FC = cf77
   DEFINES = -DCRAY_T3D -DCRAY -DSHMEM
  INCLUDES = -I.
-   FFLAGS =  -Ccray-t3d -g -Wf-dp 
+   FFLAGS =  -Ccray-t3d -g -Wf"-dp -ojump"
 #  CFLAGS = -g $(DEFINES) $(INCLUDES) -Wl"-Drdahead=on"
-   CFLAGS = -O3 -h inline3 $(DEFINES) $(INCLUDES)
+   CFLAGS = -O3 -h inline3 $(DEFINES) $(INCLUDES) -Tcray-t3d -hjump
      LOPT = -Wl"-Drdahead=on"
 # -happrentice
     EXTRA = t3d.o snd_rcv_probe.o

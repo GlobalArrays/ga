@@ -107,8 +107,8 @@ ifeq ($(TARGET),CRAY-T3D)
  ifeq ($(COPT),-O)
          COPT = -O2
  endif
-     FOPT_REN = -Ccray-t3d -Wf-dp
-     COPT_REN = -h inline3 
+     FOPT_REN = -Ccray-t3d -Wf"-dp -ojump"
+     COPT_REN = -h inline3 -hjump
       FLD_REN = -Wl"-Drdahead=on -Ddalign=64"
       CLD_REN = -Wl"-Drdahead=on -Ddalign=64"
  GLOB_DEFINES = -DCRAY_T3D
