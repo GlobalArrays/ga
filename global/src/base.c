@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.35 2003-02-25 23:04:25 d3g293 Exp $ */
+/* $Id: base.c,v 1.36 2003-02-26 22:42:48 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2499,6 +2499,8 @@ void FATR ga_mask_sync_(Integer *begin, Integer *end)
   else _ga_sync_end = 0;
 }
 
+/*\ utility function to tell whether or not an array is mirrored
+\*/
 logical FATR ga_is_mirrored_(Integer *g_a)
 {
   Integer ret = FALSE;
@@ -2510,6 +2512,8 @@ logical FATR ga_is_mirrored_(Integer *g_a)
   return ret;
 }
 
+/*\ merge all copies of a mirrored array by adding them together
+\*/
 void FATR ga_merge_mirrored_(Integer *g_a)
 {
   Integer handle = GA_OFFSET + *g_a;
@@ -2520,8 +2524,12 @@ void FATR ga_merge_mirrored_(Integer *g_a)
   Integer nelem, count, type, size, atype;
   char *zptr, *bptr, *nptr;
   Integer bytes, total;
+  int local_sync_begin, local_sync_end;
 
   GA_PUSH_NAME("ga_merge_mirrored");
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
+  if (local_sync_begin) ga_sync_();
   /* don't perform update if node is not mirrored */
   if (!ga_is_mirrored_(g_a)) ga_error("Array is not mirrored",GAme);
 
@@ -2599,5 +2607,6 @@ void FATR ga_merge_mirrored_(Integer *g_a)
     /* now that gap data has been zeroed, do a global sum on data */
     armci_msg_gop_scope(SCOPE_MASTERS, zptr, total, "+", atype);
   } 
+  if (local_sync_end) ga_sync_();
   GA_POP_NAME;
 }
