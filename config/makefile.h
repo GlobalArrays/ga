@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.95 2003-12-11 03:34:32 edo Exp $
+# $Id: makefile.h,v 1.96 2003-12-13 01:23:35 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -192,7 +192,6 @@ ifeq ($(TARGET),MACX)
            CC = gcc
            FC = g77
        RANLIB = ranlib
- GLOB_DEFINES += -DLINUX
 
 ifneq (,$(findstring mpif,$(_FC)))
          _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; exit } ' )
@@ -216,7 +215,7 @@ endif
 
 ifeq ($(FC),xlf)
      FOPT_REN += -q32  -qextname
-GLOB_DEFINES += -DXLFLINUX -DEXTNAME
+GLOB_DEFINES += -DXLFMAC -DEXTNAME
 endif
 
 endif
