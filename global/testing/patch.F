@@ -1,4 +1,4 @@
-c $Id: patch.F,v 1.16 2000-05-25 01:09:20 d3h325 Exp $
+c $Id: patch.F,v 1.17 2000-09-12 18:29:47 d3h325 Exp $
 #if defined(CRAY) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
@@ -6,8 +6,8 @@ c $Id: patch.F,v 1.16 2000-05-25 01:09:20 d3h325 Exp $
 #   define xgemm DGEMM
 #   define ygemm ZGEMM
 #endif
-#ifdef FUJITSU
-# define THRESH  1.0d-12
+#if defined(FUJITSU) || defined(CRAY_YMP)
+# define THRESH  1.0d-10
 #else
 # define THRESH  1.0d-20
 #endif
@@ -66,11 +66,12 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
+#include "testutil.fh"
 c
       integer n,m
       parameter (n = 128)
       parameter (m = n*n)
-      double precision a(n,n), b(n,n), c(n,n), buf(m), drand, val
+      double precision a(n,n), b(n,n), c(n,n), buf(m), val
       double precision alpha, beta
       integer nproc, me 
       integer i, j, ailo, ajlo, bilo, bjlo, base, iran
@@ -78,7 +79,7 @@ c
       integer g_a, g_b, g_c 
       integer rows, cols, loop
       logical status, dist_same 
-      iran(i) = int(drand(0)*real(i)) + 1
+      iran(i) = int(util_drand(0)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -503,6 +504,7 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
+#include "testutil.fh"
 c
       integer n,m
       parameter (n = 128)
@@ -516,7 +518,7 @@ c
       integer rows, cols, loop
       logical status, dist_same 
       double precision drand
-      iran(i) = int(drand(0)*real(i)) + 1
+      iran(i) = int(util_drand(0)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()

@@ -1,10 +1,11 @@
-c $Id: ndim.F,v 1.5 2000-05-25 01:09:19 d3h325 Exp $
+c$Id: ndim.F,v 1.6 2000-09-12 18:29:45 d3h325 Exp $
 #define  MAXLOOP 100
 
       program test
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
+#include "testutil.fh"
       integer nproc
       logical status
 c
@@ -53,6 +54,7 @@ c-----------------
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
+#include "testutil.fh"
 c     
       integer n
       integer ndim
@@ -65,7 +67,7 @@ c
       integer chunk(ndim), dims(ndim), adims(ndim), ld(ndim)
       logical status, compare_patches
       integer count_elems
-      double precision drand,crap,alpha
+      double precision crap,alpha
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -190,7 +192,7 @@ c
       call ifill_array(lop,ndim,1)
       call ifill_array(hip,ndim,n-1)
       call random_range(lop,hip,lo,hi,ndim)
-      crap = drand(1)
+      crap = util_drand(1)
       maxloop = 10
       alpha = .1d0 ! alpha must be 1/maxloop
       call ga_sync()
@@ -219,6 +221,7 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
+#include "testutil.fh"
 c     
       integer n
       integer ndim
@@ -231,7 +234,7 @@ c
       integer chunk(ndim), dims(ndim), ld(ndim)
       logical status, compare_patches
       integer count_elems
-      double precision drand,crap,alpha
+      double precision crap,alpha
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -359,7 +362,7 @@ c
       call ifill_array(lop,ndim,1)
       call ifill_array(hip,ndim,n)
       call random_range(lop,hip,lo,hi,ndim)
-      crap = drand(1)
+      crap = util_drand(1)
       maxloop = 10
       alpha = .1d0 ! alpha must be 1/maxloop
       call ga_sync()
@@ -391,10 +394,10 @@ c
 
       subroutine random_range(lo,hi,lop,hip,ndim)
       implicit none
+#include "testutil.fh"
       integer lo(1),hi(1),lop(1),hip(1),ndim
       integer i, range, swap, val,iran
-      double precision drand
-      iran(range) = int(drand(0)*dble(range)) + 1
+      iran(range) = int(util_drand(0)*dble(range)) + 1
 c     iran(range) = range/2 
       do i = 1, ndim
          range = hi(i)-lo(i)+1
@@ -441,6 +444,7 @@ c     iran(range) = range/2
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
+#include "testutil.fh"
 c     
       integer n
       parameter (n = 5)
