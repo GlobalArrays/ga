@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.43 2002-01-08 21:56:49 vinod Exp $
+/* $Id: myrinet.c,v 1.44 2002-01-09 17:22:37 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -647,15 +647,11 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     int s         = armci_clus_id(proc);
     int serv_mpi_id = armci_clus_info[s].master;
     request_header_t *msginfo = (request_header_t *)vbuf;
-<<<<<<< myrinet.c
-    armci_gm_context_t *context = ((armci_gm_context_t *)buf)-1;
-=======
     armci_gm_context_t *context;
     MPI_Status status;
     int flag;
     context= BUF_TO_EVBUF(buf);
     
->>>>>>> 1.39.2.3
     /* set the message tag */
     msginfo->tag.data_ptr = buf + sizeof(request_header_t) - sizeof(long);
     msginfo->tag.ack = ARMCI_GM_CLEAR;
