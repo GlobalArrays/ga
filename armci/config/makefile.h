@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.110 2004-09-30 02:07:50 edo Exp $
+#$Id: makefile.h,v 1.111 2005-01-14 03:11:24 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -190,6 +190,7 @@ ifeq  ($(_CPU),ia64)
   ifeq ($(_CC),gcc)
       COPT_NO = -g -O0
       COPT= -O0 -g
+      COPT_REN += -Wall
   endif
   ifeq ($(_CC),ecc)
      COPT_REN= -w1 #-fno-alias    
