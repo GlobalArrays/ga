@@ -35,6 +35,12 @@ ifeq ($(FC),g77)
     FOPT_REN += -funroll-loops -fomit-frame-pointer
    endif
 endif      
+ifeq ($(FC),pgf77)
+ MAKEFLAGS += FC=pgf77
+ FOPT_REN = -Mdalign -Mnolist -Minform,warn -Minfo=loop -Munixlogical
+ FOPT = -O2 -Mvect
+ GLOB_DEFINES+= -DPGLINUX
+endif
        RANLIB = ranlib
 endif
 
