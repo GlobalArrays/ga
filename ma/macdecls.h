@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.12 2000-10-13 23:18:18 d3h325 Exp $
+ * $Id: macdecls.h,v 1.13 2000-10-25 18:08:06 edo Exp $
  */
 
 /* 
@@ -54,7 +54,7 @@ extern Boolean MA_alloc_get(
 extern Boolean MA_allocate_heap(
     Integer     datatype,       /* of elements in this block */
     Integer     nelem,          /* # of elements in this block */
-    char        *name,          /* assigned to this block by client */
+    const char        *name,          /* assigned to this block by client */
     Integer     *memhandle      /* RETURN: handle for this block */ );
 extern Boolean MA_chop_stack(Integer memhandle);
 extern Boolean MA_free_heap(Integer memhandle);

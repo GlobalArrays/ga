@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.25 2000-10-13 23:18:17 d3h325 Exp $
+ * $Id: ma.c,v 1.26 2000-10-25 18:08:05 edo Exp $
  */
 
 /*
@@ -1894,7 +1894,7 @@ public Boolean MA_alloc_get(
 public Boolean MA_allocate_heap(
     Integer	datatype,	/* of elements in this block */
     Integer	nelem,		/* # of elements in this block */
-    char	*name,		/* assigned to this block by client */
+    const char	*name,		/* assigned to this block by client */
     Integer	*memhandle	/* RETURN: handle for this block */ )
 {
     AR		ar;		/* allocation request */
