@@ -96,7 +96,7 @@ extern void FATR ga_copy_   ARGS_((Integer *, Integer *));
 extern void FATR ga_print_  ARGS_((Integer *));
 extern void FATR ga_print_stats_();
 extern void FATR ga_zero_   ARGS_((Integer *));
-extern void FART ga_fill_   ARGS_((Integer *, void *));
+extern void FATR ga_fill_   ARGS_((Integer *, void *));
 extern void FATR ga_scale_  ARGS_((Integer *, void *));
 extern void FATR ga_add_   ARGS_((Void *, Integer *, Void *,                                Integer *, Integer *));
 extern Integer FATR ga_idot_ ARGS_((Integer *, Integer *));
