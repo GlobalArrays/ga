@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.71 2002-09-17 16:46:18 vinod Exp $
+# $Id: makefile.h,v 1.72 2002-09-21 17:45:08 vinod Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -598,6 +598,9 @@ endif
  
 ifdef GA_USE_VAMPIR
    GLOB_DEFINES += -DGA_USE_VAMPIR
+   ifdef VT_DEBUG
+      GLOB_DEFINES += -DVT_DEBUG
+   endif
 endif
 #
 #.............................. final flags ....................................
@@ -780,7 +783,11 @@ ifdef USE_MPI
   endif
   ifdef GA_USE_VAMPIR
       ifdef VT_PATH
-         LIBS += -ltcgmsg-mpi $(VT_PATH) -lVT $(LIBMPI)
+         ifdef VT_LIB
+            LIBS += -ltcgmsg-mpi $(VT_PATH) $(VT_LIB) $(LIBMPI)
+         else
+            LIBS += -ltcgmsg-mpi $(VT_PATH) -lVT $(LIBMPI)
+         endif
       else
          echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
       endif
@@ -793,7 +800,11 @@ else
   else
     ifdef GA_USE_VAMPIR
       ifdef VT_PATH
-         LIBS += -ltcgmsg $(VT_PATH) -lVT -lmpi
+         ifdef VT_LIB
+            LIBS += -ltcgmsg $(VT_PATH) $(VT_LIB) -lmpi
+         else
+            LIBS += -ltcgmsg $(VT_PATH) -lVT -lmpi
+         endif
       else
          echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
       endif

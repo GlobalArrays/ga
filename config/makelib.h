@@ -1,15 +1,5 @@
 # Include file for makefiles in individual subdirectories 
 
-ifdef GA_USE_VAMPIR
-   ifdef VT_INCLUDE
-      ifdef HEADERS
-         HEADERS += $(VT_INCLUDE)
-      endif
-   else
-      echo "Setenv VT_INCLUDE to the absolute filename of VT.h"
-   endif
-endif
-
 # LIBDIR defines where the libraries should be built.
 # LIB_DISTRIB defines default location for the GA distribution package
 # when built as a standalone package.
