@@ -703,11 +703,16 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
     GA_PUSH_NAME("nga_fill_patch");
     
     nga_inquire_(g_a,  &type, &ndim, dims);
-    
+
+    /* get limits of VISIBLE patch */ 
     nga_distribution_(g_a, &me, loA, hiA);
     
-    /*  determine subset of my patch to access  */
+    /*  determine subset of my local patch to access  */
+    /*  Output is in loA and hiA */
     if(ngai_patch_intersect(lo, hi, loA, hiA, ndim)){
+
+        /* get data_ptr to corner of patch */
+        /* ld are leading dimensions INCLUDING ghost cells */
         nga_access_ptr(g_a, loA, hiA, &data_ptr, ld);
  
         /* number of n-element of the first dimension */
@@ -1147,10 +1152,10 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
         case MT_F_INT:
             valptr = (void *)(&ival);
             break;
-        case MT_F_DCPL:
+        case MT_F_DBL:
             valptr = (void *)(&dval);
             break;
-        case MT_F_DBL:
+        case MT_F_DCPL:
         {
             cval.real = 0.0; cval.imag = 0.0;
             valptr = (void *)(&cval);
@@ -1162,7 +1167,6 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
         
         default: ga_error(" wrong data type ",type);
     }
-    
     nga_fill_patch_(g_a, lo, hi, valptr);
     
     GA_POP_NAME;
