@@ -117,8 +117,7 @@ ifeq ($(_FC),sgif90)
 endif
 ifeq ($(_FC),efc)
 FOPT =  -O3 -hlo -pad
-FOPT_REN= -w1
-GLOB_DEFINES= -DIFCLINUX 
+FOPT_REN= -w1 -cm -w90
 endif
 endif
 ifeq  ($(_CPU),alpha)
@@ -126,8 +125,8 @@ ifeq  ($(_CPU),alpha)
      CC = ccc
      FOPT_REN = -assume no2underscore -fpe3 -check nooverflow
      FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
-     EXTRA_OBJ = tas.o
 endif
+     EXTRA_OBJ = tas.o
    
 endif
 #----------------------------- Fujitsu ------------------------------
