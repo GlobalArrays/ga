@@ -36,15 +36,6 @@ GLOB_INCLUDES = -I../../ma
   CUR_VERSION = SHMEM
         MKDIR = mkdir
 
-
-ifdef NWCHEM_TOP
-     TOPDIR = $(NWCHEM_TOP)
-     LIBDIR = $(TOPDIR)/lib/$(TARGET)
-     BINDIR = $(TOPDIR)/bin/$(TARGET)
-     INCDIR = $(TOPDIR)/src/include
-     CNFDIR = $(TOPDIR)/src/config
-endif
-
 ifeq ($(GA_TRACE), YES)
     DEF_TRACE = -DGA_TRACE
 endif
@@ -227,10 +218,10 @@ ifeq ($(TARGET),SGI_N32)
  FOPT_REN = -n32 -mips4
 
 #optimization flags for R8000 (IP21)
- FOPT_8K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000:fprop_limit=2000 -TENV:X=3 -WK,-so=1,-o=1,-r=3,-dr=AKC
+ FOPT_8K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=3 -WK,-so=1,-o=1,-r=3,-dr=AKC
 
 #optimization flags for R10000 (IP28)
- FOPT_10K = -O3 -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000:fprop_limit=2000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
+ FOPT_10K = -O3 -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
 
 ifeq ($(TARGET_CPU),R10000)
  FOPT_REN += $(FOPT_10K)
@@ -254,13 +245,14 @@ ifeq ($(TARGET),SGITFP)
          FOPT = -O3
  endif
         CDEFS = -DEXT_INT
-     FOPT_REN = -i8 -align64
+     FOPT_REN = -i8 -align64 -64
+     COPT_REN = -64
 
 #optimization flags for R8000 (IP21)
- FOPT_8K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000:fprop_limit=2000 -TENV:X=3 -WK,-so=1,-o=1,-r=3,-dr=AKC
+ FOPT_8K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=3 -WK,-so=1,-o=1,-r=3,-dr=AKC
 
 #optimization flags for R10000 (IP28)
- FOPT_10K = -O3 -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000:fprop_limit=2000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
+ FOPT_10K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
 
 ifeq ($(TARGET_CPU),R10000)
  FOPT_REN += $(FOPT_10K)
@@ -336,7 +328,7 @@ ifeq ($(TARGET),SP)
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP -DEXTNAME -DAIX
-      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
+      FLD_REN = -b rename:.dgemm_,.dgemm -b rename:.zgemm_,.zgemm
 
 # need to strip symbol table to alleviate a bug in AIX 4.1 ld
 define AIX4_RANLIB
@@ -385,7 +377,7 @@ ifeq ($(TARGET),IBM)
        RANLIB = ranlib
  GLOB_DEFINES = -DEXTNAME -DAIX
      FOPT_REN = -qEXTNAME 
-      FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
+      FLD_REN = -b rename:.dgemm_,.dgemm -b rename:.zgemm_,.zgemm
     EXPLICITF = TRUE
 endif
 #
