@@ -1119,8 +1119,8 @@ void armci_write_strided2(void *ptr, int stride_levels, int stride_arr[],
     
     if(stride_levels == 0){
        armci_copy( ptr, buf, count[0]);
-    }else if (count[0]%ALIGN_SIZE || (unsigned long)ptr%ALIGN_SIZE)
-              armci_write_strided(ptr,stride_levels, stride_arr,count,buf);
+    }else if (count[0]%ALIGN_SIZE || (unsigned long)ptr%ALIGN_SIZE ) 
+              armci_write_strided1(ptr,stride_levels, stride_arr,count,buf);
           else {
              int rows, ld, idx, ldd;
              char *src;
@@ -1207,8 +1207,8 @@ void armci_read_strided2(void *ptr, int stride_levels, int stride_arr[],
    
     if(stride_levels == 0){
        armci_copy( buf, ptr, count[0]);
-    }else if (count[0]%ALIGN_SIZE || (unsigned long)ptr%ALIGN_SIZE)
-              armci_read_strided(ptr,stride_levels, stride_arr,count,buf);
+    }else if (count[0]%ALIGN_SIZE || (unsigned long)ptr%ALIGN_SIZE) 
+              armci_read_strided1(ptr,stride_levels, stride_arr,count,buf);
           else {
              int rows, ld, idx, ldd;
              char *src;
