@@ -161,7 +161,7 @@ $(patsubst %,$(LIBRARY_PATH)(%),evlog.o): sndrcv.h evlog.h
 test.isend.o: sndrcv.h
 hello.o: sndrcv.h
 pvm.o: sndrcv.h
-
+test.x: $(LIBRARY_PATH)
 
 
 
