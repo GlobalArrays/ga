@@ -1,11 +1,11 @@
-/* $Id: strided.c,v 1.12 1999-10-14 00:18:51 d3h325 Exp $ */
+/* $Id: strided.c,v 1.13 1999-10-18 18:52:20 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
 #include "memlock.h"
 #include <stdio.h>
 
-#if defined(SGI_N32) || defined(SGI) || defined(FUJITSU)
+#if defined(SGI_N32) || defined(SGI) || defined(FUJITSU) ||defined(HPUX)
 #   define PTR_ALIGN  
 #endif
 
