@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.66 2003-04-02 01:36:07 d3h325 Exp $ */
+/* $Id: strided.c,v 1.67 2003-04-02 20:56:32 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -380,7 +380,7 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
      if(!nb_handle)
 #   endif
     {
-       if(proc != armci_me){
+       if(!(SAMECLUSNODE(proc)){
           if(op == GET){
             WAIT_FOR_GETS; /* wait for data arrival */
           }else { 
