@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.96 2003-12-13 01:23:35 d3h325 Exp $
+# $Id: makefile.h,v 1.97 2003-12-31 00:59:27 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -626,20 +626,23 @@ endif
 
 ifeq ($(TARGET),NEC)
 #
+#    on SX-6 we must use c++ compiler and cc on SX-5
+     CC = c++
      FC = f90
      ifeq ($(FOPT), -O)
-         FOPT = -Cvopt -Wf"-pvctl nomsg"
+         FOPT = -Cvopt -Wf"-pvctl nomsg noassume vwork=stack"
      endif
      ifeq ($(COPT), -O)
-         COPT = -O nomsg -pvctl,nomsg
+         COPT = -O nomsg -pvctl,nomsg -Xa
      endif
      CLD = $(FC) -size_t64
      LINK.c = $(CLD)
      FLD_REN  = -size_t64
 #     COPT_REN = -hsize_t64
-     FOPT_REN = -ew
-     CDEFS    = -hsize_t64 -DEXT_INT
-     CLIBS    = -li90sxe
+     FOPT_REN = -ew -size_t64
+     CDEFS    = -size_t64 -DEXT_INT
+#    CLIBS    = -li90sxe
+     CLIBS    = -f90libew
      LIBBLAS = -lblas
      HAS_BLAS = yes
 endif
