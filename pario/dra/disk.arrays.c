@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.73 2005-01-20 21:35:34 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.74 2005-01-24 12:27:18 manoj Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -2597,7 +2597,7 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
     if (ga_nodeid_() == 0) {
       printf("WARNING: Number of files requested exceeds number of\n");
       printf("processors. Value is reset to number of processors: %d\n",
-              ga_nnodes_());
+              (int)ga_nnodes_());
     }
     *number_of_files = ga_nnodes_();
   }
@@ -2606,7 +2606,7 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
       if (ga_nodeid_() == 0) {
         printf("WARNING: Number of IO processors is not equal to the\n");
         printf("number of files requested. Number of IO processors\n");
-        printf("is reset to number of files: %d\n",*number_of_files);
+        printf("is reset to number of files: %d\n",(int)*number_of_files);
       }
       *io_procs = *number_of_files;
     }
@@ -2617,7 +2617,7 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
         printf("WARNING: Number of requested IO processors\n");
         printf("exceeds number of available processors. Number of IO\n");
         printf("processors reset to the number of available processors %d\n",
-               ga_nnodes_());
+               (int)ga_nnodes_());
       }
       *io_procs = ga_nnodes_();
     }
@@ -2626,7 +2626,7 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
     if (ga_nodeid_() == 0) {
       printf("WARNING: Number of files is greater than\n");
       printf("number of IO processors. Number of files reset to number of\n");
-      printf("IO processors: %d",*io_procs);
+      printf("IO processors: %d",(int)*io_procs);
     }
     *number_of_files = *io_procs;
   }
@@ -3190,17 +3190,17 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
   ds_chunk =  ds_unlg = ds_a;
   if (dra_debug_flag && 0) {
     for (i=0; i<ndim; i++) {
-      printf("ndai_transfer_unlgn: ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
-      printf("ndai_transfer_unlgn: ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
+      printf("ndai_transfer_unlgn: ds_chunk.lo[%d] = %d\n",(int)i,(int)ds_chunk.lo[i]);
+      printf("ndai_transfer_unlgn: ds_chunk.hi[%d] = %d\n",(int)i,(int)ds_chunk.hi[i]);
     }
     printf("ndai_transfer_unlgn: number of unaligned chunks = %d\n",
         Requests[req].nu);
     for (j=0; j<Requests[req].nu; j++) {
       for (i=0; i<ndim; i++) {
         printf("ndai_transfer_unlgn: list_cover[%d][%d] = %d\n",
-            j,2*i,Requests[req].list_cover[j][2*i]);
+            (int)j,(int)(2*i),(int)Requests[req].list_cover[j][2*i]);
         printf("ndai_transfer_unlgn: list_cover[%d][%d] = %d\n",
-            j,2*i+1,Requests[req].list_cover[j][2*i+1]);
+            (int)j,(int)(2*i+1),(int)Requests[req].list_cover[j][2*i+1]);
       }
     }
   }
@@ -3244,12 +3244,12 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
 
         if (dra_debug_flag && 0) {
           for (i=0; i<ndim; i++) {
-            printf("ndai_transfer_unlgn: ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
-            printf("ndai_transfer_unlgn: ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
+            printf("ndai_transfer_unlgn: ds_chunk.lo[%d] = %d\n",(int)i,(int)ds_chunk.lo[i]);
+            printf("ndai_transfer_unlgn: ds_chunk.hi[%d] = %d\n",(int)i,(int)ds_chunk.hi[i]);
           }
           for (i=0; i<ndim; i++) {
-            printf("ndai_transfer_unlgn: ds_unlg.lo[%d] = %d\n",i,ds_unlg.lo[i]);
-            printf("ndai_transfer_unlgn: ds_unlg.hi[%d] = %d\n",i,ds_unlg.hi[i]);
+            printf("ndai_transfer_unlgn: ds_unlg.lo[%d] = %d\n",(int)i,(int)ds_unlg.lo[i]);
+            printf("ndai_transfer_unlgn: ds_unlg.hi[%d] = %d\n",(int)i,(int)ds_unlg.hi[i]);
           }
         }
             
@@ -3334,10 +3334,10 @@ void ndai_transfer_algn(int opcode, int transp,
 
     while(ndai_next_chunk(req, Requests[req].list_algn[next], &ds_chunk)){
       if (dra_debug_flag && 0) { 
-        printf("ndai_transfer_algn: Request %d\n",req);
+        printf("ndai_transfer_algn: Request %d\n",(int)req);
         for (i=0; i<ndim; i++) {
-          printf("ndai_transfer_algn: ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
-          printf("ndai_transfer_algn: ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
+          printf("ndai_transfer_algn: ds_chunk.lo[%d] = %d\n",(int)i,(int)ds_chunk.lo[i]);
+          printf("ndai_transfer_algn: ds_chunk.hi[%d] = %d\n",(int)i,(int)ds_chunk.hi[i]);
         }
       }
 
@@ -3582,12 +3582,12 @@ section_t d_sect, g_sect;
 
    if (dra_debug_flag) {
      for (i=0; i<ndim; i++) {
-       printf("proc[%d] ndra_read_section: dlo[%d] = %d\n",me,i,dlo[i]);
-       printf("proc[%d] ndra_read_section: dhi[%d] = %d\n",me,i,dhi[i]);
+       printf("proc[%d] ndra_read_section: dlo[%d] = %d\n",(int)me,(int)i,(int)dlo[i]);
+       printf("proc[%d] ndra_read_section: dhi[%d] = %d\n",(int)me,(int)i,(int)dhi[i]);
      }
      for (i=0; i<ndim; i++) {
-       printf("proc[%d] ndra_read_section: glo[%d] = %d\n",me,i,glo[i]);
-       printf("proc[%d] ndra_read_section: ghi[%d] = %d\n",me,i,ghi[i]);
+       printf("proc[%d] ndra_read_section: glo[%d] = %d\n",(int)me,(int)i,(int)glo[i]);
+       printf("proc[%d] ndra_read_section: ghi[%d] = %d\n",(int)me,(int)i,(int)ghi[i]);
      }
    }
 
@@ -3609,15 +3609,15 @@ section_t d_sect, g_sect;
          Requests[*request].nu);
      for (i=0; i<2*ndim; i++) {
        printf("ndra_read_section: list_algn[%d] =  %d\n",
-           i,Requests[*request].list_algn[0][i]);
+           (int)i,(int)Requests[*request].list_algn[0][i]);
      }
      for (i=0; i<2*ndim; i++) {
        printf("ndra_read_section: list_cover[%d] =  %d\n",
-           i,Requests[*request].list_cover[0][i]);
+           (int)i,(int)Requests[*request].list_cover[0][i]);
      }
      for (i=0; i<2*ndim; i++) {
-       printf("ndra_read_section: list_unlgn[%d] =  %d\n",i,
-           Requests[*request].list_unlgn[0][i]);
+       printf("ndra_read_section: list_unlgn[%d] =  %d\n",(int)i,
+           (int)Requests[*request].list_unlgn[0][i]);
      } 
    }
 
