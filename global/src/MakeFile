@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.10 1999-11-18 19:52:40 d3h325 Exp $
+#	$Id: MakeFile,v 1.11 1999-11-18 20:10:02 d3h325 Exp $
 #
 
 OBJDIR=.\obj
@@ -29,7 +29,6 @@ OBJ      = $(OBJDIR)\global.armci.obj \
         $(OBJDIR)\capi.obj \
         $(OBJDIR)\rs-mod.obj \
         $(OBJDIR)\ga_symmetr.obj\
-        $(OBJDIR)\ga_summarize.obj \
         $(OBJDIR)\ga_diag_seq.obj\
         $(OBJDIR)\ga_solve_seq.obj\
         $(OBJDIR)\ga_dgemm.obj\
