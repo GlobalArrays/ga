@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.1 1996-07-17 15:27:52 mogill Exp $
+#$Id: makefile,v 1.2 1996-07-17 15:57:18 mogill Exp $
 #
 # Parent makefile for ChemIO in NWChem tree
 #
