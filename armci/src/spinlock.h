@@ -1,9 +1,9 @@
 #if defined(LINUX)
 
-#if defined(__i386__) || defined(__alpha) 
+#if defined(__i386__) || defined(__alpha) || defined(__ia64)
 #  define SPINLOCK 
 #  if defined(__GNUC__)
-#     ifdef __i386__
+#     if defined(__i386__) || defined(__ia64)
 #          include "tas-i386.h"
 #     else
 #          include "tas-alpha.h"

@@ -1,7 +1,9 @@
 #ifdef __alpha
 # include "tas-alpha.h"
-#elif defined(__i386__)
+#elif defined(__i386__) 
 # include "tas-i386.h"
+#elif defined(__ia64)
+# include "tas-ia64.h"
 #else
   int testandset(int *spinlock)
   {
