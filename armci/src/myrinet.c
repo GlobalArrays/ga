@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.36 2001-11-09 01:31:07 vinod Exp $
+/* $Id: myrinet.c,v 1.37 2001-11-21 23:38:22 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -109,7 +109,7 @@ typedef struct {
 /***************/
 
 /****************added for put pipeline*****************/
-#define NUMOFSNDBUFS 3 
+#define NUMOFSNDBUFS 2 
 int pipelinebufferindex=0;
 char *MultiMessageSndBuffer[NUMOFSNDBUFS];
 void (*callbacks[NUMOFSNDBUFS])(struct gm_port *port, void *context,gm_status_t status);
@@ -720,16 +720,16 @@ char *armci_ReadFromDirect(int proc, request_header_t * msginfo, int len)
 /* preallocate required memory at the startup */
 int armci_gm_serv_mem_alloc()
 {
-    int i;
+    int i,j=0,k=0;
     int armci_gm_max_msg_size = gm_min_size_for_length(MSG_BUFLEN);
     int short_msg_size = gm_min_size_for_length(SHORT_MSGLEN);
-    
+    int numofrcvbufs = NUMRCVBUFS; 
     /********************** get local unregistered memory *******************/
     /* allocate dma buffer for low priority */
     serv_gm->dma_buf = (void **)malloc(armci_gm_max_msg_size * sizeof(void *));
     if(!serv_gm->dma_buf)return FALSE;
     
-    serv_gm->dma_buf_short = (void **)malloc(short_msg_size * sizeof(void *));
+    serv_gm->dma_buf_short = (void **)malloc((numofrcvbufs- armci_gm_max_msg_size+ 2*(ARMCI_GM_MIN_MESG_SIZE-1))*sizeof(void *));
     if(!serv_gm->dma_buf_short)return FALSE;
 
     /* allocate buf for keeping the pointers of client MessageSndbuffer */
@@ -751,6 +751,22 @@ int armci_gm_serv_mem_alloc()
                                         gm_max_length_for_size(i));
         if(!serv_gm->dma_buf_short[i]) return FALSE;
     }
+#ifdef MEM_UNIFORM_HIGH
+    for(j=ARMCI_GM_MIN_MESG_SIZE; i<=numofrcvbufs-armci_gm_max_msg_size+2*(ARMCI_GM_MIN_MESG_SIZE-1);j++,i++){
+	serv_gm->dma_buf_short[i] = (char *)gm_dma_malloc(serv_gm->rcv_port,
+                                        gm_max_length_for_size(j));
+        if(!serv_gm->dma_buf_short[i]) return FALSE;
+    } 
+#endif
+#ifdef MEM_NONUNIFORM_HIGH
+    for(j=ARMCI_GM_MIN_MESG_SIZE; i<=numofrcvbufs-armci_gm_max_msg_size+2*(ARMCI_GM_MIN_MESG_SIZE-1);j++){
+	for(k=0;k<armci_gm_max_msg_size-j-2;k++){
+            serv_gm->dma_buf_short[i] = (char *)gm_dma_malloc(serv_gm->rcv_port,
+                                        gm_max_length_for_size(j));
+            if(!serv_gm->dma_buf_short[i++]) return FALSE;
+	}
+    }
+#endif
 
     /* allocate ack buffer for each client process */
     serv_gm->ack = (long *)gm_dma_malloc(serv_gm->rcv_port,
@@ -878,19 +894,42 @@ static int armci_get_free_port(int ports, int boards, struct gm_port **p)
    }
    return(-1);     
 }
+int count_sizevar1=12,count_sizevar2=0;          
+int getsizeforbuffer(int i,unsigned int min_mesg_size,unsigned int max_mesg_size,int *tag_xtra){
+    int sizevar = 0;
+#ifdef MEM_UNIFORM_HIGH 
+	if(i<20)return(i);
+	else {*tag_xtra=TAG_SHORT+1;return(i%20+min_mesg_size);}    
+#elif defined(MEM_NONUNIFORM_HIGH)
+	if(i<20) return(i);
+	else {
+	   
+	   count_sizevar2++;
+	   *tag_xtra = TAG_SHORT+count_sizevar2;
+	   if(count_sizevar2 == count_sizevar1+1){
+		count_sizevar2=0;
+		count_sizevar1--;
+           }
+	   sizevar = max_mesg_size - 2 - count_sizevar1;	
+	   return(sizevar); 	
+	}
+#else 
+	sizevar = i;      
+	return(sizevar); 	
+#endif
           
-        
-          
+}
 
 /* initialization of server thread */
 int armci_gm_server_init() 
 {
     int i;
-    int status;
+    int status,sizevar,tag_xtra;
     
     unsigned long size_mask;
     unsigned int min_mesg_size, min_mesg_length;
     unsigned int max_mesg_size, max_mesg_length;
+    unsigned int numofrcvbufs;
  
     /* allocate gm data structure for server */
     serv_gm->node_map = (int *)malloc(armci_nproc * sizeof(int));
@@ -963,7 +1002,7 @@ int armci_gm_server_init()
     max_mesg_size = gm_min_size_for_length(MSG_BUFLEN);
     min_mesg_length = gm_max_length_for_size(min_mesg_size);
     max_mesg_length = MSG_BUFLEN;
-    
+    numofrcvbufs = NUMRCVBUFS;
     if(DEBUG_INIT_) {
         printf("%d: SERVER min_mesg_size = %d, max_mesg_size = %d\n",
                armci_me, min_mesg_size, max_mesg_size);
@@ -987,10 +1026,12 @@ int armci_gm_server_init()
                serv_gm->dma_buf[i], i, GM_LOW_PRIORITY, TAG_DFLT);
 
     /* provide the extra set of buffers for short messages */
-    for(i=min_mesg_size; i<=gm_min_size_for_length(SHORT_MSGLEN); i++)
+    tag_xtra = TAG_SHORT;
+    for(i=min_mesg_size; i<=numofrcvbufs - gm_min_size_for_length(SHORT_MSGLEN)+2*(min_mesg_size-1); i++){
+	sizevar = getsizeforbuffer(i,min_mesg_size,max_mesg_size,&tag_xtra);
         gm_provide_receive_buffer_with_tag(serv_gm->rcv_port,
-               serv_gm->dma_buf_short[i], i, GM_LOW_PRIORITY, TAG_SHORT);
-
+               serv_gm->dma_buf_short[i], sizevar, GM_LOW_PRIORITY, tag_xtra);
+    }
     if(DEBUG_ && armci_me==0)printf("provided (%d,%d) buffers, rcv tokens=%d\n",
            max_mesg_size,
            gm_min_size_for_length(SHORT_MSGLEN),
@@ -1224,7 +1265,6 @@ void armci_call_data_server()
               tag = gm_ntohc(event->recv.tag);
               length = gm_ntohl(event->recv.length);
               buf = (char *)gm_ntohp(event->recv.buffer);
-
               armci_data_server(buf);
               
               gm_provide_receive_buffer_with_tag(serv_gm->rcv_port, buf,

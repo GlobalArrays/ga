@@ -41,9 +41,19 @@ extern int _armci_bypass;
 #define INTERLEAVE_GET_THRESHOLD 524288 
 #endif
 
-#define PIPE_BUFSIZE  (16*1024 -128)
-#define PIPE_MIN_BUFSIZE 4096 
+#define PIPE_BUFSIZE  (8*1024 -128)
+#define PIPE_MIN_BUFSIZE 1024 
 #define PIPE_MEDIUM_BUFSIZE (4*8192)
+
+#define MEM_NONUNIFORM_HIGH
+
+#ifdef MEM_UNIFORM_HIGH
+#define NUMRCVBUFS 43 
+#elif defined(MEM_NONUNIFORM_HIGH)
+#define NUMRCVBUFS  108
+#else 
+#define NUMRCVBUFS 30
+#endif
 
 /* context for callback routine */
 typedef struct {
