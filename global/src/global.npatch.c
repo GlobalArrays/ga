@@ -176,8 +176,8 @@ void nga_copy_patch(char *trans,
         /* they are the same patch */
         if(ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) return;
         /* they are in the same GA, but not the same patch */
-        else
-            ga_error("arrays have to be different ", 0L);
+        else if (ngai_patch_intersect(alo, ahi, blo, bhi, andim))
+            ga_error("array patches cannot overlap ", 0L);
 
     if(atype != btype ) ga_error("array type mismatch ", 0L);
     
