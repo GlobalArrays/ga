@@ -17,7 +17,7 @@ c
          if (.not. ma_init(MT_DBL, 200000, 200000))
      $        call parerr(1)
       else
-         if (.not. ma_init(MT_DBL, 30000, 30000))
+         if (.not. ma_init(MT_DBL, 60000, 60000))
      $        call parerr(1)
       endif
 c
