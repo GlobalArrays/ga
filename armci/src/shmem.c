@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.36 2000-10-18 18:11:10 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.37 2000-11-02 22:18:26 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -41,10 +41,6 @@
  */
 #define STAMP 0
 
-#if defined(SUN) || defined(SOLARIS)
-#define MULTIPLE_REGIONS
-#endif
-
 
 #include "shmem.h"
 #include "shmalloc.h"
@@ -76,19 +72,29 @@ static  int logpagesize=0;
 /* Need to determine the max shmem segment size. There are 2 alternatives:
  * 1. use predefined SHMMAX if available or set some reasonable values, or
  * 2. trial-and-error search for a max value (default)
+ *    case a) fork a process to determine shmmax size (more accurate)
+ *    case b) search w/o forking until success (less accurate)
  */
-/* on SP cannot get return status from a child process needed to test SHMMAX */
-#if defined(LAPI) || defined(IBM) || defined(GM)
-#define NO_SHMMAX_SEARCH
+
+/* under Myrinet GM, we cannot fork */
+#if defined(GM)
+#   define SHMMAX_SEARCH_NO_FORK 
+#endif
+#if defined(LAPI) || defined(IBM) || defined(SHMMAX_SEARCH_NO_FORK)
+#   define NO_SHMMAX_SEARCH
 #endif
 
-#ifdef NO_SHMMAX_SEARCH
+/* on some platforms with tiny shmmax can try to glue multiple regions */
+#if (defined(SUN) || defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK)
+#    define MULTIPLE_REGIONS
+#endif
+
 /* Limits for the largest shmem segment are in Kilobytes to avoid passing
  * Gigavalues to shmalloc
  * the limit for the KSR is lower than SHMMAX in sys/param.h because
  * shmat would fail -- SHMMAX cannot be trusted (a bug)
  */
-#define _SHMMAX need to know the SHMMAX limit for this machine
+#define _SHMMAX 4*1024
 
 #if defined(SUN)||defined(SOLARIS)
 #  undef _SHMMAX
@@ -124,14 +130,12 @@ static  int logpagesize=0;
 #  undef _SHMMAX
 #  define _SHMMAX (((unsigned long)SHMMAX)>>10)
 #endif
-   static  unsigned long MinShmem = _SHMMAX;  
-   static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
-#else
 
-   static  unsigned long MinShmem;  
-   static  unsigned long MaxShmem;
+static  unsigned long MinShmem = _SHMMAX;  
+static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
+static  char *ptr_search_no_fork = (char*)0;
+static  int id_search_no_fork=0;
 
-#endif
 
 #ifdef LINUX
 #define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm shm %d",id);
@@ -173,7 +177,9 @@ unsigned long iptr;
 }
 #endif
 
-
+/*\ test is a shared memory region of a specified size can be allocated
+ *  return 0 (no) or 1 (yes)
+\*/
 int armci_test_allocate(long size)
 {
    char *ptr;
@@ -191,6 +197,28 @@ int armci_test_allocate(long size)
    if (((long)ptr) == -1L) return 0;
    else return 1;
 }
+
+
+/*\ try to allocate a shared memory region of a specified size; return pointer
+\*/
+static int armci_shmalloc_try(long size)
+{
+   char *ptr;
+   int id = shmget(IPC_PRIVATE, (size_t) size, (IPC_CREAT |00600));
+   if (id <0) return 0;
+
+   /* attach to segment */
+   ptr =  shmat(id, (char *) NULL, 0);
+
+   /* test pointer */
+   if (((long)ptr) == -1L) return 0;
+
+   ptr_search_no_fork = ptr;
+   id_search_no_fork = id;
+   return 1;
+}
+
+
 
 
 /* parameters that define range and granularity of search for shm segment size
@@ -250,34 +278,30 @@ long lower_bound=0;
 
 /*\ determine the max shmem segment size by halving
 \*/
-int armci_shmem_test_by_shmalloc()                          
+static int armci_shmem_test_no_fork()                          
 {
 long x;                                                     
 int  i,rc;
-long lower_bound=0;
+long lower_bound=_SHMMAX*SHM_UNIT;
+#define UBOUND_SEARCH_NO_FORK (256*SHM_UNIT*SHM_UNIT)
 
-     x = UBOUND;
+     x = UBOUND_SEARCH_NO_FORK;
      for(i=1;;i++){
-        char *temp;
 
-        shmalloc_request((unsigned)(x<<10), (unsigned)(x<<9));
-        temp = shmalloc((unsigned)x);
-        rc = (temp != (char*)0 );
+        rc = armci_shmalloc_try(x);
         if(DEBUG_)
            printf("%d:test by halving size=%ld bytes rc=%d\n",armci_me,x,rc);
 
         if(rc){
           lower_bound = x;
-          shfree(temp);
           break;
         }else{
           x >>= 1 ;
-          if(x<PAGE) break;
+          if(x<lower_bound) break;
         }
      }
 
      if(DEBUG_) printf("%ld bytes segment size, %d calls \n",lower_bound,i);
-     if(!lower_bound)return(0);
      return (int)( lower_bound>>20); /* return shmmax in mb */
 }
 
@@ -302,13 +326,12 @@ void armci_shmem_init()
 #endif
 
    if(armci_me == armci_master){
-#ifndef NO_SHMMAX_SEARCH
-        int x;
-#ifdef LAPI
-        x = armci_shmem_test();
-#else
-        x =armci_child_shmem_init();
-#endif
+#if !defined(NO_SHMMAX_SEARCH) || defined(SHMMAX_SEARCH_NO_FORK)
+#       ifdef SHMMAX_SEARCH_NO_FORK
+          int x = armci_shmem_test_no_fork();
+#       else
+          int x = armci_child_shmem_init();
+#       endif
 
         if(x<1)
           armci_die("no usable amount of shared memory available: only got \n",
@@ -741,14 +764,24 @@ size_t sz = (size_t)size;
        armci_die("Create_Shared_Region: to many regions already allocated ",0L);
 
     last_allocated = alloc_regions;
-    if ( (id = shmget(IPC_PRIVATE, sz, (IPC_CREAT | 00600))) < 0 ) {
-       fprintf(stderr,"id=%d size=%ld\n",id, size);
-       shmem_errmsg(sz);
-       armci_die("allocate: failed to create shared region ",id);
-    }
 
-    if ( (long)( (temp = shmat(id, pref_addr, 0))) == -1L){
-       armci_die("allocate: failed to attach to shared region id=",id);
+#ifdef SHMMAX_SEARCH_NO_FORK
+    if (ptr_search_no_fork){
+        temp = ptr_search_no_fork;
+        id   = id_search_no_fork;
+        ptr_search_no_fork = (char*)0; /* do not look at it again */
+    }else 
+#endif
+    {
+       if ( (id = shmget(IPC_PRIVATE, sz, (IPC_CREAT | 00600))) < 0 ) {
+          fprintf(stderr,"id=%d size=%ld\n",id, size);
+          shmem_errmsg(sz);
+          armci_die("allocate: failed to create shared region ",id);
+       }
+
+       if ( (long)( (temp = shmat(id, pref_addr, 0))) == -1L){
+          armci_die("allocate: failed to attach to shared region id=",id);
+       }
     }
 
     region_list[alloc_regions].addr = temp;
