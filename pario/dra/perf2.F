@@ -59,17 +59,17 @@ c
 #include "global.fh"
 #include "tcgmsg.fh"
 #include "dra.fh"
-      integer n,m,ndim
-      parameter (n=5000, ndim=2)
+      integer n,m
+      parameter (n=5000)
       parameter (m = 2*n)
       double precision   err, tt0, tt1, mbytes
       integer g_a, g_b,  d_a, d_b
       double precision drand
-      integer i, req, loop
-      integer dlo(ndim),dhi(ndim),glo(ndim),ghi(ndim)
-      integer dims(ndim),reqdims(ndim)
+      integer i,j, req, loop
+      integer dlo(2),dhi(2)
+      integer glo(2),ghi(2)
       integer me, nproc
-      integer index, ld(ndim), chunk(ndim)
+      integer index, dims(2), reqdims(2), ld(2)
       integer iran
       logical status
       external  drand
@@ -81,18 +81,13 @@ c
       nproc = ga_nnodes()
       me    = ga_nodeid()
 c    
-      if (me.eq.0) print *, 'Creating global arrays ',n,' x',n,' x',n
+      if (me.eq.0) print *, 'creating global arrays ',n,' x',n
       if (me.eq.0)call ffflush(6)
       call ga_sync()
-      do i = 1, ndim
-        dims(i) = n
-        chunk(i) = 1
-      end do
-
-      if(.not. nga_create(MT_DBL, ndim, dims, 'a', chunk, g_a))
-     &         call ga_error('nga_create failed: a', 0)
-      if(.not. nga_create(MT_DBL, ndim, dims, 'b', chunk, g_b))
-     &         call ga_error('nga_create failed: b', 0)
+      if(.not. ga_create(MT_DBL, n, n, 'a', 1, 1, g_a))
+     &         call ga_error('ga_create failed: a', 0)
+      if(.not. ga_create(MT_DBL, n, n, 'b', 1, 1, g_b))
+     &         call ga_error('ga_create failed: b', 0)
       if (me.eq.0) print *,'done '
       if (me.eq.0)call ffflush(6)
 c
@@ -100,9 +95,10 @@ c     initialize g_a, g_b with random values
 c     ... use ga_access to avoid allocating local buffers for ga_put
 c
       call ga_sync()
-      call nga_distribution(g_a, me, glo, ghi)
+      call nga_distribution(g_a, me, glo, ghi, ld)
       call nga_access(g_a, glo, ghi, index, ld)
-      call fill_random(DBL_MB(index), glo, ghi, ld(1), ld(2))
+      call fill_random(DBL_MB(index), ghi(1)-glo(1)+1,
+     &                 ghi(2)-glo(2)+1, ld(1))
       call ga_sync()
 *     if (me.eq.0) print *,'done '
 *     if (me.eq.0)call ffflush(6)
@@ -113,10 +109,11 @@ c
 c.......................................................................
       if (me.eq.0) print *, 'creating disk array ',n,' x',n
       if (me.eq.0)call ffflush(6)
-      do i = 1, ndim
-        reqdims(i) = n
-      end do
-      if(ndra_create(MT_DBL, ndim, dims, 'A', FNAME, 
+      dims(1) = n
+      dims(2) = n
+      reqdims(1) = 1
+      reqdims(2) = 1
+      if(ndra_create(MT_DBL, 2, dims, 'A', FNAME, 
      &      DRA_RW, reqdims, d_a).ne.0)
      $   CALL ga_error('ndra_create failed: ',0)
 c
@@ -146,23 +143,25 @@ c
 c
       if (me.eq.0) print *, 'creating disk array ',m,' x',m
       if (me.eq.0)call ffflush(6)
-      do i = 1, ndim
-        dims(i) = m
-        reqdims(i) = n
-      end do
-      if(ndra_create(MT_DBL, ndim, dims, 'A', FNAME1,
+      dims(1) = m
+      dims(2) = m
+      reqdims(1) = n
+      reqdims(2) = n
+      if(dra_create(MT_DBL, 2, dims, 'A', FNAME1,
      &      DRA_RW, reqdims, d_b).ne.0)
-     $   CALL ga_error('ndra_create failed: ',0)
+     $   CALL ga_error('dra_create failed: ',0)
 c
       if(me.eq.0) print *, 'non alligned blocking write'
       if (me.eq.0)call ffflush(6)
 c
-      do i = 1, ndim
-        glo(i) = 1
-        ghi(i) = n
-        dlo(i) = 2
-        dhi(i) = n+1
-      end do
+      glo(1) = 1
+      glo(2) = 1
+      ghi(1) = n
+      ghi(2) = n
+      dlo(1) = 2
+      dlo(2) = 2
+      dhi(1) = n+1
+      dhi(2) = n+1
       tt0 = tcgtime()
       if(ndra_write_section(.false., g_a, glo, ghi,
      &               d_b, dlo, dhi, req).ne.0)
@@ -205,7 +204,6 @@ c
       err = ga_ddot(g_b, g_b)
       if(err.ne.0) then
           if (me.eq.0) print *,'BTW, we have error =', err
-cbjp          call ga_print(g_b) 
       else
           if (me.eq.0) print *,'OK'
       endif
@@ -220,9 +218,9 @@ c
       if(me.eq.0) print *, 'non alligned blocking read'
       if (me.eq.0)call ffflush(6)
       tt0 = tcgtime()
-      if(ndra_read_section(.false., g_b, glo, ghi,
+      if(dra_read_section(.false.,   g_b, glo, ghi,
      &               d_b, dlo, dhi, req).ne.0)
-     &        call   ga_error('ndra_read_section failed:',0)
+     &        call   ga_error('dra_read_section failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       tt1 = tcgtime() -tt0
       if (me.eq.0)then
@@ -243,17 +241,36 @@ c.......................................................................
 100   format(g11.2,' MB  time=',g11.2,' rate=',g11.3,'MB/s')
       end
 
-      subroutine fill_random(a, lo, hi, ld1)
-      parameter (ndim = 2)
-      integer lo(ndim), hi(ndim), ld1
-      double precision a(ld1,*), drand, seed
-      integer i,j,k
+
+
+      subroutine swap(a,b)
+      integer a, b, temp
+         temp = a
+         a = b
+         b = temp
+      end
+
+
+      subroutine init_char(str, len, char)
+      character*(*) str
+      character*1 char
+      integer i
+      do i = 1, len -1 
+         str(i:i+1) = char
+      enddo
+      end
+          
+      
+      subroutine fill_random(a, n,m, ld)
+      integer ld, n,m
+      double precision a(ld,*), drand, seed
+      integer i,j
       external  drand
 c
-      do j = 1, hi(2) - lo(2) + 1
-        seed = drand(k)
-        do i = 1, hi(1) - lo(1) + 1
-          a(i,j)=seed*i
-        end do
+      do j=1,m
+         seed = drand(j)
+         do i=1,n
+            a(i,j)=seed*i
+         enddo
       enddo
       end
