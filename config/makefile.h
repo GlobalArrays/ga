@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.48 2001-05-07 23:54:26 edo Exp $
+# $Id: makefile.h,v 1.49 2001-05-08 00:03:21 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -209,7 +209,7 @@ GLOB_DEFINES += -DLINUX -DLINUX64
     FOPT_REN +=-assume accuracy_sensitive -check nopower -check nounderflow
 ifdef USE_INTEGER4
     FOPT_REN += -i4  -Wl,-taso
-    COPT_REN+= -Wl,-taso -misalign
+    COPT_REN+= -Wl,-taso #-misalign # alignment fix
 else
 GLOB_DEFINES += -DEXT_INT
     FOPT_REN +=-i8
@@ -279,7 +279,7 @@ ifeq ($(TARGET),DECOSF)
      FOPT_REN = -fpe2 -check nounderflow -check nopower -check nooverflow
 ifdef USE_INTEGER4
      FOPT_REN += -i4 
-     COPT_REN += -misalign
+     COPT_REN += #-misalign # alignment fix
 else
      FOPT_REN += -i8 
         CDEFS = -DEXT_INT
