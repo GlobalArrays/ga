@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.24 2003-10-23 04:55:26 d3h325 Exp $ */
+/* $Id: elan.c,v 1.25 2003-10-23 19:11:20 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,7 +29,7 @@ static void *_qd;
 #else
 #define MAX_SLOTS 64
 #define MIN_OUTSTANDING 6
-static int max_pending=MAX_SLOTS; /* throttle number of outstanding nb calls */
+static int max_pending=16; /* throttle number of outstanding nb calls */
 #endif
 
 #ifdef ELAN_ACC
@@ -78,10 +78,9 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
    /* on Elan-3 we limit the number of outstanding nb calls as f(nprocs) */
 #if !defined(DOELAN4) && (VCALLS==0)
    if(armci_nproc >128) max_pending = MIN_OUTSTANDING;
-   else if(armci_nproc >64) max_pending =MAX_SLOTS/6;
-   else if(armci_nproc >32) max_pending =MAX_SLOTS/4;
-   else if(armci_nproc >16) max_pending =MAX_SLOTS/2;
-   else max_pending =MAX_SLOTS;
+   else if(armci_nproc >64) max_pending =MAX_SLOTS/8;
+   else if(armci_nproc >16) max_pending =MAX_SLOTS/6;
+   else max_pending =MAX_SLOTS/4;
 #endif
 
 
