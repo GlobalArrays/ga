@@ -6,7 +6,11 @@ ifeq ($(OSNAME),AIX)
      LIB_DEFINES += $(shell oslevel | awk -F. \
                       '{ if ($$1 > 5 || ($$1 == 5 && $$2 > 1))\
                       print "-DAIX52" }')
-ifdef USE_OLDAIO
+#lsdev -C -l aio0
+#aio0 Defined  Asynchronous I/O (Legacy)
+USE_OLDAIO= $(shell lsdev -C -l aio0  2>&1|grep Lega|awk ' /Legacy/  {print "Y"}')
+
+ifeq ($(USE_OLDAIO),Y)
      LIB_DEFINES += -D_AIO_AIX_SOURCE
 endif
 endif
