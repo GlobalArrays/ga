@@ -2,7 +2,7 @@
 #define _scope_h
 
 /* 
- * $Id: scope.h,v 1.3 1994-10-07 19:41:31 d3g681 Exp $
+ * $Id: scope.h,v 1.4 1998-01-30 18:49:33 d3h325 Exp $
  */
 
 /* 
@@ -17,6 +17,6 @@
 
 /* pseudo reserved words for scope control */
 #define private static
-#define public
+#define public  
 
 #endif /* _scope_h */

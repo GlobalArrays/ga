@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.15 1997-12-09 02:17:11 d3g681 Exp $
+ * $Id: ma.c,v 1.16 1998-01-30 18:49:31 d3h325 Exp $
  */
 
 /*
@@ -10,7 +10,7 @@
 #include <string.h>
 #include "error.h"
 #include "ma.h"
-#include "memory.h"
+#include "memcpy.h"
 #include "scope.h"
 #include "table.h"
 
@@ -297,7 +297,6 @@ public MA_LongDoubleComplex	ma_cb_ldcpl[2];	/* MT_C_LDCPL */
 
 private int trace = 0;		/* If true print push/pop/alloc/free */
 
-/*
 /**
  ** macros
  **/

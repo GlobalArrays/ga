@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 1997-02-26 20:39:14 d3h325 Exp $
+# $Id: Makefile,v 1.5 1998-01-30 18:49:29 d3h325 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -6,7 +6,7 @@
   LIB_DISTRIB = ../lib
  OBJ_OPTIMIZE = error.o f2c.o ma.o maf.o table.o
       HEADERS = macommon.h matypes.h macdecls.h \
-                scope.h error.h memory.h \
+                scope.h error.h memcpy.h \
                 string-util.h table.h mafdecls.fh
 
   LIB_TARGETS = testf.o testf.x testc.o testc.x string-util.o
