@@ -1,4 +1,4 @@
-/* $Id: shmlimit.c,v 1.7 2000-04-06 23:19:16 edo Exp $ */
+/* $Id: shmlimit.c,v 1.8 2000-04-17 22:31:41 d3h325 Exp $ */
 /*
  * This code is used to test shared memory limits within
  * a separately forked child process.
@@ -23,6 +23,9 @@
 #define USE_PIPE 
 #define DEBUG_ 0
 
+#if defined(DECOSF) || defined(SOLARIS64)
+#define PIPE_AFTER_FORK_BUG
+#endif
 
 void (*Sig_Chld_Orig)();
 static int status=0;
@@ -63,7 +66,7 @@ int armci_child_shmem_init()
 {
     pid_t pid;
     int x;
-#ifdef DECOSF
+#ifdef PIPE_AFTER_FORK_BUG
     int i;
 #endif
 
@@ -85,7 +88,7 @@ int armci_child_shmem_init()
 #ifdef USE_PIPE
        x= armci_shmem_test();
 
-#ifdef DECOSF
+#ifdef PIPE_AFTER_FORK_BUG
        /* due to a bug in OSF1 V4.0/1229/alpha first item written gets hosed*/
        for(i=0;i<2;i++)
 #endif
@@ -100,7 +103,7 @@ int armci_child_shmem_init()
 
 #ifdef USE_PIPE
        int val;
-#ifdef DECOSF
+#ifdef PIPE_AFTER_FORK_BUG
        /* due to a bug in OSF1 V4.0/1229/alpha first item read is garbage */
        for(i=0;i<2;i++)
 #endif

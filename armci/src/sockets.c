@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.15 2000-03-28 18:33:56 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.16 2000-04-17 22:31:42 d3h325 Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -155,13 +155,14 @@ void armci_TcpNoDelay( int sock)
 #else
   struct protoent *proto = getprotobyname("TCP");
 #endif
+  void *optval = &value;
 
   if (proto == (struct protoent *) NULL)
     armci_die("armci_TcpNoDelay: getprotobyname on TCP failed!",  -1);
 
   level = proto->p_proto;
 
-  status = setsockopt(sock, level, TCP_NODELAY, &value, sizeof(int));
+  status = setsockopt(sock, level, TCP_NODELAY, optval, sizeof(int));
 
   if (status != 0)
     armci_die("armci_TcpNoDelay: setsockopt failed",  status);
@@ -346,7 +347,7 @@ int i;
   }
 
   if (DEBUG_) {
-    (void) printf("process %ld out of listen on %d sockets\n",armci_me,num);
+    (void) printf("process %d out of listen on %d sockets\n",armci_me,num);
     (void) fflush(stdout);
   }
 }
@@ -466,7 +467,7 @@ againlist:
   }
 
   if (DEBUG_) {
-    (void) printf("process %ld out of listen on socket %d\n",armci_me,sock);
+    (void) printf("process %d out of listen on socket %d\n",armci_me,sock);
     (void) fflush(stdout);
   }
 
@@ -501,7 +502,7 @@ againacc:
   }
 
   if (DEBUG_) {
-    (void) printf("process %ld out of accept on socket %d\n", armci_me,msgsock);
+    (void) printf("process %d out of accept on socket %d\n", armci_me,msgsock);
     (void) fflush(stdout);
   }
 

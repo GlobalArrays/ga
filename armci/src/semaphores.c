@@ -1,4 +1,4 @@
-/* $Id: semaphores.c,v 1.7 1999-11-18 01:20:52 d3h325 Exp $ */
+/* $Id: semaphores.c,v 1.8 2000-04-17 22:31:41 d3h325 Exp $ */
 #include "semaphores.h"
 #include <stdio.h>
 
@@ -81,21 +81,21 @@ void SemDel()
 }
 
 
-void CreateInitLocks(int num, lockset_t *id)
+void Sem_CreateInitLocks(int num, lockset_t *id)
 {
      *id = SemGet(num);
      SemInit(ALL_SEMS,1);
 }
 
 
-void InitLocks(int num, lockset_t id)
+void Sem_InitLocks(int num, lockset_t id)
 {
     semaphoreID = id;
     num_sem_alloc = num;
 }
 
 
-void DeleteLocks(lockset_t id)
+void Sem_DeleteLocks(lockset_t id)
 {
     union semun dummy;
 

@@ -1,4 +1,5 @@
-/* $Id: locks.c,v 1.5 1999-10-18 18:52:42 d3h325 Exp $ */
+/* $Id: locks.c,v 1.6 2000-04-17 22:31:38 d3h325 Exp $ */
+#define _LOCKS_C_
 #include "locks.h"
 #include "armcip.h"
 #ifndef WIN32
@@ -6,12 +7,64 @@
 #endif
 #include <stdio.h>
 
+
 extern void armci_die(char*,int);
 
-#define FILE_LEN 200
+#if defined(SPINLOCK) || defined(PMUTEXES)
+
+void CreateInitLocks(int num_locks, lockset_t *plockid)
+{
+void *ptr;
+int size=num_locks*sizeof(PAD_LOCK_T);
+
+  ptr = Create_Shared_Region(plockid->idlist,size,&plockid->off);
+  if(!ptr) armci_die("Failed to create spinlocks",size);
+  _armci_int_mutexes = (PAD_LOCK_T*)ptr;
+
+#ifdef PMUTEXES
+  {
+       int i;
+       pthread_mutexattr_t pshared;
+       if(pthread_mutexattr_init(&pshared))
+            armci_die("armci_allocate_locks: could not init mutex attr",0);
+#      ifndef LINUX
+         if(pthread_mutexattr_setpshared(&pshared,PTHREAD_PROCESS_SHARED))
+            armci_die("armci_allocate_locks: could not set PROCESS_SHARED",0);
+#      endif
+
+       for(i=0; i< num_locks; i++){
+             if(pthread_mutex_init(_armci_int_mutexes+i,&pshared))
+                armci_die("armci_allocate_locks: could not init mutex",i);
+       }
+  }
+#else
+
+       bzero(_armci_int_mutexes,size);
+#endif
+} 
+
+
+void InitLocks(int num_locks, lockset_t lockid)
+{
+void *ptr;
+int size=num_locks*sizeof(LOCK_T);
+
+  ptr=Attach_Shared_Region(lockid.idlist,size,lockid.off);
+  if(!ptr) armci_die("Failed to initialize spinlocks",size);
+  _armci_int_mutexes = (PAD_LOCK_T*)ptr;
+}
+
+
+void DeleteLocks(lockset_t lockid)
+{
+  _armci_int_mutexes = (PAD_LOCK_T*)0;
+}
+
+
 
 /********************* all SGI systems ****************/
-#ifdef SGI
+#elif defined(SGI)
+#define FILE_LEN 200
 lockset_t lockset;
 static char arena_name[FILE_LEN];
 usptr_t *arena_ptr;
@@ -34,7 +87,6 @@ char *tmp;
                   armci_clus_info[armci_clus_me].nslave+1); /* +1 for server */
    arena_ptr = usinit(arena_name);    
    if(!arena_ptr) armci_die("Failed to Create Arena", 0);
-/*   else fprintf(stderr,	"created arena %x\n",arena_ptr); */
  
    for(i=0; i<num_locks; i++){
        lockset.lock_array[i] = usnewlock(arena_ptr); 
@@ -75,13 +127,12 @@ void DeleteLocks(lockset_t lockid)
   else avail = 0;
   usdetach (arena_ptr);
   arena_ptr = 0;
-  (void)unlink(arena_name); /* ignore armci_die code -- file might be already gone*/
+  (void)unlink(arena_name); /*ignore armci_die code:file might be already gone*/
 }
 
-#endif
 
 /***************** Convex/HP Exemplar ****************/
-#if defined(CONVEX)
+#elif defined(CONVEX)
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/cnx_mman.h>
@@ -89,6 +140,7 @@ void DeleteLocks(lockset_t lockid)
 #include <sys/types.h>
 #include <sys/cnx_ail.h>
 
+#define FILE_LEN 200
 lock_t *lock_array;
 static char file_name[FILE_LEN];
 static int fd=-1;
@@ -136,7 +188,7 @@ int i;
 void DeleteLocks(lockset_t  lockid)
 {
   lock_array = 0;
-  (void)unlink(file_name); /* ignore armci_die code -- file might be already gone*/
+  (void)unlink(file_name); /*ignore armci_die code: file might be already gone*/
   (void)munmap((char *) shmem_size, 0);
 }
 
@@ -157,9 +209,8 @@ void unsetlock(unsigned * volatile lp)
        (void)fetch_and_clear32(lp);
 }
 
-#endif
 
-#if defined(WIN32)
+#elif defined(WIN32)
 /****************************** Windows NT ********************************/
 #include <process.h>
 #include <windows.h>
@@ -221,9 +272,7 @@ void unsetlock(int mutex)
 }
 
 
-#endif
-
-#ifdef CRAY_YMP
+#elif defined(CRAY_YMP)
 
 lock_t  cri_l[NUM_LOCKS];
 #pragma  _CRI common cri_l
@@ -245,4 +294,21 @@ void InitLocks(int num_locks, lockset_t lockid)
 void DeleteLocks(lockset_t lockid)
 {
 }
+
+#else
+/*********************** every thing else *************************/
+
+void CreateInitLocks(int num_locks, lockset_t  *lockid)
+{}
+
+void InitLocks(int num_locks, lockset_t lockid)
+{
+}
+
+
+void DeleteLocks(lockset_t lockid)
+{
+}
+
 #endif
+

@@ -1,107 +1,67 @@
          FOPT = -O
          COPT = -O
 
-OBJ= strided.o armci.o memory.o fcopy.o fence.o rmw.o faccumulate.o acc.o\
- memlock.o pack.o vector.o clusterinfo.o message.o mutex.o
+OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o\
+ memlock.o pack.o vector.o clusterinfo.o message.o mutex.o locks.o
 
-#reference to the MPI library name, overwritten by LIBMPI environment variable
-MPI_LIB_NAME = -lmpi
-
-#reference to the PVM library name, overwritten by LIBPVM environment variable
-ifeq ($(TARGET),CRAY-T3E)
-     PVM_LIB_NAME = -lpvm3
-else
-     PVM_LIB_NAME = -lgpvm3 -lpvm3
+#ARMCI can be built without using fortran code when NOFORT is defined
+#NOFORT =1
+ifndef NOFORT
+OBJ += fcopy.o faccumulate.o
 endif
 
-INTERRUPT_AVAILABLE = SP1 SP PARAGON LAPI
-SYSTEM_V = SUN SGI SGI_N32 SGI64 SGITFP HPUX SOLARIS IBM DECOSF CONVEX LINUX
+
+#default message-passing library for ARMCI is MPI
+ifndef MSG_COMMS
+  MSG_COMMS=MPI
+endif
+
+#defines communication libs and symbols
+include ../config/makemp.h
+include ../config/makecoms.h
+
+SYSTEM_V = SUN SOLARIS SOLARIS64 SGI SGI_N32 SGI64 SGITFP HPUX SOLARIS IBM DECOSF LINUX
+SHMEM    = $(SYSTEM_V) LAPI
+SOCKETS  = $(SYSTEM_V)
 ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP
-NATIVE_LOCKS = SGI SGI_N32 SGI64 SGITFP CONVEX WIN32 CRAY-YMP
+#USE_PTHREADS = LINUX SGI_N32 SOLARIS
 #USE_POSIX = IBM
 
-ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
+ifeq ($(TARGET),$(findstring $(TARGET),$(USE_PTHREADS)))
+     LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT
+     EXTRA_LIBS += -lpthread
+endif
+
+ifeq ($(TARGET),$(findstring $(TARGET),$(SHMEM)))
      LIB_DEFINES += -DSYSV
-     OBJ += shmalloc.o signaltrap.o dataserv.o request.o sockets.o shmlimit.o
- ifeq ($(TARGET),$(findstring $(TARGET),$(USE_POSIX)))
-     OBJ += winshmem.o
- else
-     OBJ += shmem.o
- endif
- ifeq ($(TARGET),$(findstring $(TARGET),$(NATIVE_LOCKS)))
-     OBJ += locks.o
- else
-     OBJ += semaphores.o
- endif
-else
- ifeq ($(TARGET),$(findstring $(TARGET),$(NATIVE_LOCKS)))
-     OBJ += locks.o
- endif
+     OBJ += shmalloc.o signaltrap.o request.o shmlimit.o shmem.o
 endif
 
-#let compiler to choose the appropriate MPI lib
-ifeq ($(TARGET),LAPI)
-     OBJ += lapi.o request.o
-     MPI_LIB_NAME =
-ifdef LAPI2
-     LIB_DEFINES = -DLAPI2
-     EXTRA_LIBS += /u2/d3h325/lapi_vector_beta/liblapi_r_dbg.a
-else
-     OBJ += shmalloc.o signaltrap.o shmem.o shmlimit.o
-     LIB_DEFINES = -DSYSV
-endif
-     
+ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
+ OBJ += semaphores.o 
 endif
 
-ifneq ($(TARGET),$(findstring $(TARGET),$(ONESIDED_AVAILABLE)))
-     LIB_DEFINES += -DSHMEM
+ifeq ($(ARMCI_NETWORK),GM)
+  OBJ += dataserv-myri.o myrinet.o spawn.o
+  LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT
 endif
 
-
-#
-# settings dependent on selection of the message-passing library
-#
-ifeq ($(MSG_COMMS),PVM)
-#........................... settings for PVM ....................
-ifdef PVM_INCLUDE
-  LIB_INCLUDES += -I$(PVM_INCLUDE)
+ifndef ARMCI_NETWORK
+ifeq ($(TARGET),$(findstring $(TARGET),$(SOCKETS)))
+ OBJ += spawn.o dataserv.o sockets.o
+ LIB_DEFINES += -DSOCKETS
 endif
-ifdef PVM_LIB
-  LIBS += -L$(PVM_LIB)
-endif
-ifdef LIBPVM
-  PVM_LIB_NAME = $(LIBPVM)
-endif
-LIBS += $(PVM_LIB_NAME)
-LIB_DEFINES += -DPVM
-#........................... end of PVM section ..................
-else
-  ifeq ($(MSG_COMMS),TCGMSG)
-    ifdef TCG_INCLUDE
-      LIB_INCLUDES += -I$(TCG_INCLUDE)
-    endif
-    ifdef TCG_LIB
-      LIBS += -L$(TCG_LIB) -ltcgmsg
-    endif
-    LIB_DEFINES += -DTCG
-  else
-#.............. MPI is the default library for ARMCI ..................
-    ifdef MPI_INCLUDE
-      LIB_INCLUDES += -I$(MPI_INCLUDE)
-    endif
-    ifdef MPI_LIB
-      LIBS += -L$(MPI_LIB)
-    endif
-    ifdef LIBMPI
-      MPI_LIB_NAME = $(LIBMPI)
-    endif
-    LIBS += $(MPI_LIB_NAME)
-    LIB_DEFINES += -DMPI
-  endif
-#........................... end of MPI section ..................
 endif
 
+LIB_DEFINES += $(MP_DEFINES) $(COMM_DEFINES)
+LIB_INCLUDES += $(COMM_INCLUDES) $(MP_INCLUDES)
+EXTRA_LIBS += $(MP_LIBS) $(COMM_LIBS)
 
+ifdef NOFORT
+LIB_DEFINES += -DNOFORT
+endif
+
+#......................................................................
 LIBRARY = libarmci.a
 HARDCLEAN = yes
 
@@ -111,10 +71,12 @@ LIB_TARGETS = *.x $(NTSTUFF)
 LIB_DISTRIB = ../lib
 
 include ../config/makefile.h
-include ../config/makelib.h
+OBJ += $(EXTRA_OBJ)
 
+include ../config/makelib.h
 LIBS += $(EXTRA_LIBS)
 
+#......................................................................
 %.x.p:%.x
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
 

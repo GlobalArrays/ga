@@ -1,4 +1,4 @@
-/* $Id: lapi.c,v 1.10 1999-11-24 01:24:56 d3h325 Exp $ */
+/* $Id: lapi.c,v 1.11 2000-04-17 22:31:38 d3h325 Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>
@@ -22,7 +22,7 @@ lapi_cmpl_t  get_cntr;     /* counter used with lapi_get  */
 
 int intr_status;
 lapi_info_t     lapi_info;
-#ifndef TCG
+#ifndef TCGMSG
 lapi_handle_t   lapi_handle;
 #endif
 pthread_mutex_t _armci_mutex_thread=PTHREAD_MUTEX_INITIALIZER;
@@ -194,6 +194,11 @@ int rc;
             pcmpl_cntr=NULL; /* don't trace completion status for load ops */
             SET_COUNTER(buf_cntr,1); /* expect data to arrive into same buf*/
 
+      }else if (msginfo->operation==UNLOCK){
+
+            msglen += msginfo->dscrlen;
+            pcmpl_cntr=NULL; /* don't trace completion status for unlock */
+
       }else{
 
          if(lapi_max_uhdr_data_sz < (msginfo->datalen + msginfo->dscrlen)){
@@ -239,7 +244,7 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
 
 /*\ server sends data back to client
 \*/
-void armci_send_data(request_header_t* msginfo, char *data)
+void armci_send_data(request_header_t* msginfo, void *data)
 {
 /*     fprintf(stderr,"%d: sending %d bytes (%lf) to %d adr=(%x,%x)\n",armci_me, msginfo->datalen, *(double*)data, msginfo->from, msginfo->tag.buf, MessageSndBuffer);*/
      armci_lapi_send(msginfo->tag, data, msginfo->datalen, msginfo->from);
@@ -256,12 +261,16 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo, char *bdata,
 }
 
 
-void armci_rcv_data(int proc)
+char* armci_rcv_data(int proc)
 {
 /*     fprintf(stderr,"%d: receiving cntr=%d val=%d\n", armci_me, buf_cntr.cntr, buf_cntr.val);*/
      CLEAR_COUNTER(buf_cntr);
+
 /*     fprintf(stderr,"%d received %lf\n",armci_me, *((double*)MessageSndBuffer));*/
+     return MessageSndBuffer;
 }
+
+
 
 /*\ client receives strided data from server
 \*/
@@ -273,6 +282,16 @@ void armci_rcv_strided_data(int proc, char *buf, int datalen,
 }
 
 
+
+/*\ client receives vector data from server to buffer and unpacks it            
+\*/
+void armci_rcv_vector_data(int proc, char *buf, armci_giov_t darr[], int len)
+{
+    buf = armci_rcv_data(proc);
+    armci_vector_from_buf(darr, len, buf);
+}
+
+
 /*\ initialization of LAPI related data structures
 \*/
 void armci_init_lapi()
@@ -280,7 +299,7 @@ void armci_init_lapi()
 int rc, p;
 int lapi_max_uhdr_sz;
 
-#ifndef TCG
+#ifndef TCGMSG
     rc = LAPI_Init(&lapi_handle, &lapi_info);
     if(rc) ERROR("lapi_init failed",rc);
 #endif

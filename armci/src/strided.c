@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.16 1999-11-10 01:53:45 d3h325 Exp $ */
+/* $Id: strided.c,v 1.17 2000-04-17 22:31:42 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -140,7 +140,7 @@ void armci_acc_2D(int op, void* scale, int proc, void *src_ptr, void *dst_ptr,
                   int bytes, int cols, int src_stride, int dst_stride, int lockit)
 {
 int   rows, lds, ldd, span;
-void (FATR *func)(void*, int*, int*, void*, int*, void*, int*);
+void (ATR *func)(void*, int*, int*, void*, int*, void*, int*);
 
 /*
       if((long)src_ptr%ALIGN)armci_die("src not aligned",(long)src_ptr);
@@ -372,6 +372,7 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
          if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
 #   endif
 
+
 #ifndef LAPI2
     if(!direct)
        rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
@@ -428,7 +429,7 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
 
     if(!direct){
 
-#ifdef DATA_SERVER
+#if defined(DATA_SERVER) && defined(SOCKETS)
        /* larger strided or 1-D reqests, buffer not used to send data 
         * we can bypass the packetization step and send request directly
         */

@@ -1,19 +1,34 @@
 # ARMCI makefile for Windows NT nmake
 
+#if you do not have fortran compiler you can build ARMCI by defining
+#NOFORT = 1
+!ifdef NOFORT
+FORTDEF  =-DNOFORT
+!endif
+
+#you can use MT library
+#MT=1
+!ifdef MT
+   MTDEF = -DNO_STDLIBC
+   MTLIB = /MT /link /NODEFAULTLIB:libc.lib
+   MTOPT = /MT
+!endif
+
+
 LIBRARY=armci.lib
 LIBDIR =.\..\lib\win32
 OBJDIR =.\obj
 PRJDIR =.\NTprojects
 LIBRARY_PATH = $(LIBDIR)\$(LIBRARY)
 
-DEFINES =-DWIN32 -DSERVER_THREAD
+DEFINES  =-DWIN32 -DSERVER_THREAD -DSOCKETS $(FORTDEF) $(MTDEF)
 INCLUDES =-I$(MPI_INCLUDE)
 
 AR = link.exe -lib 
 ARFLAGS = /nologo /out:$(LIBRARY_PATH)
 
 CC = cl
-COPT = -nologo -W3 -GX -O2
+COPT = -nologo -W3 -GX -O2 $(MTOPT)
 CFLAGS = $(COPT) $(DEFINES) $(INCLUDES) -Fo"$(OBJDIR)/" -c
 
 FC = fl32
@@ -22,11 +37,11 @@ FFLAGS = $(FOPT) -Fo"$(OBJDIR)/" -c
 
 #path and name of MPI library
 MPI_LIB_NAME=Cvwmpi.lib
-LIBS = $(MPI_LIB)\$(MPI_LIB_NAME)
+LIBS = $(MPI_LIB)\$(MPI_LIB_NAME) wsock32.lib $(MTLIB)
 
 #################
 
-OBJ =   "$(OBJDIR)\winshmem.obj" \
+COBJ =  "$(OBJDIR)\winshmem.obj" \
         "$(OBJDIR)\shmalloc.obj" \
         "$(OBJDIR)\rmw.obj" \
         "$(OBJDIR)\clusterinfo.obj" \
@@ -35,16 +50,23 @@ OBJ =   "$(OBJDIR)\winshmem.obj" \
         "$(OBJDIR)\message.obj" \
         "$(OBJDIR)\locks.obj" \
         "$(OBJDIR)\fence.obj" \
-        "$(OBJDIR)\fcopy.obj" \
         "$(OBJDIR)\acc.obj" \
-        "$(OBJDIR)\faccumulate.obj"\
         "$(OBJDIR)\strided.obj" \
         "$(OBJDIR)\armci.obj" \
         "$(OBJDIR)\vector.obj"\
         "$(OBJDIR)\pack.obj"\
         "$(OBJDIR)\memlock.obj"\
         "$(OBJDIR)\dataserv.obj"\
+        "$(OBJDIR)\spawn.obj"\
+        "$(OBJDIR)\request.obj"\
         "$(OBJDIR)\sockets.obj"
+
+!ifndef NOFORT
+FOBJ =  "$(OBJDIR)\fcopy.obj" \
+        "$(OBJDIR)\faccumulate.obj"
+!endif
+
+OBJ = $(COBJ) $(FOBJ)
 
 $(LIBRARY_PATH): $(LIBDIR) $(OBJ)
 	$(AR) @<<

@@ -6,11 +6,39 @@
 #include "armci.h"
 #include "message.h"
 
-#ifdef SYSV
+#if defined(SYSV) || defined(WIN32)
 #  define CLUSTER 
 #ifndef LAPI
-#  define DATA_SERVER
+#  define DATA_SERVER   
 #endif
+
+#ifdef SERVER_THREAD
+#  define SERVER_NODE(c) (armci_clus_info[(c)].master);
+#else
+#  define SOFFSET -10000
+#  define SERVER_NODE(c) (SOFFSET -armci_clus_info[(c)].master);
+#endif
+
+#endif
+
+#if defined(LAPI) || defined(PTHREADS)
+# include <pthread.h>
+  typedef pthread_t thread_id_t;
+# define  THREAD_ID_SELF pthread_self
+#elif defined(WIN32)
+# include <windows.h>
+  typedef DWORD thread_id_t;
+# define  THREAD_ID_SELF GetCurrentThreadId  
+#else
+  typedef int thread_id_t;
+# define  THREAD_ID_SELF() 1  
+#endif
+
+extern thread_id_t armci_usr_tid;
+#ifdef SERVER_THREAD
+#  define SERVER_CONTEXT (armci_usr_tid != THREAD_ID_SELF())
+#else
+#  define SERVER_CONTEXT (armci_me<0)
 #endif
 
 #if defined(LAPI) || defined(CLUSTER)
@@ -22,7 +50,8 @@
 #ifdef WIN32
 #  define bzero(a,len){\
      int _i;\
-     for(_i=0; _i< (len); _i++)((char*)(a))[_i]=0;\
+     char *_c = (char*)(a);\
+     for(_i=0; _i< (int)(len); _i++)_c[_i]=(char)0;\
    }
 #  define bcopy(a,b,len) memcpy(b,a,len)
 #else
@@ -117,8 +146,8 @@ extern void armci_vector_to_buf(armci_giov_t darr[], int len, void* buf);
 extern void armci_vector_from_buf(armci_giov_t darr[], int len, void* buf);
 extern void armci_init_fence();
 
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#define MIN(a,b) (((a)<(b))?(a):(b))
 #define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
 #define ACC(op)  (((op)-ARMCI_ACC_INT)>=0)
 
@@ -137,7 +166,7 @@ extern void armci_init_fence();
         else  FENCE_NODE(proc)
 #elif defined(CLUSTER)
 #  define ORDER(op,proc)\
-        if(proc != armci_me && op != GET )_armci_fence_arr[proc]=1
+        if(!SAMECLUSNODE(proc) && op != GET )_armci_fence_arr[proc]=1
 #else
 #  define ORDER(op,proc) if(proc != armci_me) FENCE_NODE(proc) 
 #endif
@@ -170,8 +199,18 @@ extern armci_clus_t *armci_clus_info;
 extern int armci_nclus, armci_clus_me, armci_master;
 extern int armci_clus_first, armci_clus_last;
 extern int armci_clus_id(int p);
-extern void armci_serv_attach_req(void *info, int ilen, long size, 
-                                  void* resp,int rlen);
+extern void armci_init_clusinfo();
 extern void armci_set_mem_offset(void *ptr);
+extern int _armci_terminating;
+extern void armci_acc_2D(int op, void* scale, int proc, void *src_ptr, 
+                         void *dst_ptr, int bytes, int cols, int src_stride, 
+                         int dst_stride, int lockit);
+extern void armci_lockmem_scatter(void *ptr_array[], int len, int bytes, int p);
+extern void armci_generic_rmw(int op, int *ploc, int *prem, int extra, int p);
+
+#if defined(SYSV) || defined(WIN32)
+extern void armci_shmem_init();
+extern void armci_set_shmem_limit(unsigned long shmemlimit);
+#endif
 
 #endif

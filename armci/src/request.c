@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.8 1999-11-10 01:53:45 d3h325 Exp $ */
+/* $Id: request.c,v 1.9 2000-04-17 22:31:40 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -7,10 +7,11 @@
 
 #define DEBUG_ 0
 
-double _armci_snd_buf[MSG_BUFLEN_DBL], _armci_rcv_buf[MSG_BUFLEN_DBL];
-char* MessageRcvBuffer = (char*)_armci_rcv_buf;
-char* MessageSndBuffer = (char*)_armci_snd_buf;
-
+#ifndef GM 
+  double _armci_snd_buf[MSG_BUFLEN_DBL], _armci_rcv_buf[MSG_BUFLEN_DBL];
+  char* MessageRcvBuffer = (char*)_armci_rcv_buf;
+  char* MessageSndBuffer = (char*)_armci_snd_buf;
+#endif
 
 #define ADDBUF(buf,type,val) *(type*)(buf) = (val); (buf) += sizeof(type)
 #define GETBUF(buf,type,var) (var) = *(type*)(buf); (buf) += sizeof(type)
@@ -22,7 +23,7 @@ char* MessageSndBuffer = (char*)_armci_snd_buf;
 void armci_rem_lock(int mutex, int proc, int *ticket)      
 {
 request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
-
+ 
     GET_SEND_BUFFER;
 
     msginfo->datalen = msginfo->dscrlen= 0;
@@ -36,9 +37,9 @@ request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
     armci_send_req(proc);
 
     msginfo->datalen = sizeof(int); /* receive ticket from server */
-    armci_rcv_data(proc);
 
-    *ticket = *(int*)MessageSndBuffer;
+    *ticket = *(int*)armci_rcv_data(proc);
+    
     if(DEBUG_)fprintf(stderr,"%d receiving ticket %d\n",armci_me, *ticket);
 }
 
@@ -128,7 +129,8 @@ void armci_rem_rmw(int op, int *ploc, int *prem, int extra, int proc)
 {
 request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
 char *buf = (char*)(msginfo+1);
-
+void *buffer;
+ 
     GET_SEND_BUFFER;
 
     msginfo->dscrlen = sizeof(void*);
@@ -146,11 +148,11 @@ char *buf = (char*)(msginfo+1);
     /* need to adjust datalen for long datatype version */
     msginfo->datalen = (op==ARMCI_FETCH_AND_ADD)? sizeof(int): sizeof(long);
 
-    armci_rcv_data(proc);  /* receive response */
+    buffer = armci_rcv_data(proc);  /* receive response */
     if(op==ARMCI_FETCH_AND_ADD)
-      *ploc = *(int*)MessageSndBuffer;
+        *ploc = *(int*)buffer;
     else
-      *(long*)ploc = *(long*)MessageSndBuffer;
+        *(long*)ploc = *(long*)buffer;
 }
 
 
@@ -269,8 +271,8 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
     armci_send_req(proc);
 
     if(op == GET){
-       armci_rcv_data(proc);
-       armci_vector_from_buf(darr, len, MessageSndBuffer);
+        armci_rcv_vector_data(proc, MessageSndBuffer, darr, len);
+        
     }
     return 0;
 }
@@ -301,9 +303,9 @@ int armci_rem_strided(int op, void* scale, int proc,
        rem_ptr = dst_ptr;
        rem_stride_arr = dst_stride_arr;
     }
-
-    for(i=0, msginfo->datalen=1;i<=stride_levels;i++)msginfo->datalen*=count[i];
     
+    for(i=0, msginfo->datalen=1;i<=stride_levels;i++)msginfo->datalen*=count[i];
+
     /* fill strided descriptor */
                                        buf += sizeof(request_header_t);
     *(void**)buf = rem_ptr;            buf += sizeof(void*);
@@ -355,15 +357,15 @@ int armci_rem_strided(int op, void* scale, int proc,
     msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
 
     if(op == GET){
-
        armci_send_req(proc);
-	   armci_rcv_strided_data(proc, MessageSndBuffer, msginfo->datalen,
-				     dst_ptr, stride_levels, dst_stride_arr, count);
+       armci_rcv_strided_data(proc, MessageSndBuffer, msginfo->datalen,
+                              dst_ptr, stride_levels, dst_stride_arr, count);
 
-    } else
+    } else{
        /* for put and accumulate send data */
        armci_send_strided(proc,msginfo, buf, 
                           src_ptr, stride_levels, src_stride_arr, count); 
+    }
 
     return 0;
 }
@@ -378,7 +380,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     int  *count, stride_levels;
     void *buf_ptr, *loc_ptr;
     void *scale;
-	char *dscr_save = dscr;
+    char *dscr_save = dscr;
     int  rc, i,proc;
 
     /* unpack descriptor record */
@@ -403,12 +405,11 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     }
 
 	scale = dscr_save+ (msginfo->dscrlen - slen);
-	/*
-	if(ACC(msginfo->operation))
-	      fprintf(stderr,"%d in server len=%d slen=%d alpha=%lf\n", armci_me,
-						 msginfo->dscrlen, slen, *(double*)scale); 
-	*/
-
+/*
+    if(ACC(msginfo->operation))
+      fprintf(stderr,"%d in server len=%d slen=%d alpha=%lf\n", armci_me,
+				 msginfo->dscrlen, slen, *(double*)scale); 
+*/
 
     buf_ptr = buf; /*  data in buffer */
 

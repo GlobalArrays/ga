@@ -4,8 +4,53 @@
 #define MAX_LOCKS 128 
 #define NUM_LOCKS MAX_LOCKS 
 
+#ifndef EXTERN
+#   define EXTERN extern
+#endif
 
-#ifdef SGI
+#include "spinlock.h"
+
+#if 0
+/* code disabled until more tests of pthread locking is done */
+#if !defined(SPINLOCK) &&  defined(SGI) 
+/* check if Pthreads locks in Posix 1003.1c support processes*/
+#include <pthread.h>
+#include <unistd.h>
+#ifdef _POSIX_THREAD_PROCESS_SHARED
+#  define PMUTEXES
+#endif
+#endif
+#endif
+
+#if defined(PTHREADS) && !(defined(PMUTEXES) || defined(SPINLOCK))
+cannot run
+#endif
+
+#if defined(SPINLOCK) || defined(PMUTEXES)
+#  include "shmem.h"
+   typedef struct {
+     long off;
+     long idlist[SHMIDLEN];
+   }lockset_t;
+   extern lockset_t lockid;
+#endif
+
+
+#if defined(SPINLOCK)
+
+#  define NAT_LOCK(x) armci_acquire_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
+#  define NAT_UNLOCK(x) armci_release_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
+   EXTERN PAD_LOCK_T *_armci_int_mutexes;
+
+#elif defined(PMUTEXES)
+
+#  define NAT_LOCK(x) pthread_mutex_lock(_armci_int_mutexes +x)
+#  define NAT_UNLOCK(x) pthread_mutex_unlock(_armci_int_mutexes +x)
+#  define LOCK_T pthread_mutex_t
+#  define PAD_LOCK_T LOCK_T
+   EXTERN PAD_LOCK_T *_armci_int_mutexes;
+
+#elif defined(SGI)
 
 #  define SGI_SPINS 100
 #  include <ulocks.h>
@@ -60,21 +105,13 @@
 #  define NAT_LOCK(x) while( shmem_swap(&armci_lock_var,INVALID,(x)) )
 #  define NAT_UNLOCK(x) shmem_swap(&armci_lock_var, 0, (x))
 
+
 #elif  defined(SYSV) && defined(LAPI)
 
-int **_armci_lapi_mutexes;
-#  define NAT_LOCK(x)  armci_lapi_lock(_armci_lapi_mutexes[armci_master]+x)
-#  define NAT_UNLOCK(x)  armci_lapi_unlock(_armci_lapi_mutexes[armci_master]+x)
+int **_armci_int_mutexes;
+#  define NAT_LOCK(x)  armci_lapi_lock(_armci_int_mutexes[armci_master]+x)
+#  define NAT_UNLOCK(x)  armci_lapi_unlock(_armci_int_mutexes[armci_master]+x)
    typedef int lockset_t;
-
-#elif defined(SYSV)
-
-#  include "semaphores.h"
-#  undef NUM_LOCKS
-#  define NUM_LOCKS ((MAX_LOCKS< SEMMSL) ? MAX_LOCKS:SEMMSL)
-
-#  define NAT_LOCK(x)   P_semaphore(x)
-#  define NAT_UNLOCK(x)  V_semaphore(x)
 
 #elif defined(CYGNUS)
 
@@ -94,6 +131,21 @@ int **_armci_lapi_mutexes;
 #elif defined(FUJITSU)
    typedef int lockset_t;
 #  include "fujitsu-vpp.h"
+
+#elif defined(SYSV)
+
+#  include "semaphores.h"
+#  undef NUM_LOCKS
+#  define NUM_LOCKS ((MAX_LOCKS< SEMMSL) ? MAX_LOCKS:SEMMSL)
+
+#  define NAT_LOCK(x)   P_semaphore(x)
+#  define NAT_UNLOCK(x)  V_semaphore(x)
+
+#ifndef _LOCKS_C_
+#define CreateInitLocks Sem_CreateInitLocks
+#define InitLocks Sem_InitLocks
+#define DeleteLocks Sem_DeleteLocks
+#endif
 
 #else
 

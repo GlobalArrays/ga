@@ -2,6 +2,8 @@
 #define _REQUEST_H_
 #ifdef LAPI
 #  include "lapidefs.h"
+#elif defined(GM)
+#  include "myrinet.h"
 #else
    typedef int msg_tag_t;
 #endif
@@ -38,6 +40,9 @@ extern  char* MessageSndBuffer;
 
 extern void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
                          void *ptr, int strides, int stride_arr[], int count[]);
+
+extern char *armci_rcv_data(int proc);
+
 void armci_rcv_strided_data(int proc, char *buf, int datalen,
                         void *ptr, int strides, int stride_arr[], int count[]);
 extern void armci_send_strided_data(int proc,  request_header_t *msginfo, 
@@ -51,11 +56,26 @@ extern int armci_rem_strided(int op, void* scale, int proc,
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, int lockit);
 
+extern void armci_rem_rmw(int op, int *ploc, int *prem, int extra, int proc);
+extern void armci_rem_ack(int clus);
 extern void armci_server(request_header_t *msginfo, char *dscr, char* buf, 
                          int buflen);
+extern void armci_server_vector(request_header_t *msginfo,
+                                char *dscr, char* buf, int buflen);
+extern void armci_serv_attach_req(void *info, int ilen, long size,
+                                  void* resp,int rlen);
+extern void armci_server_lock(request_header_t *msginfo);
+extern void armci_server_unlock(request_header_t *msginfo, char* dscr);
+extern void armci_create_server_thread ( void* (* func)(void*) );
+extern int armci_server_lock_mutex(int mutex, int proc, msg_tag_t tag);
+extern void armci_send_data(request_header_t* msginfo, void *data);
+extern int armci_server_unlock_mutex(int mutex, int p, int tkt, msg_tag_t* tag);
+extern void armci_rcv_vector_data(int p, char *buf, armci_giov_t dr[], int len);
 
-extern void armci_server_vector( request_header_t *msginfo,
-                          char *dscr, char* buf, int buflen);
-
+#ifndef LAPI
+extern void armci_wait_for_server();
+extern void armci_start_server();
+extern void armci_transport_cleanup();
+#endif
 
 #endif

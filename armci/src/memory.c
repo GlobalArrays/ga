@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.11 1999-11-24 23:50:43 d3h325 Exp $ */
+/* $Id: memory.c,v 1.12 2000-04-17 22:31:39 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -20,8 +20,8 @@ int nproc = armci_clus_info[armci_clus_me].nslave;
       if(armci_me ==i){
         printf("%d master =%d nproc=%d off=%d\n",armci_me, 
                armci_master,nproc, off);
-        printf("%d bytes=%d mptr=%d s=%d ptr=",armci_me, bytes, myptr,size);
-        for(j = 0; j< armci_nproc; j++)printf(" %d",(int)ptr_arr[j]);
+        printf("%d:bytes=%d mptr=%ld s=%d ",armci_me, bytes, myptr,size);
+        for(j = 0; j< armci_nproc; j++)printf(" %ld",ptr_arr[j]);
         printf("\n"); fflush(stdout);
       }
       armci_msg_barrier();
@@ -50,7 +50,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
     int  i,cn, len;
     int  nproc = armci_clus_info[armci_clus_me].nslave;
 
-    bzero(ptr_arr,armci_nproc*sizeof(void*));
+    bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
 
     /* allocate work arrays */
     size_arr = (long*)calloc(armci_nproc,sizeof(long));
@@ -89,7 +89,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
        if(size)armci_master_exp_attached_ptr(myptr);
 
        if(DEBUG_){
-         printf("%d:armci_malloc addr me=%d size=%d\n",armci_me,myptr,size); 
+         printf("%d:armci_malloc addr me=%ld size=%ld\n",armci_me,myptr,size); 
          fflush(stdout);
        }
     }
@@ -106,7 +106,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
         */
        if(size) armci_set_mem_offset(myptr);
        if(DEBUG_){
-          printf("%d:armci_malloc attached addr me=%d ref=%d size=%d\n",
+          printf("%d:armci_malloc attached addr me=%ld ref=%ld size=%ld\n",
                  armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
     }
@@ -118,14 +118,22 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
        if(armci_nclus>1){
           if(armci_me == armci_master){
 
-             armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size, 
-                                &ptr, sizeof(void*));
-             ptr_ref_arr[armci_clus_me]= ptr; /* from server*/
+#            ifdef SERVER_THREAD
 
-             if(DEBUG_){
-               printf("%d: addresses server=%d me=%d\n",armci_me, ptr, myptr);
-               fflush(stdout);
-             }
+               /* data server thread runs on master process */
+               ptr_ref_arr[armci_clus_me]=myptr;
+
+#            else
+               /* ask data server process to attach to the region and get ptr */
+               armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size, 
+                                     &ptr, sizeof(void*));
+               ptr_ref_arr[armci_clus_me]= ptr; /* from server*/
+
+               if(DEBUG_){
+                 printf("%d:addresses server=%ld me=%ld\n",armci_me,ptr,myptr);
+                 fflush(stdout);
+               }
+#            endif
           }
 
           /* exchange ref addr of shared memory region on every cluster node*/

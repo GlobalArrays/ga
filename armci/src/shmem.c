@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.11 2000-04-06 23:19:16 edo Exp $ */
+/* $Id: shmem.c,v 1.12 2000-04-17 22:31:41 d3h325 Exp $ */
 /* System V shared memory allocation and managment for GAs:
  *
  * Interface:
@@ -60,7 +60,6 @@ extern void armci_die();
   extern char *shmat();
 #endif
 
-#define MAX_REGIONS 120
 #define SHM_UNIT (1024)
 
 
@@ -69,7 +68,7 @@ extern void armci_die();
  * 2. trial-and-error search for a max value (default)
  */
 /* on SP cannot get return status from a child process needed to test SHMMAX */
-#if defined(LAPI) || defined(IBM)
+#if defined(LAPI) || defined(IBM) || defined(GM)
 #define NO_SHMMAX_SEARCH
 #endif
 
@@ -124,7 +123,7 @@ int armci_test_allocate(long size)
 
    /* delete segment id */
    if(shmctl( (int) id, IPC_RMID,(struct shmid_ds *)NULL))
-      fprintf(stderr,"failed to remove shm id=%d\n",id);
+      fprintf(stderr,"failed to remove shm id=%ld\n",id);
 
    /* test pointer */
    if (((long)ptr) == -1L) return 0;
@@ -145,7 +144,8 @@ int armci_test_allocate(long size)
 \*/
 int armci_shmem_test()
 {
-long x,i,rc;
+long x;
+int  i,rc;
 long upper_bound=UBOUND;
 long lower_bound=0;
 
@@ -563,7 +563,9 @@ int  reg, nreg;
     *id = region_list[reg].id;
     occup_blocks++;
   
+/*
   if(DEBUG_) fprintf(stderr,"Create_Shared_Region: reg=%d id= %d  off=%d  addr=%d    addr+off=%d s=%d\n",reg,*id, *offset, region_list[reg].addr, temp, size);
+*/
 
     return temp;
 }
@@ -604,7 +606,7 @@ long ga_nodeid_();
   /* attach if not attached yet */
   if(!region_list[reg].attached){
    if ( (long) (temp = shmat((int) *id, (char *)NULL, 0)) == -1L){
-       fprintf(stderr, " err: id= %d  off=%d \n",*id, offset);
+       fprintf(stderr, " err: id= %ld  off=%ld \n",*id, offset);
        shmem_errmsg(size);
        armci_die("Attach_Shared_Region: failed to attach ",(long)id);
     }
@@ -612,7 +614,9 @@ long ga_nodeid_();
     region_list[reg].attached = 1;
   }
 
+/*
   if(DEBUG_) fprintf(stderr, "attach: reg=%d id= %d  off=%d  addr=%d addr+off=%d   f=%d\n",reg,*id,offset, region_list[reg].addr,region_list[reg].addr+ offset,  found);
+*/
 
   if(STAMP)
   /* check stamp to make sure that we are attached in the right place */
@@ -643,7 +647,7 @@ long id;
     last_allocated = alloc_regions;
     if ( (id = (long)shmget(IPC_PRIVATE, (int) size,
                      (int) (IPC_CREAT | 00600))) < 0L ){
-       fprintf(stderr,"id=%d size=%d\n",id, (int) size);
+       fprintf(stderr,"id=%ld size=%d\n",id, (int) size);
        shmem_errmsg(size);
        armci_die("allocate: failed to create shared region ",(long)id);
     }
@@ -653,7 +657,7 @@ long id;
        armci_die("allocate: failed to attach to shared region",  temp);
     }
 
-    if(DEBUG_)fprintf(stderr,"allocate: id= %d addr=%d size=%d\n",id,temp,size);
+    if(DEBUG_)fprintf(stderr,"allocate:id=%ld adr=%ld size=%ld\n",id,temp,size);
     region_list[alloc_regions].addr = temp;
     region_list[alloc_regions].id = id;
     alloc_regions++;
@@ -679,7 +683,7 @@ void Free_Shmem_Ptr( id, size, addr)
 void Delete_All_Regions()
 {
 int reg;
-long code=0;
+int code=0;
 extern int armci_me;
 
   for(reg = 0; reg < MAX_REGIONS; reg++){

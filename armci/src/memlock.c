@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.7 2000-03-11 02:10:24 d3h325 Exp $ */
+/* $Id: memlock.c,v 1.8 2000-04-17 22:31:38 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -45,8 +45,6 @@ static memlock_t table[MAX_SLOTS];
 
 
 
-
-
 /*\ simple locking scheme that ignores addresses
 \*/
 void armci_lockmem_(void *pstart, void *pend, int proc)
@@ -72,7 +70,6 @@ void armci_unlockmem_(int proc)
     }
 #   endif
 }
-
 
 
 
@@ -119,7 +116,7 @@ void armci_lockmem(void *start, void *end, int proc)
 #endif
 
      if(DEBUG_){
-       printf("%d: calling armci_lockmem for %d range %d -%d\n",
+       printf("%d: calling armci_lockmem for %d range %lx -%lx\n",
               armci_me, proc, start,end);
        fflush(stdout);
      }
@@ -240,8 +237,8 @@ void armci_set_mem_offset(void *ptr)
       armci_mem_offset =off;
       first_time =0;
       if(DEBUG_){
-        printf("%d memlock offset=%d me=%d ref=%d\n",armci_me, armci_mem_offset,
-           ref_ptr, ptr); fflush(stdout);
+        printf("%d memlock offset=%ld ref=%lx ptr=%lx\n",armci_me,
+                  armci_mem_offset, ref_ptr, ptr); fflush(stdout);
       }
 
    }else{
@@ -252,4 +249,3 @@ void armci_set_mem_offset(void *ptr)
       }
    }
 }
-

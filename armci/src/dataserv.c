@@ -1,29 +1,29 @@
-/* $Id: dataserv.c,v 1.12 1999-11-24 01:35:29 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.13 2000-04-17 22:31:37 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
 #include "message.h"
 #include "memlock.h"
+#include "shmem.h"
 #include "copy.h"
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
 
+#ifdef WIN32
+#include <windows.h>
+#define sleep(x) Sleep(100*(x))
+#endif
  
 #define ACK 0
 #define DEBUG_ 0
 #define QUIT 33
 #define ATTACH 34
-#define SOFFSET -1000
 
 extern int AR_ready_sigchld;
-int *AR_sock;
+int *SRV_sock;
 int *AR_port;
+int *CLN_sock;
 
-int init_port, init_socket;
-pid_t server_pid= (pid_t)0;
 char *msg="hello from server";
 static int allocate_memlock=1;
 
@@ -51,7 +51,7 @@ int bytes;
                cluster,proc,dscrlen,datalen,bytes);
         fflush(stdout);
      }
-    stat = armci_WriteToSocket(AR_sock[cluster], MessageSndBuffer, bytes);
+    stat = armci_WriteToSocket(SRV_sock[cluster], MessageSndBuffer, bytes);
     if(stat<0)armci_die("armci_send_req:write failed",stat);
 }
 
@@ -121,8 +121,8 @@ void armci_read_strided_sock(void *ptr, int stride_levels, int stride_arr[],
             if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
         }
 
-	    /* memcpy(buf, ((char*)ptr)+idx, count[0]); */
-	    /* buf += count[0]; */
+	/* memcpy(buf, ((char*)ptr)+idx, count[0]); */
+	/* buf += count[0]; */
         stat = armci_ReadFromSocket(fd, ((char*)ptr)+idx, count[0]);
         if(stat<0)armci_die("armci_read_strided_sock:read failed",stat);
     }
@@ -161,19 +161,29 @@ int bytes;
       /* for small contiguous blocks copy into a buffer before sending */
       armci_write_strided(ptr, strides, stride_arr, count, bdata);
 
-      stat = armci_WriteToSocket(AR_sock[cluster], msginfo, bytes);
+      stat = armci_WriteToSocket(SRV_sock[cluster], msginfo, bytes);
       if(stat<0)armci_die("armci_send_strided:write failed",stat);
 
     }else{
 
       /* we write header + data descriptor */
       bytes = hdrlen + dscrlen;
-      stat = armci_WriteToSocket(AR_sock[cluster], msginfo, bytes);
+      stat = armci_WriteToSocket(SRV_sock[cluster], msginfo, bytes);
       if(stat<0)armci_die("armci_send_strided:write failed",stat);
 
       /* for larger blocks write directly to socket thus avoiding memcopy */
-      armci_write_strided_sock(ptr, strides, stride_arr,count,AR_sock[cluster]);
+      armci_write_strided_sock(ptr, strides, stride_arr,count,SRV_sock[cluster]);
     }
+}
+
+
+
+/*\ client receives vector data from server to buffer and unpacks it 
+\*/
+void armci_rcv_vector_data(int proc, char *buf, armci_giov_t darr[], int len)
+{
+    buf = armci_rcv_data(proc);
+    armci_vector_from_buf(darr, len, buf);
 }
 
 
@@ -187,10 +197,10 @@ int hdrlen = sizeof(request_header_t);
 int stat;
 int bytes;
 
-    stat =armci_ReadFromSocket(AR_sock[p],MessageRcvBuffer,hdrlen);
+    stat =armci_ReadFromSocket(CLN_sock[p],MessageRcvBuffer,hdrlen);
     if(stat<0){
-	fflush(stdout); sleep(1);
-	armci_die("armci_rcv_req: failed to receive header ",stat);
+	fflush(stdout); 
+	armci_die("armci_rcv_req: failed to receive header ",p);
     }
 
     if(DEBUG_){
@@ -222,7 +232,7 @@ int bytes;
       bytes = msginfo->bytes;
 
     if(msginfo->bytes){
-       stat = armci_ReadFromSocket(AR_sock[p],msginfo+1,bytes);
+       stat = armci_ReadFromSocket(CLN_sock[p],msginfo+1,bytes);
        if(stat<0)armci_die("armci_rcv_req: read of data failed",stat);
        *(void**)pdescr = msginfo+1;
        *(void**)pdata  = msginfo->dscrlen + (char*)(msginfo+1); 
@@ -258,7 +268,7 @@ int bytes;
 
 /*\ client receives data from server
 \*/
-void armci_rcv_data(int proc)
+char* armci_rcv_data(int proc)
 {
 int cluster = armci_clus_id(proc);
 int datalen = ((request_header_t*)MessageSndBuffer)->datalen;
@@ -272,12 +282,13 @@ int stat;
     if(datalen > MSG_BUFLEN)
        armci_die("armci_rcv_data:data overflowing rcv buffer",datalen);
 
-    stat =armci_ReadFromSocket(AR_sock[cluster],MessageSndBuffer,datalen);
+    stat =armci_ReadFromSocket(SRV_sock[cluster],MessageSndBuffer,datalen);
     if(stat<0)armci_die("armci_rcv_data: read failed",stat);
     if(DEBUG_){
       printf("%d:armci_rcv_data: got %d bytes \n",armci_me,datalen);
       fflush(stdout);
     }
+    return MessageSndBuffer;
 }
 
 
@@ -297,7 +308,7 @@ int stat;
    if(count[0] < TCP_PAYLOAD && strides>1 ){
 
      /* for small data segments minimize number of system calls */
-     stat =armci_ReadFromSocket(AR_sock[cluster],buf,datalen);
+     stat =armci_ReadFromSocket(SRV_sock[cluster],buf,datalen);
      if(stat<0)armci_die("armci_rcv_data: read failed",stat);
 	
      armci_read_strided(ptr, strides, stride_arr, count, buf);
@@ -306,7 +317,7 @@ int stat;
 	
 
      /* for larger blocks read directly from socket thus avoiding memcopy */
-     armci_read_strided_sock(ptr, strides, stride_arr, count, AR_sock[cluster]);
+     armci_read_strided_sock(ptr, strides, stride_arr, count, SRV_sock[cluster]);
    }
 
     if(DEBUG_){
@@ -325,7 +336,7 @@ void armci_send_data(request_header_t* msginfo, void *data)
 int to = msginfo->from;
 int stat;
 
-    stat = armci_WriteToSocket(AR_sock[to], data, msginfo->datalen);
+    stat = armci_WriteToSocket(CLN_sock[to], data, msginfo->datalen);
     if(stat<0)armci_die("armci_send_data:write failed",stat);
 }
 
@@ -347,26 +358,26 @@ int datalen = msginfo->datalen;
        /* for small contiguous blocks copy into a buffer before sending */
        armci_write_strided(ptr, strides, stride_arr, count, bdata);
 
-       stat = armci_WriteToSocket(AR_sock[to], bdata, datalen);
+       stat = armci_WriteToSocket(CLN_sock[to], bdata, datalen);
        if(stat<0)armci_die("armci_send_strided_data:write failed",stat);
 
    }else{
 
      /* for larger blocks write directly to socket thus avoiding memcopy */
-     armci_write_strided_sock(ptr, strides, stride_arr, count, AR_sock[to]);
+     armci_write_strided_sock(ptr, strides, stride_arr, count, CLN_sock[to]);
    }
 
 }
 
 
 
-/*\ write data to socket associated with process "to"
+/*\ server writes data to socket associated with process "to"
 \*/
 void armci_sock_send(int to, void* data, int len)
 {
 int stat;
 
-    stat = armci_WriteToSocket(AR_sock[to], data, len);
+    stat = armci_WriteToSocket(CLN_sock[to], data, len);
     if(stat<0)armci_die("armci_sock_send:write failed",stat);
 }
 
@@ -379,7 +390,7 @@ request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
 char *buf;
 
     msginfo->from  = armci_me;
-    msginfo->to    = SOFFSET - armci_master; /*server id derived from master*/
+    msginfo->to    = SERVER_NODE(armci_clus_me);
     msginfo->dscrlen   = ilen;
     msginfo->datalen = sizeof(long)+sizeof(rlen);
     msginfo->operation = msginfo->format  =  ATTACH;
@@ -462,12 +473,12 @@ void armci_server_ipc(request_header_t* msginfo, void* descr,
 
 /*\ close all open sockets, called before terminating/aborting
 \*/
-void armci_CleanupSockets()
+void armci_transport_cleanup()
 {
-     if(armci_me < 0) 
-        armci_ShutdownAll(AR_sock,armci_nproc); /*server */
+     if(SERVER_CONTEXT) 
+        armci_ShutdownAll(CLN_sock,armci_nproc); /*server */
      else
-        armci_ShutdownAll(AR_sock,armci_nclus); /*client */
+        armci_ShutdownAll(SRV_sock,armci_nclus); /*client */
 }
 
 
@@ -489,7 +500,7 @@ void armci_server_goodbye(request_header_t* msginfo)
        armci_send_data(msginfo, &ack);
      }
 
-     armci_CleanupSockets();
+     armci_ShutdownAll(CLN_sock,armci_nproc);
 
      /* Finalizing data server process w.r.t. MPI is not portable 
       * some IBM implementations of MPI could hang in MPI_Finalize
@@ -516,7 +527,7 @@ int stat;
    
     msginfo->dscrlen = 0;
     msginfo->from  = armci_me;
-    msginfo->to    = SOFFSET - armci_master; /* server id derived from master*/
+    msginfo->to    = SERVER_NODE(armci_clus_me); 
     msginfo->format  = msginfo->operation = QUIT;
     if(ACK)
        msginfo->bytes   = msginfo->datalen = sizeof(int); /* ACK */
@@ -532,6 +543,8 @@ int stat;
             armci_die("armci_serv_quit: wrong response from server", stat);
     }
 }
+
+
 
 /*\ server sends ACK to client
 \*/
@@ -557,10 +570,15 @@ request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
 
     msginfo->dscrlen = 0;
     msginfo->from  = armci_me;
-    msginfo->to    = SOFFSET -armci_clus_info[clus].master; 
+    msginfo->to    = SERVER_NODE(clus);
     msginfo->format  = msginfo->operation = ACK;
     msginfo->bytes   =0;
     msginfo->datalen =sizeof(int);
+
+     if(DEBUG_){
+        printf("%d client: sending ACK to %d c=%d\n",armci_me,msginfo->to,clus);
+        fflush(stdout);
+     }
 
     armci_send_req(armci_clus_info[clus].master);
     armci_rcv_data(armci_clus_info[clus].master);  /* receive ACK */
@@ -581,10 +599,15 @@ int up=1;
     readylist = (int*)calloc(sizeof(int),armci_nproc);
     if(!readylist)armci_die("armci_data_server:could not allocate readylist",0);
 
+    if(DEBUG_){
+      printf("%d server waiting for request\n",armci_me); fflush(stdout);
+      sleep(1);
+    }
+
     /* server main loop; wait for and service requests until QUIT requested */
     for(;;){ 
       int i, p;
-      nready = armci_WaitSock(AR_sock, armci_nproc, readylist);
+      nready = armci_WaitSock(CLN_sock, armci_nproc, readylist);
 
       for(i = 0; i < armci_nproc; i++){
           void *descr, *buffer;
@@ -660,40 +683,48 @@ int up=1;
 }
    
 
-/*\ Create Socket Connections
- *  all tasks must participate at least to allocate memory
+/*\ Create Sockets for clients and servers 
 \*/
 void armci_create_connections()
 {
   int p,master = armci_clus_info[armci_clus_me].master;
 
-  AR_sock = (int*) malloc(sizeof(int)*armci_nproc);
-  if(!AR_sock)armci_die("ARMCI cannot allocate AR_sock",armci_nproc);
+  /* sockets for communication with data server */
+  SRV_sock = (int*) malloc(sizeof(int)*armci_nclus);
+  if(!SRV_sock)armci_die("ARMCI cannot allocate SRV_sock",armci_nclus);
+
+  /* array that will be used to exchange port info */
   AR_port = (int*) calloc(armci_nproc * armci_nclus, sizeof(int));
-  if(!AR_port)armci_die("ARMCI cannot allocate ARport",armci_nproc*armci_nclus);
+  if(!AR_port)armci_die("ARMCI cannot allocate AR_port",armci_nproc*armci_nclus);
 
   /* create sockets for communication with each user process */ 
-  if(master==armci_me)for(p=0; p< armci_nproc; p++){
-      int off_port = armci_clus_me*armci_nproc; 
-      armci_CreateSocketAndBind(AR_sock + p, AR_port + p +off_port);
-/*      printf("%d:port %d\n",armci_me,AR_port[p+off_port]); fflush(stdout);*/
+  if(master==armci_me){
+     CLN_sock = (int*) malloc(sizeof(int)*armci_nproc);
+     if(!CLN_sock)armci_die("ARMCI cannot allocate CLN_sock",armci_nproc);
+
+     for(p=0; p< armci_nproc; p++){
+       int off_port = armci_clus_me*armci_nproc; 
+#      ifdef SERVER_THREAD
+         if(p >=armci_clus_first && p <= armci_clus_last) CLN_sock[p]=-1;
+         else
+#      endif
+         armci_CreateSocketAndBind(CLN_sock + p, AR_port + p +off_port);
+     }
   }
 }
 
 
+
 void armci_wait_for_server()
 {
-  if(armci_me == armci_master && server_pid ){
-     int stat;
-     pid_t rc;
+  if(armci_me == armci_master){
+#ifndef SERVER_THREAD
      RestoreSigChldDfl();
      armci_serv_quit();
-     rc = wait (&stat);
-     if (rc != server_pid){
-         perror("ARMCI master: wait for child process (server) failed:");
-     }
-     server_pid = (pid_t)0;
-
+#endif
+#ifndef SERVER_THREAD
+     armci_wait_server_process();
+#endif
   }
 }
 
@@ -701,18 +732,24 @@ void armci_wait_for_server()
 
 void armci_client_code()
 {
-  int stat,p, c, nall, master = armci_clus_info[armci_clus_me].master;
+  int stat,c, nall;
   char str[100];
+#ifndef SERVER_THREAD
+  int p;
+#endif
 
   if(DEBUG_){
      bzero(str,99);
      printf("in client after fork %d\n",armci_me);
+     fflush(stdout);
   }
 
-  /* master has to close all sockets -- they are used by server */ 
-  if(master==armci_me)for(p=0; p< armci_nproc; p++){
-     close(AR_sock[p]);
+#ifndef SERVER_THREAD
+  /* master has to close all sockets -- they are used by server PROCESS */ 
+  if(armci_master==armci_me)for(p=0; p< armci_nproc; p++){
+     close(CLN_sock[p]);
   } 
+#endif
 
   /* exchange port numbers with processes in all cluster nodes
    * save number of messages by using global sum -only masters contribute
@@ -726,53 +763,78 @@ void armci_client_code()
       
       int off_port = c*armci_nproc; 
 
-      if(DEBUG_){
-         printf("%d: client connecting to %s:%d\n",armci_me,
+#ifdef SERVER_THREAD
+      /*no intra node socket connection with server thread*/
+      if(c == armci_clus_me) SRV_sock[c]=-1; 
+      else
+#endif
+       SRV_sock[c] = armci_CreateSocketAndConnect(armci_clus_info[c].hostname,
+                                                  AR_port[off_port + armci_me]);
+      if(DEBUG_ && SRV_sock[c]!=-1){
+         printf("%d: client connected to %s:%d\n",armci_me,
              armci_clus_info[c].hostname, AR_port[off_port + armci_me]);
          fflush(stdout);
       }
-      AR_sock[c] = armci_CreateSocketAndConnect(armci_clus_info[c].hostname,
-                                                AR_port[off_port + armci_me]);
+
   }
 
   if(DEBUG_){
      printf("%d client connected to all %d\n",armci_me, armci_nclus);
   
-     for(c=0; c< armci_nclus; c++){
-        stat =armci_ReadFromSocket(AR_sock[c],str, sizeof(msg)+1);
+     for(c=0; c< armci_nclus; c++)if(SRV_sock[c]!=-1){
+        stat =armci_ReadFromSocket(SRV_sock[c],str, sizeof(msg)+1);
         if(stat<0)armci_die("read failed",stat);
         printf("in client %d message was=%s from%d\n",armci_me,str,c); 
         fflush(stdout);
      }
   }
-     
+
+  /* we do not need the port numbers anymore */
+  free(AR_port);
 }
 
 
-void armci_server_code()
+void * armci_server_code(void *data)
 {
      int stat, p;
 
-     armci_me = SOFFSET -armci_me; /* server id derived from parent id */
-
-     if(DEBUG_)
+     if(DEBUG_){
         printf("in server after fork %d\n",armci_me);
+        fflush(stdout);
+     }
 
      /* establish connections with compute processes */
-     armci_AcceptSockAll(AR_sock, armci_nproc);
+#ifdef SERVER_THREAD
+
+     if(armci_clus_first>0)
+        armci_AcceptSockAll(CLN_sock, armci_clus_first);
+     if(armci_clus_last< armci_nproc-1)
+        armci_AcceptSockAll(CLN_sock + armci_clus_last+1, 
+                            armci_nproc-armci_clus_last-1);
+#else
+     armci_AcceptSockAll(CLN_sock, armci_nproc);
+#endif
 
      if(DEBUG_){
        printf("%d: server connected to all clients\n",armci_me); fflush(stdout);
 
-       for(p=0; p<armci_nproc; p++){
-         stat = armci_WriteToSocket(AR_sock[p], msg, sizeof(msg)+1);
+       sleep(1);
+       for(p=0; p<armci_nproc; p++)if(CLN_sock[p]!=-1){
+         stat = armci_WriteToSocket(CLN_sock[p], msg, sizeof(msg)+1);
          if(stat<0)armci_die("write failed",stat);
        }
+       sleep(5);
      }
 
-     armci_data_server();
-}
+#ifndef SERVER_THREAD
+     /* we do not need the port numbers anymore */
+     free(AR_port);
+#endif
 
+     armci_data_server();
+     return(NULL);
+
+}
 
 
 void armci_start_server()
@@ -783,28 +845,26 @@ void armci_start_server()
 
    if(armci_me == armci_master){
 
-     pid_t pid;
+#ifdef SERVER_THREAD
 
-     armci_ListenSockAll(AR_sock, armci_nproc);
+     /* skip sockets associated with processes on the current node */
+     if(armci_clus_first>0)
+        armci_ListenSockAll(CLN_sock, armci_clus_first); 
 
-     if ( (pid = fork() ) < 0)
-        armci_die("fork failed", (int)pid);
+     if(armci_clus_last< armci_nproc-1)
+        armci_ListenSockAll(CLN_sock + armci_clus_last+1, 
+                            armci_nproc-armci_clus_last-1);
 
-     else if(pid == 0) {
+     armci_create_server_thread( armci_server_code );
 
-        armci_server_code();
+#else
 
-     }else {
+     armci_ListenSockAll(CLN_sock, armci_nproc);
+     armci_create_server_process( armci_server_code );
 
-	/* wait before attempting to connect to data server */
-        /*sleep(1);*/ 
-        server_pid = pid;
-        armci_client_code();
+#endif
 
-     }
-
-   } else 
-     armci_client_code();
-
+   }  
+     
+   armci_client_code();
 }
-

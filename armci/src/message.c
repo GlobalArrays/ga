@@ -1,7 +1,7 @@
-/* $Id: message.c,v 1.12 1999-11-24 01:39:21 d3h325 Exp $ */
+/* $Id: message.c,v 1.13 2000-04-17 22:31:39 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
-#elif defined(TCG)
+#elif defined(TCGMSG)
 #   include <sndrcv.h>
 #else
 #   ifndef MPI

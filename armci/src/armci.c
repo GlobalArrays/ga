@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.27 1999-11-24 01:41:08 d3h325 Exp $ */
+/* $Id: armci.c,v 1.28 2000-04-17 22:31:37 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -23,6 +23,7 @@
  * distribute to other US Government contractors.
  */
 
+#define  EXTERN
 #include <stdio.h>
 #ifdef LAPI
 #  include "lapidefs.h"
@@ -40,8 +41,9 @@
 int armci_me, armci_nproc;
 int armci_clus_me, armci_nclus, armci_master;
 int armci_clus_first, armci_clus_last;
-static int armci_initialized=0;
-static int armci_terminating =0;
+int _armci_initialized=0;
+int _armci_terminating =0;
+thread_id_t armci_usr_tid;
 
 double armci_internal_buffer[BUFSIZE_DBL];
 
@@ -55,7 +57,7 @@ void ARMCI_Cleanup()
 {
 #if defined(SYSV) || defined(WIN32)
     Delete_All_Regions();
-#ifndef LAPI
+#if !defined(LAPI) 
     DeleteLocks(lockid);
 #endif
 
@@ -64,7 +66,7 @@ void ARMCI_Cleanup()
     if(armci_nclus >1){
         /* send quit request to server unless it is already dead */
         armci_wait_for_server();
-        armci_CleanupSockets();
+        armci_transport_cleanup();
     }
 #endif
 #ifndef WIN32
@@ -74,7 +76,7 @@ void ARMCI_Cleanup()
 }
 
 
-void armci_perror_msg()
+static void armci_perror_msg()
 {
     char perr_str[80];
     if(!errno)return;
@@ -82,14 +84,9 @@ void armci_perror_msg()
     perror(perr_str);
 }
 
-void armci_die(char *msg, int code)
-{
-   
-    if(armci_terminating)return;
-    else armci_terminating=1;
 
-    fprintf(stdout,"%d:%s: %d\n",armci_me, msg, code); fflush(stdout);
-    fprintf(stderr,"%d:%s: %d\n",armci_me, msg, code);
+static void armci_abort(int code)
+{
     armci_perror_msg();
     ARMCI_Cleanup();
 
@@ -104,24 +101,39 @@ void armci_die(char *msg, int code)
 }
 
 
+void armci_die(char *msg, int code)
+{
+   
+    if(_armci_terminating)return;
+    else _armci_terminating=1;
+
+    if(SERVER_CONTEXT){
+       fprintf(stdout,"%d(s):%s: %d\n",armci_me, msg, code); fflush(stdout);
+       fprintf(stderr,"%d(s):%s: %d\n",armci_me, msg, code);
+    }else{
+      fprintf(stdout,"%d:%s: %d\n",armci_me, msg, code); fflush(stdout);
+      fprintf(stderr,"%d:%s: %d\n",armci_me, msg, code);
+    }
+    armci_abort(code);
+}
+
+
 void armci_die2(char *msg, int code1, int code2)
 {
-    if(armci_terminating)return;
-    else armci_terminating=1;
+    if(_armci_terminating)return;
+    else _armci_terminating=1;
 
-    fprintf(stdout,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2); fflush(stdout);
-    fprintf(stderr,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2);
-    armci_perror_msg();
-    ARMCI_Cleanup();
+    if(SERVER_CONTEXT){
+      fprintf(stdout,"%d(s):%s: (%d,%d)\n",armci_me,msg,code1,code2); 
+	  fflush(stdout);
+      fprintf(stderr,"%d(s):%s: (%d,%d)\n",armci_me,msg,code1,code2);
+    }else{
+      fprintf(stdout,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2); 
+	  fflush(stdout);
+      fprintf(stderr,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2);
+    }
 
-    /* data server process cannot use message-passing library to abort
-     * it simply exits, parent will get SIGCHLD and abort the program
-     */
-#if defined(DATA_SERVER)
-    if(armci_me<0)_exit(1);
-    else
-#endif
-    armci_msg_abort(code1);
+    armci_abort(code1);
 }
 
 
@@ -134,21 +146,21 @@ void ARMCI_Error(char *msg, int code)
 #if defined(SYSV) || defined(WIN32)
 void armci_allocate_locks()
 {
-#if defined(LAPI)
+    
+#if defined(LAPI_)
 
     int rc, bytes;
-    _armci_lapi_mutexes = (int**) malloc(armci_nproc*sizeof(int*));
-    if(!_armci_lapi_mutexes) armci_die("failed to allocate  ARMCI mutexes",0);
+    _armci_int_mutexes = (lockset_t**) malloc(armci_nproc*sizeof(lockset_t*));
+    if(!_armci_int_mutexes) armci_die("failed to allocate  ARMCI mutexes",0);
 
-    if(armci_master == armci_me) {
-      bytes = NUM_LOCKS*sizeof(int);
-    }
+    if(armci_master == armci_me) bytes = NUM_LOCKS*sizeof(lockset_t);
     else bytes =0;
 
-    rc = ARMCI_Malloc((void**)_armci_lapi_mutexes, bytes);
+    rc = ARMCI_Malloc((void**)_armci_int_mutexes, bytes);
     if(rc) armci_die("failed to allocate ARMCI mutex array",rc);
+
     if(armci_master == armci_me)
-     bzero(_armci_lapi_mutexes[armci_me],sizeof(int)*NUM_LOCKS);
+         bzero(_armci_int_mutexes[armci_me],sizeof(lockset_t)*NUM_LOCKS);
 
 #else
     if(armci_master==armci_me)CreateInitLocks(NUM_LOCKS, &lockid);
@@ -174,7 +186,7 @@ unsigned long limit;
 int ARMCI_Uses_shm()
 {
     int uses=0;
-    if(!armci_initialized)armci_die("ARMCI not yet initialized",0);
+    if(!_armci_initialized)armci_die("ARMCI not yet initialized",0);
 
 #if defined(SYSV) || defined(WIN32)
 #   ifdef LAPI
@@ -235,11 +247,14 @@ void armci_init_memlock()
 int ARMCI_Init()
 {
 
-    if(armci_initialized)return 0;
-    else armci_initialized=1;
+    _armci_initialized++;
+/*    fprintf(stderr,"%d armci initialized %d\n",armci_msg_me(),_armci_initialized);
+*/
+    if(_armci_initialized>1)return 0;
 
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
+	armci_usr_tid = THREAD_ID_SELF(); /*remember the main user thread id */
 
 
 #ifdef CRAY
@@ -273,7 +288,6 @@ int ARMCI_Init()
     if(armci_nclus >1) armci_start_server();
 #endif
 
-
     armci_msg_barrier();
 
     armci_init_memlock();
@@ -286,9 +300,10 @@ int ARMCI_Init()
 
 void ARMCI_Finalize()
 {
-    if(!armci_initialized)return;
-/*    armci_initialized=0;*/
+    _armci_initialized--;
+    if(_armci_initialized)return;
 
+    _armci_terminating =1;;
     armci_msg_barrier();
     if(armci_me==armci_master) ARMCI_ParentRestoreSignals();
 

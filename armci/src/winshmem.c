@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.3 1999-07-28 00:48:06 d3h325 Exp $ */
+/* $Id: winshmem.c,v 1.4 2000-04-17 22:31:43 d3h325 Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -52,7 +52,6 @@
 
 #define DEBUG 0
 #define SHM_UNIT (1024)
-#define MAX_REGIONS 16
 
 /* default unit for shared memory allocation in KB! */
 #ifdef WIN32
