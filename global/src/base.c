@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.39 2003-03-05 17:14:11 d3g293 Exp $ */
+/* $Id: base.c,v 1.40 2003-04-14 14:33:12 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -634,6 +634,10 @@ Integer  i, ga_handle, status, maplen=0;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
       GA[ga_handle].ndim    = (int) ndim;
+      /* If only one node is being used, set proc list to default value */
+      if (ga_cluster_nnodes_() == 1) {
+        p_handle = -1;
+      }
       GA[ga_handle].p_handle = (int) p_handle;
 
       GA[ga_handle].ghosts = 0;
@@ -2531,7 +2535,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
   if (local_sync_begin) ga_sync_();
   /* don't perform update if node is not mirrored */
-  if (!ga_is_mirrored_(g_a)) ga_error("Array is not mirrored",GAme);
+  if (!ga_is_mirrored_(g_a)) return;
 
   inode = ga_cluster_nodeid_();
   nnodes = ga_cluster_nnodes_(); 
