@@ -19,8 +19,6 @@
         SHELL = /bin/sh
            MV = /bin/mv
            RM = /bin/rm
-         MAKE = make
-    MAKEFLAGS = -j
       INSTALL =
       ARFLAGS = rcv
     EXPLICITF = FALSE
@@ -135,7 +133,6 @@ ifeq ($(TARGET),SP1)
 
          EUIH = /usr/lpp/euih/eui
            FC = xlf
-         MAKE = gnumake
 
 GLOB_INCLUDES = -I. -I../../ma -I$(EUIH)
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX

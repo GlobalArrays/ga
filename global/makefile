@@ -15,20 +15,20 @@ USES_BLAS = src/ga_solve_seq.F src/ga_dgemm.F src/ga_dgemm_seq.F
 ifeq ($(TARGET),PARAGON)
 # Distributed memory machines
 global_stamp:	include_stamp 
-	make -f makefile.GA TARGET=$(TARGET) VERSION=DISMEM \
+	$(MAKE) -f makefile.GA TARGET=$(TARGET) VERSION=DISMEM \
 		DIAG=PAR LU_SOLVE=PAR
 	cp -p libglobal.a $(LIBDIR)
 else
 ifeq ($(TARGET),DELTA)
 # Delta which GA treats as the IPSC ?
 global_stamp:	include_stamp 
-	make -f makefile.GA TARGET=IPSC VERSION=DISMEM \
+	$(MAKE) -f makefile.GA TARGET=IPSC VERSION=DISMEM \
 		DIAG=PAR LU_SOLVE=PAR
 	cp -p libglobal.a $(LIBDIR)
 else
 # Shared memory machines
 global_stamp:	include_stamp 
-	make -f makefile.GA TARGET=$(TARGET) VERSION=SHMEM \
+	$(MAKE) -f makefile.GA TARGET=$(TARGET) VERSION=SHMEM \
 		DIAG=PAR LU_SOLVE=PAR
 	cp -p libglobal.a $(LIBDIR)
 endif
