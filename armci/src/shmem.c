@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.19 2000-06-02 01:05:07 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.20 2000-06-07 01:09:34 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -30,8 +30,8 @@
 #ifdef SYSV
 
  
-#define DEBUG_ 0
-#define DEBUG1 0
+#define DEBUG_ 1
+#define DEBUG1 1
 
 /* For debugging purposes at the beginning of the shared memory region
  * creator process can write a stamp which then is read by attaching processes
@@ -42,12 +42,12 @@
 #define STAMP 0
 
 extern void armci_die();
-extern int armci_me;
+extern int armci_me, armci_master;
 
 #include "shmem.h"
 #include "shmalloc.h"
 
-#if defined(SUN) || defined(SOLARIS)
+#if defined(SUN) || defined(SOLARIS) || defined(LINUX)
 #define MULTIPLE_REGIONS
 #endif
 
@@ -57,6 +57,14 @@ extern int armci_me;
 #include <sys/param.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#ifdef   ALLOC_MUNMAP
+#include <sys/mman.h>
+#include <unistd.h>
+static  size_t pagesize=0;
+static  int log_pagesize=0;
+#endif
 
 #if defined(SUN)
   extern char *shmat();
@@ -124,6 +132,35 @@ extern int armci_me;
    static  unsigned long MaxShmem;
 
 #endif
+
+#ifdef LINUX
+#define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm shm %d",id);
+#elif  defined(SOLARIS) 
+#define CLEANUP_CMD(command) sprintf(command,"/bin/ipcrm -m %d",id);
+#elif  defined(SGI) 
+#define CLEANUP_CMD(command) sprintf(command,"/usr/sbin/ipcrm -m %d",id);
+#else
+#define CLEANUP_CMD(command) sprintf(command,"/usr/bin/ipcrm -m %d",id);
+#endif
+
+
+#ifdef   ALLOC_MUNMAP
+static char* alloc_munmap(size_t size)
+{
+char *tmp;
+unsigned long iptr;
+    tmp = malloc(size + pagesize -1);
+    if(tmp){
+        iptr = (unsigned long)tmp;
+        iptr >>= logpagesize; iptr <<= logpagesize;
+        tmp = (char*)iptr;
+        if(munmap(tmp, size) == -1) perror("munmap");
+        printf("%d:after unmap %d size=%d\n",rc,tmp, (int)size);
+    }else armci_die("alloc_munmap: malloc failed",(int)size);
+    return tmp;
+}
+#endif
+
 
 
 int armci_test_allocate(long size)
@@ -201,6 +238,22 @@ long lower_bound=0;
 
 void armci_shmem_init()
 {
+
+#ifdef ALLOC_MUNMAP
+   /* determine log2(pagesize) needed for address alignment */
+   int tp=512;
+   logpagesize = 9;
+   pagesize = getpagesize();
+   if(tp>pagesize)armci_die("armci_shmem_init:pagesize",pagesize);
+
+   while(tp<pagesize){
+        tp <<= 1;
+        logpagesize++;
+   }
+   if(tp!=pagesize)armci_die("armci_shmem_init:pagesize pow 2",pagesize);
+#endif
+
+   if(armci_me == armci_master){
 #ifndef NO_SHMMAX_SEARCH
         int x;
 #ifdef LAPI
@@ -219,13 +272,13 @@ void armci_shmem_init()
 #ifdef REPORT_SHMMAX
        printf("%d using x=%d SHMMAX=%dKB\n", armci_me,x, MinShmem);
        fflush(stdout);
-       sleep(2);
+       sleep(1);
 #endif
 #else
 
       /* nothing to do here - limits were given */
-
 #endif
+    }
 }
 
 
@@ -255,7 +308,8 @@ static void shmem_errmsg(long size)
     printf("matches the amount of memory needed by your application and ");
     printf("the system has sufficient amount of swap space. ");
     printf("Most UNIX systems can be easily reconfigured ");
-    printf("to allow larger shared memory segments.\n");
+    printf("to allow larger shared memory segments,\n");
+    printf("see http://www.emsl.pnl.gov/docs/global/support.html\n");
     printf("In some cases, the problem might be caused by insufficient swap space.\n");
     printf("*******************************************************\n");
 }
@@ -273,6 +327,7 @@ static long occup_blocks=0;
  *   region - actual piece of shared memory allocated from OS
  *   block  - a part of allocated shmem that is given to the requesting process
  */
+
 
 
 
@@ -359,6 +414,7 @@ long reg;
         region_list[reg].id=0;
       }
       shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
+      idlist[SHMIDLEN-1]=MinShmem;
   }
 
   temp = shmalloc((unsigned long)size);
@@ -385,12 +441,10 @@ char *Attach_Shared_Region(idlist, size, offset)
      long *idlist, offset, size;
 {
 int ir, reg,  found, first;
-static char *temp;
-char *pref_addr;
-long ga_nodeid_();
+char *temp = (char*)0, *pref_addr=(char*)0;
 
   if(alloc_regions>=MAX_REGIONS)
-       armci_die("Attach_Shared_Region: to many regions ",0L);
+       armci_die("Attach_Shared_Region: too many regions ",0L);
 
   /* first time needs to initialize region_list structure */
   if(!alloc_regions){
@@ -399,6 +453,7 @@ long ga_nodeid_();
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
+      MinShmem= idlist[SHMIDLEN-1];
   }
 
  /* 
@@ -408,6 +463,7 @@ long ga_nodeid_();
   *    . idlist[0] has the number of shmem regions to process
   *    . idlist is assumed to be ordered -- first region comes first etc.
   */
+  pref_addr = (char*)0;   /* first time let the OS choose address */
   for (ir = 0; ir< idlist[0]; ir++){
       /* search region_list for the current shmem id */
       for(found =0, reg=0; reg < MAX_REGIONS;reg++)
@@ -417,18 +473,26 @@ long ga_nodeid_();
          /* shmem id is not on the list */ 
          reg = alloc_regions;
          region_list[reg].id =idlist[1+ir];
+
       }
 
       /* attach if not attached yet */
       if(!region_list[reg].attached){
         /* make sure the next shmem region will be adjacent to previous one */
-         if(alloc_regions)
-           pref_addr= region_list[alloc_regions-1].addr SHM_OP (MinShmem*SHM_UNIT);
+
+         if(temp) pref_addr= temp SHM_OP (MinShmem*SHM_UNIT);
+#ifdef   ALLOC_MUNMAP
          else
-            pref_addr = (char*)0;   /* first time let the OS choose address */
+              pref_addr = alloc_munmap((size_t) (MinShmem*SHM_UNIT));
+#        endif
+
+         if(DEBUG_)
+            fprintf(stderr,"%d:trying id=%d pref=%ld tmp=%ld u=%d\n",armci_me,
+                 idlist[1+ir],pref_addr,temp,MinShmem);
 
          if ( (int) (temp = (char*)shmat((int)idlist[1+ir], pref_addr, 0))==-1){
-           fprintf(stderr, "shmat err: id= %d off=%d \n",idlist[1+ir],offset);
+           fprintf(stderr,"%d:shmat err:id=%d pref=%ld off=%d\n",
+                   armci_me, idlist[1+ir],pref_addr,offset);
            shmem_errmsg(size);
            armci_die("AttachSharedRegion:failed to attach",(long)idlist[1+ir]);
          }
@@ -437,8 +501,11 @@ long ga_nodeid_();
          region_list[reg].attached = 1;
          alloc_regions++;
 
-         if(DEBUG_) fprintf(stderr, "-Attach_Shared_Region: id=%d addr=%d \n",
-                           idlist[1+ir], temp);
+         if(DEBUG_){
+           printf("%d: Attach_Shared_Region: id=%d pref=%ld got addr=%ld\n",
+                           armci_me, idlist[1+ir], pref_addr, temp);
+           fflush(stdout);
+         }
       }
       /* now we have this region attached and ready to go */
 
@@ -457,6 +524,7 @@ long ga_nodeid_();
                 *((int*)(region_list[reg].addr+ offset)));
   }
   occup_blocks++;
+
 /*  return (region_list[reg].addr + offset);*/
   return (region_list[0].addr + offset);
 }
@@ -469,7 +537,7 @@ char *allocate(size)
      long size;
 {
 #define min(a,b) ((a)>(b)? (b): (a))
-char *temp, *ftemp, *pref_addr, *valloc();
+char *temp = (char*)0, *pref_addr=(char*)0, *ftemp;
 int id, newreg, i;
 long sz;
 
@@ -485,6 +553,13 @@ long sz;
     prev_alloc_regions = alloc_regions; 
 
     if(DEBUG_)fprintf(stderr, "in allocate size=%d\n",size);
+
+#ifdef  ALLOC_MUNMAP
+    pref_addr = alloc_munmap((size_t) size);
+#else
+    pref_addr = (char*)0;   /* first time let the OS choose address */
+#endif
+
     /* allocate shmem in as many segments as neccesary */
     for(i =0; i< newreg; i++){ 
        sz =(i==newreg-1)?size -i*MinShmem*SHM_UNIT: min(size,SHM_UNIT*MinShmem);
@@ -497,38 +572,22 @@ long sz;
           armci_die("allocate: failed to create shared region ",(long)id);
        }
 
-       /* fprintf(stderr,"shm id=%d\n",id); */
        /* make sure the next shmem region will be adjacent to previous one */
-       if(alloc_regions)
-         pref_addr=region_list[alloc_regions-1].addr SHM_OP (MinShmem*SHM_UNIT);
-       else
-         pref_addr= (char*)0;   /* first time let the OS choose address */
+       if(temp) pref_addr= temp SHM_OP (MinShmem*SHM_UNIT);
 
        if(DEBUG_)printf(" calling shmat: id=%d adr=%d sz=%d\n",id,pref_addr,sz);
 
        if ( (int)(temp = (char*)shmat((int) id, pref_addr, 0)) == -1){
           char command[64];
-#ifdef LINUX
-          sprintf(command,"/usr/bin/ipcrm shm %d",id);
-#elif  defined(SOLARIS) 
-          sprintf(command,"/bin/ipcrm -m %d",id);
-#elif  defined(SGI) 
-          sprintf(command,"/usr/sbin/ipcrm -m %d",id);
-#else
-          sprintf(command,"/usr/bin/ipcrm -m %d",id);
-#endif
+          CLEANUP_CMD(command);
           if(system(command) == -1) 
-          fprintf(stderr,"Might need to clean shared memory: type 'ipcrm -m %d'\n", id);
+            fprintf(stderr,"Need to clean shared memory id=%d: see man ipcrm\n",id);
           if(pref_addr){
-             printf("Application attempted to allocate shared memory segment ");
-             printf("that is larger than SHMMAX largest segment size allowed ");
              printf("ARMCI shared memory allocator was unable to obtain from ");
              printf("the operating system multiple segments adjacent to ");
              printf("each other in order to combine them into a one large ");
              printf("segment together\n");
-             printf("You need to ask your system administrator to reconfigure");
-             printf(" the operating system to allow larger shared memory ");
-             printf("segments. This parameter is called SHMMAX\n");
+             shmem_errmsg(size);
              armci_die("allocate: failed to attach to shared region",  0L);
          }
        }
@@ -544,7 +603,8 @@ long sz;
     return (min(ftemp,temp));
 }
     
-/********************************* MULTIPLE_REGIONS *******************/
+/************************** END of MULTIPLE_REGIONS *******************/
+
 #else /* Now, the machines where shm segments are not glued together */ 
 
 
