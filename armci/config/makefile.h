@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.109 2004-09-10 02:35:14 edo Exp $
+#$Id: makefile.h,v 1.110 2004-09-30 02:07:50 edo Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -208,16 +208,19 @@ endif
    
 endif
 ifeq  ($(_CPU),x86_64)
-  _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90"} ')
+  _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /Path/ { print "pathf90" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90"} ')
   ifeq ($(_FC),pgf90)
      FOPT_REN= -fastsse -Mdalign -tp k8-64 -O3
   endif
-  _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /ifc/ { print "ifort" ; exit };/ifort/ { print "ifort" ; exit }; /pgf90/ { apgf90count++}; /pgf77/ { apgf77count++}; END {if(apgf77count)print "pgf77" ; if(apgf90count)print "pgf90"} ')
+  _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /Path/ { print "pathf90" ; exit }; /efc/ { print "efc" ; exit }; /ifc/ { print "ifort" ; exit };/ifort/ { print "ifort" ; exit }; /pgf90/ { apgf90count++}; /pgf77/ { apgf77count++}; END {if(apgf77count)print "pgf77" ; if(apgf90count)print "pgf90"} ')
   ifeq ($(_FC),g77)
         FOPT_REN  += -fstrength-reduce -mfpmath=sse 
   endif
   ifeq ($(_FC),ifort)
         FOPT_REN  += -quiet -O3  -w -cm -xW -tpp7
+  endif
+  ifeq ($(_FC),pathf90)
+        FOPT_REN  = -O3 -OPT:Ofast 
   endif
 endif
 ifeq  ($(_CPU),ppc64)
