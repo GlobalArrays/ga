@@ -100,7 +100,7 @@ c.................................
 
  1000       call testerr(eaf_probe(aio(fnum, iter), stat2))
             write(0,999) stat2
- 999        format(i5,$)
+ 999        format(i5,i8)
             if(stat2 .ne. 0) then
                do nap=1, 2000000
                   dummy = 2.0**2.0+nap
