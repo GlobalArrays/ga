@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.61 2002-12-23 20:49:55 manoj Exp $ */
+/* $Id: armci.c,v 1.62 2002-12-23 22:22:21 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -389,13 +389,13 @@ int ARMCI_Wait(armci_hdl_t usr_hdl){
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
 int direct=SAMECLUSNODE(nb_handle->proc);
+   if(direct)return(success);
     if(nb_handle) {
       if(nb_handle->agg_flag) {
 	armci_agg_complete(nb_handle, UNSET);
 	return (success);
       }
     }
-   if(direct)return(success);
     if(nb_handle){
 #     ifdef ARMCI_NB_WAIT
         if(nb_handle->tag==0){
