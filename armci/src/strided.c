@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.78 2003-12-09 16:12:51 vinod Exp $ */
+/* $Id: strided.c,v 1.79 2003-12-09 16:59:15 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -587,6 +587,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 /*\ function offers the same functionality as regular PutS and sets remote flag
 \*/  
 static int *valflagarr=NULL;
+static armci_hdl_t nbhdlarr1[1000];
 
 int ARMCI_PutS_flag_dir( 
                 void *src_ptr,        /* pointer to 1st segment at source*/ 
