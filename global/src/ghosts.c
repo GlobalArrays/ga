@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.30 2003-10-10 21:42:19 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.31 2003-10-10 21:44:02 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1688,7 +1688,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
-#if 1
+#if 0
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count, ndim- 1, proc_rem);
       /* Send signal to remote processor that data transfer has been completed. */
       bytes = sizeof(int);
@@ -1753,7 +1753,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
-#if 1
+#if 0
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count, ndim- 1, proc_rem);
       /* Send signal to remote processor that data transfer has been completed. */
       bytes = sizeof(int);
@@ -2257,7 +2257,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
         } 
         if (rprocflag) {
-#if 1
+#if 0
           ARMCI_PutS(ptr_snd, stride_snd, ptr_rem, stride_rem, count, ndim- 1,
                      proc_rem_snd);
           /* Send signal to remote processor that data transfer has been completed. */
@@ -2284,7 +2284,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
         }
         if (rprocflag) {
-#if 1
+#if 0
           ARMCI_PutS(ptr_snd, stride_snd, ptr_rem, stride_rem, count, ndim- 1,
                      proc_rem_snd);
           /* Send signal to remote processor that data transfer has been completed. */
@@ -2434,7 +2434,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
         } 
         if (rprocflag) {
-#if 1
+#if 0
           ARMCI_PutS(ptr_snd, stride_snd, ptr_rem, stride_rem, count, ndim- 1,
                      proc_rem_snd);
           /* Send signal to remote processor that data transfer has been completed. */
@@ -2461,7 +2461,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
           armci_msg_rcv(msgcnt, rcv_ptr, bufsize, &msglen, proc_rem_rcv);
         }
         if (rprocflag) {
-#if 1
+#if 0
           ARMCI_PutS(ptr_snd, stride_snd, ptr_rem, stride_rem, count, ndim- 1,
                      proc_rem_snd);
           /* Send signal to remote processor that data transfer has been completed. */
