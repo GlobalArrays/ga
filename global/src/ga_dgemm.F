@@ -29,7 +29,7 @@ c
 #ifdef USE_SUMMA
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.27 2000-06-12 18:02:57 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.28 2000-06-24 00:08:01 d3h325 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -46,7 +46,7 @@ c
 #endif
       subroutine GA_DGEMM(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.27 2000-06-12 18:02:57 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.28 2000-06-24 00:08:01 d3h325 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -54,7 +54,6 @@ C$Id: ga_dgemm.F,v 1.27 2000-06-12 18:02:57 d3h325 Exp $
       Integer            g_a, g_b, g_c
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 c     
 c     GA_DGEMM  performs one of the matrix-matrix operations:
 c           C := alpha*op( A )*op( B ) + beta*C,

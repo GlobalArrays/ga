@@ -1,9 +1,8 @@
       subroutine ga_diag_std(g_a, g_v, eval)
-C$Id: ga_diag.F,v 1.22 1999-09-09 20:20:41 d3g270 Exp $
+C$Id: ga_diag.F,v 1.23 2000-06-24 00:08:01 d3h325 Exp $
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 #include "diag.fh"
       integer g_a               ! matrix to diagonalize
       integer g_v               ! global matrix to return evecs
@@ -184,7 +183,7 @@ c
      $        call ga_error('ga_diag_std: insufficient mem 2',
      $        myelem+elemz)
 c
-c***     load the fock (A) matrix 
+c***     load  matrix A 
 c
          istart = 0
          do k = 1, n
@@ -280,7 +279,8 @@ c     Make sure that even processes that did not participate in the
 c     diagonalization have the eigen vectors
 c
       ga_diag_type = 32760 - 30 
-      call ga_brdcst(ga_diag_type, eval, mdtob(n), 0)
+      call ga_brdcst(ga_diag_type, eval, 
+     $               ma_sizeof(MT_DBL,n,MT_BYTE), 0)
 c     if(myproc.eq.0)then
 c       print *, 'evals after brdcast'
 c       print *, (eval(k),k=1,n)
@@ -297,7 +297,6 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 #include "diag.fh"
       integer g_a               ! matrix to diagonalize
       integer g_s               ! metric
@@ -495,7 +494,7 @@ c
      $        ma_push_get(mt_dbl,elemz,'ga_diag:z',hz,adrz)
          if (.not. status) call ga_error('ga_diag: memory?', myelem)
 c
-c        load the fock (A) and overlap (S) matrices 
+c        load A and S matrices 
 c
          istart = 0
          do k = 1, n
@@ -588,7 +587,8 @@ c       call ffflush(6)
 c     endif
 
       ga_diag_type = 32760 - 30 
-      call ga_brdcst(ga_diag_type, eval, mdtob(n), 0)
+      call ga_brdcst(ga_diag_type, eval, 
+     $               ma_sizeof(MT_DBL,n,MT_BYTE), 0)
 c
       call ga_sync()
 c
@@ -598,7 +598,6 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
 #include "diag.fh"
       integer reuse             ! allows to reuse factorized g_s   
                                 !     0  first time,
@@ -846,7 +845,7 @@ c
          status = ma_push_get(mt_dbl,elemz,'z',hz,adrz)
          if(.not. status)call ga_error('ga_diag: c not allocated ',0)
 c
-c***     load the fock (A) and overlap (S) matrices 
+c***     load A and S matrices 
 c
          istart = 0
          do k = 1, n
@@ -928,7 +927,8 @@ c***  Make sure that even processes that did not participate in the
 c***  diagonalization have the eigen vectors
 c
       ga_diag_type = 32760 - 30 
-      call ga_brdcst(ga_diag_type, eval, mdtob(n), 0)
+      call ga_brdcst(ga_diag_type, eval, 
+     $               ma_sizeof(MT_DBL,n,MT_BYTE), 0)
 c
       if(reuse.eq.0) first_time = .false.
 c

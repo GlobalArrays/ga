@@ -1,4 +1,4 @@
-c $Id: ga_cholesky.F,v 1.7 1999-07-28 00:25:31 d3h325 Exp $
+c $Id: ga_cholesky.F,v 1.8 2000-06-24 00:08:01 d3h325 Exp $
       subroutine ga_cholesky(g_a)
 c
 c     Cholesky factorization G&VL: alg. 6.6.1
@@ -6,7 +6,6 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
       integer g_a
       Integer me, nproc
       Integer ilo, ihi, jlo, jhi, n, j, k
@@ -51,13 +50,15 @@ c
             call dscal(n-k+1, alpha, dbl_mb(adrv+k-1), 1)
             call ga_put(g_a, k,n, k, k, dbl_mb(adrv+k-1),n)
             if(k.lt.n) 
-     &         call ga_brdcst(32111, dbl_mb(adrv+k), mdtob(n-k),me)
+     &         call ga_brdcst(32111, dbl_mb(adrv+k), 
+     &                        ma_sizeof(MT_DBL,n-k,MT_BYTE),me)
          endif
          call ga_sync()
 c
          if(k.lt.n)then
             if(me.ne.0)then
-                  call ga_brdcst(32111, dbl_mb(adrv+k), mdtob(n-k),0)
+                  call ga_brdcst(32111, dbl_mb(adrv+k),
+     &                        ma_sizeof(MT_DBL,n-k,MT_BYTE),0)
             endif
          endif
 c          

@@ -2,7 +2,6 @@
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
       integer g_a               ! Matrix to diagonalize
       integer g_s               ! Metric
       integer g_v               ! Global matrix to return evecs
@@ -84,8 +83,8 @@ c
 c     
 c     Broadcast the eigenvalues to all processes
 c
-c     we explicitly assume 8-byte double precision to avoid tcgmsg calls
-      call ga_brdcst(11, evals, 8*n, 0)
+      call ga_brdcst(32500, evals, 
+     $               ma_sizeof(MT_DBL,n,MT_BYTE), 0)
       call ga_sync()
 c
       end
@@ -94,7 +93,6 @@ c
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
-#include "tcgmsg.fh"
       integer g_a               ! Matrix to diagonalize
       integer g_v               ! Global matrix to return evecs
       double precision evals(*) ! Local array to return evals
@@ -160,8 +158,8 @@ c
 c     
 c     Broadcast the eigenvalues to all processes
 c
-c     we explicitly assume 8-byte double precision to avoid tcgmsg calls
-      call ga_brdcst(11, evals, 8*n, 0)
+      call ga_brdcst(32500, evals, 
+     $               ma_sizeof(MT_DBL,n,MT_BYTE), 0)
       call ga_sync()
 c
       end
