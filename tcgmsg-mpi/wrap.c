@@ -1,6 +1,9 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.2 2001-06-29 00:18:28 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.3 2001-11-14 19:12:01 edo Exp $ */
 #include <stdlib.h>
 #include <mpi.h>
+#ifdef CRAY
+#include <fortran.h>
+#endif
 #include "sndrcv.h"
 #include "tcgmsgP.h"
 #include "typesf2c.h"
@@ -244,7 +247,6 @@ void FATR dgop_(wrap_ptype, x, wrap_pn, op, len_op)
 void FATR igop_(ptype, x, pn, arg)
      Integer *x;
      Integer *ptype, *pn;
-     long *x;
      _fcd arg;
 {
   char *op = _fcdtocp(arg);
