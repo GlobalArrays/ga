@@ -115,6 +115,9 @@ include ../config/makelib.h
 
 LIBS += $(EXTRA_LIBS)
 
+%.x.p:%.x
+	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
+
 %.x:%.c  $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
@@ -123,6 +126,7 @@ test0.x: test.o $(LIBRARY_PATH)
 
 ipctest.x: $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) ipctest.c -o $@ $^ $(LIBS)
+
 
 $(LIBRARY_PATH)(winshmem.o):    ./shmem.h ./shmalloc.h 
 $(LIBRARY_PATH)(vector.o):      ./memlock.h ./copy.h ./armcip.h ./acc.h 
@@ -147,3 +151,4 @@ $(LIBRARY_PATH)(armci.o):       ./signaltrap.h ./shmem.h ./memlock.h ./locks.h .
 locks.h: semaphores.h
 armcip.h: message.h lapidefs.h memlock.h
 %.x: %.c
+
