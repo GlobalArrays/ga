@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.56 2003-01-28 22:49:12 edo Exp $ */
+/* $Id: shmem.c,v 1.57 2003-02-04 21:51:30 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -137,7 +137,6 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 static  unsigned long MinShmem = _SHMMAX;  
 static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
 static  int create_call=0;
-static  char *armci_elan_starting_address = (char*)0;
 
 #ifdef  SHMMAX_SEARCH_NO_FORK
 static  char *ptr_search_no_fork = (char*)0;
@@ -160,6 +159,8 @@ static  int id_search_no_fork=0;
 #ifdef QUADRICS
 #include <elan/elan.h>
 #include <elan3/elan3.h>
+
+static  char *armci_elan_starting_address = (char*)0;
 
 #ifdef __ia64__
 #define ALLOC_MUNMAP_ALIGN 1024*1024
