@@ -83,7 +83,7 @@ typedef struct {
   char buf[MAX_BUFLEN];
 }vbuf_long_t;
 
-static vbuf_t *serv_buf_arr;
+static vbuf_t *serv_buf_arr, *spare_serv_buf;
 static vbuf_long_t *client_buf, *serv_buf;
 static VIP_MEM_HANDLE serv_memhandle, client_memhandle;
 static armci_connect_t *SRV_con;
@@ -319,7 +319,8 @@ char *tmp;
 int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
 
      /* allocate memory for the recv buffers-must be alligned on 64byte bnd */
-     bytes = clients*sizeof(vbuf_t) + sizeof(vbuf_long_t) + extra;
+     /* note we add extra one to repost it for the client we are received req */
+     bytes = (clients+1)*sizeof(vbuf_t) + sizeof(vbuf_long_t) + extra;
      tmp = malloc(bytes + SIXTYFOUR);
      if(!tmp) armci_die("failed to malloc recv vbufs",bytes);
 
@@ -331,7 +332,8 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
      /* setup buffer pointers */
      mod = ((ssize_t)tmp)%SIXTYFOUR;
      serv_buf_arr = (vbuf_t*)(tmp+SIXTYFOUR-mod);
-     serv_buf = (vbuf_long_t*)(serv_buf_arr+clients); /* buffer for response */
+     spare_serv_buf = serv_buf_arr+clients; /* spare buffer is at the end */
+     serv_buf = (vbuf_long_t*)(serv_buf_arr+clients+1); /* buffer for response*/
      MessageRcvBuffer = serv_buf->buf;
 
      /* setup memory attributes for the region */
@@ -499,7 +501,7 @@ VIP_VI_HANDLE vi;
 VIP_BOOLEAN rcv;
 VIP_DESCRIPTOR *pdscr;
 vbuf_t *vbuf;
-int c;
+int c, need_ack;
 request_header_t *msginfo;
 
      for(;;){
@@ -521,27 +523,30 @@ request_header_t *msginfo;
        msginfo = (request_header_t*)vbuf->buf;
        armci_ack_proc= c= msginfo->from; 
 
-       if(DEBUG0){
+       if(DEBUG2){
          printf("%d(s):got REQUEST %d from %d\n",armci_me,msginfo->operation,c);         fflush(stdout);
        }
 
+       /* we replace (repost) the current buffer with the spare one 
+        * so that the client has one available ASAP for next request */ 
+       armci_init_vbuf(&spare_serv_buf->dscr,spare_serv_buf->buf, VBUF_DLEN, 
+                       serv_memhandle);
+       rc = VipPostRecv((CLN_con+c)->vi,&spare_serv_buf->dscr,serv_memhandle);
+       armci_check_status(DEBUG0, rc,"server repost recv vbuf");
+       spare_serv_buf = vbuf; /* save the current buf as spare */
+       
+       if((msginfo->operation == PUT) || ACC(msginfo->operation)){
+           /* for operations that do not send data back we can send ACK now */
+           SERVER_SEND_ACK(armci_ack_proc);
+           need_ack=0;
+       }else need_ack=1;
 
-         /* we should post it this vbuf again even though data it contains 
-          * will be processed in armci_data_server() later
-          * this is safe since the corresponding client cannot send us 
-          * new request before receiving response/ack
-          */
-
-         armci_init_vbuf(pdscr, vbuf->buf, VBUF_DLEN, serv_memhandle);
-         rc = VipPostRecv((CLN_con+c)->vi,pdscr, serv_memhandle);
-         armci_check_status(DEBUG0, rc,"server Repost recv vbuf");
-
-         armci_data_server(vbuf);
+       armci_data_server(vbuf);
 
        armci_serv_clear_sends(); /* for now we complete all pending sends */
-
+      
        /* flow control: send ack for this request since no response was sent */
-       if(armci_ack_proc != NONE) SERVER_SEND_ACK(armci_ack_proc);
+       if(need_ack &&(armci_ack_proc != NONE)) SERVER_SEND_ACK(armci_ack_proc);
 
        if(DEBUG0){
          printf("%d(s): REQUEST from %d processed\n",armci_me,c);fflush(stdout);
