@@ -59,11 +59,8 @@ int rc;
     
      rc = LAPI_Getv(lapi_handle, (uint)p,  &src, &dst, NULL, &get_cntr.cntr);
      if(rc) ERROR("LAPI_getv failed",rc);
-/*     wait_for_get();*/
-/*     sleep(1);*/
-/*     LAPI_Waitcntr(lapi_handle, &get_cntr.cntr, 1, NULL); */
-/*     printf("%d: GET cntr =%d\n",armci_me,&get_cntr.cntr); fflush(stdout);*/
-/*     get_cntr.val =0;*/
-/*      CLEAR_COUNTER(get_cntr);*/
+
+     /* temporary hack*/ 
+     CLEAR_COUNTER(get_cntr);
 }
 
