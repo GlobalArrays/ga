@@ -13,7 +13,5 @@
       external eaf_delete, eaf_stat, eaf_length, eaf_truncate
       external eaf_eof
       external eaf_util_random,eaf_util_szint
-c
       integer eaf_rw, eaf_r, eaf_w
       parameter (eaf_rw=EAF_RW, eaf_r=EAF_R, eaf_w=EAF_W)
-c

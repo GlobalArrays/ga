@@ -1,4 +1,4 @@
-c****************** Fortran header file for Disk Arrays *****************
+!****************** Fortran header file for Disk Arrays *****************
 
 #include  "chemio.h"
 #define   DRA_RW ELIO_RW
@@ -19,7 +19,6 @@ c****************** Fortran header file for Disk Arrays *****************
           Integer           DRA_PROBE
           Integer           DRA_WAIT
           Integer           DRA_TERMINATE  
-c          
           External          DRA_CREATE
           External          DRA_OPEN
           External          DRA_INQUIRE
