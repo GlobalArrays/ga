@@ -209,41 +209,46 @@ void ga_dgop(type, x, n, op)
      Integer rem, me, nproc, lenmes, sync=1,to,lenbuf ;
      DoublePrecision work[BUF_SIZE];
      static void ddoop();
+     long ndo;
 
      me = ga_nodeid_(); nproc = ga_nnodes_(); 
-     if(n > BUF_SIZE)ga_error("ga_dgop: buffer to small ",0L);
 
-     /* up-tree phase */
+     while ((ndo = (n<=BUF_SIZE) ? n : BUF_SIZE)) {
 
-     do {
-       factor *= 2; rem = me%factor;
-       lenbuf = lenmes = n*sizeof(DoublePrecision);
-       if(rem){
-              to = me - rem;
-              snd_(&type, x, &lenmes, &to, &sync); 
-              rcv_(&type, x, &lenmes, &lenbuf, &to, &to, &sync);
-              break;
-       }else{
-              to = me + factor/2;
-              if(to < nproc){
-                 rcv_(&type, work, &lenmes, &lenbuf, &to, &to, &sync);
-                 ddoop(n, op, x, work); 
-              }
-       }
-     }while (factor < nproc);
-
-     /* Now, root broadcasts the result down the binary tree */
-
-     for(factor = 1; factor <= 2*nproc; factor*=2);
-     do {
-       factor /= 2;         
-       rem = me % factor;
-       lenbuf = lenmes = n*sizeof(DoublePrecision);
-       if(!rem && me != factor){
-              to = me + factor;
-              if(to < nproc) snd_(&type, x, &lenmes, &to, &sync); 
-       }
-     } while(factor > 1);
+       /* up-tree phase */
+       
+       do {
+	 factor *= 2; rem = me%factor;
+	 lenbuf = lenmes = ndo*sizeof(DoublePrecision);
+	 if(rem){
+	   to = me - rem;
+	   snd_(&type, x, &lenmes, &to, &sync); 
+	   rcv_(&type, x, &lenmes, &lenbuf, &to, &to, &sync);
+	   break;
+	 }else{
+	   to = me + factor/2;
+	   if(to < nproc){
+	     rcv_(&type, work, &lenmes, &lenbuf, &to, &to, &sync);
+	     ddoop(ndo, op, x, work); 
+	   }
+	 }
+       }while (factor < nproc);
+       
+       /* Now, root broadcasts the result down the binary tree */
+       
+       for(factor = 1; factor <= 2*nproc; factor*=2);
+       do {
+	 factor /= 2;         
+	 rem = me % factor;
+	 lenbuf = lenmes = ndo*sizeof(DoublePrecision);
+	 if(!rem && me != factor){
+	   to = me + factor;
+	   if(to < nproc) snd_(&type, x, &lenmes, &to, &sync); 
+	 }
+       } while(factor > 1);
+       n -=ndo;
+       x +=ndo;
+     }
 
 #else
 
@@ -271,6 +276,91 @@ long gtype,gn,glen;
      gtype = (long)*type; gn = (long)*n; glen = len;
 
      ga_dgop(gtype, x, gn, op);
+}
+
+/*\ GLOBAL OPERATIONS 
+ *  (C)
+ *  We cannot use TCGMSG in data-server model 
+ *  where only half of processes participate
+\*/
+void ga_igop(type, x, n, op)
+     Integer type, n;
+     Integer *x;
+     char *op;
+{
+#ifdef DATA_SERVER
+#define BUF_SIZE 10000
+     Integer factor = 1;  /*  log of level of binary tree */
+     Integer rem, me, nproc, lenmes, sync=1,to,lenbuf ;
+     Integer work[BUF_SIZE];
+     static void ddoop();
+     long ndo;
+
+     me = ga_nodeid_(); nproc = ga_nnodes_(); 
+
+     while ((ndo = (n<=BUF_SIZE) ? n : BUF_SIZE)) {
+
+       /* up-tree phase */
+       
+       do {
+	 factor *= 2; rem = me%factor;
+	 lenbuf = lenmes = ndo*sizeof(Integer);
+	 if(rem){
+	   to = me - rem;
+	   snd_(&type, x, &lenmes, &to, &sync); 
+	   rcv_(&type, x, &lenmes, &lenbuf, &to, &to, &sync);
+	   break;
+	 }else{
+	   to = me + factor/2;
+	   if(to < nproc){
+	     rcv_(&type, work, &lenmes, &lenbuf, &to, &to, &sync);
+	     ddoop(ndo, op, x, work); 
+	   }
+	 }
+       }while (factor < nproc);
+       
+       /* Now, root broadcasts the result down the binary tree */
+       
+       for(factor = 1; factor <= 2*nproc; factor*=2);
+       do {
+	 factor /= 2;         
+	 rem = me % factor;
+	 lenbuf = lenmes = ndo*sizeof(Integer);
+	 if(!rem && me != factor){
+	   to = me + factor;
+	   if(to < nproc) snd_(&type, x, &lenmes, &to, &sync); 
+	 }
+       } while(factor > 1);
+       n -=ndo;
+       x +=ndo;
+     }
+
+#else
+
+     /* use TCGMSG as a wrapper to a more efficient native implementation
+      * of  global ops 
+      */
+     void igop_(); 
+     igop_(&type, x, &n, op, (Integer)strlen(op)); 
+#endif
+}
+
+
+
+/*\ GLOBAL OPERATIONS 
+ *  Fortran
+\*/
+void ga_igop_(type, x, n, op, len)
+     Integer *type, *n;
+     Integer *x;
+     char *op;
+     long len;
+{
+void igop_();
+long gtype,gn,glen;
+     gtype = (long)*type; gn = (long)*n; glen = len;
+
+     ga_igop(gtype, x, gn, op);
 }
 
 
