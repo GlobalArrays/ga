@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.23 1999-10-14 00:18:50 d3h325 Exp $ */
+/* $Id: armci.c,v 1.24 1999-11-10 01:57:18 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -65,10 +65,18 @@ void ARMCI_Cleanup()
         armci_CleanupSockets();
     }
 #endif
-
+    ARMCI_RestoreSignals();
 #endif
 }
 
+
+void armci_perror_msg()
+{
+    char *perr_str="Last System Error Message from Task          ";
+    if(!errno)return;
+    sprintf(perr_str +(strlen(perr_str)-9),"%d:",armci_me);
+    perror(perr_str);
+}
 
 void armci_die(char *msg, int code)
 {
@@ -78,8 +86,16 @@ void armci_die(char *msg, int code)
 
     fprintf(stdout,"%d:%s: %d\n",armci_me, msg, code); fflush(stdout);
     fprintf(stderr,"%d:%s: %d\n",armci_me, msg, code);
-    if(errno)perror("System Error Message:");
+    armci_perror_msg();
     ARMCI_Cleanup();
+
+    /* data server process cannot use message-passing library to abort
+     * it simply exits, parent will get SIGCHLD and abort the program
+     */
+#if defined(DATA_SERVER)
+    if(armci_me<0)_exit(1);
+    else
+#endif
     armci_msg_abort(code);
 }
 
@@ -91,8 +107,16 @@ void armci_die2(char *msg, int code1, int code2)
 
     fprintf(stdout,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2); fflush(stdout);
     fprintf(stderr,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2);
-    if(errno)perror("System Error Message:");
+    armci_perror_msg();
     ARMCI_Cleanup();
+
+    /* data server process cannot use message-passing library to abort
+     * it simply exits, parent will get SIGCHLD and abort the program
+     */
+#if defined(DATA_SERVER)
+    if(armci_me<0)_exit(1);
+    else
+#endif
     armci_msg_abort(code1);
 }
 
@@ -160,10 +184,38 @@ int ARMCI_Uses_shm()
 }
 
 
+/*\ allocate and initialize memory locking data structure
+\*/
+void armci_init_memlock()
+{
+    int rc;
+    int bytes = MAX_SLOTS*sizeof(memlock_t) + sizeof(int);
+
+    memlock_table_array = malloc(armci_nproc*sizeof(void*));
+    if(!memlock_table_array) armci_die("malloc failed for ARMCI lock array",0);
+
+    rc = ARMCI_Malloc(memlock_table_array, bytes);
+    if(rc) armci_die("failed to allocate ARMCI memlock array",rc);
+
+    bzero(memlock_table_array[armci_me],bytes);
+
+    armci_use_memlock_table = (int*) (MAX_SLOTS*sizeof(memlock_t) + 
+                              (char*) memlock_table_array[armci_master]);  
+                              
+    if(armci_master == armci_me) *armci_use_memlock_table =1+armci_me;
+
+    armci_msg_barrier();
+    /*
+    printf("%d: use table val = %d\n",armci_me, *armci_use_memlock_table);
+    fflush(stdout);
+    */
+}
+
+
+
 
 int ARMCI_Init()
 {
-    int rc;
 
     if(armci_initialized)return 0;
     else armci_initialized=1;
@@ -206,14 +258,8 @@ int ARMCI_Init()
 
     armci_msg_barrier();
 
-    memlock_table_array = malloc(armci_nproc*sizeof(void*));
-    if(!memlock_table_array) armci_die("malloc failed for ARMCI lock array",0); 
+    armci_init_memlock();
 
-    rc = ARMCI_Malloc(memlock_table_array, MAX_SLOTS*sizeof(memlock_t));
-    if(rc) armci_die("failed to allocate ARMCI memlock array",rc); 
-
-    bzero(memlock_table_array[armci_me],MAX_SLOTS*sizeof(memlock_t));
-    armci_msg_barrier();
 /*    fprintf(stderr,"%d ready \n",armci_me);*/
 
     return 0;
