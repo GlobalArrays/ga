@@ -1,11 +1,15 @@
-c $Id: perf.F,v 1.5 2000-05-25 01:09:20 d3h325 Exp $
+c $Id: perf.F,v 1.6 2003-07-09 18:36:23 d3h325 Exp $
 c------------------------------------------------------------------------
 c Program perf.x is used to test performance of GA put, get, accumulate  |
 c It has to be executed on four processors.                              |
 c remote operations access data on processes 1,2,3 in the round-robin way|
 c------------------------------------------------------------------------
 c
+#ifdef __crayx1
+#define SLEEP my_sleep
+#else
 #define SLEEP sleep
+#endif
       program perf
       implicit none
 #include "mafdecls.fh"
@@ -127,7 +131,7 @@ c
      &           '           accumulate'
         write(6,*)' bytes    dim     sec      MB/s     sec      MB/s',
      &           '     sec      MB/s'
-        call flush(6)
+        call ffflush(6)
       endif
       call ga_sync()
 c
@@ -166,7 +170,7 @@ c
         if (me .eq. 0) then
           write(6,77)bytes, chunk(loop), tg, 
      &          1d-6*bytes/tg,tp, 1d-6*bytes/tp, ta, 1d-6*bytes/ta
-          call flush(6)
+          call ffflush(6)
         endif
       enddo
 c
@@ -389,7 +393,7 @@ c
      &           '           accumulate'
         write(6,*)' bytes    dim     sec      MB/s     sec      MB/s',
      &           '     sec      MB/s'
-        call flush(6)
+        call ffflush(6)
       endif
       call ga_sync()
 c
@@ -428,7 +432,7 @@ c
         if (me .eq. 0) then
           write(6,77)bytes, chunk(loop), tg, 
      &          1d-6*bytes/tg,tp, 1d-6*bytes/tp, ta, 1d-6*bytes/ta
-          call flush(6)
+          call ffflush(6)
         endif
       enddo
 c

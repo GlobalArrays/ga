@@ -445,7 +445,7 @@ double FATR util_drand_(Integer* flag)
 
 #else
 
-#if defined(LINUX) || defined(SOLARIS)
+#if defined(LINUX) || defined(SOLARIS) || defined(__crayx1)
   if (fflag) srandom((unsigned) fflag);
   return ((double) random()) * 4.6566128752458e-10;
 #else

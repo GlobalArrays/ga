@@ -1,4 +1,4 @@
-#if defined(CRAY) || defined(WIN32) || defined(HITACHI)
+#if (defined(CRAY)&& !defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
 
 #define print_range_  PRINT_RANGE
 #define copy_range_   COPY_RANGE
