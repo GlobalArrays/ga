@@ -366,3 +366,22 @@ c
       call testerr(eaf_delete(fname))
 c
       end
+
+      subroutine util_dfill(n,val,a,ia)
+      implicit none
+      double precision  a(*), val
+      integer n, ia, i
+c
+c     initialise double precision array to scalar value
+c
+      if (ia.eq.1) then
+         do 10 i = 1, n
+            a(i) = val
+ 10      continue
+      else
+         do 20 i = 1,(n-1)*ia+1,ia
+            a(i) = val
+ 20      continue
+      endif
+      end
+
