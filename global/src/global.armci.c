@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.34 2000-04-12 19:01:06 jju Exp $ */
+/* $Id: global.armci.c,v 1.35 2000-04-13 17:56:08 jju Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2221,9 +2221,7 @@ int rc;
     if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
 
-  if(alpha ==NULL) rc=ARMCI_PutV(&desc, 1, (int)proc);
-  else{
-
+  if(alpha != NULL) {
     int optype;
     if(type==MT_F_DBL) optype= ARMCI_ACC_DBL;
     else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
@@ -2295,6 +2293,10 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     Integer pindex, phandle, item_size;
     Integer proc, type=GA[GA_OFFSET + *g_a].type;
 
+    Integer *aproc, naproc; /* active processes and numbers */
+    Integer *map;           /* map the active processes to allocated space */
+    char *buf1, *buf2;
+    
     Integer *count;   /* counters for each process */
     Integer *nelem;   /* number of elements for each process */
     /* source and destination pointers for each process */
@@ -2314,23 +2316,14 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         ga_error("MA alloc failed ", *g_a);
 
     /* allocate temp memory */
-    count = gai_malloc(GAnproc * sizeof(Integer));
-    nelem = gai_malloc(GAnproc * sizeof(Integer));
-    ptr_src = gai_malloc(GAnproc * sizeof(void **));
-    ptr_dst = gai_malloc(GAnproc * sizeof(void **));
-    ptr_org = gai_malloc(2*(*nv)*sizeof(void *));
-    ilo = gai_malloc(GAnproc * sizeof(Integer));
-    ihi = gai_malloc(GAnproc * sizeof(Integer));
-    jlo = gai_malloc(GAnproc * sizeof(Integer));
-    jhi = gai_malloc(GAnproc * sizeof(Integer));
-    ldp = gai_malloc(GAnproc * sizeof(Integer));
-    ptr_ref = gai_malloc(GAnproc * sizeof(char *));
+    buf1 = gai_malloc(4 * GAnproc * (sizeof(Integer)));
+    if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
     
-    if(count == NULL || nelem == NULL || ptr_src == NULL || ptr_dst == NULL ||
-       ptr_org == NULL || ilo == NULL || ihi == NULL ||
-       jlo == NULL || jhi == NULL || ptr_ref == NULL || ldp == NULL)
-        ga_error("gai_malloc failed", GAnproc);
-
+    count = (Integer *)buf1;
+    nelem = (Integer *)(buf1 + GAnproc * sizeof(Integer));
+    aproc = (Integer *)(buf1 + 2 * GAnproc * sizeof(Integer));
+    map = (Integer *)(buf1 + 3 * GAnproc * sizeof(Integer));
+    
     /* initialize the counters and nelem */
     for(kk=0; kk<GAnproc; kk++) {
         count[kk] = 0; nelem[kk] = 0;
@@ -2344,13 +2337,35 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         }
         nelem[INT_MB[pindex+k]]++;
     }
-    for(kk=0; kk<GAnproc; kk++) {
-        ga_distribution_(g_a, &kk,
+
+    naproc = 0;
+    for(k=0; k<GAnproc; k++) if(nelem[k] > 0) {
+        aproc[naproc] = k;
+        map[k] = naproc;
+        naproc ++;
+    }
+    
+    buf2 = gai_malloc(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
+                      5*naproc*sizeof(Integer) + naproc*sizeof(char*));
+    if(buf2 == NULL) ga_error("gai_malloc failed", naproc);
+ 
+    ptr_src = (void ***)buf2;
+    ptr_dst = (void ***)(buf2 + naproc*sizeof(void **));
+    ptr_org = (void **)(buf2 + 2*naproc*sizeof(void **));
+    ilo = (Integer *)(buf2+2*naproc*sizeof(void **)+2*(*nv)*sizeof(void *));
+    ihi = ilo + naproc;
+    jlo = ihi + naproc;
+    jhi = jlo + naproc;
+    ldp = jhi + naproc;
+    ptr_ref = (char **)(ldp + naproc);
+
+    for(kk=0; kk<naproc; kk++) {
+        ga_distribution_(g_a, &aproc[kk],
                          &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
         
         /* get address of the first element owned by proc */
-        if(nelem[kk] > 0) gaShmemLocation(kk, *g_a, ilo[kk], jlo[kk],
-                                          &(ptr_ref[kk]),&(ldp[kk]));
+        gaShmemLocation(aproc[kk], *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),
+                        &(ldp[kk]));
     }
     
     /* determine limit for message size --  v,i, & j will travel together */
@@ -2359,44 +2374,41 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     GAbytes.gatloc += (double)item_size* nelem[GAme];
 
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
-    for(k=1; k<GAnproc; k++) {
-        ptr_src[k] = ptr_src[k-1] + nelem[k-1];
-        ptr_dst[k] = ptr_dst[k-1] + nelem[k-1];
+    for(k=1; k<naproc; k++) {
+        ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
+        ptr_dst[k] = ptr_dst[k-1] + nelem[aproc[k-1]];
     }
-
+    
     for(k=0; k<(*nv); k++){
-        proc = INT_MB[pindex+k];
-        ptr_src[proc][count[proc]] = ((char*)v) + k * item_size;
+        int this_count;
+        proc = INT_MB[pindex+k]; this_count = count[proc]; count[proc]++;
+        proc = map[proc];
+        ptr_src[proc][this_count] = ((char*)v) + k * item_size;
         if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
            j[k] < jlo[proc] || j[k] > jhi[proc]){
             sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
                  proc, i[k], j[k], ilo[proc], ihi[proc], jlo[proc], jhi[proc]);
             ga_error(err_string, *g_a);
         }
-        ptr_dst[proc][count[proc]] = ptr_ref[proc] + item_size *
+        ptr_dst[proc][this_count] = ptr_ref[proc] + item_size *
             ((j[k] - jlo[proc])* ldp[proc] + i[k] - ilo[proc]);
-        count[proc]++;
     }
     
     /* source and destination pointers are ready for all processes */
-    for(k=0; k<GAnproc; k++) {
+    for(k=0; k<naproc; k++) {
         int rc;
-        if(nelem[k] < 1) continue;
+
         desc.bytes = item_size;
         desc.src_ptr_array = ptr_src[k];
         desc.dst_ptr_array = ptr_dst[k];
-        desc.ptr_array_len = nelem[k];
+        desc.ptr_array_len = nelem[aproc[k]];
         
-        rc = ARMCI_PutV(&desc, 1, k);
+        rc = ARMCI_PutV(&desc, 1, aproc[k]);
         if(rc) ga_error("scatter failed in armci",rc);
     }
 
-    gai_free(ptr_ref);
-    gai_free(ldp);
-    gai_free(jhi); gai_free(jlo); gai_free(ihi); gai_free(ilo); 
-    gai_free(ptr_org);
-    gai_free(ptr_dst); gai_free(ptr_src);
-    gai_free(nelem); gai_free(count);
+    gai_free(buf2);
+    gai_free(buf1);
 
     if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
     GA_POP_NAME;
@@ -2564,6 +2576,10 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     Integer  ndim, item_size, type;
     Integer *proc, phandle;
 
+    Integer *aproc, naproc; /* active processes and numbers */
+    Integer *map;           /* map the active processes to allocated space */
+    char *buf1, *buf2;
+    
     Integer *count;        /* counters for each process */
     Integer *nelem;        /* number of elements for each process */
     /* source and destination pointers for each process */
@@ -2581,18 +2597,16 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     type = GA[handle].type;
     item_size = GA[handle].elemsize;
     *totbytes += (double)item_size**nv;
-    
-    /* allocate temp memory */
-    count = gai_malloc(GAnproc * sizeof(Integer));
-    nelem = gai_malloc(GAnproc * sizeof(Integer));
-    ptr_src = gai_malloc(GAnproc * sizeof(void **));
-    ptr_dst = gai_malloc(GAnproc * sizeof(void **));
-    ptr_org = gai_malloc(2*(*nv)*sizeof(void *));
- 
-    if(count == NULL || nelem == NULL || ptr_src == NULL || ptr_dst == NULL ||
-       ptr_org == NULL)
-        ga_error("gai_malloc failed", GAnproc);
 
+    /* allocate temp memory */
+    buf1 = gai_malloc(4 * GAnproc * (sizeof(Integer)));
+    if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
+    
+    count = (Integer *)buf1;
+    nelem = (Integer *)(buf1 + GAnproc * sizeof(Integer));
+    aproc = (Integer *)(buf1 + 2 * GAnproc * sizeof(Integer));
+    map = (Integer *)(buf1 + 3 * GAnproc * sizeof(Integer));
+    
     /* initialize the counters and nelem */
     for(k=0; k<GAnproc; k++) {count[k] = 0; nelem[k] = 0;}
 
@@ -2606,6 +2620,21 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         }
         nelem[proc[k]]++;
     }
+
+    /* find the active processes (with which transfer data) */
+    naproc = 0;
+    for(k=0; k<GAnproc; k++) if(nelem[k] > 0) {
+        aproc[naproc] = k;
+        map[k] = naproc;
+        naproc ++;
+    }
+
+    buf2 = gai_malloc(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *));
+    if(buf2 == NULL) ga_error("gai_malloc failed", 2*naproc);
+    
+    ptr_src = (void ***)buf2;
+    ptr_dst = (void ***)(buf2 + naproc * sizeof(void **));
+    ptr_org = (void **)(buf2 + 2 * naproc * sizeof(void **));
     
     /* set the pointers as
      *    P0            P1                  P0          P1        
@@ -2616,11 +2645,11 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
      *         | nelem[0] | nelem[1] |...      | nelem[0] | nelem[1] |...
      */
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
-    for(k=1; k<GAnproc; k++) {
-        ptr_src[k] = ptr_src[k-1] + nelem[k-1];
-        ptr_dst[k] = ptr_dst[k-1] + nelem[k-1];
+    for(k=1; k<naproc; k++) {
+        ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
+        ptr_dst[k] = ptr_dst[k-1] + nelem[aproc[k-1]];
     }
-    
+
     *locbytes += (double)item_size* nelem[GAme];
     
 /*
@@ -2637,23 +2666,22 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */  
         for(k=0; k<(*nv); k++){
-            ptr_dst[proc[k]][count[proc[k]]] = ((char*)v) + k * item_size;
+            ptr_dst[map[proc[k]]][count[proc[k]]] = ((char*)v) + k * item_size;
             gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
-                        ptr_src[proc[k]]+count[proc[k]]);
+                        ptr_src[map[proc[k]]]+count[proc[k]]);
             count[proc[k]]++;
         }
         
         /* source and destination pointers are ready for all processes */
-        for(k=0; k<GAnproc; k++) {
+        for(k=0; k<naproc; k++) {
             int rc;
-            
+
             desc.bytes = item_size;
             desc.src_ptr_array = ptr_src[k];
             desc.dst_ptr_array = ptr_dst[k];
-            desc.ptr_array_len = nelem[k];
-            if(nelem[k] == 0) continue;
+            desc.ptr_array_len = nelem[aproc[k]];
             
-            rc=ARMCI_GetV(&desc, 1, k);
+            rc=ARMCI_GetV(&desc, 1, aproc[k]);
             if(rc) ga_error("gather failed in armci",rc);
         }
         break;
@@ -2665,25 +2693,24 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */
         for(k=0; k<(*nv); k++){
-            ptr_src[proc[k]][count[proc[k]]] = ((char*)v) + k * item_size;
+            ptr_src[map[proc[k]]][count[proc[k]]] = ((char*)v) + k * item_size;
             gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
-                        ptr_dst[proc[k]]+count[proc[k]]);
+                        ptr_dst[map[proc[k]]]+count[proc[k]]);
             count[proc[k]]++;
         }
 
         /* source and destination pointers are ready for all processes */
-        for(k=0; k<GAnproc; k++) {
+        for(k=0; k<naproc; k++) {
             int rc;
-            
+
             desc.bytes = item_size;
             desc.src_ptr_array = ptr_src[k];
             desc.dst_ptr_array = ptr_dst[k];
-            desc.ptr_array_len = nelem[k];
-            if(nelem[k] == 0) continue;
+            desc.ptr_array_len = nelem[aproc[k]];
             
-            if(GA_fence_set) fence_array[k]=1;
+            if(GA_fence_set) fence_array[aproc[k]]=1;
             
-            rc=ARMCI_PutV(&desc, 1, k);
+            rc=ARMCI_PutV(&desc, 1, aproc[k]);
             if(rc) ga_error("scatter failed in armci",rc);
         }
         break;
@@ -2695,42 +2722,39 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
          *                ptr_dst[1][...] ...
          */
         for(k=0; k<(*nv); k++){
-            ptr_src[proc[k]][count[proc[k]]] = ((char*)v) + k * item_size;
+            ptr_src[map[proc[k]]][count[proc[k]]] = ((char*)v) + k * item_size;
             gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
-                        ptr_dst[proc[k]]+count[proc[k]]);
+                        ptr_dst[map[proc[k]]]+count[proc[k]]);
             count[proc[k]]++;
         }
 
         /* source and destination pointers are ready for all processes */
-        for(k=0; k<GAnproc; k++) {
+        for(k=0; k<naproc; k++) {
             int rc;
+            
             desc.bytes = item_size;
             desc.src_ptr_array = ptr_src[k];
             desc.dst_ptr_array = ptr_dst[k];
-            desc.ptr_array_len = nelem[k];
-            if(nelem[k] == 0) continue;
+            desc.ptr_array_len = nelem[aproc[k]];
             
-            if(GA_fence_set) fence_array[k]=1;
+            if(GA_fence_set) fence_array[aproc[k]]=1;
             
-            if(alpha ==NULL) rc=ARMCI_PutV(&desc, 1, k);
-            else{
+            if(alpha != NULL) {
                 int optype;
                 if(type==MT_F_DBL) optype= ARMCI_ACC_DBL;
                 else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
                 else if(item_size==sizeof(int))optype= ARMCI_ACC_INT;
                 else if(item_size==sizeof(long))optype= ARMCI_ACC_LNG;
                 else ga_error("type not supported",type);
-                rc= ARMCI_AccV(optype, alpha, &desc, 1, k);
+                rc= ARMCI_AccV(optype, alpha, &desc, 1, aproc[k]);
             }
             if(rc) ga_error("scatter_acc failed in armci",rc);
         }
         break;        
       default: ga_error("operation not supported",op);
     }
-    
-    gai_free(ptr_org);
-    gai_free(ptr_dst); gai_free(ptr_src);
-    gai_free(nelem); gai_free(count);
+
+    gai_free(buf2); gai_free(buf1);
     
     if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
 }
@@ -2826,6 +2850,10 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     Integer pindex, phandle, item_size;
     Integer proc;
 
+    Integer *aproc, naproc; /* active processes and numbers */
+    Integer *map;           /* map the active processes to allocated space */
+    char *buf1, *buf2;
+    
     Integer *count;   /* counters for each process */
     Integer *nelem;   /* number of elements for each process */
     /* source and destination pointers for each process */
@@ -2844,24 +2872,15 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     if(!MA_push_get(MT_F_INT, *nv, "ga_gather--p", &phandle, &pindex))
         ga_error("MA failed ", *g_a);
 
-        /* allocate temp memory */
-    count = gai_malloc(GAnproc * sizeof(Integer));
-    nelem = gai_malloc(GAnproc * sizeof(Integer));
-    ptr_src = gai_malloc(GAnproc * sizeof(void **));
-    ptr_dst = gai_malloc(GAnproc * sizeof(void **));
-    ptr_org = gai_malloc(2*(*nv)*sizeof(void *));
-    ilo = gai_malloc(GAnproc * sizeof(Integer));
-    ihi = gai_malloc(GAnproc * sizeof(Integer));
-    jlo = gai_malloc(GAnproc * sizeof(Integer));
-    jhi = gai_malloc(GAnproc * sizeof(Integer));
-    ldp = gai_malloc(GAnproc * sizeof(Integer));
-    ptr_ref = gai_malloc(GAnproc * sizeof(char *));
+    /* allocate temp memory */
+    buf1 = gai_malloc(4 * GAnproc * (sizeof(Integer)));
+    if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
     
-    if(count == NULL || nelem == NULL || ptr_src == NULL || ptr_dst == NULL ||
-       ptr_org == NULL || ilo == NULL || ihi == NULL ||
-       jlo == NULL || jhi == NULL || ptr_ref == NULL || ldp == NULL)
-        ga_error("gai_malloc failed", GAnproc);
-
+    count = (Integer *)buf1;
+    nelem = (Integer *)(buf1 + GAnproc * sizeof(Integer));
+    aproc = (Integer *)(buf1 + 2 * GAnproc * sizeof(Integer));
+    map = (Integer *)(buf1 + 3 * GAnproc * sizeof(Integer));
+   
     /* initialize the counters and nelem */
     for(kk=0; kk<GAnproc; kk++) {
         count[kk] = 0; nelem[kk] = 0;
@@ -2876,58 +2895,77 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         nelem[INT_MB[pindex+k]]++;
     }
 
-    for(kk=0; kk<GAnproc; kk++) {
-        ga_distribution_(g_a, &kk,
+    naproc = 0;
+    for(k=0; k<GAnproc; k++) if(nelem[k] > 0) {
+        aproc[naproc] = k;
+        map[k] = naproc;
+        naproc ++;
+    }
+    
+    buf2 = gai_malloc(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
+                      5*naproc*sizeof(Integer) + naproc*sizeof(char*));
+    if(buf2 == NULL) ga_error("gai_malloc failed", naproc);
+ 
+    ptr_src = (void ***)buf2;
+    ptr_dst = (void ***)(buf2 + naproc*sizeof(void **));
+    ptr_org = (void **)(buf2 + 2*naproc*sizeof(void **));
+    ilo = (Integer *)(buf2+2*naproc*sizeof(void **)+2*(*nv)*sizeof(void *));
+    ihi = ilo + naproc;
+    jlo = ihi + naproc;
+    jhi = jlo + naproc;
+    ldp = jhi + naproc;
+    ptr_ref = (char **)(ldp + naproc);
+
+    for(kk=0; kk<naproc; kk++) {
+        ga_distribution_(g_a, &aproc[kk],
                          &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
         
         /* get address of the first element owned by proc */
-        if(nelem[kk] > 0) gaShmemLocation(kk, *g_a, ilo[kk], jlo[kk],
-                                          &(ptr_ref[kk]),&(ldp[kk]));
+        gaShmemLocation(aproc[kk], *g_a, ilo[kk], jlo[kk], &(ptr_ref[kk]),
+                        &(ldp[kk]));
     }
     
     item_size = GA[GA_OFFSET + *g_a].elemsize;
     GAbytes.gattot += (double)item_size**nv;
-    GAbytes.gatloc += (double)item_size* nelem[GAme];
+    GAbytes.gatloc += (double)item_size * nelem[GAme];
 
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
-    for(k=1; k<GAnproc; k++) {
-        ptr_src[k] = ptr_src[k-1] + nelem[k-1];
-        ptr_dst[k] = ptr_dst[k-1] + nelem[k-1];
+    for(k=1; k<naproc; k++) {
+        ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
+        ptr_dst[k] = ptr_dst[k-1] + nelem[aproc[k-1]];
     }
-
+    
     for(k=0; k<(*nv); k++){
-        proc = INT_MB[pindex+k];
-        ptr_dst[proc][count[proc]] = ((char*)v) + k * item_size;
+        int this_count;
+        proc = INT_MB[pindex+k]; this_count = count[proc]; count[proc]++;
+        proc = map[proc]; 
+        ptr_dst[proc][this_count] = ((char*)v) + k * item_size;
+
         if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
            j[k] < jlo[proc] || j[k] > jhi[proc]){
             sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
                  proc, i[k], j[k], ilo[proc], ihi[proc], jlo[proc], jhi[proc]);
             ga_error(err_string, *g_a);
         }
-        ptr_src[proc][count[proc]] = ptr_ref[proc] + item_size *
+        ptr_src[proc][this_count] = ptr_ref[proc] + item_size *
             ((j[k] - jlo[proc])* ldp[proc] + i[k] - ilo[proc]);
-        count[proc]++;
     }
     
     /* source and destination pointers are ready for all processes */
-    for(k=0; k<GAnproc; k++) {
+    for(k=0; k<naproc; k++) {
         int rc;
-	if(nelem[k] < 1) continue;
+
         desc.bytes = item_size;
         desc.src_ptr_array = ptr_src[k];
         desc.dst_ptr_array = ptr_dst[k];
-        desc.ptr_array_len = nelem[k];
+        desc.ptr_array_len = nelem[aproc[k]];
         
-        rc=ARMCI_GetV(&desc, 1, k);
+        rc=ARMCI_GetV(&desc, 1, aproc[k]);
         if(rc) ga_error("gather failed in armci",rc);
     }
 
-    gai_free(ptr_ref);
-    gai_free(ldp);
-    gai_free(jhi); gai_free(jlo); gai_free(ihi); gai_free(ilo); 
-    gai_free(ptr_org);
-    gai_free(ptr_dst); gai_free(ptr_src);
-    gai_free(nelem); gai_free(count);
+    gai_free(buf2);
+    gai_free(buf1);
 
     if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
     GA_POP_NAME;
