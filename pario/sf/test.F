@@ -1,0 +1,114 @@
+c
+c FNAME - filename for test program
+c
+#define BASE_NAME 'shared.file'
+#ifdef  HPIODIR
+#  define FNAME   HPIODIR//BASE_NAME
+#else
+#  define FNAME   BASE_NAME
+#endif
+#define SYNCH ga_sync
+
+      program sftest
+c
+      implicit none
+#include "sf.fh"
+c
+      integer size
+      integer dimnsn
+      integer maxid
+      parameter(maxid=5)           ! max number of outstanding I/O requests
+      parameter(dimnsn=8192)
+      real*8 buffer(dimnsn,maxid)  ! need buffering for all maxid requests
+      double precision tt0,ttw, ttr, tcgtime
+c     integer stack, heap
+      integer idlist(maxid), curid
+c
+      integer nodeid, nnodes
+      integer me,nproc,handle,i,start,end,j, rc, chunk
+c
+      call pbeginf()
+      call ga_initialize()
+c
+      curid = 0
+      me = nodeid()
+      nproc = nnodes()
+      size  = maxid*dimnsn*nproc
+c
+      rc = sf_create(FNAME,
+     $     dble(16*size),dble(8*size),dble(8*dimnsn),handle)
+c
+      call SYNCH
+      chunk = (size+nproc-1)/nproc
+      start = me*chunk+1
+      end = min((start+chunk-1),size)
+      tt0 = tcgtime()
+c
+      print *,'me=',me,'writing:', start, end
+c     everybody writes chunk of data
+      if(start.le.end) then
+         do i = start, end,dimnsn
+            do j = 1, min(dimnsn,(end-i+1))
+               buffer(j,curid+1) = dble(i+j-1)
+            enddo
+
+            if(curid .eq. maxid)then
+               rc=sf_waitall(idlist,maxid)
+               curid = 0
+            endif
+            curid = curid+1
+            rc = sf_write(handle,  8*dble(i-1), 
+     &           8*dble(min(dimnsn,(end-i+1))), buffer(1,curid), 
+     &           idlist(curid))
+            if (rc.ne.0)call ga_error('write failed',rc)
+
+         enddo
+      endif
+c
+      rc=sf_waitall(idlist,curid)
+      curid = 0
+
+      ttw = tcgtime() -tt0
+c
+      call ga_dgop(88,ttw,1,'max')
+      call SYNCH
+c
+c
+c     everybody reads different chunk of data
+      start = (nproc-me-1)*chunk+1
+      end = min((start+chunk-1),size)
+      print *,'me=',me,'reading:', start, end
+      tt0 = tcgtime()
+      do i = start,end,dimnsn
+
+c           read and test data chunk by chunk
+            rc = sf_read(handle, 8*dble(i-1),
+     .           8*dble(min(dimnsn,(end-i+1))), buffer, idlist(1))
+            if (rc.ne.0)call ga_error('read failed',rc)
+            rc=sf_wait(idlist(1))
+c
+            do j = 1,min(dimnsn,(end-i+1))
+               if(buffer(j,1).ne.dble(i+j-1)) then
+                  print *, me,buffer(j,1), i+j-1,i 
+                  stop 'test failed'
+               endif
+            enddo
+      enddo
+      ttr = tcgtime() -tt0
+c
+      call ga_dgop(88,ttr,1,'max')
+      call SYNCH
+c
+      rc = sf_destroy(handle)
+      if(me.eq.0)then
+        write(*,*)' '
+        write(*,*)'test passed ', 40*dimnsn,' bytes'
+        write(*,*) 40e-6*dimnsn/ttw,' MB/s write rate'
+        write(*,*) 40e-6*dimnsn/ttr,' MB/s read rate'
+        write(*,*)' '
+      endif
+c
+      call SYNCH
+      call ga_terminate
+      call pend()
+      end
