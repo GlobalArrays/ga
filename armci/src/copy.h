@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.30 2001-06-04 23:14:58 d3h325 Exp $ */
+/* $Id: copy.h,v 1.31 2001-06-28 20:32:48 edo Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -15,7 +15,7 @@
 #  define MEMCPY
 #endif
 
-#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS)
+#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined (DECOSF)
 #   define PTR_ALIGN
 #endif
 
