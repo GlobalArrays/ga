@@ -119,7 +119,11 @@ void msg_wait(long msgid)
     if (nspin < spinlim)
       Busy(100);
     else 
+#ifdef CRAY
       USleep(waittim);
+#else
+      usleep(1);
+#endif
   }
 }
 

@@ -125,7 +125,11 @@ static void local_await(long *p, long value)
     if (nspin < spinlim)
       Busy(100);
     else 
+#ifdef CRAY
       USleep(waittim);
+#else
+      usleep(1);
+#endif
   }
 }
 

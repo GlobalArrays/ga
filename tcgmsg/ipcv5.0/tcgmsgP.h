@@ -15,10 +15,12 @@
 #endif
 
 /* under Cygnus we got only serial execution */
-#ifdef CYGNUS
-#define    MAX_PROC 1
+#if defined(CRAY_T3D) || defined(LAPI)
+#  define    MAX_PROC 512
+#elif defined(CYGNUS)
+#  define    MAX_PROC 1
 #else
-#define    MAX_PROC 512
+#  define    MAX_PROC 16
 #endif
 
 #define    INTERNAL_SYNC_TYPE 33333
@@ -63,7 +65,7 @@ EXTERN long TCGMSG_caught_sigint; /* True if SIGINT was trapped */
 #elif defined(LAPI)
 #     define WHOLE_BUF_SIZE (3*4096)
 #else
-#     define WHOLE_BUF_SIZE (8*8192)
+#     define WHOLE_BUF_SIZE (16*8192)
 #endif
 
 #define SHMEM_BUF_SIZE (WHOLE_BUF_SIZE - RESERVED)

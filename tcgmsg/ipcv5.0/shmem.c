@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/shmem.c,v 1.3 2000-08-23 16:59:06 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/shmem.c,v 1.4 2002-01-24 22:07:27 d3h325 Exp $ */
 
 /*
   This stuff attempts to provide a simple interface to temporary shared
@@ -238,7 +238,7 @@ char *AttachSharedRegion(long id, long size)
 }
 
 #endif
-#if defined(CONVEX) || defined(APOLLO)
+#if defined(CONVEX) || defined(APOLLO) || defined(MMAP)
 
 #include <stdio.h>
 #include <sys/time.h>
@@ -286,7 +286,7 @@ char *CreateSharedRegion(id, size)
     Error("CreateSharedRegion: failed to open temporary file",0);
 #endif
 
-  id_list[*id].addr = mmap((caddr_t) 0, (unsigned *) size, 
+  id_list[*id].addr = mmap((caddr_t) 0, (size_t)*size, 
                            PROT_READ|PROT_WRITE, 
                            MAP_ANON|MAP_SHARED, id_list[*id].fd, 0);
 #ifdef APOLLO

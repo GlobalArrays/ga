@@ -22,7 +22,7 @@ extern void TrapSigint(void);
 extern void TrapSigchld(void);
 extern int WaitAll(long);
 
-#if !(defined(KSR) || defined(CRAY) || defined(LINUX))
+#if !(defined(KSR) || defined(CRAY) || defined(LINUX) || defined(CYGWIN))
 extern void bzero(char *, int);
 #endif
 extern pid_t getpid(void), fork(void);
@@ -75,7 +75,7 @@ void PBEGIN_(int argc, char **argv)
 
   /* Set up handler for SIGINT and SIGCHLD */
 
-#ifdef SYSV
+#if defined(SYSV) || defined(MMAP)
   TrapSigint();
   TrapSigchld();
 #endif
@@ -105,7 +105,7 @@ void PBEGIN_(int argc, char **argv)
 
   /* Create the shared memory and fill with zeroes */
   
-#if defined(SYSV)
+#if defined(SYSV) || defined(MMAP)
   TCGMSG_shmem_size = (long) (TCGMSG_nnodes * TCGMSG_nnodes * sizeof(ShmemBuf));
   TCGMSG_shmem = CreateSharedRegion(&TCGMSG_shmem_id, &TCGMSG_shmem_size);
 #else
@@ -119,7 +119,7 @@ void PBEGIN_(int argc, char **argv)
   
   TCGMSG_proc_info[0].pid = getpid();
   
-#ifdef SYSV
+#if defined(SYSV) || defined(MMAP)
   for (node=1; node<TCGMSG_nnodes; node++) {
     pid_t pid = fork();
 
@@ -149,14 +149,14 @@ void PBEGIN_(int argc, char **argv)
     long me = TCGMSG_nodeid;
     if (me != node) {
 
-#     ifndef SYSV
-         TCGMSG_proc_info[node].sendbuf = ((ShmemBuf *) TCGMSG_shmem) + me;
-         TCGMSG_proc_info[node].recvbuf = ((ShmemBuf *) TCGMSG_shmem) + node;
-#     else
+#if   defined(SYSV) || defined(MMAP)
          TCGMSG_proc_info[node].sendbuf = ((ShmemBuf *) TCGMSG_shmem) +
 	   (node*TCGMSG_nnodes + me);
          TCGMSG_proc_info[node].recvbuf = ((ShmemBuf *) TCGMSG_shmem) +
 	   (me*TCGMSG_nnodes + node);
+#     else
+         TCGMSG_proc_info[node].sendbuf = ((ShmemBuf *) TCGMSG_shmem) + me;
+         TCGMSG_proc_info[node].recvbuf = ((ShmemBuf *) TCGMSG_shmem) + node;
 #     endif
     }
   }
@@ -186,19 +186,19 @@ void PEND_(void)
 {
   Integer type = 999;
 
-#ifdef SYSV 
+#if   defined(SYSV) || defined(MMAP)
   (void) signal(SIGCHLD, SIG_DFL); /* Death of children now OK */
 #endif
 
   SYNCH_(&type);
   
-#ifdef SYSV 
+#if   defined(SYSV) || defined(MMAP)
   if (TCGMSG_nodeid == 0 && TCGMSG_nnodes > 1) {
     int status;
     int rc;
     status = WaitAll(TCGMSG_nnodes-1);       /* Wait for demise of children */
     rc=DeleteSharedRegion(TCGMSG_shmem_id);
-    printf("DeleteSharedMem returned %d\n",rc);
+    if(rc)printf("DeleteSharedMem returned %d\n",rc);
     if (status) exit(1);
   }
 #endif
