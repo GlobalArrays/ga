@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.27 2000-11-06 20:10:32 d3h325 Exp $
+ * $Id: ma.c,v 1.28 2002-04-02 01:36:19 edo Exp $
  */
 
 /*
@@ -2441,7 +2441,7 @@ public Boolean MA_init(
         heap_bytes = (nominal_heap * ma_sizeof[datatype]) +
             (DEFAULT_REQUESTS_HEAP * max_block_overhead(datatype));
     }
-    heap_bytes = (unsigned)round((long)heap_bytes, (ulongi)ALIGNMENT);
+    heap_bytes = (unsigned long)round((long)heap_bytes, (ulongi)ALIGNMENT);
 
     /* compute # of bytes in stack */
     if (nominal_stack < 0)
@@ -2453,7 +2453,7 @@ public Boolean MA_init(
         stack_bytes = (nominal_stack * ma_sizeof[datatype]) +
             (DEFAULT_REQUESTS_STACK * max_block_overhead(datatype));
     }
-    stack_bytes = (unsigned)round((long)stack_bytes, (ulongi)ALIGNMENT);
+    stack_bytes = (unsigned long)round((long)stack_bytes, (ulongi)ALIGNMENT);
 
     /* segment consists of heap and stack */
     total_bytes = heap_bytes + stack_bytes;

@@ -2,7 +2,7 @@
 #define _memcpy_h
 
 /* 
- * $Id: memcpy.h,v 1.3 2000-07-04 05:54:56 d3g001 Exp $
+ * $Id: memcpy.h,v 1.4 2002-04-02 01:36:22 edo Exp $
  */
 
 /* 
@@ -29,7 +29,7 @@
  **/
 
 /* allocate bytes */
-#define bytealloc(nbytes)	malloc((unsigned)(nbytes))
+#define bytealloc(nbytes)	malloc((unsigned long)(nbytes))
 
 /* deallocate bytes */
 #define bytefree(pointer)	(void)free((char *)(pointer))
