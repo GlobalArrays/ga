@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.29 2002-01-10 17:57:47 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.30 2002-01-14 17:15:24 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -2342,7 +2342,7 @@ void ndai_get(section_t ds_a, /*[input] section of DRA read from disk */
   } \
   if(!_range_ok) dai_error(_err_msg, _dim); \
 }
- 
+
 /*\ decompose section defined by lo and hi into aligned and unaligned DRA
  *  subsections
 \*/ 
@@ -2356,8 +2356,9 @@ void ndai_decomp_section(
 {
   Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
   Integer i, j, idir, ndim = DRA[handle].ndim;
-  Integer off_low[MAXDIM], off_hi[MAXDIM], mask[MAXDIM];
-  Integer check;
+  Integer off_low[MAXDIM], off_hi[MAXDIM];
+  Integer cover_lo[MAXDIM], cover_hi[MAXDIM];
+  Integer check, chunk_lo, chunk_hi;
 
   /* section[lo,hi] is decomposed into 'aligned' and 'unaligned'
    * subsections.  The aligned subsections are aligned on
@@ -2373,22 +2374,90 @@ void ndai_decomp_section(
    * high values in the 0 direction, idir = 2,3 corresponds to low and
    * high values in the 1 direction and so on up to a value of
    * idir = 2*ndim-1.
+   *
+   * The strategy for performing the decomposition is to first find the
+   * coordinates corresponding to an aligned patch that completely covers
+   * the originally requested section.
    * 
    * Begin by initializing some arrays. */
 
   for (i=0, j=0; i<ndim; i++) {
     aligned[a][j] = ds_a.lo[i];
+    cover_lo[i] = ds_a.lo[i];
     off_low[i] = (ds_a.lo[i] - 1) % DRA[handle].chunk[i];
     j++;
     aligned[a][j] = ds_a.hi[i];
+    cover_hi[i] = ds_a.hi[i];
     off_hi[i] = ds_a.hi[i] % DRA[handle].chunk[i];
     j++;
   }
+  /* Find coordinates of aligned patch that completely covers the first
+     ndim-1 dimensions of ds_a */
+  for (i=0; i<ndim-1; i++) {
+    if (off_low[i] !=0) {
+      chunk_lo = (ds_a.lo[i] - 1) / DRA[handle].chunk[i];
+      cover_lo[i] = chunk_lo * DRA[handle].chunk[i] + 1;
+    }
+    if (off_hi[i] !=0) {
+      chunk_hi = ds_a.hi[i] / DRA[handle].chunk[i] + 1;
+      cover_hi[i] = chunk_hi * DRA[handle].chunk[i];
+      if (cover_hi[i] > DRA[handle].dims[i])
+        cover_hi[i] = DRA[handle].dims[i];
+    }
+  }
+  /* Find coordinates of aligned chunk (if there is one) */
+  j = 0;
+  check = 1;
+  for (i=0; i<ndim-1; i++) {
+    if (off_low[i] != 0) {
+      chunk_lo = (ds_a.lo[i] - 1) / DRA[handle].chunk[i] + 1;
+      aligned[a][j] = chunk_lo * DRA[handle].chunk[i] + 1;
+    }
+    j++;
+    if (off_hi[i] !=0) {
+      chunk_hi = ds_a.hi[i] / DRA[handle].chunk[i];
+      aligned[a][j] = chunk_hi * DRA[handle].chunk[i];
+    }
+    if (aligned[a][j] < aligned[a][j-1]) check = 0;
+    j++;
+  }
+  *na = (check == 1)  ?1 :0;
 
-  /* evaluate cover sections and unaligned chunk dimensions */
+  /* evaluate cover sections and unaligned chunk dimensions. We
+     break the evaluation of chunks into the following two
+     cases:
+     1) There is no aligned section
+     2) There is an aligned section */
+
+  if (*na == 0) {
+    /* There is no aligned block. Just return with one cover
+       section */
+    for (i=0, j=0; i<ndim; i++) {
+      cover[u][j] = cover_lo[i];
+      unaligned[u][j] = ds_a.lo[i];
+      j++;
+      cover[u][j] = cover_hi[i];
+      unaligned[u][j] = ds_a.hi[i];
+      j++;
+    }
+    *nu = 1;
+    return;
+  }
+
+  /* An aligned chunk exists so we must find cover sections that
+     surround it. We scan over the coordinate directions idir
+     and choose cover sections such that if the coordinate
+     direction of the cover section is less than idir, then the
+     cover section extends to the boundary of the aligned
+     section. If the coordinate direction of the cover section
+     is greater than idir then the cover extends beyond the
+     dimensions of the aligned chunk (if there is a nonzero
+     offset). This scheme guarantees that corner pieces of the
+     sections are picked up once and only once. */
+
   for (idir=0; idir<ndim-1; idir++) {
     check = 1;
-    /* handle cover over lower end of patch */
+    /* cover over lower end of patch */
     if (off_low[idir] != 0) {
       for (i=0, j=0; i<ndim-1; i++) {
         if (i < idir) {
@@ -2512,13 +2581,8 @@ void ndai_decomp_section(
       aligned[a][2*idir+1] = cover[u-1][2*idir]-1;
     }
   }
-  /* find the boundaries of the aligned subsection (if there is one) */
-  algn_flag = ON;
-  for (i = 0; i<ndim; i++) {
-    if (aligned[a][2*i] > aligned[a][2*i+1]) algn_flag = OFF;
-  }
   *nu = (int)u;
-  *na = (algn_flag == OFF)? 0: 1;
+  return;
 }
 
 /*\ given the set of indices lo inside the patch cover, find the next
@@ -2613,13 +2677,26 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
                         Integer req     /*[input]: request number*/
                         )
 {
-  Integer   chunk_ld[MAXDIM],  next, offset, i;
+  Integer   chunk_ld[MAXDIM],  next, offset, i, j;
   Integer   type = DRA[ds_a.handle+DRA_OFFSET].type;
   Integer   ndim = DRA[ds_a.handle+DRA_OFFSET].ndim;
   section_t ds_chunk, ds_unlg;
   char      *buffer; 
 
   ds_chunk =  ds_unlg = ds_a;
+/*  for (i=0; i<ndim; i++) {
+    printf("(init) ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
+    printf("(init) ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
+  }
+  printf("(init) number of unaligned chunks = %d\n",Requests[req].nu);
+  for (j=0; j<Requests[req].nu; j++) {
+    for (i=0; i<ndim; i++) {
+      printf("(init) list_cover[%d][%d] = %d\n",
+          j,2*i,Requests[req].list_cover[j][2*i]);
+      printf("(init) list_cover[%d][%d] = %d\n",
+          j,2*i+1,Requests[req].list_cover[j][2*i+1]);
+    }
+  } */
 
   for(next = 0; next < Requests[req].nu; next++){
 
@@ -2641,8 +2718,16 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
           ds_unlg.hi[i] = Requests[req].list_unlgn[next][2*i+1];
         }
 
+/*        for (i=0; i<ndim; i++) {
+          printf("ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
+          printf("ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
+        }
+        for (i=0; i<ndim; i++) {
+          printf("ds_unlg.lo[%d] = %d\n",i,ds_unlg.lo[i]);
+          printf("ds_unlg.hi[%d] = %d\n",i,ds_unlg.hi[i]);
+        } */
         if(!dai_section_intersect(ds_chunk, &ds_unlg))
-            dai_error("dai_transfer_unlgn: inconsistent cover",0);
+            dai_error("ndai_transfer_unlgn: inconsistent cover",0);
 
         /* copy data from disk to DRA buffer */
         for (i=0; i<ndim-1; i++) chunk_ld[i] = ds_chunk.hi[i] - ds_chunk.lo[i] + 1;
@@ -2966,10 +3051,13 @@ section_t d_sect, g_sect;
    _dra_turn = 0;
 
    /* process unaligned subsections */
+   printf("Start call to ndai_transfer_unlgn\n");
    ndai_transfer_unlgn(DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
            
    /* process aligned subsections */
+   printf("Start call to ndai_transfer_algn\n");
    ndai_transfer_algn (DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
+   printf("Complete call to ndai_transfer_algn\n");
 
    return(ELIO_OK);
 }
