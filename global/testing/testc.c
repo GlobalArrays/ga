@@ -49,7 +49,7 @@ DoublePrecision buf[N], err, alpha, beta;
      if(me==0)printf("Checking if matrix A is symmetric\n");
      GA_transpose(&g_a, &g_b); /* B=A' */
      alpha=1.; beta=-1.;
-     GA_dadd(&alpha, &g_a, &beta, &g_b, &g_b);  /* B= A - B */
+     GA_add(&alpha, &g_a, &beta, &g_b, &g_b);  /* B= A - B */
      err= GA_ddot(&g_b, &g_b);
      
      if(me==0)printf("Error=%lf\n",(double)err);

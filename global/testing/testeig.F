@@ -255,7 +255,7 @@ c
       call ga_dgemm('n','n',n,n,n, 1d0, g_c, g_b, 0d0, g_a) ! a := c*b
  
       call ga_sync()
-      call ga_dadd(1d0, g_d, -1d0, g_a, g_c)
+      call ga_add(1d0, g_d, -1d0, g_a, g_c)
       sum = ga_ddot(g_c,g_c)
       if (me .eq. 0) then
         print *,' '

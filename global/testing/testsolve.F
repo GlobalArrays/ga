@@ -107,7 +107,7 @@ c
       call ga_lu_solve('n', g_a, g_b)
 #endif
       call ga_dgemm('n','n',n,n,n, 1d0, g_a, g_b, 0d0, g_d) ! d := a*b
-      call ga_dadd(1d0, g_d, -1d0, g_c, g_c) 
+      call ga_add(1d0, g_d, -1d0, g_c, g_c) 
       sum = ga_ddot(g_c,g_c)
       if (me .eq. 0) then
  	print *,' '
@@ -131,7 +131,7 @@ c
 #endif
 c
       call ga_dgemm('n','n',n,1,n, 1d0, g_a, g_e, 0d0, g_g) ! g := a*e
-      call ga_dadd(1d0, g_g, -1d0, g_f, g_f) 
+      call ga_add(1d0, g_g, -1d0, g_f, g_f) 
       sum = ga_ddot(g_f,g_f)
       if (me .eq. 0) then
         print *,' '

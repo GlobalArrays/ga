@@ -113,7 +113,7 @@ c...          release access to the local data (the data were updated !)
            endif
 c
 c...       compute the stopping number -- second norm
-           call ga_dadd(1d0, g_u, -1d0, g_ux, g_diff)    ! g_diff = g_u - g_ux 
+           call ga_add(1d0, g_u, -1d0, g_ux, g_diff)    ! g_diff = g_u - g_ux 
            product = ga_ddot(g_diff, g_diff)             ! <g_diff, g_diff>
            norm    = sqrt(product)/uxnorm
            if(me.eq.0 .and. Mod(k,10).eq.1) print *,k,' error= ',norm

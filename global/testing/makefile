@@ -19,7 +19,7 @@
 ifndef TARGET
 error:
 	@echo "TARGET machine not defined "
-	@echo "-- one of [SUN,SGI,SGITFP,IBM,DECOSF,SP1,IPSC,DELTA,PARAGON,KSR,CRAY-T3D]"
+	@echo "-- one of [SUN,SGI,SGITFP,IBM,DECOSF,SP1,SP,IPSC,DELTA,PARAGON,KSR,CRAY-T3D,CONVEX-SPP,HPUX]"
 	exit
 endif
 
@@ -38,8 +38,10 @@ LIB_TARGETS = *.x *.p
 
 include ../Makefile.h
 include ../Makelib.h
-include ../../config/makelib.h
 
+ifndef LIBDIR
+   LIBDIR = $(LIB_DISTRIB)/$(TARGET)
+endif
 
 ifeq ($(GA_TRACE),YES)
    LIBTRACE= ../trace/libtrace.a
@@ -114,3 +116,16 @@ endif
 
 %.p:
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
+
+.PHONY: clean
+clean:
+	-$(RM) -f *.o *.p *core *stamp mputil.mp* *trace *.x *events*
+
+.PHONY: realclean
+realclean:      clean
+	-$(RM) -rf *~ \#*\#
+
+.PHONY: cleanstamp
+cleanstamp:
+	-$(RM) -rf *.stamp
+

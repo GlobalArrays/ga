@@ -111,7 +111,7 @@ c
         jump  =  n/(60*loop) ! jump distance between consecutive patches
 c
 c       everybody touches own data 
-        call ga_dfill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
+        call ga_fill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
         if (me .eq. 0) then
           tg= time_get(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count)
         else
@@ -119,7 +119,7 @@ c       everybody touches own data
         endif
 c
 c       everybody touches own data
-        call ga_dfill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
+        call ga_fill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
         if (me .eq. 0) then
           tp= time_put(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count)
         else
@@ -127,7 +127,7 @@ c       everybody touches own data
         endif
 c
 c       everybody touches own data
-        call ga_dfill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
+        call ga_fill_patch(g_a, 1, n, 1, n , 1d0*me*loop)
         if (me .eq. 0) then
           ta= time_acc(g_a,ilo,ihi,jlo,jhi,buf,chunk(loop),jump,count)
         else
