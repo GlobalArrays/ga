@@ -265,7 +265,7 @@ void Busy(int n)
  /*   LAPI_Probe(lapi_handle); */
 }
 
-void SYNCH____(long* type)
+void SYNCH_(long* type)
 {
 int rc;
 
@@ -282,10 +282,3 @@ void PARERR_(code)
   Error("User detected error in FORTRAN", *code);
 }
 
-
-void SYNCH_(Integer *ptype)
-{
-
-   LAPI_Gfence(lapi_handle);
-
-}
