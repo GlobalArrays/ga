@@ -61,8 +61,6 @@ extern void NGA_Proc_topology(int g_a, int proc, int coord[]);
 extern void GA_Print_patch(int g_a,int ilo,int ihi,int jlo,int jhi,int pretty);
 extern void GA_Print_stats(void);
 extern void GA_Check_handle(int g_a, char *string);
-extern void GA_Init_fence(void);
-extern void GA_Fence(void);
 extern int GA_Create_mutexes(int number);
 extern int GA_Destroy_mutexes();
 extern void GA_Lock(int mutex);
@@ -123,6 +121,7 @@ extern void GA_Nblock(int g_a, int *nblock);
 #define GA_Uses_ma (int)ga_uses_ma_
 #define GA_Print_stats ga_print_stats_
 #define GA_Init_fence  ga_init_fence_
+#define GA_Fence  ga_fence_
 #define GA_Nodeid (int)ga_nodeid_
 #define GA_Nnodes (int)ga_nnodes_
 
