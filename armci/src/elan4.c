@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.1 2004-08-10 16:57:06 d3h325 Exp $ */
+/* $Id: elan4.c,v 1.2 2004-08-12 18:28:50 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -512,7 +512,7 @@ int ret;
 request_header_t *msginfo = (request_header_t *)(handle+1);
 
      if(msginfo->inbuf)
-        ret = elan_poll(handle,0);
+        ret = !elan_poll(handle,1L);
      else
         ret = (msginfo->tag)? 0: 1;
 

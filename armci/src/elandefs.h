@@ -18,6 +18,7 @@ extern int armcill_testbuf(ELAN_EVENT** handle);
 #define BUF_ALLOCATE(_size) malloc(_size)
 #define NB_CMPL_T ELAN_EVENT*
 #define BUF_EXTRA_FIELD_T  ELAN_EVENT*
+#define CLEAR_HNDL_FIELD(_x) _x=NULL
 
 #define INIT_SEND_BUF(_field,_snd,_rcv) _field=NULL
 #define CLEAR_SEND_BUF_FIELD(_field, _s, _r,_t,_o) armcill_clearbuf(&(_field)) 
@@ -25,5 +26,8 @@ extern int armcill_testbuf(ELAN_EVENT** handle);
         elan_wait((_field),elan_base->waitType);  \
         if(!((request_header_t*)(&(_field)+1))->inbuf) while(((request_header_t*)(&(_field)+1))->tag) armci_util_spin(100,&(_field)+1); else
 #define TEST_SEND_BUF_FIELD(_field, _s, _r,_t,_o,_ret) *_ret=armcill_testbuf(&_field)
+
+#define LONG_PUT_THRESHOLD 12800
+#define PACKPUT 8
 
 #endif

@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.67 2004-07-28 19:43:29 d3h325 Exp $ */
+/* $Id: copy.h,v 1.68 2004-08-12 18:28:49 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -126,8 +126,8 @@ void FATR DCOPY13(int*, int*, int*, void*, int*, int*, void*, int*);
               *(phandle)=elan_put(elan_base->state,src,dst,n,proc)
 #      define ARMCI_NB_GET(src,dst,n,proc,phandle)\
               *(phandle)=elan_get(elan_base->state,src,dst,n,proc)
-#      define ARMCI_NB_WAIT(handle) elan_wait(handle,elan_base->waitType) 
-#      define ARMCI_NB_TEST(handle,_succ) (*(_succ))=!elan_poll(handle,1L) 
+#      define ARMCI_NB_WAIT(handle) if(handle)elan_wait(handle,elan_base->waitType) 
+#      define ARMCI_NB_TEST(handle,_succ) (*(_succ))= (handle)? !elan_poll(handle,1L): 1 
 #   else
 #      define qsw_put(src,dst,n,proc) shmem_putmem((dst),(src),(int)(n),(proc))
 #      define qsw_get(src,dst,n,proc) shmem_getmem((dst),(src),(int)(n),(proc))

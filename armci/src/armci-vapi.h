@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.10 2004-04-09 18:41:10 vinod Exp $ */
+/*$Id: armci-vapi.h,v 1.11 2004-08-12 18:28:34 d3h325 Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -109,8 +109,9 @@ typedef struct {
 
 #if defined(ALLOW_PIN)
 #  define NB_CMPL_T sdescr_t*
-#  define ARMCI_NB_WAIT(_cntr) if(nb_handle->tag==(_cntr)->tag)\
+#  define ARMCI_NB_WAIT(_cntr) if(_cntr)if(nb_handle->tag==(_cntr)->tag)\
           armci_client_send_complete(&((_cntr)->descr),"NB_WAIT");
+#  define CLEAR_HNDL_FIELD(_x) _x=NULL
 #endif
 
 

@@ -41,6 +41,10 @@ extern void _armci_buf_clear_all();
    typedef long msg_tag_t;
 #endif
 
+#ifndef CLEAR_HNDL_FIELD 
+#   define CLEAR_HNDL_FIELD(_x) 
+#endif
+
 #define ACK_QUIT 0
 #define QUIT 33
 #define ATTACH 34

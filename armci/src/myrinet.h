@@ -20,7 +20,8 @@
 #define TEST_HANDLE _armci_buf_test_nb_request
 #if defined(ALLOW_PIN)
 # define NB_CMPL_T armci_gm_context_t*
-# define ARMCI_NB_WAIT(_cntr) if(nb_handle->tag==(_cntr)->tag)\
+# define CLEAR_HNDL_FIELD(_x) _x = NULL
+# define ARMCI_NB_WAIT(_cntr) if(_cntr)if(nb_handle->tag==(_cntr)->tag)\
 if((_cntr)->done==ARMCI_GM_SENDING){\
   MPI_Status status;\
   int flag;\

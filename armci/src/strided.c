@@ -540,14 +540,17 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
     ORDER(PUT,proc); /* ensure ordering */
     PREPROCESS_STRIDED(tmp_count);
 
-#ifndef QUADRICS
+#if !defined(QUADRICS) || defined(PACKPUT)
     direct=SAMECLUSNODE(proc);
 #endif
 
     /* use direct protocol for remote access when performance is better */
-#   if (defined(LAPI) && !defined(LAPI2)) 
-      if(!direct)
-         if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
+#   if defined(LAPI) || defined(DOELAN4)
+       if(!direct) switch(stride_levels) {
+          case 0:  direct =1; break;
+          case 1:  if((count[1]<PACKPUT)||count[0]>LONG_PUT_THRESHOLD) direct =1; break;
+          default: if(count[0]> LONG_PUT_THRESHOLD )direct=1; break;
+       }
 #   endif
 
 #ifndef LAPI2
@@ -1282,10 +1285,11 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 				ARMCI_PROF_NBPUTS);
 #endif
 
-#ifndef QUADRICS
+    PREPROCESS_STRIDED(tmp_count);
+
+#if !defined(QUADRICS) || defined(PACKPUT)
     direct=SAMECLUSNODE(proc);
 #endif
-    PREPROCESS_STRIDED(tmp_count);
 
     /* aggregate put */
     if(nb_handle && nb_handle->agg_flag == SET) {
@@ -1314,6 +1318,14 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
       else
         nb_handle = armci_set_implicit_handle(PUT, proc);
     }
+
+#if defined(DOELAN4)
+    if(!direct) switch(stride_levels) {
+          case 0:  direct =1; break;
+          case 1:  if((count[1]<PACKPUT)||count[0]>LONG_PUT_THRESHOLD) direct =1; break;
+          default: if(count[0]> LONG_PUT_THRESHOLD )direct=1; break;
+    }
+#endif
 
 #ifndef LAPI2
     if(!direct){
@@ -1350,8 +1362,11 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
        }
        else
 #  endif
+
+       nb_handle->tag =0; /* packed request is completed locally */ 
+       CLEAR_HNDL_FIELD(nb_handle->cmpl_info);
        rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,dst_ptr,
-                  dst_stride_arr, count, stride_levels,NULL,-1,-1,-1,nb_handle);
+                  dst_stride_arr, count, stride_levels,NULL,-1,-1,-1,NULL);
     }
     else
 #endif 

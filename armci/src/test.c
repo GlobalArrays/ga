@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.42 2003-09-29 09:10:15 vinod Exp $ */
+/* $Id: test.c,v 1.43 2004-08-12 18:28:50 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -588,6 +588,8 @@ int idx1=0, idx2=0, idx3=0;
                           strideB, count, ndim-1, proc,(hdl_put+ndim));
        }
     }
+sleep(5);
+    MP_BARRIER();
     /*before we do gets, we have to make sure puts are complete 
       on the remote processor*/
     for(ndim=1;ndim<=MAXDIMS;ndim++)

@@ -50,9 +50,10 @@ extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI send */
 #define SHORT_ACC_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
 #define SHORT_PUT_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
 
-#define LONG_PUT_THRESHOLD 4000
+#define LONG_PUT_THRESHOLD 128 
 #define LONG_GET_THRESHOLD 4000
 #define LONG_GET_THRESHOLD_STRIDED LONG_GET_THRESHOLD
+#define PACKPUT 8
 
 #define MSG_BUFLEN_DBL 30000
 
@@ -69,7 +70,7 @@ extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI send */
           if(LAPI_Getcntr(lapi_handle,&(counter).cntr,&_val__))\
               armci_die("LAPI_Getcntr failed",-1);\
           if(_val__ != (counter).val) *(_ret_)=1;\
-}
+}else *(_ret_)=1;
 
 #define WAIT_COUNTER(counter) if((counter).val)\
         for(;;){\
