@@ -34,6 +34,7 @@
 #include "message.h"
 #include "global.h"
 #include "globalp.h"
+#include "armci.h"
 #include <math.h>
 
 #ifdef GA_USE_VAMPIR
@@ -546,12 +547,18 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     Integer me= ga_nodeid_(), temp_created=0;
     char *tempname = "temp", transp, transp_a, transp_b;
     int local_sync_begin;
+    Integer a_grp, b_grp;
 
     local_sync_begin = _ga_sync_begin; 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)ga_sync_();
 
     GA_PUSH_NAME("ngai_dot_patch");
+    a_grp = ga_get_pgroup_(g_a);
+    b_grp = ga_get_pgroup_(g_b);
+    if (a_grp != b_grp)
+      ga_error("Both arrays must be defined on same group",0L);
+    me = ga_pgroup_nodeid_(&a_grp);
 
     nga_inquire_internal_(g_a, &atype, &andim, adims);
     nga_inquire_internal_(g_b, &btype, &bndim, bdims);
@@ -755,7 +762,17 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
       armci_msg_gop_scope(SCOPE_NODE,retval,alen,"+",ctype);
     } else {
+#ifdef MPI
+           extern ARMCI_Group* ga_get_armci_group_(int);
+#endif
+           if (a_grp == -1) {
       armci_msg_gop_scope(SCOPE_ALL,retval,alen,"+",ctype);
+#ifdef MPI
+           } else {
+             armci_msg_group_gop_scope(SCOPE_ALL,retval,alen,"+",ctype,
+      				 ga_get_armci_group_((int)a_grp));
+#endif
+	   }
     }
     
     if(temp_created) ga_destroy_(&g_B);
