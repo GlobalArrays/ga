@@ -2,7 +2,7 @@
 #define _matypes_h
 
 /* 
- * $Id: matypes.h,v 1.4 1996-10-02 23:59:37 d3h325 Exp $
+ * $Id: matypes.h,v 1.5 1998-06-16 19:45:32 d3g681 Exp $
  */
 
 /* 
@@ -20,11 +20,14 @@
 
 /* sizeof(Integer) must equal sizeof(FORTRAN integer) */
 /* JN: changed LongInteger into EXT_INT to avoid conflicts with GA and PEIGS */
+#ifndef _INTEGER_DEFINED_
+#define _INTEGER_DEFINED_ 1
 #ifdef EXT_INT 
     typedef long Integer;
 #else 
     typedef int Integer;
 #endif 
+#endif
 
 typedef Integer Boolean;	/* MA_TRUE or MA_FALSE */
 typedef char * Pointer;		/* generic pointer */
