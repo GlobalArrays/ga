@@ -16,6 +16,8 @@ extern int  armci_msg_nproc();
 extern void armci_msg_abort(int code);
 
 extern void armci_msg_clus_brdcst(void *buf, int len);
-extern void armci_msg_clus_igop(long *x, int n, char* op, int logint); 
+extern void armci_msg_clus_igop(int *x, int n, char* op); 
+extern void armci_msg_clus_lgop(long *x, int n, char* op); 
+extern void armci_msg_clus_dgop(double *x, int n, char* op); 
 
 #endif
