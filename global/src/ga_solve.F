@@ -1,3 +1,6 @@
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.fh"
+#endif
 c**********************************************************************
 c* Source : ga_lu_solve
 c* Scope  : LU factorization
@@ -56,6 +59,9 @@ c
 c
 c***  check environment
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_LU_SOLVE,__FILE__,__LINE__)
+#endif
       me     = ga_nodeid()
 c
 c***  check GA info for input arrays
@@ -161,6 +167,9 @@ c
       endif
 c
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_LU_SOLVE,__FILE__,__LINE__)
+#endif
       end
 
 c     alt entry point for C that avoids char args
@@ -168,10 +177,16 @@ c
 	subroutine ga_lu_solve_alt(tr, g_a, g_b)
 	implicit none
         integer g_a, g_b, tr
+#ifdef GA_USE_VAMPIR
+        call vampir_begin_galinalg(GA_LU_SOLVE_ALT,__FILE__,__LINE__)
+#endif
         if(tr.eq.0) then
            call ga_lu_solve('n',g_a, g_b) 
         else
            call ga_lu_solve('y',g_a, g_b) 
         endif
+#ifdef GA_USE_VAMPIR
+        call vampir_end_galinalg(GA_LU_SOLVE_ALT,__FILE__,__LINE__)
+#endif
         end
 

@@ -1,3 +1,6 @@
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.fh"
+#endif
 c**********************************************************************
 c* Source : ga_llt
 c* Scope  : interface between GA and LLT SCALAPACK routines
@@ -31,6 +34,9 @@ c****
       integer i, j, hBUF, adrBUF
 
 c**** Check Environment
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_ZEROUL,__FILE__,__LINE__)
+#endif
       nproc = ga_nnodes()
       me    = ga_nodeid()
       
@@ -74,6 +80,9 @@ c****       case U: make zero the lower triangle
 c
       status = ma_pop_stack(hBUF)
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_ZEROUL,__FILE__,__LINE__)
+#endif
       end
 
 
@@ -99,6 +108,9 @@ c****
       integer i, j, hBUF, adrBUF, idx      
 
 c**** Check Environment
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_SYMUL,__FILE__,__LINE__)
+#endif
       nproc = ga_nnodes()
       me    = ga_nodeid()
       
@@ -154,6 +166,9 @@ c****                and over the diag is 2 times
       
       status = ma_pop_stack(hBUF)
       call ga_symmetrize(g_A)
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_SYMUL,__FILE__,__LINE__)
+#endif
       end
 
       
@@ -177,7 +192,13 @@ c*
 c***********************************************************************
       integer function ga_cholesky(uplo, g_a)
       integer ga_llt_f
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_CHOLESKY,__FILE__,__LINE__)
+#endif
       ga_cholesky = ga_llt_f(uplo, g_A, -1)
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_CHOLESKY,__FILE__,__LINE__)
+#endif
       end
 
 
@@ -355,6 +376,9 @@ c
       data nb /NB/
 c
 c**** Check the Environment
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_LLT_S,__FILE__,__LINE__)
+#endif
       me = ga_nodeid()
       
 c**** Check GA info for input array F, B
@@ -443,6 +467,9 @@ c**** between ga_llt_f and ga_llt_s beside A and B
       if (elemA.ne.0) status = ma_pop_stack(hA)
 c
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_LLT_S,__FILE__,__LINE__)
+#endif
       end
 
 
@@ -495,6 +522,9 @@ c****
       data nb /NB/
 c
 c**** Check Environment
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_LLT_I,__FILE__,__LINE__)
+#endif
       nproc = ga_nnodes()
       me = ga_nodeid()
 
@@ -573,6 +603,9 @@ c**** between ga_llt_f and ga_llt_i
       if(elemA.ne.0) status = ma_pop_stack(hA)
 c
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_LLT_I,__FILE__,__LINE__)
+#endif
       end
 
       
@@ -609,6 +642,9 @@ c***********************************************************************
       integer     ga_llt_f
 c
 c**** call the Cholesky factorization routine
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_LLT_SOLVE,__FILE__,__LINE__)
+#endif
       hsA  = 0
       uplo = 'L'
       irc  = ga_llt_f(uplo, g_A, hsA)
@@ -623,6 +659,9 @@ c****    call the ga_llt_s internal interface
 c****    if the factorization is not OK just return the error
          ga_llt_solve = irc
       endif
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_LLT_SOLVE,__FILE__,__LINE__)
+#endif
       end
 
 
@@ -660,6 +699,9 @@ c
 c**** call the Cholesky factorization routine
       hsA  = 0
       uplo = 'L' 
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_SPD_INVERT,__FILE__,__LINE__)
+#endif
       ircF = ga_llt_f(uplo, g_A, hsA)
 c
 c**** check if the factorization is OK
@@ -676,6 +718,9 @@ c****    call the ga_llt_i internal interface
 c****    if the factorization is not OK just return the error
          ga_spd_invert = ircF
       endif
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_SPD_INVERT,__FILE__,__LINE__)
+#endif
       end
 
 c***********************************************************************
@@ -717,6 +762,9 @@ c***********************************************************************
       integer     ga_llt_solve
 c
 c**** Call Cholesky solver as the first try      
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_SOLVE,__FILE__,__LINE__)
+#endif
       ga_solve = ga_llt_solve(g_A, g_B)
       if (ga_solve.eq.0) then
 c****    if Cholesky was succcesully just return 
@@ -724,4 +772,7 @@ c****    if Cholesky was succcesully just return
 c****    else if Cholesky failed
          call ga_lu_solve('N', g_A, g_B)
       endif
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_SOLVE,__FILE__,__LINE__)
+#endif
       end

@@ -1,3 +1,6 @@
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.fh"
+#endif
       subroutine ga_diag_seq(g_a, g_s, g_v, evals)
       implicit none
 #include "mafdecls.fh"
@@ -19,6 +22,9 @@ c     all eigen-vectors and values in ascending order
 c
 c     The input matrices may be destroyed
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_DIAG_SEQ,__FILE__,__LINE__)
+#endif
       call ga_check_handle(g_a, 'ga_diag_seq a')
       call ga_check_handle(g_s, 'ga_diag_seq s')
       call ga_check_handle(g_v, 'ga_diag_seq v')
@@ -86,6 +92,9 @@ c
       call ga_brdcst(32500, evals, 
      $               ma_sizeof(MT_DBL,n,MT_BYTE), 0)
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_DIAG_SEQ,__FILE__,__LINE__)
+#endif
 c
       end
 c
@@ -109,6 +118,9 @@ c     all eigen-vectors and values in ascending order
 c
 c     The input matrices may be destroyed
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_DIAG_STD_SEQ,__FILE__,__LINE__)
+#endif
       call ga_check_handle(g_a, 'ga_diag_std a')
       call ga_check_handle(g_v, 'ga_diag_std v')
       call ga_sync()
@@ -161,5 +173,8 @@ c
       call ga_brdcst(32500, evals, 
      $               ma_sizeof(MT_DBL,n,MT_BYTE), 0)
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_DIAG_STD_SEQ,__FILE__,__LINE__)
+#endif
 c
       end

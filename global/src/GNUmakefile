@@ -12,6 +12,9 @@ endif
 LIB_DISTRIB = ../../lib
 INCDIR = ../../include
 HEADERS = ga.h global.h global.fh c.names.h
+ifdef GA_USE_VAMPIR
+  HEADERS += ga_vampir.h ga_vampir.fh
+endif
 ifndef LIBRARY
   LIBRARY = libglobal.a
 endif
@@ -23,6 +26,9 @@ endif
 
 # extra interfaces
 GA_EXTRA = global.periodic.o sparse.o select.o ghosts.o
+ifdef GA_USE_VAMPIR
+   GA_EXTRA += ga_vampir.o
+endif
 
 # utility 
 GA_UTIL = DP.o fort.o hsort.scat.o

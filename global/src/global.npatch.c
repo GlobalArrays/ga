@@ -35,6 +35,10 @@
 #include "globalp.h"
 #include <math.h>
 
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.h"
+#endif
+
 #ifdef CRAY
 #      include <fortran.h>
 #endif
@@ -164,7 +168,10 @@ void nga_copy_patch(char *trans,
     Integer factor_idx1[MAXDIM], factor_idx2[MAXDIM], factor_data[MAXDIM];
     Integer base;
     Integer me= ga_nodeid_();
-    
+
+#ifdef GA_USE_VAMPIR
+    vampir_begin(NGA_COPY_PATCH,__FILE__,__LINE__);
+#endif    
     ga_sync_();
     
     GA_PUSH_NAME("nga_copy_patch");
@@ -338,6 +345,9 @@ void nga_copy_patch(char *trans,
     }
     GA_POP_NAME;
     ga_sync_();
+#ifdef GA_USE_VAMPIR
+    vampir_end(NGA_COPY_PATCH,__FILE__,__LINE__);
+#endif    
 }
 
 /*\ COPY A PATCH AND POSSIBLY RESHAPE
@@ -617,6 +627,9 @@ DoublePrecision nga_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
     DoublePrecision  sum = 0.;
     
+#ifdef GA_USE_VAMPIR
+    vampir_begin(NGA_DDOT_PATCH,__FILE__,__LINE__);
+#endif    
     ga_sync_();
     GA_PUSH_NAME("nga_ddot_patch");
     
@@ -628,6 +641,9 @@ DoublePrecision nga_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
 
     GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+    vampir_end(NGA_DDOT_PATCH,__FILE__,__LINE__);
+#endif    
     return (sum);
 }
 
@@ -671,6 +687,9 @@ DoubleComplex nga_zdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 DoubleComplex  sum;
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(NGA_ZDOT_PATCH,__FILE__,__LINE__);
+#endif    
    ga_sync_();
    GA_PUSH_NAME("nga_zdot_patch");
 
@@ -683,6 +702,9 @@ DoubleComplex  sum;
                   (void *)(&sum));
 
    GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+   vampir_end(NGA_ZDOT_PATCH,__FILE__,__LINE__);
+#endif    
    return (sum);
 }
 
@@ -717,7 +739,10 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
     Integer idx, n1dim;
     Integer bvalue[MAXDIM], bunit[MAXDIM], baseld[MAXDIM];
     Integer me= ga_nodeid_();
-    
+   
+#ifdef GA_USE_VAMPIR
+    vampir_begin(NGA_FILL_PATCH,__FILE__,__LINE__);
+#endif 
     ga_sync_();
     GA_PUSH_NAME("nga_fill_patch");
     
@@ -826,6 +851,9 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
     }
     GA_POP_NAME;
     ga_sync_();
+#ifdef GA_USE_VAMPIR
+    vampir_end(NGA_FILL_PATCH,__FILE__,__LINE__);
+#endif 
 }
 
 
@@ -845,6 +873,9 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
     DoublePrecision tmp1_real, tmp1_imag, tmp2_real, tmp2_imag;
     Integer me= ga_nodeid_();
 
+#ifdef GA_USE_VAMPIR
+    vampir_begin(NGA_SCALE_PATCH,__FILE__,__LINE__);
+#endif 
     ga_sync_();
     GA_PUSH_NAME("nga_scal_patch");
     
@@ -956,6 +987,9 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
     }
     GA_POP_NAME;
     ga_sync_();
+#ifdef GA_USE_VAMPIR
+    vampir_end(NGA_SCALE_PATCH,__FILE__,__LINE__);
+#endif 
 }
 
 
@@ -983,6 +1017,9 @@ DoublePrecision *alpha, *beta;
     Integer me= ga_nodeid_(), A_created=0, B_created=0;
     char *tempname = "temp", notrans='n';
 
+#ifdef GA_USE_VAMPIR
+    vampir_begin(NGA_ADD_PATCH,__FILE__,__LINE__);
+#endif 
     ga_sync_();
     GA_PUSH_NAME("nga_add_patch");
 
@@ -1191,6 +1228,9 @@ DoublePrecision *alpha, *beta;
     
     GA_POP_NAME;
     ga_sync_();
+#ifdef GA_USE_VAMPIR
+    vampir_end(NGA_ADD_PATCH,__FILE__,__LINE__);
+#endif 
 }
 
 void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
@@ -1203,6 +1243,9 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
     float fval = 0.0;
     void *valptr;
     
+#ifdef GA_USE_VAMPIR
+    vampir_begin(NGA_ZERO_PATCH,__FILE__,__LINE__);
+#endif 
     ga_sync_();
     GA_PUSH_NAME("nga_zero_patch");
     
@@ -1233,6 +1276,9 @@ void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
     
     GA_POP_NAME;
     ga_sync_();
+#ifdef GA_USE_VAMPIR
+    vampir_end(NGA_ZERO_PATCH,__FILE__,__LINE__);
+#endif 
 }
 
 /*************************************************************
@@ -1255,7 +1301,13 @@ void ga_copy_patch(char *trans, Integer *g_a, Integer *ailo, Integer *aihi,
     blo[0] = *bilo; blo[1] = *bjlo;
     bhi[0] = *bihi; bhi[1] = *bjhi;
 
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_COPY_PATCH,__FILE__,__LINE__);
+#endif 
     nga_copy_patch(trans, g_a, alo, ahi, g_b, blo, bhi);
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_COPY_PATCH,__FILE__,__LINE__);
+#endif 
 }
 
 
@@ -1310,6 +1362,9 @@ DoublePrecision ga_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 DoublePrecision  sum = 0.;
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_DDOT_PATCH,__FILE__,__LINE__);
+#endif
    ga_sync_();
    GA_PUSH_NAME("ga_ddot_patch");
 
@@ -1322,6 +1377,9 @@ DoublePrecision  sum = 0.;
                  g_b, t_b, bilo, bihi, bjlo, bjhi, &sum);
 
    GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_DDOT_PATCH,__FILE__,__LINE__);
+#endif
    return (sum);
 }
 
@@ -1340,6 +1398,9 @@ DoubleComplex ga_zdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 DoubleComplex  sum;
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_ZDOT_PATCH,__FILE__,__LINE__);
+#endif
    ga_sync_();
    GA_PUSH_NAME("ga_zdot_patch");
 
@@ -1352,6 +1413,9 @@ DoubleComplex  sum;
                  g_b, t_b, bilo, bihi, bjlo, bjhi, (DoublePrecision*)&sum);
 
    GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_ZDOT_PATCH,__FILE__,__LINE__);
+#endif
    return (sum);
 }
 
@@ -1418,7 +1482,13 @@ void FATR ga_fill_patch_(g_a, ilo, ihi, jlo, jhi, val)
     lo[0] = *ilo; lo[1] = *jlo;
     hi[0] = *ihi; hi[1] = *jhi;
 
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_FILL_PATCH,__FILE__,__LINE__);
+#endif
     nga_fill_patch_(g_a, lo, hi, val);
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_FILL_PATCH,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -1434,7 +1504,13 @@ void FATR ga_scale_patch_(g_a, ilo, ihi, jlo, jhi, alpha)
     lo[0] = *ilo; lo[1] = *jlo;
     hi[0] = *ihi; hi[1] = *jhi;
 
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_SCALE_PATCH,__FILE__,__LINE__);
+#endif
     nga_scale_patch_(g_a, lo, hi, (void *)alpha);
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_SCALE_PATCH,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -1457,7 +1533,13 @@ void FATR ga_add_patch_(alpha, g_a, ailo, aihi, ajlo, ajhi,
     clo[0] = *cilo; clo[1] = *cjlo;
     chi[0] = *cihi; chi[1] = *cjhi;
     
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_ADD_PATCH,__FILE__,__LINE__);
+#endif
     nga_add_patch_(alpha, g_a, alo, ahi, beta, g_b, blo, bhi, g_c, clo, chi);
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_ADD_PATCH,__FILE__,__LINE__);
+#endif
 }
 
 

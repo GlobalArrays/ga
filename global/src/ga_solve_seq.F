@@ -2,6 +2,9 @@
 #define DGETRF SGETRF
 #define DGETRS SGETRS
 #endif
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.fh"
+#endif
 c -- this comment needed by CPP on Digital Unix 4.0E
       subroutine ga_lu_solve_seq(trans,g_a, g_b)
       implicit none
@@ -41,6 +44,9 @@ c
 c
 c***  check environment
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_LU_SOLVE_SEQ,__FILE__,__LINE__)
+#endif
       me     = ga_nodeid()
 c
 c***  check GA info for input arrays
@@ -110,4 +116,7 @@ c
 c
 c
       call ga_sync()     
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_LU_SOLVE_SEQ,__FILE__,__LINE__)
+#endif
       end

@@ -32,6 +32,10 @@
 #include "global.h"
 #include "globalp.h"
 
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.h"
+#endif
+
 #define RANGE_NUM 3
 #define RANGE_BOUND 6
 #define IS_REGULAR_PATCH 100
@@ -229,17 +233,35 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
 void FATR nga_periodic_get_(Integer *g_a, Integer *lo, Integer *hi,
                             void *buf, Integer *ld)
 {
+#ifdef GA_USE_VAMPIR
+    vampir_begin(NGA_PERIODIC_GET,__FILE__,__LINE__);
+#endif
     ngai_periodic_(g_a, lo, hi, buf, ld, NULL, PERIODIC_GET);
+#ifdef GA_USE_VAMPIR
+    vampir_end(NGA_PERIODIC_GET,__FILE__,__LINE__);
+#endif
 }
 
 void FATR nga_periodic_put_(Integer *g_a, Integer *lo, Integer *hi,
                             void *buf, Integer *ld)
 {
+#ifdef GA_USE_VAMPIR
+    vampir_begin(NGA_PERIODIC_PUT,__FILE__,__LINE__);
+#endif
     ngai_periodic_(g_a, lo, hi, buf, ld, NULL, PERIODIC_PUT);
+#ifdef GA_USE_VAMPIR
+    vampir_end(NGA_PERIODIC_PUT,__FILE__,__LINE__);
+#endif
 }
 
 void FATR nga_periodic_acc_(Integer *g_a, Integer *lo, Integer *hi,
                             void *buf, Integer *ld, void *alpha)
 {
+#ifdef GA_USE_VAMPIR
+    vampir_begin(NGA_PERIODIC_ACC,__FILE__,__LINE__);
+#endif
     ngai_periodic_(g_a, lo, hi, buf, ld, alpha, PERIODIC_ACC);
+#ifdef GA_USE_VAMPIR
+    vampir_end(NGA_PERIODIC_ACC,__FILE__,__LINE__);
+#endif
 }

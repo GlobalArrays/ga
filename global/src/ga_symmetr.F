@@ -1,3 +1,6 @@
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.fh"
+#endif
       subroutine ga_symmetrize(g_a) 
 c
 c     Symmetrizes matrix A:  A := .5 * (A+A`)
@@ -21,6 +24,9 @@ c
 c
 c***  check environment
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_SYMMETRIZE,__FILE__,__LINE__)
+#endif
       myproc = ga_nodeid() 
       proc   = ga_nnodes()
       alpha = 0.5d0
@@ -62,6 +68,9 @@ c    $            ilo, ihi, jlo, jhi
       endif
 c
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_SYMMETRIZE,__FILE__,__LINE__)
+#endif
 c
       end
 
@@ -93,6 +102,9 @@ c
 c
 c***  check environment
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(NGA_SYMMETRIZE,__FILE__,__LINE__)
+#endif
       myproc = ga_nodeid() 
       proc   = ga_nnodes()
       alpha = 0.5d0
@@ -164,6 +176,9 @@ c
          if (.not. ma_pop_stack(hB))
      $        call ga_error('ga_symmetrize: ma_pop?', 0)
       endif
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(NGA_SYMMETRIZE,__FILE__,__LINE__)
+#endif
 c
       end
 

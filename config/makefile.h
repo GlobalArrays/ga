@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.67 2002-07-16 23:40:03 vinod Exp $
+# $Id: makefile.h,v 1.68 2002-07-17 17:33:19 vinod Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -577,7 +577,10 @@ GLOB_DEFINES += -DIBM -DAIX
 # testsolve.x uses several blas routines
 #     HAS_BLAS = yes
 endif
-
+ 
+ifdef GA_USE_VAMPIR
+   GLOB_DEFINES += -DGA_USE_VAMPIR
+endif
 #
 #.............................. final flags ....................................
 #
@@ -733,12 +736,28 @@ ifdef USE_MPI
   ifdef MPI_LIB
       LIBS += -L$(MPI_LIB)
   endif
-  LIBS += -ltcgmsg-mpi $(LIBMPI)
+  ifdef GA_USE_VAMPIR
+      ifdef VT_PATH
+         LIBS += -ltcgmsg-mpi $(VT_PATH) -lVT $(LIBMPI)
+      else
+         echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
+      endif
+  else
+      LIBS += -ltcgmsg-mpi $(LIBMPI)
+  endif
 else
   ifeq ($(MSG_COMMS),MPI)
     LIBS += $(MP_LIBS)
   else
-    LIBS += -ltcgmsg 
+    ifdef GA_USE_VAMPIR
+      ifdef VT_PATH
+         LIBS += -ltcgmsg $(VT_PATH) -lVT -lmpi
+      else
+         echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
+      endif
+    else
+      LIBS += -ltcgmsg 
+    endif
   endif
 endif
 

@@ -11,6 +11,9 @@
 #include "global.h"
 #include "globalp.h"
 
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.h"
+#endif
 
 /* work arrays used in all routines */
 static Integer dims[MAXDIM], ld[MAXDIM-1];
@@ -41,6 +44,10 @@ Integer ndim, type, me, elems;
 void *ptr;
 register Integer i;
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_ZERO,__FILE__,__LINE__);
+#endif
+
    ga_sync_();
 
    me = ga_nodeid_();
@@ -55,6 +62,9 @@ register Integer i;
  
       if (ga_has_ghosts_(g_a)) {
         nga_zero_patch_(g_a,lo,hi);
+#ifdef GA_USE_VAMPIR
+        vampir_end(GA_ZERO,__FILE__,__LINE__);
+#endif
         return;
       }
       nga_access_ptr(g_a, lo, hi, &ptr, ld);
@@ -93,6 +103,9 @@ register Integer i;
 
    GA_POP_NAME;
    ga_sync_();
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_ZERO,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -168,6 +181,9 @@ Integer  ndim, ndimb, type, typeb, me = ga_nodeid_();
 Integer dimsb[MAXDIM],i;
 void *ptr_a;
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_COPY,__FILE__,__LINE__);
+#endif
    ga_sync_();
 
    GA_PUSH_NAME("ga_copy");
@@ -193,6 +209,9 @@ void *ptr_a;
    ga_sync_();
 
    GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_COPY,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -332,7 +351,8 @@ void *ptr_a, *ptr_b;
 }
 
 
-Integer FATR ga_idot_(Integer *g_a, Integer *g_b)
+Integer FATR ga_idot_(g_a, g_b)
+        Integer *g_a, *g_b;
 {
 Integer sum,ndim,type;
 #       ifdef EXT_INT 
@@ -350,7 +370,17 @@ DoublePrecision FATR ga_ddot_(g_a, g_b)
         Integer *g_a, *g_b;
 {
 DoublePrecision sum;
+
+#ifdef GA_USE_VAMPIR
+        vampir_begin(GA_DDOT,__FILE__,__LINE__);
+#endif
+
         gai_dot(C_DBL, g_a, g_b, &sum);
+
+#ifdef GA_USE_VAMPIR
+        vampir_end(GA_DDOT,__FILE__,__LINE__);
+#endif
+
         return sum;
 }
 
@@ -372,7 +402,17 @@ float sum;
 DoubleComplex ga_zdot(Integer *g_a, Integer *g_b)
 {
 DoubleComplex sum;
+
+#ifdef GA_USE_VAMPIR
+        vampir_begin(GA_ZDOT,__FILE__,__LINE__);
+#endif
+
         gai_dot(C_DCPL, g_a, g_b, &sum);
+
+#ifdef GA_USE_VAMPIR
+        vampir_end(GA_ZDOT,__FILE__,__LINE__);
+#endif
+
         return sum;
 }
 
@@ -396,6 +436,9 @@ Integer ndim, type, me, elems;
 register Integer i;
 void *ptr;
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_SCALE,__FILE__,__LINE__);
+#endif
    ga_sync_();
 
    me = ga_nodeid_();
@@ -407,6 +450,9 @@ void *ptr;
    nga_distribution_(g_a, &me, lo, hi);
    if (ga_has_ghosts_(g_a)) {
      nga_scale_patch_(g_a, lo, hi, alpha);
+#ifdef GA_USE_VAMPIR
+     vampir_end(GA_SCALE,__FILE__,__LINE__);
+#endif
      return;
    }
 
@@ -455,6 +501,9 @@ void *ptr;
 
    GA_POP_NAME;
    ga_sync_();
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_SCALE,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -471,7 +520,9 @@ void *ptr_a, *ptr_b, *ptr_c;
  Integer bndim, bdims[MAXDIM];
  Integer cndim, cdims[MAXDIM];
  
-
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_ADD,__FILE__,__LINE__);
+#endif
    me = ga_nodeid_();
 
    GA_PUSH_NAME("ga_add");
@@ -488,6 +539,9 @@ void *ptr_a, *ptr_b, *ptr_c;
                       g_c, one_arr, cdims);
        
        GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+       vampir_end(GA_ADD,__FILE__,__LINE__);
+#endif
        return;
    }
 
@@ -590,6 +644,9 @@ void *ptr_a, *ptr_b, *ptr_c;
 
    GA_POP_NAME;
    ga_sync_();
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_ADD,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -633,6 +690,10 @@ Integer me = ga_nodeid_();
 Integer nproc = ga_nnodes_(); 
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 Integer lo[2],hi[2];
+
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_TRANSPOSE,__FILE__,__LINE__);
+#endif
 
     GA_PUSH_NAME("ga_transpose");
     
@@ -683,6 +744,11 @@ Integer lo[2],hi[2];
 
     ga_sync_();
     GA_POP_NAME;
+
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_TRANSPOSE,__FILE__,__LINE__);
+#endif
+
 }
     
 

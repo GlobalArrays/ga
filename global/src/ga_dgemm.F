@@ -1,3 +1,6 @@
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.fh"
+#endif     
       subroutine ga_dgemm_easyc(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
       implicit none
@@ -29,7 +32,7 @@ c
 #ifdef USE_SUMMA
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.29 2000-11-04 01:46:31 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.30 2002-07-17 17:31:33 vinod Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -38,15 +41,21 @@ C$Id: ga_dgemm.F,v 1.29 2000-11-04 01:46:31 d3h325 Exp $
 c
 c     ga_summa calls ga_ga_dgemm to handle cases it does not cover
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(VT_GA_DGEMM,__FILE__,__LINE__)
+#endif
       call ga_summa(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(VT_GA_DGEMM,__FILE__,__LINE__)
+#endif
 c
       end
 #define GA_DGEMM ga_ga_dgemm
 #endif
       subroutine GA_DGEMM(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.29 2000-11-04 01:46:31 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.30 2002-07-17 17:31:33 vinod Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -97,6 +106,9 @@ C     Set defaults -- platform dependent
       ichunk = 128
       jchunk = 128
       kchunk = 128
+#endif
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(VT_GA_DGEMM,__FILE__,__LINE__)
 #endif
 C
 *      write(6,*) ' transa, transb ', transa, transb
@@ -215,6 +227,9 @@ C
       status = status .and. ma_pop_stack(l_a)
       if (.not. status)call ga_error('ga_dgemm: pop of stack failed', 0)
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(VT_GA_DGEMM,__FILE__,__LINE__)
+#endif
 c
       end
 
@@ -234,6 +249,9 @@ c
       integer l_a, k_a, l_b, k_b, l_c, k_c
       integer dim1a, dim2a,  dim1b, dim2b, dim1c, dim2c, type
       logical status
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_DGEMM_SEQ,__FILE__,__LINE__)
+#endif
 c
       call ga_sync()
       call ga_inquire(g_a, type, dim1a, dim2a)
@@ -272,6 +290,9 @@ c
       endif
 c
       call ga_sync
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_DGEMM_SEQ,__FILE__,__LINE__)
+#endif
 c
       end
 

@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.22 2002-03-19 17:34:32 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.23 2002-07-17 17:31:33 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -50,6 +50,10 @@
 #define BYTE_ADDRESSABLE_MEMORY
 #endif
 
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.h"
+#endif
+
 int    ProcListPerm[MAX_NPROC];            /* permuted list of processes */
 static global_array_t *GA = _ga_main_data_structure;
 
@@ -76,6 +80,9 @@ extern int GA_fence_set;
 #ifdef CHECK_MA
 Integer status;
 #endif
+#ifdef GA_USE_VAMPIR
+       vampir_begin(GA_SYNC,__FILE__,__LINE__);
+#endif
 
        ARMCI_AllFence();
        ga_msg_sync_();
@@ -83,6 +90,9 @@ Integer status;
        GA_fence_set=0;
 #ifdef CHECK_MA
        status = MA_verify_allocator_stuff();
+#endif
+#ifdef GA_USE_VAMPIR
+       vampir_end(GA_SYNC,__FILE__,__LINE__);
 #endif
 }
 
@@ -92,17 +102,29 @@ Integer status;
 void FATR ga_fence_()
 {
     int proc;
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_FENCE,__FILE__,__LINE__);
+#endif
     if(GA_fence_set<1)ga_error("ga_fence: fence not initialized",0);
     GA_fence_set--;
     for(proc=0;proc<GAnproc;proc++)if(fence_array[proc])ARMCI_Fence(proc);
     bzero(fence_array,(int)GAnproc);
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_FENCE,__FILE__,__LINE__);
+#endif
 }
 
 /*\ initialize tracing of request completion
 \*/
 void FATR ga_init_fence_()
 {
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_INIT_FENCE,__FILE__,__LINE__);
+#endif
     GA_fence_set++;
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_INIT_FENCE,__FILE__,__LINE__);
+#endif
 }
 
 void gai_init_onesided()
@@ -319,6 +341,9 @@ Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size;
 int proc, ndim;
 
+#ifdef GA_USE_VAMPIR
+      vampir_begin(NGA_PUT,__FILE__,__LINE__);
+#endif
       GA_PUSH_NAME("nga_put");
 
       if(!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np ))
@@ -371,6 +396,9 @@ int proc, ndim;
       }
 
       GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+      vampir_end(NGA_PUT,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -381,6 +409,9 @@ void FATR  ga_put_(g_a, ilo, ihi, jlo, jhi, buf, ld)
 {
 Integer lo[2], hi[2];
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_PUT,__FILE__,__LINE__);
+#endif
 #ifdef GA_TRACE
    trace_stime_();
 #endif
@@ -395,6 +426,9 @@ Integer lo[2], hi[2];
    trace_etime_();
    op_code = GA_OP_PUT; 
    trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
+#endif
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_PUT,__FILE__,__LINE__);
 #endif
 }
 
@@ -417,6 +451,10 @@ void FATR nga_get_(Integer *g_a,
 Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size;
 int proc, ndim;
+
+#ifdef GA_USE_VAMPIR
+      vampir_begin(NGA_GET,__FILE__,__LINE__);
+#endif
 
       GA_PUSH_NAME("nga_get");
 
@@ -487,6 +525,9 @@ int proc, ndim;
       }
 
       GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+      vampir_end(NGA_GET,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -496,6 +537,9 @@ void FATR  ga_get_(g_a, ilo, ihi, jlo, jhi, buf, ld)
 {
 Integer lo[2], hi[2];
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_GET,__FILE__,__LINE__);
+#endif
 #ifdef GA_TRACE
    trace_stime_();
 #endif
@@ -510,6 +554,9 @@ Integer lo[2], hi[2];
    trace_etime_();
    op_code = GA_OP_GET;
    trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
+#endif
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_GET,__FILE__,__LINE__);
 #endif
 }
 
@@ -530,6 +577,9 @@ Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size, type;
 int optype, proc, ndim;
 
+#ifdef GA_USE_VAMPIR
+      vampir_begin(NGA_ACC,__FILE__,__LINE__);
+#endif
       GA_PUSH_NAME("nga_acc");
 
       if(!nga_locate_region_(g_a, lo, hi, _ga_map, GA_proclist, &np ))
@@ -588,6 +638,9 @@ int optype, proc, ndim;
       }
 
       GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+      vampir_end(NGA_ACC,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -601,6 +654,9 @@ Integer lo[2], hi[2];
    trace_stime_();
 #endif
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_ACC,__FILE__,__LINE__);
+#endif
    lo[0]=*ilo;
    lo[1]=*jlo;
    hi[0]=*ihi;
@@ -611,6 +667,9 @@ Integer lo[2], hi[2];
    trace_etime_();
    op_code = GA_OP_ACC;
    trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
+#endif
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_ACC,__FILE__,__LINE__);
 #endif
 }
 
@@ -650,6 +709,9 @@ Integer  ow,i;
 unsigned long    elemsize;
 unsigned long    lref, lptr;
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(NGA_ACCESS,__FILE__,__LINE__);
+#endif
    GA_PUSH_NAME("nga_access");
    if(!nga_locate_(g_a,lo,&ow))ga_error("locate top failed",0);
    if(ow != GAme) ga_error("cannot access top of the patch",ow);
@@ -713,6 +775,9 @@ unsigned long    lref, lptr;
    FLUSH_CACHE;
 
    GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+   vampir_end(NGA_ACCESS,__FILE__,__LINE__);
+#endif
 }
 
 /*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
@@ -725,11 +790,17 @@ Integer lo[2], hi[2],ndim=ga_ndim_(g_a);
      if(ndim != 2) 
         ga_error("ga_access: 2D API cannot be used for array dimension",ndim);
 
+#ifdef GA_USE_VAMPIR
+     vampir_begin(GA_ACCESS,__FILE__,__LINE__);
+#endif
      lo[0]=*ilo;
      lo[1]=*jlo;
      hi[0]=*ihi;
      hi[1]=*jhi;
      nga_access_(g_a,lo,hi,index,ld);
+#ifdef GA_USE_VAMPIR
+     vampir_end(GA_ACCESS,__FILE__,__LINE__);
+#endif
 } 
 
 
@@ -897,6 +968,9 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     char **ptr_ref;
     
     if (*nv < 1) return;
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_SCATTER,__FILE__,__LINE__);
+#endif
     
     ga_check_handleM(g_a, "ga_scatter");
     GA_PUSH_NAME("ga_scatter");
@@ -1001,6 +1075,9 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     gai_free(buf1);
 
     GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_SCATTER,__FILE__,__LINE__);
+#endif
 }
       
 
@@ -1309,12 +1386,18 @@ void FATR nga_gather_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 
   if (*nv < 1) return;
   ga_check_handleM(g_a, "nga_gather");
+#ifdef GA_USE_VAMPIR
+  vampir_begin(NGA_GATHER,__FILE__,__LINE__);
+#endif
   GA_PUSH_NAME("nga_gather");
   GAstat.numgat++;
 
   gai_gatscat(GATHER,g_a,v,subscript,nv,&GAbytes.gattot,&GAbytes.gatloc, NULL);
 
   GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+  vampir_end(NGA_GATHER,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -1322,6 +1405,9 @@ void FATR nga_scatter_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
 {
 
   if (*nv < 1) return;
+#ifdef GA_USE_VAMPIR
+  vampir_begin(NGA_SCATTER,__FILE__,__LINE__);
+#endif
   ga_check_handleM(g_a, "nga_scatter");
   GA_PUSH_NAME("nga_scatter");
   GAstat.numsca++;
@@ -1329,6 +1415,9 @@ void FATR nga_scatter_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
   gai_gatscat(SCATTER,g_a,v,subscript,nv,&GAbytes.scatot,&GAbytes.scaloc, NULL);
 
   GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+  vampir_end(NGA_SCATTER,__FILE__,__LINE__);
+#endif
 }
 
 void FATR nga_scatter_acc_(Integer *g_a, void* v, Integer subscript[],
@@ -1403,6 +1492,9 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     
     if (*nv < 1) return;
 
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_GATHER,__FILE__,__LINE__);
+#endif
     ga_check_handleM(g_a, "ga_gather");
     GA_PUSH_NAME("ga_gather");
     GAstat.numgat++;
@@ -1504,6 +1596,9 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     gai_free(buf2);
     gai_free(buf1);
     GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_GATHER,__FILE__,__LINE__);
+#endif
 }
       
 
@@ -1516,6 +1611,9 @@ Integer FATR nga_read_inc_(Integer* g_a, Integer* subscript, Integer* inc)
 Integer *ptr, ldp[MAXDIM], value, proc, handle=GA_OFFSET+*g_a;
 int optype;
 
+#ifdef GA_USE_VAMPIR
+    vampir_begin(NGA_READ_INC,__FILE__,__LINE__);
+#endif
     ga_check_handleM(g_a, "nga_read_inc");
     GA_PUSH_NAME("ga_read_inc");
 
@@ -1544,6 +1642,9 @@ int optype;
     ARMCI_Rmw(optype, (int*)&value, (int*)ptr, (int)*inc, (int)proc);
 
    GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+   vampir_end(NGA_READ_INC,__FILE__,__LINE__);
+#endif
    return(value);
 }
 
@@ -1557,6 +1658,9 @@ Integer FATR ga_read_inc_(g_a, i, j, inc)
 {
 Integer  value, subscript[2];
 
+#ifdef GA_USE_VAMPIR
+   vampir_begin(GA_READ_INC,__FILE__,__LINE__);
+#endif
 #ifdef GA_TRACE
        trace_stime_();
 #endif
@@ -1570,6 +1674,9 @@ Integer  value, subscript[2];
      op_code = GA_OP_RDI;
      trace_genrec_(g_a, i, i, j, j, &op_code);
 #  endif
+#ifdef GA_USE_VAMPIR
+   vampir_end(GA_READ_INC,__FILE__,__LINE__);
+#endif
 
    return(value);
 }

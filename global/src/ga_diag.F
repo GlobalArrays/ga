@@ -1,5 +1,8 @@
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.fh"
+#endif
       subroutine ga_diag_std(g_a, g_v, eval)
-C$Id: ga_diag.F,v 1.23 2000-06-24 00:08:01 d3h325 Exp $
+C$Id: ga_diag.F,v 1.24 2002-07-17 17:31:33 vinod Exp $
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -52,6 +55,9 @@ c
 c
 c***  check environment
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_DIAG_STD,__FILE__,__LINE__)
+#endif
       myproc = ga_nodeid()
       proc   = ga_nnodes()
 c
@@ -74,6 +80,9 @@ c
       n = dimA1
       if (n .lt. 64) then
              call ga_diag_std_seq(g_a,  g_v, eval)
+#ifdef GA_USE_VAMPIR
+             call vampir_end_galinalg(GA_DIAG_STD,__FILE__,__LINE__)
+#endif
              return
       endif
 c
@@ -289,6 +298,9 @@ c     endif
 
 c
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_DIAG_STD,__FILE__,__LINE__)
+#endif
 c
       end
 
@@ -355,6 +367,9 @@ c
 c
 c***  check environment
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_DIAG,__FILE__,__LINE__)
+#endif
       myproc = ga_nodeid()
       proc   = ga_nnodes()
 c
@@ -381,6 +396,9 @@ c
       n = dimA1
       if (n .lt. 64) then
          call ga_diag_seq(g_a, g_s, g_v, eval)
+#ifdef GA_USE_VAMPIR
+         call vampir_end_galinalg(GA_DIAG,__FILE__,__LINE__)
+#endif
          return
       endif
 c
@@ -591,6 +609,9 @@ c     endif
      $               ma_sizeof(MT_DBL,n,MT_BYTE), 0)
 c
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_DIAG,__FILE__,__LINE__)
+#endif
 c
       end
 c
@@ -663,6 +684,9 @@ c
 c~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c***  check the environment
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_DIAG_REUSE,__FILE__,__LINE__)
+#endif
       myproc = ga_nodeid()
       proc   = ga_nnodes()
 c
@@ -702,6 +726,9 @@ c
       n = dimA1
       if (n .lt. thr_seq) then
          call ga_diag_seq(g_a, g_s, g_v, eval)
+#ifdef GA_USE_VAMPIR
+         call vampir_end_galinalg(GA_DIAG_REUSE,__FILE__,__LINE__)
+#endif
          return
       endif
 c
@@ -728,6 +755,9 @@ c
      $         call ga_error('ga_reuse: ma_free hmb', 0)
          first_time = .true.
        endif
+#ifdef GA_USE_VAMPIR
+       call vampir_end_galinalg(GA_DIAG_REUSE,__FILE__,__LINE__)
+#endif
        return
       endif
 c
@@ -933,4 +963,7 @@ c
       if(reuse.eq.0) first_time = .false.
 c
       call ga_sync()
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_DIAG_REUSE,__FILE__,__LINE__)
+#endif
       end

@@ -1,4 +1,7 @@
-c $Id: ga_cholesky.F,v 1.8 2000-06-24 00:08:01 d3h325 Exp $
+c $Id: ga_cholesky.F,v 1.9 2002-07-17 17:31:33 vinod Exp $
+#ifdef GA_USE_VAMPIR
+#include "ga_vampir.fh"
+#endif
       subroutine ga_cholesky(g_a)
 c
 c     Cholesky factorization G&VL: alg. 6.6.1
@@ -18,6 +21,9 @@ c
 c
 c***  check environment
 c
+#ifdef GA_USE_VAMPIR
+      call vampir_begin_galinalg(GA_CHOLESKY,__FILE__,__LINE__)
+#endif
       me = ga_nodeid()
       nproc   = ga_nnodes()
 c
@@ -75,5 +81,8 @@ c
 c
       status = ma_pop_stack(hw)
       status = ma_pop_stack(hv)
+#ifdef GA_USE_VAMPIR
+      call vampir_end_galinalg(GA_CHOLESKY,__FILE__,__LINE__)
+#endif
       end
 

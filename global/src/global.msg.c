@@ -767,6 +767,9 @@ void FATR ga_brdcst_(type, buf, len, originator)
 {
      Integer orig_clust, tcg_orig_node, tcg_orig_master; 
 
+#ifdef GA_USE_VAMPIR
+     vampir_begin(GA_BRDCST,__FILE__,__LINE__);
+#endif
      if(DEBUG1){
          printf("%s:%d> broadcast type=%d len=%d root=%d\n",
               GA_clus_info[GA_clus_id].hostname,ga_msg_nodeid_(),*type,*len, *originator);
@@ -804,6 +807,9 @@ void FATR ga_brdcst_(type, buf, len, originator)
             ga_msg_brdcst(gtype, buf, glen, gfrom);
 #       endif
      }
+#ifdef GA_USE_VAMPIR
+     vampir_end(GA_BRDCST,__FILE__,__LINE__);
+#endif
 }
 
 
@@ -955,6 +961,9 @@ void ga_dgop(type, x, n, op)
      char *op;
 {
 
+#ifdef GA_USE_VAMPIR
+    vampir_begin(GA_DGOP,__FILE__,__LINE__);
+#endif
 #ifdef TIME_DGOP
      t0_dgop = tcgtime_();
 #endif
@@ -987,6 +996,9 @@ void ga_dgop(type, x, n, op)
      t_dgop += tcgtime_() - t0_dgop;
      n_dgop+= 1;
      s_dgop+= (double)n;
+#endif
+#ifdef GA_USE_VAMPIR
+    vampir_end(GA_DGOP,__FILE__,__LINE__);
 #endif
 }
 
@@ -1069,6 +1081,9 @@ void ga_igop(type, x, n, op)
      char *op;
 {
 
+#ifdef GA_USE_VAMPIR
+     vampir_begin(GA_IGOP,__FILE__,__LINE__);
+#endif
      if(ClusterMode){
 #       ifdef IWAY
            ga_sync_();
@@ -1093,6 +1108,9 @@ void ga_igop(type, x, n, op)
             ga_msg_sync_();
 #       endif
      }
+#ifdef GA_USE_VAMPIR
+     vampir_end(GA_IGOP,__FILE__,__LINE__);
+#endif
 }
 
 
