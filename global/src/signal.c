@@ -8,6 +8,8 @@
 
 #include <signal.h>
 
+#define  ERROR ga_error
+
 #if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT))
 #   define SigType  int
 #else
@@ -24,7 +26,7 @@
 #include <sys/wait.h>
 #endif
 
-extern void ga_error();
+extern void ERROR();
 
 extern int SR_caught_sigint;
 
@@ -32,13 +34,18 @@ SigType (*SigChldOrig)(), (*SigIntOrig)(), (*SigHupOrig)();
 
 
 /*********************** SIGINT *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigIntHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigIntHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  ga_error("SigIntHandler: interrupt signal was caught",(long) code);
+  ERROR("SigIntHandler: interrupt signal was caught",(long) sig);
 }
 
 void TrapSigInt()
@@ -49,7 +56,7 @@ void TrapSigInt()
 */
 {
   if ( (SigIntOrig = signal(SIGINT, SigIntHandler)) == SIG_ERR)
-    ga_error("TrapSigInt: error from signal setting SIGINT",0);
+    ERROR("TrapSigInt: error from signal setting SIGINT",0);
 }
 
 void RestoreSigInt()
@@ -58,16 +65,21 @@ void RestoreSigInt()
 */
 {
   if ( signal(SIGINT, SigIntOrig) == SIG_ERR)
-    ga_error("RestoreSigInt: error from restoring signal SIGINT",0);
+    ERROR("RestoreSigInt: error from restoring signal SIGINT",0);
 }
 
 
 
 /*********************** SIGCHLD *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigChldHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigChldHandler(sig)
+#endif
+     int sig;
 {
   int status, pid;
   
@@ -82,7 +94,7 @@ SigType SigChldHandler(sig, code, scp, addr)
   pid = wait(&status);
 #endif
   SR_caught_sigint = 1;
-  ga_error("Child process terminated prematurely, status=",(long) status);
+  ERROR("Child process terminated prematurely, status=",(long) status);
 }
 
 void TrapSigChld()
@@ -91,7 +103,7 @@ void TrapSigChld()
 */
 {
   if ( (SigChldOrig = signal(SIGCHLD, SigChldHandler)) == SIG_ERR)
-    ga_error("TrapSigChld: error from signal setting SIGCHLD",0);
+    ERROR("TrapSigChld: error from signal setting SIGCHLD",0);
 }
 
 
@@ -101,20 +113,25 @@ void RestoreSigChld(d)
 */
 {
   if ( signal(SIGCHLD, SigChldOrig) == SIG_ERR)
-    ga_error("RestoreSigChld: error from restoring signal SIGChld",0);
+    ERROR("RestoreSigChld: error from restoring signal SIGChld",0);
 }
 
 
 
 
 /*********************** SIGBUS *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigBusHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigBusHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  ga_error("Bus error, status=",(long) code);
+  ERROR("Bus error, status=",(long) sig);
 }
 
 void TrapSigBus()
@@ -123,20 +140,25 @@ void TrapSigBus()
 */
 {
   if ( signal(SIGBUS, SigBusHandler) == SIG_ERR)
-    ga_error("TrapSigBus: error from signal setting SIGBUS", 0);
+    ERROR("TrapSigBus: error from signal setting SIGBUS", 0);
 }
 
 
 
 
 /*********************** SIGFPE *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigFpeHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigFpeHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  ga_error("Floating Point Exception error, status=",(long) code);
+  ERROR("Floating Point Exception error, status=",(long) sig);
 }
 
 void TrapSigFpe()
@@ -145,20 +167,25 @@ void TrapSigFpe()
 */
 {
   if ( signal(SIGFPE, SigFpeHandler) == SIG_ERR)
-    ga_error("TrapSigFpe: error from signal setting SIGFPE", 0);
+    ERROR("TrapSigFpe: error from signal setting SIGFPE", 0);
 }
 
 
 
 
 /*********************** SIGILL *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigIllHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigIllHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  ga_error("Illegal Instruction error, status=",(long) code);
+  ERROR("Illegal Instruction error, status=",(long) sig);
 }
 
 void TrapSigIll()
@@ -167,20 +194,25 @@ void TrapSigIll()
 */
 {
   if ( signal(SIGILL, SigIllHandler) == SIG_ERR)
-    ga_error("TrapSigIll: error from signal setting SIGILL", 0);
+    ERROR("TrapSigIll: error from signal setting SIGILL", 0);
 }
 
 
 
 
 /*********************** SIGSEGV *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigSegvHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigSegvHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  ga_error("Segmentation Violation error, status=",(long) code);
+  ERROR("Segmentation Violation error, status=",(long) sig);
 }
 
 void TrapSigSegv()
@@ -189,20 +221,25 @@ void TrapSigSegv()
 */
 {
   if ( signal(SIGSEGV, SigSegvHandler) == SIG_ERR)
-    ga_error("TrapSigSegv: error from signal setting SIGSEGV", 0);
+    ERROR("TrapSigSegv: error from signal setting SIGSEGV", 0);
 }
 
 
 
 
 /*********************** SIGSYS *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigSysHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigSysHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  ga_error("Bad Argument To System Call error, status=",(long) code);
+  ERROR("Bad Argument To System Call error, status=",(long) sig);
 }
 
 void TrapSigSys()
@@ -212,20 +249,25 @@ void TrapSigSys()
 {
 #ifndef LINUX
   if ( signal(SIGSYS, SigSysHandler) == SIG_ERR)
-    ga_error("TrapSigSys: error from signal setting SIGSYS", 0);
+    ERROR("TrapSigSys: error from signal setting SIGSYS", 0);
 #endif
 }
 
 
 
 /*********************** SIGTRAP *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigTrapHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigTrapHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  ga_error("Trace Trap error, status=",(long) code);
+  ERROR("Trace Trap error, status=",(long) sig);
 }
 
 void TrapSigTrap()
@@ -234,19 +276,24 @@ void TrapSigTrap()
 */
 {
   if ( signal(SIGTRAP, SigTrapHandler) == SIG_ERR)
-    ga_error("TrapSigTrap: error from signal setting SIGTRAP", 0);
+    ERROR("TrapSigTrap: error from signal setting SIGTRAP", 0);
 }
 
 
 
 /*********************** SIGHUP *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigHupHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigHupHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  ga_error("Hangup error, status=",(long) code);
+  ERROR("Hangup error, status=",(long) sig);
 }
 
 void TrapSigHup()
@@ -255,7 +302,7 @@ void TrapSigHup()
 */
 {
   if ( (SigHupOrig = signal(SIGHUP, SigHupHandler)) == SIG_ERR)
-    ga_error("TrapSigHup: error from signal setting SIGHUP", 0);
+    ERROR("TrapSigHup: error from signal setting SIGHUP", 0);
 }
 
 
@@ -265,19 +312,24 @@ void RestoreSigHup()
 */
 {
   if ( signal(SIGHUP, SigHupOrig) == SIG_ERR)
-    ga_error("RestoreSigHUP: error from restoring signal SIGHUP",0);
+    ERROR("RestoreSigHUP: error from restoring signal SIGHUP",0);
 }
 
 
 
 /*********************** SIGTERM *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigTermHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigTermHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  ga_error("Terminate signal was sent, status=",(long) code);
+  ERROR("Terminate signal was sent, status=",(long) sig);
 }
 
 void TrapSigTerm()
@@ -286,18 +338,23 @@ void TrapSigTerm()
 */
 {
   if ( signal(SIGTERM, SigTermHandler) == SIG_ERR)
-    ga_error("TrapSigTerm: error from signal setting SIGTERM", 0);
+    ERROR("TrapSigTerm: error from signal setting SIGTERM", 0);
 }
 
 
 /*********************** SIGIOT *************************************/
+#if defined(SUN) && !defined(SOLARIS)
 SigType SigIotHandler(sig, code, scp, addr)
-     int sig, code;
+     int code;
      struct sigcontext *scp;
      char *addr;
+#else
+SigType SigIotHandler(sig)
+#endif
+     int sig;
 {
   SR_caught_sigint = 1;
-  ga_error("IOT signal was sent, status=",(long) code);
+  ERROR("IOT signal was sent, status=",(long) sig);
 }
 
 void TrapSigIot()
@@ -306,5 +363,5 @@ void TrapSigIot()
 */
 {
       if ( signal(SIGIOT, SigIotHandler) == SIG_ERR)
-          ga_error("TrapSigIot: error from signal setting SIGIOT", 0);
+          ERROR("TrapSigIot: error from signal setting SIGIOT", 0);
 }
