@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.23 1999-06-30 20:15:35 jju Exp $*/
+/*$Id: global.util.c,v 1.24 1999-07-14 22:35:24 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -44,51 +44,6 @@
   void fflush();
 #endif
 
-
-
-/*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
-\*/
-void FATR ga_copy_(g_a, g_b)
-     Integer *g_a, *g_b;
-{
-Integer atype, btype, adim1, adim2, bdim1, bdim2;
-Integer ilo, ihi, jlo, jhi;
-Integer me= ga_nodeid_(), index, ld;
-
-   ga_sync_();
-
-   ga_check_handle(g_a, "ga_copy");
-   ga_check_handle(g_b, "ga_copy");
-
-   if(*g_a == *g_b) ga_error("ga_copy: arrays have to be different ", 0L);
-
-   ga_inquire_(g_a, &atype, &adim1, &adim2);
-   ga_inquire_(g_b, &btype, &bdim1, &bdim2);
-
-   if(atype != btype || (atype != MT_F_DBL && atype != MT_F_INT &&
-                         atype != MT_F_DCPL))
-               ga_error("ga_copy: wrong types ", 0L);
-
-   if(adim1 != bdim1 || adim2!=bdim2 )
-               ga_error("ga_copy: arrays not conformant", 0L);
-
-   ga_distribution_(g_a, &me, &ilo, &ihi, &jlo, &jhi);
-
-   if (  ihi>0 && jhi>0 ){
-      ga_access_(g_a, &ilo, &ihi, &jlo, &jhi,  &index, &ld);
-      switch (atype){
-        case MT_F_DBL:
-           ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, DBL_MB+index-1, &ld); break;
-        case MT_F_DCPL:
-           ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, DCPL_MB+index-1, &ld); break;
-        case MT_F_INT:
-           ga_put_(g_b, &ilo, &ihi, &jlo, &jhi, INT_MB+index-1, &ld);
-      }
-      ga_release_(g_a, &ilo, &ihi, &jlo, &jhi);
-   }
-
-   ga_sync_();
-}
 
 
 
