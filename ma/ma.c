@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.1.1.1 1994-03-29 06:44:33 d3g681 Exp $
+ * $Id: ma.c,v 1.2 1994-04-04 22:04:23 d3g681 Exp $
  */
 
 /*
@@ -1627,6 +1627,7 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
             (void)sprintf(ma_ebuf,
                 "block '%s', not enough space to allocate %lu bytes",
                 name, nbytes);
+	    MA_summarize_allocated_blocks();
             ma_error(EL_Nonfatal, ET_External, "MA_allocate_heap", ma_ebuf);
             return MA_FALSE;
         }
@@ -2434,6 +2435,7 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
         (void)sprintf(ma_ebuf,
             "block '%s', not enough space to allocate %lu bytes",
             name, nbytes);
+	MA_summarize_allocated_blocks();
         ma_error(EL_Nonfatal, ET_External, "MA_push_stack", ma_ebuf);
         return MA_FALSE;
     }
