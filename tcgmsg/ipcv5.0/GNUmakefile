@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.6 2002-09-21 17:48:03 vinod Exp $
+# $Id: GNUmakefile,v 1.7 2003-06-27 21:00:19 vinod Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -126,14 +126,17 @@ endif
 
 LOADLIBES = $(LIBRARY_PATH) $(COMM_LIBS) 
 ifdef GA_USE_VAMPIR
-   ifdef VT_PATH
+   ifdef GA_USE_VAMPIR
       ifdef VT_LIB
-         LOADLIBES += $(VT_PATH) $(VT_LIB)
-      else
-         LOADLIBES += $(VT_PATH) -lVT
+       ifdef LIBVT
+          LIBS += -ltcgmsg -L$(VT_LIB) $(LIBVT)
+       else
+          LIBS += -ltcgmsg -L$(VT_LIB) -lVT
+       endif
       endif
-   else
-      echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
+   endif
+   ifdef VT_INCLUDE
+      INCLUDES += -I$(VT_INCLUDE)
    endif
 endif
 #......................... make targets ........................
