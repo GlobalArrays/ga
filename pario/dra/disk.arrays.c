@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.30 2002-01-14 17:15:24 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.31 2002-01-14 17:37:57 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -3051,13 +3051,10 @@ section_t d_sect, g_sect;
    _dra_turn = 0;
 
    /* process unaligned subsections */
-   printf("Start call to ndai_transfer_unlgn\n");
    ndai_transfer_unlgn(DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
            
    /* process aligned subsections */
-   printf("Start call to ndai_transfer_algn\n");
    ndai_transfer_algn (DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
-   printf("Complete call to ndai_transfer_algn\n");
 
    return(ELIO_OK);
 }
