@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.103 2004-04-13 19:41:32 d3h325 Exp $
+# $Id: makefile.h,v 1.104 2004-04-28 01:02:10 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -384,24 +384,26 @@ endif
 # Opteron
 ifeq  ($(_CPU),x86_64)
      _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90"} ')
+  ifdef USE_INTEGER4
+     FOPT_REN += -i4
+  else
+     FOPT_REN += -i8
+  endif
   ifeq ($(_FC),pgf90)
 #     CMAIN = -Dmain=MAIN_
      FOPT_REN += -Mdalign 
      GLOB_DEFINES += -DPGLINUX
-  ifdef USE_INTEGER4
-     FOPT_REN += -i4
-  else
-     FOPT_REN += -i8
-  endif
   endif
   ifeq ($(_FC),pgf77)
      GLOB_DEFINES += -DPGLINUX
-  ifdef USE_INTEGER4
-     FOPT_REN += -i4
-  else
-     FOPT_REN += -i8
   endif
+  ifeq ($(_FC),pathf90)
+     FOPT_REN += -cpp
+     FOPT_REN += -fno-second-underscore
+     CLD_REN += -static
+     COPT +=  -static
   endif
+   GLOB_DEFINES += -DNOUSE_MMAP
 endif
 #
 # power4
