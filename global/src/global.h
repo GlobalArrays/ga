@@ -135,7 +135,7 @@ extern void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi);
 extern void FATR  nga_inquire_(Integer *g_a, Integer *type, Integer *ndim,Integer *dims); 
 
 extern logical FATR nga_locate_(Integer *g_a,
-                                Integer* subscript,
+                                Integer* subscr,
                                 Integer* owner);
 
 extern logical FATR nga_locate_region_( Integer *g_a,
@@ -158,12 +158,12 @@ extern void FATR nga_get_(Integer *g_a, Integer *lo, Integer *hi,
                           void *buf, Integer *ld);
 extern void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi, void    *buf,
                           Integer *ld, void    *alpha);
-extern void FATR nga_scatter_(Integer *g_a, void* v, Integer subscript[], 
+extern void FATR nga_scatter_(Integer *g_a, void* v, Integer subscr[], 
                               Integer *nv);
-extern void FATR nga_gather_(Integer *g_a, void* v, Integer subscript[],
+extern void FATR nga_gather_(Integer *g_a, void* v, Integer subscr[],
                              Integer *nv);
-extern Integer FATR nga_read_inc_(Integer* g_a,Integer* subscript,Integer* inc);
-extern void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscript);
+extern Integer FATR nga_read_inc_(Integer* g_a,Integer* subscr,Integer* inc);
+extern void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscr);
 
 
 extern DoubleComplex   *DCPL_MB;
