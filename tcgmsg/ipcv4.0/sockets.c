@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.7 1999-11-20 03:15:06 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.8 2000-09-30 19:04:22 d3g681 Exp $ */
 
 
 #include <stdio.h>
@@ -38,6 +38,44 @@ extern int errno;
 
 #include "sndrcv.h"
 #include "sndrcvP.h"
+
+long WaitForSockets(int nsock, int *socks, int *list)
+/*
+  Wait until one or more sockets are ready or have an exception.
+
+  Returns the number of ready sockets and sets corresponding 
+  numbers in list.  I.e., list[i]=k meaning sock[k] is ready.
+*/
+{
+  fd_set ready;
+  int i;
+  long nready;
+  int sockmax = 0;
+
+again:
+  FD_ZERO(&ready);
+  for (i=0; i<nsock; i++) {
+    FD_SET(socks[i], &ready);
+    if (socks[i] > sockmax) sockmax = socks[i];
+  }
+  nready = (long) select(sockmax+1, &ready, (fd_set *) NULL, (fd_set *) NULL,
+			 (struct timeval *) NULL);
+  if (nready < 0) {
+    if (errno == EINTR)
+      goto again;
+    else
+      Error("WaitForSockets: error from select",  0L);
+  }
+  else {
+    int n = 0;
+    for (i=0; i<nsock; i++) {
+      if (FD_ISSET(socks[i],&ready)) list[n++] = i;
+    }
+  }	
+
+  return nready;
+}
+
 
 long PollSocket(sock)
      int sock;

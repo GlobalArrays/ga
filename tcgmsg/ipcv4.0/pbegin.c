@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.11 2000-08-01 17:42:36 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.12 2000-09-30 19:04:21 d3g681 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -296,6 +296,7 @@ void PBEGIN_(argc, argv)
      create the shared memory and semaphores and fork the processes
      partitioning out the resources */
 
+  SR_using_shmem = 0;
 #ifdef SHMEM
   me = NODEID_();
   nslave = SR_clus_info[SR_clus_id].nslave;
@@ -309,6 +310,7 @@ void PBEGIN_(argc, argv)
 		    NODEID_(), nslave);
       (void) fflush(stdout);
     }
+    SR_using_shmem = 1;
     SR_proc_info[me].shmem = CreateSharedRegion(&SR_proc_info[me].shmem_id,
 						&SR_proc_info[me].shmem_size);
     if (DEBUG_) {
@@ -469,6 +471,17 @@ void PBEGIN_(argc, argv)
 
   ConnectAll();
 
+  /* If we are only using sockets we can block in select when waiting for a message */
+  for (i=0; i<(SR_n_proc+1); i++) {
+    if (SR_proc_info[i].sock >= 0) {
+      SR_socks[i] = SR_proc_info[i].sock;
+    }
+    else {
+      SR_socks[i] = 0;
+      if (i != NODEID_())
+	SR_using_shmem = 1;
+    }
+  }
   /* Synchronize timers before returning to application 
      or logging any events */
 
@@ -493,6 +506,10 @@ void PBEGIN_(argc, argv)
   }
 #endif
 
+  if (DEBUG_) {
+    printf("pbegin: %2ld: Returning to application\n",NODEID_());
+    fflush(stdout);
+  }
 }
 
 void PEND_()

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.15 2000-08-01 23:13:35 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.16 2000-09-30 19:04:21 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -575,6 +575,9 @@ static long NextReadyNode(type)
   memory buffer (local process).
 
   This may be an expensive operation but fairness seems important.
+
+  If only sockets are in use, just block in select until data is
+  available.  
 */
 {
   static long  next_node = 0;
@@ -582,6 +585,18 @@ static long NextReadyNode(type)
   long  nproc = NNODES_();
   long  me = NODEID_();
   int i, nspin = 0;
+
+  if (!SR_using_shmem) {
+    int list[MAX_PROCESS];
+    int nready;
+    nready = WaitForSockets(SR_n_proc+1,SR_socks,list);
+    if (nready == 0) 
+      Error("NextReadyNode: nready = 0\n", 0);
+
+    /* Insert here type checking logic ... not yet done */
+
+    return list[0];
+  }
 
   /* With both local and remote processes end up with a busy wait
      as no way to wait for both a semaphore and a socket.
@@ -649,7 +664,7 @@ static long NextReadyNode(type)
     else if (nspin < 600)
       USleep((long) 10000);
     else
-      USleep((long) 1000000);
+      USleep((long) 100000);
   }
 
   i = next_node;

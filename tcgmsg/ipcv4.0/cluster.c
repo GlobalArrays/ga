@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.8 1999-11-20 03:15:05 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.9 2000-09-30 19:04:20 d3g681 Exp $ */
 
 #include <stdio.h>
 
@@ -72,6 +72,10 @@ void InitClusInfo(procgrp, masterhostname)
     if (SR_n_clus == MAX_CLUSTER)
       Error("InitClusInfo: maximum no. of clusters exceeded",
             (long) MAX_CLUSTER);
+
+    if (atoi(nslave) > MAX_SLAVE) 
+      Error("InitClusInfo: maximum no. of slaves per cluster exceeded",
+	    (long) MAX_SLAVE);
 
     SR_clus_info[SR_n_clus].user = strdup(user);
     SR_clus_info[SR_n_clus].hostname = strdup(host);

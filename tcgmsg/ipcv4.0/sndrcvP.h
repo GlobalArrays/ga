@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.13 2000-08-30 16:38:30 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.14 2000-09-30 19:04:21 d3g681 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
@@ -105,6 +105,9 @@ extern long SR_error;                    /* flag indicating error has been calle
 
 extern long SR_numchild;                   /* no. of forked processes */
 extern long SR_pids[MAX_SLAVE];          /* pids of forked processes */
+extern int  SR_socks[MAX_PROCESS]; /* Sockets used for each process */
+extern long SR_using_shmem;	/* 1=if shmem is used for an process, 0 if all
+				 processes are connected to this one by sockets */
 
 
 /* This is used to store info from the PROCGRP file about each
