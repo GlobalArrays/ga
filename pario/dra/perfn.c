@@ -30,11 +30,12 @@
    2*SIZE**NDIM*sizeof(double) bytes. The amount of disk space
    required is approximately 1+2**NDIM times this amount.
 */
-#define USER_CONFIG 2
-#define TEST_TRANSPOSE 0
+#define USER_CONFIG 0
+#define TEST_TRANSPOSE 1
 
 #define NDIM 3
-#define SIZE 500
+#define SIZE 250
+
 /*
 #define NDIM 2
 #define SIZE 4000
@@ -586,8 +587,8 @@ char **argv;
   GA_Initialize();
   if (!GA_Uses_ma()) {
     if (ga_nodeid_() == 0) printf("GA not using MA\n");
-    stack = 1000000000;
-    heap  = 1000000000;
+    stack = 10000000;
+    heap  = 10000000;
   }
 
   if (MA_init(MT_F_DBL, stack, heap) ) {
