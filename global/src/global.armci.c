@@ -605,7 +605,7 @@ logical FATR nga_create_irreg_(Integer *type, Integer *ndim, Integer *dims,
                  _fcd array_name, Integer map[], Integer block[], Integer *g_a)
 #else
 logical FATR nga_create_irreg_(Integer *type, Integer *ndim, Integer *dims,
-                _fcd array_name, Integer map[], Integer block[],
+                 char* array_name, Integer map[], Integer block[],
                  Integer *g_a, int slen)
 #endif
 {
