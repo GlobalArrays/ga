@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.59 2002-12-31 05:04:59 manoj Exp $ */
+/* $Id: strided.c,v 1.60 2003-02-12 23:21:59 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -303,7 +303,10 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
 #  ifdef LAPI2 
     /*even 1D armci_nbput has to use different origin counters for 1D */
     if(!ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
-       !nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD)) 
+       !nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD) &&
+      /*line below is a temporary and a problem specific solution that has
+      to be changed/fixed as soon as possible*/
+       !(count[0]<2048 && count[0]>1000 && count[1]>222)) 
        armci_lapi_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
                          dst_stride_arr,count,stride_levels,nb_handle);
     else
