@@ -10,7 +10,7 @@
 #include "sndrcv.h"
 #endif
 
-#define _GA_USENAMESPACE_ 1
+#define _GA_USENAMESPACE_ 0
 
 #if _GA_USENAMESPACE_
 #define _GA_STATIC_ 
