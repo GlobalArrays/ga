@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.19 2002-12-22 03:33:54 vinod Exp $    **/
+/* $Id: buffers.c,v 1.20 2003-01-07 21:51:20 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -529,7 +529,7 @@ int  index = _armci_buf_to_index(bufptr);
    }
    else{
       _armci_buf_state->smallbuf[index-MAX_BUFS].id.tag=tag;
-      _armci_buf_state->buf[index-MAX_BUFS].id.protocol=protocol;
+      _armci_buf_state->smallbuf[index-MAX_BUFS].id.protocol=protocol;
    }
 }
 

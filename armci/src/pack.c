@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.28 2002-12-11 00:43:34 vinod Exp $ */
+/* $Id: pack.c,v 1.29 2003-01-07 21:51:22 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -86,6 +86,7 @@ int armci_pack_strided(int op, void* scale, int proc,
     int flag=1;
 #endif
     int b;
+    static int call_count;
 
 #ifdef STRIDED_GET_BUFLEN
     if(op==GET)bufsize=STRIDED_GET_BUFLEN;
@@ -125,6 +126,10 @@ int armci_pack_strided(int op, void* scale, int proc,
 
         if(nb == chunk){ /* take shortcut when whole patch fits in the buffer */
            if(h) h->last = last?1:0;
+           if(nb_handle  && call_count ){
+             nb_handle->bufid=NB_MULTI;
+             call_count++;
+           }
            return(OP_STRIDED(op, scale, proc, src_ptr, src_stride_arr,
                   dst_ptr,dst_stride_arr,count,stride_levels,h,flag,nb_handle));
         }
@@ -140,12 +145,12 @@ int armci_pack_strided(int op, void* scale, int proc,
         else{ b = chunk%nb; if(b==0)b=nb; } /* put smallest piece first */
 
         for(sn = 0; sn < chunk; ){
-
            src = (char*)src_ptr + src_stride* sn;
            dst = (char*)dst_ptr + dst_stride* sn;
            count[fit_level] = MIN(b, chunk-sn); /*modify count for this level*/
 
            if(h) h->last = (last && ((sn+b)>=chunk))? 1: 0 ;
+           if(nb_handle)call_count++;
            rc = OP_STRIDED( op, scale, proc, src, src_stride_arr,
                            dst,dst_stride_arr,count,fit_level,h,flag,nb_handle);
            if(rc) break;
@@ -155,17 +160,22 @@ int armci_pack_strided(int op, void* scale, int proc,
         }
         count[fit_level] = chunk; /* restore original count */
 
-    }else for(sn = 0; sn < count[stride_levels]; sn++){
-                 int looplast =0;
-                 src = (char*)src_ptr + src_stride_arr[stride_levels -1]* sn;
-                 dst = (char*)dst_ptr + dst_stride_arr[stride_levels -1]* sn;
-
-                 if(last && (sn == count[stride_levels]-1)) looplast =1;
-                 rc = armci_pack_strided(op, scale, proc, src, src_stride_arr,
-                            dst, dst_stride_arr, count, stride_levels -1, 
-                            h,fit_level, nb, looplast,nb_handle);
-                 if(rc) return rc;
     }
+    else {
+        for(sn = 0; sn < count[stride_levels]; sn++){
+           int looplast =0;
+           src = (char*)src_ptr + src_stride_arr[stride_levels -1]* sn;
+           dst = (char*)dst_ptr + dst_stride_arr[stride_levels -1]* sn;
+
+           if(last && (sn == count[stride_levels]-1)) looplast =1;
+           rc = armci_pack_strided(op, scale, proc, src, src_stride_arr,
+                                   dst, dst_stride_arr, count, stride_levels -1,
+                                   h,fit_level, nb, looplast,nb_handle);
+           if(rc) return rc;
+        }
+    }
+    if(nb_handle && call_count )
+       nb_handle->bufid=NB_MULTI;
     return rc;
 }
 

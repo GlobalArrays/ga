@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.49 2002-12-23 22:16:23 vinod Exp $ */
+/* $Id: request.c,v 1.50 2003-01-07 21:51:22 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -107,7 +107,7 @@ void armci_save_strided_dscr(char **bptr, void *rem_ptr,int rem_stride_arr[],
 {
 int i;
 char *bufptr=*bptr;
-BUF_INFO_T *info;
+BUF_INFO_T *info=NULL;
     if(is_nb){    
        info=BUF_TO_BUFINFO(*bptr);
        bufptr = (info->dscr);
@@ -532,8 +532,8 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
       /*for now, set handle->bufid to MULTI. Since MULTI is a superset of ONE
         this shouldnt cause any problems. Later on this has to be properly
         set in pack.c for both strided and vector protocols*/
-      armci_set_nbhandle_bufid(nb_handle,NULL,NB_MULTI);
-      if(op==GET)armci_save_vector_dscr(&buf,darr,len,op,1);
+      if(nb_handle->bufid == NB_NONE)
+        armci_set_nbhandle_bufid(nb_handle,buf,0);
     }
 
     buf += sizeof(request_header_t);
@@ -592,6 +592,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
     }
 
     armci_send_req(proc, msginfo, bufsize);
+    if(nb_handle && op==GET)armci_save_vector_dscr(&buf0,darr,len,op,1);
     if(op == GET 
 #   if !defined(USE_SOCKET_VECTOR_API) 
        && !nb_handle
@@ -653,10 +654,8 @@ int armci_rem_strided(int op, void* scale, int proc,
       /*for now, set handle->bufid to MULTI. Since MULTI is a superset of ONE
         this shouldnt cause any problems. Later on this has to be properly
         set in pack.c for both strided and vector protocols*/
-      armci_set_nbhandle_bufid(nb_handle,NULL,NB_MULTI);
-      if(op==GET)
-        armci_save_strided_dscr(&buf,dst_ptr,dst_stride_arr,count,
-                                stride_levels,1);
+      if(nb_handle->bufid == NB_NONE)
+        armci_set_nbhandle_bufid(nb_handle,buf,0);
     }
     
     msginfo = (request_header_t*)buf;
@@ -770,6 +769,9 @@ int armci_rem_strided(int op, void* scale, int proc,
 
              if(msginfo->pinned) armci_send_req(proc,msginfo,bufsize);
              else armci_client_send_ack(proc, 1);
+             /*if(nb_handle)
+               armci_save_strided_dscr(&buf,dst_ptr,dst_stride_arr,count,
+                                       stride_levels,1);*/
           }
 
          }else
@@ -778,7 +780,10 @@ int armci_rem_strided(int op, void* scale, int proc,
           armci_send_req(proc, msginfo, bufsize);
        }
 #     if !defined(USE_SOCKET_VECTOR_API) 
-       if(!nb_handle)
+       if(nb_handle)
+         armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
+                                 stride_levels,1);
+       else
 #     endif 
        {
          armci_rcv_strided_data(proc, msginfo, msginfo->datalen,
