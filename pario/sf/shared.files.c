@@ -76,7 +76,7 @@ Integer hndl;
 #       ifdef  PARAGON
           SF[hndl].fd = elio_gopen(SF[hndl].fname,ELIO_RW);
 #       else
-          SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW);
+          SF[hndl].fd = elio_open(SF[hndl].fname,ELIO_RW, ELIO_SHARED);
 #       endif
 
         SF[hndl].soft_size = *size_soft_limit;

@@ -32,7 +32,7 @@ include ../../config/makelib.h
 
  COPT    = -g
  FOPT    = -g
-LOC_LIBS = -L$(LIBDIR) -lchemio -lglobal -lma -lblas  $(COM_LIB)
+LOC_LIBS = -L$(LIBDIR) -lchemio -lglobal -lma $(COM_LIB) $(EXTRA_COMM_LIBS)
 
 ifeq ($(TARGET), DECOSF)
   LOC_LIBS += -laio -lpthreads 
@@ -43,9 +43,9 @@ endif
 #
 %.x : %.o $(LIBRARY_PATH)  $(EXTRA)
 	if [ -f $(basename $@).c ]; then\
-		$(CC) $(CLDOPT) -o $@ $< $(LOC_LIBS) $(CLIBS);\
+		$(CLD) $(CLDOPT) -o $@ $< $(LOC_LIBS) $(CLIBS);\
 	else\
-		$(FC) $(FOPT_REN) $(FLDOPT) -o $@ $< $(LOC_LIBS);\
+		$(FLD) $(FOPT_REN) $(FLDOPT) -o $@ $< $(LOC_LIBS);\
 	fi
 
 # *.p file is required for tcgmsg `parallel' command to run your program

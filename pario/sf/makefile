@@ -6,7 +6,7 @@
   LIB_DISTRIB = ../../lib
       LIBRARY = libchemio.a
           OBJ = shared.files.o sf_fortran.o
-      HEADERS = sf.fh
+      HEADERS = sf.fh sf.h
  LIB_INCLUDES = -I../elio
   LIB_TARGETS = 
 
@@ -25,3 +25,5 @@ endif
 include ../../config/makefile.h
 include ../../config/makelib.h
 
+$(patsubst %,$(LIBRARY_PATH)(%),shared.files.o): sf.h coms.h
+$(patsubst %,$(LIBRARY_PATH)(%),fortran.o):      sf.h
