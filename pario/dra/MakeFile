@@ -5,6 +5,7 @@ OBJDIR=.\obj
 OBJ = $(OBJDIR)\disk.arrays.obj \
    $(OBJDIR)\disk.param.obj \
    $(OBJDIR)\patch.util.obj \
+   $(OBJDIR)\ffflush.obj \
    $(OBJDIR)\env.obj \
    $(OBJDIR)\fortran.obj
 
