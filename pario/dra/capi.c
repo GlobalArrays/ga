@@ -59,12 +59,11 @@ int NDRA_Create(int type, int ndim, int dims[], char *name, char* filename,
     COPYC2F(reqdims, _da_reqdims, ndim);
     ttype = (Integer)type;
     nndim = (Integer)ndim;
-    dd_a = (Integer)d_a;
     mmode = (Integer)mode;
     
     st = ndra_create(&ttype, &nndim, _da_dims, name,
         filename, &mmode, _da_reqdims, &dd_a);
-    *d_a = dd_a;
+    *d_a = (int)dd_a;
     if(st==TRUE) return 1;
     else return 0;
 }
@@ -144,4 +143,72 @@ int NDRA_Read_section(logical transp, int g_a, int glo[], int ghi[],
           _da_hi, &rrequest);
    *request = (int)rrequest;
    return (int)status;
+}
+
+int DRA_Init(int max_arrays, double max_array_size,
+             double total_disk_space, double max_memory)
+{
+  Integer mmax_arrays, status;
+  DoublePrecision mmax_array_size, ttotal_disk_space, mmax_memory;
+  mmax_arrays = (Integer)max_arrays;
+  mmax_array_size = (DoublePrecision)max_array_size;
+  ttotal_disk_space = (DoublePrecision)total_disk_space;
+  mmax_memory = (DoublePrecision)max_memory;
+  status = dra_init_(&mmax_arrays, &mmax_array_size,
+                     &ttotal_disk_space, &mmax_memory);
+  return (int)status;
+}
+
+int DRA_Terminate()
+{
+  Integer status;
+  status = dra_terminate_();
+  return (int)status;
+}
+
+int DRA_Open(char* filename, int mode, int *d_a)
+{
+  Integer mmode, dd_a, status;
+  mmode = (Integer)mode;
+  status = dra_open(filename, &mode, &dd_a);
+  *d_a = (int)dd_a;
+  return (int)status;
+}
+
+int DRA_Probe(int request, int *compl_status)
+{
+  Integer rrequest, ccompl_status, status;
+  rrequest = (Integer)request;
+  status = dra_probe_(&rrequest, &ccompl_status);
+  *compl_status = (int)ccompl_status;
+  return (int)status;
+}
+
+int DRA_Wait(int request)
+{
+  Integer rrequest, status;
+  rrequest = (Integer)request;
+  status = dra_wait_(&rrequest);
+  return (int)status;
+}
+
+int DRA_Delete(int d_a)
+{
+  Integer dd_a, status;
+  dd_a = (Integer)d_a;
+  status = dra_delete_(&dd_a);
+  return (int)status;
+}
+
+int DRA_Close(int d_a)
+{
+  Integer dd_a, status;
+  dd_a = (Integer)d_a;
+  status = dra_close_(&dd_a);
+  return (int)status;
+}
+
+void DRA_Flick()
+{
+  dra_flick_();
 }
