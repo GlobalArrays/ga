@@ -77,7 +77,7 @@ register Integer i;
 
 /*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
 \*/
-void FATR ga_copy_(Integer *g_a, Integer *g_b)
+void FATR ga_copy_old(Integer *g_a, Integer *g_b)
 {
 Integer  ndim, ndimb, type, typeb, me, elems=0, elemsb=0;
 Integer dimsb[MAXDIM];
@@ -124,6 +124,43 @@ void *ptr_a, *ptr_b;
 
      ga_sync_();
    }
+
+   GA_POP_NAME;
+}
+
+
+
+/*\ COPY ONE GLOBAL ARRAY INTO ANOTHER
+\*/
+void FATR ga_copy_(Integer *g_a, Integer *g_b)
+{
+Integer  ndim, ndimb, type, typeb, me = ga_nodeid_();
+Integer dimsb[MAXDIM],i;
+void *ptr_a;
+
+   ga_sync_();
+
+   GA_PUSH_NAME("ga_copy");
+
+   if(*g_a == *g_b) ga_error("arrays have to be different ", 0L);
+
+   nga_inquire_(g_a,  &type, &ndim, dims);
+   nga_inquire_(g_b,  &typeb, &ndimb, dimsb);
+
+   if(type != typeb) ga_error("types not the same", *g_b);
+   if(ndim != ndimb) ga_error("dimensions not the same", ndimb);
+
+   for(i=0; i< ndim; i++)if(dims[i]!=dimsb[i]) 
+                            ga_error("dimensions not the same",i);
+
+   nga_distribution_(g_a, &me, lo, hi);
+
+   if(lo[0]>0){
+      nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+      nga_put_(g_b, lo, hi, ptr_a, ld);
+   }
+   
+   ga_sync_();
 
    GA_POP_NAME;
 }
