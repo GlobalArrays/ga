@@ -1,4 +1,4 @@
-		GLOBAL ARRAYS LIBRARY 3.0 RELEASE NOTES
+	  	GLOBAL ARRAYS LIBRARY RELEASE NOTES
 
 DISCLAIMER
 
@@ -24,7 +24,7 @@ ACKNOWLEDGMENT
 
 
 GENERAL NOTES
-  Version 3.1 of Global Arrays Library:
+  Version 3.2 of Global Arrays Library:
   - supports a wide variety of platforms, from supercomputer, such as
     IBM SP and CRAY T3E, to Linux clusters and Windows NT.
   - supports arbitrary dimensional array operations. 
@@ -35,10 +35,10 @@ GENERAL NOTES
 
 
 SUPPORTED PLATFORMS
-  * IBM SP, CRAY T3E & J90, SGI Origin, Fujitsu
+  * IBM SP, CRAY T3E & J90, SGI Origin, Fujitsu, Hitachi, MAC X, Cygwin
   * Cluster of workstations/servers: Solaris, IRIX, AIX, HPUX, Digital Unix
   * Linux clusters/servers
-  * Windows NT
+  * Windows NT, 2000, XP
 
 
 DIRECTORY STRUCTURE
@@ -53,7 +53,7 @@ DIRECTORY STRUCTURE
 HISTORY
   version 3.2   October, 2002
               * support for ghost cells
-              * port to Linux64/Itanium, Hitachi, Cray SV1, and Cygwin 
+              * port to Linux64/Itanium, Hitachi, Cray SV1, MAC X, and Cygwin 
               * support two underscores in fortran names on Linux/Cygwin
                 (enabled by setting F2C_TWO_UNDERSCORES)
 	      * C++ bindings to Global Arrays
