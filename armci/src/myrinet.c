@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.52 2003-03-10 19:29:07 vinod Exp $
+/* $Id: myrinet.c,v 1.53 2003-03-10 22:19:01 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -71,6 +71,8 @@
 #define SERV_STAMP 99
 /*static char * client_tail;*/
 static char * serv_tail;
+
+static int server_can_poll=0;
 
 #if 0
 extern void armci_buf_free(char *ap);
@@ -1150,6 +1152,9 @@ int armci_gm_server_init()
 
     if(!(serv_gm->ops_done_ar = (ops_t*)calloc(armci_nproc,sizeof(ops_t))))
         armci_die("malloc failed for ARMCI ops_done_ar",0);
+
+    /* check if we can poll in the server thread */
+    if(getenv("ARMCI_SERVER_CAN_POLL")) server_can_poll=1;
     
     return TRUE;
 }
@@ -1330,14 +1335,13 @@ void armci_call_data_server()
 
     /* server main loop; wait for and service requests until QUIT requested */
     while(!iexit) {        
-#ifdef ARMCI_POLLING_RECV
-        event = gm_receive(serv_gm->rcv_port);
-#else
-        event = gm_blocking_receive_no_spin(serv_gm->rcv_port);
-#endif
+        if(server_can_poll)
+            event = gm_receive(serv_gm->rcv_port);
+        else
+            event = gm_blocking_receive_no_spin(serv_gm->rcv_port);
 
-        if(DEBUG_INIT_) { fprintf(stdout, "%d(server): receive event type %d\n",
-                    armci_me, event->recv.type); fflush(stdout);     
+        if(DEBUG_INIT_){fprintf(stdout,"%d(server:%d):receive event type %d\n",
+                    armci_me,server_can_poll,event->recv.type); fflush(stdout);  
         }
         
         switch(event->recv.type) {
