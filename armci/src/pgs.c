@@ -1,9 +1,9 @@
-/* $Id: pgs.c,v 1.7 2004-08-10 22:05:01 d3h325 Exp $ 
+/* $Id: pgs.c,v 1.8 2004-08-13 05:26:25 d3h325 Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
 
-#ident	"@(#)$Id: pgs.c,v 1.7 2004-08-10 22:05:01 d3h325 Exp $"
+#ident	"@(#)$Id: pgs.c,v 1.8 2004-08-13 05:26:25 d3h325 Exp $"
 
 #define BINLOAD 1
 
@@ -511,7 +511,10 @@ void * pgs_ds_init (ELAN_STATE *state, void *qMem, void *dsqMem, int maxbufs)
    
     _bflags = elan_gallocElan(elan_base, elan_base->allGroup, 64, maxbufs*sizeof(E4_uint64));
     if(!_bflags)elan_exception(pgsstate->elan_state, ELAN_ENOMEM, "bflags: no Elan memory");
-    memset(_bflags, 0, maxbufs*sizeof(E4_uint64));
+#if QSNETLIBS_VERSION_CODE > QSNETLIBS_VERSION(1,7,0)
+    _bflags =elan4_elan2main(elan_base->state->ctx,(ADDR_ELAN)_bflags);
+#endif
+    bzero(_bflags,maxbufs*sizeof(E4_uint64));
     MEMBAR_STORESTORE();
 
     /*
