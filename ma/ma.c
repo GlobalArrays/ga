@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.31 2003-11-13 22:28:24 edo Exp $
+ * $Id: ma.c,v 1.32 2004-03-30 22:35:03 manoj Exp $
  */
 
 /*
@@ -2008,7 +2008,7 @@ public Boolean MA_allocate_heap(
     /* initialize the AD */
     ad->datatype = datatype;
     ad->nelem = nelem;
-    str_ncopy(ad->name, name, MA_NAMESIZE);
+    str_ncopy(ad->name, (char*)name, MA_NAMESIZE);
     /* ad->client_space is already set */
     /* ad->nbytes is already set */
     list_insert(ad, &ma_hused);
@@ -3262,7 +3262,7 @@ public Boolean MA_push_stack(
     /* initialize the AD */
     ad->datatype = datatype;
     ad->nelem = nelem;
-    str_ncopy(ad->name, name, MA_NAMESIZE);
+    str_ncopy(ad->name, (char*)name, MA_NAMESIZE);
     ad->client_space = client_space;
     ad->nbytes = nbytes;
     list_insert(ad, &ma_sused);
