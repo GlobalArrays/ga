@@ -101,16 +101,6 @@ ifeq ($(TARGET),LINUX64)
    GLOB_DEFINES += -DLINUX
    EXTRA_OBJ = tas.o
 endif
-ifeq ($(TARGET),LINUX64_32)
-     FC = fort
-     FOPT_REN = -i4 -assume no2underscore -fpe3 -check nooverflow
-     FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
-     
-#    COPT_REN = -g3  
-     CC = ccc
-   GLOB_DEFINES += -DLINUX -DLINUX64
-   EXTRA_OBJ = tas.o
-endif
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt
@@ -300,13 +290,6 @@ ifeq ($(TARGET),DECOSF)
           CLD = cc
      FOPT_REN = -fpe2 -check nounderflow -check nopower -check nooverflow
 endif
-#----------------------------- DEC/Compaq ---------------------------------
-ifeq ($(TARGET),DECOSF32)
-          CLD = cc
-     FOPT_REN = -fpe2 -check nounderflow -check nopower -check nooverflow
- GLOB_DEFINES = -DDECOSF
-endif
-
 #------------------------------- Crays ------------------------------------
 
 # YMP, J90, ... PVP
@@ -371,9 +354,6 @@ endif
 # IBM RS/6000 under AIX
 ifeq ($(TARGET),IBM)
         IBM_  = 1
-endif
-ifeq ($(TARGET),IBM64_32)
-      IBM64_  = 1
 endif
 ifeq ($(TARGET),IBM64)
       IBM64_  = 1
