@@ -1,7 +1,7 @@
       program main
       implicit double precision (a-h,o-z)
 c
-c $Header: /tmp/hpctools/ga/tcgmsg-mpi/testf.f,v 1.5 2001-06-29 00:18:28 edo Exp $
+c $Header: /tmp/hpctools/ga/tcgmsg-mpi/testf.F,v 1.1 2001-06-29 00:24:39 edo Exp $
 c
 c     FORTRAN program to test message passing routines
 c
