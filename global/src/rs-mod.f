@@ -1,3 +1,4 @@
+c $Id: rs-mod.f,v 1.5 1999-07-28 00:24:13 d3h325 Exp $
 c
 c JN: the original file has been slightly modified
 c JN: renamed pythag to pythag000 to avoid multiply defined symbol also in rsg.f

@@ -1,3 +1,4 @@
+c $Id: rsg.f,v 1.4 1999-07-28 00:24:14 d3h325 Exp $
       subroutine rsg(nm,n,a,b,w,matz,z,fv1,fv2,ierr)
 c
       integer n,nm,ierr,matz

@@ -1,3 +1,4 @@
+c $Id: fill.f,v 1.2 1999-07-28 00:24:12 d3h325 Exp $
       subroutine util_dfill(n,val,a,ia)
       implicit none
       double precision  a(*), val
