@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.77 2004-05-11 00:36:20 vinod Exp $ */
+/* $Id: base.c,v 1.78 2004-05-12 15:38:07 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2183,7 +2183,7 @@ int local_sync_begin;
     return(TRUE);
 }
 
-    
+extern double putcallcount,putcounttime,putlocatetime; 
      
 /*\ TERMINATE GLOBAL ARRAY STRUCTURES
  *
@@ -2204,6 +2204,8 @@ extern double t_dgop, n_dgop, s_dgop;
 #ifdef GA_PROFILE 
     ga_profile_terminate();
 #endif
+    if(putcallcount){
+    printf("\n%d:putcalls=%.2e cou=%.2e loc=%.2e \n",GAme,putcallcount,putcounttime/putcallcount,putlocatetime/putcallcount); fflush(stdout);}
     for (i=0;i<_max_global_array;i++){
           handle = i - GA_OFFSET ;
           if(GA[i].actv) ga_destroy_(&handle);
@@ -2527,23 +2529,22 @@ int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
 Integer  proc, owner, i, ga_handle;
 Integer  d, dpos, ndim, elems, p_handle;
 global_array_t *lochdlptr;
-#if defined(__crayx1)
+#if defined(__crayx1_)
 global_array_t lochdl;
 #endif
    ga_check_handleM(g_a, "nga_locate_region");
 
    ga_handle = GA_OFFSET + *g_a;
-#if defined(__crayx1)
+#if defined(__crayx1_)
    memcpy(&lochdl,&GA[ga_handle],sizeof(global_array_t));
    lochdlptr = &lochdl;
 #else
    lochdlptr = &GA[ga_handle];
 #endif
-   for(d = 0; d< lochdl.ndim; d++)
+   for(d = 0; d< lochdlptr->ndim; d++)
        if((lo[d]<1 || hi[d]>lochdlptr->dims[d]) ||(lo[d]>hi[d]))return FALSE;
    
-
-   ndim = GA[ga_handle].ndim;
+   ndim = lochdlptr->ndim;
 
    /* find "processor coordinates" for the top left corner and store them
     * in ProcT */
@@ -2555,7 +2556,7 @@ global_array_t lochdl;
 
    /* find "processor coordinates" for the right bottom corner and store
     * them in procB */
-   for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
+   for(d = 0, dpos = 0; d< lochdlptr->ndim; d++){
        findblock(lochdlptr->mapc + dpos, lochdlptr->nblock[d], 
                  lochdlptr->scale[d], (int)hi[d], &procB[d]);
        dpos += lochdlptr->nblock[d];
