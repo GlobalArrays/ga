@@ -2,6 +2,8 @@
 #include "eafP.h"
 #include "typesf2c.h"
 #include <math.h>
+#include <string.h>
+#include <stdlib.h>
 
 #if defined(CRAY)
 #include <fortran.h>
