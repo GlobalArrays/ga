@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.h,v 1.5 2004-02-27 16:47:36 vinod Exp $ */
+/* $Id: ga_vampir.h,v 1.6 2004-08-17 07:50:03 manoj Exp $ */
 #ifndef _GA_VAMPIR_H_
 #define _GA_VAMPIR_H_
 
@@ -108,7 +108,7 @@
 #define NGA_ZDOT_PATCH        32291
 #define NGA_ZERO_PATCH        32290
 #define GA_CHOLESKY           32289 
-#define GA_DGEMM              32288
+#define VT_GA_DGEMM           32288
 #define GA_DGEMM_SEQ          32287
 #define GA_DIAG_STD           32286
 #define GA_DIAG               32285
@@ -133,7 +133,11 @@
 #define NGA_STRIDED_GET       32265
 #define NGA_STRIDED_ACC       32264
 #define GA_ALLOCATE           32263
-
+#define GA_MATMUL             32262
+#define NGA_MATMUL_PATCH      32261
+#define VT_GA_SGEMM           32260
+#define VT_GA_ZGEMM           32259
+#define GA_PGROUP_SYNC        32258
 #include "ga_vampir.fh"
 
 extern void ga_vampir_init(); 

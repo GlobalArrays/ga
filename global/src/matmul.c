@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.56 2004-06-28 17:47:53 manoj Exp $ */
+/* $Id: matmul.c,v 1.57 2004-08-17 07:50:03 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -9,6 +9,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include "matmul.h"
+
+#ifdef GA_USE_VAMPIR
+#include "../ga_vt.h"
+#include "ga_vampir.h"
+#endif
 
 #define DEBUG_ 0 /*set 1, to verify the correctness of parallel matrix mult.*/
 
@@ -2076,7 +2081,7 @@ void ga_dgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
                double *beta, Integer *g_c) {
 
 #ifdef GA_USE_VAMPIR
-  vampir_begin(GA_DGEMM,__FILE__,__LINE__);
+  vampir_begin(VT_GA_DGEMM,__FILE__,__LINE__);
 #endif
   /**
    * ga_summa calls ga_ga_dgemm to handle cases it does not cover
@@ -2084,7 +2089,7 @@ void ga_dgemm_(char *transa, char *transb, Integer *m, Integer *n, Integer *k,
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   ga_summa_(transa, transb, m, n, k, alpha, g_a, g_b, beta, g_c);
 #ifdef GA_USE_VAMPIR
-  vampir_end(GA_DGEMM,__FILE__,__LINE__);
+  vampir_end(VT_GA_DGEMM,__FILE__,__LINE__);
 #endif
 }
 #  define GA_DGEMM ga_ga_dgemm_
@@ -2127,14 +2132,14 @@ SET_GEMM_INDICES;
 #endif
  
 #ifdef GA_USE_VAMPIR
-  vampir_begin(GA_DGEMM,__FILE__,__LINE__);
+  vampir_begin(VT_GA_DGEMM,__FILE__,__LINE__);
 #endif
  ga_matmul(transa, transb, alpha, beta,
 	   g_a, &ailo, &aihi, &ajlo, &ajhi,
 	   g_b, &bilo, &bihi, &bjlo, &bjhi,
 	   g_c, &cilo, &cihi, &cjlo, &cjhi);
 #ifdef GA_USE_VAMPIR
-  vampir_end(GA_DGEMM,__FILE__,__LINE__);
+  vampir_end(VT_GA_DGEMM,__FILE__,__LINE__);
 #endif
 }
 
@@ -2157,14 +2162,14 @@ SET_GEMM_INDICES;
 
 
 #ifdef GA_USE_VAMPIR
-  vampir_begin(GA_SGEMM,__FILE__,__LINE__);
+  vampir_begin(VT_GA_SGEMM,__FILE__,__LINE__);
 #endif
   ga_matmul (transa, transb, alpha, beta,
 	     g_a, &ailo, &aihi, &ajlo, &ajhi,
 	     g_b, &bilo, &bihi, &bjlo, &bjhi,
 	     g_c, &cilo, &cihi, &cjlo, &cjhi);
 #ifdef GA_USE_VAMPIR
-  vampir_end(GA_SGEMM,__FILE__,__LINE__);
+  vampir_end(VT_GA_SGEMM,__FILE__,__LINE__);
 #endif
 }
 
@@ -2187,14 +2192,14 @@ SET_GEMM_INDICES;
 #endif
 
 #ifdef GA_USE_VAMPIR
-  vampir_begin(GA_ZGEMM,__FILE__,__LINE__);
+  vampir_begin(VT_GA_ZGEMM,__FILE__,__LINE__);
 #endif
   ga_matmul (transa, transb, alpha, beta,
 	     g_a, &ailo, &aihi, &ajlo, &ajhi,
 	     g_b, &bilo, &bihi, &bjlo, &bjhi,
 	     g_c, &cilo, &cihi, &cjlo, &cjhi);
 #ifdef GA_USE_VAMPIR
-  vampir_end(GA_ZGEMM,__FILE__,__LINE__);
+  vampir_end(VT_GA_ZGEMM,__FILE__,__LINE__);
 #endif
 }
 

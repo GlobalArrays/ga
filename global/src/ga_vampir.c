@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.c,v 1.8 2004-02-27 16:47:24 vinod Exp $ */
+/* $Id: ga_vampir.c,v 1.9 2004-08-17 07:50:03 manoj Exp $ */
 #include "ga_vampir.h"
 
 void ga_vampir_init() {
@@ -45,8 +45,9 @@ void ga_vampir_init() {
     vampir_symdef(GA_LOCATE,                 "GA_Locate",                  "GA",__FILE__,__LINE__);
     vampir_symdef(GA_LOCATE_REGION,          "GA_Locate_region",           "GA",__FILE__,__LINE__);
     vampir_symdef(GA_LOCK,                   "GA_Lock",                    "GA",__FILE__,__LINE__);
-    vampir_symdef(GA_MATMUL_PATCH,           "GA_Matmul_patch",
-        "GA_MATRIX",__FILE__,__LINE__);
+    vampir_symdef(GA_MATMUL_PATCH,           "GA_Matmul_patch",            "GA_MATRIX",__FILE__,__LINE__);
+    vampir_symdef(GA_MATMUL,                 "GA_Matmul",                  "GA_MATRIX",__FILE__,__LINE__);
+    vampir_symdef(NGA_MATMUL_PATCH,          "NGA_Matmul_patch",           "GA_MATRIX",__FILE__,__LINE__);
     vampir_symdef(GA_MEMORY_AVAIL,           "GA_Memory_avail",            "GA",__FILE__,__LINE__);
     vampir_symdef(GA_MEMORY_LIMITED,         "GA_Memory_limited",          "GA",__FILE__,__LINE__);
     vampir_symdef(GA_MPI_COMMUNICATOR,       "GA_Mpi_communicator",        "GA",__FILE__,__LINE__);
@@ -137,7 +138,9 @@ void ga_vampir_init() {
         "GA_MATRIX",__FILE__,__LINE__);
 
     vampir_symdef(GA_CHOLESKY,               "GA_Cholesky",                "GA_linalg",__FILE__,__LINE__);
-    vampir_symdef(GA_DGEMM,               "GA_Dgemm",                   "GA_linalg",__FILE__,__LINE__);
+    vampir_symdef(VT_GA_DGEMM,               "GA_Dgemm",                   "GA_linalg",__FILE__,__LINE__);
+    vampir_symdef(VT_GA_SGEMM,               "GA_Sgemm",                   "GA_linalg",__FILE__,__LINE__);
+    vampir_symdef(VT_GA_ZGEMM,               "GA_Zgemm",                   "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_DGEMM_SEQ,              "GA_Dgemm_seq",               "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_DIAG_STD,               "GA_Diag_std",                "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_DIAG,                   "GA_Diag",                    "GA_linalg",__FILE__,__LINE__);
