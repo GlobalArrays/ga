@@ -184,6 +184,7 @@ ifeq ($(TARGET),IBM)
 # IBM RS/6000 under AIX
 #
          IBM  = 1
+        CDEFS = -DEXTNAME
 endif
 
 ifdef IBM
