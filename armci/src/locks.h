@@ -26,7 +26,7 @@
 
 
 #if defined(PTHREADS) && !(defined(PMUTEXES) || defined(SPINLOCK))
-# if defined(LINUX) && defined(ULTRA)
+# if defined(LINUX) && defined(__sparc__) && defined(GM)
 #    define PMUTEXES
 #    include <pthread.h>
 # else

@@ -262,13 +262,14 @@ int armci_gm_proc_init()
         return FALSE;
     }
 
-    /* get the gm version number and set bypass flag */
+    /* get the gm version number and set bypass flag: need GM >1.1 */
     if(armci_me == 0) {
         char gm_version[8];
         strncpy(gm_version, _gm_get_kernel_build_id(proc_gm->port), 3);
         gm_version[3] = '\0';
-        if(strcmp(gm_version, "1.2") == 0) armci_gm_bypass = TRUE;
-        else armci_gm_bypass = FALSE;
+        if(strcmp(gm_version, "1.0") == 0) armci_gm_bypass = FALSE;
+        else if(strcmp(gm_version, "1.1") == 0) armci_gm_bypass = FALSE;
+        else armci_gm_bypass = TRUE;
     }
     
     return TRUE;
