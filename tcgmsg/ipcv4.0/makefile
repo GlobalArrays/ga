@@ -305,6 +305,8 @@ ifeq ($(TARGET),SOLARIS)
 endif
 #
 ifeq ($(TARGET),SOLARIS64)
+          _FC = $(notdir $(FC))
+          _CC = $(notdir $(CC))
   ifeq ($(_CC),fcc)
      COPT_REN = -Kfast -KV9FMADD
   else
