@@ -39,7 +39,7 @@ PRIVATE static global_array GA[MAX_ARRAYS];
 PRIVATE static int max_global_array = MAX_ARRAYS;
 
 PRIVATE static  volatile int    barrier_size;
-PRIVATE static  int             *barrier, *barrier1;
+PRIVATE static  volatile int    *barrier, *barrier1;
 PRIVATE static  long            shmSIZE, shmID;
 PRIVATE static  DoublePrecision *shmBUF;
 
