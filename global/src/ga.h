@@ -128,6 +128,7 @@ extern void GA_Copy_patch(char ta,int g_a, int ailo, int aihi,int ajlo,int ajhi,
                              int g_b, int bilo, int bihi, int bjlo,int bjhi);
 extern void GA_Brdcst(void *buf, int lenbuf, int root);
 extern void GA_Dgop(double x[], int n, char *op);
+extern void GA_Lgop(long x[], int n, char *op);
 extern void GA_Igop(Integer x[], int n, char *op);
 
 extern void NGA_Copy_patch(char trans, int g_a, int alo[], int ahi[],
