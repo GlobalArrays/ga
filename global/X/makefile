@@ -1,17 +1,36 @@
-#$Id: makefile,v 1.4 1995-10-17 08:53:22 d3g681 Exp $
-#Specify location for X Windows 
+# Please specify location of X include files and libs
+# XLOC = -I/usr
+XLOC = /msrc/apps/X11
 
-    LOC = /msrc/apps/X11R5
-  XLIBS = -L$(LOC)/lib -lXaw -lXmu -lXt -lX11 -lXau -lXdmcp -lXext
+INCLUDES = -I$(XLOC)/include
+    COPT = -g
+  CFLAGS = $(COPT) $(INCLUDES)
 
-#
- CFLAGS =  -g -I$(LOC)/include
+  XLIBS = -L$(XLOC)/lib -lMrm -lXm -lXaw -lXmu -lXt -lX11 -lXau -lXdmcp -lXext
+  LIBS = 
+  RM = rm
+OBJ_LOC = .
 
-xregion0:	xregion0.o
-	cc $(CFLAGS) -o xregion0 xregion0.o $(XLIBS) -lm
+  CC = gcc
 
-lint:
-	lint -h -I$(LOC)/include xregion0.c
+THE_OBJS =	\
+		$(OBJ_LOC)/xregion_colormap.o\
+		$(OBJ_LOC)/xregion_dialog.o\
+		$(OBJ_LOC)/xregion_display.o\
+		$(OBJ_LOC)/xregion_fileio.o\
+		$(OBJ_LOC)/xregion_main.o\
+		$(OBJ_LOC)/xregion_pixregion.o\
+		$(OBJ_LOC)/xregion_scrollbars.o\
+		$(OBJ_LOC)/xregion_util.o\
+		$(OBJ_LOC)/xregion_overview.o\
+		$(OBJ_LOC)/xregion_view.o\
+		$(OBJ_LOC)/xregion_xcmap.o
+
+default :	xregion
+
+xregion :		$(THE_OBJS)
+		$(CC) $(CFLAGS) $(THE_OBJS) -o xregion  $(XLIBS) -lm
 
 clean:
-	/bin/rm -rf *.o xregion0
+	$(RM) -rf $(THE_OBJS) xregion
+
