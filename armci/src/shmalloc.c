@@ -194,8 +194,6 @@ static Header *morecore(nu)
   char *cp;
   Header *up;
   void addtofree();
-  unsigned long off;
-  
   
   if (usage.total >= max_nalloc)
     return (Header *) NULL;   /* Enforce upper limit on core usage */
@@ -209,14 +207,8 @@ static Header *morecore(nu)
   (void) fflush(stdout);
 #endif
 
-/* JN: increase request to allign memory  segment */
-  nu+=ALIGNMENT;
   if ((cp = allocate((unsigned)nu * sizeof(Header))) == (char *) NULL)
     return (Header *) NULL;
-
-/* JN: round up the pointer */
-  off = ((unsigned long)cp)%ALIGNMENT;
-  cp += off;
   
   usage.total += nu;   /* Have just got nu more units */
   usage.nchunk++;      /* One more chunk */

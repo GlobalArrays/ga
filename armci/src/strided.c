@@ -46,8 +46,8 @@ void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
                    || dst_stride % ALIGN_SIZE
                    || src_stride % ALIGN_SIZE
 #ifdef PTR_ALIGN
-                   || (ulong)src_ptr%ALIGN_SIZE
-                   || (ulong)dst_ptr%ALIGN_SIZE
+                   || (unsigned long)src_ptr%ALIGN_SIZE
+                   || (unsigned long)dst_ptr%ALIGN_SIZE
 #endif
                 ){ 
 

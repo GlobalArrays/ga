@@ -98,7 +98,6 @@
          a(r+2,c) = d3
          a(r+3,c) = d4
       enddo
-      print *, a(1,1),a(1,2),alpha,b(1,1),b(1,2)
       enddo
       end
 

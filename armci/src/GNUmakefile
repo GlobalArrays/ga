@@ -62,11 +62,11 @@ include ../config/makefile.h
 include ../config/makelib.h
 
 
-test.x: $(LIBRARY_PATH)
-	$(CC) $(DEFINES) test.c -o $@ $^ $(LIBS)
+test.x: test.c $(LIBRARY_PATH)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 ipctest.x: $(LIBRARY_PATH)
-	$(CC) ipctest.c -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) ipctest.c -o $@ $^ $(LIBS)
 
 
 $(patsubst %,$(LIBRARY_PATH)(%),strided.o): copy.h armcip.h acc.h memlock.h
@@ -80,3 +80,5 @@ $(patsubst %,$(LIBRARY_PATH)(%),rmw.o):   locks.h
 $(patsubst %,$(LIBRARY_PATH)(%),memlock.o):   memlock.h locks.h
 $(patsubst %,$(LIBRARY_PATH)(%),semaphores.o):   semaphores.h
 locks.h: semaphores.h
+
+%.x: %.c

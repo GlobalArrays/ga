@@ -61,7 +61,7 @@ int ARMCI_Init()
 
     /* trap signals to cleanup ARMCI system resources in case of crash */
     if(armci_me==0) ARMCI_ParentTrapSignals();
-    else ARMCI_ChildrenTrapSignals();
+    ARMCI_ChildrenTrapSignals();
 
 #if defined(SYSV) || defined(WIN32)
 
