@@ -23,7 +23,7 @@ c***  check environment
 c
       myproc = ga_nodeid() 
       proc   = ga_nnodes()
-      alpha = 0.5
+      alpha = 0.5d0
 c  
       call ga_inquire(g_a,  type, dim1, dim2)
 c
