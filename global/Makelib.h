@@ -4,7 +4,7 @@
        CORE_LIBS = -lglobal -lma
 
 ifndef LIBMPI
-   LIBMPI = libmpi.a
+   LIBMPI = -lmpi
 endif
 
 ifneq ($(MSG_COMMS),MPI)
@@ -47,6 +47,10 @@ ifeq ($(TARGET),KSR)
        BLAS  = -lksrblas
  EXTRA_LIBS += -lrpc -para
 endif
+#................................ HPUX  .....................................
+ifeq ($(TARGET),HPUX)
+       EXTRA_LIBS = -lm 
+endif
 #................................ Intel .....................................
 ifeq ($(INTEL),YES)
 #
@@ -57,7 +61,6 @@ ifeq ($(TARGET),PARAGON)
        CLIB = -lm
 #
        EXTRA_LIBS = -nx 
-       MPI_DEV = paragon/ch_nx
 else
        EXTRA_LIBS = -node 
 endif
@@ -86,10 +89,11 @@ endif
 
 
 ifdef USE_MPI
-   ifndef MPI_LIB
-      ERRMSG = "YOU MUST DEFINE MPI LIBRARY LOCATION - MPI_LIB\\n"
+   ifdef MPI_LIB
+         LIBCOM += -L$(MPI_LIB) $(LIBMPI)
+   else
+         LIBCOM +=  $(LIBMPI)
    endif
-   LIBCOM += $(MPI_LIB)/$(LIBMPI)
 endif
 
 ifdef IWAY

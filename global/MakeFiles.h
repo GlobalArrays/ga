@@ -7,6 +7,7 @@
 #
 #
 INTERRUPT_AVAILABLE = SP1 IPSC DELTA PARAGON
+NATIVE LOCKS = SGITFP SGI64 CONVEX-SPP
 
 #                  Synchronization
 #
@@ -19,8 +20,8 @@ ifeq ($(VERSION),SHMEM)
             GA_SYNC =  semaphores.o
        endif
      endif
-     ifeq ($(TARGET),SGITFP)
-            GA_SYNC =  sgi.locks.o
+     ifeq ($(TARGET),$(findstring $(TARGET),$(NATIVE LOCKS)))
+            GA_SYNC +=  locks.o
      endif
 else
      ifeq ($(INTEL),YES)

@@ -17,6 +17,7 @@
           CXX = CC
          FOPT = -O
          COPT = -O
+	 NOPT = -g
 GLOB_INCLUDES = -I../../ma
            AR = ar
            AS = as
@@ -104,6 +105,39 @@ ifeq ($(TARGET),DECOSF)
      FOPT_REN = -i8
  GLOB_DEFINES = -DDECOSF
 endif
+
+#............................... Convex ....................................
+
+ifeq ($(TARGET),CONVEX-SPP)
+     FOPT_REN = -ppu -or none
+     COPT_REN = -or none
+          CPP = /lib/cpp -P
+           FC = fc
+         NOPT = -no
+ GLOB_DEFINES = -DCONVEX -DHPUX -DEXTNAME -DSPPLOCKS
+ ifeq ($(FOPT),-O)
+         FOPT = -O1
+ endif
+ ifeq ($(FOPT),-g)
+         FOPT = $(NOPT)
+ endif
+ ifeq ($(COPT),-g)
+         COPT = $(NOPT)
+ endif
+    EXPLICITF = TRUE
+endif
+
+#................................ HP  ....................................
+
+ifeq ($(TARGET),HPUX)
+     FOPT_REN = +ppu
+         CPP  = /lib/cpp -P
+           FC = fort77
+          CC = gcc
+ GLOB_DEFINES = -DHPUX -DEXTNAME
+    EXPLICITF = TRUE
+endif
+
 
 #
 #................................ CRAY-T3D ..................................
@@ -279,11 +313,9 @@ ifeq ($(VERSION),SHMEM)
 endif
 
 ifdef USE_MPI
- ifndef MPI_INCLUDE
-     MPI_INCLUDE = 'You must define location of MPI include files'
-     CC = @echo
+ ifdef MPI_INCLUDE
+   GLOB_INCLUDES += -I$(MPI_INCLUDE)
  endif
- GLOB_INCLUDES += -I$(MPI_INCLUDE)
  ifeq ($(MSG_COMMS),MPI)
     GLOB_DEFINES += -DMPI
  endif
@@ -291,7 +323,7 @@ endif
 
       DEFINES = $(GLOB_DEFINES) $(LOC_DEFINES) $(DEF_TRACE)
      INCLUDES = $(GLOB_INCLUDES) $(LOC_INCLUDES)
-       FFLAGS = $(FOPT) $(FOPT_REN) $(INCLUDES) $(DEFINES)
+       FFLAGS = $(FOPT) $(FOPT_REN) $(INCLUDES) $(DEFINES) $(FDEFS)
        CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS)
        FLDOPT = $(FOPT) $(FOPT_REN) $(FLD_REN)
        CLDOPT = $(COPT) $(COPT_REN) $(CLD_REN)
@@ -324,6 +356,6 @@ ifeq ($(TARGET),LINUX)
 	$(CPP) $(INCLUDES) $(DEFINES) .tmp.$$$$.c | sed '/^$$/d' > $*.f ;\
 	/bin/rm -f .tmp.$$$$.c) || exit 1
 else
-	$(CPP) $(INCLUDES) $(DEFINES) < $*.F | sed '/^#/D' > $*.f
+	$(CPP) $(INCLUDES) $(DEFINES) $(FDEFS) < $*.F | sed '/^#/D' > $*.f
 endif
 endif
