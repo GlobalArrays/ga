@@ -28,10 +28,6 @@ Integer index;
 
    ga_sync_();
 
-#ifdef GA_TRACE
-       trace_stime_();
-#endif
-
    me = ga_nodeid_();
 
    ga_check_handle(g_a, "ga_zero");
@@ -74,11 +70,6 @@ Integer index;
       ga_release_update_(g_a, &ilo, &ihi, &jlo, &jhi);
    } 
 
-#ifdef GA_TRACE
-   trace_etime_();
-   op_code = GA_OP_ZER;
-   trace_genrec_(g_a, &ilo, &ihi, &jlo, &jhi, &op_code);
-#endif
 
    GA_POP_NAME;
    ga_sync_();
@@ -97,9 +88,6 @@ Integer     index_a, index_b;
 
    ga_sync_();
 
-#ifdef GA_TRACE
-       trace_stime_();
-#endif
 
    me = ga_nodeid_();
 
@@ -156,15 +144,7 @@ Integer     index_a, index_b;
    type = GA_TYPE_GSM; len =1;
    ga_dgop_(&type, &sum, &len, "+",1); 
     
-#ifdef GA_TRACE
-   trace_etime_();
-   op_code = GA_OP_DDT;
-   trace_genrec_(g_a, &ailo, &aihi, &ajlo, &ajhi, &op_code);
-   if(g_a != g_b) trace_genrec_(g_b, &bilo, &bihi, &bjlo, &bjhi, &op_code);
-#endif
-
    GA_POP_NAME;
-/*   ga_sync_();*/
 
    return (sum);
 }
@@ -183,10 +163,6 @@ DoubleComplex  sum;
 Integer     index_a, index_b;
 
    ga_sync_();
-
-#ifdef GA_TRACE
-       trace_stime_();
-#endif
 
    me = ga_nodeid_();
 
@@ -247,13 +223,6 @@ Integer     index_a, index_b;
    type = GA_TYPE_GSM; len =2; /* take advantage of DoubleComplex layout */
    ga_dgop_(&type, &sum, &len, "+",1); 
 
-#ifdef GA_TRACE
-   trace_etime_();
-   op_code = GA_OP_DDT;
-   trace_genrec_(g_a, &ailo, &aihi, &ajlo, &ajhi, &op_code);
-   if(g_a != g_b) trace_genrec_(g_b, &bilo, &bihi, &bjlo, &bjhi, &op_code);
-#endif
-
    GA_POP_NAME;
 /*   ga_sync_();*/
 
@@ -271,10 +240,6 @@ register Integer i,j;
 Integer index;
 
    ga_sync_();
-
-#ifdef GA_TRACE
-       trace_stime_();
-#endif
 
    me = ga_nodeid_();
 
@@ -321,12 +286,6 @@ Integer index;
       ga_release_update_(g_a, &ilo, &ihi, &jlo, &jhi);
    }
 
-#ifdef GA_TRACE
-   trace_etime_();
-   op_code = GA_OP_DSC;
-   trace_genrec_(g_a, &ilo, &ihi, &jlo, &jhi, &op_code);
-#endif
-
    GA_POP_NAME;
    ga_sync_();
 }
@@ -350,10 +309,6 @@ Integer index_a, index_b, index_c;
 
 
    ga_sync_();
-
-#ifdef GA_TRACE
-       trace_stime_();
-#endif
 
    me = ga_nodeid_();
 
@@ -439,14 +394,6 @@ Integer index_a, index_b, index_c;
        ga_release_(g_a, &ailo, &aihi, &ajlo, &ajhi);
    }
 
-#ifdef GA_TRACE
-   trace_etime_();
-   op_code = GA_OP_ADD;
-   trace_genrec_(g_a, &ailo, &aihi, &ajlo, &ajhi, &op_code);
-   if(g_a != g_b) trace_genrec_(g_b, &bilo, &bihi, &bjlo, &bjhi, &op_code);
-   if(g_a != g_c && g_c != g_b) 
-                  trace_genrec_(g_c, &cilo, &cihi, &cjlo, &cjhi, &op_code);
-#endif
 
    GA_POP_NAME;
    ga_sync_();

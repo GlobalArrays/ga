@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.20 1997-12-13 01:21:50 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.21 1998-05-26 20:21:18 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -56,10 +56,6 @@ Integer me= ga_nodeid_(), index, ld;
 
    ga_sync_();
 
-#ifdef GA_TRACE
-       trace_stime_();
-#endif
-
    ga_check_handle(g_a, "ga_copy");
    ga_check_handle(g_b, "ga_copy");
 
@@ -89,12 +85,6 @@ Integer me= ga_nodeid_(), index, ld;
       }
       ga_release_(g_a, &ilo, &ihi, &jlo, &jhi);
    }
-
-#ifdef GA_TRACE
-   trace_etime_();
-   op_code = GA_OP_COP;
-   trace_genrec_(g_a, ilo, ihi, jlo, jhi, &op_code);
-#endif
 
    ga_sync_();
 }
