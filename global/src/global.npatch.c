@@ -391,10 +391,13 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     DoubleComplex zsum;
     float fsum;
     Integer me= ga_nodeid_(), temp_created=0;
-    Integer type = GA_TYPE_GSM;
     char *tempname = "temp", transp, transp_a, transp_b;
+    int local_sync_begin;
 
-    ga_sync_();
+    local_sync_begin = _ga_sync_begin; 
+    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+    if(local_sync_begin)ga_sync_();
+
     GA_PUSH_NAME("ngai_dot_patch");
 
     nga_inquire_internal_(g_a, &atype, &andim, adims);
@@ -619,11 +622,6 @@ Integer nga_idot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
 {
     Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
     Integer sum = 0.;
-    int local_sync_begin,local_sync_end;
-
-    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_();
 
     GA_PUSH_NAME("nga_idot_patch");
     
@@ -650,15 +648,10 @@ DoublePrecision nga_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
 {
     Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
     DoublePrecision  sum = 0.;
-    int local_sync_begin,local_sync_end;
  
 #ifdef GA_USE_VAMPIR
     vampir_begin(NGA_DDOT_PATCH,__FILE__,__LINE__);
 #endif    
-
-    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_();
 
     GA_PUSH_NAME("nga_ddot_patch");
     
@@ -688,14 +681,9 @@ float nga_fdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
 {
     Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
     float  sum = 0.;
-    int local_sync_begin,local_sync_end;
  
     GA_PUSH_NAME("nga_fdot_patch");
 
-    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    if(local_sync_begin)ga_sync_();
- 
     nga_inquire_internal_(g_a, &atype, &andim, adims);
     nga_inquire_internal_(g_b, &btype, &bndim, bdims);
  
@@ -719,14 +707,10 @@ DoubleComplex nga_zdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
 {
 Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
 DoubleComplex  sum;
-int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(NGA_ZDOT_PATCH,__FILE__,__LINE__);
 #endif    
-   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)ga_sync_();
 
    GA_PUSH_NAME("nga_zdot_patch");
 
@@ -1415,15 +1399,10 @@ DoublePrecision ga_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 DoublePrecision  sum = 0.;
-int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_DDOT_PATCH,__FILE__,__LINE__);
 #endif
-
-   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)ga_sync_();
 
    GA_PUSH_NAME("ga_ddot_patch");
 
@@ -1456,15 +1435,11 @@ DoubleComplex ga_zdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 DoubleComplex  sum;
-int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
    vampir_begin(GA_ZDOT_PATCH,__FILE__,__LINE__);
 #endif
 
-   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)ga_sync_();
    GA_PUSH_NAME("ga_zdot_patch");
 
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);
@@ -1495,11 +1470,7 @@ float ga_fdot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 float  sum = 0.;
-int local_sync_begin,local_sync_end;
- 
-   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   if(local_sync_begin)ga_sync_();
+
    GA_PUSH_NAME("ga_fdot_patch");
  
    ga_inquire_internal_(g_a, &atype, &adim1, &adim2);

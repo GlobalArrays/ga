@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.62 2003-12-09 16:17:58 vinod Exp $ */
+/* $Id: base.c,v 1.63 2003-12-31 01:06:25 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -273,7 +273,7 @@ static int ma_address_init=0;
 void gai_ma_address_init()
 {
 #ifdef CHECK_MA_ALGN
-Integer  off_dbl, off_int, off_dcpl, off_flt,off_long;
+Integer  off_dbl, off_int, off_dcpl, off_flt;
 #endif
      ma_address_init=1;
      INT_MB = (Integer*)MA_get_mbase(MT_F_INT);
@@ -562,7 +562,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
   Integer  i, j, itmp, icheck, ndim, map_offset[MAXDIM];
   Integer  index[MAXDIM], subscript[MAXDIM];
   Integer  handle = GA_OFFSET + *g_a;
-  Integer  type, size, p_handle, id;
+  Integer  type, size, id;
   char     *fptr, *lptr;
 
   /* find total number of elements */
@@ -996,10 +996,10 @@ Integer nga_get_dimension_(Integer *g_a)
 logical ga_allocate_( Integer *g_a)
 {
 
-  Integer lo[MAXDIM], hi[MAXDIM];
+  Integer hi[MAXDIM];
   Integer ga_handle = *g_a + GA_OFFSET;
   Integer d, width[MAXDIM], ndim;
-  Integer mem_size, nelem, nnodes;
+  Integer mem_size, nelem;
   Integer i, status, maplen=0, p_handle;
   Integer dims[MAXDIM], chunk[MAXDIM];
   Integer pe[MAXDIM], *pmap[MAXDIM], *map;
@@ -2013,7 +2013,7 @@ int local_sync_begin,local_sync_end;
           GA[ga_handle].ptr[GAme]=NULL;
       }
 
-      ga_sync_();
+      if(local_sync_end)ga_sync_();
 
 #     ifdef GA_CREATE_INDEF
       if(status){
@@ -2144,13 +2144,13 @@ char buf[FNAM];
 logical FATR ga_destroy_(Integer *g_a)
 {
 Integer ga_handle = GA_OFFSET + *g_a;
-int local_sync_begin,local_sync_end;
+int local_sync_begin;
 
 #ifdef GA_USE_VAMPIR
     vampir_begin(GA_DESTROY,__FILE__,__LINE__);
 #endif
 
-    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+    local_sync_begin = _ga_sync_begin; 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)ga_sync_();
 
@@ -2922,11 +2922,10 @@ void FATR ga_mask_sync_(Integer *begin, Integer *end)
 void FATR ga_merge_mirrored_(Integer *g_a)
 {
   Integer handle = GA_OFFSET + *g_a;
-  Integer p_handle = GA[handle].p_handle;
   Integer inode, nprocs, nnodes, zero, zproc;
   int *blocks, *map, *dims, *width;
   Integer i, j, index[MAXDIM], itmp, ndim;
-  Integer nelem, count, type, size, atype;
+  Integer nelem, count, type, atype;
   char *zptr, *bptr, *nptr;
   Integer bytes, total;
   int local_sync_begin, local_sync_end;
@@ -3012,11 +3011,10 @@ void FATR ga_merge_mirrored_(Integer *g_a)
       armci_msg_gop_scope(SCOPE_MASTERS, zptr, total, "+", atype);
     } 
   } else {
-    Integer _ga_tmp, iproc;
+    Integer _ga_tmp;
     Integer lo[MAXDIM], hi[MAXDIM], ld[MAXDIM];
     Integer idims[MAXDIM], iwidth[MAXDIM], ichunk[MAXDIM];
     void *ptr_a;
-    void *ptr_l;
     void *one;
     double d_one = 1.0;
     int i_one = 1;
@@ -3193,20 +3191,17 @@ Integer FATR nga_num_mirrored_seg_(Integer *g_a)
 {
   Integer handle = *g_a + GA_OFFSET;
   Integer i, j, ndim, map_offset[MAXDIM];
-  Integer index[MAXDIM];
   int *first, *last, *nblock;
   Integer lower[MAXDIM], upper[MAXDIM];
-  int *mapc, *dims;
   Integer istart = 0, nproc, inode;
   Integer ret = 0, icheck, np;
+
   if (!ga_is_mirrored_(g_a)) return ret;
   GA_PUSH_NAME("nga_num_mirrored_seg");
-  mapc = GA[handle].mapc;
   ndim = GA[handle].ndim;
   first = GA[handle].first;
   last = GA[handle].last;
   nblock = GA[handle].nblock;
-  dims = GA[handle].dims;
   for (i=0; i<ndim; i++) {
     map_offset[i] = 0;
     for (j=0; j<i; j++) {
@@ -3262,13 +3257,11 @@ void FATR nga_get_mirrored_block_(Integer *g_a,
 {
   Integer handle = *g_a + GA_OFFSET;
   Integer i, j, ndim, map_offset[MAXDIM];
-  Integer index[MAXDIM];
   int *first, *last, *nblock;
   Integer lower[MAXDIM], upper[MAXDIM];
-  int *mapc, *dims;
   Integer istart = 0, nproc, inode;
   Integer ret = 0, icheck, np;
-  Integer iblock=0;
+
   if (!ga_is_mirrored_(g_a)) {
     for (j=0; j<GA[handle].ndim; j++) {
       lo[j] = 0;
@@ -3277,12 +3270,10 @@ void FATR nga_get_mirrored_block_(Integer *g_a,
     return;
   }
   GA_PUSH_NAME("nga_get_mirrored_block");
-  mapc = GA[handle].mapc;
   ndim = GA[handle].ndim;
   first = GA[handle].first;
   last = GA[handle].last;
   nblock = GA[handle].nblock;
-  dims = GA[handle].dims;
   for (i=0; i<ndim; i++) {
     map_offset[i] = 0;
     for (j=0; j<i; j++) {
@@ -3366,11 +3357,10 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   Integer inode, new_inode, nprocs, nnodes, new_nnodes, zero, zproc;
   int *blocks, *map, *dims, *width;
   Integer i, j, index[MAXDIM], itmp, ndim;
-  Integer nelem, count, type, size, atype;
-  Integer arr1[MAXDIM];
+  Integer nelem, count, type;
   int slength, rlength, nsize;
-  char *zptr, *bptr, *nptr, *fptr;
-  Integer bytes, total;
+  char  *bptr, *nptr, *fptr;
+  Integer bytes;
   Integer ilast,inext,id;
   int local_sync_begin, local_sync_end;
 
@@ -3378,12 +3368,10 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   int next_node,next;
   int armci_tag = 88000;
   char *dstn,*srcp;
-  static int barr_count = 0;
-  int last, next_nodel=0;
+  int next_nodel=0;
   int dummy=1, LnB, powof2nodes;
   int groupA, groupB, sizeB;
   void armci_util_wait_int(volatile int *,int,int);
-  Integer one = 1;
 
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
   _ga_sync_begin = 1; _ga_sync_end = 1; /*remove any previous masking */
@@ -3428,7 +3416,6 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   if (groupB) printf("p[%d] Group B\n",GAme);*/
 
   zproc = ga_cluster_procid_(&inode, &zero);
-  zptr = GA[handle].ptr[zproc];
   map = GA[handle].mapc;
   blocks = GA[handle].nblock;
   dims = GA[handle].dims;

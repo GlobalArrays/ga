@@ -61,7 +61,6 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
      Integer *g_m, *mlo, *mhi;	/* patch of g_m */
 {
   Integer i, j;
-  Integer compatible;
   Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
   Integer ctype, mtype, cndim, cdims[MAXDIM], mndim, mdims[MAXDIM];
   Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
@@ -357,7 +356,7 @@ ga_median_patch_ (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, g_m, mlo, mhi)
 	    na = sqrt ((za.real) * (za.real) + (za.imag) * (za.imag));
 	    nb = sqrt ((zb.real) * (zb.real) + (zb.imag) * (zb.imag));
 	    nc = sqrt ((zc.real) * (zc.real) + (zc.imag) * (zc.imag));
-	    median_dcpl(na, nb, nb, za, zb, zc, zm);
+	    median_dcpl(na, nb, nc, za, zb, zc, zm);
 	    ((DoubleComplex *) M_ptr)[idx + j] = zm;
 	  }
 	}
@@ -436,7 +435,7 @@ void FATR
 ga_norm_infinity_ (Integer * g_a, double *nm)
 {
   Integer dim1, dim2, type, size, nelem;
-  Integer iloA, ihiA, jloA, jhiA, index, ld, lo[2], hi[2];
+  Integer iloA, ihiA, jloA, jhiA, ld, lo[2], hi[2];
   Integer me = ga_nodeid_ (), i, j;
 
   void *ptr;

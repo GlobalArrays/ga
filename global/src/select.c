@@ -26,9 +26,9 @@ struct  info_t{
         Integer subscr[MAXDIM]; 
         DoubleComplex extra;} info;
 int     participate=0;
-        int local_sync_begin,local_sync_end;
+        int local_sync_begin;
 
-   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+   local_sync_begin = _ga_sync_begin; 
    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
    if(local_sync_begin)ga_sync_();
 

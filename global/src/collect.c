@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.16 2002-08-22 22:21:22 vinod Exp $ */
+/* $Id: collect.c,v 1.17 2003-12-31 01:06:25 d3h325 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -6,7 +6,9 @@
 
 /* can handle ga_brdcst/igop/dgop via ARMCI or native message-passing library
  * uncomment line below to use the ARMCI version */
+#ifndef NEC
 #define  ARMCI_COLLECTIVES 
+#endif
 
 #if defined(CRAY)
 #  include <fortran.h>

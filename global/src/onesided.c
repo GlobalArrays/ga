@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.47 2003-11-14 01:39:43 edo Exp $ */
+/* $Id: onesided.c,v 1.48 2003-12-31 01:06:25 d3h325 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -410,6 +410,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 	      ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,
 			   proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
 	    else {
+#if 0
 	      if((loop==0 && counter==(int)np-1) || loop==1)
 		ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
 	      else {
@@ -417,6 +418,10 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 		ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1,
 			     proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
 	      }
+#else 
+              ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
+
+#endif
 	    }
 	  } /* end if(cond) */
 	}
@@ -741,7 +746,7 @@ void FATR nga_acc_common(Integer *g_a,
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size, type, p_handle, ga_nbhandle;
-int optype, proc, loop, ndim, cond, counter=0;
+int optype, proc, loop, ndim, cond;
 int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 
 #ifdef GA_USE_VAMPIR
@@ -1234,7 +1239,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
 {
     register Integer k;
     Integer kk;
-    Integer pindex, item_size;
+    Integer item_size;
     Integer proc, type=GA[GA_OFFSET + *g_a].type;
     Integer nproc, p_handle, iproc;
 
@@ -2145,7 +2150,6 @@ void gai_SetStrideWithSkip(Integer ndim, Integer size, Integer *ld,
                           int *stride_loc, Integer *skip)
 {
   int i, nstride;
-  int idloc, idrem;
   int ts_loc[MAXDIM], ts_rem[MAXDIM];
   stride_rem[0] = stride_loc[0] = (int)size;
   ts_loc[0] = ts_rem[0] = (int)size;
@@ -2194,7 +2198,7 @@ void FATR nga_strided_put_(Integer *g_a,
      buf[]:  Local buffer that patch will be copied from
      ld[]:   ndim-1 physical dimensions of local buffer */
   Integer p, np, handle = GA_OFFSET + *g_a;
-  Integer idx, elems, size, nstride;
+  Integer idx, size, nstride;
   int i, proc, ndim;
 
 #ifdef GA_USE_VAMPIR
@@ -2294,7 +2298,7 @@ void FATR nga_strided_get_(Integer *g_a,
      buf[]:  Local buffer that patch will be copied from
      ld[]:   ndim-1 physical dimensions of local buffer */
   Integer p, np, handle = GA_OFFSET + *g_a;
-  Integer idx, elems, size, nstride;
+  Integer idx, size, nstride;
   int i, proc, ndim;
 
 #ifdef GA_USE_VAMPIR
@@ -2398,7 +2402,7 @@ void FATR nga_strided_acc_(Integer *g_a,
      ld[]:   ndim-1 physical dimensions of local buffer
      alpha:  muliplicative scale factor */
   Integer p, np, handle = GA_OFFSET + *g_a;
-  Integer idx, elems, size, nstride, type;
+  Integer idx, size, nstride, type;
   int i, optype, proc, ndim;
 
 #ifdef GA_USE_VAMPIR

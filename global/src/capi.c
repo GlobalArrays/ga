@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.68 2003-12-09 16:17:58 vinod Exp $ */
+/* $Id: capi.c,v 1.69 2003-12-31 01:06:25 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -873,10 +873,8 @@ void NGA_Distribution_no_handle(int ndim, const int dims[], const int nblock[], 
      Integer _ndim = ndim;
      Integer _dims[MAXDIM];
      Integer _nblock[MAXDIM];
-     Integer _mapc[MAXDIM];
      COPYINDEX_C2F(dims, _dims, ndim);
      COPYINDEX_C2F(nblock, _nblock, ndim);
-     COPYINDEX_C2F(mapc, _mapc, ndim);
      nga_distribution_no_handle_(&_ndim, _dims, _nblock, mapc, &p, _ga_lo, _ga_hi);
      COPYINDEX_F2C(_ga_lo,lo, ndim);
      COPYINDEX_F2C(_ga_hi,hi, ndim);
@@ -1139,11 +1137,6 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
 void GA_Dgemm(char ta, char tb, int m, int n, int k,
               double alpha, int g_a, int g_b, double beta, int g_c )
 {
-  Integer Ta = (ta=='t' || ta=='T');
-  Integer Tb = (tb=='t' || tb=='T');
-  Integer M = m;
-  Integer N = n;
-  Integer K = k;
   Integer G_a = g_a;
   Integer G_b = g_b;
   Integer G_c = g_c;
@@ -1173,11 +1166,6 @@ void GA_Zgemm(char ta, char tb, int m, int n, int k,
               DoubleComplex alpha, int g_a, int g_b, 
 	      DoubleComplex beta, int g_c )
 {
-  Integer Ta = (ta=='t' || ta=='T');
-  Integer Tb = (tb=='t' || tb=='T');
-  Integer M = m;
-  Integer N = n;
-  Integer K = k;
   Integer G_a = g_a;
   Integer G_b = g_b;
   Integer G_c = g_c;
@@ -1207,11 +1195,6 @@ void GA_Sgemm(char ta, char tb, int m, int n, int k,
               float alpha, int g_a, int g_b, 
 	      float beta,  int g_c )
 {
-  Integer Ta = (ta=='t' || ta=='T');
-  Integer Tb = (tb=='t' || tb=='T');
-  Integer M = m;
-  Integer N = n;
-  Integer K = k;
   Integer G_a = g_a;
   Integer G_b = g_b;
   Integer G_c = g_c;

@@ -63,7 +63,7 @@ void LP_daxpy(n,da,dx,incx,dy,incy)
 REAL dx[],dy[],da;
 int incx,incy,n;
 {
-	int i,ix,iy,m,mp1;
+	int i,ix,iy;
 
 	if(n <= 0) return;
 	if (da == ZERO) return;
@@ -121,7 +121,7 @@ REAL dx[],dy[];
 int incx,incy,n;
 {
 	REAL dtemp;
-	int i,ix,iy,m,mp1;
+	int i,ix,iy;
 
 	dtemp = ZERO;
 
@@ -177,7 +177,7 @@ void LP_dscal(n,da,dx,incx)
 REAL da,dx[];
 int n, incx;
 {
-	int i,m,mp1,nincx;
+	int i,nincx;
 
 	if(n <= 0)return;
 	if(incx != 1) {
@@ -514,10 +514,7 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
   Integer dimA1, dimA2, typeA;
   Integer dimB1, dimB2, typeB;
   Integer me;
-  Integer info, job=0;
-  REAL norma;
-  int info_t;
-
+  Integer info;
 
   /** check environment */
 #ifdef GA_USE_VAMPIR
