@@ -22,7 +22,7 @@
 #include <memory.h>
 #endif
 
-#if defined(LINUX) && (_SOCKETBITS_H)
+#if defined(LINUX) && ( defined(_SOCKETBITS_H) || defined(__BITS_SOCKET_H))
  /* should have socklen_t defined */
 #elif defined(AIX)
   typedef size_t socklen_t;
