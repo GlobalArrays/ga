@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.32 2002-01-22 00:40:11 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.33 2002-01-23 02:12:58 edo Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -929,7 +929,7 @@ Integer ilo, ihi, jlo, jhi;
         if( !dai_write_allowed(*d_a))
              dai_error("dra_write: write not allowed to this array",*d_a);
 
-        ga_inquire_(g_a, &gtype, &gdim1, &gdim2);
+        ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
         if(DRA[handle].type != gtype)dai_error("dra_write: type mismatch",gtype);
         if(DRA[handle].dims[0] != gdim1)dai_error("dra_write: dim1 mismatch",gdim1);
         if(DRA[handle].dims[1] != gdim2)dai_error("dra_write: dim2 mismatch",gdim2);
@@ -1602,7 +1602,7 @@ section_t d_sect, g_sect;
    /* usual argument/type/range checking stuff */
 
    dai_check_handleM(*d_a,"dra_write_sect");
-   ga_inquire_(g_a, &gtype, &gdim1, &gdim2);
+   ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
    if(!dai_write_allowed(*d_a))dai_error("dra_write_sect: write not allowed",*d_a);
    if(DRA[handle].type != gtype)dai_error("dra_write_sect: type mismatch",gtype);
    dai_check_rangeM(*gilo,*gihi, gdim1, "dra_write_sect: g_a dim1 error");
@@ -1672,7 +1672,7 @@ section_t d_sect, g_sect;
    /* usual argument/type/range checking stuff */
    dai_check_handleM(*d_a,"dra_read_sect");
    if(!dai_read_allowed(*d_a))dai_error("dra_read_sect: read not allowed",*d_a);
-   ga_inquire_(g_a, &gtype, &gdim1, &gdim2);
+   ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
    if(DRA[handle].type != gtype)dai_error("dra_read_sect: type mismatch",gtype);
    dai_check_rangeM(*gilo, *gihi, gdim1, "dra_read_sect: g_a dim1 error");
    dai_check_rangeM(*gjlo, *gjhi, gdim2, "dra_read_sect: g_a dim2 error");
@@ -1729,7 +1729,7 @@ Integer ilo, ihi, jlo, jhi;
         /* usual argument/type/range checking stuff */
         dai_check_handleM(*d_a,"dra_read");
         if(!dai_read_allowed(*d_a))dai_error("dra_read: read not allowed",*d_a);
-        ga_inquire_(g_a, &gtype, &gdim1, &gdim2);
+        ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
         if(DRA[handle].type != gtype)dai_error("dra_read: type mismatch",gtype);
         if(DRA[handle].dims[0] != gdim1)dai_error("dra_read: dim1 mismatch",gdim1);
         if(DRA[handle].dims[1] != gdim2)dai_error("dra_read: dim2 mismatch",gdim2);
@@ -2926,7 +2926,7 @@ section_t d_sect, g_sect;
    /* usual argument/type/range checking stuff */
 
    dai_check_handleM(*d_a,"ndra_write_sect");
-   nga_inquire(g_a, &gtype, &ndim, gdims);
+   nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
    if(!dai_write_allowed(*d_a))dai_error("ndra_write_sect: write not allowed",*d_a);
    if(DRA[handle].type != gtype)dai_error("ndra_write_sect: type mismatch",gtype);
    if(DRA[handle].ndim != ndim)dai_error("ndra_write_sect: dimension mismatch", ndim);
@@ -3012,7 +3012,7 @@ Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
         if( !dai_write_allowed(*d_a))
              dai_error("ndra_write: write not allowed to this array",*d_a);
 
-        nga_inquire(g_a, &gtype, &ndim, gdims);
+        nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
         if(DRA[handle].type != gtype)dai_error("ndra_write: type mismatch",gtype);
         if(DRA[handle].ndim != ndim)dai_error("ndra_write: dimension mismatch",ndim);
         for (i=0; i<ndim; i++) {
@@ -3050,7 +3050,7 @@ section_t d_sect, g_sect;
    /* usual argument/type/range checking stuff */
    dai_check_handleM(*d_a,"ndra_read_sect");
    if(!dai_read_allowed(*d_a))dai_error("ndra_read_sect: read not allowed",*d_a);
-   nga_inquire(g_a, &gtype, &ndim, gdims);
+   nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
    if(DRA[handle].type != gtype)dai_error("ndra_read_sect: type mismatch",gtype);
    if(DRA[handle].ndim != ndim)dai_error("ndra_read_sect: dimension mismatch", ndim);
    for (i=0; i<ndim; i++) dai_check_rangeM(glo[i], ghi[i], gdims[i],
@@ -3111,7 +3111,7 @@ Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
         /* usual argument/type/range checking stuff */
         dai_check_handleM(*d_a,"ndra_read");
         if(!dai_read_allowed(*d_a))dai_error("ndra_read: read not allowed",*d_a);
-        nga_inquire(g_a, &gtype, &ndim, gdims);
+        nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
         if(DRA[handle].type != gtype)dai_error("ndra_read: type mismatch",gtype);
         if(DRA[handle].ndim != ndim)dai_error("ndra_read: dimension mismatch",ndim);
         for (i=0; i<ndim; i++) {
