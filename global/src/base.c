@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.45 2003-07-23 14:44:41 d3g293 Exp $ */
+/* $Id: base.c,v 1.46 2003-07-30 04:57:31 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -399,7 +399,7 @@ int bytes;
     GA_Update_Flags = (int**)malloc(GAnproc*sizeof(void*));
     if (!GA_Update_Flags)
       ga_error("ga_init: Failed to initialize GA_Update_Flags",(int)GAme);
-    if (ARMCI_Malloc((void**)GA_Update_Flags, bytes))
+    if (ARMCI_Malloc((void**)GA_Update_Flags, (armci_size_t) bytes))
       ga_error("ga_init:Failed to initialize memory for update flags",GAme);
     /* Zero update flags */
     for (i=0; i<2*MAXDIM; i++) GA_Update_Flags[GAme][i] = 0;
@@ -1532,7 +1532,7 @@ int i;
     }else
 #endif
 
-    status = ARMCI_Malloc((void**)ptr_arr, (int)bytes);
+    status = ARMCI_Malloc((void**)ptr_arr, (armci_size_t)bytes);
     if(status) return status;
 
 #ifndef _CHECK_MA_ALGN
