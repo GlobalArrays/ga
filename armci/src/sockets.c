@@ -1,6 +1,7 @@
-/* $Id: sockets.c,v 1.9 1999-10-14 00:18:51 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.10 1999-10-30 01:04:43 d3h325 Exp $ */
 /**************************************************************************
- This code was derived from the TCGMSG sockets.c by Robert Harrison
+ Some parts of this code were derived from the TCGMSG file sockets.c
+ Jarek Nieplocha, last update 10/28/99
  *************************************************************************/
 
 #include <stdio.h>
@@ -42,6 +43,7 @@ typedef int soclen_t;
 
 extern int armci_me, armci_nproc;
 #define DEBUG_ 0
+#define CONNECT_TRIALS 4 
 
 
 int armci_PollSocket(int sock)
@@ -205,6 +207,7 @@ again:
    return status;
 }
 
+
 int armci_WriteToSocket (int sock, void* buffer, int lenbuf)
 /*
   Write to the socket in packets of PACKET_SIZE bytes
@@ -213,30 +216,40 @@ int armci_WriteToSocket (int sock, void* buffer, int lenbuf)
   int status = lenbuf;
   int nsent, len;
   char *buf = (char*)buffer;
-  
+ 
   if(DEBUG_){
     printf("%d armci_WriteToSocket sock=%d lenbuf=%d\n",armci_me,sock,lenbuf);
     fflush(stdout);
   }
 
   while (lenbuf > 0) {
-    
+again:
+
     len = (lenbuf > PACKET_SIZE) ? PACKET_SIZE : lenbuf;
     nsent = send(sock, buf, len, 0);
-    
+   
     if (nsent < 0) { /* This is bad news */
-      (void) fprintf(stderr,"sock=%d, pid=%d, nsent=%d, len=%d\n",
-		     sock, armci_me, nsent, lenbuf);
-      (void) fflush(stderr);
-      status = -1; break;
+      if(errno ==EINTR){
+         if(DEBUG_){
+           fprintf(stderr,"%d:interrupted in socket send\n",armci_me);
+         }
+         goto again;
+      }else{
+
+        (void) fprintf(stderr,"sock=%d, pid=%d, nsent=%d, len=%d\n",
+                     sock, armci_me, nsent, lenbuf);
+        (void) fflush(stderr);
+        status = -1; break;
+      }
     }
 
     buf += nsent;
     lenbuf -= nsent;
   }
-  
+
   return status;
 }
+
 
 
 void armci_CreateSocketAndBind(int *sock, int *port)
@@ -378,7 +391,7 @@ againsel:
     if(setsockopt(msgsock, SOL_SOCKET, SO_SNDBUF, (char *) &size, sizeof size))
       armci_die("armci_ListenAndAcceptAll: error setting SO_SNDBUF",  size);
 
-    armci_TcpNoDelay(sock);
+    armci_TcpNoDelay(msgsock);
 
     (void) close(sock); /* will not be needing this again */
 
@@ -500,21 +513,13 @@ int armci_CreateSocketAndConnect(char *hostname, int port)
     armci_die("armci_CreateSocketAndConnect: socket failed",  sock);
   }
 
+/*
   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 
 		 (char *) &on, sizeof on) == -1)
 	armci_die("armci_CreateSocketAndConnect: error setting REUSEADDR",  -1);
-
-  /* Increase size of socket buffers to improve long message
-     performance and increase size of message that goes asynchronously */
-
-  if(setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *) &size, sizeof size))
-    armci_die("armci_CreateSocketAndConnect: error setting SO_RCVBUF",  size);
-  if(setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *) &size, sizeof size))
-    armci_die("armci_CreateSocketAndConnect: error setting SO_SNDBUF",  size);
-
+*/
 
   /* Connect socket */
-
   server.sin_family = AF_INET;
   hp = gethostbyname(hostname);
   if (hp == 0) {
@@ -532,18 +537,29 @@ againcon:
      connect(sock, (struct sockaddr *) &server, sizeof server)) < 0) {
     if (errno == EINTR)
       goto againcon;
-    else if(trial){
+    else if(trial>CONNECT_TRIALS){
       
-           (void) fprintf(stderr,"trying to connect to host=%s, port=%d\n",
-                   hostname, port);
+           (void) fprintf(stderr,"%d:trying connect to host=%s, port=%d t=%d %d\n",
+                   armci_me,hostname, port,trial,errno);
+           perror("trying to connect:");
            armci_die("armci_CreateSocketAndConnect: connect failed", status);
        }else {
 
-         trial =1;
+         trial++;
          sleep(1);
          goto againcon;
        }
   }
   
+  /* Increase size of socket buffers to improve long message
+     performance and increase size of message that goes asynchronously */
+
+  if(setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *) &size, sizeof size))
+    armci_die("armci_CreateSocketAndConnect: error setting SO_RCVBUF",  size);
+  if(setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *) &size, sizeof size))
+    armci_die("armci_CreateSocketAndConnect: error setting SO_SNDBUF",  size);
+
+  armci_TcpNoDelay(sock);
+
   return sock;
 }
