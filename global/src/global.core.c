@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.18 1996-01-02 18:41:21 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.19 1996-01-17 00:38:12 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -608,6 +608,7 @@ Integer nblock1, nblock2;
            /* nprocx= (int)sqrt((double)GAnproc);*/
            double dproc = ((double)GAnproc*(*dim1))/((double) *dim2);
            nprocx = NEAR_INT(sqrt(dproc)); 
+           nprocx = MAX(1, nprocx); /* to avoid division by 0 */
            for(i=nprocx;i>0&& (GAnproc%i);i--);
            nprocx =(int)i; nprocy=(int)GAnproc/nprocx;
         }
