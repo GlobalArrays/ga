@@ -43,15 +43,14 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(INTERRUPT_AVAILABLE)))
 endif
 
 GA_CORE := global.core.o global.util.o global.patch.o global.msg.o \
-           global.serv.o ga_lock.o fops.2d.o global.ma.o global.alg.o
-
+           global.serv.o ga_lock.o fops.2d.o global.ma.o global.alg.o ga_trace.o
 ifeq ($(TARGET),LAPI)
   GA_CORE += lapi.o
 endif
 
 ifndef OLD_GA
   GA_CORE = global.armci.o global.util.o global.patch.o \
-	    collect.o decomp.o capi.o global.nalg.o global.npatch.o
+	    collect.o decomp.o capi.o global.nalg.o global.npatch.o ga_trace.o
 else
 ifdef IWAY
   GA_CORE += iway.o net.o
@@ -100,8 +99,5 @@ ifdef OLD_GA
 else
    GA_UTIL = ffflush.o fill.o hsort.scat.o DP.o fort.o fops.2d.o
 endif
-
-# trace lib was moved in
-  GA_TRA = ga_trace.o
 
 OBJ = $(GA_CORE) $(GA_ALG) $(GA_UTIL) $(EXTRA) $(OBJ_FRAGILE) $(GA_TRA)

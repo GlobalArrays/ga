@@ -116,8 +116,6 @@ ifndef OLD_GA
   LIBCOM += -larmci
 endif
 
-#LIBCOM += -ltrace
-
 ifdef USE_MPI
    ifdef MPI_LIB
          LIBCOM += -L$(MPI_LIB) $(LIBMPI)

@@ -10,12 +10,12 @@
            FC = f77
            CC = cc
           FLD = $(FC)
-	   M4 = /usr/bin/m4
+ 	       M4 = /usr/bin/m4
           CLD = $(FLD)
           CXX = CC
          FOPT = -O
          COPT = -O
-	 NOPT = -g
+	     NOPT = -g
 GLOB_INCLUDES = -I../../include
            AR = ar
            AS = as
@@ -151,7 +151,7 @@ ifeq ($(TARGET),SOLARIS)
 	   M4 = /usr/ccs/bin/m4
 endif
 #
-#................................ DEC ALPHA ................................
+#................................ Compaq/DEC ALPHA ..............................
 #
 ifeq ($(TARGET),DECOSF)
 #
