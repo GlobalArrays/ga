@@ -273,7 +273,7 @@ ifeq ($(TARGET),SGITFP)
 # SGI running IRIX 6.X
 #
  ifeq ($(FOPT),-O)
-         FOPT = -O3
+         FOPT = -O1
  endif
         CDEFS = -DEXT_INT
      FOPT_REN = -i8 -align64 -64
