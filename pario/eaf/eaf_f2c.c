@@ -1,4 +1,3 @@
-#include <sys/types.h>
 #include "eaf.h"
 #include "eafP.h"
 #include "types.f2c.h"
@@ -22,7 +21,6 @@
 #define eaf_print_stats_ EAF_PRINT_STATS
 #define eaf_errmsg_ EAF_ERRMSG
 #endif
-
 
 static int fortchar_to_string(const char *f, int flen, char *buf, 
 			      const int buflen)

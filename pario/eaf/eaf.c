@@ -328,7 +328,7 @@ int eaf_eof(int code)
   Return 0 if code corresponds to EOF, or non-zero.
   */
 {
-    return !(code == EAF_EOF_CONST);
+    return !(code == EAF_ERR_EOF);
 }
 
 void eaf_errmsg(int code, char *msg)
@@ -340,7 +340,7 @@ void eaf_errmsg(int code, char *msg)
 {
     if (code == EAF_OK) 
 	(void) strcpy(msg, "OK");
-    else if (code == EAF_EOF_CONST)
+    else if (code == EAF_ERR_EOF) 
 	(void) strcpy(msg, "end of file");
     else if (code == EAF_ERR_MAX_OPEN)
 	(void) strcpy(msg, "too many open files");

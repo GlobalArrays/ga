@@ -4,7 +4,7 @@
 /* These macros are for EAF internal use only. EOF_OK must be 0. */
 
 #define EAF_OK                      0
-#define EAF_EOF_CONST          -10001
+#define EAF_ERR_EOF            -10001
 #define EAF_ERR_MAX_OPEN       -10002
 #define EAF_ERR_MEMORY         -10003
 #define EAF_ERR_OPEN           -10004
@@ -25,8 +25,5 @@
 #define EAF_ERR_TRUNCATE       -10019
 #define EAF_ERR_LENGTH         -10020
 
-#ifndef PATH_MAX
-#define PATH_MAX 1024
-#endif
 
 #endif
