@@ -644,7 +644,7 @@ Integer handle, elem_size;
 
            if (INDEPFILES(*d_a)) {
 
-             sprintf(dummy_fname,"%s%d",DRA[handle].fname,dai_io_nodeid(*d_a));
+             sprintf(dummy_fname,"%s.%d",DRA[handle].fname,dai_io_nodeid(*d_a));
              DRA[handle].fd = elio_open(dummy_fname,*mode, ELIO_PRIVATE);
 
            }else{
@@ -657,6 +657,7 @@ Integer handle, elem_size;
 #             endif
            }
 
+           if(DRA[handle].fd==NULL)dai_error("dra_create:failed to open file",0);
            if(DRA[handle].fd->fd==-1)dai_error("dra_create:failed to open file",0);
         }
 
@@ -707,7 +708,7 @@ Integer handle;
 
            if (INDEPFILES(*d_a)) {
 
-             sprintf(dummy_fname,"%s%d",DRA[handle].fname,dai_io_nodeid(*d_a));
+             sprintf(dummy_fname,"%s.%d",DRA[handle].fname,dai_io_nodeid(*d_a));
              DRA[handle].fd = elio_open(dummy_fname,*mode, ELIO_PRIVATE);
 
            }else{
@@ -720,7 +721,8 @@ Integer handle;
 #             endif
            }
 
-           if(DRA[handle].fd->fd ==-1) dai_error("dra_open failed",ga_nodeid_());  
+           if(DRA[handle].fd ==NULL)dai_error("dra_open failed",ga_nodeid_());
+           if(DRA[handle].fd->fd ==-1)dai_error("dra_open failed",ga_nodeid_());  
         }
 
 

@@ -24,16 +24,20 @@ int dai_file_config(char* filename)
     /* on T3E always use independent files */
 
 #ifdef CRAY_T3E
-    return 1;
+    if(ga_nnodes_()==1) return 0;
+    else return 1;
 #else
 
 char param_filename[MAX_HD_NAME_LEN];
 Integer len;
-Integer me=ga_nodeid_(), nproc = ga_nnodes_();
 Integer gop_type, orig=0, one=1;
 char dummy[HDLEN], sum='+';
+Integer me=ga_nodeid_();
+Integer nproc = ga_nnodes_();
 Integer status;
 stat_t info;
+
+    if(nproc==1) return 0;
 
     /* build param file name */
     len = strlen(filename);
