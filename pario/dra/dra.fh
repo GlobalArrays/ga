@@ -23,6 +23,7 @@
           Integer           DRA_READ_SECTION
           Integer           NDRA_READ_SECTION
           Integer           DRA_PROBE
+          Integer           DRA_SET_DEBUG
           Integer           DRA_WAIT
           Integer           DRA_TERMINATE  
           External          DRA_CREATE
@@ -42,6 +43,7 @@
           External          DRA_READ_SECTION
           External          NDRA_READ_SECTION
           External          DRA_PROBE
+          External          DRA_SET_DEBUG
           External          DRA_WAIT
           External          DRA_TERMINATE
           External          DRA_FLICK
