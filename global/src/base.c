@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.98 2004-11-03 22:32:32 d3g293 Exp $ */
+/* $Id: base.c,v 1.99 2004-11-04 15:30:46 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -585,7 +585,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
   Integer  i, j, itmp, icheck, ndim, map_offset[MAXDIM];
   Integer  index[MAXDIM], subscript[MAXDIM];
   Integer  handle = GA_OFFSET + *g_a;
-  Integer  type, size, id;
+  Integer  type, size, id, grp_id;
   int Save_default_group;
   char     *fptr, *lptr;
 
@@ -603,6 +603,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     nnodes = ga_cluster_nnodes_();
     inode = ga_cluster_nodeid_();
     nproc = ga_cluster_nprocs_(&inode);
+    grp_id = GA[handle].p_handle;
     ifirst = (int)((double)(inode*nelems)/((double)nnodes));
     if (inode != nnodes-1) {
       ilast = (int)((double)((inode+1)*nelems)/((double)nnodes))-1;
@@ -668,6 +669,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     np = 0;
     for (i=0; i<inode; i++) np += ga_cluster_nprocs_(&i);
     np += nfirst;
+    np = PGRP_LIST[grp_id].map_proc_list[np];
     nga_distribution_(g_a, &np, lo, hi);
     for (i=0; i<ndim; i++) {
       subscript[i] = ifirst%(hi[i] - lo[i] + 1);
@@ -707,6 +709,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     np = 0;
     for (i=0; i<inode; i++) np += ga_cluster_nprocs_(&i);
     np += nlast;
+    np = PGRP_LIST[grp_id].map_proc_list[np];
     nga_distribution_(g_a, &np, lo, hi);
     for (i=0; i<ndim; i++) {
       subscript[i] = ilast%(hi[i] - lo[i] + 1);
