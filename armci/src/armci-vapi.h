@@ -35,11 +35,11 @@
 
 
 #define DEFAULT_MAX_SG_LIST	(1)
-#define DEFAULT_MAX_CQ_SIZE	50/*(4000)*/
+#define DEFAULT_MAX_CQ_SIZE	500/*(4000)*/
 
-#define MAX_NUM_DHANDLE		50/*(4000)*/
+#define MAX_NUM_DHANDLE		500/*(4000)*/
 
-#define  DEFAULT_MAX_WQE	50/*(1023)*/
+#define  DEFAULT_MAX_WQE	500/*(1023)*/
 
 typedef struct {
     void *data_ptr;         /* pointer where the data should go */

@@ -73,7 +73,7 @@ static int armci_vapi_server_stage2=0;
 static int armci_vapi_client_ready;
 int _s=-1,_c=-1;
 static int server_can_poll=0;
-
+static int armci_vapi_max_inline_size=-1;
 #define CLIENT_STAMP 101
 #define SERV_STAMP 99 
 
@@ -273,6 +273,11 @@ VAPI_qp_init_attr_t initattr;
     initattr.ts_type            = IB_TS_RC;
 
     rc = VAPI_create_qp(nic->handle, &initattr, qp, qp_prop);
+    if(!armci_vapi_max_inline_size){
+       armci_vapi_max_inline_size = qp_prop->cap.max_inline_data_sq;
+       if(DEBUG_CLN)
+       printf("\n%d:max inline size= %d\n",armci_me,armci_vapi_max_inline_size);
+    }
 
     armci_check_status(DEBUG_INIT, rc,"create qp");
 
@@ -481,11 +486,12 @@ int *tmparr;
 
     /*every client creates a qp with every server other than the one on itself*/
     sz = armci_nproc*(sizeof(VAPI_qp_num_t)/sizeof(int));
+    armci_vapi_max_inline_size = 0;
     for(s=0; s< armci_nclus; s++){
        armci_connect_t *con = SRV_con + s;
        con->rqpnum = (VAPI_qp_num_t *)malloc(sizeof(VAPI_qp_num_t)*armci_nproc);
        bzero(con->rqpnum,sizeof(VAPI_qp_num_t)*armci_nproc);
-       /*if(armci_clus_me != s){*/
+       /*if(armci_clus_me != s)*/
        {
          armci_create_qp(SRV_nic,&con->qp,&con->qp_prop);
          con->sqpnum  = con->qp_prop.qp_num;
@@ -1116,7 +1122,7 @@ armci_connect_t *con;
        nic = SRV_nic;
        con = SRV_con+con_offset;
     }
-    if(snd_dscr->sg_lst_p->len>100)
+    if(snd_dscr->sg_lst_p->len>armci_vapi_max_inline_size)
        rc = VAPI_post_sr(nic->handle,con->qp,snd_dscr);
     else
        rc = EVAPI_post_inline_sr(nic->handle,con->qp,snd_dscr);
