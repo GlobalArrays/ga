@@ -51,17 +51,23 @@ typedef struct {
 
 int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo, Integer *hi,
                          Integer range[][RANGE_BOUND], Integer range_num[],
-                         Integer offset[][RANGE_BOUND/2])
+                         Integer offset[][RANGE_BOUND/2], Integer op_code)
 {
     Integer i;
     Range range_raw[MAXDIM];
     Integer is_regular_patch;
  
     /* check the patch is valid or not */
-    for(i=0; i<ndim; i++)
-        if(((hi[i] - lo[i] + 1) > dims[i]) || ((hi[i] - lo[i] + 1) < 1))
-            return FALSE;
-
+    for(i=0; i<ndim; i++) {
+        if(op_code == PERIODIC_GET) {
+            if((hi[i] - lo[i] + 1) < 1) return FALSE;
+        }
+        else {
+            if(((hi[i]-lo[i]+1) > dims[i]) || ((hi[i]-lo[i]+1) < 1))
+                return FALSE;
+        }
+    }
+    
     /* break the lo and hi into the corresponding ranges
      *
      * lo (if < 1)         1                dims[i]      hi (if > dims[i])
@@ -96,6 +102,8 @@ int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo, Integer *hi,
             range_raw[i].hig.hi = hi[i]; range_raw[i].hig.isvalid = 1; }
         else {
             range_raw[i].mid.hi = hi[i]; range_raw[i].mid.isvalid = 1; }
+
+        if((lo[i] < 1) && (hi[i] > dims[i])) range_raw[i].mid.isvalid = 1;
     }
 
     /* check if this is a regular patch, not periodic operation needed */
@@ -145,7 +153,7 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
     nga_inquire_(g_a, &type, &ndim, dims);
 
     get_range = ngai_peri_get_range_(ndim, dims, lo, hi, range, range_num,
-                                     offset);
+                                     offset, op_code);
     
     if(!get_range) ga_error("g_a indices are invalid ", 0L);
 
@@ -183,12 +191,13 @@ void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,
             else {
                 temp_offset = offset[i][counter[i]];
                 for(j=0; j<i; j++)
-                    temp_offset *= dims[j];
+                    /* temp_offset *= dims[j]; */
+                    temp_offset *= ld[j];
                 my_offset += temp_offset;
             }
         }
         
-        /* get this patch */
+        /* deal with this patch */
         switch(op_code) {
           case PERIODIC_GET:
               nga_get_(g_a, lop, hip,
