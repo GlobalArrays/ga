@@ -83,6 +83,25 @@ extern int ARMCI_AccV( int op,       /* operation code */
                 int proc             /* remote process(or) ID */
               );
 
+extern int ARMCI_PutValueInt(int src,     /* value in a register to put     */
+			     void *dst,   /* dest starting addr to put data */
+			     int proc     /* remote process (or) ID         */
+			     );
+
+extern int ARMCI_PutValueLong(long src,   /* value in a register to put     */
+			      void *dst,  /* dest starting addr to put data */
+			      int proc    /* remote process (or) ID         */
+			      );
+
+extern int ARMCI_PutValueFloat(float src, /* value in a register to put     */
+			       void *dst, /* dest starting addr to put data */
+			       int proc   /* remote process (or) ID         */
+			       );
+
+extern int ARMCI_PutValueDouble(double src,/* value in a register to put     */
+				void *dst, /* dest starting addr to put data */
+				int proc   /* remote process (or) ID         */
+				);
 
 extern int ARMCI_Malloc(void* ptr_arr[], int bytes);
 extern int ARMCI_Free(void *ptr);
