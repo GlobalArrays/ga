@@ -1,7 +1,7 @@
       program main
       implicit double precision (a-h,o-z)
 c
-c $Header: /tmp/hpctools/ga/tcgmsg-mpi/testf.f,v 1.4 2001-05-08 21:53:40 edo Exp $
+c $Header: /tmp/hpctools/ga/tcgmsg-mpi/testf.f,v 1.5 2001-06-29 00:18:28 edo Exp $
 c
 c     FORTRAN program to test message passing routines
 c
@@ -9,7 +9,7 @@ c     LOG is the FORTRAN unit number for standard output.
 c
       parameter (LOG = 6)
       parameter (MAXLEN = 262144 / 8)
-      include 'msgtypesf.h'
+#include "msgtypesf.h"
       dimension buf(MAXLEN)
       integer ibuf(MAXLEN)
       character*80 fname

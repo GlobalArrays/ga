@@ -14,6 +14,7 @@ OBJ      = "$(OBJDIR)/sizeof.obj" \
         "$(OBJDIR)/collect.obj" \
         "$(OBJDIR)/nxtval-armci.obj" \
         "$(OBJDIR)/memalign.obj" \
+        "$(OBJDIR)/wrap.obj" \
         "$(OBJDIR)/evlog.obj"
 
 HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h tcgmsg.fh
@@ -29,10 +30,10 @@ LIB_DISTRIB = ..\lib\win32
 !INCLUDE ..\config\NTmakefile.h
 !INCLUDE ..\config\NTmakelib.h
 
-LIBS = ..\armci\lib\win32\armci.lib $(MPI) wsock32.lib
+LIBS = ..\lib\win32\armci.lib $(MPI) wsock32.lib
 
 testf.exe: .\obj\testf.obj .\obj\checkbyte.obj $(LIBRARY_PATH)
-	$(FC) $(FOPT) /Fetestf.exe $** $(LIBS)
+	$(FC) $(FOPT)  -I. /Fetestf.exe $** $(LIBS)
 
 test.exe: .\obj\test.obj .\obj\checkbyte.obj $(LIBRARY_PATH)
 	$(CC) $(COPT) /Fetest.exe $** $(LIBS)

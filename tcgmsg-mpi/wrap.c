@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.1 2001-06-28 23:48:24 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.2 2001-06-29 00:18:28 edo Exp $ */
 #include <stdlib.h>
 #include <mpi.h>
 #include "sndrcv.h"
@@ -219,9 +219,10 @@ Integer FATR wrap_nxtval( wrap_mproc)
 }
 
 #if defined(CRAY) || defined(WIN32)
-void FATR dgop_(wrap_ptype, x, wrap_pn, op, arg)
+void FATR dgop_(wrap_ptype, x, wrap_pn, arg)
      Integer *wrap_ptype, *wrap_pn;
      double *x;
+     _fcd arg;
 {
   char *op = _fcdtocp(arg);
   int len_op = _fcdlen(arg);
@@ -240,7 +241,7 @@ void FATR dgop_(wrap_ptype, x, wrap_pn, op, len_op)
      (void) DGOP_(&ptype, x, &pn, op);
 }
 #if defined(CRAY) || defined(WIN32)
-void FATR igop_(ptype, x, pn, op)
+void FATR igop_(ptype, x, pn, arg)
      Integer *x;
      Integer *ptype, *pn;
      long *x;
