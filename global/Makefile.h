@@ -72,11 +72,17 @@ ifeq ($(FC),pgf77)
  MAKEFLAGS += FC=pgf77
 endif
 ifeq ($(CC),gcc)
+    ifneq ($(TARGET_CPU),ULTRA)
        COPT_REN = -malign-double
+    endif
 endif
 
 ifeq ($(FC),g77)
+    ifeq ($(TARGET_CPU),ULTRA)
+       FOPT_REN += -funroll-loops -fomit-frame-pointer
+    else
        FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
+    endif
 #for 2.7.2 and earlier
 ifndef OLD_G77
     FOPT_REN += -Wno-globals
