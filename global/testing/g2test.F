@@ -27,12 +27,12 @@ c#define NEW_API
       parameter (nmax = 1000, DIM = 2, nwidth = 2, MAXPROC = 2000)
       parameter (nloop = 50)
       integer ndim, nproc, pdims(7), type, dcnt, g_a, maxval
-      integer i, j, k, dims(7), width(7), map(2*nmax)
+      integer i, j, dims(7), width(7), map(2*nmax)
       integer lo(7), hi(7), ld(7)
       integer lo2(7), hi2(7), ld2(7)
       integer dims3(7), ld3(7), index3, chunk(7)
       integer a(nmax, nmax), b(nmax+2*nwidth,nmax+2*nwidth)
-      double precision start,finish,start1,finish1,t1,t2,t3,t4,t5,tmp
+      double precision start,t1,t2,t3,t4,t5,tmp
       double precision t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,t17,t18
       double precision t19,t20,t21,t22,t23,t24
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
@@ -656,7 +656,7 @@ c
 #include "global.fh"
       integer ld, width(7)
       integer a(ld,*), b(ld2,*)
-      integer i, j, k, nproc, me, idx
+      integer i, j, nproc, me, idx
       logical has_data(0:1999), check_data
       logical check_corner
 
