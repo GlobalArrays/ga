@@ -6,6 +6,7 @@
 #include "drap.h"
 #include "dra.h"
 #include <math.h>
+#include <stdlib.h>
 #include "macommon.h"
 
 /************************** constants ****************************************/
@@ -475,7 +476,6 @@ void dai_zero_eof(d_a)
 {
 Integer handle = d_a+DRA_OFFSET, nelem;
 off_t offset;
-io_request_t id;
 Size_t  bytes;
 
         if(DRA[handle].type == MT_F_DBL)*(DoublePrecision*)_dra_buffer = 0.;
@@ -516,8 +516,8 @@ Size_t  bytes;
 
 
         bytes = dai_sizeofM(DRA[handle].type);
-        if(bytes != elio_write(DRA[handle].fd, offset, _dra_buffer, bytes)) 
-                    dai_error("dai_zero_eof: write error ",0);
+        if(bytes != elio_write(DRA[handle].fd, offset, _dra_buffer, bytes))
+                     dai_error("dai_zero_eof: write error ",0);
 }
 
 
@@ -709,11 +709,13 @@ Integer dra_close_(d_a)
         Integer *d_a;                       /* input:DRA handle*/ 
 {
 Integer handle = *d_a+DRA_OFFSET;
+int rc;
 
         ga_sync_();
 
         dai_check_handleM(*d_a, "dra_close");
-        if(dai_io_manage()) elio_close(DRA[handle].fd);
+        if(dai_io_manage()) if(ELIO_OK != (rc=elio_close(DRA[handle].fd)))
+                            dai_error("dra_close: close failed",rc);
         dai_release_handle(d_a); 
 
         ga_sync_();
@@ -982,7 +984,7 @@ int op, trans;
          Integer ihandle, jhandle, vhandle, iindex, jindex, vindex;
          Integer pindex, phandle;
          Integer type = DRA[ds_a.handle+DRA_OFFSET].type, nelem;
-         Integer i, j, ii, jj, ldv, base;  
+         Integer i, j, ii, jj, base;  
          char    *base_addr;
 
 #        define ITERATOR_2D(i,j, base, ds_chunk)\
@@ -1182,8 +1184,7 @@ void dai_transfer_algn(opcode, transp, ds_a, gs_a, req)
         Integer req;
         section_t ds_a, gs_a;
 {
-Integer   chunk, next, chunk_ld;
-Integer   gtype, gdim1, gdim2;
+Integer   next, chunk_ld;
 section_t ds_chunk = ds_a;
 
    for(next = 0; next < Requests[req].na; next++){

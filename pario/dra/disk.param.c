@@ -5,6 +5,7 @@
 
 
 #include <stdio.h>
+#include <unistd.h>
 #include "global.h"
 #include "drap.h"
 
@@ -24,7 +25,7 @@ Integer d_a;
 FILE *fd;
 char param_filename[MAX_HD_NAME_LEN];
 Integer len;
-Integer me=ga_nodeid_(), proc=ga_nnodes_();
+Integer me=ga_nodeid_();
 Integer brd_type=DRA_BRD_TYPE, orig, dra_hndl=d_a+DRA_OFFSET;
 
   ga_sync_();

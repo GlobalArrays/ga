@@ -23,8 +23,7 @@ Integer ga_idot_(g_a, g_b)
 Integer  atype, adim1, adim2, btype, bdim1, bdim2, ald, bld;
 Integer  ailo,aihi, ajlo, ajhi, bilo, bihi, bjlo, bjhi;
 register Integer i,j;
-Integer  type,len, me;
-Integer  sum;
+Integer  me, sum;
 Integer  index_a, index_b;
 #define  GA_TYPE_GSM 32760 - 6
 
@@ -81,8 +80,7 @@ Integer  index_a, index_b;
        ga_release_(g_b, &bilo, &bihi, &bjlo, &bjhi);
    }
 
-   type = GA_TYPE_GSM; len =1;
-   ga_igop_(&type, &sum, &len, "+",1);
+   ga_igop((Integer)GA_TYPE_GSM, &sum, (Integer)1, "+");
 
    ga_sync_();
 

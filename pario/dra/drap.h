@@ -1,6 +1,7 @@
 /*********************** "private" include file for DRA *****************/
-
+ 
 #include "elio.h"
+#include <string.h>
 
 
 /************************** common constants *******************************/
@@ -67,3 +68,11 @@ extern disk_array_t *DRA;
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 
 #define dai_error ga_error
+
+extern void dai_read_param(char* filename, Integer d_a);
+extern void dai_write_param(char* filename, Integer d_a);
+extern void dai_delete_param(char* filename, Integer d_a);
+extern logical dai_section_intersect(section_t sref, section_t* sadj);
+extern Integer MA_push_get (Integer, Integer, char*, Integer*, Integer*);
+extern Integer MA_pop_stack (Integer);
+
