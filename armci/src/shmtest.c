@@ -66,9 +66,8 @@ long lower_bound=LBOUND;
         }
       }
       if(verbose){
-        if(x==lower_bound)
-          printf("no usable amount (%d bytes) of shared memory available\n",LBOUND
-);
+        if(x==LBOUND)
+          printf("no usable amount (%d bytes) of shared memory available\n",LBOUND);
         else printf("%ld bytes segment size, %d calls \n",y,i);
       }else{
          printf("%d\n",y);
