@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.1.1.1 1994-03-29 06:44:53 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.2 1994-06-01 14:33:43 d3g681 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -444,9 +444,7 @@ void PBEGIN_(argc, argv)
 
 #ifdef EVENTLOG
   if (eventfile=malloc((unsigned) 32)) {
-    (void) printf("eventlog sprint %ld\n", NODEID_()); fflush(stdout);
     (void) sprintf(eventfile, "events.%03ld", NODEID_());
-    (void) printf("eventlog opening %ld\n", NODEID_()); fflush(stdout);
     evlog(EVKEY_ENABLE, EVKEY_FILENAME, eventfile,
 	  EVKEY_BEGIN, EVENT_PROCESS,
 	  EVKEY_STR_INT, "Startup used (cs)", (int) (MTIME_()-start),
@@ -454,7 +452,6 @@ void PBEGIN_(argc, argv)
 	  EVKEY_DISABLE,
 	  EVKEY_LAST_ARG);
     (void) free(eventfile);
-    (void) printf("eventlog opened %ld\n", NODEID_()); fflush(stdout);
     SYNCH_(&type);
   }
 #endif
