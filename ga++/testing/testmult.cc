@@ -14,6 +14,12 @@
 #define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 #define TOLERANCE 0.000001
 
+#ifdef MPI
+#define CLOCK_ MPI_Wtime
+#else
+#define CLOCK_ TCGTIME_
+#endif
+
 DoublePrecision gTime=0.0, gStart;
 
 void
@@ -84,7 +90,7 @@ test(int data_type, int ndim) {
   g_B->fill(value2);
   g_C->zero();
 
-  gStart = TCGTIME_();
+  gStart = CLOCK_();
   switch (data_type) {
   case C_FLOAT:
     g_C->sgemm('N', 'N', m, n, k, alpha_flt,  g_A, g_B, beta_flt);
@@ -101,7 +107,7 @@ test(int data_type, int ndim) {
   default:
     GA::SERVICES.error("wrong data type", data_type);
   }
-  gTime += TCGTIME_()-gStart;
+  gTime += CLOCK_()-gStart;
 
   g_B->destroy();
   
@@ -164,11 +170,11 @@ DoublePrecision time;
 
  GA::Initialize(argc, argv, heap, stack, GA_DATA_TYPE, 0);
 
- time = TCGTIME_(); 
+ time = CLOCK_(); 
  do_work();
 
 #ifdef TIME
- printf("%d Total Time = %lf\n", me, TCGTIME_()-time);
+ printf("%d Total Time = %lf\n", me, CLOCK_()-time);
  printf("%d GEMM Total Time = %lf\n", me, gTime);
 #endif
  
