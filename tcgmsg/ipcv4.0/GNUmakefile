@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.6 2001-06-28 00:09:09 edo Exp $
+# $Id: GNUmakefile,v 1.7 2001-07-11 18:05:03 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -117,7 +117,7 @@ ifeq ($(TARGET),CONVEX-SPP)
 endif
 
 SYSTEM_V =  IBM IBM64 LINUX SGI SGI_N32 SGITFP HPUX HPUX64 SOLARIS SOLARIS64 
-SYSTEM_V += DECOSF CONVEX-SPP LINUXIA64
+SYSTEM_V += DECOSF CONVEX-SPP LINUXIA64 LINUX64
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
      LIB_DEFINES += -DSYSV -DSHMEM
