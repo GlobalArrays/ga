@@ -3,22 +3,13 @@
 # Jarek Nieplocha, Aug  1 1996
 #
 
+  LIB_DISTRIB = ../../lib
       LIBRARY = libchemio.a
-          OBJ = shared.files.o fortran.o
+          OBJ = shared.files.o sf_fortran.o
       HEADERS = sf.fh
  LIB_INCLUDES = -I../elio
   LIB_TARGETS = 
 
-# select the communication library for Shared Files
-     COM_LIB = -ltcgmsg
-ifeq ($(SFCOM), GA)
- LIB_DEFINES = -DGA
-     COM_LIB = -lglobal -ltcgmsg
-endif
-ifeq ($(SFCOM), MPI)
- LIB_DEFINES = -DMPI
-     COM_LIB = -lmpi
-endif
 
 ifdef HPIODIR
  LIB_DEFINES += -DHPIODIR=\'$(HPIODIR)/\'
