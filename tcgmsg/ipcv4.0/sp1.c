@@ -248,9 +248,10 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 */
 {
   long me = NODEID_();
-  static long ttype, nbytes;
-  static long node;		
-  static long status, msgid;
+  static int ttype, nbytes;
+  static int node;		
+  static int status, msgid;
+  size_t len;
   
   
   if (*nodeselect == -1) 
@@ -280,14 +281,15 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
     /* mpc_rcv + mpc_status are interruptable  */
 
 #ifdef INTR_SAFE
-    status = mpc_recv(buf, *lenbuf, &node, &ttype, &msgid); 
+    status = mpc_recv(buf, (int)*lenbuf, &node, &ttype, &msgid); 
     if(status == -1) Error("RCV: mperrno error code ", mperrno);
 
     while((status=mpc_status(msgid)) == -1); /* nonblocking probe */
     if(status < -1) Error("blocking RCV: invalid message ID ", msgid );
     *lenmes = status; 
 #else
-    status = mpc_brecv(buf, *lenbuf, &node, &ttype, lenmes); 
+    status = mpc_brecv(buf, *lenbuf, &node, &ttype, &len); 
+    *lenmes = (long)len;
 #endif
 
     *nodefrom = node;          /* Get source node  */
@@ -636,20 +638,21 @@ void WAITCOM_(nodesel)
 /*\ Interrupt handler
 \*/
 static void nxtval_handler(pid)
-       long *pid;
+       int *pid;
 {
 static long cnt     = 0;          /* actual counter */
-volatile static long ndone = 0;   /* no. finished for this loop */
-static long done_list[MAXPROC];   /* list of processes finished with this loop*/
-static  long lencnt = sizeof cnt;    /* length of cnt */
-static  long node   = -1;            /* select any node */
-static  long rtype  = TYPE_NXTVAL_REPLY;   /* reply message type */
-static  long mproc;                  /* no. of processes running loop */
-static  long nval;                   /* no. of values requested */
-static  long sync   = 1;             /* all info goes synchronously */
-static  long lenbuf = sizeof(nxtval_buffer[0]);    /* length of buffer */
-static  long status, htype = TYPE_NXTVAL, msglen, id;
-static  long new=1, old;
+volatile static int ndone = 0;   /* no. finished for this loop */
+static int done_list[MAXPROC];   /* list of processes finished with this loop*/
+static  int lencnt = sizeof cnt;    /* length of cnt */
+static  int node   = -1;            /* select any node */
+static  int rtype  = TYPE_NXTVAL_REPLY;   /* reply message type */
+static  int mproc;                  /* no. of processes running loop */
+static  int nval;                   /* no. of values requested */
+static  int sync   = 1;             /* all info goes synchronously */
+static  int lenbuf = sizeof(nxtval_buffer[0]);    /* length of buffer */
+static  int status, htype = TYPE_NXTVAL, id;
+static  int new=1, old;
+static  size_t msglen;
 
   mpc_wait(pid, &msglen);
   if (msglen != lenbuf) 
