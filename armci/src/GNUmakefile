@@ -1,4 +1,4 @@
-         fOPT = -O
+         FOPT = -O
          COPT = -O
 
 OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o\
