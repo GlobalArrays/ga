@@ -592,7 +592,7 @@ distribute to other US Government contractors.
 
       character trans           [input]          ! transpose or not transpose 
       integer g_a               [input]          ! coefficient matrix
-      integer g_b               [output/output]  ! rhs matrix
+      integer g_b               [input/output]  ! rhs matrix
 
       Solve the system of linear equations op(A)X = B based on the LU
       factorization. op(A) = A or A' depending on the parameter trans.
