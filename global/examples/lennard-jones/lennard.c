@@ -72,7 +72,7 @@ static double kineticEnergySum, totalEnergySum, totalEnergySqdSum;
 /**
  * To get the next task id. It is an atomic operation.
  */
-int nxtask(void) {
+static int nxtask(void) {
 
   int subscript = 0;
   return NGA_Read_inc(g_T, &subscript, 1);
