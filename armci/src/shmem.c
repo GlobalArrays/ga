@@ -1,12 +1,12 @@
-/* $Id: shmem.c,v 1.59 2003-03-12 21:34:07 edo Exp $ */
+/* $Id: shmem.c,v 1.60 2003-03-21 19:41:08 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
  * ~~~~~~~~~
  *  char *Create_Shared_Region(long *idlist, long size, long *offset)
  *       . to be called by just one process. 
- *       . calls shmalloc, a modified by Robert Harrison version of malloc-like
- *         memory allocator from K&R.shmalloc inturn calls armci_allocate() that
+ *       . calls kr_malloc, a modified by Robert Harrison version of malloc-like
+ *         memory allocator from K&R.kr_malloc inturn calls armci_allocate() that
  *         does shmget() and shmat(). 
  *       . idlist might be just a pointer to integer or a true array in the
  *         MULTIPLE_REGIONS versions (calling routine has to take care of it) 
@@ -16,7 +16,7 @@
  *       . has to be called after shmem region was created
  *  void  Free_Shmem_Ptr(long id, long size, char* addr)
  *       . called ONLY by the process that created shmem region (id) to return
- *         pointer to shmalloc (shmem is not destroyed)
+ *         pointer to kr_malloc (shmem is not destroyed)
  *  void  Delete_All_Regions()
  *       . destroys all shared memory regions
  *       . can be called by any process assuming that all processes attached
@@ -51,7 +51,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "shmem.h"
-#include "shmalloc.h"
+#include "kr_malloc.h"
 #include "shmlimit.h"
 
 #ifdef   ALLOC_MUNMAP
@@ -93,7 +93,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 #endif
 
 /* Limits for the largest shmem segment are in Kilobytes to avoid passing
- * Gigavalues to shmalloc
+ * Gigavalues to kr_malloc
  * the limit for the KSR is lower than SHMMAX in sys/param.h because
  * shmat would fail -- SHMMAX cannot be trusted (a bug)
  */
@@ -136,6 +136,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
 
 static  unsigned long MinShmem = _SHMMAX;  
 static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
+static  context_t ctx_shmem; /* kr_malloc context */ 
 static  int create_call=0;
 
 #ifdef  SHMMAX_SEARCH_NO_FORK
@@ -659,7 +660,7 @@ char *temp = (char*)0, *pref_addr=(char*)0;
 }
 
 
-/*\ allocates shmem, to be called by shmalloc that is called by process that
+/*\ allocates shmem, to be called by kr_malloc that is called by process that
  *  creates shmem region
 \*/
 char *armci_allocate(long size)
@@ -848,7 +849,7 @@ static char *temp;
 }
 
 
-/*\ allocates shmem, to be called by shmalloc that is called by process that
+/*\ allocates shmem, to be called by krmalloc that is called by process that
  *  creates shmem region
 \*/
 char *armci_allocate(long size)
@@ -921,7 +922,7 @@ size_t sz = (size_t)size;
 \*/
 char *Create_Shared_Region(long *id, long size, long *offset)
 {
-char *temp,  *armci_shmalloc();
+  char *temp;  
 int  reg, refreg=0,nreg;
   
     if(alloc_regions>=MAX_REGIONS)
@@ -944,13 +945,14 @@ int  reg, refreg=0,nreg;
                  armci_me,MinShmem,MaxShmem);
           fflush(stdout);
        }
-       shmalloc_request((size_t)MinShmem, (size_t)MaxShmem);
+       kr_malloc_init(SHM_UNIT, (size_t)MinShmem, (size_t)MaxShmem, 
+		      (void *)armci_allocate, 0, &ctx_shmem);
        id[SHMIDLEN-2]=MinShmem;
     }
 
-    temp = armci_shmalloc((size_t)size);
+    temp = kr_malloc((size_t)size, &ctx_shmem);
     if(temp == (char*)0 )
-       armci_die("CreateSharedRegion:shmalloc failed size in KB",(int)size>>10);
+       armci_die("CreateSharedRegion:kr_malloc failed size in KB",(int)size>>10);
     
     if(!(nreg=find_regions(temp,id,&reg)))
         armci_die("CreateSharedRegion: allocation inconsitent",0);
@@ -975,14 +977,13 @@ int  reg, refreg=0,nreg;
 
 
 
-/*\ only process that created shared region returns the pointer to shmalloc 
+/*\ only process that created shared region returns the pointer to kr_malloc 
 \*/
 void Free_Shmem_Ptr( id, size, addr)
      long id, size;
      char *addr;
 {
-  void shfree();
-  shfree(addr);
+  kr_free(addr, &ctx_shmem);
 }
 
 

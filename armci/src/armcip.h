@@ -157,6 +157,7 @@ extern  int armci_me, armci_nproc;
 #endif
 
 extern void armci_shmem_init();
+extern void armci_krmalloc_init_localmem();
 extern void armci_die(char *msg, int code);
 extern void armci_die2(char *msg, int code1, int code2);
 extern void armci_write_strided(void *ptr, int stride_levels, 

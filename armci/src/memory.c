@@ -1,8 +1,9 @@
-/* $Id: memory.c,v 1.28 2002-07-17 18:05:33 vinod Exp $ */
+/* $Id: memory.c,v 1.29 2003-03-21 19:41:08 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
 #include "message.h"
+#include "kr_malloc.h"
  
 #define DEBUG_ 0
 #define USE_MALLOC 
@@ -22,6 +23,8 @@
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
 #endif
+
+static context_t ctx_localmem;
 
 void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
 {
@@ -92,7 +95,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
        /* can malloc if there is no data server process and has 1 process/node*/
 #      ifndef RMA_NEEDS_SHMEM
              if(nproc == 1)
-                myptr = malloc(size);
+                myptr = kr_malloc(size, &ctx_localmem);
              else
 #      endif
                 myptr = Create_Shared_Region(idlist+1,size,idlist);
@@ -216,7 +219,22 @@ void armci_shmem_malloc(void* ptr_arr[], int bytes)
 
 #endif
 
+/* public constructor to initialize the kr_malloc context */
+void armci_krmalloc_init_localmem() {
+  kr_malloc_init(0, 0, 0, malloc, 0, &ctx_localmem);
+}
 
+/**
+ * Local Memory Allocation and Free
+ */
+void *ARMCI_Malloc_local(size_t bytes) {
+    return (void *)kr_malloc(bytes, &ctx_localmem);
+}
+
+int ARMCI_Free_local(void *ptr) {
+    kr_free((char *)ptr, &ctx_localmem);
+    return 0;
+}
 
 /*\ Collective Memory Allocation
  *  returns array of pointers to blocks of memory allocated by everybody
@@ -236,7 +254,7 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
        fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, bytes);
 #ifdef USE_MALLOC
     if(armci_nproc == 1) {
-      ptr = malloc(bytes);
+      ptr = kr_malloc(bytes, &ctx_localmem);
       if(bytes) if(!ptr) armci_die("armci_malloc:malloc failed",bytes);
       ptr_arr[armci_me] = ptr;
 #ifdef GA_USE_VAMPIR
@@ -248,9 +266,8 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 
     if( ARMCI_Uses_shm() ) armci_shmem_malloc(ptr_arr,bytes);
     else {
-
       /* on distributed-memory systems just malloc & collect all addresses */
-      ptr = malloc(bytes);
+      ptr = kr_malloc(bytes, &ctx_localmem);
       if(bytes) if(!ptr) armci_die("armci_malloc:malloc failed",bytes);
 
       bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
@@ -267,7 +284,7 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 
 
 
-/*\ shared memory is released to shmalloc only on process 0
+/*\ shared memory is released to kr_malloc only on process 0
  *  with data server malloc cannot be used
 \*/
 int ARMCI_Free(void *ptr)
@@ -286,7 +303,7 @@ int ARMCI_Free(void *ptr)
             Free_Shmem_Ptr(0,0,ptr);
 #          else
             if(armci_clus_info[armci_clus_me].nslave>1) Free_Shmem_Ptr(0,0,ptr);
-            else free(ptr);
+            else kr_free(ptr, &ctx_localmem);
 #          endif
          }
          ptr = NULL;
@@ -296,7 +313,7 @@ int ARMCI_Free(void *ptr)
          return 0;
       }
 #endif
-        free(ptr);
+        kr_free(ptr, &ctx_localmem);
         ptr = NULL;
 #ifdef GA_USE_VAMPIR
         vampir_end(ARMCI_FREE,__FILE__,__LINE__);

@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.68 2003-03-20 00:57:27 d3h325 Exp $
+#$Id: GNUmakefile,v 1.69 2003-03-21 19:41:07 manoj Exp $
          FOPT = -O
          COPT = -O
 
@@ -41,12 +41,12 @@ ifeq ($(TARGET),HITACHI)
      LIB_DEFINES += -DMMAP -DCLUSTER
 #     OBJ += shmalloc.o signaltrap.o winshmem.o spawn.o ds-shared.o request.o
 #     LIB_DEFINES += -DDATA_SERVER -DMMAP
-     OBJ += shmalloc.o signaltrap.o winshmem.o ds-shared.o request.o buffers.o
+     OBJ += kr_malloc.o signaltrap.o winshmem.o ds-shared.o request.o buffers.o
 endif
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SHMEM)))
      LIB_DEFINES += -DSYSV
-     OBJ += shmalloc.o signaltrap.o 
+     OBJ += kr_malloc.o signaltrap.o 
   ifeq ($(TARGET),$(findstring $(TARGET),$(SHMMMAP)))
      OBJ += winshmem.o 
   else
@@ -160,10 +160,10 @@ ipctest.x: $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) $(MP_DEFINES) ipctest.c -o $@ $^ $(LIBS)
 
 
-$(LIBRARY_PATH)(winshmem.o):    ./shmem.h ./shmalloc.h 
+$(LIBRARY_PATH)(winshmem.o):    ./shmem.h ./kr_malloc.h 
 $(LIBRARY_PATH)(vector.o):      ./memlock.h ./copy.h ./armcip.h ./acc.h 
 $(LIBRARY_PATH)(strided.o):     ./memlock.h ./copy.h ./armcip.h ./acc.h 
-$(LIBRARY_PATH)(shmem.o):       ./shmem.h ./shmalloc.h 
+$(LIBRARY_PATH)(shmem.o):       ./shmem.h ./kr_malloc.h 
 $(LIBRARY_PATH)(semaphores.o):  ./semaphores.h 
 $(LIBRARY_PATH)(rmw.o): 	./locks.h ./copy.h ./armcip.h 
 $(LIBRARY_PATH)(request.o):     ./request.h ./memlock.h ./copy.h ./armcip.h 

@@ -110,6 +110,8 @@ extern int ARMCI_GetValue(void *src, /* source starting addr to put    */
 
 extern int ARMCI_Malloc(void* ptr_arr[], int bytes);
 extern int ARMCI_Free(void *ptr);
+extern void* ARMCI_Malloc_local(size_t bytes);
+extern int ARMCI_Free_local(void *ptr);
 extern int ARMCI_Same_node(int proc);
 
 extern void ARMCI_Finalize();    /* terminate ARMCI */

@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.65 2003-03-08 18:45:26 vinod Exp $ */
+/* $Id: armci.c,v 1.66 2003-03-21 19:41:08 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -285,8 +285,9 @@ int ARMCI_Init()
     armci_init_fence();
 
 #if defined(SYSV) || defined(WIN32)
-    /* init shared memory */
+    /* init shared/K&R memory */
     if(ARMCI_Uses_shm() ) armci_shmem_init();
+    else armci_krmalloc_init_localmem();
 #   if defined(QUADRICS) && !defined(NO_SHM)
        if(armci_me == armci_master)armci_check_shmmax();
 #   endif

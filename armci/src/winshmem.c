@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.12 2002-06-20 23:34:17 vinod Exp $ */
+/* $Id: winshmem.c,v 1.13 2003-03-21 19:41:08 manoj Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -6,8 +6,8 @@
  * ~~~~~~~~~
  *  char *Create_Shared_Region(long *idlist, long *size, long *offset)
  *       . to be called by just one process. 
- *       . calls shmalloc, a modified by Robert Harrison version of malloc-like
- *         memory allocator from K&R.shmalloc inturn calls armci_allocate() that
+ *       . calls kr_malloc, a modified by Robert Harrison version of malloc-like
+ *         memory allocator from K&R.kr_malloc inturn calls armci_allocate() that
  *         does shmget() and shmat(). 
  *       . idlist might be just a pointer to integer or a true array in the
  *         MULTIPLE_REGIONS versions (calling routine has to take cere of it) 
@@ -17,7 +17,7 @@
  *       . has to be called after shmem region was created
  *  void  Free_Shmem_Ptr(long id, long size, char* addr)
  *       . called ONLY by the process that created shmem region (id) to return
- *         pointer to shmalloc (shmem is not destroyed)
+ *         pointer to kr_malloc (shmem is not destroyed)
  *  long  Delete_All_Regions()
  *       . destroys all shared memory regions
  *       . can be called by any process assuming that all processes attached
@@ -76,7 +76,7 @@
 #endif
 
 #include <assert.h>
-#include "shmalloc.h"
+#include "kr_malloc.h"
 #include "shmem.h"
 
 #define SHM_UNIT (1024)
@@ -114,6 +114,7 @@ static  int last_allocated=0; /* counter trailing alloc_regions by 0/1 */
 /* Min and Max amount of aggregate memory that can be allocated */
 static  unsigned long MinShmem = _SHMMAX;  
 static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
+static  context_t ctx_winshmem;    /* kr_malloc context */
 static  int parent_pid=-1;  /* process id of process 0 "parent" */
 
 extern void armci_die(char*,int);
@@ -161,11 +162,11 @@ long code=0;
 }
 
 
-/*\ only process that created shared region returns the pointer to shmalloc 
+/*\ only process that created shared region returns the pointer to kr_malloc 
 \*/
 void Free_Shmem_Ptr(long id, long size, char* addr)
 {  
-  shfree(addr);
+  kr_free(addr, &ctx_winshmem);
 }
 
 
@@ -327,7 +328,7 @@ char *armci_get_core_from_map_file(int exists, long size)
 }
 
 
-/*\ function called by shared memory allocator (shmalloc)
+/*\ function called by shared memory allocator (kr_malloc)
 \*/
 char *armci_allocate(size_t size)
 {
@@ -356,14 +357,15 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
             region_list[reg].id=0;
             parent_pid = GETPID();
           }
-          shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
+          kr_malloc_init(SHM_UNIT, (unsigned)MinShmem, (unsigned)MaxShmem, 
+			 (void *)armci_allocate, 0, &ctx_winshmem);
      }
 
-     temp = armci_shmalloc((unsigned)size);
+     temp = kr_malloc((unsigned)size, &ctx_winshmem);
      if(temp == (char*)0 )
-           armci_die("Create_Shared_Region: shmalloc failed ",0);
+           armci_die("Create_Shared_Region: kr_malloc failed ",0);
     
-     /* find if shmalloc allocated a new shmem region */
+     /* find if kr_malloc allocated a new shmem region */
      if(last_allocated == alloc_regions){
          *offset = (long) (temp - region_list[last_allocated-1].addr);
      } else if(last_allocated == alloc_regions -1){
