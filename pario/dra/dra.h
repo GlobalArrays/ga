@@ -69,6 +69,10 @@ typedef Integer dra_size_t;
 
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* C-interface prototypes */
 
 extern int NDRA_Create(       int type,
@@ -142,7 +146,7 @@ extern int DRA_Close(         int d_a);
 extern void DRA_Flick();
 
 #ifdef __cplusplus
-	   
+       }	   
 #endif
 
 #undef _ARGS_
