@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.8 1999-07-28 00:48:02 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.9 1999-11-02 00:51:30 d3h325 Exp $ */
 /* System V shared memory allocation and managment for GAs:
  *
  * Interface:
@@ -62,7 +62,7 @@ extern void armci_die();
  * 2. trial-and-error search for a max value (default)
  */
 /* on SP cannot get return status from a child process needed to test SHMMAX */
-#ifdef LAPI
+#if defined(LAPI) || defined(IBM)
 #define NO_SHMMAX_SEARCH
 #endif
 
