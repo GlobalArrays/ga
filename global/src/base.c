@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.16 2002-01-22 20:05:11 vinod Exp $ */
+/* $Id: base.c,v 1.17 2002-01-22 23:51:46 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1160,11 +1160,12 @@ void *GA_Getmem(int type, int nelem)
 char **ptr_arr=(char**)0;
 int  rc,i;
 long id;
-int bytes = nelem *  GAsizeofM(type);
+int bytes;
 int extra=sizeof(getmem_t)+GAnproc*sizeof(char*);
 char *myptr;
 Integer status;
-
+     type = ga_type_f2c(type);	
+     bytes = nelem *  GAsizeofM(type);
      if(GA_memory_limited){
          GA_total_memory -= bytes+extra;
          status = (GA_total_memory >= 0) ? 1 : 0;
