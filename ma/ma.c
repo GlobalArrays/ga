@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.7 1996-02-12 20:14:24 d3g681 Exp $
+ * $Id: ma.c,v 1.8 1996-08-06 05:36:16 d3g681 Exp $
  */
 
 /*
@@ -1422,7 +1422,7 @@ private Boolean mh2ad(memhandle, adout, location, caller)
             (void)sprintf(ma_ebuf,
                 "memhandle %ld (name: '%s') not top of stack",
                 (long)memhandle, ad->name);
-	    MA_summarize_allocated_blocks(0); /* RJH */
+	    /* MA_summarize_allocated_blocks(0); /* RJH */
             ma_error(EL_Nonfatal, ET_External, caller, ma_ebuf);
             return MA_FALSE;
         }
@@ -1630,9 +1630,8 @@ public Boolean MA_alloc_get(datatype, nelem, name, memhandle, index)
     else {
         /* MA_allocate_heap failed */
 
-	/* RJH ... to help diagnose allocation failues print stats */
-
-	MA_summarize_allocated_blocks();
+	/* RJH ... to help diagnose allocation failures print stats */
+	/* MA_summarize_allocated_blocks(); */
 
         return MA_FALSE;
       }
@@ -1720,7 +1719,7 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
             (void)sprintf(ma_ebuf,
                 "block '%s', not enough space to allocate %lu bytes",
                 name, nbytes);
-	    MA_summarize_allocated_blocks(0); /* RJH */
+	    /* MA_summarize_allocated_blocks(0); /* RJH */
             ma_error(EL_Nonfatal, ET_External, "MA_allocate_heap", ma_ebuf);
             return MA_FALSE;
         }
@@ -2086,7 +2085,7 @@ public Boolean MA_init(datatype, nominal_stack, nominal_heap)
         (void)sprintf(ma_ebuf,
             "could not allocate %lu bytes",
             total_bytes);
-	MA_summarize_allocated_blocks(0); /* RJH */
+	/* MA_summarize_allocated_blocks(0); /* RJH */
         ma_error(EL_Nonfatal, ET_External, "MA_init", ma_ebuf);
         return MA_FALSE;
     }
@@ -2452,9 +2451,8 @@ public Boolean MA_push_get(datatype, nelem, name, memhandle, index)
     else
         /* MA_push_stack failed */
       {
-	/* RJH ... to help diagnose allocation failues print stats */
-
-	MA_summarize_allocated_blocks();
+	  /* RJH ... to help diagnose allocation failures print stats */
+	  /* MA_summarize_allocated_blocks(); */
 
         return MA_FALSE;
       }
@@ -2535,7 +2533,7 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
         (void)sprintf(ma_ebuf,
             "block '%s', not enough space to allocate %lu bytes",
             name, nbytes);
-	MA_summarize_allocated_blocks(0); /* RJH */
+	/* MA_summarize_allocated_blocks(0); /* RJH */
         ma_error(EL_Nonfatal, ET_External, "MA_push_stack", ma_ebuf);
         return MA_FALSE;
     }
