@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.78 2003-10-21 05:35:53 d3h325 Exp $
+#$Id: GNUmakefile,v 1.79 2004-04-13 19:56:36 manoj Exp $
          FOPT = -O
          COPT = -O
 
@@ -91,6 +91,7 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
 #   LIB_DEFINES += -DNO_SHM
 ifdef DOELAN4
     LIB_DEFINES += -DACC_SMP
+    OBJ += pgs.o
 else
 ifdef LIBELAN_NATTACH
     LIB_DEFINES +=  -DMULTI_CTX -DACC_SMP
