@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.12 2001-03-22 21:46:15 d3h325 Exp $ */
+/* $Id: memlock.c,v 1.13 2001-08-09 23:53:45 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -203,7 +203,7 @@ void armci_unlockmem(int proc)
      memlock_t *memlock_table;
 
 #ifdef CORRECT_PTR
-     if(!armci_use_memlock_table){
+     if(! *armci_use_memlock_table){
        /* if offset invalid, use dumb locking scheme ignoring addresses */
        armci_unlockmem_(proc);               
        return;
