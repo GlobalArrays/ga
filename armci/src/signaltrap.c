@@ -463,8 +463,9 @@ void TrapSigXcpu()
 
 void ARMCI_ChildrenTrapSignals()
 {
-
+#ifndef LAPI
      TrapSigBus();
+#endif
      TrapSigFpe();
      TrapSigIll();
      TrapSigSegv(); 
