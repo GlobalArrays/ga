@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.4 2002-01-18 19:52:12 vinod Exp $ */
+/* $Id: ghosts.c,v 1.5 2002-01-18 22:33:51 vinod Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -127,7 +127,7 @@ unsigned long    lref, lptr;
    /* compute index and check if it is correct */
    switch (GA[handle].type){
      case C_DBL:
-        *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
+        *index = (Integer) ((double*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;
         break;
 
@@ -137,7 +137,7 @@ unsigned long    lref, lptr;
         break;
 
      case C_INT:
-        *index = (Integer) ((Integer*)ptr - INT_MB);
+        *index = (Integer) ((int*)ptr - INT_MB);
         lref = (unsigned long)INT_MB;
         break;
 
@@ -145,6 +145,12 @@ unsigned long    lref, lptr;
         *index = (Integer) ((float*)ptr - FLT_MB);
         lref = (unsigned long)FLT_MB;
         break;        
+
+     case C_LONG:
+        *index = (Integer) ((long*)ptr - LONG_MB);
+        lref = (unsigned long)LONG_MB;
+        break;
+
    }
 
 #ifdef BYTE_ADDRESSABLE_MEMORY

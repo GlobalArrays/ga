@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.13 2002-01-18 19:52:12 vinod Exp $ */
+/* $Id: base.c,v 1.14 2002-01-18 22:33:51 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -145,8 +145,8 @@ Integer GAsizeof(type)
         Integer type;
 {
   switch (type) {
-     case C_DBL  : return (sizeof(DoublePrecision));
-     case C_INT  : return (sizeof(Integer));
+     case C_DBL  : return (sizeof(double));
+     case C_INT  : return (sizeof(int));
      case C_DCPL : return (sizeof(DoubleComplex));
      case C_FLOAT : return (sizeof(float));
      case C_LONG : return (sizeof(long));
@@ -1331,10 +1331,10 @@ int      *save_mapc;
          Integer dim1 =GA[ga_handle].dims[1], dim2=GA[ga_handle].dims[2];
          if(GAme==0)fprintf(stderr,"duplicate:initializing GA array%ld\n",*g_b);
          if(GA[ga_handle].type == C_DBL) {
-             DoublePrecision bad = DBL_MAX;
+             double bad = (double) DBL_MAX;
              ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
          } else if (GA[ga_handle].type == C_INT) {
-             Integer bad = (Integer) INT_MAX;
+             int bad = (int) INT_MAX;
              ga_fill_patch_(g_b, &one, &dim1, &one, &dim2,  &bad);
          } else if (GA[ga_handle].type == C_LONG) {
              long bad = LONG_MAX;
@@ -1542,10 +1542,10 @@ char *ptr;
         for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
         break;
    case C_DBL:  
-        for(i=0; i<elems;i++)((DoublePrecision*)ptr)[i]=*(DoublePrecision*)val;
+        for(i=0; i<elems;i++)((DoublePrecision*)ptr)[i]=*(double*)val;
         break;
    case C_INT:  
-        for(i=0; i<elems;i++)((Integer*)ptr)[i]=*(Integer*)val;
+        for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*)val;
         break;
    case C_FLOAT:
         for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val;

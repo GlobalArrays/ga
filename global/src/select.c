@@ -46,13 +46,13 @@ int     participate=0;
       participate =1;
 
       switch (type){
-        Integer *ia,ival;
-        DoublePrecision *da,dval;
+        int *ia,ival;
+        double *da,dval;
         DoubleComplex *ca;
         float *fa,fval;
-
+        long *la,lval;
         case C_INT:
-           ia = (Integer*)ptr;
+           ia = (int*)ptr;
            ival = *ia;
           
            if (strncmp(op,"min",3) == 0)
@@ -82,7 +82,7 @@ int     participate=0;
            break;
 
         case C_DBL:
-           da = (DoublePrecision*)ptr;
+           da = (double*)ptr;
            dval = *da;
            if (strncmp(op,"min",3) == 0)
               for(i=0;i<elems;i++){ if(dval > da[i]) {dval=da[i];ind=i; } }
@@ -104,15 +104,15 @@ int     participate=0;
            info.v.fval = fval;
            break;
         case C_LONG:
-           fa = (long*)ptr;
-           fval = *fa;
+           la = (long*)ptr;
+           lval = *fa;
  
            if (strncmp(op,"min",3) == 0)
-              for(i=0;i<elems;i++){ if(fval > fa[i]) {fval=fa[i];ind=i; } }
+              for(i=0;i<elems;i++){ if(lval > la[i]) {lval=la[i];ind=i; } }
            else
-              for(i=0;i<elems;i++){ if(fval < fa[i]) {fval=fa[i];ind=i; } }
+              for(i=0;i<elems;i++){ if(lval < la[i]) {lval=la[i];ind=i; } }
  
-           info.v.fval = fval;
+           info.v.lval = lval;
            break;
                                       
         default: ga_error(" wrong data type ",type);

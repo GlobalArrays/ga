@@ -10,21 +10,21 @@ static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integ
     int i;
 
     switch (type){
-       Integer *ia;
-       DoublePrecision *da;
+       int *ia;
+       double *da;
        DoubleComplex *ca;
        float *fa;
        long *la;
        case C_INT:
-            ia = (Integer*)ptr;
+            ia = (int*)ptr;
             if(add) for(i=0; i< n; i++) {
                     if(i==0) 
-                       ia[i] += *(Integer*)val; 
+                       ia[i] += *(int*)val; 
                     else
-                       ia[i] = ia[i-1] + *(Integer*)val; 
+                       ia[i] = ia[i-1] + *(int*)val; 
             }
             else
-                    for(i=0; i< n; i++) ia[i] = *(Integer*)val; 
+                    for(i=0; i< n; i++) ia[i] = *(int*)val; 
             break;
        case C_DCPL:
             ca = (DoubleComplex*)ptr;
@@ -84,15 +84,15 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
     int i;
  
         switch (type){
-          Integer *ia1, *ia2;
-          DoublePrecision *da1, *da2;
+          int *ia1, *ia2;
+          double *da1, *da2;
           DoubleComplex *ca1, *ca2;
           float *fa1, *fa2;
           long *la1, *la2; 
           case C_INT:
-             ia1 = (Integer*)ptr1;
-             ia2 = (Integer*)ptr2;
-             ia2[0] = ia1[0] +  *(Integer*)val; 
+             ia1 = (int*)ptr1;
+             ia2 = (int*)ptr2;
+             ia2[0] = ia1[0] +  *(int*)val; 
              for(i=1; i< n; i++) ia2[i] = ia2[i-1]+ia1[i];
              break;
           case C_DCPL:
@@ -131,15 +131,15 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
 static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sbit, Integer pack, Integer mx)
 {
     int i, cnt=0;
-    Integer         *is, *id;
-    DoublePrecision *ds, *dd;
+    int         *is, *id;
+    double *ds, *dd;
     DoubleComplex   *cs, *cd;
     float           *fs, *fd;
     long            *ls, *ld;
     if(pack)
         switch (type){
          case C_INT:
-             is = (Integer*)a; id = (Integer*)b;
+             is = (int*)a; id = (int*)b;
              for(i=0; i< n; i++) if(sbit[i]) { 
                      *id = is[i]; id++;
                      cnt++;
@@ -173,7 +173,7 @@ static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sb
     else
         switch (type){
           case C_INT:
-             is = (Integer*)b; id = (Integer*)a;
+             is = (int*)b; id = (int*)a;
              for(i=0; i< n; i++) if(sbit[i]) { id[i] = *is; is++;  cnt++; }
              break;
           case C_DCPL:
@@ -237,15 +237,15 @@ register Integer i;
         nga_access_ptr(g_a, &lop, &hip, &ptr, NULL);
         
         switch (type){
-          Integer *ia;
-          DoublePrecision *da;
+          int *ia;
+          double *da;
           DoubleComplex *ca;
           float *fa;
           long *la;
           case C_INT:
-             ia = (Integer*)ptr;
+             ia = (int*)ptr;
              for(i=0; i< hip-lop+1; i++)
-                 ia[i] = *(Integer*)start+(off+i)* *(Integer*)stride; 
+                 ia[i] = *(int*)start+(off+i)* *(int*)stride; 
              break;
           case C_DCPL:
              ca = (DoubleComplex*)ptr;
@@ -257,10 +257,10 @@ register Integer i;
              }
              break;
           case C_DBL:
-             da = (DoublePrecision*)ptr;
+             da = (double*)ptr;
              for(i=0; i< hip-lop+1; i++)
-                 da[i] = *(DoublePrecision*)start+
-                         (off+i)* *(DoublePrecision*)stride; 
+                 da[i] = *(double*)start+
+                         (off+i)* *(double*)stride; 
              break;
           case C_FLOAT:
              fa = (float*)ptr;

@@ -61,18 +61,18 @@ register Integer i;
       GET_ELEMS(ndim,lo,hi,ld,&elems);
 
       switch (type){
-        Integer *ia;
-        DoublePrecision *da;
+        int *ia;
+        double *da;
         float *fa;
         long *la;
         case C_INT:
-           ia = (Integer*)ptr;
+           ia = (int*)ptr;
            for(i=0;i<elems;i++) ia[i]  = 0;
            break;
         case C_DCPL:
            elems *=2;
         case C_DBL:
-           da = (DoublePrecision*)ptr;
+           da = (double*)ptr;
            for(i=0;i<elems;i++) da[i] = 0;
            break;
         case C_FLOAT:
@@ -203,7 +203,7 @@ void gai_dot(int Type, Integer *g_a, Integer *g_b, void *value)
 {
 Integer  ndim, type, me, elems=0, elemsb=0;
 register Integer i;
-Integer isum=0;
+int isum=0;
 long lsum=0;
 DoubleComplex zsum ={0.,0.};
 float fsum=0.0;
@@ -264,13 +264,13 @@ void *ptr_a, *ptr_b;
 
       /* compute "local" contribution to the dot product */
       switch (type){
-	Integer *ia, *ib;
-	DoublePrecision *da,*db;
+	int *ia, *ib;
+	double *da,*db;
         float *fa, *fb;
         long *la,*lb;
         case C_INT:
-           ia = (Integer*)ptr_a;
-           ib = (Integer*)ptr_b;
+           ia = (int*)ptr_a;
+           ib = (int*)ptr_b;
            for(i=0;i<elems;i++) 
                  isum += ia[i]  * ib[i];
            *(Integer*)value = isum; 
@@ -287,11 +287,11 @@ void *ptr_a, *ptr_b;
            break;
 
         case C_DBL:
-           da = (DoublePrecision *)ptr_a;
-           db = (DoublePrecision *)ptr_b;
+           da = (double*)ptr_a;
+           db = (double*)ptr_b;
            for(i=0;i<elems;i++) 
                  zsum.real += da[i]  * db[i];
-           *(DoublePrecision*)value = zsum.real; 
+           *(double*)value = zsum.real; 
            break;
         case C_FLOAT:
            fa = (float*)ptr_a;
@@ -317,15 +317,15 @@ void *ptr_a, *ptr_b;
       }
 
 
-   if(Type == C_INT)ga_igop((Integer)GA_TYPE_GSM,(Integer*)value, 1, "+");
+   if(Type == C_INT)ga_igop((Integer)GA_TYPE_GSM,(int*)value, 1, "+");
    else if(Type == C_LONG)
      ga_lgop((long)GA_TYPE_GSM,(long*)value, 1, "+"); 
    else if(Type == C_DBL) 
-     ga_dgop((Integer)GA_TYPE_GSM, (DoublePrecision*)value, 1, "+"); 
+     ga_dgop((Integer)GA_TYPE_GSM, (double*)value, 1, "+"); 
    else if(Type == C_FLOAT)
      ga_fgop((Integer)GA_TYPE_GSM, (float*)value, 1, "+");  
    else
-     ga_dgop((Integer)GA_TYPE_GSM, (DoublePrecision*)value, 2, "+"); 
+     ga_dgop((Integer)GA_TYPE_GSM, (double*)value, 2, "+"); 
     
    GA_POP_NAME;
 
@@ -404,14 +404,14 @@ void *ptr;
       GET_ELEMS(ndim,lo,hi,ld,&elems);
 
       switch (type){
-        Integer *ia;
-        DoublePrecision *da;
+        int *ia;
+        double *da;
         DoubleComplex *ca, scale;
         long *la;
         float *fa;
         case C_INT:
-           ia = (Integer*)ptr;
-           for(i=0;i<elems;i++) ia[i]  *= *(Integer*)alpha;
+           ia = (int*)ptr;
+           for(i=0;i<elems;i++) ia[i]  *= *(int*)alpha;
            break;
         case C_LONG:
 	   la = (long*)ptr;
@@ -427,8 +427,8 @@ void *ptr;
            }
            break;
         case C_DBL:
-           da = (DoublePrecision*)ptr;
-           for(i=0;i<elems;i++) da[i] *= *(DoublePrecision*)alpha;
+           da = (double*)ptr;
+           for(i=0;i<elems;i++) da[i] *= *(double*)alpha;
            break;
         case C_FLOAT:
            fa = (float*)ptr;
@@ -520,17 +520,17 @@ void *ptr_a, *ptr_b, *ptr_c;
 
        /* operation on the "local" piece of data */
        switch(type){
-         Integer *ia, *ib, *ic;
-         DoublePrecision *da,*db,*dc;
+         int *ia, *ib, *ic;
+         double *da,*db,*dc;
          float *fa, *fb, *fc;
          long *la,*lb,*lc;
          case C_DBL:
-                  da = (DoublePrecision *)ptr_a;
-                  db = (DoublePrecision *)ptr_b;
-                  dc = (DoublePrecision *)ptr_c;
+                  da = (double*)ptr_a;
+                  db = (double*)ptr_b;
+                  dc = (double*)ptr_c;
                   for(i=0; i<elems; i++)
-                      dc[i] = *(DoublePrecision*)alpha *da[i] +
-                              *(DoublePrecision*)beta * db[i];
+                      dc[i] = *(double*)alpha *da[i] +
+                              *(double*)beta * db[i];
               break;
          case C_DCPL:
                   for(i=0; i<elems; i++){
@@ -554,11 +554,11 @@ void *ptr_a, *ptr_b, *ptr_c;
                       fc[i] = *(float*)alpha *fa[i] + *(float*)beta *fb[i]; 
               break;
          case C_INT:
-                  ia = (Integer*)ptr_a;
-                  ib = (Integer*)ptr_b;
-                  ic = (Integer*)ptr_c;
+                  ia = (int*)ptr_a;
+                  ib = (int*)ptr_b;
+                  ic = (int*)ptr_c;
                   for(i=0; i<elems; i++) 
-                      ic[i] = *(Integer*)alpha *ia[i] + *(Integer*)beta *ib[i];
+                      ic[i] = *(int*)alpha *ia[i] + *(int*)beta *ib[i];
               break;    
          case C_LONG:
                   la = (long*)ptr_a;
@@ -591,7 +591,7 @@ int i;
 
        case C_INT:
             for(i = 0; i< n; i++, ptrb+= stride) 
-               *(Integer*)ptrb= ((Integer*)ptra)[i];
+               *(int*)ptrb= ((int*)ptra)[i];
             break;
        case C_DCPL:
             for(i = 0; i< n; i++, ptrb+= stride) 

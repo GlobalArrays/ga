@@ -313,11 +313,11 @@ void nga_copy_patch(char *trans,
 
                 /* move the element to the temporary location */
                 switch(atype) {
-                    case C_DBL: ((DoublePrecision *)tmp_ptr)[i] =
-                                       ((DoublePrecision *)src_data_ptr)[idx]; 
+                    case C_DBL: ((double*)tmp_ptr)[i] =
+                                       ((double*)src_data_ptr)[idx]; 
                     break;
-                    case C_INT: ((Integer *)tmp_ptr)[i] =
-                                       ((Integer *)src_data_ptr)[idx];
+                    case C_INT: ((int *)tmp_ptr)[i] =
+                                       ((int *)src_data_ptr)[idx];
                     break;
                     case C_DCPL:((DoubleComplex *)tmp_ptr)[i] =
                                        ((DoubleComplex *)src_data_ptr)[idx];
@@ -373,9 +373,9 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     Integer bvalue[MAXDIM], bunit[MAXDIM], baseldA[MAXDIM];
     Integer idx, n1dim;
     Integer atotal, btotal;
-    Integer isum;
+    int isum;
     long lsum;
-    DoublePrecision dsum;
+    double dsum;
     DoubleComplex zsum;
     float fsum;
     Integer me= ga_nodeid_(), temp_created=0;
@@ -475,8 +475,8 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                     }
                     
                     for(j=0; j<(hiA[0]-loA[0]+1); j++)
-                        isum += ((Integer *)A_ptr)[idx+j] *
-                            ((Integer *)B_ptr)[idx+j];
+                        isum += ((int *)A_ptr)[idx+j] *
+                            ((int *)B_ptr)[idx+j];
                 }
                 break;
             case C_DCPL:
@@ -506,8 +506,8 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                     }
                     
                     for(j=0; j<(hiA[0]-loA[0]+1); j++)
-                        dsum += ((DoublePrecision *)A_ptr)[idx+j] *
-                            ((DoublePrecision *)B_ptr)[idx+j];
+                        dsum += ((double*)A_ptr)[idx+j] *
+                            ((double*)B_ptr)[idx+j];
                 }
                 break;
             case C_FLOAT:
@@ -545,38 +545,35 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
         nga_release_(&g_B, loA, hiA);
     }
 
-    ga_sync_();
 
     /* the return value */
     switch (atype){
         case C_INT:
-            ga_igop(type, &isum, 1, "+");
-            *((Integer *)retval) += isum;
+            armci_msg_igop(&isum, 1, "+");
+            *((int *)retval) += isum;
             break;
         case  C_DBL:
-            ga_dgop(type, &dsum, 1, "+");
-            *((DoublePrecision *)retval) = dsum;
+            armci_msg_dgop(&dsum, 1, "+");
+            *((double*)retval) = dsum;
             break;
         case C_DCPL:
-            ga_dgop(type, &zsum.real, 1, "+");
-            ga_dgop(type, &zsum.imag, 1, "+");
+            armci_msg_dgop(&zsum.real, 2, "+");
             (*((DoubleComplex *)retval)).real = zsum.real;
             (*((DoubleComplex *)retval)).imag = zsum.imag;
             break;
         case C_FLOAT:
-            ga_fgop(type, &fsum, 1, "+");
+            armci_msg_fgop(&fsum, 1, "+");
             *((float *)retval) += fsum;
             break;
         case C_LONG:
- 	    ga_lgop(type, &lsum, 1, "+");
-            *((float *)retval) += lsum;
+ 	    armci_msg_lgop(&lsum, 1, "+");
+            *((long *)retval) += lsum;
             break;  
         default: ga_error(" wrong data type ",atype);
     }
     
     if(temp_created) ga_destroy_(&g_B);
     GA_POP_NAME;
-    ga_sync_();
 }
 
 
@@ -596,10 +593,10 @@ Integer nga_idot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     ga_sync_();
     GA_PUSH_NAME("nga_idot_patch");
     
-    ga_inquire_internal_(g_a, &atype, &andim, adims);
-    ga_inquire_internal_(g_b, &btype, &bndim, bdims);
+    nga_inquire_internal_(g_a, &atype, &andim, adims);
+    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
-    if(atype != btype || (atype != C_INT )) ga_error(" wrong types ", 0L);
+    if(atype != btype || ((atype != C_INT )&&(atype !=C_LONG))) ga_error(" wrong types ", 0L);
 
     ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, (void *)(&sum));
 
@@ -623,8 +620,8 @@ DoublePrecision nga_ddot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     ga_sync_();
     GA_PUSH_NAME("nga_ddot_patch");
     
-    ga_inquire_internal_(g_a, &atype, &andim, adims);
-    ga_inquire_internal_(g_b, &btype, &bndim, bdims);
+    nga_inquire_internal_(g_a, &atype, &andim, adims);
+    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
 
     if(atype != btype || (atype != C_DBL )) ga_error(" wrong types ", 0L);
 
@@ -650,8 +647,8 @@ float nga_fdot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi)
     ga_sync_();
     GA_PUSH_NAME("nga_fdot_patch");
  
-    ga_inquire_internal_(g_a, &atype, &andim, adims);
-    ga_inquire_internal_(g_b, &btype, &bndim, bdims);
+    nga_inquire_internal_(g_a, &atype, &andim, adims);
+    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
  
     if(atype != btype || (atype != C_FLOAT )) ga_error(" wrong types ", 0L);
  
@@ -763,7 +760,7 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
                         if(bvalue[j] > (hiA[j]-loA[j])) bvalue[j] = 0;
                     }
                     for(j=0; j<(hiA[0]-loA[0]+1); j++)
-                        ((Integer *)data_ptr)[idx+j] = *(Integer*)val;
+                        ((int *)data_ptr)[idx+j] = *(int*)val;
                 }
                 break;
             case C_DCPL:
@@ -793,8 +790,8 @@ void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
                     }
                     
                     for(j=0; j<(hiA[0]-loA[0]+1); j++) 
-                        ((DoublePrecision *)data_ptr)[idx+j] =
-                            *(DoublePrecision *)val;
+                        ((double*)data_ptr)[idx+j] =
+                            *(double*)val;
                 }
                 break;
             case C_FLOAT:
@@ -886,8 +883,8 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
                     }
                     
                     for(j=0; j<(hiA[0]-loA[0]+1); j++) 
-                        ((DoublePrecision *)src_data_ptr)[idx+j]  *=
-                            *(DoublePrecision*)alpha;                    
+                        ((double*)src_data_ptr)[idx+j]  *=
+                            *(double*)alpha;                    
                 }
                 break;
             case C_DCPL:
@@ -922,7 +919,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
                     }
                     
                     for(j=0; j<(hiA[0]-loA[0]+1); j++)
-                        ((Integer *)src_data_ptr)[idx+j]  *= *(Integer*)alpha;
+                        ((int*)src_data_ptr)[idx+j]  *= *(int*)alpha;
                 }
                 break;
             case C_LONG:
@@ -1106,11 +1103,11 @@ DoublePrecision *alpha, *beta;
                     }
                     
                     for(j=0; j<(hiC[0]-loC[0]+1); j++)
-                        ((DoublePrecision*)C_ptr)[idx+j] =
-                            *(DoublePrecision*)alpha *
-                            ((DoublePrecision*)A_ptr)[idx+j] +
-                            *(DoublePrecision*)beta *
-                            ((DoublePrecision*)B_ptr)[idx+j];
+                        ((double*)C_ptr)[idx+j] =
+                            *(double*)alpha *
+                            ((double*)A_ptr)[idx+j] +
+                            *(double*)beta *
+                            ((double*)B_ptr)[idx+j];
                 }
                 break;
             case C_DCPL:
@@ -1144,9 +1141,9 @@ DoublePrecision *alpha, *beta;
                     }
                     
                     for(j=0; j<(hiC[0]-loC[0]+1); j++)
-                        ((Integer *)C_ptr)[idx+j] = *(Integer *)alpha *
-                            ((Integer *)A_ptr)[idx+j] + *(Integer *)beta *
-                            ((Integer *)B_ptr)[idx+j];
+                        ((int*)C_ptr)[idx+j] = *(int *)alpha *
+                            ((int*)A_ptr)[idx+j] + *(int*)beta *
+                            ((int*)B_ptr)[idx+j];
                 }
                 break;
             case C_FLOAT:
@@ -1199,9 +1196,9 @@ DoublePrecision *alpha, *beta;
 void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
 {
     Integer ndim, dims[MAXDIM], type;
-    Integer ival = 0;
+    int ival = 0;
     long lval = 0; 
-    DoublePrecision dval = 0.0;
+    double dval = 0.0;
     DoubleComplex cval;
     float fval = 0.0;
     void *valptr;

@@ -80,8 +80,8 @@
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
 
-#define GAsizeofM(type)  ( (type)==C_DBL? sizeof(DoublePrecision): \
-                           (type)==C_INT? sizeof(Integer): \
+#define GAsizeofM(type)  ( (type)==C_DBL? sizeof(double): \
+                           (type)==C_INT? sizeof(int): \
                            (type)==C_DCPL? sizeof(DoubleComplex): \
                            (type)==C_LONG? sizeof(long): \
                            (type)==C_FLOAT? sizeof(float):0)
