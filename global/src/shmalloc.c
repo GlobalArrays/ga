@@ -183,7 +183,7 @@ char *shmalloc(nbytes)
 }
 
 
-#if defined SGI|| defined(HPUX)
+#if defined(SGI) || defined(HPUX)
 Header *morecore(nu)
 #else
 static Header *morecore(nu)
