@@ -1,4 +1,4 @@
-c $Id: perf.F,v 1.6 2003-07-09 18:36:23 d3h325 Exp $
+c $Id: perf.F,v 1.7 2003-09-17 23:36:19 d3h325 Exp $
 c------------------------------------------------------------------------
 c Program perf.x is used to test performance of GA put, get, accumulate  |
 c It has to be executed on four processors.                              |
@@ -137,7 +137,7 @@ c
 c
       do loop = 1, num_chunks
         bytes = util_mdtob(1)*chunk(loop) ! how much data is accessed
-        jump  =  n/(6000*loop) ! jump distance between consecutive patches
+        jump  = n/(6000*loop)!jump distance between consecutive patches
         if(loop.eq.num_chunks)jump=0
 c
 c       everybody touches own data 
@@ -174,7 +174,7 @@ c
         endif
       enddo
 c
-77    format(i7, i7,1x, 3(1x,d8.3,1x,d8.3))
+77    format(i7, i7,1x, 3(1x,e8.3,1x,e8.3))
       end
 
 
@@ -398,7 +398,7 @@ c
       call ga_sync()
 c
       do loop = 1, num_chunks
-        bytes = util_mdtob(1)*chunk(loop)*chunk(loop) !how much data is accessed
+        bytes = util_mdtob(1)*chunk(loop)*chunk(loop) !how much data 
         jump  =  n/(60*loop) ! jump distance between consecutive patches
         if(loop.eq.num_chunks)jump=0
 c
@@ -436,7 +436,7 @@ c
         endif
       enddo
 c
-77    format(i7, i7,1x, 3(1x,d8.3,1x,d8.3))
+77    format(i7, i7,1x, 3(1x,e8.3,1x,e8.3))
       end
 
 
