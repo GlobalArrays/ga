@@ -29,16 +29,23 @@
 #define DRA_OP_READ   888
 
 #define MAX_REQ   5
-#define  GA_TYPE_GSM 32760 - 6
 
+/* message type/tag used by DRA */
+#define  GA_TYPE_GSM 32760 - 6
+#define  GA_TYPE_GOP 32760 - 7
+
+/* alignment factor for the internal buffer */
+#if defined(CRAY)
+#   define ALIGN 512
+#else
+#   define ALIGN 16
+#endif
 
 #define INFINITE_NUM_PROCS  8094
 
 #ifdef PARAGON
 #  define DRA_NUM_IOPROCS  64
 #  define DRA_NUM_FILE_MGR INFINITE_NUM_PROCS
-#elif defined(CRAY_T3E)
-#  define DRA_NUM_IOPROCS 1
 #elif defined(CRAY_T3D)
 #  define DRA_NUM_IOPROCS 16 
 #elif defined(SP1)|| defined(SP)
@@ -279,7 +286,7 @@ int i;
            dai_error("dra_init: incorrect max number of arrays",*max_arrays);
         _max_disk_array = (*max_arrays==-1) ? DEF_MAX_ARRAYS: *max_arrays;
 
-        if(!dai_io_nodeid()) printf("DRA I/O processors %d\n",dai_io_procs());
+/*        if(!dai_io_nodeid()) printf("DRA I/O processors %d\n",dai_io_procs());*/
 
         DRA = (disk_array_t*)malloc(sizeof(disk_array_t)**max_arrays);
         if(!DRA) dai_error("dra_init: memory alocation failed\n",0);
@@ -289,15 +296,23 @@ int i;
 
 #ifndef STATBUF
         {
+            /* check if we have enough MA memory for DRA buffer on every node */
             Integer avail = MA_inquire_avail(MT_C_DBL);
-            ga_igop(32000, &avail, (Integer)1, "min");
-            if(avail < DRA_DBL_BUF_SIZE && ga_nodeid_() == 0)
+            long diff;
+            ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+            if(avail < (ALIGN -1 + DRA_DBL_BUF_SIZE) && ga_nodeid_() == 0)
               dai_error("Not enough memory available from MA for DRA",avail);
-            if(MA_alloc_get(MT_C_DBL, DRA_DBL_BUF_SIZE, "DRA buf", 
+
+            /* get buffer memory */
+            if(MA_alloc_get(MT_C_DBL, DRA_DBL_BUF_SIZE+ALIGN-1, "DRA buf", 
               &_handle_buffer, &_idx_buffer))
                 MA_get_pointer(_handle_buffer, &_dra_buffer); 
             else
                 dai_error("dra_init: ma_alloc_get failed",DRA_DBL_BUF_SIZE); 
+
+            /* align buffer address */
+            diff = ((long)_dra_buffer) % (sizeof(DoublePrecision)*ALIGN);
+            if(diff) _dra_buffer += (sizeof(DoublePrecision)*ALIGN - diff);
         }
 #endif
  
@@ -706,6 +721,8 @@ Integer handle;
 #          endif
            if(DRA[handle].fd->fd ==-1) dai_error("dra_open failed",ga_nodeid_());  
         }
+
+        /* need to make only one process to read the file */
         dai_read_param(DRA[handle].fname, *d_a);
 
 #       ifdef DEBUG

@@ -7,8 +7,8 @@
 /************************** common constants *******************************/
 #define DRA_OFFSET     5000                    /* DRA handle offset          */
 #define DRA_BRD_TYPE  30000                    /* msg type for DRA broadcast */
-#define DRA_MAX_NAME     80                      /* max length of array name  */
-#define DRA_MAX_FNAME   200                    /* max length of array name  */
+#define DRA_MAX_NAME     72                    /* max length of array name  */
+#define DRA_MAX_FNAME   248                    /* max length of array name  */
 
 
 /************************* common data structures **************************/
@@ -17,11 +17,11 @@ typedef struct{                               /* stores basic DRA info */
         Integer chunk1, chunk2;
         Integer type;
         Integer layout;
+        char    name[DRA_MAX_NAME+8];
+        char    fname[DRA_MAX_FNAME+8];
         Integer actv;
         Integer mode;
         Fd_t      fd;
-        char    name[DRA_MAX_NAME+8];
-        char    fname[DRA_MAX_FNAME+8];
 } disk_array_t;
 
 #define MAX_ALGN  1                /* max # aligned subsections   */ 

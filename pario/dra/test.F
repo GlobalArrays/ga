@@ -1,7 +1,7 @@
 c
 c FNAME - filename for test program
 c
-#define BASE_NAME 'da.try'
+#define BASE_NAME 'dra.file'
 #ifdef  HPIODIR
 #  define FNAME   HPIODIR//BASE_NAME
 #else
@@ -59,7 +59,8 @@ c
       integer i,j, req, err, dim1, dim2, type
       integer me, nproc
       logical status
-      character*1 name(100), filename(200)
+      character*1 filename(200)
+      character*80 name
 c    
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -89,8 +90,7 @@ c
       enddo
 c
       if(me.eq.0) print *, 'Creating Disk Array ',n,' x',n
-      if (me.eq.0) print *,'file base', FNAME
-      if(dra_create(MT_INT, n, n, 'A', FNAME, 
+      if(dra_create(MT_INT, n, n, 'array A', FNAME, 
      &   DRA_RW,    n, 1, d_a).ne.0)
      $   CALL ga_error('dra_create failed: ',0)
       if (me.eq.0) print *,'OK'
@@ -159,7 +159,7 @@ c
 #include "global.fh"
 #include "dra.fh"
       integer n,m
-      parameter (n = 103)
+      parameter (n = 4)
       parameter (m = 2*n)
       double precision a(n,n),  err
       integer g_a, g_b,  d_a
@@ -222,8 +222,8 @@ c
 c
 c     error checking: (g_a - g_b)^2
 c
-*     call ga_print(g_a)
-*     call ga_print(g_b)
+c     call ga_print(g_a)
+c     call ga_print(g_b)
       call ga_add(1d0, g_a, -1d0, g_b, g_b) 
       err = ga_ddot(g_b, g_b) 
       if(err.ne.0) then
@@ -280,7 +280,6 @@ c
       enddo
       if (me.eq.0) print*,' OK'
       if (me.eq.0) print*,' '
-c
       if(dra_delete(d_a).ne.0)
      &            call ga_error('dra_delete failed',0)
 c

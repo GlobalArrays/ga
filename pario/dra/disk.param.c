@@ -26,6 +26,7 @@ Integer len;
 Integer me=ga_nodeid_();
 Integer brd_type=DRA_BRD_TYPE, orig, dra_hndl=d_a+DRA_OFFSET;
 long input;
+char dummy[80];
 
   ga_sync_();
     
@@ -56,13 +57,16 @@ long input;
     if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk2",0);
     DRA[dra_hndl].chunk2 = (Integer) input;
 
-    /* need to add name !!!*/
+    fgets(dummy,80,fd); /*advance to next line*/
+    if(!fgets(DRA[dra_hndl].name,DRA_MAX_NAME,fd))dai_error("dai_read_param:name",0);
+
     if(fclose(fd))dai_error("dai_read_param: fclose failed",0);
   }
 
   /* process 0 broadcasts data to everybody else                            */
   /* for 6 Integers there shouldn't be alignement padding in the structure */
-  len = 6*sizeof(Integer); orig =0;
+  /* the integers are followed by array name */
+  len = 6*sizeof(Integer)+DRA_MAX_NAME+1; orig =0;
   ga_brdcst_(&brd_type, DRA + dra_hndl, &len, &orig);
   
   ga_sync_();
@@ -105,8 +109,9 @@ Integer me=ga_nodeid_(), dra_hndl=d_a+DRA_OFFSET;
                                 dai_error("dai_write_param:chunk1",0);
     if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].chunk2))
                                 dai_error("dai_write_param:chunk2",0);
+    if(!fprintf(fd,"\n%s\n",(long)DRA[dra_hndl].name))
+                                dai_error("dai_write_param:name",0);
 
-    /* name not stored yet*/
     if(fclose(fd))dai_error("dai_write_param: fclose failed",0);
   }
 
