@@ -1,4 +1,4 @@
-c $Id: scalapack.F,v 1.3 2004-11-15 17:49:16 edo Exp $
+c $Id: scalapack.F,v 1.4 2004-11-15 23:01:03 edo Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
@@ -18,7 +18,6 @@ c
 #include "scalapack.fh"
       data init /.false./
       end
-
 
 
       subroutine SLinit
@@ -99,7 +98,8 @@ c
 c
       integer  dim, nb,lo, hi
       integer  np_or_q, npnum, mypcord 
-      integer totblocks, minblocksproc, extrablocks, corr,BlocksBeforeMe 
+      integer totblocks, minblocksproc, extrablocks, corr,
+     *     BlocksBeforeMe 
       integer numroc
 c
       np_or_q = numroc(dim, nb, mypcord, 0, npnum)
@@ -138,13 +138,13 @@ c***  reference: Dongarra et al, 'A look at scalable dense lin. alg. libs'
 c
       implicit none
 #include "scalapack.fh"
-      integer g_a, nbr, nbc, lda, np, nq, dim1, dim2
+      integer  nbr, nbc, lda, np, nq, dim1, dim2
+      integer g_a
       double  precision  s_a(lda,nq)
       integer row, col, tcol, trow, rbase, cbase
       integer pcol, prow
 
 c***  Synchronize at the beginning
-      call ga_sync()
 c    
       rbase = 1
       cbase = 1
@@ -172,7 +172,6 @@ c
       enddo
 
 c**** ... and at the end
-      call ga_sync()
       end
 
 
@@ -190,7 +189,6 @@ c
       integer pcol, prow
 c
 c**** Syncronize at the beginning
-      call ga_sync()
 c   
       rbase = 1
       cbase = 1
@@ -217,7 +215,6 @@ c
       enddo
 
 c**** ... and at the end
-      call ga_sync()
       end
 
 
@@ -1172,7 +1169,8 @@ c
 c
       integer me
       integer nwork
-      integer lda, ldb, elemA, elemB
+      integer lda, ldb
+      integer elemA,elemB
       integer numroc
       
       integer nb                ! block size
@@ -1182,21 +1180,21 @@ c
       integer ngaps, hgap, adrgaps
       integer iclu, hclustr, adrclustr
       integer if, hfail, adrfail
-      integer liwork, hiwork, adriwork
-      integer lcwork, hcwork, adrcwork
+      integer liwork,hiwork, adriwork
+      integer lcwork,hcwork, adrcwork
 c
-      integer nn, mq0, np0
+      integer nn,mq0, np0
       double precision vl, vu, abstol, orfac
       integer il, iu
       integer m, nz
       integer n
       integer info
 
-      integer iceil, iii
+      integer iii
       double precision pdlamch
       external pdlamch
-      external iceil
-      intrinsic max
+      integer iceil
+!      intrinsic max
 c     
 c     processor dependent; machine dependent
 c     
@@ -1253,7 +1251,8 @@ c
 c     
       call ga_sync()
 c     
-      if (oactive) then
+!      if (oactive) then
+      if (.true.) then
 c     
          elemA= mpA*nqA
          status = .true.
@@ -1550,7 +1549,8 @@ c
 c     
       call ga_sync()
 c     
-      if (oactive) then
+!      if (oactive) then
+      if (.true.) then
 c     
          elemA= mpA*nqA
          status = .true.
