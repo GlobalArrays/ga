@@ -45,7 +45,7 @@ void fill_patch(double *ptr, int dim[], int ld[], int ndim, double val)
 
 void do_work()
 {
-int g_a, g_b, g_c;
+int g_a, g_b;
 int me=GA_Nodeid(), nproc=GA_Nnodes(), proc, loop;
 int dims[NDIM], lo[NDIM], hi[NDIM], block[NDIM], ld[NDIM-1];
 int i,d,*proclist, offset;
@@ -56,8 +56,6 @@ typedef struct {
 } patch_t;
 patch_t *regions;
 int *map;
-int elems;
-double val;
 double *buf;
 
      /***** create array A with default distribution  *****/
