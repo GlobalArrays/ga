@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.15 2003-03-31 21:06:43 d3g293 Exp $*/
+/*$Id: matmul.c,v 1.16 2003-05-07 15:57:14 d3g293 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -432,7 +432,7 @@ Integer *tmplo = adims, *tmphi =bdims;
 DoubleComplex ONE, ZERO;
 float ONE_F = 1.0, ZERO_F = 0.0;
 double ZERO_D = 0.0;
-Integer ZERO_I;
+Integer ZERO_I = 0;
 Integer get_new_B;
 DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
