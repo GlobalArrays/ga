@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.88 2004-07-20 02:26:10 manoj Exp $ */
+/* $Id: armci.c,v 1.89 2004-07-20 17:51:14 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -538,18 +538,17 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
 int direct=SAMECLUSNODE(nb_handle->proc);
    if(direct)return(success);
-#ifdef ARMCI_PROFILE
-   armci_profile_start(ARMCI_PROFILE_NOTIFY_WAIT);
-#endif
     if(nb_handle) {
       if(nb_handle->agg_flag) {
 	armci_agg_complete(nb_handle, UNSET);
-#       ifdef ARMCI_PROFILE
-	armci_profile_stop();
-#       endif
 	return (success);
       }
     }
+#ifdef ARMCI_PROFILE
+    /* to avoid event overlapping, start profiling after aggregate calls */
+    armci_profile_start(ARMCI_PROFILE_NOTIFY_WAIT);
+#endif
+
     if(nb_handle){
 #     ifdef ARMCI_NB_WAIT
         if(nb_handle->tag==0){
