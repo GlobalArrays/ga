@@ -24,8 +24,8 @@
 #define  ga_diag_                  GA_DIAG
 #define  ga_diag_reuse_            GA_DIAG_REUSE
 #define  ga_diag_seq_              GA_DIAG_SEQ
-#define  ga_diag_std_i             GA_DIAG_STD
-#define  ga_diag_std_seq_i         GA_DIAG_STD_SEQ
+#define  ga_diag_std_              GA_DIAG_STD
+#define  ga_diag_std_seq_          GA_DIAG_STD_SEQ
 #define  ga_distribution_          GA_DISTRIBUTION
 #define  ga_duplicate_             GA_DUPLICATE
 #define  ga_error_                 GA_ERROR
