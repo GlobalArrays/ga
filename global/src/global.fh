@@ -15,6 +15,7 @@
       logical ga_create_mutexes
       logical ga_destroy_mutexes
       logical ga_valid_handle
+      logical ga_update2_ghosts
       double precision ga_ddot, ga_ddot_patch
       double complex   ga_zdot, ga_zdot_patch
       double complex   nga_zdot_patch
@@ -36,6 +37,7 @@
       external ga_create_mutexes
       external ga_destroy_mutexes
       external ga_valid_handle
+      external ga_update2_ghosts
       external ga_ndim
       external ga_spd_invert, ga_solve, ga_llt_solve
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg

@@ -162,6 +162,7 @@
 #define  ga_ndim_                  GA_NDIM
 #define  ga_print_distribution_    GA_PRINT_DISTRIBUTION
 #define  ga_update_ghosts_         GA_UPDATE_GHOSTS
+#define  ga_update2_ghosts_        GA_UPDATE2_GHOSTS
 #define  ga_has_ghosts_            GA_HAS_GHOSTS
 
 #define  nga_create_               NGA_CREATE
