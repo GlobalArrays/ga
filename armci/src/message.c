@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.37 2002-03-22 22:14:22 d3h325 Exp $ */
+/* $Id: message.c,v 1.38 2002-05-09 21:23:22 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -92,6 +92,12 @@ void armci_msg_gop_init()
        work = GOP_BUF(armci_me)->array; /* each process finds its place */
        GOP_BUF(armci_me)->a.flag=EMPTY;   /* initially buffer is empty */
        GOP_BUF(armci_me)->b.flag=EMPTY;  /* initially buffer is empty */
+       if(armci_me == armci_master ){
+          GOP_BUF(armci_clus_last+1)->a.flag=EMPTY;/*initially buffer is empty*/
+          GOP_BUF(armci_clus_last+2)->a.flag=EMPTY;/*initially buffer is empty*/
+          GOP_BUF(armci_clus_last+1)->b.flag=EMPTY;/*initially buffer is empty*/
+          GOP_BUF(armci_clus_last+2)->b.flag=EMPTY;/*initially buffer is empty*/
+       }
        _armci_gop_shmem = 1;
      }
 #endif
@@ -269,150 +275,97 @@ int count=0;
 
 /*\ shared memory based broadcast for a single SMP node
 \*/
-static void armci_smp_bcast(void *x, int n )
+void armci_smp_bcast(void *x, int n , int root)
 {
-int root, up, left, right;
-int ndo, len,i;
-int nslave = armci_clus_info[armci_clus_me].nslave;
-static int bufid=0;
+int ndo, len,i, bufsize = BUF_SIZE*sizeof(double);
+static int bufid=1;
 
-    if(nslave<2) return; /* nothing to do */
+  if(armci_clus_info[armci_clus_me].nslave<2) return; /* nothing to do */
 
-    if(!x)armci_die("armci_msg_bcast: NULL pointer", n);
+  if(!x)armci_die("armci_msg_bcast: NULL pointer", n);
   
-    armci_msg_bintree(SCOPE_NODE, &root, &up, &left, &right);
-       
-    while ((ndo = (n<=BUF_SIZE*sizeof(double)) ? n : BUF_SIZE*sizeof(double))) {
-       len = ndo;
+  /* enable or balance pipeline for messages comparable to bufsize */
+  if((n>bufsize/2) && (n <(2*bufsize-64))){
+      bufsize = n/2; bufsize>>=3; bufsize<<=3; 
+  }
+
+  while ((ndo = (n<=bufsize) ? n : bufsize)) {
+    len = ndo;
           
-       if(armci_me==root){
+    if(armci_me==root){
+
+       /* wait for the flag protecting the buffer to clear */
+       armci_util_wait_int(&GOP_BUF(armci_clus_last+bufid)->a.flag,EMPTY,100);
+       GOP_BUF(armci_clus_last+bufid)->a.flag=FULL; /* reserve it */
 #if 0     
-          for(i=armci_clus_first; i <= armci_clus_last; i++)
-                if(i!=root)armci_util_wait_int(&GOP_BUF(i)->b.flag, EMPTY, 100);
-          armci_copy(x,GOP_BUF(armci_clus_last+bufid+1)->array,len);
-          for(i=armci_clus_first; i <= armci_clus_last; i++)
-                if(i!=root) GOP_BUF(i)->b.flag=FULL;
-#else          
-          armci_copy(x,GOP_BUF(armci_clus_last+bufid+1)->array,len);
-          for(i=armci_clus_first; i <= armci_clus_last; i++)
-                if(i!=root){ 
+       for(i=armci_clus_first; i <= armci_clus_last; i++)
+           if(i!=root)armci_util_wait_int(&GOP_BUF(i)->b.flag, EMPTY, 100);
+       armci_copy(x,GOP_BUF(armci_clus_last+bufid+1)->array,len);
+       for(i=armci_clus_first; i <= armci_clus_last; i++)
+           if(i!=root) GOP_BUF(i)->b.flag=FULL;
+#else   
+       armci_copy(x,GOP_BUF(armci_clus_last+bufid)->array,len);
+       for(i=armci_clus_first; i <= armci_clus_last; i++)
+           if(i!=root){ 
                   armci_util_wait_int(&GOP_BUF(i)->b.flag, EMPTY, 100);
                   GOP_BUF(i)->b.flag=FULL;
-                } 
+           } 
 #endif            
-       }else{     
-           armci_util_wait_int(&GOP_BUF(armci_me)->b.flag , FULL, 100);
-           armci_copy(GOP_BUF(armci_clus_last+bufid+1)->array,x,len);
+    }else{     
+           armci_util_wait_int(&GOP_BUF(armci_me)->b.flag, FULL, 100);
+           armci_copy(GOP_BUF(armci_clus_last+bufid)->array,x,len);
            GOP_BUF(armci_me)->b.flag  = EMPTY;
-       }
+    }
 
-       n -=ndo;
-       x = len + (char*)x;
+    n -=ndo;
+    x = len + (char*)x;
        
-       bufid = (bufid+1)%2;
-    }    
+    bufid = (bufid)%2 +1;
+
+    /* since root waited for everybody to check in the previous buffer is free*/
+    if(armci_me==root){
+          GOP_BUF(armci_clus_last+bufid)->a.flag=EMPTY;
+    }
+  }    
 }        
-       
-#if 0
-/*\ shared memory based broadcast for a single SMP node
+
+
+
+/*\ shared memory based broadcast for a single SMP node out of shmem buffer
 \*/
-static void armci_smp_bcast3(void *x, int n )
+void armci_smp_buf_bcast(void *x, int n, int root, void *shmbuf )
 {
-int root, up, left, right;
-int ndo, len;
-int nslave = armci_clus_info[armci_clus_me].nslave;
+int i, nslave = armci_clus_info[armci_clus_me].nslave;
 
-    if(nslave<2) return; /* nothing to do */
-   
+    if(nslave<2){
+        armci_copy(shmbuf,x,n);
+        return; /* nothing to do */
+    }
     if(!x)armci_die("armci_msg_bcast: NULL pointer", n);
-   
-    armci_msg_bintree(SCOPE_NODE, &root, &up, &left, &right);
-   
-    while ((ndo = (n<=BUF_SIZE*sizeof(double)) ? n : BUF_SIZE*sizeof(double))) {
-       len = ndo;
-      
-       if (left >-1)
-         armci_util_wait_int(&GOP_BUF(left)->a.flag , EMPTY, 100);
-
-       if (right >-1 )
-         armci_util_wait_int(&GOP_BUF(right)->a.flag , EMPTY, 100);
-
-       if(armci_me == root){
-           armci_util_wait_int(&GOP_BUF(armci_me)->a.flag , EMPTY, 100);
-           armci_copy(x,GOP_BUF(armci_me)->array,len);
-       } else {
-           armci_util_wait_int(&GOP_BUF(armci_me)->a.flag , FULL, 100);
-           armci_copy(GOP_BUF(up)->array,GOP_BUF(armci_me)->array,len);
-       }
-
-       if (left >-1)
-           GOP_BUF(left)->a.flag =FULL;
-
-       if (right >-1 )
-           GOP_BUF(right)->a.flag =FULL;
-
-       if (armci_me != root ){
-           armci_copy(GOP_BUF(up)->array,x,len);
-           GOP_BUF(armci_me)->a.flag=EMPTY;
-       }
-
-       n -=ndo;
-       x = len + (char*)x;
+    if(!shmbuf)armci_die("armci_msg_bcast: NULL pointer", n);
+ 
+    if(armci_me==root){
+          /* notify others that the data in buffer is ready */
+          for(i=armci_clus_first; i <= armci_clus_last; i++)
+                if(i!=root){
+                  armci_util_wait_int(&GOP_BUF(i)->b.flag, EMPTY, 100);
+                  GOP_BUF(i)->b.flag=FULL;
+                }
+          /* root also needs to copy */
+          armci_copy(shmbuf,x,n);
+          /* wait until everybody is finished -- can reclaim buffer */
+          for(i=armci_clus_first; i <= armci_clus_last; i++)
+              if(i!=root)armci_util_wait_int(&GOP_BUF(i)->b.flag, EMPTY,100000);
+          
+    }else{
+           /* spin until data in buffer is ready */
+           armci_util_wait_int(&GOP_BUF(armci_me)->b.flag , FULL, 100000);
+           armci_copy(shmbuf,x,n);       /* copy data */
+           GOP_BUF(armci_me)->b.flag  = EMPTY; /* indicate we are done */
     }
 }
 
-
-/*\ shared memory based broadcast for a single SMP node
-\*/ 
-static void armci_smp_bcast2(void *x, int n )
-{   
-int root, up, left, right;
-int ndo, len;
-int nslave = armci_clus_info[armci_clus_me].nslave;
        
-    if(nslave<2) return; /* nothing to do */
-
-    if(!x)armci_die("armci_msg_bcast: NULL pointer", n);
-       
-    armci_msg_bintree(SCOPE_NODE, &root, &up, &left, &right);
-          
-    while ((ndo = (n<=BUF_SIZE*sizeof(double)) ? n : BUF_SIZE*sizeof(double))) {
-       len = ndo;
-
-       /* we should be able to get rid of this copy */
-       if(armci_me == root){
-           armci_copy(x,GOP_BUF(armci_me)->array,len);
-           GOP_BUF(armci_me)->a.flag = FULL;
-       }          
-               
-       armci_util_wait_int(&GOP_BUF(armci_me)->a.flag, FULL, 100);
-                  
-       /*  this version assumes a specific order of data arrival */
-       if (left >-1) { 
-         armci_util_wait_int(&GOP_BUF(left)->a.flag, EMPTY, 100);
-         armci_copy(GOP_BUF(armci_me)->array,GOP_BUF(left)->array,len);
-         GOP_BUF(left)->a.flag = FULL;
-       }       
-                      
-       if (right >-1 ) {
-         armci_util_wait_int(&GOP_BUF(right)->a.flag, EMPTY, 100);
-         armci_copy(GOP_BUF(armci_me)->array, GOP_BUF(right)->array,len);
-         GOP_BUF(right)->a.flag = FULL;
-       }
-       
-       if (armci_me != root ){
-           armci_copy(GOP_BUF(armci_me)->array,x,len);
-           GOP_BUF(armci_me)->a.flag=EMPTY;
-       }
-       
-       n -=ndo;
-       x = len + (char*)x;
-    }    
-}      
-
-
-#endif
-
 #ifndef armci_msg_bcast
 /*\ SMP-aware global broadcast routine
 \*/
@@ -426,8 +379,8 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
 
     /* intra-node operation */
 #if 1
-    if(_armci_gop_shmem && nslave<17 && root==armci_master)
-     armci_smp_bcast(buf, len);
+    if(_armci_gop_shmem && nslave<33)
+       armci_smp_bcast(buf, len, Root);
     else
 #endif
     armci_msg_bcast_scope(SCOPE_NODE, buf, len, Root);
@@ -1032,10 +985,13 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
                if(from != -1){
                   b = GOP_BUF(from);
 #if 1
-                  if(first)
-                     gop2(type, ndo, op, GOP_BUF(armci_me)->array, b->array,x);
-                  else
-                     gop(type, ndo, op, GOP_BUF(armci_me)->array, b->array);
+                  if(armci_me == root) gop(type, ndo, op, x, b->array);
+                  else {
+                    if(first)
+                       gop2(type, ndo, op, GOP_BUF(armci_me)->array, b->array,x);
+                    else
+                       gop(type, ndo, op, GOP_BUF(armci_me)->array, b->array);
+                  }
                   first =0;
 #else
                   gop(type, ndo, op, GOP_BUF(armci_me)->array, b->array);
@@ -1064,9 +1020,12 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
 
        if (armci_me != root ) {
            GOP_BUF(armci_me)->a.flag=FULL;
-       }else
+       }
+#if 0
+        else
            /* NOTE:  this copy can be eliminated in a cluster configuration */
            armci_copy(GOP_BUF(armci_me)->array,x,len);
+#endif
 
        n -=ndo;
        x = len + (char*)x;
