@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.17 2000-05-02 17:48:53 d3h325 Exp $
+# $Id: makefile.h,v 1.18 2000-05-05 18:25:53 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -252,21 +252,24 @@ endif
 # LAPI is the primary target for SP
 #
 ifeq ($(TARGET),LAPI)
-         IBM_  = 1
+         IBM_ = 1
          FLD  = mpcc_r -lxlf -lxlf90 -lm
+           CC = mpcc_r
 GLOB_DEFINES += -DSP
 endif
 #....................
 ifeq ($(TARGET),SP1)
 #
-         IBM_  = 1
+         IBM_ = 1
          FLD  = mpxlf
+           CC = mpcc
 endif
 #....................
 ifeq ($(TARGET),SP)
 #
-         IBM_  = 1
+         IBM_ = 1
          FLD  = mpxlf
+           CC = mpcc
 
 # need to strip symbol table to alleviate a bug in AIX 4.1 ld
 define AIX4_RANLIB
