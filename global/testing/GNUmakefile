@@ -75,7 +75,7 @@ COPT= $(NOPT)
 
 
 ifeq ($(P_FILE),YES)
-%.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a  $(EXTRA)
+%.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a $(LIBDIR)/libarmci.a  $(EXTRA)
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
 	if [ -f $(basename $@).c ]; then\
 		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(CLIBS);\
@@ -83,7 +83,7 @@ ifeq ($(P_FILE),YES)
 		$(LINK.f) $(FLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(FLIBS);\
         fi
 else
-%.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a  $(EXTRA)
+%.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a  $(LIBDIR)/libarmci.a $(EXTRA)
 	if [ -f $(basename $@).c ]; then\
 		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(CLIBS);\
 	else\
