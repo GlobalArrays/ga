@@ -107,4 +107,8 @@ int _val_;\
 
 #define PENDING_OPER(p) cmpl_arr[(p)].oper
 
+
+#define WAIT_FOR_GETS CLEAR_COUNTER(get_cntr)
+#define WAIT_FOR_PUTS CLEAR_COUNTER(ack_cntr)
+
 #endif

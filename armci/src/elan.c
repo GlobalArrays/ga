@@ -264,3 +264,47 @@ ELAN_LOCK *rem_locks = (ELAN_LOCK*)(all_locks + proc*num_locks);
 }
      
 #endif
+
+#ifdef _ELAN_PUTGET_H
+/*\ strided put, nonblocking
+\*/
+void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+int _j;
+char *ps=src_ptr, *pd=dst_ptr;
+
+    for (_j = 0;  _j < count;  _j++){
+      elan_put(elan_base->state, ps, pd, (size_t)bytes, proc);
+      ps += src_stride;
+      pd += dst_stride;
+    }
+}
+
+
+/*\ strided get, nonblocking
+\*/
+void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+int _j;
+char *ps=src_ptr, *pd=dst_ptr;
+      for (_j = 0;  _j < count;  _j++){
+          elan_get(elan_base->state, ps, pd, (size_t)bytes, proc);
+          ps += src_stride;
+          pd += dst_stride;
+      }
+}
+
+
+void armcill_wait_get()
+{
+   elan_getWaitAll(elan_base->state,1000);
+}
+
+void armcill_wait_put()
+{
+   elan_putWaitAll(elan_base->state,1000);
+}
+
+#endif

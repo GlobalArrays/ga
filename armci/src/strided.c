@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.39 2002-03-13 17:13:33 vinod Exp $ */
+/* $Id: strided.c,v 1.40 2002-05-21 19:48:09 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -361,13 +361,13 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
       }
     }
     
-#ifdef LAPI
+    /* deal with non-blocking loads and stores */
+#if defined(LAPI) || defined(_ELAN_PUTGET_H)
     if(proc != armci_me){
-
        if(op == GET){
-           CLEAR_COUNTER(get_cntr); /* wait for data arrival */
+           WAIT_FOR_GETS; /* wait for data arrival */
        }else { 
-           CLEAR_COUNTER(ack_cntr); /* data must be copied out*/ 
+           WAIT_FOR_PUTS; /* data must be copied out*/ 
        }
     }
 #endif

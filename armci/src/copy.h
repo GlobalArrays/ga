@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.36 2002-05-10 01:21:30 edo Exp $ */
+/* $Id: copy.h,v 1.37 2002-05-21 19:48:08 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -84,6 +84,7 @@ void FATR DCOPY1D(void*, void*, int*);
 /***************************** 1-Dimensional copy ************************/
 
 #if defined(QUADRICS)
+#include <elan/elan.h>
 #      define armci_put(src,dst,n,proc)\
            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
               armci_copy(src,dst,n);\
@@ -238,7 +239,12 @@ void FATR DCOPY1D(void*, void*, int*);
 #   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
            CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
 
-#elif defined(HITACHI)
+#elif defined(HITACHI) || defined(_ELAN_PUTGET_H)
+
+#ifdef QUADRICS
+#   define WAIT_FOR_PUTS elan_putWaitAll(elan_base->state,200)
+#   define WAIT_FOR_GETS elan_getWaitAll(elan_base->state,200)
+#endif
 
     extern void armcill_put2D(int proc, int bytes, int count,
                 void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
@@ -246,6 +252,7 @@ void FATR DCOPY1D(void*, void*, int*);
                 void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
 #   define armci_put2D armcill_put2D
 #   define armci_get2D armcill_get2D
+
 
 #else
 #   define armci_put2D(proc,bytes,count,src_ptr,src_stride,dst_ptr,dst_stride){\
