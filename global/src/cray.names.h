@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.16 1996-08-16 23:08:24 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.17 1996-12-11 00:10:41 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -60,6 +60,7 @@
 #define  ga_ddot_patch_dp_         GA_DDOT_PATCH_DP
 #define  ga_proc_topology_         GA_PROC_TOPOLOGY
 #define  ga_symmetrize_            GA_SYMMETRIZE
+#define  ga_summarize_             GA_SUMMARIZE
 #define  ga_transpose_             GA_TRANSPOSE
 
 #define  gai_dot_patch_            GAI_DOT_PATCH

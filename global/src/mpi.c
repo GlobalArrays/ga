@@ -16,8 +16,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "mpi.h"
 #include "config.h"
+#include "mpi.h"
 #include "global.h"
 #include "message.h"
 
@@ -34,6 +34,46 @@ int SR_caught_sigint;     /* for compatibility with TCGMSG interface only */
 
 #define MAX_PROC 1024     /* max no. processes used in data server model */
 #define DEBUG 0
+
+
+
+/*\ Creates communicator for GA compute processes
+\*/
+void ga_mpi_communicator(GA_COMM)
+MPI_Comm *GA_COMM;
+{
+MPI_Comm MSG_COMM;
+
+#   ifdef MPI
+       /* running with MPI library */
+       MSG_COMM = MPI_COMM_WORLD;
+#   else
+       /* running with TCGMSG-MPI library */
+       extern MPI_Comm  TCGMSG_Comm;
+       MSG_COMM = TCGMSG_Comm;
+#   endif
+
+    if(ClusterMode){
+
+        MPI_Group MSG_GROUP, GA_GROUP;
+        int i, *data_servers = (int*)malloc(GA_n_clus*sizeof(int)); 
+
+        if(!data_servers)ga_error("ga_mpi_communicator: malloc failed",0);
+        for(i=0; i < GA_n_clus; i++)
+           data_servers[i] = GA_clus_info[i].masterid+GA_clus_info[i].nslave-1;
+      
+        /* exclude data server processes from the group */ 
+        MPI_Comm_group(MSG_COMM, &MSG_GROUP); 
+        MPI_Group_excl(MSG_GROUP, (int)GA_n_clus, data_servers, &GA_GROUP);
+        MPI_Comm_create(MSG_COMM, GA_GROUP, GA_COMM);
+
+    } else{
+
+        *GA_COMM = MSG_COMM;
+
+    }
+}
+
 
 static char* merge_names(name, len)
 char *name;
@@ -146,45 +186,6 @@ void init_msg_interface()
   if(ga_msg_nodeid_()==0 && DEBUG)
     for(i=0;i<GA_n_clus;i++)
        printf("%s cluster:%d nodes:%d\n", GA_clus_info[i].hostname,i, GA_clus_info[i].nslave );
-}
-
-
-
-/*\ Creates communicator for GA compute processes
-\*/
-void ga_mpi_communicator(GA_COMM)
-MPI_Comm *GA_COMM;
-{
-MPI_Comm MSG_COMM;
-
-#   ifdef MPI
-       /* running with MPI library */
-       MSG_COMM = MPI_COMM_WORLD;
-#   else
-       /* running with TCGMSG-MPI library */
-       extern MPI_Comm  TCGMSG_Comm;
-       MSG_COMM = TCGMSG_Comm;
-#   endif
-
-    if(ClusterMode){
-
-        MPI_Group MSG_GROUP, GA_GROUP;
-        int i, *data_servers = (int*)malloc(GA_n_clus*sizeof(int)); 
-
-        if(!data_servers)ga_error("ga_mpi_communicator: malloc failed",0);
-        for(i=0; i < GA_n_clus; i++)
-           data_servers[i] = GA_clus_info[i].masterid+GA_clus_info[i].nslave-1;
-      
-        /* exclude data server processes from the group */ 
-        MPI_Comm_group(MSG_COMM, &MSG_GROUP); 
-        MPI_Group_excl(MSG_GROUP, (int)GA_n_clus, data_servers, &GA_GROUP);
-        MPI_Comm_create(MSG_COMM, GA_GROUP, GA_COMM);
-
-    } else{
-
-        *GA_COMM = MSG_COMM;
-
-    }
 }
 
 

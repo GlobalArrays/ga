@@ -55,6 +55,7 @@
 #define  GA_sort_scat_dbl          ga_sort_scat_dbl_
 #define  GA_sort_scat_int          ga_sort_scat_int_
 #define  GA_sync                   ga_sync_
+#define  GA_summarize              ga_summarize_
 #define  GA_symmetrize             ga_symmetrize_
 #define  GA_terminate              ga_terminate_
 #define  GA_transpose              ga_transpose_
