@@ -1,6 +1,8 @@
 #ifndef _GAPP_H
 #define _GAPP_H
 
+#if defined(__cplusplus) || defined(c_plusplus)
+
 #include <stdio.h>
 #include "ga.h"
 #include "macdecls.h"
@@ -10,7 +12,7 @@
 #include "sndrcv.h"
 #endif
 
-#define _GA_USENAMESPACE_ 0
+#define _GA_USENAMESPACE_ 1
 
 #if _GA_USENAMESPACE_
 #define _GA_STATIC_ 
@@ -42,3 +44,4 @@ class GA {
 };
 
 #endif // _GAPP_H
+#endif
