@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.15 1996-07-26 16:27:55 d3g681 Exp $*/
+/*$Id: global.util.c,v 1.16 1996-08-06 05:33:53 d3g681 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -150,13 +150,13 @@ char name[FLEN];
               case MT_F_DBL:
                    ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj++)
-                     fprintf(DEV," %12.6f",dbuf[jj]);
+                     fprintf(DEV," %11.5f",dbuf[jj]);
                    break;
 
               case MT_F_DCPL:
                    ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj+=2)
-                     fprintf(DEV," %12.6f,%12.6f",dbuf[jj], dbuf[jj+1]);
+                     fprintf(DEV," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
                    break;
               default: ga_error("ga_print: wrong type",0);
            }
@@ -206,13 +206,13 @@ char name[FLEN];
                  case MT_F_DBL:
                       ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
                       for(jj=0; jj<(jmax-j+1); jj++)
-                        fprintf(DEV," %12.6f",dbuf[jj]);
+                        fprintf(DEV," %11.5f",dbuf[jj]);
                       break;
 
                  case MT_F_DCPL:
 	              ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
 	              for(jj=0; jj<(jmax-j+1); jj+=2)
-	                fprintf(DEV," %12.6f,%12.6f",dbuf[jj], dbuf[jj+1]);
+	                fprintf(DEV," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
                       break;
                  default: ga_error("ga_print: wrong type",0);
 	     }
