@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.14 2001-08-30 19:06:54 d3h325 Exp $ */
+/* $Id: pack.c,v 1.15 2001-09-13 00:15:02 d3h325 Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -146,7 +146,7 @@ void armci_dispatch_strided(void *ptr, int stride_arr[], int count[],
         int chunk = count[fit_level];
         int stride_upd;
    
-#       ifdef PIPE_MEDIUM_BUFSIZE
+#       ifdef PIPE_MEDIUM_BUFSIZE_
           /* for first call we adjust nb for performance in medium request  */
           if(first_call && strides==0)
              if(chunk<2*bufsize && chunk>PIPE_MEDIUM_BUFSIZE) 
