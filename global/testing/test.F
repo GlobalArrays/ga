@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.45 2003-02-18 00:43:43 manoj Exp $
+c $Id: test.F,v 1.46 2003-04-17 21:42:55 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -14,6 +14,8 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 
 
+c#define MIRROR
+#define GA3
 
       program main
       implicit none
@@ -45,9 +47,13 @@ c
 c     we can also use GA_set_memory_limit BEFORE first ga_create call
 c
       ma_heap = heap/nproc + fudge 
+      ma_heap = 2*ma_heap
       call GA_set_memory_limit(util_mdtob(ma_heap))
 c
       if(ga_nodeid().eq.0)then
+#ifdef MIRROR
+         print *,' Performing tests on Mirrored Arrays'
+#endif
          print *,' GA initialized '
          call ffflush(6)
       endif
@@ -158,28 +164,39 @@ c
       parameter (n = 128)
       parameter (m = 2*n)
       double precision a(n,n), b(n,n), v(m),w(m)
-      integer iv(m), jv(m)
-      logical status
-      integer g_a, g_b
+      integer iv(m), jv(m), ijv(2,m)
+      logical status, lsame
+      integer g_a, g_b, g_c
       integer iran, i,j, loop,nloop,maxloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, ii, jj
       parameter (maxloop = 100)
       integer maxproc
+      integer ndim, dims(2), chunk(2), p_mirror
       parameter (maxproc = 128)
       double precision crap, sum1, sum2, x
       double precision nwords
+      logical found
+      integer lprocs,inode,iproc,nnodes
       intrinsic int
       iran(i) = int(util_drand(0)*real(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
+      inode = ga_cluster_nodeid()
+      lprocs = ga_cluster_nprocs(inode)
+      nnodes = ga_cluster_nnodes()
+      iproc = mod(me,lprocs)
       nloop = Min(maxloop,n)
 c     
 c     a() is a local copy of what the global array should start as
 c
       do j = 1, n
          do i = 1, n
+#ifndef MIRROR
             a(i,j) = i-1 + (j-1)*n
+#else
+            a(i,j) = inode + i-1 + (j-1)*n
+#endif
             b(i,j) =-1. 
          enddo
       enddo
@@ -192,7 +209,18 @@ c
 *     print *,ga_nodeid(), ' creating array'
 *     call ffflush(6)
 c     call setdbg(1)
+#ifndef MIRROR
       status = ga_create(MT_DBL, n, n, 'a', 0, 0, g_a)
+#else
+      ndim = 2
+      dims(1) = n
+      dims(2) = n
+      chunk(1) = 0
+      chunk(2) = 0
+      p_mirror = ga_mirror_config()
+      status = nga_create_config(MT_DBL, ndim,  dims, 'a', chunk,
+     +                  p_mirror, g_a)
+#endif
       if (.not. status) then
          write(6,*) ' ga_create failed'
          call ffflush(6)
@@ -251,7 +279,11 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
+#ifndef MIRROR
             if (mod(ij,nproc) .eq. me) then
+#else
+            if (mod(ij,lprocs) .eq. iproc) then
+#endif
                ilo = i
                ihi = min(i+inc, n)
                jlo = j
@@ -381,7 +413,11 @@ c           ihi = min(i+inc, n)
             if(jhi.eq.n-1)jhi=n
 c           jhi = min(j+inc-1, n)
 *               call ffflush(6)
+#ifndef MIRROR
             if (mod(ij,nproc) .eq. me) then
+#else
+            if (mod(ij,lprocs) .eq. iproc) then
+#endif
 c               print *, me, 'checking accumulate ',ilo,ihi,jlo,jhi,x
 * 11            format(' node ',i2,' checking accumulate ',4i4)
 *               call ffflush(6)
@@ -420,18 +456,33 @@ c              call ga_error('... exiting ',0)
 c
 c     overlapping accumulate
       call ga_sync()
+#ifndef MIRROR
       if (.not. ga_create(MT_DBL, n, n, 'b', 0, 0, g_b)) then
+#else
+      if (.not. nga_create_config(MT_DBL, ndim, dims, 'b', chunk,
+     +                    p_mirror, g_b)) then
+#endif
          call ga_error('ga_create failed for second array ',0)
       endif
 c
       call ga_zero(g_b)
       call ga_acc(g_b, n/2, n/2, n/2, n/2, 1d0, 1, 1d0)
       call ga_sync()
+#ifndef MIRROR
       if (me.eq.0) then
          call ga_get(g_b, n/2, n/2, n/2, n/2, b(1,1), 1)
          x = abs(b(1,1) -1d0*nproc)
+#else
+      if (iproc.eq.0) then
+         call ga_get(g_b, n/2, n/2, n/2, n/2, b(1,1), 1)
+         x = abs(b(1,1) -1d0*lprocs)
+#endif
          if(x.gt. 1d-10)then
+#ifndef MIRROR
             write(6,*)'val=',b(1,1),' expected=',nproc, x
+#else
+            write(6,*)'val=',b(1,1),' expected=',lprocs, x
+#endif
             call ga_error('overlapping accumulate failed',0)
          endif
          write(6,*)
@@ -456,7 +507,11 @@ c
          enddo
       enddo
       
+#ifndef MIRROR
       if (me.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
+#else
+      if (iproc.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
+#endif
       call ga_add(0.1d0, g_a, 0.9d0, g_b, g_b)
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
@@ -490,7 +545,11 @@ c
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
+#ifndef MIRROR
       if (me.eq.0) then 
+#else
+      if (iproc.eq.0) then 
+#endif
          call ga_put(g_b, 1, n, 1, n, b, n)
          call ga_put(g_a, 1, n, 1, n, a, n)
       endif
@@ -567,8 +626,14 @@ c
       crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
       do j = 1, 10 
        call ga_sync()
+#ifndef MIRROR
        itmp = iran(nproc)-1
        if(me.eq.itmp) then
+#else
+       itmp = iran(lprocs)-1
+       if(me.eq.itmp) then
+#endif
+#ifndef NGA_GATSCAT
          do loop = 1,m 
            ilo = iran(n) 
            jlo = iran(n)
@@ -587,6 +652,26 @@ c
              call ga_error('... exiting ',0)
            endif
          enddo
+#else
+         do loop = 1,m 
+           ilo = iran(n) 
+           jlo = iran(n)
+           ijv(1,loop) = ilo
+           ijv(2,loop) = jlo
+         enddo 
+         call nga_gather(g_a, v, ijv, m)
+         do loop = 1,m
+           ilo= ijv(1,loop)
+           jlo= ijv(2,loop)
+           call ga_get(g_a,ilo,ilo,jlo,jlo,v(loop),1)
+           if(v(loop)  .ne. a(ilo,jlo))then
+             write(6,*)me,' gather ', ilo,',',jlo,',', a(ilo,jlo)
+     &             ,' ',v(loop)
+             call ffflush(6)
+             call ga_error('... exiting ',0)
+           endif
+         enddo
+#endif
        endif
       enddo
 c
@@ -600,7 +685,12 @@ c
 
       do j = 1,10 
        call ga_sync()
+#ifndef MIRROR
        if(me.eq.iran(ga_nnodes())-1) then
+#else
+       if(iproc.eq.iran(lprocs)-1) then
+#endif
+#ifndef NGA_GATSCAT
          do loop = 1,m
            ilo = iran(n)
            jlo = iran(n)
@@ -622,6 +712,29 @@ c          if(v(loop)  .ne. w(loop))then
              call ga_error('... exiting ',0)
            endif
          enddo 
+#else
+         do loop = 1,m
+           ilo = iran(n)
+           jlo = iran(n)
+           ijv(1,loop) = ilo
+           ijv(2,loop) = jlo
+c          v(loop) = DSIN(a(ilo,jlo)+b(ilo,jlo)) 
+           v(loop) = 1d0 *(ilo+jlo)
+         enddo 
+         call nga_scatter(g_a, v, ijv, m)
+         do loop = 1,m
+           ilo= ijv(1,loop)
+           jlo= ijv(2,loop) 
+           call ga_get(g_a,ilo,ilo,jlo,jlo,w(loop),1)
+c          if(v(loop)  .ne. w(loop))then 
+           if(w(loop)  .ne. 1d0 *(ilo+jlo) )then 
+             write(6,*)me,' scatter ', ilo,',',jlo,',',w(loop) 
+     &             ,' ', 1d0 *(ilo+jlo) 
+             call ffflush(6)
+             call ga_error('... exiting ',0)
+           endif
+         enddo 
+#endif
        endif
        call ga_sync()
       enddo
@@ -654,23 +767,35 @@ c
       x = .1d0
       ii =n
       do jj = 1,1 
-	  call ga_sync()
+        call ga_sync()
         do loop = 1, ii 
 
-c          generate unique i,j pairs
-10         continue
-              i = iran(n)
-	      j=iran(n)
-           if (found(i,j, iv, jv, loop-1) ) goto 10
-
-           iv(loop) = i
-           jv(loop) = j
-           v(loop) = 1d0 *(i+j)
-           b(i,j) = b(i,j) + nproc*x*v(loop) ! update local ref. array
+c         generate unique i,j pairs
+10        continue
+          i = iran(n)
+          j=iran(n)
+          if (found(i,j, iv, jv, loop-1) ) goto 10
+#ifndef NGA_GATSCAT
+          iv(loop) = i
+          jv(loop) = j
+#else
+          ijv(1,loop) = i
+          ijv(2,loop) = j
+#endif
+          v(loop) = 1d0 *(i+j)
+#ifndef MIRROR
+          b(i,j) = b(i,j) + nproc*x*v(loop) ! update local ref. array
+#else
+          b(i,j) = b(i,j) + lprocs*x*v(loop) ! update local ref. array
+#endif
         enddo
 
 
-	call ga_scatter_acc(g_a,v,iv,jv, ii,x)
+#ifndef NGA_GATSCAT
+        call ga_scatter_acc(g_a,v,iv,jv, ii,x)
+#else
+        call nga_scatter_acc(g_a,v,ijv,ii,x)
+#endif
 
 c
         call ga_sync()
@@ -680,8 +805,13 @@ c
         call ga_get(g_a, 1, n, 1,n, a, n)
 
         do loop = 1,ii
+#ifndef NGA_GATSCAT
           i = iv(loop)
           j = jv(loop)
+#else
+          i = ijv(1,loop)
+          j = ijv(2,loop)
+#endif
           if(MISMATCH(a(i,j),b(i,j)))then
              print *,'Error',i,j,loop,a(i,j),'expected=',b(i,j)  
 *            if(me.eq.0)then
@@ -692,7 +822,7 @@ c
              call ga_error('scatter-acc error in trial ',jj) 
           endif
         enddo
-	  call ga_sync()
+        call ga_sync()
 
       enddo
 
@@ -723,28 +853,40 @@ c
       parameter (m = 2*n)
       double complex a(n,n), b(n,n), v(m),w(m)
       integer iv(m), jv(m)
+      integer ijv(2,m)
       logical status
       integer g_a, g_b
       integer iran, i,j, loop,nloop,maxloop, ilo, ihi, jlo, jhi, itmp
-      integer nproc, me, int, ij, inc, ii, jj
+      integer nproc, me, int, ij, inc, ii, jj, nnodes
       parameter (maxloop = 100)
       integer maxproc
+      integer ndim, dims(2), chunk(2), p_mirror
       parameter (maxproc = 128)
       double precision crap, real
       double precision nwords
       double complex   x, sum1, sum2, factor
+      integer lprocs, inode, iproc
       intrinsic int
       iran(i) = int(util_drand(0)*real(i)) + 1
 c
       nproc = ga_nnodes()
       me    = ga_nodeid()
+      inode = ga_cluster_nodeid()
+      lprocs = ga_cluster_nprocs(inode)
+      nnodes = ga_cluster_nnodes()
+      iproc = mod(me,lprocs)
       nloop = Min(maxloop,n)
 c
 c     a() is a local copy of what the global array should start as
 c
       do j = 1, n
          do i = 1, n
+#ifndef MIRROR
             a(i,j) = cmplx(dble(i-1), dble((j-1)*n))
+#else
+            a(i,j) = cmplx(dble(inode),0.0d00)
+     +             + cmplx(dble(i-1), dble((j-1)*n))
+#endif
             b(i,j) = cmplx(-1d0,1d0)
          enddo
       enddo
@@ -754,12 +896,28 @@ c
 c     print *,ga_nodeid(), ' creating array'
       call ffflush(6)
 c     call setdbg(1)
+#ifndef MIRROR
       status = ga_create(MT_DCPL, n, n, 'a', 0, 0, g_a)
+#else
+      ndim = 2
+      dims(1) = n
+      dims(2) = n
+      chunk(1) = 0
+      chunk(2) = 0
+      p_mirror = ga_mirror_config()
+      status = nga_create_config(MT_DCPL, ndim, dims, 'a', chunk,
+     +                           p_mirror, g_a)
+#endif
       if (.not. status) then
          write(6,*) ' ga_create failed'
          call ga_error('... exiting ',0)
       endif
+#ifndef MIRROR
       if (.not. ga_create(MT_DCPL, n, n, 'b', 0, 0, g_b)) then
+#else
+      if (.not. nga_create_config(MT_DCPL, ndim, dims, 'b', chunk,
+     _                            p_mirror, g_b)) then
+#endif
          call ga_error('ga_create failed for second array ',0)
       endif
 
@@ -808,7 +966,11 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
+#ifndef MIRROR
             if (mod(ij,nproc) .eq. me) then
+#else
+            if (mod(ij,lprocs) .eq. iproc) then
+#endif
                ilo = i
                ihi = min(i+inc, n)
                jlo = j
@@ -910,6 +1072,7 @@ c
       do j = 1, n
          do i = 1, n
             b(i,j) = cmplx(util_drand(0),util_drand(1))
+            b(i,j) = cmplx(dble(i),dble(j))
          enddo
       enddo
 c
@@ -927,7 +1090,11 @@ c           x = cmplx(0.333d0,0)
             jlo = j
             jhi = min(j+inc-1, n)
             if(jhi.eq.n-1)jhi=n
+#ifndef MIRROR
             if (mod(ij,nproc) .eq. me) then
+#else
+            if (mod(ij,lprocs) .eq. iproc) then
+#endif
                call ga_acc(g_a, ilo, ihi, jlo, jhi, b(ilo, jlo), n, x)
             endif
             ij = ij + 1
@@ -965,12 +1132,21 @@ c
       call ga_zero(g_b)
       call ga_acc(g_b, n/2, n/2, n/2, n/2, (1d0,-1d0), 1, (1d0,0d0))
       call ga_sync()
+#ifndef MIRROR
       if (me.eq.0) then
          call ga_get(g_b, n/2, n/2, n/2, n/2, x, 1)
-c        error = abs(x -(1d0,-1d0)*nproc)
          if (MISMATCH(x, ((1d0,-1d0)*nproc)))then
+#else
+      if (iproc.eq.0) then
+         call ga_get(g_b, n/2, n/2, n/2, n/2, x, 1)
+         if (MISMATCH(x, ((1d0,-1d0)*lprocs)))then
+#endif
 c        if(error.gt. (1d-8))then
+#ifndef MIRROR
             write(6,*)'val=',x,' expected=(',nproc,',',-nproc,')'
+#else
+            write(6,*)'val=',x,' expected=(',lprocs,',',-lprocs,')'
+#endif
             call ga_error('overlapping accumulate failed',0)
          endif
          write(6,*)
@@ -987,7 +1163,11 @@ c
          call ffflush(6)
       endif
       call ga_sync()
+#ifndef MIRROR
       if(me.eq.0) call ga_put(g_a, 1, n, 1, n, a, n)
+#else
+      if(iproc.eq.0) call ga_put(g_a, 1, n, 1, n, a, n)
+#endif
       call ga_copy(g_a, g_b)
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
@@ -1044,8 +1224,13 @@ c
       crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
       do j = 1, 10
        call ga_sync()
+#ifndef MIRROR
        itmp = iran(nproc)-1
        if(me.eq.itmp) then
+#else
+       itmp = iran(lprocs)-1
+       if(iproc.eq.itmp) then
+#endif
          do loop = 1,m
            ilo = iran(n)
            jlo = iran(n)
@@ -1076,7 +1261,11 @@ c
 c
       do j = 1,10
        call ga_sync()
+#ifndef MIRROR
        if(me.eq.iran(ga_nnodes())-1) then
+#else
+       if(me.eq.iran(lprocs)-1) then
+#endif
          do loop = 1,m
            ilo = iran(n)
            jlo = iran(n)
@@ -1121,7 +1310,11 @@ c
          enddo
       enddo
 
+#ifndef MIRROR
       if (me.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
+#else
+      if (iproc.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
+#endif
       call ga_add((0.1d0,-.1d0), g_a, (0.9d0,-.9d0), g_b, g_b)
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
@@ -1155,7 +1348,11 @@ c
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
+#ifndef MIRROR
       if (me.eq.0) then
+#else
+      if (iproc.eq.0) then
+#endif
          call ga_put(g_b, 1, n, 1, n, b, n)
          call ga_put(g_a, 1, n, 1, n, a, n)
       endif
@@ -1195,6 +1392,8 @@ c
       integer g_a
       integer iran, i, j, loop, nloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, dimi,dimj,iproc, ii, jj
+      integer ndim, dims(2), chunk(2), p_mirror, nnodes
+      integer lprocs, inode, iproc
       double precision nwords
       parameter (nloop = 100)
       integer maxproc
@@ -1207,18 +1406,37 @@ c
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
+      inode = ga_cluster_nodeid()
+      lprocs = ga_cluster_nprocs(inode)
+      nnodes = ga_cluster_nnodes()
+      iproc = mod(me,lprocs)
 c     
 c     a() is a local copy of what the global array should start as
 c
       do j = 1, n
          do i = 1, n
+#ifndef MIRROR
             a(i,j) = i-1 + (j-1)*1000
+#else
+            a(i,j) = inode + i-1 + (j-1)*1000
+#endif
          enddo
       enddo
 c     
 c     Create a global array
 c
+      ndim = 2
+      dims(1) = n
+      dims(2) = n
+      chunk(1) = 0
+      chunk(2) = 0
+      p_mirror = ga_mirror_config()
+#ifndef MIRROR
       if (.not. ga_create(MT_INT, n, n, 'a', 0, 0, g_a)) then
+#else
+      if (.not. nga_create_config(MT_INT, ndim, dims, 'a', chunk,
+     +                            p_mirror, g_a)) then
+#endif
          write(6,*) ' ga_create failed'
          call ffflush(6)
          call ga_error('... exiting ',0)
@@ -1265,7 +1483,11 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
+#ifndef MIRROR
             if (mod(ij,nproc) .eq. me) then
+#else
+            if (mod(ij,lprocs) .eq. iproc) then
+#endif
                ilo = i
                ihi = min(i+inc, n)
                jlo = j
@@ -1282,17 +1504,21 @@ c              call ffflush(6)
 c
 c     All nodes check all of a
 c
+#ifndef MIRROR
       if(me.eq.0)then
-      call ga_get(g_a, 1, n, 1, n, b, n)
-      do i = 1, n
-         do j = 1, n
-            if (b(i,j) .ne. a(i,j)) then
-               write(6,*) ' put ', me, i, j, a(i,j),b(i,j)
-               call ffflush(6)
-               call ga_error('... exiting ',0)
-            endif
-         enddo
-      enddo
+#else
+      if(iproc.eq.0)then
+#endif
+        call ga_get(g_a, 1, n, 1, n, b, n)
+        do i = 1, n
+           do j = 1, n
+              if (b(i,j) .ne. a(i,j)) then
+                 write(6,*) ' put ', me, i, j, a(i,j),b(i,j)
+                 call ffflush(6)
+                 call ga_error('... exiting ',0)
+              endif
+           enddo
+        enddo
       endif
       call ga_sync()
 c
@@ -1428,6 +1654,7 @@ c
 c
 c
 c
+#ifndef MIRROR
       if (me.eq.0) then
          write(6,*)
          write(6,*) '> checking ga_fence and ga_lock'
@@ -1482,6 +1709,7 @@ c
          write(6,*) ' ga_fence and ga_lock are OK'
          write(6,*)
       endif 
+#endif
 c
 c
       if (me.eq.0) then
@@ -1498,7 +1726,11 @@ c
             b(i,j)=-1
          enddo
       enddo
+#ifndef MIRROR
       if(me.eq.0)call ga_put(g_a,1,n,1,n,b,n)
+#else
+      if(iproc.eq.0)call ga_put(g_a,1,n,1,n,b,n)
+#endif
       call ga_sync()
       do k = 1, np
          if(map(5,k).eq.me)then
@@ -1508,7 +1740,11 @@ c
                 endif
                 do j= map(3,k), map(4,k)
                         do i= map(1,k), map(2,k)
+#ifndef MIRROR
                         b(i,j)=1*me
+#else
+                        b(i,j)=1*iproc
+#endif
                         enddo
                 enddo
                 call ga_put(g_a, map(1,k),map(2,k),map(3,k),map(4,k),
@@ -1519,7 +1755,11 @@ c
       call ga_sync()
 c
       do k = 1, np
+#ifndef MIRROR
          if(map(5,k).eq.me)then
+#else
+         if(map(5,k).eq.iproc)then
+#endif
                 call ga_get(g_a, map(1,k),map(2,k),map(3,k),map(4,k),
      &                 a(map(1,k),map(3,k)),n)
                 do j= map(3,k), map(4,k)
@@ -1535,7 +1775,11 @@ c
       enddo
       call ga_sync()
 c
+#ifndef MIRROR
       if(me.eq.0)then
+#else
+      if(iproc.eq.0)then
+#endif
 
         call ga_get(g_a,1,n,1,n,a,n)
         do j=1,n
@@ -1572,29 +1816,40 @@ c---------------------------------------------------------------------
       parameter (n =10) 
       parameter (m=2*n)
       real a(n,n), b(n,n), v(m), w(m)
-      integer iv(m), jv(m)
-      logical status
-      integer g_a, g_b
+      integer iv(m), jv(m), ijv(m)
+      logical status, lsame
+      integer g_a, g_b, g_c
       integer iran, i, j, loop, nloop, maxloop, ilo, ihi, jlo, jhi, itmp
-      integer nproc, me, int, ij, inc, ii, jj
+      integer nproc, me, int, ij, inc, ii, jj, nnodes
       double precision nwords
       parameter (maxloop = 100)
       integer maxproc
+      integer ndim, dims(2), chunk(2), p_mirror
       parameter (maxproc = 128)
       double precision crap
       real x, sum1, sum2
+      logical found
+      integer lprocs, inode, iproc
       intrinsic int
       iran(i) = int(util_drand(0)*real(i)) + 1
 
       nproc = ga_nnodes()
       me    = ga_nodeid()
+      inode = ga_cluster_nodeid()
+      lprocs = ga_cluster_nprocs(inode)
+      nnodes = ga_cluster_nnodes()
+      iproc = mod(me,lprocs)
       nloop = Min(maxloop,n)
 c     
 c     a() is a local copy of what the global array should start as
 c
       do j = 1, n
          do i = 1, n
+#ifndef MIRROR
             a(i,j) = i-1 + (j-1)*n
+#else
+            a(i,j) = inode + i-1 + (j-1)*n
+#endif
             b(i,j) = -1.
          enddo
       enddo
@@ -1602,7 +1857,18 @@ c
 c     
 c     Create a global array
 c
+      ndim = 2
+      dims(1) = n
+      dims(2) = n
+      chunk(1) = 0
+      chunk(2) = 0
+      p_mirror = ga_mirror_config()
+#ifndef MIRROR
       if (.not. ga_create(MT_REAL, n, n, 'a', 0, 0, g_a)) then
+#else
+      if (.not. nga_create_config(MT_REAL, ndim, dims, 'a', chunk,
+     +                            p_mirror, g_a)) then
+#endif
          write(6,*) ' ga_create failed'
          call ffflush(6)
          call ga_error('... exiting ',0)
@@ -1657,7 +1923,11 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
+#ifndef MIRROR
             if (mod(ij,nproc) .eq. me) then
+#else
+            if (mod(ij,lprocs) .eq. iproc) then
+#endif
                ilo = i
                ihi = min(i+inc, n)
                jlo = j
@@ -1784,7 +2054,11 @@ c           ihi = min(i+inc, n)
             if(jhi.eq.n-1)jhi=n
 c           jhi = min(j+inc-1, n)
 *               call ffflush(6)
+#ifndef MIRROR
             if (mod(ij,nproc) .eq. me) then
+#else
+            if (mod(ij,lprocs) .eq. iproc) then
+#endif
 c               print *, me, 'checking accumulate ',ilo,ihi,jlo,jhi,x
 * 11            format(' node ',i2,' checking accumulate ',4i4)
 *               call ffflush(6)
@@ -1823,7 +2097,12 @@ c
 c
 c     overlapping accumulate
       call ga_sync()
+#ifndef MIRROR
       if (.not. ga_create(MT_REAL, n, n, 'b', 0, 0, g_b)) then
+#else
+      if (.not. nga_create_config(MT_REAL, ndim, dims, 'b', chunk,
+     +                            p_mirror, g_b)) then
+#endif
          call ga_error('ga_create failed for second array ',0)
       endif
 c
@@ -1832,9 +2111,17 @@ c
       call ga_sync()
       if (me.eq.0) then
          call ga_get(g_b, n/2, n/2, n/2, n/2, b(1,1), 1)
+#ifndef MIRROR
          x = abs(b(1,1) -1*nproc)
+#else
+         x = abs(b(1,1) -1*lprocs)
+#endif
          if(x.gt. 1e-10)then
+#ifndef MIRROR
             write(6,*)'val=',b(1,1),' expected=',nproc, x
+#else
+            write(6,*)'val=',b(1,1),' expected=',lprocs, x
+#endif
             call ga_error('overlapping accumulate failed',0)
          endif
          write(6,*)
@@ -1857,7 +2144,11 @@ c
             a(i,j) = 0.1*a(i,j) + 0.9*b(i,j)
          enddo
       enddo
+#ifndef MIRROR
       if (me.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
+#else
+      if (iproc.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
+#endif
       call ga_add(0.1, g_a, 0.9, g_b, g_b)
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
@@ -1891,7 +2182,11 @@ c
             sum1 = sum1 + a(i,j)*b(i,j)
          enddo
       enddo
+#ifndef MIRROR
       if (me.eq.0) then
+#else
+      if (iproc.eq.0) then
+#endif
          call ga_put(g_b, 1, n, 1, n, b, n)
          call ga_put(g_a, 1, n, 1, n, a, n)
       endif
@@ -1968,8 +2263,13 @@ c
       crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
       do j = 1, 10
        call ga_sync()
+#ifndef MIRROR
        itmp = iran(nproc)-1
        if(me.eq.itmp) then
+#else
+       itmp = iran(lprocs)-1
+       if(iproc.eq.itmp) then
+#endif
          do loop = 1,m
            ilo = iran(n)
            jlo = iran(n)
@@ -2001,7 +2301,11 @@ c
  
       do j = 1,10
        call ga_sync()
+#ifndef MIRROR
        if(me.eq.iran(ga_nnodes())-1) then
+#else
+       if(iproc.eq.iran(lprocs)-1) then
+#endif
          do loop = 1,m
            ilo = iran(n)
            jlo = iran(n)
@@ -2067,7 +2371,11 @@ c          generate unique i,j pairs
            iv(loop) = i
            jv(loop) = j
            v(loop) = 1.0 *(i+j)
+#ifndef MIRROR
            b(i,j) = b(i,j) + nproc*x*v(loop) ! update local ref. array
+#else
+           b(i,j) = b(i,j) + lprocs*x*v(loop) ! update local ref. array
+#endif
         enddo
  
         call ga_scatter_acc(g_a,v,iv,jv, ii,x)
