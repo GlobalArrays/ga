@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.59 2003-07-31 22:45:10 vinod Exp $ */
+/* $Id: request.c,v 1.60 2004-02-25 21:34:26 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -689,13 +689,16 @@ int armci_rem_strided(int op, void* scale, int proc,
 #   endif
     }
     buf = buf0= GET_SEND_BUFFER(bufsize,op,proc);
-    if(nb_handle){
+    if(nb_handle)
+#ifdef ACC_SMP
+	 if(!ACC(op))
+#endif
+    {
       INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
       _armci_buf_set_tag(buf,nb_handle->tag,0);  
       if(nb_handle->bufid == NB_NONE)
         armci_set_nbhandle_bufid(nb_handle,buf,0);
     }
-    
     msginfo = (request_header_t*)buf;
 
     if(op == GET){
@@ -833,10 +836,14 @@ int armci_rem_strided(int op, void* scale, int proc,
        {
           armci_send_req(proc, msginfo, bufsize);
        }
-#     if !defined(USE_SOCKET_VECTOR_API) 
-       if(nb_handle)
+#     if !defined(USE_SOCKET_VECTOR_API)
+       if(nb_handle){
+#ifdef ACC_SMP
+	 if(!ACC(op))
+#endif
          armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
                                  stride_levels,1);
+       }
        else
 #     endif 
        {
