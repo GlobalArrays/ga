@@ -87,6 +87,7 @@ ifeq ($(TARGET),SOLARIS)
 #
 # Sun running Solaris
 #
+           CC = gcc
      WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
                 -Wwrite-strings
  GLOB_DEFINES = -DSOLARIS

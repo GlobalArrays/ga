@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.23 1996-04-30 23:36:38 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.24 1996-05-10 22:00:16 d3g681 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -42,7 +42,7 @@
 #include "global.core.h"
 
 #define DEBUG 0
-#define USE_MALLOC 0
+#define USE_MALLOC 1
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
