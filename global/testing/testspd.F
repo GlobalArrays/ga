@@ -310,10 +310,10 @@ c**** Create A, B, Y
 c**** It is granted that A, B, Y will not change
 c**** during the execution of the test LLT driver      
       
-c**** B = A * A'
+c**** B = A * A^
       call ga_dgemm('N', 'T', n, n, n, 1.d0, g_A, g_A, 0.d0, g_B)
 
-c**** A = B = A * A'
+c**** A = B = A * A^
       call ga_copy(g_B, g_A)
       
 c**** B = A * X      
@@ -341,18 +341,18 @@ c**** to obtain an LL'/U'U factorization (external interface)
 c**** if return code 'zero' is OK
       if (irc.eq.0) then
 
-c****    A1 = X * X' or A1 = X' * X
+c****    A1 = X * X^ or A1 = X^ * X
          if (uplo.eq.'L') then
           call ga_dgemm('N', 'T', n, n, n, 1.d0, g_X, g_X, 0.d0, g_A1)
          else
           call ga_dgemm('T', 'N', n, n, n, 1.d0, g_X, g_X, 0.d0, g_A1)
          endif
          
-c****    A1 = A - A1 = A - X * X' or A1 = A - A1 = A - X' * X
+c****    A1 = A - A1 = A - X * X^ or A1 = A - A1 = A - X^ * X
          call ga_add(1.0d0, g_A1, -1.0d0, g_A, g_A1)
       
-c****    dnF = ||A - A1*A1'|| / (||A|| * N * eps) : SHAPE L
-c****    dnF = ||A - A1'*A1|| / (||A|| * N * eps) : SHAPE U         
+c****    dnF = ||A - A1*A1^|| / (||A|| * N * eps) : SHAPE L
+c****    dnF = ||A - A1^*A1|| / (||A|| * N * eps) : SHAPE U         
          dnF = ga_dnormF(g_A1) / (dnA * n * eps)
 
          if (uplo.eq.'L') then

@@ -23,7 +23,7 @@ error:
 	exit
 endif
 
-LOC_INCLUDES = -I../src
+LOC_INCLUDES = -I../src -I../../tcgmsg/ipcv4.0
 ifeq ($(DIAG), PAR)
      LOC_DEFINES += -DPAR_DIAG
 endif
@@ -68,6 +68,8 @@ COPT= $(NOPT)
 #
 
 #.PRECIOUS: %.o
+
+
 
 
 ifeq ($(P_FILE),YES)
@@ -119,6 +121,11 @@ endif
 
 %.p:
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
+
+ifndef SCALAPACK
+testspd.x:
+	@echo testspd.x requires SCALAPACK installed: see global/README
+endif
 
 .PHONY: clean
 clean:
