@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.23 2004-03-29 19:06:24 manoj Exp $ */
+/* $Id: clusterinfo.c,v 1.24 2004-03-30 18:40:53 manoj Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -343,19 +343,17 @@ void armci_init_clusinfo()
      armci_die("armci: gethostname overrun name string length",len);
 #endif
 
-  if(DEBUG)
-     fprintf(stderr,"%d: %s len=%d\n",armci_me, name,(int)strlen(name));
-
 #ifdef SHMEM_HACK
   if(armci_enable_alpha_hack()) {
     name[len]='0'+armci_me;
     name[len+1]='\0';
     len++;
   }
-  if(DEBUG)
-     fprintf(stderr,"%d: %s len=%d\n",armci_me, name,(int)strlen(name));
 #endif
   
+  if(DEBUG)
+     fprintf(stderr,"%d: %s len=%d\n",armci_me, name,(int)strlen(name));
+
 #ifdef CLUSTER
   merged = merge_names(name); /* create hostname list */
   process_hostlist(merged);        /* compute cluster info */
