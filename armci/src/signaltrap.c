@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.21 2002-10-12 02:24:32 manoj Exp $ */
+/* $Id: signaltrap.c,v 1.22 2003-10-23 17:58:27 d3h325 Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -560,10 +560,7 @@ void ARMCI_ParentTrapSignals()
 
 void ARMCI_RestoreSignals()
 {
-#if !(defined(SERVER_THREAD) && defined(LINUX))
      RestoreSigTerm();
-     RestoreSigChld();
-#endif
      RestoreSigInt();
      RestoreSigSegv();
 }
@@ -571,6 +568,9 @@ void ARMCI_RestoreSignals()
 
 void ARMCI_ParentRestoreSignals()
 {
+#ifndef LAPI
+     RestoreSigChld();
+#endif
      ARMCI_RestoreSignals();
      RestoreSigHup();
 }
