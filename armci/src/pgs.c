@@ -1,4 +1,4 @@
-/* $Id: pgs.c,v 1.13 2005-01-03 23:43:02 manoj Exp $ 
+/* $Id: pgs.c,v 1.14 2005-02-21 23:24:36 manoj Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
@@ -207,7 +207,8 @@ int pgs_initDesc (ELAN_STATE *state, ELAN_RAIL *rail, void *handle,
      */
     qdma = &r->r_qdma;
     qdma->dma_dstAddr  = 0; /* Queue slot offset */
-    
+
+    r->r_event.evm_next = NULL;
     r->r_event.handle = pgsrail;
     r->r_event.pollFn = _elan_pgsPoll;
     r->r_event.waitFn = _elan_pgsWait;
