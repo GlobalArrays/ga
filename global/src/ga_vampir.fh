@@ -9,7 +9,6 @@
 #define GA_LU_SOLVE           32191
 #define GA_LU_SOLVE_ALT       32190
 #define GA_LU_SOLVE_SEQ       32189
-#define GA_SYMMETRIZE         32188
 #define GA_LLT_I              32187
 #define GA_LLT_S              32186
 #define GA_LLT_SOLVE          32185
@@ -17,4 +16,3 @@
 #define GA_SPD_INVERT         32183
 #define GA_SYMUL              32182
 #define GA_ZEROUL             32181
-#define NGA_SYMMETRIZE        32180

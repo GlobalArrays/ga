@@ -121,5 +121,4 @@ void ga_vampir_init() {
     vampir_symdef(GA_SPD_INVERT,             "GA_SPD_Invert",              "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_SYMUL,                  "GA_SymUL",                   "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_ZEROUL,                 "GA_ZeroUL",                  "GA_linalg",__FILE__,__LINE__);
-    vampir_symdef(NGA_SYMMETRIZE,            "NGA_Symmetrize",             "GA_linalg",__FILE__,__LINE__);
 }
