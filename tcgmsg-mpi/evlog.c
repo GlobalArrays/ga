@@ -1,5 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.c,v 1.4 2003-06-27 13:46:34 manoj Exp $ */
-
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.c,v 1.5 2003-06-27 13:48:42 manoj Exp $ */
+ 
 /* Event logging routine with key driven varargs interface */
 
 #include <stdio.h>

@@ -1,5 +1,5 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.h,v 1.3 2003-06-27 13:46:34 manoj Exp $ */
-
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.h,v 1.4 2003-06-27 13:48:42 manoj Exp $ */
+ 
 /*
   Define EVENT and KEY values used when calling evlog.
 */

@@ -1,10 +1,10 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/evlog.h,v 1.2 1994-12-30 20:55:45 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/evlog.h,v 1.3 2003-06-27 13:53:12 manoj Exp $ */
 
 /*
   Define EVENT and KEY values used when calling evlog.
 */
 
-extern void evlog();
+extern void evlog(int farg_key, ...);
 
 /* Values of keys in key value pairs */
 
