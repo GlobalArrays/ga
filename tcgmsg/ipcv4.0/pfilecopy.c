@@ -1,7 +1,11 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pfilecopy.c,v 1.7 2002-09-20 17:11:10 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pfilecopy.c,v 1.8 2004-04-01 02:04:57 manoj Exp $ */
 
 #include <stdio.h>
-
+#ifdef SEQUENT
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 #include "sndrcv.h"
 #include "msgtypesc.h"
 

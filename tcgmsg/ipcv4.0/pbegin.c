@@ -1,7 +1,8 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.18 2003-11-04 23:49:31 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.19 2004-04-01 02:04:57 manoj Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
+#include <unistd.h>
 #ifdef SEQUENT
 #include <strings.h>
 #else
@@ -45,6 +46,8 @@
 #endif
 
 extern void exit();
+extern void InitClusInfoNotParallel();
+extern int WaitAll(long nchild);
 
 #if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
     defined(CONVEX)  || defined(ARDENT) || defined(ULTRIX) || defined(AIX) || \

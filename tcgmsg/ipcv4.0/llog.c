@@ -1,8 +1,9 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/llog.c,v 1.5 1995-10-11 23:46:25 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/llog.c,v 1.6 2004-04-01 02:04:57 manoj Exp $ */
 
 #include <stdio.h>
 
 #include <sys/types.h>
+#include <time.h>
 #include <sys/time.h>
 
 #include "sndrcv.h"

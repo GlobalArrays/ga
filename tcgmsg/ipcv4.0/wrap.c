@@ -1,9 +1,14 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/wrap.c,v 1.6 2002-12-16 21:41:41 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/wrap.c,v 1.7 2004-04-01 02:04:57 manoj Exp $ */
 #include <stdlib.h>
 #include "sndrcv.h"
 #include "sndrcvP.h"
 #include "typesf2c.h"
 #include "msgtypesc.h"
+#ifdef SEQUENT
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 
 #define GOP_BUF_SIZE 81920
 

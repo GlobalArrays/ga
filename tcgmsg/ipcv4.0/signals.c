@@ -1,9 +1,12 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.10 2000-10-13 20:55:40 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.11 2004-04-01 02:04:57 manoj Exp $ */
 
 #include <signal.h>
 #include "sndrcvP.h"
 #if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
     defined(AIX) || defined(NEXT)
+#include <sys/wait.h>
+#else
+#include <sys/types.h>
 #include <sys/wait.h>
 #endif
 

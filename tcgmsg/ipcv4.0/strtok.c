@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/strtok.c,v 1.4 1995-02-24 02:17:55 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/strtok.c,v 1.5 2004-04-01 02:04:57 manoj Exp $ */
 
 /*
   Primitive version of strtok for alliant etc who don't have it.
@@ -17,9 +17,9 @@ static int InSet(a, set)
 */
 {
   register char test;
-  register b = (*a);
+  register char b = (*a);
 
-  while ( test = *set++ )
+  while ( (test = *set++) )
     if (test == b)
       return 1;
 

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.20 2003-10-22 03:36:39 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.21 2004-04-01 02:04:57 manoj Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -7,6 +7,7 @@
 #include <string.h>
 #endif
 #include <sys/types.h>
+#include <unistd.h> 
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -35,6 +36,7 @@ extern char *strdup();
 
 extern void NextValueServer();
 extern void Error();
+extern int WaitAll(long nchild);
 
 #if (defined(SUN) && !defined(SOLARIS))
     extern char *sprintf();

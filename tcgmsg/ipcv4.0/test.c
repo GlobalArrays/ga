@@ -1,6 +1,7 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.12 2004-02-11 21:42:24 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.13 2004-04-01 02:04:57 manoj Exp $ */
 
 #include <stdio.h>
+#include <unistd.h>
 #if !defined(SEQUENT) && !defined(CONVEX)
 #include <memory.h>
 #endif
@@ -355,7 +356,7 @@ void RingTest()
   long type = 4;
   long left = (me + NNODES_() - 1) % NNODES_();
   long right = (me + 1) % NNODES_();
-  char *buf, *buf2;
+  char *buf, *buf2=NULL;
   unsigned char sum, sum2;
   long lenbuf, lenmes, nodefrom;
   double start, used, rate;
@@ -494,7 +495,7 @@ void NextValueTest()
   long type = 51 | MSGINT;
   long i, node, lenbuf, n_val, next;
   long ngot, ntimes;
-  double start, used, rate;
+  double start=0.0, used, rate;
 
   lenbuf = sizeof(long);
 

@@ -1,6 +1,7 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.10 2000-10-13 20:55:39 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.11 2004-04-01 02:04:56 manoj Exp $ */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef SEQUENT
 #include <strings.h>

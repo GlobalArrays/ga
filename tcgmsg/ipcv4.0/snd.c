@@ -1,6 +1,7 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.20 2002-09-21 17:46:37 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.21 2004-04-01 02:04:57 manoj Exp $ */
 
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef SEQUENT
 #include <strings.h>
 #else
@@ -49,6 +50,8 @@ extern void SRmover();
 #include "evlog.h"
 #endif
 
+extern void ListenOnSock(int sock);
+extern int AcceptConnection(int sock);
 
 void PrintProcInfo()
 /*

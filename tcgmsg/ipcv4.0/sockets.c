@@ -1,7 +1,9 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.10 2000-10-12 23:02:36 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.11 2004-04-01 02:04:57 manoj Exp $ */
 
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #ifdef SEQUENT
 #include <strings.h>

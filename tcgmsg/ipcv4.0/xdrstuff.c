@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/xdrstuff.c,v 1.4 2004-03-31 02:47:27 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/xdrstuff.c,v 1.5 2004-04-01 02:04:57 manoj Exp $ */
 
 #ifdef GOTXDR
 
@@ -410,5 +410,7 @@ static bool_t xdr_char(xdrs, cp)
 
 #else
 /* dummy function to make this source file legitimate */
-static void _dummy_() {return;}
+#include <stdio.h>
+#include <stdlib.h>
+void _dummy_ZefP_() {printf("XDR:Illegal function call\n"); exit(1);}
 #endif

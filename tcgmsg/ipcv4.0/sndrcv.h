@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcv.h,v 1.9 2002-01-28 20:08:01 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcv.h,v 1.10 2004-04-01 02:04:57 manoj Exp $ */
 
 #include "srftoc.h"
 
@@ -185,6 +185,7 @@ extern void STATS_();
   Wait for completion of all asynchronous send/recieve to node *node
 */
 extern void WAITCOM_();
+extern void ALT_PBEGIN_();
 
 /*
   void Error(char *string, long integer) 

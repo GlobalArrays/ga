@@ -1,8 +1,9 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/nxtval.c,v 1.5 2002-07-17 17:20:11 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/nxtval.c,v 1.6 2004-04-01 02:04:57 manoj Exp $ */
 
 #include <stdio.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <unistd.h>
 #include "sndrcvP.h"
 #include "sndrcv.h"
 
@@ -129,7 +130,7 @@ long NXTVAL_(mproc)
   long type = TYPE_NXTVAL;
   long lenmes, nodefrom;
   long sync = 1;
-  long result;
+  long result=0;
 
 #ifdef GA_USE_VAMPIR
   vampir_begin(TCGMSG_NXTVAL,__FILE__,__LINE__);

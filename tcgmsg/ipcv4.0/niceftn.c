@@ -1,4 +1,7 @@
 #include "srftoc.h"
+#ifndef IPSC
+#include <unistd.h>
+#endif
 
 int NICEFTN_(ival)
      int *ival;
