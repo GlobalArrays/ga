@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.10 2000-04-21 20:54:18 d3h325 Exp $ */
+/* $Id: request.c,v 1.11 2000-04-27 22:37:11 jju Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -319,8 +319,8 @@ int armci_rem_strided(int op, void* scale, int proc,
       if(flag){
          /* to bypass the client MessageSnd buffer in get we need to add source
             pointer and stride info - server will put data directly there */
-         ADDBUF(buf,void*,src_ptr);
-         for(i=0;i<stride_levels;i++)((int*)buf)[i] = src_stride_arr[i];
+         ADDBUF(buf,void*,dst_ptr);
+         for(i=0;i<stride_levels;i++)((int*)buf)[i] = dst_stride_arr[i];
                                        buf += stride_levels*sizeof(int);
          msginfo->bypass=1;
          
@@ -371,6 +371,12 @@ int armci_rem_strided(int op, void* scale, int proc,
 
     if(op == GET){
        armci_send_req(proc);
+#      ifdef CLIENT_BUF_BYPASS
+         if(msginfo->bypass)
+             armci_rcv_strided_data_bypass(proc, msginfo->datalen,
+                                           dst_ptr, stride_levels);
+         else
+#      endif             
        armci_rcv_strided_data(proc, MessageSndBuffer, msginfo->datalen,
                               dst_ptr, stride_levels, dst_stride_arr, count);
 
@@ -416,7 +422,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
           dscr += (1+stride_levels)*sizeof(int); /* move past count */
           GETBUF(dscr,void*,client_ptr);
           client_stride_arr = (int*)dscr; dscr += stride_levels*sizeof(int);
-       }
+        }
 #   endif
 
     /* get scale for accumulate, adjust buf to point to data */
@@ -442,16 +448,16 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     if(msginfo->operation == GET){
     
-#      ifdef CLIENT_BUF_BYPASS__
+#      ifdef CLIENT_BUF_BYPASS
          if(msginfo->bypass)
-            armci_send_strided_data_bypass(proc, msginfo, buf, 
+             armci_send_strided_data_bypass(proc, msginfo, buf, buflen,
                        loc_ptr, loc_stride_arr, 
                        client_ptr, client_stride_arr, count, stride_levels);
 
          else
 #      endif
 
-       armci_send_strided_data(proc, msginfo, buf, 
+       armci_send_strided_data(proc, msginfo, buf,
                                loc_ptr, stride_levels, loc_stride_arr, count); 
 
     } else{

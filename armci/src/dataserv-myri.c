@@ -51,8 +51,9 @@ void armci_send_req(int proc)
         fflush(stdout);
     }
 
-    stat = armci_dma_send_gm(proc, MessageSndBuffer, bytes);
-    if(stat == ARMCI_GM_FAILED) armci_die("armci_send_req: write failed", stat);
+    armci_dma_send_gm(proc, MessageSndBuffer, bytes);
+    if(armci_client_send_complete() == ARMCI_GM_FAILED)
+        armci_die("armci_send_req: write failed", stat);
 }
 
 
@@ -86,8 +87,8 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
     /* for small contiguous blocks copy into a buffer before sending */
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
     
-    stat = armci_dma_send_gm(proc, msginfo, bytes);
-    if(stat == ARMCI_GM_FAILED)
+    armci_dma_send_gm(proc, msginfo, bytes);
+    if(armci_client_send_complete() == ARMCI_GM_FAILED)
         armci_die("armci_send_strided: write failed", stat);
 }
 
@@ -124,9 +125,29 @@ void armci_rcv_vector_data(int proc, char *buf, armci_giov_t darr[], int len)
 {
     buf = armci_rcv_data(proc);
     armci_vector_from_buf(darr, len, buf);
+}
 
-    /* send notice to server the message has been received */
-    /* armci_NotifyDirect(proc);*/
+void armci_rcv_strided_data_bypass(int proc, int datalen,
+                                   void *ptr, int stride_levels)
+{
+    int i;
+    int len;
+
+    if(DEBUG_){
+        fprintf(stdout,
+                "%d: armci_rcv_strided_data: expecting datalen %d from %d\n",
+                armci_me, datalen, proc);
+        fflush(stdout);
+    }
+
+    /* wait message arrives */
+    wait_flag_updated((long *)(proc_gm->ack_buf), ARMCI_GM_COMPLETE);
+
+    if(DEBUG_){
+        fprintf(stdout, "%d: armci_rcv_strided_data: got %d bytes from %d\n",
+                armci_me, datalen, proc);
+        fflush(stdout);
+    }
 }
 
 /* client receives strided data from server */
@@ -147,16 +168,12 @@ void armci_rcv_strided_data(int proc, char *buf, int datalen, void *ptr,
     /* the buf should be MessageSndBuffer */
     if(buf != MessageSndBuffer)
         armci_die("armci_rcv_strided_data: not the right buffer", 0L);
-
-    /* the received data starts at
-     * MessageSndBuffer + sizeof(request_header_t)
-     */
     
     /* for small data segments minimize number of system calls */
     databuf = armci_ReadFromDirect(MessageSndBuffer, datalen);
     
     armci_read_strided(ptr, strides, stride_arr, count, databuf);
-        
+    
     /* send notice to server the message has been received */
     /* armci_NotifyDirect(proc); */
     
@@ -189,7 +206,6 @@ void armci_rem_ack(int clus)
     armci_send_req(armci_clus_info[clus].master);
     databuf = armci_rcv_data(armci_clus_info[clus].master);  /* receive ACK */
 }
-
 
 void armci_wait_for_server()
 {
@@ -233,17 +249,23 @@ void armci_rcv_req(void *mesg,
     }
     
     *(void **)phdr = msginfo;
-    
-    /* leave space for header ack */ 
-    *(void**)pdata  = MessageRcvBuffer + sizeof(long);
-    *buflen = MSG_BUFLEN - sizeof(request_header_t) - sizeof(long);
-                                        /* tail acks -^ */
 
+    if(msginfo->bypass) {
+        *(void**)pdata  = MessageRcvBuffer;
+        *buflen = MSG_BUFLEN;
+    }
+    else {
+        /* leave space for header ack */
+        *(void**)pdata  = MessageRcvBuffer + sizeof(long);
+        *buflen = MSG_BUFLEN - sizeof(request_header_t) - sizeof(long);
+        /* tail acks -^ */
+    }
+    
     /* regular checking */
     if((msginfo->to != armci_me && msginfo->to < armci_master) ||
        msginfo->to >= armci_master + armci_clus_info[armci_clus_me].nslave)
         armci_die("armci_rcv_req: invalid to", msginfo->to);
-
+    
     if(msginfo->operation != GET && msginfo->bytes > *buflen)
         armci_die("armci_rcv_req: message overflowing rcv buffer",
                   msginfo->bytes);
@@ -288,12 +310,146 @@ void armci_send_data(request_header_t* msginfo, void *data)
         armci_copy(data, buf, msginfo->datalen);
         armci_WriteToDirect(to, msginfo, buf);
     }
-
-    /* wait the client send back the ack */
-    /* if(msginfo->operation == GET) */
-    /* armci_WaitAckDirect(to); */
 }
 
+void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
+                                    void *loc_buf, int msg_buflen,
+                                    void *loc_ptr, int *loc_stride_arr,
+                                    void *rem_ptr, int *rem_stride_arr,
+                                    int *count, int stride_levels)
+{
+    int i, j, stat;
+    long loc_idx, rem_idx;
+    int n1dim;  /* number of 1 dim block */
+    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL]; 
+
+    int to = msginfo->from;
+    void *buf;
+    int buflen;
+    int msg_threshold;
+
+    msg_threshold = MIN(msg_buflen, INTERLEAVE_GET_THRESHOLD);
+    
+    buf = loc_buf; buflen = msg_buflen;
+    
+    if(DEBUG_){
+        fprintf(stdout, "%d(server): sending data to %d\n", armci_me, to);
+        fflush(stdout);
+    }
+ 
+    /* number of n-element of the first dimension */
+    n1dim = 1;
+    for(i=1; i<=stride_levels; i++)
+        n1dim *= count[i];
+
+    /* calculate the destination indices */
+    bvalue[0] = 0; bvalue[1] = 0; bunit[0] = 1; bunit[1] = 1;
+    for(i=2; i<=stride_levels; i++) {
+        bvalue[i] = 0;
+        bunit[i] = bunit[i-1] * count[i-1];
+    }
+
+    for(i=0; i<n1dim; i++) {
+        loc_idx = 0; rem_idx = 0;
+        for(j=1; j<=stride_levels; j++) {
+            loc_idx += bvalue[j] * loc_stride_arr[j-1];
+            rem_idx += bvalue[j] * rem_stride_arr[j-1];
+            if((i+1) % bunit[j] == 0) bvalue[j]++;
+            if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
+        }
+
+        /* segment is larger than INTERLEAVE_GET_THRESHOLD,
+         * but less than msg_buflen
+         */
+        if((count[0] > INTERLEAVE_GET_THRESHOLD) && (count[0] <= msg_buflen)) {
+            char *src_ptr = (char *)loc_ptr+loc_idx;
+            char *dst_ptr = (char *)rem_ptr+rem_idx;
+            int msg_size = count[0] /2;
+
+            armci_serv_send_nonblocking_complete(0);
+            
+            armci_copy(src_ptr, buf, msg_size);
+            armci_server_direct_send(to, buf, dst_ptr, msg_size,
+                                     ARMCI_GM_NONBLOCKING);
+            
+            src_ptr += msg_size; dst_ptr += msg_size;
+            buf += msg_size;
+            
+            armci_copy(src_ptr, buf, msg_size);
+            armci_server_direct_send(to, buf, dst_ptr, msg_size,
+                                     ARMCI_GM_NONBLOCKING);
+            
+            buf = loc_buf;
+        }
+        
+        /* if each segment is larger than the buffer size */
+        else if(count[0] > msg_buflen) {
+            int msglen = count[0];
+            char *src_ptr = (char *)loc_ptr+loc_idx;
+            char *dst_ptr = (char *)rem_ptr+rem_idx;
+
+            /* the message buffer is divided into two */
+            int msg_size = msg_buflen/2;
+            while(msglen > 0) {
+                int len;
+                if(msglen > msg_size) len = msg_size;
+                else len = msglen;
+                
+                armci_copy(src_ptr, buf, len);
+
+                armci_server_direct_send(to, buf, dst_ptr, len,
+                                         ARMCI_GM_NONBLOCKING);
+                
+                msglen -= len;
+                src_ptr += len; dst_ptr += len;
+
+                if(buf == loc_buf) buf += msg_size; else buf = loc_buf;
+
+                /* at any time, there can be only one outstanding
+                 * callback not called
+                 */
+                armci_serv_send_nonblocking_complete(1);
+            }
+
+            buf = loc_buf;
+        }
+        /* if each segment is less than the buffer size */
+        else {
+            armci_copy((char *)loc_ptr+loc_idx, buf, count[0]);
+
+            /* if the this is the last segment to fit into the buffer in
+             * this round
+             */
+            if((buflen - count[0]) < count[0]) {
+                armci_server_direct_send(to, buf, (char*)rem_ptr+rem_idx,
+                                         count[0], ARMCI_GM_NONBLOCKING);
+                buf = loc_buf; buflen = msg_buflen;
+                
+                /* check if the buffer is ready, prepare for next round */
+                /* if(stride_levels == 0) */
+                armci_serv_send_nonblocking_complete(0);
+            }
+            else{ 
+                armci_server_direct_send(to, buf, (char*)rem_ptr+rem_idx,
+                                         count[0], ARMCI_GM_NONBLOCKING);
+
+                 buf += count[0]; buflen -= count[0];
+                 
+                 armci_serv_send_nonblocking_complete(5);
+            }
+        }
+    }
+
+    armci_serv_send_nonblocking_complete(0);
+    
+    /* inform client the send is over */
+    armci_InformClient(to, serv_gm->direct_ack, ARMCI_GM_COMPLETE);
+    
+    if(DEBUG_){
+        fprintf(stdout, "%d(server): sent data to %d\n", armci_me, to);
+        fflush(stdout);
+    }
+}
 
 
 /* server sends strided data back to client */
@@ -302,23 +458,21 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
                              int stride_arr[], int count[])
 {
     int to = msginfo->from;
-    
+
     /* for small contiguous blocks copy into a buffer before sending */
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
     
     if(DEBUG_){
-        fprintf(stdout, "%d(server): sending datalen = %d to %d first: %f\n",
+        fprintf(stdout,
+                "%d(server): sending datalen = %d to %d first: %f\n",
                 armci_me, msginfo->datalen, to, *(double *)bdata);
         fflush(stdout);
     }
     
     /* write the message to the client */
     armci_WriteToDirect(to, msginfo, bdata);
-
-    /* wait the client send back the ack */
-    /* if(msginfo->operation == GET) */
-    /* armci_WaitAckDirect(to); */
 }
+
 
 /* server sends ACK to client */
 void armci_server_ack(request_header_t* msginfo)

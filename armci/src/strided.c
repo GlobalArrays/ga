@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.18 2000-04-21 20:54:18 d3h325 Exp $ */
+/* $Id: strided.c,v 1.19 2000-04-27 22:37:11 jju Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -395,12 +395,13 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                 )
 {
     int rc,direct=1;
+    int bypass=0;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
     if(count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
-
+    
     ORDER(GET,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
 
@@ -419,14 +420,20 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 
     if(!direct){
 
-#if defined(DATA_SERVER) && defined(SOCKETS)
+#if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS))
        /* larger strided or 1-D reqests, buffer not used to send data 
         * we can bypass the packetization step and send request directly
         */
-       if(stride_levels==0 || count[0]> LONG_GET_THRESHOLD )
+       if(count[0]> LONG_GET_THRESHOLD){
+#        ifdef GM
+           bypass= armci_pin_memory(dst_ptr,dst_stride_arr,count,stride_levels);
+#        endif
          rc = armci_rem_strided(GET, NULL, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr, count, stride_levels, 0);
-       else
+                          dst_ptr, dst_stride_arr, count, stride_levels,bypass);
+#        ifdef GM
+          if(bypass)armci_unpin_memory(dst_ptr,dst_stride_arr,count,stride_levels);
+#        endif
+       }else
 #endif
          rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
                        dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
