@@ -1,5 +1,5 @@
 C
-C  This defines bit masks that can be OR'ed with user types (1-32767)
+C  This defines bit masks that can be ORed with user types (1-32767)
 C  to indicate the nature of the data to the message passing system
 C
       integer msgdbl, msgint, msgchr
