@@ -11,7 +11,7 @@
       external eaf_write, eaf_awrite, eaf_read, eaf_aread
       external eaf_wait, eaf_probe, eaf_close, eaf_open
       external eaf_delete, eaf_stat, eaf_length, eaf_truncate
-      external eaf_eof, eaf_errmsg
+      external eaf_eof
       external eaf_util_random,eaf_util_szint
 c
       integer eaf_rw, eaf_r, eaf_w
