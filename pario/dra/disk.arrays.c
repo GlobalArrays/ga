@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.66 2003-01-23 00:02:02 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.67 2003-02-07 02:34:22 edo Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -725,7 +725,7 @@ void dai_assign_request_handle(Integer* request)
         Requests[*request].ibuf=-1;
 /*        Requests[*request].id = ELIO_DONE; */
         Requests[*request].callback = OFF;
-        Requests[i].num_pending = ON;
+        Requests[*request].num_pending = ON;
 }
 
 
