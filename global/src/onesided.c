@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.32 2003-02-21 20:49:12 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.33 2003-02-25 16:55:33 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -270,7 +270,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
       } else {                                                                 \
         _pinv = P_LIST[_p_handle].inv_map_proc_list[proc];                     \
       }                                                                        \
-      *(ptr_loc) =  GA[g_handle].ptr[proc]+_offset*GA[g_handle].elemsize;      \
+      *(ptr_loc) =  GA[g_handle].ptr[_pinv]+_offset*GA[g_handle].elemsize;     \
 }
 
 
@@ -356,7 +356,7 @@ void nga_put_common(Integer *g_a,
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size, p_handle;
-int proc, ndim;
+int proc, ndim,i;
 
 #ifdef GA_USE_VAMPIR
       vampir_begin(NGA_NBPUT,__FILE__,__LINE__);
