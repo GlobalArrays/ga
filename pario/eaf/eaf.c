@@ -10,8 +10,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.c,v $
-CVS: $Date: 1996-08-05 15:38:04 $
-CVS: $Revision: 1.5 $
+CVS: $Date: 1996-08-19 16:31:10 $
+CVS: $Revision: 1.6 $
 CVS: $State: Exp $
 ******************************************************************************/
 
@@ -71,11 +71,7 @@ off_t        offset;
 Void        *buf;
 Size_t       bytes;
 {
-  Size_t  b_read;
-
-  b_read = elio_read(fd, offset, buf, bytes);
-
-  return(b_read);
+  return(elio_read(fd, offset, buf, bytes));
 }
 
 
@@ -172,7 +168,7 @@ int   type;
   while(i< EAF_MAX_FILES && eaf_fd[i] != NULL) i++;
   eaf_fd[i] = fd;
   if((eaf_fname[i]=(char*) malloc(strlen(fname)+1)) == NULL)
-    EAF_ABORT("EAF_OpenSF: Unable to malloc scratch file name", 1);
+    EAF_ERR("EAF_OpenSF: Unable to malloc scratch file name", fname, (Fd_t) -1);
   strcpy(eaf_fname[i], fname);
 
   return(fd);
@@ -187,20 +183,23 @@ int   type;
 |*|          If the <fd> is in the scratch file (eaf_fd) table
 |*|          also unlink/delete it.
 \*/
-void EAF_CloseC(fd)
+int  EAF_CloseC(fd)
 Fd_t  fd;
 {
   int i=0;
+  int r;
  
-  elio_close(fd);
+  r = elio_close(fd);
   while(i< EAF_MAX_FILES && eaf_fd[i] != fd) i++;
   if(eaf_fd[i] == fd && i < EAF_MAX_FILES)
     {
       if(elio_delete(eaf_fname[i]) != NULL)
-	EAF_ABORT("EAF_Close: Unable to delete scratch file on close.",1);
+	EAF_ERR("EAF_Close: Unable to delete scratch file on close.",
+		NULL, -1);
       eaf_fd[i] = NULL;
       free(eaf_fname[i]);
     } 
+  return( r);
 }
 
 
@@ -249,4 +248,19 @@ void EAF_TerminateC()
 	}
       i++;
     };
+}
+
+
+
+
+
+
+/*\ Error handling routine
+\*/
+void eaf_err(char *func, char *fname)
+{
+  fprintf(stderr, "EAF: Error in routine %s", func);
+  if(fname != NULL)
+    fprintf(stderr, " on file: |%s|", fname);
+  perror("\nEAF: ");
 }

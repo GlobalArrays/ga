@@ -11,8 +11,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf_c2f.c,v $
-CVS: $Date: 1996-08-05 15:38:10 $
-CVS: $Revision: 1.4 $
+CVS: $Date: 1996-08-19 16:31:19 $
+CVS: $Revision: 1.5 $
 CVS: $State: Exp $
 ******************************************************************************/
 #define EAF_FILENAME_MAX ELIO_FILENAME_MAX
@@ -33,8 +33,8 @@ CVS: $State: Exp $
 \*/
 eaf_fort_status_t      EAF_Close(eaf_fort_fd_t *fort_fd)
 {
-  EAF_CloseC(fd_table[*fort_fd]);
-  return (eaf_fort_status_t) EAF_STAT_OK;
+  FD_IN_RANGE("EAF_Close", fort_fd);
+  return (eaf_fort_status_t) EAF_CloseC(fd_table[*fort_fd]);
 }
 
 
@@ -57,11 +57,19 @@ eaf_fort_fd_t        EAF_OpenPersist(eaf_fort_char_t *fn,
   char         tmp_fn[EAF_FILENAME_MAX];
   char        *tmp_str;
 
-#if defined(CRAY)           /* NOTICE:                                      */
+
+#if defined(CRAY)
+#  if 0           /* Use the Cray Fortran string format of the month        */
+                            /* NOTICE:                                      */
   fn_len = fn.fcd_len / 8;  /*    The 8 indicates the number of bits per    */
                             /*    byte, which should always work here, but  */
                             /*    the Cray scientists are hard at work on.  */
   strncpy(tmp_fn, fn.c_pointer, fn_len);
+#  else           /* Use Cray's handy new conversion primitives             */
+  fn_len = _fcdlen(fn);
+  strncpy(tmp_fn, _fcdtocp(fn), fn_len);
+#  endif          /* Cray Fortran string conversion                         */
+
 #else
   strncpy(tmp_fn, fn, fn_len);
 #endif
@@ -80,7 +88,8 @@ eaf_fort_fd_t        EAF_OpenPersist(eaf_fort_char_t *fn,
       return((eaf_fort_fd_t) ffd);
     }
   else
-    EAF_ABORT("EAF_OpenPersist: No space in C's (Fd_t) fd_table[]",1);
+    EAF_ERR("EAF_OpenPersist: No space in C's (Fd_t) fd_table[]",
+	    tmp_fn, -1);
   
 }
 
@@ -103,14 +112,22 @@ eaf_fort_fd_t        EAF_OpenScratch(eaf_fort_char_t *fn,
   char         tmp_fn[EAF_FILENAME_MAX];
   char        *tmp_str;
 
-#if defined(CRAY)           /* NOTICE:                                      */
+#if defined(CRAY)
+#  if 0           /* Use the Cray Fortran string format of the month        */
+                            /* NOTICE:                                      */
   fn_len = fn.fcd_len / 8;  /*    The 8 indicates the number of bits per    */
                             /*    byte, which should always work here, but  */
                             /*    the Cray scientists are hard at work on.  */
   strncpy(tmp_fn, fn.c_pointer, fn_len);
+#  else           /* Use Cray's handy new conversion primitives             */
+  fn_len = _fcdlen(fn);
+  strncpy(tmp_fn, _fcdtocp(fn), fn_len);
+#  endif          /* Cray Fortran string conversion                         */
+
 #else
   strncpy(tmp_fn, fn, fn_len);
 #endif
+
   tmp_fn[(fn_len < EAF_FILENAME_MAX) ? fn_len : (EAF_FILENAME_MAX - 1)] = 0;
   if ((tmp_str = strchr(tmp_fn, ' ')) != NULL)
   {
@@ -124,7 +141,7 @@ eaf_fort_fd_t        EAF_OpenScratch(eaf_fort_char_t *fn,
       return((eaf_fort_fd_t) ffd);
     }
   else
-    EAF_ABORT("EAF_OpenPersist: No space in C's (Fd_t) fd_table[]",1);
+    EAF_ERR("EAF_OpenPersist: No space in C's (Fd_t) fd_table[]", tmp_fn, -1);
 
 }
 
@@ -140,6 +157,7 @@ eaf_fort_size_t         EAF_Write(eaf_fort_fd_t   *fort_fd,
 				   Void            *buf,
 				   eaf_fort_size_t *fort_size)
 {
+  FD_IN_RANGE("EAF_Write", fort_fd);
   return( EAF_WriteC(fd_table[*fort_fd], *fort_offset, buf, *fort_size) );
 }
 
@@ -156,6 +174,7 @@ eaf_fort_status_t         EAF_AWrite(eaf_fort_fd_t   *fort_fd,
 				      eaf_fort_size_t *fort_size,
 				      eaf_fort_req_t  *req_id)
 {
+  FD_IN_RANGE("EAF_AWrite", fort_fd);
   return( EAF_AWriteC(fd_table[*fort_fd], *fort_offset, buf, *fort_size, req_id) );
 }
 
@@ -171,6 +190,7 @@ eaf_fort_size_t         EAF_Read(eaf_fort_fd_t   *fort_fd,
 				  Void            *buf,
 				  eaf_fort_size_t *fort_size)
 {
+  FD_IN_RANGE("EAF_Read", fort_fd);
   return (eaf_fort_size_t) EAF_ReadC(fd_table[*fort_fd], *fort_offset, buf, *fort_size);
 }
 
@@ -187,6 +207,7 @@ eaf_fort_status_t         EAF_ARead(eaf_fort_fd_t   *fort_fd,
 				     eaf_fort_size_t *fort_size,
 				     eaf_fort_req_t  *req_id)
 {
+  FD_IN_RANGE("EAF_ARead", fort_fd);
   return (eaf_fort_status_t) EAF_AReadC(fd_table[*fort_fd], *fort_offset, buf, *fort_size, req_id);
 }
 
@@ -212,6 +233,16 @@ eaf_fort_status_t          EAF_Wait(eaf_fort_req_t  *id)
 eaf_fort_status_t          EAF_Probe(eaf_fort_req_t   *id,
 				      eaf_fort_status_t  *stat)
 {
+  int   s, ret;
+
+#if 0
   return (eaf_fort_status_t) EAF_ProbeC(id, stat);
+#else
+  ret = EAF_ProbeC(id, &s);
+  *stat = (eaf_fort_status_t) s;
+  return (eaf_fort_status_t) ret;
+#endif
 }
+
+
 

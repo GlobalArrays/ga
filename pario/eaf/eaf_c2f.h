@@ -11,8 +11,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf_c2f.h,v $
-CVS: $Date: 1996-08-05 15:38:13 $
-CVS: $Revision: 1.4 $
+CVS: $Date: 1996-08-19 16:31:22 $
+CVS: $Revision: 1.5 $
 CVS: $State: Exp $
 ******************************************************************************/
 
@@ -82,7 +82,7 @@ typedef float                   eaf_fort_real_t;
 typedef double                  eaf_fort_double_t;
 typedef long int                eaf_fort_strlen_t;
 
-#elif defined(CRAY_T3D)
+#elif defined(CRAY)
 
 typedef _fcd                    eaf_fort_char_t;
 typedef long int                eaf_fort_int_t;
@@ -105,7 +105,6 @@ typedef int                     eaf_fort_strlen_t;
 
 
 /* .  .  .  .  .  .  .  .  .  Common type definitions  .  .  .  .  .  .  .  */
-
 #ifdef EXT_INT
 #define Integer long
 #else
@@ -123,4 +122,15 @@ typedef io_request_t             eaf_fort_req_t;       /* Added for asynch */
 
 
 #include "c2f.h"
+
+
+#define FD_IN_RANGE( _func, _fort_fd ) \
+{ \
+  if( *_fort_fd < 0  || *_fort_fd > EAF_MAX_FILES) \
+    {\
+    fprintf(stderr,"fort fd == %d\n", _fort_fd); \
+      fprintf(stderr, "EAF: Error in function %s\n", _func); \
+      EAF_ERR("Fortran filedescriptor out of range", NULL, -1); \
+    }\
+}
 

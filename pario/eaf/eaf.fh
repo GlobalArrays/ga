@@ -24,8 +24,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.fh,v $
-CVS: $Date: 1996-08-01 22:54:38 $
-CVS: $Revision: 1.3 $
+CVS: $Date: 1996-08-19 16:31:14 $
+CVS: $Revision: 1.4 $
 CVS: $State: Exp $
 ******************************************************************************/
 
@@ -74,51 +74,6 @@ CVS: $State: Exp $
 #endif
 
 
-#if 0      /* Jarek wants these out */
-/******************************************************************************
-                         Define types for general use
-******************************************************************************/
-#if defined(SUNOS)   || defined(AIX) || defined(PARAGON) || \
-    defined(HP_HPUX) || defined(FBSD)
-#  define EAF_address_t INTEGER*4
-#  define EAF_integer_t INTEGER*4
-#  define EAF_unsigned_t INTEGER*4
-#  define EAF_long_t INTEGER*4
-#  define EAF_ulong_t INTEGER*4
-#  define EAF_float_t REAL*4
-#  define EAF_double_t REAL*8
-
-#elif defined(SGITFP)
-
-#  define EAF_address_t INTEGER*4
-#  define EAF_integer_t INTEGER*8
-#  define EAF_unsigned_t INTEGER*8
-#  define EAF_long_t INTEGER*8
-#  define EAF_ulong_t INTEGER*8
-#  define EAF_float_t REAL*4
-#  define EAF_double_t REAL*8
-
-#elif defined(T3D)
-
-#  define EAF_address_t INTEGER*8
-#  define EAF_integer_t INTEGER*8
-#  define EAF_unsigned_t INTEGER*8
-#  define EAF_long_t INTEGER*8
-#  define EAF_ulong_t INTEGER*8
-#  define EAF_float_t REAL*4
-#  define EAF_double_t REAL*8
-
-#endif
-
-
-/* .  .  .  .  .  .  .  .  .  Common type definitions  .  .  .  .  .  .  .  */
-#define EAF_status_t EAF_unsigned_t
-#define EAF_fd_t EAF_address_t
-#define EAF_size_t EAF_long_t
-#define EAF_io_request_t EAF_long_t
-
-
-#endif   /* Jarek wants these out */
 c
 c    
 c Begin Fortran Code

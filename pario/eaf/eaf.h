@@ -10,8 +10,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.h,v $
-CVS: $Date: 1996-08-05 15:38:07 $
-CVS: $Revision: 1.5 $
+CVS: $Date: 1996-08-19 16:31:16 $
+CVS: $Revision: 1.6 $
 CVS: $State: Exp $
 ******************************************************************************/
 #if defined(__STDC__) || defined(__cplusplus)
@@ -32,9 +32,10 @@ extern int    EAF_WaitC     _ARGS_((io_request_t *id));
 extern int    EAF_ProbeC    _ARGS_((io_request_t *id, int* status));
 extern Fd_t   EAF_OpenScratchC    _ARGS_((char *fname, int type));
 extern Fd_t   EAF_OpenPersistC    _ARGS_((char *fname, int type));
-extern void   EAF_CloseC     _ARGS_((Fd_t fd));
+extern int    EAF_CloseC     _ARGS_((Fd_t fd));
        void   EAF_InitC      _ARGS_(());
        void   EAF_TerminateC _ARGS_(());
+       void   eaf_err        _ARGS_((char *func, char *fname));
 
 #undef _ARGS_
 
@@ -82,4 +83,11 @@ extern void fflush();
   fprintf(stderr, "EAF Fatal -- Msg: %s\n", msg ); \
   EAF_TerminateC(); \
   PRINT_AND_ABORT(msg, val); \
+}
+
+
+#define EAF_ERR(_func, _fname, _code) \
+{ \
+    eaf_err(_func, _fname); \
+    return( _code ); \
 }
