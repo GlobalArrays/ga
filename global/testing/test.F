@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.58 2004-08-10 22:04:08 d3h325 Exp $
+c $Id: test.F,v 1.59 2004-11-03 22:15:26 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -1970,7 +1970,7 @@ c
          call ffflush(6)
       endif
 
-      call ga_locate_region(g_a, 1, n, 1,n, map,np)
+      call ga_locate_region(g_a, 1, n, 1, n, map, np)
       found = 0
       do j=1,n
          do i=1,n
@@ -1984,7 +1984,11 @@ c
 #endif
       call ga_sync()
       do k = 1, np
+#ifndef MIRROR
          if(map(5,k).eq.me)then
+#else
+         if(map(5,k).eq.iproc)then
+#endif
                 if(found.eq.1) then
                     write(6,*)'double entry in map for proc ',me
                     call ffflush(6)
@@ -2129,7 +2133,6 @@ c
       if (.not. ga_create(MT_REAL, n, n, 'a', 0, 0, g_a)) then
 #  else
 cBJP
-      write(6,*) 'Creating g_a'
       p_mirror = ga_pgroup_get_mirror()
       if (.not. nga_create_config(MT_REAL, ndim, dims, 'a', chunk,
      +                            p_mirror, g_a)) then
