@@ -15,7 +15,8 @@ main()
   int  fnum, sz, iter;
   int  i;
   Fd_t fd[IO_NUM_FILES];
-  
+  Size_t avail;
+
 /*  EAF_Init(); */
   
   for(fnum = 0; fnum < IO_NUM_FILES; fnum++)
@@ -39,6 +40,8 @@ main()
 		      sz, IO_TEST_SZ, fnum, iter);
 	      exit(1);
 	    };
+          elio_stat(fname, &avail);
+	  printf("avail = %d\n", avail);
 	};
     };
   for(fnum = 0; fnum < IO_NUM_FILES; fnum++)

@@ -48,7 +48,7 @@ main()
   for(fnum = 0; fnum < IO_NUM_FILES; fnum++)
     {
 #if 1
-      sprintf(fname,"output.%1d", fnum); 
+      sprintf(fname,"/tmp/output.%1d", fnum); 
 #else
       sprintf(fname, "/pfs-temp/mogill/output.%1d", fnum);
 #endif
@@ -94,7 +94,7 @@ main()
   for(fnum = 0; fnum < IO_NUM_FILES; fnum++)
     {
 #if 1
-      sprintf(fname,"output.%1d", fnum); 
+      sprintf(fname,"/tmp/output.%1d", fnum); 
 #else
       sprintf(fname, "/pfs-temp/mogill/output.%1d", fnum);
 #endif

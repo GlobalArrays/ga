@@ -6,7 +6,7 @@ cjqm#include "chemio.h"
 /*  This define just got added because the size declarations were removed from
     eaf.fh, but the test codes still use them.
 */
-#define EAF_SZ_INT 4
+#define EAF_SZ_INT 8
 
 #define IO_TEST_SZ (1024*1024/128)
 #define IO_NUM_FILES 4
@@ -95,7 +95,6 @@ c.................................
      $                   MAP(iter)
 	      stop 1
 	    endif
-
 	    do i = 1, IO_TEST_SZ
 	      if(buf(i) .ne. buf2(i)) then 
 	        write(6,*) "Bad read of file=",fnum,
