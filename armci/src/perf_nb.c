@@ -1,4 +1,4 @@
-/* $Id: perf_nb.c,v 1.2 2003-10-23 21:05:48 d3h325 Exp $ */
+/* $Id: perf_nb.c,v 1.3 2004-03-29 19:14:51 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -340,7 +340,7 @@ void test_perf_nb(int dry_run) {
 	MP_BARRIER();
       }
 
-#if 0
+#if 1
       /* See the note below why this part is disabled */
       /* ---------------------- nb-Accumulate ------------------------ */    
       for(i=0; i<elems[1]; i++) dsrc[me][i]=1.0;  MP_BARRIER();
