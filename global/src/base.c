@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.40 2003-04-14 14:33:12 d3g293 Exp $ */
+/* $Id: base.c,v 1.41 2003-04-17 22:17:07 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1087,7 +1087,7 @@ logical FATR nga_create_ghosts_irreg_config_(Integer *type,
     _fcd array_name, Integer map[], Integer block[],
     Integer *p_handle, Integer *g_a)
 #else
-logical FATR nga_create_ghosts_irreg__config_(Integer *type,
+logical FATR nga_create_ghosts_irreg_config_(Integer *type,
     Integer *ndim, Integer *dims, Integer width[], char* array_name,
     Integer map[], Integer block[], Integer *p_handle, Integer *g_a,
     int slen)
