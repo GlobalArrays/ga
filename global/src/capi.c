@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.58 2003-07-23 14:44:42 d3g293 Exp $ */
+/* $Id: capi.c,v 1.59 2003-07-31 23:57:31 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -19,6 +19,7 @@ Integer _ga_vvlo[MAXDIM], _ga_vvhi[MAXDIM];
 Integer _ga_xxlllo[MAXDIM], _ga_xxllhi[MAXDIM];
 Integer _ga_xxuulo[MAXDIM], _ga_xxuuhi[MAXDIM];
 
+short int _ga_irreg_flag = 0;
 
 #ifdef USE_FAPI
 #  define COPYC2F(carr, farr, n){\
@@ -142,8 +143,10 @@ int NGA_Create_irreg(int type,int ndim,int dims[],char *name,int block[],int map
 #else
      ptr = _ga_map_capi + base_work;
 #endif
-
-    st = nga_create_irreg(type, (Integer)ndim, _ga_dims, name, ptr, _ga_work, &g_a);
+      
+     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
+     st = nga_create_irreg(type, (Integer)ndim, _ga_dims, name, ptr, _ga_work, &g_a);
+     _ga_irreg_flag = 0; /* unset it after creating the array */
 
     if(st==TRUE) return (int) g_a;
     else return 0;
@@ -193,8 +196,10 @@ int NGA_Create_irreg_config(int type,int ndim,int dims[],char *name,int block[],
      ptr = _ga_map_capi + base_work;
 #endif
 
-    st = nga_create_irreg_config(type, (Integer)ndim, _ga_dims, name, ptr,
-                                 _ga_work, (Integer)p_handle, &g_a);
+     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
+     st = nga_create_irreg_config(type, (Integer)ndim, _ga_dims, name, ptr,
+				  _ga_work, (Integer)p_handle, &g_a);
+     _ga_irreg_flag = 0; /* unset it, after creating array */
 
     if(st==TRUE) return (int) g_a;
     else return 0;
@@ -244,10 +249,12 @@ int NGA_Create_ghosts_irreg(int type,int ndim,int dims[],int width[],char *name,
 #else
      ptr = _ga_map_capi + base_work;
 #endif
-
-    st = nga_create_ghosts_irreg(type, (Integer)ndim, _ga_dims, _ga_width, name, ptr,
-        _ga_work, &g_a);
-
+     
+     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
+     st = nga_create_ghosts_irreg(type, (Integer)ndim, _ga_dims, _ga_width, 
+				  name, ptr, _ga_work, &g_a);
+     _ga_irreg_flag = 0; /* unset it, after creating array */ 
+     
     if(st==TRUE) return (int) g_a;
     else return 0;
 }
@@ -297,8 +304,11 @@ int NGA_Create_ghosts_irreg_config(int type, int ndim, int dims[], int width[],
      ptr = _ga_map_capi + base_work;
 #endif
 
-    st = nga_create_ghosts_irreg_config(type, (Integer)ndim, _ga_dims, _ga_width,
-         name, ptr, _ga_work, (Integer)p_handle, &g_a);
+     _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
+     st = nga_create_ghosts_irreg_config(type, (Integer)ndim, _ga_dims,
+					 _ga_width, name, ptr, _ga_work, 
+					 (Integer)p_handle, &g_a);
+     _ga_irreg_flag = 0; /* unset it, after creating array */ 
 
     if(st==TRUE) return (int) g_a;
     else return 0;
@@ -1004,10 +1014,10 @@ void GA_Dgemm(char ta, char tb, int m, int n, int k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul_patch(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
-		  &G_a, &ailo, &aihi, &ajlo, &ajhi,
-		  &G_b, &bilo, &bihi, &bjlo, &bjhi,
-		  &G_c, &cilo, &cihi, &cjlo, &cjhi);
+  ga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
+	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
+	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
+	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
 }
 
 void GA_Zgemm(char ta, char tb, int m, int n, int k,
@@ -1038,10 +1048,10 @@ void GA_Zgemm(char ta, char tb, int m, int n, int k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul_patch(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
-		  &G_a, &ailo, &aihi, &ajlo, &ajhi,
-		  &G_b, &bilo, &bihi, &bjlo, &bjhi,
-		  &G_c, &cilo, &cihi, &cjlo, &cjhi);
+  ga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
+	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
+	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
+	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
 }
 
 void GA_Sgemm(char ta, char tb, int m, int n, int k,
@@ -1072,10 +1082,10 @@ void GA_Sgemm(char ta, char tb, int m, int n, int k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul_patch(&ta, &tb, (DoublePrecision*)&alpha, (DoublePrecision*)&beta,
-		  &G_a, &ailo, &aihi, &ajlo, &ajhi,
-		  &G_b, &bilo, &bihi, &bjlo, &bjhi,
-		  &G_c, &cilo, &cihi, &cjlo, &cjhi);
+  ga_matmul(&ta, &tb, (DoublePrecision*)&alpha, (DoublePrecision*)&beta,
+	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
+	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
+	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
 }
 
 /* Patch related */
