@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.30 2003-10-22 22:26:10 manoj Exp $ */
+/* $Id: matmul.c,v 1.31 2003-10-22 23:34:35 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -733,7 +733,7 @@ static void gai_matmul_irreg(transa, transb, alpha, beta, atype,
        a = a_ar[shiftA^1];
        WAIT_GET_BLOCK(&gNbhdlA[shiftA^1]);
        if(taskListC.chunkBId) {
-	  b = b_ar[shiftA^1];
+	  b = b_ar[shiftB^1];
 	  WAIT_GET_BLOCK(&gNbhdlB[shiftB^1]);
        }
        
