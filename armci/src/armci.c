@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.69 2003-03-29 00:18:43 vinod Exp $ */
+/* $Id: armci.c,v 1.70 2003-04-16 21:34:18 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -103,6 +103,11 @@ static void armci_perror_msg()
 }
 
 
+#ifdef IBM64
+int AR_caught_sigint;
+int AR_caught_sigterm;
+#endif
+
 static void armci_abort(int code)
 {
     armci_perror_msg();
@@ -115,6 +120,11 @@ static void armci_abort(int code)
     /* data server process cannot use message-passing library to abort
      * it simply exits, parent will get SIGCHLD and abort the program
      */
+#ifdef IBM64
+     /* hack for a problem in POE signal handlers in 64-bit mode */
+     if(AR_caught_sigint || AR_caught_sigterm) _exit(1);
+#endif
+
 #if defined(DATA_SERVER)
     if(armci_me<0)_exit(1);
     else
