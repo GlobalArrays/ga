@@ -1,0 +1,627 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <mpi.h>
+#include <assert.h>
+
+#ifdef WIN32
+#  include <windows.h>
+#  define sleep(x) Sleep(1000*(x))
+#endif
+
+#include "armci.h"
+
+#define DIM1 5
+#define DIM2 3
+#ifdef SOLARIS
+/* shared memory shortage in default system configuration */
+# define DIM3 4
+# define DIM4 4
+# define DIM5 3
+#else
+# define DIM3 8
+# define DIM4 9
+# define DIM5 7
+#endif
+#define DIM6 3
+#define DIM7 2
+
+#define OFF 1
+#define EDIM1 (DIM1+OFF)
+#define EDIM2 (DIM2+OFF)
+#define EDIM3 (DIM3+OFF)
+#define EDIM4 (DIM4+OFF)
+#define EDIM5 (DIM5+OFF)
+#define EDIM6 (DIM6+OFF)
+#define EDIM7 (DIM7+OFF)
+
+#define DIMS 4
+#define MAXDIMS 7
+#define MAX_DIM_VAL 50 
+#define LOOP 200
+
+#define BASE 100.
+#define MAXPROC 128
+
+/***************************** macros ************************/
+#define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
+#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
+#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+
+/***************************** global data *******************/
+int me, nproc;
+void* work[MAXPROC]; /* work array for propagating addresses */
+
+
+
+
+/*\ generate random range for a section of multidimensional array 
+\*/
+void get_range(int ndim, int dims[], int lo[], int hi[]) 
+{
+	int dim;
+	for(dim=0; dim <ndim;dim++){
+		int toss1, toss2;
+		toss1 = rand()%dims[dim];
+		toss2 = rand()%dims[dim];
+		if(toss1<toss2){
+			lo[dim]=toss1;
+			hi[dim]=toss2;
+		}else {
+  			hi[dim]=toss1;
+			lo[dim]=toss2;
+		}
+    }
+}
+
+
+
+/*\ generates a new random range similar to the input range for an array with specified dimensions
+\*/
+void new_range(int ndim, int dims[], int lo[], int hi[],int new_lo[], int new_hi[])
+{
+	int dim;
+	for(dim=0; dim <ndim;dim++){
+		int toss, range;
+		int diff = hi[dim] -lo[dim]+1;
+		assert(diff <= dims[dim]);
+                range = dims[dim]-diff;
+                toss = (range > 0)? rand()%range : lo[dim];
+		new_lo[dim] = toss;
+		new_hi[dim] = toss + diff -1;
+		assert(new_hi[dim] < dims[dim]);
+		assert(diff == (new_hi[dim] -new_lo[dim]+1));
+	}
+}
+
+
+
+
+
+/*\ print range of ndim dimensional array with two strings before and after
+\*/
+void print_range(char *pre,int ndim, int lo[], int hi[], char* post)
+{
+	int i;
+
+	printf("%s[",pre);
+	for(i=0;i<ndim;i++){
+		printf("%d:%d",lo[i],hi[i]);
+		if(i==ndim-1)printf("] %s",post);
+		else printf(",");
+	}
+}
+
+/*\ print subscript of ndim dimensional array with two strings before and after
+\*/
+void print_subscript(char *pre,int ndim, int subscript[], char* post)
+{
+	int i;
+
+	printf("%s [",pre);
+	for(i=0;i<ndim;i++){
+		printf("%d",subscript[i]);
+		if(i==ndim-1)printf("] %s",post);
+		else printf(",");
+	}
+}
+
+
+/*\ print a section of a 2-D array of doubles
+\*/
+void print_2D_double(double *a, int ld, int *lo, int *hi)
+{
+int i,j;
+     for(i=lo[0];i<=hi[0];i++){
+       for(j=lo[1];j<=hi[1];j++) printf("%13f ",a[ld*j+i]);
+       printf("\n");
+     }
+}
+          
+
+/*\ initialize array: a[i,j,k,..]=i+100*j+10000*k+ ... 
+\*/
+void init(double *a, int ndim, int elems, int dims[])
+{
+	int idx[MAXDIMS];
+	int i,dim;
+
+ 	for(i=0; i<elems; i++){
+		int Index = i;
+		double field, val;
+        
+		for(dim = 0; dim < ndim; dim++){
+			idx[dim] = Index%dims[dim];
+			Index /= dims[dim];
+		}
+		
+        field=1.; val=0.;
+		for(dim=0; dim< ndim;dim++){
+			val += field*idx[dim];
+			field *= BASE;
+		}
+		a[i] = val;
+		/* printf("(%d,%d,%d)=%6.0f",idx[0],idx[1],idx[2],val); */
+	}
+}
+
+
+/*\ compute Index from subscript
+ *  assume that first subscript component changes first
+\*/
+int Index(int ndim, int subscript[], int dims[])
+{
+	int idx = 0, i, factor=1;
+	for(i=0;i<ndim;i++){
+		idx += subscript[i]*factor;
+		factor *= dims[i];
+	}
+	return idx;
+}
+
+
+void update_subscript(int ndim, int subscript[], int lo[], int hi[], int dims[])
+{
+	int i;
+	for(i=0;i<ndim;i++){
+		if(subscript[i] < hi[i]) { subscript[i]++; return; }
+		subscript[i] = lo[i];
+	}
+}
+
+	
+
+void compare_patches(int ndim, double *patch1, int lo1[], int hi1[], int dims1[],
+					           double *patch2, int lo2[], int hi2[], int dims2[])
+{
+	int i,j, elems=1;	
+	int subscr1[MAXDIMS], subscr2[MAXDIMS];
+
+	for(i=0;i<ndim;i++){   /* count # of elements & verify consistency of both patches */
+		int diff = hi1[i]-lo1[i];
+		assert(diff == (hi2[i]-lo2[i]));
+		assert(diff < dims1[i]);
+		assert(diff < dims2[i]);
+		elems *= diff+1;
+		subscr1[i]= lo1[i];
+		subscr2[i]=lo2[i];
+	}
+
+	
+	/* compare element values in both patches */ 
+	for(j=0; j< elems; j++){ 
+		int idx1, idx2, offset1, offset2;
+		
+		idx1 = Index(ndim, subscr1, dims1);	 /* calculate element Index from a subscript */
+		idx2 = Index(ndim, subscr2, dims2);
+
+		if(j==0){
+			offset1 =idx1;
+			offset2 =idx2;
+		}
+		idx1 -= offset1;
+		idx2 -= offset2;
+		
+
+		if(patch1[idx1] != patch2[idx2]){
+			char msg[32];
+			sprintf(msg,"%f",patch1[idx1]);
+			print_subscript("ERROR: a",ndim,subscr1,msg);
+			sprintf(msg,"%f\n",patch2[idx2]);
+			print_subscript(" b",ndim,subscr2,msg);
+			assert(0);
+		}
+
+		{ /* update subscript for the patches */
+		   update_subscript(ndim, subscr1, lo1,hi1, dims1);
+		   update_subscript(ndim, subscr2, lo2,hi2, dims2);
+		}
+	}
+				 
+	
+
+	/* make sure we reached upper limit */
+	/*for(i=0;i<ndim;i++){ 
+		assert(subscr1[i]==hi1[i]);
+		assert(subscr2[i]==hi2[i]);
+	}*/ 
+}
+
+
+void create_array(void *a[], int elem_size, int ndim, int dims[])
+{
+     int bytes=elem_size, i, rc;
+
+     assert(ndim<=MAXDIMS);
+     for(i=0;i<ndim;i++)bytes*=dims[i];
+
+     rc = ARMCI_Malloc(a, bytes);
+     assert(rc==0);
+     
+     assert(a[me]);
+     
+}
+
+void destroy_array(void *ptr[])
+{
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    assert(!ARMCI_Free(ptr[me]));
+}
+
+
+int loA[MAXDIMS], hiA[MAXDIMS];
+int dimsA[MAXDIMS]={DIM1,DIM2,DIM3,DIM4,DIM5,DIM6, DIM7};
+int loB[MAXDIMS], hiB[MAXDIMS];
+int dimsB[MAXDIMS]={EDIM1,EDIM2,EDIM3,EDIM4,EDIM5,EDIM6,EDIM7};
+int count[MAXDIMS];
+int strideA[MAXDIMS], strideB[MAXDIMS];
+int loC[MAXDIMS], hiC[MAXDIMS];
+int idx[MAXDIMS]={0,0,0,0,0,0,0};
+
+    
+void test_dim(int ndim)
+{
+	int dim,elems;
+	int i,j, proc;
+	/* double a[DIM4][DIM3][DIM2][DIM1], b[EDIM4][EDIM3][EDIM2][EDIM1];*/
+        void *b[MAXPROC];
+        void *a, *c;
+
+	elems = 1;   
+        strideA[0]=sizeof(double); 
+        strideB[0]=sizeof(double);
+	for(i=0;i<ndim;i++){
+		strideA[i] *= dimsA[i];
+		strideB[i] *= dimsB[i];
+                if(i<ndim-1){
+                     strideA[i+1] = strideA[i];
+                     strideB[i+1] = strideB[i];
+                }
+		elems *= dimsA[i];
+	}
+
+        /* create shared and local arrays */
+        create_array(b, sizeof(double),ndim,dimsB);
+        a = malloc(sizeof(double)*elems);
+        assert(a);
+        c = malloc(sizeof(double)*elems);
+        assert(c);
+
+	init(a, ndim, elems, dimsA);
+	
+	if(me==0){
+            printf("--------array[%d",dimsA[0]);
+	    for(dim=1;dim<ndim;dim++)printf(",%d",dimsA[dim]);
+	    printf("]--------\n");
+        }
+        sleep(1);
+
+	for(i=0;i<LOOP;i++){
+	    int idx1, idx2, idx3;
+	    get_range(ndim, dimsA, loA, hiA);
+	    new_range(ndim, dimsB, loA, hiA, loB, hiB);
+	    new_range(ndim, dimsA, loA, hiA, loC, hiC);
+
+            proc=nproc-1-me;
+
+            if(me==0){
+	       print_range("local",ndim,loA, hiA,"-> ");
+	       print_range("remote",ndim,loB, hiB,"-> ");
+	       print_range("local",ndim,loC, hiC,"\n");
+            }
+
+	    idx1 = Index(ndim, loA, dimsA);
+	    idx2 = Index(ndim, loB, dimsB);
+	    idx3 = Index(ndim, loC, dimsA);
+
+/*            idx1 = 1; idx2=0; idx3 = 0;*/
+	    for(j=0;j<ndim;j++)count[j]=hiA[j]-loA[j]+1;
+
+	    count[0]   *= sizeof(double); /* convert range to bytes at stride level zero */
+
+            (void)ARMCI_PutS((double*)a + idx1, strideA, (double*)b[proc] + idx2, strideB, count, ndim-1, proc);
+
+/*            sleep(1);*/
+
+/*            printf("%d: a=(%x,%f) b=(%x,%f)\n",me,idx1 + (double*)a,*(idx1 + (double*)a),idx2 + (double*)b,*(idx2 + (double*)b));*/
+/*            fflush(stdout);*/
+/*            sleep(1);*/
+
+            /* note that we do not need ARMCI_Fence here since
+             * consectutive operations targeting the same process are ordered */
+	    (void)ARMCI_GetS((double*)b[proc] + idx2, strideB, (double*)c + idx3, strideA,  count, ndim-1, proc);
+            
+            compare_patches(ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx3, loC, hiC, dimsA);
+
+    
+        }
+
+        free(c);
+        destroy_array(b);
+        free(a);
+}
+
+
+
+/*************************** vector interface *********************************\
+ * tests vector interface for transfers of triangular sections of a 2-D array *
+ ******************************************************************************/
+void test_vector()
+{
+	int dim,elems,ndim,cols,rows,mrc;
+	int i, proc, loop;
+        int rc;
+        int idx1, idx3;
+        void *b[MAXPROC];
+        void *a, *c;
+        armci_giov_t dsc[MAX_DIM_VAL];
+        void *psrc[MAX_DIM_VAL];
+        void *pdst[MAX_DIM_VAL];
+
+	elems = 1;   
+        ndim  = 2;
+	for(i=0;i<ndim;i++){
+                dimsA[i]=MAX_DIM_VAL;
+                dimsB[i]=MAX_DIM_VAL+1;
+		elems *= dimsA[i];
+	}
+
+        /* create shared and local arrays */
+        create_array(b, sizeof(double),ndim,dimsB);
+        a = malloc(sizeof(double)*elems);
+        assert(a);
+        c = malloc(sizeof(double)*elems);
+        assert(c);
+
+	init(a, ndim, elems, dimsA);
+	
+	if(me==0){
+            printf("--------array[%d",dimsA[0]);
+	    for(dim=1;dim<ndim;dim++)printf(",%d",dimsA[dim]);
+	    printf("]--------\n");
+        }
+        sleep(1);
+
+	for(loop=0;loop<LOOP;loop++){
+	    get_range(ndim, dimsA, loA, hiA);
+	    new_range(ndim, dimsB, loA, hiA, loB, hiB);
+	    new_range(ndim, dimsA, loA, hiA, loC, hiC);
+
+            proc=nproc-1-me;
+
+            if(me==0){
+	       print_range("local",ndim,loA, hiA,"-> ");
+	       print_range("remote",ndim,loB, hiB,"-> ");
+	       print_range("local",ndim,loC, hiC,"\n");
+            }
+
+/*            printf("array at source\n");*/
+/*            print_2D_double((double *)a, dimsA[0], loA, hiA);*/
+
+            cols =  hiA[1]-loA[1]+1; 
+            rows =  hiA[0]-loA[0]+1; 
+            mrc =MIN(cols,rows);
+
+            /* generate a data descriptor for a lower-triangular patch */
+            for(i=0; i < mrc; i++){
+               int ij[2];
+               int idx;
+
+               ij[0] = loA[0]+i;
+               ij[1] = loA[1]+i;
+               idx = Index(ndim, ij, dimsA);
+               psrc[i]= (double*)a + Index(ndim, ij, dimsA);
+
+               ij[0] = loB[0]+i;
+               ij[1] = loB[1]+i;
+               idx = Index(ndim, ij, dimsB);
+               pdst[i]= (double*)b[proc] + Index(ndim, ij, dimsB);
+
+               dsc[i].bytes = (rows-i)*sizeof(double);
+               dsc[i].src_ptr_array = &psrc[i];
+               dsc[i].dst_ptr_array = &pdst[i];
+
+               /* assume each element different in size (not true in rectangular patches) */ 
+               dsc[i].ptr_array_len = 1; 
+            }
+
+            if(rc=ARMCI_PutV(dsc, mrc, proc))ARMCI_Error("putv failed ",rc);
+
+/*            printf("array at destination\n");*/
+/*            print_2D_double((double *)b[proc], dimsB[0], loB, hiB);*/
+
+            /* generate a data descriptor for the upper-triangular patch */
+            /* there is one less element since diagonal is excluded      */
+            for(i=1; i < cols; i++){
+               int ij[2];
+
+               ij[0] = loA[0];
+               ij[1] = loA[1]+i;
+               psrc[i-1]= (double*)a + Index(ndim, ij, dimsA);
+
+               ij[0] = loB[0];
+               ij[1] = loB[1]+i;
+               pdst[i-1]= (double*)b[proc] + Index(ndim, ij, dimsB);
+
+               mrc = MIN(i,rows);
+               dsc[i-1].bytes = mrc*sizeof(double);
+               dsc[i-1].src_ptr_array = &psrc[i-1];
+               dsc[i-1].dst_ptr_array = &pdst[i-1];
+
+               /* assume each element different in size (not true in rectangular patches) */ 
+               dsc[i-1].ptr_array_len = 1; 
+            }
+
+            if(cols-1)if(rc=ARMCI_PutV(dsc, cols-1, proc))ARMCI_Error("putv(2) failed ",rc);
+
+            /* we get back entire rectangular patch */
+            for(i=0; i < cols; i++){
+               int ij[2];
+               ij[0] = loB[0];
+               ij[1] = loB[1]+i;
+               psrc[i]= (double*)b[proc] + Index(ndim, ij, dimsB);
+
+               ij[0] = loC[0];
+               ij[1] = loC[1]+i;
+               pdst[i]= (double*)c + Index(ndim, ij, dimsA);
+            }
+
+            dsc[0].bytes = rows*sizeof(double);
+            dsc[0].src_ptr_array = psrc;
+            dsc[0].dst_ptr_array = pdst;
+            dsc[0].ptr_array_len = cols; 
+
+            /* note that we do not need ARMCI_Fence here since
+             * consecutive operations targeting the same process are ordered */
+            if(rc=ARMCI_GetV(dsc, 1, proc))ARMCI_Error("getv failed ",rc);
+            
+	    idx1 = Index(ndim, loA, dimsA);
+	    idx3 = Index(ndim, loC, dimsA);
+            compare_patches(ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx3, loC, hiC, dimsA);
+    
+        }
+
+        free(c);
+        destroy_array(b);
+        free(a);
+}
+
+
+void test_fetch_add()
+{
+    int rc, bytes, i, val, times =0;
+    int *arr[MAXPROC];
+
+    /* shared variable is located on processor 0 */
+    bytes = me == 0 ? sizeof(int) : 0;
+
+    rc = ARMCI_Malloc((void**)arr,bytes);
+    assert(rc==0);
+
+    if(me == 0) *arr[0] = 5;  /* initialization */
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    /* show that what everybody gets */
+    rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
+    assert(rc==0);
+
+    for(i = 0; i< nproc; i++){
+        if(i==me){
+            printf("process %d got value of %d\n",i,val);
+            fflush(stdout);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    if(me == 0)printf("\nIncrement the shared counter until reaches %d\n",LOOP);
+    
+    /* now increment the counter value until reaches LOOP */
+    while(val<LOOP){
+          rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
+          assert(rc==0);
+          times++;
+    }
+
+    for(i = 0; i< nproc; i++){
+        if(i==me){
+            printf("process %d incremented the counter %d times value=%d\n",i,times,val);
+            fflush(stdout);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+
+    if(me == 0) *arr[0] = 0;  /* set it back to 0 */
+    if(me == 0)printf("\nNow everybody increments the counter %d times\n",LOOP); 
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    for(i = 0; i< LOOP; i++){
+          rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
+          assert(rc==0);
+    }
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    if(me == 0){
+        printf("The final value is %d, should be %d.\n\n",*arr[0],LOOP*nproc); 
+        if( *arr[0] != LOOP*nproc) ARMCI_Error("failed ...",*arr[0]);
+    }
+
+    ARMCI_Free(arr[me]);
+}
+
+
+
+
+int main(int argc, char* argv[])
+{
+    int ndim;
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &me);
+    if(nproc>MAXPROC && me==0)ARMCI_Error("Test works for up to %d processors\n",MAXPROC);
+    if(me==0){
+       printf("%ARMCI test program (%d MPI processes)\n",nproc); 
+       fflush(stdout);
+       sleep(4);
+    }
+
+    ARMCI_Init();
+        
+        if(me==0){
+           printf("\nTesting strided gets and puts\n");
+           printf("(Only std output for process 0 is printed)\n\n"); 
+           fflush(stdout);
+           sleep(4);
+        }
+        for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        if(me==0){
+           printf("\nTesting Vector Interface using triangular patches of a 2-D array\n\n");
+           fflush(stdout);
+           sleep(3);
+        }
+
+        test_vector();
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        if(me==0){
+           printf("\nTesting atomic fetch&add\n");
+           printf("(Std Output for all processes is printed)\n\n"); 
+           fflush(stdout);
+           sleep(3);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        test_fetch_add();
+
+        MPI_Barrier(MPI_COMM_WORLD);
+	if(me==0)printf("All tests passed\n"); fflush(stdout);
+    ARMCI_Finalize();
+    MPI_Finalize();
+    return(0);
+}

@@ -1,0 +1,5266 @@
+%!PS-Adobe-3.0
+%%Title: (Untitled Document)
+%%Version: 1 2
+%%Creator: (FrameMaker 5.5P4f)
+%%CreationDate: (D:19980501124539)
+%%DocumentData: Clean7Bit
+%%BoundingBox: 0 0 612 791
+%%Pages: 4
+%%DocumentProcessColors: Cyan Magenta Yellow Black
+%%DocumentSuppliedResources:
+%%+ font Times-Italic
+%%+ font Courier
+%%+ font Helvetica-Bold
+%%+ font Times-Roman
+%%+ font Helvetica
+%%+ procset (Adobe Acrobat - PDF operators) 1.2 0
+%%+ procset (Adobe Acrobat - type operators) 1.2 0
+%%+ procset (Adobe Acrobat - general image support) 1.2 0
+%%+ procset (Adobe Acrobat - monochrome image support) 1.2 0
+%%EndComments
+%%BeginDefaults
+%%EndDefaults
+%%BeginProlog
+%%EndProlog
+%%BeginSetup
+/currentpacking where{pop currentpacking true setpacking}if
+userdict /PDF 85 dict put
+%%BeginFile: pdfvars.prc
+%%Copyright: Copyright 1987-1996 Adobe Systems Incorporated. All Rights Reserved.
+userdict /PDFVars 75 dict dup begin put
+/_save 0 def
+/_cshow 0 def
+/InitAll 0 def
+/TermAll 0 def
+/_lp /none def
+/_doClip 0 def
+/sfc 0 def
+/_sfcs 0 def
+/_sfc 0 def
+/ssc 0 def
+/_sscs 0 def
+/_ssc 0 def
+/_fcs 0 def
+/_scs 0 def
+/_fp 0 def
+/_sp 0 def
+/_f0 0 array def
+/_f1 1 array def
+/_f3 3 array def
+/_f4 4 array def
+/_fc null def
+/_s0 0 array def
+/_s1 1 array def
+/_s3 3 array def
+/_s4 4 array def
+/_sc null def
+/_cpcf null def
+/_cpcs null def
+/_inT false def
+/_tr -1 def
+/_rise 0 def
+/_ax 0 def
+/_cx 0 def
+/_ld 0 def
+/_tm matrix def
+/_ctm matrix def
+/_mtx matrix def
+/_hy (-) def
+/_fScl 0 def
+/_hs 1 def
+/_pdfEncodings 2 array def
+/_Tj 0 def
+/_italMtx[1 0 .212557 1 0 0]def
+/_basefont 0 def
+/_basefonto 0 def
+/_categories 10 dict def
+/_sa? true def
+/_op? false def
+/_ColorSep5044? false def
+/_tmpcolr? [] def
+/_tmpop? {} def
+end
+%%EndFile
+PDFVars begin PDF begin
+%%BeginFile: pdfutil.prc
+%%Copyright: Copyright 1993 Adobe Systems Incorporated. All Rights Reserved.
+/bd {bind def} bind def
+/ld {load def} bd
+/dd { PDFVars 3 1 roll put } bd
+/xdd { exch dd } bd
+/Level2?
+/languagelevel where { pop languagelevel 2 ge } { false } ifelse
+def
+/here {
+dup currentdict exch known
+{ currentdict exch get true }
+{ pop false }
+ifelse
+} bd
+/isdefined? { where { pop true } { false } ifelse } bd
+/StartLoad { dup dup not { /_save save dd } if } bd
+/EndLoad { if not { _save restore } if } bd
+/npop { { pop } repeat } bd
+%%EndFile
+%%BeginFile: l2compat
+%%Copyright: Copyright 1987-1993 Adobe Systems Incorporated. All Rights Reserved.
+/cshow isdefined? not StartLoad {
+/cshow {
+exch /_cshow xdd
+{ 0 0 _cshow exec } forall
+} bd
+} EndLoad
+/setcmykcolor isdefined? not StartLoad {
+/setcmykcolor {
+1 sub 4 1 roll
+3 {
+3 index add neg dup 0 lt { pop 0 } if
+3 1 roll
+} repeat
+setrgbcolor
+pop
+} bd
+} EndLoad
+/rectclip isdefined? not StartLoad {
+/re 0 def
+/rectclip { newpath re clip newpath } bd
+} EndLoad
+/execform isdefined? not StartLoad {
+/execform {
+gsave dup begin
+Matrix concat
+BBox aload pop
+exch 3 index sub
+exch 2 index sub
+rectclip
+PaintProc end grestore
+} def
+} EndLoad
+/sethalftone isdefined? not StartLoad {
+/sethalftone {
+begin
+HalftoneType 1 eq
+{ Frequency Angle /SpotFunction load setscreen }
+if
+end
+} bd
+} EndLoad
+%%EndFile
+%%BeginFile: pdf.prc
+%%Copyright: Copyright 1987-1996 Adobe Systems Incorporated. All Rights Reserved.
+/initialize {
+_ColorSep5044? {sep_ops begin 50 dict begin} if
+newpath
+} bd
+/terminate {
+_ColorSep5044? {end end} if
+} bd
+Level2? StartLoad
+{ /m/moveto ld
+/l/lineto ld
+/c/curveto ld
+/setSA/setstrokeadjust ld
+} EndLoad
+Level2? not StartLoad
+{
+/pl {
+transform
+0.25 sub round 0.25 add exch
+0.25 sub round 0.25 add exch
+itransform
+} bd
+/m { _sa? { pl } if moveto } bd
+/l { _sa? { pl } if lineto } bd
+/c { _sa? { pl } if curveto } bd
+/setSA { /_sa? xdd } bd
+} EndLoad
+/v { currentpoint 6 2 roll c } bd
+/y { 2 copy c } bd
+/h/closepath ld
+/d/setdash ld
+/j/setlinejoin ld
+/J/setlinecap ld
+/M/setmiterlimit ld
+/w/setlinewidth ld
+/cf currentflat def
+/i {
+dup 0 eq { pop cf } if
+setflat
+} bd
+/ilp { /_lp /none dd } bd
+/sfc {
+_lp /fill ne {
+_sfcs
+_sfc
+/_lp /fill dd
+} if
+} dd
+/ssc {
+_lp /stroke ne {
+_sscs
+_ssc
+/_lp /stroke dd
+} if
+} dd
+/n {
+_doClip 1 ge {
+_doClip 1 eq { clip } { eoclip } ifelse
+/_doClip 0 dd
+} if
+newpath
+} bd
+/f {
+_doClip 1 ge
+{
+gsave sfc fill grestore
+_doClip 1 eq { clip } { eoclip } ifelse
+newpath
+ilp
+/_doClip 0 dd
+}
+{ sfc fill }
+ifelse
+} bd
+/f* {
+_doClip 1 ge
+{
+gsave sfc eofill grestore
+_doClip 1 eq { clip } { eoclip } ifelse
+newpath
+ilp
+/_doClip 0 dd
+}
+{ sfc eofill }
+ifelse
+} bd
+/S {
+_doClip 1 ge
+{
+gsave ssc stroke grestore
+_doClip 1 eq { clip } { eoclip } ifelse
+newpath
+ilp
+/_doClip 0 dd
+}
+{ ssc stroke }
+ifelse
+} bd
+/s { h S } bd
+/B {
+_doClip dup 1 ge
+gsave f grestore
+{
+gsave S grestore
+1 eq { clip } { eoclip } ifelse
+newpath
+ilp
+/_doClip 0 dd
+}
+{ pop S }
+ifelse
+} bd
+/b { h B } bd
+/B* {
+_doClip dup 1 ge
+gsave f* grestore
+{
+gsave S grestore
+1 eq { clip } { eoclip } ifelse
+newpath
+ilp
+/_doClip 0 dd
+}
+{ pop S }
+ifelse
+} bd
+/b* { h B* } bd
+/W { /_doClip 1 dd } bd
+/W* { /_doClip 2 dd } bd
+/q/save ld
+/Q { restore ilp } bd
+Level2? StartLoad
+{ /defineRes/defineresource ld
+/findRes/findresource ld
+currentglobal
+true systemdict /setglobal get exec
+[/Function /ExtGState /Form]
+{ /Generic /Category findresource dup length dict copy /Category defineresource pop }
+forall
+systemdict /setglobal get exec
+} EndLoad
+Level2? not StartLoad
+{ /AlmostFull?
+{ dup maxlength exch length sub 2 le
+} bind def
+/Expand
+{ 1 index maxlength mul cvi dict
+dup begin exch { def } forall end
+} bind def
+/xput
+{ 3 2 roll
+dup 3 index known not
+{ dup AlmostFull? { 1.5 Expand } if
+} if
+dup 4 2 roll put
+} bind def
+/defineRes
+{ _categories 1 index known not
+{ /_categories _categories 2 index 10 dict xput store
+} if
+_categories exch 2 copy get 5 -1 roll 4 index xput put
+} bind def
+/findRes
+{ _categories exch get exch get
+} bind def
+} EndLoad
+/cs
+{
+dup where { pop load } if
+dup /_fcs xdd
+ucs
+_cpcf exch get
+/_fc xdd
+/_fp null dd
+} bd
+/CS
+{
+dup where { pop load } if
+dup /_scs xdd ucs _cpcs exch get /_sc xdd /_sp null dd
+} bd
+/ucs {
+dup type /arraytype eq
+{ dup 0 get
+dup /Indexed eq
+{ pop 0 get }
+{ /Pattern eq
+{ dup length 2 eq
+{ 1 get ucs }
+{ 0 get }
+ifelse }
+{ 0 get }
+ifelse }
+ifelse }
+if }
+bd
+/_cpcf
+15 dict dup begin
+/DefaultGray _f1 def
+/DeviceGray _f1 def
+/DefaultRGB _f3 def
+/DeviceRGB _f3 def
+/DeviceCMYK _f4 def
+/CalGray _f1 def
+/CalRGB _f3 def
+/CalCMYK _f4 def
+/Lab _f3 def
+/Pattern _f0 def
+/Indexed _f1 def
+/Separation _f1 def
+/CIEBasedA _f1 def
+/CIEBasedABC _f3 def
+end
+dd
+/_cpcs
+15 dict dup begin
+/DefaultGray _s1 def
+/DeviceGray _s1 def
+/DefaultRGB _s3 def
+/DeviceRGB _s3 def
+/DeviceCMYK _s4 def
+/CalGray _s1 def
+/CalRGB _s3 def
+/CalCMYK _s4 def
+/Lab _s3 def
+/Pattern _s0 def
+/Indexed _s1 def
+/Separation _s1 def
+/CIEBasedA _s1 def
+/CIEBasedABC _s3 def
+end
+dd
+Level2? not StartLoad {
+/ri/pop ld
+/makePat/pop ld
+} EndLoad
+Level2? StartLoad {
+/ri
+{
+/findcolorrendering isdefined?
+{
+mark exch
+findcolorrendering
+counttomark 2 eq
+{ type /booleantype eq
+{ dup type /nametype eq
+{ dup /ColorRendering resourcestatus
+{ pop pop
+dup /DefaultColorRendering ne
+{
+/ColorRendering findresource
+setcolorrendering
+} if
+} if
+} if
+} if
+} if
+cleartomark
+}
+{ pop
+} ifelse
+} bd
+/makePat /makepattern ld
+} EndLoad
+Level2? not _ColorSep5044? or StartLoad
+{
+/L1setcolor {
+aload length
+dup 0 eq
+{ pop .5 setgray }
+{ dup 1 eq
+{ pop setgray }
+{ 3 eq
+{ setrgbcolor }
+{ setcmykcolor }
+ifelse }
+ifelse }
+ifelse
+} bind dd
+/_sfcs { } dd
+/_sscs { } dd
+} EndLoad
+Level2? not _ColorSep5044? not and StartLoad
+{
+/_sfc { _fc L1setcolor } dd
+/_ssc { _sc L1setcolor } dd
+} EndLoad
+Level2? _ColorSep5044? not and StartLoad
+{
+/_sfcs
+{
+_fcs setcolorspace
+} bind dd
+/_sscs
+{
+_scs setcolorspace
+} bind dd
+/_sfc
+{
+_fc aload pop
+_fp null eq
+{ setcolor }
+{ _fp setpattern }
+ifelse
+} bind dd
+/_ssc
+{
+_sc aload pop
+_sp null eq { setcolor } { _sp setpattern } ifelse
+} bind dd
+} EndLoad
+/sc
+{
+_fc astore pop
+ilp
+} bd
+/SC
+{
+_sc astore pop
+ilp
+} bd
+/scn {
+dup type /dicttype eq
+{ dup /_fp xdd
+/PaintType get 1 eq
+{ /_fc _f0 dd ilp }
+{ /_fc _cpcf _fcs ucs get dd
+sc }
+ifelse }
+{ sc }
+ifelse
+} bd
+/SCN {
+dup type /dicttype eq
+{ dup /_sp xdd
+/PaintType get 1 eq
+{ /_sc _s0 dd ilp }
+{ /_sc _cpcs _scs ucs get dd
+SC }
+ifelse }
+{ SC }
+ifelse
+} bd
+/g { /DefaultGray cs sc } bd
+/rg { /DefaultRGB cs sc } bd
+/k { /DeviceCMYK cs sc } bd
+/G { /DefaultGray CS SC } bd
+/RG { /DefaultRGB CS SC } bd
+/K { /DeviceCMYK CS SC } bd
+/cm { _mtx astore concat } bd
+/re {
+4 2 roll m
+1 index 0 rlineto
+0 exch rlineto
+neg 0 rlineto
+h
+} bd
+/RC/rectclip ld
+/EF/execform ld
+/PS { cvx exec } bd
+/initgs {
+/DefaultGray where
+{ pop }
+{ /DefaultGray /DeviceGray dd }
+ifelse
+/DefaultRGB where
+{ pop }
+{ /DefaultRGB /DeviceRGB dd }
+ifelse
+0 g 0 G
+[] 0 d 0 j 0 J 10 M 1 w
+true setSA
+} bd
+21 dict dup begin
+/CosineDot
+{ 180 mul cos exch 180 mul cos add 2 div } bd
+/Cross
+{ abs exch abs 2 copy gt { exch } if pop neg } bd
+/Diamond
+{ abs exch abs 2 copy add .75 le
+{ dup mul exch dup mul add 1 exch sub }
+{ 2 copy add 1.23 le
+{ .85 mul add 1 exch sub }
+{ 1 sub dup mul exch 1 sub dup mul add 1 sub }
+ifelse }
+ifelse } bd
+/Double
+{ exch 2 div exch 2 { 360 mul sin 2 div exch } repeat add } bd
+/DoubleDot
+{ 2 { 360 mul sin 2 div exch } repeat add } bd
+/Ellipse
+{ abs exch abs 2 copy 3 mul exch 4 mul add 3 sub dup 0 lt
+{ pop dup mul exch .75 div dup mul add 4 div
+1 exch sub }
+{ dup 1 gt
+{pop 1 exch sub dup mul exch 1 exch sub
+.75 div dup mul add 4 div 1 sub }
+{ .5 exch sub exch pop exch pop }
+ifelse }
+ifelse } bd
+/EllipseA
+{ dup mul .9 mul exch dup mul add 1 exch sub } bd
+/EllipseB
+{ dup 5 mul 8 div mul exch dup mul exch add sqrt 1 exch sub } bd
+/EllipseC
+{ dup .5 gt { 1 exch sub } if
+dup .25 ge
+{ .5 exch sub 4 mul dup mul 1 sub }
+{ 4 mul dup mul 1 exch sub }
+ifelse
+exch
+dup .5 gt { 1 exch sub } if
+dup .25 ge
+{ .5 exch sub 4 mul dup mul 1 sub }
+{ 4 mul dup mul 1 exch sub }
+ifelse
+add -2 div } bd
+/InvertedDouble
+{ exch 2 div exch 2 { 360 mul sin 2 div exch } repeat add neg } bd
+/InvertedDoubleDot
+{ 2 { 360 mul sin 2 div exch } repeat add neg } bd
+/InvertedEllipseA
+{ dup mul .9 mul exch dup mul add 1 sub } bd
+/InvertedSimpleDot
+{ dup mul exch dup mul add 1 sub } bd
+/Line
+{ exch pop abs neg } bd
+/LineX
+{ pop } bd
+/LineY
+{ exch pop } bd
+/Rhomboid
+{ abs exch abs 0.9 mul add 2 div } bd
+/Round
+{ abs exch abs 2 copy add 1 le
+{ dup mul exch dup mul add 1 exch sub }
+{ 1 sub dup mul exch 1 sub dup mul add 1 sub }
+ifelse } bd
+/SimpleDot
+{ dup mul exch dup mul add 1 exch sub } bd
+/Square
+{ abs exch abs 2 copy lt { exch } if pop neg } bd
+end
+{ /Function defineRes pop } forall
+/Identity {} /Function defineRes pop
+Level2? StartLoad {
+/gs
+{
+begin
+/SA here { setstrokeadjust } if
+/OP here { setoverprint } if
+/BG here { setblackgeneration } if
+/UCR here { setundercolorremoval } if
+/HT here { sethalftone } if
+/sethalftonephase isdefined? { /HTP here { sethalftonephase } if } if
+/TR here
+{
+dup xcheck { settransfer } { aload pop setcolortransfer } ifelse
+} if
+end
+} bd
+{ /Default /Halftone findresource pop } stopped
+{
+currenthalftone exch defineresource pop }
+if
+} EndLoad
+Level2? not StartLoad {
+/gs
+{
+begin
+/SA here { /_sa? xdd } if
+/OP here { dup /_op? xdd
+/setoverprint where {pop setoverprint}
+{pop} ifelse
+} if
+/HT here { sethalftone } if
+/TR here { dup xcheck
+{ settransfer }
+{ pop }
+ifelse } if
+end
+} bd
+5 dict dup
+begin
+currentscreen 1 [/HalftoneType /SpotFunction /Angle /Frequency]
+{ exch def } forall
+end
+/Default exch /Halftone defineRes pop
+} EndLoad
+/int {
+dup 2 index sub 3 index 5 index sub div 6 -2 roll sub mul
+exch pop add exch pop
+} bd
+/limit {
+dup 2 index le { exch } if pop
+dup 2 index ge { exch } if pop
+} bd
+_ColorSep5044? StartLoad {
+/_sfc
+{
+_fp null eq
+{ _fcs type /arraytype eq
+{_fcs 0 get /Separation eq
+{
+_fcs 1 get /All eq
+{
+_fc aload pop 1 exch sub
+/setseparationgray where pop begin setseparationgray end
+}
+{
+1 _fcs 3 get exec _fcs 1 get
+/findcmykcustomcolor where pop begin findcmykcustomcolor end
+_fc aload pop
+/setcustomcolor where pop begin setcustomcolor end
+}
+ifelse
+}
+{ _fc L1setcolor }
+ifelse
+}
+{ _fc L1setcolor }
+ifelse
+}
+{ _fp setpattern }
+ifelse
+} bind dd
+/_ssc
+{
+_sp null eq
+{ _scs type /arraytype eq
+{_scs 0 get /Separation eq
+{
+_scs 1 get /All eq
+{
+_sc aload pop 1 exch sub
+/setseparationgray where pop begin setseparationgray end
+}
+{
+1 _scs 3 get exec _scs 1 get
+/findcmykcustomcolor where pop begin findcmykcustomcolor end
+_sc aload pop
+/setcustomcolor where pop begin setcustomcolor end
+}
+ifelse
+}
+{ _sc L1setcolor }
+ifelse
+}
+{ _sc L1setcolor }
+ifelse
+}
+{ _sp setpattern }
+ifelse
+} bind dd
+} EndLoad
+%%EndFile
+%%BeginFile: pdftext.prc
+%%Copyright: Copyright 1987-1994 Adobe Systems Incorporated. All Rights Reserved.
+PDF /PDFText 51 dict dup begin put
+/initialize { PDFText begin } bd
+/terminate { end } bd
+/CopyFont {
+{
+1 index /FID ne 2 index /UniqueID ne and
+{ def } { pop pop } ifelse
+} forall
+} bd
+/modEnc {
+/_enc xdd
+/_icode 0 dd
+counttomark 1 sub -1 0
+{
+index
+dup type /nametype eq
+{
+_enc _icode 3 -1 roll put
+_icode 1 add
+}
+if
+/_icode xdd
+} for
+cleartomark
+_enc
+} bd
+/trEnc {
+/_enc xdd
+255 -1 0 {
+exch dup -1 eq
+{ pop /.notdef }
+{ Encoding exch get }
+ifelse
+_enc 3 1 roll put
+} for
+pop
+_enc
+} bd
+/TE {
+/_i xdd
+StandardEncoding 256 array copy modEnc
+_pdfEncodings exch _i exch put
+} bd
+/TZ
+{
+/_usePDFEncoding xdd
+findfont
+dup length 2 add dict
+begin
+{
+1 index /FID ne { def } { pop pop } ifelse
+} forall
+/FontName exch def
+_usePDFEncoding 0 ge
+{
+/Encoding _pdfEncodings _usePDFEncoding get def
+pop
+}
+{
+_usePDFEncoding -1 eq
+{
+counttomark 0 eq
+{ pop }
+{
+Encoding 256 array copy
+modEnc /Encoding exch def
+}
+ifelse
+}
+{
+256 array
+trEnc /Encoding exch def
+}
+ifelse
+}
+ifelse
+FontName currentdict
+end
+definefont pop
+}
+bd
+/_pdfIsLevel2
+systemdict /languagelevel known
+{languagelevel 2 ge}
+{false}
+ifelse
+def
+_pdfIsLevel2
+{
+/_pdfFontStatus
+{
+dup /Font resourcestatus
+{pop pop pop true}
+{
+/CIDFont /Category resourcestatus
+{
+pop pop
+/CIDFont resourcestatus
+{pop pop true}
+{false}
+ifelse
+}
+{ pop false }
+ifelse
+}
+ifelse
+} bd
+}
+{
+/_pdfFontStatusString 50 string def
+_pdfFontStatusString 0 (fonts/) putinterval
+/_pdfFontStatus
+{
+_pdfFontStatusString 6 42 getinterval
+cvs length 6 add
+_pdfFontStatusString exch 0 exch getinterval
+status
+{ pop pop pop pop true}
+{ false }
+ifelse
+} bd
+}
+ifelse
+/_pdfString100 100 string def
+/_pdfComposeFontName
+{
+dup length 1 eq
+{
+0 get
+1 index
+type /nametype eq
+{
+_pdfString100 cvs
+length dup dup _pdfString100 exch (-) putinterval
+_pdfString100 exch 1 add dup _pdfString100 length exch sub getinterval
+2 index exch cvs length
+add 1 add _pdfString100 exch 0 exch getinterval
+exch pop
+true
+}
+{
+pop pop
+false
+}
+ifelse
+}
+{
+false
+}
+ifelse
+} bd
+systemdict /composefont known
+{
+/_pdfComposeFont
+{
+1 index /CMap resourcestatus
+{pop pop true}
+{false}
+ifelse
+1 index true exch
+{
+_pdfFontStatus not
+{pop false exit}
+if
+}
+forall
+and
+{composefont true}
+{
+_pdfComposeFontName
+{
+dup _pdfFontStatus
+{ findfont definefont true }
+{ pop pop false }
+ifelse
+}
+{
+dup _pdfFontStatus
+{ findfont true }
+{ pop false }
+ifelse
+}
+ifelse
+}
+ifelse
+} bd
+}
+{
+/_pdfComposeFont
+{
+_pdfComposeFontName not
+{
+dup
+}
+if
+2 copy _pdfFontStatus
+{ pop findfont definefont true }
+{
+eq
+{pop false}
+{
+dup _pdfFontStatus
+{findfont true}
+{pop false}
+ifelse
+}
+ifelse
+}
+ifelse
+} bd
+}
+ifelse
+/_pdfFaceByStyleDict 4 dict dup begin
+_pdfIsLevel2
+{
+/Serif
+/Ryumin-Light-83pv-RKSJ-H /Font resourcestatus
+{pop pop /Ryumin-Light}
+{/HeiseiMin-W3}
+ifelse
+def
+/SansSerif
+/GothicBBB-Medium-83pv-RKSJ-H /Font resourcestatus
+{pop pop /GothicBBB-Medium}
+{/HeiseiKakuGo-W5}
+ifelse
+def
+/Jun101-Light-83pv-RKSJ-H /Font resourcestatus
+{pop pop /RoundSansSerif /Jun101-Light def }
+{
+/HeiseiMaruGo-W4-83pv-RKSJ-H /Font resourcestatus
+{pop pop /RoundSansSerif /HeiseiMaruGo-W4 def}
+if
+}
+ifelse
+/Default Serif def
+}
+{
+/Serif /Ryumin-Light def
+/SansSerif /GothicBBB-Medium def
+{
+(fonts/Jun101-Light-83pv-RKSJ-H) status
+}stopped
+{pop}{
+{pop pop pop pop /RoundSansSerif /Jun101-Light def }
+if
+}ifelse
+/Default Serif def
+}
+ifelse
+end
+def
+/TZzero
+{
+/_styleArr xdd
+3 copy
+_pdfComposeFont
+{exch pop exch pop exch pop}
+{
+[
+0 1 _styleArr length 1 sub
+{
+_styleArr exch get
+_pdfFaceByStyleDict exch 2 copy known not
+{ pop /Default }
+if
+get
+}
+for
+]
+exch pop
+2 index 3 1 roll
+_pdfComposeFont
+{exch pop}
+{
+findfont
+dup length dict
+begin
+{1 index /FID ne {def}{pop pop} ifelse }
+forall
+currentdict
+end
+}
+ifelse
+}
+ifelse
+definefont pop
+}
+bd
+/swj {
+dup 4 1 roll
+dup length exch stringwidth
+exch 5 -1 roll 3 index mul add
+4 1 roll 3 1 roll mul add
+6 2 roll /_cnt 0 dd
+{1 index eq {/_cnt _cnt 1 add dd} if} forall pop
+exch _cnt mul exch _cnt mul 2 index add 4 1 roll 2 index add 4 1 roll pop pop
+} bd
+/jss {
+4 1 roll
+{
+2 npop
+(0) exch 2 copy 0 exch put
+gsave
+32 eq
+{
+exch 6 index 6 index 6 index 5 -1 roll widthshow
+currentpoint
+}
+{
+false charpath currentpoint
+4 index setmatrix stroke
+}
+ifelse
+grestore
+moveto
+2 copy rmoveto
+} exch cshow
+6 npop
+} def
+/jsp
+{
+{
+2 npop
+(0) exch 2 copy 0 exch put
+32 eq
+{ exch 5 index 5 index 5 index 5 -1 roll widthshow }
+{ false charpath }
+ifelse
+2 copy rmoveto
+} exch cshow
+5 npop
+} bd
+/trj { _cx 0 32 _ax 0 6 5 roll } bd
+/pjsf { trj sfc awidthshow } bd
+/pjss { trj _ctm ssc jss } bd
+/pjsc { trj jsp } bd
+/_Tjdef [
+/pjsf load
+/pjss load
+{
+dup
+currentpoint 3 2 roll
+pjsf
+newpath moveto
+pjss
+} bind
+{
+trj swj rmoveto
+} bind
+{
+dup currentpoint 4 2 roll gsave
+pjsf
+grestore 3 1 roll moveto
+pjsc
+} bind
+{
+dup currentpoint 4 2 roll
+currentpoint gsave newpath moveto
+pjss
+grestore 3 1 roll moveto
+pjsc
+} bind
+{
+dup currentpoint 4 2 roll gsave
+dup currentpoint 3 2 roll
+pjsf
+newpath moveto
+pjss
+grestore 3 1 roll moveto
+pjsc
+} bind
+/pjsc load
+] def
+/BT
+{
+/_inT true dd
+_ctm currentmatrix pop matrix _tm copy pop
+0 _rise translate _hs 1 scale
+0 0 moveto
+} bd
+/ET
+{
+/_inT false dd
+_tr 3 gt {clip} if
+_ctm setmatrix newpath
+} bd
+/Tr {
+_inT { _tr 3 le {currentpoint newpath moveto} if } if
+dup /_tr xdd
+_Tjdef exch get /_Tj xdd
+} bd
+/Tj {
+userdict /$$copystring 2 index put
+_Tj
+} bd
+/iTm { _ctm setmatrix _tm concat 0 _rise translate _hs 1 scale } bd
+/Tm { _tm astore pop iTm 0 0 moveto } bd
+/Td { _mtx translate _tm _tm concatmatrix pop iTm 0 0 moveto } bd
+/TD { dup /_ld xdd Td } bd
+/Tf {
+dup 1000 div /_fScl xdd
+exch findfont exch scalefont setfont
+} bd
+/TL { neg /_ld xdd } bd
+/Tw { /_cx xdd } bd
+/Tc { /_ax xdd } bd
+/Ts { /_rise xdd currentpoint iTm moveto } bd
+/Tz { 100 div /_hs xdd iTm } bd
+/Tk { exch pop _fScl mul neg 0 rmoveto } bd
+/T* { 0 _ld Td } bd
+/' { T* Tj } bd
+/" { exch Tc exch Tw ' } bd
+/TJ {
+{
+dup type /stringtype eq
+{ Tj }
+{ 0 exch Tk }
+ifelse
+} forall
+} bd
+/T- { _hy Tj } bd
+/d0/setcharwidth ld
+/d1 { setcachedevice /sfc{}dd /ssc{}dd } bd
+/nND {{/.notdef} repeat} bd
+/T3Defs {
+/BuildChar
+{
+1 index /Encoding get exch get
+1 index /BuildGlyph get exec
+}
+def
+/BuildGlyph {
+exch begin
+GlyphProcs exch get exec
+end
+} def
+} bd
+/MakeBold {
+findfont dup dup length 2 add dict
+begin
+CopyFont
+/PaintType 2 def
+/StrokeWidth .03 0 FontMatrix idtransform pop def
+/dummybold currentdict
+end
+definefont
+8 dict begin
+/_basefont exch def
+/_basefonto exch def
+/FontType 3 def
+/FontMatrix[1 0 0 1 0 0]def
+/FontBBox[0 0 1 1]def
+/Encoding StandardEncoding def
+/BuildChar
+{
+exch begin
+_basefont setfont
+( )dup 0 4 -1 roll put
+dup stringwidth
+1 index 0 ne { exch .03 add exch }if
+setcharwidth
+0 0 moveto
+gsave
+dup show
+grestore
+_basefonto setfont
+show
+end
+}bd
+currentdict
+end
+definefont pop
+}bd
+/MakeItalic {
+findfont _italMtx makefont
+dup length dict
+begin
+CopyFont
+currentdict
+end
+definefont pop
+}bd
+/MakeBoldItalic {
+/dummybold exch
+MakeBold
+/dummybold
+MakeItalic
+}bd
+currentdict readonly pop end
+%%EndFile
+PDFText begin
+[39/quotesingle 96/grave 128/Adieresis/Aring/Ccedilla/Eacute/Ntilde/Odieresis
+/Udieresis/aacute/agrave/acircumflex/adieresis/atilde/aring/ccedilla/eacute
+/egrave/ecircumflex/edieresis/iacute/igrave/icircumflex/idieresis/ntilde
+/oacute/ograve/ocircumflex/odieresis/otilde/uacute/ugrave/ucircumflex
+/udieresis/dagger/degree/cent/sterling/section/bullet/paragraph/germandbls
+/registered/copyright/trademark/acute/dieresis/.notdef/AE/Oslash
+/.notdef/plusminus/.notdef/.notdef/yen/mu/.notdef/.notdef
+/.notdef/.notdef/.notdef/ordfeminine/ordmasculine/.notdef/ae/oslash
+/questiondown/exclamdown/logicalnot/.notdef/florin/.notdef/.notdef
+/guillemotleft/guillemotright/ellipsis/.notdef/Agrave/Atilde/Otilde/OE/oe
+/endash/emdash/quotedblleft/quotedblright/quoteleft/quoteright/divide
+/.notdef/ydieresis/Ydieresis/fraction/currency/guilsinglleft/guilsinglright
+/fi/fl/daggerdbl/periodcentered/quotesinglbase/quotedblbase/perthousand
+/Acircumflex/Ecircumflex/Aacute/Edieresis/Egrave/Iacute/Icircumflex
+/Idieresis/Igrave/Oacute/Ocircumflex/.notdef/Ograve/Uacute/Ucircumflex
+/Ugrave/dotlessi/circumflex/tilde/macron/breve/dotaccent/ring/cedilla
+/hungarumlaut/ogonek/caron
+0 TE
+[1/dotlessi/caron 39/quotesingle 96/grave 
+127/bullet/bullet/bullet/quotesinglbase/florin/quotedblbase/ellipsis
+/dagger/daggerdbl/circumflex/perthousand/Scaron/guilsinglleft/OE
+/bullet/bullet/bullet/bullet/quoteleft/quoteright/quotedblleft
+/quotedblright/bullet/endash/emdash/tilde/trademark/scaron
+/guilsinglright/oe/bullet/bullet/Ydieresis/space/exclamdown/cent/sterling
+/currency/yen/brokenbar/section/dieresis/copyright/ordfeminine
+/guillemotleft/logicalnot/hyphen/registered/macron/degree/plusminus
+/twosuperior/threesuperior/acute/mu/paragraph/periodcentered/cedilla
+/onesuperior/ordmasculine/guillemotright/onequarter/onehalf/threequarters
+/questiondown/Agrave/Aacute/Acircumflex/Atilde/Adieresis/Aring/AE/Ccedilla
+/Egrave/Eacute/Ecircumflex/Edieresis/Igrave/Iacute/Icircumflex/Idieresis
+/Eth/Ntilde/Ograve/Oacute/Ocircumflex/Otilde/Odieresis/multiply/Oslash
+/Ugrave/Uacute/Ucircumflex/Udieresis/Yacute/Thorn/germandbls/agrave
+/aacute/acircumflex/atilde/adieresis/aring/ae/ccedilla/egrave/eacute
+/ecircumflex/edieresis/igrave/iacute/icircumflex/idieresis/eth/ntilde
+/ograve/oacute/ocircumflex/otilde/odieresis/divide/oslash/ugrave/uacute
+/ucircumflex/udieresis/yacute/thorn/ydieresis
+1 TE
+end
+%%BeginFile: pdfimage.prc
+%%Copyright: Copyright 1987-1993 Adobe Systems Incorporated. All Rights Reserved.
+PDF /PDFImage 38 dict put
+PDF /PDFIVars 20 dict put
+PDF /PDFImage get begin
+/initialize { PDFImage begin } bd
+/terminate { end } bd
+/nulldict 0 dict def
+/gv { PDFIVars exch get } bd
+/pv { PDFIVars 3 1 roll put } bd
+/BI { save /savelevel exch pv mark } bd
+/EI { /savelevel gv restore } bd
+end
+%%EndFile
+%%BeginFile: pdfimg1b.prc
+%%Copyright: Copyright 1987-1993 Adobe Systems Incorporated. All Rights Reserved.
+PDF /PDFImage get begin
+Level2? not StartLoad {
+PDFIVars /PDFImages 4 dict put
+/InstallImage {
+PDFIVars /PDFImages get 3 1 roll put
+} bd
+/ColorComps? {
+dup type /arraytype eq { 0 get } if /PDFImages gv exch get 0 get
+} bd
+/ColorProc? {
+dup type /arraytype eq { 0 get } if /PDFImages gv exch get 1 get
+} bd
+/ImageFilter { /DataSource load } bd
+/ID {
+5 counttomark 2 idiv
+dup 3 1 roll add
+dict begin
+{ def } repeat
+cleartomark
+currentdict
+end
+PDFIVars begin begin
+/ImageMatrix [ Width 0 0 Height neg 0 Height ] def
+/ColorSpace here { pop }
+{ /ColorSpace /DeviceGray def } ifelse
+ColorSpace ColorProc? exec
+end end
+} bd
+/DeviceGray [ 1
+{
+/ImageMask here not { false } if
+{
+sfc
+Width Height
+/Decode here { 0 get 1 eq } { false } ifelse
+ImageMatrix ImageFilter imagemask
+} {
+Width Height BitsPerComponent ImageMatrix ImageFilter image
+} ifelse
+} bind
+] InstallImage
+} EndLoad
+end
+%%EndFile
+%%BeginFile: pdfimg2.prc
+%%Copyright: Copyright 1987-1993 Adobe Systems Incorporated. All Rights Reserved.
+PDF /PDFImage get begin
+Level2? StartLoad {
+/ID {
+5 counttomark 2 idiv
+dup 3 1 roll add
+dict begin
+{ def } repeat
+cleartomark
+currentdict
+end
+begin
+/ImageType 1 def
+/ImageMatrix [ Width 0 0 Height neg 0 Height ] def
+/ImageMask here { not } { true } ifelse
+{ /ImageMask false def } if
+ImageMask not { ColorSpace setcolorspace } if
+/Intent here { ri } if
+/Decode here { pop } {
+/Decode [
+ImageMask {
+0 1
+} {
+currentcolorspace 0 get /Indexed eq {
+0 2 BitsPerComponent exp 1 sub
+} {
+mark currentcolor counttomark
+dup 2 add 1 roll cleartomark
+{ 0 1 } repeat
+} ifelse
+} ifelse
+] def
+} ifelse
+[
+/DataSource here { pop } {
+currentfile
+/Filter here {
+dup type /arraytype eq { length } { pop 1 } ifelse
+1 sub 0 1 3 -1 roll {
+/DecodeParms here {
+dup type /arraytype eq {
+1 index get
+} if
+dup null eq { pop } { exch } ifelse
+} if
+Filter dup type /arraytype eq
+{ exch get } { exch pop } ifelse
+filter
+dup
+} for
+} if
+/DataSource exch def
+} ifelse
+currentdict
+/ImageMask here not { false } if
+{ sfc imagemask } { image } ifelse
+counttomark
+{ dup status
+{ dup flushfile closefile }
+{ pop }
+ifelse
+}
+repeat
+pop
+end
+} bd
+currentdict readonly pop
+} EndLoad
+end
+%%EndFile
+currentdict readonly pop
+end end
+/currentpacking where {pop setpacking}if
+PDFVars/InitAll{[PDF PDFText PDFImage]{/initialize get exec}forall initgs 0 Tr}put
+PDFVars/TermAll{[PDFImage PDFText PDF]{/terminate get exec}forall}put
+PDFVars begin PDF begin PDFVars/InitAll get exec
+/N34 8 dict dup begin
+/SA false def
+/OP false def
+end /ExtGState defineRes pop
+% Begin encoding-delta
+[/N32/Times-Italic -1 TZ
+% End encoding-delta
+% Begin encoding-delta
+[/N31/Courier -1 TZ
+% End encoding-delta
+% Begin encoding-delta
+[/N30/Helvetica-Bold -1 TZ
+% End encoding-delta
+% Begin encoding-delta
+[/N29/Times-Roman -1 TZ
+% End encoding-delta
+% Begin encoding-delta
+[/N33/Helvetica -1 TZ
+% End encoding-delta
+PDFVars/TermAll get exec end end
+
+%%EndSetup
+%%Page: 1 1
+%%BeginPageSetup
+userdict /pgsave save put
+PDFVars begin PDF begin PDFVars/InitAll get exec
+0 1 translate
+%%EndPageSetup
+0 0 612 791 RC
+BT
+/N29 1 Tf
+9.96 0 0 9.96 303.57 35.97 Tm
+0 g
+/N34 /ExtGState findRes gs
+0 Tc
+0 Tw
+(1)Tj
+/N30 1 Tf
+13.92 0 0 13.92 100.77 710.61 Tm
+0.002 Tc
+-0.004 Tw
+[(ARMCI: A )-8 (P)40 (o)1 (r)-23 (t)-1 (a)6 (b)1 (le Ag)10 (g)-8 (r)3 (egate Rem)-6 (o)1 (te Mem)-6 (o)1 (r)-6 (y)-2 ( )-8 (Cop)10 (y)-2 ( In)-8 (t)7 (e)-2 (r)-6 (f)7 (ace)]TJ
+/N29 1 Tf
+10.92 0 0 10.92 270.57 685.05 Tm
+-0.003 Tc
+0.006 Tw
+[(Ja)-10 (re)-10 (k)-9 ( N)-6 (i)0 (e)-10 (p)-9 (lo)-9 (c)-10 (h)2 (a)]TJ
+/N31 1 Tf
+9 0 0 9 238.65 672.69 Tm
+0 Tc
+[(<jarek.niep)13 (locha@pnl.gov>)]TJ
+/N30 1 Tf
+12 0 0 12 72.09 647.01 Tm
+-0.001 Tc
+-0.007 Tw
+[(Motiv)15 (a)5 (t)-8 (i)7 (on)-10 ( and )-10 (Bac)25 (k)-5 (gr)18 (ound)]TJ
+/N29 1 Tf
+9.96 0 0 9.96 90.09 628.77 Tm
+0 Tc
+0.075 Tw
+[(A lig)-6 (h)-6 (t)1 (weig)-6 (ht)-11 ( po)-6 (rtabl)-11 (e)-2 ( re)10 (m)-5 (o)-6 (te m)-5 (e)-2 (m)-5 (o)6 (ry)-6 ( co)-6 (p)18 (y)-6 ( is)-9 ( n)-6 (eeded)-6 ( in)-6 ( p)-6 (a)10 (rall)-11 (el di)-11 (strib)18 (u)-6 (ted-array l)-11 (i)1 (braries )-12 (a)10 (n)-6 (d)-6 ( co)-6 (m)7 (p)-6 (iler ru)-6 (n-)]TJ
+-1.8073 -1.2049 TD
+0.002 Tc
+-0.011 Tw
+[(time systems. A simple API )12 (i)-9 (n)8 ( the )12 (s)-7 (t)3 (yle )12 (of )12 (t)-9 (h)8 (e mem)9 (o)-4 (ry )12 (cop)8 (y)8 ( interf)10 (ace )]TJ
+/N32 1 Tf
+28.0616 0 TD
+0.004 Tc
+-0.025 Tw
+[(memcpy\(a)10 (ddr)7 (1, add)10 (r2)10 (, )-12 (n)10 (b)-2 (yt)5 (es\))]TJ
+/N29 1 Tf
+12.2897 0 TD
+-0.013 Tw
+[( can )12 (lead to )12 (poo)10 (r)]TJ
+-40.3513 -1.2049 TD
+0.003 Tc
+0.084 Tw
+[(p)9 (e)1 (rfor)11 (m)-2 (ance o)9 (n)-3 ( systems)-6 ( )12 (w)-10 (ith )12 (high )12 (l)-8 (a)1 (ten)9 (c)13 (y n)9 (e)1 (two)9 (r)-1 (ks for)11 ( app)9 (l)-8 (ication)9 (s)-6 ( th)9 (at)-8 ( )12 (requ)9 (i)-8 (r)11 (e non)9 (con)9 (t)-8 (ig)9 (uou)9 (s)-6 ( d)9 (a)1 (ta t)-8 (r)11 (ansfers \(fo)9 (r)]TJ
+T*
+0 Tc
+0.124 Tw
+[(e)10 (x)6 (am)-5 (p)-6 (l)1 (e, sectio)-6 (n)-6 (s)3 ( o)-6 (f)8 ( d)-6 (e)-2 (n)-6 (s)3 (e m)-5 (u)-6 (ltid)-6 (im)-5 (ens)-9 (i)1 (o)-6 (n)6 (al arrays)-9 ( o)-6 (r)8 ( s)-9 (catter/gath)-6 (er op)-6 (eratio)-6 (ns)-9 (\))8 ( )-12 (and)-6 ( p)-6 (r)8 (e)22 (v)6 (ents)-9 ( th)-6 (e com)-5 (m)-5 (u)-6 (nicati)-11 (o)6 (n)]TJ
+T*
+0.005 Tc
+-0.002 Tw
+[(l)6 (i)6 (b)-1 (r)13 (a)3 (ry f)13 (r)1 (om )12 (e)15 (x)-1 (p)11 (l)-6 (o)11 (i)6 (ti)6 (n)11 (g)-1 ( t)6 (h)-1 (e )12 (in)11 (for)13 (m)0 (at)6 (i)6 (on ab)11 (ou)11 (t )12 (th)11 (e act)6 (ual)6 ( l)6 (a)3 (yo)11 (ut)6 ( o)11 (f)1 ( t)6 (h)-1 (e u)11 (s)-4 (er)13 ( dat)6 (a)3 (. )]TJ
+1.8073 -1.8796 TD
+-0.026 Tw
+[(A mor)13 (e)3 ( )-12 (g)11 (e)3 (neral)6 ( API)13 ( )-12 (s)8 (h)-1 (o)11 (u)-1 (l)6 (d)-1 ( des)8 (c)3 (ri)6 (be a non)11 (cont)6 (i)6 (g)11 (uou)11 (s l)6 (a)3 (you)11 (t)6 ( )-12 (o)11 (f)1 ( dat)6 (a)3 ( in)11 ( )-12 (m)12 (e)3 (mory)11 ( )-12 (t)6 (o)11 ( )-12 (al)6 (l)6 (o)23 (w a commu)11 (ni)6 (cat)6 (i)6 (on l)6 (i)6 (b)-1 (rar)13 (y)]TJ
+-1.8073 -1.2049 TD
+0.002 Tc
+0.013 Tw
+[(to: 1\))10 ( )-12 (min)8 (i)-9 (m)9 (i)3 (ze )-12 (the nu)8 (mber)10 ( )-12 (o)8 (f)-2 ( und)8 (erlying)8 ( )-12 (n)8 (e)0 (two)8 (r)-2 (k mess)-7 (ag)8 (es)-7 ( b)20 (y)-4 ( packin)8 (g dis)-7 (tinct blo)8 (c)0 (ks )-12 (o)8 (f)-2 ( )-12 (d)8 (a)0 (ta )-12 (in)8 (t)-9 (o)8 ( )-12 (as fe)24 (w mes)-7 (s)5 (ages)]TJ
+T*
+0 Tc
+0.148 Tw
+[(as p)-6 (o)6 (s)-9 (s)3 (ib)-6 (le,  2\) m)-5 (i)1 (ni)-11 (m)7 (i)-11 (z)10 (e)-2 ( th)-6 (e n)-6 (u)6 (m)-5 (b)-6 (er)8 ( o)-6 (f)-4 ( )12 (i)-11 (n)6 (terru)-6 (pts)-9 ( in th)-6 (e in)-6 (terr)8 (u)-6 (p)-6 (t)1 (-)8 (d)-6 (ri)25 (v)18 (e)-2 (n)-6 ( m)-5 (e)-2 (ssag)-6 (e)-2 (-del)-11 (i)25 (v)18 (ery s)-9 (y)6 (s)-9 (t)1 (em)-5 (s, and)-6 ( 3\) take)]TJ
+T*
+0.002 Tc
+0.085 Tw
+[(ad)8 (v)20 (a)0 (ntag)8 (e )-12 (o)8 (f)-2 ( an)20 (y a)12 (v)32 (ailable s)-7 (h)8 (ared mem)9 (o)-4 (ry)8 ( )-12 (o)8 (p)-4 (timizations \(pr)10 (e)0 (fetching)8 (/)-9 (p)8 (osts)-7 (tor)10 (i)3 (ng\))10 ( )-12 (o)8 (n)-4 ( the shared)8 ( )-12 (m)9 (e)0 (mory)8 ( s)-7 (y)8 (s)-7 (t)3 (ems.)]TJ
+T*
+0 Tc
+0.015 Tw
+[(Rem)-5 (o)-6 (te co)-6 (py )-12 (op)-6 (eratio)-6 (ns)-9 ( sh)-6 (o)-6 (u)6 (ld)-6 ( m)-5 (a)-2 (p)-6 ( d)-6 (i)1 (rectly)-6 ( --)8 ( )-12 (with)-6 (o)-6 (u)6 (t )-12 (in)-6 (ter)8 (m)-5 (ed)-6 (iate co)-6 (py)-6 (ing)-6 ( o)-6 (f)-4 ( th)-6 (e d)-6 (a)-2 (ta -- to)-6 ( th)-6 (e n)-6 (a)-2 (ti)25 (ve h)-6 (i)1 (gh)-6 (-perfor-)]TJ
+T*
+0.003 Tw
+[(m)-5 (a)-2 (nce m)-5 (e)-2 (m)-5 (o)6 (ry)-6 ( )12 (co)-6 (py)-6 ( )12 (o)-6 (p)-6 (e)-2 (r)8 (a)-2 (ti)-11 (on)-6 (s \(in)-6 (c)-2 (lud)-6 (i)1 (n)-6 (g)-6 ( )12 (b)18 (u)-6 (lk)-6 ( data tran)-6 (sfer )12 (f)8 (acil)-11 (ities\) wh)-6 (en s)-9 (h)6 (ared)-6 ( )12 (m)-5 (e)-2 (m)-5 (o)-6 (r)8 (y)-6 ( is u)-6 (s)3 (ed)-6 (.)]TJ
+1.8073 -1.8676 TD
+0.002 Tc
+0.097 Tw
+[(A lo)20 (wer)22 (-)-2 (le)24 (v)20 (e)0 (l i)-9 (n)8 (terf)10 (ace than)8 ( )-12 (th)8 (e M)-13 (P)4 (I-)10 (2 on)8 (e-si)-9 (d)8 (e)0 (d com)9 (m)-3 (unication)8 ( \(no)8 ( )-12 (ep)8 (och)8 (s)-7 (, wind)8 (o)20 (w)1 (s, datatypes, F)16 (o)-4 (r)10 (t)-9 (r)10 (a)0 (n-7)8 (7)]TJ
+-1.8073 -1.2049 TD
+0.013 Tw
+[(API, comp)8 (li)-9 (cated)8 ( )-12 (p)8 (r)-2 (og)8 (res)-7 (s)5 ( rules )-12 (etc.\))10 ( )-12 (w)13 (o)-4 (u)8 (l)-9 (d)8 ( )-12 (streamline an implemen)8 (t)-9 (a)12 (t)-9 (i)3 (o)8 (n)-4 ( )-12 (an)8 (d could)8 ( )-12 (g)8 (r)-2 (eatly i)-9 (m)9 (pro)20 (v)8 (e a por)10 (t)-9 (a)0 (b)8 (l)3 (e )-12 (p)8 (e)0 (r-)]TJ
+T*
+0.012 Tw
+[(fo)9 (rman)9 (ce of such a libr)11 (a)1 (ry)69 (. S)-7 (t)4 (r)11 (a)1 (i)-8 (g)9 (htfo)9 (rw)14 (ard pr)11 (ogr)11 (es)-6 (s rules s)-6 (i)4 (mp)9 (li)-8 (f)11 (y)-3 ( the d)9 (e)25 (v)9 (e)1 (lop)9 (m)-2 (ent and)9 ( perf)11 (orman)9 (ce analysis)-6 ( o)9 (f)-1 ( the)]TJ
+T*
+-0.001 Tc
+0.052 Tw
+[(app)-7 (licati)-12 (o)5 (n)-7 (s)2 ( and)-7 ( a)21 (v)17 (o)-7 (i)0 (d am)-6 (bi)-12 (gu)-7 (ities)-10 ( )12 (o)-7 (f)-5 ( )12 (th)-7 (e )12 (p)-7 (l)0 (atfo)-7 (r)7 (m)-6 (-sp)-7 (ecif)19 (i)0 (c im)-6 (p)-7 (l)0 (em)6 (en)-7 (tati)-12 (on)-7 (s: rem)6 (o)-7 (te copy)-7 ( )12 (o)-7 (p)-7 (e)-3 (r)7 (a)-3 (ti)-12 (on)-7 (s are )12 (to)-7 ( )12 (b)-7 (e)-3 ( tr)7 (u)-7 (l)0 (y)]TJ
+T*
+0 Tc
+-0.009 Tw
+[(on)-6 (e-sid)-6 (e)-2 (d)-6 ( an)-6 (d co)-6 (m)-5 (p)-6 (lete re)10 (gardles)-9 (s)3 ( o)-6 (f)-4 ( th)-6 (e actio)-6 (n)-6 (s)3 ( t)-11 (a)-2 (k)18 (e)-2 (n)-6 ( by )-12 (the )-12 (re)10 (m)-5 (o)-6 (te p)-6 (r)-4 (oces)-9 (s\(o)-6 (r)8 (\). In)-6 ( particu)-6 (l)1 (ar)32 (,)9 ( )-12 (po)-6 (lli)-11 (ng)-6 ( can)-6 ( b)-6 (e)-2 ( h)-6 (e)-2 (lpfu)-6 (l)]TJ
+T*
+0.003 Tc
+0 Tw
+[(\(f)11 (or )12 (perfo)9 (rman)9 (ce reasons\); h)9 (o)21 (we)25 (v)21 (e)1 (r)35 (,)12 ( it)-8 ( )12 (s)-6 (h)9 (ould )12 (not b)9 (e)1 ( necess)-6 (a)13 (ry to )12 (as)-6 (sur)11 (e)1 ( pro)9 (g)-3 (ress. )]TJ
+1.8073 -1.8796 TD
+0.036 Tw
+[(Th)9 (e cop)21 (y)-3 ( op)9 (eration)9 (s)-6 ( sho)9 (u)-3 (ld )12 (be or)11 (dered)9 ( \(co)9 (m)-2 (plete in )12 (ord)9 (e)1 (r the)25 (y)-3 ( were )12 (i)-8 (ssued\))11 ( when)9 ( refer)11 (e)1 (ncing)9 ( the same r)11 (e)1 (mote)]TJ
+-1.8073 -1.2049 TD
+0.109 Tw
+[(p)8 (r)-2 (ocess)-7 (\()10 (or\))10 (.)-1 ( Operation)8 (s)-7 ( iss)-7 (u)8 (ed to dif)34 (f)-2 (eren)8 (t)-9 ( p)8 (r)-2 (ocessors can co)8 (mplete in an ar)10 (bitrary)8 ( order)58 (.)11 ( )-13 (Or)10 (dering)8 ( s)-7 (i)3 (mp)8 (li)-9 (f)22 (i)3 (es pro)8 (-)]TJ
+T*
+0.072 Tw
+[(g)9 (r)-1 (amming)9 ( mod)9 (e)1 (l )-12 (an)9 (d is )-12 (r)11 (e)1 (quir)11 (e)1 (d in man)21 (y)-3 ( app)9 (licat)-8 (io)9 (ns. S)-7 (o)9 (me s)-6 (y)9 (s)-6 (t)4 (ems enf)11 (o)-3 (rce o)9 (r)-1 (derin)9 (g)-3 ( of)11 ( )-12 (th)9 (e otherwise uno)9 (rder)11 (ed)]TJ
+T*
+-0.002 Tc
+-0.007 Tw
+[(op)-8 (eratio)-8 (ns)-11 ( by )-12 (pro)16 (v)-8 (id)-8 (in)-8 (g )-12 (a fence )-12 (op)-8 (eratio)-8 (n )-12 (th)-8 (a)8 (t)-13 ( b)-8 (l)-1 (ock)-8 (s)-11 ( th)-8 (e callin)-8 (g)-8 ( p)-8 (r)-6 (oces)-11 (s u)-8 (n)-8 (til t)-13 (h)4 (e )-12 (ou)-8 (ts)-11 (tand)-8 (in)-8 (g )-12 (op)-8 (eratio)-8 (n )-12 (com)-7 (p)-8 (letes )-12 (so)]TJ
+T*
+0.002 Tc
+0.073 Tw
+[(that )12 (the n)8 (e)12 (xt )12 (op)8 (eration )12 (is)-7 (sued )12 (w)13 (ould)8 ( no)8 (t o)20 (v)8 (er)10 (t)-9 (a)0 (k)20 (e)0 ( it. )12 (This)-7 ( )12 (app)8 (r)-2 (oach)8 ( acco)8 (mplis)-7 (h)8 (e)0 (s)-7 ( )12 (mor)10 (e)0 ( than)8 ( th)8 (e app)8 (l)3 (i)-9 (catio)8 (ns)-7 ( )12 (desire)]TJ
+T*
+0.06 Tw
+[(an)9 (d cou)9 (l)4 (d ha)25 (v)21 (e)1 ( ne)25 (gati)28 (v)21 (e)1 ( impact o)9 (n)-3 ( per)11 (f)-1 (or)11 (mance o)9 (n)-3 ( the )12 (platform)10 (s)-6 ( wh)9 (ere the co)9 (p)9 (y)-3 ( o)9 (p)-3 (eration)9 (s)-6 ( )12 (are oth)9 (e)1 (rwis)-6 (e o)9 (r)-1 (der)11 (e)1 (d.)]TJ
+T*
+0.061 Tw
+[(Usually)68 (, )-12 (o)8 (r)-2 (derin)8 (g)-4 ( )-12 (c)12 (a)0 (n )-12 (b)8 (e)0 ( )-12 (acco)8 (mplished wi)-9 (th)8 ( )-12 (a l)-9 (o)32 (wer o)8 (v)20 (erhead)8 ( )-12 (inside the commu)8 (nication li)-9 (b)8 (r)-2 (ary)8 ( )-12 (b)20 (y)-4 ( usi)-9 (n)8 (g platfor)10 (m)-3 (-)]TJ
+T*
+0.001 Tw
+[(specif)22 (i)3 (c mean)8 (s)-7 ( r)10 (a)0 (ther th)8 (an at the )12 (application )12 (l)-9 (e)36 (v)8 (e)0 (l with a f)10 (e)0 (nce o)8 (p)-4 (eration)8 (.)]TJ
+1.8073 -1.8676 TD
+0.001 Tc
+0.014 Tw
+[(A )12 (co)-5 (mp)-5 (atib)7 (i)-10 (lity)-5 ( )12 (wi)-10 (th)7 ( mess)-8 (ag)7 (e-p)-5 (a)-1 (ssin)-5 (g)-5 ( )12 (li)-10 (b)7 (r)-3 (aries \(p)7 (rimarily)-5 ( )12 (MPI\) )12 (i)-10 (s)4 ( n)7 (eces)-8 (sary)7 ( fo)7 (r r)9 (eal ap)-5 (p)7 (l)2 (i)-10 (catio)-5 (n)7 (s)-8 ( )12 (th)-5 (at f)9 (r)-3 (eq)-5 (u)7 (e)-1 (n)-5 (tly)]TJ
+-1.8073 -1.2049 TD
+0.004 Tc
+0.035 Tw
+[(u)10 (s)-5 (e )12 (h)10 (ybri)5 (d)10 ( p)10 (r)0 (og)10 (rammi)5 (ng)10 ( m)11 (odel)5 (s)7 (. B)8 (o)-2 (t)5 (h)-2 ( )12 (bl)5 (o)10 (c)2 (ki)5 (ng)10 ( and)10 ( a )12 (no)10 (n-b)10 (l)-7 (o)10 (c)2 (ki)5 (ng)10 ( AP)6 (Is)7 ( ar)12 (e nee)14 (d)-2 (ed. )12 (The )12 (no)10 (n-b)10 (l)5 (ocki)5 (ng)10 ( AP)6 (I )12 (can )12 (be)]TJ
+T*
+0.003 Tc
+0 Tw
+[(u)9 (s)-6 (ed)9 ( b)9 (y)9 ( s)-6 (o)9 (me ap)9 (plicati)-8 (o)9 (ns to o)21 (v)9 (er)11 (lap com)10 (putation)9 (s)-6 ( an)9 (d co)9 (mmun)9 (i)4 (cati)-8 (o)9 (ns.)]TJ
+/N30 1 Tf
+12 0 0 12 72.09 252.09 Tm
+-0.001 Tc
+0.003 Tw
+[(ARMC)-9 (I)7 ( Da)-5 (ta)-5 ( )10 (Struc)-5 (t)2 (ure)-5 (s)]TJ
+/N29 1 Tf
+9.96 0 0 9.96 90.09 233.85 Tm
+0.005 Tc
+0.022 Tw
+[(AR)9 (M)-10 (C)9 (I i)6 (s)-4 ( bei)6 (n)-1 (g)11 ( )-12 (d)11 (e)27 (v)23 (e)3 (lo)11 (ped bas)8 (e)3 (d on)11 ( )-12 (t)6 (h)11 (e )-12 (as)8 (s)8 (u)-1 (mpt)6 (i)6 (o)-1 (n)11 (s)-4 ( pr)13 (esen)11 (t)6 (e)3 (d in)11 ( )-12 (t)6 (h)11 (e )-12 (p)11 (r)1 (e)27 (v)-1 (i)6 (o)-1 (u)11 (s)-4 ( s)8 (ect)6 (io)11 (n. It)6 ( of)25 (f)13 (e)3 (rs)8 ( )-12 (t)6 (w)16 (o for)13 (m)0 (at)6 (s t)6 (o)]TJ
+-1.8073 -1.2049 TD
+-0.002 Tw
+[(d)11 (e)3 (scri)6 (b)11 (e)3 ( no)11 (ncon)11 (t)6 (i)-6 (g)11 (uou)11 (s )12 (lay)11 (out)6 (s)8 ( of)13 ( dat)6 (a)3 ( i)6 (n)11 ( memor)13 (y)59 (.)]TJ
+0 -2.2772 TD
+-0.006 Tc
+(1.)Tj
+/N32 1 Tf
+1.8073 0 TD
+0.002 Tc
+0.061 Tw
+[(Gener)17 (a)8 (li)-9 (zed I/O )-12 (vector)114 (.)]TJ
+/N29 1 Tf
+9.5185 0 TD
+0 Tc
+0.075 Tw
+[( I)8 (t)-11 ( )12 (i)-11 (s)3 ( th)-6 (e )12 (m)-5 (o)-6 (st g)-6 (e)-2 (neral form)-5 (at in)-6 (tend)-6 (ed)-6 ( )12 (fo)-6 (r )12 (m)-5 (u)-6 (ltip)-6 (le sets)-9 ( of equ)-6 (a)-2 (lly)-6 (-sized)-6 ( data s)-9 (e)22 (g)-6 (m)-5 (ent)-11 (s)]TJ
+-9.5185 -1.2049 TD
+0.002 Tc
+0.109 Tw
+[(mo)20 (v)20 (e)0 (d between arb)8 (i)-9 (tr)10 (ary local and)8 ( )-13 (r)10 (e)0 (mote memo)8 (ry location)8 (s)-7 (. It e)12 (x)8 (t)-9 (e)0 (n)8 (d)-4 (s )-13 (th)8 (e )-13 (f)10 (o)-4 (rm)9 (at)-9 ( u)8 (s)-7 (ed in the UNIX )]TJ
+/N32 1 Tf
+42.6527 0 TD
+-0.028 Tc
+[(re)-30 (a)-22 (d)-34 (v)]TJ
+/N29 1 Tf
+2.2531 0 TD
+0 Tc
+0 Tw
+(/)Tj
+/N32 1 Tf
+-44.9058 -1.2049 TD
+-0.002 Tc
+[(wr)-11 (ite)8 (v)]TJ
+/N29 1 Tf
+2.4941 0 TD
+0.002 Tc
+0.037 Tw
+[( o)8 (p)-4 (eratio)8 (ns)-7 (.)11 ( It u)8 (s)-7 (es two)8 ( arr)10 (a)0 (ys of )12 (poin)8 (t)-9 (er)10 (s)-7 (:)3 ( o)8 (n)-4 (e fo)8 (r sou)8 (r)-2 (ce an)8 (d on)8 (e fo)8 (r destination)8 ( addr)10 (es)-7 (ses, see F)-8 (i)3 (g)8 (u)-4 (re )12 (1.)]TJ
+-2.4941 -1.2049 TD
+-0.011 Tw
+[(Th)8 (e length o)8 (f)-2 ( each ar)10 (ray is equ)8 (a)0 (l)-9 ( to)8 ( t)-9 (h)8 (e num)9 (ber o)8 (f)-2 ( s)-7 (e)24 (gmen)8 (ts)-7 (. Som)9 (e)0 ( oper)10 (a)0 (t)-9 (i)3 (o)8 (n)-4 (s t)-9 (h)8 (at wo)8 (uld map)8 ( wel)-9 (l)3 ( to)8 ( )-12 (th)8 (is)-7 ( fo)8 (rmat)]TJ
+T*
+0 Tc
+0.003 Tw
+[(in)-6 (clud)-6 (e scatter an)-6 (d gath)-6 (er)56 (. It will allo)18 (w to)-6 ( )12 (t)-11 (r)8 (an)-6 (sfer the en)-6 (tire triang)-6 (u)-6 (l)1 (ar )12 (s)-9 (ectio)-6 (n o)-6 (f)-4 ( )12 (a 2)-6 (-)-4 (D ar)8 (ray)-6 ( )12 (i)-11 (n)6 ( o)-6 (n)6 (e o)-6 (p)6 (eratio)-6 (n)-6 (.)]TJ
+/N31 1 Tf
+0 -1.2651 TD
+0.002 Tc
+0 Tw
+[(typedef stru)12 (ct {)]TJ
+0 -1.2772 TD
+[(  void *src_)12 (ptr_ar;)]TJ
+0 -1.2651 TD
+[(  void *dst_)12 (ptr_ar;)]TJ
+0 -1.2772 TD
+(  int bytes;)Tj
+0 -1.2651 TD
+[(  int ptr_ar)12 (_len;)]TJ
+T*
+[(} armci_giov)12 (_t;)]TJ
+/N33 1 Tf
+9 0 0 9 498.09 37.77 Tm
+0.004 Tc
+[(04)13 (.30)13 (.)2 (98)]TJ
+ET
+PDFVars/TermAll get exec end end
+userdict /pgsave get restore
+showpage
+%%PageTrailer
+%%EndPage
+%%Page: 2 2
+%%BeginPageSetup
+userdict /pgsave save put
+PDFVars begin PDF begin PDFVars/InitAll get exec
+0 1 translate
+%%EndPageSetup
+0 0 612 791 RC
+BT
+/N29 1 Tf
+9.96 0 0 9.96 303.57 35.97 Tm
+0 g
+/N34 /ExtGState findRes gs
+0 Tc
+0 Tw
+(2)Tj
+-21.4337 50.9398 TD
+0.002 Tc
+-0.023 Tw
+[(F)16 (o)8 (r e)12 (x)-4 (am)9 (ple, with the g)8 (e)0 (neralized I)10 (/)3 (O)-11 ( v)20 (ector)10 ( for)10 (m)-3 (at a )]TJ
+/N32 1 Tf
+21.6521 0.0026 TD
+0.006 Tc
+(put)Tj
+/N29 1 Tf
+1.2892 0 TD
+0.002 Tc
+[( o)8 (p)-4 (eration)8 ( that cop)8 (i)-9 (es data to)8 ( t)-9 (h)8 (e pro)8 (ces)-7 (s\(o)8 (r\) )]TJ
+/N32 1 Tf
+17.8804 0 TD
+-0.006 Tc
+[(pr)34 (o)-12 (c)]TJ
+/N29 1 Tf
+1.7953 0 TD
+-0.007 Tc
+-0.014 Tw
+[( me)-9 (m)-12 (-)]TJ
+-44.4238 -1.2049 TD
+0.003 Tc
+0 Tw
+[(o)9 (r)-1 (y h)9 (a)1 (s)-6 ( )12 (t)-8 (h)9 (e fo)9 (l)-8 (l)4 (o)33 (w)2 (i)-8 (n)9 (g inter)11 (f)11 (ace:)]TJ
+/N31 1 Tf
+1.8073 -1.47 TD
+[(int ARMCI_Pu)12 (tV\(armci_giov_t dscr_arr[], int arr_len)12 (, int proc\))]TJ
+/N29 1 Tf
+0 -2.0121 TD
+0.06 Tw
+[(Th)9 (e f)23 (i)4 (rst ar)23 (gu)9 (ment )12 (i)-8 (s)6 ( )12 (an ar)11 (ray )12 (of)11 ( si)-8 (ze)13 ( )]TJ
+/N32 1 Tf
+15.4586 0 TD
+-0.002 Tc
+[(a)-8 (rr_)-8 (len)]TJ
+/N31 1 Tf
+3.0122 0 TD
+0 Tc
+0 Tw
+(.)Tj
+/N29 1 Tf
+0.6024 0 TD
+0.002 Tc
+0.049 Tw
+[( Each array)8 ( )-12 (elemen)8 (t)-9 ( specif)22 (i)3 (es)-7 ( a )-12 (set )-12 (o)8 (f)-2 ( )-12 (eq)8 (ually-sized s)-7 (e)24 (gments )-12 (o)8 (f)]TJ
+-20.8805 -1.2049 TD
+0 Tw
+[(d)9 (a)1 (t)-8 (a)1 ( )12 (copied)9 ( fro)9 (m the lo)9 (cal memor)11 (y)-3 ( to )12 (t)-8 (h)9 (e memo)9 (ry )12 (at)-8 ( )12 (t)-8 (h)9 (e rem)10 (o)-3 (te pr)11 (ocess)-6 (\()-1 (o)9 (r\) )]TJ
+/N32 1 Tf
+30.6882 0 TD
+-0.006 Tc
+[(pr)34 (o)-12 (c)]TJ
+/N29 1 Tf
+1.7953 0 TD
+0 Tc
+(.)Tj
+-32.4835 -3.47 TD
+-0.006 Tc
+(2.)Tj
+/N32 1 Tf
+1.8073 0 TD
+-0.004 Tc
+[(St)-15 (rid)-10 (e)-6 (d)]TJ
+/N29 1 Tf
+2.9038 0 TD
+0.002 Tc
+0.001 Tw
+[(. This fo)8 (rmat is an o)8 (p)-4 (timization o)8 (f)-2 ( the )12 (gener)10 (a)0 (l)-9 (i)3 (zed)8 ( I/O v)20 (ector f)10 (o)-4 (rmat. )12 (It is)-7 ( )12 (i)-9 (n)8 (tended)8 ( to min)8 (i)-9 (m)9 (i)-9 (z)12 (e)0 ( s)-7 (t)3 (o)8 (r)-2 (age )]TJ
+-2.9038 -1.2049 TD
+[(re)12 (quired)8 ( to d)8 (e)0 (s)-7 (c)0 (r)10 (i)-9 (b)8 (e)0 ( s)-7 (e)12 (ct)-9 (io)8 (ns of )12 (dense mu)8 (l)-9 (tidim)9 (ens)-7 (i)3 (o)8 (n)-4 (al arr)10 (a)0 (ys. In)8 (s)-7 (t)3 (ead )12 (of in)8 (cl)-9 (u)8 (d)-4 (ing)8 ( add)8 (r)-2 (ess)-7 (e)0 (s fo)8 (r all the se)12 (g-)]TJ
+T*
+[(men)8 (t)3 (s)-7 (,)-1 ( )12 (i)-9 (t)3 ( specif)22 (i)3 (es on)8 (l)-9 (y)8 ( an )12 (addre)12 (s)-7 (s of)10 ( the f)22 (i)3 (rst s)-7 (e)24 (gmen)8 (t)-9 ( )12 (i)-9 (n)8 ( the set fo)8 (r sour)10 (ce and)8 ( desti)-9 (n)8 (ati)-9 (o)8 (n. )12 (The ad)8 (dress)-7 (e)0 (s o)8 (f)-2 ( the )]TJ
+T*
+0 Tw
+[(o)9 (t)-8 (h)9 (e)1 (r se)13 (gm)10 (ents)-6 ( )12 (can b)9 (e)1 ( comp)9 (uted u)9 (s)-6 (in)9 (g the )12 (s)-6 (t)4 (ride )12 (i)-8 (n)9 (for)11 (m)-2 (ation.)]TJ
+/N31 1 Tf
+0 -1.4097 TD
+[(  void *src_)12 (ptr;)]TJ
+T*
+[(  void *dst_)12 (ptr;)]TJ
+T*
+[(  int stride)12 (_levels;)]TJ
+T*
+[(  int src_st)12 (ride_arr[stride_levels];)]TJ
+0 -1.3977 TD
+[(  int dst_st)12 (ride_arr[stride_levels];)]TJ
+0 -1.4097 TD
+[(  int count[)12 (stride_levels+1];)]TJ
+/N29 1 Tf
+0 -2.0121 TD
+0.001 Tw
+[(F)16 (o)8 (r e)12 (x)-4 (am)9 (ple, wit)-9 (h)8 ( the st)-9 (r)10 (i)-9 (d)8 (e)0 (d fo)8 (rmat a )]TJ
+/N32 1 Tf
+15.6514 0 TD
+0.006 Tc
+[(pu)12 (t)]TJ
+/N29 1 Tf
+1.2892 0 TD
+0.003 Tc
+0 Tw
+[( oper)11 (a)1 (t)-8 (i)4 (o)9 (n)-3 ( that cop)9 (i)-8 (e)13 (s)-6 ( data to th)9 (e pro)9 (ces)-6 (s\(or)11 (\) )]TJ
+/N32 1 Tf
+18.0732 0 TD
+0.006 Tc
+[(pr)58 (oc)]TJ
+/N29 1 Tf
+1.7953 0 TD
+-0.002 Tw
+[( memo)11 (ry h)11 (a)3 (s t)6 (h)-1 (e f)13 (o)-1 (l)6 (-)]TJ
+-38.6163 -1.2049 TD
+0.002 Tc
+0.001 Tw
+[(lo)32 (w)-11 (i)3 (n)8 (g)-4 ( interf)22 (ace:)]TJ
+/N31 1 Tf
+9 0 0 9 90.09 284.01 Tm
+0 Tc
+-0.133 Tw
+[(int AR)13 (MCI_PutS\(src_ptr)13 (, src_stride_ar, d)13 (st_ptr, dst_strid)13 (e_ar, count, strid)13 (e_levels, )]TJ
+2.8 -1.2267 TD
+(proc\))Tj
+ET
+1 i
+176.13 715.29 m
+172.41 714.93 l
+172.53 714.93 l
+169.17 713.85 l
+166.17 712.17 l
+166.29 712.17 l
+163.65 710.01 l
+161.37 707.37 l
+161.37 707.49 l
+159.69 704.37 l
+158.73 701.01 l
+158.73 701.13 l
+158.37 697.53 l
+158.37 607.53 l
+158.73 603.93 l
+159.69 600.45 l
+159.69 600.57 l
+161.37 597.57 l
+163.65 594.93 l
+166.29 592.65 l
+166.17 592.77 l
+169.17 591.21 l
+172.53 590.13 l
+172.41 590.13 l
+176.13 589.77 l
+257.13 589.77 l
+260.73 590.13 l
+264.09 591.21 l
+263.97 591.21 l
+267.09 592.77 l
+267.09 592.65 l
+269.73 594.93 l
+271.89 597.57 l
+273.57 600.57 l
+273.45 600.45 l
+274.53 603.93 l
+274.89 607.53 l
+274.89 697.53 l
+274.53 701.13 l
+274.53 701.01 l
+273.45 704.37 l
+271.77 707.49 l
+271.89 707.37 l
+269.73 710.01 l
+267.09 712.17 l
+263.97 713.85 l
+264.09 713.85 l
+260.73 714.93 l
+257.13 715.29 l
+176.13 715.29 l
+176.13 715.77 l
+257.13 715.77 l
+260.73 715.41 l
+260.85 715.41 l
+264.21 714.33 l
+267.33 712.65 l
+267.45 712.53 l
+270.09 710.37 l
+272.25 707.73 l
+273.93 704.61 l
+273.93 704.49 l
+275.01 701.13 l
+275.37 697.53 l
+275.37 607.53 l
+275.01 603.93 l
+275.01 603.81 l
+273.93 600.33 l
+272.25 597.33 l
+272.25 597.21 l
+270.09 594.57 l
+267.45 592.29 l
+267.33 592.29 l
+264.21 590.73 l
+260.85 589.65 l
+260.73 589.65 l
+257.13 589.29 l
+176.13 589.29 l
+172.41 589.65 l
+169.05 590.73 l
+168.93 590.73 l
+165.93 592.29 l
+163.29 594.57 l
+161.01 597.21 l
+161.01 597.33 l
+159.33 600.33 l
+159.21 600.33 l
+158.25 603.81 l
+158.25 603.93 l
+157.89 607.53 l
+157.89 697.53 l
+158.25 701.13 l
+159.21 704.49 l
+159.21 704.61 l
+160.89 707.73 l
+161.01 707.73 l
+163.29 710.37 l
+165.93 712.53 l
+168.93 714.21 l
+169.05 714.33 l
+172.41 715.41 l
+176.13 715.77 l
+f 
+176.13 715.29 m
+176.13 715.77 l
+f 
+344.61 715.89 m
+341.01 715.53 l
+341.13 715.53 l
+337.65 714.45 l
+334.65 712.77 l
+334.77 712.77 l
+332.13 710.61 l
+329.85 707.97 l
+329.85 708.09 l
+328.29 704.97 l
+327.21 701.61 l
+327.21 701.73 l
+326.85 698.13 l
+326.85 608.13 l
+327.21 604.53 l
+328.29 601.17 l
+328.29 601.29 l
+329.85 598.17 l
+332.13 595.53 l
+334.77 593.37 l
+334.65 593.37 l
+337.65 591.69 l
+337.65 591.81 l
+341.13 590.73 l
+341.01 590.73 l
+344.61 590.37 l
+425.61 590.37 l
+429.21 590.73 l
+432.57 591.81 l
+432.45 591.81 l
+435.57 593.49 l
+435.57 593.37 l
+438.21 595.53 l
+440.37 598.17 l
+440.25 598.17 l
+441.93 601.29 l
+441.93 601.17 l
+443.01 604.53 l
+443.37 608.13 l
+443.37 698.13 l
+443.01 701.73 l
+443.01 701.61 l
+441.93 704.97 l
+440.25 708.09 l
+440.37 707.97 l
+438.21 710.61 l
+435.57 712.77 l
+432.45 714.45 l
+432.57 714.45 l
+429.21 715.53 l
+425.61 715.89 l
+344.61 715.89 l
+344.61 716.37 l
+425.61 716.37 l
+429.21 716.01 l
+429.33 716.01 l
+432.69 714.93 l
+435.81 713.25 l
+435.93 713.13 l
+438.57 710.97 l
+440.73 708.33 l
+442.41 705.21 l
+442.41 705.09 l
+443.49 701.73 l
+443.85 698.13 l
+443.85 608.13 l
+443.49 604.53 l
+443.49 604.41 l
+442.41 601.05 l
+440.73 597.93 l
+440.73 597.81 l
+438.57 595.17 l
+435.93 593.01 l
+435.81 593.01 l
+432.69 591.33 l
+429.33 590.25 l
+429.21 590.25 l
+425.61 589.89 l
+344.61 589.89 l
+341.01 590.25 l
+337.53 591.33 l
+337.41 591.33 l
+334.41 593.01 l
+331.77 595.17 l
+329.49 597.81 l
+329.37 597.93 l
+327.81 601.05 l
+326.73 604.41 l
+326.73 604.53 l
+326.37 608.13 l
+326.37 698.13 l
+326.73 701.73 l
+327.81 705.09 l
+327.81 705.21 l
+329.37 708.33 l
+329.49 708.33 l
+331.77 710.97 l
+334.41 713.13 l
+337.41 714.81 l
+337.53 714.93 l
+341.01 716.01 l
+344.61 716.37 l
+f 
+344.61 715.89 m
+344.61 716.37 l
+f 
+175.65 688.53 0.96 0.48 re
+f 
+175.65 661.53 0.96 -0.48 re
+f 
+175.65 688.53 0.96 -27 re
+f 
+211.65 670.53 0.96 0.48 re
+f 
+211.65 643.53 0.96 -0.48 re
+f 
+211.65 670.53 0.96 -27 re
+f 
+247.65 679.53 0.96 0.48 re
+f 
+247.65 652.53 0.96 -0.48 re
+f 
+247.65 679.53 0.96 -27 re
+f 
+355.65 661.53 0.96 0.48 re
+f 
+355.65 634.53 0.96 -0.48 re
+f 
+355.65 661.53 0.96 -27 re
+f 
+382.65 697.53 0.96 0.48 re
+f 
+382.65 670.53 0.96 -0.48 re
+f 
+382.65 697.53 0.96 -27 re
+f 
+391.65 634.53 0.96 0.48 re
+f 
+391.65 607.53 0.96 -0.48 re
+f 
+391.65 634.53 0.96 -27 re
+f 
+341.49 660.57 m
+343.05 662.73 l
+343.53 663.09 l
+343.77 662.85 l
+349.65 655.29 l
+350.73 653.85 l
+349.05 654.45 l
+340.05 657.69 l
+339.57 657.93 l
+339.93 658.41 l
+340.53 658.65 l
+349.53 655.41 l
+349.05 654.45 l
+348.93 654.57 l
+343.05 662.13 l
+343.77 662.85 l
+343.77 662.25 l
+342.21 660.09 l
+f 
+339.93 658.41 m
+341.49 660.57 l
+342.21 660.09 l
+340.65 657.93 l
+f 
+341.85 660.33 m
+343.41 662.49 l
+349.29 654.93 l
+340.29 658.17 l
+f* 
+176.01 679.77 m
+176.25 679.29 l
+179.61 681.09 l
+179.37 681.57 l
+f 
+184.53 684.21 m
+184.77 683.73 l
+186.93 684.69 l
+186.69 685.17 l
+f 
+186.69 685.17 m
+186.93 684.69 l
+191.85 686.85 l
+191.61 687.33 l
+f 
+197.13 689.37 m
+197.37 689.49 l
+197.49 689.49 l
+197.61 689.01 l
+197.37 688.89 l
+f 
+197.49 689.49 m
+202.89 691.29 l
+203.01 690.81 l
+197.61 689.01 l
+f 
+202.89 691.29 m
+203.01 690.81 l
+204.69 691.29 l
+204.57 691.77 l
+f 
+210.21 693.21 m
+210.33 692.73 l
+213.93 693.57 l
+213.81 694.05 l
+f 
+213.81 694.05 m
+213.93 693.57 l
+217.89 694.29 l
+217.77 694.77 l
+f 
+223.53 695.61 m
+223.65 695.13 l
+230.13 695.97 l
+230.01 695.97 l
+230.01 696.45 l
+f 
+230.01 695.97 1.2 0.48 re
+f 
+237.09 696.69 m
+237.09 696.21 l
+240.81 696.33 l
+240.81 696.81 l
+f 
+240.81 696.81 m
+240.81 696.33 l
+244.77 696.21 l
+244.77 696.69 l
+f 
+250.65 695.97 0.96 0.48 re
+f 
+251.61 696.45 m
+251.61 695.97 l
+258.33 695.13 l
+258.33 695.61 l
+f 
+264.21 694.89 m
+264.09 694.41 l
+271.65 692.85 l
+271.77 693.33 l
+f 
+277.41 692.01 m
+277.29 691.53 l
+283.29 689.85 l
+283.41 690.33 l
+f 
+283.41 690.33 m
+283.29 689.85 l
+284.73 689.37 l
+284.85 689.85 l
+f 
+290.37 688.05 m
+290.25 687.57 l
+293.49 686.49 l
+293.37 686.49 l
+293.61 686.97 l
+f 
+293.61 686.97 m
+293.37 686.49 l
+297.45 684.81 l
+297.69 685.29 l
+f 
+302.97 683.13 m
+302.85 682.65 l
+303.57 682.41 l
+303.45 682.41 l
+303.69 682.89 l
+f 
+303.69 682.89 m
+303.45 682.41 l
+309.81 679.41 l
+310.05 679.89 l
+f 
+315.21 677.25 m
+314.97 676.77 l
+321.81 673.05 l
+322.05 673.53 l
+f 
+326.97 670.41 m
+326.73 670.05 l
+332.25 666.69 l
+332.49 667.05 l
+f 
+332.49 667.05 m
+332.25 666.69 l
+333.33 665.97 l
+333.57 666.33 l
+f 
+338.37 662.97 m
+338.13 662.61 l
+341.25 660.45 l
+341.49 660.81 l
+f 
+369.21 686.25 m
+370.65 688.53 l
+371.13 688.89 l
+371.37 688.65 l
+377.73 681.45 l
+378.93 680.13 l
+377.25 680.61 l
+368.01 683.37 l
+367.41 683.61 l
+367.77 684.09 l
+368.25 684.33 l
+377.49 681.57 l
+377.25 680.61 l
+377.01 680.73 l
+370.65 687.93 l
+371.37 688.65 l
+371.37 688.05 l
+369.93 685.77 l
+f 
+367.77 684.09 m
+369.21 686.25 l
+369.93 685.77 l
+368.49 683.61 l
+f 
+369.57 686.01 m
+371.01 688.29 l
+377.37 681.09 l
+368.13 683.85 l
+f* 
+212.13 661.77 m
+212.25 661.29 l
+215.85 662.73 l
+215.73 663.21 l
+f 
+221.13 665.37 m
+221.37 664.89 l
+228.69 667.89 l
+228.45 668.37 l
+f 
+233.85 670.53 m
+234.09 670.05 l
+241.41 673.17 l
+241.17 673.65 l
+f 
+246.57 675.93 m
+246.81 675.45 l
+250.29 677.01 l
+250.17 677.49 l
+250.05 677.49 l
+f 
+250.17 677.49 m
+250.29 677.01 l
+254.13 678.45 l
+254.01 678.93 l
+f 
+259.53 681.21 m
+259.65 680.73 l
+266.97 683.61 l
+266.85 684.09 l
+f 
+272.37 686.25 m
+272.49 685.77 l
+279.93 688.41 l
+279.81 688.89 l
+f 
+285.45 690.69 m
+285.57 690.21 l
+290.85 691.77 l
+290.73 692.25 l
+f 
+290.73 692.25 m
+290.85 691.77 l
+293.13 692.37 l
+293.01 692.85 l
+f 
+298.65 694.41 m
+298.77 693.93 l
+301.05 694.41 l
+300.93 694.89 l
+f 
+300.93 694.89 m
+301.05 694.41 l
+306.57 695.49 l
+306.45 695.97 l
+f 
+312.21 696.93 m
+312.21 696.45 l
+320.13 697.29 l
+320.13 697.77 l
+f 
+326.01 698.13 0.12 -0.48 re
+f 
+326.13 698.13 4.92 -0.48 re
+f 
+331.05 698.13 m
+331.05 697.65 l
+333.81 697.41 l
+333.81 697.89 l
+f 
+339.69 697.29 m
+340.89 697.17 l
+341.01 697.17 l
+340.89 696.69 l
+339.69 696.81 l
+f 
+341.01 697.17 m
+345.93 696.21 l
+345.81 695.73 l
+340.89 696.69 l
+f 
+345.93 696.21 m
+345.81 695.73 l
+347.49 695.25 l
+347.61 695.73 l
+f 
+353.25 694.17 m
+355.41 693.45 l
+355.17 692.97 l
+355.29 692.97 l
+353.13 693.69 l
+f 
+355.41 693.45 m
+360.09 691.53 l
+359.85 691.05 l
+355.17 692.97 l
+f 
+360.09 691.53 m
+359.85 691.05 l
+360.33 690.81 l
+360.57 691.29 l
+f 
+365.85 688.41 m
+365.61 688.05 l
+368.97 686.01 l
+369.21 686.37 l
+f 
+378.33 622.53 m
+379.05 625.05 l
+379.29 625.65 l
+379.77 625.41 l
+387.93 620.49 l
+389.37 619.53 l
+387.69 619.53 l
+378.09 619.41 l
+377.49 619.41 l
+377.61 620.01 l
+378.09 620.37 l
+387.69 620.49 l
+387.69 619.53 l
+387.45 619.53 l
+379.29 624.45 l
+379.77 625.41 l
+380.01 624.81 l
+379.29 622.29 l
+f 
+377.61 620.01 m
+378.33 622.53 l
+379.29 622.29 l
+378.57 619.77 l
+f 
+378.81 622.41 m
+379.53 624.93 l
+387.69 620.01 l
+378.09 619.89 l
+f* 
+248.25 661.77 m
+248.01 661.29 l
+251.49 659.61 l
+251.73 660.09 l
+f 
+257.01 657.69 m
+256.77 657.21 l
+263.49 654.45 l
+263.73 654.93 l
+f 
+263.73 654.93 m
+263.49 654.45 l
+263.97 654.21 l
+264.21 654.69 l
+f 
+269.73 652.65 m
+269.49 652.17 l
+271.41 651.33 l
+271.53 651.33 l
+271.65 651.81 l
+f 
+271.65 651.81 m
+271.53 651.33 l
+276.93 649.41 l
+277.05 649.89 l
+f 
+282.57 648.09 m
+282.45 647.61 l
+289.89 645.33 l
+290.01 645.81 l
+f 
+295.53 644.01 m
+295.41 643.53 l
+295.77 643.41 l
+295.89 643.89 l
+f 
+295.89 643.89 m
+295.77 643.41 l
+302.85 641.49 l
+302.97 641.97 l
+f 
+308.61 640.41 m
+308.49 639.93 l
+312.09 638.85 l
+312.21 639.33 l
+f 
+312.21 639.33 m
+312.09 638.85 l
+316.05 637.89 l
+316.17 638.37 l
+f 
+321.81 637.05 m
+321.69 636.57 l
+329.25 634.65 l
+329.37 635.13 l
+f 
+335.01 633.69 m
+334.89 633.21 l
+342.45 631.41 l
+342.57 631.89 l
+f 
+348.33 630.45 m
+348.21 629.97 l
+355.77 628.17 l
+355.89 628.65 l
+f 
+361.53 627.21 m
+361.41 626.73 l
+361.89 626.61 l
+362.01 627.09 l
+f 
+362.01 627.09 m
+361.89 626.61 l
+368.97 624.81 l
+369.09 625.29 l
+f 
+374.73 623.73 m
+374.61 623.25 l
+378.33 622.29 l
+378.45 622.77 l
+f 
+BT
+/N29 1 Tf
+7.92 0 0 7.92 158.13 693.09 Tm
+0.008 Tw
+[( src)-11 (_pt)-10 (r_a)-11 (r[0)-15 (])]TJ
+7.955 -0.4394 TD
+-0.002 Tc
+[(s)-7 (r)-18 (c_p)-17 (t)3 (r)-18 (_)-2 (ar)-18 ([2])]TJ
+13.5614 -2.2729 TD
+-0.001 Tc
+[(dst_)-16 (ptr)-17 (_)-1 (a)-12 (r[0])]TJ
+4.5457 3.8487 TD
+[(dst_)-16 (ptr)-17 (_)-1 (a)-12 (r[1])]TJ
+2.2729 -7.258 TD
+[(dst_)-16 (ptr)-17 (_)-1 (a)-12 (r[2])]TJ
+9.96 0 0 9.96 198.09 570.69 Tm
+0.004 Tc
+-0.001 Tw
+[(F)6 (i)5 (gur)12 (e1:)5 ( S)6 (o)-2 (u)10 (r)0 (ce and)10 ( des)7 (t)5 (i)5 (n)-2 (at)5 (i)5 (on )12 (poi)5 (nt)5 (er)12 ( array)10 (s)]TJ
+7.92 0 0 7.92 187.29 673.77 Tm
+0 Tc
+[(src_)-15 (pt)-10 (r_a)-11 (r[1])]TJ
+ET
+1 g
+126.09 233.97 152.88 -98.88 re
+f 
+0 g
+126.09 233.73 153.24 0.48 re
+f 
+278.85 134.73 0.48 99.24 re
+f 
+125.85 134.73 153.24 0.48 re
+f 
+125.85 134.97 0.48 99.24 re
+f 
+1 g
+351.09 197.97 107.88 -71.88 re
+f 
+0 g
+351.09 197.73 108.24 0.48 re
+f 
+458.85 125.73 0.48 72.24 re
+f 
+350.85 125.73 108.24 0.48 re
+f 
+350.85 125.97 0.48 72.24 re
+f 
+0.703 g
+216.09 206.97 17.88 -35.88 re
+f 
+0 g
+216.09 206.73 18.24 0.48 re
+f 
+233.85 170.73 0.48 36.24 re
+f 
+215.85 170.73 18.24 0.48 re
+f 
+215.85 170.97 0.48 36.24 re
+f 
+377.73 180.81 m
+379.41 182.85 l
+380.01 183.09 l
+380.13 182.73 l
+385.53 174.81 l
+386.61 173.37 l
+384.93 174.09 l
+376.17 178.05 l
+375.69 178.41 l
+376.05 178.89 l
+376.65 179.01 l
+385.41 175.05 l
+384.93 174.09 l
+384.81 174.33 l
+379.41 182.25 l
+380.13 182.73 l
+380.13 182.13 l
+378.45 180.09 l
+f 
+376.05 178.89 m
+377.73 180.81 l
+378.45 180.09 l
+376.77 178.17 l
+f 
+378.09 180.45 m
+379.77 182.49 l
+385.17 174.57 l
+376.41 178.53 l
+f* 
+215.97 207.21 m
+216.21 206.73 l
+220.05 208.29 l
+219.81 208.77 l
+f 
+225.69 210.93 m
+225.81 210.45 l
+229.89 211.77 l
+229.77 212.25 l
+f 
+229.77 212.25 m
+229.89 211.77 l
+233.73 212.85 l
+233.61 213.33 l
+f 
+239.61 214.77 m
+239.73 214.29 l
+244.05 215.25 l
+243.93 215.73 l
+f 
+243.93 215.73 m
+244.05 215.25 l
+247.77 215.85 l
+247.65 216.33 l
+f 
+253.77 217.29 m
+253.77 216.81 l
+258.33 217.29 l
+258.33 217.77 l
+f 
+258.33 217.77 m
+258.33 217.29 l
+261.93 217.53 l
+261.93 218.01 l
+f 
+268.17 218.37 m
+268.17 217.89 l
+273.09 218.01 l
+273.09 218.49 l
+f 
+273.09 218.01 3.24 0.48 re
+f 
+282.57 218.37 m
+282.57 217.89 l
+287.97 217.53 l
+287.97 218.01 l
+f 
+287.97 218.01 m
+287.97 217.53 l
+290.73 217.29 l
+290.73 217.77 l
+f 
+296.97 217.17 m
+296.97 216.69 l
+302.97 215.97 l
+303.09 216.45 l
+302.97 216.45 l
+f 
+303.09 216.45 m
+302.97 215.97 l
+305.13 215.61 l
+305.25 216.09 l
+f 
+311.25 215.01 m
+311.13 214.53 l
+317.85 213.33 l
+317.97 213.81 l
+f 
+317.97 213.81 m
+317.85 213.33 l
+319.29 213.09 l
+319.41 213.57 l
+f 
+325.41 212.13 m
+325.29 211.65 l
+332.61 209.97 l
+332.73 210.45 l
+f 
+332.73 210.45 m
+332.61 209.97 l
+333.33 209.73 l
+333.45 210.21 l
+f 
+339.33 208.29 m
+339.09 207.81 l
+345.21 204.93 l
+345.45 205.41 l
+f 
+345.45 205.41 m
+345.21 204.93 l
+346.53 204.21 l
+346.77 204.69 l
+f 
+352.05 201.45 m
+351.81 201.09 l
+356.61 197.85 l
+356.97 198.21 l
+356.85 198.21 l
+f 
+356.97 198.21 m
+356.61 197.85 l
+358.53 196.29 l
+358.89 196.65 l
+f 
+363.81 192.93 m
+363.45 192.57 l
+367.17 189.33 l
+367.53 189.69 l
+f 
+367.53 189.69 m
+367.17 189.33 l
+369.69 187.29 l
+370.05 187.65 l
+f 
+374.85 183.57 m
+374.49 183.21 l
+377.61 180.57 l
+377.97 180.93 l
+f 
+BT
+/N31 1 Tf
+7.92 0 0 7.92 198.09 215.97 Tm
+0.006 Tc
+(src_ptr)Tj
+24.1681 -4.2881 TD
+(dst_ptr)Tj
+ET
+207.09 195.45 m
+203.85 195.45 l
+203.97 196.05 l
+207.09 206.97 l
+210.21 196.05 l
+210.33 195.45 l
+209.73 195.45 l
+209.25 195.81 l
+206.61 205.05 l
+207.57 205.29 l
+207.57 205.05 l
+204.93 195.81 l
+203.97 196.05 l
+204.45 196.41 l
+207.09 196.41 l
+f 
+207.09 196.41 2.64 -0.96 re
+f 
+207.09 195.93 m
+204.45 195.93 l
+207.09 205.17 l
+209.73 195.93 l
+f* 
+207.09 182.49 m
+210.33 182.49 l
+210.21 181.89 l
+207.09 170.97 l
+203.97 181.89 l
+203.85 182.49 l
+204.45 182.49 l
+204.93 182.13 l
+207.57 172.89 l
+206.61 172.65 l
+206.61 172.89 l
+209.25 182.13 l
+210.21 181.89 l
+209.73 181.53 l
+207.09 181.53 l
+f 
+204.45 182.49 2.64 -0.96 re
+f 
+207.09 182.01 m
+209.73 182.01 l
+207.09 172.77 l
+204.45 182.01 l
+f* 
+206.85 195.45 0.48 0.24 re
+f 
+206.85 182.49 0.48 -0.24 re
+f 
+206.85 195.45 0.48 -12.96 re
+f 
+BT
+7.92 0 0 7.92 153.09 188.97 Tm
+(count[0])Tj
+ET
+223.53 161.97 m
+223.53 159.93 l
+222.93 160.05 l
+217.77 161.49 l
+216.09 161.97 l
+217.77 162.45 l
+222.93 163.89 l
+223.53 164.01 l
+223.53 163.41 l
+223.17 162.93 l
+218.01 161.49 l
+217.77 162.45 l
+218.01 162.45 l
+223.17 161.01 l
+222.93 160.05 l
+222.57 160.53 l
+222.57 161.97 l
+f 
+222.57 163.41 0.96 -1.44 re
+f 
+223.05 161.97 m
+223.05 160.53 l
+217.89 161.97 l
+223.05 163.41 l
+f* 
+226.65 161.97 m
+226.65 164.01 l
+227.25 163.89 l
+232.41 162.45 l
+234.09 161.97 l
+232.41 161.49 l
+227.25 160.05 l
+226.65 159.93 l
+226.65 160.53 l
+227.01 161.01 l
+232.17 162.45 l
+232.41 161.49 l
+232.17 161.49 l
+227.01 162.93 l
+227.25 163.89 l
+227.61 163.41 l
+227.61 161.97 l
+f 
+226.65 161.97 0.96 -1.44 re
+f 
+227.13 161.97 m
+227.13 163.41 l
+232.29 161.97 l
+227.13 160.53 l
+f* 
+223.29 162.21 0.24 -0.48 re
+f 
+226.53 161.73 0.24 0.48 re
+f 
+223.53 161.73 3 0.48 re
+f 
+BT
+7.92 0 0 7.92 180.09 146.49 Tm
+(count[1])Tj
+ET
+0.703 g
+387.09 170.97 17.88 -35.88 re
+f 
+0 g
+387.09 170.73 18.24 0.48 re
+f 
+404.85 134.73 0.48 36.24 re
+f 
+386.85 134.73 18.24 0.48 re
+f 
+386.85 134.97 0.48 36.24 re
+f 
+297.09 222.45 m
+293.85 222.45 l
+293.97 223.05 l
+297.09 233.97 l
+300.21 223.05 l
+300.33 222.45 l
+299.73 222.45 l
+299.25 222.81 l
+296.61 232.05 l
+297.57 232.29 l
+297.57 232.05 l
+294.93 222.81 l
+293.97 223.05 l
+294.45 223.41 l
+297.09 223.41 l
+f 
+297.09 223.41 2.64 -0.96 re
+f 
+297.09 222.93 m
+294.45 222.93 l
+297.09 232.17 l
+299.73 222.93 l
+f* 
+297.09 146.49 m
+300.33 146.49 l
+300.21 145.89 l
+297.09 134.97 l
+293.97 145.89 l
+293.85 146.49 l
+294.45 146.49 l
+294.93 146.13 l
+297.57 136.89 l
+296.61 136.65 l
+296.61 136.89 l
+299.25 146.13 l
+300.21 145.89 l
+299.73 145.53 l
+297.09 145.53 l
+f 
+294.45 146.49 2.64 -0.96 re
+f 
+297.09 146.01 m
+299.73 146.01 l
+297.09 136.77 l
+294.45 146.01 l
+f* 
+296.85 222.45 0.48 0.24 re
+f 
+296.85 146.49 0.48 -0.24 re
+f 
+296.85 222.45 0.48 -75.96 re
+f 
+477.09 186.45 m
+473.85 186.45 l
+473.97 187.05 l
+477.09 197.97 l
+480.21 187.05 l
+480.33 186.45 l
+479.73 186.45 l
+479.25 186.81 l
+476.61 196.05 l
+477.57 196.29 l
+477.57 196.05 l
+474.93 186.81 l
+473.97 187.05 l
+474.45 187.41 l
+477.09 187.41 l
+f 
+477.09 187.41 2.64 -0.96 re
+f 
+477.09 186.93 m
+474.45 186.93 l
+477.09 196.17 l
+479.73 186.93 l
+f* 
+477.09 137.49 m
+480.33 137.49 l
+480.21 136.89 l
+477.09 125.97 l
+473.97 136.89 l
+473.85 137.49 l
+474.45 137.49 l
+474.93 137.13 l
+477.57 127.89 l
+476.61 127.65 l
+476.61 127.89 l
+479.25 137.13 l
+480.21 136.89 l
+479.73 136.53 l
+477.09 136.53 l
+f 
+474.45 137.49 2.64 -0.96 re
+f 
+477.09 137.01 m
+479.73 137.01 l
+477.09 127.77 l
+474.45 137.01 l
+f* 
+476.85 186.45 0.48 0.24 re
+f 
+476.85 137.49 0.48 -0.24 re
+f 
+476.85 186.45 0.48 -48.96 re
+f 
+BT
+0 7.92 -7.92 0 492.57 125.37 Tm
+(dst_stride_arr[0])Tj
+2.2727 22.668 TD
+(src_stride_arr[0])Tj
+/N29 1 Tf
+9.96 0 0 9.96 180.09 83.25 Tm
+-0.002 Tw
+[(F)7 (i)6 (gur)13 (e 2:)6 ( S)7 (t)6 (ri)6 (ded)11 ( for)13 (m)0 (at)6 ( fo)11 (r 2-)13 (di)6 (mens)8 (i)6 (o)-1 (n)11 (a)3 (l )12 (array)11 ( sect)6 (i)6 (o)-1 (n)11 (s)]TJ
+/N31 1 Tf
+9 0 0 9 270.09 110.13 Tm
+0 Tc
+0 Tw
+[(stride)13 (_levels = 1)]TJ
+ET
+PDFVars/TermAll get exec end end
+userdict /pgsave get restore
+showpage
+%%PageTrailer
+%%EndPage
+%%Page: 3 3
+%%BeginPageSetup
+userdict /pgsave save put
+PDFVars begin PDF begin PDFVars/InitAll get exec
+0 1 translate
+/N75 [/Pattern /DeviceRGB ] /ColorSpace defineRes pop
+/N74 8 dict dup begin
+/PatternType 1 def
+/PaintType 1 def
+/TilingType 1 def
+/BBox [0 
+0 
+1 
+1 ]def
+/XStep 1 def
+/YStep 1 def
+/PaintProc {begin
+1 1 1 rg
+/N34 /ExtGState findRes gs
+0 1 1 -1 re
+f 
+0 0 0 rg
+q
+1 0 0 -1 0 1 cm
+BI
+	/Width 8
+	/Height 8
+	/BitsPerComponent 1
+	/ImageMask true
+	/DataSource {{<F0783C1E0F87C3E1>} 0 get}
+ID EI 
+Q
+end} bind def end [0.96 
+0 
+0 
+-0.96 
+10.89 
+776.01 ]makePat /Pattern defineRes pop
+/N73 8 dict dup begin
+/PatternType 1 def
+/PaintType 1 def
+/TilingType 1 def
+/BBox [0 
+0 
+1 
+1 ]def
+/XStep 1 def
+/YStep 1 def
+/PaintProc {begin
+1 1 1 rg
+/N34 /ExtGState findRes gs
+0 1 1 -1 re
+f 
+0 0 0 rg
+q
+1 0 0 -1 0 1 cm
+BI
+	/Width 8
+	/Height 8
+	/BitsPerComponent 1
+	/ImageMask true
+	/DataSource {{<3333333333333333>} 0 get}
+ID EI 
+Q
+end} bind def end [0.96 
+0 
+0 
+-0.96 
+10.89 
+776.01 ]makePat /Pattern defineRes pop
+/N72 8 dict dup begin
+/PatternType 1 def
+/PaintType 1 def
+/TilingType 1 def
+/BBox [0 
+0 
+1 
+1 ]def
+/XStep 1 def
+/YStep 1 def
+/PaintProc {begin
+1 1 1 rg
+/N34 /ExtGState findRes gs
+0 1 1 -1 re
+f 
+0 0 0 rg
+q
+1 0 0 -1 0 1 cm
+BI
+	/Width 8
+	/Height 8
+	/BitsPerComponent 1
+	/ImageMask true
+	/DataSource {{<0000FFFF0000FFFF>} 0 get}
+ID EI 
+Q
+end} bind def end [0.96 
+0 
+0 
+-0.96 
+10.89 
+776.01 ]makePat /Pattern defineRes pop
+%%EndPageSetup
+0 0 612 791 RC
+BT
+/N29 1 Tf
+9.96 0 0 9.96 303.57 35.97 Tm
+0 g
+/N34 /ExtGState findRes gs
+0 Tc
+0 Tw
+(3)Tj
+-21.4337 44.3494 TD
+0.003 Tc
+0.072 Tw
+[(Th)9 (e f)23 (i)-8 (r)11 (s)-6 (t ar)23 (gum)10 (ent is)-6 ( an ar)11 (ray o)9 (f)-1 ( s)-6 (i)4 (ze )]TJ
+/N32 1 Tf
+15.6156 0.0023 TD
+-0.002 Tc
+[(a)-8 (rr_)-8 (len)]TJ
+/N29 1 Tf
+3.0122 0 TD
+0.002 Tc
+0.073 Tw
+[(. Each)8 ( array)8 ( )-12 (elem)9 (ent s)-7 (p)8 (eci)-9 (f)22 (i)3 (es a s)-7 (e)0 (t of)10 ( equally-)10 (s)-7 (ized se)12 (g)8 (m)-3 (ents )-12 (o)8 (f)]TJ
+-20.4347 -1.2049 TD
+-0.012 Tw
+[(d)9 (a)1 (t)-8 (a)1 ( t)-8 (o)9 ( )-12 (be copied)9 ( )-12 (fro)9 (m )-12 (the )-12 (lo)9 (cal)-8 ( memor)11 (y)-3 ( )-12 (to t)-8 (h)9 (e )-12 (memo)9 (ry at)-8 ( t)-8 (h)9 (e )-12 (remo)9 (te )-12 (pro)9 (ces)-6 (s\(o)9 (r\) )]TJ
+/N32 1 Tf
+32.9172 0 TD
+-0.006 Tc
+[(pr)34 (o)-12 (c)]TJ
+/N29 1 Tf
+1.7953 0 TD
+0 Tc
+0 Tw
+(.)Tj
+-32.9052 -1.8676 TD
+0.002 Tc
+0.037 Tw
+[(A s)-7 (i)3 (mp)8 (le )]TJ
+/N32 1 Tf
+3.9881 0 TD
+-0.006 Tc
+(pu)Tj
+/N29 1 Tf
+1 0 TD
+-0.001 Tc
+0.04 Tw
+[(t o)-7 (p)-7 (e)-3 (r)7 (a)-3 (ti)-12 (on)-7 ( for  )]TJ
+/N32 1 Tf
+6.4099 0 TD
+0.001 Tc
+[(n)7 (b)-5 (ytes)]TJ
+/N29 1 Tf
+2.5664 0 TD
+-0.001 Tc
+[( of co)-7 (n)-7 (tin)-7 (uo)-7 (u)-7 (s)2 ( d)-7 (a)-3 (ta in)-7 ( th)-7 (e s)-10 (t)0 (yl)-12 (e o)-7 (f)7 ( )]TJ
+/N32 1 Tf
+13.9886 0 TD
+0.002 Tc
+[(memcp)8 (y)]TJ
+/N29 1 Tf
+3.2893 0 TD
+-0.008 Tc
+0.059 Tw
+[( \(o)-14 (r)-12 ( )]TJ
+/N32 1 Tf
+1.7471 0 TD
+0.003 Tc
+[(shmem_pu)9 (t)]TJ
+/N29 1 Tf
+4.5785 0 TD
+0.048 Tw
+[( o)9 (p)-3 (eration)9 ( )12 (on )12 (C)-5 (r)11 (ay)]TJ
+-39.3754 -1.2049 TD
+0.004 Tc
+-0.001 Tw
+[(T3)10 (E\) can)10 ( be eas)7 (i)5 (l)5 (y)-2 ( e)14 (x)10 (pres)7 (s)7 (e)2 (d i)5 (n)-2 ( )12 (ter)12 (m)-1 (s)7 ( of )12 (eit)5 (h)10 (er v)22 (ect)5 (or o)10 (r)0 ( s)7 (t)5 (ri)5 (ded )12 (A)-9 (R)8 (MCI)12 ( put)5 ( o)10 (p)-2 (erat)5 (i)5 (o)10 (n. F)18 (o)10 (r e)14 (x)10 (ampl)5 (e:)]TJ
+/N31 1 Tf
+1.8073 -1.8676 TD
+0.002 Tc
+0 Tw
+[(ARMCI_PutS\(s)12 (rc_ptr, NULL, dst_ptr, NULL, &nbytes, 0)12 (,)0 ( proc\))]TJ
+/N29 1 Tf
+T*
+0 Tc
+0.039 Tw
+[(Fig)-6 (u)-6 (r)8 (e 3)-6 ( illu)-6 (strates)-9 ( m)7 (e)-2 (m)-5 (o)-6 (ry lay)-6 (o)-6 (u)6 (t an)-6 (d)-6 ( )12 (s)-9 (t)1 (o)-6 (r)8 (ag)-6 (e requ)-6 (irem)-5 (ents)-9 ( in)-6 ( )12 (t)-11 (h)6 (e two AR)-8 (MCI fo)-6 (r)8 (m)-5 (ats)-9 ( us)-9 (ed to)-6 ( des)-9 (c)-2 (ribe tran)-6 (s-)]TJ
+-1.8073 -1.2049 TD
+0.099 Tw
+[(fe)10 (rs)-9 ( o)-6 (f)-4 ( a )-12 (3x)-6 (3x)-6 (3)-6 ( s)-9 (ectio)-6 (n )-12 (of )-12 (a 3)-6 (-)-4 (dim)-5 (e)-2 (n)-6 (s)3 (io)-6 (n)-6 (a)-2 (l array)66 (.)-3 ( W)28 (ith)-6 ( th)-6 (e g)-6 (e)-2 (n)-6 (e)-2 (r)8 (a)-2 (li)-11 (zed )-12 (I/O vector )-12 (f)8 (o)-6 (rm)-5 (at, it )-12 (is)-9 ( requ)-6 (ired)-6 ( to)-6 ( s)-9 (p)6 (eci)-11 (f)8 (y)]TJ
+T*
+0.002 Tc
+0.049 Tw
+[(sou)8 (r)-2 (ce and)8 ( desti)-9 (n)8 (ati)-9 (o)8 (n p)8 (o)-4 (inters fo)8 (r each se)12 (g)8 (m)-3 (ent \(c)12 (olumn)8 (\))-2 ( in the )12 (s)-7 (e)0 (q)8 (u)-4 (ence. )12 (W)30 (ith th)8 (e s)-7 (t)3 (rid)8 (e)0 (d fo)8 (rmat o)8 (n)-4 (ly the sou)8 (r)-2 (ce)]TJ
+T*
+-0.023 Tw
+[(an)8 (d d)8 (e)0 (s)-7 (tination)8 ( add)8 (r)-2 (es)-7 (ses for)10 ( the f)22 (i)3 (rst ha)24 (v)20 (e)0 ( to b)8 (e)0 ( specif)22 (i)3 (ed an)8 (d the )12 (res)-7 (t)3 ( can)8 ( be )12 (comp)8 (uted b)8 (a)0 (s)-7 (e)0 (d)8 ( on)8 ( the stride ar)22 (g)8 (u)-4 (ments.)]TJ
+T*
+0.004 Tc
+-0.001 Tw
+[(Th)10 (e sa)26 (v)10 (i)-7 (n)10 (g)-2 (s)7 ( fro)10 (m us)7 (i)5 (n)-2 (g)10 ( st)5 (r)12 (i)-7 (d)10 (e)2 (d f)12 (o)-2 (rmat)5 ( can)10 ( be )12 (qui)5 (t)5 (e)2 ( s)7 (ubs)7 (t)5 (a)2 (nt)5 (i)5 (a)2 (l)5 ( fo)10 (r a l)5 (a)2 (r)24 (g)-2 (er )12 (num)11 (ber o)10 (f)0 ( s)7 (e)14 (gm)11 (ent)5 (s)-5 (.)]TJ
+/N30 1 Tf
+12 0 0 12 72.09 323.97 Tm
+0 Tc
+0.002 Tw
+[(ARMC)-8 (I)8 ( Ope)6 (r)-1 (ations)]TJ
+/N29 1 Tf
+9.96 0 0 9.96 90.09 305.73 Tm
+0.001 Tc
+(A )Tj
+/N32 1 Tf
+0.9519 0 TD
+-0.006 Tc
+[(ge)-8 (t)]TJ
+/N29 1 Tf
+1.2169 0 TD
+0.003 Tc
+-0.024 Tw
+[( op)9 (eration tr)11 (ansfers data fro)9 (m the rem)10 (o)-3 (te pro)9 (ces)-6 (s\(o)9 (r\) memo)9 (ry \()11 (s)-6 (o)9 (u)-3 (rce\) to)9 ( t)-8 (h)9 (e calli)-8 (n)9 (g)-3 ( pr)11 (ocess)-6 (\()11 (or\) lo)9 (cal)-8 ( m)10 (e)1 (m-)]TJ
+-3.9761 -1.2049 TD
+-0.007 Tc
+0.118 Tw
+[(or)-11 (y)-13 ( )-13 (\(d)-13 (e)-9 (s)-4 (t)-18 (i)-6 (na)-9 (t)-18 (i)-6 (on)-13 (\))-11 (.)-10 ( A)-20 ( )]TJ
+/N32 1 Tf
+8.5064 0 TD
+-0.006 Tc
+[(pu)-12 (t)]TJ
+/N29 1 Tf
+1.2772 0 TD
+0.002 Tc
+0.122 Tw
+[( op)8 (eration)8 ( t)-9 (r)10 (ansfers data f)10 (r)-2 (om th)8 (e local memo)8 (ry o)8 (f)-2 ( the c)12 (a)0 (l)-9 (ling)8 ( pro)8 (ces)-7 (s\(o)8 (r\) \()10 (s)-7 (o)8 (u)-4 (rce\) )13 (t)-9 (o)8 ( the)]TJ
+-9.7836 -1.2049 TD
+0.001 Tc
+0.026 Tw
+[(m)-4 (e)-1 (m)8 (o)-5 (ry o)-5 (f)9 ( a )12 (rem)-4 (o)7 (t)-10 (e)11 ( p)-5 (r)9 (o)-5 (cess)-8 (\()9 (o)-5 (r\) )12 (\(des)-8 (tin)-5 (atio)-5 (n\). )12 (Th)-5 (e )12 (n)-5 (o)-5 (n)7 (-b)-5 (lo)-5 (ckin)-5 (g)-5 ( )12 (AP)-9 (I)9 ( \(with)-5 ( )12 (th)-5 (e )]TJ
+/N32 1 Tf
+32.0979 0 TD
+0.008 Tc
+(Nb)Tj
+/N29 1 Tf
+1.1808 0 TD
+0.005 Tc
+0.01 Tw
+[( pr)13 (ef)25 (ix)11 (\) is)8 ( )-12 (d)11 (e)3 (ri)30 (v)23 (e)3 (d from)12 ( )-12 (t)6 (h)-1 (e bl)6 (ock)11 (-)]TJ
+-33.2787 -1.2049 TD
+0.003 Tc
+0 Tw
+[(ing)9 ( interf)11 (ace )12 (b)9 (y)9 ( addin)9 (g)-3 ( a h)9 (a)1 (ndle )12 (ar)11 (g)9 (u)-3 (men)9 (t)-8 ( )]TJ
+/N32 1 Tf
+17.1575 0 TD
+-0.028 Tc
+[(re)-30 (q)]TJ
+/N29 1 Tf
+1.2892 0 TD
+0.003 Tc
+[( that iden)9 (ti)-8 (f)23 (i)4 (es an in)9 (s)-6 (t)4 (anc)13 (e)1 ( of )12 (t)-8 (h)9 (e no)9 (n-b)9 (l)-8 (o)9 (c)1 (king)9 ( req)9 (u)-3 (es)-6 (t.)12 ( )]TJ
+/N30 1 Tf
+10.92 0 0 10.92 72.09 245.49 Tm
+0.004 Tc
+-0.007 Tw
+[(Pr)19 (ogr)8 (ess and )-11 (o)11 (r)19 (deri)7 (n)0 (g)]TJ
+/N29 1 Tf
+9.96 0 0 9.96 90.09 226.53 Tm
+0.035 Tw
+[(W)8 (h)-2 (en a b)10 (l)-7 (o)10 (c)2 (king)10 ( )]TJ
+/N32 1 Tf
+7.2293 0 TD
+0.006 Tc
+(put)Tj
+/N29 1 Tf
+1.2772 0 TD
+0.004 Tc
+[( op)10 (erat)5 (i)5 (on co)10 (mpl)5 (e)2 (t)5 (e)2 (s)7 (,)1 ( t)5 (h)-2 (e dat)5 (a)2 ( has)7 ( been)10 ( copi)5 (ed)10 ( out)5 ( t)5 (h)-2 (e cal)5 (l)5 (i)5 (ng p)10 (r)0 (oces)7 (s)7 (\()0 (or\))12 ( memor)12 (y)-2 ( b)22 (u)-2 (t)5 ( has)]TJ
+-10.3137 -1.2049 TD
+0.001 Tc
+-0.022 Tw
+[(n)7 (o)-5 (t necess)-8 (a)-1 (rily)7 ( )-12 (ar)9 (ri)26 (v)7 (e)-1 (d)7 ( t)-10 (o)7 ( t)-10 (h)7 (e dest)-10 (in)7 (ati)-10 (o)7 (n. Th)7 (i)-10 (s)4 ( is)-8 ( a )]TJ
+/N32 1 Tf
+20.1817 0 TD
+[(lo)-5 (ca)-5 (l)]TJ
+/N29 1 Tf
+2.0121 0 TD
+[( co)-5 (m)8 (p)-5 (letio)-5 (n)-5 (.)-2 ( A )]TJ
+/N32 1 Tf
+6.181 0 TD
+0.006 Tc
+[(gl)7 (o)12 (bal)7 ( )]TJ
+/N29 1 Tf
+2.7953 0 TD
+-0.002 Tc
+-0.007 Tw
+[(co)-8 (m)-7 (p)4 (leti)-13 (on)-8 ( )12 (o)-8 (f)6 ( the ou)-8 (tst)-13 (a)-4 (nd)-8 (in)-8 (g )]TJ
+/N32 1 Tf
+12.1934 0 TD
+-0.006 Tc
+[(pu)-12 (t)]TJ
+/N29 1 Tf
+1.2772 0 TD
+0.005 Tc
+-0.026 Tw
+[( op)11 (er-)]TJ
+-44.6407 -1.2049 TD
+0 Tc
+0.027 Tw
+[(atio)-6 (ns)-9 ( can)-6 ( b)-6 (e)-2 ( ach)-6 (ie)22 (v)18 (e)-2 (d)-6 ( b)18 (y)-6 ( call)-11 (i)1 (ng)-6 ( AR)-8 (MC)-8 (I)8 (_)-6 (Fen)-6 (ce o)-6 (r)-4 ( AR)-8 (MCI_)-6 (AllFen)-6 (ce. AR)-8 (MCI_)-6 (Fen)-6 (ce b)-6 (l)1 (ock)-6 (s)3 ( )-12 (the )-12 (callin)-6 (g )-12 (pro)-6 (cess)-9 (o)6 (r)]TJ
+T*
+-0.002 Tc
+0.077 Tw
+[(un)-8 (til)-13 ( all )]TJ
+/N32 1 Tf
+3.5062 0 TD
+-0.006 Tc
+[(pu)-12 (t)]TJ
+/N29 1 Tf
+1.2772 0 TD
+0 Tc
+0.075 Tw
+[( o)-6 (p)-6 (e)-2 (r)8 (a)-2 (t)-11 (i)1 (on)-6 (s )-12 (it )-12 (issu)-6 (ed)-6 ( to)-6 ( t)-11 (h)6 (e )-12 (sp)-6 (ecif)20 (i)1 (ed)-6 ( rem)7 (o)-6 (te )-12 (pro)-6 (cess\(o)-6 (r)-4 (\))8 ( )-12 (com)-5 (p)-6 (lete at)-11 ( th)-6 (e d)-6 (e)-2 (stin)-6 (atio)-6 (n)-6 (.)-3 ( AR)-8 (MCI_)-6 (AllFen)-6 (ce)]TJ
+-4.7834 -1.2049 TD
+-0.001 Tc
+0.004 Tw
+[(do)-7 (es th)-7 (e sam)-6 (e)-3 ( for all th)-7 (e ou)-7 (tst)-12 (a)9 (n)-7 (d)-7 (i)0 (n)-7 (g)5 ( )]TJ
+/N32 1 Tf
+14.9646 0 TD
+0.006 Tc
+[(pu)12 (t)]TJ
+/N29 1 Tf
+1.2892 0 TD
+-0.001 Tc
+[( )12 (o)-7 (p)-7 (e)-3 (r)7 (a)-3 (ti)-12 (on)-7 (s is)-10 (su)-7 (ed by th)-7 (e callin)-7 (g p)-7 (r)-5 (oces)-10 (s\(or\) r)7 (e)9 (gard)-7 (less)-10 ( )12 (o)-7 (f)-5 ( the d)-7 (e)-3 (sti)-12 (n)5 (ati)-12 (o)5 (n)-7 (.)-4 ( )]TJ
+/N30 1 Tf
+10.92 0 0 10.92 72.09 154.29 Tm
+0.004 Tc
+-0.007 Tw
+[(Memor)-14 (y)0 ( all)7 (ocat)7 (ion)]TJ
+/N29 1 Tf
+9.96 0 0 9.96 90.09 135.33 Tm
+0.003 Tc
+0.072 Tw
+[(On shar)11 (ed memo)9 (ry systems)-6 (,)12 ( )-12 (AR)7 (MC)-5 (I o)9 (p)-3 (eration)9 (s)-6 ( req)9 (u)-3 (ire the r)11 (e)1 (mote data to be lo)9 (cat)-8 (ed)9 ( in s)-6 (h)9 (ared me)13 (mory)69 (. Th)9 (i)-8 (s)]TJ
+-1.8073 -1.2049 TD
+0 Tc
+0.027 Tw
+[(re)10 (s)-9 (t)1 (rictio)-6 (n)-6 ( greatly)-6 ( sim)-5 (p)-6 (lif)20 (ies)-9 ( an )-12 (im)7 (p)-6 (l)1 (em)-5 (en)-6 (tatio)-6 (n an)-6 (d)-6 ( im)-5 (pro)18 (v)6 (es th)-6 (e p)-6 (e)-2 (r)8 (f)-4 (o)-6 (r)-4 (m)7 (a)-2 (n)-6 (ce. It can b)-6 (e)-2 ( lifted)-6 ( in)-6 ( th)-6 (e f)8 (u)-6 (tu)-6 (re v)18 (e)-2 (rsio)-6 (n)-6 (s)]TJ
+T*
+0.002 Tc
+0.109 Tw
+[(o)8 (f)-2 ( AR)6 (MC)-6 (I )12 (if )12 (comp)8 (el)-9 (ling)8 ( r)10 (eas)-7 (o)8 (n)-4 (s are )12 (iden)8 (t)-9 (i)3 (f)22 (i)3 (ed.)11 ( Ho)20 (we)24 (v)20 (e)0 (r)46 (,)-1 ( m)9 (o)-4 (st)-9 ( )12 (lik)8 (ely )12 (t)-9 (h)8 (e p)8 (e)0 (rfo)8 (rmanc)12 (e)0 ( of)10 ( AR)6 (MC)-6 (I )12 (wil)-9 (l)3 ( )12 (alw)13 (a)0 (y)8 (s)-7 ( )12 (be)]TJ
+T*
+0.06 Tw
+[(mo)9 (re comp)9 (et)-8 (iti)28 (v)21 (e)1 ( )-12 (if s)-6 (h)9 (ared memo)9 (ry is)-6 ( used. As)-6 ( a )-12 (co)9 (n)33 (v)21 (enienc)13 (e )-12 (to the )-12 (p)9 (r)-1 (og)9 (rammer)47 (,)0 ( AR)-5 (MC)-5 (I)11 ( )-12 (p)9 (r)-1 (o)9 (v)9 (i)4 (des )-12 (tw)14 (o collecti)16 (v)21 (e)]TJ
+T*
+-0.011 Tw
+[(o)8 (p)-4 (eration)8 (s)-7 ( to allocate and)8 ( )-12 (f)10 (r)-2 (ee memo)8 (ry that can be u)8 (s)-7 (ed)8 ( )-12 (in)8 ( )-12 (th)8 (e )-12 (co)8 (nte)12 (x)8 (t)-9 ( o)8 (f)-2 ( the AR)-6 (MC)-6 (I)10 ( cop)8 (y)-4 ( o)8 (p)-4 (eration)8 (s)-7 (. Th)8 (e)12 (y)-4 ( u)8 (s)-7 (e local)]TJ
+T*
+0.048 Tw
+[(mem)10 (o)-3 (ry)9 ( )-12 (o)9 (n)-3 ( s)-6 (y)9 (s)-6 (t)4 (ems t)-8 (h)9 (at )-12 (d)9 (o)-3 ( not supp)9 (ort s)-6 (h)9 (ared mem)10 (o)-3 (ry an)9 (d s)-6 (h)9 (ared memo)9 (ry on)9 ( )-12 (th)9 (ose )-12 (that do)9 (. The pro)9 (g)-3 (ram)10 (m)-2 (er can)]TJ
+ET
+1 i
+149.85 687.57 18.24 0.48 re
+f 
+167.61 669.57 0.48 18.24 re
+f 
+149.61 669.57 18.24 0.48 re
+f 
+149.61 669.81 0.48 18.24 re
+f 
+1 g
+134.61 710.13 53.88 -53.88 re
+f 
+0 g
+134.61 709.89 54.24 0.48 re
+f 
+188.37 655.89 0.48 54.24 re
+f 
+134.37 655.89 54.24 0.48 re
+f 
+134.37 656.13 0.48 54.24 re
+f 
+193.77 617.49 0.12 -0.24 re
+f 
+149.97 617.25 0.12 0.24 re
+f 
+150.09 617.25 43.68 0.24 re
+f 
+149.97 617.37 0.12 -0.24 re
+f 
+149.97 617.13 m
+145.29 617.61 l
+143.37 618.09 l
+143.25 618.09 l
+141.45 618.81 l
+140.01 619.65 l
+138.93 620.61 l
+139.17 620.73 l
+139.05 620.73 l
+140.13 619.77 l
+140.13 619.89 l
+141.57 619.05 l
+143.37 618.33 l
+145.29 617.85 l
+149.97 617.37 l
+f 
+138.93 620.61 m
+138.21 621.57 l
+138.21 621.69 l
+138.45 621.69 l
+139.17 620.73 l
+f 
+137.97 622.89 0.24 -0.12 re
+f 
+138.21 621.69 m
+138.45 621.69 l
+138.21 622.77 l
+137.97 622.77 l
+f 
+193.65 617.49 0.12 -0.24 re
+f 
+193.77 617.49 m
+195.69 617.25 l
+197.37 616.77 l
+197.25 616.53 l
+195.57 617.01 l
+195.69 617.01 l
+193.77 617.25 l
+f 
+197.37 616.77 m
+198.45 616.05 l
+198.57 615.93 l
+198.33 615.81 l
+197.25 616.53 l
+f 
+199.05 615.09 m
+199.05 614.97 l
+198.81 614.85 l
+198.81 614.97 l
+f 
+198.57 615.93 m
+198.33 615.81 l
+198.81 614.97 l
+199.05 615.09 l
+f 
+82.29 617.49 0.12 -0.24 re
+f 
+126.09 617.25 0.12 0.24 re
+f 
+82.41 617.25 43.68 0.24 re
+f 
+137.97 622.77 0.24 0.12 re
+f 
+138.21 622.77 m
+137.97 621.69 l
+137.97 621.57 l
+137.25 620.61 l
+137.13 620.61 l
+136.05 619.65 l
+134.61 618.81 l
+132.81 618.09 l
+132.81 618.33 l
+132.69 618.33 l
+134.49 619.05 l
+135.93 619.89 l
+135.93 619.77 l
+137.01 620.73 l
+137.73 621.69 l
+137.97 622.77 l
+f 
+132.81 618.09 m
+130.77 617.61 l
+130.77 617.85 l
+132.81 618.33 l
+f 
+126.09 617.13 0.12 0.24 re
+f 
+130.77 617.61 m
+130.77 617.85 l
+126.21 617.37 l
+126.21 617.13 l
+f 
+77.13 615.09 m
+77.13 614.97 l
+77.37 614.85 l
+77.37 614.97 l
+f 
+77.13 615.09 m
+77.61 615.93 l
+77.61 616.05 l
+78.69 616.77 l
+78.81 616.53 l
+77.73 615.81 l
+77.85 615.81 l
+77.37 614.97 l
+f 
+78.69 616.77 m
+80.37 617.25 l
+80.49 617.25 l
+80.49 617.01 l
+78.81 616.53 l
+f 
+82.41 617.25 0.12 0.24 re
+f 
+80.49 617.25 m
+80.49 617.01 l
+82.41 617.25 l
+82.41 617.49 l
+f 
+BT
+9.96 0 0 9.96 97.77 537.45 Tm
+[(F)-7 (i)4 (g)9 (u)-3 (re 3)9 (:)4 ( Memor)11 (y)-3 ( lay)9 (out an)9 (d storag)9 (e req)9 (u)-3 (iremen)9 (ts)-6 ( n)9 (eeded)9 ( to d)9 (e)1 (s)-6 (c)1 (rib)9 (e)1 ( transfer)11 (s)-6 ( o)9 (f)-1 ( a )12 (3x3)9 (x3 )12 (s)-6 (ection)9 ( of)11 ( a 3-)11 (D)]TJ
+-1.8194 -1.2049 TD
+[(array)9 (:)-8 ( )]TJ
+9 0 0 9 105.33 525.45 Tm
+-0.003 Tc
+-0.02 Tw
+[(T)8 (h)-10 (e vect)-5 (or A)-14 (P)6 (I u)-10 (s)-1 (es 1)-10 (8)4 ( p)-10 (o)4 (i)-5 (n)-10 (t)8 (e)-12 (rs \(sou)-10 (rce )-13 (& de)-12 (st)-5 (i)8 (n)-10 (at)-5 (i)-5 (o)4 (n)-10 (  for 9)-10 ( se)14 (g)-10 (m)2 (en)-10 (t)-5 (s)-1 (\) an)-10 (d 1)-10 ( +1 )-13 (i)8 (n)-10 (t)-5 (s)-1 ( = 2)-10 (0)4 ( word)-10 (s.)7 ( )-13 (T)8 (h)-10 (e st)-5 (ri)-5 (de)-12 (d AP)-7 (I n)-10 (eed)-10 (s:)]TJ
+-2.8533 -1.2533 TD
+-0.006 Tc
+0.009 Tw
+[(2)-13 ( )13 (p)-13 (o)1 (i)-8 (n)-13 (te)-15 (r)-6 (s)-4 ( \()7 (s)-17 (ou)-13 (r)7 (c)-15 (e & des)-17 (t)5 (i)-8 (n)-13 (at)-8 (i)-8 (on\))-6 ( an)-13 (d 2+)-15 (2 +1)-13 ( )13 (+ 3)-13 ( )13 (i)-8 (n)-13 (ts)-17 ( )13 (=)-15 ( )13 (1)-13 (0)1 ( w)9 (o)-13 (r)-6 (d)1 (s.)]TJ
+ET
+73.05 717.81 464.28 0.48 re
+f 
+536.85 502.41 0.48 215.64 re
+f 
+72.81 502.41 464.28 0.48 re
+f 
+72.81 502.65 0.48 215.64 re
+f 
+116.61 691.65 54.48 0.96 re
+f 
+170.13 637.65 0.96 54.48 re
+f 
+116.13 637.65 54.48 0.96 re
+f 
+116.13 638.13 0.96 54.48 re
+f 
+170.49 692.25 m
+170.37 692.13 l
+170.73 691.77 l
+170.85 691.89 l
+f 
+188.49 710.25 m
+188.61 710.37 l
+188.97 710.01 l
+188.85 709.89 l
+f 
+170.49 692.25 m
+170.85 691.89 l
+188.85 709.89 l
+188.49 710.25 l
+f 
+170.49 638.25 m
+170.37 638.13 l
+170.73 637.77 l
+170.85 637.89 l
+f 
+188.49 656.25 m
+188.61 656.37 l
+188.97 656.01 l
+188.85 655.89 l
+f 
+170.49 638.25 m
+170.85 637.89 l
+188.85 655.89 l
+188.49 656.25 l
+f 
+116.49 692.25 m
+116.37 692.13 l
+116.73 691.77 l
+116.85 691.89 l
+f 
+134.49 710.25 m
+134.61 710.37 l
+134.97 710.01 l
+134.85 709.89 l
+f 
+116.49 692.25 m
+116.85 691.89 l
+134.85 709.89 l
+134.49 710.25 l
+f 
+q
+134.37 692.13 0.48 0.24 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N72 /Pattern findRes scn
+134.37 692.37 0.6 -0.36 re
+f 
+Q
+q
+134.37 656.13 0.48 -0.24 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N72 /Pattern findRes scn
+134.37 656.13 0.6 -0.36 re
+f 
+Q
+q
+134.37 692.13 0.48 -36 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N72 /Pattern findRes scn
+134.37 692.13 0.6 -36.12 re
+f 
+Q
+q
+134.37 656.37 0.24 -0.48 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N73 /Pattern findRes scn
+134.37 656.37 0.36 -0.6 re
+f 
+Q
+q
+170.61 655.89 0.24 0.48 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N73 /Pattern findRes scn
+170.61 656.37 0.36 -0.6 re
+f 
+Q
+q
+134.61 655.89 36 0.48 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N73 /Pattern findRes scn
+134.61 656.37 36.12 -0.6 re
+f 
+Q
+q
+116.49 638.25 m
+116.37 638.13 l
+116.73 637.77 l
+116.85 637.89 l
+W n 
+/N75 /ColorSpace findRes cs
+
+/N74 /Pattern findRes scn
+116.37 638.25 0.6 -0.6 re
+f 
+Q
+q
+134.49 656.25 m
+134.61 656.37 l
+134.97 656.01 l
+134.85 655.89 l
+W n 
+/N75 /ColorSpace findRes cs
+
+/N74 /Pattern findRes scn
+134.49 656.37 0.6 -0.6 re
+f 
+Q
+q
+116.49 638.25 m
+116.85 637.89 l
+134.85 655.89 l
+134.49 656.25 l
+W n 
+/N75 /ColorSpace findRes cs
+
+/N74 /Pattern findRes scn
+116.49 656.25 18.48 -18.48 re
+f 
+Q
+0.902 g
+158.85 678.81 m
+168.09 687.81 l
+168.09 669.81 l
+158.85 660.81 l
+158.85 669.81 l
+f* 
+0.5 g
+158.73 678.93 m
+167.97 687.93 l
+168.33 688.29 l
+168.33 669.57 l
+159.09 660.57 l
+158.61 660.09 l
+158.61 678.81 l
+158.73 678.93 l
+159.09 678.81 l
+159.09 660.81 l
+158.61 660.81 l
+158.73 660.93 l
+167.97 669.93 l
+168.33 669.57 l
+167.85 669.81 l
+167.85 687.81 l
+168.33 687.81 l
+168.33 687.57 l
+159.09 678.57 l
+f 
+0.914 g
+149.49 687.81 m
+140.25 678.81 l
+158.61 678.81 l
+167.85 687.81 l
+f* 
+0.578 g
+149.73 687.57 m
+140.49 678.57 l
+140.25 678.57 l
+140.25 679.05 l
+158.61 679.05 l
+158.85 678.57 l
+158.49 678.93 l
+167.73 687.93 l
+167.85 688.05 l
+168.57 688.05 l
+168.09 687.57 l
+158.85 678.57 l
+139.77 678.57 l
+140.13 678.93 l
+149.37 687.93 l
+f 
+167.85 687.57 m
+149.49 687.57 l
+149.37 687.93 l
+149.49 688.05 l
+167.85 688.05 l
+f 
+0.969 g
+140.25 678.93 18.48 -18 re
+f 
+0 g
+140.25 678.69 18.84 0.48 re
+f 
+158.61 660.57 0.48 18.36 re
+f 
+140.01 660.57 18.84 0.48 re
+f 
+140.01 660.81 0.48 18.36 re
+f 
+0.5 g
+144.21 682.05 m
+143.97 682.29 l
+143.73 682.05 l
+143.97 681.81 l
+144.21 682.05 l
+f 
+162.21 682.05 m
+161.97 682.29 l
+161.73 682.05 l
+161.97 681.81 l
+162.21 682.05 l
+f 
+143.97 681.81 18 0.48 re
+f 
+162.33 682.29 m
+162.21 682.41 l
+162.09 682.53 l
+161.97 682.41 l
+161.85 682.29 l
+162.09 682.05 l
+162.33 682.29 l
+f 
+162.45 664.05 m
+162.21 664.29 l
+161.97 664.05 l
+162.21 663.81 l
+162.45 664.05 l
+f 
+162.33 682.29 m
+161.85 682.29 l
+161.97 664.05 l
+162.45 664.05 l
+f 
+0.148 g
+80.61 611.97 15.48 0.48 re
+f 
+95.61 606.57 0.48 5.64 re
+f 
+80.37 606.57 15.48 0.48 re
+f 
+80.37 606.81 0.48 5.64 re
+f 
+85.77 612.21 m
+85.53 612.45 l
+85.29 612.21 l
+85.41 612.09 l
+85.53 611.97 l
+85.77 612.21 l
+f 
+85.77 606.81 m
+85.53 607.05 l
+85.29 606.81 l
+85.53 606.57 l
+85.77 606.81 l
+f 
+85.29 612.21 0.48 -5.4 re
+f 
+90.81 612.21 m
+90.57 612.45 l
+90.33 612.21 l
+90.45 612.09 l
+90.57 611.97 l
+90.69 612.09 l
+90.81 612.21 l
+f 
+90.69 606.81 m
+90.45 607.05 l
+90.21 606.81 l
+90.45 606.57 l
+90.69 606.81 l
+f 
+90.81 612.21 m
+90.33 612.21 l
+90.21 606.81 l
+90.69 606.81 l
+f 
+0.578 g
+146.37 678.93 m
+146.13 679.17 l
+145.89 678.93 l
+146.13 678.69 l
+146.37 678.93 l
+f 
+146.37 660.81 m
+146.13 661.05 l
+145.89 660.81 l
+146.01 660.69 l
+146.13 660.57 l
+146.25 660.69 l
+146.37 660.81 l
+f 
+145.89 678.93 0.48 -18.12 re
+f 
+153.21 678.93 m
+152.97 679.17 l
+152.73 678.93 l
+152.97 678.69 l
+153.21 678.93 l
+f 
+153.21 660.81 m
+152.97 661.05 l
+152.73 660.81 l
+152.85 660.69 l
+152.97 660.57 l
+153.21 660.81 l
+f 
+152.73 678.93 0.48 -18.12 re
+f 
+140.37 673.05 m
+140.13 673.29 l
+139.89 673.05 l
+140.13 672.81 l
+140.37 673.05 l
+f 
+158.97 673.05 m
+158.73 673.29 l
+158.49 673.05 l
+158.73 672.81 l
+158.97 673.05 l
+f 
+140.13 672.81 18.6 0.48 re
+f 
+140.49 666.57 m
+140.37 666.69 l
+140.25 666.81 l
+140.13 666.69 l
+140.01 666.57 l
+140.25 666.33 l
+140.49 666.57 l
+f 
+159.09 666.57 m
+158.97 666.69 l
+158.85 666.81 l
+158.61 666.57 l
+158.85 666.33 l
+159.09 666.57 l
+f 
+140.25 666.33 18.6 0.48 re
+f 
+146.37 678.93 m
+146.13 679.17 l
+145.89 678.93 l
+146.13 678.69 l
+146.37 678.93 l
+f 
+154.77 687.81 m
+154.53 688.05 l
+154.29 687.81 l
+154.41 687.69 l
+154.53 687.57 l
+154.77 687.81 l
+f 
+146.01 679.05 m
+146.37 678.69 l
+154.77 687.57 l
+154.41 687.93 l
+f 
+153.21 678.81 m
+152.97 679.05 l
+152.73 678.81 l
+152.85 678.69 l
+152.97 678.57 l
+153.21 678.81 l
+f 
+161.73 687.81 m
+161.49 688.05 l
+161.25 687.81 l
+161.37 687.69 l
+161.49 687.57 l
+161.61 687.69 l
+161.73 687.81 l
+f 
+152.85 678.93 m
+153.21 678.57 l
+161.73 687.57 l
+161.37 687.93 l
+f 
+164.97 684.57 m
+164.85 684.69 l
+164.73 684.81 l
+164.61 684.69 l
+164.49 684.57 l
+164.73 684.33 l
+164.97 684.57 l
+f 
+165.21 666.69 m
+164.97 666.93 l
+164.73 666.69 l
+164.85 666.57 l
+164.97 666.45 l
+165.21 666.69 l
+f 
+164.97 684.57 m
+164.49 684.57 l
+164.73 666.69 l
+165.21 666.69 l
+f 
+165.21 684.81 m
+164.97 685.05 l
+164.73 684.81 l
+164.85 684.69 l
+164.97 684.57 l
+165.09 684.69 l
+165.21 684.81 l
+f 
+146.97 684.93 m
+146.73 685.17 l
+146.49 684.93 l
+146.73 684.69 l
+146.97 684.93 l
+f 
+164.97 684.57 m
+164.97 685.05 l
+146.73 685.17 l
+146.73 684.69 l
+f 
+159.09 673.05 m
+158.85 673.29 l
+158.61 673.05 l
+158.85 672.81 l
+159.09 673.05 l
+f 
+168.09 681.81 m
+167.85 682.05 l
+167.61 681.81 l
+167.73 681.69 l
+167.85 681.57 l
+167.97 681.69 l
+168.09 681.81 l
+f 
+158.73 673.17 m
+159.09 672.81 l
+168.09 681.57 l
+167.73 681.93 l
+f 
+159.09 666.57 m
+158.97 666.69 l
+158.85 666.81 l
+158.61 666.57 l
+158.85 666.33 l
+159.09 666.57 l
+f 
+168.09 675.81 m
+167.85 676.05 l
+167.61 675.81 l
+167.73 675.69 l
+167.85 675.57 l
+167.97 675.69 l
+168.09 675.81 l
+f 
+158.73 666.69 m
+159.09 666.33 l
+168.09 675.57 l
+167.73 675.93 l
+f 
+0.148 g
+140.25 678.69 18.84 0.48 re
+f 
+158.61 660.57 0.48 18.36 re
+f 
+140.01 660.57 18.84 0.48 re
+f 
+140.01 660.81 0.48 18.36 re
+f 
+132.09 611.97 15.48 0.48 re
+f 
+147.09 606.57 0.48 5.64 re
+f 
+131.85 606.57 15.48 0.48 re
+f 
+131.85 606.81 0.48 5.64 re
+f 
+137.25 612.21 m
+137.01 612.45 l
+136.77 612.21 l
+137.01 611.97 l
+137.13 612.09 l
+137.25 612.21 l
+f 
+137.25 606.81 m
+137.01 607.05 l
+136.77 606.81 l
+137.01 606.57 l
+137.25 606.81 l
+f 
+136.77 612.21 0.48 -5.4 re
+f 
+142.41 612.21 m
+142.17 612.45 l
+141.93 612.21 l
+142.05 612.09 l
+142.17 611.97 l
+142.41 612.21 l
+f 
+142.17 606.81 m
+141.93 607.05 l
+141.69 606.81 l
+141.93 606.57 l
+142.17 606.81 l
+f 
+142.41 612.21 m
+141.93 612.21 l
+141.69 606.81 l
+142.17 606.81 l
+f 
+181.53 611.97 15.6 0.48 re
+f 
+196.65 606.57 0.48 5.64 re
+f 
+181.29 606.57 15.6 0.48 re
+f 
+181.29 606.81 0.48 5.64 re
+f 
+186.81 612.21 m
+186.57 612.45 l
+186.33 612.21 l
+186.45 612.09 l
+186.57 611.97 l
+186.69 612.09 l
+186.81 612.21 l
+f 
+186.81 606.81 m
+186.57 607.05 l
+186.33 606.81 l
+186.57 606.57 l
+186.81 606.81 l
+f 
+186.33 612.21 0.48 -5.4 re
+f 
+191.85 612.21 m
+191.61 612.45 l
+191.37 612.21 l
+191.49 612.09 l
+191.61 611.97 l
+191.73 612.09 l
+191.85 612.21 l
+f 
+191.73 606.81 m
+191.49 607.05 l
+191.25 606.81 l
+191.49 606.57 l
+191.73 606.81 l
+f 
+191.85 612.21 m
+191.37 612.21 l
+191.25 606.81 l
+191.73 606.81 l
+f 
+0 g
+354.21 617.49 0.12 -0.24 re
+f 
+310.53 617.25 0.12 0.24 re
+f 
+310.65 617.25 43.56 0.24 re
+f 
+310.53 617.37 0.12 -0.24 re
+f 
+310.53 617.13 m
+305.85 617.61 l
+303.81 618.09 l
+303.69 618.09 l
+302.01 618.81 l
+300.45 619.65 l
+299.37 620.61 l
+299.61 620.73 l
+299.49 620.73 l
+300.57 619.77 l
+300.57 619.89 l
+302.13 619.05 l
+303.81 618.33 l
+305.85 617.85 l
+310.53 617.37 l
+f 
+299.37 620.61 m
+298.77 621.57 l
+299.01 621.69 l
+299.61 620.73 l
+f 
+298.41 622.65 m
+298.41 622.77 l
+298.65 622.89 l
+298.65 622.77 l
+f 
+298.77 621.57 m
+299.01 621.69 l
+298.65 622.77 l
+298.41 622.65 l
+f 
+354.09 617.49 0.12 -0.24 re
+f 
+354.21 617.49 m
+356.25 617.25 l
+357.93 616.77 l
+357.81 616.53 l
+356.13 617.01 l
+356.25 617.01 l
+354.21 617.25 l
+f 
+357.93 616.77 m
+359.01 616.05 l
+359.13 615.93 l
+358.89 615.81 l
+357.81 616.53 l
+f 
+359.49 615.09 m
+359.49 614.97 l
+359.25 614.85 l
+359.25 614.97 l
+f 
+359.13 615.93 m
+358.89 615.81 l
+359.25 614.97 l
+359.49 615.09 l
+f 
+242.85 617.49 0.12 -0.24 re
+f 
+286.53 617.25 0.12 0.24 re
+f 
+242.97 617.25 43.56 0.24 re
+f 
+298.41 622.77 0.24 0.12 re
+f 
+298.65 622.77 m
+298.41 621.69 l
+298.41 621.57 l
+297.81 620.61 l
+297.69 620.61 l
+296.61 619.65 l
+295.05 618.81 l
+293.37 618.09 l
+293.37 618.33 l
+293.25 618.33 l
+294.93 619.05 l
+296.49 619.89 l
+296.49 619.77 l
+297.57 620.73 l
+298.17 621.69 l
+298.41 622.77 l
+f 
+293.37 618.09 m
+291.33 617.61 l
+291.33 617.85 l
+293.37 618.33 l
+f 
+286.53 617.13 0.12 0.24 re
+f 
+291.33 617.61 m
+291.33 617.85 l
+286.65 617.37 l
+286.65 617.13 l
+f 
+237.69 615.09 m
+237.69 614.97 l
+237.93 614.85 l
+237.93 614.97 l
+f 
+237.69 615.09 m
+238.05 615.93 l
+238.05 616.05 l
+239.25 616.77 l
+239.37 616.53 l
+238.17 615.81 l
+238.29 615.81 l
+237.93 614.97 l
+f 
+239.25 616.77 m
+240.81 617.25 l
+240.93 617.25 l
+240.93 617.01 l
+239.37 616.53 l
+f 
+242.97 617.25 0.12 0.24 re
+f 
+240.93 617.25 m
+240.93 617.01 l
+242.97 617.25 l
+242.97 617.49 l
+f 
+0.148 g
+241.05 611.97 15.6 0.48 re
+f 
+256.17 606.57 0.48 5.64 re
+f 
+240.81 606.57 15.6 0.48 re
+f 
+240.81 606.81 0.48 5.64 re
+f 
+246.33 612.21 m
+246.09 612.45 l
+245.85 612.21 l
+245.97 612.09 l
+246.09 611.97 l
+246.33 612.21 l
+f 
+246.33 606.81 m
+246.09 607.05 l
+245.85 606.81 l
+246.09 606.57 l
+246.33 606.81 l
+f 
+245.85 612.21 0.48 -5.4 re
+f 
+251.37 612.21 m
+251.13 612.45 l
+250.89 612.21 l
+251.13 611.97 l
+251.25 612.09 l
+251.37 612.21 l
+f 
+251.25 606.81 m
+251.01 607.05 l
+250.77 606.81 l
+251.01 606.57 l
+251.25 606.81 l
+f 
+251.37 612.21 m
+250.89 612.21 l
+250.77 606.81 l
+251.25 606.81 l
+f 
+292.53 611.97 15.6 0.48 re
+f 
+307.65 606.57 0.48 5.64 re
+f 
+292.29 606.57 15.6 0.48 re
+f 
+292.29 606.81 0.48 5.64 re
+f 
+297.81 612.21 m
+297.57 612.45 l
+297.33 612.21 l
+297.45 612.09 l
+297.57 611.97 l
+297.69 612.09 l
+297.81 612.21 l
+f 
+297.81 606.81 m
+297.57 607.05 l
+297.33 606.81 l
+297.57 606.57 l
+297.81 606.81 l
+f 
+297.33 612.21 0.48 -5.4 re
+f 
+302.85 612.21 m
+302.61 612.45 l
+302.37 612.21 l
+302.61 611.97 l
+302.73 612.09 l
+302.85 612.21 l
+f 
+302.73 606.81 m
+302.49 607.05 l
+302.25 606.81 l
+302.49 606.57 l
+302.73 606.81 l
+f 
+302.85 612.21 m
+302.37 612.21 l
+302.25 606.81 l
+302.73 606.81 l
+f 
+342.09 611.97 15.6 0.48 re
+f 
+357.21 606.57 0.48 5.64 re
+f 
+341.85 606.57 15.6 0.48 re
+f 
+341.85 606.81 0.48 5.64 re
+f 
+347.25 612.21 m
+347.01 612.45 l
+346.77 612.21 l
+347.01 611.97 l
+347.13 612.09 l
+347.25 612.21 l
+f 
+347.25 606.81 m
+347.01 607.05 l
+346.77 606.81 l
+347.01 606.57 l
+347.25 606.81 l
+f 
+346.77 612.21 0.48 -5.4 re
+f 
+352.41 612.21 m
+352.17 612.45 l
+351.93 612.21 l
+352.17 611.97 l
+352.29 612.09 l
+352.41 612.21 l
+f 
+352.17 606.81 m
+351.93 607.05 l
+351.69 606.81 l
+351.93 606.57 l
+352.17 606.81 l
+f 
+352.41 612.21 m
+351.93 612.21 l
+351.69 606.81 l
+352.17 606.81 l
+f 
+0 g
+526.29 617.49 0.12 -0.24 re
+f 
+482.49 617.25 0.12 0.24 re
+f 
+482.61 617.25 43.68 0.24 re
+f 
+482.49 617.37 0.12 -0.24 re
+f 
+482.49 617.13 m
+477.81 617.61 l
+475.89 618.09 l
+475.77 618.09 l
+473.97 618.81 l
+472.53 619.65 l
+471.45 620.61 l
+471.69 620.73 l
+471.57 620.73 l
+472.65 619.77 l
+472.65 619.89 l
+474.09 619.05 l
+475.89 618.33 l
+477.81 617.85 l
+482.49 617.37 l
+f 
+471.45 620.61 m
+470.73 621.57 l
+470.73 621.69 l
+470.97 621.69 l
+471.69 620.73 l
+f 
+470.49 622.89 0.24 -0.12 re
+f 
+470.73 621.69 m
+470.97 621.69 l
+470.73 622.77 l
+470.49 622.77 l
+f 
+526.17 617.49 0.12 -0.24 re
+f 
+526.29 617.49 m
+528.21 617.25 l
+529.89 616.77 l
+529.77 616.53 l
+528.09 617.01 l
+528.21 617.01 l
+526.29 617.25 l
+f 
+529.89 616.77 m
+530.97 616.05 l
+531.09 615.93 l
+530.85 615.81 l
+529.77 616.53 l
+f 
+531.45 615.09 m
+531.45 614.97 l
+531.21 614.85 l
+531.21 614.97 l
+f 
+531.09 615.93 m
+530.85 615.81 l
+531.21 614.97 l
+531.45 615.09 l
+f 
+414.81 617.49 0.12 -0.24 re
+f 
+458.49 617.25 0.12 0.24 re
+f 
+414.93 617.25 43.56 0.24 re
+f 
+470.49 622.77 0.24 0.12 re
+f 
+470.73 622.77 m
+470.49 621.69 l
+470.49 621.57 l
+469.77 620.61 l
+469.65 620.61 l
+468.57 619.65 l
+467.13 618.81 l
+465.33 618.09 l
+465.33 618.33 l
+465.21 618.33 l
+467.01 619.05 l
+468.45 619.89 l
+468.45 619.77 l
+469.53 620.73 l
+470.25 621.69 l
+470.49 622.77 l
+f 
+465.33 618.09 m
+463.29 617.61 l
+463.29 617.85 l
+465.33 618.33 l
+f 
+458.61 617.13 0.12 0.24 re
+f 
+463.29 617.61 m
+463.29 617.85 l
+458.73 617.37 l
+458.73 617.13 l
+f 
+409.65 615.09 m
+409.65 614.97 l
+409.89 614.85 l
+409.89 614.97 l
+f 
+409.65 615.09 m
+410.13 615.93 l
+410.13 616.05 l
+411.21 616.77 l
+411.33 616.53 l
+410.25 615.81 l
+410.37 615.81 l
+409.89 614.97 l
+f 
+411.21 616.77 m
+412.89 617.25 l
+413.01 617.25 l
+413.01 617.01 l
+411.33 616.53 l
+f 
+414.93 617.25 0.12 0.24 re
+f 
+413.01 617.25 m
+413.01 617.01 l
+414.93 617.25 l
+414.93 617.49 l
+f 
+0.148 g
+413.13 611.97 15.48 0.48 re
+f 
+428.13 606.57 0.48 5.64 re
+f 
+412.89 606.57 15.48 0.48 re
+f 
+412.89 606.81 0.48 5.64 re
+f 
+418.29 612.21 m
+418.05 612.45 l
+417.81 612.21 l
+417.93 612.09 l
+418.05 611.97 l
+418.29 612.21 l
+f 
+418.29 606.81 m
+418.05 607.05 l
+417.81 606.81 l
+418.05 606.57 l
+418.29 606.81 l
+f 
+417.81 612.21 0.48 -5.4 re
+f 
+423.33 612.21 m
+423.09 612.45 l
+422.85 612.21 l
+422.97 612.09 l
+423.09 611.97 l
+423.21 612.09 l
+423.33 612.21 l
+f 
+423.21 606.81 m
+422.97 607.05 l
+422.73 606.81 l
+422.97 606.57 l
+423.21 606.81 l
+f 
+423.33 612.21 m
+422.85 612.21 l
+422.73 606.81 l
+423.21 606.81 l
+f 
+464.61 611.97 15.48 0.48 re
+f 
+479.61 606.57 0.48 5.64 re
+f 
+464.37 606.57 15.48 0.48 re
+f 
+464.37 606.81 0.48 5.64 re
+f 
+469.77 612.21 m
+469.53 612.45 l
+469.29 612.21 l
+469.41 612.09 l
+469.53 611.97 l
+469.65 612.09 l
+469.77 612.21 l
+f 
+469.77 606.81 m
+469.53 607.05 l
+469.29 606.81 l
+469.53 606.57 l
+469.77 606.81 l
+f 
+469.29 612.21 0.48 -5.4 re
+f 
+474.93 612.21 m
+474.69 612.45 l
+474.45 612.21 l
+474.69 611.97 l
+474.81 612.09 l
+474.93 612.21 l
+f 
+474.69 606.81 m
+474.45 607.05 l
+474.21 606.81 l
+474.45 606.57 l
+474.69 606.81 l
+f 
+474.93 612.21 m
+474.45 612.21 l
+474.21 606.81 l
+474.69 606.81 l
+f 
+514.05 611.97 15.6 0.48 re
+f 
+529.17 606.57 0.48 5.64 re
+f 
+513.81 606.57 15.6 0.48 re
+f 
+513.81 606.81 0.48 5.64 re
+f 
+519.33 612.21 m
+519.09 612.45 l
+518.97 612.33 l
+518.85 612.21 l
+518.97 612.09 l
+519.09 611.97 l
+519.21 612.09 l
+519.33 612.21 l
+f 
+519.33 606.81 m
+519.09 607.05 l
+518.97 606.93 l
+518.85 606.81 l
+518.97 606.69 l
+519.09 606.57 l
+519.33 606.81 l
+f 
+518.85 612.21 0.48 -5.4 re
+f 
+524.37 612.21 m
+524.13 612.45 l
+523.89 612.21 l
+524.01 612.09 l
+524.13 611.97 l
+524.25 612.09 l
+524.37 612.21 l
+f 
+524.25 606.81 m
+524.01 607.05 l
+523.77 606.81 l
+524.01 606.57 l
+524.25 606.81 l
+f 
+524.37 612.21 m
+523.89 612.21 l
+523.77 606.81 l
+524.25 606.81 l
+f 
+1 g
+261.45 681.93 m
+261.45 687.57 l
+321.45 676.41 l
+261.45 665.13 l
+261.45 670.77 l
+f* 
+0 g
+261.33 681.81 0.24 0.12 re
+f 
+261.33 681.93 m
+261.33 687.69 l
+261.45 687.69 l
+321.45 676.53 l
+321.45 676.29 l
+321.45 676.53 l
+321.45 676.29 l
+261.45 687.45 l
+261.45 687.69 l
+261.57 687.57 l
+261.57 681.93 l
+f 
+321.45 676.29 m
+261.45 665.01 l
+261.33 665.01 l
+261.33 665.13 l
+261.45 665.25 l
+321.45 676.53 l
+f 
+261.33 670.89 0.24 -0.12 re
+f 
+261.33 670.77 0.24 -5.64 re
+f 
+1 g
+175.53 681.93 85.92 -11.16 re
+f* 
+0 g
+261.45 682.05 0.12 -0.24 re
+f 
+175.41 681.81 86.04 0.24 re
+f 
+175.41 670.65 0.24 11.28 re
+f 
+261.45 670.65 0.12 0.24 re
+f 
+175.53 670.65 85.92 0.24 re
+f 
+1 g
+331.77 706.65 76.68 -46.44 re
+f 
+0 g
+331.77 706.41 77.04 0.48 re
+f 
+408.33 659.85 0.48 46.8 re
+f 
+331.53 659.85 77.04 0.48 re
+f 
+331.53 660.09 0.48 46.8 re
+f 
+306.09 690.57 77.4 0.96 re
+f 
+382.53 644.13 0.96 46.92 re
+f 
+305.61 644.13 77.4 0.96 re
+f 
+305.61 644.61 0.96 46.92 re
+f 
+382.89 691.17 m
+382.77 691.05 l
+383.01 690.69 l
+383.13 690.81 l
+f 
+408.45 706.77 m
+408.57 706.89 l
+408.81 706.53 l
+408.69 706.41 l
+f 
+382.89 691.17 m
+383.13 690.81 l
+408.69 706.41 l
+408.45 706.77 l
+f 
+382.89 644.73 m
+382.77 644.61 l
+383.01 644.25 l
+383.13 644.37 l
+f 
+408.45 660.21 m
+408.57 660.33 l
+408.81 659.97 l
+408.69 659.85 l
+f 
+382.89 644.73 m
+383.13 644.37 l
+408.69 659.85 l
+408.45 660.21 l
+f 
+305.97 691.17 m
+305.85 691.05 l
+306.09 690.69 l
+306.21 690.81 l
+f 
+331.65 706.77 m
+331.77 706.89 l
+332.01 706.53 l
+331.89 706.41 l
+f 
+305.97 691.17 m
+306.21 690.81 l
+331.89 706.41 l
+331.65 706.77 l
+f 
+q
+331.53 691.05 0.48 0.24 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N72 /Pattern findRes scn
+331.53 691.29 0.6 -0.36 re
+f 
+Q
+q
+331.53 660.09 0.48 -0.24 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N72 /Pattern findRes scn
+331.53 660.09 0.6 -0.36 re
+f 
+Q
+q
+331.53 691.05 0.48 -30.96 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N72 /Pattern findRes scn
+331.53 691.05 0.6 -31.08 re
+f 
+Q
+q
+331.53 660.33 0.24 -0.48 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N73 /Pattern findRes scn
+331.53 660.33 0.36 -0.6 re
+f 
+Q
+q
+383.01 659.85 0.24 0.48 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N73 /Pattern findRes scn
+383.01 660.33 0.36 -0.6 re
+f 
+Q
+q
+331.77 659.85 51.24 0.48 re
+W n 
+/N75 /ColorSpace findRes cs
+
+/N73 /Pattern findRes scn
+331.77 660.33 51.36 -0.6 re
+f 
+Q
+q
+305.97 644.73 m
+305.85 644.61 l
+306.09 644.25 l
+306.21 644.37 l
+W n 
+/N75 /ColorSpace findRes cs
+
+/N74 /Pattern findRes scn
+305.85 644.73 0.48 -0.6 re
+f 
+Q
+q
+331.65 660.21 m
+331.77 660.33 l
+332.01 659.97 l
+331.89 659.85 l
+W n 
+/N75 /ColorSpace findRes cs
+
+/N74 /Pattern findRes scn
+331.65 660.33 0.48 -0.6 re
+f 
+Q
+q
+305.97 644.73 m
+306.21 644.37 l
+331.89 659.85 l
+331.65 660.21 l
+W n 
+/N75 /ColorSpace findRes cs
+
+/N74 /Pattern findRes scn
+305.97 660.21 26.04 -15.96 re
+f 
+Q
+0.602 g
+348.81 688.53 18.24 0.48 re
+f 
+366.57 670.53 0.48 18.24 re
+f 
+348.57 670.53 18.24 0.48 re
+f 
+348.57 670.77 0.48 18.24 re
+f 
+0.961 g
+357.81 679.77 m
+367.17 688.77 l
+367.17 670.77 l
+357.81 661.77 l
+357.81 670.77 l
+f* 
+0.801 g
+357.69 679.89 m
+367.05 688.89 l
+367.41 689.25 l
+367.41 670.53 l
+358.05 661.53 l
+357.57 661.05 l
+357.57 679.77 l
+357.69 679.89 l
+358.05 679.77 l
+358.05 661.77 l
+357.57 661.77 l
+357.69 661.89 l
+367.05 670.89 l
+367.41 670.53 l
+366.93 670.77 l
+366.93 688.77 l
+367.41 688.77 l
+367.41 688.53 l
+358.05 679.53 l
+f 
+0.961 g
+348.45 688.77 m
+339.21 679.77 l
+357.69 679.77 l
+366.81 688.77 l
+f* 
+0.801 g
+348.69 688.53 m
+339.45 679.53 l
+339.21 679.53 l
+339.21 680.01 l
+357.69 680.01 l
+357.93 679.53 l
+357.57 679.89 l
+366.69 688.89 l
+366.81 689.01 l
+367.53 689.01 l
+367.05 688.53 l
+357.93 679.53 l
+338.73 679.53 l
+339.09 679.89 l
+348.33 688.89 l
+f 
+366.81 688.53 m
+348.45 688.53 l
+348.33 688.89 l
+348.45 689.01 l
+366.81 689.01 l
+f 
+0.988 g
+339.21 679.89 18.48 -18 re
+f 
+0.602 g
+339.21 679.65 18.84 0.48 re
+f 
+357.57 661.53 0.48 18.36 re
+f 
+338.97 661.53 18.84 0.48 re
+f 
+338.97 661.77 0.48 18.36 re
+f 
+0.801 g
+343.17 683.13 m
+342.93 683.37 l
+342.69 683.13 l
+342.93 682.89 l
+343.17 683.13 l
+f 
+361.17 683.13 m
+360.93 683.37 l
+360.69 683.13 l
+360.93 682.89 l
+361.17 683.13 l
+f 
+342.93 682.89 18 0.48 re
+f 
+361.41 683.25 m
+361.17 683.49 l
+360.93 683.25 l
+361.17 683.01 l
+361.41 683.25 l
+f 
+361.53 665.13 m
+361.29 665.37 l
+361.05 665.13 l
+361.29 664.89 l
+361.53 665.13 l
+f 
+361.41 683.25 m
+360.93 683.25 l
+361.05 665.13 l
+361.53 665.13 l
+f 
+345.45 679.89 m
+345.21 680.13 l
+344.97 679.89 l
+345.21 679.65 l
+345.45 679.89 l
+f 
+345.45 661.77 m
+345.21 662.01 l
+344.97 661.77 l
+345.21 661.53 l
+345.45 661.77 l
+f 
+344.97 679.89 0.48 -18.12 re
+f 
+352.17 679.89 m
+351.93 680.13 l
+351.69 679.89 l
+351.93 679.65 l
+352.17 679.89 l
+f 
+352.17 661.77 m
+351.93 662.01 l
+351.69 661.77 l
+351.93 661.53 l
+352.17 661.77 l
+f 
+351.69 679.89 0.48 -18.12 re
+f 
+339.33 674.01 m
+339.09 674.25 l
+338.85 674.01 l
+339.09 673.77 l
+339.33 674.01 l
+f 
+357.93 674.01 m
+357.69 674.25 l
+357.45 674.01 l
+357.69 673.77 l
+357.93 674.01 l
+f 
+339.09 673.77 18.6 0.48 re
+f 
+339.45 667.65 m
+339.21 667.89 l
+338.97 667.65 l
+339.21 667.41 l
+339.45 667.65 l
+f 
+358.05 667.65 m
+357.81 667.89 l
+357.57 667.65 l
+357.81 667.41 l
+358.05 667.65 l
+f 
+339.21 667.41 18.6 0.48 re
+f 
+345.45 679.89 m
+345.21 680.13 l
+344.97 679.89 l
+345.21 679.65 l
+345.45 679.89 l
+f 
+353.85 688.77 m
+353.61 689.01 l
+353.37 688.77 l
+353.61 688.53 l
+353.85 688.77 l
+f 
+345.09 680.01 m
+345.45 679.65 l
+353.85 688.53 l
+353.49 688.89 l
+f 
+352.17 679.77 m
+351.93 680.01 l
+351.69 679.77 l
+351.93 679.53 l
+352.17 679.77 l
+f 
+360.69 688.77 m
+360.45 689.01 l
+360.21 688.77 l
+360.45 688.53 l
+360.69 688.77 l
+f 
+351.81 679.89 m
+352.17 679.53 l
+360.69 688.53 l
+360.33 688.89 l
+f 
+364.05 685.53 m
+363.81 685.77 l
+363.57 685.53 l
+363.69 685.41 l
+363.81 685.29 l
+363.93 685.41 l
+364.05 685.53 l
+f 
+364.17 667.65 m
+363.93 667.89 l
+363.69 667.65 l
+363.93 667.41 l
+364.17 667.65 l
+f 
+364.05 685.53 m
+363.57 685.53 l
+363.69 667.65 l
+364.17 667.65 l
+f 
+364.17 685.89 m
+363.93 686.13 l
+363.69 685.89 l
+363.93 685.65 l
+364.17 685.89 l
+f 
+345.93 685.89 m
+345.69 686.13 l
+345.45 685.89 l
+345.69 685.65 l
+345.93 685.89 l
+f 
+345.69 685.65 18.24 0.48 re
+f 
+358.05 674.01 m
+357.81 674.25 l
+357.57 674.01 l
+357.81 673.77 l
+358.05 674.01 l
+f 
+367.05 682.77 m
+366.81 683.01 l
+366.57 682.77 l
+366.81 682.53 l
+367.05 682.77 l
+f 
+357.69 674.13 m
+358.05 673.77 l
+367.05 682.53 l
+366.69 682.89 l
+f 
+358.05 667.65 m
+357.81 667.89 l
+357.57 667.65 l
+357.81 667.41 l
+358.05 667.65 l
+f 
+367.05 676.77 m
+366.81 677.01 l
+366.57 676.77 l
+366.81 676.53 l
+367.05 676.77 l
+f 
+357.69 667.77 m
+358.05 667.41 l
+367.05 676.53 l
+366.69 676.89 l
+f 
+0.602 g
+339.21 679.65 18.84 0.48 re
+f 
+357.57 661.53 0.48 18.36 re
+f 
+338.97 661.53 18.84 0.48 re
+f 
+338.97 661.77 0.48 18.36 re
+f 
+0 g
+92.61 586.65 m
+92.61 583.41 l
+92.01 583.53 l
+81.09 586.65 l
+92.01 589.77 l
+92.61 589.89 l
+92.61 589.29 l
+92.25 588.81 l
+83.01 586.17 l
+82.77 587.13 l
+83.01 587.13 l
+92.25 584.49 l
+92.01 583.53 l
+91.65 584.01 l
+91.65 586.65 l
+f 
+91.65 589.29 0.96 -2.64 re
+f 
+92.13 586.65 m
+92.13 584.01 l
+82.89 586.65 l
+92.13 589.29 l
+f* 
+118.77 586.65 m
+118.77 589.89 l
+119.37 589.77 l
+130.29 586.65 l
+119.37 583.53 l
+118.77 583.41 l
+118.77 584.01 l
+119.13 584.49 l
+128.37 587.13 l
+128.61 586.17 l
+128.37 586.17 l
+119.13 588.81 l
+119.37 589.77 l
+119.73 589.29 l
+119.73 586.65 l
+f 
+118.77 586.65 0.96 -2.64 re
+f 
+119.25 586.65 m
+119.25 589.29 l
+128.49 586.65 l
+119.25 584.01 l
+f* 
+92.37 586.89 0.24 -0.48 re
+f 
+118.77 586.41 0.24 0.48 re
+f 
+92.61 586.41 26.16 0.48 re
+f 
+92.61 577.65 m
+92.61 574.41 l
+92.01 574.53 l
+81.09 577.65 l
+92.01 580.77 l
+92.61 580.89 l
+92.61 580.29 l
+92.25 579.81 l
+83.01 577.17 l
+82.77 578.13 l
+83.01 578.13 l
+92.25 575.49 l
+92.01 574.53 l
+91.65 575.01 l
+91.65 577.65 l
+f 
+91.65 580.29 0.96 -2.64 re
+f 
+92.13 577.65 m
+92.13 575.01 l
+82.89 577.65 l
+92.13 580.29 l
+f* 
+231.57 577.65 m
+231.57 580.89 l
+232.17 580.77 l
+243.09 577.65 l
+232.17 574.53 l
+231.57 574.41 l
+231.57 575.01 l
+231.93 575.49 l
+241.17 578.13 l
+241.41 577.17 l
+241.17 577.17 l
+231.93 579.81 l
+232.17 580.77 l
+232.53 580.29 l
+232.53 577.65 l
+f 
+231.57 577.65 0.96 -2.64 re
+f 
+232.05 577.65 m
+232.05 580.29 l
+241.29 577.65 l
+232.05 575.01 l
+f* 
+92.37 577.89 0.24 -0.48 re
+f 
+231.57 577.41 0.24 0.48 re
+f 
+92.61 577.41 138.96 0.48 re
+f 
+BT
+9 0 0 9 93.69 592.65 Tm
+0 Tc
+[(stri)11 (d)-7 (e)4 ([0)-7 (])]TJ
+6.4667 -1.0667 TD
+[(stri)11 (d)-7 (e)4 ([1)-7 (])]TJ
+ET
+PDFVars/TermAll get exec end end
+userdict /pgsave get restore
+showpage
+%%PageTrailer
+%%EndPage
+%%Page: 4 4
+%%BeginPageSetup
+userdict /pgsave save put
+PDFVars begin PDF begin PDFVars/InitAll get exec
+0 1 translate
+%%EndPageSetup
+0 0 612 791 RC
+BT
+/N29 1 Tf
+9.96 0 0 9.96 303.57 35.97 Tm
+0 g
+/N34 /ExtGState findRes gs
+0 Tc
+0 Tw
+(4)Tj
+-23.241 68.012 TD
+0.004 Tc
+0.023 Tw
+[(p)10 (e)2 (rfor)12 (m)-1 ( mem)11 (o)-2 (ry)10 ( all)-7 (o)10 (cati)-7 (o)10 (n o)10 (n)-2 ( its)7 ( o)22 (w)3 (n )12 (us)7 (i)-7 (n)10 (g o)10 (t)-7 (h)10 (e)2 (r mea)14 (n)-2 (s )12 (\(e.g.)13 (,)1 ( with )]TJ
+/N32 1 Tf
+27.833 0.0035 TD
+0 Tc
+[(ma)-6 (llo)-6 (c/fr)40 (ee)]TJ
+/N29 1 Tf
+4.5303 0 TD
+0.005 Tc
+0.022 Tw
+[( on)11 ( di)6 (s)8 (t)-6 (r)13 (i)6 (b)23 (u)-1 (t)6 (e)3 (d m)12 (e)3 (mory)11 ( s)8 (y)-1 (s)8 (t)-6 (em)12 (s an)11 (d)]TJ
+/N32 1 Tf
+-32.363 -1.2049 TD
+0.004 Tc
+[(s)7 (h)-2 (mg)10 (et)5 (&s)7 (hmat)5 ( )]TJ
+/N29 1 Tf
+6.3015 0 TD
+0.005 Tc
+(or )Tj
+/N32 1 Tf
+1.1326 0 TD
+0.001 Tc
+[(mm)-12 (a)7 (p)]TJ
+/N29 1 Tf
+2.4579 0 TD
+0.003 Tc
+0.036 Tw
+[( on s)-6 (h)9 (ared memor)11 (y)-3 ( s)-6 (y)-3 (stems\). A)-10 (R)7 (MC)-5 (I)11 (_)-3 (C)-5 (l)4 (ean)9 (up releas)-6 (es )-12 (a)13 (n)9 (y s)-6 (y)9 (s)-6 (t)4 (em resour)11 (ces)-6 ( \(lik)9 (e )-12 (System)]TJ
+-9.892 -1.2049 TD
+0.001 Tc
+(V )Tj
+/N32 1 Tf
+1.0482 0 TD
+-0.001 Tc
+[(sh)-7 (mem)]TJ
+/N29 1 Tf
+2.7833 0 TD
+0 Tc
+0.075 Tw
+[( id)-6 (s\) that)-11 ( )12 (AR)-8 (MC)-8 (I)8 ( can)-6 ( be h)-6 (o)6 (ld)-6 (in)-6 (g)-6 (.)9 ( It is in)-6 (ten)-6 (d)-6 (e)10 (d)-6 ( to)-6 ( be u)-6 (s)3 (ed)-6 ( )]TJ
+/N32 1 Tf
+24.4711 0 TD
+-0.004 Tc
+[(be)-6 (fo)-10 (r)36 (e)]TJ
+/N29 1 Tf
+2.5182 0 TD
+0 Tc
+[( term)-5 (in)-6 (a)10 (t)-11 (ing)-6 ( a pro)-6 (g)6 (ram)-5 ( \()8 (e)-2 (.g)-6 (., )12 (by calli)-11 (ng)]TJ
+-30.8208 -1.2049 TD
+0.003 Tc
+0.012 Tw
+[(MPI_Ab)9 (ort\) in case of)11 ( )-12 (an)9 ( erro)9 (r)47 (.)12 ( )-12 (AR)7 (MC)-5 (I_)9 (Erro)9 (r comb)9 (ines )-12 (th)9 (e fun)9 (c)1 (t)-8 (i)4 (o)9 (n)-3 (alit)-8 (y)9 ( of AR)-5 (MC)7 (I_)9 (C)-5 (l)4 (eanu)9 (p)-3 ( and MPI_)9 (A)-10 (b)9 (ort, an)9 (d)]TJ
+T*
+0.004 Tc
+-0.001 Tw
+[(i)5 (t)5 ( pr)12 (i)5 (n)-2 (t)5 (s)-5 ( )12 (\(t)5 (o s)7 (t)5 (dou)10 (t)5 ( and )12 (st)5 (der)12 (r\) a )12 (us)7 (er s)7 (p)-2 (eci)5 (f)24 (i)5 (ed mes)7 (s)7 (a)2 (ge fo)10 (l)5 (l)-7 (o)34 (w)3 (ed b)22 (y)-2 ( an)10 ( i)5 (n)-2 (t)5 (e)14 (g)10 (e)2 (r co)10 (de.)]TJ
+/N30 1 Tf
+10.92 0 0 10.92 72.09 635.73 Tm
+0.005 Tc
+-0.008 Tw
+[(Li)8 (st of)8 ( )-11 (Opera)12 (t)-3 (i)8 (ons)]TJ
+/N29 1 Tf
+9.96 0 0 9.96 72.09 607.41 Tm
+-0.001 Tc
+[(1.)-1064 (Initi)-12 (alizatio)-7 (n/)-12 (setu)-7 (p)]TJ
+/N31 1 Tf
+1.8073 -1.7953 TD
+0.002 Tc
+0 Tw
+[(int ARMCI_In)12 (it)]TJ
+T*
+[(int ARMCI_Fi)12 (nalize)]TJ
+/N29 1 Tf
+-1.8073 -1.8073 TD
+0.004 Tc
+-0.001 Tw
+[(2)10 (.)-1059 (C)8 (o)-2 (p)10 (y)10 ( oper)12 (a)2 (t)5 (i)-7 (o)10 (n)-2 (s)7 ( us)7 (i)5 (ng )12 (th)10 (e gen)10 (e)2 (ral)5 (i)5 (zed I)12 (/)-7 (O v)22 (ect)5 (or)12 ( for)12 (m)-1 (at)]TJ
+/N31 1 Tf
+1.8073 -1.7953 TD
+0.002 Tc
+0 Tw
+[(int ARMCI_Pu)12 (tV\(armci_giov_t *dsrc_arr, int arr_len,)12 ( int proc\))]TJ
+0 -1.8073 TD
+[(int ARMCI_Nb)12 (PutV\(armci_giov_t *dsrc_arr, int arr_le)12 (n, int proc, int *req\))]TJ
+0 -1.7953 TD
+[(int ARMCI_Ge)12 (tV\(armci_giov_t *dsrc_arr, int arr_len,)12 ( int proc\))]TJ
+T*
+[(int ARMCI_Nb)12 (GetV\(armci_giov_t *dsrc_arr, int arr_le)12 (n, int proc, int *req\))]TJ
+/N29 1 Tf
+-1.8073 -1.8073 TD
+0.005 Tc
+-0.002 Tw
+[(3)11 (.)-1058 (C)9 (o)-1 (p)11 (y)11 ( oper)13 (a)3 (t)6 (i)-6 (o)11 (n)-1 (s)8 ( us)8 (i)6 (ng )12 (th)11 (e s)8 (t)-6 (r)13 (i)6 (ded f)13 (o)-1 (rm)12 (at)]TJ
+/N31 1 Tf
+1.8073 -1.7953 TD
+0.002 Tc
+0 Tw
+[(int ARMCI_Pu)12 (tS\(void* src_ptr, int src_stride_ar[], )12 (void* dst_ptr, int )]TJ
+2.5302 -1.2049 TD
+[(dst_stride_a)12 (r[], int count[], int stride_levels, in)12 (t proc\))]TJ
+-2.5302 -1.8073 TD
+[(int ARMCI_Nb)12 (PutS\(void* src_ptr, int src_stride_ar[])12 (, void* dst_ptr, int )]TJ
+2.5302 -1.2049 TD
+[(dst_stride_a)12 (r[], int count[], int stride_levels, in)12 (t proc,int *req\))]TJ
+-2.5302 -1.7953 TD
+[(int ARMCI_Ge)12 (tS\(void* src_ptr, int src_stride_ar[], )12 (void* dst_ptr, int )]TJ
+2.5302 -1.2049 TD
+[(dst_stride_a)12 (r[], int count[], int stride_levels, in)12 (t proc\))]TJ
+-2.5302 -1.8073 TD
+[(int ARMCI_Nb)12 (GetS\(void* src_ptr, int src_stride_ar[])12 (, void* dst_ptr, int )]TJ
+2.5302 -1.2049 TD
+[(dst_stride_a)12 (r[], int count[], int stride_levels, in)12 (t proc, int *req\))]TJ
+/N29 1 Tf
+-4.3376 -1.7953 TD
+0.005 Tc
+-0.002 Tw
+[(4)11 (.)-1058 (Lo)11 (cal)6 ( comp)11 (l)6 (e)3 (ti)6 (o)11 (n)-1 ( of)13 ( no)11 (nbl)6 (o)11 (c)3 (ki)6 (ng )12 (oper)13 (a)3 (ti)6 (o)11 (n)-1 (s)]TJ
+/N31 1 Tf
+1.8073 -1.7953 TD
+0.002 Tc
+0 Tw
+[(int ARMCI_Wa)12 (it\(int req\))]TJ
+/N29 1 Tf
+-1.8073 -1.8073 TD
+-0.002 Tc
+0.005 Tw
+[(5.)-1065 (Glo)-8 (b)4 (al co)-8 (m)-7 (p)4 (l)-13 (e)-4 (tion)-8 ( o)-8 (f)6 ( th)-8 (e ou)-8 (ts)-11 (tand)-8 (in)-8 (g o)-8 (p)-8 (e)-4 (r)6 (a)-4 (ti)-13 (on)-8 (s)]TJ
+/N31 1 Tf
+1.8073 -1.7953 TD
+0.002 Tc
+0 Tw
+[(int ARMCI_Fe)12 (nce\(int proc\))]TJ
+0 -1.8073 TD
+[(int ARMCI_Al)12 (lFence\(\))]TJ
+/N29 1 Tf
+-1.8073 -1.7953 TD
+-0.001 Tc
+0.004 Tw
+[(6.)-1064 (Po)-7 (llin)-7 (g o)-7 (p)-7 (e)-3 (r)7 (a)-3 (ti)-12 (on)-7 ( \()7 ( n)-7 (o)-7 (t)0 ( r)7 (e)-3 (q)-7 (u)-7 (i)0 (r)7 (e)-3 (d)-7 ( for pro)-7 (g)-7 (r)7 (es)-10 (s\))]TJ
+/N31 1 Tf
+1.8073 -1.7953 TD
+0.002 Tc
+0 Tw
+[(void ARMCI_P)12 (oll\(\))]TJ
+/N29 1 Tf
+-1.8073 -1.8073 TD
+0.001 Tw
+[(7)8 (.)-1061 (Memo)8 (ry )12 (al)-9 (lo)8 (cat)-9 (io)8 (n an)8 (d release)]TJ
+/N31 1 Tf
+1.8073 -1.7953 TD
+0 Tw
+[(int ARMCI_Ma)12 (lloc\(void* prt[], int bytes\))]TJ
+0 -1.8073 TD
+[(int ARMCI_Fr)12 (ee\(void *address\))]TJ
+/N29 1 Tf
+-1.8073 -1.7953 TD
+[(8)9 (.)-1060 (C)7 (l)4 (eanup)9 ( and)9 ( abno)9 (rmal term)10 (i)-8 (n)9 (ation)]TJ
+/N31 1 Tf
+1.8073 -1.7953 TD
+[(void ARMCI_C)12 (leanup\(\))]TJ
+0 -1.8073 TD
+[(void ARMCI_E)12 (rror\(char *message, int code\))]TJ
+/N29 1 Tf
+0 -2.3977 TD
+0.073 Tw
+[(Th)8 (e )-12 (in)8 (te)12 (ger v)32 (a)0 (lue return)8 (ed b)20 (y)-4 ( AR)-6 (MC)-6 (I)10 ( )-12 (o)8 (p)-4 (eratio)8 (ns)-7 ( r)10 (e)0 (presents )-12 (an)8 ( error)10 ( )-12 (c)12 (ode. Th)8 (e )-12 (zer)10 (o v)20 (a)0 (lu)8 (e )-12 (is s)-7 (u)8 (cces)-7 (sful, o)8 (t)-9 (h)8 (e)0 (r)]TJ
+-1.8073 -1.2049 TD
+0.001 Tw
+[(v)32 (a)0 (lues)-7 ( )12 (repr)10 (es)-7 (en)8 (t)-9 ( )12 (a f)10 (a)0 (ilure \()10 (d)-4 (escribed)8 ( in the r)10 (e)0 (leas)-7 (e n)8 (o)-4 (tes\).)]TJ
+ET
+PDFVars/TermAll get exec end end
+userdict /pgsave get restore
+showpage
+%%PageTrailer
+%%EndPage
+%%Trailer
+%%EOF
