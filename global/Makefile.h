@@ -55,7 +55,7 @@ endif
 
 #
 #................................ LINUX ....................................
-# IBM ThinkPad running Linux 1.2.13
+# IBM PC running Linux
 #
 ifeq ($(TARGET),LINUX)
 
@@ -372,6 +372,36 @@ endif
   CUR_VERSION = DISMEM
     EXPLICITF = TRUE
 endif
+
+#.............................. IBM  LAPI ......................................
+#
+ifeq ($(TARGET),LAPI)
+#
+           FC = xlf
+           CC = mpcc_r
+          FLD = $(CC)
+       RANLIB = ranlib
+       P_FILE = NO
+ GLOB_DEFINES = -DEXTNAME -DAIX -DLAPI -DLAPI_SPLIT
+
+ifndef USE_MPI
+ GLOB_DEFINES += -DTCGMSG
+endif
+OPT3 = -O3 -qstrict -qcompact -qarch=com -qtune=pwr2
+ ifeq ($(FOPT),-O)
+         FOPT = -O3 -qstrict -qcompact -qarch=com -qtune=pwr2
+ endif
+ ifeq ($(COPT),-O)
+         COPT = -O -qcompact -qarch=com -qtune=pwr2
+ endif
+
+     FOPT_REN = -qEXTNAME
+#     FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
+    EXPLICITF = TRUE
+  CUR_VERSION = SHMEM
+endif
+
+
 #
 #.............................. IBM .........................................
 #

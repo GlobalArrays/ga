@@ -69,13 +69,34 @@ endif
 ifeq ($(TARGET),SGI64)
        BLAS = -lblas
 endif
-#.................................. SP1 ....................................
+#.................................. IBM SP ..................................
 ifeq ($(TARGET),SP1)
        BLAS = -lblas
 endif
 ifeq ($(TARGET),SP)
        BLAS = -lblas
 endif
+
+#........ LAPI ............
+#
+ifeq ($(TARGET),LAPI)
+LIBLAPIDIR = /usr/lpp/ssp/css/lib
+   LIBHAL = -lhal_r
+  LIBLAPI = -llapi_r
+# LIBCOM := -ltimer $(LIBCOM)
+     BLAS = -lesslp2
+
+#EXTRA_LIBS = -lxlf90 -lxlf -lm
+
+EXTRA_LIBS = \
+   -bnso -bI:/usr/lib/syscalls.exp -L$(LIBLAPIDIR) $(LIBHAL) $(LIBLAPI) \
+          -bI:/usr/lib/threads.exp /usr/lpp/ssp/css/libtb3/libmpci_r.a \
+          -bI:/usr/lpp/ssp/css/libus/fs_ext.exp \
+          /usr/lpp/ppe.poe/lib/libppe_r.a  -lm \
+          -bl:/tmp/new.map -lpthreads -lxlf90 -lxlf -lm
+   LIBMPI = -lmpi_r
+endif
+
 #...........................................................................
 ifeq ($(TARGET),IBM)
        BLAS = -lblas
