@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.50 2001-03-22 21:46:17 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.51 2001-05-07 21:55:20 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2347,12 +2347,12 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc*sizeof(void **));
     ptr_org = (void **)(buf2 + 2*naproc*sizeof(void **));
-    ilo = (Integer *)(buf2+2*naproc*sizeof(void **)+2*(*nv)*sizeof(void *));
+    ptr_ref = (char **)(buf2+2*naproc*sizeof(void **)+2*(*nv)*sizeof(void *));
+    ilo = (Integer *)(((char*)ptr_ref) + naproc*sizeof(char*));
     ihi = ilo + naproc;
     jlo = ihi + naproc;
     jhi = jlo + naproc;
     ldp = jhi + naproc;
-    ptr_ref = (char **)(ldp + naproc);
 
     for(kk=0; kk<naproc; kk++) {
         ga_distribution_(g_a, &aproc[kk],
@@ -2855,12 +2855,12 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     ptr_src = (void ***)buf2;
     ptr_dst = (void ***)(buf2 + naproc*sizeof(void **));
     ptr_org = (void **)(buf2 + 2*naproc*sizeof(void **));
-    ilo = (Integer *)(buf2+2*naproc*sizeof(void **)+2*(*nv)*sizeof(void *));
+    ptr_ref = (char **)(buf2+2*naproc*sizeof(void **)+2*(*nv)*sizeof(void *));
+    ilo = (Integer *)(((char*)ptr_ref) + naproc*sizeof(char*));
     ihi = ilo + naproc;
     jlo = ihi + naproc;
     jhi = jlo + naproc;
     ldp = jhi + naproc;
-    ptr_ref = (char **)(ldp + naproc);
 
     for(kk=0; kk<naproc; kk++) {
         ga_distribution_(g_a, &aproc[kk],
