@@ -262,7 +262,9 @@ extern long Detach_Shared_Region ARGS_((long id, long size, char *addr));
 extern long Delete_Shared_Region ARGS_((long id));
 extern long Delete_All_Regions ARGS_(( void));
 
+#ifdef VIOLATESTANDARD
 extern Void* memcpy ARGS_((Void*, const Void*, size_t));
+#endif
 extern double sqrt ARGS_((double));
 extern Integer MA_push_get ARGS_((Integer, Integer, char*, Integer*, Integer*));
 extern Integer MA_pop_stack ARGS_((Integer));
