@@ -71,6 +71,7 @@ all: $(TESTS)
 
 clean:
 	$(MAKESUBDIRS) $^
+	$(RM) -f $(LIBRARY)
 
 cleanstamp:
 	$(MAKESUBDIRS) $^

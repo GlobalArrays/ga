@@ -190,6 +190,26 @@ ifeq ($(TARGET),CRAY-T3D)
     EXPLICITF = TRUE
 endif
 #
+#................................ CRAY-J90 ..................................
+#
+ifeq ($(TARGET),CRAY-YMP)
+     ifeq ($(FOPT), -O)
+         FOPT = -O1
+     endif
+           FC = f90
+          CPP = cpp
+#         CLD = $(CC)
+       P_FILE = NO
+ ifeq ($(COPT),-O)
+         COPT = -O2 -h inline3
+ endif
+     FOPT_REN = -dp -ataskcommon
+#    COPT_REN = -htaskprivate $(LIBCM)
+        CDEFS = -DFLUSHCACHE -htaskprivate $(LIBCM)
+ GLOB_DEFINES = -DCRAY_T3D -DCRAY_YMP
+    EXPLICITF = TRUE
+endif
+#
 #................................ KSR ......................................
 #
 ifeq ($(TARGET),KSR)
@@ -342,7 +362,7 @@ define AIX4_RANLIB
   strip
 endef
 
-#       RANLIB = $(AIX4_RANLIB) 
+#      RANLIB = $(AIX4_RANLIB) 
      FOPT_REN = -qEXTNAME
   CUR_VERSION = DISMEM
     EXPLICITF = TRUE

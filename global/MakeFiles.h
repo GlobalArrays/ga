@@ -6,7 +6,6 @@
 #........................................................................
 #
 #
-INTERRUPT_AVAILABLE = SP1 SP IPSC DELTA PARAGON
 NATIVE LOCKS = SGITFP SGI64 SGI_N32 CONVEX-SPP
 
 #                  Synchronization
@@ -45,6 +44,10 @@ endif
 
 GA_CORE := global.core.o global.util.o global.patch.o global.msg.o \
            global.serv.o ga_lock.o
+
+ifeq ($(TARGET),LAPI)
+  GA_CORE += lapi.o
+endif
 
 ifdef IWAY
   GA_CORE += iway.o net.o
