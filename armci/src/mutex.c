@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.17 2002-06-25 21:39:05 vinod Exp $ */
+/* $Id: mutex.c,v 1.18 2002-08-08 18:28:35 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -8,7 +8,7 @@
 #define MAX_LOCKS 32768
 #define SPINMAX 1000
 
-#if defined(LAPI) || defined(SERVER_THREAD) 
+#if (defined(LAPI) || defined(SERVER_THREAD)) && !defined(VIA)
 #  define SERVER_LOCK 
 #endif
 
