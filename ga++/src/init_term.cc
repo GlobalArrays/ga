@@ -51,7 +51,7 @@ GA::Initialize(int argc, char *argv[], unsigned long heapSize,
   stackSize /= ((unsigned long) nProcs);
   
   if(!MA_init(type, stackSize, heapSize)) 
-    GA_Error("MA_init failed",stackSize+heapSize);
+    GA_Error((char *)"MA_init failed",stackSize+heapSize);
   // }
 }
 
