@@ -51,8 +51,8 @@
 #define DRAND48_     DRAND48
 #define SRAND48_     SRAND48
 #define PFCOPY_      PFCOPY
-#define dgop_        DGOP
-#define igop_        IGOP
+#define DGOP_        DGOP
+#define IGOP_        IGOP
 
 #else
 

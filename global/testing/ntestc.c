@@ -57,7 +57,7 @@ double val;
 double *buf;
 
      /***** create array A with default distribution  *****/
-     if(me==0)printf("Creating array A\n");
+     if(me==0){printf("Creating array A\n"); fflush(stdout);}
      for(i = 0; i<NDIM; i++)dims[i] = N*(i+1);
      g_a = NGA_Create(MT_F_DBL, NDIM, dims, "array A", NULL);
      if(!g_a) GA_Error("create failed: A",0); 
@@ -226,7 +226,9 @@ int me, nproc;
 
       MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
 
+      printf("init %d\n",me); fflush(stdout);
       GA_initialize();                           /* initialize GA */
+      printf("Init %d\n",me); fflush(stdout);
 
 #ifdef PERMUTE
       {

@@ -600,6 +600,26 @@ char buf[FNAM];
   return (nga_create(*type, *ndim,  dims, buf, chunk, g_a));
 }
 
+#if defined(CRAY) || defined(WIN32)
+logical FATR nga_create_irreg_(Integer *type, Integer *ndim, Integer *dims,
+                 _fcd array_name, Integer map[], Integer block[], Integer *g_a)
+#else
+logical FATR nga_create_irreg_(Integer *type, Integer *ndim, Integer *dims,
+                _fcd array_name, Integer map[], Integer block[],
+                 Integer *g_a, int slen)
+#endif
+{
+char buf[FNAM];
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
+#else
+      f2cstring(array_name ,slen, buf, FNAM);
+#endif
+
+  return (nga_create_irreg(*type, *ndim,  dims, buf, map, block, g_a));
+}
+
+
 
 
 void gai_init_struct(handle)
