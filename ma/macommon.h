@@ -37,6 +37,7 @@
 #define f2c_allocate_heap_			F2C_ALLOCATE_HEAP
 #define f2c_chop_stack_				F2C_CHOP_STACK
 #define f2c_free_heap_				F2C_FREE_HEAP
+#define f2c_free_heap_piece_			F2C_FREE_HEAP_PIECE
 #define f2c_get_index_				F2C_GET_INDEX
 #define f2c_get_next_memhandle_			F2C_GET_NEXT_MEMHANDLE
 #define f2c_get_numalign_                       F2C_GET_NUMALIGN

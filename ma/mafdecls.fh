@@ -2,7 +2,7 @@
 #define _mafdecls_fh
 
 !
-!     $Id: mafdecls.fh,v 1.7 2000-07-04 05:54:56 d3g001 Exp $
+!     $Id: mafdecls.fh,v 1.8 2000-07-04 11:27:03 d3g001 Exp $
 !
 
 !
@@ -59,6 +59,7 @@
       logical MA_allocate_heap
       logical MA_chop_stack
       logical MA_free_heap
+      logical MA_free_heap_piece
       logical MA_get_index
       logical MA_get_next_memhandle
       logical MA_get_numalign
@@ -86,6 +87,7 @@
       external MA_allocate_heap
       external MA_chop_stack
       external MA_free_heap
+      external MA_free_heap_piece
       external MA_get_index
       external MA_get_next_memhandle
       external MA_get_numalign

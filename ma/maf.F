@@ -1,5 +1,5 @@
 c
-c     $Id: maf.F,v 1.11 2000-07-04 05:54:55 d3g001 Exp $
+c     $Id: maf.F,v 1.12 2000-07-04 11:27:03 d3g001 Exp $
 c
 
 c
@@ -142,6 +142,27 @@ c     --------------------------------------------------------------- c
           MA_free_heap = .true.
       else
           MA_free_heap = .false.
+      endif
+
+      return
+      end
+
+c     --------------------------------------------------------------- c
+c     --------------------------------------------------------------- c
+
+      logical function MA_free_heap_piece (memhandle, nelem)
+
+      implicit none
+
+      integer memhandle
+      integer nelem
+
+#include "maf2c.fh"
+
+      if (f2c_free_heap_piece(memhandle, nelem) .eq. MA_TRUE) then
+          MA_free_heap_piece = .true.
+      else
+          MA_free_heap_piece = .false.
       endif
 
       return

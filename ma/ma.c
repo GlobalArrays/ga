@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.22 2000-07-04 05:54:54 d3g001 Exp $
+ * $Id: ma.c,v 1.23 2000-07-04 11:27:02 d3g001 Exp $
  */
 
 /*
@@ -147,7 +147,8 @@ private Boolean ad_lt();
 private void ad_print();
 private void balloc_after();
 private void balloc_before();
-private void block_split();
+private void block_free_heap();
+private AD *block_split();
 private ulongi checksum();
 
 #ifdef DEBUG
@@ -369,6 +370,7 @@ typedef enum
     FID_MA_allocate_heap,
     FID_MA_chop_stack,
     FID_MA_free_heap,
+    FID_MA_free_heap_piece,
     FID_MA_get_index,
     FID_MA_get_mbase,
     FID_MA_get_next_memhandle,
@@ -416,6 +418,7 @@ private char *ma_routines[] =
     "MA_allocate_heap",
     "MA_chop_stack",
     "MA_free_heap",
+    "MA_free_heap_piece",
     "MA_get_index",
     "MA_get_mbase",
     "MA_get_next_memhandle",
@@ -472,7 +475,7 @@ private Boolean ad_big_enough(ad, ar)
     if (nbytes <= ad->nbytes)
     {
         /* ad is big enough; split block if necessary */
-        block_split(ad, nbytes);
+        (void)block_split(ad, nbytes, MA_TRUE);
 
         /* set fields appropriately */
         ad->client_space = client_space;
@@ -793,15 +796,70 @@ private void balloc_before(ar, address, client_space, nbytes)
 
 /* ------------------------------------------------------------------------- */
 /*
- * If ad is sufficiently bigger than bytes_needed bytes, create a new
- * block from the remainder, insert it in the free list, and set the
- * lengths of both blocks.
+ * Reclaim the given block by updating ma_hp and ma_hfree.
  */
 /* ------------------------------------------------------------------------- */
 
-private void block_split(ad, bytes_needed)
+private void block_free_heap(ad)
+    AD		*ad;		/* AD to free */
+{
+    AD		*ad2;		/* traversal pointer */
+    AD		*max_ad;	/* rightmost AD */
+
+    /* find rightmost heap block */
+    for (max_ad = (AD *)NULL, ad2 = ma_hused; ad2; ad2 = ad2->next)
+    {
+        if (ad2 > max_ad)
+            max_ad = ad2;
+    }
+
+    if (max_ad)
+    {
+        /* at least 1 block is in use */
+
+        /* set ma_hp to first address past end of max_ad */
+        ma_hp = (Pointer)max_ad + max_ad->nbytes;
+
+        /* delete any free list blocks that are no longer in heap region */
+        (void)list_delete_many(
+            &ma_hfree,
+            ad_gt,
+            (Pointer)max_ad,
+            (void (*)())NULL);
+
+        /* if ad is in the heap region, add it to free list */
+        if (ad < max_ad)
+        {
+            list_insert_ordered(ad, &ma_hfree, ad_lt);
+            list_coalesce(ma_hfree);
+        }
+    }
+    else
+    {
+        /* no blocks are in use */
+
+        /* set ma_hp to start of segment */
+        ma_hp = ma_segment;
+
+        /* clear the free list */
+        ma_hfree = (AD *)NULL;
+    }
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * If ad is sufficiently bigger than bytes_needed bytes, create a new
+ * block from the remainder, optionally insert it in the free list,
+ * and set the lengths of both blocks.
+ *
+ * Return a pointer to the new block (NULL if not created).
+ */
+/* ------------------------------------------------------------------------- */
+
+private AD *block_split(ad, bytes_needed, insert_free)
     AD		*ad;		/* the AD to split */
     ulongi	bytes_needed;	/* from ad */
+    Boolean	insert_free;	/* insert in free list? */
 {
     ulongi	bytes_extra;	/* in ad */
     AD		*ad2;		/* the new AD */
@@ -817,19 +875,30 @@ private void block_split(ad, bytes_needed)
         /* set the length of ad2 */
         ad2->nbytes = bytes_extra;
 
-        /* insert ad2 into free list */
-        list_insert_ordered(ad2, &ma_hfree, ad_lt);
+        if (insert_free)
+        {
+            /* insert ad2 into free list */
+            list_insert_ordered(ad2, &ma_hfree, ad_lt);
+        }
 
         /* set the length of ad */
         ad->nbytes = bytes_needed;
+
+        return ad2;
     }
-    /*
-     * If 0 < bytes_extra < MINBLOCKSIZE then there are too few extra bytes
-     * to form a new block.  In this case, we simply do nothing; ad will
-     * retain its original length (which is slightly too big), and the
-     * entire block will be reclaimed upon deallocation, preventing any
-     * memory leakage.
-     */
+    else
+    {
+        /*
+         * If 0 <= bytes_extra < MINBLOCKSIZE then there are too few
+         * extra bytes to form a new block.  In this case, we simply
+         * do nothing; ad will retain its original length (which is
+         * either perfect or slightly too big), and the entire block
+         * will be reclaimed upon deallocation, preventing any
+         * memory leakage.
+         */
+
+        return (AD *)NULL;
+    }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2015,8 +2084,6 @@ public Boolean MA_free_heap(memhandle)
     Integer	memhandle;	/* the block to deallocate */
 {
     AD		*ad;		/* AD for memhandle */
-    AD		*ad2;		/* traversal pointer */
-    AD		*max_ad;	/* rightmost AD */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_free_heap]++;
@@ -2049,47 +2116,103 @@ public Boolean MA_free_heap(memhandle)
     ma_stats.hbytes -= ad->nbytes;
 #endif /* STATS */
 
-    /*
-     * update ma_hp and ma_hfree
-     */
-
-    /* find rightmost heap block */
-    for (max_ad = (AD *)NULL, ad2 = ma_hused; ad2; ad2 = ad2->next)
-    {
-        if (ad2 > max_ad)
-            max_ad = ad2;
-    }
-
-    if (max_ad)
-    {
-        /* at least 1 block is in use */
-
-        /* set ma_hp to first address past end of max_ad */
-        ma_hp = (Pointer)max_ad + max_ad->nbytes;
-
-        /* delete any free list blocks that are no longer in heap region */
-        (void)list_delete_many(&ma_hfree, ad_gt, (Pointer)max_ad, (void (*)())NULL);
-
-        /* if ad is in the heap region, add it to free list */
-        if (ad < max_ad)
-        {
-            list_insert_ordered(ad, &ma_hfree, ad_lt);
-            list_coalesce(ma_hfree);
-        }
-    }
-    else
-    {
-        /* no blocks are in use */
-
-        /* set ma_hp to start of segment */
-        ma_hp = ma_segment;
-
-        /* clear the free list */
-        ma_hfree = (AD *)NULL;
-    }
+    /* reclaim the deallocated block */
+    block_free_heap(ad);
 
     /* free memhandle */
     table_deallocate(memhandle);
+
+    /* success */
+    return MA_TRUE;
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Deallocate nelem elements from the given heap block.
+ *
+ * The nelem elements (of the datatype specified when the heap block
+ * was allocated) to be deallocated are assumed to be at the rightmost
+ * (i.e., higher addresses) edge of the heap block.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Boolean MA_free_heap_piece(memhandle, nelem)
+    Integer	memhandle;	/* the block to deallocate a piece of */
+    Integer	nelem;		/* # of elements to deallocate */
+{
+    AD		*ad;		/* AD for memhandle */
+    AD		*ad_reclaim;	/* AD for data returned */
+    AR		ar;		/* AR for data kept */
+    Pointer	client_space;	/* location of client_space */
+    ulongi	nbytes;		/* length of block for data kept */
+
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_free_heap_piece]++;
+#endif /* STATS */
+
+#ifdef VERIFY
+    if (ma_auto_verify && !MA_verify_allocator_stuff())
+        return MA_FALSE;
+#endif /* VERIFY */
+
+    /* verify memhandle and convert to AD */
+    if (!mh2ad(memhandle, &ad, BL_Heap, "MA_free_heap_piece"))
+        return MA_FALSE;
+
+    /* verify nelem */
+    if (nelem < 0)
+    {
+        (void)sprintf(ma_ebuf,
+            "block '%s', invalid nelem: %ld",
+            ad->name, (long)nelem);
+        ma_error(EL_Nonfatal, ET_External, "MA_free_heap_piece", ma_ebuf);
+        return MA_FALSE;
+    }
+    else if (nelem >= ad->nelem)
+    {
+        /* deallocate the whole block */
+        return MA_free_heap(memhandle);
+    }
+
+    if (ma_trace) 
+	(void)printf("MA: freeing %ld elements of '%s'\n",
+            (long)nelem, ad->name);
+
+    /* set AR for data to keep */
+    ar.datatype = ad->datatype;
+    ar.nelem = ad->nelem - nelem;
+
+    /* perform trial allocation to determine size */
+    balloc_after(&ar, (Pointer)ad, &client_space, &nbytes);
+
+    if (nbytes < ad->nbytes)
+    {
+        /* ad has extra space; split block if possible */
+        ad_reclaim = block_split(ad, nbytes, MA_FALSE);
+
+        if (ad_reclaim)
+        {
+#ifdef STATS
+            ma_stats.hbytes -= ad_reclaim->nbytes;
+#endif /* STATS */
+
+            /* reclaim the deallocated (new) block */
+            block_free_heap(ad_reclaim);
+        }
+    }
+
+    /* update surviving block */
+    ad->nelem = ar.nelem;
+    ad->checksum = checksum(ad);
+
+    /* set the guards */
+    guard_set(ad);
+
+#ifdef DEBUG
+    debug_ad_print(ad);
+#endif /* DEBUG */
 
     /* success */
     return MA_TRUE;

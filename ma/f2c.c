@@ -1,5 +1,5 @@
 /*
- * $Id: f2c.c,v 1.9 2000-07-04 05:54:54 d3g001 Exp $
+ * $Id: f2c.c,v 1.10 2000-07-04 11:27:02 d3g001 Exp $
  */
 
 /*
@@ -173,6 +173,19 @@ public Boolean FATR f2c_free_heap_(memhandle)
     Integer	*memhandle;
 {
     return MA_free_heap(*memhandle);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * 
+ */
+/* ------------------------------------------------------------------------- */
+
+public Boolean FATR f2c_free_heap_piece_(memhandle, nelem)
+    Integer	*memhandle;
+    Integer	*nelem;
+{
+    return MA_free_heap_piece(*memhandle, *nelem);
 }
 
 /* ------------------------------------------------------------------------- */
