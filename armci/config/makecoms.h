@@ -12,7 +12,7 @@ ifeq ($(ARMCI_NETWORK),GM)
     COMM_LIBS = -L$(GM_LIB)
   endif
   GM_LIB_NAME = -lgm
-  COMM_LIBS += $(GM_LIB_NAME) -lpthread -lm
+  COMM_LIBS += $(GM_LIB_NAME) -lpthread
 endif
 
 ifeq ($(ARMCI_NETWORK),VIA)
@@ -26,6 +26,23 @@ ifeq ($(ARMCI_NETWORK),VIA)
   VIA_LIB_NAME = -lvia
   COMM_LIBS += $(VIA_LIB_NAME)
 endif
+
+ifeq ($(ARMCI_NETWORK),QUADRICS)
+  COMM_DEFINES = -DQUADRICS
+  ifdef QUADRICS_INCLUDE
+    COMM_INCLUDES = -I$(QUADRICS_INCLUDE)
+  else
+    COMM_INCLUDES = -I/opt/rms/include
+  endif
+  ifdef QUADRICS_LIB
+    COMM_LIBS = -L$(QUADRICS_LIB)
+  else
+    COMM_LIBS = -L/opt/rms/lib
+  endif
+  QUADRICS_LIB_NAME = -lelan3 -lshmem -lrt
+  COMM_LIBS += $(QUADRICS_LIB_NAME)
+endif
+
 
 ifeq ($(TARGET),LAPI)
 ifdef LAPI2
