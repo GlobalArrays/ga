@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.41 2003-11-14 01:05:16 manoj Exp $ */
+/* $Id: matmul.c,v 1.42 2003-11-14 02:06:54 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -1021,10 +1021,14 @@ void ga_matmul(transa, transb, alpha, beta,
           if(Jchunk<=0) Jchunk = 1;
           if(Kchunk<=0) Kchunk = 1;
 
-	  if(Ichunk/Kchunk > GA_ASPECT_RATIO || 
-	     Jchunk/Kchunk > GA_ASPECT_RATIO) irregular = SET;
+	  {
+	     Integer irreg;	     
+	     if(Ichunk/Kchunk > GA_ASPECT_RATIO || 
+		Jchunk/Kchunk > GA_ASPECT_RATIO) irreg = SET;
+	     ga_igop(GA_TYPE_GOP, &irreg, (Integer)1, "max");   
+	     if(irreg==SET) irregular = SET;
+	  }
 	  
-
 	  /* If non-blocking, we need 2 temporary buffers for A and B matrix */
 	  if(use_NB_matmul) nbuf = 2; 
 	  
