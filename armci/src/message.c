@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.9 1999-11-20 01:43:07 d3h325 Exp $ */
+/* $Id: message.c,v 1.10 1999-11-20 02:02:08 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCG)
@@ -411,7 +411,7 @@ void *origx =x;
          if (armci_me != root) armci_msg_snd(tag, x, len, up);
 
          n -=ndo;
-         x +=ndo;
+         x = len + (char*)x;
      }
 
      /* Now, root broadcasts the result down the binary tree */
