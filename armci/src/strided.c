@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.53 2002-12-14 00:29:22 d3h325 Exp $ */
+/* $Id: strided.c,v 1.54 2002-12-17 12:32:08 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -796,7 +796,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
        vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
 #endif
 
-    ORDER(PUT,proc); /* ensure ordering */
+    /*ORDER(PUT,proc);  ensure ordering */
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -864,7 +864,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(proc<0)return FAIL5;
     
 
-    ORDER(GET,proc); /* ensure ordering */
+     /*ORDER(GET,proc);  ensure ordering */
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -935,7 +935,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
     if(proc<0)return FAIL5;
 
 
-    ORDER(optype,proc); /* ensure ordering */
+    /*ORDER(optype,proc);  ensure ordering */
 
     direct=SAMECLUSNODE(proc);
 
@@ -977,29 +977,29 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 \*/
 int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
 {
-    int rc, direct;
+    int rc=0, direct;
+    armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
 
     if(src == NULL || dst == NULL) return FAIL;
 
     direct =SAMECLUSNODE(proc);
     if(direct) { 
+       /*armci_wait needs proc to compute direct*/
+       INIT_NB_HANDLE(nb_handle,PUT,proc);
        armci_copy(src,dst,bytes);
     }else{
 #     ifdef ARMCI_NB_PUT
-           armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
-
            /*set tag and op in the nb handle*/
            INIT_NB_HANDLE(nb_handle,PUT,proc);
 
            UPDATE_FENCE_STATE(proc, PUT, 1);
-#          ifdef LAPI
-               SET_COUNTER(ack_cntr, 1);
-#          endif
+
            ARMCI_NB_PUT(src, dst, bytes, proc, &nb_handle->cmpl_info);
 #     else
            return ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
     } 
+    return(rc);
 }
 
 
@@ -1008,22 +1008,27 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
 int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
 {
 
-    int rc, direct;
+    int rc=0, direct;
+    armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
+
     if(src == NULL || dst == NULL) return FAIL;
 
     direct =SAMECLUSNODE(proc);
     if(direct) {
+       /*armci_wait needs proc to compute direct*/
+       INIT_NB_HANDLE(nb_handle,PUT,proc);
        armci_copy(src,dst,bytes);
     }else{
 #     ifdef ARMCI_NB_GET
-           armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
            /*set tag and op in the nb handle*/
            INIT_NB_HANDLE(nb_handle,GET,proc);
+
            ARMCI_NB_GET(src, dst, bytes, proc, &nb_handle->cmpl_info);
 #     else
            return ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
     } 
+    return(rc);
 }
 
 
