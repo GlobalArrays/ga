@@ -51,7 +51,7 @@
 #  define SPINLOCK  
 #  if defined(__GNUC__)
 #    include "tas-ppc.h"
-#    define TESTANDSET(x) (! __compare_and_swap((long int *)(x),0,1)) 
+#    define TESTANDSET(x) (krspin_lock((long int *)(x)))
 #  else
 #    define TESTANDSET gcc_testandset
 #    define RELEASE_SPINLOCK gcc_clear_spinlock

@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.85 2004-09-08 01:44:41 manoj Exp $
+#$Id: GNUmakefile,v 1.86 2005-03-10 19:11:23 vinodtipparaju Exp $
          FOPT = -O
          COPT = -O
 
@@ -67,6 +67,10 @@ ifeq ($(TARGET),LAPI64)
 endif
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
+ OBJ += semaphores.o 
+endif
+
+ifeq ($(TARGET),MACX)
  OBJ += semaphores.o 
 endif
 

@@ -79,3 +79,24 @@ __compare_and_swap_with_release_semantics (long int *p,
   return ret == 0;
 }
 
+static int  krspin_lock(long int *p)
+{
+        unsigned long tmp;
+        int ret;
+        __asm__ __volatile__(
+        "b      1f              # spin_lock\n\
+2:      lwzx    %0,0,%1\n\
+        cmpwi   0,%0,0\n\
+        bne+    2b\n\
+1:      lwarx   %0,0,%1\n\
+        cmpwi   0,%0,0\n\
+        bne-    2b\n"
+"       stwcx.  %2,0,%1\n\
+        bne-    2b\n\
+        isync"
+        : "=&r"(tmp)
+        : "r"(p), "r"(1)
+        : "cr0", "memory");
+  return ret == 0;
+}
+

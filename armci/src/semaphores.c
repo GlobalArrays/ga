@@ -1,4 +1,4 @@
-/* $Id: semaphores.c,v 1.11 2000-10-11 19:48:49 d3h325 Exp $ */
+/* $Id: semaphores.c,v 1.12 2005-03-10 19:11:23 vinodtipparaju Exp $ */
 #include "semaphores.h"
 #include <stdio.h>
 #include <unistd.h>
@@ -18,7 +18,7 @@ int semaphoreID;
 
 /* follows LINUX semctl manpage */
 #if (defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)) ||\
-    defined(SGI) || defined(SUN) || defined(__FreeBSD__) || defined(INTERIX)
+    defined(SGI) || defined(SUN) || defined(__FreeBSD__) || defined(INTERIX) || defined(MACX)
     /* union semun is defined by including <sys/sem.h> */
 #   else
     /* according to X/OPEN we have to define it ourselves */
