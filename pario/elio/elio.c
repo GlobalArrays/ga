@@ -306,7 +306,7 @@ int elio_wait(io_request_t *req_id)
 #  else
       if((int)aio_suspend(cb_fout_arr+(int)*req_id, 1, NULL) != 0) rc =-1;
 #  endif
-      if(rc =-1) ELIO_ERROR(SUSPFAIL,0);
+      if(rc ==-1) ELIO_ERROR(SUSPFAIL,0);
 
 #  ifndef KSR
       /* on DEC aio_return is required to clean internal data structures */
