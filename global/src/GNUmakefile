@@ -24,7 +24,7 @@ GA_CORE = base.o onesided.o nbutil.o ghosts.o global.util.o collect.o decomp.o \
 
 # extra interfaces
 GA_EXTRA = global.periodic.o sparse.o select.o ghosts.o DP.o hsort.scat.o \
-		ga_solve_seq.o
+		ga_solve_seq.o ga_profile.o
 ifdef GA_USE_VAMPIR
    GA_EXTRA += ga_vampir.o
 endif
@@ -58,6 +58,9 @@ endif
   LIB_DEFINES += -DARMCI
   ifeq ($(GA_TRACE), YES)
     LIB_DEFINES += -DGA_TRACE
+  endif
+  ifeq ($(GA_PROFILE), YES)
+    LIB_DEFINES += -DGA_PROFILE
   endif
   LIB_INCLUDES += -I../../armci/src -I$(INCDIR)
 
