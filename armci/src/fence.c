@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.20 2004-06-11 04:41:42 vinod Exp $ */
+/* $Id: fence.c,v 1.21 2004-07-21 00:29:59 manoj Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -16,7 +16,9 @@ char *_armci_fence_arr;
 #ifdef GA_USE_VAMPIR
 #include "armci_vampir.h"
 #endif
-
+#ifdef ARMCI_PROFILE
+#include "armci_profile.h"
+#endif
 void armci_init_fence()
 {
 #ifdef DATA_SERVER
@@ -35,6 +37,10 @@ void ARMCI_Fence(int proc)
  if (armci_me != proc)
         vampir_start_comm(proc,armci_me,0,ARMCI_FENCE);
 #endif
+#ifdef ARMCI_PROFILE
+ armci_profile_start(ARMCI_PROF_FENCE);
+#endif
+
 #if defined(DATA_SERVER) && !(defined(GM) && defined(ACK_FENCE))
      if(_armci_fence_arr[proc] && (armci_nclus >1)){
          
@@ -50,6 +56,9 @@ void ARMCI_Fence(int proc)
 #else
      FENCE_NODE(proc);
      MEM_FENCE;
+#endif
+#ifdef ARMCI_PROFILE
+ armci_profile_stop(ARMCI_PROF_FENCE);
 #endif
 #ifdef GA_USE_VAMPIR
      if (armci_me != proc) 
@@ -100,6 +109,9 @@ void ARMCI_AllFence()
 #ifdef GA_USE_VAMPIR
      vampir_begin(ARMCI_ALLFENCE,__FILE__,__LINE__);
 #endif
+#ifdef ARMCI_PROFILE
+     armci_profile_start(ARMCI_PROF_ALLFENCE);
+#endif
 #ifdef _CRAYMPP
      if(cmpl_proc != -1) FENCE_NODE(cmpl_proc);
 #elif defined(LAPI) || defined(CLUSTER)
@@ -108,6 +120,9 @@ void ARMCI_AllFence()
 #else
      { int p; for(p=0;p<armci_nproc;p++)ARMCI_Fence(p); }
 #endif
+#endif
+#ifdef ARMCI_PROFILE
+     armci_profile_stop(ARMCI_PROF_ALLFENCE);
 #endif
 #ifdef GA_USE_VAMPIR
      vampir_end(ARMCI_ALLFENCE,__FILE__,__LINE__);
@@ -118,6 +133,9 @@ void ARMCI_AllFence()
 void ARMCI_Barrier()
 {
     if(armci_nproc==1)return;
+#ifdef ARMCI_PROFILE
+    armci_profile_start(ARMCI_PROF_BARRIER);
+#endif
 #ifdef GM
     /*first step is to make sure all the sends are complete */
     {
@@ -158,4 +176,8 @@ void ARMCI_Barrier()
 #  endif
 #endif
     MEM_FENCE;
+#ifdef ARMCI_PROFILE
+    armci_profile_stop(ARMCI_PROF_BARRIER);
+#endif
+
 }

@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.90 2004-07-20 18:07:23 manoj Exp $ */
+/* $Id: armci.c,v 1.91 2004-07-21 00:29:59 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -537,24 +537,31 @@ int ARMCI_Wait(armci_hdl_t* usr_hdl){
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
 int direct=SAMECLUSNODE(nb_handle->proc);
-   if(direct)return(success);
+#ifdef ARMCI_PROFILE
+    armci_profile_start(ARMCI_PROF_WAIT);
+#endif
+    if(direct) {
+#      ifdef ARMCI_PROFILE
+       armci_profile_stop(ARMCI_PROF_WAIT);
+#      endif
+       return(success);
+    }
     if(nb_handle) {
       if(nb_handle->agg_flag) {
 	armci_agg_complete(nb_handle, UNSET);
+#       ifdef ARMCI_PROFILE
+	armci_profile_stop(ARMCI_PROF_WAIT);
+#       endif
 	return (success);
       }
     }
-#ifdef ARMCI_PROFILE
-    /* to avoid event overlapping, start profiling after aggregate calls */
-    armci_profile_start(ARMCI_PROFILE_WAIT);
-#endif
 
     if(nb_handle){
 #     ifdef ARMCI_NB_WAIT
         if(nb_handle->tag==0){
               ARMCI_NB_WAIT(nb_handle->cmpl_info);
 #             ifdef ARMCI_PROFILE
-	      armci_profile_stop();
+	      armci_profile_stop(ARMCI_PROF_WAIT);
 #             endif
               return(success);
         }
@@ -562,7 +569,7 @@ int direct=SAMECLUSNODE(nb_handle->proc);
          if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
                ARMCI_NB_WAIT(nb_handle->cmpl_info);
 #              ifdef ARMCI_PROFILE
-	       armci_profile_stop();
+	       armci_profile_stop(ARMCI_PROF_WAIT);
 #              endif
                return(success);
          }
@@ -574,7 +581,7 @@ int direct=SAMECLUSNODE(nb_handle->proc);
     }
 
 #ifdef ARMCI_PROFILE
-    armci_profile_stop();
+    armci_profile_stop(ARMCI_PROF_WAIT);
 #endif
     return(success);
 }
@@ -672,7 +679,7 @@ int armci_notify_wait(int proc,int *pval)
 {
   int retval;
 #ifdef ARMCI_PROFILE
-  armci_profile_start(ARMCI_PROFILE_NOTIFY_WAIT);
+  armci_profile_start(ARMCI_PROF_NOTIFY);
 #endif
 
 #ifdef GM
@@ -695,7 +702,7 @@ int armci_notify_wait(int proc,int *pval)
 #endif
 
 #ifdef ARMCI_PROFILE
-  armci_profile_stop();
+  armci_profile_stop(ARMCI_PROF_NOTIFY);
 #endif
   return retval;
 }

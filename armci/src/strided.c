@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.91 2004-07-20 02:46:15 manoj Exp $ */
+/* $id: strided.c,v 1.91 2004/07/20 02:46:15 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -558,7 +558,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #endif
 #ifdef ARMCI_PROFILE
     armci_profile_start_strided(seg_count, stride_levels, proc, 
-				ARMCI_PROFILE_PUT);
+				ARMCI_PROF_PUTS);
 #endif
 
     ORDER(PUT,proc); /* ensure ordering */
@@ -583,7 +583,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],NULL,0,mhloc,mhrem);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
-	 armci_profile_stop_strided();
+	 armci_profile_stop_strided(ARMCI_PROF_PUTS);
 #        endif
          return 0;
        }
@@ -594,7 +594,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
            armci_two_phase_send(proc, src_ptr, src_stride_arr, dst_ptr,
                           dst_stride_arr,count,stride_levels,NULL,NULL,mhloc);
 #          ifdef ARMCI_PROFILE
-	   armci_profile_stop_strided();
+	   armci_profile_stop_strided(ARMCI_PROF_PUTS);
 #          endif
            return 0;  
          
@@ -630,7 +630,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 
     POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
-    armci_profile_stop_strided();
+    armci_profile_stop_strided(ARMCI_PROF_PUTS);
 #endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
@@ -681,7 +681,7 @@ int ARMCI_PutS_flag_dir(
 #endif
 #ifdef ARMCI_PROFILE
     armci_profile_start_strided(seg_count, stride_levels, proc, 
-				ARMCI_PROFILE_PUT);
+				ARMCI_PROF_PUTS);
 #endif
 
     ORDER(PUT,proc); /* ensure ordering */
@@ -721,7 +721,7 @@ int ARMCI_PutS_flag_dir(
 	     }
 #            endif
 #            ifdef ARMCI_PROFILE  
-	     armci_profile_stop_strided();   
+	     armci_profile_stop_strided(ARMCI_PROF_PUTS);   
 #            endif 
 	     return 0;
 	  }
@@ -758,7 +758,7 @@ int ARMCI_PutS_flag_dir(
 
     POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
-    armci_profile_stop_strided();
+    armci_profile_stop_strided(ARMCI_PROF_PUTS);
 #endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
@@ -798,7 +798,7 @@ int ARMCI_PutS_flag(
 #endif
 #ifdef ARMCI_PROFILE
     armci_profile_start_strided(seg_count, stride_levels, proc, 
-				ARMCI_PROFILE_PUT);
+				ARMCI_PROF_PUTS);
 #endif
 
     ORDER(PUT,proc); /* ensure ordering */
@@ -841,7 +841,7 @@ int ARMCI_PutS_flag(
 
     POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
-    armci_profile_stop_strided();
+    armci_profile_stop_strided(ARMCI_PROF_PUTS);
 #endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
@@ -880,7 +880,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #endif
 #ifdef ARMCI_PROFILE
     armci_profile_start_strided(seg_count, stride_levels, proc, 
-				ARMCI_PROFILE_GET);
+				ARMCI_PROF_GETS);
 #endif
 
     ORDER(GET,proc); /* ensure ordering */
@@ -909,7 +909,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
          ARMCI_REM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
-         armci_profile_stop_strided();
+         armci_profile_stop_strided(ARMCI_PROF_GETS);
 #        endif
          return 0;
        }
@@ -920,7 +920,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
           armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
                           dst_stride_arr,count,stride_levels,NULL,NULL,mhloc);  
 #         ifdef ARMCI_PROFILE
-	  armci_profile_stop_strided();
+	  armci_profile_stop_strided(ARMCI_PROF_GETS);
 #         endif
           return 0;
        }
@@ -959,7 +959,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 
     POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
-    armci_profile_stop_strided();
+    armci_profile_stop_strided(ARMCI_PROF_GETS);
 #endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
@@ -1001,7 +1001,7 @@ int ARMCI_AccS( int  optype,            /* operation */
 #endif
 #ifdef ARMCI_PROFILE
     armci_profile_start_strided(seg_count, stride_levels, proc, 
-				ARMCI_PROFILE_ACC);
+				ARMCI_PROF_ACCS);
 #endif
 
     ORDER(optype,proc); /* ensure ordering */
@@ -1021,7 +1021,7 @@ int ARMCI_AccS( int  optype,            /* operation */
 
     POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
-    armci_profile_stop_strided();
+    armci_profile_stop_strided(ARMCI_PROF_ACCS);
 #endif
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
@@ -1036,23 +1036,27 @@ int ARMCI_AccS( int  optype,            /* operation */
 
 int ARMCI_Put(void *src, void* dst, int bytes, int proc)
 {
+    int rc=0;
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(&bytes, 0, proc, ARMCI_PROF_PUT);
+#endif
+
 #ifdef __crayx1
-       memcpy(dst,src,bytes);
-       return 0;
+    memcpy(dst,src,bytes);
 #else
 #ifdef ALLOW_PIN
-    
     if(ARMCI_REGION_BOTH_FOUND(src,dst,bytes,armci_clus_id(proc))){
-#if 0
-      printf("direct put s=%p d=%p %d bytes to %d\n",src,dst,bytes,proc); fflush(stdout);
-#endif
-      ARMCI_Fence(proc);
-      armci_client_direct_send(proc, src, dst, bytes,NULL,0,mhloc,mhrem);
-      return 0;
+       ARMCI_Fence(proc);
+       armci_client_direct_send(proc, src, dst, bytes,NULL,0,mhloc,mhrem);
     }else
 #endif
-    return ARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
+       rc = ARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
 #endif
+    
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided(ARMCI_PROF_PUT);
+#endif
+    return rc;
 }
 
 extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc)
@@ -1062,19 +1066,27 @@ extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc)
 
 int ARMCI_Get(void *src, void* dst, int bytes, int proc)
 {
+    int rc=0;
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(&bytes, 0, proc, ARMCI_PROF_GET);
+#endif
+
 #ifdef __crayx1
-       memcpy(dst,src,bytes);   
-       return 0;
+    memcpy(dst,src,bytes);   
 #else
-#ifdef ALLOW_PIN
+# ifdef ALLOW_PIN
     if(ARMCI_REGION_BOTH_FOUND(dst,src,bytes,armci_clus_id(proc))){
        ARMCI_Fence(proc);
        ARMCI_REM_GET(proc, src,NULL,dst,NULL,&bytes, 0, NULL);
-       return 0;
     }  else
+# endif
+       rc = ARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
 #endif
-    return ARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
+    
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided(ARMCI_PROF_GET);
 #endif
+    return rc;
 }
 
 
@@ -1176,6 +1188,10 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     if (armci_me != proc)
        vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
 #endif
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(seg_count, stride_levels, proc,
+				ARMCI_PROF_NBPUTS);
+#endif
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -1190,6 +1206,9 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 						 count, stride_levels, proc, 
 						 PUT, nb_handle);
         POSTPROCESS_STRIDED(tmp_count);
+#       ifdef ARMCI_PROFILE
+	  armci_profile_stop_strided(ARMCI_PROF_NBPUTS);
+#       endif
         return(rc);
       }
     } else {
@@ -1207,12 +1226,6 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
         nb_handle = armci_set_implicit_handle(PUT, proc);
     }
 
-#ifdef ARMCI_PROFILE
-    /* to avoid event overlapping, start profiling after aggregate calls */
-    armci_profile_start_strided(seg_count, stride_levels, proc,
-				ARMCI_PROFILE_NBPUT);
-#endif
-
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
@@ -1225,7 +1238,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
                                   nb_handle->tag,mhloc,mhrem);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
-	 armci_profile_stop_strided();
+	 armci_profile_stop_strided(ARMCI_PROF_NBPUTS);
 #        endif 
          return 0;
        }
@@ -1236,7 +1249,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
          armci_two_phase_send(proc, src_ptr, src_stride_arr, dst_ptr,
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);
 #        ifdef ARMCI_PROFILE
-	 armci_profile_stop_strided();
+	 armci_profile_stop_strided(ARMCI_PROF_NBPUTS);
 #        endif 
          return 0;  
        }
@@ -1262,7 +1275,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     
     POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
-    armci_profile_stop_strided();
+    armci_profile_stop_strided(ARMCI_PROF_NBPUTS);
 #endif 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
@@ -1294,6 +1307,10 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(seg_count, stride_levels, proc,
+				ARMCI_PROF_NBGETS);
+#endif
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
@@ -1307,6 +1324,9 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 					 count, stride_levels, proc, 
 					 GET, nb_handle);
         POSTPROCESS_STRIDED(tmp_count);
+#       ifdef ARMCI_PROFILE
+	  armci_profile_stop_strided(ARMCI_PROF_NBGETS);
+#       endif	
         return(rc);
       }
     } else {
@@ -1323,12 +1343,6 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
         nb_handle = armci_set_implicit_handle(GET, proc);
     }
     
-#ifdef ARMCI_PROFILE
-    /* to avoid event overlapping, start profiling after aggregate calls */
-    armci_profile_start_strided(seg_count, stride_levels, proc,
-				ARMCI_PROFILE_NBGET);
-#endif
-
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
@@ -1338,7 +1352,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
          ARMCI_NBREM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
-	 armci_profile_stop_strided();
+	 armci_profile_stop_strided(ARMCI_PROF_NBGETS);
 #        endif
          return 0;
        }
@@ -1349,7 +1363,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
           armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);  
 #        ifdef ARMCI_PROFILE
-	 armci_profile_stop_strided();
+	 armci_profile_stop_strided(ARMCI_PROF_NBGETS);
 #        endif
          return 0;
        }
@@ -1388,9 +1402,9 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 
     POSTPROCESS_STRIDED(tmp_count);
 
-#   ifdef ARMCI_PROFILE
-    armci_profile_stop_strided();
-#   endif
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided(ARMCI_PROF_NBGETS);
+#endif
     if(rc) return FAIL6;
     else return 0;
 }
@@ -1421,7 +1435,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 
 #ifdef ARMCI_PROFILE
     armci_profile_start_strided(seg_count, stride_levels, proc,
-				ARMCI_PROFILE_NBACC);
+				ARMCI_PROF_NBACCS);
 #endif
 
     UPDATE_FENCE_INFO(proc);
@@ -1454,7 +1468,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
     POSTPROCESS_STRIDED(tmp_count);
 
 #   ifdef ARMCI_PROFILE
-    armci_profile_stop_strided();
+    armci_profile_stop_strided(ARMCI_PROF_NBACCS);
 #   endif
     if(rc) return FAIL6;
     else return 0;
@@ -1478,14 +1492,21 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
     armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
     
     if(src == NULL || dst == NULL) return FAIL;
-        
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(&bytes, 0, proc, ARMCI_PROF_NBPUT);
+#endif
+
     direct =SAMECLUSNODE(proc);
 
     /* aggregate put */
     if(nb_handle && nb_handle->agg_flag == SET) {
-      if(direct) { armci_copy(src,dst,bytes); return 0; }
+      if(direct) { armci_copy(src,dst,bytes); rc=0; }
       else
-	return armci_agg_save_descriptor(src,dst,bytes,proc,PUT,0,nb_handle); 
+	rc=armci_agg_save_descriptor(src,dst,bytes,proc,PUT,0,nb_handle); 
+#     ifdef ARMCI_PROFILE
+        armci_profile_stop_strided(ARMCI_PROF_NBPUT);
+#     endif
+      return rc;
     }
 
     if(direct) {
@@ -1512,12 +1533,16 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
          armci_client_direct_send(proc, src, dst, bytes,
                                   (void **)(&nb_handle->cmpl_info),
                                   nb_handle->tag,mhloc,mhrem);
-         return 0;
+         rc=0;
        }else
 #       endif
-         return ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+         rc=ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
     }
+
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided(ARMCI_PROF_NBPUT);
+#endif
     return(rc);
 }
 
@@ -1529,14 +1554,21 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
     armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
     
     if(src == NULL || dst == NULL) return FAIL;
-    
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(&bytes, 0, proc, ARMCI_PROF_NBGET);
+#endif    
+
     direct =SAMECLUSNODE(proc);
 
     /* aggregate get */
     if(nb_handle && nb_handle->agg_flag == SET) {
-      if(direct) { armci_copy(src,dst,bytes); return 0; }
+      if(direct) { armci_copy(src,dst,bytes); rc=0; }
       else
-	return armci_agg_save_descriptor(src,dst,bytes,proc,GET,0,nb_handle);
+	rc=armci_agg_save_descriptor(src,dst,bytes,proc,GET,0,nb_handle);
+#     ifdef ARMCI_PROFILE
+        armci_profile_stop_strided(ARMCI_PROF_NBGET); 
+#     endif
+      return rc;
     }
 
     if(direct) {
@@ -1559,12 +1591,15 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 	 nb_handle->proc= proc;
 	 nb_handle->bufid=NB_NONE;
          ARMCI_NBREM_GET(proc, src,NULL,dst,NULL,&bytes, 0, nb_handle);
-         return 0;
+         rc=0;
        }else
 #       endif
-      return ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+      rc=ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
 #     endif
     }
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided(ARMCI_PROF_NBGET);
+#endif
     return(rc);
 }
 

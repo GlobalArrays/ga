@@ -1,4 +1,4 @@
-/* $Id: armci_profile.c,v 1.5 2004-07-20 03:00:50 manoj Exp $ */
+/* $Id: armci_profile.c,v 1.6 2004-07-21 00:29:59 manoj Exp $ */
 
 /**
  * Set an environment variable as follows to enable ARMCI profiling
@@ -67,7 +67,9 @@
 #define ARMCI_MAX_MSG_RANGE 22 /* 0 to 21 */
 
 #if ARMCI_PRINT_STRIDE
-#define STRIDE_COUNT 1000
+
+# define STRIDE_COUNT 1000
+# define ARMCI_MAX_DIM 7
 
   typedef struct armci_stride {
     int stride_levels;
@@ -90,25 +92,17 @@
 
 #endif
 
-#define ARMCI_EVENTS 23 /* contiguous, strided and vector get/put/acc calls */
-enum events {CONTIG_GET, CONTIG_PUT, CONTIG_ACC, /* Contiguous get/put/acc */
-	     STR_GET, STR_PUT, STR_ACC,          /* strided Get/put/acc */
-	     VEC_GET, VEC_PUT, VEC_ACC,          /* vector Get/put/acc */
-	     CONTIG_NBGET, CONTIG_NBPUT, CONTIG_NBACC, /* non-blocking */
-             STR_NBGET, STR_NBPUT, STR_NBACC,
-             VEC_NBGET, VEC_NBPUT, VEC_NBACC,
-	     BARRIER, WAIT, NOTIFY, FENCE, ALLFENCE /* misc */
-};
+#define ARMCI_EVENTS 24
 
-char *event_name[ARMCI_EVENTS]={
+char *gEventName[ARMCI_EVENTS]={
   "GET", "PUT", "ACC", 
   "STRIDED GET", "STRIDED PUT", "STRIDED ACC",
   "VECTOR GET", "VECTOR PUT", "VECTOR ACC",
   "NBGET", "NBPUT", "NBACC",
   "STRIDED NBGET", "STRIDED NBPUT", "STRIDED NBACC",
   "VECTOR NBGET", "VECTOR NBPUT", "VECTOR NBACC",
-  "BARRIER","ARMCI_WAIT","ARMCI_NOTIFY_WAIT",
-  "FENCE", "ALLFENCE"
+  "BARRIER","ARMCI_WAIT","NOTIFY_WAIT",
+  "FENCE", "ALLFENCE", "RMW"
 };
 
 typedef struct armci_profile {
@@ -125,15 +119,24 @@ static armci_profile_t ARMCI_PROF[ARMCI_EVENTS][ARMCI_MAX_MSG_RANGE];
 
 /* Current event */
 struct event_info {
+  int is_set;
   int event_type;
   int range;
-  int is_set;
   double start_time;
 } gCURRENT_EVNT; 
+
+static int strided_event(int e) {
+    if (e==ARMCI_PROF_GETS || e==ARMCI_PROF_PUTS || e==ARMCI_PROF_ACCS || 
+	e==ARMCI_PROF_NBGETS || e==ARMCI_PROF_NBPUTS || e==ARMCI_PROF_NBACCS)
+       return 1;
+    return 0;
+}
 
 void armci_profile_init() {
     int i,j;
     if(armci_me==0) {printf("\nProfiling ARMCI - ON\n");fflush(stdout);}
+
+    gCURRENT_EVNT.is_set = 0;
 
     for(i=0; i<ARMCI_EVENTS; i++)
        for(j=0; j<ARMCI_MAX_MSG_RANGE; j++) {
@@ -142,16 +145,15 @@ void armci_profile_init() {
 
 #if ARMCI_PRINT_STRIDE
     for(i=0; i<ARMCI_EVENTS; i++) {
-       if(i==STR_GET || i==STR_PUT || i==STR_ACC ||
-	  i==STR_NBGET || i==STR_NBPUT || i==STR_NBACC)
+       if(strided_event(i))
 	  for(j=0; j<ARMCI_MAX_MSG_RANGE; j++) {
 	     ARMCI_PROF[i][j].stride = (armci_stride_t*)malloc(STRIDE_COUNT*sizeof(armci_stride_t));
 	     ARMCI_PROF[i][j].vector = NULL;
 	     if( ARMCI_PROF[i][j].stride == NULL)
 		armci_die("armci_profile_init(): malloc failed", armci_me);
 	  }
-       if(i==VEC_GET || i==VEC_PUT || i==VEC_ACC ||
-	  i==VEC_NBGET || i==VEC_NBPUT || i==VEC_NBACC)
+       if(i==ARMCI_PROF_GETV || i==ARMCI_PROF_PUTV || i==ARMCI_PROF_ACCV ||
+	  i==ARMCI_PROF_NBGETV || i==ARMCI_PROF_NBPUTV || i==ARMCI_PROF_NBACCV)
 	  for(j=0; j<ARMCI_MAX_MSG_RANGE; j++) {
 	     ARMCI_PROF[i][j].vector = (armci_vector_t*)malloc(STRIDE_COUNT*sizeof(armci_vector_t));
 	     ARMCI_PROF[i][j].stride = NULL;
@@ -162,16 +164,60 @@ void armci_profile_init() {
 #endif
 }
 
-static void armci_profile_set_event(int event_type, int range) {
-    gCURRENT_EVNT.event_type = event_type;
-    gCURRENT_EVNT.range      = range;
-    gCURRENT_EVNT.is_set     = 1;
-    gCURRENT_EVNT.start_time = MP_TIMER();
+#define ARMCI_EVENT_CLOSED     0
+#define ARMCI_EVENT_NOTCLOSED -1
+#define ARMCI_EVENT_SET        0
+#define ARMCI_EVENT_NOTSET    -1
+
+static int armci_profile_set_event(int event_type, int range) {
+    if(gCURRENT_EVNT.is_set == 0) { /* set an event */
+       gCURRENT_EVNT.is_set     = 1;
+       gCURRENT_EVNT.event_type = event_type;
+       gCURRENT_EVNT.range      = range;
+       gCURRENT_EVNT.start_time = MP_TIMER();
+       return ARMCI_EVENT_SET;
+    }
+    else gCURRENT_EVNT.is_set++; /* event overlap */
+    return ARMCI_EVENT_NOTSET;
+}
+
+static int armci_profile_close_event(int event_type, int range, double *time, 
+				     char *name) {
+    
+    int curr_event = gCURRENT_EVNT.event_type;
+
+    if(gCURRENT_EVNT.is_set==1) { /* Yep, there is an event set. So close it.*/
+       /*Check if "profile stop" is called for corresponding "profile start"*/
+       if(event_type != curr_event) {
+	  fprintf(stderr, 
+		  "%d: %s: ERROR:Profile started for %s, but stopped for %s\n",
+		  armci_me,name,gEventName[curr_event],gEventName[event_type]);
+	  armci_die("Profile_stop is called a different event", armci_me); 
+       }
+       
+       *time = MP_TIMER() - gCURRENT_EVNT.start_time;
+       ARMCI_PROF[curr_event][range].time += *time;
+       gCURRENT_EVNT.is_set = 0; /* close the event */
+       return ARMCI_EVENT_CLOSED;
+    }
+    else { /* event overlapping */
+       gCURRENT_EVNT.is_set--;
+       if(gCURRENT_EVNT.is_set<=0) {
+	  char *msg="Profile_stop is called before profile_start";
+	    fprintf(stderr, "%d: %s: ERROR: %s. Event Name = %s\n", armci_me, 
+		    name, msg, gEventName[curr_event]);
+	  armci_die(" profile_stop is called before profile_start", armci_me);
+       }
+    }
+    return ARMCI_EVENT_NOTCLOSED;
 }
 
 void armci_profile_start_strided(int count[], int stride_levels, int proc, 
-				 int comm_type) {
-    int i, bytes=1, non_contig=0, event_type=-1, range;
+				 int event_type) {
+    int i, status, bytes=1, range;
+
+    if(stride_levels >= ARMCI_MAX_DIM) 
+       armci_die("ARMCI_PROFILE: stride_levels >= ARMCI_MAX_DIM. Increase ARMCI_MAX_DIM.", armci_me);
 
     /* find the message range */
     for(i=0; i<= stride_levels; i++)  bytes *= count[i];
@@ -179,121 +225,67 @@ void armci_profile_start_strided(int count[], int stride_levels, int proc,
     else range = (int) (log((double)bytes)/log(2.0));
     if(range>=ARMCI_MAX_MSG_RANGE-1) range = ARMCI_MAX_MSG_RANGE-1;
  
-    /* check contiguous or non-contiguous */
-    if(stride_levels>0) non_contig=1; /* i.e. non-contiguous */
-    if(stride_levels >= ARMCI_MAX_DIM) 
-       armci_die("ARMCI_PROFILE: stride_levels >= ARMCI_MAX_DIM. Increase ARMCI_MAX_DIM.", armci_me);
-    switch(comm_type) {
-       case ARMCI_PROFILE_PUT:
-	  if(non_contig) event_type = STR_PUT;
-	  else event_type = CONTIG_PUT;
-	  break;
-       case ARMCI_PROFILE_GET: 
-	  if(non_contig) event_type = STR_GET;
-	  else event_type = CONTIG_GET;
-	  break;
-       case ARMCI_PROFILE_ACC: 
-	  if(non_contig) event_type = STR_ACC;
-	  else event_type = CONTIG_ACC;
-	  break;
-       case ARMCI_PROFILE_NBPUT:
-	  if(non_contig) event_type = STR_NBPUT;
-	  else event_type = CONTIG_NBPUT;
-	  break;
-       case ARMCI_PROFILE_NBGET: 
-	  if(non_contig) event_type = STR_NBGET;
-	  else event_type = CONTIG_NBGET;
-	  break;
-       case ARMCI_PROFILE_NBACC: 
-	  if(non_contig) event_type = STR_NBACC;
-	  else event_type = CONTIG_NBACC;
-	  break;
-       default: armci_die("ARMCI_PROFILE: Invalid communication type", armci_me);
-    }
-
     /* set the curent event for timer */
-    armci_profile_set_event(event_type, range);
+    status = armci_profile_set_event(event_type, range);
     
-    /* profile update: i.e. update event count */
-    ARMCI_PROF[event_type][range].count++;
-    
-#if ARMCI_PRINT_STRIDE 
-    if(non_contig) {
-       int idx = ARMCI_PROF[event_type][range].count-1;
-       if(idx<STRIDE_COUNT) {
-	  ARMCI_PROF[event_type][range].stride[idx].stride_levels = stride_levels;
-	  ARMCI_PROF[event_type][range].stride[idx].proc = proc;
-	  for(i=0;i<=stride_levels;i++) {
-	     ARMCI_PROF[event_type][range].stride[idx].count[i] = count[i];
+    if(status == ARMCI_EVENT_SET) { /* new event set */
+       /* profile update: i.e. update event count */
+       ARMCI_PROF[event_type][range].count++;
+       
+#      if ARMCI_PRINT_STRIDE 
+          if(strided_event(event_type)) {
+	     int idx = ARMCI_PROF[event_type][range].count-1;
+	     if(idx<STRIDE_COUNT) {
+		ARMCI_PROF[event_type][range].stride[idx].stride_levels = stride_levels;
+		ARMCI_PROF[event_type][range].stride[idx].proc = proc;
+		for(i=0;i<=stride_levels;i++) {
+		   ARMCI_PROF[event_type][range].stride[idx].count[i]=count[i];
+		}
+	     }
 	  }
+#      endif
+    }
+    else { /* Do nothing. It is just an event overlap */ }
+}
+
+void armci_profile_stop_strided(int event_type) {
+    double time;
+    int status, range = gCURRENT_EVNT.range;
+
+    status = armci_profile_close_event(event_type, range, &time,
+				       "armci_profile_stop_strided");
+    
+#if ARMCI_PRINT_STRIDE
+    if(status == ARMCI_EVENT_CLOSED) {
+       /* record the time of each strided data transfer */
+       if(strided_event(event_type)) {
+	  int idx = ARMCI_PROF[event_type][range].count-1;
+	  if(idx<STRIDE_COUNT) 
+	     ARMCI_PROF[event_type][range].stride[idx].time = time;
        }
     }
 #endif
 }
 
-void armci_profile_stop_strided() {
-    int event_type = gCURRENT_EVNT.event_type;
-    int range = gCURRENT_EVNT.range;
-    double time = MP_TIMER() - gCURRENT_EVNT.start_time;
-
-    if(gCURRENT_EVNT.is_set) { /* Yep, there is an event set */
-       ARMCI_PROF[event_type][range].time += time;
-       gCURRENT_EVNT.is_set = 0; /* clear the event */
-    }
-    else {
-       fprintf(stderr, "Event Type = %s\n", event_name[event_type]);
-       armci_die("ARMCI_PROFILE: No event set. Probably armci_profile_stop_strided() is called before armci_profile_start_strided()", armci_me);
-    }
-
-#if ARMCI_PRINT_STRIDE
-    /* record the time of each strided data transfer */
-    if(event_type==STR_GET || event_type==STR_PUT || event_type==STR_ACC) {  
-       int idx = ARMCI_PROF[event_type][range].count-1;
-       if(idx<STRIDE_COUNT) ARMCI_PROF[event_type][range].stride[idx].time = time;
-    }
-#endif
-}
-
 void armci_profile_start_vector(armci_giov_t darr[], int len, int proc, 
-				int comm_type) {
+				int event_type) {
 
-    int i, bytes=0, event_type=-1, range;
+    int i, bytes=0, range, status;
 
     /* find the message range */
     for(i=0; i<len; i++) bytes += darr[i].bytes;
     if(bytes<=0) range=0;
     else range = (int) (log((double)bytes)/log(2.0));
     if(range>=ARMCI_MAX_MSG_RANGE-1) range = ARMCI_MAX_MSG_RANGE-1;
-    
-    switch(comm_type) {
-       case ARMCI_PROFILE_PUT:
-	  event_type = VEC_PUT;
-	  break;
-       case ARMCI_PROFILE_GET: 
-	  event_type = VEC_GET;
-	  break;
-       case ARMCI_PROFILE_ACC: 
-	  event_type = VEC_ACC;
-	  break;
-       case ARMCI_PROFILE_NBPUT:
-	  event_type = VEC_NBPUT;
-	  break;
-       case ARMCI_PROFILE_NBGET: 
-	  event_type = VEC_NBGET;
-	  break;
-       case ARMCI_PROFILE_NBACC: 
-	  event_type = VEC_NBACC;
-	  break;
-       default: armci_die("ARMCI_PROFILE: Invalid comm type", armci_me);
-    }
        
     /* set the curent event for timer */
-    armci_profile_set_event(event_type, range);
-    
-    /* profile update: i.e. update event count */
-    ARMCI_PROF[event_type][range].count++;
+    status = armci_profile_set_event(event_type, range);
+
+    if(status == ARMCI_EVENT_SET) { /* new event set */
+       /* profile update: i.e. update event count */
+       ARMCI_PROF[event_type][range].count++;
        
-#if ARMCI_PRINT_STRIDE 
+#      if ARMCI_PRINT_STRIDE 
        {
 	  int idx = ARMCI_PROF[event_type][range].count-1;
 	  if(idx<STRIDE_COUNT) {
@@ -302,31 +294,25 @@ void armci_profile_start_vector(armci_giov_t darr[], int len, int proc,
 	     ARMCI_PROF[event_type][range].vector[idx].giov = 
 	       (giov_t*)malloc(len*sizeof(giov_t));
 	     for(i=0;i<len;i++) {
-		ARMCI_PROF[event_type][range].vector[idx].giov[i].ptr_array_len = 
-		  darr[i].ptr_array_len;
+		ARMCI_PROF[event_type][range].vector[idx].giov[i].ptr_array_len = darr[i].ptr_array_len;
 		ARMCI_PROF[event_type][range].vector[idx].giov[i].bytes = 
 		  darr[i].bytes;
 	     }
 	  }
        }
-#endif
+#      endif
+    }
 }
 
-void armci_profile_stop_vector() {
-    int event_type = gCURRENT_EVNT.event_type;
-    int range = gCURRENT_EVNT.range;
-    double time = MP_TIMER() - gCURRENT_EVNT.start_time;
+void armci_profile_stop_vector(int event_type) {
+    double time;
+    int status, range = gCURRENT_EVNT.range;
     
-    if(gCURRENT_EVNT.is_set) { /* Yep, there is an event set */
-       ARMCI_PROF[event_type][range].time += time;
-       gCURRENT_EVNT.is_set = 0; /* clear the event */
-    }
-    else {
-       fprintf(stderr, "Event Type = %s\n", event_name[event_type]);
-       armci_die("ARMCI_PROFILE: No event set. Probably armci_profile_stop_vector() is called before armci_profile_start_vector()", armci_me);
-    }
+    status = armci_profile_close_event(event_type, range, &time, 
+				       "armci_profile_stop_vector"); 
+
 #if ARMCI_PRINT_STRIDE
-    {  /* record the time of each vector data transfer */
+    if(status == ARMCI_EVENT_CLOSED) {/*record time of each data transfer*/
        int idx = ARMCI_PROF[event_type][range].count-1;
        if(idx<STRIDE_COUNT)  
 	  ARMCI_PROF[event_type][range].vector[idx].time = time;
@@ -334,51 +320,25 @@ void armci_profile_stop_vector() {
 #endif
 }
 
-void armci_profile_start(int comm_type) {
-    int event_type=-1, range;
+void armci_profile_start(int event_type) {
+    int range, status;
 
     /* message range is zero for events registered using this call */
     range=0;
- 
-    switch(comm_type) {
-       case ARMCI_PROFILE_BARRIER:
-	  event_type = BARRIER;
-	  break;
-       case ARMCI_PROFILE_WAIT: 
-	  event_type = WAIT;
-	  break;
-       case ARMCI_PROFILE_NOTIFY_WAIT: 
-	  event_type = NOTIFY;
-	  break;
-       case ARMCI_PROFILE_FENCE: 
-	  event_type = FENCE;
-	  break;
-       case ARMCI_PROFILE_ALLFENCE: 
-	  event_type = ALLFENCE;
-	  break;
-       default: armci_die("ARMCI_PROFILE: Invalid communication type", armci_me);
-    }
-
-    /* set the curent event for timer */
-    armci_profile_set_event(event_type, range);
     
-    /* profile update: i.e. update event count */
-    ARMCI_PROF[event_type][range].count++;
+    /* set the curent event for timer */
+    status = armci_profile_set_event(event_type, range);
+    if(status == ARMCI_EVENT_SET) { /* new event set */  
+       /* profile update: i.e. update event count */
+       ARMCI_PROF[event_type][range].count++;
+    }
 }
 
-void armci_profile_stop() {
-    int event_type = gCURRENT_EVNT.event_type;
-    int range = gCURRENT_EVNT.range;
-    double time = MP_TIMER() - gCURRENT_EVNT.start_time;
-    
-    if(gCURRENT_EVNT.is_set) { /* Yep, there is an event set */
-       ARMCI_PROF[event_type][range].time += time;
-       gCURRENT_EVNT.is_set = 0; /* clear the event */
-    }
-    else {
-       fprintf(stderr, "Event Type = %s\n", event_name[event_type]);
-       armci_die("ARMCI_PROFILE: No event set. Probably armci_profile_stop() is called before armci_profile_start()", armci_me);
-    }
+void armci_profile_stop(int event_type) {
+    double time;
+    int status,range = gCURRENT_EVNT.range;
+    status = armci_profile_close_event(event_type, range, &time, 
+				       "armci_profile_stop");
 }
 
 #define ARMCI_HDR0(fp) fprintf(fp, "\n\n************** TOTAL DATA TRANSFERS **************\n\n");
@@ -400,31 +360,43 @@ static void armci_print_all(FILE *fp) {
     ARMCI_HDR0(fp); ARMCI_HDR3(fp);
     for(i=0; i< nrange; i++) {
 
-       nget =(ARMCI_PROF[CONTIG_GET][i].count + 
-	      ARMCI_PROF[STR_GET][i].count + ARMCI_PROF[VEC_GET][i].count +
-	      ARMCI_PROF[CONTIG_NBGET][i].count + 
-	      ARMCI_PROF[STR_NBGET][i].count + ARMCI_PROF[VEC_NBGET][i].count);
-       nput =(ARMCI_PROF[CONTIG_PUT][i].count + 
-	      ARMCI_PROF[STR_PUT][i].count + ARMCI_PROF[VEC_PUT][i].count +
-	      ARMCI_PROF[CONTIG_NBPUT][i].count +
-              ARMCI_PROF[STR_NBPUT][i].count + ARMCI_PROF[VEC_NBPUT][i].count);
-       nacc =(ARMCI_PROF[CONTIG_ACC][i].count + 
-	      ARMCI_PROF[STR_ACC][i].count + ARMCI_PROF[VEC_ACC][i].count +
-	      ARMCI_PROF[CONTIG_NBACC][i].count +
-              ARMCI_PROF[STR_NBACC][i].count + ARMCI_PROF[VEC_NBACC][i].count);
+       nget =(ARMCI_PROF[ARMCI_PROF_GET][i].count + 
+	      ARMCI_PROF[ARMCI_PROF_GETS][i].count + 
+	      ARMCI_PROF[ARMCI_PROF_GETV][i].count +
+	      ARMCI_PROF[ARMCI_PROF_NBGET][i].count + 
+	      ARMCI_PROF[ARMCI_PROF_NBGETS][i].count + 
+	      ARMCI_PROF[ARMCI_PROF_NBGETV][i].count);
+       nput =(ARMCI_PROF[ARMCI_PROF_PUT][i].count + 
+	      ARMCI_PROF[ARMCI_PROF_PUTS][i].count + 
+	      ARMCI_PROF[ARMCI_PROF_PUTV][i].count +
+	      ARMCI_PROF[ARMCI_PROF_NBPUT][i].count +
+              ARMCI_PROF[ARMCI_PROF_NBPUTS][i].count + 
+	      ARMCI_PROF[ARMCI_PROF_NBPUTV][i].count);
+       nacc =(ARMCI_PROF[ARMCI_PROF_ACC][i].count + 
+	      ARMCI_PROF[ARMCI_PROF_ACCS][i].count + 
+	      ARMCI_PROF[ARMCI_PROF_ACCV][i].count +
+	      ARMCI_PROF[ARMCI_PROF_NBACC][i].count +
+              ARMCI_PROF[ARMCI_PROF_NBACCS][i].count + 
+	      ARMCI_PROF[ARMCI_PROF_NBACCV][i].count);
 
-       gtime = (ARMCI_PROF[CONTIG_GET][i].time + 
-		ARMCI_PROF[STR_GET][i].time + ARMCI_PROF[VEC_GET][i].time +
-		ARMCI_PROF[CONTIG_NBGET][i].time +
-		ARMCI_PROF[STR_NBGET][i].time + ARMCI_PROF[VEC_NBGET][i].time);
-       ptime = (ARMCI_PROF[CONTIG_PUT][i].time + 
-		ARMCI_PROF[STR_PUT][i].time + ARMCI_PROF[VEC_PUT][i].time +
-		ARMCI_PROF[CONTIG_NBPUT][i].time +
-		ARMCI_PROF[STR_NBPUT][i].time + ARMCI_PROF[VEC_NBPUT][i].time);
-       atime = (ARMCI_PROF[CONTIG_ACC][i].time + 
-		ARMCI_PROF[STR_ACC][i].time+ARMCI_PROF[VEC_ACC][i].time +
-		ARMCI_PROF[CONTIG_NBACC][i].time +
-                ARMCI_PROF[STR_NBACC][i].time+ARMCI_PROF[VEC_NBACC][i].time);
+       gtime = (ARMCI_PROF[ARMCI_PROF_GET][i].time + 
+		ARMCI_PROF[ARMCI_PROF_GETS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_GETV][i].time +
+		ARMCI_PROF[ARMCI_PROF_NBGET][i].time +
+		ARMCI_PROF[ARMCI_PROF_NBGETS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_NBGETV][i].time);
+       ptime = (ARMCI_PROF[ARMCI_PROF_PUT][i].time + 
+		ARMCI_PROF[ARMCI_PROF_PUTS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_PUTV][i].time +
+		ARMCI_PROF[ARMCI_PROF_NBPUT][i].time +
+		ARMCI_PROF[ARMCI_PROF_NBPUTS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_NBPUTV][i].time);
+       atime = (ARMCI_PROF[ARMCI_PROF_ACC][i].time + 
+		ARMCI_PROF[ARMCI_PROF_ACCS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_ACCV][i].time +
+		ARMCI_PROF[ARMCI_PROF_NBACC][i].time +
+                ARMCI_PROF[ARMCI_PROF_NBACCS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_NBACCV][i].time);
        
        fprintf(fp, "%d\t %d\t %d\t %.2e   %.2e   %.2e  ",
                nget, nput, nacc,  gtime, ptime, atime);
@@ -439,12 +411,12 @@ static void armci_print_contig(FILE *fp) {
     ARMCI_HDR1(fp); ARMCI_HDR3(fp);
     for(i=0; i< nrange; i++) {
        fprintf(fp, "%d\t %d\t %d\t %.2e   %.2e   %.2e  ",
-	       ARMCI_PROF[CONTIG_GET][i].count,
-	       ARMCI_PROF[CONTIG_PUT][i].count,
-	       ARMCI_PROF[CONTIG_ACC][i].count, 
-	       ARMCI_PROF[CONTIG_GET][i].time,
-	       ARMCI_PROF[CONTIG_PUT][i].time,
-	       ARMCI_PROF[CONTIG_ACC][i].time);
+	       ARMCI_PROF[ARMCI_PROF_GET][i].count,
+	       ARMCI_PROF[ARMCI_PROF_PUT][i].count,
+	       ARMCI_PROF[ARMCI_PROF_ACC][i].count, 
+	       ARMCI_PROF[ARMCI_PROF_GET][i].time,
+	       ARMCI_PROF[ARMCI_PROF_PUT][i].time,
+	       ARMCI_PROF[ARMCI_PROF_ACC][i].time);
        if(i< nrange-1) fprintf(fp, "(%d-%d)\n", 1<<i, (1<<(i+1))-1);
        else fprintf(fp, "(>=%d)\n", 1<<(ARMCI_MAX_MSG_RANGE-1));
     }
@@ -458,12 +430,18 @@ static void armci_print_noncontig(FILE *fp) {
 
     ARMCI_HDR2(fp); ARMCI_HDR3(fp);
     for(i=0; i< nrange; i++) {
-       nget = ARMCI_PROF[STR_GET][i].count + ARMCI_PROF[VEC_GET][i].count;
-       nput = ARMCI_PROF[STR_PUT][i].count + ARMCI_PROF[VEC_PUT][i].count;
-       nacc = ARMCI_PROF[STR_ACC][i].count + ARMCI_PROF[VEC_ACC][i].count;
-       gtime=ARMCI_PROF[STR_GET][i].time+ARMCI_PROF[VEC_GET][i].time;
-       ptime=ARMCI_PROF[STR_PUT][i].time+ARMCI_PROF[VEC_PUT][i].time;
-       atime=ARMCI_PROF[STR_ACC][i].time+ARMCI_PROF[VEC_ACC][i].time;
+       nget = (ARMCI_PROF[ARMCI_PROF_GETS][i].count + 
+	       ARMCI_PROF[ARMCI_PROF_GETV][i].count);
+       nput = (ARMCI_PROF[ARMCI_PROF_PUTS][i].count + 
+	       ARMCI_PROF[ARMCI_PROF_PUTV][i].count);
+       nacc = (ARMCI_PROF[ARMCI_PROF_ACCS][i].count + 
+	       ARMCI_PROF[ARMCI_PROF_ACCV][i].count);
+       gtime = (ARMCI_PROF[ARMCI_PROF_GETS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_GETV][i].time);
+       ptime = (ARMCI_PROF[ARMCI_PROF_PUTS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_PUTV][i].time);
+       atime = (ARMCI_PROF[ARMCI_PROF_ACCS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_ACCV][i].time);
        
        fprintf(fp, "%d\t %d\t %d\t %.2e   %.2e   %.2e  ",
 	       nget, nput, nacc,  gtime, ptime, atime);
@@ -479,12 +457,12 @@ static void armci_print_nbcontig(FILE *fp) {
     ARMCI_HDR6(fp); ARMCI_HDR8(fp);
     for(i=0; i< nrange; i++) {
        fprintf(fp, "%d\t %d\t %d\t %.2e   %.2e   %.2e  ",
-	       ARMCI_PROF[CONTIG_NBGET][i].count,
-	       ARMCI_PROF[CONTIG_NBPUT][i].count,
-	       ARMCI_PROF[CONTIG_NBACC][i].count, 
-	       ARMCI_PROF[CONTIG_NBGET][i].time,
-	       ARMCI_PROF[CONTIG_NBPUT][i].time,
-	       ARMCI_PROF[CONTIG_NBACC][i].time);
+	       ARMCI_PROF[ARMCI_PROF_NBGET][i].count,
+	       ARMCI_PROF[ARMCI_PROF_NBPUT][i].count,
+	       ARMCI_PROF[ARMCI_PROF_NBACC][i].count, 
+	       ARMCI_PROF[ARMCI_PROF_NBGET][i].time,
+	       ARMCI_PROF[ARMCI_PROF_NBPUT][i].time,
+	       ARMCI_PROF[ARMCI_PROF_NBACC][i].time);
        if(i< nrange-1) fprintf(fp, "(%d-%d)\n", 1<<i, (1<<(i+1))-1);
        else fprintf(fp, "(>=%d)\n", 1<<(ARMCI_MAX_MSG_RANGE-1));
     }
@@ -498,15 +476,18 @@ static void armci_print_nbnoncontig(FILE *fp) {
 
     ARMCI_HDR7(fp); ARMCI_HDR8(fp);
     for(i=0; i< nrange; i++) {
-       nget = ARMCI_PROF[STR_NBGET][i].count + ARMCI_PROF[VEC_NBGET][i].count;
-       nput = ARMCI_PROF[STR_NBPUT][i].count + ARMCI_PROF[VEC_NBPUT][i].count;
-       nacc = ARMCI_PROF[STR_NBACC][i].count + ARMCI_PROF[VEC_NBACC][i].count;
-       gtime = (ARMCI_PROF[STR_NBGET][i].time + 
-		ARMCI_PROF[VEC_NBGET][i].time);
-       ptime = (ARMCI_PROF[STR_NBPUT][i].time + 
-		ARMCI_PROF[VEC_NBPUT][i].time);
-       atime = (ARMCI_PROF[STR_NBACC][i].time + 
-		ARMCI_PROF[VEC_NBACC][i].time);
+       nget = (ARMCI_PROF[ARMCI_PROF_NBGETS][i].count + 
+	       ARMCI_PROF[ARMCI_PROF_NBGETV][i].count);
+       nput = (ARMCI_PROF[ARMCI_PROF_NBPUTS][i].count + 
+	       ARMCI_PROF[ARMCI_PROF_NBPUTV][i].count);
+       nacc = (ARMCI_PROF[ARMCI_PROF_NBACCS][i].count + 
+	       ARMCI_PROF[ARMCI_PROF_NBACCV][i].count);
+       gtime = (ARMCI_PROF[ARMCI_PROF_NBGETS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_NBGETV][i].time);
+       ptime = (ARMCI_PROF[ARMCI_PROF_NBPUTS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_NBPUTV][i].time);
+       atime = (ARMCI_PROF[ARMCI_PROF_NBACCS][i].time + 
+		ARMCI_PROF[ARMCI_PROF_NBACCV][i].time);
 
        fprintf(fp, "%d\t %d\t %d\t %.2e   %.2e   %.2e  ",
 	       nget, nput, nacc,  gtime, ptime, atime);
@@ -520,24 +501,32 @@ static void armci_print_misc(FILE *fp) {
     ARMCI_HDR9(fp);
     fprintf(fp, "#calls\t time\t   EVENT\n\n");
     fprintf(fp, "%d\t %.2e  ARMCI_Wait()\n", 
-	    ARMCI_PROF[WAIT][0].count, ARMCI_PROF[WAIT][0].time);
+	    ARMCI_PROF[ARMCI_PROF_WAIT][0].count, 
+	    ARMCI_PROF[ARMCI_PROF_WAIT][0].time);
     fprintf(fp, "%d\t %.2e  armci_notify_wait()\n", 
-	    ARMCI_PROF[NOTIFY][0].count, ARMCI_PROF[NOTIFY][0].time);
-#if 0
+	    ARMCI_PROF[ARMCI_PROF_NOTIFY][0].count, 
+	    ARMCI_PROF[ARMCI_PROF_NOTIFY][0].time);
     fprintf(fp, "%d\t %.2e  ARMCI_Barrier()\n", 
-	    ARMCI_PROF[BARRIER][0].count, ARMCI_PROF[BARRIER][0].time);
+	    ARMCI_PROF[ARMCI_PROF_BARRIER][0].count, 
+	    ARMCI_PROF[ARMCI_PROF_BARRIER][0].time);
     fprintf(fp, "%d\t %.2e  ARMCI_Fence()\n", 
-	    ARMCI_PROF[FENCE][0].count, ARMCI_PROF[FENCE][0].time);
+	    ARMCI_PROF[ARMCI_PROF_FENCE][0].count, 
+	    ARMCI_PROF[ARMCI_PROF_FENCE][0].time);
     fprintf(fp, "%d\t %.2e  ARMCI_Allfence()\n", 
-	    ARMCI_PROF[ALLFENCE][0].count, ARMCI_PROF[ALLFENCE][0].time);
-#endif
+	    ARMCI_PROF[ARMCI_PROF_ALLFENCE][0].count, 
+	    ARMCI_PROF[ARMCI_PROF_ALLFENCE][0].time);
+    fprintf(fp, "%d\t %.2e  ARMCI_Rmw()\n", 
+	    ARMCI_PROF[ARMCI_PROF_RMW][0].count, 
+	    ARMCI_PROF[ARMCI_PROF_RMW][0].time);
 }
 
 #if ARMCI_PRINT_STRIDE 
 static void armci_print_warning_msg(FILE *fp, int range, int str_count) {
     fprintf(fp, "WARNING: In your program, total number of data transfers\n");
-    fprintf(fp, "for message range[%d - %d] is %d. This exceeds\n", 1<<range, 1<<(range+1), str_count);
-    fprintf(fp, "the maximum # of data transfers [%d] that can be profiled.\n", STRIDE_COUNT); 
+    fprintf(fp, "for message range[%d - %d] is %d. This exceeds\n", 
+	    1<<range, 1<<(range+1), str_count);
+    fprintf(fp,"the maximum # of data transfers [%d] that can be profiled.\n",
+	    STRIDE_COUNT); 
     fprintf(fp, "Therefore profile of only first %d data \n", STRIDE_COUNT);
     fprintf(fp, "transfers are shown below. To increase the count, set\n");
     fprintf(fp, "STRIDE_COUNT > %d (in armci_profile.c)\n", str_count);
@@ -555,7 +544,7 @@ static void armci_print_stridedinfo(FILE *fp, int event, int range) {
     }
 
     fprintf(fp, "\n\nSTRIDE INFORMATION FOR MSG_RANGE %d-%d for EVENT: %s\n", 
-	    1<<range, 1<<(range+1), event_name[event]);
+	    1<<range, 1<<(range+1), gEventName[event]);
     ARMCI_HDR4(fp);
 
     for(i=0; i< str_count; i++) {
@@ -587,7 +576,7 @@ static void armci_print_vectorinfo(FILE *fp, int event, int range) {
     }
     
     fprintf(fp, "\n\nVECTOR INFORMATION FOR MSG_RANGE %d-%d for EVENT: %s\n", 
-	    1<<range, 1<<(range+1), event_name[event]);
+	    1<<range, 1<<(range+1), gEventName[event]);
     ARMCI_HDR5(fp);
 
     for(i=0; i< str_count; i++) {
@@ -627,23 +616,26 @@ void armci_profile_terminate() {
 #if ARMCI_PRINT_STRIDE
     {
        /**
-	* printing stride info for non-contiguous get (STR_GET) for message
+	* printing stride info for non-contiguous get (ARMCI_PROF_GETS) for message
 	* range #6. 2^6 - 2^(6+1) bytes (i.e. 64-128 bytes)
-	*    Ex: armci_print_stridedinfo(STR_GET,6);
+	*    Ex: armci_print_stridedinfo(ARMCI_PROF_GETS,6);
  	*/
 #define ARMCI_PRINT_EVENTS 6
-       int i,j,str_event[ARMCI_PRINT_EVENTS]={ STR_GET, STR_PUT, STR_ACC,
-					       STR_NBGET,STR_NBPUT,STR_NBACC};
-       int vec_event[ARMCI_PRINT_EVENTS] = { VEC_GET, VEC_PUT, VEC_ACC,
-					     VEC_NBGET, VEC_NBPUT, VEC_NBACC};
-
+       int i,j;
+       int str_event[ARMCI_PRINT_EVENTS]={ARMCI_PROF_GETS, ARMCI_PROF_PUTS,
+					  ARMCI_PROF_ACCS, ARMCI_PROF_NBGETS,
+					  ARMCI_PROF_NBPUTS,ARMCI_PROF_NBACCS};
+       int vec_event[ARMCI_PRINT_EVENTS]={ARMCI_PROF_GETV, ARMCI_PROF_PUTV,
+					  ARMCI_PROF_ACCV, ARMCI_PROF_NBGETV,
+					  ARMCI_PROF_NBPUTV,ARMCI_PROF_NBACCV};
+       
        fprintf(fp,"\n\n***************************************************\n");
        fprintf(fp,    " STRIDE INFORMATION for all strided data transfers\n");
        fprintf(fp,    "***************************************************\n");
        for(i=0; i<ARMCI_MAX_MSG_RANGE; i++)
 	  for(j=0; j<ARMCI_PRINT_EVENTS; j++)
 	     armci_print_stridedinfo(fp,str_event[j], i);
-
+       
        fprintf(fp,"\n\n**************************************************\n");
        fprintf(fp,    " VECTOR INFORMATION for all vector data transfers\n");
        fprintf(fp,    "**************************************************\n");

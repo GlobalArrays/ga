@@ -1,26 +1,22 @@
-/* $Id: armci_profile.h,v 1.3 2004-07-20 02:26:10 manoj Exp $ */
+/* $Id: armci_profile.h,v 1.4 2004-07-21 00:29:59 manoj Exp $ */
 
-#define ARMCI_PROFILE_GET          1
-#define ARMCI_PROFILE_PUT          2
-#define ARMCI_PROFILE_ACC          3
-#define ARMCI_PROFILE_NBGET        4
-#define ARMCI_PROFILE_NBPUT        5
-#define ARMCI_PROFILE_NBACC        6
-#define ARMCI_PROFILE_BARRIER      7
-#define ARMCI_PROFILE_WAIT         8
-#define ARMCI_PROFILE_NOTIFY_WAIT  9
-#define ARMCI_PROFILE_FENCE        10
-#define ARMCI_PROFILE_ALLFENCE     11
-
-#define ARMCI_MAX_DIM 7
+enum events {ARMCI_PROF_GET, ARMCI_PROF_PUT, ARMCI_PROF_ACC, /* get/put/acc */
+	     ARMCI_PROF_GETS, ARMCI_PROF_PUTS, ARMCI_PROF_ACCS, /* strided */
+	     ARMCI_PROF_GETV, ARMCI_PROF_PUTV, ARMCI_PROF_ACCV, /* vector */
+	     ARMCI_PROF_NBGET, ARMCI_PROF_NBPUT, ARMCI_PROF_NBACC,/*Non-block*/
+             ARMCI_PROF_NBGETS, ARMCI_PROF_NBPUTS, ARMCI_PROF_NBACCS,
+             ARMCI_PROF_NBGETV, ARMCI_PROF_NBPUTV, ARMCI_PROF_NBACCV,
+	     ARMCI_PROF_BARRIER, ARMCI_PROF_WAIT, ARMCI_PROF_NOTIFY, /*misc*/
+	     ARMCI_PROF_FENCE, ARMCI_PROF_ALLFENCE, ARMCI_PROF_RMW
+};
 
 extern void armci_profile_init();
 extern void armci_profile_terminate();
 extern void armci_profile_start_strided(int count[], int stride_levels, 
-					int proc, int comm_type);
-extern void armci_profile_stop_strided();
+					int proc, int event_type);
+extern void armci_profile_stop_strided(int event_type);
 extern void armci_profile_start_vector(armci_giov_t darr[], int len, int proc,
-				       int comm_type);
-extern void armci_profile_stop_vector();
-extern void armci_profile_start(int comm_type);
-extern void armci_profile_stop();
+				       int event_type);
+extern void armci_profile_stop_vector(int event_type);
+extern void armci_profile_start(int event_type);
+extern void armci_profile_stop(int event_type);
