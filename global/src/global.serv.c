@@ -916,6 +916,47 @@ void ga_server_handler()
 
 /*\ WAIT until all requests are serviced 
 \*/
+void ga_check_req_balance()
+{
+Integer outstanding, local_req=NumSndReq; 
+char sum='+';
+
+#  if defined(LAPI) || defined(IWAY)
+     ga_error("ga_check_req_balance: does not work on this platform",0);
+#  endif
+   
+#  if defined(DATA_SERVER)
+       /* add all requests sent by ga nodes in this cluster */
+       ga_igop_clust(GA_TYPE_SYN, &local_req, 1, &sum, CLUST_GRP);
+
+       if(ga_msg_nodeid_() == cluster_master){
+#  endif
+
+     /* *NumRecReq has the number of requests received by local server */
+      outstanding = local_req - *NumRecReq; 
+
+#     if defined(DATA_SERVER)
+             ga_igop_clust(GA_TYPE_SYN, &outstanding, 1, &sum, INTER_CLUST_GRP);
+#     else
+             ga_igop(GA_TYPE_SYN, &outstanding, 1, &sum);
+#     endif
+
+      if(outstanding != 0) 
+         ga_error("ERROR:ga_check_req_balance: mismatch detected!",outstanding);
+
+#  if defined(DATA_SERVER)
+        /* now cluster master knows that there are no outstanding requests */
+     }
+#  endif
+
+
+}
+
+
+
+
+/*\ WAIT until all requests are serviced 
+\*/
 void ga_wait_server()
 {
 Integer outstanding, local_req=NumSndReq; 

@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.48 1997-12-13 01:21:48 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.49 1997-12-30 23:58:39 d3h325 Exp $*/
 /* 
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -127,6 +127,11 @@ Integer status;
 #endif
 #ifdef CHECK_MA
        status = MA_verify_allocator_stuff();
+#endif
+
+    /* sanity check to verify if request messages have not been lost */
+#if defined(SP) || defined(SP1)
+       ga_check_req_balance();
 #endif
 }
 

@@ -142,5 +142,5 @@ extern void ga_get_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo,
 extern Integer ga_read_inc_local(Integer g_a, Integer i, Integer j, Integer inc, 
                                  Integer proc);
 
-
+extern void ga_check_req_balance();
 #endif
