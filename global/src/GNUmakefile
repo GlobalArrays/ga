@@ -74,21 +74,6 @@ HARDCLEAN = yes
 
 include ../../config/makefile.h
 
-#
-# for IA64 only. gcc 3.x cannot find the symbols modsi3 and divsi3 in IA64.
-# lib1funs-ia64 includes these symbols.
-ifeq ($(TARGET),LINUX64)
-ifeq ($(_CPU),ia64)
-ifeq ($(CC), gcc)
-ifeq ($(FC), efc)
-     GA_EXTRA += lib1funcs-ia64.o
-%.o: %.S
-	$(CC) -c lib1funcs-ia64.S
-endif
-endif
-endif
-endif
-
 include ../../config/makelib.h
 
 $(OBJ_FRAGILE): %.o : %.c
