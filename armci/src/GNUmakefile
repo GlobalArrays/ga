@@ -63,10 +63,14 @@ endif
 ifdef ARMCI_NETWORK
   LIBRARY_STAMP = $(ARMCI_NETWORK).$(MSG_COMMS)
 else
+  # sockets
   LIBRARY_STAMP = $(MSG_COMMS)
   ifeq ($(TARGET),$(findstring $(TARGET),$(SOCKETS)))
      OBJ += spawn.o dataserv.o sockets.o request.o
      LIB_DEFINES += -DDATA_SERVER -DSOCKETS
+     # to use pthread version uncomment the following two lines
+     #LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT
+     #EXTRA_LIBS += -lpthread
   endif
 endif
 
