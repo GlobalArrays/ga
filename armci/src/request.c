@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.26 2001-09-13 22:58:25 d3h325 Exp $ */
+/* $Id: request.c,v 1.27 2001-09-26 00:53:38 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -476,7 +476,7 @@ int armci_rem_strided(int op, void* scale, int proc,
          for(i=0;i<stride_levels;i++)((int*)buf)[i] = dst_stride_arr[i];
                                        buf += stride_levels*sizeof(int);
          msginfo->bypass=1;
-         msginfo->pinned=1; /* if set then pin is done before sending req*/
+         msginfo->pinned=0; /* if set then pin is done before sending req*/
       }else{
          msginfo->bypass=0;
          msginfo->pinned=0;
@@ -570,9 +570,7 @@ int armci_rem_strided(int op, void* scale, int proc,
 
              if(msginfo->pinned) armci_send_req(proc,msginfo,bufsize);
              else armci_client_send_ack(proc, 1);
-
-             armci_rcv_strided_data_bypass(proc, msginfo->datalen,
-                                           dst_ptr, stride_levels);
+             armci_rcv_strided_data_bypass(proc, msginfo,dst_ptr,stride_levels);
              armci_unpin_memory(dst_ptr,dst_stride_arr,count, stride_levels);
           }
 

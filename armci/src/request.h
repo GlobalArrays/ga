@@ -87,7 +87,7 @@ extern void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
                          void *ptr, int strides, int stride_arr[], int count[]);
 
 extern char *armci_rcv_data(int proc, request_header_t *msginfo);
-extern void armci_rcv_strided_data_bypass(int proc, int datalen,
+extern void armci_rcv_strided_data_bypass(int proc, request_header_t *msginfo,
                                           void *ptr, int stride_levels);
 extern void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
             void *loc_buf, int msg_buflen, void *loc_ptr, int *loc_stride_arr,
