@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include "mpi.h"
+#include <mpi.h>
 
 #define HOSTNAME_LEN 128 
 static char myname[HOSTNAME_LEN], rootname[HOSTNAME_LEN];

@@ -1,4 +1,4 @@
-#include "mpi.h"
+#include <mpi.h>
 #include "tcgmsgP.h"
 
 char      tcgmsg_err_string[ERR_STR_LEN];

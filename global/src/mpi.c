@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "config.h"
-#include "mpi.h"
+#include <mpi.h>
 #include "global.h"
 #include "message.h"
 

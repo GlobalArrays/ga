@@ -1,4 +1,4 @@
-#include "mpi.h"
+#include <mpi.h>
 #include "tcgmsgP.h"
 #include "../config/fujitsu-vpp.h"
 
