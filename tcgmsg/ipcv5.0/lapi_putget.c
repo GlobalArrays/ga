@@ -160,7 +160,7 @@ Integer NXTVAL_(mproc)
 */
 {
 #define INC 1
-  long local;
+  int local;
   long stype = INTERNAL_SYNC_TYPE;
   lapi_cntr_t req_id;
   int rc, inc = INC;
