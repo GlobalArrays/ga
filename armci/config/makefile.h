@@ -101,6 +101,16 @@ ifeq ($(TARGET),LINUX64)
    GLOB_DEFINES += -DLINUX
    EXTRA_OBJ = tas.o
 endif
+ifeq ($(TARGET),LINUX64_32)
+     FC = fort
+     FOPT_REN = -i4 -assume no2underscore -fpe3 -check nooverflow
+     FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
+     
+#    COPT_REN = -g3  
+     CC = ccc
+   GLOB_DEFINES += -DLINUX -DLINUX64
+   EXTRA_OBJ = tas.o
+endif
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt

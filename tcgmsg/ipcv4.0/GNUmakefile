@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.4 2001-05-04 23:57:09 edo Exp $
+# $Id: GNUmakefile,v 1.5 2001-05-05 05:24:19 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -38,6 +38,10 @@ ifeq ($(TARGET),LINUX)
    EXTRA = strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),LINUX64)
+   LIB_DEFINES =  -DLINUX -DLINUX64 -DCOMPAQ_FORT -DSYSV -DSHMEM -DTIMINGS -DNOSPIN
+   EXTRA = strdup.o strtok.o wrap.o
+endif
+ifeq ($(TARGET),LINUX64_32)
    LIB_DEFINES =  -DLINUX -DLINUX64 -DCOMPAQ_FORT -DSYSV -DSHMEM -DTIMINGS -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
 endif

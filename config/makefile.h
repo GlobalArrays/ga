@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.45 2001-05-04 23:57:05 edo Exp $
+# $Id: makefile.h,v 1.46 2001-05-05 05:24:19 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -212,6 +212,21 @@ FOPT_REN +=-assume accuracy_sensitive -check nopower -check nounderflow
         CLIBS = -lfor
 endif
 
+ifeq ($(TARGET),LINUX64_32)
+           CC = ccc
+           FC = fort
+       RANLIB = echo
+GLOB_DEFINES += -DLINUX -DLINUX64 
+FOPT_REN=-i4 -assume no2underscore -align_dcommons -fpe3 -check nooverflow 
+FOPT_REN +=-assume accuracy_sensitive -check nopower -check nounderflow
+        FOPT_REN+= -Wl,-taso
+        COPT_REN+= -Wl,-taso -misalign
+#COPT_REN= 
+          CLD = $(CC)
+        FLD_REN= -Wl,-taso
+        CLIBS = -lfor
+endif
+
 #............................. CYGNUS on Windows ..........................
 #
 ifeq ($(TARGET),CYGNUS)
@@ -275,6 +290,7 @@ endif
 #
 ifeq ($(TARGET),DECOSF32)
      FOPT_REN = -i4 -fpe2 -check nounderflow -check nopower -check nooverflow
+     COPT_REN = -misalign
         CDEFS = #-DEXT_INT
        RANLIB = ranlib
  GLOB_DEFINES = -DDECOSF
