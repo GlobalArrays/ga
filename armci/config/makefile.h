@@ -64,7 +64,7 @@ ifeq ($(TARGET),LINUX)
                      /i686/{ print "686" }; /i*86&&^i686/ { print "x86" } ' )
 
 ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { print "pgf77" ; exit } ' )
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { apgfcount++}; END {if(apgfcount)print "pgf77"} ' )
 endif
 ifneq (,$(findstring mpicc,$(_CC)))
          _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
