@@ -1,5 +1,5 @@
 #
-# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.14 1996-06-27 22:44:49 d3g681 Exp $
+# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.15 1998-11-23 10:09:16 d3e129 Exp $
 #
 # for events and debugging with events add  -DEVENTLOG to the DEFINES definition
 # for the given machine
@@ -308,6 +308,19 @@ IF LINUX
       LIBS = -lc
      EXTRA = strdup.o strtok.o
 ENDIF LINUX
+IF PGLINUX
+# PC80x86 Linux pl10. 
+# f77 usage of argc&argv inside f2c is (xargc & xargv).
+# -DPLOT option removed for linux. See DECOSF comment....
+        FC = pgf77
+    FFLAGS = -O
+        CC = gcc
+   DEFINES = -DLINUX -DPGLINUX -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
+    CFLAGS = -O $(DEFINES)
+ LINTFLAGS = $(DEFINES) -u
+      LIBS = -lc
+     EXTRA = strdup.o strtok.o
+ENDIF PGLINUX
 IF SGI
 #SGI IRIX ...  note that need -lmalloc ... default break in Stress
         FC = f77

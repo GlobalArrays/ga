@@ -3,7 +3,7 @@
 # Define TARGET to be the machine you wish to build for
 # choose one of :
 # SUN,SOLARIS,SGI,SGITFP,IBM,KSR,SP1,CRAY-T3D,CRAY-T3E,IPSC,DELTA,PARAGON,DECOSF,LAPI
-#
+# LINUX, PGLINUX
 # Specify message-passing library to be used with GA. The current choices
 # are: TCGMSG (default) or MPI. For MPI, please refer to global.doc for 
 # configuration info.
@@ -68,6 +68,20 @@ else
            FC = g77
 endif
  GLOB_DEFINES = -DLINUX
+          CPP = gcc -E -nostdinc -undef -P
+       RANLIB = ranlib
+endif
+
+#
+#................................ PGLINUX ....................................
+# IBM PC running Linux with Portland Group Compilers
+#
+ifeq ($(TARGET),PGLINUX)
+
+     FOPT_REN = -fno-second-underscore
+           FC = pgf77
+ GLOB_DEFINES = -DLINUX -DPGLINUX
+           CC = gcc
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
 endif

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.5 1996-03-21 18:24:32 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.6 1998-11-23 10:09:16 d3e129 Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -43,6 +43,11 @@
 #if defined(LINUX)
 #define ARGC_ xargc
 #define ARGV_ xargv
+#endif
+
+#if defined(PGLINUX)
+#define ARGC_ __argc_save
+#define ARGV_ __argv_save
 #endif
 
 #ifdef SEQUENT

@@ -167,6 +167,18 @@ ifeq ($(TARGET),LINUX)
      EXTRA = strdup.o strtok.o
 endif
 
+ifeq ($(TARGET),PGLINUX)
+# PC80x86 Linux pl10. with pgf
+# f77 usage of argc&argv inside f2c is (xargc & xargv).
+# -DPLOT option removed for linux. 
+        FC = pgf77 -fno-second-underscore 
+        CC = gcc
+   DEFINES = -DLINUX -DPGLINUX -DSYSV -DSHMEM -DTIMINGS -DNOSPIN
+ LINTFLAGS = $(DEFINES) -u
+      LIBS = -lc
+     EXTRA = strdup.o strtok.o
+endif
+
 
 ifeq ($(TARGET),SGI-OLD)
 # 32-bit systems running IRIX 5.3 and older
