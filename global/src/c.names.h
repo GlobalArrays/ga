@@ -336,7 +336,7 @@
 #define  ga_elem_minimum_	   ga_elem_minimum__  
 #define  ga_aba_value_patch_       ga_abs_value_patch__
 #define  ga_add_constant_patch_	   ga_add_constant_patch__
-#define  ga_recip_patch_ 	   ga_recip__
+#define  ga_recip_patch_ 	   ga_recip_patch__
 #define  ga_elem_multiply_patch_   ga_elem_multiply_patch__	
 #define  ga_elem_divide_patch_     ga_elem_divide_patch__	
 #define  ga_elem_maxumum_patch_    ga_elem_maximum_patch__	

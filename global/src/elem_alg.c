@@ -1287,18 +1287,20 @@ void ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
 	*result = 1.0;
      else
      {
-     	/*Now look at each element of the array g_a. If an element of g_a is negative, then simply return */ 
+     	/*Now look at each element of the array g_a. 
+          If an element of g_a is negative, then simply return */ 
      	if(has_negative_elem(g_a, alo, ahi))
 		ga_error("ga_step_max_patch_: g_a has negative element.", -1);
      
      	/*duplicatecate an array c to hold the temparate result = g_a/g_b; */
      	ga_duplicate(g_a, &g_C, "Temp");
      	if(g_C==0)
-		ga_error("ga_step_max_patch_:fail to duplicate array c", *g_c);
+		ga_error("ga_step_max_patch_:fail to duplicate array c", *g_a);
         g_c = &g_C; 
      	ga_elem_divide_patch_(g_a, alo, ahi, g_b, blo, bhi, g_c, alo, ahi);
 
-        /*Now look at each element of the array g_c. If an element of g_c is positive, then replace it with -GA_INFINITY */ 
+        /*Now look at each element of the array g_c. If an element of g_c is positive,
+          then replace it with -GA_INFINITY */ 
         ngai_elem3_patch_(g_c, alo, ahi, OP_STEPMAX);  
         /*Then, we will select the maximum of the array g_c*/ 
         nga_select_elem_(g_c, "max", result, &index); 
