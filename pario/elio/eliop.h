@@ -37,7 +37,7 @@ extern void ga_error(char*, long);
 #  include <sys/mount.h>
 #  include <nx.h>
 #endif
-#if defined(SP) || defined(SP1)
+#ifdef PIOFS
 #  include <piofs/piofs_ioctl.h>
 #endif
 
