@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.15 1996-07-19 20:05:27 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.16 1996-08-16 23:08:24 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -40,6 +40,7 @@
 #define  ga_net_nodeid_            GA_NET_NODEID
 #define  ga_print_                 GA_PRINT
 #define  ga_print_patch_           GA_PRINT_PATCH
+#define  ga_print_stats_           GA_PRINT_STATS
 #define  ga_put_                   GA_PUT
 #define  ga_read_inc_              GA_READ_INC
 #define  ga_reinit_handler_        GA_REINIT_HANDLER

@@ -45,6 +45,7 @@
 #define  GA_nodeid                 ga_nodeid_
 #define  GA_print                  ga_print_
 #define  GA_print_patch            ga_print_patch_
+#define  GA_print_stats            ga_print_stats_
 #define  GA_proc_topology          ga_proc_topology_
 #define  GA_put                    ga_put_
 #define  GA_read_inc               ga_read_inc_

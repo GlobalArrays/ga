@@ -48,6 +48,7 @@ typedef struct {
 static global_array GA[MAX_ARRAYS]; 
 static int max_global_array = MAX_ARRAYS;
 Integer map[MAX_NPROC][5];               /* used in get/put/acc */
+extern Integer in_handler;               /* set in interrupt handler*/
 
 
 #ifdef  CRAY_T3D
@@ -165,7 +166,6 @@ int  GA_stack_size=0;
 #          define NATIVEbarrier barrier
 #      elif defined(NX) || defined(SP1) || defined(SP)
 #            include "interrupt.h"
-             extern Integer in_handler;
              long oldmask;
 #            define LOCK(g_a, proc, x) \
                     { if(  in_handler == 0) ga_mask(1L, &oldmask) }
@@ -213,6 +213,9 @@ int ProcListPerm[MAX_NPROC];            /* permuted list of processes */
 Integer local_buf_req=0;
 Integer *NumRecReq = &local_buf_req;/* # received requests by data server */
                                     /* overwritten by shmem buf ptr if needed */
+struct ga_stat_t GAstat = {0,0,0,0,0,0,0,0,0,0,0};
+struct ga_bytes_t GAbytes ={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
+
     
 #ifdef CRAY_T3D
 #      include <fortran.h>
@@ -221,7 +224,6 @@ Integer *NumRecReq = &local_buf_req;/* # received requests by data server */
 /* set total limit (bytes) for memory usage per processor to "unlimited" */ 
 static Integer GA_total_memory = -1;
 static Integer GA_memory_limited = 0;
-
 
 
 #if defined(__STDC__) || defined(__cplusplus)

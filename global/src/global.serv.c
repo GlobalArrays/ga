@@ -292,6 +292,7 @@ Integer ga_read_inc_local();
       if(ACK) ga_msg_snd(GA_TYPE_ACK, &ack, sizeof(ack), from);
 #else
       in_handler = 1; /*distinguish cases when GA ops are called by the server*/
+      GAstat.numser ++;
 #endif
 
       if(DEBUG0) fprintf(stderr,"%d>ga_server got request %d from %d GAto=%d\n",

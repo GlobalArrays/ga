@@ -78,6 +78,7 @@ extern void ga_matmul_patch  ARGS_((char *, char *,                             
 
 extern void ga_copy_   ARGS_((Integer *, Integer *));
 extern void ga_print_  ARGS_((Integer *));
+extern void ga_print_stats_();
 extern void ga_zero_   ARGS_((Integer *));
 extern void ga_scale_  ARGS_((Integer *, DoublePrecision *));
 extern void ga_add_   ARGS_((Void *, Integer *, Void *,                                Integer *, Integer *));

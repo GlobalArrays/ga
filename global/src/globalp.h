@@ -70,8 +70,39 @@
 #define NAME_STACK_LEN 10
 #define PAGE_SIZE  4096
 
+struct ga_stat_t {
+         long   curmem; 
+         long   maxmem; 
+         long   numacc;
+         long   numget;
+         long   numput;
+         long   numsca;
+         long   numgat;
+         long   numrdi;
+         long   numcre; 
+         long   numdes;
+         long   numser;
+};
+
+struct ga_bytes_t{ 
+         double acctot;
+         double accloc;
+         double gettot;
+         double getloc;
+         double puttot;
+         double putloc;
+         double rditot;
+         double rdiloc;
+         double gattot;
+         double gatloc;
+         double scatot;
+         double scaloc;
+};
+extern struct ga_stat_t GAstat;
+extern struct ga_bytes_t GAbytes;
 extern char *GA_name_stack[NAME_STACK_LEN];    /* stack for names of GA ops */ 
 extern int  GA_stack_size;
+
 #define  GA_PUSH_NAME(name) (GA_name_stack[GA_stack_size++] = (name)) 
 #define  GA_POP_NAME        (GA_stack_size--)
 

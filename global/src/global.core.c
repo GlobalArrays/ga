@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.27 1996-08-15 21:59:49 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.28 1996-08-16 23:08:29 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -883,6 +883,8 @@ Integer  i, ga_handle, status;
 
       ga_sync_();
 
+      GAstat.numcre ++; 
+
       if(*type != MT_F_DBL && *type != MT_F_INT &&  *type != MT_F_DCPL)
          ga_error("ga_create_irreg: type not yet supported ",  *type);
       else if( *dim1 <= 0 )
@@ -1011,9 +1013,12 @@ Integer  i, ga_handle, status;
 
       ga_sync_();
 
-      if(status) return(TRUE);
-      else{
-         ga_destroy_(g_a); 
+      if(status){
+         GAstat.curmem += GA[ga_handle].size;
+         GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
+         return(TRUE);
+      }else{
+         ga_destroy_(g_a);
          return(FALSE);
       }
 }
@@ -1067,6 +1072,8 @@ int      *save_mapc;
 
       ga_sync_();
 
+      GAstat.numcre ++; 
+
       ga_check_handleM(g_a,"ga_duplicate");       
 
       /* find a free global_array handle for g_b */
@@ -1103,6 +1110,7 @@ int      *save_mapc;
             GA[ga_handle].id = INVALID_MA_HANDLE;
 #     endif
 
+
       /* if requested, enforce limits on memory consumption */
       if(GA_memory_limited) GA_total_memory -= mem_size_proc;
 
@@ -1127,8 +1135,11 @@ int      *save_mapc;
 
       ga_sync_();
 
-      if(status) return(TRUE);
-      else{ 
+      if(status){
+         GAstat.curmem += GA[ga_handle].size;
+         GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
+         return(TRUE);
+      }else{ 
          ga_destroy_(g_b);
          return(FALSE);
       }
@@ -1170,6 +1181,7 @@ logical ga_destroy_(g_a)
 Integer ga_handle = GA_OFFSET + *g_a;
 
     ga_sync_();
+    GAstat.numdes ++; /*regardless of array status we count this call */
 
     /* fails if handle is out of range or array not active */
     if(ga_handle < 0 || ga_handle >= max_global_array) return FALSE;
@@ -1196,6 +1208,7 @@ Integer ga_handle = GA_OFFSET + *g_a;
 
     if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
     GA[ga_handle].actv = 0;     
+    GAstat.curmem -= GA[ga_handle].size;
     return(TRUE);
 }
 
@@ -1362,6 +1375,7 @@ Integer  ld_glob, rows, cols, type;
    rows = ihi - ilo +1;
    cols = jhi - jlo +1;
 
+   if(GAme == proc && !in_handler) GAbytes.putloc += (double)GAsizeofM(type)*rows*cols;
    gaShmemLocation(proc, g_a, ilo, jlo, &ptr_glob, &ld_glob);
    ptr_loc = (char *)buf  + GAsizeofM(type) * offset;
 
@@ -1405,7 +1419,7 @@ void ga_put_(g_a, ilo, ihi, jlo, jhi, buf, ld)
    Integer  *g_a,  *ilo, *ihi, *jlo, *jhi,  *ld;
    Void  *buf;
 {
-Integer  p, np, proc, idx;
+Integer  p, np, proc, idx, type=GA[GA_OFFSET + *g_a].type;
 Integer  ilop, ihip, jlop, jhip, offset;
 
 #ifdef GA_TRACE
@@ -1413,6 +1427,8 @@ Integer  ilop, ihip, jlop, jhip, offset;
 #endif
 
       GA_PUSH_NAME("ga_put");
+      GAstat.numput++;
+      GAbytes.puttot += (double)GAsizeofM(type)*(*ihi-*ilo+1)*(*jhi-*jlo+1);
 
       if(!ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np )){
           sprintf(err_string, "cannot locate region (%d:%d,%d:%d)",
@@ -1439,7 +1455,7 @@ Integer  ilop, ihip, jlop, jhip, offset;
             /* number of messages determined by message-buffer size */
 
             Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk;
-            Integer TmpSize = MSG_BUF_SIZE/GAsizeofM(GA[GA_OFFSET + *g_a].type);
+            Integer TmpSize = MSG_BUF_SIZE/GAsizeofM(type);
             Integer ilimit  = MIN(TmpSize, ihip-ilop+1);
             Integer jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
 
@@ -1480,6 +1496,7 @@ Integer  ld_glob, rows, cols, type;
    type = GA[GA_OFFSET + g_a].type;
    rows = ihi - ilo +1;
    cols = jhi - jlo +1;
+   if(GAme == proc && !in_handler) GAbytes.getloc += (double)GAsizeofM(type)*rows*cols;
 
    gaShmemLocation(proc, g_a, ilo, jlo, &ptr_glob, &ld_glob);
 
@@ -1553,7 +1570,7 @@ void ga_get_(g_a, ilo, ihi, jlo, jhi, buf, ld)
    Integer  *g_a, *ilo, *ihi, *jlo, *jhi,  *ld;
    Void     *buf;
 {
-Integer p, np, proc, idx;
+Integer p, np, proc, idx, type=GA[GA_OFFSET + *g_a].type;
 Integer ilop, ihip, jlop, jhip, offset;
 
 #ifdef GA_TRACE
@@ -1561,6 +1578,8 @@ Integer ilop, ihip, jlop, jhip, offset;
 #endif
 
       GA_PUSH_NAME("ga_get");
+      GAstat.numget++;
+      GAbytes.gettot += (double)GAsizeofM(type)*(*ihi-*ilo+1)*(*jhi-*jlo+1);
 
       if(!ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np )){
           sprintf(err_string, "cannot locate region (%d:%d,%d:%d)",
@@ -1594,7 +1613,7 @@ Integer ilop, ihip, jlop, jhip, offset;
                int i_on;
 #           endif
 #           if defined(IWAY) && defined(SP1)
-               TmpSize = IWAY_MSG_BUF_SIZE/GAsizeofM(GA[GA_OFFSET + *g_a].type);
+               TmpSize = IWAY_MSG_BUF_SIZE/GAsizeofM(type);
 #           else
                TmpSize = MSG_BUF_SIZE/GAsizeofM(GA[GA_OFFSET + *g_a].type);
 #           endif
@@ -1692,6 +1711,8 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
      ptr_src = (char *)buf   + item_size * offset;
      rows = ihi - ilo +1;
      cols = jhi-jlo+1;
+     if(GAme == proc && !in_handler) GAbytes.accloc += (double)GAsizeofM(type)*rows*cols;
+
      if(GAnproc>1) LOCK(g_a, proc, ptr_dst);
        if(type == MT_F_DBL){
           accumulate(alpha, rows, cols, (DoublePrecision*)ptr_dst, ldp, 
@@ -1756,6 +1777,8 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
 #endif
 
    GA_PUSH_NAME("ga_acc");
+   GAstat.numacc++;
+   GAbytes.acctot += (double)GAsizeofM(type)*(*ihi-*ilo+1)*(*jhi-*jlo+1);
 
    if(!ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np )){
           sprintf(err_string, "cannot locate region (%d:%d,%d:%d)",
@@ -2162,6 +2185,7 @@ register Integer k, offset;
   gaShmemLocation(proc, g_a, ilo, jlo, &ptr_ref, &ldp);
 
   item_size = GAsizeofM(GA[GA_OFFSET + g_a].type);
+  if(GAme==proc && !in_handler) GAbytes.scaloc += (double)item_size*nv ;
 
   for(k=0; k< nv; k++){
      if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
@@ -2227,6 +2251,8 @@ Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
 
   ga_check_handleM(g_a, "ga_scatter");
   GA_PUSH_NAME("ga_scatter");
+  GAstat.numsca++;
+
 
   if(!MA_push_get(MT_F_INT,*nv, "ga_scatter--p", &phandle, &pindex))
             ga_error("MA alloc failed ", *g_a);
@@ -2240,6 +2266,7 @@ Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
   /* determine limit for message size --  v,i, & j will travel together */
   item_size = GAsizeofM(type);
   BufLimit   = MSG_BUF_SIZE/(2*sizeof(Integer)+item_size);
+  GAbytes.scatot += (double)item_size**nv ;
 
   /* Sort the entries by processor */
   ga_sort_scat(nv, (DoublePrecision*)v, i, j, INT_MB+pindex, type );
@@ -2304,6 +2331,7 @@ register Integer k, offset;
   gaShmemLocation(proc, g_a, ilo, jlo, &ptr_ref, &ldp);
 
   item_size = GAsizeofM(GA[GA_OFFSET + g_a].type);
+  if(GAme==proc && !in_handler) GAbytes.gatloc += (double)item_size*nv ;
 
   for(k=0; k< nv; k++){
      if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
@@ -2394,6 +2422,8 @@ Integer first, BufLimit, proc;
 
   ga_check_handleM(g_a, "ga_gather");
   GA_PUSH_NAME("ga_gather");
+  GAstat.numgat++;
+
 
   if(!MA_push_get(MT_F_INT, *nv, "ga_gather--p", &phandle, &pindex))
             ga_error("MA failed ", *g_a);
@@ -2414,6 +2444,8 @@ Integer first, BufLimit, proc;
    *     when server executes ga_gather_local                          */
 
   item_size = GAsizeofM(GA[GA_OFFSET + *g_a].type);
+  GAbytes.gattot += (double)item_size**nv;
+
   BufLimit   = MSG_BUF_SIZE/(2*sizeof(Integer)+item_size);
   /*BufLimit = MIN( MSG_BUF_SIZE/(2*sizeof(Integer)), MSG_BUF_SIZE/item_size);*/
 
@@ -2472,6 +2504,7 @@ Integer ga_read_inc_local(g_a, i, j, inc, proc)
 Integer *ptr, ldp, value;
 
    GA_PUSH_NAME("ga_read_inc_local");
+   if(GAme == proc && !in_handler)GAbytes.rdiloc += (double)sizeof(Integer);
 
    /* get a address of the g_a(i,j) element */
    gaShmemLocation(proc, g_a, i, j, (char**)&ptr, &ldp);
@@ -2533,6 +2566,9 @@ Integer  value, proc;
 #endif
 
     ga_check_handleM(g_a, "ga_read_inc");
+    GAstat.numrdi++;
+    GAbytes.rditot += (double)sizeof(Integer);
+
     if(GA[GA_OFFSET + *g_a].type !=MT_F_INT)
        ga_error(" ga_read_inc: type must be integer ",*g_a);
 
