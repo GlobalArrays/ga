@@ -11,10 +11,11 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf_c2f.c,v $
-CVS: $Date: 1996-07-17 15:58:07 $
-CVS: $Revision: 1.2 $
+CVS: $Date: 1996-07-27 23:20:42 $
+CVS: $Revision: 1.3 $
 CVS: $State: Exp $
 ******************************************************************************/
+#define EAF_FILENAME_MAX ELIO_FILENAME_MAX
 
 #if defined(CRAY)              /* This is needed to get the _fcd type for    */
 # include <fortran.h>         /* da_fort_char_t since Fortran string pnters */
@@ -23,6 +24,7 @@ CVS: $State: Exp $
 #include "elio.h"
 #include "eaf_c2f.h"
 #include "eaf.h"
+#include <string.h>
 
 
 /*\

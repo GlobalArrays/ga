@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.2 1996-07-17 15:58:12 mogill Exp $
+#$Id: makefile,v 1.3 1996-07-27 23:20:43 d3h325 Exp $
 #
 # Nakefile for EAF of ChemIO 
 #
@@ -18,7 +18,6 @@ F_AFFIX :=
 #F_AFFIX += -DEAF_FC_PREFIX=_
 F_AFFIX += -DEAF_FC_POSTFIX=_
 
-
 # . .  . .  . .  . .  . .  . .  . .  . .  . .  . .  . . 
 # Fortran Case Translation
 #    Use null F_CASE for mixed case
@@ -31,16 +30,25 @@ F_CASE = -DEAF_FC_LOWERCASE
 #F_CASE = -DEAF_FC_UPPERCASE
 #F_CASE =
 
+#points to location where library should be built
+LIB_DISTRIB = ../../lib
 
 OBJ = eaf.o eaf_c2f.o
 LIBRARY = libeaf.a
 HEADERS = eaf.h eaf.fh eaf_c2f.h
-LIB_DEFINES = $(F_AFFIX) $(F_CASE)
 
+LIB_DEFINES = $(F_AFFIX) $(F_CASE)
+LIB_INCLUDES= -I../elio
 
 include ../../config/makefile.h
 include ../../config/makelib.h
 
+#aftest_eaf.F   atest_eaf.c    ftest_eaf.F    test_eaf.c
 
-$(OBJ) : $(HEADERS)
+LIBS = $(LIB_DISTRIB)/$(TARGET)/libeaf.a $(LIB_DISTRIB)/$(TARGET)/libelio.a
 
+ftest_eaf : ftest_eaf.o $(LIBS)
+
+$(patsubst %,$(LIBRARY_PATH)(%),eaf.o): eaf.h
+$(patsubst %,$(LIBRARY_PATH)(%),eaf_c2f.o): eaf.h eaf_c2f.h
+/*$(OBJ) : $(HEADERS)*/

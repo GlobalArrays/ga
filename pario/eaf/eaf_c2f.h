@@ -11,8 +11,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf_c2f.h,v $
-CVS: $Date: 1996-07-17 15:58:09 $
-CVS: $Revision: 1.2 $
+CVS: $Date: 1996-07-27 23:20:42 $
+CVS: $Revision: 1.3 $
 CVS: $State: Exp $
 ******************************************************************************/
 
@@ -73,40 +73,38 @@ CVS: $State: Exp $
 /******************************************************************************
                                Type definitions
 ******************************************************************************/
-#if defined(SUNOS)   || defined(AIX) || defined(PARAGON) || \
-    defined(HP_HPUX) || defined(LINUX)
-typedef char                    eaf_fort_char_t;
-typedef int                     eaf_fort_int_t;
-typedef unsigned                eaf_fort_uint_t;
-typedef float                   eaf_fort_real_t;
-typedef double                  eaf_fort_double_t;
-
-typedef int                     eaf_fort_strlen_t;
-
-#elif defined(SGITFP)
+#if defined(SGITFP)
 
 typedef char                    eaf_fort_char_t;
 typedef long int                eaf_fort_int_t;
 typedef long unsigned           eaf_fort_uint_t;
 typedef float                   eaf_fort_real_t;
 typedef double                  eaf_fort_double_t;
-
 typedef long int                eaf_fort_strlen_t;
 
-#elif defined(T3D)
+#elif defined(CRAY_T3D)
 
 typedef _fcd                    eaf_fort_char_t;
 typedef long int                eaf_fort_int_t;
 typedef long unsigned           eaf_fort_uint_t;
 typedef float                   eaf_fort_real_t;
 typedef double                  eaf_fort_double_t;
-
 typedef unsigned long           eaf_fort_strlen_t;
+
+#else
+
+typedef char                    eaf_fort_char_t;
+typedef int                     eaf_fort_int_t;
+typedef unsigned                eaf_fort_uint_t;
+typedef float                   eaf_fort_real_t;
+typedef double                  eaf_fort_double_t;
+typedef int                     eaf_fort_strlen_t;
+
 
 #endif
 
 /* .  .  .  .  .  .  .  .  .  Common type definitions  .  .  .  .  .  .  .  */
-typedef Fd_t*                    eaf_fort_fd_t;        /* Changed from uint */
+typedef Fd_t                    eaf_fort_fd_t;        /* Changed from uint */
 typedef eaf_fort_int_t           eaf_fort_mode_t;
 typedef eaf_fort_int_t           eaf_fort_oflags_t;
 typedef Size_t                   eaf_fort_size_t;      /* Now using ELIO size */

@@ -10,8 +10,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf.c,v $
-CVS: $Date: 1996-07-17 15:57:59 $
-CVS: $Revision: 1.2 $
+CVS: $Date: 1996-07-27 23:20:40 $
+CVS: $Revision: 1.3 $
 CVS: $State: Exp $
 ******************************************************************************/
 
@@ -27,7 +27,7 @@ CVS: $State: Exp $
 |*|                -1 if failed
 \*/
 Size_t EAF_WriteC(fd, offset, buf, bytes)
-Fd_t        *fd;
+Fd_t         fd;
 off_t        offset;
 Void        *buf;
 Size_t       bytes;
@@ -46,7 +46,7 @@ Size_t       bytes;
 |*|                -1 if failed
 \*/
 int EAF_AWriteC(fd, offset, buf, bytes, req_id)
-Fd_t        *fd;
+Fd_t         fd;
 off_t        offset;
 Void        *buf;
 Size_t       bytes;
@@ -66,7 +66,7 @@ io_request_t *req_id;
 |*|                -1 if failed
 \*/
 Size_t EAF_ReadC(fd, offset, buf, bytes)
-Fd_t        *fd;
+Fd_t         fd;
 off_t        offset;
 Void        *buf;
 Size_t       bytes;
@@ -89,7 +89,7 @@ Size_t       bytes;
 |*|                -1 if failed
 \*/
 int EAF_AReadC(fd, offset, buf, bytes, req_id)
-Fd_t         *fd;
+Fd_t          fd;
 off_t         offset;
 Void         *buf;
 Size_t        bytes;
@@ -141,7 +141,7 @@ int          *status;
 |*|      Returns:
 |*|                 File descriptor
 \*/
-Fd_t* EAF_OpenPersistC(fname, type)
+Fd_t  EAF_OpenPersistC(fname, type)
 char* fname;
 int   type;
 {
@@ -159,11 +159,11 @@ int   type;
 |*|      Returns:
 |*|                 File descriptor
 \*/
-Fd_t* EAF_OpenScratchC(fname, type)
+Fd_t  EAF_OpenScratchC(fname, type)
 char *fname;
 int   type;
 {
-  Fd_t *fd;
+  Fd_t  fd;
   int   i=0;
   
   if(first_eaf_init) EAF_InitC();
@@ -188,7 +188,7 @@ int   type;
 |*|          also unlink/delete it.
 \*/
 void EAF_CloseC(fd)
-Fd_t *fd;
+Fd_t  fd;
 {
   int i=0;
   
@@ -200,7 +200,7 @@ Fd_t *fd;
 	EAF_ABORT("EAF_Close: Unable to delete scratch file on close.",1);
       eaf_fd[i] = NULL;
       free(eaf_fname[i]);
-    };
+    } 
 }
 
 
