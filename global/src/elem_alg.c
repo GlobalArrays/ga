@@ -171,7 +171,7 @@ static void do_recip(void *ptr, int nelem, int type)
                   if(ia[i]!=0) ia[i]= 1/ia[i];
                      else
  		  ia[i] = GA_INFINITY_I;
-                  //ga_error("zero value at index",i);  
+                  /* ga_error("zero value at index",i); */
               break;
          case C_DCPL:
               ca = (DoubleComplex *) ptr;
@@ -182,7 +182,7 @@ static void do_recip(void *ptr, int nelem, int type)
                    ca[i].imag =-ca[i].imag/temp;
                   }
                   else{
- 		     //ga_error("zero value at index",i);
+ 		     /* ga_error("zero value at index",i); */
  		     ca[i].real = GA_INFINITY;
  		     ca[i].imag = GA_INFINITY;
                  }
@@ -193,7 +193,7 @@ static void do_recip(void *ptr, int nelem, int type)
               for(i=0;i<nelem;i++)
                   if(da[i]!=0.0) da[i]= (double)1/da[i];
   		     else
-		  //ga_error("zero value at index",i);
+		  /* ga_error("zero value at index",i); */
  		  da[i] = GA_INFINITY;
               break;
          case C_FLOAT:
@@ -201,7 +201,7 @@ static void do_recip(void *ptr, int nelem, int type)
               for(i=0;i<nelem;i++)
                   if(fa[i]!=0.0) fa[i]= (float)1/fa[i];
                      else
-		  //ga_error("zero value at index",i);		
+		  /* ga_error("zero value at index",i); */
  		  fa[i] = GA_INFINITY;
               break;
 	case C_LONG:
@@ -209,7 +209,7 @@ static void do_recip(void *ptr, int nelem, int type)
               for(i=0;i<nelem;i++)
                   if(la[i]!=0.0) la[i]= (long)1/la[i];
                      else
-                  //ga_error("zero value at index",i);
+                  /* ga_error("zero value at index",i); */
  		  la[i] = GA_INFINITY_I;
               break;
 
@@ -535,7 +535,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
 	  ((double*)pC)[i]=  GA_INFINITY;
 	else
 	  ((double*)pC)[i]=  GA_NEGATIVE_INFINITY;
-	//ga_error("zero divisor ",((double*)pB)[i]);
+	/* ga_error("zero divisor ",((double*)pB)[i]); */
       }
     }
     break;
@@ -555,7 +555,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
       else{
 	((DoubleComplex*)pC)[i].real=GA_INFINITY;
 	((DoubleComplex*)pC)[i].imag=GA_INFINITY;
-	//ga_error("zero divisor ",temp);
+	/* ga_error("zero divisor ",temp); */
       }
     }
     break;
@@ -568,7 +568,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
 	  ((int*)pC)[i]=GA_INFINITY_I;
 	else
 	  ((int*)pC)[i]=GA_NEGATIVE_INFINITY_I;
-	//ga_error("zero divisor ",((int*)pB)[i]);
+	/* ga_error("zero divisor ",((int*)pB)[i]); */
       } 
     }
     break;
@@ -581,7 +581,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
 	  ((float*)pC)[i]= GA_INFINITY;
 	else
 	  ((float*)pC)[i]= GA_NEGATIVE_INFINITY;
-	//ga_error("zero divisor ",((float*)pB)[i]);
+	/* ga_error("zero divisor ",((float*)pB)[i]); */
       }
     }
     break;
@@ -594,7 +594,7 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
 	  ((long *)pC)[i] = GA_INFINITY_L;
 	else
 	  ((long *)pC)[i] = GA_NEGATIVE_INFINITY_L;
-	//ga_error("zero divisor ",((long*)pB)[i]);
+	/* ga_error("zero divisor ",((long*)pB)[i]); */
       }
     }
     break;		
@@ -706,7 +706,7 @@ static void FATR ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,
 Integer *g_a, *alo, *ahi;    /* patch of g_a */
 Integer *g_b, *blo, *bhi;    /* patch of g_b */
 Integer *g_c, *clo, *chi;    /* patch of g_c */
-Integer op; //operation to be perform between g_a and g_b
+Integer op; /* operation to be perform between g_a and g_b */
 {
     Integer i, j;
     Integer compatible;
@@ -1258,13 +1258,13 @@ void ga_step_max2_patch_(g_xx,xxlo,xxhi, g_vv,vvlo,vvhi, g_xxll,xxlllo,xxllhi, g
         /*Then, we will select the maximum of the array g_c*/ 
         nga_select_elem_(g_c, "max", &result2, &index); 
         *result = MAX(result1, result2);
-     //if(*result==0.0) *result = -GA_INFINITY;
+     /* if(*result==0.0) *result = -GA_INFINITY; */
      *result = ABS(*result);
 }
 
 /*\ generic  routine for element wise operation between two array
 \*/
-#if 0 //I want to delete op parameter
+#if 0 /* I want to delete op parameter */
 void ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result, op) 
 #else
 #endif
@@ -1279,7 +1279,7 @@ void ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
 
 {
      Integer index;
-     //double result = -1;
+     /* double result = -1; */
      Integer *g_c;
      Integer g_C;
 

@@ -456,7 +456,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   ga_check_handle (g_a, "ga_norm_infinity_");
   GA_PUSH_NAME ("ga_norm_infinity_");
 
-//  ga_inquire (g_a, &type, &dim1, &dim2);
+/*  ga_inquire (g_a, &type, &dim1, &dim2); */
   nga_inquire_internal_ (g_a, &type, &ndim, dims);
 
   dim1 = dims[0];
@@ -503,7 +503,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   /*zero the buffer */
   memset (buf, 0, nelem * size);
 
-  //ga_distribution_ (g_a, &me, &iloA, &ihiA, &jloA, &jhiA);
+  /* ga_distribution_ (g_a, &me, &iloA, &ihiA, &jloA, &jhiA); */
 
   nga_distribution_(g_a, &me, lo, hi);
   if(ndim<=0)
@@ -527,10 +527,10 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   /* determine subset of my patch to access */
   if (ihiA > 0 && jhiA > 0)
     {
-      //lo[0] = iloA;
-      //lo[1] = jloA;
-      //hi[0] = ihiA;
-      // hi[1] = jhiA;
+      /* lo[0] = iloA; */
+      /* lo[1] = jloA; */
+      /* hi[0] = ihiA; */
+      /* hi[1] = jhiA; */
       nga_access_ptr (g_a, lo, hi, &ptr, &ld);
 
       switch (type)
@@ -693,7 +693,7 @@ ga_norm1_ (Integer * g_a, double *nm)
         dim2 = dims[1];
   else
         ga_error("ga_norm1: wrong dimension", ndim);
- //ga_inquire (g_a, &type, &dim1, &dim2);
+ /* ga_inquire (g_a, &type, &dim1, &dim2); */
 
   /*allocate a temporary buffer of size equal to the number of columns */
   size = GAsizeof (type);
@@ -747,15 +747,15 @@ ga_norm1_ (Integer * g_a, double *nm)
   else
         ga_error("ga_norm1: wrong dimension", ndim);
 
-  //ga_distribution_ (g_a, &me, &iloA, &ihiA, &jloA, &jhiA);
+  /* ga_distribution_ (g_a, &me, &iloA, &ihiA, &jloA, &jhiA); */
 
 
   /* determine subset of my patch to access */
   if (ihiA > 0 && jhiA > 0)
     {
-     // lo[0] = iloA;
-     // lo[1] = jloA;
-     // hi[0] = ihiA;
+     /* lo[0] = iloA; */
+     /* lo[1] = jloA; */
+     /* hi[0] = ihiA; */
       hi[1] = jhiA;
 
       nga_access_ptr (g_a, lo, hi, &ptr, &ld);

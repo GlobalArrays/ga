@@ -95,7 +95,7 @@ ga_symmetrize_(Integer *g_a) {
       ldb[i] = bhi[i] - blo[i] + 1;/* as I switched rows and cols */
     nga_get_(g_a, blo, bhi, b_ptr, ldb);
   }
-  ga_sync_(); // why ? check
+  ga_sync_(); /* why ? check */
 
   if(have_data) {
     gai_add(alo, ahi, a_ptr, b_ptr, alpha, type, nelem, ndim);
