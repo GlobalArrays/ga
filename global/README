@@ -29,6 +29,9 @@ distribute to other US Government contractors.
 
 What is new ?
 ~~~~~~~~~~~~
+version 3.0   . support for n-dimensional arrays (n<=7)
+              . improved interoperability with MPI on clusters of workstations
+              . ports to Cray J90 and Windows NT (single machine)
 
 version 2.3   . added lock operations: ga_lock, ga_unlock, ga_create_mutex,
                 ga_destroy_mutex
@@ -109,15 +112,14 @@ Dependencies on other software:
 
 - MPI, SCALAPACK, PBBLAS, and BLACS libraries are required for ga_lu_solve,
   ga_cholesky, ga_llt_solve, ga_spd_invert, ga_solve. If you do not install
-  these libs, the named operations will not be available. Please see note below
-  on how to build BLACS compatible with GA.
+  these libs, the named operations will not be available.
 
 - if you'd like to use tracing, an additonal library libtrace.a is required,
   and DGA_TRACE define flag should be specified for C and Fortran compilers.
 
 
   To build the GA toolkit compatible with MPI, you need to define
-  environmental variable USE_MPI,  MPI_LIB and MPI_INCLUDE  which
+  environment variables USE_MPI,  MPI_LIB and MPI_INCLUDE  which
   should point to the location of the MPI library and include
   directories.  Additionaly, if the TCGMSG-MPI library is not needed,
   the make/environmental variable MSG_COMMS should be defined as
@@ -138,19 +140,6 @@ Dependencies on other software:
   blacsF77cinit, some system might require specification of -lblacs
   twice to fix the unresolved external symbols from these libs.
 
-  On machines that do not have 'native' implementation of TCGMSG-MPI nxtval
-  operation (see README in tcgmsg-mpi directory), it is required to modify 
-  a BLACS file blacs_pinfo_.c to substitute MPI_COMM_WORLD with the
-  communicator returned from ga_mpi_communicator routine.
-  This is an excerpt from the modified file:
-
-#ifdef GA
-      ga_mpi_communicator(&BI_MPI_COMM_WORLD);
-      BI_F77_MPI_COMM_WORLD = (int *)&BI_MPI_COMM_WORLD;
-#endif
-      BI_MPI_Comm_size(BI_MPI_COMM_WORLD, &BI_Np, ierr);
-      BI_MPI_Comm_rank(BI_MPI_COMM_WORLD, &BI_Iam, ierr);
-
 
 Makefiles:
 ~~~~~~~~~
@@ -167,7 +156,7 @@ of VERSION will be determined automatically.
 
 Valid TARGET is one of: SUN, SOLARIS, SGI, SGI_N32, SGITFP,
         DECOSF, IBM, KSR, SP1, SP, CRAY-T3D, CONVEX-SPP,IPSC, DELTA, PARAGON,
-        LINUX, HPUX 
+        LINUX, HPUX, CRAY_YMP (J90)
 
 Test Programs:
 ~~~~~~~~~~~~~
