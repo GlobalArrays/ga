@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.57 2003-02-04 21:51:30 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.58 2003-03-12 21:32:27 edo Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -361,7 +361,7 @@ void armci_shmem_init()
 
 #ifdef ALLOC_MUNMAP
 
-#if defined(QUADRICS) & !defined(DECOSF)
+#if defined(QUADRICS) && !defined(DECOSF) && defined(__alpha)
 #   if defined(__ia64__) || defined(__alpha)
 
       /* this is to determine size of Elan Main memory allocator for munmap */
