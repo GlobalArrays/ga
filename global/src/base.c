@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.108 2004-12-08 02:40:50 manoj Exp $ */
+/* $Id: base.c,v 1.109 2005-01-13 16:33:52 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -3375,6 +3375,7 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
   Integer a_handle, b_handle, adim, bdim;
   Integer mlo[MAXDIM], mhi[MAXDIM], mld[MAXDIM];
   Integer dlo[MAXDIM], dhi[MAXDIM];
+  char trans[2];
   double d_one;
   Integer type, i_one;
   double z_one[2];
@@ -3397,7 +3398,14 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
   b_handle = GA_OFFSET + *g_b;
 
   if (!ga_is_mirrored_(g_a))
-    ga_error("Handle to a non-mirrored array passed",0);
+    if (ga_cluster_nnodes_() > 1) {
+      ga_error("Handle to a non-mirrored array passed",0);
+    } else {
+      trans[0] = 'N';
+      trans[1] = '\0';
+      nga_copy_patch(trans, g_a, alo, ahi, g_b, blo, bhi);
+      return;
+    }
 
   if (ga_is_mirrored_(g_b) && ga_cluster_nnodes_())
     ga_error("Distributed array is mirrored",0);
