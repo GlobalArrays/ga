@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.23 2001-02-23 23:41:59 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.24 2001-02-28 21:57:59 d3h325 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1057,7 +1057,7 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
      if(op==LOAD) f = ga_get_;
      else f = ga_put_;
 
-     ga_inquire(&gs_a.handle, &atype, &rows, &cols);     
+     ga_inquire_(&gs_a.handle, &atype, &rows, &cols);     
      elemsize = MA_sizeof(atype, 1, MT_C_CHAR);
 
      /* find where in global array the first dra chunk element in buffer goes*/
