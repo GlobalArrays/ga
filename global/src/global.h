@@ -234,7 +234,7 @@ extern logical ga_update3_ghosts(Integer *g_a);
 extern logical ga_update4_ghosts(Integer *g_a);
 extern logical ga_update5_ghosts(Integer *g_a);
 extern logical ga_update6_ghosts(Integer *g_a);
-extern logical ga_update_ghost_dir(Integer *g_a, Integer *idim, Integer *idir,
+extern logical nga_update_ghost_dir(Integer *g_a, Integer *idim, Integer *idir,
                                 logical *flag);
 
 extern void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi);

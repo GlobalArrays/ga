@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.18 2002-06-26 20:29:49 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.19 2002-08-14 14:57:44 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2242,7 +2242,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY ALONG ONE SIDE OF ARRAY
 \*/
-logical FATR ga_update_ghost_dir_(Integer *g_a, Integer *pdim, Integer *pdir,
+logical FATR nga_update_ghost_dir_(Integer *g_a, Integer *pdim, Integer *pdir,
            logical *pflag)
 {
   Integer idx, ipx, inx, np, handle=GA_OFFSET + *g_a, proc_rem;
