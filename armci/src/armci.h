@@ -9,12 +9,11 @@ typedef struct {
     int bytes;
 } armci_giov_t;
 
-#define ARMCI_Put(src, dst, bytes, proc) \
-        ARMCI_PutS((src), NULL, (dst), NULL, &(bytes), 0, proc)
-#define ARMCI_Get(src, dst, bytes, proc) \
-        ARMCI_GetS((src), NULL, (dst), NULL, &(bytes), 0, proc)
-
 extern int ARMCI_Init(void);    /* initialize ARMCI */
+
+extern int ARMCI_Put(void *src, void* dst, int bytes, int proc);
+extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc);
+
 extern int ARMCI_PutS(          /* strided put */
                 void *src_ptr,        /* pointer to 1st segment at source*/ 
 		int src_stride_arr[], /* array of strides at source */
@@ -23,6 +22,21 @@ extern int ARMCI_PutS(          /* strided put */
 		int count[],          /* number of units at each stride level count[0]=bytes */
 		int stride_levels,    /* number of stride levels */
                 int proc	      /* remote process(or) ID */
+                );
+
+
+extern int ARMCI_PutS_flag(
+                void *src_ptr,        /* pointer to 1st segment at source*/
+                int src_stride_arr[], /* array of strides at source */
+                void* dst_ptr,        /* pointer to 1st segment at destination*/
+                int dst_stride_arr[], /* array of strides at destination */
+                int count[],          /* number of segments at each stride 
+                                         levels: count[0]=bytes*/
+                int stride_levels,    /* number of stride levels */
+                int *flag,            /* pointer to remote flag */
+                int val,              /* value to set flag upon completion of
+                                         data transfer */
+                int proc              /* remote process(or) ID */
                 );
 
 extern int ARMCI_AccS(                /* strided accumulate */
@@ -38,6 +52,7 @@ extern int ARMCI_AccS(                /* strided accumulate */
                 );
 
 
+extern int ARMCI_Get(void *src, void* dst, int bytes, int proc);
 
 extern int ARMCI_GetS(          /* strided get */
                 void *src_ptr,        /* pointer to 1st segment at source*/ 

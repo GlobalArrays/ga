@@ -17,8 +17,6 @@
 #if (defined(SYSV) || defined(WIN32)|| defined(HITACHI)) && !defined(NO_SHM)
 #define CLUSTER 
 
-
-
 #ifdef SERVER_THREAD
 #  define SERVER_NODE(c) (armci_clus_info[(c)].master);
 #else
@@ -27,6 +25,19 @@
 #endif
 
 #endif
+
+
+typedef struct{
+  int len;
+  int last;
+  void *exthdr;
+} ext_header_t;
+
+typedef struct{
+int val;
+void *ptr;
+} armci_flag_t;
+
 
 #if defined(LAPI) || defined(PTHREADS)
 # include <pthread.h>
@@ -150,15 +161,11 @@ extern int armci_acc_vector(int op, /* operation code */
                 int proc  /* remote process(or) ID */
               );
 
-extern int armci_rem_strided(int op, void* scale, int proc,void *src_ptr,
-                        int src_stride_arr[],
-                       void* dst_ptr, int dst_stride_arr[],
-                       int count[], int stride_levels, int lockit);
-
 extern int armci_pack_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
-                       int count[], int stride_levels, int fit_level, int nb);
+                       int count[], int stride_levels, ext_header_t *hdr,
+                       int fit_level, int nb, int last);
 
 extern int armci_pack_vector(int op, void *scale, 
                       armci_giov_t darr[],int len,int proc);

@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.22 2002-02-26 15:29:20 vinod Exp $ */
+/* $Id: pack.c,v 1.23 2002-03-12 18:29:48 d3h325 Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -7,13 +7,10 @@
 #endif
 
 #if defined(REMOTE_OP) 
-#  if defined(HITACHI)
-#    define OP_STRIDED armci_sr8k_rem_strided
-#  else
-#    define OP_STRIDED armci_rem_strided
-#  endif
+#  define OP_STRIDED armci_rem_strided
 #else
-#  define OP_STRIDED armci_op_strided
+#  define OP_STRIDED(_a,_b,_c,_d,_e,_f,_g,_h,_i,_delete1,_j)\
+                    armci_op_strided(_a,_b,_c,_d,_e,_f,_g,_h,_i,_j)
 #endif
 
 
@@ -67,11 +64,19 @@ static void armci_fit_buffer(int count[], int stride_levels, int* fit_level,
  *  subpatch fits in the buffer.
  *  The recursive process is controlled by "fit_level" and "nb" arguments, 
  *  which have to be set to -1 at the top-level of the recursion tree.
+ *
+ *  Argument last and variable looplast are used to indicate to sending/packing
+ *  routine that we are dealing with the last portion of the request.
+ *  Due to the recursive nature of packing code, the algorithm is following:
+ *      if last=1  then internal for loop passes 1 for the last chunk
+ *      else it passes 0
+ *  
 \*/
 int armci_pack_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
-                       int count[], int stride_levels, int fit_level, int nb)
+                       int count[], int stride_levels, ext_header_t *h,
+                       int fit_level, int nb, int last)
 {
     int rc=0, sn, bufsize=BUFSIZE,noswap=0;
     void *src, *dst;
@@ -107,8 +112,10 @@ int armci_pack_strided(int op, void* scale, int proc,
 #endif
 
     /* determine decomposition of the patch to fit in the buffer */
-    if(fit_level<0)
+    if(fit_level<0){
        armci_fit_buffer(count, stride_levels, &fit_level, &nb, bufsize);
+       last = 1;
+    }
 
     if(fit_level == stride_levels){
 
@@ -117,8 +124,9 @@ int armci_pack_strided(int op, void* scale, int proc,
         int dst_stride, src_stride;
 
         if(nb == chunk){ /* take shortcut when whole patch fits in the buffer */
+           if(h) h->last = last?1:0;
            return(OP_STRIDED(op, scale, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr, count, stride_levels, flag));
+                  dst_ptr, dst_stride_arr, count, stride_levels, h, flag));
         }
 
         if(fit_level){
@@ -136,8 +144,10 @@ int armci_pack_strided(int op, void* scale, int proc,
            src = (char*)src_ptr + src_stride* sn;
            dst = (char*)dst_ptr + dst_stride* sn;
            count[fit_level] = MIN(b, chunk-sn); /*modify count for this level*/
+
+           if(h) h->last = (last && ((sn+b)>=chunk))? 1: 0 ;
            rc = OP_STRIDED( op, scale, proc, src, src_stride_arr,
-                            dst, dst_stride_arr, count, fit_level, flag);
+                            dst,dst_stride_arr,count,fit_level,h,flag);
            if(rc) break;
 
            sn += b;
@@ -146,11 +156,14 @@ int armci_pack_strided(int op, void* scale, int proc,
         count[fit_level] = chunk; /* restore original count */
 
     }else for(sn = 0; sn < count[stride_levels]; sn++){
+                 int looplast =0;
                  src = (char*)src_ptr + src_stride_arr[stride_levels -1]* sn;
                  dst = (char*)dst_ptr + dst_stride_arr[stride_levels -1]* sn;
+
+                 if(last && (sn == count[stride_levels]-1)) looplast =1;
                  rc = armci_pack_strided(op, scale, proc, src, src_stride_arr,
-                                    dst, dst_stride_arr,
-                                    count, stride_levels -1, fit_level, nb);
+                            dst, dst_stride_arr, count, stride_levels -1, 
+                            h, looplast, fit_level, nb );
                  if(rc) return rc;
     }
     return rc;

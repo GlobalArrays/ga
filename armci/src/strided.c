@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.37 2002-01-09 18:56:41 vinod Exp $ */
+/* $Id: strided.c,v 1.38 2002-03-12 18:29:49 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -381,11 +381,12 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
 }
 
 
-int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/ 
+int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/ 
 		int src_stride_arr[], /* array of strides at source */
 		void* dst_ptr,        /* pointer to 1st segment at destination*/
 		int dst_stride_arr[], /* array of strides at destination */
-		int count[],          /* number of segments at each stride levels: count[0]=bytes*/
+		int count[],          /* number of segments at each stride 
+                                         levels: count[0]=bytes*/
 		int stride_levels,    /* number of stride levels */
                 int proc              /* remote process(or) ID */
                 )
@@ -414,12 +415,12 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
 #if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
        if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
            rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
-                       dst_ptr, dst_stride_arr, count, stride_levels,1);
+                       dst_ptr, dst_stride_arr, count, stride_levels,NULL,1);
        }
        else
 #endif
        rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
-                       dst_ptr, dst_stride_arr, count, stride_levels, -1, -1);
+                  dst_ptr, dst_stride_arr, count, stride_levels, NULL, -1, -1, -1);
     }
     else
 #endif
@@ -430,6 +431,72 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
     else return 0;
 
 }
+
+
+
+
+/*\ function offers the same functionality as regular PutS and sets remote flag
+\*/  
+int ARMCI_PutS_flag( 
+                void *src_ptr,        /* pointer to 1st segment at source*/ 
+		int src_stride_arr[], /* array of strides at source */
+		void* dst_ptr,        /* pointer to 1st segment at destination*/
+		int dst_stride_arr[], /* array of strides at destination */
+		int count[],          /* number of segments at each stride 
+                                         levels: count[0]=bytes*/
+		int stride_levels,    /* number of stride levels */
+                int *flag,            /* pointer to remote flag */
+                int val,              /* value to set flag upon completion of
+                                         data transfer */
+                int proc              /* remote process(or) ID */
+                )
+{
+    int rc, direct=1;
+
+    if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
+    if(count[0]<0)return FAIL3;
+    if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
+    if(proc<0)return FAIL5;
+
+    ORDER(PUT,proc); /* ensure ordering */
+
+#ifndef QUADRICS
+    direct=SAMECLUSNODE(proc);
+#endif
+
+    if(!direct){
+       ext_header_t h;
+       armci_flag_t remf;
+       remf.val = val;
+       remf.ptr = flag;
+       h.exthdr = &remf;
+       h.len = sizeof(remf);
+       
+#if 0
+       printf("%d: ptr=%p to %d\n",armci_me,flag,proc); fflush(stdout);
+#endif
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
+       if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
+           rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
+                       dst_ptr, dst_stride_arr, count, stride_levels, &h, 1);
+       }
+       else
+#endif
+
+       rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
+                       dst_ptr, dst_stride_arr, count, stride_levels, &h,-1,-1,-1);
+    }
+    else {
+       rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
+                              dst_ptr, dst_stride_arr, count, stride_levels, 0);
+       armci_put(&val,flag,sizeof(int),proc); 
+    }
+
+    if(rc) return FAIL6;
+    else return 0;
+
+}
+
 
 
 int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
@@ -478,16 +545,16 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
         if( CAN_REQUEST_DIRECTLY && ((count[0]> LONG_GET_THRESHOLD) ||
             (stride_levels && count[0]>LONG_GET_THRESHOLD_STRIDED) ) ) {
 
-               int nobuf =1; /* tells the sending routine not to buffer */
-               rc = armci_rem_strided(GET, NULL, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr, count, stride_levels, nobuf);
-               if(rc) goto DefaultPath; /* attempt to avoid buffering failed */ 
+          int nobuf =1; /* tells the sending routine not to buffer */
+          rc = armci_rem_strided(GET, NULL, proc,src_ptr,src_stride_arr,dst_ptr,
+                   dst_stride_arr, count, stride_levels,(ext_header_t*)0,nobuf);
+          if(rc) goto DefaultPath; /* attempt to avoid buffering failed */ 
 
        }else
                DefaultPath: /* standard buffered path */
 #endif
-               rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
+          rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+                     dst_ptr,dst_stride_arr,count,stride_levels,NULL,-1,-1,-1);
     }else
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, 
@@ -531,11 +598,29 @@ int ARMCI_AccS( int  optype,            /* operation */
                            dst_ptr, dst_stride_arr, count, stride_levels,1);
     else
       rc = armci_pack_strided(optype, scale, proc, src_ptr, src_stride_arr, 
-                              dst_ptr,dst_stride_arr,count,stride_levels,-1,-1);
+                      dst_ptr,dst_stride_arr,count,stride_levels,NULL,-1,-1,-1);
 
     if(rc) return FAIL6;
     else return 0;
 }
+
+
+
+int ARMCI_Put(void *src, void* dst, int bytes, int proc)
+{
+    return ARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
+}
+
+extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc)
+{
+    return  ARMCI_PutS_flag(src, NULL, dst, NULL, &bytes, 0, f, v, proc);
+}
+
+int ARMCI_Get(void *src, void* dst, int bytes, int proc)
+{
+    return ARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
+}
+
 
 
 void armci_write_strided(void *ptr, int stride_levels, int stride_arr[],

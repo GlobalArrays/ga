@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.33 2002-02-26 15:29:19 vinod Exp $ */
+/* $Id: request.c,v 1.34 2002-03-12 18:29:48 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -16,8 +16,12 @@
 #endif
 
 
+#define MAX_EHLEN 248
 #define ADDBUF(buf,type,val) *(type*)(buf) = (val); (buf) += sizeof(type)
 #define GETBUF(buf,type,var) (var) = *(type*)(buf); (buf) += sizeof(type)
+
+#define ALLIGN8(buf){size_t _adr=(size_t)(buf); \
+                    _adr>>=3; _adr<<=3; _adr+=8; (buf) = (char*)_adr; }
 
 
 
@@ -439,38 +443,43 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
 int armci_rem_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
-                       int count[], int stride_levels, int flag)
+                       int count[], int stride_levels, 
+                       ext_header_t *h, int flag) 
 {
     char *buf, *buf0;
     request_header_t *msginfo;
     int  i, slen=0, bytes;
-    size_t adr;
     void *rem_ptr;
     int  *rem_stride_arr;
     int bufsize = sizeof(request_header_t);
+    int ehlen =0;
+
+    /* we send ext header only for last chunk */
+#if 0
+    if(h)  ehlen = h->len;
+#else
+    if(h) if(h->last)  ehlen = h->len;
+#endif
+    if(ehlen>MAX_EHLEN || ehlen <0) 
+       armci_die2("armci_rem_strided ehlen out of range",MAX_EHLEN,ehlen);
 
     /* calculate size of the buffer needed */
     for(i=0, bytes=1;i<=stride_levels;i++)bytes*=count[i];
-    bufsize += bytes+sizeof(void*)+2*sizeof(int)*(stride_levels+1)
-               +2*sizeof(double) + 8; /* +scale+alignment */
-#   ifdef CLIENT_BUF_BYPASS
-      if(flag && _armci_bypass) bufsize -=bytes; /* we are not sending data*/
-#   endif
-    
+    bufsize += bytes+sizeof(void*)+2*sizeof(int)*(stride_levels+1) +ehlen
+               +2*sizeof(double) + 16; /* +scale+alignment */
 
-    if(flag){
-#if defined(USE_SOCKET_VECTOR_API) 
-	bufsize = sizeof(request_header_t)+sizeof(void*)+2*sizeof(int)*(stride_levels+1)+2*sizeof(double) + 8;
-	
-        buf = buf0= GET_SEND_BUFFER((bufsize+sizeof(struct iovec)*bytes/count[0]),op,proc);
-#else
-        if(op==GET)bufsize -=bytes;
-         buf = buf0= GET_SEND_BUFFER(bufsize,op,proc);
-#endif
+    if (flag){
+#   ifdef CLIENT_BUF_BYPASS
+      if(_armci_bypass) bufsize -=bytes; /* we are not sending data*/
+#   elif defined(USE_SOCKET_VECTOR_API)
+      bufsize -=bytes; /* we are not sending data*/
+      bufsize += sizeof(struct iovec)*bytes/count[0];
+#   else
+      if(op==GET)bufsize -=bytes;
+#   endif
     }
-    else
-    
     buf = buf0= GET_SEND_BUFFER(bufsize,op,proc);
+    
     msginfo = (request_header_t*)buf;
 
     if(op == GET){
@@ -486,8 +495,9 @@ int armci_rem_strided(int op, void* scale, int proc,
     /*****for making put use readv/writev is sockets*****/
     if(op==PUT && flag)
        msginfo->datalen=0;
-    /* fill strided descriptor */
 #endif
+
+    /* fill strided descriptor */
                                        buf += sizeof(request_header_t);
     *(void**)buf = rem_ptr;            buf += sizeof(void*);
     *(int*)buf = stride_levels;        buf += sizeof(int);
@@ -513,17 +523,13 @@ int armci_rem_strided(int op, void* scale, int proc,
 
 
     /* align buf for doubles (8-bytes) before copying data */
-    adr = (size_t)buf;
-    adr >>=3; 
-    adr <<=3;
-    adr +=8; 
-    buf = (char*)adr;
-
+    ALLIGN8(buf);
+    
     /* fill message header */
-    msginfo->from  = armci_me;
-    msginfo->to    = proc;
+    msginfo->from   = armci_me;
+    msginfo->to     = proc;
+    msginfo->format = STRIDED;
     msginfo->operation  = op;
-    msginfo->format  = STRIDED;
 
     /* put scale for accumulate */
     switch(op){
@@ -550,6 +556,15 @@ int armci_rem_strided(int op, void* scale, int proc,
 	*/
 
     buf += slen;
+
+    /**** add extended header *******/
+    if(ehlen){
+       bcopy(h->exthdr,buf,ehlen);
+       i = ehlen%8; ehlen += (8-i); /* make sure buffer is still alligned */
+       buf += ehlen;
+    }
+
+    msginfo->ehlen  = ehlen;
     msginfo->dscrlen = buf - buf0 - sizeof(request_header_t);
     msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
 
@@ -621,7 +636,19 @@ int armci_rem_strided(int op, void* scale, int proc,
 }
 
 
+void armci_process_extheader(request_header_t *msginfo, char *dscr, char* buf, int buflen)
+{
+ armci_flag_t *h;
+ int *flag;
 
+   h = (armci_flag_t*)(dscr + msginfo->dscrlen - msginfo->ehlen);
+#if 0
+   if(msginfo->ehlen)printf("%d:server from=%d len=%d: ptr=%p val=%d\n",armci_me,msginfo->from, msginfo->ehlen,h->ptr,h->val);
+   fflush(stdout);
+#endif
+   flag = (int*)(h->ptr);
+   *flag = h->val;
+}
 
 void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 {
@@ -637,7 +664,13 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
       void *client_ptr=0;
 #   endif
 
-    if(msginfo->operation==PUT && msginfo->datalen==0)return;/*return if using readv/socket for put*/
+    /*return if using readv/socket for put*/
+    if(msginfo->operation==PUT && msginfo->datalen==0){
+      if(msginfo->ehlen) /* process extra header if available */
+         armci_process_extheader(msginfo, dscr, buf, buflen);
+      return;
+    }
+
     /* unpack descriptor record */
     loc_ptr = *(void**)dscr;           dscr += sizeof(void*);
     stride_levels = *(int*)dscr;       dscr += sizeof(int);
@@ -657,6 +690,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
         }
 #   endif
 
+
     /* get scale for accumulate, adjust buf to point to data */
     switch(msginfo->operation){
     case ARMCI_ACC_INT:     slen = sizeof(int); break;
@@ -667,7 +701,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 	default:				slen=0;
     }
 
-	scale = dscr_save+ (msginfo->dscrlen - slen);
+	scale = dscr_save+ (msginfo->dscrlen - slen -msginfo->ehlen);
 /*
     if(ACC(msginfo->operation))
       fprintf(stderr,"%d in server len=%d slen=%d alpha=%lf\n", armci_me,
@@ -708,6 +742,10 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
                count, stride_levels, 1)))
                armci_die("server_strided: op from buf failed",rc);
     }
+
+    if(msginfo->ehlen) /* process extra header if available */
+         armci_process_extheader(msginfo, dscr_save, buf, buflen);
+
 }
 
 

@@ -48,8 +48,9 @@ unsigned int   bypass:1;      /* indicate if bypass protocol used */
 unsigned int   format:4;      /* data format used */
 #endif
 unsigned int   bytes:20;      /* number of bytes requested */
-         int   dscrlen;       /* >0 in lapi means that descriptor is included */
          int   datalen;       /* >0 in lapi means that data is included */
+         int   ehlen:8;       /* size of extra header and the end of descr */
+  signed int   dscrlen:24;    /* >0 in lapi means that descriptor is included */
          msg_tag_t tag;       /* message tag for response to this request */
 }request_header_t;
 
@@ -123,7 +124,8 @@ extern int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,
 extern int armci_rem_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
-                       int count[], int stride_levels, int lockit);
+                       int count[], int stride_levels, 
+                       ext_header_t *h, int lockit);
 
 extern void armci_rem_rmw(int op, int *ploc, int *prem, int extra, int proc);
 extern void armci_rem_ack(int clus);
