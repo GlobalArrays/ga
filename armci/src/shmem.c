@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.29 2000-06-14 00:57:55 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.30 2000-06-16 22:25:41 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -167,7 +167,7 @@ unsigned long iptr;
         iptr = (unsigned long)tmp;
         iptr >>= logpagesize; iptr <<= logpagesize;
         if(DEBUG_)
-           printf("%d:unmap ptr=%d->%d size=%d\n",armci_me, tmp,iptr, (int)size);
+           printf("%d:unmap ptr=%d->%d size=%d\n",armci_me, tmp,iptr,(int)size);
         tmp = (char*)iptr;
         if(munmap(tmp, size) == -1) armci_die("munmap failed",0);
     }else armci_die("alloc_munmap: malloc failed",(int)size);
@@ -250,6 +250,41 @@ long lower_bound=0;
 }
 
 
+
+/*\ determine the max shmem segment size by halving
+\*/
+int armci_shmem_test_by_shmalloc()                          
+{
+long x;                                                     
+int  i,rc;
+long lower_bound=0;
+
+     x = UBOUND;
+     for(i=1;;i++){
+        char *temp;
+
+        shmalloc_request((unsigned)(x<<10), (unsigned)(x<<9));
+        temp = shmalloc((unsigned)x);
+        rc = (temp != (char*)0 );
+        if(DEBUG_)
+           printf("%d:test by halving size=%ld bytes rc=%d\n",armci_me,x,rc);
+
+        if(rc){
+          lower_bound = x;
+          shfree(temp);
+          break;
+        }else{
+          x >>= 1 ;
+          if(x<PAGE) break;
+        }
+     }
+
+     if(DEBUG_) printf("%ld bytes segment size, %d calls \n",lower_bound,i);
+     if(!lower_bound)return(0);
+     return (int)( lower_bound>>20); /* return shmmax in mb */
+}
+
+
 void armci_shmem_init()
 {
 
@@ -291,7 +326,7 @@ void armci_shmem_init()
         MinShmem = (long)(x<<10); /* make sure it is in kb: mb <<10 */ 
         MaxShmem = MAX_REGIONS*MinShmem;
 #ifdef REPORT_SHMMAX
-       printf("%d using x=%d SHMMAX=%dKB\n", armci_me,x, MinShmem);
+       printf("%d using x=%d SHMMAX=%ldKB\n", armci_me,x, MinShmem);
        fflush(stdout);
        sleep(1);
 #endif
@@ -341,14 +376,13 @@ static struct shm_region_list{
    long     id;
    int      attached;
 }region_list[MAX_REGIONS];
-static long alloc_regions=0;
+static int alloc_regions=0;
 static long occup_blocks=0;
 
 /* Terminology
  *   region - actual piece of shared memory allocated from OS
  *   block  - a part of allocated shmem that is given to the requesting process
  */
-
 
 
 
@@ -370,7 +404,7 @@ static long occup_blocks=0;
 #endif
 
 
-static long prev_alloc_regions=0;
+static int prev_alloc_regions=0;
 
 
 unsigned long armci_max_region()
@@ -382,11 +416,9 @@ unsigned long armci_max_region()
 /*\
  *   assembles the list of shmem id for the block 
 \*/
-find_regions(addrp,   idlist, first)
-    char *addrp;
-    long *idlist, *first;
+int find_regions(char *addrp,  long* idlist, int *first)
 {
-long reg, nreg, freg=-1, min_reg, max_reg;
+int reg, nreg, freg=-1, min_reg, max_reg;
 
        /* find the region where addrp belongs */
        for(reg = 0; reg < alloc_regions-1; reg++){
@@ -411,57 +443,14 @@ long reg, nreg, freg=-1, min_reg, max_reg;
        }else{
            /* get ids of the allocated regions */
            idlist[0] = alloc_regions - prev_alloc_regions;
-           if(idlist[0] < 0)armci_die(" find_regions error ",0);
+           if(idlist[0] < 0)armci_die("armci find_regions error ",0);
            for(reg =prev_alloc_regions,nreg=1; reg <alloc_regions;reg++,nreg++){
                idlist[nreg] = region_list[reg].id;
            }
            prev_alloc_regions = alloc_regions;
        }
        *first = freg;
-       return 1;
-}
-
-
-/*\
-\*/
-char *Create_Shared_Region(idlist, size, offset)
-     long size, *idlist, *offset;
-{
-char *temp,  *shmalloc();
-void shmalloc_request();
-long reg;
-  
-  if(alloc_regions>=MAX_REGIONS)
-       armci_die("Create_Shared_Region: to many regions ",0L);
-
-  /*initialization */
-  if(!alloc_regions){
-      for(reg=0;reg<MAX_REGIONS;reg++){
-        region_list[reg].addr=(char*)0;
-        region_list[reg].attached=0;
-        region_list[reg].id=0;
-      }
-      shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
-      idlist[SHMIDLEN-2]=MinShmem;
-  }
-
-  temp = shmalloc((unsigned long)size);
-  if(temp == (char*)0 )
-     armci_die("Create_Shared_Region: shmalloc failed ",0L);
-    
-  if(!find_regions(temp, idlist,&reg))
-     armci_die("Create_Shared_Region: allocation inconsistent ",0L);
-
-  /* stamp at the beginning address to be tested by other processes  */
-  if(STAMP) *(int*)temp = alloc_regions-1;
-
-/*  *offset = (long) (temp - region_list[reg].addr);*/
-  *offset = (long) (temp - region_list[0].addr);
-  occup_blocks ++;
-
-  if(DEBUG_) fprintf(stderr, ">Create_Shared_Region: reg=%d id= %d  off=%d  addr=%d addr+off=%d s=%d stamp=%d num ids=%d\n",reg,region_list[reg].id, *offset, region_list[reg].addr, temp, size, *(int*)temp,idlist[0]);
-
-  return temp;
+       return idlist[0];
 }
 
 
@@ -635,65 +624,35 @@ long sz;
 
 #else /* Now, the machines where shm segments are not glued together */ 
 
+static int last_allocated=-1;
+
+
 unsigned long armci_max_region()
 {
   return MinShmem;
 }
 
-int last_allocated=-1;
-/*\
-\*/
-char *Create_Shared_Region(id, size, offset)
-     long size, *id, *offset;
+
+int find_regions(char *addrp,  long* id, int *region)
 {
-char *temp,  *shmalloc();
-void shmalloc_request();
-int  reg, nreg;
-  
-  if(alloc_regions>=MAX_REGIONS)
-       armci_die("Create_Shared_Region: to many regions ",0L);
+int nreg, reg;
 
-  /*initialization */
-  if(!alloc_regions){
-      for(reg=0;reg<MAX_REGIONS;reg++){
-        region_list[reg].addr=(char*)0;
-        region_list[reg].attached=0;
-        region_list[reg].id=0;
-      }
-      if(DEBUG_)
-           printf("%d:allocation unit: %dK, max shmem:%dK\n",armci_me,MinShmem,MaxShmem);
-      shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
-      id[SHMIDLEN-2]=MinShmem;
-  }
-
-
-    temp = shmalloc((unsigned)size);
-    if(temp == (char*)0 )
-       armci_die("Create_Shared_Region: shmalloc failed ",0L);
-    
-    /* find the region */
     if(last_allocated!=-1){
        reg=last_allocated;
        last_allocated = -1;
     } else{
        for(reg=0,nreg=0;nreg<alloc_regions; nreg++){
-          if(region_list[nreg].addr > temp )break;
+          if(region_list[nreg].addr > addrp )break;
           reg = nreg;
        }
     }
 
-    if(STAMP) *((int*)temp) = alloc_regions-1;
-
-    *offset = (long) (temp - region_list[reg].addr);
+    *region = reg;
     *id = region_list[reg].id;
-    occup_blocks++;
-  
-/*
-  if(DEBUG_) fprintf(stderr,"Create_Shared_Region: reg=%d id= %d  off=%d  addr=%d    addr+off=%d s=%d\n",reg,*id, *offset, region_list[reg].addr, temp, size);
-*/
 
-    return temp;
+    return 1;
 }
+
 
 
 char *Attach_Shared_Region(id, size, offset)
@@ -717,7 +676,7 @@ static char *temp;
       }
       MinShmem= id[SHMIDLEN-2];
       if(DEBUG_)
-         printf("%d:allocation unit: %dK\n",armci_me,MinShmem);
+         printf("%d:allocation unit: %ldK\n",armci_me,MinShmem);
   }
 
   /* search region_list for the current shmem id */
@@ -738,7 +697,7 @@ static char *temp;
        char *pref_addr = (char*)0;
 #   endif
     if ( (long) (temp = shmat((int) *id, pref_addr, 0)) == -1L){
-       fprintf(stderr,"%d:attach error:id=%ld off=%ld seg=%d\n",armci_me,*id,offset,MinShmem);
+       fprintf(stderr,"%d:attach error:id=%ld off=%ld seg=%ld\n",armci_me,*id,offset,MinShmem);
        shmem_errmsg(MinShmem*1024);
        armci_die("Attach_Shared_Region:failed to attach to segment id=",*id);
     }
@@ -807,7 +766,60 @@ long id;
     
 #endif
 
-/* common code for the two versions */
+/******************** common code for the two versions *********************/
+
+
+/*\ Allocate a block of shared memory - called by master process
+\*/
+char *Create_Shared_Region(long *id, long size, long *offset)
+{
+char *temp,  *shmalloc();
+void shmalloc_request();
+int  reg, refreg=0,nreg;
+  
+    if(alloc_regions>=MAX_REGIONS)
+       armci_die("Create_Shared_Region: to many regions ",0L);
+
+    /*initialization: 1st allocation request */
+    if(!alloc_regions){
+       for(reg=0;reg<MAX_REGIONS;reg++){
+          region_list[reg].addr=(char*)0;
+          region_list[reg].attached=0;
+          region_list[reg].id=0;
+       }
+       if(DEBUG_)
+          printf("%d:allocation unit: %ldK, max shmem:%ldK\n",
+                 armci_me,MinShmem,MaxShmem);
+       shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
+       id[SHMIDLEN-2]=MinShmem;
+    }
+
+    temp = shmalloc((unsigned)size);
+    if(temp == (char*)0 )
+       armci_die("Create_Shared_Region: shmalloc failed ",0);
+    
+    if(!(nreg=find_regions(temp,id,&reg)))
+        armci_die("CreateSharedRegion: allocation inconsitent",0);
+
+#ifndef MULTIPLE_REGIONS
+    refreg = reg;
+#endif
+
+    if(STAMP) *((int*)temp) = alloc_regions-1;
+    *offset = (long) (temp - region_list[refreg].addr);
+    occup_blocks++;
+  
+    if(DEBUG_){ 
+      printf("%d:CreatShmReg:reg=%d id=%ld off=%ld ptr=%ld adr=%ld s=%d n=%d\n",
+           armci_me,reg,region_list[reg].id,*offset,region_list[reg].addr,
+           temp,(int)size,nreg);
+      fflush(stdout);
+    }
+
+    return temp;
+}
+
+
 
 
 /*\ only process that created shared region returns the pointer to shmalloc 

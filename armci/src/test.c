@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.21 2000-06-09 19:48:51 d3h325 Exp $ */
+/* $Id: test.c,v 1.22 2000-06-16 22:25:41 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -46,8 +46,8 @@
 #define DIM2 3
 #ifdef __sun
 /* Solaris has shared memory shortages in the default system configuration */
-# define DIM3 4
-# define DIM4 4
+# define DIM3 6
+# define DIM4 5
 # define DIM5 4
 #else
 # define DIM3 8
@@ -928,7 +928,7 @@ void test_fetch_add()
 #define LOCKED -1
 void test_swap()
 {
-    int rc, bytes, i, val, times =0,whatever=-8999;
+    int rc, bytes, i, val, whatever=-8999;
     int *arr[MAXPROC];
 
     /* shared variable is located on processor 0 */
