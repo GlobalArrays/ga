@@ -1,4 +1,4 @@
-c $Id: scalapack.F,v 1.4 2004-11-15 23:01:03 edo Exp $
+c $Id: scalapack.F,v 1.5 2004-11-16 00:53:05 edo Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
@@ -1314,8 +1314,6 @@ c
          jobz = 'V'
          range = 'A'
          uplo = 'L'
-c     abstol = 2.0d0*pdlamch('S')
-         abstol = 0.0d0
          vl = 0.d0
          vu = 0.d0
          il = 0
@@ -1350,9 +1348,8 @@ c
      &        call ga_error('ga_pdsyev: mem alloc failed cwork  ', -1)
 c     
 c     
-c     x      abstol = 2.d0 * pdlamch('s')
-c     
-         abstol = 0.0d0
+!         abstol = 0.0d0
+         abstol=pdlamch(iSLctxt, 'U')
 c     
 c     
          call pdsyevx(jobz, range, uplo,
@@ -1626,8 +1623,6 @@ c
          jobz = 'V'
          range = 'A'
          uplo = 'L'
-c     abstol = 2.0d0*pdlamch('S')
-         abstol = 0.0d0
          vl = 0.d0
          vu = 0.d0
          il = 0
@@ -1661,10 +1656,8 @@ c
          if(.not.status) 
      &        call ga_error('ga_pdsygv: mem alloc failed cwork  ', -1)
 c     
-c     
-c     x      abstol = 2.d0 * pdlamch('s')
-c     
-         abstol = 0.0d0
+!         abstol = 0.0d0
+         abstol=pdlamch(iSLctxt, 'U')
 c     
 c     
 c     
