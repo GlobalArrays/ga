@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.38 2003-10-29 04:40:22 edo Exp $ */
+/* $Id: matmul.c,v 1.39 2003-11-05 18:52:33 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -978,6 +978,9 @@ void ga_matmul(transa, transb, alpha, beta,
 #    endif
     }
 
+    nga_inquire_internal_(g_c, &ctype, &rank, dims);
+    if(dims[0] != m || dims[1] != n) irregular = SET; /* C matrix dims */
+    
     /****************************************************************
      * Get the memory (i.e.static or dynamic) for temporary buffers 
      ****************************************************************/
