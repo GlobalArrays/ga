@@ -2,14 +2,13 @@
 #define _VAPI_H
 
 /*vapi includes*/
-#include "vapi.h"
-#include "evapi.h"
-#include "mpga.h"
-#include "mtl_common.h"
+#include <vapi.h>
+#include <evapi.h>
+#include <mpga.h>
+#include <mtl_common.h>
 
-#include "ib_defs.h"
-#include "vapi_common.h"
-
+#include <ib_defs.h>
+#include <vapi_common.h>
 
 #define DSCRID_NBDSCR 10000
 

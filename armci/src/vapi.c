@@ -10,12 +10,6 @@
 
 #include "armcip.h"
 #include "copy.h"
-/*vapi includes*/
-#include "/usr/mellanox/include/vapi.h"
-#include "/usr/mellanox/include/evapi.h"
-#include "/usr/mellanox/include/ib_defs.h"
-#include "/usr/mellanox/include/vapi_common.h"
-#include "/usr/mellanox/include/mtl_common.h"
 /*our incude*/
 #include "armci-vapi.h"
 #define DEBUG_INIT 0
@@ -49,6 +43,7 @@ typedef struct {
   VAPI_cq_hndl_t rcq;               /*recv completion queue*/
   IB_lid_t *lid_arr;                /*we need to exchange lids, arr for that*/
   VAPI_qp_num_t rqpnum;            /*we need to exchng qp nums,arr for that*/
+  EVAPI_compl_handler_hndl_t rcq_eventh;
   int maxtransfersize; 
 } vapi_nic_t;
 
@@ -77,6 +72,7 @@ static int armci_vapi_client_stage1=0;
 static int armci_vapi_server_stage2=0;
 static int armci_vapi_client_ready;
 int _s=-1,_c=-1;
+static int server_can_poll=0;
 
 #define CLIENT_STAMP 101
 #define SERV_STAMP 99 
@@ -489,7 +485,7 @@ int *tmparr;
        armci_connect_t *con = SRV_con + s;
        con->rqpnum = (VAPI_qp_num_t *)malloc(sizeof(VAPI_qp_num_t)*armci_nproc);
        bzero(con->rqpnum,sizeof(VAPI_qp_num_t)*armci_nproc);
-       //if(armci_clus_me != s){
+       /*if(armci_clus_me != s){*/
        {
          armci_create_qp(SRV_nic,&con->qp,&con->qp_prop);
          con->sqpnum  = con->qp_prop.qp_num;
@@ -725,6 +721,16 @@ static void armci_init_vbuf_rrdma(VAPI_sr_desc_t *sd, VAPI_sg_lst_entry_t *sg_en
      sg_entry->len = len;
 }
 
+static void vapi_signal_comp_handler(VAPI_hca_hndl_t hca_hndl,
+                                     VAPI_cq_hndl_t cq_hndl,void* sem_p)
+{
+  /*printf("%d:in comp handler",armci_me);fflush(stdout);
+  MOSAL_sem_rel((MOSAL_semaphore_t*)sem_p);
+  printf("%d:in comp handler - semaphore released",armci_me);fflush(stdout);
+  */
+}
+
+
 
 void armci_server_initial_connection()
 {
@@ -734,13 +740,17 @@ VAPI_ret_t rc;
 VAPI_qp_attr_t         qp_attr;
 VAPI_qp_cap_t          qp_cap;
 VAPI_qp_attr_mask_t    qp_attr_mask;
+char *enval;
 
     if(DEBUG_SERVER){ 
        printf("in server after fork %d (%d)\n",armci_me,getpid());
        fflush(stdout);
     }
 
-    armci_init_nic(CLN_nic,2,2);
+    armci_init_nic(CLN_nic,1,1);
+
+    /*MOSAL_sem_init(&(res->rq_sem),0);*/
+
     _gtmparr[armci_me] = CLN_nic->lid_arr[armci_me];
     armci_vapi_server_stage1 = 1;
     armci_util_wait_int(&armci_vapi_client_stage1,1,10000);
@@ -848,9 +858,25 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
        }
        rc = VAPI_post_rr(CLN_nic->handle,(CLN_con+c)->qp,&(vbuf->dscr));
        armci_check_status(DEBUG_SERVER, rc,"server post recv vbuf");
+       
     }
 
+    rc = EVAPI_set_comp_eventh(CLN_nic->handle,CLN_nic->rcq,
+                               EVAPI_POLL_CQ_UNBLOCK_HANDLER,NULL,
+                               &(CLN_nic->rcq_eventh));
+    armci_check_status(DEBUG_SERVER, rc,"EVAPI_set_comp_eventh"); 
+
     armci_vapi_server_ready=1;
+    /* check if we can poll in the server thread */
+    enval = getenv("ARMCI_SERVER_CAN_POLL");
+    if(enval != NULL){
+       if((enval[0] != 'N') && (enval[0]!='n')) server_can_poll=1;
+    } 
+    else{
+      if(armci_clus_info[armci_clus_me].nslave < armci_getnumcpus()) 
+        server_can_poll=1;
+    }
+
 
     /* establish connections with compute processes/clients */
     /*vapi_connect_server();*/
@@ -873,15 +899,32 @@ int c,need_ack;
        VAPI_wc_desc_t pdscr1;
        pdscr = &pdscr1;
        rc=VAPI_CQ_EMPTY;
-       while(rc == VAPI_CQ_EMPTY){
-         rc = VAPI_poll_cq(CLN_nic->handle, CLN_nic->rcq, pdscr);
-         if(armci_server_terminating){
-           /* server got interrupted when clients terminate connections */
-           sleep(1);
-           _exit(0);
+
+       /*we just snoop to see if we have something */ 
+       rc = VAPI_poll_cq(CLN_nic->handle, CLN_nic->rcq, pdscr);
+
+       if(server_can_poll){
+         while(rc == VAPI_CQ_EMPTY){
+           rc = VAPI_poll_cq(CLN_nic->handle, CLN_nic->rcq, pdscr);
+           if(armci_server_terminating){
+             /* server got interrupted when clients terminate connections */
+             sleep(1);
+             _exit(0);
+           }
          }
        }
-       armci_check_status(DEBUG_SERVER, rc,"server poll recv got something");
+       else {
+         while(rc == VAPI_CQ_EMPTY){
+           rc = EVAPI_poll_cq_block(CLN_nic->handle, CLN_nic->rcq, 0, pdscr);
+           if(armci_server_terminating){
+             /* server got interrupted when clients terminate connections */
+             sleep(1);
+             _exit(0);
+           }
+         }
+       }
+
+       armci_check_status(DEBUG_SERVER, rc,"server poll/block");
        /*we can figure out which buffer we got data info from the wc_desc_t id
         * this can tell us from which process we go the buffer, as well */
 
@@ -924,8 +967,8 @@ int c,need_ack;
        }
 
       /*if ((msginfo->operation==GET)&&(PIPE_MIN_BUFSIZE<msginfo->datalen))
-         armci_serv_clear_sends(); */
-       //if((msginfo->operation==GET && msginfo->bypass) && need_ack &&(armci_ack_proc != NONE)) SERVER_SEND_ACK(armci_ack_proc);
+         armci_serv_clear_sends(); 
+       if((msginfo->operation==GET && msginfo->bypass) && need_ack &&(armci_ack_proc != NONE)) SERVER_SEND_ACK(armci_ack_proc);*/
     }
 }
 
