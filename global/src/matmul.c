@@ -133,28 +133,31 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
       /* MAX: get the maximum chunk (or, block) size i.e  */
       max_chunk=MIN(max_chunk, (Integer)(sqrt( (double)((*elems-nbuf*NUM_MATS)/(nbuf*NUM_MATS)))));
       
-#if 0 /* enable this, if later part of the code is buggy or inefficient */
-      *Ichunk = MIN(m,max_chunk);
-      *Jchunk = MIN(n,max_chunk);
-      *Kchunk = MIN(k,max_chunk);      
-#else /* This part of the code takes care of rectangular chunks and
-	 most probably gives optimum rectangular chunk size */
-      temp = max_chunk*max_chunk;
-      if(*Ichunk < max_chunk && *Kchunk > max_chunk) {
-	 *Kchunk = MIN(*Kchunk,(Integer)(temp/(*Ichunk)));
-	 *Jchunk = MIN(*Jchunk,(Integer)(temp/(*Kchunk)));
-      }
-      else if(*Kchunk < max_chunk && *Ichunk > max_chunk) {
-	 temp *= 1.0/(*Kchunk);
-	 *Ichunk = MIN(*Ichunk,(Integer)temp);
-	 *Jchunk = MIN(*Jchunk,(Integer)temp);
-      }
-      else { 
+      if(irregular) {
+	 /* NOTE:enable this part for regular cases, if later 
+	    part of the code is buggy or inefficient */
 	 *Ichunk = MIN(m,max_chunk);
 	 *Jchunk = MIN(n,max_chunk);
-	 *Kchunk = MIN(k,max_chunk);
+	 *Kchunk = MIN(k,max_chunk);      
       }
-#endif
+      else { /* This part of the code takes care of rectangular chunks and
+		most probably gives optimum rectangular chunk size */
+	 temp = max_chunk*max_chunk;
+	 if(*Ichunk < max_chunk && *Kchunk > max_chunk) {
+	    *Kchunk = MIN(*Kchunk,(Integer)(temp/(*Ichunk)));
+	    *Jchunk = MIN(*Jchunk,(Integer)(temp/(*Kchunk)));
+	 }
+	 else if(*Kchunk < max_chunk && *Ichunk > max_chunk) {
+	    temp *= 1.0/(*Kchunk);
+	    *Ichunk = MIN(*Ichunk,(Integer)temp);
+	    *Jchunk = MIN(*Jchunk,(Integer)temp);
+	 }
+	 else { 
+	    *Ichunk = MIN(m,max_chunk);
+	    *Jchunk = MIN(n,max_chunk);
+	    *Kchunk = MIN(k,max_chunk);
+	 }
+      }
     }
     else 
        *Ichunk = *Jchunk = *Kchunk = CHUNK_SIZE/nbuf;
@@ -601,7 +604,7 @@ void ga_matmul(transa, transb, alpha, beta,
     short int irregular=UNSET, need_scaling=SET, use_NB_matmul = SET;
     Integer loC[2]={0,0}, hiC[2]={0,0};
     Integer ZERO_I = 0, inode, iproc;
-
+    
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(local_sync_begin)ga_sync_();
@@ -669,8 +672,10 @@ void ga_matmul(transa, transb, alpha, beta,
 
 
     /* switch to various matmul algorithms here. more to come */
-    if( GA[GA_OFFSET + *g_c].irreg == 1 
-	|| _gai_matmul_patch_flag == SET) irregular = SET;
+    if( GA[GA_OFFSET + *g_c].irreg == 1 ||
+	GA[GA_OFFSET + *g_b].irreg == 1 ||
+	GA[GA_OFFSET + *g_a].irreg == 1 ||
+	_gai_matmul_patch_flag == SET) irregular = SET;
     if(!irregular) {
        if((adim1=GA_Cluster_nnodes()) > 1) use_NB_matmul = SET;
        else use_NB_matmul = UNSET;
@@ -740,7 +745,6 @@ void ga_matmul(transa, transb, alpha, beta,
 	*    2. Do sequential dgemm.
 	*    3. Put/accumulate the result into C matrix.
 	*********************************************************************/
-
 
        /* if only one node, then enable the optimized shmem code */
        if(use_NB_matmul==UNSET) { 
