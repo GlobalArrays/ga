@@ -8,7 +8,7 @@ endif
 
 ifndef GA_C_CORE
 error:
-	@echo "GA++ (optional) is not built, as GA_C_CORE is not defined."
+	@echo "GA++ (optional) is not built, as GA_C_CORE is not defined [That is OK]"
 	exit
 endif
 
