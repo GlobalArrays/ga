@@ -588,7 +588,7 @@ int main(argc, argv)
   long lenbuf;
   long node, opt;
   
-  PBEGIN_(argc, argv);
+  ALT_PBEGIN_(&argc, &argv);
 
   (void) printf("In process %ld\n", (long)NODEID_());
   (void) fflush(stdout);

@@ -99,11 +99,10 @@ extern int single_cluster();
 #define BROKEN_MPI_INITIALIZED
 #endif
 
-/*\ Initialization for C programs
+/*\ Alternative initialization for C programs
+ *  used to address argv/argc manipulation in MPI
 \*/
-void PBEGIN_(argc, argv)
-int argc;
-char *argv[];
+void ALT_PBEGIN_(int *argc, char **argv[])
 {
 int numprocs, myid;
 int init=0;
@@ -121,7 +120,7 @@ int init=0;
 
    if(!init){ 
       /* nope */
-      MPI_Init(&argc, &argv);
+      MPI_Init(argc, argv);
       MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
    }
 
@@ -133,6 +132,13 @@ int init=0;
    MPI_Barrier(MPI_COMM_WORLD);
    /* printf("%d:ready to go\n",NODEID_()); */
    install_nxtval();
+}
+
+/*\ Initialization for C programs
+\*/
+void PBEGIN_(int argc, char* argv[])
+{
+   ALT_PBEGIN_(&argc, &argv);
 }
 
 

@@ -43,6 +43,7 @@ extern "C" {
    extern long FATR MITOD_();
    extern void FATR PFILECOPY_();
    extern void FATR PFCOPY_();
+   extern void ALT_PBEGIN_();
 }
 #endif
 
