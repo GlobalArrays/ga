@@ -467,3 +467,8 @@ void ARMCI_Set_shmem_limit(unsigned long shmemlimit)
     */
 }
 #endif
+
+void ARMCI_Copy(void *src, void *dst, int n)
+{
+ armci_copy(src,dst,n);
+}

@@ -82,6 +82,7 @@ extern void ARMCI_Lock(int mutex, int proc);
 extern void ARMCI_Unlock(int mutex, int proc);
 extern void ARMCI_Set_shm_limit(unsigned long shmemlimit);
 extern int ARMCI_Uses_shm();
+extern void ARMCI_Copy(void *src, void *dst, int n);
 
 #define FAIL  -1
 #define FAIL2 -2
