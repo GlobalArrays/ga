@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.53 2003-08-21 06:59:40 d3h325 Exp $ */
+/* $Id: copy.h,v 1.54 2003-08-21 22:29:32 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -222,6 +222,10 @@ void FATR DCOPY1D(void*, void*, int*);
 
 #ifdef NEC
 #    define MEM_FENCE mpisx_clear_cache()
+#endif
+
+#ifdef DECOSF
+#    define MEM_FENCE asm ("mb")
 #endif
 
 #if defined(NEED_MEM_SYNC)
