@@ -34,7 +34,7 @@
 #   elif defined(DELTA)
 #     define MAX_NPROC     512
 #   elif defined(SP1) || defined(SP)
-#     define MAX_NPROC     400
+#     define MAX_NPROC     512
 #   elif defined(LAPI)
 #     define MAX_NPROC     512
 #   elif defined(CRAY_T3D)
