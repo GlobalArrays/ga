@@ -1,10 +1,10 @@
-# $Id: GNUmakefile,v 1.1 1999-05-27 16:31:09 d3h325 Exp $
+# $Id: GNUmakefile,v 1.2 2000-11-04 01:40:09 d3h325 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
       LIBRARY = libma.a
   LIB_DISTRIB = ../lib
- OBJ_OPTIMIZE = error.o f2c.o ma.o maf.o table.o
+          OBJ = error.o f2c.o ma.o maf.o table.o
       HEADERS = macommon.h matypes.h macdecls.h \
                 scope.h error.h memcpy.h \
                 string-util.h table.h mafdecls.fh\
