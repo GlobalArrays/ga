@@ -386,7 +386,7 @@ endif
 ifeq ($(TARGET),CRAY-SV1)
      COPT_REN = -htaskprivate $(LIBCM)
            FC = f90
- GLOB_DEFINES = -DCRAY_YMP
+ GLOB_DEFINES = -DCRAY_YMP -DCRAY_SV1
      FOPT_REN = -dp -ataskcommon $(LIBCM)
          CRAY = yes
 endif
