@@ -787,6 +787,7 @@ int main(int argc, char* argv[])
 
         MPI_Barrier(MPI_COMM_WORLD);
 	if(me==0)printf("All tests passed\n"); fflush(stdout);
+    sleep(5);
     ARMCI_Finalize();
     MPI_Finalize();
     return(0);

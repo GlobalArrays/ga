@@ -33,8 +33,9 @@ void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
               ps += src_stride;
               pd += dst_stride;
           }
-        } else if( bytes % ALIGN_SIZE ){ /* segment size not alligned */
+        } else if( bytes % ALIGN_SIZE || ((long)src_ptr) %ALIGN_SIZE || ((long)dst_ptr) %ALIGN_SIZE ){ 
 
+            /* size/address not alligned */
             ByteCopy2D(bytes, count, src_ptr, src_stride, dst_ptr, dst_stride);
 
         }else { /* segment size alligned -- should be the most efficient copy */

@@ -15,11 +15,11 @@
 #    define F_ACCUMULATE_2D	f_accumulate_2d_u_
 #endif
 
-void I_ACCUMULATE_2D(); 
-void D_ACCUMULATE_2D(); 
-void C_ACCUMULATE_2D(); 
-void Z_ACCUMULATE_2D(); 
-void F_ACCUMULATE_2D();
+void FATR I_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
+void FATR D_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
+void FATR C_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
+void FATR Z_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
+void FATR F_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*);
 
 extern void armci_acc_2D(int op, void* scale, int proc, void *src_ptr, void *dst_ptr, int bytes, 
 		  int cols, int src_stride, int dst_stride); 

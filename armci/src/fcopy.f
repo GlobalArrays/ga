@@ -1,4 +1,4 @@
-      subroutine dcopy2d(rows, cols, A, ald, B, bld)
+      subroutine dcopy2d_n(rows, cols, A, ald, B, bld)
       integer rows, cols
       integer c, r, ald, bld
       double precision A(ald,*), B(bld,*)

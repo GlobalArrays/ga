@@ -1,6 +1,8 @@
+#include "armcip.h"
 #include "acc.h"
 #include "locks.h"
-#include "armcip.h"
+
+#define ALIGN sizeof(double)
 
 /*\ 2-dimensional accumulate
 \*/
@@ -8,8 +10,10 @@ void armci_acc_2D(int op, void* scale, int proc, void *src_ptr, void *dst_ptr, i
 		  int cols, int src_stride, int dst_stride)
 {
 int   rows, lds, ldd;
-void (*func)();
+void (FATR *func)(void*, int*, int*, void*, int*, void*, int*);
 
+      if((long)src_ptr%ALIGN)armci_die("src not aligned",(long)src_ptr);
+      if((long)dst_ptr%ALIGN)armci_die("src not aligned",(long)dst_ptr);
       switch (op){
       case ARMCI_ACC_INT:
           rows = bytes/sizeof(int);
@@ -44,16 +48,19 @@ void (*func)();
       default: armci_die("ARMCI accumulate: operation not supported",op);
       }
 
-#if !defined(SYSV) && !defined(WIN32)
+#if !defined(SYSV) && !defined(WIN32) && !defined(CRAY_YMP)
   if(proc == armci_me)
 #endif
   {
 
       NATIVE_LOCK(proc%NUM_LOCKS);
       func(scale, &rows, &cols, dst_ptr, &ldd, src_ptr, &lds);
+/*
+      D_ACCUMULATE_2D(scale, &rows, &cols, dst_ptr, &ldd, src_ptr, &lds);
+*/
       NATIVE_UNLOCK(proc%NUM_LOCKS);
   }
-#if !defined(SYSV) && !defined(WIN32)
+#if !defined(SYSV) && !defined(WIN32) && !defined(CRAY_YMP)
   else armci_die("nonlocal acc not yet implemented",0);
 #endif
 

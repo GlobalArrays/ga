@@ -61,7 +61,8 @@ extern void ARMCI_Finalize();    /* terminate ARMCI */
 extern void ARMCI_Error(char *msg, int code);
 extern void ARMCI_Fence(int proc);
 extern void ARMCI_AllFence(void);
-extern int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc);
+extern int  ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc);
+extern void ARMCI_Cleanup(void);
 
 #define FAIL  -1
 #define FAIL2 -2

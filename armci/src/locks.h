@@ -59,6 +59,11 @@
 #  define NATIVE_LOCK(x)   P_semaphore(x)
 #  define NATIVE_UNLOCK(x) V_semaphore(x)
 
+#elif defined(CYGNUS)
+
+typedef int lockset_t;
+#  define NATIVE_LOCK(x) if(armci_nproc>1)armci_die("does not run in parallel",0) 
+#  define NATIVE_UNLOCK(x) if(armci_nproc>1)armci_die("does not run in parallel",0)  
 
 #else
 

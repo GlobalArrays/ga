@@ -32,8 +32,10 @@
 #    define DCOPY2D	dcopy2d_u
 #elif !defined(CRAY) && !defined(WIN32)
 #    define DCOPY2D	dcopy2d_u_
+#else
+#    define DCOPY2D	DCOPY2D_U
 #endif
-void DCOPY2D(); 
+void FATR DCOPY2D(int*, int*, void*, int*, void*, int*); 
 
 /***************************** 1-Dimensional copy ************************/
 

@@ -13,6 +13,7 @@ extern void armci_die(char*,int);
 lockset_t lockset;
 static char arena_name[FILE_LEN];
 usptr_t *arena_ptr;
+static int avail =0;
 
 extern char *getenv(const char *);
 
@@ -31,6 +32,7 @@ char *tmp;
   (void) usconfig(CONF_INITUSERS, (unsigned int)armci_cluster_nodes); 
    arena_ptr = usinit(arena_name);    
    if(!arena_ptr) armci_die("Failed to Create Arena", 0);
+/*   else fprintf(stderr,	"created arena %x\n",arena_ptr); */
  
    for(i=0; i<num_locks; i++){
        lockset.lock_array[i] = usnewlock(arena_ptr); 
@@ -38,6 +40,7 @@ char *tmp;
    }
 
    *lockid = lockset;
+   avail = 1;
 }   
    
 
@@ -46,6 +49,7 @@ void InitLocks(int num_locks, lockset_t lockid)
 int i;
 char *tmp;
 
+/*   if(avail) armci_die("Arena already attached", avail); */
    lockset = lockid;
    if (!(tmp = getenv("ARENA_DIR"))) tmp = "/tmp";
    sprintf(arena_name,"%s/armci_arena.%ld", tmp,lockset.id);
@@ -53,15 +57,20 @@ char *tmp;
    (void) usconfig(CONF_ARENATYPE, US_GENERAL);
    arena_ptr = usinit(arena_name);
    if(!arena_ptr) armci_die("Failed to Attach to Arena", lockid.id);
+/*   else fprintf(stderr,	"attached arena %x\n",arena_ptr); */
 
    for(i=0; i<num_locks; i++){
        if(lockset.lock_array[i] == NULL) armci_die("Failed to Attach Lock", i);
    }
+   avail = 1;
 }   
 
 
 void DeleteLocks(lockset_t lockid)
 {
+ /*  fprintf(stderr,	"deleting arena %x\n",arena_ptr);*/
+  if(!avail)return;
+  else avail = 0;
   usdetach (arena_ptr);
   arena_ptr = 0;
   (void)unlink(arena_name); /* ignore armci_die code -- file might be already gone*/

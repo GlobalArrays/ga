@@ -4,6 +4,14 @@
 #   include <stdlib.h> 
 #   include "armci.h"
 
+#ifndef FATR
+# ifdef WIN32
+#   define FATR __stdcall
+# else
+#   define FATR 
+# endif
+#endif
+
 #define MAX_STRIDE_LEVEL 10
 #define PUT 1
 #define GET 2
