@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.20 2004-02-11 21:42:24 vinod Exp $
+# $Id: GNUmakefile,v 1.21 2004-02-18 05:23:15 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -13,7 +13,7 @@ OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
           xdrstuff.o  waitcom.o   random.o    niceftn.o \
 	  mdtob.o     mitob.o     mitod.o   \
 	  mdtoi.o     globalop.o  evlog.o   \
-          evon.o      pfilecopy.o $(EXTRA)
+          evon.o      pfilecopy.o 
 
  HEADERS =  msgtypesf.h msgtypesc.h sndrcv.h srftoc.h ../tcgmsg.fh
 
@@ -22,54 +22,54 @@ OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
 
 ifeq ($(TARGET),IBM)
    LIB_DEFINES = -DGOTXDR -DNOSPIN
-   EXTRA = strdup.o strtok.o wrap.o
+   OBJ+= strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),IBM64)
    LIB_DEFINES = -DGOTXDR -DNOSPIN
-   EXTRA = strdup.o strtok.o wrap.o
+   OBJ+= strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),LINUX)
    LIB_DEFINES = -DNOSPIN
-   EXTRA = strdup.o strtok.o wrap.o
+   OBJ += strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),LINUX64)
    LIB_DEFINES = -DTIMINGS -DNOSPIN
-   EXTRA = strdup.o strtok.o wrap.o
+   OBJ+= strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),SGI_N32)
    LIB_DEFINES = -DGOTXDR -DPARTIALSPIN -DSGIUS
-   EXTRA = strdup.o  wrap.o
+   OBJ+= strdup.o  wrap.o
 endif
 ifeq ($(TARGET),SGITFP)
    LIB_DEFINES = -DPARTIALSPIN -DSGIUS
-   EXTRA = strdup.o  wrap.o
+   OBJ+= strdup.o  wrap.o
 endif
 ifeq ($(TARGET),MACX)
    LIB_DEFINES = -DNOSPIN
 endif
 ifeq ($(TARGET),HPUX)
    LIB_DEFINES = -DNOSPIN
-     EXTRA = hpuxargs.o wrap.o
+     OBJ+= hpuxargs.o wrap.o
 endif
 ifeq ($(TARGET),HPUX64)
    LIB_DEFINES = -DNOSPIN
-     EXTRA = hpuxargs.o wrap.o
+     OBJ+= hpuxargs.o wrap.o
 endif
 ifeq ($(TARGET),SOLARIS)
    LIB_DEFINES = -DSUN -DGOTXDR -DNOSPIN -DSUNF77_2 
 #  LIB_DEFINES += -D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1
    LIB_DEFINES += -D_XOPEN_SOURCE_EXTENDED=1
-     EXTRA = wrap.o
+     OBJ+= wrap.o
 endif
 ifeq ($(TARGET),SOLARIS64)
    LIB_DEFINES = -DSUN -DGOTXDR -DNOSPIN -DSUNF77_2
 #  LIB_DEFINES += -D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1
    LIB_DEFINES += -D_XOPEN_SOURCE_EXTENDED=1
-     EXTRA = wrap.o
+     OBJ+= wrap.o
 endif
 ifeq ($(TARGET),DECOSF)
    LIB_DEFINES =  -DDECFORT -DNOSPIN
-   EXTRA = strdup.o strtok.o wrap.o
+   OBJ+= strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),CRAY-YMP)
    LIB_DEFINES = -DCRAY  -DGOTXDR
@@ -81,19 +81,19 @@ ifeq ($(TARGET),SP)
 #enable workaround for a bug in MPL under PSSP 3.1 on SMP nodes
    LIB_DEFINES += -DMPL_SMP_BUG
  LINTFLAGS = -u -a -wkD $(LIB_DEFINES)
-     EXTRA = strdup.o strtok.o
    OBJ  = sp1.o evon.o evlog.o checkbyte.o mtime.o \
              memalign.o random.o drand48.o mitob.o mdtob.o \
-             mdtoi.o mitod.o llog.o $(EXTRA)
+             mdtoi.o mitod.o llog.o
+     OBJ+= strdup.o strtok.o
 endif
 ifeq ($(TARGET),SP1)
     FFLAGS = -g -qEXTNAME
    LIB_DEFINES = -DSP1 -DEXTNAME
  LINTFLAGS = -u -a -wkD $(LIB_DEFINES)
-     EXTRA = strdup.o strtok.o
    OBJ  = sp1.o evon.o evlog.o checkbyte.o mtime.o \
              memalign.o random.o drand48.o mitob.o mdtob.o \
-             mdtoi.o mitod.o llog.o $(EXTRA)
+             mdtoi.o mitod.o llog.o 
+     OBJ+= strdup.o strtok.o
 endif
                                                                            
 # the next targets have no entries in the main tools config files
@@ -127,12 +127,12 @@ endif
 NEED_MEMALIGN = DECOSF CRAY-T3E CRAY-YMP HPUX HPUX64 LAPI IBM IBM64 NEC MACX
 
 ifeq ($(MACHINE),$(findstring $(MACHINE),$(NEED_MEMALIGN)))
-        EXTRA= memalign.o
+        OBJ+= memalign.o
         LIB_DEFINES += -DNEED_MEMALIGN
 endif
 
 ifdef GA_USE_VAMPIR
-   EXTRA += tcgmsg_vampir.o ga_vt.o
+   OBJ += tcgmsg_vampir.o ga_vt.o
 endif
          
 include ../../armci/config/makecoms.h
