@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.25 2004-04-01 01:27:38 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.26 2004-04-10 00:41:43 manoj Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -25,8 +25,10 @@
  * due to a gready shmem request by the master process on cluster node 0.
  */ 
 #if defined(DECOSF) && defined(QUADRICS)
-#  define SHMEM_HACK
-extern int armci_enable_alpha_hack();
+#  if !defined(REGION_ALLOC)
+#    define SHMEM_HACK
+     extern int armci_enable_alpha_hack();
+#  endif
 #endif
 
 #define DEBUG  0
