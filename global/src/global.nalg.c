@@ -332,11 +332,16 @@ void *ptr_a, *ptr_b;
 }
 
 
-Integer FATR ga_idot_(g_a, g_b)
-        Integer *g_a, *g_b;
+Integer FATR ga_idot_(Integer *g_a, Integer *g_b)
 {
 Integer sum,ndim,type;
-        gai_dot(C_INT, g_a, g_b, &sum);
+#       ifdef EXT_INT 
+                type = C_LONG;
+#       else
+                type = C_INT;
+#       endif
+
+        gai_dot(type, g_a, g_b, &sum);
         return sum;
 }
 
