@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.65 2004-04-30 21:18:38 d3h325 Exp $ */
+/* $Id: copy.h,v 1.66 2004-07-16 21:21:05 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -22,15 +22,6 @@
 #define bcopy(src, dst, len) _fastbcopy(src, dst, len)
 #endif
 
-#ifndef EXTERN
-#   define EXTERN extern
-#endif
-
-#ifdef NEC
-#  define memcpy1 _VEC_memcpy
-#  define armci_copy1(src,dst,n) _VEC_memcpy((dst),(src),(n))
-   EXTERN long long _armci_vec_sync_flag;
-#endif
 
 
 #if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined (DECOSF) || defined(__ia64__)
@@ -42,7 +33,7 @@
 
 #   include "lapidefs.h"
 
-#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1)
+#elif defined(_CRAYMPP) || defined(QUADRICS)
 #ifdef CRAY
 #   include <mpp/shmem.h>
 #else
@@ -80,13 +71,8 @@
 #endif
 
 
-#ifdef NEC
-#  define THRESH 1
-#  define THRESH1D 1 
-#else
-#  define THRESH 32
-#  define THRESH1D 512 
-#endif
+#define THRESH 32
+#define THRESH1D 512 
 #define ALIGN_SIZE sizeof(double)
 
 /********* interface to fortran 1D and 2D memory copy functions ***********/
@@ -103,9 +89,31 @@
 #else
 #     define DCOPY2D	dcopy2d_u_
 #     define DCOPY1D	dcopy1d_u_
+#     define DCOPY21	dcopy21_
+#     define DCOPY12	dcopy12_
+#     define DCOPY21	dcopy31_
+#     define DCOPY12	dcopy13_
 #endif
 void FATR DCOPY2D(int*, int*, void*, int*, void*, int*); 
 void FATR DCOPY1D(void*, void*, int*); 
+
+#if   defined(AIX)
+#     define DCOPY21	dcopy21
+#     define DCOPY12	dcopy12
+#     define DCOPY31	dcopy31
+#     define DCOPY13	dcopy13
+#elif (defined(CRAY) &&!defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
+#else
+#     define DCOPY21	dcopy21_
+#     define DCOPY12	dcopy12_
+#     define DCOPY31	dcopy31_
+#     define DCOPY13	dcopy13_
+#endif
+
+void FATR DCOPY21(int*, int*, void*, int*, void*, int*); 
+void FATR DCOPY12(int*, int*, void*, int*, void*, int*); 
+void FATR DCOPY31(int*, int*, int*, void*, int*, int*, void*, int*); 
+void FATR DCOPY13(int*, int*, int*, void*, int*, int*, void*, int*); 
 
 
 /***************************** 1-Dimensional copy ************************/
@@ -124,27 +132,10 @@ void FATR DCOPY1D(void*, void*, int*);
               *(phandle)=elan_get(elan_base->state,src,dst,n,proc)
 #      define ARMCI_NB_WAIT(handle) elan_wait(handle,elan_base->waitType) 
 #      define ARMCI_NB_TEST(handle,_succ) (*(_succ))=!elan_poll(handle,1L) 
-#      define HAS_PUTS 0
-#      define HAS_GETS 0
 #   else
 #      define qsw_put(src,dst,n,proc) shmem_putmem((dst),(src),(int)(n),(proc))
 #      define qsw_get(src,dst,n,proc) shmem_getmem((dst),(src),(int)(n),(proc))
 #   endif
-
-#   if HAS_PUTS
-       extern ELAN_EVENT* armcill_nbputS(int proc, void* src_ptr, int src_stride_arr[],  
-              void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels);
-#      define ARMCI_NB_PUTS(_p,_s,_sstr,_d,_dstr,_c,_l,_phandle)\
-              *(_phandle)=armcill_putS(_p,_s,_sstr,_d,_dstr,_c,_l)      
-#   endif
-#   if HAS_GETS
-       extern ELAN_EVENT* armcill_nbgetS(int proc, void* src_ptr, int src_stride_arr[],  
-              void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels);
-#      define ARMCI_NB_GETS(_p,_s,_sstr,_d,_dstr,_c,_l,_phandle)\
-              *(_phandle)=armcill_getS(_p,_s,_sstr,_d,_dstr,_c,_l)
-#   endif
-       
-       
 
 #   define armci_put(src,dst,n,proc)\
            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
@@ -252,7 +243,7 @@ void FATR DCOPY1D(void*, void*, int*);
 #    ifndef MEMCPY
 #       define MEMCPY
 #    endif
-#    define MEM_FENCE armci_asm_mem_fence()
+#    define MEM_FENCE armci_asm_mem_fence
      extern void armci_asm_mem_fence();
 #endif
                                                  
@@ -261,7 +252,7 @@ void FATR DCOPY1D(void*, void*, int*);
 #endif
 
 #ifdef NEC
-#    define MEM_FENCE {mpisx_clear_cache(); _armci_vec_sync_flag=1;mpisx_syncset0_long(&_armci_vec_sync_flag);}
+#    define MEM_FENCE mpisx_clear_cache()
 #endif
 
 #ifdef DECOSF
@@ -393,9 +384,5 @@ void FATR DCOPY1D(void*, void*, int*);
 #ifndef armci_copy_fence
 #   define armci_copy_fence armci_copy
 #endif
-
-extern void armcill_putS(int proc, void* src_ptr, int src_stride_arr[],
-                         void* dst_ptr, int dst_stride_arr[], int count[],
-                         int stride_levels);
 
 #endif
