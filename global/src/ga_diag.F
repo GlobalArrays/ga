@@ -69,10 +69,10 @@ c
       endif
 c
       n = dimA1
-c$$$      if (n .lt. 128) then
-c$$$         call ga_diag_std_seq(g_a,  g_v, eval)
-c$$$         return
-c$$$      endif
+      if (n .lt. 64) then
+         call ga_diag_std_seq(g_a,  g_v, eval)
+         return
+      endif
 c
       call ga_sync()
 c
@@ -194,6 +194,9 @@ c
          call fmemreq(1,n,int_mb(adrma),int_mb(adrma),int_mb(adrmz),
      &        isize, rsize, ptr_size,int_mb(adris))
          status = ma_pop_stack(his)
+
+         isize = isize * 4
+
          if(.not. ma_push_get(mt_int,isize,'iscratch',his,adris))
      &        call ga_error('ga_diag_std allocator',1)
          if(.not. ma_push_get(mt_dbl,rsize,'scratch',hsc,adrsc))
