@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.75 2004-03-30 23:18:01 manoj Exp $ */
+/* $Id: shmem.c,v 1.76 2004-05-26 23:25:42 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -203,6 +203,32 @@ size_t bytes = size+pagesize-1;
 }
 #endif
 
+/*\ A wrapper to shmget. Just to be sure that ID is not 0.
+\*/
+static int armci_shmget(size_t size,char *from)
+{
+int id;
+
+    id = shmget(IPC_PRIVATE, size, (IPC_CREAT | 00600));
+
+    /*attaching with id 0 somehow fails (Seen on pentium4+linux24+gm163)
+     *so if id=0, shmget again. */
+    while(id==0){
+       /* free id=0 and get a new one */
+       if(shmctl((int)id,IPC_RMID,(struct shmid_ds *)NULL)) {
+         fprintf(stderr,"id=%d \n",id);
+         armci_die("allocate: failed to _delete_ shared region ",id);
+       }
+       id = shmget(IPC_PRIVATE, size, (IPC_CREAT | 00600));
+    }
+    if(DEBUG_){
+       printf("\n%d:armci_shmget sz=%ld caller=%s id=%d\n",armci_me,(long)size,
+               from,id);
+       fflush(stdout);
+    }
+    return(id);
+}
+
 
 /*\ test is a shared memory region of a specified size can be allocated
  *  return 0 (no) or 1 (yes)
@@ -210,7 +236,7 @@ size_t bytes = size+pagesize-1;
 int armci_test_allocate(long size)
 {
    char *ptr;
-   int id = shmget(IPC_PRIVATE, (size_t) size, (IPC_CREAT |00600));
+   int id = armci_shmget((size_t)size,"armci_test_allocate");
    if (id <0) return 0;
 
    /* attach to segment */
@@ -232,7 +258,7 @@ static int armci_shmalloc_try(long size)
 {
 #ifdef  SHMMAX_SEARCH_NO_FORK
    char *ptr;
-   int id = shmget(IPC_PRIVATE, (size_t) size, (IPC_CREAT |00600));
+   int id = armci_shmget((size_t) size,"armci_shmalloc_try");
    if (id <0) return 0;
 
    /* attach to segment */
@@ -727,7 +753,7 @@ size_t sz;
        szl =(i==newreg-1)?size-i*MinShmem*SHM_UNIT: min(size,SHM_UNIT*MinShmem);
        sz = (size_t) szl;
 
-       if ( (int)(id = shmget(IPC_PRIVATE, sz, (int) (IPC_CREAT |00600))) < 0 ){
+       if ( (int)(id = armci_shmget(sz,"MULTIPLE_REGIONarmci_allocate")) < 0){
           fprintf(stderr,"%d:id=%d size=%d MAX=%ld\n",armci_me,id,szl,MinShmem);
           alloc_regions++;
           shmem_errmsg(size);
@@ -924,7 +950,7 @@ size_t sz = (size_t)size;
     }else 
 #endif
     {
-       if ( (id = shmget(IPC_PRIVATE, sz, (IPC_CREAT | 00600))) < 0 ) {
+       if ( (id = armci_shmget(sz,"armci_allocate")) < 0 ) {
           fprintf(stderr,"id=%d size=%ld\n",id, size);
           shmem_errmsg(sz);
           armci_die("allocate: failed to create shared region ",id);
