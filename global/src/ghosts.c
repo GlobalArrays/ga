@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.40 2004-03-31 16:53:34 vinod Exp $ */
+/* $Id: ghosts.c,v 1.41 2004-03-31 20:35:46 vinod Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -776,13 +776,13 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
     count[0] *= size;
  
     /* put data on remote processor */
-    ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          (int)(ndim - 1), (int)proc_rem);
-    /*ARMCI_NbPutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          (int)(ndim - 1), (int)proc_rem, NULL); */
+    /*ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+          (int)(ndim - 1), (int)proc_rem);*/
+    ARMCI_NbPutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+          (int)(ndim - 1), (int)proc_rem, NULL); 
   }
 
-  /*ARMCI_WaitAll();*/
+  ARMCI_WaitAll();
   GA_POP_NAME;
   return TRUE;
 }
@@ -1102,7 +1102,7 @@ logical FATR ga_set_update4_info_(Integer *g_a)
   Integer slo_rcv[MAXDIM], shi_rcv[MAXDIM];
   Integer plo_rcv[MAXDIM], phi_rcv[MAXDIM];
   Integer ld_loc[MAXDIM];
-  int *stride_snd, *stride_rcv, *count;
+  int *stride_snd, *stride_rcv, *count,cache_size;
   int corner_flag;
   char **ptr_snd, **ptr_rcv, *cache;
   char send_name[32], rcv_name[32];
@@ -1149,6 +1149,9 @@ logical FATR ga_set_update4_info_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
+  cache_size = 3*sizeof(char *)+3*sizeof(int)+4*sizeof(Integer);
+  cache_size = 2* ndim *((cache_size/8) + 1);
+  GA[handle].cache = (double *)malloc(sizeof(double)*cache_size);
   cache = (char *)GA[handle].cache;
   corner_flag = GA[handle].corner_flag;
 
@@ -2657,7 +2660,7 @@ logical ga_set_update5_info_(Integer *g_a)
   int msgcnt, bytes, idx, corner_flag;
   char **ptr_loc, **ptr_rem,*cache;
   Integer handle = GA_OFFSET + *g_a;
-  int scope;
+  int scope,cache_size;
 
   /* This routine sets up the arrays that are used to transfer data
    * using the update5 algorithm. The arrays begining with the character
@@ -2704,6 +2707,9 @@ logical ga_set_update5_info_(Integer *g_a)
 
   ndim = GA[handle].ndim;
   size = GA[handle].elemsize;
+  cache_size = 2*sizeof(char *)+3*sizeof(int)+sizeof(Integer);
+  cache_size = 2*ndim*((cache_size/sizeof(double)) + 1);
+  GA[handle].cache = (double *)malloc(sizeof(double)*cache_size);
   cache = (char *)GA[handle].cache;
   corner_flag = GA[handle].corner_flag;
 
