@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.63 2002-01-30 01:15:26 d3h325 Exp $
+# $Id: makefile.h,v 1.64 2002-02-26 15:41:33 vinod Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -155,6 +155,15 @@ ifeq ($(TARGET),FUJITSU-AP)
            FC = frt
      FOPT_REN = -fw
  GLOB_DEFINES = -DFUJITSU
+endif
+#
+#................................ HITACHI ....................................
+# HITACHI sr8000
+#
+ifeq ($(TARGET),HITACHI)
+	   CC = mpicc
+	   FC = mpif90 -hf77
+ GLOB_DEFINES = -DHITACHI
 endif
 #
 #................................ LINUX ....................................
