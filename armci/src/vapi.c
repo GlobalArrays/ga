@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.12 2004-03-29 19:12:08 vinod Exp $************************************************ 
+/* $Id: vapi.c,v 1.13 2004-03-31 01:09:34 manoj Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.
@@ -873,10 +873,8 @@ void armci_init_vapibuf_scatter_recv(VAPI_rr_desc_t *rd, VAPI_sg_lst_entry_t * s
        scatter_entry[i].len  = bytes ;
       
       if(0){ 
-        printf("NODE-%d SERVER: num_elems = %d,the scatter_entry[%d].addr is 
-                      %p,length is %d, lkey is %d\n",armci_me,rd->sg_lst_len,i,
-                      scatter_entry[i].addr,scatter_entry[i].len, 
-                      scatter_entry[i].lkey);
+        printf("NODE-%d SERVER: num_elems = %d,the scatter_entry[%d].addr is %p,length is %d, lkey is %d\n",armci_me,rd->sg_lst_len,i,scatter_entry[i].addr,
+	       scatter_entry[i].len,scatter_entry[i].lkey);
         fflush(stdout);	 
       }   
 
@@ -925,8 +923,8 @@ static void posts_scatter_desc(int num, int id ,int type)
     int cluster = armci_clus_id(id);
    
     if(0){
-       printf("%d(%d) : inside posts scatter dscr, num = %d\t,id is
-                    %d\n",armci_me,type,num,id);
+       printf("%d(%d) : inside posts scatter dscr, num = %d\t,id is %d\n",
+	      armci_me,type,num,id);
        fflush(stdout);
     }     
     
@@ -965,9 +963,8 @@ static void posts_scatter_desc(int num, int id ,int type)
    
     if(0){
        printf("%d(%d) : posted a scatter receive\n",armci_me,type); 
-       printf("%d(%d) : list_length is %d\t, id is %d\t, seg_leng is %d
-                       \n",armci_me,type,
-                       rd->sg_lst_len,rd->id,rd->sg_lst_p->len);
+       printf("%d(%d) : list_length is %d\t, id is %d\t, seg_leng is %d\n",
+	      armci_me,type,rd->sg_lst_len,rd->id,rd->sg_lst_p->len);
          
        fflush(stdout);
     }  
@@ -1019,9 +1016,7 @@ int armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[]
 
 
     if(0){ 
-      printf("%d(%d) : armci_post_scatter total_2D = %d\t,num_xmit = %d\t,
-              rem_seg = %d\n",armci_me,type,total_of_2D,
-              num_xmit,rem_seg);
+       printf("%d(%d) : armci_post_scatter total_2D = %d\t,num_xmit = %d\t, rem_seg = %d\n", armci_me,type,total_of_2D, num_xmit,rem_seg);
       fflush(stdout);
     }
     
@@ -1138,9 +1133,8 @@ int armci_post_gather(void *src_ptr, int src_stride_arr[], int count[]
     else if(rem_seg!= 0)num_xmit++;
     
     if(0){ 
-      printf("%d(%d) : armci_post_gather total_2D = %d\t,num_xmit = %d\t,
-                   rem_seg = %d\t, count[1] = %d\n",armci_me,type,total_of_2D,
-                   num_xmit,rem_seg, count[1]);
+       printf("%d(%d) : armci_post_gather total_2D = %d\t,num_xmit = %d\t, rem_seg = %d\t, count[1] = %d\n",armci_me,type,total_of_2D, num_xmit,rem_seg, 
+	      count[1]);
       fflush(stdout);
     }
     
@@ -1270,8 +1264,7 @@ void armci_init_vapibuf_gather_send(VAPI_sr_desc_t *sd, VAPI_sg_lst_entry_t *gat
       gather_entry[i].len  = bytes ;
 
       if(DEBUG_CLN){
-         printf("GATHER :num_elmes is %d ,the gather addr is %p, length is %d, 
-                lkey is %d ,first_elem is %f\n", sd->sg_lst_len,gather_entry[i].addr, 
+         printf("GATHER :num_elmes is %d ,the gather addr is %p, length is %d, lkey is %d ,first_elem is %f\n", sd->sg_lst_len,gather_entry[i].addr, 
                 gather_entry[i].len, gather_entry[i].lkey,
                 *(double*)gather_entry[i].addr);
          fflush(stdout);
@@ -1555,9 +1548,7 @@ int type;
        armci_ack_proc = c = msginfo->from;
 
        if(DEBUG_SERVER){  	       
-          printf("%d(s) : request(not data),id is %d operation is %d, 
-                     length is %d\n" ,armci_me,pdscr->id,
-                     msginfo->operation,pdscr->byte_len);     
+          printf("%d(s) : request(not data),id is %d operation is %d, length is %d\n" ,armci_me,pdscr->id,msginfo->operation,pdscr->byte_len);     
           fflush(stdout);
        }
        
@@ -1576,16 +1567,17 @@ int type;
 
           /*unpack decsriptor_record : should call a function instead */
           msg = msginfo + 1;
-          test_ptr = dest_ptr = *(void**)msg; msg = (char*)msg + sizeof(void*);
+          test_ptr = dest_ptr = *(void**)msg; 
+	  msg = (request_header_t *) ((char*)msg + sizeof(void*));
           test_stride_levels=stride_levels = *(int*)msg; 
-          msg = (char*)msg + sizeof(int);
+          msg = (request_header_t *) ((char*)msg + sizeof(int));
           for(i =0; i<stride_levels; i++){
               test_stride_arr[i] = stride_arr[i] = *(int*)msg;
-              msg = (int*)msg + 1;
+              msg = (request_header_t*) ((int*)msg + 1);
           }
           for(i=0; i<stride_levels+1; i++){
               test_count[i] = count[i] = *(int*)msg;
-              msg = (int*)msg + 1;
+              msg = (request_header_t*) ((int*)msg + 1);
           }
 	
           found =get_armci_region_local_hndl(dest_ptr,armci_me, &loc_memhandle);
@@ -2129,8 +2121,8 @@ void server_send_complete(int proc, int num )
    VAPI_wc_desc_t *pdscr=NULL; 
    while(rc == VAPI_CQ_EMPTY  && num > 0 ){
          rc = VAPI_poll_cq(CLN_nic->handle,CLN_nic->scq, pdscr);
-         armci_check_status(DEBUG_SERVER, rc, "server waiting for gather send
-                        completion");  
+         armci_check_status(DEBUG_SERVER, rc, 
+			    "server waiting for gather send completion");  
          if ((DSCRID_GATHERSERVER < pdscr->id) && 
                          (pdscr->id > DSCRID_GATHERSERVER_END))
              armci_die("server gather send wrong dscr completed",pdscr->id );
@@ -2301,9 +2293,8 @@ static void posts_gather_desc(int num, int id, int type)
        sd->id = DSCRID_GATHERSERVER + 100*armci_me + num;
    
     if((type==CLN &&DEBUG_CLN) || (type==SERV && DEBUG_SERVER)){
-       printf("%d(%d) : list_length is %d\t, id is %d\t, seg_leng is %d
-                       \n",armci_me,type,
-                       sd->sg_lst_len,sd->id, sd->sg_lst_p->len);
+       printf("%d(%d) : list_length is %d\t, id is %d\t, seg_leng is %d\n",
+	      armci_me,type,sd->sg_lst_len,sd->id, sd->sg_lst_p->len);
     }
     if(type == CLN){
        rc = VAPI_post_sr(SRV_nic->handle,(SRV_con+cluster)->qp,sd); 
@@ -2459,8 +2450,7 @@ void armci_init_vapibuf_atomic(VAPI_sr_desc_t *sd, VAPI_sg_lst_entry_t * sg,
     sd->set_se = TRUE; 
 
     if(1){
-       printf("%d(c) : finished initialising atomic send desc 
-                       id is %d,armci_ime = %d\n",armci_me,sd->id,armci_me);
+       printf("%d(c) : finished initialising atomic send desc id is %d,armci_ime = %d\n",armci_me,sd->id,armci_me);
        fflush(stdout);
     }   
 }
