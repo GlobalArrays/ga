@@ -33,14 +33,14 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
     COMM_INCLUDES = -I$(QUADRICS_INCLUDE)
   else
     ifeq ($(TARGET),DECOSF)
-       COMM_INCLUDES = -I/opt/rms/include
+       COMM_INCLUDES = -I/usr/opt/rms/include
     endif
   endif
   ifdef QUADRICS_LIB
     COMM_LIBS = -L$(QUADRICS_LIB)
   else
     ifeq ($(TARGET),DECOSF)
-      COMM_LIBS = -L/opt/rms/lib
+      COMM_LIBS = -L/usr/opt/rms/lib
     endif
   endif
   QUADRICS_LIB_NAME = -lshmem -lelan3 -lelan 
