@@ -24,16 +24,18 @@ static int** armci_elan_fence_arr;
 #endif
 
 #ifdef OLD_QSNETLIBS
-#      define MY_PUT(src,dst,bytes,p) \
-               elan_wait(elan_doput(armci_pgctrl,(src),(dst),NULL,(bytes),p,0),elan_base->waitType)
-#      define MY_GET(src,dst,bytes,p)\
-             elan_wait(elan_doget(armci_pgctrl,src,dst,bytes,p,0),elan_base->waitType)
+#define MY_PUT(src,dst,bytes,p) \
+          elan_wait(elan_doput(armci_pgctrl,(src),(dst),NULL,(bytes),p,0),\
+                    elan_base->waitType)
+#define MY_GET(src,dst,len,p)\
+        elan_wait(elan_doget(armci_pgctrl,src,dst,len,p,0),elan_base->waitType)
                
 #else
-#      define MY_PUT(src,dst,bytes,p) \
-               elan_wait(elan_put(elan_base->state,(src),(dst),(bytes),p),elan_base->waitType)
-#      define MY_GET(src,dst,bytes,p)\
-             elan_wait(elan_get(elan_base->state,src,dst,bytes,p),elan_base->waitType)
+#define MY_PUT(src,dst,bytes,p) \
+        elan_wait(elan_put(elan_base->state,(src),(dst),(bytes),p),\
+                  elan_base->waitType)
+#define MY_GET(src,dst,len,p)\
+        elan_wait(elan_get(elan_base->state,src,dst,len,p),elan_base->waitType)
 #endif
 
  
@@ -83,16 +85,6 @@ int *buf = armci_elan_fence_arr[armci_request_from] + armci_request_to;
 #endif
 
     MY_PUT(&zero,buf,sizeof(int),armci_request_from);
-#if 0
-#ifdef OLD_QSNETLIBS
-    elan_wait(elan_doput(armci_pgctrl,&zero,buf,NULL,sizeof(int),
-                       armci_request_from,0), elan_base->waitType); 
-#else
-    elan_wait(elan_put(elan_base->state,&zero,buf,sizeof(int),
-                    armci_request_from), elan_base->waitType);
-#endif
-#endif
-
 }
 
 
@@ -180,10 +172,7 @@ void armci_rcv_req(void *mesg,
              void *zero=(void*)0;
              void *flag_to_clear;
              *(void **)pdata  = MessageRcvBuffer + off; 
-#if 0
-             elan_wait(elan_get(elan_base->state,rembuf,MessageRcvBuffer,
-                       payload, msginfo->from),elan_base->waitType);
-#endif
+
              MY_GET(rembuf,MessageRcvBuffer,payload, msginfo->from);
 
              if(DEBUG_){ printf("%d:in serv &tag=%p tag=%p\n",armci_me,
@@ -193,10 +182,6 @@ void armci_rcv_req(void *mesg,
              /* mark sender buffer as free -- flag is before descriptor */
              flag_to_clear = ((void**)msginfo->tag)-1; 
              MY_PUT(&zero,flag_to_clear,sizeof(void*),msginfo->from);
-#if 0
-             elan_wait(elan_put(elan_base->state,&zero,flag_to_clear,
-                       sizeof(void*),msginfo->from), elan_base->waitType);
-#endif
           }
         }
     }else
