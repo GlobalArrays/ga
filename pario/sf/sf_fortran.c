@@ -1,4 +1,5 @@
 #include "sf.h"
+#include <string.h>
 
 #if defined(CRAY) && defined(__crayx1)
 #undef CRAY
