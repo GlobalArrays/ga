@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.26 2002-03-01 21:24:42 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.27 2002-07-31 18:14:29 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "copy.h"
@@ -19,10 +19,11 @@ static int *readylist=(int*)0;
 #define GETBUF(buf,type,var) (var) = *(type*)(buf); (buf) += sizeof(type)
 
 #if defined(USE_SOCKET_VECTOR_API)
-int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,struct iovec *iov){
-    
+int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,
+       struct iovec *iov){
     int i,j=0,k,num_xmit=0,lastiovlength,iovlength,n=0,max_iovec,totalsize=0;
     int totaliovs=0,dim1=0,dim2=0;
+    struct iovec *saveiov=iov;
     max_iovec = MAX_IOVEC;
  
     for(i=0;i<len;i++)
@@ -35,24 +36,30 @@ int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,struct iove
     for(k=0;k<num_xmit;k++){
        if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
        else iovlength=max_iovec;
-       iov+=j;  
+       iov=saveiov;  
        for(j=0;j<iovlength;j++){
-           if(dim2==0){dim1+=1;dim2=darr[dim1].ptr_array_len;}
-           iov[j].iov_base = darr[dim1].dst_ptr_array[darr[dim1].ptr_array_len-dim2];
-           iov[j].iov_len = darr[dim1].bytes;totalsize+=iov[j].iov_len;
-           dim2--;
+         if(dim2==0){dim1+=1;dim2=darr[dim1].ptr_array_len;}
+         iov[j].iov_base=darr[dim1].dst_ptr_array[darr[dim1].ptr_array_len-dim2];
+         iov[j].iov_len = darr[dim1].bytes;totalsize+=iov[j].iov_len;
+         dim2--;
        }
-        if(DEBUG1){printf("\n%d:armci_RecvVectorFromSocket recving iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);} 
        n+=armci_ReadVFromSocket(sock,iov,j,totalsize);
-       if(DEBUG1){printf("\n%d:armci_RecvVectorFromSocket recved  iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
+       if(DEBUG1){
+         printf("\n%d:armci_RecvVectorFromSocket recved  iovlength=%d 
+               totalsize=%d n=%d",armci_me,iovlength,totalsize,n);
+         fflush(stdout);
+       }
        totalsize=0;
     }
     return(n);
 }
  
-int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,struct iovec *iov){
+
+int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,
+       struct iovec *iov){
     int i,j=0,k,num_xmit=0,lastiovlength,iovlength,n=0,max_iovec,totalsize=0;
     int totaliovs=0,dim1=0,dim2=0;
+    struct iovec *saveiov=iov;
     max_iovec = MAX_IOVEC;
     for(i=0;i<len;i++)
         totaliovs+=darr[i].ptr_array_len;
@@ -64,16 +71,19 @@ int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,struct iovec 
     for(k=0;k<num_xmit;k++){
        if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
        else iovlength=max_iovec;
-       iov+=j; 
+       iov=saveiov;  
        for(j=0;j<iovlength;j++){
-           if(dim2==0){dim1++;dim2=darr[dim1].ptr_array_len;}
-           iov[j].iov_base = darr[dim1].src_ptr_array[darr[dim1].ptr_array_len-dim2];
-           iov[j].iov_len = darr[dim1].bytes;totalsize+=iov[j].iov_len;
-           dim2--;
+         if(dim2==0){dim1++;dim2=darr[dim1].ptr_array_len;}
+         iov[j].iov_base=darr[dim1].src_ptr_array[darr[dim1].ptr_array_len-dim2];
+         iov[j].iov_len = darr[dim1].bytes;totalsize+=iov[j].iov_len;
+         dim2--;
        }
-       if(DEBUG1){printf("\n%d:armci_SendVectorToSocket sending iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
        n+=armci_WriteVToSocket(sock,iov,j,totalsize);
-       if(DEBUG1){printf("\n%d:armci_SendVectorToSocket done se iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
+       if(DEBUG1){
+         printf("\n%d:armci_SendVectorToSocket done se iovlength=%d 
+               totalsize=%d n=%d",armci_me,iovlength,totalsize,n);
+         fflush(stdout);
+       }
        totalsize = 0;
     }
     return(n);
@@ -90,7 +100,11 @@ int armci_RecvStridedFromSocket(int sock,void *dst_ptr, int dst_stride_arr[],
     int total_of_2D=1;
     int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
     max_iovec = MAX_IOVEC;
-    if(DEBUG1){printf("\nin readv count[0] is %d and strarr[0] is%d\n",count[0],dst_stride_arr[0]);fflush(stdout);}
+    if(DEBUG1){
+       printf("\nin readv count[0] is %d and strarr[0] is%d\n",count[0],
+             dst_stride_arr[0]);
+       fflush(stdout);
+    }
     index[2] = 0; unit[2] = 1;
     if(stride_levels>1){
         total_of_2D = count[2];
@@ -120,15 +134,19 @@ int armci_RecvStridedFromSocket(int sock,void *dst_ptr, int dst_stride_arr[],
                   iov[j].iov_len = count[0];totalsize+=count[0];
                   dst1+=dst_stride_arr[0];
               }
-              if(DEBUG1){printf("\n%d:armci_RecvStridedFromSocket recving iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
               n+=armci_ReadVFromSocket(sock,iov,iovlength,totalsize);
               iov+=iovlength;
-              if(DEBUG1){printf("\n%d:armci_RecvStridedFromSocket recved  iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
+              if(DEBUG1){
+                printf("\n%d:armci_RecvStridedFromSocket recved  iovlength=%d 
+                      totalsize=%d n=%d",armci_me,iovlength,totalsize,n);
+                fflush(stdout);
+              }
               totalsize=0;
           }
     }
     return(n);
 }
+
 
 int armci_SendStridedToSocket(int sock,void *src_ptr, int src_stride_arr[],
                      int count[], int stride_levels,struct iovec *iov)
@@ -140,7 +158,11 @@ int armci_SendStridedToSocket(int sock,void *src_ptr, int src_stride_arr[],
     int total_of_2D=1;
     int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
     max_iovec = MAX_IOVEC;
-    if(DEBUG1){printf("\nin writev count[0] is %d and strarr[0] is%d\n",count[0],src_stride_arr[0]);fflush(stdout);}
+    if(DEBUG1){
+       printf("\nin writev count[0] is %d and strarr[0] is%d\n",count[0],
+             src_stride_arr[0]);
+       fflush(stdout);
+    }
     index[2] = 0; unit[2] = 1;
     if(stride_levels>1){
         total_of_2D = count[2];
@@ -170,9 +192,12 @@ int armci_SendStridedToSocket(int sock,void *src_ptr, int src_stride_arr[],
                   iov[j].iov_len = count[0];totalsize+=count[0];
                   src1+=src_stride_arr[0];
               }
-              if(DEBUG1){printf("\n%d:armci_SendStridedToSocket sending iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
               n+=armci_WriteVToSocket(sock,iov,iovlength,totalsize);
-              if(DEBUG1){printf("\n%d:armci_SendStridedToSocket done se iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
+              if(DEBUG1){
+                printf("\n%d:armci_SendStridedToSocket done se 
+                      iovlength=%d totalsize=%d n=%d",armci_me,iovlength,
+                      totalsize,n);fflush(stdout);
+              }
               iov+=iovlength;
               totalsize=0;
           }
@@ -182,11 +207,12 @@ int armci_SendStridedToSocket(int sock,void *src_ptr, int src_stride_arr[],
 
 
 
-int armci_direct_vector(request_header_t *msginfo , armci_giov_t darr[], int len, int proc){
+int armci_direct_vector(request_header_t *msginfo , armci_giov_t darr[], 
+       int len, int proc){
 int bufsize=0,bytes=0,s;    
     for(s=0; s<len; s++){
-        bytes   += darr[s].ptr_array_len * darr[s].bytes; /* data */
-        bufsize += darr[s].ptr_array_len *sizeof(void*)+2*sizeof(int); /*descr*/
+        bytes   += darr[s].ptr_array_len * darr[s].bytes;/* data */
+        bufsize += darr[s].ptr_array_len *sizeof(void*)+2*sizeof(int);/*descr*/
     }
      bufsize += bytes + sizeof(long) +2*sizeof(double) +8;
     if(msginfo->operation==PUT){
@@ -196,10 +222,12 @@ int bufsize=0,bytes=0,s;
     }
     armci_send_req(proc, msginfo, bufsize);
     if(msginfo->operation==GET){
-       bytes=armci_RecvVectorFromSocket(SRV_sock[armci_clus_id(proc)],darr,len,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );	
+       bytes=armci_RecvVectorFromSocket(SRV_sock[armci_clus_id(proc)],darr,len,
+                 (struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );	
     }
     if(msginfo->operation==PUT){
-       bytes=armci_SendVectorToSocket(SRV_sock[armci_clus_id(proc)],darr,len,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) ); 
+       bytes=armci_SendVectorToSocket(SRV_sock[armci_clus_id(proc)],darr,len,
+                 (struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) ); 
     }
     return(bytes);
 }
@@ -297,7 +325,7 @@ int stat, bytes;
 
     if(DEBUG_){
       printf("%d:armci_send_req_msg_strided: op=%d to=%d bytes= %d \n",armci_me,
-				  msginfo->operation,proc,msginfo->datalen);
+             msginfo->operation,proc,msginfo->datalen);
       fflush(stdout);
     }
 
@@ -307,7 +335,8 @@ int stat, bytes;
     if(stat<0)armci_die("armci_send_strided:write failed",stat);
 #if defined(USE_SOCKET_VECTOR_API)
     if(msginfo->operation==PUT && msginfo->datalen==0)
-        armci_SendStridedToSocket( SRV_sock[cluster],ptr,stride_arr,count,strides,(struct iovec *)(msginfo+1) );
+        armci_SendStridedToSocket( SRV_sock[cluster],ptr,stride_arr,count,
+             strides,(struct iovec *)(msginfo+1) );
     else
 #endif
     /* for larger blocks write directly to socket thus avoiding memcopy */
@@ -346,7 +375,8 @@ int cluster=armci_clus_id(proc);
  
 #if defined(USE_SOCKET_VECTOR_API)
     if(msginfo->operation==GET && strides > 0)
-        armci_RecvStridedFromSocket( SRV_sock[cluster],ptr,stride_arr,count,strides,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen));
+        armci_RecvStridedFromSocket( SRV_sock[cluster],ptr,stride_arr,count,
+             strides,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen));
     else
 #endif
 
@@ -365,8 +395,12 @@ char *dscr;
 long len;
 armci_giov_t *mydarr;
     bytes = msginfo->dscrlen;
-    if(DEBUG1){printf("\n in armci_tcp_read_vector_data reading bytes=%d infonext=%p\n",bytes,(msginfo+1));fflush(stdout);}
-    stat = armci_ReadFromSocket(CLN_sock[p],(MessageRcvBuffer+sizeof(request_header_t)),bytes);
+    if(DEBUG1){
+      printf("\n in armci_tcp_read_vector_data reading bytes=%d infonext=%p\n",
+      bytes,(msginfo+1));fflush(stdout);
+    }
+    stat = armci_ReadFromSocket(CLN_sock[p],
+                (MessageRcvBuffer+sizeof(request_header_t)),bytes);
  
     if(stat<0)armci_die("armci_tcp_read_vector_data: read of data failed",stat);	
     dscr=(MessageRcvBuffer+sizeof(request_header_t)); 
@@ -375,12 +409,14 @@ armci_giov_t *mydarr;
     mydarr = (armci_giov_t *)(dscr+bytes);  
     GETBUF(dscr, long ,len);
     if(len!=0){
-	 for(i=0;i<len;i++){
-	    GETBUF(dscr, int, mydarr[i].ptr_array_len);
-	    GETBUF(dscr, int, mydarr[i].bytes);
-            mydarr[i].dst_ptr_array=(void**)dscr;dscr+=mydarr[i].ptr_array_len*sizeof(char*);  
-         }
-         j=armci_RecvVectorFromSocket(CLN_sock[p],mydarr,len,(struct iovec *)((char*)dscr+2*bytes) );
+       for(i=0;i<len;i++){
+	 GETBUF(dscr, int, mydarr[i].ptr_array_len);
+	 GETBUF(dscr, int, mydarr[i].bytes);
+         mydarr[i].dst_ptr_array=(void**)dscr;
+         dscr+=mydarr[i].ptr_array_len*sizeof(char*);  
+       }
+       j=armci_RecvVectorFromSocket(CLN_sock[p],mydarr,len,
+              (struct iovec *)((char*)dscr+2*bytes) );
     }	  
     
     
@@ -393,8 +429,12 @@ void *ptr;
 char *dscr;
 int stride_levels, *stride_arr,*count,stat;
     bytes = msginfo->dscrlen;
-    if(DEBUG1){printf("\n in armci tcp read strided data reading bytes=%d infonext=%p\n",bytes,(msginfo+1));fflush(stdout);}
-    stat = armci_ReadFromSocket(CLN_sock[p],(MessageRcvBuffer+sizeof(request_header_t)),bytes);
+    if(DEBUG1){
+       printf("\n in armci tcp read strided data reading bytes=%d infonext=%p\n"
+             ,bytes,(msginfo+1));fflush(stdout);
+    }
+    stat = armci_ReadFromSocket(CLN_sock[p],
+                (MessageRcvBuffer+sizeof(request_header_t)),bytes);
  
     if(stat<0)armci_die("armci_tcp_read_strided_data:read of data failed",stat);
     dscr=(MessageRcvBuffer+sizeof(request_header_t));
@@ -403,8 +443,11 @@ int stride_levels, *stride_arr,*count,stat;
     stride_levels = *(int*)dscr;   dscr += sizeof(int);
     stride_arr = (int*)dscr;       dscr += stride_levels*sizeof(int);
     count = (int*)dscr;            dscr += (stride_levels+1)*sizeof(int); 
-    armci_RecvStridedFromSocket( CLN_sock[p],ptr,stride_arr,count,stride_levels,(struct iovec *)dscr);
-  /*  armci_RecvStridedFromSocket( CLN_sock[p],ptr,stride_arr,count,stride_levels,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );*/
+    armci_RecvStridedFromSocket( CLN_sock[p],ptr,stride_arr,count,stride_levels,
+         (struct iovec *)dscr);
+
+    /*armci_RecvStridedFromSocket( CLN_sock[p],ptr,stride_arr,count,
+     stride_levels,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );*/
 }
 #endif
 
@@ -480,13 +523,15 @@ int stat = armci_WriteToSocket(CLN_sock[to], data, msginfo->datalen);
 void armci_WriteStridedToDirect(int proc, request_header_t* msginfo,
                          void *ptr, int strides, int stride_arr[], int count[])
 {
-    if(DEBUG_){ printf("%d:armci_WriteStridedToDirect:from %d\n",armci_me,proc);
+    if(DEBUG_){ 
+      printf("%d:armci_WriteStridedToDirect:from %d\n",armci_me,proc);
       fflush(stdout);
     }
  
 #if defined(USE_SOCKET_VECTOR_API)
     if(msginfo->operation==GET && strides>0)
-        armci_SendStridedToSocket(CLN_sock[proc],ptr,stride_arr,count,strides,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) ) ;
+        armci_SendStridedToSocket(CLN_sock[proc],ptr,stride_arr,count,strides,
+             (struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) ) ;
     else
 #endif
     armci_write_strided_sock(ptr, strides, stride_arr, count, CLN_sock[proc]);
