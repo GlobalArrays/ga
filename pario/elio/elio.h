@@ -10,6 +10,8 @@
 #define   ELIO_PFS           1	/* PFS Intel parallel filesystem type */
 #define   ELIO_PIOFS         2	/* IBM SP parallel filesystem type */
 #define   ELIO_PENDING_ERR -44  /* error code for failing elio_(g)open */
+#define   ELIO_SHARED       77
+#define   ELIO_PRIVATE      88
 
 
 /*********************** type definitions for ELIO interface *****************/
@@ -17,6 +19,7 @@ typedef long Size_t;         /* size of I/O request type */
 typedef struct {
   int   fd;
   int   fs;
+  int   mode;
 } fd_struct;                      /* file descriptor type definition */
 typedef struct{
   int   fs;
@@ -37,7 +40,7 @@ extern int    elio_awrite(Fd_t fd, off_t offset, const void *buf,
 extern int    elio_wait(io_request_t *id);
 extern int    elio_probe(io_request_t *id, int* status);
 extern int    elio_delete(const char *filename);
-extern Fd_t   elio_open(const char *fname, int type);
+extern Fd_t   elio_open(const char *fname, int type, int mode);
 extern Fd_t   elio_gopen(const char *fname, int type);
 extern int    elio_close(Fd_t fd);
 extern int    elio_stat(char *fname, stat_t *statinfo);

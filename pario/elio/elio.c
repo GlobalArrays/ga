@@ -3,7 +3,12 @@
  Authors: Jarek Nieplocha (PNNL) and Jace Mogill (ANL)
 \**********************************************************************/
 
+#ifdef CRAY_T3E
+#define FFIO 1
+#endif
+
 #include "eliop.h"
+
 
 /****************** Internal Constants and Parameters **********************/
 
@@ -20,6 +25,20 @@
 #endif
 
 
+
+#ifdef FFIO
+#  define WRITE ffwrite
+#  define READ  ffread
+#  define CLOSE ffclose
+#  define SEEK  ffseek
+#  define OPEN  ffopens
+#else
+#  define WRITE write
+#  define READ  read
+#  define CLOSE close
+#  define SEEK  lseek
+#  define OPEN  open
+#endif
 
 #if defined(AIO)
 #   include <aio.h>
@@ -60,6 +79,10 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
   else \
        stat    = 0; 
 
+#ifndef MIN 
+#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#endif
+
 /*****************************************************************************/
 
 
@@ -80,10 +103,10 @@ Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
   int pablo_code = PABLO_elio_write;
   PABLO_start( pablo_code );
   
-  if(offset != lseek(fd->fd, offset, SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
+  if(offset != SEEK(fd->fd,offset,SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
   
   while (bytes_to_write) {
-    stat = write(fd->fd, buf, bytes_to_write);
+    stat = WRITE(fd->fd, buf, bytes_to_write);
     if ((stat == -1) && ((errno == EINTR) || (errno == EAGAIN))) {
       ; /* interrupted write should be restarted */
     } else if (stat > 0) {
@@ -93,7 +116,7 @@ Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
       perror("elio_write");
       ELIO_ERROR(WRITFAIL, stat);
     }
-  };
+  }
 
   /* Only get here if all has gone OK */
   
@@ -147,7 +170,7 @@ int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request
       *req_id = (io_request_t) aio_i;
       elio_set_cb(fd, offset, aio_i, (void*) buf, bytes);
 #if defined(PARAGON)
-      if(offset != lseek(fd->fd, offset, SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
+      if(offset != SEEK(fd->fd, offset, SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
       *req_id = _iwrite(fd->fd, buf, bytes);
       stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
 #elif defined(KSR) && defined(AIO)
@@ -174,7 +197,7 @@ int elio_truncate(Fd_t fd, off_t length)
     int pablo_code = PABLO_elio_truncate;
     PABLO_start( pablo_code );
 
-    (void) lseek(fd->fd, 0L, SEEK_SET);
+    (void) SEEK(fd->fd, 0L, SEEK_SET);
     if (ftruncate(fd->fd, length))
 	return TRUNFAIL;
     else {
@@ -191,7 +214,7 @@ int elio_length(Fd_t fd, off_t *length)
     int pablo_code = PABLO_elio_length;
     PABLO_start( pablo_code );
 
-    if ((*length = lseek(fd->fd, (off_t) 0, SEEK_END)) != -1)
+    if ((*length = SEEK(fd->fd, (off_t) 0, SEEK_END)) != -1)
 	return ELIO_OK;
     else
 	return SEEKFAIL;
@@ -211,10 +234,10 @@ int    attempt=0;
   int pablo_code = PABLO_elio_read;
   PABLO_start( pablo_code );
 
-  if(offset != lseek(fd->fd,offset,SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
+  if(offset != SEEK(fd->fd,offset,SEEK_SET)) ELIO_ERROR(SEEKFAIL,0);
   
   while (bytes_to_read) {
-    stat = read(fd->fd, buf, bytes_to_read);
+    stat = READ(fd->fd, buf, bytes_to_read);
     if (stat == 0) {
       ELIO_ERROR(EOFFAIL, stat);
     } else if ((stat == -1) && ((errno == EINTR) || (errno == EAGAIN))) {
@@ -373,9 +396,41 @@ int elio_probe(io_request_t *req_id, int* status)
 }
 
 
+#if defined(CRAY) && defined(FFIO)
+static int cray_part_info(char *dirname,long *pparts,long *sparts)
+{
+  struct statfs stats;
+  long temp,count=0;
+
+  if(statfs(dirname, &stats, sizeof(struct statfs), 0) == -1) return -1;
+
+  temp = stats.f_priparts;
+  while(temp != 0){
+      count++;
+      temp <<= 1;
+  }
+ *pparts = count;
+
+ if(stats.f_secparts != 0){
+
+    temp = (stats.f_secparts << count);
+    count = 0;
+    while(temp != 0){
+           count++;
+           temp <<= 1;
+    }
+    *sparts = count;
+ }
+ return ELIO_OK;
+
+}
+
+#endif
+
+
 /*\ Noncollective File Open
 \*/
-Fd_t  elio_open(const char* fname, int type)
+Fd_t  elio_open(const char* fname, int type, int mode)
 {
   Fd_t fd=NULL;
   stat_t statinfo;
@@ -413,8 +468,50 @@ Fd_t  elio_open(const char* fname, int type)
   }
 
   fd->fs = statinfo.fs;
+  fd->mode = mode;
   
-  fd->fd = open(fname, ptype, FOPEN_MODE );
+#if defined(CRAY) && defined(FFIO)
+  {
+    struct ffsw ffstat;
+    long pparts, sparts, cbits, cblocks;
+    extern long _MPP_MY_PE;
+    char *ffio_str="bufa:128:4"; /* 4 intern I/O buffers 128*4096 bytes each */ 
+
+    if(cray_part_info(dirname,&pparts,&sparts) != ELIO_OK){
+                   free(fd);
+                   ELIO_ERROR_NULL(STATFAIL, 0);
+    }
+
+    ptype |= ( O_BIG | O_PLACE | O_RAW );
+    cbits = (sparts != 0) ? 1 : 0;
+
+    if( pparts != 1) {
+
+      /* stripe is set so we only select secondary partitions with cbits */
+      if(mode == ELIO_SHARED){
+         cbits = ~((~0L)<<MIN(32,sparts)); /* use all secondary partitions */
+         cblocks = 32;
+      }else{
+         cbits = 1 << (_MPP_MY_PE%sparts);  /* round robin over s part */
+      }
+
+      cbits <<= pparts;        /* move us out of the primary partitions */
+
+     }
+
+     
+     printf ("parts=%d cbits = %X\n",sparts,cbits);
+
+     if(mode == ELIO_SHARED)
+      fd->fd = OPEN(fname, ptype, FOPEN_MODE, cbits, cblocks, &ffstat,ffio_str);
+     else
+      fd->fd = OPEN(fname, ptype, FOPEN_MODE, cbits,  &ffstat,ffio_str);
+
+  }
+#else
+  fd->fd = OPEN(fname, ptype, FOPEN_MODE );
+#endif
+
   if( (int)fd->fd == -1) {
                    free(fd);
                    ELIO_ERROR_NULL(OPENFAIL, 0);
@@ -468,6 +565,7 @@ Fd_t  elio_gopen(const char* fname, int type)
 
 
       fd->fs = statinfo.fs;
+      fd->mode = ELIO_SHARED;
       fd->fd = gopen(fname, ptype, M_ASYNC, FOPEN_MODE );
    }
 
@@ -491,7 +589,7 @@ int elio_close(Fd_t fd)
     int pablo_code = PABLO_elio_close;
     PABLO_start( pablo_code );
 
-    if(close(fd->fd)==-1) ELIO_ERROR(CLOSFAIL, 0);
+    if(CLOSE(fd->fd)==-1) ELIO_ERROR(CLOSFAIL, 0);
     free(fd);
 
     PABLO_end(pablo_code);

@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+
 /*#define PRINT_AND_ABORT(msg, val) ga_error(msg, (long)val)*/
 #ifndef GLOBAL_H
 extern void ga_error(char*, long);
@@ -36,6 +37,12 @@ extern void ga_error(char*, long);
 #if defined(PARAGON)
 #  include <sys/mount.h>
 #  include <nx.h>
+#endif
+
+#if (defined(CRAY) && defined(FFIO))
+#        include <ffio.h>
+#        include <sys/fstyp.h>
+#        include <sys/fsid.h>
 #endif
 
 

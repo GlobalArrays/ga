@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.13 1997-05-23 00:25:39 d3h325 Exp $
+#$Id: makefile,v 1.14 1997-06-06 21:18:28 d3h325 Exp $
 #
 #  Initial version Jace A Mogill (12 June 1996), ANL
 
@@ -6,11 +6,6 @@
      LIBRARY = libchemio.a
          OBJ = elio.o stat.o
      HEADERS = chemio.h
-
-ifdef PABLO
-   LIB_DEFINES = -DPABLO
-endif
-
 
 #under AIX, there are problems with AIO and large files
 ifdef LARGE_FILES
@@ -23,6 +18,10 @@ endif
 # on platforms with Posix AIO you can choose not to use it by defining NOAIO
 ifdef NOAIO
    LIB_DEFINES += -DNOAIO
+endif
+
+ifdef PABLO
+   LIB_DEFINES = -DPABLO
 endif
 
 

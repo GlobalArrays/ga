@@ -1,6 +1,6 @@
 #include "eliop.h"
 #include "chemio.h"
-
+ 
  
 /*\ determines directory path for a given file
 \*/
@@ -68,7 +68,7 @@ int  elio_stat(char *fname, stat_t *statinfo)
 	    ELIO_ERROR(STATFAIL, 1);
 
 #   if defined(PIOFS)
-    /*fprintf(stderr,"filesystem %d\n",ufs_stat.st_vfstype);*/
+/*        fprintf(stderr,"filesystem %d\n",ufs_stat.st_vfstype);*/
         /* according to /etc/vfs, "9" means piofs */
         if(ufs_stat.st_vfstype == 9) statinfo->fs = ELIO_PIOFS;
         else
@@ -87,12 +87,17 @@ int  elio_stat(char *fname, stat_t *statinfo)
 #   endif
 		ELIO_ERROR(STATFAIL,1);
 	
-#   if defined(CRAY)
+#if defined(CRAY)
         /* f_bfree == f_bavail -- naming changes */
-        statinfo->avail = (long) ufs_statfs.f_bfree;
-#   else
-	statinfo->avail = (long) ufs_statfs.f_bavail;
-#   endif
+
+        if(ufs_statfs.f_secnfree != 0) /* check for secondary partition */
+           statinfo->avail = (long) ufs_statfs.f_secnfree;
+        else
+           statinfo->avail = (long) ufs_statfs.f_bfree;
+#else
+        statinfo->avail = (long) ufs_statfs.f_bavail;
+#endif
+
 
 #   ifdef SOLARIS
 	bsize = (int) ufs_statfs.f_frsize;
