@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.24 1999-10-26 00:20:34 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.25 1999-10-29 00:43:08 jju Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -591,17 +591,16 @@ logical status;
 
     dims[0]=*dim1;
     dims[1]=*dim2;
-   
+
     /*block size of 1 is troublesome, old ga treated it as "use default" */
     /* for backward compatibility we use old convention */
     chunk[0] = (*chunk1 ==BLK_THR)? -1: *chunk1;
     chunk[1] = (*chunk2 ==BLK_THR)? -1: *chunk2;
-        
-    status = nga_create(*type, ndim,  dims, array_name, chunk, g_a); 
+
+    status = nga_create(*type, ndim,  dims, array_name, chunk, g_a);
 
     return status;
 }
-
 
 
 /*\ CREATE A GLOBAL ARRAY
@@ -1326,21 +1325,20 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
 
 
 
-#define gam_Loc_ptr(proc, g_handle,  subscript, ptr_loc)                  \
-{                                                                              \
-Integer _offset=0, _d, _factor=1, _last=GA[g_handle].ndim-1;                   \
-Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
-                                                                               \
-      ga_ownsM(g_handle, proc, _lo, _hi);                                      \
-      gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
-      for(_d=0; _d < _last; _d++)            {                                 \
-          _offset += (subscript[_d]-_lo[_d]) * _factor;                        \
+#define gam_Loc_ptr(proc, g_handle,  subscript, ptr_loc)                      \
+{                                                                             \
+Integer _offset=0, _d, _factor=1, _last=GA[g_handle].ndim-1;                  \
+Integer _lo[MAXDIM], _hi[MAXDIM];                                             \
+                                                                              \
+      ga_ownsM(g_handle, proc, _lo, _hi);                                     \
+      gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
+      for(_d=0; _d < _last; _d++)            {                                \
+          _offset += (subscript[_d]-_lo[_d]) * _factor;                       \
           _factor *= _hi[_d] - _lo[_d]+1;                                     \
-      }                                                                        \
-      _offset += (subscript[_last]-_lo[_last]) * _factor;                      \
-      *(ptr_loc) =  GA[g_handle].ptr[proc]+_offset*GA[g_handle].elemsize;      \
+      }                                                                       \
+      _offset += (subscript[_last]-_lo[_last]) * _factor;                     \
+      *(ptr_loc) =  GA[g_handle].ptr[proc]+_offset*GA[g_handle].elemsize;     \
 }
-
 
 #define ga_check_regionM(g_a, ilo, ihi, jlo, jhi, string){                     \
    if (*(ilo) <= 0 || *(ihi) > GA[GA_OFFSET + *(g_a)].dims[0] ||               \
@@ -2468,77 +2466,132 @@ register Integer k, offset;
 void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[], 
                  Integer* nv, double *locbytes, double* totbytes)
 {
-register Integer k, nelem, handle=*g_a+GA_OFFSET;
-Integer  ndim, item_size, first,p;
-Integer *proc, *list, phandle, lhandle; 
+    register Integer k, handle=*g_a+GA_OFFSET;
+    Integer  ndim, item_size;
+    Integer *proc, phandle;
 
-  if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-p",&phandle))ga_error("MAfailed",*g_a);
-  if(!MA_get_pointer(phandle, &proc)) ga_error("MA pointer failed ", *g_a);
-  if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-l",&lhandle))ga_error("MAfailed",*g_a);
-  if(!MA_get_pointer(lhandle, &list)) ga_error("MA pointer failed ", *g_a);
+    Integer *count;        /* counters for each process */
+    Integer *nelem;        /* number of elements for each process */
+    /* source and destination pointers for each process */
+    void ***ptr_src, ***ptr_dst; 
+    void **ptr_org; /* the entire pointer array */
+    armci_giov_t desc;
+    
+    if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-p",&phandle))
+        ga_error("MAfailed",*g_a);
+    if(!MA_get_pointer(phandle, &proc))
+        ga_error("MA pointer failed ", *g_a);
 
-  ndim = GA[handle].ndim;
-  for(k=0;k<*nv;k++)list[k]=k;
-  gai_sort_proc(g_a, subscript, nv, list, proc);
+    ndim = GA[handle].ndim;
 
-  item_size = GA[handle].elemsize;
-  *totbytes += (double)item_size**nv;
+    item_size = GA[handle].elemsize;
+    *totbytes += (double)item_size**nv;
+    
+    /* allocate temp memory */
+    count = gai_malloc(GAnproc * sizeof(Integer));
+    nelem = gai_malloc(GAnproc * sizeof(Integer));
+    ptr_src = gai_malloc(GAnproc * sizeof(void **));
+    ptr_dst = gai_malloc(GAnproc * sizeof(void **));
+    ptr_org = gai_malloc(2*(*nv)*sizeof(void *));
+ 
+    if(count == NULL || nelem == NULL || ptr_src == NULL || ptr_dst == NULL ||
+       ptr_org == NULL)
+        ga_error("gai_malloc failed", GAnproc);
 
-  /* go through the list executing gather/scatter for each processor */
-  first = 0;
-  do {
-      void **ptr_src, **ptr_dst;
-      armci_giov_t desc;
+    /* initialize the counters and nelem */
+    for(k=0; k<GAnproc; k++) {count[k] = 0; nelem[k] = 0;}
 
-      p  = proc[first];
-      nelem = 0;
-
-      /* count entries for proc from "first" to last */     
-      for(k=first; k< *nv; k++)
-        if(p == proc[k]) nelem++;
-        else break;
-
-      if(p == GAme) *locbytes += (double)item_size* nelem;
-
-      ptr_src = gai_malloc(2*nelem*sizeof(void*));
-      if(ptr_src==NULL)ga_error("gai_malloc failed",nelem);
-      else ptr_dst=ptr_src+ nelem;
-      desc.bytes = item_size;
-      desc.src_ptr_array = ptr_src;
-      desc.dst_ptr_array = ptr_dst;
-      desc.ptr_array_len = nelem;
-
+    /* get the process id that the element should go and count the
+     * number of elements for each process
+     */
+    for(k=0; k<*nv; k++) {
+        if(!nga_locate_(g_a, subscript+k*ndim, proc+k)) {
+            print_subscript("invalid subscript",ndim, subscript+k*ndim,"\n");
+            ga_error("failed -element:",k);
+        }
+        nelem[proc[k]]++;
+    }
+    
+    /* set the pointers as
+     *    P0            P1                  P0          P1        
+     * ptr_src[0]   ptr_src[1] ...       ptr_dst[0]  ptr_dst[1] ...
+     *        \          \                    \          \
+     * ptr_org |-------------------------------|---------------------------|
+     *         |              (*nv)            |            (*nv)          |
+     *         | nelem[0] | nelem[1] |...      | nelem[0] | nelem[1] |...
+     */
+    ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
+    for(k=1; k<GAnproc; k++) {
+        ptr_src[k] = ptr_src[k-1] + nelem[k-1];
+        ptr_dst[k] = ptr_dst[k-1] + nelem[k-1];
+    }
+    
+    *locbytes += (double)item_size* nelem[GAme];
+    
+/*
 #ifdef PERMUTE_PIDS
     if(GA_Proc_list) p = GA_inv_Proc_list[p];
 #endif
+*/    
+    switch(op) { 
+      case GATHER:
+        /* go through all the elements
+         * for process 0: ptr_src[0][0, 1, ...] = subscript + offset0...
+         *                ptr_dst[0][0, 1, ...] = v + offset0...
+         * for process 1: ptr_src[1][...] ...
+         *                ptr_dst[1][...] ...
+         */  
+        for(k=0; k<(*nv); k++){
+            ptr_dst[proc[k]][count[proc[k]]] = ((char*)v) + k * item_size;
+            gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
+                        ptr_src[proc[k]]+count[proc[k]]);
+            count[proc[k]]++;
+        }
+        
+        /* source and destination pointers are ready for all processes */
+        for(k=0; k<GAnproc; k++) {
+            desc.bytes = item_size;
+            desc.src_ptr_array = ptr_src[k];
+            desc.dst_ptr_array = ptr_dst[k];
+            desc.ptr_array_len = nelem[k];
+            
+            ARMCI_GetV(&desc, 1, k);
+        }
+        break;
+      case SCATTER:
+        /* go through all the elements
+         * for process 0: ptr_src[0][0, 1, ...] = v + offset0...
+         *                ptr_dst[0][0, 1, ...] = subscript + offset0...
+         * for process 1: ptr_src[1][...] ...
+         *                ptr_dst[1][...] ...
+         */
+        for(k=0; k<(*nv); k++){
+            ptr_src[proc[k]][count[proc[k]]] = ((char*)v) + k * item_size;
+            gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
+                        ptr_dst[proc[k]]+count[proc[k]]);
+            count[proc[k]]++;
+        }
 
-      switch(op){ 
-        case GATHER:
-          for(k=0; k<nelem; k++){
-            ptr_dst[k] = ((char*)v) + list[k+first]*item_size;
-            gam_Loc_ptr(p, handle,  (subscript+list[first+k]*ndim), ptr_src+k);
-          }
-          ARMCI_GetV(&desc, 1, (int)p);
-          break;
-        case SCATTER:
-          for(k=0; k<nelem; k++){
-            ptr_src[k] = ((char*)v) + list[first+k]*item_size;
-            gam_Loc_ptr(p, handle,  (subscript+list[first+k]*ndim), ptr_dst+k);
-          }
-          if(GA_fence_set)fence_array[p]=1;
-          ARMCI_PutV(&desc, 1, (int)p);
-          break;
-        default: ga_error("operation not supported",op);
-      }
-
-      gai_free(ptr_src);
-      first += nelem;
-
-  }while (first< *nv);
-
-  if(! MA_pop_stack(lhandle)) ga_error(" pop stack failed!",lhandle);
-  if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
-
+        /* source and destination pointers are ready for all processes */
+        for(k=0; k<GAnproc; k++) {
+            desc.bytes = item_size;
+            desc.src_ptr_array = ptr_src[k];
+            desc.dst_ptr_array = ptr_dst[k];
+            desc.ptr_array_len = nelem[k];
+            
+            if(GA_fence_set) fence_array[k]=1;
+            
+            ARMCI_PutV(&desc, 1, k);
+        }
+        break;
+      default: ga_error("operation not supported",op);
+    }
+    
+    gai_free(ptr_org);
+    gai_free(ptr_dst); gai_free(ptr_src);
+    gai_free(nelem); gai_free(count);
+    
+    if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
 }
 
 
