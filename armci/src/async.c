@@ -1,4 +1,4 @@
-/* $Id: async.c,v 1.4 2002-10-23 18:37:38 vinod Exp $ */
+/* $Id: async.c,v 1.5 2002-12-18 18:25:33 vinod Exp $ */
 /* data structures and interfaces for handling asynchronous requests 
  */
 
@@ -11,7 +11,7 @@
 */
 #define MAX_PENDING_REQ 4
 #define MAX_STRIDE_LEVELS 8
-#if 0
+
 typedef struct {
   void *ptr;
   int  stride_levels;
@@ -24,7 +24,7 @@ typedef struct {
   int len;
   void *ptrs[60];
 }vector_dscr_t;
-#endif
+
 typedef struct {
   int reqid;              /* request id */
   int bufid;              /* communication buffer id */

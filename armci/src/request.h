@@ -80,32 +80,16 @@ unsigned int   bytes:20;      /* number of bytes requested */
 
 /*******structures copied from async.c for storing cmpl dscr for nb req*******/
 #define UBUF_LEN 112
-typedef struct {
-  void *ptr;
-  int  stride_levels;
-  int  stride_arr[8];
-  int  count[8];
-}strided_dscr_t;
-
-typedef struct {
-  int segments;
-  int len;
-  void *ptrs[13];
-}vector_dscr_t;
 
 typedef struct {
   unsigned int tag;             /* request id*/
   short int bufid;              /* communication buffer id */
   short int protocol;           /* what does this buf hold?*/
   union {                 
-        void *dscrbuf;
-        double pad;
+        void *dscrbuf;          /*in case dscr below is not enough, do a*/
+        double pad;             /*malloc, save pointer in dscrbuf and use it*/
   }ptr;
-  union {
-      char buf[UBUF_LEN];
-      strided_dscr_t strided;
-      vector_dscr_t vector;
-  }dscr;
+  char dscr[UBUF_LEN];          /*place to store the dscr*/
 }_buf_info_t;
 
 #define BUF_INFO_T _buf_info_t

@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.47 2002-12-17 13:03:42 vinod Exp $ */
+/* $Id: request.c,v 1.48 2002-12-18 18:25:33 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -52,7 +52,7 @@ void armci_complete_req_buf(BUF_INFO_T *info, void *buffer)
 request_header_t *msginfo = (request_header_t*) buffer;
     if(info->protocol==0)return;
     else if(info->protocol==SDSCR_IN_PLACE){
-       char *dscr = info->dscr.buf;
+       char *dscr = info->dscr;
        void *loc_ptr;
        int stride_levels;
        int *loc_stride_arr,*count;
@@ -75,7 +75,7 @@ request_header_t *msginfo = (request_header_t*) buffer;
     else if(info->protocol==VDSCR_IN_PLACE || info->protocol==VDSCR_IN_PTR){
        char *dscr;
        int len,i;
-       if(info->protocol==VDSCR_IN_PLACE)dscr = info->dscr.buf;
+       if(info->protocol==VDSCR_IN_PLACE)dscr = info->dscr;
        else dscr = info->ptr.dscrbuf;
        GETBUF(dscr, long ,len);
        {
@@ -110,7 +110,7 @@ char *bufptr=*bptr;
 BUF_INFO_T *info=BUF_TO_BUFINFO(*bptr);
 
     if(is_nb){    
-       bufptr = (info->dscr.buf);
+       bufptr = (info->dscr);
     }
     *(void**)bufptr = rem_ptr;         bufptr += sizeof(void*);
     *(int*)bufptr = stride_levels;     bufptr += sizeof(int);
@@ -119,7 +119,7 @@ BUF_INFO_T *info=BUF_TO_BUFINFO(*bptr);
     for(i=0;i< stride_levels+1;i++)((int*)bufptr)[i] = count[i];
     bufptr += (1+stride_levels)*sizeof(int);
     if((0 || DEBUG_) && is_nb){
-      bufptr = (info->dscr.buf);
+      bufptr = (info->dscr);
       if(armci_me==0)
         printf("\n%d:rem_ptr %p=%p stride_levels %d=%d\n",armci_me,
                 *(void**)bufptr,rem_ptr,
@@ -149,7 +149,7 @@ void *rem_ptr;
        info=BUF_TO_BUFINFO(bufptr);
        /*if descr fits in available buffer, use it else do malloc */
        if(size<=UBUF_LEN){
-         buf = info->dscr.buf;
+         buf = info->dscr;
          info->protocol=VDSCR_IN_PLACE;
        }
        else {
@@ -778,7 +778,7 @@ int armci_rem_strided(int op, void* scale, int proc,
           armci_send_req(proc, msginfo, bufsize);
        }
 #     if !defined(USE_SOCKET_VECTOR_API) 
-       if(0 || !nb_handle)
+       if(!nb_handle)
 #     endif 
        {
          armci_rcv_strided_data(proc, msginfo, msginfo->datalen,

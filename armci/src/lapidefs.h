@@ -1,16 +1,12 @@
 #ifndef LAPI_DEFS_H
 #define LAPI_DEFS_H
 
-#ifdef LAPI2
-#include "/u2/d3h325/lapi_vector_beta/lapi.h"
-#else
 #include <lapi.h>
-#endif
 
 #ifdef LAPI_ERR_BAD_NINTH_PARM
 #define LAPI2
-#define COMPLETE_HANDLE _armci_buf_complete_nb_request
 #endif
+#define COMPLETE_HANDLE _armci_buf_complete_nb_request
 
 #define NB_CMPL_T lapi_cmpl_t   
 

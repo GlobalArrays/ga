@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.11 2002-12-17 13:02:21 vinod Exp $ */
+/* $Id: lapi2.c,v 1.12 2002-12-18 18:25:33 vinod Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -244,7 +244,7 @@ int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
 int dsize=3*sizeof(void*);
     /*pick a counter, default for blocking, from descriptor for non-blocking*/
     if(nb_handle){
-       INIT_COUNTER(nb_handle->cmpl_info,0);
+       INIT_COUNTER((nb_handle->cmpl_info),0);
        o_cmpl = &(nb_handle->cmpl_info);
     }
     else{

@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.54 2002-12-17 12:32:08 vinod Exp $ */
+/* $Id: strided.c,v 1.55 2002-12-18 18:25:33 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -801,11 +801,6 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
-    /* use direct protocol for remote access when performance is better */
-#   if (defined(LAPI) && !defined(LAPI2)) 
-      if(!direct)
-         if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
-#   endif
 
     /*set tag and op in the nb handle*/
     if(nb_handle){

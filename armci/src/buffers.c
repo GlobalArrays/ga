@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.17 2002-12-17 13:02:55 vinod Exp $    **/
+/* $Id: buffers.c,v 1.18 2002-12-18 18:25:33 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -363,6 +363,9 @@ buf_state_t *buf_state = _armci_buf_state->table +index;
    /* clear table slots for all the buffers in the set for this request */
    for(; count; count--, buf_state++) *(int*)buf_state = 0;
 
+   _armci_buf_state->buf[index].id.tag=0;
+   
+
    /* the current buffer is prime candidate to satisfy next buffer request */
    _armci_buf_state->avail = index;
 }
@@ -393,15 +396,13 @@ int i=0;
     if(bufid == NB_NONE) *retcode=0;
     else if(bufid == NB_MULTI) {
        for(i=0;i<MAX_BUFS;i++){ 
-         if(tag && tag==_armci_buf_state->buf[i].id.tag && 
-            _armci_buf_state->table[i].first==i)
+         if(tag && tag==_armci_buf_state->buf[i].id.tag)
            _armci_buf_complete_index(i,1); 
        }
        *retcode=0;
     }
     else {
-       if(tag && tag==_armci_buf_state->buf[bufid].id.tag &&
-            _armci_buf_state->table[i].first==i)
+       if(tag && tag==_armci_buf_state->buf[bufid].id.tag)
          _armci_buf_complete_index(bufid,1);
        *retcode=0;
     } 
