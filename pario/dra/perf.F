@@ -74,8 +74,8 @@ c
       integer iran
       logical status
       external  drand
-      intrinsic int, dfloat
-      iran(i) = int(drand(0)*dfloat(i-1)) + 1
+      intrinsic int, dble
+      iran(i) = int(drand(0)*dble(i-1)) + 1
 c    
       loop  = 30
       req = -1

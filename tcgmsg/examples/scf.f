@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.f,v 1.2 1995-02-02 23:24:27 d3g681 Exp $
+C$Id: scf.f,v 1.3 1997-03-04 06:17:21 d3e129 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
       include 'msgtypesf.h'
@@ -118,7 +118,7 @@ c
 c     print out information on # integrals evaulated each iteration
 c     
          nints = nnbfn*(nnbfn+1)/2
-         frac  = dfloat(icut3)/dfloat(nints)
+         frac  = dble(icut3)/dble(nints)
          write(6,2) icut1, icut2, icut3, nints, frac
  2       format(/'       No. of integrals screened or computed '
      $        /'       -------------------------------------'/

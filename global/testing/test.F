@@ -107,7 +107,7 @@ c
       double precision drand, crap, sum1, sum2, x
       double precision nwords
       intrinsic int
-      iran(i) = int(drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*dble(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -593,7 +593,7 @@ c
       double precision nwords, error
       double complex   x, sum1, sum2
       intrinsic int
-      iran(i) = int(drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*dble(i)) + 1
 c
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -1057,7 +1057,7 @@ c
       integer buf
       intrinsic int
       external drand
-      iran(i) = int(drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*dble(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()

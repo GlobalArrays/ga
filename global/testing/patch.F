@@ -1,4 +1,4 @@
-#if defined(CRAY_T3D) || defined(KSR)
+#if defined(CRAY_T3D) || defined(CRAY_T3E) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
 #else
@@ -56,7 +56,7 @@ c
       integer g_a, g_b, g_c 
       integer rows, cols, loop
       logical status, dist_same 
-      iran(i) = int(drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*dble(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -79,7 +79,7 @@ c     call setdbg(1)
          call ga_error('... exiting ',0)
       endif
 c
-#if   defined(CRAY_T3D) || defined(AIX) || defined(SGI)
+#if   defined(CRAY_T3D) || defined(CRAY_T3E) || defined(AIX) || defined(SGI)
       if(dist_same) then
 #else
       if(dist_same.eq. .true.) then
@@ -500,7 +500,7 @@ c
       integer rows, cols, loop
       logical status, dist_same 
       double precision drand
-      iran(i) = int(drand(0)*real(i)) + 1
+      iran(i) = int(drand(0)*dble(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -523,7 +523,7 @@ c     call setdbg(1)
          call ga_error('... exiting ',0)
       endif
 c
-#if   defined(CRAY_T3D) || defined(AIX) || defined(SGI)
+#if   defined(CRAY_T3D) || defined(CRAY_T3E) || defined(AIX) || defined(SGI)
       if(dist_same) then
 #else
       if(dist_same.eq. .true.) then

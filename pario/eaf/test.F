@@ -3,7 +3,7 @@
 #define IO_TEST_SZ (1024*1024/128)
 #define IO_NUM_FILES 4
 #define MAX_ITER 4
-#define MAP(x) dfloat(IO_TEST_SZ*((x-1)*EAF_SZ_INT))
+#define MAP(x) dble(IO_TEST_SZ*((x-1)*EAF_SZ_INT))
 
       program eaftest
 c     

@@ -61,7 +61,7 @@ c
       implicit none
       integer nnodes, nprow, npcol,i 
 c
-      npcol = int(sqrt(real(nnodes)))
+      npcol = int(sqrt(dble(nnodes)))
       do i = npcol, 1, -1 
          if(mod(nnodes,i).eq.0) goto 1
       enddo

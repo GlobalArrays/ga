@@ -1,5 +1,5 @@
       subroutine ga_summarize(verbose)
-C$Id: ga_summarize.F,v 1.11 1996-10-04 00:11:09 d3h325 Exp $
+C$Id: ga_summarize.F,v 1.12 1997-03-04 06:16:57 d3e129 Exp $
       implicit none
 #include "global.fh"
 #include "mafdecls.fh"
@@ -47,9 +47,9 @@ c
 c
 c     Determine length for format statements
 c
-            ldim1 = log10(real(dim1)) + 1
-            ldim2 = log10(real(dim2)) + 1
-            lp    = log10(real(nproc)) + 1
+            ldim1 = log10(dble(dim1)) + 1
+            ldim2 = log10(dble(dim2)) + 1
+            lp    = log10(dble(nproc)) + 1
             do lname = len(name),1,-1
                if (name(lname:lname).ne.' ') goto 10
             enddo

@@ -1,4 +1,4 @@
-#if defined(CRAY_T3D) || defined(KSR)
+#if defined(CRAY_T3D) || defined(CRAY_T3E) || defined(KSR)
 #   define xx_dgemm sgemm
 #else
 #   define xx_dgemm dgemm
@@ -9,7 +9,7 @@ c
 #ifdef USE_SUMMA
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.22 1996-10-17 04:56:01 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.23 1997-03-04 06:16:55 d3e129 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -26,7 +26,7 @@ c
 #endif
       subroutine GA_DGEMM(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.22 1996-10-17 04:56:01 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.23 1997-03-04 06:16:55 d3e129 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k

@@ -171,8 +171,8 @@ c
       integer iran
       logical status
       external  drand
-      intrinsic int, dfloat
-      iran(i) = int(drand(0)*dfloat(i-1)) + 1
+      intrinsic int, dble
+      iran(i) = int(drand(0)*dble(i-1)) + 1
 c    
       loop  = 30
       nproc = ga_nnodes()
@@ -182,7 +182,7 @@ c     a() is a local copy of what the l array should start as
 c
       do j = 1, n
          do i = 1, n
-            a(i,j) = dfloat(i-1 + (j-1)*n)
+            a(i,j) = dble(i-1 + (j-1)*n)
          enddo
       enddo
 c
@@ -367,7 +367,7 @@ c
 
       subroutine init_char(str, len, char)
       integer len, i
-#ifdef CRAY_T3D
+#if defined(CRAY_T3D) || defined(CRAY_T3E)
       character*1 str(len)
 #else
       character*(*) str
