@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.35 2002-03-13 17:13:33 vinod Exp $ */
+/* $Id: request.c,v 1.36 2002-09-04 19:15:34 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -548,8 +548,8 @@ int armci_rem_strided(int op, void* scale, int proc,
     }
 	
 	/*
-	if(ACC(op)) fprintf(stderr,"%d in client len=%d alpha=%lf)\n",
-	             armci_me, buf - (char*)msginfo , ((double*)buf)[0]); 
+	if(ACC(op))fprintf(stderr,"%d client len=%d alpha=%lf data=%lf,%lf\n",
+	     armci_me, buf-(char*)msginfo,((double*)buf)[0],*((double*)src_ptr),             ((double*)buf)[1]);
 	*/
 
     buf += slen;
@@ -701,8 +701,8 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 	scale = dscr_save+ (msginfo->dscrlen - slen -msginfo->ehlen);
 /*
     if(ACC(msginfo->operation))
-      fprintf(stderr,"%d in server len=%d slen=%d alpha=%lf\n", armci_me,
-				 msginfo->dscrlen, slen, *(double*)scale); 
+      fprintf(stderr,"%d in server len=%d slen=%d alpha=%lf data=%lf\n", 
+               armci_me, msginfo->dscrlen, slen, *(double*)scale,*(double*)buf);
 */
 
     buf_ptr = buf; /*  data in buffer */
