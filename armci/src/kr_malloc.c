@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.4 2003-07-30 23:29:21 d3h325 Exp $ */
+/* $Id: kr_malloc.c,v 1.5 2003-10-31 22:48:52 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 
@@ -27,32 +27,6 @@ static int do_verify = 0;	/* Flag for automatic heap verification */
 
 #define VALID1  0xaaaaaaaa	/* For validity check on headers */
 #define VALID2  0x55555555
-
-#ifdef CRAY
-#define LOG_ALIGN 6
-#elif defined(KSR)
-#define LOG_ALIGN 7
-#else
-#define LOG_ALIGN 6
-#endif
-
-#define ALIGNMENT (1 << LOG_ALIGN)
-
-union header{
-  struct {
-    unsigned valid1;		/* Token to check if is not overwritten */
-    union header *ptr;		/* next block if on free list */
-    size_t size;		/* size of this block*/
-    unsigned valid2;		/* Another token acting as a guard */
-  } s;
-  char align[ALIGNMENT];	/* Align to ALIGNMENT byte boundary */
-};
-
-typedef union header Header;
-
-static Header base;		/* empty list to get started */
-static Header *freep = NULL;	/* start of free list */
-static Header *usedp = NULL;	/* start of used list */
 
 static void kr_error(char *s, unsigned long i, context_t *ctx) {
 char string[256];
@@ -105,11 +79,11 @@ static Header *morecore(size_t nu, context_t *ctx) {
     
     /* Insert into linked list of blocks in use so that kr_free works
        ... for debug only */
-    up->s.ptr = usedp;
-    usedp = up;
+    up->s.ptr = ctx->usedp;
+    ctx->usedp = up;
     
     kr_free((char *)(up+1), ctx);  /* Try to join into the free list */
-    return freep;
+    return ctx->freep;
 }
 
 void kr_malloc_init(size_t usize, /* unit size in bytes */
@@ -132,7 +106,8 @@ void kr_malloc_init(size_t usize, /* unit size in bytes */
     ctx->nalloc     = nalloc * scale;
     ctx->max_nalloc = max_nalloc * scale;
     ctx->alloc_fptr = alloc_fptr;
-
+    ctx->freep = NULL;
+    ctx->usedp = NULL;
     do_verify = debug;
 }
 
@@ -146,7 +121,7 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
     
     /* If first time in need to initialize the free list */ 
     
-    if ((prevp = freep) == NULL) { 
+    if ((prevp = ctx->freep) == NULL) { 
       
       if (sizeof(Header) != ALIGNMENT)
 	kr_error("Alignment is not valid", (unsigned long) ALIGNMENT, ctx);
@@ -159,10 +134,10 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
       ctx->nmcalls= 0;
       ctx->nfcalls= 0;
       
-      base.s.ptr = freep = prevp = &base;  /* Initialize linked list */
-      base.s.size = 0;
-      base.s.valid1 = VALID1;
-      base.s.valid2 = VALID2;
+      ctx->base.s.ptr = ctx->freep = prevp = &(ctx->base);  /* Initialize linked list */
+      ctx->base.s.size = 0;
+      ctx->base.s.valid1 = VALID1;
+      ctx->base.s.valid2 = VALID2;
     }
     
     ctx->nmcalls++;
@@ -189,18 +164,18 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
 	}
 	
 	/* Insert into linked list of blocks in use ... for debug only */
-	p->s.ptr = usedp;
-	usedp = p;
+	p->s.ptr = ctx->usedp;
+	ctx->usedp = p;
 	
 	ctx->inuse += nunits;  /* Record usage */
 	if (ctx->inuse > ctx->maxuse)
 	  ctx->maxuse = ctx->inuse;
-	freep = prevp;
+	ctx->freep = prevp;
 	return_ptr = (char *) (p+1);
 	break;
       }
       
-      if (p == freep)	{	/* wrapped around the free list */
+      if (p == ctx->freep)	{	/* wrapped around the free list */
 	if ((p = morecore(nunits, ctx)) == (Header *) NULL) {
 	  return_ptr = (char *) NULL;
 	  break;
@@ -241,7 +216,7 @@ void kr_free(char *ap, context_t *ctx) {
       /* Extract the block from the used linked list
 	 ... for debug only */
       
-      for (up=&usedp; ; up = &((*up)->s.ptr)) {
+      for (up=&(ctx->usedp); ; up = &((*up)->s.ptr)) {
 	if (!*up)
 	  kr_error("kr_free: block not found in used list\n", 
 		   (unsigned long) ap, ctx);
@@ -253,7 +228,7 @@ void kr_free(char *ap, context_t *ctx) {
       
       /* Join the memory back into the free linked list */
       
-      for (p=freep; !(bp > p && bp < p->s.ptr); p = p->s.ptr)
+      for (p=ctx->freep; !(bp > p && bp < p->s.ptr); p = p->s.ptr)
 	if (p >= p->s.ptr && (bp > p || bp < p->s.ptr))
 	  break; /* Freed block at start or end of arena */
       
@@ -271,7 +246,7 @@ void kr_free(char *ap, context_t *ctx) {
       } else
 	p->s.ptr = bp;
       
-      freep = p;
+      ctx->freep = p;
       
     } /* end if on ap */
     
@@ -308,11 +283,11 @@ void kr_malloc_verify(context_t *ctx) {
     
     LOCKIT;
     
-    if ( freep ) {
+    if ( ctx->freep ) {
       
       /* Check the used list */
       
-      for (p=usedp; p; p=p->s.ptr) {
+      for (p=ctx->usedp; p; p=p->s.ptr) {
 	if (p->s.valid1 != VALID1 || p->s.valid2 != VALID2)
 	  kr_error("invalid header on usedlist", 
 		   (unsigned long) p->s.valid1, ctx);
@@ -324,8 +299,8 @@ void kr_malloc_verify(context_t *ctx) {
       
       /* Check the free list */
       
-      p = base.s.ptr;
-      while (p != &base) {
+      p = ctx->base.s.ptr;
+      while (p != &(ctx->base)) {
 	if (p->s.valid1 != VALID1 || p->s.valid2 != VALID2)
 	  kr_error("invalid header on freelist", 
 		   (unsigned long) p->s.valid1, ctx);

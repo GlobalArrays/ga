@@ -1,6 +1,27 @@
 #ifndef KR_MALLOC_H /* K&R malloc */
 #define KR_MALLOC_H
 
+#ifdef CRAY
+#define LOG_ALIGN 6
+#elif defined(KSR)
+#define LOG_ALIGN 7
+#else
+#define LOG_ALIGN 6
+#endif
+ 
+#define ALIGNMENT (1 << LOG_ALIGN)
+ 
+union header{
+  struct {
+    unsigned valid1;            /* Token to check if is not overwritten */
+    union header *ptr;          /* next block if on free list */
+    size_t size;                /* size of this block*/
+    unsigned valid2;            /* Another token acting as a guard */
+  } s;
+  char align[ALIGNMENT];        /* Align to ALIGNMENT byte boundary */
+};
+ 
+typedef union header Header;
 
 typedef struct malloc_context {
   size_t usize;                 /* unit size in bytes */
@@ -14,6 +35,9 @@ typedef struct malloc_context {
   long nfrags;                  /* No. of fragments divided into */
   long nmcalls;                 /* No. of calls to _armci_alloc() */
   long nfcalls;                 /* No. of calls to memfree */
+  Header base;                  /* empty list to get started */
+  Header *freep;                /* start of free list */
+  Header *usedp;                /* start of used list */
 } context_t;
 
 extern void kr_malloc_init(size_t usize, /* unit size in bytes */
