@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.103 2004-11-05 22:46:09 d3g293 Exp $ */
+/* $Id: base.c,v 1.104 2004-11-08 15:53:33 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -3509,8 +3509,8 @@ Integer FATR ga_num_mirrored_seg_(Integer *g_a)
    * separate data blocks correspond to this segment of shared
    * memory */
   for (i=0; i<nproc; i++) {
-    np = nproc*inode + i;
-    nga_distribution_(g_a,&np,lower,upper);
+    /* BJP np = nproc*inode + i; */
+    nga_distribution_(g_a,&i,lower,upper);
     icheck = 1;
     /* see if processor corresponds to block of array data
      * that contains start of shared memory segment */
@@ -3581,8 +3581,8 @@ void FATR ga_get_mirrored_block_(Integer *g_a,
    * separate data blocks correspond to this segment of shared
    * memory */
   for (i=0; i<nproc; i++) {
-    np = nproc*inode + i;
-    nga_distribution_(g_a,&np,lower,upper);
+    /* BJP np = nproc*inode + i; */
+    nga_distribution_(g_a,&i,lower,upper);
     icheck = 1;
     /* see if processor corresponds to block of array data
      * that contains start of shared memory segment */
