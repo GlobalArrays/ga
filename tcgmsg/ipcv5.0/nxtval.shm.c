@@ -1,4 +1,4 @@
-/* $Id: nxtval.shm.c,v 1.5 2002-07-17 17:15:19 vinod Exp $ */
+/* $Id: nxtval.shm.c,v 1.6 2002-09-21 17:49:20 vinod Exp $ */
 
 #include "tcgmsgP.h"
 long nxtval_counter=0;
@@ -85,7 +85,7 @@ long NXTVAL_(long *mproc)
      }
      if (*mproc > 0) {
 #ifdef GA_USE_VAMPIR
-           (void) VT_log_sendmsg(me,server,0,TCGMSG_NXTVAL,0);
+           vampir_start_comm(server,me,sizeof(long),TCGMSG_NXTVAL);
 #endif
 
            LOCK;
@@ -94,7 +94,7 @@ long NXTVAL_(long *mproc)
            UNLOCK;
 
 #ifdef GA_USE_VAMPIR
-           (void) VT_log_recvmsg(server,me,0,TCGMSG_NXTVAL,0);
+           vampir_end_comm(server,me,sizeof(long),TCGMSG_NXTVAL);
 #endif
      }
 

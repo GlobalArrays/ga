@@ -153,7 +153,7 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
       (void) fflush(stdout);
   }
 #ifdef GA_USE_VAMPIR
-  (void) VT_log_recvmsg(me,*nodefrom,*lenmes,*type,0);
+  vampir_recv(me,*nodefrom,*lenmes,*type);
   vampir_end(TCGMSG_RCV,__FILE__,__LINE__);
 #endif
 }
@@ -187,7 +187,7 @@ void SND_(type, buf, lenbuf, node, sync)
 
 #ifdef GA_USE_VAMPIR
   vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
-  (void) VT_log_sendmsg(me,*node,*lenbuf,*type,0);
+  vampir_send(me,*node,*lenbuf,*type);
 #endif
 
   if (DEBUG_) {

@@ -56,7 +56,7 @@ void SND_(type, buf, lenbuf, node, sync)
    long tid=pvm_gettid("", *node);
 #ifdef GA_USE_VAMPIR
    vampir_begin(TCGMSG_SND,__FILE__,__LINE__);
-   (void) VT_log_sendmsg(me,*node,*lenbuf,*type,0);
+   vampir_send(me,*node,*lenbuf,*type);
 #endif
     
     pvm_psend(tid, *type, buf, *lenbuf, PVM_BYTE); 
@@ -84,7 +84,7 @@ int tid=*nodeselect, tidfrom;
   pvm_precv(tid, *type, buf, *lenbuf, PVM_BYTE, &tidfrom, 0, 0);
   *nodefrom = pvm_get_PE(tidfrom);
 #ifdef GA_USE_VAMPIR
-   (void) VT_log_recvmsg(me,*nodefrom,*lenmes,*type,0);
+   vampir_recv(me,*nodefrom,*lenmes,*type);
    vampir_begin(TCGMSG_RCV,__FILE__,__LINE__);
 #endif
 }

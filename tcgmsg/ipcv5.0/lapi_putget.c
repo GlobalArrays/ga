@@ -192,7 +192,7 @@ Integer NXTVAL_(mproc)
      if (*mproc > 0) {
            /* use atomic swap operation to increment nxtval counter */
 #ifdef GA_USE_VAMPIR
-          (void) VT_log_sendmsg(me,server,0,TCGMSG_NXTVAL,0);
+          vampir_start_comm(server,me,sizeof(int),TCGMSG_NXTVAL);
 #endif
 
            rc = LAPI_Setcntr(lapi_handle, &req_id, 0);
@@ -204,7 +204,7 @@ Integer NXTVAL_(mproc)
            if(rc)Error("nxtval: waitcntr failed",rc);
 
 #ifdef GA_USE_VAMPIR
-           (void) VT_log_recvmsg(server,me,0,TCGMSG_NXTVAL,0);
+           vampir_end_comm(server,me,sizeof(int),TCGMSG_NXTVAL);
 #endif
      }
    } else {
