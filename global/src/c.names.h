@@ -188,6 +188,8 @@
 #define  ga_dgemm_                 GA_DGEMM
 #define  ga_sgemm_                 GA_SGEMM
 #define  ga_zgemm_                 GA_ZGEMM
+#define  ga_free_                  GA_FREE
+#define  ga_malloc_                GA_MALLOC
 
 #elif defined(F2C2_)
 
@@ -378,6 +380,8 @@
 #define  ga_dgemm_                 ga_dgemm__
 #define  ga_sgemm_                 ga_sgemm__
 #define  ga_zgemm_                 ga_zgemm__
+#define  ga_free_                  ga_free__
+#define  ga_malloc_                ga_malloc__
 
 #endif
 

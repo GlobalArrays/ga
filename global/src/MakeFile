@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.26 2003-02-06 21:43:31 edo Exp $
+#	$Id: MakeFile,v 1.27 2003-02-20 22:59:41 edo Exp $
 #
 
 OBJDIR=.\obj
@@ -29,6 +29,7 @@ GA_CORE  = $(OBJDIR)\base.obj \
         $(OBJDIR)\matrix.obj \
         $(OBJDIR)\elem_alg.obj \
         $(OBJDIR)\nbutil.obj \
+        $(OBJDIR)\ga_malloc.obj \
 	$(OBJDIR)\ga_solve_seq.obj 
 	
 !IFDEF GA_USE_VAMPIR
