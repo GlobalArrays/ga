@@ -3,7 +3,7 @@ c     Thu Aug 25 14:08:17 PDT 1994, JN
 c
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.11 1995-02-02 23:13:12 d3g681 Exp $
+C$Id: ga_dgemm.F,v 1.12 1995-04-17 06:37:13 gg502 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -11,6 +11,7 @@ C$Id: ga_dgemm.F,v 1.11 1995-02-02 23:13:12 d3g681 Exp $
       Integer            g_a, g_b, g_c
 #include "mafdecls.h"
 #include "global.fh"
+#include "tcgmsg.fh"
 c     
 c     GA_DGEMM  performs one of the matrix-matrix operations:
 c           C := alpha*op( A )*op( B ) + beta*C,
@@ -36,20 +37,59 @@ c              be at least  zero.
 c
       integer ilo, ihi, jlo, jhi, klo, khi, ichunk, jchunk, kchunk
       integer idim, jdim, kdim, adim, bdim, cdim, ijk, me, nproc
-#ifdef DATA_SERVER
-      parameter (ichunk=256, jchunk=256, kchunk=256)
-#else
-c     parameter (ichunk=64, jchunk=64, kchunk=64)
-      parameter (ichunk=128, jchunk=128, kchunk=128)
-#endif
-*
-* rather than put these on the system stack put them on the MA stack
-*
-*      double precision c(ichunk*jchunk), a(ichunk*kchunk),
-*     $     b(kchunk*jchunk)
       integer l_a, k_a, l_b, k_b, l_c, k_c
       logical status
+C
+      Logical Get_New_B ! Allow reuse of B patch when possible
+C
+      Double Precision Chunk_cube
+      Integer Min_Tasks, Max_Chunk, Mem_Avail
+      Parameter ( Min_Tasks = 10) ! Minimum acceptable tasks per node
 c
+C     Set defaults -- platform dependent
+#ifdef DATA_SERVER
+      ichunk = 256
+      jchunk = 256
+      kchunk = 256
+#else
+      ichunk = 128
+      jchunk = 128
+      kchunk = 128
+#endif
+C
+      me = ga_nodeid()
+      nproc = ga_nnodes()
+C
+C     Make an estimate of how large patches can be and still insure
+C     enough tasks per processor that loads will be reasonably balanced.
+C     
+C     Patches per dimension are M/chunk, N/chunk, K/chunk so total tasks
+C     is roughly (K*M*N)/(chunk**3).  Assume all chunk sizes are the 
+C     same and solve for the one that provides the minimum acceptable 
+C     number of tasks.
+C
+      chunk_cube = Dble(K)*Dble(M)*Dble(N) / (Min_tasks * NProc)
+      Max_chunk = Int( Chunk_cube ** (1.0d0/3.0d0) )
+C
+C     If there is room to increase the chunk size without impacting
+C     load balance, do it.
+C
+      If ( Max_Chunk .gt. Max(ichunk, jchunk, kchunk) ) then
+C
+C        Find out how much memory we can grab.  It will be used in
+C        three chunks, and the result includes only the first one.
+C
+         Mem_Avail = MA_Inquire_Avail( MT_DBL )
+     $      - 2 * MA_SizeOf_Overhead( MT_DBL )
+         Call GA_IGOp(42, Mem_Avail, mitob(1), 'min')
+C
+         Max_Chunk = Min( Max_Chunk, Int(Sqrt(DBLE(Mem_Avail/3))) )
+C
+         IChunk = Max_Chunk
+         JChunk = Max_Chunk
+         KChunk = Max_Chunk
+      EndIf
+
       status = .true.
       status = ma_push_get(MT_DBL, ichunk*kchunk, 'ga_dgemm:a', l_a,k_a)
      $     .and. status
@@ -58,9 +98,6 @@ c
       status = ma_push_get(MT_DBL, ichunk*jchunk, 'ga_dgemm:c', l_c,k_c)
      $     .and. status
       if (.not. status) call ga_error('ga_dgemm: insufficent memory?',0)
-c
-      me = ga_nodeid()
-      nproc = ga_nnodes()
 c
       if (beta .eq. 0.0d0) then
          call ga_zero(g_c)
@@ -75,6 +112,12 @@ c
          do klo = 1, k, kchunk
             khi = min(k, klo+kchunk-1)
             kdim = khi - klo + 1
+C
+C           Each pass through the outer two loops means we need a
+C           different patch of B.
+C
+            Get_New_B = .TRUE.
+C
             do ilo = 1, m, ichunk
                if (mod(ijk,nproc) .eq. me) then
                   ihi = min(m, ilo+ichunk-1)
@@ -84,21 +127,28 @@ c
                   if (transa.eq.'n' .or. transa.eq.'N') then
                      adim = idim
                      call ga_get(g_a, ilo, ihi, klo, khi,
-     $                    dbl_mb(k_a), adim)
+     $                  dbl_mb(k_a), adim)
                   else
                      adim = kdim
                      call ga_get(g_a, klo, khi, ilo, ihi, 
-     $                    dbl_mb(k_a), adim)
+     $                  dbl_mb(k_a), adim)
                   endif
-                  if (transb.eq.'n' .or. transb.eq.'N') then
-                     bdim = kdim
-                     call ga_get(g_b, klo, khi, jlo, jhi, 
-     $                    dbl_mb(k_b), bdim)
-                  else
-                     bdim = jdim
-                     call ga_get(g_b, jlo, jhi, klo, khi, 
-     $                    dbl_mb(k_b), bdim)
-                  endif
+C
+C                 Avoid rereading B if it is the same patch as last time.
+C
+                  If ( Get_New_B ) then
+                     if (transb.eq.'n' .or. transb.eq.'N') then
+                        bdim = kdim
+                        call ga_get(g_b, klo, khi, jlo, jhi, 
+     $                     dbl_mb(k_b), bdim)
+                     else
+                        bdim = jdim
+                        call ga_get(g_b, jlo, jhi, klo, khi, 
+     $                     dbl_mb(k_b), bdim)
+                     endif
+                     Get_New_B = .FALSE. ! Until J or K change again
+                  EndIf
+C
                   call dgemm(transa, transb, idim, jdim, kdim,
      $                 alpha, dbl_mb(k_a), adim, dbl_mb(k_b), bdim,
      $                 1.0d0, dbl_mb(k_c), cdim)
