@@ -40,7 +40,7 @@ void armci_rcv_strided_data_bypass_both(int proc, request_header_t *msginfo,
                                         void *ptr, int *count, int stride_levels)
 {
 int datalen = msginfo->datalen;
-long *last;
+int *last;
 long *ack;
 int loop=0;
 
@@ -48,9 +48,9 @@ int loop=0;
                 armci_me,  proc); fflush(stdout);
     }
 
-    last = (long*)(((char*)(ptr)) + (count[0] -sizeof(long)));
+    last = (int*)(((char*)(ptr)) + (count[0] -sizeof(int)));
     ack  = &msginfo->tag.ack;
-    while(armci_util_long_getval(last) == ARMCI_GM_COMPLETE && 
+    while(armci_util_int_getval(last) == ARMCI_GM_COMPLETE && 
           armci_util_long_getval(ack)  != ARMCI_GM_COMPLETE){
           loop++;
           loop %=1000000;
@@ -130,7 +130,7 @@ void armci_rcv_req(void *mesg,
 void armci_send_contig_bypass(int proc, request_header_t *msginfo,
                               void *src_ptr, void *rem_ptr, int bytes)
 {
-long *last;
+int *last;
 
     if(DEBUG1){
         printf("%d(server): sending data bypass to %d (%p,%p)\n", armci_me, msginfo->from,
@@ -177,7 +177,7 @@ long *last;
 #endif
 
      armci_serv_send_nonblocking_complete(4);
-     last = (long*)(((char*)(src_ptr)) + (bytes -sizeof(long)));
+     last = (int*)(((char*)(src_ptr)) + (bytes -sizeof(int)));
      if(!msginfo->pinned)armci_die("armci_send_contig_bypass: not pinned",proc);
      armci_server_direct_send(msginfo->from,src_ptr,rem_ptr,bytes,ARMCI_GM_NONBLOCKING);
 

@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.55 2003-04-11 17:24:11 vinod Exp $ */
+/* $Id: request.c,v 1.56 2003-06-10 15:54:24 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -871,8 +871,8 @@ int armci_rem_get(int proc,
 
 #ifdef GM
     /* prepare for  set the stamp at the end of the user buffer */
-    if(count[0]<sizeof(long)) armci_die("armci_rem_get: wrong protocol",count[0]);
-    *(long*)(((char*)(dst_ptr)) + (count[0] -sizeof(long))) = ARMCI_GM_COMPLETE; 
+    if(count[0]<sizeof(int))armci_die("armci_rem_get: wrong protocol",count[0]);
+    *(int*)(((char*)(dst_ptr)) + (count[0] -sizeof(int))) = ARMCI_GM_COMPLETE;
 #endif
 
     armci_send_req(proc,msginfo,bufsize);
