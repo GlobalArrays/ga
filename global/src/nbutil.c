@@ -3,11 +3,12 @@
 #include "base.h"
 #include <stdio.h>
 #define DEBUG 0
+
 /*The structure of gai_nbhdl_t is (this is our internal handle)*/
 #define NUM_HDLS 20
 typedef struct {
-    int ihdl_index:8;
-    int ga_nbtag:24;
+    unsigned int ihdl_index:8;
+    unsigned int ga_nbtag:24;
 }gai_nbhdl_t;
 
 
@@ -19,6 +20,7 @@ typedef struct struct_armcihdl_t{
     int index;
     int ga_hdlarr_index;
 }ga_armcihdl_t;
+
 
 /*We create an array of type ga_nbhdl_array_t. Each of the elements in this
   array is the head of the armcihandle linked list that is associated with
@@ -62,24 +64,34 @@ static ga_armcihdl_t list_element_array[NUM_HDLS] = {
 
 
 
-/*the eternally unsafe global variables*/
 static int nextIHAelement=-1; /*oldest ga_ihdl_array element*/
 static int nextLEAelement=-1; /*oldest list_element_array element*/
 static int ihdl_array_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 static int list_ele_avail[NUM_HDLS]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
+/*\ a unique tag everytime
+\*/
 static unsigned int ga_nb_tag;
 unsigned int get_next_tag(){
     return((++ga_nb_tag));
 }
 
+/*\ the only way to complete a list element! 
+ *  does the basic list operation: remove element, update previous and next
+ *  links of the previous and next elements in the linked list
+ *  prev==null => this was the element pointed by the head(ie, first element).
+\*/
 static void clear_list_element(int index){
 ga_armcihdl_t *listele,*prev,*next;
-    listele = &(list_element_array[index]);
     if(DEBUG){
        printf("\n%d:clearing handle\n",GAme,index);fflush(stdout);
     }
+    listele = &(list_element_array[index]);
+
+    /*first wait for the armci handle */
     ARMCI_Wait(listele->handle);
+
+    /*set prev and next links of my prev element and my next element*/
     prev=listele->previous;
     next = listele->next;
     if(prev)
@@ -88,7 +100,11 @@ ga_armcihdl_t *listele,*prev,*next;
        ga_ihdl_array[listele->ga_hdlarr_index].ahandle=next;
     if(next)
        next->previous = prev; 
+
+    /*since one element from the linked list is completed, update the count*/
     ga_ihdl_array[listele->ga_hdlarr_index].count--;
+
+    /*reset the prev and next pointers and initialize the handle*/
     listele->next=NULL;
     listele->previous=NULL;
     ARMCI_INIT_HANDLE(listele->handle);
@@ -96,12 +112,14 @@ ga_armcihdl_t *listele,*prev,*next;
 }
 
 
-/*\ Get the next available list element from the list element array, of 
+/*\ Get the next available list element from the list element array, if 
  *  nothing is available, free element with index nextLEAelement
 \*/
 ga_armcihdl_t* get_armcihdl(){
 int i;
 ga_armcihdl_t *ret_handle;
+
+    /*first see if an element from the list_ele_arr is already available */
     for(i=0;i<NUM_HDLS;i++)
        if(list_ele_avail[i]){
          list_ele_avail[i]=0;
@@ -111,6 +129,8 @@ ga_armcihdl_t *ret_handle;
          }
          return(&(list_element_array[i]));
        }
+
+    /*nothing is available so best element to clear is nextLEAelement(LRU)*/
     if(nextLEAelement==-1)
        nextLEAelement=0;
     if(DEBUG){
@@ -121,6 +141,8 @@ ga_armcihdl_t *ret_handle;
     list_ele_avail[nextLEAelement]=0;
 
     ret_handle=&(list_element_array[nextLEAelement]);
+
+    /*update the LRU element index */
     nextLEAelement = (nextLEAelement+1)%NUM_HDLS;
     return(ret_handle);
 }
@@ -130,12 +152,14 @@ ga_armcihdl_t *ret_handle;
 \*/
 static void free_armci_handle_list(int elementtofree){
 ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
-
+    /*call clear_list_element for every element in the list*/
     while(first!=NULL){
        next=first->next;
        clear_list_element(first->index);
        first=next;
     }
+
+    /*reset the head of the list for reuse*/
     ga_ihdl_array[elementtofree].count=0;
     ga_ihdl_array[elementtofree].ga_nbtag=0;
     ga_ihdl_array[elementtofree].ahandle=NULL;
@@ -147,12 +171,8 @@ ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
 \*/
 static void add_armcihdl_to_list(ga_armcihdl_t *listelement, int headindex){
 ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
+
     ga_ihdl_array[headindex].count++;
-    if(ga_ihdl_array[headindex].count==2 && headindex==17){
-       if(DEBUG){
-         printf("\n%d:problem\n",headindex);fflush(stdout);
-       }
-    }
     listelement->ga_hdlarr_index = headindex;
     if(ga_ihdl_array[headindex].ahandle==NULL){
        ga_ihdl_array[headindex].ahandle=listelement;
@@ -161,8 +181,6 @@ ga_armcihdl_t *first=ga_ihdl_array[headindex].ahandle;
     }
     while(first->next!=NULL){
        first=first->next;
-       if(first->next==first)
-         sleep(100);
     }
     first->next=listelement;
     listelement->previous=first;
@@ -207,7 +225,8 @@ ga_armcihdl_t *ret_handle;
     return(ret_handle->handle);
 }
 
-
+/*\ the wait routine which is called inside nga_nbwait and ga_nbwait
+\*/ 
 int nga_wait_internal(Integer *nbhandle){
 gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
 int retval = 0;
@@ -220,6 +239,9 @@ int retval = 0;
     return(0);
 }
 
+/*\ unlike in ARMCI, user doesnt have to initialize handle in GA.
+ *  it is done by the get/put call instead.
+\*/
 void ga_init_nbhandle(Integer *nbhandle)
 {
 gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
