@@ -126,6 +126,7 @@ int armci_vector_bytes( armci_giov_t darr[], int len)
 {
 int i, bytes=0;
     for(i=0; i<len; i++){                                   
+        /*       # elements            * (elem size     + dst address ) */
         bytes += darr[i].ptr_array_len * (darr[i].bytes + sizeof(void*));
         bytes += 2*sizeof(int); /* ptr_array_len + bytes */
     }
@@ -133,24 +134,76 @@ int i, bytes=0;
 }
 
 
-int armci_pack_vector(armci_giov_t darr[], int len, int proc)
-{
-armci_giov_t *ndarr;
-int bytes=0, i, set;
+#define BUFSIZE1 25600 
 
-    if(BUFSIZE < armci_vector_bytes( darr, len)){
-       bytes=0;
-       i=0;
-       set = 0;
-       while(bytes < BUFSIZE){
-         int cur_set_bytes = 2*sizeof(int);
-         cur_set_bytes += darr[i].ptr_array_len* (darr[i].bytes+ sizeof(void*));
-         
-       }
+void armci_split_dscr_array( armci_giov_t darr[], int len,
+                             armci_giov_t* extra, int *nlen)
+{
+int s;
+int bytes=0, split=0;
+
+    extra->src_ptr_array=NULL;
+    for(s=0;s<len;s++){
+        int csize;
+
+        csize  = darr[s].ptr_array_len * (darr[s].bytes + sizeof(void*));
+        csize += 2*sizeof(int); /* ptr_array_len + bytes */
+
+        if(csize + bytes >BUFSIZE1){
+
+          split = (BUFSIZE1 -bytes-2*sizeof(int))/(darr[s].bytes +sizeof(void*));
+          if(split == 0) s--; /* no room available - do not split */
+          break;
+
+        }else bytes+=csize;
+
+        if(BUFSIZE1 -bytes < 64) break; /* stop here if almost full */
     }
-    /*** not finished ***/
+
+    if(s==len)s--; /* adjust loop counter should be < number of sets */ 
+    *nlen = s+1;
+
+    if(split){
+       /* split the set */
+       *extra = darr[s];
+       darr[s].ptr_array_len = split;
+       extra->ptr_array_len -= split;
+       extra->src_ptr_array  = &extra->src_ptr_array[split];
+       extra->dst_ptr_array  = &extra->dst_ptr_array[split];
+    }
+} 
+    
+ 
+
+int armci_pack_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
+{
+armci_giov_t extra;
+int rc, nlen;
+armci_giov_t *ndarr;
+
+    ndarr = darr;
+
+    while(len){
+
+       armci_split_dscr_array(ndarr, len, &extra, &nlen); 
+
+#ifdef REMOTE_OP
+       rc = armci_rem_vector(op, scale, ndarr,nlen,proc);
+#else
+       if(ACC(op))rc=armci_scatter_acc(op,scale,ndarr,nlen,proc);
+       rc = armci_copy_vector(op,ndarr,nlen,proc);
+#endif
+       if(rc) break;
+
+       if(extra.src_ptr_array){
+          ndarr[nlen-1]=extra; /* set the pointer to remainder of last set */
+          nlen--; /* since last set not done in full need to process it again */
+       }
+
+       if(nlen==0)armci_die("buffer too small ",BUFSIZE1);
+       len -=nlen;
+       ndarr +=nlen;
+    }
+
+    return rc;
 }
-            
-            
-       
-        
