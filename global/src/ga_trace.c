@@ -19,8 +19,8 @@
 #endif
 
 static double tt0, tt1;
-static unsigned long *tlog, thandle;
-static unsigned long *indlog, ihandle;
+static Integer *tlog, thandle;
+static Integer *indlog, ihandle;
 static int *galog, gahandle;
 static unsigned long current, MAX_EVENTS=0; 
 static int ganum = 0;
@@ -41,7 +41,8 @@ double FATR ga_timer_()
 /* n is the max number of events to be traced */
 void trace_init_(long *n)
 {
-    long index,err;
+    Integer index;
+    long err;
     
     if(*n<=0){
         printf("trace_init>>  invalid max number of events: %ld\n",*n);
