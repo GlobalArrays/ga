@@ -83,11 +83,8 @@ LIBS += $(EXTRA_LIBS)
 %.x:%.c  $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-test0.x: test.o $(LIBRARY_PATH)
-	$(LINK.c) $(CFLAGS) -o $@ $^ $(LIBS)
-
 ipctest.x: $(LIBRARY_PATH)
-	$(CC) $(CFLAGS) ipctest.c -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) $(MP_DEFINES) ipctest.c -o $@ $^ $(LIBS)
 
 
 $(LIBRARY_PATH)(winshmem.o):    ./shmem.h ./shmalloc.h 
