@@ -1,4 +1,4 @@
-/* $Id: test_groups.c,v 1.2 2004-06-28 17:45:19 manoj Exp $ */
+/* $Id: test_groups.c,v 1.3 2004-11-22 20:29:53 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -119,38 +119,35 @@ void destroy_array(void *ptr[])
     assert(!ARMCI_Free(ptr[me]));
 }
 
-#define GNUM 3
+#define GNUM_A 3
+#define GNUM_B 2
 #define ELEMS 10
 
-void test_groups(int dryrun) {
+/* to check if a process belongs to this group */
+int chk_grp_membership(int rank, ARMCI_Group *grp, int *memberlist) 
+{
+    int i,grp_size;
+    ARMCI_Group_size(grp, &grp_size);
+    for(i=0; i<grp_size; i++) if(rank==memberlist[i]) return 1;
+    return 0;
+}
+
+
+void test_groups() {
   
-    int pid_list[MAXPROC], pid_list1[MAXPROC];
+    int pid_listA[MAXPROC]  = {0,1,2};
+    int pid_listB[MAXPROC] = {1,3};
     int value = -1, bytes;
     ARMCI_Group groupA, groupB;
 
-    pid_list[0]=0;
-    pid_list[1]=1;
-    pid_list[2]=2;
-
-    pid_list1[0]=0;
-    pid_list1[1]=2;
-    pid_list1[2]=3;
-    
     MP_BARRIER();
 
-#if 1
-    /* create group 1 */
-    ARMCI_Group_create(GNUM, pid_list, &groupA);
-#endif
+    ARMCI_Group_create(GNUM_A, pid_listA, &groupA); /* create group 1 */
+    ARMCI_Group_create(GNUM_B, pid_listB, &groupB); /* create group 2 */
 
-#if 1
-    /* create group 2 */
-    ARMCI_Group_create(GNUM, pid_list1, &groupB);
-#endif
 
     /* ------------------------ GROUP A ------------------------- */ 
-#if 1
-    if(me<GNUM) { /* group A */
+    if(chk_grp_membership(me, &groupA, pid_listA)) { /* group A */
        int grp_me, grp_size;
        int i,j,src_proc=2,dst_proc=0;
        double *ddst_put[MAXPROC];
@@ -164,27 +161,30 @@ void test_groups(int dryrun) {
        
        bytes = ELEMS*sizeof(double);       
        ARMCI_Malloc_group((void **)ddst_put, bytes, &groupA);
-       // ARMCI_Malloc((void **)ddst_put, bytes);
-       // create_array((void**)ddst_put, sizeof(double), 2, elems);
        
-       for(i=0; i<ELEMS; i++) dsrc[i]=i*1.001*(me+1); 
-       for(i=0; i<ELEMS; i++) ddst_put[me][i]=0.0;
+       for(i=0; i<ELEMS; i++) dsrc[i]=i*1.001*(grp_me+1); 
+       for(i=0; i<ELEMS; i++) ddst_put[grp_me][i]=-1.0;
        
        armci_msg_group_barrier(&groupA);
-       ARMCI_Fence(dst_proc);
-
-       if(me==src_proc) {
-	  ARMCI_Put(dsrc, &ddst_put[dst_proc][0], bytes, dst_proc);
+       
+       if(grp_me==src_proc) {
+          /* NOTE: make sure to specify absolute ids in ARMCI calls */
+	  ARMCI_Put(dsrc, &ddst_put[dst_proc][0], bytes,
+                    ARMCI_Absolute_id(&groupA,dst_proc));
        }
        
        armci_msg_group_barrier(&groupA);
-       ARMCI_Fence(dst_proc);
+       /* NOTE: make sure to specify absolute ids in ARMCI calls */
+       ARMCI_Fence(ARMCI_Absolute_id(&groupA,dst_proc));
+       sleep(1);
+       
        
        /* Verify*/
-       if(me==dst_proc) {
+       if(grp_me==dst_proc) {
 	  for(j=0; j<ELEMS; j++) {
-	     if(ABS(ddst_put[me][j]-j*1.001*(src_proc+1)) > 0.1) {
-		printf("The value is: %lf\n", ddst_put[me][j]);
+	     if(ABS(ddst_put[grp_me][j]-j*1.001*(src_proc+1)) > 0.1) {
+		printf("\t%d: ddst_put[%d][%d] = %lf and expected value is %lf\n",
+                       me, grp_me, j, ddst_put[grp_me][j], j*1.001*(src_proc+1));
 		ARMCI_Error("groups: armci put failed...1", 0);
 	     }
 	  }
@@ -193,59 +193,59 @@ void test_groups(int dryrun) {
        armci_msg_group_barrier(&groupA);
        ARMCI_Free_group(ddst_put[grp_me], &groupA);
     }
-#endif
 
+    MP_BARRIER();
+    
     /* ------------------------ GROUP B ------------------------- */ 
-#if 0
-    if(me>0) { /* group B */
+    if(chk_grp_membership(me, &groupB, pid_listB)) { /* group B */
        int grp_me, grp_size;
-       int i,j,dst_proc=2;
+       int i,j,src_proc=1,dst_proc=0;
        double *ddst_put[MAXPROC];
        double dsrc[ELEMS];
        int elems[2] = {MAXPROC,ELEMS};
 
-       ARMCI_Group_rank_(groupB, &grp_me);
-       ARMCI_Group_size_(groupB, &grp_size);
+       ARMCI_Group_rank(&groupB, &grp_me);
+       ARMCI_Group_size(&groupB, &grp_size);
        if(grp_me==0) printf("GROUP SIZE = %d\n", grp_size);
        printf("%d:group rank = %d\n", me, grp_me);
-       MPI_Comm_rank(commB, &grp_me);
-       printf("%d:group rank = %d\n", me, grp_me);
        
-       bytes = ELEMS*sizeof(double);
-       ARMCI_Malloc_group((void **)ddst_put, bytes, commB);
-       // ARMCI_Malloc((void **)ddst_put, bytes);
-       // create_array((void**)ddst_put, sizeof(double), 2, elems);
+       bytes = ELEMS*sizeof(double);       
+       ARMCI_Malloc_group((void **)ddst_put, bytes, &groupB);
        
-       for(i=0; i<ELEMS; i++) dsrc[i]=i*1.001*(me+1); 
-       for(i=0; i<ELEMS; i++) ddst_put[me][i]=0.0;
+       for(i=0; i<ELEMS; i++) dsrc[i]=i*1.001*(grp_me+1); 
+       for(i=0; i<ELEMS; i++) ddst_put[grp_me][i]=0.0;
        
-       if(me==1) {
-	  ARMCI_Put(dsrc, &ddst_put[dst_proc][0], bytes, dst_proc);
+       armci_msg_group_barrier(&groupB);
+
+       if(grp_me==src_proc) {
+	  ARMCI_Put(dsrc, &ddst_put[dst_proc][0], bytes,
+                    ARMCI_Absolute_id(&groupB,dst_proc));
        }
        
-       armci_comm_barrier(commB);
-       ARMCI_Fence(dst_proc);
+       armci_msg_group_barrier(&groupB);
+       ARMCI_Fence(ARMCI_Absolute_id(&groupB,dst_proc));
+       sleep(1);
        
        /* Verify*/
-       if(me==dst_proc) {
+       if(grp_me==dst_proc) {
 	  for(j=0; j<ELEMS; j++) {
-	     if(ABS(ddst_put[me][j]-j*1.001) > 0.1) {
-		printf("The value is: %lf\n", ddst_put[me][j]);
+	     if(ABS(ddst_put[grp_me][j]-j*1.001*(src_proc+1)) > 0.1) {
+		printf("\t%d: ddst_put[%d][%d] = %lf and expected value is %lf\n",
+                       me, grp_me, j, ddst_put[grp_me][j], j*1.001*(src_proc+1));
 		ARMCI_Error("groups: armci put failed...1", 0);
 	     }
 	  }
 	  printf("\n%d: Test O.K. Verified\n", dst_proc);
        }
-
-       armci_comm_barrier(commB);
-       ARMCI_Free_group(ddst_put[grp_me], commB);
+       armci_msg_group_barrier(&groupB);
+       ARMCI_Free_group(ddst_put[grp_me], &groupB);
     }
-#endif
+
 
     ARMCI_AllFence();
     MP_BARRIER();
     
-    if(!dryrun)if(me==0){printf("O.K.\n"); fflush(stdout);}
+    if(me==0){printf("O.K.\n"); fflush(stdout);}
 }
 
 
@@ -279,7 +279,7 @@ int main(int argc, char* argv[])
       fflush(stdout);
     }
 
-    test_groups(0);
+    test_groups();
     
     ARMCI_AllFence();
     MP_BARRIER();
