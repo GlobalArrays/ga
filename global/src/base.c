@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.97 2004-10-26 18:49:19 d3g293 Exp $ */
+/* $Id: base.c,v 1.98 2004-11-03 22:32:32 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -775,16 +775,13 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
       subscript[0] = ilast+1;
       /* BJP printf("p[%d] subscript[%d]: %d\n",GAme,0,subscript[0]); */
       i = nga_locate_(g_a, subscript, &id);
-      id = PGRP_LIST[GA[handle].p_handle].map_proc_list[id];
       gam_Loc_ptr(id, handle, subscript, &lptr);
       size = 0;
     } else {
-      id = PGRP_LIST[GA[handle].p_handle].map_proc_list[id];
       gam_Loc_ptr(id, handle, GA[handle].last, &lptr);
     }
     for (i=0; i<ndim; i++) index[i] = (Integer)GA[handle].first[i];
     i = nga_locate_(g_a, index, &id);
-    id = PGRP_LIST[GA[handle].p_handle].map_proc_list[id];
     gam_Loc_ptr(id, handle, GA[handle].first, &fptr);
     GA[handle].shm_length = lptr - fptr + size;
     GA_Default_Proc_Group = Save_default_group;
@@ -1297,7 +1294,7 @@ logical ga_allocate_( Integer *g_a)
   }
   GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
   /*** determine which portion of the array I am supposed to hold ***/
-  if (p_handle > 0) {
+  if (p_handle >= 0) {
      me_local = (Integer)PGRP_LIST[p_handle].map_proc_list[GAme];
      nga_distribution_(g_a, &me_local, GA[ga_handle].lo, hi);
   } else {
@@ -3368,7 +3365,7 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
   long l_one;
   void *src_data_ptr;
   void *one;
-  Integer i, idim, intersect;
+  Integer i, idim, intersect, p_handle;
 
   GA_PUSH_NAME("nga_merge_distr_patch");
   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
@@ -3390,6 +3387,8 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
 
   adim = GA[a_handle].ndim;
   bdim = GA[b_handle].ndim;
+
+  p_handle = GA[a_handle].p_handle;
 
   if (adim != bdim)
     ga_error("Global arrays must have same dimension",0);
@@ -3418,7 +3417,8 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
   nga_zero_patch_(g_b, blo, bhi);
 
   /* Find coordinates of mirrored array patch that I own */
-  nga_distribution_(g_a, &GAme, mlo, mhi);
+  i = PGRP_LIST[p_handle].map_proc_list[GAme];
+  nga_distribution_(g_a, &i, mlo, mhi);
   /* Check to see if mirrored array patch intersects my portion of
      mirrored array */
   intersect = 1;
@@ -3766,8 +3766,6 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
       /* Locate pointers to beginning and end of non-zero data */
       for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].first[i];
       i = nga_locate_(g_a, index, &id);
-      i = id;
-      id = PGRP_LIST[GA[handle].p_handle].map_proc_list[id];
       gam_Loc_ptr(id, handle, GA[handle].first, &fptr);
       for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].last[i];
       slength = GA[handle].shm_length;
