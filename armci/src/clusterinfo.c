@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.10 1999-11-18 18:22:56 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.11 2000-04-17 22:28:20 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -25,7 +25,7 @@
  * Must define NO_SHMMAX_SEARCH in shmem.c to prevent depleting shared memory
  * due to a gready shmem request by the master process on cluster node 0.
  */ 
-#define DEBUG_HACK__
+#define DEBUG_HACK____
 #define CLUSNODES 2
 
 #define DEBUG 0
@@ -202,7 +202,7 @@ void armci_init_clusinfo()
 #endif
 
   if(DEBUG)
-     fprintf(stderr,"%d: %s len=%d \n",armci_me, name, strlen(name));
+     fprintf(stderr,"%d: %s len=%d\n",armci_me, name,(int)strlen(name));
 
 
   /******************* development hack *********************/
