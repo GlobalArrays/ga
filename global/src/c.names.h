@@ -37,6 +37,8 @@
 #define  ga_nbwait_                GA_NBWAIT
 #define  ga_nbget_                 GA_NBGET
 #define  ga_has_ghosts_            GA_HAS_GHOSTS
+#define  ga_default_config_        GA_DEFAULT_CONFIG
+#define  ga_mirror_config_         GA_MIRROR_CONFIG
 #define  ga_idot_                  GA_IDOT
 #define  ga_igop_                  GA_IGOP
 #define  ga_init_fence_            GA_INIT_FENCE
@@ -106,6 +108,7 @@
 #define  ga_update6_ghosts_        GA_UPDATE6_GHOSTS
 #define  nga_update_ghost_dir_     NGA_UPDATE_GHOST_DIR
 #define  ga_update_ghosts_         GA_UPDATE_GHOSTS
+#define  ga_merge_mirrored_        GA_MERGE_MIRRORED
 #define  ga_uses_ma_               GA_USES_MA
 #define  ga_valid_handle_          GA_VALID_HANDLE
 #define  ga_verify_handle_         GA_VERIFY_HANDLE
@@ -123,6 +126,10 @@
 #define  nga_create_ghosts_        NGA_CREATE_GHOSTS
 #define  nga_create_ghosts_irreg_  NGA_CREATE_GHOSTS_IRREG
 #define  nga_create_irreg_         NGA_CREATE_IRREG
+#define  nga_create_config_               NGA_CREATE_CONFIG
+#define  nga_create_ghosts_config_        NGA_CREATE_GHOSTS_CONFIG
+#define  nga_create_ghosts_irreg_config_  NGA_CREATE_GHOSTS_IRREG_CONFIG
+#define  nga_create_irreg_config_         NGA_CREATE_IRREG_CONFIG
 #define  nga_ddot_patch_           NGA_DDOT_PATCH
 #define  nga_distribution_         NGA_DISTRIBUTION
 #define  nga_fill_patch_           NGA_FILL_PATCH
@@ -227,6 +234,8 @@
 #define  ga_nbwait_                ga_nbwait__                 
 #define  ga_nbget_                 ga_nbget__                 
 #define  ga_has_ghosts_            ga_has_ghosts__          
+#define  ga_default_config_        ga_default_config__                
+#define  ga_mirror_config_         ga_mirror_config__                
 #define  ga_idot_                  ga_idot__                
 #define  ga_igop_                  ga_igop__                
 #define  ga_init_fence_            ga_init_fence__          
@@ -297,6 +306,7 @@
 #define  ga_update6_ghosts_        ga_update6_ghosts__  
 #define  nga_update_ghost_dir_     nga_update_ghost_dir__   
 #define  ga_update_ghosts_         ga_update_ghosts__     
+#define  ga_merge_mirrored_        ga_merge_mirrored__     
 #define  ga_uses_ma_               ga_uses_ma__             
 #define  ga_valid_handle_          ga_valid_handle__        
 #define  ga_verify_handle_         ga_verify_handle__    
@@ -314,6 +324,10 @@
 #define  nga_create_ghosts_        nga_create_ghosts__      
 #define  nga_create_ghosts_irreg_  nga_create_ghosts_irreg__
 #define  nga_create_irreg_         nga_create_irreg__       
+#define  nga_create_config_               nga_create_config__             
+#define  nga_create_ghosts_config_        nga_create_ghosts_config__      
+#define  nga_create_ghosts_irreg_config_  nga_create_ghosts_irreg_config__
+#define  nga_create_irreg_config_         nga_create_irreg_config__       
 #define  nga_ddot_patch_           nga_ddot_patch__         
 #define  nga_distribution_         nga_distribution__       
 #define  nga_fill_patch_           nga_fill_patch__         

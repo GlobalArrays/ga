@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.30 2003-02-20 17:41:56 vinod Exp $ */
+/* $Id: base.c,v 1.31 2003-02-21 20:49:12 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -326,7 +326,7 @@ int bytes;
     _ga_main_data_structure
        = (global_array_t *)malloc(sizeof(global_array_t)*MAX_ARRAYS);
     _proc_list_main_data_structure
-       = (proc_list_t *)malloc(sizeof(proc_list_t)*(MAX_ARRAYS+2));
+       = (proc_list_t *)malloc(sizeof(proc_list_t)*MAX_ARRAYS);
     if(!_ga_main_data_structure)
        ga_error("ga_init:malloc ga failed",0);
     if(!_proc_list_main_data_structure)
@@ -374,11 +374,11 @@ int bytes;
     for(i=0;i<_max_global_array;i++)GA[i].actv=0;
 
     ARMCI_Init(); /* initialize GA run-time library */
-    nproc = ga_nnodes_();
-    P_LIST[0].map_proc_list = (int*)malloc(nproc*sizeof(int)*2);
-    P_LIST[0].inv_map_proc_list = P_LIST[0].map_proc_list + nproc;
-    for (i=0; i<nproc; i++) P_LIST[0].map_proc_list[i] = -1;
-    for (i=0; i<nproc; i++) P_LIST[0].inv_map_proc_list[i] = -1;
+    /* Create proc list for mirrored arrays */
+    P_LIST[0].map_proc_list = (int*)malloc(GAnproc*sizeof(int)*2);
+    P_LIST[0].inv_map_proc_list = P_LIST[0].map_proc_list + GAnproc;
+    for (i=0; i<GAnproc; i++) P_LIST[0].map_proc_list[i] = -1;
+    for (i=0; i<GAnproc; i++) P_LIST[0].inv_map_proc_list[i] = -1;
     nnode = ga_cluster_nodeid_();
     nproc = ga_cluster_nprocs_((Integer*)&nnode);
     zero = 0;
@@ -396,7 +396,9 @@ int bytes;
 
     /* Allocate memory for update flags */
     bytes = 2*MAXDIM*sizeof(int);
-    GA_Update_Flags = (int**)malloc(GAnproc*sizeof(int*));
+    GA_Update_Flags = (void**)malloc(GAnproc*sizeof(void*));
+    if (!GA_Update_Flags)
+      ga_error("ga_init: Failed to initialize GA_Update_Flags",(int)GAme);
     if (ARMCI_Malloc((void**)GA_Update_Flags, bytes))
       ga_error("ga_init:Failed to initialize memory for update flags",GAme);
     /* Zero update flags */
@@ -559,12 +561,24 @@ void gai_init_struct(int handle)
      if(!GA[handle].mapc)ga_error("malloc failed: mapc:",0);
 }
 
+/*\ SIMPLE FUNCTIONS TO RECOVER STANDARD PROCESSOR LISTS
+\*/
+Integer FATR ga_default_config_()
+{
+  return -1;
+}
+
+Integer FATR ga_mirror_config_()
+{
+  return 0;
+}
+
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
  *   -- IRREGULAR DISTRIBUTION
  *  This is the master routine. All other creation routines are derived
  *  from this one.
 \*/
-logical nga_create_ghosts_irreg(
+logical nga_create_ghosts_irreg_config(
         Integer type,     /* MA type */ 
         Integer ndim,     /* number of dimensions */
         Integer dims[],   /* array of dimensions */
@@ -572,16 +586,20 @@ logical nga_create_ghosts_irreg(
         char *array_name, /* array name */
         Integer map[],    /* decomposition map array */ 
         Integer nblock[], /* number of blocks for each dimension in map */
+        Integer p_handle, /* processor list handle */
         Integer *g_a)     /* array handle (output) */
 {
 
 Integer  hi[MAXDIM];
 Integer  mem_size, nelem;
 Integer  i, ga_handle, status, maplen=0;
+#ifdef GA_USE_VAMPIR
+      vampir_begin(NGA_CREATE_IRREG_CONFIG,__FILE__,__LINE__);
+#endif
 
       _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
       ga_sync_();
-      GA_PUSH_NAME("nga_create_ghosts_irreg");
+      GA_PUSH_NAME("nga_create_ghosts_irreg_config");
 
       if(!GAinitialized) ga_error("GA not initialized ", 0);
       if(!ma_address_init) gai_ma_address_init();
@@ -616,7 +634,7 @@ Integer  i, ga_handle, status, maplen=0;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
       GA[ga_handle].ndim    = (int) ndim;
-      GA[ga_handle].p_handle = -1;
+      GA[ga_handle].p_handle = (int) p_handle;
 
       GA[ga_handle].ghosts = 0;
       for( i = 0; i< ndim; i++){
@@ -672,7 +690,25 @@ Integer  i, ga_handle, status, maplen=0;
          status = FALSE;
       }
       GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+      vampir_end(NGA_CREATE_IRREG_CONFIG,__FILE__,__LINE__);
+#endif
       return status;
+}
+
+logical nga_create_ghosts_irreg(
+        Integer type,     /* MA type */ 
+        Integer ndim,     /* number of dimensions */
+        Integer dims[],   /* array of dimensions */
+        Integer width[],  /* width of boundary cells for each dimension */
+        char *array_name, /* array name */
+        Integer map[],    /* decomposition map array */ 
+        Integer nblock[], /* number of blocks for each dimension in map */
+        Integer *g_a)     /* array handle (output) */
+{
+   Integer p_handle = ga_default_config_();
+   return nga_create_ghosts_irreg_config(type, ndim, dims, width,
+                array_name, map, nblock, p_handle, g_a);
 }
 
 
@@ -680,12 +716,13 @@ Integer  i, ga_handle, status, maplen=0;
  *  Allow machine to choose location of array boundaries on individual
  *  processors.
 \*/
-logical nga_create(Integer type,
-                   Integer ndim,
-                   Integer dims[],
-                   char* array_name,
-                   Integer chunk[],
-                   Integer *g_a)
+logical nga_create_config(Integer type,
+                         Integer ndim,
+                         Integer dims[],
+                         char* array_name,
+                         Integer chunk[],
+                         Integer p_handle,
+                         Integer *g_a)
 {
 Integer pe[MAXDIM], *pmap[MAXDIM], *map;
 Integer d, i, width[MAXDIM];
@@ -698,11 +735,7 @@ Integer blk[], Integer pedims[]);
 extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
             Integer bias, Integer blk[], Integer pedims[]);
 
-#ifdef GA_USE_VAMPIR
-      vampir_begin(NGA_CREATE,__FILE__,__LINE__);
-#endif
-
-      GA_PUSH_NAME("nga_create");
+      GA_PUSH_NAME("nga_create_config");
       if(!GAinitialized) ga_error("GA not initialized ", 0);
       gam_checktype(ga_type_f2c(type));
       gam_checkdim(ndim, dims);
@@ -722,7 +755,12 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
       ga_sync_();
 
 /*      ddb(ndim, dims, GAnproc, blk, pe);*/
-      ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
+      if (p_handle >= 0 && P_LIST[p_handle].mirrored) {
+        ddb_h2(ndim, dims, P_LIST[p_handle].map_nproc, 0.0,
+               (Integer)0, blk, pe);
+      } else {
+        ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
+      }
 
       for(d=0, map=mapALL; d< ndim; d++){
         Integer nblock;
@@ -766,25 +804,34 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
          }
          fflush(stdout);
       }
-      status = nga_create_ghosts_irreg(type, ndim, dims, width, array_name,
-               mapALL, pe, g_a);
+      status = nga_create_ghosts_irreg_config(type, ndim, dims, width, array_name,
+               mapALL, pe, p_handle, g_a);
       GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
-      vampir_end(NGA_CREATE,__FILE__,__LINE__);
-#endif
       return status;
+}
+
+logical nga_create(Integer type,
+                   Integer ndim,
+                   Integer dims[],
+                   char* array_name,
+                   Integer chunk[],
+                   Integer *g_a)
+{
+  Integer p_handle = ga_default_config_();
+  return nga_create_config(type, ndim, dims, array_name, chunk, p_handle, g_a);
 }
 
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
  *  Allow machine to choose location of array boundaries on individual
  *  processors.
 \*/
-logical nga_create_ghosts(Integer type,
+logical nga_create_ghosts_config(Integer type,
                    Integer ndim,
                    Integer dims[],
                    Integer width[],
                    char* array_name,
                    Integer chunk[],
+                   Integer p_handle,
                    Integer *g_a)
 {
 Integer pe[MAXDIM], *pmap[MAXDIM], *map;
@@ -818,7 +865,12 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
       ga_sync_();
 
 /*      ddb(ndim, dims, GAnproc, blk, pe);*/
-      ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
+      if (p_handle >= 0 && P_LIST[p_handle].mirrored) {
+        ddb_h2(ndim, dims, P_LIST[p_handle].map_nproc, 0.0,
+               (Integer)0, blk, pe);
+      } else {
+        ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
+      }
 
       for(d=0, map=mapALL; d< ndim; d++){
         Integer nblock;
@@ -862,10 +914,23 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
          }
          fflush(stdout);
       }
-      status = nga_create_ghosts_irreg(type, ndim, dims, width, array_name,
-               mapALL, pe, g_a);
+      status = nga_create_ghosts_irreg_config(type, ndim, dims, width,
+               array_name, mapALL, pe, p_handle, g_a);
       GA_POP_NAME;
       return status;
+}
+
+logical nga_create_ghosts(Integer type,
+                   Integer ndim,
+                   Integer dims[],
+                   Integer width[],
+                   char* array_name,
+                   Integer chunk[],
+                   Integer *g_a)
+{
+  Integer p_handle = ga_default_config_();
+  return nga_create_ghosts_config(type, ndim, dims, width, array_name,
+                  chunk, p_handle, g_a);
 }
 
 /*\ CREATE A 2-DIMENSIONAL GLOBAL ARRAY
@@ -884,10 +949,6 @@ logical status;
 #define BLK_THR 0
 #endif
  
-#ifdef GA_USE_VAMPIR
-    vampir_begin(GA_CREATE,__FILE__,__LINE__);
-#endif
-
     dims[0]=*dim1;
     dims[1]=*dim2;
 
@@ -898,11 +959,32 @@ logical status;
 
     status = nga_create(*type, ndim,  dims, array_name, chunk, g_a);
 
-#ifdef GA_USE_VAMPIR
-    vampir_end(GA_CREATE,__FILE__,__LINE__);
-#endif
-
     return status;
+}
+
+/*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION -- PROCESSOR CONFIGURATION
+ *  User can specify location of array boundaries on individual
+ *  processors and the processor configuration.
+\*/
+logical nga_create_irreg_config(
+        Integer type,     /* MA type */ 
+        Integer ndim,     /* number of dimensions */
+        Integer dims[],   /* array of dimensions */
+        char *array_name, /* array name */
+        Integer map[],    /* decomposition map array */ 
+        Integer nblock[], /* number of blocks for each dimension in map */
+        Integer p_handle, /* processor list hande */
+        Integer *g_a)     /* array handle (output) */
+{
+
+Integer  d,width[MAXDIM];
+logical status;
+
+      for (d=0; d<ndim; d++) width[d] = 0;
+      status = nga_create_ghosts_irreg_config(type, ndim, dims, width,
+          array_name, map, nblock, p_handle, g_a);
+
+      return status;
 }
 
 /*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
@@ -922,16 +1004,9 @@ logical nga_create_irreg(
 Integer  d,width[MAXDIM];
 logical status;
 
-#ifdef GA_USE_VAMPIR
-      vampir_begin(NGA_CREATE_IRREG,__FILE__,__LINE__);
-#endif
       for (d=0; d<ndim; d++) width[d] = 0;
       status = nga_create_ghosts_irreg(type, ndim, dims, width,
           array_name, map, nblock, g_a);
-
-#ifdef GA_USE_VAMPIR
-      vampir_end(NGA_CREATE_IRREG,__FILE__,__LINE__);
-#endif
 
       return status;
 }
@@ -959,10 +1034,6 @@ Integer  ndim, dims[MAXDIM], width[MAXDIM], nblock[MAXDIM], *map;
 Integer  i,ctype;
 logical status;
  
-#ifdef GA_USE_VAMPIR
-      vampir_begin(GA_CREATE_IRREG,__FILE__,__LINE__);
-#endif
-
       ctype = ga_type_f2c((int)(*type));  
       if(ctype != C_DBL  && ctype != C_INT &&  
          ctype != C_DCPL && ctype != C_FLOAT  && ctype != C_LONG)
@@ -998,12 +1069,35 @@ logical status;
       status = nga_create_ghosts_irreg(*type, ndim, dims, width,
           array_name, mapALL, nblock, g_a);
  
-#ifdef GA_USE_VAMPIR
-      vampir_end(GA_CREATE_IRREG,__FILE__,__LINE__);
-#endif
-
       return status;
 
+}
+
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
+ * -- IRREGULAR DISTRIBUTION -- PROCESSOR CONFIGURATION
+ *  Fortran version
+\*/
+#if defined(CRAY) || defined(WIN32)
+logical FATR nga_create_ghosts_irreg_config_(Integer *type,
+    Integer *ndim, Integer *dims, Integer width[],
+    _fcd array_name, Integer map[], Integer block[],
+    Integer *p_handle, Integer *g_a)
+#else
+logical FATR nga_create_ghosts_irreg__config_(Integer *type,
+    Integer *ndim, Integer *dims, Integer width[], char* array_name,
+    Integer map[], Integer block[], Integer *p_handle, Integer *g_a,
+    int slen)
+#endif
+{
+char buf[FNAM];
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
+#else
+      f2cstring(array_name ,slen, buf, FNAM);
+#endif
+
+  return (nga_create_ghosts_irreg_config(*type, *ndim,  dims, width, buf, map,
+        block, *p_handle, g_a));
 }
 
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
@@ -1055,6 +1149,28 @@ char buf[FNAM];
   return(ga_create(type, dim1, dim2, buf, chunk1, chunk2, g_a));
 }
 
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY -- PROCESSOR CONFIGURATION
+ *  Fortran version
+\*/
+#if defined(CRAY) || defined(WIN32)
+logical FATR nga_create_config_(Integer *type, Integer *ndim,
+                    Integer *dims, _fcd array_name, Integer *chunk,
+                    Integer *p_handle, Integer *g_a)
+#else
+logical FATR nga_create_config_(Integer *type, Integer *ndim,
+                   Integer *dims, char* array_name, Integer *chunk,
+                   Integer *p_handle, Integer *g_a, int slen)
+#endif
+{
+char buf[FNAM];
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
+#else
+      f2cstring(array_name ,slen, buf, FNAM);
+#endif
+
+  return (nga_create_config(*type, *ndim,  dims, buf, chunk, *p_handle, g_a));
+}
 
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY
  *  Fortran version
@@ -1075,6 +1191,32 @@ char buf[FNAM];
 #endif
 
   return (nga_create(*type, *ndim,  dims, buf, chunk, g_a));
+}
+
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS -- PROCESSOR
+ *  CONFIGURATION
+ *  Fortran version
+\*/
+#if defined(CRAY) || defined(WIN32)
+logical FATR nga_create_ghosts_config_(Integer *type, Integer *ndim,
+                   Integer *dims, Integer *width, _fcd array_name,
+                   Integer *chunk, Integer *p_handle, Integer *g_a)
+#else
+logical FATR nga_create_ghosts_config_(Integer *type, Integer *ndim,
+                   Integer *dims, Integer *width, char* array_name,
+                   Integer *chunk, Integer *p_handle, Integer *g_a,
+                   int slen)
+#endif
+{
+char buf[FNAM];
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
+#else
+      f2cstring(array_name ,slen, buf, FNAM);
+#endif
+
+  return (nga_create_ghosts_config(*type, *ndim,  dims, width, buf, chunk,
+                   *p_handle, g_a));
 }
 
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
@@ -1123,6 +1265,32 @@ char buf[FNAM];
 #endif
   return( ga_create_irreg(type, dim1, dim2, buf, map1, nblock1,
                          map2, nblock2, g_a));
+}
+
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
+ *  -- PROCESSOR DISTRIBUTION
+ *  Fortran version
+\*/
+#if defined(CRAY) || defined(WIN32)
+logical FATR nga_create_irreg_config_(Integer *type, Integer *ndim,
+                 Integer *dims, _fcd array_name, Integer map[],
+                 Integer block[], Integer *p_handle, Integer *g_a)
+#else
+logical FATR nga_create_irreg_config_(Integer *type, Integer *ndim,
+                 Integer *dims, char* array_name, Integer map[],
+                 Integer block[], Integer *p_handle, Integer *g_a,
+                 int slen)
+#endif
+{
+char buf[FNAM];
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
+#else
+      f2cstring(array_name ,slen, buf, FNAM);
+#endif
+
+  return (nga_create_irreg_config(*type, *ndim,  dims, buf, map, block,
+                 *p_handle, g_a));
 }
 
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
@@ -1325,7 +1493,6 @@ Integer ga_handle, p_handle, lproc;
    } else {
      lproc = P_LIST[p_handle].map_proc_list[*proc];
    }
-/*   printf("nga_distribution: p[%d] = %d\n",(int)GAme,(int)lproc); */
    ga_ownsM(ga_handle, lproc, lo, hi);
 
 }
@@ -2332,7 +2499,7 @@ void FATR ga_mask_sync_(Integer *begin, Integer *end)
   else _ga_sync_end = 0;
 }
 
-logical ga_is_mirrored_(Integer *g_a)
+logical FATR ga_is_mirrored_(Integer *g_a)
 {
   Integer ret = FALSE;
   Integer handle = GA_OFFSET + *g_a;
@@ -2341,4 +2508,84 @@ logical ga_is_mirrored_(Integer *g_a)
     if (P_LIST[p_handle].mirrored) ret = TRUE;
   }
   return ret;
+}
+
+logical FATR ga_merge_mirrored_(Integer *g_a)
+{
+  Integer handle = GA_OFFSET + *g_a;
+  Integer p_handle = GA[handle].p_handle;
+  Integer inode, nprocs, nnodes, zero, zproc;
+  int *blocks, *map, *dims, *width;
+  Integer i, j, index[MAXDIM], itmp, ndim;
+  Integer nelem, count, type, size;
+  char *zptr, *bptr, *nptr;
+  int bytes, total;
+
+  /* don't perform update if node is not mirrored */
+  if (!ga_is_mirrored_(g_a)) return FALSE;
+
+  inode = ga_cluster_nodeid_();
+  nnodes = ga_cluster_nnodes_(); 
+  nprocs = ga_cluster_nprocs_(&inode);
+  zero = 0;
+
+  /* Check to make sure that all nodes contain the same number
+     of processors. Throw an error otherwise */
+  if (nnodes*nprocs != ga_nnodes_()) 
+    ga_error("Not all nodes contain the same number of processors",GAme);
+
+  zproc = ga_cluster_procid_(&inode, &zero);
+  zptr = GA[handle].ptr[zproc];
+  map = GA[handle].mapc;
+  blocks = GA[handle].nblock;
+  dims = GA[handle].dims;
+  width = GA[handle].width;
+  type = GA[handle].type;
+  ndim = GA[handle].ndim;
+
+  /* check to see if there is any buffer space between the data
+     associated with each processor that needs to be zeroed out
+     before performing the merge */
+  if (zproc == GAme) {
+    for (i=0; i<nprocs; i++) {
+      /* Find out from mapc data how many elements are supposed to be located
+         on this processor. Start by converting processor number to indices */
+      itmp = i;
+      for (j=0; j<ndim; j++) {
+        index[j] = itmp%(Integer)blocks[j];
+        itmp = (itmp - index[j])/(Integer)blocks[j];
+      }
+
+      nelem = 1;
+      count = 0;
+      for (j=0; j<ndim; j++) {
+        if (index[j] < (Integer)blocks[j]-1) {
+          nelem *= (Integer)(map[index[j]+1+count] - map[index[j]+count]
+                 + 1 + 2*width[j]);
+        } else {
+          nelem *= (Integer)(dims[j] - map[index[j]+count] + 1 + 2*width[j]);
+        }
+        count += (Integer)blocks[j];
+      }
+      /* We now have the total number of elements located on this processor.
+         Find out if the location of the end of this data set matches the
+         origin of the data on the next processor. If not, then zero data in
+         the gap. */
+      nelem *= GAsizeof(type);
+      bptr = GA[handle].ptr[ga_cluster_procid_(&inode, &i)];
+      bptr += nelem;
+      if (i<nprocs-1 && bptr != nptr) {
+        j = i+1;
+        nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
+        bytes = (int)(nptr - bptr);
+        bzero(bptr, bytes);
+      }
+      /* find total number of bytes containing global array */
+      if (i == nprocs-1) {
+        total = (int)(bptr - zptr);
+      }
+      /* now that gap data has been zeroed, do a global sum on data */
+      armci_msg_gop_scope(SCOPE_MASTERS, zptr, total, "+", type);
+    }
+  }
 }

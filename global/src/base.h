@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.9 2003-02-17 22:50:55 d3g293 Exp $ */
+/*$Id: base.h,v 1.10 2003-02-21 20:49:12 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -18,7 +18,7 @@ typedef struct {
 
 typedef struct {
        int  ndim;               /* number of dimensions                 */
-       int  type;               /* data type int array                  */
+       int  type;               /* data type in array                   */
        int  actv;               /* activity status                      */
        int  size;               /* size of local data in bytes          */
        int  elemsize;           /* sizeof(datatype)                     */
@@ -100,6 +100,9 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
                      GA[ga_handle].nblock, GA[ga_handle].mapc,                 \
                      proc,lo, hi )
 
+/* this macro computes the strides on both the remote and local
+   processors that map out the data. ld and ldrem are the physical dimensions
+   of the memory on both the local and remote processors. */
 #define gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc){\
   int _i;                                                            \
   stride_rem[0]= stride_loc[0] = (int)size;                          \

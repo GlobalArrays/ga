@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.31 2003-02-18 00:29:42 manoj Exp $ */
+/* $Id: onesided.c,v 1.32 2003-02-21 20:49:12 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -760,7 +760,7 @@ int optype, proc, ndim;
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
           proc = (int)GA_proclist[p];
           if (p_handle >= 0) {
-            proc = P_LIST[p_handle].map_proc_list[proc];
+            proc = (int)P_LIST[p_handle].map_proc_list[proc];
           }
 
           gam_Location(proc,handle, plo, &prem, ldrem);

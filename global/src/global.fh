@@ -27,6 +27,7 @@
       double complex   nga_zdot_patch
       double precision nga_ddot_patch
       integer nga_idot_patch
+      integer ga_default_config, ga_mirror_config
       integer ga_ndim
       real ga_sdot, ga_sdot_patch, nga_sdot_patch
 !
@@ -35,6 +36,8 @@
       integer ga_cluster_procid
       logical nga_create, nga_locate, nga_create_irreg
       logical nga_create_ghosts_irreg,nga_create_ghosts
+      logical nga_create_config, nga_create_irreg_config
+      logical nga_create_ghosts_irreg_config, nga_create_ghosts_config
 !
       external ga_create, ga_destroy, ga_ddot, ga_locate
       external ga_nnodes, ga_nodeid, ga_read_inc, ga_create_irreg
@@ -52,10 +55,13 @@
       external ga_update6_ghosts
       external nga_update_ghost_dir
       external ga_has_ghosts
+      external ga_default_config, ga_mirror_config
       external ga_ndim
       external ga_spd_invert, ga_solve, ga_llt_solve
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg
       external nga_create_ghosts_irreg,nga_create_ghosts
+      external nga_create_config, nga_create_irreg_config
+      external nga_create_ghosts_irreg_config,nga_create_ghosts_config
       external nga_ddot_patch, nga_zdot_patch, nga_idot_patch
       external ga_sdot, ga_sdot_patch, nga_sdot_patch
       external ga_cluster_nprocs, ga_cluster_nodeid, ga_cluster_nnodes

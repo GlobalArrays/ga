@@ -153,6 +153,8 @@ extern void FATR ga_fill_   ARGS_((Integer *, void *));
 extern void FATR ga_scale_  ARGS_((Integer *, void *));
 extern void FATR ga_add_   ARGS_((Void *, Integer *, Void *, Integer *,
       Integer *));
+extern Integer FATR ga_default_config ARGS_();
+extern Integer FATR ga_mirror_config ARGS_();
 extern Integer FATR ga_idot_ ARGS_((Integer *, Integer *));
 extern float FATR ga_fdot_ ARGS_((Integer *, Integer *));            
 extern DoublePrecision FATR ga_ddot_ ARGS_((Integer *, Integer *));
@@ -208,6 +210,17 @@ extern logical nga_create_ghosts_irreg(
         Integer nblock[], /* number of blocks for each dimension in map */
         Integer *g_a);    /* array handle (output) */
 
+extern logical nga_create_ghosts_irreg_config(
+        Integer type,    /* MA type */
+        Integer ndim,    /* number of dimensions */
+        Integer dims[],   /* array of dimensions */
+        Integer width[],  /* array of ghost cell widths */
+        char *array_name, /* array name */
+        Integer map[],    /* decomposition map array */
+        Integer nblock[], /* number of blocks for each dimension in map */
+        Integer p_handle, /* processor list handle*/
+        Integer *g_a);    /* array handle (output) */
+
 extern logical nga_create_ghosts(Integer type,
                    Integer ndim,
                    Integer dims[],
@@ -216,11 +229,28 @@ extern logical nga_create_ghosts(Integer type,
                    Integer chunk[],
                    Integer *g_a);
 
+extern logical nga_create_ghosts_config(Integer type,
+                   Integer ndim,
+                   Integer dims[],
+                   Integer width[],
+                   char* array_name,
+                   Integer chunk[],
+                   Integer p_handle,
+                   Integer *g_a);
+
 extern logical nga_create(Integer type,
                    Integer ndim,
                    Integer dims[],
                    char* array_name,
                    Integer chunk[],
+                   Integer *g_a);
+
+extern logical nga_create_config(Integer type,
+                   Integer ndim,
+                   Integer dims[],
+                   char* array_name,
+                   Integer chunk[],
+                   Integer p_handle,
                    Integer *g_a);
 
 extern logical nga_create_irreg(
@@ -232,6 +262,16 @@ extern logical nga_create_irreg(
         Integer nblock[], /* number of blocks for each dimension in map */
         Integer *g_a);    /* array handle (output) */
 
+extern logical nga_create_irreg_config(
+        Integer type,    /* MA type */
+        Integer ndim,    /* number of dimensions */
+        Integer dims[],   /* array of dimensions */
+        char *array_name, /* array name */
+        Integer map[],    /* decomposition map array */
+        Integer nblock[], /* number of blocks for each dimension in map */
+        Integer p_handle, /* processor list handle*/
+        Integer *g_a);    /* array handle (output) */
+
 extern void ga_update_ghosts(Integer *g_a);
 extern void ga_update1_ghosts(Integer *g_a);
 extern logical ga_update2_ghosts(Integer *g_a);
@@ -240,8 +280,8 @@ extern logical ga_update4_ghosts(Integer *g_a);
 extern logical ga_update5_ghosts(Integer *g_a);
 extern logical ga_update6_ghosts(Integer *g_a);
 extern logical nga_update_ghost_dir(Integer *g_a, Integer *idim, 
-Integer *idir,
-                                logical *flag);
+                                    Integer *idir, logical *flag);
+extern void ga_merge_mirrored(Integer *g_a);
 
 extern void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi);
 extern void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi);

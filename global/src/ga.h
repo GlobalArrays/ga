@@ -59,7 +59,16 @@ extern int NGA_Create_irreg(int type,int ndim,int dims[],char *name,
 extern int NGA_Create_ghosts(int type,int ndim,int dims[], int width[], char *name, int chunk[]);
 extern int NGA_Create_ghosts_irreg(int type,int ndim,int dims[], int width[],
                                    char *name, int map[], int nblock[]);
+extern int NGA_Create_config(int type,int ndim,int dims[], char *name,
+                             int chunk[], int p_handle);
+extern int NGA_Create_irreg_config(int type,int ndim,int dims[],char *name,
+                                   int map[], int block[], int p_handle);
+extern int NGA_Create_ghosts_config(int type,int ndim,int dims[], int width[],
+                                    char *name, int chunk[], int p_handle);
+extern int NGA_Create_ghosts_irreg_config(int type,int ndim,int dims[], int width[],
+                                          char *name, int map[], int nblock[], int p_handle);
 extern void GA_Update_ghosts(int g_a);
+extern void GA_Merge_mirrored(int g_a);
 extern int NGA_Update_ghost_dir(int g_a, int dimension, int idir, int flag);
 extern int GA_Has_ghosts(int g_a);
 extern void NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[]);
@@ -70,6 +79,8 @@ extern void GA_Destroy(int g_a);
 extern void GA_Terminate(void);
 extern void GA_Zero(int g_a); 
 extern void GA_Fill(int g_a, void *value);
+extern int GA_Default_config();
+extern int GA_Mirror_config();
 extern int GA_Idot(int g_a, int g_b);
 extern long GA_Ldot(int g_a, int g_b);
 extern double GA_Ddot(int g_a, int g_b); 
