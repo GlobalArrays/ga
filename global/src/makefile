@@ -34,6 +34,7 @@ include ../MakeFiles.h
 
    LIBRARY = ../libglobal.a
 
+
 OBJ = $(GA_OBJ) $(GA_ALG) $(GA_UTIL)
 
 
@@ -41,6 +42,9 @@ $(LIBRARY):  $(OBJ) $(EXTRA)
 	$(RM) -f $@
 	$(AR) $(ARFLAGS) $@ $(OBJ) $(EXTRA) 
 	$(RANLIB) $@
+
+$(GA_SYNC): 
+	cc -g $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) -c  $(GA_SYNC:.o=.c)
 
 $(OBJ):  $(TARGET).$(VERSION).stamp 
 
