@@ -34,7 +34,7 @@ void lapi_initialize()
      TCGMSG_nnodes = (Integer)numtasks;
 
      /* disable LAPI internal error checking */
-     LAPI_Senv(lapi_handle, ERROR_CHK, 0);
+     /* LAPI_Senv(lapi_handle, ERROR_CHK, 0);*/
 
 #ifdef DEBUG
      printf("me=%d initialized %d processes\n", myid, numtasks);
