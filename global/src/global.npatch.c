@@ -1025,3 +1025,38 @@ DoublePrecision *alpha, *beta;
     ga_sync_();
 }
 
+void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi)
+{
+    Integer ndim, dims[MAXDIM], type;
+    Integer ival = 0;
+    DoublePrecision dval = 0.0;
+    DoubleComplex cval;
+    void *valptr;
+    
+    ga_sync_();
+    GA_PUSH_NAME("nga_zero_patch");
+    
+    nga_inquire_(g_a,  &type, &ndim, dims);
+    
+    switch (type){
+        case MT_F_INT:
+            valptr = (void *)(&ival);
+            break;
+        case MT_F_DCPL:
+            valptr = (void *)(&dval);
+            break;
+        case MT_F_DBL:
+        {
+            cval.real = 0.0; cval.imag = 0.0;
+            valptr = (void *)(&cval);
+            break;
+        }
+        
+        default: ga_error(" wrong data type ",type);
+    }
+    
+    nga_fill_patch_(g_a, lo, hi, valptr);
+    
+    GA_POP_NAME;
+    ga_sync_();
+}
