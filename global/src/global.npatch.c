@@ -613,9 +613,7 @@ void *retval;
 
 /*\ FILL IN ARRAY WITH VALUE 
 \*/
-void FATR nga_fill_patch_(g_a, lo, hi, val)
-Integer *g_a, *lo, *hi;
-Void    *val;
+void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi, void* val)
 {
     Integer i, j;
     Integer ndim, dims[MAXDIM], type;
