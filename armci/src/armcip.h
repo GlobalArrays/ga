@@ -95,6 +95,7 @@ extern thread_id_t armci_usr_tid;
 #define UNLOCK 21
 #define STRIDED 1
 #define VECTOR  2
+#define ACK (ARMCI_ACC_OFF -1)
 
 extern  int armci_me, armci_nproc;
 extern  double armci_internal_buffer[BUFSIZE_DBL];

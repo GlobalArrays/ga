@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.16 2000-08-09 17:08:56 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.17 2000-08-16 00:08:10 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -14,7 +14,7 @@
 #define sleep(x) Sleep(100*(x))
 #endif
  
-#define ACK 0
+#define ACK_QUIT 0
 #define QUIT 33
 #define ATTACH 34
 
@@ -530,14 +530,14 @@ int stat;
     msginfo->from  = armci_me;
     msginfo->to    = SERVER_NODE(armci_clus_me); 
     msginfo->operation = QUIT;
-    if(ACK)
+    if(ACK_QUIT)
        msginfo->bytes   = msginfo->datalen = sizeof(int); /* ACK */
     else
        msginfo->bytes   = msginfo->datalen = 0; /* no ACK */
    
     armci_send_req(armci_master);
 
-    if(ACK){
+    if(ACK_QUIT){
        armci_rcv_data(armci_master);  /* receive ACK */
        stat = * (int*)MessageSndBuffer;
        if(stat  != QUIT)
