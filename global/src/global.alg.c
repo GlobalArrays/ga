@@ -12,12 +12,9 @@
 
  
 #include <stdio.h>
-#include "global.c.h"
+#include "global.h"
+#include "globalp.h"
 #include "macommon.h"
-
-extern DoublePrecision *DBL_MB;
-extern Integer         *INT_MB;
-
 
 
 

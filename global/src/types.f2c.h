@@ -16,3 +16,9 @@
 
 typedef Integer logical;
 
+#if defined(__STDC__) || defined(__cplusplus)
+   typedef void Void;
+#else
+   typedef char Void;
+#endif
+

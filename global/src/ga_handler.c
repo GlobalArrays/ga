@@ -1,6 +1,7 @@
 #if defined(NX) || defined(SP1)
 
-#include "global.c.h"
+#include "global.h"
+#include "globalp.h"
 #include "message.h"
 #include "interrupt.h"
 #include <stdio.h>
@@ -8,8 +9,6 @@
 
 long htype = GA_TYPE_REQ;
 void ga_init_handler(char*, long);
-extern void ga_SERVER(long);
-
 
 
 #ifdef NX 

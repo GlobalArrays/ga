@@ -111,8 +111,8 @@ c        allocate and setup list of TCG nodes
          if( .not. ma_push_get(mt_int, proc,'list',hls,adrls))
      $        call ga_error('ga_diag_std: insufficient memory 1b', n)
          call ga_list_nodeid(int_mb(adrls), proc)
-*         print *,myproc,'list ', (int_mb(adrls+k),k=0,proc-1)
-*         call ffflush(6)
+         print *,myproc,'list ', (int_mb(adrls+k),k=0,proc-1)
+         call ffflush(6)
 c         
 c        determine distribution of a,b, and z
 c     
@@ -217,8 +217,8 @@ c
 c***  calling PEIGS parallel eigensolver
 c
       if (oactive) then
-*          print *,myproc,' participate in eig: ',proc
-*          call ffflush(6)
+          print *,myproc,' participate in eig: ',proc
+          call ffflush(6)
 *        if(myproc.eq.0)then
 *          print *,myproc,'map a ', (int_mb(adrma +k),k=0,n-1)
 *          print *,myproc,'a ', (dbl_mb(adra +k),k=0,5)
@@ -239,8 +239,8 @@ c
      &        int_mb(adris), isize,  
      &        dbl_mb(adrip), ptr_size,  
      &        dbl_mb(adrsc), rsize, info)  
-*          print *,myproc,'out: participate in eig: ',proc
-*          call ffflush(6)
+          print *,myproc,'out: participate in eig: ',proc
+          call ffflush(6)
          if (info .ne. 0)
      $        call ga_error('ga_diag_std: ... info non-zero ', myproc)
       endif
@@ -417,8 +417,8 @@ c        allocate and setup list of TCG nodes
          if( .not. ma_push_get(mt_int, proc,'list',hls,adrls))
      $        call ga_error('ga_diag: insufficient memory 1b', n)
          call ga_list_nodeid(int_mb(adrls), proc)
-*         print *,myproc,'list ', (int_mb(adrls+k),k=0,proc-1)
-*         call ffflush(6)
+         print *,myproc,'list ', (int_mb(adrls+k),k=0,proc-1)
+         call ffflush(6)
 c         
 c         
 c        determine distribution of a,b, and z
@@ -529,8 +529,8 @@ c
 c***  calling PEIGS parallel eigensolver
 c
       if (oactive) then
-*          print *,myproc,' participate in eig: ',proc
-*          call ffflush(6)
+          print *,myproc,' participate in eig: ',proc
+          call ffflush(6)
          call pdspgv( 1, n, dbl_mb(adra), int_mb(adrma),
      &        dbl_mb(adrb), int_mb(adrmb),  
      &        dbl_mb(adrz), int_mb(adrmz),  
@@ -538,8 +538,8 @@ c
      &        int_mb(adris), isize,  
      &        dbl_mb(adrip), ptr_size,  
      &        dbl_mb(adrsc), rsize, info)  
-*          print *,myproc,'out: participate in eig: ',proc
-*          call ffflush(6)
+          print *,myproc,'out: participate in eig: ',proc
+          call ffflush(6)
          if (info .ne. 0)
      $        call ga_error('ga_diag: info non-zero ', info)
       endif

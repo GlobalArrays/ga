@@ -44,6 +44,30 @@ extern Integer cluster_compute_nodes;
 extern Integer ClusterMode;
 extern Integer *NumRecReq;
 
+#if !defined(NX) &&  defined(__STDC__) || defined(__cplusplus)
+# define ARGS_(s) s
+#else
+# define ARGS_(s) ()
+#endif
 
-void ClusterInitInfo();
-Integer DataServer();
+extern void ClustInfoInit ARGS_(( void));
+extern Integer ClusterID  ARGS_((Integer ));
+extern Integer DataServer ARGS_((Integer ));
+extern void ga_snd_msg    ARGS_((Integer type, Void *buffer, Integer bytes, 
+                                 Integer to, Integer sync));
+extern void ga_rcv_msg    ARGS_((Integer type, Void *buffer, Integer buflen,
+                                 Integer *msglen, Integer from,Integer *whofrom,
+                                 Integer sync));
+extern void ga_snd_req    ARGS_((Integer, Integer, Integer, Integer, Integer,
+                                 Integer nbytes, Integer data_type,Integer oper,
+                                 Integer, Integer to));
+extern void ga_SERVER     ARGS_((Integer));
+extern void ga_igop_clust ARGS_((Integer, Integer *, Integer, char *, Integer));
+extern void ga_brdcst_clust ARGS_((Integer, Void*, Integer, Integer, Integer));
+extern void ga_dgop_clust   ARGS_((Integer , DoublePrecision *, Integer, char *,
+                                   Integer ));
+extern void ga_wait_server  ARGS_(( void));
+extern void        waitcom_ ARGS_((Integer*));
+
+#undef ARGS_
+

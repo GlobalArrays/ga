@@ -15,13 +15,12 @@
 #define  ga_ddot_patch_            GA_DDOT_PATCH
 #define  ga_destroy_               GA_DESTROY
 #define  ga_dfill_patch_           GA_DFILL_PATCH
-#define  ga_dgather_               GA_DGATHER
+#define  ga_gather_                GA_GATHER
 #define  ga_dgop_                  GA_DGOP
 #define  ga_distribution_          GA_DISTRIBUTION
-#define  ga_distribution2_         GA_DISTRIBUTION2
 #define  ga_dscal_                 GA_DSCAL
 #define  ga_dscal_patch_           GA_DSCAL_PATCH
-#define  ga_dscatter_              GA_DSCATTER
+#define  ga_scatter_               GA_SCATTER
 #define  ga_duplicate_             GA_DUPLICATE
 #define  ga_error_                 GA_ERROR
 #define  ga_get_                   GA_GET

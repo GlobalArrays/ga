@@ -1,12 +1,6 @@
-#include "global.c.h"
+#include "globalp.h"
+#include "global.h"
 #include "macommon.h"
-
-extern DoublePrecision *DBL_MB;
-extern Integer         *INT_MB;
-
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
 
 /*\ check if patches are identical

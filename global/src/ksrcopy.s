@@ -22,11 +22,11 @@ CopyTo$TXT:
    selsc8	%i4, %i9, %i9		;  cxnop
    ash8.ntr	-7, %i9, %i9		;  cxnop
    itstge8	0, %i9			;  cxnop
-   movi8	0, %i5			;  bcs.qt	@citst, .L5
-   finop                                ;  pcsp.ex.bl  128(%c6)
-   finop                                ;  pcsp.ex.bl  256(%c6)
+   movi8	0, %i5			;  bcs.qn	@citst, .L5
+   finop                                ;  pcsp.ex.nbl  128(%c6)
+   finop                                ;  pcsp.ex.nbl  256(%c6)
 .L6:
-   finop                                ;  pcsp.ex.bl  384(%c6)
+   finop                                ;  pcsp.ex.nbl  384(%c6)
    add8.ntr	1, %i5, %i5		;  ld8		0(%c7), %f0
    itstge8	%i5, %i9		;  ld8		8(%c7), %f1
    add8.ntr	33, %i31, %i31		;  ld8		16(%c7), %f5
@@ -126,11 +126,11 @@ CopyFrom$TXT:
    selsc8	%i4, %i9, %i9		;  cxnop
    ash8.ntr	-7, %i9, %i9		;  cxnop
    itstge8	0, %i9			;  cxnop
-   movi8	0, %i5			;  bcs.qt	@citst, .L17
-   finop                                ;  pcsp.ro.bl   128(%c7)
-   finop                                ;  pcsp.ro.bl   256(%c7)
+   movi8	0, %i5			;  bcs.qn	@citst, .L17
+   finop                                ;  pcsp.ro.nbl   128(%c7)
+   finop                                ;  pcsp.ro.nbl   256(%c7)
 .L18:
-   finop                                ;  pcsp.ro.bl   384(%c7)
+   finop                                ;  pcsp.ro.nbl   384(%c7)
    add8.ntr	1, %i5, %i5		;  ld8		0(%c7), %f0
    itstge8	%i5, %i9		;  ld8		8(%c7), %f1
    add8.ntr	33, %i31, %i31		;  ld8		16(%c7), %f5
@@ -238,10 +238,10 @@ Accum$TXT:
    finop				;  bcs.qn	@citst, .L29
    finop				;  st8		%f22, 40(%sp)
    finop				;  st8		%f23, 32(%sp)
-   finop                                ;  pcsp.ex.bl  128(%c6)
-   finop                                ;  pcsp.ex.bl  256(%c6)
+   finop                                ;  pcsp.ex.nbl  128(%c6)
+   finop                                ;  pcsp.ex.nbl  256(%c6)
 .L30:
-   finop                                ;  pcsp.ex.bl  384(%c6)
+   finop                                ;  pcsp.ex.nbl  384(%c6)
    add8.ntr	1, %i9, %i9		;  ld8		0(%c7), %f1
    itstge8	%i9, %i10		;  ld8.ex	0(%c6), %f12
    add8.ntr	53, %i31, %i31		;  ld8		8(%c7), %f5

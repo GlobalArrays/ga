@@ -16,7 +16,10 @@ include ../Makefile.h
 
 ifeq ($(VERSION),SHMEM)
   ifneq ($(TARGET),CRAY-T3D)
-    LOC_DEFINES = -DSYSV -DDATA_SERVER
+    LOC_DEFINES = -DSYSV
+    ifneq ($(TARGET),KSR)
+       LOC_DEFINES += -DDATA_SERVER
+    endif
   endif
 else
   ifneq ($(TARGET),$(findstring $(TARGET),$(INTERRUPT_AVAILABLE)))
@@ -43,14 +46,13 @@ $(LIBRARY):  $(OBJ) $(EXTRA)
 $(GA_SYNC): $(GA_SYNC:.o=.c)
 	cc -g $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) -c  $(GA_SYNC:.o=.c)
 
-$(OBJ):  $(TARGET).$(VERSION).stamp 
+$(OBJ): $(TARGET).$(VERSION).stamp 
 
 $(TARGET).$(VERSION).stamp: 
 	$(RM) -f *.o *.a core *.*.stamp
 	echo "" > $(TARGET).$(VERSION).stamp
 
-#clean *.o  and crap left by SP1 MPL
+#clean *.o  and crap left by MPL on SP1
 clean:
 	$(RM) -f *.o *.a core *.*.stamp mputil.mp*
-
 

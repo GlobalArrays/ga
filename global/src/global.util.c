@@ -26,7 +26,8 @@
  * distribute to other US Government contractors.
  */
 
-#include "global.c.h"
+#include "global.h"
+#include "globalp.h"
 #include "macommon.h"
 #include <stdio.h>
 
@@ -35,27 +36,14 @@
 #include <fortran.h>
 #endif
 
-void f2cstring();
-void c2fstring();
 #if !(defined(SGI)||defined(AIX))
 #ifndef CRAY_T3D
-extern int fprintf();
+  extern int fprintf();
 #endif
 #endif
 #if defined(SUN)
-void fflush();
+  void fflush();
 #endif
-
-
-extern DoublePrecision *DBL_MB;
-extern Integer         *INT_MB;
-
-
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) >= 0) ? (a) : (-(a)))
-
-
 
 
 
@@ -236,9 +224,8 @@ extern void Error();
 #ifdef SYSV
    extern int SR_caught_sigint;
 #endif
-void clean_all();
 
-    clean_all(); 
+    ga_clean_mem(); 
 
     if (ga_nnodes_() > 1){
 #      ifdef SYSV
@@ -247,11 +234,10 @@ void clean_all();
 #      endif
        Error(string,  icode);
     }
-    fprintf(stderr,"%s %ld\n",string,icode);
+    fprintf(stderr,"%s %ld",string,icode);
     fflush(stderr);
 #   if defined(SUN) || defined(SGI)
-/*       abort(); */
-       exit(1);
+       abort();
 #   else
        exit(1);
 #   endif

@@ -1,12 +1,6 @@
-#include "global.c.h"
+#include "global.h"
+#include "globalp.h"
 #include "macommon.h"
-
-extern DoublePrecision *DBL_MB;
-extern Integer         *INT_MB;
-
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
 #ifdef KSR
 #define dgemm_ sgemm_
@@ -172,10 +166,6 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
       }else{
         /*** due to generality of this transformation scatter is required ***/
 
-        /* support of integers requires iscatter ! */
-        if(atype != MT_F_DBL )
-        ga_error("ga_copy_patch: it can be done only for DoublePrecision ",0L);
-
          if(!MA_push_get(MT_F_INT, nelem, "i", &ihandle, &iindex))
             ga_error(" ga_copy_patch: MA failed ", 0L);
          if(!MA_push_get(MT_F_INT, nelem, "j", &jhandle, &jindex))
@@ -225,7 +215,7 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
          }
 
          ga_release_(g_a, &ilos, &ihis, &jlos, &jhis);
-         ga_dscatter_(g_b, DBL_MB+vindex, INT_MB+iindex, INT_MB+jindex, &nelem);
+         ga_scatter_(g_b, DBL_MB+vindex, INT_MB+iindex, INT_MB+jindex, &nelem);
          MA_pop_stack(vhandle);
          MA_pop_stack(jhandle);
          MA_pop_stack(ihandle);

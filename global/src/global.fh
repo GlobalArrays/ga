@@ -7,3 +7,4 @@
       external ga_copy_patch, ga_print_patch, ga_ifill_patch
       external ga_dfill_patch, ga_dscal_patch, ga_dadd_patch
       external ga_ddot_patch, ga_compare_distr, ga_duplicate
+      external ga_scatter, ga_gather, ga_get, ga_put 

@@ -1,40 +1,60 @@
-/*Thu Sep 29 09:40:30 PDT 1994*/
-#include "global.c.h"
-
+/*Wed Jan 25 10:25:49 PST 1995*/
+  
 #ifdef SUN
-#define volatile   
+#  define volatile   
 #endif
 
 #ifdef KSR
-#define PRIVATE  __private 
+#  define PRIVATE  __private 
 #else
-#define PRIVATE  
+#  define PRIVATE  
 #endif
 
-#define MAX_ARRAYS  32
-#define BUF_SIZE    4096 
+#define MAX_ARRAYS  32             /* max number of global arrays */
+
+#ifndef MAX_NPROC                  /* default max number of processors  */
+#   ifdef PARAGON
+#     define MAX_NPROC    1024
+#   elif defined(DELTA)
+#     define MAX_NPROC     512 
+#   elif defined(SP1)
+#     define MAX_NPROC     400 
+#   elif defined(CRAY_T3D)
+#     define MAX_NPROC     256 
+#   elif defined(KSR)
+#     define MAX_NPROC      80 
+#   else
+#     define MAX_NPROC      64     /* default for everything else */ 
+#   endif 
+#endif
+
 #define MAX_REG     128             /* max number of shmem regions per array */
 #define RESERVED    2*sizeof(long)  /* used for shmem buffer management */  
-#define FNAM        30              /* length of Fortran names   */
+#define FNAM        35              /* length of Fortran names   */
 #define FLEN        80              /* length of Fortran strings */
-#define max_nproc   256		    /* max number of processors  */
 #define GA_OFFSET   1000            /* offset for handle numbering */
+#define BUF_SIZE    4096 
+
+#ifdef  SHMEM
+#  define MAX_PTR MAX_NPROC
+#else
+#  define MAX_PTR 1
+#endif
 
 
 typedef struct {
-       Integer type;            /* type of array                        */
-       int  actv;               /* activity status                      */
-       char *ptr[max_nproc];    /* pointers to local/remote data        */
-       long ilo;                /* coordinates of local patch           */
-       long ihi;
-       long jlo;
-       long jhi;
-       long size;               /* size of local data in bytes          */
        int  dims[2];            /* global dimensions [i,j]              */
        int  chunk[2];           /* chunking                             */
        int  nblock[2];          /* number of chunks (blocks)            */
-       int  mapc[max_nproc+1];  /* block distribution map               */
-       long lock;
+       double scale[2];         /* nblock/dim (precomputed)             */
+       char *ptr[MAX_PTR];      /* pointers to local/remote data        */
+       int  mapc[MAX_NPROC+2];  /* block distribution map               */
+       Integer type;            /* type of array                        */
+       int  actv;               /* activity status                      */
+       Integer ilo;             /* coordinates of local patch           */
+       Integer jlo;
+       Integer size;            /* size of local data in bytes          */
+       long lock;               /* lock                                 */
        long id;			/* ID of shmem region / MA handle       */
        char name[FNAM+1];       /* array name                           */
 } global_array;
@@ -42,7 +62,7 @@ typedef struct {
 
 PRIVATE static global_array GA[MAX_ARRAYS]; 
 PRIVATE static int max_global_array = MAX_ARRAYS;
-PRIVATE Integer map[max_nproc][5];               /* used in get/put/acc */
+PRIVATE Integer map[MAX_NPROC][5];               /* used in get/put/acc */
 
 
 
@@ -70,10 +90,28 @@ PRIVATE Integer map[max_nproc][5];               /* used in get/put/acc */
     }                                                   \
 }
       
-#define MIN(a,b) ((a)>(b)? (b) : (a))
-#define MAX(a,b) ((a)>(b)? (a) : (b))
 
+#define ga_ownsM(ga_handle, proc, ilo,ihi, jlo, jhi)                           \
+{                                                                              \
+   Integer loc, iproc, jproc;                                                  \
+   if(proc > GA[ga_handle].nblock[0] * GA[ga_handle].nblock[1] - 1 || proc<0){ \
+         ilo = (Integer)0;    jlo = (Integer)0;                                \
+         ihi = (Integer)-1;   jhi = (Integer)-1;                               \
+   }else{                                                                      \
+         jproc = proc/GA[ga_handle].nblock[0];                                 \
+         iproc = proc%GA[ga_handle].nblock[0];                                 \
+         loc = iproc;                                                          \
+         ilo = GA[ga_handle].mapc[loc];  ihi = GA[ga_handle].mapc[loc+1] -1;   \
+         /* correction to find the right spot in mapc*/                        \
+         loc = jproc + GA[ga_handle].nblock[0];                                \
+         jlo = GA[ga_handle].mapc[loc];   jhi = GA[ga_handle].mapc[loc+1] -1;  \
+         if( iproc == GA[ga_handle].nblock[0] -1)  ihi = GA[ga_handle].dims[0];\
+         if( jproc == GA[ga_handle].nblock[1] -1)  jhi = GA[ga_handle].dims[1];\
+   }                                                                           \
+}
 
+#define GAsizeofM(type)  ( (type)==MT_F_DBL? sizeof(DoublePrecision): \
+                           (type)==MT_F_INT? sizeof(Integer): 0)
 
 
 /*********** Shared Memory, Mutual Exclusion & Memory Copy Co.  *********/
@@ -83,10 +121,6 @@ PRIVATE Integer map[max_nproc][5];               /* used in get/put/acc */
        PRIVATE static  volatile int    *barrier, *barrier1;
        PRIVATE static  long            shmSIZE, shmID;
        PRIVATE static  DoublePrecision *shmBUF;
-       char    *Create_Shared_Region();
-       long    Detach_Shared_Region();
-       long    Delete_Shared_Region();
-       char    *Attach_Shared_Region();
 #      ifdef KSR
 #          include "global.KSR.h"
 #          define SUBPAGE 128              /* subpage size on KSR */
@@ -130,11 +164,6 @@ PRIVATE Integer map[max_nproc][5];               /* used in get/put/acc */
 #endif
 
 /* MEMORY COPY */
-#ifdef SUN
-       char* memcpy();
-#else
-       void* memcpy();
-#endif
 #ifdef CRAY_T3D
        /*#          define Copy(src,dst,n)          memcpy((dst),(src),(n))*/
        /*            memcpy on this sytem is slow */
@@ -161,18 +190,14 @@ PRIVATE Integer map[max_nproc][5];               /* used in get/put/acc */
 
 
 /* MA addressing */
-#include <macommon.h>
 DoublePrecision *DBL_MB;            /* double precision base address */
 Integer         *INT_MB;            /* integer base address */
-void 	ma__base_address_();
-Integer ma__sizeof_();
 
-Integer GAsizeof();
 
 PRIVATE static int GAinitialized = 0;
 PRIVATE static Integer GAme, GAnproc, GAmaster;
 PRIVATE static Integer MPme, MPnproc;
-int ProcListPerm[max_nproc];        /* permuted list of processes */
+int ProcListPerm[MAX_NPROC];        /* permuted list of processes */
 #if defined(DATA_SERVER)
     Integer *NumRecReq;                 /* # received requests by data server */
 #else
@@ -188,4 +213,45 @@ int ProcListPerm[max_nproc];        /* permuted list of processes */
 #   endif
 #endif
 
-char *malloc();
+
+#if defined(__STDC__) || defined(__cplusplus)
+# define ARGS_(s) s
+#else
+# define ARGS_(s) ()
+#endif
+
+extern void strcpy       ARGS_((char*, char*));
+extern void srand        ARGS_((Integer));
+extern void srandom      ARGS_((Integer));
+extern char *malloc      ARGS_((int));
+extern logical gaDirectAccess ARGS_((Integer ));
+extern void ma__get_ptr_ ARGS_((char **, char *));
+extern Integer ma__diff_ ARGS_((char *, char *));
+extern void ma__base_address_ ARGS_((Void*, Void**));
+
+extern char *Create_Shared_Region ARGS_((long *idlist, long *size, long *offset)
+);
+extern char *Attach_Shared_Region ARGS_((long *idlist, long size, long *offset))
+;
+extern void Free_Shmem_Ptr ARGS_((Integer id, Integer size, char *addr));
+extern long Detach_Shared_Region ARGS_((long id, long size, char *addr));
+extern long Delete_Shared_Region ARGS_((long id));
+extern long Delete_All_Regions ARGS_(( void));
+
+extern Void* memcpy ARGS_((Void*, Void*, Integer));
+extern double sqrt ARGS_((double));
+extern Integer MA_push_get ARGS_((Integer, Integer, char*, Integer*, Integer*));
+extern Integer MA_pop_stack ARGS_((Integer));
+extern void ga_sort_scat_dbl_ ARGS_((Integer*,DoublePrecision*,Integer*,                                             Integer*,Integer*));
+extern void ga_sort_scat_int_ ARGS_((Integer*,Integer*,Integer*,Integer*,                                            Integer*));
+extern void ga_sort_gath_ ARGS_((Integer*, Integer*, Integer*, Integer*));
+
+extern void strcpy ARGS_((char*,char*));
+extern void free ARGS_((Void*));
+
+#undef ARGS_
+
+
+#ifdef GA_TRACE
+  static Integer     op_code;
+#endif

@@ -1,13 +1,45 @@
+/*
+ * module: global.msg.c
+ * author: Jarek Nieplocha
+ * date: Mon Dec 19 19:06:18 CST 1994
+ * description: data server and message-passing communication routines 
+ *
+ *
+ * DISCLAIMER
+ *
+ * This material was prepared as an account of work sponsored by an
+ * agency of the United States Government.  Neither the United States
+ * Government nor the United States Department of Energy, nor Battelle,
+ * nor any of their employees, MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR
+ * ASSUMES ANY LEGAL LIABILITY OR RESPONSIBILITY FOR THE ACCURACY,
+ * COMPLETENESS, OR USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT,
+ * SOFTWARE, OR PROCESS DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT
+ * INFRINGE PRIVATELY OWNED RIGHTS.
+ *
+ *
+ * ACKNOWLEDGMENT
+ *
+ * This software and its documentation were produced with United States
+ * Government support under Contract Number DE-AC06-76RLO-1830 awarded by
+ * the United States Department of Energy.  The United States Government
+ * retains a paid-up non-exclusive, irrevocable worldwide license to
+ * reproduce, prepare derivative works, perform publicly and display
+ * publicly by or for the US Government, including the right to
+ * distribute to other US Government contractors.
+ */
 
-#include "global.c.h"
+
+#include "global.h"
+#include "globalp.h"
 #include "tcgmsg.h"
 #include "message.h"
 #include <stdio.h>
-
 #ifdef CRAY_T3D
-#include <fortran.h>
+#  include <fortran.h>
 #endif
- 
+
+#define DEBUG 0 
+#define ACK   0
    
 struct message_struct message_buf[2];
 struct message_struct *MessageSnd = message_buf, *MessageRcv = message_buf+1;
@@ -23,6 +55,9 @@ Integer cluster_compute_nodes;
 Integer ClusterMode=0;
 
 
+/*\ determines cluster structure according to *.p file
+ *  through TCGMSG SR_clus_info
+\*/
 void    ClustInfoInit()
 {
 #ifndef SYSV
@@ -31,7 +66,7 @@ void    ClustInfoInit()
     cluster_compute_nodes  = cluster_nodes = 1;
 #else
     void PrintClusInfo();
-/*    if(nodeid_()==0) PrintClusInfo();*/
+    if(nodeid_()==0 && DEBUG) PrintClusInfo();
     if(nnodes_()==1){
        num_clusters = 1;
        cluster_id =  0;
@@ -122,7 +157,7 @@ void ga_list_data_servers_(list)
 }
 
 
-/*\ determine TCGMSG nodeid for the first GA 'num_procs'
+/*\ determine TCGMSG nodeid for the first GA <num_procs> processes 
 \*/
 void ga_list_nodeid_(list, num_procs)
      Integer *list, *num_procs;
@@ -153,7 +188,7 @@ void ga_list_nodeid_(list, num_procs)
 \*/
 void ga_snd_msg(type, buffer, bytes, to, sync)
      Integer type, bytes, to, sync;
-     char    *buffer;
+     Void    *buffer;
 {
    snd_(&type, buffer, &bytes, &to, &sync);
 }
@@ -163,7 +198,7 @@ void ga_snd_msg(type, buffer, bytes, to, sync)
 \*/
 void ga_rcv_msg(type, buffer, buflen, msglen, from, whofrom, sync)
      Integer type, buflen, *msglen, from, *whofrom, sync;
-     char    *buffer;
+     Void    *buffer;
 {
    rcv_(&type, buffer, &buflen, msglen, &from, whofrom, &sync);
 }
@@ -200,46 +235,49 @@ void ga_snd_req(g_a, ilo,ihi,jlo,jhi, nbytes, data_type, oper, proc, to)
 #   endif
 
 #   if defined(DATA_SERVER)
+    if(ACK)
        ga_rcv_msg(GA_TYPE_ACK, (char*)&ack, sizeof(ack), &len, to, &from, SYNC);
 #   endif
-    /* fprintf(stderr, "sending request %d to server %d done \n",oper, to);*/
-    NumSndReq++;
+    if(DEBUG)fprintf(stderr,"sending request %d to server %d done \n",oper, to);
+    NumSndReq++; /* count requests sent */
 }
 
 
 
 /*\ DATA SERVER services remote requests
- *       . invoked as interrupt receive handler, or
- *       . by dedicated data-server node that loops here servicing requests 
+ *       . invoked by interrupt-receive message as a server thread in addition 
+ *         to the application thread which it might be suspended or run
+ *         concurrently (Paragon), or
+ *       . dedicated data-server node that loops here servicing requests
+ *         since this routine is called in ga_initialize() until terminate
+ *         request GA_OP_END (sent in ga_terminate() ) is received
 \*/
 void ga_SERVER(from)
      Integer from;
 {
 Integer msglen, ld, offset = 0, rdi_val, elem_size, nelem, toproc;
-char *piindex, *pjindex, *pvalue;
+char    *piindex, *pjindex, *pvalue;
 
-void ga_get_local(), ga_put_local(), ga_acc_local(), ga_scatter_local(),
-     ga_gather_local(), ga_terminate_();
-logical ga_create_irreg(), ga_duplicate(), ga_destroy_();
+void    ga_get_local(), ga_put_local(), ga_acc_local(), ga_scatter_local(),
+        ga_gather_local();
 Integer ga_read_inc_local();
 
-
 #ifdef DATA_SERVER
-      fprintf(stderr, "data server %d ready\n",nodeid_());
+   if(DEBUG) fprintf(stderr, "data server %d ready\n",nodeid_());
    do {
       Integer len, ack;
       len = TOT_MSG_SIZE; /* MSG_BUF_SIZE + MSG_HEADER_SIZE */ 
       ga_rcv_msg(GA_TYPE_REQ, (char*)MessageRcv, len, &msglen, -1, &from,SYNC);
-      ga_snd_msg(GA_TYPE_ACK, &ack, sizeof(ack), from, SYNC);
+      if(ACK) ga_snd_msg(GA_TYPE_ACK, &ack, sizeof(ack), from, SYNC);
 #else
       extern Integer in_handler;
-      in_handler = 1;
+      in_handler = 1; /*distinguish cases when GA ops are called by the server*/
 #endif
-      /*       fprintf(stderr, "server %d ready\n",nodeid_()); */
 
+      if(DEBUG) fprintf(stderr, "server got request %d from %d\n",
+                                MessageRcv->operation, from);
+      /* fprintf(stderr, "server %d ready\n",nodeid_()); */
 
-      /*fprintf(stderr, "server got request %d from %d\n",
-         MessageRcv->operation, from); */ 
       elem_size = GAsizeof(MessageRcv->type);
       toproc =  MessageRcv->to;
 
@@ -278,7 +316,7 @@ Integer ga_read_inc_local();
                                MessageRcv->jlo, MessageRcv->jhi,
                                MessageRcv->buffer, offset, ld, toproc,
                                *(DoublePrecision*)(MessageRcv->buffer+msglen)); 
-                               /* alpha at the end*/
+                               /* alpha is at the end*/
                             break;
 
           case GA_OP_RDI:   /* read and increment */
@@ -339,8 +377,8 @@ Integer ga_read_inc_local();
                               Integer g_a;
 
                               if(! ga_create_irreg(& MessageRcv->type, 
-                                   &dim1, &dim2, &array_name, map1, &nblock1, 
-                                   map2, &nblock2, &g_a))
+                                   &dim1, &dim2, array_name, (Integer*) map1, 
+                                   &nblock1, (Integer*) map2, &nblock2, &g_a))
                                       ga_error("ga_server: create failed", 0);
                             }
                             break;                          
@@ -350,7 +388,7 @@ Integer ga_read_inc_local();
                               Integer g_a = MessageRcv->g_a , g_b;
                               char *array_name = "server_created";
 
-                              if(! ga_duplicate(&g_a, &g_b, &array_name))
+                              if(! ga_duplicate(&g_a, &g_b, array_name))
                                    ga_error("ga_server: duplicate failed", 0);
                             }
                             break;                          
@@ -362,7 +400,7 @@ Integer ga_read_inc_local();
                             break;                          
 
           case GA_OP_END:   /* terminate */
-                            fprintf(stderr," server terminating \n", ga_nodeid_());
+                            fprintf(stderr,"server terminating\n",ga_nodeid_());
                             ga_terminate_();
                             pend_();
                             exit(0);
@@ -378,11 +416,6 @@ Integer ga_read_inc_local();
 #endif
    /* fprintf(stderr,"leaving handler %d\n",nodeid_()); */
 }
-
-
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
 
 
@@ -459,7 +492,7 @@ Integer group_participate(me, root, up, left, right, group)
 \*/
 void ga_brdcst_clust(type, buf, len, originator, group)
      Integer type, len, originator, group;
-     char *buf;
+     Void *buf;
 {
 #ifdef SYSV 
      Integer me, lenmes, sync=1, from, root=0;
@@ -491,7 +524,7 @@ void ga_brdcst_clust(type, buf, len, originator, group)
 \*/
 void ga_brdcst_(type, buf, len, originator)
      Integer *type, *len, *originator;
-     char *buf;
+     Void *buf;
 {
      void brdcst_();
      Integer orig_clust, tcg_orig_node, tcg_orig_master; 

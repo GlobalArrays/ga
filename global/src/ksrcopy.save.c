@@ -120,6 +120,7 @@ double *src, *dest;
      src = src0;
      dest= dest0;
      m =  n/16;
+/*     _gspwt(dest0);*/
      for (i = 0; i< m; i++){
        a = src[0];
        b = src[1];
@@ -162,5 +163,6 @@ double *src, *dest;
      m = n%16;
      for (i = 0; i< m; i++)
        dest[i] += alpha*src[i];
+/*     _rsp(dest0);*/
 }
 

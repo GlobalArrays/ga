@@ -23,7 +23,7 @@
  *       . needs to by called by cleanup procedure(s)
  *
  * Jarek Nieplocha, 06.13.94
- *
+ * 
  */
 
 #ifdef SHMEM
@@ -186,10 +186,11 @@ long reg;
   /* stamp at the beginning address to be tested by other processes  */
   if(STAMP) *(int*)temp = alloc_regions-1;
 
-  *offset = (long) (temp - region_list[reg].addr);
+/*  *offset = (long) (temp - region_list[reg].addr);*/
+  *offset = (long) (temp - region_list[0].addr);
   occup_blocks ++;
 
-  if(DEBUG) fprintf(stderr, "create: reg=%d id= %d  off=%d  addr=%d addr+off=%d s=%d stamp=%d ids=%d\n",reg,region_list[reg].id, *offset, region_list[reg].addr, temp, *size, *(int*)temp,idlist[0]);
+  if(DEBUG) fprintf(stderr, ">Create_Shared_Region: reg=%d id= %d  off=%d  addr=%d addr+off=%d s=%d stamp=%d num ids=%d\n",reg,region_list[reg].id, *offset, region_list[reg].addr, temp, *size, *(int*)temp,idlist[0]);
 
   return temp;
 }
@@ -241,9 +242,6 @@ long ga_nodeid_();
          else
             pref_addr = (char*)0;   /* first time let the OS choose address */
 
-         if(DEBUG) fprintf(stderr,"Attach_Shared_Region:calling shmat: %d %d\n",
-                           idlist[1+ir], pref_addr);  
-
          if ( (int) (temp = (char*)shmat((int)idlist[1+ir], pref_addr, 0))==-1){
            fprintf(stderr, "shmat err: id= %d off=%d \n",idlist[1+ir],*offset);
            ga_error("Attach_Shared_Region:failed to attach",(long)idlist[1+ir]);
@@ -253,7 +251,7 @@ long ga_nodeid_();
          region_list[reg].attached = 1;
          alloc_regions++;
 
-         if(DEBUG) fprintf(stderr, "attach: id=%d addr=%d \n",
+         if(DEBUG) fprintf(stderr, "-Attach_Shared_Region: id=%d addr=%d \n",
                            idlist[1+ir], temp);
       }
       /* now we have this region attached and ready to go */
@@ -263,7 +261,7 @@ long ga_nodeid_();
 
   reg = first; /* first region on the list */ 
 
-  if(DEBUG) fprintf(stderr, "attach: reg=%d id= %d  off=%d  addr=%d addr+off=%d \n",reg,region_list[reg].id, *offset, region_list[reg].addr, region_list[reg].addr+ *offset);
+  if(DEBUG) fprintf(stderr, ">Attach_Shared_Region: reg=%d id= %d  off=%d  addr=%d addr+off=%d \n",reg,region_list[reg].id, *offset, region_list[reg].addr, region_list[reg].addr+ *offset);
 
   if(STAMP)
   /* check stamp to make sure that we are attached in the right place */
@@ -273,7 +271,8 @@ long ga_nodeid_();
                 *((int*)(region_list[reg].addr+ *offset)));
   }
   occup_blocks++;
-  return (region_list[reg].addr + *offset);
+/*  return (region_list[reg].addr + *offset);*/
+  return (region_list[0].addr + *offset);
 }
 
 
@@ -311,18 +310,16 @@ long sz;
        else
          pref_addr = (char*)0;   /* first time let the OS choose address */
 
-       if(DEBUG) printf("calling shmat: id=%d adr=%d sz=%d\n",id, pref_addr,sz);
+       if(DEBUG)printf("  calling shmat: id=%d adr=%d sz=%d\n",id,pref_addr,sz);
        if ( (int)(temp = (char*)shmat((int) id, pref_addr, 0)) == -1){
           perror((char*)0);
           ga_error("allocate: failed to attach to shared region",  0L);
        }
 
-       if(DEBUG) fprintf(stderr,"allocate: id=%d addr=%d size=%d\n",id,temp,sz);
-
        region_list[alloc_regions].addr = temp;
        region_list[alloc_regions].id = id;
 
-       if(DEBUG) fprintf(stderr,"allocate:attach: id=%d addr=%d \n",id, temp);
+       if(DEBUG) fprintf(stderr,"  allocate:attach: id=%d addr=%d \n",id, temp);
        alloc_regions++;
        if(i==0)ftemp = temp;
     }
