@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.21 2003-01-21 17:51:45 vinod Exp $ */
+/* $Id: mutex.c,v 1.22 2003-03-10 20:25:31 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -375,21 +375,22 @@ void ARMCI_Unlock(int mutex, int proc)
         if(armci_nproc == 1) return;
 
 #       if defined(SERVER_LOCK)
-           if(proc != armci_me)
+           if(armci_nclus >1) { 
+	     if(proc != armci_me)
                armci_rem_unlock(mutex, proc, glob_mutex[proc].tickets[mutex]);
-           else {
-               int ticket = glob_mutex[proc].tickets[mutex];
-               msg_tag_t tag;
-               int waiting;
-
-               waiting = armci_server_unlock_mutex(mutex, proc, ticket, &tag);
-               if(waiting >-1)
-                  armci_unlock_waiting_process(tag, waiting, ++ticket);
-           }
-               
-#       else
-           armci_generic_unlock(mutex, proc);
+	     else {
+	       int ticket = glob_mutex[proc].tickets[mutex];
+	       msg_tag_t tag;
+	       int waiting;
+	       
+	       waiting = armci_server_unlock_mutex(mutex, proc, ticket, &tag);
+	       if(waiting >-1)
+		 armci_unlock_waiting_process(tag, waiting, ++ticket);
+	     }
+	   }
+	   else
 #       endif
+	     armci_generic_unlock(mutex, proc);
 
         if(DEBUG)fprintf(stderr,"%d leave unlock\n",armci_me);
 }
