@@ -43,7 +43,7 @@ stat_t info;
     /* build param file name */
     len = strlen(filename);
     if(len+HD_NAME_EXT_LEN >= MAX_HD_NAME_LEN)
-       dai_error("dai_read_param: filename too long:",len);
+       dai_error("dai_file_config: filename too long:",len);
     strcpy(param_filename,filename);
     strcat(param_filename,HD_EXT);
 
@@ -81,7 +81,7 @@ int dai_read_param(char* filename,Integer d_a)
 {
 FILE *fd;
 char param_filename[MAX_HD_NAME_LEN];
-Integer len;
+Integer len, i, ndim;
 Integer me=ga_nodeid_();
 Integer brd_type=DRA_BRD_TYPE, orig, dra_hndl=d_a+DRA_OFFSET;
 long input;
@@ -101,20 +101,23 @@ char dummy[HDLEN];
 
     if((fd=fopen(param_filename,"r"))){
 
-      if(!fscanf(fd,"%ld", &input))  dai_error("dai_read_param:dim1",0);
-      DRA[dra_hndl].dims[0] = (Integer) input;
-      if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:dim2",0);
-      DRA[dra_hndl].dims[1] = (Integer) input;
+      if(!fscanf(fd,"%ld", &input))  dai_error("dai_read_param:ndim",0);
+      DRA[dra_hndl].ndim = (Integer) input;
+      ndim = (Integer) input;
+      for (i=0; i<ndim; i++) {
+        if(!fscanf(fd,"%ld", &input))  dai_error("dai_read_param:dims",i);
+        DRA[dra_hndl].dims[i] = (Integer) input;
+      }
 
       if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:type",0);
       DRA[dra_hndl].type = (Integer) input;
       if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:layout",0);
       DRA[dra_hndl].layout = (Integer) input;
 
-      if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk1",0);
-      DRA[dra_hndl].chunk[0] = (Integer) input;
-      if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk2",0);
-      DRA[dra_hndl].chunk[1] = (Integer) input;
+      for (i=0; i<ndim; i++) {
+        if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:chunk",i);
+        DRA[dra_hndl].chunk[i] = (Integer) input;
+      }
 
       fgets(dummy,HDLEN,fd); /*advance to next line*/
       if(!fgets(DRA[dra_hndl].name,DRA_MAX_NAME,fd))dai_error("dai_read_param:name",0);
@@ -147,6 +150,7 @@ Integer len;
 FILE *fd;
 char param_filename[MAX_HD_NAME_LEN];
 Integer me=ga_nodeid_(), dra_hndl=d_a+DRA_OFFSET;
+Integer i, ndim = DRA[dra_hndl].ndim;
 
   ga_sync_();
    
@@ -162,18 +166,20 @@ Integer me=ga_nodeid_(), dra_hndl=d_a+DRA_OFFSET;
     if(! (fd = fopen(param_filename,"w")) )
                                 dai_error("dai_write_param:open failed",0);
 
-    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].dims[0])) 
-                                dai_error("dai_write_param:dim1",0);
-    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].dims[1])) 
-                                dai_error("dai_write_param:dim2",0);
+    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].ndim)) 
+                                dai_error("dai_write_param:ndim",0);
+    for (i=0; i<ndim; i++) {
+      if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].dims[i])) 
+                                dai_error("dai_write_param:dims",i);
+    }
     if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].type)) 
                                 dai_error("dai_write_param:type",0);
     if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].layout))
                                 dai_error("dai_write_param:layout",0);
-    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].chunk[0]))
-                                dai_error("dai_write_param:chunk1",0);
-    if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].chunk[1]))
-                                dai_error("dai_write_param:chunk2",0);
+    for (i=0; i<ndim; i++) {
+      if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].chunk[i]))
+                                dai_error("dai_write_param:chunk",i);
+    }
     if(!fprintf(fd,"\n%s\n",DRA[dra_hndl].name))
                                 dai_error("dai_write_param:name",0);
 
