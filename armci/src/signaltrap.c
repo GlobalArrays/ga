@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.18 2002-01-08 21:56:50 vinod Exp $ */
+/* $Id: signaltrap.c,v 1.19 2002-01-28 20:16:52 d3h325 Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -423,6 +423,7 @@ void RestoreSigTerm()
 
 
 /*********************** SIGIOT *************************************/
+#ifdef SIGIOT
 #if defined(SUN) && !defined(SOLARIS)
 SigType SigIotHandler(sig, code, scp, addr)
      int code;
@@ -445,6 +446,7 @@ void TrapSigIot()
       if ( signal(SIGIOT, SigIotHandler) == SIG_ERR)
           Error("TrapSigIot: error from signal setting SIGIOT", 0);
 }
+#endif
 
 
 

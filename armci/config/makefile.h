@@ -27,6 +27,15 @@ ifeq ($(TARGET),CYGNUS)
  GLOB_DEFINES+= -DLINUX
 endif
 
+ifeq ($(TARGET),CYGWIN)
+           FC = g77
+           CC = gcc
+ GLOB_DEFINES+= -DSHMEM -DMMAP -DSYSV
+     COPT_REN = -malign-double
+     EXTRA_OBJ = winshmem.o signaltrap.o shmalloc.o
+endif
+
+
 #-------------------------- INTERIX 2.2.5 on Windows ------------
 ifeq ($(TARGET),INTERIX) 
            FC = g77

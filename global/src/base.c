@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.17 2002-01-22 23:51:46 vinod Exp $ */
+/* $Id: base.c,v 1.18 2002-01-28 20:16:53 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -71,7 +71,7 @@ int** GA_Update_Flags;
 /*#define CHECK_MA yes */
 
 /* uncomment line below to verify if MA base address is alligned wrt datatype*/ 
-#if !(defined(LINUX) || defined(CRAY))
+#if !(defined(LINUX) || defined(CRAY) || defined(CYGWIN))
 #define CHECK_MA_ALGN 1
 #endif
 
@@ -1143,7 +1143,7 @@ char *ptr = (char*)0;
             fflush(stdout);
      */
 
-     bzero(ptr_arr,(int)GAnproc*sizeof(char*));
+     bzero((char*)ptr_arr,(int)GAnproc*sizeof(char*));
      ptr_arr[GAme] = ptr;
      armci_exchange_address((void**)ptr_arr,(int)GAnproc);
      if(bytes && !ptr) return 1; 

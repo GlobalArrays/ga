@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.41 2001-08-08 07:16:32 d3h325 Exp $ */
+/* $Id: armci.c,v 1.42 2002-01-28 20:16:50 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -49,7 +49,7 @@ int _armci_initialized=0;
 int _armci_terminating =0;
 thread_id_t armci_usr_tid;
 double armci_internal_buffer[BUFSIZE_DBL];
-#if defined(SYSV) || defined(WIN32)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP)
 #   include "locks.h"
     lockset_t lockid;
 #endif
@@ -57,7 +57,7 @@ double armci_internal_buffer[BUFSIZE_DBL];
 
 void ARMCI_Cleanup()
 {
-#if defined(SYSV) || defined(WIN32)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP)
     Delete_All_Regions();
 #if !defined(LAPI) 
     DeleteLocks(lockid);
@@ -150,7 +150,7 @@ void ARMCI_Error(char *msg, int code)
 
 void armci_allocate_locks()
 {
-#if defined(SYSV) || defined(WIN32)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP)
     if(armci_nproc == 1)return;    
     if(armci_master==armci_me)CreateInitLocks(NUM_LOCKS, &lockid);
     armci_msg_clus_brdcst(&lockid, sizeof(lockid));
@@ -161,7 +161,7 @@ void armci_allocate_locks()
 
 void ARMCI_Set_shm_limit(unsigned long shmemlimit)
 {
-#if defined(SYSV) || defined(WIN32)
+#if defined(SYSV) || defined(WIN32)  || defined(MMAP)
 #define EXTRASHM  1024   /* extra shmem used internally in ARMCI */
 unsigned long limit;
     limit = armci_clus_info[armci_clus_me].nslave * shmemlimit + EXTRASHM;

@@ -1,8 +1,8 @@
-/* $Id: pack.c,v 1.20 2002-01-08 21:56:50 vinod Exp $ */
+/* $Id: pack.c,v 1.21 2002-01-28 20:16:51 d3h325 Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
-#if !defined(ACC_COPY) && !defined(CRAY_YMP) && !defined(CYGNUS)
+#if !defined(ACC_COPY) &&!defined(CRAY_YMP) &&!defined(CYGNUS)&&!defined(CYGWIN)
 #   define REMOTE_OP 
 #endif
 #ifdef REMOTE_OP

@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.61 2002-01-08 21:06:34 vinod Exp $
+# $Id: makefile.h,v 1.62 2002-01-28 20:16:53 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -269,6 +269,13 @@ endif
 
 #............................. CYGNUS on Windows ..........................
 #
+ifeq ($(TARGET),CYGWIN)
+           FC = g77
+           CC = gcc
+ GLOB_DEFINES = -DCYGWIN
+     COPT_REN = -malign-double
+       RANLIB = ranlib
+endif
 ifeq ($(TARGET),CYGNUS)
            FC = g77
            CC = gcc

@@ -21,7 +21,7 @@ c vector boxes lack arithmetic precision
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 50, DIM = 2, nwidth = 2, MAXPROC = 2000)
-      parameter (nloop = 100)
+      parameter (nloop = 1000)
       integer ndim, nproc, pdims(7), type, dcnt, g_a, maxval
       integer i, j, k, dims(7), width(7), map(2*nmax)
       integer lo(7), hi(7), ld(7)

@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.13 2001-11-09 18:31:46 d3h325 Exp $ */
+/* $Id: rmw.c,v 1.14 2002-01-28 20:16:51 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -77,7 +77,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 }
 #endif
 
-#if defined(CLUSTER) && !defined(LAPI) && !defined(QUADRICS)
+#if defined(CLUSTER) && !defined(LAPI) && !defined(QUADRICS) &&!defined(CYGWIN)
      if(!SAMECLUSNODE(proc)){
        armci_rem_rmw(op, ploc, prem,  extra, proc);
        return 0;

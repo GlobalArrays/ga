@@ -1,4 +1,4 @@
-#if defined(LINUX)
+#if defined(LINUX) || defined(CYGWIN)
 
 #if defined(__i386__) || defined(__alpha) || defined(__ia64)
 #  define SPINLOCK 

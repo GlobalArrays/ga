@@ -1,4 +1,4 @@
-/* $Id: locks.c,v 1.7 2000-06-23 22:22:06 d3h325 Exp $ */
+/* $Id: locks.c,v 1.8 2002-01-28 20:16:50 d3h325 Exp $ */
 #define _LOCKS_C_
 #include "locks.h"
 #include "armcip.h"
@@ -43,7 +43,7 @@ int size=num_locks*sizeof(PAD_LOCK_T);
   }
 #else
 
-       bzero(_armci_int_mutexes,size);
+       bzero((char*)_armci_int_mutexes,size);
 #endif
 } 
 

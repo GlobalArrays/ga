@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.7 2001-10-19 23:37:28 d3h325 Exp $ */
+/* $Id: winshmem.c,v 1.8 2002-01-28 20:16:52 d3h325 Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -26,6 +26,7 @@
  */
 
 
+#define DEBUG 0
 
 #include <stdio.h>
 
@@ -49,6 +50,14 @@
    typedef char* LPVOID;
 #  define  GETPID getpid
    static long cb_key=1961;
+#elif defined(MMAP)
+#  include <fcntl.h>
+#  include <unistd.h>
+#  include <sys/stat.h>
+#  include <sys/mman.h>
+   typedef int HANDLE;
+   typedef void* LPVOID;
+#  define  GETPID getpid
 #else
 #  ifndef _POSIX_C_SOURCE
 #    define  _POSIX_C_SOURCE 199309L
@@ -66,7 +75,6 @@
 #include "shmalloc.h"
 #include "shmem.h"
 
-#define DEBUG 0
 #define SHM_UNIT (1024)
 
 /* default unit for shared memory allocation in KB! */
@@ -138,6 +146,8 @@ long code=0;
           (int)dp_xmfree(region_list[reg].addr);
 #       else
           munmap(region_list[reg].addr, region_list[reg].size);
+          SET_MAPNAME(reg);
+          (void*)unlink(map_fname);
 #       endif
         region_list[reg].addr = (char*)0;
     }
@@ -230,6 +240,25 @@ char *armci_get_core_from_map_file(int exists, long size)
        CloseHandle(h_shm_map);
        h_shm_map = INVALID_HANDLE_VALUE;
     }
+#elif defined(MMAP)
+
+    if(exists){
+       if(size < MinShmem*SHM_UNIT) size = MinShmem*SHM_UNIT;
+       h_shm_map = open(map_fname, O_RDWR, S_IRWXU);
+       if(h_shm_map <0) return NULL;
+    }else{
+       (void*)unlink(map_fname); /* sanity cleanup */
+       h_shm_map = open(map_fname, O_CREAT|O_RDWR, S_IRWXU);
+       if(h_shm_map <0) return NULL;
+       if(ftruncate(h_shm_map,size) < 0) return NULL;
+    }
+
+    ptr = mmap((caddr_t)0, (size_t)size, PROT_READ|PROT_WRITE,
+                                         MAP_SHARED, h_shm_map, 0);
+
+    close(h_shm_map);
+    h_shm_map = -1;
+
     
 #else
 
@@ -352,6 +381,7 @@ char *Attach_Shared_Region(long id[], long size, long offset)
          alloc_regions - (int) id[0]);
 
      assert(temp);
+      if(DEBUG)fprintf(stderr,"%d:attach succesful off=%ld ptr=%p\n",armci_me,offset,temp);
      return(temp);
 }
 

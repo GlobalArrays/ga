@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.14 2001-11-09 01:37:04 vinod Exp $ */
+/* $Id: mutex.c,v 1.15 2002-01-28 20:16:51 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -58,7 +58,7 @@ int *mutex_count = (int*)armci_internal_buffer;
 
            
 /*        bzero(mutex_count,armci_nproc*sizeof(int));*/
-        bzero(mutex_count,sizeof(int)*armci_nproc);
+        bzero((char*)mutex_count,sizeof(int)*armci_nproc);
 
         /* find out how many mutexes everybody allocated */
         mutex_count[armci_me]=num;
