@@ -1,9 +1,9 @@
-/* $Id: pgs.c,v 1.3 2004-04-13 21:24:36 d3h325 Exp $ 
+/* $Id: pgs.c,v 1.4 2004-04-16 20:37:39 d3h325 Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
 
-#ident	"@(#)$Id: pgs.c,v 1.3 2004-04-13 21:24:36 d3h325 Exp $"
+#ident	"@(#)$Id: pgs.c,v 1.4 2004-04-16 20:37:39 d3h325 Exp $"
 
 #include <stdlib.h>
 
@@ -560,6 +560,8 @@ RELEASE_LH (PGS_REQDESC *r)
     pgsrail->pr_freeDescs = r;
 }
 
+#define PGSSIZE 128
+
 ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_arr, 
                  int *dst_stride_arr, u_int *count, u_int strides, u_int destvp)
 {
@@ -587,21 +589,31 @@ ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_arr,
     }
 #endif
 
-    for(rail = 0; rail <1; rail++){ /* for now only 1 rail */
-       PGS_RAIL *pgsr = pgsstate->pgs_rails + rail;
-       if (!(rdesc = (PGS_REQDESC *)ACQUIRE_LH(pgsr)))
-   	   elan_exception(pgsr->pr_state->elan_state, ELAN_ENOMEM,
+    if(count[0] <= PGSSIZE && strides==1 ){ /* use linked elan_puts */
+      int i;
+      char *ps =    (char*)src;
+      char *pd =    (char*)dst;
+      for(i=0; i< count[1]; i++){
+         event = elan_link(event,elan_put(elan_base->state,ps, pd, count[0], destvp));
+         ps += src_stride_arr[0];
+         pd += dst_stride_arr[0];
+      }
+
+    } else for(rail = 0; rail <1; rail++){ /* for now only 1 rail */
+         PGS_RAIL *pgsr = pgsstate->pgs_rails + rail;
+         if (!(rdesc = (PGS_REQDESC *)ACQUIRE_LH(pgsr)))
+     	   elan_exception(pgsr->pr_state->elan_state, ELAN_ENOMEM,
 		       "elan_putss: failed to allocate descriptor");
 
-       pack_sdscr(src, dst, src_stride_arr, dst_stride_arr, count, strides, 
+         pack_sdscr(src, dst, src_stride_arr, dst_stride_arr, count, strides, 
                   destvp, &rdesc->r_req, pgsr->pr_rail);
    
        
-       rdesc->r_qdmasize = STRIDEDHSIZE;
-       rdesc->r_vp = pgsstate->elan_state->vp; /* where to send the PUTS desc */
-       rdesc->r_req.req_type = PGS_PUTS;
-       rdesc->r_req.req_rvp = destvp; /* where to send the data to */
-       event = elan_link(event, issueStridedRequest(pgsr, rdesc)); 
+         rdesc->r_qdmasize = STRIDEDHSIZE;
+         rdesc->r_vp = pgsstate->elan_state->vp; /* where to send the PUTS desc */
+         rdesc->r_req.req_type = PGS_PUTS;
+         rdesc->r_req.req_rvp = destvp; /* where to send the data to */
+         event = elan_link(event, issueStridedRequest(pgsr, rdesc)); 
     }
 
     return(event);
@@ -680,7 +692,16 @@ ELAN_EVENT *elan_getss (void *pgs, void *src, void *dst, int *src_stride_arr, in
     }
 #endif
 
-    for(rail = 0; rail <1; rail++){ /* for now only 1 rail */
+    if(count[0] <= PGSSIZE && strides==1 ){ /* use linked elan_puts */
+      int i;
+      char *ps =    (char*)src;
+      char *pd =    (char*)dst;
+      for(i=0; i< count[1]; i++){
+         event = elan_link(event,elan_get(elan_base->state,ps, pd, count[0], destvp));
+         ps += src_stride_arr[0];
+         pd += dst_stride_arr[0];
+      }
+    } else for(rail = 0; rail <1; rail++){ /* for now only 1 rail */
        PGS_RAIL *pgsr = pgsstate->pgs_rails + rail;
        if (!(rdesc = (PGS_REQDESC *)ACQUIRE_LH(pgsr)))
    	   elan_exception(pgsr->pr_state->elan_state, ELAN_ENOMEM,
