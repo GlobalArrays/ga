@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.1.1.1 1994-03-29 06:44:49 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.2 1994-06-01 19:13:45 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -271,16 +271,16 @@ static long RemoteCreate(remote_hostname, remote_username,
     }
     else {
       argv2[0     ] = remote_executable;
-      for (i=1; i<argc; i++)
-	argv2[i] = argv[i];
-      argv2[argc+0] = "-master";
-      argv2[argc+1] = Canonical(local_hostname);
-      argv2[argc+2] = c_port;
-      argv2[argc+3] = c_n_clus;
-      argv2[argc+4] = c_n_proc;
-      argv2[argc+5] = c_clus_id;
-      argv2[argc+6] = c_proc_id;
-      argv2[argc+7] = (char *) NULL;
+      for (i=1; i<(argc-1); i++) /* Don't copy the .p file name over */
+	argv2[i] = argv[i+1];
+      argv2[i+0] = "-master";
+      argv2[i+1] = Canonical(local_hostname);
+      argv2[i+2] = c_port;
+      argv2[i+3] = c_n_clus;
+      argv2[i+4] = c_n_proc;
+      argv2[i+5] = c_clus_id;
+      argv2[i+6] = c_proc_id;
+      argv2[i+7] = (char *) NULL;
 
       (void) execv(remote_executable, argv2);
     }
