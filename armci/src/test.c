@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.14 1999-07-28 00:48:05 d3h325 Exp $ */
+/* $Id: test.c,v 1.15 1999-11-02 23:52:32 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -986,7 +986,8 @@ void test_memlock()
 
 
 
-#ifdef FUJITSU
+/* we need to rename main if linking with frt compiler */
+#ifdef FUJITSU_FRT
 #define main MAIN__
 #endif
 

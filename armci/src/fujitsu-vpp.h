@@ -38,8 +38,8 @@
 #define NATIVE_LOCK0(proc,mtx) if(VPP_SemWait((PROC)(proc),(mtx)))MPLIB_TERMINATE
 #define NATIVE_UNLOCK0(proc,mtx) if(VPP_SemPost((PROC)(proc),(mtx)))MPLIB_TERMINATE
 
-#define NATIVE_LOCK(proc) if(VPP_SemWait((PROC)(proc),SEM_BASE))MPLIB_TERMINATE
-#define NATIVE_UNLOCK(proc) if(VPP_SemPost((PROC)(proc),SEM_BASE))MPLIB_TERMINATE
+#define NAT_LOCK(proc) if(VPP_SemWait((PROC)(proc),SEM_BASE))MPLIB_TERMINATE
+#define NAT_UNLOCK(proc) if(VPP_SemPost((PROC)(proc),SEM_BASE))MPLIB_TERMINATE
 #define NATIVE_BARRIER VPP_Barrier
 #define NATIVE_BARRIER__() MPI_Barrier(MPI_COMM_WORLD)
 
