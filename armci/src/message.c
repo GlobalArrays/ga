@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.55 2004-07-27 08:57:59 manoj Exp $ */
+/* $Id: message.c,v 1.56 2004-08-19 07:08:57 edo Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -196,7 +196,7 @@ void cpu_yield()
                yield();
 #elif defined(WIN32)
                Sleep(1);
-#elif _POSIX_PRIORITY_SCHEDULING
+#elif defined(_POSIX_PRIORITY_SCHEDULING)
                sched_yield();
 #else
                usleep(1);
