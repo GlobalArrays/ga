@@ -250,6 +250,13 @@ ifeq ($(TARGET),IBM)
          IBM_  = 1
 endif
 
+ifeq ($(TARGET),IBM64)
+     FOPT_REN = -q64
+     COPT_REN = -q64
+      ARFLAGS = -rcv -X 64
+        IBM_  = 1
+endif
+
 ifdef IBM_
      ifeq ($(FOPT), -O)
          FOPT = -O4 -qarch=com -qstrict

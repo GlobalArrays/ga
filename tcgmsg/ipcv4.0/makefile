@@ -127,6 +127,15 @@ ifeq ($(TARGET),IBM)
      EXTRA = strdup.o strtok.o
 endif
 
+ifeq ($(TARGET),IBM64)
+        FC = xlf
+    FFLAGS = -O -q64 -qintsize=8 -qEXTNAME
+    CFLAGS+= -q64
+   DEFINES = -DAIX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
+ LINTFLAGS = -u -a -wkD $(DEFINES)
+     EXTRA = strdup.o strtok.o
+   ARFLAGS = -rcv -X 64
+endif
 
 ifeq ($(TARGET),IBMNOEXT)
 #IBM RISC 6000 ... AIX 3.1
@@ -252,7 +261,6 @@ ifeq ($(TARGET),SUN)
    DEFINES = -DSUN -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
     FFLAGS = -O3
 endif
-
 
 ifeq ($(TARGET),SUN77_2)
    DEFINES = -DSUN -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN -DSUNF77_2
