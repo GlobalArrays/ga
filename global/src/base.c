@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.94 2004-10-20 17:27:20 vinod Exp $ */
+/* $Id: base.c,v 1.95 2004-10-20 21:25:58 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -125,7 +125,7 @@ int  GA_stack_size=0;
 #define ga_ComputeIndexM(_index, _ndim, _subscript, _dims)                     \
 {                                                                              \
   Integer  _i, _factor=1;                                                      \
-  _Pragma("_CRI novector");                                         \
+  __CRAYX1_PRAGMA("_CRI novector");                                         \
   for(_i=0,*(_index)=0; _i<_ndim; _i++){                                       \
       *(_index) += _subscript[_i]*_factor;                                     \
       if(_i<_ndim-1)_factor *= _dims[_i];                                      \
@@ -138,7 +138,7 @@ int  GA_stack_size=0;
 #define ga_UpdateSubscriptM(_ndim, _subscript, _lo, _hi, _dims)\
 {                                                                              \
   Integer  _i;                                                                 \
-  _Pragma("_CRI novector");                                         \
+  __CRAYX1_PRAGMA("_CRI novector");                                         \
   for(_i=0; _i<_ndim; _i++){                                                   \
        if(_subscript[_i] < _hi[_i]) { _subscript[_i]++; break;}                \
        _subscript[_i] = _lo[_i];                                               \
@@ -152,7 +152,7 @@ int  GA_stack_size=0;
 {                                                                              \
   Integer  _i;                                                                 \
   *_elems = 1;                                                                 \
-  _Pragma("_CRI novector");                                         \
+  __CRAYX1_PRAGMA("_CRI novector");                                         \
   for(_i=0; _i<_ndim; _i++){                                                   \
        *_elems *= _hi[_i]-_lo[_i] +1;                                          \
        _subscript[_i] = _lo[_i];                                               \
@@ -552,7 +552,7 @@ void FATR  ga_initialize_ltd_(Integer *mem_limit)
 {\
 int _d;\
     if(ndim<1||ndim>MAXDIM) ga_error("unsupported number of dimensions",ndim);\
-  _Pragma("_CRI novector");                                         \
+  __CRAYX1_PRAGMA("_CRI novector");                                         \
     for(_d=0; _d<ndim; _d++)\
          if(dims[_d]<1)ga_error("wrong dimension specified",dims[_d]);\
 }

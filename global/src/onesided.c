@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.58 2004-10-20 17:27:20 vinod Exp $ */
+/* $Id: onesided.c,v 1.59 2004-10-20 21:25:58 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -289,7 +289,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
       ga_ownsM(g_handle, proc, _lo, _hi);                                      \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
       if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*GA[g_handle].width[0];             \
-      _Pragma("_CRI shortloop");                                               \
+      __CRAYX1_PRAGMA("_CRI shortloop");                                               \
       for(_d=0; _d < _last; _d++)            {                                 \
           _w = GA[g_handle].width[_d];                                         \
           _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                     \
@@ -326,7 +326,7 @@ Integer   _mloc = p* ndim *2;\
 #define gam_ComputePatchIndex(ndim, lo, plo, dims, pidx){\
 Integer _d, _factor;\
           *pidx = plo[0] -lo[0];\
-          _Pragma("_CRI shortloop");\
+          __CRAYX1_PRAGMA("_CRI shortloop");\
           for(_d= 0,_factor=1; _d< ndim -1; _d++){\
              _factor *= (dims[_d]);\
              *pidx += _factor * (plo[_d+1]-lo[_d+1]);\
@@ -409,7 +409,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 
 #ifndef __crayx1
       for(loop=0; loop<num_loops; loop++) {
-        _Pragma("_CRI novector");
+        __CRAYX1_PRAGMA("_CRI novector");
 #endif
 	for(idx=0; idx<np; idx++){
           Integer ldrem[MAXDIM];
@@ -658,7 +658,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 
 #ifndef __crayx1
       for(loop=0; loop<num_loops; loop++) {
-        _Pragma("_CRI novector");
+        __CRAYX1_PRAGMA("_CRI novector");
 #endif
 	for(idx=0; idx< np; idx++){
 	  Integer ldrem[MAXDIM];
