@@ -17,7 +17,7 @@ typedef struct {
   msg_tag_t tag;        /* message tag for response to this request */
 }request_header_t;
 
-#define MSG_BUFLEN_DBL 12500
+#define MSG_BUFLEN_DBL 50000
 #define MSG_BUFLEN  sizeof(double)*MSG_BUFLEN_DBL
 extern  char* MessageRcvBuffer;
 extern  char* MessageSndBuffer;
