@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.115 2005-01-14 02:07:52 manoj Exp $
+# $Id: makefile.h,v 1.116 2005-01-14 02:32:12 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -56,8 +56,10 @@ endif
 # to enable two underscores in fortran names, please define environment variable
 # F2C_TWO_UNDERSCORES or uncomment the following line
 #F2C_TWO_UNDERSCORES=1
-ifeq ($(MSG_COMMS),MPI) 
-   F2C_TWO_UNDERSCORES=1              
+ifndef USE_MPI
+  ifeq ($(MSG_COMMS),MPI)
+    F2C_TWO_UNDERSCORES=1
+  endif
 endif
 #
 #........................ SUN and Fujitsu Sparc/solaris ........................
