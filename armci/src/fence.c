@@ -1,9 +1,15 @@
-/* $Id: fence.c,v 1.13 2003-04-02 23:16:58 vinod Exp $ */
+/* $Id: fence.c,v 1.14 2003-04-02 23:52:15 vinod Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
-
 #include <stdio.h>
+#if defined(PVM)
+#   include <pvm3.h>
+#elif defined(TCGMSG)
+#   include <sndrcv.h>
+#else
+#   include <mpi.h>
+#endif
 
 #ifdef CLUSTER
    char *_armci_fence_arr;
@@ -114,9 +120,9 @@ void ARMCI_AllFence()
 
 void ARMCI_Barrier()
 {
+long type=ARMCI_TAG;
 #ifdef GM
 int buf;
-long type=ARMCI_TAG;
     /*first step is to make sure all the sends are complete */
     armci_client_clear_outstanding_sends();
 
@@ -136,9 +142,9 @@ long type=ARMCI_TAG;
 #else
     ARMCI_AllFence();
 #  ifdef MPI
-    MPI_Bcast(buffer, (int)len, MPI_CHAR, (int)root, MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
 #  else
-    BRDCST_(&type, buffer, &len, &root);
+    SYNCH_(&type);
 #  endif
 #endif
 }

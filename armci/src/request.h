@@ -12,6 +12,7 @@ extern void  _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node);
 extern void _armci_buf_complete_nb_request(int bufid,unsigned int tag, int *retcode);
 extern void _armci_buf_test_nb_request(int bufid,unsigned int tag, int *retcode);
 extern void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol);
+extern void _armci_buf_clear_all();
 
 #ifdef LAPI
 #  include "lapidefs.h"

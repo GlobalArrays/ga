@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.23 2003-04-02 23:16:58 vinod Exp $    **/
+/* $Id: buffers.c,v 1.24 2003-04-02 23:52:15 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -630,11 +630,15 @@ void _armci_buf_clear_all()
 {
 int i; 
     for(i=0;i<MAX_BUFS;i++){
+# ifdef BUF_EXTRA_FIELD_T
        if(_armci_buf_state->table[i].op || _armci_buf_state->table[i].first)
          CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[i].field,_armci_buf_state->table[i].snd,_armci_buf_state->table[i].rcv,_armci_buf_state->table[i].to,_armci_buf_state->table[i].op);
+#endif
     }
     for(i=0;i<MAX_SMALL_BUFS;i++){
+# ifdef BUF_EXTRA_FIELD_T
        if(_armci_buf_state->table[i].op || _armci_buf_state->table[i].first)
          CLEAR_SEND_BUF_FIELD(_armci_buf_state->smallbuf[i].field,_armci_buf_state->table[i].snd,_armci_buf_state->table[i].rcv,_armci_buf_state->table[i].to,_armci_buf_state->table[i].op);
+#endif
     }
 }
