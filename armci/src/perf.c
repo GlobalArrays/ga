@@ -25,6 +25,7 @@ int chunk[CHUNK_NUM] = {1,3,4,6,9,12,16,20,24,30,40,48,52,64,78,91,104,
 
 char check_type[15];
 int nproc, me;
+int warn_accuracy=0;
 
 void fill_array(double *arr, int count, int which);
 void check_result(double *src_buf, double *dst_buf, int *stride, int *count,
@@ -100,6 +101,10 @@ double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
 
     if(CHECK_RESULT) free(tmp_buf);
 
+    if(total_time == 0.0){
+       total_time=0.00001; /* workaround for inaccurate timers */
+       warn_accuracy++;
+    }
     return(total_time/loop);
 }
 
@@ -153,6 +158,10 @@ double time_put(double *src_buf, double *dst_buf, int chunk, int loop,
 
     if(CHECK_RESULT) free(tmp_buf);
     
+    if(total_time == 0.0){ 
+       total_time=0.00001; /* workaround for inaccurate timers */
+       warn_accuracy++;
+    }
     return(total_time/loop);
 }
 
@@ -216,6 +225,10 @@ double time_acc(double *src_buf, double *dst_buf, int chunk, int loop,
 
     if(CHECK_RESULT) { free(before_buf); free(after_buf); }
     
+    if(total_time == 0.0){ 
+       total_time=0.00001; /* workaround for inaccurate timers */
+       warn_accuracy++;
+    }
     return(total_time/loop);
 }
 
@@ -344,7 +357,7 @@ void test_2D()
     /* only the proc 0 doest the work */
     /* print the title */
     if(me == 0) {
-        printf("\n\t\t\tRemote 2-D Array Section\n");
+        printf("\n\t\t\tRemote 2-D Array Square Section\n");
         if(!CHECK_RESULT){
            printf("  section               get                 put");
            printf("                 acc\n");
@@ -435,8 +448,12 @@ main(int argc, char **argv)
     test_2D();
 
     MPI_Barrier(MPI_COMM_WORLD);
-    if(me == 0)
+    if(me == 0){
+       if(warn_accuracy) 
+          printf("\n\nWARNING: Your MPI timer does not have sufficient accuracy for this test (%d)\n",warn_accuracy);
        printf("\n\n------------ Now we test the same data transfer for correctness ----------\n");
+       fflush(stdout);
+    }
 
     CHECK_RESULT=1;
     MPI_Barrier(MPI_COMM_WORLD);

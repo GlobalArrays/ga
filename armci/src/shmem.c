@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.27 2000-06-09 20:57:51 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.28 2000-06-13 18:41:07 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -166,9 +166,10 @@ unsigned long iptr;
     if(tmp){
         iptr = (unsigned long)tmp;
         iptr >>= logpagesize; iptr <<= logpagesize;
-        printf("%d:unmap ptr=%d->%d size=%d\n",armci_me, tmp,iptr, (int)size);
+        if(DEBUG_)
+           printf("%d:unmap ptr=%d->%d size=%d\n",armci_me, tmp,iptr, (int)size);
         tmp = (char*)iptr;
-        if(munmap(tmp, size) == -1) perror("munmap");
+        if(munmap(tmp, size) == -1) armci_die("munmap failed",0);
     }else armci_die("alloc_munmap: malloc failed",(int)size);
     return tmp;
 }

@@ -1,0 +1,8 @@
+There are two ARMCI tests available in this directory:
+test.c - tests basic functionality
+perf.c - performance benchmark for strided operations
+
+The corresponding executable names are:
+            UNIX        WINDOWS
+test.c      test.x      test.exe  
+perf.c      perf.x      perf.exe  

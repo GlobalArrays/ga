@@ -13,7 +13,15 @@ MPI_LIB_NAME = -lmpi
 ifeq ($(TARGET),LAPI)
 MPI_LIB_NAME = 
 endif
-
+ifeq ($(ARMCI_NETWORK),QUADRICS)
+   ifeq ($(TARGET),DECOSF)
+     MPI_LOC = /usr/opt/mpi
+   else
+     MPI_LOC = /usr/lib/mpi
+   endif
+   MPI_LIB_NAME = -lmpi -lelan
+endif
+#
 #reference to the PVM library name, overwritten by LIBPVM environment variable
 ifeq ($(TARGET),CRAY-T3E)
      PVM_LIB_NAME = -lpvm3
@@ -35,12 +43,13 @@ ifeq ($(MSG_COMMS),PVM)
   MP_DEFINES += -DPVM
 endif
 #
+#
 ifeq ($(MSG_COMMS),MPI)
   ifdef MPI_INCLUDE
     MP_TMP_INCLUDES = $(MPI_INCLUDE) 
   endif
   ifdef MPI_LIB
-      MP_LIBS += -L$(MPI_LIB)
+    MP_LIBS += -L$(MPI_LIB)
   endif
   ifdef LIBMPI
       MPI_LIB_NAME = $(LIBMPI)
@@ -48,6 +57,7 @@ ifeq ($(MSG_COMMS),MPI)
   MP_LIBS += $(MPI_LIB_NAME)
   MP_DEFINES += -DMPI
 endif
+#
 #
 ifeq ($(MSG_COMMS),TCGMSG)
   ifdef TCG_INCLUDE
@@ -59,6 +69,7 @@ ifeq ($(MSG_COMMS),TCGMSG)
   MP_LIBS += -ltcgmsg
   MP_DEFINES += -DTCGMSG
 endif
+#
 #
 ifdef MP_TMP_INCLUDES
   Comma:= ,
