@@ -1,0 +1,93 @@
+1. Installation of myrinet using GM library (must have root privilege)
+
+   * To build gm on linux smp nodes, run configure with the following 
+     options. For details, refer to README-linux.
+
+	--enable-linux-smp
+	--enable-linux-modversions
+
+     then run make
+
+   * Install the driver,
+     
+     cd binary
+     ./GM_INSTAll
+
+   * Run mapper
+
+     cd sbin
+     mapper active.args
+
+   * Check the configuration
+
+     gm_board_info
+
+     It lists the driver information and routing table.
+
+2. Setting up environment
+
+   * ARMCI on top of GM requires the following environment variables to 
+     be set (Examples are taken on colony cluster of PNNL, using csh)
+   
+     setenv TARGET LINUX
+
+     setenv GM_HOME /home/myrinet/gm-1.2pre12/gm
+     setenv GM_INCLUDE $GM_HOME/include
+     setenv GM_LIB $GM_HOME/lib
+
+     setenv ARMCI_NETWORK GM
+
+   * If mpich-gm is chosen as message passing library, the following
+     additional environment variables need to be set
+     (again using examples of colony cluster of PNNL and csh)
+
+     setenv MPI_LOC /home/myrinet/mpich-1.1.2..13/mpich-gm
+     setenv MPI_LIB $MPI_LOC/build/LINUX/ch_gm/lib
+     setenv MPI_INCLUDE $MPI_LOC/include,$MPI_LOC/build/LINUX/ch_gm/include
+     set path = ($MPI_LOC/bin $MPI_LOC/build/LINUX/ch_gm/bin $path)
+
+     setenv LIBMPI -lmpich
+     setenv USE_MPI y
+
+     -- without PBS
+
+        set a $HOME/.gmpi/conf file like this:
+        # .gmpi/conf file begin
+        # first the number of nodes in the file
+        8
+        # the list of (node,port) that make the MPI World
+        nb26.colony.emal.pnnl.gov 2
+        nb26.colony.emal.pnnl.gov 4
+        nb27.colony.emal.pnnl.gov 2
+        nb27.colony.emal.pnnl.gov 4
+        nb28.colony.emal.pnnl.gov 2
+        nb28.colony.emal.pnnl.gov 4
+        nb29.colony.emal.pnnl.gov 2
+        nb29.colony.emal.pnnl.gov 4
+        # .gmpi/conf file end
+
+    -- with PBS
+
+       node files are created dynamically, but should have the same 
+       format as the default .gmpi/conf
+
+    Current ARMCI use two gm ports. The default port numbers are 5 and 6,
+    which are set in the file armci/src/myrinet.h. Users can choose 
+    different ports by editing the definition, depending on the system
+    setting and at least not conflicting with the ports used by MPI.
+
+3. Test run 
+
+   Go to armci/src and make test.x
+
+   Using mpich-gm: run it as regular mpi programs (make sure the mpirun
+   is come from mpich-gm. many systems have multiple mpi installed)
+
+   mpirun -np #procs test.x
+
+   This will read the default .gmpi/conf
+
+4. Contact info and bug report
+
+   email: j_nieplocha@pnl.gov
+   phone: (509) 372-4469
