@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.71 2004-10-12 22:06:15 edo Exp $ */
+/* $Id: copy.h,v 1.72 2004-10-20 17:29:07 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -32,7 +32,7 @@
    EXTERN long long _armci_vec_sync_flag;
 #endif
 
-#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined (DECOSF) || defined(__ia64__)
+#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined (DECOSF) || defined(__ia64__) || defined(__crayx1)
 #   define PTR_ALIGN
 #endif
 
