@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.16 2002-04-09 23:00:44 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.17 2002-04-26 20:08:47 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -717,6 +717,13 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
       mask[idx] = i-1;
       if (mask[idx] != 0) mask0 = FALSE;
       itmp = (itmp-i)/3;
+    }
+    if (mask0) continue;
+
+    /* check to see if ghost cell block has zero elements*/
+    mask0 = FALSE;
+    for (idx = 0; idx < ndim; idx++) {
+      if (mask[idx] != 0 && width[idx] == 0) mask0 = TRUE;
     }
     if (mask0) continue;
     if (DEBUG) {
@@ -2440,11 +2447,14 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
    * separate updates is 2*ndim, an update in the negative and positive
    * directions for each dimension.
    *
-   * This implementation make use of explicit message passing to perform
-   * the update. Separate message types for the updates in each coordinate
-   * direction are used to maintain synchronization locally and to
-   * guarantee that the data is present before the updates in a new
-   * coordinate direction take place.
+   * This implementation make use of a combination of explicit message
+   * passing between processors on different nodes and shared memory
+   * copies with and additional flag between processors on the same node
+   * to perform the update. Separate message types for the messages and
+   * the use of the additional flag are for the updates in each
+   * coordinate direction are used to maintain synchronization locally
+   * and to guarantee that the data is present before the updates in a
+   * new coordinate direction take place.
    *
    * To perform the update, this routine makes use of several copies of
    * indices marking the upper and lower limits of data. Indices
@@ -2474,6 +2484,14 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
    *       that will be sent to the remote processor. Note that the
    *       dimensions of the patches represented by plo_rec[], plo_rec[] and
    *       plo_snd[], phi_snd[] must be the same.
+   *
+   *       tlo_rem[], thi_rem[]: The indices of the locally held visible
+   *       portion of the global array on the remote processor that will be
+   *       receiving the data using a shared memory copy.
+   *
+   *       plo_rem[], phi_rem[]: The local indices of the coordinate patch
+   *       that will be put on the remote processor using a shared memory
+   *       copy.
    */
 
   /* if global array has no ghost cells, just return */
