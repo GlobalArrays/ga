@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.7 2004-06-28 17:45:19 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.8 2004-07-21 23:53:55 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -11,6 +11,10 @@
 
 extern char *armci_allocate(); /* Used to get memory from the system */
 extern void armci_die();
+extern int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
+				size_t *shmsize);
+static char *kr_malloc_shmem(size_t nbytes, context_t *ctx);
+static void kr_free_shmem(char *ap, context_t *ctx);
 
 /**
  * DEFAULT_NALLOC: No. of units of length ALIGNMENT to get in every 
@@ -119,14 +123,18 @@ void kr_malloc_init(size_t usize, /* unit size in bytes */
     ctx->shmid = -1;
     ctx->shmoffset = 0;
     ctx->shmsize   = 0;
+    ctx->ctx_type  = -1;
     do_verify = debug;
 }
 
 
-static char *kr_malloc_local(size_t nbytes, context_t *ctx) {
+char *kr_malloc(size_t nbytes, context_t *ctx) {
     Header *p, *prevp;
     size_t nunits;
     char *return_ptr;
+
+
+    if(ctx->ctx_type == KR_CTX_SHMEM) return kr_malloc_shmem(nbytes,ctx);
 
     /* If first time in need to initialize the free list */
 
@@ -198,8 +206,10 @@ static char *kr_malloc_local(size_t nbytes, context_t *ctx) {
 }
 
 
-static void kr_free_local(char *ap, context_t *ctx) {
+void kr_free(char *ap, context_t *ctx) {
     Header *bp, *p, **up;
+
+    if(ctx->ctx_type == KR_CTX_SHMEM) { kr_free_shmem(ap,ctx); return; }
 
     ctx->nfcalls++;
 
@@ -214,7 +224,7 @@ static void kr_free_local(char *ap, context_t *ctx) {
        bp = (Header *) ap - 1;  /* Point to block header */
 
        if (bp->s.valid1 != VALID1 || bp->s.valid2 != VALID2)
-	  kr_error("kr_free_local: pointer not from kr_malloc_local",
+	  kr_error("kr_free: pointer not from kr_malloc",
 		   (unsigned long) ap, ctx);
 
        ctx->inuse -= bp->s.size; /* Decrement memory ctx->usage */
@@ -224,7 +234,7 @@ static void kr_free_local(char *ap, context_t *ctx) {
 
        for (up=&(ctx->usedp); ; up = &((*up)->s.ptr)) {
 	  if (!*up)
-	     kr_error("kr_free_local: block not found in used list\n",
+	     kr_error("kr_free: block not found in used list\n",
 		      (unsigned long) ap, ctx);
 	  if (*up == bp) {
 	     *up = bp->s.ptr;
@@ -257,6 +267,9 @@ static void kr_free_local(char *ap, context_t *ctx) {
     } /* end if on ap */
 }
 
+/*******************************************************************
+ * kr_malloc_shmem: memory allocator for shmem context (i.e ctx_shmem)
+ */
 static 
 Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize) {
     long idlist[SHMIDLEN];
@@ -284,7 +297,7 @@ Header *get_ptr(context_t *ctx, Header *p) {
     return NULL;
 }
 
-char *kr_malloc(size_t nbytes, context_t *ctx) {
+static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
     Header *p, *prevp;
     size_t nunits, prev_shmsize=0;
     char *return_ptr;
@@ -292,8 +305,6 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
     long prev_shmoffset=0;
     context_t tmp;
 
-    if(ctx->ctx_type == KR_CTX_LOCALMEM) return kr_malloc_local(nbytes,ctx);
-    
     if(_armci_initialized && lock_mode==UNLOCKED) {
        LOCKIT(armci_master); lock_mode=LOCKED; 
     }
@@ -394,14 +405,12 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
 }
 
 
-void kr_free(char *ap, context_t *ctx) {
+static void kr_free_shmem(char *ap, context_t *ctx) {
     Header *bp, *p, **up, *nextp;
     int shmid=-1;
     long shmoffset=0;
     size_t shmsize=0;
     context_t tmp;
-
-    if(ctx->ctx_type == KR_CTX_LOCALMEM) { kr_free_local(ap,ctx); return; }
 
     if(_armci_initialized && lock_mode==UNLOCKED) {
        LOCKIT(armci_master); lock_mode=LOCKED;
@@ -509,7 +518,7 @@ void kr_free(char *ap, context_t *ctx) {
        UNLOCKIT(armci_master); lock_mode=UNLOCKED;
     }
 }
-
+/********************** end of kr_malloc for ctx_shmem *********************/
 
 /*
   Print to standard output the usage statistics.

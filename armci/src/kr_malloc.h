@@ -11,8 +11,8 @@
  
 #define ALIGNMENT (1 << LOG_ALIGN)
 
-#define KR_CTX_SHMEM     1
-#define KR_CTX_LOCALMEM  2
+#define KR_CTX_SHMEM     101
+#define KR_CTX_LOCALMEM  102
  
 union header{
   struct {
