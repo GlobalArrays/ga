@@ -1,57 +1,53 @@
-# Global Array library (shared and distributed memory version)
+
+# Tiny makefile wrapper
+
+
+include ../config/makefile.h
+
+USES_BLAS = src/ga_solve_seq.F src/ga_dgemm.F src/ga_dgemm_seq.F
+
 #
-# Type "make libglobal.a" to create the GA library
-#      "make test"        to create a test program for GAs 
-#      "make testsolve"   to create a test program for linear equation solver 
-#                         based on LU factorization
-#      "make testeig"     to create a test program for GA eigensolver,
-#                         matrix multiply, and symmetrization 
-#      "make clean"       clean
+# This dependency is buggered since the actual GA makefile
+# always CD's into the src directory to do the make ... no
+# alternative but to do the make every time
 #
-#........................................................................
 
-
-# default version and target (to be overwritten on command line)
-CUR_VERSION = SHMEM
-CUR_TARGET  = SUN 
-
-# to be able to use parallel eigensolver and linear equation solver define 
-# DIAG = PAR  &  LU_SOLVE = PAR
-
-DIAG =
-LU_SOLVE =
-
-#do you want tracing ? [YES/NO]
-#
-GA_TRACE = 
-
-ifndef VERSION
-       VERSION = $(CUR_VERSION)
+ifeq ($(TARGET),PARAGON)
+# Distributed memory machines
+global_stamp:	include_stamp 
+	$(MAKE) -f makefile.GA TARGET=$(TARGET) VERSION=DISMEM \
+		DIAG=PAR LU_SOLVE=PAR
+	cp -p libglobal.a $(LIBDIR)
+else
+ifeq ($(TARGET),DELTA)
+# Delta which GA treats as the IPSC ?
+global_stamp:	include_stamp 
+	$(MAKE) -f makefile.GA TARGET=IPSC VERSION=DISMEM \
+		DIAG=PAR LU_SOLVE=PAR
+	cp -p libglobal.a $(LIBDIR)
+else
+# Shared memory machines
+global_stamp:	include_stamp 
+	$(MAKE) -f makefile.GA TARGET=$(TARGET) VERSION=SHMEM \
+		DIAG=PAR LU_SOLVE=PAR
+	cp -p libglobal.a $(LIBDIR)
 endif
-ifndef TARGET 
-       TARGET = $(CUR_TARGET)
 endif
 
+include_stamp:	src/global.fh
+	cp src/global.fh $(INCDIR) 
+	touch include_stamp
 
-   LIBRARY = libglobal.a
-   TESTS   = test test.p testeig testeig.p jacobix jacobix.p\
-             testsolve testsolve.p testchol testchol.p\
-	     testpatch testpatch.p 
+realclean clean:	
+	/bin/rm -f include_stamp
+	-$(MAKE) -f makefile.GA clean
 
-
-export TARGET VERSION DIAG LU_SOLVE GA_TRACE
-
-.PHONY: $(LIBRARY)
-
-$(LIBRARY): 
-	(echo TARGET is $(TARGET); cd ./src; $(MAKE) -j1 || exit 1;) 
-
-$(TESTS):	$(LIBRARY)
-	(cd ./testing; $(MAKE) $@  || exit 1;)
-
-clean:
-	$(RM) *.a events
-	(cd ./src; $(MAKE) clean)
-	(cd ./testing; $(MAKE) realclean)
-	(cd ./trace; $(MAKE) clean)
-	(cd ./X; $(MAKE) clean)
+ifdef USES_BLAS
+sngl_to_dbl:
+	$(CNFDIR)/sngl_to_dbl $(USES_BLAS)
+dbl_to_sngl:
+	$(CNFDIR)/dbl_to_sngl $(USES_BLAS)
+else
+sngl_to_dbl dbl_to_sngl:
+	echo $@ : no conversion necessary
+endif
