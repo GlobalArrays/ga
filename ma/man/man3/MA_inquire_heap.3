@@ -1,4 +1,4 @@
-.TH MA_INQUIRE_HEAP 3 "3 February 1994" "MA Release 1.7" "MA LIBRARY ROUTINES"
+.TH MA_INQUIRE_HEAP 3 "20 February 1997" "MA Release 1.8" "MA LIBRARY ROUTINES"
 .SH NAME
 MA_inquire_heap -
 find out how much free space is available in the heap region
@@ -11,7 +11,7 @@ Integer MA_inquire_heap(datatype)
 .fi
 .SH "FORTRAN SYNOPSIS"
 .nf
-#include "mafdecls.h"
+#include "mafdecls.fh"
 
 integer function MA_inquire_heap(datatype)
     integer     datatype
@@ -31,7 +31,7 @@ MA_init() must be called before this routine is called.
 invalid datatype: %d
 .in +0.5i
 .I datatype
-must be one of those listed in macdecls.h or mafdecls.h.
+must be one of those listed in macdecls.h or mafdecls.fh.
 .in
 .SH "RETURN VALUE"
 C: The number of elements, as described above.
@@ -52,4 +52,4 @@ MA_inquire_avail(3),
 MA_inquire_stack(3)
 .ad
 .SH AUTHOR
-Gregory S. Thomas, Pacific Northwest Laboratory
+Gregory S. Thomas, Pacific Northwest National Laboratory

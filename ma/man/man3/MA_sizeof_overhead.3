@@ -1,4 +1,4 @@
-.TH MA_SIZEOF_OVERHEAD 3 "3 February 1994" "MA Release 1.7" "MA LIBRARY ROUTINES"
+.TH MA_SIZEOF_OVERHEAD 3 "20 February 1997" "MA Release 1.8" "MA LIBRARY ROUTINES"
 .SH NAME
 MA_sizeof_overhead -
 compute size of block overhead
@@ -11,7 +11,7 @@ Integer MA_sizeof_overhead(datatype)
 .fi
 .SH "FORTRAN SYNOPSIS"
 .nf
-#include "mafdecls.h"
+#include "mafdecls.fh"
 
 integer function MA_sizeof_overhead(datatype)
     integer     datatype
@@ -29,7 +29,7 @@ by computing the space required for
 and 400 doubles in 2 allocations in the stack.
 
 .nf
-#include "mafdecls.h"
+#include "mafdecls.fh"
 
     logical ok
     integer heap_bytes_data
@@ -58,7 +58,7 @@ or that there is a problem in the C-FORTRAN linkage.
 invalid datatype: %d
 .in +0.5i
 .I datatype
-must be one of those listed in macdecls.h or mafdecls.h.
+must be one of those listed in macdecls.h or mafdecls.fh.
 .in
 .SH "RETURN VALUE"
 C: The number of elements, as described above.
@@ -78,4 +78,4 @@ MA(3),
 MA_sizeof(3)
 .ad
 .SH AUTHOR
-Gregory S. Thomas, Pacific Northwest Laboratory
+Gregory S. Thomas, Pacific Northwest National Laboratory

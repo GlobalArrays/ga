@@ -1,12 +1,10 @@
-.TH MA 3 "3 February 1994" "MA Release 1.7" "MA LIBRARY ROUTINES"
+.TH MA 3 "20 February 1997" "MA Release 1.8" "MA LIBRARY ROUTINES"
 .SH NAME
 MA -
 introduction to the MA dynamic memory allocator
 .SH DESCRIPTION
 MA is a library of routines that comprises a dynamic memory allocator
 for use by C, FORTRAN, or mixed-language applications.
-FORTRAN applications require such a library
-because the language does not support dynamic memory allocation.
 C applications can benefit from using MA
 instead of the ordinary malloc() and free() routines
 because of the extra features MA provides:
@@ -14,22 +12,35 @@ both heap and stack memory management disciplines,
 debugging and verification support,
 usage statistics,
 and quantitative memory availability information.
+FORTRAN applications can take advantage of the same features,
+and may in fact require a library such as MA
+because dynamic memory allocation is not supported
+by all versions of the language.
 
 MA is designed to be portable across a variety of platforms.
 The following platforms are currently supported:
 
 .in +0.5i
 .nf
-delta_pgi40     Intel DELTA, NX/M R1.5 (compiled with PGI 4.0)
-ipsc_pgi40      Intel iPSC/860, NX/M R1.4 (compiled with PGI 4.0)
+alpha_osf13     DEC Alpha, DEC OSF/1 V1.3
+alpha_osf13_i8  DEC Alpha, DEC OSF/1 V1.3, f77 -i8
+crayc90_7c_dp   Cray Y-MP C90, UNICOS 7.C, cf77 -Wf-dp
+crayt3d_802_dp  Cray T3D, UNICOS 8.0.2, cf77 -Wf-dp
+delta_pgi40     Intel DELTA, NX/M R1.5 (cross-compiled by PGI 4.0)
+hp700_ux90      HP 9000/700, HP-UX 9.0, gcc
+ipsc_pgi40      Intel iPSC/860, NX/M R1.4 (cross-compiled by PGI 4.0)
 ksr1_1141       KSR1, KSR OS R1.1.4.1
 ksr1_1141_i4    KSR1, KSR OS R1.1.4.1, f77 -i4
 ksr1_1141_i4r8  KSR1, KSR OS R1.1.4.1, f77 -i4 -r8
 ksr1_1141_r8    KSR1, KSR OS R1.1.4.1, f77 -r8
+paragon_osf12   Intel Paragon, OSF/1 R1.2
 rs_aix32        IBM RS/6000, AIX 3.2
 sgi_405f        SGI, IRIX 4.0.5F
 sgi_5111        SGI, IRIX 5.1.1.1
-sun4m_412       SPARC, SunOS 4.1.x
+sgi_60          SGI Power Challenge, IRIX 6.0
+sgi_60_i8       SGI Power Challenge, IRIX 6.0, f77 -i8
+sun4m_412       Sun SPARC, SunOS 4.1.x
+sun4x_55        Sun SPARC, SunOS 5.5.x
 .fi
 .in
 .SH IMPLEMENTATION
@@ -75,6 +86,7 @@ Initialization
 .in +0.5i
 .nf
 MA_init()
+MA_initialized()
 MA_sizeof()
 MA_sizeof_overhead()
 .fi
@@ -162,7 +174,7 @@ via MA_set_error_print().
 .SH FILES
 To access required MA definitions,
 C applications should include macdecls.h
-and FORTRAN applications should include mafdecls.h.
+and FORTRAN applications should include mafdecls.fh.
 
 .nf
 Include files: /msrc/proj/hpctools/ma/release/current/include
@@ -180,6 +192,7 @@ MA_get_index(3),
 MA_get_next_memhandle(3),
 MA_get_pointer(3),
 MA_init(3),
+MA_initialized(3),
 MA_init_memhandle_iterator(3),
 MA_inquire_avail(3),
 MA_inquire_heap(3),
@@ -197,4 +210,4 @@ MA_summarize_allocated_blocks(3),
 MA_verify_allocator_stuff(3)
 .ad
 .SH AUTHOR
-Gregory S. Thomas, Pacific Northwest Laboratory
+Gregory S. Thomas, Pacific Northwest National Laboratory

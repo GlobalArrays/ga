@@ -1,4 +1,4 @@
-.TH MA_SET_AUTO_VERIFY 3 "3 February 1994" "MA Release 1.7" "MA LIBRARY ROUTINES"
+.TH MA_SET_AUTO_VERIFY 3 "20 February 1997" "MA Release 1.8" "MA LIBRARY ROUTINES"
 .SH NAME
 MA_set_auto_verify -
 set the ma_auto_verify flag
@@ -11,7 +11,7 @@ Boolean MA_set_auto_verify(value)
 .fi
 .SH "FORTRAN SYNOPSIS"
 .nf
-#include "mafdecls.h"
+#include "mafdecls.fh"
 
 logical function MA_set_auto_verify(value)
     logical     value
@@ -24,9 +24,17 @@ If the ma_auto_verify flag is true,
 then MA_verify_allocator_stuff() is called
 upon invocation
 by every other public MA routine
-except MA_set_auto_verify(),
-MA_set_error_print(),
-and MA_set_hard_fail().
+except:
+
+.in +0.5i
+.nf
+MA_initialized()
+MA_set_auto_verify()
+MA_set_error_print()
+MA_set_hard_fail()
+.fi
+.in
+
 The ma_auto_verify flag is initially false.
 .\" .SH USAGE
 .\" .SH DIAGNOSTICS
@@ -52,4 +60,4 @@ MA_set_hard_fail(3),
 MA_verify_allocator_stuff(3)
 .ad
 .SH AUTHOR
-Gregory S. Thomas, Pacific Northwest Laboratory
+Gregory S. Thomas, Pacific Northwest National Laboratory

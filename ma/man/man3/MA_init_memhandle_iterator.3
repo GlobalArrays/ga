@@ -1,4 +1,4 @@
-.TH MA_INITIALIZE_MEMHANDLE_ITERATOR 3 "3 February 1994" "MA Release 1.7" " "
+.TH MA_INITIALIZE_MEMHANDLE_ITERATOR 3 "20 February 1997" "MA Release 1.8" " "
 .SH NAME
 MA_init_memhandle_iterator -
 initialize a scan of currently allocated blocks
@@ -11,7 +11,7 @@ Boolean MA_init_memhandle_iterator(ithandle)
 .fi
 .SH "FORTRAN SYNOPSIS"
 .nf
-#include "mafdecls.h"
+#include "mafdecls.fh"
 
 logical function MA_init_memhandle_iterator(ithandle)
     integer     ithandle
@@ -25,7 +25,7 @@ The following FORTRAN code illustrates the use of MA_init_memhandle_iterator()
 by looping over all currently allocated blocks.
 
 .nf
-#include "mafdecls.h"
+#include "mafdecls.fh"
 
     logical ok
     integer ihandle
@@ -61,4 +61,4 @@ MA(3),
 MA_get_next_memhandle(3)
 .ad
 .SH AUTHOR
-Gregory S. Thomas, Pacific Northwest Laboratory
+Gregory S. Thomas, Pacific Northwest National Laboratory
