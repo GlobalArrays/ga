@@ -11,6 +11,7 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
+c#define NEW_API
 
       program main
       implicit none
@@ -125,10 +126,20 @@ c        end do
       endif
 
       type = MT_INT
-c      status = nga_create_ghosts_irreg (type, ndim, dims, width,
-c     +        "test_array", map, pdims, g_a)
-      status = nga_create_ghosts(type, ndim, dims, width,
-     +                           "test_array", chunk, g_a)
+#ifdef NEW_API
+      g_a = ga_create_handle();
+      call ga_set_data(g_a,ndim,dims,type)
+      call ga_set_array_name(g_a,"test_array")
+      call ga_set_irreg_distr(g_a,map,pdims)
+      call ga_set_ghosts(g_a,width)
+      status = ga_allocate(g_a)
+#else
+      status = nga_create_ghosts_irreg (type, ndim, dims, width,
+     +        "test_array", map, pdims, g_a)
+c      status = nga_create_ghosts(type, ndim, dims, width,
+c     +                           "test_array", chunk, g_a)
+#endif
+
       if (status.and.me.eq.0) then
         write(6,*) '*'
         write(6,*) '* Global array creation was successful'

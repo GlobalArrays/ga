@@ -16,6 +16,8 @@
 #define BASE 0
 #define PERMUTE_ 
 
+/*#define NEW_API*/
+
 
 /*\ fill n-dimensional array section with value
 \*/
@@ -61,7 +63,14 @@ double *buf;
      /***** create array A with default distribution  *****/
      if(me==0){printf("Creating array A\n"); fflush(stdout);}
      for(i = 0; i<NDIM; i++)dims[i] = N*(i+1);
+#ifdef NEW_API
+     g_a = GA_Create_handle();
+     GA_Set_data(g_a,NDIM,dims,MT_F_DBL);
+     GA_Set_array_name(g_a,"array A");
+     (void)GA_Allocate(g_a);
+#else
      g_a = NGA_Create(MT_F_DBL, NDIM, dims, "array A", NULL);
+#endif
      if(!g_a) GA_Error("create failed: A",0); 
      if(me==0)printf("OK\n\n");
 

@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.53 2003-12-12 16:12:15 d3g293 Exp $
+c $Id: test.F,v 1.54 2004-01-02 20:43:22 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -236,11 +236,11 @@ c     call setdbg(1)
       ndim = 2
       dims(1) = n
       dims(2) = n
-      call nga_set_data(g_a,ndim,dims,MT_DBL)
-      call nga_set_array_name(g_a,'a')
+      call ga_set_data(g_a,ndim,dims,MT_DBL)
+      call ga_set_array_name(g_a,'a')
 #  ifdef MIRROR
-      p_mirror = ga_mirror_config()
-      call nga_set_proc_config(g_a,p_mirror)
+      p_mirror = ga_pgroup_get_mirror()
+      call ga_set_pgroup(g_a,p_mirror)
 #  endif
       status = ga_allocate(g_a)
 #else
@@ -252,7 +252,7 @@ c     call setdbg(1)
       dims(2) = n
       chunk(1) = 0
       chunk(2) = 0
-      p_mirror = ga_mirror_config()
+      p_mirror = ga_pgroup_get_mirror()
       status = nga_create_config(MT_DBL, ndim,  dims, 'a', chunk,
      +                  p_mirror, g_a)
 #  endif
@@ -494,10 +494,10 @@ c     overlapping accumulate
       call ga_sync()
 #ifdef NEW_API
       g_b = ga_create_handle()
-      call nga_set_data(g_b,ndim,dims,MT_DBL)
-      call nga_set_array_name(g_b,'b')
+      call ga_set_data(g_b,ndim,dims,MT_DBL)
+      call ga_set_array_name(g_b,'b')
 #  ifdef MIRROR
-      call nga_set_proc_config(g_b,p_mirror)
+      call ga_set_pgroup(g_b,p_mirror)
 #  endif
       if (.not.ga_allocate(g_b)) then
 #else
@@ -933,8 +933,8 @@ c
       endif
 #ifdef NEW_API
       g_c = ga_create_handle()
-      call nga_set_data(g_c,ndim,dims,MT_DBL)
-      call nga_set_array_name(g_c,'c')
+      call ga_set_data(g_c,ndim,dims,MT_DBL)
+      call ga_set_array_name(g_c,'c')
       if (.not.ga_allocate(g_c)) then
 #else
       if (.not. nga_create(MT_DBL, ndim, dims, 'c', chunk, g_c)) then
@@ -1112,11 +1112,11 @@ c     call setdbg(1)
       dims(1) = n
       dims(2) = n
       g_a = ga_create_handle()
-      call nga_set_data(g_a,ndim,dims,MT_DCPL)
-      call nga_set_array_name(g_a,'a')
+      call ga_set_data(g_a,ndim,dims,MT_DCPL)
+      call ga_set_array_name(g_a,'a')
 #  ifdef MIRROR
-      p_mirror = ga_mirror_config()
-      call nga_set_proc_config(g_a,p_mirror)
+      p_mirror = ga_pgroup_get_mirror()
+      call ga_set_pgroup(g_a,p_mirror)
 #  endif
       status = ga_allocate(g_a)
 #else
@@ -1128,7 +1128,7 @@ c     call setdbg(1)
       dims(2) = n
       chunk(1) = 0
       chunk(2) = 0
-      p_mirror = ga_mirror_config()
+      p_mirror = ga_pgroup_get_mirror()
       status = nga_create_config(MT_DCPL, ndim, dims, 'a', chunk,
      +                           p_mirror, g_a)
 #  endif
@@ -1139,10 +1139,10 @@ c     call setdbg(1)
       endif
 #ifdef NEW_API
       g_b = ga_create_handle()
-      call nga_set_data(g_b,ndim,dims,MT_DCPL)
-      call nga_set_array_name(g_b,'b')
+      call ga_set_data(g_b,ndim,dims,MT_DCPL)
+      call ga_set_array_name(g_b,'b')
 #  ifdef MIRROR
-      call nga_set_proc_config(g_b,p_mirror)
+      call ga_set_pgroup(g_b,p_mirror)
 #  endif
       if (.not.ga_allocate(g_b)) then
 #else
@@ -1628,7 +1628,7 @@ c
       integer iran, i, j, loop, nloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, dimi, dimj, ii, jj
       integer ndim, dims(2), chunk(2), p_mirror, nnodes
-      integer lprocs, inode, iproc
+      integer lprocs, inode, iproc,lproc
       double precision nwords
       parameter (nloop = 100)
       integer maxproc
@@ -1667,18 +1667,18 @@ c
       chunk(2) = 0
 #ifdef NEW_API
       g_a = ga_create_handle()
-      call nga_set_data(g_a,ndim,dims,MT_INT)
-      call nga_set_array_name(g_a,'a')
+      call ga_set_data(g_a,ndim,dims,MT_INT)
+      call ga_set_array_name(g_a,'a')
 #  ifdef MIRROR
-      p_mirror = ga_mirror_config()
-      call nga_set_proc_config(g_a,p_mirror)
+      p_mirror = ga_pgroup_get_mirror()
+      call ga_set_pgroup(g_a,p_mirror)
 #  endif
       if (.not.ga_allocate(g_a)) then
 #else
 #  ifndef MIRROR
       if (.not. ga_create(MT_INT, n, n, 'a', 0, 0, g_a)) then
 #  else
-      p_mirror = ga_mirror_config()
+      p_mirror = ga_pgroup_get_mirror()
       if (.not. nga_create_config(MT_INT, ndim, dims, 'a', chunk,
      +                            p_mirror, g_a)) then
 #  endif
@@ -1859,14 +1859,19 @@ c
       inc =5 
 c     every processor will be operating on somebody elses data
 c
-      iproc = ga_nnodes()-me-1
+#ifndef MIRROR
+      lproc = nprocs - me - 1
+#else
+      lproc = nnodes-iproc-1
+      lproc = inode*lprocs + lproc
+#endif
 c
-      call ga_distribution(g_a,iproc,ilo,ihi,jlo,jhi)
+      call ga_distribution(g_a,lproc,ilo,ihi,jlo,jhi)
 c
       dimi = ihi-ilo
       dimj = jhi-jlo
-c     write(6,*) me,'..',ilo,ihi,jlo,jhi,'.',dimi,dimj
-c     call ffflush(6)
+      write(6,111) me,ilo,ihi,jlo,jhi,dimi,dimj
+  111 format(i2,'..',4i8,'.',2i8)
       call ga_sync()
       if(ilo .gt.0 .and. jhi .gt. 0)then
        do loop = 1,nloop 
@@ -2110,13 +2115,13 @@ c
       chunk(2) = 0
 #ifdef NEW_API
       g_a = ga_create_handle()
-      call nga_set_data(g_a,ndim,dims,MT_REAL)
-      call nga_set_array_name(g_a,'a')
+      call ga_set_data(g_a,ndim,dims,MT_REAL)
+      call ga_set_array_name(g_a,'a')
 #  ifdef MIRROR
       write(6,*) 'Getting p_mirror'
-      p_mirror = ga_mirror_config()
+      p_mirror = ga_pgroup_get_mirror()
       write(6,*) 'Setting proc config'
-      call nga_set_proc_config(g_a,p_mirror)
+      call ga_set_pgroup(g_a,p_mirror)
 #  endif
       if (.not.ga_allocate(g_a)) then
 #else
@@ -2125,7 +2130,7 @@ c
 #  else
 cBJP
       write(6,*) 'Creating g_a'
-      p_mirror = ga_mirror_config()
+      p_mirror = ga_pgroup_get_mirror()
       if (.not. nga_create_config(MT_REAL, ndim, dims, 'a', chunk,
      +                            p_mirror, g_a)) then
 cBJP
