@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.2 1996-10-09 18:00:20 d3h325 Exp $
+# $Id: Makefile,v 1.3 1996-10-23 05:48:50 d3g681 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -21,11 +21,3 @@ testf.x:  testf.o $(LIBRARY_PATH)
 testc.x:  testc.o $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^
 
-# DO NOT EDIT BENEATH THIS LINE ... GENERATED AUTOMATICALLY
-$(LIBRARY_PATH)(testc.o):	./string-util.h 
-$(LIBRARY_PATH)(table.o):	./table.h ./scope.h ./memory.h ./error.h 
-$(LIBRARY_PATH)(string-util.o):	./string-util.h 
-$(LIBRARY_PATH)(maf.o):	./mafdecls.fh 
-$(LIBRARY_PATH)(ma.o):	./table.h ./scope.h ./memory.h ./ma.h 
-$(LIBRARY_PATH)(f2c.o):	./scope.h 
-$(LIBRARY_PATH)(error.o):	./scope.h ./error.h 
