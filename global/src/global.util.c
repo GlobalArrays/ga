@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.27 1999-07-29 21:46:40 jju Exp $*/
+/*$Id: global.util.c,v 1.28 1999-07-31 00:04:36 jju Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -687,8 +687,6 @@ void FATR ga_summarize_(Integer *verbose)
     Integer me = ga_nodeid_();
     Integer nproc = ga_nnodes_();
     
-    ga_sync_();
-
     fprintf(DEV, " Summary of allocated global arrays\n");
     fprintf(DEV, "-----------------------------------\n");
 
@@ -741,8 +739,7 @@ void FATR ga_summarize_(Integer *verbose)
     if(!printed) fprintf(DEV, "  No active global arrays\n");
 
     fprintf(DEV, "\n\n");
-    
-    ga_sync_();
+    fflush(DEV);
 }
 
 #endif
