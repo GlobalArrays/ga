@@ -1,0 +1,16 @@
+This directory contains the source code for a simple lattice Boltzmann
+simulation of flow in a lid-driven cavity. The algorithm used is
+described in BJ Palmer and DR Rector, Journal of Computational Physics, vol.
+161, pp. 1-20 (2000). The temperature has been set to a constant for this
+simulation, eliminating the need for the second distribution. The output from
+the simulation is sent to the file bltz.gmv and can be viewed using the General
+Meshh Viewer program developed at Los Alamos National Laboratory. More
+information on this program can be obtained from the web page at
+http://www-xdiv.lanl.gov/XCM/gmv/GMVHome.html.
+
+The global arrays used in the code are all declared in the file main.F and
+then passed by reference to the subroutines. The output file is created by the
+subroutine in printdat.F; if you are interested in writing your own output
+routine, you should consult this file. The size of the grid used for the
+simulation is set in the include file "common" using the variable NSIZE, the
+remaining system parameters are set in the subroutine in setup.F.
