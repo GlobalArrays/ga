@@ -1,7 +1,8 @@
-c $Id: test.F,v 1.42 2002-07-31 19:11:46 d3h325 Exp $
+c $Id: test.F,v 1.43 2002-09-17 17:07:38 vinod Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
+# define THRESHF 1e-5
 #elif defined(FUJITSU)
 # define THRESH 1d-12
 # define THRESHF 1e-5
@@ -9,6 +10,7 @@ c vector boxes lack arithmetic precision
 # define THRESH 1d-13
 # define THRESHF 1e-5
 #endif
+
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 
 
