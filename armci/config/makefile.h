@@ -45,6 +45,11 @@ ifeq ($(TARGET),MACX)
  GLOB_DEFINES+= -DSHMEM -DMMAP -DDATA_SERVER
      EXTRA_OBJ = winshmem.o signaltrap.o shmalloc.o dataserv.o spawn.o \
                  dataserv.o sockets.o request.o ds-shared.o buffers.o async.o
+ifeq ($(FC),xlf)      
+     FOPT_REN = -q32  -qextname
+GLOB_DEFINES += -DXLFLINUX -DEXTNAME
+endif
+
 endif
 
 #-------------------------- INTERIX 2.2.5 on Windows ------------
