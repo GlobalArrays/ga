@@ -55,9 +55,12 @@ extern void Busy(int);
               (void)memcpy(dest, src, (size_t) n)
 
 #elif defined(LAPI)
-      static ShmemBuf    tmp_snd_buf; 
+
       extern lapi_handle_t lapi_handle;
+#if 0
       ShmemBuf *localbuf = &tmp_snd_buf;
+#endif
+
       extern void lapi_put_c(void* dest, void* src, long bytes, long node, 
                              lapi_cntr_t *cntr);
       extern void lapi_put(void* dest, void* src, long bytes, long node);
@@ -66,8 +69,18 @@ extern void Busy(int);
 #     define COPY_FROM_LOCAL(src, dest, n) (void)memcpy(dest, src, (long) n)
 #     define COPY_TO_REMOTE(src,dest,n,node) lapi_put(dest, src, (long) n, node)
 #     define COPY_FROM_REMOTE(src,dest,n,node)lapi_get(dest, src, (long) n,node)
+#if 0
 #     define COPY_TO_REMOTE_CNTR(src, dest, n, node, pcntr) \
                                 lapi_put_c(dest, src, (long) n, node, pcntr)
+#endif
+#     define COPY_TO_REMOTE_CNTR(localbuf, dest, n, node, pcntr) \
+             if(LAPI_Put(lapi_handle,(uint)node, (uint)n, dest,localbuf->info,\
+                  pcntr, &localbuf->cntr, NULL))Error("TCG:lapi_put_c failed",0)
+
+#     define NEXT_LOC_BUF(localbuf) localbuf = (sendbuf_t*)localbuf->next;
+#     define GET_LOC_BUF(localbuf)\
+          if(LAPI_Waitcntr(lapi_handle, &localbuf->cntr, 1, NULL))\
+                           Error("TCG:LAPI_Waitcntr failed",0)
 
 #else
 #define COPY_TO_LOCAL(src, dest, n) (void) memcpy(dest, src, (long) n)
@@ -257,6 +270,8 @@ long async_send(SendQEntry *entry)
   }
 #endif
 
+  GET_LOC_BUF(localbuf);
+
   if (ncopy) {
 #   ifdef DEBUG
       printf("%ld:snd:copying data node=%ld adr=%lx %ld bytes\n",TCGMSG_nodeid,
@@ -286,6 +301,9 @@ long async_send(SendQEntry *entry)
 
   COPY_TO_LOCAL(info, localbuf->info, sizeof(info));
   COPY_TO_REMOTE_CNTR(localbuf,sendbuf,sizeof(info)+ncopy,node,&sendbuf->cntr); 
+
+  /* advance to next buf */
+  NEXT_LOC_BUF(localbuf);
  
   return complete;
 }

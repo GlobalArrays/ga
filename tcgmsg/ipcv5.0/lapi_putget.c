@@ -38,6 +38,7 @@ void lapi_initialize()
      /* disable LAPI internal error checking */
      LAPI_Senv(lapi_handle, ERROR_CHK, 0);
 
+
 #ifdef DEBUG
      printf("me=%d initialized %d processes\n", myid, numtasks);
 #endif
@@ -49,10 +50,28 @@ void lapi_adr_exchg()
      long node, tgt;
      int rc;
      void **table;
+     int i;
    
      table = (void **)malloc(TCGMSG_nnodes * sizeof(void *));
      if (!table) Error(" lapi_adr_exchg: malloc failed", 0);
 
+     /* allocate and initialize send buffers */
+     sendbuf_arr = (sendbuf_t*)malloc(SENDBUF_NUM*sizeof(sendbuf_t));
+     if(!sendbuf_arr) Error(" lapi_adr_exchg:malloc 2 failed", 0);
+/*
+     bzero(sendbuf_arr,SENDBUF_NUM*sizeof(sendbuf_t));
+*/
+
+     for(i=0; i< SENDBUF_NUM; i++){
+         LAPI_Setcntr(lapi_handle,&sendbuf_arr[i].cntr, 1);
+         sendbuf_arr[i].next = sendbuf_arr+i+1;
+     }
+     sendbuf_arr[SENDBUF_NUM-1].next = sendbuf_arr;
+     localbuf = sendbuf_arr;
+     if(sizeof(ShmemBuf) != sizeof(sendbuf_t))
+        Error("lapi_adr_exchg: buffer size problem",0);
+
+     /* exchange addresses */
      for(node = 0; node < TCGMSG_nnodes; node++){
 
          /* Lapi does not like NULL address for buffer that we have 
@@ -62,7 +81,7 @@ void lapi_adr_exchg()
          else
              if(LAPI_Setcntr(lapi_handle,
                 &(TCGMSG_proc_info[node].recvbuf->cntr),0))
-                Error("lapi_adr_exchg: setcntr flailed",-1);
+                Error("lapi_adr_exchg: setcntr failed",-1);
 
          rc = LAPI_Address_init(lapi_handle, TCGMSG_proc_info[node].recvbuf, 
                                                                      table); 
