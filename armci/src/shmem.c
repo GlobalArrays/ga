@@ -1,5 +1,5 @@
-/* $Id: shmem.c,v 1.15 2000-05-25 23:51:41 d3h325 Exp $ */
-/* System V shared memory allocation and managment for GAs:
+/* $Id: shmem.c,v 1.16 2000-05-31 17:48:42 d3h325 Exp $ */
+/* System V shared memory allocation and managment
  *
  * Interface:
  * ~~~~~~~~~
@@ -29,19 +29,21 @@
 
 #ifdef SYSV
 
-
+ 
 #define DEBUG_ 0
 #define DEBUG1 0
 
-/* For debugging purposes at the beginnig of the shared memory region
+/* For debugging purposes at the beginning of the shared memory region
  * creator process can write a stamp which then is read by attaching processes
- * NOTE: on clusters we cannot use it since anymore since ARMCI node master
+ * NOTE: on clusters we cannot use it anymore since ARMCI node master
  * uses it since Nov 99 to write the value of address it attached at
- * This feature is used in the memlock table.
+ * This feature is used in the ARMCI memlock table.
  */
 #define STAMP 0
 
 extern void armci_die();
+extern int armci_me;
+
 #include "shmem.h"
 #include "shmalloc.h"
 
@@ -163,7 +165,8 @@ long lower_bound=0;
      for(i=1;;i++){
         long step;
         rc = armci_test_allocate(x);
-        if(DEBUG_) printf("test %d size=%ld bytes status=%d\n",i,x,rc);
+        if(DEBUG_) 
+           printf("%d:test %d size=%ld bytes status=%d\n",armci_me,i,x,rc);
         if(rc){
           lower_bound = x;
           step = (upper_bound -x)>>1;
@@ -210,6 +213,11 @@ void armci_shmem_init()
         if(DEBUG_) printf("GOT %d mbytes max segment size \n",x);fflush(stdout);
         MinShmem = (long)(x<<10); /* make sure it is in kb: mb <<10 */ 
         MaxShmem = MAX_REGIONS*MinShmem;
+#ifdef REPORT_SHMMAX
+       printf("%d using x=%d SHMMAX=%dKB\n", armci_me,x, MinShmem);
+       fflush(stdout);
+       sleep(2);
+#endif
 #else
 
       /* nothing to do here - limits were given */
@@ -419,7 +427,7 @@ long ga_nodeid_();
          if ( (int) (temp = (char*)shmat((int)idlist[1+ir], pref_addr, 0))==-1){
            fprintf(stderr, "shmat err: id= %d off=%d \n",idlist[1+ir],offset);
            shmem_errmsg(size);
-           armci_die("Attach_Shared_Region:failed to attach",(long)idlist[1+ir]);
+           armci_die("AttachSharedRegion:failed to attach",(long)idlist[1+ir]);
          }
 
          region_list[reg].addr = temp; 
@@ -463,7 +471,8 @@ int id, newreg, i;
 long sz;
 
     if(DEBUG1){
-       printf("Shmem allocate size %ld bytes\n",size); fflush(stdout);
+       printf("%d:Shmem allocate size %ld bytes\n",armci_me,size); 
+       fflush(stdout);
     }
 
     newreg = (size+(SHM_UNIT*MinShmem)-1)/(SHM_UNIT*MinShmem);
@@ -475,11 +484,11 @@ long sz;
     if(DEBUG_)fprintf(stderr, "in allocate size=%d\n",size);
     /* allocate shmem in as many segments as neccesary */
     for(i =0; i< newreg; i++){ 
-       sz =(i==newreg-1)? size -i*MinShmem*SHM_UNIT: min(size,SHM_UNIT*MinShmem);
+       sz =(i==newreg-1)?size -i*MinShmem*SHM_UNIT: min(size,SHM_UNIT*MinShmem);
 
        if ( (int)(id = shmget(IPC_PRIVATE, (int) sz,
                      (int) (IPC_CREAT | 00600))) < 0 ){
-          fprintf(stderr,"id=%d size=%d MAX=%d\n",id,  (int) sz, MinShmem);
+          fprintf(stderr,"%d:id=%d size=%d MAX=%d\n",armci_me,id,(int)sz,MinShmem);
           alloc_regions++;
           shmem_errmsg(size);
           armci_die("allocate: failed to create shared region ",(long)id);
@@ -492,7 +501,7 @@ long sz;
        else
          pref_addr= (char*)0;   /* first time let the OS choose address */
 
-       if(DEBUG_)printf("  calling shmat: id=%d adr=%d sz=%d\n",id,pref_addr,sz);
+       if(DEBUG_)printf(" calling shmat: id=%d adr=%d sz=%d\n",id,pref_addr,sz);
 
        if ( (int)(temp = (char*)shmat((int) id, pref_addr, 0)) == -1){
           char command[64];
@@ -514,8 +523,8 @@ long sz;
              printf("the operating system multiple segments adjacent to ");
              printf("each other in order to combine them into a one large ");
              printf("segment together\n");
-             printf("You need to ask your system administrator to reconfigure ");
-             printf("the operating system to allow larger shared memory ");
+             printf("You need to ask your system administrator to reconfigure");
+             printf(" the operating system to allow larger shared memory ");
              printf("segments. This parameter is called SHMMAX\n");
              armci_die("allocate: failed to attach to shared region",  0L);
          }
@@ -523,8 +532,9 @@ long sz;
 
        region_list[alloc_regions].addr = temp;
        region_list[alloc_regions].id = id;
+       region_list[alloc_regions].attached=1;
 
-       if(DEBUG_) fprintf(stderr,"  allocate:attach: id=%d addr=%d \n",id, temp);
+       if(DEBUG_) fprintf(stderr," allocate:attach: id=%d addr=%d \n",id, temp);
        alloc_regions++;
        if(i==0)ftemp = temp;
     }
@@ -604,6 +614,7 @@ long ga_nodeid_();
 
   /* first time needs to initialize region_list structure */
   if(!alloc_regions){
+      printf("%d creating shm region list\n",armci_me); fflush(stdout);
       for(reg=0;reg<MAX_REGIONS;reg++){
         region_list[reg].addr=(char*)0;
         region_list[reg].attached=0;
@@ -624,9 +635,10 @@ long ga_nodeid_();
   /* attach if not attached yet */
   if(!region_list[reg].attached){
    if ( (long) (temp = shmat((int) *id, (char *)NULL, 0)) == -1L){
-       fprintf(stderr, " err: id= %ld  off=%ld \n",*id, offset);
-       shmem_errmsg(size);
-       armci_die("Attach_Shared_Region: failed to attach ",(long)id);
+       fprintf(stderr,"%d:attach error:id=%ld off=%ld\n",armci_me,*id,offset);
+       shmem_errmsg(MinShmem*1024);
+       pause();
+       armci_die("Attach_Shared_Region:failed to attach to segment id=",*id);
     }
     region_list[reg].addr = temp; 
     region_list[reg].attached = 1;
@@ -656,7 +668,8 @@ char * temp;
 long id;
 
     if(DEBUG1){
-       printf("Shmem allocate size %ld bytes\n",size); fflush(stdout);
+       printf("%d:Shmem allocate size %ld bytes\n",armci_me,size); 
+       fflush(stdout);
     }
 
     if( alloc_regions >= MAX_REGIONS)
@@ -675,9 +688,13 @@ long id;
        armci_die("allocate: failed to attach to shared region",  temp);
     }
 
-    if(DEBUG_)fprintf(stderr,"allocate:id=%ld adr=%ld size=%ld\n",id,temp,size);
+    if(DEBUG_){
+      printf("%d:allocate:id=%ld adr=%ld size=%ld\n",armci_me,id,temp,size);
+      fflush(stdout);
+    }
     region_list[alloc_regions].addr = temp;
     region_list[alloc_regions].id = id;
+    region_list[alloc_regions].attached=1;
     alloc_regions++;
     return (temp);
 }
