@@ -75,7 +75,8 @@ typedef struct {
   int lo[2]; /* 2 elements: ilo and klo */
   int hi[2];
   int dim[2];
-  int chunkBId; 
+  int chunkBId;
+  short int do_put;
 }task_list_t;
 
 extern void FATR  ga_nbget_(Integer *g_a, Integer *ilo, Integer *ihi, 
