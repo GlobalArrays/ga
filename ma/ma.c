@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.24 2000-10-05 23:43:22 d3h325 Exp $
+ * $Id: ma.c,v 1.25 2000-10-13 23:18:17 d3h325 Exp $
  */
 
 /*
@@ -2342,9 +2342,10 @@ public Boolean MA_get_numalign(Integer *value)
  */
 /* ------------------------------------------------------------------------- */
 
+/* JN  converted to void* to avoid calling hassles */
 public Boolean MA_get_pointer(
     Integer	memhandle,	/* block to get pointer for */
-    Pointer	*pointer 	/* RETURN: base pointer */)
+    void	*pointer 	/* RETURN: base pointer */)
 {
     AD		*ad;		/* AD for memhandle */
 
@@ -2361,7 +2362,10 @@ public Boolean MA_get_pointer(
     if (mh2ad(memhandle, &ad, BL_HeapOrStack, "MA_get_pointer"))
     {
         /* compute pointer */
+#if 0
         *pointer = ad->client_space;
+#endif
+        *(char**)pointer = ad->client_space;
 
         /* success */
         return MA_TRUE;

@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.11 2000-10-05 23:43:24 d3h325 Exp $
+ * $Id: macdecls.h,v 1.12 2000-10-13 23:18:18 d3h325 Exp $
  */
 
 /* 
@@ -71,7 +71,7 @@ extern Boolean MA_get_next_memhandle(
 extern Boolean MA_get_numalign(Integer *value);
 extern Boolean MA_get_pointer(
     Integer     memhandle,      /* block to get pointer for */
-    Pointer     *pointer        /* RETURN: base pointer */);
+    void       *pointer        ); /*JN: void** = void*    */
 extern Boolean MA_init(
     Integer     datatype,       /* for computing storage requirement */
     Integer     nominal_stack,  /* # of datatype elements desired for stack */

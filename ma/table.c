@@ -1,5 +1,5 @@
 /*
- * $Id: table.c,v 1.5 2000-05-09 21:29:17 d3h325 Exp $
+ * $Id: table.c,v 1.6 2000-10-13 23:18:18 d3h325 Exp $
  */
 
 /*
@@ -142,8 +142,8 @@ public Integer table_allocate(data)
 
     /* if we get here, something is wrong */
     (void)sprintf(ma_ebuf,
-        "no table slot available, %d/%d slots used",
-        table_entries, table_capacity);
+        "no table slot available, %ld/%ld slots used",
+        (long)table_entries, (long)table_capacity);
     ma_error(EL_Nonfatal, ET_Internal, "table_allocate", ma_ebuf);
     return TABLE_HANDLE_NONE;
 }
