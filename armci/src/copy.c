@@ -3,6 +3,10 @@
 #include "acc.h"
 #include <stdio.h>
 
+#if defined(SGI_N32) || defined(SGI)
+#   define PTR_ALIGN
+#endif
+
 #define ARMCI_OP_2D(op, scale, proc, src, dst, bytes, count, src_stride, dst_stride)\
 if(op == GET || op ==PUT)\
       armci_copy_2D(op, proc, src, dst, bytes, count, src_stride,dst_stride);\
@@ -20,25 +24,37 @@ void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
   if(proc == armci_me)
 #endif
   {
-    switch (count){
-    case 1: armci_copy(src_ptr, dst_ptr, bytes); break;
-    default:
-        if(bytes < THRESH){     /* low-latency copy for small data segments */        
+    if(count==1){
+
+       armci_copy(src_ptr, dst_ptr, bytes); 
+
+    }else {
+
+        if(bytes < - THRESH){     /* low-latency copy for small data segments */        
           char *ps=(char*)src_ptr;
           char *pd=(char*)dst_ptr;
           int j;
+
           for (j = 0;  j < count;  j++){
               int i;
               for(i=0;i<bytes;i++) pd[i] = ps[i];
               ps += src_stride;
               pd += dst_stride;
           }
-        } else if( bytes % ALIGN_SIZE || ((long)src_ptr) %ALIGN_SIZE || ((long)dst_ptr) %ALIGN_SIZE ){ 
+
+        } else if(    bytes %ALIGN_SIZE  
+                   || dst_stride % ALIGN_SIZE
+                   || src_stride % ALIGN_SIZE
+#ifdef PTR_ALIGN
+                   || (ulong)src_ptr%ALIGN_SIZE
+                   || (ulong)dst_ptr%ALIGN_SIZE
+#endif
+                ){ 
 
             /* size/address not alligned */
             ByteCopy2D(bytes, count, src_ptr, src_stride, dst_ptr, dst_stride);
 
-        }else { /* segment size alligned -- should be the most efficient copy */
+        }else { /* segment size aligned -- should be the most efficient copy */
 
             DCopy2D(bytes/ALIGN_SIZE, count, src_ptr, src_stride/ALIGN_SIZE, 
                                         dst_ptr, dst_stride/ALIGN_SIZE);
@@ -81,7 +97,7 @@ void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
 }
 
 
-/*\ Strided copy
+/*\ Strided  operation
 \*/
 int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride_arr[],  
 		       void* dst_ptr, int dst_stride_arr[], 
@@ -95,7 +111,8 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
     switch (stride_levels){
     case 0: /* 1D copy */ 
 
-            ARMCI_OP_2D(op, scale, proc, src_ptr, dst_ptr, count[0], 1, 0,0); 
+            ARMCI_OP_2D(op, scale, proc, src_ptr, dst_ptr, count[0], 1, 
+                        count[0], count[0]); 
 
             break;
     

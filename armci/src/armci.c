@@ -5,6 +5,7 @@
 #include <mpi.h>
 #include "armcip.h"
 #include "copy.h"
+#include "memlock.h"
 #include "shmem.h"
 #include "signaltrap.h"
 
@@ -16,7 +17,6 @@ int armci_cluster_nodes;
 #   include "locks.h"
     lockset_t lockid;
 #endif
-
 
 
 void ARMCI_Cleanup()
@@ -44,6 +44,8 @@ void ARMCI_Error(char *msg, int code)
 
 int ARMCI_Init()
 {
+    int rc;
+
     MPI_Comm_size(MPI_COMM_WORLD, &armci_nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &armci_me);
     armci_cluster_nodes = armci_nproc;
@@ -69,6 +71,13 @@ int ARMCI_Init()
 
 #endif
 
+    memlock_table_array = malloc(armci_nproc*sizeof(void*));
+    if(!memlock_table_array) armci_die("malloc failed for ARMCI lock array",0); 
+    rc = ARMCI_Malloc(memlock_table_array, MAX_SLOTS*sizeof(memlock_t));
+    if(rc) armci_die("failed to allocate ARMCI memlock array",rc); 
+    bzero(memlock_table_array[armci_me],MAX_SLOTS*sizeof(memlock_t));
+    MPI_Barrier(MPI_COMM_WORLD);
+
     return 0;
 }
 
@@ -76,6 +85,9 @@ int ARMCI_Init()
 void ARMCI_Finalize()
 {
     MPI_Barrier(MPI_COMM_WORLD);
+/*
+    ARMCI_Free(memlock_table_array[armci_me]);
+*/
     if(armci_me==0) ARMCI_ParentRestoreSignals();
     ARMCI_Cleanup();
     MPI_Barrier(MPI_COMM_WORLD);
@@ -101,9 +113,9 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-    rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
+    rc = armci_pack_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
                                dst_ptr, dst_stride_arr,
-                               count, stride_levels);
+                               count, stride_levels, -1, -1);
 
     if(rc) return FAIL6;
     else return 0;

@@ -1,7 +1,7 @@
          FOPT = -O
          COPT = -O
 
-OBJ = armci.o   copy.o   memory.o   fcopy.o  fence.o rmw.o acc.o faccumulate.o
+OBJ= armci.o copy.o memory.o fcopy.o fence.o rmw.o acc.o faccumulate.o memlock.o
 
 MPI_LIB_NAME = -lmpi
 INTERRUPT_AVAILABLE = SP1 SP PARAGON LAPI

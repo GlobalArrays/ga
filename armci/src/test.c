@@ -359,6 +359,15 @@ void test_dim(int ndim)
 	    new_range(ndim, dimsB, loA, hiA, loB, hiB);
 	    new_range(ndim, dimsA, loA, hiA, loC, hiC);
 
+/*
+            if(ndim==2){
+                loA[0]=loB[0]=loC[0]=0;
+                hiA[0]=hiB[0]=hiC[0]=4;
+                loA[1]=loB[1]=loC[1]=0;
+                hiA[1]=hiB[1]=hiC[1]=2;
+            }
+*/
+
             proc=nproc-1-me;
 
             if(me==0){
@@ -674,7 +683,7 @@ void test_fetch_add()
     rc = ARMCI_Malloc((void**)arr,bytes);
     assert(rc==0);
 
-    if(me == 0) *arr[0] = 5;  /* initialization */
+    if(me == 0) *arr[0] = 0;  /* initialization */
 
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -745,7 +754,6 @@ int main(int argc, char* argv[])
     }
 
     ARMCI_Init();
-
         if(me==0){
            printf("\nTesting strided gets and puts\n");
            printf("(Only std output for process 0 is printed)\n\n"); 
@@ -754,7 +762,6 @@ int main(int argc, char* argv[])
         }
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
         MPI_Barrier(MPI_COMM_WORLD);
-
 
         if(me==0){
            printf("\nTesting atomic accumulate\n");
