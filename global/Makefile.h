@@ -10,12 +10,12 @@
            FC = f77
            CC = cc
           FLD = $(FC)
- 	       M4 = /usr/bin/m4
+           M4 = /usr/bin/m4
           CLD = $(FLD)
           CXX = CC
          FOPT = -O
          COPT = -O
-	     NOPT = -g
+         NOPT = -g
 GLOB_INCLUDES = -I../../include
            AR = ar
            AS = as
@@ -35,7 +35,7 @@ GLOB_INCLUDES = -I../../include
        LINK.f = $(FLD)
        LINK.c = $(CLD)
 
-     GA_TRACE = YES
+#    GA_TRACE = YES
 
 ifeq ($(GA_TRACE), YES)
     DEF_TRACE = -DGA_TRACE
