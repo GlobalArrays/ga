@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.9 1995-04-01 00:16:30 d3h325 Exp $
+#$Id: makefile,v 1.10 1995-06-29 23:10:08 d3g681 Exp $
 
 # Tiny makefile wrapper
 
@@ -25,6 +25,9 @@ include_stamp:	src/global.fh
 realclean clean:	
 	/bin/rm -f include_stamp
 	-$(MAKE) -f makefile.GA clean
+
+depend:
+	echo No dependencies in global
 
 ifdef USES_BLAS
 sngl_to_dbl:
