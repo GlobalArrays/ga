@@ -821,7 +821,16 @@ distribute to other US Government contractors.
       integer function ga_memory_avail()
 
       Returns amount of memory left for allocation of new global arrays on
-      the calling processor. Returned value < 0 means that no limit was set. 
+      the calling processor.
+
+      Note: If ga_uses_ma() is true, then ga_memory_avail returns the
+      lesser of the amount available under the GA limit and the amount
+      available from MA (according to ma_inquire_avail).  If no GA
+      limit has been set, it returns what MA says is available.
+
+      If ( ! ga_uses_ma() && ! ga_memory_limited() ) returns < 0, 
+      indicating that the bound on currently available memory cannot
+      be determined.
 
       -------------------------------------------------------------------
       logical function ga_uses_ma()

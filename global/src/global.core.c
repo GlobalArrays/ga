@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.7 1995-03-08 02:08:51 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.8 1995-03-23 01:03:37 gg502 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -477,7 +477,19 @@ Integer i, sum=0;
 \*/
 Integer ga_memory_avail_()
 {
+#ifdef SYSV
    return(GA_total_memory); 
+#else
+   Integer ma_limit, ga_limit;
+
+   ma_limit = MA_inquire_avail(MT_F_BYTE);
+
+   if ( GA_memory_limited ) {
+     return( MIN(GA_total_memory, ma_limit) );
+   } else {
+     return( ma_limit );
+   }
+#endif
 }
 
 
