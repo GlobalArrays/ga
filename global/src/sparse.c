@@ -341,7 +341,6 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
    Integer *lim=NULL, handle, idx, nproc, me;
    Integer lop, hip, ndim, dims, type;
    void *ptr;
-   double buf[2];
    Integer *ia, elems, i, first, myplace =0, counter=0;
 
    nproc = ga_nnodes_();

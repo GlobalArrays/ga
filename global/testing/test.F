@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.33 2000-10-13 00:31:00 d3h325 Exp $
+c $Id: test.F,v 1.34 2000-10-13 22:28:17 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -77,7 +77,7 @@ c
          call ffflush(6)
       endif
 
-*     call check_complex()
+      call check_complex()
 c
 c***  Check support for integer arrays
 c

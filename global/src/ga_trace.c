@@ -20,8 +20,8 @@
 
 static double tt0, tt1;
 static Integer *tlog, thandle;
-static Integer *indlog, ihandle;
-static int *galog, gahandle;
+static Integer *indlog, ihandle, gahandle;
+static int *galog;
 static unsigned long current, MAX_EVENTS=0; 
 static int ganum = 0;
 

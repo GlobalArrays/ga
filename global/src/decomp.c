@@ -1,4 +1,4 @@
-/* $Id: decomp.c,v 1.5 2000-05-01 21:26:56 d3j540 Exp $ */
+/* $Id: decomp.c,v 1.6 2000-10-13 22:28:09 d3h325 Exp $ */
 /***************************************************************************
  *--- 
  *--- The software in this file implements three heuristics for distributing
@@ -602,7 +602,7 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
       long npdivs;
       long p0;
       double q, w;
-      double ub,blb;
+      double ub;
       long istart, istep, ilook;
 
       /*- Allocate memory to store the granularity -*/
@@ -673,7 +673,6 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
       free(pdivs);
 
       ub = dd_ev(ndims,tard,pedims);
-      blb = ub;
 
       /*- Do an exhaustive search is the heuristic returns a solution 
        *- whose load balance ratio is less than the given threshold. -*/
