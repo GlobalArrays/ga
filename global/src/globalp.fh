@@ -47,8 +47,8 @@ c     if the latency on a remote request is 0.5ms and the transfer rate
 c     is 8 Mbytes/s then tmpsize=10000 is such that latency is only 2% 
 c     of overall cost
 c
-      parameter (max_global_array=32, max_nproc=256)
-      parameter (tmpsize=125000)
+      parameter (max_global_array=32, max_nproc=512)
+      parameter (tmpsize=12000)
       parameter (itmpsize= tmpsize)
       parameter (header_size=11)
 c
