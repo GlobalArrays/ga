@@ -23,7 +23,7 @@
 #define STOP_ITERATING  0
 #define DEBUG           0
 #define PRINT_LEVEL_1   1 /* dumps result: level 1 */
-#define PRINT_LEVEL_2   0 /* dumps result: level 2..more results */
+#define PRINT_LEVEL_2   1 /* dumps result: level 2..more results */
 #define WRITE_TO_FILE   0 /* dumps the coordinates in molden viz format */
 #define NDIM            3 /* always 3-d */
 #define MAX_PROC        256
@@ -686,7 +686,6 @@ void LJ_Solve(int natoms) {
   if(gMe == 0) printProperties(natoms);
 #if PRINT_LEVEL_2
   if(gMe == 0) {
-    printProperties(natoms);
     execTime = CLOCK_()-execTime;
     printf("%d: Total Elapsed Time  = %lf\n", gMe, execTime);
     printf("%d: Computation Time    = %lf\n", gMe, gComputeTime);
