@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.102 2004-11-05 22:04:43 d3g293 Exp $ */
+/* $Id: base.c,v 1.103 2004-11-05 22:46:09 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1169,7 +1169,7 @@ logical ga_allocate_( Integer *g_a)
   Integer dims[MAXDIM], chunk[MAXDIM];
   Integer pe[MAXDIM], *pmap[MAXDIM], *map;
   Integer blk[MAXDIM];
-  Integer me_local, nprocs;
+  Integer me_local;
 #ifdef GA_USE_VAMPIR
   vampir_begin(GA_ALLOCATE,__FILE__,__LINE__);
 #endif
@@ -3207,11 +3207,11 @@ void FATR ga_mask_sync_(Integer *begin, Integer *end)
 void FATR ga_merge_mirrored_(Integer *g_a)
 {
   Integer handle = GA_OFFSET + *g_a;
-  Integer inode, nprocs, nnodes, zero, zproc;
+  Integer inode, nprocs, nnodes, zero, zproc, nblocks;
   int *blocks, *map, *dims, *width;
   Integer i, j, index[MAXDIM], itmp, ndim;
   Integer nelem, count, type, atype;
-  char *zptr, *bptr, *nptr, *eptr;
+  char *zptr, *bptr, *nptr;
   Integer bytes, total;
   int local_sync_begin, local_sync_end;
 
@@ -3243,7 +3243,14 @@ void FATR ga_merge_mirrored_(Integer *g_a)
        associated with each processor that needs to be zeroed out
        before performing the merge */
     if (zproc == GAme) {
-      for (i=0; i<nprocs; i++) {
+      /* the use of nblocks instead of nprocs is designed to support a peculiar
+         coding style in which the dimensions of the block array are all set to
+         1 and all the data is restricted to the master processor on the node */
+      nblocks = 1;
+      for (i=0; i<ndim; i++) {
+        nblocks *= blocks[i];
+      }
+      for (i=0; i<nblocks; i++) {
         /* Find out from mapc data how many elements are supposed to be located
            on this processor. Start by converting processor number to indices */
         itmp = i;
@@ -3269,12 +3276,8 @@ void FATR ga_merge_mirrored_(Integer *g_a)
            the gap. */
         nelem *= GAsizeof(type);
         bptr = GA[handle].ptr[ga_cluster_procid_(&inode, &i)];
-        if (nelem > 0) {
-          eptr = bptr;
-          eptr += nelem;
-        }
         bptr += nelem;
-        if (i<nprocs-1) {
+        if (i<nblocks-1) {
           j = i+1;
           nptr = GA[handle].ptr[ga_cluster_procid_(&inode, &j)];
           if (bptr != nptr) {
@@ -3285,7 +3288,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
         }
       }
       /* find total number of bytes containing global array */
-      total = (long)eptr - (long)zptr;
+      total = (long)bptr - (long)zptr;
       total /= GAsizeof(type);
       /*convert from C data type to ARMCI type */
       switch(type) {
