@@ -17,7 +17,11 @@ extern void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol)
 #elif defined(GM)
 #  include "myrinet.h"
 #elif defined(QUADRICS)
+#  include <elan/elan.h>
    typedef void* msg_tag_t; 
+#  ifdef _ELAN_PUTGET_H
+#    define NB_CMPL_T ELAN_EVENT*
+#  endif
 #elif defined(VIA)
 #  include "via.h"
    typedef int msg_tag_t;

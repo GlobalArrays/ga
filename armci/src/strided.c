@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.52 2002-12-11 00:43:34 vinod Exp $ */
+/* $Id: strided.c,v 1.53 2002-12-14 00:29:22 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -807,7 +807,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
          if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
 #   endif
 
-/*set tag and op in the nb handle*/
+    /*set tag and op in the nb handle*/
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = PUT;
@@ -943,7 +943,7 @@ int ARMCI_NbAccS( int  optype,            /* operation */
        if(armci_me != proc) direct=0;
 #   endif
  
-/*set tag and op in the nb handle*/
+    /*set tag and op in the nb handle*/
     if(nb_handle){
       nb_handle->tag = GET_NEXT_NBTAG();
       nb_handle->op  = optype;
@@ -963,20 +963,70 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 }
 
 
-int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t nb_handle)
-{
-    return ARMCI_NbPutS(src, NULL, dst, NULL, &bytes, 0, proc,nb_handle);
-}
-
-
-int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t nb_handle)
-{
-    return ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,nb_handle);
-}
-
 #if !defined(ACC_COPY)&&!defined(CRAY_YMP)&&!defined(CYGNUS)&&!defined(CYGWIN)
 #   define REMOTE_OP
 #endif
+
+#define INIT_NB_HANDLE(nb,o,p) if(nb){\
+             (nb)->tag = 0;\
+             (nb)->op  = (o); (nb)->proc= (p);\
+             (nb)->bufid=NB_NONE;}
+
+
+/*\ nonblocking contiguous/1D PUT
+\*/
+int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
+{
+    int rc, direct;
+
+    if(src == NULL || dst == NULL) return FAIL;
+
+    direct =SAMECLUSNODE(proc);
+    if(direct) { 
+       armci_copy(src,dst,bytes);
+    }else{
+#     ifdef ARMCI_NB_PUT
+           armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
+
+           /*set tag and op in the nb handle*/
+           INIT_NB_HANDLE(nb_handle,PUT,proc);
+
+           UPDATE_FENCE_STATE(proc, PUT, 1);
+#          ifdef LAPI
+               SET_COUNTER(ack_cntr, 1);
+#          endif
+           ARMCI_NB_PUT(src, dst, bytes, proc, &nb_handle->cmpl_info);
+#     else
+           return ARMCI_NbPutS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+#     endif
+    } 
+}
+
+
+/*\ nonblocking contiguous/1D GET
+\*/
+int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t uhandle)
+{
+
+    int rc, direct;
+    if(src == NULL || dst == NULL) return FAIL;
+
+    direct =SAMECLUSNODE(proc);
+    if(direct) {
+       armci_copy(src,dst,bytes);
+    }else{
+#     ifdef ARMCI_NB_GET
+           armci_ihdl_t nb_handle = (armci_ihdl_t)uhandle;
+           /*set tag and op in the nb handle*/
+           INIT_NB_HANDLE(nb_handle,GET,proc);
+           ARMCI_NB_GET(src, dst, bytes, proc, &nb_handle->cmpl_info);
+#     else
+           return ARMCI_NbGetS(src, NULL,dst,NULL, &bytes,0,proc,uhandle);
+#     endif
+    } 
+}
+
+
 
 static void _armci_rem_put_value(void *src, void *dst, int proc, int bytes) {
   

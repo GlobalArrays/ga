@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.57 2002-12-11 00:43:34 vinod Exp $ */
+/* $Id: armci.c,v 1.58 2002-12-14 00:29:22 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -374,7 +374,7 @@ extern void cpu_yield();
 }
   
 
-/*\ returns 1 if specified process resides on the same smp node as calling process
+/*\ returns 1 if specified process resides on the same smp node as calling task 
 \*/
 int ARMCI_Same_node(int proc)
 {
@@ -382,18 +382,30 @@ int ARMCI_Same_node(int proc)
    return direct;
 }
 
+
+/*\ blocks the calling process until a nonblocking operation represented
+ *  by the user handle completes
+\*/
 int ARMCI_Wait(armci_hdl_t usr_hdl){
 armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
 int direct=SAMECLUSNODE(nb_handle->proc);
+
     if(direct)return(success);
     if(nb_handle){
+#     ifdef ARMCI_NB_WAIT
+        if(nb_handle->tag==0){
+              ARMCI_NB_WAIT(nb_handle->cmpl_info);
+              return(success);
+        }
+#     endif
 #     ifdef COMPLETE_HANDLE
        COMPLETE_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
 #     endif
     }
     return(success);
 }
+
 
 static unsigned int _armci_nb_tag=0;
 unsigned int _armci_get_next_tag(){
