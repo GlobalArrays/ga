@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.15 2004-12-09 00:15:56 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.16 2004-12-09 00:42:10 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -346,34 +346,15 @@ void kr_malloc_verify(context_t *ctx) {
 
 extern int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
 				size_t *shmsize);
+extern Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize);
+
+/* returns, address of the shared memory region based on shmid, offset.
+ * (i.e. return_addr = stating address of shmid + offset) */
+#define SHM_PTR(hdr) armci_shmem_get_ptr((hdr)->s.shmid, (hdr)->s.shmoffset, (hdr)->s.shmsize)
 
 /*
  * kr_malloc_shmem: memory allocator for shmem context (i.e ctx_shmem)
  */
-static 
-Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize) {
-    long idlist[SHMIDLEN];
-    Header *p = NULL;
-
-    idlist[1] = (long)shmid;
-    idlist[0] = shmoffset;
-    idlist[IDLOC+1] = shmsize;/* check idlist in CreateShmem????*/
-
-    if(!(p=(Header*)Attach_Shared_Region(idlist+1, shmsize, idlist[0])))
-       armci_die("kr_malloc:could not attach",(int)(p->s.shmsize>>10));
-#if DEBUG
-    printf("%d: armci_shmem_get_ptr: %d %ld %ld %p\n",
-           armci_me, idlist[1], idlist[0], shmsize, p); fflush(stdout);
-#endif
-    return p;
-}
-
-/* get the legitimate pointer */
-static
-Header *get_ptr(Header *p) {
-    return armci_shmem_get_ptr(p->s.shmid, p->s.shmoffset, p->s.shmsize);
-}
-
 static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
     Header *p, *prevp;
     size_t nunits, prev_shmsize=0;
@@ -418,7 +399,7 @@ static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) {
     
     if (do_verify)  kr_malloc_verify(ctx);
     
-    for (p=get_ptr(prevp); ; prevp = p, p = get_ptr(p)) {
+    for (p=SHM_PTR(prevp); ; prevp = p, p = SHM_PTR(p)) {
 
       if (p->s.size >= nunits) {	/* Big enuf */
 	if (p->s.size == nunits) {	/* exact fit */
@@ -540,12 +521,12 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
 
       /* Join the memory back into the free linked list */
       p = ctx->freep;
-      nextp = get_ptr(p);
+      nextp = SHM_PTR(p);
 
-      for ( ; !(bp > p && bp < nextp); p=nextp, nextp=get_ptr(p)) {
+      for ( ; !(bp > p && bp < nextp); p=nextp, nextp=SHM_PTR(p)) {
 	 if (p >= nextp && (bp > p || bp < nextp))
 	    break; /* Freed block at start or end of arena */
-	 nextp = get_ptr(p);
+	 nextp = SHM_PTR(p);
 	 shmid     = p->s.shmid;
 	 shmoffset = p->s.shmoffset;
 	 shmsize   = p->s.shmsize;
@@ -590,11 +571,11 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
 /* What are doing here */
 static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) 
 {
-    armci_die("kr_malloc_shmem(): Invalid Function Call");
+    armci_die("kr_malloc_shmem(): Invalid Function Call", 0L);
 }
 static void kr_free_shmem(char *ap, context_t *ctx) 
 {
-    armci_die("kr_free_shmem(): Invalid Function Call");
+    armci_die("kr_free_shmem(): Invalid Function Call", 0L);
 }
 #endif /* #ifdef SYSV */
 /********************** END: kr_malloc for ctx_shmem *********************/

@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.16 2004-07-23 20:10:14 manoj Exp $ */
+/* $Id: winshmem.c,v 1.17 2004-12-09 00:42:10 manoj Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -508,5 +508,14 @@ char* armci_shmem_reg_ptr(int i)
 int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
                          size_t *shmsize)
 {
-    /* manoj:*/
+    /* manoj: CHECK */
+    armci_die("winshmem: armci_get_shmem_info(): Fix Me", 0L);
+    return 0;
+}
+
+Header *armci_shmem_get_ptr(int shmid, long shmoffset, size_t shmsize) 
+{
+    /* manoj: CHECK */
+    armci_die("winshmem: armci_shmem_get_ptr(): Fix Me", 0L);
+    return NULL;
 }
