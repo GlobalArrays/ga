@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.2 1994-08-03 06:47:38 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.3 1994-09-14 14:39:45 d3g681 Exp $ */
 
 /*
    Toolkit interface for the iPSC-2, i860, DELTA and Paragon
@@ -651,12 +651,12 @@ void BRDCST_(type, buf, lenbuf, originator)
     crecv(ttype, buf, *lenbuf);
 }
 
-#define GOP_BUF_SIZE 50000
+#define GOP_BUF_SIZE 10000
 #define MAX(a,b) (((a) >= (b)) ? (a) : (b))
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
-double gop_work[GOP_BUF_SIZE];
+static double gop_work[GOP_BUF_SIZE];
 
 /*ARGSUSED*/
 void DGOP_(ptype, x, pn, op)
@@ -664,7 +664,6 @@ void DGOP_(ptype, x, pn, op)
      long *ptype, *pn;
      char *op;
 {
-  double gop_work[GOP_BUF_SIZE];
   double *work = gop_work;
   long nleft  = *pn;
   long buflen = MIN(nleft,GOP_BUF_SIZE); /* Try to get even sized buffers */
@@ -702,7 +701,6 @@ void IGOP_(ptype, x, pn, op)
      long *ptype, *pn;
      char *op;
 {
-  long gop_work[GOP_BUF_SIZE];
   long *work = (long *) gop_work;
   long nleft  = *pn;
   long buflen = MIN(nleft,2*GOP_BUF_SIZE); /* Try to get even sized buffers */
@@ -738,5 +736,16 @@ void IGOP_(ptype, x, pn, op)
 
 double TCGTIME_()
 {
-  return dclock();
+  static int first_call = 1;
+  static double first_time;
+  double diff;
+
+  if (first_call) {
+    first_time = dclock();
+    first_call = 0;
+  }
+
+  diff = dclock() - first_time;
+
+  return diff;			/* Add logic here for clock wrap */
 }
