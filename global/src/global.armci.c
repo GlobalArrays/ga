@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.33 2000-04-10 22:07:20 jju Exp $ */
+/* $Id: global.armci.c,v 1.34 2000-04-12 19:01:06 jju Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2381,7 +2381,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     /* source and destination pointers are ready for all processes */
     for(k=0; k<GAnproc; k++) {
         int rc;
-        
+        if(nelem[k] < 1) continue;
         desc.bytes = item_size;
         desc.src_ptr_array = ptr_src[k];
         desc.dst_ptr_array = ptr_dst[k];
@@ -2912,6 +2912,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     /* source and destination pointers are ready for all processes */
     for(k=0; k<GAnproc; k++) {
         int rc;
+	if(nelem[k] < 1) continue;
         desc.bytes = item_size;
         desc.src_ptr_array = ptr_src[k];
         desc.dst_ptr_array = ptr_dst[k];
