@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.42 2004-03-31 23:15:59 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.43 2004-04-01 15:57:03 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -3624,6 +3624,9 @@ void FATR nga_nbget_ghost_dir_(Integer *g_a,
 logical ga_set_ghost_info_(Integer *g_a)
 {
   Integer handle = *g_a + GA_OFFSET;
+  if (GA[handle].cache != NULL)
+    free(GA[handle].cache);
+  GA[handle].cache = NULL;
   if (GA[handle].actv == 1) {
 #ifdef CRAY_T3D
     return ga_set_update5_info_(g_a);

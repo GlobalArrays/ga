@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.71 2004-04-01 01:33:40 d3h325 Exp $ */
+/* $Id: base.c,v 1.72 2004-04-01 15:57:03 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2148,6 +2148,7 @@ int local_sync_begin;
     }
     if (GA[ga_handle].cache)
       free(GA[ga_handle].cache);
+    GA[ga_handle].cache = NULL;
     GA[ga_handle].actv = 0;     
     if(GA[ga_handle].ptr[GAme]==NULL){
 #ifdef GA_USE_VAMPIR
