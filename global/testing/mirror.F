@@ -1,4 +1,4 @@
-c $Id: mirror.F,v 1.2 2003-02-21 20:49:57 d3g293 Exp $
+c $Id: mirror.F,v 1.3 2003-02-25 16:56:04 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -157,10 +157,10 @@ c
       parameter (m = 2*n)
       double precision a(n,n), b(n,n), v(m),w(m)
       integer iv(m), jv(m)
-      logical status
+      logical status, lsame
       integer g_a, g_b
       integer iran, i,j, loop,nloop,maxloop, ilo, ihi, jlo, jhi, itmp
-      integer nproc, me, int, ij, inc, ii, jj
+      integer nproc, me, int, ij, inc, ii, jj, nnodes
       parameter (maxloop = 100)
       integer maxproc
       integer ndim, dims(2), chunk(2), p_mirror
@@ -175,6 +175,7 @@ c
       me    = ga_nodeid()
       inode = ga_cluster_nodeid()
       lprocs = ga_cluster_nprocs(inode)
+      nnodes = ga_cluster_nnodes()
       iproc = mod(me,lprocs)
       nloop = Min(maxloop,n)
 c     
@@ -182,7 +183,7 @@ c     a() is a local copy of what the global array should start as
 c
       do j = 1, n
          do i = 1, n
-            a(i,j) = i-1 + (j-1)*n
+            a(i,j) = inode + i-1 + (j-1)*n
             b(i,j) =-1. 
          enddo
       enddo
@@ -289,9 +290,9 @@ c
       do i = 1, n
          do j = 1, n
             if (b(i,j) .ne. a(i,j)) then
-               write(6,112) me, i, j, a(i,j), b(i,j)
-  112 format('put: p[',i2,'] (i,j) = (',i3,',',i3,') a = ',f12.4,
-     +       ' b ',f12.4)
+*               write(6,112) me, i, j, a(i,j), b(i,j)
+*  112 format('put: p[',i2,'] (i,j) = (',i3,',',i3,') a = ',f12.4,
+*     +       ' b ',f12.4)
                call ffflush(6)
                call ga_error('... exiting ',0)
             endif
@@ -718,6 +719,53 @@ c         write(6,*) ' scatter-accumulate is  OK'
 c         write(6,*)
 c      endif
 c#endif
+c
+c     Check the merge function
+c
+      do j = 1, n
+         do i = 1, n
+            a(i,j) = inode + i-1 + (j-1)*n
+            b(i,j) =i-1 + (j-1)*n
+         enddo
+      enddo
+      if (me .eq. 0) then
+         write(6,20) 
+ 20      format(/'> Checking merge ...')
+         call ffflush(6)
+      endif
+      if (iproc.eq.0) then 
+         call ga_put(g_a, 1, n, 1, n, a, n)
+      endif
+      call ga_sync()
+      call ga_merge_mirrored(g_a)
+      call ga_sync()
+      call ga_get(g_a, 1, n, 1, n, b, n)
+      lsame = .true.
+      ilo = 0
+      ihi = nnodes*(nnodes-1)/2
+      do i = 1, n
+        do j = 1, n
+          if (nnodes*a(j,i)+ihi.ne.b(j,i)) then
+            lsame = .false.
+            ilo = ilo + 1
+*            if (ilo.lt.2) then
+*              write(6,22) me,i,j,a(i,j),b(i,j)
+*   22         format('p[',i1,'] i = ',i3,' j = ',i3,' a = ',e12.6,
+*     +               ' b = ',e12.6)
+*            endif
+          endif
+        end do
+      end do
+      if(lsame.and.me.eq.0)then
+         write(6,*)
+         write(6,*) ' merge is OK '
+         write(6,*)
+      elseif (me.eq.0) then
+         write(6,*)
+         write(6,*) ' merge is wrong ',ilo
+         write(6,*)
+         call ga_error('... exiting ',0)
+      endif
 c
 c     Delete the global arrays
 c
