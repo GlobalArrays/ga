@@ -107,6 +107,8 @@ distribute to other US Government contractors.
       ga_locate_region  ... determine which process 'holds' an array section
       ga_error          ... print error message and terminate the program 
       ga_summarize      ... print information about already allocated arrays
+      ga_init_fence     ... traces completion of data movement operations 
+      ga_fence          ... blocks until the initiated communication completes 
 
    c) Operations that may be invoked by any process in true MIMD style
       and are intended to support writing of new functions
@@ -643,6 +645,43 @@ distribute to other US Government contractors.
 
       Copies elements in a patch of one array into another one. The
       patches of arrays must have the same number of elements.
+
+      -------------------------------------------------------------------
+      subroutine ga_init_fence()
+     
+      Initializes tracing of completion status of data movement operations.
+     
+      -------------------------------------------------------------------
+      subroutine ga_init_fence()
+
+      Blocks the calling process until all the data transfers corresponding
+      to GA operations called after ga_init_fence complete. For example,
+      since ga_put might return before the data reaches the final destination 
+      ga_init_fence and ga_fence allow to wait until the data is actually
+      moved:
+
+           call ga_init_fence()
+           call ga_put(g_a, ...)
+           call ga_fence()
+
+      ga_fence must be called after ga_fence_init. A barrier, ga_sync,
+      assures completion of all data transfers and implicitly cancels 
+      outstanding ga_init_fence. ga_init_fence and ga_fence must be used
+      in pairs, multiple calls to ga_fence require the same number
+      of corresponding ga_init_fence calls.
+
+      ga_fence works for multiple GA operations. For example:
+
+           call ga_init_fence()
+           call ga_put(g_a, ...)
+           call ga_scatter(g_a, ...)
+           call ga_put(g_b, ...)
+           call ga_fence()
+
+      The calling process will be blocked until data movements initiated
+      by two calls to ga_put and one ga_scatter complete.
+
+      This is a non-collective operation.
 
       -------------------------------------------------------------------
       subroutine ga_get(g_a, ilo, ihi, jlo, jhi, buf, ld)
