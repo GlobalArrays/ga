@@ -1,9 +1,10 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.c,v 1.5 2003-06-27 13:48:42 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.c,v 1.6 2003-09-18 18:25:12 edo Exp $ */
  
 /* Event logging routine with key driven varargs interface */
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include "sndrcv.h"
 
 /*extern long nodeid_();*/
@@ -23,8 +24,6 @@ extern char *strdup();
 #if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(KSR) || \
     defined(DECOSF)
 extern void *malloc();
-#else
-extern char *malloc();
 #endif
 
 #include "evlog.h"
