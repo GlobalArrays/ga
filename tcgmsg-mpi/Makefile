@@ -91,6 +91,7 @@ ifeq ($(MACHINE),DECOSF)
        RANLIB = ranlib
         CDEFS = -DEXT_INT
      FOPT_REN = -i8
+    EXTRA_OBJ = memalign.o
 endif
 
 #................................ CRAY-T3D ..................................
@@ -247,6 +248,7 @@ $(patsubst %,$(LIBRARY_PATH)(%),$(OBJ))      : tcgmsgP.h
 $(patsubst %,$(LIBRARY_PATH)(%),evon.o)      : evlog.h
 $(patsubst %,$(LIBRARY_PATH)(%),evlog.o)     : evlog.h
 $(patsubst %,$(LIBRARY_PATH)(%),pfilecopy.o) : msgtypesc.h
+$(patsubst %,$(LIBRARY_PATH)(%),pbeginf.o))  : farg.h
 tcgmsgP.h: srftoc.h
 sndrcv.h: msgtypesc.h
 srftoc.h: types.h

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.1 1995-10-12 00:06:27 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.2 1996-01-23 22:32:16 d3h325 Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -20,12 +20,12 @@
 #define ARGV_ _UT_argv
 #endif
 
-#if (defined(SGI) || defined(ULTRIX)) && !defined(DECFORT)
+#if (defined(SGI) || defined(ULTRIX))
 #define ARGC_ f77argc
 #define ARGV_ f77argv
 #endif
 
-#if defined(DECFORT)
+#if defined(DECOSF)
 #define ARGC_ __Argc
 #define ARGV_ __Argv
 #endif
