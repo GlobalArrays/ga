@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.18 2000-10-12 22:43:46 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.19 2000-11-02 01:59:01 edo Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -200,6 +200,7 @@ static long RemoteCreate(remote_hostname, remote_username,
   char  c_n_clus[8], c_n_proc[8], c_clus_id[8], c_proc_id[8];
   char  *argv2[256];
   int sock, port, i, pid;
+  char *tmp;
 
   /* Create and bind socket to wild card internet name */
 
@@ -256,6 +257,9 @@ static long RemoteCreate(remote_hostname, remote_username,
       argv2[argc+11] = c_proc_id;
       argv2[argc+12] = (char *) NULL;
 
+      if ( (tmp = getenv("TCGRSH")) != (char *) NULL )
+	(void) execv(tmp,argv2);
+      else 
 #ifdef SGI
       (void) execv("/usr/bsd/rsh",argv2);
 #endif
