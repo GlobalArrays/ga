@@ -81,7 +81,7 @@ c
         call ffflush(6)
       endif
 c
-c   Test ghost distributions
+c   Test matrix multiply for mirrored arrays
 c
       ndim = 2
 c
@@ -219,7 +219,7 @@ c
         start = util_timer()
         start1 = util_timer()
         ix = mod(inode,ndims(1))
-        iy = (inode - ix)/pdims(1)
+        iy = (inode - ix)/ndims(1)
         xinc = dims(1)/ndims(1)
         yinc = dims(2)/ndims(2)
         lo2(1) = ix*xinc+1
@@ -239,7 +239,7 @@ c      work out which chunk of matrix c this processor is responsible
 c      for
 c
         ix = mod(iproc,pdims(1))
-        iy = (inode - ix)/(hi2(1)-lo2(1)+1)
+        iy = (iproc - ix)/(hi2(1)-lo2(1)+1)
         xinc = (hi2(1)-lo2(1)+1)/pdims(1)
         yinc = (hi2(2)-lo2(2)+1)/pdims(2)
         lo3(1) = ix*xinc+lo2(1)
@@ -273,7 +273,6 @@ c
         alpha = 1.0
         beta = 0.0
         start1 = util_timer()
-        call ga_sync()
         call ga_matmul_patch('n','n',alpha,beta,
      +                       g_a,lo4(1),hi4(1),lo4(2),hi4(2),
      +                       g_b,lo5(1),hi5(1),lo5(2),hi5(2),
