@@ -1,4 +1,4 @@
-c $Id: mirror.F,v 1.3 2003-02-25 16:56:04 d3g293 Exp $
+c $Id: mirror.F,v 1.4 2003-03-24 17:14:17 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -45,6 +45,7 @@ c
 c     we can also use GA_set_memory_limit BEFORE first ga_create call
 c
       ma_heap = heap/nproc + fudge 
+      ma_heap = 2*ma_heap
 c      call GA_set_memory_limit(util_mdtob(ma_heap))
 c
       if(ga_nodeid().eq.0)then
@@ -158,7 +159,7 @@ c
       double precision a(n,n), b(n,n), v(m),w(m)
       integer iv(m), jv(m)
       logical status, lsame
-      integer g_a, g_b
+      integer g_a, g_b, g_c
       integer iran, i,j, loop,nloop,maxloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, ii, jj, nnodes
       parameter (maxloop = 100)
@@ -729,16 +730,14 @@ c
          enddo
       enddo
       if (me .eq. 0) then
-         write(6,20) 
- 20      format(/'> Checking merge ...')
+         write(6,23) 
+ 23      format(/'> Checking merge ...')
          call ffflush(6)
       endif
       if (iproc.eq.0) then 
          call ga_put(g_a, 1, n, 1, n, a, n)
       endif
-      call ga_sync()
       call ga_merge_mirrored(g_a)
-      call ga_sync()
       call ga_get(g_a, 1, n, 1, n, b, n)
       lsame = .true.
       ilo = 0
@@ -763,6 +762,58 @@ c
       elseif (me.eq.0) then
          write(6,*)
          write(6,*) ' merge is wrong ',ilo
+         write(6,*)
+         call ga_error('... exiting ',0)
+      endif
+c
+c    Checking copy between different array configurations
+c
+      if (me .eq. 0) then
+         write(6,20) 
+ 20      format(/'> Checking mixed copy ...')
+         call ffflush(6)
+      endif
+      if (.not. nga_create(MT_DBL, ndim, dims, 'c', chunk, g_c)) then
+         call ga_error('ga_create failed for third array ',0)
+      endif
+      call ga_zero(g_c)
+      call ga_copy(g_a,g_c)
+      call ga_get(g_a, 1, n, 1, n, a, n)
+      call ga_get(g_c, 1, n, 1, n, b, n)
+      do i = 1, n
+        do j = 1, n
+          if (a(j,i).ne.b(j,i)) then
+            lsame = .false.
+          endif
+        end do
+      end do
+      if(lsame.and.me.eq.0)then
+         write(6,*)
+         write(6,*) ' Mixed copy (mirrored to normal) is OK '
+         write(6,*)
+      elseif (me.eq.0) then
+         write(6,*)
+         write(6,*) ' Mixed copy (mirrored to normal) is wrong ',ilo
+         write(6,*)
+         call ga_error('... exiting ',0)
+      endif
+      call ga_zero(g_a)
+      call ga_copy(g_c,g_a)
+      call ga_get(g_a, 1, n, 1, n, a, n)
+      do i = 1, n
+        do j = 1, n
+          if (a(j,i).ne.b(j,i)) then
+            lsame = .false.
+          endif
+        end do
+      end do
+      if(lsame.and.me.eq.0)then
+         write(6,*)
+         write(6,*) ' Mixed copy (normal to mirrored) is OK '
+         write(6,*)
+      elseif (me.eq.0) then
+         write(6,*)
+         write(6,*) ' Mixed copy (normal to mirrored) is wrong ',ilo
          write(6,*)
          call ga_error('... exiting ',0)
       endif
