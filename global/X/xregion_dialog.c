@@ -3,6 +3,7 @@
 */
 
 #include "xregion.h"
+
 void dialog_box(char *dlg_str)
 {
   Display *disp;
@@ -46,7 +47,8 @@ void dialog_box(char *dlg_str)
   XtRealizeWidget(dlg_top);
 }
 
-void dismiss_dialog(Widget w, caddr_t data, XEvent *event)
+/* JJU: void dismiss_dialog(Widget w, caddr_t data, XEvent *event) */
+void dismiss_dialog(Widget w, XtPointer data, XtPointer event)
 {
   /* remove dialog box */
   XtDestroyWidget(dlg_btn);

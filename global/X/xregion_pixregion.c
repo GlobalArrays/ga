@@ -86,6 +86,7 @@ void DisplayPixRegion(int ilo, int ihi, int jlo, int jhi)
   XPutImage(display, window, gc, image, x, y, x, y, width, height);
   XFlush(display);
 
+/*
   for(count = 0; count < rows; count++)
   {
     XDrawLine(display, XtWindow(canvas_widget), gc, 0, 
@@ -100,5 +101,23 @@ void DisplayPixRegion(int ilo, int ihi, int jlo, int jhi)
              (overlay_col[count] - 1 - left_edge) * scale, 
               pict_height * scale - 1);
   }
+*/
+
+  for(count = 0; count < rows; count++)
+  {
+    XDrawLine(display, XtWindow(canvas_widget), gc, 0,
+             (overlay_row[count]  - top_edge + .5) * scale,
+              pict_width * scale - 1,
+             (overlay_row[count] - top_edge + .5) * scale);
+  }
+  for(count = 0; count < cols; count++)
+  {
+    XDrawLine(display, XtWindow(canvas_widget), gc,
+             (overlay_col[count]  - left_edge + .5) * scale, 0,
+             (overlay_col[count]  - left_edge + .5) * scale,
+              pict_height * scale - 1);
+  }
+
+
 }
 

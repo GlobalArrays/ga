@@ -18,7 +18,8 @@ void DisplaySlowdownValue()
 }
 
 /**/
-void ScrollProc(Widget scrollbar, caddr_t data, caddr_t position)
+/* JJU: void ScrollProc(Widget scrollbar, caddr_t data, caddr_t position) */
+void ScrollProc(Widget scrollbar, XtPointer data, XtPointer position)
 /*
   Called when the left or right buttons are used to step the
   scrollbar left or right. We have the responsibility of
@@ -47,7 +48,8 @@ void ScrollProc(Widget scrollbar, caddr_t data, caddr_t position)
 }
 
 /***** slowdown **********/
-void ScrollProc2(Widget scrollbar, caddr_t data, caddr_t position)
+/* JJU: void ScrollProc2(Widget scrollbar, caddr_t data, caddr_t position) */
+void ScrollProc2(Widget scrollbar, XtPointer data, XtPointer position)
 /*
   Called when the left or right buttons are used to step the
   scrollbar left or right. We have the responsibility of
@@ -96,7 +98,8 @@ void ScrollProc2(Widget scrollbar, caddr_t data, caddr_t position)
  
 
 /**/
-void JumpProc(Widget scrollbar, caddr_t data, caddr_t fraction_ptr)
+/* JJU: void JumpProc(Widget scrollbar, caddr_t data, caddr_t fraction_ptr) */
+void JumpProc(Widget scrollbar, XtPointer data, XtPointer fraction_ptr) 
 /*
   Called when the middle button is used to drag to 
   the scrollbar. The scrollbar is moved for us.
@@ -112,7 +115,8 @@ void JumpProc(Widget scrollbar, caddr_t data, caddr_t fraction_ptr)
 }
 
 /**** slowdown ****/
-void JumpProc2(Widget scrollbar, caddr_t data, caddr_t fraction_ptr)
+/* JJU: void JumpProc2(Widget scrollbar, caddr_t data, caddr_t fraction_ptr) */
+void JumpProc2(Widget scrollbar, XtPointer data, XtPointer fraction_ptr)
 /*
   Called when the middle button is used to drag to 
   the scrollbar. The scrollbar is moved for us.

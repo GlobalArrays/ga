@@ -63,7 +63,8 @@ XtAppContext create_overview(int argc, char **argv)
   return(app);
 }
 
-void start_view(Widget widget, caddr_t data, XEvent *event)
+/* JJU: void start_view(Widget widget, caddr_t data, XEvent *event); */
+void start_view(Widget widget, XtPointer data, XtPointer event)
 {
   create_main_window();
 
@@ -80,7 +81,9 @@ void start_view(Widget widget, caddr_t data, XEvent *event)
                                draw_select_box, NULL);
 }
 
-void running_overview(Widget widget, caddr_t data, XEvent *event)
+/* JJU: void running_overview(Widget widget, caddr_t data, XEvent *event) */
+void running_overview(Widget widget, XtPointer data, XEvent *event,
+                      Boolean *bln)
 {
   char loc_str[40];
   int x, y;
@@ -93,25 +96,32 @@ void running_overview(Widget widget, caddr_t data, XEvent *event)
   if (x > overview_width - 1) x = overview_width - 1;
   if (y < 0) y = 0;
   if (y > overview_height - 1) y = overview_height - 1;
-
+/*
   scale_x = (int)((x / overview_scale) + 1.5); 
   scale_y = (int)((y / overview_scale) + 1.5); 
+*/
+  scale_x = (int)((x / overview_scale) + .5); 
+  scale_y = (int)((y / overview_scale) + .5); 
 
   if (scale_x > grid_x) scale_x = grid_x;
   if (scale_y > grid_y) scale_y = grid_y;
 
-  sprintf(loc_str, "x, y: %d, %d", scale_x, scale_y);
+  sprintf(loc_str, "x, y: %d, %d", scale_x, scale_y); 
+
   XtVaSetValues(overview_title, XtNlabel, loc_str, NULL);
 }
 
-void draw_select_box(Widget widget, caddr_t data, XEvent *event)
+/* JJU: void draw_select_box(Widget widget, caddr_t data, XEvent *event) */
+void draw_select_box(Widget widget, XtPointer data, XEvent *event,
+                     Boolean *bln)
 {
   static int x1, x2, y1, y2;
   static int first = True;
   static GC gc_rband, gc_select;
   static Display *disp;
   static Pixmap pixmap;
-  static Window *win;
+  /* JJU: static Window *win; */
+  static Window win;
   static int screen;
   static int button_state = 0;
   static int another_state = False;
@@ -154,15 +164,17 @@ void draw_select_box(Widget widget, caddr_t data, XEvent *event)
         XSetForeground(disp, gc_select, GRID_COLOR);
         for(i = 0; i < rows; i++)
         {
-          XDrawLine(disp, pixmap, gc_select, 0, (overlay_row[i] - 1) * 
-                    overview_scale, 
-                    overview_width - 1, (overlay_row[i] - 1) * overview_scale);
+          int _x1=0,_x2=overview_width - 1;
+          int _y1,_y2;
+          _y1=_y2=overlay_row[i] * overview_scale;
+          XDrawLine(disp, pixmap, gc_select, _x1, _y1, _x2, _y2);
         }
         for(i = 0; i < cols; i++)
         {
-          XDrawLine(disp, pixmap, gc_select, (overlay_col[i] - 1) * 
-                    overview_scale, 0, 
-                    (overlay_col[i] - 1) * overview_scale, overview_height - 1);
+          int _y1=0,_y2=overview_height - 1;
+          int _x1,_x2;
+          _x1 =_x2 =overlay_col[i] * overview_scale;
+          XDrawLine(disp, pixmap, gc_select, _x1, _y1, _x2, _y2);
         }
         XSetForeground(disp, gc_select, SELECT_COLOR);
         XCopyArea(disp, pixmap, win, gc_select, 0, 0, overview_width, 
@@ -204,6 +216,23 @@ void draw_select_box(Widget widget, caddr_t data, XEvent *event)
           XDrawRectangle(disp, pixmap, gc_select, x1, y1, x2 - x1, y2 - y1); 
           XFillRectangle(disp, pixmap, gc_select, x1, y1, x2 - x1, y2 - y1); 
           XSetForeground(disp, gc_select, GRID_COLOR);
+        for(i = 0; i < rows; i++)
+        {
+          int _x1=0,_x2=overview_width - 1;
+          int _y1,_y2;
+          _y1=_y2=overlay_row[i] * overview_scale;
+          XDrawLine(disp, pixmap, gc_select, _x1, _y1, _x2, _y2);
+        }
+        for(i = 0; i < cols; i++)
+        {
+          int _y1=0,_y2=overview_height - 1;
+          int _x1,_x2;
+          _x1 =_x2 =overlay_col[i] * overview_scale;
+          XDrawLine(disp, pixmap, gc_select, _x1, _y1, _x2, _y2);
+        }
+
+
+/*
           for(i = 0; i < rows; i++)
           {
             XDrawLine(disp, pixmap, gc_select, 0, (overlay_row[i] - 1) * 
@@ -216,6 +245,7 @@ void draw_select_box(Widget widget, caddr_t data, XEvent *event)
                       overview_scale, 0, 
                       (overlay_col[i] - 1) * overview_scale, overview_height - 1);
           }
+*/
           XSetForeground(disp, gc_select, SELECT_COLOR);
 
           XCopyArea(disp, pixmap, win, gc_select, 0, 0, overview_width, 
@@ -271,17 +301,32 @@ void draw_select_box(Widget widget, caddr_t data, XEvent *event)
         XSetForeground(disp, gc_select, CANVAS_COLOR);
         XFillRectangle(disp, pixmap, gc_select, 0, 0,overview_width, overview_height ); 
         XSetForeground(disp, gc_select, GRID_COLOR);
+/*
         for(i = 0; i < rows; i++)
         {
-          XDrawLine(disp, pixmap, gc_select, 0, (overlay_row[i] - 1) * 
-                    overview_scale, 
-                    overview_width - 1, (overlay_row[i] - 1) * overview_scale);
+          int x1=0,x2=overview_width - 1;
+          int y1=y2=overlay_row[i] * overview_scale;
+          XDrawLine(disp, pixmap, gc_select, x1, y1, x2, y2);
         }
         for(i = 0; i < cols; i++)
         {
-          XDrawLine(disp, pixmap, gc_select, (overlay_col[i] - 1) * 
+          int y1=0,y2=overview_height - 1;
+          int x1=x2=overlay_col[i] * overview_scale;
+          XDrawLine(disp, pixmap, gc_select, x1, y1, x2, y2);
+        }
+*/
+
+        for(i = 0; i < rows; i++)
+        {
+          XDrawLine(disp, pixmap, gc_select, 0, (overlay_row[i] - 0) * 
+                    overview_scale, 
+                    overview_width - 1, (overlay_row[i] - 0) * overview_scale);
+        }
+        for(i = 0; i < cols; i++)
+        {
+          XDrawLine(disp, pixmap, gc_select, (overlay_col[i] - 0) * 
                     overview_scale, 0, 
-                    (overlay_col[i] - 1) * overview_scale, overview_height - 1);
+                    (overlay_col[i] - 0) * overview_scale, overview_height - 1);
         }
         XSetForeground(disp, gc_select, SELECT_COLOR);
         XCopyArea(disp, pixmap, win, gc_select, 0, 0, overview_width, 

@@ -65,7 +65,8 @@ Window W;
 
 
 /*****************************************************************/
-void TimeOutCallback(caddr_t data)
+/* JJU: void TimeOutCallback(caddr_t data) */
+void TimeOutCallback(XtPointer data, XtIntervalId *xtintervalid)
 {
 #define  AMP 1
 int ilo, ihi, jlo, jhi, inc;
@@ -128,24 +129,25 @@ int base, stime;
 
 
 /**/
-void Exposed(Widget widget, caddr_t data, XEvent *event)
+/* JJU: void Exposed(Widget widget, caddr_t data, XEvent *event) */
+void Exposed(Widget widget, XtPointer data, XEvent *event, Boolean *bln)
 {
-  /* Now we are exposed so we can draw ... */
-
-  if (event->xexpose.count == 0)
-  {
-    if (first_time) 
+    /* Now we are exposed so we can draw ... */
+    
+    if (event->xexpose.count == 0)
     {
-      /* Cannot seem to set this before now ? */
-      ScrollProc(scroll_widget, NULL, 0);
-      ScrollProc2(scroll_widget2, NULL, 0);
-      first_time = False;
+        if (first_time) 
+        {
+            /* Cannot seem to set this before now ? */
+            ScrollProc(scroll_widget, NULL, 0);
+            ScrollProc2(scroll_widget2, NULL, 0);
+            first_time = False;
+        }
+        
+        DrawColorMap();
+        PrintColorMapText();
+        DisplayPixRegion(0, pict_height - 1, 0, pict_width - 1);
+        XFlush(display);
     }
-
-    DrawColorMap();
-    PrintColorMapText();
-    DisplayPixRegion(0, pict_height - 1, 0, pict_width - 1);
-    XFlush(display);
-  }
 }  
 

@@ -201,7 +201,8 @@ void create_main_window()
 
 }
 
-void running_coords(Widget widget, caddr_t data, XEvent *event)
+/* JJU: void running_coords(Widget widget, caddr_t data, XEvent *event) */
+void running_coords(Widget widget, XtPointer data, XEvent *event, Boolean *bln)
 {
   char loc_str[40];
   int x, y;
@@ -209,8 +210,12 @@ void running_coords(Widget widget, caddr_t data, XEvent *event)
   x = event->xmotion.x;
   y = event->xmotion.y;
 
-  sprintf(loc_str, "Coordinates x, y: %d, %d", (int) (x / scale) + left_edge + 1, 
+/*   sprintf(loc_str, "Coordinates x, y: %d, %d", (int) (x / scale) + left_edge + 1, 
          (int) (y / scale) + top_edge + 1);
+*/
+  sprintf(loc_str, "Coordinates x, y: %d, %d", 
+		(int) (x / scale) + left_edge, 
+         	(int) (y / scale) + top_edge);
   XtVaSetValues(coord_widget, XtNlabel, loc_str, NULL);
 }
 
@@ -287,14 +292,16 @@ void setup_drawing()
 }
 
 /**/
-void Quit(Widget widget, caddr_t data, XEvent *event)
+/* JJU: void Quit(Widget widget, caddr_t data, XEvent *event) */
+void Quit(Widget widget, XtPointer data, XtPointer event)
 {
   exit(0);
 }
 
 
 /**/
-void StartStop(Widget widget, caddr_t data, XEvent *event)
+/* JJU: void StartStop(Widget widget, caddr_t data, XEvent *event) */
+void StartStop(Widget widget, XtPointer data, XtPointer event)
 {
   /* Toggle propagation of display */
 

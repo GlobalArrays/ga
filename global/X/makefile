@@ -10,6 +10,10 @@ INCLUDES = -I$(XLOC)/include
     COPT = -g
   CFLAGS = $(COPT) $(INCLUDES)
 
+ifeq ($(TARGET), SGI_N32)
+  CFLAGS += -32
+endif
+
   XLIBS = -L$(XLOC)/lib -lMrm -lXm -lXaw -lXmu -lXt -lX11 -lXau -lXdmcp -lXext
   LIBS = 
   RM = rm

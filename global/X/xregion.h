@@ -28,24 +28,49 @@ extern void UpdatePixRegion(int ilo, int ihi, int jlo, int jhi, int increment,
 extern void DisplayPixRegion(int ilo, int ihi, int jlo, int jhi);
 extern void DisplaySlowdownValue();
 extern void DisplayIntervalValue();
-extern void ScrollProc(Widget scrollbar, caddr_t data, caddr_t position);
-extern void ScrollProc2(Widget scrollbar, caddr_t data, caddr_t position);
-extern void JumpProc(Widget scrollbar, caddr_t data, caddr_t fraction_ptr);
-extern void JumpProc2(Widget scrollbar, caddr_t data, caddr_t fraction_ptr);
+/* JJU: extern void ScrollProc(Widget scrollbar, caddr_t data,
+   caddr_t position); */
+extern void ScrollProc(Widget scrollbar, XtPointer data, XtPointer position);
+/* JJU: extern void ScrollProc2(Widget scrollbar, caddr_t data,
+   caddr_t position); */
+extern void ScrollProc2(Widget scrollbar, XtPointer data, XtPointer position);
+/* JJU: extern void JumpProc(Widget scrollbar, caddr_t data,
+   caddr_t fraction_ptr); */
+extern void JumpProc(Widget scrollbar, XtPointer data, XtPointer fraction_ptr);
+/* JJU: extern void JumpProc2(Widget scrollbar, caddr_t data,
+   caddr_t fraction_ptr); */
+extern void JumpProc2(Widget scrollbar, XtPointer data,
+                      XtPointer fraction_ptr);
 extern void DrawColorMap();
 extern void PrintColorMapText();
 extern void UpdateDisplay();
-extern void TimeOutCallback(caddr_t data);
-extern void Exposed(Widget widget, caddr_t data, XEvent *event);
-extern void dismiss_dialog(Widget widget, caddr_t data, XEvent *event);
-extern void Quit(Widget widget, caddr_t data, XEvent *event);
-extern void StartStop(Widget widget, caddr_t data, XEvent *event);
-extern void start_view(Widget widget, caddr_t data, XEvent *event);
+/* JJU: extern void TimeOutCallback(caddr_t data); */
+extern void TimeOutCallback(XtPointer data, XtIntervalId *xtintervalid);
+/* JJU: extern void Exposed(Widget widget, caddr_t data, XEvent *event); */
+extern void Exposed(Widget widget, XtPointer data, XEvent *event,
+                    Boolean *bln);
+/* JJU: extern void dismiss_dialog(Widget w, caddr_t data, XEvent *event) */
+extern void dismiss_dialog(Widget widget, XtPointer data, XtPointer event);
+/* JJU: extern void Quit(Widget widget, caddr_t data, XEvent *event); */
+extern void Quit(Widget widget, XtPointer data, XtPointer event);
+/* JJU: extern void StartStop(Widget widget, caddr_t data, XEvent *event); */
+extern void StartStop(Widget widget, XtPointer data, XtPointer event);
+/* JJU: extern void start_view(Widget widget, caddr_t data, XEvent *event); */
+extern void start_view(Widget widget, XtPointer data, XtPointer event);
 extern void Setcmap();
 extern void ReadEventFile(char *filename);
-extern void running_coords(Widget widget, caddr_t data, XEvent *event);
-extern void running_overview(Widget widget, caddr_t data, XEvent *event);
-extern void draw_select_box(Widget widget, caddr_t data, XEvent *event);
+/* JJU: extern void running_coords(Widget widget, caddr_t data,
+   XEvent *event); */
+extern void running_coords(Widget widget, XtPointer data, XEvent *event,
+                           Boolean *bln);
+/* JJU: extern void running_overview(Widget widget, caddr_t data,
+   XEvent *event); */
+extern void running_overview(Widget widget, XtPointer data, XEvent *event,
+                             Boolean *bln);
+/* JJU: extern void draw_select_box(Widget widget, caddr_t data,
+   XEvent *event); */
+extern void draw_select_box(Widget widget, XtPointer data, XEvent *event,
+                            Boolean *bln);
 extern int in_display_region(int ilo, int ihi, int jlo, int jhi);
 extern XtAppContext create_overview(int argc, char **argv);
 extern void create_main_window();
