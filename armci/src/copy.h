@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.60 2004-03-27 00:26:27 d3h325 Exp $ */
+/* $Id: copy.h,v 1.61 2004-03-30 23:52:43 manoj Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -235,7 +235,7 @@ void FATR DCOPY1D(void*, void*, int*);
 #    ifndef MEMCPY
 #       define MEMCPY
 #    endif
-#    define MEM_FENCE armci_asm_mem_fence
+#    define MEM_FENCE armci_asm_mem_fence()
      extern void armci_asm_mem_fence();
 #endif
                                                  
