@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.18 2003-04-10 00:16:10 d3h325 Exp $ */
+/* $Id: elan.c,v 1.19 2003-04-10 18:10:20 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <elan3/elan3.h>
 #include <stdio.h>
@@ -78,7 +78,6 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
     elan_gsync(elan_base->allGroup);
     _pgctrl = elan_putgetInit(elan_base->state, _qd, 16, 4096, 4096, 32, ELAN_PGVINIT);
     if(!_pgctrl) armci_die("failed elan_gallocElan 2",0);
-    printf("%d passed putgetInit\n",armci_me); fflush(stdout);
     elan_gsync(elan_base->allGroup);
 #endif
 
