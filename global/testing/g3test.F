@@ -11,6 +11,7 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
+c#define MIRROR
 
       program main
       implicit none
@@ -29,11 +30,14 @@ c vector boxes lack arithmetic precision
       integer dims3(7), ld3(7), index3, chunk(7)
       integer a(nmax, nmax, nmax)
       integer b(nmax+2*nwidth,nmax+2*nwidth,nmax+2*nwidth)
+#ifdef MIRROR
+      integer lprocs, iproc, inode, p_mirror
+#endif
       double precision start,finish,start1,finish1
       double precision t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13
       double precision t14,t15,t16,t17,t18,t19,t20,t21,tmp
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
-      parameter (heap=25*25*25*4, fudge=100, stack=100*100)
+      parameter (heap=nmax*nmax*nmax*4, fudge=100, stack=100*100)
 c     
 c***  Intitialize a message passing library
 c
@@ -54,6 +58,12 @@ c
       call ga_initialize()
       nproc = ga_nnodes()
       me = ga_nodeid()
+#ifdef MIRROR
+      inode = ga_cluster_nodeid()
+      lprocs = ga_cluster_nprocs(inode)
+      iproc = mod(me,lprocs)
+      p_mirror = ga_mirror_config()
+#endif
 c     we can also use GA_set_memory_limit BEFORE first ga_create call
 c
       ma_heap = heap + fudge 
@@ -71,7 +81,12 @@ c
       if (.not. status) call ga_error('ma_init failed',-1) 
 c
       if(me.eq.0)then
+#ifndef MIRROR
         print *, 'using ', nproc, ' process(es)'
+#else
+        print *, 'using ', ga_cluster_nnodes(), ' nodes'
+        print *, 'using ',lprocs,' process(es) per node'
+#endif
         call ffflush(6)
       endif
 c
@@ -81,7 +96,11 @@ c
 c
 c   Create irregular distribution on all nodes
 c
+#ifndef MIRROR
       call factor(nproc,ndim,pdims)
+#else
+      call factor(lprocs,ndim,pdims)
+#endif
       dims(1) = pdims(1) * nmax
       dims(2) = pdims(2) * nmax
       dims(3) = pdims(3) * nmax
@@ -123,10 +142,17 @@ c
       endif
 
       type = MT_INT
+#ifndef MIRROR
       status = nga_create_ghosts_irreg (type, ndim, dims, width,
      +        "test_array_a", map, pdims, g_a)
-      status = nga_create_ghosts_irreg (type, ndim, dims, width,
-     +        "test_array_b", map, pdims, g_b)
+c      status = nga_create_ghosts_irreg (type, ndim, dims, width,
+c     +        "test_array_b", map, pdims, g_b)
+#else
+      status = nga_create_ghosts_irreg_config (type, ndim, dims, width,
+     +        "test_array_a", map, pdims, p_mirror, g_a)
+c      status = nga_create_ghosts_irreg_config (type, ndim, dims, width,
+c     +        "test_array_b", map, pdims, p_mirror, g_b)
+#endif
       if (status.and.me.eq.0) then
         write(6,*) '*'
         write(6,*) '* Global array creation was successful'
@@ -134,8 +160,13 @@ c
       elseif (.not.status) then
         write(6,*) 'Global array creation failure on ',me
       endif
+#ifndef MIRROR
       status = nga_create_irreg (type, ndim, dims,"test_array_b",
      +         map, pdims, g_b)
+#else
+      status = nga_create_irreg_config (type, ndim, dims,"test_array_b",
+     +         map, pdims, p_mirror, g_b)
+#endif
       if (.not.status) then
         write(6,*) 'Global array creation failure on ',me
       endif
@@ -143,12 +174,17 @@ c
 c   Find processors that have data
 c
       call ga_sync
+#ifndef MIRROR
       do i = 0, nproc-1
+#else
+      do i = 0, lprocs-1
+#endif
         call nga_distribution(g_a, i, lo, hi)
         has_data(i) = .true.
         do j = 1, ndim
           if (lo(j).eq.0.and.hi(j).eq.-1) has_data(i) = .false.
         end do
+#ifndef MIRROR
         if (me.eq.i) then
           write(6,*) '*'
           write(6,*) '* Distribution on processor ',i
@@ -158,6 +194,7 @@ c
           write(6,110) lo(3), hi(3)
   110     format(2i10)
         endif
+#endif
         call ffflush(6)
         call ga_sync
       end do
@@ -547,7 +584,7 @@ c
       integer ld,ld2
       integer dim(7)
       integer a(ld,ld,*), b(ld2,ld2,*)
-      integer i, j, k, l, nproc
+      integer i, j, k, l, nproc, lprocs, iproc, inode
       logical has_data(0:1999), check_data
 
       isok = .true.
