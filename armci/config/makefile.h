@@ -60,6 +60,8 @@ ifeq ($(_CC),gcc)
           COPT = -O2
      COPT_REN += -finline-functions -funroll-loops $(OPT_ALIGN)
    endif
+else
+   EXTRA_OBJ = tas-i386.o
 endif
 #
 #           g77
@@ -346,4 +348,9 @@ endif
 ifeq (CRAY,$(findstring CRAY,$(TARGET)))
 %.o:    %.f
 	$(FC) -c $(FFLAGS) $*.f
+endif
+
+ifeq ($(TARGET),LINUX)
+tas-i386.o:
+	gcc -c tas-i386.c
 endif

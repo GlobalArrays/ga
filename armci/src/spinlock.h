@@ -1,10 +1,16 @@
-#if defined(__i386__) && defined(__GNUC__)
+#if defined(__i386__)
+
+#if defined(__GNUC__)
+#include "tas-i386.h"
+#define TESTANDSET testandset
+#else
+#define TESTANDSET gcc_testandset
+extern int gcc_testandset(int *s);
+#endif
 
 #include <unistd.h>
-#include "tas-i386.h"
 #define INLINE inline
 #define SPINLOCK 
-#define TESTANDSET testandset
 
 #elif defined(SGI)
 #include <mutex.h>
