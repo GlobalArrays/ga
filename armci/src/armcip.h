@@ -48,7 +48,7 @@
 #  define BUFSIZE_DBL (MSG_BUFLEN_DBL - sizeof(request_header_t)/sizeof(double)\
                        - 3*MAX_STRIDE_LEVEL)
 #else
-#  define BUFSIZE_DBL 16384
+#  define BUFSIZE_DBL 32768
 #endif
 
 #define BUFSIZE  (BUFSIZE_DBL * sizeof(double))
