@@ -152,7 +152,7 @@ static Off_t elio_max_file_size(Fd_t fd)
 #ifdef LARGE_FILES
   return ABSURDLY_LARGE;
 #else
-  return 2147483648.0;		/* 2 GB */
+  return (2047.0*1024.0*1024.0);		/* 2 GB - 1 MB */  
 #endif
 }
 
@@ -177,7 +177,7 @@ static Fd_t elio_get_next_extent(Fd_t fd)
     len = strlen(fname);
     if (fd->extent) len -= 4;
     sprintf(fname+len,"x%3.3d",fd->extent+1);
-    printf("Opening extent %d with name '%s'\n",fd->extent+1,fname);
+    /*printf("Opening extent %d with name '%s'\n",fd->extent+1,fname);*/
     if ((next_fd = elio_open(fname, fd->type, fd->mode))) {
       next_fd->extent = fd->extent + 1;
       fd->next = (struct fd_struct *) next_fd;
@@ -221,6 +221,8 @@ Size_t elio_write(Fd_t fd, Off_t  doffset, const void* buf, Size_t bytes)
     bytes_to_write = (Size_t) (elio_max_file_size(fd)-doffset);
     nextbytes -= bytes_to_write;
   }
+  /*printf("TRYING TO WRITE AT doffset=%f offset=%lu bw=%lu nb=%lu\n", doffset, offset,
+    bytes_to_write, nextbytes);*/
 
   /* Write to this extent */
 
