@@ -488,7 +488,6 @@ int elio_close(Fd_t fd)
 
    PABLO_end(PABLO_elio_close);
 
-   fprintf(stderr,"success %d\n",ELIO_OK);
    return ELIO_OK;
 }
 
