@@ -11,7 +11,9 @@
 #   define MP_BARRIER()      pvm_barrier(MPGROUP,-1)
 #   define MP_MYID(pid)      *(pid)   = pvm_getinst(MPGROUP,pvm_mytid())
 #   define MP_PROCS(pproc)   *(pproc) = (int)pvm_gsize(MPGROUP)
-    void pvm_init(int argc, char *argv[]);
+    extern void pvm_init(int argc, char *argv[]);
+    extern double armci_timer();
+#   define MP_TIMER          armci_timer
 #elif defined(TCGMSG)
 #   include <sndrcv.h>
     long tcg_tag =30000;
@@ -20,6 +22,7 @@
 #   define MP_FINALIZE()     PEND_()
 #   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
 #   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
+#   define MP_TIMER          TCGTIME_
 #else
 #   include <mpi.h>
 #   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
@@ -27,5 +30,6 @@
 #   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
 #   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
 #   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
+#   define MP_TIMER          MPI_Wtime
 #endif
 
