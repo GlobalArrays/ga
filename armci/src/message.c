@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.13 2000-04-17 22:31:39 d3h325 Exp $ */
+/* $Id: message.c,v 1.14 2000-05-01 23:18:03 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -11,6 +11,7 @@
 #endif
 #include "message.h"
 #include "armcip.h"
+#include "copy.h"
 
 #ifdef CRAY
 char *mp_group_name = (char *)NULL;
@@ -19,14 +20,11 @@ char *mp_group_name = "mp_working_group";
 #endif
 
 #define BUF_SIZE  2048
+#define INFO_BUF_SIZE  (BUF_SIZE*sizeof(BUF_SIZE) - sizeof(double))
 static double work[BUF_SIZE];
 static long *lwork = (long*)work;
+static int *iwork = (int*)work;
 
-#define ARM_INT -99
-#define ARM_LONG -101
-#define ARM_DOUBLE -307
-#define SCOPE_ALL  333
-#define SCOPE_NODE 337
 
 void armci_msg_barrier()
 {
@@ -87,31 +85,64 @@ void armci_msg_abort(int code)
 #  endif
 }
 
+
+static void armci_msg_bintree(int scope, int* Root, int *Up, int *Left, int *Right)
+{
+int root, up, left, right, index, nproc;
+    if(scope == SCOPE_NODE){
+       root  = armci_clus_info[armci_clus_me].master;
+       nproc = armci_clus_info[armci_clus_me].nslave;
+       index = armci_me - root;
+       up    = (index-1)/2 + root; if( up < root) up = -1;
+       left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
+       right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
+    }else if(scope ==SCOPE_MASTERS){
+       root  = armci_clus_info[0].master;
+       nproc = armci_nclus;
+       if(armci_me != armci_master){up = -1; left = -1; right = -1; }
+       index = armci_clus_me - root;
+       up    = (index-1)/2 + root;
+               up = ( up < root)? -1: armci_clus_info[up].master;
+       left  = 2*index + 1 + root;
+               left = ( left >= root+nproc)? -1: armci_clus_info[up].master;
+       right = 2*index + 2 + root;
+               right = ( right >= root+nproc)? -1: armci_clus_info[up].master;
+    }else{
+       root  = 0;
+       nproc = armci_nproc;
+       index = armci_me - root;
+       up    = (index-1)/2 + root; if( up < root) up = -1;
+       left  = 2*index + 1 + root; if(left >= root+nproc) left = -1;
+       right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
+    }
+
+    *Up = up;
+    *Left = left;
+    *Right = right;
+    *Root = root;
+}
+
+
 /*\ root broadcasts to everyone else
 \*/
-void armci_msg_bcast(void *buf, int len, int root)
+void armci_msg_bcast(int scope, void *buf, int len, int root)
 {
-    int up, left, right, index, Root=0;
-    int tag=ARMCI_TAG, lenmes;
+    int up, left, right, Root;
 
     if(!buf)armci_die("armci_msg_bcast: NULL pointer", len);
     
+    armci_msg_bintree(scope, &Root, &up, &left, &right);
+
     if(root !=Root){
-        int msglen;
-        
         if(armci_me == root) armci_msg_snd(ARMCI_TAG, buf,len, Root);
-        if(armci_me ==Root) armci_msg_rcv(ARMCI_TAG, buf, len, &msglen, root);
+        if(armci_me ==Root) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, root);
     }
     
-    index = armci_me - Root;
-    up    = (index-1)/2 + Root; if( up < Root) up = -1;
-    left  = 2*index + 1 + Root; if(left >= Root+armci_nproc) left = -1;
-    right = 2*index + 2 + Root; if(right >= Root+armci_nproc)right = -1;
-    
-    if(armci_me != Root) armci_msg_rcv(tag, buf, len, &lenmes, up);
-    if (left > -1)  armci_msg_snd(tag, buf, len, left);
-    if (right > -1) armci_msg_snd(tag, buf, len, right);
+    if(armci_me != Root) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, up);
+    if (left > -1)  armci_msg_snd(ARMCI_TAG, buf, len, left);
+    if (right > -1) armci_msg_snd(ARMCI_TAG, buf, len, right);
 }
+
 
 void armci_msg_brdcst(void* buffer, int len, int root)
 {
@@ -143,20 +174,23 @@ void armci_msg_snd(int tag, void* buffer, int len, int to)
 }
 
 
+/*\ receive message of specified tag from proc and get its len if msglen!=NULL 
+\*/
 void armci_msg_rcv(int tag, void* buffer, int buflen, int *msglen, int from)
 {
 #  ifdef MPI
       MPI_Status status;
       MPI_Recv(buffer, buflen, MPI_CHAR, from, tag, MPI_COMM_WORLD, &status);
-      MPI_Get_count(&status, MPI_CHAR, msglen);
+      if(msglen) MPI_Get_count(&status, MPI_CHAR, msglen);
 #  elif defined(PVM)
-      int src, rtag;
+      int src, rtag,mlen;
       pvm_precv(pvm_gettid(mp_group_name, from), tag, buffer, buflen, PVM_BYTE,
-                &src, &rtag, msglen);
+                &src, &rtag, &mlen);
+      if(msglen)*msglen=mlen;
 #  else
-      long ttag=tag, llen=buflen, mmsglen, ffrom=from, sender, block=1;
-      RCV_(&ttag, buffer, &llen, &mmsglen, &ffrom, &sender, &block);
-      *msglen = (int)mmsglen;
+      long ttag=tag, llen=buflen, mlen, ffrom=from, sender, block=1;
+      RCV_(&ttag, buffer, &llen, &mlen, &ffrom, &sender, &block);
+      if(msglen)*msglen = (int)mlen;
 #  endif
 }
 
@@ -171,17 +205,18 @@ int armci_msg_rcvany(int tag, void* buffer, int buflen, int *msglen)
              MPI_COMM_WORLD, &status);
       if(ierr != MPI_SUCCESS) armci_die("armci_msg_rcvany: Recv failed ", tag);
 
-      ierr = MPI_Get_count(&status, MPI_CHAR, msglen);
-      if(ierr != MPI_SUCCESS) armci_die("armci_msg_rcvany: count failed ", tag);
+      if(msglen)if(MPI_SUCCESS!=MPI_Get_count(&status, MPI_CHAR, msglen))
+                       armci_die("armci_msg_rcvany: count failed ", tag);
       return (int)status.MPI_SOURCE;
 #  elif defined(PVM)
-      int src, rtag;
-      pvm_precv(-1, tag, buffer, buflen, PVM_BYTE, &src, &rtag, msglen);
+      int src, rtag,mlen;
+      pvm_precv(-1, tag, buffer, buflen, PVM_BYTE, &src, &rtag, &mlen);
+      if(msglen)*msglen=mlen;
       return(pvm_getinst(mp_group_name,src));
 #  else
-      long ttag=tag, llen=buflen, mmsglen, ffrom=-1, sender, block=1;
-      RCV_(&ttag, buffer, &llen, &mmsglen, &ffrom, &sender, &block);
-      *msglen = (int)mmsglen;
+      long ttag=tag, llen=buflen, mlen, ffrom=-1, sender, block=1;
+      RCV_(&ttag, buffer, &llen, &mlen, &ffrom, &sender, &block);
+      if(msglen)*msglen = (int)mlen;
       return (int)sender;
 #  endif
 }
@@ -324,8 +359,6 @@ static void ddoop(int n, char* op, double* x, double* work)
 
 
 
-
-
 /*\ combine array of longs/ints accross all processes
 \*/
 void armci_msg_gop(int scope, void *x, int n, char* op, int type)
@@ -352,8 +385,8 @@ void *origx =x;
        right = 2*index + 2 + root; if(right >= root+nproc)right = -1;
     }
 
-    if(type==ARM_INT) size = sizeof(int);
-	else if(type==ARM_LONG) size = sizeof(long);
+    if(type==ARMCI_INT) size = sizeof(int);
+	else if(type==ARMCI_LONG) size = sizeof(long);
     else size = sizeof(double);
 
     ratio = sizeof(double)/size;
@@ -363,15 +396,15 @@ void *origx =x;
 
          if (left > -1) {
            armci_msg_rcv(tag, lwork, len, &lenmes, left);
-           if(type==ARM_INT) idoop(ndo, op, (int*)x, (int*)work);
-           else if(type==ARM_LONG) ldoop(ndo, op, (long*)x, (long*)work);
+           if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
+           else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
            else ddoop(ndo, op, (double*)x, work);
          }
 
          if (right > -1) {
            armci_msg_rcv(tag, lwork, len, &lenmes, right);
-           if(type==ARM_INT) idoop(ndo, op, (int*)x, (int*)work);
-           else if(type==ARM_LONG) ldoop(ndo, op, (long*)x, (long*)work);
+           if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
+           else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
            else ddoop(ndo, op, (double*)x, work);
          }
          if (armci_me != root) armci_msg_snd(tag, x, len, up);
@@ -388,28 +421,108 @@ void *origx =x;
 }
 
 
+static void armci_sel(int type, char *op, void *x, void* work, int n)
+{
+int selected=0;
+  switch (type) {
+  case ARMCI_INT:
+     if(strncmp(op,"min",3) == 0){ 
+        if(*(int*)x > *(int*)work) selected=1;
+     }else
+        if(*(int*)x < *(int*)work) selected=1;
+     break;
+  case ARMCI_LONG:
+     if(strncmp(op,"min",3) == 0){ 
+        if(*(long*)x > *(long*)work) selected=1;
+     }else
+        if(*(long*)x < *(long*)work) selected=1;
+     break;
+  default:
+     if(strncmp(op,"min",3) == 0){
+        if(*(double*)x > *(double*)work) selected=1;
+     }else
+        if(*(double*)x < *(double*)work) selected=1;
+  }
+  if(selected)armci_copy(work,x, n);
+}
+   
+ 
+
+/*\ global for  op with extra info 
+\*/
+void armci_msg_sel_scope(int scope, void *x, int n, char* op, int type, int contribute)
+{
+int root, up, left, right;
+int tag=ARMCI_TAG;
+int len, lenmes, min;
+
+    min = (strncmp(op,"min",3) == 0);
+    if(!min && (strncmp(op,"max",3) != 0))
+            armci_die("armci_msg_gop_info: operation not supported ", 0);
+
+    if(!x)armci_die("armci_msg_gop_info: NULL pointer", n);
+
+    if(n>INFO_BUF_SIZE)armci_die("armci_msg_gop_info: info too large",n);
+
+    len = lenmes = n;
+
+    armci_msg_bintree(scope, &root, &up, &left, &right);
+
+    if (left > -1) {
+
+        /* receive into work if contributing otherwise into x */
+        if(contribute)armci_msg_rcv(tag, work, len, &lenmes, left);
+        else armci_msg_rcv(tag, x, len, &lenmes, left);
+
+        if(lenmes){
+           if(contribute) armci_sel(type, op, x, work, n);
+           else contribute =1; /* now we got data to pass */ 
+        }
+    }
+
+    if (right > -1) {
+        /* receive into work if contributing otherwise into x */
+        if(contribute) armci_msg_rcv(tag, work, len, &lenmes, right);
+        else armci_msg_rcv(tag, x, len, &lenmes, right);
+
+        if(lenmes){
+           if(contribute) armci_sel(type, op, x, work, n);
+           else contribute =1; /* now we got data to pass */ 
+        }
+    }
+
+    if (armci_me != root)
+       if(contribute) armci_msg_snd(tag, x, len, up);
+       else armci_msg_snd(tag, x, 0, up); /* send 0 bytes */
+
+    /* Now, root broadcasts the result down the binary tree */
+    armci_msg_bcast(scope, x, n, root);
+}
+
+
+
 /*\ combine array of longs/ints/doubles accross all processes
 \*/
 void armci_msg_igop(int *x, int n, char* op)
-{ armci_msg_gop(SCOPE_ALL,x, n, op, ARM_INT); }
+{ armci_msg_gop(SCOPE_ALL,x, n, op, ARMCI_INT); }
 
 void armci_msg_lgop(long *x, int n, char* op)
-{ armci_msg_gop(SCOPE_ALL,x, n, op, ARM_LONG); }
+{ armci_msg_gop(SCOPE_ALL,x, n, op, ARMCI_LONG); }
 
 void armci_msg_dgop(double *x, int n, char* op)
-{ armci_msg_gop(SCOPE_ALL,x, n, op, ARM_DOUBLE); }
+{ armci_msg_gop(SCOPE_ALL,x, n, op, ARMCI_DOUBLE); }
 
 
 /*\ add array of longs/ints within the same cluster 
 \*/
 void armci_msg_clus_igop(int *x, int n, char* op)
-{ armci_msg_gop(SCOPE_NODE,x, n, op, ARM_INT); }
+{ armci_msg_gop(SCOPE_NODE,x, n, op, ARMCI_INT); }
 
 void armci_msg_clus_lgop(long *x, int n, char* op)
-{ armci_msg_gop(SCOPE_NODE,x, n, op, ARM_INT); }
+{ armci_msg_gop(SCOPE_NODE,x, n, op, ARMCI_INT); }
 
 void armci_msg_clus_dgop(double *x, int n, char* op)
-{ armci_msg_gop(SCOPE_NODE,x, n, op, ARM_DOUBLE); }
+{ armci_msg_gop(SCOPE_NODE,x, n, op, ARMCI_DOUBLE); }
 
 
 #ifdef PVM
