@@ -450,7 +450,7 @@ endif
 #
 ifeq ($(TARGET),LAPI)
 #
-           FC = mpxlf_r -qnohpf
+           FC = mpxlf_r
            CC = mpcc_r
           FLD = $(CC)
        RANLIB = ranlib
