@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.15 2000-05-02 00:57:53 d3h325 Exp $
+# $Id: makefile.h,v 1.16 2000-05-02 17:47:06 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -298,8 +298,6 @@ endif
 #.............................. final flags ....................................
 #
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)
-       FC += $(FOPT_REN)
-       CC += $(COPT_REN)
 
 #Fujitsu fortran compiler requires -Wp prefix for cpp symbols
 ifeq ($(TARGET),FUJITSU-VPP)
@@ -316,12 +314,24 @@ endif
        INCLUDES += $(LIB_INCLUDES)
        CPP_FLAGS += $(INCLUDES) $(FDEFINES)
 
-       FFLAGS = $(FOPT) 
-       CFLAGS = $(INCLUDES) $(DEFINES) $(COPT) $(CDEFS) $(LIB_CDEFS)
+       FFLAGS = $(FOPT) $(FOPT_REN) 
+       CFLAGS = $(INCLUDES) $(DEFINES) $(COPT) $(COPT_REN) $(CDEFS) $(LIB_CDEFS)
        CFLAGS := $(strip $(CFLAGS))
        FFLAGS := $(strip $(FFLAGS))
        FLDOPT =  $(FLD_REN)
        CLDOPT =  $(CLD_REN)
+
+ifeq ($(LINK.f),$(FC))
+       FLDOPT += $(FOPT_REN)
+else
+       FLDOPT += $(COPT_REN)
+endif
+ifeq ($(LINK.c),$(FC))
+       FLDOPT += $(FOPT_REN)
+else
+       FLDOPT += $(COPT_REN)
+endif
+
 
 #
 # Define known suffixes mostly so that .p files don't cause pc to be invoked
