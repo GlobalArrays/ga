@@ -1,4 +1,4 @@
-/* $Id: lapi.c,v 1.16 2002-07-31 18:18:34 vinod Exp $ */
+/* $Id: lapi.c,v 1.17 2002-12-23 22:18:18 vinod Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>
@@ -75,7 +75,11 @@ int buflen=MSG_BUFLEN;
          bytes += msginfo->dscrlen;
 
          /* for large gather, compute address of descriptor at origin */
-         if(msginfo->operation == GET) origin_ptr +=sizeof(request_header_t);
+         if(msginfo->operation == GET) {
+           origin_ptr +=sizeof(request_header_t);
+           /*should put the data after msginfo */
+           msginfo->tag.buf = (void *)(origin_ptr);
+         }
      }
      if (msginfo->datalen <0){
          msginfo->datalen = -msginfo->datalen;
@@ -191,13 +195,15 @@ int rc;
          if(lapi_max_uhdr_data_sz < msginfo->dscrlen){
 
             msginfo->dscrlen = -msginfo->dscrlen; /* no room for descriptor */
+            msginfo->tag.buf = msginfo;
+            SET_COUNTER(*(lapi_cmpl_t*)pcntr,1);/*data to arrive into same buf*/
             pcntr = NULL; /* GET(descr) from CH will increment buf cntr */
 
          }else msglen += msginfo->dscrlen;
          /*we should send the mutex, too*/
          if(msginfo->operation==LOCK) msglen += sizeof(int);
          pcmpl_cntr=NULL; /* don't trace completion status for load ops */
-         SET_COUNTER(*(lapi_cmpl_t*)pcntr,1);/*data to arrive into same buf*/
+         if(pcntr)SET_COUNTER(*(lapi_cmpl_t*)pcntr,1);/*dataarrive in same buf*/
 
       }else if (msginfo->operation==UNLOCK){
 
