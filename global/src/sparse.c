@@ -289,7 +289,8 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
        /* copy the data */
        i = 0;
        for(k=lop; k<= hip; ){ 
-           int indx=i, one=1;
+           int indx=i;
+           Integer one=1;
            int elemsize = GAsizeofM(type);
            
            /* find where sbit changes */ 
