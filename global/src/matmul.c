@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.54 2004-04-01 20:04:21 manoj Exp $ */
+/* $Id: matmul.c,v 1.55 2004-05-07 19:04:46 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -914,8 +914,8 @@ static void check_result(cond, transa, transb, alpha, beta, atype,
 		    tmpb, &bdim, beta, tmpc_orig, &cdim, 1, 1);
 	     break;
 	  case C_DCPL: 
-	     zgemm_(transa, transb, &idim, &jdim, &kdim, (DoubleComplex*)alpha,
-		    a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
+	     zgemm_(transa, transb, &m, &n, &k, (DoubleComplex*)alpha,
+		    tmpa, &adim, tmpb, &bdim, beta, tmpc_orig, &cdim, 1, 1);
 	     break;
 	  default:
 	     ga_error("check_result: data type not supported here", atype);
