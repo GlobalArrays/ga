@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.105 2004-06-11 05:10:31 vinod Exp $
+#$Id: makefile.h,v 1.106 2004-07-02 00:25:49 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -181,7 +181,7 @@ ifeq  ($(_CPU),ia64)
 #
 #  for IA64 only. gcc 3.x cannot find the symbols modsi3 and divsi3 in IA64.
 #  lib1funs-ia64 includes these symbols.
-   EXTRA_OBJ += funcs-ia64.o
+#   EXTRA_OBJ += funcs-ia64.o
 
    ifeq ($(FOPT),-O)
      FOPT =  -O3 -hlo -ftz -pad
