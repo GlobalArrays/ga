@@ -49,6 +49,7 @@ c
       integer  i, j, index(n),ind(n)
       integer nproc, me
       double precision dsin, sum
+      logical status
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -73,13 +74,13 @@ c
 c
 c***  Create global arrays
 c
-      if (.not. ga_create(MT_DBL, n, n, 'a', 1, 1, g_a))
+      if (.not. ga_create(MT_DBL, n, n, 'A', 1, 1, g_a))
      $     call ga_error(' ga_create failed ',2)
-      if (.not. ga_create(MT_DBL, n, n, 'b', 1, 1, g_b))
+      if (.not. ga_create(MT_DBL, n, n, 'B', 1, 1, g_b))
      $     call ga_error(' ga_create failed ',2)
-      if (.not. ga_create(MT_DBL, n, n, 'c', 1, 1, g_c))
+      if (.not. ga_create(MT_DBL, n, n, 'C', 1, 1, g_c))
      $     call ga_error(' ga_create failed ',2)
-      if (.not. ga_create(MT_DBL, n, n, 'd', 1, 1, g_d))
+      if (.not. ga_create(MT_DBL, n, n, 'D', 1, 1, g_d))
      $     call ga_error(' ga_create failed ',2)
 c     
 c***  Fill in arrays A & B
@@ -182,8 +183,8 @@ c***  solve the eigenproblem
       endif
 c
       call ga_sync()
-      call ga_dgemm('t','n',n,n,n, 1d0, g_c, g_a, 0d0, g_d) ! d := c'*a
-      call ga_dgemm('n','n',n,n,n, 1d0, g_d, g_c, 0d0, g_a) ! a := d*c
+      call ga_dgemm('t','n',n,n,n, 1d0, g_c, g_a, 0d0, g_d)
+      call ga_dgemm('n','n',n,n,n, 1d0, g_d, g_c, 0d0, g_a)
 c
       call ga_sync()
       if (me .eq. 0) then
@@ -193,9 +194,9 @@ c
       endif
 
       call ga_sync()
-      call ga_dgemm('t','n',n,n,n, 1d0, g_c, g_b, 0d0, g_d) ! d := c'*b
+      call ga_dgemm('t','n',n,n,n, 1d0, g_c, g_b, 0d0, g_d)
       call ga_sync()
-      call ga_dgemm('n','n',n,n,n, 1d0, g_d, g_c, 0d0, g_b) ! b := d*c
+      call ga_dgemm('n','n',n,n,n, 1d0, g_d, g_c, 0d0, g_b)
 c
       call ga_sync()
       if (me .eq. 0) then
@@ -267,5 +268,10 @@ c
         print *,' '
         call ffflush(6)
       endif
+c     status =  MA_summarize_allocated_blocks()
+      status =  ga_destroy(g_d)
+      status =  ga_destroy(g_c)
+      status =  ga_destroy(g_b)
+      status =  ga_destroy(g_a)
       end
 

@@ -11,12 +11,13 @@ c
 c
 c     Initialize the MA package
 c
-      if (.not. ma_init(MT_DBL, 900000, 900000))
+      if (.not. ma_init(MT_DBL, 90000, 90000))
      $     call parerr(1)
 c
 c     Intitialize the GA package
 c
       call ga_initialize()
+c     if(ga_nodeid().eq.0)print *,ga_nnodes(),' nodes'
 c
       call testit()
       call ga_terminate()
@@ -81,17 +82,16 @@ c
 c     
 c***  Fill in arrays A & B
       if (me .eq. 0) then
-c        write(6,21) 
- 21      format(/' filling in A and B  ')
+         print *,  ' filling in A and B  '
          call ffflush(6)
-         do j = 1, n
-	    call ga_put(g_a, 1,n, j,j, a(1,j),n)
-	    call ga_put(g_b, 1,n, j,j, b(1,j),n)
-	    call ga_put(g_c, 1,n, j,j, b(1,j),n)
-         enddo
 	 call ga_put(g_e, 1,n, 1,1, b(1,1),n)
 	 call ga_put(g_f, 1,n, 1,1, b(1,1),n)
       endif
+      do j = 1+me, n, nproc 
+	    call ga_put(g_a, 1,n, j,j, a(1,j),n)
+	    call ga_put(g_b, 1,n, j,j, b(1,j),n)
+	    call ga_put(g_c, 1,n, j,j, b(1,j),n)
+      enddo
 c
 c     call ga_copy(g_b,g_c)
 c

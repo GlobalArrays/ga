@@ -87,11 +87,11 @@ testsolve.p:
 	echo "`whoami` `hostname` 4 `pwd`/testsolve /tmp" > testsolve.p
 
 testget:  stestget.o  $(LIBRARY)
-	$(FC) $(FLDOPT) -o $@ testget.o $(LIBS) $(LIBCOM) 
+	$(FC) $(FLDOPT) -o $@ stestget.o $(LIBS) $(LIBCOM) 
 	$(INSTALL) 
 
 testget.p:
-	echo "`whoami` `hostname` 4 `pwd`/testget /tmp" > test2.p
+	echo "`whoami` `hostname` 4 `pwd`/testget /tmp" > testget.p
 
 testchol: stestchol.o $(LIBRARY) 
 	$(FC) $(FLDOPT) -o  $@   stestchol.o $(LIBS) $(LIBCOM)

@@ -1,4 +1,7 @@
       program test
+c***
+c***  Last modification: Tue Oct  4 13:27:10 PDT 1994
+c***
       implicit none
 #include "mafdecls.h"
 #include "global.fh"
@@ -19,6 +22,8 @@ c
 c     Intitialize the GA package
 c
       call ga_initialize()
+      if(ga_nnodes().ne.4)
+     $   call ga_error('Must be run with 4 GA processes',ga_nnodes())
 c
       call testit()
       call ga_terminate()
@@ -35,9 +40,11 @@ c-----------------
 #include "global.fh"
 #include "tcgmsg.fh"
 c     
+c     not for the KSR
+c
       integer n, nn
-      parameter (n = 60, nn = n*n)
-c     parameter (n = 2*352, nn = n*n)
+      parameter (n = 2*352, nn = n*n)
+c     parameter (n = 60, nn = n*n)
       double precisiON a(n),  buf(nn)
 c     double precision a(n,n), b(n,n), c(n,n)
       integer g_a,g_b
@@ -48,14 +55,13 @@ c     double precision a(n,n), b(n,n), c(n,n)
       double precision tp0, tp1, tg0, tg1, ta0, ta1, rk
 c     
       nproc = ga_nnodes()
-c     if(nproc.ne.4)call ga_error("for this test use 4 processors",0)
       me = ga_nodeid()
 
 c     
 c
 c***  Create global arrays
       if (.not. ga_create(MT_DBL, n, n, 'a', 1, 1, g_a))
-     $     call ga_error(' ga_create failed ',2)
+     $     call ga_error(' ga_create failed ',1)
 c     
 c     
 c***  Fill in arrays A & B
@@ -65,18 +71,23 @@ c***  Fill in arrays A & B
          call flush(6)
       endif
 c
-      do j = 1+me, n, nproc 
-         do i = 1, n
-            a(i) = 1d0 * (i+j)
-            if(i.eq.j) then
-               a(i) = i
-            endif
-         enddo
+c     do j = 1+me, n, nproc 
+c        do i = 1, n
+c           a(i) = 1d0 * (i+j)
+c           if(i.eq.j) then
+c              a(i) = i
+c           endif
+c        enddo
 c
-         call ga_put(g_a, 1,n, j,j, a(1),n)
-      enddo
+c        call ga_put(g_a, 1,n, j,j, a(1),n)
+c     enddo
 c
 c
+
+c     this guarantees that everybody touches own data
+c
+      call ga_dfill_patch(g_a, 1, n, 1,n , 1d0*me)
+
       call ga_sync()
 c****
       if (me .eq. 0) then
@@ -94,11 +105,8 @@ c
      &           '          acc' 
 
         do k = 1, count 
-#if defined(IPSC) || defined(PARAGON) || defined(SP1)
-      call ga_distribution(g_a, me, ilo, ihi, jlo, jhi,kk)
-#else
-      call ga_distribution(g_a, me, ilo, ihi, jlo, jhi)
-#endif
+         call ga_distribution(g_a, me, ilo, ihi, jlo, jhi)
+
          rk = sqrt((1.* k)/count) 
          ii0 = ilo 
          ii1 = ii0 + int((ihi -ii0)*rk)
@@ -133,22 +141,24 @@ c
         enddo
       endif
       call ga_sync()
-      if (me.ne.0)then
-	  call sleep(150)
-      endif
 
       if (me .eq. 0) then
 77      format(i9, 3d16.8)
 c
         print *, ' '
-        do k = 1, count
+      endif
+c
+      do k = 1, count
+        
+#ifdef SHMEM
+c        everybody touches own data 
+         call ga_dfill_patch(g_a, 1, n, 1,n , 1d0)
+#endif
+      if (me .eq. 0) then
          rk = sqrt((1.* k)/count )
 c
-#if defined(IPSC) || defined(PARAGON) || defined(SP1)
-         call ga_distribution(g_a, me+1, ilo, ihi, jlo, jhi,kk)
-#else
          call ga_distribution(g_a, me+1, ilo, ihi, jlo, jhi)
-#endif
+
          ii0 = ilo 
          ii1 = ii0 + int((ihi -ii0)*rk)
          jj0 = jlo
@@ -162,10 +172,10 @@ c
 
          bytes= 8*(ii1-ii0+1)*(jj1-jj0+1) 
 c        loop = 20*k
-         loop = 2
+         loop = 1
          ldb = ii1-ii0+1
 c
-         call ga_get(g_a, ii0,ii1, jj0, jj1, buf,ldb)
+c        call ga_get(g_a, ii0,ii1, jj0, jj1, buf,ldb)
          tg0 = tcgtime()
          do kk = 1, loop
             call ga_get(g_a, ii0,ii1, jj0, jj1, buf,ldb)
@@ -204,9 +214,11 @@ c
          write(*,77)bytes,(tg1-tg0)/loop,(tp1-tp0)/loop,(ta1-ta0)/loop 
          call flush(6)
 	 call sleep(1)
-        enddo
-c
+      else
+         call sleep(1)
       endif
+      enddo
+c
 
       end
 

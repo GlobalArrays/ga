@@ -80,7 +80,11 @@ c     call setdbg(1)
          call ga_error('... exiting ',0)
       endif
 c
+#ifdef CRAY_T3D
+      if(dist_same) then
+#else
       if(dist_same.eq. .true.) then
+#endif
          call ga_duplicate(g_a, g_b, 'a_duplicated')
          if(.not.ga_compare_distr(g_a, g_b))
      $           call ga_error("g_b distribution different",0) 

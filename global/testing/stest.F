@@ -5,7 +5,7 @@
 #include "tcgmsg.fh"
       integer heap, stack, fudge
       logical status
-      parameter (heap=100*100*2, fudge=10240, stack=0)
+      parameter (heap=100*100*2, fudge=10240, stack=100)
 c     
 c     Intitialize the TCGMSG package
 c
@@ -83,7 +83,6 @@ c
       parameter (maxproc = 128)
       double precision drand, crap, sum1, sum2, x
       double precision nwords
-      external drand
       intrinsic int
       iran(i) = int(drand(0)*dfloat(n)) + 1
 c     
@@ -95,6 +94,7 @@ c
       do j = 1, n
          do i = 1, n
             a(i,j) = i-1 + (j-1)*n
+            b(i,j) =-1. 
          enddo
       enddo
 *      write(6,*) ' correct '
@@ -129,13 +129,17 @@ c
 c     Check that it is indeed zero
 c
       
-      call ga_get(g_a, 1, n, 1, n, b, n)
+      
+      if(me.eq.0)call ga_get(g_a, 1, n, 1, n, b, n)
+      call ga_sync()
+      if(me.ne.0)call ga_get(g_a, 1, n, 1, n, b, n)
+      call ga_sync()
       do i = 1, n
          do j = 1, n
             if (b(i,j) .ne. 0.0d0) then
-               write(6,*) ' zero ', me, i, j, b(i,j)
+               write(6,*) me,' zero ', i, j, b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+c              call ga_error('... exiting ',0)
             endif
          enddo
       enddo
@@ -296,14 +300,18 @@ c
             if(ihi.eq.n-1)ihi=n
 c           ihi = min(i+inc, n)
             jlo = j
-            jhi = min(j+inc, n)
+            jhi = min(j+inc-1, n)
             if(jhi.eq.n-1)jhi=n
 c           jhi = min(j+inc-1, n)
+*               call ffflush(6)
             if (mod(ij,nproc) .eq. me) then
-c               write(6,11) me, ilo, ihi, jlo, jhi
-c 11            format(' node ',i2,' checking update ',4i4)
-c               call ffflush(6)
+c               print *, me, 'checking accumulate ',ilo,ihi,jlo,jhi
+* 11            format(' node ',i2,' checking accumulate ',4i4)
+*               call ffflush(6)
+c              call ga_print_patch(g_a, 1, ihi+1, 1,jhi+1,1)
                call ga_acc(g_a, ilo, ihi, jlo, jhi, b(ilo, jlo), n, x)
+c              print *, '....'
+c              call ga_print_patch(g_a, 1, ihi+1, 1,jhi+1,1)
             endif
             ij = ij + 1
 c     
@@ -326,7 +334,7 @@ c
             if (abs(b(i,j) - a(i,j)) .gt. 1.0d-6) then
                write(6,*) ' acc ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
-               call ga_error('... exiting ',0)
+c              call ga_error('... exiting ',0)
             endif
          enddo
       enddo
@@ -561,8 +569,8 @@ c
       integer map(5,maxproc), found, np,k
       double precision drand, crap, sum1
       integer buf
-      external drand
       intrinsic int
+      external drand
       iran(i) = int(drand(0)*dfloat(n)) + 1
 c     
       nproc = ga_nnodes()
@@ -731,52 +739,6 @@ c
       if(n.gt.5) call ga_print_patch(g_a,3,5,3,7,0)
 c
       call ga_sync()
-      if (me .eq. 0) then
-         write(6,*)
-         write(6,*) '> Checking copy_patch ... '
-         write(6,*)
-         call ffflush(6)
-      endif
-      call ga_sync()
-      if (.not. ga_create(MT_INT, n+1, n+1, 'b', 1, 1, g_b)) then
-         write(6,*) ' ga_create failed for second array'
-         call ffflush(6)
-         call ga_error('... exiting ',0)
-      endif
-      call ga_copy_patch(g_a,1,n/2,1,n/2, g_b,1,n/4,1,n) 
-*     call ga_print(g_a,1,n/2,1,n/2)
-*     call ga_print(g_b,1,n/4,1,n)
-c
-      do j = 1+me, n/2, ga_nnodes()
-         call ga_get(g_b, 1, n/4, 2*j-1,2*j, b, n/4)
-         do i = 1, n/2
-            if(b(i,1) .ne. a(i,j))then
-              print *,me,' error ', i, j, b(i,1), a(i,j)
-              call ffflush(6)
-            endif
-         enddo
-      enddo
-c
-c     copy back to the original shape
-c
-      call ga_copy_patch(g_b, 1,n/4,1,n, g_a,1,n/2,1,n/2) 
-      do j = 1+me, n/2, ga_nnodes()
-         call ga_get(g_a, 1, n/2, j,j, b, n/2)
-         do i = 1, n/2
-            if(b(i,1) .ne. a(i,j))then
-              print *,me,' Error ', i, j, b(i,1), a(i,j)
-              call ffflush(6)
-            endif
-         enddo
-      enddo
-
-
-      call ga_sync()
-      if (me.eq.0) then
-         write(6,*)
-         write(6,*) ' ga_copy_patch is OK'
-         write(6,*)
-      endif
 c
       call ga_sync()
       if (me .eq. 0) then
