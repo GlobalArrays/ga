@@ -1,4 +1,4 @@
-/* $Id: shmlimit.c,v 1.4 1999-11-02 21:40:02 d3h325 Exp $ */
+/* $Id: shmlimit.c,v 1.5 1999-11-02 22:47:20 d3h325 Exp $ */
 /*
  * This code is used to test shared memory limits within
  * a separately forked child process.
@@ -27,6 +27,7 @@
 void (*Sig_Chld_Orig)();
 static int status=0;
 static int caught_sigchld=0;
+extern int armci_me;
 
 #if defined(SUN) && !defined(SOLARIS)
 static void SigChldHandler(sig, code, scp, addr)
