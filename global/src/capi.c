@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.41 2002-07-31 22:34:00 d3h325 Exp $ */
+/* $Id: capi.c,v 1.42 2002-08-01 15:55:28 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -1025,7 +1025,8 @@ int GA_Cluster_nprocs(int x)
     return armci_domain_nprocs(ARMCI_DOMAIN_SMP,x);
 }
 
-int GA_Cluster_procid()
+int GA_Cluster_procid(int node, int loc_proc)
 {
-        return armci_domain_my_id(ARMCI_DOMAIN_SMP);
+    return armci_domain_glob_proc_id(ARMCI_DOMAIN_SMP,
+                                     node, loc_proc);
 }

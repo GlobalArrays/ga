@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.41 2002-08-01 15:24:23 d3g293 Exp $*/
+/*$Id: global.util.c,v 1.42 2002-08-01 15:55:28 d3g293 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -919,7 +919,7 @@ int id;
 
 /*\ local id of calling process on the node
 \*/
-Integer FATR ga_cluster_procid(Integer *node, Integer *loc_proc_id)
+Integer FATR ga_cluster_procid_(Integer *node, Integer *loc_proc_id)
 {
         int nodeid, procid;
         nodeid = (int)*node;
