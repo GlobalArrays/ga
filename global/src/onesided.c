@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.16 2001-12-22 00:15:44 d3h325 Exp $ */
+/* $Id: onesided.c,v 1.17 2002-01-15 17:41:40 d3h325 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1500,6 +1500,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
 
     gai_free(buf2);
     gai_free(buf1);
+    GA_POP_NAME;
 }
       
 
