@@ -49,13 +49,20 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
     endif
   endif
   ifdef QUADRICS_LIB
-    COMM_LIBS = -L$(QUADRICS_LIB)
+    COMM_LIBS = -L$(QUADRICS_LIB) -Wl,-rpath-link -Wl,$(QUADRICS_LIB)
   else
     ifeq ($(TARGET),DECOSF)
       COMM_LIBS = -L/usr/opt/rms/lib
     endif
   endif
-  QUADRICS_LIB_NAME = -lshmem -lelan3 -lelan -lpthread
+ ifdef DOELAN4
+  QUADRICS_LIB_NAME = -lelan4 -lelan -lpthread
+#    COMM_INCLUDES += -I/usr/lib/qsnet/elan4/include
+#      COMM_LIBS += -L/usr/lib/qsnet/elan4/lib -L/usr/lib/qsnet/elan/lib #-L/usr/lib/qsnet/elan3/lib
+    COMM_DEFINES += -DDOELAN4
+ else
+  QUADRICS_LIB_NAME = -lelan -lpthread
+ endif
   COMM_LIBS += $(QUADRICS_LIB_NAME)
 endif
 
