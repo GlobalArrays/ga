@@ -30,6 +30,7 @@ c vector boxes lack arithmetic precision
       integer lo2(7), hi2(7)
       integer lo3(7), hi3(7)
       integer lo4(7), hi4(7)
+      integer lo5(7), hi5(7)
       integer chunk(7), imax, jmax, iloop, afail, bfail, cfail
       double precision a(nmax, nmax), b(nmax,nmax), c(nmax,nmax)
       double precision ta(nmax, nmax), tb(nmax,nmax),tc(nmax,nmax)
@@ -256,6 +257,30 @@ c
         t3 = t3 + util_timer() - start1
 c
         start1 = util_timer()
+#define DGEMM2 1
+#if DGEMM2
+        lo4(1) = lo2(1)
+        hi4(1) = hi2(1)
+        lo4(2) = 1
+        hi4(2) = dims(2)
+        lo5(1) = 1
+        hi5(1) = dims(1)
+        lo5(2) = lo2(2)
+        hi5(2) = hi2(2)
+c
+c    perform matrix patch multiplies
+c
+        alpha = 1.0
+        beta = 0.0
+        start1 = util_timer()
+        call ga_sync()
+        call ga_matmul_patch('n','n',alpha,beta,
+     +                       g_a,lo4(1),hi4(1),lo4(2),hi4(2),
+     +                       g_b,lo5(1),hi5(1),lo5(2),hi5(2),
+     +                       g_c,lo2(1),hi2(1),lo2(2),hi2(2))
+
+        t5 = t5 + util_timer() - start1
+#else
         lo4(1) = lo3(1)
         hi4(1) = hi3(1)
         lo4(2) = 1
@@ -286,10 +311,9 @@ c
         end do
         t5 = t5 + util_timer() - start1
         start1 = util_timer()
-c      if (me.eq.0) write(6,*) 'Completed partial multiply'
         call nga_put(g_c,lo3,hi3,tc,ld)
         t6 = t6 + util_timer() - start1
-c      if (me.eq.0) write(6,*) 'Copied partial multiply to GA'
+#endif
         call ga_mask_sync(.true.,.false.)
         start1 = util_timer()
         call ga_merge_mirrored(g_c) 
