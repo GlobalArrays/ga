@@ -334,7 +334,7 @@ endif
 #...........................................................................
 
 
-ifndef USE_ARMCI
+ifdef OLD_GA 
 ifneq ($(NXTVAL_AVAIL),yes)
  GLOB_DEFINES += -DNXTVAL_SERVER
     NXTVAL_OBJ = nxtval.o
