@@ -91,3 +91,43 @@
       call ga_fill_patch(g_a, ailo, aihi, ajlo, ajhi, s)
       end
 
+#ifdef ARMCI
+      double complex function nga_zdot_patch(
+     $            g_a, t_a, alo, ahi,
+     $            g_b, t_b, blo, bhi)
+      implicit none
+      integer  g_a, g_b, alo, ahi
+      integer  blo, bhi
+      character*1 t_a, t_b
+      external ngai_dot_patch
+      nga_zdot_patch = (0.,0.)
+      call ngai_dot_patch(g_a, t_a, alo, ahi, 
+     $     g_b, t_b, blo, bhi, nga_zdot_patch)
+      end
+
+      double precision function nga_ddot_patch(
+     $            g_a, t_a, alo, ahi, 
+     $            g_b, t_b, blo, bhi)
+      implicit none
+      integer  g_a, g_b, alo, ahi
+      integer  blo, bhi
+      character*1 t_a, t_b
+      external ngai_dot_patch
+      nga_ddot_patch = 0.
+      call ngai_dot_patch(g_a, t_a, alo, ahi,
+     $            g_b, t_b, blo, bhi, nga_ddot_patch)
+      end
+
+      integer function nga_idot_patch(
+     $            g_a, t_a, alo, ahi,
+     $            g_b, t_b, blo, bhi)
+      implicit none
+      integer  g_a, g_b, alo, ahi
+      integer  blo, bhi
+      character*1 t_a, t_b
+      external ngai_dot_patch
+      nga_idot_patch = 0
+      call ngai_dot_patch(g_a, t_a, alo, ahi,
+     $            g_b, t_b, blo, bhi, nga_idot_patch)
+      end
+#endif

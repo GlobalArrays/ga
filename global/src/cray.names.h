@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.20 1999-06-18 00:57:51 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.21 1999-06-30 20:15:33 jju Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -79,6 +79,18 @@
 #define  nga_locate_               NGA_LOCATE
 #define  nga_distribution_         NGA_DISTRIBUTION
 #define  nga_access_               NGA_ACCESS
+#define  nga_scatter_              NGA_SCATTER
+#define  nga_gather_               NGA_GATHER
+
+#define  nga_copy_patch_           NGA_COPY_PATCH
+#define  ngai_dot_patch_           NGAI_DOT_PATCH
+#define  nga_idot_patch_           NGA_IDOT_PATCH
+#define  nga_ddot_patch_           NGA_DDOT_PATCH
+#define  nga_zdot_patch_           NGA_ZDOT_PATCH
+#define  nga_fill_patch_           NGA_FILL_PATCH
+#define  nga_scale_patch_          NGA_SCALE_PATCH
+#define  nga_add_patch_            NGA_ADD_PATCH
+#define  nga_print_patch_          NGA_PRINT_PATCH
 
 #define  gai_dot_patch_            GAI_DOT_PATCH
 #define  gai_dot_                  GAI_DOT

@@ -13,6 +13,9 @@
       logical ga_destroy_mutexes
       double precision ga_ddot, ga_ddot_patch
       double complex   ga_zdot, ga_zdot_patch
+      double complex   nga_zdot_patch
+      double precision nga_ddot_patch
+      integer nga_idot_patch
 c
       integer nga_read_inc
       logical nga_create, nga_locate, nga_create_irreg
@@ -46,3 +49,6 @@ c
 c     n-dim GA
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg
       external nga_put, nga_get, nga_acc
+      external nga_copy_patch, nga_ddot_patch, nga_zdot_patch
+      external nga_scale_patch, nga_add_patch
+      external nga_fill_patch, ngai_dot_patch

@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.22 1999-06-08 00:08:41 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.23 1999-06-30 20:15:35 jju Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -36,7 +36,7 @@
 #endif
 
 
-#ifdef CRAY_T3D
+#ifdef CRAY
 #include <fortran.h>
 #endif
 
@@ -218,18 +218,6 @@ char *name;
 }
 
 
-void FATR ga_print_(Integer *g_a)
-{
-  Integer type, dim1, dim2;
-  Integer ilo=1, jlo=1;
-  Integer pretty = 1;
-
-  ga_inquire_(g_a, &type, &dim1, &dim2);
-
-  ga_print_patch_(g_a, &ilo, &dim1, &jlo, &dim2, &pretty);
-}
-  
-
 void FATR ga_print_stats_()
 {
 int i;
@@ -408,3 +396,295 @@ void ga_debug_suspend()
 
 #endif
 }
+
+
+
+
+
+
+
+
+#ifdef ARMCI
+
+/*********************************************************************
+ *        N-dimensional operation                                    *
+ *********************************************************************/
+/*
+ * Jialin added nga_print and nga_print_patch on Jun 28, 1999
+ */
+
+/*\ PRINT g_a[ilo, jlo]
+\*/
+void FATR nga_print_patch_(g_a, lo, hi, pretty)
+        Integer *g_a, *lo, *hi, *pretty;
+/*
+  Pretty = 0 ... spew output out with no formatting
+  Pretty = 1 ... format output so that it is readable
+*/  
+{
+#define DEV stdout
+#define BUFSIZE 6
+#define FLEN 80 
+
+    Integer i, j, jj, jmax;
+    Integer type;
+    char *name;
+    Integer ndim, dims[MAXDIM], ld[MAXDIM];
+    Integer bufsize;
+    Integer ibuf[BUFSIZE], ibuf_2d[BUFSIZE*BUFSIZE];
+    DoublePrecision dbuf[BUFSIZE], dbuf_2d[BUFSIZE*BUFSIZE];
+    Integer lop[MAXDIM], hip[MAXDIM];
+    Integer done, status_2d, status_3d;
+    ga_sync_();
+    ga_check_handle(g_a, "nga_print");
+
+    /* only the first process print the array */
+    if(ga_nodeid_() == 0) {
+        
+        nga_inquire_(g_a,  &type, &ndim, dims);
+        ga_inquire_name(g_a,  &name);
+        
+        /* check the boundary */
+        for(i=0; i<ndim; i++)
+            if(lo[i] <= 0 || hi[i] > dims[i]) 
+                ga_error("g_a indices out of range ", *g_a);
+        
+        /* print the general information */
+        fprintf(DEV,"\n global array: %s[", name);
+        for(i=0; i<ndim; i++)
+            if(i != (ndim-1)) fprintf(DEV, "%d:%d,", lo[i], hi[i]);
+            else fprintf(DEV, "%d:%d", lo[i], hi[i]);
+        fprintf(DEV,"],  handle: %d \n", (int)*g_a);
+        
+        bufsize = (type==MT_F_DCPL)? BUFSIZE/2 : BUFSIZE;
+        
+        for(i=0; i<ndim; i++) ld[i] = bufsize;
+        
+        if(!*pretty) {
+            done = 1;
+            for(i=0; i<ndim; i++) {
+                lop[i] = lo[i]; hip[i] = lo[i];
+            }
+            hip[0] = MIN(lop[0]+bufsize-1, hi[0]);
+            while(done) {
+                switch(type) {
+                    case MT_F_INT: nga_get_(g_a, lop, hip, ibuf, ld); break;
+                    case MT_F_DBL: nga_get_(g_a, lop, hip, dbuf, ld); break;
+                    case MT_F_DCPL: nga_get_(g_a, lop, hip, dbuf, ld); break;
+                    default: ga_error("ga_print: wrong type",0);
+                }
+                
+                /* print the array */
+                for(i=0; i<(hip[0]-lop[0]+1); i++) {
+                    fprintf(DEV,"%s(", name);
+                    for(j=0; j<ndim; j++)
+                        if((j == 0) && (j == (ndim-1)))
+                            fprintf(DEV, "%d", lop[j]+i);
+                        else if((j != 0) && (j == (ndim-1)))
+                            fprintf(DEV, "%d", lop[j]);
+                        else if((j == 0) && (j != (ndim-1)))
+                            fprintf(DEV, "%d,", lop[j]+i);
+                        else fprintf(DEV, "%d,", lop[j]);
+                    switch(type) {
+                        case MT_F_INT: fprintf(DEV,") = %d\n", ibuf[i]);break;
+                        case MT_F_DBL:
+                            if((double)dbuf[i]<100000.0)
+                                fprintf(DEV,") = %f\n", dbuf[i]);
+                            else fprintf(DEV,") = %e\n", dbuf[i]);
+                            break;
+                        case MT_F_DCPL:
+                            if(((double)dbuf[i*2]<100000.0) &&
+                               ((double)dbuf[i*2+1]<100000.0))
+                                fprintf(DEV,") = (%f,%f)\n",
+                                        dbuf[i*2],dbuf[i*2+1]);
+                            else
+                                fprintf(DEV,") = (%e,%e)\n",
+                                        dbuf[i*2],dbuf[i*2+1]);
+                    }
+                }
+                
+                fflush(DEV);
+                
+                lop[0] = hip[0]+1; hip[0] = MIN(lop[0]+bufsize-1, hi[0]);
+                
+                for(i=0; i<ndim; i++)
+                    if(lop[i] > hi[i]) 
+                        if(i == (ndim-1)) done = 0;
+                        else {
+                            lop[i] = lo[i];
+                            if(i == 0) hip[i] = MIN(lop[i]+bufsize-1, hi[i]);
+                            else hip[i] = lo[i];
+                            lop[i+1]++; hip[i+1]++;
+                        }
+            }
+        }
+        else {
+            /* pretty print */
+            done = 1;
+            for(i=0; i<ndim; i++) {
+                lop[i] = lo[i];
+                if((i == 0) || (i == 1))
+                    hip[i] = MIN(lop[i]+bufsize-1, hi[i]);
+                else 
+                    hip[i] = lo[i];
+            }
+            
+            status_2d = 1; status_3d = 1;
+            
+            while(done) {
+                if(status_3d && (ndim > 2)) { /* print the patch info */
+                    fprintf(DEV,"\n -- patch: %s[", name);
+                    for(i=0; i<ndim; i++)
+                        if(i < 2)
+                            if(i != (ndim-1))
+                                fprintf(DEV, "%d:%d,", lo[i], hi[i]);
+                            else fprintf(DEV, "%d:%d", lo[i], hi[i]);
+                        else
+                            if(i != (ndim-1)) fprintf(DEV, "%d,", lop[i]);
+                            else fprintf(DEV, "%d", lop[i]);
+                    fprintf(DEV,"]\n"); status_3d = 0;
+                }
+                
+                if(status_2d &&(ndim > 1)) {
+                    fprintf(DEV, "\n"); 
+                    switch(type) {
+                        case MT_F_INT:
+                            fprintf(DEV, "     ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(DEV, "%7d  ", i);
+                            fprintf(DEV,"\n      ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(DEV," --------");
+                            break;
+                        case MT_F_DBL:
+                            fprintf(DEV, "   ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(DEV, "%10d  ", i);
+                            fprintf(DEV,"\n      ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(DEV," -----------");
+                            break;
+                        case MT_F_DCPL:
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(DEV, "%22d  ", i);
+                            fprintf(DEV,"\n      ");
+                            for (i=lop[1]; i<=hip[1]; i++)
+                                fprintf(DEV," -----------------------");
+                    }
+                    
+                    fprintf(DEV,"\n");
+                    status_2d = 0;
+                }
+                
+                switch(type) {
+                    case MT_F_INT: nga_get_(g_a, lop, hip, ibuf_2d, ld); break;
+                    case MT_F_DBL: nga_get_(g_a, lop, hip, dbuf_2d, ld); break;
+                    case MT_F_DCPL: nga_get_(g_a, lop, hip, dbuf_2d, ld);break;
+                    default: ga_error("ga_print: wrong type",0);
+                }
+                
+                for(i=0; i<(hip[0]-lop[0]+1); i++) {
+                    fprintf(DEV,"%4i  ", (lop[0]+i));
+                    switch(type) {
+                        case MT_F_INT:
+                            if(ndim > 1)
+                                for(j=0; j<(hip[1]-lop[1]+1); j++)
+                                    fprintf(DEV," %8d", ibuf_2d[j*bufsize+i]);
+                            else fprintf(DEV," %8d", ibuf_2d[i]);
+                            break;
+                        case MT_F_DBL:
+                            if(ndim > 1)
+                                for(j=0; j<(hip[1]-lop[1]+1); j++)
+                                    if((double)dbuf_2d[j*bufsize+i]<100000.0)
+                                        fprintf(DEV," %11.5f",
+                                                dbuf_2d[j*bufsize+i]);
+                                    else
+                                        fprintf(DEV," %.5e",
+                                                dbuf_2d[j*bufsize+i]);
+                            else
+                                if((double)dbuf_2d[i]<100000.0)
+                                    fprintf(DEV," %11.5f",dbuf_2d[i]);
+                                else
+                                    fprintf(DEV," %.5e",dbuf_2d[i]);
+                            break;
+                        case MT_F_DCPL:
+                            if(ndim > 1)
+                                for(j=0; j<(hip[1]-lop[1]+1); j++)
+                                    if(((double)dbuf_2d[(j*bufsize+i)*2]<100000.0)&&((double)dbuf_2d[(j*bufsize+i)*2+1]<100000.0))
+                                        fprintf(DEV," %11.5f,%11.5f",
+                                                dbuf_2d[(j*bufsize+i)*2],
+                                                dbuf_2d[(j*bufsize+i)*2+1]);
+                                    else
+                                        fprintf(DEV," %.5e,%.5e",
+                                                dbuf_2d[(j*bufsize+i)*2],
+                                                dbuf_2d[(j*bufsize+i)*2+1]);
+                            else
+                                if(((double)dbuf_2d[i*2]<100000.0) &&
+                                   ((double)dbuf_2d[i*2+1]<100000.0))
+                                    fprintf(DEV," %11.5f,%11.5f",
+                                            dbuf_2d[i*2], dbuf_2d[i*2+1]);
+                                else
+                                    fprintf(DEV," %.5e,%.5e",
+                                            dbuf_2d[i*2], dbuf_2d[i*2+1]);
+                    }
+                    
+                    fprintf(DEV,"\n");
+                }
+                
+                lop[0] = hip[0]+1; hip[0] = MIN(lop[0]+bufsize-1, hi[0]);
+                
+                for(i=0; i<ndim; i++)
+                    if(lop[i] > hi[i]) 
+                        if(i == (ndim-1)) done = 0;
+                        else {
+                            lop[i] = lo[i];
+                            
+                            if((i == 0) || (i == 1))
+                                hip[i] = MIN(lop[i]+bufsize-1, hi[i]);
+                            else hip[i] = lo[i];
+                            
+                            if(i == 0) {
+                                lop[i+1] = hip[i+1]+1;
+                                hip[i+1] = MIN(lop[i+1]+bufsize-1, hi[i+1]);
+                            }
+                            else {
+                                lop[i+1]++; hip[i+1]++;
+                            }
+                            
+                            if(i == 0) status_2d = 1;
+                            if(i == 1) status_3d = 1;
+                        }
+            }
+        }
+    }
+    
+    ga_sync_();
+}
+
+#endif
+
+void FATR ga_print_(Integer *g_a)
+{
+#ifdef ARMCI    
+    Integer i;
+    Integer type, ndim, dims[MAXDIM];
+    Integer lo[MAXDIM];
+    Integer pretty = 1;
+
+    nga_inquire_(g_a, &type, &ndim, dims);
+
+    for(i=0; i<ndim; i++) lo[i] = 1;
+
+    nga_print_patch_(g_a, lo, dims, &pretty);
+
+#else
+    Integer type, dim1, dim2;
+    Integer ilo=1, jlo=1;
+    Integer pretty = 1;
+    
+    ga_inquire_(g_a, &type, &dim1, &dim2);
+    
+    ga_print_patch_(g_a, &ilo, &dim1, &jlo, &dim2, &pretty);
+#endif    
+}
+  
