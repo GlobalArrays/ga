@@ -201,9 +201,11 @@ ifeq ($(MACHINE),SGI_N32)
 #
 # SGI running IRIX 6.XX on 64-bit MIPS-4 processors
 #
- GLOB_DEFINES += -DSGI -n32 -DSGIUS
+ GLOB_DEFINES += -DSGI -DSGIUS
    NXTVAL_OBJ = nxtval.sgius.o clustercheck.o
  NXTVAL_AVAIL = yes
+     FOPT_REN = -n32
+     COPT_REN = -n32
 endif
 
 
