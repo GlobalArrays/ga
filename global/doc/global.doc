@@ -1,9 +1,6 @@
 		      Global Array Documentation
                       --------------------------
 
-		 Robert J. Harrison and Jarek Nieplocha  
-   
-
 
 
 
@@ -52,81 +49,92 @@ distribute to other US Government contractors.
    Basic operations
    ----------------
 
-   a) Operations that are globally synchronous ... i.e. must
+   a) Operations that are globally collective ... i.e. must
       be simultaneously invoked by all processes as if in SIMD mode.
 
-      ga_initialize    ... initialize global array internal structures 
-      ga_create        ... create an array (integer or double precision)
-      ga_create_irreg  ... create an array with irregular distribution
-                           (integer or double precision)
-      ga_duplicate     ... create an array following a reference array 
-      ga_destroy       ... destroy an array
-      ga_terminate     ... destroy all existing arrays and delete internal
-                           data structures  
-      ga_sync          ... synchronize processes (a barrier)
-      ga_zero          ... zero an array
-      ga_ddot          ... dot product of two arrays (doubles only)
-      ga_dscal         ... scale the elements in an array by a constant
-                           (double precision data only)
-      ga_dadd          ... scale and add two arrays to put result in a third
-                           (may overwrite one of the other two, doubles only)
-      ga_copy          ... copy one array into another
-      ga_dgemm         ... BLAS-like matrix multiply 
-      ga_ddot_patch    ... dot product of two arrays (doubles only)
-                           (patch version)
-      ga_dscal_patch   ... scale the elements in an array by a constant
-                           (patch version)
-      ga_dadd_patch    ... scale and add two arrays to put result in a third
-                           (patch version)
-      ga_copy_patch    ... copy one array into another (patch version)
-      ga_ifill_patch   ... fill a patch of array with value (integer version)
-      ga_dfill_patch   ... fill a patch of array with value (DP version)
-      ga_mulmat_patch  ... matrix multiply (patch version)
-      ga_diag          ... real symmetric generalized eigensolver 
-      ga_diag_reuse    ... a version of ga_diag for repeated use    
-      ga_diag_std      ... standard real symmetric eigensolver 
-      ga_symmetrize    ... symmetrize a matrix
-      ga_transpose     ... transpose a matrix
-      ga_lu_solve      ... solve system of linear equations based on LU 
-                           factorization 
-      ga_print_patch   ... print a patch of an array to the screen 
-      ga_print         ... print an entire array to the screen
-      ga_copy_patch    ... copy data from a patch of one global array
-      ga_compare_distr ... compare distributions of two global arrays
+      ga_initialize     ... initialize global array internal structures 
+      ga_initialize_ltd ... initialize global arrays and set memory usage limits
+      ga_create         ... create an array (integer or double precision)
+      ga_create_irreg   ... create an array with irregular distribution
+                            (integer or double precision)
+      ga_duplicate      ... create an array following a reference array 
+      ga_destroy        ... destroy an array
+      ga_terminate      ... destroy all existing arrays and delete internal
+                            data structures  
+      ga_sync           ... synchronize processes (a barrier)
+      ga_zero           ... zero an array
+      ga_ddot           ... dot product of two arrays (doubles only)
+      ga_dscal          ... scale the elements in an array by a constant
+                            (double precision data only)
+      ga_dadd           ... scale and add two arrays to put result in a third
+                            (may overwrite one of the other two, doubles only)
+      ga_copy           ... copy one array into another
+      ga_dgemm          ... BLAS-like matrix multiply 
+      ga_ddot_patch     ... dot product of two arrays (doubles only)
+                            (patch version)
+      ga_dscal_patch    ... scale the elements in an array by a constant
+                            (patch version)
+      ga_dadd_patch     ... scale and add two arrays to put result in a third
+                            (patch version)
+      ga_copy_patch     ... copy one array into another (patch version)
+      ga_ifill_patch    ... fill a patch of array with value (integer version)
+      ga_dfill_patch    ... fill a patch of array with value (DP version)
+      ga_mulmat_patch   ... matrix multiply (patch version)
+      ga_diag           ... real symmetric generalized eigensolver 
+      ga_diag_reuse     ... a version of ga_diag for repeated use    
+      ga_diag_std       ... standard real symmetric eigensolver 
+      ga_symmetrize     ... symmetrize a matrix
+      ga_transpose      ... transpose a matrix
+      ga_lu_solve       ... solve system of linear equations based on LU 
+                            factorization 
+      ga_print_patch    ... print a patch of an array to the screen 
+      ga_print          ... print an entire array to the screen
+      ga_copy_patch     ... copy data from a patch of one global array
+      ga_compare_distr  ... compare distributions of two global arrays
 
    b) Operations that may be invoked by any process in true MIMD style
 
-      ga_get           ... read from a patch of an array
-      ga_put           ... write to a patch of an array
-      ga_acc           ... accumulate into a patch of an array (double
-                           precision only)
-      ga_dscatter      ... scatter elements into an array
-      ga_dgather       ... gather elements from an array
-      ga_read_inc      ... atomically read and increment the value of
-                           a single array element (integers only)
-      ga_locate        ... determine which process 'holds' an array element
-      ga_locate_region ... determine which process 'holds' an array patch 
-      ga_error         ... print error message and terminate the program 
-      ga_summarize     ... print information about already allocated arrays
+      ga_get            ... read from a patch of an array
+      ga_put            ... write to a patch of an array
+      ga_acc            ... accumulate into a patch of an array (double
+                            precision only)
+      ga_scatter        ... scatter elements into an array
+      ga_gather         ... gather elements from an array
+      ga_read_inc       ... atomically read and increment the value of
+                            a single array element (integers only)
+      ga_locate         ... determine which process 'holds' an array element
+      ga_locate_region  ... determine which process 'holds' an array patch 
+      ga_error          ... print error message and terminate the program 
+      ga_summarize      ... print information about already allocated arrays
 
    c) Operations that may be invoked by any process in true MIMD style
-      and are intended to support writing of new (data parallel?) functions
+      and are intended to support writing of new functions
 
-      ga_inquire       ... find the name, type and dimensions of the array
-      ga_distribution  ... find coordinates of the array patch that is 
-                          'held' by a processor 
-      ga_access        ... access internal data
-      ga_release       ... relinquish access to internal data
-      ga_release_update... relinquish access after data were updated 
-      ga_mask          ... protect critical sections
-      ga_check_handle  ... verify that a GA handle is valid
+      ga_distribution   ... find coordinates of the array patch that is 
+                            'held' by a processor 
+      ga_access         ... access internal data
+      ga_release        ... relinquish access to internal data
+      ga_release_update ... relinquish access after data were updated 
+      ga_mask           ... protect critical sections
+      ga_check_handle   ... verify that a GA handle is valid
 
    d) Operations to support portability between implementations
 
-      ga_nodeid       ... find requesting compute process id
-      ga_nnodes       ... find number of compute processes
-      ga_dgop         ... equivalent to TCGMSG dgop for compute processes
-      ga_brdcst       ... equivalent to TCGMSG brdcst for compute processes
+      ga_nodeid         ... find requesting compute process message id
+      ga_nnodes         ... find number of compute processes
+      ga_dgop           ... equivalent to TCGMSG dgop for compute processes
+      ga_igop           ... equivalent to TCGMSG igop for compute processes
+      ga_brdcst         ... equivalent to TCGMSG brdcst for compute processes
+
+   e) Other utility operations
+
+      ga_inquire        ... find the type and dimensions of the array
+      ga_inquire_name   ... find the name of the array
+      ga_inquire_memory ... find the ammount of memory in active arrays 
+      ga_summarize      ... prints summary info about allocated arrays
+      ga_uses_ma        ... finds if memory in arrays comes from MA 
+                            (memory allocator)
+      ga_memory_limited ... finds if limits were set for memory usage in arrays
 
 
       Note that consistency is only guaranteed for
@@ -171,7 +179,7 @@ distribute to other US Government contractors.
 
 
   2) True message passing MPP architectures with interrupt communication
-     available: the Intel IPSC, Delta, Paragon with the NX, and the IBM SP-1
+     available: the Intel IPSC, Delta, Paragon with the NX, and the IBM SP-1/2
      with the EUIH or MPL message passing library. 
 
 
@@ -209,9 +217,20 @@ distribute to other US Government contractors.
 
       allocate and initialize internal data structures for global arrays
 
+
+      -------------------------------------------------------------------
+      subroutine ga_initialize_ltd(limit)
+      integer limit  - ammount of memory in bytes per process [input]
+
+      allocate and initialize internal data structures for global arrays
+      and set limit for memory used in global arrays
+
+      limit < 0 means "unlimited memory usage" 
+
+
       -------------------------------------------------------------------
       logical function ga_create(type, dim1, dim2, array_name,
-     $     chunk1, chunk2, g_a)
+     $                           chunk1, chunk2, g_a)
 
       integer type, dim1, dim2, chunk1, chunk2, g_a
       character*(*) array_name
@@ -240,7 +259,7 @@ distribute to other US Government contractors.
 
       -------------------------------------------------------------------
       logical function ga_create_irreg(type, dim1, dim2, array_name,
-     $     map1, nblock1, map2, nblock2,  g_a)
+     $                                 map1, nblock1, map2, nblock2,  g_a)
 
       integer type, map1(*), map2(*), nblock1, nblock2, g_a
       character*(*) array_name
@@ -636,8 +655,6 @@ distribute to other US Government contractors.
       Each call to ga_access has to be followed by a call to either
       ga_release or ga_release_update. 
    
-      Only one access to an array per processor is allowed at a time.
-
       You can access only local data. 
 
       -------------------------------------------------------------------
@@ -684,7 +701,7 @@ distribute to other US Government contractors.
       *END CRITICAL SECTION*
 	
       -------------------------------------------------------------------
-      subroutine ga_dscatter(g_a, v, i, j, n)
+      subroutine ga_scatter(g_a, v, i, j, n)
 
       integer g_a                         [input]
       double precision v(n)               [input]
@@ -699,7 +716,7 @@ distribute to other US Government contractors.
               enddo
     
       -------------------------------------------------------------------
-      subroutine ga_dgather(g_a, v, i, j, n)
+      subroutine ga_gather(g_a, v, i, j, n)
 
       integer g_a                         [input]
       double precision v(n)               [output]
@@ -766,6 +783,24 @@ distribute to other US Government contractors.
       character*(*) array_name           [output]
 
       Returns name of array
+
+      -------------------------------------------------------------------
+      integer function ga_inquire_memory()
+
+      returns ammount of memory (in bytes) used in allocated global arrays
+      on the calling processor
+
+      -------------------------------------------------------------------
+      logical function ga_uses_ma()
+
+      returns .true. if memory in global arrays comes from memory allocator
+      (MA).  .false. might mean that System V shared memory is used.
+
+      -------------------------------------------------------------------
+      logical function ga_memory_limited()
+
+      Indicates if limit is set on memory usage in global arrays on
+      the calling processor.
 
       -------------------------------------------------------------------
       subroutine ga_copy_from_patch(trans, g_a, ilo,ihi,jlo,jhi, g_b)
@@ -868,7 +903,7 @@ distribute to other US Government contractors.
 
    Subroutines and functions listed above can be also called from C
    programs.  It is required to add an underscore at the end of the
-   routine names and include "global.c.h" file. The GA routines that
+   routine names and include "global.h" file. The GA routines that
    require a character (string) argument have both C (no underscore
    suffix) and Fortran (NOT TO BE USED BY C PROGRAMS) versions, for
    example, ga_error, ga_check_handle or ga_inquire_name. The reason
@@ -879,15 +914,11 @@ distribute to other US Government contractors.
    to use GAs in C programs, see implementation of GA operations in
    global.alg.c file, where some other GA routines are called.
 
-   To use ga_access, two external symbols (pointers to base arrays) have 
-   to be declared:
-
-   extern DoublePrecision *DBL_MB; 
-   extern Integer         *INT_MB;
+   See "global.alg.c" for examples on how to use  ga_access in C.
 
    For portability purposes, it is recommended to use in your C program 
-   DoublePrecision and Integer data types defined in "types.f2c.h" that is
-   included in "global.c.h" file.
+   DoublePrecision and Integer data types defined in "types.f2c.h" 
+   (included in "global.h" file).
 
    ga_access returns an index that is used to reference the data with
    respect to the data base arrays. This index corresponds to the
