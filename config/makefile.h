@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.59 2001-12-20 20:08:31 d3h325 Exp $
+# $Id: makefile.h,v 1.60 2001-12-22 00:15:11 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -229,7 +229,7 @@ endif
          _CPU = $(shell uname -m)
 #
 # IA64 --- only Intel fortran compiler supported
-FOPT_REN = -cm -w90 -w95
+FOPT_REN += -cm -w90 -w95
 ifeq  ($(_CPU),ia64)
            CC = ecc
            FC = efc
