@@ -1,4 +1,4 @@
-/* $Id: ds-shared.c,v 1.25 2003-07-18 05:43:14 vinod Exp $ */
+/* $Id: ds-shared.c,v 1.26 2003-07-30 19:03:14 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "message.h"
@@ -29,7 +29,7 @@ int n;
     n = len%PIPE_SHORT_ROUNDUP;
    len += (PIPE_SHORT_ROUNDUP-n);
  } 
-#ifdef VIA 
+#if defined(VIA) || defined(VAPI)
  else if(len <25*PIPE_BUFSIZE){
    len /=4;
    n = len%PIPE_SHORT_ROUNDUP;
@@ -48,7 +48,7 @@ else if(len <41*PIPE_BUFSIZE){
  }
 #endif 
 else 
-#ifdef VIA
+#if defined(VIA) || defined(VAPI)
    len = 8*4096;
 #elif defined(HITACHI)
    len = 128*1024-128;
@@ -88,7 +88,7 @@ int  packsize = PACK_SIZE(msginfo->datalen);
 #if defined(GM)  
      arg.buf_posted   = msginfo->tag.data_ptr;
 #endif
-#if defined(VIA) && defined(VIA_USES_RDMA)
+#if (defined(VIA) && defined(VIA_USES_RDMA)) || defined(VAPI)
      arg.buf_posted   = msginfo->tag;
 #endif
 
@@ -110,7 +110,7 @@ int  packsize = PACK_SIZE(msginfo->datalen);
 #if defined(GM) || defined(HITACHI)
      arg.buf_posted   = msginfo->tag.data_ptr;
 #endif
-#if defined(VIA) && defined(VIA_USES_RDMA)
+#if (defined(VIA) && defined(VIA_USES_RDMA)) || defined(VAPI)
      arg.buf_posted   = msginfo->tag;
 #endif
 
@@ -142,6 +142,17 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
              msginfo->from);
       fflush(stdout);
     }
+
+#ifdef VAPI
+    if(stride_levels==0 && msginfo->pinned){
+      armci_send_contig_bypass(proc,msginfo,loc_ptr,rem_ptr,count[0]);
+      return;
+    }
+    else {
+      armci_die("***SOMETHING TERRIBLY WRONG IN send_strided_data_bypass***",0);
+    }
+#endif
+    
     armci_pin_memory(loc_ptr, loc_stride_arr,count, stride_levels);
     /*wait until client ready*/
     if(!armcill_server_wait_ack(msginfo->from,1)){
@@ -432,8 +443,8 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
 
     int to = msginfo->from;
 
-    if(DEBUG_){ printf("%d(server): sending datalen = %d to %d\n",
-                armci_me, msginfo->datalen, to); fflush(stdout); }
+    if(DEBUG_){ printf("%d(server): sending datalen = %d to %d %p\n",
+                armci_me, msginfo->datalen, to,ptr); fflush(stdout); }
  
 #if defined(SOCKETS)
     /* zero-copy optimization for large requests */
