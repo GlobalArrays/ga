@@ -2,7 +2,7 @@
  *    Author: Jialin Ju, PNNL
  */
 
-/* $Id: perf.c,v 1.15 2003-03-27 02:08:55 d3h325 Exp $ */
+/* $Id: perf.c,v 1.16 2003-03-28 21:53:07 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +24,9 @@
 #ifndef ABS
 #define ABS(a) ((a)>0? (a): -(a))
 #endif
+
+/* tells to use ARMCI_Malloc_local instead of plain malloc */
+#define MALLOC_LOC 
 
 int CHECK_RESULT=0;
 
@@ -273,14 +276,14 @@ void test_1D()
     src = me;
     
     /* memory allocation */
-#if 0
+#ifdef MALLOC_LOC 
     if(me == 0) {
-        buf = (double *)malloc(SIZE * SIZE * sizeof(double));
+        buf = (double *)ARMCI_Malloc_local(SIZE * SIZE * sizeof(double));
         assert(buf != NULL);
     }
 #else
     if(me == 0) {
-        buf = (double *)ARMCI_Malloc_local(SIZE * SIZE * sizeof(double));
+        buf = (double *)malloc(SIZE * SIZE * sizeof(double));
         assert(buf != NULL);
     }
 #endif
@@ -359,7 +362,11 @@ void test_1D()
     ARMCI_Free(get_ptr[me]);
     ARMCI_Free(ptr[me]);
     
+#ifdef MALLOC_LOC 
+    if(me == 0) ARMCI_Free_local(buf);
+#else
     if(me == 0) free(buf);
+#endif
 }
 
 void test_2D()
