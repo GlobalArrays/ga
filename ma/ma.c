@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.6 1995-03-31 01:41:45 d3g681 Exp $
+ * $Id: ma.c,v 1.7 1996-02-12 20:14:24 d3g681 Exp $
  */
 
 /*
@@ -1422,7 +1422,7 @@ private Boolean mh2ad(memhandle, adout, location, caller)
             (void)sprintf(ma_ebuf,
                 "memhandle %ld (name: '%s') not top of stack",
                 (long)memhandle, ad->name);
-	    MA_summarize_allocated_blocks(); /* RJH */
+	    MA_summarize_allocated_blocks(0); /* RJH */
             ma_error(EL_Nonfatal, ET_External, caller, ma_ebuf);
             return MA_FALSE;
         }
@@ -1720,6 +1720,7 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
             (void)sprintf(ma_ebuf,
                 "block '%s', not enough space to allocate %lu bytes",
                 name, nbytes);
+	    MA_summarize_allocated_blocks(0); /* RJH */
             ma_error(EL_Nonfatal, ET_External, "MA_allocate_heap", ma_ebuf);
             return MA_FALSE;
         }
@@ -2085,6 +2086,7 @@ public Boolean MA_init(datatype, nominal_stack, nominal_heap)
         (void)sprintf(ma_ebuf,
             "could not allocate %lu bytes",
             total_bytes);
+	MA_summarize_allocated_blocks(0); /* RJH */
         ma_error(EL_Nonfatal, ET_External, "MA_init", ma_ebuf);
         return MA_FALSE;
     }
@@ -2533,6 +2535,7 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
         (void)sprintf(ma_ebuf,
             "block '%s', not enough space to allocate %lu bytes",
             name, nbytes);
+	MA_summarize_allocated_blocks(0); /* RJH */
         ma_error(EL_Nonfatal, ET_External, "MA_push_stack", ma_ebuf);
         return MA_FALSE;
     }
