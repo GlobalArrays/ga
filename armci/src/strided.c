@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.74 2003-09-25 20:48:01 manoj Exp $ */
+/* $Id: strided.c,v 1.75 2003-09-26 22:09:30 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -642,15 +642,17 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
-		int count[],            /* number of segments at each stride levels: count[0]=bytes*/
+		int byte_count[],       /* number of segments at each stride 
+					   levels: count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
                 int proc                /* remote process(or) ID */
                 )
 {
     int rc,direct=1;
+    int *count=byte_count, tmp_count;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
-    if(count[0]<0)return FAIL3;
+    if(byte_count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
     
@@ -667,6 +669,15 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 
     if(stride_levels) /* reduce stride_levels for trivial cases */
        for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;
+
+    /* shrinking 2-d to 1-d, if 2-d is contiguous.To be extended for N-d's*/
+    if(stride_levels==1 && (count[0]==src_stride_arr[0] &&
+                            count[0]==dst_stride_arr[0])) {
+      count = &tmp_count;
+      tmp_count = byte_count[0] * byte_count[1];
+      stride_levels = 0;
+      src_stride_arr =  dst_stride_arr = NULL;
+    }
 
     /* use direct protocol for remote access when performance is better */
 #   if (defined(LAPI) && !defined(LAPI2))
@@ -994,8 +1005,8 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
-		int count[],            /* number of segments at each stride 
-                                           levels: count[0]=bytes*/
+		int byte_count[],       /* number of segments at each stride 
+                                           levels: byte_count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
                 int proc,               /* remote process(or) ID */
                 armci_hdl_t* usr_hdl  /* armci non-blocking call handle*/
@@ -1003,9 +1014,10 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
     int rc=0,direct=1;
+    int *count=byte_count, tmp_count;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
-    if(count[0]<0)return FAIL3;
+    if(byte_count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
@@ -1013,9 +1025,19 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     direct=SAMECLUSNODE(proc);
 #endif
 
+    
     if(stride_levels) /* reduce stride_levels for trivial cases */
        for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;
-
+    
+    /* shrinking 2-d to 1-d, if 2-d is contiguous.To be extended for N-d's*/
+    if(stride_levels==1 && (count[0]==src_stride_arr[0] &&
+			    count[0]==dst_stride_arr[0])) {
+       count = &tmp_count;
+       tmp_count = byte_count[0] * byte_count[1];
+       stride_levels = 0;
+       src_stride_arr =  dst_stride_arr = NULL;
+    }
+    
     /* aggregate get */
     if(nb_handle && nb_handle->agg_flag == SET) {
       if(!direct) 
