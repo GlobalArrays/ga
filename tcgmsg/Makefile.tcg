@@ -37,7 +37,7 @@ machdep:
 			done \
 		done
 	chmod a+x examples/demo
-#	chmod -f a+x makep
+	chmod -f a+x makep
 
 clean:
 	for dir in $(SUBDIRS); do \
