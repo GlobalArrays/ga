@@ -60,11 +60,11 @@ int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo, Integer *hi,
     /* check the patch is valid or not */
     for(i=0; i<ndim; i++) {
         if(op_code == PERIODIC_GET) {
-            if((hi[i] - lo[i] + 1) < 1) return FALSE;
+            if((hi[i] - lo[i] + 1) < 1) return 0;
         }
         else {
             if(((hi[i]-lo[i]+1) > dims[i]) || ((hi[i]-lo[i]+1) < 1))
-                return FALSE;
+                return 0;
         }
     }
     
@@ -107,10 +107,10 @@ int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo, Integer *hi,
     }
 
     /* check if this is a regular patch, not periodic operation needed */
-    is_regular_patch = TRUE;
+    is_regular_patch = 1;
     for(i=0; i<ndim; i++) 
         if(range_raw[i].low.isvalid || range_raw[i].hig.isvalid)
-            is_regular_patch = FALSE;
+            is_regular_patch = 0;
 
     if(is_regular_patch) return IS_REGULAR_PATCH;
     
@@ -137,7 +137,7 @@ int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo, Integer *hi,
         }  
     }
     
-    return TRUE;
+    return 1;
 }
 
 void ngai_periodic_(Integer *g_a, Integer *lo, Integer *hi, void *buf,

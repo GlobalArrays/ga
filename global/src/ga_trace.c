@@ -101,8 +101,8 @@ void  trace_etime_()
     tt1 = ga_timer_();
 }
 
-void trace_genrec_(long *ga, long *ilo, long *ihi, long *jlo, long *jhi,
-                   long *op)
+void trace_genrec_(Integer *ga, Integer *ilo, Integer *ihi, Integer *jlo, Integer *jhi,
+                   Integer *op)
 {
     int i, d, has_record, counter;
     FILE *fout;
@@ -126,12 +126,12 @@ void trace_genrec_(long *ga, long *ilo, long *ihi, long *jlo, long *jhi,
             if(*ga == (long) galog[i]) has_record = 1;
 
         if(!has_record) {
-            galog[ganum++] = *ga;
+            galog[ganum++] = (int)*ga;
             
             sprintf(fname, "distrib.%d",(int) *ga);
             fout = fopen(fname,"w");
             
-            NGA_Inquire(*ga, &type, &ndim, dims);
+            NGA_Inquire((int)*ga, &type, &ndim, dims);
             
             /* get memory for arrays describing distribution */
             proclist = (int*)malloc(nproc*sizeof(int));
@@ -141,7 +141,7 @@ void trace_genrec_(long *ga, long *ilo, long *ihi, long *jlo, long *jhi,
 
             for(d=0; d<ndim; d++) { lo[d] = 0; hi[d] = dims[d] -1;}
 
-            proc = NGA_Locate_region(*ga, lo, hi, (int*)regions, proclist);
+            proc = NGA_Locate_region((int)*ga, lo, hi, (int*)regions, proclist);
             if(proc<1) GA_Error("error in NGA_Locate_region",proc);
             
             for(d=0; d<ndim; d++) {

@@ -1,4 +1,4 @@
-/* $Id: decomp.c,v 1.6 2000-10-13 22:28:09 d3h325 Exp $ */
+/* $Id: decomp.c,v 1.7 2001-03-22 21:46:17 d3h325 Exp $ */
 /***************************************************************************
  *--- 
  *--- The software in this file implements three heuristics for distributing
@@ -139,19 +139,19 @@ void ddb(long ndims, long ardims[], long npes, long blk[], long pedims[])
     }
 
     if(count>0){
-       tardim = (long *) calloc(count,sizeof(long));
+       tardim = (long *) calloc((size_t)count,sizeof(long));
        if(tardim==NULL) {
          fprintf(stderr,"ddb: Memory allocation failed\n");
          for(i=0;i<ndims;i++) pedims[i] = 0;
          return;
        }
-       tblk = (long *) calloc(count,sizeof(long));
+       tblk = (long *) calloc((size_t)count,sizeof(long));
        if(tblk==NULL) {
           fprintf(stderr,"ddb: Memory allocation failed\n");
           for(i=0;i<ndims;i++) pedims[i] = 0;
           return;
        }
-       tpedim = (long *) calloc(count,sizeof(long));
+       tpedim = (long *) calloc((size_t)count,sizeof(long));
        if(tpedim==NULL) {
           fprintf(stderr,"ddb: Memory allocation failed\n");
           for(i=0;i<ndims;i++) pedims[i] = 0;
@@ -225,7 +225,7 @@ void ddb_ex( long ndims, long ardims[], long npes, double threshold,
       }
 
       /*- Reset array dimensions to reflect granularity -*/
-      tard = (long *) calloc(ndims,sizeof(long));
+      tard = (long *) calloc((size_t)ndims,sizeof(long));
       if(tard==NULL) {
          fprintf(stderr,"ddb_ex: Memory allocation failed\n");
          for(i=0;i<ndims;i++) blk[i] = 0;
@@ -237,7 +237,7 @@ void ddb_ex( long ndims, long ardims[], long npes, double threshold,
          tard[i] = 1; blk[i] = ardims[i]; }
 
       /*- Allocate memory for current solution -*/
-      tdims = (long *) calloc(ndims,sizeof(long));
+      tdims = (long *) calloc((size_t)ndims,sizeof(long));
       if(tdims==NULL) {
          fprintf(stderr,"ddb_ex: Memory allocation failed\n");
          for(i=0;i<ndims;i++) blk[i] = 0;
@@ -247,7 +247,7 @@ void ddb_ex( long ndims, long ardims[], long npes, double threshold,
       /*- Allocate memory to hold divisors of npes -*/
       npdivs = 1;
       for(i=2;i<=npes;i++) if(npes%i==0) npdivs += 1;
-      pdivs = (long *) calloc(npdivs,sizeof(long));
+      pdivs = (long *) calloc((size_t)npdivs,sizeof(long));
       if(pdivs==NULL) {
          fprintf(stderr,"ddb_ex: Memory allocation failed\n");
          for(i=0;i<ndims;i++) blk[i] = 0;
@@ -256,7 +256,7 @@ void ddb_ex( long ndims, long ardims[], long npes, double threshold,
       }
 
       /*- Allocate storage for the recursion stack -*/
-      stack = (long *) calloc(ndims,sizeof(long));
+      stack = (long *) calloc((size_t)ndims,sizeof(long));
       if(stack==NULL){
          fprintf(stderr,"%s: %s\n","ddb_ex",
              "memory allocation failed");
@@ -365,7 +365,7 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
       }
 
       /*- Allocate memory to store the granularity -*/
-      tard = (long *) calloc(ndims,sizeof(long));
+      tard = (long *) calloc((size_t)ndims,sizeof(long));
       if(tard==NULL){
          fprintf(stderr,"%s: %s\n","ddb_h1",
              "memory allocation failed");
@@ -380,7 +380,7 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
 
       /*- First solve the load balancing problem exactly in
        *- floating point arithmetic -*/
-      qedims = (double *) calloc(ndims,sizeof(double));
+      qedims = (double *) calloc((size_t)ndims,sizeof(double));
       if(qedims==NULL){
          fprintf(stderr,"%s: %s\n","ddb_h1",
              "memory allocation failed");
@@ -400,7 +400,7 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
       /*- Set up the search for a integer approximation the floating point solution -*/
       npdivs = 1;
       for(i=2;i<=npes;i++) if(npes%i==0) npdivs += 1;
-      pdivs = (long *) calloc(npdivs,sizeof(long));
+      pdivs = (long *) calloc((size_t)npdivs,sizeof(long));
       if(pdivs==NULL){
          fprintf(stderr,"%s: %s\n","split",
              "memory allocation failed");
@@ -418,7 +418,7 @@ void ddb_h1(long ndims, long ardims[], long npes, double threshold,
 
       /*- Lookout for a permutation of the solution vector
        *- that would improve the initial solution -*/
-      apdims = (long *) calloc(ndims,sizeof(long));
+      apdims = (long *) calloc((size_t)ndims,sizeof(long));
       if(apdims==NULL){
          fprintf(stderr,"%s: %s\n","split",
              "memory allocation failed");
@@ -606,7 +606,7 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
       long istart, istep, ilook;
 
       /*- Allocate memory to store the granularity -*/
-      tard = (long *) calloc(ndims,sizeof(long));
+      tard = (long *) calloc((size_t)ndims,sizeof(long));
       if(tard==NULL){
          fprintf(stderr,"%s: %s\n","ddb_h2",
              "memory allocation failed");
@@ -624,7 +624,7 @@ void ddb_h2(long ndims, long ardims[], long npes, double threshold, long bias,
       /*- Allocate storage to old all divisors of npes -*/
       npdivs = 1;
       for(i=2;i<=npes;i++) if(npes%i==0) npdivs += 1;
-      pdivs = (long *) calloc(npdivs,sizeof(long));
+      pdivs = (long *) calloc((size_t)npdivs,sizeof(long));
       if(pdivs==NULL){
          fprintf(stderr,"%s: %s\n","split",
              "memory allocation failed");

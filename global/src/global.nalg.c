@@ -485,7 +485,7 @@ void *ptr_a, *ptr_b, *ptr_c;
 
 
 static 
-void gai_local_transpose(int type, char *ptra, int n, int stride, char *ptrb)
+void gai_local_transpose(Integer type, char *ptra, Integer n, Integer stride, char *ptrb)
 {
 int i;
     switch(type){

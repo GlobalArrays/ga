@@ -116,7 +116,7 @@ int  elio_stat(char *fname, stat_t *statinfo)
     if(!S_ISREG(ufs_stat.st_mode) && !S_ISDIR(ufs_stat.st_mode))
 	    ELIO_ERROR(TYPEFAIL, 1);
 	
-#   if defined(CRAY)
+#   if defined(CRAY) || defined(NEC)
 	if(statfs(fname, &ufs_statfs, sizeof(ufs_statfs), 0) != 0)
 #   else
         if(STATVFS(fname, &ufs_statfs) != 0)
@@ -129,12 +129,14 @@ int  elio_stat(char *fname, stat_t *statinfo)
       
 #   else
       /* get number of available blocks */
-#     if defined(CRAY)
+#     if defined(CRAY) || defined(NEC)
           /* f_bfree == f_bavail -- naming changes */
 
+#        ifdef CRAY
           if(ufs_statfs.f_secnfree != 0) /* check for secondary partition */
              statinfo->avail = (long) ufs_statfs.f_secnfree;
           else
+#        endif
              statinfo->avail = (long) ufs_statfs.f_bfree;
 #     else
           statinfo->avail = (long) ufs_statfs.f_bavail;

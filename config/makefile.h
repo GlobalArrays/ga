@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.40 2001-02-28 20:00:24 d3h325 Exp $
+# $Id: makefile.h,v 1.41 2001-03-22 21:46:16 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -337,6 +337,19 @@ ifeq ($(TARGET),CRAY-T3E)
      FOPT_REN = -dp
  GLOB_DEFINES = -DCRAY_T3D -DCRAY_T3E
     EXPLICITF = TRUE
+endif
+#................................. NEC SX-5 ..................................
+ifeq ($(TARGET),NEC)
+#
+     FC = f90
+     ifeq ($(FOPT), -O)
+         FOPT = -Cvopt -Wf"-pvctl nomsg"
+     endif
+     ifeq ($(COPT), -O)
+         COPT = -O nomsg -pvctl,nomsg
+     endif
+     FOPT_REN = -ew
+     CDEFS    = -DEXT_INT
 endif
 #
 #.............................. IBM .........................................

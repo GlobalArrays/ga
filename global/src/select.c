@@ -99,7 +99,7 @@ int     participate=0;
 
       /* determine element subscript in the ndim-array */
       for(i = 0; i < ndim; i++){
-          int elems = hi[i]-lo[i]+1;
+          int elems = (int)( hi[i]-lo[i]+1);
           info.subscr[i] = ind%elems + lo[i] ;
           ind /= elems;
       }
@@ -107,11 +107,11 @@ int     participate=0;
 
    /* calculate global result */
    if(type==MT_F_INT){ 
-      int size = sizeof(double) + sizeof(Integer)*ndim;
+      int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
       *(Integer*)val = info.v.lval;
    }else if(type==MT_F_DBL){
-      int size = sizeof(double) + sizeof(Integer)*ndim;
+      int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_DOUBLE,participate);
       *(DoublePrecision*)val = info.v.dval;
    }else{

@@ -4,7 +4,7 @@
 #include "macdecls.h"
 
 
-static void gai_combine_val(int type, void *ptr, int n, void* val, int add)
+static void gai_combine_val(Integer type, void *ptr, Integer n, void* val, Integer add)
 {
     int i;
 
@@ -91,7 +91,7 @@ static void gai_add_val(int type, void *ptr1, void *ptr2, int n, void* val)
 }                                                               
 
 
-static void gai_copy_sbit(int type, void *a, int n, void *b, Integer *sbit, int pack, int mx)
+static void gai_copy_sbit(Integer type, void *a, Integer n, void *b, Integer *sbit, Integer pack, Integer mx)
 {
     int i, cnt=0;
     Integer         *is, *id;
@@ -221,7 +221,8 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    Integer *lim=NULL, handle, idx, nproc, me;
    Integer lop, hip, ndim, dims, type;
    double buf[2];
-   Integer *ia, elems, i;
+   Integer *ia, elems;
+   int i;
 
    nproc = ga_nnodes_();
       me = ga_nodeid_();
@@ -338,9 +339,9 @@ void ga_scan_add_(Integer* g_a, Integer* g_b, Integer* g_sbit,
 static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
               Integer* lo, Integer* hi, Integer* icount, int pack)
 {
+   void *ptr;
    Integer *lim=NULL, handle, idx, nproc, me;
    Integer lop, hip, ndim, dims, type;
-   void *ptr;
    Integer *ia, elems, i, first, myplace =0, counter=0;
 
    nproc = ga_nnodes_();

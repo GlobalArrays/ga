@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.10 2000-10-11 22:42:44 d3h325 Exp $ */
+/* $Id: rmw.c,v 1.11 2001-03-22 21:46:15 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -38,7 +38,7 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
       case ARMCI_SWAP_LONG:
                 armci_get(prem,&_a_ltemp,sizeof(long),proc);
                 armci_put(ploc,prem,sizeof(long),proc);
-                *(int*)ploc = _a_ltemp;
+                *(long*)ploc = _a_ltemp;
            break;
       default: armci_die("rmw: operation not supported",op);
     }

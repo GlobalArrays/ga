@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.34 2000-04-17 19:28:26 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.35 2001-03-22 21:46:18 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -307,7 +307,7 @@ void c2fstring( cstring, fstring, flen)
 
     /* Truncate C string into Fortran string */
 
-    if (clen > flen) clen = flen;
+    if (clen > flen) clen = (int)flen;
 
     /* Copy characters over */
 

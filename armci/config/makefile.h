@@ -316,6 +316,18 @@ ifdef CRAY
          COPT = -O1 -hinline3
      endif
 endif
+#................................. NEC SX-4 ..................................
+ifeq ($(TARGET),NEC)
+#
+     FC = f90
+     ifeq ($(FOPT), -O)
+         FOPT = -Cvopt -Wf"-pvctl nomsg"
+     endif
+     ifeq ($(COPT), -O)
+         COPT = -O nomsg -pvctl,nomsg
+     endif
+     EXTRA_LIBS += -li90sx
+endif
 
 #................................. IBM SP and workstations ...................
 

@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.5 2000-06-14 00:57:55 d3h325 Exp $ */
+/* $Id: winshmem.c,v 1.6 2001-03-22 21:46:16 d3h325 Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -33,6 +33,12 @@
 #  include <windows.h>
 #  include <process.h>
 #  define  GETPID _getpid
+#elif defined(NEC)
+#  include <unistd.h>
+#  include <sys/mppg.h>
+   typedef void* HANDLE;
+   typedef void* LPVOID;
+#  define  GETPID getpid
 #else
 #  ifndef _POSIX_C_SOURCE
 #    define  _POSIX_C_SOURCE 199309L
@@ -57,7 +63,7 @@
 #ifdef WIN32
 #  define _SHMMAX  32678      
 #else
-#  define _SHMMAX  131072      
+#  define _SHMMAX  2*32678      
 #endif
 
 #define SET_MAPNAME(id) sprintf(map_fname,"/tmp/ARMCIshmem.%d.%d",parent_pid,(id))
@@ -74,7 +80,7 @@
 static struct shm_region_list{
    char     *addr;
    HANDLE   id;
-   int      size;
+   long      size;
 }region_list[MAX_REGIONS];
 
 static char map_fname[64];
@@ -89,7 +95,7 @@ static  int parent_pid=-1;  /* process id of process 0 "parent" */
 extern void armci_die(char*,int);
 
 /* not done here yet */
-void armci_shmem_init(){};
+void armci_shmem_init() {}
 
 unsigned long armci_max_region()
 {
@@ -117,6 +123,8 @@ long code=0;
 #       if defined(WIN32)
           UnmapViewOfFile(region_list[reg].addr);
           CloseHandle(region_list[reg].id);
+#       elif defined(NEC)
+          (int)dp_xmfree(region_list[reg].addr);
 #       else
           munmap(region_list[reg].addr, region_list[reg].size);
 #       endif
@@ -134,16 +142,30 @@ void Free_Shmem_Ptr(long id, long size, char* addr)
 }
 
 
-char *armci_get_core_from_map_file(int id, int exists, int size)
+char *armci_get_core_from_map_file(int exists, long size)
 {
-    HANDLE  h_shm_map;
     LPVOID  ptr;
-    SET_MAPNAME(id);
+
+#ifdef NEC
+
+    region_list[alloc_regions].addr = (char*)0;
+    if(exists)
+       ptr = dp_xmatt(parent_pid, region_list[alloc_regions].id, (void*)0);  
+    else {
+       ptr = dp_xmalloc((void*)0, (long long) size);
+       region_list[alloc_regions].id = ptr;
+    }
+
+    if(ptr == (void*)-1) return ((char*)0); 
+       
+#else
+    HANDLE  h_shm_map;
+    SET_MAPNAME(alloc_regions);
     region_list[alloc_regions].addr = (char*)0;
 
 #if defined(WIN32)
     h_shm_map = CreateFileMapping(INVALID_HANDLE_VALUE,
-                NULL, PAGE_READWRITE, 0, size, map_fname);
+                NULL, PAGE_READWRITE, 0, (int)size, map_fname);
     if(h_shm_map == NULL) return NULL;
 
     if(exists){
@@ -182,9 +204,7 @@ char *armci_get_core_from_map_file(int id, int exists, int size)
        if(ftruncate(h_shm_map,size) < 0) return NULL;
     }
 
-fprintf(stderr,"h_shm_map =%d\n",h_shm_map );
     ptr = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, h_shm_map, 0L);
-fprintf(stderr,"ptr =%x\n",ptr);
 
     close(h_shm_map);
     h_shm_map = -1;
@@ -193,6 +213,9 @@ fprintf(stderr,"ptr =%x\n",ptr);
 
     /*     save file handle in the array to close it in the future */
     region_list[alloc_regions].id   = h_shm_map;
+    
+#endif
+
     region_list[alloc_regions].addr = (char*)ptr;
     region_list[alloc_regions].size = size;
 
@@ -202,15 +225,16 @@ fprintf(stderr,"ptr =%x\n",ptr);
 
 /*\ function called by shared memory allocator (shmalloc)
 \*/
-char *allocate(long size)
+char *allocate(size_t size)
 {
     char *ptr;
 
     if(alloc_regions>= MAX_REGIONS)
         armci_die("max alloc regions exceeded", alloc_regions);
 
-    ptr = armci_get_core_from_map_file(alloc_regions, 0, (int)size);
+    ptr = armci_get_core_from_map_file( 0, (long)size);
     if(ptr !=NULL) alloc_regions++;
+    if(DEBUG)fprintf(stderr,"allocate got %lx %ld\n",ptr, size);
 
     return ptr;
 }
@@ -233,7 +257,7 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
 
      temp = shmalloc((unsigned)size);
      if(temp == (char*)0 )
-           armci_die("Create_Shared_Region: shmalloc failed ",0L);
+           armci_die("Create_Shared_Region: shmalloc failed ",0);
     
      /* find if shmalloc allocated a new shmem region */
      if(last_allocated == alloc_regions){
@@ -248,6 +272,10 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
 
      idlist[0] = alloc_regions;
      idlist[1] = parent_pid;
+#ifdef NEC
+     idlist[2] = (long) region_list[alloc_regions-1].id;
+     if(DEBUG)fprintf(stderr,"created %lx %ld id=%ld\n",temp, size,idlist[2]);
+#endif
      return (temp);
 }
 
@@ -263,24 +291,25 @@ char *Attach_Shared_Region(long id[], long size, long offset)
           for(reg=0;reg<MAX_REGIONS;reg++){
             region_list[reg].addr=(char*)0;
             region_list[reg].id=0;
-            parent_pid= id[1];
+            parent_pid= (int) id[1];
           }
      }
 
      /* find out if a new shmem region was allocated */
      if(alloc_regions == id[0] -1){
+#        ifdef NEC
+               region_list[alloc_regions].id = (HANDLE) id[2];
+#        endif
          if(DEBUG)printf("alloc_regions=%d size=%d\n",alloc_regions,size);
-         temp = armci_get_core_from_map_file(alloc_regions,1,size);
-         assert(temp);
+         temp = armci_get_core_from_map_file(1,size);
          if(temp != NULL)alloc_regions++;
          else return NULL;
      }
 
      if( alloc_regions == id[0]){
          temp = region_list[alloc_regions-1].addr + offset; 
-         assert(temp);
      }else armci_die("Attach_Shared_Region:iconsistency in counters",
-         alloc_regions - id[0]);
+         alloc_regions - (int) id[0]);
 
      assert(temp);
      return(temp);

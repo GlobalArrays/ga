@@ -1,4 +1,4 @@
-/* $Id: shmalloc.c,v 1.7 2000-12-28 00:43:06 d3h325 Exp $ */
+/* $Id: shmalloc.c,v 1.8 2001-03-22 21:46:16 d3h325 Exp $ */
 #include <stdio.h>
 #include "shmalloc.h"
 
@@ -287,8 +287,8 @@ void shmalloc_stats(total, nchunk, inuse, maxuse, nfrags,
 {
   *total  = usage.total * sizeof(Header);
   *nchunk = usage.nchunk;
-  *inuse  = usage.inuse * sizeof(Header);
-  *maxuse = usage.maxuse* sizeof(Header);
+  *inuse  = (size_t)usage.inuse * sizeof(Header);
+  *maxuse = (size_t)usage.maxuse* sizeof(Header);
   *nfrags = usage.nfrags;
   *nmcalls= usage.nmcalls;
   *nfcalls= usage.nfcalls;

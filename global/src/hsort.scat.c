@@ -16,7 +16,7 @@ extern void ga_error();
 
 
 #define INDEX_SORT(base,pn,SWAP){\
-  unsigned gap, g;\
+  unsigned long gap, g;\
   Integer *p, *q, n=*pn;\
   Integer *hi, *base0=base - 1;\
 \
@@ -67,8 +67,8 @@ void ga_sort_scat_dcpl_(pn, v, i, j, base)
 #  define SWAP(a,b) { \
     Integer ltmp; \
     DoubleComplex dtmp; \
-    int ia = a - base; \
-    int ib = b - base; \
+    long ia = a - base; \
+    long ib = b - base; \
     ltmp=*a; *a=*b; *b=ltmp; \
     dtmp=v[ia]; v[ia]=v[ib]; v[ib]=dtmp; \
     ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
@@ -87,8 +87,8 @@ void ga_sort_permutation(pn, index, base)
 #  define SWAP(a,b) { \
     Integer ltmp; \
     Integer itmp;\
-    int ia = a - base; \
-    int ib = b - base; \
+    long ia = a - base; \
+    long ib = b - base; \
     ltmp=*a; *a=*b; *b=ltmp; \
     itmp=index[ia]; index[ia]=index[ib]; index[ib] = itmp;\
    }
@@ -112,8 +112,8 @@ void ga_sort_scat_dbl_(pn, v, i, j, base)
 #  define SWAP(a,b) { \
     Integer ltmp; \
     DoublePrecision dtmp; \
-    int ia = a - base; \
-    int ib = b - base; \
+    long ia = a - base; \
+    long ib = b - base; \
     ltmp=*a; *a=*b; *b=ltmp; \
     dtmp=v[ia]; v[ia]=v[ib]; v[ib]=dtmp; \
     ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
@@ -137,8 +137,8 @@ void ga_sort_scat_int_(pn, v, i, j, base)
 #  define SWAP(a,b) { \
     Integer ltmp; \
     Integer dtmp; \
-    int ia = a - base; \
-    int ib = b - base; \
+    long ia = a - base; \
+    long ib = b - base; \
     ltmp=*a; *a=*b; *b=ltmp; \
     dtmp=v[ia]; v[ia]=v[ib]; v[ib]=dtmp; \
     ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
@@ -179,8 +179,8 @@ void ga_sort_gath_(pn, i, j, base)
 #  undef SWAP  
 #  define SWAP(a,b) { \
     Integer ltmp; \
-    int ia = a - base; \
-    int ib = b - base; \
+    long ia = a - base; \
+    long ib = b - base; \
     ltmp=*a; *a=*b; *b=ltmp; \
     ltmp=i[ia]; i[ia]=i[ib]; i[ib]=ltmp; \
     ltmp=j[ia]; j[ia]=j[ib]; j[ib]=ltmp; \

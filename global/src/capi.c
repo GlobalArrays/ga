@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.27 2001-02-28 23:42:10 d3h325 Exp $ */
+/* $Id: capi.c,v 1.28 2001-03-22 21:46:17 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -363,7 +363,7 @@ int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[])
      Integer ndim = ga_ndim_(&a);
      Integer *tmap;
      int i;
-     tmap = (Integer *)malloc(2*ndim * GA_Nnodes()*sizeof(Integer));
+     tmap = (Integer *)malloc( (int)(GA_Nnodes()*2*ndim *sizeof(Integer)));
      if(!map)GA_Error("NGA_Locate_region: unable to allocate memory",g_a);
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
@@ -485,7 +485,7 @@ void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
     Integer nv = (Integer)n;
     Integer ndim = ga_ndim_(&a);
     Integer *_subs_array;
-    _subs_array = (Integer *)malloc(n * ndim * sizeof(Integer));
+    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
     if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
@@ -503,7 +503,7 @@ void NGA_Scatter_acc(int g_a, void *v, int* subsArray[], int n, void *alpha)
     Integer nv = (Integer)n;
     Integer ndim = ga_ndim_(&a);
     Integer *_subs_array;
-    _subs_array = (Integer *)malloc(n * ndim * sizeof(Integer));
+    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
     if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
     for(idx=0; idx<n; idx++)
         for(i=0; i<ndim; i++)
@@ -521,7 +521,7 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
     Integer nv = (Integer)n;
     Integer ndim = ga_ndim_(&a);
     Integer *_subs_array;
-    _subs_array = (Integer *)malloc(n * ndim * sizeof(Integer));
+    _subs_array = (Integer *)malloc((int)ndim* n * sizeof(Integer));
     if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
 
     /* adjust the indices for fortran interface */

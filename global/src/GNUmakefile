@@ -44,6 +44,10 @@ endif
 
 OBJ = $(GA_CORE) $(GA_EXTRA) $(GA_UTIL) $(GA_LIN_ALG) 
 
+ifeq ($(TARGET),NEC)
+OBJ_FRAGILE = global.armci.o
+endif
+
 #--------------------------- extra definitions ---------------------
   LIB_DEFINES += -DARMCI
   ifeq ($(GA_TRACE), YES)

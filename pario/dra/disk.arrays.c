@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.25 2001-03-13 23:05:29 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.26 2001-03-22 21:46:19 d3h325 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -314,7 +314,7 @@ int i;
 
         Dra_num_serv = drai_get_num_serv();
 
-        DRA = (disk_array_t*)malloc(sizeof(disk_array_t)**max_arrays);
+        DRA = (disk_array_t*)malloc(sizeof(disk_array_t)* (int)*max_arrays);
         if(!DRA) dai_error("dra_init: memory alocation failed\n",0);
         for(i=0; i<_max_disk_array ; i++)DRA[i].actv=0;
 
@@ -883,7 +883,7 @@ Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
                         algn_flag=(DRA[handle].chunk1 == DRA[handle].dim1)?OFF:ON;
                         u++;
                  }
-                 *nu = u;
+                 *nu = (int)u;
                  if(aligned[0][ IHI ]-aligned[0][ ILO ] < 0) algn_flag= OFF;
                  *na = (algn_flag== OFF)? 0: 1;
                  break;

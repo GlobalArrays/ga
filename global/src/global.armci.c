@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.49 2001-02-28 23:42:10 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.50 2001-03-22 21:46:17 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -128,7 +128,7 @@ int i;
       if( *np <0 || *np >GAnproc) ga_error("invalid number of processors",*np);
       if( *np <GAnproc) ga_error("Invalid number of processors",*np);
 
-      GA_Proc_list = (int*)malloc(GAnproc * sizeof(int)*2);
+      GA_Proc_list = (int*)malloc((size_t)GAnproc * sizeof(int)*2);
       GA_inv_Proc_list = GA_Proc_list + *np;
       if(!GA_Proc_list) ga_error("could not allocate proclist",*np);
 
@@ -150,7 +150,7 @@ void GA_Register_proclist(int *list, int np)
       if( np <0 || np >GAnproc) ga_error("invalid number of processors",np);
       if( np <GAnproc) ga_error("Invalid number of processors",np);
 
-      GA_Proc_list = (int*)malloc(GAnproc * sizeof(int)*2);
+      GA_Proc_list = (int*)malloc((size_t)GAnproc * sizeof(int)*2);
       GA_inv_Proc_list = GA_Proc_list + np;
       if(!GA_Proc_list) ga_error("could not allocate proclist",np);
 
@@ -325,11 +325,11 @@ Integer  i;
       ga_error("terminating...",0);
     }
 
-    map = (Integer*)malloc((GAnproc*2*MAXDIM +1)*sizeof(Integer));
+    map = (Integer*)malloc((size_t)(GAnproc*2*MAXDIM +1)*sizeof(Integer));
     if(!map) ga_error("ga_init:malloc failed (map)",0);
-    GA_proclist = (Integer*)malloc(GAnproc*sizeof(Integer)); 
+    GA_proclist = (Integer*)malloc((size_t)GAnproc*sizeof(Integer)); 
     if(!GA_proclist) ga_error("ga_init:malloc failed (proclist)",0);
-    fence_array = calloc(GAnproc,1);
+    fence_array = calloc((size_t)GAnproc,1);
     if(!fence_array) ga_error("ga_init:calloc failed",0);
 
     /* set activity status for all arrays to inactive */
@@ -561,8 +561,8 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
 
       for(d=0, map=mapALL; d< ndim; d++){
         Integer nblock;
+        Integer pcut; /* # procs that get full blk[] elements; the rest gets less*/
         int p;
-        int pcut; /* # procs that get full blk[] elements; the rest gets less*/
 
         pmap[d] = map;
 
@@ -570,7 +570,7 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
          but respect the users block size */
 
         if (chunk && chunk[d] > 1) {
-          int ddim = (dims[d]-1)/MIN(chunk[d],dims[d]) + 1;
+          Integer ddim = (dims[d]-1)/MIN(chunk[d],dims[d]) + 1;
           pcut = (ddim -(blk[d]-1)*pe[d]) ;
         }
         else {
@@ -578,7 +578,7 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
         }
 
         for (nblock=i=p=0; (p<pe[d]) && (i<dims[d]); p++, nblock++) {
-          int b = blk[d];
+          Integer b = blk[d];
           if (p >= pcut)
             b = b-1;
           map[nblock] = i+1;
@@ -591,8 +591,8 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
       }
 
       if(GAme==0&& DEBUG){
-         print_subscript("pe ",ndim, pe,"\n");
-         print_subscript("blocks ",ndim, blk,"\n");
+         print_subscript("pe ",(int)ndim, pe,"\n");
+         print_subscript("blocks ",(int)ndim, blk,"\n");
          printf("decomposition map\n");
          for(d=0; d< ndim; d++){
            printf("dim=%ld: ",d); 
@@ -709,11 +709,11 @@ void gai_init_struct(handle)
 Integer handle;
 {
      if(!GA[handle].ptr){
-        int len = MIN(GAnproc, MAX_PTR);
+        int len = (int)MIN(GAnproc, MAX_PTR);
         GA[handle].ptr = (char**)malloc(len*sizeof(char**));
      }
      if(!GA[handle].mapc){
-        int len = MAPLEN;
+        int len = (int)MAPLEN;
         GA[handle].mapc = (int*)malloc(len*sizeof(int*));
      }
      if(!GA[handle].ptr)ga_error("malloc failed: ptr:",0);
@@ -728,7 +728,7 @@ char* ptr_array[MAX_NPROC];
 /*\ get memory alligned w.r.t. MA base
  *  required on Linux as g77 ignores natural data alignment in common blocks
 \*/ 
-int gai_get_shmem(char **ptr_arr, int bytes, int type, long *adj)
+int gai_get_shmem(char **ptr_arr, Integer bytes, int type, long *adj)
 {
 int status=0;
 #ifndef _CHECK_MA_ALGN
@@ -759,13 +759,13 @@ int i;
     }else
 #endif
 
-    status = ARMCI_Malloc((void**)ptr_arr, bytes);
+    status = ARMCI_Malloc((void**)ptr_arr, (int)bytes);
     if(status) return status;
 
 #ifndef _CHECK_MA_ALGN
 
     /* adjust all addresses if they are not alligned on corresponding nodes*/
-    adjust = (Integer*)gai_malloc(GAnproc*sizeof(Integer));
+    adjust = (Integer*)gai_malloc((int)GAnproc*sizeof(Integer));
 
     diff = (ABS( base - (char *) ptr_arr[GAme])) % item_size; 
     for(i=0;i<GAnproc;i++)adjust[i]=0;
@@ -784,7 +784,7 @@ int i;
 }
 
 
-int gai_getmem(char* name, char **ptr_arr, int bytes, int type, long *id)
+int gai_getmem(char* name, char **ptr_arr, Integer bytes, int type, long *id)
 {
 Integer handle = INVALID_MA_HANDLE, index;
 Integer nelem, item_size = GAsizeofM(type);
@@ -884,14 +884,14 @@ Integer  i, ga_handle, status, maplen=0;
 
       /*** fill in Global Info Record for g_a ***/
       gai_init_struct(ga_handle);
-      GA[ga_handle].type = type;
+      GA[ga_handle].type = (int)type;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
-      GA[ga_handle].ndim    = ndim;
+      GA[ga_handle].ndim    = (int) ndim;
 
       for( i = 0; i< ndim; i++){
-         GA[ga_handle].dims[i] = dims[i];
-         GA[ga_handle].nblock[i] = nblock[i];
+         GA[ga_handle].dims[i] = (int)dims[i];
+         GA[ga_handle].nblock[i] = (int)nblock[i];
          GA[ga_handle].scale[i] = (double)nblock[i]/(double)dims[i];
          maplen += nblock[i];
       } 
@@ -1006,7 +1006,7 @@ Integer  i, ga_handle, status;
 
       /*** fill in Global Info Record for g_a ***/
       gai_init_struct(ga_handle);
-      GA[ga_handle].type = *type;
+      GA[ga_handle].type = (int)*type;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
       GA[ga_handle].ndim    = 2;
@@ -1060,8 +1060,8 @@ Integer  i, ga_handle, status;
       }else status = 1;
  
       if(status){
-          status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,*type,
-                              &GA[ga_handle].id);
+          status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
+                               (int)*type, &GA[ga_handle].id);
       }else{
           GA[ga_handle].ptr[GAme]=NULL;
       }
@@ -1189,7 +1189,7 @@ int      *save_mapc;
 
       if(status)
           status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
-                               GA[ga_handle].type, &GA[ga_handle].id);
+                               (int)GA[ga_handle].type, &GA[ga_handle].id);
       else{
           GA[ga_handle].ptr[GAme]=NULL;
       }
@@ -1427,13 +1427,13 @@ Integer   _mloc = p* ndim *2;\
 }
 
 #define gam_CountElems(ndim, lo, hi, pelems){\
-Integer _d;\
+int _d;\
      for(_d=0,*pelems=1; _d< ndim;_d++)  *pelems *= hi[_d]-lo[_d]+1;\
 }
 
 #define gam_ComputeCount(ndim, lo, hi, count){\
-Integer _d;\
-          for(_d=0; _d< ndim;_d++) count[_d] = hi[_d]-lo[_d]+1;\
+int _d;\
+          for(_d=0; _d< ndim;_d++) count[_d] = (int)(hi[_d]-lo[_d])+1;\
 }
 
 
@@ -1447,7 +1447,7 @@ Integer _d, _factor;\
 }
 
 #define ga_RegionError(ndim, lo, hi, val){\
-Integer _d, _l;\
+int _d, _l;\
    char *str= "cannot locate region: ";\
    sprintf(err_string, str); \
    _l = strlen(str);\
@@ -1462,7 +1462,7 @@ Integer _d, _l;\
 \*/
 void FATR ga_fill_(Integer *g_a, void* val)
 {
-int i,elems,handle=GA_OFFSET + *g_a;
+int i,elems,handle=GA_OFFSET + (int)*g_a;
 char *ptr;
 
    GA_PUSH_NAME("ga_fill");
@@ -1470,7 +1470,7 @@ char *ptr;
 
    ga_check_handleM(g_a, "ga_fill");
    gam_checktype(GA[handle].type);
-   elems = GA[handle].size/GA[handle].elemsize;
+   elems = (int)GA[handle].size/GA[handle].elemsize;
    ptr = GA[handle].ptr[GAme];
 
    switch (GA[handle].type){
@@ -1493,10 +1493,10 @@ char *ptr;
 
 #define gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc){\
 int _i;\
-          stride_rem[0]= stride_loc[0] =size;\
+          stride_rem[0]= stride_loc[0] = (int)size;\
           for(_i=0;_i<ndim;_i++){\
-                stride_rem[_i] *= ldrem[_i];\
-                stride_loc[_i] *= ld[_i];\
+                stride_rem[_i] *=  (int)ldrem[_i];\
+                stride_loc[_i] *=  (int)ld[_i];\
                 if(_i<ndim-1){\
                      stride_rem[_i+1] = stride_rem[_i]; \
                      stride_loc[_i+1] = stride_loc[_i];\
@@ -1512,8 +1512,9 @@ void FATR nga_put_(Integer *g_a,
                    void    *buf,
                    Integer *ld)
 {
-Integer  p, np, proc, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, ndim, size;
+Integer  p, np, handle=GA_OFFSET + *g_a;
+Integer  idx, elems, size;
+int proc, ndim;
 
       GA_PUSH_NAME("nga_put");
 
@@ -1536,7 +1537,7 @@ Integer  idx, elems, ndim, size;
 
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
-          proc = GA_proclist[p];
+          proc = (int)GA_proclist[p];
 
           gam_Location(proc,handle, plo, &prem, ldrem); 
 
@@ -1605,8 +1606,9 @@ void FATR nga_get_(Integer *g_a,
                    void    *buf,
                    Integer *ld)
 {
-Integer  p, np, proc, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, ndim, size ;
+Integer  p, np, handle=GA_OFFSET + *g_a;
+Integer  idx, elems, size;
+int proc, ndim;
 
       GA_PUSH_NAME("nga_get");
 
@@ -1629,7 +1631,7 @@ Integer  idx, elems, ndim, size ;
 
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
-          proc = GA_proclist[p];
+          proc = (int)GA_proclist[p];
 
           gam_Location(proc,handle, plo, &prem, ldrem);
 
@@ -1695,9 +1697,9 @@ void FATR nga_acc_(Integer *g_a,
                    Integer *ld,
                    void    *alpha)
 {
-Integer  p, np, proc, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, ndim, size, type;
-int optype;
+Integer  p, np, handle=GA_OFFSET + *g_a;
+Integer  idx, elems, size, type;
+int optype, proc, ndim;
 
       GA_PUSH_NAME("nga_acc");
 
@@ -1727,7 +1729,7 @@ int optype;
 
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
-          proc = GA_proclist[p];
+          proc = (int)GA_proclist[p];
 
           gam_Location(proc,handle, plo, &prem, ldrem);
 
@@ -2188,7 +2190,7 @@ int rc;
   type = GA[GA_OFFSET + g_a].type;
   item_size = GAsizeofM(type);
 
-  ptr_src = gai_malloc(2*nv*sizeof(void*));
+  ptr_src = gai_malloc((int)nv*2*sizeof(void*));
   if(ptr_src==NULL)ga_error("gai_malloc failed",nv);
   else ptr_dst=ptr_src+ nv;
 
@@ -2203,10 +2205,10 @@ int rc;
      ptr_dst[k] = ptr_ref + item_size * offset;
      ptr_src[k] = ((char*)v) + k*item_size;
   }
-  desc.bytes = item_size;
+  desc.bytes = (int)item_size;
   desc.src_ptr_array = ptr_src;
   desc.dst_ptr_array = ptr_dst;
-  desc.ptr_array_len = nv;
+  desc.ptr_array_len = (int)nv;
 
   if(GA_fence_set)fence_array[proc]=1;
 
@@ -2236,7 +2238,7 @@ int rc;
 \*/
 void gai_sort_proc(Integer* g_a, Integer* sbar, Integer *nv, Integer list[], Integer proc[])
 {
-Integer k, ndim;
+int k, ndim;
 extern void ga_sort_permutation();
 
    if (*nv < 1) return;
@@ -2309,7 +2311,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         ga_error("MA alloc failed ", *g_a);
 
     /* allocate temp memory */
-    buf1 = gai_malloc(4 * GAnproc * (sizeof(Integer)));
+    buf1 = gai_malloc((int) GAnproc *4 * (sizeof(Integer)));
     if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
     
     count = (Integer *)buf1;
@@ -2338,8 +2340,8 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         naproc ++;
     }
     
-    buf2 = gai_malloc(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
-                      5*naproc*sizeof(Integer) + naproc*sizeof(char*));
+    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
+                      5*naproc*sizeof(Integer) + naproc*sizeof(char*)));
     if(buf2 == NULL) ga_error("gai_malloc failed", naproc);
  
     ptr_src = (void ***)buf2;
@@ -2373,7 +2375,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     }
     
     for(k=0; k<(*nv); k++){
-        int this_count;
+        Integer this_count;
         proc = INT_MB[pindex+k]; this_count = count[proc]; count[proc]++;
         proc = map[proc];
         ptr_src[proc][this_count] = ((char*)v) + k * item_size;
@@ -2391,12 +2393,12 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     for(k=0; k<naproc; k++) {
         int rc;
 
-        desc.bytes = item_size;
+        desc.bytes = (int)item_size;
         desc.src_ptr_array = ptr_src[k];
         desc.dst_ptr_array = ptr_dst[k];
-        desc.ptr_array_len = nelem[aproc[k]];
+        desc.ptr_array_len = (int)nelem[aproc[k]];
         
-        rc = ARMCI_PutV(&desc, 1, aproc[k]);
+        rc = ARMCI_PutV(&desc, 1, (int)aproc[k]);
         if(rc) ga_error("scatter failed in armci",rc);
     }
 
@@ -2514,8 +2516,8 @@ extern void ga_sort_permutation();
 void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[], 
                  Integer* nv, double *locbytes, double* totbytes, void *alpha)
 {
-    register Integer k, handle=*g_a+GA_OFFSET;
-    Integer  ndim, item_size, type;
+    Integer k, handle=*g_a+GA_OFFSET;
+    int  ndim, item_size, type;
     Integer *proc, phandle;
 
     Integer *aproc, naproc; /* active processes and numbers */
@@ -2537,13 +2539,12 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         ga_error("MA pointer failed ", *g_a);
 
     ndim = GA[handle].ndim;
-
     type = GA[handle].type;
     item_size = GA[handle].elemsize;
     *totbytes += (double)item_size**nv;
 
     /* allocate temp memory */
-    buf1 = gai_malloc(4 * GAnproc * (sizeof(Integer)));
+    buf1 = gai_malloc((int) GAnproc * 4 * (sizeof(Integer)));
     if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
     
     count = (Integer *)buf1;
@@ -2573,7 +2574,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         naproc ++;
     }
 
-    buf2 = gai_malloc(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *));
+    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *)));
     if(buf2 == NULL) ga_error("gai_malloc failed", 2*naproc);
     
     ptr_src = (void ***)buf2;
@@ -2620,12 +2621,12 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         for(k=0; k<naproc; k++) {
             int rc;
 
-            desc.bytes = item_size;
+            desc.bytes = (int)item_size;
             desc.src_ptr_array = ptr_src[k];
             desc.dst_ptr_array = ptr_dst[k];
-            desc.ptr_array_len = nelem[aproc[k]];
+            desc.ptr_array_len = (int)nelem[aproc[k]];
             
-            rc=ARMCI_GetV(&desc, 1, aproc[k]);
+            rc=ARMCI_GetV(&desc, 1, (int)aproc[k]);
             if(rc) ga_error("gather failed in armci",rc);
         }
         break;
@@ -2647,14 +2648,14 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         for(k=0; k<naproc; k++) {
             int rc;
 
-            desc.bytes = item_size;
+            desc.bytes = (int)item_size;
             desc.src_ptr_array = ptr_src[k];
             desc.dst_ptr_array = ptr_dst[k];
-            desc.ptr_array_len = nelem[aproc[k]];
+            desc.ptr_array_len = (int)nelem[aproc[k]];
             
             if(GA_fence_set) fence_array[aproc[k]]=1;
             
-            rc=ARMCI_PutV(&desc, 1, aproc[k]);
+            rc=ARMCI_PutV(&desc, 1, (int)aproc[k]);
             if(rc) ga_error("scatter failed in armci",rc);
         }
         break;
@@ -2676,10 +2677,10 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         for(k=0; k<naproc; k++) {
             int rc;
             
-            desc.bytes = item_size;
+            desc.bytes = (int)item_size;
             desc.src_ptr_array = ptr_src[k];
             desc.dst_ptr_array = ptr_dst[k];
-            desc.ptr_array_len = nelem[aproc[k]];
+            desc.ptr_array_len = (int)nelem[aproc[k]];
             
             if(GA_fence_set) fence_array[aproc[k]]=1;
             
@@ -2690,7 +2691,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
                 else if(item_size==sizeof(int))optype= ARMCI_ACC_INT;
                 else if(item_size==sizeof(long))optype= ARMCI_ACC_LNG;
                 else ga_error("type not supported",type);
-                rc= ARMCI_AccV(optype, alpha, &desc, 1, aproc[k]);
+                rc= ARMCI_AccV(optype, alpha, &desc, 1, (int)aproc[k]);
             }
             if(rc) ga_error("scatter_acc failed in armci",rc);
         }
@@ -2755,7 +2756,7 @@ void FATR  ga_gather000_(g_a, v, i, j, nv)
      Void *v;
 {
 int k;
-Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* *nv);
+Integer *sbar = (Integer*)malloc(2*sizeof(Integer)*  (int)*nv);
      if(!sbar) ga_error("gather:malloc failed",*nv);
      for(k=0;k<*nv;k++){
           sbar[2*k] = i[k];
@@ -2774,7 +2775,7 @@ void FATR  ga_scatter000_(g_a, v, i, j, nv)
      Void *v;
 {
 int k;
-Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* *nv);
+Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* (int) *nv);
      if(!sbar) ga_error("scatter:malloc failed",*nv);
      for(k=0;k<*nv;k++){
           sbar[2*k] = i[k];
@@ -2818,7 +2819,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         ga_error("MA failed ", *g_a);
 
     /* allocate temp memory */
-    buf1 = gai_malloc(4 * GAnproc * (sizeof(Integer)));
+    buf1 = gai_malloc((int)GAnproc *4 *  (sizeof(Integer)));
     if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
     
     count = (Integer *)buf1;
@@ -2847,8 +2848,8 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         naproc ++;
     }
     
-    buf2 = gai_malloc(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
-                      5*naproc*sizeof(Integer) + naproc*sizeof(char*));
+    buf2 = gai_malloc((int)(2*naproc*sizeof(void **) + 2*(*nv)*sizeof(void *) +
+                      5*naproc*sizeof(Integer) + naproc*sizeof(char*)));
     if(buf2 == NULL) ga_error("gai_malloc failed", naproc);
  
     ptr_src = (void ***)buf2;
@@ -2881,8 +2882,10 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     }
     
     for(k=0; k<(*nv); k++){
-        int this_count;
-        proc = INT_MB[pindex+k]; this_count = count[proc]; count[proc]++;
+        Integer this_count;
+        proc = INT_MB[pindex+k]; 
+        this_count = count[proc]; 
+        count[proc]++;
         proc = map[proc]; 
         ptr_dst[proc][this_count] = ((char*)v) + k * item_size;
 
@@ -2900,12 +2903,12 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     for(k=0; k<naproc; k++) {
         int rc;
 
-        desc.bytes = item_size;
+        desc.bytes = (int)item_size;
         desc.src_ptr_array = ptr_src[k];
         desc.dst_ptr_array = ptr_dst[k];
-        desc.ptr_array_len = nelem[aproc[k]];
+        desc.ptr_array_len = (int)nelem[aproc[k]];
         
-        rc=ARMCI_GetV(&desc, 1, aproc[k]);
+        rc=ARMCI_GetV(&desc, 1, (int)aproc[k]);
         if(rc) ga_error("gather failed in armci",rc);
     }
 
@@ -2939,7 +2942,6 @@ int optype;
     nga_locate_(g_a, subscript, &proc);
 
     /* get an address of the g_a(subscript) element */
-/*    gaShmemLocation(proc, *g_a, subscript[0],subscript[1],(char**)&ptr,&ldp[0]);*/
     gam_Location(proc, handle,  subscript, (char**)&ptr, ldp);
 
 #   ifdef EXT_INT
@@ -2955,7 +2957,6 @@ int optype;
 #endif
 
     ARMCI_Rmw(optype, (int*)&value, (int*)ptr, (int)*inc, (int)proc);
-
 
    GA_POP_NAME;
    return(value);
@@ -2980,8 +2981,8 @@ Integer FATR ga_nnodes_()
 \*/
 logical FATR ga_compare_distr_(Integer *g_a, Integer *g_b)
 {
-int h_a =*g_a + GA_OFFSET;
-int h_b =*g_b + GA_OFFSET;
+int h_a =(int)*g_a + GA_OFFSET;
+int h_b =(int)*g_b + GA_OFFSET;
 int i;
 
    GA_PUSH_NAME("ga_compare_distr");
@@ -3008,7 +3009,7 @@ static int chunk_mutex;
 
 logical FATR ga_create_mutexes_(Integer *num)
 {
-Integer myshare;
+int myshare;
 
    if (*num <= 0 || *num > MAX_MUTEXES) return(FALSE);
    if(num_mutexes) ga_error("mutexes already created",num_mutexes);
@@ -3017,7 +3018,7 @@ Integer myshare;
 
    if(GAnproc == 1) return(TRUE);
 
-   chunk_mutex = (*num + GAnproc-1)/GAnproc;
+   chunk_mutex = (int)((*num + GAnproc-1)/GAnproc);
    if(GAme * chunk_mutex >= *num)myshare =0;
    else myshare=chunk_mutex;
 

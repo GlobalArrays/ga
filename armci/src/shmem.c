@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.39 2001-01-18 00:41:10 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.40 2001-03-22 21:46:16 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -692,9 +692,9 @@ int reg, found;
 static char *temp;
 
   if(alloc_regions>=MAX_REGIONS)
-       armci_die("Attach_Shared_Region: to many regions ",0L);
+       armci_die("Attach_Shared_Region: to many regions ",0);
 
-  if(!*id) armci_die("Attach_Shared_Region: shmem ID=0 ",*id);
+  if(!*id) armci_die("Attach_Shared_Region: shmem ID=0 ",(int)*id);
 
   /* first time needs to initialize region_list structure */
   if(!alloc_regions){
@@ -729,7 +729,7 @@ static char *temp;
     if ( (long) (temp = shmat((int) *id, pref_addr, 0)) == -1L){
        fprintf(stderr,"%d:attach error:id=%ld off=%ld seg=%ld\n",armci_me,*id,offset,MinShmem);
        shmem_errmsg((size_t)MinShmem*1024);
-       armci_die("Attach_Shared_Region:failed to attach to segment id=",*id);
+       armci_die("Attach_Shared_Region:failed to attach to segment id=",(int)*id);
     }
     region_list[reg].addr = temp; 
     region_list[reg].attached = 1;
@@ -766,7 +766,7 @@ size_t sz = (size_t)size;
     }
 
     if( alloc_regions >= MAX_REGIONS)
-       armci_die("Create_Shared_Region: to many regions already allocated ",0L);
+       armci_die("Create_Shared_Region: to many regions already allocated ",0);
 
     last_allocated = alloc_regions;
 
@@ -815,7 +815,7 @@ char *temp,  *shmalloc();
 int  reg, refreg=0,nreg;
   
     if(alloc_regions>=MAX_REGIONS)
-       armci_die("Create_Shared_Region: to many regions ",0L);
+       armci_die("Create_Shared_Region: to many regions ",0);
 
     /*initialization: 1st allocation request */
     if(!alloc_regions){

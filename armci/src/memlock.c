@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.11 2000-10-11 20:00:08 d3h325 Exp $ */
+/* $Id: memlock.c,v 1.12 2001-03-22 21:46:15 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -239,7 +239,7 @@ void armci_set_mem_offset(void *ptr)
 
    if(!ptr) armci_die("armci_set_mem_offset : null ptr",0);
    ref_ptr = *(void**)ptr;
-   off = (char*)ref_ptr - (char*)ptr;
+   off = (size_t)((char*)ref_ptr - (char*)ptr);
 
    if(first_time){
 

@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.22 2000-12-11 18:06:18 d3h325 Exp $ */
+/* $Id: memory.c,v 1.23 2001-03-22 21:46:15 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -88,7 +88,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
              else
 #      endif
                 myptr = Create_Shared_Region(idlist+1,size,idlist);
-       if(!myptr && size>0 )armci_die("armci_malloc: could not create", size);
+       if(!myptr && size>0 )armci_die("armci_malloc: could not create", (int)(size>>10));
 
        /* place its address at begining of attached region for others to see */
        if(size)armci_master_exp_attached_ptr(myptr);
@@ -104,7 +104,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
 
     if(armci_me != armci_master){
        myptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
-       if(!myptr)armci_die("armci_malloc: could not attach", size);
+       if(!myptr)armci_die("armci_malloc: could not attach", (int)(size>>10));
 
        /* now every process in a SMP node needs to find out its offset
         * w.r.t. master - this offset is ncessary to use memlock table

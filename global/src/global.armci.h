@@ -28,7 +28,7 @@ typedef struct {
        double scale[MAXDIM];    /* nblock/dim (precomputed)             */
        char **ptr;              /* arrays of pointers to remote data    */
        int  *mapc;              /* block distribution map               */
-       Integer type;            /* type of array                        */
+       int type;                /* type of array                        */
        int  actv;               /* activity status                      */
        Integer lo[MAXDIM];      /* top/left corner in local patch       */
        Integer size;            /* size of local data in bytes          */
