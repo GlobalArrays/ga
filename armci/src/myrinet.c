@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.18 2000-11-01 20:55:28 d3h325 Exp $
+/* $Id: myrinet.c,v 1.19 2000-11-01 22:46:08 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -22,10 +22,11 @@
  * distribute to other US Government contractors.
  *
  * History: 
- * 03/00,Jialin: initial version
+ * 03/00, Jialin: initial version
  * 9/8/00, Jarek: added armci_gm_server_ready to fix timing problems at startup
  * 10/12/00 jarek: fixed unititialized context variable -hangs
  *                 changed context allocation to static
+ * 10/00    jarek: support for overlaping client pinning with memcopy at server
  *
  */
 
@@ -35,7 +36,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-
 #include <sys/mman.h>
 
 #include "myrinet.h"
@@ -59,7 +59,6 @@
 
 #define ARMCI_GM_MIN_MESG_SIZE 1
 
-char *armci_foo;
 
 /***************/
 

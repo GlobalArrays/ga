@@ -107,6 +107,7 @@ extern void armci_transport_cleanup();
 #endif
 
 #if defined(GM) || defined(VIA)
+extern int armci_send_req_msg(int proc, void *buf, int bytes);
 extern void armci_WriteToDirect(int proc, request_header_t* msginfo, void *buf);
 extern char *armci_ReadFromDirect(request_header_t *msginfo, int len);
 extern void armci_init_connections();
@@ -114,8 +115,10 @@ extern void *armci_server_code(void *data);
 extern void armci_rcv_req(void *mesg, void *phdr, void *pdescr, 
                           void *pdata, int *buflen);
 extern void armci_client_connect_to_servers();
-extern int armci_send_req_msg(int proc, void *buf, int bytes);
 extern void armci_data_server(void *mesg);
+extern void armci_server_initial_connection();
+extern void armci_call_data_server();
+
 #endif
 
 #endif
