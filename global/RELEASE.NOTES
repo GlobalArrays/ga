@@ -24,7 +24,7 @@ ACKNOWLEDGMENT
 
 
 GENERAL NOTES
-  Version 3.2 of Global Arrays Library:
+  Version 3.4 of Global Arrays Library:
   - supports a wide variety of platforms, from supercomputer, such as
     IBM SP and CRAY T3E, to Linux clusters and Windows NT.
   - supports arbitrary dimensional array operations. 
