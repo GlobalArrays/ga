@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.28 2004-08-10 06:23:57 vinod Exp $    **/
+/* $Id: buffers.c,v 1.29 2004-09-07 19:11:06 manoj Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -657,7 +657,8 @@ int i,num,last,first;
     for(i=0;i<MAX_BUFS;i++){
 # ifdef BUF_EXTRA_FIELD_T
        if(_armci_buf_state->table[i].op==GET){
-         request_header_t *msginfo = _armci_buf_state->buf[i].buffer; 
+         request_header_t *msginfo;
+	 msginfo = (request_header_t*)_armci_buf_state->buf[i].buffer; 
          if(msginfo->pinned && msginfo->bypass && msginfo->format == STRIDED){
            num = *(int *)((char *)msginfo+msginfo->bytes); 
            last = *(int *)((char *)msginfo+msginfo->bytes+sizeof(int));
@@ -674,7 +675,7 @@ int i,num,last,first;
     for(i=MAX_BUFS;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
 # ifdef BUF_EXTRA_FIELD_T
        if(_armci_buf_state->table[i].op==GET){
-         request_header_t *msginfo=_armci_buf_state->smallbuf[i-MAX_BUFS].buffer;
+         request_header_t *msginfo = (request_header_t*)_armci_buf_state->smallbuf[i-MAX_BUFS].buffer;
          if(msginfo->pinned && msginfo->bypass && msginfo->format == STRIDED){
            num = *(int *)((char *)msginfo+msginfo->bytes); 
            last = *(int *)((char *)msginfo+msginfo->bytes+sizeof(int));
