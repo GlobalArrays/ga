@@ -511,7 +511,6 @@ void armci_data_server(void *mesg)
     void *buffer;
     int buflen;
     int from;
-    int id;
 
     /* read header, descriptor, data, and buffer length */
     armci_rcv_req(mesg, &msginfo, &descr, &buffer, &buflen );
@@ -579,7 +578,7 @@ void armci_data_server(void *mesg)
                   int src_stride_arr[MAX_STRIDE_LEVEL];    
                   int found;
                   ARMCI_MEMHDL_T *mhandle;
-                  int i,num;
+                  int i,num,id;
                   
                   if(DEBUG1){
                      printf("%d(s) : unpacking dscr\n",armci_me);
