@@ -199,6 +199,8 @@ ifeq ($(TARGET),SGI)
 # SGI running IRIX 5.X
 #
  GLOB_DEFINES = -DSGI
+ COPT_REN = -32
+ FOPT_REN = -32
 endif
 
 ifeq ($(TARGET),SGI_N32)
