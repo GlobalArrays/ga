@@ -1,5 +1,5 @@
       subroutine ga_diag_std(g_a, g_v, eval)
-C$Id: ga_diag.F,v 1.19 1995-11-01 16:23:20 d3h325 Exp $
+C$Id: ga_diag.F,v 1.20 1998-06-30 01:50:29 d3g270 Exp $
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -94,6 +94,7 @@ c
       endif
 c
       proc = min((npan-1)/2+1,proc)
+      proc = min(n, ga_nnodes())
 c
       oactive = myproc .lt. proc
       if (oactive) then
@@ -399,6 +400,7 @@ c
       endif
 c
       proc = min(npan/2,proc)
+	proc = min(ga_nnodes(), n)
 c
 c         print *,myproc,' participate in eig: ',proc
 c         call ffflush(6)
@@ -753,6 +755,7 @@ c
       endif
 c
       proc = min((npan-1)/2+1,proc)
+	proc = min( ga_nnodes(), n)
 c
       oactive = myproc .lt. proc
       if (oactive) then
