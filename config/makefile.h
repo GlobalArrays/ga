@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.113 2004-12-08 02:44:22 manoj Exp $
+# $Id: makefile.h,v 1.114 2005-01-13 20:00:46 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -258,7 +258,7 @@ endif
 ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
           COPT = -O2
-     COPT_REN += -funroll-loops $(OPT_ALIGN)
+     COPT_REN += -Wall -funroll-loops $(OPT_ALIGN)
    endif
 endif
    ifneq (,$(findstring icc,$(_CC)))
