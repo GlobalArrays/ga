@@ -44,6 +44,12 @@
 #define MAXPROC 128
 #define TIMES 100
 
+#ifdef CRAY
+# define ELEMS 800
+#else
+# define ELEMS 200
+#endif
+
 
 /***************************** macros ************************/
 #define COPY(src, dst, bytes) memcpy((dst),(src),(bytes))
@@ -678,6 +684,106 @@ void test_vector()
 }
 
 
+/*\ Atomic Accumulate test for vector API:  remote += alpha*local
+ *  Every process/or has its patch of array b updated TIMES*NPROC times.
+ *  The sequence of updates is random: everybody uses a randomly permuted list
+ *  and accumulate is non-collective (of-course)
+\*/
+void test_vector_acc()
+{
+	int dim,elems,bytes;
+	int i, j, proc, rc, one=1;
+        void *b[MAXPROC];
+        void *psrc[ELEMS/2], *pdst[ELEMS/2];
+        void *a, *c;
+        double alpha=0.1, scale;
+        int *proclist = (int*)work;
+        armci_giov_t dsc;
+
+        elems = ELEMS;
+        dim =1;
+        bytes = sizeof(double)*elems;
+
+        /* create shared and local arrays */
+        create_array(b, sizeof(double),dim,&elems);
+        a = malloc(bytes);
+        assert(a);
+        c = malloc(bytes);
+        assert(c);
+
+	init(a, dim, elems, &elems);
+	
+	if(me==0){
+            printf("--------array[%d",elems);
+	    printf("]--------\n");
+            fflush(stdout);
+        }
+
+        GetPermutedProcList(proclist);
+        
+        /* initialize all elements of array b to zero */
+        for(i=0;i<elems;i++)((double*)b[me])[i]=0.;
+
+        sleep(1);
+
+        dsc.bytes = sizeof(double);
+        dsc.src_ptr_array = psrc;
+        dsc.dst_ptr_array = pdst;
+        dsc.ptr_array_len = elems/2; 
+
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        for(i=0;i<TIMES*nproc;i++){ 
+
+/*            proc=proclist[i%nproc];*/
+            proc=0;
+
+            /* accumulate even numbered elements */
+            for(j=0; j<elems/2; j++){
+                psrc[j]= 2*j + (double*)a;
+                pdst[j]= 2*j + (double*)b[proc];
+            }
+            if(rc = ARMCI_AccV(ARMCI_ACC_DBL, &alpha, &dsc, 1, proc))
+                ARMCI_Error("accumlate failed",rc);
+/*            for(j=0; j<elems; j++)
+                printf("%d %lf %lf\n",j, *(j+ (double*)b[proc]), *(j+ (double*)a));
+*/
+            /* accumulate odd numbered elements */
+            for(j=0; j< elems/2; j++){
+                psrc[j]= 2*j+1 + (double*)a;
+                pdst[j]= 2*j+1 + (double*)b[proc];
+            }
+            (void)ARMCI_AccV(ARMCI_ACC_DBL, &alpha, &dsc, 1, proc);
+
+/*            for(j=0; j<elems; j++)
+                printf("%d %lf %lf\n",j, *(j+ (double*)a), *(j+ (double*)b[proc]));
+*/
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        /* copy my patch into local array c */
+	assert(!ARMCI_Get((double*)b[proc], c, bytes, proc));
+
+/*        scale = alpha*TIMES*nproc; */
+        scale = alpha*TIMES*nproc*nproc; 
+        scale_patch(scale, dim, a, &one, &elems, &elems);
+        
+        compare_patches(.0001, dim, a, &one, &elems, &elems, c, &one, &elems, &elems);
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        if(0==me){
+            printf(" OK\n\n");
+            fflush(stdout);
+        }
+
+        free(c);
+        destroy_array((void**)b);
+        free(a);
+}
+
+
+
 void test_fetch_add()
 {
     int rc, bytes, i, val, times =0;
@@ -743,6 +849,79 @@ void test_fetch_add()
 }
 
 
+void test_memlock()
+{
+        int dim,elems,bytes;
+        int i, j,k, proc, rc, one=1;
+        double *b[MAXPROC];
+        double *a, *c;
+        double alpha=0.1, scale;
+        int *proclist = (int*)work;
+                void *pstart, *pend;
+                int first, last;
+                void armci_lockmem(void*, void*, int);
+                void armci_unlockmem(void);
+
+        elems = ELEMS;
+        dim =1;
+
+                bytes = elems*sizeof(double);
+
+        /* create shared and local arrays */
+        create_array((void**)b, sizeof(double),dim,&elems);
+        a = (double*)malloc(bytes);
+        assert(a);
+        c = (double*)malloc(bytes);
+        assert(c);
+        
+        /* initialize all elements of array b to zero */
+        for(i=0;i<elems;i++)b[me][i]=-1.;
+
+        sleep(1);
+
+        proc=0;
+                for(i=0;i<ELEMS/5;i++)a[i]=me;
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        for(j=0;j<10*TIMES;j++){ 
+         for(i=0;i<TIMES*nproc;i++){ 
+            first = rand()%(ELEMS/2);
+                    last = first+ELEMS/5 -1;
+                        pstart = b[proc]+first;
+                        pend = b[proc]+last+1;
+                        elems = last -first +1;
+                        bytes = sizeof(double)*elems;
+
+            armci_lockmem(pstart,pend,proc);
+            assert(!ARMCI_Put(a, pstart, bytes, proc));
+            assert(!ARMCI_Get(pstart, c, bytes, proc));
+            assert(!ARMCI_Get(pstart, c, bytes, proc));
+            armci_unlockmem();
+            for(k=0;k<elems;k++)if(a[k]!=c[k]){
+                printf("%d: error patch (%d:%d) elem=%d val=%lf\n",me,first,last,k,c[k]);
+                fflush(stdout);
+                ARMCI_Error("failed is ",(int)c[k]);
+            }
+
+          }
+          if(0==me)fprintf(stderr,"done %d\n",j);
+                }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+
+        if(0==me){
+            printf(" OK\n\n");
+            fflush(stdout);
+        }
+
+        free(c);
+        destroy_array((void**)b);
+        free(a);
+}
+
+
+
 
 
 int main(int argc, char* argv[])
@@ -760,6 +939,9 @@ int main(int argc, char* argv[])
     }
 
     ARMCI_Init();
+
+    /*
+ */
         if(me==0){
            printf("\nTesting strided gets and puts\n");
            printf("(Only std output for process 0 is printed)\n\n"); 
@@ -790,6 +972,15 @@ int main(int argc, char* argv[])
         MPI_Barrier(MPI_COMM_WORLD);
 
         if(me==0){
+           printf("\nTesting Accumulate with Vector Interface\n\n");
+           fflush(stdout);
+           sleep(3);
+        }
+        test_vector_acc();
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        if(me==0){
            printf("\nTesting atomic fetch&add\n");
            printf("(Std Output for all processes is printed)\n\n"); 
            fflush(stdout);
@@ -798,6 +989,8 @@ int main(int argc, char* argv[])
         MPI_Barrier(MPI_COMM_WORLD);
 
         test_fetch_add();
+
+/*        test_memlock();*/
 
         MPI_Barrier(MPI_COMM_WORLD);
 	if(me==0)printf("All tests passed\n"); fflush(stdout);

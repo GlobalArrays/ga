@@ -9,6 +9,11 @@ typedef struct {
     int bytes;
 } armci_giov_t;
 
+#define ARMCI_Put(src, dst, bytes, proc) \
+        ARMCI_PutS((src), NULL, (dst), NULL, &(bytes), 0, proc)
+#define ARMCI_Get(src, dst, bytes, proc) \
+        ARMCI_GetS((src), NULL, (dst), NULL, &(bytes), 0, proc)
+
 extern int ARMCI_Init(void);    /* initialize ARMCI */
 extern int ARMCI_PutS(          /* strided put */
                 void *src_ptr,        /* pointer to 1st segment at source*/ 
@@ -54,6 +59,14 @@ extern int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
                 int proc  /* remote process(or) ID */
               );
 
+extern int ARMCI_AccV( int op,       /* operation code */
+                void *scale,         /* scaling factor for accumulate */
+                armci_giov_t darr[], /* descriptor array */
+                int len,             /* length of descriptor array */
+                int proc             /* remote process(or) ID */
+              );
+
+
 extern int ARMCI_Malloc(void* ptr_arr[], int bytes);
 extern int ARMCI_Free(void *ptr);
 
@@ -79,4 +92,5 @@ extern void ARMCI_Cleanup(void);
 #define ARMCI_ACC_FLT 13
 #define ARMCI_ACC_CPL 14
 #define ARMCI_ACC_DCP 15
+#define ARMCI_ACC_LNG 16
 #endif

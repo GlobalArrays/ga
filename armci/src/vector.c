@@ -1,19 +1,245 @@
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
+#include "memlock.h"
 #include <stdio.h>
 
 
 
-int armci_copy_vector(int op, /* operation code */
-                armci_giov_t darr[], /* descriptor array */
-                int len,  /* length of descriptor array */
-                int proc  /* remote process(or) ID */
+
+typedef struct {
+    float real;
+    float imag;
+} complex_t;
+
+typedef struct {
+    double real;
+    double imag;
+} dcomplex_t;
+
+
+/*
+void I_ACCUMULATE(void* scale, int elems, void*src, void* dst)
+{
+    int j;
+    int *a=(int*)dst, *b=(int*)src;
+    int alpha = *(int*)scale;
+
+    for(j=0;j<elems;j++) a[j] += alpha*b[j];
+}
+*/
+
+
+#define ACCUMULATE( DTYPE, scale, elems, src, dst) {\
+    int j;\
+    DTYPE *a =(DTYPE *)(dst);\
+    DTYPE *b =(DTYPE *)(src);\
+    DTYPE alpha = *(DTYPE *)(scale);\
+    for(j=0;j<(elems);j++)a[j] += alpha*b[j];\
+}
+        
+#define CPL_ACCUMULATE( DTYPE, scale, elems, src, dst) {\
+    int j;\
+    DTYPE *a =(DTYPE *)(dst);\
+    DTYPE *b =(DTYPE *)(src);\
+    DTYPE alpha = *(DTYPE *)(scale);\
+    for(j=0;j<(elems);j++){\
+        a[j].real += alpha.real*b[j].real - alpha.imag*b[j].imag;\
+        a[j].imag += alpha.imag*b[j].real + alpha.real*b[j].imag;\
+    }\
+}
+
+
+
+/*\ compute address range for memory to lock 
+\*/
+static void armci_lockmem_scatter(void *ptr_array[], int len, int bytes, int proc)
+{
+     int i;
+
+     void *pmin=ptr_array[0], *pmax=(void*)0;
+     for(i = 0; i< len; i++){
+              pmin = MIN(ptr_array[i],pmin);
+              pmax = MAX(ptr_array[i],pmax);
+     }
+     pmax =  bytes-1 + (char*)pmax;
+     armci_lockmem(pmin, pmax, proc);
+
+/*    printf("%d: locked %ld-%ld bytes=%d\n",armci_me,pmin,pmax,
+     1+(char*)pmax -(char*)pmin);fflush(stdout); */  
+}
+
+
+
+void armci_scatter_acc(int op, void *scale, armci_giov_t dsc, 
+                                            int proc, int lockit)
+{
+#   define ITERATOR for(i = 0; i< dsc.ptr_array_len; i++)
+    int i, elems, size;
+
+      if(lockit)
+         armci_lockmem_scatter(dsc.dst_ptr_array, dsc.ptr_array_len, 
+                               dsc.bytes, proc); 
+
+      switch (op){
+      case ARMCI_ACC_INT:
+          size  = sizeof(int);
+          elems = dsc.bytes/size;
+          if(dsc.bytes%size) armci_die("ARMCI vector accumulate: bytes not consistent with datatype",dsc.bytes);
+          ITERATOR{
+            ACCUMULATE(int, scale, elems, dsc.src_ptr_array[i], dsc.dst_ptr_array[i])
+          }
+          break;
+
+      case ARMCI_ACC_LNG:
+          size  = sizeof(int);
+          elems = dsc.bytes/size;          
+          if(dsc.bytes%size) armci_die("ARMCI vector accumulate: bytes not consistent with datatype",dsc.bytes);
+          ITERATOR{
+            ACCUMULATE(long, scale, elems, dsc.src_ptr_array[i], dsc.dst_ptr_array[i])
+          }
+          break;
+
+      case ARMCI_ACC_DBL:
+          size  = sizeof(double);      
+          elems = dsc.bytes/size;
+          if(dsc.bytes%size) armci_die("ARMCI vector accumulate: bytes not consistent with datatype",dsc.bytes);
+          ITERATOR{
+            ACCUMULATE(double, scale, elems, dsc.src_ptr_array[i], dsc.dst_ptr_array[i])
+          }
+          break;
+
+      case ARMCI_ACC_DCP:
+          size  = 2*sizeof(double);       
+          elems = dsc.bytes/size;
+          if(dsc.bytes%size) armci_die("ARMCI vector accumulate: bytes not consistent with datatype",dsc.bytes);
+          ITERATOR{
+            CPL_ACCUMULATE(dcomplex_t, scale, elems, dsc.src_ptr_array[i], dsc.dst_ptr_array[i])
+          }
+          break;
+
+      case ARMCI_ACC_CPL:
+          size  = 2*sizeof(float);      
+          elems = dsc.bytes/size;
+          if(dsc.bytes %size) armci_die("ARMCI vector accumulate: bytes not consistent with datatype",dsc.bytes);
+          ITERATOR{
+            CPL_ACCUMULATE(complex_t, scale, elems, dsc.src_ptr_array[i], dsc.dst_ptr_array[i])
+          }
+          break;
+
+      case ARMCI_ACC_FLT:
+          size  = sizeof(float);      
+          elems = dsc.bytes/size;
+          if(dsc.bytes%size) armci_die("ARMCI vector accumulate: bytes not consistent with datatype",dsc.bytes);
+          ITERATOR{
+            ACCUMULATE(float, scale, elems, dsc.src_ptr_array[i], dsc.dst_ptr_array[i])
+          }
+          break;
+      default: armci_die("ARMCI vector accumulate: operation not supported",op);
+      }
+
+      if(lockit) armci_unlockmem();
+}
+
+
+#define PWORKLEN 2048
+static void *pwork[PWORKLEN];  /* work array of pointers */
+
+int armci_acc_vector(int op,             /* operation code */
+                    void *scale,         /* pointer to scale factor in accumulate */
+                    armci_giov_t darr[], /* descriptor array */
+                    int len,             /* length of descriptor array */
+                    int proc             /* remote process(or) ID */
+              )
+{
+    int i;
+
+#if defined(ACC_COPY)
+    if(proc == armci_me ){
+#endif
+
+       for(i = 0; i< len; i++) armci_scatter_acc(op, scale, darr[i], proc, 1);
+#if defined(ACC_COPY)
+    }else{
+
+       for(i = 0; i< len; i++){
+           armci_giov_t dr =  darr[i];
+           int j, rc, nb;
+
+           if(dr.bytes > BUFSIZE/2){
+               /* for large segments use strided implementation */
+               for(j=0; j< dr.ptr_array_len; j++){
+                   rc = armci_acc_copy_strided(op, scale,proc, 
+                              dr.src_ptr_array[j], NULL, dr.dst_ptr_array[j], NULL,
+                              &dr.bytes, 0);
+                   if(rc)return(rc);
+               }
+
+           }else{
+
+               armci_giov_t dl;
+
+               /*lock memory:should optimize it to lock only a chunk at a time*/
+               armci_lockmem_scatter(dr.dst_ptr_array, dr.ptr_array_len, dr.bytes, proc);
+
+               /* copy as many blocks as possible into the local buffer */
+               dl.bytes = dr.bytes;
+               nb = MIN(PWORKLEN,BUFSIZE/dr.bytes);
+
+               for(j=0; j< dr.ptr_array_len; j+= nb){
+                   int nblocks = MIN(nb, dr.ptr_array_len -j);
+                   int k;
+
+                   /* setup vector descriptor for remote memory copy 
+                      to bring data into buffer*/
+
+                   dl.ptr_array_len = nblocks;
+                   dl.src_ptr_array = dr.dst_ptr_array + j; /* GET destination becomes source for copy */
+                   for(k=0; k< nblocks; k++) pwork[k] = k*dl.bytes + (char*)armci_internal_buffer;
+                   dl.dst_ptr_array = pwork;
+
+                   /* get data to the local buffer */
+                   rc = armci_copy_vector(GET, &dl, 1, proc);
+                   if(rc){ armci_unlockmem(); return(rc);}
+
+                   /* update source array for accumulate */
+                   dl.src_ptr_array = dr.src_ptr_array +j;
+
+                   /* do scatter accumulate updating copy of data in buffer */
+                   armci_scatter_acc(op, scale, dl, armci_me, 0);
+
+                   /* modify descriptor-now source becomes destination for PUT*/
+                   dl.dst_ptr_array = dr.dst_ptr_array + j;
+                   dl.src_ptr_array = pwork;
+
+                   /* put data back */
+                   rc = armci_copy_vector(PUT, &dl, 1, proc);
+                   FENCE_NODE(proc);
+
+                   if(rc){ armci_unlockmem(); return(rc);}
+               }
+
+               armci_unlockmem();
+           }
+       }/*endfor*/
+    }
+#endif
+
+    return 0;
+}
+
+
+
+
+int armci_copy_vector(int op,            /* operation code */
+                    armci_giov_t darr[], /* descriptor array */
+                    int len,             /* length of descriptor array */
+                    int proc             /* remote process(or) ID */
               )
 {
     int i,s;
 
-    if(proc == armci_me){ /* local copy */
+    if(proc == armci_me ){ /* local copy */
 
       for(i = 0; i< len; i++){
         for( s=0; s< darr[i].ptr_array_len; s++){
@@ -21,9 +247,11 @@ int armci_copy_vector(int op, /* operation code */
         }
       }
 
-    }else {   /********* remote copies **********/
+    }else {   
 
-      if(op==PUT) {
+      FENCE_NODE(proc);
+      switch(op){
+      case PUT:
 
         for(i = 0; i< len; i++){
 
@@ -36,8 +264,9 @@ int armci_copy_vector(int op, /* operation code */
               armci_put(darr[i].src_ptr_array[s],darr[i].dst_ptr_array[s],darr[i].bytes, proc);
            }
         }
+        break;
 
-      }else {
+      case GET:
 
         for(i = 0; i< len; i++){
 
@@ -49,7 +278,10 @@ int armci_copy_vector(int op, /* operation code */
               armci_get(darr[i].src_ptr_array[s],darr[i].dst_ptr_array[s],darr[i].bytes,proc);
            }
         }
+        break;
 
+      default:
+          armci_die("armci_copy_vector: wrong optype",op);
       }
    }
 

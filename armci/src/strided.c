@@ -167,7 +167,7 @@ void (FATR *func)(void*, int*, int*, void*, int*, void*, int*);
           rows = bytes/sizeof(float);
           ldd  = dst_stride/sizeof(float);
           lds  = src_stride/sizeof(float);
-          func = I_ACCUMULATE_2D;
+          func = F_ACCUMULATE_2D;
           break;
       default: armci_die("ARMCI accumulate: operation not supported",op);
       }
@@ -189,7 +189,7 @@ int armci_iwork[MAX_STRIDE_LEVEL];
  *  copies remote data to local buffer, accumulates, puts it back to remote location
  *  Note: if we are here then remote patch must fit in the ARMCI buffer
 \*/
-static int armci_acc_copy_strided(int optype, void* scale, int proc,
+int armci_acc_copy_strided(int optype, void* scale, int proc,
                                   void* src_ptr, int src_stride_arr[],  
 		                  void* dst_ptr, int dst_stride_arr[], 
                                   int count[], int stride_levels)

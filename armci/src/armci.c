@@ -109,7 +109,6 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
     int rc;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
-    if(src_stride_arr == NULL || dst_stride_arr ==NULL) return FAIL2;
     if(count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
@@ -135,7 +134,6 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
     int rc;
 
     if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
-    if(src_stride_arr == NULL || dst_stride_arr ==NULL) return FAIL2;
     if(count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
@@ -230,3 +228,31 @@ int ARMCI_AccS( int  optype,            /* operation */
     else return 0;
 
 }
+
+
+
+int ARMCI_AccV( int op,              /* oeration code */
+                void *scale,         /*scaling factor for accumulate */
+                armci_giov_t darr[], /* descriptor array */
+                int len,  /* length of descriptor array */
+                int proc  /* remote process(or) ID */
+              )
+{
+    int rc, i;
+
+    if(len<1) return FAIL;
+    for(i=0;i<len;i++){
+        if(darr[i].src_ptr_array == NULL || darr[i].dst_ptr_array ==NULL) return FAIL2;
+        if(darr[i].bytes<1)return FAIL3;
+        if(darr[i].ptr_array_len <1) return FAIL4;
+    }
+
+    if(proc<0 || proc >= armci_nproc)return FAIL5;
+
+    rc = armci_acc_vector( op, scale, darr, len, proc);
+
+    if(rc) return FAIL6;
+    else return 0;
+
+}
+
