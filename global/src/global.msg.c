@@ -878,6 +878,9 @@ static void idoop(n, op, x, work)
 
 
 
+#define BUF_SIZE 10000
+DoublePrecision _gops_work[BUF_SIZE];
+
 /*\  global operations:
  *     . all processors participate  
  *     . all processors in the cluster participate  
@@ -888,9 +891,8 @@ void ga_dgop_clust(type, x, n, op, group)
      DoublePrecision *x;
      char *op;
 {
-#    define BUF_SIZE 10000
      Integer  me, lenmes, from, len, root;
-     DoublePrecision work[BUF_SIZE], *origx = x;
+     DoublePrecision *work = _gops_work, *origx = x;
      Integer ndo, up, left, right, orign = n;
 
 #    ifdef IWAY
@@ -998,9 +1000,8 @@ void ga_igop_clust(type, x, n, op, group)
      Integer *x;
      char *op;
 {
-#    define BUF_SIZE 10000
      Integer  me, lenmes,  from, len, root=0 ;
-     Integer work[BUF_SIZE], *origx = x;
+     Integer *work = (Integer*)_gops_work, *origx = x;
      Integer ndo, up, left, right, orign =n;
 
 #    ifdef IWAY

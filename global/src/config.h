@@ -23,8 +23,10 @@
 #   endif
 #elif defined(SYSV)
 #   define MSG_BUF_SIZE      262152
+#elif defined(CRAY)
+#   define MSG_BUF_SIZE      1024
 #else
-#   define MSG_BUF_SIZE      16384
+#   define MSG_BUF_SIZE      4*4096
 #endif
 
 

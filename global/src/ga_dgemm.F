@@ -9,7 +9,7 @@ c
 #ifdef USE_SUMMA
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.21 1996-07-26 16:27:53 d3g681 Exp $
+C$Id: ga_dgemm.F,v 1.22 1996-10-17 04:56:01 d3h325 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -26,7 +26,7 @@ c
 #endif
       subroutine GA_DGEMM(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.21 1996-07-26 16:27:53 d3g681 Exp $
+C$Id: ga_dgemm.F,v 1.22 1996-10-17 04:56:01 d3h325 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -109,7 +109,7 @@ C
          Mem_Avail = MA_Inquire_Avail( MT_DBL )
      $      - 2 * MA_SizeOf_Overhead( MT_DBL )
 	 Mem_Avail = 0.9 * Mem_Avail ! Do not use every last drop!
-         Call GA_IGOp(42, Mem_Avail, mitob(1), 'min')
+         Call GA_IGOp(42, Mem_Avail, 1, 'min')
 C
          Max_Chunk = Min( Max_Chunk, Int(Sqrt(DBLE(Mem_Avail/3))) )
 C

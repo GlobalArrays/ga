@@ -1,7 +1,8 @@
-/*$Id: global.patch.c,v 1.17 1996-09-04 16:47:58 d3h325 Exp $*/
+/*$Id: global.patch.c,v 1.18 1996-10-17 04:56:07 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
+#include <math.h>
 
 #ifdef KSR
 #  define dgemm_ sgemm_
@@ -697,13 +698,21 @@ void ga_matmul_patch(transa, transb, alpha, beta,
      DoublePrecision    *alpha, *beta;
      char    *transa, *transb;
 {
-/* approx. sqrt(2) ratio in chunk size to use the same buffer space */
-#define C_CHUNK  92 
-#define D_CHUNK  64
-#define ICHUNK C_CHUNK
-#define JCHUNK C_CHUNK
-#define KCHUNK C_CHUNK
-DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
+#ifdef STATBUF
+  /* approx. sqrt(2) ratio in chunk size to use the same buffer space */
+#  define C_CHUNK  92 
+#  define D_CHUNK  64
+#  define ICHUNK C_CHUNK
+#  define JCHUNK C_CHUNK
+#  define KCHUNK C_CHUNK
+   DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
+#else
+   /* min acceptable and max amount of memory (in elements) */
+#  define MINMEM 400
+#  define MAXMEM 100000 
+   DoubleComplex *a, *b, *c;
+   Integer handle, idx;
+#endif
 Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2;
 Integer me= ga_nodeid_(), nproc=ga_nnodes_();
 Integer i, ijk = 0, i0, i1, j0, j1;
@@ -725,11 +734,32 @@ DoubleComplex ONE;
    if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
    if(atype != MT_F_DCPL && atype != MT_F_DBL) ga_error(" type error",atype);
 
+#ifdef STATBUF
    if(atype ==  MT_F_DBL){
       Ichunk=D_CHUNK, Kchunk=D_CHUNK, Jchunk=D_CHUNK;
    }else{
       Ichunk=ICHUNK; Kchunk=KCHUNK; Jchunk=JCHUNK;
    }
+#else
+   {
+            Integer avail = MA_inquire_avail(atype),elems, used ;
+            ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+            if(avail < MINMEM && ga_nodeid_() == 0)
+              ga_error("Not enough memory for buffers",avail);
+            elems = MIN((Integer)(avail*0.9), MAXMEM);
+            if(MA_push_get(atype, elems, "GA mulmat bufs", &handle, &idx))
+                MA_get_pointer(handle, &a);
+            else
+                ga_error("ma_alloc_get failed",avail);
+            Ichunk = Kchunk = Jchunk = (Integer) sqrt((double)(elems-2)/3.0);
+            used = Ichunk * Kchunk;
+            if(atype ==  MT_F_DBL) used = 1+used/2; 
+            b = a+ used;
+            used = Kchunk*Jchunk;
+            if(atype ==  MT_F_DBL) used = 1+used/2; 
+            c = b+ used;
+   }
+#endif
 
   /* check if patch indices and dims match */
    if (*transa == 'n' || *transa == 'N'){
@@ -821,6 +851,9 @@ DoubleComplex ONE;
                ijk++;
           }
       }
+#ifndef STATBUF
+   MA_pop_stack(handle);
+#endif
    }
  
    GA_POP_NAME;
