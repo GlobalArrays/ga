@@ -1282,34 +1282,9 @@ class GlobalArray {
     */  
     void stepMax(const GlobalArray * g_a, double *step) const;
    
-   /** 
-    * Calculates the largest step size that should be used in a projected 
-    * bound line search. 
-    * This is a collective operation. 
-    * @param g_vv, g_xxll, g_xxuu - global array              [input] 
-    * @param step2 - the maximum step size                     [output] 
-    * where 
-    * g_vv - the step direction 
-    * g_xxll - lower bounds 
-    * g_xxuu - upper bounds 
-    */
-    void stepMax2(const GlobalArray * g_vv, 
-			 const GlobalArray * g_xxll, 
-			 const GlobalArray * g_xxuu, double *step2) const;
    void stepMaxPatch(int *alo, int *ahi, 
 			    const GlobalArray * g_b, int *blo, int *bhi, 
 			    double *step) const;
-   void stepMax2Patch(int *xxlo, int *xxhi, 
-			     const GlobalArray * g_vv, int *vvlo, 
-			     int *vvhi, 
-			     const GlobalArray * g_xxll, int *xxlllo, 
-			     int *xxllhi,
-			     const GlobalArray * g_xxuu, int *xxuulo, 
-			     int *xxuuhi, double *step2) const;
- 
-
- 
- 
   
   /** Matrix Operations */
   

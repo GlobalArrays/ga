@@ -520,30 +520,10 @@ GA::GlobalArray::stepMax(const GA::GlobalArray * g_a, double *step)  const {// C
 }
 
 void 
-GA::GlobalArray::stepMax2(const GA::GlobalArray * g_vv, 
-			  const GA::GlobalArray * g_xxll, 
-			  const GA::GlobalArray * g_xxuu, double *step2)  const {
-  GA_Step_max2(mHandle, g_vv->mHandle, g_xxll->mHandle, g_xxuu->mHandle, step2);
-}
-
-void 
 GA::GlobalArray::stepMaxPatch(int *alo, int *ahi, 
 			      const GA::GlobalArray * g_b, int *blo, int *bhi, 
 			      double *step)  const {
   GA_Step_max_patch(mHandle, alo, ahi, g_b->mHandle, blo, bhi, step);
-}
-
-void 
-GA::GlobalArray::stepMax2Patch(int *xxlo, int *xxhi, 
-			       const GA::GlobalArray * g_vv, int *vvlo, 
-			       int *vvhi, 
-			       const GA::GlobalArray * g_xxll, int *xxlllo, 
-			       int *xxllhi,
-			       const GA::GlobalArray * g_xxuu, int *xxuulo, 
-			       int *xxuuhi, double *step2)  const {
-  GA_Step_max2_patch(mHandle, xxlo, xxhi, g_vv->mHandle, vvlo, vvhi, 
-		     g_xxll->mHandle, xxlllo, xxllhi, g_xxuu->mHandle, 
-		     xxuulo, xxuuhi, step2);
 }
 
 void 
