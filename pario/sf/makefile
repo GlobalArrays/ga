@@ -27,7 +27,3 @@ endif
 include ../../config/makefile.h
 include ../../config/makelib.h
 
-# DO NOT EDIT BENEATH THIS LINE ... GENERATED AUTOMATICALLY
-$(LIBRARY_PATH)(shared.files.o):	./sf.h ../elio/elio.h 
-$(LIBRARY_PATH)(sftest.o):	./sf.fh 
-$(LIBRARY_PATH)(fortran.o):	./sf.h 

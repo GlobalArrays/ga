@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.9 1996-10-23 05:48:30 d3g681 Exp $
+#$Id: makefile,v 1.10 1997-02-17 20:51:35 d3g681 Exp $
 
           OBJ = eaf.o eaf_f2c.o
       LIBRARY = libchemio.a
@@ -14,7 +14,3 @@ include ../../config/makelib.h
 test.x:	test.o $(LIBRARY_PATH)
 	$(LINK.f) -o $@ test.o $(LIBS)
 
-# DO NOT EDIT BENEATH THIS LINE ... GENERATED AUTOMATICALLY
-$(LIBRARY_PATH)(test.o):	./eaf.fh 
-$(LIBRARY_PATH)(eaf_f2c.o):	../../global/src/types.f2c.h ./eafP.h ./eaf.h 
-$(LIBRARY_PATH)(eaf.o):	../elio/elio.h ./eafP.h ./eaf.h 

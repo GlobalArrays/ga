@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.9 1996-10-14 05:45:37 d3g681 Exp $
+#$Id: makefile,v 1.10 1997-02-17 20:51:35 d3g681 Exp $
 #
 #  Initial version Jace A Mogill (12 June 1996), ANL
 
@@ -27,5 +27,3 @@ include ../../config/makelib.h
 
 $(LIBRARY_PATH)(elio.o):	./elio.h ./eliop.h ./chemio.h
 
-# DO NOT EDIT BENEATH THIS LINE ... GENERATED AUTOMATICALLY
-$(LIBRARY_PATH)(stat.o):	./eliop.h ./chemio.h 

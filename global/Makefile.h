@@ -37,6 +37,14 @@ GLOB_INCLUDES = -I../../ma
         MKDIR = mkdir
 
 
+ifdef NWCHEM_TOP
+     TOPDIR = $(NWCHEM_TOP)
+     LIBDIR = $(TOPDIR)/lib/$(TARGET)
+     BINDIR = $(TOPDIR)/bin/$(TARGET)
+     INCDIR = $(TOPDIR)/src/include
+     CNFDIR = $(TOPDIR)/src/config
+endif
+
 ifeq ($(GA_TRACE), YES)
     DEF_TRACE = -DGA_TRACE
 endif
