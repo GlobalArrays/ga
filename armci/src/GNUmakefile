@@ -1,10 +1,12 @@
-         FOPT = -g
-         COPT = -g
+         FOPT = -O
+         COPT = -O
 
-OBJ= armci.o memory.o fcopy.o fence.o rmw.o faccumulate.o\
+OBJ= armci.o memory.o fcopy.o fence.o rmw.o faccumulate.o acc.o\
  memlock.o pack.o strided.o vector.o clusterinfo.o message.o
 
+#reference to the MPI library name, overwritten by LIBMPI environment variable
 MPI_LIB_NAME = -lmpi
+
 INTERRUPT_AVAILABLE = SP1 SP PARAGON LAPI
 SYSTEM_V = SUN SGI SGI_N32 SGI64 HPUX SOLARIS IBM DECOSF CONVEX LINUX
 ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP
@@ -33,7 +35,14 @@ endif
 #let compiler to choose the appropriate MPI lib
 ifeq ($(TARGET),LAPI)
      OBJ += lapi.o request.o
+#    OBJ += shmalloc.o signaltrap.o shmem.o
+#    LIB_DEFINES = -DSYSV
      MPI_LIB_NAME =
+ifdef LAPI2
+     LIB_DEFINES = -DLAPI2
+     EXTRA_LIBS = /u2/d3h325/lapi_vector_beta/liblapi_r_dbg.a
+endif
+     
 endif
 
 
@@ -48,7 +57,12 @@ ifdef MPI_LIB
 LIBS += -L$(MPI_LIB)
 endif
 
-LIBS +=$(MPI_LIB_NAME)
+ifdef LIBMPI
+  MPI_LIB_NAME = $(LIBMPI)
+endif
+
+
+LIBS += $(MPI_LIB_NAME)
 
 LIBRARY = libarmci.a
 HARDCLEAN = yes
@@ -60,6 +74,8 @@ LIB_DISTRIB = ../lib
 
 include ../config/makefile.h
 include ../config/makelib.h
+
+LIBS += $(EXTRA_LIBS)
 
 %.x:%.c  $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
@@ -80,9 +96,10 @@ $(patsubst %,$(LIBRARY_PATH)(%),locks.o):   locks.h
 $(patsubst %,$(LIBRARY_PATH)(%),lapi.o):   lapidefs.h
 $(patsubst %,$(LIBRARY_PATH)(%),rmw.o):   locks.h armcip.h
 $(patsubst %,$(LIBRARY_PATH)(%),fence.o):    armcip.h
+$(patsubst %,$(LIBRARY_PATH)(%),clusterinfo.o):    armcip.h
 $(patsubst %,$(LIBRARY_PATH)(%),memlock.o):   memlock.h locks.h
 $(patsubst %,$(LIBRARY_PATH)(%),semaphores.o):   semaphores.h
 locks.h: semaphores.h
-armcip.h: message.h lapidefs.h
+armcip.h: message.h lapidefs.h memlock.h
 
 %.x: %.c

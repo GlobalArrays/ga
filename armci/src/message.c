@@ -9,8 +9,10 @@ void armci_msg_barrier()
 {
 #  ifdef MPI
      MPI_Barrier(MPI_COMM_WORLD);
+#  elif defined(PVM)
+
 #  else
-     long tag=TCG_SYNC_TYPE;
+     long tag=ARMCI_TAG;
      SYNCH_(&tag);
 #  endif
 }

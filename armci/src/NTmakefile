@@ -33,6 +33,7 @@ OBJ =   "$(OBJDIR)\winshmem.obj" \
         "$(OBJDIR)\locks.obj" \
         "$(OBJDIR)\fence.obj" \
         "$(OBJDIR)\fcopy.obj" \
+        "$(OBJDIR)\acc.obj" \
         "$(OBJDIR)\faccumulate.obj"\
         "$(OBJDIR)\strided.obj" \
         "$(OBJDIR)\armci.obj" \

@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi.h>
 #include <assert.h>
 
 #ifdef WIN32
@@ -8,12 +7,37 @@
 #  define sleep(x) Sleep(1000*(x))
 #endif
 
+/* ARMCI is message-passing ambivalent -  we define macros for common MP calls*/
+#if defined(PVM)
+#   include <pvm3.h>
+#   define MP_INIT(arc,argv) 
+#   define MP_FINALIZE()     pvm_exit()
+#   define MP_BARRIER()      pvm_barrier("",-1)
+#   define MP_MYID(pid)      *(pid)   = pvm_getinst("",pvm_mytid())
+#   define MP_PROCS(pproc)   *(pproc) = (int)pvm_getinst("")
+#elif defined(TCG)
+#   include <sndrcv.h>
+    long tcg_tag =30000;
+#   define MP_BARRIER()      SYNCH_(&tcg_tag)
+#   define MP_INIT(arc,argv) PBEGIN_((argc),(argv))
+#   define MP_FINALIZE()     PEND_()
+#   define MP_MYID(pid)      *(pid)   = (int)NODEID_()
+#   define MP_PROCS(pproc)   *(pproc) = (int)NNODES_()
+#else
+#   include <mpi.h>
+#   define MP_BARRIER()      MPI_Barrier(MPI_COMM_WORLD)
+#   define MP_FINALIZE()     MPI_Finalize()
+#   define MP_INIT(arc,argv) MPI_Init((argc),(argv))
+#   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
+#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
+#endif
+
 #include "armci.h"
 
 #define DIM1 5
 #define DIM2 3
 #ifdef SOLARIS
-/* Solaris has shared memory shortages in default system configuration */
+/* Solaris has shared memory shortages in the default system configuration */
 # define DIM3 4
 # define DIM4 4
 # define DIM5 3
@@ -309,7 +333,7 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
 
 void destroy_array(void *ptr[])
 {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MP_BARRIER();
 
     assert(!ARMCI_Free(ptr[me]));
 }
@@ -363,7 +387,7 @@ void test_dim(int ndim)
         sleep(1);
 
         ARMCI_AllFence();
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 	for(i=0;i<LOOP;i++){
 	    int idx1, idx2, idx3;
 	    get_range(ndim, dimsA, loA, hiA);
@@ -514,7 +538,7 @@ void test_acc(int ndim)
         }
 
         ARMCI_AllFence();
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
         for(i=0;i<TIMES*nproc;i++){ 
 
             proc=proclist[i%nproc];
@@ -522,7 +546,7 @@ void test_acc(int ndim)
         }
 
         ARMCI_AllFence();
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 
         /* copy my patch into local array c */
 	(void)ARMCI_GetS((double*)b[me] + idx2, strideB, (double*)c + idx1, strideA,  count, ndim-1, me);
@@ -532,7 +556,7 @@ void test_acc(int ndim)
         scale_patch(scale, ndim, (double*)a+idx1, loA, hiA, dimsA);
         
         compare_patches(.0001, ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx1, loA, hiA, dimsA);
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 
         if(0==me){
             printf(" OK\n\n");
@@ -737,7 +761,7 @@ void test_vector_acc()
         dsc.ptr_array_len = elems/2; 
 
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
         for(i=0;i<TIMES*nproc;i++){ 
 
 /*            proc=proclist[i%nproc];*/
@@ -766,7 +790,7 @@ void test_vector_acc()
         }
 
         ARMCI_AllFence();
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 
         /* copy my patch into local array c */
 	assert(!ARMCI_Get((double*)b[proc], c, bytes, proc));
@@ -776,7 +800,7 @@ void test_vector_acc()
         scale_patch(scale, dim, a, &one, &elems, &elems);
         
         compare_patches(.0001, dim, a, &one, &elems, &elems, c, &one, &elems, &elems);
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 
         if(0==me){
             printf(" OK\n\n");
@@ -803,7 +827,7 @@ void test_fetch_add()
 
     if(me == 0) *arr[0] = 0;  /* initialization */
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MP_BARRIER();
 
     /* show that what everybody gets */
     rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
@@ -814,7 +838,7 @@ void test_fetch_add()
             printf("process %d got value of %d\n",i,val);
             fflush(stdout);
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
     }
 
     if(me == 0)printf("\nIncrement the shared counter until reaches %d\n",LOOP);
@@ -831,21 +855,21 @@ void test_fetch_add()
             printf("process %d incremented the counter %d times value=%d\n",i,times,val);
             fflush(stdout);
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
     }
 
 
     if(me == 0) *arr[0] = 0;  /* set it back to 0 */
     if(me == 0)printf("\nNow everybody increments the counter %d times\n",LOOP); 
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MP_BARRIER();
 
     for(i = 0; i< LOOP; i++){
           rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
           assert(rc==0);
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MP_BARRIER();
     if(me == 0){
         printf("The final value is %d, should be %d.\n\n",*arr[0],LOOP*nproc); 
         if( *arr[0] != LOOP*nproc) ARMCI_Error("failed ...",*arr[0]);
@@ -888,7 +912,7 @@ void test_memlock()
         proc=0;
                 for(i=0;i<ELEMS/5;i++)a[i]=me;
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
         for(j=0;j<10*TIMES;j++){ 
          for(i=0;i<TIMES*nproc;i++){ 
             first = rand()%(ELEMS/2);
@@ -913,7 +937,7 @@ void test_memlock()
           if(0==me)fprintf(stderr,"done %d\n",j);
                 }
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 
 
         if(0==me){
@@ -938,10 +962,13 @@ int main(int argc, char* argv[])
 {
     int ndim;
 
-    MPI_Init(&argc, &argv);
+    MP_INIT(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
-    if(nproc>MAXPROC && me==0)ARMCI_Error("Test works for up to %d processors\n",MAXPROC);
+
+    if(nproc>MAXPROC && me==0)
+       ARMCI_Error("Test works for up to %d processors\n",MAXPROC);
+
     if(me==0){
        printf("ARMCI test program (%d MPI processes)\n",nproc); 
        fflush(stdout);
@@ -961,7 +988,7 @@ int main(int argc, char* argv[])
 
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
         ARMCI_AllFence();
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 
         if(me==0){
            printf("\nTesting atomic accumulate\n");
@@ -970,7 +997,7 @@ int main(int argc, char* argv[])
         }
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_acc(ndim); 
         ARMCI_AllFence();
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 
 
         if(me==0){
@@ -981,7 +1008,7 @@ int main(int argc, char* argv[])
 
         test_vector();
         ARMCI_AllFence();
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 
         if(me==0){
            printf("\nTesting Accumulate with Vector Interface\n\n");
@@ -991,7 +1018,7 @@ int main(int argc, char* argv[])
         test_vector_acc();
 
         ARMCI_AllFence();
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 
         if(me==0){
            printf("\nTesting atomic fetch&add\n");
@@ -999,16 +1026,17 @@ int main(int argc, char* argv[])
            fflush(stdout);
            sleep(3);
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 
         test_fetch_add();
 
 /*        test_memlock();*/
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        MP_BARRIER();
 	if(me==0)printf("All tests passed\n"); fflush(stdout);
     sleep(5);
+
     ARMCI_Finalize();
-    MPI_Finalize();
+    MP_FINALIZE();
     return(0);
 }
