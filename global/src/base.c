@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.31 2003-02-21 20:49:12 d3g293 Exp $ */
+/* $Id: base.c,v 1.32 2003-02-24 22:51:04 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -396,7 +396,7 @@ int bytes;
 
     /* Allocate memory for update flags */
     bytes = 2*MAXDIM*sizeof(int);
-    GA_Update_Flags = (void**)malloc(GAnproc*sizeof(void*));
+    GA_Update_Flags = (int**)malloc(GAnproc*sizeof(void*));
     if (!GA_Update_Flags)
       ga_error("ga_init: Failed to initialize GA_Update_Flags",(int)GAme);
     if (ARMCI_Malloc((void**)GA_Update_Flags, bytes))
