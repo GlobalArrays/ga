@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.10 1996-09-19 01:12:26 d3g681 Exp $
+ * $Id: ma.c,v 1.11 1996-10-01 18:56:42 d3e129 Exp $
  */
 
 /*
@@ -2414,6 +2414,12 @@ public void MA_print_stats(printroutines)
     (void)printf("\tmaximum total bytes\t\t%10lu\t%10lu\n",
         ma_stats.hbytes_max,
         ma_stats.sbytes_max);
+    (void)printf("\tmaximum total K-bytes\t\t%10lu\t%10lu\n",
+        ((ma_stats.hbytes_max+999)/1000),
+        ((ma_stats.sbytes_max+999)/1000));
+    (void)printf("\tmaximum total M-bytes\t\t%10lu\t%10lu\n",
+        ((ma_stats.hbytes_max+999999)/1000000),
+        ((ma_stats.sbytes_max+999999)/1000000));
     if (printroutines) {
 	(void)printf("\n\tcalls per routine:\n");
 	for (i = 0; i < NUMROUTINES; i++)
