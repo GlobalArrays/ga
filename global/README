@@ -30,12 +30,20 @@ distribute to other US Government contractors.
 What is new ?
 ~~~~~~~~~~~~
 
+version 2.1     selection of message-passing (TCGMSG or MPI) library
+                new operations: ga_mpi_communicator and ga_proc_topology;
+                performance optimizations;
+                alternative C interface and C test programs;
+                port to Sun Solaris.
+
 version 2.0     support for networks of multiprocessors (SMP);
-		integrated shared and distributed memory versions;
+		(tightly) integrated shared and distributed memory versions;
+                ability to restrict memory usage in global arrays;
 		ga_scatter/gather supports integers;
+                a program to test performance of GA primitives;
 		different numbering of global array handles (< 0);
-		and other internal improvements, like randomization
-		of remote operations. 	
+		and other internal improvements, like randomized order
+		of remote operations, prototypes of C-callable ops, etc. 	
 
 version 1.3.1   port to CRAY-T3D;
                 new operation ga_summarize;
@@ -47,7 +55,6 @@ version 1.3	introduced patch versions of ga_ddot, ga_dscal, ga_dadd;
                 ga_copy_patch now has a transpose argument.
 
 version 1.2     (loosely) integrated shared and distributed memory versions
-
 
 
 Directory Structure:
@@ -63,8 +70,9 @@ X        - source code for GA visualization program
 Dependencies on other software:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- TCGMSG: more or less extensive support is required. For example, TCGMSG is 
-  used on some platforms to fork processes, implement broadcast and ga_dgop;
+- TCGMSG or MPI: more or less extensive support is required. For
+  example, a message-passing library is used on some platforms to
+  fork processes, implement broadcast, ga_dgop;
 
 - MA (memory allocator by Greg Thomas) include files are used to implement 
   MA-like addressing (no libma.a library is required to use GA operations
@@ -73,18 +81,28 @@ Dependencies on other software:
   you want to use ga_access in Fortran);
 
 - GA eigensolver, ga_diag, is a wrapper for the eigensolver from PEIGS library;
-  (Please contact George Fann <d3g270@pnl.gov> for PEIGS)
+  (Please contact George Fann <gi_fann@pnl.gov> for PEIGS)
 
 - BLAS library is required for the eigensolver and ga_dgemm;
 
 - LAPACK library is required for the eigensolver;
 
 - SCALAPACK, PBBLAS, and BLACS libraries are required for ga_lu_solve;
-  (Please contact George Fann <d3g270@pnl.gov> for the current port of BLACS 
-   to TCGMSG.) 
+  (Please contact George Fann <gi_fann@pnl.gov> for port of BLACS to TCGMSG.) 
 
 - if you want to use tracing, libtrace.a (built in ./trace) will be required;
-  also DGA_TRACE define symbol should be specified for CC and FC compilers.
+  also DGA_TRACE define symbol should be specified for C and Fortran compilers.
+
+
+  To build the GA toolkit compatible with MPI, you need to define
+  environmental variable USE_MPI and MPI_LOC which should point to the
+  location of the MPI library and include directories. Additionaly, if
+  the TCGMSG-MPI library is not needed, the make/environmental variable
+  MSG_COMMS should be defined as MSG_COMMS = MPI.
+  Note that some fortran test programs are using certain TCGMSG utility
+  functions (for example, equivalent of C sizeof operator) and therefore
+  will not built without TCGMSG or TCGMSG-MPI library.
+
 
 
 Makefiles:
@@ -97,7 +115,8 @@ VERSION of memory (shared or distributed), and Makelib.h (specification of
 libraries to be linked with when test programs are built).
 The user needs to specify TARGET in the ./makefile or on the 
 command line when calling make. The library and test programs should be
-built by calling make in the current directory. 
+built by calling make in the current directory. The appropriate value
+of VERSION will be determined automatically. 
 
 Valid TARGET is one of: SUN, SGI, IBM, KSR, IPSC, PARAGON, SP1 
 Valid VERSION names:    SHMEM, DISMEM
