@@ -17,6 +17,11 @@
    extern void gcc_clear_spinlock();
 #endif
 
+#elif defined(DECOSF)
+#include "tas-alpha.h"
+#define SPINLOCK 
+#define TESTANDSET testandset
+
 #elif defined(SGI)
 #include <mutex.h>
 #define SPINLOCK 
