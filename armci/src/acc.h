@@ -26,7 +26,7 @@
 #endif
 
 void FATR I_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
-void      L_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
+void FATR L_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
 void FATR D_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
 void FATR C_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
 void FATR Z_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*); 
