@@ -35,7 +35,7 @@
       double precision nga_ddot_patch
       integer nga_idot_patch
       integer ga_pgroup_get_default, ga_pgroup_get_mirror
-      integer ga_pgroup_get_world
+      integer ga_pgroup_get_world, ga_num_mirrored_seg
       integer ga_ndim
       real ga_sdot, ga_sdot_patch, nga_sdot_patch
       integer ga_is_mirrored
@@ -72,7 +72,7 @@
       external ga_pgroup_create
       external ga_has_ghosts
       external ga_pgroup_get_default, ga_pgroup_get_mirror
-      external ga_pgroup_get_world
+      external ga_pgroup_get_world, ga_num_mirrored_seg
       external ga_ndim
       external ga_spd_invert, ga_solve, ga_llt_solve
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg
