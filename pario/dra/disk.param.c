@@ -1,6 +1,6 @@
 /**********************************************************************/
-/* store and retrieve parameters for disk resident array              */ 
-/*       -- at present time, we use additional file for parameters    */
+/* store and retrieve metadata/parameters for disk resident array     */ 
+/*       -- at present time, we use separate file for metadata        */
 /**********************************************************************/
 
 
@@ -18,7 +18,7 @@
 
 
 /*\ check file configuration: shared or independent files are used
- *  we'll verify if every process can access DRA param file
+ *  we'll verify if every process can access DRA metafile
  *  if yes, then we have shared file, otherwise independent files
 \*/
 int dai_file_config(char* filename)
@@ -66,14 +66,16 @@ stat_t info;
      */ 
     if(status == 1) return(1);
     else if(status == nproc) return 0;
+#ifdef NO_SMP_NODES
          else dai_error("dai_file_config: confusing file configuration",status); 
+#endif
     return 1;
 #endif
 }
     
 
 
-/*\ Retrive parameters of a disk array from the disk
+/*\ Retrive metadata for a disk array from the disk
 \*/
 int dai_read_param(char* filename,Integer d_a)
 {
@@ -88,7 +90,7 @@ char dummy[HDLEN];
 
   ga_sync_();
     
-  if(!me){ /* only process 0 reads param file */
+  if(!me){ /* only process 0 reads metafile */
 
     /* build param file name */
     len = strlen(filename);
@@ -126,7 +128,7 @@ char dummy[HDLEN];
   ga_brdcst_(&brd_type, &rc, &len, &orig);
   if(rc) return(rc);
 
-  /* process 0 broadcasts data to everybody else                            */
+  /* process 0 broadcasts data to everybody else                           */
   /* for 6 Integers there shouldn't be alignement padding in the structure */
   /* the integers are followed by array name */
   len = 6*sizeof(Integer)+DRA_MAX_NAME+1;
