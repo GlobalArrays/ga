@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.6 2002-02-26 19:08:45 d3h325 Exp $    **/
+/* $Id: buffers.c,v 1.7 2002-03-13 18:10:48 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -123,6 +123,7 @@ int  extra= ALIGN64ADD(tmp);
      }
      /* now allocate state array */
      tmp  = calloc(1, sizeof(reqbuf_pool_t) + 64);
+	if(!tmp)armci_die("_armci_buf_init calloc failed",0);
      extra= ALIGN64ADD(tmp);
      _armci_buf_state = (reqbuf_pool_t*)(tmp + extra); 
 
