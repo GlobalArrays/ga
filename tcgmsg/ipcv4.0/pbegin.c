@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.10 1999-11-20 03:15:05 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.11 2000-08-01 17:42:36 d3g681 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -16,6 +16,13 @@
                  || defined(CONVEX)  || defined(AIX)    || defined(NEXT) \
                  || defined(LINUX)
 #include <sys/wait.h>
+#endif
+
+
+#if defined(SOLARIS)
+/* See notes below on processor binding */
+/*#include <sys/processor.h>*/
+/*#include <sys/procset.h>*/
 #endif
 
 #include "cluster.h"
@@ -333,6 +340,24 @@ void PBEGIN_(argc, argv)
 #endif
 #endif
 
+#if defined(SOLARIS) 
+    /* If there fewer processes than processors it appears beneficial
+       to bind processes to processors.  It also appears useful to
+       leave the lowest numbered processors free (???).  
+       BUT ... this code is not general enough since the configured
+       processors are not necessarily numbered consecutively and
+       we also need to add logic to determine the list of processors
+       that have not already been bound to a process. 
+
+       Need to also modify the code below for binding slaves and enable
+       the include of processor.h and procset.h */
+
+    /* printf("binding master process %d to processor %d\n", getpid(), 31-0);
+    if (processor_bind(P_PID, P_MYID, 31-0, (void *) NULL))
+    printf("binding to %d failed\n", 31-0); */
+#endif
+
+
     for (i=1; i<nslave; i++) {
       if (DEBUG_) {
   	(void) printf("pbegin: %ld fork process, i=%ld\n", NODEID_(), nslave);
@@ -358,6 +383,12 @@ void PBEGIN_(argc, argv)
 	  (void) printf("pbegin: bound slave process %ld\n", NODEID_());
 	  (void) fflush(stdout);
 	}
+#endif
+
+#if defined(SOLARIS)
+	/*printf("binding slave process %d to processor %d\n", getpid(), 31-i);
+	if (processor_bind(P_PID, P_MYID, 31-i, (void *) NULL))
+	printf("binding to %d failed\n", 31-i); */
 #endif
 
 	/* Tidy up files */
