@@ -34,7 +34,6 @@ endif
 LOC_INCLUDES = -I../src
 LOC_DEFINES  = $(DIAG_DEF) $(LU_SOLVE_DEF)
 LIB_DISTRIB  = ../../lib
-LIBRARY = libglobal.a
 LIB_TARGETS = *.x *.p
 
 include ../Makefile.h
@@ -56,14 +55,14 @@ ifneq ($(MSG_COMMS), MPI)
 endif
 
 
-FOPT=-g
-COPT=-g
+FOPT= $(NOPT)
+COPT= $(NOPT)
 
 #
 # build test programs and .p files if needed
 #
 
-.PRECIOUS: %.o
+#.PRECIOUS: %.o
 
 
 ifeq ($(P_FILE),YES)
@@ -109,7 +108,7 @@ ifeq ($(P_FILE),YES)
 	$(INSTALL)
 else
     %.x : %.o $(LIBDIR)/libglobal.a
-	$(FC) $(FLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS)
+	$(FC) $(FLDOPT) -o $@ $<  -L$(LIBDIR) $(LIBS)
 	$(INSTALL)
 endif
 

@@ -1,4 +1,4 @@
-      program test
+      program main
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -32,7 +32,7 @@ c     In the second, user can set limit (per processor) in bytes.
 c
       call ga_initialize_ltd(mdtob(ma_heap))
       if(ga_nodeid().eq.0)then
-         print *,' GA initialized'
+         print *,' GA initialized '
          call ffflush(6)
       endif
 c
@@ -286,7 +286,7 @@ c     Each node accumulates into disjoint sections of the array
 c
       if (me .eq. 0) then
          write(6,9) 
- 9       format(/'> Checking disjoint accumulate ... ')
+ 9       format(/'> Checking accumulate ... ')
          call ffflush(6)
       endif
       call ga_sync()
@@ -316,10 +316,7 @@ c           jhi = min(j+inc-1, n)
 c               print *, me, 'checking accumulate ',ilo,ihi,jlo,jhi
 * 11            format(' node ',i2,' checking accumulate ',4i4)
 *               call ffflush(6)
-c              call ga_print_patch(g_a, 1, ihi+1, 1,jhi+1,1)
                call ga_acc(g_a, ilo, ihi, jlo, jhi, b(ilo, jlo), n, x)
-c              print *, '....'
-c              call ga_print_patch(g_a, 1, ihi+1, 1,jhi+1,1)
             endif
             ij = ij + 1
 c     
@@ -348,10 +345,30 @@ c              call ga_error('... exiting ',0)
       enddo
       if (me.eq.0) then
          write(6,*)
-         write(6,*) ' ga_acc is OK'
+         write(6,*) ' disjoint ga_acc is OK'
          write(6,*)
       endif
+c
+c     overlapping accumulate
       call ga_sync()
+      if (.not. ga_create(MT_DBL, n, n, 'b', 1, 1, g_b)) then
+         call ga_error('ga_create failed for second array ',0)
+      endif
+c
+      call ga_zero(g_b)
+      call ga_acc(g_b, 1, n/2, 1, n/2, 1d0, 1, 1d0)
+      call ga_sync()
+      if (me.eq.0) then
+         call ga_get(g_b, 1, n/2, 1, n/2, b(1,1), 1)
+         x = abs(b(1,1) -1d0*nproc)
+         if(x.gt. 1d-10)then
+            write(6,*)'val=',b(1,1),' expected=',nproc, x
+            call ga_error('overlapping accumulate failed',0)
+         endif
+         write(6,*)
+         write(6,*) ' overlapping ga_acc is OK'
+         write(6,*)
+      endif
 c
 c     Check the ga_add function
 c
@@ -360,11 +377,8 @@ c
  91      format(/'> Checking add ...')
          call ffflush(6)
       endif
-      if (.not. ga_create(MT_DBL, n, n, 'b', 1, 1, g_b)) then
-         write(6,*) ' ga_create failed for second array'
-         call ffflush(6)
-         call ga_error('... exiting ',0)
-      endif
+c
+c
       crap = drand(12345)       ! Everyone has same seed
       do j = 1, n
          do i = 1, n
@@ -372,6 +386,7 @@ c
             a(i,j) = 0.1d0*a(i,j) + 0.9d0*b(i,j)
          enddo
       enddo
+      
       if (me.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
       call ga_dadd(0.1d0, g_a, 0.9d0, g_b, g_b)
       call ga_get(g_b, 1, n, 1, n, b, n)
