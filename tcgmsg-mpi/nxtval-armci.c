@@ -44,7 +44,7 @@ long NXTVAL_(mproc)
      }
      if (*mproc > 0) {
 
-       rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD_LONG,&local,pnxtval_counter,1,server);
+       rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD_LONG,(int*)&local,(int*)pnxtval_counter,1,server);
      
      }
    } else {
