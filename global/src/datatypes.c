@@ -1,4 +1,4 @@
-/* $Id: datatypes.c,v 1.5 2002-01-18 22:49:34 vinod Exp $
+/* $Id: datatypes.c,v 1.6 2002-01-24 18:04:06 d3g293 Exp $
  * conversion of MA identifiers between C to Fortran data types 
  * Note that ga_type_c2f(MT_F_INT) == MT_F_INT 
  */
@@ -35,6 +35,7 @@ int ctype;
 #       else
 		ctype = C_SCPL;
 #       endif
+                break;
    default:     ctype = type;
                 break;
    }
@@ -72,6 +73,7 @@ int ftype;
 #       else
                 ftype = MT_F_SCPL;
 #       endif
+                break;
    default:     ftype = type;
                 break;
    }
