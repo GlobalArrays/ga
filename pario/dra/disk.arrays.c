@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.43 2002-05-23 17:01:38 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.44 2002-06-05 15:14:46 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1066,7 +1066,7 @@ void dra_set_mode_(Integer* val)
     *(id) = (_index_)%(ldd) + (ilod);\
     *(jd) = (_index_)/(ldd) + (jlod);\
 }
-#define dai_dest_indicesM(is,js, ilos,jlos, lds, id,jd, ilod, jlod, ldd)   \
+#define dai_dest_indicesM(is, js, ilos, jlos, lds, id, jd, ilod, jlod, ldd)\
 { \
     Integer _index_;\
     _index_ = (lds)*((js)-(jlos)) + (is)-(ilos);\
@@ -1309,6 +1309,22 @@ void nga_move(int op,             /*[input] flag for read or write */
                 ds_a.hi[0]-ds_a.lo[0]+1, &gs_chunk.hi[0], &gs_chunk.hi[1],
                 gs_a.lo[0], gs_a.lo[1],  gs_a.hi[0] - gs_a.lo[0] + 1);*/
     ndai_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a);
+    consistent = TRUE;
+    for (i=0; i<ndim; i++) {
+      if (gs_chunk.hi[i]<gs_chunk.lo[i] || gs_chunk.lo[i]<0) {
+        consistent = FALSE;
+      }
+    }
+    if (!consistent) {
+      for(i=0; i<ndim; i++) {
+        printf("gs_chunk[%d] %5d:%5d  ds_chunk[%d] %5d:%5d",
+                (int)i,(int)gs_chunk.lo[i],(int)gs_chunk.hi[i],
+                (int)i,(int)ds_chunk.lo[i],(int)ds_chunk.hi[i]);
+        printf(" gs_a[%d] %5d:%5d  ds_a[%d] %5d:%5d\n",
+                (int)i,(int)gs_a.lo[i],(int)gs_a.hi[i],
+                (int)i,(int)ds_a.lo[i],(int)ds_a.hi[i]);
+      }
+    }
 /*    printf("(nga_move) gs_chunk.ndim = %d\n",gs_chunk.ndim);
     for (i=0; i<ndim; i++) {
       printf("(nga_move) gs_chunk.lo[%d] = %d\n",i,gs_chunk.lo[i]);
@@ -1924,7 +1940,7 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
   Integer patch_size;
   Integer i, j, tmp_patch, block[MAXDIM], block_map[MAXDIM];
   double ratio;
-  logical full_buf;
+  logical full_buf, some_neg, overfull_buf;
   /* copy block_orig so that original guesses are not destroyed */
   for (i=0; i<ndim; i++) block[i] = block_orig[i];
 
@@ -1944,65 +1960,59 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
       }
     }
   }
-  
-  for (i=0; i<ndim; i++) chunk[i] = 0;
-  /* map block sizes from highest to lowest */
-  block_sortM(ndim, block, block_map);
-#ifdef DEBUG
-    for (i=0; i<ndim; i++) {
-      printf("Block[%d] = %d Map[%d] = %d Block[Map[%d]] = %d\n",(int)i,
-        (int)block[i],(int)i,(int)block_map[i],(int)i,(int)block[block_map[i]]);
-    }
-#endif
 
-  full_buf = FALSE;
+  /* initialize chunk array to zero and find out how big patch is based
+     on specified block dimensions */
   patch_size = 1;
-  /* start by using non-negative values in block to determine size of
-     chunk */
+  some_neg = FALSE;
+  full_buf = FALSE;
+  overfull_buf = FALSE;
   for (i=0; i<ndim; i++) {
-    if (block[block_map[i]] > 0) {
-      tmp_patch = patch_size * block[block_map[i]];
-      if (tmp_patch*elem_size > DRA_BUF_SIZE) {
-        chunk[block_map[i]] = DRA_BUF_SIZE/(patch_size*elem_size);
-        patch_size *= chunk[block_map[i]];
-        full_buf = TRUE;
-        break;
-      } else {
-        patch_size *= block[block_map[i]];
-        chunk[block_map[i]] = block[block_map[i]];
-      }
-    }
+    if (block[i] > 0) patch_size *= block[i];
+    else some_neg = TRUE;
   }
-#ifdef DEBUG
-  printf("Current patch at 1 is %d\n",(int)patch_size*elem_size);
-#endif
+  if (patch_size*elem_size > DRA_BUF_SIZE) overfull_buf = TRUE;
 
-  /* If block sizes already fill message buffer, set remaining
-     chunks to 1 */
-  if (full_buf) {
-    for (i=0; i<ndim; i++) {
-      if (chunk[i] == 0) chunk[i] = 1;
-    }
-  } else {
-    /* map DRA dimensions from highest to lowest */
-    block_sortM(ndim, dims, block_map);
-    /* For dimensions where block has been set to -1, start using the
-       remaining DRA dimensions to determine chunk size */
-    for (i=0; i<ndim; i++) {
-      if (chunk[block_map[i]] == 0) {
+  /* map dimension sizes from highest to lowest */
+  block_sortM(ndim, dims, block_map);
+
+  /* IO buffer is not full and there are some unspecied chunk dimensions.
+     Set unspecified dimensions equal to block dimensions until buffer
+     is filled. */
+  if (!full_buf && !overfull_buf && some_neg) {
+    for (i=ndim-1; i>=0; i--) {
+      if (block[block_map[i]] < 0) {
         tmp_patch = patch_size * dims[block_map[i]];
-        if (tmp_patch*elem_size > DRA_BUF_SIZE) {
-          chunk[block_map[i]] = DRA_BUF_SIZE/(patch_size*elem_size);
-          patch_size *= chunk[block_map[i]];
-          full_buf = TRUE;
-          break;
-        } else {
+        if (tmp_patch*elem_size < DRA_BUF_SIZE) {
           patch_size *= dims[block_map[i]];
-          chunk[block_map[i]] = dims[block_map[i]];
+          block[block_map[i]] = dims[block_map[i]];
+        } else {
+          block[block_map[i]] = DRA_BUF_SIZE/(patch_size*elem_size); 
+          patch_size *= block[block_map[i]];
+          full_buf = TRUE;
         }
       }
     }
   }
+
+  /* copy block array to chunk array */
+  for (i=0; i<ndim; i++) {
+    if (block[i] > 0) chunk[i] = block[i];
+    else chunk[i] = 1;
+  }
+
+  /* If patch overfills buffer, scale patch down until it fits */
+  if (overfull_buf) {
+    ratio = ((double)DRA_BUF_SIZE)/((double)(patch_size*elem_size));
+    ratio = pow(ratio,1.0/((double)ndim));
+    patch_size = 1;
+    for (i=0; i<ndim; i++) {
+      chunk[i] = (int)(((double)chunk[i])*ratio);
+      if (chunk[i] < 1) chunk[i] = 1;
+      patch_size *= chunk[i];
+    }
+  }
+
 #ifdef DEBUG
   printf("Current patch at 2 is %d\n",(int)patch_size*elem_size);
 #endif
@@ -2514,7 +2524,7 @@ void ndai_decomp_section(
           } else {
             cover[u][j] = ds_a.lo[i];
           }
-          unaligned[u][j] = cover[u][j];
+          unaligned[u][j] = ds_a.lo[i];
           j++;
           if (off_hi[i] != 0) {
             chunk_units = ds_a.hi[i] / DRA[handle].chunk[i]+1;
@@ -2523,7 +2533,7 @@ void ndai_decomp_section(
           } else {
             cover[u][j] = ds_a.hi[i];
           }
-          unaligned[u][j] = cover[u][j];
+          unaligned[u][j] = ds_a.hi[i];
           j++;
         } else if (i == idir) {
           chunk_units = (ds_a.lo[i] - 1) / DRA[handle].chunk[i];
@@ -2541,7 +2551,7 @@ void ndai_decomp_section(
           } else {
             cover[u][j] = ds_a.lo[i];
           }
-          unaligned[u][j] = cover[u][j];
+          unaligned[u][j] = ds_a.lo[i];
           j++;
           if (off_hi[i] != 0) {
             chunk_units = ds_a.hi[i] / DRA[handle].chunk[i];
@@ -2549,7 +2559,7 @@ void ndai_decomp_section(
           } else {
             cover[u][j] = ds_a.hi[i];
           }
-          unaligned[u][j] = cover[u][j];
+          unaligned[u][j] = ds_a.hi[i];
           j++;
         }
       }
@@ -2579,7 +2589,7 @@ void ndai_decomp_section(
           } else {
             cover[u][j] = ds_a.lo[i];
           }
-          unaligned[u][j] = cover[u][j];
+          unaligned[u][j] = ds_a.lo[i];
           j++;
           if (off_hi[i] != 0) {
             chunk_units = ds_a.hi[i] / DRA[handle].chunk[i]+1;
@@ -2588,7 +2598,7 @@ void ndai_decomp_section(
           } else {
             cover[u][j] = ds_a.hi[i];
           }
-          unaligned[u][j] = cover[u][j];
+          unaligned[u][j] = ds_a.hi[i];
           j++;
         } else if (i == idir) {
           chunk_units = ds_a.hi[i] / DRA[handle].chunk[i];
@@ -2607,7 +2617,7 @@ void ndai_decomp_section(
           } else {
             cover[u][j] = ds_a.lo[i];
           }
-          unaligned[u][j] = cover[u][j];
+          unaligned[u][j] = ds_a.lo[i];
           j++;
           if (off_hi[i] != 0) {
             chunk_units = ds_a.hi[i] / DRA[handle].chunk[i];
@@ -2615,7 +2625,7 @@ void ndai_decomp_section(
           } else {
             cover[u][j] = ds_a.hi[i];
           }
-          unaligned[u][j] = cover[u][j];
+          unaligned[u][j] = ds_a.hi[i];
           j++;
         }
       }
@@ -2792,6 +2802,7 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
             printf("ndai_transfer_unlgn: ds_unlg.hi[%d] = %d\n",i,ds_unlg.hi[i]);
           }
         }
+            
         if(!dai_section_intersect(ds_chunk, &ds_unlg))
             dai_error("ndai_transfer_unlgn: inconsistent cover",0);
 
