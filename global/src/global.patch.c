@@ -1,4 +1,4 @@
-/*$Id: global.patch.c,v 1.20 1998-04-18 01:03:11 d3h325 Exp $*/
+/*$Id: global.patch.c,v 1.21 1998-07-20 22:16:11 bernhold Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
@@ -131,7 +131,7 @@ Integer byte_index;
    ga_sync_();
 
    GA_PUSH_NAME("ga_copy_patch");
-   if(*g_a == *g_b) ga_error(" arrays have to be different ", 0L);
+   /*   if(*g_a == *g_b) ga_error(" arrays have to be different ", 0L); */
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);

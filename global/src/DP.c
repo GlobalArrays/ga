@@ -64,7 +64,7 @@ char transp;
    ga_check_handle(g_a, "ga_copy_patch_dp");
    ga_check_handle(g_b, "ga_copy_patch_dp");
 
-   if(*g_a == *g_b) ga_error("ga_copy_patch_dp: arrays have to different ", 0L);
+   /* if(*g_a == *g_b) ga_error("ga_copy_patch_dp: arrays have to different ", 0L); */
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
