@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.52 2004-03-24 22:15:12 manoj Exp $ */
+/* $Id: matmul.c,v 1.53 2004-03-24 22:45:18 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -475,7 +475,7 @@ static void gai_matmul_regular(transa, transb, alpha, beta, atype,
     Integer idim, jdim, kdim;
     Integer k, adim, bdim, cdim, adim_next, bdim_next;
     Integer loC[2]={1,1}, hiC[2]={1,1}, ld[2];
-    int xmax_tasks=0, shiftA=0, shiftB=0;
+    int max_tasks=0, shiftA=0, shiftB=0;
     int currA, nextA, currB, nextB; /* "current" and "next" task Ids */
     task_list_t taskListA[MAX_CHUNKS], taskListB[MAX_CHUNKS], state; 
     short int do_put=UNSET, single_task_flag=UNSET, chunks_left=0;
