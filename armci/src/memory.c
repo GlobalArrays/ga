@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.50 2004-12-15 00:09:02 manoj Exp $ */
+/* $Id: memory.c,v 1.51 2005-02-11 08:17:36 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -776,9 +776,15 @@ int ARMCI_Uses_shm()
 }
 #ifdef MPI
 
-int ARMCI_Uses_shm_grp(int grp_me, int grp_nproc, int grp_nclus) {
-    int uses=0;
+int ARMCI_Uses_shm_grp(ARMCI_Group *group) 
+{    
+    int uses=0, grp_me, grp_nproc, grp_nclus;
+    armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
 
+    ARMCI_Group_size(group, &grp_nproc);
+    ARMCI_Group_rank(group, &grp_me);
+    grp_nclus = grp_attr->grp_nclus;
+    
 #if (defined(SYSV) || defined(WIN32) || defined(MMAP) ||defined(HITACHI)) && !defined(NO_SHM)
 #   ifdef RMA_NEEDS_SHMEM
       if(grp_nproc >1) uses= 1; /* always unless serial mode */
@@ -790,7 +796,7 @@ int ARMCI_Uses_shm_grp(int grp_me, int grp_nproc, int grp_nclus) {
     return uses;
 }
 
-/*\ Group Collective Memory Allocation
+/*\ ************** Begin Group Collective Memory Allocation ******************
  *  returns array of pointers to blocks of memory allocated by everybody
  *  Note: as the same shared memory region can be mapped at different locations
  *        in each process address space, the array might hold different values
@@ -826,7 +832,7 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
     }
 #endif
     
-    if( ARMCI_Uses_shm_grp(grp_me, grp_nproc, grp_attr->grp_nclus) ) {
+    if( ARMCI_Uses_shm_grp(group) ) {
 #      ifdef SGIALTIX
           armci_altix_shm_malloc_group(ptr_arr,bytes,group);
 #      else   
@@ -896,7 +902,7 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 #      ifdef USE_MALLOC
          if(grp_nproc > 1)
 #      endif
-       if(ARMCI_Uses_shm_grp(grp_me, grp_nproc, grp_attr->grp_nclus)){
+       if(ARMCI_Uses_shm_grp(group)){
 	  if(grp_me == grp_master) {
 #           ifdef RMA_NEEDS_SHMEM
 	     Free_Shmem_Ptr(0,0,ptr);
@@ -915,7 +921,7 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
     kr_free(ptr, &ctx_localmem);
 #endif /* ifdef REGION_ALLOC */
 #else /* SGI Altix */
-    if(ARMCI_Uses_shm_grp(grp_me, grp_nproc, grp_attr->grp_nclus)) 
+    if(ARMCI_Uses_shm_grp(group)) 
        kr_free(ptr, &altix_ctx_shmem_grp);
     else kr_free(ptr, &ctx_localmem);
        
@@ -927,5 +933,5 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
 #endif
     return 0;
 }
-/********************************************************************/
+/* ***************** End Group Collective Memory Allocation ******************/
 #endif
