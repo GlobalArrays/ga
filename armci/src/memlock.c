@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.17 2004-07-27 09:00:49 manoj Exp $ */
+/* $Id: memlock.c,v 1.18 2004-08-04 22:42:46 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -49,7 +49,7 @@ static memlock_t table[MAX_SLOTS];
 \*/
 void armci_lockmem_(void *pstart, void *pend, int proc)
 {
-#if defined(CLUSTER)
+#if defined(CLUSTER) && !defined(SGIALTIX)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;
@@ -75,7 +75,7 @@ void armci_lockmem_(void *pstart, void *pend, int proc)
 
 void armci_unlockmem_(int proc)
 {
-#if defined(CLUSTER)
+#if defined(CLUSTER) && !defined(SGIALTIX) 
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;
@@ -118,7 +118,7 @@ void armci_lockmem(void *start, void *end, int proc)
      register  int slot, avail=0;
      int turn=0, conflict=0;
      memlock_t *memlock_table;
-#if defined(CLUSTER)
+#if defined(CLUSTER) && !defined(SGIALTIX)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;

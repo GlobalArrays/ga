@@ -1,4 +1,4 @@
-/* $Id: gpc.c,v 1.1 2003-07-24 19:47:24 d3h325 Exp $ *****************************************************
+/* $Id: gpc.c,v 1.2 2004-08-04 22:42:46 manoj Exp $ *****************************************************
   Prototype of Global Procedure Calls.
   July/03 JN - shared memory version  
   
@@ -103,7 +103,7 @@ return ptr;
 \*/
 void ARMCI_Gpc_lock(int proc)
 {
-#if defined(CLUSTER)
+#if defined(CLUSTER) && !defined(SGIALTIX)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;
@@ -126,7 +126,7 @@ return 0;
 \*/
 void ARMCI_Gpc_unlock(int proc)
 {
-#if defined(CLUSTER)
+#if defined(CLUSTER) && !defined(SGIALTIX)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;

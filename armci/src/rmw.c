@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.19 2004-04-09 22:07:53 manoj Exp $ */
+/* $Id: rmw.c,v 1.20 2004-08-04 22:42:46 manoj Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -70,7 +70,7 @@ long _a_ltemp;
 
 void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
-#if defined(CLUSTER)
+#if defined(CLUSTER) && !defined(SGIALTIX)
     int lock = (proc-armci_clus_info[armci_clus_id(proc)].master)%NUM_LOCKS;
 #else
     int lock = 0;
