@@ -6,18 +6,20 @@ print MA usage statistics on the standard output (stdout)
 .nf
 #include "macdecls.h"
 
-void MA_print_stats()
+void MA_print_stats(printroutines)
+     Boolean printroutines;  /* read-only */
 .fi
 .SH "FORTRAN SYNOPSIS"
 .nf
 #include "mafdecls.h"
 
-subroutine MA_print_stats
+subroutine MA_print_stats(printroutines)
+     logical printroutines
 .fi
 .SH DESCRIPTION
 MA_print_stats() prints MA allocation statistics
 (current and maximum number of blocks and total bytes for heap and stack)
-and calls per MA routine
+and, if printroutines is true, calls per MA routine
 on the standard output (stdout).
 .\" .SH USAGE
 .SH DIAGNOSTICS
