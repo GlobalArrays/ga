@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.36 2001-05-07 22:57:27 llt Exp $
+c $Id: test.F,v 1.37 2001-05-08 00:16:03 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -1568,15 +1568,13 @@ c---------------------------------------------------------------------
       logical status
       integer g_a, g_b
       integer iran, i, j, loop, nloop, maxloop, ilo, ihi, jlo, jhi, itmp
-      integer nproc, me, int, ij, inc, dimi,dimj,iproc, ii, jj
+      integer nproc, me, int, ij, inc, ii, jj
       double precision nwords
       parameter (maxloop = 100)
       integer maxproc
       parameter (maxproc = 128)
-      integer map(5,maxproc), found, np,k
       double precision crap
       real x, sum1, sum2
-      integer buf
       intrinsic int
       iran(i) = int(util_drand(0)*real(i)) + 1
 

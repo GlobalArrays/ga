@@ -26,8 +26,7 @@
       double precision nga_ddot_patch
       integer nga_idot_patch
       integer ga_ndim
-      real ga_sdot, ga_sdot_patch
-      real nga_sdot_patch
+      real ga_sdot, ga_sdot_patch, nga_sdot_patch
 !
       integer nga_read_inc
       logical nga_create, nga_locate, nga_create_irreg
@@ -52,4 +51,4 @@
 !     n-dim GA
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg
       external nga_ddot_patch, nga_zdot_patch, nga_idot_patch
-      external nga_fdot_patch
+      external ga_sdot, ga_sdot_patch, nga_sdot_patch

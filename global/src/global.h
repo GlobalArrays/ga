@@ -52,13 +52,14 @@ extern void  FATR ga_acc_   ARGS_((Integer*, Integer*, Integer*, Integer*, Integ
 extern void FATR ga_access_ ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Integer*, Integer* ));
 extern void FATR ga_brdcst_ ARGS_((Integer*, Void*, Integer*, Integer* ));
 extern void FATR ga_gather_ ARGS_((Integer*, Void*, Integer*, Integer*, Integer* ));
-extern void ga_dgop ARGS_((Integer, DoublePrecision*, Integer, char* ));
 extern void FATR ga_distribution_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer*, Integer* ));
 extern void FATR ga_scatter_ ARGS_((Integer*, Void*, Integer*, Integer*, Integer*));
 extern void ga_error    ARGS_((char*, Integer));
 extern void FATR ga_init_fence_   ARGS_(( void));
 extern void FATR ga_fence_   ARGS_(( void));
 extern void FATR ga_get_     ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Void*, Integer* ));
+extern void ga_dgop ARGS_((Integer, DoublePrecision*, Integer, char* ));
+extern void ga_fgop     ARGS_((Integer, float*, Integer, char* ));
 extern void ga_igop     ARGS_((Integer, Integer*, Integer, char* ));
 extern void FATR ga_initialize_ ARGS_(( void));
 extern void FATR ga_initialize_ltd_ ARGS_(( Integer* ));

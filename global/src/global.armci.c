@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.52 2001-05-07 22:56:58 llt Exp $ */
+/* $Id: global.armci.c,v 1.53 2001-05-08 00:15:53 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -894,12 +894,8 @@ Integer  i, ga_handle, status, maplen=0;
       GA[ga_handle].type = (int)type;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
-/*<<<<<<< global.armci.c*/
-      GA[ga_handle].ndim    = ndim;
-/*=======*/
       GA[ga_handle].ndim    = (int) ndim;
 
-/*>>>>>>> 1.50*/
       for( i = 0; i< ndim; i++){
          GA[ga_handle].dims[i] = (int)dims[i];
          GA[ga_handle].nblock[i] = (int)nblock[i];
@@ -1416,7 +1412,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                             \
    if (*(ilo) <= 0 || *(ihi) > GA[GA_OFFSET + *(g_a)].dims[0] ||               \
        *(jlo) <= 0 || *(jhi) > GA[GA_OFFSET + *(g_a)].dims[1] ||               \
        *(ihi) < *(ilo) ||  *(jhi) < *(jlo)){                                   \
-       sprintf(err_string,"%s:request(%ld:%ld,%ld:%ld) out of range (1:%ld,1:%ld)",\
+       sprintf(err_string,"%s:req(%ld:%ld,%ld:%ld) out of range (1:%ld,1:%ld)",\
                string, *(ilo), *(ihi), *(jlo), *(jhi),                         \
                GA[GA_OFFSET + *(g_a)].dims[0], GA[GA_OFFSET + *(g_a)].dims[1]);\
        ga_error(err_string, *(g_a));                                           \
@@ -1569,7 +1565,7 @@ int proc, ndim;
           if(GA_fence_set)fence_array[proc]=1;
 #ifdef PERMUTE_PIDS
     if(GA_Proc_list){
-/*       fprintf(stderr,"permuted %d %d\n",proc,GA_inv_Proc_list[proc]);*/
+       /* fprintf(stderr,"permuted %d %d\n",proc,GA_inv_Proc_list[proc]);*/
        proc = GA_inv_Proc_list[proc];
     }
 #endif
@@ -2555,10 +2551,9 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     
     GA_PUSH_NAME("gai_gatscat");
 
-    if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-p",&phandle))
+    if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-p",&phandle)) 
         ga_error("MAfailed",*g_a);
-    if(!MA_get_pointer(phandle, &proc))
-        ga_error("MA pointer failed ", *g_a);
+    if(!MA_get_pointer(phandle, &proc)) ga_error("MA pointer failed ", *g_a);
 
     ndim = GA[handle].ndim;
     type = GA[handle].type;
@@ -2575,7 +2570,8 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     map = (Integer *)(buf1 + 3 * GAnproc * sizeof(Integer));
     
     /* initialize the counters and nelem */
-    for(k=0; k<GAnproc; k++) {count[k] = 0; nelem[k] = 0;}
+    for(k=0; k<GAnproc; k++) count[k] = 0; 
+    for(k=0; k<GAnproc; k++) nelem[k] = 0;
 
     /* get the process id that the element should go and count the
      * number of elements for each process
@@ -3139,13 +3135,6 @@ logical FATR ga_locate_region_(g_a, ilo, ihi, jlo, jhi, mapl, np )
 
 
 
-void ga_scatter_local(Integer g_a, Void *v,Integer *i,Integer *j,
-                      Integer nv, Integer proc) 
-{
-     ga_error("ga_scatter_local should not be used",0);
-}
-
-
 /*\ LOCATE THE OWNER OF THE (i,j) ELEMENT OF A GLOBAL ARRAY
 \*/
 logical FATR ga_locate_(g_a, i, j, owner)
@@ -3188,13 +3177,6 @@ Integer subscript[2];
 }
 
 
-
-Integer ga_read_inc_local(g_a, i, j, inc, proc)
-        Integer g_a, i, j, inc, proc;
-{
-   ga_error("ga_rdi_local should not be used",0);
-   return(-1);
-}
 
 
 /*\ READ AND INCREMENT AN ELEMENT OF A GLOBAL ARRAY

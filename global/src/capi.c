@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.29 2001-05-07 22:56:56 llt Exp $ */
+/* $Id: capi.c,v 1.30 2001-05-08 00:15:53 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -479,7 +479,7 @@ void GA_Igop(Integer x[], int n, char *op)
   ga_igop(type, x, len, op);
 }
 
-void GA_Fgop(Integer x[], int n, char *op)
+void GA_Fgop(float x[], int n, char *op)
 {
   Integer type=GA_TYPE_GOP;
   Integer len = (Integer)n;
