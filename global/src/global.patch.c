@@ -1,4 +1,4 @@
-/*$Id: global.patch.c,v 1.13 1995-10-11 23:09:17 d3h325 Exp $*/
+/*$Id: global.patch.c,v 1.14 1995-11-22 23:07:08 d3g681 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
@@ -296,7 +296,9 @@ DoublePrecision  sum = 0.;
           *        - create a temp array that matches distribution of g_a
           *        - copy & reshape patch of g_b into g_B
           */
-         ga_duplicate_(g_a, &g_B, tempname, sizeof(tempname));
+         if (!ga_duplicate_(g_a, &g_B, tempname, sizeof(tempname))) 
+            ga_error("ga_ddot_patch: dup failed", 0L);
+           
          ga_copy_patch(&transp, g_b, bilo, bihi, bjlo, bjhi,
                                &g_B, ailo, aihi, ajlo, ajhi);  
          temp_created = 1;
@@ -512,7 +514,8 @@ char *tempname = "temp", notrans='n';
           *        - create a temp array that matches distribution of g_c
           *        - copy & reshape patch of g_a into g_A
           */
-         ga_duplicate_(g_c, &g_A, tempname, sizeof(tempname));
+         if (!ga_duplicate_(g_c, &g_A, tempname, sizeof(tempname)))
+            ga_error("ga_dadd_patch: dup failed", 0L);
          ga_copy_patch(&notrans, g_a, ailo, aihi, ajlo, ajhi,
                                 &g_A, cilo, cihi, cjlo, cjhi);  
          A_created = 1;
@@ -526,7 +529,8 @@ char *tempname = "temp", notrans='n';
           *        - create a temp array that matches distribution of g_c
           *        - copy & reshape patch of g_b into g_B
           */
-         ga_duplicate_(g_c, &g_B, tempname, sizeof(tempname));
+         if (!ga_duplicate_(g_c, &g_B, tempname, sizeof(tempname)))
+            ga_error("ga_dadd_patch: dup failed", 0L);
          ga_copy_patch(&notrans, g_b, bilo, bihi, bjlo, bjhi,
                                 &g_B, cilo, cihi, cjlo, cjhi);  
          B_created = 1;
