@@ -5,8 +5,8 @@ endif
 
 ifndef TARGET
 error:
-        @echo "TARGET/MACHINE machine not defined"
-        exit
+	@echo "TARGET/MACHINE machine not defined"
+	exit
 endif
 
 
@@ -19,7 +19,7 @@ endif
     FFLAGS = -O
  LINTFLAGS = $(DEFINES) -bhzu
  MAKEFLAGS = -j1
-        RM = rm -f
+        RM = rm
 
 
 
@@ -200,7 +200,8 @@ endif
 
 
 ifeq ($(TARGET),SGITFP)
-    FFLAGS = -O2 -i8
+    FFLAGS = -O2 -i8 -64
+    CFLAGS = -O -64 $(DEFINES)
    DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS -DPARTIALSPIN -DSGIUS
  LINTFLAGS = $(DEFINES) -u
     RANLIB = @echo $*
