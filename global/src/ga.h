@@ -60,6 +60,7 @@ extern void GA_Copy_patch(char ta,int g_a, int ailo, int aihi,int ajlo,int ajhi,
 extern void GA_Brdcst(void *buf, int lenbuf, int root);
 extern void GA_Dgop(double x[], int n, char *op);
 extern void GA_Igop(Integer x[], int n, char *op);
+extern int  GA_Valid_handle(int g_a);
 
 #define GA_Initialize ga_initialize_
 #define GA_Terminate ga_terminate_
