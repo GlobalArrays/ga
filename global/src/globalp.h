@@ -1,4 +1,4 @@
-#define MAX_ARRAYS  40             /* max number of global arrays */
+#include "config.h"
 
 #ifndef MAX_NPROC                  /* default max number of processors  */
 #   ifdef PARAGON
@@ -17,7 +17,6 @@
 #endif
 
 /* types/tags of messages used internally by GA */
-#define     GA_MSG_OFFSET 32000
 #define     GA_TYPE_REQ   GA_MSG_OFFSET + 1
 #define     GA_TYPE_GET   GA_MSG_OFFSET + 2
 #define     GA_TYPE_PUT   GA_MSG_OFFSET + 3

@@ -1,4 +1,4 @@
-/*$Id: message.h,v 1.8 1996-01-02 18:41:31 d3h325 Exp $*/
+/*$Id: message.h,v 1.9 1996-08-15 22:02:03 d3h325 Exp $*/
 
 #ifdef MPI
 #  include "mpi.h"
@@ -14,19 +14,6 @@
 #define ALL_CLUST_GRP   2         /* all processes inc. data server in cluster*/
 #define INTER_CLUST_GRP 3         /* cluster masters */
 
-/*#   define MSG_BUF_SIZE      262152 */
-/* constants for send and receive buffers to handle remote requests */
-#if defined(NX) || defined(SP1)
-#   ifdef IWAY
-#      define MSG_BUF_SIZE    129000
-#   else
-#      define MSG_BUF_SIZE    122840
-#   endif
-#elif defined(SYSV)
-#   define MSG_BUF_SIZE      262152 
-#else
-#   define MSG_BUF_SIZE      16384 
-#endif
 
 /* limit the buffer size on SP when unexpected messages arrive (IWAY) */
 #define IWAY_MSG_BUF_SIZE    8000 

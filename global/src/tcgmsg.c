@@ -4,6 +4,7 @@
 # include<string.h>
 #endif
 #include "global.h"
+#include "config.h"
 #include "message.h"
 
 /*** data required to exploit locality and implement data server ***/
