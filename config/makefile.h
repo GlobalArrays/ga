@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.18 2000-05-05 18:25:53 d3h325 Exp $
+# $Id: makefile.h,v 1.19 2000-05-08 22:53:33 jju Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -94,6 +94,7 @@ endif
 #
 ifeq ($(TARGET),LINUX)
            CC=gcc
+ GLOB_DEFINES = -DLINUX
 ifndef USE_F77
 #    Linux with g77
      FOPT_REN = -fno-second-underscore
@@ -105,23 +106,35 @@ else
 	 	/bin/rm -f .tmp.$$$$.c ) || exit 1
 endif
 
-ifeq ($(TARGET_CPU),POWERPC)
-#    no special optimization flags
-else
-
-  ifeq ($(CC),gcc)
-       COPT_REN = -malign-double
-  endif
+ifndef TARGET_CPU
   ifeq ($(FC),g77)
-      FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
-  #for 2.7.2 and earlier
-    ifndef OLD_G77
-      FOPT_REN += -Wno-globals
-    endif
+       FOPT_REN += -malign-double
+  endif
+  ifeq ($(CC),gcc)
+       COPT_REN += -malign-double
   endif
 endif
-
- GLOB_DEFINES = -DLINUX
+#
+#                GNU compilers
+ifeq ($(CC),gcc)
+   ifeq ($(COPT),-O)
+#        COPT = -O2
+    COPT_REN += -funroll-loops
+#   COPT_REN += -finline-functions -funroll-loops
+   endif
+endif
+ifeq ($(FC),g77)
+   ifeq ($(FOPT),-O)
+#        FOPT = -O3
+    FOPT_REN += -funroll-loops -fomit-frame-pointer
+   endif
+   #for 2.7.2 and earlier
+   ifndef OLD_G77
+      FOPT_REN += -Wno-globals
+   endif
+endif     
+#
+# portland group compilers
 ifeq ($(FC),pgf77)
 # linux with Portland Group Compiler
        FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
