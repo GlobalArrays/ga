@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.31 2001-08-15 21:34:30 d3h325 Exp $
+/* $Id: myrinet.c,v 1.32 2001-09-11 18:17:21 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -45,6 +45,7 @@
 #include "armcip.h"
 
 #define DEBUG_ 0
+#define DEBUG2 0
 #define DEBUG_INIT_ 0
 #define STATIC_PORTS__
 
@@ -63,7 +64,7 @@
 #define ARMCI_GM_COMPLETE -2
 #define ARMCI_GM_ACK      -3
 
-#define ARMCI_GM_MIN_MESG_SIZE 1
+#define ARMCI_GM_MIN_MESG_SIZE 5
 #define SHORT_MSGLEN 68000
 #define SND_BUFLEN (MSG_BUFLEN +128)
 
@@ -653,7 +654,6 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
 }
 
 
-
 /* check if data is available in the buffer
  * assume the buf is pinned and is inside MessageSndBuffer
  * format buf = hdr ack + data + tail ack
@@ -713,6 +713,9 @@ int armci_gm_serv_mem_alloc()
 
     /********************** get registered memory **************************/
     for(i=ARMCI_GM_MIN_MESG_SIZE; i<=armci_gm_max_msg_size; i++) {
+        if((armci_me==0) && DEBUG_){
+           printf("size %d len=%ld\n",i,gm_max_length_for_size(i));
+        }
         serv_gm->dma_buf[i] = (char *)gm_dma_malloc(serv_gm->rcv_port,
                                         gm_max_length_for_size(i));
         if(!serv_gm->dma_buf[i]) return FALSE;
@@ -1019,8 +1022,7 @@ void armci_server_initial_connection()
               ((long *)MessageRcvBuffer)[4] = ARMCI_GM_COMPLETE;
               
               armci_gm_serv_context->done = ARMCI_GM_SENDING;
-              gm_directed_send_with_callback(serv_gm->snd_port,
-                   MessageRcvBuffer,
+              gm_directed_send_with_callback(serv_gm->snd_port,MessageRcvBuffer,
                    (gm_remote_ptr_t)(gm_up_t)(serv_gm->proc_buf_ptr[rid]),
                    5*sizeof(long), GM_LOW_PRIORITY, serv_gm->node_map[rid],
                    serv_gm->port_map[rid], armci_serv_callback,
@@ -1330,4 +1332,111 @@ void armci_gm_freebuf(void *ptr)
 {
 armci_gm_context_t *context = ((armci_gm_context_t *)ptr)-1;
       armci_gm_freebuf_tag(context->tag);
+}
+
+
+static void armci_pipe_advance_buf(int strides, int count[], 
+                                   char **buf, long **ack, int *bytes )
+{
+int i, extra;
+
+     for(i=0, *bytes=1; i<=strides; i++)*bytes*=count[i]; /*compute chunk size*/
+     
+     /* allign receive buffer on 64-byte boundary */
+     extra = ALIGN64ADD((*buf));
+     (*buf) +=extra;                  /*** this where the data is *******/
+     if(DEBUG2){ printf("%d: pipe advancing %d %d\n",armci_me, *bytes,extra); fflush(stdout);
+     }
+     *ack = (long*)((*buf) + *bytes); /*** this is where ACK should be ***/
+}
+
+
+/*\ prepost buffers for receiving data from server (pipeline)
+\*/
+void armcill_pipe_post_bufs(void *ptr, int stride_arr[], int count[],
+                            int strides, void* argvoid)
+{
+int bytes;
+buf_arg_t *arg = (buf_arg_t*)argvoid;
+long *ack;
+
+     armci_pipe_advance_buf(strides, count, &arg->buf_posted, &ack, &bytes);
+
+     if(DEBUG2){ printf("%d: posting %d pipe receive %d b=%d (%p,%p) ack=%p\n",
+          armci_me,arg->count,arg->proc,bytes,arg->buf, arg->buf_posted,ack);
+          fflush(stdout);
+     }
+     *ack = 0L;                      /*** clear ACK flag ***/
+
+     arg->buf_posted += bytes+sizeof(long);/* advance pointer for next chunk */
+     arg->count++;
+}
+
+
+void armcill_pipe_extract_data(void *ptr, int stride_arr[], int count[],
+                               int strides, void* argvoid)
+{
+int bytes;
+long *ack;
+buf_arg_t *arg = (buf_arg_t*)argvoid;
+
+     armci_pipe_advance_buf(strides, count, &arg->buf_posted, &ack, &bytes);
+
+     if(DEBUG2){ printf("%d:extracting pipe  data from %d %d b=%d %p ack=%p\n",
+            armci_me,arg->proc,arg->count,bytes,arg->buf,ack); fflush(stdout);
+     }
+
+     armci_wait_long_flag_updated(ack, 1); /********* wait for data ********/
+
+     /* copy data to the user buffer identified by ptr */
+     armci_read_strided(ptr, strides, stride_arr, count, arg->buf_posted);
+     if(DEBUG2 ){printf("%d(c):extracting: data %p first=%f\n",armci_me,
+                arg->buf_posted,((double*)arg->buf_posted)[0]); 
+                fflush(stdout);
+     }
+
+     arg->buf_posted += bytes+sizeof(long);/* advance pointer for next chunk */
+     arg->count++;
+}
+
+
+void armcill_pipe_send_chunk(void *data, int stride_arr[], int count[],
+                             int strides, void* argvoid)
+{
+int bytes, bytes_ack;
+buf_arg_t *arg = (buf_arg_t*)argvoid;
+long *ack;
+
+     armci_pipe_advance_buf(strides, count, &arg->buf_posted, &ack, &bytes);
+     armci_pipe_advance_buf(strides, count, &arg->buf, &ack, &bytes);
+     bytes_ack = bytes+sizeof(long);
+
+     if(DEBUG2){ printf("%d:SENDING pipe data %d to %d %p b=%d %p)\n",armci_me,
+                 arg->count, arg->proc, arg->buf, bytes, ack); fflush(stdout);
+     }
+
+     /* copy data to buffer */
+     armci_write_strided(data, strides, stride_arr, count, arg->buf);
+     *ack=1;
+
+     armci_server_direct_send(arg->proc, arg->buf, arg->buf_posted, bytes_ack,
+                              ARMCI_GM_NONBLOCKING);
+
+     if(DEBUG2){ printf("%d:  out of send %d bytes=%d first=%f\n",armci_me,
+               arg->count,bytes,((double*)arg->buf)[0]); fflush(stdout);
+     }
+
+#if 0
+     /* at any time, we will allow fixed numer of outstanding sends */
+     armci_serv_send_nonblocking_complete(8);
+#endif
+
+     arg->buf += bytes+sizeof(long);        /* advance pointer for next chunk */
+     arg->buf_posted += bytes+sizeof(long); /* advance pointer for next chunk */
+     arg->count++;
+}
+
+void armci_pipe_send_req(int proc, void *vbuf, int len)
+{
+ armci_send_req_msg(proc, vbuf, len);
 }

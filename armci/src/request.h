@@ -71,7 +71,7 @@ extern  char* MessageSndBuffer;
 
 
 typedef struct {
-           void *buf; int count; int proc; int op; int extra; double scale[2];
+           char *buf; char* buf_posted; int count; int proc; int op; int extra;
 } buf_arg_t;
 
 #ifdef PIPE_BUFSIZE 

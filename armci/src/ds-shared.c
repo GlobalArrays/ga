@@ -19,14 +19,11 @@
 void armci_pipe_prep_receive_strided(request_header_t *msginfo, char *buf,
                         int strides, int stride_arr[], int count[], int bufsize)
 {
-int extra;
 buf_arg_t arg;
 int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
 
-     extra = ALIGN64ADD(buf);
-     buf  += extra;
-     arg.buf   = buf;
-     arg.count = bufsize-extra;
+     arg.buf_posted = arg.buf   = buf;
+     arg.count = bufsize;
      arg.proc  = (msginfo->operation==GET)?msginfo->to:msginfo->from;
      arg.op    = msginfo->operation;
     
@@ -39,6 +36,9 @@ void armci_pipe_receive_strided(request_header_t* msginfo, void *ptr,
 {
 buf_arg_t arg;
 int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
+#ifdef GM
+     arg.buf_posted   = msginfo->tag.data_ptr;
+#endif
 
      arg.buf   = ptr;
      arg.count = 0;
@@ -55,6 +55,9 @@ void armci_pipe_send_strided(request_header_t *msginfo, void *buf, int buflen,
 buf_arg_t arg;
 int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
 
+#ifdef GM
+     arg.buf_posted   = msginfo->tag.data_ptr;
+#endif
      arg.buf   = buf;
      arg.count = 0;
      arg.proc  = (msginfo->operation==GET)?msginfo->from:msginfo->to;
@@ -62,6 +65,9 @@ int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
 
      armci_dispatch_strided(ptr, stride_arr, count, strides, -1, -1,
                             packsize, armcill_pipe_send_chunk, &arg);
+#ifdef GM
+     armci_serv_send_nonblocking_complete(0);
+#endif
 }
 #endif
 /**************************** end of pipelining for medium size msg ***********/

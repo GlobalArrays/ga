@@ -22,7 +22,9 @@
 #   define GM_1_2      /* most likely we have GM <1.4 */
 #endif
 
-#define CLIENT_BUF_BYPASS 
+/*  CLIENT_BUF_BYPASS should be defined to enable zero-copy protocol
+    that uses registration -- sloooooow on GM >1.2 */
+#define CLIENT_BUF_BYPASS_ 
 #ifdef __i386__
 # ifdef GM_1_2
 #   define LONG_GET_THRESHOLD 66248
@@ -37,6 +39,10 @@
 #define LONG_GET_THRESHOLD_STRIDED 30000 
 #define INTERLEAVE_GET_THRESHOLD 524288 
 #endif
+
+#define PIPE_BUFSIZE  (64*1024 -128)
+#define PIPE_MIN_BUFSIZE 8192
+#define PIPE_MEDIUM_BUFSIZE (4*8192)
 
 /* context for callback routine */
 typedef struct {
