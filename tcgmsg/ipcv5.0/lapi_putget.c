@@ -14,6 +14,7 @@ extern ShmemBuf TCGMSG_receive_buffer[];
 #define LEN 2
 int nxtval_counter=0;
 int *nxtval_cnt_adr = &nxtval_counter;
+static lapi_cntr_t req_cnt;
 
 #define INCR 1                 /* increment for NXTVAL */
 #define BUSY -1L               /* indicates somebody else updating counter*/
@@ -42,6 +43,8 @@ void lapi_initialize()
      /* disable LAPI internal error checking */
      LAPI_Senv(lapi_handle, ERROR_CHK, 0);
 
+     rc = LAPI_Setcntr(lapi_handle, &req_cnt, 0);
+     if(rc)Error("lapi_initialize: setcntr failed",rc);
 
 #ifdef DEBUG
      printf("me=%d initialized %d processes\n", myid, numtasks);
@@ -233,11 +236,8 @@ Integer NXTVAL_(mproc)
 \*/
 void lapi_get(void* dest, void* src, long bytes, long node)
 {
-  static lapi_cntr_t req_cnt;
   int rc;
 
-  rc = LAPI_Setcntr(lapi_handle, &req_cnt, 0);
-  if(rc)Error("lapi_get: setcntr failed",rc);
 
 #ifdef DEBUG
   printf("%ld getting %ld bytes from addr=%lx node %ld to adr=%lx\n", 
@@ -277,9 +277,11 @@ void lapi_put(void* dest, void* src, long bytes, long node)
   }
 #endif
 
-  rc = LAPI_Put(lapi_handle, (uint)node, (uint)bytes, dest, src,NULL,
-                NULL,NULL);
+  rc=LAPI_Put(lapi_handle, (uint)node, (uint)bytes, dest, src,NULL, &req_cnt,NULL);
   if(rc)Error("lapi_put: sdput failed",rc);
+  rc = LAPI_Waitcntr(lapi_handle, &req_cnt, 1, NULL);
+  if(rc)Error("lapi_put: waitcntr failed",rc);
+  
 }
 
 
