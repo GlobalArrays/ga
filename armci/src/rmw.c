@@ -14,7 +14,6 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
         /* here sizeof(long)= sizeof(int) */
         { 
 #         include <limits.h>
-#         define INVALID (long)(_INT_MIN_64 +1)
           long lval;
           while ( (lval = shmem_swap((long*)prem, INVALID, proc) ) == INVALID);
           *(int*)ploc   = lval;

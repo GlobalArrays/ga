@@ -1,7 +1,8 @@
          FOPT = -O
          COPT = -O
 
-OBJ= armci.o copy.o memory.o fcopy.o fence.o rmw.o acc.o faccumulate.o memlock.o
+OBJ= armci.o memory.o fcopy.o fence.o rmw.o faccumulate.o\
+ memlock.o pack.o strided.o vector.o
 
 MPI_LIB_NAME = -lmpi
 INTERRUPT_AVAILABLE = SP1 SP PARAGON LAPI
@@ -29,6 +30,7 @@ else
  endif
 endif
 
+#let compiler to choose the appropriate MPI lib
 ifeq ($(TARGET),LAPI)
      OBJ += lapi.o
      MPI_LIB_NAME =
@@ -52,7 +54,7 @@ LIBRARY = libarmci.a
 HARDCLEAN = yes
 
 # include NT files to clean when needed
-NTSTUFF = *.ilk *.exe *.ncb ./Debug/*.obj ./Debug/vc* ./Debug/*.pdb ./Debug/*.pch
+NTSTUFF = *.ilk *.exe *.ncb
 LIB_TARGETS = *.x $(NTSTUFF)
 LIB_DISTRIB = ../lib
 
@@ -60,23 +62,21 @@ include ../config/makefile.h
 include ../config/makelib.h
 
 
-test.x: test.o $(LIBRARY_PATH)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+test.x: $(LIBRARY_PATH)
+	$(CC) $(DEFINES) test.c -o $@ $^ $(LIBS)
 
-ipctest.x: ipctest.o $(LIBRARY_PATH)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+ipctest.x: $(LIBRARY_PATH)
+	$(CC) ipctest.c -o $@ $^ $(LIBS)
 
-test.o: $(LIBRARY_PATH)
-ipctest.o: $(LIBRARY_PATH)
 
-$(patsubst %,$(LIBRARY_PATH)(%),copy.o): copy.h armcip.h
+$(patsubst %,$(LIBRARY_PATH)(%),strided.o): copy.h armcip.h acc.h memlock.h
+$(patsubst %,$(LIBRARY_PATH)(%),vector.o): copy.h armcip.h acc.h memlock.h
 $(patsubst %,$(LIBRARY_PATH)(%),armci.o): armci.h armcip.h
 $(patsubst %,$(LIBRARY_PATH)(%),memory.o): armci.h armcip.h locks.h shmem.h
 $(patsubst %,$(LIBRARY_PATH)(%),shmem.o):  shmem.h shmalloc.h
 $(patsubst %,$(LIBRARY_PATH)(%),shmalloc.o):   shmalloc.h
 $(patsubst %,$(LIBRARY_PATH)(%),locks.o):   locks.h
 $(patsubst %,$(LIBRARY_PATH)(%),rmw.o):   locks.h
-$(patsubst %,$(LIBRARY_PATH)(%),acc.o):   acc.h
-$(patsubst %,$(LIBRARY_PATH)(%),copy.o):   acc.h
+$(patsubst %,$(LIBRARY_PATH)(%),memlock.o):   memlock.h locks.h
 $(patsubst %,$(LIBRARY_PATH)(%),semaphores.o):   semaphores.h
 locks.h: semaphores.h

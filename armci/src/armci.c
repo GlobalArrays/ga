@@ -12,6 +12,7 @@
 
 int armci_me, armci_nproc;
 int armci_cluster_nodes;
+double armci_internal_buffer[BUFSIZE_DBL];
 
 #if defined(SYSV) || defined(WIN32)
 #   include "locks.h"
@@ -113,9 +114,9 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-    rc = armci_pack_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
+    rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
                                dst_ptr, dst_stride_arr,
-                               count, stride_levels, -1, -1);
+                               count, stride_levels, 0);
 
     if(rc) return FAIL6;
     else return 0;
@@ -141,7 +142,7 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
 
     rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, 
                                dst_ptr, dst_stride_arr,
-                               count, stride_levels);
+                               count, stride_levels,0);
     if(rc) return FAIL6;
     else return 0;
 
@@ -215,9 +216,15 @@ int ARMCI_AccS( int  optype,            /* operation */
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
+#   if defined(ACC_COPY) || defined(REMOTE_ACC)
+    if(armci_me != proc)
+       rc = armci_pack_strided(optype, scale, proc, src_ptr, src_stride_arr, 
+                               dst_ptr, dst_stride_arr,count,stride_levels,-1,-1);
+    else  
+#   endif
     rc = armci_op_strided( optype, scale, proc, src_ptr, src_stride_arr, 
                                dst_ptr, dst_stride_arr,
-                               count, stride_levels);
+                               count, stride_levels,1);
 
     if(rc) return FAIL6;
     else return 0;

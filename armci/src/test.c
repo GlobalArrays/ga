@@ -41,7 +41,7 @@
 
 #define BASE 100.
 #define MAXPROC 128
-#define TIMES 10
+#define TIMES 100
 
 
 /***************************** macros ************************/
@@ -232,10 +232,11 @@ void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
 
 		if(eps < ABS(diff)/max){
 			char msg[48];
-			sprintf(msg,"%lf",patch1[idx1]);
+			sprintf(msg,"(proc=%d):%lf",me,patch1[idx1]);
 			print_subscript("ERROR: a",ndim,subscr1,msg);
 			sprintf(msg,"%lf\n",patch2[idx2]);
 			print_subscript(" b",ndim,subscr2,msg);
+                        sleep(1);
 			assert(0);
 		}
 
@@ -496,9 +497,14 @@ void test_acc(int ndim)
 
         sleep(1);
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        if(me==0){
+               print_range("patch",ndim,loA, hiA," -> ");
+               print_range("patch",ndim,loB, hiB,"\n");
+               fflush(stdout);
+        }
 
-        for(i=0;i<TIMES*nproc;i++){
+        MPI_Barrier(MPI_COMM_WORLD);
+        for(i=0;i<TIMES*nproc;i++){ 
 
             proc=proclist[i%nproc];
             (void)ARMCI_AccS(ARMCI_ACC_DBL,&alpha,(double*)a + idx1, strideA, (double*)b[proc] + idx2, strideB, count, ndim-1, proc);
@@ -506,15 +512,14 @@ void test_acc(int ndim)
 
         MPI_Barrier(MPI_COMM_WORLD);
 
-         /* copy my patch into local array c */
-	(void)ARMCI_GetS((double*)b[me] + idx2, strideB, (double*)c + idx1, strideA,  count, ndim-1, proc);
+        /* copy my patch into local array c */
+	(void)ARMCI_GetS((double*)b[me] + idx2, strideB, (double*)c + idx1, strideA,  count, ndim-1, me);
 
         scale = alpha*TIMES*nproc; 
 
         scale_patch(scale, ndim, (double*)a+idx1, loA, hiA, dimsA);
         
         compare_patches(.0001, ndim, (double*)a+idx1, loA, hiA, dimsA, (double*)c+idx1, loA, hiA, dimsA);
-
         MPI_Barrier(MPI_COMM_WORLD);
 
         if(0==me){
@@ -760,6 +765,7 @@ int main(int argc, char* argv[])
            fflush(stdout);
            sleep(4);
         }
+
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
         MPI_Barrier(MPI_COMM_WORLD);
 
@@ -768,7 +774,7 @@ int main(int argc, char* argv[])
            fflush(stdout);
            sleep(4);
         }
-        for(ndim=1; ndim<= MAXDIMS; ndim++) test_acc(ndim);
+        for(ndim=1; ndim<= MAXDIMS; ndim++) test_acc(ndim); 
         MPI_Barrier(MPI_COMM_WORLD);
 
 

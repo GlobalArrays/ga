@@ -50,6 +50,14 @@
 #  define NATIVE_LOCK(x)   t_lock(cri_l+(x))
 #  define NATIVE_UNLOCK(x) t_unlock(cri_l+(x))
 
+#elif defined(CRAY_T3E)
+#  include <limits.h>
+   static long armci_lock_var=0;
+   typedef int lockset_t;
+#  define INVALID (long)(_INT_MIN_64 +1)
+#  define NATIVE_LOCK(x)  while( shmem_swap(&armci_lock_var,INVALID,(x)) )
+#  define NATIVE_UNLOCK(x) shmem_swap(&armci_lock_var, 0, (x))
+
 #elif defined(SYSV)
 
 #  include "semaphores.h"

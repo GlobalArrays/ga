@@ -40,7 +40,9 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 /***************************** 1-Dimensional copy ************************/
 
 #if defined(CRAY_T3E)
-#      define armci_copy(src,dst,n)           memcpy((dst),(src),(n))
+#      define armci_copy(src,dst,n)\
+        if((n)<128 || n%sizeof(long) ) memcpy((dst),(src),(n));\
+        else shmem_put((long*)(dst),(long*)(src),(int)(n)/sizeof(long),armci_me)
 
 #      define armci_put(src,dst,n,proc) \
               shmem_put((long*)(dst),(long*)(src),(int)(n)/sizeof(long),(proc))
