@@ -244,6 +244,43 @@ void ga_check_handle(Integer *g_a,char * string)
      
 
 
+
+/*\ Initialize MA-like addressing:
+ *  get addressees for the base arrays for double, complex and int types
+\*/
+static int ma_address_init=0;
+void gai_ma_address_init()
+{
+#ifdef CHECK_MA_ALGN
+Integer  off_dbl, off_int, off_dcpl;
+#endif
+     ma_address_init=1;
+     INT_MB = (Integer*)MA_get_mbase(MT_F_INT);
+     DBL_MB = (DoublePrecision*)MA_get_mbase(MT_F_DBL);
+     DCPL_MB= (DoubleComplex*)MA_get_mbase(MT_F_DCPL);
+
+#   ifdef CHECK_MA_ALGN
+        off_dbl = 0 != ((long)DBL_MB)%sizeof(DoublePrecision);
+        off_int = 0 != ((long)INT_MB)%sizeof(Integer);
+        off_dcpl= 0 != ((long)DCPL_MB)%sizeof(DoublePrecision);
+
+        if(off_dbl)
+           ga_error("GA initialize: MA DBL_MB not alligned", (Integer)DBL_MB);
+
+        if(off_int)
+           ga_error("GA initialize: INT_MB not alligned", (Integer)INT_MB);
+
+        if(off_dcpl)
+          ga_error("GA initialize: DCPL_MB not alligned", (Integer)DCPL_MB);
+#   endif
+
+    if(DEBUG)
+        printf("%d INT_MB=%d(%x) DBL_MB=%ld(%lx) DCPL_MB=%d(%lx)\n",
+                GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB);
+}
+
+
+
 /*\ INITIALIZE GLOBAL ARRAY STRUCTURES
  *
  *  either ga_initialize_ltd or ga_initialize must be the first 
@@ -252,9 +289,6 @@ void ga_check_handle(Integer *g_a,char * string)
 void FATR  ga_initialize_()
 {
 Integer  i;
-#ifdef CHECK_MA_ALGN
-Integer  off_dbl, off_int, off_dcpl;
-#endif
 
     if(GAinitialized) return;
 
@@ -272,10 +306,11 @@ Integer  off_dbl, off_int, off_dcpl;
     if(GA_Proc_list) GAme = (Integer)GA_Proc_list[ga_msg_nodeid_()];
     else
 #endif
-      GAme = (Integer)ga_msg_nodeid_();
+    GAme = (Integer)ga_msg_nodeid_();
 
     MPme= ga_msg_nodeid_();
     MPnproc = ga_msg_nnodes_();
+
     if(GA_Proc_list)
       fprintf(stderr,"permutation applied %d now becomes %d\n",MPme, GAme);
 
@@ -284,7 +319,6 @@ Integer  off_dbl, off_int, off_dcpl;
       fprintf(stderr,"Please change MAX_NPROC in config.h & recompile\n");
       ga_error("terminating...",0);
     }
-
 
     map = (Integer*)malloc((GAnproc*2*MAXDIM +1)*sizeof(Integer));
     if(!map) ga_error("ga_init:malloc failed (map)",0);
@@ -296,36 +330,13 @@ Integer  off_dbl, off_int, off_dcpl;
     /* set activity status for all arrays to inactive */
     for(i=0;i<max_global_array;i++)GA[i].actv=0;
 
+    ARMCI_Init(); /* initialize GA run-time library */
+
+    /* assure that GA will not alocate more shared memory than specified */
+    if(ARMCI_Uses_shm())
+       if(GA_memory_limited) ARMCI_Set_shm_limit(GA_total_memory);
+
     GAinitialized = 1;
-
-    /* Initialize MA-like addressing:
-     *    get addressees for the base arrays for double, complex and int types
-     *
-     * MA include files: macommon.h, macdecls.h and mafdecls.h
-     */
-     INT_MB = (Integer*)MA_get_mbase(MT_F_INT);
-     DBL_MB = (DoublePrecision*)MA_get_mbase(MT_F_DBL);
-     DCPL_MB= (DoubleComplex*)MA_get_mbase(MT_F_DCPL);
-
-#   ifdef CHECK_MA_ALGN
-        off_dbl = 0 != ((long)DBL_MB)%sizeof(DoublePrecision);
-        off_int = 0 != ((long)INT_MB)%sizeof(Integer);
-        off_dcpl= 0 != ((long)DCPL_MB)%sizeof(DoublePrecision);
-
-        if(off_dbl)
-           ga_error("ga_initialize: MA DBL_MB not alligned", (Integer)DBL_MB);
-
-        if(off_int)
-           ga_error("ga_initialize: INT_MB not alligned", (Integer)INT_MB);
-
-        if(off_dcpl)
-          ga_error("ga_initialize: DCPL_MB not alligned", (Integer)DCPL_MB);
-#   endif
-
-    if(DEBUG)
-        printf("%d INT_MB=%d(%x) DBL_MB=%ld(%lx) DCPL_MB=%d(%lx)\n",
-                GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB);
-    ARMCI_Init();
 
 }
 
@@ -492,6 +503,8 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
       if(!GAinitialized) ga_error("GA not initialized ", 0);
       gam_checktype(type);
       gam_checkdim(ndim, dims);
+
+      if(!ma_address_init) gai_ma_address_init();
 
       if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
           for(d=0; d< ndim; d++) blk[d]=chunk[d];
@@ -735,6 +748,8 @@ Integer  i, ga_handle, status, maplen=0;
       GA_PUSH_NAME("nga_create_irreg");
 
       if(!GAinitialized) ga_error("GA not initialized ", 0);
+      if(!ma_address_init) gai_ma_address_init();
+
       gam_checktype(type);
       gam_checkdim(ndim, dims);
 
@@ -2743,10 +2758,10 @@ void FATR ga_list_nodeid_(list, num_procs)
 Integer proc;
    for( proc = 0; proc < *num_procs; proc++)
 
-     #ifdef PERMUTE_PIDS
+#ifdef PERMUTE_PIDS
        if(GA_Proc_list) list[proc] = GA_inv_Proc_list[proc]; 
        else
-     #endif
+#endif
        list[proc]=proc;
 }
 
