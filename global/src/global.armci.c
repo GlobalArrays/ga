@@ -2636,6 +2636,10 @@ int i;
    GA_POP_NAME;
 
    if(GA[h_a].ndim != GA[h_b].ndim) return FALSE; 
+
+   for(i=0; i <GA[h_a].ndim; i++)
+       if(GA[h_a].dims[i] != GA[h_b].dims[i]) return FALSE;
+
    for(i=0; i <MAPLEN; i++){
       if(GA[h_a].mapc[i] != GA[h_b].mapc[i]) return FALSE;
       if(GA[h_a].mapc[i] == -1) break;

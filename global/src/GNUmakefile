@@ -79,5 +79,6 @@ $(patsubst %,$(LIBRARY_PATH)(%),shmalloc.o)     : shmalloc.h
 $(patsubst %,$(LIBRARY_PATH)(%),iway.o)         : global.h message.h farg.h
 $(patsubst %,$(LIBRARY_PATH)(%),net.o)          : global.h message.h farg.h
 $(patsubst %,$(LIBRARY_PATH)(%),ga_diag.o)      : global.fh diag.fh 
+$(patsubst %,$(LIBRARY_PATH)(%),global.armci.o) : global.h global.armci.h 
 global.h       : cray.names.h
 global.core.h  : interrupt.h mem.ops.h semaphores.h locks.h lapidefs.h
