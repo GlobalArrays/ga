@@ -16,8 +16,8 @@
           FLD = $(FC)
           CLD = $(FLD)
           CXX = CC
-         FOPT = -O
-         COPT = -O
+         FOPT = -g
+         COPT = -g
 	 NOPT = -g
 GLOB_INCLUDES = -I../../ma
            AR = ar
@@ -58,8 +58,14 @@ endif
 # IBM ThinkPad running Linux 1.2.13
 #
 ifeq ($(TARGET),LINUX)
-    MAKEFLAGS = -j 1
+
+ifdef USE_G77
+#    Linux with g77
+     FOPT_REN = -fno-second-underscore
+           FC = g77
+else
     EXPLICITF = TRUE
+endif
  GLOB_DEFINES = -DLINUX
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
