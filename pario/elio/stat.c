@@ -8,7 +8,7 @@ int elio_dirname(const char *fname, char *dirname, int len)
 {
     size_t flen;
     
-    if(len< (flen =strlen(fname))) 
+    if(len<= (flen =strlen(fname))) 
 	ELIO_ERROR(LONGFAIL,flen);
     
     while(fname[flen] != '/' && flen >0 ) flen--;
