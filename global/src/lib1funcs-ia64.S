@@ -27,7 +27,7 @@
 // alternative.
 //
 // in0 holds the dividend.  in1 holds the divisor.
-
+	
 	.text
 	.align 16
 	.global __divsi3
