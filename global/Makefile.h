@@ -45,7 +45,7 @@ ifeq ($(TARGET),SUN)
 # Sun running SunOS
 #
 #          CC = gcc
-     FOPT_REN = -Nl100
+     FOPT_REN = -Nl100 -fast -dalign
        RANLIB = ranlib
      WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
 		-Wwrite-strings
