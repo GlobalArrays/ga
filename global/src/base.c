@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.47 2003-07-31 07:10:36 d3h325 Exp $ */
+/* $Id: base.c,v 1.48 2003-07-31 23:56:11 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -805,6 +805,7 @@ Integer  i, ga_handle, status, maplen=0;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
       GA[ga_handle].ndim    = (int) ndim;
+      GA[ga_handle].irreg   = _ga_irreg_flag;
       /* If only one node is being used, set proc list to default value */
       if (ga_cluster_nnodes_() == 1) {
         p_handle = -1;
@@ -1268,14 +1269,18 @@ logical FATR nga_create_ghosts_irreg_config_(Integer *type,
 #endif
 {
 char buf[FNAM];
+Integer st; 
 #if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
 #endif
-
-  return (nga_create_ghosts_irreg_config(*type, *ndim,  dims, width, buf, map,
-        block, *p_handle, g_a));
+  
+      _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
+      st = nga_create_ghosts_irreg_config(*type, *ndim,  dims, width, buf, 
+					  map, block, *p_handle, g_a);
+      _ga_irreg_flag = 0; /* unset it, after creating array */ 
+      return st;
 }
 
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
@@ -1293,14 +1298,18 @@ logical FATR nga_create_ghosts_irreg_(Integer *type, Integer *ndim,
 #endif
 {
 char buf[FNAM];
+Integer st;
 #if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
 #endif
-
-  return (nga_create_ghosts_irreg(*type, *ndim,  dims, width, buf, map,
-        block, g_a));
+      
+      _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
+      st = nga_create_ghosts_irreg(*type, *ndim,  dims, width, buf, map,
+				   block, g_a);
+      _ga_irreg_flag = 0; /* unset it, after creating array */
+      return st;
 }
 
 /*\ CREATE A 2-DIMENSIONAL GLOBAL ARRAY
@@ -1461,14 +1470,18 @@ logical FATR nga_create_irreg_config_(Integer *type, Integer *ndim,
 #endif
 {
 char buf[FNAM];
+Integer st;
 #if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
 #endif
 
-  return (nga_create_irreg_config(*type, *ndim,  dims, buf, map, block,
-                 *p_handle, g_a));
+      _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */ 
+      st = nga_create_irreg_config(*type, *ndim,  dims, buf, map, block,
+				   *p_handle, g_a);
+      _ga_irreg_flag = 0; /* unset it, after creating array */ 
+      return st;
 }
 
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
@@ -1484,13 +1497,17 @@ logical FATR nga_create_irreg_(Integer *type, Integer *ndim, Integer *dims,
 #endif
 {
 char buf[FNAM];
+Integer st;
 #if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
 #else
       f2cstring(array_name ,slen, buf, FNAM);
 #endif
-
-  return (nga_create_irreg(*type, *ndim,  dims, buf, map, block, g_a));
+      
+      _ga_irreg_flag = 1; /* set this flag=1, to indicate array is irregular */
+      st = nga_create_irreg(*type, *ndim,  dims, buf, map, block, g_a);
+      _ga_irreg_flag = 0; /* unset it, after creating array */
+      return st;
 }
 
 #ifdef PERMUTE_PIDS

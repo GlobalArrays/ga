@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.13 2003-07-23 14:44:41 d3g293 Exp $ */
+/*$Id: base.h,v 1.14 2003-07-31 23:56:11 manoj Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -6,6 +6,7 @@ extern Integer *GA_proclist;
 extern int* GA_Proc_list;
 extern int* GA_inv_Proc_list;
 extern int** GA_Update_Flags;
+extern short int _ga_irreg_flag; 
 
 #define FNAM        31              /* length of array names   */
 
@@ -17,7 +18,8 @@ typedef struct {
 } proc_list_t;
 
 typedef struct {
-       int  ndim;               /* number of dimensions                 */
+       short int  ndim;         /* number of dimensions                 */
+       short int  irreg;        /* 0-regular; 1-irregular distribution  */
        int  type;               /* data type in array                   */
        int  actv;               /* activity status                      */
        int  size;               /* size of local data in bytes          */
