@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.65 2003-04-03 19:35:03 vinod Exp $
+/* $Id: myrinet.c,v 1.66 2003-04-03 19:48:21 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -780,10 +780,10 @@ void armci_client_send_ack(int p, int success)
 }
 
 static int get_corrected_size(size){
-    if(size<11)return 11;
-    else if(size<15)return 15;
-    else if(size<18)return 18;
-    else if(size<19)return 19;
+    if(size<=11)return 11;
+    else if(size<=15)return 15;
+    else if(size<=18)return 18;
+    else if(size<=19)return 19;
     else armci_die("wrong size",size);
     return(-1);
 }
