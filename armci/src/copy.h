@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.59 2003-10-21 04:12:01 d3h325 Exp $ */
+/* $Id: copy.h,v 1.60 2004-03-27 00:26:27 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -22,6 +22,15 @@
 #define bcopy(src, dst, len) _fastbcopy(src, dst, len)
 #endif
 
+#ifndef EXTERN
+#   define EXTERN extern
+#endif
+
+#ifdef NEC
+#  define memcpy1 _VEC_memcpy
+#  define armci_copy1(src,dst,n) _VEC_memcpy((dst),(src),(n))
+   EXTERN long long _armci_vec_sync_flag;
+#endif
 
 
 #if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS) || defined (DECOSF) || defined(__ia64__)
@@ -71,8 +80,13 @@
 #endif
 
 
-#define THRESH 32
-#define THRESH1D 512 
+#ifdef NEC
+#  define THRESH 1
+#  define THRESH1D 1 
+#else
+#  define THRESH 32
+#  define THRESH1D 512 
+#endif
 #define ALIGN_SIZE sizeof(double)
 
 /********* interface to fortran 1D and 2D memory copy functions ***********/
@@ -230,7 +244,7 @@ void FATR DCOPY1D(void*, void*, int*);
 #endif
 
 #ifdef NEC
-#    define MEM_FENCE mpisx_clear_cache()
+#    define MEM_FENCE {mpisx_clear_cache(); _armci_vec_sync_flag=1;mpisx_syncset0_long(&_armci_vec_sync_flag);}
 #endif
 
 #ifdef DECOSF

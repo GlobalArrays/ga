@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.50 2003-07-10 19:19:28 d3h325 Exp $ */
+/* $Id: message.c,v 1.51 2004-03-27 00:26:28 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -61,6 +61,8 @@ static bufstruct *_gop_buffer;
 #ifdef NEED_MEM_SYNC
 #  ifdef AIX
 #    define SET_SHM_FLAG(_flg,_val) _clear_lock((int *)(_flg),_val);
+#elif defined(NEC)
+# define SET_SHM_FLAG(_flg,_val) MEM_FENCE; *(_flg)=(_val)
 #  elif defined(__ia64) && defined(__GNUC__)
 #    if defined(__GNUC__)
 #       define SET_SHM_FLAG(_flg,_val)\
@@ -1105,8 +1107,6 @@ int root, up, left, right, size;
 int tag=ARMCI_TAG;
 int ndo, len, lenmes, orign =n, ratio;
 void *origx =x;
-
-
     if(!x)armci_die("armci_msg_gop: NULL pointer", n);
     if(work==NULL)_allocate_mem_for_work();
 
@@ -1154,8 +1154,6 @@ void armci_msg_reduce_scope(int scope, void *x, int n, char* op, int type)
 int root, up, left, right, size;
 int tag=ARMCI_TAG;
 int ndo, len, lenmes, ratio;
-
-
     if(!x)armci_die("armci_msg_gop: NULL pointer", n);
     if(work==NULL)_allocate_mem_for_work();
 
@@ -1254,8 +1252,8 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
        armci_util_wait_int(&GOP_BUF(armci_me)->a.flag, EMPTY, 100);
 
 #if 1
-        if(left<0 && right<0) armci_copy(x,GOP_BUF(armci_me)->array,len);
-
+        if(left<0 && right<0) armci_copy(x,GOP_BUF(armci_me)->array,len); 
+ 
        /*  version oblivious to the order of data arrival */
        {
           int need_left = left >-1;
@@ -1499,7 +1497,8 @@ int len, lenmes, min;
 
 /*\ combine array of longs/ints/doubles accross all processes
 \*/
-#if 0
+#if defined(NEC)
+
 void armci_msg_igop(int *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_INT); }
 
@@ -1508,6 +1507,10 @@ void armci_msg_lgop(long *x, int n, char* op)
 
 void armci_msg_dgop(double *x, int n, char* op)
 { armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_DOUBLE); }
+
+void armci_msg_fgop (float *x, int n, char* op)
+{ armci_msg_gop_scope(SCOPE_ALL,x, n, op, ARMCI_FLOAT);}
+
 #else
 void armci_msg_igop(int *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_INT); }
 void armci_msg_lgop(long *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_LONG); }

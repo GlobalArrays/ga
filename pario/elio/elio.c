@@ -79,6 +79,13 @@
 #endif
 
 
+#ifdef WIN32
+#define FSYNC _commit
+#else
+#include <unistd.h>
+#define FSYNC fsync
+#endif
+
 /* structure to emulate control block in Posix AIO */
 #if defined (CRAY)
 #   if defined(FFIO)
@@ -993,6 +1000,28 @@ int elio_close(Fd_t fd)
 }
 
 
+
+/*\ Close File
+\*/
+int elio_fsync(Fd_t fd)
+{
+    int status = ELIO_OK;
+
+#ifdef FSYNC
+    if (fd->next)
+      status = elio_fsync((Fd_t) fd->next);
+
+    printf("syncing extent %d name %s\n", fd->extent, fd->name);
+//    if(FSYNC(fd->fd)==-1 || (status != ELIO_OK))
+    sync();
+    if(fsync(fd->fd)==-1 )
+      ELIO_ERROR(FSYNCFAIL, 0);
+#endif
+
+    return ELIO_OK;
+}
+
+
 /*\ Delete File
 \*/
 int elio_delete(const char* filename)
@@ -1089,4 +1118,5 @@ char *errtable[ERRLEN] ={
 ">Error in Probe",
 ">Unable to Truncate",
 ">End of File",
+">Fsync Failed",
 ""};

@@ -1,3 +1,4 @@
+#$Id: makefile.h,v 1.99 2004-03-27 00:26:16 d3h325 Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -500,7 +501,7 @@ ifeq ($(TARGET),NEC)
 #    on SX-6 we must use c++ compiler and cc on SX-5
      CC = c++
      ifeq ($(FOPT), -O)
-         FOPT = -Cvopt -Wf"-pvctl nomsg noassume vwork=stack"
+         FOPT = -V -Cvopt -Wf"-pvctl nomsg noassume vwork=stack"
      endif
      ifeq ($(COPT), -O)
          COPT = -O nomsg

@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.99 2004-02-11 21:41:51 vinod Exp $
+# $Id: makefile.h,v 1.100 2004-03-27 00:26:31 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -632,7 +632,7 @@ ifeq ($(TARGET),NEC)
          FOPT = -Cvopt -Wf"-pvctl nomsg noassume vwork=stack"
      endif
      ifeq ($(COPT), -O)
-         COPT = -O nomsg -pvctl,nomsg -Xa
+         COPT = -V -Cvsafe -O nomsg -pvctl,nomsg -Xa
      endif
      CLD = $(FC) -size_t64
      LINK.c = $(CLD)

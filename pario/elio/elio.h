@@ -59,4 +59,5 @@ extern int    elio_dirname(const char *fname, char *statinfo, int len);
 extern int    elio_truncate(Fd_t fd, Off_t length);
 extern int    elio_length(Fd_t fd, Off_t *length);
 extern void   elio_errmsg(int code, char *msg);
+extern int    elio_fsync(Fd_t fd);
 
