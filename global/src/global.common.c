@@ -673,11 +673,11 @@ void c2fstring( cstring, fstring, flen)
      char *cstring, *fstring;
      Integer flen;
 {
-char *strncpy();
-int clen = strlen(cstring);
+    char *strncpy();
+    int clen = strlen(cstring);
     strncpy(fstring, cstring, flen);
     /* remove \n character if any */
-    if(flen>clen)fstring[clen]=' ';
+    while(flen-- > clen)fstring[flen]=' ';
 }
 
 
