@@ -1,4 +1,4 @@
-/* $Id: via.c,v 1.25 2002-12-11 00:43:34 vinod Exp $ */
+/* $Id: via.c,v 1.26 2002-12-22 03:34:34 vinod Exp $ */
 #include <stdio.h>
 #include <strings.h>
 #include <assert.h>
@@ -788,11 +788,11 @@ char *tmp,*tmp0;
 
    /*we use the size passed by the armci_init_bufs routine instead of bytes
    */
-   total = size + extra+ SIXTYFOUR;
+   total = size + extra+ 2*SIXTYFOUR;
    tmp0  = tmp = malloc(total);
    if(!tmp) armci_die("failed to malloc client bufs",total);
    /* stamp the last byte */
-   client_tail= tmp + extra+ size +SIXTYFOUR-1;
+   client_tail= tmp + extra+ size +2*SIXTYFOUR-1;
    *client_tail=CLIENT_STAMP;
  
    /* we also have a place to store memhandle for zero-copy get */
