@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.42 2002-07-17 18:05:33 vinod Exp $ */
+/* $Id: strided.c,v 1.43 2002-09-21 17:43:00 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -408,7 +408,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_PUTS,__FILE__,__LINE__);
     if (armci_me != proc)
-       (void) VT_log_sendmsg(armci_me,proc,count[0],ARMCI_PUTS,0);
+       vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
 #endif
 
     ORDER(PUT,proc); /* ensure ordering */
@@ -446,7 +446,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
-       (void) VT_log_recvmsg(proc,armci_me,count[0],ARMCI_PUTS,0);
+       vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
     vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
 #endif
 
@@ -484,7 +484,7 @@ int ARMCI_PutS_flag(
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_PUTS,__FILE__,__LINE__);
     if (armci_me != proc)
-       (void) VT_log_sendmsg(armci_me,proc,count[0],ARMCI_PUTS,0);
+       vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
 #endif
 
     ORDER(PUT,proc); /* ensure ordering */
@@ -523,7 +523,7 @@ int ARMCI_PutS_flag(
 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
-       (void) VT_log_recvmsg(proc,armci_me,count[0],ARMCI_PUTS,0);
+       vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
     vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
 #endif
 
@@ -553,7 +553,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_GETS,__FILE__,__LINE__);
     if (armci_me != proc)
-       (void) VT_log_sendmsg(proc,armci_me,count[0],ARMCI_GETS,0);
+       vampir_start_comm(proc,armci_me,count[0],ARMCI_GETS);
 #endif
 
     ORDER(GET,proc); /* ensure ordering */
@@ -602,7 +602,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
-       (void) VT_log_recvmsg(armci_me,proc,count[0],ARMCI_GETS,0);
+       vampir_end_comm(proc,armci_me,count[0],ARMCI_GETS);
     vampir_end(ARMCI_GETS,__FILE__,__LINE__);
 #endif
 
@@ -635,7 +635,7 @@ int ARMCI_AccS( int  optype,            /* operation */
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_ACCS,__FILE__,__LINE__);
     if (armci_me != proc)
-       (void) VT_log_sendmsg(armci_me,proc,count[0],ARMCI_ACCS,0);
+        vampir_start_comm(armci_me,proc,count[0],ARMCI_ACCS);
 #endif
 
     ORDER(optype,proc); /* ensure ordering */
@@ -654,7 +654,7 @@ int ARMCI_AccS( int  optype,            /* operation */
 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
-       (void) VT_log_recvmsg(proc,armci_me,count[0],ARMCI_ACCS,0);
+       vampir_end_comm(armci_me,proc,count[0],ARMCI_ACCS);
     vampir_end(ARMCI_ACCS,__FILE__,__LINE__);
 #endif
 

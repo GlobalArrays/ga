@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.15 2002-07-17 18:05:33 vinod Exp $ */
+/* $Id: vector.c,v 1.16 2002-09-21 17:43:00 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -359,7 +359,7 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_PUTV,__FILE__,__LINE__);
     if (armci_me != proc)
-       (void) VT_log_sendmsg(armci_me,proc,tot,ARMCI_PUTV,0);
+       vampir_start_comm(armci_me,proc,tot,ARMCI_PUTV);
 #endif
 
     ORDER(PUT,proc); /* ensure ordering */
@@ -386,7 +386,7 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
-       (void) VT_log_recvmsg(proc,armci_me,tot,ARMCI_PUTV,0);
+       vampir_end_comm(armci_me,proc,tot,ARMCI_PUTV);
     vampir_end(ARMCI_PUTV,__FILE__,__LINE__);
 #endif
 
@@ -420,7 +420,7 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_GETV,__FILE__,__LINE__);
     if (armci_me != proc)
-       (void) VT_log_sendmsg(proc,armci_me,tot,ARMCI_GETV,0);
+       vampir_start_comm(proc,armci_me,tot,ARMCI_GETV);
 #endif
 
     ORDER(GET,proc); /* ensure ordering */
@@ -447,7 +447,7 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
-       (void) VT_log_recvmsg(armci_me,proc,tot,ARMCI_GETV,0);
+       vampir_end_comm(proc,armci_me,tot,ARMCI_GETV);
     vampir_end(ARMCI_GETV,__FILE__,__LINE__);
 #endif
 
@@ -484,7 +484,7 @@ int ARMCI_AccV( int op,              /* oeration code */
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_ACCV,__FILE__,__LINE__);
     if (armci_me != proc)
-       (void) VT_log_sendmsg(armci_me,proc,tot,ARMCI_ACCV,0);
+       vampir_start_comm(armci_me,proc,tot,ARMCI_ACCV);
 #endif
 
     ORDER(op,proc); /* ensure ordering */
@@ -501,7 +501,7 @@ int ARMCI_AccV( int op,              /* oeration code */
 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
-       (void) VT_log_recvmsg(proc,armci_me,tot,ARMCI_ACCV,0);
+       vampir_end_comm(armci_me,proc,tot,ARMCI_ACCV);
     vampir_end(ARMCI_ACCV,__FILE__,__LINE__);
 #endif
 

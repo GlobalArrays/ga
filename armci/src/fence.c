@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.6 2002-07-17 18:05:33 vinod Exp $ */
+/* $Id: fence.c,v 1.7 2002-09-21 17:43:00 vinod Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -23,6 +23,8 @@ void ARMCI_Fence(int proc)
 {
 #ifdef GA_USE_VAMPIR
      vampir_begin(ARMCI_FENCE,__FILE__,__LINE__);
+ if (armci_me != proc)
+        vampir_start_comm(proc,armci_me,0,ARMCI_FENCE);
 #endif
 #ifdef DATA_SERVER
      if(_armci_fence_arr[proc] && (armci_nclus >1)){
@@ -40,10 +42,8 @@ void ARMCI_Fence(int proc)
      FENCE_NODE(proc);
 #endif
 #ifdef GA_USE_VAMPIR
-     if (armci_me != proc) {
-        (void) VT_log_sendmsg(proc,armci_me,0,ARMCI_FENCE,0);
-        (void) VT_log_recvmsg(armci_me,proc,0,ARMCI_FENCE,0);
-     };
+     if (armci_me != proc) 
+        vampir_end_comm(proc,armci_me,0,ARMCI_FENCE);
      vampir_end(ARMCI_FENCE,__FILE__,__LINE__);
 #endif
 }
