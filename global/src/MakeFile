@@ -31,7 +31,8 @@ OBJ      = "$(OBJDIR)\global.armci.obj" \
         $(OBJDIR)\ga_solve_seq.obj\
         $(OBJDIR)\ga_dgemm.obj\
         $(OBJDIR)\ga_dgemm_seq.obj\
-        $(OBJDIR)\ga_transpose.obj
+        $(OBJDIR)\ga_transpose.obj \
+        $(OBJDIR)\DP.obj
 
 
 LOC_DEFINES = -DARMCI
