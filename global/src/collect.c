@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.7 2000-05-05 00:03:23 edo Exp $ */
+/* $Id: collect.c,v 1.8 2000-05-05 19:48:05 d3h325 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -98,10 +98,10 @@ void ga_igop(type, x, n, op)
 #ifdef MPI
 #ifdef EXT_INT
 extern void armci_msg_lgop();
-            armci_msg_lgop(x, (int)n, op,1);
+            armci_msg_lgop(x, (int)n, op);
 #else
 extern void armci_msg_igop();
-            armci_msg_igop(x, (int)n, op,1);
+            armci_msg_igop(x, (int)n, op);
 #endif
 #else
             IGOP_(&type, x, &n, op);

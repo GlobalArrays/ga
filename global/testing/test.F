@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.28 1999-11-11 00:11:43 d3h325 Exp $
+c $Id: test.F,v 1.29 2000-05-05 19:48:05 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-11
@@ -88,6 +88,16 @@ c
       endif
 
       call check_int()
+c
+c     
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*)'CHECKING Wrappers to Message Passing Collective ops'
+         write(6,*)
+         call ffflush(6)
+      endif
+
+      call check_wrappers
 c
 c***  Check if memory limits are enforced 
 c
@@ -666,7 +676,7 @@ c
          write(6,*)
       endif
 #endif
-c     
+c
 c     Delete the global arrays
 c
       status = ga_destroy(g_b)
@@ -1517,12 +1527,92 @@ c
          write(6,*)
          call ffflush(6)
       endif
-
 c     
 c     Delete the global array
 c
       status = ga_destroy(g_a)
 c     
+      end
+
+
+      subroutine check_wrappers
+      implicit none
+      integer mem_size
+#include "mafdecls.fh"
+#include "global.fh"
+#include "testutil.fh"
+      double precision sum
+      integer isum, ibuf(2)
+      integer me, nproc
+c
+      nproc = ga_nnodes()
+      me = ga_nodeid()
+c
+      call ga_sync()
+      if (me .eq. 0) then
+         write(6,*)
+         write(6,*)'> Checking ga_igop'
+         write(6,*)
+         call ffflush(6)
+      endif
+      ibuf(1) = 1
+      ibuf(2) =  me
+      call ga_igop(10000, ibuf, 2, '+')
+      if(ibuf(1).ne.nproc)then
+        call ga_error('ga_igop error',isum)
+      endif
+      if(ibuf(2).ne.((nproc-1)*nproc/2))then
+        call ga_error('ga_igop error -2',isum)
+      endif
+      call ga_sync()
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' ga_igop is  OK'
+         write(6,*)
+      endif
+      call ga_sync()
+c
+      call ga_sync()
+      if (me .eq. 0) then
+         write(6,*)
+         write(6,*)'> Checking ga_dgop'
+         write(6,*)
+         call ffflush(6)
+      endif
+      sum = 1d0 * me
+      call ga_dgop(10000, sum, 1, '+')
+      if(Int(sum).ne.((nproc-1)*nproc/2))then
+        call ga_error('ga_dgop error',Int(sum))
+      endif
+      call ga_sync()
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' ga_dgop is  OK'
+         write(6,*)
+      endif
+c
+      call ga_sync()
+      if (me .eq. 0) then
+         write(6,*)
+         write(6,*)'> Checking ga_brdcst'
+         write(6,*)
+         call ffflush(6)
+      endif
+      if(me.eq.nproc-1)then
+        ibuf(1) = me
+        ibuf(2) = nproc
+      endif
+      call ga_brdcst(1000,ibuf,util_mitob(2),nproc-1)
+      if(ibuf(1).ne.nproc-1)call ga_error('ibuf(1) error',ibuf(1))
+      if(ibuf(2).ne.nproc)call ga_error('ibuf(2) error',ibuf(2))
+      call ga_sync()
+      if (me .eq. 0) then
+         write(6,*)
+         write(6,*)'> ga_brdcst is OK '
+         write(6,*)
+         call ffflush(6)
+      endif
+      call ga_sync()
       end
 
 
