@@ -31,16 +31,21 @@
 #   include <shmem.h>
 #endif
 #   ifdef ELAN
-#     define FENCE_NODE(p) {shmem_quiet(); if(((p)<armci_clus_first)||((p)>armci_clus_last))armci_elan_fence(p);}
+#     define FENCE_NODE(p) {shmem_quiet(); \
+          if(((p)<armci_clus_first)||((p)>armci_clus_last))armci_elan_fence(p);}
 #     define UPDATE_FENCE_STATE(p, op, nissued) 
 #   else
       int cmpl_proc;
-#     define FENCE_NODE(p) if(cmpl_proc == (p)){\
+#     ifdef DECOSF
+#       define FENCE_NODE(p) if(cmpl_proc == (p)){\
              if(((p)<armci_clus_first)||((p)>armci_clus_last))shmem_quiet();\
              else asm ("mb"); }
+#     else
+#       define FENCE_NODE(p) if(cmpl_proc == (p)){\
+             if(((p)<armci_clus_first)||((p)>armci_clus_last))shmem_quiet(); }
+#     endif
 #     define UPDATE_FENCE_STATE(p, op, nissued) if((op)==PUT) cmpl_proc=(p);
 #   endif
-
 #else
 
 #   define FENCE_NODE(p)
