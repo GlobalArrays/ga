@@ -9,7 +9,7 @@ c     allocated and they are numbered 0, ...
 c
       logical verbose            ! If true print distribution info
       character*80 name, form, head
-      integer type, dim1, dim2
+      integer type, dim1, dim2, active
       integer ga_verify_handle
       external ga_verify_handle
       integer g_a, nproc, me, l_d, k_d, ii, lname, ldim1, ldim2, lp
@@ -30,7 +30,8 @@ c
      $        ' ----------------------------------'/)
 c
       do g_a = 0, 99
-         if (ga_verify_handle(g_a)) then
+         active = ga_verify_handle(g_a)
+         if (active .eq. 1) then
 c
 c     Get info from standard GA interface
 c

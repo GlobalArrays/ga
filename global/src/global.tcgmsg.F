@@ -1790,9 +1790,11 @@ c
 c
       end
       integer function ga_verify_handle(g_a)
+      implicit none
 #include "mafdecls.h"
 #include "globalp.fh"
 #include "tcgmsg.fh"
+      integer g_a
       logical status
 c
 c     Return 1/0 if array is active/inactive
