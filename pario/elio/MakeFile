@@ -1,0 +1,19 @@
+#
+
+OBJDIR=.\obj
+
+OBJ          = $(OBJDIR)\elio.obj \
+               $(OBJDIR)\stat.obj
+
+HEADERS      = elio.h      \
+               chemio.h
+
+LOC_DEFINES = -DNOAIO
+LOC_INCLUDES = -I..\..\include
+INCDIR = ..\..\include
+
+LIBRARY = chemio.lib
+LIB_DISTRIB = ..\..\lib\win32
+
+!INCLUDE ..\..\config\NTmakefile.h
+!INCLUDE ..\..\config\NTmakelib.h

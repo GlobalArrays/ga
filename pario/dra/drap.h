@@ -1,8 +1,8 @@
 /*********************** "private" include file for DRA *****************/
  
 #include "elio.h"
+#include "macdecls.h"
 #include <string.h>
-
 
 /************************** common constants ***********************************/
 #define DRA_OFFSET     5000                    /* DRA handle offset            */
@@ -76,11 +76,4 @@ extern void dai_write_param(char* filename, Integer d_a);
 extern void dai_delete_param(char* filename, Integer d_a);
 extern int dai_file_config(char* filename);
 extern logical dai_section_intersect(section_t sref, section_t* sadj);
-extern Integer MA_alloc_get (Integer, Integer, char*, Integer*, Integer*);
-extern Integer MA_push_get (Integer, Integer, char*, Integer*, Integer*);
-extern Integer MA_heap_stack (Integer);
-extern Integer MA_inquire_avail(Integer);
-extern Integer MA_get_pointer(Integer, void*);
-extern Integer MA_pop_stack(Integer);
-extern Integer MA_free_heap(Integer);
-extern int  drai_get_num_serv();
+extern int  drai_get_num_serv(void);

@@ -9,34 +9,6 @@ make test.x
 Documentation is located in disk_arrays.doc and implementation
 notes in Notes.doc.
 
-Running test programs:
-~~~~~~~~~~~~~~~~~~~~~
-
-At present time, test.F and perf.F have meta-file names that include
-hardwired paths of the high-performance filesystems on machines that 
-I am using. 
-
-YOU MUST UPDATE THESE NAMES TO GET THESE PROGRAMS TO WORK ! 
-
-
-Due to memory requirements perf.x requires a minimum number of processors
-it can be run on. The current setup is for 32 processors, except for
-the IBM SP where 16 is sufficient. 
-
-Changing default PIOFS configuration (in particular setting USE_PIOFS_LSEEK)
-in piofs.profile on the IBM SP is discouraged.
-
-
-Platforms that Disk Arrays were tested on:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Intel Paragon
-Cray T3D
-IBM SP
-KSR
-SGI (Power Challenge)
-SUN
-
-
 Bug report, comments, questions:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Jarek Nieplocha <j_nieplocha@pnl.gov>

@@ -5,7 +5,9 @@
 
 
 #include <stdio.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include "global.h"
 #include "drap.h"
 
@@ -21,9 +23,9 @@
 \*/
 int dai_file_config(char* filename)
 {
-    /* on T3E always use independent files */
+    /* on Cray  always use independent files */
 
-#ifdef CRAY_T3E
+#ifdef CRAY
     if(ga_nnodes_()==1) return 0;
     else return 1;
 #else
@@ -171,7 +173,7 @@ Integer me=ga_nodeid_(), dra_hndl=d_a+DRA_OFFSET;
                                 dai_error("dai_write_param:chunk1",0);
     if(!fprintf(fd,"%ld ",(long)DRA[dra_hndl].chunk2))
                                 dai_error("dai_write_param:chunk2",0);
-    if(!fprintf(fd,"\n%s\n",(long)DRA[dra_hndl].name))
+    if(!fprintf(fd,"\n%s\n",DRA[dra_hndl].name))
                                 dai_error("dai_write_param:name",0);
 
     if(fclose(fd))dai_error("dai_write_param: fclose failed",0);

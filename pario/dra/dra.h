@@ -14,6 +14,7 @@
 #define DRA_create           dra_create
 #define DRA_open             dra_open
 #define DRA_inquire          dra_inquire
+#define DRA_flick            dra_flick
 
 #define DRA_init             dra_init_
 #define DRA_close            dra_close_
@@ -25,9 +26,8 @@
 #define DRA_probe            dra_probe_
 #define DRA_wait             dra_wait_
 #define DRA_terminate        dra_terminate_
-#define DRA_flick            dra_flick
 
-#ifdef CRAY_T3D
+#if defined(CRAY) || defined(WIN32)
 #  define dra_create_        DRA_CREATE
 #  define dra_open_          DRA_OPEN
 #  define dra_inquire_       DRA_INQUIRE
@@ -47,13 +47,13 @@
 
 
 
-#if defined(__STDC__) || defined(__cplusplus)
+#if defined(__STDC__) || defined(__cplusplus) || defined(WIN32)
 # define _ARGS_(s) s
 #else
 # define _ARGS_(s) ()
 #endif
 
-extern Integer DRA_init           _ARGS_((Integer *max_arrays,\
+extern Integer FATR DRA_init           _ARGS_((Integer *max_arrays,\
                                          DoublePrecision *max_array_size,\
                                          DoublePrecision *tot_disk_space,\
                                          DoublePrecision *max_memory)); 
@@ -75,15 +75,15 @@ extern Integer DRA_inquire        _ARGS_((Integer *d_a,\
                                          Integer *dim2,\
                                          char    *name,\
                                          char    *filename));  
-extern Integer DRA_close          _ARGS_((Integer *d_a));
-extern Integer DRA_delete         _ARGS_((Integer *d_a)); 
-extern Integer DRA_write          _ARGS_((Integer *g_a,\
+extern Integer FATR DRA_close          _ARGS_((Integer *d_a));
+extern Integer FATR DRA_delete         _ARGS_((Integer *d_a)); 
+extern Integer FATR DRA_write          _ARGS_((Integer *g_a,\
                                          Integer *d_a,\
                                          Integer *request));
-extern Integer DRA_read           _ARGS_((Integer *g_a,\
+extern Integer FATR DRA_read           _ARGS_((Integer *g_a,\
                                          Integer *d_a,\
                                          Integer *request));
-extern Integer DRA_write_section  _ARGS_((logical *transp, 
+extern Integer FATR DRA_write_section  _ARGS_((logical *transp, 
                                          Integer *g_a, 
                                          Integer *d_a,
                                          Integer *gilo,
@@ -95,7 +95,7 @@ extern Integer DRA_write_section  _ARGS_((logical *transp,
                                          Integer *djlo,
                                          Integer *djhi,
                                          Integer *request));
-extern Integer DRA_read_section   _ARGS_((logical *transp, 
+extern Integer FATR DRA_read_section   _ARGS_((logical *transp, 
                                          Integer *g_a,  
                                          Integer *d_a,
                                          Integer *gilo,
@@ -107,9 +107,9 @@ extern Integer DRA_read_section   _ARGS_((logical *transp,
                                          Integer *djlo,
                                          Integer *djhi,
                                          Integer *request));
-extern Integer DRA_probe          _ARGS_((Integer *request, Integer *status));
-extern Integer DRA_wait           _ARGS_((Integer *request));
-extern Integer DRA_terminate      _ARGS_(());
+extern Integer FATR DRA_probe          _ARGS_((Integer *request, Integer *status));
+extern Integer FATR DRA_wait           _ARGS_((Integer *request));
+extern Integer FATR DRA_terminate      _ARGS_(());
 extern void    DRA_flick          _ARGS_(());
 
 #undef _ARGS_

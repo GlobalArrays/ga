@@ -2,34 +2,17 @@
 #define SFSYNC 29000
 
 #ifndef TSCMSG 
-#   ifdef CRAY
-#      define SYNC      GA_SYNC
-#      define NPROC     GA_NNODES
-#      define ME        GA_NODEID
-#   else
-#      define SYNC      ga_sync_
-#      define NPROC     ga_nnodes_
-#      define ME        ga_nodeid_
-#   endif
-#   define ERROR  ga_error
-    extern void    SYNC();
+#   include "global.h"
+#   define SYNC      GA_sync
+#   define NPROC     GA_nnodes
+#   define ME        GA_nodeid
+#   define ERROR     GA_error
 #else
+#   include "sndrcv.h"
     long sync_flag = SFSYNC;
-#   ifdef CRAY
-#      define SYNC()    SYNCH(&sync_flag)
-#      define NPROC     NNODES
-#      define ME        NODEID
-       extern void      SYNCH();
-#   else
-#      define SYNC()    synch_(&sync_flag)
-#      define NPROC     nnodes_
-#      define ME        nodeid_
-       extern void      synch_();
-#   endif
+#   define SYNC()    SYNCH_(&sync_flag)
+#   define NPROC     NNODES_
+#   define ME        NODEID_
 #   define ERROR  Error
 #endif
-
-extern Integer NPROC(), ME();
-extern void    ERROR();
-
 

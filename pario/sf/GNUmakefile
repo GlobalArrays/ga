@@ -1,4 +1,4 @@
-# make file for Shared Files library
+# GNU make file for Shared Files library
 #
 # Jarek Nieplocha, Aug  1 1996
 #
@@ -8,11 +8,12 @@
  LIB_TARGETS = *.x *.p
          OBJ = sf_fortran.o shared.files.o
      HEADERS = sf.h sf.fh
-LIB_INCLUDES = -I../elio
+INCDIR = ../../include
+LIB_INCLUDES = -I$(INCDIR)
 
 
-include ../../config/makefile.h
 include ../makefile.h
+include ../../config/makefile.h
 include ../../config/makelib.h
 
 COPT=-g

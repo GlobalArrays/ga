@@ -48,8 +48,7 @@ Integer sf_handle =-1, candidate = 0;
 }
 
 
-void sfi_release_handle(handle)
-        Integer *handle;
+void sfi_release_handle(Integer *handle)
 {
      SF[*handle+SF_OFFSET].actv =0;
      *handle = 0;
@@ -86,7 +85,7 @@ Integer hndl;
 }
 
 
-Integer sf_destroy_(s_a)
+Integer FATR sf_destroy_(s_a)
         Integer *s_a;                      /*input:SF handle */
 {
 Integer handle = *s_a+SF_OFFSET;
@@ -104,7 +103,7 @@ Integer handle = *s_a+SF_OFFSET;
 
 /*\ asynchronous write to shared file
 \*/
-Integer sf_write_(s_a, offset, bytes, buffer, req_id)
+Integer FATR sf_write_(s_a, offset, bytes, buffer, req_id)
         Integer *s_a;
         SFsize_t *offset, *bytes;
         char *buffer;
@@ -132,7 +131,7 @@ io_request_t id;
 
 /*\ asynchronous read from shared file
 \*/
-Integer sf_read_(s_a, offset, bytes, buffer, req_id)
+Integer FATR sf_read_(s_a, offset, bytes, buffer, req_id)
         Integer *s_a;
         SFsize_t *offset, *bytes;
         char *buffer;
@@ -152,7 +151,7 @@ io_request_t id;
 
 /*\ block calling process until I/O operation completes
 \*/
-Integer sf_wait_(req_id)
+Integer FATR sf_wait_(req_id)
         Integer *req_id;
 {
 int status;
@@ -166,7 +165,7 @@ io_request_t id = (io_request_t) *req_id;
 /*\ block calling process until all I/O operations associated
  *  with id in the list complete
 \*/
-Integer sf_waitall_(list, num)
+Integer FATR sf_waitall_(list, num)
         Integer *list, *num;
 {
 int i;

@@ -1,9 +1,13 @@
 #include "eaf.h"
 #include "eafP.h"
-#include "types.f2c.h"
+#include "typesf2c.h"
+#include <math.h>
 
 #if defined(CRAY)
 #include <fortran.h>
+#endif
+
+#if defined(CRAY) || defined(WIN32)
 #define eaf_write_ EAF_WRITE
 #define eaf_awrite_ EAF_AWRITE
 #define eaf_read_ EAF_READ
@@ -20,6 +24,8 @@
 #define eaf_error_ EAF_ERROR
 #define eaf_print_stats_ EAF_PRINT_STATS
 #define eaf_errmsg_ EAF_ERRMSG
+#define eaf_util_szint_ EAF_UTIL_SZINT
+#define eaf_util_random_ EAF_UTIL_RANDOM
 #endif
 
 static int fortchar_to_string(const char *f, int flen, char *buf, 
@@ -60,7 +66,7 @@ static int valid_offset(double offset)
     return ((offset - ((double) ((eaf_off_t) offset))) == 0.0);
 }
 	
-Integer eaf_write_(Integer *fd, double *offset, const void *buf, 
+Integer FATR eaf_write_(Integer *fd, double *offset, const void *buf, 
 		   Integer *bytes)
 {
     if (!valid_offset(*offset)) return EAF_ERR_NONINTEGER_OFFSET;
@@ -68,7 +74,7 @@ Integer eaf_write_(Integer *fd, double *offset, const void *buf,
 			       (size_t) *bytes);
 }
 
-Integer eaf_awrite_(Integer *fd, double *offset, const void *buf, 
+Integer FATR eaf_awrite_(Integer *fd, double *offset, const void *buf, 
 		    Integer *bytes, Integer *req_id)
 {
     int req, status;
@@ -80,14 +86,14 @@ Integer eaf_awrite_(Integer *fd, double *offset, const void *buf,
     return (Integer) status;
 }
 
-Integer eaf_read_(Integer *fd, double *offset, void *buf, Integer *bytes)
+Integer FATR eaf_read_(Integer *fd, double *offset, void *buf, Integer *bytes)
 {
     if (!valid_offset(*offset)) return EAF_ERR_NONINTEGER_OFFSET;
     return (Integer) eaf_read((int) *fd, (eaf_off_t) *offset, buf, 
 			      (size_t) *bytes);
 }
 
-Integer eaf_aread_(Integer *fd, double *offset, void *buf, 
+Integer FATR eaf_aread_(Integer *fd, double *offset, void *buf, 
 		    Integer *bytes, Integer *req_id)
 {
     int req, status;
@@ -99,22 +105,22 @@ Integer eaf_aread_(Integer *fd, double *offset, void *buf,
     return (Integer) status;
 }
 
-Integer eaf_wait_(Integer *fd, Integer *id)
+Integer FATR eaf_wait_(Integer *fd, Integer *id)
 {
     return (Integer) eaf_wait((int) *fd, (int) *id);
 }
 
-void eaf_print_stats_(Integer *fd)
+void FATR eaf_print_stats_(Integer *fd)
 {
     eaf_print_stats((int) *fd);
 }
 
-Integer eaf_truncate_(Integer *fd, double *length)
+Integer FATR eaf_truncate_(Integer *fd, double *length)
 {
     return (Integer) eaf_truncate((int) *fd, (eaf_off_t) *length);
 }
 
-Integer eaf_probe_(Integer *id, Integer *status)
+Integer FATR eaf_probe_(Integer *id, Integer *status)
 {
     int s, code;
 
@@ -125,12 +131,13 @@ Integer eaf_probe_(Integer *id, Integer *status)
 }
 
 
-Integer eaf_close_(Integer *fd)
+Integer FATR eaf_close_(Integer *fd)
 {
     return (Integer) eaf_close((int) *fd);
 }
 
-Integer eaf_length_(Integer *fd, double *length)
+
+Integer FATR eaf_length_(Integer *fd, double *length)
 {
     eaf_off_t len;
     int code;
@@ -146,13 +153,14 @@ logical eaf_eof_(Integer *code)
     return (logical) eaf_eof((int) *code);
 }
 
-#if defined(CRAY) || defined(CRAY_T3D)
-int eaf_open_(_fcd f, Integer *type, Integer *fd)
+
+#if defined(CRAY) || defined(WIN32)
+Integer FATR  eaf_open_(_fcd f, Integer *type, Integer *fd)
 {
     char *fname = _fcdtocp(f);
     int flen = _fcdlen(f);
 #else
-int eaf_open_(const char *fname, Integer *type, Integer *fd, int flen)
+Integer FATR eaf_open_(const char *fname, Integer *type, Integer *fd, int flen)
 {
 #endif
     char buf[1024];
@@ -164,16 +172,16 @@ int eaf_open_(const char *fname, Integer *type, Integer *fd, int flen)
     code = eaf_open(buf, (int) *type, &tmp);
     *fd = (Integer) tmp;
 
-    return code;
+    return (Integer)code;
 }
 
-#ifdef CRAY
-Integer eaf_delete_(_fcd f)
+#if defined(CRAY) || defined(WIN32)
+Integer FATR eaf_delete_(_fcd f)
 {
     char *fname = _fcdtocp(f);
     int flen = _fcdlen(f);
 #else
-Integer eaf_delete_(const char *fname, int flen)
+Integer FATR eaf_delete_(const char *fname, int flen)
 {
 #endif
     char buf[1024];
@@ -184,15 +192,15 @@ Integer eaf_delete_(const char *fname, int flen)
     return (Integer) eaf_delete(buf);
 }
 
-#ifdef CRAY
-Integer eaf_stat_(_fcd p, Integer *avail_kb, _fcd fst)
+#if defined(CRAY) || defined(WIN32)
+Integer FATR eaf_stat_(_fcd p, Integer *avail_kb, _fcd fst)
 {
     char *path = _fcdtocp(p);
     int pathlen = _fcdlen(p);
     char *fstype = _fcdtocp(fst);
     int fslen = _fcdlen(fst);
 #else
-Integer eaf_stat_(const char *path, int *avail_kb, char *fstype, 
+Integer FATR eaf_stat_(const char *path, int *avail_kb, char *fstype, 
 		  int pathlen, int fslen)
 {
 #endif
@@ -215,13 +223,13 @@ Integer eaf_stat_(const char *path, int *avail_kb, char *fstype,
     return code;
 }
     
-#ifdef CRAY
-void eaf_errmsg_(Integer *code,  _fcd m)
+#if defined(CRAY) || defined(WIN32)
+void FATR eaf_errmsg_(Integer *code,  _fcd m)
 {
     char *msg = _fcdtocp(m);
     int msglen = _fcdlen(m);
 #else
-void eaf_errmsg_(Integer *code, char *msg, int msglen)
+void FATR eaf_errmsg_(Integer *code, char *msg, int msglen)
 {
 #endif
     char buf[80];
@@ -231,4 +239,15 @@ void eaf_errmsg_(Integer *code, char *msg, int msglen)
     (void) string_to_fortchar(msg, msglen, buf);
 }
 
+
+double FATR eaf_util_random_(Integer* seed)
+{
+  if(*seed) srandom((unsigned) *seed);
+  return ((double) random())*4.6566128752458e-10;
+}
+
+Integer FATR eaf_util_szint_()
+{
+  return (Integer)sizeof(Integer);
+}
 

@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.6 1997-06-06 21:22:26 d3h325 Exp $
+#$Id: GNUmakefile,v 1.1 1999-05-27 16:37:40 d3h325 Exp $
 
 LIB_DISTRIB = ../lib
 LIBRARY = libchemio.a

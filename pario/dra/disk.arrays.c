@@ -8,7 +8,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "macommon.h"
+#include "macdecls.h"
 
 /************************** constants ****************************************/
 
@@ -50,6 +50,8 @@
 #  define DRA_NUM_FILE_MGR INFINITE_NUM_PROCS
 #elif defined(CRAY_T3D)
 #  define DRA_NUM_IOPROCS 16 
+#elif defined(CRAY_YMP)
+#  define DRA_NUM_IOPROCS 4 
 #elif defined(SP1)|| defined(SP)
 #     define DRA_NUM_IOPROCS 8
 #elif defined(KSR)
@@ -189,7 +191,12 @@ Integer dai_io_procs(Integer d_a)
 Integer num;
 
         /* this one of many possibilities -- depends on the system */
+#ifdef CRAY_T3D
+        num = DRA_NUM_IOPROCS;
+#else
         num = (INDEPFILES(d_a)) ? INFINITE_NUM_PROCS: DRA_NUM_IOPROCS; 
+#endif
+
         return( MIN( ga_nnodes_(), num));
 }
 
@@ -211,7 +218,7 @@ Integer me = ga_nodeid_();
 
 /*\ determines if I/O process participates in file management (create/delete)
 \*/
-Integer dai_io_manage(d_a)
+Integer dai_io_manage(Integer d_a)
 {
         Integer me = dai_io_nodeid(d_a);
 
@@ -259,11 +266,11 @@ void dai_callback(int op, int transp, section_t gs_a, section_t ds_a,
 
 /*\ INITIALIZE DISK ARRAY DATA STRUCTURES
 \*/
-Integer dra_init_(max_arrays, max_array_size, tot_disk_space, max_memory)
-        Integer *max_arrays;              /* input */
-        DoublePrecision *max_array_size;  /* input */
-        DoublePrecision *tot_disk_space;  /* input */
-        DoublePrecision *max_memory;      /* input */
+Integer FATR dra_init_(
+        Integer *max_arrays,              /* input */
+        DoublePrecision *max_array_size,  /* input */
+        DoublePrecision *tot_disk_space,  /* input */
+        DoublePrecision *max_memory)      /* input */
 {
 #define DEF_MAX_ARRAYS 16
 #define MAX_ARRAYS 1024
@@ -545,7 +552,7 @@ Size_t  bytes;
 \*/
 void dai_get(section_t ds_a, Void *buf, Integer ld, io_request_t *id)
 {
-Integer handle = ds_a.handle + DRA_OFFSET, elem;
+Integer handle = ds_a.handle + DRA_OFFSET, elem, rc;
 off_t   offset;
 Size_t  bytes;
 void    dai_clear_buffer();
@@ -561,8 +568,8 @@ void    dai_clear_buffer();
         /* since everything is aligned, read data from disk */
         elem = (ds_a.ihi - ds_a.ilo + 1) * (ds_a.jhi - ds_a.jlo + 1);
         bytes= (Size_t) elem * dai_sizeofM(DRA[handle].type);
-        if( ELIO_OK != elio_aread(DRA[handle].fd, offset, buf, bytes, id ))
-                       dai_error("dai_get failed", ds_a.handle);
+        rc= elio_aread(DRA[handle].fd, offset, buf, bytes, id );
+        if(rc !=  ELIO_OK) dai_error("dai_get failed", rc);
 }
 
 
@@ -591,16 +598,16 @@ void dai_assign_request_handle(Integer* request)
 
 /*\ CREATE A DISK ARRAY
 \*/
-Integer dra_create(type, dim1, dim2, name, filename, mode, reqdim1, reqdim2, d_a)
-        Integer *d_a;                      /*input:DRA handle*/
-        Integer *type;                     /*input*/
-        Integer *dim1;                     /*input*/
-        Integer *dim2;                     /*input*/
-        Integer *reqdim1;                  /*input: dim1 of typical request*/
-        Integer *reqdim2;                  /*input: dim2 of typical request*/
-        Integer *mode;                     /*input*/
-        char    *name;                     /*input*/
-        char    *filename;                 /*input*/
+Integer dra_create(
+        Integer *type,                     /*input*/
+        Integer *dim1,                     /*input*/
+        Integer *dim2,                     /*input*/
+        char    *name,                     /*input*/
+        char    *filename,                 /*input*/
+        Integer *mode,                     /*input*/
+        Integer *reqdim1,                  /*input: dim1 of typical request*/
+        Integer *reqdim2,                  /*input: dim2 of typical request*/
+        Integer *d_a)                      /*output:DRA handle*/
 {
 Integer handle, elem_size;
 
@@ -671,8 +678,9 @@ Integer handle, elem_size;
         ga_sync_();
 
         if(dai_file_master(*d_a) && dai_write_allowed(*d_a)) dai_zero_eof(*d_a);
-	/* if(dai_io_nodeid(*d_a)==0)printf("chunking: %d x %d\n",DRA[handle].chunk1,
-                                                          DRA[handle].chunk2); */
+/*        if(dai_io_nodeid(*d_a)==0)printf("chunking: %d x %d\n",DRA[handle].chunk1,
+                                                          DRA[handle].chunk2);
+*/
 
         ga_sync_();
 
@@ -683,10 +691,10 @@ Integer handle, elem_size;
 
 /*\ OPEN AN ARRAY THAT EXISTS ON THE DISK
 \*/
-Integer dra_open(filename, mode, d_a)
-        char *filename;                  /* input  */
-        Integer *mode;                   /*input*/
-        Integer *d_a;                    /* output */
+Integer dra_open(
+        char *filename,                  /* input  */
+        Integer *mode,                   /*input*/
+        Integer *d_a)                    /* output */
 {
 Integer handle;
 
@@ -742,7 +750,7 @@ Integer handle;
 
 /*\ CLOSE AN ARRAY AND SAVE IT ON THE DISK
 \*/
-Integer dra_close_(Integer* d_a) /* input:DRA handle*/ 
+Integer FATR dra_close_(Integer* d_a) /* input:DRA handle*/ 
 {
 Integer handle = *d_a+DRA_OFFSET;
 int rc;
@@ -764,7 +772,6 @@ int rc;
 /*\ decompose [ilo:ihi, jlo:jhi] into aligned and unaligned DRA subsections
 \*/ 
 void dai_decomp_section(
-/*ds_a, aligned, na, cover,unaligned,nu)*/
         section_t ds_a,
         Integer aligned[][4], 
         int *na,
@@ -860,10 +867,10 @@ Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
 
 /*\ WRITE g_a TO d_a
 \*/
-Integer dra_write_(g_a, d_a, request)
-        Integer *g_a;                      /*input:GA handle*/
-        Integer *d_a;                      /*input:DRA handle*/
-        Integer *request;                  /*output: handle to async oper. */
+Integer FATR dra_write_(
+        Integer *g_a,                      /*input:GA handle*/
+        Integer *d_a,                      /*input:DRA handle*/
+        Integer *request)                  /*output: handle to async oper. */
 {
 Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
 logical transp = FALSE;
@@ -1265,20 +1272,19 @@ section_t ds_chunk = ds_a;
 
 /*\ WRITE SECTION g_a[gilo:gihi, gjlo:gjhi] TO d_a[dilo:dihi, djlo:djhi]
 \*/
-Integer dra_write_section_(transp, g_a, gilo, gihi, gjlo, gjhi,
-                                  d_a, dilo, dihi, djlo, djhi, request)
-        logical *transp;                   /*input:transpose operator*/
-        Integer *g_a;                      /*input:GA handle*/ 
-        Integer *d_a;                      /*input:DRA handle*/ 
-        Integer *gilo;                     /*input*/
-        Integer *gihi;                     /*input*/
-        Integer *gjlo;                     /*input*/
-        Integer *gjhi;                     /*input*/
-        Integer *dilo;                     /*input*/
-        Integer *dihi;                     /*input*/
-        Integer *djlo;                     /*input*/
-        Integer *djhi;                     /*input*/
-        Integer *request;                  /*output: async. request id*/ 
+Integer FATR dra_write_section_(
+        logical *transp,                   /*input:transpose operator*/
+        Integer *g_a,                      /*input:GA handle*/ 
+        Integer *gilo,                     /*input*/
+        Integer *gihi,                     /*input*/
+        Integer *gjlo,                     /*input*/
+        Integer *gjhi,                     /*input*/
+        Integer *d_a,                      /*input:DRA handle*/ 
+        Integer *dilo,                     /*input*/
+        Integer *dihi,                     /*input*/
+        Integer *djlo,                     /*input*/
+        Integer *djhi,                     /*input*/
+        Integer *request)                  /*output: async. request id*/ 
 {
 Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
 section_t d_sect, g_sect;
@@ -1336,20 +1342,19 @@ section_t d_sect, g_sect;
 
 /*\ READ SECTION g_a[gilo:gihi, gjlo:gjhi] FROM d_a[dilo:dihi, djlo:djhi]
 \*/
-Integer dra_read_section_(transp, g_a, gilo, gihi, gjlo, gjhi,
-                                 d_a, dilo, dihi, djlo, djhi, request)
-        logical *transp;                   /*input:transpose operator*/
-        Integer *g_a;                      /*input:GA handle*/ 
-        Integer *d_a;                      /*input:DRA handle*/ 
-        Integer *gilo;                     /*input*/
-        Integer *gihi;                     /*input*/
-        Integer *gjlo;                     /*input*/
-        Integer *gjhi;                     /*input*/
-        Integer *dilo;                     /*input*/
-        Integer *dihi;                     /*input*/
-        Integer *djlo;                     /*input*/
-        Integer *djhi;                     /*input*/
-        Integer *request;               /*output: request id*/ 
+Integer FATR dra_read_section_(
+        logical *transp,                   /*input:transpose operator*/
+        Integer *g_a,                      /*input:GA handle*/ 
+        Integer *gilo,                     /*input*/
+        Integer *gihi,                     /*input*/
+        Integer *gjlo,                     /*input*/
+        Integer *gjhi,                     /*input*/
+        Integer *d_a,                      /*input:DRA handle*/ 
+        Integer *dilo,                     /*input*/
+        Integer *dihi,                     /*input*/
+        Integer *djlo,                     /*input*/
+        Integer *djhi,                     /*input*/
+        Integer *request)                  /*output: request id*/ 
 {
 Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
 section_t d_sect, g_sect;
@@ -1405,7 +1410,7 @@ section_t d_sect, g_sect;
 
 /*\ READ g_a FROM d_a
 \*/
-Integer dra_read_(Integer* g_a, Integer* d_a, Integer* request)
+Integer FATR dra_read_(Integer* g_a, Integer* d_a, Integer* request)
 {
 Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
 logical transp = FALSE;
@@ -1432,7 +1437,7 @@ Integer ilo, ihi, jlo, jhi;
 
 /*\ WAIT FOR COMPLETION OF DRA OPERATION ASSOCIATED WITH request
 \*/ 
-Integer dra_wait_(Integer* request)
+Integer FATR dra_wait_(Integer* request)
 {
         if(*request == DRA_REQ_INVALID) return(ELIO_OK);
 
@@ -1448,7 +1453,7 @@ Integer dra_wait_(Integer* request)
 
 /*\ TEST FOR COMPLETION OF DRA OPERATION ASSOCIATED WITH request
 \*/
-Integer dra_probe_(
+Integer FATR dra_probe_(
         Integer *request,                  /*input*/
         Integer *status)                   /*output*/
 {
@@ -1494,13 +1499,13 @@ int stat;
 
 /*\ INQUIRE PARAMETERS OF EXISTING DISK ARRAY
 \*/
-Integer dra_inquire(d_a, type, dim1, dim2, name, filename)
-        Integer *d_a;                      /*input:DRA handle*/ 
-        Integer *type;                     /*output*/
-        Integer *dim1;                     /*output*/
-        Integer *dim2;                     /*output*/
-        char    *name;                     /*output*/
-        char    *filename;                 /*output*/
+Integer dra_inquire(
+        Integer *d_a,                      /*input:DRA handle*/ 
+        Integer *type,                     /*output*/
+        Integer *dim1,                     /*output*/
+        Integer *dim2,                     /*output*/
+        char    *name,                     /*output*/
+        char    *filename)                 /*output*/
 {
 Integer handle=*d_a+DRA_OFFSET;
 
@@ -1518,7 +1523,7 @@ Integer handle=*d_a+DRA_OFFSET;
 
 /*\ DELETE DISK ARRAY  -- relevant file(s) gone
 \*/
-Integer dra_delete_(Integer* d_a)            /*input:DRA handle */
+Integer FATR dra_delete_(Integer* d_a)            /*input:DRA handle */
 {
 Integer handle = *d_a+DRA_OFFSET;
 
@@ -1529,7 +1534,7 @@ Integer handle = *d_a+DRA_OFFSET;
 
         if(dai_file_master(*d_a))
           if(INDEPFILES(*d_a)){ 
-             sprintf(dummy_fname,"%s%d",DRA[handle].fname,dai_io_nodeid(*d_a));
+             sprintf(dummy_fname,"%s.%d",DRA[handle].fname,dai_io_nodeid(*d_a));
              elio_delete(dummy_fname);
           }else {
 
@@ -1546,7 +1551,7 @@ Integer handle = *d_a+DRA_OFFSET;
 
 /*\ TERMINATE DRA DRATA STRUCTURES
 \*/
-Integer dra_terminate_()
+Integer FATR dra_terminate_()
 {
         free(DRA);
         MA_free_heap(_handle_buffer);

@@ -39,7 +39,7 @@ c
       else
         print *,'ma_init failed'
       endif
-      if(me.eq.0)print *, 'all done ...'
+c     if(me.eq.0)print *, 'all done ...'
       call pend()
       end
 

@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.16 1998-07-17 17:21:02 d3g681 Exp $
+#$Id: GNUmakefile,v 1.1 1999-05-27 16:38:02 d3h325 Exp $
 
           OBJ = eaf.o eaf_f2c.o
       LIBRARY = libchemio.a
@@ -6,7 +6,8 @@
       HEADERS = eaf.fh eaf.h
   LIB_DEFINES = -DEAF_STATS
   LIB_TARGETS = test.x
- LIB_INCLUDES = -I../elio -I../../global/src
+       INCDIR = ../../include
+ LIB_INCLUDES = -I$(INCDIR)
 
 include ../../config/makefile.h
 include ../makefile.h

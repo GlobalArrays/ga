@@ -1,0 +1,15 @@
+SUBDIRS = .\elio .\dra .\eaf .\sf
+
+!include ..\config\NTmakefile.h
+LIBDIR = ..\lib\win32
+COMPLIBS = eaf.lib dra.lib sf.lib
+
+all: $(SUBDIRS)
+	!cd $** & nmake -nologo /f NTmakefile 
+	cd $(LIBDIR)
+	$(AR) /out:chemio.lib $(COMPLIBS)  
+	-del $(COMPLIBS)
+	
+	
+clean: $(SUBDIRS)
+	!cd $** & nmake -nologo /f NTmakefile clean

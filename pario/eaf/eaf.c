@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef WIN32
+#define PATH_MAX _MAX_PATH
+#define F_OK 2
+#else
 #include <unistd.h>
+#endif
 #include <string.h>
 #include <limits.h>
 #ifdef EAF_STATS
@@ -396,6 +401,7 @@ int eaf_truncate(int fd, eaf_off_t length)
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
+#ifdef CRAY 
    /* ftruncate does not work with Cray FFIO, we need to implement it
     * as a sequence of generic close, truncate, open calls 
     */
@@ -408,6 +414,9 @@ int eaf_truncate(int fd, eaf_off_t length)
         file[fd].fname = 0;
         return ELIO_PENDING_ERR;
     }
+#else
+    if(elio_truncate(file[fd].elio_fd, (off_t)length)) return EAF_ERR_TRUNCATE;
+#endif
 
     return EAF_OK;
 

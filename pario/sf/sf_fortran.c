@@ -32,13 +32,13 @@ static void f2cstring(fstring, flength, cstring, clength)
 }
 
 
-#ifdef CRAY
-Integer SF_CREATE(fname, size_hard_limit, size_soft_limit, req_size, handle)
+#if defined(CRAY) || defined(WIN32)
+Integer FATR SF_CREATE(fname, size_hard_limit, size_soft_limit, req_size, handle)
         _fcd fname;
         SFsize_t *size_hard_limit, *size_soft_limit, *req_size;
         Integer *handle;
 #else
-Integer sf_create_(fname, size_hard_limit, size_soft_limit, req_size,handle,len)
+Integer FATR sf_create_(fname, size_hard_limit, size_soft_limit, req_size,handle,len)
         char *fname;
         SFsize_t *size_hard_limit, *size_soft_limit, *req_size;
         Integer *handle;
@@ -46,7 +46,7 @@ Integer sf_create_(fname, size_hard_limit, size_soft_limit, req_size,handle,len)
 
 #endif
 {
-#ifdef CRAY
+#if defined(CRAY) || defined(WIN32)
       f2cstring(_fcdtocp(fname), _fcdlen(fname), cname, MAX_NAME);
 #else
       f2cstring(fname, len, cname, MAX_NAME);

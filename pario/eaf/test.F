@@ -1,12 +1,7 @@
-#if defined(CRAY) || defined(SGITFP) || defined(DECOSF)
-#define EAF_SZ_INT 8
-#else
-#define EAF_SZ_INT 4
-#endif
 #define IO_TEST_SZ (1024*1024/8)
 #define IO_NUM_FILES 4
 #define MAX_ITER 4
-#define MAP(x) dble(IO_TEST_SZ*((x-1)*EAF_SZ_INT))
+#define MAP(x) dble(IO_TEST_SZ*((x-1)*eaf_util_szint()))
 #define MAX_FILE_SZ 1.8d9
 #define BASE_NAME 'EAFfile'
 #ifdef  HPIODIR
@@ -40,7 +35,7 @@ c
       integer aio(IO_NUM_FILES, MAX_ITER)
       integer stat2
 c     
-      buf_sz = (IO_TEST_SZ*EAF_SZ_INT)
+      buf_sz = (IO_TEST_SZ*eaf_util_szint())
 c
       write(6,*)
       write(6,*) ' TEST 2 ... asynchronous read/write of multiple files'
@@ -143,7 +138,7 @@ c
       integer fd(IO_NUM_FILES)
       integer buf_sz
 c     
-      buf_sz = (IO_TEST_SZ*EAF_SZ_INT)
+      buf_sz = (IO_TEST_SZ*eaf_util_szint())
 c
       write(6,*)
       write(6,*) ' TEST 1 ... synchronous read/write of multiple files'
@@ -278,8 +273,6 @@ c
       integer avail, fd, i, nwrite, ierr, iolen4, iolen, loop
       double precision length, offset, ofw
       double precision buf(IO_TEST_SZ)
-      double precision util_random
-      external util_random
 c
       write(6,*)
       write(6,*) ' TEST 4 ... fill the file system '
@@ -342,13 +335,13 @@ c
 c
 c     random read and write
 c
-      buf(1) = util_random(35321)
+      buf(1) = eaf_util_random(35321)
       do iolen4 = 0,2
          iolen = 8*1024 * (4**iolen4)   ! 1024,4096,16384 doubles
          write(6,*) ' Random write: len=',iolen
          call testerr(eaf_open(fname, eaf_rw, fd))
          do loop = 1, int(length/iolen)/4
-           offset = int((length-iolen)*util_random(0))
+           offset = int((length-iolen)*eaf_util_random(0))
            ierr = eaf_write(fd, offset, buf, iolen)
            if (ierr .ne. 0) then
              call testerr(ierr)
@@ -359,7 +352,7 @@ c
          write(6,*) ' Random read : len=',iolen
          call testerr(eaf_open(fname, eaf_rw, fd))
          do loop = 1, int(length/iolen)/4
-           offset = int((length-iolen)*util_random(0))
+           offset = int((length-iolen)*eaf_util_random(0))
            ierr = eaf_read(fd, offset, buf, iolen)
            if (ierr .ne. 0) then
              call testerr(ierr)

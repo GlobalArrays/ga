@@ -1,0 +1,26 @@
+#
+
+OBJDIR=.\obj
+
+OBJ = $(OBJDIR)\eaf.obj \
+   $(OBJDIR)\eaf_f2c.obj 
+
+HEADERS      = eaf.h eaf.fh
+
+LOC_INCLUDES = -I..\..\include
+INCDIR = ..\..\include
+
+LIBRARY = eaf.lib
+LIB_DISTRIB = ..\..\lib\win32
+
+!INCLUDE ..\..\config\NTmakefile.h
+!INCLUDE ..\..\config\NTmakelib.h
+
+
+LIBS = /MT $(LIB_DISTRIB)\chemio.lib\
+ $(LIB_DISTRIB)\global.lib  $(LIB_DISTRIB)\tcgmsg-mpi.lib\
+ $(LIB_DISTRIB)\ma.lib  $(LIB_DISTRIB)\linalg.lib\
+ ..\..\armci\lib\win32\armci.lib $(MPI) wsock32.lib
+
+test.exe: $(OBJDIR)\test.obj
+        $(FC) $(FOPT) /Fetest.exe $** $(LIBS)

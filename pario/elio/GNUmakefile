@@ -1,13 +1,14 @@
-#$Id: makefile,v 1.16 1998-07-17 17:21:02 d3g681 Exp $
+#$Id: GNUmakefile,v 1.1 1999-05-27 16:38:06 d3h325 Exp $
 #
 #  Initial version Jace A Mogill (12 June 1996), ANL
 
  LIB_DISTRIB = ../../lib
      LIBRARY = libchemio.a
          OBJ = elio.o stat.o
-     HEADERS = chemio.h
+     HEADERS = chemio.h elio.h
 
 
+INCDIR = ../../include
 include ../../config/makefile.h
 include ../makefile.h
 
