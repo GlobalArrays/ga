@@ -30,14 +30,14 @@ c
 c     we can also use GA_set_memory_limit BEFORE first ga_create call
 c
       if(ga_nodeid().eq.0)then
-         print *,' GA initialized '
+         print *,' GA initialized ', nproc, stack, heap
          call ffflush(6)
       endif
 c
 c***  Initialize the MA package
 c     MA must be initialized before any global array is allocated
 c
-      status = ma_init(MT_DCPL, stack, ma_heap)
+      status = ma_init(MT_DCPL, stack, heap)
       if (.not. status) call ga_error('ma_init failed',-1) 
 c
       if(me.eq.0)then
