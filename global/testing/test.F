@@ -85,9 +85,9 @@ c
       integer iv(m), jv(m)
       logical status
       integer g_a, g_b
-      integer iran, i, j, loop, nloop, ilo, ihi, jlo, jhi, itmp
+      integer iran, i,j, loop,nloop,maxloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, ii, jj
-      parameter (nloop = 100)
+      parameter (maxloop = 100)
       integer maxproc
       parameter (maxproc = 128)
       double precision drand, crap, sum1, sum2, x
@@ -97,6 +97,7 @@ c
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
+      nloop = Min(maxloop,n)
 c     
 c     a() is a local copy of what the global array should start as
 c

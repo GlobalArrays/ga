@@ -1,3 +1,10 @@
+#if defined(CRAY_T3D) || defined(KSR)
+#   define xgemm SGEMM
+#else
+#   define xgemm DGEMM
+#endif
+c
+c
       program test
 #include "mafdecls.h"
 #include "global.fh"
@@ -332,7 +339,7 @@ c......................................................
      $                      g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
      $                      g_b, bilo,bilo+n/3, bjlo, bjlo+n/2,
      $                      g_c, bilo,bilo+n/2, bjlo, bjlo+n/2)
-      call dgemm('n','n',n/2+1,n/2+1,n/3+1,1d0,a(ailo,ajlo), n,
+      call xgemm('n','n',n/2+1,n/2+1,n/3+1,1d0,a(ailo,ajlo), n,
      $            b(bilo,bjlo),n, 0d0, c, n)
 *     call ga_print_patch(g_a, ailo,ailo+n/2, ajlo, ajlo+n/3)
 *     call ga_print_patch(g_b, bilo,bilo+n/3, bjlo, bjlo+n/2)
@@ -364,7 +371,7 @@ c
      $                      g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
      $                      g_b, bilo,bilo+n/3, bjlo, bjlo+n/2,
      $                      g_c, bilo,bilo+n/2, bjlo, bjlo+n/2)
-      call dgemm('t','n',n/2+1,n/2+1,n/3+1,1d0,a(ajlo,ailo), n,
+      call xgemm('t','n',n/2+1,n/2+1,n/3+1,1d0,a(ajlo,ailo), n,
      $            b(bilo,bjlo),n, 0d0, c, n)
 *     call ga_print(g_a,1) 
 *     call ga_print_patch(g_b, bilo,bilo+n/3, bjlo, bjlo+n/2)
@@ -396,7 +403,7 @@ c
      $                      g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
      $                      g_b, bilo,bilo+n/3, bjlo, bjlo+n/2,
      $                      g_c, bilo,bilo+n/2, bjlo, bjlo+n/2)
-      call dgemm('n','t',n/2+1,n/2+1,n/3+1,1d0,a(ailo,ajlo), n,
+      call xgemm('n','t',n/2+1,n/2+1,n/3+1,1d0,a(ailo,ajlo), n,
      $            b(bjlo,bilo),n, 0d0, c, n)
 *     call ga_print(g_a,1)
 *     call ga_print_patch(g_b, bilo,bilo+n/3, bjlo, bjlo+n/2)
@@ -428,7 +435,7 @@ c
      $                      g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
      $                      g_b, bilo,bilo+n/3, bjlo, bjlo+n/2,
      $                      g_c, bilo,bilo+n/2, bjlo, bjlo+n/2)
-      call dgemm('t','t',n/2+1,n/2+1,n/3+1,1d0,a(ajlo,ailo), n,
+      call xgemm('t','t',n/2+1,n/2+1,n/3+1,1d0,a(ajlo,ailo), n,
      $            b(bjlo,bilo),n, 0d0, c, n)
 *     call ga_print(g_a,1)
 *     call ga_print_patch(g_b, bilo,bilo+n/3, bjlo, bjlo+n/2)

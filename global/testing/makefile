@@ -1,4 +1,3 @@
-#$Id: makefile,v 1.6 1995-02-02 23:14:21 d3g681 Exp $
 # Global Array library (shared and distributed memory version)
 #
 #      "make test.x"      to create a test program for GA 
@@ -79,6 +78,6 @@ ipc.clean:	ipc.clean.o
 
 
 clean:   
-	rm -f *.o *.a core mppcore *.p *.x  ipc.clean event* 
+	rm -f *.o *.a core mppcore mputil* *.p *.x  ipc.clean event* *.x.trace
 
 realclean: clean
