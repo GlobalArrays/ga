@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.15 2002-05-14 22:12:14 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.16 2002-12-27 00:26:38 edo Exp $ */
 
 /*
   These routines simplify the interface to semaphores for use in mutual
@@ -100,7 +100,7 @@ extern void Error();
 static int sem_set_id_list[MAX_SEM_SETS];
 static int num_sem_set = 0;
 
-#if defined(SGITFP) || defined(SGI64) || defined(KSR) || defined(SOLARIS)
+#if defined(SGITFP) || defined(SGI64) || defined(KSR) || defined(SOLARIS) || defined (AIX)
 #   define MAX_N_SEM 512 
 #else
 #   define MAX_N_SEM 40
