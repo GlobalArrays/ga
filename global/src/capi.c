@@ -1,11 +1,11 @@
-/* $Id: capi.c,v 1.31 2001-05-22 19:17:50 d3h325 Exp $ */
+/* $Id: capi.c,v 1.32 2001-08-07 20:04:14 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 Integer _ga_lo[MAXDIM], _ga_hi[MAXDIM], _ga_work[MAXDIM];
-Integer _ga_dims[MAXDIM], _ga_map[MAX_NPROC];
+Integer _ga_dims[MAXDIM], _ga_map_capi[MAX_NPROC];
 
 Integer _ga_alo[MAXDIM], _ga_ahi[MAXDIM];
 Integer _ga_blo[MAXDIM], _ga_bhi[MAXDIM];
@@ -96,9 +96,9 @@ int NGA_Create_irreg(int type,int ndim,int dims[],char *name,int block[],int map
 #endif
         for(b=0; b<block[d]; b++){
 
-            _ga_map[base_work + b] = (Integer)map[base_map +b]; /*****/
+            _ga_map_capi[base_work + b] = (Integer)map[base_map +b]; /*****/
 #ifdef BASE_0
-            _ga_map[base_work + b]++;
+            _ga_map_capi[base_work + b]++;
 #endif
         }
         base_map += block[d];
@@ -110,9 +110,9 @@ int NGA_Create_irreg(int type,int ndim,int dims[],char *name,int block[],int map
      }
 
 #ifdef  USE_FAPI
-     ptr = _ga_map;
+     ptr = _ga_map_capi;
 #else
-     ptr = _ga_map + base_work;
+     ptr = _ga_map_capi + base_work;
 #endif
 
     st = nga_create_irreg(type, (Integer)ndim, _ga_dims, name, ptr, _ga_work, &g_a);
@@ -375,13 +375,13 @@ int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[])
      COPYINDEX_C2F(lo,_ga_lo,ndim);
      COPYINDEX_C2F(hi,_ga_hi,ndim);
 
-     st = nga_locate_region_(&a,_ga_lo, _ga_hi, tmap, _ga_map, &np);
+     st = nga_locate_region_(&a,_ga_lo, _ga_hi, tmap, _ga_map_capi, &np);
      if(st==FALSE){
        free(tmap);
        return 0;
      }
 
-     COPY(int,_ga_map,procs, np);
+     COPY(int,_ga_map_capi,procs, np);
 
         /* might have to swap lo/hi when copying */
 
