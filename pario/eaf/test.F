@@ -1,21 +1,21 @@
-#define FNAME '/tmp/EAFfile'
+#define FNAME 'EAFfile'
 #define EAF_SZ_INT 4
-#define IO_TEST_SZ (1024*1024/128)
+#define IO_TEST_SZ (1024*1024/8)
 #define IO_NUM_FILES 4
 #define MAX_ITER 4
 #define MAP(x) dble(IO_TEST_SZ*((x-1)*EAF_SZ_INT))
-
       program eaftest
 c     
       call test1
       call test2
       call test3
+      call test4
 c     
       print *,' '
       print *,'All tests completed'
       end
 
-      subroutine test1
+      subroutine test2
       implicit none
 #include "eaf.fh"
 c     
@@ -30,6 +30,11 @@ c
       integer aio(IO_NUM_FILES, MAX_ITER)
 c     
       buf_sz = (IO_TEST_SZ*EAF_SZ_INT)
+c
+      write(6,*)
+      write(6,*) ' TEST 2 ... asynchronous read/write of multiple files'
+      write(6,*) ' ----------------------------------------------------'
+      write(6,*)
 c     
  10   format (A,'.', I1)
 c     
@@ -112,10 +117,12 @@ c
       do fnum = 1, IO_NUM_FILES
          call eaf_print_stats(fd(fnum))
          call testerr(eaf_close(fd(fnum)))
+         write (fname, 10) FNAME, fnum
+         call testerr(eaf_delete(fname))
       enddo
 c     
       end
-      subroutine test2
+      subroutine test1
       implicit none
 #include "eaf.fh"
       integer buf(IO_TEST_SZ), buf2(IO_TEST_SZ)
@@ -126,6 +133,11 @@ c
       integer buf_sz
 c     
       buf_sz = (IO_TEST_SZ*EAF_SZ_INT)
+c
+      write(6,*)
+      write(6,*) ' TEST 1 ... synchronous read/write of multiple files'
+      write(6,*) ' ---------------------------------------------------'
+      write(6,*)
 c     
       do fnum = 1, IO_NUM_FILES
          write (fname, 10) FNAME, fnum
@@ -179,6 +191,8 @@ c
       do fnum = 1, IO_NUM_FILES
          call eaf_print_stats(fd(fnum))
          call testerr(eaf_close(fd(fnum)))
+         write (fname, 10) FNAME, fnum
+         call testerr(eaf_delete(fname))
       enddo
 c     
       end
@@ -216,6 +230,11 @@ c
       integer avail, fd
       double precision length
 c
+      write(6,*)
+      write(6,*) ' TEST 3 ... misc. functions'
+      write(6,*) ' --------------------------'
+      write(6,*)
+c
       write (fname, 10) FNAME, 1
  10   format (A,'.', I1)
 c
@@ -237,5 +256,69 @@ c
       call testerr(eaf_length(fd,length))
       write(6,*) ' should be zero file length = ', length
       call testerr(eaf_close(fd))
+      call testerr(eaf_delete(fname))
+c
+      end
+      subroutine test4
+      implicit none
+#include "eaf.fh"
+      character*200 fname
+      character*8 fstype
+      integer avail, fd, i, nwrite, ierr
+      double precision length, offset, ofw
+      double precision buf(IO_TEST_SZ)
+c
+      write(6,*)
+      write(6,*) ' TEST 4 ... fill the file system '
+      write(6,*) ' ------------------------------- '
+      write(6,*)
+c
+      fname = ' '
+      write (fname, 10) FNAME, 1
+ 10   format (A,'.', I1)
+c
+      call testerr(eaf_stat(fname, avail, fstype))
+      write(6,*) ' avail = ', avail, ' fstype = ', fstype
+      avail = 0.95*avail
+      length = 1024.0d0*avail
+      call testerr(eaf_open(fname, eaf_rw, fd))
+      write(6,*) ' 95% available length ', length,' bytes'
+c
+      ofw = 0
+      do offset = 0, length, (IO_TEST_SZ)*8
+         nwrite = min(nint(length-offset+1.0d0),(IO_TEST_SZ)*8)
+         call dfill(nwrite/8, offset, buf, 1)
+         if (ofw .le. offset) then
+            write(6,*) ' writing at ',offset, nwrite
+            ofw = ofw + 100000000.0d0
+         endif
+         ierr = eaf_write(fd, offset, buf, nwrite)
+         if (ierr .ne. 0) then
+           call testerr(ierr)
+           call errquit('bad write',ierr)
+         endif
+      enddo
+c
+      call eaf_print_stats(fd)
+c
+      ofw = 0
+      do offset = 0, length, (IO_TEST_SZ)*8
+         nwrite = min(nint(length-offset+1.0d0),(IO_TEST_SZ)*8)
+         if (ofw .le. offset) then
+            write(6,*) ' reading at ', offset, nwrite
+            ofw = ofw + 100000000.0d0
+         endif
+         ierr = eaf_read(fd, offset, buf, nwrite)
+         if (ierr .ne. 0) then
+           call testerr(ierr)
+           call errquit('bad read',ierr)
+         endif
+         do i = 1, nwrite/8
+            if (buf(i).ne.offset) call errquit('bad ', i)
+         enddo
+      enddo
+c
+      call testerr(eaf_close(fd))
+      call testerr(eaf_delete(fname))
 c
       end
