@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.13 2000-06-03 00:38:57 d3h325 Exp $ */
+/* $Id: request.c,v 1.14 2000-08-09 20:14:46 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -137,11 +137,21 @@ void *buffer;
     msginfo->from  = armci_me;
     msginfo->to    = proc; 
     msginfo->format  = msginfo->operation = op;
-    msginfo->datalen =sizeof(int); /* extra */
-    msginfo->bytes   =msginfo->datalen+msginfo->dscrlen ;
+    msginfo->datalen = sizeof(int); /* extra */
 
-    ADDBUF(buf,void* ,prem);
-    ADDBUF(buf,int,extra); 
+    ADDBUF(buf, void*, prem); /* pointer is shipped as descriptor */
+
+    /* data field: extra argument in fetch&add and local value in swap */
+    if(op==ARMCI_SWAP){
+       ADDBUF(buf, int, *ploc); 
+    }else if(op==ARMCI_SWAP_LONG) {
+       ADDBUF(buf, long, *((long*)ploc) ); 
+       msginfo->datalen = sizeof(long);
+    }else {
+      ADDBUF(buf, int, extra);
+    }
+
+    msginfo->bytes   = msginfo->datalen+msginfo->dscrlen ;
 
     armci_send_req(proc);
 
@@ -176,17 +186,23 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
         fflush(stdout);
      }
 
+     /* for swap operations *pextra has the  value to swap
+      * for fetc&add it carries the increment argument
+      */
+
      switch(op){
-     case ARMCI_FETCH_AND_ADD:
      case ARMCI_SWAP:
+        iold = *(int*) pextra;
+     case ARMCI_FETCH_AND_ADD:
         if(msginfo->datalen != sizeof(int))
           armci_die("armci_server_rmw: bad datalen=",msginfo->datalen);
         pold = &iold;
         msginfo->datalen = sizeof(int);
         break;
 
-     case ARMCI_FETCH_AND_ADD_LONG:
      case ARMCI_SWAP_LONG:
+        lold = *(long*) pextra;
+     case ARMCI_FETCH_AND_ADD_LONG:
         if(msginfo->datalen != sizeof(int))
           armci_die("armci_server_rmw: long bad datalen=",msginfo->datalen);
         pold = &lold;
