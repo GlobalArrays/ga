@@ -99,8 +99,8 @@ unsigned long time;
    for(j=0;;j++){
      fgets(ln,100,fin);
      if(feof(fin))break;
-     sscanf(ln,"%d%d%d%d%d%d%d%d%lu",
-            &i,&k,patch+1,patch+2,patch+3,patch+4,&i,&flag,&time);
+     if(9>sscanf(ln,"%d%d%d%d%d%d%d%d%lu",
+            &i,&k,patch+1,patch+2,patch+3,patch+4,&i,&flag,&time))continue;
 
      loc = LocFound(patch);  
      if(!Patches[loc][0])for(i=1;i<5;i++)Patches[loc][i]=patch[i];
