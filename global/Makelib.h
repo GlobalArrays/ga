@@ -59,6 +59,9 @@ endif
 ifeq ($(TARGET),SGI)
        BLAS = -lblas
 endif
+ifeq ($(TARGET),SGI_N32)
+       BLAS = -lblas
+endif
 ifeq ($(TARGET),SGI64)
        BLAS = -lblas
 endif
@@ -66,9 +69,16 @@ endif
 ifeq ($(TARGET),SP1)
        BLAS = -lblas
 endif
+ifeq ($(TARGET),SP)
+       BLAS = -lblas
+endif
 #...........................................................................
 ifeq ($(TARGET),IBM)
        BLAS = -lblas
+endif
+#...........................................................................
+ifeq ($(TARGET),DECOSF)
+     CLIB = -lfor -lots -lm
 endif
 #...........................................................................
 

@@ -104,6 +104,7 @@ ifeq ($(TARGET),DECOSF)
 # DEC ALPHA running OSF/1
 #
        RANLIB = ranlib
+          CLD = cc
         CDEFS = -DEXT_INT
      FOPT_REN = -i8
  GLOB_DEFINES = -DDECOSF
@@ -217,13 +218,13 @@ ifeq ($(TARGET),SGI_N32)
  FOPT_8K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=3 -WK,-so=1,-o=1,-r=3,-dr=AKC
 
 #optimization flags for R10000 (IP28)
- FOPT_10K = -O3 -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
+ FOPT_10K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
 
 ifeq ($(TARGET_CPU),R10000)
- FOPT_REN += $(FOPT_10K)
+ FOPT += $(FOPT_10K)
 endif
 ifeq ($(TARGET_CPU),R8000)
- FOPT_REN += $(FOPT_8K)
+ FOPT += $(FOPT_8K)
 endif
 
 #if you are running more processes than CPUs are available, remove -DSGIUS
@@ -251,10 +252,10 @@ ifeq ($(TARGET),SGITFP)
  FOPT_10K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
 
 ifeq ($(TARGET_CPU),R10000)
- FOPT_REN += $(FOPT_10K)
+ FOPT += $(FOPT_10K)
 endif
 ifeq ($(TARGET_CPU),R8000)
- FOPT_REN += $(FOPT_8K)
+ FOPT += $(FOPT_8K)
 endif
 
 #if you are running more processes than CPUs are available, remove -DSGIUS
