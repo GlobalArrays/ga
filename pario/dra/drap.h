@@ -42,6 +42,8 @@ typedef struct{                               /* stores basic DRA info */
         Integer actv;                         /* is array active ? */ 
         Integer indep;                        /* shared/independent files ? */
         Fd_t      fd;                         /* ELIO meta-file descriptor */
+        int algorithm;                        /* open file system algorithm */
+        int nnodes;                           /* number of IO nodes */
 } disk_array_t;
 
 #define MAX_ALGN  1                /* max # aligned subsections   */ 
