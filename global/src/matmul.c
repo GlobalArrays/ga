@@ -608,12 +608,12 @@ void ga_matmul(transa, transb, alpha, beta,
      * Do All Sanity Checks 
      **************************************************/
 
-#if 0
     /* Check to make sure all global arrays are of the same type */
     if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
 	  ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
        ga_error_("Processors do not match for all arrays",ga_nnodes_());
     }
+#if 0
     if (ga_is_mirrored_(g_a)) {
        inode = ga_cluster_nodeid_();
        nproc = ga_cluster_nprocs_(&inode);
@@ -764,6 +764,294 @@ void ga_matmul(transa, transb, alpha, beta,
        if(local_sync_end)ga_sync_();
 }
 
+/* This is the old matmul code. It is enadle now for mirrored matrix multiply. 
+   It also work for normal matrix/vector multiply with no changes */
+void ga_matmul_mirrored(transa, transb, alpha, beta,
+			g_a, ailo, aihi, ajlo, ajhi,
+			g_b, bilo, bihi, bjlo, bjhi,
+			g_c, cilo, cihi, cjlo, cjhi)
+
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+     Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
+     void    *alpha, *beta;
+     char    *transa, *transb;
+{
+#ifdef STATBUF
+  /* approx. sqrt(2) ratio in chunk size to use the same buffer space */
+   DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
+#else
+   DoubleComplex *a, *b, *c;
+   Integer handle, idx;
+#endif
+Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2, dims[2], rank;
+Integer me= ga_nodeid_(), nproc=ga_nnodes_();
+Integer i, ijk = 0, i0, i1, j0, j1;
+Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
+Integer n, m, k, adim, bdim, cdim;
+Integer Ichunk, Kchunk, Jchunk;
+DoubleComplex ONE, ZERO;
+
+DoublePrecision chunk_cube;
+Integer min_tasks = 10, max_chunk;
+int need_scaling=1;
+float ONE_F = 1.0, ZERO_F = 0.0;
+double ZERO_D = 0.0;
+Integer ZERO_I = 0, inode, iproc; 
+Integer get_new_B;
+int local_sync_begin,local_sync_end;
+ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
+
+ 
+   ONE.real =1.; ZERO.real =0.;
+   ONE.imag =0.; ZERO.imag =0.;
+
+   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+   if(local_sync_begin)ga_sync_();
+
+   GA_PUSH_NAME("ga_matmul_patch");
+
+   /* Check to make sure all global arrays are of the same type */
+   if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
+         ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
+     ga_error_("Processors do not match for all arrays",ga_nnodes_());
+   }
+   if (ga_is_mirrored_(g_a)) {
+     inode = ga_cluster_nodeid_();
+     nproc = ga_cluster_nprocs_(&inode);
+     iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
+   } else {
+     nproc = ga_nnodes_();
+     iproc = me;
+   }
+
+   nga_inquire_internal_(g_a, &atype, &rank, dims); 
+   VECTORCHECK(rank, dims, adim1, adim2, *ailo, *aihi, *ajlo, *ajhi);
+   nga_inquire_internal_(g_b, &btype, &rank, dims); 
+   VECTORCHECK(rank, dims, bdim1, bdim2, *bilo, *bihi, *bjlo, *bjhi);
+   nga_inquire_internal_(g_c, &ctype, &rank, dims); 
+   VECTORCHECK(rank, dims, cdim1, cdim2, *cilo, *cihi, *cjlo, *cjhi);
+
+   if(atype != btype || atype != ctype ) ga_error(" types mismatch ", 0L);
+   if(atype != C_DCPL && atype != C_DBL && atype != C_FLOAT) 
+     ga_error(" type error",atype);
+   
+   
+   
+   /* check if patch indices and dims match */
+   if (*transa == 'n' || *transa == 'N'){
+     if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
+       ga_error("  g_a indices out of range ", *g_a);
+   }else
+     if (*ailo <= 0 || *aihi > adim2 || *ajlo <= 0 || *ajhi > adim1)
+       ga_error("  g_a indices out of range ", *g_a);
+   
+   if (*transb == 'n' || *transb == 'N'){
+     if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
+       ga_error("  g_b indices out of range ", *g_b);
+   }else
+     if (*bilo <= 0 || *bihi > bdim2 || *bjlo <= 0 || *bjhi > bdim1)
+       ga_error("  g_b indices out of range ", *g_b);
+   
+   if (*cilo <= 0 || *cihi > cdim1 || *cjlo <= 0 || *cjhi > cdim2)
+     ga_error("  g_c indices out of range ", *g_c);
+   
+   /* verify if patch dimensions are consistent */
+   m = *aihi - *ailo +1;
+   n = *bjhi - *bjlo +1;
+   k = *ajhi - *ajlo +1;
+   if( (*cihi - *cilo +1) != m) ga_error(" a & c dims error",m);
+   if( (*cjhi - *cjlo +1) != n) ga_error(" b & c dims error",n);
+   if( (*bihi - *bilo +1) != k) ga_error(" a & b dims error",k);
+   
+
+   /* In 32-bit platforms, k*m*n might exceed the "long" range(2^31), 
+      eg:k=m=n=1600. So casting the temporary value to "double" helps */
+   chunk_cube = (k*(double)(m*n)) / (min_tasks * nproc);
+   max_chunk = (Integer)pow(chunk_cube, (DoublePrecision)(1.0/3.0) );
+   if (max_chunk < 32) max_chunk = 32;
+
+#ifdef STATBUF
+   if(atype ==  C_DBL || atype == C_FLOAT){
+      Ichunk=D_CHUNK, Kchunk=D_CHUNK, Jchunk=D_CHUNK;
+   }else{
+      Ichunk=ICHUNK; Kchunk=KCHUNK; Jchunk=JCHUNK;
+   }
+#else
+   {
+     /**
+      * Find out how much memory we can grab.  It will be used in
+      * three chunks, and the result includes only the first one.
+      */
+     Integer avail = MA_inquire_avail(atype), used, elems;
+     ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
+     if(avail < MINMEM && ga_nodeid_() == 0)
+       ga_error("Not enough memory for buffers",avail);
+     elems = (Integer)(avail*0.9);/*Do not use entire mem. avail*/
+     if(MA_push_get(atype, elems, "GA mulmat bufs", &handle, &idx))
+       MA_get_pointer(handle, &a);
+     else ga_error("ma_alloc_get failed",avail);
+     
+     Ichunk = Jchunk = Kchunk = CHUNK_SIZE;
+
+     if ( max_chunk > Ichunk) { 
+       max_chunk = MIN(max_chunk, (Integer)(sqrt( (double)((elems-4)/3))) );
+       Ichunk = MIN(m,max_chunk);
+       Jchunk = MIN(n,max_chunk);
+       Kchunk = MIN(k,max_chunk);
+     }
+     used = Ichunk * Kchunk;
+     if(atype == C_FLOAT)  used = 1+used/4;/*(sizeof(DCplx)/sizeof(float));*/
+     else if(atype ==  C_DBL) used = 1+used/2;
+     b = a+ used;
+     used = Kchunk*Jchunk;
+     if(atype == C_FLOAT) used = 1+used/4; /*(sizeof(DCplx)/sizeof(float));*/
+     else if(atype ==  C_DBL) used = 1+used/2; 
+     c = b+ used;
+   }
+#endif
+
+   if(atype==C_DCPL){if((((DoubleComplex*)beta)->real == 0) &&
+	       (((DoubleComplex*)beta)->imag ==0)) need_scaling =0;} 
+   else if((atype==C_DBL)){if(*(DoublePrecision *)beta == 0) need_scaling =0;}
+   else if( *(float*)beta ==0) need_scaling =0;
+
+   if(need_scaling) ga_scale_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
+   else  ga_fill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
+
+   for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
+       jhi = MIN(n-1, jlo+Jchunk-1);
+       jdim= jhi - jlo +1;
+
+       for(klo = 0; klo < k; klo += Kchunk){    /* loop cols of g_a patch */
+	 khi = MIN(k-1, klo+Kchunk-1);          /* loop rows of g_b patch */
+	 kdim= khi - klo +1;                                     
+	 
+	 /** Each pass through the outer two loops means we need a
+	     different patch of B.*/
+	 get_new_B = TRUE;
+	 
+	 for(ilo = 0; ilo < m; ilo += Ichunk){ /*loop through rows of g_c patch */
+	   
+	   if(ijk%nproc == me){
+
+	     ihi = MIN(m-1, ilo+Ichunk-1);
+	     idim= cdim = ihi - ilo +1;
+	     
+	     if(atype == C_FLOAT) 
+	       for (i = 0; i < idim*jdim; i++) *(((float*)c)+i)=0;
+	     else if(atype ==  C_DBL)
+	       for (i = 0; i < idim*jdim; i++) *(((double*)c)+i)=0;
+	     else
+	       for (i = 0; i < idim*jdim; i++){ c[i].real=0;c[i].imag=0;}
+	     
+	     if (*transa == 'n' || *transa == 'N'){ 
+	       adim = idim;
+	       i0= *ailo+ilo; i1= *ailo+ihi;   
+	       j0= *ajlo+klo; j1= *ajlo+khi;
+	       ga_get_(g_a, &i0, &i1, &j0, &j1, a, &idim);
+	     }else{
+	       adim = kdim;
+	       i0= *ajlo+klo; i1= *ajlo+khi;   
+	       j0= *ailo+ilo; j1= *ailo+ihi;
+	       ga_get_(g_a, &i0, &i1, &j0, &j1, a, &kdim);
+	     }
+
+
+	     /* Avoid rereading B if it is the same patch as last time. */
+	     if(get_new_B) { 
+	       if (*transb == 'n' || *transb == 'N'){ 
+		 bdim = kdim;
+		 i0= *bilo+klo; i1= *bilo+khi;   
+		 j0= *bjlo+jlo; j1= *bjlo+jhi;
+		 ga_get_(g_b, &i0, &i1, &j0, &j1, b, &kdim);
+	       }else{
+		 bdim = jdim;
+		 i0= *bjlo+jlo; i1= *bjlo+jhi;   
+		 j0= *bilo+klo; j1= *bilo+khi;
+		 ga_get_(g_b, &i0, &i1, &j0, &j1, b, &jdim);
+	       }
+	       get_new_B = FALSE; /* Until J or K change again */
+	     }
+
+	     
+	     idim_t=idim; jdim_t=jdim; kdim_t=kdim;
+	     adim_t=adim; bdim_t=bdim; cdim_t=cdim;
+
+#	   if (defined(CRAY) || defined(WIN32)) && !defined(GA_C_CORE)
+	     switch(atype) {
+	     case C_FLOAT:
+	       xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			(float *)alpha, (float *)a, &adim_t, (float *)b, 
+			&bdim_t, &ZERO_F,  (float *)c, &cdim_t);
+	       break;
+	     case C_DBL:
+	       DGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
+		     alpha, (double*)a, &adim, (double*)b, &bdim, &ONE, 
+		     (double*)c, &cdim);
+	       break;
+	     case C_DCPL:
+	       ZGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
+		     (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE,c,&cdim);
+	       break;
+	     default:
+	       ga_error("ga_matmul_patch: wrong data type", atype);
+	     }
+#          else 
+	     switch(atype) {
+	     case C_FLOAT:
+	       xb_sgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			(float *)alpha, (float *)a, &adim_t, (float *)b, 
+			&bdim_t, &ZERO_F,  (float *)c, &cdim_t);
+	       break;
+	     case C_DBL:
+#            ifdef GA_C_CORE
+	       xb_dgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			alpha, (double *)a, &adim_t, (double *)b, &bdim_t, 
+			&ZERO_D,  (double *)c, &cdim_t);
+#            else
+	       dgemm_(transa, transb, &idim, &jdim, &kdim,
+		      alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
+#            endif
+	       break;
+	     case C_DCPL:
+#            ifdef GA_C_CORE
+	       xb_zgemm(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			(DoubleComplex *)alpha, a, &adim_t, b, &bdim_t, 
+			&ZERO,  c, &cdim_t);
+#            else
+	       zgemm_(transa, transb, &idim, &jdim, &kdim,
+		      (DoubleComplex*)alpha, a, &adim, b, &bdim, &ONE, c, 
+		      &cdim, 1, 1);
+#            endif
+	       break;
+	     default:
+	       ga_error("ga_matmul_patch: wrong data type", atype);
+	     }
+#          endif
+	     
+	     i0= *cilo+ilo; i1= *cilo+ihi;   j0= *cjlo+jlo; j1= *cjlo+jhi;
+	     if(atype == C_FLOAT) 
+	       ga_acc_(g_c, &i0, &i1, &j0, &j1, (float *)c, 
+		       &cdim, &ONE_F);
+	     else
+	       ga_acc_(g_c, &i0, &i1, &j0, &j1, (DoublePrecision*)c, 
+		       &cdim, (DoublePrecision*)&ONE);
+	   }
+	   ++ijk;
+	 }
+       }
+   }
+   
+#ifndef STATBUF
+   if(!MA_pop_stack(handle)) ga_error("MA_pop_stack failed",0);
+#endif
+
+   GA_POP_NAME;
+   if(local_sync_end)ga_sync_();
+}
+
 
 void ga_matmul_patch(transa, transb, alpha, beta,
 		     g_a, ailo, aihi, ajlo, ajhi,
@@ -776,12 +1064,19 @@ void ga_matmul_patch(transa, transb, alpha, beta,
      void    *alpha, *beta;
      char    *transa, *transb;
 {
-    _gai_matmul_patch_flag = SET;
-    ga_matmul(transa, transb, alpha, beta,
-	      g_a, ailo, aihi, ajlo, ajhi,
-	      g_b, bilo, bihi, bjlo, bjhi,
-	      g_c, cilo, cihi, cjlo, cjhi);
-    _gai_matmul_patch_flag = UNSET;
+    if(ga_is_mirrored_(g_a)) 
+       ga_matmul_mirrored(transa, transb, alpha, beta,
+			  g_a, ailo, aihi, ajlo, ajhi,
+			  g_b, bilo, bihi, bjlo, bjhi,
+			  g_c, cilo, cihi, cjlo, cjhi);
+    else {
+       _gai_matmul_patch_flag = SET;
+       ga_matmul(transa, transb, alpha, beta,
+		 g_a, ailo, aihi, ajlo, ajhi,
+		 g_b, bilo, bihi, bjlo, bjhi,
+		 g_c, cilo, cihi, cjlo, cjhi);
+       _gai_matmul_patch_flag = UNSET;
+    }
 }
 
 
