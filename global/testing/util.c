@@ -357,3 +357,54 @@ char msg[100];
     f2c_copy_indices(LO, lo, (int)*ndim);
     print_range(msg,(int)*ndim, lo, hi, "\n");
 }
+
+void FATR copy_range_(Integer *me, Integer LO1[], Integer HI1[], Integer *ndim1, Integer LO2[], Integer HI2[], Integer *ndim2)
+{
+int hi1[MAXDIM], lo1[MAXDIM], hi2[MAXDIM], lo2[MAXDIM];
+char msg[100];
+
+    assert((int)*ndim1 < MAXDIM);
+    assert((int)*ndim2 < MAXDIM);
+    sprintf(msg,"%d: copy ",(int)*me);
+    f2c_copy_indices(HI1, hi1, (int)*ndim1);
+    f2c_copy_indices(LO1, lo1, (int)*ndim1);
+    print_range(msg,(int)*ndim1, lo1, hi1, "");
+    sprintf(msg,"to ");
+    f2c_copy_indices(HI2, hi2, (int)*ndim2);
+    f2c_copy_indices(LO2, lo2, (int)*ndim2);
+    print_range(msg,(int)*ndim2, lo2, hi2, "\n");
+}
+
+void FATR add_range_(Integer *me, Integer LO1[], Integer HI1[], Integer *ndim1, Integer LO2[], Integer HI2[], Integer *ndim2)
+{
+int hi1[MAXDIM], lo1[MAXDIM], hi2[MAXDIM], lo2[MAXDIM];
+char msg[100];
+
+    assert((int)*ndim1 < MAXDIM);
+    assert((int)*ndim2 < MAXDIM);
+    sprintf(msg,"%d: ",(int)*me);
+    f2c_copy_indices(HI1, hi1, (int)*ndim1);
+    f2c_copy_indices(LO1, lo1, (int)*ndim1);
+    print_range(msg,(int)*ndim1, lo1, hi1, "");
+    sprintf(msg,"+= ");
+    f2c_copy_indices(HI2, hi2, (int)*ndim2);
+    f2c_copy_indices(LO2, lo2, (int)*ndim2);
+    print_range(msg,(int)*ndim2, lo2, hi2, "\n");
+}
+
+void FATR dot_range_(Integer *me, Integer LO1[], Integer HI1[], Integer *ndim1, Integer LO2[], Integer HI2[], Integer *ndim2)
+{
+int hi1[MAXDIM], lo1[MAXDIM], hi2[MAXDIM], lo2[MAXDIM];
+char msg[100];
+
+    assert((int)*ndim1 < MAXDIM);
+    assert((int)*ndim2 < MAXDIM);
+    sprintf(msg,"%d: dot ",(int)*me);
+    f2c_copy_indices(HI1, hi1, (int)*ndim1);
+    f2c_copy_indices(LO1, lo1, (int)*ndim1);
+    print_range(msg,(int)*ndim1, lo1, hi1, "");
+    sprintf(msg,", ");
+    f2c_copy_indices(HI2, hi2, (int)*ndim2);
+    f2c_copy_indices(LO2, lo2, (int)*ndim2);
+    print_range(msg,(int)*ndim2, lo2, hi2, "\n");
+}
