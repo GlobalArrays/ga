@@ -2,7 +2,7 @@
 #include "ga_vampir.fh"
 #endif
       subroutine ga_diag_std(g_a, g_v, eval)
-C$Id: ga_diag.F,v 1.24 2002-07-17 17:31:33 vinod Exp $
+C$Id: ga_diag.F,v 1.25 2003-10-22 04:22:25 edo Exp $
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -91,19 +91,7 @@ c
       pan = 1                   !panel size
       npan = n/pan
 c
-      if (n .lt. SIZE1) then
-         proc = min(PROC1, ga_nnodes())
-      else if (n .lt. SIZE2) then
-         proc = min(PROC2,ga_nnodes())
-      else if (n .lt. SIZE3) then
-         proc = min(PROC3,ga_nnodes())
-      else 
-         proc = min(PROC4,ga_nnodes())
-      endif
-c     
-      proc = min((npan-1)/2+1,proc)
-      proc = min(n, ga_nnodes())
-      proc = min(n/15, ga_nnodes())
+      proc = min(n/35, ga_nnodes())
 c     
       oactive = myproc .lt. proc
       if (oactive) then
@@ -407,18 +395,7 @@ c
       pan = 1                   !panel size
       npan = n/pan
 c
-      if (n .lt. SIZE1) then
-         proc = min(PROC1, ga_nnodes())
-      else if (n .lt. SIZE2) then
-         proc = min(PROC2,ga_nnodes())
-      else if (n .lt. SIZE3) then
-         proc = min(PROC3,ga_nnodes())
-      else
-         proc = min(PROC4,ga_nnodes())
-      endif
-c
-      proc = min(npan/2,proc)
-	proc = min(ga_nnodes(), n/15)
+	proc = min(ga_nnodes(), n/35)
 c
 c         print *,myproc,' participate in eig: ',proc
 c         call ffflush(6)
@@ -774,18 +751,7 @@ c
       pan = 1                   !panel size
       npan = n/pan
 c
-      if (n .lt. SIZE1) then
-         proc = min(PROC1, ga_nnodes())
-      else if (n .lt. SIZE2) then
-         proc = min(PROC2,ga_nnodes())
-      else if (n .lt. SIZE3) then
-         proc = min(PROC3,ga_nnodes())
-      else if (n .lt. SIZE4) then
-         proc = min(PROC4,ga_nnodes())
-      endif
-c
-      proc = min((npan-1)/2+1,proc)
-	proc = min( ga_nnodes(), n/15)
+	proc = min( ga_nnodes(), n/35)
 c
       oactive = myproc .lt. proc
       if (oactive) then
