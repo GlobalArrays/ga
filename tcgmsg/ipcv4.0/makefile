@@ -342,6 +342,7 @@ LIB_TARGETS = $(BINDIR)/parallel *.x *.x testf.? core events events.??? log.???\
 include ../../config/makelib.h
 
 
+LD_LIBES = $(LIBRARY_PATH) $(LIBS)
 #......................... make targets ........................
 #
 ifeq ($(TARGET),$(findstring $(TARGET),$(NO_PARALLEL)))
@@ -367,8 +368,7 @@ ifneq ($(TARGET),$(findstring $(TARGET),$(NO_PARALLEL)))
 	para.ipsc.o:    para.ipsc.c
 		cc -c -g para.ipsc.c
   else
-        $(BINDIR)/parallel:	parallel.o $(LIBRARY_PATH)
-		$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+        $(BINDIR)/parallel:	 $(LIBRARY_PATH)
 		@echo ">>>" $@ "is used to run TCGMSG programs"
   endif
 else
