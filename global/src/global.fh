@@ -61,6 +61,8 @@
       external ga_update5_ghosts
       external ga_update6_ghosts
       external ga_update7_ghosts
+      external ga_set_update4_info
+      external ga_set_update5_info
       external nga_update_ghost_dir
       external ga_create_handle
       external ga_allocate
