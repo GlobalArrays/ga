@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.40 2002-07-31 22:34:00 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.41 2002-08-01 15:24:23 d3g293 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -919,7 +919,11 @@ int id;
 
 /*\ local id of calling process on the node
 \*/
-Integer FATR ga_cluster_procid()
+Integer FATR ga_cluster_procid(Integer *node, Integer *loc_proc_id)
 {
-        return (Integer) armci_domain_my_id(ARMCI_DOMAIN_SMP);
+        int nodeid, procid;
+        nodeid = (int)*node;
+        procid = (int)*loc_proc_id;
+        return (Integer) armci_domain_glob_proc_id(ARMCI_DOMAIN_SMP, nodeid,
+                                                   procid);
 }

@@ -102,6 +102,10 @@ extern void FATR ga_sync_ ARGS_(( void));
 extern void FATR ga_terminate_ ARGS_(( void));
 extern logical FATR ga_uses_ma_ ARGS_(( void));
 extern logical FATR ga_memory_limited_ ARGS_(( void));
+extern Integer FATR ga_cluster_nodes_ ARGS_(( void));
+extern Integer FATR ga_cluster_nprocs_ ARGS_((Integer*));
+extern Integer FATR ga_cluster_nodeid_ ARGS_(( void));
+extern Integer FATR ga_cluster_procid_ ARGS_((Integer*, Integer*));
 
 
 extern void ga_copy_patch ARGS_((char *, Integer *, Integer *, Integer *,
