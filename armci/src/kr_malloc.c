@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.8 2004-07-21 23:53:55 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.9 2004-07-23 00:30:25 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -456,7 +456,7 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
 	 
 	 /* CHECK - offset */
 	 ctx->base.s.shmoffset = ctx->shmsize - 4 * sizeof(Header) +
-	   sizeof(void*) + ((void*)&(ctx->base) - (void*)ctx);
+	   sizeof(void*) + ((char*)&(ctx->base) - (char*)ctx);
 	 ctx->shmoffset = ctx->base.s.shmoffset;
 	 ctx->base.s.shmsize   = ctx->shmsize;
 	 tmp.ctx_type = KR_CTX_LOCALMEM;
