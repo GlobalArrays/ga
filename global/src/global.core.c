@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <limits.h>
 #include "global.h"
 #include "globalp.h"
 #include "message.h"
@@ -1077,6 +1078,25 @@ int heap_status;
 
 #endif
       ga_sync_();
+
+/*#define GA_CREATE_INDEF*/
+#ifdef GA_CREATE_INDEF
+{
+    Integer one = 1;
+    if(*type == MT_F_DBL) {
+	double bad = DBL_MAX;
+	ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
+    } else if (*type == MT_F_INT) {
+	Integer bad = (Integer) INT_MAX;
+	ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) &bad);
+    } else if (*type == MT_F_DCPL) {
+	double bad[2] = {DBL_MAX, DBL_MAX};
+	ga_fill_patch_(g_a, &one, dim1, &one, dim2, (Void *) bad);
+    } else {
+	ga_error("ga_create_irreg: type not yet supported ",  *type);
+    }
+}
+#endif
 
       if(status){
          GAstat.curmem += GA[ga_handle].size;
