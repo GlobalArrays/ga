@@ -181,8 +181,8 @@ void armci_shmem_init()
           armci_die("no usable amount (%d bytes) of shared memory available\n",
           (int)LBOUND);
 
-        if(DEBUG_) printf("GOT %d kbytes segment size \n",x<<10);fflush(stdout);
-        MinShmem = (long)x; /* make sure it is in kb */ 
+        if(DEBUG_) printf("GOT %d mbytes max segment size \n",x);fflush(stdout);
+        MinShmem = (long)(x<<10); /* make sure it is in kb: mb <<10 */ 
         MaxShmem = MAX_REGIONS*MinShmem;
 #else
 

@@ -30,9 +30,8 @@ static void SigChldHandler(sig)
 #endif
      int sig;
 {
-#ifndef LINUX
+#ifdef DISABLED
   int pid;
-  /* reentrancy problems on RH 5.2 */
   pid = wait(&status);
   caught_sigchld=1;
 #endif
@@ -70,9 +69,10 @@ int armci_child_shmem_init()
        
        /* we might already got status from wait in SIGCHLD handler */
        if(!caught_sigchld){
-         rc = wait (&status);
+again:   rc = wait (&status);
          /* can get SIGCHLD while waiting */
-         if(rc!=pid) perror("ARMCI: wait for child process Shm failed:");
+/*         if(rc!=pid) perror("ARMCI: wait for child process Shm failed:");*/
+         if(rc == -1 && errno == EINTR) goto again;
        }
        if (!WIFEXITED(status)) armci_die("ARMCI: child did not return rc",0);
        x = WEXITSTATUS(status);
