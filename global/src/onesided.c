@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.55 2004-06-29 20:37:02 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.56 2004-07-19 18:37:49 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1101,6 +1101,9 @@ unsigned long    lref=0, lptr;
    
    if (GA_Default_Proc_Group != -1)
       ow = PGRP_LIST[GA_Default_Proc_Group].map_proc_list[ow];
+   if (GA[handle].p_handle == 0) {
+     ow = (int)PGRP_LIST[GA[handle].p_handle].map_proc_list[ow];
+   }
    gam_Location(ow,handle, lo, &ptr, ld);
 
    /*
