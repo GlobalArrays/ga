@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.46 2003-10-01 21:17:28 manoj Exp $ */
+/* $Id: onesided.c,v 1.47 2003-11-14 01:39:43 edo Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -76,7 +76,6 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 \*/
 void FATR ga_sync_()
 {
-extern int GA_fence_set;
 #ifdef CHECK_MA
 Integer status;
 #endif
