@@ -8,6 +8,10 @@ extern Integer         *INT_MB;
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
+#ifdef KSR
+#define dgemm_ sgemm_
+#endif
+
 
 #define DEST_INDICES(is,js, ilos,jlos, lds, id,jd, ilod, jlod, ldd) \
 { \
@@ -542,16 +546,16 @@ DoublePrecision ONE = 1.;
    else      ga_dfill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
   
    for(jlo = 0; jlo < n; jlo += Jchunk){ /* loop through columns of g_c patch */
-       jhi = MIN(n-1, jlo+Jchunk+1);
+       jhi = MIN(n-1, jlo+Jchunk-1);
        jdim= jhi - jlo +1;
        for(ilo = 0; ilo < m; ilo += Ichunk){ /*loop through rows of g_c patch */
-           ihi = MIN(m-1, ilo+Ichunk+1);
+           ihi = MIN(m-1, ilo+Ichunk-1);
            idim= cdim = ihi - ilo +1;
            for(klo = 0; klo < k; klo += Kchunk){    /* loop cols of g_a patch */
                                                     /* loop rows of g_b patch */
                if(ijk%nproc == me){
                   for (i = 0; i < idim*jdim; i++) c[i]=0.;
-                  khi = MIN(k-1, klo+Kchunk+1);
+                  khi = MIN(k-1, klo+Kchunk-1);
                   kdim= khi - klo +1;
                   if (*transa == 'n' || *transa == 'N'){ 
                      adim = idim;
