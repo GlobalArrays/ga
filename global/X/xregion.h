@@ -19,7 +19,6 @@
 #define INITSLOW 50.
 #define POW_BASE 100.
 
-extern char *malloc();
 extern void exit();
 
 /* function prototypes */

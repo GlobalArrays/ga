@@ -1,6 +1,10 @@
 # Please specify location of X include files and libs
 # XLOC = -I/usr
-XLOC = /msrc/apps/X11
+ifeq ($(TARGET), SOLARIS)
+  XLOC = /msrc/apps/X11R5
+else
+  XLOC = /usr
+endif
 
 INCLUDES = -I$(XLOC)/include
     COPT = -g
@@ -11,7 +15,7 @@ INCLUDES = -I$(XLOC)/include
   RM = rm
 OBJ_LOC = .
 
-  CC = gcc
+  CC = cc
 
 THE_OBJS =	\
 		$(OBJ_LOC)/xregion_colormap.o\
@@ -34,3 +38,5 @@ xregion :		$(THE_OBJS)
 clean:
 	$(RM) -rf $(THE_OBJS) xregion
 
+cleanstamp:
+	$(RM) -rf *.stamp
