@@ -45,21 +45,6 @@ ifeq ($(MSG_COMMS),PVM)
 endif
 #
 #
-ifeq ($(MSG_COMMS),MPI)
-  ifdef MPI_INCLUDE
-    MP_TMP_INCLUDES = $(MPI_INCLUDE) 
-  endif
-  ifdef MPI_LIB
-    MP_LIBS += -L$(MPI_LIB)
-  endif
-  ifdef LIBMPI
-      MPI_LIB_NAME = $(LIBMPI)
-  endif
-  MP_LIBS += $(MPI_LIB_NAME)
-  MP_DEFINES += -DMPI
-endif
-#
-#
 ifeq ($(MSG_COMMS),TCGMSG)
   ifdef TCG_INCLUDE
      MP_TMP_INCLUDES = $(TCG_INCLUDE)
@@ -69,6 +54,31 @@ ifeq ($(MSG_COMMS),TCGMSG)
   endif
   MP_LIBS += -ltcgmsg
   MP_DEFINES += -DTCGMSG
+endif
+#
+#
+ifdef GA_USE_VAMPIR
+   MP_DEFINES += -DGA_USE_VAMPIR
+   ifdef VT_PATH
+      MP_LIBS += $(VT_PATH) -lVT
+   else
+      echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
+   endif
+endif
+#
+#
+ifeq ($(MSG_COMMS),MPI)
+  ifdef MPI_INCLUDE
+    MP_TMP_INCLUDES = $(MPI_INCLUDE)
+  endif
+  ifdef MPI_LIB
+    MP_LIBS += -L$(MPI_LIB)
+  endif
+  ifdef LIBMPI
+      MPI_LIB_NAME = $(LIBMPI)
+  endif
+  MP_LIBS += $(MPI_LIB_NAME)
+  MP_DEFINES += -DMPI
 endif
 #
 #
