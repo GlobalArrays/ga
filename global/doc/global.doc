@@ -122,9 +122,9 @@ distribute to other US Government contractors.
 
       ga_nodeid         ... find requesting compute process message id
       ga_nnodes         ... find number of compute processes
-      ga_dgop           ... equivalent to TCGMSG dgop 
-      ga_igop           ... equivalent to TCGMSG igop
-      ga_brdcst         ... equivalent to TCGMSG brdcst
+      ga_dgop           ... reduce operation (double) equivalent to TCGMSG dgop 
+      ga_igop           ... reduce operation (integer) equivalent to TCGMSG igop
+      ga_brdcst         ... broadcast operation equivalent to TCGMSG brdcst
 
    e) Other utility operations
 
@@ -152,10 +152,10 @@ distribute to other US Government contractors.
   Status of current implementation (version 2.0)
   --------------------------------
   
-  There are two platforms that GA work on: 
+  There are two classes of platforms that GA work on: 
 
-  1) Network of (possibly multiprocessor) workstations, using the
-     data-server/compute_nodes model where each machine needs an
+  1) Network of (possibly multiprocessor) machines, using the
+     data-server/compute-nodes model where each machine needs an
      additional process (data-server) that services requests for the
      data. Therefore, number of processes specified in the TCGMSG *.p
      file minus one are considered to be compute nodes, and remaining
@@ -171,7 +171,7 @@ distribute to other US Government contractors.
      one on bohr).
 
      Single (possibly multiprocessor) machines with shared memory
-     like:  the KSR-2, workstations, and even Cray T3D are really a
+     like:  the KSR-2, workstations, and even Cray T3D are in fact a
      special case of 1).  The shared memory implementation uses TCGMSG
      (in the future MPI) to fork all the processes (except for the 
      Cray T3D) and implement ga_brdcst and ga_dgop. There are no data server
@@ -215,7 +215,6 @@ distribute to other US Government contractors.
   ------------------------------------------
 
 
-
       subroutine ga_initialize()
 
       Allocate and initialize internal data structures for global arrays.
@@ -231,7 +230,7 @@ distribute to other US Government contractors.
 
       -------------------------------------------------------------------
       logical function ga_create(type, dim1, dim2, array_name,
-     $                           chunk1, chunk2, g_a)
+     $                                    chunk1, chunk2, g_a)
 
       integer type, dim1, dim2, chunk1, chunk2, g_a
       character*(*) array_name
@@ -895,6 +894,41 @@ distribute to other US Government contractors.
 
       NOTE: the number GA processes might not be the same as the number
       message-passing nodes.
+
+      -------------------------------------------------------------------
+      subroutine ga_brdcst(type, buf, lenbuf, root)
+      integer type       [input]         ! message type for broadcast
+      byte buf(lenbuf)   [input/output]
+      integer lenbuf     [input]
+      integer root       [input]
+
+      Broadcast from process root to all other processes a message
+      of length lenbuf.
+
+      -------------------------------------------------------------------
+      subroutine ga_dgop(type, x, n, op)
+      integer type             [input]
+      double precision x(n)    [input/output]
+      character*(*) op         [input]
+
+      Double Global OPeration.
+      X(1:N) is a vector present on each process. DGOP 'sums'
+      elements of X accross all nodes using the commutative operator
+      OP. The result is broadcast to all nodes. Supported operations
+      include '+', '*', 'max', 'min', 'absmax', 'absmin'.
+      The use of lowerecase for operators is necessary.
+
+      -------------------------------------------------------------------
+      subroutine ga_igop(type, x, n, op)
+      integer type             [input]
+      integer x(n)             [input/output]
+      character*(*) OP         [input]
+
+      Integer Global OPeration.
+      The integer version of ga_dgop described above, also include the
+      bitwise OR operation.
+
+      -------------------------------------------------------------------
 
 
    C language interface 
