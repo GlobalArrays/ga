@@ -1,4 +1,4 @@
-// $Id: x86copy.gcc,v 1.9 2001-09-14 00:35:43 d3h325 Exp $
+// $Id: x86copy.gcc,v 1.10 2001-10-22 20:17:05 d3h325 Exp $
 // memory copy implementation derived from examples 3 and 4 at
 // http://www.sgi.com/developers/library/resources/asc_cpu.html
 //
@@ -20,7 +20,7 @@
 #define SSESUPPORT 0x02000000
 #define IA64       0x70000000
 static  char vendor[13];
-typedef enum {unkown=0,p5, p2, p3, p4, pro, p6, K5, K6, K7, ia64} CPUTYPE;
+typedef enum {unkown=0,p5, p2, p2m, p3, p4, pro, p6, K5, K6, K7, ia64} CPUTYPE;
 
 
 #define EX4  // use sgi's example_4_cpy if n is greater than 2k
@@ -240,7 +240,8 @@ CPUTYPE cpu_check()
         case 6: // pro,P2,P3
             if(model == 1) return pro;
             else if(model == 3 || model == 5) return p2;
-            else if(model == 6 || model==7 || model == 8 ) //celeron/p3
+            else if(model == 6 ) return p2m; //pentium II mobile/celeron
+            else if( model==7 || model == 8 ) //celeron/p3
                 return p3;
             else
                 return unkown;
