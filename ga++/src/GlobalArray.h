@@ -174,7 +174,7 @@ class GlobalArray {
    * @param blo[]            - gb patch coordinates [input]  
    * @param bhi[]            - gb patch coordinates [input]  
    */
-  void copyPatch(char trans, GlobalArray* ga, int alo[], int ahi[], int blo[], int bhi[]);
+  void copyPatch(char trans, const GlobalArray* ga, int alo[], int ahi[], int blo[], int bhi[]);
   
   /**
    * Computes element-wise dot product of the two arrays which must be of
