@@ -9,7 +9,7 @@ Author: Limin Zhang, Ph.D.
         Pasco, WA 99301
         Limin.Zhang@cbc2.org
 
-Mentor: Jarek Naplocha, Ph.D.
+Mentor: Jarek Nieplocha.
   	Environmental Molecular Science Laboratory
         Pacific Northwest National Laboratory
 	Richland, WA 99352
