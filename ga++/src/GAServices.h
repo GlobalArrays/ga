@@ -216,7 +216,6 @@ class GAServices {
    * This function returns the node ID of the process.  On SMP architectures 
    * with more than one processor per node, several processes may return the
    * same node id. 
-   * @param inode                [input]
    * \n This is a  local operation. 
    */
   int clusterNodeid();
@@ -229,17 +228,15 @@ class GAServices {
   int clusterNprocs(int inode);
   
   /**
-   * @param inode,iproc          [input]
    * This function returns the processor id associated with node inode and 
    * the local processor id iproc. If node inode has N processors, then the 
    * value of iproc lies between 0 and N-1. 
+   * @param inode,iproc          [input]
    * \n This is a  local operation. 
    */
   int clusterProcid(int inode, int iproc);
 
    /**
-   * @param number  - number of mutexes in mutex array   [input]
-   *
    * Creates a set containing the number of mutexes. Returns 0 if the 
    * opereation succeeded or 1 when failed. Mutex is a simple 
    * synchronization object used to protect Critical Sections. Only one 
@@ -247,6 +244,7 @@ class GAServices {
    * and destroyed as many times as needed. 
    * Mutexes are numbered: 0, ..., number -1. 
    * \n This is a collective operation. 
+   * @param number  - number of mutexes in mutex array   [input]
    */
   int createMutexes(int number);
     
@@ -349,7 +347,24 @@ class GAServices {
    * arrays on the calling processor. This operation is local. 
    */
   size_t inquireMemory();
-  
+
+   /**
+   * 
+   * Long Global OPeration. 
+   *
+   * X(1:N) is a vector present on each process. LGOP 'sums' elements of 
+   * X accross all nodes using the commutative operator OP. The result is 
+   * broadcast to all nodes. Supported operations include '+', '*', 'max', 
+   * 'min', 'absmax', 'absmin'. The use of lowerecase for operators is 
+   * necessary. This is operation is provided only for convenience purposes: 
+   * it is available regardless of the message-passing library that GA is 
+   * running with. \n This is a collective operation. 
+   * @param n     - number of elements      [input]
+   * @param x[n]  - array of elements       [input/output]
+   * @param op    - operator                [input]
+   */
+  void lgop(long x[], int n, char *op);
+
   /**
    * @param mutex - mutex object id  [input]
    *

@@ -143,6 +143,11 @@ GA::GAServices::inquireMemory() {
 }
 
 void 
+GA::GAServices::lgop(long x[], int n, char *op) {
+  GA_Lgop(x, n, op);
+}
+
+void 
 GA::GAServices::lock(int mutex) {
   GA_Lock(mutex);
 }
