@@ -1,4 +1,4 @@
-#define FNAME '/scratch/EAFfile'
+#define FNAME '/tmp/EAFfile'
 #define EAF_SZ_INT 4
 #define IO_TEST_SZ (1024*1024/128)
 #define IO_NUM_FILES 4
@@ -11,7 +11,10 @@ c
       call test2
       call test3
 c     
+      print *,' '
+      print *,'All tests completed'
       end
+
       subroutine test1
       implicit none
 #include "eaf.fh"
@@ -111,7 +114,6 @@ c
          call testerr(eaf_close(fd(fnum)))
       enddo
 c     
-      print *,'All seems OK'
       end
       subroutine test2
       implicit none
@@ -179,8 +181,6 @@ c
          call testerr(eaf_close(fd(fnum)))
       enddo
 c     
-      print *, 'All seems OK'
-
       end
       subroutine testerr(code)
       implicit none

@@ -39,7 +39,7 @@ static int valid_fd(int fd)
     return ( (fd >= 0) && (fd < EAF_MAX_FILES) && (file[fd].fname) );
 }
 
-static double wall_time()
+static double wall_time(void)
 /*
   Return wall_time in seconds as cheaply and as accurately as possible
   */
@@ -87,7 +87,7 @@ int eaf_open(const char *fname, int type, int *fd)
     if (!(file[i].elio_fd = elio_open(fname, type))) {
 	free(file[i].fname);
 	file[i].fname = 0;
-	return EAF_ERR_OPEN;
+	return ELIO_PENDING_ERR;
     }
 
     file[i].nwait = file[i].nread = file[i].nwrite = 
@@ -146,11 +146,9 @@ int eaf_close(int fd)
     free(file[fd].fname);
     file[fd].fname = 0;
 
-    if (elio_close(file[fd].elio_fd))
-	return EAF_ERR_CLOSE;
-    else
-	return EAF_OK;
+    return elio_close(file[fd].elio_fd);
 }
+
 
 int eaf_write(int fd, eaf_off_t offset, const void *buf, size_t bytes)
 /*
@@ -159,12 +157,15 @@ int eaf_write(int fd, eaf_off_t offset, const void *buf, size_t bytes)
   */
 {    
     double start = wall_time();
+    Size_t rc;
+
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
-    if (elio_write(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes)
-	!= bytes)
-	return EAF_ERR_WRITE;
-    else {
+    rc = elio_write(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes);
+    if (rc != bytes){
+        if(rc < 0) return((int)rc); /* rc<0 means ELIO detected error */
+ 	else return EAF_ERR_WRITE;
+    }else {
 	file[fd].nwrite++;
 	file[fd].nb_write += bytes;
 	file[fd].t_write += wall_time() - start;
@@ -184,20 +185,17 @@ int eaf_awrite(int fd, eaf_off_t offset, const void *buf, size_t bytes,
   */
 {
     io_request_t req;
+    int rc;
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
-    if (elio_awrite(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes,
-		     &req)) {
-	*req_id = -1;
-	return EAF_ERR_AWRITE;
-    }
-    else {
+    rc = elio_awrite(file[fd].elio_fd, (off_t)offset, buf, (Size_t)bytes, &req);
+    if(!rc){
 	*req_id = req;
 	file[fd].nawrite++;
 	file[fd].nb_awrite += bytes;
-	return EAF_OK;
-    }
+    } 
+    return rc;
 }
 
 int eaf_read(int fd, eaf_off_t offset, void *buf, size_t bytes)
@@ -207,13 +205,15 @@ int eaf_read(int fd, eaf_off_t offset, void *buf, size_t bytes)
   */
 {
     double start = wall_time();
+    Size_t rc;
     
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
     
-    if (elio_read(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes)
-	!= bytes)
-	return EAF_ERR_READ;
-    else {
+    rc = elio_read(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes);
+    if (rc != bytes){
+        if(rc < 0) return((int)rc); /* rc<0 means ELIO detected error */
+        else return EAF_ERR_READ;
+    } else {
 	file[fd].nread++;
 	file[fd].nb_read += bytes;
 	file[fd].t_read += wall_time() - start;
@@ -232,20 +232,18 @@ int eaf_aread(int fd, eaf_off_t offset, void *buf, size_t bytes,
   */
 {
     io_request_t req;
+    int rc;
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
-    if (elio_aread(file[fd].elio_fd, (off_t) offset, buf, (Size_t) bytes,
-		     &req)) {
-	*req_id = -1;
-	return EAF_ERR_AREAD;
-    }
-    else {
+    rc = elio_aread(file[fd].elio_fd, (off_t) offset, buf, (Size_t)bytes, &req);
+
+    if(!rc){
 	*req_id = req;
 	file[fd].naread++;
 	file[fd].nb_aread++;
-	return EAF_OK;
     }
+    return rc;
 }
 
 int eaf_wait(int fd, int req_id)
@@ -258,11 +256,7 @@ int eaf_wait(int fd, int req_id)
     int code;
 
     io_request_t req = req_id;
-    if (elio_wait(&req)) 
-	code = EAF_ERR_WAIT;
-    else
-	code = EAF_OK;
-
+    code = elio_wait(&req);
     file[fd].t_wait += wall_time() - start;
     file[fd].nwait++;
 
@@ -277,13 +271,11 @@ int eaf_probe(int req_id, int *status)
   */
 {
     io_request_t req = req_id;
+    int rc;
 
-    if (elio_probe(&req, status))
-	return EAF_ERR_PROBE;
-    else {
-	*status = !(*status == ELIO_DONE);
-	return EAF_OK;
-    }
+    rc = elio_probe(&req, status);
+    if(!rc) *status = !(*status == ELIO_DONE);
+    return rc;
 }
 
 int eaf_delete(const char *fname)
@@ -312,15 +304,11 @@ int eaf_stat(const char *path, int *avail_kb, char *fstype, int fslen)
 {
  char dirname[PATH_MAX];
  stat_t statinfo;
+ int rc;
 
- if (elio_dirname(path, dirname, sizeof(dirname)))
-     return EAF_ERR_STAT;
-
- if (elio_stat(dirname, &statinfo))
-     return EAF_ERR_STAT;
-
- if (fslen < 6)
-     return EAF_ERR_TOO_SHORT;
+ if (rc = elio_dirname(path, dirname, sizeof(dirname))) return rc;
+ if (rc = elio_stat(dirname, &statinfo)) return rc;
+ if (fslen < 6) return EAF_ERR_TOO_SHORT;
 
  *avail_kb = statinfo.avail;
  if (statinfo.fs == ELIO_UFS)
@@ -391,7 +379,7 @@ void eaf_errmsg(int code, char *msg)
     else if (code == EAF_ERR_TRUNCATE)
 	(void) strcpy(msg, "truncate failed");
     else 
-	*msg = 0;
+	elio_errmsg(code, msg);
 }
 
 int eaf_truncate(int fd, eaf_off_t length)
@@ -401,12 +389,9 @@ int eaf_truncate(int fd, eaf_off_t length)
   */
 {
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
-
-    if (elio_truncate(file[fd].elio_fd, (off_t) length))
-	return EAF_ERR_TRUNCATE;
-    else
-	return EAF_OK;
+    return elio_truncate(file[fd].elio_fd, (off_t) length);
 }
+
 
 int eaf_length(int fd, eaf_off_t *length)
 /*
@@ -415,15 +400,11 @@ int eaf_length(int fd, eaf_off_t *length)
   */
 {
     off_t len;
+    int rc;
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
-    if (elio_length(file[fd].elio_fd, &len))
-	return EAF_ERR_LENGTH;
-    else {
-	*length = (eaf_off_t) len;
-	return EAF_OK;
-    }
+    rc = elio_length(file[fd].elio_fd, &len);
+    if(!rc) *length = (eaf_off_t) len;
+    return rc;
 }
-
-	
