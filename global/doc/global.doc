@@ -834,43 +834,6 @@ distribute to other US Government contractors.
       the calling processor.
 
       -------------------------------------------------------------------
-      subroutine ga_copy_from_patch(trans, g_a, ilo,ihi,jlo,jhi, g_b)
-
-      character trans                     [input] transpose flag
-      integer g_a                         [input] handle to src array
-      integer g_b                         [input] handle to dst array
-      integer ilo,ihi,jlo,jhi             [input] coordinates of the patch
-
-      copies a patch of g_a to g_b
-               g_b = op(g_a[ilo:ihi, jlo:jhi])
-      where op(g_a) means
-               g_a  if trans is 'n' or 'N'   
-               g_a' otherwise
-
-      g_b has to have dimensions conforming to the size of the patch
-
-      NOTE: available only on the shared memory platforms and might disappear
-
-      -------------------------------------------------------------------
-      subroutine ga_copy_to_patch(trans, g_a, ilo,ihi,jlo,jhi, g_b)
-
-      character trans                     [input] transpose flag
-      integer g_a                         [input] handle to dst array
-      integer g_b                         [input] handle to src array
-      integer ilo,ihi,jlo,jhi             [input] coordinates of the patch
-
-      copies  g_b to a patch of g_a 
-               g_a[ilo:ihi, jlo:jhi] = op(g_b)
-      where op(g_b) means
-               g_b  if trans is 'n' or 'N'   
-               g_b' otherwise
-
-      g_b has to have dimensions conforming to the size of the patch
-
-      NOTE: available only on the shared memory platforms and might 
-            disappear
-            
-      -------------------------------------------------------------------
       subroutine ga_print_patch(g_a,ilo,ihi,jlo,jhi,pretty)
       
       integer g_a                         [input]
