@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.42 2001-09-05 17:35:55 edo Exp $ */
+/* $Id: shmem.c,v 1.43 2001-10-22 21:16:57 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -236,6 +236,19 @@ static int armci_shmalloc_try(long size)
 #define LBOUND  1048576L
 #define UBOUND 512*LBOUND
 
+static long get_user_shmmax()
+{
+char *uval;
+long x;
+     uval = getenv("ARMCI_DEFAULT_SHMMAX"); 
+     if(uval != NULL){
+       sscanf(uval,"%d",&x);
+       if(x<1 || x> 2048) 
+          armci_die("incorrect ARMCI_DEFAULT_SHMMAX should be <1,2048>mb and 2^N",x);
+     }else x =0;
+     return x*1048576; /* return value in bytes */
+}
+
 /*\ determine the max shmem segment size using bisection
 \*/
 int armci_shmem_test()
@@ -245,7 +258,10 @@ int  i,rc;
 long upper_bound=UBOUND;
 long lower_bound=0;
 
-     x = UBOUND;
+     x = get_user_shmmax();
+     if(!x) x = upper_bound;
+     else upper_bound =x;
+     
      for(i=1;;i++){
         long step;
         rc = armci_test_allocate(x);
@@ -290,7 +306,9 @@ int  i,rc;
 long lower_bound=_SHMMAX*SHM_UNIT;
 #define UBOUND_SEARCH_NO_FORK (256*SHM_UNIT*SHM_UNIT)
 
-     x = UBOUND_SEARCH_NO_FORK;
+     x = get_user_shmmax();
+     if(!x) x = UBOUND_SEARCH_NO_FORK;
+
      for(i=1;;i++){
 
         rc = armci_shmalloc_try(x);
