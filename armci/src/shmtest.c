@@ -35,7 +35,7 @@ int armci_test_allocate(long size)
  */
 
 #define PAGE 65536L
-#define UBOUND 8*4096*PAGE
+#define UBOUND 4*4096*PAGE
 #define LBOUND 10*PAGE
 
 int verbose=1;
