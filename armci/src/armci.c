@@ -147,7 +147,6 @@ int ARMCI_Init()
     armci_nproc = armci_msg_nproc();
     armci_me = armci_msg_me();
 
-    fprintf(stderr,"%d starting\n",armci_me); sleep(1);
 
 #ifdef CRAY
     cmpl_proc=-1;
