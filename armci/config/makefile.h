@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.111 2005-01-14 03:11:24 manoj Exp $
+#$Id: makefile.h,v 1.112 2005-01-20 23:45:03 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -211,7 +211,7 @@ endif
 ifeq  ($(_CPU),x86_64)
   _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /Path/ { print "pathf90" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90"} ')
   ifeq ($(_FC),pgf90)
-     FOPT_REN= -fastsse -Mdalign -tp k8-64 -O3
+     FOPT_REN= -fast -Mdalign -tp k8-64 -O3
   endif
   _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /Path/ { print "pathf90" ; exit }; /efc/ { print "efc" ; exit }; /ifc/ { print "ifort" ; exit };/ifort/ { print "ifort" ; exit }; /pgf90/ { apgf90count++}; /pgf77/ { apgf77count++}; END {if(apgf77count)print "pgf77" ; if(apgf90count)print "pgf90"} ')
   ifeq ($(_FC),g77)
