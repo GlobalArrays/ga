@@ -346,7 +346,7 @@ c
       endif
 c
       n = dimA1
-      if (n .lt. 20) then
+      if (n .lt. 64) then
          call ga_diag_seq(g_a, g_s, g_v, eval)
          return
       endif
@@ -582,7 +582,7 @@ c
       logical status, first_time
       data first_time /.true./
       integer g_ps, eig_flag, thr_seq
-      data thr_seq /20/         !min problem size to be run in parallel 
+      data thr_seq /64/         !min problem size to be run in parallel 
       
 c
       integer hma, adrma        !mapa
