@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.h,v 1.4 2004-02-27 15:08:24 vinod Exp $ */
+/* $Id: ga_vampir.h,v 1.5 2004-02-27 16:47:36 vinod Exp $ */
 #ifndef _GA_VAMPIR_H_
 #define _GA_VAMPIR_H_
 
@@ -108,7 +108,7 @@
 #define NGA_ZDOT_PATCH        32291
 #define NGA_ZERO_PATCH        32290
 #define GA_CHOLESKY           32289 
-#define VT_GA_DGEMM           32288
+#define GA_DGEMM              32288
 #define GA_DGEMM_SEQ          32287
 #define GA_DIAG_STD           32286
 #define GA_DIAG               32285

@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.c,v 1.7 2004-02-27 15:57:47 vinod Exp $ */
+/* $Id: ga_vampir.c,v 1.8 2004-02-27 16:47:24 vinod Exp $ */
 #include "ga_vampir.h"
 
 void ga_vampir_init() {
@@ -137,7 +137,7 @@ void ga_vampir_init() {
         "GA_MATRIX",__FILE__,__LINE__);
 
     vampir_symdef(GA_CHOLESKY,               "GA_Cholesky",                "GA_linalg",__FILE__,__LINE__);
-    vampir_symdef(VT_GA_DGEMM,               "GA_Dgemm",                   "GA_linalg",__FILE__,__LINE__);
+    vampir_symdef(GA_DGEMM,               "GA_Dgemm",                   "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_DGEMM_SEQ,              "GA_Dgemm_seq",               "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_DIAG_STD,               "GA_Diag_std",                "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_DIAG,                   "GA_Diag",                    "GA_linalg",__FILE__,__LINE__);
