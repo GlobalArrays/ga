@@ -23,7 +23,7 @@ ifeq ($(ARMCI_NETWORK),VIA)
   ifdef VIA_LIB
     COMM_LIBS = -L$(VIA_LIB)
   endif
-  VIA_LIB_NAME = -lvia
+  VIA_LIB_NAME = -lvipl
   COMM_LIBS += $(VIA_LIB_NAME)
 endif
 
