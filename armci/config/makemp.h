@@ -59,8 +59,15 @@ endif
 #
 ifdef GA_USE_VAMPIR
    MP_DEFINES += -DGA_USE_VAMPIR
+   ifdef VT_DEBUG
+      MP_DEFINES += -DVT_DEBUG
+   endif
    ifdef VT_PATH
-      MP_LIBS += $(VT_PATH) -lVT
+      ifdef VT_LIB
+         MP_LIBS += $(VT_PATH) $(VT_LIB)
+      else
+         MP_LIBS += $(VT_PATH) -lVT
+      endif
    else
       echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
    endif
