@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.88 2004-08-17 23:02:28 manoj Exp $ */
+/* $Id: base.c,v 1.89 2004-08-23 23:09:17 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -414,6 +414,8 @@ int bytes;
       ga_error("ga_init: Failed to initialize GA_Update_Flags",(int)GAme);
     if (ARMCI_Malloc((void**)GA_Update_Flags, (armci_size_t) bytes))
       ga_error("ga_init:Failed to initialize memory for update flags",GAme);
+    if(GA_Update_Flags[GAme]==NULL)ga_error("ga_init:ARMCIMalloc failed",GAme);
+
     bytes = sizeof(int);
     GA_Update_Signal = ARMCI_Malloc_local((armci_size_t) bytes);
 
@@ -1931,6 +1933,8 @@ int i, nproc,grp_me=GAme;
        else
 #  endif
 	  status = ARMCI_Malloc((void**)ptr_array, bytes);
+       if(bytes!=0 && ptr_array[grp_me]=NULL) 
+	  ga_error("gai_get_shmem: ARMCI Malloc failed", GAme);
        for(i=0;i<nproc;i++)ptr_arr[i] = ptr_array[GA_inv_Proc_list[i]];
     }else
 #endif
@@ -1944,6 +1948,9 @@ int i, nproc,grp_me=GAme;
     } else
 #endif
       status = ARMCI_Malloc((void**)ptr_arr, (armci_size_t)bytes);
+
+    if(bytes!=0 && ptr_arr[grp_me]=NULL) 
+       ga_error("gai_get_shmem: ARMCI Malloc failed", GAme);
     if(status) return status;
 
 #ifndef _CHECK_MA_ALGN
