@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.6 1995-10-11 23:46:21 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/cluster.c,v 1.7 1997-02-17 20:37:26 d3g681 Exp $ */
 
 #include <stdio.h>
 
@@ -16,10 +16,6 @@
                      || defined(NEXT)
 extern char *strdup();
 extern char *strtok();
-#endif
-
-#ifdef SWTCH
-#include "sw.h"
 #endif
 
 extern void Error();
@@ -83,9 +79,6 @@ void InitClusInfo(procgrp, masterhostname)
     SR_clus_info[SR_n_clus].image = strdup(image);
     SR_clus_info[SR_n_clus].workdir = strdup(workdir);
     SR_clus_info[SR_n_clus].masterid = SR_n_proc;
-#if defined(ALLIANT) && defined(SWTCH)
-    SR_clus_info[SR_n_clus].swtchport = sw_port_by_name(host);
-#endif
 
     if (!SR_clus_info[SR_n_clus].user || !SR_clus_info[SR_n_clus].hostname ||
         !SR_clus_info[SR_n_clus].image || !SR_clus_info[SR_n_clus].workdir)
@@ -108,9 +101,6 @@ void InitClusInfo(procgrp, masterhostname)
   SR_clus_info[SR_n_clus].image    = "parallel";
   if (!SR_clus_info[SR_n_clus].hostname)
     Error("InitClusInfo: no memory 3 ", 0L);
-#if defined(ALLIANT) && defined(SWTCH)
-  SR_clus_info[SR_n_clus].swtchport = sw_port_by_name(masterhostname);
-#endif
 
   free(tmp);
 }
@@ -124,22 +114,14 @@ void PrintClusInfo()
 
   printf("No. Clusters: %d\n", SR_n_clus);
   for (i=0; i<clus_to_print; i++)
-#ifndef SWTCH
     (void) printf("Cluster %ld {\n  user = %s\n  host = %s\n  nslave = %ld\n\
   image = %s\n  workdir = %s\n  masterid = %ld}\n",
-#else
-    (void) printf("Cluster %ld {\n  user = %s\n  host = %s\n  nslave = %ld\n\
-  image = %s\n  workdir = %s\n  swport = %ld  masterid = %ld}\n",
-#endif
 		  i,
 		  SR_clus_info[i].user,
 		  SR_clus_info[i].hostname,
 		  SR_clus_info[i].nslave,
 		  SR_clus_info[i].image,
 		  SR_clus_info[i].workdir,
-#ifdef SWTCH
-		  SR_clus_info[i].swtchport,
-#endif
 		  SR_clus_info[i].masterid);
   printf("SR_clus_info = %d size=%d\n",(long) SR_clus_info, sizeof(struct cluster_info_struct));
   (void) fflush(stdout);
@@ -175,9 +157,6 @@ void InitGlobal()
     SR_clus_info[i].image = (char *) NULL;
     SR_clus_info[i].workdir = (char *) NULL;
     SR_clus_info[i].masterid = 0;
-#if defined(ALLIANT) && defined(SWTCH)
-    SR_clus_info[i].swtchport = -1;
-#endif
   }
 
   for (i=0; i<MAX_PROCESS; i++) {

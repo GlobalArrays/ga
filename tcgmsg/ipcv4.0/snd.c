@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.7 1996-03-21 18:24:38 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.8 1997-02-17 20:37:28 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -45,11 +45,6 @@ extern void SRmover();
 #include "evlog.h"
 #endif
 
-#ifdef SWTCH
-#include "sw.h"
-static int next_indexp1;
-static int next_lenmes;
-#endif
 
 void PrintProcInfo()
 /*
@@ -107,91 +102,6 @@ static void PrintMessageHeader(info, header)
   (void) fflush(stdout);
 }
 
-
-#if defined(ALLIANT) && defined(SWTCH)
-
-void snd_switch(me, node, port, buf, lenbuf, type)
-     int me, node, port, lenbuf, type;
-     char *buf;
-/*
-  Send to switch taking care of long messages.
-  Note have to dick around with type as current daemon does
-  not necessarily send messages in order and we use this
-  to order receipt of messages.
-*/
-{
-  int len;
-
-  len = sw_send(me, node, port, buf, lenbuf, type);
-  while (lenbuf -= len) {
-    type += 1000000;
-    buf  += len;
-    len   = sw_send(me, node, port, buf, lenbuf, type);
-  }
-}
-    
-void rcv_switch(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
-     long *type;
-     char *buf;
-     long *lenbuf;
-     long *lenmes;
-     long *nodeselect;
-     long *nodefrom;
-/*
-  synchronous receive of data
-
-  long *type        = user defined type of received message (input)
-  char *buf        = data buffer (output)
-  long *lenbuf      = length of buffer in bytes (input)
-  long *lenmes      = length of received message in bytes (output)
-                     (exceeding receive buffer is hard error)
-  long *nodeselect  = node to receive from (input)
-  long *nodefrom    = node message is received from (output)
-  
-*/
-{
-  int indexp1 = next_indexp1;
-  int len = next_lenmes;
-  int me = NODEID_();
-  int match_type = *type;
-  int len_got = 0;
-  int len_packet;
-
-  *nodefrom = *nodeselect;
-
-  if (DEBUG_) {
-    printf("%2d: rcv_sw_probe: from=%d, type=%d\n",me, *nodefrom, *type);
-    sw_dump_bufs();
-    fflush(stdout);
-  }
- 
-  if (!indexp1)
-    while (!(indexp1 = sw_probe(nodefrom, me, &match_type, &len)))
-      ;
-  *lenmes = len;
-
-  if (*lenmes > *lenbuf) 
-    Error("rcv_switch: message too long for buffer", *lenmes);
-
-  len_got = len_packet = sw_recv(indexp1, buf);
-  
-  while (len_got < *lenmes) {
-    match_type += 1000000;
-    buf += len_packet;
-    while (!(indexp1 = sw_probe(nodefrom, me, &match_type, &len)))
-      ;
-    len_packet = sw_recv(indexp1, buf);
-    len_got += len_packet;
-  }
-
-  if (DEBUG_) {
-    printf("%d: rcv_sw_done: from=%d, type=%d, len=%d\n",
-           me, *nodefrom, *type, *lenmes);
-    fflush(stdout);
-  }
-  next_indexp1 = 0;
-}
-#endif
 
 #ifdef SHMEM
 
@@ -603,22 +513,7 @@ void SND_(type, buf, lenbuf, node, sync)
 #endif
   } else {
 #endif
-#if defined(ALLIANT) && defined(SWTCH)
-    int toport = SR_clus_info[SR_proc_info[*node].clusid].swtchport;
-    int meport = SR_clus_info[SR_proc_info[me].clusid].swtchport;
-    if ((toport >= 0) && (meport >= 0) && (toport != meport)) {
-      if (DEBUG_) {
-	printf("%d: snd_switch: toport=%d, fromport=%d, to=%d, type=%d\n",
-	       me, toport, meport, *node, *type);
-	(void) fflush(stdout);
-      }
-      snd_switch(me, *node, toport, buf, *lenbuf, *type);
-    } else {
-#endif
       snd_remote(type, buf, lenbuf, node);
-#if defined(ALLIANT) && defined(SWTCH)
-    }
-#endif
 #ifdef SHMEM
   }
 #endif
@@ -670,10 +565,6 @@ static long NextReadyNode(type)
 
   long  nproc = NNODES_();
   long  me = NODEID_();
-#ifdef SWTCH
-  long  meport = SR_clus_info[SR_proc_info[me].clusid].swtchport;
-  long  nextport, iport;
-#endif
   int i, nspin = 0;
 
   /* With both local and remote processes end up with a busy wait
@@ -683,10 +574,6 @@ static long NextReadyNode(type)
   while (1) {
     
     for(i=0; i<nproc; i++, next_node = (next_node + 1) % nproc) {
-
-#ifdef SWTCH
-        nextport = SR_clus_info[SR_proc_info[next_node].clusid].swtchport;
-#endif
 
       if (next_node == me) {
         ;  /* can't receive from self */
@@ -701,14 +588,6 @@ static long NextReadyNode(type)
 #endif
 	  break;
       }
-#ifdef SWTCH
-      else if ((meport >= 0) && (nextport >= 0) && (meport != nextport)) {
-	/* Look for message over HIPPI switch */
-
-        if (next_indexp1 = sw_probe(&next_node, me, &type, &next_lenmes))
-          break;
-      }
-#endif
       else if (SR_proc_info[next_node].sock >= 0) {
 	/* Look for message over socket */
 
@@ -782,10 +661,6 @@ long PROBE_(type, node)
   
   long  nproc = NNODES_();
   long  me = NODEID_();
-#ifdef SWTCH
-  long  meport = SR_clus_info[SR_proc_info[me].clusid].swtchport;
-  long  nextport, iport;
-#endif
   int i, proclo, prochi;
   
   if (*node == me)
@@ -800,10 +675,6 @@ long PROBE_(type, node)
   
   for(i=proclo; i<=prochi; i++) {
     
-#ifdef SWTCH
-    nextport = SR_clus_info[SR_proc_info[i].clusid].swtchport;
-#endif
-    
     if (i == me) {
       ;  /* can't receive from self */
     }
@@ -817,14 +688,6 @@ long PROBE_(type, node)
 #endif
 	break;
     }
-#ifdef SWTCH
-    else if ((meport >= 0) && (nextport >= 0) && (meport != nextport)) {
-      /* Look for message over HIPPI switch */
-      
-      if (next_indexp1 = sw_probe(&i, me, &type, &next_lenmes))
-	break;
-    }
-#endif
     else if (SR_proc_info[i].sock >= 0) {
       /* Look for message over socket */
       
@@ -1034,10 +897,6 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
   start = TCGTIME_();
 #endif
 
-#ifdef SWTCH
-  next_indexp1 = 0;    /* IF nodeselect = -1 will be set to message index */
-#endif
-
   if (*nodeselect == -1)
     node = NextReadyNode(*type);
   else
@@ -1063,17 +922,7 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 #endif
   } else {
 #endif
-#if defined(ALLIANT) && defined(SWTCH)
-    int frport = SR_clus_info[SR_proc_info[node].clusid].swtchport;
-    int meport = SR_clus_info[SR_proc_info[me].clusid].swtchport;
-    if ((frport >= 0) && (meport >= 0) && (frport != meport)) {
-      rcv_switch(type, buf, lenbuf, lenmes, &node, nodefrom);
-    } else {
-#endif
       rcv_remote(type, buf, lenbuf, lenmes, &node, nodefrom);
-#if defined(ALLIANT) && defined(SWTCH)
-    }
-#endif
 #ifdef SHMEM
   }
 #endif
@@ -1109,10 +958,6 @@ void RemoteConnect(a, b, c)
   long tmp, lenmes, nodefrom, clusid, lenbuf, sync=1;
   int sock, port;
   long lport;
-#ifdef SWTCH
-  int aport = SR_clus_info[SR_proc_info[a].clusid].swtchport;
-  int bport = SR_clus_info[SR_proc_info[b].clusid].swtchport;
-#endif
 
   if ((a == b) || (a == c) || (b == c) )
     return;        /* Gracefully ignore redundant connections */
@@ -1120,12 +965,6 @@ void RemoteConnect(a, b, c)
   if ( (me != a) && (me != b) && (me != c) )
     return;        /* I'm not involved in this connection */
     
-#ifdef SWTCH
-  /* If connected over HiPPI don't need a socket also */
-
-  if ((aport >= 0) && (bport >= 0) && (aport != bport))
-    return;
-#endif
 
   if (a < b) {
     tmp = a; a = b; b = tmp;

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.9 1996-10-04 22:10:22 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.10 1997-02-17 20:37:27 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -20,10 +20,6 @@
 #include "sndrcv.h"
 #include "signals.h"
 #include "sockets.h"
-
-#ifdef SWTCH
-#include "sw.h"
-#endif
 
 extern char *getenv();
 #if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) || \
@@ -367,18 +363,6 @@ int main(argc, argv)
 
   SR_proc_id = SR_n_proc;
 
-#ifdef SWTCH
-  /* Attach to the HIPPI switch */
-
-  sw_attach("tcgmsg");  /* Non-unique appid resticts to ONE tcgmsg
-			   application on the whole cluster */
-
-  /* Turn off switch routing temporarily as must send procgroup
-     over sockets ... when can find port number from hostname
-     will not need to do this */
-
-  SR_clus_info[SR_n_clus].swtchport = -1;
-#endif
   /* Now create the remote cluster master processes */
 
   for (i=0; i<SR_n_clus; i++) {
@@ -397,10 +381,6 @@ int main(argc, argv)
     type = TYPE_BEGIN | MSGCHR;
     SND_(&type, procgrp, &len_procgrp, &node, &sync);
   }
-
-#ifdef SWTCH
-  SR_clus_info[SR_n_clus].swtchport = sw_port_by_name(hostname);
-#endif
 
   /* Now have to route messages between the cluster masters as they connect */
 

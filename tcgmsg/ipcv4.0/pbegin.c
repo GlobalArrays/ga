@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.7 1996-03-21 18:24:33 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.8 1997-02-17 20:37:27 d3g681 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -27,10 +27,6 @@
 #ifdef SHMEM
 #include "shmem.h"
 #include "sema.h"
-#endif
-
-#if defined(ALLIANT) && defined(SWTCH)
-#include "sw.h"
 #endif
 
 #ifdef EVENTLOG
@@ -265,17 +261,6 @@ void PBEGIN_(argc, argv)
     PrintClusInfo();
     (void) fflush(stdout);
   }
-
-#if defined(ALLIANT) && defined(SWTCH)
-  /* Attach to the HiPPI daemon */
-
-  if(SR_clus_info[SR_proc_info[NODEID_()].clusid].swtchport != -1)
-    sw_attach("tcgmsg");
-  if (DEBUG_) {
-    printf("%ld: pbegin: attached to the switch\n",NODEID_());
-    fflush(stdout);
-  }
-#endif
 
   /* Change to desired working directory ... forked processes
      will inherit it */
