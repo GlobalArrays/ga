@@ -50,7 +50,7 @@
 #endif
 
 
-/* structure to emulate control block in Posiz AIO */
+/* structure to emulate control block in Posix AIO */
 #if defined (CRAY_T3E)
 #   if defined(FFIO)
        typedef struct { struct ffsw stat; int filedes; }io_status_t;
@@ -95,11 +95,13 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
 #  define AIO_LOOKUP(aio_i) aio_i = MAX_AIO_REQ
 #endif
 
-
+/* JN 12.31.97: 
+ * fixed stat returning -1 instead of error code from elio_read/write 
+ */
 #define SYNC_EMULATE(op) *req_id = ELIO_DONE; \
-  if( elio_ ## op (fd, offset, buf, bytes) != bytes ) \
-       stat   = -1;  \
-  else \
+  if((stat= elio_ ## op (fd, offset, buf, bytes)) != bytes ){ \
+       ELIO_ERROR(stat,0);  \
+  }else \
        stat    = 0; 
 
 #ifndef MIN 
@@ -204,7 +206,7 @@ int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request
 #if defined(PARAGON)
       *req_id = _iwrite(fd->fd, buf, bytes);
       stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
-#elif defined(CRAY_T3E)
+#elif defined(CRAY_T3E) && defined(AIO)
       rc = WRITEA(fd->fd, (char*)buf, bytes, &cb_fout[aio_i].stat, DEFARG);
       stat = (rc < 0)? -1 : 0; 
 #elif defined(KSR) && defined(AIO)
@@ -320,7 +322,7 @@ int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * re
 #if defined(PARAGON)
       *req_id = _iread(fd->fd, buf, bytes);
       stat = (*req_id == (io_request_t)-1) ? (Size_t)-1: (Size_t)0;
-#elif defined(CRAY_T3E)
+#elif defined(CRAY_T3E) && defined(AIO)
       rc = READA(fd->fd, buf, bytes, &cb_fout[aio_i].stat, DEFARG);
       stat = (rc < 0)? -1 : 0;
 #elif defined(KSR) && defined(AIO)
