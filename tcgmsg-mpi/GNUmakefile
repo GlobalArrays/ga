@@ -90,7 +90,8 @@ endif
 #
 ifeq ($(MACHINE),LINUX)
            FC = g77
-     FOPT_REN = -Nl100 -fno-second-underscore
+     FOPT_REN = -Nl100 -fno-second-underscore -malign-double
+     COPT_REN = -malign-double
        RANLIB = ranlib
 endif
 

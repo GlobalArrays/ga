@@ -54,6 +54,7 @@ endif
 
 
 ifeq ($(TARGET),LINUX)
+           CC=gcc
 ifndef USE_F77
 #    Linux with g77
      FOPT_REN = -fno-second-underscore
@@ -63,6 +64,12 @@ else
      FCONVERT = @(/bin/cp $< .tmp.$$$$.c; \
 		$(CPP) $(CPP_FLAGS) .tmp.$$$$.c  | sed '/^$$/d' > $*.f; \
 	 	/bin/rm -f .tmp.$$$$.c ) || exit 1
+endif
+ifeq ($(CC),gcc)
+       COPT_REN = -malign-double
+endif
+ifeq ($(FC),g77)
+       FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
 endif
  GLOB_DEFINES = -DLINUX
           CPP = gcc -E -nostdinc -undef -P

@@ -21,6 +21,20 @@ ifeq ($(TARGET),LINUX)
      FOPT_REN = -fno-second-underscore
            FC = g77
            CC = gcc
+ifeq ($(CC),gcc)
+     COPT_REN = -malign-double
+   ifeq ($(COPT),-O)
+         COPT = -O2
+    COPT_REN += -finline-functions -funroll-loops
+   endif
+endif
+ifeq ($(FC),g77)
+       FOPT_REN += -malign-double
+   ifeq ($(FOPT),-O)
+         FOPT = -O3
+    FOPT_REN += -funroll-loops -fomit-frame-pointer
+   endif
+endif      
        RANLIB = ranlib
 endif
 
