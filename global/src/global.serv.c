@@ -499,7 +499,7 @@ void ga_init_fence_()
 #if defined(KSR) || defined(CONVEX) || defined(CRAY_T3D)
 #else
 # ifdef SYSV
-       proc = GA_n_clus-1;
+       proc = ga_msg_nnodes_()-1;
 #   else
        proc = ga_nnodes_()-1;
 # endif
@@ -522,7 +522,7 @@ void ga_fence_()
     return;
 #else
 #   if defined(SYSV)
-       proc = GA_n_clus-1;
+       proc = ga_msg_nnodes_()-1;
 #   else
        proc = ga_nnodes_()-1;
 #   endif
