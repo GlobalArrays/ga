@@ -55,6 +55,9 @@ ifdef LAPI2
   COMM_LIBS += /u2/d3h325/lapi_vector_beta/liblapi_r_dbg.a
 endif
 endif
+ifeq ($(TARGET),LAPI64)
+   COMM_LIBS += $(LAPI64LIBS)
+endif
 
 ifeq ($(TARGET),SOLARIS)
 #  need gethostbyname from -lucb under earlier versions of Solaris

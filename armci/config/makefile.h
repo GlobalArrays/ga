@@ -289,27 +289,39 @@ endif
 
 #................................. IBM SP and workstations ...................
 
+# IBM SP with LAPI: 32- and 64-bit versions
 ifeq ($(TARGET),LAPI)
          IBM_ = 1
+         LAPI_= 1
+endif
+ifeq ($(TARGET),LAPI64)
+       IBM64_ = 1
+         LAPI_= 1
+GLOB_DEFINES += -DLAPI -DIBM64
+endif
+
+# IBM RS/6000 under AIX
+ifeq ($(TARGET),IBM)
+        IBM_  = 1
+endif
+ifeq ($(TARGET),IBM64)
+      IBM64_  = 1
+endif
+
+ifdef LAPI_
           CC  = mpcc_r
       LINK.f  = mpcc_r -lc_r -lxlf -lxlf90 -lm
     EXTRA_OBJ = lapi.o request.o
 GLOB_DEFINES += -DSP
 endif
-
-ifeq ($(TARGET),IBM)
-# IBM RS/6000 under AIX
 #
-         IBM_  = 1
-endif
-
-ifeq ($(TARGET),IBM64)
+ifdef IBM64_
+        IBM_  = 1
      FOPT_REN = -q64
      COPT_REN = -q64
       ARFLAGS = -rcv -X 64
-        IBM_  = 1
 endif
-
+#
 ifdef IBM_
      ifeq ($(FOPT), -O)
          FOPT = -O4 -qarch=com -qstrict
@@ -320,9 +332,9 @@ ifdef IBM_
      ifeq ($(COPT), -O)
          COPT = -O3 -qinline=100 -qstrict -qarch=com -qtune=auto
      endif
-     CDEFS += -DEXTNAME
+       CDEFS += -DEXTNAME
            FC = xlf
-GLOB_DEFINES  += -DAIX
+GLOB_DEFINES += -DAIX
 endif
 
 #...................... common definitions .......................

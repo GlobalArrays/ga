@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.35 2000-11-02 00:57:12 d3h325 Exp $
+# $Id: makefile.h,v 1.36 2000-12-29 21:09:41 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -320,6 +320,18 @@ ifeq ($(TARGET),LAPI)
            CC = mpcc_r
 GLOB_DEFINES += -DSP
 endif
+
+ifeq ($(TARGET),LAPI64)
+         IBM_ = 1
+         FLD  = mpcc_r -lxlf -lxlf90 -lm
+           CC = mpcc_r
+     FOPT_REN = -q64 -qintsize=8
+     COPT_REN = -q64
+        CDEFS = -DEXT_INT
+      ARFLAGS = -rcv -X 64
+GLOB_DEFINES += -DSP -DLAPI
+endif
+
 #....................
 ifeq ($(TARGET),SP1)
 #
@@ -357,6 +369,7 @@ ifeq ($(TARGET),IBM64)
         CDEFS = -DEXT_INT
       ARFLAGS = -rcv -X 64
 endif
+
 
 ifdef IBM_
            FC = xlf

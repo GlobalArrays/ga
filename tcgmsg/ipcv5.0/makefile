@@ -82,6 +82,19 @@ LIBLAPIDIR = /usr/lpp/ssp/css/lib
           -lppe -bl:new.map
 endif
 
+ifeq ($(MACHINE),LAPI64)
+       FC = mpxlf
+       CC = mpcc_r
+      FLD = $(CC)
+   FFLAGS = -qEXTNAME -q64 -qintsize=8
+   CFLAGS = -q64 -O -DEXTNAME -DSHMEM -DAIX -DIBM -DLAPI -DNOTIFY_SENDER
+    EXTRA = lapi_putget.o memalign.o async_send_lapi.o signals.o
+  TESTOBJ = test.o
+    FLIBS = -lxlf90 -lxlf
+     LIBS = -L$(LIBPATH) -llapi_r -lhal_r
+  ARFLAGS = -rcv -X 64
+endif
+
 
 ifeq ($(MACHINE),CRAY-T3E)
      LINT = cclint
