@@ -103,7 +103,7 @@ extern DoublePrecision FATR ga_ddot_ ARGS_((Integer *, Integer *));
 extern DoubleComplex ga_zdot ARGS_((Integer *, Integer *));
 extern void FATR ga_print_patch_ ARGS_((Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *));
 
-extern void ga_summarize     ARGS_((logical*));
+extern void FATR ga_summarize_     ARGS_((logical*));
 extern void FATR ga_symmetrize_   ARGS_((Integer *)); 
 extern void FATR ga_transpose_    ARGS_((Integer *, Integer *));
 extern void FATR ga_diag_seq_     ARGS_((Integer *, Integer *, Integer *,                                                DoublePrecision *));
@@ -111,8 +111,13 @@ extern void FATR ga_diag_reuse_   ARGS_((Integer*, Integer *, Integer *, Integer
                                   DoublePrecision *));
 extern void FATR ga_diag_std_     ARGS_((Integer *, Integer *, DoublePrecision *));
 extern void FATR ga_diag_std_seq_ ARGS_((Integer *, Integer *, DoublePrecision *));
-extern void ga_lu_solve      ARGS_((char *, Integer *, Integer *));
-extern void ga_lu_solve_seq  ARGS_((char *, Integer *, Integer *));
+extern void FATR ga_lu_solve_      ARGS_((char *, Integer *, Integer *));
+extern void FATR ga_lu_solve_alt_  ARGS_((Integer *, Integer *, Integer *));
+extern void ga_lu_solve_seq_  ARGS_((char *, Integer *, Integer *));
+
+extern Integer FATR ga_llt_solve_ ARGS_((Integer *, Integer *));
+extern Integer FATR ga_solve_ ARGS_((Integer *, Integer *));
+extern Integer FATR ga_spd_invert_ ARGS_((Integer *));
 
 extern void ga_dgemm ARGS_((char *, char *, Integer *, Integer *, Integer *,                                DoublePrecision *, Integer *, Integer *,                                        DoublePrecision *, Integer *));
 extern void FATR ga_diag_ ARGS_((Integer *, Integer *, Integer *,DoublePrecision *));
