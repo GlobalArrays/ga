@@ -201,7 +201,7 @@ extern logical nga_create_irreg(
         Integer nblock[], /* number of blocks for each dimension in map */
         Integer *g_a);    /* array handle (output) */
 
-extern void nga_update(Integer *g_a);
+extern void ga_update_ghosts(Integer *g_a);
 
 extern void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi);
 extern void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi);

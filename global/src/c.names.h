@@ -161,13 +161,13 @@
 #define  ga_set_memory_limit_      GA_SET_MEMORY_LIMIT
 #define  ga_ndim_                  GA_NDIM
 #define  ga_print_distribution_    GA_PRINT_DISTRIBUTION
+#define  ga_update_ghosts_         GA_UPDATE_GHOSTS
+#define  ga_has_ghosts_            GA_HAS_GHOSTS
 
 #define  nga_create_               NGA_CREATE
 #define  nga_create_irreg_         NGA_CREATE_IRREG
 #define  nga_create_ghosts_irreg_  NGA_CREATE_GHOSTS_IRREG
 #define  nga_create_ghosts_        NGA_CREATE_GHOSTS
-#define  nga_has_ghosts_           NGA_HAS_GHOSTS
-#define  nga_update_               NGA_UPDATE
 #define  nga_acc_                  NGA_ACC
 #define  nga_put_                  NGA_PUT
 #define  nga_get_                  NGA_GET

@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.4 2001-08-29 15:57:28 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.5 2001-09-04 18:38:19 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1728,7 +1728,7 @@ Integer  value, subscript[2];
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY
 \*/
-void FATR nga_update_(Integer *g_a)
+void FATR ga_update_ghosts_(Integer *g_a)
 {
   Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
   Integer size, ndim, nwidth, offset, slice, increment[MAXDIM];
@@ -1822,7 +1822,7 @@ void FATR nga_update_(Integer *g_a)
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) return;
 
-  GA_PUSH_NAME("nga_update");
+  GA_PUSH_NAME("ga_update");
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
