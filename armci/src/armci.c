@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.35 2000-06-14 22:49:57 d3h325 Exp $ */
+/* $Id: armci.c,v 1.36 2000-07-25 00:03:25 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -205,6 +205,7 @@ void armci_init_memlock()
 }
 
 
+#if defined(SYSV) || defined(WIN32)
 static void armci_check_shmmax()
 {
   long mylimit, limit;
@@ -219,6 +220,7 @@ static void armci_check_shmmax()
      armci_die("All nodes must have the same SHMMAX limit if NO_SHM is not defined",0);
   }
 }
+#endif
 
 
 int ARMCI_Init()
