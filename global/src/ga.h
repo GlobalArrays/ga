@@ -5,6 +5,10 @@
 #include <windows.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <sys/types.h>
 #include "global.h"
 
@@ -32,7 +36,7 @@ extern void NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[]);
 extern void NGA_Release(int g_a, int lo[], int hi[]);
 extern void NGA_Release_update(int g_a, int lo[], int hi[]);
 extern void NGA_Scatter(int g_a, void *v, int* subsArray[], int n);
-extern void NGA_Scatter(int g_a, void *v, int* subsArray[], int n);
+extern void NGA_Gather(int g_a, void *v, int* subsArray[], int n);
 extern void GA_Error(char *message, int code);
 extern int NGA_Locate(int g_a, int subscript[]);
 extern int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[]);
@@ -102,5 +106,9 @@ extern int  GA_Valid_handle(int g_a);
 #define GA_Init_fence  ga_init_fence_
 #define GA_Nodeid (int)ga_nodeid_
 #define GA_Nnodes (int)ga_nnodes_
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
