@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.48 2000-11-02 19:17:00 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.49 2001-02-28 23:42:10 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -829,6 +829,16 @@ Integer ga_handle;
    ga_check_handleM(g_a, "nga_distribution");
    ga_handle = (GA_OFFSET + *g_a);
    ga_ownsM(ga_handle, *proc, lo, hi);
+}
+
+
+
+
+/*\ RETURN COORDINATES OF A GA PATCH ASSOCIATED WITH PROCESSOR proc
+\*/
+void FATR nga_distribution_no_handle_(Integer *ndim, Integer *dims, Integer *nblock, Integer *mapc, Integer *proc, Integer *lo, Integer * hi)
+{
+   ga_ownsM_no_handle(*ndim, dims, nblock, mapc, *proc, lo, hi);
 }
 
 

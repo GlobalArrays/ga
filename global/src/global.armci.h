@@ -72,12 +72,12 @@ int  GA_stack_size=0;
       ga_error(err_string, (*g_a));                                    \
     }                                                                  \
 }
-      
+
 /* this macro finds cordinates of the chunk of array owned by processor proc */
-#define ga_ownsM(ga_handle, proc, lo, hi)                                      \
+#define ga_ownsM_no_handle(ndim, dims, nblock, mapc, proc, lo, hi)                                      \
 {                                                                              \
-   Integer _loc, _nb, _d, _index, _dim=GA[ga_handle].ndim,_dimstart=0, _dimpos;\
-   for(_nb=1, _d=0; _d<_dim; _d++)_nb *= GA[ga_handle].nblock[_d];             \
+   Integer _loc, _nb, _d, _index, _dim=ndim,_dimstart=0, _dimpos;\
+   for(_nb=1, _d=0; _d<_dim; _d++)_nb *= nblock[_d];             \
    if(proc > _nb - 1 || proc<0)for(_d=0; _d<_dim; _d++){                       \
          lo[_d] = (Integer)0;                                                  \
          hi[_d] = (Integer)-1;                                                 \
@@ -85,16 +85,21 @@ int  GA_stack_size=0;
          _index = proc;                                                        \
          if(GA_inv_proc_list) _index = GA_inv_proc_list[proc];                 \
          for(_d=0; _d<_dim; _d++){                                             \
-             _loc = _index% GA[ga_handle].nblock[_d];                          \
-             _index  /= GA[ga_handle].nblock[_d];                              \
+             _loc = _index% nblock[_d];                          \
+             _index  /= nblock[_d];                              \
              _dimpos = _loc + _dimstart; /* correction to find place in mapc */\
-             _dimstart += GA[ga_handle].nblock[_d];                            \
-             lo[_d] = GA[ga_handle].mapc[_dimpos];                             \
-             if(_loc==GA[ga_handle].nblock[_d]-1)hi[_d]=GA[ga_handle].dims[_d];\
-             else hi[_d] = GA[ga_handle].mapc[_dimpos+1]-1;                    \
+             _dimstart += nblock[_d];                            \
+             lo[_d] = mapc[_dimpos];                             \
+             if(_loc==nblock[_d]-1)hi[_d]=dims[_d];\
+             else hi[_d] = mapc[_dimpos+1]-1;                    \
          }                                                                     \
    }                                                                           \
 }
+
+/* this macro finds cordinates of the chunk of array owned by processor proc */
+#define ga_ownsM(ga_handle, proc, lo, hi)				\
+  ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims, GA[ga_handle].nblock, GA[ga_handle].mapc, proc, lo, hi )
+
 
 
 /*\ This macro computes index (place in ordered set) for the element

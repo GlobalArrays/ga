@@ -36,6 +36,7 @@ extern void NGA_Periodic_put(int g_a, int lo[], int hi[], void* buf, int ld[]);
 extern void NGA_Periodic_acc(int g_a, int lo[], int hi[],void* buf,int ld[],void* alpha);
 extern long NGA_Read_inc(int g_a, int subscript[], long inc);
 extern void NGA_Distribution(int g_a, int iproc, int lo[], int hi[]); 
+extern void NGA_Distribution_no_handle(int ndim, const int dims[], const int nblock[], const int mapc[], int iproc, int lo[], int hi[]);
 extern int GA_Compare_distr(int g_a, int g_b); 
 extern void GA_Print_distribution(int g_a); 
 extern void NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[]);

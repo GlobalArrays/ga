@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.26 2000-11-07 00:52:11 d3h325 Exp $ */
+/* $Id: capi.c,v 1.27 2001-02-28 23:42:10 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -304,6 +304,21 @@ int GA_Compare_distr(int g_a, int g_b)
     st = ga_compare_distr_(&a,&b);
     if(st == TRUE) return 0;
     else return 1;
+}
+
+void NGA_Distribution_no_handle(int ndim, const int dims[], const int nblock[], const int mapc[], int iproc, int lo[], int hi[])
+{
+     Integer p=(Integer)iproc;
+     Integer _ndim = ndim;
+     Integer _dims[MAXDIM];
+     Integer _nblock[MAXDIM];
+     Integer _mapc[MAXDIM];
+     COPYINDEX_C2F(dims, _dims, ndim);
+     COPYINDEX_C2F(nblock, _nblock, ndim);
+     COPYINDEX_C2F(mapc, _mapc, ndim);
+     nga_distribution_no_handle_(&_ndim, dims, nblock, mapc, &p, _ga_lo, _ga_hi);
+     COPYINDEX_F2C(_ga_lo,lo, ndim);
+     COPYINDEX_F2C(_ga_hi,hi, ndim);
 }
 
 
