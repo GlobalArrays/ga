@@ -20,7 +20,7 @@
      LIBRARY = libchemio.a
          OBJ = disk.arrays.o disk.param.o patch.util.o fortran.o env.o
  LIB_TARGETS = *.x *.p
-     HEADERS = drap.h dra.h
+     HEADERS = drap.h dra.h dra.fh
       INCDIR = ../../include
 LIB_INCLUDES = -I$(INCDIR)
 
