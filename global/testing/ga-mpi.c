@@ -13,7 +13,7 @@
 *          2. Using MPI calls only -- preprocessor symbol MPI must be defined.
 *
 ****************************************************************************/
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "global.h"

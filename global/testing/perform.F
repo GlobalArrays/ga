@@ -95,7 +95,7 @@ c
       integer me
       integer loop, jump, count, bytes
 c
-      me = nodeid()
+      me = ga_nodeid()
       if (me .eq. 0) then
         write(6,*)' '
         write(6,'(21X,8hACCESS [,i3,1h:,i4,1h,,i3,1h:,i4,1h])') 

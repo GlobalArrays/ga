@@ -11,9 +11,8 @@
 #      "make testc.x"     to create a C test program for GA
 #      "make ga-mpi.x"    to create a C test program for GA that demonstrates
 #                         the interface to MPI
-#      "make ipc.clean"   to create a utility to clean IPC resources 
 #      "make clean"       clean
-#      "make realclean"   even cleaner    
+#      "make realclean"   even cleaner   
 #
 #........................................................................
 
@@ -34,25 +33,27 @@ endif
 
 LOC_INCLUDES = -I../src
 LOC_DEFINES  = $(DIAG_DEF) $(LU_SOLVE_DEF)
-
+LIB_DISTRIB  = ../../lib
+LIBRARY = libglobal.a
+LIB_TARGETS = *.x *.p
 
 include ../Makefile.h
 include ../Makelib.h
-include ../MakeFiles.h
+include ../../config/makelib.h
 
-   LIBRARY = ../libglobal.a
 
 ifeq ($(GA_TRACE),YES)
    LIBTRACE= ../trace/libtrace.a
 endif
+LIBS = $(CORE_LIBS) $(LINALG) $(LIBCOM) $(LIBTRACE)
 
 #
 # main program in C requires extra effort to provide Fortran libs
 # Highly system dependent !!!
+
 ifneq ($(MSG_COMMS), MPI)
   COPT_REN += -I../../tcgmsg/ipcv4.0
 endif
-
 
 
 FOPT=-g
@@ -63,6 +64,33 @@ COPT=-g
 #
 
 .PRECIOUS: %.o
+
+
+ifeq ($(P_FILE),YES)
+    testc.x: testc.o $(LIBDIR)/libglobal.a
+	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
+	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
+    ifdef USE_MPI
+      ga-mpi.x: ga-mpi.o $(LIBDIR)/libglobal.a
+	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
+	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
+    else
+      ga-mpi.x:
+	@echo "You need to recompile the package to use MPI "
+    endif
+else
+    testc.x: testc.o $(LIBDIR)/libglobal.a
+	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
+    ifdef USE_MPI
+      ga-mpi.x: ga-mpi.o $(LIBDIR)/libglobal.a
+	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
+    else
+      ga-mpi.x:
+	@echo "You need to define USE_MPI and recompile the package "
+    endif
+endif
+
+
 
 ifeq ($(P_FILE),YES)
     ifeq ($(EXPLICITF),FALSE)
@@ -75,46 +103,15 @@ ifeq ($(P_FILE),YES)
 	   $(CC) $(CFLAGS) -DSYSV -c $*.c 
     endif
 
-    %.x : %.o $(LIBRARY)
-	$(FC) $(FLDOPT) -o $@ $< $(LIBS) $(LIBCOM) 
+    %.x : %.o $(LIBDIR)/libglobal.a
+	$(FC) $(FLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) 
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
 	$(INSTALL)
 else
-    %.x : %.o $(LIBRARY)
-	$(FC) $(FLDOPT) -o $@ $< $(LIBS) $(LIBCOM) 
+    %.x : %.o $(LIBDIR)/libglobal.a
+	$(FC) $(FLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS)
 	$(INSTALL)
 endif
 
-
-ifeq ($(P_FILE),YES)
-testc.x: testc.o $(LIBRARY)
-	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
-	$(CLD) $(CLDOPT) -o $@ $< $(LIBS) $(LIBCOM) $(CLIB)
-    ifdef USE_MPI
-ga-mpi.x: ga-mpi.o $(LIBRARY)
-	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
-	$(CLD) $(CLDOPT) -o $@ $< $(LIBS) $(LIBCOM) $(CLIB)
-    else
-ga-mpi.x:
-	@echo "You need to define USE_MPI and recompile the package "
-    endif
-else
-testc.x: testc.o $(LIBRARY)
-	$(CLD) $(CLDOPT) -o $@ $< $(LIBS) $(LIBCOM) $(CLIB)
-    ifdef USE_MPI
-ga-mpi.x: ga-mpi.o $(LIBRARY)
-	$(CLD) $(CLDOPT) -o $@ $< $(LIBS) $(LIBCOM) $(CLIB)
-    else
-ga-mpi.x:
-	@echo "You need to define USE_MPI and recompile the package "
-    endif
-endif
-
-ipc.clean:	ipc.clean.o
-	$(CC) -o $@  ipc.clean.o
-
-
-clean:   
-	rm -f *.o *.a core mppcore mputil* *.p *.x  ipc.clean event* *.x.trace
-
-realclean: clean
+%.p:
+	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@

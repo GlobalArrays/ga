@@ -188,7 +188,7 @@ c
 c     All nodes check all of a
 c
       call dfill(n*n, 0.0d0, b, 1)
-c     call ga_print(g_a,1)
+*     call ga_print(g_a,1)
       call ga_get(g_a, 1, n, 1, n, b, n)
 *      write(6,*) ' after get'
 *      call output(b, 1, n, 1, n, n, n, 1)
@@ -474,7 +474,7 @@ c
 c
       call ga_sync()
       if (me .eq. 0) then
-         write(6,*) '> Checking scatter/gather ... '
+         write(6,*) '> Checking scatter/gather (slow)... '
          call ffflush(6)
       endif
       call ga_sync()
