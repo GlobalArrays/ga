@@ -6,7 +6,10 @@
 #else
 #include <lapi.h>
 #endif
-   
+#ifdef LAPI_ERR_BAD_NINTH_PARM
+#define LAPI2
+#endif
+#define NB_CMPL_T lapi_cmpl_t   
 extern lapi_handle_t lapi_handle;
 extern int lapi_max_uhdr_data_sz; /* max data payload in AM header */
 
@@ -46,15 +49,9 @@ extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI send */
 #define SHORT_ACC_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
 #define SHORT_PUT_THRESHOLD (6 * lapi_max_uhdr_data_sz) 
 
-#ifdef LAPI2
-#  define LONG_PUT_THRESHOLD 0
-#  define LONG_GET_THRESHOLD 0
-#  define LONG_GET_THRESHOLD_STRIDED 0
-#else
-#  define LONG_PUT_THRESHOLD 4000
-#  define LONG_GET_THRESHOLD 3000
-#  define LONG_GET_THRESHOLD_STRIDED LONG_GET_THRESHOLD
-#endif
+#define LONG_PUT_THRESHOLD 4000
+#define LONG_GET_THRESHOLD 4000
+#define LONG_GET_THRESHOLD_STRIDED LONG_GET_THRESHOLD
 
 #define MSG_BUFLEN_DBL 30000
 

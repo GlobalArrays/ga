@@ -148,7 +148,19 @@ extern int armci_domain_count(armci_domain_t domain);
 extern char *mp_group_name;
 
 /*********************stuff for non-blocking API******************************/
-typedef struct armci_req_t * armci_hdl_t;
+/*\ the request structure for non-blocking api. 
+\*/
+typedef struct{
+   int tag;
+   int bufid;
+   int op;
+#ifdef NB_CMPL_T
+   NB_CMPL_T cmpl_info;
+#endif
+} armci_req_t;
+/*\ the request structure for non-blocking api. 
+\*/
+typedef armci_req_t* armci_hdl_t;
 
 extern int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t nb_handle);
 

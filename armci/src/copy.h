@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.43 2002-09-25 00:53:04 d3h325 Exp $ */
+/* $Id: copy.h,v 1.44 2002-10-21 04:25:09 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -242,7 +242,7 @@ void FATR DCOPY1D(void*, void*, int*);
       }\
     }
 
-#if defined(FUJITSU) || defined(LAPI2)
+#if defined(FUJITSU) 
 
 #   define armci_put2D(p, bytes,count,src_ptr,src_stride,dst_ptr,dst_stride)\
            CopyPatchTo(src_ptr, src_stride, dst_ptr, dst_stride, count,bytes, p)

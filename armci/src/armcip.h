@@ -34,18 +34,6 @@ extern void armci_elan_fence(int p);
 
 #endif
 
-/*\ the request structure for non-blocking api. 
-\*/
-typedef struct{
-   int tag;
-   int bufid;
-   int op;
-#ifdef NB_CMPL_T
-   NB_CMPL_T cmpl_info;
-#endif
-} armci_req_t;
-/*\ the request structure for non-blocking api. 
-\*/
 
 
 typedef struct{

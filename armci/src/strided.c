@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.44 2002-10-18 18:17:20 vinod Exp $ */
+/* $Id: strided.c,v 1.45 2002-10-21 04:25:09 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -34,7 +34,7 @@ int armci_iwork[MAX_STRIDE_LEVEL];
 static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, 
                           int bytes, int count, int src_stride, int dst_stride)
 {
-#ifdef LAPI2
+#ifdef LAPI2__
 #  define COUNT 1
 #else
 #  define COUNT count
@@ -301,6 +301,14 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
 
 /*    if(proc!=armci_me) INTR_OFF;*/
 
+#  ifdef LAPI2 
+    /*even 1D armci_nbput has to use different origin counters for 1D */
+    if(!ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
+       !nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD)) 
+       armci_lapi_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
+                         dst_stride_arr,count,stride_levels,nb_handle);
+    else
+#  endif
     switch (stride_levels) {
       case 0: /* 1D copy */ 
 
@@ -792,29 +800,18 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 
 #ifndef LAPI2
     if(!direct){
-#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
+#  if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)
        if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
            rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
                      dst_ptr, dst_stride_arr, count, stride_levels,NULL,1,NULL);
        }
        else
-#endif
+#  endif
        rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,dst_ptr,
                   dst_stride_arr, count, stride_levels, NULL, -1, -1, -1,NULL);
     }
-#else /*if it is actually LAPI2, we use vector, strided or contig protocols*/
-    if(stride_levels==0) {
-       rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
-                            dst_ptr,dst_stride_arr,count,stride_levels, 0,NULL);
-    }
-    else if(stride_levels==1) {
-       /*armci_lapi2_put2D();*/
-    }
-    else if(count[0]<=LONG_PUT_THRESHOLD){
-       /*armci_lapi2_putND();*/
-    }
-#endif
     else
+#endif 
        rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr,
                             dst_ptr,dst_stride_arr,count,stride_levels, 0,NULL);
 
