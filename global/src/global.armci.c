@@ -347,11 +347,10 @@ Integer  i;
 \*/ 
 logical FATR ga_uses_ma_()
 {
-#  if defined(CRAY_T3E)||defined(SP)||defined(LAPI)||defined(PARAGON)||defined(ARMCI)
-     return FALSE;
-#  else
-     return TRUE;
-#  endif
+   if(!GAinitialized) return FALSE;
+   
+   if(ARMCI_Uses_shm()) return FALSE;
+   else return TRUE;
 }
 
 
@@ -651,14 +650,16 @@ Integer handle;
 }
 
 
-char* ptr_array[1024];
+#ifdef PERMUTE_PIDS
+char* ptr_array[MAX_NPROC];
+#endif
 
 /*\ get memory alligned w.r.t. MA base
  *  required on Linux as g77 ignores natural data alignment in common blocks
 \*/ 
-int gai_getmem(char **ptr_arr, int bytes, int type, long *adj)
+int gai_get_shmem(char **ptr_arr, int bytes, int type, long *adj)
 {
-int status;
+int status=0;
 #ifndef _CHECK_MA_ALGN
 char *base;
 long diff, item_size;  
@@ -674,7 +675,7 @@ int i;
     }
 
     item_size = GAsizeofM(type);
-    bytes += item_size; /***** will change on clusters *****/
+    bytes += item_size; 
 
 #endif
 
@@ -688,7 +689,6 @@ int i;
 #endif
 
     status = ARMCI_Malloc((void**)ptr_arr, bytes);
-
     if(status) return status;
 
 #ifndef _CHECK_MA_ALGN
@@ -711,6 +711,31 @@ int i;
 #endif
     return status;
 }
+
+
+int gai_getmem(char* name, char **ptr_arr, int bytes, int type, long *id)
+{
+Integer handle = INVALID_MA_HANDLE, index;
+Integer nelem, item_size = GAsizeofM(type);
+char *ptr = (char*)0;
+
+   if(ARMCI_Uses_shm()) return gai_get_shmem(ptr_arr, bytes, type, id);
+   else{
+
+     nelem = bytes/item_size + 1;
+     if(bytes)
+        if(MA_alloc_get(type, nelem, name, &handle, &index))
+                MA_get_pointer(handle, &ptr);
+     *id   = (long)handle;
+
+     bzero(ptr_arr,(int)GAnproc*sizeof(char*));
+     ptr_arr[GAme] = ptr;
+     armci_exchange_address(ptr_arr,(int)GAnproc);
+     if(bytes && !ptr) return 1; 
+     else return 0;
+   }
+}
+
 
 
 
@@ -805,8 +830,8 @@ Integer  i, ga_handle, status, maplen=0;
 /*      fprintf(stderr,"%d, elems=%d size=%d status=%d\n",GAme,nelem,mem_size,status);*/
 /*      ga_sync_();*/
       if(status){
-          status = !gai_getmem(GA[ga_handle].ptr,mem_size,(int)type,
-                              &GA[ga_handle].id);
+          status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
+                                 (int)type, &GA[ga_handle].id);
       }else{
           GA[ga_handle].ptr[GAme]=NULL;
       }
@@ -943,7 +968,7 @@ Integer  i, ga_handle, status;
       }else status = 1;
  
       if(status){
-          status = !gai_getmem(GA[ga_handle].ptr,mem_size,*type,
+          status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,*type,
                               &GA[ga_handle].id);
       }else{
           GA[ga_handle].ptr[GAme]=NULL;
@@ -1071,8 +1096,8 @@ int      *save_mapc;
       }else status = 1;
 
       if(status)
-          status = !gai_getmem(GA[ga_handle].ptr,mem_size,GA[ga_handle].type,
-                              &GA[ga_handle].id);
+          status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
+                               GA[ga_handle].type, &GA[ga_handle].id);
       else{
           GA[ga_handle].ptr[GAme]=NULL;
       }
@@ -1151,9 +1176,13 @@ Integer ga_handle = GA_OFFSET + *g_a;
     if(GA[ga_handle].actv==0) return FALSE;       
     if(GA[ga_handle].ptr[GAme]==NULL) return TRUE;
  
-    /* make sure that we free original (before address allignment) pointer */
-    ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
-/*    printf("%d destr ptr=%d\n",GAme,GA[ga_handle].ptr[GAme]);*/
+    if(ARMCI_Uses_shm()){
+      /* make sure that we free original (before address allignment) pointer */
+      ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
+    }else{
+      if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
+    }
+
     if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
     GA[ga_handle].actv = 0;     
     GAstat.curmem -= GA[ga_handle].size;
