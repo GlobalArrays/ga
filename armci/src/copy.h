@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.51 2003-07-10 19:19:28 d3h325 Exp $ */
+/* $Id: copy.h,v 1.52 2003-08-01 21:39:43 manoj Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -218,6 +218,10 @@ void FATR DCOPY1D(void*, void*, int*);
                                                  
 #if  defined(MEMCPY)  && !defined(armci_copy)
 #    define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 
+#endif
+
+#ifdef NEC
+#    define MEM_FENCE mpisx_clear_cache
 #endif
 
 #ifndef armci_copy
