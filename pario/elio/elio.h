@@ -1,7 +1,5 @@
 /* file name: elio.h  to be included by all apps that use ELIO */
 
-#define PRINT_AND_ABORT(msg, val) ga_error(msg, (long)val)
-extern void ga_error(char*, long);
 
 /*include file that contains some common constants, also include by fortran */
 #include "chemio.h" 

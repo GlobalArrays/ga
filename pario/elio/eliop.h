@@ -4,6 +4,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define PRINT_AND_ABORT(msg, val) ga_error(msg, (long)val)
+#ifndef GLOBAL_H
+extern void ga_error(char*, long);
+#endif
+
 #if (defined(SP) || defined(SP1)) && !defined(NOPIOFS)
 #define PIOFS 1
 #endif
