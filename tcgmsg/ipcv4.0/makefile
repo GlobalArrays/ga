@@ -254,7 +254,7 @@ ifeq ($(TARGET),KSR)
 endif
 
 ifeq ($(TARGET),HPUX)
-    FFLAGS = -O +ppu
+    FFLAGS = -O3 +ppu
    DEFINES = -DHPUX -DEXTNAME -DSYSV -DSHMEM  -DNOSPIN
  LINTFLAGS = $(DEFINES) -bhu
     RANLIB = @echo $*
@@ -265,7 +265,7 @@ ifeq ($(TARGET),HPUX64)
         FC = f90
    DEFINES = -DHPUX64 -DHPUX -DEXTNAME -DSYSV -DSHMEM  -DNOSPIN
     FFLAGS = -O +DA2.0W +ppu +i8
-    CFLAGS = -O +DA2.0W -Ae $(DEFINES)
+    CFLAGS = -O +Odataprefetch +DA2.0W -Ae $(DEFINES)
  LINTFLAGS = $(DEFINES) -bhu
     RANLIB = @echo $*
      EXTRA = hpuxargs.o

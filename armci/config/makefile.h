@@ -110,13 +110,12 @@ endif
 
 #----------------------------- HP/Convex ------------------------------
 ifeq ($(TARGET),HPUX)
-# HP compiler can generate bad code for shared memory data
-# use gcc if cc breaks
-#          CC = gcc
            FC = fort77
            AS = cc -c
     ifeq ($(FOPT),-O)
          FOPT = -O3
+         FOPT += $(shell uname -m |\
+		 awk -F/ '{ if ( $$2 > 799 ) print "+Odataprefetch" }')
     endif
      FOPT_REN = +ppu
      COPT_REN = -Ae
@@ -128,7 +127,7 @@ ifeq ($(TARGET),HPUX64)
            FC = f90
            AS = cc -c
     ifeq ($(FOPT),-O)
-         FOPT = -O3
+         FOPT = -O3 +Odataprefetch
     endif
      FOPT_REN = +DA2.0W +ppu
      COPT_REN = +DA2.0W -Ae 

@@ -38,7 +38,7 @@
 /* dcopy2d_u_ uses explicit unrolled loops to depth 4 */
 #if defined(AIX)
 #    define DCOPY2D	dcopy2d_u
-#elif defined(LINUX)
+#elif defined(LINUX)  || defined(HPUX64)
 #    define DCOPY2D	dcopy2d_n_
 #elif !defined(CRAY) && !defined(WIN32)
 #    define DCOPY2D	dcopy2d_u_

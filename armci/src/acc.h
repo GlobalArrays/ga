@@ -8,6 +8,12 @@
 #    define C_ACCUMULATE_2D	c_accumulate_2d_u
 #    define Z_ACCUMULATE_2D	z_accumulate_2d_u
 #    define F_ACCUMULATE_2D	f_accumulate_2d_u
+#elif defined(FUJITSU) || defined(CRAY) ||  defined(HPUX64)
+#    define I_ACCUMULATE_2D     i_accumulate_2d_
+#    define D_ACCUMULATE_2D     d_accumulate_2d_
+#    define C_ACCUMULATE_2D     c_accumulate_2d_
+#    define Z_ACCUMULATE_2D     z_accumulate_2d_
+#    define F_ACCUMULATE_2D     f_accumulate_2d_
 #elif !defined(CRAY) && !defined(WIN32)
 #    define I_ACCUMULATE_2D     i_accumulate_2d_u_
 #    define D_ACCUMULATE_2D     d_accumulate_2d_u_
@@ -20,11 +26,6 @@
 
 #ifdef CRAY
 #define  D_ACCUMULATE_2D daxpy_2d_
-#endif
-
-#if defined(FUJITSU)
-#undef D_ACCUMULATE_2D
-#define D_ACCUMULATE_2D d_accumulate_2d_
 #endif
 
 #ifdef NOFORT
