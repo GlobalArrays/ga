@@ -21,6 +21,7 @@ extern int GA_Duplicate(int g_a, char* array_name);
 extern void GA_Destroy(int g_a);
 extern void GA_Terminate(void);
 extern void GA_Zero(int g_a); 
+extern void GA_Fill(int g_a, void *value);
 extern double GA_Ddot(int g_a, int g_b); 
 extern DoubleComplex GA_Zdot(int g_a, int g_b); 
 extern void GA_Scale(int g_a, void *value); 
@@ -74,6 +75,8 @@ extern double NGA_Ddot_patch(int g_a, char t_a, int alo[], int ahi[],
                              int g_b, char t_b, int blo[], int bhi[]);
 extern DoubleComplex NGA_Zdot_patch(int g_a, char t_a, int alo[], int ahi[],
                                     int g_b, char t_b, int blo[], int bhi[]);
+extern void NGA_Zero_patch(int g_a, int lo[], int hi[]);
+    
 extern void NGA_Fill_patch(int g_a, int lo[], int hi[], void *val);
 extern void NGA_Scale_patch(int g_a, int lo[], int hi[], void *alpha);
 extern void NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[],
