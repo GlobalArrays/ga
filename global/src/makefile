@@ -43,7 +43,7 @@ $(LIBRARY):  $(OBJ) $(EXTRA)
 	$(AR) $(ARFLAGS) $@ $(OBJ) $(EXTRA) 
 	$(RANLIB) $@
 
-$(GA_SYNC): 
+$(GA_SYNC):	 $(GA_SYNC:.o=.c)
 	cc -g $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) -c  $(GA_SYNC:.o=.c)
 
 $(OBJ):  $(TARGET).$(VERSION).stamp 
