@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.38 2004-06-11 07:09:57 d3h325 Exp $ */
+/* $Id: elan.c,v 1.39 2004-06-28 17:38:11 manoj Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,7 +124,7 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
 	/* New PutS/GetS subsystem */
 	q = elan_gallocElan(elan_base, elan_base->allGroup, ELAN_QUEUE_ALIGN,
 				elan_pgsGlobalMemSize(elan_base->state));
-	//q = elan_gallocQueue(elan_base, elan_base->allGroup);
+	/* q = elan_gallocQueue(elan_base, elan_base->allGroup); */
 	
 	_pgsstate = pgs_init(elan_base->state, q);
     }
