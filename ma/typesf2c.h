@@ -2,10 +2,10 @@
 #define _TYPES_F2C_H_
 
 /*
- * $Id: typesf2c.h,v 1.4 2001-05-09 00:05:08 d3h325 Exp $
+ * $Id: typesf2c.h,v 1.5 2001-08-21 16:48:15 d3h325 Exp $
  */
 
-#  ifdef _WIN32
+#  if defined(_WIN32) && !defined(CYGNUS) && !defined(CYGWIN)
 #    include "winf2c.h"
 #  else
 #    define FATR 
