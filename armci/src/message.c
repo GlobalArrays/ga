@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.40 2002-07-24 18:26:59 vinod Exp $ */
+/* $Id: message.c,v 1.41 2002-07-24 19:00:34 vinod Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -213,12 +213,13 @@ void armci_msg_barr_init(){
  *algorithm with SMP barrier inside a node and msg_snd/rcv between the nodes.
  *NOTE::code for power or two nodes and non power of two nodes can be combined.
 \*/
+#ifdef LAPI
 static void _armci_msg_barrier(){
     int next_node,next,i;
     char *dstn,*srcp;
     int nslave = armci_clus_info[armci_clus_me].nslave;
     static int barr_count = 0;
-    int last, next_nodel;
+    int last, next_nodel=0;
     void armci_util_wait_int(int *,int,int);
     /*if(barr_count==0)armci_msg_barr_init();*/
     barr_count++;
@@ -294,7 +295,7 @@ static void _armci_msg_barrier(){
     }
 }
        
-
+#endif
 void armci_msg_barrier()
 {
 #  ifdef MPI
@@ -537,7 +538,7 @@ int i, nslave = armci_clus_info[armci_clus_me].nslave;
 void _armci_msg_binomial_bcast(void *buf, int len, int root){
     int Root = armci_master;
     int nslave = armci_clus_info[armci_clus_me].nslave;
-    int next1,i,next_node,next;
+    int i,next_node,next;
 /*    int my_rank,root_rank,next_rank; */
     /* inter-node operation between masters */
     if(root !=armci_clus_info[0].master){
@@ -1253,8 +1254,7 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
 
 void _armci_msg_binomial_reduce(void *x, int n, char* op, int type){
     int root = armci_clus_info[0].master;
-    int nslave = armci_clus_info[armci_clus_me].nslave;
-    int next1,i,next_node,next;
+    int i,next_node,next;
     int size, ratio, ndo, lenmes,len;
 /*    int my_rank,root_rank,next_rank; */
     if(armci_me!=armci_master)return;
