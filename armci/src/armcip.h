@@ -34,6 +34,11 @@ extern void armci_elan_fence(int p);
 
 #endif
 
+/*\ Stuff for non-blocking API
+\*/ 
+#define NB_MULTI -1 /*more than one armci buffer(buffers.c) used for nbcall*/
+#define NB_NONE  -2 /*no armci buffer(buffers.c) used for nbcall*/
+
 
 
 typedef struct{
