@@ -162,8 +162,13 @@ int  GA_stack_size=0;
              long oldmask;
 #            define LOCK(g_a, proc, x) \
                     { if(  in_handler == 0) ga_mask(1L, &oldmask) }
-#            define UNLOCK(g_a,proc, x) \
+#            ifdef PARAGON
+#              define UNLOCK(g_a,proc, x) \
+                    { if( in_handler == 0) ga_mask(0L, &oldmask) }
+#            else
+#              define UNLOCK(g_a,proc, x) \
                     { if( in_handler == 0) ga_mask(oldmask, &oldmask) }
+#            endif
 #        endif
 #endif
 

@@ -1,4 +1,4 @@
-/*$Id: message.h,v 1.4 1995-03-22 19:23:29 d3h325 Exp $*/
+/*$Id: message.h,v 1.5 1995-04-10 17:02:36 d3h325 Exp $*/
 
 /* flags to specify blocking/nonblocking communication in TCGMSG */
 #define SYNC  1
@@ -10,13 +10,16 @@
 #define ALL_CLUST_GRP   2
 #define INTER_CLUST_GRP 3
 
+/* constants for send and receive buffers to handle remote requests */
 #if defined(NX) || defined(SP1)
 #   define MSG_BUF_SIZE    98304
 #else
 #   define MSG_BUF_SIZE    16384
 #endif
-#define MSG_HEADER_SIZE 10*sizeof(Integer)
-#define TOT_MSG_SIZE    (MSG_BUF_SIZE + MSG_HEADER_SIZE) 
+#define REQ_FIELDS 10
+#define MSG_HEADER_SIZE  (REQ_FIELDS*sizeof(Integer))
+#define TOT_MSG_SIZE     (MSG_BUF_SIZE + MSG_HEADER_SIZE) 
+#define MSG_BUF_DBL_SIZE ((TOT_MSG_SIZE + sizeof(double)-1)/sizeof(double))
 
 /* size of buffer used to send/broadcast shared memory ids */
 #ifdef SUN

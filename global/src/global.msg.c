@@ -41,8 +41,13 @@
 #define DEBUG 0 
 #define ACK   0
    
-struct message_struct message_buf[2];
-struct message_struct *MessageSnd = message_buf, *MessageRcv = message_buf+1;
+/* send & receive buffers alligned on sizeof(double) boundary  */
+double _snd_dbl_buf[MSG_BUF_DBL_SIZE];
+double _rcv_dbl_buf[MSG_BUF_DBL_SIZE];
+struct message_struct *MessageSnd = (struct message_struct*)_snd_dbl_buf,
+                      *MessageRcv = (struct message_struct*)_rcv_dbl_buf;
+
+
 Integer in_handler = 0;
 Integer NumSndReq=0;
 
