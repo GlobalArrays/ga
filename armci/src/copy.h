@@ -7,14 +7,18 @@
 #define MEMCPY
 #endif
 
+
 /* macros to ensure ordering of consecutive puts or gets following puts */
 #if defined(LAPI)
 
 #   include "lapidefs.h"
 
-#elif defined(CRAY)
-
+#elif defined(CRAY) || defined(QUADRICS)
+#ifdef CRAY
 #   include <mpp/shmem.h>
+#else
+#   include <elan/shmem.h>
+#endif
     int cmpl_proc;
 #   define FENCE_NODE(p) if(cmpl_proc == (p)){\
            shmem_quiet(); cmpl_proc=-1;}
@@ -46,7 +50,24 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 
 /***************************** 1-Dimensional copy ************************/
 
-#if defined(CRAY_T3E)
+#if defined(QUADRICS)
+#      define armci_copy(src,dst,n)           memcpy((dst),(src),(n))
+#      define armci_put(src,dst,n,proc)\
+              if(proc==armci_me){\
+                 armci_copy(src,dst,n);\
+              } else { shmem_double_put((double*)(dst),(double*)(src),(n)/sizeof(double),(proc));}
+/*
+              } else { shmem_int_put((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
+*/
+#      define armci_get(src,dst,n,proc) \
+              if(proc==armci_me){\
+                 armci_copy(src,dst,n);\
+              } else { shmem_double_get((double*)(dst),(double*)(src),(n)/sizeof(double),(proc));}
+/*
+              } else { shmem_int_get((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
+*/
+
+#elif defined(CRAY_T3E)
 #      define armci_copy(src,dst,n)\
         if((n)<128 || n%sizeof(long) ) memcpy((dst),(src),(n));\
         else shmem_put((long*)(dst),(long*)(src),(int)(n)/sizeof(long),armci_me)

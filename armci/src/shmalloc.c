@@ -1,4 +1,4 @@
-/* $Id: shmalloc.c,v 1.5 2000-04-17 22:23:19 d3h325 Exp $ */
+/* $Id: shmalloc.c,v 1.6 2000-05-05 00:28:48 d3h325 Exp $ */
 #include <stdio.h>
 #include "shmalloc.h"
 
@@ -96,16 +96,53 @@ void shmalloc_debug(code)
   do_verify = code;
 }
 
+
+static Header *morecore(nu)
+     unsigned nu;
+{
+  char *cp;
+  Header *up;
+  void addtofree();
+ 
+  if (usage.total >= max_nalloc)
+    return (Header *) NULL;   /* Enforce upper limit on core usage */
+
+  nu = nalloc*((nu-1)/nalloc+1); /* nu must by a multiplicity of nalloc */
+  /*if (nu < nalloc) nu = nalloc;*/ /* Minimum size for getting memory */
+
+#if DEBUG
+  (void) printf("morecore: Getting %d more units of length %d\n",
+                nu, sizeof(Header));
+  (void) fflush(stdout);
+#endif
+
+  if ((cp = allocate((unsigned)nu * sizeof(Header))) == (char *) NULL)
+    return (Header *) NULL;
+ 
+  usage.total += nu;   /* Have just got nu more units */
+  usage.nchunk++;      /* One more chunk */
+  usage.nfrags++;      /* Currently one more frag */
+  usage.inuse += nu;   /* Inuse will be decremented by shfree */
+
+  up = (Header *) cp;
+  up->s.size = nu;
+  up->s.valid1 = VALID1;
+  up->s.valid2 = VALID2;
+
+  /* Insert into linked list of blocks in use so that shfree works
+     ... for debug only */
+  up->s.ptr = usedp;
+  usedp = up;
+
+  addtofree((char *)(up+1));  /* Try to join into the free list */
+  return freep;
+}
+
 char *shmalloc(nbytes)
      unsigned nbytes;
 {
   Header *p, *prevp;
   unsigned nunits;
-#if defined(SGI) || defined(HPUX)
-  Header *morecore();
-#else
-  static Header *morecore();
-#endif
   char *return_ptr;
 #ifdef IPSC
   long oldmask = masktrap((long) 1);  /* Make this single threaded */
@@ -184,51 +221,6 @@ char *shmalloc(nbytes)
   return return_ptr;
 }
 
-
-#if defined(SGI) || defined(HPUX)
-Header *morecore(nu)
-#else
-static Header *morecore(nu)
-#endif
-     unsigned nu;
-{
-  char *cp;
-  Header *up;
-  void addtofree();
-  
-  if (usage.total >= max_nalloc)
-    return (Header *) NULL;   /* Enforce upper limit on core usage */
-
-  nu = nalloc*((nu-1)/nalloc+1); /* nu must by a multiplicity of nalloc */
-  /*if (nu < nalloc) nu = nalloc;*/ /* Minimum size for getting memory */
-
-#if DEBUG
-  (void) printf("morecore: Getting %d more units of length %d\n",
-		nu, sizeof(Header));
-  (void) fflush(stdout);
-#endif
-
-  if ((cp = allocate((unsigned)nu * sizeof(Header))) == (char *) NULL)
-    return (Header *) NULL;
-  
-  usage.total += nu;   /* Have just got nu more units */
-  usage.nchunk++;      /* One more chunk */
-  usage.nfrags++;      /* Currently one more frag */
-  usage.inuse += nu;   /* Inuse will be decremented by shfree */
-
-  up = (Header *) cp;
-  up->s.size = nu;
-  up->s.valid1 = VALID1;
-  up->s.valid2 = VALID2;
-
-  /* Insert into linked list of blocks in use so that shfree works
-     ... for debug only */
-  up->s.ptr = usedp;
-  usedp = up;
-
-  addtofree((char *)(up+1));  /* Try to join into the free list */
-  return freep;
-}
 
 void shfree(ap)
      char *ap;

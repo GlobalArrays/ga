@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.4 1999-07-28 00:48:00 d3h325 Exp $ */
+/* $Id: rmw.c,v 1.5 2000-05-05 00:28:48 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -32,7 +32,7 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
     if(op != ARMCI_FETCH_AND_ADD && op != ARMCI_FETCH_AND_ADD_LONG)
                               armci_die("rmw: op type not supported",op);
 
-#if defined(CLUSTER) && !defined(LAPI)
+#if defined(CLUSTER) && !defined(LAPI) && !defined(QUADRICS)
      if(!SAMECLUSNODE(proc)){
        armci_rem_rmw(op, ploc, prem,  extra, proc);
        return 0;
@@ -48,6 +48,18 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
           *(int*)ploc   = lval;
           (void) shmem_swap((long*)prem, (lval + extra), proc);
         }
+#  elif defined(QUADRICS)
+      if(op ==ARMCI_FETCH_AND_ADD){
+          int ival;
+          while ( (ival = shmem_int_swap(prem, INT_MAX, proc) ) == INT_MAX);
+          (void) shmem_int_swap(prem, ival +extra, proc);
+          *(int*) ploc = ival;
+      }else{
+          long lval;
+          while ( (lval = shmem_long_swap((long*)prem, LONG_MAX, proc) ) == LONG_MAX);
+          (void) shmem_long_swap((long*)prem, (lval + extra), proc);
+          *(long*)ploc   = lval;
+      }
 #  elif defined(LAPI)
    {      int rc, local;
           lapi_cntr_t req_id;

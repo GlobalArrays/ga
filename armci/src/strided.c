@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.19 2000-04-27 22:37:11 jju Exp $ */
+/* $Id: strided.c,v 1.20 2000-05-05 00:28:48 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -362,7 +362,9 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
     if(proc<0)return FAIL5;
 
     ORDER(PUT,proc); /* ensure ordering */
+#ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
+#endif
 
     /* use direct protocol for remote access when performance is better */
 #   if defined(LAPI) && !defined(LAPI2)
@@ -403,7 +405,9 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(proc<0)return FAIL5;
     
     ORDER(GET,proc); /* ensure ordering */
+#ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
+#endif
 
     /* use direct protocol for remote access when performance is better */
 #   if defined(LAPI) && !defined(LAPI2)

@@ -1,19 +1,7 @@
-/* Copyright (c)  1999 Pacific Northwest National Laboratory
- * All rights reserved.
- *
+/* 
  *    Author: Jialin Ju, PNNL
  */
 
-/***
-   NAME
-     test.c
-   PURPOSE
-     compare the performance of MPI2 GET and ARMCI GET
-   NOTES
-
-   HISTORY
-     jju - Mar 15, 1999: Created.
-***/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,19 +9,19 @@
 #include <math.h>
 #include <mpi.h>
 #include "armci.h"
-#include "armcip.h"
 
 #define SIZE 550
-#define MAXPROC 10
+#define MAXPROC 8
 
 #define CHUNK_NUM 28
 
-#define CHECK_RESULT 1
+int CHECK_RESULT=0;
 
 int chunk[CHUNK_NUM] = {1,3,4,6,9,12,16,20,24,30,40,48,52,64,78,91,104,
                         128,142,171,210,256,300,353,400,440,476,512};
 
 char check_type[15];
+int nproc, me;
 
 void fill_array(double *arr, int count, int which);
 void check_result(double *src_buf, double *dst_buf, int *stride, int *count,
@@ -225,35 +213,37 @@ void test_1D()
     void *ptr[MAXPROC], *get_ptr[MAXPROC];
 
     /* find who I am and the dst process */
-    src = armci_me;
+    src = me;
     
     /* memory allocation */
-    if(armci_me == 0) {
+    if(me == 0) {
         buf = (double *)malloc(SIZE * SIZE * sizeof(double));
         assert(buf != NULL);
     }
     
     ierr = ARMCI_Malloc(ptr, (SIZE * SIZE * sizeof(double)));
-    assert(ierr == 0); assert(ptr[armci_me]);
+    assert(ierr == 0); assert(ptr[me]);
     ierr = ARMCI_Malloc(get_ptr, (SIZE * SIZE * sizeof(double)));
-    assert(ierr == 0); assert(get_ptr[armci_me]);
+    assert(ierr == 0); assert(get_ptr[me]);
 
     /* ARMCI - initialize the data window */
-    fill_array(ptr[armci_me], SIZE*SIZE, armci_me);
-    fill_array(get_ptr[armci_me], SIZE*SIZE, armci_me);
+    fill_array(ptr[me], SIZE*SIZE, me);
+    fill_array(get_ptr[me], SIZE*SIZE, me);
     
     MPI_Barrier(MPI_COMM_WORLD);
     
     /* only the proc 0 doest the work */
-    if(armci_me == 0) {
+    if(me == 0) {
         printf("\n\t\t\tRemote 1-D Array Section\n");
-        printf("  section               get                 put");
-        printf("                 acc\n");
-        printf("bytes   loop       sec      MB/s       sec      MB/s");
-        printf("       sec      MB/s\n");
-        printf("------- ------  --------  --------  --------  --------");
-        printf("  --------  --------\n");
-        fflush(stdout);
+        if(!CHECK_RESULT){
+          printf("  section               get                 put");
+          printf("                 acc\n");
+          printf("bytes   loop       sec      MB/s       sec      MB/s");
+          printf("       sec      MB/s\n");
+          printf("------- ------  --------  --------  --------  --------");
+          printf("  --------  --------\n");
+          fflush(stdout);
+        }
         
         for(i=0; i<CHUNK_NUM; i++) {
             int loop;
@@ -266,46 +256,46 @@ void test_1D()
             loop = (SIZE * SIZE) / (chunk[i] * chunk[i]);
             loop = (int)sqrt((double)loop);
             
-            for(dst=1; dst<armci_nclus; dst++) {
+            for(dst=1; dst<nproc; dst++) {
                 /* strided get */
-                fill_array(buf, SIZE*SIZE, armci_me*10);
+                fill_array(buf, SIZE*SIZE, me*10);
                 t_get += time_get((double *)(get_ptr[dst]), (double *)buf,
                                   chunk[i]*chunk[i], loop, dst, 0);
                 
                 /* strided put */
-                fill_array(buf, SIZE*SIZE, armci_me*10);
+                fill_array(buf, SIZE*SIZE, me*10);
                 t_put += time_put((double *)buf, (double *)(ptr[dst]),
                                   chunk[i]*chunk[i], loop, dst, 0);
                 
                 /* strided acc */
-                fill_array(buf, SIZE*SIZE, armci_me*10);
+                fill_array(buf, SIZE*SIZE, me*10);
                 t_acc += time_acc((double *)buf, (double *)(ptr[dst]),
                                   chunk[i]*chunk[i], loop, dst, 0);
             }
             
-            latency_get = t_get/(armci_nclus - 1);
-            latency_put = t_put/(armci_nclus - 1);
-            latency_acc = t_acc/(armci_nclus - 1);
+            latency_get = t_get/(nproc - 1);
+            latency_put = t_put/(nproc - 1);
+            latency_acc = t_acc/(nproc - 1);
             
-            bandwidth_get = (bytes * (armci_nclus - 1) * 1e-6)/t_get;
-            bandwidth_put = (bytes * (armci_nclus - 1) * 1e-6)/t_put;
-            bandwidth_acc = (bytes * (armci_nclus - 1) * 1e-6)/t_acc;
+            bandwidth_get = (bytes * (nproc - 1) * 1e-6)/t_get;
+            bandwidth_put = (bytes * (nproc - 1) * 1e-6)/t_put;
+            bandwidth_acc = (bytes * (nproc - 1) * 1e-6)/t_acc;
 
             /* print */
-            printf("%d\t%d\t%.2e  %.2e  %.2e  %.2e  %.2e  %.2e\n",
+            if(!CHECK_RESULT)printf("%d\t%d\t%.2e  %.2e  %.2e  %.2e  %.2e  %.2e\n",
                    bytes, loop, latency_get, bandwidth_get,
                    latency_put, bandwidth_put, latency_acc, bandwidth_acc);
         }
     }
-    else sleep(4);
+    else sleep(10);
     
     MPI_Barrier(MPI_COMM_WORLD);
     
     /* cleanup */
-    ARMCI_Free(get_ptr[armci_me]);
-    ARMCI_Free(ptr[armci_me]);
+    ARMCI_Free(get_ptr[me]);
+    ARMCI_Free(ptr[me]);
     
-    if(armci_me == 0) free(buf);
+    if(me == 0) free(buf);
 }
 
 void test_2D()
@@ -317,38 +307,39 @@ void test_2D()
     void *ptr[MAXPROC], *get_ptr[MAXPROC];
 
     /* find who I am and the dst process */
-    src = armci_me;
+    src = me;
     
     /* memory allocation */
-    if(armci_me == 0) {
+    if(me == 0) {
         buf = (double *)malloc(SIZE * SIZE * sizeof(double));
         assert(buf != NULL);
     }
     
     ierr = ARMCI_Malloc(ptr, (SIZE * SIZE * sizeof(double)));
-    assert(ierr == 0); assert(ptr[armci_me]);
+    assert(ierr == 0); assert(ptr[me]);
     ierr = ARMCI_Malloc(get_ptr, (SIZE * SIZE * sizeof(double)));
-    assert(ierr == 0); assert(get_ptr[armci_me]);
+    assert(ierr == 0); assert(get_ptr[me]);
     
     /* ARMCI - initialize the data window */
-    fill_array(ptr[armci_me], SIZE*SIZE, armci_me);
-    fill_array(get_ptr[armci_me], SIZE*SIZE, armci_me);
+    fill_array(ptr[me], SIZE*SIZE, me);
+    fill_array(get_ptr[me], SIZE*SIZE, me);
 
     MPI_Barrier(MPI_COMM_WORLD);
     
     /* only the proc 0 doest the work */
     /* print the title */
-    if(armci_me == 0) {
+    if(me == 0) {
         printf("\n\t\t\tRemote 2-D Array Section\n");
-        printf("  section               get                 put");
-        printf("                 acc\n");
-        printf("bytes   loop       sec      MB/s       sec      MB/s");
-        printf("       sec      MB/s\n");
-        printf("------- ------  --------  --------  --------  --------");
-        printf("  --------  --------\n");
-        fflush(stdout);
+        if(!CHECK_RESULT){
+           printf("  section               get                 put");
+           printf("                 acc\n");
+           printf("bytes   loop       sec      MB/s       sec      MB/s");
+           printf("       sec      MB/s\n");
+           printf("------- ------  --------  --------  --------  --------");
+           printf("  --------  --------\n");
+           fflush(stdout);
+        }
         
-        /* for(i=0; i<CHUNK_NUM; i++) { */
         for(i=0; i<CHUNK_NUM; i++) {
             int loop;
             int bytes = chunk[i] * chunk[i] * sizeof(double);
@@ -359,52 +350,50 @@ void test_2D()
             
             loop = SIZE / chunk[i];
 
-            for(dst=1; dst<armci_nclus; dst++) {
+            for(dst=1; dst<nproc; dst++) {
                 /* strided get */
-                fill_array(buf, SIZE*SIZE, armci_me*10);
+                fill_array(buf, SIZE*SIZE, me*10);
                 t_get += time_get((double *)(get_ptr[dst]), (double *)buf,
                                  chunk[i], loop, dst, 1);
  
                 /* strided put */
-                fill_array(buf, SIZE*SIZE, armci_me*10);
+                fill_array(buf, SIZE*SIZE, me*10);
                 t_put += time_put((double *)buf, (double *)(ptr[dst]),
                                  chunk[i], loop, dst, 1);
                 
                 /* strided acc */
-                fill_array(buf, SIZE*SIZE, armci_me*10);
+                fill_array(buf, SIZE*SIZE, me*10);
                 t_acc += time_acc((double *)buf, (double *)(ptr[dst]),
                                  chunk[i], loop, dst, 1);
             }
             
-            latency_get = t_get/(armci_nclus - 1);
-            latency_put = t_put/(armci_nclus - 1);
-            latency_acc = t_acc/(armci_nclus - 1);
+            latency_get = t_get/(nproc - 1);
+            latency_put = t_put/(nproc - 1);
+            latency_acc = t_acc/(nproc - 1);
             
-            bandwidth_get = (bytes * (armci_nclus - 1) * 1e-6)/t_get;
-            bandwidth_put = (bytes * (armci_nclus - 1) * 1e-6)/t_put;
-            bandwidth_acc = (bytes * (armci_nclus - 1) * 1e-6)/t_acc;
+            bandwidth_get = (bytes * (nproc - 1) * 1e-6)/t_get;
+            bandwidth_put = (bytes * (nproc - 1) * 1e-6)/t_put;
+            bandwidth_acc = (bytes * (nproc - 1) * 1e-6)/t_acc;
 
             /* print */
-            if(armci_me == 0)
-                printf("%d\t%d\t%.2e  %.2e  %.2e  %.2e  %.2e  %.2e\n",
+            if(!CHECK_RESULT)printf("%d\t%d\t%.2e  %.2e  %.2e  %.2e  %.2e  %.2e\n",
                        bytes, loop, latency_get, bandwidth_get,
                        latency_put, bandwidth_put, latency_acc, bandwidth_acc);
         }
     }
-    else sleep(4);
-
-    MPI_Barrier(MPI_COMM_WORLD);
+    else sleep(10);
     
     /* cleanup */
-    ARMCI_Free(get_ptr[armci_me]);
-    ARMCI_Free(ptr[armci_me]);
-    if(armci_me == 0) free(buf);
+    MPI_Barrier(MPI_COMM_WORLD);
+    ARMCI_Free(get_ptr[me]);
+    ARMCI_Free(ptr[me]);
+
+    if(me==0)free(buf);
 }
 
     
 main(int argc, char **argv)
 {
-    int nproc, me;
     
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &me);
@@ -413,7 +402,7 @@ main(int argc, char **argv)
     if(nproc < 2) {
         if(me == 0)
             fprintf(stderr,
-                    "USAGE: 2 <= processes < %d\n", MAXPROC);
+                    "USAGE: 2 <= processes < %d\n", nproc);
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Finalize();
         exit(0);
@@ -421,15 +410,6 @@ main(int argc, char **argv)
     
     /* initialize ARMCI */
     ARMCI_Init();
-
-    if(nproc != armci_nclus) {
-        if(me == 0)
-            fprintf(stderr, "USAGE: Please run one process on each node.\n");
-        MPI_Barrier(MPI_COMM_WORLD);
-        ARMCI_Finalize();
-        MPI_Finalize();
-        exit(0);
-    }
 
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -440,6 +420,18 @@ main(int argc, char **argv)
     test_2D();
 
     MPI_Barrier(MPI_COMM_WORLD);
+    if(me == 0)
+       printf("\n\n------------ Now we test the same data transfer for correctness ----------\n");
+
+    CHECK_RESULT=1;
+    MPI_Barrier(MPI_COMM_WORLD);
+    test_1D();
+    if(me == 0) printf("OK\n");
+    MPI_Barrier(MPI_COMM_WORLD);
+    test_2D();
+    if(me == 0) printf("OK\n\n\nTests Completed.\n");
+    MPI_Barrier(MPI_COMM_WORLD);
+
     /* done */
     ARMCI_Finalize();
     MPI_Finalize();
@@ -458,7 +450,7 @@ void check_result(double *src_buf, double *dst_buf, int *stride, int *count,
     int i, j, size;
     long idx;
     int n1dim;  /* number of 1 dim block */
-    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
+    int bvalue[ARMCI_MAX_STRIDE_LEVEL], bunit[ARMCI_MAX_STRIDE_LEVEL];
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -497,7 +489,7 @@ void acc_array(double scale, double *array1, double *array2, int *stride,
         int i, j, size;
     long idx;
     int n1dim;  /* number of 1 dim block */
-    int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
+    int bvalue[ARMCI_MAX_STRIDE_LEVEL], bunit[ARMCI_MAX_STRIDE_LEVEL];
 
     /* number of n-element of the first dimension */
     n1dim = 1;

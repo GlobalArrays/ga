@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.28 2000-04-17 22:31:37 d3h325 Exp $ */
+/* $Id: armci.c,v 1.29 2000-05-05 00:28:47 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -183,22 +183,6 @@ unsigned long limit;
 }
 
 
-int ARMCI_Uses_shm()
-{
-    int uses=0;
-    if(!_armci_initialized)armci_die("ARMCI not yet initialized",0);
-
-#if defined(SYSV) || defined(WIN32)
-#   ifdef LAPI
-      if(armci_nproc != armci_nclus)uses= 1;
-#   else
-      if(armci_nproc >1) uses= 1;
-#   endif
-#endif
-/*    fprintf(stderr,"uses shmem %d\n",uses);*/
-    return uses;
-}
-
 
 /*\ allocate and initialize memory locking data structure
 \*/
@@ -263,6 +247,10 @@ int ARMCI_Init()
 
 #ifdef LAPI
     armci_init_lapi();
+#endif
+
+#ifdef QUADRICS
+    shmem_init();
 #endif
 
     armci_init_clusinfo();

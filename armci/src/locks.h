@@ -105,8 +105,11 @@
 #  define NAT_LOCK(x)   t_lock(cri_l+(x))
 #  define NAT_UNLOCK(x) t_unlock(cri_l+(x))
 
-#elif defined(CRAY_T3E)
+#elif defined(CRAY_T3E) || defined(QUADRICS)
 #  include <limits.h>
+#ifdef DECOSF
+#  define  _INT_MIN_64 (LONG_MAX-1)
+#endif
    static long armci_lock_var=0;
    typedef int lockset_t;
 #  define INVALID (long)(_INT_MIN_64 +1)

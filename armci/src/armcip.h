@@ -6,11 +6,8 @@
 #include "armci.h"
 #include "message.h"
 
-#if defined(SYSV) || defined(WIN32)
-#  define CLUSTER 
-#ifndef LAPI
-#  define DATA_SERVER   
-#endif
+#if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
+#define CLUSTER 
 
 #ifdef SERVER_THREAD
 #  define SERVER_NODE(c) (armci_clus_info[(c)].master);
@@ -62,7 +59,7 @@ extern thread_id_t armci_usr_tid;
 # include <strings.h>
 #endif
 
-#if defined (CRAY_T3E) || defined(FUJITSU)
+#if defined (CRAY_T3E) || defined(FUJITSU) || defined(QUADRICS)
 #define ACC_COPY
 #endif
 
@@ -75,7 +72,7 @@ extern thread_id_t armci_usr_tid;
 #endif
 
 #define MAX_PROC 8096
-#define MAX_STRIDE_LEVEL 8
+#define MAX_STRIDE_LEVEL ARMCI_MAX_STRIDE_LEVEL
 
 /* msg tag ARMCI uses in collective ops */
 #define ARMCI_TAG 30000
@@ -168,7 +165,7 @@ extern void armci_init_fence();
 #  define ORDER(op,proc)\
         if( proc == armci_me || ( ACC(op) && ACC(PENDING_OPER(proc))) );\
         else  FENCE_NODE(proc)
-#elif defined(CLUSTER)
+#elif defined(CLUSTER) && !defined(QUADRICS)
 #  define ORDER(op,proc)\
         if(!SAMECLUSNODE(proc) && op != GET )_armci_fence_arr[proc]=1
 #else

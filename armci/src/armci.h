@@ -102,6 +102,8 @@ extern void ARMCI_Copy(void *src, void *dst, int n);
 #define ARMCI_ACC_DCP (ARMCI_ACC_OFF + 5)
 #define ARMCI_ACC_LNG (ARMCI_ACC_OFF + 6)
 
+#define ARMCI_MAX_STRIDE_LEVEL 8
+
 /* PVM group
  * On CrayT3E: the default group is the global group which is (char *)NULL
  *             It is the only working group.

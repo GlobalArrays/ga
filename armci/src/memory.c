@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.12 2000-04-17 22:31:39 d3h325 Exp $ */
+/* $Id: memory.c,v 1.13 2000-05-05 00:28:48 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -223,7 +223,7 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 
     assert(sizeof(long) == sizeof(void*)); /* is it ever false? - yes, WIN64 */
 
-#if defined(SYSV) || defined(WIN32)
+#if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
 
     armci_shmem_malloc(ptr_arr,bytes);
 
@@ -249,39 +249,11 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 /*\ shared memory is released to shmalloc only on process 0
  *  with data server malloc cannot be used
 \*/
-int ARMCI_Free00(void *ptr)
-{
-#if defined(SYSV) || defined(WIN32)
-
-#   ifdef DATA_SERVER
-      if(armci_nproc == 1) {
-#   else
-      if(armci_clus_info[armci_clus_me].nslave == 1) {
-#   endif
-
-#endif
-
-	if(!ptr)return 1;
-	free(ptr);
-
-#if defined(SYSV) || defined(WIN32)
-
-    }else 
-
-       if(armci_me==armci_master) Free_Shmem_Ptr( 0, 0, ptr);
-
-#endif
-
-    ptr = NULL;
-    return 0;
-}
-
-
 int ARMCI_Free(void *ptr)
 {
     if(!ptr)return 1;
 
-#if defined(SYSV) || defined(WIN32) 
+#if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
 #   ifdef USE_MALLOC
       if(armci_nproc > 1)
 #   endif
@@ -294,6 +266,22 @@ int ARMCI_Free(void *ptr)
         free(ptr);
         ptr = NULL;
         return 0;
+}
+
+
+int ARMCI_Uses_shm()
+{
+    int uses=0;
+
+#if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
+#   if defined(LAPI) || defined(QUADRICS) || defined(SERVER_THREAD)
+      if(armci_nproc != armci_nclus)uses= 1;
+#   else
+      if(armci_nproc >1) uses= 1;
+#   endif
+#endif
+/*    fprintf(stderr,"uses shmem %d\n",uses);*/
+    return uses;
 }
 
 

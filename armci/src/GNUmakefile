@@ -7,7 +7,7 @@ OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o\
 #ARMCI can be built without using fortran code when NOFORT is defined
 #NOFORT =1
 ifndef NOFORT
-OBJ += fcopy.o faccumulate.o
+OBJ += faccumulate.o fcopy.o
 endif
 
 
@@ -20,7 +20,7 @@ endif
 include ../config/makemp.h
 include ../config/makecoms.h
 
-SYSTEM_V = SUN SOLARIS SOLARIS64 SGI SGI_N32 SGI64 SGITFP HPUX SOLARIS IBM DECOSF LINUX
+SYSTEM_V = SUN SOLARIS SOLARIS64 SGI DECOSF SGI_N32 SGI64 SGITFP HPUX SOLARIS IBM DECOSF LINUX
 SHMEM    = $(SYSTEM_V) LAPI
 SOCKETS  = $(SYSTEM_V)
 ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP
@@ -34,7 +34,7 @@ endif
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SHMEM)))
      LIB_DEFINES += -DSYSV
-     OBJ += shmalloc.o signaltrap.o request.o shmlimit.o shmem.o
+     OBJ += shmalloc.o signaltrap.o shmlimit.o shmem.o
 endif
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
@@ -42,14 +42,19 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
 endif
 
 ifeq ($(ARMCI_NETWORK),GM)
-  OBJ += dataserv-myri.o myrinet.o spawn.o
-  LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT
+  OBJ += dataserv-myri.o myrinet.o spawn.o request.o
+  LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
+endif
+
+ifeq ($(ARMCI_NETWORK),QUADRICS)
+# shared memory causes problems for shmem
+   LIB_DEFINES += -DNO_SHM
 endif
 
 ifndef ARMCI_NETWORK
 ifeq ($(TARGET),$(findstring $(TARGET),$(SOCKETS)))
- OBJ += spawn.o dataserv.o sockets.o
- LIB_DEFINES += -DSOCKETS
+ OBJ += spawn.o dataserv.o sockets.o request.o
+ LIB_DEFINES += -DDATA_SERVER -DSOCKETS
 endif
 endif
 
@@ -81,7 +86,7 @@ LIBS += $(EXTRA_LIBS)
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
 
 %.x:%.c  $(LIBRARY_PATH)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS) -lm
 
 ipctest.x: $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) $(MP_DEFINES) ipctest.c -o $@ $^ $(LIBS)

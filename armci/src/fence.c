@@ -1,12 +1,7 @@
-/* $Id: fence.c,v 1.3 1999-07-28 00:47:54 d3h325 Exp $ */
+/* $Id: fence.c,v 1.4 2000-05-05 00:28:48 d3h325 Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
-
-#ifdef CRAY
-#include <mpp/shmem.h>
-#endif 
-
 
 #ifdef CLUSTER
    char *_armci_fence_arr;
