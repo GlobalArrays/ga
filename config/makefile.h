@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.60 2001-12-22 00:15:11 d3h325 Exp $
+# $Id: makefile.h,v 1.61 2002-01-08 21:06:34 vinod Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -602,7 +602,7 @@ else
 
 .m4.o:
 	$(M4) $*.m4 > $*.F
-	$(FC) $(CPP_FLAGS) -c $*.F -o $*.o
+	$(FC) $(CPP_FLAGS) $(FOPT_REN) -c $*.F -o $*.o
 	$(RM) $*.F
 
 endif
