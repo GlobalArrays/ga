@@ -386,10 +386,12 @@ c
 #endif
 #endif
 c
+#if defined(DATA_SERVER)
       if (me .eq. 0) then
          write(6,1) nproc-nserver, nproc-1
  1       format(/'Global array server processes are ',i3,' to ',i3/)
       endif
+#endif
 c
       call ga_sync()
 c
@@ -453,8 +455,8 @@ c      g_a           - integer handle for future references [output]
 c
 c
       ga_create = .false.
-      chunk1 = achunk1
-      chunk2 = achunk2
+      chunk1 = min(achunk1, dim1)
+      chunk2 = min(achunk2, dim2)
 c
       if (.not. (type.eq.MT_DBL .or. type.eq.MT_INT)) then
          write(6,*) ' ga_create: type not yet supported ', array_name
@@ -785,37 +787,37 @@ c
          endif
       endif
 c
-      if (me .eq. 0) then
-         ldim1 = log10(dfloat(dim1)) + 1
-         ldim2 = log10(dfloat(dim2)) + 1
-         lga = log10(dfloat(g_a)) + 1
-         lp = log10(dfloat(nproc)) + 1
-         lname = lenstr(array_name)
-         if (type .eq. MT_DBL) then
-            write(form, 1) lname, ldim1, ldim2, lga
-         else
-            write(form, 2) lname, ldim1, ldim2, lga
-         endif
- 1       format('('' ga_create: double precision "'',a',i4,',''"('',i',
-     $        i4,','','',i',i4,','') has handle '',i',i4,')')
- 2       format('('' ga_create: integer "'',a',i4,',''"('',i',i4,
-     $        ','','',i',i4,','') has handle '',i',i4,')')
-         write(6,*)
-         write(6,form) array_name, dim1, dim2, g_a
-         write(form,3) ldim1, ldim1, ldim2, ldim2, lp
- 3       format('(''     ('',i',i4,','':'',i',i4,','', '',i',i4,
-     $        ','':'',i',i4,','') -> '',i',i4,')')
-         if (overbose) then
-            do iproc = 0,nserver-1
-               write(6,form) (mapc(i,iproc,g_a),i=1,4),iproc
-            enddo
-         else if (oterse) then
-            write(6,4) ' 1st dimension ', (map1(i), i=1, nblock1)
-            write(6,4) ' 2nd dimension ', (map2(i), i=1, nblock2)
- 4          format(a,10(12i5/14x))
-         endif
-         write(6,*)
-      endif
+c$$$      if (me .eq. 0) then
+c$$$         ldim1 = log10(dfloat(dim1)) + 1
+c$$$         ldim2 = log10(dfloat(dim2)) + 1
+c$$$         lga = log10(dfloat(g_a)) + 1
+c$$$         lp = log10(dfloat(nproc)) + 1
+c$$$         lname = lenstr(array_name)
+c$$$         if (type .eq. MT_DBL) then
+c$$$            write(form, 1) lname, ldim1, ldim2, lga
+c$$$         else
+c$$$            write(form, 2) lname, ldim1, ldim2, lga
+c$$$         endif
+c$$$ 1       format('('' ga_create: double precision "'',a',i4,',''"('',i',
+c$$$     $        i4,','','',i',i4,','') has handle '',i',i4,')')
+c$$$ 2       format('('' ga_create: integer "'',a',i4,',''"('',i',i4,
+c$$$     $        ','','',i',i4,','') has handle '',i',i4,')')
+c$$$         write(6,*)
+c$$$         write(6,form) array_name, dim1, dim2, g_a
+c$$$         write(form,3) ldim1, ldim1, ldim2, ldim2, lp
+c$$$ 3       format('(''     ('',i',i4,','':'',i',i4,','', '',i',i4,
+c$$$     $        ','':'',i',i4,','') -> '',i',i4,')')
+c$$$         if (overbose) then
+c$$$            do iproc = 0,nserver-1
+c$$$               write(6,form) (mapc(i,iproc,g_a),i=1,4),iproc
+c$$$            enddo
+c$$$         else if (oterse) then
+c$$$            write(6,4) ' 1st dimension ', (map1(i), i=1, nblock1)
+c$$$            write(6,4) ' 2nd dimension ', (map2(i), i=1, nblock2)
+c$$$ 4          format(a,10(12i5/14x))
+c$$$         endif
+c$$$         write(6,*)
+c$$$      endif
 c
       ga_create_irreg = .true.
       actv(g_a) = .true.
