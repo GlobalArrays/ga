@@ -507,10 +507,12 @@ void check_result(double *src_buf, double *dst_buf, int *stride, int *count,
         size = count[0] / sizeof(double);
         for(j=0; j<size; j++)
             if(ABS(((double *)((char *)src_buf+idx))[j] - 
-               ((double *)((char *)dst_buf+idx))[j]) > 0.000001 )
+               ((double *)((char *)dst_buf+idx))[j]) > 0.000001 ){
                 fprintf(stdout,"Error: %s comparison failed: (%d) (%f : %f)\n",
                         check_type, j, ((double *)((char *)src_buf+idx))[j],
                         ((double *)((char *)dst_buf+idx))[j]);
+                ARMCI_Error("failed",0);
+            }
     }
 }
 
