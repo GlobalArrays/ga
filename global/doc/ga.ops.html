@@ -1,0 +1,1076 @@
+<HTML><HEAD><TITLE> GA Operations </TITLE></HEAD>
+<BODY>
+
+
+<H2> <A name="ga_initialize"> GA_INITIALIZE </A> </H2>
+<listing>
+      subroutine ga_initialize()
+</listing>
+<P>
+      Allocate and initialize internal data structures for global arrays.
+</P>
+<HR>
+
+<H2> <A name="ga_initialize_ltd"> GA_INITIALIZE_LTD </A> </H2>
+<listing>
+      subroutine ga_initialize_ltd(limit)
+      integer limit  - amount of memory in bytes per process [input]
+
+</listing>
+<P>
+      Allocate and initialize internal data structures for global arrays
+      and set limit for memory used in global arrays.
+
+<P>
+      limit < 0 means allow "unlimited memory usage"
+
+</P>
+<HR>
+
+<H2> <A name="ga_create"> GA_CREATE </A> </H2>
+<listing>
+      logical function ga_create(type, dim1, dim2, array_name, chunk1, chunk2, g_a)
+
+      integer type, dim1, dim2, chunk1, chunk2, g_a
+      character*(*) array_name
+
+      array_name	- a unique character string [input]
+      type		- MA type [input]
+      dim1/2		- array(dim1,dim2) as in FORTRAN [input]
+      chunk1/2		- minimum size that dimensions should
+                      	  be chunked up into [input]
+      g_a               - integer handle for future references [output]
+
+</listing>
+<P>
+   Creates an array.
+<P>
+
+	  Setting chunk1=dim1 gives distribution by vertical strips
+	  (chunk2 columns) setting chunk2=dim2 gives distribution by
+	  horizontal strips (chunk1 rows).  Actual chunks will be
+	  modified so that they are at least the size of the minimum
+	  and each process has either zero or one chunk.
+
+	 Specifying chunk1/2 as <= 1 will cause that dimension to be
+	 distributed evenly.  Note: current distribution algorithm is
+	 primitive !
+
+</P>
+<HR>
+
+<H2> <A name="ga_create_irreg"> GA_CREATE_IRREG </A> </H2>
+<listing>
+      logical function ga_create_irreg(type, dim1, dim2, array_name, map1, nblock1, map2, nblock2, g_a)
+
+      integer type, map1(*), map2(*), nblock1, nblock2, g_a
+      character*(*) array_name
+
+       array_name    - a unique character string [input]
+       type          - MA type [input]
+       dim1/2        - array(dim1,dim2) as in FORTRAN [input]
+       nblock1       - no. of blocks first dimension is divided into [input]
+       nblock2       - no. of blocks second dimension is divided into [input]
+       map1          - ilo for each block [input]
+       map2          - jlo for each block [input]
+       g_a           - integer handle for future references [output]
+
+</listing>
+<P>
+   Creates an array by following the user-specified distribution.
+</P>
+<HR>
+
+<H2> <A name="ga_duplicate"> GA_DUPLICATE </A> </H2>
+<listing>
+      logical function ga_duplicate(g_a, g_b, array_name)
+      integer *g_a, *g_b;
+      char *array_name;
+
+      array_name    - a character string [input]
+      g_a           - Integer handle for reference array [input]
+      g_b           - Integer handle for new array [output]
+</listing>
+<P>
+ Creates a new array by applying all the properties of another
+      existing array.
+
+</P>
+<HR>
+
+<H2> <A name="ga_destroy"> GA_DESTROY </A> </H2>
+<listing>
+      logical function ga_destroy(g_a)
+  
+      integer g_a     [input]
+</listing>
+<P>
+  Deallocates the array and frees any associated resources
+
+</P>
+
+<HR>
+<H2> <A name="ga_terminate"> GA_TERMINATE </A> </H2>
+<listing>
+      subroutine ga_terminate()
+</listing>
+<P>
+ Delete all active arrays and destroy internal data structures
+
+</P>
+<HR>
+
+<H2> <A name="ga_sync"> GA_SYNC </A> </H2>
+<listing>
+      subroutine ga_sync()
+</listing>
+<P>
+   Synchronize processes (a barrier) and ensure that all global
+      array operations are complete (or at least appear complete).
+</P>
+<HR>
+
+<H2> <A name="ga_zero"> GA_ZERO </A> </H2>
+<listing>
+      subroutine ga_zero(g_a)
+
+      integer g_a                         [input]
+</listing>
+<P>
+  Zeroes the contents of the array and behaves like
+
+<listing>
+         ga_sync()        ! Barrier to ensure all processes in ga_zero
+         {zero the array}   
+         ga_sync()        ! Barrier to ensure no reads before zero complete
+</listing>
+<HR>
+
+<H2> <A name="ga_ddot"> GA_DDOT </A> </H2>
+<listing>
+      double precision function ga_ddot(g_a, g_b)
+
+      integer g_a, g_b                    [input]
+</listing>
+<P>
+  Computes the element-wise dot product of the two arrays which
+      must be double precision, the same shape and identically aligned.
+</P>
+  
+<listing>
+         ga_ddot = SUM_ij a(i,j)*b(i,j)
+</listing>
+
+<HR>
+
+<H2> <A name="ga_ddot_patch"> GA_DDOT_PATCH </A> </H2>
+<listing>
+      double precision function ga_ddot_patch(g_a, ta, ailo, aihi, ajlo, ajhi,
+                                              g_b, tb, bilo, bihi, bjlo, bjhi) 
+
+      integer     g_a, g_b                   [input]
+      integer     ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
+      integer     bilo, bihi, bjlo, bjhi     [input] g_b patch coordinates
+      character*1 ta, tb                     [input] transpose flags
+
+</listing>
+<P>
+ Computes the element-wise dot product of the two (possibly transposed)
+      patches which must be double precision and have the same number of 
+      elements. 
+</P>
+<HR>
+
+<H2> <A name="ga_matmul_patch"> GA_MATMUL_PATCH </A> </H2>
+<listing>
+     subroutine ga_matmul_patch(transa, transb, alpha, beta,
+                                 g_a, ailo, aihi, ajlo, ajhi,
+                                 g_b, bilo, bihi, bjlo, bjhi,
+                                 g_c, cilo, cihi, cjlo, cjhi)
+
+     integer g_a, ailo, aihi, ajlo, ajhi;    [input]  patch of g_a
+     integer g_b, bilo, bihi, bjlo, bjhi;    [input]  patch of g_b
+     integer g_c, cilo, cihi, cjlo, cjhi;    [input]  patch of g_c 
+     double precision      alpha, beta;      [input]
+     character*1    transa, transb;          [input]
+
+</listing>
+<P>
+      ga_matmul_patch is a patch version of <A href="#ga_dgemm">ga_dgemm</A>:
+</P>
+<listing>
+         C[cilo:cihi,cjlo:cjhi] := alpha* AA[ailo:aihi,ajlo:ajhi] *
+                                   BB[bilo:bihi,bjlo:bjhi] ) + beta*C[cilo:cihi,cjlo:cjhi],
+</listing>
+<P>
+      where  AA = op(A), BB = op(B), and op( X ) is one of
+</P>
+<listing>
+         op( X ) = X   or   op( X ) = X',
+</listing>
+<P>
+      Valid values for transpose arguments:  'n', 'N', 't', 'T'.
+</P>
+
+<HR>
+
+<H2> <A name="ga_dscal"> GA_DSCAL </A> </H2>
+<listing>
+      subroutine ga_dscal(g_a, s)
+ 
+      integer g_a                         [input]
+      double precision s                  [input]
+
+</listing>
+<P>
+ Scales the double precision array by the constant s.
+</P>
+<HR>
+
+<H2> <A name="ga_dscal_patch"> GA_DSCAL_PATCH </A> </H2>
+<listing>
+      subroutine ga_dscal_patch(g_a, ailo, aihi, ajlo, ajhi, s)
+
+      integer g_a                         [input]
+      double precision s                  [input]
+      integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
+</listing>
+<P>
+  Scales the patch of double precision array by the constant s.
+
+</P>
+<HR>
+
+<H2> <A name="ga_dadd"> GA_DADD </A> </H2>
+<listing>
+      subroutine ga_dadd(alpha, g_a, beta, g_b, g_c)
+
+      integer g_a, g_b, g_c               [input]
+      double precision alpha, beta        [input]
+</listing>
+<P>
+  The double precision arrays (which must be the same shape and
+      identically aligned) are added together element-wise
+
+<listing>
+           c = alpha * a  +  beta * b
+</listing>
+<P>
+
+      The result (c) may replace one of the input arrays (a/b).
+</P>
+<HR>
+<H2> <A name="ga_dadd_patch"> GA_DADD_PATCH </A> </H2>
+<listing>
+      subroutine ga_dadd_patch (alpha, g_a, ailo, aihi, ajlo, ajhi,
+                                beta,  g_b, bilo, bihi, bjlo, bjhi,
+                                       g_c, cilo, cihi, cjlo, cjhi)
+
+      integer g_a, g_b, g_c               [input]
+      double precision alpha, beta        [input]
+      integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
+      integer  bilo, bihi, bjlo, bjhi     [input] g_b patch coordinates
+      integer  cilo, cihi, cjlo, cjhi     [input] g_c patch coordinates
+
+</listing>
+<P>
+   Patches of double precision arrays (which must have the same number 
+      of elements) are added together element-wise.
+
+</P>
+
+<HR>
+<H2> <A name="ga_dfill_patch"> GA_DFILL_PATCH </A> </H2>
+<listing>
+      subroutine ga_dfill_patch(g_a, ailo, aihi, ajlo, ajhi, s)
+
+      integer g_a                         [input]
+      double precision s                  [input]
+      integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
+
+</listing>
+<P>
+
+      Fills the patch of double precision array with value s.
+
+</P>
+<HR>
+
+<H2> <A name="ga_ifill_patch"> GA_IFILL_PATCH </A> </H2>
+<listing>
+      subroutine ga_ifill_patch(g_a, ailo, aihi, ajlo, ajhi, s)
+
+      integer g_a                         [input]
+      integer s                           [input]
+      integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
+
+</listing>
+<P>
+ Fills the patch of integer array with value s.
+
+</P>
+<HR>
+
+<H2> <A name="ga_summarize"> GA_SUMMARIZE </A> </H2>
+<listing>
+      subroutine ga_summarize(verbose)
+      logical verbose                     [input]! If true print 
+                                                   distribution info
+</listing>
+<P>
+  Prints info about allocated arrays.
+</P>
+
+<HR>
+
+<H2> <A name="ga_symmetrize"> GA_SYMMETRIZE </A> </H2>
+<listing>
+      subroutine ga_symmetrize(g_a)
+
+      integer g_a                         [input/output]
+
+</listing>
+<P>
+  Symmetrizes matrix g_a:  g_a := .5 * (g_a+g_a')
+</P>
+<HR>
+
+<H2> <A name="ga_transpose"> GA_TRANSPOSE </A> </H2>
+<listing>
+      subroutine ga_transpose(g_a, g_b)
+
+      integer g_a                         [input]  ! remains unchanged
+      integer g_b                         [output]
+
+</listing>
+<P>
+  Transposes a matrix: g_b = g_a'
+</P>
+<HR>
+
+<H2> <A name="ga_diag"> GA_DIAG </A> </H2>
+<listing>
+      subroutine ga_diag(g_a, g_s, g_v, eval)
+
+      integer g_a               [input]   ! Matrix to diagonalize
+      integer g_s               [input]   ! Metric
+      integer g_v               [output]  ! Global matrix to return evecs
+      double precision eval(*)  [output]  ! Local array to return evals
+
+</listing>
+<P>
+
+      Solve the generalized eigen-value problem returning
+      all eigen-vectors and values in ascending order.
+ 
+      The input matrices are not overwritten or destroyed.
+</P>
+<HR>
+<H2> <A name="ga_diag_reuse"> GA_DIAG_REUSE </A> </H2>
+<listing>
+      subroutine ga_diag_reuse(control, g_a, g_s, g_v, eval)
+
+      integer control           [input]   ! control flag 
+      integer g_a               [input]   ! Matrix to diagonalize
+      integer g_s               [input]   ! Metric
+      integer g_v               [output]  ! Global matrix to return evecs
+      double precision eval(*)  [output]  ! Local array to return evals
+
+</listing>
+<P>
+  Solve the generalized eigen-value problem returning
+      all eigen-vectors and values in ascending order. 
+      Recommended for REPEATED calls if g_s is unchanged.
+
+      Values of the control flag:
+<listing>
+             value       action/purpose
+   
+              0          indicates first call to the eigensolver
+             >0          consecutive calls (reuses factored g_s)
+             <0          only erases factorized g_s; g_v and eval unchanged
+                         (should be called after previous use if another 
+                         eigenproblem, i.e., different g_a and g_s, is to 
+                         be solved)
+</listing>
+<P>
+
+      The input matrices are not destroyed.
+</P>
+
+<HR>
+<H2> <A name="ga_diag_std"> GA_DIAG_STD </A> </H2>
+<listing>
+      subroutine ga_diag_std(g_a, g_v, eval)
+
+      integer g_a               [input]   ! Matrix to diagonalize
+      integer g_v               [output]  ! Global matrix to return evecs
+      double precision eval(*)  [output]  ! Local array to return evals
+
+</listing>
+<P>
+      Solve the standard (non-generalized) eigenvalue problem returning
+      all eigenvectors and values in the ascending order.
+
+      The input matrix is neither overwritten nor destroyed.
+
+</P>
+<HR>
+
+<H2> <A name="ga_lu_solve"> GA_LU_SOLVE </A> </H2>
+<listing>
+      subroutine ga_lu_solve(trans, g_a, g_b)
+
+      character trans           [input]          ! transpose or not transpose 
+      integer g_a               [input]          ! coefficient matrix
+      integer g_b               [output/output]  ! rhs matrix
+
+</listing>
+<P>
+      Solve the system of linear equations op(A)X = B based on the LU
+      factorization. op(A) = A or A' depending on the parameter trans.
+    
+      Matrix A is a general real matrix. Matrix B contains possibly
+      multiple rhs vectors.  
+
+      Array g_b is overwritten by the solution matrix X.
+</P>
+<HR>
+
+<H2> <A name="ga_dgemm"> GA_DGEMM </A> </H2>
+<listing>
+      subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, g_b, beta, g_c )
+      Character*1        transa, transb        [input]
+      Integer            m, n, k               [input]
+      Double Precision   alpha, beta           [input]
+      Integer            g_a, g_b,             [input]
+      Integer            g_c                   [output]
+ 
+</listing>
+<P>
+      ga_dgemm  performs one of the matrix-matrix operations:
+<listing>
+         C := alpha*op( A )*op( B ) + beta*C,
+</listing>
+<P>
+      where  op( X ) is one of
+<listing>
+         op( X ) = X   or   op( X ) = X',
+</listing>
+ 
+<P>
+      alpha and beta are scalars, and A, B and C are matrices, with op( A )
+      an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
+ 
+</listing>
+<P>
+   On entry, transa specifies the form of op( A ) to be used in
+      the matrix multiplication as follows:
+<listing>
+               transa = 'N' or 'n',  op( A ) = A.
+               transa = 'T' or 't',  op( A ) = A'.
+ 
+      m      - On entry,  m  specifies  the number  of rows  of the  matrix
+               op( A )  and of the  matrix  C.  m  must  be at least  zero.
+      n      - On entry,  n  specifies the number  of columns of the matrix
+               op( B ) and the number of columns of the matrix C. n must be
+               at least zero.
+      k      - On entry,  k  specifies  the number of columns of the matrix
+               op( A ) and the number of rows of the matrix op( B ). K must
+               be at least  zero.
+</listing>
+<HR>
+
+<H2> <A name="ga_copy"> GA_COPY </A> </H2>
+<listing>
+      subroutine ga_copy(g_a, g_b)
+ 
+      integer g_a, g_b                    [input]
+</listing>
+<P>
+      Copies g_a element-wise into g_b.  The arrays (integer or double)
+      must be the same shape and identically aligned.
+</P>
+
+<HR>
+<H2> <A name="ga_copy_patch"> GA_COPY_PATCH </A> </H2>
+<listing>
+      subroutine ga_copy_patch(trans, g_a, ailo, aihi, ajlo, ajhi,
+                                  g_b, bilo, bihi, bjlo, bjhi)
+ 
+      character trans                     [input] transpose operator
+      integer g_a, g_b                    [input]
+      integer ailo, aihi, ajlo, ajhi      [input] g_a patch coordinates
+      integer bilo, bihi, bjlo, bjhi      [input] g_b patch coordinates
+
+</listing>
+<P>
+   Copies elements in a patch of one array into another one. The
+      patches of arrays must have the same number of elements.
+
+</P>
+<HR>
+
+<H2> <A name="ga_get"> GA_GET </A> </H2>
+<listing>
+      subroutine ga_get(g_a, ilo, ihi, jlo, jhi, buf, ld)
+
+      integer g_a                         [input]
+      integer ilo, ihi, jlo, jhi          [input]
+      integer/double precision buf        [output]
+      integer ld                          [input]
+
+</listing>
+<P>
+Performs the equivalent of the following Fortran-90.  Array
+      bounds are always checked and both integer and doubles are supported.
+
+<listing>
+      dimension g_a(1:dim1,1:dim2)
+      dimension buf(1:ld, 1:*)
+
+      buf(1:ihi-ilo+1, 1:jhi-jlo+1) = g_a(ilo:ihi, jlo:jhi)
+</listing>
+<HR>
+
+<H2> <A name="ga_put"> GA_PUT </A> </H2>
+<listing>
+      subroutine ga_put(g_a, ilo, ihi, jlo, jhi, buf, ld)
+
+      integer g_a                         [input]
+      integer ilo, ihi, jlo, jhi          [input]
+      integer/double precision buf        [input]
+      integer ld                          [input]
+
+</listing>
+<P>
+  Performs the equivalent of the following Fortran-90.  Array
+      bounds are always checked and both integer and doubles are supported.
+<listing>
+
+      dimension g_a(1:dim1,1:dim2)
+      dimension buf(1:ld, 1:*)
+
+      g_a(ilo:ihi, jlo:jhi) = buf(1:ihi-ilo+1, 1:jhi-jlo+1)
+</listing>
+<HR>
+
+<H2> <A name="ga_acc"> GA_ACC </A> </H2>
+<listing>
+      subroutine ga_acc(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
+
+      integer g_a                         [input]
+      integer ilo, ihi, jlo, jhi          [input]
+      double precision buf                [input]
+      integer ld                          [input]
+      double precision alpha              [input]
+
+</listing>
+<P>
+  Performs the equivalent of the following Fortran-90.  Array
+      bounds are always checked and only double precision is supported.
+      The operation is atomic.
+<listing>
+
+      dimension g_a(1:dim1,1:dim2)
+      dimension buf(1:ld, 1:*)
+
+      g_a(ilo:ihi, jlo:jhi) = g_a(ilo:ihi, jlo:jhi) + 
+                              alpha*buf(1:ihi-ilo+1, 1:jhi-jlo+1)
+</listing>
+
+<HR>
+<H2> <A name="ga_distribution"> GA_DISTRIBUTION </A> </H2>
+<listing>
+      subroutine ga_distribution(g_a, iproc, ilo, ihi, jlo, jhi)
+
+      integer g_a, iproc                  [input]
+      integer ilo, ihi, jlo, jhi          [output]
+ 
+       g_a             - array handle [input]
+       iproc           - process number [input]
+       ilo/ihi/jlo/jhi - range held by process iproc [output]
+
+</listing>
+<P>
+    If proc doesn't 'have' any data the range is returned as
+       [0, -1] for the i and [0,-1] for the j dimensions.
+
+</P>
+<HR>
+
+<H2> <A name="ga_compare_distr"> GA_COMPARE_DISTR </A> </H2>
+<listing>
+      logical function ga_compare_distr(g_a, g_b)
+
+      integer g_a, g_b                   [input]
+
+</listing>
+<P>
+   Compares distributions of two global arrays. Returns .TRUE. if
+      distributions are identical.
+
+</P>
+<HR>
+
+<H2> <A name="ga_access"> GA_ACCESS </A> </H2>
+<listing>
+      subroutine ga_access(g_a, ilo, ihi, jlo, jhi, index, ld)
+
+      integer g_a                         [input]
+      integer ilo, ihi, jlo, jhi          [input]
+      integer index                       [output]
+      integer ld                          [output]
+
+</listing>
+<P>
+
+      Provides access to the specified patch of array. Returns leading
+      dimension ld and and MA-like index for the data. This routine is
+      intended for writing new GA operations. Call to ga_access should
+      normally follow a call to <A href="#ga_distribution">ga_distribution</A> that returns
+      coordinates of the patch associated with a processor. You need to
+      make sure that coordinates of the patch are valid (test values
+      returned from ga_distribution.
+
+<P>
+      Your code should include a MA include file,  mafdecls.h. 
+      The addressing convention:
+</P>
+<listing>
+       
+          dbl_mb(index)  - for double precision data 
+          int_mb(index)  - for integer data
+      
+</listing>
+<P>
+      provides access to the first element (ilo,jlo) of the patch.
+
+<P>
+      For a given subroutine:
+          
+<listing>
+          subroutine foo(A,  nrows, ncols lda)
+          double precision A(lda,*)
+          integer nrows, ncols
+             ....
+          end
+
+</listing>
+<P>
+      you can pass g_a(ilo:ihi,jlo:jhi) in the following way:
+
+<listing>
+          call foo(dbl_mb(index), ihi-ilo+1, jhi-jlo+1, lda)
+</listing>
+<P>
+      NOTE:
+      You have to worry about mutual exclusion in simultaneous overlapping
+      access to the data by multiple processors (critical sections are not 
+      protected). 
+
+<P>
+      Each call to ga_access has to be followed by a call to either <A
+      href="#ga_release_update">ga_release</A> or <A
+      href="#ga_release_update">ga_release_update</A>.
+
+      You can access only local data.  </P> <HR>
+
+<H2> <A name="ga_release"> GA_RELEASE </A> </H2>
+<listing>
+      subroutine ga_release(g_a, ilo, ihi, jlo, jhi)
+
+      integer g_a                         [input]
+      integer ilo, ihi, jlo, jhi          [input]
+</listing>
+<P>
+
+      Releases access to a global array when the data was read only. 
+<P>
+      Your code should look like:
+
+<listing>
+           call ga_distribution(g_a, myproc, ilo,ihi,jlo,jhi)
+           call ga_access(g_a, ilo, ihi, jlo, jhi, index, ld)
+               
+                < operate on the data >
+
+           call ga_release(g_a, ilo, ihi, jlo, jhi) 
+</listing>
+
+<P>
+      NOTE: see restrictions for <A href="#ga_access">ga_access</A>
+
+</P>
+
+<HR>
+<H2> <A name="ga_release_update"> GA_RELEASE_UPDATE </A> </H2>
+<listing>
+      subroutine ga_release_update(g_a, ilo, ihi, jlo, jhi)
+
+      integer g_a                         [input]
+      integer ilo, ihi, jlo, jhi          [input]
+</listing>
+<P>
+    Releases access to the data. It must be used if the data was 
+      accessed for writing.
+
+      NOTE: see restrictions for <A href="#ga_access">ga_access</A>
+</P>
+<HR>
+
+<H2> <A name="ga_read_inc"> GA_READ_INC </A> </H2>
+<listing>
+ integer function ga_read_inc(g_a, i, j, inc)
+
+      integer g_a                         [input]
+      integer i, j, inc                   [input]
+</listing>
+<P>
+ Atomically read and increment an element in an integer array.
+<listing>
+      *BEGIN CRITICAL SECTION*
+      return value = a(i,j)
+      a(i,j) += inc
+      *END CRITICAL SECTION*
+</listing>
+</P>
+<HR>
+
+<H2> <A name="ga_scatter"> GA_SCATTER </A> </H2>
+<listing>
+      subroutine ga_scatter(g_a, v, i, j, n)
+
+      integer g_a                         [input]
+      double precision v(n)               [input]
+      integer i(n), j(n), n               [input]
+</listing>
+<P>
+
+      Scatters the array (integer or double) elements into the array.
+      The contents of the input arrays (v, i, j) are preserved, but
+      their contents might be (consistently) shuffled on return.
+
+              do k = 1, nv
+                 a(i(k),j(k)) = v(k)     enddo
+</P>
+<HR>
+
+<H2> <A name="ga_error"> GA_ERROR </A> </H2>
+<listing>
+      subroutine ga_error(message, code)
+      character*1 message(*)              [input]
+      integer     code                    [input]
+</listing>
+<P>
+
+      Called in case of an error. Print an error message + an integer
+      value that is intended to be the error code. Releases some system
+      resources. This is the recomended way of aborting the program
+      execution.
+</P>
+
+<HR>
+<H2> <A name="ga_locate"> GA_LOCATE </A> </H2>
+<listing>
+      logical function ga_locate(g_a, i, j, owner)
+
+      integer g_a, i, j                   [input]
+      integer owner                       [output]
+
+</listing>
+<P>
+ Return in owner the GA compute process id that 'owns' the data.
+      If i/j are out of bounds .FALSE. is returned, otherwise .TRUE..
+
+</P>
+<HR>
+
+<H2> <A name="ga_locate_region"> GA_LOCATE_REGION </A> </H2>
+<listing>
+      logical function ga_locate_region(g_a, ilo, ihi, jlo, jhi, map, np )
+
+      integer g_a, ilo, ihi, jlo, jhi              [input]
+      integer map(5,*), np                         [output]
+
+</listing>
+<P>
+ Parts of the specified patch might be actually 'owned' by several
+      (precisely np) processes.
+
+      Return the list of the GA processes id that 'own' the data.
+      If i/j are out of bounds .FALSE. is returned, otherwise .TRUE..
+</P>
+<listing>
+        map(2,*)    -  ilo'
+        map(3,*)    -  ihi'
+        map(4,*)    -  jlo'
+        map(5,*)    -  jhi'
+
+</listing>
+<P>
+      specify coordinates of a subpatch 'held' by the process map(1,*)
+<HR>
+
+<H2> <A name="ga_inquire"> GA_INQUIRE </A> </H2>
+<listing>
+      subroutine ga_inquire(g_a, type, dim1, dim2)
+
+      integer g_a                         [input]
+      integer type                       [output]
+      integer dim1                       [output]
+      integer dim2                       [output]
+
+</listing>
+<P>
+  Returns type and dimensions of array.
+</P>
+<HR>
+
+<H2>  <A name="ga_inquire_memory"> GA_INQUIRE_MEMORY </A>  </H2>
+<listing>
+    integer function ga_inquire_memory()
+</listing>
+<P>
+    Returns amount of memory (in bytes) used in allocated global arrays
+      on the calling processor.
+
+</P>
+
+<HR>
+<H2> <A name="ga_inquire_name"> GA_INQUIRE_NAME </A> </H2>
+<listing>
+      subroutine ga_inquire_name(g_a, array_name)
+
+      integer g_a                         [input]
+      character*(*) array_name           [output]
+
+</listing>
+<P>
+  Returns name of array.
+</P>
+<HR>
+
+<H2> <A name="ga_memory_avail"> GA_MEMORY_AVAIL </A> </H2>
+<listing>
+   integer function ga_memory_avail()
+</listing>
+<P>
+
+      Returns amount of memory left for allocation of new global arrays on
+      the calling processor.
+
+<P>
+      Note: If ga_uses_ma() is true, then ga_memory_avail returns the
+      lesser of the amount available under the GA limit and the amount
+      available from MA (according to ma_inquire_avail).  If no GA
+      limit has been set, it returns what MA says is available.
+
+<P>
+
+      If ( ! <A href="#ga_uses_ma">ga_uses_ma</A>() && ! <A
+      href="#ga_memory_limited">ga_memory_limited</A>() ) returns < 0,
+      indicating that the bound on currently available memory cannot be
+      determined.
+
+</P>
+<HR>
+
+<H2> <A name="ga_uses_ma"> GA_USES_MA </A> </H2>
+<listing>
+      logical function ga_uses_ma()
+</listing>
+<P>
+ Returns .true. if memory in global arrays comes from the Memory Allocator
+      (MA). .false. means that memory comes from another source, for example
+      System V shared memory is used.
+
+</P>
+<HR>
+<H2> <A name="ga_memory_limited"> GA_MEMORY_LIMITED </A> </H2>
+<listing>
+      logical function ga_memory_limited()
+</listing>
+<P>
+  Indicates if limit is set on memory usage in global arrays on
+      the calling processor.
+
+</P>
+
+<HR>
+<H2> <A name="ga_proc_topology"> GA_PROC_TOPOLOGY </A> </H2>
+<listing>
+      subroutine ga_proc_topology(g_a, proc, prow, pcol)
+
+      integer g_a                         [input]
+      integer proc                        [input] 
+      integer prow, pcol                  [output]
+
+</listing>
+<P>
+   Based on the distribution of g_a, determines block row and column
+      coordinates for the array section 'owned' by specified processor.
+      The numbering starts from 0. The value of -1 means that the processor
+      doesn't 'own' any section of g_a.
+
+</P>
+<HR>
+
+<H2> <A name="ga_print_patch"> GA_PRINT_PATCH </A> </H2>
+<listing>
+      subroutine ga_print_patch(g_a,ilo,ihi,jlo,jhi,pretty)
+      
+      integer g_a                         [input]
+      integer ilo,ihi,jlo,jhi             [input] coordinates of the patch
+      integer pretty                      [input]
+</listing>
+<P>
+   Prints a patch of g_a array to the standard output.  If pretty has
+      the value 0 then output is printed in a dense fashion.  If pretty
+      has the value 1 then output is formatted and rows/columns labeled.
+
+</P>
+<HR>
+
+<H2> <A name="ga_print"> GA_PRINT </A> </H2>
+<listing>
+      subroutine ga_print(g_a)
+      
+      integer g_a                         [input]
+
+</listing>
+<P>
+     Prints an entire g_a array to the standard output.
+</P>
+<HR>
+<H2> <A name="ga_check_handle"> GA_CHECK_HANDLE </A> </H2>
+<listing>
+      subroutine ga_check_handle(g_a, string)
+      integer g_a                         [input]
+      character *(*) string               [input]
+ 
+</listing>
+<P>
+  Check that the global array handle g_a is valid ... if not
+      call <A href="#ga_error">ga_error</A> with the string provided and some more info.
+ 
+</P>
+
+<HR>
+<H2> <A name="ga_nodeid"> GA_NODEID </A> </H2>
+<listing>
+      integer function ga_nodeid()
+
+</listing>
+<P>
+
+      Returns the GA process id (0, ..., <A href="#ga_nnodes">ga_nnodes</A>()-1) of the
+      requesting compute process.
+
+      NOTE: the GA process id might not be the same as message-passing 
+      node id.
+
+</P>
+<HR>
+
+<H2> <A name="ga_nnodes"> GA_NNODES </A> </H2>
+<listing>
+   integer function ga_nnodes()
+</listing>
+<P>
+ Returns the number of GA compute (user) processes.
+
+      NOTE: the number GA processes might not be the same as the number
+      message-passing nodes.
+
+   
+</P>
+<HR>
+
+<H2> <A name="ga_brdcst"> GA_BRDCST </A> </H2>
+<listing>
+      subroutine ga_brdcst(type, buf, lenbuf, root)
+      integer type       [input]         ! message type for broadcast
+      byte buf(lenbuf)   [input/output]
+      integer lenbuf     [input]
+      integer root       [input]
+
+</listing>
+<P>
+   Broadcast from process root to all other processes a message
+   of length lenbuf. 
+<P>
+This is a convenience operation available regardless
+   of the message-passing library that GA is running with.
+
+</P>
+<HR>
+<H2> <A name="ga_dgop"> GA_DGOP </A> </H2>
+<listing>
+      subroutine ga_dgop(type, x, n, op)
+      integer type             [input]
+      double precision x(n)    [input/output]
+      character*(*) op         [input]
+
+</listing>
+<P>
+      Double Global OPeration.
+<P>
+      X(1:N) is a vector present on each process. DGOP 'sums'
+      elements of X accross all nodes using the commutative operator
+      OP. The result is broadcast to all nodes. Supported operations
+      include '+', '*', 'max', 'min', 'absmax', 'absmin'.
+      The use of lowerecase for operators is necessary.
+<P>
+This is a convenience operation available regardless
+   of the message-passing library that GA is running with.
+
+</P>
+
+<HR>
+<H2> <A name="ga_igop"> GA_IGOP </A> </H2>
+<listing>
+      subroutine ga_igop(type, x, n, op)
+      integer type		[input]
+      integer x(n)		[input/output]
+      character*(*) OP		[input]
+
+</listing>
+<P>
+    Integer Global OPeration.
+      The integer version of <A href="#ga_dgop">ga_dgop</A> described above, also include the
+      bitwise OR operation.
+<P>
+This is a convenience operation available regardless
+   of the message-passing library that GA is running with.
+
+
+</P>
+<HR>
+
+<H2> <A name="ga_list_nodeid"> GA_LIST_NODEID </A> </H2>
+<listing>
+      subroutine ga_list_nodeid(list, n)
+      integer n			[input]
+      integer list(n)		[output]
+</listing>
+<P>
+  Returns message-passing process ID (rank in MPI) for the GA
+      processes in the range 0 .. n-1. For MPI, the ranks are in
+      MPI_COMM_WORLD.
+</P>
+<HR>
+
+<H2> <A name="ga_mpi_communicator"> GA_MPI_COMMUNICATOR </A> </H2>
+<listing>
+      void ga_mpi_communicator(GA_COMM)
+      MPI_Comm *GA_COMM;       [output]
+
+</listing>
+<P>
+ Available in C only if MPI is used. Returns communicator handle
+      for GA processes (group).
+</P>
+
+<HR>
+</BODY></HTML>
