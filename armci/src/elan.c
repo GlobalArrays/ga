@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.27 2004-02-02 20:38:16 nwchem Exp $ */
+/* $Id: elan.c,v 1.28 2004-03-29 19:06:24 manoj Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +69,6 @@ static ops_t *ops_done_ar;
 #define MY_GET(src,dst,len,p)\
         elan_wait(elan_get(elan_base->state,src,dst,len,p),elan_base->waitType)
 #endif
-
 
 void armci_init_connections()
 {
@@ -710,4 +709,17 @@ void armci_checkMapped(void *buffer, size_t size)
 }
 #endif
 
+int armci_enable_alpha_hack() {
+  int enable=0;
+#if defined(DECOSF) && defined(QUADRICS)
+#  ifdef QSNETLIBS_VERSION 
+#    if QSNETLIBS_VERSION_CODE > QSNETLIBS_VERSION(1,4,0) 
+       int nnodes = atoi((const char *)getenv("RMS_NNODES"));
+       printf("nnodes = %d\n", nnodes);
+       if(nnodes > 1) enable=1;
+#    endif
+#  endif
+#endif
+  return enable;
+}
 

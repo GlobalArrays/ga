@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.22 2003-09-25 00:11:44 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.23 2004-03-29 19:06:24 manoj Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -20,13 +20,14 @@
 #  include <winsock.h>
 #endif
 
-/* DEBUG_HACK enables to simulate cluster environment on a single workstation.
- * CLUSNODES is the number of processes assigned to each cluster node.
+/* SHMEM_HACK enables to simulate cluster environment on a single workstation.
  * Must define NO_SHMMAX_SEARCH in shmem.c to prevent depleting shared memory
  * due to a gready shmem request by the master process on cluster node 0.
  */ 
-#define DEBUG_HACK____
-#define CLUSNODES 2
+#if defined(DECOSF) && defined(QUADRICS)
+#  define SHMEM_HACK
+extern int armci_enable_alpha_hack();
+#endif
 
 #define DEBUG  0
 #define MAX_HOSTNAME 80
@@ -345,12 +346,14 @@ void armci_init_clusinfo()
   if(DEBUG)
      fprintf(stderr,"%d: %s len=%d\n",armci_me, name,(int)strlen(name));
 
-
-  /******************* development hack *********************/
-#ifdef DEBUG_HACK
-  name[len]='0'+armci_me/CLUSNODES; 
-  name[len+1]='\0';
-  len++;
+#ifdef SHMEM_HACK
+  if(armci_enable_alpha_hack()) {
+    name[len]='0'+armci_me;
+    name[len+1]='\0';
+    len++;
+  }
+  if(DEBUG)
+     fprintf(stderr,"%d: %s len=%d\n",armci_me, name,(int)strlen(name));
 #endif
   
 #ifdef CLUSTER
@@ -363,12 +366,13 @@ void armci_init_clusinfo()
 
   armci_master = armci_clus_info[armci_clus_me].master;
 
-  /******************* development hack *********************/
-#ifdef DEBUG_HACK
-  for(i=0;i<armci_nclus;i++){
-     int len=strlen(armci_clus_info[i].hostname);
-/*     fprintf(stderr,"----hostlen=%d\n",len);*/
-     armci_clus_info[i].hostname[len-1]='\0';
+#ifdef SHMEM_HACK
+  if(armci_enable_alpha_hack()) {
+    for(i=0;i<armci_nclus;i++){
+      int len=strlen(armci_clus_info[i].hostname);
+      /*     fprintf(stderr,"----hostlen=%d\n",len);*/
+      armci_clus_info[i].hostname[len-1]='\0';
+    }
   }
 #endif
 
