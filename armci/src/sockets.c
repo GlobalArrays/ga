@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.17 2000-10-11 21:37:01 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.18 2001-05-25 21:16:52 d3h325 Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -29,8 +29,13 @@
 
 
 #ifdef AIX
-#include <sys/select.h>
-typedef size_t soclen_t;
+#  include <standards.h>
+#  include <sys/select.h>
+#  ifdef _AIXVERSION_430
+     typedef socklen_t soclen_t;
+#  else
+     typedef size_t soclen_t;
+#  endif
 #else
 typedef int soclen_t;
 #endif
