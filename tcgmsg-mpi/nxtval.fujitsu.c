@@ -2,6 +2,12 @@
 #include "tcgmsgP.h"
 #include "../config/fujitsu-vpp.h"
 
+#define BARRIER_BROKEN 1
+
+#ifdef BARRIER_BROKEN
+#  undef NATIVE_BARRIER
+#  define  NATIVE_BARRIER MPI_Barrier(MPI_COMM_WORLD)
+#endif
 
 #define LEN 2
 long nxtval_counter=0;
@@ -69,4 +75,6 @@ Int NXTVAL_(mproc)
 void install_nxtval()
 {
 }
+
+void finalize_nxtval(){};
 

@@ -1,7 +1,7 @@
       program main
       implicit double precision (a-h,o-z)
 c
-c $Header: /tmp/hpctools/ga/tcgmsg-mpi/testf.f,v 1.1 1995-10-12 00:07:03 d3h325 Exp $
+c $Header: /tmp/hpctools/ga/tcgmsg-mpi/testf.f,v 1.2 1997-12-13 01:17:15 d3h325 Exp $
 c
 c     FORTRAN program to test message passing routines
 c
@@ -12,6 +12,8 @@ c
       include 'msgtypesf.h'
       dimension buf(MAXLEN)
       character*80 fname
+      integer IUNIT
+      double precision tcgtime, start,used
 c
 c     Always the first thing to do is call pbeginf
 c
@@ -59,23 +61,24 @@ c
 c      
         lenbuf = 1
  30     if (me .eq. 0) then
-           istart = mtime()
+           start = tcgtime()
            call snd(itype, buf, lenbuf, left, 1)
            call rcv(itype, buf, lenbuf, lenmes, iright, node, 1)
-           iused = mtime() - istart
-           if (iused.gt.0) then
-             rate = 1.0d-4 * dble(nproc * lenbuf) / dble(iused)
+           used = tcgtime() - start
+           if (used.gt.0) then
+c            rate = 1.0d-4 * dble(nproc * lenbuf) / dble(iused)
+             rate = 1.0d-6 * dble(nproc * lenbuf) / used
            else
              rate = 0.0d0
            endif
-           write(LOG,31) lenbuf, iused, rate
+           write(LOG,31) lenbuf, used, rate
         else
            call rcv(itype, buf, lenbuf, lenmes, iright, node, 1)
            call snd(itype, buf, lenbuf, left, 1)
         endif
         lenbuf = lenbuf * 2
         if (lenbuf .le. mdtob(MAXLEN)) goto 30
- 31     format(' len=',i7,' bytes, used=',i4,' cs, rate=',f10.6,' Mb/s')
+ 31     format(' len=',i7,'bytes, used=',f10.6,'s, rate=',f10.6,'Mb/s')
         call evend('Ring test')
       endif
 c
@@ -83,13 +86,14 @@ c
 c     Check that everyone can open, write, read and close
 c     a binary FORTRAN file
 c
+      IUNIT = 9+me
       call pfname('junk',fname)
-      open(9,file=fname,form='unformatted',status='unknown',
+      open(IUNIT,file=fname,form='unformatted',status='unknown',
      &  err=1000)
-      write(9,err=1001) buf
-      rewind 9
-      read(9,err=1002) buf
-      close(9,status='delete')
+      write(IUNIT,err=1001) buf
+      rewind IUNIT
+      read(IUNIT,err=1002) buf
+      close(IUNIT,status='delete')
       call event('Read file OK')
 c
       if (me.eq.0) call stats

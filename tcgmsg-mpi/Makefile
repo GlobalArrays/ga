@@ -110,10 +110,10 @@ ifeq ($(MACHINE),CRAY-T3E)
            FC = f90
          FOPT = -g
           CPP = cpp
-     FOPT_REN = -Wf-dp
+     FOPT_REN = -dp
  GLOB_DEFINES = -DCRAY_T3D -DCRAY_T3E
     EXTRA_OBJ = memalign.o
-   NXTVAL_OBJ = nxtval.t3d.o
+   NXTVAL_OBJ = nxtval.cray.o
  NXTVAL_AVAIL = yes
 endif
 
@@ -127,8 +127,24 @@ ifeq ($(MACHINE),CRAY-T3D)
      FOPT_REN = -Ccray-t3d -Wf-dp
  GLOB_DEFINES = -DCRAY_T3D
     EXTRA_OBJ = memalign.o
-   NXTVAL_OBJ = nxtval.t3d.o
+   NXTVAL_OBJ = nxtval.cray.o
  NXTVAL_AVAIL = yes
+endif
+
+#................................ CRAY-J90 ..................................
+ifeq ($(TARGET),CRAY-YMP)
+     ifeq ($(FOPT), -O)
+         FOPT = -O1
+     endif
+     COPT_REN = -htaskprivate -D_MULTIP_ 
+           FC = f90
+     FOPT_REN = -dp -ataskcommon
+#    FLD_REN =  $(LIBCM)
+ GLOB_DEFINES = -DCRAY_YMP
+    EXTRA_OBJ = memalign.o
+   NXTVAL_OBJ = nxtval.cray.o
+ NXTVAL_AVAIL = yes
+   EXTRA_LIBS = $(LIBCM)
 endif
 
 #
@@ -347,6 +363,12 @@ test_arcv.x: test_arcv.o $(LIBRARY_PATH)
 
 test_asyn.x: test_asyn.o $(LIBRARY_PATH)
 	$(CC)  $(CLDOPT) -o $@ $^ $(LIBS)
+
+ifeq ($(TARGET),CRAY-YMP)
+pbeginf.o:
+	$(CC) -g -c pbeginf.c
+
+endif
 
 $(patsubst %,$(LIBRARY_PATH)(%),$(OBJ))      : tcgmsgP.h
 $(patsubst %,$(LIBRARY_PATH)(%),evon.o)      : evlog.h

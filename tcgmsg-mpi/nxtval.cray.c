@@ -1,7 +1,8 @@
 #include <mpi.h>
+#include <mpp/shmem.h>
 #include "tcgmsgP.h"
 
-
+#define NXTVAL_GUARD 63
 #define LEN 2
 long nxtval_counter=0;
 #define INCR 1                 /* increment for NXTVAL */
@@ -21,7 +22,6 @@ Int NXTVAL_(mproc)
 
 */
 {
-  long shmem_swap();
   long local;
 
   int  server = (int)NNODES_() -1;         /* id of server process */
@@ -39,9 +39,24 @@ Int NXTVAL_(mproc)
            barrier();
      }
      if (*mproc > 0) {
+
+#       if defined(CRAY_T3D) || defined(_CRAYMPP)
+
            /* use atomic swap operation to increment nxtval counter */
            while((local = shmem_swap(&nxtval_counter, BUSY, server)) == BUSY);
            shmem_swap(&nxtval_counter, (local+INCR), server);
+
+#       else
+
+           /* only a subset of shemem available */
+#          pragma _CRI guard NXTVAL_GUARD 
+           shmem_get(&local,&nxtval_counter,1,0);
+           local +=INCR;
+           shmem_put(&nxtval_counter,&local,1,0);
+#          pragma _CRI endguard NXTVAL_GUARD
+
+#       endif
+
      }
    } else {
      /* Not running in parallel ... just do a simulation */

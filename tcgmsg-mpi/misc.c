@@ -1,6 +1,10 @@
 #include <mpi.h>
 #include "tcgmsgP.h"
 
+#ifndef CRAY_YMP
+#define USE_MPI_ABORT   
+#endif
+
 char      tcgmsg_err_string[ERR_STR_LEN];
 MPI_Comm  TCGMSG_Comm;
 Int       DEBUG_;
@@ -44,7 +48,11 @@ void Error(string, code)
            (long)code,(long)code);
 
     finalize_nxtval(); /* clean nxtval resources */
+#ifdef USE_MPI_ABORT
     MPI_Abort(MPI_COMM_WORLD,(int)code);
+#else
+    exit(1);
+#endif
 }
 
 
