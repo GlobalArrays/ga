@@ -1,6 +1,9 @@
 /* $$ */
 
 #include "tcgmsgP.h"
+#ifdef LINUX
+#include "sys/wait.h"
+#endif
 
 #if defined(SUN) || defined(ALLIANT) || defined(ENCORE) || \
     defined(SEQUENT) || defined(AIX) || defined(NEXT)

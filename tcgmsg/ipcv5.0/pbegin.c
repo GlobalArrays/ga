@@ -3,18 +3,31 @@
 #define PBEGIN_C
 #include "tcgmsgP.h"
 
+#ifdef CRAY_T3D  /* on this machine we don't use SYS V shared memory */
+       ShmemBuf  TCGMSG_receive_buffer[MAX_PROC];
+       void t3d_gops_init();
+#      pragma _CRI cache_align TCGMSG_receive_buffer
+#endif
+
+#ifdef LAPI
+       ShmemBuf  TCGMSG_receive_buffer[MAX_PROC];
+       void lapi_initialize();
+#endif
+
 extern void TrapSigint(void);
 extern void TrapSigchld(void);
 extern int WaitAll(long);
 
-#if !(defined(KSR) || defined(CRAY))
+#if !(defined(KSR) || defined(CRAY) || defined(LINUX))
 extern void bzero(char *, int);
 #endif
 extern pid_t getpid(void), fork(void);
 
+long DEBUG_ =0;           /* debug flag ... see setdbg */
+
 void PBEGIN_(int argc, char **argv)
 /*
-  Simple shared-memory only version of TCGMSG
+  shared-memory version of TCGMSG
 */  
 {
   long arg, node, i, max_n_msg;
@@ -24,6 +37,9 @@ void PBEGIN_(int argc, char **argv)
 
 #ifdef CRAY_T3D
   TCGMSG_nnodes = (long)_num_pes(); 
+  TCGMSG_nodeid = (long) _my_pe();     /* get my unique id */
+#elif defined(LAPI)
+  lapi_initialize();
 #else
   for (arg=1; arg<(argc-1); arg++)
     if (strcmp(argv[arg],"-p") == 0) {
@@ -47,7 +63,7 @@ void PBEGIN_(int argc, char **argv)
 
   /* Set up handler for SIGINT and SIGCHLD */
 
-#ifndef CRAY_T3D
+#ifdef SYSV
   TrapSigint();
   TrapSigchld();
 #endif
@@ -64,7 +80,7 @@ void PBEGIN_(int argc, char **argv)
      pair for every message sent */
 
   max_n_msg = 2*TCGMSG_nnodes;
-  if (max_n_msg < 64) max_n_msg = 64;
+  if (max_n_msg < MAX_N_OUTSTANDING_MSG) max_n_msg = MAX_N_OUTSTANDING_MSG;
 
   if (!(TCGMSG_sendq_ring = (SendQEntry *)
 	malloc((size_t) (max_n_msg*sizeof(SendQEntry)))))
@@ -77,14 +93,12 @@ void PBEGIN_(int argc, char **argv)
 
   /* Create the shared memory and fill with zeroes */
   
-#ifdef CRAY_T3D
-  TCGMSG_shmem_size = (long)(TCGMSG_nnodes * sizeof(ShmemBuf));
-
-  TCGMSG_shmem = (char *) TCGMSG_receive_buffer;
-#else
+#if defined(SYSV)
   TCGMSG_shmem_size = (long) (TCGMSG_nnodes * TCGMSG_nnodes * sizeof(ShmemBuf));
-  
   TCGMSG_shmem = CreateSharedRegion(&TCGMSG_shmem_id, &TCGMSG_shmem_size);
+#else
+  TCGMSG_shmem_size = (long)(TCGMSG_nnodes * sizeof(ShmemBuf));
+  TCGMSG_shmem = (char *) TCGMSG_receive_buffer;
 #endif
   
   bzero(TCGMSG_shmem, (int) TCGMSG_shmem_size);
@@ -93,12 +107,7 @@ void PBEGIN_(int argc, char **argv)
   
   TCGMSG_proc_info[0].pid = getpid();
   
-#ifdef CRAY_T3D
-
-  TCGMSG_nodeid = (long) _my_pe();     /* get my unique id */
-
-#else
-
+#ifdef SYSV
   for (node=1; node<TCGMSG_nnodes; node++) {
     pid_t pid = fork();
 
@@ -111,6 +120,7 @@ void PBEGIN_(int argc, char **argv)
     }
   }
 #endif
+
 
   /* Now everyone initializes the pointers to the shared-
      memory buffers.
@@ -127,7 +137,7 @@ void PBEGIN_(int argc, char **argv)
     long me = TCGMSG_nodeid;
     if (me != node) {
 
-#     ifdef CRAY_T3D
+#     ifndef SYSV
          TCGMSG_proc_info[node].sendbuf = ((ShmemBuf *) TCGMSG_shmem) + me;
          TCGMSG_proc_info[node].recvbuf = ((ShmemBuf *) TCGMSG_shmem) + node;
 #     else
@@ -142,6 +152,9 @@ void PBEGIN_(int argc, char **argv)
 #ifdef CRAY_T3D
   /* initialize T3D gops/brodcast work array */
   t3d_gops_init();
+#endif
+#ifdef LAPI
+  lapi_adr_exchg();
 #endif
 
 
@@ -161,7 +174,7 @@ void PEND_(void)
 {
   Integer type = 999;
 
-#ifndef CRAY_T3D
+#ifdef SYSV 
   (void) signal(SIGCHLD, SIG_DFL); /* Death of children now OK */
 #endif
 

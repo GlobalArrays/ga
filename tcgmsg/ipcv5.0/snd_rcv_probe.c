@@ -86,7 +86,7 @@ long PROBE_(type, node)
 
 void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
      long *type;
-     char *buf;
+     void *buf;
      long *lenbuf;
      long *lenmes;
      long *nodeselect;
@@ -139,7 +139,7 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 
 void SND_(type, buf, lenbuf, node, sync)
      long *type;
-     char *buf;
+     void *buf;
      long *lenbuf;
      long *node;
      long *sync;
@@ -155,13 +155,20 @@ void SND_(type, buf, lenbuf, node, sync)
   long me = NODEID_();
   long msg_async_snd();
 
+  /*asynchronous communication not supported under LAPI */
+#ifdef LAPI
+  long block = 1;
+#else
+  long block = *sync;
+#endif
+
   if (DEBUG_) {
     (void)printf("SND_: node %ld sending to %ld, len=%ld, type=%ld, sync=%ld\n",
                   me, *node, *lenbuf, *type, *sync);
     (void) fflush(stdout);
   }
 
-  if (*sync)
+  if (block)
     msg_wait(msg_async_snd(*type, buf, *lenbuf, *node));
 
   else {

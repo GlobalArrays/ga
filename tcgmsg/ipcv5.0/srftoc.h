@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/srftoc.h,v 1.2 1994-12-30 20:56:17 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/srftoc.h,v 1.3 1997-11-07 23:44:18 d3h325 Exp $ */
 
 #ifndef SRFTOC_H_
 #define SRFTOC_H_
@@ -50,45 +50,11 @@
 #define DRAND48_     DRAND48
 #define SRAND48_     SRAND48
 #define PFCOPY_      PFCOPY
-#define dgop_        DGOP
-#define igop_        IGOP
 #define DGOP_        DGOP
 #define IGOP_        IGOP
 
 #else
 
-#if (defined(AIX) || defined(NEXT) || defined(HPUX)) && !defined(EXTNAME)
-#define NICEFTN_     niceftn
-#define NODEID_      nodeid
-#define NNODES_      nnodes
-#define MTIME_       mtime
-#define TCGTIME_     tcgtime
-#define SND_         snd
-#define RCV_         rcv
-#define BRDCST_      brdcst
-#define SYNCH_       synch
-#define PBEGINF_     pbeginf
-#define PBGINF_      pbginf
-#define PEND_        pend
-#define SETDBG_      setdbg
-#define NXTVAL_      nxtval
-#define PBFTOC_      pbftoc
-#define PARERR_      parerr
-#define LLOG_        llog
-#define STATS_       stats
-#define WAITCOM_     waitcom
-#define MITOD_       mitod
-#define MDTOI_       mdtoi
-#define MDTOB_       mdtob
-#define MITOB_       mitob
-#define DRAND48_     drand48
-#define SRAND48_     srand48
-#define PFCOPY_      pfcopy
-#define dgop_        dgop
-#define igop_        igop
-#define DGOP_        dgop
-#define IGOP_        igop
-#else
 #define NICEFTN_     niceftn_
 #define NODEID_      nodeid_
 #define PROBE_       probe_
@@ -116,12 +82,8 @@
 #define DRAND48_     drand48_
 #define SRAND48_     srand48_
 #define PFCOPY_      pfcopy_
-#if defined(SP1)
 #define DGOP_        dgop_
 #define IGOP_        igop_
 #endif
 #endif
 
-#endif
-
-#endif

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/usleep.c,v 1.3 1995-01-24 20:40:26 og845 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/usleep.c,v 1.4 1997-11-07 23:44:20 d3h325 Exp $ */
 
 #ifdef AIX
 #include <stdio.h>
@@ -9,7 +9,9 @@
 
 #include "tcgmsgP.h"
 
+#ifndef AIX
 extern int select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+#endif
 
 #ifdef STUPIDUSLEEP
 void USleep(us)

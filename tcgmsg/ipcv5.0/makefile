@@ -12,25 +12,58 @@ endif
    RANLIB = echo
        RM = rm
 MAKEFLAGS = -j1
+  TESTOBJ = test.isend.o
 
 
-      OBJ_CORE = pbegin.o queues.o shmem.o usleep.o nnodes.o nodeid.o \
-                 signals.o synch.o error.o async_send.o waitall.o busy.o\
-                 mitob.o mdtob.o mitod.o mdtoi.o
+      OBJ_CORE = pbegin.o queues.o globalop.o usleep.o nnodes.o nodeid.o \
+                 signals.o synch.o  waitall.o drand48.o random.o\
+                 mitob.o mdtob.o mitod.o mdtoi.o misc.o snd_rcv_probe.o mtime.o
 
 ifeq ($(MACHINE),SUN)
        CC = gcc
    CFLAGS = -g -Wall -DSHMEM -DSYSV -DSUN
    RANLIB = ranlib
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o
 endif
 
-ifeq ($(MACHINE),KSR)
-   CFLAGS = -g -DSHMEM -DSYSV -DKSR
-    EXTRA = copyall.o
-endif
 
 ifeq ($(MACHINE),SGITFP)
    CFLAGS = -O3 -fullwarn -DSHMEM -DSYSV -DSGI -DSGITFP
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o
+endif
+
+ifeq ($(MACHINE),SGI)
+   CFLAGS = -O -DSHMEM -DSYSV -DSGI -DNOSPIN -DNOTIFY_SENDER
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o
+endif
+
+
+ifeq ($(MACHINE),LINUX)
+       CC = gcc
+   CFLAGS = -Wall -O -DSHMEM -DSYSV -DLINUX -DNOSPIN -DNOTIFY_SENDER
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o
+   RANLIB = ranlib
+endif
+
+
+ifeq ($(MACHINE),LAPI)
+       FC = mpxlf
+       CC = mpcc_r
+      FLD = $(CC)
+   FFLAGS = -qEXTNAME
+   CFLAGS = -O -DEXTNAME -DSHMEM -DAIX -DIBM -DLAPI -DNOTIFY_SENDER
+    EXTRA = lapi_putget.o memalign.o async_send_lapi.o
+  TESTOBJ = test.o
+    FLIBS =  -lxlf90 -lxlf
+LIBLAPIDIR = /usr/lpp/ssp/css/lib
+   LIBHAL = -lhal_r
+  LIBLAPI = -llapi_r
+
+  LDFLAGS = -L$(LIBLAPIDIR) $(LIBHAL) $(LIBLAPI) -bnso \
+          -bI:/usr/lib/threads.exp -lppe_r \
+          -bI:/usr/lpp/ssp/css/libus/fs_ext.exp \
+          -bI:/usr/lib/syscalls.exp  -lm \
+          -lppe -bl:new.map
 endif
 
 
@@ -85,7 +118,10 @@ include ../../config/makelib.h
 
 all:	 $(LIBRARY_PATH) test.x
 
-test.x:	test.isend.o checkbyte.o $(LIBRARY_PATH)
+testf:  testf.o $(LIBRARY_PATH)
+	$(FLD) $(LOPT) -o $@ $^ $(LIBS) $(FLIBS)
+
+test.x:	$(TESTOBJ) checkbyte.o $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) $(LOPT) -o $@ $^ $(LIBS)
 
 hello.x: hello.o $(LIBRARY_PATH)

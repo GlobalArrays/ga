@@ -1,15 +1,21 @@
-#include "tcgmsg.h"
 #include "srftoc.h"
+#include "tcgmsg.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 
+#ifdef LAPI
+#include <lapi.h>
+#endif
+
 #ifdef SHMEM
 #include "shmem.h"
 #endif
 
-#define    MAX_PROC 256
+#define    MAX_PROC 512
+#define    INTERNAL_SYNC_TYPE 33333
+#define    MAX_N_OUTSTANDING_MSG 64
 
 #ifdef PBEGIN_C
 /* This stupidity to avoid multiple defininitions in the SGI linker */
@@ -20,6 +26,7 @@
 
 extern void USleep(long);
 
+EXTERN long DEBUG_;
 EXTERN long TCGMSG_nodeid;	/* The id of this process */
 EXTERN long TCGMSG_nnodes;	/* Total no. of processes */
 
@@ -36,17 +43,30 @@ EXTERN long TCGMSG_caught_sigint; /* True if SIGINT was trapped */
    multiple of page sizes. Structure of this buffer is exploited
    in T3D code. */
 
+#ifdef NOTIFY_SENDER
+#define RESERVED 7*sizeof(long)
+#else
+#define RESERVED 4*sizeof(long)
+#endif
+
 #ifdef CRAY_T3E
 #     define SHMEM_BUF_SIZE (16384  - 4*sizeof(long))
 #elif defined(CRAY_T3D)
-#     define SHMEM_BUF_SIZE (8192  - 4*sizeof(long))
+#     define SHMEM_BUF_SIZE (8192  - RESERVED)
+#elif defined(LAPI)
+#     define SHMEM_BUF_SIZE (3*4096  - RESERVED)
 #else
-#     define SHMEM_BUF_SIZE (32768  - 4*sizeof(long))
+#     define SHMEM_BUF_SIZE (4*8192  - RESERVED)
 #endif
 
 typedef struct {
   long info[4];                 /* 0=type, 1=length, 2=tag, 3=full */
   char buf[SHMEM_BUF_SIZE];	/* Message buffer */
+#ifdef NOTIFY_SENDER
+  long stamp;
+  lapi_cntr_t cntr;
+  long flag;                    /* JN: used by receiver to signal sender */
+#endif
 } ShmemBuf;
 
 /* Structure defines an entry in the send q */
@@ -89,9 +109,4 @@ EXTERN ProcInfo *TCGMSG_proc_info; /* Will point to array of structures */
 EXTERN SendQEntry *TCGMSG_sendq_ring; /* Circular ring of SendQEntry structures 
 					 for fast allocation/free */
 
-#ifdef CRAY_T3D  /* on this machine we don't use SYS V shared memory */
-       ShmemBuf  TCGMSG_receive_buffer[MAX_PROC];
-       void t3d_gops_init();
-#      pragma _CRI cache_align TCGMSG_receive_buffer 
-#endif
 

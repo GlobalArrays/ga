@@ -1,6 +1,8 @@
 /* $$  */
 #include "tcgmsgP.h"
 
+/*#define DEBUG 1*/
+/*#define DEBUG2 1*/
 static const long false = 0;
 static const long true  = 1;
 
@@ -19,7 +21,6 @@ extern void Busy(int);
 #      define COPY_TO_LOCAL(src, dest, n) copyto(src, dest, n)
 #      define COPY_FROM_LOCAL(src, dest, n) copyfrom(src, dest, n)
 #elif defined(CRAY_T3E)
-#      include <mpp/shmem.h>
        /* T3E has adaptive routing, this is safer with shmem_quiet */
 #      define COPY_TO_REMOTE(src, dest, n, node){ \
               shmem_put((long*)(dest),(long*)(src),(int) ((n)>>3),(node));\
@@ -44,25 +45,35 @@ extern void Busy(int);
 #            define FLUSH_CACHE 
 #            define FLUSH_CACHE_LINE(x)  
 #      endif
-
-#      define COPY_TO_REMOTE(src, dest, n, node){ \
-              shmem_put((long*)(dest),(long*)(src),(int) ((n)>>3),(node));\
-              }
-
+#      define COPY_TO_REMOTE(src, dest, n, node) \
+              shmem_put((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
 #      define COPY_FROM_REMOTE(src, dest, n, node) \
               shmem_get((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
-
 #      define COPY_TO_LOCAL(src, dest, n)\
               (void)memcpy(dest, src, (size_t) n)
-/*              (void) copyto(src, dest, (long) n)*/
-
 #      define COPY_FROM_LOCAL(src, dest, n)\
               (void)memcpy(dest, src, (size_t) n)
-/*              (void) copyfrom(src, dest, (long) n)*/
+
+#elif defined(LAPI)
+      static ShmemBuf    tmp_snd_buf; 
+      extern lapi_handle_t lapi_handle;
+      ShmemBuf *localbuf = &tmp_snd_buf;
+      extern void lapi_put_c(void* dest, void* src, long bytes, long node, 
+                             lapi_cntr_t *cntr);
+      extern void lapi_put(void* dest, void* src, long bytes, long node);
+      extern void lapi_get(void* dest, void* src, long bytes, long node);
+#     define COPY_TO_LOCAL(src, dest, n) (void) memcpy(dest, src, (long) n)
+#     define COPY_FROM_LOCAL(src, dest, n) (void)memcpy(dest, src, (long) n)
+#     define COPY_TO_REMOTE(src,dest,n,node) lapi_put(dest, src, (long) n, node)
+#     define COPY_FROM_REMOTE(src,dest,n,node)lapi_get(dest, src, (long) n,node)
+#     define COPY_TO_REMOTE_CNTR(src, dest, n, node, pcntr) \
+                                lapi_put_c(dest, src, (long) n, node, pcntr)
 
 #else
-#define COPY_TO_SHMEM(src, dest, n, destnode) (void) memcpy(dest, src, (long) n)
-#define COPY_FROM_SHMEM(src, dest, n) (void)memcpy(dest, src, (long) n)
+#define COPY_TO_LOCAL(src, dest, n) (void) memcpy(dest, src, (long) n)
+#define COPY_FROM_LOCAL(src, dest, n) (void)memcpy(dest, src, (long) n)
+#define COPY_TO_REMOTE(src, dest, n, destnode) (void) memcpy(dest, src, (long)n)
+#define COPY_FROM_REMOTE(src, dest, n, destnode) (void)memcpy(dest, src,(long)n)
 #endif
 #ifndef FLUSH_CACHE 
 #	define FLUSH_CACHE          
@@ -85,15 +96,53 @@ static long remote_flag(long *p, long node)
   return tmp;
 }
 
-static long local_flag(long *p)
+static long local_flag(void *p)
 /*
   Return the value of a volatile variable in shared memory
   that is LOCAL to this processor
 */
 {
+  long val;
   FLUSH_CACHE_LINE(p);  
-  return(*p);
+  val = *(long*)p;
+  return(val);
 }
+
+
+void set_local_flag(void *p, long val)
+{
+     *(long*)p = val;
+}
+
+
+void set_remote_flag(void *p, long val, long node)
+{
+    COPY_TO_REMOTE(&val, p, sizeof(long), node); 
+}
+
+
+static void lapi_await(long *p, long value, lapi_cntr_t* cntr)
+/*
+  Wait on Lapi counter for data to appear
+  check if *p == value
+*/
+{
+  int val;
+  long pval;
+
+  if(LAPI_Waitcntr(lapi_handle, cntr, 1, &val))
+                   Error("lapi_await: error",-1);
+
+  if ( (pval = local_flag(p)) != value) {
+      fprintf(stdout,"%2ld: invalid value=%ld, local_flag=%lx %ld\n",
+              TCGMSG_nodeid, value, (unsigned long)p, pval);
+      fflush(stdout);
+      Error("lapi_await: exiting..",-1);;
+  }
+}
+
+
+
 
 static void local_await(long *p, long value)
 /*
@@ -109,12 +158,13 @@ static void local_await(long *p, long value)
   long spinlim = 100000000;
   long waittim = 100000;
 #endif  
+  extern void flush_send_q(void);
 
   while ((pval = local_flag(p)) != value) {
 
     if (pval && (pval != value)) {
       fprintf(stdout,"%2ld: invalid value=%ld, local_flag=%lx %ld\n", 
-              TCGMSG_nodeid, value, p, pval);
+              TCGMSG_nodeid, value, (unsigned long)p, pval);
       fflush(stdout);
       exit(1);
     }
@@ -143,79 +193,103 @@ long async_send(SendQEntry *entry)
   merely have to determine if the receivers buffer for you is empty
   and copy directly into the receivers buffer.
 
-  Return 0 if more data is to be sent, 1 if the send is complete.
+  Return 0 data has not been sent, 1 if the send is complete.
 */
 {
   long node = entry->node;
   ShmemBuf *sendbuf= TCGMSG_proc_info[node].sendbuf;
-  long nleft, ncopy;
+#ifdef NOTIFY_SENDER
+  void *busy_flag = &TCGMSG_proc_info[node].recvbuf->flag;
+#endif
+  long ncopy, complete;
   long pval;
   long info[4];
   
-#ifdef DEBUG
+#ifdef DEBUG2
   (void) fprintf(stdout,"%2ld: sending to %ld buf=%lx len=%ld\n",
                  TCGMSG_nodeid, node, entry->buf, entry->lenbuf); 
   (void) fprintf(stdout,"%2ld: sendbuf=%lx\n", TCGMSG_nodeid, sendbuf);
   (void) fflush(stdout);
 #endif
 
+  /* return if the receiver buffer is not available */
+#ifdef NOTIFY_SENDER
+  if ((pval = local_flag(busy_flag))) {
+#else
   if ((pval = remote_flag(&sendbuf->info[3], node))) {
-#ifdef DEBUG
-  {
-    long info[4];
-    FLUSH_CACHE;
-    COPY_FROM_REMOTE(sendbuf->info, info, sizeof(info), node);
-    fprintf(stdout,"%2ld: snd info after full = %ld %ld %ld\n", TCGMSG_nodeid,
-            info[0], info[1], info[2]);
-    fflush(stdout);
-  }
-    sleep(1);
 #endif
+#   ifdef DEBUG
+    {
+      long info[4];
+      FLUSH_CACHE;
+      COPY_FROM_REMOTE(sendbuf->info, info, sizeof(info), node);
+      fprintf(stdout,"%2ld: snd info after full = %ld %ld %ld\n", TCGMSG_nodeid,
+            info[0], info[1], info[2]);
+      fflush(stdout);
+      sleep(1);
+    }
+#   endif
 
     return 0;
   }
 
+  /* if data has been written already and we are here, operation is complete */
+  if(entry->written) return 1L;
+
+# ifdef NOTIFY_SENDER
+    set_local_flag(busy_flag,true);
+# endif
+
   info[0] = entry->type; info[1] = entry->lenbuf; info[2] = entry->tag;
+  entry->buffer_number++;
+  info[3] = entry->buffer_number;
 
-  /* Copy over the first buffer load of the message */
-
-  nleft = entry->lenbuf - entry->written;
-  ncopy = (long) ((nleft <= SHMEM_BUF_SIZE) ? nleft : SHMEM_BUF_SIZE);
+  /* Copy over the message if it fits in the receiver buffer */
+  ncopy = (long) (( entry->lenbuf <= SHMEM_BUF_SIZE) ? entry->lenbuf : 0 );
   
+#ifdef CRAY_T3D
   if (ncopy&7) {
-#ifdef DEBUG
-    printf("%2ld: rounding buffer up %ld->%ld\n", TCGMSG_nodeid,
-           ncopy, ncopy + 8 - (ncopy&7));
+#   ifdef DEBUG
+    printf("%3d:rounding buffer%d->%d\n",TCGMSG_nodeid,ncopy,ncopy+8-(ncopy&7));
     fflush(stdout);
-#endif
+#   endif
     ncopy = ncopy + 8 - (ncopy&7); 
   }
-
-  if (ncopy) {
-    COPY_TO_REMOTE(entry->buf+entry->written, sendbuf->buf, ncopy, node);
-  }
-
-
-  /* NOTE that SHMEM_BUF_SIZE is a multiple of 8 by construction so that
-     this ncopy is only rounded up on the last write */
-
-  ncopy = (long) ((nleft <= SHMEM_BUF_SIZE) ? nleft : SHMEM_BUF_SIZE);
-  entry->written += ncopy;
-  entry->buffer_number++;
-  
-  /* Copy over the header information include buffer full flag */
-
-  info[3] = entry->buffer_number;
-#ifdef CRAY_T3E
-  COPY_TO_REMOTE(info, sendbuf->info, 3*sizeof(long), node);
-  shmem_long_p(&sendbuf->info[3],info[3], node);
-  shmem_quiet();
-#else
-  COPY_TO_REMOTE(info, sendbuf->info, sizeof(info), node);
 #endif
 
-  return (long) (entry->written == entry->lenbuf);
+  if (ncopy) {
+#   ifdef DEBUG
+      printf("%ld:snd:copying data node=%ld adr=%lx %ld bytes\n",TCGMSG_nodeid,
+           node, sendbuf->buf, ncopy);
+      fflush(stdout);
+#   endif
+    COPY_TO_LOCAL(entry->buf+entry->written, localbuf->buf, ncopy);
+    complete = 1;
+  } else {
+#   ifdef DEBUG
+      printf("%ld:snd:copying addr node=%ld adr=%lx %ld bytes\n",TCGMSG_nodeid,
+           node, sendbuf->buf, ncopy);
+      fflush(stdout);
+#   endif
+    /* copy address of the user buffer to the send buffer */
+    COPY_TO_LOCAL(&(entry->buf), localbuf->buf, sizeof(char*));
+    ncopy = sizeof(char*);
+    complete = 0;  /* sent is complete only when receiver gets the data */
+    entry->written = 1; 
+  }
+
+# ifdef DEBUG
+    printf("%ld:snd:copying info to node=%ld adr=%lx %ld bytes\n",TCGMSG_nodeid,
+           node, sendbuf->info, sizeof(info));
+    fflush(stdout);
+# endif
+
+  COPY_TO_LOCAL(info, localbuf->info, sizeof(info));
+  COPY_TO_REMOTE_CNTR(localbuf,sendbuf,sizeof(info)+ncopy,node,&sendbuf->cntr); 
+ 
+  return complete;
 }
+
 
 void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
 /*
@@ -230,7 +304,6 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
   merely have to determine if the receivers buffer for you is empty
   and copy directly into the receivers buffer.
 
-  Return 0 if more data is to be sent, 1 if the send is complete.
 */
 {
   long me = TCGMSG_nodeid;
@@ -238,6 +311,9 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
   long nleft;
   long msg_type, msg_tag, msg_len;
   long buffer_number = 1;
+#ifdef NOTIFY_SENDER
+  void *busy_flag= &TCGMSG_proc_info[node].sendbuf->flag;
+#endif
   
   if (node<0 || node>=TCGMSG_nnodes)
     Error("msg_rcv: node is out of range", node);
@@ -248,28 +324,35 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
 
 #ifdef DEBUG
   (void) fprintf(stdout,"%2ld: receiving from %ld buf=%lx len=%ld\n",
-                 me, node, buf, lenbuf); 
-
-  (void) fprintf(stdout,"%2ld: recvbuf=%lx\n", me, recvbuf);
+                 me, node, recvbuf,lenbuf); 
+  (void) fprintf(stdout,"%2ld: user buf=%lx len=%ld\n", me, buf, lenbuf);
   (void) fflush(stdout);
 #endif
 
+#ifdef LAPI
+  lapi_await(&recvbuf->info[3], buffer_number, &recvbuf->cntr);
+#else
   local_await(&recvbuf->info[3], buffer_number);
+#endif
 
   /* Copy over the header information */
 
-/*  FLUSH_CACHE;*/
   msg_type = recvbuf->info[0]; 
   msg_len  = recvbuf->info[1];
   msg_tag  = recvbuf->info[2];
 
+#ifdef DEBUG
+  (void) fprintf(stdout,"%2ld: received msg from %ld len=%ld\n",
+                 me, node, msg_len); 
+  (void) fflush(stdout);
+#endif
+
   /* Check type and size information */
   
   if (msg_type != type) {
-    (void) fprintf(stdout,
+    (void) fprintf(stderr,
 		   "rcv: me=%ld from=%ld type=(%ld != %ld) tag=%ld len=%ld\n",
                    me, node, type, msg_type, msg_tag, msg_len);
-    fflush(stdout);
     Error("msg_rcv: type mismatch ... strong typing enforced\n", 0L);
   }
 
@@ -281,34 +364,47 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
   }
     
   nleft = *lenmes = msg_len;
-  if (nleft == 0) {
-   recvbuf->info[3] = false;
+
+  if (nleft) {
+    long ncopy = nleft;
+
+    /* for short messages data is in local buffer, for long in remote buffer */
+
+    if(nleft <= SHMEM_BUF_SIZE) { 
+
+#     if defined(CRAY_T3D) && !defined(CRAY_T3E)
+      /* cache flushing optimizations for T3D */
+      long line;
+      if(ncopy < 321) 
+          for(line = 0; line < ncopy; line+=32) 
+              FLUSH_CACHE_LINE(recvbuf->buf+line);
+      else 
+#     endif
+
+        FLUSH_CACHE;
+
+      COPY_FROM_LOCAL(recvbuf->buf, buf, ncopy);
+
+    }else {
+
+      char *addr = *((char**)recvbuf->buf);
+
+#     ifdef CRAY_T3D
+        /* WILL NOT WORK ON T3D for data not alligned on 8-byte boundary !!! */
+        if(nleft&7)Error("msg_rcv: not alligned",nleft);
+#     endif
+
+      COPY_FROM_REMOTE(addr, buf, nleft, node);
+
+    }
   }
 
-  while (nleft) {
-    long ncopy = (long) ((nleft <= SHMEM_BUF_SIZE) ? nleft : SHMEM_BUF_SIZE);
-    { 
-    long line;
-    if(ncopy < 321) 
-        for(line = 0; line < ncopy; line+=32) 
-            FLUSH_CACHE_LINE(recvbuf->buf+line);
-    else 
-      FLUSH_CACHE;
-    }
-
-/*    if (buffer_number > 1) FLUSH_CACHE;*/
-    COPY_FROM_LOCAL(recvbuf->buf, buf, ncopy);
-    
     recvbuf->info[3] = false;
-    
-    nleft -= ncopy;
-    buf   += ncopy;
-    
-    if (nleft) {
-      buffer_number++;
-      local_await(&recvbuf->info[3], buffer_number);
-    }
-  }
+#ifdef NOTIFY_SENDER
+    /* confirm that data has been transfered */
+    set_remote_flag(busy_flag,false,node);
+#endif
+
 }
 
 

@@ -1,8 +1,10 @@
-#include "tcgmsg.h"
+#include "tcgmsgP.h"
 
-extern int sleep(int);
 
 void SYNCH_(Integer *ptype)
 {
-  sleep(2);
+  Integer junk = 0, n = 1;
+
+  IGOP_(ptype, &junk, &n, "+");
+
 }

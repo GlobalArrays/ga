@@ -160,6 +160,8 @@ long msg_async_snd(type, buf, lenbuf, node)
   entry->tag   = TCGMSG_proc_info[node].n_snd++; /* Increment tag */
   entry->msgid = msgid;
   entry->type  = type;
+#ifdef CRAY_T3D
+  /* allignment is critical on T3D (shmem library) */
   if (((unsigned long) buf) & 7) {
     printf("%2ld: mallocing unalinged buffer len=%ld\n",
            TCGMSG_nodeid, lenbuf);
@@ -169,7 +171,9 @@ long msg_async_snd(type, buf, lenbuf, node)
     (void) memcpy(entry->buf, buf, lenbuf);
     entry->free_buf_on_completion = 1;
   }
-  else {
+  else 
+#endif
+  {
     entry->buf   = buf;
     entry->free_buf_on_completion = 0;
   }

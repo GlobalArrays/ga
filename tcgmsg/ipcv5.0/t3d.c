@@ -1,6 +1,6 @@
 /*\
- *       TCGMSG INTERFACE FOR THE CRAY T3D      
- *
+ *       TCGMSG INTERFACE FOR THE CRAY T3D/E
+ *           Jarek Nieplocha, 10.12.1994
 \*/
 
 #include <stdio.h>
@@ -8,27 +8,25 @@
 #include <mpp/shmem.h>
 #include "srftoc.h"
 
-#define MAXPROC 512
-
-long pSync[_SHMEM_BCAST_SYNC_SIZE];  /* workspace needed for shmem system routines */
-long rSync[_SHMEM_REDUCE_SYNC_SIZE];  /* workspace needed for shmem system routines */
-#pragma _CRI cache_align pSync,rSync
 
 #ifdef EVENTLOG
 #include "evlog.h"
 #endif
 
 #define MAX(a,b) (((a) >= (b)) ? (a) : (b))
+#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define ABS(a) (((a) >= 0) ? (a) : (-(a)))
+#define MEMCPY(dst, src, n) memcpy(dst, src, (size_t) n)
 
 #define INCR 1                 /* increment for NXTVAL */
 #define BUSY -1L               /* indicates somebody else updating counter*/
 
-long nxtval_counter=0;
-
-
-long DEBUG_ =0;           /* debug flag ... see setdbg */
 
 /* Global variables */
+
+long pSync[_SHMEM_BCAST_SYNC_SIZE];   /* workspace needed for shmem routines */
+long rSync[_SHMEM_REDUCE_SYNC_SIZE];  /* workspace needed for shmem routines */
+#pragma _CRI cache_align pSync,rSync
 
 static volatile long n_in_msg_q = 0;    /* No. in the message q */
 
@@ -43,12 +41,11 @@ static struct msg_q_struct{
 } msg_q[MAX_Q_LEN];
 
 
-extern char *memalign();
-/*extern copyto(const void *,  void *, long);*/
-#define MEMCPY(dst, src, n) memcpy(dst, src, (size_t) n)
-/* copyto((src), (dst), (n))*/
-
 static long me, procs;
+long nxtval_counter=0;
+extern long DEBUG_;
+
+
 /***********************************************************/
 
 
@@ -91,9 +88,6 @@ void Error(string, code)
 }
 
 
-
-
-
 /*\ Synchronize processes
 \*/
 void SYNCH_(type)
@@ -110,7 +104,7 @@ void t3d_gops_init()
   int node;
 
   for(node=0;node<_SHMEM_BCAST_SYNC_SIZE;node++)pSync[node] = _SHMEM_SYNC_VALUE;
-  for(node=0;node<_SHMEM_REDUCE_SYNC_SIZE;node++)rSync[node] = _SHMEM_SYNC_VALUE;
+  for(node=0;node<_SHMEM_REDUCE_SYNC_SIZE;node++)rSync[node]= _SHMEM_SYNC_VALUE;
 }
 
 
@@ -150,7 +144,7 @@ long NXTVAL_(mproc)
 
   if (*mproc == 0)
 
-    Error("NVS: invalid mproc ", mproc);
+    Error("NVS: invalid mproc ", *mproc);
 
   else if (*mproc > 0) {
 
@@ -208,21 +202,15 @@ void STATS_()
 
 
 /* global operation stuff */
-
-#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) >= 0) ? (a) : (-(a)))
-
 #define GPSZ 10000
-/* hpp */
-#define GOP_WORK_SIZE (MAX(GPSZ, _SHMEM_REDUCE_MIN_WRKDATA_SIZE)) /*gops work size*/
-/* #define GOP_BUF_SIZE  (2*GOP_WORK_SIZE-2)                  gops buffer size */
-#define GOP_BUF_SIZE  GOP_WORK_SIZE
+#define GOP_WORK_SIZE (MAX(GPSZ, _SHMEM_REDUCE_MIN_WRKDATA_SIZE))
+#define GOP_BUF_SIZE  (3*GOP_WORK_SIZE)
 
-static double gop_work[GOP_WORK_SIZE];
-static double gop_target_buf[GOP_BUF_SIZE];
-static double gop_source_buf[GOP_BUF_SIZE];
-
+/* gop_work buffer is partitioned into 3 even chunks in IGOP/DGOP */
+/* BRDCST uses full buffer space                                  */
+static double gop_work[GOP_BUF_SIZE];
+static double *gop_target_buf=gop_work+GOP_WORK_SIZE;
+static double *gop_source_buf=gop_work+2*GOP_WORK_SIZE;
 
 
 
@@ -232,10 +220,9 @@ void BRDCST_(type, x, bytes, originator)
      long *bytes;
      long *originator;
 /*
-  broadcast buffer to all other processes from process originator
-  ... all processes call this routine specifying the same
-  orginating process.
-*/
+ * Broadcast buffer to all other processes from process originator:
+ * all processes call this routine specifying the same orginating process.
+ */
 {
   long buflen = GOP_BUF_SIZE;
   int words   = (*bytes+sizeof(long)-1)/sizeof(long);
@@ -258,7 +245,8 @@ void BRDCST_(type, x, bytes, originator)
   buflen = (nleft-1) / nbuf + 1;
 
   if(((long)x)%sizeof(long))
-     Error("t3d broadcast: buffer must be alligned on 8-byte boundary: ",(long) x);
+     Error("Broadcast: buffer must be alligned on 8-byte boundary: ",(long) x);
+
 
   while (nleft) {
     long ndo = MIN(nleft, buflen);
@@ -267,7 +255,7 @@ void BRDCST_(type, x, bytes, originator)
     shmem_broadcast(brdcst_buf, (long*)x, ndo, (int)*originator, 0, 0, 
                    (int)procs, pSync);
     if(me!= *originator){
-          bytes_to_copy =  (long)( (start + *bytes <= x + ndo*sizeof(long)) ? 
+          bytes_to_copy =  (long)( (start + *bytes >= x + ndo*sizeof(long)) ? 
                                     ndo*sizeof(long) : start + *bytes - x);
           
           MEMCPY(x,brdcst_buf,bytes_to_copy);
@@ -291,7 +279,7 @@ void DGOP_(ptype, x, pn, op)
   double *target    = gop_target_buf;
   double *source    = gop_source_buf;
   long nleft  = *pn;
-  long buflen = MIN(nleft,GOP_BUF_SIZE); /* Try to get even sized buffers */
+  long buflen = MIN(nleft,GOP_WORK_SIZE); /* Try to get even sized buffers */
   long nbuf   = (nleft-1) / buflen + 1;
   long n;
   me = NODEID_();
@@ -339,7 +327,7 @@ void IGOP_(ptype, x, pn, op)
   int *target     = (int*) gop_target_buf;
   int *source     = (int*) gop_source_buf;
   int nleft  = *pn;
-  int buflen = MIN(nleft,GOP_BUF_SIZE); /* Try to get even sized buffers */
+  int buflen = MIN(nleft,GOP_WORK_SIZE); /* Try to get even sized buffers */
   int nbuf   = (nleft-1) / buflen + 1;
   int n;
   me = NODEID_();
