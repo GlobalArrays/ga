@@ -50,6 +50,10 @@ endif
 
 ifeq ($(TARGET),SOLARIS)
      FLD_REN = -xs
+     LOC_LIBS += -lsocket -lrpcsvc -lnsl -lucb -ldl 
+     ifdef LARGE_FILES
+        LOC_LIBS += $(shell getconf LFS_LIBS)
+     endif
 endif
 
 

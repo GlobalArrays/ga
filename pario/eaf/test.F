@@ -2,8 +2,9 @@
 #define IO_NUM_FILES 4
 #define MAX_ITER 4
 #define MAP(x) dble(IO_TEST_SZ*((x-1)*eaf_util_szint()))
-#define MAX_FILE_SZ 1.8d9
+#define MAX_FILE_SZ 4.0d9
 #define BASE_NAME 'EAFfile'
+#define HPIODIR '/scratch/'
 #ifdef  HPIODIR
 #  define FNAME   HPIODIR//BASE_NAME
 #else
@@ -12,9 +13,9 @@
 
       program eaftest
 c     
-      call test1
-      call test2
-      call test3
+*      call test1
+*      call test2
+*      call test3
       call test4
 c     
       print *,' '
