@@ -117,6 +117,8 @@
 #define  ga_is_mirrored_           GA_IS_MIRRORED
 #define  nga_num_mirrored_seg_     NGA_NUM_MIRRORED_SEG
 #define  nga_get_mirrored_block_   NGA_GET_MIRRORED_BLOCK
+#define  nga_get_common_           NGA_GET_COMMON
+#define  nga_acc_common_           NGA_ACC_COMMON
 #define  ga_uses_ma_               GA_USES_MA
 #define  ga_valid_handle_          GA_VALID_HANDLE
 #define  ga_verify_handle_         GA_VERIFY_HANDLE
@@ -335,7 +337,9 @@
 #define  ga_is_mirrored_           ga_is_mirrored__     
 #define  nga_num_mirrored_seg_     ga_num_mirrored_seg__     
 #define  nga_get_mirrored_block_   ga_get_mirrored_block__     
-#define  ga_uses_ma_               ga_uses_ma__             
+#define  ga_uses_ma_               ga_uses_ma__            
+#define  nga_get_common_           nga_get_common__
+#define  nga_acc_common_           nga_acc_common__
 #define  ga_valid_handle_          ga_valid_handle__        
 #define  ga_verify_handle_         ga_verify_handle__    
 #define  ga_zdot_                  ga_zdot__                

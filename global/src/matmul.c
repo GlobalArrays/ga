@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.37 2003-10-29 00:18:28 manoj Exp $ */
+/* $Id: matmul.c,v 1.38 2003-10-29 04:40:22 edo Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -83,7 +83,7 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
     if(state->lo[0] != -1) recovery = 1;
 
     nloops = (iend-istart+1)/Ichunk + ( ((iend-istart+1)%Ichunk)?1:0 );
-    if(nloops>MAX_CHUNKS) GA_Error("Increase MAX_CHUNKS value in matmul.h",0L);
+    if(nloops>MAX_CHUNKS) ga_error("Increase MAX_CHUNKS value in matmul.h",0L);
 
     if(recovery) jstart_ = state->lo[0]; /* recovering the previous state */
     for(ii=jj=0, jlo = jstart_; jlo <= jend; jlo += Jchunk) {
@@ -908,7 +908,7 @@ void ga_matmul(transa, transb, alpha, beta,
     /* Check to make sure all global arrays are of the same type */
     if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
 	  ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
-       ga_error_("Processors do not match for all arrays",ga_nnodes_());
+       ga_error("Processors do not match for all arrays",ga_nnodes_());
     }
 #if 0
     if (ga_is_mirrored_(g_a)) {
@@ -1152,7 +1152,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    /* Check to make sure all global arrays are of the same type */
    if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
         ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
-     ga_error_("Processors do not match for all arrays",ga_nnodes_());
+     ga_error("Processors do not match for all arrays",ga_nnodes_());
    }
    if (ga_is_mirrored_(g_a)) {
      inode = ga_cluster_nodeid_();
@@ -1511,7 +1511,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    /* Check to make sure all global arrays are of the same type */
    if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
         ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
-     ga_error_("Processors do not match for all arrays",ga_nnodes_());
+     ga_error("Processors do not match for all arrays",ga_nnodes_());
    }
    if (ga_is_mirrored_(g_a)) {
      inode = ga_cluster_nodeid_();

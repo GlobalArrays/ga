@@ -156,8 +156,8 @@ extern void FATR ga_fill_   ARGS_((Integer *, void *));
 extern void FATR ga_scale_  ARGS_((Integer *, void *));
 extern void FATR ga_add_   ARGS_((Void *, Integer *, Void *, Integer *,
       Integer *));
-extern Integer FATR ga_default_config ();
-extern Integer FATR ga_mirror_config ();
+extern Integer FATR ga_default_config_();
+extern Integer FATR ga_mirror_config_();
 extern Integer FATR ga_idot_ ARGS_((Integer *, Integer *));
 extern float FATR ga_fdot_ ARGS_((Integer *, Integer *));            
 extern DoublePrecision FATR ga_ddot_ ARGS_((Integer *, Integer *));
@@ -296,12 +296,22 @@ extern logical ga_update6_ghosts(Integer *g_a);
 extern logical ga_update7_ghosts(Integer *g_a);
 extern logical nga_update_ghost_dir(Integer *g_a, Integer *idim, 
                                     Integer *idir, logical *flag);
-extern void ga_merge_mirrored(Integer *g_a);
-extern void ga_fast_merge_mirrored(Integer *g_a);
-extern int ga_is_mirrored(Integer *g_a);
-extern int nga_num_mirrored_seg(Integer *g_a);
+extern void FATR ga_merge_mirrored_(Integer *g_a);
+extern void FATR ga_fast_merge_mirrored_(Integer *g_a);
+extern logical FATR ga_is_mirrored_(Integer *g_a);
+extern Integer FATR nga_num_mirrored_seg_(Integer *g_a);
 extern void nga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
                                   Integer *g_b, Integer *blo, Integer *bhi);
+extern void FATR nga_get_mirrored_block_(Integer *g_a, Integer *npatch,
+					 Integer *lo,  Integer *hi);
+extern void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
+					Integer *g_b, Integer *blo, Integer *bhi);
+extern void  FATR nga_nbget_ghost_dir_(Integer *g_a, Integer *mask, Integer *nbhandle);
+extern void FATR nga_get_common(Integer *g_a, Integer *lo, Integer *hi,
+				void    *buf, Integer *ld, Integer *nbhandle);
+extern void FATR nga_acc_common(Integer *g_a, Integer *lo, Integer *hi,
+				void    *buf, Integer *ld, void    *alpha, Integer *nbhandle);
+
 
 extern void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi);
 extern void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi);
