@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.17 2002-10-01 23:32:31 vinod Exp $ */
+/* $Id: vector.c,v 1.18 2002-10-18 18:17:20 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -386,10 +386,8 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
        if(totvec<500)
          rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1);
        else 
-         rc = armci_pack_vector(PUT, NULL, darr, len, proc);
-#else	 
-         rc = armci_pack_vector(PUT, NULL, darr, len, proc);
 #endif    
+         rc = armci_pack_vector(PUT, NULL, darr, len, proc);
     }
 
 #ifdef GA_USE_VAMPIR
@@ -455,10 +453,8 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
        if(totvec<500)
           rc = armci_rem_vector(GET, NULL, darr, len, proc,1);
        else
-          rc = armci_pack_vector(GET, NULL, darr, len, proc);
-#else
-       rc = armci_pack_vector(GET, NULL, darr, len, proc);
 #endif   
+       rc = armci_pack_vector(GET, NULL, darr, len, proc);
     }
 
 #ifdef GA_USE_VAMPIR
@@ -525,3 +521,133 @@ int ARMCI_AccV( int op,              /* oeration code */
     else return 0;
 }
 
+/*****************************************************************************/
+
+/*\ Non-blocking vector API
+\*/
+int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
+                int len,  /* length of descriptor array */
+                int proc, /* remote process(or) ID */
+                armci_hdl_t nb_handle  /*non-blocking request handle*/
+              )
+{
+    int rc, i,direct=1,totvec=0;
+
+    if(len<1) return FAIL;
+    for(i=0;i<len;i++){
+        if(darr[i].src_ptr_array == NULL || darr[i].dst_ptr_array ==NULL) return FAIL2;
+        if(darr[i].bytes<1)return FAIL3;
+        if(darr[i].ptr_array_len <1) return FAIL4;
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)  
+        totvec+=darr[i].ptr_array_len;
+#endif
+    }
+
+    if(proc<0 || proc >= armci_nproc)return FAIL5;
+
+
+    ORDER(PUT,proc); /* ensure ordering */
+#ifndef QUADRICS
+    direct=SAMECLUSNODE(proc);
+#endif
+
+
+    if(direct)
+         rc = armci_copy_vector(PUT, darr, len, proc);
+    else{
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)  
+       /*500 is very conservative, the number here should be modified to be 
+       based on the size of send/recv buffer*/
+       if(totvec<500)
+         rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1);
+       else 
+#endif    
+         rc = armci_pack_vector(PUT, NULL, darr, len, proc);
+    }
+
+    if(rc) return FAIL6;
+    else return 0;
+}
+
+int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
+                int len,  /* length of descriptor array */
+                int proc, /* remote process(or) ID */
+                armci_hdl_t nb_handle  /*non-blocking request handle*/
+              )
+{
+    int rc, i,direct=1,totvec=0;
+
+    if(len<1) return FAIL;
+    for(i=0;i<len;i++){
+      if(darr[i].src_ptr_array==NULL ||darr[i].dst_ptr_array==NULL)return FAIL2;
+      if(darr[i].bytes<1)return FAIL3;
+      if(darr[i].ptr_array_len <1) return FAIL4;
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)  
+      totvec+=darr[i].ptr_array_len;
+#endif
+    }
+
+    if(proc<0 || proc >= armci_nproc)return FAIL5;
+
+    ORDER(GET,proc); /* ensure ordering */
+#ifndef QUADRICS
+    direct=SAMECLUSNODE(proc);
+#endif
+
+    if(direct)
+       rc = armci_copy_vector(GET, darr, len, proc);
+    else{
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
+       /*500 is very conservative, the number here should be modified to be 
+       based on the size of send/recv buffer*/
+       if(totvec<500)
+          rc = armci_rem_vector(GET, NULL, darr, len, proc,1);
+       else
+#endif   
+       rc = armci_pack_vector(GET, NULL, darr, len, proc);
+    }
+
+    if(rc) return FAIL6;
+    else return 0;
+}
+
+int ARMCI_NbAccV( int op,              /* oeration code */
+                void *scale,         /*scaling factor for accumulate */
+                armci_giov_t darr[], /* descriptor array */
+                int len,             /* length of descriptor array */
+                int proc,            /* remote process(or) ID */
+                armci_hdl_t nb_handle  /*non-blocking request handle*/
+              )
+{
+    int rc, i,direct=1;
+
+#ifdef GA_USE_VAMPIR
+    int tot=0;
+    for(i=0;i<len;i++) tot+=darr[i].bytes;
+#endif
+
+    if(len<1) return FAIL;
+    for(i=0;i<len;i++){
+      if(darr[i].src_ptr_array==NULL ||darr[i].dst_ptr_array==NULL)return FAIL2;
+      if(darr[i].bytes<1)return FAIL3;
+      if(darr[i].ptr_array_len <1) return FAIL4;
+    }
+
+    if(proc<0 || proc >= armci_nproc)return FAIL5;
+
+    ORDER(op,proc); /* ensure ordering */
+    direct=SAMECLUSNODE(proc);
+
+#   if defined(ACC_COPY)
+       if(armci_me != proc) direct=0;
+#   endif
+
+    if(direct)
+         rc = armci_acc_vector( op, scale, darr, len, proc);
+    else
+         rc = armci_pack_vector(op, scale, darr, len, proc);
+
+    if(rc) return FAIL6;
+    else return 0;
+}
+/*****************************************************************************/

@@ -147,4 +147,66 @@ extern int armci_domain_count(armci_domain_t domain);
 
 extern char *mp_group_name;
 
+/*********************stuff for non-blocking API******************************/
+typedef struct armci_req_t * armci_hdl_t;
+
+extern int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t nb_handle);
+
+extern int ARMCI_NbPutS(          /* strided put */
+                void *src_ptr,        /* pointer to 1st segment at source*/ 
+		int src_stride_arr[], /* array of strides at source */
+		void* dst_ptr,        /* pointer to 1st segment at destination*/
+		int dst_stride_arr[], /* array of strides at destination */
+		int count[],          /* number of units at each stride level count[0]=bytes */
+		int stride_levels,    /* number of stride levels */
+                int proc,	      /* remote process(or) ID */
+                armci_hdl_t nb_handle /*armci_non-blocking request handle*/
+                );
+
+extern int ARMCI_NbAccS(                /* strided accumulate */
+                int  optype,          /* operation */
+                void *scale,          /* scale factor x += scale*y */
+                void *src_ptr,        /* pointer to 1st segment at source*/ 
+		int src_stride_arr[], /* array of strides at source */
+		void* dst_ptr,        /* pointer to 1st segment at destination*/
+		int dst_stride_arr[], /* array of strides at destination */
+		int count[],          /* number of units at each stride level count[0]=bytes */
+		int stride_levels,    /* number of stride levels */
+                int proc,	      /* remote process(or) ID */
+                armci_hdl_t nb_handle /*armci_non-blocking request handle*/
+                );
+
+extern int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t nb_handle);
+
+extern int ARMCI_NbGetS(          /* strided get */
+                void *src_ptr,        /* pointer to 1st segment at source*/ 
+		int src_stride_arr[], /* array of strides at source */
+		void* dst_ptr,        /* pointer to 1st segment at destination*/
+		int dst_stride_arr[], /* array of strides at destination */
+		int count[],          /* number of units at each stride level count[0]=bytes */
+		int stride_levels,    /* number of stride levels */
+                int proc,	      /* remote process(or) ID */
+                armci_hdl_t nb_handler/*armci_non-blocking request handle*/
+                );
+
+extern int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
+                int len,  /* length of descriptor array */
+                int proc,  /* remote process(or) ID */
+                armci_hdl_t nb_handle /*armci_non-blocking request handle*/
+              );
+
+extern int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
+                int len,  /* length of descriptor array */
+                int proc,  /* remote process(or) ID */
+                armci_hdl_t nb_handle /*armci_non-blocking request handle*/
+              );
+
+extern int ARMCI_NbAccV( int op,       /* operation code */
+                void *scale,         /* scaling factor for accumulate */
+                armci_giov_t darr[], /* descriptor array */
+                int len,             /* length of descriptor array */
+                int proc,             /* remote process(or) ID */
+                armci_hdl_t nb_handle /*armci_non-blocking request handle*/
+              );
+
 #endif /* _ARMCI_H */

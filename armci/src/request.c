@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.38 2002-10-17 10:07:43 d3h325 Exp $ */
+/* $Id: request.c,v 1.39 2002-10-18 18:17:20 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -439,7 +439,7 @@ int armci_rem_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, 
-                       ext_header_t *h, int flag) 
+                       ext_header_t *h, int flag,armci_hdl_t nb_handle) 
 {
     char *buf, *buf0;
     request_header_t *msginfo;
@@ -715,7 +715,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 #endif
        if((rc = armci_op_strided(msginfo->operation, scale, proc,
                buf_ptr, buf_stride_arr, loc_ptr, loc_stride_arr,
-               count, stride_levels, 1)))
+               count, stride_levels, 1,NULL)))
                armci_die("server_strided: op from buf failed",rc);
     }
 

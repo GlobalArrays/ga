@@ -34,6 +34,19 @@ extern void armci_elan_fence(int p);
 
 #endif
 
+/*\ the request structure for non-blocking api. 
+\*/
+typedef struct{
+   int tag;
+   int bufid;
+   int op;
+#ifdef NB_CMPL_T
+   NB_CMPL_T cmpl_info;
+#endif
+} armci_req_t;
+/*\ the request structure for non-blocking api. 
+\*/
+
 
 typedef struct{
   int len;
@@ -155,8 +168,9 @@ extern void armci_write_strided(void *ptr, int stride_levels,
 extern void armci_read_strided(void *ptr, int stride_levels, 
                                int stride_arr[], int count[], char *buf);
 extern int armci_op_strided(int op, void* scale, int proc,void *src_ptr, 
-			int src_stride_arr[],  void* dst_ptr, int dst_stride_arr[], 
-                       int count[], int stride_levels, int lockit);
+			int src_stride_arr[],  void* dst_ptr, 
+                        int dst_stride_arr[], int count[],  
+                        int stride_levels, int lockit,armci_hdl_t nb_handle);
 extern int armci_copy_vector(int op, /* operation code */
                 armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
@@ -174,7 +188,7 @@ extern int armci_pack_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, ext_header_t *hdr,
-                       int fit_level, int nb, int last);
+                       int fit_level, int nb, int last,armci_hdl_t nb_handle);
 
 extern int armci_pack_vector(int op, void *scale, 
                       armci_giov_t darr[],int len,int proc);
@@ -282,5 +296,6 @@ extern void armci_set_shmem_limit(unsigned long shmemlimit);
 
 #define SIXTYFOUR 64
 #define ALIGN64ADD(buf) (SIXTYFOUR-(((ssize_t)(buf))%SIXTYFOUR))
+
 
 #endif

@@ -139,7 +139,7 @@ extern int armci_rem_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, 
-                       ext_header_t *h, int lockit);
+                       ext_header_t *h, int lockit,armci_hdl_t nb_handle);
 
 extern void armci_rem_rmw(int op, int *ploc, int *prem, int extra, int proc);
 extern void armci_rem_ack(int clus);
