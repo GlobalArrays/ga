@@ -5,6 +5,7 @@
  *   - range of message passing tag/type values
  *   - length of message buffer(s) 
  *   - max number of processors
+ *   - disabling MA use  
  *
  */
 
@@ -22,6 +23,7 @@
 #define  GA_MSG_OFFSET 32000
 
 /* length (in bytes) for send and receive buffers to handle remote requests */
+/* this is obsolete in GA 3.0 and higher  left for OLD_GA builds */
 #if defined(NX) || defined(SP1) || defined(SP)
 #   ifdef IWAY
 #      define MSG_BUF_SIZE    129000
@@ -43,5 +45,10 @@
 
 /* uncomment the following line to overwrite default max number of processors */
 /*#define MAX_NPROC 128*/
+
+
+/* uncoment the following line to never use MA (Memory Allocator) for
+ * storing data in global arrays (not temporary buffers!)  */
+/*#define AVOID_MA_STORAGE */
 
 #endif

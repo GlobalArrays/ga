@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.40 2000-05-05 20:40:10 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.41 2000-05-17 01:15:06 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -349,10 +349,14 @@ Integer  i;
 \*/ 
 logical FATR ga_uses_ma_()
 {
+#ifdef AVOID_MA_STORAGE
+   return FALSE;
+#else
    if(!GAinitialized) return FALSE;
    
    if(ARMCI_Uses_shm()) return FALSE;
    else return TRUE;
+#endif
 }
 
 
@@ -783,6 +787,9 @@ Integer handle = INVALID_MA_HANDLE, index;
 Integer nelem, item_size = GAsizeofM(type);
 char *ptr = (char*)0;
 
+#ifdef AVOID_MA_STORAGE
+   return gai_get_shmem(ptr_arr, bytes, type, id);
+#else
    if(ARMCI_Uses_shm()) return gai_get_shmem(ptr_arr, bytes, type, id);
    else{
 
@@ -798,6 +805,7 @@ char *ptr = (char*)0;
      if(bytes && !ptr) return 1; 
      else return 0;
    }
+#endif
 }
 
 
@@ -1240,12 +1248,16 @@ Integer ga_handle = GA_OFFSET + *g_a;
     GA[ga_handle].actv = 0;     
     if(GA[ga_handle].ptr[GAme]==NULL) return TRUE;
  
+#ifndef AVOID_MA_STORAGE
     if(ARMCI_Uses_shm()){
+#endif
       /* make sure that we free original (before address allignment) pointer */
       ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
+#ifndef AVOID_MA_STORAGE
     }else{
       if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
     }
+#endif
 
     if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
     GAstat.curmem -= GA[ga_handle].size;
