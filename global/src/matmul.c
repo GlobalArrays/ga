@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.45 2004-01-13 17:41:09 d3g293 Exp $ */
+/* $Id: matmul.c,v 1.46 2004-01-16 23:55:08 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -1009,7 +1009,7 @@ void ga_matmul(transa, transb, alpha, beta,
           if(Kchunk<=0) Kchunk = 1;
 
 	  {
-	     Integer irreg;	     
+	     Integer irreg=0;
 	     if(Ichunk/Kchunk > GA_ASPECT_RATIO || 
 		Jchunk/Kchunk > GA_ASPECT_RATIO) irreg = SET;
 	     ga_igop(GA_TYPE_GOP, &irreg, (Integer)1, "max");   
