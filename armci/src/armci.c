@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.39 2001-04-05 23:04:35 d3h325 Exp $ */
+/* $Id: armci.c,v 1.40 2001-05-09 17:15:31 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -27,6 +27,11 @@
 #define MEMLOCK_SHMEM_FLAG  
 
 #include <stdio.h>
+#ifdef CRAY
+#  include <sys/category.h>
+#  include <sys/resource.h>
+#  include <unistd.h>
+#endif
 #ifdef LAPI
 #  include "lapidefs.h"
 #endif
@@ -87,6 +92,10 @@ static void armci_abort(int code)
 {
     armci_perror_msg();
     ARMCI_Cleanup();
+#ifdef CRAY
+    limit(C_PROC,0,L_CORE,1L); /* MPI_Abort on Cray dumps core!!! - sqeeze it */
+    chdir("/"); /* we should not be able to write core file here */
+#endif
 
     /* data server process cannot use message-passing library to abort
      * it simply exits, parent will get SIGCHLD and abort the program
