@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.34 2001-09-17 18:25:28 d3h325 Exp $
+/* $Id: myrinet.c,v 1.35 2001-10-23 17:23:21 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -107,6 +107,13 @@ typedef struct {
 } armci_gm_serv_t;
 
 /***************/
+
+/****************added for put pipeline*****************/
+#define NUMOFSNDBUFS 3 
+int pipelinebufferindex=0;
+char *MultiMessageSndBuffer[NUMOFSNDBUFS];
+void (*callbacks[NUMOFSNDBUFS])(struct gm_port *port, void *context,gm_status_t status);
+/***************************************************/
 
 extern struct gm_port *gmpi_gm_port; /* the port that mpi currently using */
 
@@ -348,14 +355,20 @@ int armci_gm_client_mem_alloc()
 {
 char *tmp;
 int extra=256;
+int i; /*loop variable for multi put buffers*/
 
     /* allocate buf keeping the pointers of server ack buf */
     proc_gm->serv_ack_ptr = (long **)calloc(armci_nclus, sizeof(long*));
     if(!proc_gm->serv_ack_ptr) return FALSE;
 
     /* allocate send buffer */
-    MessageSndBuffer = (char *)gm_dma_malloc(proc_gm->port, SND_BUFLEN+extra);
-    if(MessageSndBuffer == 0) return FALSE;
+     for(i=0;i<(NUMOFSNDBUFS);i++){
+        MessageSndBuffer = (char *)gm_dma_malloc(proc_gm->port, SND_BUFLEN+extra);
+        if(MessageSndBuffer == 0) return FALSE;
+        ((armci_gm_context_t*)MessageSndBuffer)->done=ARMCI_GM_CLEAR;
+        MultiMessageSndBuffer[i]=MessageSndBuffer;
+    }
+    MessageSndBuffer=MultiMessageSndBuffer[0];  
     /* stamp the last byte */
     client_tail= MessageSndBuffer+SND_BUFLEN+extra-1;
     *client_tail=CLIENT_STAMP;
@@ -633,6 +646,8 @@ void armci_client_send_ack_seq(int p, int success)
                                                          sizeof(long));
 }
 
+void armci_gm_check_next_buf_context(int i);
+
 /*\ send request message to server and wait for completion
  *  assumption: the buffer is pinned and most probably is MessageSndBuffer
 \*/
@@ -650,6 +665,7 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     msginfo->tag.ack = ARMCI_GM_CLEAR;
 
     context->done = ARMCI_GM_SENDING;
+    armci_gm_check_next_buf_context(1);
     gm_send_with_callback(proc_gm->port, buf, size, len, GM_LOW_PRIORITY,
                           proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
                           armci_client_send_callback, context);
@@ -1293,6 +1309,26 @@ armci_gm_context_t *context;
       for(i=0;i<NBUFS;i++)printf("%p ",bufarr[i]);
       printf("]\n"); fflush(stdout);
   }
+}
+
+void armci_wait_for_server_ack(){
+   armci_wait_long_flag_updated((long *)proc_gm->ack,ARMCI_GM_COMPLETE);
+}	
+
+void armci_gm_check_next_buf_context(int i){
+   armci_gm_context_t *context;
+   context=(armci_gm_context_t*)MultiMessageSndBuffer[(pipelinebufferindex+i)%NUMOFSNDBUFS];
+   armci_client_send_complete(context);
+}
+
+
+char* armci_gm_get_send_buf(int bufsize){
+   pipelinebufferindex = (pipelinebufferindex+1)%NUMOFSNDBUFS;
+   MessageSndBuffer = MultiMessageSndBuffer[pipelinebufferindex];
+   return ((char*) (((armci_gm_context_t*)MessageSndBuffer)+1)); 
+}
+
+void armci_gm_free_send_buf(void * ptr){
 }
  
 char* armci_gm_getbuf(size_t size)
