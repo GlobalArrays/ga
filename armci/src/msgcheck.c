@@ -1,9 +1,54 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "armci.h"
+#include "message.h"
 #include "mp3.h"
 
 
 int me, nproc;
+
+#define LOOP 20
+
+void time_gop(double *test,int len)
+{
+int i;
+double t;
+
+  t = MP_TIMER();
+  for(i=0; i<LOOP; i++){
+    armci_msg_dgop(test, len, "+");
+  }
+  t = MP_TIMER() -t;
+
+  t /= LOOP;
+
+  if(me==0){
+     printf("Time per gop %lf len=%d doubles\n",t, len);
+     fflush(stdout);
+  }
+}
+
+
+void time_reduce(double *test,int len)
+{
+int i;
+double t;
+
+  t = MP_TIMER();
+  for(i=0; i<LOOP; i++){
+    armci_msg_reduce(test, len, "+",ARMCI_DOUBLE);
+  }
+  t = MP_TIMER() -t;
+
+  t /= LOOP;
+
+  if(me==0){
+     printf("Time per gop %lf len=%d doubles\n",t, len);
+     fflush(stdout);
+  }
+}
+
+
 
 void TestGlobals()
 {
@@ -41,7 +86,7 @@ void TestGlobals()
 
     if (me == (nproc-1)) {
       for (i=0; i<len; i++) {
-        ltest[i] = (long)itest[i] = i;
+        ltest[i] = itest[i] = i;
         dtest[i] = (double) itest[i];
       }
     }
@@ -84,11 +129,17 @@ void TestGlobals()
         ARMCI_Error("TestGlobals: global sum failed", (int) i);
     }
 
+
     if (me == 0) {
       printf("global sums OK\n");
       fflush(stdout);
     }
   }
+
+
+  /* now we get timing data */
+  time_gop(dtest,MAXLENG);
+  time_reduce(dtest,MAXLENG);
      
   free((char *) itest);
   free((char *) ltest);
