@@ -50,7 +50,7 @@ endif
 
 
    TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x perform.x testc.x\
-             ga-mpi.x
+             ga-mpi.x 
 
 ifdef USE_SCALAPACK
    TESTS += testspd.x
@@ -64,7 +64,7 @@ export DIAG TARGET VERSION LU_SOLVE GA_TRACE MSG_COMMS
 $(LIBRARY): 
 	(echo TARGET is $(TARGET); cd ./src; $(MAKE) || exit 1;) 
 
-$(TESTS):	$(LIBRARY)
+$(TESTS) %.x:	$(LIBRARY)
 	(cd ./testing; $(MAKE) $@  || exit 1;)
 
 all: $(TESTS)
