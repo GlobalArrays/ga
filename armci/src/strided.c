@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.82 2004-03-29 19:12:08 vinod Exp $ */
+/* $Id: strided.c,v 1.83 2004-03-31 00:33:26 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -543,6 +543,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
          POSTPROCESS_STRIDED(tmp_count);
          return 0;
        }
+#if   defined(VAPI)
        if(stride_levels==1 && count[0]>VAPI_SGPUT_MIN_COLUMN &&
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
            ARMCI_Fence(proc);
@@ -551,8 +552,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
            return 0;  
          
        }
-
-
+#     endif
        
 #    endif
 #if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
@@ -835,20 +835,22 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
-       if(!stride_levels && count[0]>VAPI_SGGET_MIN_COLUMN &&
+       if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
          ARMCI_Fence(proc);
          ARMCI_REM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
          POSTPROCESS_STRIDED(tmp_count);
          return 0;
        }
-       if(stride_levels==1 &&
+#if   defined(VAPI)
+       if(stride_levels==1 && count[0]>VAPI_SGGET_MIN_COLUMN &&
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
           ARMCI_Fence(proc);
           armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
                           dst_stride_arr,count,stride_levels,NULL,NULL,mhloc);  
           return 0;
        }
+#     endif
        
 #     endif
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS))
@@ -1136,6 +1138,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
          POSTPROCESS_STRIDED(tmp_count);
          return 0;
        }
+#if   defined(VAPI)
        if(0&&stride_levels==1 && count[0]>VAPI_SGPUT_MIN_COLUMN &&
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
          ARMCI_Fence(proc);
@@ -1143,6 +1146,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);
          return 0;  
        }
+#     endif
 #     endif
     ORDER(PUT,proc); /* ensure ordering */
 #  if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)
@@ -1233,6 +1237,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
          POSTPROCESS_STRIDED(tmp_count);
          return 0;
        }
+#if   defined(VAPI)
        if(stride_levels==1 && count[0]>VAPI_SGGET_MIN_COLUMN &&
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
          ARMCI_Fence(proc);
@@ -1240,6 +1245,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);  
          return 0;
        }
+#     endif
 #     endif
     ORDER(GET,proc); /* ensure ordering */
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS))

@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.61 2004-03-29 19:12:08 vinod Exp $ */
+/* $Id: request.c,v 1.62 2004-03-31 00:33:26 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -869,7 +869,7 @@ int armci_rem_strided(int op, void* scale, int proc,
 
 
 
-#if defined(ALLOW_PIN)
+#if defined(ALLOW_PIN) && defined(VAPI)
 /*\
  * two phase send
 \*/
