@@ -1,3 +1,6 @@
+#ifndef _INITTERM_H
+#define _INITTERM_H
+
 
 /**
  * Ga Initialize and Terminate calls.
@@ -48,3 +51,5 @@ Initialize(int argc, char *argv[], unsigned long heapSize,
  */
 _GA_STATIC_ void 
 Terminate();
+
+#endif // _INITTERM_H  

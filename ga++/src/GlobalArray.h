@@ -1,3 +1,7 @@
+#ifndef  _GLOBALARRAY_H
+#define  _GLOBALARRAY_H
+
+
 #define DEF_NDIM 2
 #define DEF_DIMS 10
 
@@ -1403,3 +1407,4 @@ class GlobalArray {
   int mHandle;      /* g_a handle */
 };
 
+#endif // _GLOBALARRAY_H 
