@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.19 2004-03-31 02:17:17 manoj Exp $ */
+/* $Id: fence.c,v 1.20 2004-06-11 04:41:42 vinod Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -120,26 +120,31 @@ void ARMCI_Barrier()
     if(armci_nproc==1)return;
 #ifdef GM
     /*first step is to make sure all the sends are complete */
-    armci_client_clear_outstanding_sends();
-
-    /*now do the barrier */
-#  ifdef MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#  else
     {
-       long type=ARMCI_TAG;
-       SYNCH_(&type);
-    }
+      extern int _armci_initialized;
+      if(_armci_initialized)
+      armci_client_clear_outstanding_sends();
+
+      /*now do the barrier */
+#  ifdef MPI
+      MPI_Barrier(MPI_COMM_WORLD);
+#  else
+      {
+         long type=ARMCI_TAG;
+         SYNCH_(&type);
+      }
 #  endif
 
-   /*master sends a message to the server on the same node, waits for response*/
-    if(armci_nclus>1){
-       int buf;
-       if(armci_me==armci_master)
-         armci_rem_ack(armci_clus_me);
+     /*master sends a message to server on the same node, waits for response*/
+      if(_armci_initialized)
+        if(armci_nclus>1){
+          int buf;
+          if(armci_me==armci_master)
+            armci_rem_ack(armci_clus_me);
 
-       /*a local barrier*/
-       armci_msg_gop_scope(SCOPE_NODE,&buf,1,"+",ARMCI_INT);
+          /*a local barrier*/
+          armci_msg_gop_scope(SCOPE_NODE,&buf,1,"+",ARMCI_INT);
+        }
     }
 #else
     ARMCI_AllFence();
