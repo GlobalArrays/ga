@@ -1,5 +1,5 @@
 c
-c     $Id: testf.F,v 1.4 1995-10-17 08:54:09 d3g681 Exp $
+c     $Id: testf.F,v 1.5 1996-09-19 01:12:33 d3g681 Exp $
 c
 
 c
@@ -495,7 +495,7 @@ c     ok
 
 c     ok
       write (*,*) 'start testing MA_print_stats ...'
-      call MA_print_stats
+      call MA_print_stats(.true.)
       write (*,*) 'stop testing MA_print_stats'
       write (*,*) ' '
 

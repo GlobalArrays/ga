@@ -1,5 +1,5 @@
 c
-c     $Id: maf.F,v 1.5 1995-11-03 20:42:59 d3g681 Exp $
+c     $Id: maf.F,v 1.6 1996-09-19 01:12:30 d3g681 Exp $
 c
 
 c
@@ -309,13 +309,19 @@ c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
 
-      subroutine MA_print_stats
+      subroutine MA_print_stats(printroutines)
 
       implicit none
 
 #include "maf2c.h"
 
-      call f2c_print_stats()
+      logical printroutines
+
+      if (printroutines) then
+         call f2c_print_stats(1)
+      else
+         call f2c_print_stats(0)
+      endif
 
       return
       end

@@ -1,5 +1,5 @@
 /*
- * $Id: testc.c,v 1.3 1994-10-07 19:41:34 d3g681 Exp $
+ * $Id: testc.c,v 1.4 1996-09-19 01:12:31 d3g681 Exp $
  */
 
 /*
@@ -284,7 +284,7 @@ main(argc, argv)
                 }
                 break;
             case C_MA_print_stats:
-                MA_print_stats();
+                MA_print_stats(1);
                 break;
             case C_MA_push_get:
                 if (scanf("%d %d %80s", &ii1, &ii2, s) != 3)

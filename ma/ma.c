@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.9 1996-08-23 23:30:22 d3h325 Exp $
+ * $Id: ma.c,v 1.10 1996-09-19 01:12:26 d3g681 Exp $
  */
 
 /*
@@ -2382,7 +2382,8 @@ public Boolean MA_pop_stack(memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public void MA_print_stats()
+public void MA_print_stats(printroutines)
+     Boolean printroutines;
 {
 #ifdef STATS
 
@@ -2413,11 +2414,13 @@ public void MA_print_stats()
     (void)printf("\tmaximum total bytes\t\t%10lu\t%10lu\n",
         ma_stats.hbytes_max,
         ma_stats.sbytes_max);
-    (void)printf("\n\tcalls per routine:\n");
-    for (i = 0; i < NUMROUTINES; i++)
-        (void)printf("\t\t%10lu  %s\n",
-            ma_stats.calls[i],
-            ma_routines[i]);
+    if (printroutines) {
+	(void)printf("\n\tcalls per routine:\n");
+	for (i = 0; i < NUMROUTINES; i++)
+	    (void)printf("\t\t%10lu  %s\n",
+			 ma_stats.calls[i],
+			 ma_routines[i]);
+    }
 
 #else
 

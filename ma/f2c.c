@@ -1,5 +1,5 @@
 /*
- * $Id: f2c.c,v 1.3 1994-10-07 19:41:21 d3g681 Exp $
+ * $Id: f2c.c,v 1.4 1996-09-19 01:12:23 d3g681 Exp $
  */
 
 /*
@@ -323,9 +323,10 @@ public Boolean f2c_pop_stack_(memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public void f2c_print_stats_()
+public void f2c_print_stats_(printroutines)
+     Boolean *printroutines;
 {
-    MA_print_stats();
+    MA_print_stats(*printroutines);
 }
 
 /* ------------------------------------------------------------------------- */
