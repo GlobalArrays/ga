@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.26 1999-11-16 00:48:41 d3g681 Exp $ */
+/* $Id: armci.c,v 1.27 1999-11-24 01:41:08 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -33,6 +33,8 @@
 #include "memlock.h"
 #include "shmem.h"
 #include "signaltrap.h"
+
+#define MEMLOCK_SHMEM_FLAG  
 
 /* global variables */
 int armci_me, armci_nproc;
@@ -190,8 +192,13 @@ int ARMCI_Uses_shm()
 \*/
 void armci_init_memlock()
 {
-    int rc;
-    int bytes = MAX_SLOTS*sizeof(memlock_t) + sizeof(int);
+    int bytes = MAX_SLOTS*sizeof(memlock_t);
+    int rc, msize_per_proc=bytes;
+    
+#ifdef MEMLOCK_SHMEM_FLAG    
+    /* last proc on node allocates memlock flag in shmem */
+    if(armci_clus_last == armci_me) bytes += sizeof(int);
+#endif
 
     memlock_table_array = malloc(armci_nproc*sizeof(void*));
     if(!memlock_table_array) armci_die("malloc failed for ARMCI lock array",0);
@@ -199,18 +206,27 @@ void armci_init_memlock()
     rc = ARMCI_Malloc(memlock_table_array, bytes);
     if(rc) armci_die("failed to allocate ARMCI memlock array",rc);
 
+    armci_msg_barrier();
+
     bzero(memlock_table_array[armci_me],bytes);
 
-    armci_use_memlock_table = (int*) (MAX_SLOTS*sizeof(memlock_t) + 
-                              (char*) memlock_table_array[armci_master]);  
+#ifdef MEMLOCK_SHMEM_FLAG    
+    /* armci_use_memlock_table is a pointer to local memory variable=1
+     * we overwrite the pointer with address of shared memory variable 
+     * armci_use_memlock_table and initialize it >0
+     */
+    armci_use_memlock_table = (int*) (msize_per_proc + 
+                              (char*) memlock_table_array[armci_clus_last]);  
                               
-    if(armci_master == armci_me) *armci_use_memlock_table =1+armci_me;
+    /* printf("%d: last=%d bytes=%d ptr =(%d, %d)\n",
+           armci_me,armci_clus_last,bytes,armci_use_memlock_table,  
+           memlock_table_array[armci_clus_last]); fflush(stdout); */
+
+    if(armci_clus_last == armci_me) *armci_use_memlock_table =1+armci_me;
+
+#endif
 
     armci_msg_barrier();
-    /*
-    printf("%d: use table val = %d\n",armci_me, *armci_use_memlock_table);
-    fflush(stdout);
-    */
 }
 
 
