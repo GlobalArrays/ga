@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.20 2002-01-08 22:58:05 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.21 2002-01-10 19:09:13 vinod Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -63,7 +63,7 @@ typedef int soclen_t;
 extern int armci_me, armci_nproc,armci_nclus;
 extern void armci_die(char* str,int);
 extern void armci_die2(char* str,int,int); 
-int tcp_sendrcv_bufsize=1048576;
+int tcp_sendrcv_bufsize=131072;
 #define DEBUG_ 0
 #define DEBUG1 0
 #define CONNECT_TRIALS 4 
@@ -196,7 +196,7 @@ void armci_ShutdownAll(int socklist[], int num)
 }
 
 
-#if defined(USE_SOCKET_VECTOR_API)
+#if defined(USE_SOCKET_VECTOR_API) 
 
 int _armci_tcp_writev(int sock, struct iovec *iovptr,int writeiovlength,int currentwritesize,struct iovec *iov){
     int n=0;
@@ -204,7 +204,7 @@ int _armci_tcp_writev(int sock, struct iovec *iovptr,int writeiovlength,int curr
         int rc;
         rc=writev(sock,iovptr,writeiovlength);
         if(rc<0)perror("writev failed");
-        if(DEBUG1)if(rc<currentwritesize){printf("\nelse write %d bytes of %d bytes writeiovlen=%d",rc,currentwritesize,writeiovlength);fflush(stdout);} 
+        if(DEBUG1&&0)if(rc<currentwritesize){printf("\n%d:_armci_tcp_writev write %d bytes of %d bytes writeiovlen=%d",armci_me,rc,currentwritesize,writeiovlength);fflush(stdout);} 
         n+=rc;
         if(n<currentwritesize){
             int completediovs=0;
@@ -234,7 +234,7 @@ int _armci_tcp_readv(int sock, struct iovec *iovptr,int readiovlength,int curren
         int rc;
         rc=readv(sock,iovptr,readiovlength);
         if(rc<0)perror("readv failed");
-        if(DEBUG1)if(rc<currentreadsize){printf("\nelse Read %d bytes of %d bytes readiovlen=%d",rc,currentreadsize,readiovlength);fflush(stdout);}
+        if(DEBUG1&&0)if(rc<currentreadsize){printf("\n%d:_armci_tcp_readv Read %d bytes of %d bytes readiovlen=%d",armci_me,rc,currentreadsize,readiovlength);fflush(stdout);}
         n+=rc;
         if(n<currentreadsize){
             int completediovs=0;
@@ -261,34 +261,39 @@ int _armci_tcp_readv(int sock, struct iovec *iovptr,int readiovlength,int curren
 int armci_ReadVFromSocket(int sock,struct iovec *iov, int iovlength, int totalsize)
 {
     struct iovec *iovptr;
-    int i=-1,num_xmit=1,lastiovoriglen=0,lastiovindex=-1,n=0;
-    int readiovlength,currentreadsize=totalsize,totalreadsofar=0;
+    int i=0,num_xmit=1,lastiovoriglen=0,lastiovnewlen=0,lastiovindex=-1,n=0;
+    int readiovlength,currentreadsize=totalsize,totalreadsofar=0,byteslefttoread=0;
+    char *lastiovorigbase=NULL;
     iovptr=iov; 
     if(totalsize>PACKET_SIZE){
         while(totalreadsofar!=totalsize){
             currentreadsize=0;
-            iovptr=iov+lastiovindex;
+            if(lastiovindex>=0)
+                iovptr=iov+lastiovindex;
             if(lastiovoriglen!=0){
-	        iov[lastiovindex].iov_base = (char *)(iov[lastiovindex].iov_base)+iov[lastiovindex].iov_len;
-	        iov[lastiovindex].iov_len=lastiovoriglen-iov[lastiovindex].iov_len;
-                lastiovoriglen=0;lastiovindex=0;   
+	        iov[lastiovindex].iov_base = (lastiovorigbase+lastiovnewlen); 
+	        iov[lastiovindex].iov_len=lastiovoriglen-lastiovnewlen;
+                lastiovoriglen=0;   
             } 
-            else
-	       iovptr+=1;
-            iovlength=1;  
-	    while(currentreadsize<PACKET_SIZE){
-                if(iov[i].iov_len+currentreadsize>PACKET_SIZE){
-                    lastiovoriglen=iov[i].iov_len;
+            iovlength=0;  
+            
+            if(totalsize-totalreadsofar<PACKET_SIZE)byteslefttoread=totalsize-totalreadsofar;
+            else byteslefttoread=PACKET_SIZE;
+	    while(currentreadsize<byteslefttoread){
+                if(iov[i].iov_len+currentreadsize>byteslefttoread){
+                    lastiovoriglen=iov[i].iov_len;lastiovorigbase=(char *)iov[i].iov_base;
                     lastiovindex=i; 
-		    iov[i].iov_len=PACKET_SIZE-currentreadsize;
-		    currentreadsize+=iov[i].iov_len; 
+		    iov[i].iov_len=byteslefttoread-currentreadsize;
+		    currentreadsize+=iov[i].iov_len; lastiovnewlen=iov[i].iov_len;
                 }
                 else {  
 		    currentreadsize+=iov[i].iov_len;
+                    i++;
                     lastiovindex=i;
-                    i++;iovlength++;
+                    iovlength++;
                 }
             }
+            if(lastiovoriglen>0)iovlength+=1;
             totalreadsofar+=currentreadsize;
             num_xmit++;
             readiovlength=iovlength;
@@ -301,7 +306,7 @@ int armci_ReadVFromSocket(int sock,struct iovec *iov, int iovlength, int totalsi
         readiovlength=iovlength;
         n=0;
         n+=_armci_tcp_readv(sock,iovptr,readiovlength,currentreadsize,iov); 
-        if(DEBUG1){printf("\nFinished reading n=%d bytes iov of length %d \n",n,iovlength);fflush(stdout);}
+        if(DEBUG1){printf("\nFits in one packet Finished reading n=%d bytes iov of length %d \n",n,iovlength);fflush(stdout);}
      }  
     return(n);
 }
@@ -309,38 +314,43 @@ int armci_ReadVFromSocket(int sock,struct iovec *iov, int iovlength, int totalsi
 
 int armci_WriteVToSocket(int sock,struct iovec *iov, int iovlength, int totalsize){     
 
-    int lastiovoriglen=0,lastiovindex=-1,totalwritesofar=0;
+    int lastiovoriglen=0,lastiovnewlen=0,lastiovindex=-1,totalwritesofar=0,byteslefttowrite=0;
     struct iovec *iovptr; 
     int i=0,num_xmit=0,n=0;
     int currentwritesize=totalsize,writeiovlength;
+     char *lastiovorigbase=NULL;
+    iovptr=iov; 
     if(totalsize>PACKET_SIZE){
  	while(totalwritesofar!=totalsize){      
-            currentwritesize=0;
-	    iovptr=iov+lastiovindex;
+            currentwritesize=0; 
+            if(lastiovindex>=0)
+	        iovptr=iov+lastiovindex;
             if(lastiovoriglen!=0){
-                iov[lastiovindex].iov_base = (char *)(iov[lastiovindex].iov_base)+iov[lastiovindex].iov_len;
-                iov[lastiovindex].iov_len=lastiovoriglen-iov[lastiovindex].iov_len;
-                lastiovoriglen=0;lastiovindex=0;
+                iov[lastiovindex].iov_base = (lastiovorigbase+lastiovnewlen); 
+                iov[lastiovindex].iov_len= lastiovoriglen-lastiovnewlen;
+                lastiovoriglen=0;
             }
-            else
-               iovptr+=1;
-            iovlength=1;
-            while(currentwritesize<PACKET_SIZE){
-		if(iov[i].iov_len+currentwritesize>PACKET_SIZE){
-                    lastiovoriglen=iov[i].iov_len;
+            iovlength=0;
+          
+            if(totalsize-totalwritesofar<PACKET_SIZE)byteslefttowrite=totalsize-totalwritesofar;
+            else byteslefttowrite=PACKET_SIZE;
+            while(currentwritesize<byteslefttowrite){
+		if(iov[i].iov_len+currentwritesize>byteslefttowrite){
+                    lastiovoriglen=iov[i].iov_len;lastiovorigbase=(char *)iov[i].iov_base;
                     lastiovindex=i;
-                    iov[i].iov_len=PACKET_SIZE-currentwritesize;
-		    currentwritesize+=iov[i].iov_len;
+                    iov[i].iov_len=byteslefttowrite-currentwritesize;
+		    currentwritesize+=iov[i].iov_len;lastiovnewlen=iov[i].iov_len;
                 }
                 else {
                     currentwritesize+=iov[i].iov_len;
+                    i++;
                     lastiovindex=i;
-                    i++;iovlength++;
+                    iovlength++;
                 }
             }
             totalwritesofar+=currentwritesize;
             num_xmit++;
-            iovptr=iov;
+            if(lastiovoriglen>0)iovlength+=1;
             writeiovlength=iovlength;     
 	    n=_armci_tcp_writev(sock,iovptr,writeiovlength,currentwritesize,iov); 
             if(DEBUG1){printf("\nFinished writing n=%d iov of length %d \n",n,iovlength);fflush(stdout);}
@@ -354,13 +364,13 @@ int armci_WriteVToSocket(int sock,struct iovec *iov, int iovlength, int totalsiz
         n=0;
         n= _armci_tcp_writev(sock,iovptr,writeiovlength,currentwritesize,iov); 
         if(n<0)perror("write failed");
-        if(DEBUG1){printf("\nElse Finished writing n=%d iov of length %d \n",n,iovlength);fflush(stdout);}
+        if(DEBUG1){printf("\nFits in one packet Finished writing n=%d iov of length %d \n",n,iovlength);fflush(stdout);}
         if(n!=currentwritesize)armci_die2("\n problems with writing using writev\n",n,currentwritesize);
     } 
     return(n);
 }
 
-#endif /*for use_socket_vec_api*/
+#endif /*for use_socket_vec_api*/  
 
 int armci_ReadFromSocket(int sock, void* buffer, int lenbuf)
 /*

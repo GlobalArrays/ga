@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.24 2002-01-09 20:12:54 vinod Exp $ */
+/* $Id: dataserv.c,v 1.25 2002-01-10 19:09:13 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "copy.h"
@@ -71,9 +71,9 @@ int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,struct iovec 
            iov[j].iov_len = darr[dim1].bytes;totalsize+=iov[j].iov_len;
            dim2--;
        }
-              if(DEBUG1){printf("\n%d:armci_SendVectorToSocket sending iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
+       if(DEBUG1){printf("\n%d:armci_SendVectorToSocket sending iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
        n+=armci_WriteVToSocket(sock,iov,j,totalsize);
-              if(DEBUG1){printf("\n%d:armci_SendVectorToSocket done se iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
+       if(DEBUG1){printf("\n%d:armci_SendVectorToSocket done se iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);fflush(stdout);}
        totalsize = 0;
     }
     return(n);
@@ -401,7 +401,7 @@ int stride_levels, *stride_arr,*count,stat;
     ptr = *(void**)dscr;           dscr += sizeof(void*);
     stride_levels = *(int*)dscr;   dscr += sizeof(int);
     stride_arr = (int*)dscr;       dscr += stride_levels*sizeof(int);
-    count = (int*)dscr;            dscr += sizeof(int*); 
+    count = (int*)dscr;            dscr += (stride_levels+1)*sizeof(int); 
     armci_RecvStridedFromSocket( CLN_sock[p],ptr,stride_arr,count,stride_levels,(struct iovec *)dscr);
   /*  armci_RecvStridedFromSocket( CLN_sock[p],ptr,stride_arr,count,stride_levels,(struct iovec *)((char*)(msginfo+1)+msginfo->dscrlen) );*/
 }
