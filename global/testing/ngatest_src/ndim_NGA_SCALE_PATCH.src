@@ -62,7 +62,8 @@ c
       do loop=1, 10
          call random_range(lop,hip,lo,hi,ndim)
          if(me.eq.0)
-     $        print *, loop,': scale [',(lo(i),':',hi(i), i=1,ndim),']'
+     $        call print_range(loop,lo,hi,ndim)
+c$$$     $        print *, loop,': scale [',(lo(i),':',hi(i), i=1,ndim),']'
 c        the random number to scale
          val = m4_rand(1)
 c

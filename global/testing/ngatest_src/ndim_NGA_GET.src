@@ -57,7 +57,7 @@ c
       do loop = 1, MAXLOOP 
          call random_range(lop,hip,lo,hi,ndim)
          if(me.eq.0 .and. Mod(loop,10).eq.0)then
-            call prnt_rng(loop,lo,hi,ndim)
+            call print_range(loop,lo,hi,ndim)
          endif
 c
          call nga_get(g_a,lo,hi,

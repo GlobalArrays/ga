@@ -98,8 +98,9 @@ c---
             bhi(i) = ahi(i) + 1
          enddo
          if(me.eq.0)then
-            print *, loop,': copy [',(alo(i),':',ahi(i), i=1,ndim),']', 
-     $           '-->', '[',(blo(i),':',bhi(i), i=1,ndim),']'
+            call copy_range(loop,alo,ahi,ndim,blo,bhi,ndim)
+c$$$            print *, loop,': copy [',(alo(i),':',ahi(i), i=1,ndim),']', 
+c$$$     $           '-->', '[',(blo(i),':',bhi(i), i=1,ndim),']'
          endif
 c     
 c        keep a copy of the origian array
@@ -129,8 +130,9 @@ c---
             bhi(i) = ahi(ndim-i+1) + 1
          enddo
          if(me.eq.0)then
-            print *, loop,': copy [',(alo(i),':',ahi(i), i=1,ndim),']', 
-     $           '-->', '[',(blo(i),':',bhi(i), i=1,ndim),']'
+            call copy_range(loop,alo,ahi,ndim,blo,bhi,ndim)
+c$$$            print *, loop,': copy [',(alo(i),':',ahi(i), i=1,ndim),']', 
+c$$$     $           '-->', '[',(blo(i),':',bhi(i), i=1,ndim),']'
          endif
 c     
          call nga_copy_patch('n', g_a, alo, ahi, g_b, blo, bhi)
@@ -159,8 +161,9 @@ c
             bhi(i) = ahi(ndim-i+1) + 1
          enddo
          if(me.eq.0)then
-            print *, loop,': copy [',(alo(i),':',ahi(i), i=1,ndim),']', 
-     $           '-->', '[',(blo(i),':',bhi(i), i=1,ndim),']'
+            call copy_range(loop,alo,ahi,ndim,blo,bhi,ndim)
+c$$$            print *, loop,': copy [',(alo(i),':',ahi(i), i=1,ndim),']', 
+c$$$     $           '-->', '[',(blo(i),':',bhi(i), i=1,ndim),']'
          endif
 c     
          call nga_copy_patch('t', g_a, alo, ahi, g_b, blo, bhi)
@@ -234,8 +237,9 @@ c
          dhi(1) = ahi(ndim)
 c     
          if(me.eq.0) then
-            print *, loop,': copy [',(alo(i),':',ahi(i),i=1,ndim),
-     $           ']','-->','[',(dlo(i),':',dhi(i), i=1,dndim),']'
+            call copy_range(loop,alo,ahi,ndim,dlo,dhi,dndim)
+c$$$            print *, loop,': copy [',(alo(i),':',ahi(i),i=1,ndim),
+c$$$     $           ']','-->','[',(dlo(i),':',dhi(i), i=1,dndim),']'
          endif
 c     
          call nga_copy_patch('n', g_a, alo, ahi, g_b, dlo, dhi)

@@ -11,13 +11,15 @@ c
       parameter (ndim = m4_ndim)
       m4_data_type a(substr(m4_array, 1, eval(m4_ndim*2-1)))
       m4_data_type b(substr(m4_array, 1, eval(m4_ndim*2-1)))
+      m4_data_type c(substr(m4_array, 1, eval(m4_ndim*2-1)))
       integer lo(ndim),hi(ndim),dims(ndim),ld(ndim)
       integer g_a
+      integer lop(ndim),hip(ndim)
       integer chunk(ndim)
       integer i, total, loop
       double precision drand
       m4_data_type val, alpha
-      integer nproc, me
+      integer nproc, me, proc
       logical status
 c     
       nproc = ga_nnodes()
@@ -47,13 +49,16 @@ c
       val = m4_rand(me*2+1)
       call ga_fill(g_a,val)
       call ga_sync()
-      call my_space(me,nproc,ndim,total,dims,lo,hi)
+      proc =  nproc-1 -me       ! access other process memory 
+      call nga_distribution(g_a,proc,lop,hip)
+c      
       call m4_util_init_array(m4_test_type)(b,total)
 c
       do loop = 1, MAXLOOP 
+         call random_range(lop,hip,lo,hi,ndim)
          if(Mod(loop,10).eq.0)then
             if(Mod((loop/10),ndim).eq.me) then
-               call prnt_rng(loop,lo,hi,ndim)
+               call print_range(loop,lo,hi,ndim)
             endif
          endif
          call ga_sync()
@@ -61,8 +66,10 @@ c        keep a copy of the original patch
          call nga_get(g_a,lo,hi,
      $        a(substr(m4_lo_all, 1, eval(m4_ndim*6-1))),ld)
 c        generate the alpha
-         alpha = m4_rand(1)
+         alpha = val
 c
+         call ga_sync()
+c        keep a copy of the original patch
          call nga_acc(g_a,lo,hi,
      $        b(substr(m4_lo_all, 1, eval(m4_ndim*6-1))),ld,alpha)
 c     
@@ -75,10 +82,10 @@ c        scale the local copy of array
 c
 c        get the patch from the global array
          call nga_get(g_a,lo,hi,
-     $        b(substr(m4_lo_all, 1, eval(m4_ndim*6-1))),ld)
+     $        c(substr(m4_lo_all, 1, eval(m4_ndim*6-1))),ld)
 c
          call m4_util_compare_patches(m4_test_type)(1d-2,total,
-     $        a,lo,hi,ndim,dims,b,lo,hi,ndim,dims)
+     $        a,lo,hi,ndim,dims,c,lo,hi,ndim,dims)
       enddo
 c
       call ga_sync()

@@ -56,7 +56,7 @@ c
          do loop = 1, MAXLOOP 
             call random_range(lo,hi,lop,hip,ndim)
             if(me.eq.0 .and. Mod(loop,10).eq.0)then
-               call prnt_rng(loop,lop,hip,ndim)
+               call print_range(loop,lop,hip,ndim)
             endif
             call nga_put(g_a,lop,hip,
      $           a(substr(m4_lop_all, 1, eval(m4_ndim*7-1))),ld)

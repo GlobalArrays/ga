@@ -117,8 +117,9 @@ c---
             chi(i) = ahi(i) + 2
          enddo
          if(me.eq.0)then
-            print *, loop,': [',(alo(i),':',ahi(i), i=1,ndim),']', 
-     $           '+', '[',(blo(i),':',bhi(i), i=1,ndim),']'
+            call add_range(loop,alo,ahi,ndim,blo,bhi,ndim)
+c$$$            print *, loop,': [',(alo(i),':',ahi(i), i=1,ndim),']', 
+c$$$     $           '+', '[',(blo(i),':',bhi(i), i=1,ndim),']'
          endif
 c
          alpha = m4_rand(1)
@@ -199,8 +200,9 @@ c
          dhi(1) = ahi(ndim)
 c     
          if(me.eq.0) then
-            print *, loop,': [',(alo(i),':',ahi(i), i=1,ndim),']', 
-     $           '+', '[',(dlo(i),':',dhi(i), i=1,dndim),']'
+            call add_range(loop,alo,ahi,ndim,dlo,dhi,dndim)
+c$$$            print *, loop,': [',(alo(i),':',ahi(i), i=1,ndim),']', 
+c$$$     $           '+', '[',(dlo(i),':',dhi(i), i=1,dndim),']'
          endif
 c     
          alpha = m4_rand(1)

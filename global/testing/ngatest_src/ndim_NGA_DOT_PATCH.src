@@ -106,8 +106,9 @@ c---
             bhi(i) = ahi(i) + 1
          enddo
          if(me.eq.0)then
-            print *, loop,'dot: [',(alo(i),':',ahi(i), i=1,ndim),']', 
-     $           ',', '[',(blo(i),':',bhi(i), i=1,ndim),']'
+            call dot_range(loop,alo,ahi,ndim,blo,bhi,ndim)
+c$$$            print *, loop,'dot: [',(alo(i),':',ahi(i), i=1,ndim),']', 
+c$$$     $           ',', '[',(blo(i),':',bhi(i), i=1,ndim),']'
          endif
 c
          alpha=m4_nga_dot_patch(m4_dot)(g_a,'n',alo,ahi,g_b,'n',blo,bhi)
@@ -140,8 +141,9 @@ c
             bhi(i) = ahi(i) + 1
          enddo
          if(me.eq.0)then
-            print *, loop,'dot: [',(alo(i),':',ahi(i), i=1,ndim),']', 
-     $           ',', '[',(blo(i),':',bhi(i), i=1,ndim),']'
+            call dot_range(loop,alo,ahi,ndim,blo,bhi,ndim)
+c$$$            print *, loop,'dot: [',(alo(i),':',ahi(i), i=1,ndim),']', 
+c$$$     $           ',', '[',(blo(i),':',bhi(i), i=1,ndim),']'
          endif
 c
          alpha=m4_nga_dot_patch(m4_dot)(g_a,'n',alo,ahi,g_b,'t',blo,bhi)
@@ -222,8 +224,9 @@ c
          dhi(1) = ahi(ndim)
 c     
          if(me.eq.0) then
-            print *,loop,'dot: [',(alo(i),':',ahi(i), i=1,ndim),']', 
-     $           ',', '[',(dlo(i),':',dhi(i), i=1,dndim),']'
+            call dot_range(loop,alo,ahi,ndim,dlo,dhi,dndim)
+c$$$            print *,loop,'dot: [',(alo(i),':',ahi(i), i=1,ndim),']', 
+c$$$     $           ',', '[',(dlo(i),':',dhi(i), i=1,dndim),']'
          endif
 c     
          alpha=m4_nga_dot_patch(m4_dot)(g_a,'n',alo,ahi,
