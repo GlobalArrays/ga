@@ -90,8 +90,14 @@ GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #
 #                 Utility Routines
 #
-GA_UTIL = ffflush.o fill.o ga_summarize.o hsort.scat.o\
-          DP.o fort.o fops.2d.o
+# GA_UTIL = ffflush.o fill.o ga_summarize.o hsort.scat.o\
+#           DP.o fort.o fops.2d.o
+ifdef USE_ARMCI
+   GA_UTIL = ffflush.o fill.o hsort.scat.o DP.o fort.o fops.2d.o
+else
+   GA_UTIL = ffflush.o fill.o ga_summarize.o hsort.scat.o\
+             DP.o fort.o fops.2d.o
+endif
 
 ifndef USE_ARMCI
   OBJ_FRAGILE = $(GA_SYNC) $(GA_HANDLER) $(IPC)
