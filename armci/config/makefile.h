@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.100 2004-03-31 23:46:06 d3h325 Exp $
+#$Id: makefile.h,v 1.101 2004-04-09 21:37:11 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -435,9 +435,13 @@ endif
 
 #----------------------------- DEC/Compaq ---------------------------------
 ifeq ($(TARGET),DECOSF)
+USE_REGION = $(shell /sbin/sysconfig -s | awk ' /shmem/  { print "yes" } ' )
           CLD = cc
      FOPT_REN = -fpe2 -check nounderflow -check nopower -check nooverflow
      COPT_REN += -D_POSIX_PII_SOCKET
+ifeq ($(USE_REGION),yes)
+     COPT_REN += -DREGION_ALLOC
+endif
 endif
 #------------------------------- Crays ------------------------------------
 
