@@ -8,7 +8,7 @@
 #   define EXTERN extern
 #endif
 
-#ifndef CYGNUS
+#if !defined(CYGNUS) && !defined(QUADRICS)
 #include "spinlock.h"
 #endif
 
@@ -44,7 +44,7 @@
 #endif
 
 
-#if defined(SPINLOCK)
+#if defined(SPINLOCK) 
 
 #  define NAT_LOCK(x) armci_acquire_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
 #  define NAT_UNLOCK(x) armci_release_spinlock((LOCK_T*)(_armci_int_mutexes+(x)))
