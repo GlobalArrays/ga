@@ -1,15 +1,13 @@
-/*$Id: base.h,v 1.2 2001-10-25 21:06:39 d3g293 Exp $ */
+/*$Id: base.h,v 1.3 2001-10-29 19:55:13 d3h325 Exp $ */
 extern int _max_global_array;
-extern int gai_getval(int *ptr);
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
 extern Integer *GA_proclist;
 extern int* GA_Proc_list;
 extern int* GA_inv_Proc_list;
 extern global_array_t GA[MAX_ARRAYS]; 
-extern int** GA_Update_Flags;
-#define ERR_STR_LEN 256             /* length of string for error reporting */
-char err_string[ ERR_STR_LEN];        /* string for extended error reporting */
+#define ERR_STR_LEN 256               /* length of string for error reporting */
+static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 
 /**************************** MACROS ************************************/
 
@@ -52,3 +50,4 @@ char err_string[ ERR_STR_LEN];        /* string for extended error reporting */
 /* this macro finds cordinates of the chunk of array owned by processor proc */
 #define ga_ownsM(ga_handle, proc, lo, hi)				\
   ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims, GA[ga_handle].nblock, GA[ga_handle].mapc, proc, lo, hi )
+

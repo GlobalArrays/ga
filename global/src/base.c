@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.8 2001-10-25 21:06:39 d3g293 Exp $ */
+/* $Id: base.c,v 1.9 2001-10-29 19:55:12 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -75,7 +75,6 @@ int **GA_Update_Flags;
 /*uncomment line below to initialize arrays in ga_create/duplicate */
 /*#define GA_CREATE_INDEF yes */
 
-static int GA_fence_set=0;
 typedef struct {
 long id;
 long type;
@@ -91,7 +90,7 @@ struct ga_bytes_t GAbytes ={0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
 long   *GAstat_arr;
 static Integer GA_memory_limit=0;
 Integer GAme, GAnproc;
-static Integer MPnproc, MPme;
+static Integer MPme;
 Integer mapALL[MAX_NPROC+1];
 
 char *GA_name_stack[NAME_STACK_LEN];  /* stack for storing names of GA ops */
@@ -326,7 +325,6 @@ int bytes;
        ga_error("ga_init:message-passing initialization problem: my ID=",GAme);
 
     MPme= (Integer)armci_msg_me();
-    MPnproc = (Integer)armci_msg_nproc();
 
     if(GA_Proc_list)
       fprintf(stderr,"permutation applied %d now becomes %d\n",(int)MPme,(int)GAme);
@@ -517,7 +515,7 @@ logical nga_create_ghosts_irreg(
 {
 
 Integer  hi[MAXDIM];
-Integer  mem_size, nelem, mem_size_proc;
+Integer  mem_size, nelem;
 Integer  i, ga_handle, status, maplen=0;
 
       ga_sync_();
@@ -1158,7 +1156,7 @@ int  rc,i;
 long id;
 int bytes = nelem *  GAsizeofM(type);
 int extra=sizeof(getmem_t)+GAnproc*sizeof(char*);
-char *end,*myptr;
+char *myptr;
 Integer status;
 
      if(GA_memory_limited){
@@ -1357,7 +1355,7 @@ int      *save_mapc;
 int GA_Assemble_duplicate(int g_a, char* array_name, void* ptr)
 {
 char     **save_ptr;
-int   i, ga_handle, status;
+int      i, ga_handle;
 int      *save_mapc;
 int extra = sizeof(getmem_t)+GAnproc*sizeof(char*);
 getmem_t *info = (getmem_t *)((char*)ptr - extra);
