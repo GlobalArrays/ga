@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.10 2003-10-22 22:12:22 d3h325 Exp $************************************************ 
+/* $Id: vapi.c,v 1.11 2004-01-20 04:18:58 vinod Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.
@@ -575,7 +575,7 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state = VAPI_RTR;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
-    qp_attr.qp_ous_rd_atom = 2;
+    qp_attr.qp_ous_rd_atom = 4;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_OUS_RD_ATOM);
     qp_attr.av.sl            = 0;
     qp_attr.av.grh_flag      = FALSE;
@@ -615,13 +615,13 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
     qp_attr.sq_psn   = 0;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_SQ_PSN);
-    qp_attr.timeout   = 0x20;
+    qp_attr.timeout   = 18;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_TIMEOUT);
     qp_attr.retry_count   = 1;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RETRY_COUNT);
     qp_attr.rnr_retry     = 3;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RNR_RETRY);
-    qp_attr.ous_dst_rd_atom  = 1;
+    qp_attr.ous_dst_rd_atom  = 4;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_OUS_DST_RD_ATOM);
 
     start = (armci_clus_me==0)? armci_nclus-1 : armci_clus_me-1;
@@ -786,7 +786,7 @@ char *enval;
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state = VAPI_RTR;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
-    qp_attr.qp_ous_rd_atom = 2;
+    qp_attr.qp_ous_rd_atom = 4;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_OUS_RD_ATOM);
     qp_attr.av.sl            = 0;
     qp_attr.av.grh_flag      = FALSE;
@@ -824,13 +824,13 @@ char *enval;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
     qp_attr.sq_psn   = 0;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_SQ_PSN);
-    qp_attr.timeout   = 0x20;
+    qp_attr.timeout   = 18;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_TIMEOUT);
     qp_attr.retry_count   = 1;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RETRY_COUNT);
     qp_attr.rnr_retry     = 3;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RNR_RETRY);
-    qp_attr.ous_dst_rd_atom  = 1;
+    qp_attr.ous_dst_rd_atom  = 4;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_OUS_DST_RD_ATOM);
     for(c=0; c< armci_nproc; c++){
        armci_connect_t *con = CLN_con + c;
