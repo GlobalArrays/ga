@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.14 2003-07-10 15:12:01 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.15 2003-09-06 01:29:19 edo Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -7,7 +7,7 @@
 
 extern void PBEGIN_();
 
-#if defined(HPUX) || defined(SUN) || defined(SOLARIS) ||defined(PARAGON) ||defined(FUJITSU) || defined(WIN32) ||defined(LINUX64) || defined(NEC)||defined(LINUX) || defined(HITACHI) || defined(__crayx1)
+#if defined(HPUX) || defined(SUN) || defined(SOLARIS) ||defined(PARAGON) ||defined(FUJITSU) || defined(WIN32) ||defined(LINUX64) || defined(NEC)||(defined(LINUX) & !defined(IFCV8)) || defined(HITACHI) || defined(__crayx1)
 #define HAS_GETARG 1
 #endif
 
@@ -22,7 +22,7 @@ extern void FATR getarg_( NTYPE *, char*, int, NTYPE*);
 #define FATR 
 #endif
 
-#ifdef __crayx1
+#if defined(__crayx1) || defined(IFCV8)
 #define getarg_  pxfgetarg_
 #define IARGC  ipxfargc_
 #define NTYPE  int 
