@@ -77,7 +77,7 @@ ifeq ($(MACHINE),FUJITSU-VPP)
    NXTVAL_OBJ = nxtval.fujitsu.o
  NXTVAL_AVAIL = yes
 #   EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
-   EXTRA_LIBS =  -lgen  -lpx -lelf -Wl,-J,-P
+   EXTRA_LIBS =  -lmp -lgen  -lpx -lelf -Wl,-J,-P
 endif
 
 ifeq ($(MACHINE),FUJITSU-VPP64)
@@ -87,7 +87,7 @@ ifeq ($(MACHINE),FUJITSU-VPP64)
         CDEFS = -DEXT_INT
    NXTVAL_OBJ = nxtval.fujitsu.o
  NXTVAL_AVAIL = yes
-   EXTRA_LIBS = -lgen -lpx -lelf -Wl,-J,-P
+   EXTRA_LIBS = -lmp -lgen -lpx -lelf -Wl,-J,-P
 endif
 
 
