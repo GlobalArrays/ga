@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.31 1996-09-18 16:46:17 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.32 1996-09-29 02:04:50 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -494,7 +494,7 @@ long *msg_buf;
        ga_init_handler(MessageRcv, TOT_MSG_SIZE );
        ga_mask(0L, &oldmask);
     }
-#      ifdef SP
+#      if (defined(SP) || defined(SP1)) && !defined(AIX3)
           mpc_setintrdelay(1);
 #      endif
 #   endif
@@ -1609,7 +1609,7 @@ Integer ilop, ihip, jlop, jhip, offset;
             Integer TmpSize;
             Integer ilimit;
             Integer jlimit;
-#           ifdef SP
+#           if (defined(SP) || defined(SP1)) && !defined(AIX3)
                int i_on;
 #           endif
 #           if defined(IWAY) && defined(SP1)
@@ -1626,7 +1626,7 @@ Integer ilop, ihip, jlop, jhip, offset;
               if(ilimit > 2048) jlimit  = 1;
 #           endif
 
-#           ifdef SP
+#           if (defined(SP) || defined(SP1)) && !defined(AIX3)
               i_on = mpc_queryintr();
               mpc_disableintr();
 #           endif
@@ -1641,7 +1641,7 @@ Integer ilop, ihip, jlop, jhip, offset;
 
                }
             }
-#           ifdef SP
+#           if (defined(SP) || defined(SP1)) && !defined(AIX3)
               if(i_on) mpc_enableintr();
 #           endif
 
@@ -2498,7 +2498,7 @@ Integer first, BufLimit, proc;
 
         Integer last = first + nelem -1;
         Integer range, chunk;
-#       ifdef SP
+#       if (defined(SP) || defined(SP1)) && !defined(AIX3)
               int i_on = mpc_queryintr();
               mpc_disableintr();
 #       endif
@@ -2507,7 +2507,7 @@ Integer first, BufLimit, proc;
             ga_gather_remote(*g_a, ((char*)v)+item_size*range, i+range, j+range,
                               chunk, proc);
         }
-#       ifdef SP
+#       if (defined(SP) || defined(SP1)) && !defined(AIX3)
               if(i_on) mpc_enableintr();
 #       endif
       }
@@ -2602,12 +2602,12 @@ Integer  value, proc;
     if(gaDirectAccess(proc)){
         value = ga_read_inc_local(*g_a, *i, *j, *inc, proc);
     }else{
-#       ifdef SP
+#       if (defined(SP) || defined(SP1)) && !defined(AIX3)
               int i_on = mpc_queryintr();
               mpc_disableintr();
 #       endif
         value = ga_read_inc_remote(*g_a, *i, *j, *inc, proc);
-#       ifdef SP
+#       if (defined(SP) || defined(SP1)) && !defined(AIX3)
               if(i_on) mpc_enableintr();
 #       endif
     }

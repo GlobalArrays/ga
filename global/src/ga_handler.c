@@ -64,14 +64,14 @@ static void ga_handler(int *pid)
 {
 size_t msglen;
 
-# ifdef SP1
+# ifdef AIX3
     mpc_wait(pid, &msglen);
 # endif
 
   /* fprintf(stderr,"in handler: msg from %d\n",requesting_node); */
   ga_SERVER(requesting_node);
 
-# ifdef SP
+# ifndef AIX3
     mpc_wait(pid, &msglen); /*under AIX4 version of MPL can wait after handler*/ 
 # endif
 

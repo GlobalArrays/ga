@@ -586,14 +586,14 @@ void ga_msg_sync_()
         first_time =0;
       }
 
-#     ifdef SP
+#     if (defined(SP) || defined(SP1)) && !defined(AIX3)
               i_on = mpc_queryintr();
               mpc_disableintr();
 #     endif
       /* one sync should be enough but it is not -- this code needs more work!*/
       sp_sync();
       sp_sync();
-#     ifdef SP
+#     if (defined(SP) || defined(SP1)) && !defined(AIX3)
               if(i_on) mpc_enableintr();
 #     endif
    }
