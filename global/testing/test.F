@@ -1282,7 +1282,7 @@ c
 c
       if (me.eq.0) then
          write(6,*)
-         write(6,*) '> checking ga_fence'
+         write(6,*) '> checking ga_fence and ga_lock'
          write(6,*)
          call ffflush(6)
       endif
@@ -1292,8 +1292,16 @@ c
 c***  use ga_read_inc and elements g_a(1:2,1) to implement a lock
 c***  compute g_a(:,n) = sum (1(:)) for P processors
 c     
+      status = ga_create_mutexes(1)
+      if (.not. status) then
+         call ga_error('ga_create_mutexes failed ',0)
+      endif
+
       if(n.lt.2)call ga_error('insufficient n to test ga_fence',n)
-      call my_lock(g_a)
+
+      call ga_lock(0)
+c     call my_lock(g_a)
+
 c          get original values  g_a(:,n)
            call ga_get(g_a, 1,n, n,n, b,n)
 c          add my contribution
@@ -1307,8 +1315,12 @@ c
            call ga_init_fence()
                 call ga_put(g_a, 1,n, n,n, b,n)
            call ga_fence()
-      call my_unlock(g_a)
+      call ga_unlock(0)
+c     call my_unlock(g_a)
 c
+333   if(.not.ga_destroy_mutexes())
+     $   call ga_error('mutex not destroyed',0)
+
       call ga_sync()
       if (me.eq.0) then
          call ga_get(g_a, 1,n, n,n, b,n)
@@ -1319,7 +1331,7 @@ c
               endif
          enddo
          write(6,*)
-         write(6,*) ' ga_fence is OK'
+         write(6,*) ' ga_fence and ga_lock are OK'
          write(6,*)
       endif 
 c

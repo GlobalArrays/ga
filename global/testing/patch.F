@@ -70,7 +70,6 @@ c
 c
 c***  Create a global array
 c
-      call ffflush(6)
 c     call setdbg(1)
       status = ga_create(MT_DBL, n, n, 'a', 1, 1, g_a)
       if (.not. status) then
@@ -515,7 +514,6 @@ c
 c
 c***  Create a global array
 c
-      call ffflush(6)
 c     call setdbg(1)
       status = ga_create(MT_DCPL, n, n, 'a', 1, 1, g_a)
       if (.not. status) then
