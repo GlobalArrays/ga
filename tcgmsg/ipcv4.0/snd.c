@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.8 1997-02-17 20:37:28 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.9 1997-05-05 20:04:41 d3h325 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -214,8 +214,8 @@ static void rcv_local(type, buf, lenbuf, lenmes, nodeselect, nodefrom)
 
   if (head->type != *type) {
     PrintMessageHeader("rcv_local ",head);
-    printf("rcv_local: type mismatch ... strong typing enforced\n");
-    abort();
+/*    printf("rcv_local: type mismatch ... strong typing enforced\n"); */
+/*    abort(); */
     Error("rcv_local: type mismatch ... strong typing enforced", (long) *type);
   }
 
