@@ -188,6 +188,25 @@ ifeq ($(TARGET),SGI)
  GLOB_DEFINES = -DSGI
 endif
 
+ifeq ($(TARGET),SGI_N32)
+#
+# SGI running IRIX >6.1, MIPS-4
+#
+#
+ ifeq ($(FOPT),-O)
+         FOPT = -O3
+ endif
+     COPT_REN = -n32 -mips4
+
+#optimization flags for R8000 (IP21)
+ FOPT_8K = -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000:fprop_limit=2000 -TENV:X=3 -WK,-so=1,-o=1,-r=3,-dr=AKC
+
+#optimization flags for R10000 (IP28)
+ FOPT_10K = -O3 -OPT:fold_arith_limit=4000:const_copy_limit=20000:global_limit=20000:fprop_limit=2000 -TENV:X=1 -WK,-so=1,-o=1,-r=3,-dr=AKC -SWP:if_conversion=OFF
+ FOPT_REN = -n32 -mips4 $(FOPT_8K)
+ GLOB_DEFINES = -DSGI
+endif
+
 #................................ SGI Power Challenge .......................
 #
 ifeq ($(TARGET),SGITFP)
@@ -199,6 +218,7 @@ ifeq ($(TARGET),SGITFP)
          FOPT = -O3
  endif
         CDEFS = -DEXT_INT
+
      FOPT_REN = -i8 -align64 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000 
  GLOB_DEFINES = -DSGI -DSGI64 -DSGIUS
 endif
