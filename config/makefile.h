@@ -69,7 +69,8 @@ ifeq ($(CC),gcc)
        COPT_REN = -malign-double
 endif
 ifeq ($(FC),g77)
-       FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
+    FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
+    FOPT_REN += -Wno-globals
 endif
  GLOB_DEFINES = -DLINUX
 ifeq ($(FC),pgf77)
@@ -93,6 +94,7 @@ ifeq ($(TARGET),CYGNUS)
            CC = gcc
  GLOB_DEFINES = -DLINUX -DCYGNUS
      FOPT_REN = -fno-second-underscore
+     COPT_REN = -malign-double
        RANLIB = ranlib
 endif
 
@@ -405,7 +407,7 @@ ifdef MPI_LIB
       LIBS += -L$(MPI_LIB)
 endif
 
-ifdef USE_ARMCI
+ifndef OLD_GA
 LIBS += -larmci
 endif
 
