@@ -19,6 +19,10 @@
    Boston, MA 02111-1307, USA.  */
 
 #ifdef __GNUC__
+
+// JN: had to diable PT_EI as it was causing testandset not inline
+// when entire library was compiled with gcc
+
 #ifndef PT_EI
 # define PT_EI extern inline
 #endif
@@ -28,77 +32,8 @@
    alias that contains the same information.  */
 #define __atomic_fool_gcc(x) (*(volatile struct { int a[100]; } *)x)
 
-#ifndef ELF_MACHINE_NAME
-
-#define NEED_SEPARATE_REGISTER_STACK
-
-/* We want the OS to assign stack addresses.  */
-#define FLOATING_STACKS 1
-
-/* Maximum size of the stack if the rlimit is unlimited.  */
-#define ARCH_STACK_MAX_SIZE     32*1024*1024
-
-/* Get some notion of the current stack.  Need not be exactly the top
-   of the stack, just something somewhere in the current frame.
-   r12 (sp) is the stack pointer. */
-#define CURRENT_STACK_FRAME  stack_pointer
-register char *stack_pointer __asm__ ("sp");
-
-
-/* Register r13 (tp) is reserved by the ABI as "thread pointer". */
-struct _pthread_descr_struct;
-register struct _pthread_descr_struct *__thread_self __asm__("r13");
-
-/* Return the thread descriptor for the current thread.  */
-#define THREAD_SELF  __thread_self
-
-/* Initialize the thread-unique value.  */
-#define INIT_THREAD_SELF(descr, nr)  (__thread_self = (descr))
-
-
-/* Access to data in the thread descriptor is easy.  */
-#define THREAD_GETMEM(descr, member) __thread_self->member
-#define THREAD_GETMEM_NC(descr, member) __thread_self->member
-#define THREAD_SETMEM(descr, member, value) __thread_self->member = (value)
-#define THREAD_SETMEM_NC(descr, member, value) __thread_self->member = (value)
-
-
-#define HAS_COMPARE_AND_SWAP_WITH_RELEASE_SEMANTICS
-
-PT_EI int
-__compare_and_swap (long int *p, long int oldval, long int newval)
-{
-  long int readval;
-
-  __asm__ __volatile__
-       ("mov ar.ccv=%4;;\n\t"
-	"cmpxchg8.acq %0=%1,%2,ar.ccv"
-	: "=r" (readval), "=m" (__atomic_fool_gcc (p))
-	: "r"(newval), "1" (__atomic_fool_gcc (p)), "r" (oldval)
-	: "memory");
-  return readval == oldval;
-}
-
-PT_EI int
-__compare_and_swap_with_release_semantics (long int *p,
-					   long int oldval,
-					   long int newval)
-{
-  long int readval;
-
-  __asm__ __volatile__
-       ("mov ar.ccv=%4;;\n\t"
-	"cmpxchg8.rel %0=%1,%2,ar.ccv"
-	: "=r" (readval), "=m" (__atomic_fool_gcc (p))
-	: "r"(newval), "1" (__atomic_fool_gcc (p)), "r" (oldval)
-	: "memory");
-  return readval == oldval;
-}
-
-#endif /* ELF_MACHINE_NAME */
-
 /* Spinlock implementation; required.  */
-PT_EI long int
+static inline long int
 testandset (int *spinlock)
 {
   long int ret;

@@ -3,8 +3,10 @@
 #if defined(__i386__) || defined(__alpha) || defined(__ia64)
 #  define SPINLOCK 
 #  if defined(__GNUC__)
-#     if defined(__i386__) || defined(__ia64)
+#     if defined(__i386__)
 #          include "tas-i386.h"
+#     elif  defined(__ia64)
+#          include "tas-ia64.h"
 #     else
 #          include "tas-alpha.h"
 #     endif
