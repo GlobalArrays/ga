@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.41 2003-09-23 17:00:42 vinod Exp $ */
+/* $Id: test.c,v 1.42 2003-09-29 09:10:15 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -746,8 +746,8 @@ int lenpergiov;
          dsc[j].dst_ptr_array = &pdst[kcold];
          dsc[j].ptr_array_len = PTR_ARR_LEN;
        }
-       ARMCI_INIT_HANDLE(hdl_put+i);
-       if((rc=ARMCI_NbPutV(dsc,GIOV_ARR_LEN,dstproc,hdl_put+i)))
+       ARMCI_INIT_HANDLE(hdl_put+dstproc);
+       if((rc=ARMCI_NbPutV(dsc,GIOV_ARR_LEN,dstproc,hdl_put+dstproc)))
          ARMCI_Error("putv failed",rc);
     }
     if(me==0){
