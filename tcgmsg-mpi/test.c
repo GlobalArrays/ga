@@ -8,7 +8,7 @@
 #include "sndrcv.h"
 /*#include "evlog.h"*/
 
-/*extern char *memalign();*/
+extern char *memalign();
 extern unsigned char CheckByte();
 #if defined(SUN)
 extern char *sprintf();
