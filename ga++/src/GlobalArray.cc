@@ -127,8 +127,8 @@ GA::GlobalArray::copy(const GA::GlobalArray *g_a) {
 }
 
 void 
-GA::GlobalArray::copyPatch(char trans, GlobalArray* ga, int alo[], int ahi[], 
-			   int blo[], int bhi[]) {
+GA::GlobalArray::copyPatch(char trans, const GA::GlobalArray* ga, int alo[], 
+			   int ahi[], int blo[], int bhi[]) {
   NGA_Copy_patch(trans, ga->mHandle, alo, ahi, mHandle, blo, bhi);
 }
 
@@ -290,8 +290,8 @@ GA::GlobalArray::matmulPatch(char transa, char transb, void* alpha,
 
 void 
 GA::GlobalArray::matmulPatch(char transa, char transb, void* alpha, void *beta,
-			     const GlobalArray *g_a, int *alo, int *ahi,
-			     const GlobalArray *g_b, int *blo, int *bhi,
+			     const GA::GlobalArray *g_a, int *alo, int *ahi,
+			     const GA::GlobalArray *g_b, int *blo, int *bhi,
 			     int *clo, int *chi) {
   NGA_Matmul_patch(transa, transb, alpha, beta, g_a->mHandle, alo, ahi, 
 		  g_b->mHandle, blo, bhi, mHandle, clo, chi);
