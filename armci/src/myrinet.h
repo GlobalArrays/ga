@@ -24,6 +24,7 @@
 
 /*  CLIENT_BUF_BYPASS should be defined to enable zero-copy protocol
     that uses registration -- sloooooow on GM >1.2 */
+extern int _armci_bypass;
 #define CLIENT_BUF_BYPASS_ 
 #ifdef __i386__
 # ifdef GM_1_2

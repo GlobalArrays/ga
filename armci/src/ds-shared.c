@@ -89,6 +89,30 @@ int  packsize = PACK_SIZE(msginfo->datalen);
 /**************************** end of pipelining for medium size msg ***********/
 
 
+#if defined(CLIENT_BUF_BYPASS) && !defined(GM)
+/**************** NOTE: for now this code can only handle contiguous data *****/
+void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
+                                    void *loc_buf, int msg_buflen,
+                                    void *loc_ptr, int *loc_stride_arr,
+                                    void *rem_ptr, int *rem_stride_arr,
+                                    int *count, int stride_levels)
+{
+    if(DEBUG_){
+      printf("%d(s): strided(%d) get bypass from %d\n",armci_me,stride_levels,
+             msginfo->from);
+      fflush(stdout);
+    }
+    armci_pin_memory(loc_ptr, loc_stride_arr,count, stride_levels);
+    armcill_server_wait_ack(msginfo->from,1); /*wait until client ready*/
+    armcill_server_put(msginfo->from,loc_ptr,rem_ptr,count[0]);
+    armci_unpin_memory(loc_ptr, loc_stride_arr,count, stride_levels);
+    if(DEBUG_){
+      printf("%d(s): strided(%d) get bypass done \n",armci_me,stride_levels);
+      fflush(stdout);
+    }
+}
+#endif
+
 /*\ client initialization
 \*/
 void armci_client_code()
@@ -127,7 +151,11 @@ int bytes;
     if(bytes > len)armci_die2("armci_send_req:buffer overflow",bytes,len);
 
 #ifdef PIPE_BUFSIZE
-    if((msginfo->datalen>2*PIPE_MIN_BUFSIZE) && (msginfo->operation == GET)
+    if(
+#   ifdef CLIENT_BUF_BYPASS 
+     (!msginfo->bypass) &&
+#   endif
+     (msginfo->datalen>2*PIPE_MIN_BUFSIZE) && (msginfo->operation == GET)
                                         && (msginfo->format == STRIDED)){
       char *buf = sizeof(void*) + (char*)(msginfo+1);
       int  *ibuf = (int*)buf;

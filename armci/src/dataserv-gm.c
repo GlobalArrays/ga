@@ -19,9 +19,10 @@ long check_flag(long *buf)
 
 /*\ wait for strided data to arrive
 \*/
-void armci_rcv_strided_data_bypass(int proc, int datalen,
+void armci_rcv_strided_data_bypass(int proc, request_header_t *msginfo,
                                    void *ptr, int stride_levels)
 {
+int datalen = msginfo->datalen;
 
     if(DEBUG_){ printf("%d:rcv_strided_data:expecting datalen %d from %d\n",
                 armci_me, datalen, proc); fflush(stdout);
