@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.6 2000-04-17 22:41:04 d3h325 Exp $ */
+/* $Id: collect.c,v 1.7 2000-05-05 00:03:23 edo Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -6,7 +6,6 @@
 #if defined(CRAY)
 #  include <fortran.h>
 #endif
-
 
 #ifdef MPI
 #  include <mpi.h>
@@ -97,8 +96,13 @@ void ga_igop(type, x, n, op)
      char *op;
 {
 #ifdef MPI
+#ifdef EXT_INT
+extern void armci_msg_lgop();
+            armci_msg_lgop(x, (int)n, op,1);
+#else
 extern void armci_msg_igop();
             armci_msg_igop(x, (int)n, op,1);
+#endif
 #else
             IGOP_(&type, x, &n, op);
 #endif
