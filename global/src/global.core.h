@@ -244,13 +244,14 @@ static Integer GA_memory_limited = 0;
 # define ARGS_(s) ()
 #endif
 
+extern char* strcpy      ARGS_((char*, const char*));
 extern void srand        ARGS_((Integer));
 extern void srandom      ARGS_((Integer));
-extern char *malloc      ARGS_((int));
+extern Void *malloc      ARGS_((size_t));
 extern logical gaDirectAccess ARGS_((Integer ));
-extern void ma__get_ptr_ ARGS_((char **, char *));
-extern Integer ma__diff_ ARGS_((char *, char *));
-extern void ma__base_address_ ARGS_((Void*, Void**));
+extern void ma_ga_get_ptr_ ARGS_((char **, char *));
+extern Integer ma_ga_diff_ ARGS_((char *, char *));
+extern void ma_ga_base_address_ ARGS_((Void*, Void**));
 
 extern char *Create_Shared_Region ARGS_((long *idlist, long *size, long *offset)
 );
@@ -261,6 +262,7 @@ extern long Detach_Shared_Region ARGS_((long id, long size, char *addr));
 extern long Delete_Shared_Region ARGS_((long id));
 extern long Delete_All_Regions ARGS_(( void));
 
+extern Void* memcpy ARGS_((Void*, const Void*, size_t));
 extern double sqrt ARGS_((double));
 extern Integer MA_push_get ARGS_((Integer, Integer, char*, Integer*, Integer*));
 extern Integer MA_pop_stack ARGS_((Integer));

@@ -17,7 +17,7 @@
           CXX = CC
          FOPT = -O
          COPT = -O
-GLOB_INCLUDES = -I../../ma
+GLOB_INCLUDES = -I../../ma -I.
            AR = ar
            AS = as
        RANLIB = @echo
@@ -44,8 +44,10 @@ GLOB_DEFINES = -D$(TARGET)
 # IBM ThinkPad running Linux 1.2.13
 #
 ifeq ($(TARGET),LINUX)
+          CPP = gcc -E -nostdinc -undef -P 
     MAKEFLAGS = -j 1
     EXPLICITF = TRUE
+ GLOB_DEFINES = -DLINUX
 endif
 #
 #................................ SUN ......................................
@@ -292,7 +294,14 @@ ifeq ($(EXPLICITF),TRUE)
 	$(FC) $(FOPT) $(FOPT_REN) -c $*.f
 
 .F.f:	
+ifeq ($(TARGET),LINUX)
+	(/bin/cp $*.F /tmp/$$$$.c; \
+		$(CPP) $(INCLUDES) $(DEFINES) /tmp/$$$$.c | \
+			sed '/^$$/d' > $*.f; \
+				/bin/rm -f /tmp/$$$$.c) || exit 1
+else
 	$(CPP) $(INCLUDES) $(DEFINES) < $*.F | sed '/^#/D' > $*.f
+endif
 
 .c.o:
 	$(CC) $(CFLAGS) -c $*.c

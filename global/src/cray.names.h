@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.11 1995-10-12 20:26:18 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.12 1995-11-03 20:42:34 d3g681 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -69,8 +69,8 @@
 #define  pend_                     PEND 
 #define  waitcom_                  WAITCOM
 #define  tcgtime_                  TCGTIME 
-#define  ma__base_address_         MA__BASE_ADDRESS 
-#define  ma__sizeof_               MA__SIZEOF
-#define  ma__get_ptr_              MA__GET_PTR
-#define  ma__diff_                 MA__DIFF
+#define  ma_ga_base_address_         MA_GA_BASE_ADDRESS 
+#define  ma_ga_sizeof_               MA_GA_SIZEOF
+#define  ma_ga_get_ptr_              MA_GA_GET_PTR
+#define  ma_ga_diff_                 MA_GA_DIFF
 #define  dgemm_                    DGEMM

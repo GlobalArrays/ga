@@ -68,7 +68,8 @@ static void sherror(s, i)
   fprintf(stderr,"shmalloc error: %s %ld(0x%x)\n", s, i, i);
   fflush(stderr);
   shmalloc_print_stats();
-  abort();
+/* abort(); */
+  ga_error("shmalloc: fatal error", i);
 }
 
 void shmalloc_request(size, maxsize)

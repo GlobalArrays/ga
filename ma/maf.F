@@ -1,5 +1,5 @@
 c
-c     $Id: maf.F,v 1.4 1995-10-17 08:54:08 d3g681 Exp $
+c     $Id: maf.F,v 1.5 1995-11-03 20:42:59 d3g681 Exp $
 c
 
 c
@@ -19,7 +19,7 @@ c     --------------------------------------------------------------- c
 
       implicit none
 
-#include "f2c.h"
+#include "maf2c.h"
 #include "mafdecls.fh"
 
       ma_set_sizes = 0
@@ -71,7 +71,7 @@ c     --------------------------------------------------------------- c
       integer memhandle
       integer index
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_alloc_get(datatype, nelem, name, memhandle, index) .eq.
      $    MA_TRUE) then
@@ -96,7 +96,7 @@ c     --------------------------------------------------------------- c
       character*(*) name
       integer memhandle
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_allocate_heap(datatype, nelem, name, memhandle) .eq.
      $    MA_TRUE) then
@@ -117,7 +117,7 @@ c     --------------------------------------------------------------- c
 
       integer memhandle
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_chop_stack(memhandle) .eq. MA_TRUE) then
           MA_chop_stack = .true.
@@ -137,7 +137,7 @@ c     --------------------------------------------------------------- c
 
       integer memhandle
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_free_heap(memhandle) .eq. MA_TRUE) then
           MA_free_heap = .true.
@@ -158,7 +158,7 @@ c     --------------------------------------------------------------- c
       integer memhandle
       integer index
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_get_index(memhandle, index) .eq. MA_TRUE) then
           MA_get_index = .true.
@@ -179,7 +179,7 @@ c     --------------------------------------------------------------- c
       integer ithandle
       integer memhandle
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_get_next_memhandle(ithandle, memhandle) .eq. MA_TRUE)
      $    then
@@ -203,7 +203,7 @@ c     --------------------------------------------------------------- c
       integer nominal_stack
       integer nominal_heap
 
-#include "f2c.h"
+#include "maf2c.h"
 
       MA_init = .false.
 
@@ -226,7 +226,7 @@ c     --------------------------------------------------------------- c
 
       integer ithandle
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_init_memhandle_iterator(ithandle) .eq. MA_TRUE)
      $    then
@@ -247,7 +247,7 @@ c     --------------------------------------------------------------- c
 
       integer datatype
 
-#include "f2c.h"
+#include "maf2c.h"
 
       MA_inquire_avail = f2c_inquire_avail(datatype)
 
@@ -263,7 +263,7 @@ c     --------------------------------------------------------------- c
 
       integer datatype
 
-#include "f2c.h"
+#include "maf2c.h"
 
       MA_inquire_heap = f2c_inquire_heap(datatype)
 
@@ -279,7 +279,7 @@ c     --------------------------------------------------------------- c
 
       integer datatype
 
-#include "f2c.h"
+#include "maf2c.h"
 
       MA_inquire_stack = f2c_inquire_stack(datatype)
 
@@ -295,7 +295,7 @@ c     --------------------------------------------------------------- c
 
       integer memhandle
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_pop_stack(memhandle) .eq. MA_TRUE) then
           MA_pop_stack = .true.
@@ -313,7 +313,7 @@ c     --------------------------------------------------------------- c
 
       implicit none
 
-#include "f2c.h"
+#include "maf2c.h"
 
       call f2c_print_stats()
 
@@ -334,7 +334,7 @@ c     --------------------------------------------------------------- c
       integer memhandle
       integer index
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_push_get(datatype, nelem, name, memhandle, index) .eq.
      $    MA_TRUE) then
@@ -359,7 +359,7 @@ c     --------------------------------------------------------------- c
       character*(*) name
       integer memhandle
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_push_stack(datatype, nelem, name, memhandle) .eq.
      $    MA_TRUE) then
@@ -381,7 +381,7 @@ c     --------------------------------------------------------------- c
       logical value
       integer ivalue
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (value) then
           ivalue = MA_TRUE
@@ -408,7 +408,7 @@ c     --------------------------------------------------------------- c
       logical value
       integer ivalue
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (value) then
           ivalue = MA_TRUE
@@ -435,7 +435,7 @@ c     --------------------------------------------------------------- c
       logical value
       integer ivalue
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (value) then
           ivalue = MA_TRUE
@@ -463,7 +463,7 @@ c     --------------------------------------------------------------- c
       integer nelem1
       integer datatype2
 
-#include "f2c.h"
+#include "maf2c.h"
 
       MA_sizeof = f2c_sizeof(datatype1, nelem1, datatype2)
 
@@ -479,7 +479,7 @@ c     --------------------------------------------------------------- c
 
       integer datatype
 
-#include "f2c.h"
+#include "maf2c.h"
 
       MA_sizeof_overhead = f2c_sizeof_overhead(datatype)
 
@@ -493,7 +493,7 @@ c     --------------------------------------------------------------- c
 
       implicit none
 
-#include "f2c.h"
+#include "maf2c.h"
 
       call f2c_summarize_allocated_blocks()
 
@@ -507,7 +507,7 @@ c     --------------------------------------------------------------- c
 
       implicit none
 
-#include "f2c.h"
+#include "maf2c.h"
 
       if (f2c_verify_allocator_stuff() .eq. MA_TRUE) then
           MA_verify_allocator_stuff = .true.

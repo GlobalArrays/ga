@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.16 1995-11-02 18:32:46 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.17 1995-11-03 20:42:36 d3g681 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -455,15 +455,15 @@ long *msg_buf;
      *
      * DBL_MB and INT_MB are assigned adresses of their counterparts
      *    (of the same name in MA mafdecls.h file) by calling Fortran
-     *    ma__base_address_() routine that calls C ma__get_ptr_ to copy
+     *    ma_ga_base_address_() routine that calls C ma_ga_get_ptr_ to copy
      *    pointers
      */
     {
       static Integer dtype = MT_F_DBL;
-      ma__base_address_(&dtype, (Void**)&DBL_MB);
+      ma_ga_base_address_(&dtype, (Void**)&DBL_MB);
       if(!DBL_MB)ga_error("ga_initialize: wrong dbl pointer ", 1L);
       dtype = MT_F_INT;
-      ma__base_address_(&dtype, (Void**)&INT_MB);
+      ma_ga_base_address_(&dtype, (Void**)&INT_MB);
       if(!INT_MB)ga_error("ga_initialize: wrong int pointer ", 2L);
     }
 
@@ -741,6 +741,7 @@ char    *array_name;
 {
 #ifdef SYSV
    long *msg_buf = (long*)MessageRcv->buffer, bytes=(long)mem_size;
+   int adjust;
 #else
    Integer handle, index;
 #endif
@@ -752,6 +753,11 @@ char    *array_name;
    if(mem_size <  0 ) return (0); /* < 0 byte request is not OK */ 
 
    *id   = 1;
+
+#ifdef LINUX
+   mem_size += 7;		/* Worst case alignment error */
+   bytes = (long) mem_size;
+#endif
 
 #  ifndef SYSV
          /*............. allocate local memory ...........*/
@@ -766,7 +772,7 @@ char    *array_name;
          if(MPme == cluster_master){
             if(GAnproc == 1 && USE_MALLOC){
                /* for single process, shmem not needed */
-               *pptr  = malloc((int)mem_size);
+	      *pptr  = malloc((int)mem_size);
             }else {
                /* cluster master uses Snd buffer */
                msg_buf = (long*)MessageSnd->buffer;
@@ -782,7 +788,23 @@ char    *array_name;
          if(MPme != cluster_master)
                     *pptr =  Attach_Shared_Region(msg_buf+1, bytes, msg_buf);
 
-         *id = (*pptr) ? 1 :0;
+#ifdef LINUX
+         if (type == MT_F_DBL) {
+	   char *base = (char *) DBL_MB;
+	   int diff = (abs(base - (char *) *pptr)) % sizeof(DoublePrecision);
+	   adjust = (diff > 0) ? sizeof(DoublePrecision) - diff : 0;
+	 }
+         else if (type == MT_F_INT) {
+	   char *base = (char *) INT_MB;
+	   int diff = (abs(base - (char *) *pptr)) % sizeof(Integer);
+	   int adjust = (diff > 0) ? sizeof(Integer) - diff : 0;
+	 }
+         if (DEBUG)
+           fprintf(stderr, "align: DBL=%lx, INT=%lx, adjust=%lx, old=%lx, new=%lx \n", 
+	  	   DBL_MB, INT_MB, adjust, *pptr, *pptr+adjust);
+         *id = adjust;		/* Id kludged to hold adjust */
+         *pptr = (void *) (adjust + (char *) *pptr);
+#endif
 
 #  endif
 
@@ -1080,13 +1102,22 @@ Integer ga_handle = GA_OFFSET + *g_a;
  
 #   ifdef SYSV 
       if(GAnproc == 1 && USE_MALLOC){
+#ifdef LINUX
+         free(GA[ga_handle].ptr[0]-GA[ga_handle].id);	/* Id = adjust */
+#else
          free(GA[ga_handle].ptr[0]);
+#endif
       }else{
          if(MPme == cluster_master){
             /* Now, deallocate shared memory */
             if(GA[ga_handle].ptr[0]){
+#ifdef LINUX
+               Free_Shmem_Ptr(GA[ga_handle].id, GA[ga_handle].size, 
+                              GA[ga_handle].ptr[0]-GA[ga_handle].id);
+#else
                Free_Shmem_Ptr(GA[ga_handle].id, GA[ga_handle].size, 
                               GA[ga_handle].ptr[0]);
+#endif
                GA[ga_handle].ptr[0]=NULL;
             }
             if(ClusterMode) 
@@ -1723,8 +1754,10 @@ Integer  item_size, proc_place;
    else ga_error(" ga_access: type not supported ",-1L);
 
    /* check the allignment */
-   if(*index % item_size)
-       ga_error(" ga_access: base address misallignment ",(long)index);
+   if(*index % item_size) {
+     fprintf(stderr, "ga_access: index=%ld, item_size=%ld\n", *index, item_size);
+     ga_error(" ga_access: base address misallignment ",(long)index);
+   }
 
    /* adjust index according to the data type */
    *index /= item_size;
@@ -2391,14 +2424,14 @@ Integer ga_nnodes_()
 
 /*********************** other utility routines *************************/
 
-void ma__get_ptr_(ptr, address)
+void ma_ga_get_ptr_(ptr, address)
       char **ptr, *address;
 {
    *ptr = address; 
 }
 
 
-Integer ma__diff_(ptr1, ptr2)
+Integer ma_ga_diff_(ptr1, ptr2)
         char *ptr1, *ptr2;
 {
    return((Integer)(ptr2-ptr1));

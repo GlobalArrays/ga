@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.10 1995-06-29 23:10:08 d3g681 Exp $
+#$Id: makefile,v 1.11 1995-11-03 20:42:22 d3g681 Exp $
 
 # Tiny makefile wrapper
 
@@ -19,7 +19,7 @@ global_stamp:	include_stamp
 	cp -p libglobal.a $(LIBDIR)
 
 include_stamp:	src/global.fh
-	cp src/global.fh $(INCDIR) 
+	cp src/global.fh da/da.fh $(INCDIR) 
 	touch include_stamp
 
 realclean clean:	
@@ -36,5 +36,9 @@ dbl_to_sngl:
 	$(CNFDIR)/dbl_to_sngl $(USES_BLAS)
 else
 sngl_to_dbl dbl_to_sngl:
-	echo $@ : no conversion necessary
+	@echo $@ : no conversion necessary
 endif
+
+.PHONY:	cleanF
+cleanF:
+	@echo Not done here
