@@ -4,17 +4,6 @@
 #include "ga++.h"
 
 
-
-
-
-
-
-
-#define N     10    // First dimension
-#define NDIM  4     // Number of dimensions
-#define BASE  0
-#define PERMUTE_
-
 #define GA_DATA_TYPE MT_F_REAL
 
 #define N 4			/* dimension of matrices */
@@ -46,7 +35,7 @@ test_scale_cols (GA::GlobalArray *g_a,
   
   int index[MAXDIM];
   void *min, *max;
-  int imin, imax;
+  Integer imin, imax;
   float fmin, fmax;
   long lmin, lmax;
   double dmin, dmax;
@@ -118,7 +107,7 @@ test_scale_cols (GA::GlobalArray *g_a,
       beta = (void *)&bl;
       break;
     default:
-      GA::SERVICES.error ("test_scale_cols:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_scale_cols:wrong data type.", type);
     }
 
   switch (type)
@@ -144,7 +133,7 @@ test_scale_cols (GA::GlobalArray *g_a,
       val2 = (void *)&lval2;
       break;
     default:
-      GA::SERVICES.error ("test_scale_cols:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_scale_cols:wrong data type.", type);
     }
 
   if (me == 0)
@@ -156,8 +145,8 @@ test_scale_cols (GA::GlobalArray *g_a,
   
   g_a->scaleCols (g_v);
   /*the result is the same same as g_b filled with val2 */
-  g_b = GA::SERVICES.createGA (g_a, "B");
-  g_c = GA::SERVICES.createGA (g_a, "C");
+  g_b = GA::SERVICES.createGA (g_a, (char *)"B");
+  g_c = GA::SERVICES.createGA (g_a, (char *)"C");
 
   g_b->fill(val2);
 
@@ -186,11 +175,11 @@ test_scale_cols (GA::GlobalArray *g_a,
       min = (void *)&lmin;
       break;
     default:
-      GA::SERVICES.error ("test_scale_rows:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_scale_rows:wrong data type.", type);
     }
 
-  g_c->selectElem ("max", max, index);
-  g_c->selectElem ("min", min, index);
+  g_c->selectElem ((char *)"max", max, index);
+  g_c->selectElem ((char *)"min", min, index);
 
 
   switch (type)
@@ -246,7 +235,7 @@ test_scale_cols (GA::GlobalArray *g_a,
 	}
       break;
     default:
-      GA::SERVICES.error ("test_scale_rows:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_scale_rows:wrong data type.", type);
     }
 }
 
@@ -258,7 +247,7 @@ test_scale_rows (GA::GlobalArray *g_a,
   
   int index[MAXDIM];
   void *min, *max;
-  int imin, imax;
+  Integer imin, imax;
   float fmin, fmax;
   long lmin, lmax;
   double dmin, dmax;
@@ -331,7 +320,7 @@ test_scale_rows (GA::GlobalArray *g_a,
       beta = (void *)&bl;
       break;
     default:
-      GA::SERVICES.error ("test_scale_rows:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_scale_rows:wrong data type.", type);
     }
 
   switch (type)
@@ -357,7 +346,7 @@ test_scale_rows (GA::GlobalArray *g_a,
       val2 = (void *)&lval2;
       break;
     default:
-      GA::SERVICES.error ("test_scale_rows:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_scale_rows:wrong data type.", type);
     }
 
   if (me == 0)
@@ -370,8 +359,8 @@ test_scale_rows (GA::GlobalArray *g_a,
 
   g_a->scaleRows (g_v);
   /*the result is the same same as g_b filled with val2 */
-  g_b = GA::SERVICES.createGA (g_a, "B");
-  g_c = GA::SERVICES.createGA (g_a, "C");
+  g_b = GA::SERVICES.createGA (g_a, (char *)"B");
+  g_c = GA::SERVICES.createGA (g_a, (char *)"C");
 
   g_b->fill (val2);
 
@@ -399,11 +388,11 @@ test_scale_rows (GA::GlobalArray *g_a,
       min =(void *) &lmin;
       break;
     default:
-      GA::SERVICES.error ("test_scale_rows:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_scale_rows:wrong data type.", type);
     }
 
-  g_c->selectElem ("max", max, index);
-  g_c->selectElem ("min", min, index);
+  g_c->selectElem ((char *)"max", max, index);
+  g_c->selectElem ((char *)"min", min, index);
 
 
   switch (type)
@@ -459,7 +448,7 @@ test_scale_rows (GA::GlobalArray *g_a,
 	}
       break;
     default:
-      GA::SERVICES.error ("test_scale_rows:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_scale_rows:wrong data type.", type);
     }
 
 }
@@ -473,7 +462,7 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   GA::GlobalArray * g_e;
   int index[MAXDIM];
   void *min, *max;
-  int imin, imax;
+  Integer imin, imax;
   float fmin, fmax;
   long lmin, lmax;
   double dmin, dmax;
@@ -547,7 +536,7 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
       beta = (void *)&bl;
       break;
     default:
-      GA::SERVICES.error ("test_median:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_median:wrong data type.", type);
     }
 
   dcval.real = -2.0;
@@ -589,7 +578,8 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
       val3 = (void *)&lval3;
       break;
     default:
-      GA::SERVICES.error ("test_median:test_median:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_median:test_median:wrong data type.", 
+			  type);
     }
 
   if (me == 0)
@@ -612,7 +602,7 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   */
 
   /* g_e = g_c - g_m */
-  g_e = GA::SERVICES.createGA(g_a, "E");
+  g_e = GA::SERVICES.createGA(g_a, (char *)"E");
   g_e->zero ();
   g_e->addPatch (alpha, g_c, clo, chi, beta, g_m, mlo, mhi, alo, ahi);
 
@@ -639,11 +629,11 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
       min = (void *)&lmin;
       break;
     default:
-      ga_error ("test_median:wrong data type.", type);
+      ga_error ((char *)"test_median:wrong data type.", type);
     }
 
-  g_e->selectElem ("max", max, index);
-  g_e->selectElem ("min", min, index);
+  g_e->selectElem ((char *)"max", max, index);
+  g_e->selectElem ((char *)"min", min, index);
 
 
   switch (type)
@@ -699,7 +689,7 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
 	}
       break;
     default:
-      GA::SERVICES.error ("test_median:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_median:wrong data type.", type);
     }
 
 
@@ -713,7 +703,7 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   GA::GlobalArray *g_e;
   int index[MAXDIM];
   void *min, *max;
-  int imin, imax;
+  Integer imin, imax;
   float fmin, fmax;
   long lmin, lmax;
   double dmin, dmax;
@@ -786,7 +776,7 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
       beta = (void *)&bl;
       break;
     default:
-      GA::SERVICES.error ("test_median:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_median:wrong data type.", type);
     }
 
   dcval.real = -2.0;
@@ -828,7 +818,7 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
       val3 = (void *)&lval3;
       break;
     default:
-      ga_error ("test_median:test_median:wrong data type.", type);
+      ga_error ((char *)"test_median:test_median:wrong data type.", type);
     }
 
   if (me == 0)
@@ -844,16 +834,16 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   g_c->fill (val3);
 
   g_m->median (g_a, g_b, g_c);
-
+  
   /*
     The result array should        be g_c due to the value I chose: 
     val3 is the median of the three values val, val2, and val3
   */
 
   /* g_e = g_c - g_m */
-  g_e = GA::SERVICES.createGA (g_a, "E");
+  g_e = GA::SERVICES.createGA (g_a, (char *)"E");
   g_e->add (alpha, g_c, beta, g_m);
-
+  
   switch (type)
     {
     case C_INT:
@@ -877,12 +867,11 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
       min = (void *)&lmin;
       break;
     default:
-      GA::SERVICES.error ("test_median:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_median:wrong data type.", type);
     }
-
-  g_e->selectElem ("max", max, index);
-  g_e->selectElem ("min", min, index);
-
+  
+  g_e->selectElem ((char *)"max", max, index);
+  g_e->selectElem ((char *)"min", min, index);
 
   switch (type)
     {
@@ -937,7 +926,7 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
 	}
       break;
     default:
-      GA::SERVICES.error ("test_median:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_median:wrong data type.", type);
     }
 
 
@@ -985,7 +974,7 @@ test_norm_infinity (GA::GlobalArray * g_a) {
       val = (void *)&lval;
       break;
     default:
-      GA::SERVICES.error ("test_norm_infinity:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_norm_infinity:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1015,7 +1004,7 @@ test_norm_infinity (GA::GlobalArray * g_a) {
       result = sqrt (dcval.real * dcval.real + dcval.imag * dcval.imag);
       break;
     default:
-      GA::SERVICES.error ("test_norm_infinity: wrong data type.\n", type);
+      GA::SERVICES.error ((char *)"test_norm_infinity: wrong data type.\n", type);
     }
   result = result * dims[0];
   if (me == 0)
@@ -1070,7 +1059,7 @@ test_norm1 (GA::GlobalArray * g_a)
       val = (void *)&lval;
       break;
     default:
-      GA::SERVICES.error ("test_norm1:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_norm1:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1099,7 +1088,7 @@ test_norm1 (GA::GlobalArray * g_a)
       result = sqrt (dcval.real * dcval.real + dcval.imag * dcval.imag);
       break;
     default:
-      GA::SERVICES.error ("test_norm1: wrong data type.\n", type);
+      GA::SERVICES.error ((char *)"test_norm1: wrong data type.\n", type);
     }
   result = result * dims[1];
   if (me == 0)
@@ -1154,7 +1143,7 @@ test_get_diagonal (GA::GlobalArray * g_a,
       val =(void *) &lval;
       break;
     default:
-      GA::SERVICES.error ("test_get_diagonal:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_get_diagonal:wrong data type.", type);
     }
 
   if (me == 0)
@@ -1224,7 +1213,7 @@ test_get_diagonal (GA::GlobalArray * g_a,
 	}
       break;
     default:
-      GA::SERVICES.error ("test_get_diagonal:wrong data type:", type);
+      GA::SERVICES.error ((char *)"test_get_diagonal:wrong data type:", type);
     }
 
 
@@ -1278,7 +1267,7 @@ test_add_diagonal (GA::GlobalArray * g_a,
       val = (void *)&lval;
       break;
     default:
-      GA::SERVICES.error ("test_add_diagonal:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_add_diagonal:wrong data type.", type);
     }
 
 
@@ -1363,7 +1352,7 @@ test_add_diagonal (GA::GlobalArray * g_a,
 	}
       break;
     default:
-      GA::SERVICES.error ("test_add_diagonal:wrong data type:", type);
+      GA::SERVICES.error ((char *)"test_add_diagonal:wrong data type:", type);
     }
 
 }
@@ -1411,7 +1400,7 @@ test_set_diagonal (GA::GlobalArray * g_a,
       val =(void *) &lval;
       break;
     default:
-      GA::SERVICES.error ("test_set_diagonal:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_set_diagonal:wrong data type.", type);
     }
 
 
@@ -1483,7 +1472,7 @@ test_set_diagonal (GA::GlobalArray * g_a,
 	}
       break;
     default:
-      GA::SERVICES.error ("test_set_diagonal:wrong data type:", type);
+      GA::SERVICES.error ((char *)"test_set_diagonal:wrong data type:", type);
     }
 
 }
@@ -1530,7 +1519,8 @@ test_shift_diagonal (GA::GlobalArray *g_a) {
       val =(void *) &lval;
       break;
     default:
-      GA::SERVICES.error ("test_shift_diagonal:wrong data type.", type);
+      GA::SERVICES.error ((char *)"test_shift_diagonal:wrong data type.", 
+			  type);
     }
 
 
@@ -1600,7 +1590,8 @@ test_shift_diagonal (GA::GlobalArray *g_a) {
 	}
       break;
     default:
-      GA::SERVICES.error ("test_shift_diagonal:wrong data type: ", type);
+      GA::SERVICES.error ((char *)"test_shift_diagonal:wrong data type: ", 
+			  type);
     }
 
 }
@@ -1633,58 +1624,58 @@ do_work (int type, int op) {
     {
 
     case OP_SHIFT_DIAGONAL:
-      g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
+      g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       test_shift_diagonal (g_a);
       g_a->destroy();
       break;
     case OP_SET_DIAGONAL:
-      g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
+      g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*find out the diagonal length of the matrix A */
       vdim = MIN (dims[0], dims[1]);
-      g_v = GA::SERVICES.createGA (type, 1, &vdim, "V", NULL);
+      g_v = GA::SERVICES.createGA (type, 1, &vdim, (char *)"V", NULL);
       test_set_diagonal (g_a, g_v);
       g_a->destroy ();
       g_v->destroy ();
       break;
     case OP_ADD_DIAGONAL:
-      g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
+      g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*find out the diagonal length of the matrix A */
       vdim = MIN (dims[0], dims[1]);
-      g_v = GA::SERVICES.createGA (type, 1, &vdim, "V", NULL);
+      g_v = GA::SERVICES.createGA (type, 1, &vdim, (char *)"V", NULL);
       test_add_diagonal (g_a, g_v);
       g_a->destroy ();
       g_v->destroy ();
       break;
     case OP_GET_DIAGONAL:
-      g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
+      g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*find out the diagonal length of the matrix A */
       vdim = MIN (dims[0], dims[1]);
-      g_v = GA::SERVICES.createGA (type, 1, &vdim, "V", NULL);
+      g_v = GA::SERVICES.createGA (type, 1, &vdim, (char *)"V", NULL);
       test_get_diagonal (g_a, g_v);
       g_a->destroy ();
       g_v->destroy ();
       break;
     case OP_NORM1:
-      g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
+      g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       if (!g_a)
-	GA_Error ("create failed: A", n);
+	GA_Error ((char *)"create failed: A", n);
       test_norm1 (g_a);
       g_a->destroy ();
       break;
 
     case OP_NORM_INFINITY:
-      g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
+      g_a = GA::SERVICES.createGA (type, 2, dims,(char *) "A", NULL);
       test_norm_infinity (g_a);
       g_a->destroy ();
       break;
 
     case OP_MEDIAN:
-      g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
+      g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*duplicate g_a */
-      g_b = GA::SERVICES.createGA (g_a, "B");      
-      g_c = GA::SERVICES.createGA (g_a, "C");
+      g_b = GA::SERVICES.createGA (g_a, (char *)"B");      
+      g_c = GA::SERVICES.createGA (g_a, (char *)"C");
 #if 0 //test g_m is different from g_a, g_b, amd g_c
-      g_m = GA::SERVICES.createGA (g_a, "M");
+      g_m = GA::SERVICES.createGA (g_a, (char *)"M");
       test_median (g_a, g_b, g_c, g_m);
 #else //test g_m = g_c
       test_median (g_a, g_b, g_c, g_a);
@@ -1698,11 +1689,11 @@ do_work (int type, int op) {
       break;
 
     case OP_MEDIAN_PATCH:
-      g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
+      g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*duplicate g_a */
-      g_b = GA::SERVICES.createGA (g_a, "B");
-      g_c = GA::SERVICES.createGA (g_a, "C");
-      g_m = GA::SERVICES.createGA (g_a, "M");
+      g_b = GA::SERVICES.createGA (g_a, (char *)"B");
+      g_c = GA::SERVICES.createGA (g_a, (char *)"C");
+      g_m = GA::SERVICES.createGA (g_a, (char *)"M");
       test_median_patch (g_a, lo, hi, g_b, lo, hi, g_c, lo, hi, g_m, lo, hi);
       g_a->destroy ();
       g_b->destroy ();
@@ -1710,26 +1701,26 @@ do_work (int type, int op) {
       g_m->destroy ();
       break;
     case OP_SCALE_ROWS:
-      g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
+      g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*find out the diagonal length of the matrix A */
       vdim = dims[1];
-      g_v = GA::SERVICES.createGA (type, 1, &vdim, "V", NULL);
+      g_v = GA::SERVICES.createGA (type, 1, &vdim, (char *)"V", NULL);
       test_scale_rows (g_a, g_v);
       g_a->destroy ();
       g_v->destroy ();
       break;
     case OP_SCALE_COLS:
-      g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
+      g_a = GA::SERVICES.createGA (type, 2, dims, (char *)"A", NULL);
       /*find out the diagonal length of the matrix A */
       vdim = dims[0];
-      g_v = GA::SERVICES.createGA (type, 1, &vdim, "V", NULL);
+      g_v = GA::SERVICES.createGA (type, 1, &vdim, (char *)"V", NULL);
       test_scale_cols (g_a, g_v);
       g_a->destroy ();
       g_v->destroy ();
       break;
 
     default:
-      GA::SERVICES.error ("test_function: wrong operation.", op);
+      GA::SERVICES.error ((char *)"test_function: wrong operation.", op);
     }
 }
 
