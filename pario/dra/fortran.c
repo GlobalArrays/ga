@@ -77,6 +77,7 @@ Integer FATR ndra_create_(type, ndim, dims, name, filename, mode, reqdims, d_a,
                    nlen, flen)
         Integer *d_a;                      /*input:DRA handle*/
         Integer *type;                     /*input*/
+        Integer *ndim;                     /*input*/
         Integer dims[];                    /*input*/
         Integer reqdims[];                 /*input: dims of typical request*/
         Integer *mode;                     /*input*/
@@ -145,6 +146,7 @@ Integer FATR dra_inquire_(d_a, type, dim1, dim2, name, filename, nlen, flen)
 #endif
 {
 Integer stat = dra_inquire(d_a, type, dim1, dim2, cname, cfilename);
+*type = (Integer)ga_type_c2f((int)*type);
 #if defined(CRAY) || defined(WIN32)
    c2fstring(cname, _fcdtocp(name), _fcdlen(name));
    c2fstring(cfilename, _fcdtocp(filename), _fcdlen(filename));
@@ -177,6 +179,7 @@ Integer FATR ndra_inquire_(d_a, type, ndim, dims, name, filename, nlen, flen)
 #endif
 {
 Integer stat = ndra_inquire(d_a, type, ndim, dims, cname, cfilename);
+*type = (Integer)ga_type_c2f((int)*type);
 #if defined(CRAY) || defined(WIN32)
    c2fstring(cname, _fcdtocp(name), _fcdlen(name));
    c2fstring(cfilename, _fcdtocp(filename), _fcdlen(filename));
