@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.1.1.1 1994-03-29 06:44:54 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.2 1994-08-03 06:47:38 d3g681 Exp $ */
 
 /*
    Toolkit interface for the iPSC-2, i860, DELTA and Paragon
@@ -54,7 +54,7 @@ static long nxtval_server;
 #define DEBUG_ DEBUG
 static long DEBUG=0;           /* debug flag ... see setdbg */
 
-#define MAX_Q_LEN 2048         /* Maximum no. of outstanding messages */
+#define MAX_Q_LEN 64         /* Maximum no. of outstanding messages */
 
 static long n_in_msg_q = 0;    /* No. in the message q */
 
@@ -580,7 +580,7 @@ static void nxtval_handler(msgtype, msglen, requesting_node, pid)
   long oldmask = masktrap(1);
   static long cnt     = 0;     /* actual counter */
   static long ndone   = 0;     /* no. finished for this loop */
-  static long done_list[512];  /* list of processes finished with this loop */
+  static long done_list[4096];  /* list of processes finished with this loop */
   long lencnt = sizeof cnt;    /* length of cnt */
   long node   = -1;            /* select any node */
   long type   = TYPE_NXTVAL_REPLY;   /* message type */
@@ -656,7 +656,7 @@ void BRDCST_(type, buf, lenbuf, originator)
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
-static double gop_work[GOP_BUF_SIZE];
+double gop_work[GOP_BUF_SIZE];
 
 /*ARGSUSED*/
 void DGOP_(ptype, x, pn, op)
@@ -664,6 +664,7 @@ void DGOP_(ptype, x, pn, op)
      long *ptype, *pn;
      char *op;
 {
+  double gop_work[GOP_BUF_SIZE];
   double *work = gop_work;
   long nleft  = *pn;
   long buflen = MIN(nleft,GOP_BUF_SIZE); /* Try to get even sized buffers */
@@ -701,6 +702,7 @@ void IGOP_(ptype, x, pn, op)
      long *ptype, *pn;
      char *op;
 {
+  long gop_work[GOP_BUF_SIZE];
   long *work = (long *) gop_work;
   long nleft  = *pn;
   long buflen = MIN(nleft,2*GOP_BUF_SIZE); /* Try to get even sized buffers */
