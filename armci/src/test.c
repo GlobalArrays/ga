@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.37 2003-03-07 23:37:04 manoj Exp $ */
+/* $Id: test.c,v 1.38 2003-03-10 21:25:35 manoj Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -1864,7 +1864,24 @@ int main(int argc, char* argv[])
 	  printf("\nTesting aggregate put/get requests\n");
 	  fflush(stdout);
 	}
-	test_aggregate();
+	
+	/** 
+	 * Aggregate put/get requests cannot be tested for\ number of procs 
+	 * greater than 32. (Current implementation of aggregate put/get 
+	 * can use at the maximum of 32 handles (defined by macro 
+	 * _MAX_AGG_BUFFERS in aggregate.c). This test case is written in 
+	 * such a way that each process puts/gets data to all the other 
+	 * processes, thus the number of aggregate handle used is equal to 
+	 * the number of processes created.
+	*/
+	if(nproc > 32) {
+	  if(me==0){
+	    printf("\n WARNING: Aggregate put/get requests cannot be tested for number of procs greater than 32.\n\n");
+	    fflush(stdout);
+	  }
+	}
+	else
+	  test_aggregate();
 	
 	ARMCI_AllFence();
 	MP_BARRIER();
