@@ -44,9 +44,9 @@ c
         call ffflush(6)
       endif
 c
-c     call test_nga_select_elem()                            ! Test global max/min
+      call test_nga_select_elem()                            ! Test global max/min
       call test_ga_patch_enum()                              ! Test enumerate
-c
+
 c     if(me.eq.0) call ga_print_stats()
 c
 c***  Tidy up the GA package
