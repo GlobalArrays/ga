@@ -1,11 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <mpi.h>
+
 #ifdef WIN32
 #include <winsock.h>
 #else
 #include <unistd.h>
 #endif
-#include <mpi.h>
 
 #define HOSTNAME_LEN 128 
 static char myname[HOSTNAME_LEN], rootname[HOSTNAME_LEN];
