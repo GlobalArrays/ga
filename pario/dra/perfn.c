@@ -1,5 +1,5 @@
-#define BASE_NAME  "/scratch/da.try"
-#define BASE_NAME1 "/scratch/da1.try"
+#define BASE_NAME  "/gpfs2/d3g293/da.try"
+#define BASE_NAME1 "/gpfs2/d3g293/da1.try"
 #  define FNAME   BASE_NAME
 #  define FNAME1  BASE_NAME1
 
@@ -16,16 +16,17 @@
 #define SIZE 250
 #define NSIZE 15625000
 #define LSIZE 125000000
-
+*/
 #define NDIM 2
 #define SIZE 4000
 #define NSIZE 16000000
 #define LSIZE 64000000
-*/
+/*
 #define NDIM 1
 #define SIZE 16000000
 #define NSIZE 16000000
 #define LSIZE 32000000
+*/
 
 #define MAXDIM 7
 #define TRUE (logical)1
@@ -175,7 +176,7 @@ void test_io_dbl()
   if (NDRA_Write(g_a, d_a, &req) != 0) GA_Error("NDRA_Write failed(d_a):",0);
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed(d_a): ",req);
   tt1 = tcgtime_() - tt0;
-  mbytes = 1.e-6 * (double)(pow(n,ndim));
+  mbytes = 1.e-6 * (double)(pow(n,ndim)*sizeof(double));
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
@@ -243,7 +244,7 @@ void test_io_dbl()
 
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed(d_b): ",req);
   tt1 = tcgtime_() - tt0;
-  mbytes = 1.e-6*(double)(pow(n,ndim));
+  mbytes = 1.e-6*(double)(pow(n,ndim)*sizeof(double));
   if (me == 0) {
     printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
