@@ -1,4 +1,4 @@
-// $Id: x86copy.gcc,v 1.13 2002-12-10 01:35:20 edo Exp $
+// $Id: x86copy.gcc,v 1.14 2003-02-06 18:49:36 manoj Exp $
 // memory copy implementation derived from examples 3 and 4 at
 // http://www.sgi.com/developers/library/resources/asc_cpu.html
 //
@@ -36,34 +36,31 @@ static int use_asm_copy=-1;
 void *asm_memcpy3(void *dst, const void *src, size_t n)
 {
 
-	asm __volatile__ ("
-	      shr $6, %2
-	loopl:
-	      prefetchnta 64(%0);
-	      prefetchnta 96(%0);
-
-	      movq 0(%0), %%mm1;
-	      movq 8(%0), %%mm2;
-	      movq 16(%0), %%mm3;
-	      movq 24(%0), %%mm4;
-	      movq 32(%0), %%mm5;
-	      movq 40(%0), %%mm6;
-	      movq 48(%0), %%mm7;
-	      movq 56(%0), %%mm0;
-
-	      movntq %%mm1, 0(%1);
-	      movntq %%mm2, 8(%1);
-	      movntq %%mm3, 16(%1);
-	      movntq %%mm4, 24(%1);
-	      movntq %%mm5, 32(%1);
-	      movntq %%mm6, 40(%1);
-	      movntq %%mm7, 48(%1);
-	      movntq %%mm0, 56(%1);
-     
-	      add $64, %0;
-	      add $64, %1;
-	      dec %2;
-	      jnz loopl;
+	asm __volatile__ ("\
+	      shr $6, %2;\
+	loopl:\
+	      prefetchnta 64(%0);\
+	      prefetchnta 96(%0);\
+	      movq 0(%0), %%mm1;\
+	      movq 8(%0), %%mm2;\
+	      movq 16(%0), %%mm3;\
+	      movq 24(%0), %%mm4;\
+	      movq 32(%0), %%mm5;\
+	      movq 40(%0), %%mm6;\
+	      movq 48(%0), %%mm7;\
+	      movq 56(%0), %%mm0;\
+	      movntq %%mm1, 0(%1);\
+	      movntq %%mm2, 8(%1);\
+	      movntq %%mm3, 16(%1);\
+	      movntq %%mm4, 24(%1);\
+	      movntq %%mm5, 32(%1);\
+	      movntq %%mm6, 40(%1);\
+	      movntq %%mm7, 48(%1);\
+	      movntq %%mm0, 56(%1);\
+	      add $64, %0;\
+	      add $64, %1;\
+	      dec %2;\
+	      jnz loopl;\
 	      emms;"
 	      : 
 	      : "r"(src), "r"(dst), "c"(n)
@@ -85,78 +82,78 @@ void *asm_memcpy4(void *dst, const void *src, size_t n, int bufid)
 		ptbuf = tbuf1;      
 
 
-	asm __volatile__ (" 
-		movl %1, %%esi;  // %1: src
-	        shr $11, %0;     // %0: n
-		movl %2, %%edi;  // %2: dst
-
-	loop2k: // Copy 2k into temporary buffer 
-		pushl %%edi 
-	        movl ptbuf, %%edi;
-	        movl $2048, %%ecx;
-	        shr $6, %%ecx;
-
-	loopMemToL1: 
-        	prefetchnta 64(%%esi); // Prefetch next loop, non-temporal 
-	        prefetchnta 96(%%esi); 
-
-        	movq 0(%%esi), %%mm1; // Read in source data 
-	        movq 8(%%esi), %%mm2; 
-	        movq 16(%%esi), %%mm3; 
-	        movq 24(%%esi), %%mm4; 
-	        movq 32(%%esi), %%mm5; 
-	        movq 40(%%esi), %%mm6; 
-	        movq 48(%%esi), %%mm7; 
-	        movq 56(%%esi), %%mm0; 
-
-	        movq  %%mm1, 0(%%edi); // Store into L1 
-	        movq  %%mm2, 8(%%edi); 
-	        movq  %%mm3, 16(%%edi); 
-	        movq  %%mm4, 24(%%edi); 
-	        movq  %%mm5, 32(%%edi); 
-	        movq  %%mm6, 40(%%edi); 
-	        movq  %%mm7, 48(%%edi); 
-	        movq  %%mm0, 56(%%edi); 
-
-	        add $64, %%esi;
-	        add $64, %%edi;
-	        dec %%ecx ;
-	        jnz loopMemToL1 ;
-
-	        popl %%edi; // Now copy from L1 to system memory 
-	        pushl %%esi ;
-	        movl ptbuf, %%esi;
-	        movl $2048, %%ecx;
-	        shr $6, %%ecx;
-
-	loopL1ToMem: 
-
-	        movq 0(%%esi), %%mm1; // Read in source data from L1 
-	        movq 8(%%esi), %%mm2; 
-	        movq 16(%%esi), %%mm3; 
-	        movq 24(%%esi), %%mm4;
-	        movq 32(%%esi), %%mm5; 
-	        movq 40(%%esi), %%mm6; 
-	        movq 48(%%esi), %%mm7; 
-	        movq 56(%%esi), %%mm0; 
-
-	        movntq %%mm1, 0(%%edi); // Non-temporal stores 
-	        movntq %%mm2, 8(%%edi); 
-	        movntq %%mm3, 16(%%edi); 
-	        movntq %%mm4, 24(%%edi); 
-	        movntq %%mm5, 32(%%edi); 
-	        movntq %%mm6, 40(%%edi); 
-	        movntq %%mm7, 48(%%edi); 
-	        movntq %%mm0, 56(%%edi); 
-
-	        add $64, %%esi;
-	        add $64, %%edi;
-	        dec %%ecx;
-	        jnz loopL1ToMem ;
-
-	        popl %%esi; // Do next 2k block 
-	 	dec %0
-	        jnz loop2k; 
+	asm __volatile__ (" \
+		movl %1, %%esi;\
+	        shr $11, %0;\
+		movl %2, %%edi;\
+\
+	loop2k:\
+		pushl %%edi; \
+	        movl ptbuf, %%edi;\
+	        movl $2048, %%ecx;\
+	        shr $6, %%ecx;\
+\
+	loopMemToL1: \
+        	prefetchnta 64(%%esi); \
+	        prefetchnta 96(%%esi); \
+\
+        	movq 0(%%esi), %%mm1; \
+	        movq 8(%%esi), %%mm2; \
+	        movq 16(%%esi), %%mm3; \
+	        movq 24(%%esi), %%mm4; \
+	        movq 32(%%esi), %%mm5; \
+	        movq 40(%%esi), %%mm6; \
+	        movq 48(%%esi), %%mm7; \
+	        movq 56(%%esi), %%mm0; \
+\
+	        movq  %%mm1, 0(%%edi); \
+	        movq  %%mm2, 8(%%edi); \
+	        movq  %%mm3, 16(%%edi); \
+	        movq  %%mm4, 24(%%edi); \
+	        movq  %%mm5, 32(%%edi); \
+	        movq  %%mm6, 40(%%edi); \
+	        movq  %%mm7, 48(%%edi); \
+	        movq  %%mm0, 56(%%edi); \
+\
+	        add $64, %%esi;\
+	        add $64, %%edi;\
+	        dec %%ecx ;\
+	        jnz loopMemToL1 ;\
+\
+	        popl %%edi; \
+	        pushl %%esi ;\
+	        movl ptbuf, %%esi;\
+	        movl $2048, %%ecx;\
+	        shr $6, %%ecx;\
+\
+	loopL1ToMem: \
+\
+	        movq 0(%%esi), %%mm1; \
+	        movq 8(%%esi), %%mm2; \
+	        movq 16(%%esi), %%mm3; \
+	        movq 24(%%esi), %%mm4;\
+	        movq 32(%%esi), %%mm5; \
+	        movq 40(%%esi), %%mm6; \
+	        movq 48(%%esi), %%mm7; \
+	        movq 56(%%esi), %%mm0; \
+\
+	        movntq %%mm1, 0(%%edi); \
+	        movntq %%mm2, 8(%%edi); \
+	        movntq %%mm3, 16(%%edi); \
+	        movntq %%mm4, 24(%%edi); \
+	        movntq %%mm5, 32(%%edi); \
+	        movntq %%mm6, 40(%%edi); \
+	        movntq %%mm7, 48(%%edi); \
+	        movntq %%mm0, 56(%%edi); \
+\
+	        add $64, %%esi;\
+	        add $64, %%edi;\
+	        dec %%ecx;\
+	        jnz loopL1ToMem ;\
+\
+	        popl %%esi; \
+	 	dec %0;\
+	        jnz loop2k; \
 		emms;"
 		: "=r"(dum)
 	        : "r"(src), "r"(dst), "0"(n)
@@ -179,31 +176,31 @@ CPUTYPE cpu_check()
     unsigned int reax;
     unsigned int redx;
 
-    asm __volatile__ ("
-         movl $1, %%eax;
-         cpuid;
-         movl %%eax, %0;"
+    asm __volatile__ ("\
+         movl $1, %%eax;\
+         cpuid;\
+         movl %%eax, %0;"\
         :"=r"(reax)
         :"0"(reax)
         :"%eax"
         );
 
-   asm __volatile__ ("
-         movl $1, %%eax;
-         cpuid;
+   asm __volatile__ ("\
+         movl $1, %%eax;\
+         cpuid;\
          movl %%edx, %0;"
         :"=r"(redx)
         :"0"(redx)
         :"%eax", "%edx"
       );
 
-    asm __volatile__ ("
-         movl $vendor, %%esi;
-         movl $0, %%eax;
-         cpuid;
-         movl %%ebx, 0(%%esi);
-         movl %%edx, 4(%%esi);
-         movl %%ecx, 8(%%esi);"
+    asm __volatile__ (
+         "movl $vendor, %%esi;"
+         "movl $0, %%eax;"
+         "cpuid;"
+         "movl %%ebx, 0(%%esi);"
+         "movl %%edx, 4(%%esi);"
+         "movl %%ecx, 8(%%esi);"
         :
         :
         : "%ebx", "%ecx", "%edx", "%esi"
