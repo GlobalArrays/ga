@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcv.h,v 1.6 2000-08-04 20:34:20 erjurrus Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcv.h,v 1.7 2000-11-07 00:03:38 d3h325 Exp $ */
 
 #include "srftoc.h"
 
@@ -43,6 +43,10 @@ extern void PFILECOPY_(long *type, long *node0, char *filename);
 extern long TCGREADY_();
 extern double DRAND48_();
 extern void SRAND48_(long *seed);
+extern void LLOG_();
+extern void STATS_();
+extern void SYNCH_(long *type)
+extern void WAITCOM_(long *node);
 }
 #else
 
