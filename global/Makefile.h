@@ -40,8 +40,8 @@ ifeq ($(TARGET),SUN)
 #
 #
 #          CC = gcc
-     FOPT_REN = -Nl100 -dalign
-     COPT_REN = -dalign
+     FOPT_REN = -Nl100
+     COPT_REN = 
      WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
 		-Wwrite-strings
  GLOB_DEFINES = -DSUN
