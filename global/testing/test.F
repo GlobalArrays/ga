@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.32 2000-09-12 18:29:47 d3h325 Exp $
+c $Id: test.F,v 1.33 2000-10-13 00:31:00 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -134,7 +134,7 @@ c
       parameter (m = 2*n)
       double precision a(n,n), b(n,n), v(m),w(m)
       integer iv(m), jv(m)
-      logical status, found
+      logical status
       integer g_a, g_b
       integer iran, i,j, loop,nloop,maxloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, ii, jj
@@ -705,7 +705,7 @@ c
       integer maxproc
       parameter (maxproc = 128)
       double precision crap, real
-      double precision nwords, error
+      double precision nwords
       double complex   x, sum1, sum2, factor
       intrinsic int
       iran(i) = int(util_drand(0)*real(i)) + 1
@@ -1538,7 +1538,6 @@ c
 
       subroutine check_wrappers
       implicit none
-      integer mem_size
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
