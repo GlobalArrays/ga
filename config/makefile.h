@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.75 2003-02-07 19:35:34 manoj Exp $
+# $Id: makefile.h,v 1.76 2003-02-07 19:42:13 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -759,20 +759,6 @@ endif
 ifeq (CRAY,$(findstring CRAY,$(TARGET)))
 %.o:	%.f
 	$(FC) -c $(FFLAGS) $*.f
-endif
-
-#
-# for IA64 only. gcc 3.x cannot find the symbols modsi3 and divsi3 in IA64. 
-ifeq ($(TARGET),LINUX64)
-ifeq ($(_CPU),ia64)
-ifeq ($(CC), gcc)
-ifeq ($(FC), efc)
-     GA_EXTRA += lib1funcs-ia64.o
-%.o: %.S
-	$(CC) -c lib1funcs-ia64.S
-endif
-endif
-endif
 endif
 
 #
