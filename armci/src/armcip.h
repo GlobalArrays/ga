@@ -252,6 +252,7 @@ extern unsigned long armci_max_region();
 extern void armci_dispatch_strided(void *ptr, int stride_arr[], int count[],
                             int strides, int fit_level, int nb, int bufsize, 
                             void (*fun)(void*,int*,int*,int,void*), void *arg);
+extern void armci_msg_gop_init();
 
 #if defined(SYSV) || defined(WIN32)
 extern void armci_shmem_init();

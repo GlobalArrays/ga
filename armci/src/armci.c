@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.43 2002-01-29 23:17:33 vinod Exp $ */
+/* $Id: armci.c,v 1.44 2002-02-20 23:26:41 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -256,6 +256,7 @@ int ARMCI_Init()
 #endif
 
     armci_init_clusinfo();
+    armci_msg_gop_init();
 
     /* trap signals to cleanup ARMCI system resources in case of crash */
     if(armci_me==armci_master) ARMCI_ParentTrapSignals();
@@ -323,3 +324,19 @@ void ARMCI_Copy(void *src, void *dst, int n)
 {
  armci_copy(src,dst,n);
 }
+
+
+/*\ busy wait 
+ *  n represents number of time delay units   
+ *  notused is useful to fool compiler by passing address of sensitive variable 
+\*/
+#define DUMMY_INIT 1.0001
+double _armci_dummy_work=DUMMY_INIT;
+void armci_util_spin(int n, void *notused)
+{
+int i;
+    for(i=0; i<n; i++)
+        if(armci_msg_me()>-1)  _armci_dummy_work *=DUMMY_INIT; 
+    if(_armci_dummy_work>(double)armci_msg_nproc())_armci_dummy_work=DUMMY_INIT;
+}
+  

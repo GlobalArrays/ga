@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.28 2001-09-26 00:06:47 d3h325 Exp $ */
+/* $Id: message.c,v 1.29 2002-02-20 23:26:42 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -30,6 +30,10 @@ static long *lwork = (long*)work;
 static int *iwork = (int*)work;
 static float *fwork = (float*)work;
 
+
+void armci_msg_gop_init()
+{
+}
 
 void armci_msg_barrier()
 {
