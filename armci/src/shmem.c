@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.21 2000-06-07 01:12:46 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.22 2000-06-07 23:39:43 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -47,7 +47,7 @@ extern int armci_me, armci_master;
 #include "shmem.h"
 #include "shmalloc.h"
 
-#if defined(SUN) || defined(SOLARIS) || defined(LINUX)
+#if defined(SUN) || defined(SOLARIS)
 #define MULTIPLE_REGIONS
 #endif
 
@@ -63,7 +63,7 @@ extern int armci_me, armci_master;
 #include <sys/mman.h>
 #include <unistd.h>
 static  size_t pagesize=0;
-static  int log_pagesize=0;
+static  int logpagesize=0;
 #endif
 
 #if defined(SUN)
@@ -155,7 +155,7 @@ unsigned long iptr;
         iptr >>= logpagesize; iptr <<= logpagesize;
         tmp = (char*)iptr;
         if(munmap(tmp, size) == -1) perror("munmap");
-        printf("%d:after unmap %d size=%d\n",rc,tmp, (int)size);
+        printf("%d:after unmap size=%d\n",tmp, (int)size);
     }else armci_die("alloc_munmap: malloc failed",(int)size);
     return tmp;
 }
