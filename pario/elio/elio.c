@@ -524,7 +524,10 @@ int elio_aread(Fd_t fd, Off_t doffset, void* buf, Size_t bytes, io_request_t * r
 {
   off_t offset = (off_t) doffset;
   Size_t stat;
-  int    aio_i,rc;
+  int    aio_i;
+#ifdef CRAY
+  int rc;
+#endif
 
   if (doffset >= ABSURDLY_LARGE) 
     ELIO_ERROR(SEEKFAIL,0);
