@@ -37,6 +37,8 @@ static struct {
     double nb_aread;		/* #asynchronous bytes read */
     double t_write;		/* Wall seconds synchronous writing */
     double t_read;		/* Wall seconds synchronous reading */
+    double t_awrite;		/* Wall seconds asynchronous writing */
+    double t_aread;		/* Wall seconds asynchronous reading */
     double t_wait;		/* Wall seconds waiting */
 } file[EAF_MAX_FILES];
 
@@ -114,7 +116,7 @@ void eaf_print_stats(int fd)
   */
 {
     eaf_off_t len;
-    double mbr, mbw;
+    double mbr, mbw, mbra, mbwa;
     if (!valid_fd(fd)) return;
 
     if (eaf_length(fd, &len)) len = -1;
@@ -132,15 +134,35 @@ void eaf_print_stats(int fd)
     printf("   data(b): %.2e  %.2e  %.2e  %.2e\n",
 	   file[fd].nb_write, file[fd].nb_read, file[fd].nb_awrite, 
 	   file[fd].nb_aread);
-    printf("   time(s): %.2e  %.2e                      %.2e\n",
-	   file[fd].t_write, file[fd].t_read, file[fd].t_wait);
+    printf("   time(s): %.2e  %.2e  %.2e  %.2e  %.2e\n",
+	   file[fd].t_write, file[fd].t_read, 
+	   file[fd].t_awrite, file[fd].t_aread, 
+	   file[fd].t_wait);
     mbr = 0.0;
     mbw = 0.0;
-    if (file[fd].t_write) mbw = file[fd].nb_write/(1e6*file[fd].t_write);
-    if (file[fd].t_read) mbr = file[fd].nb_read/(1e6*file[fd].t_read);
+    mbwa= 0.0;
+    mbra= 0.0;
+    if (file[fd].t_write > 0.0) mbw = file[fd].nb_write/(1e6*file[fd].t_write);
+    if (file[fd].t_read  > 0.0) mbr = file[fd].nb_read/(1e6*file[fd].t_read);
+    if ((file[fd].t_wait + file[fd].t_aread) > 0.0) 
+      mbra = 1e-6*file[fd].nb_aread / 
+	(file[fd].t_wait + file[fd].t_aread);
+    if ((file[fd].t_wait + file[fd].t_awrite) > 0.0) 
+      mbwa = 1e-6*file[fd].nb_awrite / 
+	(file[fd].t_wait + file[fd].t_awrite);
 	
-    printf("rate(mb/s): %.2e  %.2e\n", mbw, mbr);
-    printf("------------------------------------------------------------\n\n");
+    /* Note that wait time does not distinguish between read/write completion 
+       so that entire wait time is counted 
+       in computing effective speed for async read & write */
+    if (mbwa+mbra) {
+      printf("rate(mb/s): %.2e  %.2e  %.2e* %.2e*\n", mbw, mbr, mbwa, mbra);
+      printf("------------------------------------------------------------\n");
+      printf("* = Effective rate.  Full wait time used for read and write.\n\n");
+    }
+    else {
+      printf("rate(mb/s): %.2e  %.2e\n", mbw, mbr);
+      printf("------------------------------------------------------------\n\n");
+    }
     fflush(stdout);
 }
 
@@ -192,6 +214,7 @@ int eaf_awrite(int fd, eaf_off_t offset, const void *buf, size_t bytes,
   Return 0 on success, non-zero on failure
   */
 {
+    double start = wall_time();
     io_request_t req;
     int rc;
 
@@ -203,6 +226,7 @@ int eaf_awrite(int fd, eaf_off_t offset, const void *buf, size_t bytes,
 	file[fd].nawrite++;
 	file[fd].nb_awrite += bytes;
     } 
+    file[fd].t_awrite += wall_time() - start;
     return rc;
 }
 
@@ -239,6 +263,7 @@ int eaf_aread(int fd, eaf_off_t offset, void *buf, size_t bytes,
   Return 0 on success, non-zero on failure
   */
 {
+    double start = wall_time();
     io_request_t req;
     int rc;
 
@@ -251,6 +276,7 @@ int eaf_aread(int fd, eaf_off_t offset, void *buf, size_t bytes,
 	file[fd].naread++;
 	file[fd].nb_aread += bytes;
     }
+    file[fd].t_aread += wall_time() - start;
     return rc;
 }
 
