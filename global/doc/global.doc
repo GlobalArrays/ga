@@ -107,6 +107,7 @@ distribute to other US Government contractors.
       ga_locate        ... determine which process 'holds' an array element
       ga_locate_region ... determine which process 'holds' an array patch 
       ga_error         ... print error message and terminate the program 
+      ga_summarize     ... print information about already allocated arrays
 
    c) Operations that may be invoked by any process in true MIMD style
       and are intended to support writing of new (data parallel?) functions
@@ -367,6 +368,13 @@ distribute to other US Government contractors.
       integer  ailo, aihi, ajlo, ajhi     [input] g_a patch coordinates
 
       Fills the patch of integer array with value s.
+
+      -------------------------------------------------------------------
+      subroutine ga_summarize(verbose)
+      logical verbose                     [input]! If true print 
+                                                   distribution info
+
+      Prints info about allocated arrays
 
       -------------------------------------------------------------------
       subroutine ga_symmetrize(g_a)
@@ -846,17 +854,14 @@ distribute to other US Government contractors.
 
    Subroutines and functions listed above can be called from C
    programs.  It is required to add an underscore at the end of the
-   routine names.  There are also some GA routines that have both C and
-   Fortran versions, for example, ga_error, ga_check_handle or
-   ga_inquire_name. The reason for having two separate versions was to
-   avoid Fortran to C character string conversion, at least in the
-   routines that are supposed to be called quite frequently.
+   routine names and include "global.c.h" file. The GA routines that 
+   require a character (string) argument have both C (no underscore 
+   suffix) and Fortran (NOT TO BE USED BY C PROGRAMS) versions, for example, 
+   ga_error, ga_check_handle or ga_inquire_name. The reason for having 
+   two separate versions was to avoid Fortran to C character string 
+   conversion.
 
-   In case of Fortran routines that require a character string
-   (ga_create_, for example), one extra argument has to be added at the
-   end of the argument list. It is a length of the string (as returned
-   by strlen()) and it must be passed by a value not a pointer. All the 
-   other Fortran arguments are passed by pointers. For an example on how
+   GA arguments are passed by pointers. For an example on how
    to use GAs in C programs, see implementation of GA operations in
    global.alg.c file, where some other GA routines are called.
 
@@ -866,15 +871,15 @@ distribute to other US Government contractors.
    extern DoublePrecision *DBL_MB; 
    extern Integer         *INT_MB;
 
-   and types.f2c.h header file has to be included.  For portability
-   purposes, it is recommended to use in your C program DoublePrecision
-   and Integer data types defined in types.f2c.h.
+   For portability purposes, it is recommended to use in your C program 
+   DoublePrecision and Integer data types defined in "types.f2c.h" that is
+   included in "global.c.h" file.
 
    ga_access returns an index that is used to reference the data with
    respect to the data base arrays. This index corresponds to the
    Fortran addressing convention so to use it in C, you need to
    decrement it by one.
 
-   Some GA routines operate on  DoublePrecision and Integer data. 
+   GA routines operate on DoublePrecision and Integer data. 
    Identifiers for these data types (MT_F_DBL and MT_F_INT)
    are defined in macommon.h that is located in the MA directory.
