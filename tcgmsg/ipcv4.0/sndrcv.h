@@ -1,6 +1,7 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcv.h,v 1.5 1999-08-12 00:56:28 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcv.h,v 1.6 2000-08-04 20:34:20 erjurrus Exp $ */
 
 #include "srftoc.h"
+
 
 #include "msgtypesc.h"
 
@@ -13,6 +14,37 @@
   srftoc.h contains macros which define the names of c routines
   accessible from FORTRAN and vice versa
 */
+
+#ifdef __cplusplus
+extern "C" {
+
+extern long NODEID_();
+extern long NNODES_();
+extern long MTIME_();
+extern double TCGTIME_();
+extern void SND_(long *type, char *buf, long *lenbuf, long *node, long *sync);
+extern void RCV_(long *type, char *buf, long *lenbuf, long *lenmes, 
+                 long *nodeselect, long * nodefrom, long *sync);
+
+extern long PROBE_(long *type, long *node);
+extern void BRDCST_(long *type, char *buf, long *lenbuf, long *originator);
+extern void DGOP_(long *type, double *x, long *n, char *op);
+extern void IGOP_(long *type,   long *x, long *n, char *op);
+extern void PBEGIN_(int argc, char **argv);
+extern void PEND_();
+extern void Error(char* str, long code);
+extern void SETDBG_(long *value);
+extern long NXTVAL_(long *mproc);
+extern long MDTOB_(long *n);
+extern long MITOB_(long *n);
+extern long MDTOI_(long *n);
+extern long MITOD_(long *n);
+extern void PFILECOPY_(long *type, long *node0, char *filename);
+extern long TCGREADY_();
+extern double DRAND48_();
+extern void SRAND48_(long *seed);
+}
+#else
 
 /*
   long NODEID_() returns logical node no. of current process.
@@ -209,4 +241,7 @@ extern void RemoteConnect();
 extern void PrintProcInfo();
 extern void MtimeReset();
 extern void USleep();
+
+#endif
+
 #endif
