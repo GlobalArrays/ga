@@ -13,12 +13,12 @@
 
 
 typedef struct {
-#ifdef SOLARIS
+#if 1 
+   int   to:16;               /* message recipient */
+   int from:16;               /* message sender */
+#else
    short int   to;            /* message recipient */
    short int from;            /* message sender */
-#else
-         int   to:16;         /* message recipient */
-         int from:16;         /* message sender */
 #endif
 unsigned int   operation:8;   /* operation code */
 #ifdef CLIENT_BUF_BYPASS
