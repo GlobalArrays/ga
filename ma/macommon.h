@@ -49,6 +49,10 @@
 #define f2c_inquire_avail_			F2C_INQUIRE_AVAIL
 #define f2c_inquire_heap_			F2C_INQUIRE_HEAP
 #define f2c_inquire_stack_			F2C_INQUIRE_STACK
+#define f2c_inquire_heap_check_stack_           F2C_INQUIRE_HEAP_CHECK_STACK
+#define f2c_inquire_heap_no_partition_          F2C_INQUIRE_HEAP_NO_PARTITION
+#define f2c_inquire_stack_check_heap_           F2C_INQUIRE_STACK_CHECK_HEAP
+#define f2c_inquire_stack_no_partition_         F2C_INQUIRE_STACK_NO_PARTITION
 #define f2c_pop_stack_				F2C_POP_STACK
 #define f2c_print_stats_			F2C_PRINT_STATS
 #define f2c_push_get_				F2C_PUSH_GET
@@ -84,6 +88,10 @@
 #define f2c_inquire_avail_              f2c_inquire_avail__
 #define f2c_inquire_heap_               f2c_inquire_heap__
 #define f2c_inquire_stack_              f2c_inquire_stack__
+#define f2c_inquire_heap_check_stack_   f2c_inquire_heap_check_stack__
+#define f2c_inquire_heap_no_partition_  f2c_inquire_heap_no_partition__
+#define f2c_inquire_stack_check_heap_   f2c_inquire_stack_check_heap__
+#define f2c_inquire_stack_no_partition_ f2c_inquire_stack_no_partition__
 #define f2c_pop_stack_                  f2c_pop_stack__
 #define f2c_print_stats_                f2c_print_stats__
 #define f2c_push_get_                   f2c_push_get__
