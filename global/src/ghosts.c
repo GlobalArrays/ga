@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.21 2002-08-14 15:24:27 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.22 2002-08-21 15:16:42 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2266,7 +2266,14 @@ logical FATR nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
 
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) {
+    _ga_sync_begin = 1;
+    _ga_sync_end = 1;
     return TRUE;
+  }
+  if(_ga_sync_begin) {
+    ga_sync_();
+  } else {
+    _ga_sync_begin = 1;
   }
 
   idim = *pdim;
@@ -2289,10 +2296,14 @@ logical FATR nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
     for (np = 0; np < GA[handle].nblock[idx]; np++) {
       if (np < GA[handle].nblock[idx] - 1) {
         if (GA[handle].mapc[ipx+1]-GA[handle].mapc[ipx]+1<width[idx]) {
+          _ga_sync_begin = 1;
+          _ga_sync_end = 1;
           return FALSE;
         }
       } else {
         if (GA[handle].dims[idx]-GA[handle].mapc[ipx]+1<width[idx]) {
+          _ga_sync_begin = 1;
+          _ga_sync_end = 1;
           return FALSE;
         }
       }
@@ -2430,6 +2441,11 @@ logical FATR nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   }
 
   GA_POP_NAME;
+  if(_ga_sync_end) {
+    ga_sync_();
+  } else {
+    _ga_sync_end = 1;
+  }
   return TRUE;
 }
 
