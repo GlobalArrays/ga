@@ -44,6 +44,9 @@
 #define MAX_PROC 8096
 #define MAX_STRIDE_LEVEL 8
 
+/* msg tag ARMCI uses in collective ops */
+#define ARMCI_TAG 30000
+
 /* packing algorithm for double complex numbers requires even number */
 #ifdef MSG_BUFLEN_DBL
 #  define BUFSIZE_DBL (MSG_BUFLEN_DBL - sizeof(request_header_t)/sizeof(double)\
