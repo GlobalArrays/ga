@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.15 2001-09-13 00:15:02 d3h325 Exp $ */
+/* $Id: pack.c,v 1.16 2001-09-26 00:54:27 d3h325 Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -75,6 +75,7 @@ int armci_pack_strided(int op, void* scale, int proc,
 #else
     int flag=1;
 #endif
+    int b;
 
 #ifdef STRIDED_GET_BUFLEN
     if(op==GET)bufsize=STRIDED_GET_BUFLEN;
@@ -102,14 +103,20 @@ int armci_pack_strided(int op, void* scale, int proc,
            dst_stride = src_stride = 1;
         }
 
-        for(sn = 0; sn < chunk; sn += nb){
+        if(op == GET) b =nb; 
+        else{ b = chunk%nb; if(b==0)b=nb; } /* put smallest piece first */
+
+        for(sn = 0; sn < chunk; ){
 
            src = (char*)src_ptr + src_stride* sn;
            dst = (char*)dst_ptr + dst_stride* sn;
-           count[fit_level] = MIN(nb, chunk-sn); /*modify count for this level*/
+           count[fit_level] = MIN(b, chunk-sn); /*modify count for this level*/
            rc = OP_STRIDED( op, scale, proc, src, src_stride_arr,
                             dst, dst_stride_arr, count, fit_level, flag);
            if(rc) break;
+
+           sn += b;
+           b = nb;
         }
         count[fit_level] = chunk; /* restore original count */
 
