@@ -1,0 +1,14 @@
+HEADERS = typesf2c.h winutil.h winf2c.h
+INCDIR = ..\include
+
+all: WIN32.stamp
+
+!include NTmakelib.h
+
+
+#WIN32.stamp:  $(HEADERS)
+#	!copy $** $(INCDIR)
+#	@echo "" >WIN32.stamp
+#
+#clean:
+#	-@del WIN32.stamp
