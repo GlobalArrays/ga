@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.42 2000-05-22 22:44:53 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.43 2000-06-12 17:45:00 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -801,7 +801,7 @@ char *ptr = (char*)0;
 
      bzero(ptr_arr,(int)GAnproc*sizeof(char*));
      ptr_arr[GAme] = ptr;
-     armci_exchange_address(ptr_arr,(int)GAnproc);
+     armci_exchange_address((void**)ptr_arr,(int)GAnproc);
      if(bytes && !ptr) return 1; 
      else return 0;
    }

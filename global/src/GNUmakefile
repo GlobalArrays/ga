@@ -1,65 +1,53 @@
-#........................................................................
-# Lower-level makefile for building libglobal.a. 
-# 
-# JN
-#........................................................................
+#....................................................................
+# $Id
+# JN/June 9, 2000: cleaned makefile from old files 
+#
 
 ifndef TARGET
 error:
-	@echo "TARGET machine not defined (see README file for list of valid targets" 
+	@echo "TARGET machine not defined" 
 	exit
 endif
-
-# We can remove entire library when cleaning rather than individual objects
-#
-HARDCLEAN = yes
 
 LIB_DISTRIB = ../../lib
 INCDIR = ../../include
 HEADERS = ga.h global.h global.fh c.names.h cray.names.h
-
-#upper level might want to override library name
 ifndef LIBRARY
   LIBRARY = libglobal.a
 endif
 
-ifeq ($(GA_TRACE), YES)
-    DEF_TRACE = -DGA_TRACE
-endif
+#---------------------- file list ---------------------------------
+# core of the library
+  GA_CORE = global.armci.o global.util.o collect.o decomp.o capi.o \
+            global.nalg.o global.npatch.o ga_trace.o
 
-include ../MakeFiles.h
+# extra interfaces
+GA_EXTRA = global.periodic.o sparse.o select.o
 
+# utility 
+GA_UTIL = ffflush.o fill.o hsort.scat.o DP.o fort.o fops.2d.o
 
-ifdef OLD_GA
-#............................ old version of GA (pre 3.0) ...................
-INTERRUPT_AVAILABLE = SP1 SP IPSC DELTA PARAGON LAPI
-DATA-SERVER = SUN SGI SGI_N32 SGITFP SGI64 HPUX SOLARIS IBM DECOSF LINUX
-ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP LAPI FUJITSU-VPP CYGNUS
-#
-ifdef IWAY
-       LOC_DEFINES = -DIWAY -DSOCKCONNECT
-endif
-ifeq ($(TARGET),$(findstring $(TARGET),$(DATA-SERVER)))
-    ifndef IWAY
-       LOC_DEFINES += -DDATA_SERVER
-    endif
-endif
-ifeq ($(VERSION),SHMEM)
-  ifneq ($(TARGET),$(findstring $(TARGET),$(ONESIDED_AVAILABLE)))
-    LOC_DEFINES += -DSYSV
-  endif
-endif
-LOC_DEFINES += $(DEF_TRACE)
-include ../Makefile.h
-
+# Linear Algebra
+GA_LIN_ALG = mulmat.patch.o ga_dgemm.o ga_symmetr.o ga_diag_seq.o rsg.o\
+              rs-mod.o ga_solve_seq.o ga_transpose.o
+ifeq ($(DIAG),PAR)
+     GA_LIN_ALG += ga_diag.o
 else
+     GA_LIN_ALG += peigstubs.o
+endif
+ifdef USE_SCALAPACK
+     GA_LIN_ALG += SLface.o ga_solve.o ga_spd.o
+else
+     GA_LIN_ALG += sclstubs.o
+endif
 
-# ............................... ARMCI based version ........................
-# you can restore the old threshold for default decomposition in ga_create
-# by uncommenting the following statement
-# LIB_DEFINES += -DOLD_DEFAULT_BLK
+OBJ = $(GA_CORE) $(GA_EXTRA) $(GA_UTIL) $(GA_LIN_ALG) 
 
-  LIB_DEFINES += -DARMCI $(DEF_TRACE)
+#--------------------------- extra definitions ---------------------
+  LIB_DEFINES += -DARMCI
+  ifeq ($(GA_TRACE), YES)
+    LIB_DEFINES += -DGA_TRACE
+  endif
   LIB_INCLUDES += -I../../armci/src -I$(INCDIR)
 
 #we USE_MPI requires us to acces MPI headers to handle ga_mpi_communicator
@@ -69,27 +57,18 @@ endif
 ifeq ($(MSG_COMMS),MPI)
 include ../../armci/config/makemp.h
 endif
+
+# We can remove entire library when cleaning rather than individual objects
+HARDCLEAN = yes
+
 include ../../config/makefile.h
-endif
-
-
-
 include ../../config/makelib.h
 
 $(OBJ_FRAGILE): %.o : %.c
 	$(CC) $(NOPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) -c $<
 
 $(patsubst %,$(LIBRARY_PATH)(%),$(GA_CORE))     : globalp.h global.h
-$(patsubst %,$(LIBRARY_PATH)(%),global.core.o)  : global.core.h message.h mem.ops.h lapidefs.h
-$(patsubst %,$(LIBRARY_PATH)(%),global.serv.o)  : message.h mem.ops.h
-$(patsubst %,$(LIBRARY_PATH)(%),global.msg.o)   : message.h
 $(patsubst %,$(LIBRARY_PATH)(%),global.alg.o)   : globalp.h global.h
-$(patsubst %,$(LIBRARY_PATH)(%),ga_handler.o)   : interrupt.h message.h
-$(patsubst %,$(LIBRARY_PATH)(%),lapi.o)         : lapidefs.h
-$(patsubst %,$(LIBRARY_PATH)(%),semaphores.o)   : semaphores.h
-$(patsubst %,$(LIBRARY_PATH)(%),shmalloc.o)     : shmalloc.h
-$(patsubst %,$(LIBRARY_PATH)(%),iway.o)         : global.h message.h farg.h
-$(patsubst %,$(LIBRARY_PATH)(%),net.o)          : global.h message.h farg.h
 $(patsubst %,$(LIBRARY_PATH)(%),ga_diag.o)      : global.fh diag.fh 
 $(patsubst %,$(LIBRARY_PATH)(%),global.armci.o) : global.h global.armci.h 
 global.h       : cray.names.h
