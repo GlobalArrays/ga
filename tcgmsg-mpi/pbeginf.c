@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.7 2000-05-10 18:28:05 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.8 2000-05-10 20:47:02 d3h325 Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -59,7 +59,10 @@ void FATR PBEGINF_()
     char *argv[LEN], arg[LEN];
 
     for (i=0; i<argc; i++) {
-#      if defined(HPUX)
+#      if defined(HPUX64)
+          long ii=i, lmax=LEN;
+          len = hpargv_(&ii, arg, &lmax);
+#      elif defined(HPUX)
           len = hpargv_(&i, arg, &maxlen);
 #      elif defined(WIN32)
           short n=(short)i, status;
