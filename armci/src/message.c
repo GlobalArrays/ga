@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.41 2002-07-24 19:00:34 vinod Exp $ */
+/* $Id: message.c,v 1.42 2002-08-19 17:03:27 vinod Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -69,6 +69,8 @@ barrier_struct *_bar_buff;
 #define BAR_BUF(p) (_bar_buff+((p)))
 void **barr_snd_ptr,**barr_rcv_ptr;
 int _armci_barrier_init=0;
+int _armci_barrier_shmem=0;
+int _armci_called_from_barrier=0;
 /*\
  *  *************************************************************
 \*/
@@ -125,15 +127,27 @@ void armci_msg_gop_init()
      }
 #endif
      /*stuff needed for barrier and binomial bcast/reduce*/
-     if(!_armci_barrier_init){
+#ifdef LAPI
+     if(!_armci_barrier_shmem){
+       int size = 2*sizeof(int);
+       /*allocate memory to send/rcv data*/
+       barr_snd_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
+       barr_rcv_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
+
+       if(ARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barrinit failed",0);
+       if(ARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barrinit failed",0);
+       if(barr_rcv_ptr[armci_me]==NULL || barr_snd_ptr[armci_me]==NULL)
+         armci_die("problems in malloc barr_init",0);
        powof2nodes=1;
        LnB = floor(log(armci_nclus)/log(2))+1;
        if(pow(2,LnB-1)<armci_nclus){powof2nodes=0;}
        /*Lp2 is the largest pow-of-2 less than or equal to nclus(num of nodes)*/
        Lp2 = pow(2,LnB);
+       _armci_barrier_init = 1;
      }
      /****************************************************/
      _armci_gop_init=1;
+#endif
 }
 
 
@@ -169,6 +183,7 @@ int count=0;
 /***************************Barrier Code*************************************/
 
 void armci_msg_barr_init(){
+#if defined(SYSV) || defined(MMAP) || defined(WIN32)
     int size=sizeof(barrier_struct)*armci_clus_info[armci_clus_me].nslave;
     long idlist[SHMIDLEN];
     char *tmp;
@@ -205,6 +220,8 @@ void armci_msg_barr_init(){
     if(pow(2,LnB-1)<armci_nclus){powof2nodes=0;}
     /*Lp2 is the largest pow-of-2 less than or equal to nclus(num of nodes)*/
     Lp2 = pow(2,LnB);
+    _armci_barrier_shmem = 1;
+#endif
     _armci_barrier_init = 1;
 }
 
@@ -228,6 +245,7 @@ static void _armci_msg_barrier(){
          armci_util_wait_int(&BAR_BUF(i)->flag1,FULL,100000);
          BAR_BUF(i)->flag1=EMPTY;
        }
+       if(armci_nclus>1){
        last =  ((int)pow(2,(LnB-1)))^armci_clus_me;
        if(last>=0 && last<armci_nclus)
          next_nodel = armci_clus_info[last].master;
@@ -250,8 +268,10 @@ static void _armci_msg_barrier(){
          }
          for(i=0;i<LnB-1;i++){/*step 2*/
            next=((int)pow(2,i))^armci_clus_me;
+           /*printf("\n%d:next=%d \n",armci_me,next);fflush(stdout);*/
            if(next>=0 && next<armci_nclus){
              next_node = armci_clus_info[next].master;
+             /*printf("\n%d:node=%d -\n",armci_me,next_node);fflush(stdout);*/
              srcp = (char *)barr_snd_ptr[next_node];
              *(int *)srcp = barr_count;
              dstn = (char *)barr_rcv_ptr[next_node];
@@ -265,7 +285,6 @@ static void _armci_msg_barrier(){
                armci_msg_snd(ARMCI_TAG, srcp,4,next_node);
              }
              armci_util_wait_int((int *)dstn,barr_count,100000);
-             /*printf("\n%d:node=%d\n",armci_me,next_node);fflush(stdout);*/
            }
          }
          if(last<armci_nclus && !powof2nodes){ /*step 3*/
@@ -284,6 +303,7 @@ static void _armci_msg_barrier(){
            armci_util_wait_int((int *)dstn,barr_count,100000);
          }
        }
+       } /* paranthesis for if armci_nclus>1*/
        for(i=1;i<nslave;i++) /*tell smp procs that internode barrier complete*/
          BAR_BUF(i)->flag2=FULL;
     }
@@ -295,7 +315,7 @@ static void _armci_msg_barrier(){
     }
 }
        
-#endif
+#endif /*barrier enabled only for lapi*/
 void armci_msg_barrier()
 {
 #  ifdef MPI
@@ -307,7 +327,9 @@ void armci_msg_barrier()
        _armci_msg_barrier();
      else{
        long tag=ARMCI_TAG;
+       _armci_called_from_barrier=1;
        SYNCH_(&tag);
+       _armci_called_from_barrier=0;
      }
 #  else
      long tag=ARMCI_TAG;
