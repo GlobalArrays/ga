@@ -290,7 +290,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
    Integer *lim=NULL, handle, idx, nproc, me;
    Integer lop, hip, ndim, dims, type;
    double buf[2];
-   Integer *ia, elems;
+   Integer *ia, elems,ld;
    int i;
 
    nproc = ga_nnodes_();
@@ -321,7 +321,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
       
    if ( lop > 0 ){ /* we get 0 if no elements stored on this process */ 
 
-        nga_access_ptr(g_sbit, &lop, &hip, &ia, NULL);
+        nga_access_ptr(g_sbit, &lop, &hip, &ia, &ld);
         elems = hip -lop+1;
         /* find last bit set on given process */
         for(i=0; i<elems; i++) if(ia[i]) lim[me]= i+lop;
@@ -345,7 +345,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
        if(hip > *hi)hip = *hi;
       
        /* access the data */
-       nga_access_ptr(g_b, &lop, &hip, &ptr_b, NULL);
+       nga_access_ptr(g_b, &lop, &hip, &ptr_b, &ld);
 
        /* find start bit corresponding to my patch */
        /* case 1: sbit set for the first patch element and check earlier elems*/
@@ -410,7 +410,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 {
    void *ptr;
    Integer *lim=NULL, handle, idx, nproc, me;
-   Integer lop, hip, ndim, dims, type;
+   Integer lop, hip, ndim, dims, type,crap;
    Integer *ia, elems, i, first, myplace =0, counter=0;
 
    nproc = ga_nnodes_();
@@ -441,7 +441,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
         if(*hi <lop || hip <*lo); /* we got no elements to update */
         else{
 
-          nga_access_ptr(g_sbit, &lop, &hip, &ptr, NULL);
+          nga_access_ptr(g_sbit, &lop, &hip, &ptr, &elems);
           ia    = (Integer*)ptr;
           elems = hip -lop+1;
 
@@ -470,7 +470,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
      Integer start=lop+first; /* the first element for which sbit is set */
      Integer dst_lo =myplace+1, dst_hi = myplace + counter;
 
-     nga_access_ptr(g_a, &start, &hip, &ptr, NULL);
+     nga_access_ptr(g_a, &start, &hip, &ptr, &crap);
 
      if(MA_push_get(type, counter, "ga pack buf", &handle, &idx))
            MA_get_pointer(handle, &buf);
@@ -572,7 +572,7 @@ int rc=0;
 
 logical ga_create_bin_range_(Integer *g_bin, Integer *g_cnt, Integer *g_off, Integer *g_range)
 {
-Integer type, ndim, nbin, lobin, hibin, me=ga_nodeid_();
+Integer type, ndim, nbin, lobin, hibin, me=ga_nodeid_(),crap;
 Integer dims[2], nproc=ga_nnodes_(),chunk[2];
 
     nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
@@ -590,7 +590,7 @@ Integer dims[2], nproc=ga_nnodes_(),chunk[2];
       Integer *myoff, bin;
 
       /* get offset values stored on my processor to first and last bin */
-      nga_access_ptr(g_off, &lobin, &hibin, &myoff, NULL);
+      nga_access_ptr(g_off, &lobin, &hibin, &myoff, &crap);
       first_off = myoff[0]; last_off = myoff[hibin-lobin];
 /*
       nga_get_(g_off,&lobin,&lobin,&first_off,&lo);
@@ -661,7 +661,7 @@ Integer dims[2], nproc=ga_nnodes_(),chunk[2];
 void ga_bin_sorter_(Integer *g_bin, Integer *g_cnt, Integer *g_off)
 {
 extern void gai_hsort(Integer *list, int n);
-Integer nbin,totbin,type,ndim,lo,hi,me=ga_nodeid_();
+Integer nbin,totbin,type,ndim,lo,hi,me=ga_nodeid_(),crap;
 Integer g_range;
 
     if(FALSE==ga_create_bin_range_(g_bin, g_cnt, g_off, &g_range))
@@ -688,7 +688,7 @@ Integer g_range;
         nga_get_(g_cnt,bin_range,bin_range+1,bin_cnt,&nbin);
 
         /* get access to local bin elements */
-        nga_access_ptr(g_bin, &lo, &hi, &ptr, NULL);
+        nga_access_ptr(g_bin, &lo, &hi, &ptr, &crap);
         
         for(i=0;i<nbin;i++){ 
             int elems =(int) bin_cnt[i];
