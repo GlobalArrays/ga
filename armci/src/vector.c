@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.30 2004-07-14 02:30:52 manoj Exp $ */
+/* $Id: vector.c,v 1.31 2004-07-20 02:47:07 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -613,6 +613,11 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
 	nb_handle = armci_set_implicit_handle(PUT, proc);
     }
 
+#ifdef ARMCI_PROFILE
+    /* to avoid event overlapping, start profiling after aggregate calls */
+    armci_profile_start_vector(darr, len, proc, ARMCI_PROFILE_NBPUT);
+#endif
+
     if(direct)
          rc = armci_copy_vector(PUT, darr, len, proc);
     else{
@@ -626,6 +631,9 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
          rc = armci_pack_vector(PUT, NULL, darr, len, proc,nb_handle);
     }
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_vector();
+#endif
     if(rc) return FAIL6;
     else return 0;
 }
@@ -674,7 +682,12 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
       else
 	nb_handle = armci_set_implicit_handle(GET, proc);
     }
-    
+
+#ifdef ARMCI_PROFILE
+    /* to avoid event overlapping, start profiling after aggregate calls */
+    armci_profile_start_vector(darr, len, proc, ARMCI_PROFILE_NBGET);
+#endif
+
     if(direct) 
        rc = armci_copy_vector(GET, darr, len, proc);
     else{
@@ -688,6 +701,9 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
        rc = armci_pack_vector(GET, NULL, darr, len, proc,nb_handle);
     }
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_vector();
+#endif
     if(rc) return FAIL6;
     else return 0;
 }
@@ -731,6 +747,10 @@ int ARMCI_NbAccV( int op,              /* oeration code */
     else
       nb_handle = armci_set_implicit_handle(op, proc);
 
+#ifdef ARMCI_PROFILE
+    /* to avoid event overlapping, start profiling after aggregate calls */
+    armci_profile_start_vector(darr, len, proc, ARMCI_PROFILE_NBACC);
+#endif
 
 #   if defined(ACC_COPY) && !defined(ACC_SMP)
        if(armci_me != proc) direct=0;
@@ -741,6 +761,9 @@ int ARMCI_NbAccV( int op,              /* oeration code */
     else
          rc = armci_pack_vector(op, scale, darr, len, proc,nb_handle);
 
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_vector();
+#endif
     if(rc) return FAIL6;
     else return 0;
 }
