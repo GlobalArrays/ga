@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.20 2002-08-14 15:14:05 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.21 2002-08-14 15:24:27 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2300,7 +2300,7 @@ logical FATR nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
     }
   }
 
-  GA_PUSH_NAME("ga_update_ghosts_dir");
+  GA_PUSH_NAME("nga_update_ghost_dir");
   /* Get pointer to local memory */
   ptr_loc = GA[handle].ptr[GAme];
   /* obtain range of data that is held by local processor */
