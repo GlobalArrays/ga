@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/sndrcv.h,v 1.7 2002-01-30 01:15:36 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/sndrcv.h,v 1.8 2002-03-16 02:06:57 edo Exp $ */
 
 #include "srftoc.h"
 #include "msgtypesc.h"
@@ -16,7 +16,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+
 
 
 /*
@@ -45,7 +45,8 @@ extern double FATR TCGTIME_();
   to node *node.
   Specify *sync as 1 for (mostly) synchronous, 0 for asynchronous.
 */
-extern void SND_(long *type, void *buf, long *lenbuf, long *node, long *sync);
+extern void SND_();
+/*extern void SND_(long *type, void *buf, long *lenbuf, long *node, long *sync);*/
   
 /*
   receive a message of type *type in buffer buf, size of buf is *lenbuf
@@ -200,8 +201,62 @@ extern void PFILECOPY_(long *type, long *node0, char *filename);
 */
 extern long TCGREADY_();
 
-#ifdef __cplusplus
 }
+
+#else
+
+
+extern long NODEID_();
+
+extern long NNODES_();
+
+extern long MTIME_();
+
+extern double FATR TCGTIME_();
+
+extern void SND_();
+
+extern  void RCV_();
+
+extern long PROBE_();
+
+extern   void BRDCST_();
+
+extern  void DGOP_();
+extern  void IGOP_();
+
+extern void PBEGIN_();
+extern void ALT_PBEGIN_();
+
+extern void FATR PEND_();
+
+extern void SETDBG_();
+
+extern long NXTVAL_();
+
+extern void FATR LLOG_();
+
+extern  void SYNCH_();
+
+extern void FATR STATS_();
+
+extern void WAITCOM_();
+
+extern  void Error();
+#define ERROR_ Error
+
+extern double FATR DRAND48_();
+extern void FATR SRAND48_();
+
+extern long MDTOB_();
+extern long MITOB_();
+extern long MDTOI_();
+extern long MITOD_();
+
+extern void PFILECOPY_();
+
+extern long TCGREADY_();
+
 #endif
 
 /*
