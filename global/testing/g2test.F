@@ -172,6 +172,7 @@ c
 c
 c   print out values of a
 c
+#if 0
       do k = 0, nproc-1
         call ga_sync
         if (k.eq.me.and.has_data(me).and.maxval.lt.10000) then
@@ -186,6 +187,7 @@ c
       end do
   101 format(10x,10i5)
       call ffflush(6)
+#endif
 
 c      go to 122
       t1 = 0.0d00
@@ -237,6 +239,7 @@ c      go to 122
 
 c      go to 123
       t7 = 0.0d00
+      call ga_sync
       do i = 1, nloop
         start = util_timer()
         status = ga_update5_ghosts(g_a)
