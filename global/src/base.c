@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.29 2003-02-19 19:01:24 vinod Exp $ */
+/* $Id: base.c,v 1.30 2003-02-20 17:41:56 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -312,8 +312,8 @@ Integer  off_dbl, off_int, off_dcpl, off_flt,off_long;
 \*/
 void FATR  ga_initialize_()
 {
-Integer  i, j;
-int bytes, nproc, nnode, zero;
+Integer  i, j,nproc, nnode, zero;
+int bytes;
 
     if(GAinitialized) return;
 #ifdef GA_USE_VAMPIR
