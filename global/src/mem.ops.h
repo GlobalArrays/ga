@@ -175,7 +175,7 @@ DoublePrecision alpha, *a, *b;
       for(c=0;c<(cols);c++)\
            Accum((alpha), (B) + c*(bld), (A) + c*(ald), (rows));\
    }
-#elif defined(CRAY_T3D) || defined(SGI)
+#elif defined(CRAY_T3D)
 #  define accumulate(alpha, rows, cols, A, ald, B, bld) {\
    register Integer c,r;\
    if(rows< THRESH)\

@@ -1,5 +1,5 @@
       subroutine ga_diag_std(g_a, g_v, eval)
-C$Id: ga_diag.F,v 1.16 1995-09-06 23:35:00 d3h325 Exp $
+C$Id: ga_diag.F,v 1.17 1995-10-11 23:08:57 d3h325 Exp $
       implicit none
 #include "mafdecls.h"
 #include "global.fh"

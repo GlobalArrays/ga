@@ -19,6 +19,9 @@ ifeq ($(VERSION),SHMEM)
             GA_SYNC =  semaphores.o
        endif
      endif
+     ifeq ($(TARGET),SGITFP)
+            GA_SYNC =  sgi.locks.o
+     endif
 else
      ifeq ($(INTEL),YES)
             EXTRA = memcpy.i860.o
@@ -46,7 +49,14 @@ else
           GA_HANDLER = ga_handler.o
      endif
 endif
-GA_CORE = global.core.o global.util.o global.patch.o global.msg.o
+GA_CORE = global.core.o global.util.o global.patch.o global.msg.o \
+          global.server.o
+
+ifdef USE_MPI
+  GA_CORE += mpi.o
+else
+  GA_CORE += tcgmsg.o
+endif
 
 GA_OBJ = $(GA_CORE) $(GA_SYNC) $(GA_HANDLER) $(IPC)
 
@@ -73,12 +83,13 @@ GA_UTIL = ffflush.o ifill.o dfill.o ga_summarize.o hsort.scat.o global.ma.o\
           DP.o fops.2d.o
 
 
-$(GA_CORE)    : globalp.h global.h
-global.core.o : global.core.h message.h interrupt.h mem.ops.h
-global.msg.o  : message.h tcgmsg.h
-global.alg.o  : globalp.h global.h
-ga_handler.o  : interrupt.h message.h
-hsort.scat.o  : types.f2c.h
-semaphores.o  : semaphores.h
-shmalloc.o    : shmalloc.h
-global.h      : types.f2c.h cray.names.h
+$(GA_CORE)     : globalp.h global.h
+global.core.o  : global.core.h message.h interrupt.h mem.ops.h
+global.server.o: globalp.h message.h interrupt.h
+global.msg.o   : message.h globalp.h
+global.alg.o   : globalp.h global.h
+ga_handler.o   : interrupt.h message.h
+hsort.scat.o   : types.f2c.h
+semaphores.o   : semaphores.h
+shmalloc.o     : shmalloc.h
+global.h       : types.f2c.h cray.names.h

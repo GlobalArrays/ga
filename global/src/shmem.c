@@ -34,7 +34,7 @@
 
 extern void ga_error();
 
-#ifdef SUN
+#if defined(SUN) || defined(SOLARIS)
 #define MULTIPLE_REGIONS
 #endif
 
@@ -45,8 +45,8 @@ extern void ga_error();
 #include <errno.h>
 #include <stdio.h>
 
-#if !defined(SGI) && !defined(KSR) && !defined(DECOSF)
-extern char *shmat();
+#if !defined(SGI) && !defined(KSR) && !defined(DECOSF) && !defined(SOLARIS)
+  extern char *shmat();
 #endif
 
 
@@ -57,7 +57,7 @@ extern char *shmat();
  */
 #define _SHMMAX need to know the limits for this machine
 
-#ifdef SUN
+#if defined(SUN)||defined(SOLARIS)
 #  undef _SHMMAX
 #  define _SHMMAX (1024)  /* memory in KB */
 #elif defined(SGI) || defined(AIX)

@@ -136,6 +136,9 @@ distribute to other US Government contractors.
       ga_uses_ma        ... finds if memory in arrays comes from MA 
                             (memory allocator)
       ga_memory_limited ... finds if limits were set for memory usage in arrays
+      ga_proc_topology  ... finds block coordinates for the array section
+                            held by a processor
+      ga_list_nodeid    ... returns message-passing process id for GA processes
 
 
       Note that consistency is only guaranteed for
@@ -145,11 +148,11 @@ distribute to other US Government contractors.
           iii) Multiple disjoint put operations (as there is only one writer 
                for each element)
 
-      The application has to worry about everything else (usually
-      by appropriate insertion of ga_sync calls)
+      The application has to worry about everything else (usually by
+      appropriate insertion of ga_sync calls)
 
-
-  Status of current implementation (version 2.0)
+
+  Status of current implementation (version 2.1)
   --------------------------------
   
   There are two classes of platforms that GA work on: 
@@ -187,8 +190,31 @@ distribute to other US Government contractors.
      with the EUIH or MPL message passing library. 
 
 
+  Starting with version 2.1, Global Arrays works with either TCGMSG or
+  MPI message-passing librarries.  TCGMSG still is and going to be the
+  default library until MPI implementations mature. There are two
+  possible interfaces between GA and MPI:
+
+     1. TCGMSG emulation library, TCGMSG-MPI, that implements functionality
+        of TCGMSG using MPI and other techniques. In this mode, message-
+        passing library is initialized using TCGMSG PBEGIN(F) which
+        internally calls MPI_Initialize. In this mode, TCGMSG-MPI might
+        'steal' one process from the application to implement NXTVAL
+        operation. To enable this mode, define environmental variable
+        USE_MPI and MPI_LOC which should point to the location of the
+        MPI library and include directories. 
+
+     2. Direct MPI-GA interface. In this mode, GA program should contain 
+        MPI initialization calls instead PBEGIN(F).
+
+  In both the cases, GA programs are started with the mechanism that
+  any other MPI programs use on the given platform. In particular,
+  neither the TCGMSG parallel command nor .p file is used.
+
   Your program should look like
   -----------------------------
+
+  1. with TCGMSG or TCGMSG-MPI (GA-MPI interface 1) library:
 
   call pbeginf()                  ! start TCGMSG
   status = ma_init(..)            ! start memory allocator if required
@@ -200,6 +226,19 @@ distribute to other US Government contractors.
   call pend()                     ! tidy up tcgmsg
   stop                            ! exit program
 
+  2. with MPI  (GA-MPI interface 2) library:
+
+  call MPI_Initialize()           ! start MPI
+  status = ma_init(..)            ! start memory allocator if required
+  call ga_initialize()            ! start global arrays
+
+  .... do work
+
+  call ga_terminate()             ! tidy up global arrays
+  call MPI_Finalize()             ! tidy up MPI
+  stop                            ! exit program
+
+
   The ma_init call looks like
 
     status = ma_init(type, stack_size, heap_size)
@@ -209,8 +248,42 @@ distribute to other US Government contractors.
   allocate a global array of size N elements, you need to ensure that
   the call to ma_init gets at least N/(no. of GA processes) elements
   per process. 
+
+  Message-Passing in GA Programs
+  ------------------------------
 
+  There are two issues to be aware of when using message-passing in GA
+  programs:
 
+    1. Process count and numbering. In the network environment,
+       some message-passing processes are hiden from the application
+       when GA is initialized. This will cause that ga_nodeid() and
+       ga_nnodes() return values inconsistent with the process
+       rank/count values obtained from the message-passing library. The
+       GA routine ga_list_nodeid() could be used to transform GA
+       process ID/rank into the message-passing process ID/rank. In
+       addition, with MPI library, C-language routine
+       ga_mpi_communicator provides communicator for the GA processes.
+       This operation is unavailable if the original TCGMSG library is
+       used. ga_mpi_communicator cannot be called from Fortran since
+       there is no mechanism in MPI for passing handles between C and
+       Fortran. Contact MPI Forum for fixing this problem !
+
+    2. Synchronization. The current implementation of interrupt-receive
+       on the IBM SP requires that in order to avoid deadlock, GA application
+       must synchronize (ga_sync()) before and after message-passing 
+       communication calls. This means that GA and message-passing 
+       communication must be separated into different phases. 
+
+               ...
+           <GA communication phase>
+           ga_sync()
+           <message-passing phase>
+           ga_sync()
+           <GA communication phase>
+               ...
+        
+
   Prototypes of GA Subroutines and Functions
   ------------------------------------------
 
@@ -853,6 +926,18 @@ distribute to other US Government contractors.
       the calling processor.
 
       -------------------------------------------------------------------
+      subroutine ga_proc_topology(g_a, proc, prow, pcol)
+
+      integer g_a                         [input]
+      integer proc                        [input] 
+      integer prow, pcol                  [output]
+
+      Based on the distribution of g_a, determines block row and column
+      coordinates for the array section 'owned' by specified processor.
+      The numbering starts from 0. The value of -1 means that the processor
+      doesn't 'own' any section of g_a.
+
+      -------------------------------------------------------------------
       subroutine ga_print_patch(g_a,ilo,ihi,jlo,jhi,pretty)
       
       integer g_a                         [input]
@@ -929,8 +1014,23 @@ distribute to other US Government contractors.
       bitwise OR operation.
 
       -------------------------------------------------------------------
+      subroutine ga_list_nodeid(list, n)
+      integer n                [input]
+      integer list(n)          [output]
 
+      Returns message-passing process ID (rank in MPI) for the GA
+      processes in the range 0 .. n. For MPI, the ranks are in
+      MPI_COMM_WORLD.
 
+      -------------------------------------------------------------------
+      void ga_mpi_communicator(GA_COMM)
+      MPI_Comm *GA_COMM;       [output]
+
+      Available in C only if MPI is used. Returns communicator handle
+      for GA processes (group).
+
+      -------------------------------------------------------------------
+
    C language interface 
    --------------------
 
@@ -942,6 +1042,12 @@ distribute to other US Government contractors.
    example, ga_error, ga_check_handle or ga_inquire_name. The reason
    for having two separate versions is to avoid sometimes painful
    Fortran to C character string conversion.
+
+   For convenience purposes, starting with version 2.1, global.h header
+   file defines names for C routines as having GA_ prefix and no
+   underscore suffix, see testc.c or ga-mpi.c for examples. For the
+   debugging purpose, the programmer should be still aware of the
+   actual naming convention as described above.
 
    GA arguments are passed by pointers. For an example on how
    to use GAs in C programs, see implementation of GA operations in

@@ -12,8 +12,9 @@
 #define FALSE (logical) 0
 #define TRUE  (logical) 1
 
+#include "c.names.h"
 #ifdef CRAY_T3D
-#include "cray.names.h"
+#  include "cray.names.h"
 #endif
 
 
@@ -39,7 +40,6 @@ extern logical ga_locate_region_ ARGS_((Integer*, Integer*, Integer*, Integer*, 
 extern void  ga_acc_   ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               DoublePrecision*, Integer*, DoublePrecision* ));
 extern void ga_access_ ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Integer*, Integer* ));
 extern void ga_brdcst_ ARGS_((Integer*, Void*, Integer*, Integer* ));
-extern void ga_clean_mem ARGS_(( void));
 extern void ga_gather_ ARGS_((Integer*, Void*, Integer*, Integer*, Integer* ));
 extern void ga_dgop ARGS_((Integer, DoublePrecision*, Integer, char* ));
 extern void ga_distribution_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer*, Integer* ));
@@ -94,6 +94,9 @@ extern void ga_lu_solve_seq  ARGS_((char *, Integer *, Integer *));
 
 extern void ga_dgemm ARGS_((char *, char *, Integer *, Integer *, Integer *,                                DoublePrecision *, Integer *, Integer *,                                        DoublePrecision *, Integer *));
 extern void ga_diag_ ARGS_((Integer *, Integer *, Integer *,DoublePrecision *));
+extern void ga_proc_topology_ ARGS_((Integer *g_a, Integer *proc,  Integer *pr,\
+                                     Integer *pc));
+
 #undef ARGS_
 
 

@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.10 1995-08-31 21:53:21 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.11 1995-10-11 23:09:21 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -235,7 +235,7 @@ extern void Error();
     int level;
     char error_buffer[ERR_LEN];
 
-    ga_clean_mem(); 
+    ga_clean_resources(); 
 
     /* print GA names stack */
     sprintf(error_buffer,"%d:", ga_nodeid_());

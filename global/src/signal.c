@@ -28,6 +28,7 @@ extern void ga_error();
 
 extern int SR_caught_sigint;
 
+SigType (*SigChldOrig)(), (*SigIntOrig)(), (*SigHupOrig)();
 
 
 /*********************** SIGINT *************************************/
@@ -47,8 +48,17 @@ void TrapSigInt()
   manner not possible just by killing everyone
 */
 {
-  if ( signal(SIGINT, SigIntHandler) == SIG_ERR)
-    ga_error("TrapSigInt: error from signal setting SIGINT",(long) SIGINT);
+  if ( (SigIntOrig = signal(SIGINT, SigIntHandler)) == SIG_ERR)
+    ga_error("TrapSigInt: error from signal setting SIGINT",0);
+}
+
+void RestoreSigInt()
+/*
+ Restore the original signal handler
+*/
+{
+  if ( signal(SIGINT, SigIntOrig) == SIG_ERR)
+    ga_error("RestoreSigInt: error from restoring signal SIGINT",0);
 }
 
 
@@ -80,9 +90,18 @@ void TrapSigChld()
   Trap SIGCHLD so that can tell if children die unexpectedly.
 */
 {
-  if ( signal(SIGCHLD, SigChldHandler) == SIG_ERR)
-    ga_error("TrapSigChld: error from signal setting SIGCHLD",
-		  (long) SIGCHLD);
+  if ( (SigChldOrig = signal(SIGCHLD, SigChldHandler)) == SIG_ERR)
+    ga_error("TrapSigChld: error from signal setting SIGCHLD",0);
+}
+
+
+void RestoreSigChld(d)
+/*
+ Restore the original signal handler
+*/
+{
+  if ( signal(SIGCHLD, SigChldOrig) == SIG_ERR)
+    ga_error("RestoreSigChld: error from restoring signal SIGChld",0);
 }
 
 
@@ -104,8 +123,7 @@ void TrapSigBus()
 */
 {
   if ( signal(SIGBUS, SigBusHandler) == SIG_ERR)
-    ga_error("TrapSigBus: error from signal setting SIGBUS",
-                  (long) SIGBUS);
+    ga_error("TrapSigBus: error from signal setting SIGBUS", 0);
 }
 
 
@@ -127,8 +145,7 @@ void TrapSigFpe()
 */
 {
   if ( signal(SIGFPE, SigFpeHandler) == SIG_ERR)
-    ga_error("TrapSigFpe: error from signal setting SIGFPE",
-                  (long) SIGFPE);
+    ga_error("TrapSigFpe: error from signal setting SIGFPE", 0);
 }
 
 
@@ -150,8 +167,7 @@ void TrapSigIll()
 */
 {
   if ( signal(SIGILL, SigIllHandler) == SIG_ERR)
-    ga_error("TrapSigIll: error from signal setting SIGILL",
-                  (long) SIGILL);
+    ga_error("TrapSigIll: error from signal setting SIGILL", 0);
 }
 
 
@@ -173,8 +189,7 @@ void TrapSigSegv()
 */
 {
   if ( signal(SIGSEGV, SigSegvHandler) == SIG_ERR)
-    ga_error("TrapSigSegv: error from signal setting SIGSEGV",
-                  (long) SIGSEGV);
+    ga_error("TrapSigSegv: error from signal setting SIGSEGV", 0);
 }
 
 
@@ -196,8 +211,7 @@ void TrapSigSys()
 */
 {
   if ( signal(SIGSYS, SigSysHandler) == SIG_ERR)
-    ga_error("TrapSigSys: error from signal setting SIGSYS",
-                  (long) SIGSYS);
+    ga_error("TrapSigSys: error from signal setting SIGSYS", 0);
 }
 
 
@@ -218,8 +232,7 @@ void TrapSigTrap()
 */
 {
   if ( signal(SIGTRAP, SigTrapHandler) == SIG_ERR)
-    ga_error("TrapSigTrap: error from signal setting SIGTRAP",
-                  (long) SIGTRAP);
+    ga_error("TrapSigTrap: error from signal setting SIGTRAP", 0);
 }
 
 
@@ -239,9 +252,18 @@ void TrapSigHup()
   Trap SIGHUP
 */
 {
-  if ( signal(SIGHUP, SigHupHandler) == SIG_ERR)
-    ga_error("TrapSigHup: error from signal setting SIGHUP",
-                  (long) SIGHUP);
+  if ( (SigHupOrig = signal(SIGHUP, SigHupHandler)) == SIG_ERR)
+    ga_error("TrapSigHup: error from signal setting SIGHUP", 0);
+}
+
+
+void RestoreSigHup()
+/*
+ Restore the original signal handler
+*/
+{
+  if ( signal(SIGHUP, SigHupOrig) == SIG_ERR)
+    ga_error("RestoreSigHUP: error from restoring signal SIGHUP",0);
 }
 
 
@@ -262,8 +284,7 @@ void TrapSigTerm()
 */
 {
   if ( signal(SIGTERM, SigTermHandler) == SIG_ERR)
-    ga_error("TrapSigTerm: error from signal setting SIGTERM",
-                  (long) SIGTERM);
+    ga_error("TrapSigTerm: error from signal setting SIGTERM", 0);
 }
 
 
@@ -283,6 +304,5 @@ void TrapSigIot()
 */
 {
       if ( signal(SIGIOT, SigIotHandler) == SIG_ERR)
-          ga_error("TrapSigIot: error from signal setting SIGIOT",
-                    (long) SIGIOT);
+          ga_error("TrapSigIot: error from signal setting SIGIOT", 0);
 }

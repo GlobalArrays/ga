@@ -13,12 +13,21 @@
 
        LIBS = ../libglobal.a \
  	      ../../ma/libma.a
-       LIBCOM = ../../tcgmsg/ipcv4.0/libtcgmsg.a 
        BLAS = -lblas
+
+ifneq ($(MSG_COMMS),MPI)
+       LIBCOM = ../../tcgmsg/ipcv4.0/libtcgmsg.a 
+endif
 
 #................................ SUN ..........................................
 ifeq ($(TARGET),SUN)
        BLAS = ../../lapack_blas/libblas.a
+       MPI_DEV = sun4/ch_p4
+endif
+ifeq ($(TARGET),SOLARIS)
+       BLAS = ../../lapack_blas/libblas.a
+       EXTRA_LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
+       MPI_DEV = solaris/ch_shmem
 endif
 #................................ DEC ..........................................
 ifeq ($(TARGET),DECOSF)
@@ -28,9 +37,10 @@ endif
 #
 ifeq ($(TARGET),CRAY-T3D)
 #
-
-       LIBCOM = ../../tcgmsg/ipcv5.0/libtcgmsg.a /mpp/lib/old/libsma.a
-#      LIBCOM = ../../tcgmsg/ipcv5.0/libtcgmsg.a
+# 
+#      LIBCOM = ../../tcgmsg/ipcv5.0/libtcgmsg.a /mpp/lib/old/libsma.a
+       LIBCOM = ../../tcgmsg/ipcv5.0/libtcgmsg.a
+       MPI_DEV = cray_t3d/t3d
        BLAS=
 endif
 #................................ KSR ......................................
@@ -47,7 +57,7 @@ ifeq ($(TARGET),KSR)
 #    LIBCOM = $(SRC)/tcgmsg/ipcv4.0/libtcgmsg.a
 
        BLAS  = -lksrblas
-     LIBCOM += -lrpc -para
+ EXTRA_LIBS += -lrpc -para
 endif
 #................................ Intel .....................................
 ifeq ($(INTEL),YES)
@@ -56,11 +66,13 @@ ifeq ($(INTEL),YES)
 #
 #................................ PARAGON ...................................
 #
+       CLIB = -lm
 ifeq ($(TARGET),PARAGON)
 #
-       LIBS += -nx 
+       EXTRA_LIBS = -nx 
+       MPI_DEV = paragon/ch_nx
 else
-       LIBS += -node 
+       EXTRA_LIBS = -node 
 endif
        BLAS  = -lkmath
 endif
@@ -69,21 +81,32 @@ endif
 ifeq ($(TARGET),SGITFP)
 #
        BLAS = ../../lapack_blas/libblas.a
+       MPI_DEV = IRIX/ch_shmem
 endif
 #.................................. SP1 ....................................
 #
 ifeq ($(TARGET),SP1)
-#
-# IBM SP1 under EUIH or MPL 
-#
-ifdef EUIH
-       LIBS += -bnso -bI:/lib/syscalls.exp -bI:$(EUIH)/eui.exp -e main
+       MPI_DEV = rs6000/ch_eui
+       BLAS += ../../lapack_blas/libblas.a
 endif
+#...........................................................................
+ifeq ($(TARGET),IBM)
+       MPI_DEV = rs6000/ch_p4
+       BLAS += ../../lapack_blas/libblas.a
 endif
-
 #...........................................................................
 
 LIBS += ../../lapack_blas/liblapack.a $(BLAS)
+
+ifdef USE_MPI
+   ifndef MPI_LOC
+      MPI_LOC='YOU MUST DEFINE MPI_LOC'
+   endif
+       LIBCOM = ../../tcgmsg/ipcv4.0/libtcgmsg.a 
+   LIBCOM = ../../tcgmsg-mpi/libtcgmsg.a $(MPI_LOC)/lib/$(MPI_DEV)/libmpi.a
+endif
+
+LIBCOM += $(EXTRA_LIBS)
 
 ifeq (LU_SOLVE, PAR)
   SCALAPACK = $(SRC1)/scalapack/scalapack.a $(SRC1)/scalapack/pbblas.a\

@@ -58,5 +58,7 @@ extern int  GA_stack_size;
 
 extern void f2cstring    ARGS_((char*, Integer, char*, Integer));
 extern void c2fstring    ARGS_(( char*, char*, Integer));
+extern void ga_clean_resources ARGS_(( void));
+
 
 #undef ARGS_

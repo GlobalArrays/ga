@@ -1,7 +1,7 @@
 /*Wed Jan 25 10:25:49 PST 1995*/
   
-#ifdef SUN
-#  define volatile   
+#if !defined(__STDC__) || !defined(__cplusplus)
+#  define volatile
 #endif
 
 #ifdef KSR
@@ -125,8 +125,8 @@ int  GA_stack_size=0;
 /**************** Shared Memory and Mutual Exclusion Co.  **************/
 #ifdef SYSV
        /* SHARED MEMORY */
-       PRIVATE static  volatile int    barrier_size;
-       PRIVATE static  volatile int    *barrier, *barrier1;
+       PRIVATE volatile int    barrier_size;
+       PRIVATE volatile int    *Barrier, *Barrier1;
        PRIVATE static  long            shmSIZE, shmID;
        PRIVATE static  DoublePrecision *shmBUF;
 #      ifdef KSR
@@ -138,6 +138,15 @@ int  GA_stack_size=0;
 #          define UNLOCK(g_a, proc, x)    _rsp(GA[GA_OFFSET + g_a].ptr[(proc)])
 #          define UNALIGNED(x)    (((unsigned long) (x)) % sizeof(long))
            typedef __align128 unsigned char subpage[128];
+#      elif defined(SGIUS)
+#          include "sgi.locks.h"
+           long   lockID;
+#          define LOCK(g_a,proc, x)    SGI_LOCK((proc)-cluster_master)
+#          define UNLOCK(g_a,proc,x) SGI_UNLOCK((proc)-cluster_master)
+#          define MUTEX cluster_nodes
+           /* P & V compatible with binary sem ops */
+#          define P(s)  SGI_LOCK((s))
+#          define V(s)  SGI_UNLOCK((s)) 
 #      else
            /* define LOCK OPERATIONS using SYSV semaphores */
 #          include "semaphores.h"

@@ -42,6 +42,9 @@ $(LIBRARY):  $(OBJ) $(EXTRA)
 	$(RM) -f $@
 	$(AR) $(ARFLAGS) $@ $(OBJ) $(EXTRA) 
 	$(RANLIB) $@
+	@echo
+	@echo libglobal.a is built for $(TARGET)
+	@echo
 
 $(GA_SYNC): $(GA_SYNC:.o=.c)
 	cc -g $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) -c  $(GA_SYNC:.o=.c)

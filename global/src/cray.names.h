@@ -1,13 +1,11 @@
-/*$Id: cray.names.h,v 1.9 1995-05-27 20:24:23 gg502 Exp $*/
+/*$Id: cray.names.h,v 1.10 1995-10-11 23:08:51 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
 #define  ga_check_handle_          GA_CHECK_HANDLE
 #define  ga_compare_distr_         GA_COMPARE_DISTR
 #define  ga_copy_                  GA_COPY
-#define  ga_copy_from_patch_       GA_COPY_FROM_PATCH
 #define  ga_copy_patch_            GA_COPY_PATCH
-#define  ga_copy_to_patch_         GA_COPY_TO_PATCH
 #define  ga_create_                GA_CREATE
 #define  ga_create_irreg_          GA_CREATE_IRREG
 #define  ga_dadd_                  GA_DADD
@@ -27,7 +25,6 @@
 #define  ga_get_                   GA_GET
 #define  ga_ifill_patch_           GA_IFILL_PATCH
 #define  ga_igop_                  GA_IGOP
-#define  ga_init_handler_          GA_INIT_HANDLER
 #define  ga_initialize_            GA_INITIALIZE
 #define  ga_initialize_ltd_        GA_INITIALIZE_LTD
 #define  ga_inquire_               GA_INQUIRE
@@ -36,7 +33,6 @@
 #define  ga_list_nodeid_           GA_LIST_NODEID
 #define  ga_locate_                GA_LOCATE
 #define  ga_locate_region_         GA_LOCATE_REGION
-#define  ga_mask_                  GA_MASK
 #define  ga_matmul_patch_          GA_MATMUL_PATCH
 #define  ga_memory_limited_        GA_MEMORY_LIMITED
 #define  ga_memory_avail_          GA_MEMORY_AVAIL
@@ -58,6 +54,7 @@
 #define  ga_verify_handle_         GA_VERIFY_HANDLE
 #define  ga_copy_patch_dp_         GA_COPY_PATCH_DP
 #define  ga_ddot_patch_dp_         GA_DDOT_PATCH_DP
+#define  ga_proc_topology_         GA_PROC_TOPOLOGY
 
 #define  synch_                    SYNCH 
 #define  nnodes_                   NNODES 

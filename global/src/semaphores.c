@@ -1,5 +1,6 @@
 #include "semaphores.h"
 #include <stdio.h>
+#include "types.f2c.h"
 
 int num_sem_alloc=0;
 void perror();
@@ -17,12 +18,13 @@ int semaphoreID;
 int SemGet(num_sem)
     int num_sem;
 {
-  long nodeid_();
+  Integer ga_msg_nodeid_();
   void ga_error();
 
   semaphoreID = semget(IPC_PRIVATE,num_sem,0600);
   if(semaphoreID<0){
-    fprintf(stderr," %ld SemGet failed \nsuggestions to fix the problem: \n", nodeid_());
+    fprintf(stderr," %ld SemGet failed \nsuggestions to fix the problem: \n",
+            ga_msg_nodeid_());
     fprintf(stderr," 1. run ipcs and ipcrm -s commands to clean semaphore ids\n");
     fprintf(stderr," 2. verify if constant SEMMSL defined in file semaphore.h is set correctly for your system\n");
        sleep(1);

@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.12 1995-08-31 21:53:15 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.13 1995-10-11 23:09:03 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -30,7 +30,7 @@
  * distribute to other US Government contractors.
  */
 
-
+ 
 #include <stdio.h>
 #include "global.h"
 #include "globalp.h"
@@ -44,31 +44,33 @@
 
 
 
+/* need to move these variables outside gaCentralBarrier() so 
+ * that SGI compiler will not break (overoptimize) the code 
+ */
+volatile int local_flag=0;
+volatile int local_barrier, local_barrier1;
 
 /*\ central barrier algorithm 
 \*/
 void gaCentralBarrier()
 {
 #if (defined(SYSV) && !defined(KSR))
-      static int local_flag=0;
-      volatile int local_barrier, local_barrier1;
-
       if(cluster_compute_nodes == 1)return;
       local_flag = 1 - local_flag;
       P(MUTEX);
-         (*barrier) ++;
-         local_barrier = *barrier;
-         if(local_barrier==barrier_size) *barrier  = 0;
+         (*Barrier) ++;
+         local_barrier = *Barrier;
+         if(local_barrier==barrier_size) *Barrier  = 0;
       V(MUTEX);
  
       if(local_barrier==barrier_size){
-                /*LOCK(barrier1);*/
-                  *barrier1 = local_flag;
-                /* UNLOCK(barrier1);*/
+                /*LOCK(Barrier1);*/
+                  *Barrier1 = local_flag;
+                /* UNLOCK(Barrier1);*/
       }else do{
-                /*LOCK(barrier1);*/
-                   local_barrier1 = *barrier1;
-                /*UNLOCK(barrier1);*/
+                /*LOCK(Barrier1);*/
+                   local_barrier1 = *Barrier1;
+                /*UNLOCK(Barrier1);*/
            }while (local_barrier1 != local_flag);
 #endif
 }
@@ -86,11 +88,11 @@ void   ga_wait_server();
        if(ClusterMode) ga_wait_server();
        gaCentralBarrier();
 #elif  defined(CRAY_T3D)
-       barrier();
+       Barrier();
 #elif  defined(KSR)
        KSRbarrier();
 #else  
-       { Integer stype = GA_TYPE_SYN; synch_(&stype); } /* TCGMSG */
+       ga_msg_sync_();
 #      ifdef PARAGON
              ga_wait_server();  /* synchronize data server thread */
 #      endif
@@ -111,12 +113,16 @@ Integer GAsizeof(type)
 
 /*\ FINAL CLEANUP of shmem when terminating
 \*/
-void ga_clean_mem()
+void ga_clean_resources()
 {                  
 #ifdef SYSV 
     if(GAinitialized){
 #      ifndef KSR
-          if(GAnproc>1) SemDel();
+#         if defined(SGIUS)
+             if(GAnproc>1) DeleteLocks(lockID);
+#         else
+             if(GAnproc>1) SemDel();
+#         endif
 #      endif
        if(!(USE_MALLOC) || GAnproc >1)(void)Delete_All_Regions(); 
      }
@@ -208,6 +214,19 @@ void TrapSigChld(), TrapSigInt(), TrapSigHup();
 #endif
 }
 
+/*\  parent process restores the original handlers 
+\*/
+void gaParentRestoreSignals()
+{
+#ifdef SYSV
+void RestoreSigChld(), RestoreSigInt(), RestoreSigHup();
+     RestoreSigChld();
+     RestoreSigInt();
+     RestoreSigHup();
+#endif
+}
+
+
 #if defined(SUN) || defined(KSR)
     int random();
     int rand();
@@ -279,7 +298,7 @@ void gaPermuteProcList2(nproc)
 \*/
 void ga_initialize_()
 {
-Integer nnodes_(), nodeid_(), type, i;
+Integer type, i;
 Integer buf_size, bar_size;
 long *msg_buf;
 
@@ -305,8 +324,8 @@ long *msg_buf;
         *  .cluster master participates in inter-cluster collective ops
         *   and contacts data server to create or destroy arrays
         */ 
-       GAnproc = (Integer)nnodes_() - num_clusters;
-       GAme = (Integer)nodeid_();
+       GAnproc = ga_msg_nnodes_() - num_clusters;
+       GAme = ga_msg_nodeid_();
        GAmaster= cluster_master - cluster_id; 
 
        /* data servers have their message-passing node id negated */
@@ -314,11 +333,11 @@ long *msg_buf;
           else GAme -= cluster_id;
     }else{
        GAmaster= 0;
-       GAnproc = (Integer)nnodes_();
-       GAme = (Integer)nodeid_();
+       GAnproc = (Integer)ga_msg_nnodes_();
+       GAme = (Integer)ga_msg_nodeid_();
     }
-    MPme= (Integer)nodeid_();
-    MPnproc = (Integer)nnodes_();
+    MPme= ga_msg_nodeid_();
+    MPnproc = ga_msg_nnodes_();
 
     if(GAnproc > MAX_NPROC && MPme==0){
       fprintf(stderr,"current GA setup is for up to %d processors\n",MAX_NPROC);
@@ -351,21 +370,27 @@ long *msg_buf;
 
         /* allocate shared memory for communication buffer and barrier  */
         if(GAnproc == 1 && USE_MALLOC){ 
-           barrier  = (int*) malloc((int)shmSIZE);/*use malloc for single proc*/
+           Barrier  = (int*) malloc((int)shmSIZE);/*use malloc for single proc*/
         }else
-           barrier  = (int*) Create_Shared_Region(msg_buf+1,&shmSIZE,msg_buf);
+           Barrier  = (int*) Create_Shared_Region(msg_buf+1,&shmSIZE,msg_buf);
 
+/*        fprintf(stderr,"Barrier=%ld\n",(long)Barrier);*/
+        
         /* Now, set up shmem communication buffer */
-        shmBUF = (DoublePrecision*)( bar_size + (char *)barrier);
-        NumRecReq = (Integer*)( bar_size + buf_size +(char *)barrier );
+        shmBUF = (DoublePrecision*)( bar_size + (char *)Barrier);
+        NumRecReq = (Integer*)( bar_size + buf_size +(char *)Barrier );
         *NumRecReq= 0;
 
-#       ifndef KSR 
+#       if !defined(KSR)
            if(GAnproc > 1 ){
-              /* allocate and intialize semaphores */
-              semaphoreID = SemGet(NUM_SEM);
-              SemInit(ALL_SEMS,1);
-              *((int*)shmBUF) = semaphoreID;
+#             if defined(SGIUS) 
+                 CreateInitLocks(lock_array, cluster_nodes+1, &lockID); 
+#             else
+                 /* allocate and intialize semaphores */
+                 semaphoreID = SemGet(NUM_SEM);
+                 SemInit(ALL_SEMS,1);
+                 *((int*)shmBUF) = semaphoreID;
+#             endif
            }
 #       endif
     }
@@ -377,28 +402,41 @@ long *msg_buf;
     ga_brdcst_clust(type, (char*) msg_buf, SHMID_BUF_SIZE, cluster_master, 
                     ALL_CLUST_GRP);
     if(DEBUG) fprintf(stderr,"GAme=%d\n",GAme);
+#   if defined(SGIUS) 
+       ga_brdcst_clust(type, (char*) &lockID, sizeof(long), cluster_master, 
+                       ALL_CLUST_GRP);
+       ga_brdcst_clust(type, (char*)lock_array, 
+                      (cluster_nodes+1)*sizeof(ulock_t *), cluster_master, 
+                       ALL_CLUST_GRP);
+#   endif
 
     if(MPme != cluster_master){
         /* remaining processes atach to the shared memory */
-        barrier  = (int *) Attach_Shared_Region(msg_buf+1,shmSIZE, msg_buf);
+        Barrier  = (int *) Attach_Shared_Region(msg_buf+1,shmSIZE, msg_buf);
 
         /* Now, set up shmem communication buffer */
-        shmBUF = (DoublePrecision*)( bar_size + (char *)barrier);
-        NumRecReq = (Integer*)( bar_size + buf_size +(char *)barrier );
+        shmBUF = (DoublePrecision*)( bar_size + (char *)Barrier);
+        NumRecReq = (Integer*)( bar_size + buf_size +(char *)Barrier );
 
-#       ifndef KSR
-               /* read semaphore_id from shmem buffer */
-               semaphoreID = *((int*)shmBUF);
+#       if !defined(KSR)
+           if(GAnproc > 1 ){
+#             if defined(SGIUS)
+                 InitLocks(lock_array, cluster_nodes+1, lockID); 
+#             else
+                 /* read semaphore_id from shmem buffer */
+                 semaphoreID = *((int*)shmBUF);
+#             endif
+           }
 #       endif
     }
 
 
     /* initialize the barrier for nproc processes  */
 #   ifdef KSR
-       KSRbarrier_init((int)cluster_compute_nodes, (int)GAme, 6,(char*)barrier);
+       KSRbarrier_init((int)cluster_compute_nodes, (int)GAme, 6,(char*)Barrier);
 #   else
        barrier_size = cluster_compute_nodes;
-       barrier1 = barrier +1; /*next element */
+       Barrier1 = Barrier +1; /*next element */
 #   endif
     /*..................................................................*/
 #endif
@@ -440,12 +478,13 @@ long *msg_buf;
     }
 #   endif
 
-    /* synchronize, and then we are ready to do some real work */
+    /* synchronize, and then we are ready to do real work */
 #   ifdef KSR
-      { Integer tsyn = GA_TYPE_SYN; synch_(&tsyn); }
+      ga_msg_sync_(); /* barrier not ready yet */
 #   else
       ga_sync_();
 #   endif
+/*        fprintf(stderr,"__Barrier=%ld\n",(long)Barrier);*/
 }
 
 
@@ -1087,7 +1126,7 @@ Integer i, handle;
 
 #   ifdef SYSV
       if(GAnproc == 1 && USE_MALLOC){
-         free((char*)barrier);
+         free((char*)Barrier);
          GAinitialized = 0;
          return;
       }
@@ -1096,7 +1135,8 @@ Integer i, handle;
     if(MPme == cluster_master){
        if(ClusterMode) 
              ga_snd_req(0, 0, 0, 0, 0, 0, 0, GA_OP_END, GAme, DataServer(GAme));
-         ga_clean_mem();
+         ga_clean_resources();
+         gaParentRestoreSignals();
     }
     GAinitialized = 0;
 }   
@@ -1363,6 +1403,7 @@ void ga_get_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
 char     *ptr_src, *ptr_dst;
 Integer  type, rows, cols, len, to, from, msglen=0;
 int      need_copy;
+msgid_t  msgid;
 
    if(proc<0)ga_error(" get_remote: invalid process ",proc);
    type = GA[GA_OFFSET + g_a].type;
@@ -1379,14 +1420,16 @@ int      need_copy;
       ptr_src = (char *)buf + GAsizeofM(type)* offset;/*arrives to user buffer*/
 
 #  if defined(NX) || defined(SP1)
-      ga_rcv_msg(GA_TYPE_GET, ptr_src, msglen, &len, to,&from,ASYNC);
+      len = msglen;
+      msgid = ga_msg_ircv(GA_TYPE_GET, ptr_src, msglen, to);
       ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_GET,proc,to);
-      waitcom_(&to); /* TCGMSG */
+      ga_msg_wait(msgid, &len, &from); 
 #  else
       ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_GET,proc,to);
-      ga_rcv_msg(GA_TYPE_GET, ptr_src, msglen, &len, to, &from,SYNC);
+      ga_msg_rcv(GA_TYPE_GET, ptr_src, msglen, &len, to, &from);
 #  endif
 
+   if(len != msglen) ga_error(" get_remote: wrong data length",len); 
    if(need_copy){
       /* Copy patch [ilo:ihi, jlo:jhi] from MessageBuffer */
       ptr_dst = (char *)buf  + GAsizeofM(type)* offset;
@@ -1789,6 +1832,26 @@ register Integer iproc, jproc, loc, ga_handle;
 
 
 
+/*\ RETURN COORDINATES OF ARRAY BLOCK HELD BY A PROCESSOR
+\*/
+void ga_proc_topology_(g_a, proc, pr, pc)
+   Integer *g_a, *proc, *pr, *pc;
+{
+register Integer ga_handle;
+
+   ga_check_handleM(g_a, "ga_proc_topology");
+
+   ga_handle = (GA_OFFSET + *g_a);
+
+   if(*proc > GA[ga_handle].nblock[0] * GA[ga_handle].nblock[1] - 1 || *proc<0){
+         *pc = -1; *pr = -1;
+   }else{
+         *pc = (*proc)/GA[ga_handle].nblock[0];
+         *pr = (*proc)%GA[ga_handle].nblock[0];
+   }
+}
+
+
 
 /*\ finds block i that 'elem' belongs to: map[i]>= elem < map[i+1]
 \*/
@@ -2116,7 +2179,8 @@ void ga_gather_remote(g_a, v, i, j, nv, proc)
      Void *v;
 {
 register Integer item_size, offset, nbytes;
-Integer  len, from, to,  msglen;
+Integer  len, from, to,  msglen, handle = GA_OFFSET + g_a;
+msgid_t  msgid;
 
   if (nv < 1) return;
   if(proc<0)ga_error(" gather_remote: invalid process ",proc);
@@ -2131,15 +2195,18 @@ Integer  len, from, to,  msglen;
   Copy((char*)j, MessageSnd->buffer + offset, nbytes);
 
   msglen = offset + nbytes; 
+  nbytes = item_size * nv; /* data to receive */
   to = DataServer(proc);
 # if defined(NX) || defined(SP1)
-     ga_rcv_msg(GA_TYPE_DGT, v, item_size * nv, &len, to, &from, ASYNC);
-     ga_snd_req(g_a, nv, 0,0,0, msglen, GA[GA_OFFSET + g_a].type, GA_OP_DGT, proc, to);
-     waitcom_(&to);
+     len = nbytes;
+     msgid = ga_msg_ircv(GA_TYPE_DGT, v, nbytes, to);
+     ga_snd_req(g_a, nv, 0,0,0, msglen, GA[handle].type, GA_OP_DGT, proc, to);
+     ga_msg_wait(msgid, &len, &from); 
 # else
-     ga_snd_req(g_a, nv, 0, 0, 0, msglen, GA[GA_OFFSET + g_a].type, GA_OP_DGT, proc, to);
-     ga_rcv_msg(GA_TYPE_DGT, v, item_size * nv, &len, to, &from, SYNC);
+     ga_snd_req(g_a, nv, 0, 0, 0, msglen, GA[handle].type, GA_OP_DGT, proc, to);
+     ga_msg_rcv(GA_TYPE_DGT, v, nbytes, &len, to, &from);
 # endif
+  if(len != nbytes) ga_error(" gather_remote: wrong data length",len); 
 }
 
 
@@ -2255,19 +2322,22 @@ Integer *ptr, ldp, value;
 Integer ga_read_inc_remote(g_a, i, j, inc, proc)
         Integer g_a, i, j, inc, proc;
 {
-Integer len, from, to, value;
+Integer len, from, to, value, handle = GA_OFFSET + g_a, bytes=sizeof(value);
+msgid_t  msgid;
 
    if(proc<0)ga_error(" read_inc_remote: invalid process ",proc);
 
    to = DataServer(proc);
 #  if defined(NX) || defined(SP1)
-      ga_rcv_msg(GA_TYPE_RDI, &value, sizeof(value), &len, to, &from, ASYNC);
-      ga_snd_req(g_a, i, inc, j, 0, sizeof(value), GA[GA_OFFSET + g_a].type, GA_OP_RDI,proc,  to);
-      waitcom_(&to); /* TCGMSG */
+      len = bytes;
+      msgid = ga_msg_ircv(GA_TYPE_RDI, &value, bytes, to);
+      ga_snd_req(g_a, i, inc, j, 0, bytes, GA[handle].type, GA_OP_RDI,proc, to);
+      ga_msg_wait(msgid, &len, &from);
 #  else
-      ga_snd_req(g_a, i, inc, j, 0, sizeof(value), GA[GA_OFFSET + g_a].type, GA_OP_RDI,proc,  to);
-      ga_rcv_msg(GA_TYPE_RDI, (char*)&value,sizeof(value),&len,to,&from, SYNC);
+      ga_snd_req(g_a, i, inc, j, 0, bytes, GA[handle].type, GA_OP_RDI,proc, to);
+      ga_msg_rcv(GA_TYPE_RDI, (char*)&value, bytes, &len, to, &from);
 #  endif
+   if(len != bytes) ga_error(" read_inc_remote: wrong data length",len); 
    return(value);
 }
 

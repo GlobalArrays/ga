@@ -1,14 +1,19 @@
 # Makefile.h, Wed Jan 25 13:01:15 PST 1995 
 #
 # Define TARGET to be the machine you wish to build for
-# (one of SUN, SGI, SGITFP, IBM, KSR, SP1, CRAY-T3D, IPSC, DELTA, PARAGON)
+# (one of SUN,SOLARIS,SGI,SGITFP,IBM,KSR,SP1,CRAY-T3D,IPSC,DELTA,PARAGON,DECOSF)
 #
-# Define VERSION of memory (SHMEM/DISMEM) - or accept machine default
+# Specify message-passing library to be used with GA. The current choices
+# are: TCGMSG (default) or MPI. For MPI, please refer to global.doc for 
+# configuration info.
+# MSG_COMMS = MPI
 #
 # common definitions (overwritten later if required)
 #
            FC = f77
            CC = cc
+          FLD = $(FC)
+          CLD = $(FLD)
           CXX = CC
          FOPT = -O
          COPT = -O
@@ -48,6 +53,19 @@ ifeq ($(TARGET),SUN)
 endif
 
 #
+#.............................. SOLARIS ....................................
+#
+ifeq ($(TARGET),SOLARIS)
+#
+# Sun running Solaris
+#
+     WARNINGS = -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual \
+                -Wwrite-strings
+ GLOB_DEFINES = -DSOLARIS
+     FLD_REN = -xs
+endif
+
+#
 #................................ DEC ALPHA ................................
 #
 ifeq ($(TARGET),DECOSF)
@@ -75,7 +93,7 @@ ifeq ($(TARGET),CRAY-T3D)
          FOPT = -O1
  endif
  ifeq ($(COPT),-O)
-         COPT = -O3
+         COPT = -O2
  endif
      FOPT_REN = -Ccray-t3d -Wf-dp
      COPT_REN = -h inline3 
@@ -120,7 +138,7 @@ ifeq ($(TARGET),SGITFP)
  endif
         CDEFS = -DEXT_INT
      FOPT_REN = -i8 -align64 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000 
- GLOB_DEFINES = -DSGI -DSGI64
+ GLOB_DEFINES = -DSGI -DSGI64 -DSGIUS
 endif
 
 #............................. IPSC/DELTA/PARAGON .............................
@@ -168,9 +186,10 @@ ifeq ($(INTEL),YES)
            CC = icc
            AR = ar860
            AS = as860
+          CLD = $(CC)
        P_FILE = NO
- ifeq ($(COPT),-O)
-         COPT = -O3
+ ifeq ($(FOPT),-O)
+         FOPT = -O2
  endif
      FOPT_REN += -Knoieee -Mquad -Mreentrant -Mrecursive
      COPT_REN += -Knoieee -Mquad -Mreentrant
@@ -231,13 +250,19 @@ endif
 ifeq ($(VERSION),SHMEM)
  GLOB_DEFINES += -DSHMEM
 endif
+ifdef USE_MPI
+ GLOB_INCLUDES += -I$(MPI_LOC)/include 
+ ifeq ($(MSG_COMMS),MPI)
+    GLOB_DEFINES += -DMPI
+ endif
+endif
 
       DEFINES = $(GLOB_DEFINES) $(LOC_DEFINES) $(DEF_TRACE)
      INCLUDES = $(GLOB_INCLUDES) $(LOC_INCLUDES)
        FFLAGS = $(FOPT) $(FOPT_REN) $(INCLUDES) $(DEFINES)
        CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS)
-       FLDOPT = $(FOPT) $(FLD_REN)
-       CLDOPT = $(COPT) $(CLD_REN)
+       FLDOPT = $(FOPT) $(FOPT_REN) $(FLD_REN)
+       CLDOPT = $(COPT) $(COPT_REN) $(CLD_REN)
      CXXFLAGS = $(CFLAGS)
 
 ifeq ($(EXPLICITF),TRUE)

@@ -9,13 +9,15 @@
 #                         matrix multiply, and symmetrization 
 #      "make perform.x"   to create a program testing performance of GA
 #                         primitives: get, put & accumulate,
+#      "make testc.x"     to create a C test program for GA 
+#      "make ga-mpi.x"    to create a C test program for GA that demonstrates
+#                         the interface to MPI 
 #      "make clean"       clean
 #
+# All programs are built in ./testing subdirectory. 
 # TARGET might be one of:
 #      SUN, SGI, SGITFP, IBM, DECOSF, KSR, SP1, CRAY-T3D, IPSC, DELTA, PARAGON
 #
-# VERSION might be: DISMEM or SHMEM. 
-#         If not specified, machine specific default is used.  
 #........................................................................
 
 
@@ -39,7 +41,8 @@ endif
 
 
    LIBRARY = libglobal.a
-   TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x perform.x
+   TESTS   = test.x testeig.x jacobi.x testsolve.x patch.x perform.x testc.x\
+             ga-mpi.x
 
 
 export DIAG TARGET VERSION LU_SOLVE GA_TRACE

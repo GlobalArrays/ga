@@ -39,7 +39,7 @@ void ga_init_handler(char *buffer, long lenbuf) /*Also called in ga_initialize*/
 static long  requesting_node;
 static long  msgid; 
 static long  have_wildcards=0; 
-static long  dontcare, allmsg, nulltask,allgrp; /*values of MPL/EUIH wildcards*/
+int    dontcare, allmsg, nulltask,allgrp; /*values of MPL/EUIH wildcards*/
 
 
 /*\ gets values of EUI wildcards
