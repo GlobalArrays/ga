@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.29 2003-01-07 21:51:22 vinod Exp $ */
+/* $Id: pack.c,v 1.30 2003-03-06 06:00:36 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -94,6 +94,14 @@ int armci_pack_strided(int op, void* scale, int proc,
     else 
 	if(stride_levels || ACC(op))bufsize=MSG_BUFLEN_SMALL-PAGE_SIZE;
 #  endif
+#endif
+
+#if !defined(LAPI) || defined(CLUSTER)
+    /*we cant assume that the entire available buffer will be used for data, 
+      fact that the header and descriptor also go in the same buffer should be
+      considered while packing.
+    */
+    bufsize-=(sizeof(request_header_t)+(MAX_STRIDE_LEVEL+4)*sizeof(int)+2*sizeof(void *));
 #endif
 
 #ifdef BALANCE_FACTOR
