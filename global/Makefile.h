@@ -160,7 +160,7 @@ ifeq ($(TARGET),CRAY-T3D)
      FOPT_REN = -Ccray-t3d -Wf-dp
       FLD_REN = -Wl"-Drdahead=on -Ddalign=64"
       CLD_REN = -Wl"-Drdahead=on -Ddalign=64"
- GLOB_DEFINES = -DCRAY_T3D
+ GLOB_DEFINES = -DCRAY_T3D -DFIX_HEAP
 #       CDEFS = -DFLUSHCACHE
     EXPLICITF = TRUE
 endif
@@ -181,7 +181,7 @@ endif
 #
 ifeq ($(TARGET),SGI)
 #
-# SGI running IRIX
+# SGI running IRIX 5.X
 #
 #
       FLD_REN = -v -Wl,-U
@@ -192,7 +192,7 @@ endif
 #
 ifeq ($(TARGET),SGITFP)
 #
-# SGI running IRIX6.0
+# SGI running IRIX 6.X
 #
 #
  ifeq ($(FOPT),-O)
@@ -271,7 +271,7 @@ ifeq ($(TARGET),SP)
  GLOB_DEFINES = -DSP -DEXTNAME -DAIX
       FLD_REN = -b rename:.daxpy_,.daxpy -b rename:.dgemm_,.dgemm -b rename:.dcopy_,.dcopy -b rename:.zgemm_,.zgemm
 
-# need to strip symbol table to alleviate a bug in AIX ld
+# need to strip symbol table to alleviate a bug in AIX 4.1 ld
 define AIX4_RANLIB
   ranlib $@
   strip
