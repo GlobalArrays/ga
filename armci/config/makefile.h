@@ -448,7 +448,7 @@ ifdef CRAY
          COPT = -O1 -hinline3
      endif
 endif
-#................................. NEC SX-4 ..................................
+#................................. NEC SX ..................................
 ifeq ($(TARGET),NEC)
 #
      FC = f90
@@ -458,8 +458,10 @@ ifeq ($(TARGET),NEC)
      ifeq ($(COPT), -O)
          COPT = -O nomsg -hnovector,nomulti -pvctl,nomsg
      endif
-#    COPT_REN = -hsize_t64
-     EXTRA_LIBS += -li90sx
+     COPT_REN = -hsize_t64
+     ASFLAGS = -h size_t64
+     EXTRA_LIBS += -li90sxe
+     EXTRA_OBJ = tas-sx.o
 endif
 
 #................................. IBM SP and workstations ...................

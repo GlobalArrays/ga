@@ -58,6 +58,17 @@ extern void _release_lock();
 #define SPINLOCK  
 #define TESTANDSET(x) (!_acquire_lock((x))) 
 #define RELEASE_SPINLOCK _release_lock 
+
+#elif defined(NEC)
+extern ullong ts1am_2me();
+#define LOCK_T ullong
+#define _LKWD (1ULL << 63)
+#define SPINLOCK  
+#define TESTANDSET(x) ((_LKWD & ts1am_2me(_LKWD, 0xffULL, (ullong)(x))))
+#define MEMORY_BARRIER mpisx_clear_cache 
+extern void mpisx_clear_cache();
+#define RELEASE_SPINLOCK(x) ts1am_2me(0ULL, 0xffULL, (ullong)x); 
+
 #endif
 
 
@@ -76,7 +87,9 @@ typedef struct{
 double  lock[DBL_PAD];
 }pad_lock_t;
 
+#ifndef LOCK_T
 #define LOCK_T int
+#endif
 #define PAD_LOCK_T pad_lock_t
 
 /* we got problems on IA64/Linux64 with Elan if inlining is used */
@@ -94,7 +107,7 @@ static INLINE void armci_init_spinlock(LOCK_T *mutex)
 
 static INLINE void armci_acquire_spinlock(LOCK_T *mutex)
 {
-int loop=0, maxloop =100;
+int loop=0, maxloop =10;
 
    while (TESTANDSET(mutex)){
       loop++;
