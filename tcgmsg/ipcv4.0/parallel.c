@@ -1,5 +1,4 @@
-/*$Id: parallel.c,v 1.3 1995-02-02 23:25:29 d3g681 Exp $*/
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.3 1995-02-02 23:25:29 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.4 1995-02-24 02:14:10 d3h325 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT

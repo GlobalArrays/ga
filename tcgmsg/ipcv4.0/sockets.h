@@ -1,5 +1,4 @@
-/*$Id: sockets.h,v 1.2 1995-02-02 23:25:49 d3g681 Exp $*/
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.h,v 1.2 1995-02-02 23:25:49 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.h,v 1.3 1995-02-24 02:14:28 d3h325 Exp $ */
 
 extern void ShutdownAll();
 extern int ReadFromSocket();

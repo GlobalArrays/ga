@@ -1,4 +1,3 @@
-/*$Id: niceftn.c,v 1.2 1995-02-02 23:25:22 d3g681 Exp $*/
 #include "srftoc.h"
 
 int NICEFTN_(ival)

@@ -1,5 +1,4 @@
-/*$Id: globalop.c,v 1.2 1995-02-02 23:25:06 d3g681 Exp $*/
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/globalop.c,v 1.2 1995-02-02 23:25:06 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/globalop.c,v 1.3 1995-02-24 02:13:53 d3h325 Exp $ */
 
 #include "sndrcv.h"
 #include "msgtypesc.h"

@@ -1,5 +1,4 @@
-/*$Id: sockets.c,v 1.3 1995-02-02 23:25:48 d3g681 Exp $*/
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.3 1995-02-02 23:25:48 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.4 1995-02-24 02:14:27 d3h325 Exp $ */
 
 
 #include <stdio.h>

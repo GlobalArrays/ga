@@ -1,5 +1,5 @@
 #
-# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.6 1995-02-03 18:23:48 d3h449 Exp $
+# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.7 1995-02-24 02:13:40 d3h325 Exp $
 #
 # for events and debugging with events add  -DEVENTLOG to the DEFINES definition
 # for the given machine
@@ -21,11 +21,9 @@ IF SP1 SP1GA
 # INCLUDES = -I/usr/lpp/euih/eui
 #     LIBS = -bnso -bI:/lib/syscalls.exp -bI:/usr/lpp/euih/eui/eui.exp -e main
 #.................................
-#        FC = mpxlf_rnc
-        FC = mpxlf
+        FC = mpxlf_rnc
     FFLAGS = -g -qEXTNAME
-#        CC = mpcc_rnc
-        CC = mpcc
+        CC = mpcc_rnc
 IF SP1GA
    DEFINES = -DSP1 -DAIX -DEXTNAME  -DTIMINGS -DINTR_SAFE
 ELSE

@@ -1,5 +1,4 @@
-/*$Id: para.ipsc.c,v 1.2 1995-02-02 23:25:28 d3g681 Exp $*/
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/para.ipsc.c,v 1.2 1995-02-02 23:25:28 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/para.ipsc.c,v 1.3 1995-02-24 02:14:09 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <sys/types.h>

@@ -1,5 +1,4 @@
-/*$Id: sema.c,v 1.2 1995-02-02 23:25:34 d3g681 Exp $*/
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.2 1995-02-02 23:25:34 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.3 1995-02-24 02:14:15 d3h325 Exp $ */
 
 /*
   These routines simplify the interface to semaphores for use in mutual

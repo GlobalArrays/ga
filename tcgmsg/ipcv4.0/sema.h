@@ -1,5 +1,4 @@
-/*$Id: sema.h,v 1.2 1995-02-02 23:25:35 d3g681 Exp $*/
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.h,v 1.2 1995-02-02 23:25:35 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.h,v 1.3 1995-02-24 02:14:16 d3h325 Exp $ */
 
 /* Header file declaring stubs for semaphore routines. */
 

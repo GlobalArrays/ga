@@ -1,5 +1,4 @@
-/*$Id: pbeginf.c,v 1.2 1995-02-02 23:25:33 d3g681 Exp $*/
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.2 1995-02-02 23:25:33 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.3 1995-02-24 02:14:12 d3h325 Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
