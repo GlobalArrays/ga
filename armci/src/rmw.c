@@ -1,36 +1,56 @@
-/* $Id: rmw.c,v 1.5 2000-05-05 00:28:48 d3h325 Exp $ */
+/* $Id: rmw.c,v 1.6 2000-06-03 00:38:57 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
 #include <stdio.h>
 
-void armci_generic_rmw(int op, int *ploc, int *prem, int extra, int proc)
+/* global scope to prevent compiler optimization of volatile code */
+int  _a_temp;
+long _a_ltemp;
+
+void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
 {
     int lock = proc%NUM_LOCKS;
+
     NATIVE_LOCK(lock);
-      if(op ==ARMCI_FETCH_AND_ADD){
-                volatile int temp;
+    switch (op) {
+      case ARMCI_FETCH_AND_ADD:
                 armci_get(prem,ploc,sizeof(int),proc);
-                temp = *ploc + extra;
-                armci_put((int*)&temp,prem,sizeof(int),proc);
-      }else{
-                volatile long temp;
+                _a_temp = *(int*)ploc + extra;
+                armci_put(&_a_temp,prem,sizeof(int),proc);
+           break;
+      case ARMCI_FETCH_AND_ADD_LONG:
                 armci_get(prem,ploc,sizeof(long),proc);
-                temp = *(long*)ploc + extra;
-                armci_put((long*)&temp,prem,sizeof(long),proc);
-      }
+                _a_ltemp = *(long*)ploc + extra;
+                armci_put(&_a_ltemp,prem,sizeof(long),proc);
+           break;
+      case ARMCI_SWAP:
+                armci_get(prem,&_a_temp,sizeof(int),proc);
+                armci_put(ploc,prem,sizeof(int),proc);
+                *(int*)ploc = _a_temp; 
+           break;
+      case ARMCI_SWAP_LONG:
+                armci_get(prem,&_a_ltemp,sizeof(long),proc);
+                armci_put(ploc,prem,sizeof(long),proc);
+                *(int*)ploc = _a_ltemp;
+           break;
+      default: armci_die("rmw: operation not supported",op);
+    }
 
-      ARMCI_Fence(proc); /* we need fence before unlocking */
-
+    ARMCI_Fence(proc); /* we need fence before unlocking */
     NATIVE_UNLOCK(lock);
 }
 
 
 int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
 {
-
-    if(op != ARMCI_FETCH_AND_ADD && op != ARMCI_FETCH_AND_ADD_LONG)
-                              armci_die("rmw: op type not supported",op);
+#ifdef LAPI
+    int  ival, rc, opcode=0;
+    lapi_cntr_t req_id;
+#elif defined(_CRAYMPP) || defined(QUADRICS)
+    int  ival;
+    long lval;
+#endif
 
 #if defined(CLUSTER) && !defined(LAPI) && !defined(QUADRICS)
      if(!SAMECLUSNODE(proc)){
@@ -39,41 +59,63 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
      }
 #endif
 
-#  ifdef _CRAYMPP
-        /* here sizeof(long)= sizeof(int) */
-        {
-#         include <limits.h>
-          long lval;
+    switch (op) {
+#   ifdef _CRAYMPP
+      /************** here sizeof(long)= sizeof(int) **************/
+      case ARMCI_FETCH_AND_ADD:
+      case ARMCI_FETCH_AND_ADD_LONG:
           while ( (lval = shmem_swap((long*)prem, INVALID, proc) ) == INVALID);
           *(int*)ploc   = lval;
           (void) shmem_swap((long*)prem, (lval + extra), proc);
-        }
-#  elif defined(QUADRICS)
-      if(op ==ARMCI_FETCH_AND_ADD){
-          int ival;
+        break;
+      case ARMCI_SWAP:
+      case ARMCI_SWAP_LONG:
+          *(int*)ploc = shmem_swap((long*)prem, (long*)ploc,  proc); 
+        break;
+#   elif defined(QUADRICS)
+      /************** here sizeof(long) != sizeof(int) **************/
+      case ARMCI_FETCH_AND_ADD:
           while ( (ival = shmem_int_swap(prem, INT_MAX, proc) ) == INT_MAX);
           (void) shmem_int_swap(prem, ival +extra, proc);
           *(int*) ploc = ival;
-      }else{
-          long lval;
-          while ( (lval = shmem_long_swap((long*)prem, LONG_MAX, proc) ) == LONG_MAX);
+        break;
+      case ARMCI_FETCH_AND_ADD_LONG:
+          while ((lval=shmem_long_swap((long*)prem,LONG_MAX,proc)) == LONG_MAX);
           (void) shmem_long_swap((long*)prem, (lval + extra), proc);
           *(long*)ploc   = lval;
-      }
-#  elif defined(LAPI)
-   {      int rc, local;
-          lapi_cntr_t req_id;
+        break;
+      case ARMCI_SWAP:
+          *(int*)ploc = shmem_int_swap((int*)prem, (int*)ploc,  proc); 
+        break;
+      case ARMCI_SWAP_LONG:
+          *(long*)ploc = shmem_swap((long*)prem, (long*)ploc,  proc); 
+        break;
+#   elif defined(LAPI)
+      /************** here sizeof(long)= sizeof(int) **************/
+      case ARMCI_FETCH_AND_ADD:
+      case ARMCI_FETCH_AND_ADD_LONG:
+           opcode = FETCH_AND_ADD;
+      case ARMCI_SWAP:
+      case ARMCI_SWAP_LONG:
+          if(opcode!=FETCH_AND_ADD)opcode = SWAP;
           if( rc = LAPI_Setcntr(lapi_handle,&req_id,0))
-                        armci_die("setcntr failed",rc);
-          if( rc = LAPI_Rmw(lapi_handle, FETCH_AND_ADD, proc, prem,
-                        &extra, &local, &req_id)) armci_die("rmw failed",rc);
+                        armci_die("rmw setcntr failed",rc);
+          if( rc = LAPI_Rmw(lapi_handle, opcode, proc, prem,
+                        &extra, &ival, &req_id)) armci_die("rmw failed",rc);
           if( rc = LAPI_Waitcntr(lapi_handle, &req_id, 1, NULL))
-                        armci_die("wait failed",rc);
-          *ploc  = local;
-   }
-#else
-    armci_generic_rmw(op, ploc, prem,  extra, proc);
-#endif
+                        armci_die("rmw wait failed",rc);
+          *ploc  = ival;
+        break;
+#   else
+      case ARMCI_FETCH_AND_ADD:
+      case ARMCI_FETCH_AND_ADD_LONG:
+      case ARMCI_SWAP:
+      case ARMCI_SWAP_LONG:
+           armci_generic_rmw(op, ploc, prem,  extra, proc);
+        break;
+#   endif
+      default: armci_die("rmw: operation not supported",op);
+    }
 
     return 0;
 }

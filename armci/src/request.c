@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.12 2000-05-09 17:40:43 jju Exp $ */
+/* $Id: request.c,v 1.13 2000-06-03 00:38:57 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -146,13 +146,19 @@ void *buffer;
     armci_send_req(proc);
 
     /* need to adjust datalen for long datatype version */
-    msginfo->datalen = (op==ARMCI_FETCH_AND_ADD)? sizeof(int): sizeof(long);
+    if(op==ARMCI_FETCH_AND_ADD || op== ARMCI_SWAP)
+        msginfo->datalen = sizeof(int);
+    else
+        msginfo->datalen = sizeof(long);
 
     buffer = armci_rcv_data(proc);  /* receive response */
-    if(op==ARMCI_FETCH_AND_ADD)
+
+    if(op==ARMCI_FETCH_AND_ADD || op== ARMCI_SWAP)
         *ploc = *(int*)buffer;
     else
         *(long*)ploc = *(long*)buffer;
+    
+
 }
 
 
@@ -172,6 +178,7 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
 
      switch(op){
      case ARMCI_FETCH_AND_ADD:
+     case ARMCI_SWAP:
         if(msginfo->datalen != sizeof(int))
           armci_die("armci_server_rmw: bad datalen=",msginfo->datalen);
         pold = &iold;
@@ -179,6 +186,7 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
         break;
 
      case ARMCI_FETCH_AND_ADD_LONG:
+     case ARMCI_SWAP_LONG:
         if(msginfo->datalen != sizeof(int))
           armci_die("armci_server_rmw: long bad datalen=",msginfo->datalen);
         pold = &lold;

@@ -92,8 +92,12 @@ extern void ARMCI_Copy(void *src, void *dst, int n);
 #define FAIL6 -6
 #define FAIL7 -7
 #define FAIL8 -8
+
 #define ARMCI_FETCH_AND_ADD 88
 #define ARMCI_FETCH_AND_ADD_LONG 89
+#define ARMCI_SWAP 90
+#define ARMCI_SWAP_LONG 91
+
 #define ARMCI_ACC_OFF 100
 #define ARMCI_ACC_INT (ARMCI_ACC_OFF + 1)
 #define ARMCI_ACC_DBL (ARMCI_ACC_OFF + 2)

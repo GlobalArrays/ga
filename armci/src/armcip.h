@@ -207,7 +207,7 @@ extern void armci_acc_2D(int op, void* scale, int proc, void *src_ptr,
                          void *dst_ptr, int bytes, int cols, int src_stride, 
                          int dst_stride, int lockit);
 extern void armci_lockmem_scatter(void *ptr_array[], int len, int bytes, int p);
-extern void armci_generic_rmw(int op, int *ploc, int *prem, int extra, int p);
+extern void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int p);
 
 #if defined(SYSV) || defined(WIN32)
 extern void armci_shmem_init();
