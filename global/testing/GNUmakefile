@@ -42,10 +42,11 @@ ifndef LIBDIR
    LIBDIR = $(LIB_DISTRIB)/$(TARGET)
 endif
 
-ifeq ($(GA_TRACE),YES)
-   LIBTRACE= -ltrace
-endif
-LIBS = $(CORE_LIBS) $(LINALG) $(LIBCOM) $(LIBTRACE)
+# ifeq ($(GA_TRACE),YES)
+#    LIBTRACE= -ltrace
+# endif
+# LIBS = $(CORE_LIBS) $(LINALG) $(LIBCOM) $(LIBTRACE)
+LIBS = $(CORE_LIBS) $(LINALG) $(LIBCOM)
 
 #
 # main program in C requires extra effort to provide Fortran libs
