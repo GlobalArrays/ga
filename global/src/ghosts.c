@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.31 2003-10-10 21:44:02 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.32 2003-10-10 22:03:39 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1696,7 +1696,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
 #else
       ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
-          signal, (int)proc_rem);
+          *GA_Update_Signal, (int)proc_rem);
 #endif
       msgcnt++;
 
@@ -1762,7 +1762,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
 #else
       ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
-          signal, (int)proc_rem);
+          *GA_Update_Signal, (int)proc_rem);
 #endif
       msgcnt++;
     }
@@ -2267,7 +2267,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 #else
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
-                          GA_Update_Signal, (int)proc_rem_snd);
+                          *GA_Update_Signal, (int)proc_rem_snd);
 #endif
         }
         if (index[idx]%2 != 0 && !sprocflag) {
@@ -2294,7 +2294,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 #else
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
-                          GA_Update_Signal, (int)proc_rem_snd);
+                          *GA_Update_Signal, (int)proc_rem_snd);
 #endif
         }
         if (index[idx]%2 != 0 && !sprocflag) {
@@ -2444,7 +2444,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 #else
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
-                          GA_Update_Signal, (int)proc_rem_snd);
+                          *GA_Update_Signal, (int)proc_rem_snd);
 #endif
         }
         if (index[idx]%2 != 0 && !sprocflag) {
@@ -2471,7 +2471,7 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 #else
           ARMCI_PutS_flag(ptr_snd, stride_snd, ptr_rem, stride_rem, count,
                           (int)(ndim-1), GA_Update_Flags[proc_rem_snd]+msgcnt,
-                          GA_Update_Signal, (int)proc_rem_snd);
+                          *GA_Update_Signal, (int)proc_rem_snd);
 #endif
         }
         if (index[idx]%2 != 0 && !sprocflag) {
