@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.77 2003-02-11 20:17:29 vinod Exp $
+# $Id: makefile.h,v 1.78 2003-06-24 00:02:25 vinod Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -801,14 +801,17 @@ ifdef USE_MPI
       LIBS += -L$(MPI_LIB)
   endif
   ifdef GA_USE_VAMPIR
-      ifdef VT_PATH
-         ifdef VT_LIB
-            LIBS += -ltcgmsg-mpi $(VT_PATH) $(VT_LIB) $(LIBMPI)
+      ifdef VT_LIB
+         ifdef LIBVT
+            LIBS += -ltcgmsg-mpi -L$(VT_LIB) $(LIBVT) $(LIBMPI)
          else
-            LIBS += -ltcgmsg-mpi $(VT_PATH) -lVT $(LIBMPI)
+            LIBS += -ltcgmsg-mpi -L$(VT_LIB) -lVT $(LIBMPI)
          endif
-      else
-         echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
+#     else
+#	Setenv VT_PATH to -L<directory where libVT.a lives>
+      endif
+      ifdef VT_INCLUDE
+         INCLUDES += -I$(VT_INCLUDE) 
       endif
   else
       LIBS += -ltcgmsg-mpi $(LIBMPI)
@@ -818,14 +821,17 @@ else
     LIBS += $(MP_LIBS)
   else
     ifdef GA_USE_VAMPIR
-      ifdef VT_PATH
-         ifdef VT_LIB
-            LIBS += -ltcgmsg $(VT_PATH) $(VT_LIB) -lmpi
+      ifdef VT_LIB
+         ifdef LIBVT
+            LIBS += -ltcgmsg -L$(VT_LIB) $(LIBVT) -lmpi
          else
-            LIBS += -ltcgmsg $(VT_PATH) -lVT -lmpi
+            LIBS += -ltcgmsg -L$(VT_LIB) -lVT -lmpi
          endif
-      else
-         echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
+#     else
+#        Setenv VT_PATH to -L<directory where libVT.a lives>
+      endif
+      ifdef VT_INCLUDE
+         INCLUDES += -I$(VT_INCLUDE) 
       endif
     else
       LIBS += -ltcgmsg 

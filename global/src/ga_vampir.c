@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.c,v 1.4 2003-06-21 03:30:42 edo Exp $ */
+/* $Id: ga_vampir.c,v 1.5 2003-06-24 00:01:24 vinod Exp $ */
 #include "ga_vampir.h"
 
 void ga_vampir_init() {
@@ -123,4 +123,10 @@ void ga_vampir_init() {
     vampir_symdef(GA_SPD_INVERT,             "GA_SPD_Invert",              "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_SYMUL,                  "GA_SymUL",                   "GA_linalg",__FILE__,__LINE__);
     vampir_symdef(GA_ZEROUL,                 "GA_ZeroUL",                  "GA_linalg",__FILE__,__LINE__);
+    vampir_symdef(NGA_CREATE_GHOSTS_IRREG_CONFIG, "NGA_Create_ghosts_irreg_config",           "GA",__FILE__,__LINE__);
+    vampir_symdef(NGA_CREATE_IRREG_CONFIG,   "NGA_Create_irreg_config",    "GA",__FILE__,__LINE__);
+    vampir_symdef(NGA_NBPUT,                 "NGA_NbPut",                  "GA",__FILE__,__LINE__);
+    vampir_symdef(NGA_STRIDED_PUT,           "NGA_Strided_put",            "GA",__FILE__,__LINE__);
+    vampir_symdef(NGA_STRIDED_GET,           "NGA_Strided_get",            "GA",__FILE__,__LINE__);
+    vampir_symdef(NGA_STRIDED_ACC,           "NGA_Strided_acc",            "GA",__FILE__,__LINE__);
 }

@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.42 2003-04-22 18:57:17 d3g293 Exp $ */
+/* $Id: base.c,v 1.43 2003-06-24 00:01:53 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -594,7 +594,7 @@ Integer  hi[MAXDIM];
 Integer  mem_size, nelem;
 Integer  i, ga_handle, status, maplen=0;
 #ifdef GA_USE_VAMPIR
-      vampir_begin(NGA_CREATE_IRREG_CONFIG,__FILE__,__LINE__);
+      vampir_begin(NGA_CREATE_GHOSTS_IRREG_CONFIG,__FILE__,__LINE__);
 #endif
 
       _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
