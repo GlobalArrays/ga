@@ -530,7 +530,6 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
       gam_checktype(type);
       gam_checkdim(ndim, dims);
 
-      if(!ma_address_init) gai_ma_address_init();
 
       if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
           for(d=0; d< ndim; d++) blk[d]=chunk[d];
@@ -905,6 +904,7 @@ Integer  i, ga_handle, status;
       if(!GAinitialized) ga_error("GA not initialized ", 0);
 
       ga_sync_();
+      if(!ma_address_init) gai_ma_address_init();
 
       GAstat.numcre ++; 
 
