@@ -70,7 +70,7 @@ extern  char* MessageSndBuffer;
 #endif
 
 #ifdef VIA
-#  define PIPE_BUFSIZE  (15*4096)
+#  define PIPE_BUFSIZE  (14*4096)
 #  define PIPE_MIN_BUFSIZE 8192   
 #  define PIPE_MEDIUM_BUFSIZE (4*8192)
    typedef struct { void *buf; int count; int proc; } buf_arg_t;

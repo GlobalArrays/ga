@@ -12,6 +12,54 @@
 #define DEBUG1 0
 
 
+/**************************** pipelining for medium size msg ***********/
+#ifdef PIPE_BUFSIZE
+
+void armci_pipe_prep_receive_strided(request_header_t *msginfo, char *buf,
+                        int strides, int stride_arr[], int count[], int bufsize)
+{
+int extra;
+buf_arg_t arg;
+int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
+
+     extra = ALIGN64ADD(buf);
+     buf +=extra;
+     arg.buf   = buf;
+     arg.count = bufsize-extra;
+     arg.proc  = msginfo->to;
+    
+     armci_dispatch_strided(buf, stride_arr, count, strides, -1, -1,
+                            packsize, armcill_pipe_post_bufs,&arg);
+}
+
+void armci_pipe_receive_strided(request_header_t* msginfo, void *ptr,
+                                int stride_arr[], int count[], int strides)
+{
+buf_arg_t arg;
+int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
+
+     arg.buf   = ptr;
+     arg.count = 0;
+     arg.proc  = msginfo->to;
+
+     armci_dispatch_strided(ptr, stride_arr, count, strides, -1, -1,
+                            packsize, armcill_pipe_extract_data, &arg);
+}
+    
+void armci_pipe_send_strided(request_header_t *msginfo, void *buf, int buflen,
+                             void *ptr, int *stride_arr,int count[],int strides)
+{
+buf_arg_t arg;
+int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
+
+     arg.buf   = buf;
+     arg.count = 0;
+     arg.proc  = msginfo->from;
+     armci_dispatch_strided(ptr, stride_arr, count, strides, -1, -1,
+                            packsize, armcill_pipe_send_chunk, &arg);
+}
+#endif
+/**************************** end of pipelining for medium size msg ***********/
 
 /*\ client initialization
 \*/
@@ -50,8 +98,21 @@ int bytes;
 
     if(bytes > len)armci_die2("armci_send_req:buffer overflow",bytes,len);
 
-    if(armci_send_req_msg(proc,msginfo, bytes))
-                      armci_die("armci_send_req:failed",0);
+#ifdef PIPE_BUFSIZE
+    if((msginfo->datalen>2*PIPE_MIN_BUFSIZE) && (msginfo->operation == GET)
+                                        && (msginfo->format == STRIDED)){
+      char *buf = sizeof(void*) + (char*)(msginfo+1);
+      int  *ibuf = (int*)buf;
+      int  *strides =ibuf;
+      int  *stride_arr= ibuf +1;
+      int  *count = stride_arr + *strides;
+      armci_pipe_prep_receive_strided(msginfo, buf, *strides, stride_arr, count,
+                                      len-2**strides*sizeof(int)-sizeof(void*));
+      armci_pipe_send_req(proc,msginfo, bytes);
+    }else
+#endif
+
+       armci_send_req_msg(proc,msginfo, bytes);
 }
 
 
@@ -145,6 +206,11 @@ void armci_rcv_strided_data(int proc, request_header_t* msginfo, int datalen,
        armci_ReadStridedFromDirect(proc,msginfo,ptr,strides,stride_arr, count);
        return; /*********************** done ************************/
     }
+#elif defined(PIPE_BUFSIZE) 
+    if(msginfo->datalen>2*PIPE_MIN_BUFSIZE){
+       armci_pipe_receive_strided(msginfo, ptr, stride_arr, count, strides);
+       return; /*********************** done ************************/
+    } 
 #endif
 
     databuf = armci_ReadFromDirect(proc,msginfo,datalen);
@@ -243,11 +309,17 @@ void armci_send_strided_data(int proc,  request_header_t *msginfo,
     if(DEBUG_){ printf("%d(server): sending datalen = %d to %d\n",
                 armci_me, msginfo->datalen, to); fflush(stdout); }
  
-#ifdef SOCKETS
+#if defined(SOCKETS)
     /* zero-copy optimization for large requests */
     if(count[0] >  TCP_PAYLOAD){
        armci_WriteStridedToDirect(to,msginfo,ptr, strides, stride_arr, count);
        return; /*********************** done ************************/
+    }
+#elif defined(PIPE_BUFSIZE)
+    if(msginfo->datalen>2*PIPE_MIN_BUFSIZE) {
+        armci_pipe_send_strided(msginfo, bdata, msginfo->datalen,
+                                ptr, stride_arr, count, strides);
+        return;
     }
 #endif
 
@@ -460,3 +532,4 @@ void armci_server_goodbye(request_header_t* msginfo)
       */
      _exit(0);
 }
+

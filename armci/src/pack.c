@@ -1,15 +1,24 @@
-/* $Id: pack.c,v 1.13 2000-10-11 19:42:55 d3h325 Exp $ */
+/* $Id: pack.c,v 1.14 2001-08-30 19:06:54 d3h325 Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
 #if !defined(ACC_COPY) && !defined(CRAY_YMP) && !defined(CYGNUS)
 #   define REMOTE_OP 
 #endif
+#ifdef REMOTE_OP
+#  define OP_STRIDED armci_rem_strided
+#else
+#  define OP_STRIDED armci_op_strided
+#endif
+
 
 /*\ determine if patch fits in the ARMCI buffer, and if not 
- *  at which stride level (patch dim) need to decompose it
+ *  at which stride level (patch dim) need to decompose it 
+ *  *fit_level is the value of stride level to perform packing at 
+ *  *nb means number of elements of count[*fit_level] that fit in buf 
 \*/
-static void armci_fit_buffer(int count[], int stride_levels, int* fit_level, int *nb)
+static void armci_fit_buffer(int count[], int stride_levels, int* fit_level, 
+                             int *nb, int bufsize)
 {
    int bytes=1, sbytes=1;
    int level;
@@ -18,11 +27,11 @@ static void armci_fit_buffer(int count[], int stride_levels, int* fit_level, int
    for(level=0; level<= stride_levels; level++){
       sbytes = bytes; /* store #bytes at current level to save div cost later */
       bytes *= count[level];
-      if(BUFSIZE < bytes) break;
+      if(bufsize < bytes) break;
    }
 
    /* buffer big enough for entire patch */
-   if(BUFSIZE >= bytes){
+   if(bufsize >= bytes){
        *fit_level = stride_levels;
        *nb = count[stride_levels];
        return;
@@ -33,7 +42,7 @@ static void armci_fit_buffer(int count[], int stride_levels, int* fit_level, int
    case 0: 
        /* smaller than a single column */
        *fit_level = 0;
-       *nb = BUFSIZE;
+       *nb = bufsize;
        break;
    case -1:   /* one column fits */
        *fit_level = 0;
@@ -42,7 +51,7 @@ static void armci_fit_buffer(int count[], int stride_levels, int* fit_level, int
    default:
        /* it could keep nb instances of (level-1)-dimensional patch */
        *fit_level = level;
-       *nb = BUFSIZE/sbytes;
+       *nb = bufsize/sbytes;
    }   
 }
 
@@ -57,21 +66,23 @@ static void armci_fit_buffer(int count[], int stride_levels, int* fit_level, int
 int armci_pack_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
-                       int count[], int stride_levels, 
-                       int fit_level, int nb)
+                       int count[], int stride_levels, int fit_level, int nb)
 {
-    int rc=0, sn;
+    int rc=0, sn, bufsize=BUFSIZE;
     void *src, *dst;
+#ifdef REMOTE_OP
+    int flag=0;
+#else
+    int flag=1;
+#endif
+
+#ifdef STRIDED_GET_BUFLEN
+    if(op==GET)bufsize=STRIDED_GET_BUFLEN;
+#endif
 
     /* determine decomposition of the patch to fit in the buffer */
-    if(fit_level<0)armci_fit_buffer(count, stride_levels, &fit_level, &nb);
-
-/*
-    if(count[0]>1024){
-       printf("%d: count[0]=%d fit_level=%d nb=%d\n",armci_me, count[0], fit_level, nb);
-       fflush(stdout);
-    }
-*/
+    if(fit_level<0)
+       armci_fit_buffer(count, stride_levels, &fit_level, &nb, bufsize);
 
     if(fit_level == stride_levels){
 
@@ -79,15 +90,9 @@ int armci_pack_strided(int op, void* scale, int proc,
         int chunk = count[fit_level];
         int dst_stride, src_stride;
 
-        
         if(nb == chunk){ /* take shortcut when whole patch fits in the buffer */
-#ifdef REMOTE_OP
-           return( armci_rem_strided(op, scale, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr, count, stride_levels, 0));
-#else
-           return(armci_op_strided(op, scale, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr,count, stride_levels,1));
-#endif
+           return(OP_STRIDED(op, scale, proc, src_ptr, src_stride_arr,
+                          dst_ptr, dst_stride_arr, count, stride_levels, flag));
         }
 
         if(fit_level){
@@ -102,13 +107,8 @@ int armci_pack_strided(int op, void* scale, int proc,
            src = (char*)src_ptr + src_stride* sn;
            dst = (char*)dst_ptr + dst_stride* sn;
            count[fit_level] = MIN(nb, chunk-sn); /*modify count for this level*/
-#ifdef REMOTE_OP
-           rc = armci_rem_strided( op, scale, proc, src, src_stride_arr,
-                                   dst, dst_stride_arr, count, fit_level, 0);
-#else
-           rc = armci_op_strided(op, scale, proc, src, src_stride_arr,
-                                 dst, dst_stride_arr, count, fit_level,1);
-#endif
+           rc = OP_STRIDED( op, scale, proc, src, src_stride_arr,
+                            dst, dst_stride_arr, count, fit_level, flag);
            if(rc) break;
         }
         count[fit_level] = chunk; /* restore original count */
@@ -124,6 +124,58 @@ int armci_pack_strided(int op, void* scale, int proc,
     return rc;
 }
 
+/*\ decompose strided data into chunks and call func on each chunk
+\*/
+void armci_dispatch_strided(void *ptr, int stride_arr[], int count[],
+                            int strides, int fit_level, int nb, int bufsize, 
+                            void (*fun)(void*,int*,int*,int,void*), void *arg)
+{
+    int  sn,first_call=0;
+    void *ptr_upd;
+
+    /* determine decomposition of the patch to fit in the buffer */
+    if(fit_level<0){
+       first_call=1;
+       armci_fit_buffer(count, strides, &fit_level, &nb, bufsize);
+    }
+ 
+
+    if(fit_level == strides){
+
+        /* we can fit subpatch into the buffer */
+        int chunk = count[fit_level];
+        int stride_upd;
+   
+#       ifdef PIPE_MEDIUM_BUFSIZE
+          /* for first call we adjust nb for performance in medium request  */
+          if(first_call && strides==0)
+             if(chunk<2*bufsize && chunk>PIPE_MEDIUM_BUFSIZE) 
+                                              nb = PIPE_MEDIUM_BUFSIZE;
+#       endif
+
+        if(nb == chunk){ /* take shortcut when whole patch fits in the buffer */
+           fun(ptr, stride_arr, count, strides, arg);
+        }
+
+        if(fit_level)
+           stride_upd = stride_arr[fit_level -1];
+        else
+           stride_upd = 1;
+
+        for(sn = 0; sn < chunk; sn += nb){
+
+           ptr_upd = (char*)ptr + stride_upd* sn;
+           count[fit_level] = MIN(nb, chunk-sn); /*modify count for this level*/
+           fun(ptr_upd, stride_arr, count, fit_level, arg);
+        }
+        count[fit_level] = chunk; /* restore original count */
+
+    }else for(sn = 0; sn < count[strides]; sn++){
+              ptr_upd = (char*)ptr + stride_arr[strides -1]* sn;
+              armci_dispatch_strided(ptr_upd, stride_arr, count, strides -1,
+                                     fit_level, nb, bufsize, fun, arg);
+    }
+}
 
 /* how much space is needed to move data + reduced descriptor ? */
 int armci_vector_bytes( armci_giov_t darr[], int len)

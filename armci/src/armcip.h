@@ -85,10 +85,16 @@ extern thread_id_t armci_usr_tid;
 /* msg tag ARMCI uses in collective ops */
 #define ARMCI_TAG 30000
 
+#ifndef EXTRA_MSG_BUFLEN_DBL
+#   define RESERVED_BUFLEN ((sizeof(request_header_t)>>3)+3*MAX_STRIDE_LEVEL)
+#else
+#   define RESERVED_BUFLEN ((sizeof(request_header_t)>>3)+3*MAX_STRIDE_LEVEL +\
+                           EXTRA_MSG_BUFLEN_DBL)
+#endif
+
 /* packing algorithm for double complex numbers requires even number */
 #ifdef MSG_BUFLEN_DBL
-#  define BUFSIZE_DBL (MSG_BUFLEN_DBL - sizeof(request_header_t)/sizeof(double)\
-                       - 3*MAX_STRIDE_LEVEL)
+#  define BUFSIZE_DBL (MSG_BUFLEN_DBL - RESERVED_BUFLEN)
 #else
 #  define BUFSIZE_DBL 32768
 #endif
@@ -231,6 +237,9 @@ extern void armci_acc_2D(int op, void* scale, int proc, void *src_ptr,
 extern void armci_lockmem_scatter(void *ptr_array[], int len, int bytes, int p);
 extern void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int p);
 extern unsigned long armci_max_region();
+extern void armci_dispatch_strided(void *ptr, int stride_arr[], int count[],
+                            int strides, int fit_level, int nb, int bufsize, 
+                            void (*fun)(void*,int*,int*,int,void*), void *arg);
 
 #if defined(SYSV) || defined(WIN32)
 extern void armci_shmem_init();
@@ -246,5 +255,8 @@ extern void armci_set_shmem_limit(unsigned long shmemlimit);
               if(sizeof(long)==8){_y>>=3; _y<<=3; }\
                             else { _y>>=2; _y<<=2; }\
               _y += sizeof(long); (x) = (type*)_y; }
+
+#define SIXTYFOUR 64
+#define ALIGN64ADD(buf) (SIXTYFOUR-(((ssize_t)(buf))%SIXTYFOUR))
 
 #endif
