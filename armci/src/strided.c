@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.89 2004-07-20 02:26:10 manoj Exp $ */
+/* $Id: strided.c,v 1.90 2004-07-20 02:36:30 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -1176,10 +1176,6 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     if (armci_me != proc)
        vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
 #endif
-#ifdef ARMCI_PROFILE
-    armci_profile_start_strided(seg_count, stride_levels, proc,
-				ARMCI_PROFILE_NBPUT);
-#endif
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -1194,9 +1190,6 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 						 count, stride_levels, proc, 
 						 PUT, nb_handle);
         POSTPROCESS_STRIDED(tmp_count);
-#       ifdef ARMCI_PROFILE
-	armci_profile_stop_strided();
-#       endif 
         return(rc);
       }
     } else {
@@ -1213,6 +1206,12 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
       else
         nb_handle = armci_set_implicit_handle(PUT, proc);
     }
+
+#ifdef ARMCI_PROFILE
+    /*to avoid event overlapping,should start profiling after aggregate calls*/
+    armci_profile_start_strided(seg_count, stride_levels, proc,
+				ARMCI_PROFILE_NBPUT);
+#endif
 
 #ifndef LAPI2
     if(!direct){
@@ -1295,11 +1294,6 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
-#ifdef ARMCI_PROFILE
-    armci_profile_start_strided(seg_count, stride_levels, proc,
-				ARMCI_PROFILE_NBGET);
-#endif
-
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
@@ -1313,9 +1307,6 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 					 count, stride_levels, proc, 
 					 GET, nb_handle);
         POSTPROCESS_STRIDED(tmp_count);
-#       ifdef ARMCI_PROFILE
-	armci_profile_stop_strided();
-#       endif
         return(rc);
       }
     } else {
@@ -1332,6 +1323,12 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
         nb_handle = armci_set_implicit_handle(GET, proc);
     }
     
+#ifdef ARMCI_PROFILE
+    /*to avoid event overlapping,should start profiling after aggregate calls*/
+    armci_profile_start_strided(seg_count, stride_levels, proc,
+				ARMCI_PROFILE_NBGET);
+#endif
+
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
