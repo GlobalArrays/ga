@@ -852,7 +852,7 @@ DoublePrecision *alpha, *beta;
     Integer idx, n1dim;
     Integer atotal, btotal;
     Integer g_A = *g_a, g_B = *g_b;
-    Integer me= ga_nodeid_(), B_created=0, A_created=0;
+    Integer me= ga_nodeid_(), B_created=0;
     char *tempname = "temp", notrans='n';
 
     ga_sync_();
@@ -901,7 +901,6 @@ DoublePrecision *alpha, *beta;
         nga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
         andim = cndim;
         g_A = *g_c;
-        A_created = 1;
         nga_distribution_(&g_A, &me, loA, hiA);
     }
 
@@ -1019,7 +1018,6 @@ DoublePrecision *alpha, *beta;
     }
     
     if(B_created) ga_destroy_(&g_B);
-    if(A_created) ga_destroy_(&g_A);
     
     GA_POP_NAME;
     ga_sync_();
