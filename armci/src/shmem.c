@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.10 1999-11-10 01:28:14 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.11 2000-04-06 23:19:16 edo Exp $ */
 /* System V shared memory allocation and managment for GAs:
  *
  * Interface:
@@ -219,6 +219,26 @@ void armci_set_shmem_limit(unsigned long shmemlimit)
 }
 
 
+static void shmem_errmsg(long size)
+{
+    printf("******************* ARMCI INFO ************************\n");
+    printf("The application attempted to allocate a shared memory segment ");
+    printf("of %ld bytes in size. This might be in addition to segments ",size);
+    printf("that were allocated succesfully previously. ");
+    printf("The current system configuration does not allow enough ");
+    printf("shared memory to be allocated to the application.\n");
+    printf("This is most often caused by:\n1) system parameter SHMMAX ");
+    printf("(largest shared memory segment) being too small or\n");
+    printf("2) insufficient swap space.\n");
+    printf("Please ask your system administrator to verify if SHMMAX ");
+    printf("matches the amount of memory needed by your application and ");
+    printf("the system has sufficient amount of swap space. ");
+    printf("Most UNIX systems can be easily reconfigured ");
+    printf("to allow larger shared memory segments.\n");
+    printf("In some cases, the problem might be caused by insufficient swap space.\n");
+    printf("*******************************************************\n");
+}
+
 
 static struct shm_region_list{
    char     *addr;
@@ -388,6 +408,7 @@ long ga_nodeid_();
 
          if ( (int) (temp = (char*)shmat((int)idlist[1+ir], pref_addr, 0))==-1){
            fprintf(stderr, "shmat err: id= %d off=%d \n",idlist[1+ir],offset);
+           shmem_errmsg(size);
            armci_die("Attach_Shared_Region:failed to attach",(long)idlist[1+ir]);
          }
 
@@ -444,12 +465,13 @@ long sz;
     if(DEBUG_)fprintf(stderr, "in allocate size=%d\n",size);
     /* allocate shmem in as many segments as neccesary */
     for(i =0; i< newreg; i++){ 
-       sz =(i==newreg-1)? size - i*MinShmem*SHM_UNIT: min(size,SHM_UNIT*MinShmem);
+       sz =(i==newreg-1)? size -i*MinShmem*SHM_UNIT: min(size,SHM_UNIT*MinShmem);
 
        if ( (int)(id = shmget(IPC_PRIVATE, (int) sz,
                      (int) (IPC_CREAT | 00600))) < 0 ){
           fprintf(stderr,"id=%d size=%d MAX=%d\n",id,  (int) sz, MinShmem);
           alloc_regions++;
+          shmem_errmsg(size);
           armci_die("allocate: failed to create shared region ",(long)id);
        }
 
@@ -467,8 +489,18 @@ long sz;
           sprintf(command,"/bin/ipcrm -m %d",id);
           if(system(command) == -1) 
           fprintf(stderr,"Might need to clean shared memory: type 'ipcrm -m %d'\n", id);
-          perror((char*)0);
-          armci_die("allocate: failed to attach to shared region",  0L);
+          if(pref_addr){
+             printf("Application attempted to allocate shared memory segment ");
+             printf("that is larger than SHMMAX largest segment size allowed ");
+             printf("ARMCI shared memory allocator was unable to obtain from ");
+             printf("the operating system multiple segments adjacent to ");
+             printf("each other in order to combine them into a one large ");
+             printf("segment together\n");
+             printf("You need to ask your system administrator to reconfigure ");
+             printf("the operating system to allow larger shared memory ");
+             printf("segments. This parameter is called SHMMAX\n");
+             armci_die("allocate: failed to attach to shared region",  0L);
+         }
        }
 
        region_list[alloc_regions].addr = temp;
@@ -573,6 +605,7 @@ long ga_nodeid_();
   if(!region_list[reg].attached){
    if ( (long) (temp = shmat((int) *id, (char *)NULL, 0)) == -1L){
        fprintf(stderr, " err: id= %d  off=%d \n",*id, offset);
+       shmem_errmsg(size);
        armci_die("Attach_Shared_Region: failed to attach ",(long)id);
     }
     region_list[reg].addr = temp; 
@@ -610,8 +643,8 @@ long id;
     last_allocated = alloc_regions;
     if ( (id = (long)shmget(IPC_PRIVATE, (int) size,
                      (int) (IPC_CREAT | 00600))) < 0L ){
-       perror((char*)0);
        fprintf(stderr,"id=%d size=%d\n",id, (int) size);
+       shmem_errmsg(size);
        armci_die("allocate: failed to create shared region ",(long)id);
     }
 

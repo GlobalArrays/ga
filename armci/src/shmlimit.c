@@ -1,4 +1,4 @@
-/* $Id: shmlimit.c,v 1.6 1999-11-24 23:45:04 d3h325 Exp $ */
+/* $Id: shmlimit.c,v 1.7 2000-04-06 23:19:16 edo Exp $ */
 /*
  * This code is used to test shared memory limits within
  * a separately forked child process.
@@ -63,6 +63,9 @@ int armci_child_shmem_init()
 {
     pid_t pid;
     int x;
+#ifdef DECOSF
+    int i;
+#endif
 
 #ifdef USE_PIPE
     int y;
@@ -81,7 +84,12 @@ int armci_child_shmem_init()
 
 #ifdef USE_PIPE
        x= armci_shmem_test();
-       if(write(fd[1],&x,sizeof(int)) <sizeof(int))
+
+#ifdef DECOSF
+       /* due to a bug in OSF1 V4.0/1229/alpha first item written gets hosed*/
+       for(i=0;i<2;i++)
+#endif
+           if(write(fd[1],&x,sizeof(int)) <sizeof(int))
                          armci_die("armci shmem_test: write failed",0);
 #endif
        _exit(x);
@@ -91,8 +99,13 @@ int armci_child_shmem_init()
        pid_t rc;
 
 #ifdef USE_PIPE
-       if(read(fd[0],&y,sizeof(int))<sizeof(int))
-                         armci_die("armci shmem_test: read failed",0);
+       int val;
+#ifdef DECOSF
+       /* due to a bug in OSF1 V4.0/1229/alpha first item read is garbage */
+       for(i=0;i<2;i++)
+#endif
+          if((val=read(fd[0],&y,sizeof(int)))<sizeof(int))
+                         armci_die("armci shmem_test: read failed",val);
 #endif
 
        /* we might already got status from wait in SIGCHLD handler */
