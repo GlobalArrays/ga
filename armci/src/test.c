@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.29 2002-12-06 23:24:46 d3h325 Exp $ */
+/* $Id: test.c,v 1.30 2002-12-14 00:30:31 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -506,10 +506,12 @@ int idx1=0, idx2=0, idx3=0;
        assert(c[ndim]);
        init(a[ndim], ndim, elems, dimsA);
     }
+#if 0
     if(me==0){
       printf("Testing nonblocking API for 1 to 7 dimensional data transfers\n");
       fflush(stdout);
     }
+#endif
     ARMCI_AllFence();
     proc=nproc-1-me;
     MP_BARRIER();
@@ -524,11 +526,13 @@ int idx1=0, idx2=0, idx3=0;
            strideB[i+1] = strideB[i];
          }
        }
+#if 0
        if(me==0){
          printf("--------array[%d",dimsA[0]);
          for(i=1;i<ndim;i++)printf(",%d",dimsA[i]);
          printf("]--------\n");
        }
+#endif
        get_range(ndim, dimsA, nloA[ndim], nhiA[ndim]);
        new_range(ndim, dimsB, nloA[ndim], nhiA[ndim], nloB[ndim], 
                  nhiB[ndim]);
@@ -538,6 +542,7 @@ int idx1=0, idx2=0, idx3=0;
          print_range("local",ndim,nloA[ndim], nhiA[ndim],"-> ");
          print_range("remote",ndim,nloB[ndim], nhiB[ndim],"-> ");
          print_range("local",ndim,nloC[ndim], nhiC[ndim],"\n");
+         fflush(stdout); sleep(1);
        }
 
        idx1 = Index(ndim, nloA[ndim], dimsA);
@@ -545,16 +550,30 @@ int idx1=0, idx2=0, idx3=0;
        idx3 = Index(ndim, nloC[ndim], dimsA);
        for(j=0;j<ndim;j++)count[j]=nhiA[ndim][j]-nloA[ndim][j]+1;
        count[0]   *= sizeof(double); 
-       /*if(me==0)
-         printf("%d:count[0]=%d idxs= %d %d %d\n",me,count[0],idx1,idx2,idx3);
-        */
-       (void)ARMCI_NbPutS((double*)a[ndim]+idx1,strideA,
+#if 0
+       if(me==0)
+         printf("%d: dim=%d count[0]=%d idxs= %d %d %d\n",me, ndim, 
+                count[0],idx1,idx2,idx3);
+#endif
+       
+       if(ndim==1){
+         (void)ARMCI_NbPut((double*)a[ndim]+idx1,(double*)b[ndim][proc]+idx2,
+                           count[0], proc, (hdl_put+ndim));
+         (void)ARMCI_NbGet((double*)b[ndim][proc]+idx2,(double*)c[ndim]+idx3,
+                           count[0], proc, (hdl_get+ndim));
+       }else{
+
+         (void)ARMCI_NbPutS((double*)a[ndim]+idx1,strideA,
                           (double*)b[ndim][proc]+idx2,
                           strideB, count, ndim-1, proc,(hdl_put+ndim));
-       (void)ARMCI_NbGetS((double*)b[ndim][proc]+idx2,strideB,
+         (void)ARMCI_NbGetS((double*)b[ndim][proc]+idx2,strideB,
                           (double*)c[ndim]+idx3,
                           strideA, count, ndim-1, proc,(hdl_get+ndim));
+       }
+#if 0
        if(me==0){printf("OK\n");fflush(stdout);}
+#endif
+
     }
     MP_BARRIER();
     if(me==0){
@@ -571,7 +590,7 @@ int idx1=0, idx2=0, idx3=0;
                      dimsA,(double*)c[ndim]+idx3,nloC[ndim],nhiC[ndim],dimsA);
     }
     if(me==0){
-       printf("Wait successful and data verified\n");
+       printf("OK\n");
        fflush(stdout);
     }
     
@@ -1178,21 +1197,32 @@ void test_rput()
   ARMCI_AllFence();
   MP_BARRIER();
   
+  if(me==0)printf("int data type: ");
   for(i=0; i<elems; i++) {
     if(idst[me][i]!=10*(i+1)) 
       ARMCI_Error("Integer register-originated put failed", 0);
-    if(ldst[me][i]!=10*(i+1)) 
+  }
+
+  if(me==0)printf("OK\nlong data type: ");
+  for(i=0; i<elems; i++) {
+    if(ldst[me][i]!=10*(i+1))
       ARMCI_Error("Long register-originated put failed", 0);
-    if(ABS(ddst[me][i]-10.001*(i+1)) > 0.1) 
-      ARMCI_Error("Double register-originated put failed",0);
-    if( ABS(fdst[me][i]-10.01*(i+1)) > 0.1) 
+  }
+  if(me==0)printf("OK\nfloat data type: ");
+  for(i=0; i<elems; i++) {
+    if( ABS(fdst[me][i]-10.01*(i+1)) > 0.1)
       ARMCI_Error("Float register-originated put failed", 0);
   }
-  
+  if(me==0)printf("OK\ndouble data type: ");
+  for(i=0; i<elems; i++) {
+    if(ABS(ddst[me][i]-10.001*(i+1)) > 0.1)
+      ARMCI_Error("Double register-originated put failed",0);
+  }
+  if(me==0){printf("OK\n"); fflush(stdout);}
+
   ARMCI_AllFence();
   MP_BARRIER();
 
-  if(me==0){printf("O.K.\n"); fflush(stdout);}
   
   destroy_array((void **)idst);
   destroy_array((void **)ldst);
