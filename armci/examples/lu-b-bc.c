@@ -9,7 +9,7 @@
 #include <mpi.h> 
 #include "armci.h"
 
-#define DEBUG
+#define DEBUG_
 #define MAXRAND                         32767.0
 #define DEFAULT_N                         512
 #define DEFAULT_B                          16
