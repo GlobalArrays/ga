@@ -103,13 +103,20 @@ int argc;
 char *argv[];
 {
 int numprocs, myid;
+int init;
 
    if(SR_initialized)Error("TCGMSG initialized already???",-1);
    else SR_initialized=1;
 
-   MPI_Init(&argc, &argv);
+   /* check if another library initialized MPI already */
+   MPI_Initialized(&init);
+   if(init){ 
+      /* nope */
+      MPI_Init(&argc, &argv);
+      MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+   }
 
-   MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+
    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
    SR_parallel = numprocs > 1 ? 1 : 0;
