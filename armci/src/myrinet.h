@@ -17,8 +17,6 @@
 #define MYRINET_H
 
 #include "mpi.h"
-#define GM_STRONG_TYPES 0
-#include "gm.h"
 
 #define CLIENT_BUF_BYPASS 
 #ifdef __i386__

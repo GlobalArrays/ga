@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.21 2001-02-17 01:53:22 d3h325 Exp $
+/* $Id: myrinet.c,v 1.22 2001-02-24 01:29:05 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -39,6 +39,9 @@
 #include <sys/mman.h>
 
 #include "myrinet.h"
+#define GM_STRONG_TYPES 0
+#include "gm.h"
+
 #include "armcip.h"
 
 #define DEBUG_ 0
