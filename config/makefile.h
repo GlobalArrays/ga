@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.13 2000-04-17 22:40:57 d3h325 Exp $
+# $Id: makefile.h,v 1.14 2000-04-21 20:56:14 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -287,6 +287,7 @@ ifdef IBM_
            FC = xlf
      FOPT_REN = -qEXTNAME -qarch=com
 GLOB_DEFINES += -DIBM -DAIX
+       CDEFS += -DEXTNAME
     EXPLICITF = TRUE
 # we compile blas to avoid headache with missing underscores in the IBM library
 # testsolve.x uses several blas routines
