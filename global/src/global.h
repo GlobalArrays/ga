@@ -182,6 +182,7 @@ extern void nga_copy_patch(char *trans,
                            Integer *g_b, Integer *blo, Integer *bhi);
 extern Integer nga_idot_patch(Integer *g_a, char *t_a, Integer *alo,
           Integer *ahi, Integer *g_b, char *t_b, Integer *blo, Integer *bhi);
+extern void FATR nga_print_patch_(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty);
 
 extern DoublePrecision nga_ddot_patch(Integer *g_a, char *t_a, 
           Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo,

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.18 1999-11-18 14:37:24 d3g681 Exp $ */
+/* $Id: capi.c,v 1.19 1999-11-18 21:37:26 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -495,7 +495,7 @@ void NGA_Copy_patch(char trans, int g_a, int alo[], int ahi[],
     COPYINDEX_C2F(blo,_ga_blo, bndim);
     COPYINDEX_C2F(bhi,_ga_bhi, bndim);
 
-    nga_copy_patch_(&trans, &a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi);
+    nga_copy_patch(&trans, &a, _ga_alo, _ga_ahi, &b, _ga_blo, _ga_bhi);
 }
 
 int NGA_Idot_patch(int g_a, char t_a, int alo[], int ahi[],
@@ -625,10 +625,11 @@ void NGA_Print_patch(int g_a, int lo[], int hi[], int pretty)
 {
     Integer a=(Integer)g_a;
     Integer ndim = ga_ndim_(&a);
+    Integer p = (Integer)pretty;
     COPYINDEX_C2F(lo,_ga_lo, ndim);
     COPYINDEX_C2F(hi,_ga_hi, ndim);
   
-    nga_print_patch_(&a, _ga_lo, _ga_hi, pretty);
+    nga_print_patch_(&a, _ga_lo, _ga_hi, &p);
 }
 
 void GA_Print(int g_a)

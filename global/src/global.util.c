@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.31 1999-11-17 21:15:50 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.32 1999-11-18 21:37:26 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -716,8 +716,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
     ga_sync_();
 }
 
-void FATR nga_print_patch_(g_a, lo, hi, pretty)
-        Integer *g_a, *lo, *hi, *pretty;
+void FATR nga_print_patch_(Integer *g_a, Integer *lo, Integer *hi, Integer *pretty)
 {
   nga_file_print_patch(stdout, g_a, lo, hi, pretty);
 

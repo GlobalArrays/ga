@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.25 1999-07-29 21:38:13 jju Exp $*/
+/*$Id: cray.names.h,v 1.26 1999-11-18 21:37:26 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -103,8 +103,10 @@
 #define  ga_ma_get_ptr_            GA_MA_GET_PTR
 
 #define  ga_diag_                  GA_DIAG
+#define  ga_diag_seq_	      	   GA_DIAG_SEQ
 #define  ga_diag_reuse_            GA_DIAG_REUSE
 #define  ga_diag_std_	           GA_DIAG_STD
+#define  ga_diag_std_seq_	   GA_DIAG_STD_SEQ
 #define  ga_llt_solve_             GA_LLT_SOLVE
 #define  ga_lu_solve_alt_	   GA_LU_SOLVE_ALT
 #define  ga_solve_		   GA_SOLVE
