@@ -177,7 +177,7 @@ static Fd_t elio_get_next_extent(Fd_t fd)
     len = strlen(fname);
     if (fd->extent) len -= 4;
     sprintf(fname+len,"x%3.3d",fd->extent+1);
-    printf("Opening extent %d with name '%s'\n",fd->extent+1,fname);
+    /*printf("Opening extent %d with name '%s'\n",fd->extent+1,fname);*/
     if ((next_fd = elio_open(fname, fd->type, fd->mode))) {
       next_fd->extent = fd->extent + 1;
       fd->next = (struct fd_struct *) next_fd;
@@ -958,7 +958,7 @@ int elio_close(Fd_t fd)
     if (fd->next)
       status = elio_close((Fd_t) fd->next);
 
-    printf("Closing extent %d name %s\n", fd->extent, fd->name);
+    /*printf("Closing extent %d name %s\n", fd->extent, fd->name);*/
     if(CLOSE(fd->fd)==-1 || (status != ELIO_OK)) 
       ELIO_ERROR(CLOSFAIL, 0);
 
@@ -996,7 +996,7 @@ int elio_delete(const char* filename)
       for (extent=1; extent<MAX_EXTENT; extent++) {
 	char fname[ELIO_FILENAME_MAX];
 	sprintf(fname,"%sx%3.3d",filename,extent);
-	printf("Deleting extent %d with name '%s'\n",extent,fname);
+	/*printf("Deleting extent %d with name '%s'\n",extent,fname);*/
 	if (unlink(fname)) break;
       }
     }
