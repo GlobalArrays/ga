@@ -6,6 +6,17 @@
 static const long false = 0;
 static const long true  = 1;
 
+typedef struct {
+   int from:16;
+   int to:16;
+} nodepair_t;
+
+typedef union{
+   long fromto;
+   nodepair_t n;
+} pair_t;
+
+
 extern void Busy(int);
 
 #ifdef SHMEM
@@ -146,12 +157,14 @@ static void lapi_await(long *p, long value, lapi_cntr_t* cntr)
   if(LAPI_Waitcntr(lapi_handle, cntr, 1, &val))
                    Error("lapi_await: error",-1);
 
+#if 0
   if ( (pval = local_flag(p)) != value) {
       fprintf(stdout,"%2ld: invalid value=%ld, local_flag=%lx %ld\n",
               TCGMSG_nodeid, value, (unsigned long)p, pval);
       fflush(stdout);
       Error("lapi_await: exiting..",-1);;
   }
+#endif
 }
 
 
@@ -192,6 +205,8 @@ static void local_await(long *p, long value)
 
 #define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
+
+
 long async_send(SendQEntry *entry)
 /*
   Entry points to info about a message ... determine which
@@ -217,6 +232,7 @@ long async_send(SendQEntry *entry)
   long ncopy, complete;
   long pval;
   long info[4];
+  pair_t pair;
   
 #ifdef DEBUG2
   (void) fprintf(stdout,"%2ld: sending to %ld buf=%lx len=%ld\n",
@@ -254,22 +270,18 @@ long async_send(SendQEntry *entry)
 # endif
 
   info[0] = entry->type; info[1] = entry->lenbuf; info[2] = entry->tag;
+#if 0
   entry->buffer_number++;
   info[3] = entry->buffer_number;
+#else
+  pair.n.from = TCGMSG_nodeid;
+  pair.n.to   = node;
+  info[3] =  pair.fromto;
+#endif
 
   /* Copy over the message if it fits in the receiver buffer */
   ncopy = (long) (( entry->lenbuf <= SHMEM_BUF_SIZE) ? entry->lenbuf : 0 );
   
-#ifdef CRAY_T3D
-  if (ncopy&7) {
-#   ifdef DEBUG
-    printf("%3d:rounding buffer%d->%d\n",TCGMSG_nodeid,ncopy,ncopy+8-(ncopy&7));
-    fflush(stdout);
-#   endif
-    ncopy = ncopy + 8 - (ncopy&7); 
-  }
-#endif
-
   GET_LOC_BUF(localbuf);
 
   if (ncopy) {
@@ -321,7 +333,6 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
   one buffer for every other process.  Thus, to send a message U
   merely have to determine if the receivers buffer for you is empty
   and copy directly into the receivers buffer.
-
 */
 {
   long me = TCGMSG_nodeid;
@@ -348,6 +359,7 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
   (void) fflush(stdout);
 #endif
 
+
 #ifdef LAPI
   lapi_await(&recvbuf->info[3], buffer_number, &recvbuf->cntr);
 #else
@@ -367,11 +379,13 @@ void msg_rcv(long type, char *buf, long lenbuf, long *lenmes, long node)
 #endif
 
   /* Check type and size information */
-  
-  if (msg_tag != expected_tag) {
-    (void) fprintf(stdout,
-		   "rcv: me=%ld from=%ld type=%ld, tag=%ld, expectedtag=%ld\n",
-		   me, node, type, msg_tag, expected_tag);
+  if(msg_tag != expected_tag) {
+     pair_t pair;
+     pair.fromto = recvbuf->info[3];
+     fprintf(stdout,
+	   "rcv: me=%ld from=%ld type=%ld expectedtag=%ld lenbuf=%ld\ngot: to=%d from=%d type=%ld msg_tag=%ld msg_len=%ld info[3]=%ld\n",
+	   me, node, type, expected_tag, lenbuf,
+           (int)pair.n.to, (int)pair.n.from, msg_type, msg_tag, msg_len,  recvbuf->info[3]);
     fflush(stdout);
     Error("msg_rcv: tag mismatch ... transport layer failed????", 0L);
   }
