@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.66 2003-10-29 00:19:02 manoj Exp $ */
+/* $Id: capi.c,v 1.67 2003-11-01 00:10:14 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -455,7 +455,7 @@ void NGA_Set_irreg_distr_(int g_a, int map[], int block[])
    nga_set_irreg_distr_(&aa, ptr, _ga_work);
 }
 
-void NGA_Set_irreg_flag(int g_a, int flag)
+void GA_Set_irreg_flag(int g_a, int flag)
 {
   Integer aa;
   logical fflag;
@@ -464,7 +464,7 @@ void NGA_Set_irreg_flag(int g_a, int flag)
   nga_set_irreg_flag_(&aa, &fflag);
 }
 
-int NGA_Get_dimension(int g_a)
+int GA_Get_dimension(int g_a)
 {
   Integer aa;
   aa = (Integer)g_a;
