@@ -1,7 +1,9 @@
-#define BASE_NAME  "/gpfs2/d3g293/da.try"
-#define BASE_NAME1 "/gpfs2/d3g293/da1.try"
+#define BASE_NAME  "/scratch/da.try"
+#define BASE_NAME1 "/scratch/da1.try"
+#define BASE_NAME2 "/scratch/da2.try"
 #  define FNAME   BASE_NAME
 #  define FNAME1  BASE_NAME1
+#  define FNAME2  BASE_NAME2
 
 #include <stdio.h>
 #include <math.h>
@@ -11,17 +13,17 @@
 #include "dra.h"
 #include "sndrcv.h"
 #include "srftoc.h"
-/*
+
 #define NDIM 3
 #define SIZE 250
 #define NSIZE 15625000
 #define LSIZE 125000000
-*/
+/*
 #define NDIM 2
 #define SIZE 4000
 #define NSIZE 16000000
 #define LSIZE 64000000
-/*
+
 #define NDIM 1
 #define SIZE 16000000
 #define NSIZE 16000000
@@ -81,7 +83,7 @@ void test_io_dbl()
 {
   int n,m,ndim = NDIM;
   double err, tt0, tt1, mbytes;
-  int g_a, g_b, d_a, d_b;
+  int g_a, g_b, g_c, g_d, d_a, d_b, d_c;
   int i, req, loop;
   int dlo[MAXDIM],dhi[MAXDIM],glo[MAXDIM],ghi[MAXDIM];
   int dims[MAXDIM],reqdims[MAXDIM];
@@ -92,7 +94,7 @@ void test_io_dbl()
 #if USEMULTFILES
   int ilen;
 #endif
-  char filename[80], filename1[80];
+  char filename[80], filename1[80], filename2[80];
   logical status;
  
   n = (int)(pow(NSIZE,1.0/(double)ndim)+0.5);
@@ -314,6 +316,96 @@ void test_io_dbl()
 /*.......................................................................*/
   GA_Destroy(g_a);
   GA_Destroy(g_b);
+/*.......................................................................*/
+/* Test transpose function for DRAs */
+  dims[0] = n;
+  for (i=1; i<ndim; i++) dims[i] = n/2;
+  for (i=0; i<ndim; i++) chunk[i] = 1;
+  if (me == 0) printf("Creating asymmetric arrays to test transpose\n\n");
+  g_c = NGA_Create(MT_DBL, ndim, dims, "c", chunk);
+  if (!g_c) GA_Error("NGA_Create failed: c", 0);
+  g_d = NGA_Create(MT_DBL, ndim, dims, "d", chunk);
+  if (!g_d) GA_Error("NGA_Create failed: d", 0);
+  if (me == 0) printf("done\n");
+  if (me == 0) fflush(stdout);
+
+/*     initialize g_a, g_b with random values
+      ... use ga_access to avoid allocating local buffers for ga_put */
+
+  GA_Sync();
+  NGA_Distribution(g_c, me, glo, ghi);
+  NGA_Access(g_c, glo, ghi, &index, ld);
+  isize = 1;
+  for (i=0; i<ndim; i++) isize *= (ghi[i]-glo[i]+1);
+  fill_random(index, isize);
+  GA_Sync();
+  GA_Zero(g_c);
+  GA_Copy(g_c,g_d);
+
+  for (i=0; i<ndim; i++) {
+    dims[i] = m;
+    reqdims[i] = n;
+  }
+  strcpy(filename2,FNAME2);
+  if (me == 0) printf("Creating DRA for transpose test\n");
+  if (NDRA_Create(MT_DBL, ndim, dims, "C", filename2, DRA_RW,
+      reqdims, &d_c) != 0) GA_Error("NDRA_Create failed(d_c): ",0);
+  if (me == 0) printf("done\n");
+  if (me == 0) fflush(stdout);
+  GA_Sync();
+  for (i=0; i<ndim-1; i++) {
+    dlo[i] = 1;
+    dhi[i] = n/2;
+  }
+  dlo[ndim-1] = 1;
+  dhi[ndim-1] = n;
+  glo[0] = 0;
+  ghi[0] = n-1;
+  for (i=1; i<ndim; i++) {
+    glo[i] = 0;
+    ghi[i] = n/2-1;
+  }
+  if (me == 0) printf("non-aligned blocking write with transpose\n");
+  tt0 = tcgtime_();
+  if (NDRA_Write_section(TRUE,g_c,glo,ghi,d_c,dlo,dhi,&req) != 0)
+    GA_Error("NDRA_Write_section (transpose) failed: ",0);
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",&req);
+  tt1 = tcgtime_() - tt0;
+  if (me == 0) {
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
+        mbytes,tt1,mbytes/tt1);
+  }
+  if (DRA_Close(d_c) != 0) GA_Error("DRA_Close failed(d_c): ",d_c);
+  if (me == 0) printf("\n");
+  if (me == 0) printf("disk array closed\n");
+  if (me == 0) fflush(stdout);
+
+  if (me == 0) printf("\n");
+  if (me == 0) printf("opening disk array\n");
+  if (DRA_Open(filename2, DRA_R, &d_c) != 0) GA_Error("DRA_Open failed",0);
+
+  GA_Zero(g_c);
+  if (me == 0) printf("non-aligned blocking read with transpose\n");
+  tt0 = tcgtime_();
+  if (NDRA_Read_section(TRUE,g_c,glo,ghi,d_c,dlo,dhi,&req) != 0)
+    GA_Error("NDRA_Read_section (transpose) failed: ",0);
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",&req);
+  tt1 = tcgtime_() - tt0;
+  if (me == 0) {
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
+        mbytes,tt1,mbytes/tt1);
+  }
+  GA_Add(&plus, g_c, &minus, g_d, g_d);
+  err = GA_Ddot(g_d, g_d);
+  if (err != 0) {
+    if (me == 0) printf("BTW, we have error = %f\n",err);
+  } else {
+    if (me == 0) printf("OK\n");
+  }
+  if (DRA_Delete(d_c) != 0) GA_Error("DRA_Delete failed",0);
+/*.......................................................................*/
+  GA_Destroy(g_c);
+  GA_Destroy(g_d);
 }
 
 void main(argc, argv)
