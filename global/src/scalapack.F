@@ -1,4 +1,4 @@
-c $Id: scalapack.F,v 1.6 2004-11-16 20:18:04 edo Exp $
+c $Id: scalapack.F,v 1.7 2004-11-30 17:44:54 edo Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
@@ -404,7 +404,7 @@ c*           Giuseppe Vitillaro peppe@unipg.it
 c* 08/28/96  Jarek Nieplocha, some cleanup and optimizations 
 c**********************************************************************
 
-#define NB 64
+#define NB_ 64
 #define DSCLEN 10
 #define ga_dnormF(g_a) sqrt(ga_ddot(g_a, g_a)
       
@@ -626,7 +626,7 @@ c****
       integer numroc
       integer nb
       integer descA(DSCLEN)
-      data nb /NB/
+      data nb /NB_/
 
 c**** Check Environment
       me = ga_nodeid()
@@ -749,7 +749,7 @@ c****
       integer nb
       integer descA(DSCLEN), descB(DSCLEN)
 c
-      data nb /NB/
+      data nb /NB_/
 c
 c**** Check the Environment
       me = ga_nodeid()
@@ -889,7 +889,7 @@ c****
       integer nb
       integer descA(DSCLEN)
 c****      
-      data nb /NB/
+      data nb /NB_/
 c
 c**** Check Environment
       nproc = ga_nnodes()
@@ -1196,7 +1196,8 @@ c
 c     
 c     processor dependent; machine dependent
 c     
-      data nb/64/
+!      data nb/64/
+       data nb/16/
 c     
 c***  check environment
 c     
@@ -1321,7 +1322,7 @@ c
 c     ability to deal with orthonormality ; let's just
 c     have the regular scalapack stuff for the moment
 c     
-         liwork = 6*max(n, nprow*npcol+1, 4)
+         liwork = 6*max(n, nprow*npcol+1, 4) 
          if(liwork.ne.0)status =
      $        ma_push_get(MT_INT, liwork ,'iwork',hiwork,adriwork)
          if(.not.status) 
@@ -1335,7 +1336,7 @@ c
          orfac = 1.d-3
 c     
 c     
-         lcwork = 5*n +MAX(5*NN,(NP0*MQ0 + 2*NB*NB))+
+         lcwork = 5*n +MAX(5*NN,(NP0*MQ0 + 2*nb*nb))+
      +          ICEIL( N, NPROW*NPCOL)*NN+1
 
 c     
@@ -1346,7 +1347,6 @@ c
      &        call ga_error('ga_pdsyev: mem alloc failed cwork  ', -1)
 c     
 c     
-!         abstol = 0.0d0
          abstol=pdlamch(iSLctxt, 'U')
 c     
 c     
@@ -1620,7 +1620,7 @@ c
 c     ability to deal with orthonormality ; let's just
 c     have the regular scalapack stuff for the moment
 c     
-         liwork = 6*max(n, nprow*npcol+1, 4)
+         liwork = 6*max(n, nprow*npcol+1, 4) 
          if(liwork.ne.0)status =
      $        ma_push_get(MT_INT, liwork ,'iwork',hiwork,adriwork)
          if(.not.status) 
@@ -1634,8 +1634,8 @@ c
          orfac = 1.d-3
 c     
 c     
-         lcwork = 5*n +MAX(5*NN,(NP0*MQ0 + 2*NB*NB))+
-     +          ICEIL( N, NPROW*NPCOL)*NN+1
+         lcwork = 5*n +MAX(5*NN,(NP0*MQ0 + 2*nb*nb))+
+     +          ICEIL( N, NPROW*NPCOL)*NN+1 
 
 c     
          if(lcwork.ne.0)
@@ -1644,7 +1644,6 @@ c
          if(.not.status) 
      &        call ga_error('ga_pdsygv: mem alloc failed cwork  ', -1)
 c     
-!         abstol = 0.0d0
          abstol=pdlamch(iSLctxt, 'U')
 c     
 c     
