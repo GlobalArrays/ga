@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.91 2003-11-13 15:06:15 vinod Exp $
+# $Id: makefile.h,v 1.92 2003-11-21 21:55:04 vinod Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -202,7 +202,9 @@ ifneq (,$(findstring mpicc,$(_CC)))
 endif
 ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
-     COPT_REN += -funroll-loops $(OPT_ALIGN)
+#    COPT_REN += -funroll-loops $(OPT_ALIGN)
+#VT:unroll-loops options is causing single precision dot to fail, Is it the compiler?
+     COPT_REN += $(OPT_ALIGN)
    endif
 endif
 #
@@ -213,7 +215,7 @@ ifeq ($(_FC),g77)
 endif
 
 ifeq ($(FC),xlf)
-     FOPT_REN = -q32  -qextname
+     FOPT_REN += -q32  -qextname
 GLOB_DEFINES += -DXLFLINUX -DEXTNAME
 endif
 
