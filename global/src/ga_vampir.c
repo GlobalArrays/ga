@@ -1,3 +1,4 @@
+/* $Id: ga_vampir.c,v 1.3 2003-06-21 02:59:29 edo Exp $ */
 #include "ga_vampir.h"
 
 void ga_vampir_init() {

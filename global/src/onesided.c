@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.39 2003-04-14 18:16:39 vinod Exp $ */
+/* $Id: onesided.c,v 1.40 2003-06-21 02:59:29 edo Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -2139,7 +2139,7 @@ void FATR nga_strided_put_(Integer *g_a,
   int i, proc, ndim;
 
 #ifdef GA_USE_VAMPIR
-  vampire_begin(NGA_STRIDED_PUT,__FILE__,__LINE__);
+  vampir_begin(NGA_STRIDED_PUT,__FILE__,__LINE__);
 #endif
 
   size = GA[handle].elemsize;
@@ -2239,7 +2239,7 @@ void FATR nga_strided_get_(Integer *g_a,
   int i, proc, ndim;
 
 #ifdef GA_USE_VAMPIR
-  vampire_begin(NGA_STRIDED_GET,__FILE__,__LINE__);
+  vampir_begin(NGA_STRIDED_GET,__FILE__,__LINE__);
 #endif
 
   size = GA[handle].elemsize;
@@ -2343,7 +2343,7 @@ void FATR nga_strided_acc_(Integer *g_a,
   int i, optype, proc, ndim;
 
 #ifdef GA_USE_VAMPIR
-  vampire_begin(NGA_STRIDED_ACC,__FILE__,__LINE__);
+  vampir_begin(NGA_STRIDED_ACC,__FILE__,__LINE__);
 #endif
 
   size = GA[handle].elemsize;

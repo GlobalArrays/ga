@@ -1,3 +1,4 @@
+/* $Id: ga_vampir.fh,v 1.3 2003-06-21 02:59:29 edo Exp $ */
 #define GA_CHOLESKY           32199
 #define VT_GA_DGEMM           32198
 #define GA_DGEMM_SEQ          32197

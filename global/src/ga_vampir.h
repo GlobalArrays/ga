@@ -1,3 +1,4 @@
+/* $Id: ga_vampir.h,v 1.2 2003-06-21 02:59:29 edo Exp $ */
 #ifndef _GA_VAMPIR_H_
 #define _GA_VAMPIR_H_
 
@@ -106,6 +107,12 @@
 #define NGA_SELECT_ELEM       32292
 #define NGA_ZDOT_PATCH        32291
 #define NGA_ZERO_PATCH        32290
+#define NGA_CREATE_IRREG_CONFIG 32289
+#define NGA_STRIDED_GET       32288
+#define NGA_STRIDED_PUT       32287
+#define NGA_STRIDED_ACC       32286
+#define NGA_NBPUT             32285
+#define GA_SYMMETRIZE         32284
 
 #include "ga_vampir.fh"
 
