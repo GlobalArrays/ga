@@ -280,6 +280,8 @@ extern int ARMCI_NbPutValueDouble(double src,/* value in a register to put   */
 
 extern int ARMCI_Wait(armci_hdl_t* nb_handle); /*non-blocking request handle*/
 
+extern int ARMCI_Test(armci_hdl_t* nb_handle); /*non-blocking request handle*/
+
 extern int ARMCI_WaitAll (void);
 
 extern int ARMCI_WaitProc (int proc);

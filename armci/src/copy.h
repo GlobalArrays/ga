@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.48 2003-03-10 18:51:06 vinod Exp $ */
+/* $Id: copy.h,v 1.49 2003-03-27 17:39:46 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -100,6 +100,7 @@ void FATR DCOPY1D(void*, void*, int*);
 #      define ARMCI_NB_GET(src,dst,n,proc,phandle)\
               *(phandle)=elan_get(elan_base->state,src,dst,n,proc)
 #      define ARMCI_NB_WAIT(handle) elan_wait(handle,elan_base->waitType) 
+#      define ARMCI_NB_TEST(handle,_succ) (*(_succ))=!elan_poll(handle,1L) 
 #   else
 #      define qsw_put(src,dst,n,proc) shmem_putmem((dst),(src),(int)(n),(proc))
 #      define qsw_get(src,dst,n,proc) shmem_getmem((dst),(src),(int)(n),(proc))
@@ -188,6 +189,7 @@ void FATR DCOPY1D(void*, void*, int*);
                  ARMCI_Error("LAPI_Get NB_GET failed",0);else;}
 
 #      define ARMCI_NB_WAIT(cmplt) CLEAR_COUNTER((cmplt))
+#      define ARMCI_NB_TEST(cmplt,_succ) CLEAR_COUNTER((cmplt),(_succ))
        
 
 #else

@@ -7,6 +7,7 @@
 #define LAPI2
 #endif
 #define COMPLETE_HANDLE _armci_buf_complete_nb_request
+#define TEST_HANDLE _armci_buf_test_nb_request
 
 #define NB_CMPL_T lapi_cmpl_t   
 
@@ -63,6 +64,13 @@ extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI send */
 
 
 /**** macros to control LAPI modes and ordering of operations ****/
+#define TEST_COUNTER(counter,_ret_) if((counter).val){\
+          int _val__;\
+          if(LAPI_Getcntr(lapi_handle,&(counter).cntr,&_val__))\
+              armci_die("LAPI_Getcntr failed",-1);\
+          if(_val__ != (counter).val) *(_ret_)=1;\
+}
+
 #define WAIT_COUNTER(counter) if((counter).val)\
         for(;;){\
           int _val__;\
@@ -92,6 +100,7 @@ int _val_;\
 
 #define INIT_SEND_BUF(_cntr,_snd,_rcv)    INIT_COUNTER(_cntr,1)
 #define CLEAR_SEND_BUF_FIELD(_cntr, _s, _r,_t,_o) CLEAR_COUNTER(_cntr)
+#define TEST_SEND_BUF_FIELD(_cntr, _s, _r,_t,_o,_ret) TEST_COUNTER(_cntr,(_ret))
 #define FIRST_INIT_SEND_BUF INIT_COUNTER
 #define SET_BUF_TAG _armci_buf_set_tag
 #define INIT_SENDBUF_INFO(_hdl,_buf,_op,_proc) \

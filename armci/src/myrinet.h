@@ -17,6 +17,7 @@
 #define MYRINET_H
 
 #define COMPLETE_HANDLE _armci_buf_complete_nb_request
+#define TEST_HANDLE _armci_buf_test_nb_request
 #define GM_STRONG_TYPES 0 
 #include "gm.h"
 /* in GM 1.4 memory registration got so slow we cannot use 0-copy protocols
@@ -76,6 +77,12 @@ extern struct gm_port *gmpi_gm_port;
 #define SND_BUFLEN (MSG_BUFLEN +128) 
 
 #define INIT_SEND_BUF(_cntr,_snd,_rcv) (_cntr).done=ARMCI_GM_CLEAR
+
+#define TEST_SEND_BUF_FIELD(_cntr, _s, _r,_t,_o,_ret) if((_cntr).done==ARMCI_GM_SENDING){\
+MPI_Status status;\
+int flag;\
+(*(_ret))=1;\
+MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);};
 
 #define CLEAR_SEND_BUF_FIELD(_cntr, _s, _r,_t,_o) if((_cntr).done==ARMCI_GM_SENDING){\
 MPI_Status status;\

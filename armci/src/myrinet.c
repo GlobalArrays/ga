@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.59 2003-03-27 02:08:55 d3h325 Exp $
+/* $Id: myrinet.c,v 1.60 2003-03-27 17:39:46 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -667,8 +667,6 @@ void armci_client_to_client_direct_send(int p, void *src_buf, void *dst_buf, int
                (gm_remote_ptr_t)(gm_up_t)dst_buf, len, GM_LOW_PRIORITY,
                 proc_gm->node_map[serv_mpi_id], server_init_struct[p].port_id, 
                 armci_client_send_callback_direct, armci_gm_client_context);
-
-    /* blocking: wait until send is done by calling the callback */
 }
 
 /*\ direct send to server 

@@ -1,4 +1,4 @@
-/* $Id: via.c,v 1.28 2003-03-06 00:58:32 vinod Exp $ */
+/* $Id: via.c,v 1.29 2003-03-27 17:39:46 vinod Exp $ */
 #include <stdio.h>
 #include <strings.h>
 #include <assert.h>
@@ -907,6 +907,37 @@ BUF_INFO_T *info;
            fflush(stdout);
            armci_die("armci_via_complete_buf: wrong rcv dscr completed",0);
         }
+    }
+}
+
+void armci_via_test_buf(armci_via_field_t *field,int snd,int rcv,int to,int op,int *retval)
+{
+VIP_RETURN rc;
+VIP_DESCRIPTOR *cmpl_dscr,* snd_dscr,* rcv_dscr;
+BUF_INFO_T *info;
+    info = (BUF_INFO_T *)((char *)field-sizeof(BUF_INFO_T));
+    fflush(stdout);
+    if(info->tag && op==GET)return;
+    if(snd){
+       snd_dscr=(VIP_DESCRIPTOR *)(field->s);
+       rc = VipSendWait((SRV_con+armci_clus_id(to))->vi,1, &cmpl_dscr);
+       if(rc==VIP_NOT_DONE || rc==VIP_SUCCESS){
+         if(rc==VIP_NOT_DONE)
+           *retval=1;
+          return;
+       }
+       armci_check_status(DEBUG0, rc,"test_buf: wait for send to complete");
+    }
+
+    if(rcv){
+       rcv_dscr=(VIP_DESCRIPTOR *)(field->r);
+       rc = VipRecvWait((SRV_con+armci_clus_id(to))->vi, 1,&cmpl_dscr);
+       if(rc==VIP_NOT_DONE || rc==VIP_SUCCESS){
+         if(rc==VIP_NOT_DONE)
+           *retval=1;
+          return;
+       }
+       armci_check_status(DEBUG0, rc,"test_buf: wait for recv to complete");
     }
 }
 

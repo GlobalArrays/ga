@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.20 2003-01-07 21:51:20 vinod Exp $    **/
+/* $Id: buffers.c,v 1.21 2003-03-27 17:39:46 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -248,6 +248,47 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
 
     /* clear table slots for all the buffers in the set for this request */
     for(; count; count--, buf_state++) *(int*)buf_state = 0;
+}
+
+
+/*\  test outstanding operation that uses the specified buffer for complete
+ *   It is important not to change the state of the buffer, the buffer has
+ *   to remain as it was, only completion has to be indicated
+\*/
+int _armci_buf_test_index(int idx, int called)
+{
+int count,retval=0;
+buf_state_t *buf_state = _armci_buf_state->table +idx;
+    count = buf_state->count;
+    if(DEBUG_ ){
+       printf("%d:buf_test_index:%d op=%d first=%d count=%d called=%d\n",
+              armci_me,idx,buf_state->op,buf_state->first,buf_state->count,
+              called); 
+       fflush(stdout);
+    }
+    if(buf_state->first != (unsigned int)idx){ 
+      armci_die2("_buf_test_index:inconsistent index:",idx,buf_state->first);
+    }
+#   ifdef BUF_EXTRA_FIELD_T
+    /* need to call platform specific function */
+    if(idx>=MAX_BUFS){
+       int relidx;
+       relidx = idx-MAX_BUFS; 
+       /*printf("\n%d:relidx=%d \n",armci_me,relidx);fflush(stdout);*/
+       TEST_SEND_BUF_FIELD(_armci_buf_state->smallbuf[relidx].field,buf_state->snd,buf_state->rcv,buf_state->to,buf_state->op,&retval);
+
+    }
+    else {
+       TEST_SEND_BUF_FIELD(_armci_buf_state->buf[idx].field,buf_state->snd,buf_state->rcv,buf_state->to,buf_state->op,&retval);
+    }
+#   endif
+    if(DEBUG_ ){
+       printf("%d:buf_test_index:%d op=%d first=%d count=%d called=%d ret=%d\n",
+              armci_me,idx,buf_state->op,buf_state->first,buf_state->count,
+              called,retval); 
+       fflush(stdout);
+    }
+    return(retval);
 }
 
 
@@ -516,6 +557,41 @@ int i=0;
     } 
 }
 
+
+/*\function called from ARMCI_Test to test completion of non-blocking ops
+\*/
+void _armci_buf_test_nb_request(int bufid,unsigned int tag, int *retcode) 
+{
+int i,retval=0;
+    if(bufid == NB_NONE) *retcode=0;
+    else if(bufid == NB_MULTI) {
+       for(i=0;i<MAX_BUFS;i++){ 
+         if(tag && tag==_armci_buf_state->buf[i].id.tag){
+           if(_armci_buf_test_index(i,1)){
+             *retcode=1;
+	     break;
+	   }
+	 }
+       }
+       for(i=0;i<MAX_SMALL_BUFS;i++){ 
+         if(tag && tag==_armci_buf_state->smallbuf[i].id.tag)
+           if(_armci_buf_test_index(i+MAX_BUFS,1)){
+             *retcode=1;
+	     break;
+	   }
+       }
+    }
+    else {
+       if(bufid<MAX_BUFS){
+         if(tag && tag==_armci_buf_state->buf[bufid].id.tag)
+           *retcode = _armci_buf_test_index(bufid,1);
+       }
+       else{
+         if(tag && tag==_armci_buf_state->smallbuf[bufid-MAX_BUFS].id.tag)
+           *retcode = _armci_buf_test_index(bufid,1);
+       }
+    }
+}
 
 /*\function to set the buffer tag and the protocol
 \*/

@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.67 2003-03-27 02:08:55 d3h325 Exp $ */
+/* $Id: armci.c,v 1.68 2003-03-27 17:39:45 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -519,4 +519,36 @@ long armci_util_long_getval(long* p)
 int armci_util_int_getval(int* p)
 {
    return *p;
+}
+
+
+int ARMCI_Test(armci_hdl_t *usr_hdl)
+{
+armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
+int success=0;
+int direct=SAMECLUSNODE(nb_handle->proc);
+   if(direct)return(success);
+    if(nb_handle) {
+      if(nb_handle->agg_flag) {
+         armci_die("test for aggregate handle not yet implemented\n",0);
+      }
+    }
+    if(nb_handle){
+#     ifdef ARMCI_NB_TEST
+        if(nb_handle->tag==0){
+              ARMCI_NB_TEST(nb_handle->cmpl_info,&success);
+              return(success);
+        }
+#       ifdef LAPI
+         if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
+               ARMCI_NB_TEST(nb_handle->cmpl_info,&success);
+               return(success);
+         }
+#       endif
+#     endif
+#     ifdef TEST_HANDLE
+       TEST_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
+#     endif
+    }
+    return(success);
 }

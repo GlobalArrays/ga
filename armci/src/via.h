@@ -27,6 +27,7 @@ extern void armci_via_wait_ack();
 #define GET_SEND_BUFFER _armci_buf_get
 #define FREE_SEND_BUFFER _armci_buf_release
 #define COMPLETE_HANDLE _armci_buf_complete_nb_request
+#define TEST_HANDLE _armci_buf_test_nb_request
 #define BALANCE_BUFFERS
 #ifdef BALANCE_BUFFERS
 #  define BALANCE_FACTOR 1.6
@@ -47,6 +48,8 @@ typedef struct {
 
 #define BUF_EXTRA_FIELD_T armci_via_field_t 
 #define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op) armci_via_complete_buf((armci_via_field_t *)(&(_field)),(_snd),(_rcv),(_to),(_op));_snd=0;_rcv=0;_to=0
+
+#define TEST_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op,_ret) armci_via_test_buf((armci_via_field_t *)(&(_field)),(_snd),(_rcv),(_to),(_op),(_ret))
 
 /*we have 3 protocols for get, 2 of them would now not post any recv descriptors
   hence would not require _rcv, third one, pinning protocol, would still post a 
