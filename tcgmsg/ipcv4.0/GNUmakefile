@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.7 2001-07-11 18:05:03 edo Exp $
+# $Id: GNUmakefile,v 1.8 2001-08-23 20:30:41 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -33,12 +33,8 @@ ifeq ($(TARGET),LINUX)
    LIB_DEFINES = -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
 endif
-ifeq ($(TARGET),LINUXIA64)
-   LIB_DEFINES = -DNOSPIN
-   EXTRA = strdup.o strtok.o wrap.o
-endif
 ifeq ($(TARGET),LINUX64)
-   LIB_DEFINES = -DCOMPAQ_FORT -DTIMINGS -DNOSPIN
+   LIB_DEFINES = -DTIMINGS -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
 endif
 ifeq ($(TARGET),SGI_N32)
@@ -117,7 +113,7 @@ ifeq ($(TARGET),CONVEX-SPP)
 endif
 
 SYSTEM_V =  IBM IBM64 LINUX SGI SGI_N32 SGITFP HPUX HPUX64 SOLARIS SOLARIS64 
-SYSTEM_V += DECOSF CONVEX-SPP LINUXIA64 LINUX64
+SYSTEM_V += DECOSF CONVEX-SPP LINUX64
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
      LIB_DEFINES += -DSYSV -DSHMEM
@@ -128,7 +124,6 @@ include ../../armci/config/makecoms.h
 include ../../armci/config/makemp.h
 include ../../config/makefile.h
 include ../../config/makelib.h
-
 
 
 #.......................... general ................................
@@ -176,11 +171,11 @@ else
 endif
 
 test.x:	$(LIBRARY_PATH) $(BINDIR)/parallel test.c
-	$(CC) $(CFLAGS) -o $@ test.c $(LOADLIBES)
+	$(CC) $(CFLAGS) $(CLD_REN) -o $@ test.c $(LOADLIBES)
 
 testf.x: msgtypesf.h testf.f.proto $(LIBRARY_PATH) $(BINDIR)/parallel
 	./port "$(TARGET)" testf.f.proto
-	$(FC) $(FFLAGS) -o $@ testf.f $(LOADLIBES)
+	$(FC) $(FFLAGS) $(FLD_REN) -o $@ testf.f $(LOADLIBES)
 
 parse:	parse.o 
 	$(CC) -O -c parse.c
