@@ -75,7 +75,7 @@ c
       integer numroc
 c
       np_or_q = numroc(dim, nb, mypcord, 0, npnum)
-      if(np_or_q .lt. 1)then    ! this processor desn't have any data 
+      if(np_or_q .lt. 1)then    ! this processor does not have any data 
          lo =  0
          hi = -1
          return
