@@ -69,6 +69,21 @@ extern  char* MessageSndBuffer;
 #define FREE_SEND_BUFFER(_ptr)  
 #endif
 
+#ifdef VIA
+#  define PIPE_BUFSIZE  (15*4096)
+#  define PIPE_MIN_BUFSIZE 8192   
+#  define PIPE_MEDIUM_BUFSIZE (4*8192)
+   typedef struct { void *buf; int count; int proc; } buf_arg_t;
+#endif
+#ifdef PIPE_BUFSIZE 
+   extern void armcill_pipe_post_bufs(void *ptr, int stride_arr[], int count[],
+                                      int strides, void* argvoid);
+   extern void armcill_pipe_extract_data(void *ptr,int stride_arr[],int count[],
+                                         int strides, void* argvoid);
+   extern void armcill_pipe_send_chunk(void *data, int stride_arr[],int count[],
+                                       int strides, void* argvoid);
+#endif
+
 extern void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
                          void *ptr, int strides, int stride_arr[], int count[]);
 
