@@ -1,5 +1,5 @@
 /*
- * $Id: error.c,v 1.3 1994-09-01 21:11:59 d3e129 Exp $
+ * $Id: error.c,v 1.4 1994-09-14 14:38:54 d3g681 Exp $
  */
 
 /*
@@ -76,5 +76,6 @@ public void ma_error(elevel, etype, func, emsg)
 
     /* terminate execution? */
     if ((elevel == EL_Fatal) || ma_hard_fail)
-        exit(1);
+      ga_error("MA error detected", 1L);
+      /* exit(1); */
 }
