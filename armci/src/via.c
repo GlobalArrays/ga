@@ -1,4 +1,4 @@
-/* $Id: via.c,v 1.30 2003-09-11 16:03:17 vinod Exp $ */
+/* $Id: via.c,v 1.31 2004-04-09 22:02:27 manoj Exp $ */
 #include <stdio.h>
 #include <strings.h>
 #include <assert.h>
@@ -158,7 +158,7 @@ void armci_transport_cleanup()
   }
   if(!SERVER_CONTEXT) if(*client_tail != CLIENT_STAMP){
         printf("%d: client_stamp %d %d\n",armci_me,*client_tail, CLIENT_STAMP);
-        //armci_die("ARMCI Internal Error: end-of-buffer overwritten",0); 
+        /*armci_die("ARMCI Internal Error: end-of-buffer overwritten",0); */
   }
 }
 
@@ -1554,7 +1554,7 @@ char *dst=(char*)d;
     }
     armci_serv_clear_sends();  
     CLN_handle[proc] =0; /*clear is for next round */
-//  SERVER_SEND_ACK(proc); /* server code does not expect ack in GET*/
+    /*  SERVER_SEND_ACK(proc);*/ /* server code does not expect ack in GET*/
 }
 
 /*********** this code was adopted from the Giganet SDK examples *************/

@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.16 2004-04-09 18:41:10 vinod Exp $************************************************ 
+/* $Id: vapi.c,v 1.17 2004-04-09 22:04:39 manoj Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.
@@ -138,7 +138,7 @@ static int *flag_arr; /* flag indicates its receiving scatter data */
 static int pendingsend = 0; /* not being used */
 #define SERV 2
 #define CLN 1
-//typedef enum TYPES{CLN=1,SERV};
+/*typedef enum TYPES{CLN=1,SERV}; */
 
 
 
@@ -551,7 +551,7 @@ int clients = armci_nproc,i,j=0;
     MessageRcvBuffer = serv_buf->buf;
 
     /* set up server_scatter descriptor memory */
-    //serv_scatter_arr = (VAPI_rr_desc_t *)malloc(sizeof(VAPI_rr_desc_t)*armci_nproc);
+    /*serv_scatter_arr = (VAPI_rr_desc_t *)malloc(sizeof(VAPI_rr_desc_t)*armci_nproc);*/
    
    flag_arr = (int *)malloc(sizeof(int)*armci_nproc); 
    for (i =0; i<armci_nproc; i++) flag_arr[i] = 9999; 
@@ -878,7 +878,7 @@ void armci_init_vapibuf_scatter_recv(VAPI_rr_desc_t *rd, VAPI_sg_lst_entry_t * s
        }
      
        
-      scatter_entry[i].lkey = (mhandle->lkey);// + 1;
+       scatter_entry[i].lkey = (mhandle->lkey);/* + 1; */
        scatter_entry[i].addr = (VAPI_virt_addr_t)(MT_virt_addr_t) ( (char *)ptr + idx);
        scatter_entry[i].len  = bytes ;
       
@@ -977,7 +977,7 @@ static void posts_scatter_desc(int num, int id ,int type)
     armci_check_status(DEBUG_SERVER,rc,"posts 1 of several rcv");
    
     if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ){
-       //printf("%d(%d) : posted a scatter receive\n",armci_me,type); 
+       /*printf("%d(%d) : posted a scatter receive\n",armci_me,type);  */
        printf("\n%d: list_length is %d, id is %ld, seg_leng is %d\n",
 	      armci_me,rd->sg_lst_len,rd->id,rd->sg_lst_p->len);
          
@@ -1012,7 +1012,7 @@ int armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[]
    max_seg =  DEFAULT_MAX_SG_LIST; 
    index[2] = 0; unit[2] = 1;
    if (type == SERV)
-       clear_scatterlist(1,id); //scatter =1
+      clear_scatterlist(1,id); /*scatter =1*/
    else if(type == CLN)
        clear_scatterlist(4,id);
                        
@@ -1498,7 +1498,7 @@ int c,i,need_ack;
        
        if(msginfo->operation == PUT &&msginfo->pinned == 1){
           int found, num;
-          int stride_arr[MAX_STRIDE_LEVEL]; //should be MAX_STRIDE_LEVELS
+          int stride_arr[MAX_STRIDE_LEVEL]; /*should be MAX_STRIDE_LEVELS*/
           int count[MAX_STRIDE_LEVEL];
           VAPI_rr_desc_t * dscr1;
           void *dest_ptr;
@@ -1769,7 +1769,7 @@ int total = 0;
                     armci_vapi_max_inline_size);
     }
     
-    //if(snd_dscr->sg_lst_p->len>armci_vapi_max_inline_size){
+    /*if(snd_dscr->sg_lst_p->len>armci_vapi_max_inline_size){*/
     
     /*if(snd_dscr->sg_lst_len > 1 || 
        snd_dscr->sg_lst_p->len>armci_vapi_max_inline_size){*/
@@ -2322,7 +2322,7 @@ void armci_init_vapibuf_atomic(VAPI_sr_desc_t *sd, VAPI_sg_lst_entry_t * sg,
        sd->swap = extra ;
     }
     sd->comp_type = VAPI_SIGNALED;
-    sg->len = 8; // 64 bit atomic
+    sg->len = 8; /* 64 bit atomic*/
     printf("--------\n");
     sg->addr= (VAPI_virt_addr_t)(MT_virt_addr_t)(void *)ploc;
     if(lhandle)
@@ -2331,9 +2331,9 @@ void armci_init_vapibuf_atomic(VAPI_sr_desc_t *sd, VAPI_sg_lst_entry_t * sg,
     sd->sg_lst_len = 1;
     sd->remote_addr = (VAPI_virt_addr_t)(MT_virt_addr_t)(void *)prem;
     if(rhandle)
-    sd->r_key = rhandle->rkey; // how do we get the remote key 
+       sd->r_key = rhandle->rkey; /* how do we get the remote key  */
     sd->id = DSCRID_RMW + armci_me;
-    sd->fence = FALSE;//what should this be
+    sd->fence = FALSE;/*what should this be*/
     sd->set_se = TRUE; 
 
     if(1){
@@ -2380,7 +2380,7 @@ void armci_direct_rmw(int op, int*ploc, int *prem, int extra, int proc,
   }        
   
   rc = VAPI_post_sr(nic->handle,con->qp, sd);  
-  //rc = EVAPI_post_inline_sr(nic->handle,con->qp,sd); //since bytes = 8
+  /*rc = EVAPI_post_inline_sr(nic->handle,con->qp,sd); *//*since bytes = 8*/
   armci_check_status(DEBUG_CLN,rc,"client direct atomic");
 
   if(1){
@@ -2388,7 +2388,7 @@ void armci_direct_rmw(int op, int*ploc, int *prem, int extra, int proc,
      fflush(stdout);
   }
   
-  //armci_client_send_complete(sd,"send_remote_atomic");
+  /*armci_client_send_complete(sd,"send_remote_atomic");*/
   client_rmw_complete(sd,"send_remote_atomic");
   
   return; 

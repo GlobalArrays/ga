@@ -1,4 +1,4 @@
-/* $Id: regions.c,v 1.7 2004-03-31 02:38:34 manoj Exp $ interface to keep track of memory regions accross the cluster */
+/* $Id: regions.c,v 1.8 2004-04-09 22:03:12 manoj Exp $ interface to keep track of memory regions accross the cluster */
 /* 
  * armci_region_init - allocates list of regions, initialization
  * armci_region_register_shm - registers shared memory on the current node
@@ -192,7 +192,7 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
      /* first scan for local */
      for(i=0; i<reg->n; i++){
         if((reg->list+i)->start <= loc && (reg->list+i)->end > loc){
-//          printf("\n%d: loc found \n",armci_me);
+	   /* printf("\n%d: loc found \n",armci_me); */
 	  found=1; break;
 	}
 #if 0
@@ -208,7 +208,7 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
          reg=clus_regions+armci_clus_me;
          for(i=0; i<reg->n; i++){
            if((reg->list+i)->start <= loc && (reg->list+i)->end > loc){
-//             printf("\n%d: clus found \n",armci_me);
+	      /* printf("\n%d: clus found \n",armci_me); */
 	     found=1; break;
 	   }
 #if 0
@@ -228,7 +228,7 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
      reg=serv_regions+node;
      for(i=0; i<reg->n; i++){
          if((reg->list+i)->start <= rem && (reg->list+i)->end > rem){
-//                 printf("\n%d: serv found \n",armci_me);
+	    /* printf("\n%d: serv found \n",armci_me); */
 		 found=2;break;
 	 }
 #if 0

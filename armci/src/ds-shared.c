@@ -618,7 +618,7 @@ void armci_data_server(void *mesg)
                      fflush(stdout);
                   }     
                  
-                  //armci_server_send_complete(id ,num);   
+                  /*armci_server_send_complete(id ,num);    */
                 
                   if(DEBUG1){
                      printf("%d(s):finished send completion for gather\n",
