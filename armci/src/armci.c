@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.78 2003-08-20 22:41:07 d3h325 Exp $ */
+/* $Id: armci.c,v 1.79 2003-08-21 07:00:33 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -66,7 +66,7 @@ double armci_internal_buffer[BUFSIZE_DBL];
 #endif
 
 typedef struct{
-  long sent;
+  int sent;
   int received;
   int waited;
 }armci_notify_t;
@@ -330,9 +330,6 @@ int ARMCI_Init()
     if(armci_me==armci_master) ARMCI_ParentTrapSignals();
     ARMCI_ChildrenTrapSignals();
 
-    armci_init_fence();
-
-
 #if defined(SYSV) || defined(WIN32)
     /* init shared/K&R memory */
     if(ARMCI_Uses_shm() ) armci_shmem_init();
@@ -380,6 +377,10 @@ int ARMCI_Init()
 
     /* allocate locks: we need to do it before server is started */
     armci_allocate_locks();
+    armci_init_fence();
+
+    /* NOTE: FOR PROCESS-BASED DATA SERVER WE CANNOT call ARMCI_Malloc yet */
+
 #   if defined(DATA_SERVER) || defined(ELAN_ACC)
        if(armci_nclus >1) armci_start_server();
 #   endif

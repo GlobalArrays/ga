@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.70 2003-07-30 15:55:05 vinod Exp $
+/* $Id: myrinet.c,v 1.71 2003-08-21 07:00:33 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -1393,6 +1393,7 @@ void armci_server_send_ack(request_header_t* msginfo)
 void armci_client_clear_outstanding_sends()
 {
 int i;
+    if(armci_nclus==1) return;
     /*three sends that need to be cleared viz.. */
     /* 1)sends using client_send_context, */
     armci_client_send_complete(armci_gm_client_context);
@@ -1808,6 +1809,9 @@ int armci_inotify_proc(int proc)
 {
 int *remptr = verify_wait->recv_verify_arr[proc]+2*armci_me;
     if(SAMECLUSNODE(proc)){
+#ifdef MEM_FENCE
+       MEM_FENCE;
+#endif
        remptr = verify_wait->recv_verify_smp_arr[proc]+armci_me;
        *(remptr)=verify_wait->verify_seq_ar[proc]++;
        return((*remptr));

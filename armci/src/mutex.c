@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.23 2003-08-01 00:35:17 d3h325 Exp $ */
+/* $Id: mutex.c,v 1.24 2003-08-21 07:00:33 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -236,7 +236,7 @@ int len=sizeof(int);
 
        /* write new ticket value stored previously in tickets  */
        ARMCI_Put(newval, mutex_ticket, len, proc);
-       MEM_FENCE();
+       MEM_FENCE;
 }
 
 

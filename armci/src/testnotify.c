@@ -1,4 +1,4 @@
-/* $Id: testnotify.c,v 1.1 2003-08-20 22:41:10 d3h325 Exp $ */
+/* $Id: testnotify.c,v 1.2 2003-08-21 07:00:33 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -370,7 +370,8 @@ void scale_patch(double alpha, int ndim, double *patch1, int lo1[], int hi1[], i
 
 void create_array(void *a[], int elem_size, int ndim, int dims[])
 {
-     int bytes=elem_size, i, rc;
+     armci_size_t bytes=elem_size;
+     int i, rc;
 
      assert(ndim<=MAXDIMS);
      for(i=0;i<ndim;i++)bytes*=dims[i];
@@ -380,7 +381,6 @@ void create_array(void *a[], int elem_size, int ndim, int dims[])
      
      assert(a[me]);
      bzero(a[me],bytes);
-     
 }
 
 void destroy_array(void *ptr[])
@@ -438,10 +438,12 @@ int loopcnt=1, less=2;
 
     for(i=0; i<ndim-2; i++)Idx *= dimsB[i];
 
+    ARMCI_Barrier();
     if(me==0){
        printf("--------array[%d",dimsB[0]);
        for(dim=1;dim<ndim;dim++)printf(",%d",dimsB[dim]);
        printf("]--------\n");
+       fflush(stdout);
     }
 
     ARMCI_Barrier();
@@ -468,6 +470,8 @@ int loopcnt=1, less=2;
 
         idx += Idx; /* advance to the next slab */
     }
+
+    ARMCI_Barrier();
 
     if(me==0){
        compare_patches(0.,ndim,(double*)a[0],lo,hi,dimsB,
@@ -497,14 +501,15 @@ int main(int argc, char* argv[])
     
     ARMCI_Init();
 
+        MP_BARRIER();
         if(me==0){
            printf("\nTesting armci_notify\n");
            fflush(stdout);
            sleep(1);
         }
+        MP_BARRIER();
         
         for(ndim=1; ndim<MAXDIMS; ndim++) test_notify(ndim);
-        ARMCI_AllFence();
         MP_BARRIER();
 
     ARMCI_Finalize();

@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.35 2003-08-01 00:10:36 manoj Exp $ */
+/* $Id: memory.c,v 1.36 2003-08-21 07:00:33 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -204,10 +204,10 @@ void armci_shmem_malloc(void *ptr_arr[], armci_size_t bytes)
 #   endif
 
 #ifdef ALLOW_PIN
-    armci_region_exchange(myptr, (long) size_arr[armci_me]);
-#else
-    armci_msg_barrier();
+    if(armci_nclus>1)armci_region_exchange(myptr, (long) size_arr[armci_me]);
+    else
 #endif
+    armci_msg_barrier();
 
     /* free work arrays */
     free(ptr_ref_arr);
