@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.36 2004-03-11 18:45:19 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.37 2004-03-12 20:20:59 vinod Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2026,7 +2026,7 @@ logical ga_update5_ghosts_(Integer *g_a)
   cache = GA[handle].cache;
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) return TRUE;
-  printf("p[%d] Got to 1\n",ga_nodeid_());
+  /*printf("p[%d] Got to 1\n",ga_nodeid_());*/
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -2054,8 +2054,8 @@ logical ga_update5_ghosts_(Integer *g_a)
       proc_rem = (int)(*proc_rem_ptr);
       cache = (char *)(proc_rem_ptr+1);
           
-  printf("p[%d] Got to 2: remote proc %d\n",ga_nodeid_(),proc_rem);
-      if(count[0]>10000){
+      /*printf("p[%d] Got to 2: remote proc %d\n",ga_nodeid_(),proc_rem);*/
+      if(count[0]>1000000){
         /*tries to use armci direct put when possible */
         ARMCI_PutS_flag_dir(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
             (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
@@ -2082,8 +2082,8 @@ logical ga_update5_ghosts_(Integer *g_a)
       proc_rem = (int)(*proc_rem_ptr);
       cache = (char *)(proc_rem_ptr+1);
 
-  printf("p[%d] Got to 3: remote proc %d\n",ga_nodeid_(),proc_rem);
-      if(count[0]>10000){
+      /*printf("p[%d] Got to 3: remote proc %d\n",ga_nodeid_(),proc_rem);*/
+      if(count[0]>1000000){
         /*tries to use armci direct put when possible */
         ARMCI_PutS_flag_dir(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
             (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
@@ -2098,17 +2098,23 @@ logical ga_update5_ghosts_(Integer *g_a)
 #endif
 
       }
-  printf("p[%d] Got to 4\n",ga_nodeid_());
+      /*printf("p[%d] Got to 4\n",ga_nodeid_());*/
 
       msgcnt++;
 
     }
-    if (corner_flag) {
+    else
+      msgcnt+=2;
+#if 1
+    if (corner_flag){
       /* check to make sure that last two messages have been recieved
          before starting update along a new dimension */
       waitforflags((GA_Update_Flags[GAme]+msgcnt-2),
         (GA_Update_Flags[GAme]+msgcnt-1));
     }
+    if(!nwidth)msgcnt-=2;
+#endif
+   
   }
 #if 1
   if (!corner_flag) {
@@ -2219,7 +2225,7 @@ void ga_set_update5_info_(Integer *g_a)
             slo_rem, shi_rem, *g_a);
 
         *proc_rem = (Integer)GA_proclist[0];
-        printf("p[%d] Set: Got to 1 %d\n",ga_nodeid_(),*proc_rem);
+        /*printf("p[%d] Set: Got to 1 %d\n",ga_nodeid_(),*proc_rem);*/
 
 #ifdef UPDATE_SAMENODE_GHOSTS_FIRST
         if(scope == 0 && ARMCI_Same_node(*proc_rem))
@@ -2278,7 +2284,7 @@ void ga_set_update5_info_(Integer *g_a)
             slo_rem, shi_rem, *g_a);
 
         *proc_rem = (Integer)GA_proclist[0];
-        printf("p[%d] Set: Got to 2 %d\n",ga_nodeid_(),*proc_rem);
+        /*printf("p[%d] Set: Got to 2 %d\n",ga_nodeid_(),*proc_rem);*/
 
 #ifdef UPDATE_SAMENODE_GHOSTS_FIRST
         if(scope == 0 && ARMCI_Same_node(*proc_rem))
