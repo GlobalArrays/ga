@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.44 2002-01-09 17:22:37 vinod Exp $
+/* $Id: myrinet.c,v 1.45 2002-01-24 18:03:10 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -1418,6 +1418,10 @@ buf_arg_t *arg = (buf_arg_t*)argvoid;
 
      armci_wait_long_flag_updated(ack, 1); /********* wait for data ********/
 
+/****we suspect that cache is not being flushed out after data is written. myrinet is flushing*/
+/****the cache after writing data into memory, so we are not sure what could  be wrong*********/
+/****temporary solution is to write to the memory ourself, there by triggering  a flush cache**/
+     *ack = 0L;                      /*** touching memory ***/
      /* copy data to the user buffer identified by ptr */
      armci_read_strided(ptr, strides, stride_arr, count, arg->buf_posted);
      if(DEBUG2 ){printf("%d(c):extracting: data %p first=%f\n",armci_me,
