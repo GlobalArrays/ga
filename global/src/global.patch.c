@@ -29,6 +29,27 @@ extern Integer         *INT_MB;
 }
 
 
+/*\ check if dimensions of two patches are divisible 
+\*/
+static logical patches_conforming(ailo, aihi, ajlo, ajhi,
+                                  bilo, bihi, bjlo, bjhi)
+     Integer *ailo, *aihi, *ajlo, *ajhi;
+     Integer *bilo, *bihi, *bjlo, *bjhi;
+{
+Integer mismatch;
+Integer adim1, bdim1, adim2, bdim2;
+     adim1 = *aihi - *ailo +1;
+     adim2 = *ajhi - *ajlo +1;
+     bdim1 = *bihi - *bilo +1;
+     bdim2 = *bjhi - *bjlo +1;
+     mismatch  = (adim1<bdim1) ? bdim1%adim1 : adim1%bdim1; 
+     mismatch += (adim2<bdim2) ? bdim2%adim2 : adim2%bdim2; 
+     if(mismatch)return(FALSE);
+     else return(TRUE);
+} 
+
+
+
 /*\ check if patches are identical 
 \*/
 static logical comp_patch(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
@@ -100,7 +121,7 @@ void ga_copy_patch(trans, g_a, ailo, aihi, ajlo, ajhi,
 {
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer ilos, ihis, jlos, jhis;
-/*Integer ilod, ihid, jlod, jhid;*/
+Integer ilod, ihid, jlod, jhid;
 Integer me= ga_nodeid_(), index, ld, i,j;
 Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj; 
 
@@ -117,9 +138,6 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
    if(atype != btype )
         ga_error("ga_copy_patch: array type mismatch ", 0L);
 
-   /* support of integers requires iscatter ! */
-   if(atype != MT_F_DBL )
-        ga_error("ga_copy_patch:so far only DoublePrecision type supported",0L);
 
    /* check if patch indices and dims match */
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
@@ -141,38 +159,57 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
       nelem = (ihis-ilos+1)*(jhis-jlos+1);
       index --;     /* fortran to C conversion */
 
-      if(!MA_push_get(MT_F_INT,nelem, "i", &ihandle, &iindex))
-         ga_error(" ga_copy_patch: MA failed ", 0L);
-      if(!MA_push_get(MT_F_INT,nelem, "j", &jhandle, &jindex))
-         ga_error(" ga_copy_patch: MA failed ", 0L);
-      if(!MA_push_get(MT_F_DBL,nelem, "v", &vhandle, &vindex))
-         ga_error(" ga_copy_patch: MA failed ", 0L);
+      if((*trans == 'n' || *trans == 'N') && (*ailo- *aihi ==  *bilo- *bihi)){ 
+         /*** straight copy possible if there's no reshaping or transpose ***/
+         
+         /* find source[ilo:ihi, jlo:jhi] --> destination[ilo:ihi, jlo:jhi] */
+         DEST_INDICES(ilos, jlos, *ailo, *ajlo, (*aihi - *ailo +1),
+                      ilod, jlod, *bilo, *bjlo, (*bihi - *bilo +1) );
+         DEST_INDICES(ihis, jhis, *ailo, *ajlo, (*aihi - *ailo +1),
+                      ihid, jhid, *bilo, *bjlo, (*bihi - *bilo +1) );
 
-      base = 0;
-      if (*trans == 'n' || *trans == 'N')  
-        for(j = jlos, jj=0; j <= jhis; j++, jj++)
-          for(i = ilos, ii =0; i <= ihis; i++, ii++){
-              DEST_INDICES(i, j, *ailo, *ajlo, (*aihi- *ailo +1), 
+         ga_put_(g_b, &ilod, &ihid, &jlod, &jhid, DBL_MB+index, &ld); 
+
+      }else{
+        /*** due to generality of this transformation scatter is required ***/
+
+        /* support of integers requires iscatter ! */
+        if(atype != MT_F_DBL )
+        ga_error("ga_copy_patch: it can be done only for DoublePrecision ",0L);
+
+         if(!MA_push_get(MT_F_INT,nelem, "i", &ihandle, &iindex))
+            ga_error(" ga_copy_patch: MA failed ", 0L);
+         if(!MA_push_get(MT_F_INT,nelem, "j", &jhandle, &jindex))
+            ga_error(" ga_copy_patch: MA failed ", 0L);
+         if(!MA_push_get(MT_F_DBL,nelem, "v", &vhandle, &vindex))
+            ga_error(" ga_copy_patch: MA failed ", 0L);
+
+         base = 0;
+         if (*trans == 'n' || *trans == 'N')  
+           for(j = jlos, jj=0; j <= jhis; j++, jj++)
+             for(i = ilos, ii =0; i <= ihis; i++, ii++){
+                 DEST_INDICES(i, j, *ailo, *ajlo, (*aihi- *ailo +1), 
                            INT_MB[base+iindex], INT_MB[base+jindex],
                            *bilo, *bjlo, (*bihi - *bilo +1) );
-              DBL_MB[base+vindex] = DBL_MB[index+ ld*jj + ii];
-              base++;
-          }
-      else
-        for(j = jlos, jj=0; j <= jhis; j++, jj++)
-          for(i = ilos, ii =0; i <= ihis; i++, ii++){
-              DEST_INDICES(j, i, *ajlo, *ailo, (*ajhi - *ajlo +1),
-                           INT_MB[base+iindex], INT_MB[base+jindex],
-                           *bilo, *bjlo, (*bihi - *bilo +1) );
-              DBL_MB[base+vindex] = DBL_MB[index+ ld*jj + ii];
-              base++;
-          }
+                 DBL_MB[base+vindex] = DBL_MB[index+ ld*jj + ii];
+                 base++;
+             }
+         else
+           for(j = jlos, jj=0; j <= jhis; j++, jj++)
+             for(i = ilos, ii =0; i <= ihis; i++, ii++){
+                 DEST_INDICES(j, i, *ajlo, *ailo, (*ajhi - *ajlo +1),
+                              INT_MB[base+iindex], INT_MB[base+jindex],
+                              *bilo, *bjlo, (*bihi - *bilo +1) );
+                 DBL_MB[base+vindex] = DBL_MB[index+ ld*jj + ii];
+                 base++;
+             }
 
-      ga_release_(g_a, &ilos, &ihis, &jlos, &jhis);
-      ga_dscatter_(g_b, DBL_MB+vindex, INT_MB+iindex, INT_MB+jindex, &nelem);
-      MA_pop_stack(vhandle);
-      MA_pop_stack(jhandle);
-      MA_pop_stack(ihandle);
+         ga_release_(g_a, &ilos, &ihis, &jlos, &jhis);
+         ga_dscatter_(g_b, DBL_MB+vindex, INT_MB+iindex, INT_MB+jindex, &nelem);
+         MA_pop_stack(vhandle);
+         MA_pop_stack(jhandle);
+         MA_pop_stack(ihandle);
+      }
   }
   ga_sync_();
 }

@@ -1,7 +1,7 @@
       subroutine ga_summarize(verbose)
       implicit none
 #include "global.fh"
-#include "mafdecls.fh"
+#include "mafdecls.h"
 c
 c     MIMD callable ... summarize all allocated arrays onto
 c     FORTRAN unit 6 ... assumes no more than 100 arrays are
