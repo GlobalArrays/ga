@@ -1,0 +1,12 @@
+-----------------------------------------------------------------------
+
+		GA++: C++ bindings for Global Arrays
+				v0.1
+
+-----------------------------------------------------------------------
+
+
+GA++  provides a C++ interface to global arrays (GA) libraries. This is 
+the first beta release. The documentation of GA++ can be see in the 
+GA++/doc/html/index.html.
+
