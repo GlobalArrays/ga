@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.20 1999-12-06 18:30:37 jju Exp $ */
+/* $Id: capi.c,v 1.21 2000-02-18 02:20:05 jju Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -237,6 +237,37 @@ void NGA_Acc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha)
     nga_acc_(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha);
 }    
 
+void NGA_Periodic_get(int g_a, int lo[], int hi[], void* buf, int ld[])
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+    COPYC2F(ld,_ga_work, ndim-1);
+    ngai_periodic_(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_GET);
+}
+
+void NGA_Periodic_put(int g_a, int lo[], int hi[], void* buf, int ld[])
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+    COPYC2F(ld,_ga_work, ndim-1);
+    ngai_periodic_(&a, _ga_lo, _ga_hi, buf, _ga_work, NULL, PERIODIC_PUT);
+}    
+
+
+void NGA_Periodic_acc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha)
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+    COPYC2F(ld,_ga_work, ndim-1);
+    ngai_periodic_(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha, PERIODIC_ACC);
+}
+
 long NGA_Read_inc(int g_a, int subscript[], long inc)
 {
     Integer a=(Integer)g_a;
@@ -245,7 +276,6 @@ long NGA_Read_inc(int g_a, int subscript[], long inc)
     COPYINDEX_C2F(subscript, _ga_lo, ndim);
     return (long)nga_read_inc_(&a, _ga_lo, &in);
 }
-
 
 void NGA_Distribution(int g_a, int iproc, int lo[], int hi[])
 {

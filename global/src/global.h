@@ -168,13 +168,19 @@ extern void FATR nga_put_(Integer *g_a, Integer *lo, Integer *hi,
                           void *buf, Integer *ld);
 extern void FATR nga_get_(Integer *g_a, Integer *lo, Integer *hi, 
                           void *buf, Integer *ld);
-extern void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi, void    *buf,
-                          Integer *ld, void    *alpha);
+extern void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi,
+                          void *buf, Integer *ld, void *alpha);
 extern void FATR nga_scatter_(Integer *g_a, void* v, Integer subscr[], 
                               Integer *nv);
 extern void FATR nga_gather_(Integer *g_a, void* v, Integer subscr[],
                              Integer *nv);
 extern Integer FATR nga_read_inc_(Integer* g_a,Integer* subscr,Integer* inc);
+extern void FATR nga_periodic_get_(Integer *g_a, Integer *lo, Integer *hi,
+                                   void *buf, Integer *ld);
+extern void FATR nga_periodic_put_(Integer *g_a, Integer *lo, Integer *hi,
+                                   void *buf, Integer *ld);
+extern void FATR nga_periodic_acc_(Integer *g_a, Integer *lo, Integer *hi,
+                                   void *buf, Integer *ld, void *alpha);
 extern void FATR nga_proc_topology_(Integer* g_a, Integer* proc, Integer* subscr);
 
 extern void nga_copy_patch(char *trans,

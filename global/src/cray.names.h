@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.26 1999-11-18 21:37:26 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.27 2000-02-18 02:20:33 jju Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -85,6 +85,10 @@
 #define  nga_access_               NGA_ACCESS
 #define  nga_scatter_              NGA_SCATTER
 #define  nga_gather_               NGA_GATHER
+
+#define  nga_periodic_acc_         NGA_PERIODIC_ACC
+#define  nga_periodic_put_         NGA_PERIODIC_PUT
+#define  nga_periodic_get_         NGA_PERIODIC_GET
 
 #define  nga_copy_patch_           NGA_COPY_PATCH
 #define  ngai_dot_patch_           NGAI_DOT_PATCH
