@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.19 2003-04-10 18:10:20 d3h325 Exp $ */
+/* $Id: elan.c,v 1.20 2003-04-10 20:45:46 vinod Exp $ */
 #include <elan/elan.h>
 #include <elan3/elan3.h>
 #include <stdio.h>
@@ -7,11 +7,17 @@
 #include "copy.h"
 
 #define DEBUG_ 0
-
+#ifdef QSNETLIBS_VERSION
 #if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,4,6) 
 #   define VCALLS 0
 #else
+static ELAN_PGCTRL *_pgctrl;
+static void *_qd;
 #   define VCALLS 1
+#   define QSNETLIBS_NEWAPI
+#endif
+#else
+#   define VCALLS 0
 #endif
 
 #ifdef ELAN_ACC
@@ -49,11 +55,6 @@ static ops_t *ops_done_ar;
         elan_wait(elan_get(elan_base->state,src,dst,len,p),elan_base->waitType)
 #endif
 
-#if QSNETLIBS_VERSION_CODE >= QSNETLIBS_VERSION(1,4,6)
-static ELAN_PGCTRL *_pgctrl;
-static void *_qd;
-#endif
- 
 
 void armci_init_connections()
 {
@@ -65,7 +66,7 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
     if ((q = elan_gallocQueue(elan_base, elan_base->allGroup)) == NULL)
             armci_die( "elan_gallocElan",0 );
 
-#if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,4,6) 
+#if !defined(QSNETLIBS_NEWAPI)
     if (!(mq = elan_mainQueueInit( elan_base->state, q, nslots, slotsize)))
             armci_die("Failed to to initialise Main Q",0);
 #else
