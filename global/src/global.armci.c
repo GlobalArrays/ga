@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.53 2001-05-08 00:15:53 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.54 2001-06-01 21:01:19 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -1948,8 +1948,23 @@ void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi)
 /*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
  *  Fortran version
 \*/ 
-void FATR  ga_inquire_(g_a,  type, dim1, dim2)
-      Integer *g_a, *dim1, *dim2, *type;
+void FATR  ga_inquire_(Integer* g_a, Integer* type, Integer* dim1,Integer* dim2)
+{
+Integer ndim = ga_ndim_(g_a);
+
+   if(ndim != 2)
+      ga_error("ga_inquire: 2D API cannot be used for array dimension",ndim);
+
+   *type       = (Integer)ga_type_c2f(GA[GA_OFFSET + *g_a].type);
+   *dim1       = GA[GA_OFFSET + *g_a].dims[0];
+   *dim2       = GA[GA_OFFSET + *g_a].dims[1];
+}
+
+
+/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
+ *  C version
+\*/
+void ga_inquire(Integer* g_a, Integer* type, Integer* dim1, Integer* dim2)
 {
 Integer ndim = ga_ndim_(g_a);
 
@@ -1962,7 +1977,6 @@ Integer ndim = ga_ndim_(g_a);
 }
 
 
-
 /*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
  *  Fortran version
 \*/
@@ -1970,10 +1984,23 @@ void FATR nga_inquire_(Integer *g_a, Integer *type, Integer *ndim,Integer *dims)
 {
 Integer handle = GA_OFFSET + *g_a,i;
    ga_check_handleM(g_a, "nga_inquire");
+   *type       = (Integer)ga_type_c2f(GA[handle].type);
+   *ndim       = GA[handle].ndim;
+   for(i=0;i<*ndim;i++)dims[i]=GA[handle].dims[i];
+}
+
+/*\ INQUIRE POPERTIES OF A GLOBAL ARRAY
+ *  C version
+\*/
+void nga_inquire(Integer *g_a, Integer *type, Integer *ndim,Integer *dims)
+{
+Integer handle = GA_OFFSET + *g_a,i;
+   ga_check_handleM(g_a, "nga_inquire");
    *type       = GA[handle].type;
    *ndim       = GA[handle].ndim;
    for(i=0;i<*ndim;i++)dims[i]=GA[handle].dims[i];
 }
+
 
 
 /*\ INQUIRE NAME OF A GLOBAL ARRAY
