@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.6 2001-03-22 21:46:16 d3h325 Exp $ */
+/* $Id: winshmem.c,v 1.7 2001-10-19 23:37:28 d3h325 Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -39,6 +39,16 @@
    typedef void* HANDLE;
    typedef void* LPVOID;
 #  define  GETPID getpid
+#elif defined(HITACHI)
+#  include <unistd.h>
+#  include <strings.h>
+#  include <stdlib.h>
+#  include <hxb/combuf.h>
+#  include <hxb/combuf_returns.h>
+   typedef long HANDLE;
+   typedef char* LPVOID;
+#  define  GETPID getpid
+   static long cb_key=1961;
 #else
 #  ifndef _POSIX_C_SOURCE
 #    define  _POSIX_C_SOURCE 199309L
@@ -93,6 +103,7 @@ static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
 static  int parent_pid=-1;  /* process id of process 0 "parent" */
 
 extern void armci_die(char*,int);
+extern int armci_me;
 
 /* not done here yet */
 void armci_shmem_init() {}
@@ -146,7 +157,36 @@ char *armci_get_core_from_map_file(int exists, long size)
 {
     LPVOID  ptr;
 
-#ifdef NEC
+#if defined(HITACHI)
+
+    Cb_object_t oid;
+    int desc;
+
+    region_list[alloc_regions].addr = (char*)0;
+    if(exists){ 
+      if(size < MinShmem*SHM_UNIT) size = MinShmem*SHM_UNIT;
+      if(combuf_object_get(region_list[alloc_regions].id, (Cb_size_t)size, 0, &oid)
+                       != COMBUF_SUCCESS) armci_die("attaching combufget fail",0);
+      if(combuf_map(oid, 0, (Cb_size_t)size, COMBUF_COMMON_USE, &ptr) 
+                       != COMBUF_SUCCESS) armci_die("combuf map failed",0);
+       
+    }else{
+      if(combuf_object_get(cb_key, (Cb_size_t)size, COMBUF_OBJECT_CREATE, &oid)
+                       != COMBUF_SUCCESS) armci_die("creat combufget fail",0);
+      if(combuf_map(oid, 0, (Cb_size_t)size, COMBUF_COMMON_USE, &ptr) 
+                       != COMBUF_SUCCESS) armci_die("combuf map failed",0);
+
+      /* make the region suitable for communication */
+      if(combuf_create_field(oid, ptr, (Cb_size_t)size, FIELD_NUM, 0, 0, &desc)
+                       != COMBUF_SUCCESS) armci_die("create field failed",0);
+    
+      region_list[alloc_regions].id = cb_key;
+
+      cb_key++; /* increment for next combuf create call */
+     
+    }
+
+#elif defined(NEC)
 
     region_list[alloc_regions].addr = (char*)0;
     if(exists)
@@ -272,7 +312,7 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
 
      idlist[0] = alloc_regions;
      idlist[1] = parent_pid;
-#ifdef NEC
+#if  defined(HITACHI) || defined(NEC)
      idlist[2] = (long) region_list[alloc_regions-1].id;
      if(DEBUG)fprintf(stderr,"created %lx %ld id=%ld\n",temp, size,idlist[2]);
 #endif
@@ -297,7 +337,7 @@ char *Attach_Shared_Region(long id[], long size, long offset)
 
      /* find out if a new shmem region was allocated */
      if(alloc_regions == id[0] -1){
-#        ifdef NEC
+#if      defined(HITACHI) || defined(NEC)
                region_list[alloc_regions].id = (HANDLE) id[2];
 #        endif
          if(DEBUG)printf("alloc_regions=%d size=%d\n",alloc_regions,size);
@@ -313,4 +353,19 @@ char *Attach_Shared_Region(long id[], long size, long offset)
 
      assert(temp);
      return(temp);
+}
+
+
+
+long armci_shmem_reg_size(int i, long id)
+{
+     if(i<0 || i>= MAX_REGIONS)armci_die("armci_shmem_reg_size: bad i",i); 
+     if(region_list[i].id !=(HANDLE)id)armci_die("armci_shmem_reg_size id",(int)id);
+     return region_list[i].size;
+}
+
+char* armci_shmem_reg_ptr(int i)
+{
+     if(i<0 || i>= MAX_REGIONS)armci_die("armci_shmem_reg_ptr: bad i",i); 
+     return region_list[i].addr;
 }
