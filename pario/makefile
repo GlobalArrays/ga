@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.2 1996-07-17 15:57:18 mogill Exp $
+#$Id: makefile,v 1.3 1996-08-01 19:15:16 d3h325 Exp $
 #
 # Parent makefile for ChemIO in NWChem tree
 #
@@ -8,11 +8,11 @@
 #
 #
 
+SUBDIRS = elio eaf dra sf
+
 include ../config/makefile.h
+include ../config/makelib.h
 
-
-SUBDIRS = elio eaf # dra sf
-MAKESUBDIRS = for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit 1; done
 
 global_stamp: include_stamp
 	@echo "this is rule global_stamp"
@@ -42,8 +42,4 @@ dra:
 
 sf:
 	@echo "SF does not exist yet"
-
-
-clean:
-	#(MAKESUBDIRS) clean
 
