@@ -62,7 +62,7 @@ GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #
 #                 Utility Routines
 #
-GA_UTIL = ffflush.o ifill.o dfill.o ga_summarize.o hsort.scat.o global.ma.o
+GA_UTIL = ffflush.o ifill.o dfill.o ga_summarize.o hsort.scat.o global.ma.o DP.o
 
 
 $(GA_CORE)    : globalp.h global.h
