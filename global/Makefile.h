@@ -103,7 +103,9 @@ ifeq ($(TARGET),SGITFP)
        RANLIB = echo
         CDEFS = -DEXT_INT
 #    FOPT_REN = -i8
-     FOPT_REN = -d8 -i8 -64 -mips4 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000 
+         COPT = -g -mips4
+     FOPT_REN = -d8 -i8 -64 -mips4 \
+                -OPT:roundoff=3:IEEE_arithmetic=3:fold_arith_limit=4000 
  GLOB_DEFINES = -DSGI -DSGITFP 
 endif
 
