@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.6 2001-09-06 15:37:49 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.7 2001-09-06 18:37:30 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1920,7 +1920,7 @@ void FATR ga_update_ghosts_(Integer *g_a)
         /* locate processor with this data */
         if (!nga_locate_region_(g_a, slo_rem, shi_rem, _ga_map,
             GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
-            tlo_rem, thi_rem, *g_a);
+            slo_rem, shi_rem, *g_a);
 
         if (DEBUG) {
           fprintf(stderr,"\np[%d] Value of np is %d Value of imax is %d\n",
