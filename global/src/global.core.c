@@ -1564,10 +1564,21 @@ Integer  ilop, ihip, jlop, jhip, offset;
             /* number of messages determined by message-buffer size */
 
             Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk;
+#if defined(LINUX)
+            Integer TmpSize = MSG_BUF_SIZE;
+            Integer ilimit;
+            Integer jlimit;
+
+	    TmpSize /= GAsizeofM(type);
+	    ilimit = MIN(TmpSize, ihip-ilop+1);
+	    jlimit = MIN(TmpSize/ilimit, jhip-jlop+1);
+#else
+	    /*-BREAKS GCC on LINUX --------------*/
             Integer TmpSize = MSG_BUF_SIZE/GAsizeofM(type);
             Integer ilimit  = MIN(TmpSize, ihip-ilop+1);
             Integer jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
-
+	    /*-BREAKS GCC on LINUX --------------*/
+#endif
             for(jlo_chunk = jlop; jlo_chunk <= jhip; jlo_chunk += jlimit){
                jhi_chunk  = MIN(jhip, jlo_chunk+jlimit-1);
                for( ilo_chunk = ilop; ilo_chunk<= ihip; ilo_chunk += ilimit){
@@ -1724,7 +1735,14 @@ Integer ilop, ihip, jlop, jhip, offset;
 #           if defined(IWAY) && defined(SP1)
                TmpSize = IWAY_MSG_BUF_SIZE/GAsizeofM(type);
 #           else
+#              if defined(LINUX)
+                 TmpSize = MSG_BUF_SIZE;
+	         TmpSize /= GAsizeofM(GA[GA_OFFSET + *g_a].type);
+#              else
+	       /*-------------- breaks LINUX gcc ----------------*/
                TmpSize = MSG_BUF_SIZE/GAsizeofM(GA[GA_OFFSET + *g_a].type);
+	       /*-------------- breaks LINUX gcc ----------------*/
+#              endif
 #           endif
             ilimit  = MIN(TmpSize, ihip-ilop+1);
             jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
@@ -2112,11 +2130,21 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
        }else{
          /* number of messages determined by message-buffer size */
 
+         Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk;
+#if defined(LINUX)
+         Integer TmpSize = MSG_BUF_SIZE;
+         Integer ilimit  ;
+         Integer jlimit  ;
+	 TmpSize /= GAsizeofM(type);
+	 ilimit = MIN(TmpSize, ihip-ilop+1);
+	 jlimit = MIN(TmpSize/ilimit, jhip-jlop+1);
+#else
+	 /*-BREAKS GCC on LINUX --------------*/
          Integer TmpSize = MSG_BUF_SIZE/GAsizeofM(type);
          Integer ilimit  = MIN(TmpSize, ihip-ilop+1);
          Integer jlimit  = MIN(TmpSize/ilimit, jhip-jlop+1);
-         Integer ilo_chunk, ihi_chunk, jlo_chunk, jhi_chunk;
-
+	 /*-BREAKS GCC on LINUX --------------*/
+#endif
          for(jlo_chunk = jlop; jlo_chunk <= jhip; jlo_chunk += jlimit){
             jhi_chunk  = MIN(jhip, jlo_chunk+jlimit-1);
             for( ilo_chunk = ilop; ilo_chunk<= ihip; ilo_chunk += ilimit){
