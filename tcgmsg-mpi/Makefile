@@ -64,6 +64,19 @@ ifeq ($(MACHINE),SUN)
        RANLIB = ranlib
 endif
 
+#
+#................................. FUJITSU VPP .............................
+#
+ifeq ($(MACHINE),FUJITSU-VPP)
+      FC = frt
+      CC = cc
+ GLOB_DEFINES = -DFUJITSU
+   NXTVAL_OBJ = nxtval.fujitsu.o
+ NXTVAL_AVAIL = yes
+   EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
+endif
+
+
 #................................ SOLARIS ..................................
 #
 ifeq ($(MACHINE),SOLARIS)

@@ -20,6 +20,10 @@ endif
 ifeq ($(TARGET),SOLARIS)
        EXTRA_LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
 endif
+#................................ FUJITSU-VPP ..............................
+ifeq ($(TARGET),FUJITSU-VPP)
+        EXTRA_LIBS = -L /opt/tools/lib/ -lmp2tv -lgen  -lpx -lelf -Wl,-J,-P
+endif
 #................................ KSR ......................................
 #
 ifeq ($(TARGET),KSR)

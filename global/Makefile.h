@@ -16,8 +16,8 @@
           FLD = $(FC)
           CLD = $(FLD)
           CXX = CC
-         FOPT = -O
-         COPT = -O
+         FOPT = -g
+         COPT = -g
 	 NOPT = -g
 GLOB_INCLUDES = -I../../ma
            AR = ar
@@ -71,6 +71,14 @@ endif
        RANLIB = ranlib
 endif
 #
+#................................ FUJITSU ..................................
+#
+ifeq ($(TARGET),FUJITSU-VPP)
+      FC = frt
+      CC = cc
+FOPT_REN = -Sw
+ GLOB_DEFINES = -DFUJITSU
+endif
 #................................ SUN ......................................
 #
 ifeq ($(TARGET),SUN)
@@ -398,8 +406,20 @@ ifdef USE_MPI
 endif
 
       DEFINES = $(GLOB_DEFINES) $(LOC_DEFINES) $(DEF_TRACE)
+
+ifeq ($(TARGET),FUJITSU-VPP)
+       comma:= ,
+       empty:=
+       space:= $(empty) $(empty)
+       FDEFINES_0 = $(DEFINES) $(FDEFS)
+       FDEFINES_1 = $(strip  $(FDEFINES_0))
+       FDEFINES = -Wp,$(subst $(space),$(comma),$(FDEFINES_1))
+else
+       FDEFINES = $(DEFINES) $(FDEFS)
+endif
+
      INCLUDES = $(GLOB_INCLUDES) $(LOC_INCLUDES)
-       FFLAGS = $(FOPT) $(FOPT_REN) $(INCLUDES) $(DEFINES) $(FDEFS)
+       FFLAGS = $(FOPT) $(FOPT_REN) $(INCLUDES) $(FDEFINES)
        CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS)
        FLDOPT = $(FOPT) $(FOPT_REN) $(FLD_REN)
        CLDOPT = $(COPT) $(COPT_REN) $(CLD_REN)
