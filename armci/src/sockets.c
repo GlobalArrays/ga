@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.10 1999-10-30 01:04:43 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.11 1999-11-10 01:55:55 d3h325 Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -513,11 +513,10 @@ int armci_CreateSocketAndConnect(char *hostname, int port)
     armci_die("armci_CreateSocketAndConnect: socket failed",  sock);
   }
 
-/*
+  /* the following can be disabled */
   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 
 		 (char *) &on, sizeof on) == -1)
 	armci_die("armci_CreateSocketAndConnect: error setting REUSEADDR",  -1);
-*/
 
   /* Connect socket */
   server.sin_family = AF_INET;
