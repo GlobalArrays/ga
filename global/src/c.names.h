@@ -84,7 +84,7 @@
 #define  GA_valid_handle           ga_valid_handle_
 #define  GA_set_memory_limit       ga_set_memory_limit_
 
-#if defined(CRAY) || defined(_WIN32)
+#if defined(CRAY) || defined(_WIN32) && !defined(CYGNUS) && !defined(CYGWIN)
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
