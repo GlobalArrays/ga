@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.27 2002-12-17 23:15:00 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.28 2002-12-18 15:47:25 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1719,9 +1719,9 @@ Integer gai_correct_strided_patch(Integer ndim,
 int gai_ComputeCountWithSkip(Integer ndim, Integer *lo, Integer *hi,
                              Integer *skip, int *count, Integer *nstride)
 {
-  Integer i, idx;
-  int istride = 0;
-  for (i=0; i<ndim; i++) {
+  Integer idx;
+  int i, istride = 0;
+  for (i=0; i<(int)ndim; i++) {
     idx = hi[i] - lo[i];
     if (idx < 0) return 0;
     if (skip[i] > 1) {
@@ -1833,12 +1833,12 @@ void FATR nga_strided_put_(Integer *g_a,
     Integer idx_buf, *plo, *phi;
     char *pbuf, *prem;
 
-    p = (Integer)ProcListPerm[idx];
+    p = (Integer)ProcListPerm[(int)idx];
     /* find visible portion of patch held by processor p and return
        the result in plo and phi. Also, get actual processor index
        corresponding to p and store the result in proc. */
     gam_GetRangeFromMap(p, ndim, &plo, &phi);
-    proc = (int)GA_proclist[p];
+    proc = (int)GA_proclist[(int)p];
 
     /* Correct ranges to account for skips in original patch. If no
        data is left in patch jump to next processor in loop. */
@@ -1933,12 +1933,12 @@ void FATR nga_strided_get_(Integer *g_a,
     Integer idx_buf, *plo, *phi;
     char *pbuf, *prem;
 
-    p = (Integer)ProcListPerm[idx];
+    p = (Integer)ProcListPerm[(int)idx];
     /* find visible portion of patch held by processor p and return
        the result in plo and phi. Also, get actual processor index
        corresponding to p and store the result in proc. */
     gam_GetRangeFromMap(p, ndim, &plo, &phi);
-    proc = (int)GA_proclist[p];
+    proc = (int)GA_proclist[(int)p];
 
     /* Correct ranges to account for skips in original patch. If no
        data is left in patch jump to next processor in loop. */
@@ -2045,12 +2045,12 @@ void FATR nga_strided_acc_(Integer *g_a,
     Integer idx_buf, *plo, *phi;
     char *pbuf, *prem;
 
-    p = (Integer)ProcListPerm[idx];
+    p = (Integer)ProcListPerm[(int)idx];
     /* find visible portion of patch held by processor p and return
        the result in plo and phi. Also, get actual processor index
        corresponding to p and store the result in proc. */
     gam_GetRangeFromMap(p, ndim, &plo, &phi);
-    proc = (int)GA_proclist[p];
+    proc = (int)GA_proclist[(int)p];
 
     /* Correct ranges to account for skips in original patch. If no
        data is left in patch jump to next processor in loop. */
