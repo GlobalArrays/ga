@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.47 2001-05-07 17:25:34 edo Exp $
+# $Id: makefile.h,v 1.48 2001-05-07 23:54:26 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -240,6 +240,8 @@ ifeq ($(TARGET),HPUX)
 # free HP cc compiler is not up to the job: use gcc if no commercial version
 #          CC = gcc
            FC = fort77
+!           FC = f90
+
           CPP = /lib/cpp
     ifeq ($(FOPT),-O)
          FOPT = -O1
@@ -258,11 +260,16 @@ ifeq ($(TARGET),HPUX64)
     ifeq ($(FOPT),-O)
          FOPT = -O1
     endif
-     FOPT_REN = +DA2.0W +ppu +i8
+     FOPT_REN = +DA2.0W +ppu 
      COPT_REN = +DA2.0W -Ae
         FLIBS = -lU77
  GLOB_DEFINES+= -DHPUX -DEXTNAME
+ifdef USE_INTEGER4
+#     COPT_REN +=+u1 # this is to fix alignment problems
+else
+     FOPT_REN += +i8
         CDEFS = -DEXT_INT
+endif
 endif
 #
 #................................ Compaq/DEC ALPHA .............................
