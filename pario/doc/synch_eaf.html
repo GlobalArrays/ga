@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+   <TITLE></TITLE>
+   <META NAME="GENERATOR" CONTENT="Mozilla/3.0b5aGold (X11; I; Linux 1.2.13 i586) [Netscape]">
+</HEAD>
+<BODY>
+
+<P><!-- Changed by: Jace A Mogill,  1-Sep-1996 --></P>
+
+<UL>
+<UL>
+<UL>
+<P><FONT SIZE=+4>Example EAF Synchronous Program</FONT></P>
+</UL>
+</UL>
+</UL>
+
+<P>This is a small example of an EAF program which uses synchronous I/O
+to open, write to, then read back from a file.</P>
+
+<PRE>
+<HR SIZE=5 WIDTH="100%"></PRE>
+
+<PRE>#include &quot;chemio.h&quot;
+#include &quot;eaf.fh&quot;
+
+        integer fh              ! File Handle
+        integer sz              ! Return value of size written
+        integer stat            ! Return status
+        integer buf(100)        ! Data to write
+
+        fh = EAF_OpenPersist('/tmp/test.out', CHEMIO_RW)
+ 
+        sz = EAF_Write(fh, 0, buf, 100*EAF_SZ_INT)
+</PRE>
+
+<PRE>        if(sz .ne. 100*EAF_SZ_INT) 
+      $       write(0,*) 'Error writing, wrote ', sz, ' bytes'
+
+        sz = EAF_Read(fh, 0, buf, 100*EAF_SZ_INT)
+        if(sz .ne. 100*EAF_SZ_INT) 
+      $       write(0,*) 'Error reading, read ', sz, ' bytes'
+
+        stat = EAF_Close(fh)
+        end
+</PRE>
+
+<PRE>
+<HR SIZE=5 WIDTH="100%"></PRE>
+
+<P>The include file 'chemio.h' defines the permission macros <TT>CHEMIO_R</TT>,
+<TT>CHEMIO_W</TT>, and <TT>CHEMIO_RW</TT> for read, write, and read-write
+permissions, respectively. The header file <TT>'eaf.fh'</TT> is a Fortran
+program segment externally defining the EAF routines and must appear <I>before</I>
+any executable code using EAF. </P>
+
+<P><TT>EAF_OpenPersist</TT> opens a persistent file, as opposed to a scratch
+file (<TT>EAF_OpenScratch</TT>) which is deleted when it is closed. This
+file is named '/tmp/test.out' and has read-write permissions. The returned
+value is the file handle for this file and should not be directly manipulated
+by the user. </P>
+
+<P><TT>EAF_Write</TT> writes to the file opened with file handle, fh, at
+absolute offset 0. It is legal to write a scalar or array, for instance
+in the above example both 'buf' and 'buf(1)' have the same meaning. The
+last argument is the number of bytes to be written. It is important to
+multiply the number of array elements by the element size. The following
+macros are provided in 'eaf.fh': </P>
+
+<UL>
+<UL>
+<UL>
+<PRE>EAF_SZ BYTE </PRE>
+
+<PRE>EAF_SZ_CHARACTER </PRE>
+
+<PRE>EAF_SZ_INTEGER </PRE>
+
+<PRE>EAF_SZ_LOGICAL </PRE>
+
+<PRE>EAF_SZ_REAL </PRE>
+
+<PRE>EAF_SZ_COMPLEX </PRE>
+
+<PRE>EAF_SZ_DOUBLE_COMPLEX </PRE>
+
+<PRE>EAF_SZ_DOUBLE_PRECISION </PRE>
+</UL>
+</UL>
+</UL>
+
+<P>The return value is the number of bytes written, if this number does
+not match the requested number of bytes to be written, an error has occured.
+The return value of EAF_Read also indicates the number of bytes actually
+transmitted.</P>
+
+</BODY>
+</HTML>
