@@ -69,6 +69,8 @@ extern char * armci_vapi_client_mem_alloc(int);
 
 #define _armci_bypass 1
 
+#define COMPLETE_HANDLE _armci_buf_complete_nb_request
+
 #define LONG_GET_THRESHOLD 20000000
 #define LONG_GET_THRESHOLD_STRIDED 20000000
 

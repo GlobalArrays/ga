@@ -116,6 +116,8 @@ typedef struct {
 
 static int* _gtmparr;
 
+char *MessageRcvBuffer;
+
 extern void armci_util_wait_int(volatile int *,int,int);
 void armci_send_data_to_client(int proc, void *buf,int bytes,void *dbuf);
 

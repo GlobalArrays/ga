@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.56 2003-06-10 15:54:24 vinod Exp $ */
+/* $Id: request.c,v 1.57 2003-07-18 06:21:44 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -8,7 +8,7 @@
 
 #define DEBUG_ 0
 
-#if !defined(GM) && !defined(VIA) && !defined(LAPI)
+#if !defined(GM) && !defined(VIA) && !defined(LAPI) &&!defined(VAPI)
   double _armci_rcv_buf[MSG_BUFLEN_DBL];
   double _armci_snd_buf[MSG_BUFLEN_DBL]; 
   char* MessageSndBuffer = (char*)_armci_snd_buf;
