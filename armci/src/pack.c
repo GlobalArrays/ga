@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.17 2001-11-09 01:31:07 vinod Exp $ */
+/* $Id: pack.c,v 1.18 2001-11-09 18:17:33 d3h325 Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -80,7 +80,9 @@ int armci_pack_strided(int op, void* scale, int proc,
 #ifdef STRIDED_GET_BUFLEN
     if(op==GET)bufsize=STRIDED_GET_BUFLEN;
 #endif
-/* Added the following for balancing buffers */
+
+#ifdef BALANCE_FACTOR
+    /* Added the following for balancing buffers */
     if(op==PUT){
         for(i=0; i<= stride_levels; i++)
                 bytes *= count[i];
@@ -90,6 +92,8 @@ int armci_pack_strided(int op, void* scale, int proc,
                 noswap = 1;
         }
     }
+#endif
+
     /* determine decomposition of the patch to fit in the buffer */
     if(fit_level<0)
        armci_fit_buffer(count, stride_levels, &fit_level, &nb, bufsize);
