@@ -24,7 +24,7 @@ extern void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol)
 #  endif
 #elif defined(VIA)
 #  include "via.h"
-   typedef int msg_tag_t;
+   typedef void* msg_tag_t;
 #elif defined(SOCKETS)
 #  include "sockets.h" 
    typedef long msg_tag_t;

@@ -1,4 +1,4 @@
-/* $Id: ds-shared.c,v 1.23 2003-01-20 20:55:06 vinod Exp $ */
+/* $Id: ds-shared.c,v 1.24 2003-03-06 00:58:31 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "message.h"
@@ -85,8 +85,11 @@ void armci_pipe_receive_strided(request_header_t* msginfo, void *ptr,
 {
 buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
-#if defined(GM) 
+#if defined(GM)  
      arg.buf_posted   = msginfo->tag.data_ptr;
+#endif
+#if defined(VIA) && defined(VIA_USES_RDMA)
+     arg.buf_posted   = msginfo->tag;
 #endif
 
      arg.buf   = ptr;
@@ -107,6 +110,10 @@ int  packsize = PACK_SIZE(msginfo->datalen);
 #if defined(GM) || defined(HITACHI)
      arg.buf_posted   = msginfo->tag.data_ptr;
 #endif
+#if defined(VIA) && defined(VIA_USES_RDMA)
+     arg.buf_posted   = msginfo->tag;
+#endif
+
      arg.buf   = buf;
      arg.count = 0;
      arg.proc  = (msginfo->operation==GET)?msginfo->from:msginfo->to;

@@ -2,7 +2,7 @@
 #define _VIA_H_ 
 extern int armci_long_buf_free, armci_long_buf_taken_srv;
 extern void armci_via_wait_ack();
-
+#define VIA_USES_RDMA 1
 #define PIPE_BUFSIZE  (4096)
 #define PIPE_MIN_BUFSIZE 1024 
 #define PIPE_MEDIUM_BUFSIZE (2*1024)
@@ -47,7 +47,15 @@ typedef struct {
 
 #define BUF_EXTRA_FIELD_T armci_via_field_t 
 #define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op) armci_via_complete_buf((armci_via_field_t *)(&(_field)),(_snd),(_rcv),(_to),(_op));_snd=0;_rcv=0;_to=0
+
+/*we have 3 protocols for get, 2 of them would now not post any recv descriptors
+  hence would not require _rcv, third one, pinning protocol, would still post a 
+  descriptor but waits for it outside of the regular complete_buf code. so, _rcv
+  can be set to 0 safely
 #define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;if(operation==GET&&size>2*PIPE_MIN_BUFSIZE)_rcv=0
+*/
+#define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;if(operation==GET)_rcv=0
+
 extern char * armci_via_client_mem_alloc(int);
 #define BUF_ALLOCATE(_size) armci_via_client_mem_alloc(_size)
 
