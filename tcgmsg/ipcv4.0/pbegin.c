@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.17 2003-10-22 03:36:39 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.18 2003-11-04 23:49:31 manoj Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -543,6 +543,7 @@ void PEND_()
   vampir_begin(TCGMSG_PEND,__FILE__,__LINE__);
 #endif
 
+  SR_initialized = 0;
   if (!SR_parallel) return;
 
   (void) signal(SIGCHLD, SIG_DFL); /* Death of children now OK */

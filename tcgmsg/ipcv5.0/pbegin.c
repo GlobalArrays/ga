@@ -220,7 +220,8 @@ void PEND_(void)
 #endif
 
   SYNCH_(&type);
-  
+  SR_initialized = 0;
+
 #if   defined(SYSV) || defined(MMAP)
   if (TCGMSG_nodeid == 0 && TCGMSG_nnodes > 1) {
     int status;
