@@ -1,0 +1,68 @@
+# ARMCI makefile for Windows NT nmake
+
+LIBRARY=armci.lib
+LIBDIR =.\..\lib\win32
+OBJDIR =.\obj
+PRJDIR =.\NTprojects
+LIBRARY_PATH = $(LIBDIR)\$(LIBRARY)
+
+DEFINES =-DWIN32
+INCLUDES =-I$(MPI_INCLUDE)
+
+AR = link.exe -lib 
+ARFLAGS = /nologo /out:$(LIBRARY_PATH)
+
+CC = cl
+COPT = -nologo -W3 -GX -O2
+CFLAGS = $(COPT) $(DEFINES) $(INCLUDES) -Fo"$(OBJDIR)/" -c
+
+FC = fl32
+FOPT = -nologo -G5 -Ox
+FFLAGS = $(FOPT) -Fo"$(OBJDIR)/" -c
+
+#path and name of MPI library
+MPI_LIB_NAME=Cvwmpi.lib
+LIBS = $(MPI_LIB)\$(MPI_LIB_NAME)
+
+#################
+
+OBJ =   "$(OBJDIR)\winshmem.obj" \
+        "$(OBJDIR)\shmalloc.obj" \
+        "$(OBJDIR)\rmw.obj" \
+        "$(OBJDIR)\memory.obj" \
+        "$(OBJDIR)\locks.obj" \
+        "$(OBJDIR)\fence.obj" \
+        "$(OBJDIR)\fcopy.obj" \
+        "$(OBJDIR)\faccumulate.obj"\
+        "$(OBJDIR)\strided.obj" \
+        "$(OBJDIR)\armci.obj" \
+        "$(OBJDIR)\vector.obj"\
+        "$(OBJDIR)\pack.obj"\
+        "$(OBJDIR)\memlock.obj"
+
+$(LIBRARY_PATH): $(LIBDIR) $(OBJ)
+	$(AR) @<<
+	$(ARFLAGS) $(OBJ)
+<<
+
+"$(LIBDIR)" :
+    if not exist "$(LIBDIR)\$(NULL)" mkdir "$(LIBDIR)"
+
+"$(OBJDIR)" :
+    if not exist "$(OBJDIR)\$(NULL)" mkdir "$(OBJDIR)"
+
+.c{$(OBJDIR)}.obj:
+	$(CC) $(CFLAGS) $<
+
+.f{$(OBJDIR)}.obj:
+	$(FC) $(FFLAGS) $<
+
+$(OBJ): $(OBJDIR) armci.h armcip.h
+$(OBJDIR)/test.obj: $(OBJDIR) armci.h
+
+test.exe: $(OBJDIR)/test.obj $(LIBRARY_PATH)
+	$(CC) $(COPT) -Fe$@ $** $(LIBS)
+
+clean:
+	-@erase *.exe $(OBJDIR)\*.obj $(OBJDIR)\*.for $(PRJDIR)\*.idb $(PRJDIR)\*.pch $(PRJDIR)\*.pdb  $(LIBRARY_PATH)
+	-@rmdir $(OBJDIR)
