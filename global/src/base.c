@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.63 2003-12-31 01:06:25 d3h325 Exp $ */
+/* $Id: base.c,v 1.64 2004-01-02 20:41:21 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -800,12 +800,12 @@ void gai_init_struct(int handle)
 
 /*\ SIMPLE FUNCTIONS TO RECOVER STANDARD PROCESSOR LISTS
 \*/
-Integer FATR ga_default_config_()
+Integer FATR ga_pgroup_get_default_()
 {
   return -1;
 }
 
-Integer FATR ga_mirror_config_()
+Integer FATR ga_pgroup_get_mirror_()
 {
   return 0;
 }
@@ -839,11 +839,11 @@ Integer ga_create_handle_()
 
 /*\ Set the dimensions and data type on a new global array
 \*/
-void nga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
+void ga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
 {
   Integer i;
   Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_data");
+  GA_PUSH_NAME("ga_set_data");
   if (GA[ga_handle].actv == 1)
     ga_error("Cannot set data on array that has been allocated",0);
   gam_checkdim(*ndim, dims);
@@ -862,11 +862,11 @@ void nga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
 
 /*\ Set the chunk array on a new global array
 \*/
-void nga_set_chunk_(Integer *g_a, Integer *chunk)
+void ga_set_chunk_(Integer *g_a, Integer *chunk)
 {
   Integer i;
   Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_chunk");
+  GA_PUSH_NAME("ga_set_chunk");
   if (GA[ga_handle].actv == 1)
     ga_error("Cannot set chunk on array that has been allocated",0);
   if (GA[ga_handle].ndim < 1)
@@ -881,10 +881,10 @@ void nga_set_chunk_(Integer *g_a, Integer *chunk)
 
 /*\ Set the array name on a new global array
 \*/
-void nga_set_array_name(Integer g_a, char *array_name)
+void ga_set_array_name(Integer g_a, char *array_name)
 {
   Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_array_name");
+  GA_PUSH_NAME("ga_set_array_name");
   if (GA[ga_handle].actv == 1)
     ga_error("Cannot set array name on array that has been allocated",0);
   strcpy(GA[ga_handle].name, array_name);
@@ -895,9 +895,9 @@ void nga_set_array_name(Integer g_a, char *array_name)
  *  Fortran version
 \*/
 #if defined(CRAY) || defined(WIN32)
-void FATR nga_set_array_name_(Integer *g_a, _fcd array_name)
+void FATR ga_set_array_name_(Integer *g_a, _fcd array_name)
 #else
-void FATR nga_set_array_name_(Integer *g_a, char* array_name, int slen)
+void FATR ga_set_array_name_(Integer *g_a, char* array_name, int slen)
 #endif
 {
   char buf[FNAM];
@@ -907,15 +907,15 @@ void FATR nga_set_array_name_(Integer *g_a, char* array_name, int slen)
   f2cstring(array_name ,slen, buf, FNAM);
 #endif
 
-  nga_set_array_name(*g_a, buf);
+  ga_set_array_name(*g_a, buf);
 }
 
 /*\ Set the processor configuration on a new global array
 \*/
-void nga_set_proc_config_(Integer *g_a, Integer *p_handle)
+void ga_set_pgroup_(Integer *g_a, Integer *p_handle)
 {
   Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_proc_config");
+  GA_PUSH_NAME("ga_set_pgrouop");
   if (GA[ga_handle].actv == 1)
     ga_error("Cannot set processor configuration on array that has been allocated",0);
   GA[ga_handle].p_handle = (int) (*p_handle);
@@ -924,11 +924,11 @@ void nga_set_proc_config_(Integer *g_a, Integer *p_handle)
 
 /*\ Add ghost cells to a new global array
 \*/
-void nga_set_ghosts_(Integer *g_a, Integer *width)
+void ga_set_ghosts_(Integer *g_a, Integer *width)
 {
   Integer i;
   Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_ghosts");
+  GA_PUSH_NAME("ga_set_ghosts");
   if (GA[ga_handle].actv == 1)
     ga_error("Cannot set ghost widths on array that has been allocated",0);
   if (GA[ga_handle].ndim < 1)
@@ -948,11 +948,11 @@ void nga_set_ghosts_(Integer *g_a, Integer *width)
 
 /*\ Set irregular distribution in a new global array
 \*/
-void nga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
+void ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
 {
   Integer i, maplen;
   Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_irreg_distr");
+  GA_PUSH_NAME("ga_set_irreg_distr");
   if (GA[ga_handle].actv == 1)
     ga_error("Cannot set irregular data distribution on array that has been allocated",0);
   if (GA[ga_handle].ndim < 1)
@@ -975,17 +975,17 @@ void nga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
 
 /*\ Overide the irregular data distribution flag on a new global array
 \*/
-void nga_set_irreg_flag_(Integer *g_a, logical *flag)
+void ga_set_irreg_flag_(Integer *g_a, logical *flag)
 {
   Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_irreg");
+  GA_PUSH_NAME("ga_set_irreg");
   GA[ga_handle].irreg = (int)(*flag);
   GA_POP_NAME;
 }
 
 /*\ Get dimension on a new global array
 \*/
-Integer nga_get_dimension_(Integer *g_a)
+Integer ga_get_dimension_(Integer *g_a)
 {
   Integer ga_handle = *g_a + GA_OFFSET;
   return (Integer)GA[ga_handle].ndim;
@@ -1187,11 +1187,11 @@ logical nga_create_ghosts_irreg_config(
   GA_PUSH_NAME("nga_create_ghosts_irreg_config");
 
   *g_a = ga_create_handle_();
-  nga_set_data_(g_a,&ndim,dims,&type);
-  nga_set_ghosts_(g_a,width);
-  nga_set_array_name(*g_a,array_name);
-  nga_set_irreg_distr_(g_a,map,nblock);
-  nga_set_proc_config_(g_a,&p_handle);
+  ga_set_data_(g_a,&ndim,dims,&type);
+  ga_set_ghosts_(g_a,width);
+  ga_set_array_name(*g_a,array_name);
+  ga_set_irreg_distr_(g_a,map,nblock);
+  ga_set_pgroup_(g_a,&p_handle);
   status = ga_allocate_(g_a);
 
   GA_POP_NAME;
@@ -1211,7 +1211,7 @@ logical nga_create_ghosts_irreg(
         Integer nblock[], /* number of blocks for each dimension in map */
         Integer *g_a)     /* array handle (output) */
 {
-   Integer p_handle = ga_default_config_();
+   Integer p_handle = ga_pgroup_get_default_();
    return nga_create_ghosts_irreg_config(type, ndim, dims, width,
                 array_name, map, nblock, p_handle, g_a);
 }
@@ -1232,10 +1232,10 @@ logical nga_create_config(Integer type,
   logical status;
   GA_PUSH_NAME("nga_create_config");
   *g_a = ga_create_handle_();
-  nga_set_data_(g_a,&ndim,dims,&type);
-  nga_set_array_name(*g_a,array_name);
-  nga_set_chunk_(g_a,chunk);
-  nga_set_proc_config_(g_a,&p_handle);
+  ga_set_data_(g_a,&ndim,dims,&type);
+  ga_set_array_name(*g_a,array_name);
+  ga_set_chunk_(g_a,chunk);
+  ga_set_pgroup_(g_a,&p_handle);
   status = ga_allocate_(g_a);
   GA_POP_NAME;
   return status;
@@ -1248,7 +1248,7 @@ logical nga_create(Integer type,
                    Integer *chunk,
                    Integer *g_a)
 {
-  Integer p_handle = ga_default_config_();
+  Integer p_handle = ga_pgroup_get_default_();
   return nga_create_config(type, ndim, dims, array_name, chunk, p_handle, g_a);
 }
 
@@ -1268,11 +1268,11 @@ logical nga_create_ghosts_config(Integer type,
   logical status;
   GA_PUSH_NAME("nga_create_ghosts");
   *g_a = ga_create_handle_();
-  nga_set_data_(g_a,&ndim,dims,&type);
-  nga_set_ghosts_(g_a,width);
-  nga_set_array_name(*g_a,array_name);
-  nga_set_chunk_(g_a,chunk);
-  nga_set_proc_config_(g_a,&p_handle);
+  ga_set_data_(g_a,&ndim,dims,&type);
+  ga_set_ghosts_(g_a,width);
+  ga_set_array_name(*g_a,array_name);
+  ga_set_chunk_(g_a,chunk);
+  ga_set_pgroup_(g_a,&p_handle);
   status = ga_allocate_(g_a);
   GA_POP_NAME;
   return status;
@@ -1286,7 +1286,7 @@ logical nga_create_ghosts_nocorner(Integer type,
                    Integer chunk[],
                    Integer *g_a)
 {
-  Integer p_handle = ga_default_config_();
+  Integer p_handle = ga_pgroup_get_default_();
   logical status;
   status = nga_create_ghosts_config(type, ndim, dims, width, array_name,
                   chunk, p_handle, g_a);
@@ -1303,7 +1303,7 @@ logical nga_create_ghosts(Integer type,
                    Integer chunk[],
                    Integer *g_a)
 {
-  Integer p_handle = ga_default_config_();
+  Integer p_handle = ga_pgroup_get_default_();
   return nga_create_ghosts_config(type, ndim, dims, width, array_name,
                   chunk, p_handle, g_a);
 }

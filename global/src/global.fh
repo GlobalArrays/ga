@@ -30,7 +30,7 @@
       double complex   nga_zdot_patch
       double precision nga_ddot_patch
       integer nga_idot_patch
-      integer ga_default_config, ga_mirror_config
+      integer ga_pgroup_get_default, ga_pgroup_get_mirror
       integer ga_ndim
       real ga_sdot, ga_sdot_patch, nga_sdot_patch
       integer ga_is_mirrored, nga_num_mirrored_seg
@@ -63,7 +63,7 @@
       external ga_create_handle
       external ga_allocate
       external ga_has_ghosts
-      external ga_default_config, ga_mirror_config
+      external ga_pgroup_get_default, ga_pgroup_get_mirror
       external ga_ndim
       external ga_spd_invert, ga_solve, ga_llt_solve
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg

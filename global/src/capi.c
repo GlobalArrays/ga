@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.69 2003-12-31 01:06:25 d3h325 Exp $ */
+/* $Id: capi.c,v 1.70 2004-01-02 20:41:22 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -381,63 +381,63 @@ int GA_Create_handle()
     return (int)g_a;
 }
 
-void NGA_Set_data(int g_a, int ndim, int dims[], int type)
+void GA_Set_data(int g_a, int ndim, int dims[], int type)
 {
     Integer aa, nndim, ttype;
     COPYC2F(dims,_ga_dims, ndim);
     aa = (Integer)g_a;
     nndim = (Integer)ndim;
     ttype = (Integer)type;
-    nga_set_data_(&aa, &nndim, _ga_dims, &ttype);
+    ga_set_data_(&aa, &nndim, _ga_dims, &ttype);
 }
 
-void NGA_Set_chunk(int g_a, int chunk[])
+void GA_Set_chunk(int g_a, int chunk[])
 {
     Integer aa, *ptr, ndim;
     aa = (Integer)g_a;
-    ndim = nga_get_dimension_(g_a);
+    ndim = ga_get_dimension_(g_a);
     if(!chunk)ptr=(Integer*)0;  
     else {
       COPYC2F(chunk,_ga_work, ndim);
       ptr = _ga_work;
     }
-    nga_set_chunk_(&aa, ptr);
+    ga_set_chunk_(&aa, ptr);
 }
 
-void NGA_Set_array_name(int g_a, char *name)
+void GA_Set_array_name(int g_a, char *name)
 {
     Integer aa;
     aa = (Integer)g_a;
-    nga_set_array_name(aa, name);
+    ga_set_array_name(aa, name);
 }
 
-void NGA_Set_proc_config(int g_a, int p_handle)
+void GA_Set_pgroup(int g_a, int p_handle)
 {
   Integer aa, pp;
   aa = (Integer)g_a;
   pp = (Integer)pp;
-  nga_set_proc_config_(&aa, &pp);
+  ga_set_pgroup_(&aa, &pp);
 }
 
-void NGA_Set_ghosts(int g_a, int width[])
+void GA_Set_ghosts(int g_a, int width[])
 {
     Integer aa, *ptr, ndim;
     aa = (Integer)g_a;
-    ndim = nga_get_dimension_(g_a);
+    ndim = ga_get_dimension_(g_a);
     if(!width)ptr=(Integer*)0;  
     else {
       COPYC2F(width,_ga_work, ndim);
       ptr = _ga_work;
     }
-    nga_set_ghosts_(&aa, ptr);
+    ga_set_ghosts_(&aa, ptr);
 }
 
-void NGA_Set_irreg_distr_(int g_a, int map[], int block[])
+void GA_Set_irreg_distr_(int g_a, int map[], int block[])
 {
     Integer aa, *ptr, ndim;
     int d, base_map=0, base_work, b;
     aa = (Integer)g_a;
-    ndim = nga_get_dimension_(g_a);
+    ndim = ga_get_dimension_(g_a);
     COPYC2F(block,_ga_work, ndim);
 
     /* copy might swap only order of dimensions for blocks in map */
@@ -471,7 +471,7 @@ void NGA_Set_irreg_distr_(int g_a, int map[], int block[])
 #else
    ptr = _ga_map_capi + base_work;
 #endif
-   nga_set_irreg_distr_(&aa, ptr, _ga_work);
+   ga_set_irreg_distr_(&aa, ptr, _ga_work);
 }
 
 void GA_Set_irreg_flag(int g_a, int flag)
@@ -480,14 +480,14 @@ void GA_Set_irreg_flag(int g_a, int flag)
   logical fflag;
   aa = (Integer)g_a;
   fflag = (logical)flag;
-  nga_set_irreg_flag_(&aa, &fflag);
+  ga_set_irreg_flag_(&aa, &fflag);
 }
 
 int GA_Get_dimension(int g_a)
 {
   Integer aa;
   aa = (Integer)g_a;
-  return (int)nga_get_dimension_(&aa);
+  return (int)ga_get_dimension_(&aa);
 }
 
 int GA_Allocate(int g_a)
@@ -629,15 +629,15 @@ void GA_Zero(int g_a)
     ga_zero_(&a);
 }
 
-int GA_Default_config()
+int GA_Pgroup_get_default()
 {
-    int value = (int)ga_default_config_();
+    int value = (int)ga_pgroup_get_default_();
     return value;
 }
 
-int GA_Mirror_config()
+int GA_Pgroup_get_mirror()
 {
-    int value = (int)ga_mirror_config_();
+    int value = (int)ga_pgroup_get_mirror_();
     return value;
 }
 

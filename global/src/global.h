@@ -156,8 +156,8 @@ extern void FATR ga_fill_   ARGS_((Integer *, void *));
 extern void FATR ga_scale_  ARGS_((Integer *, void *));
 extern void FATR ga_add_   ARGS_((Void *, Integer *, Void *, Integer *,
       Integer *));
-extern Integer FATR ga_default_config_();
-extern Integer FATR ga_mirror_config_();
+extern Integer FATR ga_pgroup_get_default_();
+extern Integer FATR ga_pgroup_get_mirror_();
 extern Integer FATR ga_idot_ ARGS_((Integer *, Integer *));
 extern float FATR ga_fdot_ ARGS_((Integer *, Integer *));            
 extern DoublePrecision FATR ga_ddot_ ARGS_((Integer *, Integer *));
@@ -286,7 +286,7 @@ extern logical nga_create_irreg_config(
 extern Integer ga_create_handle();
 extern void ga_set_data(Integer *g_a, Integer *ndim, Integer dims[], Integer *type);
 extern void ga_set_chunk(Integer *g_a, Integer chunk[]);
-extern void ga_set_array_name(Integer *g_a, char *array_name);
+extern void ga_set_array_name(Integer g_a, char *array_name);
 extern void ga_set_proc_config(Integer *g_a, Integer *p_handle);
 extern void ga_set_ghosts(Integer *g_a, Integer width[]);
 extern void ga_set_irreg_distr(Integer *g_a, Integer map[], Integer nblock[]);
