@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.35 1997-02-01 00:26:55 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.36 1997-02-24 19:18:44 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -887,7 +887,7 @@ logical ga_create_irreg(type, dim1, dim2, array_name, map1, nblock1,
       * g_a           - Integer handle for future references [output]
       */
 {
-char     op='*', *ptr = NULL;
+char     op[]="*", *ptr = NULL;
 Integer  ilo, ihi, jlo, jhi;
 Integer  mem_size, nelem, mem_size_proc;
 Integer  i, ga_handle, status;
@@ -989,7 +989,7 @@ Integer  i, ga_handle, status;
 
       if(!status) GA[ga_handle].actv=0; /* no memory allocated */
 
-      ga_igop(GA_TYPE_GOP, &status, 1, &op); /* check if everybody succeded */
+      ga_igop(GA_TYPE_GOP, &status, 1, op); /* check if everybody succeded */
 
       /* determine pointers to individual blocks*/
       if(status) ga__set_ptr_array(*g_a, ptr);
@@ -1078,7 +1078,7 @@ logical ga_duplicate(g_a, g_b, array_name)
       * g_b           - Integer handle for new array [output]
       */
 {
-char     op='*', *ptr = NULL, **save_ptr;
+char     op[]="*", *ptr = NULL, **save_ptr;
 Integer  mem_size, mem_size_proc, nelem;
 Integer  i, ga_handle, status;
 int      *save_mapc;
@@ -1134,7 +1134,7 @@ int      *save_mapc;
           status = 0;
 
       if(!status) GA[ga_handle].actv=0; /* no memory allocated */
-      ga_igop(GA_TYPE_GOP, &status, 1, &op); /* check if everybody succeded */
+      ga_igop(GA_TYPE_GOP, &status, 1, op); /* check if everybody succeded */
 
       /* determine pointers to individual blocks*/
       if(status) ga__set_ptr_array(*g_b, ptr);
