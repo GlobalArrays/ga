@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.28 2002-08-01 22:08:32 d3g293 Exp $ */
+/* $Id: dataserv.c,v 1.29 2002-09-30 23:03:25 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "copy.h"
@@ -36,7 +36,7 @@ int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,
     for(k=0;k<num_xmit;k++){
        if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
        else iovlength=max_iovec;
-       iov=saveiov;  
+       iov=saveiov; 
        for(j=0;j<iovlength;j++){
          if(dim2==0){dim1+=1;dim2=darr[dim1].ptr_array_len;}
          iov[j].iov_base=darr[dim1].dst_ptr_array[darr[dim1].ptr_array_len-dim2];
@@ -70,7 +70,7 @@ int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,
     for(k=0;k<num_xmit;k++){
        if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
        else iovlength=max_iovec;
-       iov=saveiov;  
+       iov=saveiov; 
        for(j=0;j<iovlength;j++){
          if(dim2==0){dim1++;dim2=darr[dim1].ptr_array_len;}
          iov[j].iov_base=darr[dim1].src_ptr_array[darr[dim1].ptr_array_len-dim2];
@@ -79,7 +79,7 @@ int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,
        }
        n+=armci_WriteVToSocket(sock,iov,j,totalsize);
        if(DEBUG1){
-         printf("\n%d:armci_SendVectorToSocket done se iovlength=%d totalsize=%d n=%d",
+         printf("\n%d:armci_SendVectorToSocket done iovlen=%d totalsiz=%d n=%d",
                 armci_me,iovlength,totalsize,n);
          fflush(stdout);
        }
@@ -91,13 +91,13 @@ int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,
 
 int armci_RecvStridedFromSocket(int sock,void *dst_ptr, int dst_stride_arr[],
                      int count[],int stride_levels,struct iovec *iov){
- 
-    char *dst=(char*)dst_ptr;
-    char *dst1;
-    
-    int i,j,k,num_xmit=0,lastiovlength,iovlength,n=0,max_iovec,totalsize=0;
-    int total_of_2D=1;
-    int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+
+char *dst=(char*)dst_ptr;
+char *dst1;
+int i,j,k,num_xmit=0,lastiovlength,iovlength,n=0,max_iovec,totalsize=0,vecind;
+int total_of_2D=1;
+int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+
     max_iovec = MAX_IOVEC;
     if(DEBUG1){
        printf("\nin readv count[0] is %d and strarr[0] is%d\n",count[0],
@@ -106,56 +106,65 @@ int armci_RecvStridedFromSocket(int sock,void *dst_ptr, int dst_stride_arr[],
     }
     index[2] = 0; unit[2] = 1;
     if(stride_levels>1){
-        total_of_2D = count[2];
-        for(j=3; j<=stride_levels; j++) {
-          index[j] = 0; unit[j] = unit[j-1] * count[j-1];
-          total_of_2D *= count[j];
-        }
+       total_of_2D = count[2];
+       for(j=3; j<=stride_levels; j++) {
+         index[j] = 0; unit[j] = unit[j-1] * count[j-1];
+         total_of_2D *= count[j];
+       }
     }
+
+    num_xmit = (total_of_2D*count[1])/max_iovec;
+    lastiovlength = (total_of_2D*count[1])%max_iovec;
+    if(num_xmit == 0) num_xmit = 1;
+    else if(lastiovlength!=0)num_xmit++;
+
+    k=0;vecind=0;
+    if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
+    else iovlength=max_iovec;
+
     for(i=0; i<total_of_2D; i++) {
-        dst = (char *)dst_ptr;
-        for(j=2; j<=stride_levels; j++) {
-              dst += index[j] * dst_stride_arr[j-1];
- 
-              if(((i+1) % unit[j]) == 0) index[j]++;
-              if(index[j] >= count[j]) index[j] = 0;
-          }
-          dst1=dst;
-          num_xmit = count[1]/max_iovec;
-          lastiovlength = (count[1])%max_iovec;
-          if(num_xmit == 0) num_xmit = 1;
-          else if(lastiovlength!=0)num_xmit++;
-          for(k=0;k<num_xmit;k++){
-              if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
-              else iovlength=max_iovec;
-              for(j=0;j<iovlength;j++){
-                  iov[j].iov_base = dst1;
-                  iov[j].iov_len = count[0];totalsize+=count[0];
-                  dst1+=dst_stride_arr[0];
-              }
-              n+=armci_ReadVFromSocket(sock,iov,iovlength,totalsize);
-              iov+=iovlength;
-              if(DEBUG1){
-                printf("\n%d:armci_RecvStridedFromSocket recved  iovlength=%d totalsize=%d n=%d",
-                       armci_me,iovlength,totalsize,n);
-                fflush(stdout);
-              }
-              totalsize=0;
-          }
+       dst = (char *)dst_ptr;
+       for(j=2; j<=stride_levels; j++) {
+         dst += index[j] * dst_stride_arr[j-1];
+         if(((i+1) % unit[j]) == 0) index[j]++;
+         if(index[j] >= count[j]) index[j] = 0;
+       }
+       dst1=dst;
+       for(j=0;j<count[1];j++,vecind++){
+         if(vecind==iovlength){
+           n+=armci_ReadVFromSocket(sock,iov,iovlength,totalsize);
+           vecind = 0; totalsize=0; k++;
+           if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
+           else iovlength=max_iovec;
+         }
+         iov[vecind].iov_base = dst1;
+         iov[vecind].iov_len = count[0];totalsize+=count[0];
+         dst1+=dst_stride_arr[0];
+       }
+       if(vecind==iovlength){
+         n+=armci_ReadVFromSocket(sock,iov,iovlength,totalsize);
+         vecind = 0; totalsize=0; k++;
+         if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
+         else iovlength=max_iovec;
+       }
+       if(DEBUG1){
+         printf("\n%d:armci_RecvStridedFromSocket iovlen=%d totalsize=%d n=%d",
+               armci_me,iovlength,totalsize,n);
+         fflush(stdout);
+       }
     }
     return(n);
 }
 
 
 int armci_SendStridedToSocket(int sock,void *src_ptr, int src_stride_arr[],
-                     int count[], int stride_levels,struct iovec *iov)
-{
-    char *src=(char*)src_ptr;
-    char *src1;
-    
-    int i,j,k,num_xmit=0,lastiovlength,iovlength,n=0,max_iovec,totalsize=0;
-    int total_of_2D=1;
-    int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+                     int count[], int stride_levels,struct iovec *iov){
+char *src=(char*)src_ptr;
+char *src1;
+int i,j,k,num_xmit=0,lastiovlength,iovlength,n=0,max_iovec,totalsize=0,vecind;
+int total_of_2D=1;
+int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+
     max_iovec = MAX_IOVEC;
     if(DEBUG1){
        printf("\nin writev count[0] is %d and strarr[0] is%d\n",count[0],
@@ -170,35 +179,44 @@ int armci_SendStridedToSocket(int sock,void *src_ptr, int src_stride_arr[],
           total_of_2D *= count[j];
         }
     }
+    num_xmit = total_of_2D*count[1]/max_iovec;
+    lastiovlength = (total_of_2D*count[1])%max_iovec;
+    if(num_xmit == 0) num_xmit = 1;
+    else if(lastiovlength!=0)num_xmit++;
+
+    k=0;vecind=0;
+    if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
+    else iovlength=max_iovec;
+
     for(i=0; i<total_of_2D; i++) {
-          src = (char *)src_ptr;
-          for(j=2; j<=stride_levels; j++) {
-              src += index[j] * src_stride_arr[j-1];
- 
-              if(((i+1) % unit[j]) == 0) index[j]++;
-              if(index[j] >= count[j]) index[j] = 0;
-          }
-          src1=src;
-          num_xmit = count[1]/max_iovec;
-          lastiovlength = (count[1])%max_iovec;
-          if(num_xmit == 0) num_xmit = 1;
-          else if(lastiovlength!=0)num_xmit++;
-          for(k=0;k<num_xmit;k++){
-              if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
-              else iovlength=max_iovec;
-              for(j=0;j<iovlength;j++){
-                  iov[j].iov_base = src1;
-                  iov[j].iov_len = count[0];totalsize+=count[0];
-                  src1+=src_stride_arr[0];
-              }
-              n+=armci_WriteVToSocket(sock,iov,iovlength,totalsize);
-              if(DEBUG1){
-                printf("\n%d:armci_SendStridedToSocket done se iovlength=%d totalsize=%d n=%d",
-                      armci_me,iovlength, totalsize,n);fflush(stdout);
-              }
-              iov+=iovlength;
-              totalsize=0;
-          }
+       src = (char *)src_ptr;
+       for(j=2; j<=stride_levels; j++) {
+         src += index[j] * src_stride_arr[j-1];
+         if(((i+1) % unit[j]) == 0) index[j]++;
+         if(index[j] >= count[j]) index[j] = 0;
+       }
+       src1=src;
+       for(j=0;j<count[1];j++,vecind++){
+         if(vecind==iovlength){
+           n+=armci_WriteVToSocket(sock,iov,iovlength,totalsize);
+           vecind = 0; totalsize=0; k++;
+           if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
+           else iovlength=max_iovec;
+         }
+         iov[vecind].iov_base = src1;
+         iov[vecind].iov_len = count[0];totalsize+=count[0];
+         src1+=src_stride_arr[0];
+       }
+       if(vecind==iovlength){
+         n+=armci_WriteVToSocket(sock,iov,iovlength,totalsize);
+         vecind = 0; totalsize=0; k++;
+         if(lastiovlength!=0 && k==(num_xmit-1))iovlength=lastiovlength;
+         else iovlength=max_iovec;
+       }
+       if(DEBUG1){
+         printf("\n%d:armci_SendStridedToSocket iovlength=%d totalsize=%d n=%d",
+               armci_me,iovlength, totalsize,n);fflush(stdout);
+       }
      }
      return(n);
 }

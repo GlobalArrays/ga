@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.36 2002-09-04 19:15:34 d3h325 Exp $ */
+/* $Id: request.c,v 1.37 2002-09-30 23:03:25 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -344,10 +344,8 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
     bufsize += bytes + sizeof(long) +2*sizeof(double) +8; /*+scale+allignment*/
 #if defined(USE_SOCKET_VECTOR_API) 
     if(flag){
-        int totaliovecs=0;
+        int totaliovecs=MAX_IOVEC;
         /*if(op==PUT)*/bufsize-=bytes; 
-        for(s=0; s<len; s++)
-	    totaliovecs+=darr[s].ptr_array_len;
         buf = buf0= GET_SEND_BUFFER((bufsize+sizeof(struct iovec)*totaliovecs),op,proc);
     }
     else
@@ -470,7 +468,7 @@ int armci_rem_strided(int op, void* scale, int proc,
       if(_armci_bypass) bufsize -=bytes; /* we are not sending data*/
 #   elif defined(USE_SOCKET_VECTOR_API)
       bufsize -=bytes; /* we are not sending data*/
-      bufsize += sizeof(struct iovec)*bytes/count[0];
+      bufsize += sizeof(struct iovec)*MAX_IOVEC;
 #   else
       if(op==GET)bufsize -=bytes;
 #   endif
