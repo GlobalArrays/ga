@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.34 2004-01-13 17:05:36 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.35 2004-01-19 18:12:12 edo Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2125,7 +2125,8 @@ logical ga_update5_ghosts_(Integer *g_a)
 
 void ga_set_update5_info_(Integer *g_a)
 {
-  int *proc_rem,i;
+  int i;
+  Integer *proc_rem;
   Integer size, ndim, nwidth, increment[MAXDIM],np;
   Integer width[MAXDIM];
   Integer dims[MAXDIM];
@@ -2204,7 +2205,7 @@ void ga_set_update5_info_(Integer *g_a)
         stride_loc = (int *)(cache+2*sizeof(char *));
         stride_rem = (int *)(stride_loc+ndim);
         count = (int *)(stride_rem+ndim);
-        proc_rem = (int *)(count+ndim);
+        proc_rem = (Integer *)(count+ndim);
 
         get_remote_block_neg(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                              dims, width);
@@ -2260,7 +2261,7 @@ void ga_set_update5_info_(Integer *g_a)
         stride_loc = (int *)(cache+2*sizeof(char *));
         stride_rem = (int *)(stride_loc+ndim);
         count = (int *)(stride_rem+ndim);
-        proc_rem = (int *)(count+ndim);
+        proc_rem = (Integer *)(count+ndim);
 
         get_remote_block_pos(idx, ndim, lo_loc, hi_loc, slo_rem, shi_rem,
                              dims, width);
