@@ -142,7 +142,7 @@ extern int DRA_Close(         int d_a);
 extern void DRA_Flick();
 
 #ifdef __cplusplus
-	   }
+	   
 #endif
 
 #undef _ARGS_
