@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.44 2002-11-26 01:25:10 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.45 2003-10-01 21:15:13 manoj Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -905,36 +905,44 @@ void ga_print_file(FILE *file, Integer *g_a)
   
 void FATR ga_print_(Integer *g_a)
 {
-  ga_print_file(stdout, g_a);
+    ga_print_file(stdout, g_a);
 }
 
 
-/*\ return id of the current node
+/*\ return ClusterNode id of the specified process
+\*/
+Integer FATR ga_cluster_proc_nodeid_(Integer *proc)
+{
+    int id = armci_domain_id(ARMCI_DOMAIN_SMP, (int)*proc);
+    return (Integer) id;
+}
+
+/*\ return ClusterNode id of the calling process
 \*/
 Integer FATR ga_cluster_nodeid_()
 {
-int id = armci_domain_my_id(ARMCI_DOMAIN_SMP);
-        return (Integer) id;
+    int id = armci_domain_my_id(ARMCI_DOMAIN_SMP);
+    return (Integer) id;
 }
 
 /*\ number of nodes in a cluster
 \*/
 Integer FATR ga_cluster_nnodes_()
 {
-        return (Integer) armci_domain_count(ARMCI_DOMAIN_SMP);
+    return (Integer) armci_domain_count(ARMCI_DOMAIN_SMP);
 }
 
 /*\ number of processes in the job on the specified node
 \*/
 Integer FATR ga_cluster_nprocs_(Integer *node)
 {
-int id;
-        id = (int)*node;
-        return (Integer) armci_domain_nprocs(ARMCI_DOMAIN_SMP, id);
+    int id;
+    id = (int)*node;
+    return (Integer) armci_domain_nprocs(ARMCI_DOMAIN_SMP, id);
 }
 
 
-/*\ local id of calling process on the node
+/*\ global id of calling process on the node
 \*/
 Integer FATR ga_cluster_procid_(Integer *node, Integer *loc_proc_id)
 {

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.61 2003-09-03 17:11:21 d3g293 Exp $ */
+/* $Id: capi.c,v 1.62 2003-10-01 21:15:13 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -1757,21 +1757,31 @@ void GA_Median_patch(int g_a, int *alo, int *ahi, int g_b, int *blo, int *bhi, i
 #include <../../armci/src/armci.h>
 #endif
 
+/* return number of nodes being used in a cluster */
 int GA_Cluster_nnodes()
 {
     return armci_domain_count(ARMCI_DOMAIN_SMP);
 } 
 
+/* returns ClusterNode id of the calling process */
 int GA_Cluster_nodeid() 
 {
     return armci_domain_my_id(ARMCI_DOMAIN_SMP);
 }
 
+/* returns ClusterNode id of the specified process */
+int GA_Cluster_proc_nodeid(int proc)
+{
+    return armci_domain_id(ARMCI_DOMAIN_SMP, proc);
+}
+
+/* return number of processes being used on the specified node */
 int GA_Cluster_nprocs(int x) 
 {
     return armci_domain_nprocs(ARMCI_DOMAIN_SMP,x);
 }
 
+/* global id of the calling process */
 int GA_Cluster_procid(int node, int loc_proc)
 {
     return armci_domain_glob_proc_id(ARMCI_DOMAIN_SMP,

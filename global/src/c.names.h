@@ -196,6 +196,7 @@
 #define  ga_norm_infinity_         GA_NORM_INFINITY
 #define  ga_median_         	   GA_MEDIAN
 #define  ga_median_patch_          GA_MEDIAN_PATCH
+#define  ga_cluster_proc_nodeid_   GA_CLUSTER_PROC_NODEID 
 #define  ga_cluster_nodeid_        GA_CLUSTER_NODEID 
 #define  ga_cluster_nnodes_        GA_CLUSTER_NNODES
 #define  ga_cluster_nprocs_        GA_CLUSTER_NPROCS
@@ -403,6 +404,7 @@
 #define  ga_norm_infinity_         ga_norm_infinity__
 #define  ga_median_         	   ga_median__
 #define  ga_median_patch_          ga_median_patch__
+#define  ga_cluster_proc_nodeid_   ga_cluster_proc_nodeid__ 
 #define  ga_cluster_nodeid_        ga_cluster_nodeid__ 
 #define  ga_cluster_nnodes_        ga_cluster_nnodes__
 #define  ga_cluster_nprocs_        ga_cluster_nprocs__

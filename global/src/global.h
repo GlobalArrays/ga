@@ -111,6 +111,7 @@ extern logical FATR ga_uses_ma_ ARGS_(( void));
 extern logical FATR ga_memory_limited_ ARGS_(( void));
 extern Integer FATR ga_cluster_nnodes_ ARGS_(( void));
 extern Integer FATR ga_cluster_nprocs_ ARGS_((Integer*));
+extern Integer FATR ga_cluster_proc_nodeid_ ARGS_((Integer*));
 extern Integer FATR ga_cluster_nodeid_ ARGS_(( void));
 extern Integer FATR ga_cluster_procid_ ARGS_((Integer*, Integer*));
 
