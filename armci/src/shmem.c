@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.65 2003-05-20 01:40:17 edo Exp $ */
+/* $Id: shmem.c,v 1.66 2003-05-22 17:11:40 edo Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -270,9 +270,11 @@ long x;
      uval = getenv("ARMCI_DEFAULT_SHMMAX"); 
      if(uval != NULL){
        sscanf(uval,"%ld",&x);
-       if(x<1L || x> 2048L) 
-          armci_die("incorrect ARMCI_DEFAULT_SHMMAX should be <1,2048>mb and 2^N",x);
-     }else x =0;
+       if(x<1L || x> 2048L){ 
+          fprintf(stderr,"incorrect ARMCI_DEFAULT_SHMMAX should be <1,2048>mb and 2^N Found=%ld\n",x);
+          x=0;
+       }
+     }
      return x*1048576; /* return value in bytes */
 }
 
