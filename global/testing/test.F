@@ -93,7 +93,7 @@ c
       double precision drand, crap, sum1, sum2, x
       double precision nwords
       intrinsic int
-      iran(i) = int(drand(0)*dfloat(n)) + 1
+      iran(i) = int(drand(0)*dfloat(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
@@ -480,7 +480,8 @@ c
       crap = drand(nodeid()*51 + 1) ! Different seed for each process
       do j = 1, 10 
        call ga_sync()
-       if(me.eq.iran(ga_nnodes())-1) then
+       itmp = iran(nproc)-1
+       if(me.eq.itmp) then
          do loop = 1,m 
            ilo = iran(n) 
            jlo = iran(n)
@@ -576,7 +577,7 @@ c
       integer buf
       intrinsic int
       external drand
-      iran(i) = int(drand(0)*dfloat(n)) + 1
+      iran(i) = int(drand(0)*dfloat(i)) + 1
 c     
       nproc = ga_nnodes()
       me    = ga_nodeid()
