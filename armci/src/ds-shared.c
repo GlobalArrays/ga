@@ -16,11 +16,27 @@
 /**************************** pipelining for medium size msg ***********/
 #ifdef PIPE_BUFSIZE
 
+static int pack_size(int len)
+{
+#define PIPE_ROUNDUP 512 
+#define PIPE_SHORT_ROUNDUP (1024) 
+int n;
+ if(len <4*PIPE_BUFSIZE){
+   len /=4;
+   n = len%PIPE_SHORT_ROUNDUP;
+   len += (PIPE_SHORT_ROUNDUP-n); 
+ }else len=PIPE_BUFSIZE;
+ return len;
+}
+    
+#define PACK_SIZE1(_len) ((_len)<PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
+#define PACK_SIZE(_len) pack_size(_len) 
+
 void armci_pipe_prep_receive_strided(request_header_t *msginfo, char *buf,
                         int strides, int stride_arr[], int count[], int bufsize)
 {
 buf_arg_t arg;
-int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
+int  packsize = PACK_SIZE(msginfo->datalen);
 
      arg.buf_posted = arg.buf   = buf;
      arg.count = bufsize;
@@ -35,7 +51,7 @@ void armci_pipe_receive_strided(request_header_t* msginfo, void *ptr,
                                 int stride_arr[], int count[], int strides)
 {
 buf_arg_t arg;
-int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
+int  packsize = PACK_SIZE(msginfo->datalen);
 #ifdef GM
      arg.buf_posted   = msginfo->tag.data_ptr;
 #endif
@@ -53,7 +69,7 @@ void armci_pipe_send_strided(request_header_t *msginfo, void *buf, int buflen,
                              void *ptr, int *stride_arr,int count[],int strides)
 {
 buf_arg_t arg;
-int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
+int  packsize = PACK_SIZE(msginfo->datalen);
 
 #ifdef GM
      arg.buf_posted   = msginfo->tag.data_ptr;
