@@ -1,9 +1,16 @@
-#define FNAME 'EAFfile'
 #define EAF_SZ_INT 4
 #define IO_TEST_SZ (1024*1024/8)
 #define IO_NUM_FILES 4
 #define MAX_ITER 4
 #define MAP(x) dble(IO_TEST_SZ*((x-1)*EAF_SZ_INT))
+#define MAX_FILE_SZ 5.0d9
+#define BASE_NAME 'EAFfile'
+#ifdef  HPIODIR
+#  define FNAME   HPIODIR//BASE_NAME
+#else
+#  define FNAME   BASE_NAME
+#endif
+
       program eaftest
 c     
       call test1
@@ -43,7 +50,7 @@ c
 c     
          call testerr(eaf_open(fname, eaf_rw, fd(fnum)))
 c     
-         print *,'testing EAF_AWrite'
+         print *,'testing EAF_AWrite', ' file= ',fname
          do iter = 1, MAX_ITER
             do i = 1, IO_TEST_SZ
                buf(i,iter) = i + fnum + (iter*10000)
@@ -282,12 +289,17 @@ c
       avail = 0.95*avail
       length = 1024.0d0*avail
       call testerr(eaf_open(fname, eaf_rw, fd))
-      write(6,*) ' 95% available length ', length,' bytes'
+      if(length.gt. MAX_FILE_SZ) then
+         length = MAX_FILE_SZ
+         write(6,*) ' trying max file length ', length,' bytes'
+      else
+         write(6,*) ' 95% available length ', length,' bytes'
+      endif
 c
       ofw = 0
       do offset = 0, length, (IO_TEST_SZ)*8
          nwrite = min(nint(length-offset+1.0d0),(IO_TEST_SZ)*8)
-         call dfill(nwrite/8, offset, buf, 1)
+         call util_dfill(nwrite/8, offset, buf, 1)
          if (ofw .le. offset) then
             write(6,*) ' writing at ',offset, nwrite
             ofw = ofw + 100000000.0d0
@@ -295,7 +307,7 @@ c
          ierr = eaf_write(fd, offset, buf, nwrite)
          if (ierr .ne. 0) then
            call testerr(ierr)
-           call errquit('bad write',ierr)
+           call ga_error('bad write',ierr)
          endif
       enddo
 c
@@ -311,10 +323,10 @@ c
          ierr = eaf_read(fd, offset, buf, nwrite)
          if (ierr .ne. 0) then
            call testerr(ierr)
-           call errquit('bad read',ierr)
+           call ga_error('bad read',ierr)
          endif
          do i = 1, nwrite/8
-            if (buf(i).ne.offset) call errquit('bad ', i)
+            if (buf(i).ne.offset) call ga_error('bad ', i)
          enddo
       enddo
 c
