@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.22 2000-06-16 22:25:41 d3h325 Exp $ */
+/* $Id: test.c,v 1.23 2000-10-13 23:04:33 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -6,6 +6,8 @@
 #ifdef WIN32
 #  include <windows.h>
 #  define sleep(x) Sleep(1000*(x))
+#else
+#  include <unistd.h>
 #endif
 
 /* ARMCI is impartial to message-passing libs - we handle them with MP macros */
@@ -684,7 +686,7 @@ void test_vector()
                dsc[i].ptr_array_len = 1; 
             }
 
-            if(rc=ARMCI_PutV(dsc, mrc, proc))ARMCI_Error("putv failed ",rc);
+            if((rc=ARMCI_PutV(dsc, mrc, proc)))ARMCI_Error("putv failed ",rc);
 
 /*            printf("array at destination\n");*/
 /*            print_2D_double((double *)b[proc], dimsB[0], loB, hiB);*/
@@ -711,7 +713,8 @@ void test_vector()
                dsc[i-1].ptr_array_len = 1; 
             }
 
-            if(cols-1)if(rc=ARMCI_PutV(dsc, cols-1, proc))ARMCI_Error("putv(2) failed ",rc);
+            if((cols-1))if((rc=ARMCI_PutV(dsc, cols-1, proc)))
+                               ARMCI_Error("putv(2) failed ",rc);
 
             /* we get back entire rectangular patch */
             for(i=0; i < cols; i++){
@@ -732,7 +735,7 @@ void test_vector()
 
             /* note that we do not need ARMCI_Fence here since
              * consecutive operations targeting the same process are ordered */
-            if(rc=ARMCI_GetV(dsc, 1, proc))ARMCI_Error("getv failed ",rc);
+            if((rc=ARMCI_GetV(dsc, 1, proc)))ARMCI_Error("getv failed ",rc);
             
 	    idx1 = Index(ndim, loA, dimsA);
 	    idx3 = Index(ndim, loC, dimsA);
@@ -805,8 +808,8 @@ void test_vector_acc()
                 psrc[j]= 2*j + (double*)a;
                 pdst[j]= 2*j + (double*)b[proc];
             }
-            if(rc = ARMCI_AccV(ARMCI_ACC_DBL, &alpha, &dsc, 1, proc))
-                ARMCI_Error("accumlate failed",rc);
+            if((rc = ARMCI_AccV(ARMCI_ACC_DBL, &alpha, &dsc, 1, proc)))
+                     ARMCI_Error("accumlate failed",rc);
 /*            for(j=0; j<elems; j++)
                 printf("%d %lf %lf\n",j, *(j+ (double*)b[proc]), *(j+ (double*)a));
 */
@@ -974,7 +977,9 @@ void test_memlock()
         int i, j,k, proc;
         double *b[MAXPROC];
         double *a, *c;
+#if 0
         int *proclist = (int*)work;
+#endif
                 void *pstart, *pend;
                 int first, last;
                 void armci_lockmem(void*, void*, int);
