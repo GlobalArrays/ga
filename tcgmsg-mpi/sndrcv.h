@@ -11,6 +11,41 @@
   accessible from FORTRAN and vice versa
 */
 
+#ifdef __cplusplus
+extern "C" {
+   extern Integer FATR NODEID_();
+   extern Integer FATR NNODES_();
+   extern Integer FATR MTIME_();
+   extern double FATR TCGTIME_();
+   extern void FATR SND_();
+   extern void FATR RCV_();
+   extern Integer FATR PROBE_();
+   extern void FATR BRDCST_();
+   extern void FATR DGOP_();
+   extern void FATR IGOP_();
+   extern void FATR PBEGINF_();
+   extern void PBEGIN_();
+   extern void FATR PEND_();
+   extern void FATR SETDBG_();
+   extern Integer FATR NXTVAL_();
+   extern void FATR LLOG_();
+   extern void FATR SYNCH_();
+   extern void FATR STATS_();
+   extern void FATR WAITCOM_();
+   extern void Error();
+   extern void FATR PARERR_();
+   extern double FATR DRAND48_();
+   extern void FATR SRAND48_();
+   extern long TCGREADY_();
+   extern Integer FATR MDTOB_();
+   extern Integer FATR MITOB_();
+   extern Integer FATR MDTOI_();
+   extern Integer FATR MITOD_();
+   extern void FATR PFILECOPY_();
+   extern void FATR PFCOPY_();
+}
+#endif
+
 /*
   Integer NODEID_() returns logical node no. of current process.
   This is 0,1,...,NNODES_()-1
