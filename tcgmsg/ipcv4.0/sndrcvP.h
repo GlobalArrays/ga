@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.11 2000-08-02 23:48:22 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.12 2000-08-03 22:31:53 d3g681 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
@@ -20,9 +20,9 @@
   Defines and macro definitions
   *****************************/
 
-#define MAX_CLUSTER 34           /* Maximum no. of clusters */
-#define MAX_SLAVE   32           /* Maximum no. of slaves per cluster */
-#define MAX_PROCESS 255          /* Maximum no. of processes */
+#define MAX_CLUSTER 128          /* Maximum no. of clusters */
+#define MAX_SLAVE   512           /* Maximum no. of slaves per cluster */
+#define MAX_PROCESS 8192          /* Maximum no. of processes */
 
 #define TYPE_SETUP 32768         /* used for setup communication */
 #define TYPE_CHECK 32769         /* used for checking communication */
