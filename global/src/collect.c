@@ -1,7 +1,8 @@
-/* $Id: collect.c,v 1.8 2000-05-05 19:48:05 d3h325 Exp $ */
+/* $Id: collect.c,v 1.9 2000-06-14 01:20:10 d3h325 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
+#include "message.h"
 
 #if defined(CRAY)
 #  include <fortran.h>
@@ -17,11 +18,14 @@ void ga_msg_brdcst(type, buffer, len, root)
 Integer type, len, root;
 Void*   buffer;
 {
+   armci_msg_bcast(buffer, (int)len, (int)root);
+#if 0
 #  ifdef MPI
       MPI_Bcast(buffer, (int)len, MPI_CHAR, (int)root, MPI_COMM_WORLD);
 #  else
       BRDCST_(&type, buffer, &len, &root);
 #  endif
+#endif
 }
 
 /*\ BROADCAST
