@@ -48,6 +48,7 @@
 #define  ga_sort_scat2_            GA_SORT_SCAT2
 #define  ga_sync_                  GA_SYNC
 #define  ga_terminate_             GA_TERMINATE
+#define  ga_verify_handle_         GA_VERIFY_HANDLE
 #define  ga_zero_                  GA_ZERO
 
 #define  nnodes_                   NNODES 
@@ -62,3 +63,5 @@
 #define  ma__get_ptr_              MA__GET_PTR
 #define  ma__diff_                 MA__DIFF
 #define  dgemm_                    DGEMM
+
+
