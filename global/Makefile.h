@@ -61,7 +61,7 @@ endif
 # IBM PC running Linux
 #
 ifeq ($(TARGET),LINUX)
-
+           CC = gcc
 ifdef USE_F77
 #    Linux with f2c (using f77 script)
     EXPLICITF = TRUE
@@ -70,10 +70,16 @@ else
      FOPT_REN = -fno-second-underscore
            FC = g77
 endif
- GLOB_DEFINES = -DLINUX
 ifeq ($(FC),pgf77)
  GLOB_DEFINES+= -DPGLINUX
 endif
+ifeq ($(CC),gcc)
+       COPT_REN = -malign-double
+endif
+ifeq ($(FC),g77)
+       FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
+endif      
+ GLOB_DEFINES = -DLINUX
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
 endif
@@ -82,7 +88,6 @@ endif
 # IBM PC running Linux with Portland Group Compilers
 #
 ifeq ($(TARGET),PGLINUX)
-
      FOPT_REN = -fno-second-underscore
            FC = pgf77
  GLOB_DEFINES = -DLINUX -DPGLINUX
