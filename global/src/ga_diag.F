@@ -76,6 +76,9 @@ c     endif
 c
       call ga_sync()
 c
+      pan = 1                   !panel size
+      npan = n/pan
+c
       if (n .lt. 350) then
          proc = min(8,ga_nnodes())
       else if (n .lt. 700) then
@@ -88,12 +91,12 @@ c
          proc = min(256,ga_nnodes())
       endif
 c
+      proc = min((npan-1)/2+1,proc)
+c
 c         print *,myproc,' participate in eig: ',proc
 c         call ffflush(6)
       oactive = myproc .lt. proc
       if (oactive) then
-         pan = 1                !panel size
-         npan = n/pan
 c     
 c        allocate map arrays
 c
@@ -350,6 +353,9 @@ c
 c
       call ga_sync()
 c
+      pan = 1                   !panel size
+      npan = n/pan
+c
       if (n .lt. 350) then
          proc = min(8,ga_nnodes())
       else if (n .lt. 700) then
@@ -362,12 +368,12 @@ c
          proc = min(256,ga_nnodes())
       endif
 c
+      proc = min(npan/2,proc)
+c
 c         print *,myproc,' participate in eig: ',proc
 c         call ffflush(6)
       oactive = myproc .lt. proc
       if (oactive) then
-         pan = 1                !panel size
-         npan = n/pan
 c     
 c        allocate map arrays
 c
@@ -685,6 +691,8 @@ c
 c
 c***  for smaller problems use fewer processors (performance reasons)
 c
+      pan = 1                   !panel size
+      npan = n/pan
       if (n .lt. 350) then
          proc = min(8,ga_nnodes())
       else if (n .lt. 700) then
@@ -697,11 +705,10 @@ c
          proc = min(256,ga_nnodes())
       endif
 c
+      proc = min((npan-1)/2+1,proc)
 c
       oactive = myproc .lt. proc
       if (oactive) then
-         pan = 1                !panel size
-         npan = n/pan
 c     
 c***     allocate storage for map arrays: A & Z from stack and B from heap
 c
