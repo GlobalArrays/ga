@@ -27,6 +27,9 @@
 #  include "cray.names.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(__STDC__) || defined(__cplusplus) || defined(WIN32)
 # define ARGS_(s) s
@@ -212,6 +215,10 @@ extern void FATR nga_add_patch_(DoublePrecision *alpha, Integer *g_a,
                     Integer *alo, Integer *ahi, DoublePrecision *beta,
                     Integer *g_b, Integer *blo, Integer *bhi, Integer *g_c,
                     Integer *clo, Integer *chi);
+
+#ifdef __cplusplus
+}
+#endif
 
 extern DoubleComplex   *DCPL_MB;
 extern DoublePrecision *DBL_MB;
