@@ -1,4 +1,4 @@
-         FOPT = -O
+         fOPT = -O
          COPT = -O
 
 OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o\
@@ -52,12 +52,12 @@ endif
 
 ifeq ($(ARMCI_NETWORK),GM)
 #  OBJ += dataserv-myri.o myrinet.o spawn.o request.o 
-  OBJ += dataserv-gm.o ds-shared.o myrinet.o spawn.o request.o buffers.o
+  OBJ += dataserv-gm.o ds-shared.o myrinet.o spawn.o request.o bufalloc.o async.o buffers.o
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
 endif
 
 ifeq ($(ARMCI_NETWORK),VIA)
-  OBJ += spawn.o  request.o via.o ds-shared.o buffers.o
+  OBJ += spawn.o  request.o via.o ds-shared.o buffers.o async.o
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
 endif
 
