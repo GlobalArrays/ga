@@ -1,4 +1,4 @@
-/*$Id: mulmat.patch.c,v 1.5 2001-12-20 20:09:05 d3h325 Exp $*/
+/*$Id: mulmat.patch.c,v 1.6 2002-01-11 20:57:20 edo Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -469,7 +469,7 @@ DoubleComplex ONE;
 /*\ MATRIX MULTIPLICATION for patches 
  *  Fortran interface
 \*/
-void nga_matmul_patch_(transa, transb, alpha, beta, g_a, alo, ahi, 
+void FATR nga_matmul_patch_(transa, transb, alpha, beta, g_a, alo, ahi, 
                        g_b, blo, bhi, g_c, clo, chi)
 
                       void *alpha, *beta;
