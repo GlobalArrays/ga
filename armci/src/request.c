@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.62 2004-03-31 00:33:26 vinod Exp $ */
+/* $Id: request.c,v 1.63 2004-03-31 23:38:26 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -822,6 +822,8 @@ int armci_rem_strided(int op, void* scale, int proc,
           }else
 #endif
           {
+             int armci_pin_memory(void *,int *,int *,int);
+             void armci_client_send_ack(int, int);
              if(!msginfo->pinned) armci_send_req(proc,msginfo,bufsize);
              if(!armci_pin_memory(dst_ptr,dst_stride_arr,count, stride_levels)){
                armci_client_send_ack(proc, -1);
@@ -884,13 +886,10 @@ int bytes, i;
 int ehlen = 0;
 int *rem_ptr;
 int * rem_stride_arr;
-int type;
 int bufsize = sizeof(request_header_t);
 
 /* for breaking into chinks */
-int j,k, num_xmit=0,lastiovlength,iovlength,max_iovec,vecind;
-int total_of_2D = 1;
-int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+int armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int);
      
     bytes = 0;
      
@@ -909,7 +908,7 @@ int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
     armci_save_strided_dscr(&buf,rem_ptr,rem_stride_arr,count,stride_levels,0);
           
     if(DEBUG_){
-       printf(" CLIENT :the dest_ptr is %d\n", rem_ptr);
+       printf(" CLIENT :the dest_ptr is %p\n", rem_ptr);
        for(i =0; i<stride_levels; i++)
 	 printf("the value of stride_arr[i] is %d,value of count[i] is %d\n",
                                rem_stride_arr[i], count[i]);
@@ -971,12 +970,14 @@ int armci_two_phase_get(int proc, void*src_ptr, int src_stride_arr[],
 {
 char *buf, *buf0;
 request_header_t *msginfo;
-int bytes, i;
+int bytes;
 int ehlen = 0;
 int *rem_ptr;
 int num; 
 int *rem_stride_arr;
 int bufsize = sizeof(request_header_t);
+int armci_post_scatter(void *,int *,int *,int, armci_vapi_memhndl_t *,int,request_header_t * ,int);
+void armci_client_recv_complete(int, int);
 
     if(DEBUG_){
        printf("%d(c):about to call armci_post_scatter, CLN value is %d\n",

@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.83 2004-03-31 00:33:26 vinod Exp $ */
+/* $Id: strided.c,v 1.84 2004-03-31 23:38:26 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -53,6 +53,8 @@ else\
 ARMCI_MEMHDL_T *mhloc=NULL,*mhrem=NULL; 
 
 #ifdef REGIONS_REQUIRE_MEMHDL 
+   int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
+                 ARMCI_MEMHDL_T **loc_memhdl,ARMCI_MEMHDL_T **rem_memhdl);
 #  define ARMCI_REGION_BOTH_FOUND(_s,_d,_b,_p) \
     armci_region_both_found_hndl((_s),(_d),(_b),(_p),&mhloc,&mhrem)
 #else
@@ -61,7 +63,14 @@ ARMCI_MEMHDL_T *mhloc=NULL,*mhrem=NULL;
 #endif
 
 #ifdef HAS_RDMA_GET
-
+        
+#  ifdef VAPI
+   void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
+         void** cptr,int nbtag,ARMCI_MEMHDL_T *lochdl,ARMCI_MEMHDL_T *remhdl);
+#  else
+   void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
+                    void** contextptr,int nbtag,void *mhdl,void *mhdl1);
+#  endif
 #  define ARMCI_NBREM_GET(_p,_s,_sst,_d,_dst,_cou,_lev,_hdl) \
     armci_client_direct_get((_p),(_s),(_d),(_cou)[0],&((_hdl)->cmpl_info),(_hdl)->tag,(void *)mhloc,(void *)mhrem); \
 
