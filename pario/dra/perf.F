@@ -21,19 +21,19 @@ c
       double precision max_sz, max_disk, max_mem 
       data max_arrays, max_sz, max_disk, max_mem /10,1d8,1d10, 1d6/
 #if   defined(IBM)|| defined(CRAY_T3E)
-      data stack, heap /3000000, 2000000/
+      data stack, heap /9000000, 4000000/
 #else
       data stack, heap /1200000, 800000/
 #endif
 c
       call pbeginf 
+      call ga_initialize()
       if(.not. ga_uses_ma())then
          stack = 10000 
          heap  = 10000 
       endif
 c
       if(ma_init(MT_F_DBL, stack, heap) ) then
-        call ga_initialize()
         me    = ga_nodeid()
         if(dra_init(max_arrays, max_sz, max_disk, max_mem).ne.0)then
                 call ga_error('dra_init failed: ',0)

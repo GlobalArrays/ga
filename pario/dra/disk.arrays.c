@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.18 1999-10-21 21:53:39 d3g681 Exp $*/
+/*$Id: disk.arrays.c,v 1.19 1999-10-26 20:09:41 d3h325 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -37,7 +37,13 @@
 
 /************************** constants ****************************************/
 
-#define DRA_DBL_BUF_SIZE 100000 /*  buffer size --- reduce for debugging */
+/*  buffer size --- adjust to be a multiplicity of the
+    striping factor in a parallel filesystem */
+#ifdef SP
+#define DRA_DBL_BUF_SIZE 131072
+#else
+#define DRA_DBL_BUF_SIZE 100000 
+#endif
 
 #define DRA_FAIL  (Integer)1
 #define COLUMN    1
@@ -77,8 +83,8 @@
 #  define DRA_NUM_IOPROCS 16 
 #elif defined(CRAY_YMP)
 #  define DRA_NUM_IOPROCS 4 
-#elif defined(SP1)|| defined(SP)
-#     define DRA_NUM_IOPROCS 8
+#elif defined(SP1)|| defined(SP) || defined(LAPI)
+#     define DRA_NUM_IOPROCS 8 
 #elif defined(KSR)
 #  define DRA_NUM_IOPROCS 8
 #else
