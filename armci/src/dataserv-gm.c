@@ -1,3 +1,4 @@
+/* $Id: dataserv-gm.c,v 1.12 2003-10-22 22:12:18 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "myrinet.h"

@@ -1,3 +1,4 @@
+/* $Id: timer.c,v 1.2 2003-10-22 22:12:22 d3h325 Exp $ */
 #ifdef WIN32
    static double msec;             // reference for timer
 #  include <windows.h>

@@ -1,3 +1,4 @@
+/*$Id: armci-vapi.h,v 1.8 2003-10-22 22:12:16 d3h325 Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 

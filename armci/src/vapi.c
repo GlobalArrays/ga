@@ -1,4 +1,4 @@
-/********************************************************************* 
+/* $Id: vapi.c,v 1.10 2003-10-22 22:12:22 d3h325 Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.

@@ -1,5 +1,4 @@
-
-/**
+/** $Id: aggregate.c,v 1.6 2003-10-22 22:12:14 d3h325 Exp $
  * Aggregate Put/Get requests
  */
 
