@@ -52,7 +52,9 @@ typedef struct malloc_context {
   Header *usedp;                /* start of used list */
 } context_t;
 
-/* Memory required to store the shmem context in shared memory */
+/* Memory required to store the shmem context in shared memory. This shmem
+   context shuld be stored in shared memory and is stored in the first shared
+   memory segment created (i.e.armci_krmalloc_init_ctxshmem) */
 #define SHMEM_CTX_MEM   (sizeof(context_t)+sizeof(void*))
 #define SHMEM_CTX_BYTES ((SHMEM_CTX_MEM + sizeof(Header) - 1)>>LOG_ALIGN) + 1; 
 

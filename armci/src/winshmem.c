@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.18 2005-02-09 21:21:25 manoj Exp $ */
+/* $Id: winshmem.c,v 1.19 2005-02-09 23:09:45 manoj Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -128,23 +128,25 @@ extern int armci_me;
 void armci_krmalloc_init_ctxwinshmem() {
     void *myptr=NULL;
     long idlist[SHMIDLEN];
-    long size = sizeof(context_t) + 2*sizeof(void*);
+    long size;
     int offset = sizeof(void*)/sizeof(int);
- 
+
+    /* to store shared memory context and  myptr */
+    size = SHMEM_CTX_MEM;
+    
     if(armci_me == armci_master ){
        myptr = Create_Shared_Region(idlist+1,size,idlist);
        if(!myptr && size>0 ) armci_die("armci_krmalloc_init_ctxwinshmem: could not create", (int)(size>>10));
        if(size) *(volatile void**)myptr = myptr;
        if(DEBUG){
-          printf("%d:armci_krmalloc_init_ctxwinshmem addr mptr=%p ref=%p size=%ld\n", armci_me,myptr,*(void**)myptr, size);
+          printf("%d:armci_krmalloc_init_ctxwinshmem addr mptr=%p ref=%p size=%ld\n", armci_me, myptr, *(void**)myptr, size);
           fflush(stdout);
        }
        
-       /* Bootstrapping:allocate storage for ctx_winshmem_global. NOTE:there is
-          offset,as master places its address at begining for others to see */
+       /* Bootstrapping: allocate storage for ctx_winshmem_global. NOTE:there
+          is offset,as master places its addr at begining for others to see */
        ctx_winshmem_global = (context_t*) ( ((int*)myptr)+offset );
        *ctx_winshmem_global=ctx_winshmem;/*master copies ctx into shared rgn*/
-       
     }
  
     /* broadcast shmem id to other processes on the same cluster node */
@@ -152,8 +154,7 @@ void armci_krmalloc_init_ctxwinshmem() {
     
     if(armci_me != armci_master){
        myptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
-       if(!myptr)armci_die("armci_krmalloc_init_ctxwinshmem: could not attach",
-			   (int)(size>>10));
+       if(!myptr)armci_die("armci_krmalloc_init_ctxwinshmem: could not attach", (int)(size>>10));
        
        /* now every process in a SMP node needs to find out its offset
         * w.r.t. master - this offset is necessary to use memlock table
@@ -283,7 +284,7 @@ char *armci_get_core_from_map_file(int exists, long size)
     h_shm_map = CreateFileMapping(INVALID_HANDLE_VALUE,
                 NULL, PAGE_READWRITE, 0, (int)size, map_fname);
     if(h_shm_map == NULL) return NULL;
-
+    
     if(exists){
        /* get an error code when mapping should exist */
        if (GetLastError() != ERROR_ALREADY_EXISTS){
@@ -324,7 +325,6 @@ char *armci_get_core_from_map_file(int exists, long size)
 
     close(h_shm_map);
     h_shm_map = -1;
-
 #elif defined(MACX)
 
     if(exists){
@@ -370,7 +370,7 @@ char *armci_get_core_from_map_file(int exists, long size)
 
     /*     save file handle in the array to close it in the future */
     region_list[alloc_regions].id   = h_shm_map;
-    
+
 #endif
 
     if(DEBUG0){printf("%d: got ptr=%p bytes=%ld mmap\n",armci_me,ptr,size); fflush(stdout); }
@@ -483,8 +483,11 @@ char *Attach_Shared_Region(long id[], long size, long offset)
 
      if( alloc_regions == id[0]){
          temp = region_list[alloc_regions-1].addr + offset; 
-     }else armci_die("Attach_Shared_Region:iconsistency in counters",
-         alloc_regions - (int) id[0]);
+     }
+     else if(alloc_regions-1 == id[0]){
+         temp = region_list[alloc_regions-1].addr + offset;
+     } else armci_die("Attach_Shared_Region:inconsistency in counters",
+                      alloc_regions - (int) id[0]);
 
       if(DEBUG)fprintf(stderr,"\n%d:attach succesful off=%ld ptr=%p\n",armci_me,offset,temp);
      return(temp);
@@ -508,14 +511,42 @@ char* armci_shmem_reg_ptr(int i)
 int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
                          size_t *shmsize)
 {
-    /* manoj: CHECK */
-    armci_die("winshmem: armci_get_shmem_info(): Fix Me", 0L);
-    return 0;
+    int region;
+    
+    if(last_allocated == alloc_regions){ 
+       region = last_allocated-1;
+    } else if(last_allocated == alloc_regions -1){
+       region = last_allocated;
+    }else{
+       armci_die(" armci_get_shmem_info: inconsitency in counters",
+		 last_allocated - alloc_regions);
+    }
+
+    *shmid     = (int) region;
+    *shmoffset = (long)(addrp - region_list[region].addr);
+    *shmsize   = region_list[region].size;
+#if DEBUG
+    printf("%d: armci_get_shmem_info: shmid=%d offset=%ld size=%ld %p\n",
+           armci_me, *shmid, *shmoffset, *shmsize, addrp);
+    fflush(stdout);
+#endif    
+    return 1;
 }
 
-Header *armci_get_shmem_ptr(int shmid, long shmoffset, size_t shmsize) 
+Header *armci_get_shmem_ptr(int shmid, long shmoffset, size_t shmsize)
 {
-    /* manoj: CHECK */
-    armci_die("winshmem: armci_get_shmem_ptr(): Fix Me", 0L);
-    return NULL;
+    /* returns, address of the shared memory region based on shmid, offset.
+     * (i.e. return_addr = stating address of shmid + offset)*/
+    long id = shmid;
+    Header *p = NULL;
+
+    if(!(p=(Header*)Attach_Shared_Region(&id, shmsize, shmoffset)))
+       armci_die("armci_get_shmem_ptr: could not attach",
+                 (int)(p->s.shmsize>>10));
+#if DEBUG
+    printf("%d: armci_get_shmem_ptr: shmid=%d offset=%ld size=%ld %p\n",
+           armci_me, shmid, shmoffset, shmsize, p);
+    fflush(stdout);
+#endif
+    return p;
 }

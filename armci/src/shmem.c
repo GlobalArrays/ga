@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.85 2005-02-09 21:21:25 manoj Exp $ */
+/* $Id: shmem.c,v 1.86 2005-02-09 23:09:45 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -414,16 +414,15 @@ void armci_krmalloc_init_ctxshmem() {
     long size; 
     int offset = sizeof(void*)/sizeof(int);
 
-    /* If you are changing this size, change SHMEM_CTX_MEM accordingly */
-    size = sizeof(context_t)+sizeof(void*);
+    /* to store shared memory context and  myptr */
+    size = SHMEM_CTX_MEM;
     
     if(armci_me == armci_master ){
        myptr = Create_Shared_Region(idlist+1,size,idlist);
        if(!myptr && size>0 ) armci_die("armci_krmalloc_init_ctxshmem: could not create", (int)(size>>10));
        if(size) *(volatile void**)myptr = myptr;
        if(DEBUG_){
-	  printf("%d:armci_krmalloc_init_ctxshmem addr mptr=%p ref=%p size=%ld\n",
-		 armci_me,myptr,*(void**)myptr, size);
+	  printf("%d:armci_krmalloc_init_ctxshmem addr mptr=%p ref=%p size=%ld\n", armci_me, myptr, *(void**)myptr, size);
 	  fflush(stdout);
        }
        
@@ -445,14 +444,12 @@ void armci_krmalloc_init_ctxshmem() {
         */
        if(size) armci_set_mem_offset(myptr);
        if(DEBUG_){
-          printf("%d:armci_krmalloc_init_ctxshmem attached addr mptr=%p ref=%p size=%ld\n",
-                 armci_me,myptr, *(void**)myptr,size); fflush(stdout);
+          printf("%d:armci_krmalloc_init_ctxshmem attached addr mptr=%p ref=%p size=%ld\n", armci_me,myptr, *(void**)myptr,size); fflush(stdout);
        }
        /* store context info */
        ctx_shmem_global = (context_t*) ( ((int*)myptr)+offset );
        if(DEBUG_){
-	  printf("%d:armci_krmalloc_init_ctxshmem: shmid=%d off=%ld size=%ld\n",
-		 armci_me, ctx_shmem_global->shmid, ctx_shmem_global->shmoffset,
+	  printf("%d:armci_krmalloc_init_ctxshmem: shmid=%d off=%ld size=%ld\n", armci_me, ctx_shmem_global->shmid, ctx_shmem_global->shmoffset,
 		 (long)ctx_shmem_global->shmsize);
 	  fflush(stdout);
        }
