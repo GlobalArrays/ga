@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.10 1999-10-14 18:18:37 d3h325 Exp $ */
+/* $Id: capi.c,v 1.11 1999-10-14 19:57:23 jju Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -160,6 +160,12 @@ DoubleComplex GA_Zdot(int g_a, int g_b)
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
     return ga_zdot(&a,&b);
+}
+
+void GA_Fill(int g_a, void *value)
+{
+    Integer a=(Integer)g_a;
+    ga_fill_(&a, value);
 }
 
 
@@ -536,6 +542,16 @@ void NGA_Fill_patch(int g_a, int lo[], int hi[], void *val)
     COPYINDEX_C2F(hi,_ga_hi, ndim);
 
     nga_fill_patch_(&a, _ga_lo, _ga_hi, val);
+}
+
+void NGA_Zero_patch(int g_a, int lo[], int hi[])
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    COPYINDEX_C2F(lo,_ga_lo, ndim);
+    COPYINDEX_C2F(hi,_ga_hi, ndim);
+
+    nga_zero_patch_(&a, _ga_lo, _ga_hi);
 }
 
 void NGA_Scale_patch(int g_a, int lo[], int hi[], void *alpha)
