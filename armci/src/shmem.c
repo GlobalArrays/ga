@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.25 2000-06-09 17:27:38 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.26 2000-06-09 20:45:52 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -648,19 +648,10 @@ int  reg, nreg;
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
-<<<<<<< shmem.c
-      if(DEBUG_)
-           printf("allocation unit: %dK, max shmem:%dK\n",MinShmem,MaxShmem);
-=======
       if(DEBUG_)
            printf("%d:allocation unit: %dK, max shmem:%dK\n",armci_me,MinShmem,MaxShmem);
->>>>>>> 1.24
       shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
-<<<<<<< shmem.c
-      id[SHMIDLEN-1]=MinShmem;
-=======
       id[SHMIDLEN-2]=MinShmem;
->>>>>>> 1.24
   }
 
 
