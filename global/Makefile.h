@@ -1,4 +1,4 @@
-#$Id: Makefile.h,v 1.22 1995-02-02 23:12:51 d3g681 Exp $
+#$Id: Makefile.h,v 1.23 1995-02-03 18:23:04 d3h449 Exp $
 # Makefile.h, Wed Jan 25 13:01:15 PST 1995 
 #
 # Define TARGET to be the machine you wish to build for
@@ -192,8 +192,10 @@ GLOB_INCLUDES = -I. -I../../ma -I$(EUIH)
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX -DEUIH
       FLD_REN = -b  rename:.lockrnc_,.lockrnc
 else
-           CC = mpcc_rnc
-           FC = mpxlf_rnc
+#           CC = mpcc_rnc
+#           FC = mpxlf_rnc
+           CC = mpcc
+           FC = mpxlf
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
 endif
 
