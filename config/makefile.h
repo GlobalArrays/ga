@@ -76,8 +76,12 @@ ifeq ($(CC),gcc)
 endif
 ifeq ($(FC),g77)
     FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
+#for 2.7.2 and earlier
+ifndef OLD_G77
     FOPT_REN += -Wno-globals
 endif
+endif
+
  GLOB_DEFINES = -DLINUX
 ifeq ($(FC),pgf77)
 # linux with Portland Group Compiler
