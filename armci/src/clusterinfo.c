@@ -12,7 +12,7 @@
 #include "armcip.h"
 
 #define DEBUG 0
-#define DEBUG_HACK
+#define DEBUG_HACK_
 #define CLUSNODES 2
 #define MAX_HOSTNAME 80
 
