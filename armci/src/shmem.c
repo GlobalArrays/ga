@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.80 2004-07-21 23:54:46 manoj Exp $ */
+/* $Id: shmem.c,v 1.81 2004-08-10 18:43:26 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -667,6 +667,12 @@ int reg, nreg, freg=-1, min_reg, max_reg;
        }
        *first = freg;
        return idlist[0];
+}
+
+int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
+                         size_t *shmsize)
+{
+    /* manoj:*/
 }
 
 
