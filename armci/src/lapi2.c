@@ -1,5 +1,5 @@
-/* $Id: lapi2.c,v 1.5 2002-10-22 21:51:44 vinod Exp $ */
-#define DEBUG 1
+/* $Id: lapi2.c,v 1.6 2002-10-22 22:23:25 vinod Exp $ */
+#define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
 #define LAPI_CLEAR_CNTR(ocmpl_) if((ocmpl_)->val) {\
