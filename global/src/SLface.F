@@ -7,21 +7,48 @@
 *     nprow/ npcol  - number of processor rows/cols in virtual proc. grid  *
 *     myrow/mycol   - cordinates of my processor in virtual proc. grid     *
 *                                                                          *
-****************************************************************************
-
-      subroutine SLinit
+c***************************************************************************
+c* 04/12/96  GVT  Changed the code to adapt to a new version of ScaLAPACK
+c*           Giuseppe Vitillaro peppe@unipg.it
+c***************************************************************************
+      block data SLblock
       implicit none
 c
 #include "slface.fh"
       data init /.false./
-      external initpinfo, blacsinit, gridinfo 
+      end
+
+
+
+      subroutine SLinit
+      implicit none
+      integer  icontxt
+c
+#include "slface.fh"
+      external blacs_pinfo, blacs_get, blacs_gridinit, blacs_gridinfo
 c
       if(init)return
-      call initpinfo(iam, nnodes) 
 c
-      call findgrid(nnodes, nprow, npcol)
-      call blacsinit(nprow, npcol)
-      call gridinfo(nprow, npcol, myrow, mycol)
+c**** call ga_sync before to enter in BLACS and after
+      call ga_sync()
+c     
+      call blacs_pinfo(iam, nnodes)
+c
+      call FindGrid(nnodes, nprow, npcol)
+c
+      call blacs_get (0, 0, icontxt)
+      igctxt = icontxt
+c
+      icontxt = igctxt
+      call blacs_gridinit(icontxt, 'R', nprow, npcol)
+      iSLctxt = icontxt
+c
+      call blacs_gridinfo(iSLctxt, nprow, npcol, myrow, mycol)
+c
+      init=.true.
+c
+      call ga_sync()
+c    
       end
 
 
@@ -114,6 +141,9 @@ c
       double  precision  s_a(lda,nq)
       integer row, col, tcol, trow, rbase, cbase
       integer pcol, prow
+
+c***  Synchronize at the beginning
+      call ga_sync()
 c    
       rbase = 1
       cbase = 1
@@ -139,10 +169,11 @@ c
             cbase = cbase + nbc
          endif
       enddo
+
+c**** ... and at the end
+      call ga_sync()
       end
 
-
-  
 
 
       subroutine ga_from_SL(g_a, dim1, dim2, nbr, nbc, s_a, lda, np, nq)
@@ -156,6 +187,9 @@ c
       double  precision s_a(lda,nq)
       integer row, col, tcol, trow, rbase, cbase
       integer pcol, prow
+c
+c**** Syncronize at the beginning
+      call ga_sync()
 c   
       rbase = 1
       cbase = 1
@@ -180,5 +214,7 @@ c
             cbase = cbase + nbc
          endif
       enddo
-      end
 
+c**** ... and at the end
+      call ga_sync()
+      end

@@ -1,3 +1,15 @@
+c**********************************************************************
+c* Source : ga_lu_solve
+c* Scope  : LU factorization
+c*
+c* 02/16/94  Jarek Nieplocha 
+c* 04/12/96  GVT  Adapted the code to the new version of ScaLAPACK
+c*           Giuseppe Vitillaro peppe@unipg.it
+c**********************************************************************      
+c
+c length of scalapack array descriptor
+# define DSCLEN 10
+c
       subroutine ga_lu_solve(trans,g_a, g_b)
       implicit none
 #include "mafdecls.fh"
@@ -9,7 +21,6 @@ c
       integer g_b               ! rhs matrix, B, overwritten on exit by
                                 ! the solution vector, X
 c
-c
 c     solve the set of linear equations 
 c
 c           AX = B
@@ -18,16 +29,12 @@ c     with possibly multiple rhs stored as columns of matrix B
 c
 c     the matrix A is not destroyed
 c
-c
-c Jarek Nieplocha, 02.16.94
-c
 c~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c
       logical status
 c
       integer ha, adra          !A
       integer hb, adrb          !B
-      integer hz, adrz          !workspace
       integer hi, adri          !ipiv
 c
 c
@@ -43,9 +50,9 @@ c
       integer n,lda, ldb, elemA, elemB
       integer numroc
 
-      integer nb                ! block size for A and rhs, internal parameter
-      data nb /5/
-c
+      integer descA(DSCLEN), descB(DSCLEN) ! descriptors for distr. matrixes A,B
+      integer nb                           ! block size for A and rhs
+      data nb /64/
 c
 c***  check environment
 c
@@ -57,7 +64,6 @@ c
       call ga_check_handle(g_b, 'ga_lu_solve: b')
       call ga_inquire(g_a, typeA, dimA1, dimA2)
       call ga_inquire(g_b, typeB, dimB1, dimB2)
-c
 c
       if (dimA1 .ne. dimA2) then
          call ga_error('ga_lu_solve: g_a must be square matrix ', 1)
@@ -81,10 +87,9 @@ c
       ldb = max(1,mpB)
 
       oactive = .true.
-      call ga_sync()
       if (oactive) then
 c
-c***     allocate a,b, and work and ipiv arrays
+c***     allocate A,B and ipiv arrays
 c     
          elemA= mpA*nqA
          status = .true.
@@ -97,15 +102,7 @@ c
          if(.not.status) 
      &       call ga_error('ga_lu_solve: mem alloc failed B ', -1)
 c
-c...     amount of Scalapack workspace as specified in pdgetrf - WRONG !
-c
-c        nwork = max(1,nb * (n/(nb*nprow) +n/(nb*npcol)+2))
-         nwork = max( mpA*nqA*2,mpB*nqB*2 )
-         status = ma_push_get(MT_DBL,nwork,'z',hz,adrz)
-         if(.not.status) 
-     &       call ga_error('ga_lu_solve: mem alloc failed Z ', -1)
-c
-         status = ma_push_get(MT_INT,lda+nb,'ipiv',hi,adri)
+         status = ma_push_get(MT_INT,mpA+nb,'ipiv',hi,adri)
          if(.not.status) 
      &       call ga_error('ga_lu_solve: mem alloc failed ipiv ', -1)
 c
@@ -115,22 +112,31 @@ c
          call ga_to_SL(g_a, n, n, nb, nb, dbl_mb(adrA), lda, mpA,nqA)
          call ga_to_SL(g_b, n,dimB2, nb,nb, dbl_mb(adrB), ldb, mpB, nqB)
 c     
-         call ga_sync()
+c***     fill SCALAPACK matrices descriptors
 c
+	 call descinit(descA, dimA1, dimA2, nb, nb, 0, 0, 
+     &                 iSLctxt, lda, info)
+         if(info.ne.0) call ga_error(' ga_lu_solve: descinit A failed ',
+     &                               -info)
+         call descinit(descB, dimB1, dimB2, nb, nb, 0, 0, 
+     &                 iSLctxt, ldb, info)
+         if(info.ne.0) call ga_error(' ga_lu_solve: descinit B failed ',
+     &                               -info)
 c
 c***     LU factorization
 c
-
-         call pdgetrf(n, n, nb, dbl_mb(adra), lda, int_mb(adri),
-     &                info, dbl_mb(adrz))
+         call ga_sync()
+	 call pdgetrf(n, n, dbl_mb(adrA), 1, 1, descA, 
+     &                int_mb(adrI), info)
+         call ga_sync()
+c
 c
          if(info.eq.0)then
 c
 c***        solve: forward/backward substitution
 c
-            call pdgetrs(trans, n, nb, dimB2, nb, dbl_mb(adra), lda,
-     &           int_mb(adri),dbl_mb(adrb), ldb, 0, info, dbl_mb(adrz))
-c
+            call pdgetrs(trans, n, dimB2, dbl_mb(adrA), 1, 1, descA,
+     &                   int_mb(adrI), dbl_mb(adrB), 1, 1, descB, info)
             if(info.eq.0)then
 c
 c***           copy solution matrix back to g_b
@@ -148,9 +154,10 @@ c
 c***     deallocate work/SL arrays
 c
          status = ma_pop_stack(hi)
-         status = ma_pop_stack(hz)
-         if(elemB.ne.0)status = ma_pop_stack(hb)
-         if(elemA.ne.0)status = ma_pop_stack(ha)
+         if(elemB.ne.0) status = status .and. ma_pop_stack(hb)
+         if(elemA.ne.0) status = status .and. ma_pop_stack(ha)
+         if(.not.status)
+     &       call ga_error('ga_lu_solve:ma_pop_stack failed',0)
       endif
 c
       call ga_sync()

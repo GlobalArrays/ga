@@ -1,3 +1,4 @@
-      integer iam, nnodes,nprow,npcol, myrow, mycol
+      integer iam, nnodes,nprow,npcol, myrow, mycol, igctxt,iSLctxt
       logical init
-      common /SLface/ iam, nnodes, nprow,npcol, myrow, mycol, init
+      common /SLface/ iam, nnodes, nprow,npcol, myrow, mycol, init,
+     .                igctxt,iSLctxt
