@@ -536,6 +536,10 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
       else
           for(d=0; d< ndim; d++) blk[d]=-1;
 
+      /* eliminate dimensions =1 from ddb analysis */
+      for(d=0; d<ndim; d++)if(dims[d]==1)blk[d]=1;
+          
+
       if(GAme==0 && DEBUG)for(d=0;d<ndim;d++) fprintf(stderr,"b[%d]=%d\n",d,blk[d]);
       ga_sync_();
 
