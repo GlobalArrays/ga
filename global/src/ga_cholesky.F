@@ -8,7 +8,7 @@ c
 #include "tcgmsg.fh"
       integer g_a
       Integer me, nproc
-      Integer ilo, ihi, jlo, jhi, n, i, j, k
+      Integer ilo, ihi, jlo, jhi, n, j, k
       Integer dim1, dim2, type
       double precision alpha
       Logical status
