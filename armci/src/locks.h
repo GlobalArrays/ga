@@ -8,7 +8,9 @@
 #   define EXTERN extern
 #endif
 
+#ifndef CYGNUS
 #include "spinlock.h"
+#endif
 
 #if 0
 /* code disabled until more tests of pthread locking is done */
