@@ -21,24 +21,6 @@
 /* there are 20 message-passing tags/types numbered from GA_MSG_OFFSET up */
 #define  GA_MSG_OFFSET 32000
 
-/* length (in bytes) for send and receive buffers to handle remote requests */
-/* this is obsolete in GA 3.0 and higher  left for OLD_GA builds */
-#if defined(NX) || defined(SP1) || defined(SP)
-#   ifdef IWAY
-#      define MSG_BUF_SIZE    129000
-#   else
-#      define MSG_BUF_SIZE    122840
-#   endif
-#elif defined(LAPI)
-#   define MSG_BUF_SIZE      131072
-#elif defined(SYSV)
-#   define MSG_BUF_SIZE      262152
-#elif defined(CRAY)
-#   define MSG_BUF_SIZE      1024
-#else
-#   define MSG_BUF_SIZE      4*4096
-#endif
-
 /* max number of dimensions
  * Now set in global.h and global.fh so users can access the value.
  * We set the macro used internally from the global.h value.
