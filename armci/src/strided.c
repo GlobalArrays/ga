@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.77 2003-10-08 07:16:06 vinod Exp $ */
+/* $Id: strided.c,v 1.78 2003-12-09 16:12:51 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -586,6 +586,111 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 
 /*\ function offers the same functionality as regular PutS and sets remote flag
 \*/  
+static int *valflagarr=NULL;
+
+int ARMCI_PutS_flag_dir( 
+                void *src_ptr,        /* pointer to 1st segment at source*/ 
+		int src_stride_arr[], /* array of strides at source */
+		void* dst_ptr,        /* pointer to 1st segment at destination*/
+		int dst_stride_arr[], /* array of strides at destination */
+		int seg_count[],          /* number of segments at each stride 
+                                         levels: count[0]=bytes*/
+		int stride_levels,    /* number of stride levels */
+                int *flag,            /* pointer to remote flag */
+                int val,              /* value to set flag upon completion of
+                                         data transfer */
+                int proc              /* remote process(or) ID */
+                )
+{
+    int rc, direct=1,i;
+    int *count=seg_count, tmp_count;
+
+    if(src_ptr == NULL || dst_ptr == NULL) return FAIL;
+    if(count[0]<0)return FAIL3;
+    if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
+    if(proc<0)return FAIL5;
+
+#ifdef GA_USE_VAMPIR
+    vampir_begin(ARMCI_PUTS,__FILE__,__LINE__);
+    if (armci_me != proc)
+       vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
+#endif
+
+    ORDER(PUT,proc); /* ensure ordering */
+    PREPROCESS_STRIDED(tmp_count);
+
+#ifndef QUADRICS
+    direct=SAMECLUSNODE(proc);
+#endif
+
+    if(!valflagarr)
+       valflagarr = (int *)ARMCI_Malloc_local(armci_nproc*sizeof(int));
+
+    if(!direct){
+       ext_header_t h;
+       armci_flag_t remf;
+       remf.val = val;
+       remf.ptr = flag;
+       h.exthdr = &remf;
+       h.len = sizeof(remf);
+#if 1
+       if(stride_levels==1 &&
+         ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){ 
+         for(i=0;i<count[1];i++){
+            ARMCI_INIT_HANDLE(&nbhdlarr1[i%1000]);
+            ARMCI_NbPut(src_ptr,dst_ptr,count[0],proc,&nbhdlarr1[i%1000]);
+            src_ptr +=src_stride_arr[0];
+            dst_ptr +=dst_stride_arr[0];
+         }
+         valflagarr[proc]=val;
+         ARMCI_NbPut(valflagarr+proc,flag,4,proc,&nbhdlarr1[i%1000]);
+#  if 0
+         for(i=0;i<count[1];i++){
+            ARMCI_Wait(&nbhdlarr1[i%1000]);
+         }
+#  endif
+         return 0;
+       }
+       if(stride_levels==0 &&
+         ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){ 
+          ARMCI_INIT_HANDLE(&nbhdlarr1[i%1000]);
+          ARMCI_NbPut(src_ptr,dst_ptr,count[0],proc,&nbhdlarr1[i%1000]);
+          valflagarr[proc]=val;
+          ARMCI_NbPut(valflagarr+proc,flag,4,proc,&nbhdlarr1[i%1000]);
+       }
+#endif
+        
+#if 0
+       printf("%d: ptr=%p to %d\n",armci_me,flag,proc); fflush(stdout);
+#endif
+#if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
+       if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
+           rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
+                     dst_ptr, dst_stride_arr, count, stride_levels, &h,1,NULL);
+       }
+       else
+#endif
+
+       rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,dst_ptr,
+                       dst_stride_arr, count, stride_levels, &h,-1,-1,-1,NULL);
+    }
+    else {
+       rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr, 
+                       dst_ptr, dst_stride_arr, count, stride_levels, 0,NULL);
+       armci_put(&val,flag,sizeof(int),proc); 
+    }
+
+#ifdef GA_USE_VAMPIR
+    if (armci_me != proc)
+       vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
+    vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
+#endif
+
+    POSTPROCESS_STRIDED(tmp_count);
+    if(rc) return FAIL6;
+    else return 0;
+
+}
 int ARMCI_PutS_flag( 
                 void *src_ptr,        /* pointer to 1st segment at source*/ 
 		int src_stride_arr[], /* array of strides at source */
@@ -620,6 +725,9 @@ int ARMCI_PutS_flag(
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
+
+    if(!valflagarr)
+       valflagarr = (int *)ARMCI_Malloc_local(armci_nproc*sizeof(int));
 
     if(!direct){
        ext_header_t h;
@@ -1027,7 +1135,6 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     else return 0;
     
 }
-
 
 int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
