@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.35 2002-01-25 22:10:31 edo Exp $*/
+/*$Id: disk.arrays.c,v 1.36 2002-01-25 23:04:05 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1010,8 +1010,8 @@ int       retval;
   _R = 0; \
   for (_i=_ndim-1; _i >= 0; _i--) { \
     _b = ((ds_a).lo[_i]-1)/DRA[hndl].chunk[_i]; \
-    *(CR) = *(CR) * _R + _b; \
     _R = (DRA[hndl].dims[_i]+DRA[hndl].chunk[_i]-1)/DRA[hndl].chunk[_i];\
+    *(CR) = *(CR) * _R + _b; \
   } \
 }
 
@@ -1023,7 +1023,8 @@ Integer   iome    = dai_io_nodeid(ds_chunk.handle);
     if(INDEPFILES(ds_chunk.handle)){
 
       /* compute cardinal number for the current chunk */
-      nsect_to_blockM(ds_chunk, &_dra_turn);
+      /*nsect_to_blockM(ds_chunk, &_dra_turn); */
+      sect_to_blockM(ds_chunk, &_dra_turn);
 
     }else{
       _dra_turn++;
