@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.17 2000-06-01 01:17:01 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.18 2000-06-01 22:25:52 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -100,7 +100,7 @@ extern int armci_me;
 #elif defined(LINUX) 
 #  if !defined(SHMMAX) /* Red Hat does not define SHMMAX */
 #     undef _SHMMAX
-#     ifdef __sparc__ 
+#     if defined(__sparc__) || defined(__powerpc__) 
 #       define _SHMMAX ((unsigned long)16*1024)
 #     elif defined(__alpha__)
 #       define _SHMMAX ((unsigned long)4*1024)
