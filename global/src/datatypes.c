@@ -1,10 +1,10 @@
-/* $Id: datatypes.c,v 1.8 2003-02-11 20:21:21 vinod Exp $
+/* $Id: datatypes.c,v 1.9 2003-07-09 20:28:28 d3h325 Exp $
  * conversion of MA identifiers between C to Fortran data types 
  * Note that ga_type_c2f(MT_F_INT) == MT_F_INT 
  */
 
-#include <macdecls.h>
 #include "global.h"
+#include "globalp.h"
 int ga_type_f2c(int type)
 {
 int ctype;
@@ -17,7 +17,7 @@ int ctype;
 #       endif
                 break;
    case MT_F_REAL: 
-#       if defined(CRAY) || defined(NEC) || defined(NO_REAL_32)
+#       if defined(NO_REAL_32)
                 ctype = C_DBL;
 #       else
                 ctype = C_FLOAT;
@@ -30,7 +30,7 @@ int ctype;
 		ctype = C_DCPL;
                 break;
    case MT_F_SCPL: 
-#       if defined(CRAY) || defined(NEC) || defined(NO_REAL_32)
+#       if defined(NO_REAL_32)
 		ctype = C_DCPL;
 #       else
 		ctype = C_SCPL;
@@ -55,7 +55,7 @@ int ftype;
                 ftype = (sizeof(long) != sizeof(Integer))? -1: MT_F_INT;
                 break;
    case C_FLOAT:
-#       if defined(CRAY) || defined(NEC) || defined(NO_REAL_32)
+#       if defined(NO_REAL_32)
                 ftype = -1;
 #       else
                 ftype = MT_F_REAL; 
@@ -68,7 +68,7 @@ int ftype;
                 ftype = MT_F_DCPL;
                 break;
    case C_SCPL:
-#       if defined(CRAY) || defined(NEC) || defined(NO_REAL_32)
+#       if defined(NO_REAL_32)
                 ftype = -1;
 #       else
                 ftype = MT_F_SCPL;

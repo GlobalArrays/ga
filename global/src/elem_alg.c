@@ -713,7 +713,7 @@ static void FATR ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,
 Integer *g_a, *alo, *ahi;    /* patch of g_a */
 Integer *g_b, *blo, *bhi;    /* patch of g_b */
 Integer *g_c, *clo, *chi;    /* patch of g_c */
-Integer op; /* operation to be perform between g_a and g_b */
+int op; /* operation to be perform between g_a and g_b */
 {
     Integer i, j;
     Integer compatible;
@@ -1057,9 +1057,7 @@ Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
 
 }
 
-static void ngai_elem3_patch_(g_a, alo, ahi, op)
-Integer *g_a, *alo, *ahi;    /* patch of g_a */
-Integer op; /*operation to be perform on g_a*/
+static void ngai_elem3_patch_(Integer *g_a, Integer *alo, Integer *ahi, int op)
 /*do some preprocess jobs for stepMax and stepMax2*/
 {
     Integer i, j;

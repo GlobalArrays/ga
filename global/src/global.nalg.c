@@ -434,7 +434,7 @@ DoublePrecision sum;
 }
 
 
-#if defined(CRAY) || defined(NEC) || defined(NO_REAL_32)
+#if defined(NO_REAL_32)
 DoublePrecision FATR ga_sdot_(g_a, g_b)
         Integer *g_a, *g_b;
 {

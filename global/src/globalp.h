@@ -4,6 +4,10 @@
 #include "config.h"
 #include "global.h"
 
+#ifdef __crayx1
+#undef CRAY
+#endif
+
 #ifdef FALSE
 #undef FALSE
 #endif
@@ -25,6 +29,10 @@
 #   include "winutil.h"
 #endif
 #include "macdecls.h"
+
+#if (defined(CRAY) && !defined(__crayx1)) || defined(NEC) 
+#  define NO_REAL_32  
+#endif
 
 #define GA_OFFSET   1000           /* offset for handle numbering */
 

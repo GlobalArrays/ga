@@ -1,7 +1,7 @@
 #ifndef  C_NAMES_H
 #define  C_NAMES_H
 
-#if defined(CRAY) || defined(WIN32) || defined(HITACHI)
+#if (defined(CRAY) && !defined(__crayx1)) || defined(WIN32) || defined(HITACHI)
 
 #define  ga_acc_                   GA_ACC
 #define  ga_nbacc_                 GA_NBACC

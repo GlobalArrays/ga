@@ -94,9 +94,9 @@ include ../../config/makelib.h
 $(OBJ_FRAGILE): %.o : %.c
 	$(CC) $(NOPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS)  -c $<
 
-$(patsubst %,$(LIBRARY_PATH)(%),$(GA_CORE))     : globalp.h global.h
-$(patsubst %,$(LIBRARY_PATH)(%),global.alg.o)   : globalp.h global.h
-$(patsubst %,$(LIBRARY_PATH)(%),ga_diag.o)      : global.fh diag.fh 
-$(patsubst %,$(LIBRARY_PATH)(%),global.armci.o) : global.h global.armci.h 
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),$(GA_CORE))     : globalp.h global.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),global.alg.o)   : globalp.h global.h
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),ga_diag.o)      : global.fh diag.fh 
+$(patsubst %,$(FULL_LIBRARY_PATH)(%),global.armci.o) : global.h global.armci.h 
 global.h       : c.names.h
 
