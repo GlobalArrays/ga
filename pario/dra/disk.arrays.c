@@ -671,8 +671,8 @@ Integer handle, elem_size;
         ga_sync_();
 
         if(dai_file_master(*d_a) && dai_write_allowed(*d_a)) dai_zero_eof(*d_a);
-        if(dai_io_nodeid(*d_a)==0)printf("chunking: %d x %d\n",DRA[handle].chunk1,
-                                                          DRA[handle].chunk2);
+	/* if(dai_io_nodeid(*d_a)==0)printf("chunking: %d x %d\n",DRA[handle].chunk1,
+                                                          DRA[handle].chunk2); */
 
         ga_sync_();
 
