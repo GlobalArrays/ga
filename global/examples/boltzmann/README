@@ -4,7 +4,7 @@ described in BJ Palmer and DR Rector, Journal of Computational Physics, vol.
 161, pp. 1-20 (2000). The temperature has been set to a constant for this
 simulation, eliminating the need for the second distribution and an ideal gas
 has been used for equation of state. The output from the simulation is sent
-to the file bltz.gmv and can be viewed using the General Meshh Viewer program
+to the file bltz.gmv and can be viewed using the General Mesh Viewer program
 developed at Los Alamos National Laboratory. More information on this program
 can be obtained from the web page at
 http://www-xdiv.lanl.gov/XCM/gmv/GMVHome.html.
@@ -35,3 +35,16 @@ remaining parameters are:
    uxbc: velocity of lid
 
 The executable name is boltz.x
+
+The parameters are currently set to run at a Reynolds number of 128. A
+calculation at a much higher Reynolds number of 2560 can be run by changing
+the value of NSIZE to 4097 and resetting the following parameters:
+
+    viscosity: 0.05
+
+    delta_t: 0.1
+
+Note that the simulation will have to be run for a considerably longer time
+period before any significant flow patterns begin to develop, on the order of
+100000-200000 steps. This calculation also involves a much larger number of
+grid cells and requires a significant number of processors to run.
