@@ -100,6 +100,7 @@ extern void GA_Terminate(void);
 extern void GA_Zero(int g_a); 
 extern void GA_Fill(int g_a, void *value);
 extern int GA_Pgroup_get_default();
+extern void GA_Pgroup_set_default(int p_handle);
 extern int GA_Pgroup_get_mirror();
 extern int GA_Pgroup_get_world();
 extern int GA_Idot(int g_a, int g_b);

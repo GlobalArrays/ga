@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.79 2005-01-21 22:21:25 d3g293 Exp $ */
+/* $Id: capi.c,v 1.80 2005-03-02 20:10:34 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -638,6 +638,12 @@ int GA_Pgroup_get_default()
 {
     int value = (int)ga_pgroup_get_default_();
     return value;
+}
+
+void GA_Pgroup_set_default(int p_handle)
+{
+    Integer grp = (Integer)p_handle;
+    ga_pgroup_set_default_(&grp);
 }
 
 int GA_Pgroup_get_mirror()
