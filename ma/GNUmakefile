@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.4 2003-07-10 19:19:28 d3h325 Exp $
+# $Id: GNUmakefile,v 1.5 2004-06-03 16:53:50 vinod Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -16,6 +16,10 @@
 
 include ../config/makefile.h
 include ../config/makelib.h
+
+ifdef ARMCI_NETWORK
+  CFLAGS += -DENABLE_USE_ARMCI_MEM_OPTION
+endif
 
 testf.x:  testf.o $(FULL_LIBRARY_PATH)
 	$(FC) -o $@ $(FFLAGS) $^

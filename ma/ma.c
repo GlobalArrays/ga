@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.34 2004-04-01 22:21:31 vinod Exp $
+ * $Id: ma.c,v 1.35 2004-06-03 16:53:50 vinod Exp $
  */
 
 /*
@@ -2477,12 +2477,14 @@ public Boolean MA_init(
     mallopt(M_TRIM_THRESHOLD, -1);
 #endif
     /* allocate the segment of memory */
+#ifdef ENABLE_USE_ARMCI_MEM_OPTION
     if(getenv("MA_USE_ARMCI_MEM"))
     {
         void* ARMCI_Malloc_local(long bytes);
         ma_segment = (Pointer)ARMCI_Malloc_local(total_bytes);
     }
     else
+#endif
         ma_segment = (Pointer)bytealloc(total_bytes);
     if (ma_segment == (Pointer)NULL)
     {
