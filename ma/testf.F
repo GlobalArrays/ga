@@ -1,5 +1,5 @@
 c
-c     $Id: testf.F,v 1.2 1994-09-01 21:12:25 d3e129 Exp $
+c     $Id: testf.F,v 1.3 1994-10-07 19:41:35 d3g681 Exp $
 c
 
 c

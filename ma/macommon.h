@@ -2,7 +2,7 @@
 #define _macommon_h
 
 /* 
- * $Id: macommon.h,v 1.2 1994-09-01 21:12:10 d3e129 Exp $
+ * $Id: macommon.h,v 1.3 1994-10-07 19:41:27 d3g681 Exp $
  */
 
 /* 
@@ -66,6 +66,7 @@
 #define f2c_get_index_				F2C_GET_INDEX
 #define f2c_get_next_memhandle_			F2C_GET_NEXT_MEMHANDLE
 #define f2c_inform_base_			F2C_INFORM_BASE
+#define f2c_inform_base_fcd_			F2C_INFORM_BASE_FCD
 #define f2c_init_				F2C_INIT
 #define f2c_init_memhandle_iterator_		F2C_INIT_MEMHANDLE_ITERATOR
 #define f2c_inquire_avail_			F2C_INQUIRE_AVAIL

@@ -2,7 +2,7 @@
 #define _f2c_h
 
 /* 
- * $Id: f2c.h,v 1.2 1994-09-01 21:12:03 d3e129 Exp $
+ * $Id: f2c.h,v 1.3 1994-10-07 19:41:22 d3g681 Exp $
  */
 
 /* 
@@ -31,6 +31,9 @@
 	integer f2c_get_index
 	integer f2c_get_next_memhandle
 	integer f2c_inform_base
+#ifdef _CRAY
+	integer f2c_inform_base_fcd
+#endif /* _CRAY */
 	integer f2c_init
 	integer f2c_init_memhandle_iterator
 	integer f2c_inquire_avail
@@ -55,6 +58,9 @@
 	external f2c_get_index
 	external f2c_get_next_memhandle
 	external f2c_inform_base
+#ifdef _CRAY
+	external f2c_inform_base_fcd
+#endif /* _CRAY */
 	external f2c_init
 	external f2c_init_memhandle_iterator
 	external f2c_inquire_avail

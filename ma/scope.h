@@ -2,7 +2,7 @@
 #define _scope_h
 
 /* 
- * $Id: scope.h,v 1.2 1994-09-01 21:12:19 d3e129 Exp $
+ * $Id: scope.h,v 1.3 1994-10-07 19:41:31 d3g681 Exp $
  */
 
 /* 

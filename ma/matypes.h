@@ -2,7 +2,7 @@
 #define _matypes_h
 
 /* 
- * $Id: matypes.h,v 1.2 1994-09-01 21:12:16 d3e129 Exp $
+ * $Id: matypes.h,v 1.3 1994-10-07 19:41:30 d3g681 Exp $
  */
 
 /* 

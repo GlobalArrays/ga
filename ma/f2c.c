@@ -1,5 +1,5 @@
 /*
- * $Id: f2c.c,v 1.2 1994-09-01 21:12:02 d3e129 Exp $
+ * $Id: f2c.c,v 1.3 1994-10-07 19:41:21 d3g681 Exp $
  */
 
 /*
@@ -219,6 +219,29 @@ public Boolean f2c_inform_base_(datatype, address1, address2)
 {
     return ma_inform_base(*datatype, address1, address2);
 }
+
+#ifdef _CRAY
+/* ------------------------------------------------------------------------- */
+/*
+ * Crays pass a FORTRAN character descriptor (_fcd) for byte_mb(i)
+ * from ma_set_sizes, from which the character address must be extracted.
+ * The C90 _fcd is 8 bytes, which fits into an 8-byte pointer, but the
+ * T3D _fcd is 16 bytes, which doesn't fit.  To solve this problem, this
+ * Cray-specific routine is provided.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Boolean f2c_inform_base_fcd_(datatype, fcd1, fcd2)
+    Integer	*datatype;
+    _fcd	fcd1;
+    _fcd	fcd2;
+{
+    Pointer	address1 = _fcdtocp(fcd1);
+    Pointer	address2 = _fcdtocp(fcd2);
+
+    return ma_inform_base(*datatype, address1, address2);
+}
+#endif /* _CRAY */
 
 /* ------------------------------------------------------------------------- */
 /*

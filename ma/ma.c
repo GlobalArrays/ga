@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.4 1994-09-01 21:12:05 d3e129 Exp $
+ * $Id: ma.c,v 1.5 1994-10-07 19:41:23 d3g681 Exp $
  */
 
 /*
@@ -62,11 +62,11 @@
 #define DEFAULT_REQUESTS_STACK	1
 
 /* bytes per address */
-#ifdef _CRAY
+#ifdef _CRAY1
 #define BPA	8
-#else /* _CRAY */
+#else /* _CRAY1 */
 #define BPA	1
-#endif /* _CRAY */
+#endif /* _CRAY1 */
 
 /* per-allocation storage overhead, excluding alignment gaps */
 #define BLOCK_OVERHEAD_FIXED	(sizeof(AD) + (2 * sizeof(Guard)))
@@ -1626,9 +1626,15 @@ public Boolean MA_alloc_get(datatype, nelem, name, memhandle, index)
     if (MA_allocate_heap(datatype, nelem, name, memhandle))
         /* MA_allocate_heap succeeded; try MA_get_index */
         return MA_get_index(*memhandle, index);
-    else
+    else {
         /* MA_allocate_heap failed */
+
+	/* RJH ... to help diagnose allocation failues print stats */
+
+	MA_summarize_allocated_blocks();
+
         return MA_FALSE;
+      }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2442,7 +2448,13 @@ public Boolean MA_push_get(datatype, nelem, name, memhandle, index)
         return MA_get_index(*memhandle, index);
     else
         /* MA_push_stack failed */
+      {
+	/* RJH ... to help diagnose allocation failues print stats */
+
+	MA_summarize_allocated_blocks();
+
         return MA_FALSE;
+      }
 }
 
 /* ------------------------------------------------------------------------- */

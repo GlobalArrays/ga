@@ -2,7 +2,7 @@
 #define _mafdecls_h
 
 /* 
- * $Id: mafdecls.h,v 1.2 1994-09-01 21:12:15 d3e129 Exp $
+ * $Id: mafdecls.h,v 1.3 1994-10-07 19:41:28 d3g681 Exp $
  */
 
 /* 
