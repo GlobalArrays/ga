@@ -29,7 +29,8 @@ c vector boxes lack arithmetic precision
       integer dims3(7), ld3(7), index3, chunk(7)
       integer a(nmax, nmax), b(nmax+2*nwidth,nmax+2*nwidth)
       double precision start,finish,start1,finish1,t1,t2,t3,t4,t5,tmp
-      double precision t6,t7,t8,t9,t10,t11,t12,t13,t14
+      double precision t6,t7,t8,t9,t10,t11,t12,t13,t14,t15,t16,t17,t18
+      double precision t19,t20,t21
       logical status, safe_put, safe_get, has_data(0:MAXPROC-1)
       parameter (heap=60*60*4, fudge=100, stack=100*100)
 c     
@@ -124,8 +125,10 @@ c        end do
       endif
 
       type = MT_INT
-      status = nga_create_ghosts_irreg (type, ndim, dims, width,
-     +        "test_array", map, pdims, g_a)
+c      status = nga_create_ghosts_irreg (type, ndim, dims, width,
+c     +        "test_array", map, pdims, g_a)
+      status = nga_create_ghosts(type, ndim, dims, width,
+     +                           "test_array", chunk, g_a)
       if (status.and.me.eq.0) then
         write(6,*) '*'
         write(6,*) '* Global array creation was successful'
@@ -197,61 +200,67 @@ c      go to 123
       endif
       t1 = 0.0d00
       t2 = 0.0d00
+      t3 = 0.0d00
       do i = 1, nloop
-        start1 = util_timer()
-        call ga_sync
+        start = util_timer()
+        call ga_ghost_barrier
+        t1 = t1 + util_timer() - start
         start = util_timer()
         call ga_update1_ghosts(g_a)
-        finish = util_timer()
-        call ga_sync
-        finish1 = util_timer()
-        t1 = t1 + finish - start
-        t2 = t2 + finish1 - start1
+        t2 = t2 + util_timer() - start
+        start = util_timer()
+        call ga_ghost_barrier
+        t3 = t3 + util_timer() - start
       end do
       t1 = t1/dble(nloop)
       t2 = t2/dble(nloop)
+      t3 = t3/dble(nloop)
 
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 2'
         write(6,*)
       endif
-      t3 = 0.0d00
       t4 = 0.0d00
+      t5 = 0.0d00
+      t6 = 0.0d00
       do i = 1, nloop
-        start1 = util_timer()
-        call ga_sync
+        start = util_timer()
+        call ga_ghost_barrier
+        t4 = t4 + util_timer() - start
         start = util_timer()
         status = ga_update2_ghosts(g_a)
-        finish = util_timer()
-        call ga_sync
-        finish1 = util_timer()
-        t3 = t3 + finish - start
-        t4 = t4 + finish1 - start1
+        t5 = t5 + util_timer() - start
+        start = util_timer()
+        call ga_ghost_barrier
+        t6 = t6 + util_timer() - start
       end do
-      t3 = t3/dble(nloop)
       t4 = t4/dble(nloop)
+      t5 = t5/dble(nloop)
+      t6 = t6/dble(nloop)
 
       if (me.eq.0) then
         write(6,*)
         write(6,*) 'Testing update 3'
         write(6,*)
       endif
-      t5 = 0.0d00
-      t6 = 0.0d00
+      t7 = 0.0d00
+      t8 = 0.0d00
+      t9 = 0.0d00
       do i = 1, nloop
-        start1 = util_timer()
-        call ga_sync
+        start = util_timer()
+        call ga_ghost_barrier
+        t7 = t7 + util_timer() - start
         start = util_timer()
         status = ga_update3_ghosts(g_a)
-        finish = util_timer()
-        call ga_sync
-        finish1 = util_timer()
-        t5 = t5 + finish - start
-        t6 = t6 + finish1 - start1
+        t8 = t8 + util_timer() - start
+        start = util_timer()
+        call ga_ghost_barrier
+        t9 = t9 + util_timer() - start
       end do
-      t5 = t5/dble(nloop)
-      t6 = t6/dble(nloop)
+      t7 = t7/dble(nloop)
+      t8 = t8/dble(nloop)
+      t9 = t9/dble(nloop)
 
       if (me.eq.0) then
         write(6,*)
@@ -259,21 +268,23 @@ c      go to 123
         write(6,*)
       endif
   122 continue
-      t7 = 0.0d00
-      t8 = 0.0d00
+      t10 = 0.0d00
+      t11 = 0.0d00
+      t12 = 0.0d00
       do i = 1, nloop
-        start1 = util_timer()
-        call ga_sync
+        start = util_timer()
+        call ga_ghost_barrier
+        t10 = t10 + util_timer() - start
         start = util_timer()
         status = ga_update4_ghosts(g_a)
-        finish = util_timer()
-        call ga_sync
-        finish1 = util_timer()
-        t7 = t7 + finish - start
-        t8 = t8 + finish1 - start1
+        t11 = t11 + util_timer() - start
+        start = util_timer()
+        call ga_ghost_barrier
+        t12 = t12 + util_timer() - start
       end do
-      t7 = t7/dble(nloop)
-      t8 = t8/dble(nloop)
+      t10 = t10/dble(nloop)
+      t11 = t11/dble(nloop)
+      t12 = t12/dble(nloop)
 
 c      go to 123
       if (me.eq.0) then
@@ -281,22 +292,24 @@ c      go to 123
         write(6,*) 'Testing update 5'
         write(6,*)
       endif
-      t9 = 0.0d00
-      t10 = 0.0d00
+      t13 = 0.0d00
+      t14 = 0.0d00
+      t15 = 0.0d00
       call ga_sync
       do i = 1, nloop
-        start1 = util_timer()
-        call ga_sync
+        start = util_timer()
+        call ga_ghost_barrier
+        t13 = t13 + util_timer() - start
         start = util_timer()
         status = ga_update5_ghosts(g_a)
-        finish = util_timer()
-        call ga_sync
-        finish1 = util_timer()
-        t9 = t9 + finish - start
-        t10 = t10 + finish1 - start1
+        t14 = t14 + util_timer() - start
+        start = util_timer()
+        call ga_ghost_barrier
+        t15 = t15 + util_timer() - start
       end do
-      t9 = t9/dble(nloop)
-      t10 = t10/dble(nloop)
+      t13 = t13/dble(nloop)
+      t14 = t14/dble(nloop)
+      t15 = t15/dble(nloop)
   123 continue
 
       if (me.eq.0) then
@@ -304,22 +317,24 @@ c      go to 123
         write(6,*) 'Testing update 6'
         write(6,*)
       endif
-      t11 = 0.0d00
-      t12 = 0.0d00
+      t16 = 0.0d00
+      t17 = 0.0d00
+      t18 = 0.0d00
       call ga_sync
       do i = 1, nloop
-        start1 = util_timer()
-        call ga_sync
+        start = util_timer()
+        call ga_ghost_barrier
+        t16 = t16 + util_timer() - start
         start = util_timer()
         status = ga_update6_ghosts(g_a)
-        finish = util_timer()
-        call ga_sync
-        finish1 = util_timer()
-        t11 = t11 + finish - start
-        t12 = t12 + finish1 - start1
+        t17 = t17 + util_timer() - start
+        start = util_timer()
+        call ga_ghost_barrier
+        t18 = t18 + util_timer() - start
       end do
-      t11 = t11/dble(nloop)
-      t12 = t12/dble(nloop)
+      t16 = t16/dble(nloop)
+      t17 = t17/dble(nloop)
+      t18 = t18/dble(nloop)
 
       if (me.eq.0) then
         write(6,*) '*'
@@ -358,22 +373,24 @@ c      do i = 1, ndim
 c        if (hi2(i)-lo2(i).ge.dims(i)) safe_get = .false.
 c      end do
 
-      t13 = 0.0d00
-      t14 = 0.0d00
+      t19 = 0.0d00
+      t20 = 0.0d00
+      t21 = 0.0d00
       do i = 1, nloop
-        start1 = util_timer()
-        call ga_sync
+        start = util_timer()
+        call ga_ghost_barrier
+        t19 = t19 + util_timer() - start
         start = util_timer()
         if (has_data(me).and.safe_get)
      +    call nga_periodic_get(g_a, lo2, hi2, b, ld2)
-        finish = util_timer()
-        call ga_sync
-        finish1 = util_timer()
-        t13 = t13 + finish - start
-        t14 = t14 + finish1 - start1
+        t20 = t20 + util_timer() - start
+        start = util_timer()
+        call ga_ghost_barrier
+        t21 = t21 + util_timer() - start
       end do
-      t13 = t13/dble(nloop)
-      t14 = t14/dble(nloop)
+      t19 = t19/dble(nloop)
+      t20 = t20/dble(nloop)
+      t21 = t21/dble(nloop)
 
 c      if (me.eq.0.and.maxval.lt.10000) then
 c        write(6,*) '*'
@@ -409,228 +426,116 @@ c      end do
       call atest(int_mb(index3),dims3(1),dims3(2),ld3,b,
      +           nmax+2*nwidth,has_data)
       call ga_sync
-      tmp = t1
-      call ga_dgop(1,tmp,1,'max')
-      if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update1_ghosts ',tmp
-      endif
-      tmp = t1
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update1_ghosts ',tmp
-      endif
-      tmp = t1
+      tmp = t2
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
         write(6,*) 'Average time for nga_update1_ghosts ',
      +              tmp/dble(nproc)
       endif
-      tmp = t2
-      call ga_dgop(1,tmp,1,'max')
-      if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update1_ghosts(sync) ',tmp
-      endif
-      tmp = t2
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update1_ghosts(sync) ',tmp
-      endif
-      tmp = t2
+      tmp = t1
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update1_ghosts(sync) ',
-     +              tmp/dble(nproc)
+        write(6,*) '   Average time for prior sync',tmp/dble(nproc)
       endif
       tmp = t3
-      call ga_dgop(1,tmp,1,'max')
+      call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update2_ghosts ',tmp
+        write(6,*) '   Average time for post sync',tmp/dble(nproc)
       endif
-      tmp = t3
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update2_ghosts ',tmp
-      endif
-      tmp = t3
+      tmp = t5
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
         write(6,*) 'Average time for nga_update2_ghosts ',
      +              tmp/dble(nproc)
       endif
       tmp = t4
-      call ga_dgop(1,tmp,1,'max')
-      if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update2_ghosts(sync) ',tmp
-      endif
-      tmp = t4
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update2_ghosts(sync) ',tmp
-      endif
-      tmp = t4
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update2_ghosts(sync) ',
-     +              tmp/dble(nproc)
+        write(6,*) '   Average time for prior sync',tmp/dble(nproc)
       endif
-      tmp = t5
-      call ga_dgop(1,tmp,1,'max')
+      tmp = t6
+      call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update3_ghosts ',tmp
+        write(6,*) '   Average time for post sync',tmp/dble(nproc)
       endif
-      tmp = t5
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update3_ghosts ',tmp
-      endif
-      tmp = t5
+      tmp = t8
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
         write(6,*) 'Average time for nga_update3_ghosts ',
      +              tmp/dble(nproc)
       endif
-      tmp = t6
-      call ga_dgop(1,tmp,1,'max')
-      if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update3_ghosts(sync) ',tmp
-      endif
-      tmp = t6
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update3_ghosts(sync) ',tmp
-      endif
-      tmp = t6
+      tmp = t7
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update3_ghosts(sync) ',
-     +              tmp/dble(nproc)
+        write(6,*) '   Average time for prior sync',tmp/dble(nproc)
       endif
-      tmp = t7
-      call ga_dgop(1,tmp,1,'max')
+      tmp = t9
+      call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update4_ghosts ',tmp
+        write(6,*) '   Average time for post sync',tmp/dble(nproc)
       endif
-      tmp = t7
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update4_ghosts ',tmp
-      endif
-      tmp = t7
+      tmp = t11
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
         write(6,*) 'Average time for nga_update4_ghosts ',
      +              tmp/dble(nproc)
       endif
-      tmp = t8
-      call ga_dgop(1,tmp,1,'max')
-      if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update4_ghosts(sync) ',tmp
-      endif
-      tmp = t8
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update4_ghosts(sync) ',tmp
-      endif
-      tmp = t8
+      tmp = t10
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update4_ghosts(sync) ',
-     +              tmp/dble(nproc)
+        write(6,*) '   Average time for prior sync',tmp/dble(nproc)
       endif
-      tmp = t9
-      call ga_dgop(1,tmp,1,'max')
+      tmp = t12
+      call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update5_ghosts ',tmp
+        write(6,*) '   Average time for post sync',tmp/dble(nproc)
       endif
-      tmp = t9
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update5_ghosts ',tmp
-      endif
-      tmp = t9
+      tmp = t14
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
         write(6,*) 'Average time for nga_update5_ghosts ',
      +              tmp/dble(nproc)
       endif
-      tmp = t10
-      call ga_dgop(1,tmp,1,'max')
-      if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update5_ghosts(sync) ',tmp
-      endif
-      tmp = t10
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update5_ghosts(sync) ',tmp
-      endif
-      tmp = t10
+      tmp = t13
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update5_ghosts(sync) ',
-     +              tmp/dble(nproc)
+        write(6,*) '   Average time for prior sync',tmp/dble(nproc)
       endif
-      tmp = t11
-      call ga_dgop(1,tmp,1,'max')
+      tmp = t15
+      call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update6_ghosts ',tmp
+        write(6,*) '   Average time for post sync',tmp/dble(nproc)
       endif
-      tmp = t11
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update6_ghosts ',tmp
-      endif
-      tmp = t11
+      tmp = t17
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
         write(6,*) 'Average time for nga_update6_ghosts ',
      +              tmp/dble(nproc)
       endif
-      tmp = t12
-      call ga_dgop(1,tmp,1,'max')
-      if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_update6_ghosts(sync) ',tmp
-      endif
-      tmp = t12
-      call ga_dgop(2,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_update6_ghosts(sync) ',tmp
-      endif
-      tmp = t12
+      tmp = t16
       call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Average time for nga_update6_ghosts(sync) ',
-     +              tmp/dble(nproc)
+        write(6,*) '   Average time for prior sync',tmp/dble(nproc)
       endif
-      tmp = t13
-      call ga_dgop(4,tmp,1,'max')
+      tmp = t18
+      call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_periodic_get ',tmp
+        write(6,*) '   Average time for post sync',tmp/dble(nproc)
       endif
-      tmp = t13
-      call ga_dgop(5,tmp,1,'min')
-      if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_periodic_get ',tmp
-      endif
-      tmp = t13
+      tmp = t20
       call ga_dgop(6,tmp,1,'+')
       if (me.eq.0) then
         write(6,*) 'Average time for nga_periodic_get ',tmp/dble(nproc)
       endif
-      tmp = t14
-      call ga_dgop(4,tmp,1,'max')
+      tmp = t19
+      call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Maximum time for nga_periodic_get(sync) ',tmp
+        write(6,*) '   Average time for prior sync',tmp/dble(nproc)
       endif
-      tmp = t14
-      call ga_dgop(5,tmp,1,'min')
+      tmp = t21
+      call ga_dgop(3,tmp,1,'+')
       if (me.eq.0) then
-        write(6,*) 'Minimum time for nga_periodic_get(sync) ',tmp
-      endif
-      tmp = t14
-      call ga_dgop(6,tmp,1,'+')
-      if (me.eq.0) then
-        write(6,*) 'Average time for nga_periodic_get(sync) ',
-     +              tmp/dble(nproc)
+        write(6,*) '   Average time for post sync',tmp/dble(nproc)
       endif
   127 continue
 c
