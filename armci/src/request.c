@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.64 2004-04-05 17:30:50 vinod Exp $ */
+/* $Id: request.c,v 1.65 2004-04-09 18:41:10 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -219,6 +219,7 @@ int *ibuf;
 int bufsize = sizeof(request_header_t)+sizeof(int);
  
     msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,LOCK,proc);
+    bzero(msginfo,sizeof(request_header_t));
 
     msginfo->datalen = sizeof(int);
     msginfo->dscrlen = 0;
@@ -274,6 +275,7 @@ int *ibuf;
 int bufsize = sizeof(request_header_t)+sizeof(ticket);
 
     msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,UNLOCK,proc);
+    bzero(msginfo,sizeof(request_header_t));
 
     msginfo->dscrlen = msginfo->bytes = sizeof(ticket); 
     msginfo->datalen = 0; 
@@ -332,6 +334,7 @@ void armci_serv_register_req(void *ptr,long sz,ARMCI_MEMHDL_T *memhdl)
 char *buf;
 int bufsize = sizeof(request_header_t)+sizeof(long)+sizeof(void *)+sizeof(ARMCI_MEMHDL_T);
 request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,ATTACH,armci_me);
+    bzero(msginfo,sizeof(request_header_t));
 
     msginfo->from  = armci_me;
     msginfo->to    = SERVER_NODE(armci_clus_me);
@@ -362,6 +365,7 @@ void armci_serv_attach_req(void *info, int ilen, long size, void* resp,int rlen)
 char *buf;
 int bufsize = sizeof(request_header_t)+ilen + sizeof(long)+sizeof(rlen);
 request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,ATTACH,armci_me);
+    bzero(msginfo,sizeof(request_header_t));
 
     msginfo->from  = armci_me;
     msginfo->to    = SERVER_NODE(armci_clus_me);
@@ -457,6 +461,7 @@ void *buffer;
 int bufsize = sizeof(request_header_t)+sizeof(long)+sizeof(void*);
  
     msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,op,proc);
+    bzero(msginfo,sizeof(request_header_t));
 
     msginfo->dscrlen = sizeof(void*);
     msginfo->from  = armci_me;
@@ -981,7 +986,7 @@ int num;
 int *rem_stride_arr;
 int bufsize = sizeof(request_header_t);
 int armci_post_scatter(void *,int *,int *,int, armci_vapi_memhndl_t *,int,request_header_t * ,int);
-void armci_client_recv_complete(int, int);
+void armci_client_recv_complete(int, int, int);
 
     if(DEBUG_){
        printf("%d(c):about to call armci_post_scatter, CLN value is %d\n",
@@ -992,13 +997,13 @@ void armci_client_recv_complete(int, int);
     num =  armci_post_scatter(dst_ptr, dst_stride_arr, count, stride_levels, 
                    mhloc,proc,msginfo,CLN);
     if(DEBUG_){
-       printf("%d(c) : returned from armci_post_scatter\n",armci_me);
+       printf("\n%d: returned from armci_post_scatter %d\n",armci_me,num);
        fflush(stdout);
     }   
 
     bytes = 0; 
     bufsize += bytes+sizeof(void *) + 2*sizeof(int)*(stride_levels+1) + ehlen
-                                            +2*sizeof(double) + 16;
+                           +2*sizeof(int) +2*sizeof(double) + 16;
 
     buf = buf0 = GET_SEND_BUFFER(bufsize,GET,proc);
     if(nb_handle){
@@ -1034,14 +1039,19 @@ void armci_client_recv_complete(int, int);
        fflush(stdout);
     }
     if(!nb_handle){
+       extern int client_id_for_scatter;
        *(int *)((char *)msginfo+msginfo->bytes) = num;
-       armci_client_recv_complete(proc, num);
+       armci_client_recv_complete(proc, num, client_id_for_scatter);
        FREE_SEND_BUFFER(msginfo);
     }
     else{
+       extern int client_id_for_scatter;
        armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
                                  stride_levels,1);
        *(int *)((char *)msginfo+msginfo->bytes) = num;
+       *(int *)((char *)msginfo+msginfo->bytes+sizeof(int))=client_id_for_scatter;
+       /*armci_client_recv_complete(proc, num,client_id_for_scatter);
+       *(int *)((char *)msginfo+msginfo->bytes) = 0; */
     }
     if(DEBUG_){
        printf("%d(c) : finished polling for scatter_recv\n",armci_me);
@@ -1260,7 +1270,6 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     if(msginfo->ehlen) /* process extra header if available */
          armci_process_extheader(msginfo, dscr_save, buf, buflen);
-
 }
 
 

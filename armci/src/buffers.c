@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.26 2003-07-31 22:45:10 vinod Exp $    **/
+/* $Id: buffers.c,v 1.27 2004-04-09 18:41:10 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -639,10 +639,56 @@ int i;
          CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[i].field,_armci_buf_state->table[i].snd,_armci_buf_state->table[i].rcv,_armci_buf_state->table[i].to,_armci_buf_state->table[i].op);
 #endif
     }
-    for(i=0;i<MAX_SMALL_BUFS;i++){
+    for(i=MAX_BUFS;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
 # ifdef BUF_EXTRA_FIELD_T
        if(_armci_buf_state->table[i].op || _armci_buf_state->table[i].first)
-         CLEAR_SEND_BUF_FIELD(_armci_buf_state->smallbuf[i].field,_armci_buf_state->table[i].snd,_armci_buf_state->table[i].rcv,_armci_buf_state->table[i].to,_armci_buf_state->table[i].op);
+         CLEAR_SEND_BUF_FIELD(_armci_buf_state->smallbuf[i-MAX_BUFS].field,_armci_buf_state->table[i].snd,_armci_buf_state->table[i].rcv,_armci_buf_state->table[i].to,_armci_buf_state->table[i].op);
 #endif
     }
 }
+
+#ifdef VAPI
+/* this will work for vapi as there is no get pipeline enabled in vapi
+ * with get pipeline, this will break very badly
+ */
+void _armci_buf_update_scatter_count(int id)
+{
+int i,num,last,first;
+    for(i=0;i<MAX_BUFS;i++){
+# ifdef BUF_EXTRA_FIELD_T
+       if(_armci_buf_state->table[i].op==GET){
+         request_header_t *msginfo = _armci_buf_state->buf[i].buffer; 
+         if(msginfo->pinned && msginfo->bypass && msginfo->format == STRIDED){
+           num = *(int *)((char *)msginfo+msginfo->bytes); 
+           last = *(int *)((char *)msginfo+msginfo->bytes+sizeof(int));
+           first = last - num+1;
+           if(first < 0 )first+=DSCRID_SCATTERCLIENT_END-DSCRID_SCATTERCLIENT-1;
+           if(id == first && num!=0){
+             *(int *)((char *)msginfo+msginfo->bytes) = (--num);
+             return;
+           }
+         }
+       }
+# endif
+    }
+    for(i=MAX_BUFS;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
+# ifdef BUF_EXTRA_FIELD_T
+       if(_armci_buf_state->table[i].op==GET){
+         request_header_t *msginfo=_armci_buf_state->smallbuf[i-MAX_BUFS].buffer;
+         if(msginfo->pinned && msginfo->bypass && msginfo->format == STRIDED){
+           num = *(int *)((char *)msginfo+msginfo->bytes); 
+           last = *(int *)((char *)msginfo+msginfo->bytes+sizeof(int));
+           first = last - num+1;
+           if(first < 0 )first+=DSCRID_SCATTERCLIENT_END-DSCRID_SCATTERCLIENT-1;
+           if(id == first && num!=0){
+             *(int *)((char *)msginfo+msginfo->bytes) = (--num);
+             return;
+           }
+         }
+       }
+# endif
+    }
+
+}
+#endif
+

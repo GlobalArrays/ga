@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.9 2004-03-29 19:12:08 vinod Exp $ */
+/*$Id: armci-vapi.h,v 1.10 2004-04-09 18:41:10 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -122,12 +122,15 @@ typedef struct {
 #define ARMCI_VAPI_CLEAR 0
 #define VAPI_SGGET_MIN_COLUMN 720
 #define VAPI_SGPUT_MIN_COLUMN 1680
+#define DSCRID_SCATTERCLIENT 70000
+#define DSCRID_SCATTERCLIENT_END 70000+9999
+
+
 
 #define HAS_RDMA_GET
 
 #endif /* _VAPI_CONST_H */
 
-extern int armci_send_gather_req_msg(void *loc_buf, int  stride_arr[], int count[] ,int stride_levels ,int nb_tag, ARMCI_MEMHDL_T * loc_hdl, int proc);
 extern void armci_wait_ack(char *buffer);
 extern void armci_complete_multi_sglist_sends(int proc);
 extern void armci_client_direct_send(int p,void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag,ARMCI_MEMHDL_T *lochdl,ARMCI_MEMHDL_T *remhdl);
