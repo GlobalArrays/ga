@@ -7,6 +7,8 @@
 
 #include "matmul.h"
 
+#define _GA_ACCESS_PTR 0
+
 static int max3(int ichunk, int jchunk, int kchunk) {
   if(ichunk>jchunk) return MAX(ichunk,kchunk);
   else return MAX(jchunk, kchunk);
@@ -275,7 +277,7 @@ static void gai_matmul_shmem(transa, transb, alpha, beta, atype,
     jstart = loC[1]-1; jend = hiC[1]-1;
     kstart = 0       ; kend = *ajhi-*ajlo;
 
-#if 1 /* disable, if you don't wanna use access_ptr. Program will still work */
+#if _GA_ACCESS_PTR /* disable, if you don't wanna use access_ptr. Program will still work */
     /* check if there is only one task. If so, then it is contiguous */
     if( (iend-istart+1 <= Ichunk) && (jend-jstart+1 <= Jchunk) &&
 	(kend-kstart+1 <= Kchunk) ) {
@@ -420,7 +422,7 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
 			 hiC[1]-1, k-1, Ichunk, Jchunk, Kchunk, &max_tasks);
        currA = nextA = 0;
 
-#  if 1 /*disable,if you don't wanna use access_ptr.Program will still work*/
+#  if _GA_ACCESS_PTR /*disable,if you don't wanna use access_ptr.Program will still work*/
        /* check if there is only one task. If so, then it is contiguous */
        if(max_tasks == 1) {
 	  if( !((hiC[0]-loC[0]+1 <= Ichunk) && (hiC[1]-loC[1]+1 <= Jchunk) &&
@@ -504,7 +506,7 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
 
 #ifdef _NBACC
        /* NB Accumulate disabled temporarily */
-       if(irregular) if(currA!=me) ga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
+       if(irregular) if(currA!=me) nga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
 #endif
 
        if(currA < max_tasks) {
@@ -555,7 +557,7 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
    
     if(irregular) {
 #ifdef _NBACC
-       ga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
+       nga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
 #endif
        GA_Destroy(g_t);
     }
@@ -594,6 +596,7 @@ void ga_matmul(transa, transb, alpha, beta,
     int local_sync_begin,local_sync_end;
     short int irregular=UNSET, need_scaling=SET, use_NB_matmul = SET;
     Integer loC[2]={0,0}, hiC[2]={0,0};
+    Integer ZERO_I = 0, inode, iproc;
 
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
@@ -604,6 +607,22 @@ void ga_matmul(transa, transb, alpha, beta,
     /**************************************************
      * Do All Sanity Checks 
      **************************************************/
+
+#if 0
+    /* Check to make sure all global arrays are of the same type */
+    if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
+	  ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
+       ga_error_("Processors do not match for all arrays",ga_nnodes_());
+    }
+    if (ga_is_mirrored_(g_a)) {
+       inode = ga_cluster_nodeid_();
+       nproc = ga_cluster_nprocs_(&inode);
+       iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
+    } else {
+       nproc = ga_nnodes_();
+       iproc = me;
+    }
+#endif
 
     /* check if ranks are O.K. */
     nga_inquire_internal_(g_a, &atype, &rank, dims); 

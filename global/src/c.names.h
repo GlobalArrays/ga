@@ -35,7 +35,6 @@
 #define  ga_fill_patch_            GA_FILL_PATCH
 #define  ga_gather_                GA_GATHER
 #define  ga_get_                   GA_GET
-#define  ga_nbwait_                GA_NBWAIT
 #define  ga_nbget_                 GA_NBGET
 #define  ga_has_ghosts_            GA_HAS_GHOSTS
 #define  ga_default_config_        GA_DEFAULT_CONFIG
@@ -239,7 +238,6 @@
 #define  ga_fill_patch_            ga_fill_patch__          
 #define  ga_gather_                ga_gather__              
 #define  ga_get_                   ga_get__                 
-#define  ga_nbwait_                ga_nbwait__                 
 #define  ga_nbget_                 ga_nbget__                 
 #define  ga_has_ghosts_            ga_has_ghosts__          
 #define  ga_default_config_        ga_default_config__                

@@ -75,7 +75,6 @@ extern int GA_Is_mirrored(int g_a);
 extern int NGA_Num_shmem_seg(int g_a);
 extern void NGA_Get_shmem_block(int g_a, int nblock, int lo[], int hi[]);
 extern int NGA_Update_ghost_dir(int g_a, int dimension, int idir, int flag);
-extern void NGA_NbGet_ghost_dir(int g_a, int mask[], Integer handle);
 extern int GA_Has_ghosts(int g_a);
 extern void NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[]);
 extern void NGA_Access_ghost_element(int g_a,  void *ptr, int subscript[], int ld[]);
@@ -229,7 +228,8 @@ extern void NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[],
 extern void NGA_NbAcc(int g_a,int lo[], int hi[],void* buf,int ld[],void* alpha,
 		      ga_nbhdl_t* nbhandle);
 extern int NGA_NbWait(ga_nbhdl_t* nbhandle);
-extern int GA_NbWait(ga_nbhdl_t* nbhandle);
+extern void NGA_NbGet_ghost_dir(int g_a, int mask[], ga_nbhdl_t* handle);
+
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.59 2003-07-31 23:57:31 manoj Exp $ */
+/* $Id: capi.c,v 1.60 2003-08-12 14:18:12 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -422,7 +422,7 @@ int NGA_Update_ghost_dir(int g_a, int dimension, int dir, int flag)
     return (int)st;
 }
 
-void NGA_NbGet_ghost_dir(int g_a, int mask[], ga_nbhdl_t nbhandle)
+void NGA_NbGet_ghost_dir(int g_a, int mask[], ga_nbhdl_t* nbhandle)
 {
     Integer a=(Integer)g_a;
     Integer ndim = ga_ndim_(&a);
@@ -607,11 +607,6 @@ void NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[],
 }
 
 int NGA_NbWait(ga_nbhdl_t* nbhandle)
-{
-    return(nga_wait_internal((Integer *)nbhandle));
-}
-
-int GA_NbWait(ga_nbhdl_t* nbhandle)
 {
     return(nga_wait_internal((Integer *)nbhandle));
 }

@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.48 2003-07-31 23:56:11 manoj Exp $ */
+/* $Id: base.c,v 1.49 2003-08-12 14:18:12 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2874,6 +2874,9 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
      that patches are the same dimensions */
   a_handle = GA_OFFSET + *g_a;
   b_handle = GA_OFFSET + *g_b;
+
+  if (!ga_is_mirrored_(g_a))
+    ga_error("Handle to a non-mirrored array passed",0);
 
   if (ga_is_mirrored_(g_b))
     ga_error("Distributed array is mirrored",0);
