@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.16 2002-07-17 17:20:11 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.17 2003-10-22 03:36:39 edo Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -59,7 +59,7 @@ extern char *strdup();
     defined(KSR)    || defined(DECOSF)
 extern void *malloc();
 #else
-extern char *malloc();
+#include <stdlib.h>
 #endif
 
 #ifdef IPSC

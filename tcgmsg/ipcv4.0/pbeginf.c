@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.10 2001-08-23 20:30:42 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.11 2003-10-22 03:36:39 edo Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -7,7 +7,10 @@
 
 extern void PBEGIN_();
 
-#if !(defined(HPUX) || defined(SUNF77_2)||(defined(LINUX64)&&defined(__alpha__)))
+#if defined(HPUX) || defined(SUNF77_2)||(defined(LINUX64)&&(defined(__alpha__) ||defined(XLFLINUX)))
+#define HAS_GETARG 1
+#endif
+#ifndef HAS_GETARG
 void PBEGINF_()
 /*
   Interface routine between FORTRAN and c version of pbegin.
@@ -24,7 +27,7 @@ void PBEGINF_()
 */
 {
   extern char *strdup();
-#if defined(SUNF77_2)|| (defined(CONVEX)&&defined(HPUX))|| defined(__alpha__)
+#ifndef HPUX
   extern int iargc_();
   extern void getarg_();
   int argc = iargc_() + 1;
@@ -41,15 +44,15 @@ void PBEGINF_()
   char *argv[256], arg[256];
 
   for (i=0; i<argc; i++) {
-#if defined(SUNF77_2)|| (defined(CONVEX)&&defined(HPUX))|| defined(__alpha__)
+#if defined(HPUX64)
+    Integer ii=i, lmax=maxlen;
+    len = hpargv_(&ii, arg, &lmax);
+#elif defined(HPUX)
+    len = hpargv_(&i, arg, &maxlen);
+#else
     getarg_(&i, arg, maxlen);
     for(len = maxlen-2; len && (arg[len] == ' '); len--);
     len++;
-#elif defined(HPUX64)
-    Integer ii=i, lmax=maxlen;
-    len = hpargv_(&ii, arg, &lmax);
-#else
-    len = hpargv_(&i, arg, &maxlen);
 #endif
     arg[len] = '\0';
     /* printf("%10s, len=%d\n", arg, len);  fflush(stdout); */

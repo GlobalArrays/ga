@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.8 2002-01-28 20:08:01 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.9 2003-10-22 03:36:39 edo Exp $ */
 
 #include <stdio.h>
 #if !defined(SEQUENT) && !defined(CONVEX)
@@ -13,7 +13,7 @@ extern char *memalign();
                     || defined(DECOSF)
 extern void *malloc();
 #else
-extern char *malloc();
+#include <stdlib.h>
 #endif
 extern unsigned char CheckByte();
 extern double DRAND48_();

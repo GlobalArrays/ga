@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.19 2000-11-02 01:59:01 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.20 2003-10-22 03:36:39 edo Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -26,7 +26,7 @@ extern char *getenv();
     defined(KSR)    || defined(DECOSF)
 extern void *malloc();
 #else
-extern char *malloc();
+#include <stdlib.h>
 #endif
 
 #if !(defined(SGI) || defined(LINUX))
