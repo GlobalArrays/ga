@@ -1,4 +1,4 @@
-c $Id: mirror.F,v 1.1 2003-02-17 23:00:12 d3g293 Exp $
+c $Id: mirror.F,v 1.2 2003-02-21 20:49:57 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -163,6 +163,7 @@ c
       integer nproc, me, int, ij, inc, ii, jj
       parameter (maxloop = 100)
       integer maxproc
+      integer ndim, dims(2), chunk(2), p_mirror
       parameter (maxproc = 128)
       double precision crap, sum1, sum2, x
       double precision nwords
@@ -194,7 +195,14 @@ c
 *     print *,ga_nodeid(), ' creating array'
 *     call ffflush(6)
 c     call setdbg(1)
-      status = ga_create(MT_DBL, n, n, 'a', 0, 0, g_a)
+      ndim = 2
+      dims(1) = n
+      dims(2) = n
+      chunk(1) = 0
+      chunk(2) = 0
+      p_mirror = ga_mirror_config()
+      status = nga_create_config(MT_DBL, ndim, dims, 'a', chunk,
+     +                           p_mirror, g_a)
       if (.not. status) then
          write(6,*) ' ga_create failed'
          call ffflush(6)
@@ -426,7 +434,8 @@ c              call ga_error('... exiting ',0)
 c
 c     overlapping accumulate
       call ga_sync()
-      if (.not. ga_create(MT_DBL, n, n, 'b', 0, 0, g_b)) then
+      if (.not. nga_create_config(MT_DBL, ndim, dims, 'b', chunk,
+     +                     p_mirror, g_b)) then
          call ga_error('ga_create failed for second array ',0)
       endif
 c
@@ -712,6 +721,7 @@ c#endif
 c
 c     Delete the global arrays
 c
+  123 continue
       status = ga_destroy(g_b)
       status = ga_destroy(g_a)
 c     
