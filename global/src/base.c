@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.24 2002-09-17 17:03:52 vinod Exp $ */
+/* $Id: base.c,v 1.25 2002-11-12 06:15:55 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -40,6 +40,7 @@
 #include "message.h"
 #include "base.h"
 #include "macdecls.h"
+#include "armci.h"
 
 #ifdef GA_USE_VAMPIR
 #include "ga_vampir.h"
@@ -371,6 +372,9 @@ int bytes;
       ga_error("ga_init:Failed to initialize memory for update flags",GAme);
     /* Zero update flags */
     for (i=0; i<2*MAXDIM; i++) GA_Update_Flags[GAme][i] = 0;
+
+    /* set MA error function */
+    MA_set_error_callback(ARMCI_Error);
 
     GAinitialized = 1;
 

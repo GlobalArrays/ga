@@ -1,5 +1,5 @@
 /*
- * $Id: error.c,v 1.7 1999-05-27 16:31:11 d3h325 Exp $
+ * $Id: error.c,v 1.8 2002-11-12 06:16:07 d3h325 Exp $
  */
 
 /*
@@ -30,6 +30,16 @@ public Boolean ma_error_print = MA_TRUE;
 
 /* terminate execution upon any error? */
 public Boolean ma_hard_fail = MA_FALSE;
+
+void (*ma_func_terminate)() = 0;
+
+
+void MA_set_error_callback( func)
+void (*func);
+{
+  ma_func_terminate = func;
+}
+
 
 /**
  ** public routines for internal use only
@@ -76,6 +86,8 @@ public void ma_error(elevel, etype, func, emsg)
     }
 
     /* terminate execution? */
-    if ((elevel == EL_Fatal) || ma_hard_fail)
-        exit(1);
+    if ((elevel == EL_Fatal) || ma_hard_fail){
+       if(ma_func_terminate) ma_func_terminate("MA aborting",0);
+       else exit(1);
+    }
 }

@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.16 2002-10-07 22:44:34 d3g001 Exp $
+ * $Id: macdecls.h,v 1.17 2002-11-12 06:16:07 d3h325 Exp $
  */
 
 /* 
@@ -145,6 +145,8 @@ extern void MA_summarize_allocated_blocks();
 extern void MA_trace();
 extern Boolean MA_verify_allocator_stuff();
 #endif
+
+extern void ma_set_error_callback();
 
 /**
  ** variables
