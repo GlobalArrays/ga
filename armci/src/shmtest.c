@@ -37,9 +37,9 @@ int armci_test_allocate(long size)
  * LBOUND  is set to amount that is considered insufficient for our purposes 
  */
 
-#define PAGE 65536L
-#define UBOUND 4*4096*PAGE
-#define LBOUND 100*PAGE
+#define PAGE 131072L
+#define UBOUND 2*4096*PAGE
+#define LBOUND 4*PAGE
 
 int verbose=1;
 
@@ -58,7 +58,7 @@ long lower_bound=0;
           if(verbose)printf("test %d size=%ld bytes: success\n",i,x);
           y=lower_bound = x;
           step = (upper_bound -x)>>1;
-          if(step < PAGE) break;
+          if(step < 16*PAGE) break;
           x += step;
         }else{
           if(verbose)printf("test %d size=%ld bytes: failed\n",i,x);
