@@ -38,8 +38,22 @@
 #define INTERLEAVE_GET_THRESHOLD 524288 
 #endif
 
+/* context for callback routine */
+typedef struct {
+    int tag;
+    volatile int done;
+} armci_gm_context_t;
+
+#define MULTIPLE_SND_BUFS_ 
+#ifdef MULTIPLE_SND_BUFS 
 #define GET_SEND_BUFFER armci_gm_getbuf
 #define FREE_SEND_BUFFER armci_gm_freebuf
+#else
+#define GET_SEND_BUFFER(x) (char*)(((armci_gm_context_t*)MessageSndBuffer)+1);
+/*        armci_client_send_complete((armci_gm_context_t*)MessageSndBuffer);
+*/
+#define FREE_SEND_BUFFER(x) 
+#endif
 
 /* two ports used by ARMCI and their boards iff STATIC_PORTS defined */
 #define ARMCI_GM_SERVER_RCV_PORT 5
@@ -75,6 +89,7 @@ extern int  armci_wait_pin_client(int);
 extern void armci_client_send_ack(int p, int success);
 extern void armci_gm_freebuf(void *ptr);
 extern char* armci_gm_getbuf(size_t size);
+extern void armci_client_send_complete(armci_gm_context_t*);
 
 
 #endif /* MYRINET_H */

@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.28 2001-06-07 23:23:23 d3h325 Exp $
+/* $Id: myrinet.c,v 1.29 2001-06-08 23:23:17 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -50,6 +50,8 @@
 
 #define FALSE  0
 #define TRUE   1
+#define TAG_DFLT  0
+#define TAG_SHORT 1
 
 /* call back */
 #define ARMCI_GM_SENT    1
@@ -99,12 +101,6 @@ typedef struct {
     unsigned long complete_msg_ct;
 } armci_gm_serv_t;
 
-/* context for callback routine */
-typedef struct {
-    int tag;
-    volatile int done;
-} armci_gm_context_t;
-
 /***************/
 
 extern struct gm_port *gmpi_gm_port; /* the port that mpi currently using */
@@ -129,6 +125,8 @@ char *MessageRcvBuffer;
 
 int armci_gm_bypass = 0;
 static int armci_gm_server_ready = 0;
+static int armci_gm_num_send_tokens=0;
+static int armci_gm_num_receive_tokens=0;
 
 GM_ENTRY_POINT char * _gm_get_kernel_build_id(struct gm_port *p);
 
@@ -412,6 +410,14 @@ int armci_gm_client_init()
     /* memory preallocation for computing process */
     if(!armci_gm_client_mem_alloc()) armci_die(" client mem alloc failed ",0); 
 
+    /* query GM for number of tokens available */
+    armci_gm_num_receive_tokens = gm_num_receive_tokens(proc_gm->port);
+    armci_gm_num_send_tokens = gm_num_send_tokens(proc_gm->port);
+    if(DEBUG_ && armci_me==0){
+        printf("has %d send %d receive tokens\n",armci_gm_num_send_tokens,
+           armci_gm_num_receive_tokens); fflush(stdout);
+    }
+
 #ifdef CLIENT_BUF_BYPASS
     /* get the gm version number and set bypass flag: need GM >1.1 */
     if(armci_me == 0) {
@@ -422,15 +428,11 @@ int armci_gm_client_init()
         if(strcmp(gm_version, "1.0") == 0) armci_gm_bypass = FALSE;
         else if(strcmp(gm_version, "1.1") == 0) armci_gm_bypass = FALSE;
         else armci_gm_bypass = TRUE;
-#if 0
-        printf("has %d send %d receive tokens\n",
-           gm_num_send_tokens(proc_gm->port), gm_num_receive_tokens(proc_gm->port));
-     fflush(stdout); sleep(1);
-#endif
     }
     armci_msg_brdcst(&armci_gm_bypass, sizeof(int), 0);
 #endif
     
+    ((armci_gm_context_t*)MessageSndBuffer)->done=ARMCI_GM_CLEAR;
     return TRUE;
 }
 
@@ -440,7 +442,6 @@ void armci_client_send_callback(struct gm_port *port, void *context,gm_status_t 
 {
     if(status==GM_SUCCESS){
          ((armci_gm_context_t*)context)->done = ARMCI_GM_CLEAR;
-         //armci_gm_freebuf_tag(((armci_gm_context_t *)context)->tag); 
     }else ((armci_gm_context_t *)context)->done = ARMCI_GM_FAILED;
 }
 
@@ -452,7 +453,7 @@ void armci_client_send_callback_direct(struct gm_port *port, void *context,gm_st
 }
 
 /* client trigers gm_unknown, so that callback func can be executed */
-static int armci_client_send_complete(armci_gm_context_t* context)
+void armci_client_send_complete(armci_gm_context_t* context)
 {
     MPI_Status status;
     int flag;
@@ -460,8 +461,8 @@ static int armci_client_send_complete(armci_gm_context_t* context)
     /* blocking: wait til the send is done by calling the callback */
     while(context->done == ARMCI_GM_SENDING) 
         MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
-
-    return(context->done);
+    if(context->done == ARMCI_GM_FAILED)
+       armci_die("armci_client_send_complete: failed code=",context->done);
 }
 
 
@@ -479,8 +480,7 @@ void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len)
                 armci_client_send_callback_direct, armci_gm_client_context);
 
     /* blocking: wait until send is done by calling the callback */
-    if(armci_client_send_complete(armci_gm_client_context) == ARMCI_GM_FAILED)
-             armci_die(" failed sending msg to server", p);
+    armci_client_send_complete(armci_gm_client_context);
 }
 
 
@@ -515,8 +515,7 @@ void armci_client_connect_to_servers()
                     proc_gm->port_map[i], armci_client_send_callback_direct,armci_gm_client_context);
 
             /* blocking: wait til the send is done by calling the callback */
-            if(armci_client_send_complete(armci_gm_client_context) == ARMCI_GM_FAILED)
-                armci_die(" failed to make connection with server",0);
+            armci_client_send_complete(armci_gm_client_context);
 
             if(DEBUG_INIT_) fprintf(stderr,"%d:sent 1 msg to server %d at %p\n",
                                     armci_me, server_mpi_id, MessageSndBuffer);
@@ -605,9 +604,10 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
                           proc_gm->node_map[serv_mpi_id], proc_gm->port_map[s], 
                           armci_client_send_callback, context);
 
-/*
-     if(armci_client_send_complete(context) == ARMCI_GM_FAILED)return -1;
-*/
+#ifndef MULTIPLE_SEND_BUFS
+     armci_client_send_complete(context);
+#endif
+
     return 0;
 }
 
@@ -912,12 +912,17 @@ int armci_gm_server_init()
     /* provide the buffers initially create a size mask and set */
     for(i=min_mesg_size; i<=max_mesg_size; i++)
         gm_provide_receive_buffer_with_tag(serv_gm->rcv_port,
-               serv_gm->dma_buf[i], i, GM_LOW_PRIORITY, 0);
+               serv_gm->dma_buf[i], i, GM_LOW_PRIORITY, TAG_DFLT);
 
     /* provide the extra set of buffers for short messages */
     for(i=min_mesg_size; i<=gm_min_size_for_length(SHORT_MSGLEN); i++)
         gm_provide_receive_buffer_with_tag(serv_gm->rcv_port,
-               serv_gm->dma_buf_short[i], i, GM_LOW_PRIORITY, 0);
+               serv_gm->dma_buf_short[i], i, GM_LOW_PRIORITY, TAG_SHORT);
+
+    if(DEBUG_ && armci_me==0)printf("provided (%d,%d) buffers, rcv tokens=%d\n",
+           max_mesg_size,
+           gm_min_size_for_length(SHORT_MSGLEN),
+           gm_num_receive_tokens(serv_gm->rcv_port));
 
     serv_gm->pending_msg_ct = 0; serv_gm->complete_msg_ct = 0; 
     
@@ -925,11 +930,11 @@ int armci_gm_server_init()
 }
 
 
-/* server start communication with all the computing processes */
+/* server start communication with all the compute processes */
 void armci_server_initial_connection()
 {
     gm_recv_event_t *event;
-    unsigned int size, length;
+    unsigned int size, length, tag;
     char *buf;
     int rid;
     int procs_in_clus = armci_clus_info[armci_clus_me].nslave;
@@ -951,15 +956,15 @@ void armci_server_initial_connection()
               iexit--;
 
               size = gm_ntohc(event->recv.size);
+              tag  = gm_ntohc(event->recv.tag);
               length = gm_ntohl(event->recv.length);
               buf = gm_ntohp(event->recv.buffer);              
 
               /* receiving the remote mpi id and addr of serv_ack_ptr */
               rid = (int)(((long *)buf)[0]);
 
-              if(DEBUG_INIT_) 
-                 printf( "%d(serv): recv init mesg from %d, size=%d, len=%d\n",
-                          armci_me, rid, size, length);
+              if(DEBUG_INIT_)printf("%d(srv):init msg from %d size=%d len=%d\n",
+                                     armci_me, rid, size, length);
               
               serv_gm->proc_buf_ptr[rid] = ((long *)buf)[1];
               serv_gm->proc_ack_ptr[rid] = ((long *)buf)[2];
@@ -1000,9 +1005,8 @@ void armci_server_initial_connection()
                 fflush(stdout);
               }
               
-              buf = serv_gm->dma_buf[size];
               gm_provide_receive_buffer_with_tag(serv_gm->rcv_port, buf,
-                                                 size, GM_LOW_PRIORITY, 0);
+                                                 size, GM_LOW_PRIORITY, tag);
               break;
           default:
               gm_unknown(serv_gm->rcv_port, event);
@@ -1125,7 +1129,7 @@ void armci_server_send_ack(int client)
 void armci_call_data_server()
 {
     int iexit = FALSE;
-    unsigned int size, length;
+    unsigned int size, length, tag;
     char *buf;
     gm_recv_event_t *event; /* gm event */
     
@@ -1146,14 +1150,14 @@ void armci_call_data_server()
           case GM_RECV_EVENT:
           case GM_PEER_RECV_EVENT:
               size = gm_ntohc(event->recv.size);
+              tag = gm_ntohc(event->recv.tag);
               length = gm_ntohl(event->recv.length);
               buf = (char *)gm_ntohp(event->recv.buffer);
 
               armci_data_server(buf);
               
-              buf = serv_gm->dma_buf[size];
               gm_provide_receive_buffer_with_tag(serv_gm->rcv_port, buf,
-                                                 size, GM_LOW_PRIORITY, 0);
+                                                 size, GM_LOW_PRIORITY, tag);
     
               break;
           default:
@@ -1201,9 +1205,8 @@ void armci_init_connections()
 }
 
 #define NBUFS 4
-/*static void *bufarr[NBUFS]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-*/
-static void *bufarr[NBUFS]={NULL,NULL,NULL,NULL};
+#define NBUFS_MAX 8
+static void *bufarr[NBUFS_MAX]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 static int nbuf_cur=0;
 
 void armci_gm_freebuf_tag(int tag)
@@ -1214,8 +1217,7 @@ armci_gm_context_t *context;
   if(bufarr[tag]){
      context = (armci_gm_context_t *)bufarr[tag];
      if(tag != context->tag)armci_die("armci_gm_freebuf_tag: tag mismatch",tag);
-     if(armci_client_send_complete(context) == ARMCI_GM_FAILED)
-              armci_die("armci_gm_freebuf_tag:failed freeing context",nbuf_cur);
+     armci_client_send_complete(context);
      armci_buf_free(bufarr[tag]);
      bufarr[tag]=(void*)0;
   }else{
