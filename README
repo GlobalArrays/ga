@@ -137,8 +137,8 @@ or a better solution (for C shell users) is
    gmake
 
    where xxxx is your machine. The list of supported machines is:
-        SOLARIS (Sun running Solaris operating system)
-        SOLARIS64 (Sun running Solaris operating system)
+        SOLARIS (Sun or Fujitsu running Solaris operating system)
+        SOLARIS64 (Sun or Fujitsu running Solaris operating system)
         SGI (older 32-bit Mips-2 and Mips-3 SGI systems)
         SGI_N32 (64-bit Mips-4 processors, 32-bit address space, fastest code)
         SGITFP (all SGI systems with 64-bit address space) 
@@ -174,7 +174,7 @@ library    suported platforms                     notes
   MPI          All                                 -
   TCGMSG       Sun, IBM, SP, SGI, HPUX, Compaq   can use TCGMSG-MPI on others
            
-If you would like to built the MPI version of GA on a platform that does
+If you would like to build the MPI version of GA on a platform that does
 not have a vendor implementation of MPI and/or its header and library
 files are installed in non-standard locations, you need to:
 . provide locations of MPI include (MPI_INCLUDE) and library (MPI_LIB) files,
