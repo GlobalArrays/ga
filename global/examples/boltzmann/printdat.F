@@ -13,7 +13,7 @@ c
 #include "global.fh"
 #include "tcgmsg.fh"
 c
-      double precision buffer(BSIZE,10,3)
+      double precision buffer(NSIZE,10,3)
       double precision dx, dy
       integer glo(NDIM+1), ghi(NDIM+1), bld(NDIM)
       integer i,j,k,imax,icnt1,icnt2,inc1,inc2,jcnt
@@ -26,7 +26,7 @@ c
       ghi(1) = size(1)
       glo(3) = 1
       ghi(3) = 3
-      bld(1) = size(1)
+      bld(1) = NSIZE
       bld(2) = 10
 c
       maxelem = 256
