@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.7 1996-07-19 20:27:57 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.8 1999-10-06 18:00:35 d3g681 Exp $ */
 
 #include <signal.h>
 #include "sndrcvP.h"
@@ -115,6 +115,29 @@ void TrapSigsegv()
 {
   if ( signal(SIGSEGV, SigsegvHandler) == SIG_ERR)
        Error("TrapSigsegv: error from signal setting SIGSEGV", (long) SIGSEGV);
+}
+
+#if (defined(ENCORE) || defined(SEQUENT) || defined(ARDENT)) || (defined(SUN) && !defined(SOLARIS))
+SigType SigtermHandler(sig, code, scp, addr)
+     int code;
+     struct sigcontext *scp;
+     char *addr;
+#else
+SigType SigtermHandler(sig)
+#endif
+     int sig;
+{
+  SR_caught_sigint = 1;
+  Error("SigtermHandler: signal was caught",(long) sig);
+}
+
+void TrapSigterm()
+/*
+  parallel needs to trap the SIGTERM for batch jobs
+*/
+{
+  if ( signal(SIGTERM, SigtermHandler) == SIG_ERR)
+       Error("TrapSigterm: error from signal setting SIGTERM", (long) SIGTERM);
 }
 
 

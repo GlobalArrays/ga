@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.14 1999-07-02 16:38:50 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.15 1999-10-06 18:00:35 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -334,6 +334,7 @@ int main(argc, argv)
 
   TrapSigint();
   TrapSigchld();
+  TrapSigterm();
  
   /* on Solaris parallel gets SIGSEGV interrupted while polling  in NxtVal */
 #ifdef SOLARIS
