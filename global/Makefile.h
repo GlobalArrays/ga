@@ -13,7 +13,7 @@
            CC = cc
          FOPT = -O
          COPT = -O
-GLOB_INCLUDES = -I../../ma
+GLOB_INCLUDES = -I../../ma -I.
            AR = ar
        RANLIB = echo
           CPP = /usr/lib/cpp
