@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.117 2005-02-24 06:54:16 manoj Exp $
+#$Id: makefile.h,v 1.118 2005-02-24 06:59:26 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -655,8 +655,6 @@ ifdef IBM_
        CDEFS += -DEXTNAME
            FC = xlf
 GLOB_DEFINES += -DAIX
-#         _CPU = $(shell lsattr -El `lsdev -C -c processor -F name | head -n 1` | awk ' /POWER4/ { print "PWR4" };')
-# For stability reasons in power5, _CPU is set as below:
           _CPU = $(shell lsattr -El `lsdev -C -c processor -F name | head -1` | awk ' /POWER4/ { print "PWR4" }; /POWER5/ { print "PWR4" }')
 endif
 #
