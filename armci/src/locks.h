@@ -11,7 +11,7 @@
 #include <elan/elan.h>
 #endif
 
-#if !defined(CYGNUS) && !defined(QUADRICS) || defined(ELAN)
+#if !defined(CYGNUS) && !defined(QUADRICS) || defined(ELAN_ACC)
 #include "spinlock.h"
 #endif
 
@@ -28,7 +28,7 @@
 #endif
 
 
-#if defined(PTHREADS) && !(defined(PMUTEXES) || defined(SPINLOCK))
+#if defined(PTHREADS) && !(defined(PMUTEXES) || defined(SPINLOCK)||defined(QUADRICS))
 # if defined(LINUX) && defined(__sparc__) && defined(GM)
 #    define PMUTEXES
 #    include <pthread.h>

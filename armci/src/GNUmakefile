@@ -74,9 +74,9 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
 #   LIB_DEFINES += -DNO_SHM
     LIB_DEFINES += -DALLOC_MUNMAP -DACC_SMP
     OBJ += elan.o
-#   LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT -DELAN
-#   OBJ += elan.o spawn.o ds-shared.o request.o
-#   EXTRA_LIBS += -lpthread
+    LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT -DELAN_ACC
+    OBJ += spawn.o ds-shared.o request.o
+    EXTRA_LIBS += -lpthread
 endif
 
 ifdef ARMCI_NETWORK
