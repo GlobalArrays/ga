@@ -53,7 +53,7 @@ ga_symmetrize_(Integer *g_a) {
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)ga_sync_();
 
-  GA_PUSH_NAME("nga_copy_patch");
+  GA_PUSH_NAME("ga_symmetrize");
 
   
   nga_inquire_internal_(g_a, &type, &ndim, dims);
