@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.5 2001-09-04 18:38:19 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.6 2001-09-06 15:37:49 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1822,7 +1822,7 @@ void FATR ga_update_ghosts_(Integer *g_a)
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) return;
 
-  GA_PUSH_NAME("ga_update");
+  GA_PUSH_NAME("ga_update_ghosts");
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
