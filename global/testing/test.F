@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.46 2003-04-17 21:42:55 d3g293 Exp $
+c $Id: test.F,v 1.47 2003-04-19 17:23:44 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -1393,7 +1393,7 @@ c
       integer iran, i, j, loop, nloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, dimi,dimj,iproc, ii, jj
       integer ndim, dims(2), chunk(2), p_mirror, nnodes
-      integer lprocs, inode, iproc
+      integer lprocs, inode
       double precision nwords
       parameter (nloop = 100)
       integer maxproc
