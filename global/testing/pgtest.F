@@ -1,4 +1,4 @@
-c $Id: pgtest.F,v 1.4 2004-11-04 15:52:08 d3g293 Exp $
+c $Id: pgtest.F,v 1.5 2004-11-08 19:59:01 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -27,6 +27,7 @@ c#define NGA_GATSCAT
       integer heap, stack, fudge, ma_heap, me, nproc
       integer inode,nnodes,proclist(100),i,j,nprocs
       integer proc_group(0:100)
+      integer midnode
       logical status
       parameter (heap=200*200*4, fudge=100, stack=200*200)
 c     
@@ -47,10 +48,6 @@ c     In the second, user can set limit (per processor) in bytes.
 c
       call ga_initialize()
       nproc = ga_nnodes()
-      if(nproc .ne. 8) then
-         write(*,*) 'nproc =', nproc
-         call ga_error('failed: need atleast 8 processors',10)
-      endif
       me = ga_nodeid()
 c
 c***  Initialize the MA package
@@ -67,45 +64,28 @@ c
 c
 c***  Create process groups on SMP nodes
 c
-      inode = ga_cluster_nodeid()
-      nnodes = ga_cluster_nnodes()
-c      do i=0, nnodes-1
-c        nprocs = ga_cluster_nprocs(i)
-c        do j = 0, nprocs - 1
-c          proclist(j+1) = ga_cluster_procid(i,j)
-c        end do
-c        proc_group(i) = ga_pgroup_create(proclist, nprocs)
-c      end do
-      proclist(1) = 0
-      proclist(2) = 1
-      proclist(3) = 2
-      proclist(4) = 3
-      nprocs = 4
+      midnode = nproc/2
+      do i = 1, midnode
+        proclist(i) = i-1
+      end do
+      nprocs = midnode
       proc_group(0) = ga_pgroup_create(proclist, nprocs)
-      proclist(1) = 4
-      proclist(2) = 5
-      proclist(3) = 6
-      proclist(4) = 7
-      nprocs = 4
+      do i = midnode+1, nproc
+        proclist(i-midnode) = i-1
+      end do
+      nprocs = nproc - midnode
       proc_group(1) = ga_pgroup_create(proclist, nprocs)
 c      call ga_pgroup_set_default(proc_group(inode))
-      if (me.lt.4) then
+      if (me.lt.midnode) then
         call ga_pgroup_set_default(proc_group(0))
         call runtest
       endif
       call ga_pgroup_set_default(ga_pgroup_get_world())
       call ga_sync()
-      if (me.ge.4) then
-        if (me.le.7) then
-          call ga_pgroup_set_default(proc_group(1))
-          call runtest
-        endif
+      if (me.ge.midnode) then
+        call ga_pgroup_set_default(proc_group(1))
+        call runtest
       endif
-c      if (nnodes.gt.0) then
-c        if (inode.eq.1) call runtest
-c      else
-c        write(6,*) 'You must run test on more nodes'
-c      endif
       call ga_pgroup_set_default(ga_pgroup_get_world())
 c
 c***  Check if memory limits are enforced 
