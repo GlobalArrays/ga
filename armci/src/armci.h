@@ -187,6 +187,8 @@ typedef struct{
 #endif
 } armci_hdl_t;
 
+#define armci_req_t armci_hdl_t
+
 extern int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* nb_handle);
 
 extern int ARMCI_NbPutS(          /* strided put */
