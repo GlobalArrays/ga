@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/random.c,v 1.3 1997-11-07 23:44:16 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/random.c,v 1.4 2003-12-13 01:08:37 d3h325 Exp $ */
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -22,6 +22,12 @@ static char sccsid[] = "@(#)random.c	5.5 (Berkeley) 7/6/88";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+
+#ifdef MACX
+#include <stdlib.h>
+
+#else
+#define PUBLIC 
 
 /*
  * random.c:
@@ -184,7 +190,7 @@ static  long		*end_ptr		= &randtbl[ DEG_3 + 1 ];
  * values produced by this routine.
  */
 
-void srandom( x )
+PUBLIC void srandom( x )
 
     unsigned		x;
 {
@@ -291,7 +297,7 @@ initstate( seed, arg_state, n )
  * Returns a pointer to the old state information.
  */
 
-char  *
+PUBLIC char  *
 setstate( arg_state )
 
     char		*arg_state;
@@ -343,7 +349,7 @@ setstate( arg_state )
  * Returns a 31-bit random number.
  */
 
-long
+PUBLIC long
 random()
 {
 	long		i;
@@ -365,6 +371,8 @@ random()
 	return( i );
 }
 /*  Added by RJH ... usual FORTRAN drand interface */
+
+#endif
 
 double drand_(flag)
     unsigned long *flag;

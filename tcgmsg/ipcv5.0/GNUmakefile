@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.9 2003-07-17 22:46:19 vinod Exp $
+# $Id: GNUmakefile,v 1.10 2003-12-13 01:08:37 d3h325 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -48,6 +48,11 @@ endif
 
 ifeq ($(TARGET),CYGWIN)
    LIB_DEFINES = -DSHMEM -DMMAP -DNOSPIN 
+    EXTRA = $(OBJ_SYSV)  memalign.o
+endif
+
+ifeq ($(TARGET),MACX)
+   LIB_DEFINES = -DSHMEM -DSYSV -DNOSPIN 
     EXTRA = $(OBJ_SYSV)  memalign.o
 endif
 

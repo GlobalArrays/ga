@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.12 2003-11-13 15:43:14 vinod Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.13 2003-12-13 01:08:37 d3h325 Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -54,11 +54,11 @@
 #elif defined(SGILINUX)
 #define ARGC_ _f90argc
 #define ARGV_ _f90argv
-#elif defined(XLFLINUX) && defined(MACX)
+#elif defined(XLFMAC) && defined(MACX)
 #define ARGC_ NXArgc
 #define ARGV_ NXArgv
 #else
-#if defined(LINUX)
+#if defined(LINUX) || defined(MACX)
 /*---------------------------------------------------------------------------*\
  There are a multitutde of LINUX distributions and ALL of them differ
  to some extent.  To compile and use this software with code compiled 

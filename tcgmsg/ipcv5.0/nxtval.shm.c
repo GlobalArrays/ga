@@ -1,4 +1,4 @@
-/* $Id: nxtval.shm.c,v 1.6 2002-09-21 17:49:20 vinod Exp $ */
+/* $Id: nxtval.shm.c,v 1.7 2003-12-13 01:08:37 d3h325 Exp $ */
 
 #include "tcgmsgP.h"
 long nxtval_counter=0;
@@ -15,8 +15,6 @@ long *nxtval_shmem = &nxtval_counter;
 
 #if defined(__i386__) && defined(__GNUC__)
 #   define TESTANDSET testandset
-#   define LOCK if(nproc>1)acquire_spinlock((int*)(nxtval_shmem+1))
-#   define UNLOCK if(nproc>1)release_spinlock((int*)(nxtval_shmem+1))
 
 static inline int testandset(int *spinlock)
 {
@@ -27,6 +25,36 @@ static inline int testandset(int *spinlock)
 
   return ret;
 }
+
+#elif defined(MACX) && defined(__GNUC__)
+#     define TESTANDSET(x) (! __compare_and_swap((long int *)(x),0,1))
+
+static int __compare_and_swap (long int *p, long int oldval, long int newval)
+{
+  int ret;
+
+  __asm__ __volatile__ (  
+           "0:    lwarx %0,0,%1 ;"
+           "      xor. %0,%3,%0;"
+           "      bne 1f;"
+           "      stwcx. %2,0,%1;"
+           "      bne- 0b;"
+           "1:    "
+        : "=&r"(ret)
+        : "r"(p), "r"(newval), "r"(oldval)
+        : "cr0", "memory");
+  /* This version of __compare_and_swap is to be used when acquiring
+     a lock, so we don't need to worry about whether other memory
+     operations have completed, but we do need to be sure that any loads
+     after this point really occur after we have acquired the lock.  */
+  __asm__ __volatile__ ("isync" : : : "memory");
+  return ret == 0;
+}
+#endif
+
+#ifdef TESTANDSET
+#   define LOCK if(nproc>1)acquire_spinlock((int*)(nxtval_shmem+1))
+#   define UNLOCK if(nproc>1)release_spinlock((int*)(nxtval_shmem+1))
 
 static void acquire_spinlock(int *mutex)
 {

@@ -69,6 +69,8 @@ EXTERN long TCGMSG_caught_sigint; /* True if SIGINT was trapped */
 #     define WHOLE_BUF_SIZE 16384
 #elif defined(CRAY_T3D)
 #     define WHOLE_BUF_SIZE 8192
+#elif defined(MACX)
+#     define WHOLE_BUF_SIZE 2*65536
 #elif defined(LAPI)
 #     define WHOLE_BUF_SIZE (3*4096)
 #else
