@@ -112,11 +112,14 @@ endif
 ifeq ($(TARGET),PARAGON)
 #
 # PARAGON running OS>=1.2 with NX (crosscompilation on Sun)
+# Paragon running OS1.2.2 with nx (compiled on Paragon, ORNL)
 #
            FC = if77
            CC = icc
            AR = ar860
        RANLIB = echo
+         FOPT = -O1
+         COPT = -O1
 
      FOPT_REN = -Knoieee -Mquad -Mreentrant -Mrecursive -nx
      COPT_REN = -Knoieee -nx
