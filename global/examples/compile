@@ -1,0 +1,27 @@
+echo /bin/rm -f petsc.f petsc.o
+/bin/rm -f petsc.f petsc.o
+echo
+echo petsc.F to petsc.f
+cpp -I../../include -I/usr/local/pkg/acts/PETSc/petsc-2.0.24 -I/usr/local/pkg/ac
+ts/PETSc/petsc-2.0.24/include -DUSES_INT_MPI_COMM -I/usr/local/pkg/acts/PETSc/pe
+tsc-2.0.24/bmake/t3e -DCRAY_T3D -DCRAY_T3E -DSHMEM < petsc.F | sed '/^#/D' > pet
+sc.f
+echo
+echo f90 -g -dp -c petsc.f
+f90 -g -dp -c petsc.f
+echo
+echo f90 -dp -o petsc.x petsc.o -L../../lib/CRAY-T3E -lglobal -lma -llinalg -ltc
+gmsg-mpi -larmci -lmpi -L/usr/local/pkg/acts/PETSc/petsc-2.0.24/lib/libg/t3e -lp
+etscfortran -L/usr/local/pkg/acts/PETSc/petsc-2.0.24/lib/libg/t3e -lpetscsles -L
+/usr/local/pkg/acts/PETSc/petsc-2.0.24/lib/libg/t3e -lpetscdm -L/usr/local/pkg/a
+cts/PETSc/petsc-2.0.24/lib/libg/t3e -lpetscmat -L/usr/local/pkg/acts/PETSc/petsc
+-2.0.24/lib/libg/t3e -lpetscvec -L/usr/local/pkg/acts/PETSc/petsc-2.0.24/lib/lib
+g/t3e -lpetsc -lX11 -lm
+f90 -dp -o petsc.x petsc.o -L../../lib/CRAY-T3E -lglobal -lma -llinalg -ltcgmsg-
+mpi -larmci -lmpi -L/usr/local/pkg/acts/PETSc/petsc-2.0.24/lib/libg/t3e -lpetscf
+ortran -L/usr/local/pkg/acts/PETSc/petsc-2.0.24/lib/libg/t3e -lpetscsles -L/usr/
+local/pkg/acts/PETSc/petsc-2.0.24/lib/libg/t3e -lpetscdm -L/usr/local/pkg/acts/P
+ETSc/petsc-2.0.24/lib/libg/t3e -lpetscmat -L/usr/local/pkg/acts/PETSc/petsc-2.0.
+24/lib/libg/t3e -lpetscvec -L/usr/local/pkg/acts/PETSc/petsc-2.0.24/lib/libg/t3e
+ -lpetsc -lX11 -lm
+
