@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.24 2002-08-23 20:45:04 d3h325 Exp $ */
+/* $Id: ghosts.c,v 1.25 2002-08-29 22:49:18 manoj Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2242,7 +2242,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY ALONG ONE SIDE OF ARRAY
 \*/
-logical FATR nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
+logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
                                    Integer *pdim,   /* Dimension of update */
                                    Integer *pdir,   /* Direction of update (+/-1) */
                                    logical *pflag)  /* include corner cells */
@@ -2440,7 +2440,7 @@ logical FATR nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM
 \*/
-void FATR ga_update_ghosts_(Integer *g_a)
+void ga_update_ghosts_(Integer *g_a)
 {
   /* Wrapper program for ghost cell update operations. If optimized
      update operation fails then use slow but robust version of
