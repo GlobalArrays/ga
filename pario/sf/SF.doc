@@ -67,3 +67,11 @@ specified in list completed, invalidates ids on the list
 integer sf_destroy(handle)
         handle           -- file handle returned from sf_create      [in]
 
+subroutine sf_errmsg(ierr,message)
+        ierr             -- error code returned by a previous call to SF [in]
+        message          -- character string where the corresponding message
+                            is written
+
+returns a string interpretation of the error code, or
+an empty string (Fortran all blanks, C null first character)
+if the error code is not recognized.

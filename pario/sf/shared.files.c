@@ -1,4 +1,4 @@
-/* $Id: shared.files.c,v 1.7 1999-10-21 21:53:40 d3g681 Exp $ */
+/* $Id: shared.files.c,v 1.8 2000-04-05 21:51:25 d3h325 Exp $ */
 /* DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -203,4 +203,15 @@ int status, fail=0;
         }
         if (fail)return((Integer)SF_FAIL);
         else     return((Integer)ELIO_OK);
+}
+
+
+/*\ retrieve message associated with error code
+\*/
+void sf_errmsg(int code, char *msg)
+{
+ if(code==SF_FAIL)
+   (void) strcpy(msg, "SF operation failed");
+ else
+    elio_errmsg(code, msg);
 }

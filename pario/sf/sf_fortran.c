@@ -55,3 +55,37 @@ return sf_create(cname, size_hard_limit, size_soft_limit,
                    req_size, handle);
 }
 
+
+
+static int string_to_fortchar(char *f, const int flen, const char *buf)
+{
+  const int len = (int) strlen(buf);
+  int i;
+
+  if (len > flen)
+    return 0;                   /* Won't fit */
+
+  for (i=0; i<len; i++)
+    f[i] = buf[i];
+  for (i=len; i<flen; i++)
+    f[i] = ' ';
+
+  return 1;
+}
+
+
+#if defined(CRAY) || defined(WIN32)
+void FATR sf_errmsg_(Integer *code,  _fcd m)
+{
+    char *msg = _fcdtocp(m);
+    int msglen = _fcdlen(m);
+#else
+void FATR sf_errmsg_(Integer *code, char *msg, int msglen)
+{
+#endif
+    char buf[80];
+
+    sf_errmsg((int) *code, buf);
+
+    (void) string_to_fortchar(msg, msglen, buf);
+}

@@ -23,6 +23,7 @@ c
       double precision tt0,ttw, ttr, tcgtime
 c     integer stack, heap
       integer idlist(maxid), curid
+      character*80 errmsg
 c
       integer nodeid, nnodes
       integer me,nproc,handle,i,start,end,j, rc, chunk
@@ -66,6 +67,7 @@ c     everybody writes chunk of data
       endif
 c
       rc=sf_waitall(idlist,curid)
+      if(rc.ne.0)call ga_error('waitall failed',rc)
       curid = 0
 
       ttw = tcgtime() -tt0
@@ -84,8 +86,13 @@ c     everybody reads different chunk of data
 c           read and test data chunk by chunk
             rc = sf_read(handle, 8*dble(i-1),
      .           8*dble(min(dimnsn,(end-i+1))), buffer, idlist(1))
-            if (rc.ne.0)call ga_error('read failed',rc)
+            if (rc.ne.0)then
+               call sf_errmsg(rc,errmsg) 
+               print *,'read at offset ',8*dble(i-1),' failed:',errmsg
+               call ga_error('read failed',rc)
+            endif
             rc=sf_wait(idlist(1))
+            if (rc.ne.0)call ga_error('wait failed',rc)
 c
             do j = 1,min(dimnsn,(end-i+1))
                if(buffer(j,1).ne.dble(i+j-1)) then
