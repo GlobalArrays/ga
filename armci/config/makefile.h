@@ -58,7 +58,7 @@ ifeq ($(TARGET),LINUX)
            FC = g77
            CC = gcc
          _CPU = $(shell uname -m |\
-                 awk ' /sparc/ { print "sparc" };\
+                 awk ' /sparc/ { print "sparc" };/ppc/{ print "ppc"};\
                      /i686/{ print "686" }; /i*86&&^i686/ { print "x86" } ' )
 
 ifneq (,$(findstring mpif,$(_FC)))
@@ -69,6 +69,9 @@ ifneq (,$(findstring mpicc,$(_CC)))
 endif
 #
 #              GNU compilers 
+ifeq ($(_CPU),ppc)
+        CDEFS += -DPPC
+endif
 ifeq ($(_CPU),x86)
      OPT_ALIGN = -malign-double
 endif
@@ -379,6 +382,15 @@ ifeq ($(TARGET),CRAY-YMP)
      FOPT_REN = -dp -ataskcommon $(LIBCM)
          CRAY = yes
 endif
+
+ifeq ($(TARGET),CRAY-SV1)
+     COPT_REN = -htaskprivate $(LIBCM)
+           FC = f90
+ GLOB_DEFINES = -DCRAY_YMP
+     FOPT_REN = -dp -ataskcommon $(LIBCM)
+         CRAY = yes
+endif
+
 
 ifeq ($(TARGET),CRAY-T3D)
            FC = cf77
