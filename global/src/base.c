@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.105 2004-11-08 20:33:06 d3g293 Exp $ */
+/* $Id: base.c,v 1.106 2004-11-30 10:19:32 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -72,7 +72,7 @@
 
 /*uncomment line below to introduce padding between shared memory regions 
   of a GA when the region spans in more than 1 process within SMP */
-/*#define GA_ELEM_PADDING yes */
+#define GA_ELEM_PADDING yes
 
 global_array_t *_ga_main_data_structure;
 global_array_t *GA;
