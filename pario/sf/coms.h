@@ -1,7 +1,7 @@
 /*************** interface to a parallel communication system ********/
 #define SFSYNC 29000
 
-#ifdef GA
+#ifndef TSCMSG 
 #   ifdef CRAY
 #      define SYNC      GA_SYNC
 #      define NPROC     GA_NNODES
