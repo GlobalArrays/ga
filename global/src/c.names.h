@@ -143,6 +143,7 @@
 #define  nga_set_data_             NGA_SET_DATA
 #define  nga_set_chunk_            NGA_SET_CHUNK
 #define  nga_set_array_name_       NGA_SET_ARRAY_NAME
+#define  nga_set_ghosts_           NGA_SET_GHOSTS
 #define  nga_set_proc_config_      NGA_SET_PROC_CONFIG
 #define  nga_set_irreg_distr_      NGA_SET_IRREG_DISTR
 #define  nga_set_irreg_flag_       NGA_SET_IRREG_FLAG
@@ -360,6 +361,7 @@
 #define  nga_set_data_             nga_set_data__
 #define  nga_set_chunk_            nga_set_chunk__
 #define  nga_set_array_name_       nga_set_array_name__
+#define  nga_set_ghosts_           nga_set_ghosts__
 #define  nga_set_proc_config_      nga_set_proc_config__
 #define  nga_set_irreg_distr_      nga_set_irreg_distr__
 #define  nga_set_irreg_flag_       nga_set_irreg_flag__
