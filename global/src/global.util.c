@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.6 1995-02-02 23:13:37 d3g681 Exp $*/
+/*$Id: global.util.c,v 1.7 1995-03-01 19:58:19 d3g681 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -278,11 +278,27 @@ void c2fstring( cstring, fstring, flen)
      char *cstring, *fstring;
      Integer flen;
 {
-char *strncpy();
-int clen = strlen(cstring);
-    strncpy(fstring, cstring, flen);
-    /* remove \n character if any */
-    if(flen-- >clen)fstring[clen]=' ';
+    char *strncpy();
+    int clen = strlen(cstring);
+
+    /* remove terminal \n character if any */
+
+    if(cstring[clen] == '\n') clen--;
+
+    /* Truncate C string into Fortran string */
+
+    if (clen > flen) clen = flen;
+
+    /* Copy characters over */
+
+    flen -= clen;
+    while (clen--)
+	*fstring++ = *cstring++;
+
+    /* Now terminate with blanks */
+
+    while (flen--)
+	*fstring++ = ' ';
 }
 
 

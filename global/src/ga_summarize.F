@@ -1,14 +1,14 @@
       subroutine ga_summarize(verbose)
-C$Id: ga_summarize.F,v 1.7 1995-02-02 23:13:20 d3g681 Exp $
+C$Id: ga_summarize.F,v 1.8 1995-03-01 19:58:16 d3g681 Exp $
       implicit none
 #include "global.fh"
 #include "mafdecls.h"
 c
 c     MIMD callable ... summarize all allocated arrays onto
 c     FORTRAN unit 6 ... assumes no more than 100 arrays are
-c     allocated and they are numbered 0, ...
+c     allocated and they are numbered -1000, -999, ...
 c
-      logical verbose            ! If true print distribution info
+      integer verbose            ! If (non-zero) print distribution info
       character*80 name, form, head
       integer type, dim1, dim2, active
       integer ga_verify_handle
@@ -59,9 +59,11 @@ c
      $           ','':'',i',i4,','') -> '',i',i4,')')
 c
             if (type .eq. mt_int) then
-               write(head,2) g_a, 'integer', lname, ldim1, ldim2
+               write(head,2) g_a+1000,
+     $              'integer', lname, ldim1, ldim2
             else
-               write(head,2) g_a, 'real', lname, ldim1, ldim2
+               write(head,2) g_a+1000,
+     $              'real', lname, ldim1, ldim2
             endif
 
  2          format('(''  array',i2,' => ', a ,' '',a', i2, 
@@ -71,7 +73,7 @@ c
 *            write(6,*) head
              write(6,head) name(1:lname), dim1, dim2
 c
-            if (verbose) then
+            if (verbose .ne. 0) then
                do i = 0, nproc-1
                   if (map(2,i).gt.0 .and. map(4,i).gt.0) then
                      write(6,form) (map(k,i),k=1,4), i
