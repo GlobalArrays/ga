@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.12 1997-04-16 18:19:15 d3h325 Exp $
+#$Id: makefile,v 1.13 1997-06-06 21:21:10 d3h325 Exp $
 
           OBJ = eaf.o eaf_f2c.o
       LIBRARY = libchemio.a
@@ -22,5 +22,4 @@ include ../../config/makefile.h
 include ../../config/makelib.h
 
 test.x:	test.o $(LIBRARY_PATH)
-	$(LINK.f) -o $@ test.o $(LIBS)
-
+	$(FLD) -o $@ $< $(LIBS)

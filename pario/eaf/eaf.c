@@ -20,6 +20,7 @@
 static struct {
     char *fname;		/* Filename --- if non-null is active*/
     Fd_t elio_fd;		/* ELIO file descriptor */
+    int type;                   /* file type */
     int nwait;			/* #waits */
     int nwrite;			/* #synchronous writes */
     int nread;			/* #synchronous reads */
@@ -84,7 +85,7 @@ int eaf_open(const char *fname, int type, int *fd)
     if (!(file[i].fname = strdup(fname)))
 	return EAF_ERR_MEMORY;
 
-    if (!(file[i].elio_fd = elio_open(fname, type))) {
+    if (!(file[i].elio_fd = elio_open(fname, type, ELIO_PRIVATE))) {
 	free(file[i].fname);
 	file[i].fname = 0;
 	return ELIO_PENDING_ERR;
@@ -96,9 +97,11 @@ int eaf_open(const char *fname, int type, int *fd)
 	file[i].nb_awrite = file[i].t_read = file[i].t_write = 
 	file[i].t_wait = 0.0;
 
+    file[i].type = type;
     *fd = i;
     return EAF_OK;
 }
+
 
 void eaf_print_stats(int fd)
 /*
@@ -382,14 +385,34 @@ void eaf_errmsg(int code, char *msg)
 	elio_errmsg(code, msg);
 }
 
+
 int eaf_truncate(int fd, eaf_off_t length)
 /*
   Truncate the file to the specified length.
   Return 0 on success, non-zero otherwise.
   */
 {
+    int rc;
+
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
-    return elio_truncate(file[fd].elio_fd, (off_t) length);
+
+   /* ftruncate does not work with Cray FFIO, we need to implement it
+    * as a sequence of generic close, truncate, open calls 
+    */
+
+    rc = elio_close(file[fd].elio_fd);
+    if(rc) return rc;
+    if(truncate(file[fd].fname, (off_t) length)) return EAF_ERR_TRUNCATE;  
+    if (!(file[fd].elio_fd = elio_open(file[fd].fname, file[fd].type, ELIO_PRIVATE))) {
+        free(file[fd].fname);
+        file[fd].fname = 0;
+        return ELIO_PENDING_ERR;
+    }
+
+    return EAF_OK;
+
+
+/*  return elio_truncate(file[fd].elio_fd, (off_t) length);*/
 }
 
 

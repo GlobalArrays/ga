@@ -1,9 +1,13 @@
+#if defined(CRAY) || defined(SGITFP) || defined(DECOSF)
+#define EAF_SZ_INT 8
+#else
 #define EAF_SZ_INT 4
+#endif
 #define IO_TEST_SZ (1024*1024/8)
 #define IO_NUM_FILES 4
 #define MAX_ITER 4
 #define MAP(x) dble(IO_TEST_SZ*((x-1)*EAF_SZ_INT))
-#define MAX_FILE_SZ 5.0d9
+#define MAX_FILE_SZ 5.0d8
 #define BASE_NAME 'EAFfile'
 #ifdef  HPIODIR
 #  define FNAME   HPIODIR//BASE_NAME
@@ -29,12 +33,12 @@ c
       integer buf(IO_TEST_SZ, MAX_ITER), buf2(IO_TEST_SZ)
       character fname*200
       integer fnum,  iter
-      integer i, sleep
+      integer i, nap
       real    dummy
       integer fd(IO_NUM_FILES)
-      integer stat, stat2
       integer buf_sz
       integer aio(IO_NUM_FILES, MAX_ITER)
+      integer stat2
 c     
       buf_sz = (IO_TEST_SZ*EAF_SZ_INT)
 c
@@ -61,15 +65,14 @@ c
      $           buf(1,iter), buf_sz, aio(fnum, iter)))
 
             write(0,*) 'Submitted EAF_AWriteF  fnum=', fnum,
-     $           '   iter=',iter,'  stat=',stat,
-     $           '   aio=',aio(fnum, iter)
+     $           '   iter=',iter, '   aio=',aio(fnum, iter)
          enddo
       enddo
 
       do fnum = 1, IO_NUM_FILES
          do iter = 1, MAX_ITER
             write(0,*) 'Waiting to close  fnum=', fnum,
-     $           '   iter=',iter,'  stat=',stat       
+     $           '   iter=',iter
             call testerr(eaf_wait(fd(fnum), aio(fnum, iter)))
          enddo
          call eaf_print_stats(fd(fnum))
@@ -99,12 +102,13 @@ c.................................
             write(0,999) stat2
  999        format(i5,$)
             if(stat2 .ne. 0) then
-               do sleep=1, 2000000
-                  dummy = 2.0**2.0+sleep
+               do nap=1, 2000000
+                  dummy = 2.0**2.0+nap
                enddo
                goto 1000
             endif
 
+            call sleep(10)
             write(0,*) 'Finished reading file=',fnum, 
      $           '  fd=',fd(fnum),
      $           '  iter=',iter
