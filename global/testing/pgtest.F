@@ -1,4 +1,4 @@
-c $Id: pgtest.F,v 1.3 2004-08-18 11:09:50 edo Exp $
+c $Id: pgtest.F,v 1.4 2004-11-04 15:52:08 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -268,6 +268,7 @@ c
       logical found
       integer lprocs,inode,iproc,nnodes
       intrinsic int
+      integer tlo(2),thi(2),tld(2),index
       iran(i) = int(util_drand(0)*real(i)) + 1
 c     
       nproc = ga_nnodes()
@@ -310,7 +311,6 @@ c     call setdbg(1)
       p_mirror = ga_pgroup_get_mirror()
       call ga_set_pgroup(g_a,p_mirror)
 #  endif
-      write(6,*) ' before ga_create '
       status = ga_allocate(g_a)
 #else
 #  ifndef MIRROR
@@ -347,13 +347,10 @@ c
          call ffflush(6)
       endif
       call ga_zero(g_a)
-
 c
 c     Check that it is indeed zero
 c
-      write(6,*) 'Calling get'
       call ga_get(g_a, 1, n, 1, n, b, n)
-      write(6,*) 'Called get'
       call ga_sync()
       do i = 1, n
          do j = 1, n
@@ -758,9 +755,7 @@ c
            iv(loop) = ilo
            jv(loop) = jlo
          enddo 
-         write(6,*) 'Calling ga_gather'
          call ga_gather(g_a, v, iv, jv, m)
-         write(6,*) 'Completed ga_gather'
          do loop = 1,m
            ilo= iv(loop)
            jlo= jv(loop)
@@ -779,9 +774,7 @@ c
            ijv(1,loop) = ilo
            ijv(2,loop) = jlo
          enddo 
-         write(6,*) 'Calling nga_gather'
          call nga_gather(g_a, v, ijv, m)
-         write(6,*) 'Completed nga_gather'
          do loop = 1,m
            ilo= ijv(1,loop)
            jlo= ijv(2,loop)
