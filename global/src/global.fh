@@ -1,11 +1,13 @@
       integer ga_mask, ga_nnodes, ga_nodeid, ga_read_inc
-C$Id: global.fh,v 1.4 1995-02-02 23:13:29 d3g681 Exp $
+      integer ga_inquire_memory
       logical ga_create, ga_destroy, ga_locate, ga_create_irreg
-      logical ga_compare_distr, ga_duplicate
+      logical ga_compare_distr, ga_duplicate, ga_uses_ma
+      logical ga_memory_limited
       double precision ga_ddot, ga_ddot_patch
       external ga_create, ga_destroy, ga_ddot, ga_mask, ga_locate
       external ga_nnodes, ga_nodeid, ga_read_inc, ga_create_irreg
       external ga_copy_patch, ga_print_patch, ga_ifill_patch
       external ga_dfill_patch, ga_dscal_patch, ga_dadd_patch
       external ga_ddot_patch, ga_compare_distr, ga_duplicate
-      external ga_scatter, ga_gather, ga_get, ga_put 
+      external ga_scatter, ga_gather, ga_get, ga_put
+      external ga_inquire_memory, ga_uses_ma, ga_memory_limited

@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.6 1995-02-15 17:55:21 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.7 1995-02-28 19:50:37 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -29,13 +29,16 @@
 #define  ga_igop_                  GA_IGOP
 #define  ga_init_handler_          GA_INIT_HANDLER
 #define  ga_initialize_            GA_INITIALIZE
+#define  ga_initialize_ltd_        GA_INITIALIZE_LTD
 #define  ga_inquire_               GA_INQUIRE
 #define  ga_inquire_name_          GA_INQUIRE_NAME
+#define  ga_inquire_memory_        GA_INQUIRE_MEMORY
 #define  ga_list_nodeid_           GA_LIST_NODEID
 #define  ga_locate_                GA_LOCATE
 #define  ga_locate_region_         GA_LOCATE_REGION
 #define  ga_mask_                  GA_MASK
 #define  ga_matmul_patch_          GA_MATMUL_PATCH
+#define  ga_memory_limited_        GA_MEMORY_LIMITED
 #define  ga_nnodes_                GA_NNODES
 #define  ga_nodeid_                GA_NODEID
 #define  ga_print_                 GA_PRINT
@@ -49,6 +52,7 @@
 #define  ga_sort_scat2_            GA_SORT_SCAT2
 #define  ga_sync_                  GA_SYNC
 #define  ga_terminate_             GA_TERMINATE
+#define  ga_uses_ma_               GA_USES_MA
 #define  ga_zero_                  GA_ZERO
 #define  ga_verify_handle_         GA_VERIFY_HANDLE
 

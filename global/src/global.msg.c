@@ -1,4 +1,3 @@
-/*$Id: global.msg.c,v 1.3 1995-02-02 23:13:33 d3g681 Exp $*/
 /*
  * module: global.msg.c
  * author: Jarek Nieplocha
@@ -377,10 +376,12 @@ Integer ga_read_inc_local();
                               char *array_name = "server_created";
                               Integer g_a;
 
-                              if(! ga_create_irreg(& MessageRcv->type, 
-                                   &dim1, &dim2, array_name, (Integer*) map1, 
-                                   &nblock1, (Integer*) map2, &nblock2, &g_a))
-                                      ga_error("ga_server: create failed", 0);
+                              /* create can fail due to memory limits */
+                              if(!ga_create_irreg(& MessageRcv->type, 
+                                  &dim1, &dim2, array_name, (Integer*) map1, 
+                                  &nblock1, (Integer*) map2, &nblock2, &g_a))
+                                     fprintf(stderr,"ga_server:create failed\n",
+                                             ga_nodeid_());
                             }
                             break;                          
 
@@ -389,8 +390,10 @@ Integer ga_read_inc_local();
                               Integer g_a = MessageRcv->g_a , g_b;
                               char *array_name = "server_created";
 
-                              if(! ga_duplicate(&g_a, &g_b, array_name))
-                                   ga_error("ga_server: duplicate failed", 0);
+                              /* duplicate can fail due to memory limits */
+                              if(!ga_duplicate(&g_a, &g_b, array_name))
+                                  fprintf(stderr,"ga_server:duplicate failed\n",
+                                           ga_nodeid_());
                             }
                             break;                          
 
@@ -401,7 +404,7 @@ Integer ga_read_inc_local();
                             break;                          
 
           case GA_OP_END:   /* terminate */
-                            fprintf(stderr,"server terminating\n",ga_nodeid_());
+                            fprintf(stderr,"GA data server terminating\n");
                             ga_terminate_();
                             pend_();
                             exit(0);
@@ -450,7 +453,7 @@ Integer group_participate(me, root, up, left, right, group)
 
                            break;
       case ALL_CLUST_GRP:  *root = cluster_master;
-                           *me = nodeid_(); nproc = cluster_nodes;
+                           *me = nodeid_(); nproc = cluster_nodes; /* +server*/
                            if(*me < *root || *me >= *root +nproc)
                                                 return 0; /*does not*/
 

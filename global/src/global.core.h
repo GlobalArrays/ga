@@ -1,4 +1,3 @@
-/*$Id: global.core.h,v 1.3 1995-02-02 23:13:28 d3g681 Exp $*/
 /*Wed Jan 25 10:25:49 PST 1995*/
   
 #ifdef SUN
@@ -198,7 +197,7 @@ Integer         *INT_MB;            /* integer base address */
 PRIVATE static int GAinitialized = 0;
 PRIVATE static Integer GAme, GAnproc, GAmaster;
 PRIVATE static Integer MPme, MPnproc;
-int ProcListPerm[MAX_NPROC];        /* permuted list of processes */
+int ProcListPerm[MAX_NPROC];            /* permuted list of processes */
 #if defined(DATA_SERVER)
     Integer *NumRecReq;                 /* # received requests by data server */
 #else
@@ -213,6 +212,11 @@ int ProcListPerm[MAX_NPROC];        /* permuted list of processes */
 #      include <fortran.h>
 #   endif
 #endif
+
+/* set total limit (bytes) for memory usage per processor to "unlimited" */ 
+static Integer GA_total_memory = -1;
+static Integer GA_memory_limited = 0;
+
 
 
 #if defined(__STDC__) || defined(__cplusplus)

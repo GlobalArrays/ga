@@ -1,8 +1,8 @@
-/*$Id: global.core.c,v 1.5 1995-02-15 17:55:23 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.6 1995-02-28 19:50:39 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
- * date: Mon Dec 19 19:03:38 CST 1994
+ * last major change date: Mon Dec 19 19:03:38 CST 1994
  * description: implements GA primitive operations --
  *              create (regular& irregular) and duplicate, destroy, get, put,
  *              accumulate, scatter, gather, read&increment & synchronization 
@@ -107,6 +107,7 @@ Integer GAsizeof(type)
           default  : return 0; 
   }
 }
+
 
 /*\ FINAL CLEANUP of shmem when terminating
 \*/
@@ -241,6 +242,7 @@ void TrapSigChld(), TrapSigInt(), TrapSigHup();
   }\
 }
      
+
 void gaPermuteProcList2(nproc)
     Integer nproc;
 {
@@ -268,11 +270,12 @@ void gaPermuteProcList2(nproc)
     }
 }
  
- 
+
 
 /*\ INITIALIZE GLOBAL ARRAY STRUCTURES
  *
- *  must be the first GA routine called
+ *  either ga_initialize_ltd or ga_initialize must be the first 
+ *         GA routine called (except ga_uses_ma)
 \*/
 void ga_initialize_()
 {
@@ -427,8 +430,68 @@ Integer *msg_buf = (Integer*)MessageRcv->buffer;
 #   endif
 
     /* synchronize, and then we are ready to do some real work */
-    { Integer tsyn = GA_TYPE_SYN; synch_(&tsyn); }
+#   ifdef KSR
+      { Integer tsyn = GA_TYPE_SYN; synch_(&tsyn); }
+#   else
+      ga_sync_();
+#   endif
 }
+
+
+
+
+/*\ IS MA USED FOR ALLOCATION OF GA MEMORY ?
+\*/ 
+logical ga_uses_ma_()
+{
+#  ifdef SYSV
+     return FALSE;
+#  else
+     return TRUE;
+#  endif
+}
+
+
+/*\ IS MEMORY LIMIT SET ?
+\*/
+logical ga_memory_limited_()
+{
+   if(GA_memory_limited) return TRUE;
+   else                  return FALSE;
+}
+
+
+
+/*\ RETURNS AMMOUNT OF MEMORY on each processor IN ACTIVE GLOBAL ARRAYS 
+\*/
+Integer  ga_inquire_memory_()
+{
+Integer i, sum=0;
+    for(i=0; i<max_global_array; i++) 
+        if(GA[i].actv) sum += GA[i].size; 
+    return(sum);
+}
+
+
+
+/*\ INITIALIZE GLOBAL ARRAY STRUCTURES and SET LIMIT ON GA MEMORY USAGE
+ *  
+ *  the byte limit is per processor (even for shared memory)
+ *  either ga_initialize_ltd or ga_initialize must be the first 
+ *         GA routine called (except ga_uses_ma)
+ *  ga_initialize_ltd is another version of ga_initialize 
+ *         without memory control
+ *  mem_limit < 0 means "memory unlimited"
+\*/
+void ga_initialize_ltd_(mem_limit)
+Integer *mem_limit;
+{
+
+  GA_total_memory = *mem_limit; 
+  if(*mem_limit >= 0) GA_memory_limited = 1; 
+  ga_initialize_();
+}
+
 
 
 
@@ -452,9 +515,11 @@ logical ga_create(type, dim1, dim2, array_name, chunk1, chunk2, g_a)
       * g_a           - Integer handle for future references [output]
       */
 {
-register int   i,nprocx,nprocy, fchunk1, fchunk2;
+register int   i, nprocx, nprocy, fchunk1, fchunk2;
 static Integer map1[MAX_NPROC], map2[MAX_NPROC];
 Integer nblock1, nblock2;
+
+      if(!GAinitialized) ga_error("GA not initialized ", 0);
 
       ga_sync_();
 
@@ -542,7 +607,10 @@ char buf[FNAM];
 }
 
 
-Integer ga__memsize_clust(g_a)
+
+/*\ determine how much shared memory needs to be allocated in the cluster
+\*/
+Integer ga__shmem_size(g_a)
 Integer g_a;
 {
    Integer clust_node, ganode;
@@ -559,21 +627,107 @@ Integer g_a;
 }
 
 
-void ga__setptr_clust(g_a)
-Integer g_a;
-{
-   Integer clust_node, ganode;
-   Integer ilo, ihi, jlo, jhi, nelem;
-   Integer item_size=GAsizeofM(GA[GA_OFFSET + g_a].type);
 
-   for(clust_node=1; clust_node < cluster_compute_nodes; clust_node++){
-       ganode = clust_node-1 + GAmaster; /* previous ganode */
-       ga_distribution_(&g_a, &ganode, &ilo, &ihi, &jlo, &jhi);
-       nelem = (ihi-ilo+1)*(jhi-jlo+1);
-       GA[GA_OFFSET + g_a].ptr[clust_node] = 
-             GA[GA_OFFSET + g_a].ptr[clust_node-1] + nelem*item_size;
-   }
+/*\ set up array of pointers to (all or some) blocks of g_a
+\*/
+void ga__set_ptr_array(g_a, ptr)
+Integer g_a;
+Void    *ptr;
+{
+Integer  ga_handle = g_a + GA_OFFSET;
+
+#  ifdef CRAY_T3D
+     Integer i, len = sizeof(Void*);
+     Integer mtype = GA_TYPE_SYN;
+     GA[ga_handle].ptr[GAme] = ptr;
+
+     /* need pointers on all procs to support global addressing */
+     for(i=0; i < GAnproc; i++) ga_brdcst_(&mtype, GA[ga_handle].ptr+i,&len,&i);
+
+#  else
+     GA[ga_handle].ptr[0] = ptr;
+
+#    ifdef SYSV 
+     {
+       Integer ilo, ihi, jlo, jhi, nelem, ganode, clust_node;
+       Integer item_size=GAsizeofM(GA[ga_handle].type);
+
+       /* determine pointers to memory "held" by procs in the cluster */
+       for(clust_node=1; clust_node < cluster_compute_nodes; clust_node++){
+           ganode = clust_node-1 + GAmaster; /* previous ganode */
+           ga_distribution_(&g_a, &ganode, &ilo, &ihi, &jlo, &jhi);
+           nelem = (ihi-ilo+1)*(jhi-jlo+1);
+           GA[ga_handle].ptr[clust_node] = 
+                          GA[ga_handle].ptr[clust_node-1] + nelem*item_size;
+       }
+     }
+#    endif
+#  endif
 }
+
+
+/*\ allocate local/shared memory
+\*/
+Integer ga__allocate_memory(type, nelem, mem_size, array_name, id, pptr)
+Integer type, nelem, mem_size, *id;
+Void    **pptr;
+char    *array_name;
+{
+#ifdef SYSV
+   Integer *msg_buf = (Integer*)MessageRcv->buffer;
+#else
+   Integer handle, index;
+#endif
+
+   *id   = INVALID_MA_HANDLE;
+   *pptr = (Void*)NULL;
+
+   if(mem_size == 0 ) return (1); /*   0 byte request is OK */ 
+   if(mem_size <  0 ) return (0); /* < 0 byte request is not OK */ 
+
+   *id   = 1;
+
+#  ifndef SYSV
+         /*............. allocate local memory ...........*/
+
+         if(MA_alloc_get(type, nelem, array_name, &handle, &index)) 
+              MA_get_pointer(handle, pptr);
+         else handle = INVALID_MA_HANDLE; 
+         *id   = handle;
+#  else
+         /*............. allocate shared memory ..........*/
+
+         if(MPme == cluster_master){
+            if(GAnproc == 1 && USE_MALLOC){
+               /* for single process, shmem not needed */
+               *pptr  = malloc((int)mem_size);
+            }else {
+               /* cluster master uses Snd buffer */
+               msg_buf = (Integer*)MessageSnd->buffer;
+               /* cluster master creates shared memory */
+               *pptr = Create_Shared_Region(msg_buf+1,&mem_size,msg_buf);
+            }
+         }
+
+         /* every other compute node in the cluster gets shmem id(s) to attach*/
+         ga_brdcst_clust(GA_TYPE_SYN, (char*)msg_buf, SHMID_BUF_SIZE,
+                                      cluster_master, CLUST_GRP);
+
+         if(MPme != cluster_master)
+                    *pptr =  Attach_Shared_Region(msg_buf+1,mem_size, msg_buf);
+
+         *id = (*pptr) ? 1 :0;
+
+#  endif
+
+   if(DEBUG)fprintf(stderr,"me=%d ga__alloc_mem:ptr=%d id=%d\n",GAme,*pptr,*id);
+
+   /* to return succesfully from here, we must have a non-NULL pointer */
+   if(*pptr) return 1; 
+   else      return 0;
+
+}
+
 
 
 /*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
@@ -593,17 +747,12 @@ logical ga_create_irreg(type, dim1, dim2, array_name, map1, nblock1,
       * g_a           - Integer handle for future references [output]
       */
 {
-#ifdef SYSV
-   Integer *msg_buf = (Integer*)MessageRcv->buffer;
-#else
-   Integer handle=INVALID_MA_HANDLE, index;
-   Integer len = sizeof(char*), nelem, item_size;
-   char    op='*', *ptr = NULL;
-#endif
-
+char     op='*', *ptr = NULL;
 Integer  ilo, ihi, jlo, jhi;
-Integer  id=1, mtype = GA_TYPE_SYN, mem_size;
-Integer  i, ga_handle;
+Integer  mem_size, nelem, mem_size_proc;
+Integer  i, ga_handle, status;
+
+      if(!GAinitialized) ga_error("GA not initialized ", 0);
 
       ga_sync_();
 
@@ -621,24 +770,24 @@ Integer  i, ga_handle;
          ga_error("ga_create_irreg: too many blocks ",*nblock1 * *nblock2);
 
       if(GAme==0&& DEBUG){
-        fprintf(stderr,"map1\n");
-        for (i=0;i<*nblock1;i++)fprintf(stderr," %d ",map1[i]);
-        fprintf(stderr,"\nmap2\n");
-        for (i=0;i<*nblock2;i++)fprintf(stderr," .%d ",map2[i]);
+        fprintf(stderr," array:%d map1:\n", *g_a);
+        for (i=0;i<*nblock1;i++)fprintf(stderr," %d |",map1[i]);
+        fprintf(stderr," \n array:%d map2:\n", *g_a);
+        for (i=0;i<*nblock2;i++)fprintf(stderr," %d |",map2[i]);
         fprintf(stderr,"\n\n");
       }
 
-      /* Get next free global_array handle */
+      /*** Get next free global array handle ***/
       ga_handle =-1; i=0;
       do{
           if(!GA[i].actv) ga_handle=i;
           i++;
       }while(i<max_global_array && ga_handle==-1);
       if( ga_handle == -1)
-        ga_error("ga_create: too many arrays ", (Integer)max_global_array);
+          ga_error("ga_create: too many arrays ", (Integer)max_global_array);
       *g_a = (Integer)ga_handle - GA_OFFSET;
 
-      /*** fill in global data info record for g_a ***/
+      /*** fill in Global Info Record for g_a ***/
       GA[ga_handle].type = *type;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
@@ -653,7 +802,6 @@ Integer  i, ga_handle;
        * . since nblock1*nblock2<=GAnproc,  mapc[GAnproc+1] suffices
        *   to pack everything into it;
        * . the dimension of block i is given as: MAX(mapc[i+1]-mapc[i],dim1/2)
-       *
        */
       for(i=0;i< *nblock1; i++) GA[ga_handle].mapc[i] = (int)map1[i];
       for(i=0;i< *nblock2; i++) GA[ga_handle].mapc[i+ *nblock1] = (int)map2[i];
@@ -666,80 +814,56 @@ Integer  i, ga_handle;
          fprintf(stderr,"\n\n");
       }
 
-      /* determine which portion of array I am supposed to hold */
+      /*** determine which portion of the array I am supposed to hold ***/
       ga_distribution_(g_a, &GAme, &ilo, &ihi, &jlo, &jhi);
       GA[ga_handle].chunk[0] = (int) (ihi-ilo+1);
       GA[ga_handle].chunk[1] = (int) (jhi-jlo+1);
       GA[ga_handle].ilo = ilo;
       GA[ga_handle].jlo = jlo;
+      nelem = (ihi-ilo+1)*(jhi-jlo+1);
 
-
-      /************************ Allocate Memory ***************************/
-#     ifndef SYSV 
-         /*....................... allocate local memory ...............*/
-         nelem = (ihi-ilo+1)*(jhi-jlo+1);
-         item_size = GAsizeofM(*type);
-         mem_size = nelem * item_size;
-   
-         if(nelem){
-            if(!MA_alloc_get(*type, nelem, array_name, &handle, &index)) id =0;
-            if(id)MA_get_pointer(handle, &ptr);
-         }
-
-#        ifdef CRAY_T3D
-            GA[ga_handle].ptr[GAme] = ptr;
-            /* here we need all pointers to support global addressing */
-            for(i=0; i < GAnproc; i++) 
-                         ga_brdcst_(&mtype, GA[ga_handle].ptr+i, &len, &i);
-#        else
-            GA[ga_handle].ptr[0] = ptr;
-#        endif
-         GA[ga_handle].id   = handle;
-         ga_igop(mtype, &id, 1, &op); /*check if everybody succeded */
-
+      /*** Memory Allocation & Initialization of GA Addressing Space ***/
+#     ifdef SYSV
+            mem_size = ga__shmem_size(*g_a);
+            mem_size_proc = mem_size/cluster_compute_nodes;
 #     else
-         /*....................... allocate shared memory ...............*/
-         mem_size = ga__memsize_clust(*g_a);
-         if(MPme == cluster_master){
-            if(GAnproc == 1 && USE_MALLOC){
-               GA[ga_handle].ptr[0]  = malloc((int)mem_size);
-            }else {
-               msg_buf = (Integer*)MessageSnd->buffer;
-               /* cluster master creates shared memory */
-               GA[ga_handle].ptr[0] = Create_Shared_Region
-                                        (msg_buf+1,&mem_size,msg_buf);
-
-              /*** send all g_a info + shm ids to data server ***/
-              /*   data server has to call this routine too !  */
-              if(ClusterMode) {
-                Integer nbytes = *nblock1 * sizeof(Integer);
-                Copy(map1, MessageSnd->buffer + SHMID_BUF_SIZE, nbytes);
-                Copy(map2, MessageSnd->buffer + SHMID_BUF_SIZE +nbytes, 
-                     *nblock2 * sizeof(Integer));
-                nbytes = SHMID_BUF_SIZE+ (*nblock1 + *nblock2) *sizeof(Integer);
-
-                ga_snd_req(0,  *dim1, *nblock1, *dim2, *nblock2, nbytes, *type,
-                           GA_OP_CRE, GAme, DataServer(GAme));
-              }
-           }
-         }
-
-
-         ga_brdcst_clust(mtype, (char*)msg_buf, SHMID_BUF_SIZE, cluster_master, 
-                         CLUST_GRP);
-
-         if(MPme != cluster_master)
-            GA[ga_handle].ptr[0] = Attach_Shared_Region(msg_buf+1,mem_size, msg_buf);
-         if(DEBUG)fprintf(stderr,"%dcreate:ptr=%d\n",GAme,GA[ga_handle].ptr[0]);
-         ga__setptr_clust(*g_a); /* determine pointers to individual blocks */
-         GA[ga_handle].id   = id;
-        /* ............................................................... */
+            mem_size = mem_size_proc =  nelem * GAsizeofM(*type);  
+            GA[ga_handle].id = INVALID_MA_HANDLE;
 #     endif
-      GA[ga_handle].size = mem_size;
+
+      /* on shmem platforms, we use avg mem_size per processor in cluster */
+      GA[ga_handle].size = mem_size_proc;
+
+      /* if requested, enforce limits on memory consumption */
+      if(GA_memory_limited) GA_total_memory -= mem_size_proc; 
+
+      if(!GA_memory_limited || GA_total_memory >= 0){
+          status =  ga__allocate_memory(*type, nelem, mem_size, array_name, 
+                                         &(GA[ga_handle].id), &ptr);
+      }else
+          status = 0;
+
+      ga_igop(GA_TYPE_SYN, &status, 1, &op); /* check if everybody succeded */
+
+      /* determine pointers to individual blocks*/
+      if(status) ga__set_ptr_array(*g_a, ptr);
+
+      /*** in cluster mode, master sends create request to data server ***/
+      if(ClusterMode && (MPme == cluster_master)) {
+            Integer nbytes = *nblock1 * sizeof(Integer);
+            Copy(map1, MessageSnd->buffer + SHMID_BUF_SIZE, nbytes);
+            Copy(map2, MessageSnd->buffer + SHMID_BUF_SIZE +nbytes,
+                 *nblock2 * sizeof(Integer));
+            nbytes = SHMID_BUF_SIZE+ (*nblock1 + *nblock2) *sizeof(Integer);
+
+            /*** send g_a info + shmem id(s) to data server ***/
+            ga_snd_req(0,  *dim1, *nblock1, *dim2, *nblock2, nbytes, *type,
+                       GA_OP_CRE, GAme, DataServer(GAme));
+      }
 
       ga_sync_();
 
-      if(id) return(TRUE);
+      if(status) return(TRUE);
       else{
          ga_destroy_(g_a); 
          return(FALSE);
@@ -777,7 +901,7 @@ char buf[FNAM];
 
 
 /*\ DUPLICATE A GLOBAL ARRAY
- *  -- new array g_b will have the properties of g_a
+ *  -- new array g_b will have properties of g_a
 \*/
 logical ga_duplicate(g_a, g_b, array_name)
      Integer *g_a, *g_b;
@@ -788,17 +912,9 @@ logical ga_duplicate(g_a, g_b, array_name)
       * g_b           - Integer handle for new array [output]
       */
 {
-#ifdef SYSV 
-   Integer *msg_buf = (Integer*)MessageRcv->buffer;
-#else
-   Integer  ilo, ihi, jlo, jhi, nelem;
-   Integer index, handle=INVALID_MA_HANDLE;
-   Integer len = sizeof(char*);
-   char    op='*', *ptr = NULL;
-#endif
-
-Integer  id=1, mtype = GA_TYPE_SYN, mem_size;
-Integer  i, ga_handle;
+char     op='*', *ptr = NULL;
+Integer  mem_size, mem_size_proc, nelem;
+Integer  i, ga_handle, status;
 
       ga_sync_();
 
@@ -811,68 +927,47 @@ Integer  i, ga_handle;
         i++;
       }while(i<max_global_array && ga_handle==-1);
       if( ga_handle == -1)
-        ga_error("ga_duplicate: too many arrays ", (Integer)max_global_array);
+          ga_error("ga_duplicate: too many arrays ", (Integer)max_global_array);
       *g_b = (Integer)ga_handle - GA_OFFSET;
 
       GA[ga_handle] = GA[GA_OFFSET + *g_a];
       strcpy(GA[ga_handle].name, array_name);
+      nelem = GA[ga_handle].chunk[1]*GA[ga_handle].chunk[0];
 
-      mem_size  = GA[ga_handle].size;
-
-      /************************ Allocate Memory ***************************/
-#     ifndef SYSV 
-         nelem = GA[ga_handle].chunk[1]*GA[ga_handle].chunk[0];
-         if(nelem>0){
-            if(!MA_alloc_get(GA[ga_handle].type, nelem, array_name, &handle, &index))
-                                                                         id =0;
-            if(id)MA_get_pointer(handle, &ptr);
-         }
-         GA[ga_handle].id   = handle;
-  
-#        ifdef CRAY_T3D
-            GA[ga_handle].ptr[GAme] = ptr;
-            for(i=0;i<GAnproc;i++) 
-                      ga_brdcst_(&mtype, GA[ga_handle].ptr+i, &len, &i);
-#        else
-            GA[ga_handle].ptr[0] = ptr;
-#        endif
-  
-         ga_igop(mtype, &id, 1, &op); /*check if everybody succeded */
-
+      /*** Memory Allocation & Initialization of GA Addressing Space ***/
+#     ifdef SYSV
+            /* we have to recompute mem_size for the cluster */
+            mem_size = ga__shmem_size(*g_a);
+            mem_size_proc = mem_size/cluster_compute_nodes;
+            if(GA[ga_handle].size != mem_size_proc)
+                  ga_error("ga_duplicate: mem_size_proc error ",mem_size_proc);
 #     else
-      /*......................... Allocate Shared Memory .................*/
-         if(MPme==cluster_master){
-            if(GAnproc == 1 && USE_MALLOC){
-               GA[ga_handle].ptr[0]  = malloc((int)mem_size);
-               id =1;
-            }else {
-               msg_buf = (Integer*)MessageSnd->buffer;
-               GA[ga_handle].ptr[0] = Create_Shared_Region
-                                        (msg_buf+1,&mem_size,msg_buf);
+            mem_size = mem_size_proc = GA[ga_handle].size; 
+            GA[ga_handle].id = INVALID_MA_HANDLE;
+#     endif
 
-              /* send all g_a handle + shm ids to data server */
-              if(ClusterMode) {
+      /* if requested, enforce limits on memory consumption */
+      if(GA_memory_limited) GA_total_memory -= mem_size_proc;
+
+      if(!GA_memory_limited || GA_total_memory >= 0)
+          status =  ga__allocate_memory(GA[ga_handle].type, nelem, mem_size, 
+                                        array_name, &(GA[ga_handle].id), &ptr);
+      else
+          status = 0;
+
+      ga_igop(GA_TYPE_SYN, &status, 1, &op); /* check if everybody succeded */
+
+      /* determine pointers to individual blocks*/
+      if(status) ga__set_ptr_array(*g_b, ptr);
+
+      if( ClusterMode && MPme == cluster_master){
                 ga_snd_req(*g_a, 0, 0, 0, 0, SHMID_BUF_SIZE, 0, GA_OP_DUP,
                            GAme, DataServer(GAme));
-              }
-            }
-         }
-
-
-         ga_brdcst_clust(mtype, (char*)msg_buf, SHMID_BUF_SIZE, cluster_master,
-                         CLUST_GRP);
-
-         if(MPme!=cluster_master)
-            GA[ga_handle].ptr[0] = Attach_Shared_Region(msg_buf+1,mem_size, msg_buf);
-
-         ga__setptr_clust(*g_b); /* determine pointers to individual blocks */
-         GA[ga_handle].id   = id;
-         /* ............................................................... */
-#     endif
+      }
 
       ga_sync_();
 
-      if(id) return(TRUE);
+      if(status) return(TRUE);
       else{ 
          ga_destroy_(g_b);
          return(FALSE);
@@ -912,28 +1007,32 @@ char buf[FNAM];
 logical ga_destroy_(g_a)
         Integer *g_a;
 {
+Integer ga_handle = GA_OFFSET + *g_a;
+
     ga_sync_();
-    ga_check_handleM(g_a,"ga_destroy");       
+    if(GA[ga_handle].actv==0) return TRUE;       
  
 #   ifdef SYSV 
       if(GAnproc == 1 && USE_MALLOC){
-         free(GA[GA_OFFSET + *g_a].ptr[0]);
+         free(GA[ga_handle].ptr[0]);
       }else{
          if(MPme == cluster_master){
             /* Now, deallocate shared memory */
-            Free_Shmem_Ptr(GA[GA_OFFSET + *g_a].id,GA[GA_OFFSET + *g_a].size,GA[GA_OFFSET + *g_a].ptr[0]);
-
+            if(GA[ga_handle].ptr[0]){
+               Free_Shmem_Ptr(GA[ga_handle].id, GA[ga_handle].size, 
+                              GA[ga_handle].ptr[0]);
+               GA[ga_handle].ptr[0]=NULL;
+            }
             if(ClusterMode) 
                ga_snd_req(*g_a, 0,0,0,0,0,0, GA_OP_DES, GAme, DataServer(GAme));
          } 
       }
-      GA[GA_OFFSET + *g_a].ptr[0] = NULL;
 #   else
-      if(GA[GA_OFFSET + *g_a].id != INVALID_MA_HANDLE) 
-                                    MA_free_heap(GA[GA_OFFSET + *g_a].id);
+      if(GA[ga_handle].id != INVALID_MA_HANDLE) MA_free_heap(GA[ga_handle].id);
 #   endif
 
-    GA[GA_OFFSET + *g_a].actv = 0;     
+    if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
+    GA[ga_handle].actv = 0;     
     return(TRUE);
 }
 
@@ -956,6 +1055,9 @@ Integer i, handle;
           }
     
     ga_sync_();
+
+    GA_total_memory = -1; /* restore "unlimited" memory usage status */
+    GA_memory_limited = 0;
 
 #   ifdef SYSV
       if(GAnproc == 1 && USE_MALLOC){

@@ -1,18 +1,7 @@
-/*$Id: DP.c,v 1.6 1995-02-02 23:13:03 d3g681 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
 
-
-/*\ check if patches are identical
-\*/
-static logical comp_patch(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
-     Integer ilo, ihi, jlo, jhi;
-     Integer ilop, ihip, jlop, jhip;
-{
-   if(ihip != ihi || ilop != ilo || jhip != jhi || jlop != jlo) return(FALSE);
-   else return(TRUE);
-}
 
 
 /*\ check if I own the patch
@@ -153,10 +142,10 @@ DoublePrecision ga_ddot_patch_dp_(g_a, t_a, ailo, aihi, ajlo, ajhi,
 Integer atype, btype, adim1, adim2, bdim1, bdim2;
 Integer iloA, ihiA, jloA, jhiA, indexA, ldA;
 Integer iloB, ihiB, jloB, jhiB, indexB, ldB;
-Integer g_A = *g_a, g_B = *g_b;
+Integer g_A = *g_a;
 Integer me= ga_nodeid_(), i, j, temp_created=0;
 Integer handleB, corr, nelem;
-char *tempname = "temp", transp, transp_a, transp_b;
+char    transp, transp_a, transp_b;
 DoublePrecision  sum = 0.;
 
 

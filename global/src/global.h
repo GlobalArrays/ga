@@ -1,4 +1,3 @@
-/*$Id: global.h,v 1.2 1995-02-02 23:13:30 d3g681 Exp $*/
 /* file global.h */
 
 #include "types.f2c.h"
@@ -26,6 +25,7 @@
 
 extern Integer ga_nnodes_   ARGS_(( void));
 extern Integer ga_nodeid_   ARGS_(( void));
+extern Integer ga_inquire_memory_  ARGS_(( void));
 extern Integer ga_read_inc_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
 extern Integer ga_verify_handle_ ARGS_((Integer* ));
 extern logical ga_create ARGS_((Integer*, Integer*, Integer*, char*, Integer*,                                  Integer*, Integer*));
@@ -47,6 +47,7 @@ extern void ga_error ARGS_((char*, Integer));
 extern void ga_get_  ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               Void*, Integer* ));
 extern void ga_igop  ARGS_((Integer, Integer*, Integer, char* ));
 extern void ga_initialize_ ARGS_(( void));
+extern void ga_initialize_ltd_ ARGS_(( Integer* ));
 extern void ga_inquire_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
 extern void ga_inquire_name ARGS_((Integer*, char* ));
 extern void ga_list_data_servers_ ARGS_((Integer* ));
@@ -57,6 +58,8 @@ extern void ga_release_ ARGS_((Integer*, Integer*, Integer*,Integer*,Integer*));
 extern void ga_release_update_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer* ));
 extern void ga_sync_ ARGS_(( void));
 extern void ga_terminate_ ARGS_(( void));
+extern logical ga_uses_ma_ ARGS_(( void));
+extern logical ga_memory_limited_ ARGS_(( void));
 
 
 extern void ga_copy_patch ARGS_((char *, Integer *, Integer *, Integer *,                                        Integer *, Integer *, Integer *, Integer *,                                     Integer *, Integer *, Integer *));
