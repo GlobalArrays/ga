@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.87 2004-07-14 02:30:51 manoj Exp $ */
+/* $Id: armci.c,v 1.88 2004-07-20 02:26:10 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -538,9 +538,15 @@ armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
 int success=0;
 int direct=SAMECLUSNODE(nb_handle->proc);
    if(direct)return(success);
+#ifdef ARMCI_PROFILE
+   armci_profile_start(ARMCI_PROFILE_NOTIFY_WAIT);
+#endif
     if(nb_handle) {
       if(nb_handle->agg_flag) {
 	armci_agg_complete(nb_handle, UNSET);
+#       ifdef ARMCI_PROFILE
+	armci_profile_stop();
+#       endif
 	return (success);
       }
     }
@@ -548,11 +554,17 @@ int direct=SAMECLUSNODE(nb_handle->proc);
 #     ifdef ARMCI_NB_WAIT
         if(nb_handle->tag==0){
               ARMCI_NB_WAIT(nb_handle->cmpl_info);
+#             ifdef ARMCI_PROFILE
+	      armci_profile_stop();
+#             endif
               return(success);
         }
 #       if defined(LAPI) || defined(ALLOW_PIN)
          if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
                ARMCI_NB_WAIT(nb_handle->cmpl_info);
+#              ifdef ARMCI_PROFILE
+	       armci_profile_stop();
+#              endif
                return(success);
          }
 #       endif
@@ -561,6 +573,10 @@ int direct=SAMECLUSNODE(nb_handle->proc);
        COMPLETE_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
 #     endif
     }
+
+#ifdef ARMCI_PROFILE
+    armci_profile_stop();
+#endif
     return(success);
 }
 
@@ -655,20 +671,34 @@ extern int armci_inotify_proc(int);
 \*/
 int armci_notify_wait(int proc,int *pval)
 {
-#ifdef GM
-extern int armci_inotify_wait(int,int*);
-   return(armci_inotify_wait(proc,pval));
-#else
-   long loop=0;
-   armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
-   pnotify->waited++;
-   while( pnotify->waited > pnotify->received) { 
-       if(++loop == 1000) { loop=0;cpu_yield(); }
-       armci_util_spin(loop, pnotify);
-   }
-   *pval = pnotify->waited; 
-   return(pnotify->received);
+  int retval;
+#ifdef ARMCI_PROFILE
+  armci_profile_start(ARMCI_PROFILE_NOTIFY_WAIT);
 #endif
+
+#ifdef GM
+  {
+     extern int armci_inotify_wait(int,int*);
+     retval=armci_inotify_wait(proc,pval);
+  }
+#else
+  {
+     long loop=0;
+     armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
+     pnotify->waited++;
+     while( pnotify->waited > pnotify->received) { 
+	if(++loop == 1000) { loop=0;cpu_yield(); }
+	armci_util_spin(loop, pnotify);
+     }
+     *pval = pnotify->waited; 
+     retval=pnotify->received;
+  }
+#endif
+
+#ifdef ARMCI_PROFILE
+  armci_profile_stop();
+#endif
+  return retval;
 }
 
 long armci_util_long_getval(long* p)

@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.88 2004-07-14 02:30:51 manoj Exp $ */
+/* $Id: strided.c,v 1.89 2004-07-20 02:26:10 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -582,6 +582,9 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
          ARMCI_Fence(proc);
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],NULL,0,mhloc,mhrem);
          POSTPROCESS_STRIDED(tmp_count);
+#        ifdef ARMCI_PROFILE
+	 armci_profile_stop_strided();
+#        endif
          return 0;
        }
 #if   defined(VAPI)
@@ -590,6 +593,9 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
            ARMCI_Fence(proc);
            armci_two_phase_send(proc, src_ptr, src_stride_arr, dst_ptr,
                           dst_stride_arr,count,stride_levels,NULL,NULL,mhloc);
+#          ifdef ARMCI_PROFILE
+	   armci_profile_stop_strided();
+#          endif
            return 0;  
          
        }
@@ -622,6 +628,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 				 0,NULL);
     }
 
+    POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
     armci_profile_stop_strided();
 #endif
@@ -630,8 +637,6 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
        vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
     vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
 #endif
-
-    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 
@@ -710,11 +715,14 @@ int ARMCI_PutS_flag_dir(
 	     }
 	     valflagarr[proc]=val;
 	     ARMCI_NbPut(valflagarr+proc,flag,4,proc,&nbhdlarr1[i%1000]);
-#  if 1
+#            if 1
 	     for(i=0;i<count[1];i++){
 		ARMCI_Wait(&nbhdlarr1[i%1000]);
 	     }
-#  endif
+#            endif
+#            ifdef ARMCI_PROFILE  
+	     armci_profile_stop_strided();   
+#            endif 
 	     return 0;
 	  }
 	  if(stride_levels==0 &&
@@ -748,6 +756,7 @@ int ARMCI_PutS_flag_dir(
        armci_put(&val,flag,sizeof(int),proc); 
     }
 
+    POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
     armci_profile_stop_strided();
 #endif
@@ -756,8 +765,6 @@ int ARMCI_PutS_flag_dir(
        vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
     vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
 #endif
-
-    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 
@@ -832,6 +839,7 @@ int ARMCI_PutS_flag(
        armci_put(&val,flag,sizeof(int),proc); 
     }
 
+    POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
     armci_profile_stop_strided();
 #endif
@@ -840,8 +848,6 @@ int ARMCI_PutS_flag(
        vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
     vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
 #endif
-
-    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 
@@ -902,6 +908,9 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
          ARMCI_Fence(proc);
          ARMCI_REM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
          POSTPROCESS_STRIDED(tmp_count);
+#        ifdef ARMCI_PROFILE
+         armci_profile_stop_strided();
+#        endif
          return 0;
        }
 #if   defined(VAPI)
@@ -910,6 +919,9 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
           ARMCI_Fence(proc);
           armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
                           dst_stride_arr,count,stride_levels,NULL,NULL,mhloc);  
+#         ifdef ARMCI_PROFILE
+	  armci_profile_stop_strided();
+#         endif
           return 0;
        }
 #     endif
@@ -944,6 +956,8 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
                              dst_stride_arr,count, stride_levels,0,NULL);
+
+    POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
     armci_profile_stop_strided();
 #endif
@@ -952,8 +966,6 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        vampir_end_comm(proc,armci_me,count[0],ARMCI_GETS);
     vampir_end(ARMCI_GETS,__FILE__,__LINE__);
 #endif
-
-    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 }
@@ -1007,6 +1019,7 @@ int ARMCI_AccS( int  optype,            /* operation */
       rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
                       dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,NULL);
 
+    POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
     armci_profile_stop_strided();
 #endif
@@ -1015,8 +1028,6 @@ int ARMCI_AccS( int  optype,            /* operation */
        vampir_end_comm(armci_me,proc,count[0],ARMCI_ACCS);
     vampir_end(ARMCI_ACCS,__FILE__,__LINE__);
 #endif
-
-    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
 }
@@ -1165,6 +1176,10 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     if (armci_me != proc)
        vampir_start_comm(armci_me,proc,count[0],ARMCI_PUTS);
 #endif
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(seg_count, stride_levels, proc,
+				ARMCI_PROFILE_NBPUT);
+#endif
 
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
@@ -1179,6 +1194,9 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 						 count, stride_levels, proc, 
 						 PUT, nb_handle);
         POSTPROCESS_STRIDED(tmp_count);
+#       ifdef ARMCI_PROFILE
+	armci_profile_stop_strided();
+#       endif 
         return(rc);
       }
     } else {
@@ -1207,6 +1225,9 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
                                   (void **)(&nb_handle->cmpl_info),
                                   nb_handle->tag,mhloc,mhrem);
          POSTPROCESS_STRIDED(tmp_count);
+#        ifdef ARMCI_PROFILE
+	 armci_profile_stop_strided();
+#        endif 
          return 0;
        }
 #if   defined(VAPI)
@@ -1215,6 +1236,9 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
          ARMCI_Fence(proc);
          armci_two_phase_send(proc, src_ptr, src_stride_arr, dst_ptr,
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);
+#        ifdef ARMCI_PROFILE
+	 armci_profile_stop_strided();
+#        endif 
          return 0;  
        }
 #     endif
@@ -1237,13 +1261,15 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 		       dst_ptr,dst_stride_arr,count,stride_levels, 0,nb_handle);
       }
     
+    POSTPROCESS_STRIDED(tmp_count);
+#ifdef ARMCI_PROFILE
+    armci_profile_stop_strided();
+#endif 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
        vampir_end_comm(armci_me,proc,count[0],ARMCI_PUTS);
     vampir_end(ARMCI_PUTS,__FILE__,__LINE__);
 #endif
-
-    POSTPROCESS_STRIDED(tmp_count);
     if(rc) return FAIL6;
     else return 0;
     
@@ -1269,6 +1295,11 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
 
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(seg_count, stride_levels, proc,
+				ARMCI_PROFILE_NBGET);
+#endif
+
 #ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
 #endif
@@ -1282,6 +1313,9 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 					 count, stride_levels, proc, 
 					 GET, nb_handle);
         POSTPROCESS_STRIDED(tmp_count);
+#       ifdef ARMCI_PROFILE
+	armci_profile_stop_strided();
+#       endif
         return(rc);
       }
     } else {
@@ -1306,6 +1340,9 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
          ARMCI_Fence(proc);
          ARMCI_NBREM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
          POSTPROCESS_STRIDED(tmp_count);
+#        ifdef ARMCI_PROFILE
+	 armci_profile_stop_strided();
+#        endif
          return 0;
        }
 #if   defined(VAPI)
@@ -1314,6 +1351,9 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
          ARMCI_Fence(proc);
           armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);  
+#        ifdef ARMCI_PROFILE
+	 armci_profile_stop_strided();
+#        endif
          return 0;
        }
 #     endif
@@ -1350,6 +1390,10 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
                              dst_stride_arr,count, stride_levels,0,nb_handle);
 
     POSTPROCESS_STRIDED(tmp_count);
+
+#   ifdef ARMCI_PROFILE
+    armci_profile_stop_strided();
+#   endif
     if(rc) return FAIL6;
     else return 0;
 }
@@ -1377,6 +1421,11 @@ int ARMCI_NbAccS( int  optype,            /* operation */
     if(count[0]<0)return FAIL3;
     if(stride_levels <0 || stride_levels > MAX_STRIDE_LEVEL) return FAIL4;
     if(proc<0)return FAIL5;
+
+#ifdef ARMCI_PROFILE
+    armci_profile_start_strided(seg_count, stride_levels, proc,
+				ARMCI_PROFILE_NBACC);
+#endif
 
     UPDATE_FENCE_INFO(proc);
     PREPROCESS_STRIDED(tmp_count);
@@ -1406,6 +1455,10 @@ int ARMCI_NbAccS( int  optype,            /* operation */
                     dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,nb_handle);
 
     POSTPROCESS_STRIDED(tmp_count);
+
+#   ifdef ARMCI_PROFILE
+    armci_profile_stop_strided();
+#   endif
     if(rc) return FAIL6;
     else return 0;
 }
