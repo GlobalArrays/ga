@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.65 2003-10-24 20:22:08 manoj Exp $ */
+/* $Id: capi.c,v 1.66 2003-10-29 00:19:02 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -1138,7 +1138,7 @@ void GA_Dgemm(char ta, char tb, int m, int n, int k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul_patch(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
+  ga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -1172,7 +1172,7 @@ void GA_Zgemm(char ta, char tb, int m, int n, int k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul_patch(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
+  ga_matmul(&ta, &tb, (DoublePrecision *)&alpha,(DoublePrecision *)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
@@ -1206,7 +1206,7 @@ void GA_Sgemm(char ta, char tb, int m, int n, int k,
   Integer cjlo = 1;
   Integer cjhi = n;
   
-  ga_matmul_patch(&ta, &tb, (DoublePrecision*)&alpha, (DoublePrecision*)&beta,
+  ga_matmul(&ta, &tb, (DoublePrecision*)&alpha, (DoublePrecision*)&beta,
 	    &G_a, &ailo, &aihi, &ajlo, &ajhi,
 	    &G_b, &bilo, &bihi, &bjlo, &bjhi,
 	    &G_c, &cilo, &cihi, &cjlo, &cjhi);
