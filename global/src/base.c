@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.57 2003-10-16 21:06:32 d3g293 Exp $ */
+/* $Id: base.c,v 1.58 2003-10-21 22:41:17 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -806,6 +806,358 @@ Integer FATR ga_mirror_config_()
   return 0;
 }
 
+/*\ Return a new global array handle
+\*/
+Integer ga_create_handle_()
+{
+  Integer ga_handle, i, g_a;
+  /*** Get next free global array handle ***/
+  GA_PUSH_NAME("ga_create_handle");
+  ga_handle =-1; i=0;
+  do{
+      if(!GA[i].actv) ga_handle=i;
+      i++;
+  }while(i<_max_global_array && ga_handle==-1);
+  if( ga_handle == -1)
+      ga_error(" too many arrays ", (Integer)_max_global_array);
+  g_a = (Integer)ga_handle - GA_OFFSET;
+
+  /*** fill in Global Info Record for g_a ***/
+  gai_init_struct(ga_handle);
+  GA[ga_handle].p_handle = -1;
+  GA[ga_handle].name[0] = '\0';
+  GA[ga_handle].mapc[0] = -1;
+  GA[ga_handle].irreg = 0;
+  GA[ga_handle].ghosts = 0;
+  GA_POP_NAME;
+  return g_a;
+}
+
+/*\ Set the dimensions and data type on a new global array
+\*/
+void nga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
+{
+  Integer i;
+  Integer ga_handle = *g_a + GA_OFFSET;
+  GA_PUSH_NAME("nga_set_data");
+  if (GA[ga_handle].actv == 1)
+    ga_error("Cannot set data on array that has been allocated",0);
+  gam_checkdim(*ndim, dims);
+  gam_checktype(ga_type_f2c(*type));
+
+  GA[ga_handle].type = ga_type_f2c((int)(*type));
+
+  for (i=0; i<*ndim; i++) {
+    GA[ga_handle].dims[i] = (int)dims[i];
+    GA[ga_handle].chunk[i] = 0;
+    GA[ga_handle].width[i] = 0;
+  }
+  GA[ga_handle].ndim = (int)(*ndim);
+  GA_POP_NAME;
+}
+
+/*\ Set the chunk array on a new global array
+\*/
+void nga_set_chunk_(Integer *g_a, Integer *chunk)
+{
+  Integer i;
+  Integer ga_handle = *g_a + GA_OFFSET;
+  GA_PUSH_NAME("nga_set_chunk");
+  if (GA[ga_handle].actv == 1)
+    ga_error("Cannot set chunk on array that has been allocated",0);
+  if (GA[ga_handle].ndim < 1)
+    ga_error("Dimensions must be set before chunk array is specified",0);
+  if (chunk) {
+    for (i=0; i<GA[ga_handle].ndim; i++) {
+      GA[ga_handle].chunk[i] = (int)chunk[i];
+    }
+  }
+  GA_POP_NAME;
+}
+
+/*\ Set the array name on a new global array
+\*/
+void nga_set_array_name(Integer g_a, char *array_name)
+{
+  Integer ga_handle = g_a + GA_OFFSET;
+  GA_PUSH_NAME("nga_set_array_name");
+  if (GA[ga_handle].actv == 1)
+    ga_error("Cannot set array name on array that has been allocated",0);
+  strcpy(GA[ga_handle].name, array_name);
+  GA_POP_NAME;
+}
+
+/*\ Set the array name on a new global array
+ *  Fortran version
+\*/
+#if defined(CRAY) || defined(WIN32)
+void FATR nga_set_array_name_(Integer *g_a, _fcd array_name)
+#else
+void FATR nga_set_array_name_(Integer *g_a, char* array_name)
+#endif
+{
+  int slen;
+  char buf[FNAM];
+#if defined(CRAY) || defined(WIN32)
+  f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
+#else
+  f2cstring(array_name ,slen, buf, FNAM);
+#endif
+
+  nga_set_array_name(*g_a, buf);
+}
+
+/*\ Set the processor configuration on a new global array
+\*/
+void nga_set_proc_config_(Integer *g_a, Integer *p_handle)
+{
+  Integer ga_handle = *g_a + GA_OFFSET;
+  GA_PUSH_NAME("nga_set_proc_config");
+  if (GA[ga_handle].actv == 1)
+    ga_error("Cannot set processor configuration on array that has been allocated",0);
+  GA[ga_handle].p_handle = (int) (*p_handle);
+  GA_POP_NAME;
+}
+
+/*\ Add ghost cells to a new global array
+\*/
+void nga_set_ghosts_(Integer *g_a, Integer *width)
+{
+  Integer i;
+  Integer ga_handle = *g_a + GA_OFFSET;
+  GA_PUSH_NAME("nga_set_ghosts");
+  if (GA[ga_handle].actv == 1)
+    ga_error("Cannot set ghost widths on array that has been allocated",0);
+  if (GA[ga_handle].ndim < 1)
+    ga_error("Dimensions must be set before array widths are specified",0);
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    if ((int)width[i] > GA[ga_handle].dims[i])
+      ga_error("Boundary width must be <= corresponding dimension",i);
+    if ((int)width[i] < 0)
+      ga_error("Boundary width must be >= 0",i);
+  }
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    GA[ga_handle].width[i] = (int)width[i];
+    if (width[i] > 0) GA[ga_handle].ghosts = 1;
+  }
+  GA_POP_NAME;
+}
+
+/*\ Set irregular distribution in a new global array
+\*/
+void nga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
+{
+  Integer i, maplen;
+  Integer ga_handle = *g_a + GA_OFFSET;
+  GA_PUSH_NAME("nga_set_irreg_distr");
+  if (GA[ga_handle].actv == 1)
+    ga_error("Cannot set irregular data distribution on array that has been allocated",0);
+  if (GA[ga_handle].ndim < 1)
+    ga_error("Dimensions must be set before irregular distribution is specified",0);
+  for (i=0; i<GA[ga_handle].ndim; i++)
+    if ((int)nblock[i] > GA[ga_handle].dims[i])
+      ga_error("number of blocks must be <= corresponding dimension",i);
+  maplen = 0;
+  for (i=0; i<GA[ga_handle].ndim; i++) {
+    maplen += nblock[i];
+    GA[ga_handle].nblock[i] = (int)nblock[i];
+  }
+  for (i=0; i<maplen; i++) {
+    GA[ga_handle].mapc[i] = (int)mapc[i];
+  }
+  GA[ga_handle].mapc[maplen] = -1;
+  GA[ga_handle].irreg = 1;
+  GA_POP_NAME;
+}
+
+/*\ Overide the irregular data distribution flag on a new global array
+\*/
+void nga_set_irreg_flag_(Integer *g_a, logical *flag)
+{
+  Integer ga_handle = *g_a + GA_OFFSET;
+  GA_PUSH_NAME("nga_set_irreg");
+  GA[ga_handle].irreg = (int)(*flag);
+  GA_POP_NAME;
+}
+
+/*\ Get dimension on a new global array
+\*/
+Integer nga_get_dimension_(Integer *g_a)
+{
+  Integer ga_handle = *g_a + GA_OFFSET;
+  return (Integer)GA[ga_handle].ndim;
+} 
+
+/*\  Allocate memory and complete setup of global array
+\*/
+logical ga_allocate_( Integer *g_a)
+{
+
+  Integer lo[MAXDIM], hi[MAXDIM];
+  Integer ga_handle = *g_a + GA_OFFSET;
+  Integer d, width[MAXDIM], ndim;
+  Integer mem_size, nelem, nnodes;
+  Integer i, status, maplen=0, p_handle;
+  Integer dims[MAXDIM], chunk[MAXDIM];
+  Integer pe[MAXDIM], *pmap[MAXDIM], *map;
+  Integer blk[MAXDIM];
+#ifdef GA_USE_VAMPIR
+  vampir_begin(NGA_ALLOCATE,__FILE__,__LINE__);
+#endif
+
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
+  if (GA[ga_handle].ndim == -1)
+    ga_error("Insufficient data to create global array",0);
+  ga_sync_();
+  GA_PUSH_NAME("nga_allocate");
+
+  if(!GAinitialized) ga_error("GA not initialized ", 0);
+  if(!ma_address_init) gai_ma_address_init();
+
+  ndim = GA[ga_handle].ndim;
+  p_handle = GA[ga_handle].p_handle;
+  for (i=0; i<ndim; i++) width[i] = GA[ga_handle].width[i];
+
+  /* The data distribution has not been specified by the user. Create
+     default distribution */
+  if (GA[ga_handle].mapc[0] == -1) {
+    extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,
+                       double thr, Integer bias, Integer blk[],
+                       Integer pedims[]);
+
+    for (d=0; d<ndim; d++) {
+      dims[d] = GA[ga_handle].dims[d];
+      chunk[d] = GA[ga_handle].chunk[d];
+    }
+    if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
+      for(d=0; d< ndim; d++) blk[d]=MIN(chunk[d],dims[d]);
+    else
+      for(d=0; d< ndim; d++) blk[d]=-1;
+
+    /* eliminate dimensions =1 from ddb analysis */
+    for(d=0; d<ndim; d++)if(dims[d]==1)blk[d]=1;
+ 
+    if (GAme==0 && DEBUG )
+      for (d=0;d<ndim;d++)
+        fprintf(stderr,"b[%ld]=%ld\n",d,blk[d]);
+    ga_sync_();
+
+    /* ddb(ndim, dims, GAnproc, blk, pe);*/
+    if (p_handle >= 0 && P_LIST[p_handle].mirrored) {
+      ddb_h2(ndim, dims, P_LIST[p_handle].map_nproc, 0.0,
+             (Integer)0, blk, pe);
+    } else {
+      ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
+    }
+
+    for(d=0, map=mapALL; d< ndim; d++){
+      Integer nblock;
+      Integer pcut; /* # procs that get full blk[] elements; the rest gets less*/
+      int p;
+
+      pmap[d] = map;
+
+      /* RJH ... don't leave some nodes without data if possible
+       but respect the users block size */
+      
+      if (chunk && chunk[d] > 1) {
+        Integer ddim = (dims[d]-1)/MIN(chunk[d],dims[d]) + 1;
+        pcut = (ddim -(blk[d]-1)*pe[d]) ;
+      }
+      else {
+        pcut = (dims[d]-(blk[d]-1)*pe[d]) ;
+      }
+
+      for (nblock=i=p=0; (p<pe[d]) && (i<dims[d]); p++, nblock++) {
+        Integer b = blk[d];
+        if (p >= pcut)
+          b = b-1;
+        map[nblock] = i+1;
+        if (chunk && chunk[d]>1) b *= MIN(chunk[d],dims[d]);
+        i += b;
+      }
+
+      pe[d] = MIN(pe[d],nblock);
+      map +=  pe[d]; 
+    }
+    if(GAme==0&& DEBUG){
+      gai_print_subscript("pe ",(int)ndim, pe,"\n");
+      gai_print_subscript("blocks ",(int)ndim, blk,"\n");
+      printf("decomposition map\n");
+      for(d=0; d< ndim; d++){
+        printf("dim=%ld: ",d); 
+        for (i=0;i<pe[d];i++)printf("%ld ",pmap[d][i]);
+        printf("\n"); 
+      }
+      fflush(stdout);
+    }
+    maplen = 0;
+    for( i = 0; i< ndim; i++){
+      GA[ga_handle].nblock[i] = pe[i];
+      maplen += pe[i];
+    }
+    for(i = 0; i< maplen; i++) {
+      GA[ga_handle].mapc[i] = (int)mapALL[i];
+    }
+    GA[ga_handle].mapc[maplen] = -1;
+  }
+
+  GAstat.numcre ++;
+
+  GA[ga_handle].actv = 1;
+  /* If only one node is being used, set proc list to default value */
+  if (ga_cluster_nnodes_() == 1) {
+    GA[ga_handle].p_handle = -1;
+  }
+
+  for( i = 0; i< ndim; i++){
+     GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
+                            / (double)GA[ga_handle].dims[i];
+  } 
+  GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
+  /*** determine which portion of the array I am supposed to hold ***/
+  nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
+  for( i = 0, nelem=1; i< ndim; i++){
+       GA[ga_handle].chunk[i] = (int)(hi[i]-GA[ga_handle].lo[i]+1);
+       nelem *= (int)(hi[i]-GA[ga_handle].lo[i]+1+2*width[i]);
+  }
+  mem_size = nelem * GA[ga_handle].elemsize;
+  GA[ga_handle].id = INVALID_MA_HANDLE;
+  GA[ga_handle].size = mem_size;
+  /* if requested, enforce limits on memory consumption */
+  if(GA_memory_limited) GA_total_memory -= mem_size;
+  /* check if everybody has enough memory left */
+  if(GA_memory_limited){
+     status = (GA_total_memory >= 0) ? 1 : 0;
+     ga_igop(GA_TYPE_GSM, &status, 1, "*");
+  }else status = 1;
+
+  if (status) {
+    status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
+                             GA[ga_handle].type, &GA[ga_handle].id);
+  } else {
+    GA[ga_handle].ptr[GAme]=NULL;
+  }
+
+  /* If array is mirrored, evaluate first and last indices */
+  ngai_get_first_last_indices(g_a);
+
+  ga_sync_();
+  if (status) {
+    GAstat.curmem += GA[ga_handle].size;
+    GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
+    status = TRUE;
+  } else {
+    ga_destroy_(g_a);
+    status = FALSE;
+  }
+  GA_POP_NAME;
+#ifdef GA_USE_VAMPIR
+  vampir_end(NGA_ALLOCATE,__FILE__,__LINE__);
+#endif
+  return status;
+}
+
 /*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
  *   -- IRREGULAR DISTRIBUTION
  *  This is the master routine. All other creation routines are derived
@@ -822,119 +1174,28 @@ logical nga_create_ghosts_irreg_config(
         Integer p_handle, /* processor list handle */
         Integer *g_a)     /* array handle (output) */
 {
-
-Integer  lo[MAXDIM], hi[MAXDIM];
-Integer  mem_size, nelem, nnodes;
-Integer  i, ga_handle, status, maplen=0;
+  logical status;
 #ifdef GA_USE_VAMPIR
-      vampir_begin(NGA_CREATE_GHOSTS_IRREG_CONFIG,__FILE__,__LINE__);
+  vampir_begin(NGA_CREATE_GHOSTS_IRREG_CONFIG,__FILE__,__LINE__);
 #endif
 
-      _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
-      ga_sync_();
-      GA_PUSH_NAME("nga_create_ghosts_irreg_config");
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
+  ga_sync_();
+  GA_PUSH_NAME("nga_create_ghosts_irreg_config");
 
-      if(!GAinitialized) ga_error("GA not initialized ", 0);
-      if(!ma_address_init) gai_ma_address_init();
+  *g_a = ga_create_handle_();
+  nga_set_data_(g_a,&ndim,dims,&type);
+  nga_set_ghosts_(g_a,width);
+  nga_set_array_name(*g_a,array_name);
+  nga_set_irreg_distr_(g_a,map,nblock);
+  nga_set_proc_config_(g_a,&p_handle);
+  status = ga_allocate_(g_a);
 
-      gam_checktype(ga_type_f2c(type));
-      gam_checkdim(ndim, dims);
-      for(i=0; i< ndim; i++)
-         if(nblock[i]>dims[i]) 
-            ga_error("number of blocks must be <= corresponding dimension",i);
-      for(i=0; i< ndim; i++)
-         if(width[i]<0) 
-            ga_error("Boundary widths must be >= 0",i);
-      for(i=0; i< ndim; i++)
-         if(width[i]>dims[i]) 
-            ga_error("Boundary widths must be <= corresponding dimension",i);
-
-      GAstat.numcre ++;
-
-      /*** Get next free global array handle ***/
-      ga_handle =-1; i=0;
-      do{
-          if(!GA[i].actv) ga_handle=i;
-          i++;
-      }while(i<_max_global_array && ga_handle==-1);
-      if( ga_handle == -1)
-          ga_error(" too many arrays ", (Integer)_max_global_array);
-      *g_a = (Integer)ga_handle - GA_OFFSET;
-
-      /*** fill in Global Info Record for g_a ***/
-      gai_init_struct(ga_handle);
-      GA[ga_handle].type = ga_type_f2c((int)type) ;
-      GA[ga_handle].actv = 1;
-      strcpy(GA[ga_handle].name, array_name);
-      GA[ga_handle].ndim    = (int) ndim;
-      GA[ga_handle].irreg   = _ga_irreg_flag;
-      /* If only one node is being used, set proc list to default value */
-      if (ga_cluster_nnodes_() == 1) {
-        p_handle = -1;
-      }
-      GA[ga_handle].p_handle = (int) p_handle;
-
-      GA[ga_handle].ghosts = 0;
-      for( i = 0; i< ndim; i++){
-         GA[ga_handle].dims[i] = (int)dims[i];
-         GA[ga_handle].nblock[i] = (int)nblock[i];
-         GA[ga_handle].scale[i] = (double)nblock[i]/(double)dims[i];
-         GA[ga_handle].width[i] = (int)width[i];
-         if (width[i] > 0) GA[ga_handle].ghosts = 1;
-         maplen += nblock[i];
-      } 
-      for(i = 0; i< maplen; i++)GA[ga_handle].mapc[i] = (int)map[i];
-      GA[ga_handle].mapc[maplen] = -1;
-      GA[ga_handle].elemsize = GAsizeofM(ga_type_f2c((int)type));
-      /*** determine which portion of the array I am supposed to hold ***/
-      nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
-      for( i = 0, nelem=1; i< ndim; i++){
-           GA[ga_handle].chunk[i] = (int)(hi[i]-GA[ga_handle].lo[i]+1);
-           nelem *= (int)(hi[i]-GA[ga_handle].lo[i]+1+2*width[i]);
-      }
-      mem_size = nelem * GA[ga_handle].elemsize;
-      GA[ga_handle].id = INVALID_MA_HANDLE;
-      GA[ga_handle].size = mem_size;
-      /* if requested, enforce limits on memory consumption */
-      if(GA_memory_limited) GA_total_memory -= mem_size;
-      /* check if everybody has enough memory left */
-      if(GA_memory_limited){
-         status = (GA_total_memory >= 0) ? 1 : 0;
-/*      printf("p[%d] GA_memory_limited: %d Status at 0: %d memory: %d\n",
-            (int)GA_memory_limited,(int)GAme,(int)status,(int)GA_total_memory);*/
-         ga_igop(GA_TYPE_GSM, &status, 1, "*");
-      }else status = 1;
-
-/*      printf("%d, elems=%d size=%d status=%d\n",GAme,nelem,mem_size,status);fflush(stdout);*/
-/*      ga_sync_();*/
-
-      if(status){
-          status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
-                                 (int)ga_type_f2c((int)type), &GA[ga_handle].id);
-      }else{
-          GA[ga_handle].ptr[GAme]=NULL;
-      }
-
-      /* If array is mirrored, evaluate first and last indices */
-      ngai_get_first_last_indices(g_a);
-
-/*      printf("Memory on %d is located at %u\n",
-              GAme,GA[ga_handle].ptr[GAme]); fflush(stdout);*/
-
-      ga_sync_();
-      if(status){
-         GAstat.curmem += GA[ga_handle].size;
-         GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
-         status = TRUE;
-      }else{
-         ga_destroy_(g_a);
-         status = FALSE;
-      }
-      GA_POP_NAME;
+  GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
-      vampir_end(NGA_CREATE_IRREG_CONFIG,__FILE__,__LINE__);
+  vampir_end(NGA_CREATE_IRREG_CONFIG,__FILE__,__LINE__);
 #endif
-      return status;
+  return status;
 }
 
 logical nga_create_ghosts_irreg(
@@ -965,90 +1226,16 @@ logical nga_create_config(Integer type,
                          Integer p_handle,
                          Integer *g_a)
 {
-Integer pe[MAXDIM], *pmap[MAXDIM], *map;
-Integer d, i, width[MAXDIM];
-Integer blk[MAXDIM];
-logical status;
-/*
-extern void ddb(Integer ndims, Integer dims[], Integer npes,
-Integer blk[], Integer pedims[]);
-*/
-extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
-            Integer bias, Integer blk[], Integer pedims[]);
-
-      GA_PUSH_NAME("nga_create_config");
-      if(!GAinitialized) ga_error("GA not initialized ", 0);
-      gam_checktype(ga_type_f2c(type));
-      gam_checkdim(ndim, dims);
-
-      if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
-          for(d=0; d< ndim; d++) blk[d]=MIN(chunk[d],dims[d]);
-      else
-          for(d=0; d< ndim; d++) blk[d]=-1;
-
-      /* eliminate dimensions =1 from ddb analysis */
-      for(d=0; d<ndim; d++)if(dims[d]==1)blk[d]=1;
-      
-      /* for load balancing overwrite block size if needed */ 
-/*      for(d=0; d<ndim; d++)if(blk[d]*GAnproc < dims[d])blk[d]=-1;*/
-
-      if(GAme==0 && DEBUG )for(d=0;d<ndim;d++) fprintf(stderr,"b[%ld]=%ld\n",d,blk[d]);
-      ga_sync_();
-
-/*      ddb(ndim, dims, GAnproc, blk, pe);*/
-      if (p_handle >= 0 && P_LIST[p_handle].mirrored) {
-        ddb_h2(ndim, dims, P_LIST[p_handle].map_nproc, 0.0,
-               (Integer)0, blk, pe);
-      } else {
-        ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
-      }
-
-      for(d=0, map=mapALL; d< ndim; d++){
-        Integer nblock;
-        Integer pcut; /* # procs that get full blk[] elements; the rest gets less*/
-        int p;
-
-        pmap[d] = map;
-        width[d] = 0;
-
-        /* RJH ... don't leave some nodes without data if possible
-         but respect the users block size */
-           
-        if (chunk && chunk[d] > 1) {
-          Integer ddim = (dims[d]-1)/MIN(chunk[d],dims[d]) + 1;
-          pcut = (ddim -(blk[d]-1)*pe[d]) ;
-        }
-        else {
-          pcut = (dims[d]-(blk[d]-1)*pe[d]) ;
-        }
-
-        for (nblock=i=p=0; (p<pe[d]) && (i<dims[d]); p++, nblock++) {
-          Integer b = blk[d];
-          if (p >= pcut)
-            b = b-1;
-          map[nblock] = i+1;
-          if (chunk && chunk[d]>1) b *= MIN(chunk[d],dims[d]);
-          i += b;
-        }
-
-        pe[d] = MIN(pe[d],nblock);
-        map +=  pe[d]; 
-      }
-      if(GAme==0&& DEBUG){
-         gai_print_subscript("pe ",(int)ndim, pe,"\n");
-         gai_print_subscript("blocks ",(int)ndim, blk,"\n");
-         printf("decomposition map\n");
-         for(d=0; d< ndim; d++){
-           printf("dim=%ld: ",d); 
-           for (i=0;i<pe[d];i++)printf("%ld ",pmap[d][i]);
-           printf("\n"); 
-         }
-         fflush(stdout);
-      }
-      status = nga_create_ghosts_irreg_config(type, ndim, dims, width, array_name,
-               mapALL, pe, p_handle, g_a);
-      GA_POP_NAME;
-      return status;
+  logical status;
+  GA_PUSH_NAME("nga_create_config");
+  *g_a = ga_create_handle_();
+  nga_set_data_(g_a,&ndim,dims,&type);
+  nga_set_array_name(*g_a,array_name);
+  nga_set_chunk_(g_a,chunk);
+  nga_set_proc_config_(g_a,&p_handle);
+  status = ga_allocate_(g_a);
+  GA_POP_NAME;
+  return status;
 }
 
 logical nga_create(Integer type,
@@ -1075,90 +1262,17 @@ logical nga_create_ghosts_config(Integer type,
                    Integer p_handle,
                    Integer *g_a)
 {
-Integer pe[MAXDIM], *pmap[MAXDIM], *map;
-Integer d, i;
-Integer blk[MAXDIM];
-logical status;
-/*
-extern void ddb(Integer ndims, Integer dims[], Integer npes,
-Integer blk[], Integer pedims[]);
-*/
-extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
-            Integer bias, Integer blk[], Integer pedims[]);
-
-      GA_PUSH_NAME("nga_create_ghosts");
-      if(!GAinitialized) ga_error("GA not initialized ", 0);
-      gam_checktype(ga_type_f2c(type));
-      gam_checkdim(ndim, dims);
-
-      if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
-          for(d=0; d< ndim; d++) blk[d]=MIN(chunk[d],dims[d]);
-      else
-          for(d=0; d< ndim; d++) blk[d]=-1;
-
-      /* eliminate dimensions =1 from ddb analysis */
-      for(d=0; d<ndim; d++)if(dims[d]==1)blk[d]=1;
-      
-      /* for load balancing overwrite block size if needed */ 
-/*      for(d=0; d<ndim; d++)if(blk[d]*GAnproc < dims[d])blk[d]=-1;*/
-
-      if(GAme==0 && DEBUG )for(d=0;d<ndim;d++) fprintf(stderr,"b[%ld]=%ld\n",d,blk[d]);
-      ga_sync_();
-
-/*      ddb(ndim, dims, GAnproc, blk, pe);*/
-      if (p_handle >= 0 && P_LIST[p_handle].mirrored) {
-        ddb_h2(ndim, dims, P_LIST[p_handle].map_nproc, 0.0,
-               (Integer)0, blk, pe);
-      } else {
-        ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
-      }
-
-      for(d=0, map=mapALL; d< ndim; d++){
-        Integer nblock;
-        Integer pcut; /* # procs that get full blk[] elements; the rest gets less*/
-        int p;
-
-        pmap[d] = map;
-
-        /* RJH ... don't leave some nodes without data if possible
-         but respect the users block size */
-           
-        if (chunk && chunk[d] > 1) {
-          Integer ddim = (dims[d]-1)/MIN(chunk[d],dims[d]) + 1;
-          pcut = (ddim -(blk[d]-1)*pe[d]) ;
-        }
-        else {
-          pcut = (dims[d]-(blk[d]-1)*pe[d]) ;
-        }
-
-        for (nblock=i=p=0; (p<pe[d]) && (i<dims[d]); p++, nblock++) {
-          Integer b = blk[d];
-          if (p >= pcut)
-            b = b-1;
-          map[nblock] = i+1;
-          if (chunk && chunk[d]>1) b *= MIN(chunk[d],dims[d]);
-          i += b;
-        }
-
-        pe[d] = MIN(pe[d],nblock);
-        map +=  pe[d]; 
-      }
-
-      if(GAme==0&& DEBUG){
-         gai_print_subscript("pe ",(int)ndim, pe,"\n");
-         gai_print_subscript("blocks ",(int)ndim, blk,"\n");
-         printf("decomposition map\n");
-         for(d=0; d< ndim; d++){
-           printf("dim=%ld: ",d); 
-           for (i=0;i<pe[d];i++)printf("%ld ",pmap[d][i]);
-           printf("\n"); 
-         }
-         fflush(stdout);
-      }
-      status = nga_create_ghosts_irreg_config(type, ndim, dims, width,
-               array_name, mapALL, pe, p_handle, g_a);
-      GA_POP_NAME;
-      return status;
+  logical status;
+  GA_PUSH_NAME("nga_create_ghosts");
+  *g_a = ga_create_handle_();
+  nga_set_data_(g_a,&ndim,dims,&type);
+  nga_set_ghosts_(g_a,width);
+  nga_set_array_name(*g_a,array_name);
+  nga_set_chunk_(g_a,chunk);
+  nga_set_proc_config_(g_a,&p_handle);
+  status = ga_allocate_(g_a);
+  GA_POP_NAME;
+  return status;
 }
 
 logical nga_create_ghosts(Integer type,
@@ -3468,355 +3582,4 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   }
   if (local_sync_end) ga_sync_();
   GA_POP_NAME;
-}
-/*\ Return a new global array handle
-\*/
-Integer ga_create_handle_()
-{
-  Integer ga_handle, i, g_a;
-  /*** Get next free global array handle ***/
-  GA_PUSH_NAME("ga_create_handle");
-  ga_handle =-1; i=0;
-  do{
-      if(!GA[i].actv) ga_handle=i;
-      i++;
-  }while(i<_max_global_array && ga_handle==-1);
-  if( ga_handle == -1)
-      ga_error(" too many arrays ", (Integer)_max_global_array);
-  g_a = (Integer)ga_handle - GA_OFFSET;
-
-  /*** fill in Global Info Record for g_a ***/
-  gai_init_struct(ga_handle);
-  GA[ga_handle].p_handle = -1;
-  GA[ga_handle].name[0] = '\0';
-  GA[ga_handle].mapc[0] = -1;
-  GA[ga_handle].irreg = 0;
-  GA[ga_handle].ghosts = 0;
-  GA_POP_NAME;
-  return g_a;
-}
-
-/*\ Set the dimensions and data type on a new global array
-\*/
-void nga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
-{
-  Integer i;
-  Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_data");
-  if (GA[ga_handle].actv == 1)
-    ga_error("Cannot set data on array that has been allocated",0);
-  gam_checkdim(*ndim, dims);
-  gam_checktype(ga_type_f2c(*type));
-
-  GA[ga_handle].type = ga_type_f2c((int)(*type));
-
-  for (i=0; i<*ndim; i++) {
-    GA[ga_handle].dims[i] = (int)dims[i];
-    GA[ga_handle].chunk[i] = 0;
-    GA[ga_handle].width[i] = 0;
-  }
-  GA[ga_handle].ndim = (int)(*ndim);
-  GA_POP_NAME;
-}
-
-/*\ Set the chunk array on a new global array
-\*/
-void nga_set_chunk_(Integer *g_a, Integer *chunk)
-{
-  Integer i;
-  Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_chunk");
-  if (GA[ga_handle].actv == 1)
-    ga_error("Cannot set chunk on array that has been allocated",0);
-  if (GA[ga_handle].ndim < 1)
-    ga_error("Dimensions must be set before chunk array is specified",0);
-  if (chunk) {
-    for (i=0; i<GA[ga_handle].ndim; i++) {
-      GA[ga_handle].chunk[i] = (int)chunk[i];
-    }
-  }
-  GA_POP_NAME;
-}
-
-/*\ Set the array name on a new global array
-\*/
-void nga_set_array_name(Integer g_a, char *array_name)
-{
-  Integer ga_handle = g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_array_name");
-  if (GA[ga_handle].actv == 1)
-    ga_error("Cannot set array name on array that has been allocated",0);
-  strcpy(GA[ga_handle].name, array_name);
-  GA_POP_NAME;
-}
-
-/*\ Set the array name on a new global array
- *  Fortran version
-\*/
-#if defined(CRAY) || defined(WIN32)
-void FATR nga_set_array_name_(Integer *g_a, _fcd array_name)
-#else
-void FATR nga_set_array_name_(Integer *g_a, char* array_name)
-#endif
-{
-  int slen;
-  char buf[FNAM];
-#if defined(CRAY) || defined(WIN32)
-  f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
-#else
-  f2cstring(array_name ,slen, buf, FNAM);
-#endif
-
-  nga_set_array_name(*g_a, buf);
-}
-
-/*\ Set the processor configuration on a new global array
-\*/
-void nga_set_proc_config_(Integer *g_a, Integer *p_handle)
-{
-  Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_proc_config");
-  if (GA[ga_handle].actv == 1)
-    ga_error("Cannot set processor configuration on array that has been allocated",0);
-  GA[ga_handle].p_handle = (int) (*p_handle);
-  GA_POP_NAME;
-}
-
-/*\ Add ghost cells to a new global array
-\*/
-void nga_set_ghosts_(Integer *g_a, Integer *width)
-{
-  Integer i;
-  Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_ghosts");
-  if (GA[ga_handle].actv == 1)
-    ga_error("Cannot set ghost widths on array that has been allocated",0);
-  if (GA[ga_handle].ndim < 1)
-    ga_error("Dimensions must be set before array widths are specified",0);
-  for (i=0; i<GA[ga_handle].ndim; i++) {
-    if ((int)width[i] > GA[ga_handle].dims[i])
-      ga_error("Boundary width must be <= corresponding dimension",i);
-    if ((int)width[i] < 0)
-      ga_error("Boundary width must be >= 0",i);
-  }
-  for (i=0; i<GA[ga_handle].ndim; i++) {
-    GA[ga_handle].width[i] = (int)width[i];
-    if (width[i] > 0) GA[ga_handle].ghosts = 1;
-  }
-  GA_POP_NAME;
-}
-
-/*\ Set irregular distribution in a new global array
-\*/
-void nga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
-{
-  Integer i, maplen;
-  Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_irreg_distr");
-  if (GA[ga_handle].actv == 1)
-    ga_error("Cannot set irregular data distribution on array that has been allocated",0);
-  if (GA[ga_handle].ndim < 1)
-    ga_error("Dimensions must be set before irregular distribution is specified",0);
-  for (i=0; i<GA[ga_handle].ndim; i++)
-    if ((int)nblock[i] > GA[ga_handle].dims[i])
-      ga_error("number of blocks must be <= corresponding dimension",i);
-  maplen = 0;
-  for (i=0; i<GA[ga_handle].ndim; i++) {
-    maplen += nblock[i];
-    GA[ga_handle].nblock[i] = (int)nblock[i];
-  }
-  for (i=0; i<maplen; i++) {
-    GA[ga_handle].mapc[i] = (int)mapc[i];
-  }
-  GA[ga_handle].mapc[maplen] = -1;
-  GA[ga_handle].irreg = 1;
-  GA_POP_NAME;
-}
-
-/*\ Overide the irregular data distribution flag on a new global array
-\*/
-void nga_set_irreg_flag_(Integer *g_a, logical *flag)
-{
-  Integer ga_handle = *g_a + GA_OFFSET;
-  GA_PUSH_NAME("nga_set_irreg");
-  GA[ga_handle].irreg = (int)(*flag);
-  GA_POP_NAME;
-}
-
-/*\ Get dimension on a new global array
-\*/
-Integer nga_get_dimension_(Integer *g_a)
-{
-  Integer ga_handle = *g_a + GA_OFFSET;
-  return (Integer)GA[ga_handle].ndim;
-} 
-
-/*\  Allocate memory and complete setup of global array
-\*/
-logical ga_allocate_( Integer *g_a)
-{
-
-  Integer lo[MAXDIM], hi[MAXDIM];
-  Integer ga_handle = *g_a + GA_OFFSET;
-  Integer d, width[MAXDIM], ndim;
-  Integer mem_size, nelem, nnodes;
-  Integer i, status, maplen=0, p_handle;
-  Integer dims[MAXDIM], chunk[MAXDIM];
-  Integer pe[MAXDIM], *pmap[MAXDIM], *map;
-  Integer blk[MAXDIM];
-#ifdef GA_USE_VAMPIR
-  vampir_begin(NGA_ALLOCATE,__FILE__,__LINE__);
-#endif
-
-  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
-  if (GA[ga_handle].ndim == -1)
-    ga_error("Insufficient data to create global array",0);
-  ga_sync_();
-  GA_PUSH_NAME("nga_allocate");
-
-  if(!GAinitialized) ga_error("GA not initialized ", 0);
-  if(!ma_address_init) gai_ma_address_init();
-
-  ndim = GA[ga_handle].ndim;
-  p_handle = GA[ga_handle].p_handle;
-  for (i=0; i<ndim; i++) width[i] = GA[ga_handle].width[i];
-
-  /* The data distribution has not been specified by the user. Create
-     default distribution */
-  if (GA[ga_handle].mapc[0] == -1) {
-    extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,
-                       double thr, Integer bias, Integer blk[],
-                       Integer pedims[]);
-
-    for (d=0; d<ndim; d++) {
-      dims[d] = GA[ga_handle].dims[d];
-      chunk[d] = GA[ga_handle].chunk[d];
-    }
-    if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
-      for(d=0; d< ndim; d++) blk[d]=MIN(chunk[d],dims[d]);
-    else
-      for(d=0; d< ndim; d++) blk[d]=-1;
-
-    /* eliminate dimensions =1 from ddb analysis */
-    for(d=0; d<ndim; d++)if(dims[d]==1)blk[d]=1;
- 
-    if (GAme==0 && DEBUG )
-      for (d=0;d<ndim;d++)
-        fprintf(stderr,"b[%ld]=%ld\n",d,blk[d]);
-    ga_sync_();
-
-    /* ddb(ndim, dims, GAnproc, blk, pe);*/
-    if (p_handle >= 0 && P_LIST[p_handle].mirrored) {
-      ddb_h2(ndim, dims, P_LIST[p_handle].map_nproc, 0.0,
-             (Integer)0, blk, pe);
-    } else {
-      ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
-    }
-
-    for(d=0, map=mapALL; d< ndim; d++){
-      Integer nblock;
-      Integer pcut; /* # procs that get full blk[] elements; the rest gets less*/
-      int p;
-
-      pmap[d] = map;
-
-      /* RJH ... don't leave some nodes without data if possible
-       but respect the users block size */
-      
-      if (chunk && chunk[d] > 1) {
-        Integer ddim = (dims[d]-1)/MIN(chunk[d],dims[d]) + 1;
-        pcut = (ddim -(blk[d]-1)*pe[d]) ;
-      }
-      else {
-        pcut = (dims[d]-(blk[d]-1)*pe[d]) ;
-      }
-
-      for (nblock=i=p=0; (p<pe[d]) && (i<dims[d]); p++, nblock++) {
-        Integer b = blk[d];
-        if (p >= pcut)
-          b = b-1;
-        map[nblock] = i+1;
-        if (chunk && chunk[d]>1) b *= MIN(chunk[d],dims[d]);
-        i += b;
-      }
-
-      pe[d] = MIN(pe[d],nblock);
-      map +=  pe[d]; 
-    }
-    if(GAme==0&& DEBUG){
-      gai_print_subscript("pe ",(int)ndim, pe,"\n");
-      gai_print_subscript("blocks ",(int)ndim, blk,"\n");
-      printf("decomposition map\n");
-      for(d=0; d< ndim; d++){
-        printf("dim=%ld: ",d); 
-        for (i=0;i<pe[d];i++)printf("%ld ",pmap[d][i]);
-        printf("\n"); 
-      }
-      fflush(stdout);
-    }
-    maplen = 0;
-    for( i = 0; i< ndim; i++){
-      GA[ga_handle].nblock[i] = pe[i];
-      maplen += pe[i];
-    }
-    for(i = 0; i< maplen; i++) {
-      GA[ga_handle].mapc[i] = (int)mapALL[i];
-    }
-    GA[ga_handle].mapc[maplen] = -1;
-  }
-
-  GAstat.numcre ++;
-
-  GA[ga_handle].actv = 1;
-  /* If only one node is being used, set proc list to default value */
-  if (ga_cluster_nnodes_() == 1) {
-    GA[ga_handle].p_handle = -1;
-  }
-
-  for( i = 0; i< ndim; i++){
-     GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
-                            / (double)GA[ga_handle].dims[i];
-  } 
-  GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
-  /*** determine which portion of the array I am supposed to hold ***/
-  nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
-  for( i = 0, nelem=1; i< ndim; i++){
-       GA[ga_handle].chunk[i] = (int)(hi[i]-GA[ga_handle].lo[i]+1);
-       nelem *= (int)(hi[i]-GA[ga_handle].lo[i]+1+2*width[i]);
-  }
-  mem_size = nelem * GA[ga_handle].elemsize;
-  GA[ga_handle].id = INVALID_MA_HANDLE;
-  GA[ga_handle].size = mem_size;
-  /* if requested, enforce limits on memory consumption */
-  if(GA_memory_limited) GA_total_memory -= mem_size;
-  /* check if everybody has enough memory left */
-  if(GA_memory_limited){
-     status = (GA_total_memory >= 0) ? 1 : 0;
-     ga_igop(GA_TYPE_GSM, &status, 1, "*");
-  }else status = 1;
-
-  if (status) {
-    status = !gai_getmem(GA[ga_handle].name, GA[ga_handle].ptr,mem_size,
-                             GA[ga_handle].type, &GA[ga_handle].id);
-  } else {
-    GA[ga_handle].ptr[GAme]=NULL;
-  }
-
-  /* If array is mirrored, evaluate first and last indices */
-  ngai_get_first_last_indices(g_a);
-
-  ga_sync_();
-  if (status) {
-    GAstat.curmem += GA[ga_handle].size;
-    GAstat.maxmem  = MAX(GAstat.maxmem, GAstat.curmem);
-    status = TRUE;
-  } else {
-    ga_destroy_(g_a);
-    status = FALSE;
-  }
-  GA_POP_NAME;
-#ifdef GA_USE_VAMPIR
-  vampir_end(NGA_ALLOCATE,__FILE__,__LINE__);
-#endif
-  return status;
 }
