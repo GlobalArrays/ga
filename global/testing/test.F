@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.47 2003-04-19 17:23:44 d3g293 Exp $
+c $Id: test.F,v 1.48 2003-04-21 17:29:56 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -14,7 +14,7 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 
 
-c#define MIRROR
+#define MIRROR
 #define GA3
 
       program main
@@ -24,7 +24,7 @@ c#define MIRROR
 #include "testutil.fh"
       integer heap, stack, fudge, ma_heap, me, nproc
       logical status
-      parameter (heap=100*100*4, fudge=100, stack=100*100)
+      parameter (heap=200*200*4, fudge=100, stack=200*200)
 c     
 c***  Intitialize a message passing library
 c
@@ -75,6 +75,14 @@ c
      $          ' with ',  ga_cluster_nprocs(-1), ' processes' 
         call ffflush(6)
       endif
+#ifdef MIRROR
+      if (me.eq.0) then
+         write(6,*) '*'
+         write(6,*) '* TESTING MIRRORED ARRAYS  '
+         write(6,*) '*'
+         call ffflush(6)
+      endif
+#endif
       call ga_sync()
 c
 c***  Check support for double precision arrays
@@ -485,9 +493,11 @@ c
 #endif
             call ga_error('overlapping accumulate failed',0)
          endif
-         write(6,*)
-         write(6,*) ' overlapping ga_acc is OK'
-         write(6,*)
+         if (me.eq.0) then
+           write(6,*)
+           write(6,*) ' overlapping ga_acc is OK'
+           write(6,*)
+         endif
       endif
 c
 c     Check the ga_add function
@@ -831,6 +841,106 @@ c
          write(6,*)
          write(6,*) ' scatter-accumulate is  OK'
          write(6,*)
+      endif
+#endif
+
+#ifdef MIRROR
+c
+c     Check the merge function
+c
+      do j = 1, n
+         do i = 1, n
+            a(i,j) = inode + i-1 + (j-1)*n
+            b(i,j) =i-1 + (j-1)*n
+         enddo
+      enddo
+      if (me .eq. 0) then
+         write(6,23) 
+ 23      format(/'> Checking merge ...')
+         call ffflush(6)
+      endif
+      if (iproc.eq.0) then 
+         call ga_put(g_a, 1, n, 1, n, a, n)
+      endif
+      call ga_merge_mirrored(g_a)
+      call ga_get(g_a, 1, n, 1, n, b, n)
+      lsame = .true.
+      ilo = 0
+      ihi = nnodes*(nnodes-1)/2
+      do i = 1, n
+        do j = 1, n
+          if (nnodes*a(j,i)+ihi.ne.b(j,i)) then
+            lsame = .false.
+            ilo = ilo + 1
+*            if (ilo.lt.2) then
+*              write(6,22) me,i,j,a(i,j),b(i,j)
+*   22         format('p[',i1,'] i = ',i3,' j = ',i3,' a = ',e12.6,
+*     +               ' b = ',e12.6)
+*            endif
+          endif
+        end do
+      end do
+      if(lsame.and.me.eq.0)then
+         write(6,*)
+         write(6,*) ' merge is OK '
+         write(6,*)
+      elseif (me.eq.0) then
+         write(6,*)
+         write(6,*) ' merge is wrong ',ilo
+         write(6,*)
+         call ga_error('... exiting ',0)
+      endif
+c
+c    Checking copy between different array configurations
+c
+      if (me .eq. 0) then
+         write(6,20) 
+ 20      format(/'> Checking mixed copy ...')
+         call ffflush(6)
+      endif
+      if (.not. nga_create(MT_DBL, ndim, dims, 'c', chunk, g_c)) then
+         call ga_error('ga_create failed for third array ',0)
+      endif
+      call ga_zero(g_c)
+      call ga_copy(g_a,g_c)
+      call ga_get(g_a, 1, n, 1, n, a, n)
+      call ga_get(g_c, 1, n, 1, n, b, n)
+      do i = 1, n
+        do j = 1, n
+          if (a(j,i).ne.b(j,i)) then
+            lsame = .false.
+          endif
+        end do
+      end do
+      if(lsame.and.me.eq.0)then
+         write(6,*)
+         write(6,*) ' Mixed copy (mirrored to normal) is OK '
+         write(6,*)
+      elseif (me.eq.0) then
+         write(6,*)
+         write(6,*) ' Mixed copy (mirrored to normal) is wrong ',ilo
+         write(6,*)
+         call ga_error('... exiting ',0)
+      endif
+      call ga_zero(g_a)
+      call ga_copy(g_c,g_a)
+      call ga_get(g_a, 1, n, 1, n, a, n)
+      do i = 1, n
+        do j = 1, n
+          if (a(j,i).ne.b(j,i)) then
+            lsame = .false.
+          endif
+        end do
+      end do
+      if(lsame.and.me.eq.0)then
+         write(6,*)
+         write(6,*) ' Mixed copy (normal to mirrored) is OK '
+         write(6,*)
+      elseif (me.eq.0) then
+         write(6,*)
+         write(6,*) ' Mixed copy (normal to mirrored) is wrong ',ilo
+         write(6,*)
+         call ga_error('... exiting ',0)
       endif
 #endif
 c
@@ -1393,7 +1503,7 @@ c
       integer iran, i, j, loop, nloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, dimi,dimj,iproc, ii, jj
       integer ndim, dims(2), chunk(2), p_mirror, nnodes
-      integer lprocs, inode
+      integer lprocs, inode, iproc
       double precision nwords
       parameter (nloop = 100)
       integer maxproc
@@ -2390,7 +2500,7 @@ c
         do loop = 1,ii
           i = iv(loop)
           j = jv(loop)
-          if(MISMATCH(a(i,j),b(i,j)))then
+          if(MISMATCHF(a(i,j),b(i,j)))then
              print *,'Error',i,j,loop,a(i,j),'expected=',b(i,j)
 *            if(me.eq.0)then
 *              do ii=1,loop
