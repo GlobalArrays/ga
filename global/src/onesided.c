@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.42 2003-08-12 14:18:12 manoj Exp $ */
+/* $Id: onesided.c,v 1.43 2003-08-12 15:45:28 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -350,6 +350,12 @@ void FATR nga_nbwait_(Integer *nbhandle)
     nga_wait_internal((Integer *)nbhandle);
 } 
 
+/*\ A routine to wait for a non-blocking call to complete
+\*/
+void FATR ga_nbwait_(Integer *nbhandle) 
+{
+    nga_wait_internal((Integer *)nbhandle);
+} 
 
 /*\ A common routine called by both non-blocking and blocking GA put calls.
 \*/

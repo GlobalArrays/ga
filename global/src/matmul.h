@@ -89,6 +89,6 @@ extern void FATR  ga_nbget_(Integer *g_a, Integer *ilo, Integer *ihi,
                     else { dim1=1; dim2=dims[0];}} \
   else ga_error("rank must be atleast 1",rank);
 
-#define WAIT_GET_BLOCK(nbhdl) nga_nbwait_(nbhdl)
+#define WAIT_GET_BLOCK(nbhdl) ga_nbwait_(nbhdl)
 
 #endif /* _MATMUL_H_ */

@@ -506,7 +506,7 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
 
 #ifdef _NBACC
        /* NB Accumulate disabled temporarily */
-       if(irregular) if(currA!=me) nga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
+       if(irregular) if(currA!=me) ga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
 #endif
 
        if(currA < max_tasks) {
@@ -557,7 +557,7 @@ static void gai_nb_matmul(transa, transb, alpha, beta, atype,
    
     if(irregular) {
 #ifdef _NBACC
-       nga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
+       ga_nbwait_(&gNbhdlC[(shiftC+1)%2]);
 #endif
        GA_Destroy(g_t);
     }
