@@ -342,7 +342,7 @@ define AIX4_RANLIB
   strip
 endef
 
-       RANLIB = $(AIX4_RANLIB) 
+#       RANLIB = $(AIX4_RANLIB) 
      FOPT_REN = -qEXTNAME
   CUR_VERSION = DISMEM
     EXPLICITF = TRUE

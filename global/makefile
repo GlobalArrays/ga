@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.21 1997-10-15 16:34:38 d3h325 Exp $
+#$Id: makefile,v 1.22 1997-11-14 05:07:20 d3g681 Exp $
 
 # Tiny makefile wrapper
 
@@ -15,9 +15,13 @@ USES_BLAS = src/ga_solve_seq.F src/ga_dgemm.F src/ga_dgemm_seq.F
 ifdef NWCHEM_TARGET_CPU
     TARGET_CPU = $(NWCHEM_TARGET_CPU)
 endif
+ifdef NWCHEM_TARGET
+ifeq ($(TARGET),SP1)
+    TARGET = SP
+endif
+endif
 
 export LIBDIR CNFDIR BINDIR INCDIR TARGET_CPU
-
 
 global_stamp:	include_stamp 
 	$(MAKE) -f Makefile TARGET=$(TARGET)\
