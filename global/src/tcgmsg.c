@@ -2,6 +2,9 @@
 
 #include "global.h"
 #include "message.h"
+#ifdef SYSV
+#include<string.h>
+#endif
 
 /*** data required to exploit locality and implement data server ***/
 cluster_info_t GA_clus_info[MAX_CLUST];
@@ -36,7 +39,6 @@ struct cluster_info_struct {
 void init_msg_interface()
 {
 #ifdef SYSV
-# include<string.h>
   long i;
 
   if(MAX_CLUST < SR_n_clus)
