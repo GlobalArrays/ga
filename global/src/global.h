@@ -456,14 +456,16 @@ extern void FATR ga_step_max_patch_(Integer *g_a, Integer *alo, Integer *ahi,
 			       Integer *g_b,  Integer *blo, Integer *bhi, 
 			       double *step);
 extern void FATR ga_step_max_(Integer *g_a, Integer *g_b, double *step);
-extern void FATR ga_step_max2_patch_(Integer *g_xx, Integer *xxlo,Integer *xxhi,
+extern void FATR ga_step_bound_info_patch_(Integer *g_xx, Integer *xxlo,Integer *xxhi,
 				Integer *g_vv, Integer *vvlo, Integer *vvhi, 
 				Integer *g_xxll, Integer *xxlllo, 
 				Integer *xxllhi, Integer *g_xxuu, 
 				Integer *xxuulo, Integer *xxuuhi, 
-				double *result);
-extern void FATR ga_step_max2_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, 
-			  Integer *g_xxuu, double *step2);
+				double *boundmin, double *wolfemin,
+				double *boundmax);
+extern void FATR ga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, 
+			  Integer *g_xxuu, double *boundmin,
+			  double *wolfemin, double *boundmax);
 
 extern void FATR ga_shift_diagonal_(Integer *g_a, void *c);
 extern void FATR ga_set_diagonal_(Integer *g_a, Integer *g_v);
