@@ -17,8 +17,8 @@ extern void ga_error();
 
 #define INDEX_SORT(base,pn,SWAP){\
   unsigned long gap, g;\
-  Integer *p, *q, n=*pn;\
-  Integer *hi, *base0=base - 1;\
+  Integer *p, *q, *hi, n=*pn;\
+  Integer  *base0=base - 1;\
 \
   gap = n >>1;\
   hi = base0 + gap + gap;\
@@ -187,3 +187,15 @@ void ga_sort_gath_(pn, i, j, base)
   }
   INDEX_SORT(base,pn,SWAP);
 }
+
+
+void gai_hsort(Integer *list, int num)
+{
+  if(num<2) return;
+# undef SWAP
+# define SWAP(a,b) { Integer ltmp; ltmp=*a; *a=*b; *b=ltmp;}
+  INDEX_SORT(list,&num,SWAP);
+}
+  
+  
+

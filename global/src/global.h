@@ -127,6 +127,13 @@ extern void FATR ga_sort_permut_ ARGS_((Integer* g_a, Integer* index, Integer* i
 extern void FATR ga_print_distribution_(Integer *g_a);
 extern Integer FATR ga_ndim_(Integer *g_a);
 
+extern logical nga_create(Integer type,
+                   Integer ndim,
+                   Integer dims[],
+                   char* array_name,
+                   Integer chunk[],
+                   Integer *g_a);
+
 extern logical nga_create_irreg(
         Integer type,    /* MA type */
         Integer ndim,    /* number of dimensions */
