@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.122 2005-01-24 09:33:37 manoj Exp $
+# $Id: makefile.h,v 1.123 2005-02-22 01:52:26 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -199,8 +199,9 @@ ifeq ($(TARGET),MACX)
            FC = g77
        RANLIB = ranlib
 
-_FC = $(shell $(FC) -v 2>&1 | awk ' /gcc version/ { print "g77"; exit}; /xlf/ {print "xlf"; exit}  ' )
-
+ifneq (,$(findstring mpif,$(_FC)))
+	_FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /xlf/ {print "xlf"; exit } ' )
+endif
 ifneq (,$(findstring mpicc,$(_CC)))
          _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
 endif
@@ -294,7 +295,7 @@ else
            FOPT_REN = -O3 -prefetch -w -cm
        endif
        GLOB_DEFINES += -DIFCLINUX
-       _IFCV8= $(shell ifc -v  2>&1|egrep 8|awk ' /8\./  {print "Y"}')
+       _IFCV8= $(shell ifc -v  2>&1|egrep "Version "|head -1|awk ' /8\./  {print "Y";exit}; /9./ {print "Y"; exit}')
        ifeq ($(_IFCV8),Y)
          GLOB_DEFINES+= -DIFCV8
        endif	
@@ -351,7 +352,7 @@ ifeq  ($(_CPU),ia64)
            FC = efc
            CC = gcc
 ifeq ($(FC),efc)
-       _IFCV8= $(shell efc -V  2>&1|egrep -v Intel|egrep -v efc |egrep -i "version 8"|awk ' /8\./  {print "Y"}')
+       _IFCV8= $(shell efc -v  2>&1|egrep "Version "|head -1|awk ' /8\./  {print "Y";exit}; /9./ {print "Y"; exit}')
        ifeq ($(_IFCV8),Y)
          FC = ifort
          GLOB_DEFINES+= -DIFCV8
@@ -359,7 +360,7 @@ ifeq ($(FC),efc)
      FOPT_REN += -cm -w90 -w95 -align 
 endif
 ifeq ($(FC),ifort)
-       _IFCV8= $(shell efc -V  2>&1|egrep -v Intel|egrep -v efc |egrep -i "version 8"|awk ' /8\./  {print "Y"}')
+       _IFCV8= $(shell ifort -v  2>&1|egrep "Version "|head -1|awk ' /8\./  {print "Y";exit}; /9./ {print "Y"; exit}')
        ifeq ($(_IFCV8),Y)
          GLOB_DEFINES+= -DIFCV8
        endif	
@@ -474,7 +475,12 @@ endif
        ifeq ($(FOPT),-O)
            FOPT_REN += -quiet  -O3 -w -cm -xW -tpp7
        endif
-       GLOB_DEFINES += -DIFCLINUX -DIFCV8
+       GLOB_DEFINES += -DIFCLINUX
+       _IFCV8= $(shell ifort -v  2>&1|egrep "Version "|head -1|awk ' /8\./  {print "Y";exit}; /9./ {print "Y"; exit}')
+       ifeq ($(_IFCV8),Y)
+         GLOB_DEFINES+= -DIFCV8
+       endif
+       FLD_REN += -Vaxlib
    endif
    GLOB_DEFINES += -DNOUSE_MMAP
 endif
@@ -483,13 +489,17 @@ endif
 # LINUX 64 CPU Specific Setup: power4
 #-------------------------------------
 ifeq  ($(_CPU),ppc64)
+  GLOB_DEFINES += -DNOUSE_MMAP
   FC=xlf
-  CC=/opt/cross/bin/powerpc64-linux-gcc
-  COPT=-O3
+  CC=gcc
+  COPT=-O
   COPT_REN +=  -funroll-loops 
   ifeq ($(_CC),xlc)
      COPT_REN = -q64  -qlanglvl=extended
      GLOB_DEFINES += -DXLCLINUX
+  else
+     # this for gcc/gcc
+     COPT_REN +=  -m64
   endif
   ifeq ($(_FC),xlf)
      FOPT_REN = -q64  -qEXTNAME
