@@ -5,6 +5,7 @@ static const long false = 0;
 static const long true  = 1;
 
 extern void Busy(int);
+extern void flush_send_q(void);
 
 #ifdef SHMEM
 
@@ -106,16 +107,20 @@ static void local_await(long *p, long value)
   long nspin = 0;
 #ifdef NOSPIN
   long spinlim = 100;
+# ifdef CRAY
   long waittim = 10000;
+# endif
 #else
   long spinlim = 100000000;
+# ifdef CRAY
   long waittim = 100000;
+# endif
 #endif  
 
   while ((pval = local_flag(p)) != value) {
 
     if (pval && (pval != value)) {
-      fprintf(stdout,"%2ld: invalid value=%ld, local_flag=%lx %ld\n", 
+      fprintf(stdout,"%2ld: invalid value=%ld, local_flag=%p %ld\n", 
               TCGMSG_nodeid, value, p, pval);
       fflush(stdout);
       exit(1);

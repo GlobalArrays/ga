@@ -1,4 +1,4 @@
-/* $Id: nxtval.shm.c,v 1.7 2003-12-13 01:08:37 d3h325 Exp $ */
+/* $Id: nxtval.shm.c,v 1.8 2004-04-01 02:23:05 manoj Exp $ */
 
 #include "tcgmsgP.h"
 long nxtval_counter=0;
@@ -65,7 +65,7 @@ int loop=0, maxloop =100;
   }
 }
 
-static release_spinlock(int *mutex)
+static void release_spinlock(int *mutex)
 {
    *mutex =0;
 }
@@ -90,7 +90,7 @@ long NXTVAL_(long *mproc)
 */
 {
   long shmem_swap();
-  long local;
+  long local=0;
   long sync_type= INTERNAL_SYNC_TYPE;
   long nproc=  NNODES_(); 
   long server=nproc-1; 

@@ -7,7 +7,7 @@ static const long true  = 1;
 extern void USleep(long);
 extern void Busy(int);
 
-extern async_send(SendQEntry *);
+extern long async_send(SendQEntry *);
 
 static long NextMsgID(long node)
 /*
@@ -108,10 +108,14 @@ void msg_wait(long msgid)
   long nspin = 0;
 #ifdef NOSPIN
   long spinlim = 100;
+# ifdef CRAY
   long waittim = 10000;
+# endif
 #else
   long spinlim = 1000000;
+# ifdef CRAY
   long waittim = 100000;
+# endif
 #endif  
 
   while (!msg_status(msgid)) {

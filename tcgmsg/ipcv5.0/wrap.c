@@ -1,9 +1,13 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/wrap.c,v 1.4 2002-12-16 21:48:41 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/wrap.c,v 1.5 2004-04-01 02:23:05 manoj Exp $ */
 
 #include "sndrcv.h"
 #include "typesf2c.h"
 #include "msgtypesc.h"
-
+#ifdef SEQUENT
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 
 #define BUF_SIZE  10000
 #define IBUF_SIZE (BUF_SIZE * sizeof(DoublePrecision)/sizeof(Integer)) 

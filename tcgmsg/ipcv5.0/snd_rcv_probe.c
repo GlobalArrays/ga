@@ -122,9 +122,8 @@ void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
 */
 {
 
-  static long ttype, nbytes;
+  static long ttype;
   static long node;
-  static long status, msgid;
   long   me = NODEID_();
   void msg_rcv();
 
@@ -174,7 +173,6 @@ void SND_(type, buf, lenbuf, node, sync)
   long *sync     = flag for sync(1) or async(0) communication (input)
 */
 {
-  long status, msgid;
   long me = NODEID_();
   long msg_async_snd();
 
@@ -240,7 +238,7 @@ void WAITCOM_(nodesel)
  * this node and node *nodesel or everyone if *nodesel == -1.
  */
 {
-  long i, status, nbytes, found = 0;
+  long i, found = 0;
 
 #ifdef GA_USE_VAMPIR
   vampir_begin(TCGMSG_WAITCOM,__FILE__,__LINE__);
