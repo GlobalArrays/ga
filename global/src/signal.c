@@ -365,3 +365,31 @@ void TrapSigIot()
       if ( signal(SIGIOT, SigIotHandler) == SIG_ERR)
           ERROR("TrapSigIot: error from signal setting SIGIOT", 0);
 }
+
+
+
+/*********************** SIGCONT *************************************/
+#if defined(SUN) && !defined(SOLARIS)
+SigType SigContHandler(sig, code, scp, addr)
+     int code;
+     struct sigcontext *scp;
+     char *addr;
+#else
+SigType SigContHandler(sig)
+#endif
+     int sig;
+{
+/*  SR_caught_sigint = 12;*/
+/*  ERROR("Trace Cont error, status=",(long) sig);*/
+}
+
+void TrapSigCont()
+/*
+  Trap SIGCONT
+*/
+{
+  if ( signal(SIGCONT, SigContHandler) == SIG_ERR)
+    ERROR("TrapSigCont: error from signal setting SIGCONT", 0);
+}
+
+

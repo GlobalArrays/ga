@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.17 1996-12-11 00:10:41 d3h325 Exp $*/
+/*$Id: cray.names.h,v 1.18 1997-02-01 00:26:52 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -62,6 +62,10 @@
 #define  ga_symmetrize_            GA_SYMMETRIZE
 #define  ga_summarize_             GA_SUMMARIZE
 #define  ga_transpose_             GA_TRANSPOSE
+#define  ga_create_mutexes_        GA_CREATE_MUTEXES
+#define  ga_destroy_mutexes_       GA_DESTROY_MUTEXES
+#define  ga_lock_                  GA_LOCK
+#define  ga_unlock_                GA_UNLOCK
 
 #define  gai_dot_patch_            GAI_DOT_PATCH
 #define  gai_dot_                  GAI_DOT

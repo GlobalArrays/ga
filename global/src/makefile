@@ -11,6 +11,7 @@ error:
 endif
 
 INTERRUPT_AVAILABLE = SP1 IPSC DELTA PARAGON
+DATA-SERVER = SUN SGI SGI_N32 SGITFP SGI64 HPUX SOLARIS IBM DECOSF
 
 include ../Makefile.h
 
@@ -18,16 +19,15 @@ ifdef IWAY
 #       LOC_DEFINES = -DIWAY -DSOCKCONNECT
 endif
 
-ifeq ($(VERSION),SHMEM)
-  ifneq ($(TARGET),CRAY-T3D)
-    LOC_DEFINES += -DSYSV
+ifeq ($(TARGET),$(findstring $(TARGET),$(DATA-SERVER)))
     ifndef IWAY
-      ifneq ($(TARGET),KSR)
-        ifneq ($(TARGET),CONVEX-SPP)
-            LOC_DEFINES += -DDATA_SERVER
-        endif
-      endif
+       LOC_DEFINES += -DDATA_SERVER
     endif
+endif
+
+ifeq ($(VERSION),SHMEM)
+  ifneq (CRAY,$(findstring CRAY,$(TARGET)))
+    LOC_DEFINES += -DSYSV
   endif
 endif
 

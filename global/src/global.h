@@ -21,7 +21,7 @@
 #endif
 
 
-#if !defined(NX) && defined(__STDC__) || defined(__cplusplus)
+#if defined(__STDC__) || defined(__cplusplus)
 # define ARGS_(s) s
 #else
 # define ARGS_(s) ()
@@ -35,9 +35,13 @@ extern Integer ga_read_inc_ ARGS_((Integer*, Integer*, Integer*, Integer* ));
 extern Integer ga_verify_handle_ ARGS_((Integer* ));
 extern logical ga_create ARGS_((Integer*, Integer*, Integer*, char*, Integer*,                                  Integer*, Integer*));
 extern logical ga_create_irreg ARGS_((Integer*, Integer*, Integer*, char*,                                            Integer*, Integer*, Integer*, Integer*,                                         Integer* ));
+extern logical ga_create_mutexes_ ARGS_((Integer*));
 extern logical ga_destroy_  ARGS_((Integer* ));
+extern logical ga_destroy_mutexes_  ARGS_((void ));
 extern logical ga_duplicate ARGS_((Integer*, Integer*, char* ));
 extern logical ga_locate_   ARGS_((Integer*, Integer*, Integer*, Integer* ));
+extern void ga_lock_        ARGS_((Integer* ));
+extern void ga_unlock_      ARGS_((Integer* ));
 extern void ga_check_handle ARGS_((Integer*, char*));
 extern logical ga_locate_region_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer*, Integer map[][5], Integer* ));
 extern void  ga_acc_   ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               void*, Integer*, void* ));

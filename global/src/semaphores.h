@@ -35,4 +35,3 @@ int semop();
 
 void SemInit(), SemDel();
 int  SemGet();
-

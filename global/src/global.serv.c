@@ -190,6 +190,7 @@ void ga_list_data_servers_(list)
 }
 
 
+
 /*\ determine msg-passing nodeid for the first GA <num_procs> processes 
 \*/
 void ga_list_nodeid_(list, num_procs)
@@ -216,49 +217,89 @@ void ga_list_nodeid_(list, num_procs)
 }
 
 
+#define FILL_MSG_HEADER {\
+        MessageSnd->g_a = g_a;\
+        MessageSnd->ilo = ilo;\
+        MessageSnd->ihi = ihi;\
+        MessageSnd->jlo = jlo;\
+        MessageSnd->jhi = jhi;\
+        MessageSnd->to     = proc;\
+        MessageSnd->from   = ga_nodeid_();\
+        MessageSnd->type   = type;\
+        MessageSnd->tag    = 77;\
+        MessageSnd->operation  = oper;\
+}
+
+        
+#if !(defined(CRAY_T3D) || defined(CONVEX) || defined(KSR))
+#   define  RECORD_FENCE(to, oper)\
+      if(GA_fence_set && (oper == GA_OP_PUT || oper == GA_OP_ACC ||\
+             oper == GA_OP_DST || oper == GA_OP_RDI)) fence_array[to]=1
+#else 
+#   define  RECORD_FENCE(to, oper) 
+#endif
+
 
 
 /*\  SEND REQUEST MESSAGE to the owner/data_server 
  *   to perform operation "oper" on g_a[ilo:ihi,jlo:jhi]
 \*/
-void ga_snd_req(g_a, ilo,ihi,jlo,jhi, nbytes, data_type, oper, proc, to)
-     Integer g_a, ilo,ihi,jlo,jhi,nbytes,  data_type, oper, to, proc; 
+void ga_snd_req(g_a, ilo,ihi,jlo,jhi, nbytes, type, oper, proc, to)
+     Integer g_a, ilo,ihi,jlo,jhi,nbytes, type, oper, to, proc; 
 {
     Integer  len, ack, from;
 
-    MessageSnd->g_a = g_a;
-    MessageSnd->ilo = ilo;
-    MessageSnd->ihi = ihi;
-    MessageSnd->jlo = jlo;
-    MessageSnd->jhi = jhi;
-    MessageSnd->to     = proc;
-    MessageSnd->from   = ga_nodeid_();
-    MessageSnd->type   = data_type;
-    MessageSnd->tag    = 77;
-    MessageSnd->operation  = oper;
+    FILL_MSG_HEADER;
     
     len = nbytes + MSG_HEADER_SIZE;
 
-    if(DEBUG1)
-       fprintf(stderr,"sending request %d GAto=%d to server %d\n",oper,proc,to);
+    if(DEBUG1) fprintf(stderr,"request %d GAto=%d to server %d\n",oper,proc,to);
     ga_msg_snd(GA_TYPE_REQ, (char*)MessageSnd, len, to);
 
 #   if defined(DATA_SERVER)
      if(ACK) ga_msg_rcv(GA_TYPE_ACK, (char*)&ack, sizeof(ack), &len, to, &from);
 #   endif
-    if(DEBUG0)fprintf(stderr,"GAme=%d sending request %d to server %d done\n",
+
+    if(DEBUG0)fprintf(stderr,"GAme=%d request %d sent to server %d\n",
               ga_nodeid_(), oper, to);
+
     NumSndReq++; /* count requests sent */
 
-#if !(defined(CRAY_T3D) || defined(CONVEX) || defined(KSR))
-      if(GA_fence_set && (oper == GA_OP_PUT || oper == GA_OP_ACC || 
-                          oper == GA_OP_DST || oper == GA_OP_RDI))
-                          fence_array[to]=1;
-#   endif
+    RECORD_FENCE(to, oper); 
 }
 
 
 #include "mem.ops.h"
+
+void ga_snd_req2D(g_a, ilo,ihi,jlo,jhi, type, oper, ptr_src, ld, proc, to)
+     Integer g_a, ilo,ihi,jlo,jhi, type, oper, proc, to, ld; 
+     char *ptr_src;
+{
+    Integer  len, ack, from, rows, cols;
+
+    FILL_MSG_HEADER;
+
+    rows = ihi-ilo+1;
+    cols = jhi-jlo+1;
+    len = (rows*cols)*GAsizeofM(type) + MSG_HEADER_SIZE;
+
+    Copy2D(type, &rows, &cols, ptr_src, &ld, (char *)MessageSnd->buffer, &rows);
+
+    if(DEBUG1) fprintf(stderr,"request %d GAto=%d to server %d\n",oper,proc,to);    ga_msg_snd(GA_TYPE_REQ, (char*)MessageSnd, len, to);
+
+#   if defined(DATA_SERVER)
+     if(ACK) ga_msg_rcv(GA_TYPE_ACK, (char*)&ack, sizeof(ack), &len, to, &from);
+#   endif
+
+    if(DEBUG0)fprintf(stderr,"GAme=%d request %d  sent to server %d\n",
+              ga_nodeid_(), oper, to);
+
+    NumSndReq++; /* count requests sent */
+
+    RECORD_FENCE(to, oper); 
+}
+
+
 
 /*\ DATA SERVER services remote requests
  *       . invoked by interrupt-receive message as a server thread in addition 
@@ -274,6 +315,8 @@ void ga_SERVER(from)
 Integer msglen, ld, offset = 0, rdi_val, elem_size, nelem, toproc,ack;
 char    *piindex, *pjindex, *pvalue;
 
+void ga_server_lock(Integer handle, Integer id, Integer node);
+void ga_server_unlock(Integer handle, Integer id, Integer node, Integer next);
 void    ga_get_local(), ga_put_local(), ga_acc_local(), ga_scatter_local(),
         ga_gather_local();
 Integer ga_read_inc_local();
@@ -356,8 +399,7 @@ Integer ga_read_inc_local();
                                MessageRcv->ilo, MessageRcv->ihi,
                                MessageRcv->jlo, MessageRcv->jhi,
                                MessageRcv->buffer, offset, ld, toproc,
-                               MessageRcv->buffer+msglen); 
-                               /* alpha is at the end*/
+                               MessageRcv->alpha); 
                             break;
 
           case GA_OP_RDI:   /* read and increment */
@@ -474,6 +516,16 @@ Integer ga_read_inc_local();
                              */
                             ga_msg_snd(GA_TYPE_ACK, &ack, 0, from);
                             break;                          
+
+          case GA_OP_LCK:   /* acquire lock on behalf client node*/
+                            ga_server_lock(MessageRcv->g_a,MessageRcv->ilo,
+                                                                     from);
+                            break;
+
+          case GA_OP_UNL:   /* release lock held  the node; g_a = id */
+                            ga_server_unlock(MessageRcv->g_a,MessageRcv->ilo,
+                                                        from,MessageRcv->ihi); 
+                            break;
 
                  default:   ga_error("ga_server: unknown request",ga_nodeid_());
       }

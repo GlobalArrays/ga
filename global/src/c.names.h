@@ -62,3 +62,9 @@
 #define  GA_uses_ma                ga_uses_ma_
 #define  GA_verify_handle          ga_verify_handle_
 #define  GA_zero                   ga_zero_
+
+#define  GA_create_mutexes         ga_create_mutexes_
+#define  GA_destroy_mutexes        ga_destroy_mutexes_
+#define  GA_lock                   ga_lock_
+#define  GA_unlock                 ga_unlock_
+

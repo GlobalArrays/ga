@@ -1,4 +1,4 @@
-/*$Id: message.h,v 1.9 1996-08-15 22:02:03 d3h325 Exp $*/
+/*$Id: message.h,v 1.10 1997-02-01 00:27:02 d3h325 Exp $*/
 
 #ifdef MPI
 #  include "mpi.h"
@@ -18,8 +18,9 @@
 /* limit the buffer size on SP when unexpected messages arrive (IWAY) */
 #define IWAY_MSG_BUF_SIZE    8000 
 
-#define REQ_FIELDS 10
-#define MSG_HEADER_SIZE  (REQ_FIELDS*sizeof(Integer))
+#define REQ_FIELDS_INT 10
+#define REQ_FIELDS_DBL 2
+#define MSG_HEADER_SIZE  (REQ_FIELDS_INT*sizeof(Integer)+REQ_FIELDS_DBL*sizeof(DoublePrecision))
 #define TOT_MSG_SIZE     (MSG_BUF_SIZE + MSG_HEADER_SIZE) 
 #define MSG_BUF_DBL_SIZE ((TOT_MSG_SIZE + sizeof(double)-1)/sizeof(double))
 
@@ -42,6 +43,7 @@ struct message_struct{
        Integer operation; 
        Integer from; 
        Integer tag; 
+       DoublePrecision alpha[REQ_FIELDS_DBL];
        char    buffer[MSG_BUF_SIZE];
 };
 

@@ -4,27 +4,26 @@
 #  define volatile
 #endif
 
-#ifdef KSR
-#  define PRIVATE  __private 
-#else
-#  define PRIVATE  
-#endif
-
-
 #define MAX_REG     128             /* max number of shmem regions per array */
 #define RESERVED    2*sizeof(long)  /* used for shmem buffer management */  
 #define FNAM        35              /* length of Fortran names   */
 #define FLEN        80              /* length of Fortran strings */
-#define GA_OFFSET   1000            /* offset for handle numbering */
-#define BUF_SIZE    4096 
+#define BUF_SIZE    4096            /* size of shmem buffer */ 
+#define ERR_STR_LEN 200             /* length of string for error reporting */
+
+#ifdef  CRAY_T3D
+#       define ALLIGN_SIZE      32
+#else
+#       define ALLIGN_SIZE      128
+#endif
 
 #ifdef  SHMEM
 #  define MAX_PTR MAX_NPROC
 #else
 #  define MAX_PTR 1
 #endif
-#define   MAPLEN  (MIN(GAnproc, MAX_NPROC) +2)
 
+#define   MAPLEN  (MIN(GAnproc, MAX_NPROC) +2)
 
 
 typedef struct {
@@ -42,22 +41,15 @@ typedef struct {
        long lock;               /* lock                                 */
        long id;			/* ID of shmem region / MA handle       */
        char name[FNAM+1];       /* array name                           */
-} global_array;
+} global_array_t;
 
 
-static global_array GA[MAX_ARRAYS]; 
+static global_array_t GA[MAX_ARRAYS]; 
 static int max_global_array = MAX_ARRAYS;
 Integer map[MAX_NPROC][5];               /* used in get/put/acc */
 extern Integer in_handler;               /* set in interrupt handler*/
 
 
-#ifdef  CRAY_T3D
-#       define ALLIGN_SIZE      32 
-#else
-#       define ALLIGN_SIZE      128
-#endif
-
-#define ERR_STR_LEN 200
 char err_string[ ERR_STR_LEN];        /* string for extended error reporting */
 char *GA_name_stack[NAME_STACK_LEN];  /* stack for storing names of GA ops */ 
 int  GA_stack_size=0;
@@ -106,10 +98,10 @@ int  GA_stack_size=0;
 /**************** Shared Memory and Mutual Exclusion Co.  **************/
 #ifdef SYSV
        /* SHARED MEMORY */
-       PRIVATE volatile int    barrier_size;
-       PRIVATE volatile int    *Barrier, *Barrier1;
-       PRIVATE static  long            shmSIZE, shmID;
-       PRIVATE static  DoublePrecision *shmBUF;
+       volatile int             barrier_size;
+       volatile int            *Barrier, *Barrier1;
+       static  long             shmSIZE, shmID;
+       static  DoublePrecision *shmBUF;
 #      ifdef KSR
            /* lock entire block owned by proc
             * Note that for this to work in data server mode we need use
@@ -123,9 +115,9 @@ int  GA_stack_size=0;
 #      elif defined(SGIUS)
 #          include "locks.h"
            long   lockID;
-#          define LOCK(g_a,proc, x)  NATIVE_LOCK((proc)-GAmaster)
-#          define UNLOCK(g_a,proc,x) NATIVE_UNLOCK((proc)-GAmaster)
-#          define MUTEX cluster_nodes 
+#          define LOCK(g_a,proc, x)  NATIVE_LOCK((proc)-GAmaster+RESERVED_LOCKS)
+#          define UNLOCK(g_a,proc,x) NATIVE_UNLOCK((proc)-GAmaster+RESERVED_LOCKS)
+#          define MUTEX 1
            /* P & V compatible with binary sem ops */
 #          define P(s)  NATIVE_LOCK((s))
 #          define V(s)  NATIVE_UNLOCK((s)) 
@@ -133,20 +125,20 @@ int  GA_stack_size=0;
 #          include "locks.h"
 #          include "semaphores.h"
            long   lockID;
-#          define LOCK(g_a,proc, x)  NATIVE_LOCK((proc)-GAmaster)
-#          define UNLOCK(g_a,proc,x) NATIVE_UNLOCK((proc)-GAmaster)
+#          define LOCK(g_a,proc, x)  NATIVE_LOCK((proc)-GAmaster+RESERVED_LOCKS)
+#          define UNLOCK(g_a,proc,x) NATIVE_UNLOCK((proc)-GAmaster+RESERVED_LOCKS)
 #          define NUM_SEM 1
-#          define MUTEX 0
+#          define MUTEX 1
 #      else
            /* define LOCK OPERATIONS using SYSV semaphores */
 #          include "semaphores.h"
-#          define NUM_SEM  MIN(2,SEMMSL)
-#          define ARR_SEM  (NUM_SEM -1) /* num of sems for locking arrays */
-#          define MUTEX    ARR_SEM      /* semid  for synchronization */
+#          define NUM_SEM  MIN(1+RESERVED_LOCKS,SEMMSL) /* min num semaphores */
+#          define ARR_SEM  (NUM_SEM -RESERVED_LOCKS)  /* num of sems for locking arrays */
+#          define MUTEX    1             /* semid  for synchronization */
 #          define LOCK(g_a,proc, x)\
-                  P(((proc)-GAmaster)%ARR_SEM)
+                  P(((proc)-GAmaster)%ARR_SEM+RESERVED_LOCKS)
 #          define UNLOCK(g_a,proc, x)\
-                   V(((proc)-GAmaster)%ARR_SEM)
+                   V(((proc)-GAmaster)%ARR_SEM+RESERVED_LOCKS)
 #      endif
 #else
 #      ifdef CRAY_T3D
@@ -191,6 +183,11 @@ int  GA_stack_size=0;
 #       define  FLUSH_CACHE_LINE(x) 
 #endif
 
+#if defined(CRAY_T3E)
+#   define FENCE shmem_fence()
+#else
+#   define FENCE 
+#endif
 
 #ifdef KSR
         int    KSRbarrier_mem_req();
@@ -246,14 +243,11 @@ extern long Detach_Shared_Region ARGS_((long id, long size, char *addr));
 extern long Delete_Shared_Region ARGS_((long id));
 extern long Delete_All_Regions ARGS_(( void));
 
-extern Integer MA_push_get ARGS_((Integer, Integer, char*, Integer*, Integer*));
-extern Integer MA_pop_stack ARGS_((Integer));
 extern void ga_sort_scat ARGS_((Integer*,Void*,Integer*,Integer*,Integer*, Integer));
 extern void ga_sort_gath_ ARGS_((Integer*, Integer*, Integer*, Integer*));
 
 
 #undef ARGS_
-
 
 #ifdef GA_TRACE
   static Integer     op_code;

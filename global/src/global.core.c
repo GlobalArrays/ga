@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.34 1996-12-20 19:48:14 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.35 1997-02-01 00:26:55 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -201,7 +201,7 @@ void TrapSigInt(), TrapSigChld(),
      TrapSigIll(), TrapSigSegv(),
      TrapSigSys(), TrapSigTrap(),
      TrapSigHup(), TrapSigTerm(),
-     TrapSigIot();
+     TrapSigIot(), TrapSigCont();
 
      TrapSigBus();
      TrapSigFpe();
@@ -210,6 +210,7 @@ void TrapSigInt(), TrapSigChld(),
      TrapSigSys();
      TrapSigTrap();
      TrapSigTerm();
+     TrapSigCont();
 #ifdef SGI
      TrapSigIot();
 #endif
@@ -407,7 +408,7 @@ long *msg_buf;
 #       if !defined(KSR)
            if(GAnproc > 1 ){
 #             if defined(SGIUS)  || defined (SPPLOCKS)
-                 CreateInitLocks(cluster_nodes+1, &lockID); 
+                 CreateInitLocks(cluster_nodes+RESERVED_LOCKS, &lockID); 
 #             else
                  /* allocate and intialize semaphores */
                  semaphoreID = SemGet(NUM_SEM);
@@ -624,8 +625,6 @@ static Integer map1[MAX_NPROC], map2[MAX_NPROC];
 Integer nblock1, nblock2;
 
       if(!GAinitialized) ga_error("GA not initialized ", 0);
-
-/*      ga_sync_();*/ /* syncing in ga_create_irreg too */
 
       if(*type != MT_F_DBL && *type != MT_F_INT &&  *type != MT_F_DCPL)
          ga_error("ga_create: type not yet supported ",  *type);
@@ -1322,8 +1321,9 @@ Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
                                                                                \
       ga_ownsM(g_handle, (proc), _ilo, _ihi, _jlo, _jhi);                      \
       if((_i)<_ilo || (_i)>_ihi || (_j)<_jlo || (_j)>_jhi){                    \
-          sprintf(err_string,"%s: p=%d invalid i/j (%d,%d) >< (%d:%d,%d:%d)",  \
-                 "gaShmemLocation", proc, (_i),(_j), _ilo, _ihi, _jlo, _jhi);  \
+          sprintf(err_string,"%s:%d p=%d invalid i/j (%d,%d) >< (%d:%d,%d:%d)",\
+                 "gaShmemLocation", g_handle, proc,                   \
+                                          (_i),(_j), _ilo, _ihi, _jlo, _jhi);  \
           ga_error(err_string, g_a );                                          \
       }                                                                        \
       offset = ((_i) - _ilo) + (_ihi-_ilo+1)*((_j)-_jlo);                      \
@@ -1351,9 +1351,9 @@ Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
 
 /*\ local put of a 2-dimensional patch of data into a global array
 \*/
-void ga_put_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
-   Integer g_a, ilo, ihi, jlo, jhi,  ld, offset, proc;
-   Void *buf;
+void ga_put_local(Integer g_a, Integer ilo, Integer ihi, 
+                               Integer jlo, Integer jhi, 
+                  void* buf, Integer offset, Integer ld, Integer proc)
 {
 char     *ptr_glob, *ptr_loc;
 Integer  ld_glob, rows, cols, type;
@@ -1374,32 +1374,25 @@ Integer  ld_glob, rows, cols, type;
 }
 
 
-
 /*\ remote put of a 2-dimensional patch of data into a global array
 \*/
 void ga_put_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
    Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
    Void *buf;
 {
-char     *ptr_src, *ptr_dst;
-Integer  type, rows, cols, msglen;
+char     *ptr_src;
+Integer  type;
 
    if(proc<0)ga_error(" ga_put_remote: invalid process ",proc);
 
+   /* prepare request data */
    type = GA[GA_OFFSET + g_a].type;
-   rows = ihi - ilo +1;
-   cols = jhi - jlo +1;
-
-   /* Copy patch [ilo:ihi, jlo:jhi] into MessageBuffer */
-   ptr_dst = (char*)MessageSnd->buffer;
    ptr_src = (char *)buf  + GAsizeofM(type)* offset;
 
-   Copy2D(type, &rows, &cols, ptr_src, &ld, ptr_dst, &rows); 
-
-   msglen = rows*cols*GAsizeofM(type);
-   ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_PUT,
-              proc, DataServer(proc));
+   ga_snd_req2D(g_a, ilo,ihi,jlo,jhi, type, GA_OP_PUT, ptr_src, ld,
+                proc, DataServer(proc));
 }
+
 
 
 /*\ PUT A 2-DIMENSIONAL PATCH OF DATA INTO A GLOBAL ARRAY 
@@ -1424,6 +1417,8 @@ Integer  ilop, ihip, jlop, jhip, offset;
                   *ilo, *ihi, *jlo, *jhi);
           ga_error(err_string, *g_a);
       }
+
+      if(np > 1 || map[0][4] != GAme) FENCE;
 
       gaPermuteProcList(np); 
       for(idx=0; idx<np; idx++){
@@ -1473,9 +1468,9 @@ Integer  ilop, ihip, jlop, jhip, offset;
 
 /*\ local get of a 2-dimensional patch of data into a global array
 \*/
-void ga_get_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
-   Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
-   Void *buf;
+void ga_get_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo,
+                  Integer jhi, void* buf, Integer offset, Integer ld,
+                  Integer proc)
 {
 char     *ptr_glob, *ptr_loc;
 Integer  ld_glob, rows, cols, type;
@@ -1727,6 +1722,9 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
         LOCK(g_a, proc, ptr_dst);
             ga_acc_1d_local(type, alpha, rows, cols, ptr_dst, ldp, ptr_src, ld, 
                                                       pbuffer, buflen, proc);
+#           ifdef CRAY_T3E
+              shmem_quiet();
+#           endif
         UNLOCK(g_a, proc, ptr_dst);
 
         if(bytes >LEN_BUF) MA_pop_stack(handle);
@@ -1766,28 +1764,21 @@ void ga_acc_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc, alpha)
    Integer g_a, ilo, ihi, jlo, jhi, ld, offset, proc;
    void *alpha, *buf;
 {
-char     *ptr_src, *ptr_dst;
-Integer  type, rows, cols, msglen;
+char     *ptr_src;
+Integer  type;
 
    if(proc<0)ga_error(" acc_remote: invalid process ",proc);
+
+   /* prepare request data */
    type = GA[GA_OFFSET + g_a].type;
-   rows = ihi - ilo +1;
-   cols = jhi - jlo +1;
-
-   /* Copy patch [ilo:ihi, jlo:jhi] into MessageBuffer */
-   ptr_dst = (char*)MessageSnd->buffer;
    ptr_src = (char *)buf  + GAsizeofM(type)* offset;
+   if(type==MT_F_DBL)
+     *(DoublePrecision*)MessageSnd->alpha= *(DoublePrecision*)alpha; 
+   else if(type==MT_F_DCPL) 
+     *(DoubleComplex*)MessageSnd->alpha= *(DoubleComplex*)alpha;
+   else *(Integer*)MessageSnd->alpha= *(Integer*)alpha;
 
-   Copy2D(type, &rows, &cols, ptr_src, &ld, ptr_dst, &rows);
-
-   /* append alpha at the end */
-   ptr_dst += rows*cols*GAsizeofM(type);
-   if(type==MT_F_DBL)*(DoublePrecision*)ptr_dst= *(DoublePrecision*)alpha; 
-   else if(type==MT_F_DCPL) *(DoubleComplex*)ptr_dst= *(DoubleComplex*)alpha;
-   else *(Integer*)ptr_dst= *(Integer*)alpha;
-
-   msglen = rows*cols*GAsizeofM(type) + GAsizeofM(type); /* plus alpha */
-   ga_snd_req(g_a, ilo,ihi,jlo,jhi, msglen, type, GA_OP_ACC,
+   ga_snd_req2D(g_a, ilo,ihi,jlo,jhi, type, GA_OP_ACC, ptr_src, ld,
               proc, DataServer(proc));
 }
 
@@ -2301,6 +2292,8 @@ Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
    
   /* go through the list again executing scatter for each processor */
 
+  FENCE;
+
   first = 0;
   do { 
       proc  = INT_MB[pindex+first]; 
@@ -2551,8 +2544,8 @@ Integer first, BufLimit, proc;
 
 /*\ local read and increment of an element of a global array
 \*/
-Integer ga_read_inc_local(g_a, i, j, inc, proc)
-        Integer g_a, i, j, inc, proc;
+Integer ga_read_inc_local(Integer g_a, Integer i, Integer j, Integer inc, 
+                                                            Integer proc)
 {
 Integer *ptr, ldp, value;
 

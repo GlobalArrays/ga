@@ -1,4 +1,9 @@
+#ifndef  GLOBALP_H
+#define GLOBALP_H
+
 #include "config.h"
+
+#define GA_OFFSET   1000           /* offset for handle numbering */
 
 #ifndef MAX_NPROC                  /* default max number of processors  */
 #   ifdef PARAGON
@@ -12,9 +17,14 @@
 #   elif defined(KSR)
 #     define MAX_NPROC      80
 #   else
-#     define MAX_NPROC      128     /* default for everything else */
+#     define MAX_NPROC     128     /* default for everything else */
 #   endif
 #endif
+
+#ifdef SYSV
+#  define RESERVED_LOCKS  2        /* reserved for barrier and ga_lock */
+#endif
+
 
 /* types/tags of messages used internally by GA */
 #define     GA_TYPE_REQ   GA_MSG_OFFSET + 1
@@ -33,6 +43,7 @@
 #define     GA_TYPE_SYN   GA_MSG_OFFSET + 14
 #define     GA_TYPE_GOP   GA_MSG_OFFSET + 15
 #define     GA_TYPE_BRD   GA_MSG_OFFSET + 16
+#define     GA_TYPE_LCK   GA_MSG_OFFSET + 17
 #define     GA_TYPE_MAS   GA_MSG_OFFSET + 20
 
 /* GA operation ids */
@@ -44,7 +55,7 @@
 #define     GA_OP_DES 6          /* Destroy                     */
 #define     GA_OP_DUP 7          /* Duplicate                   */
 #define     GA_OP_ZER 8          /* Zero                        */
-#define     GA_OP_DDT 9          /* Double precision dot product*/
+#define     GA_OP_DDT 9          /* dot product                 */
 #define     GA_OP_DST 10         /* scatter                     */
 #define     GA_OP_DGT 11         /* gather                      */
 #define     GA_OP_DSC 12         /* scale                       */
@@ -52,6 +63,8 @@
 #define     GA_OP_ADD 14         /* add                         */
 #define     GA_OP_RDI 15         /* Integer read and increment  */
 #define     GA_OP_ACK 16         /* acknowledgment              */
+#define     GA_OP_LCK 17         /* acquire lock                */
+#define     GA_OP_UNL 18         /* release lock                */
 
 
 #ifdef GA_TRACE
@@ -106,15 +119,24 @@ extern int  GA_stack_size;
 #define  GA_PUSH_NAME(name) (GA_name_stack[GA_stack_size++] = (name)) 
 #define  GA_POP_NAME        (GA_stack_size--)
 
-#if defined(__STDC__) || defined(__cplusplus)
-# define ARGS_(s) s
-#else
-# define ARGS_(s) ()
+
+extern void f2cstring(char*, Integer, char*, Integer);
+extern void c2fstring( char*, char*, Integer);
+extern void ga_clean_resources( void);
+extern Integer MA_push_get (Integer, Integer, char*, Integer*, Integer*);
+extern Integer MA_alloc_get (Integer, Integer, char*, Integer*, Integer*);
+extern Integer MA_pop_stack (Integer);
+extern Integer MA_free_heap (Integer);
+
+
+extern void ga_put_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo, 
+                         Integer jhi, void* buf, Integer offset, Integer ld, 
+                         Integer proc);
+extern void ga_get_local(Integer g_a, Integer ilo, Integer ihi, Integer jlo, 
+                         Integer jhi, void* buf, Integer offset, Integer ld, 
+                         Integer proc);
+extern Integer ga_read_inc_local(Integer g_a, Integer i, Integer j, Integer inc, 
+                                 Integer proc);
+
+
 #endif
-
-extern void f2cstring    ARGS_((char*, Integer, char*, Integer));
-extern void c2fstring    ARGS_(( char*, char*, Integer));
-extern void ga_clean_resources ARGS_(( void));
-
-
-#undef ARGS_

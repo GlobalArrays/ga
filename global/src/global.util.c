@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.18 1996-08-27 17:44:14 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.19 1997-02-01 00:26:59 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -410,14 +410,13 @@ void f2cstring(fstring, flength, cstring, clength)
 void ga_debug_suspend()
 {
 #ifdef SYSV
-#  define SECS 10
 #  include <sys/types.h>
 #  include <unistd.h>
 
-   fprintf(stdout,"ga_debug: process %ld sleeping for %d seconds\n",
-           (long)getpid(), SECS);
+   fprintf(stdout,"ga_debug: process %ld ready for debugging\n",
+           (long)getpid());
    fflush(stdout);
-   sleep(SECS);
+   pause();
 
 #endif
 }
