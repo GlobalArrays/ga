@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.50 2003-09-03 17:11:20 d3g293 Exp $ */
+/* $Id: base.c,v 1.51 2003-09-03 17:42:13 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -3366,7 +3366,7 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
               dstn = fptr + slength;
             }
             armci_msg_rcv(armci_tag, dstn,rlength,NULL,next_nodel);
-            printf("p[%d] Recieved (1) data from %d\n",GAme,next_nodel);
+            /*printf("p[%d] Recieved (1) data from %d\n",GAme,next_nodel);*/
             if (GAme > next_nodel)
               fptr -= rlength;
             slength += rlength;
