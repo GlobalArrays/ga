@@ -80,6 +80,7 @@ typedef struct{                   /* stores info associated with DRA request */
 
 
 extern disk_array_t *DRA;
+extern logical dra_debug_flag;
 
 
 /**************************** common macros ********************************/

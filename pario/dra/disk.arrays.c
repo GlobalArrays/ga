@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.33 2002-01-23 02:12:58 edo Exp $*/
+/*$Id: disk.arrays.c,v 1.34 2002-01-23 17:51:32 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -109,6 +109,7 @@ Integer         _idx_buffer, _handle_buffer;
 
 disk_array_t *DRA;          /* array of struct for basic info about DRA arrays*/
 Integer _max_disk_array;    /* max number of disk arrays open at a time      */
+logical dra_debug_flag;     /* globally defined debug parameter */
 
 
 request_t     Requests[MAX_REQ];
@@ -314,6 +315,7 @@ int i;
 
         for(i=0; i<MAX_REQ; i++)Requests[i].num_pending=0;
 
+        dra_debug_flag = FALSE;
 #ifndef STATBUF
         {
             /* check if we have enough MA memory for DRA buffer on every node */
@@ -2042,9 +2044,9 @@ void ndai_chunking(Integer elem_size, Integer ndim, Integer block_orig[],
     _R = (DRA[_hndl].dims[_i]+DRA[_hndl].chunk[_i]-1)/DRA[_hndl].chunk[_i]; \
     _b[_i] = (_C)%_R; \
   } \
-  for (_i=1; _i<DRA[_hndl].ndim; _i++) { \
+  for (_i=0; _i<DRA[_hndl].ndim; _i++) { \
     (ds_a)->lo[_i] = _b[_i]*DRA[_hndl].chunk[_i] + 1; \
-    (ds_a)->hi[_i] = (ds_a)->lo[_i] + DRA[_hndl].chunk[_i] + 1; \
+    (ds_a)->hi[_i] = (ds_a)->lo[_i] + DRA[_hndl].chunk[_i] - 1; \
     if ((ds_a)->hi[_i] > DRA[_hndl].dims[_i]) \
       (ds_a)->hi[_i] = DRA[_hndl].dims[_i]; \
   } \
@@ -2085,15 +2087,11 @@ Integer par_block[MAXDIM];
         /* compute offset (in elements) */
 
         if (INDEPFILES(ds_a.handle)) {
-          /* WARNING!! WARNING!! WARNING!! This stuff does not even
-           * begin to work. Any calculation that makes use of this block
-           * of code will produce only crap. */
-
-           Integer   CR, C, block_dims[MAXDIM]; 
-           Integer   index[MAXDIM], nelem;
-           Integer   i, j;
-           Integer   ioprocs = dai_io_procs(ds_a.handle); 
-           Integer   iome = dai_io_nodeid(ds_a.handle);
+          Integer   CR, C, block_dims[MAXDIM]; 
+          Integer   index[MAXDIM], nelem;
+          Integer   i, j;
+          Integer   ioprocs = dai_io_procs(ds_a.handle); 
+          Integer   iome = dai_io_nodeid(ds_a.handle);
            
            /* Find index of current block and find number of chunks in
               each dimension of DRA */
@@ -2103,8 +2101,8 @@ Integer par_block[MAXDIM];
                           / DRA[handle].chunk[i];
           }
           if (iome >= 0) {
-            offset = 0;
-            for (i=iome; i<CR-1; i+=ioprocs) {
+            offelem = 0;
+            for (i=iome; i<CR; i+=ioprocs) {
               /* Copy i because macro destroys i */
               C = i;
               nblock_to_indicesM(index,ndim,block_dims,C);
@@ -2113,7 +2111,11 @@ Integer par_block[MAXDIM];
                 if (index[j]<block_dims[j]-1) {
                   nelem *= DRA[handle].chunk[j];
                 } else {
-                  nelem *= part_chunk[j];
+                  if (part_chunk[j] != 0) {
+                    nelem *= part_chunk[j];
+                  } else {
+                    nelem *= DRA[handle].chunk[j];
+                  }
                 }
               }
               offelem += nelem;
@@ -2124,7 +2126,11 @@ Integer par_block[MAXDIM];
               if (index[i]<block_dims[i]-1) {
                 nelem *= DRA[handle].chunk[i];
               } else {
-                nelem *= part_chunk[i];
+                if (part_chunk[i] != 0) {
+                  nelem *= part_chunk[i];
+                } else {
+                  nelem *= DRA[handle].chunk[i];
+                }
               }
             }
             nelem *= (ds_a.lo[ndim-1]-1)%DRA[handle].chunk[ndim-1];
@@ -2671,9 +2677,12 @@ int       retval, ndim = DRA[handle].ndim, i;
     /* ds_chunk->lo is getting set in this call. list contains the
        the lower and upper indices of the cover section. */
     retval = ndai_next(ds_chunk->lo, list, DRA[handle].chunk, ndim);
-    /* retval = dai_next2d(&ds_chunk->lo[0], list[0], list[1],
-           DRA[handle].chunk[0], &ds_chunk->lo[1], list[2], list[3],
-           DRA[handle].chunk[1]); */
+    /*
+    printf("Request %d\n",req);
+    for (i=0; i<ndim; i++) {
+      printf("ds_chunk.lo[%d] = %d cover.lo[%d] = %d cover.hi[%d] = %d\n", i,
+          ds_chunk->lo[i], i, list[2*i], i, list[2*i+1]);
+    } */
     if(!retval) {
       return(retval);
     }
@@ -2696,6 +2705,10 @@ int       retval, ndim = DRA[handle].ndim, i;
          nlo = 2*(ndim-1);
          if(ds_chunk->lo[ndim-1] < list[nlo]) ds_chunk->lo[ndim-1] = list[nlo]; 
     }
+    /*
+    for (i=0; i<ndim; i++) {
+      printf("ds_chunk.hi[%d] = %d\n", i, ds_chunk->hi[i]);
+    } */
 
     return 1;
 }
@@ -2723,19 +2736,22 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
   char      *buffer; 
 
   ds_chunk =  ds_unlg = ds_a;
-/*  for (i=0; i<ndim; i++) {
-    printf("(init) ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
-    printf("(init) ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
-  }
-  printf("(init) number of unaligned chunks = %d\n",Requests[req].nu);
-  for (j=0; j<Requests[req].nu; j++) {
+  if (dra_debug_flag && 0) {
     for (i=0; i<ndim; i++) {
-      printf("(init) list_cover[%d][%d] = %d\n",
-          j,2*i,Requests[req].list_cover[j][2*i]);
-      printf("(init) list_cover[%d][%d] = %d\n",
-          j,2*i+1,Requests[req].list_cover[j][2*i+1]);
+      printf("ndai_transfer_unlgn: ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
+      printf("ndai_transfer_unlgn: ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
     }
-  } */
+    printf("ndai_transfer_unlgn: number of unaligned chunks = %d\n",
+        Requests[req].nu);
+    for (j=0; j<Requests[req].nu; j++) {
+      for (i=0; i<ndim; i++) {
+        printf("ndai_transfer_unlgn: list_cover[%d][%d] = %d\n",
+            j,2*i,Requests[req].list_cover[j][2*i]);
+        printf("ndai_transfer_unlgn: list_cover[%d][%d] = %d\n",
+            j,2*i+1,Requests[req].list_cover[j][2*i+1]);
+      }
+    }
+  }
 
   for(next = 0; next < Requests[req].nu; next++){
 
@@ -2757,14 +2773,16 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
           ds_unlg.hi[i] = Requests[req].list_unlgn[next][2*i+1];
         }
 
-/*        for (i=0; i<ndim; i++) {
-          printf("ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
-          printf("ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
+        if (dra_debug_flag && 0) {
+          for (i=0; i<ndim; i++) {
+            printf("ndai_transfer_unlgn: ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
+            printf("ndai_transfer_unlgn: ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
+          }
+          for (i=0; i<ndim; i++) {
+            printf("ndai_transfer_unlgn: ds_unlg.lo[%d] = %d\n",i,ds_unlg.lo[i]);
+            printf("ndai_transfer_unlgn: ds_unlg.hi[%d] = %d\n",i,ds_unlg.hi[i]);
+          }
         }
-        for (i=0; i<ndim; i++) {
-          printf("ds_unlg.lo[%d] = %d\n",i,ds_unlg.lo[i]);
-          printf("ds_unlg.hi[%d] = %d\n",i,ds_unlg.hi[i]);
-        } */
         if(!dai_section_intersect(ds_chunk, &ds_unlg))
             dai_error("ndai_transfer_unlgn: inconsistent cover",0);
 
@@ -2841,11 +2859,13 @@ void ndai_transfer_algn(int opcode, int transp,
 
     for (i=0; i<ndim; i++) ds_chunk.lo[i] = 0; /*initialize */
     while(ndai_next_chunk(req, Requests[req].list_algn[next], &ds_chunk)){
-    /*  printf("Request %d\n",req);
-      printf("ds_chunk.lo[0] = %d\n",ds_chunk.lo[0]);
-      printf("ds_chunk.hi[0] = %d\n",ds_chunk.hi[0]);
-      printf("ds_chunk.lo[1] = %d\n",ds_chunk.lo[1]);
-      printf("ds_chunk.hi[1] = %d\n",ds_chunk.hi[1]); */
+      if (dra_debug_flag && 0) { 
+        printf("ndai_transfer_algn: Request %d\n",req);
+        for (i=0; i<ndim; i++) {
+          printf("ndai_transfer_algn: ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
+          printf("ndai_transfer_algn: ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
+        }
+      }
 
       if(dai_myturn(ds_chunk)){
 
@@ -3042,10 +3062,11 @@ Integer FATR ndra_read_section_(
         Integer *request)                  /*output: request id*/ 
 {
 Integer gdims[MAXDIM], gtype, handle=*d_a+DRA_OFFSET;
-Integer i, gelem, delem, ndim;
+Integer i, gelem, delem, ndim, me;
 section_t d_sect, g_sect;
  
    ga_sync_();
+   me = ga_nodeid_();
 
    /* usual argument/type/range checking stuff */
    dai_check_handleM(*d_a,"ndra_read_sect");
@@ -3077,6 +3098,19 @@ section_t d_sect, g_sect;
    Requests[*request].nu=MAX_ALGN;    
    Requests[*request].na=MAX_UNLG;
 
+   if (dra_debug_flag) {
+     for (i=0; i<ndim; i++) {
+      /* printf("ndra_read_section: d_sect.lo[%d] = %d\n",i,d_sect.lo[i]);
+       printf("ndra_read_section: d_sect.hi[%d] = %d\n",i,d_sect.hi[i]); */
+       printf("proc[%d] ndra_read_section: dlo[%d] = %d\n",me,i,dlo[i]);
+       printf("proc[%d] ndra_read_section: dhi[%d] = %d\n",me,i,dhi[i]);
+     }
+     for (i=0; i<ndim; i++) {
+       printf("proc[%d] ndra_read_section: glo[%d] = %d\n",me,i,glo[i]);
+       printf("proc[%d] ndra_read_section: ghi[%d] = %d\n",me,i,ghi[i]);
+     }
+   }
+
    nfill_sectionM(d_sect, *d_a, DRA[handle].ndim, dlo, dhi); 
    nfill_sectionM(g_sect, *g_a, ndim, glo, ghi); 
 
@@ -3088,6 +3122,24 @@ section_t d_sect, g_sect;
                     &Requests[*request].nu);
 
    _dra_turn = 0;
+   if (dra_debug_flag && 0) {
+     printf("ndra_read_section: Number of aligned sections %d\n",
+         Requests[*request].na);
+     printf("ndra_read_section: Number of unaligned sections %d\n",
+         Requests[*request].nu);
+     for (i=0; i<2*ndim; i++) {
+       printf("ndra_read_section: list_algn[%d] =  %d\n",
+           i,Requests[*request].list_algn[0][i]);
+     }
+     for (i=0; i<2*ndim; i++) {
+       printf("ndra_read_section: list_cover[%d] =  %d\n",
+           i,Requests[*request].list_cover[0][i]);
+     }
+     for (i=0; i<2*ndim; i++) {
+       printf("ndra_read_section: list_unlgn[%d] =  %d\n",i,
+           Requests[*request].list_unlgn[0][i]);
+     } 
+   }
 
    /* process unaligned subsections */
    ndai_transfer_unlgn(DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
@@ -3124,7 +3176,6 @@ Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
           lo[i] = 1;
           hi[i] = DRA[handle].dims[i];
         }
-        printf("just before ndra_read_section\n");
         return(ndra_read_section_(&transp, g_a, lo, hi, d_a, lo, hi, request));
 }
 
@@ -3149,4 +3200,15 @@ Integer handle=*d_a+DRA_OFFSET;
         strcpy(filename, DRA[handle].fname);
  
         return(ELIO_OK);
+}
+
+/*\ SET DEBUG FLAG FOR DRA OPERATIONS TO TRUE OR FALSE
+\*/
+void dra_set_debug_(logical *flag)
+{
+  if (*flag) {
+    dra_debug_flag = TRUE;
+  } else {
+    dra_debug_flag = FALSE;
+  }
 }

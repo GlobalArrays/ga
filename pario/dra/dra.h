@@ -30,6 +30,7 @@
 #define DRA_write_section     dra_write_section_
 #define NDRA_write_section    ndra_write_section_
 #define DRA_probe             dra_probe_
+#define DRA_set_debug         dra_set_debug_
 #define DRA_wait              dra_wait_
 #define DRA_terminate         dra_terminate_
 
@@ -51,6 +52,7 @@
 #  define dra_write_section_  DRA_WRITE_SECTION
 #  define ndra_write_section_ NDRA_WRITE_SECTION
 #  define dra_probe_          DRA_PROBE
+#  define dra_set_debug_      DRA_SET_DEBUG
 #  define dra_wait_           DRA_WAIT
 #  define dra_terminate_      DRA_TERMINATE
 #  define dra_flick_          DRA_FLICK
@@ -158,9 +160,10 @@ extern Integer FATR NDRA_read_section  _ARGS_((logical *transp,
                                          Integer dhi[],
                                          Integer *request));
 extern Integer FATR DRA_probe          _ARGS_((Integer *request, Integer *status));
+extern void FATR DRA_set_debug         _ARGS_((logical *flag));
 extern Integer FATR DRA_wait           _ARGS_((Integer *request));
 extern Integer FATR DRA_terminate      _ARGS_(());
-extern void    DRA_flick          _ARGS_(());
+extern void    DRA_flick               _ARGS_(());
 
 /* C-interface prototypes */
 
@@ -219,6 +222,8 @@ extern int DRA_Open(          char* filename,
 
 extern int DRA_Probe(         int request,
                               int *compl_status);
+
+extern void DRA_Set_debug(    logical flag);
 
 extern int DRA_Wait(          int request);
 

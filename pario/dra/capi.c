@@ -184,6 +184,12 @@ int DRA_Probe(int request, int *compl_status)
   return (int)status;
 }
 
+void DRA_Set_debug(logical flag)
+{
+  dra_set_debug_(&flag);
+  return;
+}
+
 int DRA_Wait(int request)
 {
   Integer rrequest, status;
