@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.28 2002-12-03 18:49:24 manoj Exp $ */
+/* $Id: test.c,v 1.29 2002-12-06 23:24:46 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -507,7 +507,7 @@ int idx1=0, idx2=0, idx3=0;
        init(a[ndim], ndim, elems, dimsA);
     }
     if(me==0){
-      printf("Testing Non-blocking API for 1 to 7 dimentions data transfers\n");
+      printf("Testing nonblocking API for 1 to 7 dimensional data transfers\n");
       fflush(stdout);
     }
     ARMCI_AllFence();
@@ -1180,13 +1180,13 @@ void test_rput()
   
   for(i=0; i<elems; i++) {
     if(idst[me][i]!=10*(i+1)) 
-      ARMCI_Error("Integer registered put failed", 0);
+      ARMCI_Error("Integer register-originated put failed", 0);
     if(ldst[me][i]!=10*(i+1)) 
-      ARMCI_Error("Long registered put failed", 0);
+      ARMCI_Error("Long register-originated put failed", 0);
     if(ABS(ddst[me][i]-10.001*(i+1)) > 0.1) 
-      ARMCI_Error("Double registered put failed",0);
+      ARMCI_Error("Double register-originated put failed",0);
     if( ABS(fdst[me][i]-10.01*(i+1)) > 0.1) 
-      ARMCI_Error("Float registered put failed", 0);
+      ARMCI_Error("Float register-originated put failed", 0);
   }
   
   ARMCI_AllFence();
@@ -1258,7 +1258,7 @@ int main(int argc, char* argv[])
 
 #endif
         if(me==0){
-           printf("\nTesting registered puts\n");
+           printf("\nTesting register-originated puts\n");
            fflush(stdout);
            sleep(1);
         }
