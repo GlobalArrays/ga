@@ -129,8 +129,62 @@ int                   _elio_Errors_Fatal=0; /* sets mode of handling errors */
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #endif
 
+/* 
+ * Offsets bigger than ABSURDLY_LARGE generate a SEEKFAIL.
+ * The maximum no. of extents permitted for a file is MAX_EXTENT.
+ */
+
+#define MAX_EXTENT 127
+#ifdef LARGE_FILES
+#define ABSURDLY_LARGE 1e12
+#else
+#define ABSURDLY_LARGE (MAX_EXTENTS*2147483647.0)
+#endif
+
 /*****************************************************************************/
 
+static Off_t elio_max_file_size(Fd_t fd)
+     /* 
+      * Return the maximum size permitted for this PHYSICAL file.
+      * Presently not file dependent.
+      */
+{
+#ifdef LARGE_FILES
+  return ABSURDLY_LARGE;
+#else
+  return 2147483647.0;		/* 2 GB */
+#endif
+}
+
+static Fd_t elio_get_next_extent(Fd_t fd)
+     /*
+      * Return a pointer to the file descriptor that forms
+      * the next extent of this file.  If the extension file
+      * does not exist then it is opened.  If the open fails
+      * then the usual error condition of elio_open is returned.
+      */
+{
+  Fd_t next_fd = (Fd_t) fd->next;
+  if (!next_fd) {
+    /* Eventually need to replace this with user controllable naming 
+     * and combine with similar logic in delete routine.
+     */
+    char fname[ELIO_FILENAME_MAX];
+    int len;
+    if (fd->extent >= MAX_EXTENT)
+      return 0;
+    strcpy(fname, fd->name);
+    len = strlen(fname);
+    if (fd->extent) len -= 4;
+    sprintf(fname+len,"x%3.3d",fd->extent+1);
+    printf("Opening extent %d with name '%s'\n",fd->extent+1,fname);
+    if ((next_fd = elio_open(fname, fd->type, fd->mode))) {
+      next_fd->extent = fd->extent + 1;
+      fd->next = (struct fd_struct *) next_fd;
+    }
+  }
+  return next_fd;
+}
 
 void elio_errors_fatal(int onoff)
 {
@@ -138,13 +192,37 @@ void elio_errors_fatal(int onoff)
 }
  
 
-
 /*\ Blocking Write 
  *    - returns number of bytes written or error code (<0) if failed
 \*/
-Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
+Size_t elio_write(Fd_t fd, Off_t  doffset, const void* buf, Size_t bytes)
 {
+  off_t offset;
   Size_t stat, bytes_to_write = bytes;
+  Size_t nextbytes;
+
+  if (doffset >= ABSURDLY_LARGE) 
+    ELIO_ERROR(SEEKFAIL,0);
+
+  /* Follow the linked list of extents down until we hit the file
+     that contains the offset */
+  if (doffset >= elio_max_file_size(fd)) {
+    Fd_t next_fd = elio_get_next_extent(fd);
+    if (!next_fd) ELIO_ERROR(OPENFAIL,0);
+    doffset -= elio_max_file_size(fd);
+    return elio_write(next_fd, doffset, buf, bytes);
+  }
+
+  /* Figure out if the write continues onto the next extent */
+  offset = (off_t) doffset;
+  nextbytes = 0;
+  if ((doffset+bytes_to_write) >= elio_max_file_size(fd)) {
+    nextbytes = bytes_to_write;
+    bytes_to_write = (Size_t) (elio_max_file_size(fd)-doffset);
+    nextbytes -= bytes_to_write;
+  }
+
+  /* Write to this extent */
 
 #ifdef PABLO
   int pablo_code = PABLO_elio_write;
@@ -170,14 +248,22 @@ Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
 #ifdef PABLO
   PABLO_end(pablo_code);
 #endif
+
+  /* Write to next extent(s) ... relies on incrementing of buf */
+  if (nextbytes) {
+    Fd_t next_fd = elio_get_next_extent(fd);
+    if (!next_fd) ELIO_ERROR(OPENFAIL,0);
+    stat = elio_write(next_fd, (Off_t) 0, buf, nextbytes);
+    if (stat != nextbytes)
+      ELIO_ERROR(WRITFAIL, stat);
+  }
   
   return bytes;
 }
 
-
-
-int elio_set_cb(Fd_t fd, off_t offset, int reqn, void *buf, Size_t bytes)
+int elio_set_cb(Fd_t fd, Off_t doffset, int reqn, void *buf, Size_t bytes)
 {
+  off_t offset = (off_t) doffset;
 #if defined(AIO)
 #   if defined(PARAGON) || defined(CRAY)
        if(offset != SEEK(fd->fd, offset, SEEK_SET))return (SEEKFAIL);
@@ -208,11 +294,35 @@ int elio_set_cb(Fd_t fd, off_t offset, int reqn, void *buf, Size_t bytes)
 
 /*\ Asynchronous Write: returns 0 if succeded or err code if failed
 \*/
-int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request_t * req_id)
+int elio_awrite(Fd_t fd, Off_t doffset, const void* buf, Size_t bytes, io_request_t * req_id)
 {
+  off_t offset;
   Size_t stat;
   int    aio_i;
   int    rc;
+
+  if (doffset >= ABSURDLY_LARGE) 
+    ELIO_ERROR(SEEKFAIL,0);
+
+  /* Follow the linked list of extents down until we hit the file
+     that contains the offset */
+  if (doffset >= elio_max_file_size(fd)) {
+    Fd_t next_fd = elio_get_next_extent(fd);
+    if (!next_fd) ELIO_ERROR(OPENFAIL,0);
+    doffset -= elio_max_file_size(fd);
+    return elio_awrite(next_fd, doffset, buf, bytes, req_id);
+  }
+
+  /* Figure out if the write continues onto the next extent 
+   * ... if so then force the entire request to be done synchronously
+   * so that we don't have to manage multiple async requests */
+
+  if ((doffset+((Off_t) bytes)) >= elio_max_file_size(fd)) {
+    *req_id = ELIO_DONE;
+    return elio_write(fd, doffset, buf, bytes);
+  }
+
+  offset = (off_t) doffset;
 
 #ifdef PABLO
   int pablo_code = PABLO_elio_awrite;
@@ -268,8 +378,9 @@ int elio_awrite(Fd_t fd, off_t offset, const void* buf, Size_t bytes, io_request
 
 /*\ Truncate the file at the specified length.
 \*/
-int elio_truncate(Fd_t fd, off_t length)
+int elio_truncate(Fd_t fd, Off_t dlength)
 {
+  off_t length = (off_t) dlength;
 #ifdef WIN32
 #   define ftruncate _chsize 
 #endif
@@ -293,31 +404,72 @@ int elio_truncate(Fd_t fd, off_t length)
 
 /*\ Return in length the length of the file
 \*/
-int elio_length(Fd_t fd, off_t *length)
+int elio_length(Fd_t fd, Off_t *dlength)
 {
+  off_t length;
+  int status;
+
+  /* Add up the lengths of any extents */
+  if (fd->next) {
+    Off_t tmp;
+    status = elio_length((Fd_t) fd->next, dlength);
+    *dlength += elio_max_file_size(fd);
+    return status;
+  }
+  else {
 #ifdef PABLO
     int pablo_code = PABLO_elio_length;
     PABLO_start( pablo_code );
 #endif
-
-    if ((*length = SEEK(fd->fd, (off_t) 0, SEEK_END)) != -1)
-	return ELIO_OK;
+    
+    if ((length = SEEK(fd->fd, (off_t) 0, SEEK_END)) != -1)
+      status = ELIO_OK;
     else
-	return SEEKFAIL;
-
+      status = SEEKFAIL;
+    
 #ifdef PABLO
     PABLO_end(pablo_code);
 #endif
+    
+    *dlength = (Off_t) length;
+    return status;
+  }
 }
 
 
 /*\ Blocking Read 
  *      - returns number of bytes read or error code (<0) if failed
 \*/
-Size_t elio_read(Fd_t fd, off_t  offset, void* buf, Size_t bytes)
+Size_t elio_read(Fd_t fd, Off_t doffset, void* buf, Size_t bytes)
 {
+off_t offset;
 Size_t stat, bytes_to_read = bytes;
+Size_t nextbytes;
 int    attempt=0;
+
+ if (doffset >= ABSURDLY_LARGE) 
+    ELIO_ERROR(SEEKFAIL,0);
+
+  /* Follow the linked list of extents down until we hit the file
+     that contains the offset */
+  if (doffset >= elio_max_file_size(fd)) {
+    Fd_t next_fd = elio_get_next_extent(fd);
+    if (!next_fd) ELIO_ERROR(OPENFAIL,0);
+    doffset -= elio_max_file_size(fd);
+    return elio_read(next_fd, doffset, buf, bytes);
+  }
+
+  /* Figure out if the read continues onto the next extent */
+  offset = (off_t) doffset;
+  nextbytes = 0;
+  if ((doffset+bytes_to_read) >= elio_max_file_size(fd)) {
+    nextbytes = bytes_to_read;
+    bytes_to_read = (Size_t) (elio_max_file_size(fd)-doffset);
+    nextbytes -= bytes_to_read;
+  }
+
+
+  /* Read from this physical file */
 
 #ifdef PABLO
   int pablo_code = PABLO_elio_read;
@@ -347,6 +499,16 @@ int    attempt=0;
   PABLO_end(pablo_code);
 #endif
   
+  /* Read from next extent(s) ... relies on incrementing of buf */
+  if (nextbytes) {
+    Fd_t next_fd = elio_get_next_extent(fd);
+    if (!next_fd) ELIO_ERROR(OPENFAIL,0);
+    stat = elio_read(next_fd, (Off_t) 0, buf, nextbytes);
+    if (stat != nextbytes)
+      ELIO_ERROR(READFAIL, stat);
+  }
+
+
   return bytes;
 }
 
@@ -354,10 +516,34 @@ int    attempt=0;
 
 /*\ Asynchronous Read: returns 0 if succeded or -1 if failed
 \*/
-int elio_aread(Fd_t fd, off_t offset, void* buf, Size_t bytes, io_request_t * req_id)
+int elio_aread(Fd_t fd, Off_t doffset, void* buf, Size_t bytes, io_request_t * req_id)
 {
+  off_t offset = (off_t) doffset;
   Size_t stat;
   int    aio_i, rc;
+
+  if (doffset >= ABSURDLY_LARGE) 
+    ELIO_ERROR(SEEKFAIL,0);
+
+  /* Follow the linked list of extents down until we hit the file
+     that contains the offset */
+  if (doffset >= elio_max_file_size(fd)) {
+    Fd_t next_fd = elio_get_next_extent(fd);
+    if (!next_fd) ELIO_ERROR(OPENFAIL,0);
+    doffset -= elio_max_file_size(fd);
+    return elio_aread(next_fd, doffset, buf, bytes, req_id);
+  }
+
+  /* Figure out if the read continues onto the next extent 
+   * ... if so then force the entire request to be done synchronously
+   * so that we don't have to manage multiple async requests */
+
+  if ((doffset+((Off_t) bytes)) >= elio_max_file_size(fd)) {
+    *req_id = ELIO_DONE;
+    return elio_read(fd, doffset, buf, bytes);
+  }
+
+  offset = (off_t) doffset;
 
 #ifdef PABLO
   int pablo_code = PABLO_elio_aread;
@@ -628,6 +814,9 @@ Fd_t  elio_open(const char* fname, int type, int mode)
 
   fd->fs = statinfo.fs;
   fd->mode = mode;
+  fd->type = type;
+  fd->extent = 0;
+  fd->next = NULL;
   
 #if defined(CRAY) && defined(FFIO)
   {
@@ -677,6 +866,8 @@ Fd_t  elio_open(const char* fname, int type, int mode)
                    ELIO_ERROR_NULL(OPENFAIL, 0);
   }
   
+  fd->name = strdup(fname);
+
 #ifdef PABLO
   PABLO_end(pablo_code);
 #endif
@@ -731,6 +922,9 @@ Fd_t  elio_gopen(const char* fname, int type)
 
       fd->fs = statinfo.fs;
       fd->mode = ELIO_SHARED;
+      fd->type = type;
+      fd->extent = 0;
+      fd->next = NULL;
       fd->fd = gopen(fname, ptype, M_ASYNC, FOPEN_MODE );
    }
 
@@ -738,6 +932,7 @@ Fd_t  elio_gopen(const char* fname, int type)
                    free(fd);
                    ELIO_ERROR_NULL(OPENFAIL, 0);
    }
+   fd->name = strdup(fname);
 #  else
       ELIO_ERROR_NULL(UNSUPFAIL,0);
 #  endif
@@ -754,12 +949,20 @@ Fd_t  elio_gopen(const char* fname, int type)
 \*/
 int elio_close(Fd_t fd)
 {
+    int status = ELIO_OK;
 #ifdef PABLO
     pablo_code = PABLO_elio_close;
     PABLO_start( pablo_code );
 #endif
 
-    if(CLOSE(fd->fd)==-1) ELIO_ERROR(CLOSFAIL, 0);
+    if (fd->next)
+      status = elio_close((Fd_t) fd->next);
+
+    printf("Closing extent %d name %s\n", fd->extent, fd->name);
+    if(CLOSE(fd->fd)==-1 || (status != ELIO_OK)) 
+      ELIO_ERROR(CLOSFAIL, 0);
+
+    free(fd->name);
     free(fd);
 
 #ifdef PABLO
@@ -775,12 +978,29 @@ int elio_delete(const char* filename)
 {
     int rc;
 
+    if (access(filename, F_OK) != 0) /* Succeed if the file does not exist */
+      return ELIO_OK;
+
 #ifdef PABLO
     int pablo_code = PABLO_elio_delete;
     PABLO_start( pablo_code );
 #endif
 
     rc = unlink(filename);
+
+    /* Remeber the first rc ... now delete possible extents until
+       one fails */
+
+    {
+      int extent;
+      for (extent=1; extent<MAX_EXTENT; extent++) {
+	char fname[ELIO_FILENAME_MAX];
+	sprintf(fname,"%sx%3.3d",filename,extent);
+	printf("Deleting extent %d with name '%s'\n",extent,fname);
+	if (unlink(fname)) break;
+      }
+    }
+    
     if(rc ==-1) ELIO_ERROR(DELFAIL,0);
 
 #ifdef PABLO
