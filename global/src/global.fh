@@ -18,10 +18,10 @@
       double precision nga_ddot_patch
       integer nga_idot_patch
       integer ga_ndim
-c
+!
       integer nga_read_inc
       logical nga_create, nga_locate, nga_create_irreg
-c
+!
       external ga_create, ga_destroy, ga_ddot, ga_locate
       external ga_nnodes, ga_nodeid, ga_read_inc, ga_create_irreg
       external ga_ddot_patch, ga_compare_distr, ga_duplicate
@@ -38,7 +38,7 @@ c
 #ifdef IWAY
       external ga_net_nnodes, ga_net_nodeid
 #endif
-c
-c     n-dim GA
+!
+!     n-dim GA
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg
       external nga_ddot_patch, nga_zdot_patch, nga_idot_patch
