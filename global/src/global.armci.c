@@ -1668,6 +1668,30 @@ Integer lo[2], hi[2];
 }
 
 
+void nga_access_ptr(Integer* g_a, Integer lo[], Integer hi[],
+                      void* ptr, Integer ld[])
+
+{
+char *lptr;
+Integer  handle = GA_OFFSET + *g_a;
+Integer  ow,i;
+
+   GA_PUSH_NAME("nga_access_ptr");
+   if(!nga_locate_(g_a,lo,&ow))ga_error("locate top failed",0);
+   if(ow != GAme) ga_error("cannot access top of the patch",ow);
+   if(!nga_locate_(g_a,hi, &ow))ga_error("locate bottom failed",0);
+   if(ow != GAme) ga_error("cannot access bottom of the patch",ow);
+
+   for (i=0; i<GA[handle].ndim; i++)
+       if(lo[i]>hi[i]) {
+           ga_RegionError(GA[handle].ndim, lo, hi, *g_a);
+       }
+
+   gam_Location(ow,handle, lo, &lptr, ld);
+   *(char**)ptr = lptr; 
+   GA_POP_NAME;
+}
+
 
 /*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
 \*/
@@ -1978,7 +2002,7 @@ Integer d, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
    ndim = GA[ga_handle].ndim;
 
    for(d=0, *owner=-1; d< ndim; d++) 
-       if(subscript[d]< 1 || subscript[d]>GA[ga_handle].dims[d]) return FALSE;
+       if(subscript[d]< 1 || subscript[d]>GA[ga_handle].dims[d])return FALSE;
 
    for(d = 0, dpos = 0; d< ndim; d++){
        findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d],
