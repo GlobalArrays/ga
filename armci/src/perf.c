@@ -32,6 +32,22 @@ void check_result(double *src_buf, double *dst_buf, int *stride, int *count,
 void acc_array(double scale, double *array1, double *array2, int *stride,
                int *count, int stride_levels);
 
+
+static double _tt0=0.0;
+/*\ quick fix for inacurate timer
+\*/
+double Timer()
+{
+#define DELTA 0.00001
+  double t=MPI_Wtime();
+  if(t<=_tt0 + DELTA) _tt0 += DELTA;
+  else _tt0 = t;
+  return _tt0;
+}
+
+#define TIMER MPI_Wtime
+
+
 double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
                 int proc, int levels)
 {
@@ -55,14 +71,11 @@ double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
         tmp_buf_ptr = tmp_buf;
     }
     
+    start_time = TIMER();
     for(i=0; i<loop; i++) {
-        start_time = MPI_Wtime();
         
         ARMCI_GetS(src_buf, stride, dst_buf, stride, count, stride_levels,
                    proc);
-        
-        stop_time = MPI_Wtime();
-        total_time += (stop_time - start_time);
 
         if(CHECK_RESULT) {
             sprintf(check_type, "ARMCI_GetS:");
@@ -82,6 +95,8 @@ double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
             bal = 0;
         }
     }
+    stop_time = TIMER();
+    total_time = (stop_time - start_time);
 
     if(CHECK_RESULT) free(tmp_buf);
 
@@ -108,14 +123,11 @@ double time_put(double *src_buf, double *dst_buf, int chunk, int loop,
         assert(tmp_buf != NULL);
     }
     
+    start_time = TIMER();
     for(i=0; i<loop; i++) {
-        start_time = MPI_Wtime();
 
         ARMCI_PutS(src_buf, stride, dst_buf, stride,
                    count, stride_levels, proc);
-
-        stop_time = MPI_Wtime();
-        total_time += (stop_time - start_time);
 
         if(CHECK_RESULT) {
             ARMCI_GetS(dst_buf, stride, tmp_buf, stride, count,
@@ -136,6 +148,8 @@ double time_put(double *src_buf, double *dst_buf, int chunk, int loop,
             bal = 0;
         }
     }
+    stop_time = TIMER();
+    total_time = (stop_time - start_time);
 
     if(CHECK_RESULT) free(tmp_buf);
     
@@ -164,6 +178,7 @@ double time_acc(double *src_buf, double *dst_buf, int chunk, int loop,
         assert(after_buf != NULL);
     }
     
+    start_time = TIMER();
     for(i=0; i<loop; i++) {
         double scale = (double)i;
 
@@ -173,14 +188,9 @@ double time_acc(double *src_buf, double *dst_buf, int chunk, int loop,
 
             acc_array(scale, before_buf, src_buf, stride, count,stride_levels);
         }
-        
-        start_time = MPI_Wtime();
 
         ARMCI_AccS(ARMCI_ACC_DBL, &scale, src_buf, stride, dst_buf, stride,
                    count, stride_levels, proc);
-
-        stop_time = MPI_Wtime();
-        total_time += (stop_time - start_time);
 
         if(CHECK_RESULT) {
             ARMCI_GetS(dst_buf, stride, after_buf, stride, count,
@@ -201,6 +211,8 @@ double time_acc(double *src_buf, double *dst_buf, int chunk, int loop,
             bal = 0;
         }
     }
+    stop_time = TIMER();
+    total_time = (stop_time - start_time);
 
     if(CHECK_RESULT) { free(before_buf); free(after_buf); }
     
