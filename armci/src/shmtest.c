@@ -14,9 +14,12 @@ int armci_test_allocate(long size)
    char *ptr;
    long id = (long)shmget(IPC_PRIVATE, (size_t) size, (int) (IPC_CREAT |00600));
    if (id <0L) return 0;
-
+#if 0
    /* attach to segment */
    ptr =  shmat((int) id, (char *) NULL, 0);
+#else 
+   ptr = (char *) NULL;
+#endif
 
    /* delete segment id */
    if(shmctl( (int) id, IPC_RMID,(struct shmid_ds *)NULL))
@@ -36,7 +39,7 @@ int armci_test_allocate(long size)
 
 #define PAGE 65536L
 #define UBOUND 4*4096*PAGE
-#define LBOUND 10*PAGE
+#define LBOUND 100*PAGE
 
 int verbose=1;
 
@@ -46,7 +49,7 @@ void armci_shmem_init()
 {
 long x,i, y=0L;
 long upper_bound=UBOUND;
-long lower_bound=LBOUND;
+long lower_bound=0;
      x = upper_bound;
      for(i=1;;i++){
         long step;
@@ -61,12 +64,12 @@ long lower_bound=LBOUND;
           if(verbose)printf("test %d size=%ld bytes: failed\n",i,x);
           upper_bound = x;
           step = (x-lower_bound)>>1;
-          if(step< PAGE) break;
+          if(step< PAGE || x < LBOUND) break;
           x -= step;
         }
       }
       if(verbose){
-        if(x==LBOUND)
+        if(x<LBOUND)
           printf("no usable amount (%d bytes) of shared memory available\n",LBOUND);
         else printf("%ld bytes segment size, %d calls \n",y,i);
       }else{
