@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.5 1999-08-16 21:41:51 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.6 1999-11-02 00:50:26 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -9,6 +9,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef unix
+#include <unistd.h>
+#endif
 #include "message.h"
 #include "armcip.h"
 
@@ -165,15 +168,26 @@ void armci_init_clusinfo()
 {
   char name[MAX_HOSTNAME], *merged;
   int  i, len, limit, rc;
+  char *tmp;
  
-  limit = MAX_HOSTNAME-1;
-  rc = gethostname(name, limit);
-  if(rc < 0)armci_die("armci: gethostname failed",rc);
+  if((tmp =getenv("ARMCI_HOSTNAME"))){
+    if(strlen(tmp) >= MAX_HOSTNAME)
+			armci_die("armci: hostname too long",strlen(tmp));
+	strcpy(name,tmp);  
+    printf("%d using %s hostname\n",armci_me, name);
+    fflush(stdout);
+  }else{
+    limit = MAX_HOSTNAME-1;
+    rc = gethostname(name, limit);
+    if(rc < 0)armci_die("armci: gethostname failed",rc);
+  }
 
   len =  strlen(name);
 
 #ifdef HOSTNAME_TRUNCATE
-     /* in some cases (e.g.,SP) we can truncate hostnames to save memory */
+     /* in some cases (e.g.,SP) when name is used to determine
+      * cluster structure but not to establish communication
+      * we can truncate hostnames to save memory */
      limit = HOSTNAME_LEN-2;
      if(len>limit)name[limit]='\0';
      len =limit;
