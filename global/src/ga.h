@@ -67,6 +67,16 @@ extern int NGA_Create_ghosts_config(int type,int ndim,int dims[], int width[],
                                     char *name, int chunk[], int p_handle);
 extern int NGA_Create_ghosts_irreg_config(int type,int ndim,int dims[], int width[],
                                           char *name, int map[], int nblock[], int p_handle);
+extern int GA_Create_handle();
+extern void NGA_Set_data(int g_a, int ndim, int dims[], int type);
+extern void NGA_Set_chunk(int g_a, int chunk[]);
+extern void NGA_Set_array_name(int g_a, char *name);
+extern void NGA_Set_proc_config(int g_a, int p_handle);
+extern void NGA_Set_ghosts(int g_a, int width[]);
+extern void NGA_Set_irreg_distr(int g_a, int map[], int block[]);
+extern void NGA_Set_irreg_flag(int g_a, int flag);
+extern int NGA_Get_dimension(int g_a);
+extern int GA_Allocate(int g_a);
 extern void GA_Update_ghosts(int g_a);
 extern void GA_Merge_mirrored(int g_a);
 extern void GA_Fast_merge_mirrored(int g_a);

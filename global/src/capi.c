@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.63 2003-10-02 17:41:53 d3g293 Exp $ */
+/* $Id: capi.c,v 1.64 2003-10-16 21:06:32 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -353,6 +353,129 @@ int NGA_Create_ghosts_config(int type, int ndim,int dims[], int width[], char *n
         _ga_width, name, ptr, (Integer)p_handle, &g_a);
     if(st==TRUE) return (int) g_a;
     else return 0;
+}
+
+int GA_Create_handle()
+{
+    Integer g_a;
+    g_a = ga_create_handle_();
+    return (int)g_a;
+}
+
+void NGA_Set_data(int g_a, int ndim, int dims[], int type)
+{
+    Integer aa, nndim, ttype;
+    COPYC2F(dims,_ga_dims, ndim);
+    aa = (Integer)g_a;
+    nndim = (Integer)ndim;
+    ttype = (Integer)type;
+    nga_set_data_(&aa, &nndim, _ga_dims, &ttype);
+}
+
+void NGA_Set_chunk(int g_a, int chunk[])
+{
+    Integer aa, *ptr, ndim;
+    aa = (Integer)g_a;
+    ndim = nga_get_dimension_(g_a);
+    if(!chunk)ptr=(Integer*)0;  
+    else {
+      COPYC2F(chunk,_ga_work, ndim);
+      ptr = _ga_work;
+    }
+    nga_set_chunk_(&aa, ptr);
+}
+
+void NGA_Set_array_name(int g_a, char *name)
+{
+    Integer aa;
+    aa = (Integer)g_a;
+    nga_set_array_name(aa, name);
+}
+
+void NGA_Set_proc_config(int g_a, int p_handle)
+{
+  Integer aa, pp;
+  aa = (Integer)g_a;
+  pp = (Integer)pp;
+  nga_set_proc_config_(&aa, &pp);
+}
+
+void NGA_Set_ghosts(int g_a, int width[])
+{
+    Integer aa, *ptr, ndim;
+    aa = (Integer)g_a;
+    ndim = nga_get_dimension_(g_a);
+    if(!width)ptr=(Integer*)0;  
+    else {
+      COPYC2F(width,_ga_work, ndim);
+      ptr = _ga_work;
+    }
+    nga_set_ghosts_(&aa, ptr);
+}
+
+void NGA_Set_irreg_distr_(int g_a, int map[], int block[])
+{
+    Integer aa, *ptr, ndim;
+    int d, base_map=0, base_work, b;
+    aa = (Integer)g_a;
+    ndim = nga_get_dimension_(g_a);
+    COPYC2F(block,_ga_work, ndim);
+
+    /* copy might swap only order of dimensions for blocks in map */
+#ifdef  USE_FAPI
+    base_work = 0;
+#else
+    base_work =MAX_NPROC;
+#endif
+
+    for(d=0; d<ndim; d++){
+#ifndef  USE_FAPI
+      base_work -= block[d];
+      if(base_work <0)GA_Error("GA C api: error in block",d);
+#endif
+        for(b=0; b<block[d]; b++){
+
+          _ga_map_capi[base_work + b] = (Integer)map[base_map +b]; /*****/
+#ifdef BASE_0
+          _ga_map_capi[base_work + b]++;
+#endif
+      }
+      base_map += block[d];
+#ifdef  USE_FAPI
+      base_work += block[d];
+      if(base_work >MAX_NPROC)GA_Error("GA (c): error in block",base_work);
+#endif
+   }
+
+#ifdef  USE_FAPI
+   ptr = _ga_map_capi;
+#else
+   ptr = _ga_map_capi + base_work;
+#endif
+   nga_set_irreg_distr_(&aa, ptr, _ga_work);
+}
+
+void NGA_Set_irreg_flag(int g_a, int flag)
+{
+  Integer aa;
+  logical fflag;
+  aa = (Integer)g_a;
+  fflag = (logical)flag;
+  nga_set_irreg_flag_(&aa, &fflag);
+}
+
+int NGA_Get_dimension(int g_a)
+{
+  Integer aa;
+  aa = (Integer)g_a;
+  return (int)nga_get_dimension_(&aa);
+}
+
+int GA_Allocate(int g_a)
+{
+  Integer aa;
+  aa = (Integer)g_a;
+  return (int)ga_allocate_(&aa);
 }
 
 void GA_Update_ghosts(int g_a)

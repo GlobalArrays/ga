@@ -275,6 +275,17 @@ extern logical nga_create_irreg_config(
         Integer p_handle, /* processor list handle*/
         Integer *g_a);    /* array handle (output) */
 
+extern Integer ga_create_handle();
+extern void ga_set_data(Integer *g_a, Integer *ndim, Integer dims[], Integer *type);
+extern void ga_set_chunk(Integer *g_a, Integer chunk[]);
+extern void ga_set_array_name(Integer *g_a, char *array_name);
+extern void ga_set_proc_config(Integer *g_a, Integer *p_handle);
+extern void ga_set_ghosts(Integer *g_a, Integer width[]);
+extern void ga_set_irreg_distr(Integer *g_a, Integer map[], Integer nblock[]);
+extern void ga_set_irreg_flag(Integer *g_a, logical flag);
+extern Integer nga_get_dimension(Integer *g_a);
+extern logical ga_allocate(Integer *g_a);
+
 extern void ga_update_ghosts(Integer *g_a);
 extern void ga_update1_ghosts(Integer *g_a);
 extern logical ga_update2_ghosts(Integer *g_a);

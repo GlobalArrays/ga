@@ -23,6 +23,8 @@
       logical ga_update7_ghosts
       logical nga_update_ghost_dir
       logical ga_has_ghosts
+      integer ga_create_handle, nga_get_dimensions
+      logical ga_allocate
       double precision ga_ddot, ga_ddot_patch
       double complex   ga_zdot, ga_zdot_patch
       double complex   nga_zdot_patch
@@ -57,6 +59,8 @@
       external ga_update6_ghosts
       external ga_update7_ghosts
       external nga_update_ghost_dir
+      external ga_create_handle, nga_get_dimensions
+      external ga_allocate
       external ga_has_ghosts
       external ga_default_config, ga_mirror_config
       external ga_ndim
