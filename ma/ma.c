@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.14 1997-12-09 02:13:57 d3g681 Exp $
+ * $Id: ma.c,v 1.15 1997-12-09 02:17:11 d3g681 Exp $
  */
 
 /*
@@ -1770,13 +1770,13 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
     ma_stats.calls[(int)FID_MA_allocate_heap]++;
 #endif /* STATS */
 
-    if (trace) 
-	(void) printf("ma: allocating \"%s\"(%d)\n", name, (int) nelem);
-
 #ifdef VERIFY
     if (ma_auto_verify && !MA_verify_allocator_stuff())
         return MA_FALSE;
 #endif /* VERIFY */
+
+    if (trace) 
+	(void) printf("ma: allocating \"%s\"(%d)\n", name, (int) nelem);
 
     /* verify initialization */
     if (!ma_initialized)
@@ -2621,13 +2621,13 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
     ma_stats.calls[(int)FID_MA_push_stack]++;
 #endif /* STATS */
 
-    if (trace) 
-	(void) printf("ma: pushing \"%s\"(%d)\n", name, (int) nelem);
-
 #ifdef VERIFY
     if (ma_auto_verify && !MA_verify_allocator_stuff())
         return MA_FALSE;
 #endif /* VERIFY */
+
+    if (trace) 
+	(void) printf("ma: pushing \"%s\"(%d)\n", name, (int) nelem);
 
     /* verify initialization */
     if (!ma_initialized)

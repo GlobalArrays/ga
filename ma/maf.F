@@ -1,5 +1,5 @@
 c
-c     $Id: maf.F,v 1.7 1997-02-26 20:39:19 d3h325 Exp $
+c     $Id: maf.F,v 1.8 1997-12-09 02:13:59 d3g681 Exp $
 c
 
 c
@@ -56,6 +56,12 @@ cc
 c     In general, each routine simply calls its corresponding f2c_ C
 c     wrapper routine, which performs any necessary argument munging
 c     and then calls the corresponding C routine.
+
+
+      subroutine ma_trace(value)
+      integer value
+      call f2c_trace(value)
+      end
 
 c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
