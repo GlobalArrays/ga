@@ -191,6 +191,14 @@ void DRA_Set_debug(logical flag)
   return;
 }
 
+void DRA_Internals(int d_a)
+{
+  Integer dd_a;
+  dd_a = (Integer)d_a;
+  dra_internals_(&dd_a);
+  return;
+}
+
 int DRA_Wait(int request)
 {
   Integer rrequest, status;

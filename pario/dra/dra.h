@@ -33,6 +33,7 @@
 #define NDRA_write_section    ndra_write_section_
 #define DRA_probe             dra_probe_
 #define DRA_set_debug         dra_set_debug_
+#define DRA_internals         dra_internals_
 #define DRA_wait              dra_wait_
 #define DRA_terminate         dra_terminate_
 
@@ -55,6 +56,7 @@
 #  define ndra_write_section_ NDRA_WRITE_SECTION
 #  define dra_probe_          DRA_PROBE
 #  define dra_set_debug_      DRA_SET_DEBUG
+#  define dra_internals_      DRA_INTERNALS
 #  define dra_wait_           DRA_WAIT
 #  define dra_terminate_      DRA_TERMINATE
 #  define dra_flick_          DRA_FLICK
@@ -79,6 +81,7 @@
 #  define ndra_write_section_ ndra_write_section__ 
 #  define dra_probe_          dra_probe__          
 #  define dra_set_debug_      dra_set_debug__      
+#  define dra_internals_      dra_internals__      
 #  define dra_wait_           dra_wait__           
 #  define dra_terminate_      dra_terminate__      
 #  define dra_flick_          dra_flick__          
@@ -190,6 +193,7 @@ extern Integer FATR NDRA_read_section  _ARGS_((logical *transp,
                                          Integer *request));
 extern Integer FATR DRA_probe          _ARGS_((Integer *request, Integer *status));
 extern void FATR DRA_set_debug         _ARGS_((logical *flag));
+extern void FATR DRA_internals         _ARGS_((Integer *d_a));
 extern Integer FATR DRA_wait           _ARGS_((Integer *request));
 extern Integer FATR DRA_terminate      _ARGS_(());
 extern void    DRA_flick               _ARGS_(());
@@ -253,6 +257,8 @@ extern int DRA_Probe(         int request,
                               int *compl_status);
 
 extern void DRA_Set_debug(    logical flag);
+
+extern void DRA_Internals(    int d_a);
 
 extern int DRA_Wait(          int request);
 

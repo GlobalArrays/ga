@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.41 2002-03-28 20:39:15 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.42 2002-05-23 16:07:05 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -3209,6 +3209,73 @@ Integer handle=*d_a+DRA_OFFSET;
         strcpy(filename, DRA[handle].fname);
  
         return(ELIO_OK);
+}
+
+/*\ PRINT OUT INTERNAL PARAMETERS OF DRA
+\*/
+void FATR dra_internals_(Integer *d_a)
+{
+  Integer i;
+  Integer *dims, *chunks;
+  Integer handle = *d_a + DRA_OFFSET;
+  Integer ndim = DRA[handle].ndim;
+  Integer me = ga_nodeid_();
+  dims = DRA[handle].dims;
+  chunks = DRA[handle].chunk;
+  if (me == 0) {
+    printf("Internal Data for DRA: %s\n",DRA[handle].name);
+    printf("  DRA Metafile Name: %s\n",DRA[handle].fname);
+    switch(ga_type_c2f(DRA[handle].type)){
+      case MT_F_DBL:
+        printf("  DRA data type is DOUBLE PRECISION\n");
+        break;
+      case MT_F_REAL:
+        printf("  DRA data type is SINGLE PRECISION\n");
+        break;
+      case MT_F_INT:
+        printf("  DRA data type is INTEGER\n");
+        break;
+      case MT_F_DCPL:
+        printf("  DRA data type is DOUBLE COMPLEX\n");
+        break;
+      default:
+        printf("  DRA data type is UNKNOWN\n");
+        break;
+    }
+    switch(DRA[handle].mode) {
+      case DRA_RW:
+        printf("  DRA access permisions are READ/WRITE\n");
+        break;
+      case DRA_W:
+        printf("  DRA access permisions are WRITE ONLY\n");
+        break;
+      case DRA_R:
+        printf("  DRA access permisions are READ ONLY\n");
+        break;
+      default:
+        printf("  DRA access permisions are UNKNOWN\n");
+        break;
+    }
+    printf("  Dimension of DRA: %d\n",ndim);
+    printf("  Dimensions of DRA:\n");
+    for (i=0; i<ndim; i++) {
+      printf("    Dimension in direction [%d]: %d\n",i,dims[i]);
+    }
+    printf("  Chunk dimensions of DRA:\n");
+    for (i=0; i<ndim; i++) {
+      printf("    Chunk dimension in direction [%d]: %d\n",i,dims[i]);
+    }
+    if (DRA[handle].actv) {
+      printf("  DRA is currently active\n");
+    } else {
+      printf("  DRA is not currently active\n");
+    }
+    if (DRA[handle].indep) {
+      printf("  DRA is using independent files\n");
+    } else {
+      printf("  DRA is using shared files\n");
+    }
+  }
 }
 
 /*\ SET DEBUG FLAG FOR DRA OPERATIONS TO TRUE OR FALSE
