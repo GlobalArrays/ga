@@ -1,3 +1,6 @@
+c     ijk loops rearanged into ikj
+c     Thu Aug 25 14:08:17 PDT 1994, JN
+c
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
       implicit none
