@@ -577,10 +577,10 @@ Integer dims[2], nproc=ga_nnodes_(),chunk[2];
 
     nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
     if(ndim !=1) ga_error("ga_bin_index: 1-dim array required",ndim);
-    if(type!= C_INT)ga_error("ga_bin_index: not integer type",type);
+    if(type!= C_INT && type!=C_LONG)ga_error("ga_bin_index: not integer type",type);
 
     chunk[0]=dims[0]=2; dims[1]=nproc; chunk[1]=1;
-    if(!nga_create(C_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
+    if(!nga_create(MT_F_INT, 2, dims, "bin_proc",chunk,g_range)) return FALSE;
 
     nga_distribution_(g_off,&me, &lobin,&hibin);
 
@@ -713,7 +713,7 @@ Integer type, ndim, nbin;
 
     nga_inquire_internal_(g_bin, &type, &ndim, &nbin);
     if(ndim !=1) ga_error("ga_bin_index: 1-dim array required",ndim);
-    if(type!= C_INT)ga_error("ga_bin_index: not integer type",type);
+    if(type!= C_INT && type!=C_LONG)ga_error("ga_bin_index: not integer type",type);
 
     all_bin_contrib = (int*)calloc(nbin,sizeof(int));
     if(!all_bin_contrib)ga_error("ga_binning:calloc failed",nbin);
