@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.34 2003-02-25 19:09:38 d3g293 Exp $ */
+/* $Id: base.c,v 1.35 2003-02-25 23:04:25 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2523,7 +2523,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
 
   GA_PUSH_NAME("ga_merge_mirrored");
   /* don't perform update if node is not mirrored */
-  if (!ga_is_mirrored_(g_a)) return FALSE;
+  if (!ga_is_mirrored_(g_a)) ga_error("Array is not mirrored",GAme);
 
   inode = ga_cluster_nodeid_();
   nnodes = ga_cluster_nnodes_(); 
