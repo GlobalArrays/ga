@@ -1,4 +1,4 @@
-c $Id: testeig.F,v 1.9 2000-05-25 01:09:21 d3h325 Exp $
+c $Id: testeig.F,v 1.10 2004-11-13 02:49:18 edo Exp $
       program test
       implicit none
 #include "mafdecls.fh"
@@ -17,7 +17,11 @@ c
 c
 c***  initialize PEIGS
 #ifdef PAR_DIAG
+#ifdef SCALAPACK
+c     something here?
+#else
        call mxinit()   ! PEIGS needs mxinit
+#endif
 #endif
 c
 c     Intitialize the GA package
@@ -181,7 +185,11 @@ c***  solve the eigenproblem
 #ifndef PAR_DIAG
       call ga_diag_seq(g_a,g_b,g_c,evals)
 #else
+#ifdef SCALAPACK
+      call ga_pdsygv( g_a,  g_b, g_c, evals)
+#else
       call ga_diag(g_a,g_b,g_c,evals)
+#endif
 #endif
       if (me .eq. 0) then
  	print *,' '
@@ -246,7 +254,11 @@ c***  solve the std eigenproblem
 
       call ga_sync()
 #ifdef PAR_DIAG
+#ifdef SCALAPACK
+      call ga_pdsyev( g_a,  g_c, evals)
+#else
       call ga_diag_std(g_a,g_c,evals)
+#endif
 #else
       call ga_diag_std_seq(g_a,g_c,evals)
 #endif

@@ -1,4 +1,4 @@
-c $Id: scalapack.F,v 1.1 2002-08-02 18:59:39 manoj Exp $
+c $Id: scalapack.F,v 1.2 2004-11-13 02:49:13 edo Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
@@ -1125,4 +1125,600 @@ c****    if Cholesky was succcesully just return
 c****    else if Cholesky failed
          call ga_lu_solve('N', g_A, g_B)
       endif
+      end
+c******************************************************************
+c     
+c     ga_pdsyev
+c
+c     interface into scalapack's Hermitian eigensolver
+c     
+c     ga interface to scalapack
+c     
+c     g_a .g_c(*,i) = eval(i).g_b(*,i)
+c     
+c     assume equal size blocks ...
+c     
+c******************************************************************
+c     
+      subroutine ga_pdsyev(g_a, g_b, eval)
+      implicit none
+#include "mafdecls.fh"
+#include "global.fh"
+#include "scalapack.fh"
+c     
+      integer g_a               ! matrix A
+      integer g_b               ! matrix B
+c
+c all eigenvalues are real
+c
+      double precision eval(*)
+c     
+c~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+c
+      logical status
+c
+      character*1 jobz, range, uplo
+c
+      integer ha, adra          !A
+      integer hb, adrb          !B
+c
+c
+      logical oactive           ! true iff this process participates
+      integer dimA1, dimA2, typeA
+      integer dimB1, dimB2, typeB
+c
+      integer mpA, nqA          ! rows/cols of A held by the processor
+      integer mpB, nqB          ! rows/cols of B held by the processor
+c
+      integer me
+      integer nwork
+      integer lda, ldb, elemA, elemB
+      integer numroc
+      
+      integer nb                ! block size
+      integer descA(9), descB(9) !descriptor for scalapack
+      
+c     
+      integer ngaps, hgap, adrgaps
+      integer iclu, hclustr, adrclustr
+      integer if, hfail, adrfail
+      integer liwork, hiwork, adriwork
+      integer lcwork, hcwork, adrcwork
+c
+      integer nn, mq0, np0
+      double precision vl, vu, abstol, orfac
+      integer il, iu
+      integer m, nz
+      integer n
+      integer info
+
+      integer iceil, iii
+      double precision pdlamch
+      external pdlamch
+      external iceil
+      intrinsic max
+c     
+c     processor dependent; machine dependent
+c     
+      data nb/64/
+c     
+c***  check environment
+c     
+      me     = ga_nodeid()
+c     
+c***  check GA info for input arrays
+c     
+      call ga_check_handle(g_a, 'ga_pdsyev: a')
+      call ga_check_handle(g_b, 'ga_pdsyev: b')
+c     
+      call ga_inquire(g_a, typeA, dimA1, dimA2)
+      call ga_inquire(g_b, typeB, dimB1, dimB2)
+      if(dimA1.ne.dima2) call ga_error(
+     %     'ga_pdsyev: matrix A not square ',0)
+      n=dima1
+      if(dimb1.ne.dimb2) call ga_error(
+     %     'ga_pdsyev: matrix B not square ',0)
+      if(dimb1.ne.n) call ga_error(
+     %     'ga_pdsyev: size matrix B and B differ ',0)
+      
+
+c     
+c     
+c***  initialize SL interface
+c     
+      call SLinit()
+c     
+c***  find SBS format parameters
+c     
+c     
+      mpA = numroc(dimA1, nb, myrow, 0, nprow)
+      nqA = numroc(dimA2, nb, mycol, 0, npcol)
+c     
+      mpB = numroc(dimB1, nb, myrow, 0, nprow)
+      nqB = numroc(dimB2, nb, mycol, 0, npcol) 
+c     
+c     
+      lda = max(1,mpA)
+      ldb = max(1,mpB)
+c     
+c     
+c     let scalapack check for errors
+c     
+c     should check to see if this is a compute node
+c     check to see how this works in the new data server model
+c     
+      oactive = .true.
+      if ( mpA*nqA .eq. 0 ) oactive = .false.
+      if ( mpB*nqB .eq. 0 ) oactive = .false.
+c     
+      call ga_sync()
+c     
+      if (oactive) then
+c     
+         elemA= mpA*nqA
+         status = .true.
+         if(elemA.ne.0)status =
+     $        ma_push_get(MT_DBL,elemA,'a',ha,adra)
+         if(.not.status) 
+     &        call ga_error('ga_pdsyev: mem alloc failed A ', -1)
+c     
+         elemB= mpB*nqB
+c     
+         if(elemB.ne.0)status =
+     $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
+         if(.not.status) 
+     &        call ga_error('ga_pdsyev: mem alloc failed B ', -1)
+c     
+         ngaps = nprow*npcol
+         if(ngaps.ne.0)status =
+     $        ma_push_get(MT_DBL, ngaps ,'gap',hgap,adrgaps)
+         if(.not.status) 
+     &        call ga_error('ga_pdsyev: mem alloc failed gaps  ', -1)
+c     
+         iclu = 2*nprow*npcol
+         iclu = 2*n
+         if(iclu.ne.0)status =
+     $        ma_push_get(MT_INT, iclu ,'iclustr',hclustr,adrclustr)
+         if(.not.status) 
+     &        call ga_error('ga_pdsyev: mem alloc failed iclustr  ', -1)
+c     
+         if = n
+         if(if.ne.0) then
+            status =
+     $           ma_push_get(MT_INT, if ,'ifail',hfail,adrfail)
+         endif
+         if(.not.status)
+     &        call ga_error('ga_pdsyev: mem alloc failed ifail  ', -1)
+         
+c     
+c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
+c     
+         
+         call ga_to_SL(g_a, dimA1, dimA2, nb, nb,
+     $        dbl_mb(adrA), lda, mpA, nqA)
+c     
+         call ga_to_SL(g_b, dimB1, dimB2, nb,nb,
+     $        dbl_mb(adrB), ldb, mpB, nqB)
+c     
+c***  fill SCALAPACK matrix descriptors
+c     
+         call descinit(descA, dimA1, dimA2, nb, nb, 0, 0,
+     $        iSLctxt, lda, info)
+         if(info.ne.0) call ga_error(' ga_pdsyev: descinit A failed ',
+     .        -info)
+c     
+         call descinit(descB, dimB1, dimB2, nb, nb, 0, 0,
+     .        iSLctxt, ldb, info)
+         if(info.ne.0) call ga_error(' ga_pdsyev: descinit B failed ',
+     .        -info)
+c     
+         jobz = 'V'
+         range = 'A'
+         uplo = 'L'
+c     abstol = 2.0d0*pdlamch('S')
+         abstol = 0.0d0
+         vl = 0.d0
+         vu = 0.d0
+         il = 0
+         iu = 0
+         nz = 0
+c     
+c     ability to deal with orthonormality ; let's just
+c     have the regular scalapack stuff for the moment
+c     
+         liwork = 6*max(n, nprow*npcol+1, 4)
+         if(liwork.ne.0)status =
+     $        ma_push_get(MT_INT, liwork ,'iwork',hiwork,adriwork)
+         if(.not.status) 
+     &        call ga_error('ga_pdsyev: mem alloc failed iwork  ', -1)
+c     
+         nn = max(n, nb, 2)
+         np0 = numroc(nn, nb, 0, 0, nprow)
+         mq0 = numroc(nn, nb, 0, 0, npcol)
+c     
+c     
+         orfac = 1.d-3
+c     
+c     
+         lcwork = 5*n +MAX(5*NN,(NP0*MQ0 + 2*NB*NB))+
+     +          ICEIL( N, NPROW*NPCOL)*NN+1
+
+c     
+         if(lcwork.ne.0)
+     $        status = ma_push_get(MT_DBL, lcwork ,
+     $        'cwork',hcwork,adrcwork)
+         if(.not.status) 
+     &        call ga_error('ga_pdsyev: mem alloc failed cwork  ', -1)
+c     
+c     
+c     x      abstol = 2.d0 * pdlamch('s')
+c     
+         abstol = 0.0d0
+c     
+c     
+         call pdsyevx(jobz, range, uplo,
+     1        n, dbl_mb(adrA), 1, 1, descA,vl, 
+     2        vu, il, iu, abstol, m, nz, eval, orfac, dbl_mb(adrB), 1, 
+     3        1, descB, dbl_mb(adrcwork), lcwork,
+     3        int_mb(adriwork), liwork, int_mb(adrfail),
+     4        int_mb(adrclustr), dbl_mb(adrgaps), info)
+c     
+c
+         if ( me . eq. 0 ) then
+            do iii = 1, n
+               write(*,*) iii, eval(iii)
+            enddo
+         endif
+         
+c     
+         if (nz .ne. n ) then
+            if ( info .ne. 0 ) then
+               if ( info .gt. 0 ) then
+         call ga_error(' ga_pdsyev: argument is illegal ', info)
+               else
+         call ga_error(' ga_pdsyev: eigenvectors failed to converge ',
+     $                 info)
+               endif
+            endif
+         endif
+c     
+c     
+c     
+c***  copy solution matrix back to g_c
+c     
+         call ga_from_SL(g_b, dimA1, dimB2,
+     $        nb, nb, dbl_mb(adrB),
+     &        mpB, ldb, nqB)
+c     
+c     
+         call blacs_gridexit(iSLctxt)
+c     
+c***  deallocate work/SL arrays
+c     
+         if ( lcwork .ne. 0 ) status = ma_pop_stack(hcwork)
+         if ( liwork .ne. 0 ) status = ma_pop_stack(hiwork)
+         if ( if .ne. 0 ) status = ma_pop_stack(hfail)
+         if ( iclu .ne. 0 ) status = ma_pop_stack(hclustr)
+         if ( ngaps.ne.0 ) status = ma_pop_stack(hgap)
+         if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
+         if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
+      endif
+c     
+      call ga_sync()
+      return
+      end
+c******************************************************************
+c     
+c     ga_pdsygv
+c
+c     interface into scalapack's Hermitian eigensolver
+c     
+c     ga interface to scalapack
+c     
+c     g_a .g_c(*,i) = eval(i).g_s(*,i) g_b(*,i)
+c     
+c     assume equal size blocks ...
+c     
+c******************************************************************
+      subroutine ga_pdsygv(g_a, g_s, g_b, eval)
+      implicit none
+#include "mafdecls.fh"
+#include "global.fh"
+#include "scalapack.fh"
+c     
+      integer g_a               ! matrix A
+      integer g_b               ! matrix B
+      integer g_s               ! metric
+c
+c all eigenvalues are real
+c
+      double precision eval(*)
+c     
+c~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+c
+      logical status
+c
+      character*1 jobz, range, uplo
+c
+      integer ha, adra          !A
+      integer hb, adrb          !B
+      integer hs, adrs          !S
+c
+c
+      logical oactive           ! true if this process participates
+      integer dimA1, dimA2, typeA
+      integer dimB1, dimB2, typeB
+      integer dims1, dims2, types
+c
+      integer mpA, nqA          ! rows/cols of A held by the processor
+      integer mpB, nqB          ! rows/cols of B held by the processor
+      integer mps, nqs          ! rows/cols of B held by the processor
+c
+      integer me
+      integer nwork
+      integer lda, ldb, lds, elemA, elemB, elems
+      integer numroc
+      
+      integer nb                ! block size
+      integer descA(9), descB(9) !descriptor for scalapack
+      integer descs(9)
+      
+c     
+      integer ngaps, hgap, adrgaps
+      integer iclu, hclustr, adrclustr
+      integer if, hfail, adrfail
+      integer liwork, hiwork, adriwork
+      integer lcwork, hcwork, adrcwork
+c
+      integer nn, mq0, np0
+      double precision vl, vu, abstol, orfac
+      integer il, iu
+      integer m, nz
+      integer n
+      integer info
+
+      integer iceil, iii
+      double precision pdlamch
+      external pdlamch
+      external iceil
+      intrinsic max
+c     
+c     processor dependent; machine dependent
+c     
+      data nb/64/
+c     
+c***  check environment
+c     
+      me     = ga_nodeid()
+c     
+c***  check GA info for input arrays
+c     
+      call ga_check_handle(g_a, 'ga_pdsygv: a')
+      call ga_check_handle(g_b, 'ga_pdsygv: b')
+      call ga_check_handle(g_s, 'ga_pdsygv: b')
+c     
+      call ga_inquire(g_a, typeA, dimA1, dimA2)
+      call ga_inquire(g_b, typeB, dimB1, dimB2)
+      call ga_inquire(g_s, types, dims1, dims2)
+      if(dimA1.ne.dima2) call ga_error(
+     %     'ga_pdsygv: matrix A not square ',0)
+      n=dima1
+      if(dimb1.ne.dimb2) call ga_error(
+     %     'ga_pdsygv: matrix B not square ',0)
+      if(dimb1.ne.n) call ga_error(
+     %     'ga_pdsygv: size matrix B and A differ ',0)
+      if(dims1.ne.dims2) call ga_error(
+     %     'ga_pdsygv: matrix S not square ',0)
+      if(dims1.ne.n) call ga_error(
+     %     'ga_pdsygv: size matrix A and S differ ',0)
+      
+
+c     
+c     
+c***  initialize SL interface
+c     
+      call SLinit()
+c     
+c***  find SBS format parameters
+c     
+c     
+      mpA = numroc(dimA1, nb, myrow, 0, nprow)
+      nqA = numroc(dimA2, nb, mycol, 0, npcol)
+c     
+      mpB = numroc(dimB1, nb, myrow, 0, nprow)
+      nqB = numroc(dimB2, nb, mycol, 0, npcol) 
+c     
+      mps = numroc(dims1, nb, myrow, 0, nprow)
+      nqs = numroc(dims2, nb, mycol, 0, npcol) 
+c     
+c     
+      lda = max(1,mpA)
+      ldb = max(1,mpB)
+      lds = max(1,mps)
+c     
+c     
+c     let scalapack check for errors
+c     
+c     should check to see if this is a compute node
+c     check to see how this works in the new data server model
+c     
+      oactive = .true.
+      if ( mpA*nqA .eq. 0 ) oactive = .false.
+      if ( mpB*nqB .eq. 0 ) oactive = .false.
+      if ( mps*nqs .eq. 0 ) oactive = .false.
+c     
+      call ga_sync()
+c     
+      if (oactive) then
+c     
+         elemA= mpA*nqA
+         status = .true.
+         if(elemA.ne.0)status =
+     $        ma_push_get(MT_DBL,elemA,'a',ha,adra)
+         if(.not.status) 
+     &        call ga_error('ga_pdsygv: mem alloc failed A ', -1)
+c     
+         elemB= mpB*nqB
+         if(elemB.ne.0)status =
+     $        ma_push_get(MT_DBL,elemB,'b',hb,adrb)
+         if(.not.status) 
+     &        call ga_error('ga_pdsygv: mem alloc failed B ', -1)
+         elems= mps*nqs
+         if(elems.ne.0)status =
+     $        ma_push_get(MT_DBL,elems,'s',hs,adrs)
+         if(.not.status) 
+     &        call ga_error('ga_pdsygv: mem alloc failed S ', -1)
+c     
+         ngaps = nprow*npcol
+         if(ngaps.ne.0)status =
+     $        ma_push_get(MT_DBL, ngaps ,'gap',hgap,adrgaps)
+         if(.not.status) 
+     &        call ga_error('ga_pdsygv: mem alloc failed gaps  ', -1)
+c     
+         iclu = 2*nprow*npcol
+         iclu = 2*n
+         if(iclu.ne.0)status =
+     $        ma_push_get(MT_INT, iclu ,'iclustr',hclustr,adrclustr)
+         if(.not.status) 
+     &        call ga_error('ga_pdsygv: mem alloc failed iclustr  ', -1)
+c     
+         if = n
+         if(if.ne.0) then
+            status =
+     $           ma_push_get(MT_INT, if ,'ifail',hfail,adrfail)
+         endif
+         if(.not.status)
+     &        call ga_error('ga_pdsygv: mem alloc failed ifail  ', -1)
+         
+c     
+c***  copy g_a to A and g_b to B using the block cyclic scalapack format 
+c     
+         
+         call ga_to_SL(g_a, dimA1, dimA2, nb, nb,
+     $        dbl_mb(adrA), lda, mpA, nqA)
+c     
+         call ga_to_SL(g_b, dimB1, dimB2, nb,nb,
+     $        dbl_mb(adrB), ldb, mpB, nqB)
+         call ga_to_SL(g_s, dims1, dims2, nb,nb,
+     $        dbl_mb(adrs), ldb, mps, nqs)
+c     
+c     
+c***  fill SCALAPACK matrix descriptors
+c     
+         call descinit(descA, dimA1, dimA2, nb, nb, 0, 0,
+     $        iSLctxt, lda, info)
+         if(info.ne.0) call ga_error(' ga_pdsygv: descinit A failed ',
+     .        -info)
+c     
+         call descinit(descB, dimB1, dimB2, nb, nb, 0, 0,
+     .        iSLctxt, ldb, info)
+         if(info.ne.0) call ga_error(' ga_pdsygv: descinit B failed ',
+     .        -info)
+         call descinit(descs, dims1, dims2, nb, nb, 0, 0,
+     .        iSLctxt, lds, info)
+         if(info.ne.0) call ga_error(' ga_pdsygv: descinit S failed ',
+     .        -info)
+c     
+c     call scalapack
+c     
+c     
+         jobz = 'V'
+         range = 'A'
+         uplo = 'L'
+c     abstol = 2.0d0*pdlamch('S')
+         abstol = 0.0d0
+         vl = 0.d0
+         vu = 0.d0
+         il = 0
+         iu = 0
+         nz = 0
+c     
+c     ability to deal with orthonormality ; let's just
+c     have the regular scalapack stuff for the moment
+c     
+         liwork = 6*max(n, nprow*npcol+1, 4)
+         if(liwork.ne.0)status =
+     $        ma_push_get(MT_INT, liwork ,'iwork',hiwork,adriwork)
+         if(.not.status) 
+     &        call ga_error('ga_pdsygv: mem alloc failed iwork  ', -1)
+c     
+         nn = max(n, nb, 2)
+         np0 = numroc(nn, nb, 0, 0, nprow)
+         mq0 = numroc(nn, nb, 0, 0, npcol)
+c     
+c     
+         orfac = 1.d-3
+c     
+c     
+         lcwork = 5*n +MAX(5*NN,(NP0*MQ0 + 2*NB*NB))+
+     +          ICEIL( N, NPROW*NPCOL)*NN+1
+
+c     
+         if(lcwork.ne.0)
+     $        status = ma_push_get(MT_DBL, lcwork ,
+     $        'cwork',hcwork,adrcwork)
+         if(.not.status) 
+     &        call ga_error('ga_pdsygv: mem alloc failed cwork  ', -1)
+c     
+c     
+c     x      abstol = 2.d0 * pdlamch('s')
+c     
+         abstol = 0.0d0
+c     
+c     
+c     
+         call pdsygvx(1,jobz, range, uplo,
+     1        n, dbl_mb(adrA), 1, 1, 
+     2        descA, dbl_mb(adrS), 1, 1,descs, vl,vu, il, iu, 
+     3        abstol, m, nz, eval, orfac, dbl_mb(adrB), 1, 1, descB, 
+     4        dbl_mb(adrcwork), lcwork,int_mb(adriwork), liwork, 
+     4        int_mb(adrfail), int_mb(adrclustr), 
+     5        dbl_mb(adrgaps), info)
+c     
+c     
+c
+         if ( me . eq. 0 ) then
+            do iii = 1, n
+               write(*,*) iii, eval(iii)
+            enddo
+         endif
+         
+c     
+         if (nz .ne. n ) then
+            if ( info .ne. 0 ) then
+               if ( info .gt. 0 ) then
+         call ga_error(' ga_pdsygv: argument is illegal ', info)
+               else
+         call ga_error(' ga_pdsygv: eigenvectors failed to converge ',
+     $                 info)
+               endif
+            endif
+         endif
+c     
+c     
+c     
+c***  copy solution matrix back to g_c
+c     
+c     
+         call ga_from_SL(g_b, dimA1, dimB2,
+     $        nb, nb, dbl_mb(adrB),
+     &        mpB, ldb, nqB)
+c     
+     
+         call blacs_gridexit(iSLctxt)
+c     
+c***  deallocate work/SL arrays
+c     
+         if ( lcwork .ne. 0 ) status = ma_pop_stack(hcwork)
+         if ( liwork .ne. 0 ) status = ma_pop_stack(hiwork)
+         if ( if .ne. 0 ) status = ma_pop_stack(hfail)
+         if ( iclu .ne. 0 ) status = ma_pop_stack(hclustr)
+         if ( ngaps.ne.0 ) status = ma_pop_stack(hgap)
+         if ( elemS .ne. 0 ) status = ma_pop_stack(hs)
+         if ( elemB .ne. 0 ) status = ma_pop_stack(hb)
+         if ( elemA .ne. 0 ) status = ma_pop_stack(ha)
+      endif
+c     
+      call ga_sync()
+      return
       end
