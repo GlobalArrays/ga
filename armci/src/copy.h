@@ -137,6 +137,14 @@ void FATR DCOPY1D(void*, void*, int*);
 #      define armci_put(src,dst,n,p)    armci_copy((src),(dst),(n))
 
 #endif
+
+#ifdef COPY686 
+     extern void *armci_asm_memcpy(void *dst, const void *src, size_t n);
+#    define armci_copy(src,dst,n)  armci_asm_memcpy((dst), (src), (n)) 
+#    ifndef MEMCPY
+#       define MEMCPY
+#    endif
+#endif
                                                  
 #if  defined(MEMCPY)  && !defined(armci_copy)
 #    define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 

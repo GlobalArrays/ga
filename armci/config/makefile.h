@@ -55,6 +55,8 @@ ifeq ($(_CPU),x86)
 endif
 ifeq ($(_CPU),686)
      OPT_ALIGN = -malign-double -march=pentiumpro
+        CDEFS += -DCOPY686
+    EXTRA_OBJ += x86copy.o
 endif
 ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
@@ -62,7 +64,7 @@ ifeq ($(_CC),gcc)
      COPT_REN += -Wall -finline-functions -funroll-loops $(OPT_ALIGN)
    endif
 else
-   EXTRA_OBJ = tas.o
+   EXTRA_OBJ += tas.o
 endif
 #
 #           g77

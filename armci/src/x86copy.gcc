@@ -1,0 +1,69 @@
+#include <stdio.h>
+
+void *armci_asm_memcpy(void *dst, const void *src, size_t n);
+
+//
+// memory copy implementation based on example 3
+// from http://www.sgi.com/developers/library/resources/asc_cpu.html
+//
+void *asm_memcpy3(void *dst, const void *src, size_t n)
+{
+  asm("
+      shr $6, %2
+loopl:
+      prefetchnta 64(%0);
+      prefetchnta 96(%0);
+
+      movq 0(%0), %%mm1;
+      movq 8(%0), %%mm2;
+      movq 16(%0), %%mm3;
+      movq 24(%0), %%mm4;
+      movq 32(%0), %%mm5;
+      movq 40(%0), %%mm6;
+      movq 48(%0), %%mm7;
+      movq 56(%0), %%mm0;
+
+      movntq %%mm1, 0(%1);
+      movntq %%mm2, 8(%1);
+      movntq %%mm3, 16(%1);
+      movntq %%mm4, 24(%1);
+      movntq %%mm5, 32(%1);
+      movntq %%mm6, 40(%1);
+      movntq %%mm7, 48(%1);
+      movntq %%mm0, 56(%1);
+     
+      add $64, %0;
+      add $64, %1;
+      dec %2;
+      jnz loopl;
+
+      emms;"
+      : 
+      : "r"(src), "r"(dst), "c"(n)
+      : "%eax", "%ebx"
+      );
+
+  return dst;
+}
+
+//
+// memory n byte copy from src to dst 
+// use standard memcpy for n%64 bytes from src
+// use asm memory copy for rest of (n - n%64) bytes
+//
+
+void *armci_asm_memcpy(void *dst, const void *src, size_t n)
+{
+
+    int residual = (int)n % 64;
+    int n64      = n - residual;
+
+    if(residual != 0) memcpy(dst, src, residual);
+
+    if(n64 > 0)
+	asm_memcpy3((char*)dst+residual, 
+		    (char*)src+residual, 
+		    n - residual);
+
+    return dst;
+}
