@@ -1,3 +1,7 @@
+/*
+ $Id: macommon.h,v 1.6 1997-11-04 10:01:03 d3e129 Exp $
+ */
+
 #ifndef _macommon_h
 #define _macommon_h
 
