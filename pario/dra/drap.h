@@ -24,6 +24,7 @@
 #define TRUE  (logical) 1
 #endif
 
+#define USE_OLD_BUFFER
 
 /************************** common constants ***********************************/
 #define DRA_OFFSET     5000                    /* DRA handle offset            */
@@ -73,6 +74,9 @@ typedef struct{                  /* structure stores arguments for callback f */
 
 typedef struct{                   /* stores info associated with DRA request */
         Integer  d_a;             /* disk array handle */
+#ifdef USE_OLD_BUFFER
+        io_request_t id;          /* low level asynch. I/O op. id */
+#endif
         int num_pending;          /* number of pending  asynch. I/O ops */ 
         Integer list_algn[MAX_ALGN][2*MAXDIM]; /* coordinates of aligned subsection */
         Integer list_unlgn[MAX_UNLG][2*MAXDIM];/*coordinates of unaligned subsections*/
@@ -81,14 +85,19 @@ typedef struct{                   /* stores info associated with DRA request */
         int        nu;            
         int        na;
         int        callback;      /* callback status flag ON/OFF */
+#ifdef USE_OLD_BUFFER
+        args_t     args;          /* arguments to callback function */
+#endif
 }request_t;
 
+#ifndef USE_OLD_BUFFER
 typedef struct{
   args_t args;
   Integer    req;
   io_request_t id;
   char *buffer;
 } buffer_t;
+#endif
 
 
 extern disk_array_t *DRA;

@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.72 2004-04-01 03:30:32 manoj Exp $*/
+/*$Id: disk.arrays.c,v 1.73 2005-01-20 21:35:34 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -105,13 +105,20 @@
 #define DRA_INT_BUF_SIZE (DRA_BUF_SIZE/sizeof(Integer))
 /***************************** Global Data ***********************************/
 
+#ifndef USE_OLD_BUFFER
 int _dra_buffer_index = 0;
+#endif
 #ifdef STATBUF
+#  ifndef USE_OLD_BUFFER
 DoublePrecision _dra_dbl_buffer[DRA_DBL_BUF_SIZE];        /* DRA data buffer */
-#  ifdef DRA_DBLE_BUFFER
-   DoublePrecision _dra_dbl_buffer_2[DRA_DBL_BUF_SIZE];
+#    ifdef DRA_DBLE_BUFFER
+DoublePrecision _dra_dbl_buffer_2[DRA_DBL_BUF_SIZE];
+#    endif
 #  endif
 #else
+#  ifdef USE_OLD_BUFFER
+char*           _dra_buffer;
+#  endif
 Integer         _idx_buffer, _handle_buffer;
 #endif
 
@@ -130,13 +137,15 @@ int num_pending_requests=0;
 Integer _dra_turn=0;
 int     Dra_num_serv=DRA_NUM_IOPROCS;
 
+#ifndef USE_OLD_BUFFER
 buffer_t _dra_buffer_state[2];
-#ifdef STATBUF
-#  ifdef DRA_DBLE_BUFFER
+#  ifdef STATBUF
+#    ifdef DRA_DBLE_BUFFER
    _dra_buffer_state[0].buffer = (char*)_dra_dbl_buffer;
    _dra_buffer_state[1].buffer = (char*)_dra_dbl_buffer_2;
-#  else
+#    else
    _dra_buffer_state[0].buffer = (char*)_dra_dbl_buffer;
+#    endif
 #  endif
 #endif
  
@@ -328,8 +337,13 @@ Integer handle = d_a+DRA_OFFSET;
 
 /*\  registers callback function associated with completion of asynch. I/O
 \*/
+#ifdef USE_OLD_BUFFER
+void dai_callback(int op, int transp, section_t gs_a, section_t ds_a, 
+                  section_t ds_chunk, Integer ld[], Integer req)
+#else
 void dai_callback(int op, int transp, section_t gs_a, section_t ds_a, 
                   section_t ds_chunk, Integer ld[], int ibuf, Integer req)
+#endif
 {
   Integer i;
 #if WALLTIME
@@ -344,6 +358,15 @@ void dai_callback(int op, int transp, section_t gs_a, section_t ds_a,
                 ga_nodeid_(),ibuf,tt0);
 #endif
         Requests[req].callback = ON;
+#ifdef USE_OLD_BUFFER
+        Requests[req].args.op = op;
+        Requests[req].args.transp = transp;
+        Requests[req].args.gs_a = gs_a;
+        Requests[req].args.ds_a = ds_a;
+        Requests[req].args.ds_chunk = ds_chunk;
+        Requests[req].args.ld[0] = ld[0];
+        for (i=1; i<gs_a.ndim-1; i++) Requests[req].args.ld[i] = ld[i];
+#else
         Requests[req].ibuf = ibuf;
         _dra_buffer_state[ibuf].args.op = op;
         _dra_buffer_state[ibuf].args.transp = transp;
@@ -352,6 +375,7 @@ void dai_callback(int op, int transp, section_t gs_a, section_t ds_a,
         _dra_buffer_state[ibuf].args.ds_chunk = ds_chunk;
         for (i=0; i<gs_a.ndim-1; i++)
           _dra_buffer_state[ibuf].args.ld[i] = ld[i];
+#endif
 }
 
 
@@ -393,35 +417,55 @@ int i;
               dai_error("Not enough memory available from MA for DRA",avail);
 
             /* get buffer memory */
+#ifdef USE_OLD_BUFFER
+            if(MA_alloc_get(MT_C_DBL, DRA_DBL_BUF_SIZE+ALIGN-1, "DRA buf", 
+              &_handle_buffer, &_idx_buffer))
+                MA_get_pointer(_handle_buffer, &_dra_buffer); 
+#else
             if(MA_alloc_get(MT_C_DBL, DRA_DBL_BUF_SIZE+ALIGN-1, "DRA buf 0", 
               &_handle_buffer, &_idx_buffer))
                 MA_get_pointer(_handle_buffer, &_dra_buffer_state[0].buffer); 
+#endif
             else
                 dai_error("dra_init: ma_alloc_get failed",DRA_DBL_BUF_SIZE); 
-#ifdef DRA_DBLE_BUFFER
+#ifndef USE_OLD_BUFFER
+  #ifdef DRA_DBLE_BUFFER
             if(MA_alloc_get(MT_C_DBL, DRA_DBL_BUF_SIZE+ALIGN-1, "DRA buf 1", 
               &_handle_buffer, &_idx_buffer))
                 MA_get_pointer(_handle_buffer, &_dra_buffer_state[1].buffer); 
             else
                 dai_error("dra_init: ma_alloc_get failed",DRA_DBL_BUF_SIZE); 
+  #endif
 #endif
 
             /* align buffer address */
+#ifdef USE_OLD_BUFFER
+            diff = ((long)_dra_buffer) % (sizeof(DoublePrecision)*ALIGN);
+            if(diff) _dra_buffer += (sizeof(DoublePrecision)*ALIGN - diff);
+#else
             diff = ((long)_dra_buffer_state[0].buffer)
               % (sizeof(DoublePrecision)*ALIGN);
             if(diff) _dra_buffer_state[0].buffer
               += (sizeof(DoublePrecision)*ALIGN - diff);
+  #ifdef DRA_DBLE_BUFFER
             diff = ((long)_dra_buffer_state[1].buffer)
               % (sizeof(DoublePrecision)*ALIGN);
             if(diff) _dra_buffer_state[1].buffer
               += (sizeof(DoublePrecision)*ALIGN - diff);
+  #endif
+#endif
         }
 #endif
+
+#ifndef USE_OLD_BUFFER
         /* Initialize buffer io descriptors */
         _dra_buffer_state[0].id = ELIO_DONE;
-        _dra_buffer_state[1].id = ELIO_DONE;
         _dra_buffer_state[0].args.gs_a.handle = 0;
+  #ifdef DRA_DBLE_BUFFER
+        _dra_buffer_state[1].id = ELIO_DONE;
         _dra_buffer_state[1].args.gs_a.handle = 0;
+  #endif
+#endif
 
         _dra_io_procs = ga_cluster_nnodes_();
         _dra_number_of_files = ga_cluster_nnodes_();
@@ -715,15 +759,18 @@ void dai_assign_request_handle(Integer* request)
                 *request = i;
                 break;
         }
-        for(i=0;i<MAX_REQ;i++) Requests[i].ibuf = -1;
+        /*for(i=0;i<MAX_REQ;i++) Requests[i].ibuf = -1; */
            
         if(*request ==-1) 
             dai_error("DRA: number of pending I/O requests exceeded",MAX_REQ);
            
         Requests[*request].na=0;
         Requests[*request].nu=0;
+#ifdef USE_OLD_BUFFER
+        Requests[*request].id = ELIO_DONE;
+#else
         Requests[*request].ibuf=-1;
-/*        Requests[*request].id = ELIO_DONE; */
+#endif
         Requests[*request].callback = OFF;
         Requests[*request].num_pending = ON;
 }
@@ -1530,13 +1577,18 @@ double ss0,tt0;
 
         if(request->callback==OFF)return;
         request->callback = OFF;
+#ifdef USE_OLD_BUFFER
+        arg = &request->args;
+        nga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk,
+                 _dra_buffer, arg->ld);
+#else
         ibuf = request->ibuf;
 
-#if WALLTIME
+#  if WALLTIME
         walltime(&ss0,&tt0);
         printf("p[%d] Executing callback for buffer %d: %16.6f\n",
                 ga_nodeid_(),ibuf,tt0);
-#endif
+#  endif
         arg = &_dra_buffer_state[ibuf].args;
         /* bail if there is no valid global array handle */
         if (arg->gs_a.handle == 0) return;
@@ -1544,6 +1596,7 @@ double ss0,tt0;
         nga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk,
                  buf, arg->ld);
         /* arg->gs_a.handle = 0; */
+#endif
 }
 
 
@@ -1552,34 +1605,47 @@ double ss0,tt0;
 void dai_wait(Integer req0)
 {
 Integer req;
+#ifdef USE_OLD_BUFFER
+        /* until more sophisticated buffer management is implemented wait for
+           all requests to complete */
+        for(req=0; req<MAX_REQ; req++)
+          if (Requests[req].num_pending) {
+              if (elio_wait(&Requests[req].id)==ELIO_OK)
+                   dai_exec_callback(Requests + req);
+              else
+                   dai_error("dai_wait: DRA internal error",0);
+          }
+#else
 int ibuf;
  
         /* wait for all requests to complete on buffer Requests[req].ibuf */
 
         ibuf = Requests[req0].ibuf;
         for(req=0; req<MAX_REQ; req++)
-	  if (Requests[req].num_pending && Requests[req].ibuf == ibuf) {
-             if (elio_wait(&_dra_buffer_state[Requests[req].ibuf].id)==ELIO_OK)
-                 dai_exec_callback(Requests + req);
-             else
-                 dai_error("dai_wait: DRA internal error",0);
-	  }
+        if (Requests[req].num_pending && Requests[req].ibuf == ibuf) {
+          if (elio_wait(&_dra_buffer_state[Requests[req].ibuf].id)==ELIO_OK)
+            dai_exec_callback(Requests + req);
+          else
+            dai_error("dai_wait: DRA internal error",0);
+	     }
+#endif
 }
 
+#ifndef USE_OLD_BUFFER
 /*\ wait until buffer space ibuf is avilable
 \*/
 void dai_wait_buf(int ibuf)
 {
   Integer req;
-#if WALLTIME
+#  if WALLTIME
   double ss0,tt0;
-#endif
+#  endif
         /* wait for request to complete on buffer ibuf */
-#if WALLTIME
+#  if WALLTIME
         walltime(&ss0,&tt0);
         printf("p[%d] Waiting for buffer %d: %16.6f\n",
                 ga_nodeid_(),ibuf,tt0);
-#endif
+#  endif
 
              if (elio_wait(&_dra_buffer_state[ibuf].id)==ELIO_OK) {
                  req = _dra_buffer_state[ibuf].req;
@@ -1588,6 +1654,7 @@ void dai_wait_buf(int ibuf)
                  dai_error("dai_wait: DRA internal error",0);
              }
 }
+#endif
 
 
 /*\ Write or Read Unaligned Subsections to/from disk: 
@@ -1614,20 +1681,24 @@ int        ibuf;
 
           if(dai_myturn(ds_chunk)){
 
+#ifdef USE_OLD_BUFFER
+              dai_wait(req); /* needs free buffer to proceed */
+#else
               /* assign buffer */
-#ifdef DRA_DBLE_BUFFER
+#  ifdef DRA_DBLE_BUFFER
               ibuf = _dra_buffer_index;
               _dra_buffer_index = 1 - ibuf;
               _dra_buffer_index = 0;
               ibuf = 1;
-#else
+#  else
               _dra_buffer_index = 0;
               ibuf = 1;
-#endif
+#  endif
               _dra_buffer_state[_dra_buffer_index].req = req;
               dai_wait_buf(_dra_buffer_index); /* needs free buffer to proceed */
 
               Requests[req].ibuf = _dra_buffer_index; 
+#endif
 
              /*find corresponding to chunk of 'cover' unaligned sub-subsection*/
               ds_unlg.lo[0] = Requests[req].list_unlgn[next][ ILO ];
@@ -1640,15 +1711,24 @@ int        ibuf;
 
              /* copy data from disk to DRA buffer */
               chunk_ld =  ds_chunk.hi[0] - ds_chunk.lo[0] + 1;
+#ifdef USE_OLD_BUFFER
+              dai_get(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
+              elio_wait(&Requests[req].id); 
+#else
               buf = (char*)_dra_buffer_state[_dra_buffer_index].buffer;
               dai_get(ds_chunk, buf, chunk_ld,
                       &_dra_buffer_state[_dra_buffer_index].id);
               elio_wait(&_dra_buffer_state[_dra_buffer_index].id); 
+#endif
 
              /* determine location in the buffer where GA data should be */
               offset  = (ds_unlg.lo[1] - ds_chunk.lo[1])*chunk_ld + 
                          ds_unlg.lo[0] - ds_chunk.lo[0];
+#ifdef USE_OLD_BUFFER
+              buffer  = (char*)_dra_buffer;
+#else
               buffer  = (char*)buf;
+#endif
               buffer += offset * dai_sizeofM(type);
 
               switch (opcode){
@@ -1657,8 +1737,12 @@ int        ibuf;
                  ga_move(LOAD, transp, gs_a, ds_a, ds_unlg, buffer, chunk_ld);
 
                  /* write entire updated buffer back to disk */
+#ifdef USE_OLD_BUFFER
+                 dai_put(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
+#else
                  dai_put(ds_chunk, buf, chunk_ld,
                          &_dra_buffer_state[_dra_buffer_index].id);
+#endif
                  break;
 
               case DRA_OP_READ: 
@@ -1701,36 +1785,59 @@ int   ibuf;
 
           if(dai_myturn(ds_chunk)){
 
+#ifdef USE_OLD_BUFFER
+              dai_wait(req); /* needs free buffer to proceed */
+#else
               /* assign buffer */
-#ifdef DRA_DBLE_BUFFER
+#  ifdef DRA_DBLE_BUFFER
               ibuf = _dra_buffer_index;
               _dra_buffer_index = 1 - ibuf;
               _dra_buffer_index = 0;
               ibuf = 1;
-#else
+#  else
               _dra_buffer_index = 0;
               ibuf = 1;
-#endif
+#  endif
               _dra_buffer_state[_dra_buffer_index].req = req;
 
               dai_wait_buf(_dra_buffer_index); /* needs free buffer to proceed */
               Requests[req].ibuf = _dra_buffer_index;
+#endif
 
               chunk_ld[0] =  ds_chunk.hi[0] - ds_chunk.lo[0] + 1;
 
+#ifndef USE_OLD_BUFFER
               buf = (char*)_dra_buffer_state[_dra_buffer_index].buffer;
+#endif
               switch (opcode){
 
               case DRA_OP_WRITE:
+#ifdef USE_OLD_BUFFER
+                 /* copy data from g_a to DRA buffer */
+                 ga_move(LOAD, transp, gs_a, ds_a, ds_chunk, _dra_buffer,
+                     chunk_ld[0]);
+
+                 /* copy data from DRA buffer to disk */
+                 dai_put(ds_chunk, _dra_buffer, chunk_ld[0], &Requests[req].id);
+#else
                  /* copy data from g_a to DRA buffer */
                  ga_move(LOAD, transp, gs_a, ds_a, ds_chunk, buf, chunk_ld[0]);
 
                  /* copy data from DRA buffer to disk */
                  dai_put(ds_chunk, buf, chunk_ld[0],
                          &_dra_buffer_state[_dra_buffer_index].id);
+#endif
                  break;
 
               case DRA_OP_READ:
+#ifdef USE_OLD_BUFFER
+                 /* copy data from disk to DRA buffer */
+                 dai_get(ds_chunk, _dra_buffer, chunk_ld[0], &Requests[req].id);
+                 elio_wait(&Requests[req].id);
+
+                 /* copy data from DRA buffer to g_a */
+                 dai_callback(STORE, transp, gs_a, ds_a, ds_chunk, chunk_ld, req);
+#else
                  /* copy data from disk to DRA buffer */
                  dai_get(ds_chunk, buf, chunk_ld[0],
                      &_dra_buffer_state[_dra_buffer_index].id);
@@ -1739,6 +1846,7 @@ int   ibuf;
                  /* copy data from DRA buffer to g_a */
                  dai_callback(STORE,transp,gs_a,ds_a,ds_chunk,chunk_ld,
                      _dra_buffer_index,req);
+#endif
                  break;
 
               default:
@@ -1969,10 +2077,16 @@ Integer FATR dra_wait_(Integer* request)
         printf("p[%d] executing dra_wait: %16.6f\n",ga_nodeid_(),tt0);
 #endif
 
+#ifdef USE_OLD_BUFFER
+        elio_wait(&Requests[*request].id);
+#else
         if (_dra_buffer_state[0].req == *request)
           elio_wait(&_dra_buffer_state[0].id);
+#  ifdef DRA_DBLE_BUFFER
         if (_dra_buffer_state[1].req == *request)
           elio_wait(&_dra_buffer_state[1].id);
+#  endif
+#endif
         Requests[*request].num_pending=0;
         dai_exec_callback(Requests + *request);
 
@@ -1994,8 +2108,12 @@ int  stat;
 
         if(*request == DRA_REQ_INVALID){ *status = ELIO_DONE; return(ELIO_OK); }
 
+#ifdef USE_OLD_BUFFER
+        if(elio_probe(&Requests[*request].id, &stat)!=ELIO_OK)return(DRA_FAIL);
+#else
         if(elio_probe(&_dra_buffer_state[Requests[*request].ibuf].id, &stat)
             !=ELIO_OK)return(DRA_FAIL);
+#endif
         *status = (Integer) stat;
         
         done = (*status==ELIO_DONE)? 1: 0;
@@ -2023,8 +2141,12 @@ int stat;
 
         for(req=0; req<MAX_REQ; req++)
           if(Requests[req].num_pending)
+#ifdef USE_OLD_BUFFER
+             if(elio_probe(&Requests[req].id, &stat)==ELIO_OK)
+#else
              if(elio_probe(&_dra_buffer_state[Requests[req].ibuf].id, &stat)
                  == ELIO_OK)
+#endif
                 if(stat == ELIO_DONE) dai_exec_callback(Requests + req); 
 }
         
@@ -2100,8 +2222,12 @@ Integer FATR dra_terminate_()
 void dai_clear_buffer()
 {
 int i;
+#ifdef USE_OLD_BUFFER
+     for (i=0;i<DRA_DBL_BUF_SIZE;i++) ((double*)_dra_buffer)[i]=0.;
+#else
      for (i=0;i<DRA_DBL_BUF_SIZE;i++)
        ((double*)_dra_buffer_state[0].buffer)[i]=0.;
+#endif
 }
 
 /*\ routines for N-dimensional disk resident arrays
@@ -3086,6 +3212,9 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
     while(ndai_next_chunk(req, Requests[req].list_cover[next],&ds_chunk)){
 
       if(dai_myturn(ds_chunk)){
+#ifdef USE_OLD_BUFFER
+        dai_wait(req); /* needs free buffer to proceed */
+#else
         /* assign buffer */
         ibuf = _dra_buffer_index;
         _dra_buffer_index = 1 - ibuf;
@@ -3105,6 +3234,7 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
         _dra_buffer_state[_dra_buffer_index].req = req;
 
         dai_wait_buf(_dra_buffer_index); /* needs free buffer to proceed */
+#endif
 
         /*find corresponding to chunk of 'cover' unaligned sub-subsection*/
         for (i=0; i<ndim; i++) {
@@ -3128,10 +3258,15 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
 
         /* copy data from disk to DRA buffer */
         for (i=0; i<ndim-1; i++) chunk_ld[i] = ds_chunk.hi[i] - ds_chunk.lo[i] + 1;
+#ifdef USE_OLD_BUFFER
+        ndai_get(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
+        elio_wait(&Requests[req].id); 
+#else
         buf = (char*)_dra_buffer_state[_dra_buffer_index].buffer;
         ndai_get(ds_chunk, buf, chunk_ld,
                  &_dra_buffer_state[_dra_buffer_index].id);
         elio_wait(&_dra_buffer_state[_dra_buffer_index].id); 
+#endif
 
         /* determine location in the buffer where GA data should be */
         offset = ds_unlg.lo[ndim-1]-ds_chunk.lo[ndim-1];
@@ -3139,7 +3274,11 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
           offset = offset*chunk_ld[i];
           offset += ds_unlg.lo[i] - ds_chunk.lo[i];
         }
+#ifdef USE_OLD_BUFFER
+        buffer  = (char*)_dra_buffer;
+#else
         buffer  = (char*)buf;
+#endif
         buffer += offset * dai_sizeofM(type);
 
         switch (opcode){
@@ -3148,8 +3287,12 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
             nga_move(LOAD, transp, gs_a, ds_a, ds_unlg, buffer, chunk_ld);
 
             /* write entire updated buffer back to disk */
+#ifdef USE_OLD_BUFFER
+            ndai_put(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
+#else
             ndai_put(ds_chunk, buf, chunk_ld,
                      &_dra_buffer_state[_dra_buffer_index].id);
+#endif
             break;
 
           case DRA_OP_READ: 
@@ -3199,7 +3342,9 @@ void ndai_transfer_algn(int opcode, int transp,
       }
 
       if(dai_myturn(ds_chunk)){
-
+#ifdef USE_OLD_BUFFER
+        dai_wait(req); /* needs free buffer to proceed */
+#else
         /* assign buffer */
         _dra_buffer_index = 1 - _dra_buffer_index;
         switch (opcode){
@@ -3207,9 +3352,9 @@ void ndai_transfer_algn(int opcode, int transp,
             _dra_buffer_index = 0;
             break;
           case DRA_OP_READ: 
-#ifndef DRA_DBLE_BUFFER
+#  ifndef DRA_DBLE_BUFFER
             _dra_buffer_index = 0;
-#endif
+#  endif
             break;
           default:
             break;
@@ -3217,22 +3362,41 @@ void ndai_transfer_algn(int opcode, int transp,
         _dra_buffer_state[_dra_buffer_index].req = req;
         dai_wait_buf(_dra_buffer_index); /* needs free buffer to proceed */
         Requests[req].ibuf = _dra_buffer_index;
+#endif
 
         for (i=0; i<ndim-1; i++) chunk_ld[i] = ds_chunk.hi[i] - ds_chunk.lo[i] + 1;
 
+#ifndef USE_OLD_BUFFER
         buf = (char*)_dra_buffer_state[_dra_buffer_index].buffer;
+#endif
         switch (opcode){
 
           case DRA_OP_WRITE:
+#ifdef USE_OLD_BUFFER
+            /* copy data from g_a to DRA buffer */
+            nga_move(LOAD, transp, gs_a, ds_a, ds_chunk, _dra_buffer, chunk_ld);
+
+            /* copy data from DRA buffer to disk */
+            ndai_put(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
+#else
             /* copy data from g_a to DRA buffer */
             nga_move(LOAD, transp, gs_a, ds_a, ds_chunk, buf, chunk_ld);
 
             /* copy data from DRA buffer to disk */
             ndai_put(ds_chunk, buf, chunk_ld,
                      &_dra_buffer_state[_dra_buffer_index].id);
+#endif
             break;
 
           case DRA_OP_READ:
+#ifdef USE_OLD_BUFFER
+            /* copy data from disk to DRA buffer */
+            ndai_get(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
+            elio_wait(&Requests[req].id);
+
+            /* copy data from DRA buffer to g_a */
+            dai_callback(STORE, transp, gs_a, ds_a, ds_chunk, chunk_ld, req);
+#else
             /* copy data from disk to DRA buffer */
             ndai_get(ds_chunk, buf, chunk_ld,
                      &_dra_buffer_state[_dra_buffer_index].id);
@@ -3241,6 +3405,7 @@ void ndai_transfer_algn(int opcode, int transp,
             /* copy data from DRA buffer to g_a */
             dai_callback(STORE,transp,gs_a,ds_a,ds_chunk,chunk_ld,
                         _dra_buffer_index,req);
+#endif
             break;
 
           default:
