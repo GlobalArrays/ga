@@ -4,7 +4,7 @@ c problem size:
 c   - first group are MPPs
 c   - second group are (multiprocessor) workstations
 c 
-#if defined(KSR)||defined(CRAY_T3)||defined(NX)||defined(SP1)
+#if defined(KSR)||defined(CRAY_T3D)||defined(NX)||defined(SP1)
 #   define SIZE1 200
 #   define SIZE2 400
 #   define SIZE3 800
