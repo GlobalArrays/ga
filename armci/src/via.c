@@ -1,4 +1,4 @@
-/* $Id: via.c,v 1.22 2002-01-08 21:56:50 vinod Exp $ */
+/* $Id: via.c,v 1.23 2002-07-17 05:57:51 vinod Exp $ */
 #include <stdio.h>
 #include <strings.h>
 #include <assert.h>
@@ -605,8 +605,11 @@ request_header_t *msginfo;
      for(;;){
         
        /* wait for a request message to arrive */
-
-       rc = VipCQWait(CLN_nic->rcq,VIP_INFINITE, &vi, &rcv); 
+#ifdef ARMCI_POLLING_RECV
+       while((rc=VipCQWait(CLN_nic->rcq,1, &vi, &rcv))==VIP_TIMEOUT);
+#else
+       rc = VipCQWait(CLN_nic->rcq,VIP_INFINITE, &vi, &rcv);
+#endif
        armci_check_status(DEBUG0, rc,"server out of CQ wait");
        if(rcv==VIP_FALSE)armci_die("server got null handle for vbuf",0);
 

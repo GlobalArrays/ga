@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.45 2002-01-24 18:03:10 vinod Exp $
+/* $Id: myrinet.c,v 1.46 2002-07-17 05:57:51 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -1189,7 +1189,11 @@ void armci_call_data_server()
 
     /* server main loop; wait for and service requests until QUIT requested */
     while(!iexit) {        
+#ifdef ARMCI_POLLING_RECV
+        event = gm_receive(serv_gm->rcv_port);
+#else
         event = gm_blocking_receive_no_spin(serv_gm->rcv_port);
+#endif
 
         if(DEBUG_INIT_) { fprintf(stdout, "%d(server): receive event type %d\n",
                     armci_me, event->recv.type); fflush(stdout);     
@@ -1208,6 +1212,10 @@ void armci_call_data_server()
                                                  size, GM_LOW_PRIORITY, tag);
     
               break;
+#ifdef ARMCI_POLLING_RECV
+          case GM_NO_RECV_EVENT:
+              break;
+#endif
           default:
               gm_unknown(serv_gm->rcv_port, event);
               break;
