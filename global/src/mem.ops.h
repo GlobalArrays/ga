@@ -120,9 +120,9 @@ char *ptr_src, *ptr_dst;
     /* special copy routines for moving words */
 #   define Copy2DTo(type, proc, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
     Integer item_size=GAsizeofM(type), j;\
+    char *ps=ptr_src, *pd=ptr_dst;\
     if(sizeof(Integer) != sizeof(DoublePrecision))\
               ga_error("Copy broken", sizeof(Integer));\
-    char *ps=ptr_src, *pd=ptr_dst;\
       for (j = 0;  j < *cols;  j++){\
           CopyElemTo(ps, pd, *rows, proc);\
           ps += item_size* *ld_src;\
@@ -133,9 +133,9 @@ char *ptr_src, *ptr_dst;
 #   define Copy2DFrom(type, proc, rows, cols, ptr_src, ld_src, ptr_dst,ld_dst){\
     Integer item_size=GAsizeofM(type), j;\
     Integer nbytes = item_size* *rows;\
+    char *ps=ptr_src, *pd=ptr_dst;\
     if(sizeof(Integer) != sizeof(DoublePrecision))\
               ga_error("Copy broken", sizeof(Integer));\
-    char *ps=ptr_src, *pd=ptr_dst;\
       for (j = 0;  j < *cols;  j++){\
           CopyElemFrom(ps, pd, *rows, proc);\
           ps += item_size* *ld_src;\
