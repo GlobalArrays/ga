@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.18 2001-11-09 18:17:33 d3h325 Exp $ */
+/* $Id: pack.c,v 1.19 2001-11-09 18:21:58 d3h325 Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -68,7 +68,7 @@ int armci_pack_strided(int op, void* scale, int proc,
                        void* dst_ptr, int dst_stride_arr[],
                        int count[], int stride_levels, int fit_level, int nb)
 {
-    int rc=0, sn, bufsize=BUFSIZE,i,bytes=1,noswap=0;
+    int rc=0, sn, bufsize=BUFSIZE,noswap=0;
     void *src, *dst;
 #ifdef REMOTE_OP
     int flag=0;
@@ -84,6 +84,7 @@ int armci_pack_strided(int op, void* scale, int proc,
 #ifdef BALANCE_FACTOR
     /* Added the following for balancing buffers */
     if(op==PUT){
+        int bytes=1, i;
         for(i=0; i<= stride_levels; i++)
                 bytes *= count[i];
         if(bytes > bufsize && bytes/bufsize < 3 && bytes%bufsize < BALANCE_BUFSIZE){
