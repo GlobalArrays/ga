@@ -15,6 +15,7 @@
 #define NDRA_create           ndra_create
 #define DRA_open              dra_open
 #define DRA_inquire           dra_inquire
+#define NDRA_inquire          ndra_inquire
 #define DRA_flick             dra_flick
 
 #define DRA_init              dra_init_
@@ -37,6 +38,7 @@
 #  define ndra_create_        NDRA_CREATE
 #  define dra_open_           DRA_OPEN
 #  define dra_inquire_        DRA_INQUIRE
+#  define ndra_inquire_       NDRA_INQUIRE
 #  define dra_init_           DRA_INIT
 #  define dra_close_          DRA_CLOSE
 #  define dra_delete_         DRA_DELETE
@@ -93,6 +95,12 @@ extern Integer DRA_inquire        _ARGS_((Integer *d_a,\
                                          Integer *type,\
                                          Integer *dim1,\
                                          Integer *dim2,\
+                                         char    *name,\
+                                         char    *filename));  
+extern Integer NDRA_inquire       _ARGS_((Integer *d_a,\
+                                         Integer *type,\
+                                         Integer *ndim,\
+                                         Integer dims[],\
                                          char    *name,\
                                          char    *filename));  
 extern Integer FATR DRA_close          _ARGS_((Integer *d_a));
