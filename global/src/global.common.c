@@ -256,7 +256,13 @@ void ga_dgop(type, x, n, op)
       * of  global ops 
       */
      void dgop_(); 
+#ifdef SP1
+     ga_sync_();
+#endif
      dgop_(&type, x, &n, op, (Integer)strlen(op)); 
+#ifdef SP1
+     ga_sync_();
+#endif
 #endif
 }
 
@@ -341,7 +347,13 @@ void ga_igop(type, x, n, op)
       * of  global ops 
       */
      void igop_(); 
+#ifdef SP1
+     ga_sync_();
+#endif
      igop_(&type, x, &n, op, (Integer)strlen(op)); 
+#ifdef SP1
+     ga_sync_();
+#endif
 #endif
 }
 
@@ -415,7 +427,13 @@ void ga_brdcst_(type, buf, len, originator)
      void brdcst_();
      long gtype,gfrom,glen;
      gtype =(long) *type; gfrom =(long) *originator; glen =(long) *len;
+#ifdef SP1
+     ga_sync_();
+#endif
      brdcst_(&gtype,buf,&glen,&gfrom);
+#ifdef SP1
+     ga_sync_();
+#endif
 #endif
 }
 
