@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.86 2004-08-11 22:53:27 manoj Exp $ */
+/* $Id: base.c,v 1.87 2004-08-13 21:36:01 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2087,7 +2087,7 @@ Integer ga_handle, p_handle, lproc, tproc;
    if (p_handle < 0) {
      lproc = tproc;
    } else {
-     lproc = PGRP_LIST[p_handle].map_proc_list[*proc];
+     lproc = PGRP_LIST[p_handle].map_proc_list[tproc];
    }
    ga_ownsM(ga_handle, lproc, lo, hi);
 
