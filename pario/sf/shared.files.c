@@ -1,4 +1,4 @@
-/* $Id: shared.files.c,v 1.9 2000-10-13 01:22:50 d3h325 Exp $ */
+/* $Id: shared.files.c,v 1.10 2001-03-31 00:12:55 d3h325 Exp $ */
 /* DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -117,10 +117,16 @@ Integer handle = *s_a+SF_OFFSET;
         SYNC();
 
         sfi_check_handleM(*s_a,"sf_delete");
+
+        elio_close(SF[handle].fd); /* fix from Peter Knowles */
+
+        SYNC(); /* this sync is unnecessary under Unix */
+
         if(ME() == 0)elio_delete(SF[handle].fname);
         sfi_release_handle(s_a);
 
         SYNC();
+
         return(ELIO_OK);
 }
 
