@@ -1,5 +1,11 @@
 #if defined(LINUX) || defined(CYGWIN)
 
+#if defined(PPC)
+#include "tas-ppc.h"
+#define SPINLOCK  
+#define TESTANDSET(x) (! __compare_and_swap((long int *)(x),0,1)) 
+#endif
+
 #if defined(__i386__) || defined(__alpha) || defined(__ia64)
 #  define SPINLOCK 
 #  if defined(__GNUC__)
