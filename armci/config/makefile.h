@@ -146,6 +146,11 @@ ifeq  ($(_CPU),ia64)
   ifeq ($(_FC),efc)
    GLOB_DEFINES += -DIFCLINUX
    FOPT_REN= -w -cm -w90 #-align 
+#
+#  for IA64 only. gcc 3.x cannot find the symbols modsi3 and divsi3 in IA64.
+#  lib1funs-ia64 includes these symbols.
+   EXTRA_OBJ += funcs-ia64.o
+
    ifeq ($(FOPT),-O)
      FOPT =  -O3 -hlo -ftz -pad
    endif
@@ -166,7 +171,7 @@ ifeq  ($(_CPU),alpha)
      FOPT_REN = -assume no2underscore -fpe3 -check nooverflow
      FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
 endif
-     EXTRA_OBJ = tas.o
+     EXTRA_OBJ += tas.o
 
    
 endif
