@@ -72,5 +72,5 @@
       external nga_ddot_patch, nga_zdot_patch, nga_idot_patch
       external ga_sdot, ga_sdot_patch, nga_sdot_patch
       external ga_cluster_nprocs, ga_cluster_nodeid, ga_cluster_nnodes
-      external ga_cluster_procid
+      external ga_cluster_procid, ga_cluster_proc_nodeid
       external ga_is_mirrored, nga_num_mirrored_seg
