@@ -95,9 +95,9 @@ GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 ifdef OLD_GA 
    GA_UTIL = ffflush.o fill.o ga_summarize.o hsort.scat.o\
              DP.o fort.o fops.2d.o
+   OBJ_FRAGILE = $(GA_SYNC) $(GA_HANDLER) $(IPC)
 else
    GA_UTIL = ffflush.o fill.o hsort.scat.o DP.o fort.o fops.2d.o
-   OBJ_FRAGILE = $(GA_SYNC) $(GA_HANDLER) $(IPC)
 endif
 
 OBJ = $(GA_CORE) $(GA_ALG) $(GA_UTIL) $(EXTRA) $(OBJ_FRAGILE)
