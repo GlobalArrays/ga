@@ -1,8 +1,8 @@
-#$Id: GNUmakefile,v 1.69 2003-03-21 19:41:07 manoj Exp $
+#$Id: GNUmakefile,v 1.70 2003-03-27 02:08:55 d3h325 Exp $
          FOPT = -O
          COPT = -O
 
-OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o\
+OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o kr_malloc.o\
  memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o rtinfo.o
 
 OBJ_FRAGILE = message.o
@@ -41,12 +41,12 @@ ifeq ($(TARGET),HITACHI)
      LIB_DEFINES += -DMMAP -DCLUSTER
 #     OBJ += shmalloc.o signaltrap.o winshmem.o spawn.o ds-shared.o request.o
 #     LIB_DEFINES += -DDATA_SERVER -DMMAP
-     OBJ += kr_malloc.o signaltrap.o winshmem.o ds-shared.o request.o buffers.o
+     OBJ +=  signaltrap.o winshmem.o ds-shared.o request.o buffers.o
 endif
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SHMEM)))
      LIB_DEFINES += -DSYSV
-     OBJ += kr_malloc.o signaltrap.o 
+     OBJ += signaltrap.o 
   ifeq ($(TARGET),$(findstring $(TARGET),$(SHMMMAP)))
      OBJ += winshmem.o 
   else
@@ -69,7 +69,8 @@ endif
 ifeq ($(ARMCI_NETWORK),GM)
 #  OBJ += dataserv-myri.o myrinet.o spawn.o request.o 
   OBJ += dataserv-gm.o ds-shared.o myrinet.o spawn.o request.o bufalloc.o async.o buffers.o
-  LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
+  OBJ += regions.o
+  LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DALLOW_PIN -DSERVER_THREAD -D_REENTRANT
 endif
 
 ifeq ($(ARMCI_NETWORK),VIA)

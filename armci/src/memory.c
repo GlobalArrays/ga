@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.30 2003-03-25 19:51:21 manoj Exp $ */
+/* $Id: memory.c,v 1.31 2003-03-27 02:08:55 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -202,11 +202,15 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
 
 #   endif
 
+#ifdef ALLOW_PIN
+    armci_region_exchange(myptr, (long) size_arr[armci_me]);
+#else
+    armci_msg_barrier();
+#endif
+
     /* free work arrays */
     free(ptr_ref_arr);
     free(size_arr);
-    
-    armci_msg_barrier();
 
 }
 
@@ -219,9 +223,24 @@ void armci_shmem_malloc(void* ptr_arr[], int bytes)
 
 #endif
 
+
+#ifdef ALLOW_PIN
+void *reg_malloc(size_t size)
+{
+     char *ptr = malloc(size);
+     armci_region_register_loc(ptr,(long)size);
+     return(ptr);
+}
+#endif
+
+
 /* public constructor to initialize the kr_malloc context */
 void armci_krmalloc_init_localmem() {
+#ifdef ALLOW_PIN
+  kr_malloc_init(0, 0, 0, reg_malloc, 0, &ctx_localmem);
+#else
   kr_malloc_init(0, 0, 0, malloc, 0, &ctx_localmem);
+#endif
 }
 
 /**
@@ -255,7 +274,7 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 #ifdef USE_MALLOC
     if(armci_nproc == 1) {
       ptr = kr_malloc(bytes, &ctx_localmem);
-      if(bytes) if(!ptr) armci_die("armci_malloc:malloc failed",bytes);
+      if(bytes) if(!ptr) armci_die("armci_malloc:malloc 1 failed",bytes);
       ptr_arr[armci_me] = ptr;
 #ifdef GA_USE_VAMPIR
       vampir_end(ARMCI_MALLOC,__FILE__,__LINE__);
@@ -268,13 +287,16 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
     else {
       /* on distributed-memory systems just malloc & collect all addresses */
       ptr = kr_malloc(bytes, &ctx_localmem);
-      if(bytes) if(!ptr) armci_die("armci_malloc:malloc failed",bytes);
+      if(bytes) if(!ptr) armci_die("armci_malloc:malloc 2 failed",bytes);
 
       bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
       ptr_arr[armci_me] = ptr;
 
       /* now combine individual addresses into a single array */
       armci_exchange_address(ptr_arr, armci_nproc);
+#ifdef ALLOW_PIN
+      armci_region_exchange(ptr, (long) bytes);
+#endif
     }
 #ifdef GA_USE_VAMPIR
       vampir_end(ARMCI_MALLOC,__FILE__,__LINE__);

@@ -254,4 +254,10 @@ extern void armci_pipe_receive_strided(request_header_t* msginfo, void *ptr,
 extern void armci_pipe_send_req(int proc, void *buf, int bytes);
 #endif
 
+extern void armci_rcv_strided_data_bypass_both(int, request_header_t*,void*, int*, int);
+extern int armci_rem_get(int proc, void *src_ptr, int src_stride_arr[],
+                  void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels,
+                  armci_ihdl_t nb_handle);
+
+
 #endif

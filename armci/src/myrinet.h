@@ -28,14 +28,14 @@
 /*  CLIENT_BUF_BYPASS should be defined to enable zero-copy protocol
     that uses registration -- sloooooow on GM >1.2 */
 extern int _armci_bypass;
-#define CLIENT_BUF_BYPASS_ 
+#define CLIENT_BUF_BYPASS 
 #ifdef __i386__
 # ifdef GM_1_2
 #   define LONG_GET_THRESHOLD 66248
 #   define LONG_GET_THRESHOLD_STRIDED 3000
 # else
-#   define LONG_GET_THRESHOLD 1000000
-#   define LONG_GET_THRESHOLD_STRIDED 30000 
+#   define LONG_GET_THRESHOLD 100000000
+#   define LONG_GET_THRESHOLD_STRIDED 30000000 
 # endif
 #define INTERLEAVE_GET_THRESHOLD 66248
 #else
@@ -63,7 +63,9 @@ extern int _armci_bypass;
 #define ARMCI_GM_SENDING 3
 
 /* msg ack */ 
-#define ARMCI_GM_CLEAR   0
+#define ARMCI_GM_CLEAR  20030326 
+#define ARMCI_GM_COMPLETE 1088451863
+#define ARMCI_GM_COMPLETE_ 20000316
 
 /* context for callback routine */
 typedef struct {
@@ -121,7 +123,7 @@ typedef struct {
 
 #include <mpi.h>
 
-extern void armci_server_send_ack(int client);
+extern void armci_server_send_ack();
 extern int armci_pin_contig(void *ptr, int bytes);
 extern void armci_unpin_contig(void *ptr, int bytes);
 extern void armci_serv_send_ack(int client);
@@ -141,4 +143,5 @@ extern char* armci_gm_getbuf(size_t size);
 extern void armci_client_send_complete(armci_gm_context_t*);
 extern void  armci_check_context_for_complete(int);
 extern void armci_gm_fence_init();
+extern void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len);
 #endif /* MYRINET_H */

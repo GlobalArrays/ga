@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.51 2003-01-20 20:55:06 vinod Exp $ */
+/* $Id: request.c,v 1.52 2003-03-27 02:08:56 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -803,6 +803,76 @@ int armci_rem_strided(int op, void* scale, int proc,
     return 0;
 }
 
+#ifdef ALLOW_PIN
+/*\ client version of remote strided get
+\*/
+int armci_rem_get(int proc,
+                  void *src_ptr, int src_stride_arr[],
+                  void* dst_ptr, int dst_stride_arr[],
+                  int count[], int stride_levels,
+                  armci_ihdl_t nb_handle)
+{
+    char *buf, *buf0;
+    request_header_t *msginfo;
+    int  i, bytes;
+    void *rem_ptr;
+    int  *rem_stride_arr;
+    int bufsize = sizeof(request_header_t);
+
+    /* calculate size of the buffer needed */
+    for(i=0, bytes=1;i<=stride_levels;i++)bytes*=count[i];
+    bufsize += sizeof(void*)+2*sizeof(int)*(stride_levels+1) 
+               +2*sizeof(double) + 16; /* +scale+alignment */
+
+    buf = buf0= GET_SEND_BUFFER(bufsize,GET,proc);
+    if(nb_handle){
+      INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
+      _armci_buf_set_tag(buf,nb_handle->tag,0);
+      /*for now, set handle->bufid to MULTI. Since MULTI is a superset of ONE
+        this shouldnt cause any problems. Later on this has to be properly
+        set in pack.c for both strided and vector protocols*/
+      if(nb_handle->bufid == NB_NONE)
+        armci_set_nbhandle_bufid(nb_handle,buf,0);
+    }
+
+    msginfo = (request_header_t*)buf;
+    buf += sizeof(request_header_t);
+
+    rem_ptr = src_ptr;
+    rem_stride_arr = src_stride_arr;
+    /*this function fills the dscr into buf and also moves the buf ptr to the 
+      end of the dscr*/
+    armci_save_strided_dscr(&buf,rem_ptr,rem_stride_arr,count,stride_levels,0);
+
+
+    /* to bypass the client MessageSnd buffer in get we need to add source
+       pointer and stride info - server will put data directly there */
+    ADDBUF(buf,void*,dst_ptr);
+    for(i=0;i<stride_levels;i++)((int*)buf)[i] = dst_stride_arr[i];
+                                       buf += stride_levels*sizeof(int);
+    /* fill message header */
+    msginfo->bypass=1;
+    msginfo->pinned=1;
+    msginfo->from   = armci_me;
+    msginfo->to     = proc;
+    msginfo->format = STRIDED;
+    msginfo->operation  = GET;
+    msginfo->ehlen  = 0;
+    msginfo->datalen=0;
+    msginfo->dscrlen = buf - buf0 - sizeof(request_header_t);
+    msginfo->bytes = msginfo->dscrlen;
+
+    /* set the stamp at the end of the user buffer */
+    if(count[0]<sizeof(long)) armci_die("armci_rem_get: wrong protocol",count[0]);
+    *(long*)(((char*)(dst_ptr)) + (count[0] -sizeof(long))) = ARMCI_GM_COMPLETE; 
+    armci_send_req(proc,msginfo,bufsize);
+
+    armci_rcv_strided_data_bypass_both(proc,msginfo,dst_ptr,count,stride_levels);
+    FREE_SEND_BUFFER(msginfo);
+    return 0;
+}
+#endif
+
 
 void armci_process_extheader(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 {
@@ -883,12 +953,12 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     if(msginfo->operation == GET){
     
 #      ifdef CLIENT_BUF_BYPASS
-         if(msginfo->bypass)
+         if(msginfo->bypass){
              armci_send_strided_data_bypass(proc, msginfo, buf, buflen,
                        loc_ptr, loc_stride_arr, 
                        client_ptr, client_stride_arr, count, stride_levels);
 
-         else
+         }else
 #      endif
 
        armci_send_strided_data(proc, msginfo, buf,

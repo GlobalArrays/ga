@@ -325,5 +325,17 @@ extern void armci_agg_complete(armci_ihdl_t nb_handle, int condition);
 extern armci_ihdl_t armci_set_implicit_handle (int op, int proc);
 
 extern int armci_getnumcpus(void);
+extern long armci_util_long_getval(long* p);
+extern int armci_util_int_getval(int* p);
+extern void armci_region_register_shm(void *start, long size);
+extern void armci_region_register_loc(void *start, long size);
+extern void armci_region_clus_record(int node, void *start, long size);
+extern void armci_region_init();
+extern int armci_region_clus_found(int node, void *start, int size);
+extern int armci_region_loc_found(void *start, int size);
+extern int armci_region_both_found(void *loc, void *rem, int size, int node);
+extern void armci_region_exchange(void *start, long size);
+extern void cpu_yield();
+
 
 #endif

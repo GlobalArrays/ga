@@ -2,7 +2,7 @@
  *    Author: Jialin Ju, PNNL
  */
 
-/* $Id: perf.c,v 1.14 2002-10-18 18:18:30 vinod Exp $ */
+/* $Id: perf.c,v 1.15 2003-03-27 02:08:55 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -91,7 +91,10 @@ double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
         }
         else
 #endif
-        ARMCI_GetS(src_buf, stride, dst_buf, stride, count, stride_levels,proc);
+        if(levels)
+           ARMCI_GetS(src_buf, stride, dst_buf, stride, count, stride_levels,proc);
+        else
+           ARMCI_Get(src_buf, dst_buf,count[0], proc);
 
         if(CHECK_RESULT) {
             sprintf(check_type, "ARMCI_GetS:");
@@ -155,7 +158,10 @@ double time_put(double *src_buf, double *dst_buf, int chunk, int loop,
         }
         else
 #endif
-        ARMCI_PutS(src_buf, stride, dst_buf, stride, count, stride_levels,proc);
+        if(levels)
+           ARMCI_PutS(src_buf, stride, dst_buf, stride, count, stride_levels,proc);
+        else
+           ARMCI_Put(src_buf, dst_buf,count[0], proc);
 
         if(CHECK_RESULT) {
             ARMCI_GetS(dst_buf, stride, tmp_buf, stride, count,
@@ -267,10 +273,17 @@ void test_1D()
     src = me;
     
     /* memory allocation */
+#if 0
     if(me == 0) {
         buf = (double *)malloc(SIZE * SIZE * sizeof(double));
         assert(buf != NULL);
     }
+#else
+    if(me == 0) {
+        buf = (double *)ARMCI_Malloc_local(SIZE * SIZE * sizeof(double));
+        assert(buf != NULL);
+    }
+#endif
     
     ierr = ARMCI_Malloc(ptr, (SIZE * SIZE * sizeof(double)));
     assert(ierr == 0); assert(ptr[me]);
@@ -480,8 +493,8 @@ int main(int argc, char **argv)
        fflush(stdout);
     }
 
-    CHECK_RESULT=1;
     MP_BARRIER();
+    CHECK_RESULT=1;
     test_1D();
     if(me == 0) printf("OK\n");
     MP_BARRIER();

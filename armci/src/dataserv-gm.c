@@ -28,9 +28,42 @@ int datalen = msginfo->datalen;
                 armci_me, datalen, proc); fflush(stdout);
     }
 
-    armci_wait_for_data_bypass(); /* wait until data arrives */
+    armci_wait_for_data_bypass(msginfo); /* wait until data arrives */
 
     if(DEBUG1){ printf("%d:rcv_strided_data bypass: got %d bytes from %d\n",
+                armci_me, datalen, proc); fflush(stdout);
+    }
+}
+
+
+void armci_rcv_strided_data_bypass_both(int proc, request_header_t *msginfo,
+                                        void *ptr, int *count, int stride_levels)
+{
+int datalen = msginfo->datalen;
+long *last;
+long *ack;
+int loop=0;
+
+    if(DEBUG_){ printf("%d:rcv_strided_data_both bypass from %d\n",
+                armci_me,  proc); fflush(stdout);
+    }
+
+    last = (long*)(((char*)(ptr)) + (count[0] -sizeof(long)));
+    ack  = &msginfo->tag.ack;
+    while(armci_util_long_getval(last) == ARMCI_GM_COMPLETE && 
+          armci_util_long_getval(ack)  != ARMCI_GM_COMPLETE){
+          loop++;
+          loop %=1000000;
+          if(loop==0){cpu_yield();
+            if(DEBUG_){
+               printf("%d: client last(%p)=%ld ack(%p)=%ld off=%d\n",
+                      armci_me,last,*last,ack,*ack,(char*)last - (char*)ptr);
+               fflush(stdout);
+            }
+          }
+    }
+
+    if(DEBUG1){ printf("%d:rcv_strided_data bypass both: got %d bytes from %d\n",
                 armci_me, datalen, proc); fflush(stdout);
     }
 }
@@ -97,17 +130,25 @@ void armci_rcv_req(void *mesg,
 void armci_send_contig_bypass(int proc, request_header_t *msginfo,
                               void *src_ptr, void *rem_ptr, int bytes)
 {
+long *last;
+
+    if(DEBUG1){
+        printf("%d(server): sending data bypass to %d (%p,%p)\n", armci_me, msginfo->from,
+               src_ptr, rem_ptr);
+        fflush(stdout);
+    }
+
 #if 0
      int to = msginfo->from;
      extern char *armci_foo;
      armci_server_direct_send(to,armci_foo,rem_ptr,bytes,ARMCI_GM_NONBLOCKING);
-     armci_server_send_ack(to);
+     armci_server_send_ack(msginfo);
 #endif
 
 #if 0
      if(armci_pin_contig(src_ptr,bytes)){
        armci_server_direct_send(to,src_ptr,rem_ptr,bytes,ARMCI_GM_NONBLOCKING);
-       armci_server_send_ack(to);
+       armci_server_send_ack(msginfo);
        armci_unpin_contig(src_ptr, bytes);
      }else armci_die("send_contig_bypass failed", bytes);
 #endif
@@ -130,10 +171,28 @@ void armci_send_contig_bypass(int proc, request_header_t *msginfo,
        rptr += chunk;
        if(left < chunk+half)chunk=left;
      }
-     armci_server_send_ack(to);
+     armci_server_send_ack(msginfo);
      armci_unpin_contig(src_ptr, bytes);
      
 #endif
+
+     armci_serv_send_nonblocking_complete(4);
+     last = (long*)(((char*)(src_ptr)) + (bytes -sizeof(long)));
+     if(!msginfo->pinned)armci_die("armci_send_contig_bypass: not pinned",proc);
+     armci_server_direct_send(msginfo->from,src_ptr,rem_ptr,bytes,ARMCI_GM_NONBLOCKING);
+
+#if 0
+     printf("%d:srv last(%p)=%ld off=%d\n",armci_me,last,*last,(char*)last -(char*)src_ptr);
+     fflush(stdout);
+#endif
+     
+     if(*last == ARMCI_GM_COMPLETE){
+        armci_server_send_ack(msginfo);
+#if 0
+        printf("%d:srv last special (%p)=%ld off=%d\n",armci_me,last,
+                *last,(char*)last -(char*)src_ptr); fflush(stdout);
+#endif
+     }
 
 }
        
@@ -154,6 +213,11 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
     char *buf;
     int buflen;
     int msg_threshold;
+
+    if(stride_levels==0 && msginfo->pinned){ 
+      armci_send_contig_bypass(proc,msginfo,loc_ptr,rem_ptr,count[0]);
+      return;
+    }
 
     msg_threshold = MIN(msg_buflen, INTERLEAVE_GET_THRESHOLD);
     buf = loc_buf; buflen = msg_buflen;
@@ -290,7 +354,7 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
 
     
     /* inform client all data was sent */
-    armci_server_send_ack(to);
+    armci_server_send_ack(msginfo);
     
     armci_serv_send_nonblocking_complete(0);
 

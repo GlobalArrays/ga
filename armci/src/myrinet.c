@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.58 2003-03-20 02:01:45 d3h325 Exp $
+/* $Id: myrinet.c,v 1.59 2003-03-27 02:08:55 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -54,16 +54,8 @@
 #define TRUE   1
 #define TAG_DFLT  0
 #define TAG_SHORT 1
-
-/* call back */
 #define ARMCI_GM_SENT    1
-/*#define ARMCI_GM_SENDING 3*/
-
-/* msg ack */
-/*#define ARMCI_GM_CLEAR     0*/
 #define ARMCI_GM_READY     1
-#define ARMCI_GM_COMPLETE -2
-#define ARMCI_GM_ACK      -3
 
 #define ARMCI_GM_MIN_MESG_SIZE 5
 #define SHORT_MSGLEN 400000
@@ -267,6 +259,46 @@ int armci_pin_contig(void *ptr, int bytes)
 
     return FALSE;
 }
+
+static int pin_error(char *port, int bytes, void *ptr,  gm_status_t status)
+{
+    printf("%d: pinning (%p,%d) on port %s failed status=%d\n",armci_me, ptr, bytes,
+           port, status);
+    fflush(stdout);
+    return FALSE;
+}
+
+int armci_pin_contig1(void *ptr, int bytes)
+{
+    gm_status_t status;
+
+    status = gm_register_memory(proc_gm->port, (char *)ptr, bytes);
+    if(DEBUG_){
+       printf("%d:  pinning %p %d status=%d\n",armci_me, ptr, bytes,status);
+       fflush(stdout);
+    }
+    if(status != GM_SUCCESS) return pin_error("CLN REQ",bytes,ptr,status);
+
+    if(armci_me == armci_master){
+       /* prepare for direct put by client */
+       status = gm_register_memory(serv_gm->rcv_port, (char *)ptr, bytes);
+       if(DEBUG_){
+          printf("%d:  pinning sr %p %d status=%d\n",armci_me, ptr, bytes,status);
+          fflush(stdout);
+       }
+       if(status != GM_SUCCESS) return pin_error("SRV RCV",bytes,ptr,status);
+
+       /* prepare for get reply by server */
+       status = gm_register_memory(serv_gm->snd_port, (char *)ptr, bytes);
+       if(DEBUG_){
+          printf("%d:  pinning ss %p %d status=%d\n",armci_me, ptr, bytes,status);
+          fflush(stdout);
+       }
+       if(status != GM_SUCCESS) return pin_error("SRV SND",bytes,ptr,status);
+    }
+    return TRUE;
+}
+
 
 void armci_unpin_contig(void *ptr, int bytes)
 {
@@ -679,9 +711,13 @@ void armci_client_connect_to_servers()
 
 /*\ wait until flag is updated indicated that bypass transfer is done
 \*/
-void armci_wait_for_data_bypass()
+void armci_wait_for_data_bypass(request_header_t* msginfo)
 {
-   armci_wait_long_flag_updated_clear((long *)(proc_gm->ack), ARMCI_GM_COMPLETE);
+    /* check the header ack */
+    armci_wait_long_flag_updated_clear(&(msginfo->tag.ack), ARMCI_GM_COMPLETE);
+
+    /* reset header ack */
+    msginfo->tag.ack = ARMCI_GM_CLEAR;
 }
 
 void armci_clear_ack(int proc)
@@ -1300,10 +1336,30 @@ void armci_InformClient(int dst, void *buf, long flag)
 }
 
 
+void armci_server_send_ack(request_header_t* msginfo)
+{
+    void *dst_addr = msginfo->tag.data_ptr;
+    long *p_ack = serv_gm->direct_ack;
+    int client = msginfo->from;
+
+    armci_gm_serv_ack_context->done = ARMCI_GM_SENDING;
+    *p_ack = ARMCI_GM_COMPLETE;
+
+    gm_directed_send_with_callback(serv_gm->snd_port, p_ack,
+        (gm_remote_ptr_t)(gm_up_t)dst_addr, sizeof(long),
+        GM_LOW_PRIORITY, serv_gm->node_map[client], serv_gm->port_map[client],
+        armci_serv_callback, armci_gm_serv_ack_context);
+
+    if(armci_serv_ack_complete() == ARMCI_GM_FAILED)
+        armci_die(" failed sending data to client", client);
+}
+
+
+
 /*\ sends notification to client that data in direct send was transfered/put
  *  into the client buffer
 \*/
-void armci_server_send_ack(int client)
+void armci_server_send_ack_old(int client)
 {
     long *p_ack = serv_gm->direct_ack;
 

@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.61 2003-03-21 20:46:08 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.62 2003-03-27 02:08:56 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -847,6 +847,9 @@ static char *temp;
   return (region_list[reg].addr+ offset);
 }
 
+#ifdef ALLOW_PIN
+extern void armci_region_register_shm(void *start, long size);
+#endif
 
 /*\ allocates shmem, to be called by krmalloc that is called by process that
  *  creates shmem region
@@ -908,6 +911,10 @@ size_t sz = (size_t)size;
       printf("%d:allocate:id=%d addr=%p size=%ld\n",armci_me,id,temp,size);
       fflush(stdout);
     }
+
+#ifdef ALLOW_PIN
+    armci_region_register_shm(temp, size);
+#endif
 
     return (temp);
 }

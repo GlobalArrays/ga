@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.66 2003-03-21 19:41:08 manoj Exp $ */
+/* $Id: armci.c,v 1.67 2003-03-27 02:08:55 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -278,16 +278,18 @@ int ARMCI_Init()
 
     armci_init_clusinfo();
 
+    armci_krmalloc_init_localmem();
+
     /* trap signals to cleanup ARMCI system resources in case of crash */
     if(armci_me==armci_master) ARMCI_ParentTrapSignals();
     ARMCI_ChildrenTrapSignals();
 
     armci_init_fence();
 
+
 #if defined(SYSV) || defined(WIN32)
     /* init shared/K&R memory */
     if(ARMCI_Uses_shm() ) armci_shmem_init();
-    else armci_krmalloc_init_localmem();
 #   if defined(QUADRICS) && !defined(NO_SHM)
        if(armci_me == armci_master)armci_check_shmmax();
 #   endif
@@ -298,6 +300,11 @@ int ARMCI_Init()
 #   if defined(DATA_SERVER) || defined(ELAN_ACC)
        if(armci_nclus >1) armci_start_server();
 #   endif
+#ifdef GM
+    /* initialize registration of memory */
+    armci_region_init();
+#endif
+
     armci_msg_barrier();
 
     armci_init_memlock(); /* allocate data struct for locking memory areas */
@@ -502,4 +509,14 @@ extern int armci_inotify_wait(int,int*);
 #else
    return(0);
 #endif
+}
+
+long armci_util_long_getval(long* p)
+{
+   return *p;
+}
+
+int armci_util_int_getval(int* p)
+{
+   return *p;
 }

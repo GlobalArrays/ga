@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.62 2003-03-24 18:00:33 manoj Exp $ */
+/* $Id: strided.c,v 1.63 2003-03-27 02:08:56 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -691,6 +691,15 @@ int ARMCI_AccS( int  optype,            /* operation */
 
 int ARMCI_Put(void *src, void* dst, int bytes, int proc)
 {
+#ifdef ALLOW_PIN
+    if( armci_region_both_found(src,dst,bytes,proc)){
+#if 0
+      printf("direct put s=%p d=%p %d bytes to %d\n",src,dst,bytes,proc); fflush(stdout);
+#endif
+      armci_client_direct_send(proc, src, dst, bytes);
+      return 0;
+    }else
+#endif
     return ARMCI_PutS(src, NULL, dst, NULL, &bytes, 0, proc);
 }
 
@@ -701,6 +710,15 @@ extern int ARMCI_Put_flag(void *src, void* dst,int bytes,int *f,int v,int proc)
 
 int ARMCI_Get(void *src, void* dst, int bytes, int proc)
 {
+#ifdef ALLOW_PIN
+    if( armci_region_both_found(dst,src,bytes,proc)){
+#if 0
+       printf("direct get s=%p d=%p %d bytes to %d\n",src,dst,bytes,proc); fflush(stdout);
+#endif
+       armci_rem_get(proc, src,NULL,dst,NULL,&bytes, 0, NULL);
+       return 0;
+    }  else
+#endif
     return ARMCI_GetS(src, NULL, dst, NULL, &bytes, 0, proc);
 }
 
