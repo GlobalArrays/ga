@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.54 2003-10-02 17:41:53 d3g293 Exp $ */
+/* $Id: base.c,v 1.55 2003-10-03 14:55:17 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2047,7 +2047,6 @@ extern double t_dgop, n_dgop, s_dgop;
 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(!GAinitialized) return;
-    print_ga_timing();
 
 #ifdef GA_USE_VAMPIR
     vampir_begin(GA_TERMINATE,__FILE__,__LINE__);
