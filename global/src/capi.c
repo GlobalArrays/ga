@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.81 2005-03-07 23:53:04 manoj Exp $ */
+/* $Id: capi.c,v 1.82 2005-03-10 23:52:01 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -375,7 +375,7 @@ void GA_Set_chunk(int g_a, int chunk[])
 {
     Integer aa, *ptr, ndim;
     aa = (Integer)g_a;
-    ndim = ga_get_dimension_(g_a);
+    ndim = ga_get_dimension_(&aa);
     if(!chunk)ptr=(Integer*)0;  
     else {
       COPYC2F(chunk,_ga_work, ndim);
@@ -410,7 +410,7 @@ void GA_Set_ghosts(int g_a, int width[])
 {
     Integer aa, *ptr, ndim;
     aa = (Integer)g_a;
-    ndim = ga_get_dimension_(g_a);
+    ndim = ga_get_dimension_(&aa);
     if(!width)ptr=(Integer*)0;  
     else {
       COPYC2F(width,_ga_work, ndim);
@@ -424,7 +424,7 @@ void GA_Set_irreg_distr_(int g_a, int map[], int block[])
     Integer aa, *ptr, ndim;
     int d, base_map=0, base_work, b;
     aa = (Integer)g_a;
-    ndim = ga_get_dimension_(g_a);
+    ndim = ga_get_dimension_(&aa);
     COPYC2F(block,_ga_work, ndim);
 
     /* copy might swap only order of dimensions for blocks in map */
