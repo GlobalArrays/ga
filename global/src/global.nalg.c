@@ -480,3 +480,91 @@ void *ptr_a, *ptr_b, *ptr_c;
    GA_POP_NAME;
    ga_sync_();
 }
+
+
+
+
+static 
+void gai_local_transpose(int type, char *ptra, int n, int stride, char *ptrb)
+{
+int i;
+    switch(type){
+
+       case MT_F_INT:
+            for(i = 0; i< n; i++, ptrb+= stride) 
+               *(Integer*)ptrb= ((Integer*)ptra)[i];
+            break;
+       case MT_F_DCPL:
+            for(i = 0; i< n; i++, ptrb+= stride) 
+               *(DoubleComplex*)ptrb= ((DoubleComplex*)ptra)[i];
+            break;
+       case MT_F_DBL:
+            for(i = 0; i< n; i++, ptrb+= stride) 
+               *(double*)ptrb= ((double*)ptra)[i];
+            break;
+       default: ga_error("bad type:",type);
+    }
+}
+
+
+
+void FATR ga_transpose_(Integer *g_a, Integer *g_b)
+{
+int me = ga_nodeid_();
+int nproc = ga_nnodes_(); 
+Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
+Integer lo[2],hi[2];
+
+    GA_PUSH_NAME("ga_transpose");
+    
+    ga_sync_();
+
+    if(*g_a == *g_b) ga_error("arrays have to be different ", 0L);
+
+    nga_inquire_(g_a, &atype, &andim, adims);
+    nga_inquire_(g_b, &btype, &bndim, bdims);
+
+    if(bndim != 2 || andim != 2) ga_error("dimension must be 2",0);
+    if(atype != btype ) ga_error("array type mismatch ", 0L);
+
+    nga_distribution_(g_a, &me, lo, hi);
+
+    if(lo[0]>0){
+       Integer handle, index, nelem, ld, lob[2], hib[2], nrow, ncol;
+       char *ptr_tmp, *ptr_a;
+       int i, size=GAsizeofM(atype);
+       
+       nrow   = hi[0] -lo[0]+1;
+       ncol   = hi[1] -lo[1]+1; 
+       nelem  = nrow*ncol;
+       lob[0] = lo[1]; lob[1] = lo[0];
+       hib[0] = hi[1]; hib[1] = hi[0];
+       
+       /* allocate memory for transposing elements locally */
+       if(!MA_push_get(atype, nelem, "transpose_tmp", &handle, &index) ||
+               !MA_get_pointer(handle, &ptr_tmp))
+                ga_error(" MA failed ", 0L); 
+
+       /* get access to local data */
+       nga_access_ptr(g_a, lo, hi, &ptr_a, &ld);
+   
+       for(i = 0; i < ncol; i++){
+          char *ptr = ptr_tmp + i*size;
+
+          gai_local_transpose(atype, ptr_a, nrow, ncol*size, ptr);
+          ptr_a += ld*size;
+       }
+
+       nga_release_(g_a, lo, hi); 
+
+       nga_put_(g_b, lob, hib,ptr_tmp ,&ncol);
+
+       if(!MA_pop_stack(handle))ga_error("Ma_pop_stack failed for tmp",0);
+    }
+
+    ga_sync_();
+    GA_POP_NAME;
+}
+    
+
+    

@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.46 2000-10-25 16:42:32 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.47 2000-10-31 00:08:25 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2127,7 +2127,7 @@ void GA_Nblock(int g_a, int *nblock)
 int ga_handle = GA_OFFSET + g_a;
 int i, n;
 
-     ga_check_handleM(&g_a, "ga_nblock");
+     ga_check_handleM(&g_a, "GA_Nblock");
 
      n = GA[ga_handle].ndim;
 
@@ -2139,6 +2139,19 @@ int i, n;
      
 }
      
+
+void FATR ga_nblock_(Integer *g_a, Integer *nblock)
+{
+Integer ga_handle = GA_OFFSET + *g_a;
+int i, n;
+
+     ga_check_handleM(g_a, "ga_nblock");
+
+     n = GA[ga_handle].ndim;
+
+     for(i=0; i<n; i++) nblock[i] = (Integer)GA[ga_handle].nblock[i];
+}
+
 
 void ga_scatter_acc_local(Integer g_a, Void *v,Integer *i,Integer *j,
                           Integer nv, void* alpha, Integer proc) 
@@ -3118,7 +3131,7 @@ Integer lo[2], hi[2];
 Integer ndim = ga_ndim_(g_a);
 
    if(ndim != 2)
-      ga_error("ga_distribution:2D API cannot be used for array dimension",ndim);
+      ga_error("ga_distribution:2D API cannot be used for dimension",ndim);
 
    nga_distribution_(g_a, proc, lo, hi);
    *ilo = lo[0]; *ihi=hi[0];

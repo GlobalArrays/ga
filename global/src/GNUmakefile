@@ -29,7 +29,8 @@ GA_UTIL = ffflush.o fill.o hsort.scat.o DP.o fort.o fops.2d.o
 
 # Linear Algebra
 GA_LIN_ALG = mulmat.patch.o ga_dgemm.o ga_symmetr.o ga_diag_seq.o rsg.o\
-              rs-mod.o ga_solve_seq.o ga_transpose.o
+              rs-mod.o ga_solve_seq.o
+# ga_transpose.o
 ifeq ($(DIAG),PAR)
      GA_LIN_ALG += ga_diag.o
 else
