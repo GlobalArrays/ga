@@ -1,6 +1,7 @@
-/* $Id: semaphores.c,v 1.10 2000-08-23 16:59:05 d3h325 Exp $ */
+/* $Id: semaphores.c,v 1.11 2000-10-11 19:48:49 d3h325 Exp $ */
 #include "semaphores.h"
 #include <stdio.h>
+#include <unistd.h>
 
 int num_sem_alloc=0;
 void perror();
@@ -10,6 +11,7 @@ void fflush();
 int semget(),semctl();
 #endif
 
+extern void armci_die(char*, int);
 
 struct sembuf sops;
 int semaphoreID;

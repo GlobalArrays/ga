@@ -21,4 +21,7 @@ extern int *armci_use_memlock_table;
 #  define ARMCI_UNLOCKMEM armci_unlockmem
 #endif
 
+extern void ARMCI_LOCKMEM(void *pstart, void *pend, int proc);
+extern void ARMCI_UNLOCKMEM(int proc);
+
 #endif
