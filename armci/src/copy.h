@@ -55,17 +55,11 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 #      define armci_put(src,dst,n,proc)\
               if(proc==armci_me){\
                  armci_copy(src,dst,n);\
-              } else { shmem_double_put((double*)(dst),(double*)(src),(n)/sizeof(double),(proc));}
-/*
               } else { shmem_int_put((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
-*/
 #      define armci_get(src,dst,n,proc) \
               if(proc==armci_me){\
                  armci_copy(src,dst,n);\
-              } else { shmem_double_get((double*)(dst),(double*)(src),(n)/sizeof(double),(proc));}
-/*
               } else { shmem_int_get((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
-*/
 
 #elif defined(CRAY_T3E)
 #      define armci_copy(src,dst,n)\
