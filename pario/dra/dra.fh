@@ -33,5 +33,6 @@ c
           External          DRA_PROBE
           External          DRA_WAIT
           External          DRA_TERMINATE
+          External          DRA_FLICK
 
 

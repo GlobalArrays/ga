@@ -17,6 +17,7 @@
 #define DRA_probe            dra_probe_
 #define DRA_wait             dra_wait_
 #define DRA_terminate        dra_terminate_
+#define DRA_flick            dra_flick
 
 #ifdef CRAY_T3D
 #  define dra_create_        DRA_CREATE
@@ -32,6 +33,7 @@
 #  define dra_probe_         DRA_PROBE
 #  define dra_wait_          DRA_WAIT
 #  define dra_terminate_     DRA_TERMINATE
+#  define dra_flick_         DRA_FLICK
 #endif
 
 
@@ -100,5 +102,6 @@ extern Integer DRA_read_section   _ARGS_((logical *transp,
 extern Integer DRA_probe          _ARGS_((Integer *request, Integer *status));
 extern Integer DRA_wait           _ARGS_((Integer *request));
 extern Integer DRA_terminate      _ARGS_(());
+extern void    DRA_flick          _ARGS_(());
 
 #undef _ARGS_

@@ -121,14 +121,15 @@ c
       if (me.eq.0) print*,' '
 c
       if(me.eq.0) print *, 'Checking dra_read'
+c     call dra_set_mode(1)
       if(dra_read(g_b, d_a, req).ne.0)
      $   CALL ga_error('dra_read failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
 c
 c     error checking: (g_a - g_b)^2
 c
-*     call ga_print(g_a)
-*     call ga_print(g_b)
+c     call ga_print(g_a)
+c     call ga_print(g_b)
       call ga_add(1, g_a, -1, g_b, g_b) 
       err = ga_idot(g_b, g_b) 
 c
@@ -318,6 +319,7 @@ c
             call ffflush(6)
          endif
 c
+c        call dra_set_mode(0)
          if(dra_write_section(.false.,  g_a, gilo, gihi, gjlo, gjhi,
      &                      d_a, dilo, dihi, djlo, djhi, req).ne.0)
      &      call ga_error('dra_write failed:',0)
@@ -325,6 +327,7 @@ c
 c
 c***     dra_read was tested already and we use it for testing dra_write_section
 c
+c        call dra_set_mode(1)
          if(dra_read_section(.false.,   g_b, gilo, gihi, gjlo, gjhi,
      &                      d_a, dilo, dihi, djlo, djhi, req).ne.0)
      &      call ga_error('dra_read failed:',0)

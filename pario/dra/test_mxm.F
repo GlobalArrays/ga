@@ -59,7 +59,7 @@ c
       integer i, j, req
       integer nproc, me
 c     
-      parameter (n = 200)
+      parameter (n = 500)
       parameter (nrhs = n/2)
       parameter (nb = n/5)
 c
@@ -173,8 +173,9 @@ c
 c
 c     this is a hack to avoid specifying -lglobal twice 
       if(ga_nnodes().le.0) call ga_dgemm()
+      call ga_sync()
 c
-      if(me.eq.0) print *, 'reading global array from disk'
+      if(me.eq.0) print *, 'reading global array from disk',g_temp
       if (me.eq.0)call ffflush(6)
       if(dra_read(g_temp,d_c,req).ne.0)call ga_error('read failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
@@ -333,7 +334,10 @@ c
             req_b = prefetch_next(g_b_chunk(nxt_idx), d_b, i,j, nb, n,m)
 c
 c           handle the case when we have the data & there in nothing to prefetch
-            if(req_b .eq. DRA_REQ_INVALID) nxt_idx = cur_idx
+            if(req_b .eq. DRA_REQ_INVALID)then
+                     nxt_idx = cur_idx
+                     print *, 'invalid',i,j
+            endif
 c
 *           call ga_print_patch(g_b_chunk(cur_idx), 1, n, 1, nc, 1)
             t0 =tcgtime()
@@ -348,9 +352,11 @@ c
      &                          d_c, ilo, ihi, jlo, jhi, req_c).ne.0)
      &                       call ga_error('dra_write failed for C:',0)
             if(dra_wait(req_c).ne.0)call ga_error('wait failed:',req_c)
-            if(ga_nodeid().eq.0)print *,i,j,tot, tcgtime()
+            if(ga_nodeid().eq.0)
+     &         write(6,'(2i5,5x,2e15.4)')i,j,tot, tcgtime()
          enddo
       enddo
+      if(dra_wait(req_b).ne.0) call ga_error('dra_wait failed:',req_b)
 c
 *     call ga_print(g_c, 1)
       status =  ga_destroy(g_c_chunk)

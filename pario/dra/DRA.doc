@@ -325,3 +325,11 @@ List of DRA operations:
 	      deallocate data structures corresponding to this disk
 	      array.  Invalidate "d_a" handle. The array on the disk is
 	      persistent.
+
+
+     subroutine dra_flick()
+
+            discussion:
+
+             Returns control to DRA for a VERY short time to improve 
+             progress of pending asynchronous operations.
