@@ -1,8 +1,8 @@
 c
 c FNAME - filename for test program
 c
-#define BASE_NAME  'da.try'
-#define BASE_NAME1 'da1.try'
+#define BASE_NAME  '/scratch/da.try'
+#define BASE_NAME1 '/scratch/da1.try'
 #ifdef  HPIODIR
 #  define FNAME   HPIODIR//BASE_NAME
 #  define FNAME1  HPIODIR//BASE_NAME1
@@ -11,7 +11,7 @@ c
 #  define FNAME1  BASE_NAME1
 #endif
 
-#define MULTFILES 1
+c#define MULTFILES 1
 
 #ifdef SOLARIS
 #  if MULTFILES
@@ -31,7 +31,7 @@ c
       double precision max_sz, max_disk, max_mem 
       data max_arrays, max_sz, max_disk, max_mem /10,1d8,1d10, 1d6/
 #if   defined(IBM)|| defined(CRAY_T3E)
-      data stack, heap /9000000, 4000000/
+      data stack, heap /70000000, 4000000/
 #else
       data stack, heap /1200000, 800000/
 #endif
@@ -72,7 +72,7 @@ c
       integer n,m,ndim
       parameter (n=250, ndim=3)
       parameter (m = 2*n)
-      double precision   err, tt0, tt1, mbytes
+      double precision   err, tt0, tt1, mbytes, rmax, ravg
       integer g_a, g_b,  d_a, d_b
       double precision drand
       integer i, req, loop
@@ -153,15 +153,19 @@ c
      $   CALL ga_error('ndra_write failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       tt1 = tcgtime() -tt0
+      rmax = tt1
+      call ga_dgop(1,rmax,1,'max')
       mbytes = 1e-6*mdtob(n*n*n)
       if (me.eq.0)then
-          write(6,100)mbytes,tt1,mbytes/tt1
+          write(6,100)mbytes,rmax,mbytes/rmax
       endif
 c
       if(dra_close(d_a).ne.0)call ga_error('dra_close failed: ',d_a)
       tt1 = tcgtime() -tt0
+      rmax = tt1
+      call ga_dgop(1,rmax,1,'max')
       if (me.eq.0)then
-          write(6,100)mbytes,tt1,mbytes/tt1
+          write(6,100)mbytes,rmax,mbytes/rmax
       endif
 c
       if (me.eq.0) print *,' '
@@ -207,15 +211,20 @@ c
 
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       tt1 = tcgtime() -tt0
+      rmax = tt1
+      call ga_dgop(1,rmax,1,'max')
       mbytes = 1e-6*mdtob(n*n*n)
       if (me.eq.0)then
-          write(6,100)mbytes,tt1,mbytes/tt1
+          write(6,100)mbytes,rmax,mbytes/rmax
       endif
 c
       if(dra_close(d_b).ne.0)call ga_error('dra_close failed: ',d_b)
       tt1 = tcgtime() -tt0
+      rmax = tt1
+      call ga_dgop(1,rmax,1,'max')
+      mbytes = 1e-6*mdtob(n*n*n)
       if (me.eq.0)then
-          write(6,100)mbytes,tt1,mbytes/tt1
+          write(6,100)mbytes,rmax,mbytes/rmax
       endif
 c
       if (me.eq.0) print *,' '
@@ -242,8 +251,10 @@ c
      $   CALL ga_error('ndra_read failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       tt1 = tcgtime() -tt0
+      rmax = tt1
+      call ga_dgop(1,rmax,1,'max')
       if (me.eq.0)then
-          write(6,100)mbytes,tt1,mbytes/tt1
+          write(6,100)mbytes,rmax,mbytes/rmax
       endif
       call ga_dadd(1d0, g_a, -1d0, g_b, g_b)
       err = ga_ddot(g_b, g_b)
@@ -276,8 +287,10 @@ c
      &        call   ga_error('ndra_read_section failed:',0)
       if(dra_wait(req).ne.0) call ga_error('dra_wait failed: ' ,req)
       tt1 = tcgtime() -tt0
+      rmax = tt1
+      call ga_dgop(1,rmax,1,'max')
       if (me.eq.0)then
-          write(6,100)mbytes,tt1,mbytes/tt1
+          write(6,100)mbytes,rmax,mbytes/rmax
       endif
       call ga_dadd(1d0, g_a, -1d0, g_b, g_b)
       err = ga_ddot(g_b, g_b)
