@@ -1,16 +1,17 @@
-#include <iostream>
-#include <cstdio>
-#include <cmath>
+#include <iostream.h>
+#include <stdio.h>
+#include <math.h>
 #include "ga++.h"
 
 #define N 5
 #define GA_DATA_TYPE MT_F_REAL
 
+/*
 using std::cout;
 using std::printf;
 using std::sin;
 using std::endl;
-
+*/
 
 int
 main(int argc, char *argv[]) {
@@ -57,7 +58,8 @@ main(int argc, char *argv[]) {
   
   if(me==0)printf("Symmetrizing matrix A\n");
   g_a->symmetrize();   /* symmetrize the matrix A = 0.5*(A+A') */
-  
+  err= g_b->ddot(g_b);
+  if(me==0)printf("Error=%lf\n",(double)err);
   
   /* check if A is symmetric */ 
   if(me==0)printf("Checking if matrix A is symmetric\n");

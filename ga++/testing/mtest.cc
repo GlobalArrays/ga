@@ -1,14 +1,14 @@
-#include <iostream>
-#include <cstdio>
-#include <cmath>
+#include <iostream.h>
+#include <stdio.h>
+#include <math.h>
 #include "ga++.h"
 
 
-using std::cout;
-using std::printf;
-using std::sin;
-using std::cos;
-using std::sqrt;
+
+
+
+
+
 
 #define N     10    // First dimension
 #define NDIM  4     // Number of dimensions
@@ -59,8 +59,8 @@ test_scale_cols (GA::GlobalArray *g_a,
   float af = 1.0, bf = -1.0;
   double ad = 1.0, bd = -1.0;
   DoubleComplex adc = { 1.0, 0.0 }, bdc =
-  {
-  -1.0, 0.0};
+    {
+      -1.0, 0.0};
 
   GA::GlobalArray * g_b, *g_c;
   int me = GA_Nodeid (), nproc = GA_Nnodes ();
@@ -97,25 +97,25 @@ test_scale_cols (GA::GlobalArray *g_a,
   switch (type)
     {
     case C_INT:
-      (int *) alpha = &ai;
-      (int *) beta = &bi;
+      alpha = (void *)&ai;
+      beta = (void *)&bi;
       break;
     case C_DCPL:
-      (DoubleComplex *) alpha = &adc;
-      (DoubleComplex *) beta = &bdc;
+      alpha = (void *)&adc;
+      beta = (void *)&bdc;
       break;
 
     case C_DBL:
-      (double *) alpha = &ad;
-      (double *) beta = &bd;
+      alpha = (void *)&ad;
+      beta =(void *) &bd;
       break;
     case C_FLOAT:
-      (float *) alpha = &af;
-      (float *) beta = &bf;
+      alpha =(void *) &af;
+      beta = (void *)&bf;
       break;
     case C_LONG:
-      (long *) alpha = &al;
-      (long *) beta = &bl;
+      alpha = (void *)&al;
+      beta = (void *)&bl;
       break;
     default:
       GA::SERVICES.error ("test_scale_cols:wrong data type.", type);
@@ -124,24 +124,24 @@ test_scale_cols (GA::GlobalArray *g_a,
   switch (type)
     {
     case C_INT:
-      (int *) val = &ival;
-      (int *) val2 = &ival2;
+      val = (void *)&ival;
+      val2 = (void *)&ival2;
       break;
     case C_DCPL:
-      (DoubleComplex *) val = &dcval;
-      (DoubleComplex *) val2 = &dcval2;
+      val = (void *)&dcval;
+      val2 = (void *)&dcval2;
       break;
     case C_DBL:
-      (double *) val = &dval;
-      (double *) val2 = &dval2;
+      val = (void *)&dval;
+      val2 = (void *)&dval2;
       break;
     case C_FLOAT:
-      (float *) val = &fval;
-      (float *) val2 = &fval2;
+      val = (void *)&fval;
+      val2 = (void *)&fval2;
       break;
     case C_LONG:
-      (long *) val = &lval;
-      (long *) val2 = &lval2;
+      val = (void *)&lval;
+      val2 = (void *)&lval2;
       break;
     default:
       GA::SERVICES.error ("test_scale_cols:wrong data type.", type);
@@ -166,24 +166,24 @@ test_scale_cols (GA::GlobalArray *g_a,
   switch (type)
     {
     case C_INT:
-      (int *) max = &imax;
-      (int *) min = &imin;
+      max = (void *)&imax;
+      min = (void *)&imin;
       break;
     case C_DCPL:
-      (DoubleComplex *) max = &dcmax;
-      (DoubleComplex *) min = &dcmin;
+      max = (void *)&dcmax;
+      min = (void *)&dcmin;
       break;
     case C_DBL:
-      (double *) max = &dmax;
-      (double *) min = &dmin;
+      max = (void *)&dmax;
+      min =(void *) &dmin;
       break;
     case C_FLOAT:
-      (float *) max = &fmax;
-      (float *) min = &fmin;
+      max = (void *)&fmax;
+      min = (void *)&fmin;
       break;
     case C_LONG:
-      (long *) max = &lmax;
-      (long *) min = &lmin;
+      max = (void *)&lmax;
+      min = (void *)&lmin;
       break;
     default:
       GA::SERVICES.error ("test_scale_rows:wrong data type.", type);
@@ -271,8 +271,8 @@ test_scale_rows (GA::GlobalArray *g_a,
   float af = 1.0, bf = -1.0;
   double ad = 1.0, bd = -1.0;
   DoubleComplex adc = { 1.0, 0.0 }, bdc =
-  {
-  -1.0, 0.0};
+    {
+      -1.0, 0.0};
 
   GA::GlobalArray *g_b, *g_c;
   int me = GA_Nodeid (), nproc = GA_Nnodes ();
@@ -310,25 +310,25 @@ test_scale_rows (GA::GlobalArray *g_a,
   switch (type)
     {
     case C_INT:
-      (int *) alpha = &ai;
-      (int *) beta = &bi;
+      alpha = (void *)&ai;
+      beta = (void *)&bi;
       break;
     case C_DCPL:
-      (DoubleComplex *) alpha = &adc;
-      (DoubleComplex *) beta = &bdc;
+      alpha = (void *)&adc;
+      beta = (void *)&bdc;
       break;
 
     case C_DBL:
-      (double *) alpha = &ad;
-      (double *) beta = &bd;
+      alpha = (void *)&ad;
+      beta =(void *) &bd;
       break;
     case C_FLOAT:
-      (float *) alpha = &af;
-      (float *) beta = &bf;
+      alpha = (void *)&af;
+      beta = (void *)&bf;
       break;
     case C_LONG:
-      (long *) alpha = &al;
-      (long *) beta = &bl;
+      alpha = (void *)&al;
+      beta = (void *)&bl;
       break;
     default:
       GA::SERVICES.error ("test_scale_rows:wrong data type.", type);
@@ -337,24 +337,24 @@ test_scale_rows (GA::GlobalArray *g_a,
   switch (type)
     {
     case C_INT:
-      (int *) val = &ival;
-      (int *) val2 = &ival2;
+      val = (void *)&ival;
+      val2 = (void *)&ival2;
       break;
     case C_DCPL:
-      (DoubleComplex *) val = &dcval;
-      (DoubleComplex *) val2 = &dcval2;
+      val = (void *)&dcval;
+      val2 = (void *)&dcval2;
       break;
     case C_DBL:
-      (double *) val = &dval;
-      (double *) val2 = &dval2;
+      val = (void *)&dval;
+      val2 = (void *)&dval2;
       break;
     case C_FLOAT:
-      (float *) val = &fval;
-      (float *) val2 = &fval2;
+      val =(void *) &fval;
+      val2 = (void *)&fval2;
       break;
     case C_LONG:
-      (long *) val = &lval;
-      (long *) val2 = &lval2;
+      val = (void *)&lval;
+      val2 = (void *)&lval2;
       break;
     default:
       GA::SERVICES.error ("test_scale_rows:wrong data type.", type);
@@ -379,24 +379,24 @@ test_scale_rows (GA::GlobalArray *g_a,
   switch (type)
     {
     case C_INT:
-      (int *) max = &imax;
-      (int *) min = &imin;
+      max = (void *)&imax;
+      min = (void *)&imin;
       break;
     case C_DCPL:
-      (DoubleComplex *) max = &dcmax;
-      (DoubleComplex *) min = &dcmin;
+      max = (void *)&dcmax;
+      min = (void *)&dcmin;
       break;
     case C_DBL:
-      (double *) max = &dmax;
-      (double *) min = &dmin;
+      max = (void *)&dmax;
+      min = (void *)&dmin;
       break;
     case C_FLOAT:
-      (float *) max = &fmax;
-      (float *) min = &fmin;
+      max = (void *)&fmax;
+      min = (void *)&fmin;
       break;
     case C_LONG:
-      (long *) max = &lmax;
-      (long *) min = &lmin;
+      max = (void *)&lmax;
+      min =(void *) &lmin;
       break;
     default:
       GA::SERVICES.error ("test_scale_rows:wrong data type.", type);
@@ -486,8 +486,8 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   float af = 1.0, bf = -1.0;
   double ad = 1.0, bd = -1.0;
   DoubleComplex adc = { 1.0, 0.0 }, bdc =
-  {
-  -1.0, 0.0};
+    {
+      -1.0, 0.0};
 
   void *val;
   int ival = -2;
@@ -526,25 +526,25 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   switch (type)
     {
     case C_INT:
-      (int *) alpha = &ai;
-      (int *) beta = &bi;
+      alpha = (void *)&ai;
+      beta =(void *) &bi;
       break;
     case C_DCPL:
-      (DoubleComplex *) alpha = &adc;
-      (DoubleComplex *) beta = &bdc;
+      alpha =(void *) &adc;
+      beta = (void *)&bdc;
       break;
 
     case C_DBL:
-      (double *) alpha = &ad;
-      (double *) beta = &bd;
+      alpha = (void *)&ad;
+      beta = (void *)&bd;
       break;
     case C_FLOAT:
-      (float *) alpha = &af;
-      (float *) beta = &bf;
+      alpha = (void *)&af;
+      beta = (void *)&bf;
       break;
     case C_LONG:
-      (long *) alpha = &al;
-      (long *) beta = &bl;
+      alpha = (void *)&al;
+      beta = (void *)&bl;
       break;
     default:
       GA::SERVICES.error ("test_median:wrong data type.", type);
@@ -564,29 +564,29 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   switch (type)
     {
     case C_INT:
-      (int *) val = &ival;
-      (int *) val2 = &ival2;
-      (int *) val3 = &ival3;
+      val = (void *)&ival;
+      val2 = (void *)&ival2;
+      val3 = (void *)&ival3;
       break;
     case C_DCPL:
-      (DoubleComplex *) val = &dcval;
-      (DoubleComplex *) val2 = &dcval2;
-      (DoubleComplex *) val3 = &dcval3;
+      val = (void *)&dcval;
+      val2 = (void *)&dcval2;
+      val3 = (void *)&dcval3;
       break;
     case C_DBL:
-      (double *) val = &dval;
-      (double *) val2 = &dval2;
-      (double *) val3 = &dval3;
+      val = (void *)&dval;
+      val2 = (void *)&dval2;
+      val3 = (void *)&dval3;
       break;
     case C_FLOAT:
-      (float *) val = &fval;
-      (float *) val2 = &fval2;
-      (float *) val3 = &fval3;
+      val = (void *)&fval;
+      val2 = (void *)&fval2;
+      val3 = (void *)&fval3;
       break;
     case C_LONG:
-      (long *) val = &lval;
-      (long *) val2 = &lval2;
-      (long *) val3 = &lval3;
+      val = (void *)&lval;
+      val2 = (void *)&lval2;
+      val3 = (void *)&lval3;
       break;
     default:
       GA::SERVICES.error ("test_median:test_median:wrong data type.", type);
@@ -607,9 +607,9 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   g_m->medianPatch (g_a, alo, ahi, g_b, blo, bhi, g_c, clo, chi, mlo, mhi);
 
   /*
-     The result array should        be g_c due to the value I chose: 
-     val3 is the median of the three values val, val2, and val3
-   */
+    The result array should        be g_c due to the value I chose: 
+    val3 is the median of the three values val, val2, and val3
+  */
 
   /* g_e = g_c - g_m */
   g_e = GA::SERVICES.createGA(g_a, "E");
@@ -619,24 +619,24 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   switch (type)
     {
     case C_INT:
-      (int *) max = &imax;
-      (int *) min = &imin;
+      max = (void *)&imax;
+      min = (void *)&imin;
       break;
     case C_DCPL:
-      (DoubleComplex *) max = &dcmax;
-      (DoubleComplex *) min = &dcmin;
+      max = (void *)&dcmax;
+      min = (void *)&dcmin;
       break;
     case C_DBL:
-      (double *) max = &dmax;
-      (double *) min = &dmin;
+      max = (void *)&dmax;
+      min = (void *)&dmin;
       break;
     case C_FLOAT:
-      (float *) max = &fmax;
-      (float *) min = &fmin;
+      max = (void *)&fmax;
+      min = (void *)&fmin;
       break;
     case C_LONG:
-      (long *) max = &lmax;
-      (long *) min = &lmin;
+      max = (void *)&lmax;
+      min = (void *)&lmin;
       break;
     default:
       ga_error ("test_median:wrong data type.", type);
@@ -726,8 +726,8 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   float af = 1.0, bf = -1.0;
   double ad = 1.0, bd = -1.0;
   DoubleComplex adc = { 1.0, 0.0 }, bdc =
-  {
-  -1.0, 0.0};
+    {
+      -1.0, 0.0};
 
   void *val;
   int ival = -2;
@@ -765,25 +765,25 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   switch (type)
     {
     case C_INT:
-      (int *) alpha = &ai;
-      (int *) beta = &bi;
+      alpha = (void *)&ai;
+      beta = (void *)&bi;
       break;
     case C_DCPL:
-      (DoubleComplex *) alpha = &adc;
-      (DoubleComplex *) beta = &bdc;
+      alpha = (void *)&adc;
+      beta =(void *) &bdc;
       break;
 
     case C_DBL:
-      (double *) alpha = &ad;
-      (double *) beta = &bd;
+      alpha = (void *)&ad;
+      beta = (void *)&bd;
       break;
     case C_FLOAT:
-      (float *) alpha = &af;
-      (float *) beta = &bf;
+      alpha =(void *) &af;
+      beta = (void *)&bf;
       break;
     case C_LONG:
-      (long *) alpha = &al;
-      (long *) beta = &bl;
+      alpha = (void *)&al;
+      beta = (void *)&bl;
       break;
     default:
       GA::SERVICES.error ("test_median:wrong data type.", type);
@@ -803,29 +803,29 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   switch (type)
     {
     case C_INT:
-      (int *) val = &ival;
-      (int *) val2 = &ival2;
-      (int *) val3 = &ival3;
+      val = (void *)&ival;
+      val2 =(void *) &ival2;
+      val3 = (void *)&ival3;
       break;
     case C_DCPL:
-      (DoubleComplex *) val = &dcval;
-      (DoubleComplex *) val2 = &dcval2;
-      (DoubleComplex *) val3 = &dcval3;
+      val = (void *)&dcval;
+      val2 =(void *) &dcval2;
+      val3 =(void *) &dcval3;
       break;
     case C_DBL:
-      (double *) val = &dval;
-      (double *) val2 = &dval2;
-      (double *) val3 = &dval3;
+      val = (void *)&dval;
+      val2 = (void *)&dval2;
+      val3 = (void *)&dval3;
       break;
     case C_FLOAT:
-      (float *) val = &fval;
-      (float *) val2 = &fval2;
-      (float *) val3 = &fval3;
+      val = (void *)&fval;
+      val2 = (void *)&fval2;
+      val3 = (void *)&fval3;
       break;
     case C_LONG:
-      (long *) val = &lval;
-      (long *) val2 = &lval2;
-      (long *) val3 = &lval3;
+      val = (void *)&lval;
+      val2 = (void *)&lval2;
+      val3 = (void *)&lval3;
       break;
     default:
       ga_error ("test_median:test_median:wrong data type.", type);
@@ -846,9 +846,9 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   g_m->median (g_a, g_b, g_c);
 
   /*
-     The result array should        be g_c due to the value I chose: 
-     val3 is the median of the three values val, val2, and val3
-   */
+    The result array should        be g_c due to the value I chose: 
+    val3 is the median of the three values val, val2, and val3
+  */
 
   /* g_e = g_c - g_m */
   g_e = GA::SERVICES.createGA (g_a, "E");
@@ -857,24 +857,24 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   switch (type)
     {
     case C_INT:
-      (int *) max = &imax;
-      (int *) min = &imin;
+      max =(void *) &imax;
+      min = (void *)&imin;
       break;
     case C_DCPL:
-      (DoubleComplex *) max = &dcmax;
-      (DoubleComplex *) min = &dcmin;
+      max =(void *) &dcmax;
+      min = (void *)&dcmin;
       break;
     case C_DBL:
-      (double *) max = &dmax;
-      (double *) min = &dmin;
+      max = (void *)&dmax;
+      min = (void *)&dmin;
       break;
     case C_FLOAT:
-      (float *) max = &fmax;
-      (float *) min = &fmin;
+      max = (void *)&fmax;
+      min = (void *)&fmin;
       break;
     case C_LONG:
-      (long *) max = &lmax;
-      (long *) min = &lmin;
+      max = (void *)&lmax;
+      min = (void *)&lmin;
       break;
     default:
       GA::SERVICES.error ("test_median:wrong data type.", type);
@@ -970,19 +970,19 @@ test_norm_infinity (GA::GlobalArray * g_a) {
   switch (type)
     {
     case C_INT:
-      (int *) val = &ival;
+      val = (void *)&ival;
       break;
     case C_DCPL:
-      (DoubleComplex *) val = &dcval;
+      val = (void *)&dcval;
       break;
     case C_DBL:
-      (double *) val = &dval;
+      val = (void *)&dval;
       break;
     case C_FLOAT:
-      (float *) val = &fval;
+      val =(void *) &fval;
       break;
     case C_LONG:
-      (long *) val = &lval;
+      val = (void *)&lval;
       break;
     default:
       GA::SERVICES.error ("test_norm_infinity:wrong data type.", type);
@@ -1055,19 +1055,19 @@ test_norm1 (GA::GlobalArray * g_a)
   switch (type)
     {
     case C_INT:
-      (int *) val = &ival;
+      val = (void *)&ival;
       break;
     case C_DCPL:
-      (DoubleComplex *) val = &dcval;
+      val =(void *) &dcval;
       break;
     case C_DBL:
-      (double *) val = &dval;
+      val = (void *)&dval;
       break;
     case C_FLOAT:
-      (float *) val = &fval;
+      val = (void *)&fval;
       break;
     case C_LONG:
-      (long *) val = &lval;
+      val = (void *)&lval;
       break;
     default:
       GA::SERVICES.error ("test_norm1:wrong data type.", type);
@@ -1077,7 +1077,7 @@ test_norm1 (GA::GlobalArray * g_a)
     printf ("Testing GA_Norm1...");
   g_a->fill (val);
   g_a->norm1 (&norm1);
- // GA_Print(g_a);
+  // GA_Print(g_a);
   //printf("norm1=%lf\n", norm1);
   switch (type)
     {
@@ -1114,7 +1114,7 @@ test_norm1 (GA::GlobalArray * g_a)
 
 void 
 test_get_diagonal (GA::GlobalArray * g_a, 
-				   GA::GlobalArray * g_v) {
+		   GA::GlobalArray * g_v) {
   
   int me = GA_Nodeid (), nproc = GA_Nnodes ();
   void *val;
@@ -1139,19 +1139,19 @@ test_get_diagonal (GA::GlobalArray * g_a,
   switch (type)
     {
     case C_INT:
-      (int *) val = &ival;
+      val = (void *)&ival;
       break;
     case C_DCPL:
-      (DoubleComplex *) val = &dcval;
+      val = (void *)&dcval;
       break;
     case C_DBL:
-      (double *) val = &dval;
+      val = (void *)&dval;
       break;
     case C_FLOAT:
-      (float *) val = &fval;
+      val =(void *) &fval;
       break;
     case C_LONG:
-      (long *) val = &lval;
+      val =(void *) &lval;
       break;
     default:
       GA::SERVICES.error ("test_get_diagonal:wrong data type.", type);
@@ -1235,7 +1235,7 @@ test_get_diagonal (GA::GlobalArray * g_a,
 
 void
 test_add_diagonal (GA::GlobalArray * g_a, 
-				   GA::GlobalArray * g_v)
+		   GA::GlobalArray * g_v)
 {
 
   int me = GA_Nodeid (), nproc = GA_Nnodes ();
@@ -1263,19 +1263,19 @@ test_add_diagonal (GA::GlobalArray * g_a,
   switch (type)
     {
     case C_INT:
-      (int *) val = &ival;
+      val =(void *) &ival;
       break;
     case C_DCPL:
-      (DoubleComplex *) val = &dcval;
+      val = (void *)&dcval;
       break;
     case C_DBL:
-      (double *) val = &dval;
+      val =(void *) &dval;
       break;
     case C_FLOAT:
-      (float *) val = &fval;
+      val =(void *) &fval;
       break;
     case C_LONG:
-      (long *) val = &lval;
+      val = (void *)&lval;
       break;
     default:
       GA::SERVICES.error ("test_add_diagonal:wrong data type.", type);
@@ -1370,7 +1370,7 @@ test_add_diagonal (GA::GlobalArray * g_a,
 
 void 
 test_set_diagonal (GA::GlobalArray * g_a, 
-					GA::GlobalArray * g_v)  {
+		   GA::GlobalArray * g_v)  {
   
 
   int me = GA_Nodeid (), nproc = GA_Nnodes ();
@@ -1396,19 +1396,19 @@ test_set_diagonal (GA::GlobalArray * g_a,
   switch (type)
     {
     case C_INT:
-      (int *) val = &ival;
+      val = (void *)&ival;
       break;
     case C_DCPL:
-      (DoubleComplex *) val = &dcval;
+      val = (void *)&dcval;
       break;
     case C_DBL:
-      (double *) val = &dval;
+      val = (void *)&dval;
       break;
     case C_FLOAT:
-      (float *) val = &fval;
+      val = (void *)&fval;
       break;
     case C_LONG:
-      (long *) val = &lval;
+      val =(void *) &lval;
       break;
     default:
       GA::SERVICES.error ("test_set_diagonal:wrong data type.", type);
@@ -1515,19 +1515,19 @@ test_shift_diagonal (GA::GlobalArray *g_a) {
   switch (type)
     {
     case C_INT:
-      (int *) val = &ival;
+      val = (void *)&ival;
       break;
     case C_DCPL:
-      (DoubleComplex *) val = &dcval;
+      val = (void *)&dcval;
       break;
     case C_DBL:
-      (double *) val = &dval;
+      val = (void *)&dval;
       break;
     case C_FLOAT:
-      (float *) val = &fval;
+      val =(void *) &fval;
       break;
     case C_LONG:
-      (long *) val = &lval;
+      val =(void *) &lval;
       break;
     default:
       GA::SERVICES.error ("test_shift_diagonal:wrong data type.", type);
@@ -1718,7 +1718,7 @@ do_work (int type, int op) {
       g_a->destroy ();
       g_v->destroy ();
       break;
-     case OP_SCALE_COLS:
+    case OP_SCALE_COLS:
       g_a = GA::SERVICES.createGA (type, 2, dims, "A", NULL);
       /*find out the diagonal length of the matrix A */
       vdim = dims[0];

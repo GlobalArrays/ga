@@ -1,13 +1,13 @@
-#include <iostream>
-#include <cstdio>
-#include <cmath>
+#include <iostream.h>
+#include <stdio.h>
+#include <math.h>
 #include "ga++.h"
 
 
-using std::cout;
-using std::printf;
-using std::sin;
-using std::cos;
+
+
+
+
 
 
 #define N     10    // First dimension
