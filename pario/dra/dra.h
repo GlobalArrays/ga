@@ -53,6 +53,9 @@
 # define _ARGS_(s) ()
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+
 extern Integer FATR DRA_init           _ARGS_((Integer *max_arrays,\
                                          DoublePrecision *max_array_size,\
                                          DoublePrecision *tot_disk_space,\
@@ -111,5 +114,69 @@ extern Integer FATR DRA_probe          _ARGS_((Integer *request, Integer *status
 extern Integer FATR DRA_wait           _ARGS_((Integer *request));
 extern Integer FATR DRA_terminate      _ARGS_(());
 extern void    DRA_flick          _ARGS_(());
+}
+
+#else
+   
+extern Integer FATR DRA_init           _ARGS_((Integer *max_arrays,\
+                                         DoublePrecision *max_array_size,\
+                                         DoublePrecision *tot_disk_space,\
+                                         DoublePrecision *max_memory)); 
+extern Integer DRA_create         _ARGS_((Integer *type,\
+                                         Integer *dim1,\
+                                         Integer *dim2,\
+                                         char    *name,\
+                                         char    *filename,\
+                                         Integer *mode,\
+                                         Integer *block1,\
+                                         Integer *block2,\
+                                         Integer *d_a));
+extern Integer DRA_open           _ARGS_((char *filename,\
+                                         Integer *mode, 
+                                         Integer *d_a )); 
+extern Integer DRA_inquire        _ARGS_((Integer *d_a,\
+                                         Integer *type,\
+                                         Integer *dim1,\
+                                         Integer *dim2,\
+                                         char    *name,\
+                                         char    *filename));  
+extern Integer FATR DRA_close          _ARGS_((Integer *d_a));
+extern Integer FATR DRA_delete         _ARGS_((Integer *d_a)); 
+extern Integer FATR DRA_write          _ARGS_((Integer *g_a,\
+                                         Integer *d_a,\
+                                         Integer *request));
+extern Integer FATR DRA_read           _ARGS_((Integer *g_a,\
+                                         Integer *d_a,\
+                                         Integer *request));
+extern Integer FATR DRA_write_section  _ARGS_((logical *transp, 
+                                         Integer *g_a, 
+                                         Integer *d_a,
+                                         Integer *gilo,
+                                         Integer *gihi,
+                                         Integer *gjlo,
+                                         Integer *gjhi,
+                                         Integer *dilo,
+                                         Integer *dihi,
+                                         Integer *djlo,
+                                         Integer *djhi,
+                                         Integer *request));
+extern Integer FATR DRA_read_section   _ARGS_((logical *transp, 
+                                         Integer *g_a,  
+                                         Integer *d_a,
+                                         Integer *gilo,
+                                         Integer *gihi,
+                                         Integer *gjlo,
+                                         Integer *gjhi,
+                                         Integer *dilo,
+                                         Integer *dihi,
+                                         Integer *djlo,
+                                         Integer *djhi,
+                                         Integer *request));
+extern Integer FATR DRA_probe          _ARGS_((Integer *request, Integer *status));
+extern Integer FATR DRA_wait           _ARGS_((Integer *request));
+extern Integer FATR DRA_terminate      _ARGS_(());
+extern void    DRA_flick          _ARGS_(());
+
+#endif
 
 #undef _ARGS_
