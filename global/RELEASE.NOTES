@@ -31,6 +31,7 @@ GENERAL NOTES
   - supports multiple message-passing libraries: MPI, TCGMSG.
   - provides C and Fortran interface to the library.
   - provides interface routines to ScaLAPACK
+  - exploits native protocols of following networks: Giganet, Myrinet, Quadrics
 
 
 SUPPORTED PLATFORMS
@@ -50,15 +51,17 @@ DIRECTORY STRUCTURE
 
 
 HISTORY
-  version 3.1   July 18th, 2000
-              * ports to 64-bit IBM, HP, Sun, Linux(on alpha) platforms
-              * support for clusters of Windows NT with TCP network
-              * support for Myrinet (tested on Linux/intel/ultra) 
-              * support for Compaq/Quadrics cluster
+  version 3.1   November 6th, 2000
+              * ports to 64-bit IBM, HP, Sun, Fujitsu, Linux/Alpha platforms
               * new operations: periodic version of put,get,accumulate
-              * new nga_scatter_acc, nga_select_elem operations
+              * more new operations nga_scatter_acc, nga_select_elem, ga_nblock
               * restructured makefiles to simplify changes and enable
                 export of make definitions to application makefiles
+              * new platforms supported by ARMCI (and thus GA)
+                    - Myrinet on Linux (Intel, Sparc) and Solaris/Sparc
+                    - Giganet on Linux/Intel
+                    - Compaq/Quadrics clusters 
+                    - clusters of Windows NT under TCP/IP
 
   version 3.0   November 15th, 1999:
               * This is the most significant update of the GA package to date: 
