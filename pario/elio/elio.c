@@ -393,7 +393,7 @@ int  elio_stat(fname)
 char *fname;
 {
   struct  stat     ufs_stat;
-  char             tmp_pathname[EAF_FILENAME_MAX];
+  char             tmp_pathname[ELIO_FILENAME_MAX];
   int              i;
   int              ret_fs = -1;
 #if defined(PARAGON)

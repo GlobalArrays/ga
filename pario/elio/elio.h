@@ -66,9 +66,7 @@ extern int    elio_stat     _ARGS_((char *fname));
 #undef _ARGS_
 
 
-/* Constants for EAF                                             jqm */
-#define EAF_MAX_FILES 64
-#define EAF_FILENAME_MAX 1024
+#define ELIO_FILENAME_MAX 1024
 
 #define SDIRS_INIT_SIZE 1024
 
