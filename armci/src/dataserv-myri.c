@@ -546,6 +546,8 @@ void armci_data_server(void *mesg)
           armci_server_ack(msginfo);
           break;
           
+      case ARMCI_SWAP:
+      case ARMCI_SWAP_LONG:
       case ARMCI_FETCH_AND_ADD:
       case ARMCI_FETCH_AND_ADD_LONG:
           armci_server_rmw(msginfo,descr,buffer);

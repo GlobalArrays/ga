@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.15 2000-05-31 17:35:18 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.16 2000-08-09 17:08:56 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -652,6 +652,8 @@ int up=1;
                        armci_server_goodbye(msginfo);
                        break;
 
+          case ARMCI_SWAP:
+          case ARMCI_SWAP_LONG:
           case ARMCI_FETCH_AND_ADD:
           case ARMCI_FETCH_AND_ADD_LONG:
                        armci_server_rmw(msginfo,descr,buffer);
