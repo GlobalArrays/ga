@@ -5,6 +5,13 @@
 
 ifndef LIBMPI
    LIBMPI = -lmpi
+# name LIBMPI when MPICH used
+ifeq ($(CC),mpicc)
+   LIBMPI = -lmpich
+endif
+ifeq ($(FC),mpif77)
+   LIBMPI = -lmpich
+endif
 endif
 
 ifneq ($(MSG_COMMS),MPI)
