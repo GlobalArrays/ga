@@ -16,7 +16,7 @@ OBJ      = "$(OBJDIR)/sizeof.obj" \
         "$(OBJDIR)/memalign.obj" \
         "$(OBJDIR)/evlog.obj"
 
-HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h
+HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h tcgmsg.fh
 
 LOC_DEFINES = -DARMCI
 LOC_INCLUDES = -I..\include -I$(MPI_INCLUDE) -I..\armci\src
