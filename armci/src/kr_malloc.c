@@ -1,8 +1,7 @@
-/* $Id: kr_malloc.c,v 1.14 2004-11-24 02:05:23 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.15 2004-12-09 00:15:56 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
-#include "shmem.h"
 #include "locks.h"
 
 #define DEBUG 0
@@ -11,8 +10,6 @@
 
 extern char *armci_allocate(); /* Used to get memory from the system */
 extern void armci_die();
-extern int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
-				size_t *shmsize);
 static char *kr_malloc_shmem(size_t nbytes, context_t *ctx);
 static void kr_free_shmem(char *ap, context_t *ctx);
 
@@ -47,7 +44,7 @@ static int do_verify = 0;	/* Flag for automatic heap verification */
 #define VALID1  0xaaaaaaaa	/* For validity check on headers */
 #define VALID2  0x55555555
 
-#define USEDP 0
+#define USEDP 0 /* CHECK. By default anable this. */
 
 static void kr_error(char *s, unsigned long i, context_t *ctx) {
 char string[256];
@@ -145,9 +142,7 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
     size_t nunits;
     char *return_ptr;
 
-#if 1
     if(ctx->ctx_type == KR_CTX_SHMEM) return kr_malloc_shmem(nbytes,ctx);
-#endif
 
     /* If first time in need to initialize the free list */
     if ((prevp = ctx->freep) == NULL) {
@@ -220,9 +215,7 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
 void kr_free(char *ap, context_t *ctx) {
     Header *bp, *p, **up;
 
-#if 1
     if(ctx->ctx_type == KR_CTX_SHMEM) { kr_free_shmem(ap,ctx); return; }
-#endif
 
     ctx->nfcalls++;
 
@@ -279,7 +272,82 @@ void kr_free(char *ap, context_t *ctx) {
     } /* end if on ap */
 }
 
-/*******************************************************************
+/*
+  Print to standard output the usage statistics.
+*/
+void kr_malloc_print_stats(context_t *ctx) {
+    fflush(stderr);
+    printf("\nkr_malloc statistics\n-------------------\n\n");
+    
+    printf("Total memory from system ... %ld bytes\n", 
+	   (long)(ctx->total*ctx->usize));
+    printf("Current memory usage ....... %ld bytes\n", 
+	   (long)(ctx->inuse*ctx->usize));
+    printf("Maximum memory usage ....... %ld bytes\n", 
+	   (long)(ctx->maxuse*ctx->usize));
+    printf("No. chunks from system ..... %ld\n", ctx->nchunk);
+    printf("No. of fragments ........... %ld\n", ctx->nfrags);
+    printf("No. of calls to kr_malloc ... %ld\n", ctx->nmcalls);
+    printf("No. of calls to kr_free ..... %ld\n", ctx->nfcalls);
+    printf("\n");
+    
+    fflush(stdout);
+}
+
+/*
+  Currently assumes that are working in a single region.
+*/
+void kr_malloc_verify(context_t *ctx) {
+    Header *p;
+    
+    if(_armci_initialized && lock_mode==UNLOCKED) {
+       LOCKIT(armci_master); lock_mode=LOCKED;
+    }
+
+    if ( ctx->freep ) {
+      
+      /* Check the used list */
+      
+      for (p=ctx->usedp; p; p=p->s.ptr) {
+	if (p->s.valid1 != VALID1 || p->s.valid2 != VALID2)
+	  kr_error("invalid header on usedlist", 
+		   (unsigned long) p->s.valid1, ctx);
+	
+	if (p->s.size > ctx->total)
+	  kr_error("invalid size in header on usedlist", 
+		   (unsigned long) p->s.size, ctx);
+      }
+      
+      /* Check the free list */
+      
+      p = ctx->base.s.ptr;
+      while (p != &(ctx->base)) {
+	if (p->s.valid1 != VALID1 || p->s.valid2 != VALID2)
+	  kr_error("invalid header on freelist", 
+		   (unsigned long) p->s.valid1, ctx);
+	
+	if (p->s.size > ctx->total)
+	  kr_error("invalid size in header on freelist", 
+		   (unsigned long) p->s.size, ctx);
+	
+	p = p->s.ptr;
+      }
+    } /* end if */
+    
+    if(_armci_initialized && lock_mode==LOCKED) {
+       UNLOCKIT(armci_master); lock_mode=UNLOCKED;
+    }
+}
+
+/********************** BEGIN: kr_malloc for ctx_shmem *********************/
+#ifdef SYSV
+
+#include "shmem.h"
+
+extern int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
+				size_t *shmsize);
+
+/*
  * kr_malloc_shmem: memory allocator for shmem context (i.e ctx_shmem)
  */
 static 
@@ -518,74 +586,19 @@ static void kr_free_shmem(char *ap, context_t *ctx) {
     
     UNLOCKIT(armci_master);
 }
-/********************** end of kr_malloc for ctx_shmem *********************/
-
-/*
-  Print to standard output the usage statistics.
-*/
-void kr_malloc_print_stats(context_t *ctx) {
-    fflush(stderr);
-    printf("\nkr_malloc statistics\n-------------------\n\n");
-    
-    printf("Total memory from system ... %ld bytes\n", 
-	   (long)(ctx->total*ctx->usize));
-    printf("Current memory usage ....... %ld bytes\n", 
-	   (long)(ctx->inuse*ctx->usize));
-    printf("Maximum memory usage ....... %ld bytes\n", 
-	   (long)(ctx->maxuse*ctx->usize));
-    printf("No. chunks from system ..... %ld\n", ctx->nchunk);
-    printf("No. of fragments ........... %ld\n", ctx->nfrags);
-    printf("No. of calls to kr_malloc ... %ld\n", ctx->nmcalls);
-    printf("No. of calls to kr_free ..... %ld\n", ctx->nfcalls);
-    printf("\n");
-    
-    fflush(stdout);
+#else /* #ifdef SYSV */
+/* What are doing here */
+static char *kr_malloc_shmem(size_t nbytes, context_t *ctx) 
+{
+    armci_die("kr_malloc_shmem(): Invalid Function Call");
 }
-
-/*
-  Currently assumes that are working in a single region.
-*/
-void kr_malloc_verify(context_t *ctx) {
-    Header *p;
-    
-    if(_armci_initialized && lock_mode==UNLOCKED) {
-       LOCKIT(armci_master); lock_mode=LOCKED;
-    }
-
-    if ( ctx->freep ) {
-      
-      /* Check the used list */
-      
-      for (p=ctx->usedp; p; p=p->s.ptr) {
-	if (p->s.valid1 != VALID1 || p->s.valid2 != VALID2)
-	  kr_error("invalid header on usedlist", 
-		   (unsigned long) p->s.valid1, ctx);
-	
-	if (p->s.size > ctx->total)
-	  kr_error("invalid size in header on usedlist", 
-		   (unsigned long) p->s.size, ctx);
-      }
-      
-      /* Check the free list */
-      
-      p = ctx->base.s.ptr;
-      while (p != &(ctx->base)) {
-	if (p->s.valid1 != VALID1 || p->s.valid2 != VALID2)
-	  kr_error("invalid header on freelist", 
-		   (unsigned long) p->s.valid1, ctx);
-	
-	if (p->s.size > ctx->total)
-	  kr_error("invalid size in header on freelist", 
-		   (unsigned long) p->s.size, ctx);
-	
-	p = p->s.ptr;
-      }
-    } /* end if */
-    
-    if(_armci_initialized && lock_mode==LOCKED) {
-       UNLOCKIT(armci_master); lock_mode=UNLOCKED;
-    }
+static void kr_free_shmem(char *ap, context_t *ctx) 
+{
+    armci_die("kr_free_shmem(): Invalid Function Call");
 }
+#endif /* #ifdef SYSV */
+/********************** END: kr_malloc for ctx_shmem *********************/
+
 
 /**
 issues:
