@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.h,v 1.6 2004-08-17 07:50:03 manoj Exp $ */
+/* $Id: ga_vampir.h,v 1.7 2004-08-17 23:42:49 manoj Exp $ */
 #ifndef _GA_VAMPIR_H_
 #define _GA_VAMPIR_H_
 
@@ -107,37 +107,21 @@
 #define NGA_SELECT_ELEM       32292
 #define NGA_ZDOT_PATCH        32291
 #define NGA_ZERO_PATCH        32290
-#define GA_CHOLESKY           32289 
-#define VT_GA_DGEMM           32288
-#define GA_DGEMM_SEQ          32287
-#define GA_DIAG_STD           32286
-#define GA_DIAG               32285
-#define GA_DIAG_REUSE         32284
-#define GA_DIAG_SEQ           32283
-#define GA_DIAG_STD_SEQ       32281
-#define GA_LU_SOLVE           32280
-#define GA_LU_SOLVE_ALT       32279 
-#define GA_LU_SOLVE_SEQ       32278
-#define GA_SYMMETRIZE         32277
-#define GA_LLT_I              32276 
-#define GA_LLT_S              32275  
-#define GA_LLT_SOLVE          32274
-#define GA_SOLVE              32273
-#define GA_SPD_INVERT         32272
-#define GA_SYMUL              32271  
-#define GA_ZEROUL             32270
-#define NGA_CREATE_GHOSTS_IRREG_CONFIG     32269
-#define NGA_CREATE_IRREG_CONFIG      32268
-#define NGA_NBPUT             32267
-#define NGA_STRIDED_PUT       32266
-#define NGA_STRIDED_GET       32265
-#define NGA_STRIDED_ACC       32264
-#define GA_ALLOCATE           32263
-#define GA_MATMUL             32262
-#define NGA_MATMUL_PATCH      32261
-#define VT_GA_SGEMM           32260
-#define VT_GA_ZGEMM           32259
-#define GA_PGROUP_SYNC        32258
+#define VT_GA_DGEMM           32289
+#define GA_DGEMM_SEQ          32288
+#define GA_SYMMETRIZE         32287
+#define NGA_CREATE_GHOSTS_IRREG_CONFIG     32286
+#define NGA_CREATE_IRREG_CONFIG            32285
+#define NGA_NBPUT             32284
+#define NGA_STRIDED_PUT       32283
+#define NGA_STRIDED_GET       32282
+#define NGA_STRIDED_ACC       32281
+#define GA_ALLOCATE           32280
+#define GA_MATMUL             32279
+#define NGA_MATMUL_PATCH      32278
+#define VT_GA_SGEMM           32277
+#define VT_GA_ZGEMM           32276
+#define GA_PGROUP_SYNC        32275
 #include "ga_vampir.fh"
 
 extern void ga_vampir_init(); 
