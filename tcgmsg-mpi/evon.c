@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evon.c,v 1.2 1999-06-08 21:08:29 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evon.c,v 1.3 2002-02-26 15:47:52 vinod Exp $ */
 
 /* Crude FORTRAN interface to C event logging routines.
    See evlog.c for more details.
@@ -59,7 +59,7 @@ extern char *malloc();
 #define event_    event
 #endif
 
-#if defined(CRAY) || defined(ARDENT) || defined(WIN32)
+#if defined(CRAY) || defined(ARDENT) || defined(WIN32) || defined(HITACHI)
 #define evon_     EVON
 #define evoff_    EVOFF
 #define evbgin_   EVBGIN

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.c,v 1.2 1999-06-08 21:08:28 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.c,v 1.3 2002-02-26 15:47:52 vinod Exp $ */
 
 /* Event logging routine with key driven varargs interface */
 
@@ -36,7 +36,7 @@ static double walltime();
 
 #if defined(SGI)  || defined(AIX) || defined(IPSC) || defined(CRAY) || \
     defined(HPUX) || defined(ALLIANT) || defined(CONVEX) || defined(NEXT) || \
-    defined(KSR)  || defined(DECOSF)
+    defined(KSR)  || defined(DECOSF) || defined(HITACHI)
 #define INTSPRINTF
 #endif
 

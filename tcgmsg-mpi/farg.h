@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.7 2001-06-28 00:00:25 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.8 2002-02-26 15:47:52 vinod Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -35,7 +35,7 @@
 #define ARGV_ p_xargv
 #endif
 
-#if defined(CRAY)
+#if defined(CRAY) 
 #define ARGC_ _argc
 #define ARGV_ _argv
 #endif
