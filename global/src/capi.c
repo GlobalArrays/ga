@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.74 2004-03-30 17:12:15 edo Exp $ */
+/* $Id: capi.c,v 1.75 2004-04-06 15:58:38 baxter Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -1599,16 +1599,16 @@ int GA_Ndim(int g_a)
 /*Limin's functions */
 
 
-void GA_Step_max2(int g_xx, int g_vv, int g_xxll, int g_xxuu,  double *step2)
+void GA_Step_bound_info(int g_xx, int g_vv, int g_xxll, int g_xxuu,  double *boundmin, double *wolfemin, double *boundmax)
 {
     Integer xx = (Integer)g_xx;
     Integer vv = (Integer)g_vv;
     Integer xxll = (Integer)g_xxll;
     Integer xxuu = (Integer)g_xxuu;
-    ga_step_max2_(&xx, &vv, &xxll, &xxuu, step2);
+    ga_step_bound_info_(&xx, &vv, &xxll, &xxuu, boundmin, wolfemin, boundmax);
 }
 
-void GA_Step_max2_patch(int g_xx, int xxlo[], int xxhi[],  int g_vv, int vvlo[], int vvhi[], int g_xxll, int xxlllo[], int xxllhi[], int g_xxuu,  int xxuulo[], int xxuuhi[], double *step2)
+void GA_Step_bound_info_patch(int g_xx, int xxlo[], int xxhi[],  int g_vv, int vvlo[], int vvhi[], int g_xxll, int xxlllo[], int xxllhi[], int g_xxuu,  int xxuulo[], int xxuuhi[], double *boundmin, double *wolfemin, double *boundmax)
 {
     Integer xx = (Integer)g_xx;
     Integer vv = (Integer)g_vv;
@@ -1623,7 +1623,8 @@ void GA_Step_max2_patch(int g_xx, int xxlo[], int xxhi[],  int g_vv, int vvlo[],
     COPYINDEX_C2F(xxllhi,_ga_xxllhi, ndim);
     COPYINDEX_C2F(xxuulo,_ga_xxuulo, ndim);
     COPYINDEX_C2F(xxuuhi,_ga_xxuuhi, ndim);
-    ga_step_max2_patch_(&xx, _ga_xxlo, _ga_xxhi, &vv, _ga_vvlo, _ga_vvhi, &xxll, _ga_xxlllo, _ga_xxllhi, &xxuu, _ga_xxuulo, _ga_xxuuhi , step2);
+    ga_step_bound_info_patch_(&xx, _ga_xxlo, _ga_xxhi, &vv, _ga_vvlo, _ga_vvhi, &xxll, _ga_xxlllo, _ga_xxllhi, &xxuu, _ga_xxuulo, _ga_xxuuhi , 
+    boundmin,wolfemin,boundmax);
 }
 
 void GA_Step_max(int g_a, int g_b, double *step)
