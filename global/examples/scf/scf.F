@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.2 2005-03-24 19:38:47 d3g293 Exp $
+C$Id: scf.F,v 1.3 2005-04-01 18:19:49 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -491,7 +491,7 @@ c
       double precision f_ik(ichunk,ichunk),d_jl(ichunk,ichunk)
       integer nproc,lo(4),hi(4),ld,ich
       integer lo_ik(2),hi_ik(2),lo_jl(2),hi_jl(2)
-      logical dotask
+      logical dotask, next_4chunk
 c     
 c     add in the two-electron contribution to the fock matrix
 c     
@@ -537,6 +537,7 @@ c     wait for all processes to finish work
 c
       junk = nxtask(-nproc)
 c
+#if 0
       call ga_zero(g_counter)
       ld = maxnbfn
       ich = ichunk
@@ -576,6 +577,7 @@ c          call clean_chunk(f_ik)
         endif
         dotask = next_4chunk(lo,hi,it,jt,kt,lt)
       end do
+#endif
 c
       end
       subroutine damp(fac, dens, work)
