@@ -296,6 +296,7 @@ io_request_t *req_id;
 #endif
 
   PABLO_start(PABLO_elio_wait); 
+
   if(*req_id != ELIO_DONE ) { 
 
 #if defined(PARAGON)
@@ -322,7 +323,7 @@ io_request_t *req_id;
 #endif
       while(aio_req[aio_i] != *req_id && aio_i < MAX_AIO_REQ) aio_i++;
       if(aio_i >= MAX_AIO_REQ)
-	ELIO_ABORT("elio_wait: Handle %d, is not in aio_req table", 1);
+	ELIO_ABORT("elio_wait: Handle is not in aio_req table", 1);
       aio_req[aio_i] = NULL_AIO;
       *req_id = ELIO_DONE;
    }
