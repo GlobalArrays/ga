@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.12 1997-02-26 20:39:16 d3h325 Exp $
+ * $Id: ma.c,v 1.13 1997-03-03 23:25:23 d3g681 Exp $
  */
 
 /*
@@ -1953,6 +1953,11 @@ public Boolean MA_free_heap(memhandle)
         return MA_FALSE;
     }
 
+#ifdef STATS
+    ma_stats.hblocks--;
+    ma_stats.hbytes -= ad->nbytes;
+#endif /* STATS */
+
     /*
      * update ma_hp and ma_hfree
      */
@@ -1991,11 +1996,6 @@ public Boolean MA_free_heap(memhandle)
         /* clear the free list */
         ma_hfree = (AD *)NULL;
     }
-
-#ifdef STATS
-    ma_stats.hblocks--;
-    ma_stats.hbytes -= ad->nbytes;
-#endif /* STATS */
 
     /* free memhandle */
     table_deallocate(memhandle);
