@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.49 2004-04-01 01:33:45 d3h325 Exp $ */
+/* $Id: onesided.c,v 1.50 2004-04-07 23:05:49 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -316,7 +316,7 @@ void nga_put_common(Integer *g_a,
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
 Integer  idx, elems, size, p_handle, ga_nbhandle;
-int proc, ndim, loop, cond;
+int proc, ndim, loop, cond, counter=0;
 int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 
 #ifdef GA_USE_VAMPIR
@@ -399,8 +399,8 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 	      ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,
 			   proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
 	    else {
-#if 0
-              int counter=0;
+	       /* do blocking put for local processes. If all processes
+		are remote processes then do blocking put for the last one */
 	      if((loop==0 && counter==(int)np-1) || loop==1)
 		ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
 	      else {
@@ -408,10 +408,6 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 		ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1,
 			     proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
 	      }
-#else 
-              ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
-
-#endif
 	    }
 	  } /* end if(cond) */
 	}
