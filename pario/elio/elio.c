@@ -136,7 +136,6 @@ Size_t elio_write(Fd_t fd, off_t  offset, const void* buf, Size_t bytes)
       bytes_to_write -= stat;
       buf = stat + (char*)buf; /*advance pointer by # bytes written*/
     } else {
-      perror("elio_write");
       ELIO_ERROR(WRITFAIL, stat);
     }
   }
@@ -281,7 +280,6 @@ int    attempt=0;
       bytes_to_read -= stat;
       buf = stat + (char*)buf; /*advance pointer by # bytes read*/
     } else {
-      perror("elio_read");
       ELIO_ERROR(READFAIL, stat);
     }
   };
@@ -577,7 +575,7 @@ Fd_t  elio_open(const char* fname, int type, int mode)
      }
 
      
-     printf ("parts=%d cbits = %X\n",sparts,cbits);
+/*     printf ("parts=%d cbits = %X\n",sparts,cbits);*/
 
      if(mode == ELIO_SHARED)
       fd->fd = OPEN(fname, ptype, FOPEN_MODE, cbits, cblocks, &ffstat,NULL);
