@@ -69,16 +69,45 @@ ifeq ($(TARGET),CONVEX-SPP)
  GLOB_DEFINES = -DCONVEX
 endif
 
+
 ifeq ($(TARGET),SGI)
-     COPT_REN = -n32 -mips4
-     FOPT_REN = -n32 -mips4
+    SGI = yes
 endif
 
+ifeq ($(TARGET),SGI_N32)
+     SGI = yes
+endif
+
+ifdef SGI
+    ifeq ($(FOPT),-O)
+         FOPT = -O3
+    endif
+    COPT_REN = -n32 -mips4
+    FOPT_REN = -n32 -mips4
+GLOB_DEFINES += -DSGI
+endif
+
+
 ifeq ($(TARGET),SGI64)
-       RANLIB = echo
+     ifeq ($(FOPT),-O)
+         FOPT = -O3
+     endif
      COPT_REN = -64 -mips4
      FOPT_REN = -align64 -64 -mips4 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000
  GLOB_DEFINES +=-DSGI
+endif
+
+ifeq ($(TARGET),SGITFP)
+     ifeq ($(FOPT),-O)
+         FOPT = -O3
+     endif
+     COPT_REN = -64 -mips4
+     FOPT_REN = -align64 -64 -mips4 -OPT:IEEE_arithmetic=2:fold_arith_limit=4000
+ GLOB_DEFINES +=-DSGI
+endif
+
+ifeq ($(TARGET),DECOSF)
+          CLD = cc
 endif
 
 
@@ -91,7 +120,6 @@ ifeq ($(TARGET),CRAY-YMP)
  GLOB_DEFINES = -DCRAY_YMP
      FOPT_REN = -dp -ataskcommon $(LIBCM)
 endif
-
 
 ifeq ($(TARGET),CRAY-T3D)
      ifeq ($(FOPT), -O)
@@ -139,6 +167,12 @@ ifeq ($(TARGET),IBM)
 endif
 
 ifdef IBM
+     ifeq ($(FOPT), -O)
+         FOPT = -O3 -qstrict -qcompact -qarch=com -qtune=pwr2
+     endif
+     ifeq ($(COPT), -O)
+         COPT = -O3 -qstrict -qcompact -qarch=com -qtune=pwr2
+     endif
            FC = xlf
 GLOB_DEFINES  += -DAIX
 endif
