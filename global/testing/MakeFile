@@ -37,6 +37,10 @@ p.exe: $(OBJDIR) $(OBJDIR)\p.obj $(OBJDIR)\util.obj
 testc.exe: $(OBJDIR) $(OBJDIR)\testc.obj $(OBJDIR)\util.obj
 	$(CC) $(COPT) /Fe$@ $(OBJDIR)\testc.obj $(OBJDIR)\util.obj $(LIBS) $(CLINK)
 
+ntestc.exe: $(OBJDIR) $(OBJDIR)\ntestc.obj $(OBJDIR)\util.obj
+	$(CC) $(COPT) /Fe$@ $(OBJDIR)\ntestc.obj $(OBJDIR)\util.obj $(LIBS) $(CLINK)
+
+
 ngatest.exe: $(OBJDIR) $(OBJDIR)\ngatest.obj $(OBJDIR)\util.obj
 	$(FC) $(FOPT) /Fe$@ $(OBJDIR)\ngatest.obj $(OBJDIR)\util.obj $(LIBS)
 
