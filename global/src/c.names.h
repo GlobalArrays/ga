@@ -20,7 +20,12 @@
 #define  GA_dgop                   ga_dgop_
 #define  GA_dgemm                  ga_dgemm_
 #define  GA_diag                   ga_diag_
-#define  GA_diag_reuse             ga_diag_reuse
+#define  GA_diag_reuse             ga_diag_reuse_
+#define  GA_diag_std               ga_diag_std_
+#define  GA_llt_solve              ga_llt_solve_
+#define  GA_lu_solve               ga_lu_solve_alt_
+#define  GA_solve                  ga_solve_
+#define  GA_spd_invert             ga_spd_invert_
 #define  GA_distribution           ga_distribution_
 #define  GA_scale                  ga_scale_
 #define  GA_scale_patch            ga_scale_patch_
