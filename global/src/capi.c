@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.30 2001-05-08 00:15:53 d3h325 Exp $ */
+/* $Id: capi.c,v 1.31 2001-05-22 19:17:50 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -180,7 +180,7 @@ float GA_Fdot(int g_a, int g_b)
 {
     Integer a=(Integer)g_a;
     Integer b=(Integer)g_b;
-    return (float)ga_fdot_(&a,&b);
+    return (float)ga_sdot_(&a,&b);
 }    
 
 void GA_Fill(int g_a, void *value)
