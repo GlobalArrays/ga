@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.34 2000-10-11 20:02:50 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.35 2000-10-11 21:37:01 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -41,11 +41,9 @@
  */
 #define STAMP 0
 
-extern void armci_die();
-extern int armci_me, armci_master;
-
 #include "shmem.h"
 #include "shmalloc.h"
+#include "shmlimit.h"
 
 #if defined(SUN) || defined(SOLARIS)
 #define MULTIPLE_REGIONS
@@ -752,7 +750,7 @@ long id;
     }
 
     if ( (long) (temp = shmat((int)id, pref_addr, 0)) == -1L){
-       armci_die("allocate: failed to attach to shared region",  temp);
+       armci_die("allocate: failed to attach to shared region",  (int)id);
     }
 
     if(DEBUG_){

@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.12 2000-10-11 19:52:48 d3h325 Exp $ */
+/* $Id: signaltrap.c,v 1.13 2000-10-11 21:37:01 d3h325 Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -38,9 +38,11 @@ extern int armci_me;
 int AR_caught_sigint=0;
 int AR_caught_sigterm=0;
 int AR_caught_sigchld=0;
+int AR_caught_sigsegv=0;
 int AR_caught_sig=0;
 
 SigType (*SigChldOrig)(), (*SigIntOrig)(), (*SigHupOrig)(), (*SigTermOrig)();
+SigType (*SigSegvOrig)();
 
 
 /*********************** SIGINT *************************************/
@@ -254,6 +256,7 @@ SigType SigSegvHandler(sig)
      int sig;
 {
   AR_caught_sig= sig;
+  AR_caught_sigsegv=1;
 #ifdef PAUSE_ON_ERROR
   fprintf(stderr,"%d(%d): Segmentation Violation ... pausing\n",
           armci_me, getpid() );pause(); 
@@ -267,11 +270,22 @@ void TrapSigSegv()
   Trap SIGSEGV
 */
 {
-  if ( signal(SIGSEGV, SigSegvHandler) == SIG_ERR)
+  if ( (SigSegvOrig=signal(SIGSEGV, SigSegvHandler)) == SIG_ERR)
     Error("TrapSigSegv: error from signal setting SIGSEGV", 0);
 }
 
 
+void RestoreSigSegv()
+/*
+ Restore the original signal handler
+*/
+{
+/*
+  if(AR_caught_sigsegv) SigSegvOrig(SIGSEGV);
+*/
+  if ( signal(SIGSEGV,SigSegvOrig) == SIG_ERR)
+    Error("RestoreSigSegv: error from restoring signal SIGSEGV",0);
+}
 
 
 /*********************** SIGSYS *************************************/
@@ -518,6 +532,7 @@ void ARMCI_RestoreSignals()
      RestoreSigChld();
 #endif
      RestoreSigInt();
+     RestoreSigSegv();
 }
 
 

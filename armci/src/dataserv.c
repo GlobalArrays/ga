@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.17 2000-08-16 00:08:10 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.18 2000-10-11 21:37:01 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -12,6 +12,8 @@
 #ifdef WIN32
 #include <windows.h>
 #define sleep(x) Sleep(100*(x))
+#else
+#include <unistd.h>
 #endif
  
 #define ACK_QUIT 0

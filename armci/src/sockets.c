@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.16 2000-04-17 22:31:42 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.17 2000-10-11 21:37:01 d3h325 Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -23,6 +23,7 @@
 #  include <netinet/in.h>
 #  include <netinet/tcp.h>
 #  include <netdb.h>
+#  include <unistd.h>
 #  define CLOSE close
 #endif
 

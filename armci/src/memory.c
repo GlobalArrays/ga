@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.19 2000-10-11 19:58:36 d3h325 Exp $ */
+/* $Id: memory.c,v 1.20 2000-10-11 21:37:01 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -135,7 +135,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
                ptr_ref_arr[armci_clus_me]= ptr; /* from server*/
 
                if(DEBUG_){
-                 printf("%d:addresses server=%ld me=%ld\n",armci_me,ptr,myptr);
+                 printf("%d:addresses server=%p myptr=%p\n",armci_me,ptr,myptr);
                  fflush(stdout);
                }
 #            endif

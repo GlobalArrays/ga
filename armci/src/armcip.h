@@ -46,6 +46,7 @@ extern thread_id_t armci_usr_tid;
 #ifdef SOCKETS
 #  define TCP_PAYLOAD 512
 #  define LONG_GET_THRESHOLD  TCP_PAYLOAD  
+#  define LONG_GET_THRESHOLD_STRIDED LONG_GET_THRESHOLD  
 #endif
 
 #ifdef WIN32
@@ -147,6 +148,17 @@ extern int armci_acc_copy_strided(int optype, void* scale, int proc,
 extern void armci_vector_to_buf(armci_giov_t darr[], int len, void* buf);
 extern void armci_vector_from_buf(armci_giov_t darr[], int len, void* buf);
 extern void armci_init_fence();
+
+#ifdef SOCKETS
+#ifdef SERVER_THREAD
+  extern void armci_create_server_thread ( void* (* func)(void*) );
+  extern void armci_terminate_server_thread();
+#else
+  extern void armci_create_server_process ( void* (* func)(void*) );
+  extern void armci_wait_server_process();
+  extern void RestoreSigChldDfl();
+#endif
+#endif
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
