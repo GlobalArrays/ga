@@ -68,7 +68,7 @@ c
             
 *            write(6,*) dim1, dim2, ldim1, ldim2
 *            write(6,*) head
-            write(6,head) name(1:lname), dim1, dim2
+             write(6,head) name(1:lname), dim1, dim2
 c
             if (verbose) then
                do i = 0, nproc-1

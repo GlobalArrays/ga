@@ -6,7 +6,7 @@
 
 ifndef TARGET
 error:
-	@echo "TARGET machine [SUN,SGI,IBM,SP1,IPSC,PARAGON,KSR] not defined "
+	@echo "TARGET machine [SUN,SGI,IBM,SP1,IPSC,PARAGON,KSR,CRAY-T3D] not defined "
 	exit
 endif
 
@@ -19,7 +19,11 @@ endif
 INTERRUPT_AVAILABLE = SP1 IPSC DELTA PARAGON
 
 ifeq ($(VERSION),SHMEM)
-  LOC_DEFINES = -DSHMEM -DSYSV -DTCGMSG
+  ifneq ($(TARGET),CRAY-T3D)
+    LOC_DEFINES = -DSHMEM -DSYSV -DTCGMSG
+  else
+    LOC_DEFINES = -DSHMEM
+  endif
 else
   ifeq ($(TARGET),$(findstring $(TARGET),$(INTERRUPT_AVAILABLE)))
        LOC_DEFINES = -DTCGMSG 
@@ -43,7 +47,7 @@ $(LIBRARY):  $(OBJ) $(EXTRA)
 	$(AR) $(ARFLAGS) $@ $(OBJ) $(EXTRA) 
 	$(RANLIB) $@
 
-$(GA_SYNC):	 $(GA_SYNC:.o=.c)
+$(GA_SYNC): 
 	cc -g $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS) -c  $(GA_SYNC:.o=.c)
 
 $(OBJ):  $(TARGET).$(VERSION).stamp 

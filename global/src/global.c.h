@@ -12,6 +12,10 @@
 #define FALSE (logical) 0
 #define TRUE  (logical) 1
 
+#ifdef CRAY_T3D
+#include "cray.names.h"
+#endif
+
 void     ga_symmetrize_(), ga_print_(),        ga_distribution_(),
          ga_dgop_(),       ga_check_handle(),  ga_sync_(),
          ga_copy_(),       ga_inquire(),       ga_release_(),
@@ -22,12 +26,12 @@ void     ga_symmetrize_(), ga_print_(),        ga_distribution_(),
          ga_diag_reuse_(), ga_inquire_name(),  ga_release_update_(),   
          ga_copy_patch_(), ga_print_patch_(),  ga_matmul_patch_(),
 	 ga_dadd_patch_(), ga_dscal_patch_(),  ga_dfill_patch_(), 
-	 ga_ifill_patch_(),ga_summarize_();
+	 ga_ifill_patch_();
 
-Integer  ga_nnodes_(),     ga_nodeid_(),       ga_read_inc_(),
-         ga_verify_handle_();
+Integer  ga_nnodes_(),     ga_nodeid_(),       ga_read_inc_();
 
-logical  ga_create_(),     ga_create_irreg_(), ga_destroy_() ; 
+logical  ga_create(),      ga_create_irreg(), ga_destroy_() ; 
+logical  ga_duplicate_();
 
 DoublePrecision ga_ddot_(), ga_ddot_patch_();
 

@@ -1,3 +1,4 @@
+c Thu Sep 29 09:39:57 PDT 1994
 c..................................................................
 c      Two auxiliary routines to provide MA base addresses and    :
 c                                      sizes of the data sizes    :
@@ -15,7 +16,7 @@ c      print *,'in ma__base_address -- type ', type, '>',MT_DBL
 c      call ffflush(fout)
        if(type .eq. MT_DBL)then
 c          print *,'in ma__base_address -- calling ma__get_ptr 1'
-           call ffflush(fout)
+*          call ffflush(fout)
           call ma__get_ptr(address, dbl_mb(1))
        else if(type .eq. MT_INT) then
 c          print *,'in ma__base_address -- calling ma__get_ptr 2'

@@ -14,7 +14,7 @@ c
 c     GA_DGEMM  performs one of the matrix-matrix operations:
 c           C := alpha*op( A )*op( B ) + beta*C,
 c     where  op( X ) is one of
-c           op( X ) = X   or   op( X ) = X',
+c           op( X ) = X   or   op( X ) = X`,
 c     
 c     alpha and beta are scalars, and A, B and C are matrices, with op( A )
 c     an m by k matrix,  op( B )  a  k by n matrix and  C an m by n matrix.
@@ -22,7 +22,7 @@ c
 c     On entry, TRANSA specifies the form of op( A ) to be used in
 c     the matrix multiplication as follows:
 c           transa = 'N' or 'n',  op( A ) = A.
-c           transa = 'T' or 't',  op( A ) = A'.
+c           transa = 'T' or 't',  op( A ) = A`.
 c     
 c     M      - On entry,  M  specifies  the number  of rows  of the  matrix
 c              op( A )  and of the  matrix  C.  M  must  be at least  zero.
@@ -47,8 +47,6 @@ c
       me = ga_nodeid()
       nproc = ga_nnodes()
 c
-**      write(6,*) ' ga_dgemm: beta ', beta
-**      call util_flush(6)
       if (beta .eq. 0.0d0) then
          call ga_zero(g_c)
       else

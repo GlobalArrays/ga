@@ -1789,6 +1789,7 @@ c
       endif
 c
       end
+
       integer function ga_verify_handle(g_a)
       implicit none
 #include "mafdecls.h"

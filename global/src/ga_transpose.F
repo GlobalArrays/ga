@@ -1,6 +1,6 @@
       subroutine ga_transpose(g_a,g_b) 
 c
-c     Transposes matrix A:  B := A'
+c     Transposes matrix A:  B := A`
 c     A remains unchanged
 c 
 c     J. Nieplocha 05.17.94
@@ -51,7 +51,7 @@ c     if(myproc.eq.0)call ga_print(g_a)
 c
 c***     get temporary storage for transposed local patch of array 
          if (.not. ma_push_get(MT_DBL,myelem,'B',hB,adrB))
-     $        call errquit('ga_transpose: insufficient memory', myelem)
+     $        call ga_error('ga_transpose: insufficient memory', myelem)
 c
 c***     transpose local patch
          Bbase = adrB-1

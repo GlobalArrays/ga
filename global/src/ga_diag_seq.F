@@ -48,7 +48,7 @@ c
          status=status.and.ma_push_get(MT_DBL, n,
      $        'diag_seq:fv2', l_fv2, k_fv2)
          if (.not. status)
-     $        call errquit('ga_diag_seq: insufficient memory', n)
+     $        call ga_error('ga_diag_seq: insufficient memory', n)
 c     
 c     Fill local arrays from global arrays
 c     
@@ -135,7 +135,7 @@ c
          status=status.and.ma_push_get(MT_DBL, n,
      $        'diag_std_seq:fv2', l_fv2, k_fv2)
          if (.not. status)
-     $        call errquit('ga_diag_std_seq: insufficient memory', n)
+     $      call ga_error('ga_diag_std_seq: insufficient memory', n)
 c     
 c     Fill local arrays from global arrays
 c     

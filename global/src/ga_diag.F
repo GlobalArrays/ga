@@ -61,9 +61,9 @@ c
 c
 c
       if (dimA1 .ne. dimA2) then
-         call ga_error('ga_diag_std: can only diag square matrix ', 1)
+         call ga_error('ga_diag_std: can only diag square matrix ',1)
       else if (dimV1 .ne. dimV2) then
-         call ga_error('ga_diag_std: can only diag square matrix ', 3)
+         call ga_error('ga_diag_std: can only diag square matrix ',3)
       else if(dimA1.ne.dimV1 )then
          call ga_error('ga_diag_std: A & V dimension mismatch ', 4)
       endif
@@ -104,7 +104,7 @@ c
          status = status .and. ma_push_get(mt_int,n,'mapa',hma,adrma)
          status = status .and. ma_push_get(mt_int,n,'mapz',hmz,adrmz)
          if (.not. status)
-     $        call errquit('ga_diag_std: insufficient memory 1', n)
+     $        call ga_error('ga_diag_std: insufficient memory 1', n)
 c         
 c        determine distribution of a,b, and z
 c     
@@ -170,7 +170,7 @@ c
          status = status .and.
      $        ma_push_get(mt_dbl,elemz,'ga_diag_std:z',hz,adrz)
          if (.not. status)
-     $        call errquit('ga_diag_std: insufficient mem 2',
+     $        call ga_error('ga_diag_std: insufficient mem 2',
      $        myelem+elemz)
 c
 c***     load the fock (A) matrix 
@@ -190,7 +190,7 @@ c
 * temporary patch following george's reccomendation to use 6n
 *
          if (.not. ma_push_get(mt_int,6*n,'iscratch',his,adris))
-     $        call errquit('ga_diag_std: insufficient mem 3', 6*n)
+     $        call ga_error('ga_diag_std: insufficient mem 3', 6*n)
          call fmemreq(1,n,int_mb(adrma),int_mb(adrma),int_mb(adrmz),
      &        isize, rsize, ptr_size,int_mb(adris))
          status = ma_pop_stack(his)
@@ -242,7 +242,7 @@ c
          status = status .and. ma_pop_stack(ha)
          status = status .and. ma_pop_stack(hmz)
          status = status .and. ma_pop_stack(hma)
-         if (.not. status) call errquit('ga_diag_std: ma_pop',0)
+         if (.not. status) call ga_error('ga_diag_std: ma_pop',0)
       endif
 c
 c
@@ -382,7 +382,7 @@ c
          status = status .and. ma_push_get(mt_int,n,'mapb',hmb,adrmb)
          status = status .and. ma_push_get(mt_int,n,'mapz',hmz,adrmz)
          if (.not. status)
-     $        call errquit('ga_diag: insufficient memory 1', n)
+     $        call ga_error('ga_diag: insufficient memory 1', n)
 c         
 c        determine distribution of a,b, and z
 c     
@@ -452,7 +452,7 @@ c
      $        ma_push_get(mt_dbl,myelem,'ga_diag:b',hb,adrb)
          status = status .and.
      $        ma_push_get(mt_dbl,elemz,'ga_diag:z',hz,adrz)
-         if (.not. status) call errquit('ga_diag: memory?', myelem)
+         if (.not. status) call ga_error('ga_diag: memory?', myelem)
 c
 c        load the fock (A) and overlap (S) matrices 
 c
@@ -472,11 +472,11 @@ c
 * temporary patch following george's reccomendation to use 6n
 *
          if (.not. ma_push_get(mt_int,6*n,'iscratch',his,adris))
-     $        call errquit('ga_diag: memory 2?', 6*n)
+     $        call ga_error('ga_diag: memory 2?', 6*n)
          call fmemreq(0,n,int_mb(adrma),int_mb(adrmb),int_mb(adrmz),
      &        isize, rsize, ptr_size,int_mb(adris))
          if (.not. ma_pop_stack(his))
-     $        call errquit('ga_diag: ma pop his', 0)
+     $        call ga_error('ga_diag: ma pop his', 0)
          if(.not. ma_push_get(mt_int,isize,'iscratch',his,adris))
      &        call ga_error('eig allocator',1)
          if(.not. ma_push_get(mt_dbl,rsize,'scratch',hsc,adrsc))
@@ -528,7 +528,7 @@ c
          status = status .and. ma_pop_stack(hmz) 
          status = status .and. ma_pop_stack(hmb) 
          status = status .and. ma_pop_stack(hma)
-         if (.not. status) call errquit('ga_diag: ma_pop?', 0)
+         if (.not. status) call ga_error('ga_diag: ma_pop?', 0)
       endif
 c
 c
@@ -628,7 +628,7 @@ c
          g_ps = g_s
       else
          if(g_ps .ne. g_s) 
-     $    call ga_error(' ga_diag: attempt to reuse invalid data ',g_ps) 
+     $    call ga_error('ga_diag:attempt to reuse invalid data ',g_ps) 
       endif
 c
       call ga_inquire(g_a, typeA, dimA1, dimA2)
@@ -660,22 +660,22 @@ c
 c***  test the reuse value and take the proper action
 c
       if((reuse .ne. 0) .and. first_time)
-     $ call ga_error(' ga_diag: cannot reuse uninitialized data ',reuse)
+     $ call ga_error(' ga_diag: cannot reuse uninitialized data',reuse)
 c
 c...  detect repeated "first-time" calls -- they are allowed if 
 c...         storage allocated for B is deallocated first
 c
       if((reuse .eq. 0) .and. .not. first_time)
-     $ call ga_error(' ga_diag_reuse: repeated call, memory problem ',0)
+     $ call ga_error(' ga_diag_reuse: repeated call, memory problem',0)
 c
 c...  case for < 0 is just a cleanup of storage for B
 c
       if(reuse .lt. 0) then
        if(.not. first_time) then
          if (.not. ma_free_heap(hb))
-     $         call errquit('ga_reuse: ma_free hb', 0)
+     $         call ga_error('ga_reuse: ma_free hb', 0)
          if (.not. ma_free_heap(hmb))
-     $         call errquit('ga_reuse: ma_free hmb', 0)
+     $         call ga_error('ga_reuse: ma_free hmb', 0)
          first_time = .true.
        endif
        return
@@ -713,13 +713,13 @@ c
 c***     allocate storage for map arrays: A & Z from stack and B from heap
 c
          status = ma_push_get(mt_int,n,'mapa',hma,adrma)
-         if(.not. status)call ga_error('ga_diag: mapa not allocated ',0)
+         if(.not.status)call ga_error('ga_diag: mapa not allocated ',0)
 
          if(first_time)status = ma_alloc_get(mt_int,n,'mapb',hmb,adrmb)
-         if(.not. status)call ga_error('ga_diag: mapb not allocated ',0)
+         if(.not.status)call ga_error('ga_diag: mapb not allocated ',0)
 
          status = ma_push_get(mt_int,n,'mapz',hmz,adrmz)
-         if(.not. status)call ga_error('ga_diag: mapc not allocated ',0)
+         if(.not.status)call ga_error('ga_diag: mapc not allocated ',0)
 c         
 c***     determine distribution of a,b, and z
 c     
@@ -808,11 +808,11 @@ c
 * temporary patch following george's reccomendation to use 6n
 *
          status = ma_push_get(mt_int,6*n,'iscratch',his,adris)
-         if (.not. status) call errquit('ga_reuse: 6*n', 6*n)
+         if (.not. status) call ga_error('ga_reuse: 6*n', 6*n)
          call fmemreq(0,n,int_mb(adrma),int_mb(adrmb),int_mb(adrmz),
      &        isize, rsize, ptr_size,int_mb(adris))
          status = ma_pop_stack(his)
-         if (.not. status) call errquit('ga_reuse: ma pop his', 0)
+         if (.not. status) call ga_error('ga_reuse: ma pop his', 0)
          if(.not. ma_push_get(mt_int,isize,'iscratch',his,adris))
      &        call ga_error('eig allocator',1)
          if(.not. ma_push_get(mt_dbl,rsize,'scratch',hsc,adrsc))
@@ -862,7 +862,7 @@ c
          status = status .and. ma_pop_stack(ha) 
          status = status .and. ma_pop_stack(hmz) 
          status = status .and. ma_pop_stack(hma) 
-         if (.not. status) call errquit('ga_reuse: ma_pop?', 0)
+         if (.not. status) call ga_error('ga_reuse: ma_pop?', 0)
       endif
 c
 c

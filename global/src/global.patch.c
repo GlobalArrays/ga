@@ -12,6 +12,13 @@ extern Integer         *INT_MB;
 #define dgemm_ sgemm_
 #endif
 
+#ifdef CRAY_T3D
+#      include <fortran.h>
+#      define cptofcd(fcd)  _cptofcd((fcd),1)
+#else
+#     define cptofcd(fcd) (fcd)
+#endif
+
 
 #define DEST_INDICES(is,js, ilos,jlos, lds, id,jd, ilod, jlod, ldd) \
 { \
@@ -79,13 +86,14 @@ Integer type = GA_TYPE_GSM, len = 1;
 }
 
 
+
 /*\ COPY A PATCH AND POSSIBLY RESHAPE
  *
  *  . the element capacities of two patches must be identical
  *  . copy by column order - Fortran convention
 \*/
-void ga_copy_patch_(trans, g_a, ailo, aihi, ajlo, ajhi,
-                    g_b, bilo, bihi, bjlo, bjhi)
+void ga_copy_patch(trans, g_a, ailo, aihi, ajlo, ajhi,
+                   g_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
      char    *trans;
@@ -170,14 +178,29 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
 }
 
 
+/*\ COPY A PATCH AND POSSIBLY RESHAPE
+ *  Fortran interface
+\*/
+void ga_copy_patch_(trans, g_a, ailo, aihi, ajlo, ajhi,
+                    g_b, bilo, bihi, bjlo, bjhi)
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
+#ifdef CRAY_T3D
+     _fcd    trans;
+{ga_copy_patch(_fcdtocp(trans),g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi);}
+#else 
+     char*   trans;
+{  ga_copy_patch(trans,g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi); }
+#endif
+
 
 /*\ compute DOT PRODUCT of two patches
  *
  *          . different shapes and distributions allowed but not recommended
  *          . the same number of elements required
 \*/
-DoublePrecision ga_ddot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
-                               g_b, t_b, bilo, bihi, bjlo, bjhi)
+DoublePrecision ga_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                              g_b, t_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
      char    *t_a, *t_b;                          /* transpose operators */
@@ -230,8 +253,8 @@ DoublePrecision  sum = 0.;
           *        - copy & reshape patch of g_b into g_B
           */
          ga_duplicate_(g_a, &g_B, tempname, sizeof(tempname));
-         ga_copy_patch_(&transp, g_b, bilo, bihi, bjlo, bjhi,
-                                &g_B, ailo, aihi, ajlo, ajhi);  
+         ga_copy_patch(&transp, g_b, bilo, bihi, bjlo, bjhi,
+                               &g_B, ailo, aihi, ajlo, ajhi);  
          temp_created = 1;
    }
 
@@ -267,6 +290,26 @@ DoublePrecision  sum = 0.;
 
    return (sum);
 }
+
+
+
+/*\ compute DOT PRODUCT of two patches
+ *  Fortran interface
+\*/
+DoublePrecision ga_ddot_patch_(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                               g_b, t_b, bilo, bihi, bjlo, bjhi)
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+
+#ifdef CRAY_T3D
+     _fcd   t_a, t_b;                          /* transpose operators */
+{ return ga_ddot_patch(g_a, _fcdtocp(t_a), ailo, aihi, ajlo, ajhi,
+                       g_b, _fcdtocp(t_b), bilo, bihi, bjlo, bjhi);}
+#else 
+     char    *t_a, *t_b;                          /* transpose operators */
+{ return ga_ddot_patch(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                       g_b, t_b, bilo, bihi, bjlo, bjhi);}
+#endif
 
 
 /*\ FILL IN ARRAY WITH VALUE  (integer version) 
@@ -424,8 +467,8 @@ char *tempname = "temp", notrans='n';
           *        - copy & reshape patch of g_a into g_A
           */
          ga_duplicate_(g_c, &g_A, tempname, sizeof(tempname));
-         ga_copy_patch_(&notrans, g_a, ailo, aihi, ajlo, ajhi,
-                                 &g_A, cilo, cihi, cjlo, cjhi);  
+         ga_copy_patch(&notrans, g_a, ailo, aihi, ajlo, ajhi,
+                                &g_A, cilo, cihi, cjlo, cjhi);  
          A_created = 1;
    }
 
@@ -438,8 +481,8 @@ char *tempname = "temp", notrans='n';
           *        - copy & reshape patch of g_b into g_B
           */
          ga_duplicate_(g_c, &g_B, tempname, sizeof(tempname));
-         ga_copy_patch_(&notrans, g_b, bilo, bihi, bjlo, bjhi,
-                                 &g_B, cilo, cihi, cjlo, cjhi);  
+         ga_copy_patch(&notrans, g_b, bilo, bihi, bjlo, bjhi,
+                                &g_B, cilo, cihi, cjlo, cjhi);  
          B_created = 1;
    }
 
@@ -491,7 +534,7 @@ char *tempname = "temp", notrans='n';
  *  [lo:hi,lo:hi] - patch indices _after_ op() operator was applied
  *
 \*/
-void ga_matmul_patch_(transa, transb, alpha, beta,
+void ga_matmul_patch(transa, transb, alpha, beta,
                       g_a, ailo, aihi, ajlo, ajhi,
                       g_b, bilo, bihi, bjlo, bjhi,
                       g_c, cilo, cihi, cjlo, cjhi)
@@ -579,9 +622,13 @@ DoublePrecision ONE = 1.;
                      j0= *bilo+klo; j1= *bilo+khi;
                      ga_get_(g_b, &i0, &i1, &j0, &j1, b, &jdim);
                   }
+#ifdef CRAY_T3D
+                  SGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
+                        alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
+#else
                   dgemm_(transa, transb, &idim, &jdim, &kdim,
                          alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1L, 1L);
-
+#endif
                   i0= *cilo+ilo; i1= *cilo+ihi;   j0= *cjlo+jlo; j1= *cjlo+jhi;
                   ga_acc_(g_c, &i0, &i1, &j0, &j1, c, &cdim, &ONE);
                }
@@ -592,3 +639,32 @@ DoublePrecision ONE = 1.;
  
    ga_sync_();
 }
+
+
+/*\ MATRIX MULTIPLICATION for patches 
+ *  Fortran interface
+\*/
+void ga_matmul_patch_(transa, transb, alpha, beta,
+                      g_a, ailo, aihi, ajlo, ajhi,
+                      g_b, bilo, bihi, bjlo, bjhi,
+                      g_c, cilo, cihi, cjlo, cjhi)
+
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+     Integer *g_c, *cilo, *cihi, *cjlo, *cjhi;    /* patch of g_c */
+     DoublePrecision      *alpha, *beta;
+
+#ifdef CRAY_T3D
+     _fcd   transa, transb;
+{    ga_matmul_patch(_fcdtocp(transa), _fcdtocp(transb), alpha, beta,
+                      g_a, ailo, aihi, ajlo, ajhi,
+                      g_b, bilo, bihi, bjlo, bjhi,
+                      g_c, cilo, cihi, cjlo, cjhi);}
+#else
+     char    *transa, *transb;
+{    ga_matmul_patch (transa, transb, alpha, beta,
+                      g_a, ailo, aihi, ajlo, ajhi,
+                      g_b, bilo, bihi, bjlo, bjhi,
+                      g_c, cilo, cihi, cjlo, cjhi);}
+#endif
+

@@ -1,7 +1,7 @@
 /*
  * module: global.common.c
  * author: Jarek Nieplocha
- * last modification: Wed Jun 22 08:55:17 PDT 1994
+ * last modification: Thu Sep 29 09:41:55 PDT 1994
  *
  * DISCLAIMER
  * 
@@ -26,19 +26,26 @@
  * distribute to other US Government contractors.
  */
 
+#include "global.c.h"
+#include "macommon.h"
+#include <stdio.h>
+
+
+#ifdef CRAY_T3D
+#include <fortran.h>
+#endif
+
 void f2cstring();
 void c2fstring();
 #if !(defined(SGI)||defined(AIX))
+#ifndef CRAY_T3D
 int  fprintf();
+#endif
 #endif
 #if defined(SUN)
 void fflush();
 #endif
 
-
-#include "global.c.h"
-#include "macommon.h"
-#include <stdio.h>
 
 extern DoublePrecision *DBL_MB;
 extern Integer         *INT_MB;
@@ -201,18 +208,27 @@ void ga_dgop(type, x, n, op)
 /*\ GLOBAL OPERATIONS 
  *  Fortran
 \*/
+#ifdef CRAY_T3D
+void ga_dgop_(type, x, n, op)
+     _fcd op;
+#else
 void ga_dgop_(type, x, n, op, len)
-     Integer *type, *n;
-     DoublePrecision *x;
      char *op;
      long len;
+#endif
+     Integer *type, *n;
+     DoublePrecision *x;
 {
-void dgop_();
 long gtype,gn,glen;
-     gtype = (long)*type; gn = (long)*n; glen = len;
+     gtype = (long)*type; gn = (long)*n; 
 
+#ifdef CRAY_T3D
+     ga_dgop(gtype, x, gn, _fcdtocp(op));
+#else
      ga_dgop(gtype, x, gn, op);
+#endif
 }
+
 
 /*\ GLOBAL OPERATIONS 
  *  (C)
@@ -292,18 +308,27 @@ void ga_igop(type, x, n, op)
 /*\ GLOBAL OPERATIONS 
  *  Fortran
 \*/
+#ifdef CRAY_T3D
+void ga_igop_(type, x, n, op)
+     _fcd op;
+#else
 void ga_igop_(type, x, n, op, len)
-     Integer *type, *n;
-     Integer *x;
      char *op;
      long len;
+#endif
+     Integer *type, *n;
+     Integer *x;
 {
-void igop_();
 long gtype,gn,glen;
-     gtype = (long)*type; gn = (long)*n; glen = len;
+     gtype = (long)*type; gn = (long)*n;
 
+#ifdef CRAY_T3D
+     ga_igop(gtype, x, gn, _fcdtocp(op));
+#else
      ga_igop(gtype, x, gn, op);
+#endif
 }
+
 
 
 /*\ BROADCAST 
@@ -329,7 +354,7 @@ void ga_brdcst_(type, buf, len, originator)
        factor *= 2; rem = me%factor;
        if(rem){
               to = me - rem;
-              fprintf(stderr,"%d rcv %d to %d\n",me,*type,to);
+              /*fprintf(stderr,"%d rcv %d to %d\n",me,*type,to);*/
               rcv_(type, buf, len, &lenmes,  &to, &to, &sync);
               break;
        }
@@ -344,12 +369,12 @@ void ga_brdcst_(type, buf, len, originator)
        if(!rem && me != factor){
               to = me + factor;
               if( to < nproc ) {
-                 fprintf(stderr,"%d snd down %d to %d\n",me,*type,to);
+                 /*fprintf(stderr,"%d snd down %d to %d\n",me,*type,to);*/
                  snd_(type, buf, len, &to, &sync);
               }
        }
      } while( factor > 1 );
-     fprintf(stderr,"%d broadcast done \n",me);
+     /*fprintf(stderr,"%d broadcast done \n",me);*/
 #else
      /* use TCGMSG as a wrapper to a more efficient native implementation
       * of  broadcast 
@@ -516,7 +541,7 @@ char name[80];
 	   }else if(type == MT_F_DBL){
 	     ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
 	     for(jj=0; jj<(jmax-j+1); jj++)
-	       fprintf(DEV,"%#12.6g",dbuf[jj]);
+	       fprintf(DEV,"%12.6f",dbuf[jj]);
 	     
 	   }else ga_error("ga_print: wrong type",0);
 	   fprintf(DEV,"\n");
@@ -543,12 +568,13 @@ void ga_print_(g_a)
 }
   
 
+
 /*\  ERROR TERMINATION
  *   C-version
 \*/
 void ga_error(string, icode)
      char     *string;
-     long     icode;
+     Integer  icode;
 {
 Integer i;
 #ifdef TCGMSG
@@ -580,19 +606,32 @@ extern int SR_caught_sigint;
 }
 
 
+
+
 /*\  ERROR TERMINATION
  *   Fortran version
 \*/
+#ifdef CRAY_T3D
+void ga_error_(string, icode)
+     _fcd        string;
+#else
 void ga_error_(string, icode, slen)
      char        *string;
-     Integer     *icode;
      Integer     slen;
+#endif
+     Integer     *icode;
 {
 #define FMSG 256
 char buf[FMSG];
-      f2cstring(string,(int)slen, buf, FMSG);
-      ga_error(buf,(long)*icode);
+#ifdef CRAY_T3D
+      f2cstring(_fcdtocp(string), _fcdlen(string), buf, FMSG);
+#else
+      f2cstring(string,slen, buf, FMSG);
+#endif
+      ga_error(buf,*icode);
 }
+
+
 
 
 #ifndef SHMEM
@@ -635,14 +674,11 @@ void c2fstring( cstring, fstring, flen)
      char *cstring, *fstring;
      Integer flen;
 {
-  int i;
-  char *strncpy();
-  int clen = strlen(cstring);
-  strncpy(fstring, cstring, flen);
-
-  /* Fill remainder of Fortran string with blanks */
-  for (i=clen; i<flen; i++)
-    fstring[i] = ' ';
+char *strncpy();
+int clen = strlen(cstring);
+    strncpy(fstring, cstring, flen);
+    /* remove \n character if any */
+    if(flen>clen)fstring[clen]=' ';
 }
 
 
@@ -653,9 +689,9 @@ void c2fstring( cstring, fstring, flen)
 \*/
 void f2cstring(fstring, flength, cstring, clength)
     char        *fstring;       /* FORTRAN string */
-    int         flength;        /* length of fstring */
+    Integer      flength;        /* length of fstring */
     char        *cstring;       /* C buffer */
-    int         clength;        /* max length (including NUL) of cstring */
+    Integer      clength;        /* max length (including NUL) of cstring */
 {
     /* remove trailing blanks from fstring */
     while (flength-- && fstring[flength] == ' ') ;
