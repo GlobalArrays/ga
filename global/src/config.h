@@ -13,7 +13,7 @@
 #define _CONFIG_H 
 
 /* max number of global arrays */
-#define MAX_ARRAYS  256             
+#define MAX_ARRAYS 32768            
 
 /* max number of mutexes */
 #define MAX_MUTEXES 32768
