@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.74 2004-04-16 00:53:16 manoj Exp $ */
+/* $Id: base.c,v 1.75 2004-04-16 01:39:39 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -414,9 +414,11 @@ int bytes;
 
 #if GA_PROFILE 
     {
-       int i; /* initialize to zero */
+       int i,j;
        if(ga_nodeid_()==0) {printf("\nProfiling Get/Put ON\n");fflush(stdout);}
-       for(i=0;i<GA_PROFILE_MAX;i++) get_profile[i]=put_profile[i]=acc_profile[i]=0;
+       for(i=0; i<GA_PROFILE_MAX; i++) 
+	  for(j=0; j<2; j++)  /* initialize to zero */
+	     get_profile[i][j] = put_profile[i][j] = acc_profile[i][j] = 0;
     }
 #endif
 
@@ -2201,12 +2203,16 @@ extern double t_dgop, n_dgop, s_dgop;
     if(!GAinitialized) return;
 
 #if GA_PROFILE
-    if(ga_nodeid_() == 0) {
+    if(ga_nodeid_() == 0) { /* process 0's profile only */
        int i;
-       printf("\n\nRANK\t #Gets\t #puts\t #accs\t RANGE\n\n");
+       printf("\n\nCONTIGUOUS:\nRANK\t #Gets\t #puts\t #accs\t RANGE\n\n");
        for(i=0; i< GA_PROFILE_MAX; i++)
-	  printf("%d\t %d\t %d\t %d\t (%d-%d)\n", ga_nodeid_(),get_profile[i], put_profile[i], acc_profile[i],1<<i,1<<(i+1));
-       printf("%d\t %d\t %d\t %d\t (>%d)\n",ga_nodeid_(),get_profile[i], put_profile[i], acc_profile[i], 1<<GA_PROFILE_MAX);
+	  printf("%d\t %d\t %d\t %d\t (%d-%d)\n", ga_nodeid_(),get_profile[i][0], put_profile[i][0], acc_profile[i][0],1<<i,1<<(i+1));
+       printf("%d\t %d\t %d\t %d\t (>%d)\n",ga_nodeid_(),get_profile[i][0], put_profile[i][0], acc_profile[i][0], 1<<GA_PROFILE_MAX);
+       printf("\n\nNON-CONTIGUOUS:\nRANK\t #Gets\t #puts\t #accs\t RANGE\n\n");
+       for(i=0; i< GA_PROFILE_MAX; i++)
+	  printf("%d\t %d\t %d\t %d\t (%d-%d)\n", ga_nodeid_(),get_profile[i][1], put_profile[i][1], acc_profile[i][1],1<<i,1<<(i+1));
+       printf("%d\t %d\t %d\t %d\t (>%d)\n",ga_nodeid_(),get_profile[i][1], put_profile[i][1], acc_profile[i][1], 1<<GA_PROFILE_MAX);
     }
 #endif
 
