@@ -7,6 +7,9 @@
 #ifndef EXTERN
 #   define EXTERN extern
 #endif
+#ifdef QUADRICS
+#include <elan/elan.h>
+#endif
 
 #if !defined(CYGNUS) && !defined(QUADRICS) || defined(ELAN)
 #include "spinlock.h"
@@ -116,6 +119,18 @@
 
 #  define NAT_LOCK(x,p)   t_lock(cri_l+(x))
 #  define NAT_UNLOCK(x,p) t_unlock(cri_l+(x))
+
+#elif defined(QUADRICS) && defined(_ELAN_LOCK_H)
+
+extern void armcill_allocate_locks(int);
+extern void armcill_lock(int m, int proc);
+extern void armcill_unlock(int m, int proc);
+#  undef NUM_LOCKS
+#  define NUM_LOCKS 4
+#  define NAT_LOCK armcill_lock
+#  define NAT_UNLOCK armcill_unlock
+   typedef int lockset_t;
+
 
 #elif defined(CRAY_T3E) || defined(QUADRICS)
 #  include <limits.h>

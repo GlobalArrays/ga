@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.47 2002-03-21 19:36:45 d3h325 Exp $ */
+/* $Id: armci.c,v 1.48 2002-05-17 20:18:13 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -54,6 +54,9 @@ double armci_internal_buffer[BUFSIZE_DBL];
 #if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
 #   include "locks.h"
     lockset_t lockid;
+#endif
+#ifdef QUADRICS
+#include <elan/elan.h>
 #endif
 
 
@@ -152,13 +155,13 @@ void ARMCI_Error(char *msg, int code)
 
 void armci_allocate_locks()
 {
-#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
+#if defined(HITACHI) || (defined(QUADRICS) && defined(_ELAN_LOCK_H))
+    armcill_allocate_locks(NUM_LOCKS);
+#elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
     if(armci_nproc == 1)return;    
     if(armci_master==armci_me)CreateInitLocks(NUM_LOCKS, &lockid);
     armci_msg_clus_brdcst(&lockid, sizeof(lockid));
     if(armci_master != armci_me)InitLocks(NUM_LOCKS, lockid);
-#elif defined(HITACHI)
-    armcill_allocate_locks(NUM_LOCKS);
 #endif
     
 }
