@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.53 2001-08-07 01:58:44 edo Exp $
+# $Id: makefile.h,v 1.54 2001-08-18 00:31:45 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -175,6 +175,9 @@ endif
 ifeq ($(_CPU),x86)
      OPT_ALIGN = -malign-double
 endif
+ifeq ($(_CPU),786)
+     OPT_ALIGN = -malign-double
+endif
 ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
           COPT = -O2
@@ -209,37 +212,27 @@ endif
 endif
 #
 #................................ LINUX64 ....................................
+# Linux 64-bit
 # Alphas running Linux
 # using DEC compilers
-#
+# ia64 using Intel Compiler
+# to cross compile on x86 type: make _CPU=ia64
 ifeq ($(TARGET),LINUX64)
-           CC = ccc
-           FC = fort
        RANLIB = echo
 GLOB_DEFINES += -DLINUX 
-     FOPT_REN = -assume no2underscore -align_dcommons -fpe3 -check nooverflow 
-    FOPT_REN +=-assume accuracy_sensitive -check nopower -check nounderflow
 ifdef USE_INTEGER4
-    FOPT_REN += -i4  -Wl,-taso
-    COPT_REN+= -Wl,-taso #-misalign # alignment fix
+    FOPT_REN += -i4  
 else
 GLOB_DEFINES += -DEXT_INT
     FOPT_REN +=-i8
 endif
-          CLD = $(CC)
-        CLIBS = -lfor
-endif
-
-#
-#................................ LINUXIA64 ....................................
-# IA64 running Linux
-#
-ifeq ($(TARGET),LINUXIA64)
-GLOB_DEFINES += -DLINUX 
-       RANLIB = echo
+         _CPU = $(shell uname)
+ifeq  ($(_CPU),ia64)
+           CC = ecc
+           FC = efc
+      FLD_REN = -Vaxlib
 ifneq (,$(findstring efc,$(_FC)))
     GLOB_DEFINES += -DIFCLINUX
-    FOPT_REN = 
 endif
 ifneq (,$(findstring sgif90,$(_FC)))
 # FOPT and COPT = -O breaks in global.armci.c with sgi pro64 0.13
@@ -251,17 +244,19 @@ endif
 ifneq (,$(findstring sgicc,$(_CC)))
         COPT = -O0
 endif
-ifeq ($(_CC),ecc)
-GLOB_DEFINES +=  -DIFCLINUX
-        COPT=-O
 endif
-
+ifeq  ($(_CPU),alpha)
+           CC = ccc
+           FC = fort
+     FOPT_REN = -assume no2underscore -align_dcommons -fpe3 -check nooverflow 
+    FOPT_REN +=-assume accuracy_sensitive -check nopower -check nounderflow
 ifdef USE_INTEGER4
-    FOPT_REN += -i4
-else
-GLOB_DEFINES += -DEXT_INT
-FOPT_REN +=  -i8 
+    FLD_REN +=  -Wl,-taso
+    CLD_REN+= -Wl,-taso 
 endif
+        CLIBS = -lfor
+endif
+          CLD = $(CC)
 endif
 
 #............................. CYGNUS on Windows ..........................

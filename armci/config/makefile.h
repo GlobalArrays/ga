@@ -58,6 +58,11 @@ ifeq ($(_CPU),686)
         CDEFS += -DCOPY686
     EXTRA_OBJ += x86copy.o
 endif
+ifeq ($(_CPU),786)
+     OPT_ALIGN = -malign-double -march=pentiumpro
+#        CDEFS += -DCOPY686
+    EXTRA_OBJ += x86copy.o
+endif
 ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
           COPT = -O2
@@ -83,9 +88,15 @@ ifeq ($(_CPU),686)
 endif
    endif
    ifneq (,$(findstring ifc,$(_FC)))
-       FOPT=-O3 -prefetch -unroll -ip
+       FOPT=-O4 -prefetch -unroll -ip
+ifeq ($(_CPU),k7)
+       FOPT_REN = -xM 
+endif
 ifeq ($(_CPU),686)
        FOPT_REN = -xK -tpp6
+endif
+ifeq ($(_CPU),786)
+       FOPT_REN = -xW -tpp7
 endif
    endif
 endif
@@ -93,20 +104,14 @@ endif
 
 endif
 #-----------------Linux 64-bit on DEC/Compaq Alpha with DEC compilers --
+#-----------------Linux 64-bit on Itanium with Intel compilers --
 ifeq ($(TARGET),LINUX64)
-     FC = fort
-     FOPT_REN = -assume no2underscore -fpe3 -check nooverflow
-     FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
-     
-#    COPT_REN = -g3  
-     CC = ccc
    GLOB_DEFINES += -DLINUX
-   EXTRA_OBJ = tas.o
-endif
-#-----------------Linux 64-bit on Itanium with SGI compilers --
-ifeq ($(TARGET),LINUXIA64)
+         _CPU = $(shell uname)
+ifeq  ($(_CPU),ia64)
+     FC=efc
+     CC=ecc
 ifeq ($(_FC),sgif90)
-     FC = sgif90
      FOPT_REN = -macro_expand 
 endif
 ifeq ($(_FC),efc)
@@ -114,7 +119,15 @@ FOPT =  -O3 -hlo -pad
 FOPT_REN= -w1
 GLOB_DEFINES= -DIFCLINUX 
 endif
-   GLOB_DEFINES += -DLINUX
+endif
+ifeq  ($(_CPU),alpha)
+     FC = fort
+     CC = ccc
+     FOPT_REN = -assume no2underscore -fpe3 -check nooverflow
+     FOPT_REN+= -assume accuracy_sensitive -check nopower -check nounderflow
+     EXTRA_OBJ = tas.o
+endif
+   
 endif
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)

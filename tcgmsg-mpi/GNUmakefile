@@ -70,7 +70,7 @@ test.x: test.o	$(LIBRARY_PATH)
 	$(CC)  $(COPT_REN) -o $@ $^ $(LIBS) $(CLIBS)
 
 testf.x: testf.o $(LIBRARY_PATH)
-	$(FC)  $(FOPT_REN) -o $@ $^ $(LIBS)
+	$(FC) $(FLD_REN) $(FOPT_REN) -o $@ $^ $(LIBS)
 
 hello.x: hello.o $(LIBRARY_PATH)
 	$(CC)  $(COPT_REN) -o $@ $^ $(LIBS) $(CLIBS)
