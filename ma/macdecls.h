@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.10 2000-10-03 23:00:23 erjurrus Exp $
+ * $Id: macdecls.h,v 1.11 2000-10-05 23:43:24 d3h325 Exp $
  */
 
 /* 
@@ -40,6 +40,73 @@ extern "C" {
  ** function types
  **/
 
+/* enable ANSI C prototypes */
+#define MA_PROTOTYPES 
+
+
+#ifdef MA_PROTOTYPES 
+extern Boolean MA_alloc_get(
+    Integer     datatype,       /* of elements in this block */
+    Integer     nelem,          /* # of elements in this block */
+    char        *name,          /* assigned to this block by client */
+    Integer     *memhandle,     /* RETURN: handle for this block */
+    Integer     *index          /* RETURN: index for this block */   );
+extern Boolean MA_allocate_heap(
+    Integer     datatype,       /* of elements in this block */
+    Integer     nelem,          /* # of elements in this block */
+    char        *name,          /* assigned to this block by client */
+    Integer     *memhandle      /* RETURN: handle for this block */ );
+extern Boolean MA_chop_stack(Integer memhandle);
+extern Boolean MA_free_heap(Integer memhandle);
+extern Boolean MA_free_heap_piece(
+    Integer     memhandle,      /* the block to deallocate a piece of */
+    Integer     nelem           /* # of elements to deallocate */);
+extern Boolean MA_get_index(
+    Integer     memhandle,      /* block to get index for */
+    Integer     *index          /* RETURN: base index */);
+extern Pointer MA_get_mbase(Integer datatype);   /* to get base address of */
+extern Boolean MA_get_next_memhandle(
+    Integer     *ithandle,      /* handle for this iterator */
+    Integer     *memhandle      /* RETURN: handle for the next block */);
+extern Boolean MA_get_numalign(Integer *value);
+extern Boolean MA_get_pointer(
+    Integer     memhandle,      /* block to get pointer for */
+    Pointer     *pointer        /* RETURN: base pointer */);
+extern Boolean MA_init(
+    Integer     datatype,       /* for computing storage requirement */
+    Integer     nominal_stack,  /* # of datatype elements desired for stack */
+    Integer     nominal_heap    /* # of datatype elements desired for heap */);
+extern Boolean MA_initialized();
+extern Boolean MA_init_memhandle_iterator( Integer *ithandle);
+extern Integer MA_inquire_avail(Integer datatype);
+extern Integer MA_inquire_heap(Integer datatype);
+extern Integer MA_inquire_stack(Integer datatype);
+extern Boolean MA_pop_stack(Integer memhandle);
+extern void MA_print_stats(Boolean printroutines);
+extern Boolean MA_push_get(
+    Integer     datatype,       /* of elements in this block */
+    Integer     nelem,          /* # of elements in this block */
+    char        *name,          /* assigned to this block by client */
+    Integer     *memhandle,     /* RETURN: handle for this block */
+    Integer     *index          /* RETURN: index for this block */);
+extern Boolean MA_push_stack(
+    Integer     datatype,       /* of elements in this block */
+    Integer     nelem,          /* # of elements in this block */
+    char        *name,          /* assigned to this block by client */
+    Integer     *memhandle      /* RETURN: handle for this block */);
+extern Boolean MA_set_auto_verify(Boolean  value /* to set flag to */);
+extern Boolean MA_set_error_print(Boolean value /* to set flag to */);
+extern Boolean MA_set_hard_fail( Boolean value /* to set flag to */);
+extern Boolean MA_set_numalign(Integer  value);
+extern Integer MA_sizeof(
+    Integer     datatype1,      /* of source elements */
+    Integer     nelem1,         /* # of source elements */
+    Integer     datatype2       /* of target elements */);
+extern Integer MA_sizeof_overhead(Integer datatype);
+extern void MA_summarize_allocated_blocks();
+extern void MA_trace(Boolean value);
+extern Boolean MA_verify_allocator_stuff();
+#else
 extern Boolean MA_alloc_get();
 extern Boolean MA_allocate_heap();
 extern Boolean MA_chop_stack();
@@ -69,6 +136,7 @@ extern Integer MA_sizeof_overhead();
 extern void MA_summarize_allocated_blocks();
 extern void MA_trace();
 extern Boolean MA_verify_allocator_stuff();
+#endif
 
 /**
  ** variables

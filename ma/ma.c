@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.23 2000-07-04 11:27:02 d3g001 Exp $
+ * $Id: ma.c,v 1.24 2000-10-05 23:43:22 d3h325 Exp $
  */
 
 /*
@@ -1863,12 +1863,12 @@ public void MAi_summarize_allocated_blocks(index_base)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_alloc_get(datatype, nelem, name, memhandle, index)
-    Integer	datatype;	/* of elements in this block */
-    Integer	nelem;		/* # of elements in this block */
-    char	*name;		/* assigned to this block by client */
-    Integer	*memhandle;	/* RETURN: handle for this block */
-    Integer	*index;		/* RETURN: index for this block */
+public Boolean MA_alloc_get(
+    Integer	datatype,	/* of elements in this block */
+    Integer	nelem,		/* # of elements in this block */
+    char	*name,		/* assigned to this block by client */
+    Integer	*memhandle,	/* RETURN: handle for this block */
+    Integer	*index		/* RETURN: index for this block */   )
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_alloc_get]++;
@@ -1891,11 +1891,11 @@ public Boolean MA_alloc_get(datatype, nelem, name, memhandle, index)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
-    Integer	datatype;	/* of elements in this block */
-    Integer	nelem;		/* # of elements in this block */
-    char	*name;		/* assigned to this block by client */
-    Integer	*memhandle;	/* RETURN: handle for this block */
+public Boolean MA_allocate_heap(
+    Integer	datatype,	/* of elements in this block */
+    Integer	nelem,		/* # of elements in this block */
+    char	*name,		/* assigned to this block by client */
+    Integer	*memhandle	/* RETURN: handle for this block */ )
 {
     AR		ar;		/* allocation request */
     AD		*ad;		/* AD for newly allocated block */
@@ -2036,8 +2036,7 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_chop_stack(memhandle)
-    Integer	memhandle;	/* the block to deallocate up to */
+public Boolean MA_chop_stack(Integer memhandle)/*the block to deallocate up to*/
 {
     AD		*ad;		/* AD for memhandle */
 
@@ -2080,8 +2079,7 @@ public Boolean MA_chop_stack(memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_free_heap(memhandle)
-    Integer	memhandle;	/* the block to deallocate */
+public Boolean MA_free_heap(Integer memhandle) /* the block to deallocate */
 {
     AD		*ad;		/* AD for memhandle */
 
@@ -2138,9 +2136,9 @@ public Boolean MA_free_heap(memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_free_heap_piece(memhandle, nelem)
-    Integer	memhandle;	/* the block to deallocate a piece of */
-    Integer	nelem;		/* # of elements to deallocate */
+public Boolean MA_free_heap_piece(
+    Integer	memhandle,	/* the block to deallocate a piece of */
+    Integer	nelem 		/* # of elements to deallocate */)
 {
     AD		*ad;		/* AD for memhandle */
     AD		*ad_reclaim;	/* AD for data returned */
@@ -2226,9 +2224,9 @@ public Boolean MA_free_heap_piece(memhandle, nelem)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_get_index(memhandle, index)
-    Integer	memhandle;	/* block to get index for */
-    Integer	*index;		/* RETURN: base index */
+public Boolean MA_get_index(
+    Integer	memhandle,	/* block to get index for */
+    Integer	*index 		/* RETURN: base index */)
 {
     AD		*ad;		/* AD for memhandle */
 
@@ -2263,8 +2261,7 @@ public Boolean MA_get_index(memhandle, index)
  */
 /* ------------------------------------------------------------------------- */
 
-public Pointer MA_get_mbase(datatype)
-    Integer	datatype;	/* to get base address of */
+public Pointer MA_get_mbase(Integer datatype)	/* to get base address of */
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_get_mbase]++;
@@ -2298,9 +2295,9 @@ public Pointer MA_get_mbase(datatype)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_get_next_memhandle(ithandle, memhandle)
-    Integer	*ithandle;	/* handle for this iterator */
-    Integer	*memhandle;	/* RETURN: handle for the next block */
+public Boolean MA_get_next_memhandle(
+    Integer	*ithandle,	/* handle for this iterator */
+    Integer	*memhandle 	/* RETURN: handle for the next block */)
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_get_next_memhandle]++;
@@ -2326,8 +2323,8 @@ public Boolean MA_get_next_memhandle(ithandle, memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_get_numalign(value)
-    Integer	*value;		/* RETURN: requested alignment */
+public Boolean MA_get_numalign(Integer *value)
+	/* RETURN: requested alignment */
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_get_numalign]++;
@@ -2345,9 +2342,9 @@ public Boolean MA_get_numalign(value)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_get_pointer(memhandle, pointer)
-    Integer	memhandle;	/* block to get pointer for */
-    Pointer	*pointer;	/* RETURN: base pointer */
+public Boolean MA_get_pointer(
+    Integer	memhandle,	/* block to get pointer for */
+    Pointer	*pointer 	/* RETURN: base pointer */)
 {
     AD		*ad;		/* AD for memhandle */
 
@@ -2384,10 +2381,10 @@ public Boolean MA_get_pointer(memhandle, pointer)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_init(datatype, nominal_stack, nominal_heap)
-    Integer	datatype;	/* for computing storage requirement */
-    Integer	nominal_stack;	/* # of datatype elements desired for stack */
-    Integer	nominal_heap;	/* # of datatype elements desired for heap */
+public Boolean MA_init(
+    Integer	datatype,	/* for computing storage requirement */
+    Integer	nominal_stack,	/* # of datatype elements desired for stack */
+    Integer	nominal_heap 	/* # of datatype elements desired for heap */)
 {
     ulongi	heap_bytes;	/* # of bytes for heap */
     ulongi	stack_bytes;	/* # of bytes for stack */
@@ -2513,8 +2510,7 @@ public Boolean MA_initialized()
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_init_memhandle_iterator(ithandle)
-    Integer	*ithandle;
+public Boolean MA_init_memhandle_iterator( Integer *ithandle)
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_init_memhandle_iterator]++;
@@ -2543,8 +2539,7 @@ public Boolean MA_init_memhandle_iterator(ithandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public Integer MA_inquire_avail(datatype)
-    Integer	datatype;
+public Integer MA_inquire_avail(Integer datatype)
 {
     long	gap_length;	/* # of bytes between heap and stack */
     Integer	nelem_gap;	/* max elements containable in gap */
@@ -2603,8 +2598,7 @@ public Integer MA_inquire_avail(datatype)
  */
 /* ------------------------------------------------------------------------- */
 
-public Integer MA_inquire_heap(datatype)
-    Integer	datatype;
+public Integer MA_inquire_heap(Integer datatype)
 {
     long	gap_length;	/* # of bytes between heap and partition */
     Integer	nelem_gap;	/* max elements containable in gap */
@@ -2667,8 +2661,7 @@ public Integer MA_inquire_heap(datatype)
  */
 /* ------------------------------------------------------------------------- */
 
-public Integer MA_inquire_stack(datatype)
-    Integer	datatype;
+public Integer MA_inquire_stack(Integer datatype)
 {
     long	gap_length;	/* # of bytes between partition and stack */
     Integer	nelem_gap;	/* max elements containable in gap */
@@ -2728,8 +2721,7 @@ public Integer MA_inquire_stack(datatype)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_pop_stack(memhandle)
-    Integer	memhandle;	/* the block to deallocate */
+public Boolean MA_pop_stack(Integer memhandle) /* the block to deallocate */
 {
     AD		*ad;		/* AD for memhandle */
 
@@ -2780,8 +2772,7 @@ public Boolean MA_pop_stack(memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public void MA_print_stats(printroutines)
-    Boolean	printroutines;	/* print call counts? */
+public void MA_print_stats(Boolean printroutines)
 {
 #ifdef STATS
 
@@ -2842,12 +2833,12 @@ public void MA_print_stats(printroutines)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_push_get(datatype, nelem, name, memhandle, index)
-    Integer	datatype;	/* of elements in this block */
-    Integer	nelem;		/* # of elements in this block */
-    char	*name;		/* assigned to this block by client */
-    Integer	*memhandle;	/* RETURN: handle for this block */
-    Integer	*index;		/* RETURN: index for this block */
+public Boolean MA_push_get(
+    Integer	datatype,	/* of elements in this block */
+    Integer	nelem,		/* # of elements in this block */
+    char	*name,		/* assigned to this block by client */
+    Integer	*memhandle,	/* RETURN: handle for this block */
+    Integer	*index 		/* RETURN: index for this block */)
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_push_get]++;
@@ -2870,11 +2861,11 @@ public Boolean MA_push_get(datatype, nelem, name, memhandle, index)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_push_stack(datatype, nelem, name, memhandle) 
-    Integer	datatype;	/* of elements in this block */
-    Integer	nelem;		/* # of elements in this block */
-    char	*name;		/* assigned to this block by client */
-    Integer	*memhandle;	/* RETURN: handle for this block */
+public Boolean MA_push_stack(
+    Integer	datatype,	/* of elements in this block */
+    Integer	nelem,		/* # of elements in this block */
+    char	*name,		/* assigned to this block by client */
+    Integer	*memhandle 	/* RETURN: handle for this block */)
 {
     AR		ar;		/* allocation request */
     AD		*ad;		/* AD for newly allocated block */
@@ -2996,8 +2987,7 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_set_auto_verify(value)
-    Boolean	value;		/* to set flag to */
+public Boolean MA_set_auto_verify(Boolean  value /* to set flag to */)
 {
     Boolean	old_value;	/* of flag */
 
@@ -3016,8 +3006,7 @@ public Boolean MA_set_auto_verify(value)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_set_error_print(value)
-    Boolean	value;		/* to set flag to */
+public Boolean MA_set_error_print(Boolean value /* to set flag to */)
 {
     Boolean	old_value;	/* of flag */
 
@@ -3036,8 +3025,7 @@ public Boolean MA_set_error_print(value)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_set_hard_fail(value)
-    Boolean	value;		/* to set flag to */
+public Boolean MA_set_hard_fail( Boolean value /* to set flag to */)
 {
     Boolean	old_value;	/* of flag */
 
@@ -3058,8 +3046,7 @@ public Boolean MA_set_hard_fail(value)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean MA_set_numalign(value)
-    Integer	value;		/* requested alignment */
+public Boolean MA_set_numalign(Integer  value)
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_set_numalign]++;
@@ -3084,10 +3071,10 @@ public Boolean MA_set_numalign(value)
  */
 /* ------------------------------------------------------------------------- */
 
-public Integer MA_sizeof(datatype1, nelem1, datatype2) 
-    Integer	datatype1;	/* of source elements */
-    Integer	nelem1;		/* # of source elements */
-    Integer	datatype2;	/* of target elements */
+public Integer MA_sizeof(
+    Integer	datatype1,	/* of source elements */
+    Integer	nelem1,		/* # of source elements */
+    Integer	datatype2 	/* of target elements */)
 {
     ulongi	source_bytes;	/* nelem1 * ma_sizeof[datatype1] */
     int		ceiling;	/* 1 iff ceiling alters result */
@@ -3153,8 +3140,7 @@ public Integer MA_sizeof(datatype1, nelem1, datatype2)
  */
 /* ------------------------------------------------------------------------- */
 
-public Integer MA_sizeof_overhead(datatype) 
-    Integer	datatype;	/* of elements in this block */
+public Integer MA_sizeof_overhead(Integer datatype) 
 {
     int		overhead_bytes;	/* max bytes of overhead for any block */
     int		ceiling;	/* 1 iff ceiling alters result */
@@ -3218,8 +3204,7 @@ public void MA_summarize_allocated_blocks()
  */
 /* ------------------------------------------------------------------------- */
 
-public void MA_trace(value)
-    Boolean	value;		/* on or off */
+public void MA_trace(Boolean value)
 {
     ma_trace = value;
 }
