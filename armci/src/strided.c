@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.10 1999-08-16 18:56:36 jju Exp $ */
+/* $Id: strided.c,v 1.11 1999-09-10 23:24:21 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -15,18 +15,13 @@ if(op == GET || op ==PUT)\
 else\
       armci_acc_2D(op, scale, proc, src, dst, bytes, count, src_stride,dst_stride,lockit) 
 
-#ifdef LAPI
-void wait_for_get()
-{
-CLEAR_COUNTER(get_cntr);
-}
-#endif
 
+int armci_iwork[MAX_STRIDE_LEVEL];
 
 /*\ 2-dimensional array copy
 \*/
-void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes, 
-		  int count, int src_stride, int dst_stride)
+static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, 
+                          int bytes, int count, int src_stride, int dst_stride)
 {
 #ifdef LAPI2
 #  define COUNT 1
@@ -46,7 +41,7 @@ void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
             
         }else {
             
-            if(bytes < THRESH){     /* low-latency copy for small data segments */        
+            if(bytes < THRESH){ /* low-latency copy for small data segments */        
                 char *ps=(char*)src_ptr;
                 char *pd=(char*)dst_ptr;
                 int j;
@@ -70,16 +65,16 @@ void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
                 /* size/address not alligned */
                 ByteCopy2D(bytes, count, src_ptr, src_stride, dst_ptr, dst_stride);
                 
-            }else { /* segment size aligned -- should be the most efficient copy */
+            }else { /* ize aligned -- should be the most efficient copy */
                 
-                DCopy2D(bytes/ALIGN_SIZE, count, src_ptr, src_stride/ALIGN_SIZE, 
+                DCopy2D(bytes/ALIGN_SIZE, count,src_ptr, src_stride/ALIGN_SIZE, 
                         dst_ptr, dst_stride/ALIGN_SIZE);
             }
         }
         
     } else {
         
-        /* data not in local/shared memory -- access through global address space */
+        /* data not in local/shared memory - access through global address space */
         
         if(op==PUT){ 
             
@@ -104,9 +99,6 @@ void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr, int bytes,
             }else{
                 armci_get2D(proc, bytes, count, src_ptr, src_stride,
                             dst_ptr, dst_stride);
-#ifdef LAPI2
-                wait_for_get(); /* it works here */
-#endif
             }
         }
     }
@@ -206,7 +198,6 @@ void (FATR *func)(void*, int*, int*, void*, int*, void*, int*);
 }
 
 
-int armci_iwork[MAX_STRIDE_LEVEL];
 
 /*\ strided accumulate on top of remote memory copy:
  *  copies remote data to local buffer, accumulates, puts it back 
@@ -381,7 +372,7 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
          if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
 #   endif
 
-#ifndef LAPI
+#ifndef LAPI2
     if(!direct)
        rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
                        dst_ptr, dst_stride_arr, count, stride_levels, -1, -1);
