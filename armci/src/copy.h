@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.39 2002-07-17 23:07:00 d3h325 Exp $ */
+/* $Id: copy.h,v 1.40 2002-09-04 19:32:00 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -84,15 +84,26 @@ void FATR DCOPY1D(void*, void*, int*);
 /***************************** 1-Dimensional copy ************************/
 
 #if defined(QUADRICS)
-#include <elan/elan.h>
-#      define armci_put(src,dst,n,proc)\
+#   include <elan/elan.h>
+
+#   if defined(_ELAN_PUTGET_H)
+#      define qsw_put(src,dst,n,proc) \
+        elan_wait(elan_put(elan_base->state,src,dst,n,proc),elan_base->waitType)
+#      define qsw_get(src,dst,n,proc) \
+        elan_wait(elan_get(elan_base->state,src,dst,n,proc),elan_base->waitType)
+#   else
+#      define qsw_put(src,dst,n,proc) shmem_putmem((dst),(src),(int)(n),(proc))
+#      define qsw_get(src,dst,n,proc) shmem_getmem((dst),(src),(int)(n),(proc))
+#   endif
+
+#   define armci_put(src,dst,n,proc)\
            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
               armci_copy(src,dst,n);\
-           } else { shmem_putmem((dst),(src),(int)(n),(proc));}
-#      define armci_get(src,dst,n,proc) \
+           } else { qsw_put(src,dst,n,proc);}
+#   define armci_get(src,dst,n,proc) \
            if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
              armci_copy(src,dst,n);\
-           } else { shmem_getmem((dst),(src),(int)(n),(proc));}
+           } else { qsw_get((src),(dst),(int)(n),(proc));}
 
 #elif defined(CRAY_T3E)
 #      define armci_copy_disabled(src,dst,n)\
