@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.47 2000-10-31 00:08:25 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.48 2000-11-02 19:17:00 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -856,6 +856,9 @@ Integer  i, ga_handle, status, maplen=0;
 
       gam_checktype(type);
       gam_checkdim(ndim, dims);
+      for(i=0; i< ndim; i++)
+         if(nblock[i]>dims[i]) 
+            ga_error("number of blocks must be <= corresponding dimension",i);
 
       GAstat.numcre ++;
 
@@ -866,7 +869,7 @@ Integer  i, ga_handle, status, maplen=0;
           i++;
       }while(i<max_global_array && ga_handle==-1);
       if( ga_handle == -1)
-          ga_error("ga_create: too many arrays ", (Integer)max_global_array);
+          ga_error(" too many arrays ", (Integer)max_global_array);
       *g_a = (Integer)ga_handle - GA_OFFSET;
 
       /*** fill in Global Info Record for g_a ***/
