@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.8 2000-05-10 23:07:24 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.9 2000-05-11 22:06:50 d3h325 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
@@ -32,8 +32,12 @@
 #define TYPE_BEGIN 32773         /* Used in pbegin and parallel */
 #define TYPE_CLOCK_SYNCH 32774;  /* Used to synch clocks */
 
+#ifdef BIG_MESSAGE_PROTECTION
 #define BIG_MESSAGE 41943040     /* 40Mb max message only for safety check.
 				    Change as needed.*/
+#else
+#define BIG_MESSAGE  2147483648  /* 2GB */
+#endif
 
 /* Shared memory allocated per process .. make even multiple of
    page size ... usually 4096 */
