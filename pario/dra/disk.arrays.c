@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.36 2002-01-25 23:04:05 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.37 2002-01-25 23:07:49 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -123,7 +123,7 @@ int     Dra_num_serv=DRA_NUM_IOPROCS;
 
 #define dai_check_typeM(_type)  if (_type != MT_F_DBL && _type != MT_F_INT \
      && _type != MT_INT && _type != MT_DBL && _type != MT_FLOAT \
-     && _type != MT_F_DCPL)\
+     && _type != MT_F_DCPL && _type != MT_F_REAL)\
                                   dai_error("invalid type ",_type)  
 #define dai_check_handleM(_handle, msg)                                    \
 {\
@@ -549,6 +549,7 @@ Size_t  bytes;
 
         if(DRA[handle].type == MT_F_DBL) *(DoublePrecision*)_dra_buffer = 0.;
         if(DRA[handle].type == MT_F_INT) *(Integer*)_dra_buffer = 0;
+        if(DRA[handle].type == MT_F_REAL) *(float*)_dra_buffer = 0;
 
         if(INDEPFILES(d_a)) {
 
@@ -1181,6 +1182,7 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
          case MT_F_DBL: COPY_ ## OPERATION(DBL_MB,DoublePrecision,ds_chunk);break;\
          case MT_F_INT: COPY_ ## OPERATION(INT_MB, Integer, ds_chunk); break;\
          case MT_F_DCPL:COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);\
+         case MT_F_REAL:COPY_ ## OPERATION(FLT_MB, float, ds_chunk);\
          }
 
          if(ga_nodeid_()==0) printf("DRA warning: using scatter/gather\n");
@@ -1198,7 +1200,8 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
          switch(type){
               case  MT_F_DBL:  base_addr = (char*) (DBL_MB+vindex); break;
               case  MT_F_INT:  base_addr = (char*) (INT_MB+vindex); break;
-              case  MT_F_DCPL: base_addr = (char*) (DCPL_MB+vindex);
+              case  MT_F_DCPL: base_addr = (char*) (DCPL_MB+vindex);break;
+              case  MT_F_REAL: base_addr = (char*) (FLT_MB+vindex);
          }
     
          if(trans==TRANS) 
@@ -1352,6 +1355,7 @@ void nga_move(int op,             /*[input] flag for read or write */
           case MT_F_DBL: COPY_ ## OPERATION(DBL_MB,DoublePrecision,ds_chunk);break;\
           case MT_F_INT: COPY_ ## OPERATION(INT_MB, Integer, ds_chunk); break;\
           case MT_F_DCPL:COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);\
+          case MT_F_REAL:COPY_ ## OPERATION(FLT_MB, float, ds_chunk);\
         }
 
       if(ga_nodeid_()==0) printf("DRA warning: using scatter/gather\n");
@@ -1369,7 +1373,8 @@ void nga_move(int op,             /*[input] flag for read or write */
       switch(type){
         case  MT_F_DBL:  base_addr = (char*) (DBL_MB+vindex); break;
         case  MT_F_INT:  base_addr = (char*) (INT_MB+vindex); break;
-        case  MT_F_DCPL: base_addr = (char*) (DCPL_MB+vindex);
+        case  MT_F_DCPL: base_addr = (char*) (DCPL_MB+vindex);break;
+        case  MT_F_REAL: base_addr = (char*) (FLT_MB+vindex);
       }
     
       if(trans==TRANS) 
@@ -2178,6 +2183,7 @@ Size_t  bytes;
 
         if(DRA[handle].type == MT_F_DBL) *(DoublePrecision*)_dra_buffer = 0.;
         if(DRA[handle].type == MT_F_INT) *(Integer*)_dra_buffer = 0;
+        if(DRA[handle].type == MT_F_REAL) *(float*)_dra_buffer = 0;
 
         if(INDEPFILES(d_a)) {
           /* Warning!! This section of code does not work. */
@@ -2363,13 +2369,13 @@ void ndai_get(section_t ds_a, /*[input] section of DRA read from disk */
 # endif
 
   for (i=0; i<ndim-1; i++) if ((ds_a.hi[i] - ds_a.lo[i] + 1) != ld[i])
-    dai_error("dai_get: bad ld",ld[i]); 
+    dai_error("ndai_get: bad ld",ld[i]); 
     /* since everything is aligned, read data from disk */
     elem = 1;
     for (i=0; i<ndim; i++) elem *= (ds_a.hi[i]-ds_a.lo[i]+1);
     bytes= (Size_t) elem * dai_sizeofM(DRA[handle].type);
     rc= elio_aread(DRA[handle].fd, offset, buf, bytes, id );
-    if(rc !=  ELIO_OK) dai_error("dai_get failed", rc);
+    if(rc !=  ELIO_OK) dai_error("ndai_get failed", rc);
 }
 
 #define ndai_check_rangeM(_lo, _hi, _ndim, _dims, _err_msg) \
