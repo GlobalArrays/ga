@@ -14,10 +14,10 @@ c
       integer dims(ndim)
       integer g_a
       integer chunk(ndim)
-      integer i, j, total
+      integer i, total
       integer elems, count_elems
       integer loop
-      integer lop(ndim), hip(ndim), hipl(ndim)
+      integer lop(ndim), hip(ndim)
       integer lo(ndim), hi(ndim)
       double precision drand
       m4_data_type val

@@ -14,8 +14,7 @@ c
       integer lo(ndim),hi(ndim),dims(ndim),ld(ndim)
       integer g_a
       integer chunk(ndim)
-      integer i, j, total, loop
-      integer lop(ndim), hip(ndim)
+      integer i, total, loop
       double precision drand
       m4_data_type val, alpha
       integer nproc, me

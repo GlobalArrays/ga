@@ -14,7 +14,7 @@ c
       integer lo(ndim),hi(ndim), dims(ndim), ld(ndim)
       integer g_a
       integer chunk(ndim)
-      integer i, j, total
+      integer i,total
       integer elems, count_elems
       m4_data_type val
       integer nproc, me

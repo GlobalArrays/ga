@@ -14,7 +14,7 @@ c
       integer lo(ndim),hi(ndim),dims(ndim),ld(ndim)
       integer g_a
       integer chunk(ndim)
-      integer i, j, total, loop
+      integer i, total, loop
       integer lop(ndim), hip(ndim)
       m4_data_type val
       integer nproc, me

@@ -14,7 +14,7 @@ c
       integer dims(ndim)
       integer g_a, g_b
       integer chunk(ndim)
-      integer i, j, total
+      integer i, total
       integer elems, count_elems
       integer loop
       integer lop(ndim), hip(ndim), hipl(ndim)

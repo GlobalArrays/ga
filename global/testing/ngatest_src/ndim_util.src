@@ -32,7 +32,7 @@ c     if the elements do match, stop the program
       integer lo1(ndim1),hi1(ndim1),lo2(ndim2),hi2(ndim2)
       integer dims1(ndim1),dims2(ndim2)
       integer next_index
-      integer i,index1,index2
+      integer index1,index2
       double precision diff,maxval
 c     
 c     initialize index1 and index2, searching from zeros
@@ -45,7 +45,7 @@ c     compare corresponding elements in each array
          diff = abs(array1(index1) - array2(index2))
          maxval = max(abs(array1(index1)), abs(array2(index2)))
          if((maxval.eq.0).or.(maxval.lt.eps)) maxval = 1
-         if(eps < abs(diff)/maxval) then
+         if(eps .lt. abs(diff)/maxval) then
             print *, 'Error: Comparison failed!'
             print *, array1(index1), array2(index2)
             call ga_error('bye',0)
@@ -72,7 +72,7 @@ c     do patch = patch + buf * alpha
       m4_data_type arr1(total),arr2(total)
       m4_data_type alpha, beta
       integer next_index
-      integer i, ind1, ind2
+      integer ind1, ind2
 c
       ind1 = 0
       ind2 = 0
@@ -130,7 +130,7 @@ c     do patch = patch + buf * alpha
       integer dims1(ndim1),dims2(ndim2)
       m4_data_type arr1(total),arr2(total)
       integer next_index
-      integer i, ind1, ind2
+      integer ind1, ind2
       m4_data_type res
 c
       ind1 = 0

@@ -95,7 +95,7 @@ c     and calculate my lo and hi
       implicit none
       integer me,nproc,ndim,total
       integer dims(ndim),lo(ndim),hi(ndim)
-      integer div,lop,hip,temp,i
+      integer div,lop,hip,i
 c
       div = total/nproc
 c

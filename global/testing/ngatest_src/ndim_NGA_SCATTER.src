@@ -11,7 +11,7 @@ c
       parameter (ndim = m4_ndim)
       m4_data_type a(substr(m4_array, 1, eval(m4_ndim*2-1)))
       m4_data_type b(substr(m4_array, 1, eval(m4_ndim*2-1)))
-      integer lo(ndim),hi(ndim),dims(ndim),ld(ndim)
+      integer lo(ndim),dims(ndim),ld(ndim)
       integer g_a
       integer chunk(ndim)
       integer i, j, total, loop

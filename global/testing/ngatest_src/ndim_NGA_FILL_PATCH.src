@@ -14,9 +14,8 @@ c
       integer lo(ndim),hi(ndim),dims(ndim)
       integer g_a
       integer chunk(ndim)
-      integer i, j, total
+      integer i, total
       m4_data_type val
-      double precision drand
       integer nproc, me
       logical status
 c     
