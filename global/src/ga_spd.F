@@ -692,11 +692,17 @@ c*             be able to factorize A, then it will call the LU
 c*             factorization routine and will solve the system
 c*             with forward/backward substitution.      
 c*      
-c*             On successful exit B will contain the solution X.      
+c*             On B will contain the solution X.      
 c*      
 c*             It calls the ga_llt_f and ga_llt_s and ga_lu_solve
 c*             and so it actually refer to PDGETRF/PDGETRS and
 c*             PDPORTF/PDPOTRS ScaLAPACK routines.
+c*
+c*             It returns
+c*                   = 0 : Cholesky factoriztion was succesful
+c*                   > 0 : the leading minor of this order
+c*                         is not positive definite and Cholesky 
+c*                         factorization could not be completed
 c*
 c*    Note: High overhead due to multiple conversions to/from scalapack
 c*          format can be avoided if ga_llt_solve and ga_lu_solve
@@ -711,13 +717,11 @@ c***********************************************************************
       integer     ga_llt_solve
 c
 c**** Call Cholesky solver as the first try      
-      irc = ga_llt_solve(g_A, g_B)
-      if (irc.eq.0) then
-c****    if Cholesky was succcesully just return with 1
-         ga_solve = 1
+      ga_solve = ga_llt_solve(g_A, g_B)
+      if (ga_solve.eq.0) then
+c****    if Cholesky was succcesully just return 
       else
 c****    else if Cholesky failed
          call ga_lu_solve('N', g_A, g_B)
-         ga_solve = -1
       endif
       end

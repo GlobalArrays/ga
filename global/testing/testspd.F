@@ -161,16 +161,16 @@ c****
 
       if (me.eq.0) then
          
-         if (irc.eq.1) then
+         if (irc.eq.0) then
             print *, '> LLT '
-         elseif (irc.eq.-1) then
+         elseif (irc.gt.0) then
             print *, '> LU  '
          endif
 
-         if (irc.eq.ierc) then
+         if (irc.eq.ierc .or. (irc.gt.0 .and. ierc.gt.0)) then
             print *, '> success: expected factorization'
          else
-            print *, '> failure: not expected factorization'
+            print *, '> failure: not expected factorization',irc,ierc
          endif
          
          call ffflush(6)
@@ -658,7 +658,7 @@ c**** dnS = ||AX - B|| / (||A|| * ||X|| * N * eps)
 
       call dthtest("||A*X - B||/(||A||*||X||*n*eps) =", dnS)
 
-      call stest(irc, 1)
+      call stest(irc, 0)
 
       
 c****************************************************
@@ -699,7 +699,7 @@ c**** dnS = ||X1*X - B|| / (||X1|| * ||X|| * N * eps)
 
       call dthtest("||A*X - B||/(||A||*||X||*n*eps) =", dnS)
      
-      call stest(irc, -1)
+      call stest(irc, 1)
 
       
 c****************************************************
