@@ -754,8 +754,10 @@ void BRDCST_(type, buf, lenbuf, originator)
   long ttype = *type;
 
   if (DEBUG){
-    fprintf(stderr,"type=%d, (%d,%d) int=%d, long=%d\n",*type, *originator,
+    fprintf(stderr," BRDCST: me=%d, type=%d, (%d,%d) int=%d, long=%d\n",
+            NODEID_(), *type, *originator,
             ttype, sizeof(long), sizeof(long)); 
+    fflush(stderr);
   }
 
   /*synchronize since %#@$## MPL disables interrupts in mpc_bcast indefinitely*/
