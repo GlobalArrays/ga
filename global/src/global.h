@@ -454,18 +454,18 @@ extern void FATR ga_elem_minimum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
 				   Integer *g_c,Integer *clo,Integer *chi);
 extern void FATR ga_step_max_patch_(Integer *g_a, Integer *alo, Integer *ahi, 
 			       Integer *g_b,  Integer *blo, Integer *bhi, 
-			       double *step);
-extern void FATR ga_step_max_(Integer *g_a, Integer *g_b, double *step);
+			       void *step);
+extern void FATR ga_step_max_(Integer *g_a, Integer *g_b, void *step);
 extern void FATR ga_step_bound_info_patch_(Integer *g_xx, Integer *xxlo,Integer *xxhi,
 				Integer *g_vv, Integer *vvlo, Integer *vvhi, 
 				Integer *g_xxll, Integer *xxlllo, 
 				Integer *xxllhi, Integer *g_xxuu, 
 				Integer *xxuulo, Integer *xxuuhi, 
-				double *boundmin, double *wolfemin,
-				double *boundmax);
+				void *boundmin, void *wolfemin,
+				void *boundmax);
 extern void FATR ga_step_bound_info_(Integer *g_xx, Integer *g_vv, Integer *g_xxll, 
-			  Integer *g_xxuu, double *boundmin,
-			  double *wolfemin, double *boundmax);
+			  Integer *g_xxuu, void *boundmin,
+			  void *wolfemin, void *boundmax);
 
 extern void FATR ga_shift_diagonal_(Integer *g_a, void *c);
 extern void FATR ga_set_diagonal_(Integer *g_a, Integer *g_v);
