@@ -119,18 +119,36 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
         }else {
             
             if(bytes < THRESH){ /* low-latency copy for small data segments */        
-                char *ps=(char*)src_ptr;
-                char *pd=(char*)dst_ptr;
+#if defined(__crayx1)
+	      if( !(bytes%sizeof(float)) ) {
+                float *ps=(float*)src_ptr;
+                float *pd=(float*)dst_ptr;
+                long fsstride = src_stride/sizeof(float);
+                long fdstride = dst_stride/sizeof(float);
                 int j;
                 
                 for (j = 0;  j < count;  j++){
                     int i;
+#pragma _CRI concurrent
+                    for(i=0;i<bytes/sizeof(float);i++) pd[i] = ps[i];
+                    ps += fsstride;
+                    pd += fdstride;
+                }
+	      } else
+#endif
+		{
+		  char *ps=(char*)src_ptr;
+		  char *pd=(char*)dst_ptr;
+		  int j;
+		  
+		  for (j = 0;  j < count;  j++){
+                    int i;
                     for(i=0;i<bytes;i++) pd[i] = ps[i];
                     ps += src_stride;
                     pd += dst_stride;
-                }
-                
-            } else if(bytes %ALIGN_SIZE  
+		  }
+		}
+            } else if(bytes %ALIGN_SIZE
                       || dst_stride % ALIGN_SIZE
                       || src_stride % ALIGN_SIZE
 #ifdef PTR_ALIGN

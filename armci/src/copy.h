@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.75 2004-12-09 22:20:33 manoj Exp $ */
+/* $Id: copy.h,v 1.76 2005-01-08 05:53:50 manoj Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -82,9 +82,6 @@
 #ifdef NEC
 #  define THRESH 1
 #  define THRESH1D 1
-#elif defined(__crayx1)
-#  define THRESH 8 /*In X1, when THRESH=32, single precision GA test fails*/
-#  define THRESH1D 512
 #else
 #  define THRESH 32
 #  define THRESH1D 512
