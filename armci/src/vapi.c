@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.17 2004-04-09 22:04:39 manoj Exp $************************************************ 
+/* $Id: vapi.c,v 1.18 2004-07-21 18:42:48 vinod Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.
@@ -124,10 +124,8 @@ static vapigather_t gather[64];
 static vapigather_t server_gather[64];
 static vapiscatter_t client_scatter[64];
 static vapirmw_t rmw[64];
-int num_scatter_rcv[64]; 
 int num_gather_snd[64];
 int server_num_gather_snd[64];
-int client_num_scatter_rcv[64];
 int client_id_for_scatter=0;
 int serv_id_for_scatter=0;
 int client_id_for_gather=0;
@@ -555,7 +553,6 @@ int clients = armci_nproc,i,j=0;
    
    flag_arr = (int *)malloc(sizeof(int)*armci_nproc); 
    for (i =0; i<armci_nproc; i++) flag_arr[i] = 9999; 
-   for (i =0; i<16; i++) num_scatter_rcv[i] = 0;
    
    /* setup memory attributes for the region */
     /*mr_in.acl =  VAPI_EN_LOCAL_WRITE|VAPI_EN_REMOTE_ATOM | VAPI_EN_REMOTE_WRITE |VAPI_EN_REMOTE_READ;*/
@@ -983,10 +980,6 @@ static void posts_scatter_desc(int num, int id ,int type)
          
        fflush(stdout);
     }  
-    if(type == SERV)    
-       num_scatter_rcv[id]++; 
-    else if (type == CLN)
-       client_num_scatter_rcv[id]++;     
 }
 
 
@@ -1471,19 +1464,12 @@ int c,i,need_ack;
                
        if(pdscr->id >= DSCRID_SCATTERSERVER && pdscr->id < 
                        DSCRID_SCATTERSERVER_END){
-         if(flag_arr[((pdscr->id - DSCRID_SCATTERSERVER)%1000)/100] == 1){
-           if(DEBUG_SERVER){
-	     printf("%d(s) : received DATA id = %ld, length = %d\n",
-                      armci_me,pdscr->id, pdscr->byte_len);     
-             fflush(stdout);
-           }
-           num_scatter_rcv[((pdscr->id - DSCRID_SCATTERSERVER)%1000)/100]--;
-           if(num_scatter_rcv[((pdscr->id - DSCRID_SCATTERSERVER)%1000)/100]
-                                  == 0){
-	     flag_arr[((pdscr->id - DSCRID_SCATTERSERVER)%1000)/100] = 0;
-           }
-	   continue;
-         }	  
+         if(DEBUG_SERVER){
+	   printf("%d(s) : received DATA id = %ld, length = %d\n",
+                    armci_me,pdscr->id, pdscr->byte_len);     
+           fflush(stdout);
+         }
+	 continue;
        }
        
        vbuf = serv_buf_arr[pdscr->id - armci_nproc];
@@ -1538,7 +1524,7 @@ int c,i,need_ack;
              printf("%d(s) : finished posting %d scatter\n",armci_me,num);
              fflush(stdout);
           }     
-	  flag_arr[pdscr->id - armci_nproc] = 1;
+	  /*flag_arr[pdscr->id - armci_nproc] = 1;*/
        }
        
        vbufs = serv_buf_arr[pdscr->id - armci_nproc] = spare_serv_buf;
