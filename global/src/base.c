@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.15 2002-01-19 00:40:05 vinod Exp $ */
+/* $Id: base.c,v 1.16 2002-01-22 20:05:11 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -65,7 +65,6 @@ DoubleComplex   *DCPL_MB;           /* double precision complex base address */
 DoublePrecision *DBL_MB;            /* double precision base address */
 Integer         *INT_MB;            /* integer base address */
 float           *FLT_MB;            /* float base address */
-long            *LONG_MB;
 int** GA_Update_Flags;
 
 /*uncomment line below to verify consistency of MA in every sync */
@@ -266,20 +265,18 @@ static int ma_address_init=0;
 void gai_ma_address_init()
 {
 #ifdef CHECK_MA_ALGN
-Integer  off_dbl, off_int, off_dcpl, off_flt;
+Integer  off_dbl, off_int, off_dcpl, off_flt,off_long;
 #endif
      ma_address_init=1;
-     INT_MB = (Integer*)MA_get_mbase(C_INT);
-     DBL_MB = (DoublePrecision*)MA_get_mbase(C_DBL);
-     DCPL_MB= (DoubleComplex*)MA_get_mbase(C_DCPL);
-     FLT_MB = (float*)MA_get_mbase(C_FLOAT);  
-/*?? LONG_MB= (long *)MA_get_mbase(C_LONG); */     
+     INT_MB = (Integer*)MA_get_mbase(MT_F_INT);
+     DBL_MB = (DoublePrecision*)MA_get_mbase(MT_F_DBL);
+     DCPL_MB= (DoubleComplex*)MA_get_mbase(MT_F_DCPL);
+     FLT_MB = (float*)MA_get_mbase(MT_F_REAL);  
 #   ifdef CHECK_MA_ALGN
         off_dbl = 0 != ((long)DBL_MB)%sizeof(DoublePrecision);
         off_int = 0 != ((long)INT_MB)%sizeof(Integer);
         off_dcpl= 0 != ((long)DCPL_MB)%sizeof(DoublePrecision);
         off_flt = 0 != ((long)FLT_MB)%sizeof(float);  
-
         if(off_dbl)
            ga_error("GA initialize: MA DBL_MB not alligned", (Integer)DBL_MB);
 
@@ -291,6 +288,7 @@ Integer  off_dbl, off_int, off_dcpl, off_flt;
 
         if(off_flt)
            ga_error("GA initialize: FLT_MB not alligned", (Integer)FLT_MB);   
+
 #   endif
 
     if(DEBUG)
@@ -1075,12 +1073,11 @@ Integer *adjust;
 int i;
 
     /* need to enforce proper, natural allignment (on size boundary)  */
-    switch (type){
-      case C_DBL: base =  (char *) DBL_MB; break;
-      case C_INT: base =  (char *) INT_MB; break;
-      case C_DCPL: base =  (char *) DCPL_MB; break;
-      case C_FLOAT: base =  (char *) FLT_MB; break;  
-      case C_LONG: base =  (char *) LONG_MB; break;
+    switch (ga_type_c2f(type)){
+      case MT_F_DBL:  base =  (char *) DBL_MB; break;
+      case MT_F_INT:  base =  (char *) INT_MB; break;
+      case MT_F_DCPL: base =  (char *) DCPL_MB; break;
+      case MT_F_REAL: base =  (char *) FLT_MB; break;  
       default:        base = (char*)0;
     }
 

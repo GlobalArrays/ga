@@ -315,8 +315,7 @@ extern void ga_type_gop(int type, void *x, int n, char* op);
 #endif
 
 extern DoubleComplex   *DCPL_MB;
-extern DoublePrecision *DBL_MB;
-extern Integer         *INT_MB;
+extern DoublePrecision          *DBL_MB;
+extern Integer             *INT_MB;
 extern float           *FLT_MB;
-extern long            *LONG_MB;
 #endif 

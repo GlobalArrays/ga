@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.19 2002-01-19 00:40:05 vinod Exp $ */
+/* $Id: onesided.c,v 1.20 2002-01-22 20:05:11 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -669,30 +669,26 @@ unsigned long    lref, lptr;
    elemsize = (unsigned long)GA[handle].elemsize;
 
    /* compute index and check if it is correct */
-   switch (GA[handle].type){
-     case C_DBL:
-        *index = (Integer) ((double*)ptr - DBL_MB);
+   switch (ga_type_c2f(GA[handle].type)){
+     case MT_F_DBL:
+        *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;
         break;
 
-     case C_DCPL:
+     case MT_F_DCPL:
         *index = (Integer) ((DoubleComplex*)ptr - DCPL_MB);
         lref = (unsigned long)DCPL_MB;
         break;
 
-     case C_INT:
-        *index = (Integer) ((int*)ptr - INT_MB);
+     case MT_F_INT:
+        *index = (Integer) ((Integer*)ptr - INT_MB);
         lref = (unsigned long)INT_MB;
         break;
 
-     case C_FLOAT:
+     case MT_F_REAL:
         *index = (Integer) ((float*)ptr - FLT_MB);
         lref = (unsigned long)FLT_MB;
         break;        
-     case C_LONG:
-        *index = (Integer) ((long*)ptr - LONG_MB);
-        lref = (unsigned long)LONG_MB; 
-        break;
    }
 
 #ifdef BYTE_ADDRESSABLE_MEMORY
@@ -862,7 +858,7 @@ Integer pindex, phandle;
 
   if (*nv < 1) return;
 
-  if(!MA_push_get(C_INT,*nv, "nga_sort_permut--p", &phandle, &pindex))
+  if(!MA_push_get(MT_F_INT,*nv, "nga_sort_permut--p", &phandle, &pindex))
               ga_error("MA alloc failed ", *g_a);
 
   gai_sort_proc(g_a, subscr_arr, nv, index, INT_MB+pindex);
@@ -891,26 +887,25 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     void ***ptr_src, ***ptr_dst; 
     void **ptr_org; /* the entire pointer array */
     armci_giov_t desc;
-    Integer *ilo, *ihi, *jlo, *jhi, *ldp;
+    Integer *ilo, *ihi, *jlo, *jhi, *ldp, *owner;
     char **ptr_ref;
     
+printf("\n in scatter \n");fflush(stdout);
     if (*nv < 1) return;
     
     ga_check_handleM(g_a, "ga_scatter");
     GA_PUSH_NAME("ga_scatter");
     GAstat.numsca++;
     
-    if(!MA_push_get(C_INT,*nv, "ga_scatter--p", &phandle, &pindex))
-        ga_error("MA alloc failed ", *g_a);
-
     /* allocate temp memory */
-    buf1 = gai_malloc((int) GAnproc *4 * (sizeof(Integer)));
+    buf1 = gai_malloc((int) (GAnproc *4 +*nv)* (sizeof(Integer)));
     if(buf1 == NULL) ga_error("gai_malloc failed", 3*GAnproc);
-    
-    count = (Integer *)buf1;
-    nelem = (Integer *)(buf1 + GAnproc * sizeof(Integer));
-    aproc = (Integer *)(buf1 + 2 * GAnproc * sizeof(Integer));
-    map = (Integer *)(buf1 + 3 * GAnproc * sizeof(Integer));
+   
+    owner = (Integer *)buf1;  
+    count = owner+ *nv;  
+    nelem =  count + GAnproc;  
+    aproc = count + 2 * GAnproc;  
+    map = count + 3 * GAnproc;  
     
     /* initialize the counters and nelem */
     for(kk=0; kk<GAnproc; kk++) {
@@ -919,11 +914,11 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     
     /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
     for(k=0; k< *nv; k++) {
-        if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
+        if(! ga_locate_(g_a, i+k, j+k, owner+k)){
             sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
             ga_error(err_string,*g_a);
         }
-        nelem[INT_MB[pindex+k]]++;
+        nelem[owner[k]]++;
     }
 
     naproc = 0;
@@ -959,8 +954,8 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     /* determine limit for message size --  v,i, & j will travel together */
     item_size = GAsizeofM(type);
     GAbytes.scatot += (double)item_size**nv ;
-    GAbytes.scaloc += (double)item_size* nelem[INT_MB[pindex+GAme]];
-
+    GAbytes.scaloc += (double)item_size* nelem[owner[GAme]];
+printf("\n in scatter \n");fflush(stdout);
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
     for(k=1; k<naproc; k++) {
         ptr_src[k] = ptr_src[k-1] + nelem[aproc[k-1]];
@@ -969,9 +964,12 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     
     for(k=0; k<(*nv); k++){
         Integer this_count;
-        proc = INT_MB[pindex+k]; this_count = count[proc]; count[proc]++;
+        proc = owner[k]; 
+	this_count = count[proc]; 
+	count[proc]++;
         proc = map[proc];
         ptr_src[proc][this_count] = ((char*)v) + k * item_size;
+
         if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
            j[k] < jlo[proc] || j[k] > jhi[proc]){
           sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)><[%ld:%ld,%ld:%ld]",
@@ -998,7 +996,6 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     gai_free(buf2);
     gai_free(buf1);
 
-    if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
     GA_POP_NAME;
 }
       
@@ -1020,7 +1017,7 @@ Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
   GA_PUSH_NAME("ga_scatter_acc");
   GAstat.numsca++;
 
-  if(!MA_push_get(C_INT,*nv, "ga_scatter_acc--p", &phandle, &pindex))
+  if(!MA_push_get(MT_F_INT,*nv, "ga_scatter_acc--p", &phandle, &pindex))
             ga_error("MA alloc failed ", *g_a);
 
   /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
@@ -1082,7 +1079,7 @@ extern void ga_sort_permutation();
 
   if (*nv < 1) return;
 
-  if(!MA_push_get(C_INT,*nv, "ga_sort_permut--p", &phandle, &pindex))
+  if(!MA_push_get(MT_F_INT,*nv, "ga_sort_permut--p", &phandle, &pindex))
             ga_error("MA alloc failed ", *g_a);
 
   /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
@@ -1126,7 +1123,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
     
     GA_PUSH_NAME("gai_gatscat");
 
-    if(!MA_push_stack(C_INT,*nv,"ga_gat-p",&phandle)) 
+    if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-p",&phandle)) 
         ga_error("MAfailed",*g_a);
     if(!MA_get_pointer(phandle, &proc)) ga_error("MA pointer failed ", *g_a);
 

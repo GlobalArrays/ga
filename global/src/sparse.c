@@ -302,7 +302,7 @@ static void gai_scan_copy_add(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    ga_sync_();
 
-   if(MA_push_get(C_INT, nproc, "ga scan buf", &handle, &idx))
+   if(MA_push_get(MT_F_INT, nproc, "ga scan buf", &handle, &idx))
                   MA_get_pointer(handle, &lim);
    if(!lim) ga_error("ga_scan_copy: MA memory alloc failed",nproc);
 
@@ -422,7 +422,7 @@ static void gai_pack_unpack(Integer* g_a, Integer* g_b, Integer* g_sbit,
 
    ga_sync_();
 
-   if(MA_push_get(C_INT, nproc, "ga_pack lim buf", &handle, &idx))
+   if(MA_push_get(MT_F_INT, nproc, "ga_pack lim buf", &handle, &idx))
                   MA_get_pointer(handle, &lim);
    if(!lim) ga_error("ga_pack: MA memory alloc failed",nproc);
 

@@ -228,10 +228,10 @@ void nga_copy_patch(char *trans,
             if(!MA_push_get(atype, nelem, "v", &vhandle, &vindex) ||
                !MA_get_pointer(vhandle, &tmp_ptr))
                 ga_error(" MA failed-v ", 0L);
-            if(!MA_push_get(C_INT, (andim*nelem), "si", &src_hdl, &src_idx)
+            if(!MA_push_get(MT_F_INT, (andim*nelem), "si", &src_hdl, &src_idx)
                || !MA_get_pointer(src_hdl, &src_idx_ptr))
                 ga_error(" MA failed-si ", 0L);
-            if(!MA_push_get(C_INT, (bndim*nelem), "di", &dst_hdl, &dst_idx)
+            if(!MA_push_get(MT_F_INT, (bndim*nelem), "di", &dst_hdl, &dst_idx)
                || !MA_get_pointer(dst_hdl, &dst_idx_ptr))
                 ga_error(" MA failed-di ", 0L);
                 
@@ -440,7 +440,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     /* A[83:125,1:1]  <==> B[83:125] */
     if(andim > bndim) andim = bndim; /* need more work */
 
-    isum = 0; dsum = 0.; zsum.real = 0.; zsum.imag = 0.; fsum = 0;
+    isum = 0; dsum = 0.; zsum.real = 0.; zsum.imag = 0.; fsum = 0;lsum=0;
     
     /*  determine subsets of my patches to access  */
     if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
