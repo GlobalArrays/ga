@@ -381,7 +381,7 @@ extern void FATR ga_shift_diagonal_(Integer *g_a, void *c);
 extern void FATR ga_set_diagonal_(Integer *g_a, Integer *g_v);
 extern void FATR ga_zero_diagonal_(Integer *g_a);
 extern void FATR ga_add_diagonal_(Integer *g_a, Integer *g_v);
-extern void FATR ga_get_diagonal_(Integer *g_a, Integer *g_v);
+extern void FATR ga_get_diag_(Integer *g_a, Integer *g_v);
 extern void FATR ga_scale_rows_(Integer *g_a, Integer *g_v);
 extern void FATR ga_scale_cols_(Integer *g_a, Integer *g_v);
 extern void FATR ga_norm1_(Integer *g_a, double *nm);

@@ -42,7 +42,7 @@ extern void GA_Shift_diagonal(int g_a, void *c);
 extern void GA_Set_diagonal(int g_a, int g_v);
 extern void GA_Zero_diagonal(int g_a);
 extern void GA_Add_diagonal(int g_a, int g_v);
-extern void GA_Get_diagonal(int g_a, int g_v);
+extern void GA_Get_diag(int g_a, int g_v);
 extern void GA_Scale_rows(int g_a, int g_v);
 extern void GA_Scale_cols(int g_a, int g_v);
 extern void GA_Norm1(int g_a, double *nm);

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.47 2002-09-30 17:16:03 manoj Exp $ */
+/* $Id: capi.c,v 1.48 2002-09-30 22:30:24 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -1416,10 +1416,10 @@ void GA_Add_diagonal(int g_a, int g_v){
  ga_add_diagonal_(&a, &v);
 }
 
-void GA_Get_diagonal(int g_a, int g_v){
+void GA_Get_diag(int g_a, int g_v){
  Integer a = (Integer )g_a;
  Integer v = (Integer )g_v;
- ga_get_diagonal_(&a, &v);
+ ga_get_diag_(&a, &v);
 }
 
 void GA_Scale_rows(int g_a, int g_v){

@@ -167,7 +167,7 @@
 #define  ga_set_diagonal_          GA_SET_DIAGONAL
 #define  ga_zero_diagonal_         GA_ZERO_DIAGONAL
 #define  ga_add_diagonal_          GA_ADD_DIAGONAL
-#define  ga_get_diagonal_          GA_GET_DIAGONAL
+#define  ga_get_diag_               GA_GET_DIAG
 #define  ga_scale_rows_            GA_SCALE_ROWS
 #define  ga_scale_cols_            GA_SCALE_COLS
 #define  ga_norm1_          	   GA_NORM1
@@ -350,7 +350,7 @@
 #define  ga_set_diagonal_          ga_set_diagonal__
 #define  ga_zero_diagonal_         ga_zero_diagonal__
 #define  ga_add_diagonal_          ga_add_diagonal__
-#define  ga_get_diagonal_          ga_get_diagonal__
+#define  ga_get_diag_              ga_get_diag__
 #define  ga_scale_rows_	           ga_scale_rows__		
 #define  ga_scale_cols_	           ga_scale_cols__		
 #define  ga_norm1_          	   ga_norm1__

@@ -895,7 +895,7 @@ ga_norm1_ (Integer * g_a, double *nm)
 }
 
 void FATR
-ga_get_diagonal_ (Integer * g_a, Integer * g_v)
+ga_get_diag_ (Integer * g_a, Integer * g_v)
 {
   Integer vndim, vdims, dim1, dim2, vtype, atype, type, nelem, size;
   Integer vlo, vhi, iloA, ihiA, jloA, jhiA, index, ld, lo[2], hi[2];
@@ -913,9 +913,9 @@ ga_get_diagonal_ (Integer * g_a, Integer * g_v)
   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
   if(local_sync_begin)ga_sync_();
 
-  ga_check_handle (g_a, "ga_get_diagonal_");
-  ga_check_handle (g_v, "ga_get_diagonal_");
-  GA_PUSH_NAME ("ga_get_diagonal_");
+  ga_check_handle (g_a, "ga_get_diag_");
+  ga_check_handle (g_v, "ga_get_diag_");
+  GA_PUSH_NAME ("ga_get_diag_");
 
   ga_inquire (g_a, &type, &dim1, &dim2);
 
@@ -927,18 +927,18 @@ ga_get_diagonal_ (Integer * g_a, Integer * g_v)
 
   /* Perform some error checking */
   if (vndim != 1)
-    ga_error ("ga_get_diagonal: wrong dimension for g_v.", vndim);
+    ga_error ("ga_get_diag: wrong dimension for g_v.", vndim);
 
 
   if (vdims != MIN (dim1, dim2))
     ga_error
-      ("ga_get_diagonal: The size of the first array's diagonal is greater than the size of the second array.",
+      ("ga_get_diag: The size of the first array's diagonal is greater than the size of the second array.",
        type);
 
   if (vtype != atype)
     {
       ga_error
-	("ga_get_diagonal: input global arrays do not have the same data type. Global array type =",
+	("ga_get_diag: input global arrays do not have the same data type. Global array type =",
 	 atype);
     }
 
@@ -964,7 +964,7 @@ ga_get_diagonal_ (Integer * g_a, Integer * g_v)
 	  buf = malloc (nelem * size);
 	  if (buf == NULL)
 	    ga_error
-	      ("ga_get_diagonal_:failed to allocate memory for the local buffer.",
+	      ("ga_get_diag_:failed to allocate memory for the local buffer.",
 	       9999);
 
 	  nga_access_ptr (g_a, lo, hi, &ptr, &ld);
