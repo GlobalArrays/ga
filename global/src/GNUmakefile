@@ -18,7 +18,7 @@ endif
 
 #---------------------- file list ---------------------------------
 # core of the library
-  GA_CORE = global.armci.o global.util.o collect.o decomp.o capi.o \
+  GA_CORE = base.o onesided.o global.util.o collect.o decomp.o capi.o \
             global.nalg.o global.npatch.o ga_trace.o datatypes.o
 
 # extra interfaces
