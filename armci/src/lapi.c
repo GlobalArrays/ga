@@ -21,7 +21,9 @@ lapi_cmpl_t  get_cntr;     /* counter used with lapi_get  */
 
 int intr_status;
 lapi_info_t     lapi_info;
+#ifndef TCG
 lapi_handle_t   lapi_handle;
+#endif
 pthread_mutex_t _armci_mutex_thread=PTHREAD_MUTEX_INITIALIZER;
 
 
@@ -229,8 +231,10 @@ void armci_init_lapi()
 int rc, p;
 int lapi_max_uhdr_sz;
 
+#ifndef TCG
     rc = LAPI_Init(&lapi_handle, &lapi_info);
     if(rc) ERROR("lapi_init failed",rc);
+#endif
 
     /* set the max limit for AM header data length */
     rc = LAPI_Qenv(lapi_handle,MAX_UHDR_SZ, &lapi_max_uhdr_sz);
