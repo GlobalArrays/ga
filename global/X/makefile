@@ -1,10 +1,7 @@
 # Please specify location of X include files and libs
 # XLOC = -I/usr
-ifeq ($(TARGET), SOLARIS)
-  XLOC = /msrc/apps/X11R5
-else
-  XLOC = /usr
-endif
+
+  XLOC = /usr/X11R6
 
 INCLUDES = -I$(XLOC)/include
     COPT = -g
@@ -14,7 +11,7 @@ ifeq ($(TARGET), SGI_N32)
   CFLAGS += -32
 endif
 
-  XLIBS = -L$(XLOC)/lib -lMrm -lXm -lXaw -lXmu -lXt -lX11 -lXau -lXdmcp -lXext
+  XLIBS = -L$(XLOC)/lib  -lXaw -lXmu -lXt -lX11 -lXau -lXdmcp -lXext
   LIBS = 
   RM = rm
 OBJ_LOC = .
