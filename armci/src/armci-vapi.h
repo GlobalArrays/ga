@@ -87,7 +87,11 @@ typedef struct {
 #else
 #  define MAX_BUFLEN (MSG_BUFLEN+EXTRA_MSG_BUFLEN)
 #endif
-
+#define BALANCE_BUFFERS
+#ifdef BALANCE_BUFFERS
+#  define BALANCE_FACTOR 1.6
+#  define BALANCE_BUFSIZE 25000
+#endif
 
 #define BUF_EXTRA_FIELD_T armci_vapi_field_t 
 #define GET_SEND_BUFFER _armci_buf_get

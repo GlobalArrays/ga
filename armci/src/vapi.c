@@ -60,7 +60,6 @@ armci_vapi_memhndl_t *pinned_handle;
 static vapi_nic_t nic_arr[3];
 static vapi_nic_t *SRV_nic= nic_arr;
 static vapi_nic_t *CLN_nic= nic_arr+1;
-static vapi_nic_t *CLN_rdma_nic= nic_arr+2;
 static int armci_server_terminating;
 
 #define NONE -1
@@ -161,7 +160,7 @@ VAPI_wc_desc_t pdscr1;
 VAPI_wc_desc_t *pdscr=&pdscr1;
 
     if(DEBUG_CLN){
-       printf("\n%d:client send complete called from %s id=%d\n",armci_me,
+       printf("\n%d:client send complete called from %s id=%ld\n",armci_me,
                from,snd_dscr->id);fflush(stdout);
     }
     do{
@@ -171,7 +170,7 @@ VAPI_wc_desc_t *pdscr=&pdscr1;
        rc =VAPI_CQ_EMPTY;
 
        if(DEBUG_CLN){
-         printf("\n%d:client_send_complete completed %d",armci_me, pdscr->id);
+         printf("\n%d:client_send_complete completed %ld",armci_me, pdscr->id);
          fflush(stdout);
        }
 
@@ -183,6 +182,8 @@ VAPI_wc_desc_t *pdscr=&pdscr1;
          else armci_die("client send complete got weird id",pdscr->id);
        }
     }while(pdscr->id!=snd_dscr->id);
+    if(pdscr->id >=DSCRID_NBDSCR && pdscr->id < DSCRID_NBDSCR_END)
+       armci_vapi_nbsdscr_array[pdscr->id-DSCRID_NBDSCR].tag=0;
 
 
 }
@@ -453,10 +454,6 @@ void armci_init_connections()
 {
 int c,s;
 int sz;
-VAPI_qp_attr_t         qp_attr;
-VAPI_qp_cap_t          qp_cap;
-VAPI_qp_attr_mask_t    qp_attr_mask;
-VAPI_ret_t rc;
 int *tmparr;
     
     /* initialize nic connection for qp numbers and lid's */
@@ -474,7 +471,6 @@ int *tmparr;
        tmparr[c]=0;
     }
 
-    
     /*SRV_con is for client to connect to servers */
     SRV_con=(armci_connect_t *)malloc(sizeof(armci_connect_t)*armci_nclus);
     if(!SRV_con)armci_die("cannot allocate SRV_con",armci_nclus);
@@ -514,7 +510,7 @@ int *tmparr;
 
 static void vapi_connect_client()
 {
-int s,i,start,sz=0,c;
+int i,start,sz=0,c;
 call_result_t rc;
 VAPI_qp_attr_t         qp_attr;
 VAPI_qp_cap_t          qp_cap;
@@ -741,7 +737,6 @@ static void vapi_signal_comp_handler(VAPI_hca_hndl_t hca_hndl,
 void armci_server_initial_connection()
 {
 int c, ib;
-int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
 VAPI_ret_t rc;
 VAPI_qp_attr_t         qp_attr;
 VAPI_qp_cap_t          qp_cap;
@@ -993,7 +988,7 @@ char *tmp,*tmp0;
     if(total%4096!=0)  
        total = total - (total%4096) + 4096;
     tmp0  = tmp = VMALLOC(total);
-
+    if(ALIGN64ADD(tmp0))tmp0+=ALIGN64ADD(tmp0);
     if(!tmp) armci_die("failed to malloc client bufs",total);
     /* stamp the last byte */
     client_tail= tmp + extra+ size +2*SIXTYFOUR-1;
@@ -1057,13 +1052,7 @@ void armci_transport_cleanup()
 void armci_vapi_complete_buf(armci_vapi_field_t *field,int snd,int rcv,int to,
                              int op)
 {
-VAPI_ret_t rc=VAPI_CQ_EMPTY;
 VAPI_sr_desc_t *snd_dscr;
-VAPI_rr_desc_t *rcv_dscr;
-VAPI_wc_desc_t pdscr1;
-VAPI_wc_desc_t *pdscr=&pdscr1;
-VAPI_wc_desc_t pdscr0;
-VAPI_wc_desc_t *pdscr2=&pdscr0;
 
 BUF_INFO_T *info;
     info = (BUF_INFO_T *)((char *)field-sizeof(BUF_INFO_T));
@@ -1097,7 +1086,7 @@ BUF_INFO_T *info;
            if(loop==0){
              cpu_yield();
              if(DEBUG_CLN);{
-               printf("%d: client last(%p)=%ld flag(%p)=%ld off=%d\n",
+               printf("%d: client last(%p)=%d flag(%p)=%ld off=%d\n",
                       armci_me,last,*last,flag,*flag,msginfo->datalen);
                fflush(stdout);
              }
@@ -1133,13 +1122,10 @@ armci_connect_t *con;
 
 int armci_send_req_msg(int proc, void *buf, int bytes)
 {
-VAPI_ret_t rc=VAPI_CQ_EMPTY;
 int cluster = armci_clus_id(proc);
 request_header_t *msginfo = (request_header_t *)buf;
 VAPI_sr_desc_t *snd_dscr;
 VAPI_sg_lst_entry_t *ssg_lst; 
-VAPI_wc_desc_t pdscr1;
-VAPI_wc_desc_t *pdscr=&pdscr1;
 
     snd_dscr = BUF_TO_SDESCR((char *)buf);
     ssg_lst  = BUF_TO_SSGLST((char *)buf);
@@ -1168,14 +1154,12 @@ VAPI_wc_desc_t *pdscr=&pdscr1;
                (SRV_con+cluster)->qp,snd_dscr->remote_qp,snd_dscr->id,ssg_lst->lkey);
        fflush(stdout);
     }
+    return(0);
 }
 
 void armci_client_direct_send(int p,void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag,ARMCI_MEMHDL_T *lochdl,ARMCI_MEMHDL_T *remhdl)
 {
-VAPI_ret_t rc=VAPI_CQ_EMPTY;
 sdescr_t *dirdscr;
-VAPI_wc_desc_t pdscr1;
-VAPI_wc_desc_t *pdscr=&pdscr1; 
 int clus = armci_clus_id(p);
 
     /*ID for the desr that comes from get_next_descr is already set*/
@@ -1200,8 +1184,6 @@ void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
 {      
 VAPI_ret_t rc=VAPI_CQ_EMPTY;
 sdescr_t *dirdscr;
-VAPI_wc_desc_t pdscr1;
-VAPI_wc_desc_t *pdscr=&pdscr1; 
 int clus = armci_clus_id(p);
 
     /*ID for the desr that comes from get_next_descr is already set*/
@@ -1228,11 +1210,6 @@ int clus = armci_clus_id(p);
 
 char *armci_ReadFromDirect(int proc, request_header_t *msginfo, int len)
 {
-VAPI_ret_t rc=VAPI_CQ_EMPTY;
-VAPI_sr_desc_t *sdscr;
-VAPI_rr_desc_t *rdscr;
-VAPI_wc_desc_t pdscr1;
-VAPI_wc_desc_t *pdscr=&pdscr1;
 int cluster = armci_clus_id(proc);
 vapibuf_ext_t* evbuf=BUF_TO_EVBUF(msginfo);
 char *dataptr = GET_DATA_PTR(evbuf->buf);
@@ -1259,7 +1236,7 @@ extern void armci_util_wait_int(volatile int *,int,int);
            dataptr+=msginfo->dscrlen;
          }
          if(DEBUG_CLN){
-           printf("\n%d: flagval=%d at ptr=%p ack=%d dist=%d\n",armci_me,*last,
+           printf("\n%d: flagval=%d at ptr=%p ack=%ld dist=%d\n",armci_me,*last,
                    last,*flag,len);fflush(stdout);
                    
          }
@@ -1270,7 +1247,7 @@ extern void armci_util_wait_int(volatile int *,int,int);
            if(loop==0){
              cpu_yield();
              if(DEBUG_CLN){
-               printf("%d: client last(%p)=%ld flag(%p)=%ld off=%d\n",
+               printf("%d: client last(%p)=%d flag(%p)=%ld off=%d\n",
                       armci_me,last,*last,flag,*flag,msginfo->datalen);
                fflush(stdout);
              }
@@ -1285,7 +1262,7 @@ extern void armci_util_wait_int(volatile int *,int,int);
            if(loop==0){
              cpu_yield();
              if(DEBUG_CLN){
-               printf("%d: client last(%p)=%ld flag(%p)=%ld off=%d\n",
+               printf("%d: client last(%p)=%d flag(%p)=%ld off=%d\n",
                       armci_me,last,*last,flag,*flag,msginfo->datalen);
                fflush(stdout);
              }
@@ -1315,7 +1292,6 @@ void armci_send_data_to_client(int proc, void *buf, int bytes,void *dbuf)
 {
 VAPI_ret_t rc=VAPI_CQ_EMPTY;
 VAPI_sr_desc_t *sdscr;
-VAPI_rr_desc_t *rdscr;
 VAPI_wc_desc_t *pdscr=NULL; 
 VAPI_wc_desc_t pdscr1;
 
@@ -1460,7 +1436,6 @@ void armci_server_direct_send(int dst, char *src_buf, char *dst_buf, int len,
 {
 VAPI_ret_t rc=VAPI_CQ_EMPTY;
 VAPI_sr_desc_t *sdscr;
-VAPI_rr_desc_t *rdscr;
 VAPI_wc_desc_t *pdscr=NULL;
 VAPI_wc_desc_t pdscr1;
 
@@ -1494,10 +1469,9 @@ void armci_send_contig_bypass(int proc, request_header_t *msginfo,
                               void *src_ptr, void *rem_ptr, int bytes)
 {
 int *last;
-VAPI_lkey_t *lkey;
+VAPI_lkey_t *lkey=NULL;
 VAPI_rkey_t *rkey;    
 int dscrlen = msginfo->dscrlen;
-ARMCI_MEMHDL_T *srvhdl;
 
     last = (int*)(((char*)(src_ptr)) + (bytes - sizeof(int)));
     if(!msginfo->pinned)armci_die("armci_send_contig_bypass: not pinned",proc);
@@ -1564,7 +1538,7 @@ int loop=0;
           loop %=1000000;
           if(loop==0){cpu_yield();
             if(DEBUG_CLN){
-               printf("%d: client last(%p)=%ld ack(%p)=%ld off=%d\n",
+               printf("%d: client last(%p)=%d ack(%p)=%ld off=%d\n",
                       armci_me,last,*last,ack,*ack,(char*)last - (char*)ptr);
                fflush(stdout);
             }
@@ -1608,6 +1582,7 @@ int armcill_server_wait_ack(int proc, int n)
 { 
     printf("\n%d:armcill_server_wait_ack not implemented",armci_me);
     fflush(stdout);
+    return(0);
 }
 
 

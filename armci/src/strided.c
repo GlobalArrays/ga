@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.76 2003-09-29 09:37:16 d3h325 Exp $ */
+/* $Id: strided.c,v 1.77 2003-10-08 07:16:06 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -537,6 +537,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
     if(!direct){
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
        if( !stride_levels && ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+         ARMCI_Fence(proc);
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],NULL,0,mhloc,mhrem);
          POSTPROCESS_STRIDED(tmp_count);
          return 0;
@@ -707,7 +708,8 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(!direct){
 #     ifdef ALLOW_PIN
        if(!stride_levels && 
-         ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+         ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
+         ARMCI_Fence(proc);
          ARMCI_REM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
          POSTPROCESS_STRIDED(tmp_count);
          return 0;
@@ -824,6 +826,7 @@ int ARMCI_Put(void *src, void* dst, int bytes, int proc)
 #if 0
       printf("direct put s=%p d=%p %d bytes to %d\n",src,dst,bytes,proc); fflush(stdout);
 #endif
+      ARMCI_Fence(proc);
       armci_client_direct_send(proc, src, dst, bytes,NULL,0,mhloc,mhrem);
       return 0;
     }else
@@ -845,6 +848,7 @@ int ARMCI_Get(void *src, void* dst, int bytes, int proc)
 #else
 #ifdef ALLOW_PIN
     if(ARMCI_REGION_BOTH_FOUND(dst,src,bytes,armci_clus_id(proc))){
+       ARMCI_Fence(proc);
        ARMCI_REM_GET(proc, src,NULL,dst,NULL,&bytes, 0, NULL);
        return 0;
     }  else

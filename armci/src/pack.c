@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.34 2003-09-11 16:03:17 vinod Exp $ */
+/* $Id: pack.c,v 1.35 2003-10-08 07:16:06 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -96,7 +96,7 @@ int armci_pack_strided(int op, void* scale, int proc,
 #  endif
 #endif
 
-#if (defined(GM) || defined(VIA) || defined(VAPI))
+#if (defined(GM) || defined(VIA_) || defined(VAPI_))
     /*we cant assume that the entire available buffer will be used for data, 
       fact that the header and descriptor also go in the same buffer should be
       considered while packing.
@@ -151,7 +151,6 @@ int armci_pack_strided(int op, void* scale, int proc,
         }else{
            dst_stride = src_stride = 1;
         }
-
         if(op == GET || noswap == 1) b =nb; 
         else{ b = chunk%nb; if(b==0)b=nb; } /* put smallest piece first */
 

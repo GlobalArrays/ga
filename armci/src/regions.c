@@ -1,4 +1,4 @@
-/* $Id: regions.c,v 1.3 2003-07-30 18:58:08 vinod Exp $ interface to keep track of memory regions accross the cluster */
+/* $Id: regions.c,v 1.4 2003-10-08 07:16:06 vinod Exp $ interface to keep track of memory regions accross the cluster */
 /* 
  * armci_region_init - allocates list of regions, initialization
  * armci_region_register_shm - registers shared memory on the current node
@@ -191,13 +191,33 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
      if(!allow_pin) return 0;
 
      /* first scan for local */
-     for(i=0; i<reg->n; i++)
-        if((reg->list+i)->start <= loc && (reg->list+i)->end > loc){found=1; break;}
+     for(i=0; i<reg->n; i++){
+        if((reg->list+i)->start <= loc && (reg->list+i)->end > loc){
+	  found=1; break;
+	}
+#if 0
+	else {
+	  printf("\n%d: loc ptr=%p st=%p end=%p size=%d\n",armci_me,loc,
+			  (reg->list+i)->start,(reg->list+i)->end,size);
+	  fflush(stdout);
+	}
+#endif
+     }
 
      if(!found){ /* might be local shared */
          reg=clus_regions+armci_clus_me;
-         for(i=0; i<reg->n; i++)
-           if((reg->list+i)->start <= loc && (reg->list+i)->end > loc){found=1; break;}
+         for(i=0; i<reg->n; i++){
+           if((reg->list+i)->start <= loc && (reg->list+i)->end > loc){
+	     found=1; break;
+	   }
+#if 0
+	   else {
+	     printf("\n%d:clus ptr=%p st=%p end=%p size=%d\n",armci_me,loc,
+			  (reg->list+i)->start,(reg->list+i)->end,size);
+	     fflush(stdout);
+	   }
+#endif
+	 }
      }
      if(!found) return 0;
      else {*loc_memhdl=&((reg->list+i)->memhdl);}
@@ -205,8 +225,18 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
 
      /* now check remote shared */
      reg=serv_regions+node;
-     for(i=0; i<reg->n; i++)
-         if((reg->list+i)->start <= rem && (reg->list+i)->end > rem){found=2;break;}
+     for(i=0; i<reg->n; i++){
+         if((reg->list+i)->start <= rem && (reg->list+i)->end > rem){
+		 found=2;break;
+	 }
+#if 0
+	 else {
+	   printf("\n%d: serv ptr=%p st=%p end=%p size=%d nd=%d\n",armci_me,rem,
+	          (reg->list+i)->start,(reg->list+i)->end,size,node);
+	   fflush(stdout);
+	 }
+#endif
+     }
 
 #if 0
      if(found==2){printf("%d: found both %d %p %p\n",armci_me,node,*loc_memhdl,*rem_memhdl); fflush(stdout); }
@@ -310,8 +340,8 @@ void armci_region_exchange(void *start, long size)
          if(i==armci_clus_me) continue;
          if(exch_list[2*i]){
 #if 0
-           printf("%d recording clus=%d mem %p-%p\n",armci_me,i,exch_list[2*i],
-                  exch_list[2*i+1]);
+           printf("%d recording clus=%d mem %p-%p n=%d\n",armci_me,i,exch_list[2*i],
+                  exch_list[2*i+1],r->n);
            fflush(stdout);
 #endif
 
@@ -371,8 +401,13 @@ void armci_global_region_exchange(void *start, long size)
        armci_reglist_t *r=serv_regions+i;
        armci_reglist_t *rc=clus_regions+i;
        if(i==armci_clus_me) continue;
-       armci_copy(&hdlarr[i],&(r->list+r->n)->memhdl,sizeof(ARMCI_MEMHDL_T));
-       armci_region_record((rc->list+r->n)->start,(rc->list+r->n)->end,r);
+       if((rc->list+r->n)->start){
+#if 0
+       printf("\n%d:serv recording %p from %d n=%d \n",armci_me,(rc->list+r->n)->start,i,r->n);fflush(stdout);
+#endif
+         armci_copy(&hdlarr[i],&(r->list+r->n)->memhdl,sizeof(ARMCI_MEMHDL_T));
+         armci_region_record((rc->list+r->n)->start,(rc->list+r->n)->end,r);
+       }
     }
 #endif
 }
