@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.2 1996-07-17 15:59:15 mogill Exp $
+#$Id: makefile,v 1.3 1996-07-26 21:06:23 d3h325 Exp $
 #
 # ChemIO makefile for making ELIO
 #
@@ -8,10 +8,16 @@
 #
 #
 
-OBJ = elio.o
-LIBRARY = libelio.a
-HEADERS = elio.h chemio.h
+ LIB_DISTRIB = ../../lib
+     LIBRARY = libelio.a
 
+         OBJ = elio.o
+     LIBRARY = libelio.a
+     HEADERS = elio.h chemio.h
+
+ifdef PABLO
+   LIB_CDEFS = -DPABLO
+endif
 
 include ../../config/makefile.h
 include ../../config/makelib.h

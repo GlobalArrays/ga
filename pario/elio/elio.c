@@ -2,17 +2,14 @@
  ELementary I/O (ELIO) disk operations for Chemio libraries   
 \**********************************************************************/
 
-#if defined(PABLO)
-#  define IOTRACE
-#  include "IOTrace.h"
-#endif
 
-
-#include "elio.h"
 #include <errno.h>
 #if defined(PARAGON)
 #  include <nx.h>
 #endif
+
+#include "elio.h"
+#include "pablo.h"
 
 
 #define  MAX_AIO_REQ  4
@@ -558,7 +555,7 @@ Fd_t *fd;
      ELIO_ABORT("elio_close failed:",0);
    free(fd);
 
-   PABLO_end(PABLO_elio_close):
+   PABLO_end(PABLO_elio_close);
 }
 
 

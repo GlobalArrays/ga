@@ -1,5 +1,4 @@
 /* file name: elio.h */
-#include "chemio.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -13,6 +12,7 @@
 #  include <piofs/piofs_ioctl.h> 
 #endif
 
+#include "chemio.h"
 
 
 /* file descriptor type definition */
