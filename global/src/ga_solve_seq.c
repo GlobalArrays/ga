@@ -55,7 +55,7 @@ extern void FATR DGETRS(char *, int, Integer *, Integer *, void *,
 #endif
 
 /*----------------------*/ 
-void daxpy(n,da,dx,incx,dy,incy)
+void LP_daxpy(n,da,dx,incx,dy,incy)
 /*
      constant times a vector plus a vector.
      jack dongarra, linpack, 3/11/78.
@@ -111,7 +111,7 @@ int incx,incy,n;
    
 /*----------------------*/ 
 
-REAL ddot(n,dx,incx,dy,incy)
+REAL LP_ddot(n,dx,incx,dy,incy)
 /*
      forms the dot product of two vectors.
      jack dongarra, linpack, 3/11/78.
@@ -169,7 +169,7 @@ int incx,incy,n;
 }
 
 /*----------------------*/ 
-void dscal(n,da,dx,incx)
+void LP_dscal(n,da,dx,incx)
 
 /*     scales a vector by a constant.
       jack dongarra, linpack, 3/11/78.
@@ -216,7 +216,7 @@ int n, incx;
 }
 
 /*----------------------*/ 
-int idamax(n,dx,incx)
+int LP_idamax(n,dx,incx)
 
 /*
      finds the index of element having max. absolute value.
@@ -262,169 +262,21 @@ int incx,n;
 	return (itemp);
 }
 
-/*----------------------*/ 
-REAL epslon (x)
-REAL x;
-/*
-     estimate unit roundoff in quantities of size x.
-*/
-
-{
-	REAL a,b,c,eps;
-/*
-     this program should function properly on all systems
-     satisfying the following two assumptions,
-        1.  the base used in representing dfloating point
-            numbers is not a power of three.
-        2.  the quantity  a  in statement 10 is represented to 
-            the accuracy used in dfloating point variables
-            that are stored in memory.
-     the statement number 10 and the go to 10 are intended to
-     force optimizing compilers to generate code satisfying 
-     assumption 2.
-     under these assumptions, it should be true that,
-            a  is not exactly equal to four-thirds,
-            b  has a zero for its last bit or digit,
-            c  is not exactly equal to one,
-            eps  measures the separation of 1.0 from
-                 the next larger dfloating point number.
-     the developers of eispack would appreciate being informed
-     about any systems where these assumptions do not hold.
-
-     *****************************************************************
-     this routine is one of the auxiliary routines used by eispack iii
-     to avoid machine dependencies.
-     *****************************************************************
-
-     this version dated 4/6/83.
-*/
-
-	a = 4.0e0/3.0e0;
-	eps = ZERO;
-	while (eps == ZERO) {
-		b = a - ONE;
-		c = b + b + b;
-		eps = fabs((double)(c-ONE));
-	}
-	return(eps*fabs((double)x));
-}
- 
-/*----------------------*/ 
-void dmxpy (n1, y, n2, ldm, x, m)
-REAL y[], x[], m[];
-int n1, n2, ldm;
-
-/* We would like to declare m[][ldm], but c does not allow it.  In this
-function, references to m[i][j] are written m[ldm*i+j].  */
-
-/*
-   purpose:
-     multiply matrix m times vector x and add the result to vector y.
-
-   parameters:
-
-     n1 integer, number of elements in vector y, and number of rows in
-         matrix m
-
-     y double [n1], vector of length n1 to which is added 
-         the product m*x
-
-     n2 integer, number of elements in vector x, and number of columns
-         in matrix m
-
-     ldm integer, leading dimension of array m
-
-     x double [n2], vector of length n2
-
-     m double [ldm][n2], matrix of n1 rows and n2 columns
-
- ----------------------------------------------------------------------
-*/
-{
-	int j,i,jmin;
-	/* cleanup odd vector */
-
-	j = n2 % 2;
-	if (j >= 1) {
-		j = j - 1;
-		for (i = 0; i < n1; i++) 
-            		y[i] = (y[i]) + x[j]*m[ldm*j+i];
-	} 
-
-	/* cleanup odd group of two vectors */
-
-	j = n2 % 4;
-	if (j >= 2) {
-		j = j - 1;
-		for (i = 0; i < n1; i++)
-            		y[i] = ( (y[i])
-                  	       + x[j-1]*m[ldm*(j-1)+i]) + x[j]*m[ldm*j+i];
-	} 
-
-	/* cleanup odd group of four vectors */
-
-	j = n2 % 8;
-	if (j >= 4) {
-		j = j - 1;
-		for (i = 0; i < n1; i++)
-			y[i] = ((( (y[i])
-			       + x[j-3]*m[ldm*(j-3)+i]) 
-			       + x[j-2]*m[ldm*(j-2)+i])
-			       + x[j-1]*m[ldm*(j-1)+i]) + x[j]*m[ldm*j+i];
-	} 
-
-	/* cleanup odd group of eight vectors */
-
-	j = n2 % 16;
-	if (j >= 8) {
-		j = j - 1;
-		for (i = 0; i < n1; i++)
-			y[i] = ((((((( (y[i])
-			       + x[j-7]*m[ldm*(j-7)+i]) + x[j-6]*m[ldm*(j-6)+i])
-		  	       + x[j-5]*m[ldm*(j-5)+i]) + x[j-4]*m[ldm*(j-4)+i])
-			       + x[j-3]*m[ldm*(j-3)+i]) + x[j-2]*m[ldm*(j-2)+i])
-			       + x[j-1]*m[ldm*(j-1)+i]) + x[j]  *m[ldm*j+i];
-	} 
-	
-	/* main loop - groups of sixteen vectors */
-
-	jmin = (n2%16)+16;
-	for (j = jmin-1; j < n2; j = j + 16) {
-		for (i = 0; i < n1; i++) 
-			y[i] = ((((((((((((((( (y[i])
-			       	+ x[j-15]*m[ldm*(j-15)+i]) 
-				+ x[j-14]*m[ldm*(j-14)+i])
-			        + x[j-13]*m[ldm*(j-13)+i]) 
-				+ x[j-12]*m[ldm*(j-12)+i])
-			        + x[j-11]*m[ldm*(j-11)+i]) 
-				+ x[j-10]*m[ldm*(j-10)+i])
-			        + x[j- 9]*m[ldm*(j- 9)+i]) 
-				+ x[j- 8]*m[ldm*(j- 8)+i])
-			        + x[j- 7]*m[ldm*(j- 7)+i]) 
-				+ x[j- 6]*m[ldm*(j- 6)+i])
-			        + x[j- 5]*m[ldm*(j- 5)+i]) 
-				+ x[j- 4]*m[ldm*(j- 4)+i])
-			        + x[j- 3]*m[ldm*(j- 3)+i]) 
-				+ x[j- 2]*m[ldm*(j- 2)+i])
-			        + x[j- 1]*m[ldm*(j- 1)+i]) 
-				+ x[j]   *m[ldm*j+i];
-	}
-} 
 
 
 /*----------------------*/ 
-void dgefa(a,lda,n,ipvt,info)
+void LP_dgefa(a,lda,n,ipvt,info)
 REAL a[];
 int lda,n,ipvt[],*info;
 
 /* We would like to declare a[][lda], but c does not allow it.  In this
 function, references to a[i][j] are written a[lda*i+j].  */
 /*
-     dgefa factors a double precision matrix by gaussian elimination.
+     LP_dgefa factors a double precision matrix by gaussian elimination.
 
-     dgefa is usually called by dgeco, but it can be called
+     LP_dgefa is usually called by dgeco, but it can be called
      directly with a saving in time if  rcond  is not needed.
-     (time for dgeco) = (1 + 9/n)*(time for dgefa) .
+     (time for dgeco) = (1 + 9/n)*(time for LP_dgefa) .
 
      on entry
 
@@ -452,7 +304,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
                 = 0  normal value.
                 = k  if  u[k][k] .eq. 0.0 .  this is not an error
                      condition for this subroutine, but it does
-                     indicate that dgesl or dgedi will divide by zero
+                     indicate that LP_dgesl or dgedi will divide by zero
                      if called.  use  rcond  in dgeco for a reliable
                      indication of singularity.
 
@@ -461,14 +313,14 @@ function, references to a[i][j] are written a[lda*i+j].  */
 
      functions
 
-     blas daxpy,dscal,idamax
+     blas LP_daxpy,LP_dscal,LP_idamax
 */
 
 {
 /*     internal variables	*/
 
   REAL t;
-  int idamax(),j,k,kp1,l,nm1;
+  int LP_idamax(),j,k,kp1,l,nm1;
 
 
 /*     gaussian elimination with partial pivoting	*/
@@ -480,7 +332,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 
           		/* find l = pivot index	*/
 
-			l = idamax(n-k,&a[lda*k+k],1) + k;
+			l = LP_idamax(n-k,&a[lda*k+k],1) + k;
 			ipvt[k] = l;
 
 			/* zero pivot implies this column already 
@@ -498,7 +350,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 				/* compute multipliers */
 
 				t = -ONE/a[lda*k+k];
-				dscal(n-(k+1),t,&a[lda*k+k+1],1);
+				LP_dscal(n-(k+1),t,&a[lda*k+k+1],1);
 
 				/* row elimination with column indexing */
 
@@ -508,7 +360,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 						a[lda*j+l] = a[lda*j+k];
 						a[lda*j+k] = t;
 					}
-					daxpy(n-(k+1),t,&a[lda*k+k+1],1,
+					LP_daxpy(n-(k+1),t,&a[lda*k+k+1],1,
 					      &a[lda*j+k+1],1);
   				} 
   			}
@@ -523,7 +375,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 
 /*----------------------*/ 
 
-void dgesl(a,lda,n,ipvt,b,job)
+void LP_dgesl(a,lda,n,ipvt,b,job)
 int lda,n,ipvt[],job;
 REAL a[],b[];
 
@@ -531,14 +383,14 @@ REAL a[],b[];
 function, references to a[i][j] are written a[lda*i+j].  */
 
 /*
-     dgesl solves the double precision system
+     LP_dgesl solves the double precision system
      a * x = b  or  trans(a) * x = b
-     using the factors computed by dgeco or dgefa.
+     using the factors computed by dgeco or LP_dgefa.
 
      on entry
 
         a       double precision[n][lda]
-                the output from dgeco or dgefa.
+                the output from dgeco or LP_dgefa.
 
         lda     integer
                 the leading dimension of the array  a .
@@ -547,7 +399,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
                 the order of the matrix  a .
 
         ipvt    integer[n]
-                the pivot vector from dgeco or dgefa.
+                the pivot vector from dgeco or LP_dgefa.
 
         b       double precision[n]
                 the right hand side vector.
@@ -568,14 +420,14 @@ function, references to a[i][j] are written a[lda*i+j].  */
         but it is often caused by improper arguments or improper
         setting of lda .  it will not occur if the subroutines are
         called correctly and if dgeco has set rcond .gt. 0.0
-        or dgefa has set info .eq. 0 .
+        or LP_dgefa has set info .eq. 0 .
 
      to compute  inverse(a) * c  where  c  is a matrix
      with  p  columns
            dgeco(a,lda,n,ipvt,rcond,z)
            if (!rcond is too small){
            	for (j=0,j<p,j++)
-              		dgesl(a,lda,n,ipvt,c[j][0],0);
+              		LP_dgesl(a,lda,n,ipvt,c[j][0],0);
 	   }
 
      linpack. this version dated 08/14/78 .
@@ -583,12 +435,12 @@ function, references to a[i][j] are written a[lda*i+j].  */
 
      functions
 
-     blas daxpy,ddot
+     blas LP_daxpy,LP_ddot
 */
 {
 /*     internal variables	*/
 
-	REAL ddot(),t;
+	REAL LP_ddot(),t;
 	int k,kb,l,nm1;
 
 	nm1 = n - 1;
@@ -605,7 +457,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 					b[l] = b[k];
 					b[k] = t;
 				}	
-				daxpy(n-(k+1),t,&a[lda*k+k+1],1,&b[k+1],1);
+				LP_daxpy(n-(k+1),t,&a[lda*k+k+1],1,&b[k+1],1);
 			}
 		} 
 
@@ -615,7 +467,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 		    k = n - (kb + 1);
 		    b[k] = b[k]/a[lda*k+k];
 		    t = -b[k];
-		    daxpy(k,t,&a[lda*k+0],1,&b[0],1);
+		    LP_daxpy(k,t,&a[lda*k+0],1,&b[0],1);
 		}
 	}
 	else { 
@@ -624,7 +476,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 		   first solve  trans(u)*y = b 			*/
 
 		for (k = 0; k < n; k++) {
-			t = ddot(k,&a[lda*k+0],1,&b[0],1);
+			t = LP_ddot(k,&a[lda*k+0],1,&b[0],1);
 			b[k] = (b[k] - t)/a[lda*k+k];
 		}
 
@@ -633,7 +485,7 @@ function, references to a[i][j] are written a[lda*i+j].  */
 		if (nm1 >= 1) {
 			for (kb = 1; kb < nm1; kb++) {
 				k = n - (kb+1);
-				b[k] = b[k] + ddot(n-(k+1),&a[lda*k+k+1],1,&b[k+1],1);
+				b[k] = b[k] + LP_ddot(n-(k+1),&a[lda*k+k+1],1,&b[k+1],1);
 				l = ipvt[k];
 				if (l != k) {
 					t = b[l];
@@ -715,7 +567,7 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
     
     /** LU factorization */
 #ifdef GA_C_CORE
-    dgefa(adra, dimA1, dimA2, adri, &info_t);
+    LP_dgefa(adra, dimA1, dimA2, adri, &info_t);
     info = info_t;
 #else
     DGETRF(&dimA1, &dimA2, adra, &dimA1, adri, &info);
@@ -729,7 +581,7 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
       if(*trans == 't' || *trans == 'T') job = 1; 
       for(i=0; i<dimB2; i++) {
 	p_b = adrb + i*dimB1;
-	dgesl(adra, dimA1, dimA2, adri, p_b, job);
+	LP_dgesl(adra, dimA1, dimA2, adri, p_b, job);
       }
 #else
       DGETRS(cptofcd(trans), &dimA1, &dimB2, adra, &dimA1, 
@@ -739,11 +591,11 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
       if(info == 0) 
 	ga_put_(g_b, &one, &dimB1, &one, &dimB2, adrb, &dimB1);
       else
-	ga_error(" ga_lu_solve: dgesl failed ", -info);
+	ga_error(" ga_lu_solve: LP_dgesl failed ", -info);
       
     }
     else
-      ga_error(" ga_lu_solve: dgefa failed ", -info);
+      ga_error(" ga_lu_solve: LP_dgefa failed ", -info);
     
     /** deallocate work arrays */
     if(!MA_pop_stack(hi)) ga_error("MA_pop_stack failed",0);
