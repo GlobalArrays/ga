@@ -1,4 +1,4 @@
-/* $Id: async.c,v 1.3 2002-10-22 21:49:37 vinod Exp $ */
+/* $Id: async.c,v 1.4 2002-10-23 18:37:38 vinod Exp $ */
 /* data structures and interfaces for handling asynchronous requests 
  */
 
@@ -6,10 +6,12 @@
 #include "armcip.h" 
 
 #define DEBUG_ 0
+/*
 #define UBUF_LEN 496
+*/
 #define MAX_PENDING_REQ 4
 #define MAX_STRIDE_LEVELS 8
-
+#if 0
 typedef struct {
   void *ptr;
   int  stride_levels;
@@ -22,7 +24,7 @@ typedef struct {
   int len;
   void *ptrs[60];
 }vector_dscr_t;
-
+#endif
 typedef struct {
   int reqid;              /* request id */
   int bufid;              /* communication buffer id */

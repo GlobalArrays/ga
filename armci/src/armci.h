@@ -151,7 +151,7 @@ extern char *mp_group_name;
 /*\ the request structure for non-blocking api. 
 \*/
 typedef struct{
-   int tag;
+   unsigned int tag;
    int bufid;
    int op;
 #ifdef NB_CMPL_T

@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.8 2002-10-22 21:48:39 vinod Exp $    **/
+/* $Id: buffers.c,v 1.9 2002-10-23 18:37:38 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -52,44 +52,14 @@ typedef struct {
   unsigned int to:12;    /* serv/proc to which request was sent, 4096 possible*/
 }buf_state_t;
 
-/*******structures copied from async.c for storing cmpl dscr for nb req*******/
-#define UBUF_LEN 112
-typedef struct {
-  void *ptr;
-  int  stride_levels;
-  int  stride_arr[8];
-  int  count[8];
-}strided_dscr_t;
-
-typedef struct {
-  int segments;
-  int len;
-  void *ptrs[14];
-}vector_dscr_t;
-
-typedef struct {
-  unsigned int tag;              /* request id */
-  int bufid;              /* communication buffer id */
-  union {                 /* 8 bytes for alignment reason */
-        void *dscrbuf;
-        double pad;
-  }ptr;
-  union {
-      char buf[UBUF_LEN];
-      strided_dscr_t strided;
-      vector_dscr_t vector;
-  }dscr;
-}buf_info_t;
-/****************************************************************************/
-
 #ifndef BUFID_PAD_T
-#define BUFID_PAD_T buf_info_t
+#define BUFID_PAD_T BUF_INFO_T
 #endif
 
 /* message send buffer data structure */
 typedef struct {
 #ifdef STORE_BUFID
-  buf_info_t id;
+  BUF_INFO_T id;
 #endif
 # ifdef BUF_EXTRA_FIELD_T
         BUF_EXTRA_FIELD_T field;
@@ -222,6 +192,9 @@ extern void _armci_asyn_complete_strided_get(int dsc_id, void *buf);
       else{
        /* need to call platform specific function */
        CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[idx].field,buf_state->snd,buf_state->rcv,buf_state->to);
+#   ifdef STORE_BUFID
+       _armci_buf_state->buf[idx].id.tag=0;
+#   endif
       }
 #   endif
 
@@ -344,6 +317,7 @@ int count=1, i;
     }
 
 #ifdef STORE_BUFID
+    _armci_buf_state->buf[avail].id.tag=0;
     _armci_buf_state->buf[avail].id.bufid=avail; 
 #endif
 
@@ -413,7 +387,8 @@ char *_armci_buf_ptr_from_id(int id)
 
 /*\function called from armci_wait to wait for non-blocking ops
 \*/
-void armci_complete_nb_request(armci_hdl_t nb_handle, int *retcode) {
+void _armci_complete_nb_request(armci_hdl_t nb_handle, int *retcode) 
+{
 int i=0;
     if(nb_handle->bufid == NB_NONE) *retcode=0;
     else if(nb_handle->bufid == NB_MULTI) {
@@ -428,4 +403,14 @@ int i=0;
          _armci_buf_complete_index(nb_handle->bufid,1);
        *retcode=0;
     } 
+}
+
+
+/*\function to set the buffer tag and also the async flag
+\*/
+void _armci_set_buffer_tag(void *bufptr,unsigned int tag)
+{
+int  index = BUF_TO_BUFINDEX(bufptr);
+   /*_armci_buf_state->table[index].async=1;*/
+   _armci_buf_state->buf[index].id.tag=tag;
 }

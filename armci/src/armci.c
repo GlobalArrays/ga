@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.52 2002-10-22 21:49:37 vinod Exp $ */
+/* $Id: armci.c,v 1.53 2002-10-23 18:37:37 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -392,4 +392,9 @@ int success=0;
 #     endif
     }
     return(success);
+}
+
+static unsigned int _armci_nb_tag=0;
+unsigned int _armci_get_next_tag(){
+    return((++_armci_nb_tag));
 }

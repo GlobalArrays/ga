@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.6 2002-10-22 22:23:25 vinod Exp $ */
+/* $Id: lapi2.c,v 1.7 2002-10-23 18:37:38 vinod Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -287,37 +287,40 @@ int dsize=3*sizeof(void*);
     }              
     else{ /* greated than 1D small/med stride */
 
-       /*if non-blocking, remember the pointer to orig counter in the buf
-         this will be needed by complete_buf_index routine in buffers.c*/
-       if(nb_handle){
-         ((long *)bufptr)[0] = (long)(o_cmpl);
-         bufptr+=sizeof(long);
-       }
-
        if(stride_levels==1){             /*small/med 2D, use lapi STRIDED */
-         o_cmpl->val++;
+         bufptr = GET_SEND_BUFFER(2*(sizeof(lapi_vec_t)+dsize),op,proc);
+         if(nb_handle)SET_BUF_TAG(bufptr,nb_handle->tag);
          if(op==PUT)UPDATE_FENCE_STATE(proc, PUT, 1); 
 
-         bufptr = GET_SEND_BUFFER(2*(sizeof(lapi_vec_t)+dsize),op,proc);
-         (BUF_TO_EVBUF(bufptr))->val=0;
+         /*we use the counter in the buffer*/
+         o_cmpl = (BUF_TO_EVBUF(bufptr));
 
          armcill_op2D(op,src_ptr,src_stride_arr[0],dst_ptr,dst_stride_arr[0],
                          count[1],count[0],proc,&(o_cmpl->cntr),bufptr);
        }
        else {                            /*small/med >2D, use lapi VECTOR*/
          bufptr = GET_SEND_BUFFER(DSCR_SIZE,op,proc);
-         (BUF_TO_EVBUF(bufptr))->val=0;
+         if(nb_handle)SET_BUF_TAG(bufptr,nb_handle->tag);
+         /*we use the counter in the buffer*/
+         o_cmpl = (BUF_TO_EVBUF(bufptr));
+           
+         /*val set to 0 because of the way opND is writted, to be modified*/
+         o_cmpl->val=0;
 
          armcill_opND(op,src_ptr,src_stride_arr,dst_ptr, dst_stride_arr,count,
                          stride_levels,proc,o_cmpl,bufptr);
        }
 
        /*
-         for blocking cases, we can free cmpldescr buffer before we wait for op 
-         to complete because next step after this in opstrided is WAIT_FOR_<OP>
-         anyways, so we should be safe. 
+         for blocking cases, we can free cmpldescr buffer and wait for op 
+         to complete. 
        */
-       if(!nb_handle)FREE_SEND_BUFFER(bufptr);
+       if(!nb_handle){
+          /*for now, we manually clear the counter here for blocking calls.
+            for later, this has to be done in FREE_SEND_BUFFER.*/
+          LAPI_CLEAR_CNTR(o_cmpl);
+          FREE_SEND_BUFFER(bufptr);
+       }
        
     }
 }

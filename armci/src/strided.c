@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.45 2002-10-21 04:25:09 vinod Exp $ */
+/* $Id: strided.c,v 1.46 2002-10-23 18:37:38 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -27,7 +27,6 @@ else\
 #endif
 
 int armci_iwork[MAX_STRIDE_LEVEL];
-
 
 /*\ 2-dimensional array copy
 \*/
@@ -797,6 +796,9 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
          if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
 #   endif
 
+/*set tag and op in the nb handle*/
+    nb_handle->tag = GET_NEXT_NBTAG();
+    nb_handle->op  = PUT;
 
 #ifndef LAPI2
     if(!direct){
@@ -813,7 +815,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
     else
 #endif 
        rc = armci_op_strided( PUT, NULL, proc, src_ptr, src_stride_arr,
-                            dst_ptr,dst_stride_arr,count,stride_levels, 0,NULL);
+                       dst_ptr,dst_stride_arr,count,stride_levels, 0,nb_handle);
 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
@@ -855,6 +857,10 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(stride_levels) /* reduce stride_levels for trivial cases */
        for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;
 
+/*set tag and op in the nb handle*/
+    nb_handle->tag = GET_NEXT_NBTAG();
+    nb_handle->op  = GET;
+
 #ifndef LAPI2
     if(!direct){
 
@@ -880,7 +886,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     }else
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, dst_ptr,
-                             dst_stride_arr,count, stride_levels,0,NULL);
+                             dst_stride_arr,count, stride_levels,0,nb_handle);
 
     if(rc) return FAIL6;
     else return 0;
@@ -915,6 +921,10 @@ int ARMCI_NbAccS( int  optype,            /* operation */
        if(armci_me != proc) direct=0;
 #   endif
  
+/*set tag and op in the nb handle*/
+    nb_handle->tag = GET_NEXT_NBTAG();
+    nb_handle->op  = optype;
+
     if(direct)
       rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
                            dst_stride_arr, count, stride_levels,1,NULL);

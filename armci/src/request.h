@@ -54,6 +54,38 @@ unsigned int   bytes:20;      /* number of bytes requested */
          msg_tag_t tag;       /* message tag for response to this request */
 }request_header_t;
 
+/*******structures copied from async.c for storing cmpl dscr for nb req*******/
+#define UBUF_LEN 112
+typedef struct {
+  void *ptr;
+  int  stride_levels;
+  int  stride_arr[8];
+  int  count[8];
+}strided_dscr_t;
+
+typedef struct {
+  int segments;
+  int len;
+  void *ptrs[14];
+}vector_dscr_t;
+
+typedef struct {
+  unsigned int tag;              /* request id */
+  int bufid;              /* communication buffer id */
+  union {                 /* 8 bytes for alignment reason */
+        void *dscrbuf;
+        double pad;
+  }ptr;
+  union {
+      char buf[UBUF_LEN];
+      strided_dscr_t strided;
+      vector_dscr_t vector;
+  }dscr;
+}_buf_info_t;
+#define BUF_INFO_T _buf_info_t
+/****************************************************************************/
+
+
 #ifndef MSG_BUFLEN_DBL
 # if defined(HITACHI)
 #  define MSG_BUFLEN_DBL 0x50000

@@ -38,7 +38,8 @@ extern void armci_elan_fence(int p);
 \*/ 
 #define NB_MULTI -1 /*more than one armci buffer(buffers.c) used for nbcall*/
 #define NB_NONE  -2 /*no armci buffer(buffers.c) used for nbcall*/
-
+extern unsigned int _armci_get_next_tag();
+#define GET_NEXT_NBTAG _armci_get_next_tag
 
 
 typedef struct{

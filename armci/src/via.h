@@ -33,10 +33,12 @@ extern void armci_via_wait_ack();
 #  define BALANCE_BUFSIZE 25000
 #endif
 
+/*
 typedef struct {
     char padd[128];
 } buf_pad_t;
 #define BUFID_PAD_T buf_pad_t
+*/
 
 typedef struct {
     char s[64];
