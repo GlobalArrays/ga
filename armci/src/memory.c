@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.23 2001-03-22 21:46:15 d3h325 Exp $ */
+/* $Id: memory.c,v 1.24 2002-01-25 22:51:23 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -8,7 +8,7 @@
 #define USE_MALLOC 
 #define USE_SHMEM_
 
-#if defined(SYSV) || defined(WIN32)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP)
 #include "shmem.h"
 
 #if !(defined(LAPI)||defined(QUADRICS)||defined(SERVER_THREAD)) ||defined(USE_SHMEM)
@@ -185,7 +185,7 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
       armci_exchange_address(ptr_arr, armci_nproc);
 
       /* overwrite entries for local cluster node with ptr_ref_arr */
-      bcopy( ptr_ref_arr, ptr_arr + armci_master, nproc*sizeof(void*)); 
+      bcopy((char*)ptr_ref_arr, (char*)(ptr_arr+armci_master), nproc*sizeof(void*)); 
 
       /* armci_print_ptr(ptr_arr, bytes, size, myptr, off);*/
 
@@ -240,7 +240,7 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
       ptr = malloc(bytes);
       if(bytes) if(!ptr) armci_die("armci_malloc:malloc failed",bytes);
 
-      bzero(ptr_arr,armci_nproc*sizeof(void*));
+      bzero((char*)ptr_arr,armci_nproc*sizeof(void*));
       ptr_arr[armci_me] = ptr;
 
       /* now combine individual addresses into a single array */
@@ -259,7 +259,7 @@ int ARMCI_Free(void *ptr)
 {
     if(!ptr)return 1;
 
-#if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
 #   ifdef USE_MALLOC
       if(armci_nproc > 1)
 #   endif
@@ -286,7 +286,7 @@ int ARMCI_Uses_shm()
 {
     int uses=0;
 
-#if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
 #   ifdef RMA_NEEDS_SHMEM
       if(armci_nproc >1) uses= 1; /* always unless serial mode */
 #   else
