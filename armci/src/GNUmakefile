@@ -69,8 +69,8 @@ else
      OBJ += spawn.o dataserv.o sockets.o request.o
      LIB_DEFINES += -DDATA_SERVER -DSOCKETS
      # to use pthread version uncomment the following two lines
-     #LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT
-     #EXTRA_LIBS += -lpthread
+     # LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT
+     # EXTRA_LIBS += -lpthread
   endif
 endif
 
