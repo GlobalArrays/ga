@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.14 2003-02-18 00:29:42 manoj Exp $*/
+/*$Id: matmul.c,v 1.15 2003-03-31 21:06:43 d3g293 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -85,7 +85,7 @@ void ga_matmul_patch(transa, transb, alpha, beta,
    DoubleComplex *a, *b, *c;
 #endif
 Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2, dims[2], rank;
-Integer me= ga_nodeid_(), nproc=ga_nnodes_();
+Integer me= ga_nodeid_(), nproc;
 Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim;
@@ -95,13 +95,13 @@ DoubleComplex ONE, ZERO;
 DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
 int need_scaling=1;
+Integer ZERO_I = 0, inode, iproc;
 float ONE_F = 1.0, ZERO_F = 0.0;
 double ZERO_D = 0.0;
 Integer get_new_B;
 int local_sync_begin,local_sync_end;
- int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
+int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 
- 
    ONE.real =1.; ZERO.real =0.;
    ONE.imag =0.; ZERO.imag =0.;
 
@@ -110,6 +110,20 @@ int local_sync_begin,local_sync_end;
    if(local_sync_begin)ga_sync_();
 
    GA_PUSH_NAME("ga_matmul_patch");
+
+   /* Check to make sure all global arrays are of the same type */
+   if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
+        ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
+     ga_error_("Processors do not match for all arrays",ga_nnodes_());
+   }
+   if (ga_is_mirrored_(g_a)) {
+     inode = ga_cluster_nodeid_();
+     nproc = ga_cluster_nprocs_(&inode);
+     iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
+   } else {
+     nproc = ga_nnodes_();
+     iproc = me;
+   }
 
    nga_inquire_internal_(g_a, &atype, &rank, dims); 
    VECTORCHECK(rank, dims, adim1, adim2, *ailo, *aihi, *ajlo, *ajhi);
@@ -217,7 +231,7 @@ int local_sync_begin,local_sync_end;
 	 
 	 for(ilo = 0; ilo < m; ilo += Ichunk){ /*loop through rows of g_c patch */
 	   
-	   if(ijk%nproc == me){
+	   if(ijk%nproc == iproc){
 
 	     ihi = MIN(m-1, ilo+Ichunk-1);
 	     idim= cdim = ihi - ilo +1;
@@ -404,7 +418,7 @@ void nga_matmul_patch(char *transa, char *transb, void *alpha, void *beta,
    DoubleComplex *a, *b, *c;
 #endif
 Integer atype, btype, ctype, adim1, adim2, bdim1, bdim2, cdim1, cdim2;
-Integer me= ga_nodeid_(), nproc=ga_nnodes_();
+Integer me= ga_nodeid_(), nproc, inode, iproc;
 Integer i, ijk = 0, i0, i1, j0, j1;
 Integer ilo, ihi, idim, jlo, jhi, jdim, klo, khi, kdim;
 Integer n, m, k, adim, bdim, cdim, arank, brank, crank;
@@ -418,6 +432,7 @@ Integer *tmplo = adims, *tmphi =bdims;
 DoubleComplex ONE, ZERO;
 float ONE_F = 1.0, ZERO_F = 0.0;
 double ZERO_D = 0.0;
+Integer ZERO_I;
 Integer get_new_B;
 DoublePrecision chunk_cube;
 Integer min_tasks = 10, max_chunk;
@@ -432,6 +447,20 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
    if(local_sync_begin)ga_sync_();
 
    GA_PUSH_NAME("nga_matmul_patch");
+
+   /* Check to make sure all global arrays are of the same type */
+   if (!(ga_is_mirrored_(g_a) == ga_is_mirrored_(g_b) &&
+        ga_is_mirrored_(g_a) == ga_is_mirrored_(g_c))) {
+     ga_error_("Processors do not match for all arrays",ga_nnodes_());
+   }
+   if (ga_is_mirrored_(g_a)) {
+     inode = ga_cluster_nodeid_();
+     nproc = ga_cluster_nprocs_(&inode);
+     iproc = me - ga_cluster_procid_(&inode, &ZERO_I);
+   } else {
+     nproc = ga_nnodes_();
+     iproc = me;
+   }
 
    nga_inquire_internal_(g_a, &atype, &arank, adims);
    nga_inquire_internal_(g_b, &btype, &brank, bdims);
@@ -536,7 +565,7 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 	 
 	 for(ilo = 0; ilo < m; ilo += Ichunk){ /*loop through rows of g_c patch */
 	   
-	   if(ijk%nproc == me){
+	   if(ijk%nproc == iproc){
 	     ihi = MIN(m-1, ilo+Ichunk-1);
 	     idim= cdim = ihi - ilo +1;
 	     
