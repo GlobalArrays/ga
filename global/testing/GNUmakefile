@@ -1,14 +1,16 @@
-# Global Array library (shared and distributed memory version)
+# Makefile for Global Array library test programs
 #
 #      "make test.x"      to create a test program for GA 
 #      "make patch.x"     to create a test program for GA patch operations
+#      "make ndim.x"      to create a Fortran test program for n-dim GA
 #      "make testsolve.x" to create a test program for linear equation solver 
 #                         based on LU factorization
 #      "make testeig.x"   to create a test program for GA eigensolver,
 #                         matrix multiply, and symmetrization 
-#      "make perform.x"   to create a program testing performance of GA
+#      "make perf.x"      to create a program testing performance of GA
 #                         primitives: get, put & accumulate,
 #      "make testc.x"     to create a C test program for GA
+#      "make ntestc.x"    to create a C test program for n-dim GA
 #      "make ga-mpi.x"    to create a C test program for GA that demonstrates
 #                         the interface to MPI
 #      "make clean"       clean

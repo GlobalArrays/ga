@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.27 1999-07-30 01:06:34 d3h325 Exp $
+c $Id: test.F,v 1.28 1999-11-11 00:11:43 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-11
@@ -582,6 +582,7 @@ c          if(v(loop)  .ne. w(loop))then
              write(6,*)me,' scatter ', ilo,',',jlo,',',w(loop) 
      &             ,' ', 1d0 *(ilo+jlo) 
              call ffflush(6)
+             call ga_error('... exiting ',0)
            endif
          enddo 
        endif

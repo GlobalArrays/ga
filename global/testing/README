@@ -1,18 +1,44 @@
-Note: On workstations, mpich is used.
+                   The GA Test Programs
 
-Edit the file ngatest.m4:
+These programs can be built after the GA library is compiled.
+To build C and Fortran programs type:
 
-  1 test what kind of data type:
+"make test.x"      to create a test program for GA
+"make patch.x"     to create a test program for GA patch operations
+"make testsolve.x" to create a test program for linear equation solver
+                   based on LU factorization
+"make testeig.x"   to create a test program for GA eigensolver,
+                   matrix multiply, and symmetrization
+"make ndim.x"      to create a Fortran test program for n-dim GA
+"make perf.x"      to create a program testing performance of GA
+                   primitives: get, put & accumulate,
+"make testc.x"     to create a C test program for GA
+"make ntestc.x"    to create a C test program for n-dim GA
+"make ga-mpi.x"    to create a C test program for GA that demonstrates
+                   the interface to MPI
+
+
+                   M4-based N-dim test program
+
+The following are special steps required to configure and build source file 
+for testing of n-dim global arrays based on the M4 source files. 
+The full functionality test might take several hours to complete. Therefore
+you might want to limit the test to a subset of functionality supported.
+The configuration steps are:
+
+Edit the file ngatest.m4 (this step is optional if you want to test all):
+
+  1. specify data type:
 	To test Integer, set "m4_test_int" to "yes", otherwise, "no"
 	To test Double Precision, set "m4_test_dbl" to "yes", otherwise, "no"
 	To test Double Complex, set "m4_test_dcpl" to "yes", otherwise, "no"
 
-  2 test from which dimension to which dimension:
+  2. specify range of dimensions to test (upt 7 supported in GA Fortran API):
 	Example: to test from 2 to 4 dimensions,
 		set "m4_dim_from" to 2 and "m4_dim_to" to 4
 
-  3 test which functions:
-	Functions to be tested include:
+  3. specify functions to test:
+	Functions that can be tested include:
 	    ga_fill		Set "m4_test_GA_FILL" to "yes" to test
 	    nga_get		Set "m4_test_NGA_GET" to "yes" to test
 	    nga_put		Set "m4_test_NGA_PUT" to "yes" to test
@@ -33,7 +59,7 @@ Edit the file ngatest.m4:
 
 To compile, type "make ngatest.x"
 
-To run the test, 
+To run the test with MPI, 
     On workstations, type "ngatest.x -np 4"
 
 --------
