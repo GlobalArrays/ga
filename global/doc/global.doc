@@ -54,9 +54,8 @@ distribute to other US Government contractors.
 
       ga_initialize     ... initialize global array internal structures 
       ga_initialize_ltd ... initialize global arrays and set memory usage limits
-      ga_create         ... create an array (integer or double precision)
+      ga_create         ... create an array
       ga_create_irreg   ... create an array with irregular distribution
-                            (integer or double precision)
       ga_duplicate      ... create an array following a reference array 
       ga_destroy        ... destroy an array
       ga_terminate      ... destroy all existing arrays and delete internal
@@ -76,20 +75,22 @@ distribute to other US Government contractors.
                             (patch version)
       ga_dadd_patch     ... scale and add two arrays to put result in a third
                             (patch version)
-      ga_copy_patch     ... copy one array into another (patch version)
       ga_ifill_patch    ... fill a patch of array with value (integer version)
-      ga_dfill_patch    ... fill a patch of array with value (DP version)
+      ga_dfill_patch    ... fill a patch of array with value (double version)
       ga_matmul_patch   ... matrix multiply (patch version)
       ga_diag           ... real symmetric generalized eigensolver 
+                            (sequential version also exists)
       ga_diag_reuse     ... a version of ga_diag for repeated use    
       ga_diag_std       ... standard real symmetric eigensolver 
+                            (sequential version also exists)
       ga_symmetrize     ... symmetrize a matrix
       ga_transpose      ... transpose a matrix
       ga_lu_solve       ... solve system of linear equations based on LU 
-                            factorization 
+                            factorization (sequential version also exists) 
       ga_print_patch    ... print a patch of an array to the screen 
       ga_print          ... print an entire array to the screen
       ga_copy_patch     ... copy data from a patch of one global array
+                            into another array
       ga_compare_distr  ... compare distributions of two global arrays
 
    b) Operations that may be invoked by any process in true MIMD style
@@ -103,7 +104,7 @@ distribute to other US Government contractors.
       ga_read_inc       ... atomically read and increment the value of
                             a single array element (integers only)
       ga_locate         ... determine which process 'holds' an array element
-      ga_locate_region  ... determine which process 'holds' an array patch 
+      ga_locate_region  ... determine which process 'holds' an array section
       ga_error          ... print error message and terminate the program 
       ga_summarize      ... print information about already allocated arrays
 
@@ -121,9 +122,9 @@ distribute to other US Government contractors.
 
       ga_nodeid         ... find requesting compute process message id
       ga_nnodes         ... find number of compute processes
-      ga_dgop           ... equivalent to TCGMSG dgop for compute processes
-      ga_igop           ... equivalent to TCGMSG igop for compute processes
-      ga_brdcst         ... equivalent to TCGMSG brdcst for compute processes
+      ga_dgop           ... equivalent to TCGMSG dgop 
+      ga_igop           ... equivalent to TCGMSG igop
+      ga_brdcst         ... equivalent to TCGMSG brdcst
 
    e) Other utility operations
 
@@ -206,9 +207,8 @@ distribute to other US Government contractors.
   and it basically just goes to the OS and gets stack_size+heap_size
   elements of size type.  On distributed memory platforms, if you
   allocate a global array of size N elements, you need to ensure that
-  the call to ma_initialize gets at least N/(no. of data server
-  processes) elements per process (in the data server model only the
-  highest numbered half of the processes need do this).
+  the call to ma_init gets at least N/(no. of GA processes) elements
+  per process. 
 
 
   Prototypes of GA Subroutines and Functions
@@ -218,18 +218,16 @@ distribute to other US Government contractors.
 
       subroutine ga_initialize()
 
-      allocate and initialize internal data structures for global arrays
-
+      Allocate and initialize internal data structures for global arrays.
 
       -------------------------------------------------------------------
       subroutine ga_initialize_ltd(limit)
       integer limit  - amount of memory in bytes per process [input]
 
-      allocate and initialize internal data structures for global arrays
-      and set limit for memory used in global arrays
+      Allocate and initialize internal data structures for global arrays
+      and set limit for memory used in global arrays.
 
       limit < 0 means "unlimited memory usage" 
-
 
       -------------------------------------------------------------------
       logical function ga_create(type, dim1, dim2, array_name,
@@ -260,6 +258,9 @@ distribute to other US Government contractors.
  
        g_a           - integer handle for future references [output]
 
+
+      Creates an array.
+
       -------------------------------------------------------------------
       logical function ga_create_irreg(type, dim1, dim2, array_name,
      $                                 map1, nblock1, map2, nblock2,  g_a)
@@ -283,6 +284,8 @@ distribute to other US Government contractors.
  
        g_a           - integer handle for future references [output]
 
+      Creates an array by following the user-specified distribution.
+
       -------------------------------------------------------------------
       logical function ga_duplicate(g_a, g_b, array_name)
       integer *g_a, *g_b;
@@ -291,6 +294,9 @@ distribute to other US Government contractors.
       array_name    - a character string [input]
       g_a           - Integer handle for reference array [input]
       g_b           - Integer handle for new array [output]
+
+      Creates a new array by applying all the properties of another
+      existing array.
 
       -------------------------------------------------------------------
       logical function ga_destroy(g_a)
@@ -366,7 +372,6 @@ distribute to other US Government contractors.
 
       Valid values for transpose arguments:  'n', 'N', 't', 'T'.
 
-
       -------------------------------------------------------------------
       subroutine ga_dscal(g_a, s)
  
@@ -434,7 +439,7 @@ distribute to other US Government contractors.
       logical verbose                     [input]! If true print 
                                                    distribution info
 
-      Prints info about allocated arrays
+      Prints info about allocated arrays.
 
       -------------------------------------------------------------------
       subroutine ga_symmetrize(g_a)
@@ -454,7 +459,7 @@ distribute to other US Government contractors.
       Solve the generalized eigen-value problem returning
       all eigen-vectors and values in ascending order.
  
-      The input matrices are not destroyed.
+      The input matrices are not overwritten or destroyed.
 
       -------------------------------------------------------------------
       subroutine ga_diag_reuse(control, g_a, g_s, g_v, eval)
@@ -489,9 +494,9 @@ distribute to other US Government contractors.
       double precision eval(*)  [output]  ! Local array to return evals
 
       Solve the standard (non-generalized) eigenvalue problem returning
-      all eigenvectors and values in ascending order.
+      all eigenvectors and values in the ascending order.
 
-      The input matrix is not destroyed.
+      The input matrix is neither overwritten nor destroyed.
 
       -------------------------------------------------------------------
       subroutine ga_lu_solve(trans, g_a, g_b)
@@ -544,20 +549,20 @@ distribute to other US Government contractors.
  
       integer g_a, g_b                    [input]
 
-      Copies a element-wise into b.  The arrays (integer or double) must
-      be the same shape and identically aligned.
+      Copies g_a element-wise into g_b.  The arrays (integer or double)
+      must be the same shape and identically aligned.
 
       -------------------------------------------------------------------
-      subroutine ga_copy_patch(trans, g_a, t_a, ailo, aihi, ajlo, ajhi,
+      subroutine ga_copy_patch(trans, g_a, ailo, aihi, ajlo, ajhi,
                                       g_b, bilo, bihi, bjlo, bjhi)
  
-      character t_a                       [input] transpose operator
+      character trans                     [input] transpose operator
       integer g_a, g_b                    [input]
       integer ailo, aihi, ajlo, ajhi      [input] g_a patch coordinates
       integer bilo, bihi, bjlo, bjhi      [input] g_b patch coordinates
 
-      Copies a element-wise into b.  The patches of arrays (double) must
-      have the same number of elements. 
+      Copies elements in a patch of one array into another one. The
+      patches of arrays must have the same number of elements.
 
       -------------------------------------------------------------------
       subroutine ga_get(g_a, ilo, ihi, jlo, jhi, buf, ld)
@@ -602,6 +607,7 @@ distribute to other US Government contractors.
 
       Performs the equivalent of the following Fortran-90.  Array
       bounds are always checked and only double precision is supported.
+      The operation is atomic.
 
       dimension g_a(1:dim1,1:dim2)
       dimension buf(1:ld, 1:*)
@@ -622,11 +628,6 @@ distribute to other US Government contractors.
        If proc doesn't 'have' any data the range is returned as
        [0, -1] for the i and [0,-1] for the j dimensions.
 
-       Note for the data server implementation: the data is actually
-       local to the data server process and not the compute processes.
-       Thus, you probably do not want to use this routine unless U
-       understand what is going on in some detail.
-
       -------------------------------------------------------------------
       logical function ga_compare_distr(g_a, g_b)
 
@@ -646,7 +647,7 @@ distribute to other US Government contractors.
       Provides access to the specified patch of array. Returns leading
       dimension ld and and MA-like index for the data. This routine is
       intended for writing new GA operations. Call to ga_access should
-      normally follow call to ga_distribution that returns coordinates
+      normally follow a call to ga_distribution that returns coordinates
       of the patch associated with a processor. You need to make sure
       that coordinates of the patch are valid (test values returned
       from ga_distribution).
@@ -732,9 +733,9 @@ distribute to other US Government contractors.
       double precision v(n)               [input]
       integer i(n), j(n), n               [input]
 
-      Scatters the array elements into the array.  The contents of the
-      input arrays (v, i, j) are preserved, but their contents might be
-      (consistently) shuffled on returned.
+      Scatters the array (integer or double) elements into the array.
+      The contents of the input arrays (v, i, j) are preserved, but
+      their contents might be (consistently) shuffled on return.
 
               do k = 1, nv
                  a(i(k),j(k)) = v(k)
@@ -747,8 +748,8 @@ distribute to other US Government contractors.
       double precision v(n)               [output]
       integer i(n), j(n), n               [input]
 
-      Gathers the array elements from the array. The contents of the
-      input arrays (v, i, j) are preserved.
+      Gathers the array elements  (integer or double) from the array.
+      The contents of the input arrays (v, i, j) are preserved.
 
               do k = 1, nv
                  v(k) = a(i(k),j(k))
@@ -761,7 +762,8 @@ distribute to other US Government contractors.
 
       Called in case of an error. Print an error message + an integer
       value that is intended to be the error code. Releases some system
-      resources.
+      resources. This is the recomended way of aborting the program
+      execution.
 
       -------------------------------------------------------------------
       logical function ga_locate(g_a, i, j, owner)
@@ -799,7 +801,7 @@ distribute to other US Government contractors.
       integer dim1                       [output]
       integer dim2                       [output]
 
-      Returns type, and dimensions of array
+      Returns type and dimensions of array.
 
       -------------------------------------------------------------------
       subroutine ga_inquire_name(g_a, array_name)
@@ -807,13 +809,13 @@ distribute to other US Government contractors.
       integer g_a                         [input]
       character*(*) array_name           [output]
 
-      Returns name of array
+      Returns name of array.
 
       -------------------------------------------------------------------
       integer function ga_inquire_memory()
 
-      returns amount of memory (in bytes) used in allocated global arrays
-      on the calling processor
+      Returns amount of memory (in bytes) used in allocated global arrays
+      on the calling processor.
 
       -------------------------------------------------------------------
       integer function ga_memory_avail()
@@ -824,8 +826,9 @@ distribute to other US Government contractors.
       -------------------------------------------------------------------
       logical function ga_uses_ma()
 
-      returns .true. if memory in global arrays comes from memory allocator
-      (MA).  .false. might mean that System V shared memory is used.
+      Returns .true. if memory in global arrays comes from memory allocator
+      (MA). .false. means that memory comes from another source, for example
+      System V shared memory is used.
 
       -------------------------------------------------------------------
       logical function ga_memory_limited()
@@ -857,7 +860,7 @@ distribute to other US Government contractors.
       character *(*) string               [input]
  
       Check that the global array handle g_a is valid ... if not
-      call ga_error with the string provided and some more info
+      call ga_error with the string provided and some more info.
  
       -------------------------------------------------------------------
       integer function ga_nodeid()
@@ -865,11 +868,16 @@ distribute to other US Government contractors.
       Returns the GA process id (0, ..., ga_nnodes()-1) of the
       requesting compute process.
 
+      NOTE: the GA process id might not be the same as message-passing 
+      node id.
+
       -------------------------------------------------------------------
       integer function ga_nnodes()
 
-      Returns the number of GA compute processes.
+      Returns the number of GA compute (user) processes.
 
+      NOTE: the number GA processes might not be the same as the number
+      message-passing nodes.
 
 
    C language interface 
@@ -881,7 +889,7 @@ distribute to other US Government contractors.
    require a character (string) argument have both C (no underscore
    suffix) and Fortran (NOT TO BE USED BY C PROGRAMS) versions, for
    example, ga_error, ga_check_handle or ga_inquire_name. The reason
-   for having two separate versions was to avoid sometimes painful
+   for having two separate versions is to avoid sometimes painful
    Fortran to C character string conversion.
 
    GA arguments are passed by pointers. For an example on how
@@ -897,7 +905,8 @@ distribute to other US Government contractors.
    ga_access returns an index that is used to reference the data with
    respect to the data base arrays. This index corresponds to the
    Fortran addressing convention so to use it in C, you need to
-   decrement it by one.
+   decrement it by one, for example DBL_MB[--index] provides value
+   of the first element.
 
    GA routines operate on DoublePrecision and Integer data. 
    Identifiers for these data types (MT_F_DBL and MT_F_INT)
