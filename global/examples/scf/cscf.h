@@ -59,7 +59,7 @@ c    g_fock:    global array used to store fock matrix
 c    g_schwarz: global array used to store schwarz matrix
 c    g_work:    global array used to store work matrix
 c
-      parameter (ichunk = 10)
+      parameter (ichunk = 30)
       common /g_arrays/
      $     g_counter, g_dens, g_fock, g_schwarz, g_work
       integer g_counter, g_dens, g_fock, g_schwarz, g_work

@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.3 2005-04-01 18:19:49 d3g293 Exp $
+C$Id: scf.F,v 1.4 2005-04-01 19:10:59 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -73,7 +73,6 @@ c
 c     diagonalize the fock matrix ...
 c     
             call diagon(fock, orbs, evals, work, tester, iter)
-      call flush(6)
             tdiag = tdiag + timer()
 c     
 c     make the new density matrix in work from orbitals in orbs,
@@ -336,7 +335,7 @@ c
           endif
         end do
       end do
-      call nga_put(g_dens,lo,hi,work(lo(1),lo(2)),maxnbfn)
+      call nga_put(g_work,lo,hi,work(lo(1),lo(2)),maxnbfn)
 c
       end
 c
@@ -489,8 +488,11 @@ c
       dimension work(maxnbfn,maxnbfn)
       double precision f_ij(ichunk,ichunk),d_kl(ichunk,ichunk)
       double precision f_ik(ichunk,ichunk),d_jl(ichunk,ichunk)
+      double precision s_ij(ichunk,ichunk),s_kl(ichunk,ichunk)
+      double precision xxx
       integer nproc,lo(4),hi(4),ld,ich
       integer lo_ik(2),hi_ik(2),lo_jl(2),hi_jl(2)
+      integer i,j,k,l,iloc,jloc,kloc,lloc,it,jt,kt,lt
       logical dotask, next_4chunk
 c     
 c     add in the two-electron contribution to the fock matrix
@@ -537,47 +539,67 @@ c     wait for all processes to finish work
 c
       junk = nxtask(-nproc)
 c
-#if 0
       call ga_zero(g_counter)
       ld = maxnbfn
       ich = ichunk
       dotask = next_4chunk(lo,hi,it,jt,kt,lt)
       do while (dotask)
-        if (it.ge.jt) then
-c          lo_ik(1) = lo(1)
-c          lo_ik(2) = lo(3)
-c          hi_ik(1) = hi(1)
-c          hi_ik(2) = hi(3)
-          lo_jl(1) = lo(2)
-          lo_jl(2) = lo(4)
-          hi_jl(1) = hi(2)
-          hi_jl(2) = hi(4)
-          call nga_get(g_schwarz,lo,hi,work(lo(1),lo(2)),ld)
-          call nga_get(g_schwarz,lo(3),hi(3),work(lo(3),lo(4)),ld)
-          call nga_get(g_dens,lo(3),hi(3),d_kl,ich)
-          call nga_get(g_dens,lo_jl,hi_jl,d_jl,ich)
-          call clean_chunk(f_ij)
+c        lo_ik(1) = lo(1)
+c        lo_ik(2) = lo(3)
+c        hi_ik(1) = hi(1)
+c        hi_ik(2) = hi(3)
+        lo_jl(1) = lo(2)
+        lo_jl(2) = lo(4)
+        hi_jl(1) = hi(2)
+        hi_jl(2) = hi(4)
+        call nga_get(g_schwarz,lo,hi,s_ij,ich)
+        call nga_get(g_schwarz,lo(3),hi(3),s_kl,ich)
+        call nga_get(g_dens,lo(3),hi(3),d_kl,ich)
+        call nga_get(g_dens,lo_jl,hi_jl,d_jl,ich)
+        call clean_chunk(f_ij)
 c          call clean_chunk(f_ik)
-          do i = lo(1), hi(1)
-            do j = lo(2), hi(2)
-              if (.not.(work(i,j)*schwmax .lt. tol2e)) then
-                do k = lo(3), hi(3)
-                  do l = lo(4), hi(4)
-                    if (.not.(work(i,j)*work(k,l).lt.tol2e)) then
-                      call g(gg, i, j, k, l)
-                      f_ij(i,j) = f_ij(i,j) + gg*d_kl(k,l)
-                      call g(gg, i, k, j, l)
-                      f_ij(i,j) = f_ij(i,j) - 0.5d00*gg*d_jl(j,l)
-                    endif
-                  end do
+#if 1
+        do i = lo(1), hi(1)
+          iloc = i-lo(1) + 1
+          do j = lo(2), hi(2)
+            jloc = j-lo(2) + 1
+            if (.not.(s_ij(iloc,jloc)*schwmax .lt. tol2e)) then
+              do k = lo(3), hi(3)
+                kloc = k-lo(3) + 1
+                do l = lo(4), hi(4)
+                  lloc = l-lo(4) + 1
+                  if (.not.(s_ij(iloc,jloc)*s_kl(kloc,lloc).lt.tol2e))
+     +              then
+                    call g(gg, i, j, k, l)
+                    f_ij(iloc,jloc) = f_ij(iloc,jloc)
+     +                              + gg*d_kl(kloc,lloc)
+                    call g(gg, i, k, j, l)
+                    f_ij(iloc,jloc) = f_ij(iloc,jloc)
+     +                              - 0.5d00*gg*d_jl(jloc,lloc)
+                  endif
                 end do
-              endif
-            end do
+              end do
+            endif
           end do
-        endif
+        end do
+#endif
+#if 0
+        start = tcgtime()
+        delta = 0.0d00
+        do while(delta.lt.1.0d00)
+          do iii = 1, 1000
+            xxx = exp(-dble(iii)/100.0d00)
+          end do
+          delta = tcgtime() - start
+        end do
+#endif
+c        call sleep(1)
+        write(6,*) lo(1),hi(1)
+        write(6,*) lo(2),hi(2)
+        write(6,*)
+        call nga_acc(g_fock,lo,hi,f_ij,ich)
         dotask = next_4chunk(lo,hi,it,jt,kt,lt)
       end do
-#endif
 c
       end
       subroutine damp(fac, dens, work)
@@ -592,6 +614,7 @@ c
       do 10 i = 1, nnbfn
          dens(i) = fac*dens(i) + ofac*work(i)
 10    continue
+      call ga_add(fac,g_dens,ofac,g_work,g_dens)
 c
       end
       subroutine prnout(iter, energy, deltad, tester)
@@ -617,6 +640,7 @@ c
 #include "global.fh"
 #include "tcgmsg.fh"
       dimension dens(nnbfn), work(nnbfn)
+      integer me, lo(2), hi(2), ld, d_idx, w_idx
 c
 c     compute largest change in density matrix elements
 c
@@ -626,7 +650,33 @@ c
 10    continue
       dendif = denmax
 c
+      me = ga_nodeid()
+      call nga_distribution(g_dens, me, lo, hi)
+      call nga_access(g_dens, lo, hi, d_idx, ld)
+      call nga_access(g_work, lo, hi, w_idx, ld)
+      call find_max_diff(dbl_mb(d_idx),dbl_mb(w_idx),ld,ld,denmax)
+c      dendif = denmax
+c
       end
+      subroutine find_max_diff(a, b, ld1, ld2, maxdiff)
+      implicit double precision (a-h, o-z)
+      include 'cscf.h'
+#include "mafdecls.fh"
+#include "global.fh"
+#include "tcgmsg.fh"
+      integer ld1, ld2
+      double precision a(ld1,ld2), b(ld1,ld2), maxdiff, xdiff
+      maxdiff = 0.0d00
+      do i = 1, ld1
+        do j = 1, ld2
+          xdiff = abs(a(i,j)-b(i,j))
+          if (xdiff.gt.maxdiff) maxdiff = xdiff
+        end do
+      end do
+      call ga_dgop(1,maxdiff,1,'max')
+      return
+      end
+c
       subroutine prnfin(energy, evals, orbs)
       implicit double precision (a-h, o-z)
       include 'cscf.h'
