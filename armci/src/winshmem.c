@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.15 2004-07-22 20:49:12 manoj Exp $ */
+/* $Id: winshmem.c,v 1.16 2004-07-23 20:10:14 manoj Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -503,4 +503,10 @@ char* armci_shmem_reg_ptr(int i)
 {
      if(i<0 || i>= MAX_REGIONS)armci_die("armci_shmem_reg_ptr: bad i",i); 
      return region_list[i].addr;
+}
+
+int armci_get_shmem_info(char *addrp,  int* shmid, long *shmoffset,
+                         size_t *shmsize)
+{
+    /* manoj:*/
 }
