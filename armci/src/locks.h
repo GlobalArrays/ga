@@ -146,6 +146,9 @@ extern void armcill_unlock(int m, int proc);
 
 #elif defined(CRAY_T3E) || defined(QUADRICS) || defined(__crayx1)
 #  include <limits.h>
+#  ifdef CRAY
+#    include <mpp/shmem.h>
+#  endif
 #if defined(DECOSF) || defined(LINUX64) || defined(__crayx1)
 #  define  _INT_MIN_64 (LONG_MAX-1)
 #endif

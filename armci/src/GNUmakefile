@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.84 2004-08-10 06:23:57 vinod Exp $
+#$Id: GNUmakefile,v 1.85 2004-09-08 01:44:41 manoj Exp $
          FOPT = -O
          COPT = -O
 
@@ -173,17 +173,17 @@ ipctest.x: $(FULL_LIBRARY_PATH)
 	$(CC) $(CFLAGS) $(MP_DEFINES) ipctest.c -o $@ $^ $(LIBS)
 
 
-$(FULL_LIBRARY_PATH)(winshmem.o):    ./shmem.h ./kr_malloc.h 
+$(FULL_LIBRARY_PATH)(winshmem.o):    ./shmem.h ./kr_malloc.h ./armcip.h
 $(FULL_LIBRARY_PATH)(vector.o):      ./memlock.h ./copy.h ./armcip.h ./acc.h 
 $(FULL_LIBRARY_PATH)(strided.o):     ./memlock.h ./copy.h ./armcip.h ./acc.h 
-$(FULL_LIBRARY_PATH)(shmem.o):       ./shmem.h ./kr_malloc.h 
+$(FULL_LIBRARY_PATH)(shmem.o):       ./shmem.h ./kr_malloc.h ./shmlimit.h ./message.h ./armcip.h
 $(FULL_LIBRARY_PATH)(semaphores.o):  ./semaphores.h 
 $(FULL_LIBRARY_PATH)(rmw.o): 	./locks.h ./copy.h ./armcip.h 
-$(FULL_LIBRARY_PATH)(request.o):     ./request.h ./memlock.h ./copy.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(request.o):     ./request.h ./memlock.h ./copy.h ./armcip.h ./shmem.h
 $(FULL_LIBRARY_PATH)(pack.o):        ./armcip.h ./request.h
 $(FULL_LIBRARY_PATH)(mutex.o):       ./request.h ./copy.h ./armcip.h 
 $(FULL_LIBRARY_PATH)(message.o):     ./message.h ./armcip.h  ./copy.h
-$(FULL_LIBRARY_PATH)(memory.o):      ./shmem.h ./message.h ./armcip.h 
+$(FULL_LIBRARY_PATH)(memory.o):      ./shmem.h ./message.h ./armcip.h ./kr_malloc.h
 $(FULL_LIBRARY_PATH)(memlock.o):     ./memlock.h ./locks.h ./copy.h ./armcip.h 
 $(FULL_LIBRARY_PATH)(locks.o):       ./locks.h ./armcip.h 
 $(FULL_LIBRARY_PATH)(lapi.o):        ./copy.h ./armcip.h ./lapidefs.h
@@ -194,6 +194,7 @@ $(FULL_LIBRARY_PATH)(dataserv.o):    ./sockets.h ./request.h ./message.h ./memlo
 $(FULL_LIBRARY_PATH)(dataserv-gm.o): ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
 $(FULL_LIBRARY_PATH)(clusterinfo.o): ./message.h ./armcip.h 
 $(FULL_LIBRARY_PATH)(armci.o):       ./signaltrap.h ./shmem.h ./memlock.h ./locks.h ./lapidefs.h ./copy.h 
+$(FULL_LIBRARY_PATH)(kr_malloc.o): ./kr_malloc.h ./armcip.h ./shmem.h ./locks.h
 
 locks.h: semaphores.h
 armcip.h: message.h lapidefs.h memlock.h
