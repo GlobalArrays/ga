@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.1 1996-08-29 19:34:20 d3h325 Exp $
+#$Id: makefile,v 1.2 1996-08-30 00:58:39 vg038 Exp $
 
 # Tiny makefile wrapper
 
@@ -10,8 +10,9 @@ export LIBDIR CNFDIR
 dra_stamp:	include_stamp 
 	$(MAKE) -f Makefile TARGET=$(TARGET)
 
-include_stamp:	dra.fh
+include_stamp:	dra.fh file.modes.h
 	cp dra.fh  $(INCDIR) 
+	cp file.modes.h  $(INCDIR) 
 	touch include_stamp
 
 update_archive:
