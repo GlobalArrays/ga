@@ -287,7 +287,7 @@ extern logical nga_update_ghost_dir(Integer *g_a, Integer *idim,
 extern void ga_merge_mirrored(Integer *g_a);
 extern void ga_fast_merge_mirrored(Integer *g_a);
 extern int ga_is_mirrored(Integer *g_a);
-extern int nga_num_shmem_seg(Integer *g_a);
+extern int nga_num_mirrored_seg(Integer *g_a);
 extern void nga_merge_distr_patch(Integer *g_a, Integer *alo, Integer *ahi,
                                   Integer *g_b, Integer *blo, Integer *bhi);
 

@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.53 2003-09-23 07:16:28 manoj Exp $ */
+/* $Id: base.c,v 1.54 2003-10-02 17:41:53 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2047,11 +2047,11 @@ extern double t_dgop, n_dgop, s_dgop;
 
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if(!GAinitialized) return;
+    print_ga_timing();
 
 #ifdef GA_USE_VAMPIR
     vampir_begin(GA_TERMINATE,__FILE__,__LINE__);
 #endif
-
     for (i=0;i<_max_global_array;i++){
           handle = i - GA_OFFSET ;
           if(GA[i].actv) ga_destroy_(&handle);
@@ -3026,7 +3026,7 @@ void FATR nga_merge_distr_patch_(Integer *g_a, Integer *alo, Integer *ahi,
 /*\ get number of distinct patches corresponding to a contiguous shared
  *  memory segment
 \*/
-Integer FATR nga_num_shmem_seg_(Integer *g_a)
+Integer FATR nga_num_mirrored_seg_(Integer *g_a)
 {
   Integer handle = *g_a + GA_OFFSET;
   Integer i, j, ndim, map_offset[MAXDIM];
@@ -3037,7 +3037,7 @@ Integer FATR nga_num_shmem_seg_(Integer *g_a)
   Integer istart = 0, nproc, inode;
   Integer ret = 0, icheck, np;
   if (!ga_is_mirrored_(g_a)) return ret;
-  GA_PUSH_NAME("nga_num_shmem_set");
+  GA_PUSH_NAME("nga_num_mirrored_seg");
   mapc = GA[handle].mapc;
   ndim = GA[handle].ndim;
   first = GA[handle].first;
@@ -3090,9 +3090,9 @@ Integer FATR nga_num_shmem_seg_(Integer *g_a)
 }
 
 /*\ Get patch corresponding to one of the blocks of data
- *  identified using nga_num_shmem_seg_
+ *  identified using nga_num_mirrored_seg_
 \*/
-void FATR nga_get_shmem_block_(Integer *g_a,
+void FATR nga_get_mirrored_block_(Integer *g_a,
                                Integer *npatch,
                                Integer *lo,
                                Integer *hi)
@@ -3113,7 +3113,7 @@ void FATR nga_get_shmem_block_(Integer *g_a,
     }
     return;
   }
-  GA_PUSH_NAME("nga_get_shmem_block");
+  GA_PUSH_NAME("nga_get_mirrored_block");
   mapc = GA[handle].mapc;
   ndim = GA[handle].ndim;
   first = GA[handle].first;

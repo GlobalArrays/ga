@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.62 2003-10-01 21:15:13 manoj Exp $ */
+/* $Id: capi.c,v 1.63 2003-10-02 17:41:53 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -379,19 +379,19 @@ int GA_Is_mirrored(int g_a)
     return (int)ga_is_mirrored_(&a);
 }
 
-int NGA_Num_shmem_seg(int g_a)
+int NGA_Num_mirrored_seg(int g_a)
 {
     Integer a=(Integer)g_a;
-    return (int)nga_num_shmem_seg_(&a);
+    return (int)nga_num_mirrored_seg_(&a);
 }
 
-void NGA_Get_shmem_block(int g_a, int nblock, int *lo, int *hi)
+void NGA_Get_mirrored_block(int g_a, int nblock, int *lo, int *hi)
 {
     Integer a=(Integer)g_a;
     Integer ndim = ga_ndim_(&a);
     Integer nn=(Integer)nblock;
 
-    nga_num_shmem_seg_(&a, &nn, _ga_alo, _ga_ahi);
+    nga_get_mirrored_block_(&a, &nn, _ga_alo, _ga_ahi);
 
     COPYINDEX_F2C(_ga_lo, lo, ndim);
     COPYINDEX_F2C(_ga_hi, hi, ndim);
