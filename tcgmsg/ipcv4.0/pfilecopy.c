@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pfilecopy.c,v 1.8 2004-04-01 02:04:57 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pfilecopy.c,v 1.9 2004-05-07 20:45:10 pollack Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -17,7 +17,7 @@
     defined(KSR)    || defined(DECOSF)
 extern void *malloc();
 #else
-extern char *malloc();
+extern void *malloc();
 #endif
 
 extern void free();
