@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.50 2003-03-08 18:45:27 vinod Exp $
+/* $Id: myrinet.c,v 1.51 2003-03-10 15:28:48 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -239,7 +239,6 @@ static int pin_in_block;   /* indicate pin memory in one large block or not */
 static int pin_in_segment; /* when pining segment by segment, serves as
                             * counter how many segments have been pinned so far
                             */
-
 int armci_pin_contigs(void *ptr, int bytes)
 {
     gm_status_t status;
@@ -247,7 +246,7 @@ int armci_pin_contigs(void *ptr, int bytes)
     port = serv_gm->rcv_port;
     status = gm_register_memory(port, (char *)ptr, bytes);
     if(status == GM_SUCCESS) return TRUE;
-    printf("%d:  pinning failed %d\n",armci_me, bytes);
+    printf("%d(s):  pinning failed %d\n",armci_me, bytes);
     fflush(stdout);
 
     return FALSE;
@@ -260,7 +259,7 @@ int armci_pin_contig(void *ptr, int bytes)
     else port = proc_gm->port;
     status = gm_register_memory(port, (char *)ptr, bytes);
     if(status == GM_SUCCESS) return TRUE;
-    printf("%d:  pinning failed %d\n",armci_me, bytes);
+    printf("%d:  pinning failed %d status=%d\n",armci_me, bytes,status);
     fflush(stdout);
 
     return FALSE;
@@ -446,16 +445,20 @@ int armci_gm_proc_mem_free()
     return TRUE;
 }
 
-/*seperate function required to init fence and notify arrays */
+/*seperate function required to init fence and verify arrays */
 /*should later be made a common function*/
 void armci_gm_fence_init()
 {
-
-    /*the fence array, has to be pinned for server to be able to put*/
     armci_gm_fence_arr = (ops_t**)malloc(armci_nproc*sizeof(ops_t*));
+    bzero(armci_gm_fence_arr,armci_nproc*sizeof(ops_t*));
+    armci_gm_fence_arr[armci_me]=(ops_t *)malloc(armci_nproc*sizeof(ops_t)); 
+    armci_exchange_address((void **)armci_gm_fence_arr,armci_nproc);
+    /*the fence array, has to be pinned for server to be able to put*/
+    /*armci_gm_fence_arr = (ops_t**)malloc(armci_nproc*sizeof(ops_t*));
     if(!armci_gm_fence_arr)armci_die("malloc failed for ARMCI fence array",0);
     if(ARMCI_Malloc((void**)armci_gm_fence_arr, armci_nclus*sizeof(ops_t)))
              armci_die("failed to allocate ARMCI fence array",0);
+    */
 
 
 /****************************verify-wait code*******************************/
@@ -468,8 +471,14 @@ void armci_gm_fence_init()
 
     verify_wait->recv_verify_arr = (int**)malloc(armci_nproc*sizeof(int*));
     if(!verify_wait->recv_verify_arr)armci_die("malloc fail-recv_verify_arr",0);
+    bzero(verify_wait->recv_verify_arr ,armci_nproc*sizeof(ops_t*));
+#if 0
+    verify_wait->recv_verify_arr[armci_me]=(int *)malloc(armci_nproc*sizeof(int));
+    armci_exchange_address((void **)verify_wait->recv_verify_arr ,armci_nproc);
+#else
     if(ARMCI_Malloc((void**)verify_wait->recv_verify_arr, armci_nproc*sizeof(int)))
              armci_die("failed to allocate ARMCI fence array",0);
+#endif
 /************************End verify-wait code*******************************/
 
 }
@@ -494,7 +503,6 @@ int armci_gm_client_init()
     status = gm_get_node_id(proc_gm->port, &(proc_gm->node_id));
     if(status != GM_SUCCESS)armci_die("Could not get GM node id",0);
     if(DEBUG_INIT_) printf("%d: node id is %d\n", armci_me, proc_gm->node_id);
- 
     /* broadcast my node id to other processes */
     proc_gm->node_map[armci_me] = proc_gm->node_id;
     armci_msg_igop(proc_gm->node_map, armci_nproc, "+");
@@ -983,7 +991,6 @@ static int armci_serv_pendingop_complete()
     return(armci_gm_serv_pendingop_context->done);
 }
 
-
 static int port_id=1,board_id=0;
 static int armci_get_free_port(int ports, int boards, struct gm_port **p)
 {
@@ -1055,7 +1062,6 @@ int armci_gm_server_init()
                      ARMCI_GM_SERVER_SND_PORT, "gm_pt", GM_API_VERSION_1_1);
     if(status != GM_SUCCESS) 
                  armci_die("did not get rcv port",ARMCI_GM_SERVER_SND_DEV);
-
     /* opening gm rcv port for requests */
     serv_gm->port_id  = ARMCI_GM_SERVER_RCV_PORT; 
     status = gm_open(&(serv_gm->rcv_port), ARMCI_GM_SERVER_RCV_DEV,
