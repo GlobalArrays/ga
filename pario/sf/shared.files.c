@@ -1,4 +1,4 @@
-/* $Id: shared.files.c,v 1.11 2002-01-29 17:54:44 d3h325 Exp $ */
+/* $Id: shared.files.c,v 1.12 2002-10-23 22:55:16 sohirata Exp $ */
 /* DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -25,7 +25,7 @@
 #include "elio.h"
 #include "sf.h"
 
-#define _max_shared_files 10
+#define _max_shared_files 100
 #define SF_OFFSET 3000
 #define SF_FAIL (Integer)1
 
