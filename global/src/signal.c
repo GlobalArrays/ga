@@ -341,7 +341,6 @@ void TrapSigTerm()
     ERROR("TrapSigTerm: error from signal setting SIGTERM", 0);
 }
 
-
 /*********************** SIGIOT *************************************/
 #if defined(SUN) && !defined(SOLARIS)
 SigType SigIotHandler(sig, code, scp, addr)
@@ -391,5 +390,31 @@ void TrapSigCont()
   if ( signal(SIGCONT, SigContHandler) == SIG_ERR)
     ERROR("TrapSigCont: error from signal setting SIGCONT", 0);
 }
+
+/*********************** SIGXCPU *************************************/
+#if defined(SUN) && !defined(SOLARIS)
+SigType SigXcpuHandler(sig, code, scp, addr)
+     int code;
+     struct sigcontext *scp;
+     char *addr;
+#else
+SigType SigXcpuHandler(sig)
+#endif
+     int sig;
+{
+  SR_caught_sigint = 13;
+  ERROR("Terminate signal was sent, status=",(long) sig);
+}
+
+void TrapSigXcpu()
+/*
+  Trap SIGXCPU
+*/
+{
+  if ( signal(SIGXCPU, SigXcpuHandler) == SIG_ERR)
+    ERROR("TrapSigXcpu: error from signal setting SIGTERM", 0);
+}
+
+
 
 
