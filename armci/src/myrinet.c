@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.69 2003-07-25 23:09:07 d3h325 Exp $
+/* $Id: myrinet.c,v 1.70 2003-07-30 15:55:05 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -712,7 +712,7 @@ void armci_client_to_client_direct_send(int p, void *src_buf, void *dst_buf, int
 
 /*\ direct send to server 
 \*/
-void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag)
+void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void** contextptr,int nbtag,void *mhloc,void *mhrem)
 {
     int s           = armci_clus_id(p);
     int serv_mpi_id = armci_clus_info[s].master;
@@ -740,7 +740,7 @@ void armci_client_direct_send(int p, void *src_buf, void *dst_buf, int len,void*
 /*\ RDMA get 
 \*/
 void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
-                                              void** contextptr,int nbtag)
+                             void** contextptr,int nbtag,void *mhdl,void *mhdl1)
 {
 
 #ifdef GM2
@@ -847,7 +847,7 @@ void armci_client_send_ack(int p, int success)
      long *pflag = proc_gm->tmp;
      *pflag= (success)? success : ARMCI_GM_FAILED;
      armci_client_direct_send(p, pflag, proc_gm->serv_ack_ptr[cluster], 
-                                                         sizeof(long),NULL,0);
+                              sizeof(long),NULL,0,NULL,NULL);
 }
 
 static int get_corrected_size(size){
@@ -1820,7 +1820,8 @@ int *remptr = verify_wait->recv_verify_arr[proc]+2*armci_me;
        armci_client_to_client_direct_send(proc,proc_gm->itmp,remptr,
 		                          2*sizeof(int));
 #else
-       armci_client_direct_send(proc,proc_gm->itmp,remptr,2*sizeof(int),NULL,0);
+       armci_client_direct_send(proc,proc_gm->itmp,remptr,2*sizeof(int),NULL,0,
+                                NULL,NULL);
 #endif
        if(DEBUG_NOTIFY){
          printf("\n%d: sending %d %d to %d at %p\n",armci_me,*(proc_gm->itmp),

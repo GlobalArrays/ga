@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.71 2003-07-25 23:09:07 d3h325 Exp $ */
+/* $Id: strided.c,v 1.72 2003-07-30 15:55:05 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -27,6 +27,39 @@ else\
 #  endif
 #endif
 
+
+
+#ifndef REGIONS_REQUIRE_MEMHDL 
+#  define ARMCI_MEMHDL_T void
+#endif
+
+ARMCI_MEMHDL_T *mhloc=NULL,*mhrem=NULL; 
+
+#ifdef REGIONS_REQUIRE_MEMHDL 
+#  define ARMCI_REGION_BOTH_FOUND(_s,_d,_b,_p) \
+    armci_region_both_found_hndl((_s),(_d),(_b),(_p),&mhloc,&mhrem)
+#else
+#  define ARMCI_REGION_BOTH_FOUND(_s,_d,_b,_p) \
+    armci_region_both_found((_s),(_d),(_b),(_p))
+#endif
+
+#ifdef HAS_RDMA_GET
+
+#  define ARMCI_NBREM_GET(_p,_s,_sst,_d,_dst,_cou,_lev,_hdl) \
+    armci_client_direct_get((_p),(_s),(_d),(_cou)[0],&((_hdl)->cmpl_info),(_hdl)->tag,(void *)mhloc,(void *)mhrem); \
+
+#  define ARMCI_REM_GET(_p,_s,_sst,_d,_dst,_cou,_lev,_hdl) \
+    armci_client_direct_get((_p),(_s),(_d),(_cou)[0],NULL,0,(void *)mhloc,(void *)mhrem); \
+
+#else
+
+#  define ARMCI_REM_GET(_p,_s,_sst,_d,_dst,_cou,_lev,_hdl) \
+    armci_rem_get((_p),(_s),(_sst),(_d),(_dst),(_cou),(_lev),(_hdl),(void *)mhloc,(void *)mhrem)
+#  define ARMCI_NBREM_GET ARMCI_REM_GET
+        
+#endif
+
+        
 int armci_iwork[MAX_STRIDE_LEVEL];
 
 /*\ 2-dimensional array copy
@@ -484,8 +517,8 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #ifndef LAPI2
     if(!direct){
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
-       if( !stride_levels && armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-         armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],NULL,0);
+       if( !stride_levels && ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+         armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],NULL,0,mhloc,mhrem);
          return 0;
        }
 #    endif
@@ -649,13 +682,9 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
-       if( !stride_levels && 
-         armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-#ifdef   HAS_RDMA_GET
-         armci_client_direct_get(proc, src_ptr, dst_ptr,  count[0], NULL, 0);
-#else
-         armci_rem_get(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
-#endif
+       if(!stride_levels && 
+         ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+         ARMCI_REM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
          return 0;
        }
 #     endif
@@ -681,7 +710,8 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     }else
 #else
        /* avoid LAPI_GetV  - note count[0]<0 means disabled*/
-       if(stride_levels==1 && count[0]<0 && !direct) armci_rem_get(proc,src_ptr,src_stride_arr,dst_ptr,
+       if(stride_levels==1 && count[0]<0 && !direct) 
+         ARMCI_REM_GET(proc,src_ptr,src_stride_arr,dst_ptr,
                                 dst_stride_arr, count, stride_levels, NULL);
        else
 #endif
@@ -760,11 +790,12 @@ int ARMCI_Put(void *src, void* dst, int bytes, int proc)
        return 0;
 #else
 #ifdef ALLOW_PIN
-    if( armci_region_both_found(src,dst,bytes,armci_clus_id(proc))){
+    
+    if(ARMCI_REGION_BOTH_FOUND(src,dst,bytes,armci_clus_id(proc))){
 #if 0
       printf("direct put s=%p d=%p %d bytes to %d\n",src,dst,bytes,proc); fflush(stdout);
 #endif
-      armci_client_direct_send(proc, src, dst, bytes,NULL,0);
+      armci_client_direct_send(proc, src, dst, bytes,NULL,0,mhloc,mhrem);
       return 0;
     }else
 #endif
@@ -784,16 +815,8 @@ int ARMCI_Get(void *src, void* dst, int bytes, int proc)
        return 0;
 #else
 #ifdef ALLOW_PIN
-    if( armci_region_both_found(dst,src,bytes,armci_clus_id(proc))){
-#if 0
-       printf("direct get s=%p d=%p %d bytes to %d\n",src,dst,bytes,proc); fflush(stdout);
-#endif
-#ifdef HAS_RDMA_GET
-
-         armci_client_direct_get(proc, src, dst,  bytes, NULL, 0);
-#else
-         armci_rem_get(proc, src,NULL,dst,NULL,&bytes, 0, NULL);
-#endif
+    if(ARMCI_REGION_BOTH_FOUND(dst,src,bytes,armci_clus_id(proc))){
+       ARMCI_REM_GET(proc, src,NULL,dst,NULL,&bytes, 0, NULL);
        return 0;
     }  else
 #endif
@@ -930,10 +953,11 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
-       if( !stride_levels && armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+       
+       if( !stride_levels && ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],
                                   (void **)(&nb_handle->cmpl_info),
-                                  nb_handle->tag);
+                                  nb_handle->tag,mhloc,mhrem);
          return 0;
        }
 #     endif
@@ -1017,14 +1041,9 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
-       if( !stride_levels && 
-         armci_region_both_found(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-#ifdef HAS_RDMA_GET
-         armci_client_direct_get(proc, src_ptr, dst_ptr, count[0],
-                                (void**)(&nb_handle->cmpl_info),nb_handle->tag);
-#else
-         armci_rem_get(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
-#endif
+       if(!stride_levels && 
+         ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
+         ARMCI_NBREM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
          return 0;
        }
 #     endif
@@ -1050,7 +1069,8 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     }else
 #else
        /* avoid LAPI_GetV */
-       if(stride_levels==1 && count[0]>320 && !direct) armci_rem_get(proc,src_ptr,src_stride_arr,dst_ptr,
+       if(stride_levels==1 && count[0]>320 && !direct) 
+               ARMCI_REM_GET(proc,src_ptr,src_stride_arr,dst_ptr,
                                 dst_stride_arr, count, stride_levels, nb_handle);
        else
 #endif
@@ -1157,7 +1177,7 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
       ARMCI_NB_PUT(src, dst, bytes, proc, &nb_handle->cmpl_info);
 #     else
 #       ifdef ALLOW_PIN
-       if( armci_region_both_found(src,dst,bytes,armci_clus_id(proc))){
+       if(ARMCI_REGION_BOTH_FOUND(src,dst,bytes,armci_clus_id(proc))){
          INIT_NB_HANDLE(nb_handle,PUT,proc);
 	 nb_handle->tag = GET_NEXT_NBTAG();
 	 nb_handle->op  = PUT;
@@ -1165,7 +1185,7 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 	 nb_handle->bufid=NB_NONE;
          armci_client_direct_send(proc, src, dst, bytes,
                                   (void **)(&nb_handle->cmpl_info),
-                                  nb_handle->tag);
+                                  nb_handle->tag,mhloc,mhrem);
          return 0;
        }else
 #       endif
@@ -1205,21 +1225,13 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
       ARMCI_NB_GET(src, dst, bytes, proc, &nb_handle->cmpl_info);
 #     else
 #       ifdef ALLOW_PIN
-       if( armci_region_both_found(dst,src,bytes,armci_clus_id(proc))){
+       if(ARMCI_REGION_BOTH_FOUND(dst,src,bytes,armci_clus_id(proc))){
          INIT_NB_HANDLE(nb_handle,PUT,proc);
 	 nb_handle->tag = GET_NEXT_NBTAG();
 	 nb_handle->op  = GET;
 	 nb_handle->proc= proc;
 	 nb_handle->bufid=NB_NONE;
-#ifdef HAS_RDMA_GET
-         
-         armci_client_direct_get(proc, src, dst, bytes,
-                                  (void **)(&nb_handle->cmpl_info),
-                                  nb_handle->tag);
-#else
-         armci_rem_get(proc, src,NULL,dst,NULL,&bytes, 0, nb_handle);
-#endif
-
+         ARMCI_NBREM_GET(proc, src,NULL,dst,NULL,&bytes, 0, nb_handle);
          return 0;
        }else
 #       endif
