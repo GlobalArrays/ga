@@ -1,3 +1,11 @@
+/* $Id: sr8k.c,v 1.2 2001-10-20 05:46:20 d3h325 Exp $
+ *
+ * Hitachi SR-8000 specific code 
+ *
+ * *** WE NEED TO OPTIMIZE armcill_put/get AND armcill_put2D/get2D ******* 
+ * *** latency by using TCW and combuf_kick_tcw_fast()
+ * *** bandwidth by overlapping memory copy with RDMA nonblocking communication
+ */
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -15,27 +23,27 @@
 
 /* data structure used to store ptr/size/authorization info for
    every shared memory (combuf) area on every other smp node
-   -- we only need to do it for one process on smp node - "master"
+   -- we only need it for one process on each smp node - "master"
 */
 typedef struct{
-    int pauth;
-    int gauth;
-    long size;
-    char* ptr;
+    int pauth;   /* segment descriptor for send/put operation*/
+    int gauth;   /* segment descriptor for get operation*/
+    long size;   /* segment size */
+    char* ptr;   /* address of the segment */
 }reg_auth_t;
+
  
-static long reg_idlist[MAX_REGIONS];
-static int  reg_num=0;
-static reg_auth_t *rem_reg_list;
-static reg_auth_t **rem_reg;
-static long *reg_id;
-static int  *proc_reg;
-extern ndes_t _armci_group; /* set in clusterinfo */
-double *armci_internal_buffer; /* work buffer in RDMA area */
-static char *_internal_buffer2;
-static int *_internal_mutex;
-static char *bufstart, *bufend;
-static int bufdesc;
+static long reg_idlist[MAX_REGIONS]; /* keys for rdma/shmem segments on this node */
+static int  reg_num=0;          /* number of rdma/shmem segments on this node */
+static reg_auth_t *rem_reg_list;/* info about rdma segments on every node */
+static reg_auth_t **rem_reg;    /* info about rdma segments on every node */
+static long *reg_id;            /* buffer to exchange info about new segments */
+static int  *proc_reg;          /* count of shmem/rdma segments on every node */
+extern ndes_t _armci_group;     /* processor group -- set in clusterinfo */
+double *armci_internal_buffer;  /* work buffer for accumulate -- in RDMA area */
+static char *_internal_buffer2; /* another  work buffer - page size */
+static char *bufstart, *bufend; /* address range for local rdma area */
+static int bufdesc;             /* descriptor for local rdma buffer */
 
 #define BUF_KEY 2020L
 #define PAGE_SIZE       0x1000
@@ -47,6 +55,10 @@ static int bufdesc;
 #define DEBUG0 0
 #define DEBUG1 1
  
+
+/*\ intialization of data structures 
+ *  called by armci_register_shmem in 1st ARMCI_Malloc call in  ARMCI_Init
+\*/ 
 void armci_init_sr8k()
 {
      Cb_object_t oid;
@@ -91,6 +103,9 @@ void armci_init_sr8k()
 }
      
 
+
+/*\ registers new rdma area - called in every call to ARMCI_Malloc
+\*/
 void armci_register_shmem(void *my_ptr, long size, long *idlist, long off)
 {
      int i,dst,found=0;
@@ -119,7 +134,9 @@ void armci_register_shmem(void *my_ptr, long size, long *idlist, long off)
         }
      }
 
-     if(DEBUG0){printf("%d: regist id=%ld found=%d size=%ld\n",armci_me,id,found,reg_size); fflush(stdout);}
+     if(DEBUG0){
+        printf("%d: regist id=%ld found=%d size=%ld\n",armci_me,id,found,reg_size);
+        fflush(stdout);}
 
      bzero(reg_id,3*armci_nclus*sizeof(long));
 
@@ -158,26 +175,29 @@ void armci_register_shmem(void *my_ptr, long size, long *idlist, long off)
          remote.ndes = _armci_group;
          remote.node = dst;
          if(DEBUG1){
-            printf("%d:%d: %d registering sendright %d key=%ld %p %d\n",armci_me,armci_clus_me,i,armci_clus_info[dst].master,id,ptr,len);
+            printf("%d:%d: %d registering sendright %d key=%ld %p %d\n",
+                   armci_me,armci_clus_me,i,armci_clus_info[dst].master,id,ptr,len);
             fflush(stdout);
          }
 
          rc = combuf_get_sendright( (Cb_node *)&remote, sizeof(remote),
                                     id, FIELD_NUM, -1, &auth);
-         if(rc != COMBUF_SUCCESS){ printf("%d:failed\n",armci_me);fflush(stdout);sleep(1); armci_die("combuf_get_sendright:",rc);}
+         if(rc != COMBUF_SUCCESS){ 
+            printf("%d:failed\n",armci_me);fflush(stdout);sleep(1);
+            armci_die("combuf_get_sendright:",rc);
+         }
          rem_reg[dst][proc_reg[dst]].pauth = auth;      
          rem_reg[dst][proc_reg[dst]].size  = len;      
          rem_reg[dst][proc_reg[dst]].ptr   = ptr;      
 
-         /* aquire authorization to get */
+         /* aquire authorization to do get */
          bzero( &remote, sizeof(remote) );
          remote.type = CB_NODE_RELATIVE;
          remote.ndes = _armci_group;
          remote.node = dst;
 
          if(DEBUG0){printf("%d:register target %d\n",armci_me,dst); fflush(stdout);}
-         rc = combuf_target( (Cb_node *)&remote, sizeof(remote),
-                                    id, 0, -1, &auth);
+         rc = combuf_target( (Cb_node *)&remote, sizeof(remote), id, 0, -1, &auth);
          if(rc != COMBUF_SUCCESS) armci_die("combuf_target:",rc);
          rem_reg[dst][proc_reg[dst]].gauth = auth;      
 
@@ -185,6 +205,7 @@ void armci_register_shmem(void *my_ptr, long size, long *idlist, long off)
      }
      if(DEBUG0){printf("%d:registered id=%ld\n",armci_me,id); fflush(stdout);}
 }
+
 
 /*\ basic put operation to combuf desc field at specified offset
 \*/ 
@@ -224,7 +245,9 @@ unsigned int ev;
 }
 
 
-void armci_sr8k_put(void *src, void *dst, int bytes, int proc)
+/*\  contiguous put  dst(proc) = src
+\*/
+void armcill_put(void *src, void *dst, int bytes, int proc)
 {
 Cb_size_t off;
 int found =0, i, node = armci_clus_id(proc);
@@ -239,9 +262,9 @@ int desc;
     for(i=0; i< proc_reg[node]; i++){
        ps = rem_reg[node][i].ptr;
        pe = rem_reg[node][i].size + ps;
-       if((ptr>=ps) && (ptr<pe)){ found =1; desc = rem_reg[node][i].pauth; break;}
+       if((ptr>=ps) && (ptr<pe)){ found=1; desc= rem_reg[node][i].pauth; break;}
     }
-    if(!found) armci_die("armci_sr8k_put: bad dst address for p=",proc);
+    if(!found) armci_die("armcill_put: bad dst address for p=",proc);
     off = (Cb_size_t) ( ptr - ps);
     
     if((src >= (void*)bufstart) && (src <(void*)bufend)){
@@ -249,7 +272,7 @@ int desc;
        /* no need to copy - data is in the rdma buffer */
         (void)armci_rdma_put(src, off, bytes, desc);
 
-    } else for(i = 0; i< bytes;){ /* send data piece by piece through rdma buf */
+    } else for(i = 0; i< bytes;){ /* send data piece by piece through rdma buf*/
 
         int len = ((bytes -i)<BUFSIZE)? (bytes -i): BUFSIZE;
         armci_copy(src,armci_internal_buffer,len);
@@ -262,8 +285,9 @@ int desc;
 }
 
 
-
-void armci_sr8k_get(void *src, void *dst, int bytes, int proc)
+/*\  contiguous get  src = dst(proc)
+\*/
+void armcill_get(void *src, void *dst, int bytes, int proc)
 {
 Cb_size_t off, buf_off;
 int found =0, i, node = armci_clus_id(proc);
@@ -278,10 +302,10 @@ int desc;
     for(i=0; i< proc_reg[node]; i++){
        ps = rem_reg[node][i].ptr;
        pe = rem_reg[node][i].size + ps;
-       if((ptr>=ps) && (ptr<pe)){ found =1; desc = rem_reg[node][i].gauth; break;}
+       if((ptr>=ps) && (ptr<pe)){ found=1; desc= rem_reg[node][i].gauth; break;}
     }
 
-    if(!found) armci_die("armci_sr8k_get: bad src address for p=",proc);
+    if(!found) armci_die("armcill_get: bad src address for p=",proc);
     off = (Cb_size_t) ( ptr - ps);
    
     if((dst >= (void*)bufstart) && (dst <(void*)bufend)){
@@ -290,7 +314,7 @@ int desc;
         buf_off = (Cb_size_t)(((char*)dst) - bufstart);
         (void)armci_rdma_get(off, desc, buf_off, bufdesc, bytes);
 
-    } else for(i = 0; i< bytes;){ /* send data piece by piece through rdma buf */
+    } else for(i = 0; i< bytes;){ /* send data piece by piece through rdma buf*/
 
         int len = ((bytes -i)<BUFSIZE)? (bytes -i): BUFSIZE;
         (void)armci_rdma_get(off, desc, 0, bufdesc, len);
@@ -300,6 +324,36 @@ int desc;
         dst = len +(char*)dst;
 
     }
+}
+
+
+/*\ strided put
+\*/
+void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+int _j;
+char *ps=src_ptr, *pd=dst_ptr;
+      for (_j = 0;  _j < count;  _j++){
+          armcill_put(ps, pd, bytes, proc);
+          ps += src_stride;
+          pd += dst_stride;
+      }
+}
+
+
+/*\ strided get: source is at proc, destination on calling process 
+\*/
+void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+int _j;
+char *ps=src_ptr, *pd=dst_ptr;
+      for (_j = 0;  _j < count;  _j++){
+          armcill_get(ps, pd, bytes, proc);
+          ps += src_stride;
+          pd += dst_stride;
+      }
 }
 
 
@@ -319,7 +373,8 @@ int rc,i;
 
     if(armci_me != armci_master)bytes=0;
     _mutex_array = (sr8k_mutex_t*)malloc(sizeof(sr8k_mutex_t)*armci_nclus);
-    if(!_mutex_array)armci_die("armcill_allocate_locks: malloc failed",armci_nclus);
+    if(!_mutex_array)
+         armci_die("armcill_allocate_locks: malloc failed",armci_nclus);
     if(!locks) armci_die("armcill_allocate_locks: malloc 2 failed",armci_nproc);
 
     rc = ARMCI_Malloc((void**)locks, bytes);
@@ -330,19 +385,19 @@ int rc,i;
         char *ps = (char*)locks[armci_clus_info[i].master];
         _mutex_array[i].off  = ps - rem_reg[i][0].ptr;
         _mutex_array[i].desc = rem_reg[i][0].gauth;
-        if(DEBUG0){ printf("%d: allocate %d locks (%p,%p) %p %p %d\n",armci_me,num,
-                    locks[0],locks[1], ps, rem_reg[i][0].ptr,rem_reg[i][0].size);
-                    fflush(stdout);
+        if(DEBUG0){printf("%d:allocate %d locks %p,%p %p %p %d\n",armci_me,num,
+                   locks[0],locks[1], ps, rem_reg[i][0].ptr,rem_reg[i][0].size);
+                   fflush(stdout);
                   }
         if(_mutex_array[i].off > rem_reg[i][0].size) /*verify if in 1st region*/
-                                 armci_die("armcill_allocate_locks:offset error",i);
+                           armci_die("armcill_allocate_locks:offset error",i);
     }
     free(locks);
 }
 
 
 
-/*\ lock specified mutex on node where process proc is
+/*\ lock specified mutex on node where process proc is running
 \*/
 void armcill_lock(int mutex, int proc)
 {
@@ -354,12 +409,13 @@ Cb_size_t off;
     desc = _mutex_array[node].desc;
     if(DEBUG0){
       printf("%d: lock %d on %d off=%d\n",armci_me,mutex,proc, off);fflush(stdout);}
-    while(combuf_swap(desc,off,1));
+//    while(combuf_swap(desc,off,1));
+    while(combuf_cswap(desc,off,1,0,2)); /* wait 2ms for condition to be met*/ 
 #endif
 }
 
 
-/*\ unlock specified mutex on node where process proc is
+/*\ unlock specified mutex on node where process proc is running
 \*/
 void armcill_unlock(int mutex, int proc)
 {
