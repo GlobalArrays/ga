@@ -83,6 +83,7 @@
 #define ELIO_FSYNC _commit
 #else
 #include <unistd.h>
+wrong
 #define ELIO_FSYNC fsync
 #endif
 
@@ -1018,8 +1019,12 @@ int elio_fsync(Fd_t fd)
 
     printf("syncing extent %d name %s\n", fd->extent, fd->name);
     /*   if(ELIO_FSYNC(fd->fd)==-1 || (status != ELIO_OK)) */
+#ifndef WIN32
+#if !defined(__INTERIX) 
     sync();
-    if(fsync(fd->fd)==-1 )
+#endif
+#endif
+    if(ELIO_FSYNC(fd->fd)==-1 )
       ELIO_ERROR(FSYNCFAIL, 0);
 #endif
 
