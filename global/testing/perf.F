@@ -53,7 +53,7 @@ c
       me = ga_nodeid()
 c
 c***  Create global array
-      if (.not. ga_create(MT_DBL, n, 1, 'a', 1, 1, g_a))
+      if (.not. ga_create(MT_DBL, n, 1, 'a', 0, 0, g_a))
      $     call ga_error(' ga_create failed ',1)
 c     
       do loop=1,nn
@@ -309,7 +309,7 @@ c
       me = ga_nodeid()
 c
 c***  Create global array
-      if (.not. ga_create(MT_DBL, n, n, 'a', 1, 1, g_a))
+      if (.not. ga_create(MT_DBL, n, n, 'a', 0, 0, g_a))
      $     call ga_error(' ga_create failed ',1)
 c     
       do loop=1,nn
