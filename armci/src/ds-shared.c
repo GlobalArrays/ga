@@ -5,8 +5,8 @@
 #include "copy.h"
 #include <stdio.h>
 
-#define DEBUG_ 1
-#define ACK 0
+#define DEBUG_ 0
+#define DEBUG1 1
 
 extern void armci_rcv_req(void *mesg,
                           void *phdr, void *pdescr, void *pdata, int *buflen);
@@ -36,15 +36,8 @@ int bytes;
         fflush(stdout);
     }
 
-#ifdef GM
-    armci_dma_send_gm(proc, MessageSndBuffer, bytes);
-    if(armci_client_send_complete() == ARMCI_GM_FAILED)
-        armci_die("armci_send_req: write failed", stat);
-#else
     if(armci_send_req_msg(proc,MessageSndBuffer, bytes))
       armci_die("armci_send_req: failed",0);
-#endif
-
 }
 
 
@@ -57,20 +50,12 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
     int dscrlen = msginfo->dscrlen;
     int datalen = msginfo->datalen;
     int cluster = armci_clus_id(proc);
-    int stat;
     int bytes;
-
-    if(DEBUG_) {
-        fprintf(stdout, "%d:armci_send_strided: op=%d to=%d bytes= %d \n",
-                armci_me, msginfo->operation, proc, datalen);
-        fflush(stdout);
-    }
 
     bytes = msginfo->bytes + hdrlen;
 
     if(DEBUG_){
-        fprintf(stdout,
-            "%d: sending req %d to(%d,%d,%d) bytes = %d (dslen=%d dlen=%d),\n",
+       printf("%d:sending strided %d to(%d,%d,%d) bytes=%d dslen=%d dlen=%d,\n",
                 armci_me, msginfo->operation, msginfo->to,
                 cluster, proc, bytes, dscrlen, datalen);
         fflush(stdout);
@@ -79,14 +64,8 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
     /* for small contiguous blocks copy into a buffer before sending */
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
 
-#ifdef GM
-    armci_dma_send_gm(proc, msginfo, bytes);
-    if(armci_client_send_complete() == ARMCI_GM_FAILED)
-        armci_die("armci_send_strided: write failed", stat);
-#else
     if(armci_send_req_msg(proc,MessageSndBuffer, bytes))
       armci_die("armci_send_strided_req: failed",0);
-#endif
 }
 
 
@@ -100,7 +79,7 @@ char *armci_rcv_data(int proc)
     int stat;
 
     if(DEBUG_) {
-        fprintf(stdout, "%d:armci_rcv_data:  bytes= %d \n", armci_me, datalen);
+        printf("%d:armci_rcv_data:  bytes= %d \n", armci_me, datalen);
         fflush(stdout);
     }
 
@@ -109,7 +88,7 @@ char *armci_rcv_data(int proc)
         armci_die("armci_rcv_data:data overflowing rcv buffer",datalen);
 
     /* buf = header ack + data(len = datalen) + tail ack */
-    buf = armci_ReadFromDirect(MessageSndBuffer, datalen);
+    buf = armci_ReadFromDirect((request_header_t*)MessageSndBuffer, datalen);
 
     if(DEBUG_){
         printf("%d:armci_rcv_data: got %d bytes \n",armci_me,datalen);
@@ -127,8 +106,6 @@ void armci_rcv_vector_data(int proc, char *buf, armci_giov_t darr[], int len)
     buf = armci_rcv_data(proc);
     armci_vector_from_buf(darr, len, buf);
 }
-
-
 
 
 /*\ client receives strided data from server
@@ -151,12 +128,9 @@ void armci_rcv_strided_data(int proc, char *buf, int datalen, void *ptr,
        armci_die("armci_rcv_strided_data: not the right buffer", 0L);
 
     /* for small data segments minimize number of system calls */
-    databuf = armci_ReadFromDirect(MessageSndBuffer, datalen);
+    databuf = armci_ReadFromDirect((request_header_t*)MessageSndBuffer,datalen);
 
     armci_read_strided(ptr, strides, stride_arr, count, databuf);
-
-    /* send notice to server the message has been received */
-    /* armci_NotifyDirect(proc); */
 
     if(DEBUG_){
         printf("%d: armci_rcv_strided_data: got %d bytes from %d\n",
@@ -164,7 +138,6 @@ void armci_rcv_strided_data(int proc, char *buf, int datalen, void *ptr,
         fflush(stdout);
     }
 }
-
 
 
 /*\ get ACK from server
@@ -315,6 +288,8 @@ void armci_data_server(void *mesg)
           armci_server_ack(msginfo);
           break;
 
+      case ARMCI_SWAP:
+      case ARMCI_SWAP_LONG:
       case ARMCI_FETCH_AND_ADD:
       case ARMCI_FETCH_AND_ADD_LONG:
           armci_server_rmw(msginfo,descr,buffer);
@@ -338,7 +313,7 @@ void armci_data_server(void *mesg)
                          msginfo->format, msginfo->from);
     }
 
-#ifdef VIA
+#ifdef VIA__
     if(msginfo->operation != GET && msginfo->operation != ACK) 
        armci_flow_ack(from);
 #endif

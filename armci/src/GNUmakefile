@@ -47,6 +47,11 @@ ifeq ($(ARMCI_NETWORK),GM)
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
 endif
 
+ifeq ($(ARMCI_NETWORK),VIA)
+  OBJ += spawn.o  request.o via.o ds-shared.o
+  LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT
+endif
+
 ifeq ($(ARMCI_NETWORK),QUADRICS)
 # shared memory causes problems for shmem: NO_SHM disables use of shared memory
 # only one of the two lines below can be uncommented

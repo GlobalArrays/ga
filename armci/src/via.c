@@ -6,12 +6,16 @@
 #define VIPL095  
 #include <vipl.h>
 
-#define DEBUG_ 1
+#define DEBUG_ 0
 #define DEBUG0 0
+#define DEBUG1 0
+#define PAUSE_ON_ERROR__ 
 
 #define VIADEV_NAME "/dev/clanvi0"
 #define ADDR_LEN 6
 #define SIXTYFOUR 64
+#define NONE -1
+#define GET_DATA_PTR(buf) (sizeof(request_header_t) + (char*)buf)
 
 typedef struct {
   VIP_NIC_HANDLE handle;
@@ -45,9 +49,6 @@ typedef struct {
 } armci_connect_t;
 
 
-/* we need buffer size to be 64-byte alligned */
-#define VBUF_DLEN 4*8192 
-
 typedef struct {
   VIP_DESCRIPTOR dscr;
   char buf[VBUF_DLEN];
@@ -71,13 +72,16 @@ static int *AR_discrim;
 char *MessageSndBuffer;
 char *MessageRcvBuffer;
 int armci_long_buf_free=1;
-int armci_long_buf_taken_srv=-1;
+int armci_long_buf_taken_srv=NONE;
+static int armci_server_terminating=0;
+static int armci_ack_proc=NONE;
 
-static int armci_ack_proc=-1;
-
+extern void armci_send_data_to_client(int proc, void *buf, int bytes);
 
 void armci_wait_for_server()
-{}
+{
+  armci_server_terminating=1;
+}
 
 void armci_transport_cleanup()
 {
@@ -94,14 +98,15 @@ void armci_rcv_req(void *mesg,
     request_header_t *msginfo = (request_header_t *)vbuf->buf;
     *(void **)phdr = msginfo;
 
-    if(DEBUG_) {
+    if(DEBUG0) {
         printf("%d(server): got %d req (dscrlen=%d datalen=%d) from %d\n",
                armci_me, msginfo->operation, msginfo->dscrlen,
                msginfo->datalen, msginfo->from);
         fflush(stdout);
     }
 
-    *buflen = MSG_BUFLEN;
+    /* we leave room for msginfo on the client side */
+    *buflen = MSG_BUFLEN - sizeof(request_header_t);
 
     if(msginfo->bytes) {
         *(void **)pdescr = msginfo+1;
@@ -124,9 +129,22 @@ static void armci_check_status(int debug, VIP_RETURN rc, char *msg)
      if(rc != VIP_SUCCESS){
 
         char buf[BLEN];
+        
+        if(armci_server_terminating){
+           /* server got interrupted when clients terminate connections */
+           sleep(1);
+           _exit(0);
+        }
+          
         fprintf(stderr,"%d in check FAILURE %s\n",armci_me,msg);
         assert(strlen(msg)<BLEN-20);
         sprintf(buf,"ARMCI(via):failure: %s code ",msg);
+#       ifdef  PAUSE_ON_ERROR
+          printf("%d(%d): Error from VIPL: %s - pausing\n",
+                 armci_me, getpid(), msg);
+          fflush(stdout);
+          pause();
+#       endif
         armci_die(buf,(int)rc);
 
      }else if(debug){
@@ -186,9 +204,6 @@ VIP_VI_ATTRIBUTES vattr;
     vattr.MaxTransferSize  = nic->attr.MaxTransferSize;
 
     rc= VipCreateVi(nic->handle, &vattr, nic->scq, nic->rcq, &vi);
-/*
-    rc= VipCreateVi(nic->handle, &vattr, 0, 0, &vi);
-*/
 
     armci_check_status(DEBUG0, rc,"create vi");
 
@@ -239,7 +254,7 @@ int *AR_base;
     for(s=0; s< armci_nclus; s++)if(armci_clus_me != s){
        char *ptr;
        discrim_t dm;
-       int cluster = armci_clus_id(s);
+       int cluster = s;
        int master  = armci_clus_info[cluster].master;
        armci_connect_t *con = SRV_con + s;
 
@@ -248,12 +263,12 @@ int *AR_base;
        con->vi  = armci_create_vi(SRV_nic);
 
        dm = MAKE_DISCRIMINATOR(AR_base[master], armci_me);
+       if(DEBUG_)printf("%d:discriminator(%d)=%lf\n",armci_me,master,dm);
        armci_make_netaddr(con->loc, armci_clus_info[armci_clus_me].hostname,dm);
        armci_make_netaddr(con->rem, armci_clus_info[cluster].hostname, dm);
        
     }
     if(DEBUG_) printf("%d: connections ready for client\n",armci_me);
-
 
     /* ............ masters also set up connections for clients ......... */
 
@@ -279,6 +294,8 @@ int *AR_base;
           con->vi  = armci_create_vi(CLN_nic);
 
           dm = MAKE_DISCRIMINATOR(AR_base[armci_me], c);
+          if(DEBUG_)printf("%d(s):discriminator(%d)=%lf\n",armci_me,c,dm);
+
           armci_make_netaddr(con->loc, armci_clus_info[armci_clus_me].hostname, dm);
           armci_make_netaddr(con->rem, armci_clus_info[cluster].hostname, dm);
    
@@ -330,22 +347,28 @@ int c;
        armci_check_status(DEBUG0, rc,"server out of VipRecvDone");
 
        vbuf = (vbuf_t*) pdscr;
-       c= ((request_header_t*)vbuf->buf)->from; 
+
+       /* look at the request to see where it came from */
+       armci_ack_proc= c= ((request_header_t*)vbuf->buf)->from; 
+
        if(DEBUG0){
          printf("%d(s): got REQUEST from %d\n",armci_me, c); fflush(stdout);
        }
 
-       armci_data_server(vbuf);
-
-       /* we should post it this vbuf again */
+       /* we should post it this vbuf again even though data it contains 
+        * will be processedi in armci_data_server() later
+        * this is safe since the corresponding client cannot send us 
+        * new request before receiving response/ack
+        */
        armci_init_vbuf(pdscr, vbuf->buf, VBUF_DLEN, serv_memhandle);
        rc = VipPostRecv((CLN_con+c)->vi,pdscr, serv_memhandle);
        armci_check_status(DEBUG0, rc,"server Repost recv vbuf");
 
-       /* flow control: send ack for this request if requested by higher level*/
-       if(armci_ack_proc>-1){
+       armci_data_server(vbuf);
+
+       /* flow control: send ack for this request no response was sent */
+       if(armci_ack_proc != NONE){
           armci_send_data_to_client(armci_ack_proc,serv_buf->buf,0);
-          armci_ack_proc = -1;
        }
     }
 }
@@ -360,8 +383,8 @@ int mod, bytes;
 char *tmp;
 int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
 
-     if(DEBUG_){
-        printf("in server after fork %d\n",armci_me);
+     if(DEBUG1){
+        printf("in server after fork %d (%d)\n",armci_me,getpid());
         fflush(stdout);
      }
 
@@ -405,10 +428,10 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
          armci_check_status(DEBUG0, rc,"server connect wait");
          
          rc = VipConnectAccept(con_hndl, con->vi);
-         armci_check_status(DEBUG0, rc,"server connect wait");
+         armci_check_status(DEBUG1, rc,"server connect wait");
      }
 
-     if(DEBUG_){
+     if(DEBUG1){
        printf("%d: server connected to all clients\n",armci_me); fflush(stdout);
      }
 
@@ -425,8 +448,8 @@ VIP_RETURN rc;
 int s, mod, bytes;
 char *tmp;
 
-   if(DEBUG_){
-       printf("in client after fork %d\n",armci_me);
+   if(DEBUG1){
+       printf("in client after fork %d(%d)\n",armci_me,getpid());
        fflush(stdout);
    }
 
@@ -463,12 +486,12 @@ again:
             usleep(10000);
             goto again;
       }
-      armci_check_status(DEBUG0, rc,"client connect request");
+      armci_check_status(DEBUG1, rc,"client connect request");
    }
 
    armci_msg_barrier();
 
-   if(DEBUG_){
+   if(DEBUG1){
       printf("%d client connected to all %d servers\n",armci_me, armci_nclus-1);
       fflush(stdout);
    }
@@ -493,13 +516,17 @@ void armci_start_server()
 }
 
 
+/******************* this code implements armci data transfers ***************/
+
 static void armci_client_post_buf(int srv)
 {
 VIP_RETURN rc;
+char *dataptr = GET_DATA_PTR(client_buf->buf); 
      
-     armci_init_vbuf(&client_buf->rcv_dscr,client_buf->buf, MSG_BUFLEN, client_memhandle);
+     armci_init_vbuf(&client_buf->rcv_dscr,dataptr,MSG_BUFLEN,client_memhandle);
+
      rc = VipPostRecv((SRV_con+srv)->vi,&client_buf->rcv_dscr,client_memhandle);
-     armci_check_status(DEBUG_, rc,"client prepost vbuf");
+     armci_check_status(DEBUG0, rc,"client prepost vbuf");
      armci_long_buf_taken_srv = srv;
      armci_long_buf_free = 0;
 }
@@ -512,15 +539,16 @@ VIP_DESCRIPTOR *pdscr;
 
      if(armci_long_buf_free) armci_die("armci_via_wait_ack: nothing posted",0);
 
-     armci_long_buf_free =1;
-     rc = VipRecvWait((SRV_con+armci_long_buf_taken_srv)->vi, VIP_INFINITE, &pdscr);
-     armci_check_status(DEBUG_, rc,"client wait_ack out of recv wait");
+     armci_long_buf_free =1; /* mark up the buffer as free */
 
-     printf("%d hereeeeeeeeeeeeeee\n",armci_me);fflush(stdout);
+     rc = VipRecvWait((SRV_con+armci_long_buf_taken_srv)->vi, VIP_INFINITE, &pdscr);
+     armci_check_status(DEBUG0, rc,"client wait_ack out of recv wait");
+
+     if(DEBUG0){
+       printf("%d client got ack for req\n",armci_me);fflush(stdout);
+     }
 }
 
-
-/******************* this code implements armci data transfers ***************/
 
 /*\ client sends request to server
 \*/
@@ -542,7 +570,7 @@ VIP_DESCRIPTOR *cmpl_dscr;
     if(cmpl_dscr !=&client_buf->snd_dscr)
        armci_die("different descriptor completed",0);
 
-    if(DEBUG_){ printf("%d:client sent %dbytes to server\n",armci_me,bytes);
+    if(DEBUG0){ printf("%d:client sent %dbytes to server\n",armci_me,bytes);
                 fflush(stdout);
     }
 
@@ -568,16 +596,19 @@ VIP_DESCRIPTOR *cmpl_dscr;
     if(cmpl_dscr !=&serv_buf->snd_dscr)
        armci_die("-different descriptor completed",0);
 
-    if(DEBUG_){ printf("%d:SERVER sent %dbytes to %d\n",armci_me,bytes,proc);
+    if(DEBUG0){ printf("%d:SERVER sent %dbytes to %d\n",armci_me,bytes,proc);
                 fflush(stdout);
     }
 }
 
 
 
+/*\ server sends data to client in response to request
+\*/
 void armci_WriteToDirect(int proc, request_header_t* msginfo, void *buf)
 {
      armci_send_data_to_client(proc, buf, (int)msginfo->datalen); 
+     armci_ack_proc=NONE;
 }
 
 
@@ -585,15 +616,14 @@ char *armci_ReadFromDirect(request_header_t *msginfo, int len)
 {
 VIP_RETURN rc;
 VIP_DESCRIPTOR *pdscr;
-int s = msginfo->from;
+int cluster = armci_clus_id(msginfo->to);
+char *dataptr = GET_DATA_PTR(client_buf->buf); 
 
-    rc = VipRecvWait((SRV_con+1)->vi, VIP_INFINITE, &pdscr);
-    armci_check_status(DEBUG_, rc,"client getting data from server");
-    printf("%d got data armci_long_buf_free=%d\n",armci_me,armci_long_buf_free);
-    fflush(stdout);
+    rc = VipRecvWait((SRV_con+ cluster)->vi, VIP_INFINITE, &pdscr);
+    armci_check_status(DEBUG0, rc,"client getting data from server");
     armci_long_buf_free =1;
 
-    return client_buf->buf;
+    return dataptr;
 }
 
 

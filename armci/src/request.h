@@ -4,6 +4,9 @@
 #  include "lapidefs.h"
 #elif defined(GM)
 #  include "myrinet.h"
+#elif defined(VIA)
+#  include "via.h"
+   typedef int msg_tag_t;
 #else
    typedef int msg_tag_t;
 #endif
@@ -11,30 +14,26 @@
 
 typedef struct {
 #ifdef SOLARIS
-short int   to;      /* message recipient */
-short int from;      /* message sender */
-/*
-unsigned char operation;
-unsigned char format;
-unsigned char bypass;
-unsigned int bytes;
-*/
+   short int   to;            /* message recipient */
+   short int from;            /* message sender */
 #else
-int   to:16;         /* message recipient */
-int from:16;         /* message sender */
+         int   to:16;         /* message recipient */
+         int from:16;         /* message sender */
 #endif
 unsigned int   operation:8;   /* operation code */
 unsigned int   format:3;      /* data format used */
 unsigned int   bypass:1;      /* indicate if bypass protocol used */
 unsigned int   bytes:20;      /* number of bytes requested */
-  int   dscrlen;    /* >0 in lapi indicates if descriptor is included */
-  int   datalen;    /* >0 in lapi indicates if data is included */
-  msg_tag_t tag;       /* message tag for response to this request */
+         int   dscrlen;       /* >0 in lapi means that descriptor is included */
+         int   datalen;       /* >0 in lapi means that data is included */
+         msg_tag_t tag;       /* message tag for response to this request */
 }request_header_t;
 
 
+#ifndef MSG_BUFLEN_DBL
+#  define MSG_BUFLEN_DBL 50000
+#endif
 
-#define MSG_BUFLEN_DBL 50000
 #define MSG_BUFLEN  sizeof(double)*MSG_BUFLEN_DBL
 extern  char* MessageRcvBuffer;
 extern  char* MessageSndBuffer;
@@ -45,13 +44,17 @@ extern  char* MessageSndBuffer;
 #  define GA_SEND_REPLY armci_lapi_send
 #else
 #  define REQ_TAG 32000
-#  define GET_SEND_BUFFER
-#  ifdef DATA_SERVER
+#  ifdef SOCKETS
 #    define GA_SEND_REPLY(tag, buf, len, p) armci_sock_send(p,buf,len)
 #  else
 #    define GA_SEND_REPLY(tag, buf, len, p)  
 #  endif
 #endif
+
+#ifndef GET_SEND_BUFFER
+#  define GET_SEND_BUFFER
+#endif
+
 
 extern void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
                          void *ptr, int strides, int stride_arr[], int count[]);
@@ -96,6 +99,11 @@ extern void armci_rcv_vector_data(int p, char *buf, armci_giov_t dr[], int len);
 extern void armci_wait_for_server();
 extern void armci_start_server();
 extern void armci_transport_cleanup();
+#endif
+
+#if defined(GM) || defined(VIA)
+extern void armci_WriteToDirect(int proc, request_header_t* msginfo, void *buf);
+extern char *armci_ReadFromDirect(request_header_t *msginfo, int len);
 #endif
 
 #endif
