@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.33 1999-12-01 21:57:57 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.34 2000-04-17 19:28:26 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -69,12 +69,12 @@ char *name;
 /*     name[FLEN-1]='\0';*/
      ga_inquire_name(g_a,  &name);
      if (*ilo <= 0 || *ihi > dim1 || *jlo <= 0 || *jhi > dim2){
-                      fprintf(stderr,"%d %d %d %d dims: [%d,%d]\n", 
+                      fprintf(stderr,"%ld %ld %ld %ld dims: [%ld,%ld]\n", 
                              *ilo,*ihi, *jlo,*jhi, dim1, dim2);
                       ga_error(" ga_print: indices out of range ", *g_a);
      }
 
-     fprintf(file,"\n global array: %s[%d:%d,%d:%d],  handle: %d \n",
+     fprintf(file,"\n global array: %s[%ld:%ld,%ld:%ld],  handle: %d \n",
              name, *ilo, *ihi, *jlo, *jhi, (int)*g_a);
 
      bufsize = (type==MT_F_DCPL)? BUFSIZE/2 : BUFSIZE;
@@ -88,7 +88,7 @@ char *name;
               case MT_F_INT:
                    ga_get_(g_a, &i, &i, &j, &jmax, ibuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj++)
-                     fprintf(file," %8d",ibuf[jj]);
+                     fprintf(file," %8ld",ibuf[jj]);
                    break;
 
               case MT_F_DBL:
@@ -121,30 +121,30 @@ char *name;
            fprintf(file, "      ");
            switch(type){
               case MT_F_INT:
-                   for (jj=j; jj<=jmax; jj++) fprintf(file, "%6d  ", jj);
+                   for (jj=j; jj<=jmax; jj++) fprintf(file, "%6ld  ", jj);
                    fprintf(file,"\n      ");
                    for (jj=j; jj<=jmax; jj++) fprintf(file," -------");
                    break;
               case MT_F_DCPL:
-                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%20d    ", jj);
+                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%20ld    ", jj);
                    fprintf(file,"\n      ");
                    for (jj=j; jj<=2*jmax; jj++) fprintf(file," -----------");
                    break;
               case MT_F_DBL:
-                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%8d    ", jj);
+                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%8ld    ", jj);
                    fprintf(file,"\n      ");
                    for (jj=j; jj<=jmax; jj++) fprintf(file," -----------");
            }
            fprintf(file,"\n");
 
            for(i=*ilo; i <*ihi+1; i++){
-              fprintf(file,"%4i  ",i);
+              fprintf(file,"%4ld  ",i);
 
               switch(type){
                  case MT_F_INT:
                       ga_get_(g_a, &i, &i, &j, &jmax, ibuf, &ld);
                       for(jj=0; jj<(jmax-j+1); jj++)
-                        fprintf(file," %8d",ibuf[jj]);
+                        fprintf(file," %8ld",ibuf[jj]);
                       break;
 
                  case MT_F_DBL:
@@ -187,7 +187,7 @@ void FATR ga_print_stats_()
 {
 int i;
      GAstat_arr = (long*)&GAstat;
-     printf("\n                         GA Statistics for process %4d\n",ga_nodeid_());
+     printf("\n                         GA Statistics for process %4d\n",(int)ga_nodeid_());
      printf("                         ------------------------------\n\n");
      printf("       create   destroy   get      put      acc     scatter   gather  read&inc\n");
 
@@ -239,7 +239,7 @@ extern void Error();
 
 
     /* print GA names stack */
-    sprintf(error_buffer,"%d:", ga_nodeid_());
+    sprintf(error_buffer,"%d:", (int)ga_nodeid_());
     for(level = 0; level < GA_stack_size; level++){
        strcat(error_buffer,GA_name_stack[level]);
        strcat(error_buffer,":");
@@ -389,7 +389,7 @@ static void gai_print_range(char *pre,int ndim,
 
         printf("%s[",pre);
         for(i=0;i<ndim;i++){
-                printf("%d:%d",lo[i],hi[i]);
+                printf("%ld:%ld",lo[i],hi[i]);
                 if(i==ndim-1)printf("] %s",post);
                 else printf(",");
         }
@@ -419,7 +419,7 @@ char *name;
     if(ga_nodeid_() ==0){
       nga_inquire_(&g_a, &type, &ndim, dims);
       ga_inquire_name(&g_a,&name);
-      printf("Array Handle=%d Name:'%s' ",g_a, name);
+      printf("Array Handle=%d Name:'%s' ",(int)g_a, name);
       printf("Data Type:");
       switch(type){
         case MT_F_DBL: printf("double"); break;
@@ -429,17 +429,17 @@ char *name;
       }
       printf("\nArray Dimensions:");
       if(fstyle){
-         for(i=0; i<ndim-1; i++)printf("%dx",dims[i]);
-         printf("%d\n",dims[ndim-1]);
+         for(i=0; i<ndim-1; i++)printf("%ldx",(long)dims[i]);
+         printf("%ld\n",(long)dims[ndim-1]);
       }else{
-         for(i=ndim-1; i>0; i--)printf("%dx",dims[i]);
-         printf("%d\n",dims[0]);
+         for(i=ndim-1; i>0; i--)printf("%ldx",(long)dims[i]);
+         printf("%ld\n",(long)dims[0]);
       }
 
       /* print array range for every processor */
       for(proc = 0; proc < nproc; proc++){
           nga_distribution_(&g_a,&proc,lo,hi);
-          sprintf(msg,"Process=%d\t owns array section: ",proc);
+          sprintf(msg,"Process=%d\t owns array section: ",(int)proc);
 
           /* for C style need to swap and decremenent by 1 both arrays */
           if(!fstyle){
@@ -511,8 +511,8 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
         /* print the general information */
         fprintf(file,"\n global array: %s[", name);
         for(i=0; i<ndim; i++)
-            if(i != (ndim-1)) fprintf(file, "%d:%d,", lo[i], hi[i]);
-            else fprintf(file, "%d:%d", lo[i], hi[i]);
+            if(i != (ndim-1)) fprintf(file, "%ld:%ld,", lo[i], hi[i]);
+            else fprintf(file, "%ld:%ld", lo[i], hi[i]);
         fprintf(file,"],  handle: %d \n", (int)*g_a);
         
         bufsize = (type==MT_F_DCPL)? BUFSIZE/2 : BUFSIZE;
@@ -538,14 +538,14 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     fprintf(file,"%s(", name);
                     for(j=0; j<ndim; j++)
                         if((j == 0) && (j == (ndim-1)))
-                            fprintf(file, "%d", lop[j]+i);
+                            fprintf(file, "%ld", lop[j]+i);
                         else if((j != 0) && (j == (ndim-1)))
-                            fprintf(file, "%d", lop[j]);
+                            fprintf(file, "%ld", lop[j]);
                         else if((j == 0) && (j != (ndim-1)))
-                            fprintf(file, "%d,", lop[j]+i);
-                        else fprintf(file, "%d,", lop[j]);
+                            fprintf(file, "%ld,", lop[j]+i);
+                        else fprintf(file, "%ld,", lop[j]);
                     switch(type) {
-                        case MT_F_INT: fprintf(file,") = %d\n", ibuf[i]);break;
+                        case MT_F_INT: fprintf(file,") = %ld\n", ibuf[i]);break;
                         case MT_F_DBL:
                             if((double)dbuf[i]<100000.0)
                                 fprintf(file,") = %f\n", dbuf[i]);
@@ -596,11 +596,11 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                     for(i=0; i<ndim; i++)
                         if(i < 2)
                             if(i != (ndim-1))
-                                fprintf(file, "%d:%d,", lo[i], hi[i]);
-                            else fprintf(file, "%d:%d", lo[i], hi[i]);
+                                fprintf(file, "%ld:%ld,", lo[i], hi[i]);
+                            else fprintf(file, "%ld:%ld", lo[i], hi[i]);
                         else
-                            if(i != (ndim-1)) fprintf(file, "%d,", lop[i]);
-                            else fprintf(file, "%d", lop[i]);
+                            if(i != (ndim-1)) fprintf(file, "%ld,", lop[i]);
+                            else fprintf(file, "%ld", lop[i]);
                     fprintf(file,"]\n"); status_3d = 0;
                 }
                 
@@ -610,7 +610,7 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                         case MT_F_INT:
                             fprintf(file, "     ");
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(file, "%7d  ", i);
+                                fprintf(file, "%7ld  ", i);
                             fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," --------");
@@ -618,14 +618,14 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                         case MT_F_DBL:
                             fprintf(file, "   ");
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(file, "%10d  ", i);
+                                fprintf(file, "%10ld  ", i);
                             fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," -----------");
                             break;
                         case MT_F_DCPL:
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(file, "%22d  ", i);
+                                fprintf(file, "%22ld  ", i);
                             fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
                                 fprintf(file," -----------------------");
@@ -643,13 +643,13 @@ void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
                 }
                 
                 for(i=0; i<(hip[0]-lop[0]+1); i++) {
-                    fprintf(file,"%4i  ", (lop[0]+i));
+                    fprintf(file,"%4ld  ", (lop[0]+i));
                     switch(type) {
                         case MT_F_INT:
                             if(ndim > 1)
                                 for(j=0; j<(hip[1]-lop[1]+1); j++)
-                                    fprintf(file," %8d", ibuf_2d[j*bufsize+i]);
-                            else fprintf(file," %8d", ibuf_2d[i]);
+                                    fprintf(file," %8ld", ibuf_2d[j*bufsize+i]);
+                            else fprintf(file," %8ld", ibuf_2d[i]);
                             break;
                         case MT_F_DBL:
                             if(ndim > 1)
@@ -755,13 +755,13 @@ void FATR ga_summarize_(Integer *verbose)
             
             switch(type) {
                 case MT_F_INT:
-                    fprintf(DEV, "  array %d => integer ", arr_no);
+                    fprintf(DEV, "  array %d => integer ", (int)arr_no);
                     break;
                 case MT_F_DBL:
-                    fprintf(DEV, "  array %d => double precision ", arr_no);
+                    fprintf(DEV, "  array %d => double precision ",(int)arr_no);
                     break;
                 case MT_F_DCPL:
-                    fprintf(DEV, "  array %d => double complex ", arr_no);
+                    fprintf(DEV, "  array %d => double complex ", (int)arr_no);
                     break;
                 default: ga_error("ga_print: wrong type",0);
             }
@@ -769,9 +769,9 @@ void FATR ga_summarize_(Integer *verbose)
 
             fprintf(DEV,"%s(", name);
             for(i=0; i<ndim; i++)
-                if(i != (ndim-1)) fprintf(DEV, "%d,", dims[i]);
-                else fprintf(DEV, "%d", dims[i]);
-            fprintf(DEV,"),  handle: %d \n", g_a);
+                if(i != (ndim-1)) fprintf(DEV, "%ld,", dims[i]);
+                else fprintf(DEV, "%ld", dims[i]);
+            fprintf(DEV,"),  handle: %d \n",(int) g_a);
 
             if(*verbose) {
                 for(i=0; i<nproc; i++){
@@ -780,9 +780,9 @@ void FATR ga_summarize_(Integer *verbose)
                     fprintf(DEV,"    (");
                     for(j=0; j<ndim; j++)
                         if(j != (ndim-1))
-                            fprintf(DEV, "%d:%d,", lop[j], hip[j]);
-                        else fprintf(DEV, "%d:%d", lop[j], hip[j]);
-                    fprintf(DEV,") -> %d \n", i);
+                            fprintf(DEV, "%ld:%ld,", lop[j], hip[j]);
+                        else fprintf(DEV, "%ld:%ld", lop[j], hip[j]);
+                    fprintf(DEV,") -> %d \n",(int) i);
                 }
             }
         }

@@ -44,7 +44,7 @@ void trace_init_(long *n)
     long index,err;
     
     if(*n<=0){
-        printf("trace_init>>  invalid max number of events: %d\n",*n);
+        printf("trace_init>>  invalid max number of events: %ld\n",*n);
         return;
     }
     
@@ -127,7 +127,7 @@ void trace_genrec_(long *ga, long *ilo, long *ihi, long *jlo, long *jhi,
         if(!has_record) {
             galog[ganum++] = *ga;
             
-            sprintf(fname, "distrib.%d", *ga);
+            sprintf(fname, "distrib.%d",(int) *ga);
             fout = fopen(fname,"w");
             
             NGA_Inquire(*ga, &type, &ndim, dims);
@@ -202,12 +202,12 @@ void trace_end_(long *proc)
     char fname[10];
     int i,k;
     
-    sprintf(fname,"%03d",*proc);
+    sprintf(fname,"%03d",(int)*proc);
     fout=fopen(fname,"w");
     
     for(i=0;i<min(current,MAX_EVENTS);i++){
-        fprintf(fout,"%d ",*proc);
-        for(k=i*6;k<6*(i+1);k++)fprintf(fout,"%d ",indlog[k]);
+        fprintf(fout,"%d ",(int)*proc);
+        for(k=i*6;k<6*(i+1);k++)fprintf(fout,"%d ",(int)indlog[k]);
         fprintf(fout,"%ld %ld\n",(unsigned long)tlog[i*2],
                 (unsigned long)tlog[i*2+1]);
     }

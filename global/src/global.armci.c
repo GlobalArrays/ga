@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.36 2000-04-14 23:11:27 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.37 2000-04-17 19:28:26 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -275,8 +275,8 @@ Integer  off_dbl, off_int, off_dcpl;
 #   endif
 
     if(DEBUG)
-        printf("%d INT_MB=%d(%x) DBL_MB=%ld(%lx) DCPL_MB=%d(%lx)\n",
-                GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB);
+        printf("%d INT_MB=%ld(%lx) DBL_MB=%ld(%lx) DCPL_MB=%ld(%lx)\n",
+                (int)GAme, INT_MB,INT_MB, DBL_MB,DBL_MB, DCPL_MB,DCPL_MB);
 }
 
 
@@ -314,7 +314,7 @@ Integer  i;
     MPnproc = ga_msg_nnodes_();
 
     if(GA_Proc_list)
-      fprintf(stderr,"permutation applied %d now becomes %d\n",MPme, GAme);
+      fprintf(stderr,"permutation applied %d now becomes %d\n",(int)MPme,(int)GAme);
 
     if(GAnproc > MAX_NPROC && MPme==0){
       fprintf(stderr,"Current GA setup is for up to %d processors\n",MAX_NPROC);
@@ -505,7 +505,7 @@ static void print_subscript(char *pre,int ndim, Integer subscript[], char* post)
 
         printf("%s [",pre);
         for(i=0;i<ndim;i++){
-                printf("%d",subscript[i]);
+                printf("%ld",subscript[i]);
                 if(i==ndim-1)printf("] %s",post);
                 else printf(",");
         }
@@ -548,7 +548,7 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
 /*      for(d=0; d<ndim; d++)if(blk[d]*GAnproc < dims[d])blk[d]=-1;*/
           
 
-      if(GAme==0 && DEBUG)for(d=0;d<ndim;d++) fprintf(stderr,"b[%d]=%d\n",d,blk[d]);
+      if(GAme==0 && DEBUG)for(d=0;d<ndim;d++) fprintf(stderr,"b[%ld]=%ld\n",d,blk[d]);
       ga_sync_();
 
 /*      ddb(ndim, dims, GAnproc, blk, pe);*/
@@ -590,8 +590,8 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,Intege
          print_subscript("blocks ",ndim, blk,"\n");
          printf("decomposition map\n");
          for(d=0; d< ndim; d++){
-           printf("dim=%d: ",d); 
-           for (i=0;i<pe[d];i++)printf("%d ",pmap[d][i]);
+           printf("dim=%ld: ",d); 
+           for (i=0;i<pe[d];i++)printf("%ld ",pmap[d][i]);
            printf("\n"); 
          }
          fflush(stdout);
@@ -960,10 +960,10 @@ Integer  i, ga_handle, status;
          ga_error("ga_create_irreg: too many blocks ",*nblock1 * *nblock2);
 
       if(GAme==0&& DEBUG){
-        fprintf(stderr," array:%d map1:\n", *g_a);
-        for (i=0;i<*nblock1;i++)fprintf(stderr," %d |",map1[i]);
-        fprintf(stderr," \n array:%d map2:\n", *g_a);
-        for (i=0;i<*nblock2;i++)fprintf(stderr," %d |",map2[i]);
+        fprintf(stderr," array:%d map1:\n", (int)*g_a);
+        for (i=0;i<*nblock1;i++)fprintf(stderr," %ld |",map1[i]);
+        fprintf(stderr," \n array:%d map2:\n",(int) *g_a);
+        for (i=0;i<*nblock2;i++)fprintf(stderr," %ld |",map2[i]);
         fprintf(stderr,"\n\n");
       }
 
@@ -1001,7 +1001,7 @@ Integer  i, ga_handle, status;
       GA[ga_handle].mapc[*nblock1 + *nblock2] = -1; /* end of block marker */
 
       if(GAme ==0 && DEBUG){
-         fprintf(stderr,"\nmapc %d elem\n", *nblock1 + *nblock2);
+         fprintf(stderr,"\nmapc %ld elem\n", *nblock1 + *nblock2);
          for(i=0;i<1+*nblock1+ *nblock2;i++)
              fprintf(stderr,"%d,",GA[ga_handle].mapc[i]);
          fprintf(stderr,"\n\n");
@@ -1310,7 +1310,7 @@ Integer _lo[2], _hi[2];                                                        \
       _jlo = _lo[1]; _jhi=_hi[1];                                              \
                                                                                \
       if((_i)<_ilo || (_i)>_ihi || (_j)<_jlo || (_j)>_jhi){                    \
-          sprintf(err_string,"%s: p=%d invalid i/j (%d,%d) >< (%d:%d,%d:%d)",  \
+       sprintf(err_string,"%s:p=%ld invalid i/j (%ld,%ld)><(%ld:%ld,%ld:%ld)", \
                  "gaShmemLocation", proc, (_i),(_j), _ilo, _ihi, _jlo, _jhi);  \
           ga_error(err_string, g_a );                                          \
       }                                                                        \
@@ -1329,7 +1329,7 @@ Integer _lo[2], _hi[2];                                                        \
 Integer _d;                                                                    \
    for(_d=0; _d<  ndim; _d++)                                                  \
       if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                  \
-          sprintf(err_string,"check subscript failed: %d not in (%d:%d) dim=", \
+        sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \
                   subscr[_d],  lo[_d],  hi[_d]);                            \
           ga_error(err_string, _d);                                            \
       }\
@@ -1373,7 +1373,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                             \
    if (*(ilo) <= 0 || *(ihi) > GA[GA_OFFSET + *(g_a)].dims[0] ||               \
        *(jlo) <= 0 || *(jhi) > GA[GA_OFFSET + *(g_a)].dims[1] ||               \
        *(ihi) < *(ilo) ||  *(jhi) < *(jlo)){                                   \
-       sprintf(err_string,"%s:request(%d:%d,%d:%d) out of range (1:%d,1:%d)",  \
+       sprintf(err_string,"%s:request(%ld:%ld,%ld:%ld) out of range (1:%ld,1:%ld)",\
                string, *(ilo), *(ihi), *(jlo), *(jhi),                         \
                GA[GA_OFFSET + *(g_a)].dims[0], GA[GA_OFFSET + *(g_a)].dims[1]);\
        ga_error(err_string, *(g_a));                                           \
@@ -1421,7 +1421,7 @@ Integer _d, _l;\
    sprintf(err_string, str); \
    _l = strlen(str);\
    for(_d=0; _d< ndim; _d++){ \
-        sprintf(err_string+_l, "%d:%d ",lo[_d],hi[_d]);\
+        sprintf(err_string+_l, "%ld:%ld ",lo[_d],hi[_d]);\
         _l=strlen(err_string);\
    }\
    ga_error(err_string, val);\
@@ -1833,7 +1833,7 @@ unsigned long    lref, lptr;
    /* check the allignment */
    lptr = (unsigned long)ptr;
    if( lptr%elemsize != lref%elemsize ){ 
-       printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",GAme,lptr,lptr%elemsize,
+       printf("%d: lptr=%lu(%lu) lref=%lu(%lu)\n",(int)GAme,lptr,lptr%elemsize,
                                                     lref,lref%elemsize);
        ga_error("nga_access: MA addressing problem: base address misallignment",
                  handle);
@@ -1864,78 +1864,6 @@ Integer lo[2], hi[2],ndim=ga_ndim_(g_a);
      hi[1]=*jhi;
      nga_access_(g_a,lo,hi,index,ld);
 } 
-
-
-/*\ PROVIDE ACCESS TO A PATCH OF A GLOBAL ARRAY
-\*/
-void FATR ga_access_o(g_a, ilo, ihi, jlo, jhi, index, ld)
-   Integer *g_a, *ilo, *ihi, *jlo, *jhi, *index, *ld;
-{
-register char *ptr;
-Integer  item_size, proc_place, handle = GA_OFFSET + *g_a;
-
-Integer ow;
-
-   if(!ga_locate_(g_a,ilo, jlo, &ow))ga_error("ga_access:locate top failed",0);
-   if(ow != GAme) ga_error("ga_access: cannot access top of the patch",ow);
-   if(!ga_locate_(g_a,ihi, jhi, &ow))ga_error("ga_access:locate bot failed",0);
-   if(ow != GAme) ga_error("ga_access: cannot access bottom of the patch",ow);
-
-   ga_check_handleM(g_a, "ga_access");
-   ga_check_regionM(g_a, ilo, ihi, jlo, jhi, "ga_access");
-
-   item_size = (int) GAsizeofM(GA[GA_OFFSET + *g_a].type);
-
-   proc_place = GAme -  GAmaster;
-
-   ptr = GA[handle].ptr[proc_place] + item_size * ( (*jlo - GA[handle].lo[1] )
-         *GA[handle].chunk[0] + *ilo - GA[handle].lo[0]);
-   *ld    = GA[handle].chunk[0];  
-   FLUSH_CACHE;
-
-   /*
-    * return address of the patch  as the distance in bytes
-    * from the reference address
-    * .in Fortran we need only the index to the type array: dbl_mb or int_mb
-    *  that are elements of COMMON in the the mafdecls.h include file
-    * .in C we need both the index and the pointer
-    */ 
-   /* compute index and check if it is correct */
-   switch (GA[handle].type){
-     case MT_F_DBL: 
-        *index = (Integer) (ptr - (char*)DBL_MB);
-        if(ptr != ((char*)DBL_MB)+ *index ){ 
-               ga_error("ga_access: MA addressing problem dbl - index",handle);
-        }
-        break;
-
-     case MT_F_DCPL:
-        *index = (Integer) (ptr - (char*)DCPL_MB);
-        if(ptr != ((char*)DCPL_MB)+ *index ){
-              ga_error("ga_access: MA addressing problem dcpl - index",handle);
-        }
-        break;
-
-     case MT_F_INT:
-        *index = (Integer) (ptr - (char*)INT_MB);
-        if(ptr != ((char*)INT_MB) + *index) {
-               ga_error("ga_access: MA addressing problem int - index",handle);
-        }
-        break;
-   }
-
-   /* check the allignment */
-   if(*index % item_size){
-       fprintf(stderr,"index=%ld size=%ld off =%ld\n",(long)*index, (long)item_size,(long)*index%item_size);
-       ga_error(" ga_access: base address misallignment ",(long)index);
-   }
-
-   /* adjust index according to the data type */
-   *index /= item_size;
-
-   /* adjust index for Fortran addressing */
-   (*index) ++ ;
-}
 
 
 
@@ -2201,8 +2129,8 @@ int rc;
 
   for(k=0; k< nv; k++){
      if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
-       sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
-               proc, i[k], j[k], ilo, ihi, jlo, jhi); 
+       sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)>< [%ld:%ld,%ld:%ld]",
+               (int)proc, i[k], j[k], ilo, ihi, jlo, jhi); 
        ga_error(err_string,g_a);
      }
 
@@ -2332,7 +2260,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
     for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
-            sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
+            sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
             ga_error(err_string,*g_a);
         }
         nelem[INT_MB[pindex+k]]++;
@@ -2386,8 +2314,8 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         ptr_src[proc][this_count] = ((char*)v) + k * item_size;
         if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
            j[k] < jlo[proc] || j[k] > jhi[proc]){
-            sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
-                 proc, i[k], j[k], ilo[proc], ihi[proc], jlo[proc], jhi[proc]);
+          sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)><[%ld:%ld,%ld:%ld]",
+             (int)proc, i[k], j[k], ilo[proc], ihi[proc], jlo[proc], jhi[proc]);
             ga_error(err_string, *g_a);
         }
         ptr_dst[proc][this_count] = ptr_ref[proc] + item_size *
@@ -2437,7 +2365,7 @@ Integer first, nelem, proc, type=GA[GA_OFFSET + *g_a].type;
 
   /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
   for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
-         sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
+         sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
          ga_error(err_string,*g_a);
   }
 
@@ -2499,7 +2427,7 @@ extern void ga_sort_permutation();
 
   /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
   for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
-         sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
+         sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
          ga_error(err_string,*g_a);
   }
 
@@ -2510,57 +2438,6 @@ extern void ga_sort_permutation();
 }
 
 
-
-void ga_gather_local(g_a, v, i, j, nv, proc) 
-     Integer g_a, *i, *j, nv, proc;
-     Void *v;
-{
-void **ptr_src, **ptr_dst;
-char *ptr_ref;
-Integer ldp, item_size, ilo, ihi, jlo, jhi;
-armci_giov_t desc;
-register Integer k, offset;
-
-  if (nv < 1) return;
-
-  GA_PUSH_NAME("ga_gather_local");
-
-  ga_distribution_(&g_a, &proc, &ilo, &ihi, &jlo, &jhi);
-
-  /* get address of the first element owned by proc */
-  gaShmemLocation(proc, g_a, ilo, jlo, &ptr_ref, &ldp);
-
-  item_size = GAsizeofM(GA[GA_OFFSET + g_a].type);
-  ptr_src = gai_malloc(2*nv*sizeof(void*));
-  if(ptr_src==NULL)ga_error("gai_malloc failed",nv);
-  else ptr_dst=ptr_src+ nv;
-
-  for(k=0; k< nv; k++){
-     if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
-       sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
-               proc, i[k], j[k], ilo, ihi, jlo, jhi); 
-       ga_error(err_string,g_a);
-     }
-
-     offset  = (j[k] - jlo)* ldp + i[k] - ilo;
-     ptr_dst[k] = ((char*)v) + k*item_size;
-     ptr_src[k] = ptr_ref + item_size * offset;
-  }
-  desc.bytes = item_size;
-  desc.src_ptr_array = ptr_src;
-  desc.dst_ptr_array = ptr_dst;
-  desc.ptr_array_len = nv;
-
-#ifdef PERMUTE_PIDS
-    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
-#endif
-
-  ARMCI_GetV(&desc, 1, (int)proc);
-
-  gai_free(ptr_src);
-
-  GA_POP_NAME;
-}
 
 
 #define SCATTER -99
@@ -2889,7 +2766,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
     for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
-            sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
+            sprintf(err_string,"invalid i/j=(%ld,%ld)", i[k], j[k]);
             ga_error(err_string, *g_a);
         }
         nelem[INT_MB[pindex+k]]++;
@@ -2943,8 +2820,8 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
 
         if(i[k] < ilo[proc] || i[k] > ihi[proc]  ||
            j[k] < jlo[proc] || j[k] > jhi[proc]){
-            sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
-                 proc, i[k], j[k], ilo[proc], ihi[proc], jlo[proc], jhi[proc]);
+          sprintf(err_string,"proc=%d invalid i/j=(%ld,%ld)><[%ld:%ld,%ld:%ld]",
+                 (int)proc,i[k],j[k],ilo[proc],ihi[proc],jlo[proc], jhi[proc]);
             ga_error(err_string, *g_a);
         }
         ptr_src[proc][this_count] = ptr_ref[proc] + item_size *
