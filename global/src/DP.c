@@ -2,6 +2,12 @@
 #include "globalp.h"
 #include "macommon.h"
 
+#ifdef CRAY_T3D
+#      include <fortran.h>
+#      define cptofcd(fcd)  _cptofcd((fcd),1)
+#else
+#      define cptofcd(fcd) (fcd)
+#endif
 
 
 /*\ check if I own the patch
@@ -41,7 +47,7 @@ static logical patch_intersect(ilo, ihi, jlo, jhi, ilop, ihip, jlop, jhip)
  *  . identical shapes 
  *  . copy by column order - Fortran convention
 \*/
-void ga_copy_patch_dp_(t_a, g_a, ailo, aihi, ajlo, ajhi,
+void ga_copy_patch_dp(t_a, g_a, ailo, aihi, ajlo, ajhi,
                    g_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
@@ -130,10 +136,24 @@ char transp;
   }
 }
 
+/*\ COPY A PATCH
+ *  Fortran interface
+\*/
+void ga_copy_patch_dp_(trans, g_a, ailo, aihi, ajlo, ajhi,
+                    g_b, bilo, bihi, bjlo, bjhi)
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;
+#ifdef CRAY_T3D
+     _fcd    trans;
+{ga_copy_patch_dp(_fcdtocp(trans),g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi);}
+#else 
+     char*   trans;
+{  ga_copy_patch_dp(trans,g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi); }
+#endif
 
 
 
-DoublePrecision ga_ddot_patch_dp_(g_a, t_a, ailo, aihi, ajlo, ajhi,
+DoublePrecision ga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi,
                                   g_b, t_b, bilo, bihi, bjlo, bjhi)
      Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
      Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
@@ -218,3 +238,20 @@ DoublePrecision  sum = 0.;
 }
 
       
+/*\ compute DOT PRODUCT of two patches
+ *  Fortran interface
+\*/
+DoublePrecision ga_ddot_patch_dp_(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                               g_b, t_b, bilo, bihi, bjlo, bjhi)
+     Integer *g_a, *ailo, *aihi, *ajlo, *ajhi;    /* patch of g_a */
+     Integer *g_b, *bilo, *bihi, *bjlo, *bjhi;    /* patch of g_b */
+
+#ifdef CRAY_T3D
+     _fcd   t_a, t_b;                          /* transpose operators */
+{ return ga_ddot_patch_dp(g_a, _fcdtocp(t_a), ailo, aihi, ajlo, ajhi,
+                       g_b, _fcdtocp(t_b), bilo, bihi, bjlo, bjhi);}
+#else 
+     char    *t_a, *t_b;                          /* transpose operators */
+{ return ga_ddot_patch_dp(g_a, t_a, ailo, aihi, ajlo, ajhi,
+                       g_b, t_b, bilo, bihi, bjlo, bjhi);}
+#endif
