@@ -47,13 +47,15 @@ c
 #include "tcgmsg.fh"
 c
       integer n,m
-      parameter (n = 100)
+      parameter (n = 128)
       parameter (m = n*n)
       double precision a(n,n), b(n,n), c(n,n), buf(m), drand, val
       double precision alpha, beta
       integer nproc, me 
       integer i, j, ailo, ajlo, bilo, bjlo, base, iran
+      integer aihi, ajhi, bihi, bjhi
       integer g_a, g_b, g_c 
+      integer rows, cols, loop
       logical status, dist_same 
       iran(i) = int(drand(0)*dfloat(i)) + 1
       dist_same = .false.
@@ -134,11 +136,59 @@ c***
          call ffflush(6)
       endif
 c
+      do loop =1, 10
+              ailo = iran(n/2)
+              ajlo = iran(n/2)
+              aihi = min(n, -1+ailo+n/2)
+              ajhi = min(n, -1+ajlo+n/4)
+              rows = aihi -ailo+1
+              cols = ajhi -ajlo +1
+c
+              bilo = iran(n/3)
+              bjlo = iran(n/3)
+              bihi = bilo + rows -1
+              bjhi = bjlo + cols -1
+              if (me .eq. 0) then
+                write(6,'(2x,1h[,4i4,1h],5h --> ,1h[,4i4,1h])')
+     $                ailo,aihi,ajlo,ajhi,
+     $                bilo,bihi, bjlo, bjhi
+ 
+                call ffflush(6)
+              endif
+
+c
+              call ga_copy_patch('n', g_a, ailo, aihi, ajlo, ajhi,
+     &                                g_b, bilo, bihi, bjlo, bjhi)
+c             call ga_print(g_a,1)
+c             call ga_print(g_b,1)
+              call ga_get(g_b,bilo,bihi, bjlo, bjhi, buf, rows)
+              base = 0
+              do j = ajlo, ajhi
+                 if(Mod(j,nproc).eq.me) then
+                    do i = ailo, aihi
+                       base = base+1
+                       if(buf(base) .ne. a(i,j)) then
+                          print *,me, ' error ',i,j, buf(base), a(i,j)
+                          call ga_error('exiting ...',0)
+                       endif
+                    enddo
+                 else
+                    base = base + rows
+                 endif
+              enddo
+      enddo
+c
       ailo = iran(n/2)
       ajlo = iran(n/2)
       bilo = iran(n/2)
       bjlo = iran(n/2)
 c
+      if (me .eq. 0) then
+                write(6,'(2x,1h[,4i4,1h],5h --> ,1h[,4i4,1h])')
+     $                ailo,aihi,ajlo,ajhi,
+     $                bilo,bihi, bjlo, bjhi
+      endif
+
       call ga_copy_patch('n', g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
      $                        g_b, bilo,bilo+n/3, bjlo, bjlo+n/2)
 *     call ga_print_patch(g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,1)
@@ -165,6 +215,11 @@ c
          call ffflush(6)
       endif
 c 
+      if (me .eq. 0) then
+                write(6,'(2x,1h[,4i4,2h]~,5h --> ,1h[,4i4,1h])')
+     $                ailo,aihi,ajlo,ajhi,
+     $                bilo,bihi, bjlo, bjhi
+      endif
       call ga_copy_patch('t', g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
      $                        g_b, bilo,bilo+n/3, bjlo, bjlo+n/2)
 *     call ga_print_patch(g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,1)
@@ -199,7 +254,7 @@ c***
       endif
       call ga_copy_patch('n', g_a, ailo,ailo+n/2, ajlo, ajlo+n/3,
      $                        g_b, bilo,bilo+n/2, bjlo, bjlo+n/3)
-      val = 3.14d0
+      val = 1.d0
       call ga_dscal_patch(g_b, bilo,bilo+n/2,bjlo, bjlo+n/3,val)
       call ga_get(g_b,bilo,bilo+n/2,bjlo, bjlo+n/3,buf,n/2+1)
       base = 0
@@ -272,7 +327,7 @@ c***
                beta = beta + a(i,j)**2
             enddo
       enddo
-      if(ABS(beta*val- alpha).gt.1d-5) then
+      if(ABS(beta*val- alpha).gt.1d-6*alpha) then
              print *,me, ' error ', beta*val, alpha
              call ga_error('exiting ...',0)
       endif
