@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/usleep.c,v 1.2 1994-12-30 20:56:24 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/usleep.c,v 1.3 1995-01-24 20:40:26 og845 Exp $ */
 
 #ifdef AIX
 #include <stdio.h>
@@ -31,8 +31,8 @@ void USleep(long us)
   int width=0;
   struct timeval timelimit;
 
-  printf("%2ld: sleeping for %ldus\n", TCGMSG_nodeid, us);
-  fflush(stdout);
+/*  printf("%2ld: sleeping for %ldus\n", TCGMSG_nodeid, us);
+  fflush(stdout);*/
 
   timelimit.tv_sec = (int) (us/1000000);
   timelimit.tv_usec = (int) (us - timelimit.tv_sec*1000000);
