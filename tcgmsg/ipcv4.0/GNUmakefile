@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.10 2002-07-17 17:20:11 vinod Exp $
+# $Id: GNUmakefile,v 1.11 2002-09-21 17:47:42 vinod Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -16,10 +16,6 @@ OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
           evon.o      pfilecopy.o $(EXTRA)
 
  HEADERS =  msgtypesf.h msgtypesc.h sndrcv.h srftoc.h ../tcgmsg.fh
-ifdef GA_USE_VAMPIR
- HEADERS += ../tcgmsg_vampir.h ../../ga_vt.h
-endif
-
 
   LIB_TARGETS = *.x *.o
   INCDIR      = ../../include
@@ -148,7 +144,11 @@ NO_PARALLEL = SP1 SP
 LOADLIBES = $(LIBRARY_PATH) $(COMM_LIBS) 
 ifdef GA_USE_VAMPIR
    ifdef VT_PATH
-      LOADLIBES += $(VT_PATH) -lVT
+      ifdef VT_LIB
+         LOADLIBES += $(VT_PATH) $(VT_LIB)
+      else
+         LOADLIBES += $(VT_PATH) -lVT
+      endif
    else
       echo "Setenv VT_PATH to -L<directory where libVT.a lives>"
    endif
