@@ -1,6 +1,6 @@
 #include <mpi.h>
 #include "tcgmsgP.h"
-#include <unistd.h> /* for exit() */
+#include <stdlib.h> /* for exit() */
 
 #ifndef CRAY_YMP
 #define USE_MPI_ABORT   

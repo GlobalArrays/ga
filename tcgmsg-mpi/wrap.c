@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.7 2002-12-16 21:46:28 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.8 2004-03-31 23:42:45 manoj Exp $ */
 #include <stdlib.h>
 #include <mpi.h>
 #ifdef CRAY
@@ -17,6 +17,7 @@ static double gop_work[DGOP_BUF_SIZE];              /* global ops buffer */
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define ABS(a) (((a) >= 0) ? (a) : (-(a)))
 
+#if 0
 static void idoop(n, op, x, work)
      long n;
      char *op;
@@ -58,7 +59,7 @@ static void idoop(n, op, x, work)
   else
     Error("idoop: unknown operation requested", (long) n);
 }
-
+#endif
 
 void FATR wrap_snd(wrap_type, buf, wrap_lenbuf, wrap_node, wrap_sync)
 
@@ -281,7 +282,7 @@ long n;
 
   while (nleft) {
     int root = 0; 
-    int ierr  ;
+    int ierr = MPI_SUCCESS;
     int ndo = MIN(nleft, buflen);
 
     if (strncmp(op,"+",1) == 0)
@@ -308,6 +309,7 @@ long n;
   }
 }
 
+extern void PFCOPY_();
 void FATR wrap_pfcopy(wrap_type, wrap_node0, fname, len)
   Integer *wrap_type;
   Integer *wrap_node0;

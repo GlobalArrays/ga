@@ -118,7 +118,7 @@ MPI_Status status;
 
   for (i=0; i<n_in_msg_q; i++){
     if (DEBUG_) {
-      (void) printf("WAITCOM: %ld waiting for msg to/from node %ld, #%ld\n",
+      (void) printf("WAITCOM: %ld waiting for msg to/from node %ld, #%d\n",
              NODEID_(), msg_q[i].node, i);
       (void) fflush(stdout);
     }
