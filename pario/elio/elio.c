@@ -80,10 +80,10 @@
 
 
 #ifdef WIN32
-#define FFSYNC _commit
+#define ELIO_FSYNC _commit
 #else
 #include <unistd.h>
-#define FFSYNC fsync
+#define ELIO_FSYNC fsync
 #endif
 
 /* structure to emulate control block in Posix AIO */
@@ -1007,12 +1007,12 @@ int elio_fsync(Fd_t fd)
 {
     int status = ELIO_OK;
 
-#ifdef FFSYNC
+#ifdef ELIO_FSYNC
     if (fd->next)
       status = elio_fsync((Fd_t) fd->next);
 
     printf("syncing extent %d name %s\n", fd->extent, fd->name);
-    /*   if(FFSYNC(fd->fd)==-1 || (status != ELIO_OK)) */
+    /*   if(ELIO_FSYNC(fd->fd)==-1 || (status != ELIO_OK)) */
     sync();
     if(fsync(fd->fd)==-1 )
       ELIO_ERROR(FSYNCFAIL, 0);
