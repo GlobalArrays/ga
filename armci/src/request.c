@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.54 2003-04-02 01:36:07 d3h325 Exp $ */
+/* $Id: request.c,v 1.55 2003-04-11 17:24:11 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -730,6 +730,8 @@ int armci_rem_strided(int op, void* scale, int proc,
                slen=2*sizeof(float);break; 
     case ARMCI_ACC_FLT:
                *(float*)buf = *(float*)scale; slen = sizeof(float); break;
+    case ARMCI_ACC_LNG:
+               *(long*)buf = *(long*)scale; slen = sizeof(long); break;
     default: slen=0;
     }
 	
@@ -951,6 +953,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     case ARMCI_ACC_DBL:     slen = sizeof(double); break;
     case ARMCI_ACC_CPL:     slen = 2*sizeof(float); break;
     case ARMCI_ACC_FLT:     slen = sizeof(float); break;
+    case ARMCI_ACC_LNG:     slen = sizeof(long); break;
 	default:				slen=0;
     }
 
