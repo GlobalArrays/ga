@@ -8,6 +8,7 @@ typedef struct {
     int  ptr_array_len;
     int bytes;
 } armci_giov_t;
+typedef long armci_size_t;
 extern int armci_notify(int proc);
 extern int armci_notify_wait(int proc,int *pval);
 extern int ARMCI_Init(void);    /* initialize ARMCI */
@@ -115,9 +116,9 @@ extern float ARMCI_GetValueFloat(void *src, int proc);
 extern double ARMCI_GetValueDouble(void *src, int proc);     
 
 
-extern int ARMCI_Malloc(void* ptr_arr[], int bytes);
+extern int ARMCI_Malloc(void* ptr_arr[], armci_size_t bytes);
 extern int ARMCI_Free(void *ptr);
-extern void* ARMCI_Malloc_local(int bytes);
+extern void* ARMCI_Malloc_local(armci_size_t bytes);
 extern int ARMCI_Free_local(void *ptr);
 extern int ARMCI_Same_node(int proc);
 

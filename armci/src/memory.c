@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.32 2003-07-10 19:19:28 d3h325 Exp $ */
+/* $Id: memory.c,v 1.33 2003-07-30 05:05:52 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -57,7 +57,7 @@ static void armci_master_exp_attached_ptr(void* ptr)
 
 /*\ Collective Memory Allocation on shared memory systems
 \*/
-void armci_shmem_malloc(void *ptr_arr[],int bytes)
+void armci_shmem_malloc(void *ptr_arr[], armci_size_t bytes)
 {
     void *myptr=NULL, *ptr=NULL;
     long idlist[SHMIDLEN];
@@ -247,8 +247,8 @@ void armci_krmalloc_init_localmem() {
 /**
  * Local Memory Allocation and Free
  */
-void *ARMCI_Malloc_local(int bytes) {
-    return (void *)kr_malloc(bytes, &ctx_localmem);
+void *ARMCI_Malloc_local(armci_size_t bytes) {
+    return (void *)kr_malloc((size_t)bytes, &ctx_localmem);
 }
 
 int ARMCI_Free_local(void *ptr) {
@@ -264,7 +264,7 @@ int ARMCI_Free_local(void *ptr) {
  *        and can be used in the ARMCI data transfer operations.
  *        ptr_arr[nproc]
 \*/
-int ARMCI_Malloc(void *ptr_arr[],int bytes)
+int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
 {
     void *ptr;
 #ifdef GA_USE_VAMPIR
@@ -274,8 +274,8 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
        fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, bytes);
 #ifdef USE_MALLOC
     if(armci_nproc == 1) {
-      ptr = kr_malloc(bytes, &ctx_localmem);
-      if(bytes) if(!ptr) armci_die("armci_malloc:malloc 1 failed",bytes);
+      ptr = kr_malloc((size_t) bytes, &ctx_localmem);
+      if(bytes) if(!ptr) armci_die("armci_malloc:malloc 1 failed",(int)bytes);
       ptr_arr[armci_me] = ptr;
 #ifdef GA_USE_VAMPIR
       vampir_end(ARMCI_MALLOC,__FILE__,__LINE__);
