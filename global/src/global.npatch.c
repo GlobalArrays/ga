@@ -31,6 +31,7 @@
  * distribute to other US Government contractors.
  */
 
+#include "message.h"
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -382,9 +383,9 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     Integer g_A = *g_a, g_B = *g_b;
     void *A_ptr, *B_ptr;
     Integer bvalue[MAXDIM], bunit[MAXDIM], baseldA[MAXDIM];
-    Integer idx, n1dim;
+    Integer idx, n1dim, ctype;
     Integer atotal, btotal;
-    int isum;
+    int isum, alen;
     long lsum;
     double dsum;
     DoubleComplex zsum;
@@ -452,6 +453,29 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     if(andim > bndim) andim = bndim; /* need more work */
 
     isum = 0; dsum = 0.; zsum.real = 0.; zsum.imag = 0.; fsum = 0;lsum=0;
+    switch (atype){
+      case C_INT:
+        *(int*)retval = isum;
+        alen = 1;
+        break;                                     
+      case C_DCPL:
+        ((double*)retval)[0] = zsum.real;
+        ((double*)retval)[1] = zsum.imag;
+        alen = 2;
+        break;                                     
+      case  C_DBL:
+        *(double*)retval = dsum;
+        alen = 1;
+        break;                                     
+      case  C_FLOAT:
+        *(float*)retval = fsum;
+        alen = 1;
+        break;                                     
+      case C_LONG:
+        *(long*)retval = lsum;
+        alen = 1;
+        break;                                     
+    }
     
     /*  determine subsets of my patches to access  */
     if(ngai_patch_intersect(alo, ahi, loA, hiA, andim)){
@@ -489,6 +513,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                         isum += ((int *)A_ptr)[idx+j] *
                             ((int *)B_ptr)[idx+j];
                 }
+                *(int*)retval = isum;
                 break;
             case C_DCPL:
                 for(i=0; i<n1dim; i++) {
@@ -506,6 +531,8 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                         zsum.imag += a.imag*b.real  + b.imag * a.real;
                     }
                 }
+                ((double*)retval)[0] = zsum.real;
+                ((double*)retval)[1] = zsum.imag;
                 break;
             case  C_DBL:
                 for(i=0; i<n1dim; i++) {
@@ -520,6 +547,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                         dsum += ((double*)A_ptr)[idx+j] *
                             ((double*)B_ptr)[idx+j];
                 }
+                *(double*)retval = dsum;
                 break;
             case C_FLOAT:
                 for(i=0; i<n1dim; i++) {
@@ -534,6 +562,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                         fsum += ((float *)A_ptr)[idx+j] *
                             ((float *)B_ptr)[idx+j];
                 }
+                *(float*)retval = fsum;
                 break;         
             case C_LONG:
                 for(i=0; i<n1dim; i++) {
@@ -548,6 +577,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
                         lsum += ((long *)A_ptr)[idx+j] *
                             ((long *)B_ptr)[idx+j];
                 }
+                *(long*)retval = lsum;
                 break;                                     
         }
 
@@ -556,31 +586,20 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
         nga_release_(&g_B, loA, hiA);
     }
 
-
-    /* the return value */
-    switch (atype){
-        case C_INT:
-            armci_msg_igop(&isum, 1, "+");
-            *((int *)retval) += isum;
-            break;
-        case  C_DBL:
-            armci_msg_dgop(&dsum, 1, "+");
-            *((double*)retval) = dsum;
-            break;
-        case C_DCPL:
-            armci_msg_dgop(&zsum.real, 2, "+");
-            (*((DoubleComplex *)retval)).real = zsum.real;
-            (*((DoubleComplex *)retval)).imag = zsum.imag;
-            break;
-        case C_FLOAT:
-            armci_msg_fgop(&fsum, 1, "+");
-            *((float *)retval) += fsum;
-            break;
-        case C_LONG:
- 	    armci_msg_lgop(&lsum, 1, "+");
-            *((long *)retval) += lsum;
-            break;  
-        default: ga_error(" wrong data type ",atype);
+    /*convert from C data type to ARMCI type */
+     switch(atype) {
+       case C_FLOAT: ctype=ARMCI_FLOAT; break;
+       case C_DBL: ctype=ARMCI_DOUBLE; break;
+       case C_INT: ctype=ARMCI_INT; break;
+       case C_LONG: ctype=ARMCI_LONG; break;
+       case C_DCPL: ctype=ARMCI_DOUBLE; break;
+       default: ga_error("ngai_dot_patch: type not supported",atype);
+     }
+ 
+    if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
+      armci_msg_gop_scope(SCOPE_NODE,retval,alen,"+",ctype);
+    } else {
+      armci_msg_gop_scope(SCOPE_ALL,retval,alen,"+",ctype);
     }
     
     if(temp_created) ga_destroy_(&g_B);
