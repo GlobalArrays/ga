@@ -3,7 +3,7 @@ c vector boxes lack arithmetic precision
 # define THRESH 1d-10
 #elif defined(FUJITSU)
 # define THRESH 1d-12
-# define THRESHF 1e-7
+# define THRESHF 1e-5
 #else
 # define THRESH 1d-13
 # define THRESHF 1e-5

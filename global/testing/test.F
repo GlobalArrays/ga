@@ -1,10 +1,10 @@
-c $Id: test.F,v 1.40 2001-05-25 19:31:43 d3h325 Exp $
+c $Id: test.F,v 1.41 2002-07-22 23:50:46 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
 #elif defined(FUJITSU)
 # define THRESH 1d-12
-# define THRESHF 1e-7
+# define THRESHF 1e-5
 #else
 # define THRESH 1d-13
 # define THRESHF 1e-5
