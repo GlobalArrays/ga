@@ -358,9 +358,9 @@ int eaf_delete(const char *fname)
     return EAF_ERR_UNLINK;
 }
 
-int eaf_stat(const char *path, int *avail_kb, char *fstype, int fslen)
+int eaf_stat(const char *path, int *avail_mb, char *fstype, int fslen)
 /*
-  Return in *avail_kb and *fstype the amount of free space (in Kb)
+  Return in *avail_mb and *fstype the amount of free space (in Mb)
   and filesystem type (currenly UFS, PFS, or PIOFS) of the filesystem
   associated with path.  Path should be either a filename, or a directory
   name ending in a slash (/).  fslen should specify the size of the
@@ -377,7 +377,7 @@ int eaf_stat(const char *path, int *avail_kb, char *fstype, int fslen)
  if (rc = elio_stat(dirname, &statinfo)) return rc;
  if (fslen < 8) return EAF_ERR_TOO_SHORT;
 
- *avail_kb = statinfo.avail;
+ *avail_mb = (int)(statinfo.avail>>10);
  if (statinfo.fs == ELIO_UFS)
      strcpy(fstype, "UFS");
  else if (statinfo.fs == ELIO_PFS)

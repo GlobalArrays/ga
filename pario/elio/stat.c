@@ -41,14 +41,14 @@ char* elio_drivename(const char* fname)
          return(drive);
 }
 
-void  get_avail_space(int dev, long *avail, int* bsize)
+void  get_avail_space(int dev, avail_t *avail, int* bsize)
 {
       static char drive[4]="A:\\";
       int sectors, cfree, ctotal;
       drive[0]= dev + 'A';
 
       GetDiskFreeSpace(drive, &sectors, bsize, &cfree, &ctotal);
-      *avail = sectors*cfree;
+      *avail = sectors*(avail_t)cfree;
 }
 
 #endif
@@ -134,12 +134,12 @@ int  elio_stat(char *fname, stat_t *statinfo)
 
 #        ifdef CRAY
           if(ufs_statfs.f_secnfree != 0) /* check for secondary partition */
-             statinfo->avail = (long) ufs_statfs.f_secnfree;
+             statinfo->avail = (avail_t) ufs_statfs.f_secnfree;
           else
 #        endif
-             statinfo->avail = (long) ufs_statfs.f_bfree;
+             statinfo->avail = (avail_t) ufs_statfs.f_bfree;
 #     else
-          statinfo->avail = (long) ufs_statfs.f_bavail;
+          statinfo->avail = (avail_t) ufs_statfs.f_bavail;
 #     endif
 
 #     ifdef NO_F_FRSIZE
@@ -165,11 +165,13 @@ int  elio_stat(char *fname, stat_t *statinfo)
     case 2048: statinfo->avail *=2; break;
     case 4096: statinfo->avail *=4; break;
     case 8192: statinfo->avail *=8; break;
+    case 16384: statinfo->avail *=16; break;
+    case 32768: statinfo->avail *=32; break;
     default:   { 
 		double avail;
 		double factor = ((double)bsize)/1024.0;
 		avail = factor * (double)statinfo->avail;
-		statinfo->avail = (long) avail;
+		statinfo->avail = (avail_t) avail;
                }
     }
     

@@ -286,7 +286,7 @@ c
       call testerr(eaf_stat(fname, avail, fstype))
       write(6,*) ' avail = ', avail, ' fstype = ', fstype
       avail = 0.95*avail
-      length = 1024.0d0*avail
+      length = 1024*1024.0d0*avail
       call testerr(eaf_open(fname, eaf_rw, fd))
       if(length.gt. MAX_FILE_SZ) then
          length = MAX_FILE_SZ
