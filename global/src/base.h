@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.8 2002-09-17 17:03:52 vinod Exp $ */
+/*$Id: base.h,v 1.9 2003-02-17 22:50:55 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -8,6 +8,14 @@ extern int* GA_inv_Proc_list;
 extern int** GA_Update_Flags;
 
 #define FNAM        31              /* length of array names   */
+
+typedef struct {
+       int mirrored;
+       int map_nproc;
+       int *map_proc_list;
+       int *inv_map_proc_list;
+} proc_list_t;
+
 typedef struct {
        int  ndim;               /* number of dimensions                 */
        int  type;               /* data type int array                  */
@@ -26,9 +34,11 @@ typedef struct {
        char **ptr;              /* arrays of pointers to remote data    */
        int  *mapc;              /* block distribution map               */
        char name[FNAM+1];       /* array name                           */
+       int p_handle;            /* pointer to processor list for array  */
 } global_array_t;
 
 extern global_array_t *_ga_main_data_structure; 
+extern proc_list_t *_proc_list_main_data_structure; 
 /*\
  *The following statement had to be moved here because of a problem in the c
  *compiler on SV1. The problem is that when a c file is compiled with a 
@@ -40,6 +50,7 @@ extern global_array_t *_ga_main_data_structure;
  *on SV1.
 \*/
 extern global_array_t *GA;
+extern proc_list_t *P_LIST;
 
 
 #define ERR_STR_LEN 256               /* length of string for error reporting */
@@ -61,10 +72,10 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 }
 
 /* this macro finds cordinates of the chunk of array owned by processor proc */
-#define ga_ownsM_no_handle(ndim, dims, nblock, mapc, proc, lo, hi)                                      \
+#define ga_ownsM_no_handle(ndim, dims, nblock, mapc, proc, lo, hi)             \
 {                                                                              \
-   Integer _loc, _nb, _d, _index, _dim=ndim,_dimstart=0, _dimpos;\
-   for(_nb=1, _d=0; _d<_dim; _d++)_nb *= nblock[_d];             \
+   Integer _loc, _nb, _d, _index, _dim=ndim,_dimstart=0, _dimpos;              \
+   for(_nb=1, _d=0; _d<_dim; _d++)_nb *= nblock[_d];                           \
    if(proc > _nb - 1 || proc<0)for(_d=0; _d<_dim; _d++){                       \
          lo[_d] = (Integer)0;                                                  \
          hi[_d] = (Integer)-1;                                                 \
@@ -72,22 +83,22 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
          _index = proc;                                                        \
          if(GA_inv_Proc_list) _index = GA_inv_Proc_list[proc];                 \
          for(_d=0; _d<_dim; _d++){                                             \
-             _loc = _index% nblock[_d];                          \
-             _index  /= nblock[_d];                              \
+             _loc = _index% nblock[_d];                                        \
+             _index  /= nblock[_d];                                            \
              _dimpos = _loc + _dimstart; /* correction to find place in mapc */\
-             _dimstart += nblock[_d];                            \
-             lo[_d] = mapc[_dimpos];                             \
-             if(_loc==nblock[_d]-1)hi[_d]=dims[_d];\
-             else hi[_d] = mapc[_dimpos+1]-1;                    \
+             _dimstart += nblock[_d];                                          \
+             lo[_d] = mapc[_dimpos];                                           \
+             if(_loc==nblock[_d]-1)hi[_d]=dims[_d];                            \
+             else hi[_d] = mapc[_dimpos+1]-1;                                  \
          }                                                                     \
    }                                                                           \
 }
 
 /* this macro finds cordinates of the chunk of array owned by processor proc */
-#define ga_ownsM(ga_handle, proc, lo, hi)				                  \
-  ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims,         \
-                     GA[ga_handle].nblock, GA[ga_handle].mapc, proc, \
-                     lo, hi )
+#define ga_ownsM(ga_handle, proc, lo, hi)                                      \
+  ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims,                   \
+                     GA[ga_handle].nblock, GA[ga_handle].mapc,                 \
+                     proc,lo, hi )
 
 #define gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc){\
   int _i;                                                            \

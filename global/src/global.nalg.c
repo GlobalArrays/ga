@@ -8,6 +8,7 @@
 
  
 #include <stdio.h>
+#include "message.h"
 #include "global.h"
 #include "globalp.h"
 
@@ -234,6 +235,7 @@ long lsum=0;
 DoubleComplex zsum ={0.,0.};
 float fsum=0.0;
 void *ptr_a, *ptr_b;
+int atype, alen;
 
 Integer andim, adims[MAXDIM];
 Integer bndim, bdims[MAXDIM];
@@ -301,6 +303,8 @@ Integer bndim, bdims[MAXDIM];
            for(i=0;i<elems;i++) 
                  isum += ia[i]  * ib[i];
            *(int*)value = isum; 
+           atype = C_INT;
+           alen = 1;
            break;
 
         case C_DCPL:
@@ -311,6 +315,8 @@ Integer bndim, bdims[MAXDIM];
                zsum.imag += a.imag*b.real  + b.imag * a.real;
            }
            *(DoubleComplex*)value = zsum; 
+           atype = C_DCPL;
+           alen = 2;
            break;
 
         case C_DBL:
@@ -319,6 +325,8 @@ Integer bndim, bdims[MAXDIM];
            for(i=0;i<elems;i++) 
                  zsum.real += da[i]  * db[i];
            *(double*)value = zsum.real; 
+           atype = C_DBL;
+           alen = 1;
            break;
         case C_FLOAT:
            fa = (float*)ptr_a;
@@ -326,6 +334,8 @@ Integer bndim, bdims[MAXDIM];
            for(i=0;i<elems;i++)
                  fsum += fa[i]  * fb[i];
            *(float*)value = fsum;
+           atype = C_FLOAT;
+           alen = 1;
            break;         
         case C_LONG:
            la = (long*)ptr_a;
@@ -333,6 +343,8 @@ Integer bndim, bdims[MAXDIM];
            for(i=0;i<elems;i++)
 		lsum += la[i]  * lb[i];
            *(long*)value = lsum;
+           atype = C_LONG;
+           alen = 1;
            break;               
         default: ga_error(" wrong data type ",type);
       }
@@ -344,15 +356,20 @@ Integer bndim, bdims[MAXDIM];
       }
 
 
-   if(Type == C_INT)armci_msg_igop((int*)value, 1, "+");
-   else if(Type == C_LONG)
-     armci_msg_lgop((long*)value, 1, "+"); 
-   else if(Type == C_DBL) 
-     armci_msg_dgop( (double*)value, 1, "+"); 
-   else if(Type == C_FLOAT)
-     armci_msg_fgop((float*)value, 1, "+");  
-   else
-     armci_msg_dgop((double*)value, 2, "+"); 
+   if (ga_is_mirrored_(g_a) && ga_is_mirrored_(g_b)) {
+     armci_msg_gop_scope(SCOPE_NODE,value,alen,"+",atype);
+   } else {
+/*     armci_msg_gop_scope(SCOPE_ALL,value,alen,"+",atype); */
+     if(Type == C_INT)armci_msg_igop((int*)value, 1, "+");
+     else if(Type == C_LONG)
+       armci_msg_lgop((long*)value, 1, "+"); 
+     else if(Type == C_DBL) 
+       armci_msg_dgop( (double*)value, 1, "+"); 
+     else if(Type == C_FLOAT)
+       armci_msg_fgop((float*)value, 1, "+");  
+     else
+       armci_msg_dgop((double*)value, 2, "+"); 
+   }
     
    GA_POP_NAME;
 

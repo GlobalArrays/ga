@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.29 2003-02-03 16:49:25 vinod Exp $ */
+/* $Id: onesided.c,v 1.30 2003-02-17 22:50:55 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -237,13 +237,13 @@ Integer _jw = GA[g_handle].width[1];                                           \
 }
 
 
-#define gaCheckSubscriptM(subscr, lo, hi, ndim)                             \
+#define gaCheckSubscriptM(subscr, lo, hi, ndim)                                \
 {                                                                              \
 Integer _d;                                                                    \
    for(_d=0; _d<  ndim; _d++)                                                  \
-      if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                  \
+      if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
         sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \
-                  subscr[_d],  lo[_d],  hi[_d]);                            \
+                  subscr[_d],  lo[_d],  hi[_d]);                               \
           ga_error(err_string, _d);                                            \
       }\
 }
@@ -254,7 +254,7 @@ Integer _d;                                                                    \
 #define gam_Location(proc, g_handle,  subscript, ptr_loc, ld)                  \
 {                                                                              \
 Integer _offset=0, _d, _w, _factor=1, _last=GA[g_handle].ndim-1;               \
-Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
+Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
                                                                                \
       ga_ownsM(g_handle, proc, _lo, _hi);                                      \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
@@ -267,6 +267,12 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
       }                                                                        \
       _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])       \
                * _factor;                                                      \
+      _p_handle = GA[g_handle].p_handle;                                       \
+      if (_p_handle < 0) {                                                     \
+        _pinv = proc;                                                          \
+      } else {                                                                 \
+        _pinv = P_LIST[_p_handle].inv_map_proc_list[proc];                     \
+      }                                                                        \
       *(ptr_loc) =  GA[g_handle].ptr[proc]+_offset*GA[g_handle].elemsize;      \
 }
 
@@ -352,7 +358,7 @@ void nga_put_common(Integer *g_a,
                    Integer *nbhandle)
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, size;
+Integer  idx, elems, size, p_handle;
 int proc, ndim;
 
 #ifdef GA_USE_VAMPIR
@@ -372,6 +378,7 @@ int proc, ndim;
       GAstat.numput_procs += np;
       if(nbhandle)ga_init_nbhandle(nbhandle);
       gaPermuteProcList(np);
+      p_handle = GA[handle].p_handle;
       for(idx=0; idx< np; idx++){
           Integer ldrem[MAXDIM];
           int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
@@ -381,6 +388,9 @@ int proc, ndim;
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
           proc = (int)GA_proclist[p];
+          if (p_handle >= 0) {
+            proc = (int)P_LIST[p_handle].map_proc_list[proc];
+          }
 
           gam_Location(proc,handle, plo, &prem, ldrem); 
 
@@ -410,6 +420,9 @@ int proc, ndim;
           /*casting what ganb_get_armci_handle function returns to armci_hdl is 
             very crucial here as on 64 bit platforms, pointer is 64 bits where 
             as temporary in only 32 bits*/ 
+          if (p_handle >= 0) {
+            proc = (int)GA_proclist[p];
+          }
           if(nbhandle) 
             ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1, 
                          proc,(armci_hdl_t)get_armci_nbhandle(nbhandle));
@@ -525,7 +538,7 @@ void FATR nga_get_common(Integer *g_a,
          ld[]:  Array of physical ndim-1 dimensions of local buffer */
 
 Integer  p, np, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, size;
+Integer  idx, elems, size, p_handle;
 int proc, ndim;
 
 #ifdef GA_USE_VAMPIR
@@ -557,6 +570,7 @@ int proc, ndim;
       if(nbhandle)ga_init_nbhandle(nbhandle);
 
       gaPermuteProcList(np);
+      p_handle = GA[handle].p_handle;
       for(idx=0; idx< np; idx++){
           Integer ldrem[MAXDIM];
           int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
@@ -569,6 +583,9 @@ int proc, ndim;
              index corresponding to p and store the result in proc. */
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
           proc = (int)GA_proclist[p];
+          if (p_handle >= 0) {
+            proc = (int)P_LIST[p_handle].map_proc_list[proc];
+          }
 
           /* get pointer prem to location indexed by plo. Also get
              leading physical dimensions in memory in ldrem */
@@ -599,6 +616,9 @@ int proc, ndim;
           if(proc == GAme){
              gam_CountElems(ndim, plo, phi, &elems);
              GAbytes.getloc += (double)size*elems;
+          }
+          if (p_handle >= 0) {
+            proc = (int)GA_proclist[p];
           }
           if(nbhandle) 
             ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
@@ -704,7 +724,7 @@ void FATR nga_acc_(Integer *g_a,
                    void    *alpha)
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, size, type;
+Integer  idx, elems, size, type, p_handle;
 int optype, proc, ndim;
 
 #ifdef GA_USE_VAMPIR
@@ -732,6 +752,7 @@ int optype, proc, ndim;
       GAstat.numacc_procs += np;
 
       gaPermuteProcList(np);
+      p_handle = GA[handle].p_handle;
       for(idx=0; idx< np; idx++){
           Integer ldrem[MAXDIM];
           int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
@@ -741,6 +762,9 @@ int optype, proc, ndim;
           p = (Integer)ProcListPerm[idx];
           gam_GetRangeFromMap(p, ndim, &plo, &phi);
           proc = (int)GA_proclist[p];
+          if (p_handle >= 0) {
+            proc = P_LIST[p_handle].map_proc_list[proc];
+          }
 
           gam_Location(proc,handle, plo, &prem, ldrem);
 
@@ -764,6 +788,9 @@ int optype, proc, ndim;
              GAbytes.accloc += (double)size*elems;
           }
 
+          if (p_handle >= 0) {
+            proc = (int)GA_proclist[p];
+          }
           ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count, ndim-1, proc);
 
       }
@@ -811,19 +838,23 @@ void nga_access_ptr(Integer* g_a, Integer lo[], Integer hi[],
 {
 char *lptr;
 Integer  handle = GA_OFFSET + *g_a;
-Integer  ow,i;
+Integer  ow,i,p_handle;
 
    GA_PUSH_NAME("nga_access_ptr");
-   if(!nga_locate_(g_a,lo,&ow))ga_error("locate top failed",0);
-   if(ow != GAme) ga_error("cannot access top of the patch",ow);
-   if(!nga_locate_(g_a,hi, &ow))ga_error("locate bottom failed",0);
-   if(ow != GAme) ga_error("cannot access bottom of the patch",ow);
+   if (!nga_locate_(g_a,lo,&ow)) ga_error("locate top failed",0);
+   if (ow != GAme) ga_error("cannot access top of the patch",ow);
+   if (!nga_locate_(g_a,hi, &ow)) ga_error("locate bottom failed",0);
+   if (ow != GAme) ga_error("cannot access bottom of the patch",ow);
 
    for (i=0; i<GA[handle].ndim; i++)
        if(lo[i]>hi[i]) {
            ga_RegionError(GA[handle].ndim, lo, hi, *g_a);
        }
 
+   p_handle = GA[handle].p_handle;
+   if (p_handle >= 0) {
+     ow = P_LIST[p_handle].map_proc_list[ow];
+   }
    gam_Location(ow,handle, lo, &lptr, ld);
    *(char**)ptr = lptr; 
    GA_POP_NAME;
@@ -1176,8 +1207,8 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     for(k=0; k<(*nv); k++){
         Integer this_count;
         proc = owner[k]; 
-	this_count = count[proc]; 
-	count[proc]++;
+        this_count = count[proc]; 
+        count[proc]++;
         proc = map[proc];
         ptr_src[proc][this_count] = ((char*)v) + k * item_size;
 

@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.27 2002-11-26 20:38:20 d3h325 Exp $ */
+/* $Id: base.c,v 1.28 2003-02-17 22:50:55 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -57,6 +57,8 @@
 
 global_array_t *_ga_main_data_structure;
 global_array_t *GA;
+proc_list_t *_proc_list_main_data_structure;
+proc_list_t *P_LIST;
 static int GAinitialized = 0;
 int _ga_sync_begin = 1;
 int _ga_sync_end = 1;
@@ -310,8 +312,8 @@ Integer  off_dbl, off_int, off_dcpl, off_flt,off_long;
 \*/
 void FATR  ga_initialize_()
 {
-Integer  i;
-int bytes;
+Integer  i, j;
+int bytes, nproc, nnode, zero;
 
     if(GAinitialized) return;
 #ifdef GA_USE_VAMPIR
@@ -321,12 +323,21 @@ int bytes;
 #endif
 
     /* zero in pointers in GA array */
-    _ga_main_data_structure = (global_array_t *)malloc(sizeof(global_array_t)*MAX_ARRAYS);
-    if(!_ga_main_data_structure) ga_error("ga_init:malloc failed",0);
+    _ga_main_data_structure
+       = (global_array_t *)malloc(sizeof(global_array_t)*MAX_ARRAYS);
+    _proc_list_main_data_structure
+       = (proc_list_t *)malloc(sizeof(proc_list_t)*(MAX_ARRAYS+2));
+    if(!_ga_main_data_structure)
+       ga_error("ga_init:malloc ga failed",0);
+    if(!_proc_list_main_data_structure)
+       ga_error("ga_init:malloc proc_list failed",0);
     GA = _ga_main_data_structure;
+    P_LIST = _proc_list_main_data_structure;
     for(i=0;i<MAX_ARRAYS; i++) {
        GA[i].ptr  = (char**)0;
        GA[i].mapc = (int*)0;
+       P_LIST[i].map_proc_list = (int*)0;
+       P_LIST[i].inv_map_proc_list = (int*)0;
     }
 
     bzero(&GAstat,sizeof(GAstat));
@@ -339,6 +350,22 @@ int bytes;
     if(GA_Proc_list) GAme = (Integer)GA_Proc_list[ga_msg_nodeid_()];
     else
 #endif
+    nproc = ga_nnodes_();
+    P_LIST[0].map_proc_list = (int*)malloc(nproc*sizeof(int)*2);
+    P_LIST[0].inv_map_proc_list = P_LIST[0].map_proc_list + nproc;
+    for (i=0; i<nproc; i++) P_LIST[0].map_proc_list[i] = -1;
+    for (i=0; i<nproc; i++) P_LIST[0].inv_map_proc_list[i] = -1;
+    nnode = ga_cluster_nodeid_();
+    nproc = ga_cluster_nprocs_((Integer*)&nnode);
+    zero = 0;
+    j = ga_cluster_procid_((Integer*)&nnode, (Integer*)&zero);
+    P_LIST[0].map_nproc = nproc;
+    P_LIST[0].mirrored = 1;
+    for (i=0; i<nproc; i++) {
+      P_LIST[0].map_proc_list[i+j] = i;
+      P_LIST[0].inv_map_proc_list[i] = i+j;
+    }
+
     GAme = (Integer)armci_msg_me();
     if(GAme<0 || GAme>20000) 
        ga_error("ga_init:message-passing initialization problem: my ID=",GAme);
@@ -521,7 +548,7 @@ void gai_print_subscript(char *pre,int ndim, Integer subscript[], char* post)
 void gai_init_struct(int handle)
 {
      if(!GA[handle].ptr){
-        int len = (int)MIN(GAnproc, MAX_PTR);
+        int len = (int)MIN((Integer)GAnproc, MAX_PTR);
         GA[handle].ptr = (char**)malloc(len*sizeof(char**));
      }
      if(!GA[handle].mapc){
@@ -589,6 +616,7 @@ Integer  i, ga_handle, status, maplen=0;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
       GA[ga_handle].ndim    = (int) ndim;
+      GA[ga_handle].p_handle = -1;
 
       GA[ga_handle].ghosts = 0;
       for( i = 0; i< ndim; i++){
@@ -616,17 +644,21 @@ Integer  i, ga_handle, status, maplen=0;
       /* check if everybody has enough memory left */
       if(GA_memory_limited){
          status = (GA_total_memory >= 0) ? 1 : 0;
+/*      printf("p[%d] GA_memory_limited: %d Status at 0: %d memory: %d\n",
+            (int)GA_memory_limited,(int)GAme,(int)status,(int)GA_total_memory);*/
          ga_igop(GA_TYPE_GSM, &status, 1, "*");
       }else status = 1;
 
 /*      printf("%d, elems=%d size=%d status=%d\n",GAme,nelem,mem_size,status);fflush(stdout);*/
 /*      ga_sync_();*/
+
       if(status){
           status = !gai_getmem(array_name, GA[ga_handle].ptr,mem_size,
                                  (int)ga_type_f2c((int)type), &GA[ga_handle].id);
       }else{
           GA[ga_handle].ptr[GAme]=NULL;
       }
+
 /*      printf("Memory on %d is located at %u\n",
               GAme,GA[ga_handle].ptr[GAme]); fflush(stdout);*/
       ga_sync_();
@@ -639,7 +671,6 @@ Integer  i, ga_handle, status, maplen=0;
          ga_destroy_(g_a);
          status = FALSE;
       }
-
       GA_POP_NAME;
       return status;
 }
@@ -724,7 +755,6 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
         pe[d] = MIN(pe[d],nblock);
         map +=  pe[d]; 
       }
-
       if(GAme==0&& DEBUG){
          gai_print_subscript("pe ",(int)ndim, pe,"\n");
          gai_print_subscript("blocks ",(int)ndim, blk,"\n");
@@ -1285,11 +1315,18 @@ char **ptr_arr = (char**)(info+1);
 void FATR nga_distribution_(Integer *g_a, Integer *proc, Integer *lo, Integer *
 hi)
 {
-Integer ga_handle;
+Integer ga_handle, p_handle, lproc;
 
    ga_check_handleM(g_a, "nga_distribution");
    ga_handle = (GA_OFFSET + *g_a);
-   ga_ownsM(ga_handle, *proc, lo, hi);
+   p_handle = GA[ga_handle].p_handle;
+   if (p_handle < 0) {
+     lproc = *proc;
+   } else {
+     lproc = P_LIST[p_handle].map_proc_list[*proc];
+   }
+/*   printf("nga_distribution: p[%d] = %d\n",(int)GAme,(int)lproc); */
+   ga_ownsM(ga_handle, lproc, lo, hi);
 
 }
 
@@ -1856,6 +1893,7 @@ int candidate, found, b, *map= (map_ij);\
 logical FATR nga_locate_(Integer *g_a, Integer* subscript, Integer* owner)
 {
 Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
+Integer p_handle;
 
    ga_check_handleM(g_a, "nga_locate");
    ndim = GA[ga_handle].ndim;
@@ -1871,6 +1909,11 @@ Integer d, proc, dpos, ndim, ga_handle = GA_OFFSET + *g_a, proc_s[MAXDIM];
 
    ga_ComputeIndexM(&proc, ndim, proc_s, GA[ga_handle].nblock); 
 
+/*   printf("p[%d] computed index: %d\n",(int)GAme,(int)proc); */
+   p_handle = GA[ga_handle].p_handle;
+   if (p_handle >= 0) {
+     proc = P_LIST[p_handle].inv_map_proc_list[proc];
+   }
    *owner = GA_Proc_list ? GA_Proc_list[proc]: proc;
 
    return TRUE;
@@ -1889,7 +1932,7 @@ logical FATR nga_locate_region_( Integer *g_a,
 /*    g_a      [input]  global array handle
       lo       [input]  lower indices of patch in global array
       hi       [input]  upper indices of patch in global array
-      map      [output] list of lower and upper indices for portion of
+      map      [input]  list of lower and upper indices for portion of
                         patch that exists on each processor containing a
                         portion of the patch. The map is constructed so
                         that for a D dimensional global array, the first
@@ -1907,7 +1950,7 @@ logical FATR nga_locate_region_( Integer *g_a,
 {
 int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
 Integer  proc, owner, i, ga_handle;
-Integer  d, dpos, ndim, elems;
+Integer  d, dpos, ndim, elems, p_handle;
 
    ga_check_handleM(g_a, "nga_locate_region");
 
@@ -1942,6 +1985,7 @@ Integer  d, dpos, ndim, elems;
    */
    ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,GA[ga_handle].nblock);
 
+   p_handle = GA[ga_handle].p_handle;
    for(i= 0; i< elems; i++){ 
       Integer _lo[MAXDIM], _hi[MAXDIM];
       Integer  offset;
@@ -1949,9 +1993,8 @@ Integer  d, dpos, ndim, elems;
       /* convert i to owner processor id using the current values in
        proc_subscript */
       ga_ComputeIndexM(&proc, ndim, proc_subscript, GA[ga_handle].nblock); 
-      owner = GA_Proc_list ? GA_Proc_list[proc]: proc;
       /* get range of global array indices that are owned by owner */
-      ga_ownsM(ga_handle, owner, _lo, _hi);
+      ga_ownsM(ga_handle, proc, _lo, _hi);
 
       offset = *np *(ndim*2); /* location in map to put patch range */
 
@@ -1960,6 +2003,11 @@ Integer  d, dpos, ndim, elems;
       for(d = 0; d< ndim; d++)
               map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
+      if (p_handle < 0) {
+        owner = proc;
+      } else {
+        owner = P_LIST[p_handle].inv_map_proc_list[proc];
+      }
       proclist[i] = owner;
       /* Update to proc_subscript so that it corresponds to the next
        * processor in the block of processors containing the patch */
@@ -2282,4 +2330,15 @@ void FATR ga_mask_sync_(Integer *begin, Integer *end)
 
   if (*end) _ga_sync_end = 1;
   else _ga_sync_end = 0;
+}
+
+logical ga_is_mirrored_(Integer *g_a)
+{
+  Integer ret = FALSE;
+  Integer handle = GA_OFFSET + *g_a;
+  Integer p_handle = GA[handle].p_handle;
+  if (p_handle >= 0) {
+    if (P_LIST[p_handle].mirrored) ret = TRUE;
+  }
+  return ret;
 }
