@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.17 2003-08-01 21:39:43 manoj Exp $ */
+/* $Id: fence.c,v 1.18 2003-08-21 06:59:40 d3h325 Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -49,7 +49,7 @@ void ARMCI_Fence(int proc)
      }
 #else
      FENCE_NODE(proc);
-     MEM_FENCE();
+     MEM_FENCE;
 #endif
 #ifdef GA_USE_VAMPIR
      if (armci_me != proc) 
@@ -115,7 +115,7 @@ void ARMCI_AllFence()
 #ifdef GA_USE_VAMPIR
      vampir_end(ARMCI_ALLFENCE,__FILE__,__LINE__);
 #endif
-       MEM_FENCE();
+       MEM_FENCE;
 }
 
 void ARMCI_Barrier()
@@ -155,5 +155,5 @@ void ARMCI_Barrier()
     }
 #  endif
 #endif
-    MEM_FENCE();
+    MEM_FENCE;
 }

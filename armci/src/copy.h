@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.52 2003-08-01 21:39:43 manoj Exp $ */
+/* $Id: copy.h,v 1.53 2003-08-21 06:59:40 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -221,7 +221,21 @@ void FATR DCOPY1D(void*, void*, int*);
 #endif
 
 #ifdef NEC
-#    define MEM_FENCE mpisx_clear_cache
+#    define MEM_FENCE mpisx_clear_cache()
+#endif
+
+#if defined(NEED_MEM_SYNC)
+#  ifdef AIX
+#    define MEM_FENCE (int _dummy=1; _clear_lock((int *),&_dummy,0); }
+#  elif defined(__ia64) && defined(__GNUC__)
+#    if defined(__GNUC__)
+#       define MEM_FENCE __asm__ __volatile__ ("mf" ::: "memory");
+#    else
+       /* intel compiler */
+        extern void _armci_ia64_mb();
+#       define MEM_FENCE _armci_ia64_mb();
+#    endif
+#  endif
 #endif
 
 #ifndef armci_copy
