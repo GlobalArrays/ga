@@ -51,6 +51,14 @@ DIRECTORY STRUCTURE
 
 
 HISTORY
+  version 3.3   July, 2003 (beta)
+              * nonblocking one-sided interfaces
+              * optimized matrix multiplication (ga_dgemm)
+              * mirrored arrays
+              * unoptimized port to Cray X1
+              * support for infiniband network (Mellanox VAPI)
+              * GA CCA component
+              
   version 3.2   October, 2002
               * support for ghost cells
               * port to Linux64/Itanium, Hitachi, Cray SV1, MAC X, and Cygwin 
