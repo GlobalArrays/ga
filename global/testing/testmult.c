@@ -215,9 +215,9 @@ DoublePrecision time;
 
     time = CLOCK_();
     do_work();
-    printf("%d: Total Time = %lf\n", me, CLOCK_()-time);
-    printf("%d: GEMM Total Time = %lf\n", me, gTime);
- 
+    /*    printf("%d: Total Time = %lf\n", me, CLOCK_()-time);
+	  printf("%d: GEMM Total Time = %lf\n", me, gTime);
+    */
 
     if(me==0)printf("\nSuccess\n\n");
     GA_Terminate();
