@@ -22,7 +22,7 @@ endif
             capi.o global.nalg.o global.npatch.o ga_trace.o datatypes.o
 
 # extra interfaces
-GA_EXTRA = global.periodic.o sparse.o select.o
+GA_EXTRA = global.periodic.o sparse.o select.o ghosts.o
 
 # utility 
 GA_UTIL = DP.o fort.o hsort.scat.o
