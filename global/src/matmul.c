@@ -1,4 +1,4 @@
-/*$Id: matmul.c,v 1.11 2003-02-04 11:44:04 manoj Exp $*/
+/*$Id: matmul.c,v 1.12 2003-02-04 11:50:27 manoj Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include <math.h>
@@ -799,7 +799,6 @@ SET_GEMM_INDICES;
                       g_a, &ailo, &aihi, &ajlo, &ajhi,
                       g_b, &bilo, &bihi, &bjlo, &bjhi,
                       g_c, &cilo, &cihi, &cjlo, &cjhi);
-#endif
 }
 
 #if defined(CRAY) || defined(WIN32)
