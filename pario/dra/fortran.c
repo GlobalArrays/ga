@@ -66,6 +66,7 @@ return dra_create(type, dim1, dim2,cname,cfilename, mode, reqdim1, reqdim2,d_a);
 Integer FATR ndra_create_(type, ndim, dims, name, filename, mode, reqdims, d_a)
         Integer *d_a;                      /*input:DRA handle*/
         Integer *type;                     /*input*/
+        Integer *ndim;                     /*input*/
         Integer dims[];                    /*input*/
         Integer reqdims[];                 /*input: dims of typical request*/
         Integer *mode;                     /*input*/
@@ -76,7 +77,6 @@ Integer FATR ndra_create_(type, ndim, dims, name, filename, mode, reqdims, d_a,
                    nlen, flen)
         Integer *d_a;                      /*input:DRA handle*/
         Integer *type;                     /*input*/
-        Integer *ndim;                     /*input*/
         Integer dims[];                    /*input*/
         Integer reqdims[];                 /*input: dims of typical request*/
         Integer *mode;                     /*input*/
