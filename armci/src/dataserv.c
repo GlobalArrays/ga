@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.27 2002-07-31 18:14:29 vinod Exp $ */
+/* $Id: dataserv.c,v 1.28 2002-08-01 22:08:32 d3g293 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "copy.h"
@@ -45,8 +45,7 @@ int armci_RecvVectorFromSocket(int sock,armci_giov_t darr[], int len,
        }
        n+=armci_ReadVFromSocket(sock,iov,j,totalsize);
        if(DEBUG1){
-         printf("\n%d:armci_RecvVectorFromSocket recved  iovlength=%d 
-               totalsize=%d n=%d",armci_me,iovlength,totalsize,n);
+         printf("\n%d:armci_RecvVectorFromSocket recved  iovlength=%d totalsize=%d n=%d",armci_me,iovlength,totalsize,n);
          fflush(stdout);
        }
        totalsize=0;
@@ -80,8 +79,8 @@ int armci_SendVectorToSocket(int sock,armci_giov_t darr[], int len,
        }
        n+=armci_WriteVToSocket(sock,iov,j,totalsize);
        if(DEBUG1){
-         printf("\n%d:armci_SendVectorToSocket done se iovlength=%d 
-               totalsize=%d n=%d",armci_me,iovlength,totalsize,n);
+         printf("\n%d:armci_SendVectorToSocket done se iovlength=%d totalsize=%d n=%d",
+                armci_me,iovlength,totalsize,n);
          fflush(stdout);
        }
        totalsize = 0;
@@ -137,8 +136,8 @@ int armci_RecvStridedFromSocket(int sock,void *dst_ptr, int dst_stride_arr[],
               n+=armci_ReadVFromSocket(sock,iov,iovlength,totalsize);
               iov+=iovlength;
               if(DEBUG1){
-                printf("\n%d:armci_RecvStridedFromSocket recved  iovlength=%d 
-                      totalsize=%d n=%d",armci_me,iovlength,totalsize,n);
+                printf("\n%d:armci_RecvStridedFromSocket recved  iovlength=%d totalsize=%d n=%d",
+                       armci_me,iovlength,totalsize,n);
                 fflush(stdout);
               }
               totalsize=0;
@@ -194,9 +193,8 @@ int armci_SendStridedToSocket(int sock,void *src_ptr, int src_stride_arr[],
               }
               n+=armci_WriteVToSocket(sock,iov,iovlength,totalsize);
               if(DEBUG1){
-                printf("\n%d:armci_SendStridedToSocket done se 
-                      iovlength=%d totalsize=%d n=%d",armci_me,iovlength,
-                      totalsize,n);fflush(stdout);
+                printf("\n%d:armci_SendStridedToSocket done se iovlength=%d totalsize=%d n=%d",
+                      armci_me,iovlength, totalsize,n);fflush(stdout);
               }
               iov+=iovlength;
               totalsize=0;
