@@ -248,7 +248,7 @@ Integer rrows, ldd, lds;
       for (j = 0;  j < *cols;  j++){\
          if(LAPI_Put(lapi_handle, (uint)proc, bytes, pd, ps, NULL,\
                      &ack_cntr.cntr, &cmpl_arr[proc].cntr))\
-                     ga_error("LAPI_put (2D) failed",0);\
+                     ga_error("LAPI_put (2D) failed when puting to",proc);\
           ps += item_size* *ld_src;\
           pd += item_size* *ld_dst;\
       }\
@@ -268,7 +268,7 @@ Integer rrows, ldd, lds;
          for (j = 0;  j < *cols;  j++){\
               if(LAPI_Get(lapi_handle, (uint)proc, \
                  bytes, ps, pd, NULL, &get_cntr.cntr))\
-                      ga_error("LAPI_get failed",0);\
+                      ga_error("LAPI_get failed when geting from",proc);\
               ps += item_size* *ld_src; \
               pd += item_size* *ld_dst;\
          }\
