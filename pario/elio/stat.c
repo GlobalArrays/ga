@@ -73,7 +73,7 @@ int  elio_stat(fname, statinfo)
 #if defined(PIOFS)
     strcpy(piofs_stat.name, fname);
     if(piofsioctl(filedes, PIOFS_STATFS, &piofs_stat) == 0){
-        /* JN: piofsioctl does not tell if piofs_stat.name even points to PIOFS fs */
+        /*piofsioctl does not tell if piofs_stat.name even points to PIOFS fs */
         /* we assume that if # of server nodes is > 1 we use PIOFS */  
         if(piofs_stat.f_nodes > 1){      /* number of server nodes        */
 	    statinfo->fs = ELIO_PIOFS;

@@ -313,9 +313,6 @@ io_request_t *req_id;
 
 #if defined(PARAGON)
       iowait(*req_id);
-#elif defined(KSR)
-      if((int)iosuspend(1, cb_fout_arr+(int)*req_id) ==-1)
-	ELIO_ERROR("elio_wait: suspend error",0);
 #elif defined(AIO)
 #  if defined(AIX)
 
@@ -325,6 +322,9 @@ io_request_t *req_id;
       } while(rc == -1 && errno == EINTR); 
       if(rc  == -1) ELIO_ERROR("elio_wait:  suspend error",0);
 
+#  elif defined(KSR)
+      if((int)iosuspend(1, cb_fout_arr+(int)*req_id) ==-1)
+	ELIO_ERROR("elio_wait: suspend error",0);
 #  else
 
       if((int)aio_suspend(cb_fout_arr+(int)*req_id, 1, NULL) != 0)

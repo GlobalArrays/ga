@@ -15,6 +15,9 @@
 #elif defined(CRAY) || defined(AIX)
 #        include <sys/statfs.h>
 #        define  STATVFS statfs
+#elif defined(KSR)
+#        include <sys/mount.h>
+#        define  STATVFS statfs
 #elif !defined(PARAGON)
 #        include <sys/statvfs.h>
 #        define  STATVFS statvfs
