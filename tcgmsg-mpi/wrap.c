@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.6 2002-02-14 20:59:33 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/wrap.c,v 1.7 2002-12-16 21:46:28 edo Exp $ */
 #include <stdlib.h>
 #include <mpi.h>
 #ifdef CRAY
@@ -101,11 +101,11 @@ void FATR wrap_rcv(wrap_type, buf, wrap_lenbuf, wrap_lenmes, wrap_nodeselect, wr
      type=  (long) *wrap_type;
      lenbuf= (long) *wrap_lenbuf;
      nodeselect= (long) *wrap_nodeselect;
-     nodefrom= (long) *wrap_nodefrom;
      sync= (long) *wrap_sync;
      
      (void)  RCV_(&type, buf, &lenbuf, &lenmes, &nodeselect, &nodefrom, &sync);
-     lenmes= (Integer) *wrap_lenmes;
+     *wrap_lenmes= (Integer) lenmes;
+     *wrap_nodefrom= (Integer) nodefrom;
      return;
      }
 
