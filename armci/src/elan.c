@@ -4,12 +4,10 @@
 #include <stdlib.h>
 #include "armcip.h"
 #include "copy.h"
-#ifndef LINUX64
-#include "queue.h"
-#endif
 
 #define DEBUG_ 0
 
+#ifdef _ELAN_QUEUE_H
 static int armci_server_terminating=0;
 static ELAN_MAIN_QUEUE *mq;
 static int armci_request_from=-1;
@@ -196,3 +194,4 @@ void armci_transport_cleanup() {}
 void armci_client_connect_to_servers(){}
 void armci_server_initial_connection(){}
 
+#endif
