@@ -22,7 +22,7 @@
 #include <memory.h>
 #endif
 
-#if defined(AIX)
+#if defined(AIX) || defined(LINUX)
   typedef size_t socklen_t;
 #else
   typedef int socklen_t;
