@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.50 2003-04-24 22:33:45 d3g293 Exp $
+c $Id: test.F,v 1.51 2003-07-31 00:39:55 d3h325 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -342,7 +342,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -634,7 +634,7 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
       do j = 1, 10 
        call ga_sync()
 #ifndef MIRROR
@@ -1176,7 +1176,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -1383,7 +1383,7 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
       do j = 1, 10
        call ga_sync()
 #ifndef MIRROR
@@ -1701,7 +1701,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -1771,7 +1771,7 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
       inc =5 
 c     every processor will be operating on somebody elses data
 c
@@ -2135,7 +2135,7 @@ c
 c
       nwords = 0
 c
-      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
       do loop = 1, nloop
          ilo = iran(loop)
          ihi = iran(loop)
@@ -2422,7 +2422,7 @@ c
       endif
       call ga_sync()
 c
-      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      crap = util_drand(ga_nodeid()*51 +1) !Different seed for each proc
       do j = 1, 10
        call ga_sync()
 #ifndef MIRROR
