@@ -555,8 +555,10 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
     
     /** LU factorization */
 #ifdef GA_C_CORE
-    LP_dgefa(adra, dimA1, dimA2, adri, &info_t);
-    info = info_t;
+    {  int info_t;
+       LP_dgefa(adra, dimA1, dimA2, adri, &info_t);
+       info = info_t;
+    }
 #else
     DGETRF(&dimA1, &dimA2, adra, &dimA1, adri, &info);
 #endif
@@ -566,6 +568,7 @@ void ga_lu_solve_seq(char *trans, Integer *g_a, Integer *g_b) {
 #ifdef GA_C_CORE
       DoublePrecision *p_b;
       Integer i;
+      int job;
       if(*trans == 't' || *trans == 'T') job = 1; 
       for(i=0; i<dimB2; i++) {
 	p_b = adrb + i*dimB1;
