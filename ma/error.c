@@ -1,5 +1,5 @@
 /*
- * $Id: error.c,v 1.8 2002-11-12 06:16:07 d3h325 Exp $
+ * $Id: error.c,v 1.9 2004-12-08 02:42:45 manoj Exp $
  */
 
 /*
@@ -34,8 +34,7 @@ public Boolean ma_hard_fail = MA_FALSE;
 void (*ma_func_terminate)() = 0;
 
 
-void MA_set_error_callback( func)
-void (*func);
+void MA_set_error_callback(void (*func)())
 {
   ma_func_terminate = func;
 }

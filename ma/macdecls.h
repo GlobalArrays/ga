@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.17 2002-11-12 06:16:07 d3h325 Exp $
+ * $Id: macdecls.h,v 1.18 2004-12-08 02:42:45 manoj Exp $
  */
 
 /* 
@@ -110,6 +110,7 @@ extern Integer MA_sizeof_overhead(Integer datatype);
 extern void MA_summarize_allocated_blocks();
 extern void MA_trace(Boolean value);
 extern Boolean MA_verify_allocator_stuff();
+extern void MA_set_error_callback(void(*func)());
 #else
 extern Boolean MA_alloc_get();
 extern Boolean MA_allocate_heap();
