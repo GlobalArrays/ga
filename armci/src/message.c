@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.32 2002-02-28 21:32:31 d3h325 Exp $ */
+/* $Id: message.c,v 1.33 2002-02-28 21:53:26 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -419,13 +419,14 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
 void armci_msg_bcast(void *buf, int len, int root)
 {
 int Root = armci_master;
+int nslave = armci_clus_info[armci_clus_me].nslave;
     /* inter-node operation between masters */
     if(armci_nclus>1)armci_msg_bcast_scope(SCOPE_MASTERS, buf, len, root);
     else  Root = root;
 
     /* intra-node operation */
 #if 1
-    if(_armci_gop_shmem)
+    if(_armci_gop_shmem && nslave<17)
      armci_smp_bcast(buf, len);
     else
 #endif
