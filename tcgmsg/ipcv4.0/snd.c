@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.4 1995-02-24 02:14:24 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.5 1995-02-24 02:17:47 d3h325 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT

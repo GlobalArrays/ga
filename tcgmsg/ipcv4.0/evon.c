@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/evon.c,v 1.3 1995-02-24 02:13:51 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/evon.c,v 1.4 1995-02-24 02:17:17 d3h325 Exp $ */
 
 /* Crude FORTRAN interface to C event logging routines.
    See evlog.c for more details.

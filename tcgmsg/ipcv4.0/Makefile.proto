@@ -1,5 +1,5 @@
 #
-# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.7 1995-02-24 02:13:40 d3h325 Exp $
+# $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/Makefile.proto,v 1.8 1995-02-24 02:17:08 d3h325 Exp $
 #
 # for events and debugging with events add  -DEVENTLOG to the DEFINES definition
 # for the given machine

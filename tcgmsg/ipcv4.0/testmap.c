@@ -1,5 +1,4 @@
-/*$Id: testmap.c,v 1.2 1995-02-02 23:26:02 d3g681 Exp $*/
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/testmap.c,v 1.2 1995-02-02 23:26:02 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/testmap.c,v 1.3 1995-02-24 02:18:00 d3h325 Exp $ */
 
 #include <stdio.h>
 

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pfilecopy.c,v 1.3 1995-02-24 02:14:13 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pfilecopy.c,v 1.4 1995-02-24 02:17:39 d3h325 Exp $ */
 
 #include <stdio.h>
 

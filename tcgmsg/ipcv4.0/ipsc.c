@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.5 1995-02-24 02:13:56 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/ipsc.c,v 1.6 1995-02-24 02:17:22 d3h325 Exp $ */
 
 /*
    Toolkit interface for the iPSC-2, i860, DELTA and Paragon

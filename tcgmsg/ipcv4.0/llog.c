@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/llog.c,v 1.3 1995-02-24 02:13:58 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/llog.c,v 1.4 1995-02-24 02:17:23 d3h325 Exp $ */
 
 #include <stdio.h>
 

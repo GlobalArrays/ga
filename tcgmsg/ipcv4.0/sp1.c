@@ -1,4 +1,3 @@
-/*$Id: sp1.c,v 1.2 1995-02-02 23:25:50 d3g681 Exp $*/
 /*\
  *       TCGMSG INTERFACE FOR THE IBM SP-1      
  *
@@ -728,6 +727,12 @@ void BRDCST_(type, buf, lenbuf, originator)
     fprintf(stderr,"type=%d, (%d,%d) int=%d, long=%d\n",*type, *originator,
             ttype, sizeof(long), sizeof(long)); 
   }
+
+  /*synchronize since %#@$## MPL disables interrupts in mpc_bcast indefinitely*/
+# ifdef INTR_SAFE
+    SYNCH_(type);
+# endif
+
   status = mpc_bcast(buf, *lenbuf, *originator, allgrp);
   if(status == -1) 
       Error("BRDCST failed: mperrno error code ", mperrno);

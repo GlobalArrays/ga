@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/evlog.h,v 1.3 1995-02-24 02:13:51 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/evlog.h,v 1.4 1995-02-24 02:17:17 d3h325 Exp $ */
 
 /*
   Define EVENT and KEY values used when calling evlog.

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/globalop.c,v 1.3 1995-02-24 02:13:53 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/globalop.c,v 1.4 1995-02-24 02:17:19 d3h325 Exp $ */
 
 #include "sndrcv.h"
 #include "msgtypesc.h"

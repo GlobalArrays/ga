@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.3 1995-02-24 02:14:23 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/signals.c,v 1.4 1995-02-24 02:17:45 d3h325 Exp $ */
 
 #include <signal.h>
 #include "sndrcvP.h"
