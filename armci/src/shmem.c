@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.37 2000-11-02 22:18:26 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.38 2000-12-28 00:43:06 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -9,7 +9,7 @@
  *         memory allocator from K&R. shmalloc in turn calls allocate() that
  *         does shmget() and shmat(). 
  *       . idlist might be just a pointer to integer or a true array in the
- *         MULTIPLE_REGIONS versions (calling routine has to take cere of it) 
+ *         MULTIPLE_REGIONS versions (calling routine has to take care of it) 
  *  char *Attach_Shared_Region(long *idlist, long size, long offset)
  *       . called by any other process to attach to existing shmem region or
  *         if attached just calculate the address based on the offset
@@ -42,9 +42,6 @@
 #define STAMP 0
 
 
-#include "shmem.h"
-#include "shmalloc.h"
-#include "shmlimit.h"
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -52,6 +49,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "shmem.h"
+#include "shmalloc.h"
+#include "shmlimit.h"
 
 #ifdef   ALLOC_MUNMAP
 #include <sys/mman.h>
@@ -133,8 +133,11 @@ static  int logpagesize=0;
 
 static  unsigned long MinShmem = _SHMMAX;  
 static  unsigned long MaxShmem = MAX_REGIONS*_SHMMAX;
+
+#ifdef  SHMMAX_SEARCH_NO_FORK
 static  char *ptr_search_no_fork = (char*)0;
 static  int id_search_no_fork=0;
+#endif
 
 
 #ifdef LINUX
@@ -203,6 +206,7 @@ int armci_test_allocate(long size)
 \*/
 static int armci_shmalloc_try(long size)
 {
+#ifdef  SHMMAX_SEARCH_NO_FORK
    char *ptr;
    int id = shmget(IPC_PRIVATE, (size_t) size, (IPC_CREAT |00600));
    if (id <0) return 0;
@@ -215,6 +219,7 @@ static int armci_shmalloc_try(long size)
 
    ptr_search_no_fork = ptr;
    id_search_no_fork = id;
+#endif
    return 1;
 }
 
@@ -807,7 +812,6 @@ size_t sz = (size_t)size;
 char *Create_Shared_Region(long *id, long size, long *offset)
 {
 char *temp,  *shmalloc();
-void shmalloc_request();
 int  reg, refreg=0,nreg;
   
     if(alloc_regions>=MAX_REGIONS)
@@ -823,13 +827,13 @@ int  reg, refreg=0,nreg;
        if(DEBUG_)
           printf("%d:allocation unit: %ldK, max shmem:%ldK\n",
                  armci_me,MinShmem,MaxShmem);
-       shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
+       shmalloc_request((size_t)MinShmem, (size_t)MaxShmem);
        id[SHMIDLEN-2]=MinShmem;
     }
 
-    temp = shmalloc((unsigned)size);
+    temp = shmalloc((size_t)size);
     if(temp == (char*)0 )
-       armci_die("Create_Shared_Region: shmalloc failed size",(int)size);
+       armci_die("CreateSharedRegion:shmalloc failed size in KB",(int)size>>10);
     
     if(!(nreg=find_regions(temp,id,&reg)))
         armci_die("CreateSharedRegion: allocation inconsitent",0);

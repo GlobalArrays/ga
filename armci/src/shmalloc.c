@@ -1,8 +1,6 @@
-/* $Id: shmalloc.c,v 1.6 2000-05-05 00:28:48 d3h325 Exp $ */
+/* $Id: shmalloc.c,v 1.7 2000-12-28 00:43:06 d3h325 Exp $ */
 #include <stdio.h>
 #include "shmalloc.h"
-
-extern void abort();
 
 /* Storage allocator basically copied from ANSI K&R and corrupted */
 
@@ -14,12 +12,12 @@ extern void armci_die();
 
 #define DEFAULT_MAX_NALLOC 786432 /* Maximum  no. of units that can get */
 
-static unsigned nalloc = DEFAULT_NALLOC;
-static unsigned max_nalloc = DEFAULT_MAX_NALLOC;
+static size_t nalloc = DEFAULT_NALLOC;
+static size_t max_nalloc = DEFAULT_MAX_NALLOC;
 
-#ifdef IPSC
-extern long masktrap();
-#endif
+/* mutual exclusion defs go here */
+#define  LOCKIT 
+#define  UNLOCKIT 
 
 static int do_verify = 0;	/* Flag for automatic heap verification */
 
@@ -27,7 +25,7 @@ static int do_verify = 0;	/* Flag for automatic heap verification */
 #define VALID2  0x55555555
 
 static struct shmalloc_struct {
-  unsigned total;			/* Amount request from system in units */
+  size_t total;			/* Amount request from system in units */
   long nchunk;			/* No. of chunks of system memory */
   long inuse;			/* Amount in use in units */
   long maxuse;			/* Maximum value of inuse */
@@ -50,7 +48,7 @@ union header{
   struct {
     unsigned valid1;		/* Token to check if is not overwritten */
     union header *ptr;		/* next block if on free list */
-    unsigned size;		/* size of this block*/
+    size_t size;		/* size of this block*/
     unsigned valid2;		/* Another token acting as a guard */
   } s;
   char align[ALIGNMENT];	/* Align to ALIGNMENT byte boundary */
@@ -70,12 +68,11 @@ static void sherror(s, i)
   fprintf(stderr,"shmalloc error: %s %ld(0x%lx)\n", s, i, i);
   fflush(stderr);
   shmalloc_print_stats();
-/* abort(); */
   armci_die("shmalloc: fatal error", i);
 }
 
 void shmalloc_request(size, maxsize)
-     unsigned size, maxsize;
+     size_t size, maxsize;
 {
 #define UNIT 1024
 int scale;
@@ -98,7 +95,7 @@ void shmalloc_debug(code)
 
 
 static Header *morecore(nu)
-     unsigned nu;
+     size_t nu;
 {
   char *cp;
   Header *up;
@@ -111,12 +108,12 @@ static Header *morecore(nu)
   /*if (nu < nalloc) nu = nalloc;*/ /* Minimum size for getting memory */
 
 #if DEBUG
-  (void) printf("morecore: Getting %d more units of length %d\n",
-                nu, sizeof(Header));
+  (void) printf("morecore: Getting %ld more units of length %d\n",
+                (long)nu, sizeof(Header));
   (void) fflush(stdout);
 #endif
 
-  if ((cp = allocate((unsigned)nu * sizeof(Header))) == (char *) NULL)
+  if ((cp = allocate((size_t)nu * sizeof(Header))) == (char *) NULL)
     return (Header *) NULL;
  
   usage.total += nu;   /* Have just got nu more units */
@@ -139,17 +136,13 @@ static Header *morecore(nu)
 }
 
 char *shmalloc(nbytes)
-     unsigned nbytes;
+     size_t nbytes;
 {
   Header *p, *prevp;
-  unsigned nunits;
+  size_t nunits;
   char *return_ptr;
-#ifdef IPSC
-  long oldmask = masktrap((long) 1);  /* Make this single threaded */
-#endif
-#ifdef CRAY
-#pragma _CRI guard
-#endif
+
+  LOCKIT;
 
   /* If first time in need to initialize the free list */ 
 
@@ -212,13 +205,11 @@ char *shmalloc(nbytes)
         break;
       }
   }
-#ifdef CRAY
-#pragma _CRI endguard
-#endif
-#ifdef IPSC
-      (void) masktrap(oldmask);  /* re-enable traps */
-#endif
+
+  UNLOCKIT;
+
   return return_ptr;
+
 }
 
 
@@ -226,12 +217,8 @@ void shfree(ap)
      char *ap;
 {
   Header *bp, *p, **up;
-#ifdef IPSC
-  long oldmask = masktrap((long) 1);  /* Make this single threaded */
-#endif
-#ifdef CRAY
-#pragma _CRI guard
-#endif
+
+  LOCKIT;
 
   usage.nfcalls++;
 
@@ -285,17 +272,13 @@ void shfree(ap)
   freep = p;
 
 } /* end if on ap */
-#ifdef CRAY
-#pragma _CRI endguard
-#endif
-#ifdef IPSC
-  (void) masktrap(oldmask); /* re-enable any traps */
-#endif
+
+  UNLOCKIT;
 }
 
 void shmalloc_stats(total, nchunk, inuse, maxuse, nfrags, 
 		    nmcalls, nfcalls)
-     unsigned *total, *inuse, *maxuse;
+     size_t *total, *inuse, *maxuse;
      long *nchunk, *nfrags, *nmcalls, *nfcalls;
 /*
   Return stats on shmalloc performance. Use arg list instead of
@@ -316,7 +299,7 @@ void shmalloc_print_stats()
   Print to standard output the usage statistics.
 */
 {
-  unsigned total, inuse, maxuse;
+  size_t total, inuse, maxuse;
   long nchunk, nfrags, nmcalls, nfcalls;
 
   shmalloc_stats(&total, &nchunk, &inuse, &maxuse, &nfrags,
@@ -325,9 +308,9 @@ void shmalloc_print_stats()
   fflush(stderr);
   printf("\nshmalloc statistics\n-------------------\n\n");
 
-  printf("Total memory from system ... %d bytes\n", total);
-  printf("Current memory usage ....... %d bytes\n", inuse);
-  printf("Maximum memory usage ....... %d bytes\n", maxuse);
+  printf("Total memory from system ... %ld bytes\n", (long)total);
+  printf("Current memory usage ....... %ld bytes\n", (long)inuse);
+  printf("Maximum memory usage ....... %ld bytes\n", (long)maxuse);
   printf("No. chunks from system ..... %ld\n", nchunk);
   printf("No. of fragments ........... %ld\n", nfrags);
   printf("No. of calls to shmalloc ... %ld\n", nmcalls);
@@ -344,12 +327,7 @@ void shmalloc_verify()
 {
   Header *p;
 
-#ifdef IPSC
-  long oldmask = masktrap(1);
-#endif
-#ifdef CRAY
-#pragma _CRI guard
-#endif
+  LOCKIT;
 
   if ( freep ) {
 
@@ -376,12 +354,8 @@ void shmalloc_verify()
     p = p->s.ptr;
   }
   } /* end if */
-#ifdef CRAY
-#pragma _CRI endguard
-#endif
-#ifdef IPSC
-  (void) masktrap(oldmask);
-#endif
+
+  UNLOCKIT;
 }
 
 void addtofree(ap)
