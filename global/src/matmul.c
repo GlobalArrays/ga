@@ -119,7 +119,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
     else
        max_chunk = (Integer) max3(*Ichunk, *Jchunk, *Kchunk);
     
-    if ( max_chunk > CHUNK_SIZE) {
+    if ( max_chunk > CHUNK_SIZE/nbuf) {
        /*if memory if very limited, performance degrades for large matrices
 	 as chunk size is very small, which leads to communication overhead)*/
        Integer avail = ga_memory_avail(atype);
@@ -153,6 +153,8 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
       }
 #endif
     }
+    else 
+       *Ichunk = *Jchunk = *Kchunk = CHUNK_SIZE/nbuf;
     
     /* Total elements "NUM_MAT" extra elems for safety - just in case */
     *elems = (*Ichunk)*(*Kchunk) + (*Kchunk)*(*Jchunk) + (*Ichunk)*(*Jchunk);
@@ -1485,12 +1487,19 @@ Integer clo[2], chi[2];
 	nga_matmul_patch(transa, transb, alpha, beta, g_a, alo, ahi,
                          g_b, blo, bhi, g_c, clo, chi);
 #else
-	_gai_matmul_patch_flag = SET;
-	ga_matmul(transa, transb, alpha, beta,
-		  g_a, ailo, aihi, ajlo, ajhi,
-		  g_b, bilo, bihi, bjlo, bjhi,
-		  g_c, cilo, cihi, cjlo, cjhi);
-	_gai_matmul_patch_flag = UNSET;
+	if(ga_is_mirrored_(g_a)) 
+	   ga_matmul_mirrored(transa, transb, alpha, beta,
+			      g_a, ailo, aihi, ajlo, ajhi,
+			      g_b, bilo, bihi, bjlo, bjhi,
+			      g_c, cilo, cihi, cjlo, cjhi);
+	else {
+	   _gai_matmul_patch_flag = SET;
+	   ga_matmul(transa, transb, alpha, beta,
+		     g_a, ailo, aihi, ajlo, ajhi,
+		     g_b, bilo, bihi, bjlo, bjhi,
+		     g_c, cilo, cihi, cjlo, cjhi);
+	   _gai_matmul_patch_flag = UNSET;
+	}
 #endif
 }
 #endif
