@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.54 1999-07-12 22:37:46 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.55 1999-07-13 23:08:05 d3h325 Exp $*/
 /* 
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -600,6 +600,34 @@ Integer FATR ga_memory_avail_()
 
 
 
+
+static Integer GA_memory_limit=0;
+
+/*\ (re)set limit on GA memory usage
+\*/
+void FATR ga_set_memory_limit_(Integer *mem_limit)
+{
+     if(GA_memory_limited){
+
+         /* if we had the limit set we need to adjust the amount available */
+         if (*mem_limit>=0)
+             /* adjust the current value by diff between old and new limit */
+             GA_total_memory += (*mem_limit - GA_memory_limit);
+         else{
+
+             /* negative values reset limit to "unlimited" */
+             GA_memory_limited =  0;                
+             GA_total_memory= -1;                   
+         }
+
+     }else{
+
+          GA_total_memory = GA_memory_limit  = *mem_limit;
+          if(*mem_limit >= 0) GA_memory_limited = 1;        
+     }
+}
+
+
 /*\ INITIALIZE GLOBAL ARRAY STRUCTURES and SET LIMIT ON GA MEMORY USAGE
  *  
  *  the byte limit is per processor (even for shared memory)
@@ -609,14 +637,15 @@ Integer FATR ga_memory_avail_()
  *         without memory control
  *  mem_limit < 0 means "memory unlimited"
 \*/
-void FATR  ga_initialize_ltd_(mem_limit)
+void FATR ga_initialize_ltd_(mem_limit)
 Integer *mem_limit;
 {
 
-  GA_total_memory = *mem_limit; 
+  GA_total_memory = GA_memory_limit  = *mem_limit; 
   if(*mem_limit >= 0) GA_memory_limited = 1; 
   ga_initialize_();
 }
+
 
 
 /*\ Initialize MA-like addressing:

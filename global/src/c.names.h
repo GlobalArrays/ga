@@ -70,4 +70,5 @@
 #define  GA_lock                   ga_lock_
 #define  GA_unlock                 ga_unlock_
 #define  GA_valid_handle           ga_valid_handle_
+#define  GA_set_memory_limit       ga_set_memory_limit_
 

@@ -33,6 +33,7 @@
 # define ARGS_(s) ()
 #endif
 
+extern void    FATR ga_set_memory_limit_ ARGS_((Integer *mem_limit));
 extern logical FATR ga_valid_handle_ ARGS_((Integer *g_a));
 extern Integer FATR ga_nnodes_   ARGS_(( void));
 extern Integer FATR ga_nodeid_   ARGS_(( void));
