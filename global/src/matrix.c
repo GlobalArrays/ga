@@ -1,4 +1,4 @@
-/**************************************************************
+/*$Id: matrix.c,v 1.7 2004-04-02 00:27:19 d3h325 Exp $******************************************************
 File: matrix.c 
 
 Author: Limin Zhang, Ph.D.
@@ -22,6 +22,8 @@ Purpose:
 #include "globalp.h"
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
+#include "message.h"
 
 #define auxi_median(a,b,c,m)                         \
 {                                                    \
@@ -437,13 +439,7 @@ ga_norm_infinity_ (Integer * g_a, double *nm)
   Integer dim1, dim2, type, size, nelem;
   Integer iloA, ihiA, jloA, jhiA, ld, lo[2], hi[2];
   Integer me = ga_nodeid_ (), i, j;
-
   void *ptr;
-  int *ia;
-  float *fa;
-  double *da;
-  long *la;
-  DoubleComplex *dca;
 
   int imax, *isum;
   long lmax, *lsum;
@@ -666,15 +662,9 @@ void FATR
 ga_norm1_ (Integer * g_a, double *nm)
 {
   Integer dim1, dim2, type, size, nelem;
-  Integer iloA, ihiA, jloA, jhiA, index, ld, lo[2], hi[2];
+  Integer iloA, ihiA, jloA, jhiA, ld, lo[2], hi[2];
   Integer me = ga_nodeid_ (), i, j;
-
   void *ptr;
-  int *ia;
-  float *fa;
-  double *da;
-  long *la;
-  DoubleComplex *dca;
 
   int imax, *isum;
   long lmax, *lsum;
@@ -1699,9 +1689,8 @@ void FATR ga_scale_cols_(Integer *g_a, Integer *g_v)
 
 
       if (hi[0] >= lo[0])	/*make sure the equality symbol is there!!! */
-	{			/* we got a block containing diagonal elements */
+	{			/* we got a block containing diagonal elements*/
 
-          Integer myrows = hi[0] - lo[0] + 1;
           Integer mycols = hi[1] - lo[1] + 1;
           Integer j;
           /*number of rows on the patch is jhiA - jloA + 1 */
