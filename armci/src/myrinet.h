@@ -65,7 +65,7 @@ typedef struct {
 #define ARMCI_GM_BLOCKING 1
 #define ARMCI_GM_NONBLOCKING 2
 
-#define ARMCI_GM_FAILED  2
+#define ARMCI_GM_FAILED  -1
 
 typedef struct {
     void *data_ptr;         /* pointer where the data should go */
