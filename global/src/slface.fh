@@ -2,3 +2,9 @@
       logical init
       common /SLface/ iam, nnodes, nprow,npcol, myrow, mycol, init,
      .                igctxt,iSLctxt
+#ifdef LINUX_DBL_UNDERSCORE
+#define blacs_pinfo blacs_pinfo_
+#define blacs_get blacs_get_
+#define blacs_gridinit blacs_gridinit_
+#define blacs_gridinfo blacs_gridinfo_
+#endif
