@@ -764,14 +764,34 @@ Performs the equivalent of the following Fortran-90.  Array
 </listing>
 <P>
 
-      Scatters the array (integer or double) elements into the array.
-      The contents of the input arrays (v, i, j) are preserved, but
-      their contents might be (consistently) shuffled on return.
-</P>
+      Scatters the array elements into the array.  The contents of the
+      input arrays (v, i, j) are preserved, but their contents might be
+      (consistently) shuffled on return.  </P>
 
 <listing>
       do k = 1, nv
              a(i(k),j(k)) = v(k)    
+      enddo
+</listing>
+<HR>
+
+<H2> <A name="ga_gather"> GA_GATHER </A> </H2>
+<listing>
+      subroutine ga_gather(g_a, v, i, j, n)
+
+      integer g_a                         [input]
+      double precision v(n)               [output]
+      integer i(n), j(n), n               [input]
+</listing>
+<P>
+
+      Gathers specified elements (i,j) from the global array into a
+      local single-dimesional array.  The contents of the  arrays (v,
+      i, j) might be (consistently) shuffled on return.  </P>
+
+<listing>
+      do k = 1, nv
+           v(k) =  a(i(k),j(k))
       enddo
 </listing>
 <HR>
@@ -784,7 +804,7 @@ Performs the equivalent of the following Fortran-90.  Array
 </listing>
 <P>
 
-      Called in case of an error. Print an error message + an integer
+      Called in case of an error. Print an error message and an integer
       value that is intended to be the error code. Releases some system
       resources. This is the recomended way of aborting the program
       execution.
