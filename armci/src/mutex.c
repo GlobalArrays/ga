@@ -1,4 +1,4 @@
-/* $Id: mutex.c,v 1.22 2003-03-10 20:25:31 manoj Exp $ */
+/* $Id: mutex.c,v 1.23 2003-08-01 00:35:17 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
@@ -100,7 +100,7 @@ int *mutex_count = (int*)armci_internal_buffer;
 #ifdef LAPI
         mymutexcount = num;
 #endif
-        armci_msg_barrier();
+        ARMCI_Barrier();
 
         if(DEBUG)
            fprintf(stderr,"%d created (%d,%d) mutexes\n",armci_me,num,totcount);
@@ -236,6 +236,7 @@ int len=sizeof(int);
 
        /* write new ticket value stored previously in tickets  */
        ARMCI_Put(newval, mutex_ticket, len, proc);
+       MEM_FENCE();
 }
 
 

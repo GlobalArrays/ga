@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.39 2003-03-24 18:00:33 manoj Exp $ */
+/* $Id: test.c,v 1.40 2003-08-01 00:35:17 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -1266,6 +1266,7 @@ void test_swap()
 
     if(me == 0) *arr[0] = 0;  /* initialization */
 
+    ARMCI_AllFence();
     MP_BARRIER();
     for(i = 0; i< LOOP; i++){
           val = LOCKED;
@@ -1391,6 +1392,7 @@ void test_rput()
     fsrc_get[me][0]=100.01*(me+1); dsrc_get[me][0]=100.001*(me+1);
 
     
+    ARMCI_AllFence();
     MP_BARRIER();
     for(i=0; i<nproc; i++) {
       ARMCI_PutValueInt(10*(me+1), (void *)&idst[i][me], i);
@@ -1483,7 +1485,7 @@ void test_aggregate() {
       ddst_get[me][i]=0.0;
     }
     
-    MP_BARRIER();
+    ARMCI_Barrier();
     for(i=0; i<nproc; i++) ARMCI_INIT_HANDLE(&usr_hdl_put[i]);
     for(i=0; i<nproc; i++) ARMCI_INIT_HANDLE(&usr_hdl_get[i]);
     for(i=0; i<nproc; i++) ARMCI_SET_AGGREGATE_HANDLE(&usr_hdl_put[i]);

@@ -125,7 +125,11 @@ int loop=0, maxloop =10;
 
 
 #ifdef  RELEASE_SPINLOCK
-#  define  armci_release_spinlock RELEASE_SPINLOCK
+#ifdef MEMORY_BARRIER
+#  define  armci_release_spinlock(x) MEMORY_BARRIER ();RELEASE_SPINLOCK(x)
+#else
+#  define  armci_release_spinlock(x) RELEASE_SPINLOCK(x)
+#endif
 #else
 static INLINE void armci_release_spinlock(LOCK_T *mutex)
 {
