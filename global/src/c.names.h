@@ -186,6 +186,7 @@
 #define  nga_scatter_acc_          NGA_SCATTER_ACC
 #define  nga_release_              NGA_RELEASE
 #define  nga_release_update_       NGA_RELEASE_UPDATE
+#define  nga_matmul_patch_         NGA_MATMUL_PATCH
 
 #define  nga_periodic_acc_         NGA_PERIODIC_ACC
 #define  nga_periodic_put_         NGA_PERIODIC_PUT
