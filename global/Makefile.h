@@ -147,15 +147,9 @@ ifeq ($(TARGET),HPUX)
      CPP  = /lib/cpp -P
      FC = fort77
 #    CC = gcc
-     CC = cc
-#    COPT =-fthread-jumps -fdefer-pop -fdelayed-branch -fomit-frame-pointer -finline-functions -ffast-math -finline-functions -fstrength-reduce -fschedule-insns
-     COPT = -Aa -D_HPUX_SOURCE +e -g
-     FOPT = -g
-     NOPT =
-     COPT_REN = -Ae
+     COPT_REN = -Ae 
      GLOB_DEFINES = -DHPUX -DEXTNAME
-#     EXPLICITF = TRUE
-     EXPLICITF = FALSE
+     EXPLICITF = TRUE
 endif
 #
 #................................ CRAY-T3E ..................................
