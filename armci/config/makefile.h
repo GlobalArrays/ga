@@ -16,6 +16,14 @@
  GLOB_DEFINES = -D$(TARGET)
           CLD = $(CC)
 
+ifeq ($(TARGET),CYGNUS) 
+           FC = g77
+           CC = gcc
+     FOPT_REN = -fno-second-underscore
+     COPT_REN = -malign-double
+ GLOB_DEFINES+= -DLINUX
+endif
+ 
 
 ifeq ($(TARGET),LINUX)
      FOPT_REN = -fno-second-underscore
