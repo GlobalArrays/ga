@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.48 2002-05-10 01:01:14 edo Exp $ */
+/* $Id: shmem.c,v 1.49 2002-05-15 20:01:40 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -176,9 +176,9 @@ char *tmp;
 unsigned long iptr;
 size_t bytes = size+pagesize-1;
  
-    tmp = ALGN_MALLOC(bytes, pagesize);
+    tmp = ALGN_MALLOC(bytes, getpagesize());
     if(tmp){
-        iptr = (unsigned long)tmp;
+        iptr = (unsigned long)tmp + pagesize-1;
         iptr >>= logpagesize; iptr <<= logpagesize;
         if(DEBUG_) printf("%d:unmap ptr=%p->%p size=%d pagesize=%d\n",armci_me, 
                           tmp,iptr,(int)size,pagesize);
