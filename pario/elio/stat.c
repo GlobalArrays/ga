@@ -140,17 +140,20 @@ int  elio_stat(char *fname, stat_t *statinfo)
           statinfo->avail = (long) ufs_statfs.f_bavail;
 #     endif
 
-      /* get block size, fail if bszie is still 0 */
-       bsize = (int) ufs_statfs.f_frsize;
-       if(bsize==0)bsize =(int) ufs_statfs.f_bsize; 
-       if(bsize==0) ELIO_ERROR(STATFAIL, 1);
+#     ifdef NO_F_FRSIZE
+         /*       on some older systems it was f_bsize */
+         bsize = (int) ufs_statfs.f_bsize; 
+#     else
+         /* get block size, fail if bszie is still 0 */
+         bsize = (int) ufs_statfs.f_frsize;
+         if(bsize==0)bsize =(int) ufs_statfs.f_bsize; 
+         if(bsize==0) ELIO_ERROR(STATFAIL, 1);
 
-      /* on some older systems it was f_bsize */
-      /* bsize = (int) ufs_statfs.f_bsize; */
-      if(DEBUG_)
-         printf("stat: f_frsize=%d f_bsize=%d bsize=%d free blocks=%ld\n",
+         if(DEBUG_)
+           printf("stat: f_frsize=%d f_bsize=%d bsize=%d free blocks=%ld\n",
             (int) ufs_statfs.f_frsize,(int) ufs_statfs.f_bsize, bsize,
             statinfo->avail );
+#     endif
 #   endif
     
     /* translate number of available blocks into kilobytes */
