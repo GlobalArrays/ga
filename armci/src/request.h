@@ -49,7 +49,6 @@ extern void _armci_buf_clear_all();
 #define QUIT 33
 #define ATTACH 34
 #define REGISTER 35
-#define TWOPHASE 36
    
 /*\ the internal request structure for non-blocking api. 
 \*/
