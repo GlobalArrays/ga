@@ -70,6 +70,10 @@ ifdef NOFORT
 LIB_DEFINES += -DNOFORT
 endif
 
+ifdef REPORT_SHMMAX
+LIB_DEFINES += -DREPORT_SHMMAX
+endif
+
 #......................................................................
 LIBRARY = libarmci.a
 HARDCLEAN = yes
