@@ -1,5 +1,4 @@
 
-
 LIB_DEFINES += $(shell oslevel | awk -F. \
 		 '{ if ($$1 > 5 || ($$1 == 5 && $$2 > 1))\
                print "-DAIX52" }')
