@@ -1,3 +1,4 @@
+/* $Id: lapi2.c,v 1.3 1999-07-28 00:47:56 d3h325 Exp $ */
 #define DEBUG 0
 
 /*\ nonblocking strided put

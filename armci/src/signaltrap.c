@@ -1,3 +1,4 @@
+/* $Id: signaltrap.c,v 1.5 1999-07-28 00:48:03 d3h325 Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *

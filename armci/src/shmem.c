@@ -1,3 +1,4 @@
+/* $Id: shmem.c,v 1.8 1999-07-28 00:48:02 d3h325 Exp $ */
 /* System V shared memory allocation and managment for GAs:
  *
  * Interface:

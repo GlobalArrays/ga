@@ -1,3 +1,4 @@
+/* $Id: vector.c,v 1.7 1999-07-28 00:48:05 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"

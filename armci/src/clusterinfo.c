@@ -1,3 +1,4 @@
+/* $Id: clusterinfo.c,v 1.4 1999-07-28 00:47:53 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes

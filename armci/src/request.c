@@ -1,3 +1,4 @@
+/* $Id: request.c,v 1.5 1999-07-28 00:48:00 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"

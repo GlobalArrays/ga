@@ -1,3 +1,4 @@
+/* $Id: lapi.c,v 1.8 1999-07-28 00:47:56 d3h325 Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>

@@ -1,3 +1,4 @@
+/* $Id: ipctest.c,v 1.2 1999-07-28 00:47:55 d3h325 Exp $ */
 #include <stdio.h>
 #include <mpi.h>
 #include <assert.h>

@@ -1,3 +1,4 @@
+/* $Id: armci.c,v 1.21 1999-07-28 00:47:52 d3h325 Exp $ */
 #include <stdio.h>
 #ifdef LAPI
 #  include "lapidefs.h"

@@ -1,3 +1,4 @@
+/* $Id: acc.c,v 1.7 1999-07-28 00:47:52 d3h325 Exp $ */
 void  L_ACCUMULATE_2D(long* alpha, int* rows, int* cols, long* a, 
                       int* lda, long* b, int* ldb)
 {

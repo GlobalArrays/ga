@@ -1,3 +1,4 @@
+/* $Id: shmalloc.c,v 1.4 1999-07-28 00:48:01 d3h325 Exp $ */
 #include <stdio.h>
 #include "shmalloc.h"
 

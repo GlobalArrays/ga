@@ -1,3 +1,4 @@
+/* $Id: message.c,v 1.5 1999-07-28 00:47:58 d3h325 Exp $ */
 #include "message.h"
 #include "armcip.h"
 

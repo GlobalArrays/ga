@@ -1,3 +1,4 @@
+/* $Id: fence.c,v 1.3 1999-07-28 00:47:54 d3h325 Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"

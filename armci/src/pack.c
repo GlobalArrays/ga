@@ -1,3 +1,4 @@
+/* $Id: pack.c,v 1.9 1999-07-28 00:47:59 d3h325 Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 

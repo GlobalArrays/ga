@@ -1,3 +1,4 @@
+/* $Id: rmw.c,v 1.4 1999-07-28 00:48:00 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
