@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.22 2000-06-07 23:39:43 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.23 2000-06-08 18:51:48 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -145,17 +145,24 @@ static  int logpagesize=0;
 
 
 #ifdef   ALLOC_MUNMAP
+#ifdef QUADRICS
+extern void* elan_base;
+extern void   *elan3_allocMain(void*, int, int);
+#define ALGN_MALLOC(s,a) elan3_allocMain(elan_base, (a), (s))
+#else 
+#define ALGN_MALLOC(s,a) malloc((s))
+#endif
 static char* alloc_munmap(size_t size)
 {
 char *tmp;
 unsigned long iptr;
-    tmp = malloc(size + pagesize -1);
+    tmp = ALGN_MALLOC(size+pagesize-1, pagesize);
     if(tmp){
         iptr = (unsigned long)tmp;
         iptr >>= logpagesize; iptr <<= logpagesize;
+        printf("%d:unmap ptr=%d->%d size=%d\n",armci_me, tmp,iptr, (int)size);
         tmp = (char*)iptr;
         if(munmap(tmp, size) == -1) perror("munmap");
-        printf("%d:after unmap size=%d\n",tmp, (int)size);
     }else armci_die("alloc_munmap: malloc failed",(int)size);
     return tmp;
 }
@@ -251,6 +258,8 @@ void armci_shmem_init()
         logpagesize++;
    }
    if(tp!=pagesize)armci_die("armci_shmem_init:pagesize pow 2",pagesize);
+   if(DEBUG_)printf("page size =%d log=%d\n",pagesize,logpagesize);
+
 #endif
 
    if(armci_me == armci_master){
@@ -581,7 +590,7 @@ long sz;
           char command[64];
           CLEANUP_CMD(command);
           if(system(command) == -1) 
-            fprintf(stderr,"Need to clean shared memory id=%d: see man ipcrm\n",id);
+            fprintf(stderr,"Please clean shared memory id=%d: see man ipcrm\n",id);
           if(pref_addr){
              printf("ARMCI shared memory allocator was unable to obtain from ");
              printf("the operating system multiple segments adjacent to ");
@@ -628,8 +637,10 @@ int  reg, nreg;
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
-/*      fprintf(stderr,"allocation unit: %dK, max shmem: %dK\n",MinShmem,MaxShmem);*/
+      if(DEBUG_)
+           printf("allocation unit: %dK, max shmem:%dK\n",MinShmem,MaxShmem);
       shmalloc_request((unsigned)MinShmem, (unsigned)MaxShmem);
+      id[SHMIDLEN-1]=MinShmem;
   }
 
 
@@ -667,12 +678,11 @@ char *Attach_Shared_Region(id, size, offset)
 {
 int reg, found;
 static char *temp;
-long ga_nodeid_();
 
   if(alloc_regions>=MAX_REGIONS)
        armci_die("Attach_Shared_Region: to many regions ",0L);
 
-  if(! *id)
+  if(!*id)
       armci_die("Attach_Shared_Region: shmem ID=0 ",*id);
 
   /* first time needs to initialize region_list structure */
@@ -682,6 +692,7 @@ long ga_nodeid_();
         region_list[reg].attached=0;
         region_list[reg].id=0;
       }
+      MinShmem= id[SHMIDLEN-1];
   }
 
   /* search region_list for the current shmem id */
@@ -696,10 +707,14 @@ long ga_nodeid_();
 
   /* attach if not attached yet */
   if(!region_list[reg].attached){
-   if ( (long) (temp = shmat((int) *id, (char *)NULL, 0)) == -1L){
+#   ifdef ALLOC_MUNMAP
+       char *pref_addr = alloc_munmap((size_t) (MinShmem*SHM_UNIT));
+#   else
+       char *pref_addr = (char*)0;
+#   endif
+    if ( (long) (temp = shmat((int) *id, pref_addr, 0)) == -1L){
        fprintf(stderr,"%d:attach error:id=%ld off=%ld\n",armci_me,*id,offset);
        shmem_errmsg(MinShmem*1024);
-       pause();
        armci_die("Attach_Shared_Region:failed to attach to segment id=",*id);
     }
     region_list[reg].addr = temp; 
@@ -728,6 +743,11 @@ char *allocate(size)
 {
 char * temp;
 long id;
+#ifdef ALLOC_MUNMAP
+       char *pref_addr = alloc_munmap((size_t) (MinShmem*SHM_UNIT));
+#else
+       char *pref_addr = (char*)0;
+#endif
 
     if(DEBUG1){
        printf("%d:Shmem allocate size %ld bytes\n",armci_me,size); 
@@ -745,8 +765,7 @@ long id;
        armci_die("allocate: failed to create shared region ",(long)id);
     }
 
-    if ( (long)(temp = shmat((int) id, (char *) NULL, 0)) == -1L){
-       perror((char*)0);
+    if ( (long) (temp = shmat((int)id, pref_addr, 0)) == -1L){
        armci_die("allocate: failed to attach to shared region",  temp);
     }
 
