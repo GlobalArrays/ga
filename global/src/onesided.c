@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.40 2003-06-21 02:59:29 edo Exp $ */
+/* $Id: onesided.c,v 1.41 2003-07-28 23:52:49 manoj Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -367,8 +367,9 @@ void nga_put_common(Integer *g_a,
                    Integer *nbhandle)
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, size, p_handle;
-int proc, ndim,i;
+Integer  idx, elems, size, p_handle, ga_nbhandle;
+int proc, ndim, loop, cond, counter=0;
+int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 
 #ifdef GA_USE_VAMPIR
       vampir_begin(NGA_NBPUT,__FILE__,__LINE__);
@@ -386,59 +387,82 @@ int proc, ndim,i;
       GAstat.numput++;
       GAstat.numput_procs += np;
       if(nbhandle)ga_init_nbhandle(nbhandle);
+      else ga_init_nbhandle(&ga_nbhandle);
+      
       gaPermuteProcList(np);
       p_handle = GA[handle].p_handle;
-      for(idx=0; idx< np; idx++){
+
+      for(loop=0; loop<num_loops; loop++) {
+	for(idx=0; idx<np; idx++){
           Integer ldrem[MAXDIM];
           int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
           Integer idx_buf, *plo, *phi;
           char *pbuf, *prem;
-
-          p = (Integer)ProcListPerm[idx];
-          gam_GetRangeFromMap(p, ndim, &plo, &phi);
-          proc = (int)GA_proclist[p];
-          if (p_handle >= 0) {
-            proc = (int)P_LIST[p_handle].map_proc_list[proc];
-          }
-
-          gam_Location(proc,handle, plo, &prem, ldrem); 
-
-          /* find the right spot in the user buffer */
-          gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
-          pbuf = size*idx_buf + (char*)buf;        
-
-          gam_ComputeCount(ndim, plo, phi, count); 
-
-          /* scale number of rows by element size */
-          count[0] *= size; 
-          gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
-
-          if(GA_fence_set)fence_array[proc]=1;
+	  
+	  p = (Integer)ProcListPerm[idx];
+	  proc = (int)GA_proclist[p];
+	  if(p_handle>=0)  proc = (int)P_LIST[p_handle].map_proc_list[proc];
 #ifdef PERMUTE_PIDS
-    if(GA_Proc_list){
-       /* fprintf(stderr,"permuted %d %d\n",proc,GA_inv_Proc_list[proc]);*/
-       proc = GA_inv_Proc_list[proc];
-    }
+	  if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
-
-          if(proc == GAme){
-             gam_CountElems(ndim, plo, phi, &elems);
-             GAbytes.putloc += (double)size*elems;
-          }
-
-          /*casting what ganb_get_armci_handle function returns to armci_hdl is 
-            very crucial here as on 64 bit platforms, pointer is 64 bits where 
-            as temporary in only 32 bits*/ 
-          if (p_handle >= 0) {
-            proc = (int)GA_proclist[p];
-          }
-          if(nbhandle) 
-            ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1, 
-                         proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
-          else
-            ARMCI_PutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,proc);
-
+	  
+	  /* check if it is local to SMP */
+	  cond = (armci_clus_id((int)GAme) == armci_clus_id(proc)) ? 1 : 0;
+	  if(loop==0) cond = !cond;
+	  
+	  if(cond) {
+	    gam_GetRangeFromMap(p, ndim, &plo, &phi);
+	    proc = (int)GA_proclist[p];
+	    if (p_handle >= 0) {
+	      proc = (int)P_LIST[p_handle].map_proc_list[proc];
+	    }
+	    
+	    gam_Location(proc,handle, plo, &prem, ldrem); 
+	    
+	    /* find the right spot in the user buffer */
+	    gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
+	    pbuf = size*idx_buf + (char*)buf;        
+	    
+	    gam_ComputeCount(ndim, plo, phi, count); 
+	    
+	    /* scale number of rows by element size */
+	    count[0] *= size; 
+	    gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
+	    
+	    if(GA_fence_set)fence_array[proc]=1;
+	    
+#ifdef PERMUTE_PIDS
+	    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+	    
+	    if(proc == GAme){
+	      gam_CountElems(ndim, plo, phi, &elems);
+	      GAbytes.putloc += (double)size*elems;
+	    }
+	    
+	    /*casting what ganb_get_armci_handle function returns to armci_hdl is 
+	      very crucial here as on 64 bit platforms, pointer is 64 bits where 
+	      as temporary in only 32 bits*/ 
+	    if (p_handle >= 0) {
+	      proc = (int)GA_proclist[p];
+	    }
+	    if(nbhandle) 
+	      ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,
+			   proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+	    else {
+	      if((loop==0 && counter==(int)np-1) || loop==1)
+		ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
+	      else {
+		++counter;
+		ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1,
+			     proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+	      }
+	    }
+	  } /* end if(cond) */
+	}
       }
+      
+      if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 
       GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
@@ -547,8 +571,9 @@ void FATR nga_get_common(Integer *g_a,
          ld[]:  Array of physical ndim-1 dimensions of local buffer */
 
 Integer  p, np, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, size, p_handle;
-int proc, ndim;
+Integer  idx, elems, size, p_handle, ga_nbhandle;
+int proc, ndim, loop, cond, counter=0;
+int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 
 #ifdef GA_USE_VAMPIR
       vampir_begin(NGA_GET,__FILE__,__LINE__);
@@ -577,65 +602,91 @@ int proc, ndim;
       GAstat.numget_procs += np;
 
       if(nbhandle)ga_init_nbhandle(nbhandle);
+      else ga_init_nbhandle(&ga_nbhandle);
 
       gaPermuteProcList(np);
       p_handle = GA[handle].p_handle;
-      for(idx=0; idx< np; idx++){
-          Integer ldrem[MAXDIM];
-          int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
-          Integer idx_buf, *plo, *phi;
-          char *pbuf, *prem;
 
-          p = (Integer)ProcListPerm[idx];
-          /* Find  visible portion of patch held by processor p and
-             return the result in plo and phi. Also get actual processor
-             index corresponding to p and store the result in proc. */
-          gam_GetRangeFromMap(p, ndim, &plo, &phi);
-          proc = (int)GA_proclist[p];
-          if (p_handle >= 0) {
-            proc = (int)P_LIST[p_handle].map_proc_list[proc];
-          }
-
-          /* get pointer prem to location indexed by plo. Also get
-             leading physical dimensions in memory in ldrem */
-          gam_Location(proc,handle, plo, &prem, ldrem);
-
-          /* find the right spot in the user buffer for the point
-             subscripted by plo given that the corner of the user
-             buffer is subscripted by lo */
-          gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
-          pbuf = size*idx_buf + (char*)buf;
-
-          /* compute number of elements in each dimension and store the
-             result in count */
-          gam_ComputeCount(ndim, plo, phi, count);
-
-          /* Scale first element in count by element size. The ARMCI_GetS
-             routine uses this convention to figure out memory sizes.*/
-          count[0] *= size; 
-
-          /* Return strides for memory containing global array on remote
-             processor indexed by proc (stride_rem) and for local buffer
-             buf (stride_loc) */
-          gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
-
+      for(loop=0; loop<num_loops; loop++) {
+	for(idx=0; idx< np; idx++){
+	  Integer ldrem[MAXDIM];
+	  int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
+	  Integer idx_buf, *plo, *phi;
+	  char *pbuf, *prem;
+	  
+	  p = (Integer)ProcListPerm[idx];
+	  proc = (int)GA_proclist[p];
+	  if(p_handle>=0)  proc = (int)P_LIST[p_handle].map_proc_list[proc];
 #ifdef PERMUTE_PIDS
-          if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+	  if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
-          if(proc == GAme){
-             gam_CountElems(ndim, plo, phi, &elems);
-             GAbytes.getloc += (double)size*elems;
-          }
-          if (p_handle >= 0) {
-            proc = (int)GA_proclist[p];
-          }
-          if(nbhandle) 
-            ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
-                         proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
-          else
-            ARMCI_GetS(prem,stride_rem, pbuf,stride_loc, count, ndim -1, proc);
+	  
+	  /* check if it is local to SMP */
+	  cond = (armci_clus_id((int)GAme) == armci_clus_id(proc)) ? 1 : 0;
+	  if(loop==0) cond = !cond;
+	  
+	  if(cond) {
+	    
+	    /* Find  visible portion of patch held by processor p and
+	       return the result in plo and phi. Also get actual processor
+	     index corresponding to p and store the result in proc. */
+	    gam_GetRangeFromMap(p, ndim, &plo, &phi);
+	    proc = (int)GA_proclist[p];
+	    if (p_handle >= 0) {
+	      proc = (int)P_LIST[p_handle].map_proc_list[proc];
+	    }
+	    
+	    /* get pointer prem to location indexed by plo. Also get
+	       leading physical dimensions in memory in ldrem */
+	    gam_Location(proc,handle, plo, &prem, ldrem);
+	    
+	    /* find the right spot in the user buffer for the point
+	       subscripted by plo given that the corner of the user
+	       buffer is subscripted by lo */
+	    gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
+	    pbuf = size*idx_buf + (char*)buf;
+	    
+	    /* compute number of elements in each dimension and store the
+	       result in count */
+	    gam_ComputeCount(ndim, plo, phi, count);
+	    
+	    /* Scale first element in count by element size. The ARMCI_GetS
+	       routine uses this convention to figure out memory sizes.*/
+	    count[0] *= size; 
+	    
+	    /* Return strides for memory containing global array on remote
+	       processor indexed by proc (stride_rem) and for local buffer
+	       buf (stride_loc) */
+	    gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
+	    
+#ifdef PERMUTE_PIDS
+	    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+	    if(proc == GAme){
+	      gam_CountElems(ndim, plo, phi, &elems);
+	      GAbytes.getloc += (double)size*elems;
+	    }
+	    if (p_handle >= 0) {
+	      proc = (int)GA_proclist[p];
+	    }
+	    if(nbhandle) 
+	      ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
+			   proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+	    else {
+	      if((loop==0 && counter==(int)np-1) || loop==1)
+		ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
+	      else {
+		++counter;
+		ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,
+			     proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+	      }
+	    }
+	  } /* end if(cond) */
+	}
       }
-
+      
+      if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
+      
       GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
       vampir_end(NGA_GET,__FILE__,__LINE__);
@@ -729,8 +780,9 @@ void FATR nga_acc_common(Integer *g_a,
                    Integer *nbhandle)
 {
 Integer  p, np, handle=GA_OFFSET + *g_a;
-Integer  idx, elems, size, type, p_handle;
-int optype, proc, ndim;
+Integer  idx, elems, size, type, p_handle, ga_nbhandle;
+int optype, proc, loop, ndim, cond, counter=0;
+int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 
 #ifdef GA_USE_VAMPIR
       vampir_begin(NGA_ACC,__FILE__,__LINE__);
@@ -757,56 +809,90 @@ int optype, proc, ndim;
       GAstat.numacc_procs += np;
 
       if(nbhandle)ga_init_nbhandle(nbhandle);
+      else ga_init_nbhandle(&ga_nbhandle);
 
       gaPermuteProcList(np);
       p_handle = GA[handle].p_handle;
-      for(idx=0; idx< np; idx++){
+
+      for(loop=0; loop<num_loops; loop++) {
+	for(idx=0; idx< np; idx++){
           Integer ldrem[MAXDIM];
           int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
           Integer idx_buf, *plo, *phi;
           char *pbuf, *prem;
 
-          p = (Integer)ProcListPerm[idx];
-          gam_GetRangeFromMap(p, ndim, &plo, &phi);
-          proc = (int)GA_proclist[p];
-          if (p_handle >= 0) {
-            proc = (int)P_LIST[p_handle].map_proc_list[proc];
-          }
-
-          gam_Location(proc,handle, plo, &prem, ldrem);
-
-          /* find the right spot in the user buffer */
-          gam_ComputePatchIndex(ndim,lo, plo, ld, &idx_buf);
-          pbuf = size*idx_buf + (char*)buf;
-
-          gam_ComputeCount(ndim, plo, phi, count);
-
-          /* scale number of rows by element size */
-          count[0] *= size;
-          gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
-
-          if(GA_fence_set)fence_array[proc]=1;
-
+	  p = (Integer)ProcListPerm[idx];
+	  proc = (int)GA_proclist[p];
+	  if(p_handle>=0)  proc = (int)P_LIST[p_handle].map_proc_list[proc];
 #ifdef PERMUTE_PIDS
-          if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+	  if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
 #endif
-          if(proc == GAme){
-             gam_CountElems(ndim, plo, phi, &elems);
-             GAbytes.accloc += (double)size*elems;
-          }
-
-          if (p_handle >= 0) {
-            proc = (int)GA_proclist[p];
-          }
-          if(nbhandle) 
-            ARMCI_NbAccS(optype,alpha, pbuf, stride_loc, prem, stride_rem,count,
-                       ndim-1, proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
-          else
-            ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, count,
-                       ndim-1, proc);
-
+	  
+	  /* check if it is local to SMP */
+	  cond = (armci_clus_id((int)GAme) == armci_clus_id(proc)) ? 1 : 0;
+	  if(loop==0) cond = !cond;
+	  
+	  if(cond) {
+	    p = (Integer)ProcListPerm[idx];
+	    gam_GetRangeFromMap(p, ndim, &plo, &phi);
+	    proc = (int)GA_proclist[p];
+	    if (p_handle >= 0) {
+	      proc = (int)P_LIST[p_handle].map_proc_list[proc];
+	    }
+	    
+	    gam_Location(proc,handle, plo, &prem, ldrem);
+	    
+	    /* find the right spot in the user buffer */
+	    gam_ComputePatchIndex(ndim,lo, plo, ld, &idx_buf);
+	    pbuf = size*idx_buf + (char*)buf;
+	    
+	    gam_ComputeCount(ndim, plo, phi, count);
+	    
+	    /* scale number of rows by element size */
+	    count[0] *= size;
+	    gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
+	    
+	    if(GA_fence_set)fence_array[proc]=1;
+	    
+#ifdef PERMUTE_PIDS
+	    if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
+#endif
+	    if(proc == GAme){
+	      gam_CountElems(ndim, plo, phi, &elems);
+	      GAbytes.accloc += (double)size*elems;
+	    }
+	    
+	    if (p_handle >= 0) {
+	      proc = (int)GA_proclist[p];
+	    }
+	    if(nbhandle) 
+	      ARMCI_NbAccS(optype, alpha, pbuf, stride_loc, prem,
+			   stride_rem, count, ndim-1, proc,
+			   (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+	    else {
+#  if 0 /* disabled, as nbacc fails in quadrics */
+	      if((loop==0 && counter==(int)np-1) || loop==1)
+		ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, 
+			   count, ndim-1, proc);
+	      else {
+		++counter;
+		ARMCI_NbAccS(optype, alpha, pbuf, stride_loc, prem, 
+			     stride_rem, count, ndim-1, proc,
+			     (armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+	      }
+#  else
+	      ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem,
+			 count, ndim-1, proc);
+#  endif
+	    }
+	  } /* end if(cond) */
+	}
       }
 
+#if 0
+      if(!nbhandle) nga_wait_internal(&ga_nbhandle);
+#endif
+      
       GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
       vampir_end(NGA_ACC,__FILE__,__LINE__);
