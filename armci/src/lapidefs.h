@@ -47,9 +47,11 @@ extern void armci_lapi_send(msg_tag_t, void*, int, int); /* LAPI send */
 #ifdef LAPI2
 #  define LONG_PUT_THRESHOLD 0
 #  define LONG_GET_THRESHOLD 0
+#  define LONG_GET_THRESHOLD_STRIDED 0
 #else
 #  define LONG_PUT_THRESHOLD 3000
 #  define LONG_GET_THRESHOLD 3000
+#  define LONG_GET_THRESHOLD_STRIDED LONG_GET_THRESHOLD
 #endif
 
 
