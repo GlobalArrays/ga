@@ -63,14 +63,14 @@ GA_OBJ = $(GA_CORE) $(GA_SYNC) $(GA_HANDLER) $(IPC)
 #                  Linear Algebra
 #
 GA_ALG_BLAS = global.alg.o ga_dgemm.o ga_symmetr.o ga_diag_seq.o rsg.o\
-              rs-mod.o ga_solve_seq.o ga_transpose.o ga_cholesky.o 
+              rs-mod.o ga_solve_seq.o ga_transpose.o 
 #
 #ifeq ($(DIAG),PAR)
      GA_ALG_DIAG = ga_diag.o 
 #endif
 #
-ifeq ($(LU_SOLVE),PAR)
-     GA_ALG_SOLVE= SLface.o ga_solve.o 
+ifdef USE_SCALAPACK
+     GA_ALG_SOLVE= SLface.o ga_solve.o ga_spd.o
 endif
 GA_ALG = $(GA_ALG_BLAS) $(GA_ALG_DIAG) $(GA_ALG_SOLVE)
 #

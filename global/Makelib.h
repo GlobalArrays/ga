@@ -89,12 +89,8 @@ endif
 
 LIBCOM += $(EXTRA_LIBS)
 
-ifeq (LU_SOLVE, PAR)
-  SCALAPACK = $(SRC1)/scalapack/scalapack.a $(SRC1)/scalapack/pbblas.a\
-              $(SRC1)/scalapack/blacs.a $(SRC1)/scalapack/SLtools.a
-
+ifdef USE_SCALAPACK
   LINALG = $(SCALAPACK)
 endif
 
 LINALG += $(BLAS) -llinalg $(BLAS)
-
