@@ -19,6 +19,9 @@ Date: 1/18/2002
 Purpose:
       to design and implement some interfaces between TAO and
       global arrays.
+
+Modified 3/2004 By Doug Baxter to increase robustness.
+
 **************************************************************/
 
 #include "global.h"
@@ -26,21 +29,43 @@ Purpose:
 #include <math.h>
 
 #ifndef GA_INFINITY_I
+#define GA_INFINITY_I 2147483647
+/* 
+  Original value below.
+  Seemed too small arbitrarily.
 #define GA_INFINITY_I 100000
+*/
 #endif
 
 #ifndef GA_NEGATIVE_INFINITY_I
+#define GA_NEGATIVE_INFINITY_I -2147483637
+
+
+/* 
+  Original value below. 
+  Seemed too small arbitrarily.
 #define GA_NEGATIVE_INFINITY_I -100000
+*/
 #endif
 
 #ifndef GA_INFINITY_L
+#define GA_INFINITY_L 9223372036854775807
+/* Original value was
 #define GA_INFINITY_L 100000
+*/
 #endif
 
 #ifndef GA_NEGATIVE_INFINITY_L
-#define GA_NEGATIVE_INFINITY_L -100000
+#define GA_NEGATIVE_INFINITY_L -9223372036854775807
 #endif
+/* 
+  Original value was:
+#define GA_NEGATIVE_INFINITY_L -100000
+*/
 
+/* 
+  Modified by Doug Baxter 01/24/04 to distinguish between
+  Double inifinity and float infinity.
 #ifndef GA_INFINITY
 #define GA_INFINITY 1.0e20
 #endif
@@ -48,7 +73,40 @@ Purpose:
 #ifndef GA_NEGATIVE_INFINITY
 #define GA_NEGATIVE_INFINITY -1.0e20
 #endif
-
+*/
+#ifndef GA_INFINITY_F
+#define GA_INFINITY_F 1.0e37
+#endif
+/*
+  Original value below.
+#define GA_INFINITY_F 1.0e20
+*/
+#ifndef GA_NEGATIVE_INFINITY_F
+#define GA_NEGATIVE_INFINITY_F -1.0e37
+#endif
+/*
+  Original value below.
+#define GA_NEGATIVE_INFINITY_F -1.0e20
+*/
+#ifndef GA_INFINITY_D
+#define GA_INFINITY_D 1.0e307
+#endif
+/*
+  Original value below.
+#define GA_INFINITY_D 1.0e20
+*/
+#ifndef GA_NEGATIVE_INFINITY_D
+#define GA_NEGATIVE_INFINITY_D -1.0e307
+#endif
+/*
+  Original value below.
+#define GA_NEGATIVE_INFINITY_D -1.0e20
+*/
+/*
+  End of 01/24/04 Modification.
+  Perhaps it would be more appropriate to have GA_INFINITY_D BE 1.0e307
+  These ranges make assumptions about the data.
+*/
 #define OP_ABS 0
 #define OP_ADD_CONST 1
 #define OP_RECIP 2
@@ -58,6 +116,7 @@ Purpose:
 #define OP_ELEM_MIN 6
 #define OP_STEPMAX 7
 #define OP_STEPMAX2 8
+#define OP_ELEM_SDIV 9
 #define OP_FILL 100 /*The OP_FILL is not currently in use */
 
 int debug_gai_oper_elem = 1;
@@ -77,17 +136,41 @@ static void do_stepmax2(void *ptr, int nelem, int type)
                 /*Only double data type will be handled for TAO/GA project*/ 
               da = (double *) ptr;
               for(i=0;i<nelem;i++)
-                  if(da[i]>=GA_INFINITY) da[i]=-GA_INFINITY;
+		/* Modified 01/24/04 to add _D ending to constants. */
+		if(da[i]>=GA_INFINITY_D) da[i]=-GA_INFINITY_D;
               break;
          case C_INT:
-         case C_DCPL:
+	   /* This block added 01/24/04 */
+	   ia = (int *) ptr;
+	   for (i=0;i<nelem;i++)
+	     if (ia[i]>= GA_INFINITY_I) ia[i] = GA_NEGATIVE_INFINITY_I;
+	   break;
+         case C_DCPL: 
+	   /* This operation is not well defined for complex
+	      numbers . This statement added when drop through
+	      behavior changed by adding code for C_FLOAT and C_LONG
+	      cases below. 01/24/04
+	   */
+	   ga_error("do_stepmax2:wrong data type",type);
          case C_FLOAT:
+	   /* This case added 01/24/04 */
+	   fa = (float *) ptr;
+	   for (i=0;i<nelem;i++)
+	     if (fa[i]>= GA_INFINITY_F) fa[i] = GA_NEGATIVE_INFINITY_F;
+	   break;
  	case C_LONG:
+	   /* This case added 01/24/04 */
+	   la = (long *) ptr;
+	   for (i=0;i<nelem;i++)
+	     if (la[i]>= GA_INFINITY_L) la[i] = GA_NEGATIVE_INFINITY_L;
+	   break;
          default: ga_error("do_stepmax2:wrong data type",type);
     }
 }
 static void do_stepmax(void *ptr, int nelem, int type)
-/*look at elements one by one and replace the positive with negative infinity */ 
+/*
+  Look at elements one by one and replace the positive with negative infinity.
+*/ 
 {
     int i;
     switch (type){
@@ -101,12 +184,34 @@ static void do_stepmax(void *ptr, int nelem, int type)
                 /*Only double data type will be handled for TAO/GA project*/ 
               da = (double *) ptr;
               for(i=0;i<nelem;i++)
-                  if(da[i]>0) da[i]=-GA_INFINITY;
+		/* Modified 01/24/04 to use _D ending. */
+                  if(da[i]>0) da[i]=-GA_INFINITY_D;
               break;
          case C_INT:
+	   /* Thix case added 01/24/04*/
+              ia = (int *) ptr;
+              for(i=0;i<nelem;i++)
+                  if(ia[i]>0) ia[i]=-GA_INFINITY_I;
+              break;
          case C_DCPL:
+	   /* This operation is not well defined for complex
+	      numbers . This statement added when drop through
+	      behavior changed by adding code for C_FLOAT and C_LONG
+	      cases below. 01/24/04
+	   */
+	   ga_error("do_stepmax2:wrong data type",type);
          case C_FLOAT:
- 	case C_LONG:
+	   /* Thix case added 01/24/04*/
+              fa = (float *) ptr;
+              for(i=0;i<nelem;i++)
+                  if(fa[i]>0) fa[i]=-GA_INFINITY_F;
+              break;
+         case C_LONG:
+	   /* Thix case added 01/24/04*/
+              la = (long *) ptr;
+              for(i=0;i<nelem;i++)
+                  if(la[i]>0) la[i]=-GA_INFINITY_L;
+              break;
          default: ga_error("do_stepmax:wrong data type",type);
     }
 }
@@ -115,6 +220,7 @@ static void do_stepmax(void *ptr, int nelem, int type)
 static void do_abs(void *ptr, int nelem, int type)
 {
     int i;
+    double magi, magr, x1, x2;
     switch (type){
          int *ia;
          double *da;
@@ -130,9 +236,27 @@ static void do_abs(void *ptr, int nelem, int type)
          case C_DCPL:
               ca = (DoubleComplex *) ptr;
               for(i=0;i<nelem;i++){
-                  val = ca[i];
-                  ca[i].real = sqrt(val.real * val.real + val.imag *val.imag);
-                  ca[i].imag = 0.0;
+		val = ca[i];
+                /* DJB: This algorithm can lead to overflows when
+		   and underflows when not necessary.
+		ca[i].real = sqrt(val.real * val.real + val.imag *val.imag);
+		ca[i].imag = 0.0;
+		   Better (but slower) is:
+		*/
+		magi = ABS(val.imag);
+		magr = ABS(val.real);
+		if (ABS(val.real) >= ABS(val.imag)) {
+		  if (val.real == 0.0) {
+		    ca[i].real = 0.0;
+		  } else {
+		    x2 = val.imag/val.real;
+		    ca[i].real = ABS(val.real)*sqrt(1.0+(x2*x2));
+		  }
+		} else {
+		  x2 = val.real/val.imag;
+		  ca[i].real = ABS(val.imag)*sqrt(1.0+(x2*x2));
+		}
+		ca[i].imag=0.0;
               }
               break;
   	 case C_DBL:
@@ -157,6 +281,24 @@ static void do_abs(void *ptr, int nelem, int type)
 
 static void do_recip(void *ptr, int nelem, int type)
 {
+  /*
+    DJB general comment, as I found this routine, it
+    would return some form of infinity when having 
+    a zero denominator. I find that technically incorrect
+    and the commented out error message to be preferrable.
+    If returning infinity is the behavior desired I would recommend
+    having a separate specialized reciprocal, where it's
+    in the GA documentation, what should happen on a divide
+    by zero. In IEEE standard, the default is to throw
+    a floating point exception (FPE) when division by zero
+    occurs. The ga_error message seems to be the
+    moral equivalent of that.
+    I have comment out the Infinity returs and returned 
+    to the ga_error calls. Also on the commented out 
+    infinity value returns I have been more specific in
+    the INFINITY type returned (the trailing _*).
+  */
+  double magi, magr, x1, x2, c, d;
     int i;
     switch (type){
          int *ia;
@@ -170,47 +312,82 @@ static void do_recip(void *ptr, int nelem, int type)
               for(i=0;i<nelem;i++)
                   if(ia[i]!=0) ia[i]= 1/ia[i];
                      else
- 		  ia[i] = GA_INFINITY_I;
-                  /* ga_error("zero value at index",i); */
+                   ga_error("zero value at index",i);
+		       /*
+			 ia[i] = GA_INFINITY_I;
+		       */
               break;
          case C_DCPL:
               ca = (DoubleComplex *) ptr;
               for(i=0;i<nelem;i++){
+		/* 
+		  Again, as for absolute value the following
+		  algorithm can lead to unecessary overflow/underflow
+		   
                   temp = ca[i].real*ca[i].real + ca[i].imag*ca[i].imag;
                   if( temp!=0.0){
                    ca[i].real =ca[i].real/temp;
                    ca[i].imag =-ca[i].imag/temp;
                   }
                   else{
- 		     /* ga_error("zero value at index",i); */
- 		     ca[i].real = GA_INFINITY;
- 		     ca[i].imag = GA_INFINITY;
+ 		     ga_error("zero value at index",i); 
+                     OR
+		       ca[i].real = GA_INFINITY_D;
+		       ca[i].imag = GA_INFINITY_D;
+
                  }
-              }
+		 Better (but slower) is: 
+	       */		     
+		x1 = ca[i].real;
+		x2 = ca[i].imag;
+		magr = ABS(x1);
+		magi = ABS(x2);
+		if (magr >= magi) {
+		  if (magr != 0.0) {
+		    c = x2/x1;
+		    d = 1.0/((1.0 + c*c)*x1);
+		    ca[i].real = d;
+		    ca[i].imag = -c*d;
+		  } else {
+		    ga_error("zero value at index",i); 
+		  }
+		} else {
+		  c = x1/x2;
+		  d = 1.0/((1.0 + c*c)*x2);
+		  ca[i].real = c*d;
+		  ca[i].imag = -d;
+		}
+	      }
               break;
          case C_DBL:
               da = (double *) ptr;
               for(i=0;i<nelem;i++)
                   if(da[i]!=0.0) da[i]= (double)1/da[i];
   		     else
-		  /* ga_error("zero value at index",i); */
- 		  da[i] = GA_INFINITY;
+		   ga_error("zero value at index",i); 
+		    /* 
+		       da[i] = GA_INFINITY_D;
+		    */
               break;
          case C_FLOAT:
               fa = (float *)ptr;
               for(i=0;i<nelem;i++)
                   if(fa[i]!=0.0) fa[i]= (float)1/fa[i];
                      else
-		  /* ga_error("zero value at index",i); */
- 		  fa[i] = GA_INFINITY;
+		   ga_error("zero value at index",i); 
+         	   /*
+		     fa[i] = GA_INFINITY_F
+		   */;
               break;
 	case C_LONG:
               la = (long *)ptr;
               for(i=0;i<nelem;i++)
                   if(la[i]!=0.0) la[i]= (long)1/la[i];
                      else
-                  /* ga_error("zero value at index",i); */
- 		  la[i] = GA_INFINITY_I;
+                  ga_error("zero value at index",i); 
+	          /*
+		    la[i] = GA_INFINITY_I;
+		  */
               break;
 
 
@@ -527,9 +704,102 @@ static void do_multiply(void *pA, void *pB, void *pC, Integer nelems, Integer ty
 
 
 static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type){
+  /* 
+    Modified by Doug Baxter to call ga_error on divide by 0.
+    A do_step_divide is added below to return properly signed
+    infinity for the step_max functions.
+  */
   Integer i;
   double aReal, aImag, bReal, bImag, cReal, cImag;
-  double temp;
+  double x1,x2;
+
+  switch(type){
+  
+  case C_DBL:
+    for(i = 0; i<nelems; i++) {
+      if(((double*)pB)[i]!=0.0)
+	((double*)pC)[i]=  ((double*)pA)[i]/((double*)pB)[i];
+      else{
+	ga_error("zero divisor ",((double*)pB)[i]); 
+      }
+    }
+    break;
+  case C_DCPL:
+    for(i = 0; i<nelems; i++) {
+      aReal = ((DoubleComplex*)pA)[i].real;
+      bReal = ((DoubleComplex*)pB)[i].real;
+      aImag = ((DoubleComplex*)pA)[i].imag;
+      bImag = ((DoubleComplex*)pB)[i].imag;
+      /* 
+        The following original algorithm overflows
+	when it need not.
+      temp = bReal*bReal+bImag*bImag;
+      if(temp!=0.0){
+	((DoubleComplex*)pC)[i].real
+	  =(aReal*bReal+aImag*bImag)/temp;
+	((DoubleComplex*)pC)[i].imag
+	  =(aImag*bReal-aReal*bImag)/temp;
+      }
+      else{
+	ga_error("zero divisor ",temp); 
+      }
+      */
+      if (ABS(bReal) >= ABS(bImag)) {
+	if (bReal != 0.0) {
+	  x1 = bImag/bReal;
+          /* So x1 <= 1 */
+	  x2 = 1.0/(bReal*(1.0+(x1*x1)));
+	  ((DoubleComplex*)pC)[i].real = (aReal + aImag*x1)*x2;
+	  ((DoubleComplex*)pC)[i].imag = (aImag - aReal*x1)*x2;
+	}
+	else{
+	  ga_error("zero divisor ",bReal); 
+	}
+      } else {
+	x1 = bReal/bImag;
+        /* So x1 <= 1 */
+	x2 = 1.0/(bImag*(1.0+(x1*x1)));
+	((DoubleComplex*)pC)[i].real = (aReal*x1 + aImag)*x2;
+	((DoubleComplex*)pC)[i].imag = (aImag*x1 - aReal)*x2;
+      }
+    }
+    break;
+  case C_INT:
+    for(i = 0; i<nelems; i++){
+      if(((int*)pB)[i]!=0)
+	((int*)pC)[i] = ((int*)pA)[i]/((int*)pB)[i];
+      else{
+	ga_error("zero divisor ",((int*)pB)[i]); 
+      } 
+    }
+    break;
+  case C_FLOAT:
+    for(i = 0; i<nelems; i++){
+      if(((float*)pB)[i]!=0.0) 
+	((float*)pC)[i]=  ((float*)pA)[i]/((float*)pB)[i];
+      else{
+	ga_error("zero divisor ",((float*)pB)[i]); 
+      }
+    }
+    break;
+  case C_LONG:
+    for(i = 0; i<nelems; i++){
+      if(((long *)pB)[i]!=0)
+	((long *)pC)[i]=  ((long *)pA)[i]/((long *)pB)[i];
+      else{
+	ga_error("zero divisor ",((long*)pB)[i]); 
+      }
+    }
+    break;		
+  default: ga_error(" wrong data type ",type);
+  }
+}
+ 
+
+static void do_step_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type){
+  Integer i;
+  double aReal, aImag, bReal, bImag, cReal, cImag;
+  double x1,x2;
 
   switch(type){
   
@@ -539,9 +809,11 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
 	((double*)pC)[i]=  ((double*)pA)[i]/((double*)pB)[i];
       else{
 	if(((double*)pA)[i]>=0)
-	  ((double*)pC)[i]=  GA_INFINITY;
+	  /* _D added 01/24/04 */
+	  ((double*)pC)[i]=  GA_INFINITY_D;
 	else
-	  ((double*)pC)[i]=  GA_NEGATIVE_INFINITY;
+	  /* _D added 01/24/04 */
+	  ((double*)pC)[i]=  GA_NEGATIVE_INFINITY_D;
 	/* ga_error("zero divisor ",((double*)pB)[i]); */
       }
     }
@@ -552,6 +824,9 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
       bReal = ((DoubleComplex*)pB)[i].real;
       aImag = ((DoubleComplex*)pA)[i].imag;
       bImag = ((DoubleComplex*)pB)[i].imag;
+      /*
+        This algorithme was replaced with the
+	more overflow resistant code below.
       temp = bReal*bReal+bImag*bImag;
       if(temp!=0.0){
 	((DoubleComplex*)pC)[i].real
@@ -560,10 +835,33 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
 	  =(aImag*bReal-aReal*bImag)/temp;
       }
       else{
-	((DoubleComplex*)pC)[i].real=GA_INFINITY;
-	((DoubleComplex*)pC)[i].imag=GA_INFINITY;
-	/* ga_error("zero divisor ",temp); */
+	((DoubleComplex*)pC)[i].real=GA_INFINITY_D;
+	((DoubleComplex*)pC)[i].imag=GA_INFINITY_D;
       }
+      */
+      if (ABS(bReal) >= ABS(bImag)) {
+        /* So x1 <= 1 */
+	if (bReal != 0.0) {
+	  x1 = bImag/bReal;
+	  x2 = 1.0/(bReal*(1.0+(x1*x1)));
+	  ((DoubleComplex*)pC)[i].real = (aReal + aImag*x1)*x2;
+	  ((DoubleComplex*)pC)[i].imag = (aImag - aReal*x1)*x2;
+	} else {
+	  if (aReal+aImag >= 0.0){
+	    ((DoubleComplex*)pC)[i].real=GA_INFINITY_D;
+	  } else {
+	    ((DoubleComplex*)pC)[i].real=-GA_INFINITY_D;
+	  }
+	  ((DoubleComplex*)pC)[i].imag=0.0;
+	}
+      } else {
+	x1 = bReal/bImag;
+        /* So x1 <= 1 */
+	x2 = 1.0/(bImag*(1.0+(x1*x1)));
+	((DoubleComplex*)pC)[i].real = (aReal*x1 + aImag)*x2;
+	((DoubleComplex*)pC)[i].imag = (aImag*x1 - aReal)*x2;
+      }
+
     }
     break;
   case C_INT:
@@ -584,10 +882,12 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
       if(((float*)pB)[i]!=0.0) 
 	((float*)pC)[i]=  ((float*)pA)[i]/((float*)pB)[i];
       else{
+	/* _F added 01/24/04 */
 	if(((float*)pA)[i]>=0)
-	  ((float*)pC)[i]= GA_INFINITY;
+	  ((float*)pC)[i]= GA_INFINITY_F;
 	else
-	  ((float*)pC)[i]= GA_NEGATIVE_INFINITY;
+	/* _F added 01/24/04 */
+	  ((float*)pC)[i]= GA_NEGATIVE_INFINITY_F;
 	/* ga_error("zero divisor ",((float*)pB)[i]); */
       }
     }
@@ -608,15 +908,17 @@ static void do_divide(void *pA, void *pB, void *pC, Integer nelems, Integer type
   default: ga_error(" wrong data type ",type);
   }
 }
- 
-
 
 
 
 static void do_maximum(void *pA, void *pB, void *pC, Integer nelems, Integer type){
+  /*
+    This routine was modified by DJB to scale components
+    so as not to unecessarily overflow.
+  */
   Integer i;
   double aReal, aImag, bReal, bImag, cReal, cImag, temp1, temp2;
-
+  double x1,x2;
   switch(type){
     
   case C_DBL:
@@ -629,15 +931,28 @@ static void do_maximum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
       bReal = ((DoubleComplex*)pB)[i].real;
       aImag = ((DoubleComplex*)pA)[i].imag;
       bImag = ((DoubleComplex*)pB)[i].imag;
-      temp1 = aReal*aReal+aImag*aImag;
-      temp2 = bReal*bReal+bImag*bImag;
-      if(temp1>temp2){
+      x1    = MAX(ABS(aReal),ABS(aImag));
+      x2    = MAX(ABS(bReal),ABS(bImag));
+      x1    = MAX(x1,x2);
+      if (x1 == 0.0) {
 	((DoubleComplex*)pC)[i].real=((DoubleComplex*)pA)[i].real;
 	((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pA)[i].imag;
-      }
-      else{
-	((DoubleComplex*)pC)[i].real=((DoubleComplex*)pB)[i].real;
-	((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pB)[i].imag;
+      } else {
+	x1 = 1.0/x1;
+	aReal = aReal*x1;
+	aImag = aImag*x1;
+	bReal = bReal*x1;
+	bImag = bImag*x1;
+	temp1 = (aReal*aReal)+(aImag*aImag);
+	temp2 = (bReal*bReal)+(bImag*bImag);
+	if(temp1>temp2){
+	  ((DoubleComplex*)pC)[i].real=((DoubleComplex*)pA)[i].real;
+	  ((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pA)[i].imag;
+	}
+	else{
+	  ((DoubleComplex*)pC)[i].real=((DoubleComplex*)pB)[i].real;
+	  ((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pB)[i].imag;
+	}
       }
     }
     break;
@@ -661,7 +976,12 @@ static void do_maximum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
 
 
 static void do_minimum(void *pA, void *pB, void *pC, Integer nelems, Integer type){
+  /*
+    This routine was modified by DJB to scale components
+    so as not to unecessarily overflow.
+  */
   Integer i;
+  double x1,x2;
 
   switch(type){
     double aReal, aImag, bReal, bImag, cReal, cImag, temp1, temp2;
@@ -676,15 +996,28 @@ static void do_minimum(void *pA, void *pB, void *pC, Integer nelems, Integer typ
       bReal = ((DoubleComplex*)pB)[i].real;
       aImag = ((DoubleComplex*)pA)[i].imag;
       bImag = ((DoubleComplex*)pB)[i].imag;
-      temp1 = aReal*aReal+aImag*aImag;
-      temp2 = bReal*bReal+bImag*bImag;
-      if(temp1<temp2){ 
-	((DoubleComplex*)pC)[i].real=((DoubleComplex*)pA)[i].real; 
-	((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pA)[i].imag; 
-      } 
-      else{ 
-	((DoubleComplex*)pC)[i].real=((DoubleComplex*)pB)[i].real; 
-	((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pB)[i].imag; 
+      x1    = MAX(ABS(aReal),ABS(aImag));
+      x2    = MAX(ABS(bReal),ABS(bImag));
+      x1    = MAX(x1,x2);
+      if (x1 == 0.0) {
+	((DoubleComplex*)pC)[i].real=((DoubleComplex*)pA)[i].real;
+	((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pA)[i].imag;
+      } else {
+	x1 = 1.0/x1;
+	aReal = aReal*x1;
+	aImag = aImag*x1;
+	bReal = bReal*x1;
+	bImag = bImag*x1;
+	temp1 = aReal*aReal+aImag*aImag;
+	temp2 = bReal*bReal+bImag*bImag;
+	if(temp1<temp2){ 
+	  ((DoubleComplex*)pC)[i].real=((DoubleComplex*)pA)[i].real; 
+	  ((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pA)[i].imag; 
+	} 
+	else{ 
+	  ((DoubleComplex*)pC)[i].real=((DoubleComplex*)pB)[i].real; 
+	  ((DoubleComplex*)pC)[i].imag=((DoubleComplex*)pB)[i].imag; 
+	}
       }
     }
     break;
@@ -888,6 +1221,9 @@ int op; /* operation to be perform between g_a and g_b */
                         case OP_ELEM_DIV:
                           do_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
                            break;
+                        case OP_ELEM_SDIV:
+                          do_step_divide(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
+                           break;
                         case  OP_ELEM_MAX:
                            do_maximum(tempA,tempB,tempC,hiC[0]-loC[0]+1,atype);
                            break;
@@ -1043,6 +1379,13 @@ Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi){
 
 }
 
+void FATR ga_elem_step_divide_patch_(Integer *g_a,Integer *alo,Integer *ahi,
+Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c, Integer *clo,Integer *chi){
+
+    ngai_elem2_patch_(g_a, alo, ahi, g_b, blo, bhi,g_c,clo,chi,OP_ELEM_SDIV);
+
+}
+
 void FATR ga_elem_maximum_patch_(Integer *g_a,Integer *alo,Integer *ahi,
 Integer *g_b,Integer *blo,Integer *bhi,Integer *g_c,Integer *clo,Integer *chi){
 
@@ -1164,6 +1507,9 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
     Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
     void *A_ptr; 
     double *tempA;
+    int    *itempA;
+    long   *ltempA;
+    float  *ftempA;
     Integer bvalue[MAXDIM], bunit[MAXDIM], baseldA[MAXDIM];
     Integer idx, n1dim;
     Integer atotal;
@@ -1212,18 +1558,38 @@ Integer *g_a, *alo, *ahi;    /* patch of g_a */
                     }
  
                     switch(atype){
-                        case C_DBL:
+                      case C_DBL:
                         /*double is the only type that is handled for Tao/GA project*/
-                        tempA=((double*)A_ptr)+idx;
-		        for(i=0;i<hiA[0]-loA[0]+1;i++)
-				if(tempA[i]<0) return 1;
-                        break;
-                        case C_DCPL:
-                        case C_INT:
-                        case C_FLOAT:
-                        case C_LONG:
+			/* 
+			  DJB modification to add types int, float and long.
+			  This operation does not make senses for complex.
+			*/
+			tempA=((double*)A_ptr)+idx;
+			for(i=0;i<hiA[0]-loA[0]+1;i++)
+			  if(tempA[i]<(double)0.0) return 1;
+			break;
+		      case C_DCPL:
+		         ga_error(" has_negative_elem: wrong data type ",
+				  atype);
+			 break;
+                      case C_INT:
+			itempA=((int*)A_ptr)+idx;
+			for(i=0;i<hiA[0]-loA[0]+1;i++)
+			  if(itempA[i]<(int)0) return 1;
+			break;
+                      case C_FLOAT:
+			ftempA=((float*)A_ptr)+idx;
+			for(i=0;i<hiA[0]-loA[0]+1;i++)
+			  if(ftempA[i]<(float)0.0) return 1;
+			break;
+		      case C_LONG:
+			ltempA=((long*)A_ptr)+idx;
+			for(i=0;i<hiA[0]-loA[0]+1;i++)
+			  if(ltempA[i]<(long)0) return 1;
+			break;
  
-                       default: ga_error(" has_negative_elem: wrong data type ",atype);
+                      default: ga_error(" has_negative_elem: wrong data type ",
+					atype);
                    }
 
         }
@@ -1260,7 +1626,10 @@ void FATR ga_step_max2_patch_(
         /*First, compute xu - xx */
        nga_add_patch_(&alpha, g_xxuu, xxuulo, xxuuhi, &beta, g_xx, xxlo, xxhi, g_c, xxlo, xxhi); 
        /* Then, compute (xu-xx)/dx */
+       /*
        ga_elem_divide_patch_(g_c, xxlo, xxhi, g_vv, vvlo, vvhi, g_c, xxlo, xxhi); 
+       */
+       ga_elem_step_divide_patch_(g_c, xxlo, xxhi, g_vv, vvlo, vvhi, g_c, xxlo, xxhi); 
         /*Now look at each element of the array g_c. 
 	  If an element of g_c is positive infinity, then replace it with -GA_INFINITY */ 
         ngai_elem3_patch_(g_c, xxlo, xxhi, OP_STEPMAX2);  
@@ -1271,7 +1640,10 @@ void FATR ga_step_max2_patch_(
         /*First, compute xl - xx */
        nga_add_patch_(&alpha, g_xxll, xxlllo, xxllhi, &beta, g_xx, xxlo, xxhi, g_c, xxlo, xxhi); 
        /* Then, compute (xl-xx)/dx */
+       /*
        ga_elem_divide_patch_(g_c, xxlo, xxhi, g_vv, vvlo, vvhi, g_c, xxlo, xxhi); 
+       */
+       ga_elem_step_divide_patch_(g_c, xxlo, xxhi, g_vv, vvlo, vvhi, g_c, xxlo, xxhi); 
         /*Now look at each element of the array g_c. 
 	  If an element of g_c is positive infinity, then replace it with -GA_INFINITY */ 
         ngai_elem3_patch_(g_c, xxlo, xxhi, OP_STEPMAX2);  
@@ -1318,7 +1690,11 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
      	if(g_C==0)
 		ga_error("ga_step_max_patch_:fail to duplicate array c", *g_a);
         g_c = &g_C; 
-     	ga_elem_divide_patch_(g_a, alo, ahi, g_b, blo, bhi, g_c, alo, ahi);
+	/*
+	  ga_elem_divide_patch_(g_a, alo, ahi, g_b, blo, bhi, g_c, alo, ahi);
+	*/
+     	ga_elem_step_divide_patch_(g_a, alo, ahi, g_b, blo, bhi, 
+				   g_c, alo, ahi);
 
         /*Now look at each element of the array g_c. If an element of g_c is positive,
           then replace it with -GA_INFINITY */ 
@@ -1326,7 +1702,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
         /*Then, we will select the maximum of the array g_c*/ 
         nga_select_elem_(g_c, "max", result, &index); 
      }
-     if(*result==0.0) *result = -GA_INFINITY;
+     if(*result==0.0) *result = -GA_INFINITY_D;
      *result = ABS(*result);
 }
 
