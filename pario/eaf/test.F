@@ -4,7 +4,6 @@
 #define MAP(x) dble(IO_TEST_SZ*((x-1)*eaf_util_szint()))
 #define MAX_FILE_SZ 4.0d9
 #define BASE_NAME 'EAFfile'
-#define HPIODIR '/scratch/'
 #ifdef  HPIODIR
 #  define FNAME   HPIODIR//BASE_NAME
 #else
@@ -13,9 +12,9 @@
 
       program eaftest
 c     
-*      call test1
-*      call test2
-*      call test3
+c     call test1
+c     call test2
+c     call test3
       call test4
 c     
       print *,' '
@@ -298,7 +297,7 @@ c
 c
       ofw = 0
       do offset = 0, length, (IO_TEST_SZ)*8
-         nwrite = min(nint(length-offset+1.0d0),(IO_TEST_SZ)*8)
+         nwrite = nint(min(length-offset+1.0d0,(IO_TEST_SZ)*8.0d0))
          call util_dfill(nwrite/8, offset, buf, 1)
          if (ofw .le. offset) then
             write(6,*) ' writing at ',offset, nwrite
@@ -315,7 +314,7 @@ c
 c
       ofw = 0
       do offset = 0, length, (IO_TEST_SZ)*8
-         nwrite = min(nint(length-offset+1.0d0),(IO_TEST_SZ)*8)
+         nwrite = nint(min(length-offset+1.0d0,(IO_TEST_SZ)*8.0d0))
          if (ofw .le. offset) then
             write(6,*) ' reading at ', offset, nwrite
             ofw = ofw + 100000000.0d0

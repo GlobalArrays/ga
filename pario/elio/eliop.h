@@ -4,6 +4,7 @@
 #ifdef WIN32
 #include <io.h>
 #include "winutil.h"
+#define F_OK 00
 #endif
 
 #include <errno.h>

@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-typedef off_t eaf_off_t;
+typedef double eaf_off_t;
 
 int eaf_write(int fd, eaf_off_t offset, const void *buf, size_t bytes);
 

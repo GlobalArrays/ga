@@ -2,7 +2,7 @@ SUBDIRS = .\elio .\dra .\eaf .\sf
 
 !include ..\config\NTmakefile.h
 LIBDIR = ..\lib\win32
-COMPLIBS = eaf.lib dra.lib sf.lib
+COMPLIBS = elio.lib eaf.lib dra.lib sf.lib
 
 all: $(SUBDIRS)
 	!cd $** & nmake -nologo

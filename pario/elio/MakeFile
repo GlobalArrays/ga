@@ -12,7 +12,7 @@ LOC_DEFINES = -DNOAIO
 LOC_INCLUDES = -I..\..\include
 INCDIR = ..\..\include
 
-LIBRARY = chemio.lib
+LIBRARY = elio.lib
 LIB_DISTRIB = ..\..\lib\win32
 
 !INCLUDE ..\..\config\NTmakefile.h
