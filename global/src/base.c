@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.114 2005-03-08 23:11:22 manoj Exp $ */
+/* $Id: base.c,v 1.115 2005-03-11 01:23:06 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -956,8 +956,10 @@ logical FATR ga_pgroup_split_(Integer *grp_num)
   Integer grp_id, ret;
 
   default_grp = ga_pgroup_get_default_();
+#if 0 /* This is wrong. Should split only default group and not world group */
   world_grp = ga_pgroup_get_world_();
   ga_pgroup_set_default_(&world_grp);
+#endif
   nprocs = ga_nnodes_();
   me = ga_nodeid_();
   /* Figure out how big groups are */
