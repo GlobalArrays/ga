@@ -7,11 +7,11 @@
 #ifdef NOFORT
 #  define MEMCPY
 #endif
-#if !defined(MEMCPY) && defined(__GNUC__) && defined(__sparc)
+#if !defined(MEMCPY) 
 #   define MEMCPY
 #endif
 
-#if defined(SGI) || defined(FUJITSU) || defined(HPUX)
+#if defined(SGI) || defined(FUJITSU) || defined(HPUX) || defined(SOLARIS)
 #   define PTR_ALIGN
 #endif
 
