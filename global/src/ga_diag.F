@@ -1,5 +1,5 @@
       subroutine ga_diag_std(g_a, g_v, eval)
-C$Id: ga_diag.F,v 1.21 1999-09-08 22:37:01 d3g270 Exp $
+C$Id: ga_diag.F,v 1.22 1999-09-09 20:20:41 d3g270 Exp $
       implicit none
 #include "mafdecls.fh"
 #include "global.fh"
@@ -92,18 +92,18 @@ c
       else 
          proc = min(PROC4,ga_nnodes())
       endif
-c
+c     
       proc = min((npan-1)/2+1,proc)
       proc = min(n, ga_nnodes())
-	proc = min(n/15, ga_nnodes())
-c
+      proc = min(n/15, ga_nnodes())
+c     
       oactive = myproc .lt. proc
       if (oactive) then
-*         print *,myproc,' participate in eig: ',proc
-*         call ffflush(6)
+*     print *,myproc,' participate in eig: ',proc
+*     call ffflush(6)
 c     
-c        allocate map arrays
-c
+c     allocate map arrays
+c     
          status = .true.
          status = status .and. ma_push_get(mt_int,n,'mapa',hma,adrma)
          status = status .and. ma_push_get(mt_int,n,'mapz',hmz,adrmz)
