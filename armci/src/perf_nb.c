@@ -1,4 +1,4 @@
-/* $Id: perf_nb.c,v 1.1 2003-05-07 10:36:47 manoj Exp $ */
+/* $Id: perf_nb.c,v 1.2 2003-10-23 21:05:48 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -217,7 +217,7 @@ void verify_results(int op, int *elems) {
 }
 
 
-void test_perf_nb() {
+void test_perf_nb(int dry_run) {
   
     int i, j, loop, rc, bytes, elems[2] = {MAXPROC, MAXELEMS};
     int stride, k=0, ntimes;
@@ -228,7 +228,7 @@ void test_perf_nb() {
     create_array((void**)ddst, sizeof(double),2, elems);
     create_array((void**)dsrc, sizeof(double),1, &elems[1]);
 
-    if(me == 0) {
+    if(!dry_run)if(me == 0) {
       printf("\n\t\t\tRemote 1-D Array Section\n");
       printf("section    get      nbget    wait     put     nbput  ");
       printf("   wait     acc     nbacc     wait\n");
@@ -362,7 +362,7 @@ void test_perf_nb() {
 #endif
 
       /* print timings */
-      if(me==0) printf("%d\t %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e\n", 
+     if(!dry_run) if(me==0) printf("%d\t %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e %.2e\n", 
 		       bytes, t4/ntimes, t5/ntimes, t6/ntimes, t1/ntimes, 
 		       t2/ntimes, t3/ntimes, t7/ntimes, t8/ntimes, t9/ntimes);
     }
@@ -370,7 +370,7 @@ void test_perf_nb() {
     ARMCI_AllFence();
     MP_BARRIER();
     
-    if(me==0){printf("O.K.\n"); fflush(stdout);}
+    if(!dry_run)if(me==0){printf("O.K.\n"); fflush(stdout);}
     destroy_array((void **)ddst);
     destroy_array((void **)dsrc);
 }
@@ -410,7 +410,8 @@ int main(int argc, char* argv[])
       fflush(stdout);
     }
 
-    test_perf_nb();
+    test_perf_nb(1);
+    test_perf_nb(0);
     
     ARMCI_AllFence();
     MP_BARRIER();
