@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.40 2002-03-27 19:24:14 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.41 2002-03-28 20:39:15 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -122,8 +122,8 @@ int     Dra_num_serv=DRA_NUM_IOPROCS;
 #define dai_sizeofM(_type) MA_sizeof(_type, 1, MT_C_CHAR)
 
 #define dai_check_typeM(_type)  if (_type != MT_F_DBL && _type != MT_F_INT \
-     && _type != MT_INT && _type != MT_DBL && _type != MT_FLOAT \
-     && _type != MT_F_DCPL && _type != MT_F_REAL)\
+     && _type != MT_INT && _type != MT_DBL\
+     && _type != MT_REAL && _type != MT_F_DCPL && _type != MT_F_REAL)\
                                   dai_error("invalid type ",_type)  
 #define dai_check_handleM(_handle, msg)                                    \
 {\
@@ -1178,10 +1178,10 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
 
 #        define COPY_TYPE(OPERATION, MATYPE, ds_chunk)\
          switch(MATYPE){\
-         case MT_F_DBL: COPY_ ## OPERATION(DBL_MB,DoublePrecision,ds_chunk);break;\
-         case MT_F_INT: COPY_ ## OPERATION(INT_MB, Integer, ds_chunk); break;\
-         case MT_F_DCPL:COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);\
-         case MT_F_REAL:COPY_ ## OPERATION(FLT_MB, float, ds_chunk);\
+         case MT_F_DBL:  COPY_ ## OPERATION(DBL_MB,DoublePrecision,ds_chunk);break;\
+         case MT_F_INT:  COPY_ ## OPERATION(INT_MB, Integer, ds_chunk); break;\
+         case MT_F_DCPL: COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);break;\
+         case MT_F_REAL: COPY_ ## OPERATION(FLT_MB, float, ds_chunk);\
          }
 
          if(ga_nodeid_()==0) printf("DRA warning: using scatter/gather\n");
@@ -1351,10 +1351,10 @@ void nga_move(int op,             /*[input] flag for read or write */
 
 #     define COPY_TYPE(OPERATION, MATYPE, ds_chunk)\
         switch(MATYPE){\
-          case MT_F_DBL: COPY_ ## OPERATION(DBL_MB,DoublePrecision,ds_chunk);break;\
-          case MT_F_INT: COPY_ ## OPERATION(INT_MB, Integer, ds_chunk); break;\
-          case MT_F_DCPL:COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);\
-          case MT_F_REAL:COPY_ ## OPERATION(FLT_MB, float, ds_chunk);\
+          case MT_F_DBL:  COPY_ ## OPERATION(DBL_MB,DoublePrecision,ds_chunk);break;\
+          case MT_F_INT:  COPY_ ## OPERATION(INT_MB, Integer, ds_chunk); break;\
+          case MT_F_DCPL: COPY_ ## OPERATION(DCPL_MB, DoubleComplex, ds_chunk);break;\
+          case MT_F_REAL: COPY_ ## OPERATION(FLT_MB, float, ds_chunk);\
         }
 
       if(ga_nodeid_()==0) printf("DRA warning: using scatter/gather\n");

@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.19 2002-01-30 01:14:27 d3h325 Exp $ */
+/* $Id: base.c,v 1.20 2002-03-28 20:37:08 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1074,10 +1074,10 @@ int i;
 
     /* need to enforce proper, natural allignment (on size boundary)  */
     switch (ga_type_c2f(type)){
-      case MT_F_DBL:  base =  (char *) DBL_MB; break;
-      case MT_F_INT:  base =  (char *) INT_MB; break;
-      case MT_F_DCPL: base =  (char *) DCPL_MB; break;
-      case MT_F_REAL: base =  (char *) FLT_MB; break;  
+      case MT_F_DBL:   base =  (char *) DBL_MB; break;
+      case MT_F_INT:   base =  (char *) INT_MB; break;
+      case MT_F_DCPL:  base =  (char *) DCPL_MB; break;
+      case MT_F_REAL:  base =  (char *) FLT_MB; break;  
       default:        base = (char*)0;
     }
 

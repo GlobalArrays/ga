@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.13 2000-10-25 18:08:06 edo Exp $
+ * $Id: macdecls.h,v 1.14 2002-03-28 20:39:45 d3g293 Exp $
  */
 
 /* 
@@ -23,18 +23,18 @@ extern "C" {
 
 
 /* datatypes */
-#define MT_CHAR		MT_C_CHAR	/* char */
-#define MT_INT		MT_C_INT	/* int */
-#define MT_LONGINT	MT_C_LONGINT	/* long int */
-#define MT_FLOAT	MT_C_FLOAT	/* float */
-#define MT_DBL		MT_C_DBL	/* double */
-#define MT_LDBL		MT_C_LDBL	/* long double */
-#define MT_SCPL		MT_C_SCPL	/* single precision complex */
-#define MT_DCPL		MT_C_DCPL	/* double precision complex */
-#define MT_LDCPL	MT_C_LDCPL	/* long double precision complex */
+#define MT_CHAR     MT_C_CHAR    /* char */
+#define MT_INT      MT_C_INT     /* int */
+#define MT_LONGINT  MT_C_LONGINT /* long int */
+#define MT_REAL     MT_C_FLOAT   /* float */
+#define MT_DBL      MT_C_DBL     /* double */
+#define MT_LDBL     MT_C_LDBL    /* long double */
+#define MT_SCPL     MT_C_SCPL    /* single precision complex */
+#define MT_DCPL     MT_C_DCPL    /* double precision complex */
+#define MT_LDCPL    MT_C_LDCPL   /* long double precision complex */
 
-#define MT_C_FIRST	MT_CHAR		/* first type */
-#define MT_C_LAST	MT_LDCPL	/* last type */
+#define MT_C_FIRST  MT_CHAR      /* first type */
+#define MT_C_LAST   MT_LDCPL     /* last type */
 
 /**
  ** function types

@@ -20,13 +20,13 @@
 #define MT_C_DCPL	(MT_BASE + 7)
 #define MT_C_LDCPL	(MT_BASE + 8)
 
-#define MT_F_BYTE	(MT_BASE + 9)
-#define MT_F_INT	(MT_BASE + 10)
-#define MT_F_LOG	(MT_BASE + 11)
-#define MT_F_REAL	(MT_BASE + 12)
-#define MT_F_DBL	(MT_BASE + 13)
-#define MT_F_SCPL	(MT_BASE + 14)
-#define MT_F_DCPL	(MT_BASE + 15)
+#define MT_F_BYTE  (MT_BASE + 9)
+#define MT_F_INT   (MT_BASE + 10)
+#define MT_F_LOG   (MT_BASE + 11)
+#define MT_F_REAL  (MT_BASE + 12)
+#define MT_F_DBL   (MT_BASE + 13)
+#define MT_F_SCPL  (MT_BASE + 14)
+#define MT_F_DCPL  (MT_BASE + 15)
 
 #define MT_FIRST	MT_C_CHAR
 #define MT_LAST		MT_F_DCPL

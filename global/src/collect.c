@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.13 2002-01-18 19:52:12 vinod Exp $ */
+/* $Id: collect.c,v 1.14 2002-03-28 20:37:08 d3g293 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -66,7 +66,7 @@ void ga_type_gop(int Type, void *x, int n, char* op)
 {
 int atype, type=ga_type_f2c(Type);
     switch(type){
-    case MT_FLOAT: atype=ARMCI_FLOAT; break;
+    case MT_REAL: atype=ARMCI_FLOAT; break;
     case MT_DBL: atype=ARMCI_DOUBLE; break;
     case MT_LONGINT: atype=ARMCI_LONG; break;
     case MT_INT: atype=ARMCI_INT; break;
