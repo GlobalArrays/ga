@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.15 2002-04-03 18:44:32 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.16 2002-04-09 23:00:44 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -3011,4 +3011,16 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
 
   GA_POP_NAME;
   return TRUE;
+}
+
+void ga_ghost_barrier_()
+{
+#ifdef LAPI
+  int signal = 1, n = 1;
+  int *ptr;
+  ptr = &signal;
+  armci_msg_igop(ptr,n,"+");
+#else
+  armci_msg_barrier();
+#endif
 }

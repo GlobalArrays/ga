@@ -38,6 +38,7 @@ extern int GA_Assemble_duplicate(int g_a, char *name, void *ptr);
 extern void    FATR ga_set_memory_limit_ ARGS_((Integer *mem_limit));
 extern logical FATR ga_valid_handle_ ARGS_((Integer *g_a));
 extern void    FATR ga_mask_sync_ ARGS_((Integer *begin, Integer *end));
+extern void    FATR ga_ghost_barrier_ ARGS_((void));
 extern logical FATR ga_has_ghosts_ ARGS_((Integer *g_a));
 extern Integer FATR ga_nnodes_   ARGS_(( void));
 extern Integer FATR ga_nodeid_   ARGS_(( void));
