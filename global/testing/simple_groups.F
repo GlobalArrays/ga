@@ -20,31 +20,32 @@
 
       status = ma_init(MT_DBL, 100000, 100000) 
       if (.not. status) call ga_error('ma_init failed',-1)
+      status = ma_set_auto_verify(.true.)
+      status = ma_set_hard_fail(.true.)
+      status = ma_set_error_print(.true.)
       
       inode = ga_cluster_nodeid()
       nnodes = ga_cluster_nprocs(inode)
-
-      do i = 0, nnodes-1
-        nprocs = ga_cluster_nprocs(i)
-c       if (i.eq.inode) then
-        do j = 0, nprocs - 1
-          proclist(j+1) = ga_cluster_procid(i,j)
-        end do
-        proc_group(i) = ga_pgroup_create(proclist, nprocs)
-        write(6,*) me,'Created groups'
-        call ga_sync()
+      do i=0,ga_cluster_nnodes()-1
+         do j=0,ga_cluster_nprocs(i)-1
+            proclist(j+1)=ga_cluster_procid(i,j)
+         enddo
+         proc_group(i)=ga_pgroup_create(proclist,ga_cluster_nprocs(i))
       enddo
-      do i = 0, nnodes-1
-        call ga_sync()
+      call ga_sync()
+      do i = 0, ga_cluster_nnodes()-1
         if (i.eq.inode) then
+          write(0,'(I4,A,I4)') me,' joining group',
+     ,         proc_group(inode)
           call ga_pgroup_set_default(proc_group(inode))
           status = ga_create(MT_DBL, n, n, 'a', 1, 1, g_a) 
           if (.not. status) call ga_error('ga_create failed',-1)
-          write(6,*) me,'Created array'
+          write(0,'(I4,A,I4,A,I4)') me,' Created array of  group ',
+     ,         proc_group(inode), ' as proc no. ',ga_nodeid()
           call ga_print_distribution(g_a) 
         endif
-        call ga_sync()
       enddo
+      call ga_pgroup_set_default(ga_pgroup_get_world())
 
       call ga_terminate()
 
