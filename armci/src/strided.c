@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.46 2002-10-23 18:37:38 vinod Exp $ */
+/* $Id: strided.c,v 1.47 2002-10-30 17:21:24 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -797,8 +797,10 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #   endif
 
 /*set tag and op in the nb handle*/
-    nb_handle->tag = GET_NEXT_NBTAG();
-    nb_handle->op  = PUT;
+    if(nb_handle){
+      nb_handle->tag = GET_NEXT_NBTAG();
+      nb_handle->op  = PUT;
+    }
 
 #ifndef LAPI2
     if(!direct){
@@ -858,8 +860,10 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        for(;stride_levels;stride_levels--)if(count[stride_levels]>1)break;
 
 /*set tag and op in the nb handle*/
-    nb_handle->tag = GET_NEXT_NBTAG();
-    nb_handle->op  = GET;
+    if(nb_handle){
+       nb_handle->tag = GET_NEXT_NBTAG();
+       nb_handle->op  = GET;
+    }
 
 #ifndef LAPI2
     if(!direct){

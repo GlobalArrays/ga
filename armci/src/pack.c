@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.26 2002-10-18 18:17:20 vinod Exp $ */
+/* $Id: pack.c,v 1.27 2002-10-30 17:21:25 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -282,7 +282,8 @@ int bytes=0, split=0;
     
  
 
-int armci_pack_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
+int armci_pack_vector(int op, void *scale, armci_giov_t darr[],int len,
+                      int proc,armci_hdl_t nb_handle)
 {
 armci_giov_t extra; /* keeps data remainder of set to be processed in chunks */
 armci_giov_t save;  /* keeps original value of set to be processed in chunks */
@@ -296,7 +297,7 @@ int rc=0, nlen, count=0;
 
        armci_split_dscr_array(ndarr, len, &extra, &nlen, &save); 
 #  if defined(REMOTE_OP) 
-       rc = armci_rem_vector(op, scale, ndarr,nlen,proc,0);
+       rc = armci_rem_vector(op, scale, ndarr,nlen,proc,0,nb_handle);
 #  else
        if(ACC(op))rc=armci_acc_vector(op,scale,ndarr,nlen,proc);
        else rc = armci_copy_vector(op,ndarr,nlen,proc);

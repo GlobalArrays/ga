@@ -8,6 +8,9 @@ extern void  _armci_buf_release(void *buf);
 extern int   _armci_buf_to_index(void *buf);
 extern char* _armci_buf_ptr_from_id(int id);
 extern void  _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node);
+extern void _armci_buf_complete_nb_request(int bufid,unsigned int tag, int *retcode);
+extern void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol);
+
 
 #ifdef LAPI
 #  include "lapidefs.h"
@@ -54,6 +57,7 @@ unsigned int   bytes:20;      /* number of bytes requested */
          msg_tag_t tag;       /* message tag for response to this request */
 }request_header_t;
 
+
 /*******structures copied from async.c for storing cmpl dscr for nb req*******/
 #define UBUF_LEN 112
 typedef struct {
@@ -66,13 +70,14 @@ typedef struct {
 typedef struct {
   int segments;
   int len;
-  void *ptrs[14];
+  void *ptrs[13];
 }vector_dscr_t;
 
 typedef struct {
-  unsigned int tag;              /* request id */
-  int bufid;              /* communication buffer id */
-  union {                 /* 8 bytes for alignment reason */
+  unsigned int tag;             /* request id*/
+  short int bufid;              /* communication buffer id */
+  short int protocol;           /* what does this buf hold?*/
+  union {                 
         void *dscrbuf;
         double pad;
   }ptr;
@@ -82,7 +87,18 @@ typedef struct {
       vector_dscr_t vector;
   }dscr;
 }_buf_info_t;
+
 #define BUF_INFO_T _buf_info_t
+extern BUF_INFO_T *_armci_buf_to_bufinfo(void *buf);
+#define BUF_TO_BUFINFO _armci_buf_to_bufinfo
+
+void armci_complete_req_buf(BUF_INFO_T *info, void *buffer);
+
+/*valid values for the element protocol in BUF_INFO_T*/
+#define SDSCR_IN_PLACE 1 /*indicated that strided descriptor is in place*/
+#define VDSCR_IN_PLACE 2 /*indicated that vector descriptor is in place*/
+#define VDSCR_IN_PTR   3 /*indicates that the vector descriptor in allocated 
+                           and pointer stored in dscrbuf */
 /****************************************************************************/
 
 
@@ -166,7 +182,7 @@ extern void armci_send_strided_data(int proc,  request_header_t *msginfo,
 extern void armci_send_req(int proc, request_header_t* msginfo, int len);
 extern void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra);
 extern int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,
-                            int proc,int flag);
+                            int proc,int flag,armci_hdl_t nb_handle);
 extern int armci_rem_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],

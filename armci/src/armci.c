@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.53 2002-10-23 18:37:37 vinod Exp $ */
+/* $Id: armci.c,v 1.54 2002-10-30 17:21:25 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -386,12 +386,12 @@ int ARMCI_Same_node(int proc)
 
 int ARMCI_Wait(armci_hdl_t nb_handle){
 int success=0;
+    return(success);
     if(nb_handle){
 #     ifdef COMPLETE_HANDLE
-       COMPLETE_HANDLE(nb_handle,(&success));
+       COMPLETE_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));
 #     endif
     }
-    return(success);
 }
 
 static unsigned int _armci_nb_tag=0;

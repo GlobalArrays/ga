@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.7 2002-10-23 18:37:38 vinod Exp $ */
+/* $Id: lapi2.c,v 1.8 2002-10-30 17:21:25 vinod Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -289,7 +289,7 @@ int dsize=3*sizeof(void*);
 
        if(stride_levels==1){             /*small/med 2D, use lapi STRIDED */
          bufptr = GET_SEND_BUFFER(2*(sizeof(lapi_vec_t)+dsize),op,proc);
-         if(nb_handle)SET_BUF_TAG(bufptr,nb_handle->tag);
+         if(nb_handle)SET_BUF_TAG(bufptr,nb_handle->tag,0);
          if(op==PUT)UPDATE_FENCE_STATE(proc, PUT, 1); 
 
          /*we use the counter in the buffer*/
@@ -300,7 +300,7 @@ int dsize=3*sizeof(void*);
        }
        else {                            /*small/med >2D, use lapi VECTOR*/
          bufptr = GET_SEND_BUFFER(DSCR_SIZE,op,proc);
-         if(nb_handle)SET_BUF_TAG(bufptr,nb_handle->tag);
+         if(nb_handle)SET_BUF_TAG(bufptr,nb_handle->tag,0);
          /*we use the counter in the buffer*/
          o_cmpl = (BUF_TO_EVBUF(bufptr));
            

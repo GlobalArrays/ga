@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.39 2002-10-18 18:17:20 vinod Exp $ */
+/* $Id: request.c,v 1.40 2002-10-30 17:21:25 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -23,6 +23,123 @@
 #define ALLIGN8(buf){size_t _adr=(size_t)(buf); \
                     _adr>>=3; _adr<<=3; _adr+=8; (buf) = (char*)_adr; }
 
+
+/*******************Routines to handle completion descriptor******************/
+/*\
+ *Following the the routines to fill a completion descriptor, if necessary
+ *copy the data to destination based on completion descriptor
+ *NOTE, THE FOLLOWING ROUTINES ARE FOR CLIENTS ONLY
+\*/ 
+
+
+/*\Routine to complete a vector request, data is in buf and descriptor in dscr
+\*/
+static void armci_complete_vector_get(armci_giov_t darr[],int len,void *buf)
+{
+int proc;
+request_header_t *msginfo = (request_header_t*) buf;
+    proc = msginfo->to;
+    armci_rcv_vector_data(proc, msginfo, darr, len);
+    FREE_SEND_BUFFER(buf);
+}
+
+
+/*\ Routine called from buffers.c to complete a request for which the buffer was
+ *  used for, so that the buffer can be reused.
+\*/
+void armci_complete_req_buf(BUF_INFO_T *info, void *buffer)
+{
+request_header_t *msginfo = (request_header_t*) buffer;
+    if(info->protocol==0)return;
+    else if(info->protocol==SDSCR_IN_PLACE){
+       strided_dscr_t *dscr = &(info->dscr.strided);
+       armci_rcv_strided_data(msginfo->to, msginfo, msginfo->datalen, dscr->ptr,
+                              dscr->stride_levels,dscr->stride_arr,dscr->count);
+    }
+    else if(info->protocol==VDSCR_IN_PLACE || info->protocol==VDSCR_IN_PTR){
+       char *dscr;
+       int len,i;
+       if(info->protocol==VDSCR_IN_PLACE)dscr = info->dscr.buf;
+       else dscr = info->ptr.dscrbuf;
+       GETBUF(dscr, long ,len);
+       {
+         armci_giov_t darr[len];
+         for(i = 0; i< len; i++){
+           int parlen, bytes;
+           GETBUF(dscr, int, parlen);
+           GETBUF(dscr, int, bytes);
+           darr[i].ptr_array_len = parlen;
+           darr[i].bytes = bytes;
+           if(msginfo->operation==GET)darr[i].dst_ptr_array=(void **)dscr;
+           else darr[i].src_ptr_array=(void **)dscr;
+           dscr+=sizeof(void *)*parlen;
+         }
+         if(msginfo->operation==GET)armci_complete_vector_get(darr,len,buffer);
+       }
+    }
+    else 
+       armci_die("armci_complete_req_buf,protocol val invalid",info->protocol);
+}
+
+
+/*\ save a part of strided descriptor needed to complete request
+\*/
+void armci_save_strided_dscr(void *bufptr, void *ptr, int stride[],
+                                   int count[], int levels)
+{
+strided_dscr_t *dscr;
+int i;
+BUF_INFO_T *info=BUF_TO_BUFINFO(bufptr);
+   dscr = &(info->dscr.strided);
+   dscr->stride_levels = levels;
+   dscr->ptr =ptr;
+   for(i=0;i<levels;i++)dscr->stride_arr[i]=stride[i];
+   for(i=0;i<levels+1;i++)dscr->count[i]=count[i];
+   info->protocol=SDSCR_IN_PLACE;
+}
+
+
+/*\ save a part of vector descriptor needed to complete request
+\*/
+void armci_save_vector_dscr(char **bptr,armci_giov_t darr[],int len,
+                            int op,int is_nb)
+{
+int i,size=sizeof(int);
+BUF_INFO_T *info;
+char *buf,*bufptr=*bptr;
+void *rem_ptr;
+    if(is_nb){    
+       for(i=0;i<len;i++){
+         size+=(2*sizeof(int)+darr[i].ptr_array_len * sizeof(void*));
+       }
+       info=BUF_TO_BUFINFO(bufptr);
+       /*if descr fits in available buffer, use it else do malloc */
+       if(size<=UBUF_LEN){
+         buf = info->dscr.buf;
+         info->protocol=VDSCR_IN_PLACE;
+       }
+       else {
+         info->ptr.dscrbuf = malloc(size);
+         buf = (char *)info->ptr.dscrbuf;
+         info->protocol=VDSCR_IN_PTR;
+       }
+    }
+    else
+       buf=bufptr;
+      
+    ADDBUF(buf,long,len); /* number of sets */
+    for(i=0;i<len;i++){
+        ADDBUF(buf,int,darr[i].ptr_array_len); /* number of elements */
+        ADDBUF(buf,int,darr[i].bytes);         /* sizeof element */
+        if(op==GET)rem_ptr = darr[i].src_ptr_array;
+        else rem_ptr = darr[i].dst_ptr_array;
+          
+        armci_copy(rem_ptr,buf, darr[i].ptr_array_len * sizeof(void*));
+        buf += darr[i].ptr_array_len*sizeof(void*);
+    }
+    *bptr=buf;
+}
+/**************End--Routines to handle completion descriptor******************/
 
 
 /*\ send request to server to LOCK MUTEX
@@ -325,15 +442,15 @@ void armci_server_rmw(request_header_t* msginfo,void* ptr, void* pextra)
 }
 
 extern int armci_direct_vector(request_header_t *msginfo , armci_giov_t darr[], int len, int proc);
-int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,int flag)
+int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,int flag, armci_hdl_t nb_handle)
 {
     char *buf,*buf0;
     request_header_t *msginfo;
     int bytes =0, s, slen=0;
-    void *rem_ptr;
     size_t adr;
-    int bufsize = sizeof(request_header_t);
+    int bufsize = sizeof(request_header_t),isnonblocking=0;
 
+    if(nb_handle)isnonblocking=1;
 
     /* compute size of the buffer needed */
     for(s=0; s<len; s++){
@@ -355,21 +472,11 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
     }
     msginfo = (request_header_t*)buf;
 
-    /* fill vector descriptor */
     buf += sizeof(request_header_t);
-    ADDBUF(buf,long,len); /* number of sets */
 
-    for(s=0;s<len;s++){
-
-        ADDBUF(buf,int,darr[s].ptr_array_len); /* number of elements */
-        ADDBUF(buf,int,darr[s].bytes);         /* sizeof element */
-
-        if(op == GET) rem_ptr = darr[s].src_ptr_array;   
-        else rem_ptr = darr[s].dst_ptr_array;        
-        armci_copy(rem_ptr,buf, darr[s].ptr_array_len * sizeof(void*)); 
-        buf += darr[s].ptr_array_len*sizeof(void*);
-    }
-
+    /* fill vector descriptor */
+    armci_save_vector_dscr(&buf,darr,len,op,isnonblocking);
+    
     /* align buf for doubles (8-bytes) before copying data */
     adr = (size_t)buf;
     adr >>=3;
@@ -422,9 +529,8 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
 
     armci_send_req(proc, msginfo, bufsize);
 
-    if(op == GET){
-       armci_rcv_vector_data(proc, msginfo, darr, len);
-       FREE_SEND_BUFFER(msginfo);
+    if(op == GET && !nb_handle){
+       armci_complete_vector_get(darr,len,msginfo);
     }
     return 0;
 }
@@ -818,4 +924,5 @@ void armci_server_vector( request_header_t *msginfo,
       }
     }
 }
+
 

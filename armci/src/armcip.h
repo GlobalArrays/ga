@@ -168,7 +168,7 @@ extern int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
 extern int armci_copy_vector(int op, /* operation code */
                 armci_giov_t darr[], /* descriptor array */
                 int len,  /* length of descriptor array */
-                int proc  /* remote process(or) ID */
+                int proc /* remote process(or) ID */
               );
 
 extern int armci_acc_vector(int op, /* operation code */
@@ -185,7 +185,7 @@ extern int armci_pack_strided(int op, void* scale, int proc,
                        int fit_level, int nb, int last,armci_hdl_t nb_handle);
 
 extern int armci_pack_vector(int op, void *scale, 
-                      armci_giov_t darr[],int len,int proc);
+                    armci_giov_t darr[],int len,int proc,armci_hdl_t nb_handle);
 
 extern void armci_lockmem(void *pstart, void* pend, int proc);
 extern void armci_unlockmem(int proc);

@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.18 2002-10-18 18:17:20 vinod Exp $ */
+/* $Id: vector.c,v 1.19 2002-10-30 17:21:24 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -384,10 +384,10 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
        /*500 is very conservative, the number here should be modified to be 
        based on the size of send/recv buffer*/
        if(totvec<500)
-         rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1);
+         rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1,NULL);
        else 
 #endif    
-         rc = armci_pack_vector(PUT, NULL, darr, len, proc);
+         rc = armci_pack_vector(PUT, NULL, darr, len, proc,NULL);
     }
 
 #ifdef GA_USE_VAMPIR
@@ -451,10 +451,10 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
        /*500 is very conservative, the number here should be modified to be 
        based on the size of send/recv buffer*/
        if(totvec<500)
-          rc = armci_rem_vector(GET, NULL, darr, len, proc,1);
+          rc = armci_rem_vector(GET, NULL, darr, len, proc,1,NULL);
        else
 #endif   
-       rc = armci_pack_vector(GET, NULL, darr, len, proc);
+       rc = armci_pack_vector(GET, NULL, darr, len, proc,NULL);
     }
 
 #ifdef GA_USE_VAMPIR
@@ -509,7 +509,7 @@ int ARMCI_AccV( int op,              /* oeration code */
     if(direct)
          rc = armci_acc_vector( op, scale, darr, len, proc);
     else
-         rc = armci_pack_vector(op, scale, darr, len, proc);
+         rc = armci_pack_vector(op, scale, darr, len, proc,NULL);
 
 #ifdef GA_USE_VAMPIR
     if (armci_me != proc)
@@ -559,10 +559,10 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
        /*500 is very conservative, the number here should be modified to be 
        based on the size of send/recv buffer*/
        if(totvec<500)
-         rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1);
+         rc = armci_rem_vector(PUT, NULL, darr, len, proc, 1,NULL);
        else 
 #endif    
-         rc = armci_pack_vector(PUT, NULL, darr, len, proc);
+         rc = armci_pack_vector(PUT, NULL, darr, len, proc,nb_handle);
     }
 
     if(rc) return FAIL6;
@@ -601,10 +601,10 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
        /*500 is very conservative, the number here should be modified to be 
        based on the size of send/recv buffer*/
        if(totvec<500)
-          rc = armci_rem_vector(GET, NULL, darr, len, proc,1);
+          rc = armci_rem_vector(GET, NULL, darr, len, proc,1,NULL);
        else
 #endif   
-       rc = armci_pack_vector(GET, NULL, darr, len, proc);
+       rc = armci_pack_vector(GET, NULL, darr, len, proc,nb_handle);
     }
 
     if(rc) return FAIL6;
@@ -645,7 +645,7 @@ int ARMCI_NbAccV( int op,              /* oeration code */
     if(direct)
          rc = armci_acc_vector( op, scale, darr, len, proc);
     else
-         rc = armci_pack_vector(op, scale, darr, len, proc);
+         rc = armci_pack_vector(op, scale, darr, len, proc,NULL);
 
     if(rc) return FAIL6;
     else return 0;

@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.10 2002-10-23 19:01:49 vinod Exp $    **/
+/* $Id: buffers.c,v 1.11 2002-10-30 17:21:25 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -79,14 +79,6 @@ typedef struct {
   double right_guard;       /* stamp to verify if array was corrupted */
 } reqbuf_pool_t;            
 
-
-#ifdef STORE_BUFID
-#   define BUF_TO_BUFINDEX(buf) (BUF_TO_EBUF((buf)))->id.bufid
-#else
-#  define BUF_TO_BUFINDEX(buf)\
-          ((BUF_TO_EBUF((buf)))- _armci_buffers)/sizeof(buf_ext_t)
-#endif
-
 #ifndef  BUF_EXTRA_FIELD_T
 #  define        SIZE_BUF_EXTRA_FIELD 0 
 #  define BUF_TO_EBUF(buf) (buf_ext_t*)(((char*)buf) - sizeof(BUFID_PAD_T) -\
@@ -95,6 +87,14 @@ typedef struct {
 #  define BUF_TO_EBUF(buf) (buf_ext_t*)(((char*)buf) - sizeof(BUFID_PAD_T) -\
 				      sizeof(BUF_EXTRA_FIELD_T))
 #endif
+
+#ifdef STORE_BUFID
+#   define BUF_TO_BUFINDEX(buf) (BUF_TO_EBUF((buf)))->id.bufid
+#else
+#  define BUF_TO_BUFINDEX(buf)\
+          ((BUF_TO_EBUF((buf)))- _armci_buffers)/sizeof(buf_ext_t)
+#endif
+
 
 
 
@@ -131,11 +131,10 @@ int  extra= ALIGN64ADD(tmp);
      _armci_buf_state->left_guard  = LEFT_GUARD;
      _armci_buf_state->right_guard = RIGHT_GUARD;
      _armci_buf_state->avail =0;
-     _armci_buf_state->buf = _armci_buffers; 
-/*   Should the following be enabled as a sanity check?
+     _armci_buf_state->buf = _armci_buffers;
+
      if(BUF_TO_EBUF(_armci_buf_state->buf[0].buffer)!=_armci_buf_state->buf)
         armci_die("buffers.c, internal structure alignment problem",0);
-*/
 }
 
 
@@ -193,7 +192,12 @@ extern void _armci_asyn_complete_strided_get(int dsc_id, void *buf);
        /* need to call platform specific function */
        CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[idx].field,buf_state->snd,buf_state->rcv,buf_state->to);
 #   ifdef STORE_BUFID
-       _armci_buf_state->buf[idx].id.tag=0;
+       /*later, we might just need to do this for all ops, not just get*/
+       if(_armci_buf_state->buf[idx].id.tag!=0 &&(buf_state->op == GET)){
+         armci_complete_req_buf(&(_armci_buf_state->buf[idx].id),
+                                _armci_buf_state->buf[idx].buffer);
+         _armci_buf_state->buf[idx].id.tag=0;
+       }
 #   endif
       }
 #   endif
@@ -319,6 +323,7 @@ int count=1, i;
 #ifdef STORE_BUFID
     _armci_buf_state->buf[avail].id.tag=0;
     _armci_buf_state->buf[avail].id.bufid=avail; 
+    _armci_buf_state->buf[avail].id.protocol=0;
 #endif
 
 # ifdef BUF_EXTRA_FIELD_T
@@ -385,22 +390,24 @@ char *_armci_buf_ptr_from_id(int id)
   return(_armci_buf_state->buf[id].buffer);
 }
 
+
+
 /*\function called from armci_wait to wait for non-blocking ops
 \*/
-void _armci_buf_complete_nb_request(armci_hdl_t nb_handle, int *retcode) 
+void _armci_buf_complete_nb_request(int bufid,unsigned int tag, int *retcode) 
 {
 int i=0;
-    if(nb_handle->bufid == NB_NONE) *retcode=0;
-    else if(nb_handle->bufid == NB_MULTI) {
+    if(bufid == NB_NONE) *retcode=0;
+    else if(bufid == NB_MULTI) {
        for(i=0;i<MAX_BUFS;i++){ 
-         if(nb_handle->tag==_armci_buf_state->buf[i].id.tag)
+         if(tag==_armci_buf_state->buf[i].id.tag)
            _armci_buf_complete_index(i,1); 
        }
        *retcode=0;
     }
     else {
-       if(nb_handle->tag==_armci_buf_state->buf[i].id.tag)
-         _armci_buf_complete_index(nb_handle->bufid,1);
+       if(tag==_armci_buf_state->buf[bufid].id.tag)
+         _armci_buf_complete_index(bufid,1);
        *retcode=0;
     } 
 }
@@ -408,9 +415,16 @@ int i=0;
 
 /*\function to set the buffer tag and also the async flag
 \*/
-void _armci_buf_set_tag(void *bufptr,unsigned int tag)
+void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol)
 {
 int  index = BUF_TO_BUFINDEX(bufptr);
    /*_armci_buf_state->table[index].async=1;*/
    _armci_buf_state->buf[index].id.tag=tag;
+   _armci_buf_state->buf[index].id.protocol=protocol;
+}
+
+/*\function to return bufinfo, given buf ptr
+\*/
+BUF_INFO_T *_armci_buf_to_bufinfo(void *buf){
+    return(&((BUF_TO_EBUF(buf))->id));
 }
