@@ -57,8 +57,10 @@ distribute to other US Government contractors.
       ga_initialize_ltd ... initialize global arrays and set memory usage limits
       ga_create         ... create an array
       ga_create_irreg   ... create an array with irregular distribution
+      ga_create_mutexes ... creates an array of mutexes
       ga_duplicate      ... create an array following a reference array 
       ga_destroy        ... destroy an array
+      ga_destroy_mutexes... destroys an array of mutexes
       ga_terminate      ... destroy all existing arrays and delete internal
                             data structures  
       ga_sync           ... synchronize processes (a barrier)
@@ -105,6 +107,8 @@ distribute to other US Government contractors.
                             a single array element (integers only)
       ga_locate         ... determine which process 'holds' an array element
       ga_locate_region  ... determine which process 'holds' an array section
+      ga_lock           ... lock (acquire) a mutex
+      ga_unlock         ... unlock (release) a mutex
       ga_error          ... print error message and terminate the program 
       ga_summarize      ... print information about already allocated arrays
       ga_init_fence     ... traces completion of data movement operations 
@@ -722,14 +726,13 @@ distribute to other US Government contractors.
       -------------------------------------------------------------------
       subroutine ga_acc(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
 
-      integer g_a                         [input]
-      integer ilo, ihi, jlo, jhi          [input]
-      double precision buf                [input]
-      integer ld                          [input]
-      double precision alpha              [input]
+      integer g_a                            [input]
+      integer ilo, ihi, jlo, jhi             [input]
+      double precision buf                   [input]
+      integer ld                             [input]
+      double precision/complex/integer alpha [input]
 
-      Performs the equivalent of the following Fortran-90.  Array
-      bounds are always checked and only double precision is supported.
+      Performs the equivalent of the following Fortran-90.
       The operation is atomic.
 
       dimension g_a(1:dim1,1:dim2)
@@ -877,6 +880,46 @@ distribute to other US Government contractors.
               do k = 1, nv
                  v(k) = a(i(k),j(k))
               enddo
+
+      -------------------------------------------------------------------
+      logical function ga_create_mutexes(number)
+
+      integer number             [input] 
+
+      Creates a set containing the number of mutexes. Returns .true. if
+      the opereation succeeded or .false. when failed. Mutex is simple
+      synchronization object used to protect Critical Section. Only one
+      set of mutexes can exist at a time. Mutexes can be created and
+      destroyed as many times as needed.
+
+      Mutexes are numbered: 0, ..., number -1.
+
+      This is a collective operation.
+
+      -------------------------------------------------------------------
+      logical function ga_destroy_mutexes()
+
+      Destroys the set of mutexes created with ga_create_mutexes.
+      Returns .true.  if the operation succeeded or .false. when
+      failed.
+
+      This is a collective operation.
+
+      -------------------------------------------------------------------
+      subroutine ga_lock(mutex)
+      integer mutex      [input]   ! mutex id
+
+      Locks a mutex object identified by the mutex number. It is a
+      fatal error for a process to attempt to lock a mutex which was
+      already locked by this process.
+
+      -------------------------------------------------------------------
+      subroutine ga_unlock(mutex)
+      integer mutex [input] ! mutex id
+
+      Unlocks a mutex object identified by the mutex number. It is a
+      fatal error for a process to attempt to unlock a mutex which has
+      not been locked by this process.
 
       -------------------------------------------------------------------
       subroutine ga_error(message, code)
