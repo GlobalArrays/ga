@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.5 1999-07-28 00:48:03 d3h325 Exp $ */
+/* $Id: signaltrap.c,v 1.6 1999-11-10 01:32:36 d3h325 Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -32,6 +32,7 @@ extern void Error();
 
 int AR_caught_sigint=0;
 int AR_caught_sigchld=0;
+int AR_caught_sig=0;
 
 SigType (*SigChldOrig)(), (*SigIntOrig)(), (*SigHupOrig)(), (*SigTermOrig)();
 
@@ -48,6 +49,7 @@ SigType SigIntHandler(sig)
      int sig;
 {
   AR_caught_sigint = 1;
+  AR_caught_sig= sig;
   Error("SigIntHandler: interrupt signal was caught",(int) sig);
 }
 
@@ -67,6 +69,7 @@ void RestoreSigInt()
  Restore the original signal handler
 */
 {
+  if(AR_caught_sig== SIGINT) SigIntOrig(SIGINT);
   if ( signal(SIGINT, SigIntOrig) == SIG_ERR)
     Error("RestoreSigInt: error from restoring signal SIGINT",0);
 }
@@ -84,6 +87,7 @@ SigType SigAbortHandler(sig)
      int sig;
 {
   AR_caught_sigint = 1;
+  AR_caught_sig= sig;
   Error("SigIntHandler: abort signal was caught: cleaning up",(int) sig);
 }
 
@@ -117,6 +121,8 @@ SigType SigChldHandler(sig)
   union wait ustatus;
 #endif
 
+  AR_caught_sig= sig;
+
 #if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || defined(NEXT)
   pid = wait(&ustatus);
   status = ustatus.w_status;
@@ -142,6 +148,7 @@ void RestoreSigChld()
  Restore the original signal handler
 */
 {
+  if(AR_caught_sig== SIGCHLD) SigChldOrig(SIGCHLD);
   if ( signal(SIGCHLD, SigChldOrig) == SIG_ERR)
     Error("RestoreSigChld: error from restoring signal SIGChld",0);
 }
@@ -165,6 +172,7 @@ SigType SigBusHandler(sig)
      int sig;
 {
   AR_caught_sigint = 3;
+  AR_caught_sig= sig;
   Error("Bus error, status=",(int) sig);
 }
 
@@ -192,6 +200,7 @@ SigType SigFpeHandler(sig)
      int sig;
 {
   AR_caught_sigint = 4;
+  AR_caught_sig= sig;
   Error("Floating Point Exception error, status=",(int) sig);
 }
 
@@ -219,6 +228,7 @@ SigType SigIllHandler(sig)
      int sig;
 {
   AR_caught_sigint = 5;
+  AR_caught_sig= sig;
   Error("Illegal Instruction error, status=",(int) sig);
 }
 
@@ -247,6 +257,7 @@ SigType SigSegvHandler(sig)
 {
 /*  fprintf(stderr,"\n\n SEGV pid=%d\n",getpid()); sleep(5); */
   AR_caught_sigint = 6;
+  AR_caught_sig= sig;
   Error("Segmentation Violation error, status=",(int) sig);
 }
 
@@ -274,6 +285,7 @@ SigType SigSysHandler(sig)
      int sig;
 {
   AR_caught_sigint = 7;
+  AR_caught_sig= sig;
   Error("Bad Argument To System Call error, status=",(int) sig);
 }
 
@@ -302,6 +314,7 @@ SigType SigTrapHandler(sig)
      int sig;
 {
   AR_caught_sigint = 8;
+  AR_caught_sig= sig;
   Error("Trace Trap error, status=",(int) sig);
 }
 
@@ -328,6 +341,7 @@ SigType SigHupHandler(sig)
      int sig;
 {
   AR_caught_sigint = 9;
+  AR_caught_sig= sig;
   Error("Hangup error, status=",(int) sig);
 }
 
@@ -346,6 +360,7 @@ void RestoreSigHup()
  Restore the original signal handler
 */
 {
+  if(AR_caught_sig== SIGHUP) SigHupOrig(SIGHUP);
   if ( signal(SIGHUP, SigHupOrig) == SIG_ERR)
     Error("RestoreSigHUP: error from restoring signal SIGHUP",0);
 }
@@ -364,6 +379,7 @@ SigType SigTermHandler(sig)
      int sig;
 {
   AR_caught_sigint = 10;
+  AR_caught_sig= sig;
   Error("Terminate signal was sent, status=",(int) sig);
 }
 
@@ -381,6 +397,7 @@ void RestoreSigTerm()
  Restore the original signal handler
 */
 {
+  if(AR_caught_sig== SIGTERM) SigTermOrig(SIGTERM);
   if ( signal(SIGTERM, SigTermOrig) == SIG_ERR)
     Error("RestoreSigTerm: error from restoring signal SIGTerm",0);
 }
@@ -398,6 +415,7 @@ SigType SigIotHandler(sig)
      int sig;
 {
   AR_caught_sigint = 11;
+  AR_caught_sig= sig;
   Error("IOT signal was sent, status=",(int) sig);
 }
 
@@ -425,6 +443,7 @@ SigType SigContHandler(sig)
 {
 /*  AR_caught_sigint = 12;*/
 /*  Error("Trace Cont error, status=",(int) sig);*/
+  AR_caught_sig= sig;
 }
 
 void TrapSigCont()
@@ -448,6 +467,7 @@ SigType SigXcpuHandler(sig)
      int sig;
 {
   AR_caught_sigint = 13;
+  AR_caught_sig= sig;
   Error("Terminate signal was sent, status=",(int) sig);
 }
 
@@ -496,13 +516,16 @@ void ARMCI_ParentTrapSignals()
 }
 
 
-
-void ARMCI_ParentRestoreSignals()
+void ARMCI_RestoreSignals()
 {
      RestoreSigChld();
      RestoreSigInt();
-     RestoreSigHup();
-#ifdef LAPI
      RestoreSigTerm();
-#endif
+}
+
+
+void ARMCI_ParentRestoreSignals()
+{
+     ARMCI_RestoreSignals();
+     RestoreSigHup();
 }
