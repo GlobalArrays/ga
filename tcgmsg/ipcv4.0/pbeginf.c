@@ -1,8 +1,9 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.7 2000-05-10 23:07:24 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.8 2001-05-07 23:14:53 edo Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
 #include "srftoc.h"
+#include "typesf2c.h"
 
 extern void PBEGIN_();
 
@@ -45,13 +46,13 @@ void PBEGINF_()
     for(len = maxlen-2; len && (arg[len] == ' '); len--);
     len++;
 #elif defined(HPUX64)
-    long ii=i, lmax=maxlen;
+    Integer ii=i, lmax=maxlen;
     len = hpargv_(&ii, arg, &lmax);
 #else
     len = hpargv_(&i, arg, &maxlen);
 #endif
     arg[len] = '\0';
-    /* printf("%10s, len=%d\n", arg, len);  fflush(stdout); */
+     printf("%10s, len=%d\n", arg, len);  fflush(stdout); 
     argv[i] = strdup(arg);
   }
 
