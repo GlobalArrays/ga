@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.32 2004-03-30 22:35:03 manoj Exp $
+ * $Id: ma.c,v 1.33 2004-03-31 23:10:42 manoj Exp $
  */
 
 /*
@@ -2977,7 +2977,6 @@ public Integer MA_inquire_stack_no_partition(Integer datatype)
 {
     long	gap_length;	/* # of bytes between heap and partition */
     Integer	nelem_gap;	/* max elements containable in gap */
-    Integer	nelem_frag;	/* max elements containable in any frag */
 
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_inquire_stack_no_partition]++;
@@ -3458,7 +3457,7 @@ public Integer MA_sizeof_overhead(Integer datatype)
     int		overhead_bytes;	/* max bytes of overhead for any block */
     int		ceiling;	/* 1 iff ceiling alters result */
     int		max_sizeof;	/* max over i of ma_sizeof[i] */
-    int		biggest_datatype; /* corresponds to max_sizeof */
+    int		biggest_datatype=0; /* corresponds to max_sizeof */
     int		i;		/* loop index */
 
 #ifdef STATS
