@@ -1,12 +1,3 @@
-/** Message ranges are in the power of 2. for ex:
- *   0-2       ->    range#1
- *   2-4       ->    range#2
- *   4-8       ->    range#3
- *   8-16      ->    range#4
- *   ...
- *   512-1024  ->    range#10
- */
- 
 #ifdef GA_PROFILE
 
 #include <stdio.h>
@@ -23,6 +14,14 @@
 #endif
 
 
+/** Message ranges are in the power of 2. for ex:
+ *   0-2       ->    range#1
+ *   2-4       ->    range#2
+ *   4-8       ->    range#3
+ *   8-16      ->    range#4
+ *   ...
+ *   512-1024  ->    range#10
+ */
 #define GA_MAX_MSG_RANGE 21
 
 #define GA_EVENTS 6 /*  get, put, acc, Non-Contiguous get, put, acc*/
@@ -162,8 +161,6 @@ void ga_profile_terminate() {
 	      GA_PROF[NC_ACC][i].exectime, 1<<GA_MAX_MSG_RANGE);
     }
 }
-
-
 
 #endif /* end of GA_PROFILE */
 
