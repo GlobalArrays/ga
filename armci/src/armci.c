@@ -199,7 +199,7 @@ int ARMCI_Init()
 void ARMCI_Finalize()
 {
     if(!armci_initialized)return;
-    armci_initialized=0;
+/*    armci_initialized=0;*/
 
     armci_msg_barrier();
     if(armci_me==armci_master) ARMCI_ParentRestoreSignals();
