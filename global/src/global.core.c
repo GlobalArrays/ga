@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.30 1996-09-04 16:47:57 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.31 1996-09-18 16:46:17 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -2308,6 +2308,31 @@ Integer first, nelem, BufLimit, proc, type=GA[GA_OFFSET + *g_a].type;
   GA_POP_NAME;
 }
       
+
+/*\ permutes input index list using sort routine used in scatter/gather
+\*/
+void ga_sort_permut_(g_a, index, i, j, nv)
+     Integer *g_a, *nv, *i, *j, *index;
+{
+register Integer k;
+Integer pindex, phandle;
+extern void ga_sort_permutation();
+
+  if (*nv < 1) return;
+
+  if(!MA_push_get(MT_F_INT,*nv, "ga_sort_permut--p", &phandle, &pindex))
+            ga_error("MA alloc failed ", *g_a);
+
+  /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
+  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
+         sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
+         ga_error(err_string,*g_a);
+  }
+
+  /* Sort the entries by processor */
+  ga_sort_permutation(nv, index, INT_MB+pindex);
+  if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+}
 
 
 

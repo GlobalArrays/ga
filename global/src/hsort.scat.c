@@ -77,6 +77,25 @@ void ga_sort_scat_dcpl_(pn, v, i, j, base)
   INDEX_SORT(base,pn,SWAP);
 }
 
+void ga_sort_permutation(pn, index, base)
+     Integer *pn;
+     Integer *index;
+     Integer *base;
+{
+  if (*pn < 2) return;
+#  undef SWAP  
+#  define SWAP(a,b) { \
+    Integer ltmp; \
+    Integer itmp;\
+    int ia = a - base; \
+    int ib = b - base; \
+    ltmp=*a; *a=*b; *b=ltmp; \
+    itmp=index[ia]; index[ia]=index[ib]; index[ib] = itmp;\
+   }
+  INDEX_SORT(base,pn,SWAP);
+}
+
+     
 
 
 void ga_sort_scat_dbl_(pn, v, i, j, base)

@@ -102,6 +102,7 @@ extern void ga_diag_ ARGS_((Integer *, Integer *, Integer *,DoublePrecision *));
 extern void ga_proc_topology_ ARGS_((Integer *g_a, Integer *proc,  Integer *pr,\
                                      Integer *pc));
 
+extern void ga_sort_permut_ ARGS_((Integer* g_a, Integer* index, Integer* i, Integer* j, Integer* nv));
 #undef ARGS_
 
 
