@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.2 2001-04-25 00:20:54 edo Exp $
+# $Id: GNUmakefile,v 1.3 2001-04-25 01:03:17 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -24,11 +24,9 @@ OBJ =  brdcst.o    nodeid.o    setdbg.o                          \
 ifeq ($(TARGET),IBM)
    LIB_DEFINES =  -DAIX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
-   TCGLIBS=-lc
 endif
 ifeq ($(TARGET),IBM64)
    LIB_DEFINES = -DAIX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
-   TCGLIBS=-lc
 endif
 ifeq ($(TARGET),LINUX)
    LIB_DEFINES =   -DLINUX -DSYSV -DSHMEM -DNOSPIN
@@ -57,12 +55,19 @@ endif
 ifeq ($(TARGET),SOLARIS)
    LIB_DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN -DSUNF77_2
      EXTRA = wrap.o
-   TCGLIBS=/usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl 
 endif
 ifeq ($(TARGET),SOLARIS64)
    LIB_DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN -DSUNF77_2
      EXTRA = wrap.o
-   TCGLIBS=/usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl 
+          _FC = $(notdir $(FC))
+          _CC = $(notdir $(CC))
+  ifeq ($(_CC),fcc)
+     COPT_REN = -Kfast -KV9FMADD
+  endif
+  ifeq ($(_FC),frt)
+     FFLAGS = -Kfast -KV9FMADD -CcdII8
+      CMAIN = -Dmain=MAIN__
+  endif                                                           
 endif
 ifeq ($(TARGET),DECOSF)
    LIB_DEFINES =  -DDECFORT -DSYSV -DSHMEM  -DNOSPIN
@@ -72,9 +77,60 @@ ifeq ($(TARGET),DECOSF32)
    LIB_DEFINES = -DDECOSF -DDECFORT -DSYSV -DSHMEM  -DNOSPIN
    EXTRA = strdup.o strtok.o wrap.o
 endif
+ifeq ($(TARGET),CRAY-YMP)
+   LIB_DEFINES = -DCRAY  -DGOTXDR
+ LINTFLAGS = $(DEFINES) -u
+endif                                                                         
+ifeq ($(TARGET),SP)
+    FFLAGS = -g -qEXTNAME
+   LIB_DEFINES = -DSP1 -DAIX -DEXTNAME
+#enable workaround for a bug in MPL under PSSP 3.1 on SMP nodes
+   LIB_DEFINES += -DMPL_SMP_BUG
+ LINTFLAGS = -u -a -wkD $(LIB_DEFINES)
+     EXTRA = strdup.o strtok.o
+   OBJ  = sp1.o evon.o evlog.o checkbyte.o mtime.o \
+             memalign.o random.o drand48.o mitob.o mdtob.o \
+             mdtoi.o mitod.o llog.o $(EXTRA)
+endif
+ifeq ($(TARGET),SP1)
+    FFLAGS = -g -qEXTNAME
+   LIB_DEFINES = -DSP1 -DAIX -DEXTNAME
+ LINTFLAGS = -u -a -wkD $(LIB_DEFINES)
+     EXTRA = strdup.o strtok.o
+   OBJ  = sp1.o evon.o evlog.o checkbyte.o mtime.o \
+             memalign.o random.o drand48.o mitob.o mdtob.o \
+             mdtoi.o mitod.o llog.o $(EXTRA)
+endif
+                                                                           
+# the next targets have no entries in the main tools config files
 
+ifeq ($(TARGET),CRAY)
+        FC = cf77
+   LIB_DEFINES = -DCRAY  -DGOTXDR
+    CFLAGS = -g $(DEFINES)
+ LINTFLAGS = $(DEFINES) -u
+    RANLIB = echo $*
+#This for older versions of UNICOS
+#     COMM_LIBS = -lbsd -lnet -lrpc
+endif 
+ 
+  
+ifeq ($(TARGET),CONVEX-SPP)
+        FC = fc
+    FFLAGS = -O1 -ppu -or none
+   LIB_DEFINES = -DHPUX -DCONVEX -DEXTNAME -DSYSV -DSHMEM -DSPPLOCKS
+    CFLAGS = -O1 -or none $(DEFINES)
+    RANLIB = echo $*
+ LINTFLAGS = $(DEFINES) -bhu
+endif
+         
+
+include ../../armci/config/makecoms.h
+include ../../armci/config/makemp.h
 include ../../config/makefile.h
 include ../../config/makelib.h
+
+
 
 
 #.......................... general ................................
@@ -87,7 +143,7 @@ NO_TOPLOT = ARDENT CRAY SGI SGI_N32 SGITFP NEXT NEXTNOEXT HPUX HPUXNOEXT KSR
 NO_PARALLEL = SP1 SP
 
 
-LOADLIBES = $(LIBRARY_PATH) $(TCGLIBS)
+LOADLIBES = $(LIBRARY_PATH) $(COMM_LIBS) 
 #......................... make targets ........................
 #
 ifeq ($(TARGET),$(findstring $(TARGET),$(NO_PARALLEL)))
@@ -146,7 +202,7 @@ else
 endif
 
 testpf.x: $(LIBRARY_PATH)
-	$(FC) $(FFLAGS) -o $@ testpf.f $(LIBRARY_PATH) $(TCGLIBS)
+	$(FC) $(FFLAGS) -o $@ testpf.f $(LOADLIBES) 
 
 $(LIBOBJ) parallel.o test.o testf.o:	$(INCLUDES)
 
@@ -193,13 +249,5 @@ else
 endif
 
 
-ifeq ($(TARGET),CONVEX)
-# In their infinite wisdom the version of sprintf differs between
-# the C and FORTRAN environments on the CONVEX and it's not possible
-# to just link against -lc due to other conflicts. Need to drag out
-# the one that we need by hand. Ugh.
-sprintf.o:      /usr/lib/libc.a
-	ar x /usr/lib/libc.a sprintf.o
-endif 
 
 machdep: msgtypesf.h
