@@ -478,20 +478,27 @@ ifdef CRAY
          COPT = -O1 -hinline3
      endif
 endif
-#................................. NEC SX ..................................
+#................................. NEC SX-6 .................................
 ifeq ($(TARGET),NEC)
 #
      FC = f90
+#    on SX-6 we must use c++ compiler and cc on SX-5
+     CC = c++
      ifeq ($(FOPT), -O)
-         FOPT = -Cvopt -Wf"-pvctl nomsg"
+         FOPT = -Cvopt -Wf"-pvctl nomsg noassume vwork=stack"
      endif
      ifeq ($(COPT), -O)
-         COPT = -O nomsg -hnovector,nomulti -pvctl,nomsg
+         COPT = -O nomsg
      endif
-     COPT_REN = -hsize_t64
-     ASFLAGS = -h size_t64
-     EXTRA_LIBS += -li90sxe
      EXTRA_OBJ = tas-sx.o
+     COPT_REN = -size_t64 -Nv -Xa
+     ASFLAGS = -h size_t64
+     EXTRA_LIBS += -f90libew
+#SX5
+#    COPT = -O nomsg -hnovector,nomulti -pvctl,nomsg
+#    FOPT = -Cvopt -Wf"-pvctl nomsg"
+#    COPT_REN = -hsize_t64
+#    EXTRA_LIBS += -li90sxe
 endif
 
 #................................. IBM SP and workstations ...................
