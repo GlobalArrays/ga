@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.28 2003-02-17 22:50:55 d3g293 Exp $ */
+/* $Id: base.c,v 1.29 2003-02-19 19:01:24 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -350,21 +350,6 @@ int bytes, nproc, nnode, zero;
     if(GA_Proc_list) GAme = (Integer)GA_Proc_list[ga_msg_nodeid_()];
     else
 #endif
-    nproc = ga_nnodes_();
-    P_LIST[0].map_proc_list = (int*)malloc(nproc*sizeof(int)*2);
-    P_LIST[0].inv_map_proc_list = P_LIST[0].map_proc_list + nproc;
-    for (i=0; i<nproc; i++) P_LIST[0].map_proc_list[i] = -1;
-    for (i=0; i<nproc; i++) P_LIST[0].inv_map_proc_list[i] = -1;
-    nnode = ga_cluster_nodeid_();
-    nproc = ga_cluster_nprocs_((Integer*)&nnode);
-    zero = 0;
-    j = ga_cluster_procid_((Integer*)&nnode, (Integer*)&zero);
-    P_LIST[0].map_nproc = nproc;
-    P_LIST[0].mirrored = 1;
-    for (i=0; i<nproc; i++) {
-      P_LIST[0].map_proc_list[i+j] = i;
-      P_LIST[0].inv_map_proc_list[i] = i+j;
-    }
 
     GAme = (Integer)armci_msg_me();
     if(GAme<0 || GAme>20000) 
@@ -389,6 +374,21 @@ int bytes, nproc, nnode, zero;
     for(i=0;i<_max_global_array;i++)GA[i].actv=0;
 
     ARMCI_Init(); /* initialize GA run-time library */
+    nproc = ga_nnodes_();
+    P_LIST[0].map_proc_list = (int*)malloc(nproc*sizeof(int)*2);
+    P_LIST[0].inv_map_proc_list = P_LIST[0].map_proc_list + nproc;
+    for (i=0; i<nproc; i++) P_LIST[0].map_proc_list[i] = -1;
+    for (i=0; i<nproc; i++) P_LIST[0].inv_map_proc_list[i] = -1;
+    nnode = ga_cluster_nodeid_();
+    nproc = ga_cluster_nprocs_((Integer*)&nnode);
+    zero = 0;
+    j = ga_cluster_procid_((Integer*)&nnode, (Integer*)&zero);
+    P_LIST[0].map_nproc = nproc;
+    P_LIST[0].mirrored = 1;
+    for (i=0; i<nproc; i++) {
+      P_LIST[0].map_proc_list[i+j] = i;
+      P_LIST[0].inv_map_proc_list[i] = i+j;
+    }
 
     /* assure that GA will not alocate more shared memory than specified */
     if(ARMCI_Uses_shm())
