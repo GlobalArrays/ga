@@ -192,8 +192,9 @@ ifeq  ($(_CPU),x86_64)
   ifeq ($(_FC),pgf90)
      FOPT_REN= -fastsse -Mdalign -tp k8-64 -O3
   endif
+  _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /efc/ { print "efc" ; exit } ' )
   ifeq ($(_FC),g77)
-        FOPT_REN  += -funroll-loops -fstrength-reduce -mfpmath=sse 
+        FOPT_REN  += -fstrength-reduce -mfpmath=sse 
   endif
 endif
 ifeq  ($(_CPU),ppc64)
