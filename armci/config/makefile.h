@@ -28,51 +28,58 @@ endif
 #------------------------------- Linux -------------------------------
 ifeq ($(TARGET),LINUX)
      FOPT_REN = -fno-second-underscore
+       RANLIB = ranlib
            FC = g77
            CC = gcc
-ifndef TARGET_CPU
-  ifeq ($(FC),g77)
-       FOPT_REN += -malign-double
-  endif
-  ifeq ($(CC),gcc)
-       COPT_REN += -malign-double
-  endif
+          _FC = $(notdir $(FC))
+          _CC = $(notdir $(CC))
+         _CPU = $(shell uname -m |\
+                 awk ' /sparc/ { print "sparc" }; /i*86/ { print "x86" } ' )
+
+ifneq (,$(findstring mpif,$(_FC)))
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { print "pgf77" ; exit } ' )
+endif
+ifneq (,$(findstring mpicc,$(_CC)))
+         _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
 endif
 #
-#                GNU compilers 
-ifeq ($(CC),gcc)
+#              GNU compilers 
+ifeq ($(_CPU),x86)
+     OPT_ALIGN = -malign-double
+endif
+ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
-         COPT = -O2
-    COPT_REN += -finline-functions -funroll-loops
+          COPT = -O2
+     COPT_REN += -finline-functions -funroll-loops $(OPT_ALIGN)
    endif
 endif
-ifeq ($(FC),g77)
+#
+#           g77
+ifeq ($(_FC),g77)
    ifeq ($(FOPT),-O)
          FOPT = -O3
-    FOPT_REN += -funroll-loops -fomit-frame-pointer
+    FOPT_REN += -funroll-loops -fomit-frame-pointer $(OPT_ALIGN)
    endif
-   ifeq ($(TARGET_CPU), ULTRA)
+   ifeq ($(_CPU),sparc)
          GLOB_DEFINES+= -DMEMCPY
    endif
-endif      
+else
 #
-#
-ifeq ($(FC),pgf77)
- MAKEFLAGS += FC=pgf77
- FOPT_REN = -Mdalign -Mnolist -Minform,warn -Minfo=loop -Munixlogical
- FOPT = -O2 -Mvect
- GLOB_DEFINES+= -DPGLINUX
-endif
-       RANLIB = ranlib
+#             PGI fortran compiler on intel
+   ifneq (,$(findstring pgf,$(_FC)))
+       FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
+   endif
 endif
 
+
+endif
 #-----------------Linux 64-bit on DEC/Compaq Alpha with DEC compilers --
 ifeq ($(TARGET),LINUX64)
        FC = fort
      FOPT_REN = -assume no2underscore
 #     COPT_REN = -g3  
        CC = ccc
-   GLOB_DEFINES = -DLINUX -DEXT_INT -DNOAIO
+   GLOB_DEFINES += -DLINUX
 endif
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
@@ -302,10 +309,6 @@ GLOB_DEFINES  += -DAIX
 endif
 
 #...................... common definitions .......................
-
-ifdef TARGET_CPU
-       GLOB_DEFINES += -D$(TARGET_CPU)
-endif
 
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)
 
