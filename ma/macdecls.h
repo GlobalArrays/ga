@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.1.1.1 1994-03-29 06:44:34 d3g681 Exp $
+ * $Id: macdecls.h,v 1.2 1994-09-01 21:12:08 d3e129 Exp $
  */
 
 /* 
@@ -59,5 +59,20 @@ extern Integer MA_sizeof();
 extern Integer MA_sizeof_overhead();
 extern void MA_summarize_allocated_blocks();
 extern Boolean MA_verify_allocator_stuff();
+
+/**
+ ** variables
+ **/
+
+/* base arrays for the C datatypes */
+extern char			ma_cb_char[];	/* MT_C_CHAR */
+extern int			ma_cb_int[];	/* MT_C_INT */
+extern long			ma_cb_long[];	/* MT_C_LONGINT */
+extern float			ma_cb_float[];	/* MT_C_FLOAT */
+extern double			ma_cb_dbl[];	/* MT_C_DBL */
+extern MA_LongDouble		ma_cb_ldbl[];	/* MT_C_LDBL */
+extern MA_SingleComplex		ma_cb_scpl[];	/* MT_C_SCPL */
+extern MA_DoubleComplex		ma_cb_dcpl[];	/* MT_C_DCPL */
+extern MA_LongDoubleComplex	ma_cb_ldcpl[];	/* MT_C_LDCPL */
 
 #endif /* _macdecls_h */

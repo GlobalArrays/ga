@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.3 1994-05-27 02:05:38 d3g681 Exp $
+ * $Id: ma.c,v 1.4 1994-09-01 21:12:05 d3e129 Exp $
  */
 
 /*
@@ -61,6 +61,13 @@
 #define DEFAULT_REQUESTS_HEAP	1
 #define DEFAULT_REQUESTS_STACK	1
 
+/* bytes per address */
+#ifdef _CRAY
+#define BPA	8
+#else /* _CRAY */
+#define BPA	1
+#endif /* _CRAY */
+
 /* per-allocation storage overhead, excluding alignment gaps */
 #define BLOCK_OVERHEAD_FIXED	(sizeof(AD) + (2 * sizeof(Guard)))
 
@@ -77,15 +84,20 @@
  * problem is solved, but the sum of sizes of preceding fields can
  * still potentially cause difficulty.
  */
-#define ALIGNMENT		sizeof(long)
+#define ALIGNMENT	sizeof(long)
 
 /* min size of block split and placed on free list */
-#define MINBLOCKSIZE		round((long)(4 + BLOCK_OVERHEAD_FIXED), \
-				      (ulongi)ALIGNMENT)
+#define MINBLOCKSIZE	round((long)(ALIGNMENT + BLOCK_OVERHEAD_FIXED), \
+			      (ulongi)ALIGNMENT)
 
 /* signatures for guard words */
-#define GUARD1			(Guard)0xaaaaaaaa	/* start signature */
-#define GUARD2			(Guard)0x55555555	/* stop signature */
+#ifdef _CRAY
+#define GUARD1		(Guard)0xaaaaaaaaaaaaaaaa	/* start signature */
+#define GUARD2		(Guard)0x5555555555555555	/* stop signature */
+#else /* _CRAY */
+#define GUARD1		(Guard)0xaaaaaaaa		/* start signature */
+#define GUARD2		(Guard)0x55555555		/* stop signature */
+#endif /* _CRAY */
 
 /**
  ** types
@@ -166,7 +178,25 @@ extern Integer ma_set_sizes_();	/* from the MA FORTRAN interface */
  **/
 
 /* base addresses of the datatypes */
-private Pointer ma_base[MT_NUMTYPES];
+private Pointer ma_base[] =
+{
+    (Pointer)ma_cb_char,	/* MT_C_CHAR */
+    (Pointer)ma_cb_int,		/* MT_C_INT */
+    (Pointer)ma_cb_long,	/* MT_C_LONGINT */
+    (Pointer)ma_cb_float,	/* MT_C_FLOAT */
+    (Pointer)ma_cb_dbl,		/* MT_C_DBL */
+    (Pointer)ma_cb_ldbl,	/* MT_C_LDBL */
+    (Pointer)ma_cb_scpl,	/* MT_C_SCPL */
+    (Pointer)ma_cb_dcpl,	/* MT_C_DCPL */
+    (Pointer)ma_cb_ldcpl,	/* MT_C_LDCPL */
+    0,				/* MT_F_BYTE */
+    0,				/* MT_F_INT */
+    0,				/* MT_F_LOG */
+    0,				/* MT_F_REAL */
+    0,				/* MT_F_DBL */
+    0,				/* MT_F_SCPL */
+    0				/* MT_F_DCPL */
+};
 
 /* names of the datatypes */
 private char *ma_datatype[] =
@@ -192,22 +222,22 @@ private char *ma_datatype[] =
 /* numbers of bytes in the datatypes */
 private int ma_sizeof[] =
 {
-    sizeof(char),	/* MT_C_CHAR */
-    sizeof(int),	/* MT_C_INT */
-    sizeof(long int),	/* MT_C_LONGINT */
-    sizeof(float),	/* MT_C_FLOAT */
-    sizeof(double),	/* MT_C_DBL */
-    2 * sizeof(double),	/* MT_C_LDBL */
-    2 * sizeof(float),	/* MT_C_SCPL */
-    2 * sizeof(double),	/* MT_C_DCPL */
-    4 * sizeof(double),	/* MT_C_LDCPL */
-    sizeof(char),	/* MT_F_BYTE */
-    sizeof(int),	/* MT_F_INT */
-    sizeof(int),	/* MT_F_LOG */
-    sizeof(float),	/* MT_F_REAL */
-    sizeof(double),	/* MT_F_DBL */
-    2 * sizeof(float),	/* MT_F_SCPL */
-    2 * sizeof(double)	/* MT_F_DCPL */
+    sizeof(char),			/* MT_C_CHAR */
+    sizeof(int),			/* MT_C_INT */
+    sizeof(long int),			/* MT_C_LONGINT */
+    sizeof(float),			/* MT_C_FLOAT */
+    sizeof(double),			/* MT_C_DBL */
+    sizeof(MA_LongDouble),		/* MT_C_LDBL */
+    sizeof(MA_SingleComplex),		/* MT_C_SCPL */
+    sizeof(MA_DoubleComplex),		/* MT_C_DCPL */
+    sizeof(MA_LongDoubleComplex),	/* MT_C_LDCPL */
+    0,					/* MT_F_BYTE */
+    0,					/* MT_F_INT */
+    0,					/* MT_F_LOG */
+    0,					/* MT_F_REAL */
+    0,					/* MT_F_DBL */
+    0,					/* MT_F_SCPL */
+    0					/* MT_F_DCPL */
 };
 
 /*
@@ -250,6 +280,17 @@ private Boolean ma_initialized = MA_FALSE;
 /* invoke MA_verify_allocator_stuff in each public routine? */
 private Boolean ma_auto_verify = MA_FALSE;
 
+/* base arrays for the C datatypes */
+public char			ma_cb_char[2];	/* MT_C_CHAR */
+public int			ma_cb_int[2];	/* MT_C_INT */
+public long			ma_cb_long[2];	/* MT_C_LONGINT */
+public float			ma_cb_float[2];	/* MT_C_FLOAT */
+public double			ma_cb_dbl[2];	/* MT_C_DBL */
+public MA_LongDouble		ma_cb_ldbl[2];	/* MT_C_LDBL */
+public MA_SingleComplex		ma_cb_scpl[2];	/* MT_C_SCPL */
+public MA_DoubleComplex		ma_cb_dcpl[2];	/* MT_C_DCPL */
+public MA_LongDoubleComplex	ma_cb_ldcpl[2];	/* MT_C_LDCPL */
+
 /**
  ** macros
  **/
@@ -266,6 +307,10 @@ private Boolean ma_auto_verify = MA_FALSE;
 
 /* return nonzero if d is a valid (external) datatype */
 #define mt_valid(d)	(((d) >= MT_FIRST) && ((d) <= MT_LAST))
+
+/* convert between pointer (address) and equivalent byte address */
+#define p2b(p)		((ulongi)(p) * BPA)
+#define b2p(b)		((Pointer)((b) / BPA))
 
 /* return nonzero if a is a potentially valid address */
 #define reasonable_address(a)	(((a) >= ma_segment) && ((a) < ma_eos))
@@ -503,10 +548,17 @@ private void balloc_after(ar, address, client_space, nbytes)
     Integer	datatype;	/* of elements in this block */
     ulongi	L_client_space;	/* length of client_space */
     Pointer	A_client_space;	/* address of client_space */
-    int		gap1;		/* length of gap1 */
-    int		gap2;		/* length of gap2 */
+    int		L_gap1;		/* length of gap1 */
+    int		L_gap2;		/* length of gap2 */
+
+    ulongi	B_address;	/* byte equivalent of address */
+    ulongi	B_base;		/* byte equivalent of ma_base[datatype] */
+    ulongi	B_client_space;	/* byte equivalent of A_client_space */
 
     datatype = ar->datatype;
+
+    B_address = p2b(address);
+    B_base = p2b(ma_base[datatype]);
 
     /*
      * To ensure that client_space is properly aligned:
@@ -520,15 +572,18 @@ private void balloc_after(ar, address, client_space, nbytes)
 
     L_client_space = ar->nelem * ma_sizeof[datatype];
 
-    gap1 = ((ulongi)address
-        + sizeof(AD)
-        + sizeof(Guard)
-        - (ulongi)ma_base[datatype])
-        % ma_sizeof[datatype];
-    if (gap1 < 0)
-        gap1 += ma_sizeof[datatype];
+    L_gap1 = ((long)B_base
+        - (long)B_address
+        - (long)sizeof(AD)
+        - (long)sizeof(Guard))
+        % (long)ma_sizeof[datatype];
 
-    A_client_space = address + sizeof(AD) + gap1 + sizeof(Guard);
+    if (L_gap1 < 0)
+        L_gap1 += ma_sizeof[datatype];
+
+    B_client_space = B_address + sizeof(AD) + L_gap1 + sizeof(Guard);
+    A_client_space = b2p(B_client_space);
+    B_client_space = p2b(A_client_space);
 
     /*
      * To ensure that the AD is properly aligned:
@@ -541,24 +596,25 @@ private void balloc_after(ar, address, client_space, nbytes)
      *		- address
      */
 
-    gap2 = ((ulongi)A_client_space
-        + L_client_space
-        + sizeof(Guard)
-        - (ulongi)address)
-        % ALIGNMENT;
-    if (gap2 < 0)
-        gap2 += ALIGNMENT;
+    L_gap2 = ((long)B_address
+        - (long)B_client_space
+        - (long)L_client_space
+        - (long)sizeof(Guard))
+        % (long)ALIGNMENT;
+
+    if (L_gap2 < 0)
+        L_gap2 += ALIGNMENT;
 
     /*
      * set the return values
      */
 
     *client_space = A_client_space;
-    *nbytes = (ulongi)(A_client_space
+    *nbytes = (ulongi)(B_client_space
         + L_client_space
         + sizeof(Guard)
-        + gap2
-        - address);
+        + L_gap2
+        - B_address);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -577,10 +633,17 @@ private void balloc_before(ar, address, client_space, nbytes)
     Integer	datatype;	/* of elements in this block */
     ulongi	L_client_space;	/* length of client_space */
     Pointer	A_client_space;	/* address of client_space */
-    int		gap1;		/* length of gap1 */
-    int		gap2;		/* length of gap2 */
+    int		L_gap1;		/* length of gap1 */
+    int		L_gap2;		/* length of gap2 */
+
+    ulongi	B_address;	/* byte equivalent of address */
+    ulongi	B_base;		/* byte equivalent of ma_base[datatype] */
+    ulongi	B_client_space;	/* byte equivalent of A_client_space */
 
     datatype = ar->datatype;
+
+    B_address = p2b(address);
+    B_base = p2b(ma_base[datatype]);
 
     /*
      * To ensure that client_space is properly aligned:
@@ -594,15 +657,18 @@ private void balloc_before(ar, address, client_space, nbytes)
 
     L_client_space = ar->nelem * ma_sizeof[datatype];
 
-    gap2 = ((ulongi)address
+    L_gap2 = (B_address
         - sizeof(Guard)
         - L_client_space
-        - (ulongi)ma_base[datatype])
+        - B_base)
         % ma_sizeof[datatype];
-    if (gap2 < 0)
-        gap2 += ma_sizeof[datatype];
 
-    A_client_space = address - gap2 - sizeof(Guard) - L_client_space;
+    if (L_gap2 < 0)
+        L_gap2 += ma_sizeof[datatype];
+
+    B_client_space = B_address - L_gap2 - sizeof(Guard) - L_client_space;
+    A_client_space = b2p(B_client_space);
+    B_client_space = p2b(A_client_space);
 
     /*
      * To ensure that the AD is properly aligned:
@@ -614,22 +680,20 @@ private void balloc_before(ar, address, client_space, nbytes)
      *	A(AD) == A(client_space) - L(guard1) - L(gap1) - L(AD)
      */
 
-    gap1 = ((ulongi)A_client_space
+    L_gap1 = (B_client_space
         - sizeof(Guard)
         - sizeof(AD))
         % ALIGNMENT;
-    if (gap1 < 0)
-        gap1 += ALIGNMENT;
 
     /*
      * set the return values
      */
 
     *client_space = A_client_space;
-    *nbytes = (ulongi)(address
-        - A_client_space
+    *nbytes = (ulongi)(B_address
+        - B_client_space
         + sizeof(Guard)
-        + gap1
+        + L_gap1
         + sizeof(AD));
 }
 
@@ -707,6 +771,7 @@ private void debug_ad_print(ad)
     char	*fn[NUMADFIELDS];	/* field names */
     long	fa[NUMADFIELDS];	/* field addresses */
     int		i;			/* loop index */
+    long	address;		/* other addresses */
 
     /* set field names */
     fn[0] = "datatype";
@@ -726,7 +791,7 @@ private void debug_ad_print(ad)
     fa[5] = (long)(&(ad->next));
     fa[6] = (long)(&(ad->checksum));
 
-    /* print to stderr */
+    /* print AD fields to stderr */
     (void)fprintf(stderr, "debug_ad_print:\n");
     for (i = 0; i < NUMADFIELDS; i++)
         (void)fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  ad->%s\n",
@@ -735,6 +800,27 @@ private void debug_ad_print(ad)
             fa[i] % 8,
             fa[i] % 16,
             fn[i]);
+
+    /* print other addresses to stderr */
+    address = (long)guard1(ad);
+    (void)fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  guard1\n",
+        address,
+        address % 4,
+        address % 8,
+        address % 16);
+    address = (long)ad->client_space;
+    (void)fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  client_space\n",
+        address,
+        address % 4,
+        address % 8,
+        address % 16);
+    address = (long)guard2(ad);
+    (void)fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  guard2\n",
+        address,
+        address % 4,
+        address % 8,
+        address % 16);
+
     (void)fflush(stderr);
 }
 
@@ -1199,7 +1285,7 @@ private void ma_preinitialize(caller)
     if (ma_preinitialized)
         return;
 
-    /* call a FORTRAN routine to set sizes of FORTRAN datatypes */
+    /* call a FORTRAN routine to set bases and sizes of FORTRAN datatypes */
     if (ma_set_sizes_() == 0)
     {
         (void)sprintf(ma_ebuf,
@@ -1627,7 +1713,6 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
             (void)sprintf(ma_ebuf,
                 "block '%s', not enough space to allocate %lu bytes",
                 name, nbytes);
-	    MA_summarize_allocated_blocks();
             ma_error(EL_Nonfatal, ET_External, "MA_allocate_heap", ma_ebuf);
             return MA_FALSE;
         }
@@ -1646,10 +1731,6 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
      * space has been allocated
      */
 
-#ifdef DEBUG
-    debug_ad_print(ad);
-#endif /* DEBUG */
-
     /* initialize the AD */
     ad->datatype = datatype;
     ad->nelem = nelem;
@@ -1661,6 +1742,10 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
 
     /* set the guards */
     guard_set(ad);
+
+#ifdef DEBUG
+    debug_ad_print(ad);
+#endif /* DEBUG */
 
     /* update ma_hp if necessary */
     new_hp = (Pointer)ad + ad->nbytes;
@@ -2430,12 +2515,11 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
     balloc_before(&ar, ma_sp, &client_space, &nbytes);
 
     new_sp = ma_sp - nbytes;
-    if ((ma_sp - ma_hp) < nbytes)
+    if (new_sp < ma_hp)
     {
         (void)sprintf(ma_ebuf,
             "block '%s', not enough space to allocate %lu bytes",
             name, nbytes);
-	MA_summarize_allocated_blocks();
         ma_error(EL_Nonfatal, ET_External, "MA_push_stack", ma_ebuf);
         return MA_FALSE;
     }
@@ -2448,10 +2532,6 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
      * space has been allocated
      */
 
-#ifdef DEBUG
-    debug_ad_print(ad);
-#endif /* DEBUG */
-
     /* initialize the AD */
     ad->datatype = datatype;
     ad->nelem = nelem;
@@ -2463,6 +2543,10 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
 
     /* set the guards */
     guard_set(ad);
+
+#ifdef DEBUG
+    debug_ad_print(ad);
+#endif /* DEBUG */
 
     /* update ma_sp */
     ma_sp = new_sp;

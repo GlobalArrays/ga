@@ -1,5 +1,5 @@
 c
-c     $Id: testf.F,v 1.1 1994-04-26 19:42:00 d3g681 Exp $
+c     $Id: testf.F,v 1.2 1994-09-01 21:12:25 d3e129 Exp $
 c
 
 c
@@ -10,6 +10,8 @@ c
 
       implicit none
 
+      character achar
+      character chararr(5)
       integer handle1
       integer handle2
       integer handle3
@@ -434,6 +436,38 @@ c     ok
       else
           write (*,*) '... failure'
       endif
+      write (*,*) ' '
+
+c     ok
+      write (*,*) 'start testing byte arrays ...'
+      write (*,*) 'should succeed ...'
+      value = MA_push_get(MT_BYTE, 5, 'stack3', handle1, index1)
+      if (value) then
+          write (*,*) '... success'
+      else
+          write (*,*) '... failure'
+      endif
+      chararr(1) = 'z'
+      chararr(2) = 'y'
+      chararr(3) = 'x'
+      chararr(4) = 'w'
+      chararr(5) = 'v'
+      do 20 i = 0, 4
+          byte_mb(index1 + i) = chararr(i + 1)
+20    continue
+      write (*,*) 'should be zyxwv ...'
+      do 30 i = 0, 4
+          achar = byte_mb(index1+i)
+          write (*,*) 'byte_mb(', index1+i, ') = ', achar
+30    continue
+      write (*,*) 'should succeed ...'
+      value = MA_pop_stack(handle1)
+      if (value) then
+          write (*,*) '... success'
+      else
+          write (*,*) '... failure'
+      endif
+      write (*,*) 'stop testing byte arrays ...'
       write (*,*) ' '
 
 c     ok

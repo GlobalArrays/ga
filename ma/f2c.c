@@ -1,5 +1,5 @@
 /*
- * $Id: f2c.c,v 1.1.1.1 1994-03-29 06:44:33 d3g681 Exp $
+ * $Id: f2c.c,v 1.2 1994-09-01 21:12:02 d3e129 Exp $
  */
 
 /*
@@ -10,6 +10,10 @@
 
 #include "ma.h"
 #include "scope.h"
+
+#ifdef _CRAY
+#include <fortran.h>
+#endif /* _CRAY */
 
 /**
  ** function types
@@ -29,12 +33,27 @@ private void fstring2cstring();
  */
 /* ------------------------------------------------------------------------- */
 
+#ifdef _CRAY
+private void fstring2cstring(fcd, cstring, clength)
+    _fcd	fcd;		/* FORTRAN character descriptor */
+    char	*cstring;	/* C buffer */
+    Integer	clength;	/* max length (including NUL) of cstring */
+#else /* _CRAY */
 private void fstring2cstring(fstring, flength, cstring, clength)
     char	*fstring;	/* FORTRAN string */
     Integer	flength;	/* length of fstring */
     char	*cstring;	/* C buffer */
     Integer	clength;	/* max length (including NUL) of cstring */
+#endif /* _CRAY */
 {
+#ifdef _CRAY
+    char	*fstring;	/* FORTRAN string */
+    Integer	flength;	/* length of fstring */
+
+    fstring = _fcdtocp(fcd);
+    flength = _fcdlen(fcd);
+#endif /* _CRAY */
+
     /* remove trailing blanks from fstring */
     while (flength-- && fstring[flength] == ' ')
         ;
@@ -64,6 +83,14 @@ private void fstring2cstring(fstring, flength, cstring, clength)
  */
 /* ------------------------------------------------------------------------- */
 
+#ifdef _CRAY
+public Boolean f2c_alloc_get_(datatype, nelem, name, memhandle, index)
+    Integer	*datatype;
+    Integer	*nelem;
+    _fcd	name;
+    Integer	*memhandle;
+    Integer	*index;
+#else /* _CRAY */
 public Boolean f2c_alloc_get_(datatype, nelem, name, memhandle, index, namesize)
     Integer	*datatype;
     Integer	*nelem;
@@ -71,12 +98,17 @@ public Boolean f2c_alloc_get_(datatype, nelem, name, memhandle, index, namesize)
     Integer	*memhandle;
     Integer	*index;
     Integer	namesize;	/* implicitly passed by FORTRAN */
+#endif /* _CRAY */
 {
     Boolean	value;
     char	buf[MA_NAMESIZE];
 
     /* ensure that name is NUL-terminated */
+#ifdef _CRAY
+    fstring2cstring(name, buf, (Integer)sizeof(buf));
+#else /* _CRAY */
     fstring2cstring(name, namesize, buf, (Integer)sizeof(buf));
+#endif /* _CRAY */
 
     value = MA_alloc_get(*datatype, *nelem, buf, memhandle, index);
 
@@ -92,17 +124,29 @@ public Boolean f2c_alloc_get_(datatype, nelem, name, memhandle, index, namesize)
  */
 /* ------------------------------------------------------------------------- */
 
+#ifdef _CRAY
+public Boolean f2c_allocate_heap_(datatype, nelem, name, memhandle)
+    Integer	*datatype;
+    Integer	*nelem;
+    _fcd	name;
+    Integer	*memhandle;
+#else /* _CRAY */
 public Boolean f2c_allocate_heap_(datatype, nelem, name, memhandle, namesize)
     Integer	*datatype;
     Integer	*nelem;
     char	*name;
     Integer	*memhandle;
     Integer	namesize;	/* implicitly passed by FORTRAN */
+#endif /* _CRAY */
 {
     char	buf[MA_NAMESIZE];
 
     /* ensure that name is NUL-terminated */
+#ifdef _CRAY
+    fstring2cstring(name, buf, (Integer)sizeof(buf));
+#else /* _CRAY */
     fstring2cstring(name, namesize, buf, (Integer)sizeof(buf));
+#endif /* _CRAY */
 
     return MA_allocate_heap(*datatype, *nelem, buf, memhandle);
 }
@@ -267,6 +311,14 @@ public void f2c_print_stats_()
  */
 /* ------------------------------------------------------------------------- */
 
+#ifdef _CRAY
+public Boolean f2c_push_get_(datatype, nelem, name, memhandle, index)
+    Integer	*datatype;
+    Integer	*nelem;
+    _fcd	name;
+    Integer	*memhandle;
+    Integer	*index;
+#else /* _CRAY */
 public Boolean f2c_push_get_(datatype, nelem, name, memhandle, index, namesize)
     Integer	*datatype;
     Integer	*nelem;
@@ -274,12 +326,17 @@ public Boolean f2c_push_get_(datatype, nelem, name, memhandle, index, namesize)
     Integer	*memhandle;
     Integer	*index;
     Integer	namesize;	/* implicitly passed by FORTRAN */
+#endif /* _CRAY */
 {
     Boolean	value;
     char	buf[MA_NAMESIZE];
 
     /* ensure that name is NUL-terminated */
+#ifdef _CRAY
+    fstring2cstring(name, buf, (Integer)sizeof(buf));
+#else /* _CRAY */
     fstring2cstring(name, namesize, buf, (Integer)sizeof(buf));
+#endif /* _CRAY */
 
     value = MA_push_get(*datatype, *nelem, buf, memhandle, index);
 
@@ -295,17 +352,29 @@ public Boolean f2c_push_get_(datatype, nelem, name, memhandle, index, namesize)
  */
 /* ------------------------------------------------------------------------- */
 
+#ifdef _CRAY
+public Boolean f2c_push_stack_(datatype, nelem, name, memhandle)
+    Integer	*datatype;
+    Integer	*nelem;
+    _fcd	name;
+    Integer	*memhandle;
+#else /* _CRAY */
 public Boolean f2c_push_stack_(datatype, nelem, name, memhandle, namesize)
     Integer	*datatype;
     Integer	*nelem;
     char	*name;
     Integer	*memhandle;
     Integer	namesize;	/* implicitly passed by FORTRAN */
+#endif /* _CRAY */
 {
     char	buf[MA_NAMESIZE];
 
     /* ensure that name is NUL-terminated */
+#ifdef _CRAY
+    fstring2cstring(name, buf, (Integer)sizeof(buf));
+#else /* _CRAY */
     fstring2cstring(name, namesize, buf, (Integer)sizeof(buf));
+#endif /* _CRAY */
 
     return MA_push_stack(*datatype, *nelem, buf, memhandle);
 }
