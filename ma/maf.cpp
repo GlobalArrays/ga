@@ -1,5 +1,5 @@
 c
-c     $Id: maf.cpp,v 1.2 1994-09-01 21:12:13 d3e129 Exp $
+c     $Id: maf.cpp,v 1.3 1994-12-29 06:44:23 og845 Exp $
 c
 
 c
@@ -24,8 +24,13 @@ c     --------------------------------------------------------------- c
 
       ma_set_sizes = 0
 
+#ifdef _CRAY
+      if (f2c_inform_base_fcd(MT_BYTE, byte_mb(1), byte_mb(2)) .eq.
+     $    MA_FALSE) return
+#else /* _CRAY */
       if (f2c_inform_base(MT_BYTE, byte_mb(1), byte_mb(2)) .eq.
      $    MA_FALSE) return
+#endif /* _CRAY */
       if (f2c_inform_base(MT_INT, int_mb(1), int_mb(2)) .eq.
      $    MA_FALSE) return
       if (f2c_inform_base(MT_LOG, log_mb(1), log_mb(2)) .eq.
