@@ -77,9 +77,13 @@ endif
 ifeq ($(CC),gcc)
        COPT_REN = -malign-double
 endif
+
 ifeq ($(FC),g77)
        FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
-       FOPT_REN += -Wno-globals
+#for 2.7.2 and earlier
+ifndef OLD_G77
+    FOPT_REN += -Wno-globals
+endif
 endif      
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
