@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.19 1997-03-13 00:43:43 d3h325 Exp $
+#$Id: makefile,v 1.20 1997-03-25 16:50:25 d3g681 Exp $
 
 # Tiny makefile wrapper
 
@@ -52,5 +52,5 @@ endif
 cleanF:
 	@echo Not done here
 
-src.F:
+source:
 	
