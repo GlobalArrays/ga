@@ -15,12 +15,13 @@
        LINK.c = $(CLD)
  GLOB_DEFINES = -D$(TARGET)
           CLD = $(CC)
+          _FC = $(notdir $(FC))
+          _CC = $(notdir $(CC))
 
 #-------------------------- Cygwin/Cygnus: GNU on Windows ------------
 ifeq ($(TARGET),CYGNUS) 
            FC = g77
            CC = gcc
-     FOPT_REN = -fno-second-underscore
      COPT_REN = -malign-double
  GLOB_DEFINES+= -DLINUX
 endif
@@ -29,18 +30,14 @@ endif
 ifeq ($(TARGET),INTERIX) 
            FC = g77
            CC = gcc
-     FOPT_REN = -fno-second-underscore
      COPT_REN = -malign-double
 endif
  
 #------------------------------- Linux -------------------------------
 ifeq ($(TARGET),LINUX)
-     FOPT_REN = -fno-second-underscore
        RANLIB = ranlib
            FC = g77
            CC = gcc
-          _FC = $(notdir $(FC))
-          _CC = $(notdir $(CC))
          _CPU = $(shell uname -m |\
                  awk ' /sparc/ { print "sparc" };\
                      /i686/{ print "686" }; /i*86&&^i686/ { print "x86" } ' )
@@ -73,9 +70,6 @@ ifeq ($(_FC),g77)
    ifeq ($(FOPT),-O)
          FOPT = -O3
     FOPT_REN += -funroll-loops -fomit-frame-pointer $(OPT_ALIGN)
-   endif
-   ifeq ($(_CPU),sparc)
-         GLOB_DEFINES+= -DMEMCPY
    endif
 else
 #
@@ -124,11 +118,18 @@ ifeq ($(TARGET),FUJITSU-AP)
  GLOB_DEFINES = -DFUJITSU
 endif
 
-#---------------------------- Sun -------------------------------------
+#---------------------------- Sun or Fujitsu Sparc/Solaris ----------------
 ifeq ($(TARGET),SOLARIS)
 #     COPT_REN = -dalign
 #     FOPT_REN = -dalign
+ifeq ($(_FC),frt)
+      FOPT_REN += -fw -Kfast -KV8PFMADD
 endif
+ifeq ($(_CC),fcc)
+      COPT_REN += -Kfast -KV8PFMADD
+endif
+endif
+#
 ifeq ($(TARGET),SOLARIS64)
      COPT_REN = -xarch=v9
      FOPT_REN = -xarch=v9
@@ -339,6 +340,13 @@ GLOB_DEFINES += -DAIX
 endif
 
 #...................... common definitions .......................
+#
+
+#get rid of 2nd underscore under g77
+ifeq ($(_FC),g77)
+     FOPT_REN += -fno-second-underscore
+endif
+
 
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)
 

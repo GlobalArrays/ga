@@ -5,7 +5,10 @@
 #endif
 
 #ifdef NOFORT
-#define MEMCPY
+#  define MEMCPY
+#endif
+#if !defined(MEMCPY) && defined(__GNUC__) && defined(__sparc)
+#   define MEMCPY
 #endif
 
 #if defined(SGI) || defined(FUJITSU) || defined(HPUX)

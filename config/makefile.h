@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.36 2000-12-29 21:09:41 d3h325 Exp $
+# $Id: makefile.h,v 1.37 2001-02-23 23:41:21 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -40,6 +40,8 @@
       LIBBLAS = -lblas
        P_FILE = YES
         CLIBS = -lm
+          _FC = $(notdir $(FC))
+          _CC = $(notdir $(CC))
 
 
  GLOB_DEFINES = -D$(TARGET)
@@ -50,17 +52,28 @@ ifdef OPTIMIZE
          COPT = -O
 endif
 #
-#................................ SUN ......................................
+#........................ SUN and Fujitsu Sparc/solaris ........................
 #
 ifeq ($(TARGET),SOLARIS)
           M4 = /usr/ccs/bin/m4
-     FLD_REN = -xs
+ ifeq ($(_CC),cc)
      COPT_REN = -dalign
+ endif
+ ifeq ($(_FC),cc)
+      FLD_REN = -xs
      FOPT_REN = -dalign
+ endif
+ ifeq ($(_FC),frt)
+      FOPT_REN += -fw -Kfast -KV8PFMADD
+ endif
+ ifeq ($(_CC),fcc)
+      COPT_REN += -Kfast -KV8PFMADD
+ endif
      ifdef LARGE_FILES
         LOC_LIBS += $(shell getconf LFS_LIBS)
      endif
 endif
+#
 ifeq ($(TARGET),SOLARIS64)
            M4 = /usr/ccs/bin/m4
       FLD_REN = -xs
@@ -115,10 +128,7 @@ ifeq ($(TARGET),LINUX)
            CC = gcc
            FC = g77
           CPP = gcc -E -nostdinc -undef -P
-     FOPT_REN = -fno-second-underscore
        RANLIB = ranlib
-          _FC = $(notdir $(FC))
-          _CC = $(notdir $(CC))
          _CPU = $(shell uname -m |\
                  awk ' /sparc/ { print "sparc" }; /i*86/ { print "x86" } ' )
 
@@ -145,9 +155,6 @@ ifeq ($(_FC),g77)
    ifeq ($(FOPT),-O)
            FOPT = -O2
       FOPT_REN += -funroll-loops -fomit-frame-pointer $(OPT_ALIGN)
-      ifndef OLD_G77
-        FOPT_REN += -Wno-globals
-      endif
    endif
 else
 #
@@ -183,7 +190,6 @@ ifeq ($(TARGET),CYGNUS)
            FC = g77
            CC = gcc
  GLOB_DEFINES = -DLINUX -DCYGNUS
-     FOPT_REN = -fno-second-underscore
      COPT_REN = -malign-double
        RANLIB = ranlib
 endif
@@ -191,8 +197,6 @@ endif
 ifeq ($(TARGET),INTERIX)
            FC = g77
            CC = gcc
-     FOPT_REN = -fno-second-underscore
-    FOPT_REN += -Wno-globals
      COPT_REN = -malign-double
 endif
 #
@@ -385,6 +389,15 @@ endif
 #
 #.............................. final flags ....................................
 #
+
+#get rid of 2nd underscore under g77
+ifeq ($(_FC),g77)
+     FOPT_REN += -fno-second-underscore
+     ifndef OLD_G77
+        FOPT_REN += -Wno-globals
+     endif
+endif
+
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)
 
 ifeq ($(MSG_COMMS),MPI)
