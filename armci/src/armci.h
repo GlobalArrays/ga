@@ -76,6 +76,10 @@ extern void ARMCI_Fence(int proc);
 extern void ARMCI_AllFence(void);
 extern int  ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc);
 extern void ARMCI_Cleanup(void);
+extern int ARMCI_Create_mutexes(int num);
+extern int ARMCI_Destroy_mutexes(void);
+extern void ARMCI_Lock(int mutex, int proc);
+extern void ARMCI_Unlock(int mutex, int proc);
 
 #define FAIL  -1
 #define FAIL2 -2
