@@ -13,7 +13,7 @@
 
 
 typedef struct {
-#if 1 
+#if 0 
    int   to:16;               /* message recipient */
    int from:16;               /* message sender */
 #else
