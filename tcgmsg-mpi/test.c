@@ -8,7 +8,9 @@
 #include "sndrcv.h"
 /*#include "evlog.h"*/
 
+#ifdef NEED_MEMALIGN
 extern char *memalign();
+#endif
 extern unsigned char CheckByte();
 #if defined(SUN)
 extern char *sprintf();
