@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.38 2003-10-08 07:16:06 vinod Exp $ */
+/* $Id: memory.c,v 1.39 2004-04-03 06:09:18 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -14,7 +14,7 @@ static context_t ctx_localmem;
 #if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
 #include "shmem.h"
 
-#if !defined(USE_SHMEM) && defined(HITACHI)
+#if !defined(USE_SHMEM) && (defined(HITACHI) || defined(MULTI_CTX))
 #    define USE_SHMEM 
 #endif
 
