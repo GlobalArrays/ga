@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.10 2002-02-19 16:57:22 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.11 2002-02-22 22:31:14 d3h325 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2002,9 +2002,16 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
+#if 0
+      ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count, ndim- 1, proc_rem);
+      /* Send signal to remote processor that data transfer has been completed. */
+      bytes = sizeof(int);
+      ARMCI_Put(&signal, GA_Update_Flags[proc_rem]+msgcnt, bytes, proc_rem);
+#else
       ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          (int)(ndim - 1), (void*)(GA_Update_Flags[proc_rem]+msgcnt),
+          (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
           signal, (int)proc_rem);
+#endif
       msgcnt++;
 
       /* Perform update in positive direction. Start by getting rough
@@ -2125,9 +2132,17 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
+#if 0
+      ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count, ndim- 1, proc_rem);
+      /* Send signal to remote processor that data transfer has been completed. */
+      bytes = sizeof(int);
+      ARMCI_Put(&signal, GA_Update_Flags[proc_rem]+msgcnt, bytes, proc_rem);
+
+#else
       ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          (int)(ndim - 1), (void*)(GA_Update_Flags[proc_rem]+msgcnt),
+          (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
           signal, (int)proc_rem);
+#endif
       msgcnt++;
     }
     /* check to make sure that all messages have been recieved before
