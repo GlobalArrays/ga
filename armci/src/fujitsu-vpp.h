@@ -127,7 +127,7 @@ printf("lds=%d ldd=%d bl=%d bytes=%d proc=%d\n",ld_src,ld_dst,blocks, bytes, pro
         if(_stat)MPLIB_TERMINATE;\
 }
 
-#define CopyPatchFrom(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
+#define CopyPatchFrom___(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
         int _iii, _stat=0, _bytes2copy=1;\
         char *ps=(char*)src, *pd=(char*)dst;\
         if((blocks)>1)for (_iii=0;_iii<(blocks);_iii++){\
@@ -136,6 +136,13 @@ printf("lds=%d ldd=%d bl=%d bytes=%d proc=%d\n",ld_src,ld_dst,blocks, bytes, pro
              pd += (ld_dst);\
         }else _bytes2copy=(bytes);\
         _stat += VPP_Read((PROC)(proc),(ADDRP)(src),(ADDRP)(dst),_bytes2copy);\
+        if(_stat)MPLIB_TERMINATE;\
+}
+
+#define CopyPatchFrom(src, ld_src, dst, ld_dst, blocks, bytes, proc){\
+        int _stat;\
+        _stat = VPP_ReadBothStrided((PROC)(proc), (ADDRP)src, (ADDRP)dst,\
+                    bytes, ld_src, ld_dst, bytes*blocks);\
         if(_stat)MPLIB_TERMINATE;\
 }
 #endif
