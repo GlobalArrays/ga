@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.32 2002-12-17 19:27:27 vinod Exp $ */
+/* $Id: test.c,v 1.33 2002-12-22 03:34:56 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -651,7 +651,7 @@ int idx1=0, idx2=0, idx3=0;
 
 #define PTR_ARR_LEN 10
 #define VLOOP 50
-#define VEC_ELE_LEN 100 /*number of doubles in each dimention*/
+#define VEC_ELE_LEN 20  /*number of doubles in each dimention*/
 #define GIOV_ARR_LEN 9
 
 void verify_vector_data(double *data,int procs,int isput,int datalen)
@@ -737,7 +737,7 @@ int lenpergiov;
            double *ptr;
            psrc[kc]=(void *)putsrc[PTR_ARR_LEN*(dstproc*GIOV_ARR_LEN+j)+k];
            ptr = (double *)putdst[dstproc]; 
-           pdst[kc]=(void *)(ptr+lenpergiov*(GIOV_ARR_LEN*me+j)+k*100);
+           pdst[kc]=(void *)(ptr+lenpergiov*(GIOV_ARR_LEN*me+j)+k*VEC_ELE_LEN);
          }
          dsc[j].bytes = VEC_ELE_LEN*sizeof(double);
          dsc[j].src_ptr_array = &psrc[kcold];
@@ -770,9 +770,9 @@ int lenpergiov;
          for(k=0;k<PTR_ARR_LEN;k++,kc++){
            double *ptr;
            ptr = getdst;
-           pdst[kc]=(void *)(ptr+lenpergiov*(dstproc*GIOV_ARR_LEN+j)+k*100);
+           pdst[kc]=(void *)(ptr+lenpergiov*(dstproc*GIOV_ARR_LEN+j)+k*VEC_ELE_LEN);
            ptr = (double *)(getsrc[dstproc]); 
-           psrc[kc]=(void *)(ptr+lenpergiov*(me*GIOV_ARR_LEN+j)+k*100);
+           psrc[kc]=(void *)(ptr+lenpergiov*(me*GIOV_ARR_LEN+j)+k*VEC_ELE_LEN);
          }
          dsc[j].bytes = VEC_ELE_LEN*sizeof(double);
          dsc[j].src_ptr_array = &psrc[kcold];
