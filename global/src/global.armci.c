@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.37 2000-04-17 19:28:26 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.38 2000-04-17 20:56:16 jju Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2299,7 +2299,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     /* determine limit for message size --  v,i, & j will travel together */
     item_size = GAsizeofM(type);
     GAbytes.scatot += (double)item_size**nv ;
-    GAbytes.gatloc += (double)item_size* nelem[GAme];
+    GAbytes.scaloc += (double)item_size* nelem[INT_MB[pindex+GAme]];
 
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
     for(k=1; k<naproc; k++) {
@@ -2804,7 +2804,7 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     
     item_size = GA[GA_OFFSET + *g_a].elemsize;
     GAbytes.gattot += (double)item_size**nv;
-    GAbytes.gatloc += (double)item_size * nelem[GAme];
+    GAbytes.gatloc += (double)item_size * nelem[INT_MB[pindex+GAme]];
 
     ptr_src[0] = ptr_org; ptr_dst[0] = ptr_org + (*nv);
     for(k=1; k<naproc; k++) {
