@@ -56,7 +56,7 @@ static inline long testandset(int *spinlock)
 #include <c_asm.h>
 
 /* Spinlock implementation; required.  */
-static inline long testandset(int *spinlock)
+static long testandset(int *spinlock)
 {
   long ret, temp = 0;
 
