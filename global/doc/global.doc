@@ -449,6 +449,14 @@ distribute to other US Government contractors.
       Symmetrizes matrix g_a:  g_a := .5 * (g_a+g_a')
 
       -------------------------------------------------------------------
+      subroutine ga_transpose(g_a, g_b)
+
+      integer g_a                         [input]  ! remains unchanged
+      integer g_b                         [output]
+
+      Transposes a matrix: g_b = g_a'
+
+      -------------------------------------------------------------------
       subroutine ga_diag(g_a, g_s, g_v, eval)
 
       integer g_a               [input]   ! Matrix to diagonalize
