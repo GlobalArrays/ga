@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.99 2004-03-27 00:26:16 d3h325 Exp $
+#$Id: makefile.h,v 1.100 2004-03-31 23:46:06 d3h325 Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -166,7 +166,8 @@ endif
 ifeq  ($(_CPU),ia64)
      FC=efc
      CC=gcc
- _SGIALTIX= $(shell /bin/rpm -q -i sgi-mpt  2>&1| head -1|egrep Reloc|awk ' /Rel/  {print "Y"}')
+# _SGIALTIX= $(shell /bin/rpm -q -i sgi-mpt  2>&1| head -1|egrep Reloc|awk ' /Rel/  {print "Y"}')
+ _SGIALTIX= $(shell /bin/rpm -q --last sgi-mpt  2>&1| head -1|egrep Reloc|awk ' /20/  {print "Y"}')
   ifeq ($(_SGIALTIX),Y)
    GLOB_DEFINES += -DSGIALTIX
   endif
