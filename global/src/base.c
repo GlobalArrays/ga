@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.113 2005-02-25 21:06:03 manoj Exp $ */
+/* $Id: base.c,v 1.114 2005-03-08 23:11:22 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1269,7 +1269,11 @@ logical ga_allocate_( Integer *g_a)
     ga_pgroup_sync_(&p_handle);
 
     /* ddb(ndim, dims, GAnproc, blk, pe);*/
-    ddb_h2(ndim, dims, grp_nproc, 0.0, (Integer)0, blk, pe);
+    if(p_handle == 0) /* for mirrored arrays */
+       ddb_h2(ndim, dims, PGRP_LIST[p_handle].map_nproc, 0.0,
+              (Integer)0, blk, pe);
+    else
+       ddb_h2(ndim, dims, grp_nproc, 0.0, (Integer)0, blk, pe);
 
     for(d=0, map=mapALL; d< ndim; d++){
       Integer nblock;
@@ -1346,10 +1350,11 @@ logical ga_allocate_( Integer *g_a)
   }
   GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
   /*** determine which portion of the array I am supposed to hold ***/
-  if (p_handle >= 0) {
-     nga_distribution_(g_a, &grp_me, GA[ga_handle].lo, hi);
+  if (p_handle == 0) { /* for mirrored arrays */
+     Integer me_local = (Integer)PGRP_LIST[p_handle].map_proc_list[GAme];
+     nga_distribution_(g_a, &me_local, GA[ga_handle].lo, hi);
   } else {
-     nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
+     nga_distribution_(g_a, &grp_me, GA[ga_handle].lo, hi);
   }
   for( i = 0, nelem=1; i< ndim; i++){
        GA[ga_handle].chunk[i] = (int)(hi[i]-GA[ga_handle].lo[i]+1);
