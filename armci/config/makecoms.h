@@ -75,6 +75,8 @@ ifeq ($(ARMCI_NETWORK),ELAN4)
   else
     ifeq ($(TARGET),DECOSF)
        COMM_INCLUDES = -I/usr/opt/rms/include
+    else
+       COMM_INCLUDES = /usr/lib/qsnet/elan4/include
     endif
   endif
   ifdef ELAN4_LIB
@@ -82,6 +84,8 @@ ifeq ($(ARMCI_NETWORK),ELAN4)
   else
     ifeq ($(TARGET),DECOSF)
       COMM_LIBS = -L/usr/opt/rms/lib
+    else
+      COMM_LIBS = /usr/lib/qsnet/elan4/lib
     endif
   endif
   COMM_DEFINES += -DDOELAN4  -DQUADRICS
