@@ -9,7 +9,7 @@
  */
 
 /* max number of global arrays */
-#define MAX_ARRAYS  64             
+#define MAX_ARRAYS  128            
 
 /* there are 20 message-passing tags/types numbered from GA_MSG_OFFSET up */
 #define  GA_MSG_OFFSET 32000
