@@ -126,7 +126,7 @@ ifeq  ($(_CPU),ia64)
      FOPT_REN = -macro_expand 
   endif
   ifeq ($(_FC),efc)
-   GLOB_DEFINES += -IFCLINUX
+   GLOB_DEFINES += -DIFCLINUX
      FOPT =  -O3 -hlo -ftz -pad
      FOPT_REN= -w1 -cm -w90 -align 
   endif
