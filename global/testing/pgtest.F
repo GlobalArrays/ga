@@ -1,4 +1,4 @@
-c $Id: pgtest.F,v 1.6 2005-02-11 07:47:04 manoj Exp $
+c $Id: pgtest.F,v 1.7 2005-02-11 21:29:44 manoj Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -26,7 +26,7 @@ c#define NGA_GATSCAT
 #include "testutil.fh"
       integer heap, stack, fudge, ma_heap, me, nproc
       integer inode,nnodes,proclist(100),i,j,nprocs
-      integer proc_group(0:100)
+      integer proc_group(0:100), my_proc_group, num_grp
       integer midnode
       logical status
       parameter (heap=200*200*4, fudge=100, stack=200*200)
@@ -64,6 +64,7 @@ c
 c
 c***  Create process groups on SMP nodes
 c
+#if 0
       midnode = nproc/2
       do i = 1, midnode
         proclist(i) = i-1
@@ -86,6 +87,15 @@ c      call ga_pgroup_set_default(proc_group(inode))
         call ga_pgroup_set_default(proc_group(1))
         call runtest
       endif
+#else
+c     split into 2 groups
+      num_grp = 2
+      my_proc_group = ga_pgroup_split(num_grp)
+      call ga_pgroup_set_default(my_proc_group)
+      call runtest
+#endif
+
+      call ga_sync()
       call ga_pgroup_set_default(ga_pgroup_get_world())
 c
 c***  Check if memory limits are enforced 
