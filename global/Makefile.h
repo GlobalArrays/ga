@@ -16,8 +16,8 @@
           FLD = $(FC)
           CLD = $(FLD)
           CXX = CC
-         FOPT = -O
-         COPT = -O
+         FOPT = -g
+         COPT = -g
 	 NOPT = -g
 GLOB_INCLUDES = -I../../ma
            AR = ar
@@ -59,7 +59,7 @@ endif
 #
 ifeq ($(TARGET),LINUX)
 
-ifdef USE_F2C
+ifdef USE_F77
 #    Linux with f2c (using f77 script)
     EXPLICITF = TRUE
 else
@@ -147,7 +147,10 @@ ifeq ($(TARGET),HPUX)
      CPP  = /lib/cpp -P
      FC = fort77
 #    CC = gcc
-     COPT_REN = -Ae 
+     ifeq ($(FOPT),-O)
+         FOPT = -O1
+     endif
+     COPT_REN = -Ae
      GLOB_DEFINES = -DHPUX -DEXTNAME
      EXPLICITF = TRUE
 endif
