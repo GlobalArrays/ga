@@ -208,9 +208,9 @@ void ga_sort_scat(pn, v, i, j, base, type)
      Integer type;
 { 
    switch (type){
-     case C_DBL:  ga_sort_scat_dbl_(pn, (DoublePrecision*)v, i,j,base);break;
+     case C_DBL:  ga_sort_scat_dbl_(pn, (double*)v, i,j,base);break;
      case C_DCPL: ga_sort_scat_dcpl_(pn, (DoubleComplex*)v, i,j,base); break;
-     case C_INT:  ga_sort_scat_int_(pn, (Integer*)v, i, j, base); break;
+     case C_INT:  ga_sort_scat_int_(pn, (int*)v, i, j, base); break;
      case C_FLOAT:  ga_sort_scat_flt_(pn, (float*)v, i, j, base); break; 
      case C_LONG:  ga_sort_scat_long_(pn, (long*)v, i, j, base); break;
      default:        ga_error("ERROR:ga_sort_scat: wrong type",type);
