@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.41 2001-12-28 17:18:03 vinod Exp $
+/* $Id: myrinet.c,v 1.42 2002-01-07 16:44:36 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -698,16 +698,16 @@ int armci_gm_serv_mem_alloc()
     int numofrcvbufs = NUMRCVBUFS; 
     /********************** get local unregistered memory *******************/
     /* allocate dma buffer for low priority */
-    serv_gm->dma_buf = (void **)malloc(armci_gm_max_msg_size * sizeof(void *));
+      
+    serv_gm->dma_buf = (void **)malloc((armci_gm_max_msg_size+1) * sizeof(void *));
     if(!serv_gm->dma_buf)return FALSE;
     
-    serv_gm->dma_buf_short = (void **)malloc((numofrcvbufs- armci_gm_max_msg_size+ 2*(ARMCI_GM_MIN_MESG_SIZE-1))*sizeof(void *));
+    serv_gm->dma_buf_short = (void **)malloc((numofrcvbufs- armci_gm_max_msg_size+ 2*(ARMCI_GM_MIN_MESG_SIZE-0))*sizeof(void *));
     if(!serv_gm->dma_buf_short)return FALSE;
 
     /* allocate buf for keeping the pointers of client MessageSndbuffer */
     serv_gm->proc_buf_ptr = (long *)calloc(armci_nproc, sizeof(long));
     if(!serv_gm->proc_buf_ptr) return FALSE;
-
     /********************** get registered memory **************************/
     for(i=ARMCI_GM_MIN_MESG_SIZE; i<=armci_gm_max_msg_size; i++) {
         if((armci_me==0) && DEBUG_){
@@ -717,11 +717,14 @@ int armci_gm_serv_mem_alloc()
                                         gm_max_length_for_size(i));
         if(!serv_gm->dma_buf[i]) return FALSE;
     }
-
     for(i=ARMCI_GM_MIN_MESG_SIZE; i<=short_msg_size; i++) {
         serv_gm->dma_buf_short[i] = (char *)gm_dma_malloc(serv_gm->rcv_port,
                                         gm_max_length_for_size(i));
         if(!serv_gm->dma_buf_short[i]) return FALSE;
+    }
+
+    if(DEBUG_INIT_){printf("\n%d:armci_serv_mem_alloc- allocated mem properly\n",armci_me);
+       fflush(stdout);
     }
 #ifdef MEM_UNIFORM_HIGH
     for(j=ARMCI_GM_MIN_MESG_SIZE; i<=numofrcvbufs-armci_gm_max_msg_size+2*(ARMCI_GM_MIN_MESG_SIZE-1);j++,i++){
