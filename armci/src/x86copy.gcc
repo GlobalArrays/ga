@@ -1,69 +1,208 @@
+//
+// memory copy implementation based on example 3 and 4
+// from http://www.sgi.com/developers/library/resources/asc_cpu.html
+//
+// void *armci_asm_memcpy(void *dst, const void *src, size_t n, int id);
+//
+
 #include <stdio.h>
 
-void *armci_asm_memcpy(void *dst, const void *src, size_t n);
+void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid);
 
-//
-// memory copy implementation based on example 3
-// from http://www.sgi.com/developers/library/resources/asc_cpu.html
+#define EX4  // use sgi's example_4_cpy if n is greater than 2k
+             // use memcpy and example_3_memcpy for the rest 
+//#define  EX3  // use memcpy and example_3_memcpy
+
+static char tbuf0[2048];
+static char tbuf1[2048];
+static char *ptbuf;
+
 //
 void *asm_memcpy3(void *dst, const void *src, size_t n)
 {
-  asm("
-      shr $6, %2
-loopl:
-      prefetchnta 64(%0);
-      prefetchnta 96(%0);
 
-      movq 0(%0), %%mm1;
-      movq 8(%0), %%mm2;
-      movq 16(%0), %%mm3;
-      movq 24(%0), %%mm4;
-      movq 32(%0), %%mm5;
-      movq 40(%0), %%mm6;
-      movq 48(%0), %%mm7;
-      movq 56(%0), %%mm0;
+	asm __volatile__ ("
+	      shr $6, %2
+	loopl:
+	      prefetchnta 64(%0);
+	      prefetchnta 96(%0);
 
-      movntq %%mm1, 0(%1);
-      movntq %%mm2, 8(%1);
-      movntq %%mm3, 16(%1);
-      movntq %%mm4, 24(%1);
-      movntq %%mm5, 32(%1);
-      movntq %%mm6, 40(%1);
-      movntq %%mm7, 48(%1);
-      movntq %%mm0, 56(%1);
+	      movq 0(%0), %%mm1;
+	      movq 8(%0), %%mm2;
+	      movq 16(%0), %%mm3;
+	      movq 24(%0), %%mm4;
+	      movq 32(%0), %%mm5;
+	      movq 40(%0), %%mm6;
+	      movq 48(%0), %%mm7;
+	      movq 56(%0), %%mm0;
+
+	      movntq %%mm1, 0(%1);
+	      movntq %%mm2, 8(%1);
+	      movntq %%mm3, 16(%1);
+	      movntq %%mm4, 24(%1);
+	      movntq %%mm5, 32(%1);
+	      movntq %%mm6, 40(%1);
+	      movntq %%mm7, 48(%1);
+	      movntq %%mm0, 56(%1);
      
-      add $64, %0;
-      add $64, %1;
-      dec %2;
-      jnz loopl;
+	      add $64, %0;
+	      add $64, %1;
+	      dec %2;
+	      jnz loopl;
 
-      emms;"
-      : 
-      : "r"(src), "r"(dst), "c"(n)
-      : "%eax", "%ebx"
-      );
+	      emms;"
+	      : 
+	      : "r"(src), "r"(dst), "c"(n)
+	      : "%eax", "%ebx"
+	      );
 
-  return dst;
+	return dst;
 }
+
+//
+void *asm_memcpy4(void *dst, const void *src, size_t n, int bufid)
+{
+	
+	int dum;
+
+	if(bufid == 0) 
+		ptbuf = tbuf0;
+	else    
+		ptbuf = tbuf1;      
+
+
+	asm __volatile__ (" 
+		movl %1, %%esi;  // %1: src
+	        shr $11, %0;     // %0: n
+		movl %2, %%edi;  // %2: dst
+
+	loop2k: // Copy 2k into temporary buffer 
+		pushl %%edi 
+	        movl ptbuf, %%edi;
+	        movl $2048, %%ecx;
+	        shr $6, %%ecx;
+
+	loopMemToL1: 
+        	prefetchnta 64(%%esi); // Prefetch next loop, non-temporal 
+	        prefetchnta 96(%%esi); 
+
+        	movq 0(%%esi), %%mm1; // Read in source data 
+	        movq 8(%%esi), %%mm2; 
+	        movq 16(%%esi), %%mm3; 
+	        movq 24(%%esi), %%mm4; 
+	        movq 32(%%esi), %%mm5; 
+	        movq 40(%%esi), %%mm6; 
+	        movq 48(%%esi), %%mm7; 
+	        movq 56(%%esi), %%mm0; 
+
+	        movq  %%mm1, 0(%%edi); // Store into L1 
+	        movq  %%mm2, 8(%%edi); 
+	        movq  %%mm3, 16(%%edi); 
+	        movq  %%mm4, 24(%%edi); 
+	        movq  %%mm5, 32(%%edi); 
+	        movq  %%mm6, 40(%%edi); 
+	        movq  %%mm7, 48(%%edi); 
+	        movq  %%mm0, 56(%%edi); 
+
+	        add $64, %%esi;
+	        add $64, %%edi;
+	        dec %%ecx ;
+	        jnz loopMemToL1 ;
+
+	        popl %%edi; // Now copy from L1 to system memory 
+	        pushl %%esi ;
+	        movl ptbuf, %%esi;
+	        movl $2048, %%ecx;
+	        shr $6, %%ecx;
+
+	loopL1ToMem: 
+
+	        movq 0(%%esi), %%mm1; // Read in source data from L1 
+	        movq 8(%%esi), %%mm2; 
+	        movq 16(%%esi), %%mm3; 
+	        movq 24(%%esi), %%mm4;
+	        movq 32(%%esi), %%mm5; 
+	        movq 40(%%esi), %%mm6; 
+	        movq 48(%%esi), %%mm7; 
+	        movq 56(%%esi), %%mm0; 
+
+	        movntq %%mm1, 0(%%edi); // Non-temporal stores 
+	        movntq %%mm2, 8(%%edi); 
+	        movntq %%mm3, 16(%%edi); 
+	        movntq %%mm4, 24(%%edi); 
+	        movntq %%mm5, 32(%%edi); 
+	        movntq %%mm6, 40(%%edi); 
+	        movntq %%mm7, 48(%%edi); 
+	        movntq %%mm0, 56(%%edi); 
+
+	        add $64, %%esi;
+	        add $64, %%edi;
+	        dec %%ecx;
+	        jnz loopL1ToMem ;
+
+	        popl %%esi; // Do next 2k block 
+	 	dec %0
+	        jnz loop2k; 
+		emms;"
+		: "=r"(dum)
+	        : "r"(src), "r"(dst), "0"(n)
+		: "%esi", "%ecx", "%edi", "memory"
+		 );
+
+	return dst;
+}
+
 
 //
 // memory n byte copy from src to dst 
-// use standard memcpy for n%64 bytes from src
+// use standard memcpy for n%64 bytes from src 
 // use asm memory copy for rest of (n - n%64) bytes
+// if n is less than 128, only use memcpy 
 //
-
-void *armci_asm_memcpy(void *dst, const void *src, size_t n)
+void *asm_mcpy(void *dst, const void *src, size_t n)
 {
+    int residual; 
+    int n64;      
 
-    int residual = (int)n % 64;
-    int n64      = n - residual;
-
-    if(residual != 0) memcpy(dst, src, residual);
-
-    if(n64 > 0)
-	asm_memcpy3((char*)dst+residual, 
-		    (char*)src+residual, 
-		    n - residual);
+    if(n < 128) memcpy(dst, src, n);
+    else{
+	residual = (int)n % 64;
+	n64 = n - residual;
+	
+	if(residual != 0) memcpy(dst, src, residual);
+	
+	if(n64 > 0)
+	    asm_memcpy3((char*)dst+residual, 
+			(char*)src+residual, 
+			n - residual);
+    }
 
     return dst;
 }
+
+
+void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid)
+{
+
+#ifdef EX3
+
+    asm_mcpy(dst, src, n);
+
+#else EX4
+    int residual = n % 2048;
+    int n2k  = n - residual;
+
+    if(residual != 0)
+	asm_mcpy(dst, src, residual);
+
+    if(n2k != 0)
+	asm_memcpy4((char*)dst + residual,
+	            (char*)src + residual, 
+	            n - residual, 
+		    bufid);
+
+#endif
+
+    return dst;
+}
+

@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.29 2001-05-31 18:44:11 d3h325 Exp $ */
+/* $Id: copy.h,v 1.30 2001-06-04 23:14:58 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -140,8 +140,13 @@ void FATR DCOPY1D(void*, void*, int*);
 #endif
 
 #ifdef COPY686 
-     extern void *armci_asm_memcpy(void *dst, const void *src, size_t n);
-#    define armci_copy(src,dst,n)  armci_asm_memcpy((dst), (src), (n)) 
+     extern void *armci_asm_memcpy(void *dst, const void *src, size_t n, int tid);
+#    ifdef SERVER_CONTEXT
+#      define armci_copy(src,dst,n) {\
+        int _id= (SERVER_CONTEXT)?1:0; armci_asm_memcpy((dst), (src), (n), _id);}
+#    else
+#      define armci_copy(src,dst,n)  armci_asm_memcpy((dst), (src), (n), 0)
+#    endif
 #    ifndef MEMCPY
 #       define MEMCPY
 #    endif
