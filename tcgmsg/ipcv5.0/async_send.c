@@ -24,17 +24,18 @@ extern void Busy(int);
 #      define FLUSH_CACHE_LINE(x)   shmem_udcflush_line((long*)(x))
 
 #      define COPY_TO_REMOTE(src, dest, n, node) \
-shmem_put((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
+              shmem_put((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
 
 #      define COPY_FROM_REMOTE(src, dest, n, node) \
-shmem_get((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
+              shmem_get((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
 
 #      define COPY_TO_LOCAL(src, dest, n)\
-              (void) copyto(src, dest, (long) n)
-/*              (void)memcpy(dest, src, (size_t) n)*/
+              (void)memcpy(dest, src, (size_t) n)
+/*              (void) copyto(src, dest, (long) n)*/
 
 #      define COPY_FROM_LOCAL(src, dest, n)\
-              (void) copyfrom(src, dest, (long) n)
+              (void)memcpy(dest, src, (size_t) n)
+/*              (void) copyfrom(src, dest, (long) n)*/
 
 #else
 #define COPY_TO_SHMEM(src, dest, n, destnode) (void) memcpy(dest, src, (long) n)

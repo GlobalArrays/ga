@@ -43,7 +43,7 @@ ifeq ($(MACHINE),CRAY-T3D)
 
  OBJ_CORE = pbegin.o queues.o  usleep.o mitob.o mdtob.o\
             async_send.o mtime.o memalign.o drand48.o checkbyte.o busy.o \
-            random.o copyall.o
+            random.o
 endif
 
       OBJ = $(OBJ_CORE) $(EXTRA)  

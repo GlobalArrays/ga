@@ -42,8 +42,9 @@ static struct msg_q_struct{
 
 
 extern char *memalign();
-extern copyto(const void *,  void *, long);
-#define MEMCPY(dst, src, n) copyto((src), (dst), (n))
+/*extern copyto(const void *,  void *, long);*/
+#define MEMCPY(dst, src, n) memcpy(dst, src, (size_t) n)
+/* copyto((src), (dst), (n))*/
 
 static long me, procs;
 /***********************************************************/
