@@ -110,7 +110,7 @@ char dummy[HDLEN];
       }
 
       if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:type",0);
-      DRA[dra_hndl].type = (Integer) input;
+      DRA[dra_hndl].type = (int) input;
       if(!fscanf(fd,"%ld",&input))   dai_error("dai_read_param:layout",0);
       DRA[dra_hndl].layout = (Integer) input;
 
@@ -144,7 +144,7 @@ char dummy[HDLEN];
   
 /*\ Store parameters of a disk array on the disk
 \*/
-void dai_write_param(char* filename,Integer d_a)
+void dai_write_param(char* filename, Integer d_a)
 {
 Integer len;
 FILE *fd;
