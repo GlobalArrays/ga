@@ -1,4 +1,4 @@
-/*$Id: message.h,v 1.3 1995-02-02 23:13:46 d3g681 Exp $*/
+/*$Id: message.h,v 1.4 1995-03-22 19:23:29 d3h325 Exp $*/
 
 /* flags to specify blocking/nonblocking communication in TCGMSG */
 #define SYNC  1
@@ -10,7 +10,11 @@
 #define ALL_CLUST_GRP   2
 #define INTER_CLUST_GRP 3
 
-#define MSG_BUF_SIZE    16384 
+#if defined(NX) || defined(SP1)
+#   define MSG_BUF_SIZE    98304
+#else
+#   define MSG_BUF_SIZE    16384
+#endif
 #define MSG_HEADER_SIZE 10*sizeof(Integer)
 #define TOT_MSG_SIZE    (MSG_BUF_SIZE + MSG_HEADER_SIZE) 
 
