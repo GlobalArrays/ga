@@ -1,7 +1,8 @@
 #ifndef _ARMCI_LOCKS_H_
 #define _ARMCI_LOCKS_H_
 #include <sys/types.h>
-#define NUM_LOCKS 128
+#define MAX_LOCKS 128 
+#define NUM_LOCKS MAX_LOCKS 
 
 
 #ifdef SGI
@@ -70,7 +71,7 @@ int **_armci_lapi_mutexes;
 
 #  include "semaphores.h"
 #  undef NUM_LOCKS
-#  define NUM_LOCKS SEMMSL
+#  define NUM_LOCKS ((MAX_LOCKS< SEMMSL) ? MAX_LOCKS:SEMMSL)
 
 #  define NAT_LOCK(x)   P_semaphore(x)
 #  define NAT_UNLOCK(x)  V_semaphore(x)

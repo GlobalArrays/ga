@@ -1,4 +1,4 @@
-/* $Id: semaphores.c,v 1.6 1999-07-28 00:48:01 d3h325 Exp $ */
+/* $Id: semaphores.c,v 1.7 1999-11-18 01:20:52 d3h325 Exp $ */
 #include "semaphores.h"
 #include <stdio.h>
 
@@ -33,14 +33,14 @@ int semaphoreID;
 int SemGet(num_sem)
     int num_sem;
 {
-  semaphoreID = semget(IPC_PRIVATE,num_sem,0600);
+  semaphoreID = semget(IPC_PRIVATE,num_sem, IPC_CREAT | 0600);
   if(semaphoreID<0){
     fprintf(stderr," Semaphore Allocation Failed \nsuggestions to fix the problem: \n");
     fprintf(stderr," 1. run ipcs and ipcrm -s commands to clean any semaphore ids\n");
     fprintf(stderr," 2. verify if constant SEMMSL defined in file semaphore.h is set correctly for your system\n");
     fprintf(stderr," 3. recompile semaphore.c\n");
        sleep(1);
-       perror((char*)0);
+       perror("Error message from failed semget:");
        armci_die(" exiting ...", num_sem);
     }
        
@@ -73,6 +73,10 @@ void SemInit(id,value)
 void SemDel()
 {
     union semun dummy;
+
+    /* this is only to avoid compiler whinning about the unitialized variable*/
+    dummy.val=0; 
+
     (void) semctl(semaphoreID,0,IPC_RMID,dummy);
 }
 
@@ -94,6 +98,10 @@ void InitLocks(int num, lockset_t id)
 void DeleteLocks(lockset_t id)
 {
     union semun dummy;
+
+    /* this is only to avoid compiler whinning about the unitialized variable*/
+    dummy.val=0; 
+
     (void) semctl(id,0,IPC_RMID,dummy);
 }
 

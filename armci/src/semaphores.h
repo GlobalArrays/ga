@@ -11,6 +11,12 @@
 #   endif
 #endif
 
+/* on HPUX 10.2 SEMMSL is much bigger than realistically we can allocate */  
+#ifdef HPUX
+#undef SEMMSL
+#define SEMMSL 64
+#endif
+
 extern struct sembuf sops;
 extern int semaphoreID;
 int semop();
