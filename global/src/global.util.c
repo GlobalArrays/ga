@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.11 1995-10-11 23:09:21 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.12 1996-01-23 22:33:51 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -38,11 +38,6 @@
 #include <fortran.h>
 #endif
 
-#if !(defined(SGI)||defined(AIX))
-#ifndef CRAY_T3D
-  extern int fprintf();
-#endif
-#endif
 #if defined(SUN)
   void fflush();
 #endif

@@ -796,7 +796,10 @@ void ga_dgop_clust(type, x, n, op, group)
 #    define BUF_SIZE 10000
      Integer  me, lenmes, from, len, root;
      DoublePrecision work[BUF_SIZE], *origx = x;
-     static void ddoop();
+#ifndef HPUX
+     static
+#endif
+     void ddoop();
      Integer ndo, up, left, right, orign = n;
 
 #    ifdef IWAY
@@ -907,7 +910,11 @@ void ga_igop_clust(type, x, n, op, group)
 #    define BUF_SIZE 10000
      Integer  me, lenmes,  from, len, root=0 ;
      Integer work[BUF_SIZE], *origx = x;
-     static void idoop();
+#ifndef HPUX
+     static
+#endif
+     void idoop();
+
      Integer ndo, up, left, right, orign =n;
 
 #    ifdef IWAY

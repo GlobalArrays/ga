@@ -203,12 +203,8 @@ Integer local_buf_req;
 Integer *NumRecReq = &local_buf_req;/* # received requests by data server */
                                     /* overwritten by shmem buf ptr if needed */
     
-#if !(defined(SGI)|| defined(AIX))
-#   ifndef CRAY_T3D
-       int  fprintf();
-#   else
+#ifdef CRAY_T3D
 #      include <fortran.h>
-#   endif
 #endif
 
 /* set total limit (bytes) for memory usage per processor to "unlimited" */ 

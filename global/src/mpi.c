@@ -62,7 +62,7 @@ Integer  len;
               from = me + jump/2;
               if(from < nproc){
                  lenbuf = totbuflen - curlen;
-                 ga_msg_rcv(type, work+curlen, lenbuf, &lenmes, from, &to);
+                 ga_msg_rcv(type, work+(int)curlen, lenbuf, &lenmes, from, &to);
                  curlen += lenmes;
               }
        }

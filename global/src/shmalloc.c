@@ -99,7 +99,7 @@ char *shmalloc(nbytes)
 {
   Header *p, *prevp;
   unsigned nunits;
-#ifdef SGI
+#if defined(SGI) || defined(HPUX)
   Header *morecore();
 #else
   static Header *morecore();
