@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.32 2002-01-29 23:17:33 vinod Exp $ */
+/* $Id: copy.h,v 1.33 2002-04-05 20:50:33 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -96,10 +96,10 @@ void FATR DCOPY1D(void*, void*, int*);
         else shmem_put((long*)(dst),(long*)(src),(int)(n)/sizeof(long),armci_me)
 
 #      define armci_put(src,dst,n,proc) \
-              shmem_put((long*)(dst),(long*)(src),(int)(n)/sizeof(long),(proc))
+              shmem_int_put((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc))
 
 #      define armci_get(src,dst,n,proc)\
-              shmem_get((long*)(dst),(long*)(src),(int)(n)/sizeof(long),(proc))
+              shmem_get((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc))
 
 #elif  defined(HITACHI)
 
@@ -156,15 +156,19 @@ void FATR DCOPY1D(void*, void*, int*);
 
 #ifdef COPY686 
      extern void *armci_asm_memcpy(void *dst, const void *src, size_t n, int tid);
+     extern void *armci_asm_memcpy_fence(void *d,const void *s,size_t n, int id);
 #    ifdef SERVER_CONTEXT
 #      define armci_copy(src,dst,n) {\
         int _id= (SERVER_CONTEXT)?1:0; armci_asm_memcpy((dst), (src), (n), _id);}
 #    else
 #      define armci_copy(src,dst,n)  armci_asm_memcpy((dst), (src), (n), 0)
 #    endif
+#    define armci_copy_fence(_s,_d,_n) armci_asm_memcpy_fence((_d),(_s),(_n),0)
 #    ifndef MEMCPY
 #       define MEMCPY
 #    endif
+#    define MEM_FENCE armci_asm_mem_fence
+     extern void armci_asm_mem_fence();
 #endif
                                                  
 #if  defined(MEMCPY)  && !defined(armci_copy)
@@ -261,6 +265,13 @@ void FATR DCOPY1D(void*, void*, int*);
           pd += dst_stride;\
       }\
     }
+#endif
+
+#ifndef MEM_FENCE
+#   define MEM_FENCE() 
+#endif
+#ifndef armci_copy_fence
+#   define armci_copy_fence armci_copy
 #endif
 
 #endif
