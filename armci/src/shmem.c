@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.44 2001-10-23 00:02:51 edo Exp $ */
+/* $Id: shmem.c,v 1.45 2001-12-04 21:26:14 vinod Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -32,6 +32,7 @@
  
 #define DEBUG_ 0
 #define DEBUG1 0
+#define DEBUG2_ 0
 
 /* For debugging purposes at the beginning of the shared memory region
  * creator process can write a stamp which then is read by attaching processes
@@ -324,7 +325,7 @@ long lower_bound=_SHMMAX*SHM_UNIT;
         }
      }
 
-     if(DEBUG_) printf("%ld bytes segment size, %d calls \n",lower_bound,i);
+     if(DEBUG_) printf("%ld: shmax test no fork: bytes segment size, %d calls \n",lower_bound,i);
      return (int)( lower_bound>>20); /* return shmmax in mb */
 }
 
@@ -365,7 +366,7 @@ void armci_shmem_init()
            if(x>MAX_ALLOC_MUNMAP) x=MAX_ALLOC_MUNMAP;
 #       endif
 
-        if(DEBUG_) printf("GOT %d mbytes max segment size \n",x);fflush(stdout);
+        if(DEBUG_) printf("%d: shmem_init: mbytes max segment size \n",x);fflush(stdout);
         MinShmem = (long)(x<<10); /* make sure it is in kb: mb <<10 */ 
         MaxShmem = MAX_REGIONS*MinShmem;
 #       ifdef REPORT_SHMMAX
@@ -729,8 +730,10 @@ static char *temp;
         region_list[reg].id=0;
       }
       MinShmem= id[SHMIDLEN-2];
-      if(DEBUG_)
-         printf("%d:allocation unit: %ldK\n",armci_me,MinShmem);
+      if(DEBUG2_){
+         printf("%d:attach: allocation unit: %ldK\n",armci_me,MinShmem);
+         fflush(stdout);
+      }
   }
 
   /* search region_list for the current shmem id */
@@ -755,6 +758,10 @@ static char *temp;
        fprintf(stderr,"%d:attach error:id=%ld off=%ld seg=%ld\n",armci_me,*id,offset,MinShmem);
        shmem_errmsg((size_t)MinShmem*1024);
        armci_die("Attach_Shared_Region:failed to attach to segment id=",(int)*id);
+    }
+    if(DEBUG_){
+        printf("%d:attached: id=%d address=%p\n",armci_me,(int)*id, temp);
+        fflush(stdout);
     }
     region_list[reg].addr = temp; 
     region_list[reg].attached = 1;
@@ -789,7 +796,7 @@ size_t sz = (size_t)size;
 #endif
 
     if(DEBUG1){
-       printf("%d:Shmem allocate size %ld bytes\n",armci_me,size); 
+       printf("%d:allocate: Shmem allocate size %ld bytes\n",armci_me,size); 
        fflush(stdout);
     }
 
@@ -812,13 +819,14 @@ size_t sz = (size_t)size;
           armci_die("allocate: failed to create shared region ",id);
        }
 
-    if(DEBUG_){
-      printf("%d:allocate:attach:id=%d paddr=%p size=%ld\n",armci_me,id,pref_addr,size);
-      fflush(stdout);
-    }
        if ( (long)( (temp = shmat(id, pref_addr, shmflag))) == -1L){
           armci_die("allocate: failed to attach to shared region id=",id);
        }
+       if(DEBUG_){
+         printf("%d:allocate:attach:id=%d paddr=%p size=%ld\n",armci_me,id,temp,size);
+         fflush(stdout);
+       }
+
     }
 
     region_list[alloc_regions].addr = temp;
@@ -826,7 +834,7 @@ size_t sz = (size_t)size;
     region_list[alloc_regions].attached=1;
     alloc_regions++;
 
-    if(DEBUG_){
+    if(DEBUG2_){
       printf("%d:allocate:id=%d addr=%p size=%ld\n",armci_me,id,temp,size);
       fflush(stdout);
     }
@@ -879,7 +887,7 @@ int  reg, refreg=0,nreg;
     occup_blocks++;
   
     if(DEBUG_){ 
-      printf("%d:CreatShmReg:reg=%d id=%ld off=%ld ptr=%p adr=%p s=%d n=%d\n",
+      printf("%d:CreateShmReg:reg=%d id=%ld off=%ld ptr=%p adr=%p s=%d n=%d\n",
            armci_me,reg,region_list[reg].id,*offset,region_list[reg].addr,
            temp,(int)size,nreg);
       fflush(stdout);
