@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.123 2005-02-22 01:52:26 manoj Exp $
+# $Id: makefile.h,v 1.124 2005-02-22 18:47:00 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -80,11 +80,12 @@ ifeq ($(TARGET),SOLARIS)
      FOPT_REN = -dalign
  endif
  ifeq ($(_FC),frt)
-     FOPT_REN += -fw -Kfast -KV8PFMADD
+     FOPT_REN = -fw -Kfast -KV8PFMADD
      CMAIN = -Dmain=MAIN__
  endif
  ifeq ($(_CC),fcc)
-      COPT_REN += -Kfast -KV8PFMADD
+      COPT_REN = -Kfast -KV8PFMADD
+      GLOB_DEFINES += -DSPARC64_GP
  endif
      ifdef LARGE_FILES
         LOC_LIBS += $(shell getconf LFS_LIBS)
@@ -103,6 +104,7 @@ ifeq ($(TARGET),SOLARIS64)
   endif
   ifeq ($(_CC),fcc)
      COPT_REN = -Kfast -KV9FMADD
+     GLOB_DEFINES += -DSPARC64_GP
   else
      COPT_REN = -xarch=v9 -dalign
      ifdef USE_INTEGER4

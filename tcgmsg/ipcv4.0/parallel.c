@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.21 2004-04-01 02:04:57 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.22 2005-02-22 18:47:02 manoj Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -234,7 +234,11 @@ static long RemoteCreate(remote_hostname, remote_username,
 #ifndef SUN
     if (proc_id != 0)    	/* Close all uneeded files */
       (void) fclose(stdin);
+#ifdef SPARC64_GP
+    for (i=3; i<62; i++)
+#else
     for (i=3; i<64; i++)
+#endif
       (void) close(i);
 #endif
 

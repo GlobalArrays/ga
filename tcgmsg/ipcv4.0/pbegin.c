@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.19 2004-04-01 02:04:57 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.20 2005-02-22 18:47:02 manoj Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -233,7 +233,11 @@ void PBEGIN_(argc, argv)
 
   if (SR_clus_id != 0)
     (void) fclose(stdin);
+#ifdef SPARC64_GP
+  for (i=3; i<62; i++)
+#else
   for (i=3; i<64; i++)
+#endif
     (void) close((int) i);
 
   /* Connect to the master process which will have process id

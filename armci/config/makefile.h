@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.112 2005-01-20 23:45:03 manoj Exp $
+#$Id: makefile.h,v 1.113 2005-02-22 18:46:55 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -290,10 +290,11 @@ ifeq ($(TARGET),SOLARIS)
       COPT_REN = -dalign
   endif
   ifeq ($(_FC),frt)
-      FOPT_REN += -fw -Kfast -KV8PFMADD
+      FOPT_REN = -fw -Kfast -KV8PFMADD
   endif
   ifeq ($(_CC),fcc)
-      COPT_REN += -Kfast -KV8PFMADD
+      COPT_REN = -Kfast -KV8PFMADD -x0
+      GLOB_DEFINES += -DSPARC64_GP
   endif
 endif
 #
@@ -312,7 +313,8 @@ ifeq ($(TARGET),SOLARIS64)
      FOPT_REN = -dalign -xarch=v9
   endif
   ifeq ($(_CC),fcc)
-     COPT_REN = -Kfast -KV9FMADD
+     COPT_REN = -Kfast -KV9FMADD -x0
+     GLOB_DEFINES += -DSPARC64_GP
   else
      COPT_REN = -dalign -xarch=v9
   endif
