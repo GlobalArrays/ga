@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.4 1999-07-28 00:47:53 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.5 1999-08-16 21:41:51 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -12,9 +12,15 @@
 #include "message.h"
 #include "armcip.h"
 
-#define DEBUG 0
-#define DEBUG_HACK_
+/* DEBUG_HACK enables to simulate cluster environment on a single workstation.
+ * CLUSNODES is the number of processes assigned to each cluster node.
+ * Must define NO_SHMMAX_SEARCH in shmem.c to prevent depleting shared memory
+ * due to a gready shmem request by the master process on cluster node 0.
+ */ 
+#define DEBUG_HACK__
 #define CLUSNODES 2
+
+#define DEBUG 0
 #define MAX_HOSTNAME 80
 
 /*  print info on how many cluster nodes detected */
