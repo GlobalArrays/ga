@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.83 2003-08-01 00:36:07 d3h325 Exp $
+# $Id: makefile.h,v 1.84 2003-08-01 23:28:21 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -571,6 +571,8 @@ ifeq ($(TARGET),NEC)
      FOPT_REN = -ew
      CDEFS    = -hsize_t64 -DEXT_INT
      CLIBS    = -li90sxe
+     LIBBLAS = -lblas
+     HAS_BLAS = yes
 endif
 #
 #.............................. IBM .........................................
@@ -684,6 +686,16 @@ endif
 
 ifdef GA_C_CORE
   DEFINES += -DGA_C_CORE
+endif
+
+# If user specifies a BLAS library instead of the NATIVE(/vendor) blas
+ifeq ($(NATIVE_BLAS), no)
+     HAS_BLAS = 
+     LIBBLAS = $(BLAS_LIB)
+endif
+
+ifeq ($(HAS_BLAS),yes)
+  DEFINES += -DHAS_BLAS
 endif
 
 ifeq ($(MSG_COMMS),MPI)
@@ -826,9 +838,14 @@ ifdef USE_SCALAPACK
   LIBS += $(SCALAPACK)
 endif
 LIBS += -llinalg $(LOC_LIBS)
+
 ifeq ($(HAS_BLAS),yes)
   LIBS += $(LIBBLAS)
 endif
+ifeq ($(NATIVE_BLAS),no)
+  LIBS += $(BLAS_LIB)
+endif
+
 #
 #communication libs
 LIBS += -larmci
