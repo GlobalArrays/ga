@@ -456,7 +456,9 @@ int eaf_truncate(int fd, eaf_off_t length)
   Return 0 on success, non-zero otherwise.
   */
 {
+#ifdef CRAY 
     int rc;
+#endif
 
     if (!valid_fd(fd)) return EAF_ERR_INVALID_FD;
 
