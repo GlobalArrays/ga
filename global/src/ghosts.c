@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.6 2002-01-22 20:05:11 vinod Exp $ */
+/* $Id: ghosts.c,v 1.7 2002-01-23 02:22:41 vinod Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -125,7 +125,7 @@ unsigned long    lref, lptr;
    elemsize = (unsigned long)GA[handle].elemsize;
 
    /* compute index and check if it is correct */
-   switch (GA[handle].type){
+   switch (ga_type_c2f(GA[handle].type)){
      case MT_F_DBL:
         *index = (Integer) ((DoublePrecision*)ptr - DBL_MB);
         lref = (unsigned long)DBL_MB;
