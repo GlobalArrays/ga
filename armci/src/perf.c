@@ -2,7 +2,7 @@
  *    Author: Jialin Ju, PNNL
  */
 
-/* $Id: perf.c,v 1.13 2001-06-04 17:23:18 d3h325 Exp $ */
+/* $Id: perf.c,v 1.14 2002-10-18 18:18:30 vinod Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,14 +100,14 @@ double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
         
         /* prepare next src and dst ptrs: avoid cache locality */
         if(bal == 0) {
-            src_buf += chunk * (loop - i - 1);
-            dst_buf += chunk * (loop - i - 1);
-            if(CHECK_RESULT) tmp_buf_ptr += chunk * (loop - i - 1);
+            src_buf += 128;
+            dst_buf += 128;
+            if(CHECK_RESULT) tmp_buf_ptr += 128;
             bal = 1;
         } else {
-            src_buf -= chunk * (loop - i - 1);
-            dst_buf -= chunk * (loop - i - 1);
-            if(CHECK_RESULT) tmp_buf_ptr -= chunk * (loop - i - 1);
+            src_buf -= 128;
+            dst_buf -= 128;
+            if(CHECK_RESULT) tmp_buf_ptr -= 128;
             bal = 0;
         }
     }
@@ -167,12 +167,12 @@ double time_put(double *src_buf, double *dst_buf, int chunk, int loop,
         
         /* prepare next src and dst ptrs: avoid cache locality */
         if(bal == 0) {
-            src_buf += chunk * (loop - i - 1);
-            dst_buf += chunk * (loop - i - 1);
+            src_buf += 128;
+            dst_buf += 128;
             bal = 1;
         } else {
-            src_buf -= chunk * (loop - i - 1);
-            dst_buf -= chunk * (loop - i - 1);
+            src_buf -= 128;
+            dst_buf -= 128;
             bal = 0;
         }
     }
@@ -234,12 +234,12 @@ double time_acc(double *src_buf, double *dst_buf, int chunk, int loop,
         
         /* prepare next src and dst ptrs: avoid cache locality */
         if(bal == 0) {
-            src_buf += chunk * (loop - i - 1);
-            dst_buf += chunk * (loop - i - 1);
+            src_buf += 128;
+            dst_buf += 128;
             bal = 1;
         } else {
-            src_buf -= chunk * (loop - i - 1);
-            dst_buf -= chunk * (loop - i - 1);
+            src_buf -= 128;
+            dst_buf -= 128;
             bal = 0;
         }
     }
