@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.42 2002-05-23 16:07:05 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.43 2002-05-23 17:01:38 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -3256,14 +3256,16 @@ void FATR dra_internals_(Integer *d_a)
         printf("  DRA access permisions are UNKNOWN\n");
         break;
     }
-    printf("  Dimension of DRA: %d\n",ndim);
+    printf("  Dimension of DRA: %d\n",(int)ndim);
     printf("  Dimensions of DRA:\n");
     for (i=0; i<ndim; i++) {
-      printf("    Dimension in direction [%d]: %d\n",i,dims[i]);
+      printf("    Dimension in direction [%d]: %d\n",(int)(i+1),
+             (int)dims[i]);
     }
     printf("  Chunk dimensions of DRA:\n");
     for (i=0; i<ndim; i++) {
-      printf("    Chunk dimension in direction [%d]: %d\n",i,dims[i]);
+      printf("    Chunk dimension in direction [%d]: %d\n",(int)(i+1),
+             (int)chunks[i]);
     }
     if (DRA[handle].actv) {
       printf("  DRA is currently active\n");
