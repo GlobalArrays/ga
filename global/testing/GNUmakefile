@@ -50,11 +50,11 @@ endif
 # Highly system dependent !!!
 
 
-#on Fujitsu need to rename main to avoid conflict with Fortran libs
-ifeq ($(TARGET),FUJITSU-VPP)
-   COPT_REN += -Dmain=MAIN__
-endif 
-
+#on Fujitsu or Linux with Portran Group fortran we need to rename C  main 
+# to avoid conflict with Fortran libs
+ifdef CMAIN 
+  CFLAGS += $(CMAIN) 
+endif
 
 ifeq ($(MSG_COMMS), MPI)
   P_FILE = no
