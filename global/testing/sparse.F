@@ -1,4 +1,4 @@
-C
+Cx
 C     Test the minval, minloc, maxval, maxloc, and enum functions in GA.
 C
       program main
@@ -79,12 +79,13 @@ c
       integer iv(m)                           ! scatter index array 
       double precision v(m)                   ! scatter value array
       integer iran
-      iran(i) = int(util_drand(1)*real(i)) + 1
 c
       integer ilocmax, ilocmin
       integer ilocmax_ga, ilocmin_ga
       double precision xmax1, xmin1
       double precision xmax_ga, xmin_ga
+c
+      iran(i) = int(util_drand(1)*real(i)) + 1
 c
 c***  check parallel environment
       me = ga_nodeid()
