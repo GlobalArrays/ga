@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.1 1996-07-17 15:28:28 mogill Exp $
+#$Id: makefile,v 1.2 1996-07-17 15:58:12 mogill Exp $
 #
 # Nakefile for EAF of ChemIO 
 #

@@ -11,8 +11,8 @@ Date Created:   16 May 1996
 Modifications:
 
 CVS: $Source: /tmp/hpctools/ga/pario/eaf/eaf_c2f.c,v $
-CVS: $Date: 1996-07-17 15:28:21 $
-CVS: $Revision: 1.1 $
+CVS: $Date: 1996-07-17 15:58:07 $
+CVS: $Revision: 1.2 $
 CVS: $State: Exp $
 ******************************************************************************/
 

@@ -2,6 +2,11 @@
  ELementary I/O (ELIO) disk operations for Chemio libraries   
 \**********************************************************************/
 
+#if defined(PABLO)
+#  define IOTRACE
+#  include "IOTrace.h"
+#endif
+
 
 #include "elio.h"
 #include <errno.h>
@@ -82,6 +87,8 @@ Size_t elio_write(fd, offset, buf, bytes)
 Size_t stat, bytes_to_write = bytes;
 int    attempt=0;
 
+      PABLO_start( PABLO_elio_write );
+
       /* lseek error is always fatal */
       if(offset != lseek(fd->fd, offset, SEEK_SET))
                          ELIO_ABORT("elio_write: seek broken:",0);
@@ -104,6 +111,8 @@ int    attempt=0;
 
       if(_elio_Errors_Fatal && stat != bytes) 
 	ELIO_ABORT("elio_write: failed", 0);
+
+      PABLO_end(PABLO_elio_write);
       return(stat);
 }
 
@@ -116,6 +125,8 @@ void elio_set_cb(fd, offset, reqn, buf, bytes)
      Void  *buf;
      Size_t bytes;
 {
+  PABLO_start(PABLO_elio_set_cb);
+
 #if defined(PARAGON) && defined(DEBUG)
   fprintf(stderr, "elio_set_cb: No control block to set on Paragon\n");
 #endif
@@ -140,6 +151,8 @@ void elio_set_cb(fd, offset, reqn, buf, bytes)
   ELIO_ABORT("elio_set_cb: Should not be called without AIO service.\n",1);
 #  endif
 #endif
+
+  PABLO_end(PABLO_elio_set_cb);
 }
 
 
@@ -156,6 +169,8 @@ int elio_awrite(fd, offset, buf, bytes, req_id)
 {
   Size_t stat;
   int    aio_i = 0;
+
+  PABLO_start(PABLO_elio_awrite);
 
   *req_id = ELIO_DONE;
   AIO_LOOKUP;
@@ -189,6 +204,8 @@ int elio_awrite(fd, offset, buf, bytes, req_id)
     };
   if(_elio_Errors_Fatal && stat ==-1) 
     ELIO_ABORT("elio_awrite: failed", 0);
+
+  PABLO_end(PABLO_elio_awrite);
   return(stat);
 }
 
@@ -204,6 +221,8 @@ Size_t       bytes;
 {
 Size_t stat, bytes_to_read = bytes;
 int    attempt=0;
+
+  PABLO_start(PABLO_elio_read);
 
       /* lseek error is always fatal */
       if(offset != lseek(fd->fd, offset, SEEK_SET))
@@ -227,7 +246,9 @@ int    attempt=0;
 
       if(_elio_Errors_Fatal && stat != bytes) 
 	ELIO_ABORT("elio_read: failed", 0);
-      return(stat);
+
+  PABLO_end(PABLO_elio_read);
+  return(stat);
 }
 
 
@@ -243,6 +264,8 @@ io_request_t *req_id;
 {
   Size_t stat;
   int    aio_i = 0;
+
+  PABLO_start(PABLO_elio_aread);
 
   *req_id = ELIO_DONE;
   AIO_LOOKUP;
@@ -275,6 +298,8 @@ io_request_t *req_id;
     };
   if(_elio_Errors_Fatal && stat ==-1) 
     ELIO_ABORT("elio_aread: failed", 0);
+
+  PABLO_end(PABLO_elio_aread);
   return(stat);
 }
 
@@ -286,7 +311,8 @@ io_request_t *req_id;
 {
   int  aio_i=0;
   int  rc;
-  
+ 
+  PABLO_start(PABLO_elio_wait); 
   if(*req_id != ELIO_DONE )
     { 
 #if defined(PARAGON)
@@ -310,7 +336,9 @@ io_request_t *req_id;
 	ELIO_ABORT("elio_wait: Handle %d, is not in aio_req table", 1);
       aio_req[aio_i] = NULL_AIO;
       *req_id = ELIO_DONE;
-   }
+   };
+
+   PABLO_end(PABLO_elio_wait);
    return ELIO_OK;
 }
 
@@ -325,6 +353,7 @@ int          *status;
   int    errval;
   int    aio_i = 0;
      
+   PABLO_start(PABLO_elio_probe);
    if(*req_id != ELIO_DONE)
      {
 #if defined(PARAGON)
@@ -350,7 +379,8 @@ int          *status;
        default:          ELIO_ABORT("problem in elio_probe",errval);
 			 return ELIO_FAIL;
        };
-     }
+     };
+   PABLO_end(PABLO_elio_probe);
    return ELIO_OK;
 }
 
@@ -374,7 +404,8 @@ char *fname;
 #if defined(AIX)
   piofs_statfs_t piofs_stat;
 #endif
-  
+ 
+  PABLO_start(PABLO_elio_stat); 
 
   if(fname[0] == '/')
      {
@@ -426,6 +457,7 @@ char *fname;
 #if defined(DEBUG)
    fprintf(stderr, "Determined filesystem: %d\n", ret_fs);
 #endif
+   PABLO_end(PABLO_elio_stat);
    return(ret_fs);
 }
 
@@ -440,7 +472,8 @@ int   type;
 {
   Fd_t *fd;
   int ptype;
-  
+
+  PABLO_start(PABLO_elio_open); 
   if(first_elio_init) elio_init();
   
    switch(type){
@@ -462,6 +495,8 @@ int   type;
    fd->fd = open(fname, ptype, FOPEN_MODE );
    if(_elio_Errors_Fatal && (int)fd->fd == -1)
      ELIO_ABORT("elio_open failed",0);
+
+   PABLO_end(PABLO_elio_open);
    return(fd);
 }
 
@@ -476,6 +511,7 @@ int   type;
 {
   Fd_t *fd;
 
+  PABLO_start(PABLO_elio_gopen);
   if(first_elio_init) elio_init();
   
 #  if defined(PARAGON)
@@ -504,6 +540,8 @@ int   type;
 
    if(_elio_Errors_Fatal && (int)fd->fd == -1)
      ELIO_ABORT("elio_gopen failed",0);
+
+   PABLO_end(PABLO_elio_gopen);
    return(fd);
 }
 
@@ -513,10 +551,14 @@ int   type;
 void elio_close(fd)
 Fd_t *fd;
 {
+   PABLO_start(PABLO_elio_close);
+
    /* if close fails, it must be a fatal error */
    if(close(fd->fd)==-1) 
      ELIO_ABORT("elio_close failed:",0);
    free(fd);
+
+   PABLO_end(PABLO_elio_close):
 }
 
 
@@ -525,11 +567,15 @@ Fd_t *fd;
 int elio_delete(filename)
 char  *filename;
 {
-int rc;
+   int rc;
+
+   PABLO_start(PABLO_elio_delete);
 
     rc = unlink(filename);
     if(_elio_Errors_Fatal && rc ==-1) 
       ELIO_ABORT("elio_delete failed",0);
+
+    PABLO_end(PABLO_elio_delete);
     return(rc);
 }
 
@@ -541,6 +587,8 @@ void elio_init()
 {
   int i;
 
+  PABLO_start(PABLO_elio_init);
+
   if(first_elio_init)
     {
       first_elio_init = 0;
@@ -549,6 +597,8 @@ void elio_init()
 	aio_req[i] = NULL_AIO;
 #endif
     };
+
+  PABLO_end(PABLO_elio_init);
 }
 
 

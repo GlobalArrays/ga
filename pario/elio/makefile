@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.1 1996-07-17 15:29:03 mogill Exp $
+#$Id: makefile,v 1.2 1996-07-17 15:59:15 mogill Exp $
 #
 # ChemIO makefile for making ELIO
 #
