@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/random.c,v 1.6 2002-01-28 20:07:37 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/random.c,v 1.7 2002-01-29 01:52:56 d3h325 Exp $ */
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -365,3 +365,11 @@ random()
 	return( i );
 }
 
+double drand_(flag)
+    unsigned long *flag;
+{
+  if (*flag)
+    srandom((unsigned) *flag);
+
+  return ((double) random()) * 4.6566128752458e-10;
+}
