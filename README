@@ -268,6 +268,12 @@ huge arrays (>4GB) in which case 64-bit addressing is required
 variable can be used to choose the optimal compiler flags 
 for R8000 and R10000 processors.
 
+In 64 bit platforms, if you are not using native vendor specific blas 
+library, (as the vendor blas libraries are mostly compiled with integer 
+as 4 bytes), then set the following environment variables:
+	setenv NATIVE_BLAS no
+	setenv BLAS_LIB specify_your_blas_library
+		e.g.setenv BLAS_LIB -L/usr/lib/libblas.a
 
 SUBDIRECTORIES:
 ~~~~~~~~~~~~~~
@@ -330,9 +336,9 @@ the DoE-2000 ACTS project. GA is a part of the ACTS toolkit:
 http://acts.nersc.gov 
 
 
-SUPPORT/BUG REPORT
-~~~~~~~~~~~~~~~~~~
-email: parsoft-support@emsl.pnl.gov
+HELP/SUPPORT/BUG-REPORT
+~~~~~~~~~~~~~~~~~~~~~~~
+email: hpctools@emsl.pnl.gov
 
 
 QUESTIONS and OTHER ISSUES
