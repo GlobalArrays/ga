@@ -2,7 +2,7 @@
  *    Author: Jialin Ju, PNNL
  */
 
-/* $Id: perf.c,v 1.16 2003-03-28 21:53:07 d3h325 Exp $ */
+/* $Id: perf.c,v 1.17 2003-04-14 17:58:44 d3h325 Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -472,10 +472,10 @@ int main(int argc, char **argv)
   MP_MYID(&me);
   MP_PROCS(&nproc);
 
-    if(nproc < 2) {
+    if(nproc < 2 || nproc> MAXPROC) {
         if(me == 0)
             fprintf(stderr,
-                    "USAGE: 2 <= processes < %d\n", nproc);
+                    "USAGE: 2 <= processes < %d - got %d\n", MAXPROC, nproc);
         MP_BARRIER();
         MP_FINALIZE();
         exit(0);
