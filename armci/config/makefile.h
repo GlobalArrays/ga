@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.106 2004-07-02 00:25:49 manoj Exp $
+#$Id: makefile.h,v 1.107 2004-07-23 01:08:07 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -166,8 +166,8 @@ endif
 ifeq  ($(_CPU),ia64)
      FC=efc
      CC=gcc
-# _SGIALTIX= $(shell /bin/rpm -q -i sgi-mpt  2>&1| head -1|egrep Reloc|awk ' /Rel/  {print "Y"}')
-# _SGIALTIX= $(shell /bin/rpm -q --last sgi-mpt  2>&1| head -1|egrep Reloc|awk ' /20/  {print "Y"}')
+# _SGIALTIX= $(shell /bin/rpm -q -i sgi-mpt  2>&1| head -n 1|egrep Reloc|awk ' /Rel/  {print "Y"}')
+# _SGIALTIX= $(shell /bin/rpm -q --last sgi-mpt  2>&1| head -n 1|egrep Reloc|awk ' /20/  {print "Y"}')
   _SGIALTIX= $(shell if [ -r /proc/sgi_sn/system_serial_number ]; then /bin/echo Y; fi) 
   ifeq ($(_SGIALTIX),Y)
    GLOB_DEFINES += -DSGIALTIX
@@ -577,7 +577,7 @@ ifdef IBM_
        CDEFS += -DEXTNAME
            FC = xlf
 GLOB_DEFINES += -DAIX
-         _CPU = $(shell lsattr -El `lsdev -C -c processor -F name | head -1` | awk ' /POWER4/ { print "PWR4" };')
+         _CPU = $(shell lsattr -El `lsdev -C -c processor -F name | head -n 1` | awk ' /POWER4/ { print "PWR4" };')
 endif
 #
 ifeq ($(_CPU),PWR4)
