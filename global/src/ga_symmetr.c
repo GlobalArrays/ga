@@ -53,7 +53,7 @@ ga_symmetrize_(Integer *g_a) {
   Integer blo[GA_MAX_DIM], bhi[GA_MAX_DIM], ldb[GA_MAX_DIM];
   Integer ndim, dims[GA_MAX_DIM], type;
   Logical have_data;
-  Integer g_b; // temporary global array (b = A')
+  Integer g_b; /* temporary global array (b = A') */
   Void *a_ptr, *b_ptr;
   Integer bindex;
   
