@@ -165,6 +165,7 @@
 #define  nga_create_               NGA_CREATE
 #define  nga_create_irreg_         NGA_CREATE_IRREG
 #define  nga_create_ghosts_irreg_  NGA_CREATE_GHOSTS_IRREG
+#define  nga_create_ghosts_        NGA_CREATE_GHOSTS
 #define  nga_has_ghosts_           NGA_HAS_GHOSTS
 #define  nga_update_               NGA_UPDATE
 #define  nga_acc_                  NGA_ACC

@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.5 2001-08-29 16:04:23 d3g293 Exp $ */
+/* $Id: base.c,v 1.6 2001-08-29 16:58:47 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -696,6 +696,99 @@ extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
       return status;
 }
 
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
+ *  Allow machine to choose location of array boundaries on individual
+ *  processors.
+\*/
+logical nga_create_ghosts(Integer type,
+                   Integer ndim,
+                   Integer dims[],
+                   Integer width[],
+                   char* array_name,
+                   Integer chunk[],
+                   Integer *g_a)
+{
+Integer pe[MAXDIM], *pmap[MAXDIM], *map;
+Integer d, i;
+Integer blk[MAXDIM];
+logical status;
+/*
+extern void ddb(Integer ndims, Integer dims[], Integer npes,
+Integer blk[], Integer pedims[]);
+*/
+extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,double thr,
+            Integer bias, Integer blk[], Integer pedims[]);
+
+      GA_PUSH_NAME("nga_create_ghosts");
+      if(!GAinitialized) ga_error("GA not initialized ", 0);
+      gam_checktype(type);
+      gam_checkdim(ndim, dims);
+
+      if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
+          for(d=0; d< ndim; d++) blk[d]=MIN(chunk[d],dims[d]);
+      else
+          for(d=0; d< ndim; d++) blk[d]=-1;
+
+      /* eliminate dimensions =1 from ddb analysis */
+      for(d=0; d<ndim; d++)if(dims[d]==1)blk[d]=1;
+      
+      /* for load balancing overwrite block size if needed */ 
+/*      for(d=0; d<ndim; d++)if(blk[d]*GAnproc < dims[d])blk[d]=-1;*/
+
+      if(GAme==0 && DEBUG )for(d=0;d<ndim;d++) fprintf(stderr,"b[%ld]=%ld\n",d,blk[d]);
+      ga_sync_();
+
+/*      ddb(ndim, dims, GAnproc, blk, pe);*/
+      ddb_h2(ndim, dims, GAnproc, 0.0, (Integer)0, blk, pe);
+
+      for(d=0, map=mapALL; d< ndim; d++){
+        Integer nblock;
+        Integer pcut; /* # procs that get full blk[] elements; the rest gets less*/
+        int p;
+
+        pmap[d] = map;
+
+        /* RJH ... don't leave some nodes without data if possible
+         but respect the users block size */
+           
+        if (chunk && chunk[d] > 1) {
+          Integer ddim = (dims[d]-1)/MIN(chunk[d],dims[d]) + 1;
+          pcut = (ddim -(blk[d]-1)*pe[d]) ;
+        }
+        else {
+          pcut = (dims[d]-(blk[d]-1)*pe[d]) ;
+        }
+
+        for (nblock=i=p=0; (p<pe[d]) && (i<dims[d]); p++, nblock++) {
+          Integer b = blk[d];
+          if (p >= pcut)
+            b = b-1;
+          map[nblock] = i+1;
+          if (chunk && chunk[d]>1) b *= MIN(chunk[d],dims[d]);
+          i += b;
+        }
+
+        pe[d] = MIN(pe[d],nblock);
+        map +=  pe[d]; 
+      }
+
+      if(GAme==0&& DEBUG){
+         gai_print_subscript("pe ",(int)ndim, pe,"\n");
+         gai_print_subscript("blocks ",(int)ndim, blk,"\n");
+         printf("decomposition map\n");
+         for(d=0; d< ndim; d++){
+           printf("dim=%ld: ",d); 
+           for (i=0;i<pe[d];i++)printf("%ld ",pmap[d][i]);
+           printf("\n"); 
+         }
+         fflush(stdout);
+      }
+      status = nga_create_ghosts_irreg(type, ndim, dims, width, array_name,
+               mapALL, pe, g_a);
+      GA_POP_NAME;
+      return status;
+}
+
 /*\ CREATE A 2-DIMENSIONAL GLOBAL ARRAY
  *  Allow machine to choose location of array boundaries on individual
  *  processors.
@@ -809,7 +902,7 @@ logical status;
 
 }
 
-/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLSi
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
  * -- IRREGULAR DISTRIBUTION
  *  Fortran version
 \*/
@@ -878,6 +971,28 @@ char buf[FNAM];
 #endif
 
   return (nga_create(*type, *ndim,  dims, buf, chunk, g_a));
+}
+
+/*\ CREATE AN N-DIMENSIONAL GLOBAL ARRAY WITH GHOST CELLS
+ *  Fortran version
+\*/
+#if defined(CRAY) || defined(WIN32)
+logical FATR nga_create_ghosts_(Integer *type, Integer *ndim, Integer *dims,
+                   Integer *width, _fcd array_name, Integer *chunk, Integer *g_a)
+#else
+logical FATR nga_create_ghosts_(Integer *type, Integer *ndim, Integer *dims,
+                   Integer *width, char* array_name, Integer *chunk, Integer *g_a,
+                   int slen)
+#endif
+{
+char buf[FNAM];
+#if defined(CRAY) || defined(WIN32)
+      f2cstring(_fcdtocp(array_name), _fcdlen(array_name), buf, FNAM);
+#else
+      f2cstring(array_name ,slen, buf, FNAM);
+#endif
+
+  return (nga_create_ghosts(*type, *ndim,  dims, width, buf, chunk, g_a));
 }
 
 /*\ CREATE A 2-DIMENSIONAL GLOBAL ARRAY -- IRREGULAR DISTRIBUTION

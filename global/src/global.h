@@ -177,6 +177,14 @@ extern logical nga_create_ghosts_irreg(
         Integer nblock[], /* number of blocks for each dimension in map */
         Integer *g_a);    /* array handle (output) */
 
+extern logical nga_create_ghosts(Integer type,
+                   Integer ndim,
+                   Integer dims[],
+                   Integer width[],
+                   char* array_name,
+                   Integer chunk[],
+                   Integer *g_a);
+
 extern logical nga_create(Integer type,
                    Integer ndim,
                    Integer dims[],

@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.34 2001-08-24 18:33:09 d3g293 Exp $ */
+/* $Id: capi.c,v 1.35 2001-08-29 16:58:47 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -170,6 +170,26 @@ int NGA_Create_ghosts_irreg(int type,int ndim,int dims[],int width[],char *name,
     st = nga_create_ghosts_irreg(type, (Integer)ndim, _ga_dims, _ga_width, name, ptr,
         _ga_work, &g_a);
 
+    if(st==TRUE) return (int) g_a;
+    else return 0;
+}
+
+int NGA_Create_ghosts(int type, int ndim,int dims[], int width[], char *name,
+    int chunk[])
+{
+    Integer *ptr, g_a; 
+    logical st;
+    if(ndim>MAXDIM)return 0;
+
+    COPYC2F(dims,_ga_dims, ndim);
+    COPYC2F(width,_ga_width, ndim);
+    if(!chunk)ptr=(Integer*)0;  
+    else {
+         COPYC2F(chunk,_ga_work, ndim);
+         ptr = _ga_work;
+    }
+    st = nga_create_ghosts((Integer)type, (Integer)ndim, _ga_dims,
+        _ga_width, name, ptr, &g_a);
     if(st==TRUE) return (int) g_a;
     else return 0;
 }

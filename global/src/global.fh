@@ -25,7 +25,7 @@
 !
       integer nga_read_inc
       logical nga_create, nga_locate, nga_create_irreg
-      logical nga_create_ghosts_irreg
+      logical nga_create_ghosts_irreg,nga_create_ghosts
 !
       external ga_create, ga_destroy, ga_ddot, ga_locate
       external ga_nnodes, ga_nodeid, ga_read_inc, ga_create_irreg
@@ -39,6 +39,6 @@
       external ga_ndim
       external ga_spd_invert, ga_solve, ga_llt_solve
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg
-      external nga_create_ghosts_irreg
+      external nga_create_ghosts_irreg,nga_create_ghosts
       external nga_ddot_patch, nga_zdot_patch, nga_idot_patch
       external ga_sdot, ga_sdot_patch, nga_sdot_patch
