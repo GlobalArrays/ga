@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.57 2002-09-30 18:56:43 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.58 2002-11-26 23:09:26 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -221,7 +221,15 @@ Integer num;
         num = (INDEPFILES(d_a)) ? INFINITE_NUM_PROCS: DRA_NUM_IOPROCS; 
 #endif
 */
-        num = ga_cluster_nnodes_();
+        if (INDEPFILES(d_a)) {
+          num = ga_cluster_nnodes_();
+        } else {
+          if (ga_cluster_nnodes_() >= DRA_NUM_IOPROCS) {
+            num = ga_cluster_nnodes_();
+          } else {
+            num = DRA_NUM_IOPROCS;
+          }
+        }
 
         return( MIN( ga_nnodes_(), num));
 }
@@ -240,8 +248,17 @@ Integer zero = 0;
         * if proc id beyond I/O procs number, negate it
         */
 
-        if(me == ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
-        else me = -1;
+        if (INDEPFILES(d_a)) {
+          if(me == ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
+          else me = -1;
+        } else {
+          if (ga_cluster_nnodes_() >= DRA_NUM_IOPROCS) {
+            if(me == ga_cluster_procid_(&nodeid, &zero)) me = nodeid;
+            else me = -1;
+          } else {
+            if (me >= dai_io_procs(d_a)) me = -me;
+          }
+        }
 
 /*        if (me >= dai_io_procs(d_a)) me = -me;*/
         return (me);
