@@ -38,7 +38,7 @@ int SR_caught_sigint;     /* for compatibility with TCGMSG interface only */
 #define DEBUG 0
 
 MPI_Comm GA_MPI_COMM;
-static comm_init=0;
+static int comm_init=0;
 
 
 /*\ returns communicator for GA compute processes
