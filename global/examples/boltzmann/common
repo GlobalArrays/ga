@@ -1,6 +1,6 @@
       implicit none
-      integer NDIM, NSIZE, BSIZE
-      parameter (NDIM=2, NSIZE=129, BSIZE=129)
+      integer NDIM, NSIZE
+      parameter (NDIM=2, NSIZE=129)
       common /indices/ lo(NDIM+1), hi(NDIM+1), size(NDIM), width(NDIM),
      +                 dims(NDIM)
       integer lo, hi, size, width, dims
