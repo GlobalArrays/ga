@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.26 2002-11-26 01:25:10 d3h325 Exp $ */
+/* $Id: base.c,v 1.27 2002-11-26 20:38:20 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -329,7 +329,7 @@ int bytes;
        GA[i].mapc = (int*)0;
     }
 
-    bzero(GAstat,sizeof(GAstat));
+    bzero(&GAstat,sizeof(GAstat));
 
     GAnproc = (Integer)armci_msg_nproc();
 
