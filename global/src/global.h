@@ -118,7 +118,7 @@ extern void ga_matmul_patch  ARGS_((char *, char *, DoublePrecision *,
       Integer *, Integer *, Integer *, Integer *, Integer *, Integer *,
       Integer *, Integer *, Integer *, Integer*));
 
-exten void nga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
+extern void nga_matmul_patch(char *transa, char *transb, void *alpha, void *beta, 
 		      Integer *g_a, Integer alo[], Integer ahi[], 
                       Integer *g_b, Integer blo[], Integer bhi[], 
 		      Integer *g_c, Integer clo[], Integer chi[]);
