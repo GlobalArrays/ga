@@ -28,6 +28,10 @@
 #   define VIADEV_NAME "/dev/clanvi0"
 #endif
 
+/* SHORTNAME is use to bridge the hostname as retruned by gethostbyname() and
+   used by VipNSGetHostByName - on Giganet at least it must be w/o domainname */
+#define SHORTNAME
+
 #define ADDR_LEN 6
 #define FOURTY 40
 #define NONE -1
@@ -281,12 +285,11 @@ VIP_VI_ATTRIBUTES vattr;
     return(vi);
 }
     
-
+#define SHORTNAME  
 void armci_make_netaddr_(VIP_NET_ADDRESS *pnaddr, char* hostname, discrim_t dm)
 {
 VIP_RETURN rc;
 char *p = (char*)pnaddr;
-
     rc = VipNSGetHostByName(SRV_nic->handle,hostname,pnaddr,0);
     armci_check_status(DEBUG0, rc,"get host name address");
 
@@ -299,9 +302,17 @@ char *p = (char*)pnaddr;
 void armci_make_netaddr(VIP_NET_ADDRESS *pnaddr, char* hostname)
 {
 VIP_RETURN rc;
+#ifdef SHORTNAME
+    char *found=strchr(hostname,'.'); 
+    if(found)*found='\0';  /* truncate hostname to cut off domainname */
+#endif
 
     rc = VipNSGetHostByName(SRV_nic->handle,hostname,pnaddr,0);
     armci_check_status(DEBUG0, rc,"get host name address");
+
+#ifdef SHORTNAME
+    if(found)*found='.'; /* restores the original full name */
+#endif
 
     pnaddr->HostAddressLen = SRV_nic->attr.NicAddressLen;
     pnaddr->DiscriminatorLen = sizeof(discrim_t);
