@@ -141,7 +141,7 @@ endif
 ifeq  ($(_CPU),ia64)
      FC=efc
      CC=gcc
- _SGIALTIX= $(shell /bin/rpm -q -i sgi-mpt  2>&1|egrep Reloc|awk ' /Rel/  {print "Y"}')
+ _SGIALTIX= $(shell /bin/rpm -q -i sgi-mpt  2>&1| head -1|egrep Reloc|awk ' /Rel/  {print "Y"}')
   ifeq ($(_SGIALTIX),Y)
    GLOB_DEFINES += -DSGIALTIX
   endif
