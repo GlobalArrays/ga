@@ -20,6 +20,11 @@
  * reproduce, prepare derivative works, perform publicly and display
  * publicly by or for the US Government, including the right to
  * distribute to other US Government contractors.
+ *
+ * History: 
+ * 03/00,Jialin: initial version
+ * 9/8/00, Jarek: added armci_gm_server_ready to fix timing problems at startup
+ *
  */
 
 
@@ -44,6 +49,8 @@ armci_gm_context_t *armci_gm_context, *armci_gm_serv_context;
 armci_gm_context_t *armci_serv_ack_context;
 
 int armci_gm_bypass = 0;
+static int armci_gm_server_ready = 0;
+
 GM_ENTRY_POINT char * _gm_get_kernel_build_id(struct gm_port *p);
 
 /*********************************************************************
@@ -317,6 +324,10 @@ void armci_client_create_connection_gm()
 {
     int i;
     int server_mpi_id, size;
+ 
+    /* make sure that server thread is ready */
+    if(armci_me == armci_master) while(!armci_gm_server_ready) usleep(100);
+    armci_msg_barrier();
 
     /* make initial conection to the server, not the server in this node */
     for(i=0; i<armci_nclus; i++) {
@@ -558,7 +569,7 @@ void armci_serv_callback_nonblocking(struct gm_port *port, void *context,
         armci_die(" armci_serv_callback_nonblocking: send failed", 0);
 }
 
-/* server trigues gm_unknown, so that callback func can be executed */
+/* server trigers gm_unknown, so that callback func can be executed */
 int armci_serv_send_complete()
 {
     gm_recv_event_t *event;
@@ -897,6 +908,9 @@ void armci_data_server_gm()
         fprintf(stdout, "%d(server): waiting for request\n",armci_me);
         fflush(stdout);
     }
+
+    /* notify client thread that we are ready to take requests */
+    armci_gm_server_ready = 1;
 
     /* server main loop; wait for and service requests until QUIT requested */
     while(!iexit) {        
