@@ -28,5 +28,14 @@ extern void armci_relbuf(void *buf);
 #define GET_SEND_BUFFER(_size) armci_getbuf(_size)
 #define FREE_SEND_BUFFER(x) armci_relbuf(x)
 
+#define CLIENT_BUF_BYPASS_ 
+#define LONG_GET_THRESHOLD 10000
+#define LONG_GET_THRESHOLD_STRIDED 20000000
+#define _armci_bypass 1
+extern int armci_pin_memory(void *ptr, int stride_arr[], int count[], int lev);
+extern void armci_unpin_memory(void *ptr,int stride_arr[],int count[],int lev);
+extern void armci_client_send_ack(int p, int success);
+extern void armcill_server_wait_ack(int proc, int n);
+extern void armcill_server_put(int proc, void* s, void *d, int len);
 
 #endif

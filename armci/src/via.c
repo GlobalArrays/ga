@@ -1,4 +1,4 @@
-/* $Id: via.c,v 1.20 2001-09-21 01:14:35 d3h325 Exp $ */
+/* $Id: via.c,v 1.21 2001-09-26 00:54:53 d3h325 Exp $ */
 #include <stdio.h>
 #include <strings.h>
 #include <assert.h>
@@ -77,6 +77,11 @@ typedef struct {
 } armci_connect_t;
 
 typedef struct {
+   VIP_MEM_HANDLE *prem_handle; /*address on rem server to store memory handle*/
+   VIP_MEM_HANDLE handle;
+}ack_t;
+
+typedef struct {
    char st_host[FOURTY];
 }armci_hostaddr_t;
 
@@ -113,6 +118,9 @@ static vbuf_long_t *client_buf, *serv_buf;
 static VIP_MEM_HANDLE serv_memhandle, client_memhandle;
 static armci_connect_t *SRV_con;
 static armci_connect_t *CLN_con;
+static VIP_MEM_HANDLE *CLN_handle;
+static ack_t *SRV_ack;
+static VIP_MEM_HANDLE *pinned_handle;
 
 #define MAX_DESCR 16
 typedef struct { 
@@ -355,12 +363,13 @@ void armci_server_alloc_bufs()
 VIP_RETURN rc;
 VIP_MEM_ATTRIBUTES mattr;
 int mod, bytes, total, extra =sizeof(VIP_DESCRIPTOR)*MAX_DESCR+SIXTYFOUR;
+int mhsize = armci_nproc*sizeof(VIP_MEM_HANDLE); /* ack */
 char *tmp, *tmp0;
 int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
 
      /* allocate memory for the recv buffers-must be alligned on 64byte bnd */
      /* note we add extra one to repost it for the client we are received req */
-     bytes = (clients+1)*sizeof(vbuf_t) + sizeof(vbuf_long_t) + extra;
+     bytes = (clients+1)*sizeof(vbuf_t) + sizeof(vbuf_long_t) + extra+ mhsize;
      total = bytes + SIXTYFOUR;
      tmp0=tmp = malloc(total);
      if(!tmp) armci_die("failed to malloc server vbufs",total);
@@ -368,6 +377,12 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
      /* stamp the last byte */
      serv_tail= tmp + bytes+SIXTYFOUR-1;
      *serv_tail=SERV_STAMP;
+
+     /* allocate memory for client memory handle to support put response 
+        in dynamic memory registration protocols */
+     CLN_handle = (VIP_MEM_HANDLE*)tmp;
+     memset(CLN_handle,0,mhsize); /* set it to zero */
+     tmp += mhsize;
 
      /* setup descriptor memory */
      mod = ((ssize_t)tmp)%SIXTYFOUR;
@@ -383,7 +398,7 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
 
      /* setup memory attributes for the region */
      mattr.Ptag = CLN_nic->ptag;
-     mattr.EnableRdmaWrite = VIP_FALSE;
+     mattr.EnableRdmaWrite = VIP_TRUE;
      mattr.EnableRdmaRead  = VIP_FALSE;
 
      /* lock it */
@@ -391,9 +406,10 @@ int clients = armci_nproc - armci_clus_info[armci_clus_me].nslave;
      armci_check_status(DEBUG0, rc,"server register recv vbuf");
 
      if(!serv_memhandle)armci_die("server got null handle for vbuf",0);
+
      if(DEBUG1){
-        printf("%d: registered server memory %p %dbytes memhandle=%d\n",
-               armci_me, tmp0, total, serv_memhandle); fflush(stdout);
+        printf("%d(s):registered mem %p %dbytes mhandle=%d mharr starts%p\n",
+               armci_me, tmp0, total, serv_memhandle,CLN_handle);fflush(stdout);
      }
 }
 
@@ -413,13 +429,41 @@ static void armci_print_attr(nic_t *nic)
       fflush(stdout);
 }
 
-/*\ initialize connection data structures - called by main thread
-\*/
+
+
+static void armci_set_serv_mh()
+{
+int s, ratio = sizeof(ack_t)/sizeof(int);
+
+    /* exchange address of ack/memhandle flag on servers */
+    SRV_ack = (ack_t*)calloc(armci_nclus,sizeof(ack_t));
+    if(!SRV_ack)armci_die("buffer alloc failed",ratio);
+
+    /* first collect addrresses on all masters */
+    if(armci_me == armci_master){
+      SRV_ack[armci_clus_me].prem_handle=CLN_handle;
+      SRV_ack[armci_clus_me].handle =serv_memhandle;
+      armci_msg_gop_scope(SCOPE_MASTERS,SRV_ack,ratio*armci_nclus,"+",ARMCI_INT);
+    }
+
+    /* now master broadcasts the addresses within its node */
+    armci_msg_bcast_scope(SCOPE_NODE,SRV_ack,armci_nclus*sizeof(ack_t),
+                                                         armci_master);
+    
+    /* now save address corresponding to my id on each server */
+    for(s=0; s< armci_nclus; s++){ 
+        SRV_ack[s].prem_handle += armci_me;
+        /*printf("%d: my addr on %d = %p\n",armci_me,s,SRV_ack[s].prem_handle);
+        fflush(stdout); */
+    }
+}
+
+ 
+/* initialize connection data structures - called by main thread */
 void armci_init_connections()
 {
 VIP_RETURN rc;
-int c,s;
-int *AR_base;
+int c,s, *AR_base;
 armci_hostaddr_t *host_addr;
     
     /* get base for connection descriptor - we use process id */
@@ -485,7 +529,6 @@ armci_hostaddr_t *host_addr;
        /* master initializes nic connection for talking to clients */
        armci_init_nic(CLN_nic,0,clients);
 
-
        /* allocate and initialize connection structs */
        CLN_con=(armci_connect_t*)malloc(sizeof(armci_connect_t)*armci_nproc);
        if(!CLN_con)armci_die("cannot allocate SRV_con",armci_nproc);
@@ -519,12 +562,15 @@ armci_hostaddr_t *host_addr;
 
     }
 
-    if(DEBUG_) printf("%d: all connections ready \n",armci_me);
     /* cleanup we do not need that anymore */
     free(host_addr); 
     free(AR_base); 
     rc = VipNSShutdown(SRV_nic->handle);
     armci_check_status(DEBUG0, rc,"shut down name service");
+
+    armci_set_serv_mh();
+
+    if(DEBUG_) printf("%d: all connections ready \n",armci_me);
 }
 
 
@@ -588,7 +634,6 @@ request_header_t *msginfo;
            SERVER_SEND_ACK(armci_ack_proc);
            need_ack=0;
        }else need_ack=1;
-
 
        armci_data_server(vbuf);
 
@@ -746,6 +791,9 @@ char *tmp,*tmp0;
    client_tail= tmp + extra+ bytes+SIXTYFOUR-1;
    *client_tail=CLIENT_STAMP;
 
+   /* we also have a place to store memhandle for sero-copy get */
+   pinned_handle =(VIP_MEM_HANDLE *) (tmp + extra+ bytes+SIXTYFOUR-16);
+
    /* setup descriptor memory */
    mod = ((ssize_t)tmp)%SIXTYFOUR;
    client_descr_pool.descr= (VIP_DESCRIPTOR*)(tmp+SIXTYFOUR-mod);
@@ -832,6 +880,7 @@ vbuf_ext_t *evbuf = (vbuf_ext_t*)client_buf_pool[b].buf;
            printf("%d(c): DIFFERENT recv DESCRIPTOR %p %p buf=%p \n",
                   armci_me,cmpl_dscr ,&evbuf->rcv_dscr, &client_buf->rcv_dscr);
         
+           fflush(stdout);
            armci_die("armci_complete_buf: wrong rcv dscr completed",b);
        }
        client_buf_pool[b].rcv = 0;
@@ -1283,7 +1332,44 @@ char *dataptr = GET_DATA_PTR(evbuf->buf);
     return dataptr;
 }
 
+void armci_rcv_strided_data_bypass(int proc, request_header_t* msginfo,
+                                   void *ptr, int stride_levels)
+{
+VIP_RETURN rc;
+VIP_DESCRIPTOR *pdscr;
+vbuf_ext_t* evbuf=BUF_TO_EVBUF(msginfo);
+int mybufid=-1,i,cluster = armci_clus_id(proc);
 
+#if 0
+    do{rc = VipSendDone((SRV_con+cluster)->vi, &pdscr);}while(rc==VIP_NOT_DONE);
+    armci_check_status(DEBUG0, rc,"WAIT for send msg req to complete");
+#endif
+    for(i=0; i< MAX_BUFS; i++){
+        vbuf_ext_t* cur = (vbuf_ext_t*)client_buf_pool[i].buf;
+        if(cur == evbuf){ mybufid = i; break;}
+    }
+
+    if(mybufid<0)armci_die("rcv_strided_data_bypass:did not find buf",0);
+    if(!client_buf_pool[mybufid].rcv)armci_die("rcv_strided_data_bypass: cv",0);
+
+    if(DEBUG2){
+       printf("%d:rcv_strided_data_bypass wait for ack%d\n",armci_me,mybufid);
+       fflush(stdout);
+    }
+    do{rc = VipRecvDone((SRV_con+cluster)->vi, &pdscr);}while(rc==VIP_NOT_DONE);
+    armci_check_status(DEBUG0, rc,"client getting ACK data from server");
+    if(pdscr != &evbuf->rcv_dscr)
+       armci_die("rcv_strided_data_bypass:different descriptor completed",0);
+
+    client_buf_pool[mybufid].rcv =0;
+    client_buf_pool[mybufid].snd =0;
+
+    if(DEBUG2){
+       printf("%d(c):rcv_strided_data_bypass buf %d\n",armci_me,mybufid);
+       fflush(stdout);
+    }
+}
+    
 
 void armci_send_data_to_client(int proc, void *buf, int bytes)
 {
@@ -1292,6 +1378,7 @@ VIP_DESCRIPTOR *cmpl_dscr;
 
     armci_init_vbuf(&serv_buf->snd_dscr, buf, bytes, serv_memhandle);
     rc = VipPostSend((CLN_con+proc)->vi, &serv_buf->snd_dscr, serv_memhandle);
+    armci_check_status(DEBUG0, rc,"server send");
     if(bytes)
        armci_check_status(DEBUG0, rc,"server sent data to client");
     else
@@ -1322,6 +1409,150 @@ void armci_WriteToDirect(int proc, request_header_t* msginfo, void *buf)
 }
 
 
+static void armci_iput(VIP_VI_HANDLE vi, VIP_DESCRIPTOR *d, 
+                       void *src, VIP_MEM_HANDLE smhandle,
+                       void *dst, VIP_MEM_HANDLE dmhandle, int len)
+{
+VIP_RETURN rc;
+
+    memset(d,0,sizeof(VIP_DESCRIPTOR));
+    d->CS.Control  = VIP_CONTROL_OP_RDMAWRITE;
+    d->CS.Length   = (unsigned)len;
+    d->CS.SegCount = 2; /* address segment and data segment */
+    d->CS.Reserved = 0;
+    d->CS.Status   = 0;
+    d->DS[0].Remote.Data.Address = dst;
+    d->DS[0].Remote.Handle = dmhandle;
+    d->DS[1].Local.Data.Address = src;
+    d->DS[1].Local.Handle = smhandle;
+    d->DS[1].Local.Length = (unsigned)len;
+
+    if(SERVER_CONTEXT){
+      rc = VipPostSend(vi, d, serv_memhandle);
+      armci_check_status(DEBUG0, rc,"server put");
+    }else{
+      rc = VipPostSend(vi, d, client_memhandle);
+      armci_check_status(DEBUG0, rc,"client put");
+    }
+}
+
+
+void armci_client_send_ack(int proc, int n)
+{
+int srv = armci_clus_id(proc);
+descr_pool_t *dp = &client_descr_pool;
+VIP_DESCRIPTOR *pcmpl, *pdesc = dp->descr+MAX_DESCR-dp->avail;
+VIP_RETURN rc;
+void *ptr_ack=pinned_handle;
+
+    armci_iput((SRV_con+srv)->vi, pdesc, ptr_ack, client_memhandle,
+               (SRV_ack+srv)->prem_handle, (SRV_ack+srv)->handle,
+               sizeof(VIP_MEM_HANDLE));
+
+    if(DEBUG2){
+       printf("%d(c): sent memhandle/ack %d to server at (%p,%d)\n",armci_me,
+             *pinned_handle, (SRV_ack+srv)->prem_handle, (SRV_ack+srv)->handle);
+       fflush(stdout);
+    }
+
+    /* this is for req message */
+    do{rc = VipSendDone((SRV_con+srv)->vi, &pcmpl);}while(rc==VIP_NOT_DONE);
+    armci_check_status(DEBUG0, rc,"WAIT for send msg req to complete");
+
+    /* this is for put */
+    do{rc = VipSendDone((SRV_con+srv)->vi, &pcmpl);}while(rc==VIP_NOT_DONE);
+    armci_check_status(DEBUG0, rc,"WAIT for put ack to complete");
+    if(pcmpl != pdesc)armci_die("put ack: wrong descr completed ",srv);
+}
+
+
+VIP_MEM_HANDLE _armci_getval(VIP_MEM_HANDLE *p) { return *p; }
+void armcill_server_wait_ack(int proc, int n)
+{
+volatile VIP_MEM_HANDLE ack;
+     if(DEBUG2){printf("%d(s):waiting for ack at%p\n",armci_me,CLN_handle+proc);
+                fflush(stdout);
+     }
+     do{ ack = _armci_getval(CLN_handle+proc); }while (!ack); 
+     if(DEBUG2){printf("%d(s): got memhandle %d from %d\n",armci_me,ack,proc);
+        fflush(stdout);
+     }
+}
+
+VIP_MEM_HANDLE serv_pin_memhandle;
+int armci_pin_contig(void *ptr, int len)
+{
+VIP_MEM_ATTRIBUTES mattr;
+VIP_RETURN rc;
+
+     mattr.EnableRdmaWrite = VIP_TRUE;
+     mattr.EnableRdmaRead  = VIP_FALSE;
+     if(SERVER_CONTEXT){
+        mattr.Ptag = CLN_nic->ptag;
+        rc = VipRegisterMem(CLN_nic->handle,ptr,len,&mattr,&serv_pin_memhandle);
+     }else{
+        mattr.Ptag = SRV_nic->ptag;
+        rc = VipRegisterMem(SRV_nic->handle,ptr,len,&mattr,pinned_handle);
+        if(DEBUG2){
+           printf("%d:pinned %d bytes handle %d\n",armci_me,len,*pinned_handle);
+           fflush(stdout);
+        }
+     }
+     armci_check_status(DEBUG0, rc,"pinning memory");
+     return 1;
+}
+
+void armci_unpin_contig(void *ptr, int len)
+{
+VIP_RETURN rc;
+
+     if(SERVER_CONTEXT){
+        rc = VipDeregisterMem(CLN_nic->handle,ptr,serv_pin_memhandle);
+     }else{
+        rc = VipDeregisterMem(SRV_nic->handle,ptr,*pinned_handle);
+     }
+     armci_check_status(DEBUG0, rc,"unpinning memory");
+}
+
+int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
+{
+    if(strides ==0)return armci_pin_contig(ptr,count[0]);
+    printf("%d: cannot pin stridedd",strides);
+    return 0;
+}
+
+void armci_unpin_memory(void *ptr, int stride_arr[], int count[], int strides)
+{
+    if(strides ==0) armci_unpin_contig(ptr,count[0]);
+    else armci_die("strided was not pinned",strides);
+}
+
+
+void armcill_server_put(int proc, void* s, void *d, int len)
+{
+descr_pool_t   *dp = &serv_descr_pool;
+VIP_DESCRIPTOR *pdesc;
+char *src=(char*)s;
+char *dst=(char*)d;
+
+    if(dp->avail != MAX_DESCR)
+       armci_die("armci_server_put: expected",MAX_DESCR);
+    dp->vi = (CLN_con+proc)->vi;
+    while(len){
+      int bytes = VBUF_DLEN>len? len: VBUF_DLEN;
+      if(!dp->avail)armci_serv_clear_sends();
+      pdesc = dp->descr+MAX_DESCR-dp->avail;
+      armci_iput((CLN_con+proc)->vi, pdesc, src, serv_pin_memhandle,
+                  dst, CLN_handle[proc], bytes);
+      len  -= bytes;
+      src  += bytes;
+      dst  += bytes;
+      dp->avail--; 
+    }
+    armci_serv_clear_sends();  
+    CLN_handle[proc] =0; /*clear is for next round */
+//  SERVER_SEND_ACK(proc); /* server code does not expect ack in GET*/
+}
 
 /*********** this code was adopted from the Giganet SDK examples *************/
 
