@@ -1,4 +1,4 @@
-/* $Id: sockets.c,v 1.22 2004-01-01 05:56:50 edo Exp $ */
+/* $Id: sockets.c,v 1.23 2004-04-15 05:11:33 vinod Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
@@ -602,6 +602,12 @@ againsel:
     againacc:
 
       msgsock = accept(sock, (struct sockaddr *) NULL, (soclen_t *) NULL);
+      if(msgsock==0){
+        int msgsock2;
+        msgsock2 = dup(msgsock);
+        /*(void) CLOSE(msgsock);*/
+        msgsock = msgsock2;
+      }
 
       if (msgsock == -1) {
         if (errno == EINTR)
@@ -610,7 +616,7 @@ againsel:
           armci_die("armci_AcceptSockAll: accept failed",  msgsock);
       }
 
-    if(DEBUG_) {
+    if(DEBUG_){
        (void) printf("process %d out of accept socket=%d\n",armci_me,msgsock);
        (void) fflush(stdout);
     }
