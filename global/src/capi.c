@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.15 1999-11-16 00:38:02 d3h325 Exp $ */
+/* $Id: capi.c,v 1.16 1999-11-16 23:31:36 d3g681 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -104,7 +104,7 @@ int NGA_Create_irreg(int type,int ndim,int dims[],char *name,int block[],int map
 
 #ifdef  USE_FAPI
         base_work += block[d];
-        if(base_work >MAX_NPROC)GA_Error("GA (c): error in block",base_work):
+        if(base_work >MAX_NPROC)GA_Error("GA (c): error in block",base_work);
 #endif
      }
 
@@ -455,10 +455,27 @@ void NGA_Gather(int g_a, void *v, int* subsArray[], int n)
 }
 
 
+#if defined(CRAY) || defined(WIN32)
+#define ga_dgemm_easyc_ GA_DGEMM_EASYC
+#endif
+extern void FATR ga_dgemm_easyc_(Integer *Ta, Integer *Tb, 
+				 Integer *M, Integer *N, Integer *K, 
+				 double *alpha, Integer *G_a, Integer *G_b, 
+				 double *beta, Integer *G_c);
+
 void GA_Dgemm(char ta, char tb, int m, int n, int k,
               double alpha, int g_a, int g_b, double beta, int g_c )
 {
+  Integer Ta = (ta=='t' || ta=='T');
+  Integer Tb = (tb=='t' || tb=='T');
+  Integer M = m;
+  Integer N = n;
+  Integer K = k;
+  Integer G_a = g_a;
+  Integer G_b = g_b;
+  Integer G_c = g_c;
 
+  ga_dgemm_easyc_(&Ta, &Tb, &M, &N, &K, &alpha, &G_a, &G_b, &beta, &G_c);
 }
 
 /* Patch related */
@@ -618,6 +635,12 @@ void GA_Print(int g_a)
 {
     Integer a=(Integer)g_a;
     ga_print_(&a);
+}
+
+void GA_Print_file(FILE *file, int g_a)
+{
+  Integer G_a = g_a;
+  ga_print_file(file, &G_a);
 }
 
 void GA_Diag(int g_a, int g_s, int g_v, void *eval)

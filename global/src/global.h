@@ -3,6 +3,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
+#include <stdio.h>
 #include "typesf2c.h"
 
 
@@ -93,6 +94,7 @@ extern void ga_matmul_patch  ARGS_((char *, char *,                             
                                     Integer *, Integer *, Integer *, Integer*));
 
 extern void FATR ga_copy_   ARGS_((Integer *, Integer *));
+extern void      ga_print_file ARGS_((FILE *, Integer *));
 extern void FATR ga_print_  ARGS_((Integer *));
 extern void FATR ga_print_stats_();
 extern void FATR ga_zero_   ARGS_((Integer *));

@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.29 1999-10-14 00:19:58 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.30 1999-11-16 23:31:36 d3g681 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -45,18 +45,16 @@
 #endif
 
 
-
-
 /*\ PRINT g_a[ilo:ihi, jlo:jhi]
 \*/
-void FATR ga_print_patch_(g_a, ilo, ihi, jlo, jhi, pretty)
+void ga_file_print_patch(file, g_a, ilo, ihi, jlo, jhi, pretty)
+        FILE *file;
         Integer *g_a, *ilo, *ihi, *jlo, *jhi, *pretty;
 /*
   Pretty = 0 ... spew output out with no formatting
   Pretty = 1 ... format output so that it is readable
 */  
 {
-#define DEV stdout
 #define BUFSIZE 6
 #define FLEN 80 
 Integer i, j,jj, dim1, dim2, type, ibuf[BUFSIZE], jmax, ld=1, bufsize ;
@@ -76,7 +74,7 @@ char *name;
                       ga_error(" ga_print: indices out of range ", *g_a);
      }
 
-     fprintf(DEV,"\n global array: %s[%d:%d,%d:%d],  handle: %d \n",
+     fprintf(file,"\n global array: %s[%d:%d,%d:%d],  handle: %d \n",
              name, *ilo, *ihi, *jlo, *jhi, (int)*g_a);
 
      bufsize = (type==MT_F_DCPL)? BUFSIZE/2 : BUFSIZE;
@@ -90,86 +88,98 @@ char *name;
               case MT_F_INT:
                    ga_get_(g_a, &i, &i, &j, &jmax, ibuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj++)
-                     fprintf(DEV," %8d",ibuf[jj]);
+                     fprintf(file," %8d",ibuf[jj]);
                    break;
 
               case MT_F_DBL:
                    ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj++)
-                     fprintf(DEV," %11.5f",dbuf[jj]);
+                     fprintf(file," %11.5f",dbuf[jj]);
                    break;
 
               case MT_F_DCPL:
                    ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
                    for(jj=0; jj<(jmax-j+1); jj+=2)
-                     fprintf(DEV," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
+                     fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
                    break;
               default: ga_error("ga_print: wrong type",0);
            }
          }
-         fprintf(DEV,"\n");
+         fprintf(file,"\n");
        }
-       fflush(DEV);
+       fflush(file);
 
      } else {
 
         for (j=*jlo; j<*jhi+1; j+=bufsize){
         jmax = MIN(j+bufsize-1,*jhi);
 
-           fprintf(DEV, "\n"); fprintf(DEV, "\n");
+           fprintf(file, "\n"); fprintf(file, "\n");
 
            /* Print out column headers */
 
-           fprintf(DEV, "      ");
+           fprintf(file, "      ");
            switch(type){
               case MT_F_INT:
-                   for (jj=j; jj<=jmax; jj++) fprintf(DEV, "%6d  ", jj);
-                   fprintf(DEV,"\n      ");
-                   for (jj=j; jj<=jmax; jj++) fprintf(DEV," -------");
+                   for (jj=j; jj<=jmax; jj++) fprintf(file, "%6d  ", jj);
+                   fprintf(file,"\n      ");
+                   for (jj=j; jj<=jmax; jj++) fprintf(file," -------");
                    break;
               case MT_F_DCPL:
-                   for (jj=j; jj<=jmax; jj++) fprintf(DEV,"%20d    ", jj);
-                   fprintf(DEV,"\n      ");
-                   for (jj=j; jj<=2*jmax; jj++) fprintf(DEV," -----------");
+                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%20d    ", jj);
+                   fprintf(file,"\n      ");
+                   for (jj=j; jj<=2*jmax; jj++) fprintf(file," -----------");
                    break;
               case MT_F_DBL:
-                   for (jj=j; jj<=jmax; jj++) fprintf(DEV,"%8d    ", jj);
-                   fprintf(DEV,"\n      ");
-                   for (jj=j; jj<=jmax; jj++) fprintf(DEV," -----------");
+                   for (jj=j; jj<=jmax; jj++) fprintf(file,"%8d    ", jj);
+                   fprintf(file,"\n      ");
+                   for (jj=j; jj<=jmax; jj++) fprintf(file," -----------");
            }
-           fprintf(DEV,"\n");
+           fprintf(file,"\n");
 
            for(i=*ilo; i <*ihi+1; i++){
-              fprintf(DEV,"%4i  ",i);
+              fprintf(file,"%4i  ",i);
 
               switch(type){
                  case MT_F_INT:
                       ga_get_(g_a, &i, &i, &j, &jmax, ibuf, &ld);
                       for(jj=0; jj<(jmax-j+1); jj++)
-                        fprintf(DEV," %8d",ibuf[jj]);
+                        fprintf(file," %8d",ibuf[jj]);
                       break;
 
                  case MT_F_DBL:
                       ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
                       for(jj=0; jj<(jmax-j+1); jj++)
-                        fprintf(DEV," %11.5f",dbuf[jj]);
+                        fprintf(file," %11.5f",dbuf[jj]);
                       break;
 
                  case MT_F_DCPL:
 	              ga_get_(g_a, &i, &i, &j, &jmax, dbuf, &ld);
 	              for(jj=0; jj<(jmax-j+1); jj+=2)
-	                fprintf(DEV," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
+	                fprintf(file," %11.5f,%11.5f",dbuf[jj], dbuf[jj+1]);
                       break;
                  default: ga_error("ga_print: wrong type",0);
 	     }
-	     fprintf(DEV,"\n");
+	     fprintf(file,"\n");
          }
-         fflush(DEV);
+         fflush(file);
       }
     }
   }
        
   ga_sync_();
+}
+
+/*\ PRINT g_a[ilo:ihi, jlo:jhi]
+\*/
+void FATR ga_print_patch_(g_a, ilo, ihi, jlo, jhi, pretty)
+        Integer *g_a, *ilo, *ihi, *jlo, *jhi, *pretty;
+/*
+  Pretty = 0 ... spew output out with no formatting
+  Pretty = 1 ... format output so that it is readable
+*/  
+{
+  ga_file_print_patch(stdout, g_a, ilo, ihi, jlo, jhi, pretty);
 }
 
 
@@ -428,14 +438,14 @@ char *name;
 
 /*\ PRINT g_a[ilo, jlo]
 \*/
-void FATR nga_print_patch_(g_a, lo, hi, pretty)
+void FATR nga_file_print_patch(file, g_a, lo, hi, pretty)
         Integer *g_a, *lo, *hi, *pretty;
+        FILE *file;
 /*
   Pretty = 0 ... spew output out with no formatting
   Pretty = 1 ... format output so that it is readable
 */  
 {
-#define DEV stdout
 #define BUFSIZE 6
 #define FLEN 80 
 
@@ -463,11 +473,11 @@ void FATR nga_print_patch_(g_a, lo, hi, pretty)
                 ga_error("g_a indices out of range ", *g_a);
         
         /* print the general information */
-        fprintf(DEV,"\n global array: %s[", name);
+        fprintf(file,"\n global array: %s[", name);
         for(i=0; i<ndim; i++)
-            if(i != (ndim-1)) fprintf(DEV, "%d:%d,", lo[i], hi[i]);
-            else fprintf(DEV, "%d:%d", lo[i], hi[i]);
-        fprintf(DEV,"],  handle: %d \n", (int)*g_a);
+            if(i != (ndim-1)) fprintf(file, "%d:%d,", lo[i], hi[i]);
+            else fprintf(file, "%d:%d", lo[i], hi[i]);
+        fprintf(file,"],  handle: %d \n", (int)*g_a);
         
         bufsize = (type==MT_F_DCPL)? BUFSIZE/2 : BUFSIZE;
         
@@ -489,34 +499,34 @@ void FATR nga_print_patch_(g_a, lo, hi, pretty)
                 
                 /* print the array */
                 for(i=0; i<(hip[0]-lop[0]+1); i++) {
-                    fprintf(DEV,"%s(", name);
+                    fprintf(file,"%s(", name);
                     for(j=0; j<ndim; j++)
                         if((j == 0) && (j == (ndim-1)))
-                            fprintf(DEV, "%d", lop[j]+i);
+                            fprintf(file, "%d", lop[j]+i);
                         else if((j != 0) && (j == (ndim-1)))
-                            fprintf(DEV, "%d", lop[j]);
+                            fprintf(file, "%d", lop[j]);
                         else if((j == 0) && (j != (ndim-1)))
-                            fprintf(DEV, "%d,", lop[j]+i);
-                        else fprintf(DEV, "%d,", lop[j]);
+                            fprintf(file, "%d,", lop[j]+i);
+                        else fprintf(file, "%d,", lop[j]);
                     switch(type) {
-                        case MT_F_INT: fprintf(DEV,") = %d\n", ibuf[i]);break;
+                        case MT_F_INT: fprintf(file,") = %d\n", ibuf[i]);break;
                         case MT_F_DBL:
                             if((double)dbuf[i]<100000.0)
-                                fprintf(DEV,") = %f\n", dbuf[i]);
-                            else fprintf(DEV,") = %e\n", dbuf[i]);
+                                fprintf(file,") = %f\n", dbuf[i]);
+                            else fprintf(file,") = %e\n", dbuf[i]);
                             break;
                         case MT_F_DCPL:
                             if(((double)dbuf[i*2]<100000.0) &&
                                ((double)dbuf[i*2+1]<100000.0))
-                                fprintf(DEV,") = (%f,%f)\n",
+                                fprintf(file,") = (%f,%f)\n",
                                         dbuf[i*2],dbuf[i*2+1]);
                             else
-                                fprintf(DEV,") = (%e,%e)\n",
+                                fprintf(file,") = (%e,%e)\n",
                                         dbuf[i*2],dbuf[i*2+1]);
                     }
                 }
                 
-                fflush(DEV);
+                fflush(file);
                 
                 lop[0] = hip[0]+1; hip[0] = MIN(lop[0]+bufsize-1, hi[0]);
                 
@@ -546,46 +556,46 @@ void FATR nga_print_patch_(g_a, lo, hi, pretty)
             
             while(done) {
                 if(status_3d && (ndim > 2)) { /* print the patch info */
-                    fprintf(DEV,"\n -- patch: %s[", name);
+                    fprintf(file,"\n -- patch: %s[", name);
                     for(i=0; i<ndim; i++)
                         if(i < 2)
                             if(i != (ndim-1))
-                                fprintf(DEV, "%d:%d,", lo[i], hi[i]);
-                            else fprintf(DEV, "%d:%d", lo[i], hi[i]);
+                                fprintf(file, "%d:%d,", lo[i], hi[i]);
+                            else fprintf(file, "%d:%d", lo[i], hi[i]);
                         else
-                            if(i != (ndim-1)) fprintf(DEV, "%d,", lop[i]);
-                            else fprintf(DEV, "%d", lop[i]);
-                    fprintf(DEV,"]\n"); status_3d = 0;
+                            if(i != (ndim-1)) fprintf(file, "%d,", lop[i]);
+                            else fprintf(file, "%d", lop[i]);
+                    fprintf(file,"]\n"); status_3d = 0;
                 }
                 
                 if(status_2d &&(ndim > 1)) {
-                    fprintf(DEV, "\n"); 
+                    fprintf(file, "\n"); 
                     switch(type) {
                         case MT_F_INT:
-                            fprintf(DEV, "     ");
+                            fprintf(file, "     ");
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(DEV, "%7d  ", i);
-                            fprintf(DEV,"\n      ");
+                                fprintf(file, "%7d  ", i);
+                            fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(DEV," --------");
+                                fprintf(file," --------");
                             break;
                         case MT_F_DBL:
-                            fprintf(DEV, "   ");
+                            fprintf(file, "   ");
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(DEV, "%10d  ", i);
-                            fprintf(DEV,"\n      ");
+                                fprintf(file, "%10d  ", i);
+                            fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(DEV," -----------");
+                                fprintf(file," -----------");
                             break;
                         case MT_F_DCPL:
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(DEV, "%22d  ", i);
-                            fprintf(DEV,"\n      ");
+                                fprintf(file, "%22d  ", i);
+                            fprintf(file,"\n      ");
                             for (i=lop[1]; i<=hip[1]; i++)
-                                fprintf(DEV," -----------------------");
+                                fprintf(file," -----------------------");
                     }
                     
-                    fprintf(DEV,"\n");
+                    fprintf(file,"\n");
                     status_2d = 0;
                 }
                 
@@ -597,51 +607,51 @@ void FATR nga_print_patch_(g_a, lo, hi, pretty)
                 }
                 
                 for(i=0; i<(hip[0]-lop[0]+1); i++) {
-                    fprintf(DEV,"%4i  ", (lop[0]+i));
+                    fprintf(file,"%4i  ", (lop[0]+i));
                     switch(type) {
                         case MT_F_INT:
                             if(ndim > 1)
                                 for(j=0; j<(hip[1]-lop[1]+1); j++)
-                                    fprintf(DEV," %8d", ibuf_2d[j*bufsize+i]);
-                            else fprintf(DEV," %8d", ibuf_2d[i]);
+                                    fprintf(file," %8d", ibuf_2d[j*bufsize+i]);
+                            else fprintf(file," %8d", ibuf_2d[i]);
                             break;
                         case MT_F_DBL:
                             if(ndim > 1)
                                 for(j=0; j<(hip[1]-lop[1]+1); j++)
                                     if((double)dbuf_2d[j*bufsize+i]<100000.0)
-                                        fprintf(DEV," %11.5f",
+                                        fprintf(file," %11.5f",
                                                 dbuf_2d[j*bufsize+i]);
                                     else
-                                        fprintf(DEV," %.5e",
+                                        fprintf(file," %.5e",
                                                 dbuf_2d[j*bufsize+i]);
                             else
                                 if((double)dbuf_2d[i]<100000.0)
-                                    fprintf(DEV," %11.5f",dbuf_2d[i]);
+                                    fprintf(file," %11.5f",dbuf_2d[i]);
                                 else
-                                    fprintf(DEV," %.5e",dbuf_2d[i]);
+                                    fprintf(file," %.5e",dbuf_2d[i]);
                             break;
                         case MT_F_DCPL:
                             if(ndim > 1)
                                 for(j=0; j<(hip[1]-lop[1]+1); j++)
                                     if(((double)dbuf_2d[(j*bufsize+i)*2]<100000.0)&&((double)dbuf_2d[(j*bufsize+i)*2+1]<100000.0))
-                                        fprintf(DEV," %11.5f,%11.5f",
+                                        fprintf(file," %11.5f,%11.5f",
                                                 dbuf_2d[(j*bufsize+i)*2],
                                                 dbuf_2d[(j*bufsize+i)*2+1]);
                                     else
-                                        fprintf(DEV," %.5e,%.5e",
+                                        fprintf(file," %.5e,%.5e",
                                                 dbuf_2d[(j*bufsize+i)*2],
                                                 dbuf_2d[(j*bufsize+i)*2+1]);
                             else
                                 if(((double)dbuf_2d[i*2]<100000.0) &&
                                    ((double)dbuf_2d[i*2+1]<100000.0))
-                                    fprintf(DEV," %11.5f,%11.5f",
+                                    fprintf(file," %11.5f,%11.5f",
                                             dbuf_2d[i*2], dbuf_2d[i*2+1]);
                                 else
-                                    fprintf(DEV," %.5e,%.5e",
+                                    fprintf(file," %.5e,%.5e",
                                             dbuf_2d[i*2], dbuf_2d[i*2+1]);
                     }
                     
-                    fprintf(DEV,"\n");
+                    fprintf(file,"\n");
                 }
                 
                 lop[0] = hip[0]+1; hip[0] = MIN(lop[0]+bufsize-1, hi[0]);
@@ -672,6 +682,13 @@ void FATR nga_print_patch_(g_a, lo, hi, pretty)
     }
     
     ga_sync_();
+}
+
+void FATR nga_print_patch_(g_a, lo, hi, pretty)
+        Integer *g_a, *lo, *hi, *pretty;
+{
+  nga_file_print_patch(stdout, g_a, lo, hi, pretty);
+
 }
 
 void FATR ga_summarize_(Integer *verbose)
@@ -744,7 +761,7 @@ void FATR ga_summarize_(Integer *verbose)
 
 #endif
 
-void FATR ga_print_(Integer *g_a)
+void ga_print_file(FILE *file, Integer *g_a)
 {
 #ifdef ARMCI    
     Integer i;
@@ -756,7 +773,7 @@ void FATR ga_print_(Integer *g_a)
 
     for(i=0; i<ndim; i++) lo[i] = 1;
 
-    nga_print_patch_(g_a, lo, dims, &pretty);
+    nga_file_print_patch(file, g_a, lo, dims, &pretty);
 
 #else
     Integer type, dim1, dim2;
@@ -765,7 +782,12 @@ void FATR ga_print_(Integer *g_a)
     
     ga_inquire_(g_a, &type, &dim1, &dim2);
     
-    ga_print_patch_(g_a, &ilo, &dim1, &jlo, &dim2, &pretty);
+    ga_file_print_patch(file, g_a, &ilo, &dim1, &jlo, &dim2, &pretty);
 #endif    
 }
   
+void FATR ga_print_(Integer *g_a)
+{
+  ga_print_file(stdout, g_a);
+}
+

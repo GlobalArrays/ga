@@ -1,3 +1,23 @@
+      subroutine ga_dgemm_easyc(transa, transb, m, n, k, alpha, g_a, 
+     $     g_b, beta, g_c)
+      implicit none
+      Integer            transa, transb
+      Integer            m, n, k
+      Double precision   alpha, beta
+      Integer            g_a, g_b, g_c
+c
+      character *1 opa, opb
+c
+      opa = 'n'
+      opb = 'n'
+      if (transa .ne. 0) opa = 't'
+      if (transb .ne. 0) opb = 't'
+c
+      call ga_dgemm(opa, opb, m, n, k, alpha, g_a, 
+     $     g_b, beta, g_c)
+c
+      end
+
 #if defined(CRAY) || defined(KSR)
 #   define xx_dgemm sgemm
 #else
@@ -9,7 +29,7 @@ c
 #ifdef USE_SUMMA
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.25 1999-05-27 17:51:55 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.26 1999-11-16 23:31:36 d3g681 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -26,7 +46,7 @@ c
 #endif
       subroutine GA_DGEMM(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.25 1999-05-27 17:51:55 d3h325 Exp $
+C$Id: ga_dgemm.F,v 1.26 1999-11-16 23:31:36 d3g681 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -80,6 +100,7 @@ C     Set defaults -- platform dependent
       kchunk = 128
 #endif
 C
+*      write(6,*) ' transa, transb ', transa, transb
       me = ga_nodeid()
       nproc = ga_nnodes()
 C

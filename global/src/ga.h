@@ -1,6 +1,6 @@
 #ifndef _GA_H_
 #define _GA_H_
-
+#include <stdio.h>
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -88,6 +88,7 @@ extern void NGA_Add_patch(void * alpha, int g_a, int alo[], int ahi[],
 
 extern void NGA_Print_patch(int g_a, int lo[], int hi[], int pretty);
 extern void GA_Print(int g_a);
+extern void GA_Print_file(FILE *file, int g_a);
 extern void GA_Diag(int g_a, int g_s, int g_v, void *eval);
 extern void GA_Diag_reuse(int reuse, int g_a, int g_s, int g_v, void *eval);
 extern void GA_Diag_std(int g_a, int g_v, void *eval);
