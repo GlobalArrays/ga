@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.35 2004-01-19 18:12:12 edo Exp $ */
+/* $Id: ghosts.c,v 1.36 2004-03-11 18:45:19 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1972,12 +1972,13 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
 \*/
 logical ga_update5_ghosts_(Integer *g_a)
 {
-  Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a, proc_rem;
-  Integer size, ndim, nwidth, increment[MAXDIM];
+  Integer idx, ipx, inx, i, np, handle=GA_OFFSET + *g_a;
+  Integer size, ndim, nwidth;
   Integer width[MAXDIM];
   Integer dims[MAXDIM];
+  Integer* proc_rem_ptr;
   int *stride_loc, *stride_rem,*count;
-  int msgcnt, bytes, corner_flag;
+  int msgcnt, bytes, corner_flag, proc_rem;
   char *ptr_loc, *ptr_rem,*cache;
   int local_sync_begin,local_sync_end,scope;
 #ifdef USE_MP_NORTHSOUTH
@@ -2025,6 +2026,7 @@ logical ga_update5_ghosts_(Integer *g_a)
   cache = GA[handle].cache;
   /* if global array has no ghost cells, just return */
   if (!ga_has_ghosts_(g_a)) return TRUE;
+  printf("p[%d] Got to 1\n",ga_nodeid_());
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
@@ -2048,20 +2050,22 @@ logical ga_update5_ghosts_(Integer *g_a)
       stride_loc = (int *)(cache+2*sizeof(char *));
       stride_rem = (int *)(stride_loc+ndim);
       count = (int *)(stride_rem+ndim);
-      proc_rem = *(int *)(count+ndim);
-      cache = (char *)(count+ndim+1);
+      proc_rem_ptr = (Integer *)(count+ndim);
+      proc_rem = (int)(*proc_rem_ptr);
+      cache = (char *)(proc_rem_ptr+1);
           
+  printf("p[%d] Got to 2: remote proc %d\n",ga_nodeid_(),proc_rem);
       if(count[0]>10000){
         /*tries to use armci direct put when possible */
         ARMCI_PutS_flag_dir(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
             (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
-            *GA_Update_Signal, (int)proc_rem);
+            *GA_Update_Signal, proc_rem);
       }
       else{
 #ifndef USE_MP_NORTHSOUTH
         ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
             (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
-            *GA_Update_Signal, (int)proc_rem);
+            *GA_Update_Signal, proc_rem);
 #else
 #endif
       }
@@ -2074,24 +2078,27 @@ logical ga_update5_ghosts_(Integer *g_a)
       stride_loc = (int *)(cache+2*sizeof(char *));
       stride_rem = (int *)(stride_loc+ndim);
       count = (int *)(stride_rem+ndim);
-      proc_rem = *(int *)(count+ndim);
-      cache = (char *)(count+ndim+1);
+      proc_rem_ptr = (Integer *)(count+ndim);
+      proc_rem = (int)(*proc_rem_ptr);
+      cache = (char *)(proc_rem_ptr+1);
 
+  printf("p[%d] Got to 3: remote proc %d\n",ga_nodeid_(),proc_rem);
       if(count[0]>10000){
         /*tries to use armci direct put when possible */
         ARMCI_PutS_flag_dir(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
             (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
-            *GA_Update_Signal, (int)proc_rem);
+            *GA_Update_Signal, proc_rem);
       }
       else{
 #ifndef USE_MP_NORTHSOUTH
         ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
             (int)(ndim - 1), GA_Update_Flags[proc_rem]+msgcnt,
-            *GA_Update_Signal, (int)proc_rem);
+            *GA_Update_Signal, proc_rem);
 #else
 #endif
 
       }
+  printf("p[%d] Got to 4\n",ga_nodeid_());
 
       msgcnt++;
 
@@ -2101,8 +2108,6 @@ logical ga_update5_ghosts_(Integer *g_a)
          before starting update along a new dimension */
       waitforflags((GA_Update_Flags[GAme]+msgcnt-2),
         (GA_Update_Flags[GAme]+msgcnt-1));
-      /* update increment array */
-      increment[idx] = 2*nwidth;
     }
   }
 #if 1
@@ -2213,7 +2218,8 @@ void ga_set_update5_info_(Integer *g_a)
             GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
             slo_rem, shi_rem, *g_a);
 
-        *proc_rem = GA_proclist[0];
+        *proc_rem = (Integer)GA_proclist[0];
+        printf("p[%d] Set: Got to 1 %d\n",ga_nodeid_(),*proc_rem);
 
 #ifdef UPDATE_SAMENODE_GHOSTS_FIRST
         if(scope == 0 && ARMCI_Same_node(*proc_rem))
@@ -2256,6 +2262,7 @@ void ga_set_update5_info_(Integer *g_a)
 
         do_negative:
 
+        proc_rem++;
         ptr_rem = (char **)cache;
         ptr_loc = (char **)(cache+sizeof(char *));
         stride_loc = (int *)(cache+2*sizeof(char *));
@@ -2270,7 +2277,8 @@ void ga_set_update5_info_(Integer *g_a)
             GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
             slo_rem, shi_rem, *g_a);
 
-        *proc_rem = GA_proclist[0];
+        *proc_rem = (Integer)GA_proclist[0];
+        printf("p[%d] Set: Got to 2 %d\n",ga_nodeid_(),*proc_rem);
 
 #ifdef UPDATE_SAMENODE_GHOSTS_FIRST
         if(scope == 0 && ARMCI_Same_node(*proc_rem))
