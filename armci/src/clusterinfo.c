@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.14 2002-01-29 23:17:33 vinod Exp $ */
+/* $Id: clusterinfo.c,v 1.15 2002-07-22 23:40:43 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -222,24 +222,66 @@ static void process_hostlist(char *names)
 }
        
 
+/*\ Substring Replacement: replace needle with nail in a haystack
+\*/
+static char *substr_replace(char *haystack, char *needle, char *nail)
+{
+char *tmp, *pos, *first;
+size_t len=strlen(needle), nlen=strlen(nail),bytes;
+ssize_t left;
+
+    pos = strstr(haystack,needle);
+    if (pos ==NULL) return NULL;
+    first= tmp = malloc(strlen(haystack)+nlen-len+1+1);
+    if(first==NULL) return(NULL);
+    bytes = pos - haystack;
+    while(bytes){ *tmp = *haystack; tmp++; haystack++; bytes--;}
+    while(nlen) { *tmp = *nail; tmp++; nail++; nlen--;}
+    haystack += len;
+    left = strlen(haystack);
+    while(left>0){*tmp = *haystack; tmp++; haystack++; left --;}
+    *tmp='\0';
+    return(first);
+}
+
+
+/*\ ARMCI_HOSTNAME_REPLACE contains "needle/nail" string to derive new hostname
+\*/
+static char *new_hostname(char *host)
+{
+  char *tmp, *needle, *nail;
+  if((tmp =getenv("ARMCI_HOSTNAME_REPLACE"))){
+      needle = strdup(tmp);
+      if(needle== NULL) return NULL;
+      nail = strchr(needle,'/');
+      if(nail == NULL) return NULL;
+      *nail = '\0';
+      nail++;
+      return substr_replace(host,needle,nail);
+  } else return NULL;
+}
+
+
 void armci_init_clusinfo()
 {
   char name[MAX_HOSTNAME], *merged;
   int  i, len, limit, rc;
   char *tmp;
- 
-  if((tmp =getenv("ARMCI_HOSTNAME"))){
-    if(strlen(tmp) >= MAX_HOSTNAME)
-			armci_die("armci: hostname too long",strlen(tmp));
-	strcpy(name,tmp);  
-    printf("%d using %s hostname\n",armci_me, name);
-    fflush(stdout);
-  }else{
+
+  if((tmp =getenv("ARMCI_HOSTNAME")) == NULL){
     limit = MAX_HOSTNAME-1;
     rc = GETHOSTNAME(name, limit);
     if(rc < 0)armci_die("armci: gethostname failed",rc);
+    tmp = new_hostname(name);
   }
-
+  if(tmp != NULL){
+      if(strlen(tmp) >= MAX_HOSTNAME)
+                        armci_die("armci: hostname too long",strlen(tmp));
+      strcpy(name,tmp);
+      printf("%d using %s hostname\n",armci_me, name);
+      fflush(stdout);
+  }
+  
   len =  strlen(name);
 
 #ifdef HOSTNAME_TRUNCATE
