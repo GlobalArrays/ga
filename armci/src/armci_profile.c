@@ -1,4 +1,4 @@
-/* $Id: armci_profile.c,v 1.6 2004-07-21 00:29:59 manoj Exp $ */
+/* $Id: armci_profile.c,v 1.7 2004-08-12 22:17:32 manoj Exp $ */
 
 /**
  * Set an environment variable as follows to enable ARMCI profiling
@@ -15,9 +15,8 @@
  * 
  * Note #1: Right now, only process 0's profile is printed.
  * Each and every process saves its profile in the correspoding data struture.
- * However profiler prints process 0's profile when armci_profile_terminate()
- * is called. Do the corresponding changes in armci_profile_terminate() to 
- * print the profile of other processes.
+ * Each process prints its profile to an output file armci_profile.<myrank> 
+ * when armci_profile_terminate() is called (called in ARMCI_Finalize()).
  *
  * Note #2: By default profiler prints msg ranges 0 to 21. Example: range 10
  * corresponds to message ranges from 1024 bytes to 2047 bytes.
@@ -544,7 +543,7 @@ static void armci_print_stridedinfo(FILE *fp, int event, int range) {
     }
 
     fprintf(fp, "\n\nSTRIDE INFORMATION FOR MSG_RANGE %d-%d for EVENT: %s\n", 
-	    1<<range, 1<<(range+1), gEventName[event]);
+	    1<<range, (1<<(range+1))-1, gEventName[event]);
     ARMCI_HDR4(fp);
 
     for(i=0; i< str_count; i++) {
@@ -576,7 +575,7 @@ static void armci_print_vectorinfo(FILE *fp, int event, int range) {
     }
     
     fprintf(fp, "\n\nVECTOR INFORMATION FOR MSG_RANGE %d-%d for EVENT: %s\n", 
-	    1<<range, 1<<(range+1), gEventName[event]);
+	    1<<range, (1<<(range+1))-1, gEventName[event]);
     ARMCI_HDR5(fp);
 
     for(i=0; i< str_count; i++) {
