@@ -71,17 +71,17 @@
 #define PAGE_SIZE  4096
 
 struct ga_stat_t {
-         long   curmem; 
-         long   maxmem; 
-         long   numacc;
+         long   numcre; 
+         long   numdes;
          long   numget;
          long   numput;
+         long   numacc;
          long   numsca;
          long   numgat;
          long   numrdi;
-         long   numcre; 
-         long   numdes;
          long   numser;
+         long   curmem; 
+         long   maxmem; 
 };
 
 struct ga_bytes_t{ 

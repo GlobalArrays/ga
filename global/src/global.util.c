@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.17 1996-08-16 23:08:38 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.18 1996-08-27 17:44:14 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -242,23 +242,32 @@ void ga_print_(g_a)
 
 void ga_print_stats_()
 {
+int i;
+long *stat_arr = (long*) &GAstat;
+if(stat_arr != &GAstat.numcre) ga_error("ga_print_stats: alignemnt problem",0);
+
      printf("\n                         GA Statistics for process %4d\n",ga_nodeid_());
      printf("                         ------------------------------\n\n");
-     printf("       create destroy    get       put       acc   scatter    gather    read_inc\n");
-     printf("calls: %4ld  %4ld  %9ld %9ld %9ld %9ld %9ld %9ld\n",
-                   GAstat.numcre, GAstat.numdes, GAstat.numget, GAstat.numput,
-                   GAstat.numacc, GAstat.numsca, GAstat.numgat, GAstat.numrdi);
-     printf("bytes total:         %.3e %.3e %.3e %.3e %.3e %.3e\n",
+     printf("       create   destroy   get      put      acc     scatter   gather  read&inc\n");
+
+     printf("calls: ");
+     for(i=0;i<8;i++) 
+        if(stat_arr[i] < 9999) printf("%4ld     ",stat_arr[i]);
+        else                   printf("%.2e ",(double)stat_arr[i]);
+     printf("\n");
+
+     printf("bytes total:             %.2e %.2e %.2e %.2e %.2e %.2e\n",
                    GAbytes.gettot, GAbytes.puttot, GAbytes.acctot,
                    GAbytes.scatot, GAbytes.gattot, GAbytes.rditot);
-     printf("bytes remote:        %.3e %.3e %.3e %.3e %.3e %.3e\n",
+
+     printf("bytes remote:            %.2e %.2e %.2e %.2e %.2e %.2e\n",
                    GAbytes.gettot - GAbytes.getloc, 
                    GAbytes.puttot - GAbytes.putloc,
                    GAbytes.acctot - GAbytes.accloc,
                    GAbytes.scatot - GAbytes.scaloc,
                    GAbytes.gattot - GAbytes.gatloc,
                    GAbytes.rditot - GAbytes.rdiloc);
-     printf("Max memory consumed for global arrays: %ld bytes\n",GAstat.maxmem);
+     printf("Max memory consumed for GA by this process: %ld bytes\n",GAstat.maxmem);
      if(GAstat.numser)
         printf("Number of requests serviced: %ld\n",GAstat.numser);
      fflush(stdout);
