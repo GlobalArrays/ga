@@ -1,4 +1,4 @@
-// $Id: x86copy.gcc,v 1.7 2001-07-04 00:08:59 d3h325 Exp $
+// $Id: x86copy.gcc,v 1.8 2001-08-28 20:53:37 d3h325 Exp $
 // memory copy implementation derived from examples 3 and 4 at
 // http://www.sgi.com/developers/library/resources/asc_cpu.html
 //
@@ -285,6 +285,8 @@ inline int asmcpy_works()
                 return 0;
 }
 
+#include "tas-i386.h"
+int _x86copy_mutex=0;
 
 //
 // n <128     memcpy
@@ -294,18 +296,23 @@ inline int asmcpy_works()
 void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid)
 {
 
+    int locked=0;
     int residual;
     if(use_asm_copy<0) use_asm_copy = asmcpy_works();
     if(!use_asm_copy || (n<128) ) return memcpy(dst, src, n);
      
-#ifdef EX3
 
+  /* memcpy4 has problems in multithreaded environment -- we allow only
+   * one thread to use it
+   */
+  if(n>=2048)locked = testandset((int*)&_x86copy_mutex);
+
+  if(locked){
     residual = (int)n % 64;
     if(residual != 0) memcpy(dst, src, residual);
     if(n>=64)
        asm_memcpy3((char*)dst+residual, (char*)src+residual, n - residual);
-
-#else EX4
+  }else {
 
     residual = (int)n % 2048;
 
@@ -316,10 +323,12 @@ void *armci_asm_memcpy(void *dst, const void *src, size_t n, int bufid)
           asm_memcpy3((char*)dst+res64, (char*)src+res64, residual - res64);
     }
 
-    if(n>=2048)
+    if(n>=2048){
 	asm_memcpy4((char*)dst + residual, (char*)src + residual, 
 	            n - residual, bufid);
-#endif
+        _x86copy_mutex = 0;
+    }
+  }
 
     return dst;
 }
