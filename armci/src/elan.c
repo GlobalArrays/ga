@@ -289,34 +289,38 @@ static int pending_put=0;
 void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
                                                    void* dst_ptr,int dst_stride)
 {
-int _j, i, batch;
+int _j, i, batch, issued=0;
 char *ps=src_ptr, *pd=dst_ptr;
 
 #if 1
-    for (_j = 0;  _j < count-1;  ){
+    for (_j = 0;  _j < count;  ){
       /* how big a batch of requests can we issue */
       batch = (count - _j )<MAX_PENDING ? count - _j : MAX_PENDING; 
       _j += batch;
       for(i=0; i< batch; i++){
-          if(put_dscr[cur_put])elan_wait(put_dscr[cur_put],100); 
-          else pending_put++;
+        if(put_dscr[cur_put])elan_wait(put_dscr[cur_put],100); 
+        else pending_put++;
 #if 1
-          put_dscr[cur_put]= elan_put(elan_base->state, ps, pd, (size_t)bytes, proc);
+        put_dscr[cur_put]= elan_put(elan_base->state,ps, pd,(size_t)bytes,proc);
 #else
-          elan_wait(elan_put(elan_base->state, ps, pd, (size_t)bytes, proc),1000);
+        elan_wait(elan_put(elan_base->state, ps, pd, (size_t)bytes, proc),1000);
 #endif
-          ps += src_stride;
-          pd += dst_stride;
-          cur_put++;
-          if(cur_put>=MAX_PENDING)cur_put=0;
+        issued++;
+        ps += src_stride;
+        pd += dst_stride;
+        cur_put++;
+        if(cur_put>=MAX_PENDING)cur_put=0;
       }
     }
+
+    if(issued != count) 
+       armci_die2("armci-elan put:mismatch %d %d \n", count,issued);
 #else
      for (_j = 0;  _j < count;  _j++){
-      elan_wait(elan_put(elan_base->state, ps, pd, (size_t)bytes, proc),1000);
-      ps += src_stride;
-      pd += dst_stride;
-    }
+       elan_wait(elan_put(elan_base->state, ps, pd, (size_t)bytes, proc),1000);
+       ps += src_stride;
+       pd += dst_stride;
+     }
 #endif
 }
 
@@ -327,34 +331,37 @@ char *ps=src_ptr, *pd=dst_ptr;
 void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
                                                    void* dst_ptr,int dst_stride)
 {
-int _j, i, batch;
+int _j, i, batch, issued=0;
 char *ps=src_ptr, *pd=dst_ptr;
 
 #if 1
-    for (_j = 0;  _j < count-1;  ){
+    for (_j = 0;  _j < count;  ){
       /* how big a batch of requests can we issue */
       batch = (count - _j )<MAX_PENDING ? count - _j : MAX_PENDING;
       _j += batch;
       for(i=0; i< batch; i++){
 #if 1
-          if(get_dscr[cur_get])elan_wait(get_dscr[cur_get],100); 
-          else pending_get++;
-          get_dscr[cur_get]= elan_get(elan_base->state, ps, pd, (size_t)bytes, proc);
+        if(get_dscr[cur_get])elan_wait(get_dscr[cur_get],100); 
+        else pending_get++;
+        get_dscr[cur_get]=elan_get(elan_base->state,ps,pd, (size_t)bytes, proc);
 #else
-        printf("%d: in get event %d ptr %p\n",armci_me, cur_get,get_dscr[cur_get]); fflush(stdout);
-          elan_wait(elan_get(elan_base->state, ps, pd, (size_t)bytes, proc),1000);
+        elan_wait(elan_get(elan_base->state, ps, pd, (size_t)bytes, proc),1000);
 #endif
-          ps += src_stride;
-          pd += dst_stride;
-          cur_get++;
-          if(cur_get>=MAX_PENDING)cur_get=0;
+        issued++;
+        ps += src_stride;
+        pd += dst_stride;
+        cur_get++;
+        if(cur_get>=MAX_PENDING)cur_get=0;
       }
     }
+
+    if(issued != count) 
+       armci_die2("armci-elan get:mismatch %d %d \n", count,issued);
 #else
       for (_j = 0;  _j < count;  _j++){
-          elan_wait(elan_get(elan_base->state, ps, pd, (size_t)bytes, proc),1000);
-          ps += src_stride;
-          pd += dst_stride;
+        elan_wait(elan_get(elan_base->state, ps, pd, (size_t)bytes, proc),1000);
+        ps += src_stride;
+        pd += dst_stride;
       }
 #endif
 }
