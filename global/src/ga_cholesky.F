@@ -1,3 +1,4 @@
+c $Id: ga_cholesky.F,v 1.7 1999-07-28 00:25:31 d3h325 Exp $
       subroutine ga_cholesky(g_a)
 c
 c     Cholesky factorization G&VL: alg. 6.6.1

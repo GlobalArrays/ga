@@ -1,3 +1,4 @@
+c $Id: fops.2d.F,v 1.3 1999-07-28 00:25:30 d3h325 Exp $
 *
 *     Routines to be used on systems where Fortran compiler
 *     does a better job than C compiler.

@@ -1,3 +1,4 @@
+/* $Id: ga_lock.c,v 1.5 1999-07-28 00:27:04 d3h325 Exp $ */
 #include "global.h"
 #include "globalp.h"
 #include "message.h"

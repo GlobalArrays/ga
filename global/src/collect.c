@@ -1,3 +1,4 @@
+/* $Id: collect.c,v 1.4 1999-07-28 00:27:03 d3h325 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"

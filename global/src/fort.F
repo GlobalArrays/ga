@@ -1,3 +1,4 @@
+c $Id: fort.F,v 1.2 1999-07-28 00:25:30 d3h325 Exp $
       double complex function ga_zdot(g_a,g_b)
       implicit none
       integer g_a, g_b

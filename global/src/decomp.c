@@ -1,3 +1,4 @@
+/* $Id: decomp.c,v 1.2 1999-07-28 00:27:03 d3h325 Exp $ */
 /***************************************************************************
  *--- 
  *--- The software in this file implements three heuristics for distributing

@@ -1,3 +1,4 @@
+c $Id: SLface.F,v 1.8 1999-07-28 00:25:29 d3h325 Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
