@@ -104,6 +104,7 @@ endif
 clean:
 	-$(RM) -f *.o *.p *.exe *.obj *core *stamp mputil.* *trace *.x *events*
 	-$(RM) -f ngatest.F nga-*.F
+	-$(RM) -rf ./obj
 
 .PHONY: realclean
 realclean:      clean
