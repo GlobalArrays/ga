@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.11 2003-03-27 21:40:30 d3h325 Exp $ */
+/* $Id: fence.c,v 1.12 2003-03-28 01:26:12 vinod Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -71,11 +71,11 @@ extern void** memlock_table_array;
            int master=armci_clus_info[cluster].master;
 
            h = ah+(c%MAX_HNDL);
-           if(c>MAX_HNDL) ARMCI_Wait(h);
+           if(c>=MAX_HNDL) ARMCI_Wait(h);
            
            ARMCI_INIT_HANDLE(h);
-            
-           ARMCI_NbGet(memlock_table_array+master, &buf, sizeof(int), master,  h);
+           /*printf("\n%d:master=%d p=%d\n",armci_me,master,p);fflush(stdout);*/
+           ARMCI_NbGet(memlock_table_array[master], &buf, sizeof(int), master,  h);
 
            /* one ack per cluster node suffices */
            bzero(_armci_fence_arr+master, armci_clus_info[cluster].nslave);
