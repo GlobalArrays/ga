@@ -96,6 +96,7 @@ extern void FATR ga_copy_   ARGS_((Integer *, Integer *));
 extern void FATR ga_print_  ARGS_((Integer *));
 extern void FATR ga_print_stats_();
 extern void FATR ga_zero_   ARGS_((Integer *));
+extern void FART ga_fill_   ARGS_((Integer *, void *));
 extern void FATR ga_scale_  ARGS_((Integer *, void *));
 extern void FATR ga_add_   ARGS_((Void *, Integer *, Void *,                                Integer *, Integer *));
 extern Integer FATR ga_idot_ ARGS_((Integer *, Integer *));
@@ -187,6 +188,8 @@ extern DoublePrecision nga_ddot_patch(Integer *g_a, char *t_a,
 extern DoubleComplex nga_zdot_patch(Integer *g_a, char *t_a,
           Integer *alo, Integer *ahi, Integer *g_b, char *t_b, Integer *blo,
           Integer *bhi);
+
+extern void FATR nga_zero_patch_(Integer *g_a, Integer *lo, Integer *hi);
 
 extern void FATR nga_fill_patch_(Integer *g_a, Integer *lo, Integer *hi,
                                  void *val);
