@@ -111,6 +111,9 @@ example) and ARMCI in their use of the SGI specific interprocessor
 communication facility called arena.The release 3.1 does not use 
 arenas to avoid the problem. 
 
+If processors are oversubscribed (you are using more processes than 
+processors), the SGI spin locks used for synchronization in GA 
+are a very bad idea. In such a case Sys V semaphores work much better.
 
 Sun 
 ---
@@ -154,7 +157,7 @@ Also see Note below.
 
 HP-UX 
 -----
-In most HP-UX/11 installations, the defult limit  for the largest 
+In most HP-UX/11 installations, the default limit  for the largest 
 shared memory segment is 64MB. A system administrator should be able 
 to easily increment this value to better suit the applications needs: 
 
@@ -169,6 +172,27 @@ SHMMAX in the hexadecimal format e.g.,  0X8000000 (128MB).
 
 4) Finally, select Process New Kernel from the Actions menu. It will 
 apply the new value of SHHMAX into the kernel after rebooting the system. 
+
+The C compiler (commercial version) under HP-UX 10.2 performs incorrect 
+address calculations for shared memory references. GNU gcc works fine. 
+This problem manifests itself in global/testing/test.x failing.
+If it happens, GA has to recompiled with gcc.
+
+Fujitsu VX/VPP
+--------------
+The code will not complile because of the missing header file.
+This file references MPlib library, a trade secret of Fujitsu.
+The GA/ARMCI binaries can be obtained from nobes@fecit.com.
+
+Cray systems
+-------------
+   J90 and SV1 - MPI related issues
+   Only MPI message-passing library is supported (TCGMSG-MPI also).
+   Must use "mpirun -nt" rather than "mpirun -np" command to run
+   GA based codes.
+   The Cray MPI_Abort implementation is broken(hangs) - GA aborts using _exit().
+   MPI_Initialized() is also broken - we cannot detect if some
+   other library already initialized MPI.
 
 
 FreeBSD 
