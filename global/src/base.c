@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.110 2005-01-21 22:21:25 d3g293 Exp $ */
+/* $Id: base.c,v 1.111 2005-02-11 09:34:32 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2027,18 +2027,33 @@ int i, nproc,grp_me=GAme;
     return status;
 }
 
+int gai_uses_shm(int grp_id) 
+{
+    if(grp_id > 0) return ARMCI_Uses_shm_grp(&PGRP_LIST[grp_id].group);
+    else return ARMCI_Uses_shm();
+}
 
 int gai_getmem(char* name, char **ptr_arr, Integer bytes, int type, long *id,
 	       int grp_id)
 {
 Integer handle = INVALID_MA_HANDLE, index;
-Integer nelem, item_size = GAsizeofM(type);
+Integer nproc, grp_me, nelem, item_size = GAsizeofM(type);
 char *ptr = (char*)0;
+ 
 
+   if (grp_id > 0) {
+     nproc  = PGRP_LIST[grp_id].map_nproc;
+     grp_me = PGRP_LIST[grp_id].map_proc_list[GAme];
+   }
+   else {
+     nproc = GAnproc;
+     grp_me=GAme;
+   } 
+ 
 #ifdef AVOID_MA_STORAGE
    return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
 #else
-   if(ARMCI_Uses_shm()) return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
+   if(gai_uses_shm(grp_id)) return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
    else{
      nelem = bytes/item_size + 1;
      if(bytes)
@@ -2051,9 +2066,15 @@ char *ptr = (char*)0;
             fflush(stdout);
      */
 
-     bzero((char*)ptr_arr,(int)GAnproc*sizeof(char*));
-     ptr_arr[GAme] = ptr;
-     armci_exchange_address((void**)ptr_arr,(int)GAnproc);
+     bzero((char*)ptr_arr,(int)nproc*sizeof(char*));
+     ptr_arr[grp_me] = ptr;
+#ifdef MPI
+     if (grp_id > 0) {
+        armci_exchange_address_grp((void**)ptr_arr,(int)nproc,
+                                   &PGRP_LIST[grp_id].group);
+     } else
+#endif
+        armci_exchange_address((void**)ptr_arr,(int)nproc);
      if(bytes && !ptr) return 1; 
      else return 0;
    }
@@ -2429,7 +2450,7 @@ int local_sync_begin;
        return TRUE;
     } 
 #ifndef AVOID_MA_STORAGE
-    if(ARMCI_Uses_shm()){
+    if(gai_uses_shm(GA[ga_handle].p_handle)){
 #endif
       /* make sure that we free original (before address allignment) pointer */
 #ifdef MPI
