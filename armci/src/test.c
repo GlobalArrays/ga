@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.24 2001-01-18 01:53:01 d3h325 Exp $ */
+/* $Id: test.c,v 1.25 2001-03-31 08:03:47 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -311,9 +311,9 @@ void compare_patches(double eps, int ndim, double *patch1, int lo1[], int hi1[],
 
 		if(eps < ABS(diff)/max){
 			char msg[48];
-			sprintf(msg,"(proc=%d):%lf",me,patch1[idx1]);
+			sprintf(msg,"(proc=%d):%f",me,patch1[idx1]);
 			print_subscript("ERROR: a",ndim,subscr1,msg);
-			sprintf(msg,"%lf\n",patch2[idx2]);
+			sprintf(msg,"%f\n",patch2[idx2]);
 			print_subscript(" b",ndim,subscr2,msg);
                         fflush(stdout);
                         sleep(1);
@@ -1025,7 +1025,7 @@ void test_memlock()
             assert(!ARMCI_Get(pstart, c, bytes, proc));
             armci_unlockmem();
             for(k=0;k<elems;k++)if(a[k]!=c[k]){
-                printf("%d: error patch (%d:%d) elem=%d val=%lf\n",me,first,last,k,c[k]);
+                printf("%d: error patch (%d:%d) elem=%d val=%f\n",me,first,last,k,c[k]);
                 fflush(stdout);
                 ARMCI_Error("failed is ",(int)c[k]);
             }
@@ -1090,7 +1090,6 @@ int main(int argc, char* argv[])
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
         ARMCI_AllFence();
         MP_BARRIER();
-
         if(me==0){
            printf("\nTesting atomic accumulate\n");
            fflush(stdout);

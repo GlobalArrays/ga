@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.24 2001-01-26 21:19:09 d3h325 Exp $ */
+/* $Id: message.c,v 1.25 2001-03-31 08:03:47 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -73,6 +73,17 @@ int armci_msg_nproc()
 
 #ifdef CRAY_YMP
 #define BROKEN_MPI_ABORT
+#endif
+
+#ifndef PVM
+double armci_timer()
+{
+#  ifdef MPI
+     return MPI_Wtime();
+#  else
+     return TCGTIME_();
+#  endif
+}
 #endif
 
 
