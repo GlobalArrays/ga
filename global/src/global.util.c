@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.32 1999-11-18 21:37:26 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.33 1999-12-01 21:57:57 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -224,10 +224,10 @@ void ga_error(string, icode)
      char     *string;
      Integer  icode;
 {
+#ifndef ARMCI
 extern void Error();
-#ifdef SYSV
-   extern int SR_caught_sigint;
 #endif
+
 #ifdef CRAY_T3D 
 #  define FOUT stdout
 #else
@@ -237,7 +237,6 @@ extern void Error();
     int level;
     char error_buffer[ERR_LEN];
 
-    ga_clean_resources(); 
 
     /* print GA names stack */
     sprintf(error_buffer,"%d:", ga_nodeid_());
@@ -248,6 +247,10 @@ extern void Error();
     strcat(error_buffer,string);
     strcat(error_buffer,":");
        
+#ifdef ARMCI
+    ARMCI_Error(error_buffer,(int)icode);
+#else
+    ga_clean_resources(); 
     if (ga_nnodes_() > 1) Error(error_buffer, icode);
     else{
       fprintf(FOUT,"%s %ld\n",error_buffer,icode);
@@ -255,6 +258,7 @@ extern void Error();
       fflush(FOUT);
       exit(1);
     }
+#endif
 }
 
 

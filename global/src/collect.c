@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.4 1999-07-28 00:27:03 d3h325 Exp $ */
+/* $Id: collect.c,v 1.5 1999-12-01 21:57:56 d3h325 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -22,7 +22,7 @@ void FATR dgop_();
 void FATR igop_();
 */
 
-#ifndef TCGMSG
+#if !defined(TCGMSG) && !defined(MPI) 
 #   define MPI 
 #endif
 
