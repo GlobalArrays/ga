@@ -1,6 +1,5 @@
-/* $Id: elan.c,v 1.22 2003-07-03 23:14:34 d3h325 Exp $ */
+/* $Id: elan.c,v 1.23 2003-10-21 05:20:47 d3h325 Exp $ */
 #include <elan/elan.h>
-#include <elan3/elan3.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "armcip.h"
@@ -18,6 +17,12 @@ static void *_qd;
 #endif
 #else
 #   define VCALLS 0
+#endif
+
+#ifdef DOELAN4
+#define VCALLS 0
+#else
+#include <elan3/elan3.h>
 #endif
 
 #ifdef ELAN_ACC
@@ -62,6 +67,13 @@ void armci_init_connections()
 ELAN_QUEUE *q;
 int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
 
+#if defined(SHMEM_TUNE_SMP_ENABLE) && defined(DECOSF)
+/* turn off HP SMP optimizations */
+ if(armci_nclus == 1) {
+   if(!shmem_setTuningParameter ("SHMEM_SMP_ENABLE", 0))
+             armci_die("SHMEM_SHMP_ENABLE unset failed",0);
+ }
+#endif
 
     if ((q = elan_gallocQueue(elan_base, elan_base->allGroup)) == NULL)
             armci_die( "elan_gallocElan",0 );
@@ -72,6 +84,8 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
 #else
     if (!(mq = elan_mainQueueInit( elan_base->state, q, nslots, slotsize,
           0)))armci_die("Failed to initialise Main Q",0);
+
+#if VCALLS
     _qd = elan_gallocElan(elan_base, elan_base->allGroup, E3_QUEUE_ALIGN,
                               elan_pgvGlobalMemSize(elan_base->state));
 
@@ -80,6 +94,7 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
     _pgctrl = elan_putgetInit(elan_base->state, _qd, 16, 4096, 4096, 32, ELAN_PGVINIT);
     if(!_pgctrl) armci_die("failed elan_gallocElan 2",0);
     elan_gsync(elan_base->allGroup);
+#endif
 #endif
 
     if(armci_me == armci_master) {
@@ -262,7 +277,7 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     } else /* null tag means buffer is free -- true after elan_queueReq*/;
 
     elan_queueReq(mq, proc_serv, vbuf, size); /* vbuf is sent/copied out */
-
+    
 #if 0
     if(armci_me==0){
       printf("%d sent request %d to (%d,%d)\n",armci_me,ops_pending_ar[proc], 
@@ -288,7 +303,7 @@ void armci_server_initial_connection(){}
 
 
 /************************************************************************/
-#ifdef _ELAN_LOCK_H
+#if defined(_ELAN_LOCK_H) 
 
 #define MAX_LOCKS 4
 static ELAN_LOCK *my_locks, *all_locks;
@@ -382,11 +397,11 @@ char *ps=src_ptr, *pd=dst_ptr;
         pd += dst_stride;
         issued++;
         if(issued == MAX_VECS){
-           elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),100);
+           elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
            issued=0;
         } 
     }
-    if(issued)elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),100);
+    if(issued)elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
 }
 
 void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
@@ -406,11 +421,11 @@ char *ps=src_ptr, *pd=dst_ptr;
         pd += dst_stride;
         issued++;
         if(issued == MAX_VECS){
-           elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),100);
+           elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
            issued=0;
         }
     }
-    if(issued)elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),100);
+    if(issued)elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
 }
 
 void armcill_wait_get(){}
@@ -501,7 +516,7 @@ char *ps=src_ptr, *pd=dst_ptr;
         else pending_get++;
         get_dscr[cur_get]=elan_get(elan_base->state,ps,pd, (size_t)bytes, proc);
 #else
-        elan_wait(elan_get(elan_base->state, ps, pd, (size_t)bytes, proc),1000);
+        elan_wait(elan_get(elan_base->state, ps, pd, (size_t)bytes, proc),elan_base->waitType);
 #endif
         issued++;
         ps += src_stride;
@@ -515,7 +530,7 @@ char *ps=src_ptr, *pd=dst_ptr;
        armci_die2("armci-elan get:mismatch %d %d \n", count,issued);
 #else
       for (_j = 0;  _j < count;  _j++){
-        elan_wait(elan_get(elan_base->state, ps, pd, (size_t)bytes, proc),1000);
+        elan_wait(elan_get(elan_base->state, ps, pd, (size_t)bytes, proc),elan_base->waitType);
         ps += src_stride;
         pd += dst_stride;
       }
@@ -552,11 +567,11 @@ int i;
 #ifdef MULTI_CTX
 void armci_checkMapped(void *buffer, size_t size)
 {
-#if 0
-static int seg=0;
+  if(DEBUG_) {
+        static int seg=0;
 	printf("%d: %d Checking Mapping %p %d\n",armci_me,seg++,buffer,size); 
         fflush(stdout);
-#endif
+  }
   if ( ! elan_addMapping(elan_base->state, buffer, size ) )
 	  armci_die("Error, can't add elan mapping",0);
 }
