@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.8 2001-08-23 20:30:41 edo Exp $
+# $Id: GNUmakefile,v 1.9 2002-05-14 22:12:14 d3h325 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -44,6 +44,9 @@ endif
 ifeq ($(TARGET),SGITFP)
    LIB_DEFINES = -DPARTIALSPIN -DSGIUS
    EXTRA = strdup.o  wrap.o
+endif
+ifeq ($(TARGET),MACX)
+   LIB_DEFINES = -DNOSPIN
 endif
 ifeq ($(TARGET),HPUX)
    LIB_DEFINES = -DNOSPIN
@@ -113,7 +116,7 @@ ifeq ($(TARGET),CONVEX-SPP)
 endif
 
 SYSTEM_V =  IBM IBM64 LINUX SGI SGI_N32 SGITFP HPUX HPUX64 SOLARIS SOLARIS64 
-SYSTEM_V += DECOSF CONVEX-SPP LINUX64
+SYSTEM_V += DECOSF CONVEX-SPP LINUX64 MACX
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
      LIB_DEFINES += -DSYSV -DSHMEM

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.16 2001-08-02 19:41:10 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sndrcvP.h,v 1.17 2002-05-14 22:12:14 d3h325 Exp $ */
 
 /*
   This include file contains definitions PRIVATE to the message
@@ -58,6 +58,9 @@
 #endif
 #ifdef HPUX
 #define SHMEM_BUF_SIZE 262144
+#endif
+#ifdef MACX
+#define SHMEM_BUF_SIZE 65536
 #endif
 #if defined(SOLARIS)
 #define SHMEM_BUF_SIZE 253952 

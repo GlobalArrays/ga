@@ -1,8 +1,18 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/evlog.c,v 1.4 1995-02-24 02:17:16 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/evlog.c,v 1.5 2002-05-14 22:12:14 d3h325 Exp $ */
 
 /* Event logging routine with key driven varargs interface */
 
 #include <stdio.h>
+
+#ifdef MACX
+/* jn: hack around bug in /usr/include/varargs.h */
+#ifndef __PPC__
+#   define __PPC__
+#endif
+#ifndef _CALL_SYSV
+#   define _CALL_SYSV
+#endif
+#endif
 #include <varargs.h>
 
 extern long nodeid_();
@@ -12,6 +22,7 @@ extern long nodeid_();
 #else
 #include <string.h>
 #endif
+
 
 #if defined(ALLIANT) || defined(ENCORE) || defined(SEQUENT) || \
     defined(CONVEX)  || defined(ARDENT) || defined(ULTRIX) || \

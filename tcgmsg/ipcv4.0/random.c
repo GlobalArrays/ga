@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/random.c,v 1.7 2002-01-29 01:52:56 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/random.c,v 1.8 2002-05-14 22:12:14 d3h325 Exp $ */
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -22,6 +22,13 @@ static char sccsid[] = "@(#)random.c	5.5 (Berkeley) 7/6/88";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+
+/* MAC X already has this stuff! */
+#ifdef MACX
+#define PUBLIC static
+#else
+#define PUBLIC 
+#endif
 
 /*
  * random.c:
@@ -171,6 +178,93 @@ static  long		*end_ptr		= (long*) &randtbl[ DEG_3 + 1 ];
 
 
 
+
+
+/*
+ * setstate:
+ * Restore the state from the given state array.
+ * Note: it is important that we also remember the locations of the pointers
+ * in the current state information, and restore the locations of the pointers
+ * from the old state information.  This is done by multiplexing the pointer
+ * location into the zeroeth word of the state information.
+ * Note that due to the order in which things are done, it is OK to call
+ * setstate() with the same state as the current state.
+ * Returns a pointer to the old state information.
+ */
+
+PUBLIC char  * setstate( arg_state )
+
+    char		*arg_state;
+{
+	register  long		*new_state	= (long *)arg_state;
+	register  int		type		= new_state[0]%MAX_TYPES;
+	register  int		rear		= new_state[0]/MAX_TYPES;
+	char			*ostate		= (char *)( &state[ -1 ] );
+
+	if(  rand_type  ==  TYPE_0  )  state[ -1 ] = rand_type;
+	else  state[ -1 ] = MAX_TYPES*(rptr - state) + rand_type;
+	switch(  type  )  {
+	    case  TYPE_0:
+	    case  TYPE_1:
+	    case  TYPE_2:
+	    case  TYPE_3:
+	    case  TYPE_4:
+		rand_type = type;
+		rand_deg = degrees[ type ];
+		rand_sep = seps[ type ];
+		break;
+
+	    default:
+		fprintf( stderr, "setstate: state info has been munged; not changed.\n" );
+	}
+	state = &new_state[ 1 ];
+	if(  rand_type  !=  TYPE_0  )  {
+	    rptr = &state[ rear ];
+	    fptr = &state[ (rear + rand_sep)%rand_deg ];
+	}
+	end_ptr = &state[ rand_deg ];		/* set end_ptr too */
+	return( ostate );
+}
+
+
+
+/*
+ * random:
+ * If we are using the trivial TYPE_0 R.N.G., just do the old linear
+ * congruential bit.  Otherwise, we do our fancy trinomial stuff, which is the
+ * same in all ther other cases due to all the global variables that have been
+ * set up.  The basic operation is to add the number at the rear pointer into
+ * the one at the front pointer.  Then both pointers are advanced to the next
+ * location cyclically in the table.  The value returned is the sum generated,
+ * reduced to 31 bits by throwing away the "least random" low bit.
+ * Note: the code takes advantage of the fact that both the front and
+ * rear pointers can't wrap on the same call by not testing the rear
+ * pointer if the front one has wrapped.
+ * Returns a 31-bit random number.
+ */
+
+PUBLIC long random()
+{
+	long		i;
+
+	if(  rand_type  ==  TYPE_0  )  {
+	    i = state[0] = ( state[0]*1103515245 + 12345 )&0x7fffffff;
+	}
+	else  {
+	    *fptr += *rptr;
+	    i = (*fptr >> 1)&0x7fffffff;	/* chucking least random bit */
+	    if(  ++fptr  >=  end_ptr  )  {
+		fptr = state;
+		++rptr;
+	    }
+	    else  {
+		if(  ++rptr  >=  end_ptr  )  rptr = state;
+	    }
+	}
+	return( i );
+}
+
+
 /*
  * srandom:
  * Initialize the random number generator based on the given seed.  If the
@@ -184,12 +278,11 @@ static  long		*end_ptr		= (long*) &randtbl[ DEG_3 + 1 ];
  * values produced by this routine.
  */
 
-void srandom( x )
+PUBLIC void srandom( x )
 
     unsigned		x;
 {
     	register  int		i;
-	long random();
 
 	if(  rand_type  ==  TYPE_0  )  {
 	    state[ 0 ] = x;
@@ -204,7 +297,6 @@ void srandom( x )
 	    for( i = 0; i < 10*rand_deg; i++ )  random();
 	}
 }
-
 
 
 /*
@@ -223,8 +315,7 @@ void srandom( x )
  * Returns a pointer to the old state.
  */
 
-char  *
-initstate( seed, arg_state, n )
+PUBLIC char  * initstate( seed, arg_state, n )
 
     unsigned		seed;			/* seed for R. N. G. */
     char		*arg_state;		/* pointer to state array */
@@ -278,92 +369,6 @@ initstate( seed, arg_state, n )
 }
 
 
-
-/*
- * setstate:
- * Restore the state from the given state array.
- * Note: it is important that we also remember the locations of the pointers
- * in the current state information, and restore the locations of the pointers
- * from the old state information.  This is done by multiplexing the pointer
- * location into the zeroeth word of the state information.
- * Note that due to the order in which things are done, it is OK to call
- * setstate() with the same state as the current state.
- * Returns a pointer to the old state information.
- */
-
-char  *
-setstate( arg_state )
-
-    char		*arg_state;
-{
-	register  long		*new_state	= (long *)arg_state;
-	register  int		type		= new_state[0]%MAX_TYPES;
-	register  int		rear		= new_state[0]/MAX_TYPES;
-	char			*ostate		= (char *)( &state[ -1 ] );
-
-	if(  rand_type  ==  TYPE_0  )  state[ -1 ] = rand_type;
-	else  state[ -1 ] = MAX_TYPES*(rptr - state) + rand_type;
-	switch(  type  )  {
-	    case  TYPE_0:
-	    case  TYPE_1:
-	    case  TYPE_2:
-	    case  TYPE_3:
-	    case  TYPE_4:
-		rand_type = type;
-		rand_deg = degrees[ type ];
-		rand_sep = seps[ type ];
-		break;
-
-	    default:
-		fprintf( stderr, "setstate: state info has been munged; not changed.\n" );
-	}
-	state = &new_state[ 1 ];
-	if(  rand_type  !=  TYPE_0  )  {
-	    rptr = &state[ rear ];
-	    fptr = &state[ (rear + rand_sep)%rand_deg ];
-	}
-	end_ptr = &state[ rand_deg ];		/* set end_ptr too */
-	return( ostate );
-}
-
-
-
-/*
- * random:
- * If we are using the trivial TYPE_0 R.N.G., just do the old linear
- * congruential bit.  Otherwise, we do our fancy trinomial stuff, which is the
- * same in all ther other cases due to all the global variables that have been
- * set up.  The basic operation is to add the number at the rear pointer into
- * the one at the front pointer.  Then both pointers are advanced to the next
- * location cyclically in the table.  The value returned is the sum generated,
- * reduced to 31 bits by throwing away the "least random" low bit.
- * Note: the code takes advantage of the fact that both the front and
- * rear pointers can't wrap on the same call by not testing the rear
- * pointer if the front one has wrapped.
- * Returns a 31-bit random number.
- */
-
-long
-random()
-{
-	long		i;
-
-	if(  rand_type  ==  TYPE_0  )  {
-	    i = state[0] = ( state[0]*1103515245 + 12345 )&0x7fffffff;
-	}
-	else  {
-	    *fptr += *rptr;
-	    i = (*fptr >> 1)&0x7fffffff;	/* chucking least random bit */
-	    if(  ++fptr  >=  end_ptr  )  {
-		fptr = state;
-		++rptr;
-	    }
-	    else  {
-		if(  ++rptr  >=  end_ptr  )  rptr = state;
-	    }
-	}
-	return( i );
-}
 
 double drand_(flag)
     unsigned long *flag;
