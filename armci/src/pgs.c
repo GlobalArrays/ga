@@ -1,11 +1,8 @@
-/* $Id: pgs.c,v 1.11 2004-10-09 16:29:57 edo Exp $ 
+/* $Id: pgs.c,v 1.12 2004-10-28 00:32:30 d3h325 Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
 
-#ident	"@(#)$Id: pgs.c,v 1.11 2004-10-09 16:29:57 edo Exp $"
-
-#define BINLOAD 1
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,6 +19,13 @@
 #include <elan4/dma.h>
 #include <elan4/registers.h>
 #include "pgs_thread.h"
+
+#if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,18,0)
+#define BINLOAD 1
+#else
+#define DIRECTLOAD 1
+#endif
+
 
 extern void armci_die();
 extern int armci_me;
@@ -382,6 +386,13 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
     {
 	void *cspace;
 	LOADSO *code;
+
+#if DIRECTLOAD
+        if((code = elan4_open_so_static(rail->rail_ctx, bin_data, BIN_DATA_ELEMS,0)) ==NULL)
+                                        armci_die("failed to load code",-1); 
+
+#else
+
 #if BINLOAD
 	char file_name[20];
 	FILE *fp;
@@ -403,6 +414,7 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 	if ((code = pgsrail->pr_pgsCode = OPEN_SO(rail->rail_ctx,
 				  (const char*)file_name, NULL, 0)) == NULL)
 	    armci_die("failed to load thread code",-1);
+#endif
 	
 	cspace = elan4_allocElan (pgsrail->pr_alloc, 8192, code->loadsize);
 
@@ -411,9 +423,11 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 	
 	pgsrail->pr_pgsSym  = elan4_find_sym (code, "pgs_thread");
 
-#ifndef BINLOAD
+#if !defined(BINLOAD) && !defined(DIRECTLOAD)
+
 	unlink((const char*)file_name);
 #endif
+
 
     }
 
