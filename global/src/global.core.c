@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.8 1995-03-23 01:03:37 gg502 Exp $*/
+/*$Id: global.core.c,v 1.9 1995-03-24 23:23:46 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -462,7 +462,7 @@ logical ga_memory_limited_()
 
 
 
-/*\ RETURNS AMMOUNT OF MEMORY on each processor IN ACTIVE GLOBAL ARRAYS 
+/*\ RETURNS AMOUNT OF MEMORY on each processor IN ACTIVE GLOBAL ARRAYS 
 \*/
 Integer  ga_inquire_memory_()
 {
@@ -473,22 +473,17 @@ Integer i, sum=0;
 }
 
 
-/*\ RETURNS AMMOUT OF GA MEMORY AVAILABLE on calling processor 
+/*\ RETURNS AMOUNT OF GA MEMORY AVAILABLE on calling processor 
 \*/
 Integer ga_memory_avail_()
 {
 #ifdef SYSV
    return(GA_total_memory); 
 #else
-   Integer ma_limit, ga_limit;
+   Integer ma_limit = MA_inquire_avail(MT_F_BYTE);
 
-   ma_limit = MA_inquire_avail(MT_F_BYTE);
-
-   if ( GA_memory_limited ) {
-     return( MIN(GA_total_memory, ma_limit) );
-   } else {
-     return( ma_limit );
-   }
+   if ( GA_memory_limited ) return( MIN(GA_total_memory, ma_limit) );
+   else return( ma_limit );
 #endif
 }
 
