@@ -21,7 +21,7 @@ c vector boxes lack arithmetic precision
       integer heap, stack, fudge, ma_heap, me
       integer nmax, DIM, nwidth, MAXPROC, nloop
       parameter (nmax = 300, DIM = 2, MAXPROC = 2000)
-      parameter (nloop = 1000)
+      parameter (nloop = 50)
       integer ndim, nprocs, tprocs, pdims(7), type, dcnt, g_a, maxval
       integer g_a, g_b, g_c, g_aa, g_bb, g_cc, iproc
       integer inode, tnodes, p_m, ix, iy, xinc, yinc
@@ -30,14 +30,14 @@ c vector boxes lack arithmetic precision
       integer lo2(7), hi2(7)
       integer lo3(7), hi3(7)
       integer lo4(7), hi4(7)
-      integer chunk(7), imax, jmax, iloop
+      integer chunk(7), imax, jmax, iloop, afail, bfail, cfail
       double precision a(nmax, nmax), b(nmax,nmax), c(nmax,nmax)
       double precision ta(nmax, nmax), tb(nmax,nmax),tc(nmax,nmax)
       double precision tat(nmax, nmax)
       double precision start,start1,t1,t2,t3,t4,t5,t6,t7
       double precision alpha, beta
       logical status, ltest
-      parameter (heap=200*200*4, fudge=100, stack=200*200*4)
+      parameter (heap=400*400*4, fudge=100, stack=400*400*4)
 c
       mdim = nmax
 c     
@@ -93,6 +93,13 @@ c
       iproc = mod(me,nprocs)
       call factor(tnodes,ndim,ndims)
       call factor(nprocs,ndim,pdims)
+c
+      if (me.eq.0) then
+        write(6,*) '*'
+        write(6,*) '*  Number of processors: ',tprocs
+        write(6,*) '*  Number of processors/node : ',nprocs
+        write(6,*) '*'
+      endif
 c
 c   create global arrays
 c
@@ -284,39 +291,61 @@ c
         alpha = 1.0
         beta = 0.0
         start = util_timer()
+#define DGEMM 0
+#if DGEMM
         call ga_dgemm('n','n',mdim,mdim,mdim,alpha,g_aa,g_bb,beta,g_cc)
-c      do i = 1, mdim
-c        do j = 1, mdim
-c          tat(j,i) = a(i,j)
-c        end do
-c      end do
-c      do i = 1, mdim
-c        do j = 1, mdim
-c          tc(i,j) = 0.0d00
-c          do k = 1, mdim
-c            tc(i,j) = tc(i,j) + tat(k,i)*b(k,j)
-c          end do
-c        end do
-c      end do
+#else
+        do i = 1, mdim
+          do j = 1, mdim
+            tat(j,i) = a(i,j)
+          end do
+        end do
+        do i = 1, mdim
+          do j = 1, mdim
+            tc(i,j) = 0.0d00
+            do k = 1, mdim
+              tc(i,j) = tc(i,j) + tat(k,i)*b(k,j)
+            end do
+          end do
+        end do
+#endif
         t2 = t2 + util_timer() - start
+        call ga_sync()
 c
 c   check to see if matrix operations agree
 c
         call nga_get(g_c,lo,hi,c,ld)
+#if DGEMM
         call nga_get(g_cc,lo,hi,tc,ld)
+#endif
+        call ga_sync()
         ltest = .true.
+        afail = 0
+        bfail = 0
+        cfail = 0
         do i = 1, mdim
           do j = 1, mdim
             if (c(i,j).ne.tc(i,j)) then
+              cfail = cfail+1
               ltest = .false.
+              if (c(i,j).eq.0.0d00) then
+                afail = afail + 1
+              endif
+              if (tc(i,j).eq.0.0d00) then
+                bfail = bfail + 1
+              endif
             end if
           end do
         end do
         if (ltest) then
           if (me.eq.0) write(6,*) 'Matrices agree for iteration ',iloop
         else
-          if (me.eq.0) write(6,*) 'Matrices disagree for iteration',
-     +      iloop
+          if (me.eq.0) then
+            write(6,*) 'Matrices disagree for iteration',iloop
+            write(6,*) '  Total number of disagreements',cfail
+            write(6,*) '  Total number of zeros in mirrored array',afail
+            write(6,*) '  Total number of zeros in dgemm array',bfail
+          endif
         endif
       end do
 c
