@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.8 2002-01-29 21:51:12 d3h325 Exp $ */
+/* $Id: ghosts.c,v 1.9 2002-02-19 16:12:30 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1734,6 +1734,33 @@ void waitforflags (int *ptr1, int *ptr2) {
   }
 }
 
+/* Stub in new ARMCI_PutS_flag call until actual implementation is
+   available */
+int ARMCI_PutS_flag(
+      void* src_ptr,        /* pointer to 1st segment at source */
+      int src_stride_arr[], /* array of strides at source */
+      void* dst_ptr,        /* pointer to 1st segment at destination */
+      int dst_stride_arr[], /* array of strides at destination */
+      int count[],          /* number of units at each stride level,
+                               count[0] = #bytes */
+      int stride_levels,    /* number of stride levels */
+      int *flag,            /* pointer to remote flag */
+      int val,              /* value to set flag upon completion of
+                               data transfer */
+      int proc              /* remote process(or) ID */
+      )
+{
+  int bytes;
+  /* Put local data on remote processor */
+  ARMCI_PutS(src_ptr, src_stride_arr, dst_ptr, dst_stride_arr,
+             count, stride_levels, proc);
+
+  /* Send signal to remote processor that data transfer has
+   * been completed. */
+  bytes = sizeof(int);
+  ARMCI_Put(&val, flag, bytes, proc);
+}
+
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND PUT CALLS
  *  WITHOUT ANY BARRIERS
 \*/
@@ -1974,14 +2001,9 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
-      ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          ndim - 1, proc_rem);
-
-      /* Send signal to remote processor that data transfer has been
-         completed. */
-      bytes = size;
-      ARMCI_Put(&signal, (void*)(GA_Update_Flags[proc_rem]+msgcnt),
-          bytes, proc_rem);
+      ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+          ndim - 1, (void*)(GA_Update_Flags[proc_rem]+msgcnt), signal,
+          proc_rem);
       msgcnt++;
 
       /* Perform update in positive direction. Start by getting rough
@@ -2102,14 +2124,9 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Put local data on remote processor */
-      ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
-          ndim - 1, proc_rem);
-
-      /* Send signal to remote processor that data transfer has been
-         completed. */
-      bytes = size;
-      ARMCI_Put(&signal, (void*)(GA_Update_Flags[proc_rem]+msgcnt),
-          bytes, proc_rem);
+      ARMCI_PutS_flag(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
+          ndim - 1, (void*)(GA_Update_Flags[proc_rem]+msgcnt), signal,
+          proc_rem);
       msgcnt++;
     }
     /* check to make sure that all messages have been recieved before
