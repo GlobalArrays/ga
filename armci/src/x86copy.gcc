@@ -1,4 +1,4 @@
-// $Id: x86copy.gcc,v 1.8 2001-08-28 20:53:37 d3h325 Exp $
+// $Id: x86copy.gcc,v 1.9 2001-09-14 00:35:43 d3h325 Exp $
 // memory copy implementation derived from examples 3 and 4 at
 // http://www.sgi.com/developers/library/resources/asc_cpu.html
 //
@@ -230,8 +230,8 @@ CPUTYPE cpu_check()
 
     if(strcmp(vendor, "GenuineIntel") == 0){
 
-        if(isIA64)
-            return ia64;
+//        if(isIA64)
+//            return ia64;
 
         switch(family){
         case 5: // P5
@@ -246,7 +246,7 @@ CPUTYPE cpu_check()
                 return unkown;
             break;
         case 0xf: // extended family
-            if(reax & 0x0ff00000 == 0 && model == 0) return p4;
+            if((reax & 0x0ff00000) == 0 && model == 0) return p4;
             break;
         }
     }
