@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.26 1999-10-31 17:46:34 jju Exp $ */
+/* $Id: global.armci.c,v 1.27 1999-11-03 17:59:49 jju Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2356,7 +2356,7 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         desc.dst_ptr_array = ptr_dst[k];
         desc.ptr_array_len = nelem[k];
         
-        ARMCI_GetV(&desc, 1, k);
+        ARMCI_PutV(&desc, 1, k);
     }
 
     gai_free(ptr_ref);
