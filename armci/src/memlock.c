@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.10 2000-06-14 18:38:41 edo Exp $ */
+/* $Id: memlock.c,v 1.11 2000-10-11 20:00:08 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -125,7 +125,7 @@ void armci_lockmem(void *start, void *end, int proc)
 #endif
 
      if(DEBUG_){
-       printf("%d: calling armci_lockmem for %d range %lx -%lx\n",
+       printf("%d: calling armci_lockmem for %d range %p -%p\n",
               armci_me, proc, start,end);
        fflush(stdout);
      }
@@ -246,15 +246,15 @@ void armci_set_mem_offset(void *ptr)
       armci_mem_offset =off;
       first_time =0;
       if(DEBUG_){
-        printf("%d memlock offset=%ld ref=%lx ptr=%lx\n",armci_me,
-                  armci_mem_offset, ref_ptr, ptr); fflush(stdout);
+        printf("%d memlock offset=%ld ref=%p ptr=%p\n",armci_me,
+                  (long)armci_mem_offset, ref_ptr, ptr); fflush(stdout);
       }
 
    }else{
       if(armci_mem_offset != off){
          *armci_use_memlock_table =0;
          printf("%d: WARNING:armci_set_mem_offset: offset changed %ld to %ld\n",
-                 armci_me, armci_mem_offset, off); fflush(stdout);
+                 armci_me, (long)armci_mem_offset, (long)off); fflush(stdout);
       }
    }
 }

@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.33 2000-09-13 22:31:05 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.34 2000-10-11 20:02:50 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -683,7 +683,7 @@ static char *temp;
 
   /* search region_list for the current shmem id */
   for(found = 0, reg=0; reg < MAX_REGIONS;reg++)
-     if(found=(region_list[reg].id == *id))break;
+     if((found=(region_list[reg].id == *id)))break;
 
   if(!found){
      reg = alloc_regions;
@@ -756,7 +756,7 @@ long id;
     }
 
     if(DEBUG_){
-      printf("%d:allocate:id=%ld adr=%ld size=%ld\n",armci_me,id,temp,size);
+      printf("%d:allocate:id=%ld adr=%p size=%ld\n",armci_me,id,temp,size);
       fflush(stdout);
     }
     region_list[alloc_regions].addr = temp;
@@ -812,7 +812,7 @@ int  reg, refreg=0,nreg;
     occup_blocks++;
   
     if(DEBUG_){ 
-      printf("%d:CreatShmReg:reg=%d id=%ld off=%ld ptr=%ld adr=%ld s=%d n=%d\n",
+      printf("%d:CreatShmReg:reg=%d id=%ld off=%ld ptr=%p adr=%p s=%d n=%d\n",
            armci_me,reg,region_list[reg].id,*offset,region_list[reg].addr,
            temp,(int)size,nreg);
       fflush(stdout);
