@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.26 1999-07-29 19:02:25 d3h325 Exp $*/
+/*$Id: global.util.c,v 1.27 1999-07-29 21:46:40 jju Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -670,6 +670,77 @@ void FATR nga_print_patch_(g_a, lo, hi, pretty)
             }
         }
     }
+    
+    ga_sync_();
+}
+
+void FATR ga_summarize_(Integer *verbose)
+{
+#define DEV stdout
+    
+    Integer i, j, g_a;
+    Integer printed, arr_no;
+    Integer type, active;
+    char *name;
+    Integer ndim, dims[MAXDIM];
+    Integer lop[MAXDIM], hip[MAXDIM];
+    Integer me = ga_nodeid_();
+    Integer nproc = ga_nnodes_();
+    
+    ga_sync_();
+
+    fprintf(DEV, " Summary of allocated global arrays\n");
+    fprintf(DEV, "-----------------------------------\n");
+
+    printed = 0;
+    arr_no = 0;
+    
+    for(g_a=-1000; g_a<-900; g_a++) {
+        active = ga_verify_handle_(&g_a);
+
+        if(active == 1) {
+            printed = 1;
+            nga_inquire_(&g_a, &type, &ndim, dims);
+            ga_inquire_name(&g_a,  &name);
+            
+            switch(type) {
+                case MT_F_INT:
+                    fprintf(DEV, "  array %d => integer ", arr_no);
+                    break;
+                case MT_F_DBL:
+                    fprintf(DEV, "  array %d => double precision ", arr_no);
+                    break;
+                case MT_F_DCPL:
+                    fprintf(DEV, "  array %d => double complex ", arr_no);
+                    break;
+                default: ga_error("ga_print: wrong type",0);
+            }
+            arr_no++;
+
+            fprintf(DEV,"%s(", name);
+            for(i=0; i<ndim; i++)
+                if(i != (ndim-1)) fprintf(DEV, "%d,", dims[i]);
+                else fprintf(DEV, "%d", dims[i]);
+            fprintf(DEV,"),  handle: %d \n", g_a);
+
+            if(*verbose) {
+                for(i=0; i<nproc; i++){
+                    nga_distribution_(&g_a, &i, lop, hip);
+                    
+                    fprintf(DEV,"    (");
+                    for(j=0; j<ndim; j++)
+                        if(j != (ndim-1))
+                            fprintf(DEV, "%d:%d,", lop[j], hip[j]);
+                        else fprintf(DEV, "%d:%d", lop[j], hip[j]);
+                    fprintf(DEV,") -> %d \n", i);
+                }
+            }
+        }
+    }
+
+    if(!printed) fprintf(DEV, "  No active global arrays\n");
+
+    fprintf(DEV, "\n\n");
     
     ga_sync_();
 }
