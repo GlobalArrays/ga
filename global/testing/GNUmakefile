@@ -31,9 +31,6 @@ endif
 ifdef USE_SCALAPACK
      LIB_DEFINES += -DSCALAPACK
 endif
-ifeq ($(MSG_COMMS), MPI)
-     LIB_DEFINES += -DMPI
-endif
 
 LIB_DISTRIB  = ../../lib
 LIB_TARGETS = *.x *.p
@@ -81,16 +78,16 @@ ifeq ($(P_FILE),YES)
 %.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a  $(EXTRA)
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
 	if [ -f $(basename $@).c ]; then\
-		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(CLIBS);\
+		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(CLIBS);\
 	else\
-		$(LINK.f) $(FLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(FLIBS);\
+		$(LINK.f) $(FLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(FLIBS);\
         fi
 else
 %.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a  $(EXTRA)
 	if [ -f $(basename $@).c ]; then\
-		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(CLIBS);\
+		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(CLIBS);\
 	else\
-		$(LINK.f) $(FLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(FLIBS);\
+		$(LINK.f) $(FLDOPT) -o $@ $< $(TESTUTIL) $(LIBS) $(FLIBS);\
         fi
 endif
 

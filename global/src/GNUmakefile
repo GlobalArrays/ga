@@ -68,8 +68,6 @@ ifdef USE_MPI
 endif
 ifeq ($(MSG_COMMS),MPI)
 include ../../armci/config/makemp.h
-LIB_INCLUDES += $(MP_INCLUDES)
-LIB_DEFINES += -DMPI
 endif
 include ../../config/makefile.h
 endif

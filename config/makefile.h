@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.29 2000-05-26 19:34:50 d3h325 Exp $
+# $Id: makefile.h,v 1.30 2000-06-01 01:18:35 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -103,63 +103,49 @@ endif
 #
 ifeq ($(TARGET),LINUX)
            CC = gcc
-          CPP = gcc -E -nostdinc -undef -P
-       RANLIB = ranlib
- GLOB_DEFINES = -DLINUX
-ifndef USE_F77
-#    Linux with g77
-     FOPT_REN = -fno-second-underscore
            FC = g77
-else
-    EXPLICITF = TRUE
-     FCONVERT = @(/bin/cp $< .tmp.$$$$.c; \
-		$(CPP) $(CPP_FLAGS) .tmp.$$$$.c  | sed '/^$$/d' > $*.f; \
-	 	/bin/rm -f .tmp.$$$$.c ) || exit 1
-endif
+          CPP = gcc -E -nostdinc -undef -P
+     FOPT_REN = -fno-second-underscore
+       RANLIB = ranlib
+          _FC = $(notdir $(FC))
+          _CC = $(notdir $(CC))
+         _CPU = $(shell uname -m |\
+                 awk ' /sparc/ { print "sparc" }; /i*86/ { print "x86" } ' )
 
-ifndef TARGET_CPU
-  ifeq ($(FC),g77)
-       FOPT_REN += -malign-double
-  endif
-  ifeq ($(CC),gcc)
-       COPT_REN += -malign-double
-  endif
+ifneq (,$(findstring mpif,$(_FC)))
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { print "pgf77" ; exit } ' )
+endif
+ifneq (,$(findstring mpicc,$(_CC)))
+         _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ { print "gcc" ; exit  } ' )
 endif
 #
-#                GNU compilers
-ifeq ($(CC),gcc)
+#              GNU compilers
+ifeq ($(_CPU),x86)
+     OPT_ALIGN = -malign-double
+endif
+ifeq ($(_CC),gcc)
    ifeq ($(COPT),-O)
-#        COPT = -O2
-    COPT_REN += -funroll-loops
-#   COPT_REN += -finline-functions -funroll-loops
+          COPT = -O2
+     COPT_REN += -funroll-loops $(OPT_ALIGN)
    endif
 endif
-ifeq ($(FC),g77)
+#
+#           g77
+ifeq ($(_FC),g77)
    ifeq ($(FOPT),-O)
-#        FOPT = -O3
-    FOPT_REN += -funroll-loops -fomit-frame-pointer
+           FOPT = -O2
+      FOPT_REN += -funroll-loops -fomit-frame-pointer $(OPT_ALIGN)
+      ifndef OLD_G77
+        FOPT_REN += -Wno-globals
+      endif
    endif
-   #for 2.7.2 and earlier
-   ifndef OLD_G77
-      FOPT_REN += -Wno-globals
-   endif
-endif     
+else
 #
-# Portland Group compilers
-# for pentium
-# FOPT_REN  += -tp p5  
-# for Pentium Pro or Pentium II
-# FOPT_REN  += -tp p6
-#
-ifeq ($(FC),pgf77)
-       PGLINUX = 1 
-endif
-ifeq ($(FC),pgf90)
-       PGLINUX = 1 
-endif
-ifdef PGLINUX
+#             PGI fortran compiler on intel
+   ifneq (,$(findstring pgf,$(_FC)))
        FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
        GLOB_DEFINES += -DPGLINUX
+   endif
 endif
 
 endif
@@ -172,7 +158,7 @@ ifeq ($(TARGET),LINUX64)
            CC = ccc
            FC = fort
        RANLIB = echo
- GLOB_DEFINES = -DLINUX -DLINUX64 -DEXT_INT
+GLOB_DEFINES += -DLINUX -DLINUX64 -DEXT_INT
 FOPT_REN=-i8 -assume no2underscore -align_dcommons 
 #COPT_REN= 
           CLD = $(CC)
@@ -367,6 +353,11 @@ endif
 #
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)
 
+ifeq ($(MSG_COMMS),MPI)
+  INCLUDES += $(MP_INCLUDES)
+  DEFINES += -DMPI
+endif
+
 #Fujitsu fortran compiler requires -Wp prefix for cpp symbols
 ifeq ($(TARGET),FUJITSU-VPP)
        comma:= ,
@@ -399,7 +390,6 @@ ifeq ($(LINK.c),$(FC))
 else
        CLDOPT += $(COPT_REN)
 endif
-
 
 #
 # Define known suffixes mostly so that .p files don't cause pc to be invoked
