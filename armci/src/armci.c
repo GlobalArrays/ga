@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.25 1999-11-12 00:07:51 d3h325 Exp $ */
+/* $Id: armci.c,v 1.26 1999-11-16 00:48:41 d3g681 Exp $ */
 
 /* DISCLAIMER
  *
@@ -65,7 +65,9 @@ void ARMCI_Cleanup()
         armci_CleanupSockets();
     }
 #endif
+#ifndef WIN32
     ARMCI_RestoreSignals();
+#endif
 #endif
 }
 
