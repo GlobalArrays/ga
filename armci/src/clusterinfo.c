@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.11 2000-04-17 22:28:20 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.12 2000-11-01 20:52:45 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -30,6 +30,7 @@
 
 #define DEBUG 0
 #define MAX_HOSTNAME 80
+#define CHECK_NODE_NAMES 
 
 /*  print info on how many cluster nodes detected */
 #ifdef CLUSTER
@@ -115,7 +116,34 @@ static void process_hostlist(char *names)
           armci_clus_info[cluster].nslave=1;
           armci_clus_info[cluster].master=i;
           strcpy(armci_clus_info[cluster].hostname, master); 
+
+#ifdef    CHECK_NODE_NAMES
+          /* need consecutive task id allocated on the same node
+           * the current test only compares hostnames against first cluster */
+          if(cluster) if(!strcmp(master,armci_clus_info[0].hostname)){
+               /* we have seen that hostname before */
+               fprintf(stderr, "\nIt appears that tasks allocated on the same");
+               fprintf(stderr, " host machine do not have\n");
+               fprintf(stderr, "consecutive message-passing IDs/numbers. ");
+               fprintf(stderr,"This is not acceptable \nto the ARMCI library ");
+               fprintf(stderr,"as it prevents SMP optimizations and would\n");
+               fprintf(stderr,"lead to poor resource utilization.\n\n");
+               fprintf(stderr,"Please contact your System Administrator ");
+               fprintf(stderr,"or, if you can, modify the ");
+#              if defined(MPI)
+                 fprintf(stderr,"MPI");
+#              elif defined(TCGMSG)
+                 fprintf(stderr,"TCGMSG");
+#              elif defined(PVM)
+                 fprintf(stderr,"PVM");
+#              endif
+               fprintf(stderr,"\nmessage-passing job startup configuration.\n\n");
+               sleep(1);
+               armci_die("Cannot run: improper task to host mapping!",0); 
+          }
+#endif
           cluster++;
+
         }else{
           /* the process is still on the same host */
           armci_clus_info[cluster-1].nslave++;
@@ -125,6 +153,7 @@ static void process_hostlist(char *names)
 
       if(armci_nclus != cluster)
          armci_die("inconsistency processing clusterinfo",armci_nclus);
+
     }
     /******** process 0 got all data                             ********/
 
