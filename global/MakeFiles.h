@@ -44,7 +44,7 @@ else
      endif
 endif
 GA_CORE := global.core.o global.util.o global.patch.o global.msg.o \
-           global.serv.o
+           global.serv.o ga_lock.o
 
 ifdef IWAY
   GA_CORE += iway.o net.o
