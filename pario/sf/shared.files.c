@@ -1,4 +1,4 @@
-/* $Id: shared.files.c,v 1.13 2002-10-30 19:41:11 d3h325 Exp $ */
+/* $Id: shared.files.c,v 1.14 2002-11-09 06:05:40 sohirata Exp $ */
 /* DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -134,6 +134,35 @@ Integer handle = *s_a+SF_OFFSET;
         return(ELIO_OK);
 }
 
+/*\ open
+\*/
+Integer FATR sf_open_(s_a)
+        Integer *s_a;     /* input:SF handle */
+{
+Integer handle = *s_a+SF_OFFSET;
+
+#       ifdef  PARAGON
+          SF[handle].fd = elio_gopen(SF[handle].fname,ELIO_RW);
+#       else
+          SF[handle].fd = elio_open(SF[handle].fname,ELIO_RW, ELIO_SHARED);
+#       endif
+
+        if(SF[handle].fd==NULL) ERROR("sf_open: could not open file",0);
+        if(SF[handle].fd->fd==-1) ERROR("sf_open: descriptor -1",0);
+
+        return(ELIO_OK);
+}
+
+/*\ close
+\*/
+Integer FATR sf_close_(s_a)
+        Integer *s_a;     /* input:SF handle */
+{
+Integer handle = *s_a+SF_OFFSET;
+
+        elio_close(SF[handle].fd);
+        return(ELIO_OK);
+}
 
 /*\ asynchronous write to shared file
 \*/

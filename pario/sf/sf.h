@@ -22,6 +22,8 @@ extern void sf_errmsg _ARGS_((int code, char *msg));
 #define sf_waitall_ SF_WAITALL
 #define sf_destroy_ SF_DESTROY
 #define sf_errmsg_ SF_ERRMSG
+#define sf_open_ SF_OPEN
+#define sf_close_ SF_CLOSE
 #elif defined(F2C2_)
 #define sf_errmsg   sf_errmsg__
 #define sf_write_ sf_write__
@@ -29,5 +31,7 @@ extern void sf_errmsg _ARGS_((int code, char *msg));
 #define sf_wait_ sf_wait__
 #define sf_waitall_ sf_waitall__
 #define sf_destroy_ sf_destroy__
+#define sf_open_ sf_open__
+#define sf_close_ sf_close__
 #endif
 #endif
