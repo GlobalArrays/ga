@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.17 2000-10-12 23:34:53 d3h325 Exp $ */
+/* $Id: request.c,v 1.18 2000-10-20 18:22:40 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -393,15 +393,23 @@ int armci_rem_strided(int op, void* scale, int proc,
     msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
 
     if(op == GET){
-       armci_send_req(proc);
 #      ifdef CLIENT_BUF_BYPASS
-         if(msginfo->bypass)
+         if(msginfo->bypass){
+
+             if(!armci_pin_memory(dst_ptr,dst_stride_arr,count, stride_levels))
+                                         return 1; /* failed:cannot do bypass */
+             armci_send_req(proc);
              armci_rcv_strided_data_bypass(proc, msginfo->datalen,
                                            dst_ptr, stride_levels);
-         else
+             armci_unpin_memory(dst_ptr,dst_stride_arr,count, stride_levels);
+
+         }else
 #      endif             
-       armci_rcv_strided_data(proc, MessageSndBuffer, msginfo->datalen,
-                              dst_ptr, stride_levels, dst_stride_arr, count);
+       {
+          armci_send_req(proc);
+          armci_rcv_strided_data(proc, MessageSndBuffer, msginfo->datalen,
+                                 dst_ptr, stride_levels, dst_stride_arr, count);
+       }
 
     } else{
        /* for put and accumulate send data */

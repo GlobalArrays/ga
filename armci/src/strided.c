@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.29 2000-10-13 23:40:52 d3h325 Exp $ */
+/* $Id: strided.c,v 1.30 2000-10-20 18:22:40 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -12,8 +12,16 @@ if(op == GET || op ==PUT)\
 else\
       armci_acc_2D(op, scale, proc, src, dst, bytes, count, src_stride,dst_stride,lockit) 
 
+/* macro supports run-time selection of request sending scheme */
+#ifdef GM
+#define CAN_REQUEST_DIRECTLY armci_gm_bypass
+#else
+#define CAN_REQUEST_DIRECTLY 1
+#endif
 
 int armci_iwork[MAX_STRIDE_LEVEL];
+
+
 
 /*\ 2-dimensional array copy
 \*/
@@ -396,7 +404,7 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
 
 int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
-		void* dst_ptr,          /* pointer to 1st segment at destination*/
+		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
 		int count[],            /* number of segments at each stride levels: count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
@@ -431,33 +439,22 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     if(!direct){
 
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS))
-       /* larger strided or 1-D reqests, buffer not used to send data 
-        * we can bypass the packetization step and send request directly
+       /* for larger strided or 1D reqests buffering can be avoided to send data
+        * we can try to bypass the packetization step and send request directly
         */
-        if((count[0]> LONG_GET_THRESHOLD) ||
-                      (stride_levels && count[0]>LONG_GET_THRESHOLD_STRIDED)) {
-         int bypass=0;
-#        ifdef GM
-            if(armci_gm_bypass)
-                bypass= armci_pin_memory(dst_ptr,dst_stride_arr,count,
-                                         stride_levels);
-            if(!bypass) goto PINFAIL; /* take the slower route */
-#        endif
-            rc = armci_rem_strided(GET, NULL, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr, count, stride_levels,bypass);
-#        ifdef GM
-            if(armci_gm_bypass)
-                armci_unpin_memory(dst_ptr,dst_stride_arr,count, stride_levels);
-#        endif
+        if( CAN_REQUEST_DIRECTLY && ((count[0]> LONG_GET_THRESHOLD) ||
+            (stride_levels && count[0]>LONG_GET_THRESHOLD_STRIDED) ) ) {
+
+               int nobuf =1; /* tells the sending routine not to buffer */
+               rc = armci_rem_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+                          dst_ptr, dst_stride_arr, count, stride_levels, nobuf);
+               if(rc) goto DefaultPath; /* attempt to avoid buffering failed */ 
+
        }else
-
-#ifdef CLIENT_BUF_BYPASS
-PINFAIL:   /* use the standard request with packing */
+               DefaultPath: /* standard buffered path */
 #endif
-
-#endif
-           rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
-                       dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
+               rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+                          dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
     }else
 #endif
        rc = armci_op_strided(GET, NULL, proc, src_ptr, src_stride_arr, 
@@ -474,7 +471,7 @@ int ARMCI_AccS( int  optype,            /* operation */
                 void *scale,            /* scale factor x += scale*y */
                 void *src_ptr,          /* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
-		void* dst_ptr,          /* pointer to 1st segment at destination*/
+		void* dst_ptr,          /* 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
 		int count[],            /* number of segments at each stride levels: count[0]=bytes*/
 		int stride_levels,      /* number of stride levels */
