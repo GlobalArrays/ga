@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.18 2003-11-06 07:12:31 edo Exp $
+# $Id: GNUmakefile,v 1.19 2003-11-13 15:43:14 vinod Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -122,7 +122,7 @@ SYSTEM_V += DECOSF CONVEX-SPP LINUX64 MACX
 ifeq ($(TARGET),$(findstring $(TARGET),$(SYSTEM_V)))
      LIB_DEFINES += -DSYSV -DSHMEM
 endif
-NEED_MEMALIGN = DECOSF CRAY-T3E CRAY-YMP HPUX HPUX64 LAPI IBM IBM64 NEC 
+NEED_MEMALIGN = DECOSF CRAY-T3E CRAY-YMP HPUX HPUX64 LAPI IBM IBM64 NEC MACX
 
 ifeq ($(MACHINE),$(findstring $(MACHINE),$(NEED_MEMALIGN)))
         EXTRA= memalign.o
