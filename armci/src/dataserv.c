@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.25 2002-01-10 19:09:13 vinod Exp $ */
+/* $Id: dataserv.c,v 1.26 2002-03-01 21:24:42 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "copy.h"
@@ -371,7 +371,7 @@ armci_giov_t *mydarr;
     if(stat<0)armci_die("armci_tcp_read_vector_data: read of data failed",stat);	
     dscr=(MessageRcvBuffer+sizeof(request_header_t)); 
     ptr=(void**)dscr;
-    vdscr=(void *)dscr;
+    *(void**)vdscr=(void *)dscr;
     mydarr = (armci_giov_t *)(dscr+bytes);  
     GETBUF(dscr, long ,len);
     if(len!=0){
@@ -396,8 +396,9 @@ int stride_levels, *stride_arr,*count,stat;
     if(DEBUG1){printf("\n in armci tcp read strided data reading bytes=%d infonext=%p\n",bytes,(msginfo+1));fflush(stdout);}
     stat = armci_ReadFromSocket(CLN_sock[p],(MessageRcvBuffer+sizeof(request_header_t)),bytes);
  
-    if(stat<0)armci_die("armci_tcp_read_strided_data: read of data failed",stat);
+    if(stat<0)armci_die("armci_tcp_read_strided_data:read of data failed",stat);
     dscr=(MessageRcvBuffer+sizeof(request_header_t));
+    *(void**)vdscr=(void *)dscr;
     ptr = *(void**)dscr;           dscr += sizeof(void*);
     stride_levels = *(int*)dscr;   dscr += sizeof(int);
     stride_arr = (int*)dscr;       dscr += stride_levels*sizeof(int);
