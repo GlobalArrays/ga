@@ -9,7 +9,7 @@ c
 #ifdef USE_SUMMA
       subroutine ga_dgemm(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.23 1997-03-04 06:16:55 d3e129 Exp $
+C$Id: ga_dgemm.F,v 1.24 1997-04-09 18:45:07 d3g681 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -26,7 +26,7 @@ c
 #endif
       subroutine GA_DGEMM(transa, transb, m, n, k, alpha, g_a, 
      $     g_b, beta, g_c)
-C$Id: ga_dgemm.F,v 1.23 1997-03-04 06:16:55 d3e129 Exp $
+C$Id: ga_dgemm.F,v 1.24 1997-04-09 18:45:07 d3g681 Exp $
       implicit none
       Character*1        transa, transb
       Integer            m, n, k
@@ -95,8 +95,10 @@ C
       Max_chunk = Int( Chunk_cube ** (1.0d0/3.0d0) )
 c
 c     RJH ... if chunks are too small then communication costs swap computation
+c     ... was 64 here but empirically get better performance on IBM SP with
+c     32 on large numbers of processors.
 c
-      if (max_chunk .lt. 64) max_chunk = 64
+      if (max_chunk .lt. 32) max_chunk = 32
 C
 C     If there is room to increase the chunk size without impacting
 C     load balance, do it.
