@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.26 2003-03-07 23:37:04 manoj Exp $ */
+/* $Id: vector.c,v 1.27 2003-03-21 19:53:15 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -340,7 +340,10 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
                 int proc  /* remote process(or) ID */
               )
 {
-    int rc, i,direct=1,totvec=0;
+    int rc, i,direct=1;
+#if defined(USE_SOCKET_VECTOR_API)
+    int totvec=0;
+#endif
 
 #ifdef GA_USE_VAMPIR
     int tot=0;
@@ -407,7 +410,10 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
                 int proc  /* remote process(or) ID */
               )
 {
-    int rc, i,direct=1,totvec=0;
+    int rc, i,direct=1;
+#if defined(USE_SOCKET_VECTOR_API)
+    int totvec=0;
+#endif
 
 #ifdef GA_USE_VAMPIR
     int tot=0;
@@ -532,7 +538,10 @@ int ARMCI_NbPutV( armci_giov_t darr[], /* descriptor array */
               )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
-    int rc, i,direct=1,totvec=0;
+    int rc, i,direct=1;
+#if defined(USE_SOCKET_VECTOR_API)
+    int totvec=0;
+#endif
 
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
@@ -595,7 +604,10 @@ int ARMCI_NbGetV( armci_giov_t darr[], /* descriptor array */
               )
 {
     armci_ihdl_t nb_handle = (armci_ihdl_t)usr_hdl;
-    int rc, i,direct=1,totvec=0;
+    int rc, i,direct=1;
+#if defined(USE_SOCKET_VECTOR_API)
+    int totvec=0;
+#endif
 
     if(len<1) return FAIL;
     for(i=0;i<len;i++){
