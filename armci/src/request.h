@@ -69,12 +69,11 @@ extern  char* MessageSndBuffer;
 #define FREE_SEND_BUFFER(_ptr)  
 #endif
 
-#ifdef VIA
-#  define PIPE_BUFSIZE  (14*4096)
-#  define PIPE_MIN_BUFSIZE 8192   
-#  define PIPE_MEDIUM_BUFSIZE (4*8192)
-   typedef struct { void *buf; int count; int proc; } buf_arg_t;
-#endif
+
+typedef struct {
+           void *buf; int count; int proc; int op; int extra; double scale[2];
+} buf_arg_t;
+
 #ifdef PIPE_BUFSIZE 
    extern void armcill_pipe_post_bufs(void *ptr, int stride_arr[], int count[],
                                       int strides, void* argvoid);

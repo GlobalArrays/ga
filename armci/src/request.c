@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.24 2001-08-15 21:14:38 d3h325 Exp $ */
+/* $Id: request.c,v 1.25 2001-09-04 18:29:23 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -668,6 +668,15 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     } else{
 
+#ifdef PIPE_BUFSIZE
+       if((msginfo->bytes==0) && (msginfo->operation==PUT)){
+         armci_pipe_prep_receive_strided(msginfo,buf_ptr,stride_levels,
+                    loc_stride_arr, count, buflen); 
+         armci_pipe_receive_strided(msginfo,loc_ptr,loc_stride_arr, count,
+                    stride_levels);
+           
+       } else
+#endif
        if((rc = armci_op_strided(msginfo->operation, scale, proc,
                buf_ptr, buf_stride_arr, loc_ptr, loc_stride_arr,
                count, stride_levels, 1)))

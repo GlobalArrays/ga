@@ -12,6 +12,7 @@
 #define DEBUG1 0
 
 
+
 /**************************** pipelining for medium size msg ***********/
 #ifdef PIPE_BUFSIZE
 
@@ -23,10 +24,11 @@ buf_arg_t arg;
 int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
 
      extra = ALIGN64ADD(buf);
-     buf +=extra;
+     buf  += extra;
      arg.buf   = buf;
      arg.count = bufsize-extra;
-     arg.proc  = msginfo->to;
+     arg.proc  = (msginfo->operation==GET)?msginfo->to:msginfo->from;
+     arg.op    = msginfo->operation;
     
      armci_dispatch_strided(buf, stride_arr, count, strides, -1, -1,
                             packsize, armcill_pipe_post_bufs,&arg);
@@ -40,7 +42,8 @@ int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
 
      arg.buf   = ptr;
      arg.count = 0;
-     arg.proc  = msginfo->to;
+     arg.proc  = (msginfo->operation==GET)?msginfo->to:msginfo->from;
+     arg.op    = msginfo->operation;
 
      armci_dispatch_strided(ptr, stride_arr, count, strides, -1, -1,
                             packsize, armcill_pipe_extract_data, &arg);
@@ -54,12 +57,15 @@ int  packsize = (msginfo->datalen<=PIPE_BUFSIZE)?PIPE_MIN_BUFSIZE:PIPE_BUFSIZE;
 
      arg.buf   = buf;
      arg.count = 0;
-     arg.proc  = msginfo->from;
+     arg.proc  = (msginfo->operation==GET)?msginfo->from:msginfo->to;
+     arg.op    = msginfo->operation;
+
      armci_dispatch_strided(ptr, stride_arr, count, strides, -1, -1,
                             packsize, armcill_pipe_send_chunk, &arg);
 }
 #endif
 /**************************** end of pipelining for medium size msg ***********/
+
 
 /*\ client initialization
 \*/
@@ -142,8 +148,15 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
           stride_arr, count))armci_die("armci_send_strided_req long: failed",0);
        return; /************** done **************/
     }
+#elif defined(PIPE_BUFSIZE___)
+    if((msginfo->datalen>2*PIPE_MIN_BUFSIZE) && (msginfo->operation == PUT)){
+       msginfo->bytes =0; /*** this tells server that we use pipelined put ****/
+       armci_send_req_msg(proc,msginfo, hdrlen+dscrlen);
+       armci_pipe_send_strided(msginfo, bdata, datalen,
+                               ptr, stride_arr, count, strides);
+       return; /************** done **************/
+    }
 #endif
-
     /*  copy into a buffer before sending */
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
 
@@ -262,9 +275,11 @@ static void armci_check_req(request_header_t *msginfo, int buflen)
         armci_die("armci_rcv_req: dscrlen < 0", msginfo->dscrlen);
     if(msginfo->datalen < 0)
         armci_die("armci_rcv_req: datalen < 0", msginfo->datalen);
+#ifndef PIPE_BUFSIZE
     if(msginfo->dscrlen > msginfo->bytes)
         armci_die2("armci_rcv_req: dsclen > bytes", msginfo->dscrlen,
                    msginfo->bytes);
+#endif
 }
 
 
