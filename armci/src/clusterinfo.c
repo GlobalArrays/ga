@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.18 2002-07-31 17:32:48 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.19 2002-08-23 18:27:34 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -228,7 +228,7 @@ static char *substr_replace(char *haystack, char *needle, char *nail)
 {
 char *tmp, *pos, *first;
 size_t len=strlen(needle), nlen=strlen(nail),bytes;
-ssize_t left;
+size_t left;
 
     pos = strstr(haystack,needle);
     if (pos ==NULL) return NULL;
