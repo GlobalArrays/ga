@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.33 2003-07-30 05:05:52 d3h325 Exp $ */
+/* $Id: memory.c,v 1.34 2003-07-30 19:04:32 vinod Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -296,7 +296,7 @@ int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
       /* now combine individual addresses into a single array */
       armci_exchange_address(ptr_arr, armci_nproc);
 #ifdef ALLOW_PIN
-      armci_region_exchange(ptr, (long) bytes);
+      armci_global_region_exchange(ptr, (long) bytes);
 #endif
     }
 #ifdef GA_USE_VAMPIR
