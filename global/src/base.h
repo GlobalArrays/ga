@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.28 2004-06-28 17:47:53 manoj Exp $ */
+/*$Id: base.h,v 1.29 2004-06-29 20:37:02 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -22,7 +22,9 @@ typedef struct {
        int parent;
        int *map_proc_list;
        int *inv_map_proc_list;
+#ifdef USE_MPI
        ARMCI_Group group;
+#endif
 } proc_list_t;
 
 typedef struct {

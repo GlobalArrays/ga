@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.18 2004-06-28 17:47:53 manoj Exp $ */
+/* $Id: collect.c,v 1.19 2004-06-29 20:37:02 d3g293 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -29,7 +29,9 @@ Void*   buffer;
     int p_grp = (int)ga_pgroup_get_default_();
     if (p_grp > 0) {
        int aroot = PGRP_LIST[p_grp].inv_map_proc_list[root];
+#ifdef USE_MPI
        armci_msg_group_bcast_scope(SCOPE_ALL,buffer, (int)len, aroot,(&(PGRP_LIST[p_grp].group)));
+#endif
     } else {
        armci_msg_bcast(buffer, (int)len, (int)root);
     }
@@ -60,14 +62,16 @@ void FATR ga_pgroup_brdcst_(grp_id, type, buf, len, originator)
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
     if (p_grp > 0) {
        int aroot = PGRP_LIST[p_grp].inv_map_proc_list[*originator];
+#ifdef USE_MPI
        armci_msg_group_bcast_scope(SCOPE_ALL,buf,(int)*len,aroot,(&(PGRP_LIST[p_grp].group)));
+#endif
     } else {
        int aroot = (int)*originator;
        armci_msg_bcast(buf, (int)len, (int)aroot);
     }
 }
 
-#ifdef MPI
+#ifdef USE_MPI
 void ga_mpi_communicator(GA_COMM)
 MPI_Comm *GA_COMM;
 {
@@ -79,7 +83,7 @@ MPI_Comm *GA_COMM;
 void ga_msg_sync_()
 {
     int p_grp = (int)ga_pgroup_get_default_(); 
-#ifdef MPI
+#ifdef USE_MPI
     if(p_grp>0)
        armci_msg_group_barrier(&(PGRP_LIST[p_grp].group));
     else
@@ -97,7 +101,7 @@ void ga_msg_sync_()
 void ga_msg_pgroup_sync_(Integer *grp_id)
 {
     int p_grp = (int)(*grp_id);
-#ifdef MPI
+#ifdef USE_MPI
     armci_msg_group_barrier(&(PGRP_LIST[p_grp].group));
 #else
     ga_error("ga_msg_pgroup_sync not implemented",0);
@@ -258,7 +262,9 @@ void ga_pgroup_dgop(p_grp, type, x, n, op)
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
      if (group > 0) {
+#ifdef USE_MPI
        armci_msg_group_dgop(x, (int)n, op,(&(PGRP_LIST[group].group)));
+#endif
      } else {
        armci_msg_dgop(x, (int)n, op);
      }
@@ -293,9 +299,11 @@ void ga_pgroup_lgop(p_grp,type, x, n, op)
         int group = (int)p_grp;
         _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
-        if (group > 0)
+        if (group > 0) {
+#ifdef USE_MPI
 	  armci_msg_group_lgop(x, (int)n, op,(&(PGRP_LIST[group].group)));
-        else
+#endif
+        } else
 	  armci_msg_lgop(x, (int)n, op);
 #else
             ga_error("Groups not implemented for system",0);
@@ -326,13 +334,17 @@ void ga_pgroup_igop(p_grp, type, x, n, op)
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
 #   ifdef EXT_INT
             if (group > 0) {
+#ifdef USE_MPI
               armci_msg_group_lgop(x, (int)n, op,(&(PGRP_LIST[group].group)));
+#endif
             } else {
               armci_msg_lgop(x, (int)n, op);
             }
 #   else
             if (group > 0)
+#ifdef USE_MPI
               armci_msg_group_igop(x, (int)n, op,(&(PGRP_LIST[group].group)));
+#endif
             else
               armci_msg_igop(x, (int)n, op);
 #   endif
@@ -373,7 +385,9 @@ void ga_pgroup_fgop(p_grp, type, x, n, op)
      if (p_grp > 0) {
 #if defined(ARMCI_COLLECTIVES) || defined(MPI)
        if (group > 0) {
+#ifdef USE_MPI
          armci_msg_group_fgop(x, (int)n, op, (&(PGRP_LIST[group].group)));
+#endif
        } else {
          armci_msg_fgop(x, (int)n, op);
        }
@@ -404,7 +418,7 @@ void ga_fgop(type, x, n, op)
 #if 0
 Integer ga_msg_nnodes_()
 {     
-#ifdef MPI
+#ifdef USE_MPI
      int numprocs;
      MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
      return((Integer)numprocs);

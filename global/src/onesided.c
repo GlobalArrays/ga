@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.54 2004-06-28 17:47:53 manoj Exp $ */
+/* $Id: onesided.c,v 1.55 2004-06-29 20:37:02 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -76,7 +76,7 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 /***************************************************************************/
 
 /*\ SYNCHRONIZE ALL THE PROCESSES
-  \*/
+\*/
 void FATR ga_pgroup_sync_(Integer *grp_id)
 {
 #ifdef CHECK_MA
