@@ -1,4 +1,4 @@
-/* $Id: pack.c,v 1.11 2000-04-17 22:31:40 d3h325 Exp $ */
+/* $Id: pack.c,v 1.12 2000-04-21 20:54:18 d3h325 Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
@@ -83,7 +83,7 @@ int armci_pack_strided(int op, void* scale, int proc,
         if(nb == chunk){ /* take shortcut when whole patch fits in the buffer */
 #ifdef REMOTE_OP
            return( armci_rem_strided(op, scale, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr, count, stride_levels, 1));
+                          dst_ptr, dst_stride_arr, count, stride_levels, 0));
 #else
            return(armci_op_strided(op, scale, proc, src_ptr, src_stride_arr,
                           dst_ptr, dst_stride_arr,count, stride_levels,1));
@@ -104,7 +104,7 @@ int armci_pack_strided(int op, void* scale, int proc,
            count[fit_level] = MIN(nb, chunk-sn); /*modify count for this level*/
 #ifdef REMOTE_OP
            rc = armci_rem_strided( op, scale, proc, src, src_stride_arr,
-                                   dst, dst_stride_arr, count, fit_level, 1);
+                                   dst, dst_stride_arr, count, fit_level, 0);
 #else
            rc = armci_op_strided(op, scale, proc, src, src_stride_arr,
                                  dst, dst_stride_arr, count, fit_level,1);

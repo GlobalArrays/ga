@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.17 2000-04-17 22:31:42 d3h325 Exp $ */
+/* $Id: strided.c,v 1.18 2000-04-21 20:54:18 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -102,7 +102,6 @@ static void armci_copy_2D(int op, int proc, void *src_ptr, void *dst_ptr,
             }
         }
     }
-    
 }
 
 
@@ -365,13 +364,11 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
     ORDER(PUT,proc); /* ensure ordering */
     direct=SAMECLUSNODE(proc);
 
-
     /* use direct protocol for remote access when performance is better */
 #   if defined(LAPI) && !defined(LAPI2)
       if(!direct)
          if(stride_levels==0 || count[0]> LONG_PUT_THRESHOLD )direct=1;
 #   endif
-
 
 #ifndef LAPI2
     if(!direct)
@@ -388,7 +385,7 @@ int ARMCI_PutS( void *src_ptr,  /* pointer to 1st segment at source*/
 }
 
 
-int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/ 
+int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/ 
 		int src_stride_arr[],   /* array of strides at source */
 		void* dst_ptr,          /* pointer to 1st segment at destination*/
 		int dst_stride_arr[],   /* array of strides at destination */
@@ -412,17 +409,10 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
       if(!direct)
         if( stride_levels==0 || count[0]> LONG_GET_THRESHOLD)direct=1;
         else{
-          int i;
-          int chunks=1;
-          direct = 1;
-          for(i=1; i<= stride_levels;i++){
-              chunks *= count[i];
-              if(chunks>MAX_CHUNKS_SHORT_GET){
-                 direct = 0;
-                 break;
-                 }
-              }
-          }
+          int i, chunks=1;
+          for(i=1, direct=1; i<= stride_levels; i++)
+              if((chunks *= count[i]) >MAX_CHUNKS_SHORT_GET){ direct=0; break;}
+        }
 #   endif
 
 #ifndef LAPI2
@@ -433,9 +423,9 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
        /* larger strided or 1-D reqests, buffer not used to send data 
         * we can bypass the packetization step and send request directly
         */
-       if(count[0]>TCP_PAYLOAD || stride_levels==0 )
+       if(stride_levels==0 || count[0]> LONG_GET_THRESHOLD )
          rc = armci_rem_strided(GET, NULL, proc, src_ptr, src_stride_arr,
-                          dst_ptr, dst_stride_arr, count, stride_levels, 1);
+                          dst_ptr, dst_stride_arr, count, stride_levels, 0);
        else
 #endif
          rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
@@ -447,8 +437,10 @@ int ARMCI_GetS( void *src_ptr,  /* pointer to 1st segment at source*/
 
     if(rc) return FAIL6;
     else return 0;
-
 }
+
+
+
 
 int ARMCI_AccS( int  optype,            /* operation */
                 void *scale,            /* scale factor x += scale*y */
@@ -554,4 +546,3 @@ void armci_read_strided(void *ptr, int stride_levels, int stride_arr[],
     buf += count[0];
     }
 }
-

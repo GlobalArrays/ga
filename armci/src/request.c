@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.9 2000-04-17 22:31:40 d3h325 Exp $ */
+/* $Id: request.c,v 1.10 2000-04-21 20:54:18 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -284,7 +284,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
 int armci_rem_strided(int op, void* scale, int proc,
                        void *src_ptr, int src_stride_arr[],
                        void* dst_ptr, int dst_stride_arr[],
-                       int count[], int stride_levels, int lockit)
+                       int count[], int stride_levels, int flag)
 {
     char *buf = MessageSndBuffer;
     request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
@@ -314,6 +314,19 @@ int armci_rem_strided(int op, void* scale, int proc,
                                        buf += stride_levels*sizeof(int);
     for(i=0;i< stride_levels+1;i++)((int*)buf)[i] = count[i];
                                        buf += (1+stride_levels)*sizeof(int);
+
+#   ifdef CLIENT_BUF_BYPASS
+      if(flag){
+         /* to bypass the client MessageSnd buffer in get we need to add source
+            pointer and stride info - server will put data directly there */
+         ADDBUF(buf,void*,src_ptr);
+         for(i=0;i<stride_levels;i++)((int*)buf)[i] = src_stride_arr[i];
+                                       buf += stride_levels*sizeof(int);
+         msginfo->bypass=1;
+         
+      }else msginfo->bypass=0;
+#   endif
+
 
     /* align buf for doubles (8-bytes) before copying data */
     adr = (size_t)buf;
@@ -382,6 +395,10 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     void *scale;
     char *dscr_save = dscr;
     int  rc, i,proc;
+#   ifdef CLIENT_BUF_BYPASS
+      int  *client_stride_arr; 
+      void *client_ptr;
+#   endif
 
     /* unpack descriptor record */
     loc_ptr = *(void**)dscr;           dscr += sizeof(void*);
@@ -393,6 +410,14 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
     buf_stride_arr[0]=count[0];
     for(i=0; i< stride_levels; i++)
         buf_stride_arr[i+1]= buf_stride_arr[i]*count[i+1];
+
+#   ifdef CLIENT_BUF_BYPASS
+       if(msginfo->bypass){
+          dscr += (1+stride_levels)*sizeof(int); /* move past count */
+          GETBUF(dscr,void*,client_ptr);
+          client_stride_arr = (int*)dscr; dscr += stride_levels*sizeof(int);
+       }
+#   endif
 
     /* get scale for accumulate, adjust buf to point to data */
     switch(msginfo->operation){
@@ -417,16 +442,17 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     if(msginfo->operation == GET){
     
+#      ifdef CLIENT_BUF_BYPASS__
+         if(msginfo->bypass)
+            armci_send_strided_data_bypass(proc, msginfo, buf, 
+                       loc_ptr, loc_stride_arr, 
+                       client_ptr, client_stride_arr, count, stride_levels);
+
+         else
+#      endif
+
        armci_send_strided_data(proc, msginfo, buf, 
-                          loc_ptr, stride_levels, loc_stride_arr, count); 
-
-	   /*
-       if(rc = armci_op_strided(GET, scale, proc, loc_ptr, loc_stride_arr,
-               buf_ptr, buf_stride_arr, count, stride_levels, 0))
-               armci_die("server_strided: get to buf failed",rc);
-
-       armci_send_data(msginfo, buf);
-	   */
+                               loc_ptr, stride_levels, loc_stride_arr, count); 
 
     } else{
 

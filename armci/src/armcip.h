@@ -16,7 +16,7 @@
 #  define SERVER_NODE(c) (armci_clus_info[(c)].master);
 #else
 #  define SOFFSET -10000
-#  define SERVER_NODE(c) (SOFFSET -armci_clus_info[(c)].master);
+#  define SERVER_NODE(c) ((int)(SOFFSET -armci_clus_info[(c)].master));
 #endif
 
 #endif
@@ -44,8 +44,12 @@ extern thread_id_t armci_usr_tid;
 #if defined(LAPI) || defined(CLUSTER)
 #  include "request.h"
 #endif
+
 /* min amount of data in strided request to be sent in a single TCP/IP message*/
-#define TCP_PAYLOAD   512
+#ifdef SOCKETS
+#  define TCP_PAYLOAD 512
+#  define LONG_GET_THRESHOLD  TCP_PAYLOAD  
+#endif
 
 #ifdef WIN32
 #  define bzero(a,len){\
@@ -90,10 +94,10 @@ extern thread_id_t armci_usr_tid;
 #define PUT 1
 #define GET 3
 #define RMW 5
-#define STRIDED 7
-#define VECTOR  8
 #define LOCK   20
 #define UNLOCK 21
+#define STRIDED 1
+#define VECTOR  2
 
 extern  int armci_me, armci_nproc;
 extern  double armci_internal_buffer[BUFSIZE_DBL];
@@ -149,7 +153,7 @@ extern void armci_init_fence();
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
-#define ACC(op)  (((op)-ARMCI_ACC_INT)>=0)
+#define ACC(op)  ((((int)(op))-ARMCI_ACC_INT)>=0)
 
 #ifdef CLUSTER
    extern char *_armci_fence_arr;

@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.13 2000-04-17 22:31:37 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.14 2000-04-21 20:54:17 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -15,9 +15,10 @@
 #endif
  
 #define ACK 0
-#define DEBUG_ 0
 #define QUIT 33
 #define ATTACH 34
+
+#define DEBUG_ 0
 
 extern int AR_ready_sigchld;
 int *SRV_sock;
@@ -393,7 +394,7 @@ char *buf;
     msginfo->to    = SERVER_NODE(armci_clus_me);
     msginfo->dscrlen   = ilen;
     msginfo->datalen = sizeof(long)+sizeof(rlen);
-    msginfo->operation = msginfo->format  =  ATTACH;
+    msginfo->operation =  ATTACH;
     msginfo->bytes = msginfo->dscrlen+ msginfo->datalen;
 
     armci_copy(info, msginfo +1, ilen);
@@ -528,7 +529,7 @@ int stat;
     msginfo->dscrlen = 0;
     msginfo->from  = armci_me;
     msginfo->to    = SERVER_NODE(armci_clus_me); 
-    msginfo->format  = msginfo->operation = QUIT;
+    msginfo->operation = QUIT;
     if(ACK)
        msginfo->bytes   = msginfo->datalen = sizeof(int); /* ACK */
     else
@@ -571,7 +572,7 @@ request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
     msginfo->dscrlen = 0;
     msginfo->from  = armci_me;
     msginfo->to    = SERVER_NODE(clus);
-    msginfo->format  = msginfo->operation = ACK;
+    msginfo->operation = ACK;
     msginfo->bytes   =0;
     msginfo->datalen =sizeof(int);
 

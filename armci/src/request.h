@@ -8,16 +8,31 @@
    typedef int msg_tag_t;
 #endif
 
+
 typedef struct {
-  short int to;         /* message recipient */
-  short int from;       /* message sender */
-  short int operation;  /* operation code */
-  short int format;     /* data format used */
-  int   bytes;          /* number of bytes requested */ 
-  int   datalen;        /* >0 in lapi indicates if data is included */
-  int   dscrlen;        /* >0 in lapi indicates if descriptor is included */
-  msg_tag_t tag;        /* message tag for response to this request */
+#ifdef SOLARIS
+short int   to;      /* message recipient */
+short int from;      /* message sender */
+/*
+unsigned char operation;
+unsigned char format;
+unsigned char bypass;
+unsigned int bytes;
+*/
+#else
+int   to:16;         /* message recipient */
+int from:16;         /* message sender */
+#endif
+unsigned int   operation:8;   /* operation code */
+unsigned int   format:3;      /* data format used */
+unsigned int   bypass:1;      /* indicate if bypass protocol used */
+unsigned int   bytes:20;      /* number of bytes requested */
+  int   dscrlen;    /* >0 in lapi indicates if descriptor is included */
+  int   datalen;    /* >0 in lapi indicates if data is included */
+  msg_tag_t tag;       /* message tag for response to this request */
 }request_header_t;
+
+
 
 #define MSG_BUFLEN_DBL 50000
 #define MSG_BUFLEN  sizeof(double)*MSG_BUFLEN_DBL
