@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.48 2004-10-28 23:30:19 manoj Exp $ */
+/* $Id: memory.c,v 1.49 2004-11-21 10:01:02 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -442,9 +442,16 @@ void armci_shmem_malloc_group(void *ptr_arr[], armci_size_t bytes,
           
 #            else
           /* ask data server process to attach to the region and get ptr */
-          armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size,
-                                &ptr, sizeof(void*));
-          ptr_ref_arr[grp_clus_me]= ptr; /* from server*/
+          {
+             extern int _armci_server_started;
+             if(_armci_server_started) {
+                armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size,
+                                      &ptr, sizeof(void*));
+                ptr_ref_arr[grp_clus_me]= ptr; /* from server*/
+             }
+             else /* server not yet started */
+                ptr_ref_arr[grp_clus_me]=myptr;
+          }
  
           if(DEBUG_){
              printf("%d:addresses server=%p myptr=%p\n",grp_me,ptr,myptr);
@@ -767,7 +774,6 @@ int ARMCI_Uses_shm()
     if(DEBUG_) fprintf(stderr,"%d:uses shmem %d\n",armci_me, uses);
     return uses;
 }
-
 #ifdef MPI
 
 int ARMCI_Uses_shm_grp(int grp_me, int grp_nproc, int grp_nclus) {
