@@ -1174,6 +1174,7 @@ Integer ga_handle = GA_OFFSET + *g_a;
     /* fails if handle is out of range or array not active */
     if(ga_handle < 0 || ga_handle >= max_global_array) return FALSE;
     if(GA[ga_handle].actv==0) return FALSE;       
+    GA[ga_handle].actv = 0;     
     if(GA[ga_handle].ptr[GAme]==NULL) return TRUE;
  
     if(ARMCI_Uses_shm()){
@@ -1184,7 +1185,6 @@ Integer ga_handle = GA_OFFSET + *g_a;
     }
 
     if(GA_memory_limited) GA_total_memory += GA[ga_handle].size;
-    GA[ga_handle].actv = 0;     
     GAstat.curmem -= GA[ga_handle].size;
 
     return(TRUE);
