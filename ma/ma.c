@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.11 1996-10-01 18:56:42 d3e129 Exp $
+ * $Id: ma.c,v 1.12 1997-02-26 20:39:16 d3h325 Exp $
  */
 
 /*
@@ -142,6 +142,7 @@ private Boolean ad_big_enough();
 private Boolean ad_eq();
 private Boolean ad_gt();
 private Boolean ad_le();
+private Boolean ad_lt();
 private void ad_print();
 private void balloc_after();
 private void balloc_before();
@@ -154,10 +155,12 @@ private void debug_ad_print();
 
 private Boolean guard_check();
 private void guard_set();
+private void list_coalesce();
 private AD *list_delete();
 private int list_delete_many();
 private AD *list_delete_one();
 private void list_insert();
+private void list_insert_ordered();
 private Boolean list_member();
 private int list_print();
 private void list_verify();
@@ -363,6 +366,7 @@ typedef enum
     FID_MA_get_next_memhandle,
     FID_MA_get_pointer,
     FID_MA_init,
+    FID_MA_initialized,
     FID_MA_init_memhandle_iterator,
     FID_MA_inquire_avail,
     FID_MA_inquire_heap,
@@ -405,6 +409,7 @@ private char *ma_routines[] =
     "MA_get_next_memhandle",
     "MA_get_pointer",
     "MA_init",
+    "MA_initialized",
     "MA_init_memhandle_iterator",
     "MA_inquire_avail",
     "MA_inquire_heap",
@@ -502,6 +507,19 @@ private Boolean ad_le(ad, ad_target)
     Pointer	ad_target;	/* the AD to match */
 {
     return (ad <= (AD *)ad_target) ? MA_TRUE : MA_FALSE;
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Return MA_TRUE if ad < ad_target, else return MA_FALSE.
+ */
+/* ------------------------------------------------------------------------- */
+
+private Boolean ad_lt(ad, ad_target)
+    AD		*ad;		/* the AD to test */
+    Pointer	ad_target;	/* the AD to match */
+{
+    return (ad < (AD *)ad_target) ? MA_TRUE : MA_FALSE;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -724,7 +742,7 @@ private void block_split(ad, bytes_needed)
         ad2->nbytes = bytes_extra;
 
         /* insert ad2 into free list */
-        list_insert(ad2, &ma_hfree);
+        list_insert_ordered(ad2, &ma_hfree, ad_lt);
 
         /* set the length of ad */
         ad->nbytes = bytes_needed;
@@ -876,6 +894,40 @@ private void guard_set(ad)
 
 /* ------------------------------------------------------------------------- */
 /*
+ * Coalesce list by merging any adjacent elements that are contiguous.
+ * The list is assumed to be ordered by increasing addresses, i.e.,
+ * addressOf(element i) < addressOf(element i+1).
+ */
+/* ------------------------------------------------------------------------- */
+
+private void list_coalesce(list)
+    AD		*list;		/* the list to coalesce */
+{
+    AD		*ad1;		/* lead traversal pointer */
+    AD		*ad2;		/* trailing traversal pointer */
+
+    for (ad2 = list; ad2;)
+    {
+        /* compute first address beyond ad2 */
+        ad1 = (AD *)((Pointer)ad2 + ad2->nbytes);
+
+        /* are ad2 and ad1 contiguous? */
+        if (ad1 == ad2->next)
+        {
+            /* yes; merge ad1 into ad2 */
+            ad2->nbytes += ad1->nbytes;
+            ad2->next = ad1->next;
+        }
+        else
+        {
+            /* no; advance ad2 */
+            ad2 = ad2->next;
+        }
+    }
+}
+
+/* ------------------------------------------------------------------------- */
+/*
  * Delete and return the first occurrence of ad from list.  If ad is not
  * a member of list, return NULL.
  */
@@ -993,6 +1045,59 @@ private void list_insert(ad, list)
     /* push ad onto list */
     ad->next = *list;
     *list = ad;
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Insert ad into list, immediately before the first element e
+ * for which pred(ad, e) returns true.  If there is no such element,
+ * insert ad after the last element of list.
+ */
+/* ------------------------------------------------------------------------- */
+
+private void list_insert_ordered(ad, list, pred)
+    AD		*ad;		/* the AD to insert */
+    AD		**list;		/* the list to insert into */
+    Boolean	(*pred)();	/* predicate */
+{
+    AD		*ad1;		/* lead traversal pointer */
+    AD		*ad2;		/* trailing traversal pointer */
+
+    if (*list == (AD *)NULL)
+    {
+        /* empty list */
+        ad->next = (AD *)NULL;
+        *list = ad;
+        return;
+    }
+
+    /* list has at least one element */
+    for (ad2 = (AD *)NULL, ad1 = *list; ad1; ad2 = ad1, ad1 = ad1->next)
+    {
+        /* does ad1 match? */
+        if ((*pred)(ad, ad1))
+        {
+            /* yes; insert ad before ad1 */
+            if (ad2)
+            {
+                /* ad1 is second or later element */
+                ad2->next = ad;
+            }
+            else
+            {
+                /* ad1 is first element */
+                *list = ad;
+            }
+            ad->next = ad1;
+
+            /* success */
+            return;
+        }
+    }
+
+    /* append ad to list */
+    ad2->next = ad;
+    ad->next = (AD *)NULL;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1422,7 +1527,6 @@ private Boolean mh2ad(memhandle, adout, location, caller)
             (void)sprintf(ma_ebuf,
                 "memhandle %ld (name: '%s') not top of stack",
                 (long)memhandle, ad->name);
-	    /* MA_summarize_allocated_blocks(0);*/ /* RJH */
             ma_error(EL_Nonfatal, ET_External, caller, ma_ebuf);
             return MA_FALSE;
         }
@@ -1519,7 +1623,7 @@ private void str_ncopy(to, from, maxchars)
  */
 /* ------------------------------------------------------------------------- */
 
-public Boolean ma_inform_base(datatype, address1, address2)
+public Boolean MAi_inform_base(datatype, address1, address2)
     Integer	datatype;	/* to set size of */
     Pointer	address1;	/* of datatype element base */
     Pointer	address2;	/* of an adjacent datatype element */
@@ -1529,7 +1633,7 @@ public Boolean ma_inform_base(datatype, address1, address2)
     {
         (void)sprintf(ma_ebuf,
             "MA already initialized");
-        ma_error(EL_Nonfatal, ET_Internal, "ma_inform_base", ma_ebuf);
+        ma_error(EL_Nonfatal, ET_Internal, "MAi_inform_base", ma_ebuf);
         return MA_FALSE;
     }
 
@@ -1539,7 +1643,7 @@ public Boolean ma_inform_base(datatype, address1, address2)
         (void)sprintf(ma_ebuf,
             "invalid datatype: %ld",
             (long)datatype);
-        ma_error(EL_Nonfatal, ET_Internal, "ma_inform_base", ma_ebuf);
+        ma_error(EL_Nonfatal, ET_Internal, "MAi_inform_base", ma_ebuf);
         return MA_FALSE;
     }
 
@@ -1562,7 +1666,7 @@ public Boolean ma_inform_base(datatype, address1, address2)
  */
 /* ------------------------------------------------------------------------- */
 
-public void ma_summarize_allocated_blocks(index_base)
+public void MAi_summarize_allocated_blocks(index_base)
     int		index_base;	/* 0 (C) or 1 (FORTRAN) */
 {
     int		heap_blocks;	/* # of blocks on heap used list */
@@ -1583,7 +1687,7 @@ public void ma_summarize_allocated_blocks(index_base)
         (void)sprintf(ma_ebuf,
             "invalid index_base: %d",
             index_base);
-        ma_error(EL_Nonfatal, ET_Internal, "ma_summarize_allocated_blocks", ma_ebuf);
+        ma_error(EL_Nonfatal, ET_Internal, "MAi_summarize_allocated_blocks", ma_ebuf);
         return;
     }
 
@@ -1627,14 +1731,9 @@ public Boolean MA_alloc_get(datatype, nelem, name, memhandle, index)
     if (MA_allocate_heap(datatype, nelem, name, memhandle))
         /* MA_allocate_heap succeeded; try MA_get_index */
         return MA_get_index(*memhandle, index);
-    else {
+    else
         /* MA_allocate_heap failed */
-
-	/* RJH ... to help diagnose allocation failures print stats */
-	/* MA_summarize_allocated_blocks(); */
-
         return MA_FALSE;
-      }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1685,7 +1784,7 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
     }
 
     /* verify nelem */
-    if (nelem <= 0)
+    if (nelem < 0)
     {
         (void)sprintf(ma_ebuf,
             "block '%s', invalid nelem: %ld",
@@ -1719,7 +1818,6 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
             (void)sprintf(ma_ebuf,
                 "block '%s', not enough space to allocate %lu bytes",
                 name, nbytes);
-	    /* MA_summarize_allocated_blocks(0); */ /* RJH */
             ma_error(EL_Nonfatal, ET_External, "MA_allocate_heap", ma_ebuf);
             return MA_FALSE;
         }
@@ -1878,7 +1976,10 @@ public Boolean MA_free_heap(memhandle)
 
         /* if ad is in the heap region, add it to free list */
         if (ad < max_ad)
-            list_insert(ad, &ma_hfree);
+        {
+            list_insert_ordered(ad, &ma_hfree, ad_lt);
+            list_coalesce(ma_hfree);
+        }
     }
     else
     {
@@ -2085,7 +2186,6 @@ public Boolean MA_init(datatype, nominal_stack, nominal_heap)
         (void)sprintf(ma_ebuf,
             "could not allocate %lu bytes",
             total_bytes);
-	/* MA_summarize_allocated_blocks(0); *//* RJH */
         ma_error(EL_Nonfatal, ET_External, "MA_init", ma_ebuf);
         return MA_FALSE;
     }
@@ -2113,6 +2213,21 @@ public Boolean MA_init(datatype, nominal_stack, nominal_heap)
 
     /* success */
     return MA_TRUE;
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * 
+ */
+/* ------------------------------------------------------------------------- */
+
+public Boolean MA_initialized()
+{
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_initialized]++;
+#endif /* STATS */
+
+    return ma_initialized;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2383,7 +2498,7 @@ public Boolean MA_pop_stack(memhandle)
 /* ------------------------------------------------------------------------- */
 
 public void MA_print_stats(printroutines)
-     Boolean printroutines;
+    Boolean	printroutines;
 {
 #ifdef STATS
 
@@ -2420,12 +2535,13 @@ public void MA_print_stats(printroutines)
     (void)printf("\tmaximum total M-bytes\t\t%10lu\t%10lu\n",
         ((ma_stats.hbytes_max+999999)/1000000),
         ((ma_stats.sbytes_max+999999)/1000000));
-    if (printroutines) {
-	(void)printf("\n\tcalls per routine:\n");
-	for (i = 0; i < NUMROUTINES; i++)
-	    (void)printf("\t\t%10lu  %s\n",
-			 ma_stats.calls[i],
-			 ma_routines[i]);
+    if (printroutines)
+    {
+        (void)printf("\n\tcalls per routine:\n");
+        for (i = 0; i < NUMROUTINES; i++)
+            (void)printf("\t\t%10lu  %s\n",
+                ma_stats.calls[i],
+                ma_routines[i]);
     }
 
 #else
@@ -2459,12 +2575,7 @@ public Boolean MA_push_get(datatype, nelem, name, memhandle, index)
         return MA_get_index(*memhandle, index);
     else
         /* MA_push_stack failed */
-      {
-	  /* RJH ... to help diagnose allocation failures print stats */
-	  /* MA_summarize_allocated_blocks(); */
-
         return MA_FALSE;
-      }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2515,7 +2626,7 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
     }
 
     /* verify nelem */
-    if (nelem <= 0)
+    if (nelem < 0)
     {
         (void)sprintf(ma_ebuf,
             "block '%s', invalid nelem: %ld",
@@ -2542,7 +2653,6 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
         (void)sprintf(ma_ebuf,
             "block '%s', not enough space to allocate %lu bytes",
             name, nbytes);
-	/* MA_summarize_allocated_blocks(0); */ /* RJH */
         ma_error(EL_Nonfatal, ET_External, "MA_push_stack", ma_ebuf);
         return MA_FALSE;
     }
@@ -2781,7 +2891,7 @@ public Integer MA_sizeof_overhead(datatype)
 public void MA_summarize_allocated_blocks()
 {
     /* C indices are 0-based */
-    ma_summarize_allocated_blocks(0);
+    MAi_summarize_allocated_blocks(0);
 }
 
 /* ------------------------------------------------------------------------- */

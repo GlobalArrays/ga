@@ -2,7 +2,7 @@
 #define _ma_h
 
 /* 
- * $Id: ma.h,v 1.3 1994-10-07 19:41:25 d3g681 Exp $
+ * $Id: ma.h,v 1.4 1997-02-26 20:39:17 d3h325 Exp $
  */
 
 /* 
@@ -18,7 +18,7 @@
  ** function types
  **/
 
-extern Boolean ma_inform_base();
-extern void ma_summarize_allocated_blocks();
+extern Boolean MAi_inform_base();
+extern void MAi_summarize_allocated_blocks();
 
 #endif /* _ma_h */

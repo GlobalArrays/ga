@@ -1,5 +1,5 @@
 /*
- * $Id: f2c.c,v 1.4 1996-09-19 01:12:23 d3g681 Exp $
+ * $Id: f2c.c,v 1.5 1997-02-26 20:39:15 d3h325 Exp $
  */
 
 /*
@@ -217,7 +217,7 @@ public Boolean f2c_inform_base_(datatype, address1, address2)
     Pointer	address1;
     Pointer	address2;
 {
-    return ma_inform_base(*datatype, address1, address2);
+    return MAi_inform_base(*datatype, address1, address2);
 }
 
 #ifdef _CRAY
@@ -239,7 +239,7 @@ public Boolean f2c_inform_base_fcd_(datatype, fcd1, fcd2)
     Pointer	address1 = _fcdtocp(fcd1);
     Pointer	address2 = _fcdtocp(fcd2);
 
-    return ma_inform_base(*datatype, address1, address2);
+    return MAi_inform_base(*datatype, address1, address2);
 }
 #endif /* _CRAY */
 
@@ -255,6 +255,17 @@ public Boolean f2c_init_(datatype, nominal_stack, nominal_heap)
     Integer	*nominal_heap;
 {
     return MA_init(*datatype, *nominal_stack, *nominal_heap);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * 
+ */
+/* ------------------------------------------------------------------------- */
+
+public Boolean f2c_initialized_()
+{
+    return MA_initialized();
 }
 
 /* ------------------------------------------------------------------------- */
@@ -324,7 +335,7 @@ public Boolean f2c_pop_stack_(memhandle)
 /* ------------------------------------------------------------------------- */
 
 public void f2c_print_stats_(printroutines)
-     Boolean *printroutines;
+    Boolean	*printroutines;
 {
     MA_print_stats(*printroutines);
 }
@@ -474,7 +485,7 @@ public Integer f2c_sizeof_overhead_(datatype)
 public void f2c_summarize_allocated_blocks_()
 {
     /* FORTRAN indices are 1-based */
-    ma_summarize_allocated_blocks(1);
+    MAi_summarize_allocated_blocks(1);
 }
 
 /* ------------------------------------------------------------------------- */

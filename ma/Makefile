@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 1996-10-23 05:48:50 d3g681 Exp $
+# $Id: Makefile,v 1.4 1997-02-26 20:39:14 d3h325 Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -9,7 +9,7 @@
                 scope.h error.h memory.h \
                 string-util.h table.h mafdecls.fh
 
-  LIB_TARGETS = testf.o testf.x testc.o testc.x
+  LIB_TARGETS = testf.o testf.x testc.o testc.x string-util.o
   LIB_DEFINES = -DVERIFY -DSTATS
 
 include ../config/makefile.h
@@ -18,6 +18,8 @@ include ../config/makelib.h
 testf.x:  testf.o $(LIBRARY_PATH)
 	$(FC) -o $@ $(FFLAGS) $^
 
-testc.x:  testc.o $(LIBRARY_PATH)
+testc.x: testc.o string-util.o $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^
 
+test-coalesce.x: test-coalesce.o $(LIBRARY_PATH)
+	$(CC) $(CFLAGS) -o $@ $^
