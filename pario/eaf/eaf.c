@@ -147,7 +147,11 @@ void eaf_print_stats(int fd)
     printf("\n");
     printf("------------------------------------------------------------\n");
     printf("EAF file %d: \"%s\" size=%lld bytes\n", 
-	   fd, file[fd].fname, (unsigned long long) len);
+#ifdef WIN32
+	    fd, file[fd].fname, (unsigned long) len);
+#else
+	    fd, file[fd].fname, (unsigned long long) len);
+#endif
     printf("------------------------------------------------------------\n");
     printf("               write      read    awrite     aread      wait\n");
     printf("               -----      ----    ------     -----      ----\n");
