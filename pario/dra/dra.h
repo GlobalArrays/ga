@@ -62,10 +62,9 @@
 #else
 # define _ARGS_(s) ()
 #endif
-
 #ifdef __cplusplus
 extern "C" {
-
+#endif
 extern Integer FATR DRA_init           _ARGS_((Integer *max_arrays,\
                                          DoublePrecision *max_array_size,\
                                          DoublePrecision *tot_disk_space,\
@@ -154,6 +153,8 @@ extern Integer FATR DRA_probe          _ARGS_((Integer *request, Integer *status
 extern Integer FATR DRA_wait           _ARGS_((Integer *request));
 extern Integer FATR DRA_terminate      _ARGS_(());
 extern void    DRA_flick          _ARGS_(());
+#ifdef __cplusplus
+	   }
 #endif
 
 #undef _ARGS_
