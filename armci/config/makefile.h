@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.101 2004-04-09 21:37:11 manoj Exp $
+#$Id: makefile.h,v 1.102 2004-04-10 01:16:42 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -441,6 +441,7 @@ USE_REGION = $(shell /sbin/sysconfig -s | awk ' /shmem/  { print "yes" } ' )
      COPT_REN += -D_POSIX_PII_SOCKET
 ifeq ($(USE_REGION),yes)
      COPT_REN += -DREGION_ALLOC
+     EXTRA_OBJ = alloc.o
 endif
 endif
 #------------------------------- Crays ------------------------------------
