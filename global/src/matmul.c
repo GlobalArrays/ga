@@ -209,12 +209,12 @@ static void GAI_DGEMM(Integer atype, char *transa, char *transb,
 		   (double *)&ZERO,  (double *)c, &cdim_t);
 #   else
 	  
-#     if defined(__crayx1)
-	  dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-		 alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t, 1, 1);
-#     else
+#     if !defined(HAS_BLAS) && defined(EXT_INT)
 	  dgemm_(transa, transb, &idim, &jdim, &kdim,
 		 alpha, a, &adim, b, &bdim, &ZERO, c, &cdim, 1, 1);
+#     else
+	  dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+		 alpha, a, &adim_t, b, &bdim_t, &ZERO, c, &cdim_t, 1, 1);
 #     endif
 	  
 #   endif
@@ -651,7 +651,7 @@ void ga_matmul(transa, transb, alpha, beta,
     if(!irregular) {
        if((adim1=GA_Cluster_nnodes()) > 1) use_NB_matmul = SET;
        else use_NB_matmul = UNSET;
-#    if defined(__crayx1)
+#    if defined(__crayx1) || defined(NEC)
        use_NB_matmul = UNSET;
 #    endif
     }
@@ -1062,12 +1062,12 @@ int idim_t, jdim_t, kdim_t, adim_t, bdim_t, cdim_t;
 			     alpha, (double *)a, &adim_t, (double *)b, &bdim_t, 
 			     &ZERO_D,  (double *)c, &cdim_t);
 #                 else
-#                   if defined(__crayx1)
-		    dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
-			   alpha, a, &adim_t, b, &bdim_t, &ONE,c,&cdim_t,1,1);
-#                   else
+#                 if !defined(HAS_BLAS) && defined(EXT_INT)
 		    dgemm_(transa, transb, &idim, &jdim, &kdim,
 			   alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
+#                   else
+		    dgemm_(transa, transb, &idim_t, &jdim_t, &kdim_t,
+			   alpha, a, &adim_t, b, &bdim_t, &ONE,c,&cdim_t,1,1);
 #                   endif
 #                 endif
 		    break;
