@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.4 1999-07-28 00:47:53 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.5 1999-09-02 18:28:58 jju Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -37,18 +37,23 @@ int dscrlen = ((request_header_t*)MessageSndBuffer)->dscrlen;
 int datalen = ((request_header_t*)MessageSndBuffer)->datalen;
 int cluster = armci_clus_id(proc);
 int stat, len;
+int bytes;
+
+    if(((request_header_t*)MessageSndBuffer)->operation == GET)
+      bytes = dscrlen + hdrlen;
+    else
+      bytes = ((request_header_t*)MessageSndBuffer)->bytes + hdrlen;
 
      if(DEBUG_){
-        printf("%d sending req=%d to (%d,%d,%d) dscrlen=%d datalen=%d\n",
+        printf("%d sending req=%d to (%d,%d,%d) dscrlen=%d datalen=%d bytes=%d\n",
                armci_me,
                ((request_header_t*)MessageSndBuffer)->operation,
                ((request_header_t*)MessageSndBuffer)->to,
-               cluster,proc,dscrlen,datalen);
+               cluster,proc,dscrlen,datalen,bytes);
         fflush(stdout);
      }
-
     stat = armci_WriteToSocket(AR_sock[cluster], MessageSndBuffer, 
-                 ((request_header_t*)MessageSndBuffer)->bytes + hdrlen);
+                 bytes);
     if(stat<0)armci_die("armci_send_req:write failed",stat);
 }
 
@@ -60,6 +65,7 @@ void armci_rcv_req(int p, void *phdr, void *pdescr, void *pdata, int *buflen )
 request_header_t *msginfo = (request_header_t*)MessageRcvBuffer;
 int hdrlen = sizeof(request_header_t);
 int stat;
+int bytes;
 
     stat =armci_ReadFromSocket(AR_sock[p],MessageRcvBuffer,hdrlen);
     if(stat<0)armci_die("armci_rcv_req: failed to receive header ",stat);
@@ -87,14 +93,20 @@ int stat;
     if(msginfo->dscrlen > msginfo->bytes)
        armci_die2("armci_rcv_req:dsclen>bytes",msginfo->dscrlen,msginfo->bytes);
 
+    if (msginfo->operation == GET)
+      bytes = msginfo->dscrlen; 
+    else
+      bytes = msginfo->bytes;
+
     if(msginfo->bytes){
-       stat = armci_ReadFromSocket(AR_sock[p],msginfo+1,msginfo->bytes);
+       stat = armci_ReadFromSocket(AR_sock[p],msginfo+1,bytes);
        if(stat<0)armci_die("armci_rcv_req: read of data failed",stat);
        *(void**)pdescr = msginfo+1;
        *(void**)pdata  = msginfo->dscrlen + (char*)(msginfo+1); 
        *buflen -= msginfo->dscrlen; 
 
-       if(msginfo->datalen)*buflen -= msginfo->datalen;
+       if (msginfo->operation != GET)
+           if(msginfo->datalen)*buflen -= msginfo->datalen;
 
     }else {
 
@@ -102,7 +114,7 @@ int stat;
        *(void**)pdescr = NULL;
     }
     
-    if(msginfo->datalen>0){
+    if(msginfo->datalen>0 && msginfo->operation != GET){
 
        if(msginfo->datalen > MSG_BUFLEN -hdrlen -msginfo->dscrlen)
           armci_die2("armci_rcv_req:data overflowing buffer",
@@ -111,6 +123,12 @@ int stat;
        *buflen -= msginfo->datalen;
 
     }
+/*        if (msginfo->operation == GET){
+        printf("%d received GET datalen=%d\n",armci_me,
+                                 msginfo->datalen);
+        fflush(stdout);
+       }
+*/
 }
 
 
@@ -275,6 +293,11 @@ void armci_server_goodbye(request_header_t* msginfo)
 
      armci_CleanupSockets();
 /*     sleep(1);*/
+
+#ifdef MPI
+        MPI_Finalize();
+#endif
+
      exit(0);
 }
 
