@@ -1,10 +1,10 @@
-/* $Id: memory.c,v 1.7 1999-10-14 00:18:50 d3h325 Exp $ */
+/* $Id: memory.c,v 1.8 1999-11-10 01:58:02 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
 #include "message.h"
  
-#define DEBUG 0
+#define DEBUG_ 0
 #define USE_MALLOC 
 
 #if defined(SYSV) || defined(WIN32)
@@ -27,6 +27,15 @@ int nproc = armci_clus_info[armci_clus_me].nslave;
       }
       armci_msg_barrier();
    }
+}
+
+
+/*\ master experts its address of shmem region at the beggining of that region
+\*/
+static void armci_master_exp_attached_ptr(void* ptr)
+{
+    if(!ptr) armci_die("armci_master_exp_att_ptr: null ptr",0);
+    *(volatile void**)ptr = ptr;
 }
 
 
@@ -76,6 +85,13 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
 #      endif
                 myptr = Create_Shared_Region(idlist+1,size,idlist);
        if(!myptr && size>0 )armci_die("armci_malloc: could not create", size);
+
+       /* place its address at begining of attached region for others to see */
+       armci_master_exp_attached_ptr(myptr);
+
+       if(DEBUG_){
+         printf("%d:armci_malloc addr me=%d\n",armci_me,myptr); fflush(stdout);
+       }
     }
 
     /* broadcast shmem id to other processes on the same cluster node */
@@ -84,6 +100,15 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
     if(armci_me != armci_master){
        myptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
        if(!myptr)armci_die("armci_malloc: could not attach", size);
+
+       /* now every process in a SMP node needs to find out its offset
+        * w.r.t. master - this offset is ncessary to use memlock table
+        */
+       if(DEBUG_){
+          armci_set_mem_offset(myptr);
+
+          printf("%d:armci_malloc addr me=%d ref=%d\n",armci_me,myptr,*(void**)myptr); fflush(stdout);
+       }
     }
 
 #   if defined(DATA_SERVER)
@@ -96,7 +121,11 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
              armci_serv_attach_req(idlist, SHMIDLEN*sizeof(long), size, 
                                 &ptr, sizeof(void*));
              ptr_ref_arr[armci_clus_me]= ptr; /* from server*/
-             
+
+             if(DEBUG_){
+               printf("%d: addresses server=%d me=%d\n",armci_me, ptr, myptr);
+               fflush(stdout);
+             }
           }
 
           /* exchange ref addr of shared memory region on every cluster node*/
@@ -171,7 +200,7 @@ int ARMCI_Malloc(void *ptr_arr[],int bytes)
 {
     void *ptr;
 
-    if(DEBUG)
+    if(DEBUG_)
        fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, bytes);
 #ifdef USE_MALLOC
     if(armci_nproc == 1) {
@@ -256,3 +285,5 @@ int ARMCI_Free(void *ptr)
         ptr = NULL;
         return 0;
 }
+
+

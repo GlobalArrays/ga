@@ -1,4 +1,4 @@
-/* $Id: memlock.c,v 1.5 1999-07-28 00:47:57 d3h325 Exp $ */
+/* $Id: memlock.c,v 1.6 1999-11-10 01:58:01 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -7,6 +7,22 @@
 
 #define DEBUG_ 0
 #define INVALID_VAL -9999999
+
+#ifdef DATA_SERVER
+#  define CORRECT_PTR 
+#endif
+size_t armci_mem_offset=0;
+
+/* We start by  using table: assign address of local variable set to 1
+ * On shmem systems, this addres is overwritten by a shared memory location
+ * when memlock array is allocated in armci_init 
+ * Therefore, any process within shmem node can reset armci_use_memlock_table
+ * to "not used" when offset changes. Since the variable is in shmem, everybody
+ * on that SMP node will see the change and use the same locking functions
+ */ 
+int init_use_memlock_table=1;
+int *armci_use_memlock_table=&init_use_memlock_table;
+
 static int locked_slot=INVALID_VAL;
 
 volatile double armci_dummy_work=0.;
@@ -22,6 +38,43 @@ void **memlock_table_array;
 #endif
 
 #define ALIGN_ADDRESS(x) (char*)((((unsigned long)x) >> LOG_CALGN) << LOG_CALGN) 
+#ifdef CRAY_T3E
+#pragma _CRI cache_align table
+#endif
+static memlock_t table[MAX_SLOTS];
+
+
+
+
+
+/*\ simple locking scheme that ignores addresses
+\*/
+void armci_lockmem_(void *pstart, void *pend, int proc)
+{
+    int lock = proc-armci_master;
+    NATIVE_LOCK(lock);
+#   ifdef LAPI
+    {
+       extern int kevin_ok;
+       kevin_ok=0;
+    }
+#   endif
+}
+
+void armci_unlockmem_(int proc)
+{
+    int lock = proc-armci_master;
+    NATIVE_UNLOCK(lock);
+#   ifdef LAPI
+    {
+       extern int kevin_ok;
+       kevin_ok=1;
+    }
+#   endif
+}
+
+
+
 
 /*\ idle for a time proportional to factor 
 \*/
@@ -37,11 +90,6 @@ int i=factor*100000;
 }
    
 
-#ifdef CRAY_T3E
-#pragma _CRI cache_align table
-#endif
-static memlock_t table[MAX_SLOTS];
-
 /*\ acquire exclusive LOCK to MEMORY area <pstart,pend> owned by process "proc"
  *   . only one area can be locked at a time by the calling process
  *   . must unlock it with armci_unlockmem
@@ -54,9 +102,27 @@ void armci_lockmem(void *start, void *end, int proc)
      memlock_t *memlock_table;
      register int lock;
 
+#ifdef CORRECT_PTR
+     if(! *armci_use_memlock_table){
+       /* if offset invalid, use dumb locking scheme ignoring addresses */
+       armci_lockmem_(start, end, proc); 
+       return;
+     }
 
-     if(DEBUG_)
-       fprintf(stderr,"%d: armci_lockmem for %d\n",armci_me, proc);
+     /* when processes are attached to a shmem region at different addresses,
+      * addresses written to memlock table must be adjusted to the node master
+      */
+     if(armci_mem_offset){
+        start = armci_mem_offset + (char*)start;
+        end   = armci_mem_offset + (char*)end;
+     }
+#endif
+
+     if(DEBUG_){
+       printf("%d: calling armci_lockmem for %d range %d -%d\n",
+              armci_me, proc, start,end);
+       fflush(stdout);
+     }
      memlock_table = (memlock_t*)memlock_table_array[proc];
 
      lock = proc%NUM_LOCKS;
@@ -130,6 +196,14 @@ void armci_unlockmem(int proc)
      void *null[2] = {NULL,NULL};
      memlock_t *memlock_table;
 
+#ifdef CORRECT_PTR
+     if(!armci_use_memlock_table){
+       /* if offset invalid, use dumb locking scheme ignoring addresses */
+       armci_unlockmem_(proc);               
+       return;
+     }
+#endif
+
 #ifdef DEBUG
      if(locked_slot == INVALID_VAL) armci_die("armci_unlock: empty",0);
      if(locked_slot >= MAX_SLOTS || locked_slot <0) 
@@ -140,29 +214,42 @@ void armci_unlockmem(int proc)
      armci_put(null,&memlock_table[locked_slot].start,2*sizeof(void*),proc);
 
 }
-    
 
 
-void armci_lockmem_(void *pstart, void *pend, int proc)
+
+/*\ based on address for set by master, determine correction for
+ *  memory addresses set in memlock table
+ *  if the correction/offset ever changes stop using memlock table locking
+\*/ 
+void armci_set_mem_offset(void *ptr)
 {
-    int lock = proc-armci_master;
-    NATIVE_LOCK(lock);
-#   ifdef LAPI
-    {
-       extern int kevin_ok;
-       kevin_ok=0;
-    }
-#   endif
+   extern size_t armci_mem_offset;
+   size_t off;
+   static int first_time=1;
+   volatile void *ref_ptr;
+
+   /* do not care if memlock not used */
+   if(! *armci_use_memlock_table) return;
+
+   if(!ptr) armci_die("armci_set_mem_offset : null ptr",0);
+   ref_ptr = *(void**)ptr;
+   off = (char*)ref_ptr - (char*)ptr;
+
+   if(first_time){
+
+      armci_mem_offset =off;
+      first_time =0;
+      if(DEBUG_){
+        printf("%d memlock offset=%d me=%d ref=%d\n",armci_me, armci_mem_offset,
+           ref_ptr, ptr); fflush(stdout);
+      }
+
+   }else{
+      if(armci_mem_offset != off){
+         *armci_use_memlock_table =0;
+         printf("%d: WARNING:armci_set_mem_offset: offset changed %ld to %ld\n",
+                 armci_me, armci_mem_offset, off); fflush(stdout);
+      }
+   }
 }
 
-void armci_unlockmem_(int proc)
-{
-    int lock = proc-armci_master;
-    NATIVE_UNLOCK(lock);
-#   ifdef LAPI
-    {
-       extern int kevin_ok;
-       kevin_ok=1;
-    }
-#   endif
-}

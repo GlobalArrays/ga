@@ -169,5 +169,6 @@ extern int armci_clus_first, armci_clus_last;
 extern int armci_clus_id(int p);
 extern void armci_serv_attach_req(void *info, int ilen, long size, 
                                   void* resp,int rlen);
+extern void armci_set_mem_offset(void *ptr);
 
 #endif
