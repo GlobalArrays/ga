@@ -486,7 +486,7 @@ char name[80];
      fprintf(DEV,"\n global array: %s[%d:%d,%d:%d],  handle: %d \n",
              name, *ilo, *ihi, *jlo, *jhi, (int)*g_a);
 
-     if (!pretty) {
+     if (!*pretty) {
        for (i=*ilo; i <*ihi+1; i++){
          for (j=*jlo; j <*jhi+1; j+=BUFSIZE){
 	   jmax = MIN(j+BUFSIZE-1,*jhi);
