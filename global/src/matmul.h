@@ -1,4 +1,4 @@
-/* $Id: matmul.h,v 1.11 2003-11-05 22:11:32 manoj Exp $ */
+/* $Id: matmul.h,v 1.12 2003-11-06 01:20:33 manoj Exp $ */
 #ifndef _MATMUL_H_
 #define _MATMUL_H_
 
@@ -57,7 +57,7 @@ extern void FATR ZGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
 #  define BLOCK_SIZE 1024 /* temp buf size for pinning */
 #  define GA_ASPECT_RATIO 3
 #  define NUM_MATS 3 
-#  define MINTASKS 6 /* increase this if there is high load imbalance */
+#  define MINTASKS 10 /* increase this if there is high load imbalance */
 #  define EXTRA 4
 #endif
 
