@@ -358,6 +358,7 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
      void *retval;
 {
     Integer i, j;
+    Integer compatible;
     Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
     Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
     Integer loB[MAXDIM], hiB[MAXDIM], ldB[MAXDIM];
@@ -404,10 +405,15 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     transp_b = (*t_b == 'n' || *t_b =='N')? 'n' : 't';
     transp   = (transp_a == transp_b)? 'n' : 't';
 
-    /* compare patches and distributions of g_a and g_b */
-    if(!(ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi) &&
-         (transp=='n') ) ){
-        
+    /* find out coordinates of patches of g_A and g_B that I own */
+    nga_distribution_(&g_A, &me, loA, hiA);
+    nga_distribution_(&g_B, &me, loB, hiB);
+
+    if(ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB) &&
+       ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) compatible = 1;
+    else compatible = 0;
+    ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    if(!(compatible && (transp=='n'))) {
         /* either patches or distributions do not match:
          *        - create a temp array that matches distribution of g_a
          *        - copy & reshape patch of g_b into g_B
@@ -418,23 +424,16 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
         nga_copy_patch(&transp, g_b, blo, bhi, &g_B, alo, ahi);
         bndim = andim;
         temp_created = 1;
+        nga_distribution_(&g_B, &me, loB, hiB);
     }
-
-    /* since patches and distributions of g_A and g_B match each other
-     * dot them
-     */
-
-    /* find out coordinates of patches of g_A and g_B that I own */
-    nga_distribution_(&g_A, &me, loA, hiA);
-    nga_distribution_(&g_B, &me, loB, hiB);
     
-/*    if(!ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB))
+    if(!ngai_comp_patch(andim, loA, hiA, bndim, loB, hiB))
         ga_error(" patches mismatch ",0);
-*/
+
 
     /* A[83:125,1:1]  <==> B[83:125] */
     if(andim > bndim) andim = bndim; /* need more work */
-    
+
     isum = 0; dsum = 0.; zsum.real = 0.; zsum.imag = 0.;
     
     /*  determine subsets of my patches to access  */
@@ -842,6 +841,7 @@ Integer *g_c, *clo, *chi;    /* patch of g_c */
 DoublePrecision *alpha, *beta;
 {
     Integer i, j;
+    Integer compatible;
     Integer atype, btype, ctype;
     Integer andim, adims[MAXDIM], bndim, bdims[MAXDIM], cndim, cdims[MAXDIM];
     Integer loA[MAXDIM], hiA[MAXDIM], ldA[MAXDIM];
@@ -883,44 +883,54 @@ DoublePrecision *alpha, *beta;
     if((atotal != n1dim) || (btotal != n1dim))
         ga_error("  capacities of patches do not match ", 0L);
     
-    /* compare patches and distributions of g_a and g_c */
-    if(!(ngai_comp_patch(andim, alo, ahi, cndim, clo, chi) &&
-         ga_compare_distr_(g_a, g_c))) {
-        
+    /* find out coordinates of patches of g_a, g_b and g_c that I own */
+    nga_distribution_(&g_A, &me, loA, hiA);
+    nga_distribution_(&g_B, &me, loB, hiB);
+    nga_distribution_( g_c, &me, loC, hiC);
+    
+    /* test if the local portion of patches matches */
+    if(ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC) &&
+       ngai_comp_patch(andim, alo, ahi, cndim, clo, chi)) compatible = 1;
+    else compatible = 0;
+    ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    if(!compatible) {
         /* either patches or distributions do not match:
-          *        - create a temp array that matches distribution of g_c
-          *        - do C<= A
-          */
+         *        - create a temp array that matches distribution of g_c
+         *        - do C<= A
+         */
         nga_copy_patch(&notrans, g_a, alo, ahi, g_c, clo, chi);
         andim = cndim;
         g_A = *g_c;
         A_created = 1;
+        nga_distribution_(&g_A, &me, loA, hiA);
     }
-        
-    if(!(ngai_comp_patch(bndim, blo, bhi, cndim, clo, chi) &&
-         ga_compare_distr_(g_b, g_c))) {
-        
+
+    /* test if the local portion of patches matches */
+    if(ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC) &&
+       ngai_comp_patch(bndim, blo, bhi, cndim, clo, chi)) compatible = 1;
+    else compatible = 0;
+    ga_igop(GA_TYPE_GSM, &compatible, 1, "*");
+    if(!compatible) {
         /* either patches or distributions do not match:
-          *        - create a temp array that matches distribution of g_c
-          *        - copy & reshape patch of g_b into g_B
-          */
+         *        - create a temp array that matches distribution of g_c
+         *        - copy & reshape patch of g_b into g_B
+         */
         if (!ga_duplicate(g_c, &g_B, tempname))
             ga_error("ga_dadd_patch: dup failed", 0L);
          nga_copy_patch(&notrans, g_b, blo, bhi, &g_B, clo, chi);
          bndim = cndim;
          B_created = 1;
+         nga_distribution_(&g_B, &me, loB, hiB);
     }        
-   
-    /* find out coordinates of patches of g_a, g_b and g_c that I own */
-    nga_distribution_(&g_A, &me, loA, hiA);
-    nga_distribution_(&g_B, &me, loB, hiB);
-    nga_distribution_( g_c, &me, loC, hiC);    
 
+    if(andim > bndim) cndim = bndim;
+    if(andim < bndim) cndim = andim;
+    
     if(!ngai_comp_patch(andim, loA, hiA, cndim, loC, hiC))
         ga_error(" A patch mismatch ", g_A); 
     if(!ngai_comp_patch(bndim, loB, hiB, cndim, loC, hiC))
         ga_error(" B patch mismatch ", g_B);
-    
+
     /*  determine subsets of my patches to access  */
     if (ngai_patch_intersect(clo, chi, loC, hiC, cndim)){
         nga_access_ptr(&g_A, loC, hiC, &A_ptr, ldA);
