@@ -36,7 +36,7 @@
 #define TYPE_NXTVAL_REPLY 32769	/* Type for NXTVAL response */
 #define SYNC_TYPE 32770		/* Type for synchronization */
 
-/* int mperrno=-1;*/       /* EUI error code, for some reason not in current EUIH
+/* int mperrno=-1;*/   /* EUI error code, for some reason not in current EUIH
                           remove the statement when found/fixed */
 
 #define DEBUG_ DEBUG
@@ -49,10 +49,10 @@ static long nxtval_buffer[NXTVAL_BUF_SIZE];    /* Used by handler for nxtval */
 static void nxtval_handler(int *);
 static long nxtval_server;
 
-static volatile long n_in_msg_q = 0;    /* No. in the message q */
-
-#define MAX_Q_LEN 2048         /* Maximum no. of outstanding messages */
-static struct msg_q_struct{
+#define INVALID_NODE -3333      /* used to stamp completed msg in the queue */
+#define MAX_Q_LEN 1024          /* Maximum no. of outstanding messages */
+static  volatile long n_in_msg_q = 0;   /* actual no. in the message q */
+static  struct msg_q_struct{
   long   msg_id;
   long   node;
   long   type;
@@ -186,10 +186,14 @@ void SND_(type, buf, lenbuf, node, sync)
     if(status == -1) 
       Error("async. SND: mperrno error code ", mperrno);
 
+    msg_q[n_in_msg_q].node   = *node;
+    msg_q[n_in_msg_q].type   = *type;
+    msg_q[n_in_msg_q].lenbuf = *lenbuf;
     msg_q[n_in_msg_q].msg_id =  msgid;
-    msg_q[n_in_msg_q].snd = 1;
-    fprintf(stderr,"nonblocking send: MSGID: %d\n",msgid);
+    msg_q[n_in_msg_q].snd     = 1;
+
     if (DEBUG) {
+      fprintf(stderr,"nonblocking send: MSGID: %d\n",msgid);
       (void) printf("SND: me=%ld, to=%ld, len=%ld, msg_id=%ld, ninq=%ld\n",
 		    me, *node, *lenbuf, msgid,
 		    n_in_msg_q);
@@ -591,42 +595,67 @@ void STATS_()
 }
 
 
+int compare_msg_q_entries(void* entry1, void* entry2)
+{
+    /* nodes are nondistiguishable unless one of them is INVALID_NODE */
+    if( ((struct msg_q_struct*)entry1)->node ==
+        ((struct msg_q_struct*)entry2)->node) return 0;
+    if( ((struct msg_q_struct*)entry1)->node == INVALID_NODE) return 1; 
+    if( ((struct msg_q_struct*)entry2)->node == INVALID_NODE) return -1; 
+    return 0;
+}
+
+
 void WAITCOM_(nodesel)
      long *nodesel;
 /*
-  Wait for all messages (send/receive) to complete between
-  this node and node *nodesel or everyone if *nodesel == -1.
-
-  !! CURRENTLY ALWAYS WAIT FOR ALL COMMS TO FINISH ... IGNORES NODESEL !!
-  
-  long *node = node with which to ensure communication is complete
-*/
+ * Wait for all messages (send/receive) to complete between
+ * this node and node *nodesel or everyone if *nodesel == -1.
+ */
 {
-  long i, status, nbytes;
+  long i, status, nbytes, found = 0;
+
 #ifdef EVENTLOG
   evlog(EVKEY_BEGIN,     "Waitcom",
 	EVKEY_STR_INT,   "n_in_msg_q",  n_in_msg_q,
 	EVKEY_LAST_ARG);
 #endif
 
-  for (i=0; i<n_in_msg_q; i++) {
+  for (i=0; i<n_in_msg_q; i++) if(*nodesel==msg_q[i].node || *nodesel ==-1){
+
     if (DEBUG) {
       (void) printf("WAITCOM: %ld waiting for msgid %ld, #%ld\n",NODEID_(),
 		    msg_q[i].msg_id, i);
       (void) fflush(stdout);
     }
-#ifdef WAIT_BLOCKING
-    status = mpc_wait(&msg_q[i].msg_id, &nbytes);
-    if(status == -1) 
-      Error("WAITCOM failed:  mperrno error code ", mperrno);
-#else
-      /* fprintf(stderr,"%d messages, now: %d\n",n_in_msg_q,i); */
-      while((status=mpc_status(msg_q[i].msg_id)) == -1);    /* interruptable*/
-      if(status < -1) Error("WAITCOM: invalid message ID ", msg_q[i].msg_id );
-      /* fprintf(stderr,"message %d completed\n",i); */
-#endif
+
+#   ifdef WAIT_BLOCKING
+       status = mpc_wait(&msg_q[i].msg_id, &nbytes);
+       if(status == -1) Error("WAITCOM failed: mperrno code ", mperrno);
+#   else
+       while((status=mpc_status(msg_q[i].msg_id)) == -1);    /* interruptable*/
+       if(status < -1) Error("WAITCOM: invalid message ID ", msg_q[i].msg_id );
+#   endif
+
+    msg_q[i].node = INVALID_NODE;
+    found = 1;
+
+  }else if(msg_q[i].node == INVALID_NODE)Error("WAITCOM: invalid node entry",i);
+
+  /* tidy up msg_q if there were any messages completed  */ 
+  if(found){ 
+
+    /* sort msg queue only to move the completed msg entries to the end*/ 
+    /* comparison tests against the INVALID_NODE key */ 
+    qsort(msg_q, n_in_msg_q, sizeof(struct msg_q_struct),compare_msg_q_entries);
+
+    /* update msg queue length, = the number of outstanding msg entries left*/
+    for(i = 0; i< n_in_msg_q; i++)if(msg_q[i].node == INVALID_NODE) break;
+    if(i == n_in_msg_q) Error("WAITCOM: inconsitency in msg_q update", i);
+    n_in_msg_q = i;
+
   }
-  n_in_msg_q = 0;
+
 #ifdef EVENTLOG
   evlog(EVKEY_END, "Waitcom", EVKEY_LAST_ARG);
 #endif
@@ -639,8 +668,8 @@ void WAITCOM_(nodesel)
 static void nxtval_handler(int *pid)
 {
 static long cnt     = 0;          /* actual counter */
-volatile static int ndone = 0;   /* no. finished for this loop */
-static int done_list[MAXPROC];   /* list of processes finished with this loop*/
+volatile static int ndone = 0;    /* no. finished for this loop */
+static int done_list[MAXPROC];    /* list of processes finished with this loop*/
 static  int lencnt = sizeof cnt;    /* length of cnt */
 static  int node   = -1;            /* select any node */
 static  int rtype  = TYPE_NXTVAL_REPLY;   /* reply message type */
