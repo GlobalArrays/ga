@@ -1,9 +1,9 @@
-/* $Id: pgs.c,v 1.10 2004-10-08 17:44:28 edo Exp $ 
+/* $Id: pgs.c,v 1.11 2004-10-09 16:29:57 edo Exp $ 
  * Note: the general ARMCI copyright does not apply to code included in this file 
  *       Explicit permission is required to copy/modify this code. 
  */
 
-#ident	"@(#)$Id: pgs.c,v 1.10 2004-10-08 17:44:28 edo Exp $"
+#ident	"@(#)$Id: pgs.c,v 1.11 2004-10-09 16:29:57 edo Exp $"
 
 #define BINLOAD 1
 
@@ -387,8 +387,10 @@ void pgs_railInit (pgsstate_t *pgsstate, PGS_RAIL *pgsrail, int nSlots)
 	FILE *fp;
 	int sz;
 	extern int armci_msg_me();
+	char *tmp;
 
-	sprintf(file_name, "/tmp/PGS%d.%d.so", getpid(), getuid()); 
+        if (!(tmp = getenv("ARMCI_PSGTMP"))) tmp = "/tmp";
+	sprintf(file_name, "%s/PGS%d.%d.so", tmp, getpid(), getuid()); 
 	fp = fopen((const char*)file_name, "w");
 	if(fp==NULL)armci_die("cannot open so file",-1);
 	sz = fwrite(bin_data, 1, BIN_DATA_ELEMS, fp);
