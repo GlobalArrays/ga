@@ -118,8 +118,8 @@ GA::GAServices::duplicate(int g_a, char* array_name) {
 }
 
 void 
-GA::GAServices::error(char *message, int code) { 
-  GA_Error(message, code); 
+GA::GAServices::error(const char *message, int code) { 
+  GA_Error((char *)message, code); 
 }
 
 void 
