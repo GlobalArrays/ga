@@ -4,7 +4,9 @@
 #include "memlock.h"
 #include "copy.h"
 #include <stdio.h>
-#ifndef WIN32
+#ifdef WIN32
+#include <process.h>
+#else
 #include <unistd.h>
 #endif
 
@@ -353,7 +355,7 @@ static void armci_check_req(request_header_t *msginfo, int buflen)
     if(msginfo->datalen < 0)
         armci_die("armci_rcv_req: datalen < 0", msginfo->datalen);
 #ifndef PIPE_BUFSIZE
-    if(msginfo->dscrlen > msginfo->bytes)
+    if(msginfo->dscrlen > (int)msginfo->bytes)
         armci_die2("armci_rcv_req: dsclen > bytes", msginfo->dscrlen,
                    msginfo->bytes);
 #endif

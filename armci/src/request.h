@@ -53,7 +53,6 @@ unsigned int   bytes:20;      /* number of bytes requested */
          msg_tag_t tag;       /* message tag for response to this request */
 }request_header_t;
 
-/*
 #ifndef MSG_BUFLEN_DBL
 # if defined(HITACHI)
 #  define MSG_BUFLEN_DBL 0x50000
@@ -61,7 +60,7 @@ unsigned int   bytes:20;      /* number of bytes requested */
 #  define MSG_BUFLEN_DBL 50000
 # endif
 #endif
-*/
+
 #define MSG_BUFLEN  sizeof(double)*MSG_BUFLEN_DBL
 extern  char* MessageRcvBuffer;
 extern  char* MessageSndBuffer;
