@@ -287,7 +287,6 @@ extern Integer ga_create_handle();
 extern void ga_set_data(Integer *g_a, Integer *ndim, Integer dims[], Integer *type);
 extern void ga_set_chunk(Integer *g_a, Integer chunk[]);
 extern void ga_set_array_name(Integer g_a, char *array_name);
-extern void ga_set_proc_config(Integer *g_a, Integer *p_handle);
 extern void ga_set_ghosts(Integer *g_a, Integer width[]);
 extern void ga_set_irreg_distr(Integer *g_a, Integer map[], Integer nblock[]);
 extern void ga_set_irreg_flag(Integer *g_a, logical flag);
