@@ -306,7 +306,7 @@ int armci_client_send_complete()
     
     /* blocking: wait til the send is done by calling the callback */
     while(armci_gm_context->done == ARMCI_GM_SENDING) 
-        MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
+        MPI_Iprobe(armci_me, MPI_ANY_TAG, MPI_COMM_WORLD,
                    &flag, &status);
 
     return(armci_gm_context->done);
