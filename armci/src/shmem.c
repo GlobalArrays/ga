@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.13 2000-05-04 19:50:26 jju Exp $ */
+/* $Id: shmem.c,v 1.14 2000-05-15 23:30:24 d3h325 Exp $ */
 /* System V shared memory allocation and managment for GAs:
  *
  * Interface:
@@ -45,7 +45,7 @@ extern void armci_die();
 #include "shmem.h"
 #include "shmalloc.h"
 
-#if defined(SUN) || defined(SOLARIS) || defined(DECOSF) || defined(LINUX)
+#if defined(SUN) || defined(SOLARIS)
 #define MULTIPLE_REGIONS
 #endif
 
@@ -100,7 +100,10 @@ extern void armci_die();
 #     undef _SHMMAX
 #     ifdef ULTRA
 #       define _SHMMAX ((unsigned long)16*1024)
+#     elif defined(ALPHA)
+#       define _SHMMAX ((unsigned long)4*1024)
 #     else
+        /* Intel */
 #       define _SHMMAX ((unsigned long)32*1024)
 #     endif
 #  endif
@@ -144,7 +147,7 @@ int armci_test_allocate(long size)
  */
 #define PAGE (16*65536L)
 #define LBOUND  1048576L
-#define UBOUND 255*LBOUND
+#define UBOUND 512*LBOUND
 
 /*\ determine the max shmem segment size using bisection
 \*/
@@ -492,7 +495,15 @@ long sz;
 
        if ( (int)(temp = (char*)shmat((int) id, pref_addr, 0)) == -1){
           char command[64];
+#ifdef LINUX
+          sprintf(command,"/usr/bin/ipcrm shm %d",id);
+#elif  defined(SOLARIS) 
           sprintf(command,"/bin/ipcrm -m %d",id);
+#elif  defined(SGI) 
+          sprintf(command,"/usr/sbin/ipcrm -m %d",id);
+#else
+          sprintf(command,"/usr/bin/ipcrm -m %d",id);
+#endif
           if(system(command) == -1) 
           fprintf(stderr,"Might need to clean shared memory: type 'ipcrm -m %d'\n", id);
           if(pref_addr){

@@ -76,7 +76,7 @@ HARDCLEAN = yes
 
 #add some extra Microsoft VC files to clean if any left 
 NTSTUFF = *.ilk *.exe *.ncb
-LIB_TARGETS = *.x $(NTSTUFF)
+LIB_TARGETS = *.x shmtest $(NTSTUFF)
 LIB_DISTRIB = ../lib
 
 include ../config/makefile.h
