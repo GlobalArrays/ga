@@ -11,6 +11,7 @@
 #ifdef QSNETLIBS_VERSION_CODE
 #  define ELAN_ACC
 #endif 
+extern void armci_elan_fence(int p);
 #endif
 
 #ifdef WIN32

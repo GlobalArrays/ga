@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.42 2002-09-20 19:11:08 d3h325 Exp $ */
+/* $Id: copy.h,v 1.43 2002-09-25 00:53:04 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -259,6 +259,8 @@ void FATR DCOPY1D(void*, void*, int*);
 #else
 #   define WAIT_FOR_PUTS armcill_wait_put()
 #   define WAIT_FOR_GETS armcill_wait_get()
+    extern void armcill_wait_put();
+    extern void armcill_wait_get();
 #endif
 #endif
 
