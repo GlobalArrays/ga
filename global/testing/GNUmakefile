@@ -111,6 +111,7 @@ endif
 .PHONY: clean
 clean:
 	-$(RM) -f *.o *.p *core *stamp mputil.mp* *trace *.x *events*
+	-$(RM) -f ngatest.F
 
 .PHONY: realclean
 realclean:      clean

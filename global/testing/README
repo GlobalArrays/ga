@@ -1,0 +1,57 @@
+Note: On workstations, mpich is used.
+
+Edit the file ngatest.m4:
+
+  1 test what kind of data type:
+	To test Integer, set "m4_test_int" to "yes", otherwise, "no"
+	To test Double Precision, set "m4_test_dbl" to "yes", otherwise, "no"
+	To test Double Complex, set "m4_test_dcpl" to "yes", otherwise, "no"
+
+  2 test from which dimension to which dimension:
+	Example: to test from 2 to 4 dimensions,
+		set "m4_dim_from" to 2 and "m4_dim_to" to 4
+
+  3 test which functions:
+	Functions to be tested include:
+	    ga_fill		Set "m4_test_GA_FILL" to "yes" to test
+	    nga_get		Set "m4_test_NGA_GET" to "yes" to test
+	    nga_put		Set "m4_test_NGA_PUT" to "yes" to test
+	    nga_acc		Set "m4_test_NGA_ACC" to "yes" to test
+	    nga_scatter		Set "m4_test_NGA_SCATTER" to "yes" to test
+	    nga_gather		Set "m4_test_NGA_GATHER" to "yes" to test
+
+	    nga_fill_patch	Set "m4_test_NGA_FILL_PATCH" to "yes" to test
+	    nga_copy_patch	Set "m4_test_NGA_COPY_PATCH" to "yes" to test
+	    nga_scale_patch	Set "m4_test_NGA_SCALE_PATCH" to "yes" to test
+	    nga_add_patch	Set "m4_test_NGA_ADD_PATCH" to "yes" to test
+	    nga_idot_patch	Set "m4_test_NGA_DOT_PATCH" to "yes" to test
+	    nga_ddot_patch	Set "m4_test_NGA_DOT_PATCH" to "yes" to test
+	    nga_zdot_patch	Set "m4_test_NGA_DOT_PATCH" to "yes" to test
+
+	Setting any variable to "no" will bypass testing the corresponding
+ 	function
+
+To compile, type "make ngatest.x"
+
+To run the test, 
+    On workstations, type "ngatest.x -np 4"
+
+--------
+Source files: 
+
+    ngatest.m4
+    ngatest_src/ndim.src
+    ngatest_src/ndim_main.src
+
+    ngatest_src/ndim_GA_FILL.src
+    ngatest_src/ndim_NGA_GET.src
+    ngatest_src/ndim_NGA_PUT.src
+    ngatest_src/ndim_NGA_ACC.src
+    ngatest_src/ndim_NGA_SCATTER.src
+    ngatest_src/ndim_NGA_GATHER.src
+
+    ngatest_src/ndim_NGA_FILL_PATCH.src
+    ngatest_src/ndim_NGA_COPY_PATCH.src
+    ngatest_src/ndim_NGA_SCALE_PATCH.src
+    ngatest_src/ndim_NGA_ADD_PATCH.src 
+    ngatest_src/ndim_NGA_DOT_PATCH.src
