@@ -57,7 +57,7 @@ c
      $        b(substr(m4_lo_all, 1, eval(m4_ndim*6-1))),ld)
          
          call m4_util_compare_patches(m4_test_type)(0d0,total,
-     $        a,lo,hi,ndim,dims,b,lo,hi,ndim,dims)	
+     $        a,lo,hi,ndim,dims,total,b,lo,hi,ndim,dims)	
       endif
       
       call ga_sync()

@@ -20,15 +20,15 @@ c     initialize the array with random numbers
          a(i) = m4_rand(i)
       enddo
       end       
-     
-c     compare the patches in two arrays.
+
 c     if the elements do match, stop the program
-      subroutine m4_util_compare_patches(m4_test_type)(eps,total,
-     $     array1,lo1,hi1,ndim1,dims1,array2,lo2,hi2,ndim2,dims2)
+      subroutine m4_util_compare_patches(m4_test_type)(eps,
+     $     total1,array1,lo1,hi1,ndim1,dims1,
+     $     total2,array2,lo2,hi2,ndim2,dims2)
       implicit none
       double precision eps
-      integer ndim1,ndim2,total
-      m4_data_type array1(total),array2(total)
+      integer ndim1,ndim2,total1,total2
+      m4_data_type array1(total1),array2(total2)
       integer lo1(ndim1),hi1(ndim1),lo2(ndim2),hi2(ndim2)
       integer dims1(ndim1),dims2(ndim2)
       integer next_index
@@ -39,8 +39,8 @@ c     initialize index1 and index2, searching from zeros
       index1 = 0
       index2 = 0
 c     compare corresponding elements in each array
-      index1 = next_index(index1,total,ndim1,lo1,hi1,dims1)
-      index2 = next_index(index2,total,ndim2,lo2,hi2,dims2)
+      index1 = next_index(index1,total1,ndim1,lo1,hi1,dims1)
+      index2 = next_index(index2,total2,ndim2,lo2,hi2,dims2)
       do while((index1.ne.0).and.(index2.ne.0))
          diff = abs(array1(index1) - array2(index2))
          maxval = max(abs(array1(index1)), abs(array2(index2)))
@@ -50,8 +50,8 @@ c     compare corresponding elements in each array
             print *, array1(index1), array2(index2)
             call ga_error('bye',0)
          endif
-         index1 = next_index(index1,total,ndim1,lo1,hi1,dims1)
-         index2 = next_index(index2,total,ndim2,lo2,hi2,dims2)
+         index1 = next_index(index1,total1,ndim1,lo1,hi1,dims1)
+         index2 = next_index(index2,total2,ndim2,lo2,hi2,dims2)
       enddo
 c
 c     at this point both index1 and index2 should be 0

@@ -113,7 +113,7 @@ c
      $        b(substr(m4_blo_all, 1, eval(m4_ndim*7-1))),dims)
 c     
          call m4_util_compare_patches(m4_test_type)(0d0,total,
-     $        a,alo,ahi,ndim,dims,b,blo,bhi,ndim,dims)
+     $        a,alo,ahi,ndim,dims,total,b,blo,bhi,ndim,dims)
       enddo
 c     
       call ga_sync()
@@ -141,7 +141,7 @@ c
      $        b(substr(m4_blo_all, 1, eval(m4_ndim*7-1))),dims)
 c     
          call m4_util_compare_patches(m4_test_type)(0d0,total,
-     $        a,alo,ahi,ndim,dims,b,blo,bhi,ndim,dims)
+     $        a,alo,ahi,ndim,dims,total,b,blo,bhi,ndim,dims)
       enddo
 c     
       call ga_sync()
@@ -177,7 +177,7 @@ c     adjust index of array a
             thi(i) = ahi(ndim-i+1)
          enddo
          call m4_util_compare_patches(m4_test_type)(0d0,total,
-     $        a,tlo,thi,ndim,dims,b,blo,bhi,ndim,dims)
+     $        a,tlo,thi,ndim,dims,total,b,blo,bhi,ndim,dims)
       enddo
 c     
       call ga_sync()
@@ -250,7 +250,7 @@ c
      $        a(substr(m4_alo_all, 1, eval(m4_ndim*7-1))),dims)
 c     
          call m4_util_compare_patches(m4_test_type)(0d0,total,
-     $        a,alo,ahi,ndim,dims,d,dlo,dhi,dndim,ddims)
+     $        a,alo,ahi,ndim,dims,total,d,dlo,dhi,dndim,ddims)
       enddo
 c     
       call ga_sync()

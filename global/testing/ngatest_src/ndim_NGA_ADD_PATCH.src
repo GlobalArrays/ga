@@ -142,7 +142,7 @@ c
      $        b(substr(m4_clo_all, 1, eval(m4_ndim*7-1))),dims)
 c     
          call m4_util_compare_patches(m4_test_type)(1d-5,total,
-     $        a,alo,ahi,ndim,dims,b,clo,chi,ndim,dims)
+     $        a,alo,ahi,ndim,dims,total,b,clo,chi,ndim,dims)
       enddo
 c     
       call ga_sync()
@@ -226,7 +226,7 @@ c
      $        b(substr(m4_alo_all, 1, eval(m4_ndim*7-1))),dims)
 c     
          call m4_util_compare_patches(m4_test_type)(1d-5,total,
-     $        a,alo,ahi,ndim,dims,b,alo,ahi,ndim,dims)
+     $        a,alo,ahi,ndim,dims,total,b,alo,ahi,ndim,dims)
       enddo
 c     
       call ga_sync()

@@ -22,6 +22,28 @@ c     iran(range) = range/2
       end
 c
 
+c
+      subroutine random_range_outbound(lo,hi,lop,hip,ndim)
+      implicit none
+      integer lo(1),hi(1),lop(1),hip(1),ndim
+      integer i, range, val,iran
+      double precision drand
+      iran(range) = int(drand(0)*dble(range)) + 1
+c     iran(range) = range/2
+      do i = 1, ndim
+         range = 2*(hi(i)-lo(i)+1)
+         val = iran(range)
+         lop(i) = lo(i) + val
+         range = hi(i)-lo(i)+1
+         val = iran(range)
+         hip(i) = lop(i) + range - val
+c
+         hip(i) = hip(i)-hi(i)
+         lop(i) = lop(i)-hi(i)
+      enddo
+      end
+c
+c
       integer function count_elems(lo,hi,ndim)
       implicit none
       integer lo(1),hi(1),ndim,elems,i
