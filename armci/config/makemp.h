@@ -5,6 +5,10 @@
 # MP_DEFINES  - cpp symbols
 
 #reference to the MPI library name, overwritten by LIBMPI environment variable
+# you should also add to it names of any libs on which mpi depends
+# e.g., on Compaq with Quadrics network LIBMPI should also add -lelan3
+# LIBMPI = -lmpi -lelan3
+# 
 MPI_LIB_NAME = -lmpi
 ifeq ($(TARGET),LAPI)
 MPI_LIB_NAME = 
