@@ -75,10 +75,12 @@ endif
 endif
 #-----------------Linux 64-bit on DEC/Compaq Alpha with DEC compilers --
 ifeq ($(TARGET),LINUX64)
-       FC = fort
-     FOPT_REN = -assume no2underscore
-#     COPT_REN = -g3  
-       CC = ccc
+     FC = fort
+     FOPT_REN = -assume no2underscore -fpe3 -check nooverflow
+     FOPT_REN+= -assume accuracy_sensitive -checknopower -check nounderflow
+     
+#    COPT_REN = -g3  
+     CC = ccc
    GLOB_DEFINES += -DLINUX
 endif
 #----------------------------- Fujitsu ------------------------------
@@ -144,7 +146,7 @@ ifeq ($(TARGET),HPUX64)
            FC = f90
            AS = cc -c
     ifeq ($(FOPT),-O)
-         FOPT = -O3 +Odataprefetch
+         FOPT = -O3 +Odataprefetch +Ofastaccess
     endif
      FOPT_REN = +DA2.0W +ppu
      COPT_REN = +DA2.0W -Ae 
@@ -233,6 +235,7 @@ endif
 #----------------------------- DEC/Compaq ---------------------------------
 ifeq ($(TARGET),DECOSF)
           CLD = cc
+     FOPT_REN = -fpe2 -check nounderflow -check nopower -check nooverflow
 endif
 
 #------------------------------- Crays ------------------------------------
