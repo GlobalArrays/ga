@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.5 2002-02-26 15:29:20 vinod Exp $    **/
+/* $Id: buffers.c,v 1.6 2002-02-26 19:08:45 d3h325 Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -53,11 +53,7 @@ int numofbuffers=MAX_BUFS;
 #define CLEAR_TABLE_SLOT(idx) *((int*)(_armci_buf_state->table+(idx))) =0
 
 #ifdef STORE_BUFID
-#  ifdef HITACHI
 #   define BUF_TO_BUFINDEX(buf) (BUF_TO_EBUF((buf)))->id.bufid
-#  else
-#   define BUF_TO_BUFINDEX(buf) (*(int*)BUF_TO_EBUF((buf))) 
-#  endif 
 #else
 #  define BUF_TO_BUFINDEX(buf)\
           ((BUF_TO_EBUF((buf)))- _armci_buffers)/sizeof(buf_ext_t)
@@ -296,7 +292,6 @@ int count=1, i;
               armci_die2("armci_buf_get: inconsistent first", avail,
                          _armci_buf_state->table[avail].first);
       }
-	i=((buf_ext_t *)((char *)(&(_armci_buf_state->buf[avail].field))-sizeof(BUFID_PAD_T)))->id.bufid;
  
     /* we need complete "count" number of buffers */
     for(i=0;i<count;i++){
@@ -317,7 +312,6 @@ int count=1, i;
     _armci_buf_state->buf[avail].id.bufid=avail; 
 #endif
 
-	i=((buf_ext_t *)((char *)(&(_armci_buf_state->buf[avail].field))-sizeof(BUFID_PAD_T)))->id.bufid;
 # ifdef BUF_EXTRA_FIELD_T
     INIT_SEND_BUF(_armci_buf_state->buf[avail].field,_armci_buf_state->table[avail].snd,_armci_buf_state->table[avail].rcv);
 #endif
