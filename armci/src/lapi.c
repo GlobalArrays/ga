@@ -1,4 +1,4 @@
-/* $Id: lapi.c,v 1.15 2002-01-08 21:56:49 vinod Exp $ */
+/* $Id: lapi.c,v 1.16 2002-07-31 18:18:34 vinod Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
 
 #include <pthread.h>
@@ -194,9 +194,10 @@ int rc;
             pcntr = NULL; /* GET(descr) from CH will increment buf cntr */
 
          }else msglen += msginfo->dscrlen;
-
-            pcmpl_cntr=NULL; /* don't trace completion status for load ops */
-            SET_COUNTER(*(lapi_cmpl_t*)pcntr,1);/*data to arrive into same buf*/
+         /*we should send the mutex, too*/
+         if(msginfo->operation==LOCK) msglen += sizeof(int);
+         pcmpl_cntr=NULL; /* don't trace completion status for load ops */
+         SET_COUNTER(*(lapi_cmpl_t*)pcntr,1);/*data to arrive into same buf*/
 
       }else if (msginfo->operation==UNLOCK){
 
