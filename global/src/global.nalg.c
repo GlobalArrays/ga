@@ -81,16 +81,28 @@ register Integer i;
 Integer isum=0;
 DoubleComplex zsum ={0.,0.};
 
-   ga_sync_();
+ Integer andim, adims[MAXDIM], alo[MAXDIM], ahi[MAXDIM];
+ Integer bndim, bdims[MAXDIM], blo[MAXDIM], bhi[MAXDIM];
+
    me = ga_nodeid_();
-   ga_check_handle(g_a, "ga_dot");
-   ga_check_handle(g_b, "ga_dot");
 
    GA_PUSH_NAME("ga_dot");
 
-   if(ga_compare_distr_(g_a,g_b) == FALSE)
-         ga_error("distributions not identical",0L);
+   if(ga_compare_distr_(g_a,g_b) == FALSE) {
+       /* distributions not identical */
+       nga_inquire_(g_a, &type, &andim, adims);
+       nga_inquire_(g_b, &type, &bndim, bdims);
 
+       for(i=0; i<andim; i++) { alo[i] = 1; ahi[i] = adims[i]; }
+       for(i=0; i<bndim; i++) { blo[i] = 1; bhi[i] = bdims[i]; }
+
+       ngai_dot_patch(g_a, 'n', alo, ahi, g_b, 'n', blo, bhi, value);
+       
+       GA_POP_NAME;
+       return;
+   }
+   
+   ga_sync_();
    nga_inquire_(g_a,  &type, &ndim, dims);
    if(type != Type) ga_error("type not correct", *g_a);
    nga_distribution_(g_a, &me, lo, hi);
@@ -265,22 +277,34 @@ Integer  ndim, type, typeC, me, elems=0, elemsb=0, elemsa=0;
 register Integer i;
 Integer index_a, index_b, index_c;
 
-
-   ga_sync_();
+ Integer andim, adims[MAXDIM], alo[MAXDIM], ahi[MAXDIM];
+ Integer bndim, bdims[MAXDIM], blo[MAXDIM], bhi[MAXDIM];
+ Integer cndim, cdims[MAXDIM], clo[MAXDIM], chi[MAXDIM];
+ 
 
    me = ga_nodeid_();
 
-   ga_check_handle(g_a, "ga_add");
-   ga_check_handle(g_b, "ga_add");
-   ga_check_handle(g_c, "ga_add");
-
    GA_PUSH_NAME("ga_add");
 
-   if(ga_compare_distr_(g_a,g_b) == FALSE)
-         ga_error("distributions not identical",0L);
-   if(ga_compare_distr_(g_a,g_c) == FALSE)
-         ga_error("distributions not identical",1L);
+   if((ga_compare_distr_(g_a,g_b) == FALSE) ||
+      (ga_compare_distr_(g_a,g_c) == FALSE)) {
+       /* distributions not identical */
+       nga_inquire_(g_a, &type, &andim, adims);
+       nga_inquire_(g_b, &type, &bndim, bdims);
+       nga_inquire_(g_b, &type, &cndim, cdims);
 
+       for(i=0; i<andim; i++) { alo[i] = 1; ahi[i] = adims[i]; }
+       for(i=0; i<bndim; i++) { blo[i] = 1; bhi[i] = bdims[i]; }
+       for(i=0; i<cndim; i++) { clo[i] = 1; chi[i] = cdims[i]; }
+
+       nga_add_patch_(alpha, g_a, alo, ahi, beta, g_b, blo, bhi,
+                      g_c, clo, chi);
+       
+       GA_POP_NAME;
+       return;
+   }
+
+   ga_sync_();
    nga_inquire_(g_c,  &typeC, &ndim, dims);
    nga_distribution_(g_c, &me, lo, hi);
    if (  lo[0]>0 ){
