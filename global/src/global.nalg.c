@@ -1,7 +1,7 @@
 /*************************************************************************\
  Purpose:   File global.nalg.c contains a set of linear algebra routines 
             that operate on n-dim global arrays in the SPMD mode. 
-
+ 
  Date: 10.22.98
  Author: Jarek Nieplocha
 \************************************************************************/
@@ -28,7 +28,8 @@ int _i;\
 
 void FATR ga_zero_(Integer *g_a)
 {
-Integer ndim, type, me, index, elems;
+Integer ndim, type, me, elems;
+void *ptr;
 register Integer i;
 
    ga_sync_();
@@ -41,25 +42,23 @@ register Integer i;
    nga_inquire_(g_a, &type, &ndim, dims);
    nga_distribution_(g_a, &me, lo, hi);
 
-   if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0 ||
-       DCPL_MB == (DoubleComplex*)0) ga_error("null pointer for base array",0L);
-
    if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
-
-      nga_access_(g_a, lo, hi, &index, ld);
+ 
+      nga_access_ptr(g_a, lo, hi, &ptr, ld);
       GET_ELEMS(ndim,lo,hi,ld,&elems);
 
-      index --;  /* Fortran to C correction of starting address */ 
-      
       switch (type){
+        Integer *ia;
+        DoublePrecision *da;
         case MT_F_INT:
-           for(i=0;i<elems;i++) INT_MB[index+ i ]  = 0;
+           ia = (Integer*)ptr;
+           for(i=0;i<elems;i++) ia[i]  = 0;
            break;
         case MT_F_DCPL:
-           for(i=0;i<elems;i++)DCPL_MB[index+i].real=DCPL_MB[index+i].imag = 0.;
-           break;
+           elems *=2;
         case MT_F_DBL:
-           for(i=0;i<elems;i++) DBL_MB[index+ i ]  = 0;
+           da = (DoublePrecision*)ptr;
+           for(i=0;i<elems;i++) da[i] = 0;
            break;
         default: ga_error(" wrong data type ",type);
       }
