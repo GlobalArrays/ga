@@ -35,6 +35,8 @@ main(int argc, char *argv[]) {
   
   if(me==0)printf("Size: %d: Creating matrix A\n", nproc);
   GA::GlobalArray *g_a = GA::SERVICES.createGA(type, 2, dims, (char *)"A", NULL);
+ 
+  
   if(me==0)printf("OK\n");
   
   if(me==0)printf("Creating matrix B\n");
@@ -58,8 +60,6 @@ main(int argc, char *argv[]) {
   
   if(me==0)printf("Symmetrizing matrix A\n");
   g_a->symmetrize();   /* symmetrize the matrix A = 0.5*(A+A') */
-  err= g_b->ddot(g_b);
-  if(me==0)printf("Error=%lf\n",(double)err);
   
   /* check if A is symmetric */ 
   if(me==0)printf("Checking if matrix A is symmetric\n");
