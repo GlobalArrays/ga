@@ -21,8 +21,12 @@ typedef struct {
          int from:16;         /* message sender */
 #endif
 unsigned int   operation:8;   /* operation code */
+#ifdef CLIENT_BUF_BYPASS
 unsigned int   format:3;      /* data format used */
 unsigned int   bypass:1;      /* indicate if bypass protocol used */
+#else
+unsigned int   format:4;      /* data format used */
+#endif
 unsigned int   bytes:20;      /* number of bytes requested */
          int   dscrlen;       /* >0 in lapi means that descriptor is included */
          int   datalen;       /* >0 in lapi means that data is included */

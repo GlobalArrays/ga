@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.16 2000-10-11 20:13:17 d3h325 Exp $ */
+/* $Id: request.c,v 1.17 2000-10-12 23:34:53 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -347,7 +347,6 @@ int armci_rem_strided(int op, void* scale, int proc,
          for(i=0;i<stride_levels;i++)((int*)buf)[i] = dst_stride_arr[i];
                                        buf += stride_levels*sizeof(int);
          msginfo->bypass=1;
-         
       }else msginfo->bypass=0;
 #   endif
 

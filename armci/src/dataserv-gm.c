@@ -17,30 +17,21 @@ long check_flag(long *buf)
     return(*buf);
 }
 
-/*******************************************************************
- *                   CLIENT SIDE                                   *
- *******************************************************************/
-
-
+/*\ wait for strided data to arrive
+\*/
 void armci_rcv_strided_data_bypass(int proc, int datalen,
                                    void *ptr, int stride_levels)
 {
 
-    if(DEBUG_){
-        printf( "%d: armci_rcv_strided_data: expecting datalen %d from %d\n",
-                armci_me, datalen, proc);
-        fflush(stdout);
+    if(DEBUG_){ printf("%d:rcv_strided_data:expecting datalen %d from %d\n",
+                armci_me, datalen, proc); fflush(stdout);
     }
 
-    /* wait until data arrives */
-    wait_flag_updated((long *)(proc_gm->ack_buf), ARMCI_GM_COMPLETE);
+    armci_wait_for_data_bypass(); /* wait until data arrives */
 
-    if(DEBUG1){
-        printf("%d:armci_rcv_strided_data bypass: got %d bytes from %d\n",
-                armci_me, datalen, proc);
-        fflush(stdout);
+    if(DEBUG1){ printf("%d:rcv_strided_data bypass: got %d bytes from %d\n",
+                armci_me, datalen, proc); fflush(stdout);
     }
-
 }
 
 
@@ -69,10 +60,13 @@ void armci_rcv_req(void *mesg,
 
     *(void **)phdr = msginfo;
 
+#ifdef CLIENT_BUF_BYPASS
     if(msginfo->bypass) {
         *(void**)pdata  = MessageRcvBuffer;
         *buflen = MSG_BUFLEN;
-    } else {
+    } else 
+#endif
+    {
         /* leave space for header ack */
         *(void**)pdata  = MessageRcvBuffer + sizeof(long);
         *buflen = MSG_BUFLEN - sizeof(request_header_t) - sizeof(long);
@@ -244,24 +238,3 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
 }
 
 
-void *armci_server_code(void *data)
-{
-    if(DEBUG_)
-        printf("%d: in server after creating thread.\n",armci_me);
-    
-    /* make initial contact with all the computing process
-     * get the port id of all computing process
-     */
-    armci_server_initial_connection_gm();
-    
-    if(DEBUG_) {
-        printf("%d(server): connected to all computing processes\n",armci_me);
-        fflush(stdout);
-    }
-
-    armci_data_server_gm();
-
-    armci_transport_cleanup();
-    
-    return(NULL);
-}

@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.26 2000-10-11 20:12:17 d3h325 Exp $ */
+/* $Id: strided.c,v 1.27 2000-10-12 23:34:53 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -441,18 +441,17 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
             if(armci_gm_bypass)
                 bypass= armci_pin_memory(dst_ptr,dst_stride_arr,count,
                                          stride_levels);
+            if(!bypass) goto PINFAIL; /* take the slower route */
 #        endif
             rc = armci_rem_strided(GET, NULL, proc, src_ptr, src_stride_arr,
-                                   dst_ptr, dst_stride_arr, count,
-                                   stride_levels,bypass);
+                          dst_ptr, dst_stride_arr, count, stride_levels,bypass);
 #        ifdef GM
             if(armci_gm_bypass)
-                if(bypass)armci_unpin_memory(dst_ptr,dst_stride_arr,count,
-                                             stride_levels);
+                armci_unpin_memory(dst_ptr,dst_stride_arr,count, stride_levels);
 #        endif
        }else
 #endif
-         rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
+PINFAIL:   rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
                        dst_ptr, dst_stride_arr, count, stride_levels,-1,-1);
     }else
 #endif
@@ -511,6 +510,7 @@ void armci_write_strided(void *ptr, int stride_levels, int stride_arr[],
     long idx;    /* index offset of current block position to ptr */
     int n1dim;  /* number of 1 dim block */
     int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
+    int bytes = count[0];
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -532,7 +532,7 @@ void armci_write_strided(void *ptr, int stride_levels, int stride_arr[],
             if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
         }
 
-        armci_copy( ((char*)ptr)+idx, buf, count[0]);
+        armci_copy( ((char*)ptr)+idx, buf, bytes);
         buf += count[0];
     }
 }
@@ -545,6 +545,7 @@ void armci_read_strided(void *ptr, int stride_levels, int stride_arr[],
     long idx;    /* index offset of current block position to ptr */
     int n1dim;  /* number of 1 dim block */
     int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
+    int bytes = count[0];
 
     /* number of n-element of the first dimension */
     n1dim = 1;
@@ -566,7 +567,7 @@ void armci_read_strided(void *ptr, int stride_levels, int stride_arr[],
             if(bvalue[j] > (count[j]-1)) bvalue[j] = 0;
         }
 
-        armci_copy(buf, ((char*)ptr)+idx,count[0]);
+        armci_copy(buf, ((char*)ptr)+idx,bytes);
         buf += count[0];
     }
 }

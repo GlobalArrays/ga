@@ -178,6 +178,8 @@ request_header_t *msginfo = (request_header_t*)MessageSndBuffer;
 }
 
 
+
+
 /***************************** server side *********************************/
 
 static void armci_check_req(request_header_t *msginfo, int buflen)
@@ -337,4 +339,26 @@ void armci_start_server()
     }
 
     armci_client_code();
+}
+
+
+
+void *armci_server_code(void *data)
+{
+    if(DEBUG_)
+        printf("%d: in server after creating thread.\n",armci_me);
+
+    /* make initial contact with all the computing process */
+    armci_server_initial_connection();
+
+    if(DEBUG_) {
+        printf("%d(server): connected to all computing processes\n",armci_me);
+        fflush(stdout);
+    }
+
+    armci_call_data_server();
+
+    armci_transport_cleanup();
+
+    return(NULL);
 }
