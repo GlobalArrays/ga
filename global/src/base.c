@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.1 2001-07-30 22:52:34 d3h325 Exp $ */
+/* $Id: base.c,v 1.2 2001-07-31 00:15:55 d3h325 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -722,7 +722,9 @@ int i;
 #ifndef _CHECK_MA_ALGN
 
     /* adjust all addresses if they are not alligned on corresponding nodes*/
-    adjust = (Integer*)gai_malloc((int)GAnproc*sizeof(Integer));
+
+    /* we need storage for GAnproc*sizeof(Integer) -- _ga_map is bigger */
+    adjust = (Integer*)_ga_map;
 
     diff = (ABS( base - (char *) ptr_arr[GAme])) % item_size; 
     for(i=0;i<GAnproc;i++)adjust[i]=0;
@@ -734,7 +736,6 @@ int i;
     for(i=0;i<GAnproc;i++){
        ptr_arr[i] = adjust[i] + (char*)ptr_arr[i];
     }
-    gai_free(adjust);
 
 #endif
     return status;
@@ -793,8 +794,7 @@ Integer status;
          if(!status)GA_total_memory +=bytes+extra;
      }else status = 1;
 
-     if(status) ptr_arr=(char**)gai_malloc(GAnproc*sizeof(char**));
-     if(!ptr_arr) ga_error("ga_getmem: failed to allocate ptr array",0);
+     ptr_arr=(char**)_ga_map; /* need memory GAnproc*sizeof(char**) */
      rc= gai_getmem("ga_getmem", ptr_arr,(Integer)bytes+extra, type, &id);
      if(rc)ga_error("ga_getmem: failed to allocate memory",bytes+extra);
 
@@ -816,7 +816,6 @@ Integer status;
      /* add ptr info */
      memcpy(myptr+sizeof(getmem_t),ptr_arr,(size_t)GAnproc*sizeof(char**));
 
-     gai_free(ptr_arr);
      return (void*)(myptr+extra);
 }
 
