@@ -1,9 +1,9 @@
 #ifdef FUJITSU
-# define THRESH  1.0d-12
+# define THRESH 1d-12
 #else
-# define THRESH  1.0d-20 
+# define THRESH 1d-14
 #endif
-#define MISMATCH(x,y) abs(x-y)/max(1,abs(x)).gt.THRESH
+#define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 
       program main
       implicit none
@@ -342,7 +342,7 @@ c
       call ga_get(g_a, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n
-            if (MISMATCH(b(i,j), a(i,j))) then
+            if(MISMATCH(b(i,j),a(i,j)))then
                write(6,*) ' acc ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
 c              call ga_error('... exiting ',0)
@@ -398,7 +398,7 @@ c
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n
-            if (MISMATCH(b(i,j), a(i,j))) then
+            if(MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' add ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
                call ga_error('... exiting ',0) 
@@ -433,7 +433,7 @@ c
       endif
       call ga_sync()
       sum2 = ga_ddot(g_a,g_b)
-      if (MISMATCH(sum1, sum2)) then
+      if(MISMATCH(sum1, sum2))then
          write(6,*) ' ddot wrong ', sum1, sum2
          call ffflush(6)
          call ga_error('... exiting ',0)
@@ -455,7 +455,7 @@ c
       do j = 1, n
          do i = 1, n
             a(i,j) = a(i,j)*0.123d0
-            if (MISMATCH(b(i,j), a(i,j))) then
+            if (MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' dscal ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
                call ga_error('... exiting ',0)
@@ -812,7 +812,7 @@ c
       call ga_get(g_a, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n
-            if (MISMATCH(b(i,j), a(i,j))) then
+            if (MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' acc ', me, i, j, a(i,j), b(i,j)
                call ga_error('... exiting ',0)
             endif
@@ -832,7 +832,7 @@ c
       if (me.eq.0) then
          call ga_get(g_b, n/2, n/2, n/2, n/2, x, 1)
 c        error = abs(x -(1d0,-1d0)*nproc)
-         if (MISMATCH(x, ((1d0,-1d0)*nproc))) then
+         if (MISMATCH(x, ((1d0,-1d0)*nproc)))then
 c        if(error.gt. (1d-8))then
             write(6,*)'val=',x,' expected=(',nproc,',',-nproc,')'
             call ga_error('overlapping accumulate failed',0)
@@ -882,7 +882,7 @@ c
       do j = 1, n
          do i = 1, n
             a(i,j) = a(i,j)*factor
-            if (MISMATCH(b(i,j), a(i,j))) then
+            if (MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' dscal ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
                call ga_error('... exiting ',0)
@@ -990,7 +990,7 @@ c
       call ga_get(g_b, 1, n, 1, n, b, n)
       do j = 1, n
          do i = 1, n
-            if (MISMATCH(b(i,j), a(i,j))) then
+            if (MISMATCH(b(i,j), a(i,j)))then
                write(6,*) ' add ', me, i, j, a(i,j), b(i,j)
                call ffflush(6)
                call ga_error('... exiting ',0)
@@ -1025,7 +1025,7 @@ c
       endif
       call ga_sync()
       sum2 =  ga_zdot(g_a,g_b)
-      if (MISMATCH(sum1, sum2)) then
+      if (MISMATCH(sum1, sum2))then
          write(6,*) ' zdot wrong ', sum1, sum2
          call ffflush(6)
          call ga_error('... exiting ',0)
