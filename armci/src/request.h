@@ -5,7 +5,7 @@
 #elif defined(GM)
 #  include "myrinet.h"
 #elif defined(ELAN)
-   typedef struct {void* data_ptr; int ack; }  msg_tag_t; 
+   typedef void* msg_tag_t; 
 #elif defined(VIA)
 #  include "via.h"
    typedef int msg_tag_t;

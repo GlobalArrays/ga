@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.38 2000-10-11 19:58:36 d3h325 Exp $ */
+/* $Id: armci.c,v 1.39 2001-04-05 23:04:35 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -260,7 +260,7 @@ int ARMCI_Init()
 
     /* allocate locks: we need to do it before server is started */
     armci_allocate_locks();
-#   if defined(DATA_SERVER)
+#   if defined(DATA_SERVER) || defined(ELAN)
        if(armci_nclus >1) armci_start_server();
 #   endif
 

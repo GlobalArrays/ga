@@ -67,7 +67,7 @@ extern thread_id_t armci_usr_tid;
 # include <strings.h>
 #endif
 
-#if defined (CRAY_T3E) || defined(FUJITSU) || defined(QUADRICS)
+#if defined (CRAY_T3E) || defined(FUJITSU) || (defined(QUADRICS) && !defined(ELAN))
 #define ACC_COPY
 #endif
 
