@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.14 2000-04-21 20:54:17 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.15 2000-05-31 17:35:18 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -722,8 +722,6 @@ void armci_wait_for_server()
 #ifndef SERVER_THREAD
      RestoreSigChldDfl();
      armci_serv_quit();
-#endif
-#ifndef SERVER_THREAD
      armci_wait_server_process();
 #endif
   }
