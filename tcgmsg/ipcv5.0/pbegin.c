@@ -119,7 +119,10 @@ void PBEGIN_(int argc, char **argv)
      other process that it can receive from via shared
      memory (plus one extra!). */
 
-  /*shmem_set_cache_inv();*/
+# if defined(CRAY_T3D) && !defined(FLUSHCACHE)
+        shmem_set_cache_inv();
+# endif
+
   for (node=0; node<TCGMSG_nnodes; node++) {
     long me = TCGMSG_nodeid;
     if (me != node) {

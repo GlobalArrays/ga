@@ -20,8 +20,13 @@ extern void Busy(int);
 #      define COPY_FROM_LOCAL(src, dest, n) copyfrom(src, dest, n)
 #elif defined(CRAY_T3D)
 #      include <mpp/shmem.h>
-#      define FLUSH_CACHE           shmem_udcflush()
-#      define FLUSH_CACHE_LINE(x)   shmem_udcflush_line((long*)(x))
+#      ifdef FLUSHCACHE
+#            define FLUSH_CACHE           shmem_udcflush()
+#            define FLUSH_CACHE_LINE(x)   shmem_udcflush_line((long*)(x))
+#      else
+#            define FLUSH_CACHE 
+#            define FLUSH_CACHE_LINE(x)  
+#      endif
 
 #      define COPY_TO_REMOTE(src, dest, n, node) \
               shmem_put((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
