@@ -685,29 +685,3 @@ Integer type, ndim, nbin;
     else ga_sync_();
 }
 
-
-#if 0
-logical ga_create_bin_(Integer *type, Integer *nelem, char* name, 
-                       Integer* g_off, Integer *g_a)
-{
-Integer ndim, lobin, hibin, me=ga_nodeid_(), nproc=ga_nnodes_();
-Integer *map = (Integer*)calloc(nproc,sizeof(sizeof(Integer)));
-
-    if(!all_bin_contrib)ga_error("ga_create_bin:calloc failed",nbin);
-
-    nga_distribution_(g_off,&me, &lobin,&hibin);
-
-    if(lobin>0){ /* enter this block when we have data */
-      Integer first_proc, last_proc, p;
-      Integer first_off, last_off;
-      Integer *myoff, bin;
-
-      /* get offset values stored on my processor to first and last bin */
-      nga_access_ptr(g_off, &lobin, &hibin, &myoff, NULL);
-      map[me]=myoff[0]+1;
-    }else ga_error(ga_create_bin: no offset data on this processor",me);
-
-    ga_igop(map,nproc,'+');
-    nga_create_irreg_(type,one,nelem, name,map,&nproc,g_a);
-}
-#endif
