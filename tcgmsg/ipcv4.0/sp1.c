@@ -36,7 +36,7 @@
 #define TYPE_NXTVAL_REPLY 32769	/* Type for NXTVAL response */
 #define SYNC_TYPE 32770		/* Type for synchronization */
 
-/* int mperrno=-1;       /* EUI error code, for some reason not in current EUIH
+/* int mperrno=-1;*/       /* EUI error code, for some reason not in current EUIH
                           remove the statement when found/fixed */
 
 #define DEBUG_ DEBUG
@@ -68,7 +68,7 @@ extern char *memalign();
 #ifdef INTR_SAFE
 
 /* global variables to implement interrupt safe synchronization */
-char sync[MAXPROC];
+char tcgg_sync[MAXPROC];
 int sync_msgid[MAXPROC];
 #endif
 
@@ -399,11 +399,11 @@ void PBEGIN_()
     /* post rcv for synchronization message */
     if(NODEID_() == 0)
        for(node=1;node<NNODES_() ;node++){
-          status = mpc_recv(sync+node,sizeof(char),&node,&type,sync_msgid+node);
+          status = mpc_recv(tcgg_sync+node,sizeof(char),&node,&type,sync_msgid+node);
           if(status == -1) Error("PBEGIN: trouble with mpc_recv", mperrno);
     }else{
        node = 0;
-       status = mpc_recv(sync,sizeof(char),&node,&type,sync_msgid);
+       status = mpc_recv(tcgg_sync,sizeof(char),&node,&type,sync_msgid);
        if(status == -1) Error("PBEGIN: trouble with mpc_recv", mperrno);
     }
 #endif         
@@ -495,14 +495,14 @@ void SYNCH_(type)
          while (mpc_status(sync_msgid[inode]) == -1);
       for(inode=1;inode<NNODES_();inode++){
          node = inode;
-         status = mpc_bsend(sync+node,sizeof(char),node,ttype);
-         status = mpc_recv(sync+node,sizeof(char),&node,&ttype,sync_msgid+node);
+         status = mpc_bsend(tcgg_sync+node,sizeof(char),node,ttype);
+         status = mpc_recv(tcgg_sync+node,sizeof(char),&node,&ttype,sync_msgid+node);
       } 
     }else{
        node = 0;
-       status = mpc_bsend(sync+node,sizeof(char),node,ttype);
+       status = mpc_bsend(tcgg_sync+node,sizeof(char),node,ttype);
        while (mpc_status(sync_msgid[node]) == -1);
-       status = mpc_recv(sync,sizeof(char),&node,&ttype,sync_msgid);
+       status = mpc_recv(tcgg_sync,sizeof(char),&node,&ttype,sync_msgid);
     }
 #else
     mpc_sync(allgrp);
