@@ -1,7 +1,7 @@
       program main
       implicit double precision (a-h,o-z)
 c
-c $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/testf.f.proto,v 1.1.1.1 1994-03-29 06:44:52 d3g681 Exp $
+c $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/testf.f.proto,v 1.2 2001-04-21 00:10:44 edo Exp $
 c
 c     FORTRAN program to test message passing routines
 c
@@ -12,10 +12,12 @@ IF SEQUENT
 ELSE
       parameter (LOG = 6)
 ENDIF
-      parameter (MAXLEN = 262144 / 8)
+      parameter (MAXLEN = 262144 )
       include 'msgtypesf.h'
       dimension buf(MAXLEN)
+      integer ibuf(MAXLEN)
       character*80 fname
+      integer dtype
 c
 c     Always the first thing to do is call pbeginf
 c
@@ -33,6 +35,7 @@ c     send each process my id as a message
 c     
       call evbgin('Hello test')
       itype = 1 + MSGINT
+      
       do 10 iproc = 0,nproc-1
          itest = me
          call brdcst(itype, itest, mitob(1),iproc)
@@ -63,25 +66,44 @@ c
 c      
         lenbuf = 1
  30     if (me .eq. 0) then
-           istart = mtime()
+           start = tcgtime()
            call snd(itype, buf, lenbuf, left, 1)
            call rcv(itype, buf, lenbuf, lenmes, iright, node, 1)
-           iused = mtime() - istart
-           if (iused.gt.0) then
-             rate = 1.0d-4 * dble(nproc * lenbuf) / dble(iused)
+           used = tcgtime() - start
+           if (used.gt.0d0) then
+             rate = 1.0d-6 * dble(nproc * lenbuf) / used
            else
              rate = 0.0d0
            endif
-           write(LOG,31) lenbuf, iused, rate
+           write(LOG,31) lenbuf, used, rate
         else
            call rcv(itype, buf, lenbuf, lenmes, iright, node, 1)
            call snd(itype, buf, lenbuf, left, 1)
         endif
         lenbuf = lenbuf * 2
         if (lenbuf .le. mdtob(MAXLEN)) goto 30
- 31     format(' len=',i7,' bytes, used=',i4,' cs, rate=',f10.6,' Mb/s')
+ 31   format(' len=',i7,' bytes, used=',f8.2,' cs, rate=',f10.6,' Mb/s')
         call evend('Ring test')
       endif
+c
+c     global sums
+c
+      do i=1,MAXLEN
+         ibuf(i) = i*me
+         buf(i) = dble(ibuf(i))
+      enddo
+      dtype=1+MSGDBL
+      call igop(itype, ibuf, MAXLEN, "+")
+      call dgop(dtype, buf, MAXLEN, "+")
+      
+      do i=1,MAXLEN
+         iresult = i*nproc*(nproc-1)/2;
+         if (ibuf(i).ne.iresult.or.buf(i).ne.dble(iresult))
+     .      call error('TestGlobals: global sum failed',  i)
+      enddo
+      
+      if (me.eq.0) write(LOG,*) 'global sums OK'
+
 c
 c
 c     Check that everyone can open, write, read and close
