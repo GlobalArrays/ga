@@ -1,13 +1,7 @@
                      Documentation for Global Arrays
 
-You will find here:
+Supercomputing94.ps.Z 	the original SC'94 paper describing GA
+user.pdf                User's Manual documentation for GA 3.0 
 
-Supercomputing94.ps.Z 	original SC'94 paper describing GA
-UserGuide.html		preliminary User Guide in HTML
-GAapi.html              wrapper to GA HTML documentation using frames
-global.doc		documentation in ASCII
-
-More information is available through links in the GA homepage:
-http://www.emsl.pnl.gov:2080/docs/global/ga.html.
-or
-http://www.emsl.pnl.gov/docs/global/ga.html.
+More documentation  is available at the GA homepage:
+http://www.emsl.pnl.gov:2080/docs/global
