@@ -1,24 +1,39 @@
-/* $Id: sockets.c,v 1.13 1999-11-24 23:43:46 d3h325 Exp $ */
+/* $Id: sockets.c,v 1.14 2000-03-11 01:29:37 d3h325 Exp $ */
 /**************************************************************************
  Some parts of this code were derived from the TCGMSG file sockets.c
  Jarek Nieplocha, last update 10/28/99
+ 02/28/00: modified armci_WaitSock to allow some elements of socklist to 
+           be <0 (and ignored). Needed for the threaded version of server.
  *************************************************************************/
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/wait.h>
+#include <errno.h>
+
+#ifdef WIN32
+#  include <winsock.h>
+#  define bcopy(s1,s2,n) memcpy(s2,s1,n)
+#  define sleep(x) Sleep(1000*(x))
+#  define CLOSE closesocket
+#else
+#  include <sys/wait.h>
+#  include <sys/time.h>
+#  include <sys/types.h>
+#  include <sys/socket.h>
+#  include <netinet/in.h>
+#  include <netinet/tcp.h>
+#  include <netdb.h>
+#  define CLOSE close
+#endif
+
 
 #ifdef AIX
 #include <sys/select.h>
+typedef size_t soclen_t;
+#else
+typedef int soclen_t;
 #endif
 
-#include <errno.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <netdb.h>
 
 #ifdef CRAY
 #include <memory.h>
@@ -33,15 +48,12 @@
 #endif
 */
 
-#ifdef AIX
-typedef size_t soclen_t;
-#else
-typedef int soclen_t;
-#endif
 
 #include "sockets.h"
 
 extern int armci_me, armci_nproc;
+extern void armci_die(char* str,int);
+
 #define DEBUG_ 0
 #define CONNECT_TRIALS 4 
 #define MAX_INTR_NO_DATA 8
@@ -81,11 +93,12 @@ again:
 
 /*\ sleep in select until data appears on one of sockets
  *  return number of sockets ready and indicate which ones are in ready array 
+ *  allows <0 values in socklist array (ignores them)
 \*/
 int armci_WaitSock(int *socklist, int num, int *ready)
 {
 
-  int sock,maxsock;
+  int sock,maxsock=0;
   fd_set dset;
   int nready;
 
@@ -97,7 +110,10 @@ again:
   maxsock=0;
   for(sock=0; sock<num; sock++){
      if(socklist[sock] > maxsock)maxsock = socklist[sock];
-     FD_SET(socklist[sock], &dset);
+     
+     if(socklist[sock] >0){ /* ignore fd=-1 on the list */
+        FD_SET(socklist[sock], &dset);
+     }
   }
 
 
@@ -112,9 +128,11 @@ again:
   }
 
   
-  for(sock=0; sock<num; sock++)
+  for(sock=0; sock<num; sock++){
+     ready[sock]=0;
+     if(socklist[sock] < 0) continue; 
      if(FD_ISSET(socklist[sock],&dset)) ready[sock]=1;
-     else ready[sock]=0;
+  }
 
   return nready;
 }
@@ -161,7 +179,7 @@ void armci_ShutdownAll(int socklist[], int num)
    for (i=0; i<num; i++)
       if (socklist[i] >= 0) {
          (void) shutdown(socklist[i], 2);
-         (void) close(socklist[i]);
+         (void) CLOSE(socklist[i]);
          socklist[i]=-1;
       }
 }
@@ -356,6 +374,7 @@ againsel:
   for(i=0; i<num; i++){
      if(socklist[i] > maxsock)maxsock = socklist[i]; /* find largest value*/
      if(socklist[i]>0) FD_SET(socklist[i], &ready);
+/*     printf("%d: accepting socket%d=%d of %d\n",armci_me,i,socklist[i],num);*/
   }
 
   timelimit.tv_sec = TIMEOUT_ACCEPT;
@@ -406,7 +425,7 @@ againsel:
 
     armci_TcpNoDelay(msgsock);
 
-    (void) close(sock); /* will not be needing this again */
+    (void) CLOSE(sock); /* will not be needing this again */
 
     socklist[i] = -msgsock; /* negate connected socket on the list */
 
@@ -494,7 +513,7 @@ againacc:
 
   armci_TcpNoDelay(sock);
 
-  (void) close(sock); /* will not be needing this again */
+  (void) CLOSE(sock);     /* will not be needing this again */
   return msgsock;
 }
 
@@ -514,7 +533,7 @@ int armci_CreateSocketAndConnect(char *hostname, int port)
   int on = 1;
   int size = PACKET_SIZE;
   int trial;
-#ifndef SGI
+#if !defined(SGI) && !defined(WIN32)
   struct hostent *gethostbyname();
 #endif
 
@@ -541,7 +560,7 @@ int armci_CreateSocketAndConnect(char *hostname, int port)
   }
 
   bcopy((char *) hp->h_addr, (char *) &server.sin_addr, hp->h_length);
-  server.sin_port = htons((ushort) port);
+  server.sin_port = htons((unsigned short) port);
 
   trial = 0;
 againcon:
