@@ -1,7 +1,3 @@
-/*
- $Id: macommon.h,v 1.10 1998-01-30 18:49:31 d3h325 Exp $
- */
-
 #ifndef _macommon_h
 #define _macommon_h
 
@@ -36,7 +32,7 @@
 #define MT_LAST		MT_F_DCPL
 #define MT_NUMTYPES	(MT_LAST - MT_FIRST + 1)
 
-#ifdef _CRAY
+#if defined(_CRAY) || defined(WIN32)
 #define f2c_trace_                              F2C_TRACE
 #define ma_set_sizes_				MA_SET_SIZES
 #define f2c_alloc_get_				F2C_ALLOC_GET
@@ -64,6 +60,6 @@
 #define f2c_sizeof_overhead_			F2C_SIZEOF_OVERHEAD
 #define f2c_summarize_allocated_blocks_		F2C_SUMMARIZE_ALLOCATED_BLOCKS
 #define f2c_verify_allocator_stuff_		F2C_VERIFY_ALLOCATOR_STUFF
-#endif /* _CRAY */
+#endif
 
-#endif /* _macommon_h */
+#endif
