@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.39 2002-07-19 16:25:21 vinod Exp $ */
+/* $Id: message.c,v 1.40 2002-07-24 18:26:59 vinod Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -54,6 +54,26 @@ static  bufstruct *_gop_buffer;
 #define EMPTY 0
 #define FULL 1
 
+/*\
+ *  Variables/structures for use in Barrier and for Binomial tree
+\*/
+#include <math.h>
+int barr_switch;
+static int LnB=0,powof2nodes,Lp2;
+typedef struct {
+        int flag1;
+        double dum[16];
+        int flag2;
+} barrier_struct;
+barrier_struct *_bar_buff;
+#define BAR_BUF(p) (_bar_buff+((p)))
+void **barr_snd_ptr,**barr_rcv_ptr;
+int _armci_barrier_init=0;
+/*\
+ *  *************************************************************
+\*/
+
+
 #ifdef CRAY
 char *mp_group_name = (char *)NULL;
 #else
@@ -104,25 +124,49 @@ void armci_msg_gop_init()
        _armci_gop_shmem = 1;
      }
 #endif
+     /*stuff needed for barrier and binomial bcast/reduce*/
+     if(!_armci_barrier_init){
+       powof2nodes=1;
+       LnB = floor(log(armci_nclus)/log(2))+1;
+       if(pow(2,LnB-1)<armci_nclus){powof2nodes=0;}
+       /*Lp2 is the largest pow-of-2 less than or equal to nclus(num of nodes)*/
+       Lp2 = pow(2,LnB);
+     }
+     /****************************************************/
      _armci_gop_init=1;
 }
 
-/*\
- *  Initialization Function and variables for use in armci barrier
-\*/
 
-#include <math.h>
-int barr_switch;
-static int LnB=0,powof2nodes;
-typedef struct {
-        int flag1;
-        double dum[16];
-        int flag2;
-} barrier_struct;
-barrier_struct *_bar_buff;
-#define BAR_BUF(p) (_bar_buff+((p)))
-void **barr_snd_ptr,**barr_rcv_ptr;
-int _armci_barrier_init=0;
+static void cpu_yield()
+{
+#if defined(SYSV) || defined(MMAP) || defined(WIN32)
+#ifdef SOLARIS
+               yield();
+#elif defined(WIN32)
+               Sleep(1);
+#elif _POSIX_PRIORITY_SCHEDULING
+               sched_yield();
+#else
+               usleep(1);
+#endif
+#endif
+}
+
+
+static void armci_util_wait_int(int *p, int val, int maxspin)
+{
+int count=0;
+
+       while(*p != val)
+            if((++count)<maxspin) armci_util_spin(count,p);
+            else{ 
+               cpu_yield();
+               count =0; 
+            }
+}
+
+
+/***************************Barrier Code*************************************/
 
 void armci_msg_barr_init(){
     int size=sizeof(barrier_struct)*armci_clus_info[armci_clus_me].nslave;
@@ -149,6 +193,7 @@ void armci_msg_barr_init(){
     /*allocate memory to send/rcv data*/
     barr_snd_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
     barr_rcv_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
+
     if(ARMCI_Malloc(barr_snd_ptr,size))armci_die("malloc barr_init failed",0);
     if(ARMCI_Malloc(barr_rcv_ptr,size))armci_die("malloc barr_init failed",0);
     if(barr_rcv_ptr[armci_me]==NULL || barr_snd_ptr[armci_me]==NULL)
@@ -157,7 +202,9 @@ void armci_msg_barr_init(){
     /*we have to figure if we have power of ,two nodes*/
     powof2nodes=1;
     LnB = floor(log(armci_nclus)/log(2))+1;
-    if(pow(2,LnB-1)<armci_nclus){LnB++;powof2nodes=0;}
+    if(pow(2,LnB-1)<armci_nclus){powof2nodes=0;}
+    /*Lp2 is the largest pow-of-2 less than or equal to nclus(num of nodes)*/
+    Lp2 = pow(2,LnB);
     _armci_barrier_init = 1;
 }
 
@@ -166,115 +213,87 @@ void armci_msg_barr_init(){
  *algorithm with SMP barrier inside a node and msg_snd/rcv between the nodes.
  *NOTE::code for power or two nodes and non power of two nodes can be combined.
 \*/
-
 static void _armci_msg_barrier(){
     int next_node,next,i;
     char *dstn,*srcp;
     int nslave = armci_clus_info[armci_clus_me].nslave;
     static int barr_count = 0;
+    int last, next_nodel;
     void armci_util_wait_int(int *,int,int);
     /*if(barr_count==0)armci_msg_barr_init();*/
     barr_count++;
-    /*for smp barrier, can we re-use existing flags.?..For now, nope*/
     if(armci_me==armci_master){ /*only masters do the intenode barrier*/
        for(i=1;i<nslave;i++){   /*wait for all smp procs to enter the barrier*/
          armci_util_wait_int(&BAR_BUF(i)->flag1,FULL,100000);
          BAR_BUF(i)->flag1=EMPTY;
        }
-       if(powof2nodes){/*a simple recursive doubling based pairwise exchange*/
-         for(i=0;i<LnB-1;i++){
-           next = ((int)pow(2,i))^armci_clus_me;
+       last =  ((int)pow(2,(LnB-1)))^armci_clus_me;
+       if(last>=0 && last<armci_nclus)
+         next_nodel = armci_clus_info[last].master;
+       /*three step exchange if num of nodes is not pow of 2*/
+       /*divide _nodes_ into two sets, first set "pow2" will have a power of 
+        *two nodes, the second set "not-pow2" will have the remaining.
+        *Each node in the not-pow2 set will have a pair node in the pow2 set.
+        *Step-1:each node in pow2 set with a pair in not-pow2 set first recvs 
+        *      :a message from its pair in not-pow2. 
+        *step-2:All nodes in pow2 do a Rercusive Doubling based Pairwise exng.
+        *step-3:Each node in pow2 with a pair in not-pow2 snds msg to its 
+        *      :pair node.
+        *if num of nodes a pow of 2, only step 2 executed
+       */
+       if(last>armci_clus_me){ /*the pow2 set of procs*/
+         if(last<armci_nclus && !powof2nodes){ /*step 1*/
+           dstn = (char *)barr_rcv_ptr[next_nodel];
+           armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_nodel);
+           armci_util_wait_int((int *)dstn,barr_count,100000);
+         }
+         for(i=0;i<LnB-1;i++){/*step 2*/
+           next=((int)pow(2,i))^armci_clus_me;
            if(next>=0 && next<armci_nclus){
              next_node = armci_clus_info[next].master;
              srcp = (char *)barr_snd_ptr[next_node];
              *(int *)srcp = barr_count;
              dstn = (char *)barr_rcv_ptr[next_node];
-             /*armci_put(srcp,dstn,4,next_node);*/
              if(next_node > armci_me){
                armci_msg_snd(ARMCI_TAG, srcp,4,next_node);
                armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_node);
              }
-             else {
+             else{
+               /*would we gain anything by doing a snd,rcv instead of rcv,snd*/
                armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_node);
                armci_msg_snd(ARMCI_TAG, srcp,4,next_node);
              }
              armci_util_wait_int((int *)dstn,barr_count,100000);
-             /*printf("\n%d:got %d from %d\n",armci_me,*(int *)dstn,next_node);
-             fflush(stdout);*/
+             /*printf("\n%d:node=%d\n",armci_me,next_node);fflush(stdout);*/
            }
+         }
+         if(last<armci_nclus && !powof2nodes){ /*step 3*/
+           srcp = (char *)barr_snd_ptr[next_nodel];
+           *(int *)srcp = barr_count;
+           armci_msg_snd(ARMCI_TAG, srcp,4,next_nodel);
          }
        }
-       else{ /*three step exchange if num of nodes is not pow of 2*/
-         /*divide _nodes_ into two sets, first set "pow2" will have a power of 
-          *two nodes, the second set "not-pow2" will have the remaining.
-          *Each node in the not-pow2 set will have a pair node in the pow2 set.
-          *Step-1:each node in pow2 set with a pair in not-pow2 set first recvs 
-          *      :a message from its pair in not-pow2. 
-          *step-2:All nodes in pow2 do a Rercusive Doubling based Pairwise exng.
-          *step-3:Each node in pow2 with a pair in not-pow2 snds msg to its 
-          *      :pair node.
-         */
-         int last, next_nodel;
-         last =  ((int)pow(2,(LnB-2)))^armci_clus_me;
-         if(last>=0 && last<armci_nclus)
-           next_nodel = armci_clus_info[last].master;
-
-         if(last>armci_clus_me){ /*the pow2 set of procs*/
-
-           if(last<armci_nclus){ /*step 1*/
-             dstn = (char *)barr_rcv_ptr[next_nodel];
-             armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_nodel);
-             armci_util_wait_int((int *)dstn,barr_count,100000);
-           }
-
-           for(i=0;i<LnB-2;i++){/*step 2*/ 
-             next=((int)pow(2,i))^armci_clus_me;
-             if(next>=0 && next<armci_nclus){
-               next_node = armci_clus_info[next].master;
-               srcp = (char *)barr_snd_ptr[next_node];
-               *(int *)srcp = barr_count;
-               dstn = (char *)barr_rcv_ptr[next_node];
-               if(next_node > armci_me){
-                 armci_msg_snd(ARMCI_TAG, srcp,4,next_node);
-                 armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_node);
-               }
-               else {
-                 armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_node);
-                 armci_msg_snd(ARMCI_TAG, srcp,4,next_node);
-               }
-               armci_util_wait_int((int *)dstn,barr_count,100000);
-               /*printf("\n%d:node=%d\n",armci_me,next_node);fflush(stdout);*/
-             }
-           }
-
-           if(last<armci_nclus){ /*step 3*/
-             srcp = (char *)barr_snd_ptr[next_nodel];
-             *(int *)srcp = barr_count;
-             armci_msg_snd(ARMCI_TAG, srcp,4,next_nodel);
-           }
-
-         }
-         else {                  /*the non-pow2 set of procs*/
-             srcp = (char *)barr_snd_ptr[next_nodel];
-             *(int *)srcp = barr_count;
-             dstn = (char *)barr_rcv_ptr[next_nodel];
-             armci_msg_snd(ARMCI_TAG, srcp,4,next_nodel);
-             armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_nodel);
+       else {
+         if(!powof2nodes){
+           srcp = (char *)barr_snd_ptr[next_nodel];
+           *(int *)srcp = barr_count;
+           dstn = (char *)barr_rcv_ptr[next_nodel];
+           armci_msg_snd(ARMCI_TAG, srcp,4,next_nodel);
+           armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_nodel);
+           armci_util_wait_int((int *)dstn,barr_count,100000);
          }
        }
-
-       for(i=1;i<nslave;i++){ /*tell smp procs that internode barrier complete*/
+       for(i=1;i<nslave;i++) /*tell smp procs that internode barrier complete*/
          BAR_BUF(i)->flag2=FULL;
-       }
     }
-    else {                    /*if not master,just involve in the smp barrier*/ 
+    else {                   /*if not master, partake in the smp barrier,only*/
        i=armci_me-armci_master;
        BAR_BUF(i)->flag1=FULL;
        armci_util_wait_int(&BAR_BUF(i)->flag2,FULL,100000);
        BAR_BUF(i)->flag2=EMPTY;
     }
-    /*barr_switch=(barr_switch==0)?4:0;*/
 }
+       
 
 void armci_msg_barrier()
 {
@@ -283,7 +302,7 @@ void armci_msg_barrier()
 #  elif defined(PVM)
      pvm_barrier(mp_group_name, armci_nproc);
 #  elif defined(LAPI)
-     if(_armci_barrier_init==1)
+     if(_armci_barrier_init)
        _armci_msg_barrier();
      else{
        long tag=ARMCI_TAG;
@@ -294,7 +313,7 @@ void armci_msg_barrier()
      SYNCH_(&tag);
 #  endif
 }
-
+/***********************End Barrier Code*************************************/
 
 int armci_msg_me()
 {
@@ -377,9 +396,9 @@ int root, up, left, right, index, nproc;
                up    = (index-1)/2 + root;
                up = ( up < root)? -1: armci_clus_info[up].master;
                left  = 2*index + 1 + root;
-                       left = ( left >= root+nproc)? -1: armci_clus_info[left].master;
+               left = ( left >= root+nproc)? -1: armci_clus_info[left].master;
                right = 2*index + 2 + root;
-                       right = ( right >= root+nproc)? -1: armci_clus_info[right].master;
+               right =( right >= root+nproc)? -1: armci_clus_info[right].master;
        }
     }else{
        root  = 0;
@@ -412,7 +431,8 @@ void armci_msg_bcast_scope(int scope, void *buf, int len, int root)
         if(armci_me ==Root) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, root);
     }
     
-    /* printf("%d: scope=%d left=%d right=%d up=%d\n",armci_me, scope, left, right, up);*/
+    /* printf("%d: scope=%d left=%d right=%d up=%d\n",armci_me, scope, 
+    left, right, up);*/
 
     if(armci_me != Root && up!=-1) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, up);
     if (left > -1)  armci_msg_snd(ARMCI_TAG, buf, len, left);
@@ -420,33 +440,6 @@ void armci_msg_bcast_scope(int scope, void *buf, int len, int root)
 }
 
 
-static void cpu_yield()
-{
-#if defined(SYSV) || defined(MMAP) || defined(WIN32)
-#ifdef SOLARIS
-               yield();
-#elif defined(WIN32)
-               Sleep(1);
-#elif _POSIX_PRIORITY_SCHEDULING
-               sched_yield();
-#else
-               usleep(1);
-#endif
-#endif
-}
-
-
-static void armci_util_wait_int(int *p, int val, int maxspin)
-{
-int count=0;
-
-       while(*p != val)
-            if((++count)<maxspin) armci_util_spin(count,p);
-            else{ 
-               cpu_yield();
-               count =0; 
-            }
-}
 
 
 /*\ shared memory based broadcast for a single SMP node
@@ -541,7 +534,53 @@ int i, nslave = armci_clus_info[armci_clus_me].nslave;
     }
 }
 
-       
+void _armci_msg_binomial_bcast(void *buf, int len, int root){
+    int Root = armci_master;
+    int nslave = armci_clus_info[armci_clus_me].nslave;
+    int next1,i,next_node,next;
+/*    int my_rank,root_rank,next_rank; */
+    /* inter-node operation between masters */
+    if(root !=armci_clus_info[0].master){
+       Root = armci_clus_info[0].master;
+       if(armci_me == root) armci_msg_snd(ARMCI_TAG, buf,len, Root);
+       if(armci_me ==Root) armci_msg_rcv(ARMCI_TAG, buf, len, NULL, root);
+       root = Root;
+       Root = armci_master;
+    }
+    if(armci_nclus>1 &&armci_me==armci_master){/*the internode bcast, first*/
+       /*first do the recv*/
+       int rcv_proc=armci_clus_me,flag=1,diff=1;
+       if(armci_me!=root){
+         while(!(rcv_proc & flag)){
+           diff=diff<<1;
+           flag=flag<<1;
+         }
+         rcv_proc = armci_clus_info[armci_clus_me-diff].master;
+         armci_msg_rcv(ARMCI_TAG, buf,len,NULL,rcv_proc);
+         /*printf("\n%d: recv from %d \n",armci_me,rcv_proc);fflush(stdout);*/
+       }    
+       else
+         diff = Lp2;
+
+       /*printf("\n%d: %d diff>>1 = %d\n",armci_me,Lp2,diff>>1);*/
+       for(i=diff>>1;i>=1;i=i>>1){
+         next=i^armci_clus_me;
+         if(next>=0 && next<armci_nclus){
+           next_node = armci_clus_info[next].master;
+           armci_msg_snd(ARMCI_TAG, buf,len,next_node);
+           /*printf("\n%d: send to %d \n",armci_me,next_node);fflush(stdout);*/
+         }
+       }
+    }
+    else  Root = root;
+    if(_armci_gop_shmem && nslave<33)
+       armci_smp_bcast(buf, len, Root);
+    else
+       armci_msg_bcast_scope(SCOPE_NODE, buf, len, Root);
+}
+
+
+
 #ifndef armci_msg_bcast
 /*\ SMP-aware global broadcast routine
 \*/
@@ -549,6 +588,9 @@ void armci_msg_bcast(void *buf, int len, int root)
 {
 int Root = armci_master;
 int nslave = armci_clus_info[armci_clus_me].nslave;
+#ifdef LAPI
+    if(_armci_gop_init){_armci_msg_binomial_bcast(buf,len,root);return;}
+#endif
     /* inter-node operation between masters */
     if(armci_nclus>1)armci_msg_bcast_scope(SCOPE_MASTERS, buf, len, root);
     else  Root = root;
@@ -1104,7 +1146,7 @@ static void gop2(int type, int ndo, char* op, void *x, void *work, void *work2)
      else ddoop(ndo, op, (double*)x, (double*)work);
 #else
      if(type==ARMCI_INT) idoop2(ndo, op, (int*)x, (int*)work, (int*)work2);
-     else if(type==ARMCI_LONG) ldoop2(ndo, op, (long*)x,(long*)work,(long*)work2);
+     else if(type==ARMCI_LONG)ldoop2(ndo,op,(long*)x,(long*)work,(long*)work2);
      else if(type==ARMCI_FLOAT)fdoop2(ndo,op,(float*)x,(float*)work,(float*)work2);
      else ddoop2(ndo, op, (double*)x, (double*)work,(double*)work2);
 #endif
@@ -1164,9 +1206,9 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
                   if(armci_me == root) gop(type, ndo, op, x, b->array);
                   else {
                     if(first)
-                       gop2(type, ndo, op, GOP_BUF(armci_me)->array, b->array,x);
+                      gop2(type, ndo, op, GOP_BUF(armci_me)->array, b->array,x);
                     else
-                       gop(type, ndo, op, GOP_BUF(armci_me)->array, b->array);
+                      gop(type, ndo, op, GOP_BUF(armci_me)->array, b->array);
                   }
                   first =0;
 #else
@@ -1209,6 +1251,56 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
 }
 
 
+void _armci_msg_binomial_reduce(void *x, int n, char* op, int type){
+    int root = armci_clus_info[0].master;
+    int nslave = armci_clus_info[armci_clus_me].nslave;
+    int next1,i,next_node,next;
+    int size, ratio, ndo, lenmes,len;
+/*    int my_rank,root_rank,next_rank; */
+    if(armci_me!=armci_master)return;
+    if(type==ARMCI_INT) size = sizeof(int);
+        else if(type==ARMCI_LONG) size = sizeof(long);
+	     else if(type==ARMCI_FLOAT) size = sizeof(float);
+    else size = sizeof(double);
+    ratio = sizeof(double)/size;
+   
+    while ((ndo = (n<=BUF_SIZE*ratio) ? n : BUF_SIZE*ratio)) {
+       int snd_proc=armci_clus_me,flag=1,diff=1;
+
+       len = lenmes = ndo*size;
+       if(armci_me!=root){
+         while(!(snd_proc & flag)){
+           diff=diff<<1;
+           flag=flag<<1;
+         }
+         snd_proc = armci_clus_info[armci_clus_me-diff].master;
+       }    
+       else
+         diff = Lp2;
+
+       /*printf("\n%d: %d diff>>1 = %d\n",armci_me,Lp2,diff>>1);*/
+       for(i=diff>>1;i>=1;i=i>>1){
+         next=i^armci_clus_me;
+         if(next>=0 && next<armci_nclus){
+           next_node = armci_clus_info[next].master;
+           armci_msg_rcv(ARMCI_TAG, lwork,len,&lenmes,next_node);
+           if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
+           else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+	   else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, fwork);
+           else ddoop(ndo, op, (double*)x, work);
+           /*printf("\n%d: recvd from %d \n",armci_me,next_node);*/
+         }
+       }
+       /*if(armci_me!=root){
+          printf("\n%d: send to  %d \n",armci_me,snd_proc);
+          fflush(stdout);
+       }*/
+       if(armci_me!=root)
+         armci_msg_snd(ARMCI_TAG,x,len,snd_proc);
+       n -=ndo;
+       x = len + (char*)x;
+    }
+}
 
 void armci_msg_reduce(void *x, int n, char* op, int type)
 {
@@ -1223,8 +1315,14 @@ void armci_msg_reduce(void *x, int n, char* op, int type)
     armci_msg_reduce_scope(SCOPE_NODE, x, n, op, type);
 
     /* inter-node operation between masters */
-    if(armci_nclus>1)armci_msg_reduce_scope(SCOPE_MASTERS, x, n, op, type);
-
+    if(armci_nclus>1){
+#ifdef LAPI
+       if(_armci_gop_init)
+         _armci_msg_binomial_reduce(x,n,op,type);
+       else
+#endif
+         armci_msg_reduce_scope(SCOPE_MASTERS, x, n, op, type);
+    }
 }
 
 
