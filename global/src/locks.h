@@ -5,9 +5,10 @@
 #define ERROR ga_error
 
 #ifdef SGI
+#  define SGI_SPINS 100
 #  include <ulocks.h>
    extern ulock_t *lock_array[NUM_LOCKS];
-#  define NATIVE_LOCK(x)    (void) ussetlock(lock_array[(x)])
+#  define NATIVE_LOCK(x)    (void) uswsetlock(lock_array[(x)],SGI_SPINS)
 #  define NATIVE_UNLOCK(x)  (void) usunsetlock(lock_array[(x)])
 #elif defined(CONVEX)
 #  include <sys/cnx_ail.h>
