@@ -24,7 +24,7 @@ extern void ga_error(char*, long);
 #endif
 
 
-#if defined(CRAY) || defined(AIX)
+#if defined(CRAY)
 #        include <sys/statfs.h>
 #        define  STATVFS statfs
 #elif defined(KSR)

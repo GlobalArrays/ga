@@ -148,7 +148,7 @@ int  elio_stat(char *fname, stat_t *statinfo)
       /* bsize = (int) ufs_statfs.f_bsize; */
 #   endif
     
-    /* translate number of availabell blocks into kilobytes */
+    /* translate number of available blocks into kilobytes */
     switch (bsize) {
     case 512:  statinfo->avail /=2; break;
     case 1024: break;
