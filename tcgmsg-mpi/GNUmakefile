@@ -286,6 +286,7 @@ ifeq ($(MACHINE),IBM)
 endif
 
 #.............................. LAPI .........................................
+# IBM SP using LAPI and MPI
 #
 ifeq ($(MACHINE),LAPI)
        FC = mpxlf
