@@ -1,16 +1,20 @@
 
+OSNAME =  $(shell uname | awk '{ print $1}')
+
+#under AIX, AIX52 is defined to use POSIX API in AIX 5.2.0.0 or greater
+ifeq ($(OSNAME),AIX) 
+     LIB_DEFINES += $(shell oslevel | awk -F. \
+                      '{ if ($$1 > 5 || ($$1 == 5 && $$2 > 1))\
+                      print "-DAIX52" }')
+endif
+
 #under AIX, there can be problems with AIO and large files
 ifdef LARGE_FILES
-  OSNAME =  $(shell uname | awk '{ print $1}')
 
   ifeq ($(OSNAME),AIX)
     LIB_DEFINES += $(shell oslevel | awk -F. \
               '{ if ($$1 > 4 || ($$1 == 4 && $$2 > 1))\
                print "-D_LARGE_FILES -D_LARGE_FILE_API" }')
-
-     LIB_DEFINES += $(shell oslevel | awk -F. \
-		      '{ if ($$1 > 5 || ($$1 == 5 && $$2 > 1))\
-                      print "-DAIX52" }')
 
 #   asynchronous I/O with large files supported starting with 4.2.1
 #   However, there is a bug in IBM libs on PNNL system that prevents us
