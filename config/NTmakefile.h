@@ -65,7 +65,7 @@ CPPFLAGS = $(INCLUDES) $(DEFINES)
 	@$(MAKE) -nologo $(TESTUTIL)
 !ENDIF
 	@$(MAKE) -nologo $(OBJDIR)\$*.obj
-	$(CC) /Fe$@ $(OBJDIR)\$*.obj $(TESTUTIL) $(LIBS) $(CLINK)
+	$(FC) /Fe$@ $(OBJDIR)\$*.obj $(TESTUTIL) $(LIBS) $(CLINK)
 
 .F.exe:
 	@$(MAKE) -nologo $(OBJDIR)
