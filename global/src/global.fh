@@ -17,10 +17,10 @@
       double complex   nga_zdot_patch
       double precision nga_ddot_patch
       integer nga_idot_patch
+      integer ga_ndim
 c
       integer nga_read_inc
       logical nga_create, nga_locate, nga_create_irreg
-c
 c
       external ga_create, ga_destroy, ga_ddot, ga_locate
       external ga_nnodes, ga_nodeid, ga_read_inc, ga_create_irreg
@@ -31,6 +31,7 @@ c
       external ga_create_mutexes
       external ga_destroy_mutexes
       external ga_valid_handle
+      external ga_ndim
 #ifdef WIN32
 cDEC$ IF DEFINED(fix_this_stupid_compiler)
 #endif

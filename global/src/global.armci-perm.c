@@ -1,3 +1,4 @@
+/* $Id: global.armci-perm.c,v 1.2 1999-07-28 00:41:10 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha

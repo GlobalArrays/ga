@@ -1,3 +1,4 @@
+/* $Id: capi.c,v 1.5 1999-07-28 00:41:09 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 
