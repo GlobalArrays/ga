@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.49 2004-11-21 10:01:02 manoj Exp $ */
+/* $Id: memory.c,v 1.50 2004-12-15 00:09:02 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -114,7 +114,7 @@ void armci_altix_shm_malloc_group(void *ptr_arr[], armci_size_t bytes,
        armci_die("armci_altix_shm_malloc_group(): malloc failed for groups. Increase _SHMMAX_ALTIX_GRP", armci_me);
     bzero(ptr_arr,(grp_nproc)*sizeof(void*));
     ptr_arr[grp_me] = ptr;
-    for(i=0; i< grp_nproc; i++) if(i!=grp_me) ptr_arr[i]=shmem_ptr(ptr,i);
+    for(i=0; i< grp_nproc; i++) if(i!=grp_me) ptr_arr[i]=shmem_ptr(ptr,ARMCI_Absolute_id(group, i));
 }
 #endif /* end ifdef SGIALTIX */
 /* ------------------ End Altix memory allocator ----------------- */
@@ -878,22 +878,20 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
     vampir_begin(ARMCI_FREE_GROUP,__FILE__,__LINE__);
 #endif
 
-#ifndef SGIALTIX
-#ifdef REGION_ALLOC
-    kr_free(ptr, &ctx_region_shmem);
-#else
-
     ARMCI_Group_size(group, &grp_nproc);
     ARMCI_Group_rank(group, &grp_me);
     if(grp_me == MPI_UNDEFINED) { /* check if the process is in this group */
        armci_die("armci_malloc_group: process is not a member in this group",
                  armci_me);
     }
-    
     /* get the group cluster info */
     grp_clus_me    = grp_attr->grp_clus_me;
     grp_master     = grp_attr->grp_clus_info[grp_clus_me].master;
 
+#ifndef SGIALTIX
+#ifdef REGION_ALLOC
+    kr_free(ptr, &ctx_region_shmem);
+#else
 #   if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(NO_SHM)
 #      ifdef USE_MALLOC
          if(grp_nproc > 1)
@@ -917,7 +915,7 @@ int ARMCI_Free_group(void *ptr, ARMCI_Group *group)
     kr_free(ptr, &ctx_localmem);
 #endif /* ifdef REGION_ALLOC */
 #else /* SGI Altix */
-    if(ARMCI_Uses_shm_grp(grp_me, grp_nproc, grp_attr->grp_nclus))
+    if(ARMCI_Uses_shm_grp(grp_me, grp_nproc, grp_attr->grp_nclus)) 
        kr_free(ptr, &altix_ctx_shmem_grp);
     else kr_free(ptr, &ctx_localmem);
        
