@@ -7,15 +7,23 @@
     SHELL = /bin/sh
   VERSION = 4.04
   MACHINE = SUN
-  SUBDIRS = ipcv4.0 examples
+ifeq ($(NWCHEM_TARGET),CRAY-T3D)
+  SUBDIRS = ipcv5.0 
+  VERSION = 5.0
 
+all:	everything
+else
 all:	machdep everything
+  SUBDIRS = ipcv4.0 examples
+  VERSION = 4.04
+endif
+
 
 # Compilation assuming that makefiles etc. have been made
 everything:
 	for dir in $(SUBDIRS); do \
 		echo Making $@ in $$dir ; \
-		(cd $$dir; make) ; \
+		(cd $$dir; $(MAKE)) ; \
 	done
 
 # Convert machine dependent files that don't enjoy the
@@ -29,19 +37,19 @@ machdep:
 			done \
 		done
 	chmod a+x examples/demo
-	chmod a+x makep
+	chmod a+x $(MAKE) 
 
 clean:
 	for dir in $(SUBDIRS); do \
 		echo Making $@ in $$dir ; \
-		(cd $$dir; make clean) ; \
+		(cd $$dir;  $(MAKE) clean) ; \
 	done
 
 realclean:
 	/bin/rm -f *~ makep
 	for dir in $(SUBDIRS); do \
 		echo Making $@ in $$dir ; \
-		(cd $$dir; make realclean) ; \
+		(cd $$dir;  $(MAKE) realclean) ; \
 	done
 
 # This rule seems to only work on a SUN due to the use
