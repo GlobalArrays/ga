@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.11 1997-03-13 22:07:04 d3h325 Exp $
+#$Id: makefile,v 1.12 1997-04-16 16:51:26 d3g681 Exp $
 #
 #  Initial version Jace A Mogill (12 June 1996), ANL
 
@@ -19,6 +19,7 @@ endif
 
 #under AIX, there are problems with AIO and large files
 ifdef LARGE_FILES
+  NOAIO = 1
 LIB_DEFINES += $(shell uname -a | awk \
               '{ if ($$1 == "AIX" && ($$4 > 4 || ($$4 == 4 && $$3 > 1)))\
                print "-D_LARGE_FILES -D_LARGE_FILE_API" }')
