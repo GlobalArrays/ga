@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.22 2001-02-24 01:29:05 d3h325 Exp $
+/* $Id: myrinet.c,v 1.23 2001-04-03 21:20:26 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -134,7 +134,7 @@ int __armci_wait_some =20;
 double __armci_fake_work=99.0;
 
 /* check memory */
-void wait_flag_updated(long *buf, int val)
+void armci_wait_long_flag_updated(long *buf, int val)
 {
 extern long check_flag(long*);
 
@@ -153,7 +153,7 @@ extern long check_flag(long*);
 
 /*\ wait until flag is not ARMCI_GM_CLEAR and return its value
 \*/
-long wait_flag_not_clear(long *buf)
+long armci_wait_long_flag_not_clear(long *buf)
 {
 extern long check_flag(long*);
 
@@ -517,8 +517,8 @@ void armci_client_connect_to_servers()
                                     armci_me, server_mpi_id, MessageSndBuffer);
 
             /* wait til the serv_ack_ptr has been updated */
-            wait_flag_updated((long *)MessageSndBuffer, ARMCI_GM_COMPLETE);
-            wait_flag_updated((long *)MessageSndBuffer+4, ARMCI_GM_COMPLETE);
+            armci_wait_long_flag_updated((long *)MessageSndBuffer, ARMCI_GM_COMPLETE);
+            armci_wait_long_flag_updated((long *)MessageSndBuffer+4, ARMCI_GM_COMPLETE);
             
             proc_gm->serv_ack_ptr[i] = (long*)((long *)MessageSndBuffer)[1];
             proc_gm->serv_buf_ptr[i] = (void*)((long *)MessageSndBuffer)[2];
@@ -549,7 +549,7 @@ void armci_client_connect_to_servers()
 \*/
 void armci_wait_for_data_bypass()
 {
-   wait_flag_updated((long *)(proc_gm->ack), ARMCI_GM_COMPLETE);
+   armci_wait_long_flag_updated((long *)(proc_gm->ack), ARMCI_GM_COMPLETE);
 }
 
 
@@ -561,7 +561,7 @@ long status;
 
     if(proc <0 || proc >= armci_nproc)armci_die("armci_wait_pin_client:p",proc);
 
-    status = wait_flag_not_clear(serv_gm->ack +proc);
+    status = armci_wait_long_flag_not_clear(serv_gm->ack +proc);
     if(status == ARMCI_GM_READY) return 0;
     if(status == ARMCI_GM_FAILED) return 1;
     armci_die("armci_wait_pin_client:unexpected value",(int)status);
@@ -618,7 +618,7 @@ char *armci_ReadFromDirect(request_header_t * msginfo, int len)
 
     /* check the header ack */
 
-    wait_flag_updated(&(msginfo->tag.ack), ARMCI_GM_COMPLETE);
+    armci_wait_long_flag_updated(&(msginfo->tag.ack), ARMCI_GM_COMPLETE);
     /* reset header ack */
     msginfo->tag.ack = ARMCI_GM_CLEAR;
 
@@ -628,7 +628,7 @@ char *armci_ReadFromDirect(request_header_t * msginfo, int len)
     tail = (long*)(buf+len);
     ALIGN_PTR_LONG(long, tail);
 
-    wait_flag_updated(tail, ARMCI_GM_COMPLETE);
+    armci_wait_long_flag_updated(tail, ARMCI_GM_COMPLETE);
 
     /* reset tail ack */
     *tail = ARMCI_GM_CLEAR;
@@ -938,7 +938,7 @@ void armci_server_initial_connection()
               }
 
               /* wait for the client send back the ack */
-              wait_flag_updated(&(serv_gm->ack[rid]), ARMCI_GM_ACK);
+              armci_wait_long_flag_updated(&(serv_gm->ack[rid]), ARMCI_GM_ACK);
               serv_gm->ack[rid] = ARMCI_GM_CLEAR;
               
               if(DEBUG_INIT_) {

@@ -8,7 +8,7 @@
 #   define EXTERN extern
 #endif
 
-#if !defined(CYGNUS) && !defined(QUADRICS)
+#if !defined(CYGNUS) && !defined(QUADRICS) || defined(ELAN)
 #include "spinlock.h"
 #endif
 

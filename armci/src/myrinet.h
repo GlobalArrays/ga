@@ -53,7 +53,6 @@ extern void armci_unpin_contig(void *ptr, int bytes);
 extern void armci_serv_send_ack(int client);
 extern int armci_pin_memory(void *ptr, int stride_arr[], int count[], int lev);
 extern void armci_unpin_memory(void *ptr,int stride_arr[],int count[],int lev);
-extern void wait_flag_updated(long *buf, int val);
 extern int armci_serv_send_complete();
 extern void armci_server_direct_send(int p,char *src,char *dst,int len,int typ);
 extern void armci_data_server(void *msg);
@@ -61,6 +60,5 @@ extern void armci_serv_send_nonblocking_complete(int max_outstanding);
 extern void armci_wait_for_data_bypass();
 extern int  armci_wait_pin_client(int);
 extern void armci_client_send_ack(int p, int success);
-
 
 #endif /* MYRINET_H */

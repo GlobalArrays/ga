@@ -4,6 +4,8 @@
 #  include "lapidefs.h"
 #elif defined(GM)
 #  include "myrinet.h"
+#elif defined(ELAN)
+   typedef struct {void* data_ptr; int ack; }  msg_tag_t; 
 #elif defined(VIA)
 #  include "via.h"
    typedef int msg_tag_t;
@@ -106,7 +108,7 @@ extern void armci_start_server();
 extern void armci_transport_cleanup();
 #endif
 
-#if defined(GM) || defined(VIA)
+#if defined(GM) || defined(VIA) || defined(ELAN)
 extern int armci_send_req_msg(int proc, void *buf, int bytes);
 extern void armci_WriteToDirect(int proc, request_header_t* msginfo, void *buf);
 extern char *armci_ReadFromDirect(request_header_t *msginfo, int len);
