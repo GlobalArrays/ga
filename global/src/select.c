@@ -139,7 +139,7 @@ int     participate=0;
    if(type==C_INT){
       int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
-      *(Integer*)val = info.v.lval;
+      *(Integer*)val = (Integer)info.v.lval;
    }else if(type==C_LONG){
       int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
