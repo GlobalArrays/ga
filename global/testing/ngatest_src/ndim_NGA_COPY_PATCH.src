@@ -258,7 +258,7 @@ c
 c     
       status = ga_destroy(g_b)
       })
-      changequote()
+      changequote(`,')
 c---  
       status = ga_destroy(g_a)
       end
