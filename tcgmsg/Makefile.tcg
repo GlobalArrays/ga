@@ -7,7 +7,7 @@
     SHELL = /bin/sh
   VERSION = 4.04
   MACHINE = SUN
-ifeq ($(NWCHEM_TARGET),CRAY-T3D)
+ifeq ($(MACHINE),CRAY-T3D)
   SUBDIRS = ipcv5.0 
   VERSION = 5.0
 

@@ -67,6 +67,7 @@ jacobi.x: jacobi.o $(JOBJ) libtcgmsg.a
 	$(FC) $(FFLAGS) -o jacobi.x jacobi.o $(JOBJ) libtcgmsg.a $(LIBS)
 
 libtcgmsg.a:	$(OBJ) 
+	echo MACHINE = $(MACHINE), CFLAGS = $(CFLAGS)
 	/bin/rm -f $@ 
 	$(AR) $(ARFLAGS) $@ $(OBJ) 
 	$(RANLIB) $@ 
