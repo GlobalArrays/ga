@@ -1,4 +1,4 @@
-/* $Id: DP.c,v 1.12 2002-01-18 19:52:12 vinod Exp $ */
+/* $Id: DP.c,v 1.13 2002-01-29 20:03:32 vinod Exp $ */
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
@@ -108,7 +108,7 @@ char transp;
 	  jhid  = jhis + corr;
       } else {
 	  /* If this is a transpose copy, we need local scratch space */
-	  if ( !MA_push_get(C_DBL, nelem, "ga_copy_patch_dp",
+	  if ( !MA_push_get(MT_F_DBL, nelem, "ga_copy_patch_dp",
 			    &handleT, &indexT))
 	      ga_error(" ga_copy_patch_dp: MA failed ", 0L);
 
@@ -222,7 +222,7 @@ DoublePrecision  sum = 0.;
       }else{
          /* data is remote -- get it to temp storage*/
          temp_created =1;
-         if(!MA_push_get(C_DBL,nelem, "ddot_dp_b", &handleB, &indexB))
+         if(!MA_push_get(MT_F_DBL,nelem, "ddot_dp_b", &handleB, &indexB))
              ga_error(" ga_ddot_patch_dp: MA failed ", 0L);
          /* no need to adjust index (indexB--;) -- we got it from MA*/
 
