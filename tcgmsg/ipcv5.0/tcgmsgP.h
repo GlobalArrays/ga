@@ -9,7 +9,7 @@
 #include "shmem.h"
 #endif
 
-#define    MAX_PROC 128 
+#define    MAX_PROC 256
 
 #ifdef PBEGIN_C
 /* This stupidity to avoid multiple defininitions in the SGI linker */
