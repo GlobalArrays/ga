@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.85 2004-04-13 19:57:49 manoj Exp $ */
+/* $Id: strided.c,v 1.86 2004-04-13 22:54:24 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -382,14 +382,14 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
     int total_of_2D;
     int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
     
-#ifdef HAS_PUTS
+#if HAS_PUTS
     if(op==PUT && (stride_levels>0) &&  !(SAMECLUSNODE(proc))){
        armcill_putS(proc,src_ptr,src_stride_arr,dst_ptr,
 		    dst_stride_arr,count,stride_levels);
        return 0;
     }
 #endif
-#ifdef HAS_GETS
+#if HAS_GETS
     if(op==GET && (stride_levels>0) &&  !(SAMECLUSNODE(proc))){
        armcill_getS(proc,src_ptr,src_stride_arr,dst_ptr,
 		    dst_stride_arr,count,stride_levels);
