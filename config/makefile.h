@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.38 2001-02-28 01:43:39 d3h325 Exp $
+# $Id: makefile.h,v 1.39 2001-02-28 18:18:41 d3h325 Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -56,10 +56,16 @@ endif
 #
 ifeq ($(TARGET),SOLARIS)
           M4 = /usr/ccs/bin/m4
+ ifeq ($(_CC),mpifcc)
+       _CC = fcc
+ endif
+ ifeq ($(_FC),mpifrt)
+       _FC = frt
+ endif
  ifeq ($(_CC),cc)
      COPT_REN = -dalign
  endif
- ifeq ($(_FC),cc)
+ ifeq ($(_FC),f77)
       FLD_REN = -xs
      FOPT_REN = -dalign
  endif
@@ -77,14 +83,21 @@ endif
 #
 #    64-bit version
 ifeq ($(TARGET),SOLARIS64)
-           M4 = /usr/ccs/bin/m4
+        M4 = /usr/ccs/bin/m4
+  ifeq ($(_CC),mpifcc)
+       _CC = fcc
+  endif
+  ifeq ($(_FC),mpifrt)
+       _FC = frt
+  endif
   ifeq ($(_CC),fcc)
      COPT_REN = -Kfast -KV9FMADD
   else
      COPT_REN = -xarch=v9 -dalign
   endif
   ifeq ($(_FC),frt)
-     FOPT_REN = -dalign -xarch=v9 -CcdII8
+     FOPT_REN = -Kfast -KV9FMADD -CcdII8
+#               -CcdLL8
      CMAIN = -Dmain=MAIN__
   else
      FOPT_REN = -xarch=v9 -dalign -xtypemap=real:64,double:64,integer:64
