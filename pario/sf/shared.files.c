@@ -1,4 +1,4 @@
-/* $Id: shared.files.c,v 1.8 2000-04-05 21:51:25 d3h325 Exp $ */
+/* $Id: shared.files.c,v 1.9 2000-10-13 01:22:50 d3h325 Exp $ */
 /* DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -47,7 +47,7 @@ SF_t SF[_max_shared_files];
 #define sfi_check_handleM(_handle, msg)\
 {\
         if(_handle+SF_OFFSET >=_max_shared_files||_handle+SF_OFFSET<0)\
-        {fprintf(stderr,"%s, %ld --",msg, _max_shared_files);         \
+        {fprintf(stderr,"%s, %ld --",msg,(long) _max_shared_files);   \
             ERROR("invalid SF handle",_handle);}                      \
         if( SF[(_handle+SF_OFFSET)].actv == 0)                        \
         {fprintf(stderr,"%s:",msg);                                   \
@@ -94,7 +94,7 @@ Integer hndl;
         *handle = hndl - SF_OFFSET;
 
         /*generate file name(s) */
-        sprintf(SF[hndl].fname,"%s.%d",fname, hndl);
+        sprintf(SF[hndl].fname,"%s.%d",fname, (int)hndl);
 
 #       ifdef  PARAGON
           SF[hndl].fd = elio_gopen(SF[hndl].fname,ELIO_RW);

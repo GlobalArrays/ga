@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.20 2000-07-17 20:58:16 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.21 2000-10-13 01:22:40 d3h325 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -682,7 +682,7 @@ Integer handle, elem_size;
 
            if (INDEPFILES(*d_a)) {
 
-             sprintf(dummy_fname,"%s.%d",DRA[handle].fname,dai_io_nodeid(*d_a));
+             sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              DRA[handle].fd = elio_open(dummy_fname,*mode, ELIO_PRIVATE);
 
            }else{
@@ -747,7 +747,7 @@ Integer handle;
 
            if (INDEPFILES(*d_a)) {
 
-             sprintf(dummy_fname,"%s.%d",DRA[handle].fname,dai_io_nodeid(*d_a));
+             sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              DRA[handle].fd = elio_open(dummy_fname,*mode, ELIO_PRIVATE);
 
            }else{
@@ -1015,7 +1015,7 @@ Integer ld, rows,cols;
 double *buf;  /*<<<<<*/
 {
    int i,j;
-   printf("\n ld=%d rows=%d cols=%d\n",ld,rows,cols);
+   printf("\n ld=%ld rows=%ld cols=%ld\n",ld,rows,cols);
  
    for (i=0; i<rows; i++){
    for (j=0; j<cols; j++)
@@ -1024,10 +1024,8 @@ double *buf;  /*<<<<<*/
    }
 }
 
-static Integer mode_move=0;
 void dra_set_mode_(Integer* val)
 {
-  mode_move = *val;
 }
 
 void ga_move(int op, int trans, section_t gs_a, section_t ds_a, 
@@ -1565,7 +1563,7 @@ Integer handle = *d_a+DRA_OFFSET;
 
         if(dai_file_master(*d_a))
           if(INDEPFILES(*d_a)){ 
-             sprintf(dummy_fname,"%s.%d",DRA[handle].fname,dai_io_nodeid(*d_a));
+             sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              elio_delete(dummy_fname);
           }else {
 
