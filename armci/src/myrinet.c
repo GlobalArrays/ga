@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.30 2001-06-09 00:47:13 d3h325 Exp $
+/* $Id: myrinet.c,v 1.31 2001-08-15 21:34:30 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -59,7 +59,7 @@
 
 /* msg ack */
 #define ARMCI_GM_CLEAR     0
-#define ARMCI_GM_READY    -1
+#define ARMCI_GM_READY     1
 #define ARMCI_GM_COMPLETE -2
 #define ARMCI_GM_ACK      -3
 
@@ -136,12 +136,11 @@ GM_ENTRY_POINT char * _gm_get_kernel_build_id(struct gm_port *p);
 
 int __armci_wait_some =20;
 double __armci_fake_work=99.0;
+extern long check_flag(long*);
 
 /* check memory */
 void armci_wait_long_flag_updated(long *buf, int val)
 {
-extern long check_flag(long*);
-
     long res;
     long spin =0;
 
@@ -150,17 +149,19 @@ extern long check_flag(long*);
        for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work+=0.001;
        res = check_flag(buf);
     }
-    *buf = ARMCI_GM_CLEAR;
     __armci_fake_work =99.0;
 }
 
+void armci_wait_long_flag_updated_clear(long *buf, int val)
+{
+    armci_wait_long_flag_updated(buf,val);
+    *buf = ARMCI_GM_CLEAR;
+}
 
 /*\ wait until flag is not ARMCI_GM_CLEAR and return its value
 \*/
 long armci_wait_long_flag_not_clear(long *buf)
 {
-extern long check_flag(long*);
-
     long res;
     long spin =0;
 
@@ -169,7 +170,7 @@ extern long check_flag(long*);
        for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work+=0.001;
        res = check_flag(buf);
     }
-    *buf = ARMCI_GM_CLEAR;
+/*    *buf = ARMCI_GM_CLEAR; */
     __armci_fake_work =99.0;
     return res;
 }
@@ -210,7 +211,7 @@ void armci_unpin_contig(void *ptr, int bytes)
 
 int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
 {
-    int i, j, sizes;
+    int i, j;
     long idx;
     int n1dim;  /* number of 1 dim block */
     int bvalue[MAX_STRIDE_LEVEL], bunit[MAX_STRIDE_LEVEL];
@@ -220,18 +221,20 @@ int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
     if(SERVER_CONTEXT) port = serv_gm->snd_port;
     else port = proc_gm->port;
     
-    sizes = 1;
-    for(i=0; i<strides; i++) sizes *= stride_arr[i];
-    sizes *= count[strides];
+    if(strides ==0){
+       if(gm_register_memory(port, (char *)ptr, count[0])==GM_SUCCESS)
+          return TRUE;
+       else return FALSE;
+    }
+
+    if(count[0] == stride_arr[0]){
+       int sizes = 1;
+       for(i=0; i<strides; i++) sizes *= stride_arr[i];
+       sizes *= count[strides];
         
-#if 1
-    status = gm_register_memory(port, (char *)ptr, sizes);
-    if(status == GM_SUCCESS) { pin_in_block = TRUE; return TRUE; }
-#else
-    status = mlock((char *)ptr, sizes);
-    if(!status) { pin_in_block = TRUE; return TRUE; }
-    else armci_die("pin failed",sizes);
-#endif
+       status = gm_register_memory(port, (char *)ptr, sizes);
+       if(status == GM_SUCCESS) { pin_in_block = TRUE; return TRUE; }
+    }
 
     pin_in_block = FALSE;
     pin_in_segment = 0;  /* set counter to zero */
@@ -257,7 +260,7 @@ int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
         status = gm_register_memory(port, (char *)ptr+idx, count[0]);
         if(status != GM_SUCCESS) {
             armci_unpin_memory(ptr, stride_arr, count, strides);
-            printf("%d: strided pinning 2 failed %d\n",armci_me, sizes);
+            printf("%d: strided pinning 2 failed %d\n",armci_me, count[0]);
             fflush(stdout);
             return FALSE;
         }
@@ -280,6 +283,11 @@ void armci_unpin_memory(void *ptr, int stride_arr[], int count[], int strides)
     if(SERVER_CONTEXT) port = serv_gm->snd_port;
     else port = proc_gm->port;
 
+    if(strides ==0){
+       if(gm_deregister_memory(port, (char *)ptr, count[0])!=GM_SUCCESS)
+            armci_die(" unpinning memory failed", armci_me);
+    }
+   
     if(pin_in_block) {
         sizes = 1;
         for(i=0; i<strides; i++) sizes *= stride_arr[i];
@@ -404,8 +412,10 @@ int armci_gm_client_init()
 #endif
 
     /* allow direct send */
+#if 1
     status = gm_allow_remote_memory_access(proc_gm->port);
     if(status != GM_SUCCESS) armci_die("could not enable direct sends",0);
+#endif
 
     /* memory preallocation for computing process */
     if(!armci_gm_client_mem_alloc()) armci_die(" client mem alloc failed ",0); 
@@ -521,8 +531,8 @@ void armci_client_connect_to_servers()
                                     armci_me, server_mpi_id, MessageSndBuffer);
 
             /* wait til the serv_ack_ptr has been updated */
-            armci_wait_long_flag_updated((long *)MessageSndBuffer, ARMCI_GM_COMPLETE);
-            armci_wait_long_flag_updated((long *)MessageSndBuffer+4, ARMCI_GM_COMPLETE);
+            armci_wait_long_flag_updated_clear((long *)MessageSndBuffer, ARMCI_GM_COMPLETE);
+            armci_wait_long_flag_updated_clear((long *)MessageSndBuffer+4, ARMCI_GM_COMPLETE);
             
             proc_gm->serv_ack_ptr[i] = (long*)((long *)MessageSndBuffer)[1];
             
@@ -554,9 +564,32 @@ void armci_client_connect_to_servers()
 \*/
 void armci_wait_for_data_bypass()
 {
-   armci_wait_long_flag_updated((long *)(proc_gm->ack), ARMCI_GM_COMPLETE);
+   armci_wait_long_flag_updated_clear((long *)(proc_gm->ack), ARMCI_GM_COMPLETE);
 }
 
+void armci_clear_ack(int proc)
+{
+ serv_gm->ack[proc]=ARMCI_GM_CLEAR;
+}
+
+/*\ wait until ack is set by client to certain value: on failure return 1  
+\*/
+int armci_wait_client_seq(int proc,int val)
+{
+long *buf;
+long spin =0,res;
+
+    if(proc <0 || proc >= armci_nproc)armci_die("armci_wait_pin_client:p",proc);
+    buf = serv_gm->ack +proc;
+
+    res = check_flag(buf);
+    while(res < (long)val){
+       for(spin=0; spin<__armci_wait_some; spin++)__armci_fake_work+=0.001;
+       res = check_flag(buf);
+    }
+    __armci_fake_work =99.0;
+    return 1;
+}
 
 /*\ wait until ack is set by client: on failure return 1  
 \*/
@@ -567,21 +600,28 @@ long status;
     if(proc <0 || proc >= armci_nproc)armci_die("armci_wait_pin_client:p",proc);
 
     status = armci_wait_long_flag_not_clear(serv_gm->ack +proc);
-    if(status == ARMCI_GM_READY) return 0;
+    serv_gm->ack[proc]=ARMCI_GM_CLEAR;
     if(status == ARMCI_GM_FAILED) return 1;
-    armci_die("armci_wait_pin_client:unexpected value",(int)status);
-    return 1;
+    return 0;
 }
 
 void armci_client_send_ack(int p, int success)
 {
      int cluster = armci_clus_id(p);
      long *pflag = proc_gm->tmp;
-     *pflag= (success)? ARMCI_GM_READY : ARMCI_GM_FAILED;
+     *pflag= (success)? success : ARMCI_GM_FAILED;
      armci_client_direct_send(p, pflag, proc_gm->serv_ack_ptr[cluster], 
                                                          sizeof(long));
 }
 
+void armci_client_send_ack_seq(int p, int success)
+{
+     int cluster = armci_clus_id(p);
+     long *pflag = proc_gm->tmp;
+     *pflag= (success)? ARMCI_GM_READY : ARMCI_GM_FAILED;
+     armci_client_direct_send(p, pflag, proc_gm->serv_ack_ptr[cluster],
+                                                         sizeof(long));
+}
 
 /*\ send request message to server and wait for completion
  *  assumption: the buffer is pinned and most probably is MessageSndBuffer
@@ -628,7 +668,7 @@ char *armci_ReadFromDirect(int proc, request_header_t * msginfo, int len)
 */
 
     /* check the header ack */
-    armci_wait_long_flag_updated(&(msginfo->tag.ack), ARMCI_GM_COMPLETE);
+    armci_wait_long_flag_updated_clear(&(msginfo->tag.ack), ARMCI_GM_COMPLETE);
 
     /* reset header ack */
     msginfo->tag.ack = ARMCI_GM_CLEAR;
@@ -639,7 +679,7 @@ char *armci_ReadFromDirect(int proc, request_header_t * msginfo, int len)
     tail = (long*)(buf+len);
     ALIGN_PTR_LONG(long, tail);
 
-    armci_wait_long_flag_updated(tail, ARMCI_GM_COMPLETE);
+    armci_wait_long_flag_updated_clear(tail, ARMCI_GM_COMPLETE);
 
     /* reset tail ack */
     *tail = ARMCI_GM_CLEAR;
@@ -997,7 +1037,7 @@ void armci_server_initial_connection()
               }
 
               /* wait for the client send back the ack */
-              armci_wait_long_flag_updated(&(serv_gm->ack[rid]), ARMCI_GM_ACK);
+              armci_wait_long_flag_updated_clear(&(serv_gm->ack[rid]), ARMCI_GM_ACK);
               serv_gm->ack[rid] = ARMCI_GM_CLEAR;
               
               if(DEBUG_INIT_) {
