@@ -9,6 +9,7 @@
            RM = /bin/rm
       RMFLAGS = -r
       INSTALL = @echo
+    MAKEFLAGS = -j 1                                                            
       ARFLAGS = rcv
         MKDIR = mkdir
        LINK.f = $(FLD)
