@@ -4,7 +4,7 @@
        do k = 1,10
          call trace_stime()
          do i = 1,10000
-            a(i) = sin(dble(i+k))
+            a(i) = sin(real(i+k))
          enddo
          call trace_etime()
          call trace_genrec(k,k,i,k,i,999)

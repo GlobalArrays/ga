@@ -21,24 +21,16 @@
 #    define usc_MD_timer_size  (sizeof(unsigned)*8)
      unsigned *usc_multimax_timer;
 
-#endif
-
-
-#if (defined(BALANCE) || defined(SYMMETRY))
+#elif (defined(BALANCE) || defined(SYMMETRY))
 
 #    define usc_MD_timer_size  (sizeof(usclk_t)*8)
 
-#endif
 
-
-#if (defined(BFLY2) || defined(BFLY2_TCMP))
+#elif (defined(BFLY2) || defined(BFLY2_TCMP))
 
 #    define usc_MD_timer_size  (sizeof(unsigned long)*8)
 
-#endif
-
-
-#if (defined(DELTA)||defined(PARAGON))
+#elif (defined(DELTA)||defined(PARAGON))
 
 #    if (defined (DELTA))
 #        include <mesh.h>
@@ -48,12 +40,7 @@
 #    define usc_MD_timer_size ((sizeof(long)*8)+3)
 #    define usc_MD_ticks_per_usec (HWHZ/1000000)
 
-#endif
-
-
-#if (defined(ATT_3B2) || defined(SUN) || defined(IBM_RS6000) \
-    || defined(NEXT) || defined(TITAN) || defined(BFLY1) || defined(KSR) \
-    || defined(SGI) || defined(IPSC860_HOST) || defined(ALLIANT))
+#else
 
 #	include <sys/time.h>
 	usc_time_t usc_MD_reference_time = 0;

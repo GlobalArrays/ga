@@ -38,19 +38,13 @@ typedef unsigned long usc_time_t;
 
      extern unsigned *usc_multimax_timer;
 
-#endif
-
-
-#if (defined(BALANCE) || defined(SYMMETRY))
+#elif (defined(BALANCE) || defined(SYMMETRY))
 
 #ifndef GETUSCLK
 #    include <usclkc.h>
 #endif
-#endif 
 
-#if (defined(ATT_3B2) || defined(SUN) || defined(IBM_RS6000) \
-    || defined(NEXT) || defined(TITAN) || defined(BFLY1) \
-    || defined(SGI) || defined(IPSC860_HOST) || defined(ALLIANT))
+#else
 
     extern usc_time_t usc_MD_reference_time;
 
@@ -68,16 +62,12 @@ extern usc_time_t usc_MD_rollover_val;
 #    define usc_clock() ((usc_time_t) *usc_multimax_timer)
 #    define usc_rollover_val()  (usc_MD_rollover_val)
 
-#else
-
-#if (defined(BALANCE) || defined(SYMMETRY))
+#elif (defined(BALANCE) || defined(SYMMETRY))
 
 #    define usc_clock() ((usc_time_t) getusclk())
 #    define usc_rollover_val()  (usc_MD_rollover_val)
 
-#else
-
-#if (defined(BFLY2) || defined(BFLY2_TCMP) || defined (IPSC860_NODE) \
+#elif (defined(BFLY2) || defined(BFLY2_TCMP) || defined (IPSC860_NODE) \
     || defined(IPSC860_NODE_PGI) || defined(DELTA))
 
 #    define usc_clock() usc_MD_clock()
@@ -85,22 +75,14 @@ extern usc_time_t usc_MD_rollover_val;
 
 #else
 
-#if (defined(ATT_3B2) || defined(SUN) || defined(IBM_RS6000) \
-    || defined(NEXT) || defined(TITAN) || defined(BFLY1) || defined(KSR) \
-    || defined(SGI) || defined(IPSC860_HOST) || defined(ALLIANT))
-
 #    define usc_clock() usc_MD_clock()
 #    define usc_rollover_val()  (usc_MD_rollover_val * 1000000 - 1)
 
-#else
+#endif
 
-#    define usc_clock() 0
-#    define usc_rollover_val() 0
+/*#    define usc_clock() 0*/
+/*#    define usc_rollover_val() 0*/
 
-#endif
-#endif
-#endif
-#endif
 
 /* ----------------------
   function prototypes

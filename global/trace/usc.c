@@ -1,7 +1,8 @@
 /*
  * USC.C  (Source file for the Microsecond Clock package)
  *
- * Written by:  Arun Nanda    (07/17/91)
+ * author of the initial version:  Arun Nanda    (07/17/91)
+ *
  */
 
 #include "usc_main.h"
@@ -15,10 +16,8 @@ VOID usc_init()
 	usc_multimax_timer = timer_init();
 	usc_MD_rollover_val = (usc_time_t) ((1<<usc_MD_timer_size)-1);
 
-#endif
 
-
-#if (defined(BALANCE) || defined(SYMMETRY))
+#elif (defined(BALANCE) || defined(SYMMETRY))
 
 	unsigned long roll;
 
@@ -27,20 +26,16 @@ VOID usc_init()
 	roll = 1 << (usc_MD_timer_size-1);
 	usc_MD_rollover_val = (usc_time_t) (roll + roll - 1);
 
-#endif
 
-
-#if (defined(BFLY2) || defined(BFLY2_TCMP))
+#elif (defined(BFLY2) || defined(BFLY2_TCMP))
 
 	unsigned long roll;
 
 	roll = 1 << (usc_MD_timer_size-1);
 	usc_MD_rollover_val = (usc_time_t) (roll + roll - 1);
 
-#endif
 
-
-#if (defined(IPSC860_NODE) || defined(IPSC860_NODE_PGI) || defined(DELTA))
+#elif (defined(IPSC860_NODE) || defined(IPSC860_NODE_PGI) || defined(DELTA))
 
 	esize_t hwtime;
 	double ustime;
@@ -52,12 +47,8 @@ VOID usc_init()
         ustime = (unsigned long)hwtime.slow * 0.8;
 	usc_MD_rollover_val = (usc_time_t) ustime; 
 
-#endif
 
-
-#if (defined(ATT_3B2) || defined(SUN) || defined(IBM_RS6000) \
-    || defined(NEXT) || defined(TITAN) || defined(BFLY1) || defined(KSR) \
-    || defined(SGI) || defined(IPSC860_HOST) || defined(ALLIANT))
+#else
 
 	struct timeval tp;
 	struct timezone tzp;
@@ -89,10 +80,8 @@ usc_time_t usc_MD_clock()
 	get64bitclock(&usclock);
 	return((usc_time_t)usclock.low);
 
-#endif
 
-
-#if (defined(IPSC860_NODE) || defined(IPSC860_NODE_PGI) || defined(DELTA))
+#elif (defined(IPSC860_NODE) || defined(IPSC860_NODE_PGI) || defined(DELTA))
 
 	esize_t hwtime;
 	double ustime;
@@ -104,12 +93,7 @@ usc_time_t usc_MD_clock()
         ustime = (unsigned long)hwtime.slow * 0.8;
 	return((usc_time_t)ustime);
 
-#endif
-
-
-#if (defined(ATT_3B2) || defined(SUN) || defined(IBM_RS6000) \
-    || defined(NEXT) || defined(TITAN) || defined(BFLY1) || defined(KSR) \
-    || defined(SGI) || defined(IPSC860_HOST) || defined(ALLIANT))
+#else
 
 	unsigned long ustime;
 	struct timeval tp;

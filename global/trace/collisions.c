@@ -173,4 +173,5 @@ int loc, empty, i;
   printf("Error in  LocFound ");
   for(i=0;i<5; i++)printf("%d ",patch[i]); printf("\n");
   exit(5);
+  return(0); /* never gets here */
 }

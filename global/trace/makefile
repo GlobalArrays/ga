@@ -1,34 +1,18 @@
-include ../Makefile.h
-
-LIBM = -lma
-INCLUDE = ../../ma
 OBJ =  usc.o ga_trace.o
-
-# TARGET to DEFINE translation 
-#
-DEFINE = $(TARGET)
-ifeq ($(TARGET),IPSC)
-     DEFINE = IPSC860_NODE
-endif
-ifeq ($(TARGET),IBM)
-     DEFINE = IBM_RS6000
-endif
-ifeq ($(TARGET),SP1)
-     DEFINE = IBM_RS6000
-endif
-
 LIB_DISTRIB = ../../lib
 LIBRARY = libtrace.a
 LIB_TARGETS = test adjust collisions
+LIBM = -L$(LIB_DISTRIB)/$(TARGET) -lma
 
+# TARGET to DEFINE translation
+#
+ifeq ($(TARGET),IPSC)
+     LIB_DEFINES = IPSC860_NODE
+endif
+LIB_INCLUDES = -I../../ma
+
+include ../../config/makefile.h
 include ../../config/makelib.h
 
-.c.o:   $*.c
-	$(CC) $(COPT) -I$(INCLUDE) -D$(DEFINE) -c $*.c
-
-.f.o:   $*.c
-	$(F77) $(FOPT)  -c  $*.f
-
-test:   $(OBJ)
-	$(F77) -o test $(OBJ) $(LIB) -L$(LIBDIR) $(LIBM)
-
+test.x:   test.o $(LIBRARY_PATH)
+	$(FC) -o  $@ $(FFLAGS) $^ $(LIBM)
