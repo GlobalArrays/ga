@@ -385,8 +385,6 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
     nga_inquire_(g_b, &btype, &bndim, bdims);
     
     if(atype != btype ) ga_error(" type mismatch ", 0L);
-    if((atype != MT_F_INT ) && (atype != MT_F_DBL ) && (atype != MT_F_DCPL))
-        ga_error(" wrong type", 0L);
     
     /* check if patch indices and g_a dims match */
     for(i=0; i<andim; i++)
@@ -550,12 +548,14 @@ void ngai_dot_patch(g_a, t_a, alo, ahi, g_b, t_b, blo, bhi, retval)
         case MT_F_REAL:
             ga_fgop(type, &fsum, 1, "+");
             *((float *)retval) += isum;
+        default: ga_error(" wrong data type ",atype);
     }
     
     if(temp_created) ga_destroy_(&g_B);
     GA_POP_NAME;
     ga_sync_();
 }
+
 
 /*\ compute Integer DOT PRODUCT of two patches
  *
@@ -684,6 +684,7 @@ void *retval;
 {  ngai_dot_patch(g_a, t_a, alo, ahi,
                 g_b, t_b, blo, bhi, retval);}
 #endif
+
 
 /*\ FILL IN ARRAY WITH VALUE 
 \*/
@@ -896,6 +897,7 @@ void FATR nga_scale_patch_(Integer *g_a, Integer *lo, Integer *hi,
                     for(j=0; j<(hiA[0]-loA[0]+1); j++)
                         ((float *)src_data_ptr)[idx+j]  *= *(float*)alpha;
                 }                                                           
+            default: ga_error(" wrong data type ",type);
         }
 
         /* release access to the data */
@@ -1107,7 +1109,9 @@ DoublePrecision *alpha, *beta;
                             ((float *)A_ptr)[idx+j] + *(float *)beta *
                             ((float *)B_ptr)[idx+j];
                 }
-                break;                                               }
+                break;
+            default: ga_error(" wrong data type ",atype);
+        }
         
         /* release access to the data */
         nga_release_       (&g_A, loC, hiC);

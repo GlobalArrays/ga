@@ -7,12 +7,7 @@
       parameter (ga_max_dim = 7)
 !
       integer ga_nnodes, ga_nodeid, ga_read_inc
-#ifdef IWAY
-      integer ga_net_nnodes, ga_net_nodeid
-#endif
-#ifdef SCALAPACK
-      integer ga_spd_invert, ga_solve, ga_llt_solve, ga_cholesky
-#endif
+      integer ga_spd_invert, ga_solve, ga_llt_solve
       integer ga_inquire_memory, ga_memory_avail
       logical ga_create, ga_destroy, ga_locate, ga_create_irreg
       logical ga_compare_distr, ga_duplicate, ga_uses_ma
@@ -41,14 +36,7 @@
       external ga_destroy_mutexes
       external ga_valid_handle
       external ga_ndim
-#ifdef SCALAPACK
-      external ga_spd_invert, ga_solve, ga_llt_solve, ga_cholesky
-#endif
-#ifdef IWAY
-      external ga_net_nnodes, ga_net_nodeid
-#endif
-!
-!     n-dim GA
+      external ga_spd_invert, ga_solve, ga_llt_solve
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg
       external nga_ddot_patch, nga_zdot_patch, nga_idot_patch
       external ga_sdot, ga_sdot_patch, nga_sdot_patch

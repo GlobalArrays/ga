@@ -14,9 +14,6 @@
 #define GA_MAX_DIM 7
 
 #include "c.names.h"
-#if defined(CRAY) || defined(WIN32)
-#  include "cray.names.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,9 +40,9 @@ extern logical FATR ga_destroy_  ARGS_((Integer* ));
 extern logical FATR ga_destroy_mutexes_  ARGS_((void ));
 extern logical ga_duplicate ARGS_((Integer*, Integer*, char* ));
 extern logical FATR ga_compare_distr_ ARGS_((Integer*, Integer* ));
-extern logical FATR ga_locate_   ARGS_((Integer*, Integer*, Integer*, Integer* ));
-extern void FATR ga_lock_        ARGS_((Integer* ));
-extern void FATR ga_unlock_      ARGS_((Integer* ));
+extern logical FATR ga_locate_  ARGS_((Integer*, Integer*, Integer*, Integer* ));
+extern void FATR ga_lock_       ARGS_((Integer* ));
+extern void FATR ga_unlock_     ARGS_((Integer* ));
 extern void ga_check_handle ARGS_((Integer*, char*));
 extern logical FATR ga_locate_region_ ARGS_((Integer*, Integer*, Integer*, Integer*,                                         Integer*, Integer map[][5], Integer* ));
 extern void  FATR ga_acc_   ARGS_((Integer*, Integer*, Integer*, Integer*, Integer*,                               void*, Integer*, void* ));

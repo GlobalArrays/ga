@@ -1,4 +1,4 @@
-c $Id: fort.F,v 1.3 2001-05-07 22:56:57 llt Exp $
+c $Id: fort.F,v 1.4 2001-05-09 01:02:14 d3h325 Exp $
       double complex function ga_zdot(g_a,g_b)
       implicit none
       integer g_a, g_b
@@ -92,7 +92,6 @@ c $Id: fort.F,v 1.3 2001-05-07 22:56:57 llt Exp $
       call ga_fill_patch(g_a, ailo, aihi, ajlo, ajhi, s)
       end
 
-#ifdef ARMCI
       double complex function nga_zdot_patch(
      $            g_a, t_a, alo, ahi,
      $            g_b, t_b, blo, bhi)
@@ -144,4 +143,18 @@ c $Id: fort.F,v 1.3 2001-05-07 22:56:57 llt Exp $
       call ngai_dot_patch(g_a, t_a, alo, ahi,
      $            g_b, t_b, blo, bhi, nga_sdot_patch)
       end                                             
-#endif
+
+
+      real function ga_sdot_patch(
+     $            g_a, t_a, ailo, aihi, ajlo, ajhi,
+     $            g_b, t_b, bilo, bihi, bjlo, bjhi)
+      implicit none
+      integer  g_a, g_b, ailo, aihi, ajlo, ajhi
+      integer  bilo, bihi, bjlo, bjhi
+      character*1 t_a, t_b
+      external gai_dot_patch
+      ga_sdot_patch = 0.
+      call gai_dot_patch(
+     $            g_a, t_a, ailo, aihi, ajlo, ajhi,
+     $            g_b, t_b, bilo, bihi, bjlo, bjhi, ga_sdot_patch)
+      end

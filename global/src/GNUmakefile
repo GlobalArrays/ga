@@ -11,7 +11,7 @@ endif
 
 LIB_DISTRIB = ../../lib
 INCDIR = ../../include
-HEADERS = ga.h global.h global.fh c.names.h cray.names.h
+HEADERS = ga.h global.h global.fh c.names.h
 ifndef LIBRARY
   LIBRARY = libglobal.a
 endif
@@ -76,4 +76,4 @@ $(patsubst %,$(LIBRARY_PATH)(%),$(GA_CORE))     : globalp.h global.h
 $(patsubst %,$(LIBRARY_PATH)(%),global.alg.o)   : globalp.h global.h
 $(patsubst %,$(LIBRARY_PATH)(%),ga_diag.o)      : global.fh diag.fh 
 $(patsubst %,$(LIBRARY_PATH)(%),global.armci.o) : global.h global.armci.h 
-global.h       : cray.names.h
+global.h       : c.names.h
