@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.22 2000-10-13 23:18:27 d3h325 Exp $*/
+/*$Id: disk.arrays.c,v 1.23 2001-02-23 23:41:59 d3h325 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -107,7 +107,7 @@ char*           _dra_buffer;
 Integer         _idx_buffer, _handle_buffer;
 #endif
 
-disk_array_t *DRA;           /* array of struct for basic info about DRA arrays*/
+disk_array_t *DRA;          /* array of struct for basic info about DRA arrays*/
 Integer _max_disk_array;    /* max number of disk arrays open at a time      */
 
 
@@ -1028,6 +1028,75 @@ void dra_set_mode_(Integer* val)
 {
 }
 
+
+#define dai_dest_indices_1d_M(index, id, jd, ilod, jlod, ldd) \
+{ \
+    Integer _index_;\
+    _index_ = (is)-(ilos);\
+    *(id) = (_index_)%(ldd) + (ilod);\
+    *(jd) = (_index_)/(ldd) + (jlod);\
+}
+#define dai_dest_indicesM(is,js, ilos,jlos, lds, id,jd, ilod, jlod, ldd)   \
+{ \
+    Integer _index_;\
+    _index_ = (lds)*((js)-(jlos)) + (is)-(ilos);\
+    *(id) = (_index_)%(ldd) + (ilod);\
+    *(jd) = (_index_)/(ldd) + (jlod);\
+}
+
+
+void ga_move_1d(int op, section_t gs_a, section_t ds_a,
+                section_t ds_chunk, void* buffer, Integer ldb)
+{
+     Integer index, ldd = gs_a.ihi - gs_a.ilo + 1, one=1;
+     Integer atype, cols, rows, elemsize, ilo, ihi, jlo, jhi;
+     Integer istart, iend, jstart, jend;
+     void (*f)(Integer*,Integer*,Integer*,Integer*,Integer*,void*,Integer*); 
+     char *buf = (char*)buffer;
+
+     if(op==LOAD) f = ga_get_;
+     else f = ga_put_;
+
+     ga_inquire(&gs_a.handle, &atype, &rows, &cols);     
+     elemsize = MA_sizeof(atype, 1, MT_C_CHAR);
+
+     /* find where in global array the first dra chunk element in buffer goes*/
+     index = ds_chunk.ilo - ds_a.ilo;
+     istart = index%ldd + gs_a.ilo; 
+     jstart = index/ldd + gs_a.jlo;
+     
+     /* find where in global array the last dra chunk element in buffer goes*/
+     index = ds_chunk.ihi - ds_a.ilo;
+     iend = index%ldd + gs_a.ilo; 
+     jend = index/ldd + gs_a.jlo;
+     
+     /* we have up to 3 rectangle chunks corresponding to gs_chunk 
+       .|' incomplete first column, full complete middle column, and
+           incomplete last column */
+     if(istart != gs_a.ilo || jstart==jend ){
+        ilo = istart; 
+        ihi = gs_a.ihi; 
+        if(jstart==jend) ihi=iend;
+        f(&gs_a.handle, &ilo, &ihi, &jstart, &jstart, buf, &one); 
+        buf += elemsize*(ihi -ilo+1);
+        if(jstart==jend) return;
+        jstart++;
+     }
+
+     if(iend != gs_a.ihi) jend--;
+
+     if(jstart <= jend) { 
+        f(&gs_a.handle, &gs_a.ilo, &gs_a.ihi, &jstart, &jend, buf, &ldd);
+        buf += elemsize*ldd*(jend-jstart+1); 
+     } 
+
+     if(iend != gs_a.ihi){
+        jend++; /* Since decremented above */  
+        f(&gs_a.handle, &gs_a.ilo, &iend, &jend, &jend, buf, &one);
+     }
+}
+
+
 void ga_move(int op, int trans, section_t gs_a, section_t ds_a, 
              section_t ds_chunk, void* buffer, Integer ldb)
 {
@@ -1036,17 +1105,23 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
 
         /* determine gs_chunk corresponding to ds_chunk */
         section_t gs_chunk = gs_a;
-        dai_dest_indicesM(ds_chunk.ilo, ds_chunk.jlo,   ds_a.ilo, ds_a.jlo, 
+        dai_dest_indicesM(ds_chunk.ilo, ds_chunk.jlo, ds_a.ilo, ds_a.jlo, 
                 ds_a.ihi-ds_a.ilo+1, &gs_chunk.ilo, &gs_chunk.jlo, 
                 gs_a.ilo, gs_a.jlo,   gs_a.ihi -     gs_a.ilo + 1);
-        dai_dest_indicesM(ds_chunk.ihi, ds_chunk.jhi,   ds_a.ilo,ds_a.jlo, 
+        dai_dest_indicesM(ds_chunk.ihi, ds_chunk.jhi,  ds_a.ilo,ds_a.jlo, 
                 ds_a.ihi-ds_a.ilo+1, &gs_chunk.ihi, &gs_chunk.jhi,
                 gs_a.ilo, gs_a.jlo,   gs_a.ihi -     gs_a.ilo + 1);
 
         /* move data */
         if(op==LOAD) ga_get_sectM(gs_chunk, buffer, ldb);
         else         ga_put_sectM(gs_chunk, buffer, ldb);
+    
+#ifdef MOVE1D_ENABLED
+    }else if(!trans && (ds_a.jlo==ds_a.jhi) ){
 
+        /* for a 1-dim section (column) some optimization possible */
+        ga_move_1d(op, gs_a, ds_a, ds_chunk, buffer, ldb);        
+#endif
     }else{
         /** due to generality of this transformation scatter/gather is required **/
 
