@@ -151,6 +151,25 @@ int *mutex_entry, ticket;
 }
 
 
+/*\ check if mutex is available by comparing turn and token
+ *  can only be called by a process on the same SMP node as proc
+\*/
+static int armci_mutex_free(int mutex, int proc)
+{
+volatile int *mutex_ticket=glob_mutex[proc].turn + mutex;
+volatile int *turn = glob_mutex[proc].token  +mutex;
+
+       /* here we will put code to check if other processes on the node
+        * are waiting for this mutex
+        */
+
+
+       if(*mutex_ticket == *turn) return 1;
+       else return 0;
+}
+
+
+
 static void armci_generic_lock(int mutex, int proc)
 {
 int i, myturn, factor=0, len=sizeof(int), loc;
@@ -158,6 +177,11 @@ int  *mutex_ticket, next_in_line;
         
       mutex_ticket= glob_mutex[proc].turn + mutex;
       myturn = register_in_mutex_queue(mutex, proc);
+
+      /* code to reduce cost of unlocking mutex on the same SMP node goes here
+       * lockinfo_node[me].ticket = mutex_ticket;
+       * lockinfo_node[me].mutex  = mutex;
+       */
 
       _dummy_work_ = 0.; /* must be global to fool the compiler */
       do {
@@ -183,8 +207,8 @@ int *mutex_ticket= glob_mutex[proc].turn + mutex;
 int *newval = glob_mutex[proc].tickets +mutex;
 int len=sizeof(int);
 
+       /* update ticket for next process requesting this mutex */
        (*newval) ++; 
-/* update ticket for next process requesting this mutex */
 
        /* write new ticket value stored previously in tickets  */
        ARMCI_Put(newval, mutex_ticket, len, proc);
@@ -250,6 +274,9 @@ int ack, len=sizeof(int);
 
      Ticket++; 
      armci_copy(&Ticket, mutex_ticket, len);
+
+     /* if mutex is free then nobody is reqistered in queue */
+     if(armci_mutex_free(mutex, proc))  return -1;
 
      /* search for the next process in queue waiting for this mutex */
      for(i=0; i< armci_nproc; i++){
