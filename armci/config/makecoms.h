@@ -43,7 +43,7 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
       COMM_LIBS = -L/opt/rms/lib
     endif
   endif
-  QUADRICS_LIB_NAME = -lelan3 -lshmem -lrt
+  QUADRICS_LIB_NAME = -lshmem -lelan3 -lelan -lrt
   COMM_LIBS += $(QUADRICS_LIB_NAME)
 endif
 
