@@ -172,6 +172,8 @@ extern void FATR nga_acc_(Integer *g_a, Integer *lo, Integer *hi,
                           void *buf, Integer *ld, void *alpha);
 extern void FATR nga_scatter_(Integer *g_a, void* v, Integer subscr[], 
                               Integer *nv);
+extern void FATR nga_scatter_acc_(Integer *g_a, void* v, Integer subscr[], 
+                              Integer *nv, void *alpha);
 extern void FATR nga_gather_(Integer *g_a, void* v, Integer subscr[],
                              Integer *nv);
 extern Integer FATR nga_read_inc_(Integer* g_a,Integer* subscr,Integer* inc);

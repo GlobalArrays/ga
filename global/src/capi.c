@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.22 2000-03-10 23:41:54 d3h325 Exp $ */
+/* $Id: capi.c,v 1.23 2000-04-10 22:06:11 jju Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -470,6 +470,24 @@ void NGA_Scatter(int g_a, void *v, int* subsArray[], int n)
             _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
     
     nga_scatter_(&a, v, _subs_array , &nv);
+    
+    free(_subs_array);
+}
+
+void NGA_Scatter_acc(int g_a, void *v, int* subsArray[], int n, void *alpha)
+{
+    int idx, i;
+    Integer a = (Integer)g_a;
+    Integer nv = (Integer)n;
+    Integer ndim = ga_ndim_(&a);
+    Integer *_subs_array;
+    _subs_array = (Integer *)malloc(n * ndim * sizeof(Integer));
+    if(_subs_array == NULL) GA_Error("Memory allocation failed.", 0);
+    for(idx=0; idx<n; idx++)
+        for(i=0; i<ndim; i++)
+            _subs_array[idx*ndim+i] = subsArray[idx][i] + 1;
+    
+    nga_scatter_acc_(&a, v, _subs_array , &nv, alpha);
     
     free(_subs_array);
 }

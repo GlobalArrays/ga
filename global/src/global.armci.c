@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.32 2000-04-03 18:56:09 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.33 2000-04-10 22:07:20 jju Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2380,12 +2380,15 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
     
     /* source and destination pointers are ready for all processes */
     for(k=0; k<GAnproc; k++) {
+        int rc;
+        
         desc.bytes = item_size;
         desc.src_ptr_array = ptr_src[k];
         desc.dst_ptr_array = ptr_dst[k];
         desc.ptr_array_len = nelem[k];
         
-        ARMCI_PutV(&desc, 1, k);
+        rc = ARMCI_PutV(&desc, 1, k);
+        if(rc) ga_error("scatter failed in armci",rc);
     }
 
     gai_free(ptr_ref);
@@ -2550,15 +2553,15 @@ register Integer k, offset;
 
 #define SCATTER -99
 #define GATHER -98
-
+#define SCATTER_ACC -97
 
 /*\ GATHER OPERATION elements from the global array into v
 \*/
 void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[], 
-                 Integer* nv, double *locbytes, double* totbytes)
+                 Integer* nv, double *locbytes, double* totbytes, void *alpha)
 {
     register Integer k, handle=*g_a+GA_OFFSET;
-    Integer  ndim, item_size;
+    Integer  ndim, item_size, type;
     Integer *proc, phandle;
 
     Integer *count;        /* counters for each process */
@@ -2575,6 +2578,7 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
 
     ndim = GA[handle].ndim;
 
+    type = GA[handle].type;
     item_size = GA[handle].elemsize;
     *totbytes += (double)item_size**nv;
     
@@ -2641,12 +2645,16 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
         
         /* source and destination pointers are ready for all processes */
         for(k=0; k<GAnproc; k++) {
+            int rc;
+            
             desc.bytes = item_size;
             desc.src_ptr_array = ptr_src[k];
             desc.dst_ptr_array = ptr_dst[k];
             desc.ptr_array_len = nelem[k];
+            if(nelem[k] == 0) continue;
             
-            ARMCI_GetV(&desc, 1, k);
+            rc=ARMCI_GetV(&desc, 1, k);
+            if(rc) ga_error("gather failed in armci",rc);
         }
         break;
       case SCATTER:
@@ -2665,16 +2673,58 @@ void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[],
 
         /* source and destination pointers are ready for all processes */
         for(k=0; k<GAnproc; k++) {
+            int rc;
+            
             desc.bytes = item_size;
             desc.src_ptr_array = ptr_src[k];
             desc.dst_ptr_array = ptr_dst[k];
             desc.ptr_array_len = nelem[k];
+            if(nelem[k] == 0) continue;
             
             if(GA_fence_set) fence_array[k]=1;
             
-            ARMCI_PutV(&desc, 1, k);
+            rc=ARMCI_PutV(&desc, 1, k);
+            if(rc) ga_error("scatter failed in armci",rc);
         }
         break;
+      case SCATTER_ACC:
+        /* go through all the elements
+         * for process 0: ptr_src[0][0, 1, ...] = v + offset0...
+         *                ptr_dst[0][0, 1, ...] = subscript + offset0...
+         * for process 1: ptr_src[1][...] ...
+         *                ptr_dst[1][...] ...
+         */
+        for(k=0; k<(*nv); k++){
+            ptr_src[proc[k]][count[proc[k]]] = ((char*)v) + k * item_size;
+            gam_Loc_ptr(proc[k], handle,  (subscript+k*ndim),
+                        ptr_dst[proc[k]]+count[proc[k]]);
+            count[proc[k]]++;
+        }
+
+        /* source and destination pointers are ready for all processes */
+        for(k=0; k<GAnproc; k++) {
+            int rc;
+            desc.bytes = item_size;
+            desc.src_ptr_array = ptr_src[k];
+            desc.dst_ptr_array = ptr_dst[k];
+            desc.ptr_array_len = nelem[k];
+            if(nelem[k] == 0) continue;
+            
+            if(GA_fence_set) fence_array[k]=1;
+            
+            if(alpha ==NULL) rc=ARMCI_PutV(&desc, 1, k);
+            else{
+                int optype;
+                if(type==MT_F_DBL) optype= ARMCI_ACC_DBL;
+                else if(type==MT_F_DCPL)optype= ARMCI_ACC_DCP;
+                else if(item_size==sizeof(int))optype= ARMCI_ACC_INT;
+                else if(item_size==sizeof(long))optype= ARMCI_ACC_LNG;
+                else ga_error("type not supported",type);
+                rc= ARMCI_AccV(optype, alpha, &desc, 1, k);
+            }
+            if(rc) ga_error("scatter_acc failed in armci",rc);
+        }
+        break;        
       default: ga_error("operation not supported",op);
     }
     
@@ -2697,7 +2747,7 @@ void FATR nga_gather_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
   GA_PUSH_NAME("nga_gather");
   GAstat.numgat++;
 
-  gai_gatscat(GATHER,g_a,v,subscript,nv,&GAbytes.gattot,&GAbytes.gatloc);
+  gai_gatscat(GATHER,g_a,v,subscript,nv,&GAbytes.gattot,&GAbytes.gatloc, NULL);
 
   GA_POP_NAME;
 }
@@ -2711,7 +2761,22 @@ void FATR nga_scatter_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
   GA_PUSH_NAME("nga_scatter");
   GAstat.numsca++;
 
-  gai_gatscat(SCATTER,g_a,v,subscript,nv,&GAbytes.scatot,&GAbytes.scaloc);
+  gai_gatscat(SCATTER,g_a,v,subscript,nv,&GAbytes.scatot,&GAbytes.scaloc, NULL);
+
+  GA_POP_NAME;
+}
+
+void FATR nga_scatter_acc_(Integer *g_a, void* v, Integer subscript[],
+                           Integer *nv, void *alpha)
+{
+
+  if (*nv < 1) return;
+  ga_check_handleM(g_a, "nga_scatter_acc");
+  GA_PUSH_NAME("nga_scatter_acc");
+  GAstat.numsca++;
+
+  gai_gatscat(SCATTER_ACC, g_a, v, subscript, nv, &GAbytes.scatot,
+              &GAbytes.scaloc, alpha);
 
   GA_POP_NAME;
 }
@@ -2846,12 +2911,14 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     
     /* source and destination pointers are ready for all processes */
     for(k=0; k<GAnproc; k++) {
+        int rc;
         desc.bytes = item_size;
         desc.src_ptr_array = ptr_src[k];
         desc.dst_ptr_array = ptr_dst[k];
         desc.ptr_array_len = nelem[k];
         
-        ARMCI_GetV(&desc, 1, k);
+        rc=ARMCI_GetV(&desc, 1, k);
+        if(rc) ga_error("gather failed in armci",rc);
     }
 
     gai_free(ptr_ref);
