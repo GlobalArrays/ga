@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.43 2004-04-01 15:57:03 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.44 2004-11-19 17:44:12 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2854,7 +2854,7 @@ void ga_update_ghosts_(Integer *g_a)
 #ifdef CRAY_T3D
    if (!ga_update5_ghosts_(g_a)) {
 #else
-   if (!ga_update4_ghosts_(g_a)) {
+   if (!ga_update44_ghosts_(g_a)) {
 #endif
      ga_update1_ghosts_(g_a);
    }
