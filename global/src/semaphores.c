@@ -15,7 +15,7 @@ struct sembuf sops;
 int semaphoreID;
 
 #if (defined(__GNU_LIBRARY__) && !defined(_SEM_SEMUN_UNDEFINED)) ||\
-    (defined(SGI) && !defined(_NO_XOPEN4)) || defined(SUN)
+    defined(SGI) || defined(SUN)
     /* union semun is defined by including <sys/sem.h> */
 #   else
     /* according to X/OPEN we have to define it ourselves */
