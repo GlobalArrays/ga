@@ -163,7 +163,7 @@ extern void ARMCI_Copy(void *src, void *dst, int n);
 #define ARMCI_FETCH_AND_ADD 12
 #define ARMCI_FETCH_AND_ADD_LONG 13
 
-#define ARMCI_ACC_OFF 20
+#define ARMCI_ACC_OFF 36
 #define ARMCI_ACC_INT (ARMCI_ACC_OFF + 1)
 #define ARMCI_ACC_DBL (ARMCI_ACC_OFF + 2)
 #define ARMCI_ACC_FLT (ARMCI_ACC_OFF + 3)
