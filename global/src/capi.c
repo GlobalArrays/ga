@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.16 1999-11-16 23:31:36 d3g681 Exp $ */
+/* $Id: capi.c,v 1.17 1999-11-17 21:15:49 d3h325 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -740,8 +740,13 @@ void GA_Transpose(int g_a, int g_b)
 
 void GA_Print_distribution(int g_a)
 {
-    Integer a=(Integer)g_a;
-    ga_print_distribution_(&a);
+extern void gai_print_distribution(int fstyle, Integer g_a);
+
+#ifdef USE_FAPI
+    gai_print_distribution(1,(Integer)g_a);
+#else
+    gai_print_distribution(0,(Integer)g_a);
+#endif
 }
 
 
