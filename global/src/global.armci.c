@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.28 1999-11-09 21:48:39 jju Exp $ */
+/* $Id: global.armci.c,v 1.29 1999-11-09 22:00:01 jju Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2306,6 +2306,10 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         ga_error("gai_malloc failed", GAnproc);
 
     /* initialize the counters and nelem */
+    for(kk=0; kk<GAnproc; kk++) {
+        count[kk] = 0; nelem[kk] = 0;
+    }
+    
     /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
     for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
@@ -2315,7 +2319,6 @@ void FATR  ga_scatter_(Integer *g_a, Void *v, Integer *i, Integer *j,
         nelem[INT_MB[pindex+k]]++;
     }
     for(kk=0; kk<GAnproc; kk++) {
-        count[kk] = 0; nelem[kk] = 0;
         ga_distribution_(g_a, &kk,
                          &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
         
@@ -2769,6 +2772,10 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
         ga_error("gai_malloc failed", GAnproc);
 
     /* initialize the counters and nelem */
+    for(kk=0; kk<GAnproc; kk++) {
+        count[kk] = 0; nelem[kk] = 0;
+    }
+    
     /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
     for(k=0; k< *nv; k++) {
         if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
@@ -2779,7 +2786,6 @@ void FATR  ga_gather_(Integer *g_a, void *v, Integer *i, Integer *j,
     }
 
     for(kk=0; kk<GAnproc; kk++) {
-        count[kk] = 0; nelem[kk] = 0;
         ga_distribution_(g_a, &kk,
                          &(ilo[kk]), &(ihi[kk]), &(jlo[kk]), &(jhi[kk]));
         
