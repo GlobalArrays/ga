@@ -81,9 +81,11 @@ extern int single_cluster();
           TCGMSG_Comm = MPI_COMM_WORLD; 
 
 #if !defined(NXTVAL_SERVER) && !defined(ARMCI)
+#ifdef SGI
        SR_single_cluster = single_cluster();
        if(!SR_single_cluster)
          Error("native nxtval not supported multiple hosts",0); 
+#endif
 #endif
 
 }

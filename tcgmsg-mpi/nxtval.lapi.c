@@ -10,7 +10,6 @@
 lapi_handle_t lapi_handle;
 lapi_info_t   lapi_info;
 
-typedef int Integer;
 int nxtval_counter=0;
 int *nxtval_cnt_adr = &nxtval_counter;
 
