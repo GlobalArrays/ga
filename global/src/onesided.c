@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.33 2003-02-25 16:55:33 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.34 2003-03-06 19:36:34 vinod Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -68,6 +68,7 @@ extern void ga_sort_scat(Integer*,Void*,Integer*,Integer*,Integer*, Integer);
 extern void ga_sort_gath_(Integer*, Integer*, Integer*, Integer*);
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
+extern armci_hdl_t get_armci_nbhandle(Integer *);
 
 /***************************************************************************/
 
