@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.32 2002-01-09 18:56:41 vinod Exp $ */
+/* $Id: request.c,v 1.33 2002-02-26 15:29:19 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -164,7 +164,7 @@ request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,ATTACH,ar
       armci_copy(buf, resp, rlen);
       FREE_SEND_BUFFER(msginfo);
 
-      if(DEBUG_){printf("%d:client attaching got ptr %d bytes\n",armci_me,rlen);
+      if(DEBUG_){printf("%d:client attaching got ptr=%p %d bytes\n",armci_me,buf,rlen);
          fflush(stdout);
       }
     }
@@ -213,18 +213,16 @@ void armci_server_ipc(request_header_t* msginfo, void* descr,
    int rlen = *(int*)(sizeof(long)+(char*)buffer);
 
    if(size<0) armci_die("armci_server_ipc: size<0",(int)size);
-   ptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
+	ptr=(double*)Attach_Shared_Region(idlist+1,size,idlist[0]);
    if(!ptr)armci_die("armci_server_ipc: failed to attach",0);
-
    /* provide data server with access to the memory lock data structures */
    if(allocate_memlock){
       allocate_memlock = 0;
       server_alloc_memlock(ptr);
    }
-
-   /* compute offset if we are are really allocating new memory */
+#  ifndef HITACHI
    if(size>0)armci_set_mem_offset(ptr);
-
+#endif
    if(msginfo->datalen != sizeof(long)+sizeof(int))
       armci_die("armci_server_ipc: bad msginfo->datalen ",msginfo->datalen);
 

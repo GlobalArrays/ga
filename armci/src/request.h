@@ -2,14 +2,12 @@
 #define _REQUEST_H_
 
 /********  client buffer managment ops ****************************/
-#ifndef HITACHI 
 extern void  _armci_buf_init();
 extern char* _armci_buf_get(int size, int operation, int to);
 extern void  _armci_buf_release(void *buf);
 extern int   _armci_buf_to_index(void *buf);
 extern char* _armci_buf_ptr_from_id(int id);
 extern void  _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node);
-#endif
 
 #ifdef LAPI
 #  include "lapidefs.h"
@@ -23,6 +21,8 @@ extern void  _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node);
 #elif defined(SOCKETS)
 #  include "sockets.h" 
    typedef long msg_tag_t;
+#elif defined(HITACHI)
+#  include "sr8k.h"
 #else
    typedef long msg_tag_t;
 #endif
@@ -141,7 +141,7 @@ extern void armci_send_data(request_header_t* msginfo, void *data);
 extern int armci_server_unlock_mutex(int mutex, int p, int tkt, msg_tag_t* tag);
 extern void armci_rcv_vector_data(int p, request_header_t* msginfo, armci_giov_t dr[], int len);
 
-#if !defined(LAPI) && !defined(HITACHI)
+#if !defined(LAPI) 
 extern void armci_wait_for_server();
 extern void armci_start_server();
 extern void armci_transport_cleanup();
@@ -167,7 +167,10 @@ extern int armci_send_req_msg_strided(int proc, request_header_t *msginfo,
                           char *ptr, int strides, int stride_arr[],int count[]);
 extern void armci_server_goodbye(request_header_t* msginfo);
 #endif
-
+#ifdef HITACHI
+extern void armci_server_goodbye(request_header_t* msginfo);
+extern void armci_serv_quit();
+#endif
 extern void armci_server_ipc(request_header_t* msginfo, void* descr,
                              void* buffer, int buflen);
 

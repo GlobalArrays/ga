@@ -34,8 +34,8 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(USE_PTHREADS)))
 endif
 
 ifeq ($(TARGET),HITACHI)
-     LIB_DEFINES += -DCLUSTER
-     OBJ += shmalloc.o signaltrap.o winshmem.o
+     LIB_DEFINES += -DDATA_SERVER -DMMAP
+     OBJ += shmalloc.o signaltrap.o winshmem.o spawn.o dataserv-sr8k.o ds-shared.o request.o buffers.o async.o
 endif
 
 ifeq ($(TARGET),$(findstring $(TARGET),$(SHMEM)))

@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.8 2002-01-28 20:16:52 d3h325 Exp $ */
+/* $Id: winshmem.c,v 1.9 2002-02-26 15:29:19 vinod Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -240,7 +240,7 @@ char *armci_get_core_from_map_file(int exists, long size)
        CloseHandle(h_shm_map);
        h_shm_map = INVALID_HANDLE_VALUE;
     }
-#elif defined(MMAP)
+#elif defined(MMAP)&&!defined(HITACHI)
 
     if(exists){
        if(size < MinShmem*SHM_UNIT) size = MinShmem*SHM_UNIT;
@@ -348,12 +348,17 @@ char* Create_Shared_Region(long idlist[], long size, long *offset)
      return (temp);
 }
 
-
+#ifdef HITACHI
+void server_reset_memory_variables()
+{
+	alloc_regions=0;
+	parent_pid=-1;
+}
+#endif
 
 char *Attach_Shared_Region(long id[], long size, long offset)
 {
     char *temp;
-
     /*initialization */
     if(!alloc_regions){
           int reg;
@@ -364,6 +369,7 @@ char *Attach_Shared_Region(long id[], long size, long offset)
           }
      }
 
+     if(DEBUG)printf("%d:alloc_regions=%d size=%d\n",armci_me,alloc_regions,size);
      /* find out if a new shmem region was allocated */
      if(alloc_regions == id[0] -1){
 #if      defined(HITACHI) || defined(NEC)
@@ -381,7 +387,7 @@ char *Attach_Shared_Region(long id[], long size, long offset)
          alloc_regions - (int) id[0]);
 
      assert(temp);
-      if(DEBUG)fprintf(stderr,"%d:attach succesful off=%ld ptr=%p\n",armci_me,offset,temp);
+      if(DEBUG)fprintf(stderr,"\n%d:attach succesful off=%ld ptr=%p\n",armci_me,offset,temp);
      return(temp);
 }
 

@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.4 2002-01-11 16:49:16 vinod Exp $    **/
+/* $Id: buffers.c,v 1.5 2002-02-26 15:29:20 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -19,7 +19,7 @@
 #define ALIGN64ADD(buf) (SIXTYFOUR-(((ssize_t)(buf))%SIXTYFOUR))
 /* the following symbols should be defined if needed in protocol specific
    header file:  BUF_EXTRA_FIELD, BUFID_PAD_T, BUF_ALLOCATE 
- */
+*/
 
 
 #ifndef BUFID_PAD_T
@@ -41,13 +41,23 @@
 #else
 #define MAX_BUFS  4
 #endif
+
+#ifdef HITACHI
+int numofbuffers=MAX_BUFS;
+#endif
+#ifndef MSG_BUFLEN_SMALL
 #define MSG_BUFLEN_SMALL (MSG_BUFLEN >>0) 
+#endif
 #define LEFT_GUARD  11.11e11
 #define RIGHT_GUARD 22.22e22
 #define CLEAR_TABLE_SLOT(idx) *((int*)(_armci_buf_state->table+(idx))) =0
 
 #ifdef STORE_BUFID
-#  define BUF_TO_BUFINDEX(buf) (*(int*)BUF_TO_EBUF((buf)))  
+#  ifdef HITACHI
+#   define BUF_TO_BUFINDEX(buf) (BUF_TO_EBUF((buf)))->id.bufid
+#  else
+#   define BUF_TO_BUFINDEX(buf) (*(int*)BUF_TO_EBUF((buf))) 
+#  endif 
 #else
 #  define BUF_TO_BUFINDEX(buf)\
           ((BUF_TO_EBUF((buf)))- _armci_buffers)/sizeof(buf_ext_t)
@@ -110,9 +120,9 @@ int  extra= ALIGN64ADD(tmp);
      _armci_buffers = (buf_ext_t *) (tmp + extra); 
 
      if(DEBUG2_){
-	printf("%d:armci_init_bufs: pointer %p, end of region is %p  size=%d\n",
-               armci_me,_armci_buffers,(_armci_buffers+MAX_BUFS),
-               MAX_BUFS*sizeof(buf_ext_t));
+	printf("%d:armci_init_bufs: pointer %p, before align ptr=%p bufptr=%p end of region is %p  size=%d extra=%d\n",
+               armci_me,_armci_buffers,tmp,_armci_buffers->buffer,(_armci_buffers+MAX_BUFS),
+               MAX_BUFS*sizeof(buf_ext_t),extra);
 	fflush(stdout);
      }
      /* now allocate state array */
@@ -161,7 +171,8 @@ extern void _armci_asyn_complete_strided_get(int dsc_id, void *buf);
     if(DEBUG_ ){
        printf("%d:complete_buf_index:%d op=%d first=%d count=%d called=%d\n",
               armci_me,idx,buf_state->op,buf_state->first,buf_state->count,
-              called); fflush(stdout);
+              called); 
+       fflush(stdout);
     }
 
     if(buf_state->first != (unsigned int)idx){ 
@@ -276,7 +287,6 @@ int count=1, i;
        count=(int)val;
        if(size%MSG_BUFLEN_SMALL) count++; 
     }
-    
     /* start from 0 if there is not enough bufs available from here */
     if((avail+count) > MAX_BUFS)avail = 0;
 
@@ -286,7 +296,8 @@ int count=1, i;
               armci_die2("armci_buf_get: inconsistent first", avail,
                          _armci_buf_state->table[avail].first);
       }
-
+	i=((buf_ext_t *)((char *)(&(_armci_buf_state->buf[avail].field))-sizeof(BUFID_PAD_T)))->id.bufid;
+ 
     /* we need complete "count" number of buffers */
     for(i=0;i<count;i++){
         int cur = i +avail;
@@ -306,8 +317,13 @@ int count=1, i;
     _armci_buf_state->buf[avail].id.bufid=avail; 
 #endif
 
+	i=((buf_ext_t *)((char *)(&(_armci_buf_state->buf[avail].field))-sizeof(BUFID_PAD_T)))->id.bufid;
 # ifdef BUF_EXTRA_FIELD_T
     INIT_SEND_BUF(_armci_buf_state->buf[avail].field,_armci_buf_state->table[avail].snd,_armci_buf_state->table[avail].rcv);
+#endif
+
+#ifdef HITACHI
+	PASSBUFID(_armci_buf_state->buf[avail].id.bufid);
 #endif
 
 #ifdef HISTORY
@@ -341,7 +357,6 @@ void _armci_buf_release(void *buf)
 char *ptr = (char*)buf;
 int  count, index = BUF_TO_BUFINDEX(ptr);
 buf_state_t *buf_state = _armci_buf_state->table +index;
-
    if((index >= MAX_BUFS)|| (index<0))
       armci_die2("armci_buf_release: bad index:",index,MAX_BUFS);
 

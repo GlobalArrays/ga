@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.30 2002-02-22 19:21:25 d3h325 Exp $ */
+/* $Id: message.c,v 1.31 2002-02-26 15:29:20 vinod Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -14,7 +14,9 @@
 #include "copy.h"
 #include <stdio.h>
 #ifdef _POSIX_PRIORITY_SCHEDULING
+#ifndef HITACHI
 #  include <sched.h>
+#endif
 #endif
 
 #define DEBUG_ 0
@@ -33,7 +35,15 @@ static float *fwork = (float*)work;
 static int _armci_gop_init=0;   /* tells us if we have a buffers allocated  */
 static int _armci_gop_shmem =0; /* tells us to use shared memory for gops */
 extern void armci_util_spin(int,void*);
-
+# ifdef HITACHI
+typedef struct {
+	int flag;
+	int dummy[31];
+	int flag2;
+	int dummy2[31];
+        double array[BUF_SIZE];
+} bufstruct;
+#else
 typedef struct {
         union {
            int flag;
@@ -45,6 +55,7 @@ typedef struct {
         };
         double array[BUF_SIZE];
 } bufstruct;
+#endif
 static  bufstruct *_gop_buffer; 
 
 #define GOP_BUF(p)  (_gop_buffer+((p)-armci_master))
@@ -238,7 +249,7 @@ void armci_msg_bcast_scope(int scope, void *buf, int len, int root)
 static void cpu_yield()
 {
 #if defined(SYSV) || defined(MMAP) || defined(WIN32)
-#ifdef _POSIX_PRIORITY_SCHEDULING
+#if defined(_POSIX_PRIORITY_SCHEDULING) && !defined(HITACHI)
                sched_yield();
 #elif defined(WIN32)
                Sleep(1);

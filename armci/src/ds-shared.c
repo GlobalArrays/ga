@@ -49,8 +49,10 @@ else if(len <41*PIPE_BUFSIZE){
 else 
 #ifdef VIA
    len = 8*4096;
+#elif defined(HITACHI)
+   len = 128*1024-128;
 #else
-   len = 64*1024-128; 
+   len = 64*1024-128;
 #endif
  return len;
 }
@@ -65,7 +67,11 @@ buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
 
      arg.buf_posted = arg.buf   = buf;
+#ifndef HITACHI
+     arg.count = 0;
+#else
      arg.count = bufsize;
+#endif
      arg.proc  = (msginfo->operation==GET)?msginfo->to:msginfo->from;
      arg.op    = msginfo->operation;
     
@@ -78,7 +84,7 @@ void armci_pipe_receive_strided(request_header_t* msginfo, void *ptr,
 {
 buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
-#ifdef GM
+#if defined(GM) 
      arg.buf_posted   = msginfo->tag.data_ptr;
 #endif
 
@@ -97,7 +103,7 @@ void armci_pipe_send_strided(request_header_t *msginfo, void *buf, int buflen,
 buf_arg_t arg;
 int  packsize = PACK_SIZE(msginfo->datalen);
 
-#ifdef GM
+#if defined(GM) || defined(HITACHI)
      arg.buf_posted   = msginfo->tag.data_ptr;
 #endif
      arg.buf   = buf;
@@ -340,6 +346,7 @@ msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize,ACK,destproc);
 
 static void armci_check_req(request_header_t *msginfo, int buflen)
 {
+
     if((msginfo->to != armci_me && msginfo->to < armci_master) ||
        msginfo->to >= armci_master + armci_clus_info[armci_clus_me].nslave)
         armci_die("armci_rcv_req: invalid to", msginfo->to);
@@ -487,7 +494,7 @@ void armci_data_server(void *mesg)
           }
           armci_server_ipc(msginfo, descr, buffer, buflen);
           break;
-#ifdef SOCKETS
+#if defined(SOCKETS) || defined(HITACHI)
       case QUIT:   
           if(DEBUG_){ 
              printf("%d(serv):got QUIT request from %d\n",armci_me, from);

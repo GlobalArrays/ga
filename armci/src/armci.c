@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.45 2002-02-22 19:21:25 d3h325 Exp $ */
+/* $Id: armci.c,v 1.46 2002-02-26 15:29:19 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -59,7 +59,7 @@ double armci_internal_buffer[BUFSIZE_DBL];
 
 void ARMCI_Cleanup()
 {
-#if defined(SYSV) || defined(WIN32) || defined(MMAP) 
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP))&& !defined(HITACHI) 
     Delete_All_Regions();
 #if !defined(LAPI) 
     DeleteLocks(lockid);
@@ -152,7 +152,7 @@ void ARMCI_Error(char *msg, int code)
 
 void armci_allocate_locks()
 {
-#if defined(SYSV) || defined(WIN32) || defined(MMAP) 
+#if (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
     if(armci_nproc == 1)return;    
     if(armci_master==armci_me)CreateInitLocks(NUM_LOCKS, &lockid);
     armci_msg_clus_brdcst(&lockid, sizeof(lockid));
@@ -166,7 +166,7 @@ void armci_allocate_locks()
 
 void ARMCI_Set_shm_limit(unsigned long shmemlimit)
 {
-#if defined(SYSV) || defined(WIN32)  || defined(MMAP)
+#if (defined(SYSV) || defined(WIN32)  || defined(MMAP)) && !defined(HITACHI)
 #define EXTRASHM  1024   /* extra shmem used internally in ARMCI */
 unsigned long limit;
     limit = armci_clus_info[armci_clus_me].nslave * shmemlimit + EXTRASHM;
@@ -276,7 +276,6 @@ int ARMCI_Init()
 #   if defined(DATA_SERVER) || defined(ELAN)
        if(armci_nclus >1) armci_start_server();
 #   endif
-
     armci_msg_barrier();
 
     armci_init_memlock(); /* allocate data struct for locking memory areas */
@@ -284,7 +283,7 @@ int ARMCI_Init()
 /*    fprintf(stderr,"%d ready \n",armci_me);*/
     armci_msg_barrier();
     armci_msg_gop_init();
-
+    
     return 0;
 }
 
@@ -293,7 +292,6 @@ void ARMCI_Finalize()
 {
     _armci_initialized--;
     if(_armci_initialized)return;
-
     _armci_terminating =1;;
     armci_msg_barrier();
     if(armci_me==armci_master) ARMCI_ParentRestoreSignals();

@@ -1,12 +1,17 @@
-/* $Id: pack.c,v 1.21 2002-01-28 20:16:51 d3h325 Exp $ */
+/* $Id: pack.c,v 1.22 2002-02-26 15:29:20 vinod Exp $ */
 #include "armcip.h"
 #include <stdio.h>
 
 #if !defined(ACC_COPY) &&!defined(CRAY_YMP) &&!defined(CYGNUS)&&!defined(CYGWIN)
 #   define REMOTE_OP 
 #endif
-#ifdef REMOTE_OP
-#  define OP_STRIDED armci_rem_strided
+
+#if defined(REMOTE_OP) 
+#  if defined(HITACHI)
+#    define OP_STRIDED armci_sr8k_rem_strided
+#  else
+#    define OP_STRIDED armci_rem_strided
+#  endif
 #else
 #  define OP_STRIDED armci_op_strided
 #endif
@@ -79,6 +84,10 @@ int armci_pack_strided(int op, void* scale, int proc,
 
 #ifdef STRIDED_GET_BUFLEN
     if(op==GET)bufsize=STRIDED_GET_BUFLEN;
+#  ifdef HITACHI
+    else 
+	if(stride_levels || ACC(op))bufsize=MSG_BUFLEN_SMALL-PAGE_SIZE;
+#  endif
 #endif
 
 #ifdef BALANCE_FACTOR
@@ -273,12 +282,15 @@ int rc=0, nlen, count=0;
     while(len){
 
        armci_split_dscr_array(ndarr, len, &extra, &nlen, &save); 
-
-#ifdef REMOTE_OP
+#if defined(HITACHI)
+      rc=armci_sr8k_rem_vector(op, scale, ndarr,nlen,proc,0);
+#else
+#if defined(REMOTE_OP) 
        rc = armci_rem_vector(op, scale, ndarr,nlen,proc,0);
 #else
        if(ACC(op))rc=armci_acc_vector(op,scale,ndarr,nlen,proc);
        else rc = armci_copy_vector(op,ndarr,nlen,proc);
+#endif
 #endif
        if(rc) break;
 

@@ -14,7 +14,7 @@
 #include <unistd.h>
 #endif
 
-#if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
+#if (defined(SYSV) || defined(WIN32)|| defined(HITACHI)) && !defined(NO_SHM)
 #define CLUSTER 
 
 
@@ -70,8 +70,7 @@ extern thread_id_t armci_usr_tid;
 # include <strings.h>
 #endif
 
-#if defined (CRAY_T3E) || defined(FUJITSU) || (defined(QUADRICS) && !defined(ELAN))\
-			|| defined(HITACHI)
+#if defined (CRAY_T3E) || defined(FUJITSU) || (defined(QUADRICS) && !defined(ELAN))
 #define ACC_COPY
 #endif
 
@@ -97,7 +96,7 @@ extern thread_id_t armci_usr_tid;
 #endif
 
 #if defined(HITACHI)
-#  define BUFSIZE  ((0x50000- RESERVED_BUFLEN) * sizeof(double))
+#  define BUFSIZE  ((0x50000) * sizeof(double))
 #else   
    /* packing algorithm for double complex numbers requires even number */
 #  ifdef MSG_BUFLEN_DBL
@@ -121,8 +120,8 @@ extern thread_id_t armci_usr_tid;
 #define VECTOR  2
 
 extern  int armci_me, armci_nproc;
-
 #ifdef HITACHI
+   extern int sr8k_server_ready;
    extern  double *armci_internal_buffer;
 #else
    extern  double armci_internal_buffer[BUFSIZE_DBL];
@@ -205,7 +204,7 @@ extern void armci_init_fence();
 #  define ORDER(op,proc)\
         if( proc == armci_me || ( ACC(op) && ACC(PENDING_OPER(proc))) );\
         else  FENCE_NODE(proc)
-#elif defined(CLUSTER) && !defined(QUADRICS) && !defined(HITACHI)
+#elif defined(CLUSTER) && !defined(QUADRICS)
 #  define ORDER(op,proc)\
         if(!SAMECLUSNODE(proc) && op != GET )_armci_fence_arr[proc]=1
 #else
