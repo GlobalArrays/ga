@@ -353,9 +353,9 @@ Integer *mem_limit;
 }
 
 
-#define gam_checktype(type)\
-       if(type != MT_F_DBL && type != MT_F_INT &&  type != MT_F_DCPL)\
-         ga_error("type not yet supported ",  type)
+#define gam_checktype(_type)\
+       if(_type != MT_F_DBL && _type != MT_F_INT &&  _type != MT_F_DCPL)\
+         ga_error("type not yet supported ",  _type)
 
 #define gam_checkdim(ndim, dims)\
 {\
@@ -383,11 +383,11 @@ static void print_subscript(char *pre,int ndim, int subscript[], char* post)
 
 Integer mapALL[MAX_NPROC+1];
 
-logical nga_create(Integer *type,
-                   Integer *ndim,
-                   Integer *dims,
+logical nga_create(Integer type,
+                   Integer ndim,
+                   Integer dims[],
                    char* array_name,
-                   Integer *chunk,
+                   Integer chunk[],
                    Integer *g_a)
 {
 Integer pe[MAXDIM], *pmap[MAXDIM], *map;
@@ -398,19 +398,19 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
 
       GA_PUSH_NAME("nga_create");
       if(!GAinitialized) ga_error("GA not initialized ", 0);
-      gam_checktype(*type);
-      gam_checkdim(*ndim, dims);
+      gam_checktype(type);
+      gam_checkdim(ndim, dims);
 
       if(chunk && chunk[0]!=0) /* for either NULL or chunk[0]=0 compute all */
-          for(d=0; d< *ndim; d++) blk[d]=chunk[d];
+          for(d=0; d< ndim; d++) blk[d]=chunk[d];
       else
-          for(d=0; d< *ndim; d++) blk[d]=-1;
+          for(d=0; d< ndim; d++) blk[d]=-1;
 
-      ddb(*ndim, dims, GAnproc, blk, pe);
+      ddb(ndim, dims, GAnproc, blk, pe);
 /*      pe[0]=pe[1]=1; pe[2]=8;*/
 /*      blk[0]=blk[1]=8; blk[2]=1;*/
 
-      for(d=0, map=mapALL; d< *ndim; d++){
+      for(d=0, map=mapALL; d< ndim; d++){
          Integer nblock;
          pmap[d] = map;
          for(i=0,nblock=0; i< dims[d]; i += blk[d], nblock++) map[nblock]=i+1;
@@ -419,10 +419,10 @@ extern void ddb(Integer ndims, Integer dims[], Integer npes, Integer blk[], Inte
       }
 
       if(GAme==0&& DEBUG){
-         print_subscript("pe ",*ndim, pe,"\n");
-         print_subscript("blocks ",*ndim, blk,"\n");
+         print_subscript("pe ",ndim, pe,"\n");
+         print_subscript("blocks ",ndim, blk,"\n");
          printf("decomposition map\n");
-         for(d=0; d< *ndim; d++){
+         for(d=0; d< ndim; d++){
            printf("dim=%d: ",d); 
            for (i=0;i<pe[d];i++)printf("%d ",pmap[d][i]);
            printf("\n"); 
@@ -455,7 +455,7 @@ Integer ndim=2, dims[2], chunk[2];
     chunk[0]=*chunk1;
     chunk[1]=*chunk2;
         
-    return nga_create(type, &ndim,  dims, array_name, chunk, g_a); 
+    return nga_create(*type, ndim,  dims, array_name, chunk, g_a); 
 }
 
 /*\ CREATE A GLOBAL ARRAY
@@ -591,7 +591,7 @@ char buf[FNAM];
       f2cstring(array_name ,slen, buf, FNAM);
 #endif
 
-  return (nga_create(type, ndim,  dims, array_name, chunk, g_a));
+  return (nga_create(*type, *ndim,  dims, array_name, chunk, g_a));
 }
 
 
@@ -681,8 +681,8 @@ Integer ga_handle;
 /*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
 \*/
 logical nga_create_irreg(
-        Integer *type,    /* MA type */ 
-        Integer *ndim,    /* number of dimensions */
+        Integer type,    /* MA type */ 
+        Integer ndim,    /* number of dimensions */
         Integer dims[],   /* array of dimensions */
         char *array_name, /* array name */
         Integer map[],    /* decomposition map array */ 
@@ -699,8 +699,8 @@ Integer  i, ga_handle, status, maplen=0;
       GA_PUSH_NAME("nga_create_irreg");
 
       if(!GAinitialized) ga_error("GA not initialized ", 0);
-      gam_checktype(*type);
-      gam_checkdim(*ndim, dims);
+      gam_checktype(type);
+      gam_checkdim(ndim, dims);
 
       GAstat.numcre ++;
 
@@ -716,12 +716,12 @@ Integer  i, ga_handle, status, maplen=0;
 
       /*** fill in Global Info Record for g_a ***/
       gai_init_struct(ga_handle);
-      GA[ga_handle].type = *type;
+      GA[ga_handle].type = type;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
-      GA[ga_handle].ndim    = *ndim;
+      GA[ga_handle].ndim    = ndim;
 
-      for( i = 0; i< *ndim; i++){
+      for( i = 0; i< ndim; i++){
          GA[ga_handle].dims[i] = dims[i];
          GA[ga_handle].nblock[i] = nblock[i];
          GA[ga_handle].scale[i] = (double)nblock[i]/(double)dims[i];
@@ -729,11 +729,11 @@ Integer  i, ga_handle, status, maplen=0;
       } 
       for(i = 0; i< maplen; i++)GA[ga_handle].mapc[i] = (int)map[i];
       GA[ga_handle].mapc[maplen] = -1;
-      GA[ga_handle].elemsize = GAsizeofM(*type);
+      GA[ga_handle].elemsize = GAsizeofM(type);
 
       /*** determine which portion of the array I am supposed to hold ***/
       nga_distribution_(g_a, &GAme, GA[ga_handle].lo, hi);
-      for( i = 0, nelem=1; i< *ndim; i++){
+      for( i = 0, nelem=1; i< ndim; i++){
            GA[ga_handle].chunk[i] = (int)(hi[i]-GA[ga_handle].lo[i]+1);
            nelem *= GA[ga_handle].chunk[i];
       }
@@ -754,7 +754,7 @@ Integer  i, ga_handle, status, maplen=0;
 /*      fprintf(stderr,"%d, elems=%d size=%d status=%d\n",GAme,nelem,mem_size,status);*/
 /*      ga_sync_();*/
       if(status){
-          status = !gai_getmem(GA[ga_handle].ptr,mem_size,*type,
+          status = !gai_getmem(GA[ga_handle].ptr,mem_size,(int)type,
                               &GA[ga_handle].id);
       }else{
           GA[ga_handle].ptr[GAme]=NULL;
@@ -772,7 +772,6 @@ Integer  i, ga_handle, status, maplen=0;
          status = FALSE;
       }
 
-/*      fprintf(stderr,"%d,exiting nga_create_ir\n",GAme);*/
       GA_POP_NAME;
       return status;
 }
@@ -1094,6 +1093,7 @@ Integer ga_handle = GA_OFFSET + *g_a;
     /* fails if handle is out of range or array not active */
     if(ga_handle < 0 || ga_handle >= max_global_array) return FALSE;
     if(GA[ga_handle].actv==0) return FALSE;       
+    if(GA[ga_handle].ptr[GAme]==NULL) return TRUE;
  
     /* make sure that we free original (before address allignment) pointer */
     ARMCI_Free(GA[ga_handle].ptr[GAme] - GA[ga_handle].id);
