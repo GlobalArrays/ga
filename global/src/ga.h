@@ -110,6 +110,7 @@ extern void GA_Transpose(int g_a, int g_b);
 extern int  GA_Ndim(int g_a);
 
 extern int  GA_Valid_handle(int g_a);
+extern void GA_Nblock(int g_a, int *nblock);
 
 #define GA_Initialize ga_initialize_
 #define GA_Terminate ga_terminate_

@@ -1,4 +1,4 @@
-/* $Id: global.armci.c,v 1.45 2000-09-13 22:17:07 d3h325 Exp $ */
+/* $Id: global.armci.c,v 1.46 2000-10-25 16:42:32 d3h325 Exp $ */
 /* 
  * module: global.armci.c
  * author: Jarek Nieplocha
@@ -2120,6 +2120,25 @@ Integer  d, dpos, ndim, elems;
 }
     
 
+/*\ returns in nblock array the number of blocks each dimension is divided to
+\*/
+void GA_Nblock(int g_a, int *nblock)
+{
+int ga_handle = GA_OFFSET + g_a;
+int i, n;
+
+     ga_check_handleM(&g_a, "ga_nblock");
+
+     n = GA[ga_handle].ndim;
+
+#ifdef USE_FAPI 
+     for(i=0; i<n; i++) nblock[i] = GA[ga_handle].nblock[i]);
+#else
+     for(i=0; i<n; i++) nblock[n-i-1] = GA[ga_handle].nblock[i];
+#endif
+     
+}
+     
 
 void ga_scatter_acc_local(Integer g_a, Void *v,Integer *i,Integer *j,
                           Integer nv, void* alpha, Integer proc) 
