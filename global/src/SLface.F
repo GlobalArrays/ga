@@ -128,7 +128,7 @@ c
                prow = mod(row,Trow)/nbr  ! processor row that holds "row"
                if(myrow.eq.prow) then
                   if(rbase.gt.np .or. cbase .gt. nq) then
-                     call ga_error(" ga_to_SL: rows/cols error ",0)
+                     call ga_error(' ga_to_SL: rows/cols error ',0)
                   endif
                   call ga_get(g_a,row,min(row+nbr -1,dim1),col,
      &                    min(col+nbc -1,dim2), s_a(rbase,cbase), lda) 
@@ -170,7 +170,7 @@ c
                prow = mod(row,Trow)/nbr  ! processor row that holds "row"
                if(myrow.eq.prow) then
                   if(rbase.gt.np .or. cbase .gt. nq)
-     &               call ga_error(" ga_from_SL: rows/cols error ",0)
+     &               call ga_error(' ga_from_SL: rows/cols error ',0)
                   call ga_put(g_a,row,min(row+nbr-1,dim1),col,
      &                    min(col+nbc-1,dim2), s_a(rbase,cbase), lda) 
                   rbase = rbase + nbr
