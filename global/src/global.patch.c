@@ -1,4 +1,4 @@
-/*$Id: global.patch.c,v 1.8 1995-02-02 23:13:35 d3g681 Exp $*/
+/*$Id: global.patch.c,v 1.9 1995-03-08 01:15:06 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
@@ -618,10 +618,18 @@ DoublePrecision ONE = 1.;
                ga_error("ga_matmul_patch: wrong types ", 0L);
 
   /* check if patch indices and dims match */
-   if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-      ga_error(" ga_matmul_patch: g_a indices out of range ", 0L);
-   if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       ga_error(" ga_matmul_patch: g_b indices out of range ", 0L);
+   if (*transa == 'n' || *transa == 'N'){
+      if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
+         ga_error(" ga_matmul_patch: g_a indices out of range ", 0L);
+   }else
+      if (*ailo <= 0 || *aihi > adim2 || *ajlo <= 0 || *ajhi > adim1)
+         ga_error(" ga_matmul_patch: g_a indices out of range ", 0L);
+   if (*transb == 'n' || *transb == 'N'){
+      if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
+          ga_error(" ga_matmul_patch: g_b indices out of range ", 0L);
+   }else
+      if (*bilo <= 0 || *bihi > bdim2 || *bjlo <= 0 || *bjhi > bdim1)
+          ga_error(" ga_matmul_patch: g_b indices out of range ", 0L);
    if (*cilo <= 0 || *cihi > cdim1 || *cjlo <= 0 || *cjhi > cdim2)
        ga_error(" ga_matmul_patch: g_b indices out of range ", 0L);
 
