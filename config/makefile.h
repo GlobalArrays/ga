@@ -297,7 +297,7 @@ endif
 
 ifdef IBM
            FC = xlf
-     FOPT_REN = -qEXTNAME
+     FOPT_REN = -qEXTNAME -qarch=com
 GLOB_DEFINES += -DIBM -DAIX
     EXPLICITF = TRUE
 # we compile blas to avoid headache with missing underscores in the IBM library
