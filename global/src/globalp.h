@@ -3,6 +3,21 @@
 
 #include "config.h"
 
+#ifdef FALSE
+#undef FALSE
+#endif
+#ifdef TRUE
+#undef TRUE
+#endif
+#ifdef CRAY_YMP
+#include <fortran.h>
+#define FALSE _btol(0)
+#define TRUE  _btol(1)
+#else
+#define FALSE (logical) 0
+#define TRUE  (logical) 1
+#endif
+
 #if defined(WIN32)
 #   include "winutil.h"
 #endif
