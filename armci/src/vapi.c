@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.14 2004-03-31 23:38:26 vinod Exp $************************************************ 
+/* $Id: vapi.c,v 1.15 2004-04-05 17:30:50 vinod Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.
@@ -177,7 +177,7 @@ static descr_pool_t client_descr_pool = {MAX_DESCR,0,(VAPI_rr_desc_t *)0};
  * complete a descriptor and know where it came from
 \*/
 
-#define MAX_PENDING 500
+#define MAX_PENDING 16
 #define DSCRID_NBDSCR 10000
 #define DSCRID_NBDSCR_END (10000+MAX_PENDING)
 
@@ -1757,7 +1757,16 @@ BUF_INFO_T *info;
        flag = (long *)&msginfo->tag.ack;
 
        if(op==PUT || ACC(op)){
-         while(armci_util_long_getval(flag) != ARMCI_VAPI_COMPLETE) {
+         if(msginfo->bypass && msginfo->pinned && msginfo->format == STRIDED &&
+                                       op == PUT);
+         else{
+           while(armci_util_long_getval(flag) != ARMCI_VAPI_COMPLETE) {
+             loop++;
+             loop %=100000;
+             if(loop==0){
+               cpu_yield();
+             }
+           }
          }
          *flag = 0L;
        }
@@ -2295,9 +2304,9 @@ static void posts_gather_desc(int num, int id, int type)
        /*VAPI_wc_desc_t pdscr; */
        rc=VAPI_CQ_EMPTY;
        rc = VAPI_post_sr(CLN_nic->handle, (CLN_con + id)->qp, sd);     
-       /*
+       /* 
        while(VAPI_poll_cq(CLN_nic->handle,CLN_nic->scq, &pdscr)==VAPI_CQ_EMPTY);
-       */
+       */ 
        armci_check_status(0,rc,"client posts 1 of several sends");
    }
 

@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.63 2004-03-31 23:38:26 vinod Exp $ */
+/* $Id: request.c,v 1.64 2004-04-05 17:30:50 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -567,6 +567,7 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc,i
         buf = buf0= GET_SEND_BUFFER(bufsize,op,proc);
     }
     msginfo = (request_header_t*)buf;
+    bzero(msginfo,sizeof(request_header_t));
 
     if(nb_handle){
       INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
@@ -705,6 +706,7 @@ int armci_rem_strided(int op, void* scale, int proc,
         armci_set_nbhandle_bufid(nb_handle,buf,0);
     }
     msginfo = (request_header_t*)buf;
+    bzero(msginfo,sizeof(request_header_t));
 
     if(op == GET){
        rem_ptr = src_ptr;
@@ -951,8 +953,10 @@ int armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int);
        printf("%d(c) : returned from armci_post_gather\n",armci_me);
        fflush(stdout);
     }
-    if(!nbhandle)
+    if(!nbhandle){
       armci_complete_multi_sglist_sends(proc);
+      FREE_SEND_BUFFER(msginfo);
+    }
     else{
        BUF_INFO_T *info=NULL; 
        info=BUF_TO_BUFINFO(buf0);
