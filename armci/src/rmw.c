@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.12 2001-07-31 19:31:38 d3h325 Exp $ */
+/* $Id: rmw.c,v 1.13 2001-11-09 18:31:46 d3h325 Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -55,8 +55,10 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
              long long *tgt_var,
              long long *in_val, long long *prev_tgt_val, lapi_cntr_t *org_cntr);
     long long llval, *pllarg = (long long*)ploc, lltmp;
-#define RMWBROKEN 
+/* enable RMWBROKEN if RMW fails for long datatype */
+#define RMWBROKEN_ 
 #endif
+
 #ifdef LAPI
     int  ival, rc, opcode=SWAP, *parg=ploc;
     lapi_cntr_t req_id;
@@ -116,7 +118,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
            lltmp  = (long long)extra;
            pllarg = &lltmp;
         case ARMCI_SWAP_LONG:
-#if 1
+#if 0
           printf("before opcode=%d rem=%ld, loc=(%ld,%ld) extra=%ld\n",
                   opcode,*prem,*(long*)ploc,llval, lltmp);  
           rc= sizeof(long);
@@ -131,7 +133,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
                         armci_die("rmw wait failed",rc);
 
           *(long*)ploc  = (long)llval;
-#if 1
+#if 0
           rc= sizeof(long);
           ARMCI_Get(prem, &lltmp, rc, proc);
           printf("%d:after rmw remote val from rmw=%ld and get=%ld extra=%d\n",
