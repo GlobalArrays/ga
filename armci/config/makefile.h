@@ -38,6 +38,7 @@ endif
 
 ifeq ($(TARGET),SOLARIS)
      FLD_REN  = -xs
+   EXTRA_LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
 endif
 
 ifeq ($(TARGET),HPUX)
