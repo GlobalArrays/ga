@@ -21,6 +21,7 @@
 #  endif
 
    typedef Integer logical;
+   typedef Integer Logical;
 
 #  if defined(__STDC__) || defined(__cplusplus) || defined(WIN32)
      typedef void Void;
