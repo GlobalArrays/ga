@@ -53,7 +53,7 @@
 #if   defined(AIX)
 #     define DCOPY2D	dcopy2d_u
 #     define DCOPY1D	dcopy1d_u
-#elif defined(LINUX) || defined(HPUX64)
+#elif defined(LINUX) || defined(HPUX64) || defined(DECOSF)
 #     define DCOPY2D	dcopy2d_n_
 #     define DCOPY1D	dcopy1d_n_
 #elif defined(CRAY)  || defined(WIN32)

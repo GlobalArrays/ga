@@ -4,8 +4,11 @@
 #include <stdlib.h>
 #include "armcip.h"
 #include "copy.h"
+#ifndef LINUX64
+#include "queue.h"
+#endif
 
-#define DEBUG_ 1
+#define DEBUG_ 0
 
 static int armci_server_terminating=0;
 static ELAN_MAIN_QUEUE *mq;
@@ -39,8 +42,9 @@ int nslots=armci_nproc, slotsize=_ELAN_SLOTSIZE;
              armci_die("failed to allocate ARMCI fence array",0);
     bzero(armci_elan_fence_arr[armci_me],armci_nproc*sizeof(int));
 
+#if 0
   printf("%d:vp=%d localId=%d SendBuf=%p\n",armci_me,elan_base->state->vp,elan_base->state->localId,        MessageSndBuffer); 
-armci_get(MessageSndBuffer, MessageRcvBuffer, 512, armci_nproc-1-armci_me);
+#endif
 }
 
 

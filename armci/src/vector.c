@@ -1,4 +1,4 @@
-/* $Id: vector.c,v 1.9 1999-10-14 00:18:51 d3h325 Exp $ */
+/* $Id: vector.c,v 1.10 2001-04-10 21:57:12 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -350,7 +350,9 @@ int ARMCI_PutV( armci_giov_t darr[], /* descriptor array */
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
     ORDER(PUT,proc); /* ensure ordering */
+#ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
+#endif
 
     /* use direct protocol for remote access when performance is better */
 #   ifdef LAPI
@@ -387,7 +389,9 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
     if(proc<0 || proc >= armci_nproc)return FAIL5;
 
     ORDER(GET,proc); /* ensure ordering */
+#ifndef QUADRICS
     direct=SAMECLUSNODE(proc);
+#endif
 
     /* use direct protocol for remote access when performance is better */
 #   ifdef LAPI

@@ -19,16 +19,13 @@ License along with the GNU C Library; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 675 Mass Ave,
 Cambridge, MA 02139, USA.  */
 
-#include <asm/pal.h>
-
 
 /* Spinlock implementation; required.  */
 static inline long testandset(int *spinlock)
 {
   long ret, temp;
 
-  __asm__ __volatile__(
-        "/* Inline spinlock test & set */\n"
+  asm volatile(
         "1:\t"
         "ldl_l %0,%3\n\t"
         "bne %0,2f\n\t"
@@ -36,7 +33,6 @@ static inline long testandset(int *spinlock)
         "stl_c %1,%2\n\t"
         "beq %1,1b\n"
         "2:\tmb\n"
-        "/* End spinlock test & set */"
         : "=&r"(ret), "=&r"(temp), "=m"(*spinlock)
         : "m"(*spinlock)
         : "memory");
@@ -46,6 +42,6 @@ static inline long testandset(int *spinlock)
 
 /* Spinlock release; default is just set to zero.  */
 #define RELEASE_SPINLOCK(spinlock) \
-  __asm__ __volatile__("mb" : : : "memory"); \
+  asm volatile("mb" : : : "memory"); \
   *spinlock = 0
 

@@ -58,6 +58,9 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
 # only one of the two lines below can be uncommented
 #   LIB_DEFINES += -DNO_SHM
     LIB_DEFINES += -DALLOC_MUNMAP -DACC_SMP
+#   LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT -DELAN
+#   OBJ += elan.o spawn.o ds-shared.o request.o
+#   EXTRA_LIBS += -lpthread
 endif
 
 ifdef ARMCI_NETWORK

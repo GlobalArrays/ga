@@ -14,7 +14,7 @@
 
 #if 0
 /* code disabled until more tests of pthread locking is done */
-#if !defined(SPINLOCK) &&  defined(SGI) 
+#if !defined(SPINLOCK) && (defined(SGI) || defined(DECOSF)) && defined(PTHREADS)
 /* check if Pthreads locks in Posix 1003.1c support processes*/
 #include <pthread.h>
 #include <unistd.h>
@@ -33,6 +33,7 @@
      cannot run
 # endif
 #endif
+
 
 #if defined(SPINLOCK) || defined(PMUTEXES)
 #  include "shmem.h"

@@ -1,4 +1,4 @@
-#ifdef __alpha__
+#ifdef __alpha
 # include "tas-alpha.h"
 #elif defined(__i386__)
 # include "tas-i386.h"

@@ -1,6 +1,6 @@
-#if defined(LINUX)
+#if defined(LINUX) || defined(DECOSF)
 
-#if defined(__i386__) || defined(__alpha__) 
+#if defined(__i386__) || defined(__alpha) 
 #  define SPINLOCK 
 #  if defined(__GNUC__)
 #     ifdef __i386__
