@@ -2,21 +2,31 @@
  ELementary I/O (ELIO) disk operations for Chemio libraries   
 \**********************************************************************/
 
-
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
 #if defined(PARAGON)
+#  include <sys/mount.h>
 #  include <nx.h>
+#endif
+#if defined(AIX)
+#  include <piofs/piofs_ioctl.h>
 #endif
 
 #include "elio.h"
 #include "pablo.h"
 
+/****************** Internal Constants and Parameters **********************/
 
 #define  MAX_AIO_REQ  4
 #define  NULL_AIO    -123456
-
-#define FOPEN_MODE 0644
-#define MAX_ATTEMPTS 10
+#define  FOPEN_MODE 0644
+#define  MAX_ATTEMPTS 10
 
 
 #if  defined(AIX) || defined(DECOSF) || defined(SGITFP) || defined(notKSR)
@@ -34,11 +44,12 @@ const struct aiocb   *cb_fout_arr[MAX_AIO_REQ];
 #   define INPROGRESS 1            /* I wish this didn't have to be here */
 #endif
 
+static int            aio_req[MAX_AIO_REQ]; /* array for AIO requests */
+static int            first_elio_init = 1;  /* intialization status */
+static int            _elio_Errors_Fatal=1; /* sets mode of handling errors */
 
-static int            aio_req[MAX_AIO_REQ];
-static int            first_elio_init = 1;
 
-
+/****************************** Internal Macros *****************************/
 #if defined(AIO) || defined(PARAGON)
 #  define AIO_LOOKUP \
       while(aio_req[aio_i] != NULL_AIO && aio_i < MAX_AIO_REQ) aio_i++;
@@ -50,9 +61,9 @@ static int            first_elio_init = 1;
 #define SYNC_EMMULATE(op) \
   if( elio_ ## op (fd, offset, buf, bytes) != bytes ) \
     { \
-        fprintf(stderr, "sync_emmulate: stat=%d  bytes=%d\n", stat, bytes); \
-	*req_id = ELIO_DONE; \
-	stat   = ELIO_FAIL;  \
+       fprintf(stderr,"sync_emmulate:stat=%d bytes=%d\n",(int)stat,(int)bytes);\
+       *req_id = ELIO_DONE; \
+       stat   = ELIO_FAIL;  \
     } \
   else \
     { \
@@ -60,10 +71,7 @@ static int            first_elio_init = 1;
        stat    = 0; \
     }
 
-static int _elio_Errors_Fatal=1;
-
-
-/****************************************************************/
+/*****************************************************************************/
 
 
 void elio_errors_fatal(onoff)
@@ -307,7 +315,9 @@ int elio_wait(req_id)
 io_request_t *req_id;
 {
   int  aio_i=0;
+#ifdef AIX
   int  rc;
+#endif
  
   PABLO_start(PABLO_elio_wait); 
   if(*req_id != ELIO_DONE )
@@ -582,14 +592,13 @@ char  *filename;
 \*/
 void elio_init()
 {
-  int i;
-
   PABLO_start(PABLO_elio_init);
 
   if(first_elio_init)
     {
       first_elio_init = 0;
 #if defined(AIO) || defined(PARAGON)
+      int i;
       for(i=0; i < MAX_AIO_REQ; i++)
 	aio_req[i] = NULL_AIO;
 #endif

@@ -1,49 +1,34 @@
-/* file name: elio.h */
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-#if defined(PARAGON)
-#  include <sys/mount.h>
-#endif
-#if defined(AIX)
-#  include <piofs/piofs_ioctl.h> 
-#endif
+/* file name: elio.h  to be included by all apps that use ELIO */
 
-#include "chemio.h"
+/*include file that contains some common constants, also include by fortran */
+#include "chemio.h" 
 
 
-/* file descriptor type definition */
+/*********************** type definitions for ELIO interface *****************/
 typedef struct {
   int   fd;
   int   fs;
-} Fd_t;
-
-
-/*asynchronous I/O request type */
-typedef long io_request_t;
-
-typedef long Size_t;
+} Fd_t;                      /* file descriptor type definition */
+typedef long io_request_t;   /* asynchronous I/O request type */
+typedef long Size_t;         /* size of I/O request type */ 
 
 
 #ifndef _VOID_DEFINED_
+#  define _VOID_DEFINED_ 1 
 #  if !defined(__STDC__) || !defined(__cplusplus)
       typedef char Void;
 #  else
       typedef void Void;
 #  endif
-#  define _VOID_DEFINED_ 1 
 #endif
 
 
+/********************** ELIO function prototypes *****************************/
 #if defined(__STDC__) || defined(__cplusplus)
 # define _ARGS_(s) s
 #else
 # define _ARGS_(s) ()
 #endif
-
 
 extern Size_t elio_read     _ARGS_((Fd_t *fd, off_t offset, Void *buf,
                                     Size_t bytes)); 
@@ -65,34 +50,41 @@ extern int    elio_stat     _ARGS_((char *fname));
 
 #undef _ARGS_
 
-
-#define ELIO_FILENAME_MAX 1024
-
-#define SDIRS_INIT_SIZE 1024
-
-#define FS_UFS		0
-#define FS_PFS		1
-#define FS_PIOFS	2
+/* constants to indicate filesystem type */
+#define FS_UFS		0     /* Unix filesystem type */
+#define FS_PFS		1     /* PFS Intel parallel filesystem type */
+#define FS_PIOFS	2     /* IBM SP parallel filesystem type */
 
 
-
-
+/**************************** Error Macro ******************************/
+/* ELIO defines error macro called in case of error
+ * the macro can also use user-provided error routine PRINT_AND_ABORT
+ * defined as macro to do some cleanup in the application before
+ * aborting
+ * The requirement is that PRINT_AND_ABORT is defined before
+ * including ELIO header file - this file
+ */
 #if !defined(PRINT_AND_ABORT)
-#define PRINT_AND_ABORT(val) \
+#if defined(SUN) && !defined(SOLARIS)
+extern int fprintf();
+extern void fflush();
+#endif
+
+#define PRINT_AND_ABORT(msg, val) \
 { \
-  fprintf(stderr, "ELIO Super-Fatal: PRINT_AND_ABORT not defined!\n"); \
+  fprintf(stderr, "ELIO fatal error: %s %d\n", msg, (int) val); \
+  fprintf(stdout, "ELIO fatal error: %s %d\n", msg, (int) val); \
+  fflush(stdout);\
   exit(val); \
 }
 #endif
 
 #define ELIO_ABORT(msg, val) \
 { \
-  fprintf(stderr, "ELIO Fatal -- Exiting with %d\n", val ); \
-  fprintf(stderr, "ELIO Fatal -- Msg: %s\n", msg ); \
   elio_terminate(); \
-  PRINT_AND_ABORT(val); \
+  PRINT_AND_ABORT(msg, val); \
 }
 
-
-
-
+/************** this stuff is exported because EAF uses it **************/
+#define ELIO_FILENAME_MAX 1024
+#define SDIRS_INIT_SIZE 1024
