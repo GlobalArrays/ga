@@ -30,16 +30,16 @@ ifeq ($(TARGET),LINUX)
      FOPT_REN = -fno-second-underscore
            FC = g77
            CC = gcc
-ifeq ($(TARGET_CPU),POWERPC)
-#    no special optimization flags
-else
-  ifeq ($(CC),gcc)
-       COPT_REN = -malign-double
-  endif
+ifndef TARGET_CPU
   ifeq ($(FC),g77)
-      FOPT_REN += -malign-double
+       FOPT_REN += -malign-double
+  endif
+  ifeq ($(CC),gcc)
+       COPT_REN += -malign-double
   endif
 endif
+#
+#                GNU compilers 
 ifeq ($(CC),gcc)
    ifeq ($(COPT),-O)
          COPT = -O2
@@ -51,7 +51,12 @@ ifeq ($(FC),g77)
          FOPT = -O3
     FOPT_REN += -funroll-loops -fomit-frame-pointer
    endif
+   ifeq ($(TARGET_CPU), ULTRA)
+         GLOB_DEFINES+= -DMEMCPY
+   endif
 endif      
+#
+#
 ifeq ($(FC),pgf77)
  MAKEFLAGS += FC=pgf77
  FOPT_REN = -Mdalign -Mnolist -Minform,warn -Minfo=loop -Munixlogical
@@ -261,6 +266,10 @@ GLOB_DEFINES  += -DAIX
 endif
 
 #...................... common definitions .......................
+
+ifdef TARGET_CPU
+       GLOB_DEFINES += -D$(TARGET_CPU)
+endif
 
        DEFINES = $(GLOB_DEFINES) $(LIB_DEFINES)
 

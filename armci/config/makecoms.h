@@ -12,7 +12,7 @@ ifeq ($(ARMCI_NETWORK),GM)
     COMM_LIBS = -L$(GM_LIB)
   endif
   GM_LIB_NAME = -lgm
-  COMM_LIBS += $(GM_LIB_NAME) -lpthread
+  COMM_LIBS += $(GM_LIB_NAME) -lpthread -lm
 endif
 
 ifeq ($(ARMCI_NETWORK),VIA)
@@ -57,3 +57,4 @@ endif
 ifeq ($(TARGET),HPUX)
    COMM_LIBS = -lm
 endif
+
