@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.72 2003-07-30 15:55:05 vinod Exp $ */
+/* $Id: strided.c,v 1.73 2003-08-01 00:10:36 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -183,7 +183,7 @@ static void daxpy_2d_(void* alpha, int *rows, int *cols, void *a, int *ald,
 
 void armci_acc_1D(int op, void *scale, int proc, void *src, void *dst, int bytes, int lockit)
 {
-int rows,size;
+int rows;
 void (ATR *func)(void*, void*, void*, int*);
       switch (op){
       case ARMCI_ACC_INT:

@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.34 2003-07-30 19:04:32 vinod Exp $ */
+/* $Id: memory.c,v 1.35 2003-08-01 00:10:36 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -271,7 +271,7 @@ int ARMCI_Malloc(void *ptr_arr[], armci_size_t bytes)
     vampir_begin(ARMCI_MALLOC,__FILE__,__LINE__);
 #endif
     if(DEBUG_)
-       fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, bytes);
+       fprintf(stderr,"%d bytes in armci_malloc %d\n",armci_me, (int)bytes);
 #ifdef USE_MALLOC
     if(armci_nproc == 1) {
       ptr = kr_malloc((size_t) bytes, &ctx_localmem);

@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.15 2003-07-10 19:19:28 d3h325 Exp $ */
+/* $Id: fence.c,v 1.16 2003-08-01 00:10:36 manoj Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -118,7 +118,6 @@ void ARMCI_AllFence()
 
 void ARMCI_Barrier()
 {
-long type=ARMCI_TAG;
 #ifdef GM
 int buf;
     /*first step is to make sure all the sends are complete */
@@ -127,8 +126,11 @@ int buf;
     /*now do the barrier */
 #  ifdef MPI
     MPI_Barrier(MPI_COMM_WORLD);
-#  else
-    SYNCH_(&type);
+#  else 
+    {
+       long type=ARMCI_TAG;
+       SYNCH_(&type);
+    }
 #  endif
 
    /*master sends a message to the server on the same node, waits for response*/
@@ -141,8 +143,11 @@ int buf;
     ARMCI_AllFence();
 #  ifdef MPI
     MPI_Barrier(MPI_COMM_WORLD);
-#  else
-    SYNCH_(&type);
+#  else 
+    {
+       long type=ARMCI_TAG;
+       SYNCH_(&type);
+    }
 #  endif
 #endif
 }
