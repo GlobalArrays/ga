@@ -174,7 +174,10 @@ c
 c     
 c***     allocate some memory for std eigensolver 
 c
-         status = ma_push_get(mt_int,n,'iscratch',his,adris)
+*
+* temporary patch following george's reccomendation to use 6n
+*
+         status = ma_push_get(mt_int,6*n,'iscratch',his,adris)
          call fmemreq(1,n,int_mb(adrma),int_mb(adrma),int_mb(adrmz),
      &        isize, rsize, ptr_size,int_mb(adris))
          status = ma_pop_stack(his)
@@ -439,7 +442,10 @@ c
 c     
 c        allocate some memory for eigensolver 
 c
-         status = ma_push_get(mt_int,n,'iscratch',his,adris)
+*
+* temporary patch following george's reccomendation to use 6n
+*
+         status = ma_push_get(mt_int,6*n,'iscratch',his,adris)
          call fmemreq(0,n,int_mb(adrma),int_mb(adrmb),int_mb(adrmz),
      &        isize, rsize, ptr_size,int_mb(adris))
          status = ma_pop_stack(his)
@@ -765,7 +771,10 @@ c
 c     
 c***     allocate some scratch memory for eigensolver 
 c
-         status = ma_push_get(mt_int,n,'iscratch',his,adris)
+*
+* temporary patch following george's reccomendation to use 6n
+*
+         status = ma_push_get(mt_int,6*n,'iscratch',his,adris)
          call fmemreq(0,n,int_mb(adrma),int_mb(adrmb),int_mb(adrmz),
      &        isize, rsize, ptr_size,int_mb(adris))
          status = ma_pop_stack(his)
