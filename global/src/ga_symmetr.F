@@ -54,7 +54,7 @@ c    $            ilo, ihi, jlo, jhi
       call ga_sync()
       
       if(have_data) then
-         call ga__add(nrow, ncol, dbl_mb(adrA), lda, dbl_mb(adrB),
+         call gai_add(nrow, ncol, dbl_mb(adrA), lda, dbl_mb(adrB),
      &                ncol, alpha)
          call ga_release_update(g_a, ilo, ihi, jlo, jhi)
          if (.not. ma_pop_stack(hB))
@@ -67,7 +67,7 @@ c
 
 
 
-      subroutine ga__add(nrow, ncol, A, lda, B, ldb, alpha)
+      subroutine gai_add(nrow, ncol, A, lda, B, ldb, alpha)
 c
 c     A := alpha * (A + B^)
 c
