@@ -72,7 +72,11 @@ PRIVATE Integer map[MAX_NPROC][5];               /* used in get/put/acc */
 #define ALLIGN_SIZE      128
 #endif
 
+#define ERR_STR_LEN 200
+char err_string[ ERR_STR_LEN];         /* string for extended error reporting */
 
+char *GA_name_stack[NAME_STACK_LEN];   /* stack for storing names of GA ops */ 
+int  GA_stack_size=0;
 
 /********************** MACROS ******************************/
 #define allign_size(n) \
@@ -80,14 +84,14 @@ PRIVATE Integer map[MAX_NPROC][5];               /* used in get/put/acc */
 
 #define ga_check_handleM(g_a, string) \
 {\
-    if(GA_OFFSET+ (*g_a) < 0 || GA_OFFSET+(*g_a) >= max_global_array){\
-      fprintf(stderr, " ga_check_handle: %s ", string); \
-      ga_error(" invalid global array handle ", (*g_a));\
+    if(GA_OFFSET+ (*g_a) < 0 || GA_OFFSET+(*g_a) >= max_global_array){ \
+      sprintf(err_string, "%s: INVALID ARRAY HANDLE", string);         \
+      ga_error(err_string, (*g_a));                                    \
     }\
-    if( ! (GA[GA_OFFSET+(*g_a)].actv) ){                \
-      fprintf(stderr, " ga_check_handle: %s ", string); \
-      ga_error(" global array is not active ", (*g_a)); \
-    }                                                   \
+    if( ! (GA[GA_OFFSET+(*g_a)].actv) ){                               \
+      sprintf(err_string, "%s: ARRAY NOT ACTIVE", string);             \
+      ga_error(err_string, (*g_a));                                    \
+    }                                                                  \
 }
       
 

@@ -1,17 +1,17 @@
-/*$Id: global.patch.c,v 1.9 1995-03-08 01:15:06 d3h325 Exp $*/
+/*$Id: global.patch.c,v 1.10 1995-03-29 23:40:34 d3h325 Exp $*/
 #include "global.h"
 #include "globalp.h"
 #include "macommon.h"
 
 #ifdef KSR
-#define dgemm_ sgemm_
+#  define dgemm_ sgemm_
 #endif
 
 #ifdef CRAY_T3D
 #      include <fortran.h>
 #      define cptofcd(fcd)  _cptofcd((fcd),1)
 #else
-#     define cptofcd(fcd) (fcd)
+#      define cptofcd(fcd) (fcd)
 #endif
 
 
@@ -87,8 +87,7 @@ DoublePrecision mismatch;
 Integer type = GA_TYPE_GSM, len = 1;
 
    ga_sync_();
-   ga_check_handle(g_a, "ga_compare_distr");
-   ga_check_handle(g_b, "ga_compare_distr");
+   GA_PUSH_NAME("ga_compare_distr");
 
    ga_distribution_(g_a, &me, &iloA, &ihiA, &jloA, &jhiA);
    ga_distribution_(g_b, &me, &iloB, &ihiB, &jloB, &jhiB);
@@ -96,6 +95,8 @@ Integer type = GA_TYPE_GSM, len = 1;
    mismatch = comp_patch(iloA, ihiA, jloA, jhiA, iloB, ihiB, jloB, jhiB)?0. :1.;
    ga_dgop_(&type, &mismatch, &len, "+",1);
    ga_sync_();
+   GA_POP_NAME;
+
    if(mismatch) return (FALSE);
    else return(TRUE); 
 }
@@ -121,28 +122,24 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
 
    ga_sync_();
 
-   ga_check_handle(g_a, "ga_copy_patch");
-   ga_check_handle(g_b, "ga_copy_patch");
-
-   if(*g_a == *g_b) ga_error("ga_copy_patch: arrays have to different ", 0L);
+   GA_PUSH_NAME("ga_copy_patch");
+   if(*g_a == *g_b) ga_error(" arrays have to different ", 0L);
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype )
-        ga_error("ga_copy_patch: array type mismatch ", 0L);
-
+   if(atype != btype ) ga_error(" array type mismatch ", 0L);
 
    /* check if patch indices and dims match */
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-       ga_error(" ga_copy_patch: g_a indices out of range ", 0L);
+       ga_error(" g_a indices out of range ", 0L);
    if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       ga_error(" ga_copy_patch: g_b indices out of range ", 0L);
+       ga_error(" g_b indices out of range ", 0L);
 
    /* check if numbers of elements in two patches match each other */
    if ((*bihi - *bilo + 1) * (*bjhi - *bjlo + 1) !=
        (*aihi - *ailo + 1) * (*ajhi - *ajlo + 1))
-       ga_error(" ga_copy_patch: capacities two of patches do not match ", 0L);
+       ga_error(" capacities two of patches do not match ", 0L);
 
    /* now find out cordinates of a patch of g_a that I own */
    ga_distribution_(g_a, &me, &ilos, &ihis, &jlos, &jhis);
@@ -168,11 +165,11 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
         /*** due to generality of this transformation scatter is required ***/
 
          if(!MA_push_get(MT_F_INT, nelem, "i", &ihandle, &iindex))
-            ga_error(" ga_copy_patch: MA failed ", 0L);
+            ga_error(" MA failed-i ", 0L);
          if(!MA_push_get(MT_F_INT, nelem, "j", &jhandle, &jindex))
-            ga_error(" ga_copy_patch: MA failed ", 0L);
+            ga_error(" MA failed-j ", 0L);
          if(!MA_push_get(atype, nelem, "v", &vhandle, &vindex))
-            ga_error(" ga_copy_patch: MA failed ", 0L);
+            ga_error(" MA failed-v ", 0L);
 
          base = 0;
          if(atype == MT_F_DBL ){
@@ -222,6 +219,7 @@ Integer ihandle, jhandle, vhandle, iindex, jindex, vindex, nelem, base, ii, jj;
          MA_pop_stack(ihandle);
       }
   }
+  GA_POP_NAME;
   ga_sync_();
 }
 
@@ -240,6 +238,7 @@ void ga_copy_patch_(trans, g_a, ailo, aihi, ajlo, ajhi,
      char*   trans;
 {  ga_copy_patch(trans,g_a,ailo,aihi,ajlo,ajhi,g_b,bilo,bihi,bjlo,bjhi); }
 #endif
+
 
 
 /*\ compute DOT PRODUCT of two patches
@@ -263,28 +262,25 @@ char *tempname = "temp", transp, transp_a, transp_b;
 DoublePrecision  sum = 0.;
 
    ga_sync_();
-
-   ga_check_handle(g_a, "ga_ddot_patch");
-   ga_check_handle(g_b, "ga_ddot_patch");
+   GA_PUSH_NAME("ga_ddot_patch");
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
 
-   if(atype != btype || (atype != MT_F_DBL ))
-      ga_error("ga_ddot_patch: wrong types ", 0L); 
+   if(atype != btype || (atype != MT_F_DBL )) ga_error(" wrong types ", 0L); 
 
   /* check if patch indices and g_a dims match */ 
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2) 
-      ga_error(" ga_ddot_patch: g_a indices out of range ", 0L);
+      ga_error(" g_a indices out of range ", *g_a);
 
    /* check if patch indices and g_b dims match */
    if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       ga_error(" ga_ddot_patch: g_b indices out of range ", 0L);
+       ga_error(" g_b indices out of range ", *g_b);
 
    /* check if numbers of elements in two patches match each other */
    if ((*bihi - *bilo + 1) * (*bjhi - *bjlo + 1) !=
        (*aihi - *ailo + 1) * (*ajhi - *ajlo + 1))
-       ga_error(" ga_ddot_patch: capacities of two patches do not match ", 0L);
+       ga_error(" capacities of two patches do not match ", 0L);
 
    /* is transpose operation required ? */
    /* -- only if for one array transpose operation requested*/
@@ -313,7 +309,7 @@ DoublePrecision  sum = 0.;
    ga_distribution_(&g_B, &me, &iloB, &ihiB, &jloB, &jhiB);
 
    if( ! comp_patch(iloA, ihiA, jloA, jhiA, iloB, ihiB, jloB, jhiB))
-         ga_error("ga_ddot_patch error: patch mismatch ",0); 
+         ga_error(" patches mismatch ",0); 
 
    /*  determine subsets of my patches to access  */
    if (patch_intersect(ailo, aihi, ajlo, ajhi, &iloA, &ihiA, &jloA, &jhiA)){
@@ -336,6 +332,7 @@ DoublePrecision  sum = 0.;
    ga_sync_();
    if(temp_created) ga_destroy_(&g_B);
 
+   GA_POP_NAME;
    return (sum);
 }
 
@@ -370,10 +367,10 @@ Integer iloA, ihiA, jloA, jhiA, index, ld;
 Integer me= ga_nodeid_(), i, j;
 
    ga_sync_();
-   ga_check_handle(g_a, "ga_ifill_patch");
-   ga_inquire_(g_a,  &type, &dim1, &dim2);
+   GA_PUSH_NAME("ga_ifill_patch");
 
-   if(type != MT_F_INT) ga_error("ga_ifill_patch: wrong array type ", 0L);
+   ga_inquire_(g_a,  &type, &dim1, &dim2);
+   if(type != MT_F_INT) ga_error(" wrong array type ", 0L);
    ga_distribution_(g_a, &me, &iloA, &ihiA, &jloA, &jhiA);
 
    /*  determine subset of my patch to access  */
@@ -388,7 +385,9 @@ Integer me= ga_nodeid_(), i, j;
        /* release access to the data */
         ga_release_update_(g_a, &iloA, &ihiA, &jloA, &jhiA);
    }
-  ga_sync_();
+
+   GA_POP_NAME;
+   ga_sync_();
 }
 
 
@@ -404,10 +403,10 @@ Integer iloA, ihiA, jloA, jhiA, index, ld;
 Integer me= ga_nodeid_(), i, j;
 
    ga_sync_();
-   ga_check_handle(g_a, "ga_dfill_patch");
-   ga_inquire_(g_a,  &type, &dim1, &dim2);
+   GA_PUSH_NAME("ga_dfill_patch");
 
-   if(type != MT_F_DBL) ga_error("ga_dfill_patch: wrong array type ", 0L);
+   ga_inquire_(g_a,  &type, &dim1, &dim2);
+   if(type != MT_F_DBL) ga_error("wrong array type ", *g_a);
    ga_distribution_(g_a, &me, &iloA, &ihiA, &jloA, &jhiA);
 
    /*  determine subset of my patch to access  */
@@ -422,7 +421,8 @@ Integer me= ga_nodeid_(), i, j;
        /* release access to the data */
         ga_release_update_(g_a, &iloA, &ihiA, &jloA, &jhiA);
    }
-  ga_sync_();
+   GA_POP_NAME;
+   ga_sync_();
 }
 
 
@@ -438,10 +438,10 @@ Integer iloA, ihiA, jloA, jhiA, index, ld, i, j;
 Integer me= ga_nodeid_();
 
    ga_sync_();
-   ga_check_handle(g_a, "ga_dscal_patch");
-   ga_inquire_(g_a,  &type, &dim1, &dim2);
+   GA_PUSH_NAME("ga_dscal_patch");
 
-   if(type != MT_F_DBL) ga_error("ga_dscal_patch: wrong array type ", 0L);
+   ga_inquire_(g_a,  &type, &dim1, &dim2);
+   if(type != MT_F_DBL) ga_error("wrong array type ", *g_a);
    ga_distribution_(g_a, &me, &iloA, &ihiA, &jloA, &jhiA);
 
    /*  determine subset of my patch to access  */
@@ -456,7 +456,8 @@ Integer me= ga_nodeid_();
        /* release access to the data */
         ga_release_update_(g_a, &iloA, &ihiA, &jloA, &jhiA);
    }
-  ga_sync_();
+   GA_POP_NAME;
+   ga_sync_();
 }
 
 
@@ -480,31 +481,28 @@ Integer nelem;
 char *tempname = "temp", notrans='n';
 
    ga_sync_();
-
-   ga_check_handle(g_a, "ga_dadd_patch");
-   ga_check_handle(g_b, "ga_dadd_patch");
-   ga_check_handle(g_c, "ga_dadd_patch");
+   GA_PUSH_NAME("ga_dadd_patch");
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
    ga_inquire_(g_c, &ctype, &cdim1, &cdim2);
 
    if(atype != btype || atype != ctype || atype != MT_F_DBL)
-               ga_error("ga_dadd_patch: wrong types ", 0L); 
+               ga_error(" types mismatch ", 0L); 
 
   /* check if patch indices and dims match */ 
    if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2) 
-      ga_error(" ga_dadd_patch: g_a indices out of range ", 0L);
+       ga_error("  g_a indices out of range ", *g_a);
    if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-       ga_error(" ga_dadd_patch: g_b indices out of range ", 0L);
+       ga_error("  g_b indices out of range ", *g_b);
    if (*cilo <= 0 || *cihi > cdim1 || *cjlo <= 0 || *cjhi > cdim2)
-       ga_error(" ga_dadd_patch: g_b indices out of range ", 0L);
+       ga_error("  g_c indices out of range ", *g_c);
 
    /* check if numbers of elements in patches match each other */
    nelem = (*cihi - *cilo + 1) * (*cjhi - *cjlo + 1);
    if ((*bihi - *bilo + 1) * (*bjhi - *bjlo + 1) != nelem ||
        (*aihi - *ailo + 1) * (*ajhi - *ajlo + 1) != nelem )
-       ga_error(" ga_dadd_patch: capacities of patches do not match ", 0L);
+       ga_error("  capacities of patches do not match ", 0L);
 
    /* compare patches and distributions of g_a and g_c */
    if( !(comp_patch(*ailo, *aihi, *ajlo, *ajhi, *cilo, *cihi, *cjlo, *cjhi) &&
@@ -542,9 +540,9 @@ char *tempname = "temp", notrans='n';
    ga_distribution_( g_c, &me, &iloC, &ihiC, &jloC, &jhiC);
 
    if( ! comp_patch(iloA, ihiA, jloA, jhiA, iloC, ihiC, jloC, jhiC))
-         ga_error("ga_dadd_patch error: A patch mismatch ",0); 
+         ga_error(" A patch mismatch ",g_A); 
    if( ! comp_patch(iloC, ihiC, jloC, jhiC, iloB, ihiB, jloB, jhiB))
-         ga_error("ga_dadd_patch error: B patch mismatch ",0); 
+         ga_error(" B patch mismatch ",g_B); 
 
    /*  determine subsets of my patches to access  */
    if (patch_intersect(cilo, cihi, cjlo, cjhi, &iloC, &ihiC, &jloC, &jhiC)){
@@ -566,9 +564,11 @@ char *tempname = "temp", notrans='n';
         ga_release_update_( g_c, &iloC, &ihiC, &jloC, &jhiC); 
    }
 
-   ga_sync_();
    if(A_created) ga_destroy_(&g_A);
    if(B_created) ga_destroy_(&g_B);
+
+   GA_POP_NAME;
+   ga_sync_();
 }
 
 
@@ -605,41 +605,40 @@ Integer n, m, k, adim, bdim, cdim;
 DoublePrecision ONE = 1.;
 
    ga_sync_();
-
-   ga_check_handle(g_a, "ga_matmul_patch");
-   ga_check_handle(g_b, "ga_matmul_patch");
-   ga_check_handle(g_c, "ga_matmul_patch");
+   GA_PUSH_NAME("ga_matmul_patch");
 
    ga_inquire_(g_a, &atype, &adim1, &adim2);
    ga_inquire_(g_b, &btype, &bdim1, &bdim2);
    ga_inquire_(g_c, &ctype, &cdim1, &cdim2);
 
    if(atype != btype || atype != ctype || atype != MT_F_DBL)
-               ga_error("ga_matmul_patch: wrong types ", 0L);
+               ga_error(" types mismatch ", 0L);
 
   /* check if patch indices and dims match */
    if (*transa == 'n' || *transa == 'N'){
       if (*ailo <= 0 || *aihi > adim1 || *ajlo <= 0 || *ajhi > adim2)
-         ga_error(" ga_matmul_patch: g_a indices out of range ", 0L);
+         ga_error("  g_a indices out of range ", *g_a);
    }else
       if (*ailo <= 0 || *aihi > adim2 || *ajlo <= 0 || *ajhi > adim1)
-         ga_error(" ga_matmul_patch: g_a indices out of range ", 0L);
+         ga_error("  g_a indices out of range ", *g_a);
+
    if (*transb == 'n' || *transb == 'N'){
       if (*bilo <= 0 || *bihi > bdim1 || *bjlo <= 0 || *bjhi > bdim2)
-          ga_error(" ga_matmul_patch: g_b indices out of range ", 0L);
+          ga_error("  g_b indices out of range ", *g_b);
    }else
       if (*bilo <= 0 || *bihi > bdim2 || *bjlo <= 0 || *bjhi > bdim1)
-          ga_error(" ga_matmul_patch: g_b indices out of range ", 0L);
+          ga_error("  g_b indices out of range ", *g_b);
+
    if (*cilo <= 0 || *cihi > cdim1 || *cjlo <= 0 || *cjhi > cdim2)
-       ga_error(" ga_matmul_patch: g_b indices out of range ", 0L);
+       ga_error("  g_c indices out of range ", *g_c);
 
   /* verify if patch dimensions are consistent */
    m = *aihi - *ailo +1;
    n = *bjhi - *bjlo +1;
    k = *ajhi - *ajlo +1;
-   if( (*cihi - *cilo +1) != m) ga_error("ga_matmul_patch: a & c dims error",0);
-   if( (*cjhi - *cjlo +1) != n) ga_error("ga_matmul_patch: b & c dims error",0);
-   if( (*bihi - *bilo +1) != k) ga_error("ga_matmul_patch: a & b dims error",0);
+   if( (*cihi - *cilo +1) != m) ga_error(" a & c dims error",m);
+   if( (*cjhi - *cjlo +1) != n) ga_error(" b & c dims error",n);
+   if( (*bihi - *bilo +1) != k) ga_error(" a & b dims error",k);
 
    if(*beta) ga_dscal_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
    else      ga_dfill_patch_(g_c, cilo, cihi, cjlo, cjhi, beta);
@@ -678,13 +677,13 @@ DoublePrecision ONE = 1.;
                      j0= *bilo+klo; j1= *bilo+khi;
                      ga_get_(g_b, &i0, &i1, &j0, &j1, b, &jdim);
                   }
-#ifdef CRAY_T3D
-                  SGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
-                        alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
-#else
-                  dgemm_(transa, transb, &idim, &jdim, &kdim,
-                         alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
-#endif
+#                 ifdef CRAY_T3D
+                    SGEMM(cptofcd(transa), cptofcd(transb), &idim, &jdim, &kdim,
+                          alpha, a, &adim, b, &bdim, &ONE, c, &cdim);
+#                 else
+                    dgemm_(transa, transb, &idim, &jdim, &kdim,
+                           alpha, a, &adim, b, &bdim, &ONE, c, &cdim, 1, 1);
+#                 endif
                   i0= *cilo+ilo; i1= *cilo+ihi;   j0= *cjlo+jlo; j1= *cjlo+jhi;
                   ga_acc_(g_c, &i0, &i1, &j0, &j1, c, &cdim, &ONE);
                }
@@ -693,6 +692,7 @@ DoublePrecision ONE = 1.;
       }
    }
  
+   GA_POP_NAME;
    ga_sync_();
 }
 

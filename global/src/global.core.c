@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.9 1995-03-24 23:23:46 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.10 1995-03-29 23:40:29 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -291,7 +291,7 @@ Integer *msg_buf = (Integer*)MessageRcv->buffer;
         *  .there are two groups of processes: compute and data servers
         *  .in each cluster, compute processes have one of them 
         *   distinguished as cluster master
-        *  .cluster master participates in iter-cluster collective ops
+        *  .cluster master participates in inter-cluster collective ops
         *   and contacts data server to create or destroy arrays
         */ 
        GAnproc = (Integer)nnodes_() - num_clusters;
@@ -1171,8 +1171,9 @@ Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
                                                                                \
       ga_ownsM(g_handle, (proc), _ilo, _ihi, _jlo, _jhi);                      \
       if((_i)<_ilo || (_i)>_ihi || (_j)<_jlo || (_j)>_jhi){                    \
-             fprintf(stderr,"%d : invalid i/j (%d,%d)",GAme,(_i),(_j));        \
-             ga_error(" gaShmemLocation: invalid (i,j) ",GAme);                \
+          sprintf(err_string,"%s: p=%d invalid i/j (%d,%d) >< (%d:%d,%d:%d)",  \
+                 "gaShmemLocation", proc, (_i),(_j), _ilo, _ihi, _jlo, _jhi);  \
+          ga_error(err_string, g_a );                                          \
       }                                                                        \
       offset = ((_i) - _ilo) + (_ihi-_ilo+1)*((_j)-_jlo);                      \
                                                                                \
@@ -1180,7 +1181,19 @@ Integer _ilo, _ihi, _jlo, _jhi, offset, proc_place, g_handle=(g_a)+GA_OFFSET;  \
       ProcPlace(proc_place, proc);                                             \
       *(ptr_loc) = GA[g_handle].ptr[proc_place] +                              \
                    offset*GAsizeofM(GA[g_handle].type);                        \
-       *(ld) = _ihi-_ilo+1;                                                    \
+      *(ld) = _ihi-_ilo+1;                                                     \
+}
+
+
+#define ga_check_regionM(g_a, ilo, ihi, jlo, jhi, string){                     \
+   if (*(ilo) <= 0 || *(ihi) > GA[GA_OFFSET + *(g_a)].dims[0] ||               \
+       *(jlo) <= 0 || *(jhi) > GA[GA_OFFSET + *(g_a)].dims[1] ||               \
+       *(ihi) < *(ilo) ||  *(jhi) < *(jlo)){                                   \
+       sprintf(err_string,"%s:request(%d:%d,%d:%d) out of range (1:%d,1:%d)",  \
+               string, *(ilo), *(ihi), *(jlo), *(jhi),                         \
+               GA[GA_OFFSET + *(g_a)].dims[0], GA[GA_OFFSET + *(g_a)].dims[1]);\
+       ga_error(err_string, *(g_a));                                           \
+   }                                                                           \
 }
 
 
@@ -1193,7 +1206,7 @@ void ga_put_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
 char     *ptr_src, *ptr_dst, *ptr;
 Integer  j,  item_size, nbytes, ldp, elem;
 
-   ga_check_handleM(&g_a, "ga_put_local");
+   GA_PUSH_NAME("ga_put_local");
    item_size = (int) GAsizeofM(GA[GA_OFFSET + g_a].type);
    elem = ihi - ilo +1;
    nbytes = item_size * elem;
@@ -1209,6 +1222,7 @@ Integer  j,  item_size, nbytes, ldp, elem;
               CopyTo(ptr_src, ptr_dst, nbytes);
 #       endif
    }
+   GA_POP_NAME;
 }
 
 
@@ -1222,7 +1236,7 @@ void ga_put_remote(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
 char     *ptr_src, *ptr_dst;
 register Integer  j,  item_size, nbytes, elem, msglen;
 
-   if(proc<0)ga_error(" put_remote: invalid process ",proc);
+   if(proc<0)ga_error(" ga_put_remote: invalid process ",proc);
 
    item_size =  GAsizeofM(GA[GA_OFFSET + g_a].type);
    elem = ihi - ilo +1;
@@ -1255,13 +1269,13 @@ Integer  ilop, ihip, jlop, jhip, offset;
    trace_stime_();
 #endif
 
-   ga_check_handleM(g_a, "ga_put");
-   if (*ilo <= 0 || *ihi > GA[GA_OFFSET + *g_a].dims[0] ||
-       *jlo <= 0 || *jhi > GA[GA_OFFSET + *g_a].dims[1]) 
-       ga_error(" ga_put: indices out of range ", *g_a);
+      GA_PUSH_NAME("ga_put");
 
-      if(! ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np ))
-                        ga_error("ga_put: error locate region ", GAme);
+      if(!ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np )){
+          sprintf(err_string, "cannot locate region (%d:%d,%d:%d)",
+                  *ilo, *ihi, *jlo, *jhi);
+          ga_error(err_string, *g_a);
+      }
 
       gaPermuteProcList(np); 
       for(idx=0; idx<np; idx++){
@@ -1299,6 +1313,7 @@ Integer  ilop, ihip, jlop, jhip, offset;
             }
          }
       }
+      GA_POP_NAME;
 
 #ifdef GA_TRACE
    trace_etime_();
@@ -1317,7 +1332,7 @@ void ga_get_local(g_a, ilo, ihi, jlo, jhi, buf, offset, ld, proc)
 char     *ptr_src, *ptr_dst, *ptr;
 Integer  j,  item_size, nbytes, elem, ldp;
 
-   ga_check_handleM(&g_a, "ga_get_local");
+   GA_PUSH_NAME("ga_get_local");
    item_size = (int) GAsizeofM(GA[GA_OFFSET + g_a].type);
    elem = ihi - ilo +1;
    nbytes = item_size * elem;
@@ -1335,6 +1350,7 @@ Integer  j,  item_size, nbytes, elem, ldp;
           CopyFrom(ptr_src, ptr_dst, nbytes);
 #      endif
    }
+   GA_POP_NAME;
 }
 
 
@@ -1389,15 +1405,14 @@ Integer ilop, ihip, jlop, jhip, offset;
    trace_stime_();
 #endif
 
-   ga_check_handleM(g_a, "ga_get");
-   if (*ilo <= 0 || *ihi > GA[GA_OFFSET + *g_a].dims[0] ||
-       *jlo <= 0 || *jhi > GA[GA_OFFSET + *g_a].dims[1]){
-       fprintf(stderr,"me=%d, %d %d %d %d\n", GAme, *ilo, *ihi, *jlo, *jhi); 
-       ga_error(" ga_get: indices out of range ", *g_a);
-   }
+      GA_PUSH_NAME("ga_get");
 
-      if(! ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np ))
-			ga_error("ga_get: error locate region ", GAme);
+      if(!ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np )){
+          sprintf(err_string, "cannot locate region (%d:%d,%d:%d)",
+                  *ilo, *ihi, *jlo, *jhi);
+          ga_error(err_string, *g_a);
+      }
+
       gaPermuteProcList(np);
 
       for(idx=0; idx<np; idx++){
@@ -1435,6 +1450,7 @@ Integer ilop, ihip, jlop, jhip, offset;
 
           }
       }
+      GA_POP_NAME;
 
 #ifdef GA_TRACE
    trace_etime_();
@@ -1490,7 +1506,7 @@ Integer  item_size, ldp;
    Integer j, elem, handle, index;
 #endif
 
-   ga_check_handleM(&g_a, "ga_acc_local");
+   GA_PUSH_NAME("ga_acc_local"); 
    item_size =  GAsizeofM(GA[GA_OFFSET + g_a].type);
    gaShmemLocation(proc, g_a, ilo, jlo, &ptr_dst, &ldp);
 
@@ -1515,6 +1531,7 @@ Integer  item_size, ldp;
            }
         UNLOCK(g_a, proc, ptr_dst);
         if(elem>LEN_ACC_BUF) MA_pop_stack(handle);
+        GA_POP_NAME;
         return;
      }
     /* cache coherency problem on T3D */
@@ -1526,6 +1543,7 @@ Integer  item_size, ldp;
        accumulate(alpha, ihi - ilo +1, jhi-jlo+1, (DoublePrecision*)ptr_dst,
                   ldp, (DoublePrecision*)ptr_src, ld );
      if(GAnproc>1) UNLOCK(g_a, proc, ptr_dst);
+   GA_POP_NAME;
 }
 
 
@@ -1575,14 +1593,16 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
    trace_stime_();
 #endif
 
-   ga_check_handleM(g_a, "ga_acc");
-   if (*ilo <= 0 || *ihi > GA[GA_OFFSET + *g_a].dims[0] ||
-       *jlo <= 0 || *jhi > GA[GA_OFFSET + *g_a].dims[1])
-       ga_error(" ga_acc: indices out of range ", *g_a);
+   GA_PUSH_NAME("ga_acc");
+
+   if(!ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np )){
+          sprintf(err_string, "cannot locate region (%d:%d,%d:%d)",
+                  *ilo, *ihi, *jlo, *jhi);
+          ga_error(err_string, *g_a);
+   }
+
    if (GA[GA_OFFSET + *g_a].type != MT_F_DBL) 
                        ga_error(" ga_acc: type not supported ",*g_a);
-   if(! ga_locate_region_(g_a, ilo, ihi, jlo, jhi, map, &np ))
-                       ga_error("ga_acc: error locate region ", GAme);
 
    gaPermuteProcList(np); /* prepare permuted list of indices */
    for(idx=0; idx<np; idx++){
@@ -1624,6 +1644,8 @@ void ga_acc_(g_a, ilo, ihi, jlo, jhi, buf, ld, alpha)
       }
   }
 
+  GA_POP_NAME;
+
 #ifdef GA_TRACE
    trace_etime_();
    op_code = GA_OP_ACC; 
@@ -1643,14 +1665,7 @@ Integer  item_size, proc_place;
 
 
    ga_check_handleM(g_a, "ga_access");
-
-   if (*ilo <= 0 || *ihi > GA[GA_OFFSET + *g_a].dims[0] ||
-       *jlo <= 0 || *jhi > GA[GA_OFFSET + *g_a].dims[1] ||
-       *ihi < *ilo ||  *jhi < *jlo){
-       fprintf(stderr," %d-> %d  %d \n",GAme, *ilo, *ihi); 
-       fprintf(stderr," %d-> %d  %d \n",GAme, *jlo, *jhi); 
-       ga_error(" ga_access: indices out of range ", *g_a);
-   }
+   ga_check_regionM(g_a, ilo, ihi, jlo, jhi, "ga_access");
 
    item_size = (int) GAsizeofM(GA[GA_OFFSET + *g_a].type);
 
@@ -1719,6 +1734,7 @@ void ga_release_update_(g_a, ilo, ihi, jlo, jhi)
 void ga_inquire_(g_a,  type, dim1, dim2)
       Integer *g_a, *dim1, *dim2, *type;
 {
+   ga_check_handleM(g_a, "ga_inquire");
    *type       = GA[GA_OFFSET + *g_a].type;
    *dim1       = GA[GA_OFFSET + *g_a].dims[0];
    *dim2       = GA[GA_OFFSET + *g_a].dims[1];
@@ -1756,6 +1772,7 @@ void ga_inquire_name(g_a, array_name)
       Integer *g_a;
       char    *array_name;
 { 
+   ga_check_handleM(g_a, "ga_inquire_name");
    strcpy(array_name, GA[GA_OFFSET + *g_a].name);
 }
 
@@ -1894,9 +1911,7 @@ Integer  owner, ilop, ihip, jlop, jhip, i,j, ga_handle;
    if (*ilo <= 0 || *ihi > GA[ga_handle].dims[0] ||
        *jlo <= 0 || *jhi > GA[ga_handle].dims[1] ||
        *ihi < *ilo ||  *jhi < *jlo){
-       fprintf(stderr," me %d-> %d  %d \n",GAme, *ilo, *ihi);
-       fprintf(stderr," me %d-> %d  %d \n",GAme, *jlo, *jhi);
-       ga_error(" ga_locate_region: indices out of range ", *g_a);
+       return(FALSE);
    }
 
    /* find "processor coordinates" for the left top corner */
@@ -1940,6 +1955,8 @@ Integer ilo, ihi, jlo, jhi;
 register Integer k, offset;
 
   if (nv < 1) return;
+  GA_PUSH_NAME("ga_scatter_local");
+
   ga_distribution_(&g_a, &proc, &ilo, &ihi, &jlo, &jhi);
 
   /* get a address of the first element owned by proc */
@@ -1948,23 +1965,24 @@ register Integer k, offset;
   item_size = GAsizeofM(GA[GA_OFFSET + g_a].type);
 
   for(k=0; k< nv; k++){
-     if (i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
-        fprintf(stderr," %d ga_scatter_loc: invalid i=%d j=%d [%d:%d,%d:%d]\n",
+     if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
+       sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
                proc, i[k], j[k], ilo, ihi, jlo, jhi); 
-        ga_error("exiting..",GAme);
+       ga_error(err_string,g_a);
      }
 
-        offset  = (j[k] - jlo)* ldp + i[k] - ilo;
-        ptr_dst = ptr_ref + item_size * offset;
-        ptr_src = ((char*)v) + k*item_size; 
+     offset  = (j[k] - jlo)* ldp + i[k] - ilo;
+     ptr_dst = ptr_ref + item_size * offset;
+     ptr_src = ((char*)v) + k*item_size; 
 
-#       ifdef CRAY_T3D
+#    ifdef CRAY_T3D
            if(proc==GAme) Copy(ptr_src, ptr_dst, item_size);
            else CopyTo(ptr_src, ptr_dst, 1, proc);
-#       else
+#    else
            Copy(ptr_src, ptr_dst, item_size);
-#       endif
+#    endif
   }
+  GA_POP_NAME;
 }
 
 
@@ -1976,7 +1994,7 @@ void ga_scatter_remote(g_a, v, i, j, nv, proc)
 register Integer item_size, offset, nbytes, msglen;
 
   if (nv < 1) return;
-   if(proc<0)ga_error(" scatter_remote: invalid process ",proc);
+  if(proc<0)ga_error(" scatter_remote: invalid process ",proc);
 
   item_size = GAsizeofM(GA[GA_OFFSET + g_a].type);
   
@@ -2010,17 +2028,18 @@ Integer first, nelem, BufLimit, proc;
   if (*nv < 1) return;
 
   ga_check_handleM(g_a, "ga_scatter");
+  GA_PUSH_NAME("ga_scatter");
 
-  if(!MA_push_get(MT_F_INT,*nv, "p_scatter", &phandle, &pindex))
-            ga_error(" ga_scatter: MA failed ", 0L);
+  if(!MA_push_get(MT_F_INT,*nv, "ga_scatter--p", &phandle, &pindex))
+            ga_error("MA failed ", *g_a);
 
   /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
-  for(k=0; k< *nv; k++){
-      if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k))
-         ga_error("ga_scatter: invalid i/j",i[k]*100000 + j[k]);
+  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
+         sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
+         ga_error(err_string,*g_a);
   }
 
-  /* determine limit for message size --  v,i,j will travel together */
+  /* determine limit for message size --  v,i, & j will travel together */
   item_size = GAsizeofM(GA[GA_OFFSET + *g_a].type);
   BufLimit   = MSG_BUF_SIZE/(2*sizeof(Integer)+item_size);
 
@@ -2063,7 +2082,8 @@ Integer first, nelem, BufLimit, proc;
 
       first += nelem;
   }while (first< *nv);
-  if(! MA_pop_stack(phandle)) ga_error("ga_scatter: pop stack failed!",phandle);
+  if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+  GA_POP_NAME;
 }
       
 
@@ -2079,6 +2099,8 @@ Integer ilo, ihi, jlo, jhi;
 register Integer k, offset;
 
   if (nv < 1) return;
+  GA_PUSH_NAME("ga_gather_local");
+
   ga_distribution_(&g_a, &proc, &ilo, &ihi, &jlo, &jhi);
 
   /* get a address of the first element owned by proc */
@@ -2087,9 +2109,11 @@ register Integer k, offset;
   item_size = GAsizeofM(GA[GA_OFFSET + g_a].type);
 
   for(k=0; k< nv; k++){
-     if (i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
-        fprintf(stderr,"ga_gather_local: k=%d n=%d (%d,%d)\n",k,nv,i[k],j[k]);
-        ga_error("ga_gather_local: invalid i/j",i[k]*100000 + j[k]);
+     if(i[k] < ilo || i[k] > ihi  || j[k] < jlo || j[k] > jhi){
+       sprintf(err_string,"proc=%d invalid i/j=(%d,%d)>< [%d:%d,%d:%d]",
+               proc, i[k], j[k], ilo, ihi, jlo, jhi);
+       ga_error(err_string,g_a);
+
      }
 
      offset  = (j[k] - jlo)* ldp + i[k] - ilo;
@@ -2105,6 +2129,7 @@ register Integer k, offset;
         Copy(ptr_src, ptr_dst, item_size);
 #    endif
   }
+  GA_POP_NAME;
 }
 
 
@@ -2155,14 +2180,16 @@ Integer first, BufLimit, proc;
   if (*nv < 1) return;
 
   ga_check_handleM(g_a, "ga_gather");
+  GA_PUSH_NAME("ga_gather");
 
-  if(!MA_push_get(MT_F_INT, *nv, "p_gather", &phandle, &pindex))
-            ga_error(" ga_gather: MA failed ", 0L);
+  if(!MA_push_get(MT_F_INT, *nv, "ga_gather--p", &phandle, &pindex))
+            ga_error("MA failed ", *g_a);
+
 
   /* find proc that owns the (i,j) element; store it in temp: INT_MB[] */
-  for(k=0; k< *nv; k++){
-      if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k))
-         ga_error(" ga_gather: invalid i/j",i[k]*100000 + j[k]);
+  for(k=0; k< *nv; k++) if(! ga_locate_(g_a, i+k, j+k, INT_MB+pindex+k)){
+       sprintf(err_string,"invalid i/j=(%d,%d)", i[k], j[k]);
+       ga_error(err_string,*g_a);
   }
 
   /* Sort the entries by processor */
@@ -2211,7 +2238,8 @@ Integer first, BufLimit, proc;
       first += nelem;
   }while (first< *nv);
 
-  if(! MA_pop_stack(phandle)) ga_error("ga_gather: pop stack failed!",phandle);
+  if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+  GA_POP_NAME;
 }
       
            
@@ -2223,8 +2251,9 @@ Integer ga_read_inc_local(g_a, i, j, inc, proc)
 {
 Integer *ptr, ldp, value;
 
+   GA_PUSH_NAME("ga_read_inc_local");
+
    /* get a address of the g_a(i,j) element */
-   ga_check_handleM(&g_a, "ga_read_inc_local");
    gaShmemLocation(proc, g_a, i, j, (char**)&ptr, &ldp);
 
 #  ifdef CRAY_T3D
@@ -2239,6 +2268,7 @@ Integer *ptr, ldp, value;
           (*ptr) += inc;
         if(GAnproc>1)UNLOCK(g_a, proc, ptr);
 #  endif
+   GA_POP_NAME;
    return(value);
 }
 
@@ -2276,8 +2306,10 @@ Integer  value, proc;
 #endif
 
     ga_check_handleM(g_a, "ga_read_inc");
-    if(GA[GA_OFFSET + *g_a].type !=MT_F_INT)ga_error(" ga_read_inc: must be integer ",*g_a);
+    if(GA[GA_OFFSET + *g_a].type !=MT_F_INT)
+       ga_error(" ga_read_inc: type must be integer ",*g_a);
 
+    GA_PUSH_NAME("ga_read_inc");
     ga_locate_(g_a, i, j, &proc);
     if(gaDirectAccess(proc)){
         value = ga_read_inc_local(*g_a, *i, *j, *inc, proc);
@@ -2291,7 +2323,8 @@ Integer  value, proc;
      trace_genrec_(g_a, i, i, j, j, &op_code);
 #  endif
 
-  return(value);
+   GA_POP_NAME;
+   return(value);
 }
 
 

@@ -1,4 +1,4 @@
-/*$Id: global.util.c,v 1.7 1995-03-01 19:58:19 d3g681 Exp $*/
+/*$Id: global.util.c,v 1.8 1995-03-29 23:40:35 d3h325 Exp $*/
 /*
  * module: global.util.c
  * author: Jarek Nieplocha
@@ -31,6 +31,7 @@
 #include "globalp.h"
 #include "macommon.h"
 #include <stdio.h>
+#include <string.h>
 
 
 #ifdef CRAY_T3D
@@ -113,7 +114,7 @@ void ga_print_patch_(g_a, ilo, ihi, jlo, jhi, pretty)
 #define FLEN 80 
 Integer i, j,jj, dim1, dim2, type, ibuf[BUFSIZE], jmax, ld=1 ;
 DoublePrecision  dbuf[BUFSIZE];
-char name[80];
+char name[FLEN];
 
   ga_sync_();
   ga_check_handle(g_a, "ga_print");
@@ -225,19 +226,32 @@ extern void Error();
 #ifdef SYSV
    extern int SR_caught_sigint;
 #endif
+#ifdef CRAY_T3D 
+#  define FOUT stdout
+#else
+#  define FOUT stderr
+#endif
+#define ERR_LEN 400
+    int level;
+    char error_buffer[ERR_LEN];
 
     ga_clean_mem(); 
 
-    if (ga_nnodes_() > 1){
-#      ifdef SYSV
-          /* TCGMSG */
-          if (SR_caught_sigint)fprintf(stderr,"%s %ld",string,icode);
-#      endif
-       Error(string,  icode);
+    /* print GA names stack */
+    sprintf(error_buffer,"%d:", ga_nodeid_());
+    for(level = 0; level < GA_stack_size; level++){
+       strcat(error_buffer,GA_name_stack[level]);
+       strcat(error_buffer,":");
     }
-    fprintf(stderr,"%s %ld",string,icode);
-    fflush(stderr);
-    exit(1);
+    strcat(error_buffer,string);
+    strcat(error_buffer,":");
+       
+    if (ga_nnodes_() > 1) Error(error_buffer, icode);
+    else{
+      fprintf(FOUT,"%s %ld\n",error_buffer,icode);
+      fflush(FOUT);
+      exit(1);
+    }
 }
 
 
@@ -278,7 +292,6 @@ void c2fstring( cstring, fstring, flen)
      char *cstring, *fstring;
      Integer flen;
 {
-    char *strncpy();
     int clen = strlen(cstring);
 
     /* remove terminal \n character if any */

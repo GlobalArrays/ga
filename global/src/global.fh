@@ -1,10 +1,10 @@
-      integer ga_mask, ga_nnodes, ga_nodeid, ga_read_inc
+      integer ga_nnodes, ga_nodeid, ga_read_inc
       integer ga_inquire_memory, ga_memory_avail
       logical ga_create, ga_destroy, ga_locate, ga_create_irreg
       logical ga_compare_distr, ga_duplicate, ga_uses_ma
       logical ga_memory_limited
       double precision ga_ddot, ga_ddot_patch
-      external ga_create, ga_destroy, ga_ddot, ga_mask, ga_locate
+      external ga_create, ga_destroy, ga_ddot, ga_locate
       external ga_nnodes, ga_nodeid, ga_read_inc, ga_create_irreg
       external ga_copy_patch, ga_print_patch, ga_ifill_patch
       external ga_dfill_patch, ga_dscal_patch, ga_dadd_patch

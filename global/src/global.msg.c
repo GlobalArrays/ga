@@ -293,8 +293,10 @@ Integer ga_read_inc_local();
            ld = MessageRcv->ihi - MessageRcv->ilo +1;
       }
 
+      GA_PUSH_NAME("ga_server");
       switch ( MessageRcv->operation) {
           case GA_OP_GET:   /* get */
+                            ga_check_handle(&MessageRcv->g_a,"server: ga_get");
                             ga_get_local( MessageRcv->g_a,
                                MessageRcv->ilo, MessageRcv->ihi,
                                MessageRcv->jlo, MessageRcv->jhi,  
@@ -304,6 +306,7 @@ Integer ga_read_inc_local();
                             break;
 
           case GA_OP_PUT:   /* put */
+                            ga_check_handle(&MessageRcv->g_a,"server: ga_put");
                             ga_put_local( MessageRcv->g_a,
                                MessageRcv->ilo, MessageRcv->ihi,
                                MessageRcv->jlo, MessageRcv->jhi,
@@ -311,6 +314,7 @@ Integer ga_read_inc_local();
                             break;
 
           case GA_OP_ACC:   /* accumulate */
+                            ga_check_handle(&MessageRcv->g_a,"server: ga_acc");
                             ga_acc_local( MessageRcv->g_a,
                                MessageRcv->ilo, MessageRcv->ihi,
                                MessageRcv->jlo, MessageRcv->jhi,
@@ -322,6 +326,7 @@ Integer ga_read_inc_local();
           case GA_OP_RDI:   /* read and increment */
                             {
                               Integer inc = MessageRcv->ihi;
+                              ga_check_handle(&MessageRcv->g_a,"server:ga_rdi");
                               rdi_val = ga_read_inc_local( MessageRcv->g_a,
                                  MessageRcv->ilo, MessageRcv->jlo, inc, toproc);
                               ga_snd_msg(GA_TYPE_RDI, &rdi_val, sizeof(rdi_val),
@@ -329,9 +334,10 @@ Integer ga_read_inc_local();
                             }
                             break;
           case GA_OP_DST:   /* scatter */
-                            nelem = MessageRcv->ilo;
+                            ga_check_handle(&MessageRcv->g_a,"server:ga_scat");
 
                             /* buffer contains (val,i,j) */
+                            nelem = MessageRcv->ilo;
                             if (nelem > MSG_BUF_SIZE/
                                (elem_size+2*sizeof(Integer)) )
                                   ga_error("ga_server: scatter overflows buf ",
@@ -345,12 +351,13 @@ Integer ga_read_inc_local();
                             break;
 
           case GA_OP_DGT:   /* gather */
-                            nelem = MessageRcv->ilo;
+                            ga_check_handle(&MessageRcv->g_a,"server:ga_gath");
 
                             /* rcv buffer contains (i,j) only but we also
                              * need space in the same buffer for v
                              * value will be sent by server in rcv buffer 
                              */
+                            nelem = MessageRcv->ilo;
                             if (nelem > MSG_BUF_SIZE/
                                (elem_size+2*sizeof(Integer)) )
                                   ga_error("ga_server: scatter overflows buf ",
@@ -412,6 +419,7 @@ Integer ga_read_inc_local();
       }
 
       (*NumRecReq)++;  /* increment Counter of Requests received and serviced */
+      GA_POP_NAME;
 
 #ifdef DATA_SERVER
    }while (MessageRcv->operation != GA_OP_END); 

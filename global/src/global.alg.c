@@ -1,4 +1,3 @@
-/*$Id: global.alg.c,v 1.4 1995-02-02 23:13:24 d3g681 Exp $*/
 /*************************************************************************\
  Purpose:   File global.alg.c contains a set of linear algebra routines 
             that operate on global arrays in the SPMD mode. 
@@ -35,11 +34,13 @@ Integer index;
    me = ga_nodeid_();
 
    ga_check_handle(g_a, "ga_zero");
+   GA_PUSH_NAME("ga_zero");
+
    ga_inquire_(g_a, &type, &dim1, &dim2);
    ga_distribution_(g_a, &me, &ilo, &ihi, &jlo, &jhi);
 
    if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
-                  ga_error("ga_zero: null pointer for base array",0L);
+                  ga_error("null pointer for base array",0L);
 
    if (  ihi>0 && jhi>0 ){
       ga_access_(g_a, &ilo, &ihi, &jlo, &jhi,  &index, &ld);
@@ -53,7 +54,7 @@ Integer index;
          for(j=0; j<jhi-jlo+1; j++)
             for(i=0; i<ihi-ilo+1; i++)
                  INT_MB[index +j*ld + i ]  = 0; 
-      }else ga_error("ga_zero: wrong data type ",0L);
+      }else ga_error(" wrong data type ",0L);
 
       /* release access to the data */
       ga_release_update_(g_a, &ilo, &ihi, &jlo, &jhi);
@@ -65,6 +66,7 @@ Integer index;
    trace_genrec_(g_a, &ilo, &ihi, &jlo, &jhi, &op_code);
 #endif
 
+   GA_POP_NAME;
    ga_sync_();
 }
 
@@ -92,6 +94,7 @@ Integer     index_a, index_b;
    ga_check_handle(g_a, "ga_ddot");
    ga_check_handle(g_b, "ga_ddot");
 
+   GA_PUSH_NAME("ga_ddot");
    ga_inquire_(g_a,  &atype, &adim1, &adim2);
    ga_inquire_(g_b,  &btype, &bdim1, &bdim2);
 
@@ -148,6 +151,7 @@ Integer     index_a, index_b;
    if(g_a != g_b) trace_genrec_(g_b, &bilo, &bihi, &bjlo, &bjhi, &op_code);
 #endif
 
+   GA_POP_NAME;
    ga_sync_();
 
    return (sum);
@@ -172,13 +176,14 @@ Integer index;
 
    me = ga_nodeid_();
 
+   GA_PUSH_NAME("ga_dscal");
    ga_inquire_(g_a, &type, &dim1, &dim2);
 
    if(type != MT_F_DBL)
-        ga_error("ga_dscal: type not correct", 0L);
+        ga_error("type not correct", 0L);
 
    if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
-                  ga_error("ga_dscal: null pointer for base array", 0L);
+                  ga_error("null pointer for base array", 0L);
 
    ga_distribution_(g_a, &me, &ilo, &ihi, &jlo, &jhi);
 
@@ -202,6 +207,7 @@ Integer index;
    trace_genrec_(g_a, &ilo, &ihi, &jlo, &jhi, &op_code);
 #endif
 
+   GA_POP_NAME;
    ga_sync_();
 }
 
@@ -235,18 +241,19 @@ Integer index_a, index_b, index_c;
    ga_check_handle(g_b, "ga_dadd");
    ga_check_handle(g_c, "ga_dadd");
 
+   GA_PUSH_NAME("ga_dadd");
    ga_inquire_(g_a,  &atype, &adim1, &adim2);
    ga_inquire_(g_b,  &btype, &bdim1, &bdim2);
    ga_inquire_(g_c,  &ctype, &cdim1, &cdim2);
 
    if(atype != btype || atype != ctype || atype != MT_F_DBL)
-        ga_error("ga_dadd: types not correct", 0L);
+        ga_error("types not correct", 0L);
 
    if (adim1!=bdim1 || adim2 != bdim2 || adim1!=cdim1 || adim2 != cdim2)
-            ga_error("ga_dadd: arrays not conformant", 0L);
+            ga_error("arrays not conformant", 0L);
 
    if (DBL_MB == (DoublePrecision*)0 || INT_MB == (Integer*)0)
-                  ga_error("ga_dadd: null pointer for base array",0L);
+                  ga_error(": null pointer for base array",0L);
 
    ga_distribution_(g_a, &me, &ailo, &aihi, &ajlo, &ajhi);
    ga_distribution_(g_b, &me, &bilo, &bihi, &bjlo, &bjhi);
@@ -254,7 +261,7 @@ Integer index_a, index_b, index_c;
 
    if (ailo!=bilo || aihi != bihi || ajlo!=bjlo || ajhi != bjhi ||
        ailo!=cilo || aihi != cihi || ajlo!=cjlo || ajhi != cjhi)
-             ga_error("ga_dadd: distribution not identical",0L);
+             ga_error("distributions not identical",0L);
 
    if (  aihi>0 && ajhi>0 ){
 
@@ -297,5 +304,6 @@ Integer index_a, index_b, index_c;
                   trace_genrec_(g_c, &cilo, &cihi, &cjlo, &cjhi, &op_code);
 #endif
 
+   GA_POP_NAME;
    ga_sync_();
 }

@@ -40,7 +40,13 @@
 
 #define MAX(a,b) (((a) >= (b)) ? (a) : (b))
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
-#define ABS(a) (((a) >= 0) ? (a) : (-(a)))
+#define ABS(a)   (((a) >= 0) ? (a) : (-(a)))
+
+#define NAME_STACK_LEN 10
+extern char *GA_name_stack[NAME_STACK_LEN];    /* stack for names of GA ops */ 
+extern int  GA_stack_size;
+#define  GA_PUSH_NAME(name) (GA_name_stack[GA_stack_size++] = (name)) 
+#define  GA_POP_NAME        (GA_stack_size--)
 
 #if defined(__STDC__) || defined(__cplusplus)
 # define ARGS_(s) s
