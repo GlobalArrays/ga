@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.48 2002-08-01 15:57:37 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.49 2002-08-07 20:36:42 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1376,7 +1376,7 @@ void nga_move(int op,             /*[input] flag for read or write */
     /* Only transpose is supported, not reshaping, so scatter/gather is not
        required */
     Integer vhandle, vindex, index[MAXDIM];
-    Integer i, j, itmp, jtmp, nelem, ldt[MAXDIM];
+    Integer i, j, itmp, jtmp, nelem, ldt[MAXDIM],ldg[MAXDIM];
     int type = DRA[ds_a.handle+DRA_OFFSET].type;
     char    *base_addr;
     section_t gs_chunk = gs_a;
@@ -1394,7 +1394,9 @@ void nga_move(int op,             /*[input] flag for read or write */
     if (op == LOAD) {
       /* transpose buffer with data from global array */
       ndai_trnsp_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a);
-      nga_get_sectM(gs_chunk, base_addr, ldt); 
+      for (i=0; i<ndim; i++) ldg[i] = gs_chunk.hi[i] - gs_chunk.lo[i] + 1;
+      /* copy data from global array to temporary buffer */
+      nga_get_sectM(gs_chunk, base_addr, ldg); 
       for (i=0; i<nelem; i++ ) {
         /* find indices of elements in MA buffer */
         itmp = i;
@@ -1413,19 +1415,24 @@ void nga_move(int op,             /*[input] flag for read or write */
           jtmp *= ldb[ndim-1-j];
           jtmp += index[j];
         }
-        switch(type) {
+        switch(ga_type_c2f(type)){
           case MT_F_DBL:
-            ((DoublePrecision*)buffer)[jtmp]     = *(base_addr+itmp);
+            ((DoublePrecision*)buffer)[jtmp]
+              = ((DoublePrecision*)base_addr)[i];
             break;
           case MT_F_INT:
-            ((Integer*)buffer)[jtmp]             = *(base_addr+itmp);
+            ((Integer*)buffer)[jtmp]
+              = ((Integer*)base_addr)[i];
             break;
           case MT_F_DCPL:
-            ((DoublePrecision*)buffer)[2*jtmp]   = *(base_addr+2*itmp);
-            ((DoublePrecision*)buffer)[2*jtmp+1] = *(base_addr+2*itmp+1);
+            ((DoublePrecision*)buffer)[2*jtmp]
+              = ((DoublePrecision*)base_addr)[2*i];
+            ((DoublePrecision*)buffer)[2*jtmp+1]
+              = ((DoublePrecision*)base_addr)[2*i+1];
             break;
           case MT_F_REAL:
-            ((float*)buffer)[jtmp]               = *(base_addr+itmp);
+            ((float*)buffer)[jtmp]
+              = ((float*)base_addr)[i];
             break;
         }
       }
@@ -1448,19 +1455,24 @@ void nga_move(int op,             /*[input] flag for read or write */
           jtmp *= ldb[ndim-1-j];
           jtmp += index[j];
         }
-        switch(type) {
+        switch(ga_type_c2f(type)){
           case MT_F_DBL:
-            *(base_addr+itmp)     = ((DoublePrecision*)buffer)[jtmp];
+            ((DoublePrecision*)base_addr)[i]
+              = ((DoublePrecision*)buffer)[jtmp];
             break;
           case MT_F_INT:
-            *(base_addr+itmp)     = ((Integer*)buffer)[jtmp];
+            ((Integer*)base_addr)[i]
+              = ((Integer*)buffer)[jtmp];
             break;
           case MT_F_DCPL:
-            *(base_addr+2*itmp)   = ((DoublePrecision*)buffer)[2*jtmp];
-            *(base_addr+2*itmp+1) = ((DoublePrecision*)buffer)[2*jtmp+1];
+            ((DoublePrecision*)base_addr)[2*i]
+              = ((DoublePrecision*)buffer)[2*jtmp];
+            ((DoublePrecision*)base_addr)[2*i+1]
+              = ((DoublePrecision*)buffer)[2*jtmp+1];
             break;
           case MT_F_REAL:
-            *(base_addr+itmp)     = ((float*)buffer)[jtmp];
+            ((float*)base_addr)[i]
+              = ((float*)buffer)[jtmp];
             break;
         }
       }
