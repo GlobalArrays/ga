@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.23 2001-08-08 07:16:32 d3h325 Exp $ */
+/* $Id: request.c,v 1.24 2001-08-15 21:14:38 d3h325 Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -191,12 +191,10 @@ int i;
 #ifdef MEMLOCK_SHMEM_FLAG
     armci_use_memlock_table = (int*) (MAX_SLOTS*sizeof(memlock_t) +
                       (char*) memlock_table_array[armci_clus_last]);
-
-    if(DEBUG_) fprintf(stderr,"server initialized memlock %p\n",
-                       armci_use_memlock_table);
+    
+    if(DEBUG_)
+      fprintf(stderr,"server initialized memlock %p\n",armci_use_memlock_table);
 #endif
-
-    if(DEBUG_) fprintf(stderr,"server initialized memlock\n");
 }
 
 
@@ -423,6 +421,8 @@ int armci_rem_vector(int op, void *scale, armci_giov_t darr[],int len,int proc)
 }
 
 
+#define CHUN_ (8*8096)
+#define CHUN 200000
 
 /*\ client version of remote strided operation
 \*/
@@ -476,7 +476,7 @@ int armci_rem_strided(int op, void* scale, int proc,
          for(i=0;i<stride_levels;i++)((int*)buf)[i] = dst_stride_arr[i];
                                        buf += stride_levels*sizeof(int);
          msginfo->bypass=1;
-         msginfo->pinned=0; /* if set then pin is done before sending req*/
+         msginfo->pinned=1; /* if set then pin is done before sending req*/
       }else{
          msginfo->bypass=0;
          msginfo->pinned=0;
@@ -529,6 +529,40 @@ int armci_rem_strided(int op, void* scale, int proc,
 #      ifdef CLIENT_BUF_BYPASS
          if(msginfo->bypass){
 
+#ifdef MULTISTEP_PIN
+          if(stride_levels==0 && !msginfo->pinned && count[0]>=400000){
+              int seq=1;
+              armci_send_req(proc,msginfo,bufsize);
+              for(i=0; i< bytes; i+=CHUN){
+                  int len= MIN(CHUN,(bytes-i));
+                  char *p = i +(char*)dst_ptr;
+  
+#if 0
+                  armci_pin_contig(p, len);
+                  armci_client_send_ack(proc, seq);
+#endif
+                  seq++;
+              }
+                  armci_pin_contig(dst_ptr,CHUN);
+                  armci_client_send_ack(proc, 1);
+                  armci_pin_contig(CHUN+(char*)dst_ptr,count[0]-CHUN);
+                  armci_client_send_ack(proc, seq-1);
+             armci_rcv_strided_data_bypass(proc, msginfo->datalen,
+                                           dst_ptr, stride_levels);
+                  armci_unpin_contig(dst_ptr,CHUN);
+                  armci_unpin_contig(CHUN+(char*)dst_ptr,count[0]-CHUN);
+#if 0
+                  armci_unpin_contig(dst_ptr,count[0]);
+             for(i=0; i< bytes; i+=CHUN){
+                  int len= MIN(CHUN,(bytes-i));
+                  char *p = i +(char*)dst_ptr;
+                  armci_unpin_contig(p, len);
+             }
+#endif
+          }else
+#endif
+          {
+               
              if(!msginfo->pinned) armci_send_req(proc,msginfo,bufsize);
 
              if(!armci_pin_memory(dst_ptr,dst_stride_arr,count, stride_levels))
@@ -540,6 +574,7 @@ int armci_rem_strided(int op, void* scale, int proc,
              armci_rcv_strided_data_bypass(proc, msginfo->datalen,
                                            dst_ptr, stride_levels);
              armci_unpin_memory(dst_ptr,dst_stride_arr,count, stride_levels);
+          }
 
          }else
 #      endif             

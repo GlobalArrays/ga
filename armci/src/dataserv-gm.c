@@ -169,6 +169,9 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
 
     for(i=0; i<n1dim; i++) {
         char *src_ptr, *dst_ptr;
+#       ifdef MULTISTEP_PIN
+          int seq=1;
+#       endif
 
         loc_idx = 0; rem_idx = 0;
 
@@ -196,10 +199,19 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
                 armci_copy(src_ptr, buf, len);
 
 #ifdef CLIENT_BUF_BYPASS 
-                if(msginfo->pinned==0){ /* wait until client data is pinned */
-                   if(armci_wait_pin_client(to))return; /*abandon this request*/
-                   else msginfo->pinned=1;
-                }
+#               ifdef MULTISTEP_PIN
+                   if(msginfo->pinned==0 && buf==loc_buf){ 
+                      /* wait until client data is pinned */
+                      armci_wait_client_seq(to,seq++);
+                      /* for last chunk clear the ack field */
+                      if(len == msglen) armci_clear_ack(to);
+                   }
+#               else
+                   if(msginfo->pinned==0){ /* wait until client data is pinned*/
+                      if(armci_wait_pin_client(to))return; /*abandon request*/
+                      else msginfo->pinned=1;
+                   }
+#               endif
 #endif
 
                 armci_server_direct_send(to, buf, dst_ptr, len, ARMCI_GM_NONBLOCKING);
