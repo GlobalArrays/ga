@@ -11,6 +11,7 @@
       logical ga_memory_limited
       logical ga_create_mutexes
       logical ga_destroy_mutexes
+      logical ga_valid_handle
       double precision ga_ddot, ga_ddot_patch
       double complex   ga_zdot, ga_zdot_patch
       double complex   nga_zdot_patch
@@ -29,6 +30,7 @@ c
       external ga_zdot, ga_zdot_patch
       external ga_create_mutexes
       external ga_destroy_mutexes
+      external ga_valid_handle
 #ifdef WIN32
 cDEC$ IF DEFINED(fix_this_stupid_compiler)
 #endif

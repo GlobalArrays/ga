@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.53 1999-07-12 20:49:22 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.54 1999-07-12 22:37:46 d3h325 Exp $*/
 /* 
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -3315,3 +3315,12 @@ Integer FATR ga_ma_diff_(ptr1, ptr2)
 
 
 /*************************************************************************/
+
+/*\ returns true/false depending on validity of the handle
+\*/
+logical FATR ga_valid_handle_(Integer *g_a)
+{
+   if(GA_OFFSET+ (*g_a) < 0 || GA_OFFSET+(*g_a) >= max_global_array ||
+      ! (GA[GA_OFFSET+(*g_a)].actv) ) return FALSE;
+   else return TRUE;
+}

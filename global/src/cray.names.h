@@ -1,4 +1,4 @@
-/*$Id: cray.names.h,v 1.21 1999-06-30 20:15:33 jju Exp $*/
+/*$Id: cray.names.h,v 1.22 1999-07-12 22:37:44 d3h325 Exp $*/
 #define  ga_acc_                   GA_ACC
 #define  ga_access_                GA_ACCESS
 #define  ga_brdcst_                GA_BRDCST
@@ -69,6 +69,7 @@
 #define  ga_lock_                  GA_LOCK
 #define  ga_unlock_                GA_UNLOCK
 #define  ga_fill_                  GA_FILL
+#define  ga_valid_handle_          GA_VALID_HANDLE
 
 #define  nga_create_               NGA_CREATE
 #define  nga_create_irreg_         NGA_CREATE_IRREG

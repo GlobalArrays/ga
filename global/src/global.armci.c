@@ -2899,3 +2899,14 @@ Integer  value, subscript[2];
 
    return(value);
 }
+
+
+
+/*\ returns true/false depending on validity of the handle
+\*/
+logical FATR ga_valid_handle_(Integer *g_a)
+{
+   if(GA_OFFSET+ (*g_a) < 0 || GA_OFFSET+(*g_a) >= max_global_array ||
+      ! (GA[GA_OFFSET+(*g_a)].actv) ) return FALSE;
+   else return TRUE;
+}

@@ -69,4 +69,5 @@
 #define  GA_destroy_mutexes        ga_destroy_mutexes_
 #define  GA_lock                   ga_lock_
 #define  GA_unlock                 ga_unlock_
+#define  GA_valid_handle           ga_valid_handle_
 
