@@ -29,12 +29,12 @@ c     In the first case, there is no explicit limit on memory usage.
 c     In the second, user can set limit (per processor) in bytes.
 c
       ma_heap = heap/nnodes() + fudge 
-      me = ga_nodeid()
       call ga_initialize_ltd(mdtob(ma_heap))
       if(ga_nodeid().eq.0)then
          print *,' GA initialized '
          call ffflush(6)
       endif
+      me = ga_nodeid()
 c     call PROC_REMAP()
 c
 c***  Initialize the MA package
