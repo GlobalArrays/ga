@@ -57,6 +57,7 @@ divert(-1)
   define(m4_func_NGA_GET, testit_NGA_GET_$1$2())
   define(m4_func_NGA_ACC, testit_NGA_ACC_$1$2())
   define(m4_func_NGA_SCATTER, testit_NGA_SCATTER_$1$2())
+  define(m4_func_NGA_SCATTER_ACC, testit_NGA_SCATTER_ACC_$1$2())
   define(m4_func_NGA_GATHER, testit_NGA_GATHER_$1$2())
   define(m4_func_NGA_PERIODIC_PUT, testit_NGA_PERIODIC_PUT_$1$2())
   define(m4_func_NGA_PERIODIC_GET, testit_NGA_PERIODIC_GET_$1$2())
@@ -132,6 +133,8 @@ include(`ngatest/ndim_NGA_GET.src')')
 include(`ngatest/ndim_NGA_ACC.src')')
 	    ifelse(m4_test_NGA_SCATTER, `yes', `
 include(`ngatest/ndim_NGA_SCATTER.src')')
+	    ifelse(m4_test_NGA_SCATTER_ACC, `yes', `
+include(`ngatest/ndim_NGA_SCATTER_ACC.src')')
 	    ifelse(m4_test_NGA_GATHER, `yes', `
 include(`ngatest/ndim_NGA_GATHER.src')')
 	    ifelse(m4_test_NGA_PERIODIC_PUT, `yes', `
@@ -182,6 +185,8 @@ include(`ngatest/ndim_NGA_GET.src')')
 include(`ngatest/ndim_NGA_ACC.src')')
 	    ifelse(m4_test_NGA_SCATTER, `yes', `
 include(`ngatest/ndim_NGA_SCATTER.src')')
+	    ifelse(m4_test_NGA_SCATTER_ACC, `yes', `
+include(`ngatest/ndim_NGA_SCATTER_ACC.src')')
 	    ifelse(m4_test_NGA_GATHER, `yes', `
 include(`ngatest/ndim_NGA_GATHER.src')')
 	    ifelse(m4_test_NGA_PERIODIC_PUT, `yes', `
@@ -232,6 +237,8 @@ include(`ngatest/ndim_NGA_GET.src')')
 include(`ngatest/ndim_NGA_ACC.src')')
 	    ifelse(m4_test_NGA_SCATTER, `yes', `
 include(`ngatest/ndim_NGA_SCATTER.src')')
+	    ifelse(m4_test_NGA_SCATTER_ACC, `yes', `
+include(`ngatest/ndim_NGA_SCATTER_ACC.src')')
 	    ifelse(m4_test_NGA_GATHER, `yes', `
 include(`ngatest/ndim_NGA_GATHER.src')')
 	    ifelse(m4_test_NGA_PERIODIC_PUT, `yes', `

@@ -329,6 +329,29 @@ c     test NGA_SCATTER
       call m4_func_NGA_SCATTER(m4_test_type, m4_i)')
       ')')
 c
+c     test NGA_SCATTER_ACC
+      ifelse(m4_test_NGA_SCATTER_ACC, `yes',
+        `forloop(`m4_i', m4_from, m4_to,
+           `ifelse(m4_test_int, `yes',
+               `divert(-1)
+               undefine(`m4_test_type')
+               define(m4_test_type, m4_test_type_int)
+               divert
+      call m4_func_NGA_SCATTER_ACC(m4_test_type, m4_i)')
+            ifelse(m4_test_dbl, `yes',
+              `divert(-1)
+               undefine(`m4_test_type')
+               define(m4_test_type, m4_test_type_dbl)
+               divert
+      call m4_func_NGA_SCATTER_ACC(m4_test_type, m4_i)')
+            ifelse(m4_test_dcpl, `yes',
+              `divert(-1)
+               undefine(`m4_test_type')
+               define(m4_test_type, m4_test_type_dcpl)
+               divert
+      call m4_func_NGA_SCATTER_ACC(m4_test_type, m4_i)')
+      ')')
+c
 c     test NGA_GATHER
       ifelse(m4_test_NGA_GATHER, `yes',
         `forloop(`m4_i', m4_from, m4_to,

@@ -14,6 +14,7 @@ divert(-1)
   define(m4_test_NGA_GET, `yes')
   define(m4_test_NGA_ACC, `yes')
   define(m4_test_NGA_SCATTER, `yes')
+  define(m4_test_NGA_SCATTER_ACC, `yes')
   define(m4_test_NGA_GATHER, `yes')
   
   # periodic functions
