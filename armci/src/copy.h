@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.61 2004-03-30 23:52:43 manoj Exp $ */
+/* $Id: copy.h,v 1.62 2004-04-13 19:57:32 manoj Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -124,6 +124,8 @@ void FATR DCOPY1D(void*, void*, int*);
               *(phandle)=elan_get(elan_base->state,src,dst,n,proc)
 #      define ARMCI_NB_WAIT(handle) elan_wait(handle,elan_base->waitType) 
 #      define ARMCI_NB_TEST(handle,_succ) (*(_succ))=!elan_poll(handle,1L) 
+#      define HAS_PUTS 1
+#      define HAS_GETS 1
 #   else
 #      define qsw_put(src,dst,n,proc) shmem_putmem((dst),(src),(int)(n),(proc))
 #      define qsw_get(src,dst,n,proc) shmem_getmem((dst),(src),(int)(n),(proc))
@@ -376,5 +378,9 @@ void FATR DCOPY1D(void*, void*, int*);
 #ifndef armci_copy_fence
 #   define armci_copy_fence armci_copy
 #endif
+
+extern void armcill_putS(int proc, void* src_ptr, int src_stride_arr[],
+                         void* dst_ptr, int dst_stride_arr[], int count[],
+                         int stride_levels);
 
 #endif

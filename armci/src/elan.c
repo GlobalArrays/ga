@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.32 2004-04-10 00:42:36 manoj Exp $ */
+/* $Id: elan.c,v 1.33 2004-04-13 19:56:53 manoj Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,17 +11,19 @@
 #   define VCALLS 0
 #else
 static ELAN_PGCTRL *_pgctrl;
+static void *_pgsstate;
 static void *_qd;
-#   define VCALLS 1
+#   define VCALLS 0
 #   define QSNETLIBS_NEWAPI
 #endif
 #else
 #   define VCALLS 0
 #endif
 
+extern void *pgs_init (ELAN_STATE *state, void *qMem);
+
 #ifdef DOELAN4
-#undef VCALLS
-#define VCALLS 0
+#define VCALLS 1
 #define _ELAN_SLOTSIZE_ elan_queueMaxSlotSize(elan_base->state)
 #define _ELAN_SLOTSIZE 512
 #else
@@ -71,6 +73,7 @@ static ops_t *ops_done_ar;
         elan_wait(elan_get(elan_base->state,src,dst,len,p),elan_base->waitType)
 #endif
 
+
 void armci_init_connections()
 {
 
@@ -114,6 +117,15 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
     if(!_pgctrl) armci_die("failed elan_gallocElan 2",0);
     elan_gsync(elan_base->allGroup);
 #endif
+
+    {
+	/* New PutS/GetS subsystem */
+	q = elan_gallocElan(elan_base, elan_base->allGroup, ELAN_QUEUE_ALIGN,
+				elan_pgsGlobalMemSize(elan_base->state));
+	//q = elan_gallocQueue(elan_base, elan_base->allGroup);
+	
+	_pgsstate = pgs_init(elan_base->state, q);
+    }
 #endif
 
     if(armci_me == armci_master) {
@@ -399,29 +411,7 @@ ELAN_LOCK *rem_locks = (ELAN_LOCK*)(all_locks + proc*num_locks);
 
 #define MAX_VECS 600
 static void* _src[MAX_VECS], *_dst[MAX_VECS];
-void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
-                                                   void* dst_ptr,int dst_stride)
-{
-int _j, issued=0;
-char *ps=src_ptr, *pd=dst_ptr;
 
-    
-#if 0
-    printf("%d: getv %d\n", armci_me, count); fflush(stdout);
-#endif
-    for (_j = 0;  _j < count;  _j++ ){
-        _src[issued] = ps;
-        _dst[issued] = pd;
-        ps += src_stride;
-        pd += dst_stride;
-        issued++;
-        if(issued == MAX_VECS){
-           elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
-           issued=0;
-        } 
-    }
-    if(issued)elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
-}
 
 
 void armcill_getv(int proc, int bytes, int count, void* src[], void* dst[])
@@ -443,6 +433,32 @@ int _j, issued=0;
     if(issued)elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
 }
 
+
+
+extern ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
+
+extern ELAN_EVENT *elan_getss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
+
+
+#ifdef HAS_PUTS
+
+void armcill_putS(int proc, void* src_ptr, int src_stride_arr[], void* dst_ptr,
+                  int dst_stride_arr[], int count[], int stride_levels)
+{
+    elan_wait(elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr, 
+              dst_stride_arr, count, stride_levels, proc),elan_base->waitType);
+}
+
+void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+u_int acount[2];
+acount[0]=bytes; 
+acount[1]=count; 
+elan_wait(elan_putss(_pgsstate,src_ptr,dst_ptr, &src_stride, &dst_stride, acount,1,proc),elan_base->waitType); 
+}
+
+#else
 
 void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
                                                    void* dst_ptr,int dst_stride)
@@ -468,6 +484,8 @@ char *ps=src_ptr, *pd=dst_ptr;
     if(issued)elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
 }
 
+#endif
+
 void armcill_putv(int proc, int bytes, int count, void* src[], void* dst[])
 {
 int _j, issued=0;
@@ -489,6 +507,49 @@ int _j, issued=0;
     if(issued)elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),
                         elan_base->waitType);
 }
+
+#ifdef HAS_GETS
+void armcill_getS(int proc, void* src_ptr, int src_stride_arr[], void* dst_ptr,
+                  int dst_stride_arr[], int count[], int stride_levels)
+{
+    elan_wait(elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr, 
+              dst_stride_arr, count, stride_levels, proc),elan_base->waitType);
+}
+ 
+void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+   u_int acount[2];
+   acount[0]=bytes; 
+   acount[1]=count; 
+   elan_wait(elan_getss(_pgsstate,src_ptr,dst_ptr, &src_stride, &dst_stride, acount,1,proc),elan_base->waitType); 
+}
+#else
+
+void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+int _j, issued=0;
+char *ps=src_ptr, *pd=dst_ptr;
+    
+#if 0
+    printf("%d: getv %d\n", armci_me, count); fflush(stdout);
+#endif
+    for (_j = 0;  _j < count;  _j++ ){
+        _src[issued] = ps;
+        _dst[issued] = pd;
+        ps += src_stride;
+        pd += dst_stride;
+        issued++;
+        if(issued == MAX_VECS){
+           elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
+           issued=0;
+        } 
+    }
+    if(issued)elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),elan_base->waitType);
+}
+#endif
+
 
 void armcill_wait_get(){}
 void armcill_wait_put(){}
@@ -710,16 +771,16 @@ void armci_checkMapped(void *buffer, size_t size)
 }
 #endif
 
+
 int armci_enable_alpha_hack() {
-  int enable=0;
+    int enable=0;
 #if defined(DECOSF) && defined(QUADRICS)
-#  ifdef QSNETLIBS_VERSION 
-#    if QSNETLIBS_VERSION_CODE > QSNETLIBS_VERSION(1,4,0) 
-       int nnodes = atoi((const char *)getenv("RMS_NNODES"));
-       if(nnodes > 1) enable=1;
+#  ifdef QSNETLIBS_VERSION
+#    if QSNETLIBS_VERSION_CODE > QSNETLIBS_VERSION(1,4,0)
+    int nnodes = atoi((const char *)getenv("RMS_NNODES"));
+    if(nnodes > 1) enable=1;
 #    endif
 #  endif
 #endif
-  return enable;
+    return enable;
 }
-
