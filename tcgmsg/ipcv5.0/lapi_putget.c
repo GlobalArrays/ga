@@ -75,7 +75,7 @@ void lapi_adr_exchg()
      }
      sendbuf_arr[SENDBUF_NUM-1].next = sendbuf_arr;
      localbuf = sendbuf_arr;
-     if(sizeof(ShmemBuf) != sizeof(sendbuf_t))
+     if(sizeof(ShmemBuf) < sizeof(sendbuf_t))
         Error("lapi_adr_exchg: buffer size problem",0);
 
      /* exchange addresses */
