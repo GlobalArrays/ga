@@ -82,6 +82,7 @@
 #define  GA_lock                   ga_lock_
 #define  GA_unlock                 ga_unlock_
 #define  GA_valid_handle           ga_valid_handle_
+#define  GA_mask_sync              ga_mask_sync_
 #define  GA_set_memory_limit       ga_set_memory_limit_
 
 #if defined(CRAY) || defined(_WIN32) && !defined(CYGNUS) && !defined(CYGWIN)
@@ -159,10 +160,12 @@
 #define  ga_unlock_                GA_UNLOCK
 #define  ga_fill_                  GA_FILL
 #define  ga_valid_handle_          GA_VALID_HANDLE
+#define  ga_mask_sync_             GA_MASK_SYNC
 #define  ga_set_memory_limit_      GA_SET_MEMORY_LIMIT
 #define  ga_ndim_                  GA_NDIM
 #define  ga_print_distribution_    GA_PRINT_DISTRIBUTION
 #define  ga_update_ghosts_         GA_UPDATE_GHOSTS
+#define  ga_update1_ghosts_        GA_UPDATE1_GHOSTS
 #define  ga_update2_ghosts_        GA_UPDATE2_GHOSTS
 #define  ga_update3_ghosts_        GA_UPDATE3_GHOSTS
 #define  ga_update4_ghosts_        GA_UPDATE4_GHOSTS

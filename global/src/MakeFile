@@ -1,5 +1,5 @@
 #
-#	$Id: MakeFile,v 1.18 2001-11-30 19:06:40 d3h325 Exp $
+#	$Id: MakeFile,v 1.19 2001-12-04 22:20:30 d3g293 Exp $
 #
 
 OBJDIR=.\obj
@@ -10,6 +10,7 @@ USE_MPI=y
 
 OBJ      = $(OBJDIR)\base.obj \
         $(OBJDIR)\onesided.obj \
+        $(OBJDIR)\ghosts.obj \
         $(OBJDIR)\collect.obj \
         $(OBJDIR)\global.npatch.obj \
         $(OBJDIR)\global.util.obj \

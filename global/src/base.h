@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.4 2001-10-30 00:26:17 d3h325 Exp $ */
+/*$Id: base.h,v 1.5 2001-12-04 22:20:30 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -71,6 +71,45 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 }
 
 /* this macro finds cordinates of the chunk of array owned by processor proc */
-#define ga_ownsM(ga_handle, proc, lo, hi)				\
-  ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims, GA[ga_handle].nblock, GA[ga_handle].mapc, proc, lo, hi )
+#define ga_ownsM(ga_handle, proc, lo, hi)				                  \
+  ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims,         \
+                     GA[ga_handle].nblock, GA[ga_handle].mapc, proc, \
+                     lo, hi )
+
+#define gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc){\
+  int _i;                                                            \
+  stride_rem[0]= stride_loc[0] = (int)size;                          \
+  for(_i=0;_i<ndim;_i++){                                            \
+    stride_rem[_i] *= (int)ldrem[_i];                                \
+    stride_loc[_i] *= (int)ld[_i];                                   \
+    if(_i<ndim-1){                                                   \
+      stride_rem[_i+1] = stride_rem[_i];                             \
+      stride_loc[_i+1] = stride_loc[_i];                             \
+    }                                                                \
+  }                                                                  \
+}
+
+/* Count total number of elmenents in array based on values of ndim,
+      lo, and hi */
+#define gam_CountElems(ndim, lo, hi, pelems){                        \
+  int _d;                                                            \
+  for(_d=0,*pelems=1; _d< ndim;_d++)  *pelems *= hi[_d]-lo[_d]+1;    \
+}
+
+#define gam_ComputeCount(ndim, lo, hi, count){                       \
+  int _d;                                                            \
+  for(_d=0; _d< ndim;_d++) count[_d] = (int)(hi[_d]-lo[_d])+1;       \
+}
+
+#define ga_RegionError(ndim, lo, hi, val){                           \
+  int _d, _l;                                                        \
+  char *str= "cannot locate region: ";                               \
+  sprintf(err_string, str);                                          \
+  _l = strlen(str);                                                  \
+  for(_d=0; _d< ndim; _d++){                                         \
+    sprintf(err_string+_l, "%ld:%ld",lo[_d],hi[_d]);                 \
+    _l=strlen(err_string);                                           \
+  }                                                                  \
+  ga_error(err_string, val);                                         \
+}
 

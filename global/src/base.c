@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.10 2001-10-30 00:26:17 d3h325 Exp $ */
+/* $Id: base.c,v 1.11 2001-12-04 22:20:30 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -53,6 +53,8 @@
 global_array_t _ga_main_data_structure[MAX_ARRAYS];
 static global_array_t *GA = _ga_main_data_structure;
 static int GAinitialized = 0;
+int _ga_sync_begin = 1;
+int _ga_sync_end = 1;
 int _max_global_array = MAX_ARRAYS;
 Integer *GA_proclist;
 int* GA_Proc_list = NULL;
@@ -63,7 +65,7 @@ DoubleComplex   *DCPL_MB;           /* double precision complex base address */
 DoublePrecision *DBL_MB;            /* double precision base address */
 Integer         *INT_MB;            /* integer base address */
 float           *FLT_MB;            /* float base address */
-int **GA_Update_Flags;
+int** GA_Update_Flags;
 
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
@@ -356,6 +358,8 @@ int bytes;
     GA_Update_Flags = (int**)malloc(GAnproc*sizeof(int*));
     if (ARMCI_Malloc((void**)GA_Update_Flags, bytes))
       ga_error("ga_init:Failed to initialize memory for update flags",GAme);
+    /* Zero update flags */
+    for (i=0; i<2*MAXDIM; i++) GA_Update_Flags[GAme][i] = 0;
 
     GAinitialized = 1;
 
@@ -2050,3 +2054,12 @@ logical FATR ga_valid_handle_(Integer *g_a)
 }
 
 int gai_getval(int *ptr) { return *ptr;}
+
+void FATR ga_mask_sync_(Integer *begin, Integer *end)
+{
+  if (*begin) _ga_sync_begin = 1;
+  else _ga_sync_begin = 0;
+
+  if (*end) _ga_sync_end = 1;
+  else _ga_sync_end = 0;
+}
