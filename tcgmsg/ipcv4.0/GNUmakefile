@@ -1,4 +1,4 @@
-# $Id: GNUmakefile,v 1.16 2003-11-06 05:33:18 edo Exp $
+# $Id: GNUmakefile,v 1.17 2003-11-06 06:50:19 edo Exp $
 #
 # Makefile for a portable dynamic memory allocator.
 
@@ -56,11 +56,13 @@ ifeq ($(TARGET),HPUX64)
      EXTRA = hpuxargs.o wrap.o
 endif
 ifeq ($(TARGET),SOLARIS)
-   LIB_DEFINES = -DSUN -DGOTXDR -DNOSPIN -DSUNF77_2
+   LIB_DEFINES = -DSUN -DGOTXDR -DNOSPIN -DSUNF77_2 
+   LIB_DEFINES += -D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1
      EXTRA = wrap.o
 endif
 ifeq ($(TARGET),SOLARIS64)
    LIB_DEFINES = -DSUN -DGOTXDR -DNOSPIN -DSUNF77_2
+   LIB_DEFINES += -D_XOPEN_SOURCE=1 -D_XOPEN_SOURCE_EXTENDED=1
      EXTRA = wrap.o
 endif
 ifeq ($(TARGET),DECOSF)
