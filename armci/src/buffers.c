@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.18 2002-12-18 18:25:33 vinod Exp $    **/
+/* $Id: buffers.c,v 1.19 2002-12-22 03:33:54 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -27,10 +27,12 @@
 
 #if defined(DATA_SERVER) && defined(SOCKETS)  
 #define MAX_BUFS  1
+#define MAX_SMALL_BUFS 1
 #else
 #define MAX_BUFS  4
+#define MAX_SMALL_BUFS 16
 #endif
-
+#define SMALL_BUF_LEN 8192
 #ifndef MSG_BUFLEN_SMALL
 #define MSG_BUFLEN_SMALL (MSG_BUFLEN >>0) 
 #endif
@@ -65,14 +67,23 @@ typedef struct {
   char buffer[MSG_BUFLEN_SMALL];
 } buf_ext_t;
 
+/* message send buffer data structure */
+typedef struct {
+  BUF_INFO_T id;
+# ifdef BUF_EXTRA_FIELD_T
+        BUF_EXTRA_FIELD_T field;
+# endif
+  char buffer[SMALL_BUF_LEN];
+} buf_smext_t;
 
 /* we keep table and buffer pointer together for better locality */
 typedef struct {
   double left_guard;        /* stamp to verify if array was corrupted */
-  buf_state_t table[MAX_BUFS]; /* array with state of buffer usage */
+  buf_state_t table[MAX_BUFS+MAX_SMALL_BUFS]; /*array with state of buffer */
   buf_ext_t *buf;           /* address of buffer pool */
-  buf_ext_t *largebuf;      /* address of the large buffer pool */
+  buf_smext_t *smallbuf;      /* address of the large buffer pool */
   int avail;
+  int smavail;
   int pad;
   double right_guard;       /* stamp to verify if array was corrupted */
 } reqbuf_pool_t;            
@@ -81,17 +92,23 @@ typedef struct {
 #  define        SIZE_BUF_EXTRA_FIELD 0 
 #  define BUF_TO_EBUF(buf) (buf_ext_t*)(((char*)buf) - sizeof(BUFID_PAD_T) -\
                                       SIZE_BUF_EXTRA_FIELD)
+#  define BUF_TO_SMEBUF(buf) (buf_smext_t*)(((char*)buf)- sizeof(BUFID_PAD_T) -\
+                                      SIZE_BUF_EXTRA_FIELD)
 #else
 #  define BUF_TO_EBUF(buf) (buf_ext_t*)(((char*)buf) - sizeof(BUFID_PAD_T) -\
+				      sizeof(BUF_EXTRA_FIELD_T))
+#  define BUF_TO_SMEBUF(buf) (buf_smext_t*)(((char*)buf)- sizeof(BUFID_PAD_T) -\
 				      sizeof(BUF_EXTRA_FIELD_T))
 #endif
 
 #define BUF_TO_BUFINDEX(buf) (BUF_TO_EBUF((buf)))->id.bufid
+#define BUF_TO_SMBUFINDEX(buf) (BUF_TO_SMEBUF((buf)))->id.bufid
 
 
 
 
 buf_ext_t *_armci_buffers;        /* these are the actual buffers */
+buf_smext_t *_armci_smbuffers;    /* no, these are the actual buffers */
 reqbuf_pool_t* _armci_buf_state;  /* array that describes state of each buf */ 
 
 
@@ -100,13 +117,20 @@ reqbuf_pool_t* _armci_buf_state;  /* array that describes state of each buf */
 \*/ 
 void _armci_buf_init()
 {
-char *tmp = BUF_ALLOCATE(MAX_BUFS*sizeof(buf_ext_t) + 64);
-int  extra= ALIGN64ADD(tmp);
-
+char *tmp;
+int  extra;
+int smallbuf_size = sizeof(buf_smext_t)*(MAX_SMALL_BUFS);
+     tmp = BUF_ALLOCATE(MAX_BUFS*sizeof(buf_ext_t) + 64 + smallbuf_size);
+     extra= ALIGN64ADD(tmp);
      if(sizeof(buf_state_t) != sizeof(int)) 
         armci_die("armci_buf_init size buf_state_t!=int",sizeof(buf_state_t));
                    
      _armci_buffers = (buf_ext_t *) (tmp + extra); 
+
+     tmp = (char *)(_armci_buffers + MAX_BUFS);
+     extra = ALIGN64ADD(tmp);
+     _armci_smbuffers = (buf_smext_t *) (tmp + extra); 
+     
 
      if(DEBUG2_){
 	printf("%d:armci_init_bufs: pointer %p, before align ptr=%p bufptr=%p end of region is %p  size=%d extra=%d\n",
@@ -114,9 +138,10 @@ int  extra= ALIGN64ADD(tmp);
                MAX_BUFS*sizeof(buf_ext_t),extra);
 	fflush(stdout);
      }
+
      /* now allocate state array */
      tmp  = calloc(1, sizeof(reqbuf_pool_t) + 64);
-	if(!tmp)armci_die("_armci_buf_init calloc failed",0);
+     if(!tmp)armci_die("_armci_buf_init calloc failed",0);
      extra= ALIGN64ADD(tmp);
      _armci_buf_state = (reqbuf_pool_t*)(tmp + extra); 
 
@@ -124,7 +149,11 @@ int  extra= ALIGN64ADD(tmp);
      _armci_buf_state->left_guard  = LEFT_GUARD;
      _armci_buf_state->right_guard = RIGHT_GUARD;
      _armci_buf_state->avail =0;
+     _armci_buf_state->smavail =MAX_BUFS;
      _armci_buf_state->buf = _armci_buffers;
+     _armci_buf_state->smallbuf = _armci_smbuffers;
+
+
 
      if(BUF_TO_EBUF(_armci_buf_state->buf[0].buffer)!=_armci_buf_state->buf)
         armci_die("buffers.c, internal structure alignment problem",0);
@@ -142,12 +171,22 @@ char *ptr = (char*)buf;
      printf("%d: in _armci_buf_to_index %p\n",armci_me, buf);
      fflush(stdout);
    }
-
-   index = BUF_TO_BUFINDEX(ptr);
-   if((index >= MAX_BUFS)|| (index<0)) 
-      armci_die2("armci_buf_to_index: bad index:",index,MAX_BUFS);
-   
-   return(index);
+   if(buf > (void *)_armci_buffers && buf < (void *)(_armci_buffers+MAX_BUFS)){
+      index = BUF_TO_BUFINDEX(ptr);
+      if((index >= MAX_BUFS)|| (index<0)) 
+        armci_die2("armci_buf_to_index: bad index:",index,MAX_BUFS);
+      return(index);
+   }
+   else if(buf > (void *)_armci_smbuffers && buf < (void *)(_armci_smbuffers+MAX_SMALL_BUFS)){
+      index = BUF_TO_SMBUFINDEX(ptr);
+      if((index >= MAX_BUFS+MAX_SMALL_BUFS)|| (index<MAX_BUFS)) 
+        armci_die2("armci_buf_to_ind:indexwrong",index,MAX_BUFS+MAX_SMALL_BUFS);
+      return(index);
+   } 
+   else {
+        armci_die("armci_buf_to_index: bad pointer",0);
+        return(0);
+   }
 }
 
 
@@ -161,7 +200,7 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
 
     count = buf_state->count;
     if(DEBUG_ ){
-       printf("%d:complete_buf_index:%d op=%d first=%d count=%d called=%d\n",
+       printf("%d:buf_complete_index:%d op=%d first=%d count=%d called=%d\n",
               armci_me,idx,buf_state->op,buf_state->first,buf_state->count,
               called); 
        fflush(stdout);
@@ -181,14 +220,29 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
 #   ifdef BUF_EXTRA_FIELD_T
     else{
        /* need to call platform specific function */
-       CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[idx].field,buf_state->snd,buf_state->rcv,buf_state->to,buf_state->op);
+       if(idx>=MAX_BUFS){
+         int relidx;
+         relidx = idx-MAX_BUFS; 
+         /*printf("\n%d:relidx=%d \n",armci_me,relidx);fflush(stdout);*/
+         CLEAR_SEND_BUF_FIELD(_armci_buf_state->smallbuf[relidx].field,buf_state->snd,buf_state->rcv,buf_state->to,buf_state->op);
 
        /*later, we might just need to do this for all operations, not just get*/
-       if(_armci_buf_state->buf[idx].id.tag!=0 &&(buf_state->op == GET)){
-         armci_complete_req_buf(&(_armci_buf_state->buf[idx].id),
-                                _armci_buf_state->buf[idx].buffer);
+         if(_armci_buf_state->smallbuf[relidx].id.tag!=0 &&(buf_state->op == GET)){
+          armci_complete_req_buf(&(_armci_buf_state->smallbuf[relidx].id),
+                                _armci_buf_state->smallbuf[relidx].buffer);
+         }
+         _armci_buf_state->smallbuf[relidx].id.tag=0;
        }
-       _armci_buf_state->buf[idx].id.tag=0;
+       else {
+         CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[idx].field,buf_state->snd,buf_state->rcv,buf_state->to,buf_state->op);
+
+       /*later, we might just need to do this for all operations, not just get*/
+         if(_armci_buf_state->buf[idx].id.tag!=0 &&(buf_state->op == GET)){
+           armci_complete_req_buf(&(_armci_buf_state->buf[idx].id),
+                                _armci_buf_state->buf[idx].buffer);
+         }
+         _armci_buf_state->buf[idx].id.tag=0;
+       }
     }
 #   endif
 
@@ -207,8 +261,7 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
 void _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node)
 {
     int i;
-    char *ptr = (char*)buf;
-    int index = BUF_TO_BUFINDEX(ptr);
+    int index =_armci_buf_to_index(buf); 
     int this = _armci_buf_state->table[index].first;
     int nfirst, nlast;
 
@@ -220,7 +273,7 @@ void _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node)
         armci_die2("_armci_buf_ensure_one_outstanding_op_per_node: bad to",node,
                 (int)_armci_buf_state->table[index].to);
 
-    for(i=0;i<MAX_BUFS;i++){
+    for(i=0;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
         buf_state_t *buf_state = _armci_buf_state->table +i;
         if((buf_state->to >= nfirst) && (buf_state->to<= (unsigned int) nlast))
           if((buf_state->first != (unsigned int) this)&&(buf_state->first==(unsigned int) i) && buf_state->op)
@@ -233,15 +286,14 @@ void _armci_buf_ensure_one_outstanding_op_per_node(void *buf, int node)
 void _armci_buf_ensure_one_outstanding_op_per_proc(void *buf, int proc)
 {
     int i;
-    char *ptr = (char*)buf;
-    int index = BUF_TO_BUFINDEX(ptr);
+    int index = _armci_buf_to_index(buf); 
     int this = _armci_buf_state->table[index].first;
 
     if(_armci_buf_state->table[index].to !=(unsigned int)  proc )
        armci_die2("_armci_buf_ensure_one_outstanding_op_per_proc: bad to", proc,
                 (int)_armci_buf_state->table[index].to);
 
-    for(i=0;i<MAX_BUFS;i++){
+    for(i=0;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
         buf_state_t *buf_state = _armci_buf_state->table +i;
         if(buf_state->to == (unsigned int) proc)
           if((buf_state->first != (unsigned int) this)&&(buf_state->first==(unsigned int) i) && buf_state->op)
@@ -270,6 +322,47 @@ int i;
 }
 #endif
 
+/*\  call corresponding to GET_SEND_BUF
+\*/
+char *_armci_buf_get_small(int size, int operation, int to)
+{
+int avail=_armci_buf_state->smavail,i;
+    if(_armci_buf_state->table[avail].op || 
+       _armci_buf_state->table[avail].first) {
+       
+       for(i=MAX_BUFS;i<MAX_BUFS+MAX_SMALL_BUFS;i++){
+          if(!_armci_buf_state->table[i].op &&
+             !_armci_buf_state->table[i].first)
+            break;
+       }
+       if(i<(MAX_SMALL_BUFS+MAX_BUFS))avail = i;
+       else {
+          _armci_buf_complete_index(avail,1);
+       }
+    }
+    _armci_buf_state->table[avail].op = operation;
+    _armci_buf_state->table[avail].to = to;
+    _armci_buf_state->table[avail].count=  1;
+    _armci_buf_state->table[avail].first = avail;
+    _armci_buf_state->smallbuf[avail-MAX_BUFS].id.tag=0;
+    _armci_buf_state->smallbuf[avail-MAX_BUFS].id.bufid= avail; 
+    _armci_buf_state->smallbuf[avail-MAX_BUFS].id.protocol=0;
+# ifdef BUF_EXTRA_FIELD_T
+    INIT_SEND_BUF(_armci_buf_state->smallbuf[avail-MAX_BUFS].field,_armci_buf_state->table[avail].snd,_armci_buf_state->table[avail].rcv);
+#endif
+     
+    _armci_buf_state->smavail = (avail+1-MAX_BUFS)%MAX_SMALL_BUFS + MAX_BUFS;
+
+    if(DEBUG_ || 0){
+      printf("%d:buf_get_sm:size=%d max=%d got %d ptr=%p op=%d to=%d\n",
+             armci_me,size,SMALL_BUF_LEN,avail,
+            _armci_buf_state->smallbuf[avail-MAX_BUFS].buffer,operation,to);
+      fflush(stdout);
+    }
+
+    return(_armci_buf_state->smallbuf[avail-MAX_BUFS].buffer); 
+
+}
 
 /*\  call corresponding to GET_SEND_BUF
 \*/
@@ -277,7 +370,8 @@ char *_armci_buf_get(int size, int operation, int to)
 {
 int avail=_armci_buf_state->avail;
 int count=1, i;
-   
+    /*if small buffer, we go to another routine that gets smallbuf*/
+    if(size<SMALL_BUF_LEN) return(_armci_buf_get_small(size,operation,to));
     /* compute number of buffers needed (count) to satisfy the request */
     if((size > MSG_BUFLEN_SMALL) ){ 
        double val = (double)size;  /* use double due to a bug in gcc */
@@ -346,10 +440,9 @@ int count=1, i;
 \*/
 void _armci_buf_release(void *buf)
 {
-char *ptr = (char*)buf;
-int  count, index = BUF_TO_BUFINDEX(ptr);
+int  count, index = _armci_buf_to_index(buf);
 buf_state_t *buf_state = _armci_buf_state->table +index;
-   if((index >= MAX_BUFS)|| (index<0))
+   if((index >= MAX_BUFS+MAX_SMALL_BUFS)|| (index<0))
       armci_die2("armci_buf_release: bad index:",index,MAX_BUFS);
 
    count =  _armci_buf_state->table[index].count;
@@ -362,12 +455,17 @@ buf_state_t *buf_state = _armci_buf_state->table +index;
 
    /* clear table slots for all the buffers in the set for this request */
    for(; count; count--, buf_state++) *(int*)buf_state = 0;
-
-   _armci_buf_state->buf[index].id.tag=0;
+   if(index >= MAX_BUFS){
+      _armci_buf_state->smallbuf[index-MAX_BUFS].id.tag=0;
+      _armci_buf_state->smavail = index;
+   }
+   else{
+      _armci_buf_state->buf[index].id.tag=0;
+      _armci_buf_state->avail = index;
+   }
    
 
    /* the current buffer is prime candidate to satisfy next buffer request */
-   _armci_buf_state->avail = index;
 }
 
 
@@ -375,9 +473,9 @@ buf_state_t *buf_state = _armci_buf_state->table +index;
 \*/
 char *_armci_buf_ptr_from_id(int id)
 {
-  if(id <0 || id >=MAX_BUFS) 
+  if(id <0 || id >=(MAX_BUFS+MAX_SMALL_BUFS)) 
               armci_die2("armci_buf_ptr_from_id: bad id",id,MAX_BUFS);
-
+  if(id >=MAX_BUFS)return(_armci_buf_state->smallbuf[id-MAX_BUFS].buffer);
   return(_armci_buf_state->buf[id].buffer);
 }
 
@@ -399,11 +497,21 @@ int i=0;
          if(tag && tag==_armci_buf_state->buf[i].id.tag)
            _armci_buf_complete_index(i,1); 
        }
+       for(i=0;i<MAX_SMALL_BUFS;i++){ 
+         if(tag && tag==_armci_buf_state->smallbuf[i].id.tag)
+           _armci_buf_complete_index(i+MAX_BUFS,1); 
+       }
        *retcode=0;
     }
     else {
-       if(tag && tag==_armci_buf_state->buf[bufid].id.tag)
-         _armci_buf_complete_index(bufid,1);
+       if(bufid<MAX_BUFS){
+         if(tag && tag==_armci_buf_state->buf[bufid].id.tag)
+           _armci_buf_complete_index(bufid,1);
+       }
+       else{
+         if(tag && tag==_armci_buf_state->smallbuf[bufid-MAX_BUFS].id.tag)
+           _armci_buf_complete_index(bufid,1);
+       }
        *retcode=0;
     } 
 }
@@ -413,14 +521,29 @@ int i=0;
 \*/
 void _armci_buf_set_tag(void *bufptr,unsigned int tag,short int protocol)
 {
-int  index = BUF_TO_BUFINDEX(bufptr);
+int  index = _armci_buf_to_index(bufptr);
    /*_armci_buf_state->table[index].async=1;*/
-   _armci_buf_state->buf[index].id.tag=tag;
-   _armci_buf_state->buf[index].id.protocol=protocol;
+   if(index<MAX_BUFS){
+      _armci_buf_state->buf[index].id.tag=tag;
+      _armci_buf_state->buf[index].id.protocol=protocol;
+   }
+   else{
+      _armci_buf_state->smallbuf[index-MAX_BUFS].id.tag=tag;
+      _armci_buf_state->buf[index-MAX_BUFS].id.protocol=protocol;
+   }
 }
 
 /*\function to return bufinfo, given buf ptr
 \*/
 BUF_INFO_T *_armci_buf_to_bufinfo(void *buf){
-    return(&((BUF_TO_EBUF(buf))->id));
+    if(buf > (void *)_armci_buffers && buf < (void *)(_armci_buffers+MAX_BUFS)){
+       return(&((BUF_TO_EBUF(buf))->id));
+    }
+   else if(buf > (void *)_armci_smbuffers && buf < (void *)(_armci_smbuffers+MAX_SMALL_BUFS)){
+       return(&((BUF_TO_SMEBUF(buf))->id));
+   } 
+   else {
+        armci_die("armci_buf_to_index: bad pointer",0);
+        return(0);
+   }
 }
