@@ -3,7 +3,7 @@
  Authors: Jarek Nieplocha (PNNL) and Jace Mogill (ANL)
 \**********************************************************************/
 
-#ifdef CRAY_T3E____
+#ifdef CRAY_T3E
 #define FFIO 1
 #endif
 
