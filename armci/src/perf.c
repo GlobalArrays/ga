@@ -18,6 +18,7 @@
 #define SIZE 550
 #define MAXPROC 8
 #define CHUNK_NUM 28
+#define FORCE_1D_
 
 #ifndef ABS
 #define ABS(a) ((a)>0? (a): -(a))
@@ -44,7 +45,7 @@ static double _tt0=0.0;
 \*/
 double Timer()
 {
-#define DELTA 0.00001
+#define DELTA 0.000001
   double t=MPI_Wtime();
   if(t<=_tt0 + DELTA) _tt0 += DELTA;
   else _tt0 = t;
@@ -79,9 +80,17 @@ double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
     
     start_time = TIMER();
     for(i=0; i<loop; i++) {
-        
-        ARMCI_GetS(src_buf, stride, dst_buf, stride, count, stride_levels,
-                   proc);
+         
+#ifdef FORCE_1D
+        int j;
+        if(levels>0)for(j=0; j< count[1]; j++){
+           char *s = (char*) src_buf, *d= (char*)dst_buf;
+           s += j*stride[0]; d += j*stride[0];
+           ARMCI_Get(src_buf, dst_buf, count[0],proc);
+        }
+        else
+#endif
+        ARMCI_GetS(src_buf, stride, dst_buf, stride, count, stride_levels,proc);
 
         if(CHECK_RESULT) {
             sprintf(check_type, "ARMCI_GetS:");
@@ -107,7 +116,7 @@ double time_get(double *src_buf, double *dst_buf, int chunk, int loop,
     if(CHECK_RESULT) free(tmp_buf);
 
     if(total_time == 0.0){
-       total_time=0.00001; /* workaround for inaccurate timers */
+       total_time=0.000001; /* workaround for inaccurate timers */
        warn_accuracy++;
     }
     return(total_time/loop);
@@ -136,8 +145,16 @@ double time_put(double *src_buf, double *dst_buf, int chunk, int loop,
     start_time = TIMER();
     for(i=0; i<loop; i++) {
 
-        ARMCI_PutS(src_buf, stride, dst_buf, stride,
-                   count, stride_levels, proc);
+#ifdef FORCE_1D
+        int j;
+        if(levels>0)for(j=0; j< count[1]; j++){
+           char *s = (char*) src_buf, *d= (char*)dst_buf;
+           s += j*stride[0]; d += j*stride[0];
+           ARMCI_Put(src_buf, dst_buf, count[0],proc);
+        }
+        else
+#endif
+        ARMCI_PutS(src_buf, stride, dst_buf, stride, count, stride_levels,proc);
 
         if(CHECK_RESULT) {
             ARMCI_GetS(dst_buf, stride, tmp_buf, stride, count,
@@ -164,7 +181,7 @@ double time_put(double *src_buf, double *dst_buf, int chunk, int loop,
     if(CHECK_RESULT) free(tmp_buf);
     
     if(total_time == 0.0){ 
-       total_time=0.00001; /* workaround for inaccurate timers */
+       total_time=0.000001; /* workaround for inaccurate timers */
        warn_accuracy++;
     }
     return(total_time/loop);
@@ -231,7 +248,7 @@ double time_acc(double *src_buf, double *dst_buf, int chunk, int loop,
     if(CHECK_RESULT) { free(before_buf); free(after_buf); }
     
     if(total_time == 0.0){ 
-       total_time=0.00001; /* workaround for inaccurate timers */
+       total_time=0.000001; /* workaround for inaccurate timers */
        warn_accuracy++;
     }
     return(total_time/loop);
@@ -265,7 +282,7 @@ void test_1D()
     
     MPI_Barrier(MPI_COMM_WORLD);
     
-    /* only the proc 0 doest the work */
+    /* only the proc 0 does the work */
     if(me == 0) {
         printf("\n\t\t\tRemote 1-D Array Section\n");
         if(!CHECK_RESULT){
@@ -320,8 +337,9 @@ void test_1D()
                    latency_put, bandwidth_put, latency_acc, bandwidth_acc);
         }
     }
-    else sleep(10);
+    else sleep(5);
     
+    ARMCI_AllFence();
     MPI_Barrier(MPI_COMM_WORLD);
     
     /* cleanup */
@@ -414,10 +432,12 @@ void test_2D()
                        latency_put, bandwidth_put, latency_acc, bandwidth_acc);
         }
     }
-    else sleep(10);
+    else sleep(5);
     
-    /* cleanup */
+    ARMCI_AllFence();
     MPI_Barrier(MPI_COMM_WORLD);
+
+    /* cleanup */
     ARMCI_Free(get_ptr[me]);
     ARMCI_Free(ptr[me]);
 
@@ -514,9 +534,9 @@ void check_result(double *src_buf, double *dst_buf, int *stride, int *count,
         for(j=0; j<size; j++)
             if(ABS(((double *)((char *)src_buf+idx))[j] - 
                ((double *)((char *)dst_buf+idx))[j]) > 0.000001 ){
-                fprintf(stdout,"Error: %s comparison failed: (%d) (%f : %f)\n",
+                fprintf(stdout,"Error:%s comparison failed: (%d) (%f :%f) %d\n",
                         check_type, j, ((double *)((char *)src_buf+idx))[j],
-                        ((double *)((char *)dst_buf+idx))[j]);
+                        ((double *)((char *)dst_buf+idx))[j], count[0]);
                 ARMCI_Error("failed",0);
             }
     }
