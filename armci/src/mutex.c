@@ -123,6 +123,7 @@ int ARMCI_Destroy_mutexes()
      num_mutexes=0;
      if(armci_nproc == 1) return(0);
 
+     armci_msg_barrier();
 
 #    if defined(SERVER_LOCK)
         armci_serv_mutex_close();
