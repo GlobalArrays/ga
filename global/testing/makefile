@@ -23,7 +23,6 @@ error:
 	exit
 endif
 
-LOC_INCLUDES = -I../src -I../../tcgmsg/ipcv4.0
 ifeq ($(DIAG), PAR)
      LOC_DEFINES += -DPAR_DIAG
 endif
@@ -67,6 +66,10 @@ ifdef USE_MPI
   P_FILE = no
 endif
 
+ifdef USE_ARMCI
+  TESTUTIL=util.o
+endif
+
 FOPT= $(NOPT)
 COPT= $(NOPT)
 
@@ -80,55 +83,22 @@ COPT= $(NOPT)
 
 
 ifeq ($(P_FILE),YES)
-    testc.x: testc.o $(LIBDIR)/libglobal.a
+%.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a  $(EXTRA)
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
-	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
-	$(RM) testc.o
-    ifdef USE_MPI
-      ga-mpi.x: ga-mpi.o $(LIBDIR)/libglobal.a
-	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
-	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
-	$(RM)  ga-mpi.o 
-    else
-      ga-mpi.x:
-	@echo "You need to recompile the package to use MPI "
-    endif
+	if [ -f $(basename $@).c ]; then\
+		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(CLIB);\
+	else\
+		$(LINK.f) $(FOPT_REN) $(FLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS);\
+        fi
 else
-    testc.x: testc.o $(LIBDIR)/libglobal.a
-	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
-	$(RM) testc.o
-    ifdef USE_MPI
-      ga-mpi.x: ga-mpi.o $(LIBDIR)/libglobal.a
-	$(CLD) $(CLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS) $(CLIB)
-	$(RM)  ga-mpi.o 
-    else
-      ga-mpi.x:
-	@echo "You need to define USE_MPI and recompile the package "
-    endif
+%.x : %.o $(TESTUTIL) $(LIBDIR)/libglobal.a  $(EXTRA)
+	if [ -f $(basename $@).c ]; then\
+		$(LINK.c) $(CLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS) $(CLIB);\
+	else\
+		$(LINK.f) $(FOPT_REN) $(FLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) $(LIBS);\
+        fi
 endif
 
-
-
-ifeq ($(P_FILE),YES)
-    ifeq ($(EXPLICITF),FALSE)
-        .SUFFIXES : 
-        .SUFFIXES : .F .o .x
-
-        %.o : %.F
-	   $(FC) $(FFLAGS) -c $*.F 
-        %.o : %.c
-	   $(CC) $(CFLAGS) -DSYSV -c $*.c 
-    endif
-
-    %.x : %.o $(LIBDIR)/libglobal.a
-	$(FC) $(FLDOPT) -o $@ $< -L$(LIBDIR) $(LIBS)
-	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
-	$(INSTALL)
-else
-    %.x : %.o $(LIBDIR)/libglobal.a
-	$(FLD) $(FLDOPT) -o $@ $<  -L$(LIBDIR) $(LIBS)
-	$(INSTALL)
-endif
 
 %.p:
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@

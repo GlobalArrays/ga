@@ -1,4 +1,7 @@
-#ifdef FUJITSU
+c vector guys somehow lack arithmetic precision 
+#ifdef CRAY_YMP
+# define THRESH 1d-11
+#elif defined(FUJITSU)
 # define THRESH 1d-12
 #else
 # define THRESH 1d-14
@@ -42,6 +45,7 @@ c
          print *,' GA initialized '
          call ffflush(6)
       endif
+      call PROC_REMAP()
 c
 c***  Check support for double precision arrays
 c
@@ -84,6 +88,8 @@ c
 c***  Tidy up the GA package
 c
       if(ga_nodeid().eq.0)call ga_print_stats()
+      if (ga_nodeid().eq.0) print *,' ' 
+      if (ga_nodeid().eq.0) print *,'All tests succesful ' 
       call ga_terminate()
 c
 c***  Tidy up after TCGMSG
@@ -104,7 +110,7 @@ c
       parameter (m = 2*n)
       double precision a(n,n), b(n,n), v(m),w(m)
       integer iv(m), jv(m)
-      logical status
+      logical status, found
       integer g_a, g_b
       integer iran, i,j, loop,nloop,maxloop, ilo, ihi, jlo, jhi, itmp
       integer nproc, me, int, ij, inc, ii, jj
@@ -137,7 +143,7 @@ c
 *     print *,ga_nodeid(), ' creating array'
 *     call ffflush(6)
 c     call setdbg(1)
-      status = ga_create(MT_DBL, n, n, 'a', 1, 1, g_a)
+      status = ga_create(MT_DBL, n, n, 'a', 0, 0, g_a)
       if (.not. status) then
          write(6,*) ' ga_create failed'
          call ffflush(6)
@@ -300,7 +306,8 @@ c
       crap = drand(12345)       ! Same seed for each process
       do j = 1, n
          do i = 1, n
-            b(i,j) = drand(0)
+c           b(i,j) = drand(0)
+            b(i,j) = i+j 
          enddo
       enddo
 c
@@ -308,7 +315,8 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-            x = drand(0)
+c           x = drand(0)
+            x = 10.
             ilo = i
             ihi = min(i+inc-1, n)
             if(ihi.eq.n-1)ihi=n
@@ -319,7 +327,7 @@ c           ihi = min(i+inc, n)
 c           jhi = min(j+inc-1, n)
 *               call ffflush(6)
             if (mod(ij,nproc) .eq. me) then
-c               print *, me, 'checking accumulate ',ilo,ihi,jlo,jhi
+c               print *, me, 'checking accumulate ',ilo,ihi,jlo,jhi,x
 * 11            format(' node ',i2,' checking accumulate ',4i4)
 *               call ffflush(6)
                call ga_acc(g_a, ilo, ihi, jlo, jhi, b(ilo, jlo), n, x)
@@ -357,7 +365,7 @@ c              call ga_error('... exiting ',0)
 c
 c     overlapping accumulate
       call ga_sync()
-      if (.not. ga_create(MT_DBL, n, n, 'b', 1, 1, g_b)) then
+      if (.not. ga_create(MT_DBL, n, n, 'b', 0, 0, g_b)) then
          call ga_error('ga_create failed for second array ',0)
       endif
 c
@@ -568,7 +576,77 @@ c
          write(6,*)
       endif
 c
+      call ga_sync()
+c
+c     scatter-acc available in GA ver. 3.0
+#ifdef GA3
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' checking scatter-accumulate'
+         write(6,*)
+      endif
+c
+      crap = drand(1234)
+      call ga_zero(g_a)
+c
+      do j = 1, n
+         do i = 1, n
+            b(i,j) =0.
+         enddo
+      enddo
+c
+      x = .1d0
+      ii =n
+      do jj = 1,1 
+	  call ga_sync()
+        do loop = 1, ii 
 
+c          generate unique i,j pairs
+10         continue
+              i = iran(n)
+	      j=iran(n)
+           if (found(i,j, iv, jv, loop-1) ) goto 10
+
+           iv(loop) = i
+           jv(loop) = j
+           v(loop) = 1d0 *(i+j)
+           b(i,j) = b(i,j) + nproc*x*v(loop) ! update local ref. array
+        enddo
+
+
+	call ga_scatter_acc(g_a,v,iv,jv, ii,x)
+
+c
+        call ga_sync()
+c     
+c       check the result
+c
+        call ga_get(g_a, 1, n, 1,n, a, n)
+
+        do loop = 1,ii
+          i = iv(loop)
+          j = jv(loop)
+          if(MISMATCH(a(i,j),b(i,j)))then
+             print *,'Error',i,j,loop,a(i,j),'expected=',b(i,j)  
+*            if(me.eq.0)then
+*              do ii=1,loop
+*                   print *,'element',ii, iv(ii),jv(ii)
+*              enddo
+*            endif
+             call ga_error('scatter-acc error in trial ',jj) 
+          endif
+        enddo
+	  call ga_sync()
+
+      enddo
+
+      call ga_sync()
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' scatter-accumulate is  OK'
+         write(6,*)
+      endif
+#endif
 c     
 c     Delete the global arrays
 c
@@ -618,15 +696,15 @@ c
 c
 c     Create a global array
 c
-*     print *,ga_nodeid(), ' creating array'
-*     call ffflush(6)
+c     print *,ga_nodeid(), ' creating array'
+      call ffflush(6)
 c     call setdbg(1)
-      status = ga_create(MT_DCPL, n, n, 'a', 1, 1, g_a)
+      status = ga_create(MT_DCPL, n, n, 'a', 0, 0, g_a)
       if (.not. status) then
          write(6,*) ' ga_create failed'
          call ga_error('... exiting ',0)
       endif
-      if (.not. ga_create(MT_DCPL, n, n, 'b', 1, 1, g_b)) then
+      if (.not. ga_create(MT_DCPL, n, n, 'b', 0, 0, g_b)) then
          call ga_error('ga_create failed for second array ',0)
       endif
 
@@ -784,7 +862,9 @@ c
       ij = 0
       do j = 1, n, inc
          do i = 1, n, inc
-            x = cmplx(drand(0),0.333d0)
+c           x = cmplx(drand(0),0.333d0)
+c           x = cmplx(0.333d0,0)
+            x = cmplx(0,0)
             ilo = i
             ihi = min(i+inc-1, n)
             if(ihi.eq.n-1)ihi=n
@@ -1083,7 +1163,7 @@ c
 c     
 c     Create a global array
 c
-      if (.not. ga_create(MT_INT, n, n, 'a', 1, 1, g_a)) then
+      if (.not. ga_create(MT_INT, n, n, 'a', 0, 0, g_a)) then
          write(6,*) ' ga_create failed'
          call ffflush(6)
          call ga_error('... exiting ',0)
@@ -1135,9 +1215,9 @@ c
                ihi = min(i+inc, n)
                jlo = j
                jhi = min(j+inc, n)
-*               write(6,4) me, ilo, ihi, jlo, jhi
-* 4             format(' node ',i2,' checking put ',4i4)
-*               call ffflush(6)
+c              write(6,4) me, ilo, ihi, jlo, jhi
+c4             format(' node ',i2,' checking put ',4i4)
+c              call ffflush(6)
                call ga_put(g_a, ilo, ihi, jlo, jhi, a(ilo, jlo), n)
             endif
             ij = ij + 1
@@ -1147,6 +1227,7 @@ c
 c
 c     All nodes check all of a
 c
+      if(me.eq.0)then
       call ga_get(g_a, 1, n, 1, n, b, n)
       do i = 1, n
          do j = 1, n
@@ -1157,6 +1238,7 @@ c
             endif
          enddo
       enddo
+      endif
       call ga_sync()
 c
       if (me.eq.0) then
@@ -1456,7 +1538,7 @@ c
         call print_mem_info(n,left, need, mem_size/procs)
       endif
 c
-      status = ga_create(MT_DBL, n, n, 'a', 1, 1, g_a)
+      status = ga_create(MT_DBL, n, n, 'a', 0, 0, g_a)
 c
       if(me.eq.0) then
         if(status) then
@@ -1474,7 +1556,7 @@ c
         call print_mem_info(n,left, need, mem_size/procs)
       endif
 c
-      status = ga_create(MT_DBL, n, n, 'b', 1, 1, g_b)
+      status = ga_create(MT_DBL, n, n, 'b', 0, 0, g_b)
 c
       if(me.eq.0) then
         if(status) then
@@ -1501,7 +1583,7 @@ c
 1       format('> Creating array ',i4,' by ',i4,' -- should succeed')
       else
         write(6,2)n,n 
-2       format('> Creating array ',i4,' by ',i4,' -- should fail')
+2       format('> Creating array ',i4,' by ',i4,' -- SHOULD FAIL')
       endif
       write(6,3) need, left, total
 3     format('  (need ',i7,' and  ',i7,' out of ',i7,' bytes are left)')
@@ -1550,3 +1632,34 @@ c
       call ga_put(g_b, 2,2,1,1, val+1, 1) 
       end
 
+
+      logical function found(i,j, iv, jv, n)
+      integer n
+      integer i,j, iv(n), jv(n)
+      integer loop
+
+      found = .false.
+      do loop = 1, n
+               if(i .eq. iv(loop) .and. j .eq.jv(loop))then
+                 found = .true.
+                 goto 99
+               endif
+            enddo
+99    continue
+      return
+      end 
+      
+            
+      subroutine proc_remap()
+      implicit none
+#include "global.fh"
+      integer proc(100),nproc,i
+      nproc = ga_nnodes()
+      if(nproc>100)call ga_error("remap requires<=100 processes",nproc)
+      do i = 1, nproc
+         proc(i) = nproc-i
+      enddo
+c     call ga_register_proclist(proc,nproc)
+      end
+      
+      
