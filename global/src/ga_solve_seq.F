@@ -75,24 +75,24 @@ c
 c
 c***     LU factorization
 c
-         call sgetrf(dimA1, dimA2, dbl_mb(adra), dimA1, int_mb(adri),
+         call dgetrf(dimA1, dimA2, dbl_mb(adra), dimA1, int_mb(adri),
      &                info)
 c
          if(info.eq.0)then
 c
 c***        solve
 c
-            call sgetrs(trans, dimA1, dimB2, dbl_mb(adra), dimA1, 
+            call dgetrs(trans, dimA1, dimB2, dbl_mb(adra), dimA1, 
      &                  int_mb(adri),dbl_mb(adrb), dimB1, info)
 c
             if(info.eq.0)then
                call ga_put(g_b, 1, dimB1, 1, dimB2, dbl_mb(adrb), dimB1)
             else
-               call ga_error(' ga_lu_solve: sgetrs failed ', -info)
+               call ga_error(' ga_lu_solve: dgetrs failed ', -info)
             endif
 c
          else
-            call ga_error(' ga_lu_solve: sgetrf failed ', -info)
+            call ga_error(' ga_lu_solve: dgetrf failed ', -info)
          endif
 c
 c***     deallocate work arrays

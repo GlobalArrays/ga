@@ -76,7 +76,7 @@ c
                      bdim = jdim
                      call ga_get(g_b, jlo, jhi, klo, khi, b, bdim)
                   endif
-                  call sgemm(transa, transb, idim, jdim, kdim,
+                  call dgemm(transa, transb, idim, jdim, kdim,
      $                 alpha, a, adim, b, bdim, 1.0d0, c, cdim)
                   call ga_acc(g_c, ilo, ihi, jlo, jhi, c, cdim, 1.0d0)
                endif

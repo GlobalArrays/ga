@@ -28,7 +28,7 @@ c
          call ga_get(g_c, 1, dims(1,g_c), 1, dims(2,g_c), dbl_mb(k_c), 
      $        dims(1,g_c))
 c     
-         call sgemm(transa, transb, m, n, k, alpha, dbl_mb(k_a), 
+         call dgemm(transa, transb, m, n, k, alpha, dbl_mb(k_a), 
      $        dims(1,g_a),
      $        dbl_mb(k_b), dims(1,g_b), beta, dbl_mb(k_c), dims(1,g_c))
 c     
