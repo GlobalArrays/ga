@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.9 2002-02-26 15:29:19 vinod Exp $ */
+/* $Id: winshmem.c,v 1.10 2002-05-16 18:39:49 d3h325 Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -27,6 +27,7 @@
 
 
 #define DEBUG 0
+#define DEBUG0 0
 
 #include <stdio.h>
 
@@ -78,8 +79,10 @@
 #define SHM_UNIT (1024)
 
 /* default unit for shared memory allocation in KB! */
-#ifdef WIN32
+#if defined(WIN32)
 #  define _SHMMAX  32678      
+#elif defined(MACX)
+#  define _SHMMAX  64*1024
 #else
 #  define _SHMMAX  2*32678      
 #endif
@@ -240,7 +243,7 @@ char *armci_get_core_from_map_file(int exists, long size)
        CloseHandle(h_shm_map);
        h_shm_map = INVALID_HANDLE_VALUE;
     }
-#elif defined(MMAP)&&!defined(HITACHI)
+#elif defined(MMAP)&&!defined(HITACHI) && !defined(MACX)
 
     if(exists){
        if(size < MinShmem*SHM_UNIT) size = MinShmem*SHM_UNIT;
@@ -259,6 +262,28 @@ char *armci_get_core_from_map_file(int exists, long size)
     close(h_shm_map);
     h_shm_map = -1;
 
+#elif defined(MACX)
+
+    if(exists){
+       if(size < MinShmem*SHM_UNIT) size = MinShmem*SHM_UNIT;
+       h_shm_map = shm_open(map_fname, O_RDWR, S_IRWXU);
+       if(h_shm_map == -1) return NULL;
+    }else{
+       (void*)shm_unlink(map_fname); /* sanity cleanup */
+       h_shm_map = shm_open(map_fname, O_CREAT|O_RDWR, S_IRWXU);
+       if(h_shm_map<0) perror("open");
+       if(h_shm_map == -1) return NULL;
+       if(ftruncate(h_shm_map,size) < 0){
+            perror("ftruncate");
+            return NULL;
+       }
+    }
+
+    ptr = mmap(0, size, PROT_READ|PROT_WRITE, MAP_SHARED, h_shm_map, 0L);
+    if((long)ptr <0){ perror("mmap"); return NULL; }
+
+    close(h_shm_map);
+    h_shm_map = -1;
     
 #else
 
@@ -285,6 +310,7 @@ char *armci_get_core_from_map_file(int exists, long size)
     
 #endif
 
+    if(DEBUG0){printf("%d: got ptr=%p bytes=%d mmap\n",armci_me,ptr,size); fflush(stdout); }
     region_list[alloc_regions].addr = (char*)ptr;
     region_list[alloc_regions].size = size;
 
@@ -386,7 +412,6 @@ char *Attach_Shared_Region(long id[], long size, long offset)
      }else armci_die("Attach_Shared_Region:iconsistency in counters",
          alloc_regions - (int) id[0]);
 
-     assert(temp);
       if(DEBUG)fprintf(stderr,"\n%d:attach succesful off=%ld ptr=%p\n",armci_me,offset,temp);
      return(temp);
 }

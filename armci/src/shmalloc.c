@@ -1,4 +1,4 @@
-/* $Id: shmalloc.c,v 1.8 2001-03-22 21:46:16 d3h325 Exp $ */
+/* $Id: shmalloc.c,v 1.9 2002-05-16 18:39:49 d3h325 Exp $ */
 #include <stdio.h>
 #include "shmalloc.h"
 
@@ -99,7 +99,7 @@ static Header *morecore(nu)
 {
   char *cp;
   Header *up;
-  void addtofree();
+  void armci_addtofree();
  
   if (usage.total >= max_nalloc)
     return (Header *) NULL;   /* Enforce upper limit on core usage */
@@ -131,7 +131,7 @@ static Header *morecore(nu)
   up->s.ptr = usedp;
   usedp = up;
 
-  addtofree((char *)(up+1));  /* Try to join into the free list */
+  armci_addtofree((char *)(up+1));  /* Try to join into the free list */
   return freep;
 }
 
@@ -358,7 +358,7 @@ void shmalloc_verify()
   UNLOCKIT;
 }
 
-void addtofree(ap)
+void armci_addtofree(ap)
      char *ap;
 {
   Header *bp, *p, **up;

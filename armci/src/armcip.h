@@ -14,7 +14,7 @@
 #include <unistd.h>
 #endif
 
-#if (defined(SYSV) || defined(WIN32)|| defined(HITACHI)) && !defined(NO_SHM)
+#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM)
 #define CLUSTER 
 
 #ifdef SERVER_THREAD

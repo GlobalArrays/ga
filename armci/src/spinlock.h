@@ -41,6 +41,11 @@
 #define TESTANDSET(x) (!_lock_try((x))) 
 #define RELEASE_SPINLOCK _lock_clear 
 
+#elif defined(MACX)
+#include "tas-ppc.h"
+#define SPINLOCK  
+#define TESTANDSET(x) (! __compare_and_swap((long int *)(x),0,1)) 
+
 #elif defined(HPUX__)
 extern int _acquire_lock();
 extern void _release_lock();
@@ -104,6 +109,9 @@ int loop=0, maxloop =100;
 #else
 static INLINE void armci_release_spinlock(LOCK_T *mutex)
 {
+#ifdef MEMORY_BARRIER
+  MEMORY_BARRIER ();
+#endif
   *mutex =0;
 }
 
