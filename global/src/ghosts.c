@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.2 2001-12-06 19:34:31 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.3 2001-12-11 19:52:30 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -54,10 +54,6 @@ static global_array_t *GA = _ga_main_data_structure;
 
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
-
-char *fence_array;
-static int GA_fence_set=0;
-Integer *_ga_map;       /* used in get/put/acc */
 
 /***************************************************************************/
 
