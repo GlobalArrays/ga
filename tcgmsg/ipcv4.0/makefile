@@ -160,8 +160,14 @@ ifeq ($(TARGET),LINUX)
 # PC80x86 Linux pl10.
 # f77 usage of argc&argv inside f2c is (xargc & xargv).
 # -DPLOT option removed for linux. 
-        FC = g77 -fno-second-underscore 
+#
    DEFINES = -DLINUX -DSYSV -DSHMEM -DTIMINGS -DNOSPIN
+ifeq ($(FC),pgf77)
+    FC = pgf77 -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
+    DEFINES += -DPGLINUX
+else
+    FC = g77 -fno-second-underscore 
+endif
  LINTFLAGS = $(DEFINES) -u
       LIBS = -lc
      EXTRA = strdup.o strtok.o

@@ -72,6 +72,17 @@ ifeq ($(FC),g77)
        FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
 endif
  GLOB_DEFINES = -DLINUX
+ifeq ($(FC),pgf77)
+# linux with Portland Group Compiler
+       FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
+# for pentium
+# FOPT_REN  += -tp p5  
+# for Pentium Pro or Pentium II
+# FOPT_REN  += -tp p6
+       GLOB_DEFINES += -DPGLINUX
+# for parinoia
+       MAKEFLAGS += FC=pgf77
+endif
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
 endif

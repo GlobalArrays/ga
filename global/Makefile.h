@@ -70,8 +70,13 @@ else
      FOPT_REN = -fno-second-underscore
            FC = g77
 endif
+ GLOB_DEFINES = -DLINUX
+
 ifeq ($(FC),pgf77)
+# Portland Group Compiler
  GLOB_DEFINES+= -DPGLINUX
+ FOPT_REN = -Mdalign -Mnolist -Minform,warn -Minfo=loop -Munixlogical
+ MAKEFLAGS += FC=pgf77
 endif
 ifeq ($(CC),gcc)
        COPT_REN = -malign-double
@@ -80,7 +85,6 @@ ifeq ($(FC),g77)
        FOPT_REN += -malign-double -funroll-loops -fomit-frame-pointer
        FOPT_REN += -Wno-globals
 endif      
- GLOB_DEFINES = -DLINUX
           CPP = gcc -E -nostdinc -undef -P
        RANLIB = ranlib
 endif
@@ -89,7 +93,7 @@ endif
 # IBM PC running Linux with Portland Group Compilers
 #
 ifeq ($(TARGET),PGLINUX)
-     FOPT_REN = -fno-second-underscore
+     FOPT_REN = -Mdalign -Mnolist -Minform,warn -Minfo=loop -Munixlogical
            FC = pgf77
  GLOB_DEFINES = -DLINUX -DPGLINUX
            CC = gcc

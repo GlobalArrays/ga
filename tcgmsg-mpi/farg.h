@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.4 1999-07-01 19:51:42 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.5 1999-08-05 20:29:41 d3e129 Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -40,6 +40,11 @@
 #define ARGV_ _argv
 #endif
 
+/* PGI compilers on Linux */
+#if defined(PGLINUX)
+#define ARGC_ __argc_save
+#define ARGV_ __argv_save
+#else
 /* g77/gcc fortran argc/argv interface on linux is unstable */
 #if defined(LINUX)
 #if ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ > 90)))
@@ -50,11 +55,6 @@
 #   define ARGV_ xargv
 #endif
 #endif
-
-/* PGI compilers on Linux */
-#if defined(PGLINUX)
-#define ARGC_ __argc_save
-#define ARGV_ __argv_save
 #endif
 
 

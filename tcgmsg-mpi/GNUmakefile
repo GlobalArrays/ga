@@ -89,8 +89,15 @@ endif
 #................................ LINUX ....................................
 #
 ifeq ($(MACHINE),LINUX)
-           FC = g77
-     FOPT_REN = -Nl100 -fno-second-underscore -malign-double
+ifeq ($(FC),pgf77)
+	    FC = pgf77
+      FOPT_REN = -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
+    MAKEFLAGS += FC=pgf77
+ GLOB_DEFINES += -DPGLINUX
+else
+            FC = g77
+      FOPT_REN = -Nl100 -fno-second-underscore -malign-double
+endif
      COPT_REN = -malign-double
        RANLIB = ranlib
 endif

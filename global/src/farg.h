@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/global/src/farg.h,v 1.2 1999-07-01 19:51:24 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/global/src/farg.h,v 1.3 1999-08-05 20:24:48 d3e129 Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -40,6 +40,11 @@
 #define ARGV_ _argv
 #endif
 
+#if defined(PGLINUX)
+/* Portland group compiler with linux */
+#define ARGC_ __argc_save
+#define ARGV_ __argv_save
+#else
 /* g77/gcc fortran argc/argv interface is unstable */
 #if defined(LINUX)
 #if ((__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ > 90)))
@@ -50,10 +55,6 @@
 #   define ARGV_ xargv
 #endif
 #endif
-
-#if defined(PGLINUX)
-#define ARGC_ __argc_save
-#define ARGV_ __argv_save
 #endif
 
 

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.7 1999-06-29 23:26:40 d3e129 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.8 1999-08-05 20:28:37 d3e129 Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -40,6 +40,10 @@
 #define ARGV_ _argv
 #endif
 
+#if defined(PGLINUX)
+#define ARGC_ __argc_save
+#define ARGV_ __argv_save
+#else
 #if defined(LINUX)
 /*---------------------------------------------------------------------------*\
  There are a multitutde of LINUX distributions and ALL of them differ
@@ -74,11 +78,7 @@
 #define ARGV_ xargv
 #endif
 #endif
-
-#if defined(PGLINUX)
-#define ARGC_ __argc_save
-#define ARGV_ __argv_save
-#endif
+#endif /* end of ifdef PGLINUX */
 
 #ifdef SEQUENT
 #define ARGC_ _X_argc
