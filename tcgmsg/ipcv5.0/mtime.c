@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/mtime.c,v 1.2 1994-12-30 20:56:00 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/mtime.c,v 1.3 1995-01-28 23:12:35 d3h325 Exp $ */
 
 #include <stdio.h>
 #include "srftoc.h"
@@ -12,7 +12,7 @@ double TCGTIME_();
   return (long) (TCGTIME_()*100.0);
 }
 
-#if !(defined(KSR) || defined(ALLIANT))
+#if !(defined(KSR) || defined(ALLIANT) || defined(CRAY_T3D))
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -128,4 +128,13 @@ double TCGTIME_()
   return (high*4294967296e-6+ 2.0*low) * 0.997e-5;
 }
 
+#endif
+
+#ifdef CRAY_T3D
+/* JN: gettimeofday broken on this machine-- we use fortran timef() instead */ 
+double TCGTIME_(){
+double TIMEF();
+       /* initialization not needed since initial call to TIMEF returns 0.0 */
+       return (1.e-3*TIMEF());
+}
 #endif
