@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.32 2000-06-03 01:16:38 d3h325 Exp $ */
+/* $Id: armci.c,v 1.33 2000-06-07 01:12:46 d3h325 Exp $ */
 
 /* DISCLAIMER
  *
@@ -236,7 +236,7 @@ int ARMCI_Init()
 
 #if defined(SYSV) || defined(WIN32)
     /* init shared memory */
-    if(ARMCI_Uses_shm() && armci_master == armci_me) armci_shmem_init();
+    if(ARMCI_Uses_shm() ) armci_shmem_init();
 #endif
 
     /* allocate locks: we need to do it before server is started */

@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.19 2000-04-21 20:52:19 d3h325 Exp $ */
+/* $Id: test.c,v 1.20 2000-06-07 01:12:46 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -44,11 +44,11 @@
 
 #define DIM1 5
 #define DIM2 3
-#ifdef SOLARIS
+#ifdef __sun
 /* Solaris has shared memory shortages in the default system configuration */
 # define DIM3 4
 # define DIM4 4
-# define DIM5 3
+# define DIM5 4
 #else
 # define DIM3 8
 # define DIM4 9
