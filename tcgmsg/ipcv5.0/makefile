@@ -16,35 +16,41 @@ MAKEFLAGS = -j1
 
 
       OBJ_CORE = pbegin.o queues.o globalop.o usleep.o nnodes.o nodeid.o \
-                 signals.o synch.o  waitall.o drand48.o random.o\
+                 synch.o  waitall.o drand48.o random.o\
                  mitob.o mdtob.o mitod.o mdtoi.o misc.o snd_rcv_probe.o mtime.o
 
 ifeq ($(MACHINE),SUN)
        CC = gcc
    CFLAGS = -g -Wall -DSHMEM -DSYSV -DSUN
    RANLIB = ranlib
-    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o
 endif
 
 
 ifeq ($(MACHINE),SGITFP)
    CFLAGS = -O3 -fullwarn -DSHMEM -DSYSV -DSGI -DSGITFP
-    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o
 endif
 
 ifeq ($(MACHINE),SGI)
    CFLAGS = -O -DSHMEM -DSYSV -DSGI -DNOSPIN -DNOTIFY_SENDER
-    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o
 endif
 
 
 ifeq ($(MACHINE),LINUX)
        CC = gcc
    CFLAGS = -Wall -O -DSHMEM -DSYSV -DLINUX -DNOSPIN -DNOTIFY_SENDER
-    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o
+    EXTRA = shmem.o error.o nxtval.shm.o busy.o async_send.o signals.o
    RANLIB = ranlib
 endif
 
+ifeq ($(MACHINE),CYGNUS)
+       CC = gcc
+       FC = g77
+   CFLAGS = -Wall -O -DSHMEM -DLINUX -DCYGNUS
+    EXTRA =  error.o busy.o async_send.o nxtval.shm.o pbeginf.o memalign.o
+endif
 
 ifeq ($(MACHINE),LAPI)
        FC = mpxlf
@@ -52,7 +58,7 @@ ifeq ($(MACHINE),LAPI)
       FLD = $(CC)
    FFLAGS = -qEXTNAME
    CFLAGS = -O -DEXTNAME -DSHMEM -DAIX -DIBM -DLAPI -DNOTIFY_SENDER
-    EXTRA = lapi_putget.o memalign.o async_send_lapi.o
+    EXTRA = lapi_putget.o memalign.o async_send_lapi.o signals.o
   TESTOBJ = test.o
     FLIBS =  -lxlf90 -lxlf
 LIBLAPIDIR = /usr/lpp/ssp/css/lib
@@ -111,6 +117,8 @@ OBJ = $(OBJ_CORE) $(EXTRA)
 LIB_TARGETS = *.x pvm.ring
 LIB_DISTRIB = ../../lib
 LIBRARY = libtcgmsg.a
+HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h ../tcgmsg.fh
+INCDIR  = ../../include
 include ../../config/makelib.h
 
 #......................... make targets ...................................
@@ -119,10 +127,10 @@ include ../../config/makelib.h
 all:	 $(LIBRARY_PATH) test.x
 
 testf:  testf.o $(LIBRARY_PATH)
-	$(FLD) $(LOPT) -o $@ $^ $(LIBS) $(FLIBS)
+	$(FC) $(LOPT) -o $@ $^ $(LIBS) $(FLIBS)
 
-test.x:	$(TESTOBJ)  $(LIBRARY_PATH)
-	$(CC) $(CFLAGS) checkbyte.c $(LOPT) -o $@ $^ $(LIBS)
+test.x:	$(TESTOBJ) checkbyte.o $(LIBRARY_PATH)
+	$(CC) $(CFLAGS) $(LOPT) -o $@ $^ $(LIBS)
 
 hello.x: hello.o $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) $(LOPT) -o $@ $^ $(LIBS)
