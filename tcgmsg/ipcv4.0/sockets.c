@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.5 1995-02-24 02:17:49 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.6 1999-08-10 23:27:31 d3h325 Exp $ */
 
 
 #include <stdio.h>
@@ -88,7 +88,7 @@ void TcpNoDelay(sock)
   struct protoent *proto = getprotobyname("TCP");
 #endif
 
-#if defined(APOLLO) || defined(LINUX)
+#if defined(APOLLO)
   if (value)
     return;
 #endif

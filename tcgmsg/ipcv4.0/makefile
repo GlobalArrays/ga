@@ -29,7 +29,7 @@ ifeq ($(TARGET),SP)
         FC = mpxlf
         CC = mpcc
     FFLAGS = -g -qEXTNAME
-   DEFINES = -DSP1 -DAIX -DEXTNAME  -DTIMINGS
+   DEFINES = -DSP1 -DAIX -DEXTNAME  
     CFLAGS = -g $(DEFINES)
  LINTFLAGS = -u -a -wkD $(DEFINES)
      EXTRA = strdup.o strtok.o
@@ -42,7 +42,7 @@ ifeq ($(TARGET),SP1)
         FC = mpxlf
         CC = mpcc
     FFLAGS = -g -qEXTNAME
-   DEFINES = -DSP1 -DAIX -DEXTNAME  -DTIMINGS
+   DEFINES = -DSP1 -DAIX -DEXTNAME  
     CFLAGS = -g $(DEFINES)
  LINTFLAGS = -u -a -wkD $(DEFINES)
      EXTRA = strdup.o strtok.o
@@ -89,7 +89,7 @@ endif
 ifeq ($(TARGET),CONVEX-SPP)
         FC = fc
     FFLAGS = -O1 -ppu -or none
-   DEFINES = -DHPUX -DCONVEX -DEXTNAME -DSYSV -DSHMEM -DSPPLOCKS -DTIMINGS
+   DEFINES = -DHPUX -DCONVEX -DEXTNAME -DSYSV -DSHMEM -DSPPLOCKS 
     CFLAGS = -O1 -or none $(DEFINES)
     RANLIB = echo $*
  LINTFLAGS = $(DEFINES) -bhu
@@ -100,7 +100,7 @@ ifeq ($(TARGET),CONVEX)
 # Convex C series
         FC = fc
     FFLAGS =  -O1
-   DEFINES = -DCONVEX -DTIMINGS -DSHMEM -DGOTXDR -DEVENTLOG -DNOSPIN
+   DEFINES = -DCONVEX  -DSHMEM -DGOTXDR -DEVENTLOG -DNOSPIN
     CFLAGS = -O1 -or none $(DEFINES)
  LINTFLAGS = $(DEFINES) -bhu
      EXTRA = strdup.o strtok.o sprintf.o
@@ -119,7 +119,7 @@ ifeq ($(TARGET),IBM)
 
         FC = xlf
     FFLAGS = -O -qEXTNAME
-   DEFINES = -DAIX -DEXTNAME -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
+   DEFINES = -DAIX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
  LINTFLAGS = -u -a -wkD $(DEFINES)
       LIBS = -lc
      EXTRA = strdup.o strtok.o
@@ -141,7 +141,7 @@ ifeq ($(TARGET),IBMNOEXT)
 ## the event logging which must therefore be disabled.
 ##
         FC = xlf
-   DEFINES = -DAIX -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
+   DEFINES = -DAIX -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
  LINTFLAGS = -u -a -wkD $(DEFINES)
       LIBS = -lc
      EXTRA = strdup.o strtok.o
@@ -150,7 +150,7 @@ endif
 
 ifeq ($(TARGET),DECOSF)
     FFLAGS = -O -integer_size 64
-   DEFINES = -DDECOSF -DDECFORT -DSYSV -DSHMEM -DTIMINGS -DNOSPIN
+   DEFINES = -DDECOSF -DDECFORT -DSYSV -DSHMEM  -DNOSPIN
  LINTFLAGS = $(DEFINES) -u
      EXTRA = strdup.o strtok.o
 endif
@@ -161,7 +161,7 @@ ifeq ($(TARGET),LINUX)
 # f77 usage of argc&argv inside f2c is (xargc & xargv).
 # -DPLOT option removed for linux. 
 #
-   DEFINES = -DLINUX -DSYSV -DSHMEM -DTIMINGS -DNOSPIN
+   DEFINES = -DLINUX -DSYSV -DSHMEM  -DNOSPIN
 ifeq ($(FC),pgf77)
     FC = pgf77 -Mdalign -Minform,warn -Mnolist -Minfo=loop -Munixlogical
     DEFINES += -DPGLINUX
@@ -179,7 +179,7 @@ ifeq ($(TARGET),PGLINUX)
 # -DPLOT option removed for linux. 
         FC = pgf77 -fno-second-underscore 
         CC = gcc
-   DEFINES = -DLINUX -DPGLINUX -DSYSV -DSHMEM -DTIMINGS -DNOSPIN
+   DEFINES = -DLINUX -DPGLINUX -DSYSV -DSHMEM  -DNOSPIN
  LINTFLAGS = $(DEFINES) -u
       LIBS = -lc
      EXTRA = strdup.o strtok.o
@@ -189,7 +189,7 @@ endif
 ifeq ($(TARGET),SGI-OLD)
 # 32-bit systems running IRIX 5.3 and older
     FFLAGS = -O2 -32
-   DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
+   DEFINES = -DSGI -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
     CFLAGS = -O -32 -I/usr/include/bsd -I/usr/include/sun $(DEFINES)
  LINTFLAGS = -I/usr/include/bsd -I/usr/include/sun $(DEFINES) -u
       LIBS = -lmalloc -lbsd -lrpcsvc -lsun
@@ -202,7 +202,7 @@ ifeq ($(TARGET),SGI)
 # 32-bit systems
     FFLAGS = -O2 -32
     CFLAGS = -O -32 $(DEFINES)
-   DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DPARTIALSPIN
+   DEFINES = -DSGI -DSYSV -DSHMEM  -DGOTXDR -DPARTIALSPIN
  LINTFLAGS =  $(DEFINES) -u
     RANLIB = echo $*
      EXTRA = strdup.o
@@ -211,7 +211,7 @@ endif
 ifeq ($(TARGET),SGI_N32)
 # 64-bit processors running IRIX > 6.0
     FFLAGS = -O2 -n32
-   DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DPARTIALSPIN -DSGIUS
+   DEFINES = -DSGI -DSYSV -DSHMEM  -DGOTXDR -DPARTIALSPIN -DSGIUS
     CFLAGS = -O -n32 $(DEFINES)
  LINTFLAGS =  $(DEFINES) -u
     RANLIB = echo $*
@@ -222,7 +222,7 @@ endif
 ifeq ($(TARGET),SGITFP)
     FFLAGS = -O2 -i8 -64
     CFLAGS = -O -64 $(DEFINES)
-   DEFINES = -DSGI -DSYSV -DSHMEM -DTIMINGS -DPARTIALSPIN -DSGIUS
+   DEFINES = -DSGI -DSYSV -DSHMEM  -DPARTIALSPIN -DSGIUS
  LINTFLAGS = $(DEFINES) -u
     RANLIB = @echo $*
      EXTRA = strdup.o
@@ -231,7 +231,7 @@ endif
 
 ifeq ($(TARGET),KSR)
     FFLAGS = -para -O2 -r8
-   DEFINES = -DKSR -DSYSV -DSHMEM -DTIMINGS -DGOTXDR
+   DEFINES = -DKSR -DSYSV -DSHMEM  -DGOTXDR
     CFLAGS = -para -g $(DEFINES)
  LINTFLAGS = $(DEFINES) -u
     RANLIB = @echo $*
@@ -241,14 +241,14 @@ endif
 
 ifeq ($(TARGET),HPUX)
     FFLAGS = -O +ppu
-   DEFINES = -DHPUX -DEXTNAME -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
+   DEFINES = -DHPUX -DEXTNAME -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
  LINTFLAGS = $(DEFINES) -bhu
     RANLIB = @echo $*
      EXTRA = hpuxargs.o
 endif
 
 ifeq ($(TARGET),HPUXNOEXT)
-   DEFINES = -DHPUX -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
+   DEFINES = -DHPUX -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
  LINTFLAGS = $(DEFINES) -bhu
     RANLIB = @echo $*
      EXTRA = hpuxargs.o
@@ -256,18 +256,18 @@ endif
 
 
 ifeq ($(TARGET),SUN)
-   DEFINES = -DSUN -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN
+   DEFINES = -DSUN -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN
     FFLAGS = -O3
 endif
 
 
 ifeq ($(TARGET),SUN77_2)
-   DEFINES = -DSUN -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN -DSUNF77_2
+   DEFINES = -DSUN -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN -DSUNF77_2
     FFLAGS = -O3
 endif
 
 ifeq ($(TARGET),SOLARIS)
-   DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM -DTIMINGS -DGOTXDR -DNOSPIN\
+   DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN\
              -DSUNF77_2
       LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
     RANLIB = echo $*
@@ -276,7 +276,7 @@ endif
 
 ifeq ($(TARGET),CRAY)
         FC = cf77
-   DEFINES = -DCRAY -DTIMINGS -DGOTXDR
+   DEFINES = -DCRAY  -DGOTXDR
     CFLAGS = -g $(DEFINES)
  LINTFLAGS = $(DEFINES) -u
     RANLIB = echo $*
@@ -289,7 +289,7 @@ ifeq ($(TARGET),ENCORE)
 #ENCORE ... note that testf.f compiles incorrectly with -O
     FFLAGS = -O -q loops
         CC = gcc
-   DEFINES = -DENCORE -DSYSV -DSHMEM -DTIMINGS
+   DEFINES = -DENCORE -DSYSV -DSHMEM 
     CFLAGS = -g $(DEFINES)
       LIBS = -lpp
      EXTRA = strdup.o strtok.o
@@ -299,7 +299,7 @@ endif
 ifeq ($(TARGET),SEQUENT)
         FC = fortran
     FFLAGS = -O -Z064000
-   DEFINES = -DSEQUENT -DSYSV -DSHMEM -DTIMINGS -DGOTXDR
+   DEFINES = -DSEQUENT -DSYSV -DSHMEM  -DGOTXDR
     CFLAGS = -O -Z064000 $(DEFINES)
       LIBS = -lpps
      EXTRA = strdup.o strtok.o
@@ -399,7 +399,7 @@ else
 endif
 
 
-test.x:	$(LIBRARY_PATH) $(BINDIR)/parallel
+test.x:	$(LIBRARY_PATH) $(BINDIR)/parallel test.c
 	$(CC) $(CFLAGS) -c checkbyte.c
 	$(CC) $(CFLAGS) -o $@ test.c $(LOADLIBES)
 	$(RM) checkbyte.o

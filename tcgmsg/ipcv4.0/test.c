@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.5 1995-10-11 23:46:38 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/test.c,v 1.6 1999-08-10 23:27:31 d3h325 Exp $ */
 
 #include <stdio.h>
 #if !defined(SEQUENT) && !defined(CONVEX)
@@ -389,13 +389,13 @@ void RingTest()
   }
 
   type = 5;
-  lenbuf = 1;
+  lenbuf = 0;
   while (lenbuf <= max_len) {
-    int nloops = 10 + 1000/lenbuf;
+    int nloops = 10 + 1000/((lenbuf>0)?lenbuf:1);
     int loop = nloops;
     if (me == 0) {
       sum = CheckByte((unsigned char *) buf, lenbuf);
-      (void) bzero(buf2, (int) lenbuf);
+      if (lenbuf) (void) bzero(buf2, (int) lenbuf);
       start = TCGTIME_();
       while (loop--) {
         SND_(&type, buf, &lenbuf, &left, &sync);
@@ -403,6 +403,7 @@ void RingTest()
       }
       used = TCGTIME_() - start;
       sum2 = CheckByte((unsigned char *) buf2, lenbuf);
+      sum2 = 0;
       if (used > 0)
         rate = 1.0e-6 * (double) (NNODES_() * lenbuf) / (double) used;
       else
@@ -418,7 +419,11 @@ void RingTest()
         SND_(&type, buf, &lenbuf, &left, &sync);
       }
     }
-    lenbuf *= 2;
+    if (lenbuf)
+      lenbuf *= 2;
+    else
+      lenbuf = 1;
+    (void) fflush(stdout);
   }
 
   if (me == 0)

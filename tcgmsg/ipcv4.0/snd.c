@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.9 1997-05-05 20:04:41 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.10 1999-08-10 23:27:31 d3h325 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -377,6 +377,8 @@ static void snd_remote(type, buf, lenbuf, node)
   for zero length messages only the header is sent
 */
 {
+#define SHORT_MSG_BUF_SIZE (2048 + 40)
+  static char fudge[SHORT_MSG_BUF_SIZE]; 
   MessageHeader header;
   long me=NODEID_();
   int sock=SR_proc_info[*node].sock;
@@ -412,6 +414,20 @@ static void snd_remote(type, buf, lenbuf, node)
 
   if (DEBUG_)
     PrintMessageHeader("snd_remote",&header);
+
+#ifndef GOTXDR
+  /* Combine header and messages less than a certain size to avoid
+   * performance problem on (older?) linuxes */
+  if ((*lenbuf + sizeof(header)) <= sizeof(fudge)) {
+    memcpy(fudge,(char *) &header, sizeof(header));
+    memcpy(fudge+sizeof(header), buf, *lenbuf);
+    if ( (len = WriteToSocket(sock, fudge, sizeof(header)+*lenbuf)) != 
+	                                  (sizeof(header)+*lenbuf))
+      Error("snd_remote: writing message to socket",
+            (long) (len+100000*(sock + 1000* *node)));
+    return;
+  }
+#endif
 
 #ifdef GOTXDR
   (void) WriteXdrLong(sock, (long *) &header, 
