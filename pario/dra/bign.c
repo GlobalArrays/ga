@@ -69,7 +69,7 @@ void fill_random(double *a, int isize)
 
 void test_io_dbl()
 {
-  int n,m,ndim = NDIM,nfac=NFAC;
+  int n,ndim = NDIM,nfac=NFAC;
   double err, tt0, tt1, mbytes;
   int g_a, g_b, g_c, g_d, d_a, d_b, d_c;
   int i, j, itmp, req, loop, nelem;
@@ -79,11 +79,10 @@ void test_io_dbl()
   double plus, minus;
   double *index;
   int ld[MAXDIM], chunk[MAXDIM];
-  char filename[80], filename1[80], filename2[80];
+  char filename[80];
   logical status;
  
   n = SIZE;
-  m = 2*SIZE;
 
   loop  = 30;
   req = -1;
@@ -152,16 +151,16 @@ void test_io_dbl()
   }
   tt1 = 0.0;
   for (i=0; i<nelem; i++) {
-    /* calculate indices correspondint to element i */
+    /* calculate indices corresponding to element i */
     itmp = i;
     icoord[0] = itmp%nfac;
       j = 0;
-      if (me == 1) if (icoord[j] >= nfac || icoord[j] < 0)
+      if (me == 0) if (icoord[j] >= nfac || icoord[j] < 0)
         printf("Invalid icoord[%d]: %d\n",j,icoord[j]);
     for (j=1; j<ndim; j++) {
       itmp = (itmp-icoord[j-1])/nfac;
       icoord[j] = itmp%nfac;
-      if (me == 1) if (icoord[j] >= nfac || icoord[j] < 0)
+      if (me == 0) if (icoord[j] >= nfac || icoord[j] < 0)
         printf("Invalid icoord[%d]: %d\n",j,icoord[j]);
     }
     for (j=0; j<ndim; j++) {
@@ -209,12 +208,12 @@ void test_io_dbl()
     itmp = i;
     icoord[0] = itmp%nfac;
       j = 0;
-      if (me == 1) if (icoord[j] >= nfac || icoord[j] < 0)
+      if (me == 0) if (icoord[j] >= nfac || icoord[j] < 0)
         printf("Invalid icoord[%d]: %d\n",j,icoord[j]);
     for (j=1; j<ndim; j++) {
       itmp = (itmp-icoord[j-1])/nfac;
       icoord[j] = itmp%nfac;
-      if (me == 1) if (icoord[j] >= nfac || icoord[j] < 0)
+      if (me == 0) if (icoord[j] >= nfac || icoord[j] < 0)
         printf("Invalid icoord[%d]: %d\n",j,icoord[j]);
     }
     for (j=0; j<ndim; j++) {
@@ -227,6 +226,8 @@ void test_io_dbl()
 
     if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",&req);
     tt1 += (tcgtime_() - tt0);
+    plus = 1.0;
+    minus = -1.0;
     GA_Add(&plus, g_a, &minus, g_b, g_b);
     err = GA_Ddot(g_b, g_b);
     if (err != 0) {
