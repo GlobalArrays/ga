@@ -4,7 +4,7 @@
 #define _DRA_H_
 /* used to be file.modes.h */
 #include "chemio.h"
-typedef Integer dra_size_t;
+typedef long dra_size_t;
 #define  DRA_RW ELIO_RW
 #define  DRA_R  ELIO_R
 #define  DRA_W  ELIO_W
