@@ -59,7 +59,10 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
 
 #elif  defined(FUJITSU)
 
-#      define armci_copy(src,dst,n)          _MmCopy((dst), (src), (n))
+#      include "fujitsu-vpp.h"
+#      define armci_copy(src,dst,n)     _MmCopy((char*)(dst), (char*)(src), (n))
+#      define armci_put  CopyTo
+#      define armci_get  CopyFrom
 
 #elif  defined(LAPI)
 
@@ -128,6 +131,15 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
       }\
     }
 
+#ifdef FUJITSU
+
+#   define armci_put2D(p, bytes,count,src_ptr,src_stride,dst_ptr,dst_stride)\
+           CopyPatchTo(src_ptr, src_stride, dst_ptr, dst_stride, count,bytes, p)
+
+#   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
+           CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
+
+#else
 #   define armci_put2D(proc,bytes,count,src_ptr,src_stride,dst_ptr,dst_stride){\
     int _j;\
     char *ps=src_ptr, *pd=dst_ptr;\
@@ -148,4 +160,4 @@ void FATR DCOPY2D(int*, int*, void*, int*, void*, int*);
           pd += dst_stride;\
       }\
     }
-
+#endif

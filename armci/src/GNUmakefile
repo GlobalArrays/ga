@@ -64,8 +64,8 @@ include ../config/makelib.h
 %.x:%.c $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-test.x: test.c $(LIBRARY_PATH)
-	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+test.x: test.o $(LIBRARY_PATH)
+	$(LINK.c) $(CFLAGS) -o $@ $^ $(LIBS)
 
 ipctest.x: $(LIBRARY_PATH)
 	$(CC) $(CFLAGS) ipctest.c -o $@ $^ $(LIBS)

@@ -73,6 +73,18 @@
       enddo
       end
 
+
+      subroutine i8_accumulate_2d(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      integer*8 A(ald,*), B(bld,*), alpha
+
+      do c = 1, cols
+         do r = 1, rows
+            A(r,c) = A(r,c)+ alpha*B(r,c)
+         enddo
+      enddo
+      end
 *
 *-----------------------------  loops unrolled ---------------------------------
 *
@@ -202,3 +214,28 @@
       enddo
       enddo
       end
+
+      subroutine i8_accumulate_2d_u(alpha, rows, cols, A, ald, B, bld)
+      integer rows, cols
+      integer c, r, ald, bld
+      integer*8 A(ald,*), B(bld,*), alpha
+      integer*8 r1, j2, j3, j4, j5
+c
+      do c = 1, cols
+      r1 = iand(max0(rows,0),3)
+      do r = 1, r1
+         a(r,c) = a(r,c) + alpha*b(r,c)
+      end do
+      do r = r1 + 1, rows, 4
+         j2 = a(r,c) + alpha*b(r,c)
+         j3 = a(r+1,c) + alpha*b(r+1,c)
+         j4 = a(r+2,c) + alpha*b(r+2,c)
+         j5 = a(r+3,c) + alpha*b(r+3,c)
+         a(r,c) = j2
+         a(r+1,c) = j3
+         a(r+2,c) = j4
+         a(r+3,c) = j5
+      enddo
+      enddo
+      end
+

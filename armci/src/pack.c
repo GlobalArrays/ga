@@ -198,8 +198,8 @@ int rc, nlen, count=0;
 #ifdef REMOTE_OP
        rc = armci_rem_vector(op, scale, ndarr,nlen,proc);
 #else
-       if(ACC(op))rc=armci_scatter_acc(op,scale,ndarr,nlen,proc);
-       rc = armci_copy_vector(op,ndarr,nlen,proc);
+       if(ACC(op))rc=armci_acc_vector(op,scale,ndarr,nlen,proc);
+       else rc = armci_copy_vector(op,ndarr,nlen,proc);
 #endif
        if(rc) break;
 

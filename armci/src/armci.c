@@ -249,6 +249,7 @@ int ARMCI_GetV( armci_giov_t darr[], /* descriptor array */
 
     ORDER(GET,proc); /* ensure ordering */
 
+
 #   ifdef REMOTE_OP
       if(armci_me != proc
 #       ifdef LAPI

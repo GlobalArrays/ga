@@ -9,7 +9,7 @@ typedef struct{
 
 extern void** memlock_table_array;
 
-#ifdef LAPI
+#if defined(LAPI) || defined(FUJITSU)
 #  define ARMCI_LOCKMEM armci_lockmem_
 #  define ARMCI_UNLOCKMEM armci_unlockmem_
 #else

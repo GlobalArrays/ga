@@ -107,7 +107,7 @@ void TrapSigChld()
 }
 
 
-void RestoreSigChld(d)
+void RestoreSigChld()
 /*
  Restore the original signal handler
 */

@@ -54,8 +54,11 @@ void I_ACCUMULATE(void* scale, int elems, void*src, void* dst)
 void armci_lockmem_scatter(void *ptr_array[], int len, int bytes, int proc)
 {
      int i;
+     void *pmin, *pmax;
 
-     void *pmin=ptr_array[0], *pmax=(void*)0;
+     pmin=ptr_array[0];
+     pmax=ptr_array[0];
+
      for(i = 0; i< len; i++){
               pmin = MIN(ptr_array[i],pmin);
               pmax = MAX(ptr_array[i],pmax);

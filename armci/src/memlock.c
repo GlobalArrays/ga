@@ -67,8 +67,8 @@ void armci_lockmem(void *start, void *end, int proc)
 
         NATIVE_LOCK(lock);
 
-/*        armci_get(memlock_table, table, sizeof(table), proc);*/
-        armci_copy(memlock_table, table, sizeof(table));
+        armci_get(memlock_table, table, sizeof(table), proc);
+/*        armci_copy(memlock_table, table, sizeof(table));*/
         
         /* inspect the table */
         conflict = 0; avail =-1;

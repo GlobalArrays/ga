@@ -4,8 +4,8 @@
 #include "memlock.h"
 #include <stdio.h>
 
-#if defined(SGI_N32) || defined(SGI)
-#   define PTR_ALIGN
+#if defined(SGI_N32) || defined(SGI) || defined(FUJITSU)
+#   define PTR_ALIGN  
 #endif
 
 #define ARMCI_OP_2D(op, scale, proc, src, dst, bytes, count, src_stride, dst_stride,lockit)\
@@ -145,6 +145,12 @@ void (FATR *func)(void*, int*, int*, void*, int*, void*, int*);
           ldd  = dst_stride/sizeof(int);
           lds  = src_stride/sizeof(int);
           func = I_ACCUMULATE_2D;
+          break;
+      case ARMCI_ACC_LNG:
+          rows = bytes/sizeof(long);
+          ldd  = dst_stride/sizeof(long);
+          lds  = src_stride/sizeof(long);
+          func = L_ACCUMULATE_2D;
           break;
       case ARMCI_ACC_DBL:
           rows = bytes/sizeof(double);

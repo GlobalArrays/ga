@@ -18,7 +18,7 @@
 # include <strings.h>
 #endif
 
-#if defined (CRAY_T3E)
+#if defined (CRAY_T3E) || defined(FUJITSU)
 #define ACC_COPY
 #endif
 

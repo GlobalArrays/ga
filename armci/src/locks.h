@@ -82,6 +82,10 @@
 #  define NATIVE_UNLOCK(x) pthread_mutex_unlock(&_armci_mutex_thread)
 
 
+#elif defined(FUJITSU)
+   typedef int lockset_t;
+#  include "fujitsu-vpp.h"
+
 #else
 
    typedef int lockset_t;

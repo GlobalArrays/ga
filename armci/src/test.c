@@ -929,6 +929,10 @@ void test_memlock()
 
 
 
+#ifdef FUJITSU
+#define main MAIN__
+#endif
+
 
 int main(int argc, char* argv[])
 {
