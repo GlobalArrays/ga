@@ -171,7 +171,7 @@ int DRA_Open(char* filename, int mode, int *d_a)
 {
   Integer mmode, dd_a, status;
   mmode = (Integer)mode;
-  status = dra_open(filename, &mode, &dd_a);
+  status = dra_open(filename, &mmode, &dd_a);
   *d_a = (int)dd_a;
   return (int)status;
 }
