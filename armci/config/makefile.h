@@ -162,7 +162,7 @@ ifeq  ($(_CPU),ia64)
   endif
   ifeq ($(_CC),gcc)
       COPT_NO = -g -O0
-#     COPT= -O3
+      COPT= -O0 -g
   endif
   ifeq ($(_CC),ecc)
      COPT_REN= -w1 #-fno-alias    
