@@ -19,6 +19,7 @@
       logical ga_update3_ghosts
       logical ga_update4_ghosts
       logical ga_update5_ghosts
+      logical ga_update_ghost_dir
       double precision ga_ddot, ga_ddot_patch
       double complex   ga_zdot, ga_zdot_patch
       double complex   nga_zdot_patch
@@ -44,6 +45,7 @@
       external ga_update3_ghosts
       external ga_update4_ghosts
       external ga_update5_ghosts
+      external ga_update_ghost_dir
       external ga_ndim
       external ga_spd_invert, ga_solve, ga_llt_solve
       external nga_read_inc, nga_create, nga_locate, nga_create_irreg

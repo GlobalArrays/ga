@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.13 2001-10-30 00:26:17 d3h325 Exp $ */
+/* $Id: onesided.c,v 1.14 2001-11-29 20:50:41 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -65,6 +65,9 @@ extern void ga_sort_scat(Integer*,Void*,Integer*,Integer*,Integer*, Integer);
 extern void ga_sort_gath_(Integer*, Integer*, Integer*, Integer*);
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
+#ifdef LAPI2
+extern lapi_handle_t lapi_handle;
+#endif
 
 /***************************************************************************/
 
@@ -3334,6 +3337,7 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
 }
 
 /* Utility function for ga_update5_ghosts routine */
+#ifndef LAPI2
 void waitforflags (int *ptr1, int *ptr2) {
   int i = 1;
   double val;
@@ -3341,6 +3345,52 @@ void waitforflags (int *ptr1, int *ptr2) {
     val = exp(-(double)i);
   }
 }
+#else
+void waitforflags (lapi_cntr_t *ptr1, lapi_cntr_t *ptr2) {
+  LAPI_Waitcntr(lapi_handle,ptr1,1,NULL);
+  LAPI_Waitcntr(lapi_handle,ptr2,1,NULL);
+}
+#endif
+
+#ifdef LAPI2
+#define DEBUG2 0
+void* info[24];
+int infostart =0;
+/*\ nonblocking strided put
+\*/
+void gai_lapi_Putv(void *src_ptr, int src_stride, void *dst_ptr, int dst_stride,
+                 int count, int bytes, lapi_cntr_t* flag, int p)
+{
+lapi_vec_t src, dst;
+int rc;
+/* void *sinfo[3], *dinfo[3];*/
+void** sinfo = info + infostart;
+void** dinfo = sinfo + 3;
+infostart += 6;
+infostart = infostart%24;
+
+     if(DEBUG2){
+        printf("%d: PUT src_stride=%d dst_stride=%d bytes=%d count=%d p=%d\n",
+               GAme,src_stride,dst_stride,bytes,count,p);
+        fflush(stdout);
+     }
+
+ 
+     src.vec_type = dst.vec_type                    = LAPI_GEN_STRIDED_XFER;
+
+     sinfo[0]     = src_ptr;           dinfo[0]     = dst_ptr;
+     sinfo[1]     = (void*)bytes;      dinfo[1]     = (void*)bytes;
+     sinfo[2]     = (void*)src_stride; dinfo[2]     = (void*)dst_stride;
+
+     src.num_vecs = (uint)count;       dst.num_vecs = (uint)count;
+     src.len      = NULL;              dst.len      = NULL;
+     src.info     = sinfo;             dst.info     = dinfo;
+    
+     rc = LAPI_Putv(lapi_handle, (uint)p, &dst, &src, flag,
+                    NULL, NULL);
+     if(rc) ga_error("LAPI_putv failed in update5",rc);
+}
+#endif
 
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND PUT CALLS
  *  WITHOUT ANY BARRIERS
@@ -3414,9 +3464,16 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
   }
   /* before performing global synchronization operation make sure that
      GA_Update_Flags array has been initialized to zero. */
+#ifndef LAPI2
   for (idx=0; idx < 2*ndim; idx++) {
     GA_Update_Flags[GAme][idx] = 0;
   }
+#else
+  if (ndim != 2) return FALSE;
+  for (idx=0; idx < 2*ndim; idx++) {
+    LAPI_Setcntr(lapi_handle,GA_Update_Flags[GAme]+idx,0);
+  }
+#endif
 
   ga_sync_();
   GA_PUSH_NAME("ga_update5_ghosts");
@@ -3545,6 +3602,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       gam_ComputeCount(ndim, plo_rem, phi_rem, count);
       count[0] *= size;
 
+#ifndef LAPI2
       /* Put local data on remote processor */
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           ndim - 1, proc_rem);
@@ -3554,6 +3612,11 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       bytes = size;
       ARMCI_Put(&signal, (void*)(GA_Update_Flags[proc_rem]+msgcnt),
           bytes, proc_rem);
+#else
+      gai_lapi_Putv(ptr_loc, stride_loc[0], ptr_rem, stride_rem[0],
+                 phi_rem[1]-plo_rem[1]+1, count[0],
+                 GA_Update_Flags[proc_rem]+msgcnt, proc_rem);
+#endif
       msgcnt++;
 
       /* Perform update in positive direction. Start by getting rough
@@ -3673,6 +3736,7 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       gam_ComputeCount(ndim, plo_rem, phi_rem, count);
       count[0] *= size;
 
+#ifndef LAPI2
       /* Put local data on remote processor */
       ARMCI_PutS(ptr_loc, stride_loc, ptr_rem, stride_rem, count,
           ndim - 1, proc_rem);
@@ -3682,6 +3746,11 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
       bytes = size;
       ARMCI_Put(&signal, (void*)(GA_Update_Flags[proc_rem]+msgcnt),
           bytes, proc_rem);
+#else
+      gai_lapi_Putv((void*)ptr_loc, stride_loc[0], (void*)ptr_rem, stride_rem[0],
+                 phi_rem[1]-plo_rem[1]+1, count[0],
+                 GA_Update_Flags[proc_rem]+msgcnt, proc_rem);
+#endif
       msgcnt++;
     }
     /* check to make sure that all messages have been recieved before
@@ -3695,4 +3764,195 @@ logical FATR ga_update5_ghosts_(Integer *g_a)
   ga_sync_();
   GA_POP_NAME;
   return TRUE;
+}
+
+/*\ UPDATE GHOST CELLS OF GLOBAL ARRAY ALONG ONE SIDE OF ARRAY
+\*/
+logical FATR ga_update_ghost_dir_(Integer *g_a, Integer *pdim, Integer *pdir,
+           logical *pflag)
+{
+  Integer idx, ipx, inx, np, handle=GA_OFFSET + *g_a, proc_rem;
+  Integer ntot, mask[MAXDIM],lmask[MAXDIM];
+  Integer size, ndim, i, itmp, idim, idir;
+  Integer width[MAXDIM], dims[MAXDIM];
+  Integer lo_loc[MAXDIM], hi_loc[MAXDIM];
+  Integer tlo_loc[MAXDIM], thi_loc[MAXDIM];
+  Integer plo_loc[MAXDIM], phi_loc[MAXDIM];
+  Integer tlo_rem[MAXDIM], thi_rem[MAXDIM];
+  Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
+  Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
+  logical flag;
+  int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
+  char *ptr_loc, *ptr_rem;
+
+  int ijx;
+  char *ptr, *iptr;
+
+  /* if global array has no ghost cells, just return */
+  if (!ga_has_ghosts_(g_a)) {
+    return TRUE;
+  }
+
+  idim = *pdim;
+  idir = *pdir;
+  flag = *pflag;
+
+  size = GA[handle].elemsize;
+  ndim = GA[handle].ndim;
+  /* initialize ghost cell widths and get array dimensions */
+  for (idx=0; idx < ndim; idx++) {
+    width[idx] = GA[handle].width[idx];
+    dims[idx] = GA[handle].dims[idx];
+  }
+
+  /* Check to make sure that global array is well-behaved (all processors
+     have data and the width of the data in each dimension is greater than
+     the corresponding value in width[]). */
+  ipx = 0;
+  for (idx = 0; idx < ndim; idx++) {
+    for (np = 0; np < GA[handle].nblock[idx]; np++) {
+      if (np < GA[handle].nblock[idx] - 1) {
+        if (GA[handle].mapc[ipx+1]-GA[handle].mapc[ipx]+1<width[idx]) {
+          return FALSE;
+        }
+      } else {
+        if (GA[handle].dims[idx]-GA[handle].mapc[ipx]+1<width[idx]) {
+          return FALSE;
+        }
+      }
+      ipx++;
+    }
+  }
+
+  GA_PUSH_NAME("ga_update2_ghosts");
+  /* Get pointer to local memory */
+  ptr_loc = GA[handle].ptr[GAme];
+  /* obtain range of data that is held by local processor */
+  nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
+  if (DEBUG) {
+    fprintf(stderr,"p[%d] lo(1) %d hi(1) %d\n",(int)GAme,
+        (int)lo_loc[0],(int)hi_loc[0]);
+    fprintf(stderr,"p[%d] lo(2) %d hi(2) %d\n",(int)GAme,
+        (int)lo_loc[1],(int)hi_loc[1]);
+  }
+
+  /* evaluate total number of GET operations */
+  ntot = 1;
+  if (flag) {
+    for (idx=0; idx < ndim-1; idx++) ntot *= 3;
+  }
+
+  /* Loop over all GET operations. */
+  for (ipx=0; ipx < ntot; ipx++) {
+    /* Convert ipx to corresponding mask values */
+    if (flag) {
+      itmp = ipx;
+      for (idx = 0; idx < ndim-1; idx++) {
+        i = itmp%3;
+        lmask[idx] = i-1;
+        itmp = (itmp-i)/3;
+      }
+    } else {
+      for (idx = 0; idx < ndim-1; idx++) lmask[idx] = 0;
+    }
+    inx = 0;
+    for (idx = 0; idx < ndim; idx++) {
+      if (idx == idim-1) {
+        mask[idx] = idir;
+      } else {
+        mask[idx] = lmask[inx];
+        inx++;
+      }
+    }
+    /* Now that mask has been determined, find processor that contains
+     * data needed by the corresponding block of ghost cells */
+    for (idx = 0; idx < ndim; idx++) {
+      if (mask[idx] == 0) {
+        tlo_rem[idx] = lo_loc[idx];
+        thi_rem[idx] = hi_loc[idx];
+      } else if (mask[idx] == -1) {
+        if (lo_loc[idx] > 1) {
+          tlo_rem[idx] = lo_loc[idx]-width[idx];
+          thi_rem[idx] = lo_loc[idx]-1;
+        } else {
+          tlo_rem[idx] = dims[idx]-width[idx]+1;
+          thi_rem[idx] = dims[idx];
+        }
+      } else if (mask[idx] == 1) {
+        if (hi_loc[idx] < dims[idx]) {
+          tlo_rem[idx] = hi_loc[idx] + 1;
+          thi_rem[idx] = hi_loc[idx] + width[idx];
+        } else {
+          tlo_rem[idx] = 1;
+          thi_rem[idx] = width[idx];
+        }
+      } else {
+        fprintf(stderr,"Illegal mask value found\n");
+      }
+      if (DEBUG) {
+        fprintf(stderr,"\np[%d] ipx = %d tlo_rem[%d] = %d thi_rem[%d] = %d\n",
+            (int)GAme,(int)ipx,(int)idx,(int)tlo_rem[idx],(int)idx,
+            (int)thi_rem[idx]);
+      }
+    }
+    /* Locate remote processor to which data must be sent */
+    if (!nga_locate_region_(g_a, tlo_rem, thi_rem, _ga_map,
+       GA_proclist, &np)) ga_RegionError(ga_ndim_(g_a),
+       tlo_rem, thi_rem, *g_a);
+    if (np > 1) {
+      fprintf(stderr,"More than one remote processor found\n");
+    }
+    /* Remote processor has been identified, now get ready to get
+       data from it. Start by getting distribution on remote
+       processor.*/
+    proc_rem = GA_proclist[0];
+    nga_distribution_(g_a, &proc_rem, tlo_rem, thi_rem);
+    for (idx = 0; idx < ndim; idx++) {
+      if (mask[idx] == 0) {
+        plo_loc[idx] = width[idx];
+        phi_loc[idx] = hi_loc[idx]-lo_loc[idx]+width[idx];
+        plo_rem[idx] = plo_loc[idx];
+        phi_rem[idx] = phi_loc[idx];
+      } else if (mask[idx] == -1) {
+        plo_loc[idx] = 0;
+        phi_loc[idx] = width[idx]-1;
+        plo_rem[idx] = thi_rem[idx]-tlo_rem[idx]+1;
+        phi_rem[idx] = thi_rem[idx]-tlo_rem[idx]+width[idx];
+      } else if (mask[idx] == 1) {
+        plo_loc[idx] = hi_loc[idx]-lo_loc[idx]+width[idx]+1;
+        phi_loc[idx] = hi_loc[idx]-lo_loc[idx]+2*width[idx];
+        plo_rem[idx] = width[idx];
+        phi_rem[idx] = 2*width[idx]-1;
+      }
+      if (DEBUG) {
+        fprintf(stderr,"\np[%d] plo_loc[%d] = %d phi_loc[%d] = %d\n",
+            (int)GAme,(int)idx,(int)plo_loc[idx],(int)idx,
+            (int)phi_loc[idx]);
+        fprintf(stderr,"p[%d] plo_rem[%d] = %d phi_rem[%d] = %d\n",
+            (int)GAme,(int)idx,(int)plo_rem[idx],(int)idx,
+            (int)phi_rem[idx]);
+      }
+    }
+    /* Get pointer to local data buffer and remote data
+       buffer as well as lists of leading dimenstions */
+    gam_LocationWithGhosts(GAme, handle, plo_loc, &ptr_loc, ld_loc);
+    gam_LocationWithGhosts(proc_rem, handle, plo_rem, &ptr_rem, ld_rem);
+
+    /* Evaluate strides on local and remote processors */
+    gam_setstride(ndim, size, ld_loc, ld_rem, stride_rem,
+                  stride_loc);
+
+    /* Compute the number of elements in each dimension and store
+       result in count. Scale the first element in count by the
+       element size. */
+    gam_ComputeCount(ndim, plo_loc, phi_loc, count);
+    count[0] *= size;
+ 
+    /* get data from remote processor */
+    ARMCI_GetS(ptr_rem, stride_rem, ptr_loc, stride_loc, count,
+          ndim - 1, proc_rem);
+  }
+
+  GA_POP_NAME;
+  return;
 }
