@@ -61,7 +61,7 @@ ifeq ($(ARMCI_NETWORK),QUADRICS)
 #      COMM_LIBS += -L/usr/lib/qsnet/elan4/lib -L/usr/lib/qsnet/elan/lib #-L/usr/lib/qsnet/elan3/lib
     COMM_DEFINES += -DDOELAN4
  else
-  QUADRICS_LIB_NAME = -lelan -lpthread
+  QUADRICS_LIB_NAME = -lshmem -lelan -lpthread
  endif
   COMM_LIBS += $(QUADRICS_LIB_NAME)
 endif
