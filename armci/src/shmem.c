@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.72 2003-07-30 23:29:42 d3h325 Exp $ */
+/* $Id: shmem.c,v 1.73 2003-09-29 09:36:20 d3h325 Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -196,6 +196,7 @@ size_t bytes = size+pagesize-1;
                           tmp,(char*)iptr,(int)size,pagesize);
         tmp = (char*)iptr;
         if(munmap(tmp, size) == -1) armci_die("munmap failed",0);
+        if(DEBUG_){printf("%d: unmap OK\n",armci_me); fflush(stdout);}
       }else armci_die("alloc_munmap: malloc failed",(int)size);
     }
     return tmp;
@@ -384,8 +385,8 @@ void armci_shmem_init()
 
 #ifdef ALLOC_MUNMAP
 
-#if defined(QUADRICS) && !defined(DECOSF) && !defined(__alpha)
-#   if defined(__ia64__) || defined(__alpha)
+#if defined(QUADRICS) 
+#   if (defined(__ia64__) || defined(__alpha)) && !defined(DECOSF) 
 
       /* this is to determine size of Elan Main memory allocator for munmap */
       long x;
@@ -414,24 +415,24 @@ void armci_shmem_init()
        /* need aligment on 1MB boundary rather than the actual pagesize */
        pagesize = 1024*1024;
        logpagesize = 20;
-#   endif
-#else
-   /* determine log2(pagesize) needed for address alignment */
-   int tp=512;
-   logpagesize = 9;
-   pagesize = getpagesize();
-   if(tp>pagesize)armci_die("armci_shmem_init:pagesize",pagesize);
+#   else
+       /* determine log2(pagesize) needed for address alignment */
+       int tp=512;
+       logpagesize = 9;
+       pagesize = getpagesize();
+       if(tp>pagesize)armci_die("armci_shmem_init:pagesize",pagesize);
 
-   while(tp<pagesize){
-        tp <<= 1;
-        logpagesize++;
-   }
-   if(tp!=pagesize)armci_die("armci_shmem_init:pagesize pow 2",pagesize);
-#endif
+       while(tp<pagesize){
+         tp <<= 1;
+         logpagesize++;
+       }
+       if(tp!=pagesize)armci_die("armci_shmem_init:pagesize pow 2",pagesize);
+#   endif
 
    if(DEBUG_) {
      printf("page size =%d log=%d\n",pagesize,logpagesize); fflush(stdout); }
 
+#endif
 #endif
 
    if(armci_me == armci_master){
@@ -447,12 +448,14 @@ void armci_shmem_init()
           (int)LBOUND);
 
 #       if defined(ALLOC_MUNMAP)
-           /* need to cap down for special memory allocator */
-           if(x>max_alloc_munmap && !armci_elan_starting_address) x=max_alloc_munmap;
+          /* cap down for special memory allocator unless ARMCI_DEFAULT_SHMMAX
+             not set - the user knows what is doing*/
+          if(!getenv("ARMCI_DEFAULT_SHMMAX"))
+            if(x>max_alloc_munmap && !armci_elan_starting_address) x=max_alloc_munmap;
 #       endif
 
         if(DEBUG_){
-           printf("%d:shmem_init: mbytes max segment size\n",x);fflush(stdout);}
+           printf("%d:shmem_init: %d mbytes max segment size\n",armci_me,x);fflush(stdout);}
 
         MinShmem = (long)(x<<10); /* make sure it is in kb: mb <<10 */ 
         MaxShmem = MAX_REGIONS*MinShmem;
