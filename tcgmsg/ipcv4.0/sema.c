@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.7 1996-03-21 18:24:35 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.8 1996-05-23 22:52:27 d3g681 Exp $ */
 
 /*
   These routines simplify the interface to semaphores for use in mutual
@@ -630,7 +630,7 @@ long SemSetCreate(long n_sem, long value)
 {
   int i;
 
-   sprintf(arena_name,"tcgmsg.arena.%ld",(long)getpid()); 
+   sprintf(arena_name,"/tmp/tcgmsg.arena.%ld",(long)getpid()); 
 #ifdef PRIVATE_ARENA
    (void) usconfig(CONF_ARENATYPE, US_SHAREDONLY);
 #endif
