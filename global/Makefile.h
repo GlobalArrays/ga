@@ -58,6 +58,7 @@ ifeq ($(TARGET),CRAY-T3D)
 #
        LIBSMA = ../../../libsma
            FC = cf77
+         FOPT = -O1
          MAKE = /usr/local/bin/gmake
           CPP = /lib/cpp
        RANLIB = echo
