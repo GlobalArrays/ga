@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.10 2000-06-07 23:00:58 d3h325 Exp $ */
+/* $Id: signaltrap.c,v 1.11 2000-08-15 21:39:49 d3h325 Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -9,6 +9,9 @@
 
 #include <signal.h>
 #include <stdio.h>
+#ifndef WIN32
+#include <stdio.h>
+#endif
 
 #define  Error armci_die 
 
@@ -249,7 +252,11 @@ SigType SigSegvHandler(sig)
      int sig;
 {
   AR_caught_sig= sig;
-  /* printf("%d Segmentation Violation ... pausing\n",armci_me);pause(); */
+#ifdef PAUSE_ON_ERROR
+  fprintf(stderr,"%d(%d): Segmentation Violation ... pausing\n",
+          armci_me, getpid() );pause(); 
+#endif
+
   Error("Segmentation Violation error, status=",(int) sig);
 }
 
