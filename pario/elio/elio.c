@@ -14,15 +14,22 @@
 
 
 #if  defined(AIX) || defined(DECOSF) || defined(SGITFP) || defined(SGI64)
-#   define AIO 1
+#    ifndef NOAIO
+#       define AIO 1
+#    endif
+#endif
+
+
+
+#if defined(AIO)
 #   include <aio.h>
 #   if defined(KSR)||defined(AIX)
 #      define INPROGRESS EINPROG
 #   else 
 #      define INPROGRESS EINPROGRESS
 #   endif
-      struct aiocb    cb_fout[MAX_AIO_REQ];
-const struct aiocb   *cb_fout_arr[MAX_AIO_REQ];
+    struct aiocb          cb_fout[MAX_AIO_REQ];
+    const struct aiocb   *cb_fout_arr[MAX_AIO_REQ];
 #else
 #   define INPROGRESS 1            /* I wish this didn't have to be here */
 #endif
