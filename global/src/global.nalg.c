@@ -140,8 +140,8 @@ register Integer i;
 Integer isum=0;
 DoubleComplex zsum ={0.,0.};
 
- Integer andim, adims[MAXDIM], alo[MAXDIM], ahi[MAXDIM];
- Integer bndim, bdims[MAXDIM], blo[MAXDIM], bhi[MAXDIM];
+ Integer andim, adims[MAXDIM];
+ Integer bndim, bdims[MAXDIM];
 
    me = ga_nodeid_();
 
@@ -152,10 +152,8 @@ DoubleComplex zsum ={0.,0.};
        nga_inquire_(g_a, &type, &andim, adims);
        nga_inquire_(g_b, &type, &bndim, bdims);
 
-       for(i=0; i<andim; i++) { alo[i] = 1; ahi[i] = adims[i]; }
-       for(i=0; i<bndim; i++) { blo[i] = 1; bhi[i] = bdims[i]; }
-
-       ngai_dot_patch(g_a, 'n', alo, ahi, g_b, 'n', blo, bhi, value);
+       ngai_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
+                      value);
        
        GA_POP_NAME;
        return;
@@ -336,9 +334,9 @@ Integer  ndim, type, typeC, me, elems=0, elemsb=0, elemsa=0;
 register Integer i;
 Integer index_a, index_b, index_c;
 
- Integer andim, adims[MAXDIM], alo[MAXDIM], ahi[MAXDIM];
- Integer bndim, bdims[MAXDIM], blo[MAXDIM], bhi[MAXDIM];
- Integer cndim, cdims[MAXDIM], clo[MAXDIM], chi[MAXDIM];
+ Integer andim, adims[MAXDIM];
+ Integer bndim, bdims[MAXDIM];
+ Integer cndim, cdims[MAXDIM];
  
 
    me = ga_nodeid_();
@@ -352,12 +350,8 @@ Integer index_a, index_b, index_c;
        nga_inquire_(g_b, &type, &bndim, bdims);
        nga_inquire_(g_b, &type, &cndim, cdims);
 
-       for(i=0; i<andim; i++) { alo[i] = 1; ahi[i] = adims[i]; }
-       for(i=0; i<bndim; i++) { blo[i] = 1; bhi[i] = bdims[i]; }
-       for(i=0; i<cndim; i++) { clo[i] = 1; chi[i] = cdims[i]; }
-
-       nga_add_patch_(alpha, g_a, alo, ahi, beta, g_b, blo, bhi,
-                      g_c, clo, chi);
+       nga_add_patch_(alpha, g_a, one_arr, adims, beta, g_b, one_arr, bdims,
+                      g_c, one_arr, cdims);
        
        GA_POP_NAME;
        return;
