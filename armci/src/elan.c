@@ -12,7 +12,11 @@ static int armci_server_terminating=0;
 static ELAN_MAIN_QUEUE *mq;
 static int armci_request_from=-1;
 static int armci_request_to=-1;
-static int** armci_elan_fence_arr;
+
+typedef unsigned short int ops_t;
+static ops_t** armci_elan_fence_arr;
+static ops_t *ops_pending_ar;
+static ops_t *ops_done_ar;
 
 #define _ELAN_SLOTSIZE 320
 #define MSG_DATA_LEN (_ELAN_SLOTSIZE - sizeof(request_header_t))
@@ -43,20 +47,28 @@ static int** armci_elan_fence_arr;
 void armci_init_connections()
 {
 ELAN_QUEUE *q;
-int nslots=armci_nproc+32, slotsize=_ELAN_SLOTSIZE;
+int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
 
 
     if ((q = elan_gallocQueue(elan_base, elan_base->allGroup)) == NULL)
-        armci_die( "elan_gallocElan",0 );
+            armci_die( "elan_gallocElan",0 );
 
     if (!(mq = elan_mainQueueInit( elan_base->state, q, nslots, slotsize)))
-        armci_die("Failed to to initialise Main Queue",0);
+            armci_die("Failed to to initialise Main Queue",0);
 
-    armci_elan_fence_arr = (int**)malloc(armci_nproc*sizeof(int*));
+    if(armci_me == armci_master) {
+        if(!(ops_done_ar=(ops_t*)calloc(armci_nproc,sizeof(ops_t))))
+             armci_die("malloc failed for ARMCI ops_done_ar",0);
+    }
+
+    armci_elan_fence_arr = (ops_t**)malloc(armci_nproc*sizeof(ops_t*));
     if(!armci_elan_fence_arr)armci_die("malloc failed for ARMCI fence array",0);
-    if(ARMCI_Malloc((void**)armci_elan_fence_arr, armci_nproc*sizeof(int)))
+    if(ARMCI_Malloc((void**)armci_elan_fence_arr, armci_nclus*sizeof(ops_t)))
              armci_die("failed to allocate ARMCI fence array",0);
-    bzero(armci_elan_fence_arr[armci_me],armci_nproc*sizeof(int));
+    bzero(armci_elan_fence_arr[armci_me],armci_nclus*sizeof(ops_t));
+
+    if(!(ops_pending_ar=(ops_t*)calloc(armci_nclus,sizeof(ops_t))))
+         armci_die("malloc failed for ARMCI ops_pending_ar",0);
 
 #ifdef OLD_QSNETLIBS
     /* initialize control descriptor for put/get */
@@ -67,28 +79,30 @@ int nslots=armci_nproc+32, slotsize=_ELAN_SLOTSIZE;
     if(MessageSndBuffer){
       ((request_header_t*)MessageSndBuffer)->tag = (void*)0;
     }else armci_die("armci_init_connections: buf not set",0);
-
 }
 
 
-extern void armci_send_data_to_client(int proc, void *buf, int bytes);
-
+/*\ server sends ACK to client when request is processed
+\*/
 static void armci_send_ack()
 {
-int zero=0;
-int *buf = armci_elan_fence_arr[armci_request_from] + armci_request_to;
+ops_t val=0;
+ops_t *buf = armci_elan_fence_arr[armci_request_from] + armci_clus_me;
 
 #if 0
-    printf("%d: server sending ack proc=%d fence=%p slot %p\n", armci_me, 
-           armci_request_from, armci_elan_fence_arr[armci_request_from],buf);
-    fflush(stdout);
+    if(armci_me==0)
+    printf("%d:server sends ack p=%d fence=%p slot %p got=%d\n", armci_me, 
+           armci_request_from, armci_elan_fence_arr[armci_request_from],buf,
+           ops_done_ar[armci_request_from]+1); fflush(stdout);
 #endif
 
-    MY_PUT(&zero,buf,sizeof(int),armci_request_from);
+    val = ++ops_done_ar[armci_request_from];
+
+    MY_PUT(&val,buf,sizeof(ops_t),armci_request_from);
 }
 
 
-int armci_check_int_val(int *v)
+ops_t armci_check_int_val(ops_t *v)
 {
   return (*v);
 }
@@ -97,25 +111,22 @@ int armci_check_int_val(int *v)
 void armci_elan_fence(int p)
 {
     long loop=0;
-    int *buf = armci_elan_fence_arr[armci_me] + p;
-    int  res = armci_check_int_val(buf);
+    int cluster = armci_clus_id(p);
+    ops_t *buf = armci_elan_fence_arr[armci_me] + cluster;
+    long res = ops_pending_ar[cluster] - armci_check_int_val(buf);
 
 #if 0
-    printf("%d: client fencing proc=%d fence=%p slot %p\n", 
-           armci_me, p, armci_elan_fence_arr[armci_me], buf);
-    fflush(stdout);
+    if(ops_pending_ar[cluster])
+    printf("%d: client fencing proc=%d fence=%p slot %p pending=%d got=%d\n", 
+           armci_me, p, armci_elan_fence_arr[armci_me], buf, 
+           ops_pending_ar[cluster], armci_check_int_val(buf)); fflush(stdout);
 #endif
 
     while(res){
        if(++loop == 1000) { loop=0; usleep(1);  }
        armci_util_spin(loop, buf);
-       res = armci_check_int_val(buf);
+       res = ops_pending_ar[cluster] - armci_check_int_val(buf);
     }
-    *buf = 0; 
-
-    /* wait for buffer to be free to handle requests in transition */
-    while(((request_header_t*)MessageSndBuffer)->tag)
-                              armci_util_spin(100, MessageSndBuffer);
 }
 
 
@@ -138,7 +149,8 @@ char buf[_ELAN_SLOTSIZE];
 }
 
 
-/* server receives request */
+/*\ server receives request 
+\*/
 void armci_rcv_req(void *mesg,
                    void *phdr, void *pdescr, void *pdata, int *buflen)
 {
@@ -213,7 +225,7 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     int size=_ELAN_SLOTSIZE;
     int proc_serv = armci_clus_info[cluster].master;
 
-    *(armci_elan_fence_arr[armci_me]+proc)=1;
+    ops_pending_ar[cluster]++;
 
     if((msginfo->dscrlen+msginfo->datalen)> MSG_DATA_LEN){
       /* set message tag -> has pointer to client buffer with descriptor+data */
@@ -224,6 +236,13 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     } else /* null tag means buffer is free -- true after elan_queueReq*/;
 
     elan_queueReq(mq, proc_serv, vbuf, size); /* vbuf is sent/copied out */
+
+#if 0
+    if(armci_me==0){
+      printf("%d sent request %d to (%d,%d)\n",armci_me,ops_pending_ar[proc], 
+      proc,proc_serv); fflush(stdout);
+    }
+#endif
 
     return 0;
 }
