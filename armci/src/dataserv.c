@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.11 1999-11-20 01:41:57 d3h325 Exp $ */
+/* $Id: dataserv.c,v 1.12 1999-11-24 01:35:29 d3h325 Exp $ */
 #include "armcip.h"
 #include "sockets.h"
 #include "request.h"
@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-
+ 
 #define ACK 0
 #define DEBUG_ 0
 #define QUIT 33
@@ -189,9 +189,9 @@ int bytes;
 
     stat =armci_ReadFromSocket(AR_sock[p],MessageRcvBuffer,hdrlen);
     if(stat<0){
-			fflush(stdout); sleep(1);
-			armci_die("armci_rcv_req: failed to receive header ",stat);
-	}
+	fflush(stdout); sleep(1);
+	armci_die("armci_rcv_req: failed to receive header ",stat);
+    }
 
     if(DEBUG_){
       printf("%d(server):got %d req from %d len=(%d,%d,%d)\n",
@@ -759,8 +759,7 @@ void armci_server_code()
         printf("in server after fork %d\n",armci_me);
 
      /* establish connections with compute processes */
-    
-     armci_ListenAndAcceptAll(AR_sock, armci_nproc);
+     armci_AcceptSockAll(AR_sock, armci_nproc);
 
      if(DEBUG_){
        printf("%d: server connected to all clients\n",armci_me); fflush(stdout);
@@ -786,6 +785,8 @@ void armci_start_server()
 
      pid_t pid;
 
+     armci_ListenSockAll(AR_sock, armci_nproc);
+
      if ( (pid = fork() ) < 0)
         armci_die("fork failed", (int)pid);
 
@@ -795,7 +796,8 @@ void armci_start_server()
 
      }else {
 
-        sleep(1); /* wait before attempting to connect to data server */
+	/* wait before attempting to connect to data server */
+        /*sleep(1);*/ 
         server_pid = pid;
         armci_client_code();
 
