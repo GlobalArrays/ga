@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.30 2002-12-14 00:30:31 d3h325 Exp $ */
+/* $Id: test.c,v 1.31 2002-12-17 13:05:42 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -486,6 +486,43 @@ int nloA[MAXDIMS+1][MAXDIMS], nhiA[MAXDIMS+1][MAXDIMS];
 int nloB[MAXDIMS+1][MAXDIMS], nhiB[MAXDIMS+1][MAXDIMS];
 int nloC[MAXDIMS+1][MAXDIMS], nhiC[MAXDIMS+1][MAXDIMS];
 
+int get_next_RRproc(int initialize,int ndim){
+static int distance;
+int proc;
+    if(initialize){
+       distance=nproc/2;
+       if((nproc%2)!=0)distance++;
+       if(nproc==1)distance=0;
+       return(0);
+    }
+    /*send it to a different process everytime*/
+    proc=(me<=((nproc%2==0)?((nproc/2)-1):(nproc/2)))?(me+distance):(me-distance); 
+    if((nproc%2)!=0 && me==(nproc/2))proc=me;
+    if(distance!=0){
+       if(me<(nproc/2)){
+         distance++;
+         if((me+distance)>=nproc){
+           distance=nproc/2;
+           if((nproc%2)!=0)distance++; 
+           distance-=me;
+         }
+       }
+       else {
+         distance--;
+         if((me-distance)>=(nproc/2)){
+           distance=nproc/2;
+           if((nproc%2)!=0)distance++; 
+           distance=distance+(me-distance);
+         }
+       }    
+       if(ndim!=1 && MAXDIMS>nproc && (ndim%(nproc/2)==0)){
+         distance=nproc/2;
+         if((nproc%2)!=0)distance++;
+       }
+    }
+    return(proc);
+}
+
 void test_nbdim()
 {
 int elems=1,elems1=1;
@@ -506,15 +543,10 @@ int idx1=0, idx2=0, idx3=0;
        assert(c[ndim]);
        init(a[ndim], ndim, elems, dimsA);
     }
-#if 0
-    if(me==0){
-      printf("Testing nonblocking API for 1 to 7 dimensional data transfers\n");
-      fflush(stdout);
-    }
-#endif
     ARMCI_AllFence();
-    proc=nproc-1-me;
     MP_BARRIER();
+
+    (void)get_next_RRproc(1,0);
     for(ndim=1;ndim<=MAXDIMS;ndim++){
        strideA[0]=sizeof(double);
        strideB[0]=sizeof(double);
@@ -526,13 +558,7 @@ int idx1=0, idx2=0, idx3=0;
            strideB[i+1] = strideB[i];
          }
        }
-#if 0
-       if(me==0){
-         printf("--------array[%d",dimsA[0]);
-         for(i=1;i<ndim;i++)printf(",%d",dimsA[i]);
-         printf("]--------\n");
-       }
-#endif
+       proc=get_next_RRproc(0,ndim);
        get_range(ndim, dimsA, nloA[ndim], nhiA[ndim]);
        new_range(ndim, dimsB, nloA[ndim], nhiA[ndim], nloB[ndim], 
                  nhiB[ndim]);
@@ -550,38 +576,60 @@ int idx1=0, idx2=0, idx3=0;
        idx3 = Index(ndim, nloC[ndim], dimsA);
        for(j=0;j<ndim;j++)count[j]=nhiA[ndim][j]-nloA[ndim][j]+1;
        count[0]   *= sizeof(double); 
-#if 0
-       if(me==0)
-         printf("%d: dim=%d count[0]=%d idxs= %d %d %d\n",me, ndim, 
-                count[0],idx1,idx2,idx3);
-#endif
        
        if(ndim==1){
          (void)ARMCI_NbPut((double*)a[ndim]+idx1,(double*)b[ndim][proc]+idx2,
                            count[0], proc, (hdl_put+ndim));
-         (void)ARMCI_NbGet((double*)b[ndim][proc]+idx2,(double*)c[ndim]+idx3,
-                           count[0], proc, (hdl_get+ndim));
        }else{
-
          (void)ARMCI_NbPutS((double*)a[ndim]+idx1,strideA,
                           (double*)b[ndim][proc]+idx2,
                           strideB, count, ndim-1, proc,(hdl_put+ndim));
+       }
+    }
+    /*before we do gets, we have to make sure puts are complete 
+      on the remote processor*/
+    for(ndim=1;ndim<=MAXDIMS;ndim++)
+       ARMCI_Wait(hdl_put+ndim); 
+    MP_BARRIER();
+    ARMCI_AllFence();
+
+    (void)get_next_RRproc(1,0);
+    
+    for(ndim=1;ndim<=MAXDIMS;ndim++){
+       strideA[0]=sizeof(double);
+       strideB[0]=sizeof(double);
+       for(i=0;i<ndim;i++){
+         strideA[i] *= dimsA[i];
+         strideB[i] *= dimsB[i];
+         if(i<ndim-1){
+           strideA[i+1] = strideA[i];
+           strideB[i+1] = strideB[i];
+         }
+       }
+       /*send it to a different process everytime*/
+       proc=get_next_RRproc(0,ndim);
+
+       idx1 = Index(ndim, nloA[ndim], dimsA);
+       idx2 = Index(ndim, nloB[ndim], dimsB);
+       idx3 = Index(ndim, nloC[ndim], dimsA);
+       for(j=0;j<ndim;j++)count[j]=nhiA[ndim][j]-nloA[ndim][j]+1;
+       count[0]   *= sizeof(double); 
+       if(ndim==1){
+         (void)ARMCI_NbGet((double*)b[ndim][proc]+idx2,(double*)c[ndim]+idx3,
+                           count[0], proc, (hdl_get+ndim));
+       }else{
          (void)ARMCI_NbGetS((double*)b[ndim][proc]+idx2,strideB,
                           (double*)c[ndim]+idx3,
                           strideA, count, ndim-1, proc,(hdl_get+ndim));
        }
-#if 0
-       if(me==0){printf("OK\n");fflush(stdout);}
-#endif
-
     }
+       
     MP_BARRIER();
     if(me==0){
        printf("Now waiting for all non-blocking calls and verifying data...\n");
        fflush(stdout);
     }
     for(ndim=1;ndim<=MAXDIMS;ndim++){
-       ARMCI_Wait(hdl_put+ndim); 
        ARMCI_Wait(hdl_get+ndim); 
        idx1 = Index(ndim, nloA[ndim], dimsA);
        idx2 = Index(ndim, nloB[ndim], dimsB);
@@ -601,6 +649,154 @@ int idx1=0, idx2=0, idx3=0;
     }
 }
 
+#define PTR_ARR_LEN 10
+#define VLOOP 50
+#define VEC_ELE_LEN 100 /*number of doubles in each dimention*/
+#define GIOV_ARR_LEN 9
+
+void verify_vector_data(double *data,int procs,int isput,int datalen)
+{
+double facto=2.89;
+int i,j=0,k=0,kc=0,dst=0;
+    if(isput)facto=1.89;
+    for(i=0;i<datalen;i++){
+       if(dst!=me)
+         if(ABS((data[i] -(me+facto+dst)*((kc+1)*(j%PTR_ARR_LEN + 1))))>0.001){
+           printf("\n%d:while verifying data of a op from proc=%d ",me,dst);
+           printf("giov index=%d ptr_arr_index=%d \n :element index=%d",kc,
+                   (j%PTR_ARR_LEN),k);
+           printf(" elem was supposed to be %f but is %f",
+                  (me+facto+dst)*((kc+1)*(j%PTR_ARR_LEN + 1)) ,data[i]);
+           fflush(stdout);
+           sleep(1);
+           ARMCI_Error("vector non-blocking failed",0);
+         }  
+       k++;
+       if(k==VEC_ELE_LEN){
+         j++;k=0;
+         if(j%PTR_ARR_LEN==0){
+           kc++;
+           if((kc%GIOV_ARR_LEN)==0){kc=0;dst++;}
+         }
+       }
+    }
+}
+
+void test_vec_small()
+{
+double *getdst;
+double **putsrc;
+armci_giov_t dsc[MAXPROC*GIOV_ARR_LEN];
+void **psrc; /*arrays of pointers to be used by giov_t*/
+void **pdst; 
+void *getsrc[MAXPROC]; /*to allocate mem via armci_malloc*/
+void *putdst[MAXPROC]; /*to allocate mem via armci_malloc*/
+armci_req_t hdl_put[MAXPROC],hdl_get[MAXPROC];
+int i=0,j=0,k=0,kc=0,kcold=0,rc,dstproc,dst=0;
+int lenpergiov;
+
+    lenpergiov = PTR_ARR_LEN*VEC_ELE_LEN;
+    rc = ARMCI_Malloc(getsrc,sizeof(double)*nproc*GIOV_ARR_LEN*lenpergiov);
+    assert(rc==0);assert(getsrc[me]);
+    rc = ARMCI_Malloc(putdst,sizeof(double)*nproc*GIOV_ARR_LEN*lenpergiov);
+    assert(rc==0);assert(putdst[me]);
+    /*we have to do mallocs for all the arrays instead of declaring them static
+      because some adamnt c compilers(like the sun c compiler) dont like 
+      non-constant expressions specifying array bounds*/
+
+    /*first malloc for getdst and putsrc, both are 2d arrays*/
+    getdst = (double *)malloc(sizeof(double)*nproc*GIOV_ARR_LEN*lenpergiov);
+    putsrc = (double **)malloc(sizeof(double *)*nproc*GIOV_ARR_LEN*PTR_ARR_LEN);
+    assert(getdst);assert(putsrc);
+    for(i=0;i<nproc*GIOV_ARR_LEN*PTR_ARR_LEN;i++){
+       putsrc[i]=(double *)malloc(sizeof(double)*VEC_ELE_LEN);
+       assert(putsrc[i]);
+    }
+    /*allocating memory for psrc and pdst*/
+    psrc = (void **)malloc(sizeof(void *)*PTR_ARR_LEN * nproc*GIOV_ARR_LEN);
+    pdst = (void **)malloc(sizeof(void *)*PTR_ARR_LEN * nproc*GIOV_ARR_LEN);
+    assert(pdst);assert(psrc);
+
+    for(i=0;i<nproc*lenpergiov*GIOV_ARR_LEN;i++){
+       putsrc[j][k] =(me+1.89+dst)*((kc+1)*((j%PTR_ARR_LEN) + 1));
+       ((double *)getsrc[me])[i]=(me+2.89+dst)*((kc+1)*(j%PTR_ARR_LEN + 1));
+       k++;
+       if(k==VEC_ELE_LEN){
+         j++;k=0;
+         if((j%PTR_ARR_LEN)==0){
+           kc++;
+           if((kc%GIOV_ARR_LEN)==0){kc=0;dst++;}
+         }
+       }
+    }
+    /*********************Testing NbPutV*********************************/
+    i=0;j=0;k=0;kc=0; 
+    dstproc = me;
+    for(i=0;i<nproc-1;i++){
+       dstproc++;if(dstproc==nproc)dstproc=0;
+       for(j=0; j <GIOV_ARR_LEN; j++){
+         kcold=kc;
+         for(k=0;k<PTR_ARR_LEN;k++,kc++){
+           double *ptr;
+           psrc[kc]=(void *)putsrc[PTR_ARR_LEN*(dstproc*GIOV_ARR_LEN+j)+k];
+           ptr = (double *)putdst[dstproc]; 
+           pdst[kc]=(void *)(ptr+lenpergiov*(GIOV_ARR_LEN*me+j)+k*100);
+         }
+         dsc[j].bytes = VEC_ELE_LEN*sizeof(double);
+         dsc[j].src_ptr_array = &psrc[kcold];
+         dsc[j].dst_ptr_array = &pdst[kcold];
+         dsc[j].ptr_array_len = PTR_ARR_LEN;
+       }
+       if((rc=ARMCI_NbPutV(dsc,GIOV_ARR_LEN,dstproc,hdl_put+i)))
+         ARMCI_Error("putv failed",rc);
+    }
+    if(me==0){
+       printf("\n\tNow veryfying the vector put data for correctness");
+    }
+    for(i=0;i<nproc;i++)if(i!=me)ARMCI_Wait(hdl_put+dstproc);
+    sleep(1);
+    MP_BARRIER();
+    ARMCI_AllFence();/*every one syncs after put */
+    verify_vector_data((double *)putdst[me],nproc,1,nproc*GIOV_ARR_LEN*lenpergiov);
+    if(me==0){
+       printf("\n\tPuts OK\n");
+    }
+    /****************Done Testing NbPutV*********************************/
+
+    /*********************Testing NbGetV*********************************/
+    i=0;j=0;k=0;kc=0; 
+    dstproc = me;
+    for(i=0;i<nproc-1;i++){
+       dstproc++;if(dstproc==nproc)dstproc=0;
+       for(j=0; j <GIOV_ARR_LEN; j++){
+         kcold=kc;
+         for(k=0;k<PTR_ARR_LEN;k++,kc++){
+           double *ptr;
+           ptr = getdst;
+           pdst[kc]=(void *)(ptr+lenpergiov*(dstproc*GIOV_ARR_LEN+j)+k*100);
+           ptr = (double *)(getsrc[dstproc]); 
+           psrc[kc]=(void *)(ptr+lenpergiov*(me*GIOV_ARR_LEN+j)+k*100);
+         }
+         dsc[j].bytes = VEC_ELE_LEN*sizeof(double);
+         dsc[j].src_ptr_array = &psrc[kcold];
+         dsc[j].dst_ptr_array = &pdst[kcold];
+         dsc[j].ptr_array_len = PTR_ARR_LEN;
+       }
+       if((rc=ARMCI_NbGetV(dsc,GIOV_ARR_LEN,dstproc,hdl_get+dstproc)))
+         ARMCI_Error("putv failed",rc);
+    }
+    if(me==0){
+       printf("\n\tNow veryfying the vector get data for correctness");
+    }
+    for(i=0;i<nproc;i++)if(i!=me)ARMCI_Wait(hdl_get+i);
+    sleep(1);
+    MP_BARRIER();
+    verify_vector_data((double *)getdst,nproc,0,nproc*GIOV_ARR_LEN*lenpergiov);
+    if(me==0){
+       printf("\n\tGets OK\n");
+    }
+    /****************Done Testing NbGetV*********************************/
+}
 
 
 
@@ -1271,10 +1467,11 @@ int main(int argc, char* argv[])
            fflush(stdout);
            sleep(1);
         }
-
+#if 0
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
         ARMCI_AllFence();
         MP_BARRIER();
+#endif
 
 #if 1
         if(me==0){
@@ -1287,6 +1484,14 @@ int main(int argc, char* argv[])
         MP_BARRIER();
 
 #endif
+        
+        if(me==0){
+           printf("\nTesting non-blocking vector gets and puts\n");
+           fflush(stdout);
+           sleep(1);
+        }
+        test_vec_small();
+
         if(me==0){
            printf("\nTesting register-originated puts\n");
            fflush(stdout);
