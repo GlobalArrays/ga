@@ -1,4 +1,4 @@
-/* $Id: winshmem.c,v 1.13 2003-03-21 19:41:08 manoj Exp $ */
+/* $Id: winshmem.c,v 1.14 2003-03-21 19:45:19 d3h325 Exp $ */
 /* WIN32 & Posix SysV-like shared memory allocation and management
  * 
  *
@@ -6,7 +6,7 @@
  * ~~~~~~~~~
  *  char *Create_Shared_Region(long *idlist, long *size, long *offset)
  *       . to be called by just one process. 
- *       . calls kr_malloc, a modified by Robert Harrison version of malloc-like
+ *       . calls kr_malloc,  malloc-like
  *         memory allocator from K&R.kr_malloc inturn calls armci_allocate() that
  *         does shmget() and shmat(). 
  *       . idlist might be just a pointer to integer or a true array in the
