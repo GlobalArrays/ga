@@ -70,12 +70,12 @@ int     participate=0;
            ca = (DoubleComplex*)ptr;
            dval=ca->real*ca->real + ca->imag*ca->imag;
            if (strncmp(op,"min",3) == 0)
-              for(i=0;i<elems;i++, ca+=sizeof(DoubleComplex) ){
+              for(i=0;i<elems;i++, ca+=1 ){
                   DoublePrecision tmp = ca->real*ca->real + ca->imag*ca->imag; 
                   if(dval > tmp){dval = tmp; ind = i;}
               }
            else
-              for(i=0;i<elems;i++, ca+=sizeof(DoubleComplex) ){
+              for(i=0;i<elems;i++, ca+=1 ){
                   DoublePrecision tmp = ca->real*ca->real + ca->imag*ca->imag; 
                   if(dval < tmp){dval = tmp; ind = i;}
               }
