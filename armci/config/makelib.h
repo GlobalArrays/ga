@@ -92,6 +92,7 @@ ifdef SUBDIRS
 	$(MAKESUBDIRS)
 endif
 	-$(RM) -f *.o *.p *core *stamp mputil.mp* *trace *.x *.exe obj/* *events* $(LIB_TARGETS)
+	-$(RM) -rf ./obj
 ifdef HARDCLEAN 
 	-$(RM) -f $(LIBRARY_PATH)
 else
