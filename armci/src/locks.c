@@ -1,4 +1,4 @@
-/* $Id: locks.c,v 1.8 2002-01-28 20:16:50 d3h325 Exp $ */
+/* $Id: locks.c,v 1.9 2002-09-04 18:24:38 d3h325 Exp $ */
 #define _LOCKS_C_
 #include "locks.h"
 #include "armcip.h"
@@ -21,6 +21,11 @@ int size=num_locks*sizeof(PAD_LOCK_T);
      ptr = Create_Shared_Region(plockid->idlist,size,&plockid->off);
   else
      ptr = malloc(size);
+
+#if 0
+  printf("%d: allocated lock array %d s=%d p=%p\n",armci_me,num_locks,size,ptr);
+  fflush(stdout);
+#endif
 
   if(!ptr) armci_die("Failed to create spinlocks",size);
   _armci_int_mutexes = (PAD_LOCK_T*)ptr;
