@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.97 2003-12-31 00:59:27 d3h325 Exp $
+# $Id: makefile.h,v 1.98 2004-01-01 05:52:17 edo Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -405,12 +405,10 @@ endif
 #
 # power4
 ifeq  ($(_CPU),ppc64)
-  ifeq ($(_FC),g77)
-     FOPT_REN += -m64 -maix64
-  endif
-  ifeq ($(_CC),gcc)
-     COPT_REN += -m64 -maix64 
-  endif
+  FC=xlf
+  CC=/opt/cross/bin/powerpc64-linux-gcc
+  COPT=-O3
+  COPT_REN +=  -funroll-loops 
   ifeq ($(_CC),xlc)
      COPT_REN = -q64  -qlanglvl=extended
      GLOB_DEFINES += -DXLCLINUX
