@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.45 2002-09-17 16:57:27 vinod Exp $ */
+/* $Id: message.c,v 1.46 2002-11-13 00:10:32 vinod Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -35,24 +35,33 @@ static float *fwork = NULL;
 static int _armci_gop_init=0;   /* tells us if we have a buffers allocated  */
 static int _armci_gop_shmem =0; /* tells us to use shared memory for gops */
 extern void armci_util_spin(int,void*);
+extern void armci_util_wait_int(volatile int *p, int val, int maxspin);
 
 typedef struct {
         union {
-           int flag;
+           volatile int flag;
            double dummy[16];
         }a;
         union {
-           int flag;
+           volatile int flag;
            double dummy[16];
         }b;
         double array[BUF_SIZE];
 } bufstruct;
 
-static  bufstruct *_gop_buffer; 
+static bufstruct *_gop_buffer; 
 
 #define GOP_BUF(p)  (_gop_buffer+((p)-armci_master))
 #define EMPTY 0
 #define FULL 1
+
+#ifdef NEED_MEM_SYNC
+#define SET_SHM_FLAG(_flg,_val) _clear_lock((int *)(_flg),_val);
+#else
+#define SET_SHM_FLAG(_flg,_val) *(_flg)=_val;
+#endif
+
+static int empty=EMPTY,full=FULL;
 
 /*\
  *  Variables/structures for use in Barrier and for Binomial tree
@@ -61,16 +70,15 @@ static  bufstruct *_gop_buffer;
 int barr_switch;
 static int LnB=0,powof2nodes,Lp2;
 typedef struct {
-        int flag1;
+        volatile int flag1;
         double dum[16];
-        int flag2;
+        volatile int flag2;
 } barrier_struct;
 barrier_struct *_bar_buff;
 #define BAR_BUF(p) (_bar_buff+((p)))
 void **barr_snd_ptr,**barr_rcv_ptr;
 int _armci_barrier_init=0;
 int _armci_barrier_shmem=0;
-int _armci_called_from_barrier=0;
 /*\
  *  *************************************************************
 \*/
@@ -163,7 +171,7 @@ void armci_msg_gop_init()
 }
 
 
-static void cpu_yield()
+void cpu_yield()
 {
 #if defined(SYSV) || defined(MMAP) || defined(WIN32)
 #ifdef SOLARIS
@@ -178,8 +186,8 @@ static void cpu_yield()
 #endif
 }
 
-
-static void armci_util_wait_int(int *p, int val, int maxspin)
+#if 0
+void armci_util_wait_int(int *p, int val, int maxspin)
 {
 int count=0;
 
@@ -190,7 +198,7 @@ int count=0;
                count =0; 
             }
 }
-
+#endif
 
 /***************************Barrier Code*************************************/
 
@@ -214,8 +222,8 @@ void armci_msg_barr_init(){
     if(!tmp)armci_die("allocate barr shm failed",0);
     _bar_buff=(barrier_struct *)tmp;
 
-    BAR_BUF(armci_me-armci_master)->flag1=EMPTY;
-    BAR_BUF(armci_me-armci_master)->flag2=EMPTY;
+    SET_SHM_FLAG(&(BAR_BUF(armci_me-armci_master)->flag1),empty);
+    SET_SHM_FLAG(&(BAR_BUF(armci_me-armci_master)->flag2),empty);
 
     /*allocate memory to send/rcv data*/
     barr_snd_ptr = (void **)malloc(sizeof(void *)*armci_nproc);
@@ -249,13 +257,13 @@ static void _armci_msg_barrier(){
     int nslave = armci_clus_info[armci_clus_me].nslave;
     static int barr_count = 0;
     int last, next_nodel=0;
-    void armci_util_wait_int(int *,int,int);
+    void armci_util_wait_int(volatile int *,int,int);
     /*if(barr_count==0)armci_msg_barr_init();*/
     barr_count++;
     if(armci_me==armci_master){ /*only masters do the intenode barrier*/
        for(i=1;i<nslave;i++){   /*wait for all smp procs to enter the barrier*/
          armci_util_wait_int(&BAR_BUF(i)->flag1,FULL,100000);
-         BAR_BUF(i)->flag1=EMPTY;
+         SET_SHM_FLAG(&(BAR_BUF(i)->flag1),empty);
        }
        if(armci_nclus>1){
        last =  ((int)pow(2,(LnB-1)))^armci_clus_me;
@@ -276,7 +284,7 @@ static void _armci_msg_barrier(){
          if(last<armci_nclus && !powof2nodes){ /*step 1*/
            dstn = (char *)barr_rcv_ptr[next_nodel];
            armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_nodel);
-           armci_util_wait_int((int *)dstn,barr_count,100000);
+           armci_util_wait_int((volatile int *)dstn,barr_count,100000);
          }
          for(i=0;i<LnB-1;i++){/*step 2*/
            next=((int)pow(2,i))^armci_clus_me;
@@ -296,7 +304,7 @@ static void _armci_msg_barrier(){
                armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_node);
                armci_msg_snd(ARMCI_TAG, srcp,4,next_node);
              }
-             armci_util_wait_int((int *)dstn,barr_count,100000);
+             armci_util_wait_int((volatile int *)dstn,barr_count,100000);
            }
          }
          if(last<armci_nclus && !powof2nodes){ /*step 3*/
@@ -312,18 +320,18 @@ static void _armci_msg_barrier(){
            dstn = (char *)barr_rcv_ptr[next_nodel];
            armci_msg_snd(ARMCI_TAG, srcp,4,next_nodel);
            armci_msg_rcv(ARMCI_TAG, dstn,4,NULL,next_nodel);
-           armci_util_wait_int((int *)dstn,barr_count,100000);
+           armci_util_wait_int((volatile int *)dstn,barr_count,100000);
          }
        }
        } /* paranthesis for if armci_nclus>1*/
        for(i=1;i<nslave;i++) /*tell smp procs that internode barrier complete*/
-         BAR_BUF(i)->flag2=FULL;
+         SET_SHM_FLAG(&(BAR_BUF(i)->flag2),full);
     }
     else {                   /*if not master, partake in the smp barrier,only*/
        i=armci_me-armci_master;
-       BAR_BUF(i)->flag1=FULL;
+       SET_SHM_FLAG(&(BAR_BUF(i)->flag1),full);
        armci_util_wait_int(&BAR_BUF(i)->flag2,FULL,100000);
-       BAR_BUF(i)->flag2=EMPTY;
+       SET_SHM_FLAG(&(BAR_BUF(i)->flag2),empty);
     }
 }
        
@@ -335,13 +343,14 @@ void armci_msg_barrier()
 #  elif defined(PVM)
      pvm_barrier(mp_group_name, armci_nproc);
 #  elif defined(LAPI)
+#if !defined(NEED_MEM_SYNC)
      if(_armci_barrier_init)
        _armci_msg_barrier();
-     else{
+     else
+#endif
+     {
        long tag=ARMCI_TAG;
-       _armci_called_from_barrier=1;
        SYNCH_(&tag);
-       _armci_called_from_barrier=0;
      }
 #  else
      long tag=ARMCI_TAG;
@@ -499,8 +508,8 @@ static int bufid=1;
     if(armci_me==root){
 
        /* wait for the flag protecting the buffer to clear */
-       armci_util_wait_int(&GOP_BUF(armci_clus_last+bufid)->a.flag,EMPTY,100);
-       GOP_BUF(armci_clus_last+bufid)->a.flag=FULL; /* reserve it */
+       armci_util_wait_int(&(GOP_BUF(armci_clus_last+bufid)->a.flag),EMPTY,100);
+       SET_SHM_FLAG(&(GOP_BUF(armci_clus_last+bufid)->a.flag),full);
 #if 0     
        for(i=armci_clus_first; i <= armci_clus_last; i++)
            if(i!=root)armci_util_wait_int(&GOP_BUF(i)->b.flag, EMPTY, 100);
@@ -512,13 +521,13 @@ static int bufid=1;
        for(i=armci_clus_first; i <= armci_clus_last; i++)
            if(i!=root){ 
                   armci_util_wait_int(&GOP_BUF(i)->b.flag, EMPTY, 100);
-                  GOP_BUF(i)->b.flag=FULL;
+                  SET_SHM_FLAG(&(GOP_BUF(i)->b.flag),full);
            } 
 #endif            
     }else{     
            armci_util_wait_int(&GOP_BUF(armci_me)->b.flag, FULL, 100);
            armci_copy(GOP_BUF(armci_clus_last+bufid)->array,x,len);
-           GOP_BUF(armci_me)->b.flag  = EMPTY;
+           SET_SHM_FLAG(&(GOP_BUF(armci_me)->b.flag),empty);
     }
 
     n -=ndo;
@@ -528,7 +537,7 @@ static int bufid=1;
 
     /* since root waited for everybody to check in the previous buffer is free*/
     if(armci_me==root){
-          GOP_BUF(armci_clus_last+bufid)->a.flag=EMPTY;
+          SET_SHM_FLAG(&(GOP_BUF(armci_clus_last+bufid)->a.flag),empty);
     }
   }    
 }        
@@ -1201,7 +1210,6 @@ static void gop2(int type, int ndo, char* op, void *x, void *work, void *work2)
 
 
 
-
 /*\ shared memory based reduction for a single SMP node
 \*/
 static void armci_smp_reduce(void *x, int n, char* op, int type)
@@ -1260,7 +1268,7 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
 #else
                   gop(type, ndo, op, GOP_BUF(armci_me)->array, b->array);
 #endif
-                  b->a.flag = EMPTY;
+                  SET_SHM_FLAG(&( b->a.flag),empty);
                }else  if((++count)<maxspin) armci_util_spin(count,_gop_buffer);
                       else{cpu_yield();count =0; }
           }
@@ -1273,7 +1281,7 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
        if (left >-1) {
          while(GOP_BUF(left)->a.flag != FULL) cpu_yield();
          gop(type, ndo, op, GOP_BUF(armci_me)->array, GOP_BUF(left)->array);
-         GOP_BUF(left)->a.flag = EMPTY;
+         SET_SHM_FLAG(&( GOP_BUF(left)->a.flag),empty);
        }
        if (right >-1 ) {
          while(GOP_BUF(right)->a.flag != FULL) cpu_yield();
@@ -1283,7 +1291,7 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
 #endif
 
        if (armci_me != root ) {
-           GOP_BUF(armci_me)->a.flag=FULL;
+           SET_SHM_FLAG(&(GOP_BUF(armci_me)->a.flag),full);
        }
 #if 0
         else
@@ -1295,7 +1303,6 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
        x = len + (char*)x;
     }  
 }
-
 
 void _armci_msg_binomial_reduce(void *x, int n, char* op, int type){
     int root = armci_clus_info[0].master;
