@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.41 2002-10-31 01:09:27 vinod Exp $ */
+/* $Id: request.c,v 1.42 2002-10-31 19:00:37 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -63,7 +63,9 @@ request_header_t *msginfo = (request_header_t*) buffer;
        else dscr = info->ptr.dscrbuf;
        GETBUF(dscr, long ,len);
        {
-         armci_giov_t darr[len];
+         armci_giov_t *darr;
+         darr = (armci_giov_t *)malloc(sizeof(armci_giov_t)*len);
+         if(!darr)armci_die("malloc in complete_req_buf failed",len);
          for(i = 0; i< len; i++){
            int parlen, bytes;
            GETBUF(dscr, int, parlen);
