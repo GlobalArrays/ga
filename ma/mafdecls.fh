@@ -2,7 +2,7 @@
 #define _mafdecls_fh
 
 !
-!     $Id: mafdecls.fh,v 1.6 1999-12-13 23:31:54 d3h325 Exp $
+!     $Id: mafdecls.fh,v 1.7 2000-07-04 05:54:56 d3g001 Exp $
 !
 
 !
@@ -61,6 +61,7 @@
       logical MA_free_heap
       logical MA_get_index
       logical MA_get_next_memhandle
+      logical MA_get_numalign
       logical MA_init
       logical MA_initialized
       logical MA_init_memhandle_iterator
@@ -74,12 +75,12 @@
       logical MA_set_auto_verify
       logical MA_set_error_print
       logical MA_set_hard_fail
+      logical MA_set_numalign
       integer MA_sizeof
       integer MA_sizeof_overhead
 !     subroutine MA_summarize_allocated_blocks
+!     subroutine MA_trace
       logical MA_verify_allocator_stuff
-      logical MA_set_numalign
-      logical MA_get_numalign
 
       external MA_alloc_get
       external MA_allocate_heap
@@ -87,6 +88,7 @@
       external MA_free_heap
       external MA_get_index
       external MA_get_next_memhandle
+      external MA_get_numalign
       external MA_init
       external MA_initialized
       external MA_init_memhandle_iterator
@@ -100,12 +102,12 @@
       external MA_set_auto_verify
       external MA_set_error_print
       external MA_set_hard_fail
+      external MA_set_numalign
       external MA_sizeof
       external MA_sizeof_overhead
       external MA_summarize_allocated_blocks
+      external MA_trace
       external MA_verify_allocator_stuff
-      external MA_set_numalign
-      external MA_get_numalign
 #endif /* MAF_INTERNAL */
 
 !

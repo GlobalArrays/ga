@@ -1,5 +1,5 @@
 /*
- * $Id: f2c.c,v 1.8 1999-10-19 01:01:06 d3g681 Exp $
+ * $Id: f2c.c,v 1.9 2000-07-04 05:54:54 d3g001 Exp $
  */
 
 /*
@@ -212,6 +212,18 @@ public Boolean FATR f2c_get_next_memhandle_(ithandle, memhandle)
  */
 /* ------------------------------------------------------------------------- */
 
+public Boolean FATR f2c_get_numalign_(value)
+    Integer	*value;
+{
+    return MA_get_numalign(value);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * 
+ */
+/* ------------------------------------------------------------------------- */
+
 public Boolean FATR f2c_inform_base_(datatype, address1, address2)
     Integer	*datatype;
     Pointer	address1;
@@ -340,12 +352,6 @@ public void FATR f2c_print_stats_(printroutines)
     MA_print_stats(*printroutines);
 }
 
-public void  FATR f2c_trace_(Integer *value)
-{
-    MA_trace(*value);
-}
-
-
 /* ------------------------------------------------------------------------- */
 /*
  * 
@@ -462,6 +468,18 @@ public Boolean FATR f2c_set_hard_fail_(value)
  */
 /* ------------------------------------------------------------------------- */
 
+public Boolean FATR f2c_set_numalign_(value)
+    Integer	*value;
+{
+    return MA_set_numalign(*value);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * 
+ */
+/* ------------------------------------------------------------------------- */
+
 public Integer FATR f2c_sizeof_(datatype1, nelem1, datatype2)
     Integer	*datatype1;
     Integer	*nelem1;
@@ -500,21 +518,19 @@ public void FATR f2c_summarize_allocated_blocks_()
  */
 /* ------------------------------------------------------------------------- */
 
+public void FATR f2c_trace_(value)
+    Integer	*value;
+{
+    MA_trace((Boolean)*value);
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * 
+ */
+/* ------------------------------------------------------------------------- */
+
 public Boolean FATR f2c_verify_allocator_stuff_()
 {
     return MA_verify_allocator_stuff();
 }
-
-public Boolean FATR f2c_set_numalign_(Integer *numalign)
-{
-  return MA_set_numalign((int) *numalign);
-}
-
-public Boolean FATR f2c_get_numalign_(Integer *numalign)
-{
-  int n;
-  Boolean status = MA_get_numalign(&n);
-  *numalign = n;
-  return status;
-}
-

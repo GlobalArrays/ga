@@ -2,7 +2,7 @@
 #define _macdecls_h
 
 /* 
- * $Id: macdecls.h,v 1.7 1999-10-19 01:01:07 d3g681 Exp $
+ * $Id: macdecls.h,v 1.8 2000-07-04 05:54:55 d3g001 Exp $
  */
 
 /* 
@@ -36,15 +36,15 @@
  ** function types
  **/
 
-extern void    MA_trace();
 extern Boolean MA_alloc_get();
 extern Boolean MA_allocate_heap();
 extern Boolean MA_chop_stack();
 extern Boolean MA_free_heap();
 extern Boolean MA_get_index();
-extern Boolean MA_get_next_memhandle();
-extern Boolean MA_get_pointer();
 extern Pointer MA_get_mbase();
+extern Boolean MA_get_next_memhandle();
+extern Boolean MA_get_numalign();
+extern Boolean MA_get_pointer();
 extern Boolean MA_init();
 extern Boolean MA_initialized();
 extern Boolean MA_init_memhandle_iterator();
@@ -58,12 +58,12 @@ extern Boolean MA_push_stack();
 extern Boolean MA_set_auto_verify();
 extern Boolean MA_set_error_print();
 extern Boolean MA_set_hard_fail();
+extern Boolean MA_set_numalign();
 extern Integer MA_sizeof();
 extern Integer MA_sizeof_overhead();
 extern void MA_summarize_allocated_blocks();
+extern void MA_trace();
 extern Boolean MA_verify_allocator_stuff();
-extern Boolean MA_set_numalign();
-extern Boolean MA_get_numalign();
 
 /**
  ** variables

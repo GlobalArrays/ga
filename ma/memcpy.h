@@ -2,6 +2,7 @@
 #define _memcpy_h
 
 /* 
+ * $Id: memcpy.h,v 1.3 2000-07-04 05:54:56 d3g001 Exp $
  */
 
 /* 
@@ -42,13 +43,13 @@
 #ifdef NO_BCOPY
 #ifndef WIN32
 extern void *memcpy();
-#endif
+#endif /* WIN32 */
 #define bytecopy(from,to,nbytes)	\
 	((void)memcpy((char *)(to), (char *)(from), (int)(nbytes)))
-#else
+#else /* NO_BCOPY */
 extern void bcopy();
 #define bytecopy(from,to,nbytes)	\
 	(bcopy((char *)(from), (char *)(to), (int)(nbytes)))
-#endif
+#endif /* NO_BCOPY */
 
 #endif /* _memcpy_h */

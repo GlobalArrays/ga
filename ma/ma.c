@@ -1,5 +1,5 @@
 /*
- * $Id: ma.c,v 1.21 2000-05-09 21:29:17 d3h325 Exp $
+ * $Id: ma.c,v 1.22 2000-07-04 05:54:54 d3g001 Exp $
  */
 
 /*
@@ -284,6 +284,9 @@ private Boolean ma_initialized = MA_FALSE;
 /* invoke MA_verify_allocator_stuff in each public routine? */
 private Boolean ma_auto_verify = MA_FALSE;
 
+/* print push/pop/alloc/free? */
+private Boolean ma_trace = MA_FALSE;
+
 /* base arrays for the C datatypes */
 public char			ma_cb_char[2];	/* MT_C_CHAR */
 public int			ma_cb_int[2];	/* MT_C_INT */
@@ -295,10 +298,8 @@ public MA_SingleComplex		ma_cb_scpl[2];	/* MT_C_SCPL */
 public MA_DoubleComplex		ma_cb_dcpl[2];	/* MT_C_DCPL */
 public MA_LongDoubleComplex	ma_cb_ldcpl[2];	/* MT_C_LDCPL */
 
-
-private int trace = 0;		/* If true print push/pop/alloc/free */
-
-private int NUMALIGN = 0;       /* User requested power of two alignment */
+/* requested power-of-two alignment */
+private Integer ma_numalign = 0;
 
 /**
  ** macros
@@ -369,9 +370,10 @@ typedef enum
     FID_MA_chop_stack,
     FID_MA_free_heap,
     FID_MA_get_index,
-    FID_MA_get_next_memhandle,
-    FID_MA_get_pointer,
     FID_MA_get_mbase,
+    FID_MA_get_next_memhandle,
+    FID_MA_get_numalign,
+    FID_MA_get_pointer,
     FID_MA_init,
     FID_MA_initialized,
     FID_MA_init_memhandle_iterator,
@@ -385,9 +387,11 @@ typedef enum
     FID_MA_set_auto_verify,
     FID_MA_set_error_print,
     FID_MA_set_hard_fail,
+    FID_MA_set_numalign,
     FID_MA_sizeof,
     FID_MA_sizeof_overhead,
     FID_MA_summarize_allocated_blocks,
+    FID_MA_trace,
     FID_MA_verify_allocator_stuff
 } FID;
 
@@ -413,9 +417,10 @@ private char *ma_routines[] =
     "MA_chop_stack",
     "MA_free_heap",
     "MA_get_index",
-    "MA_get_next_memhandle",
-    "MA_get_pointer",
     "MA_get_mbase",
+    "MA_get_next_memhandle",
+    "MA_get_numalign",
+    "MA_get_pointer",
     "MA_init",
     "MA_initialized",
     "MA_init_memhandle_iterator",
@@ -429,9 +434,11 @@ private char *ma_routines[] =
     "MA_set_auto_verify",
     "MA_set_error_print",
     "MA_set_hard_fail",
+    "MA_set_numalign",
     "MA_sizeof",
     "MA_sizeof_overhead",
     "MA_summarize_allocated_blocks",
+    "MA_trace",
     "MA_verify_allocator_stuff"
 };
 
@@ -613,14 +620,14 @@ private void balloc_after(ar, address, client_space, nbytes)
 
     /*
      * To align client space according to overall alignment of absolute
-     * address on user requested 2^NUMALIGN boundary.
+     * address on user requested 2^ma_numalign boundary.
      * Note that if the base arrays are not aligned accordingly then
      * this alignement request is not satisfiable and will be quietly
      * ignored.
      */
 
-    if (NUMALIGN > 0) {
-      unsigned long mask = (1<<NUMALIGN)-1;
+    if (ma_numalign > 0) {
+      unsigned long mask = (1<<ma_numalign)-1;
       int diff = ((unsigned long) B_client_space) & mask;
       
       /* Check that the difference is a multiple of the type size.
@@ -629,7 +636,7 @@ private void balloc_after(ar, address, client_space, nbytes)
        */
 
       if (diff) {
-	diff = (1<<NUMALIGN) - diff;
+	diff = (1<<ma_numalign) - diff;
 	if ((diff % ma_sizeof[datatype]) == 0 ) {
 	  /*printf("bafter realigned diff=%d\n",diff);*/
 	  A_client_space = b2p(B_client_space + diff);
@@ -729,14 +736,14 @@ private void balloc_before(ar, address, client_space, nbytes)
 
     /*
      * To align client space according to overall alignment of absolute
-     * address on user requested 2^NUMALIGN boundary.
+     * address on user requested 2^ma_numalign boundary.
      * Note that if the base arrays are not aligned accordingly then
      * this alignement request is not satisfiable and will be quietly
      * ignored.
      */
 
-    if (NUMALIGN > 0) {
-      unsigned long mask = (1<<NUMALIGN)-1;
+    if (ma_numalign > 0) {
+      unsigned long mask = (1<<ma_numalign)-1;
       int diff = ((unsigned long) B_client_space) & mask;
       
       /* Check that the difference is a multiple of the type size.
@@ -1688,7 +1695,7 @@ private void str_ncopy(to, from, maxchars)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Set the base address and size of the given datatype.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -1731,7 +1738,8 @@ public Boolean MAi_inform_base(datatype, address1, address2)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Print debugging information about all blocks currently in use
+ * on the heap or the stack.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -1780,14 +1788,6 @@ public void MAi_summarize_allocated_blocks(index_base)
  ** public routines
  **/
 
-/*
-  Control tracing of MA allocations
-  */
-public void MA_trace(Integer value)
-{
-    trace = value;
-}
-
 /* ------------------------------------------------------------------------- */
 /*
  * Convenience function that combines MA_allocate_heap and MA_get_index.
@@ -1815,7 +1815,10 @@ public Boolean MA_alloc_get(datatype, nelem, name, memhandle, index)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Allocate a heap block big enough to hold nelem elements
+ * of the given datatype.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -1840,8 +1843,8 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
         return MA_FALSE;
 #endif /* VERIFY */
 
-    if (trace) 
-	(void) printf("ma: allocating \"%s\"(%d)\n", name, (int) nelem);
+    if (ma_trace) 
+	(void)printf("MA: allocating '%s' (%d)\n", name, (int)nelem);
 
     /* verify initialization */
     if (!ma_initialized)
@@ -1957,7 +1960,10 @@ public Boolean MA_allocate_heap(datatype, nelem, name, memhandle)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Deallocate the given stack block and all stack blocks allocated
+ * after it.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -1999,7 +2005,9 @@ public Boolean MA_chop_stack(memhandle)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Deallocate the given heap block.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -2023,8 +2031,8 @@ public Boolean MA_free_heap(memhandle)
     if (!mh2ad(memhandle, &ad, BL_Heap, "MA_free_heap"))
         return MA_FALSE;
 
-    if (trace) 
-	(void) printf("ma: freeing \"%s\"\n", ad->name);
+    if (ma_trace) 
+	(void)printf("MA: freeing '%s'\n", ad->name);
 
     /* delete block from used list */
     if (list_delete(ad, &ma_hused) != ad)
@@ -2089,13 +2097,15 @@ public Boolean MA_free_heap(memhandle)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Get the base index for the given block.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_get_index(memhandle, index)
-    Integer	memhandle;
-    Integer	*index;
+    Integer	memhandle;	/* block to get index for */
+    Integer	*index;		/* RETURN: base index */
 {
     AD		*ad;		/* AD for memhandle */
 
@@ -2126,13 +2136,48 @@ public Boolean MA_get_index(memhandle, index)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Return the base address of the given datatype.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Pointer MA_get_mbase(datatype)
+    Integer	datatype;	/* to get base address of */
+{
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_get_mbase]++;
+#endif /* STATS */
+
+    /* preinitialize if necessary */
+    ma_preinitialize("MA_get_mbase");
+
+    /* verify datatype */
+    if (!mt_valid(datatype))
+    {
+        (void)sprintf(ma_ebuf,
+            "invalid datatype: %ld",
+            (long)datatype);
+        ma_error(EL_Fatal, ET_External, "MA_get_mbase", ma_ebuf);
+        return NULL;
+    }
+
+    /* convert datatype to internal (index-suitable) value */
+    datatype = mt_import(datatype);
+
+    return ma_base[datatype];
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Get the handle for the next block in the scan of currently allocated
+ * blocks.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_get_next_memhandle(ithandle, memhandle)
-    Integer	*ithandle;
-    Integer	*memhandle;
+    Integer	*ithandle;	/* handle for this iterator */
+    Integer	*memhandle;	/* RETURN: handle for the next block */
 {
 #ifdef STATS
     ma_stats.calls[(int)FID_MA_get_next_memhandle]++;
@@ -2152,13 +2197,34 @@ public Boolean MA_get_next_memhandle(ithandle, memhandle)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Get the requested alignment.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Boolean MA_get_numalign(value)
+    Integer	*value;		/* RETURN: requested alignment */
+{
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_get_numalign]++;
+#endif /* STATS */
+
+    *value = ma_numalign;
+    return MA_TRUE;
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Get the base pointer for the given block.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
 public Boolean MA_get_pointer(memhandle, pointer)
-    Integer	memhandle;
-    Pointer	*pointer;
+    Integer	memhandle;	/* block to get pointer for */
+    Pointer	*pointer;	/* RETURN: base pointer */
 {
     AD		*ad;		/* AD for memhandle */
 
@@ -2189,7 +2255,9 @@ public Boolean MA_get_pointer(memhandle, pointer)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Initialize the memory allocator.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -2273,7 +2341,6 @@ public Boolean MA_init(datatype, nominal_stack, nominal_heap)
         return MA_FALSE;
     }
 
-
     /*
      * initialize management stuff
      */
@@ -2301,7 +2368,8 @@ public Boolean MA_init(datatype, nominal_stack, nominal_heap)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Return MA_TRUE if MA_init has been called successfully,
+ * else return MA_FALSE.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -2316,7 +2384,9 @@ public Boolean MA_initialized()
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Initialize a scan of currently allocated blocks.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -2528,7 +2598,10 @@ public Integer MA_inquire_stack(datatype)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Deallocate the given stack block, which must be the one most recently
+ * allocated.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -2550,8 +2623,8 @@ public Boolean MA_pop_stack(memhandle)
     if (!mh2ad(memhandle, &ad, BL_StackTop, "MA_pop_stack"))
         return MA_FALSE;
 
-    if (trace) 
-	(void) printf("ma: popping \"%s\"\n", ad->name);
+    if (ma_trace) 
+	(void)printf("MA: popping '%s'\n", ad->name);
 
     /* delete block from used list */
     if (list_delete(ad, &ma_sused) != ad)
@@ -2580,12 +2653,12 @@ public Boolean MA_pop_stack(memhandle)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Print usage statistics.
  */
 /* ------------------------------------------------------------------------- */
 
 public void MA_print_stats(printroutines)
-    Boolean	printroutines;
+    Boolean	printroutines;	/* print call counts? */
 {
 #ifdef STATS
 
@@ -2667,7 +2740,10 @@ public Boolean MA_push_get(datatype, nelem, name, memhandle, index)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Allocate a stack block big enough to hold nelem elements
+ * of the given datatype.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -2692,8 +2768,8 @@ public Boolean MA_push_stack(datatype, nelem, name, memhandle)
         return MA_FALSE;
 #endif /* VERIFY */
 
-    if (trace) 
-	(void) printf("ma: pushing \"%s\"(%d)\n", name, (int) nelem);
+    if (ma_trace) 
+	(void)printf("MA: pushing '%s' (%d)\n", name, (int)nelem);
 
     /* verify initialization */
     if (!ma_initialized)
@@ -2853,6 +2929,33 @@ public Boolean MA_set_hard_fail(value)
 
 /* ------------------------------------------------------------------------- */
 /*
+ * Set the requested alignment.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
+ */
+/* ------------------------------------------------------------------------- */
+
+public Boolean MA_set_numalign(value)
+    Integer	value;		/* requested alignment */
+{
+#ifdef STATS
+    ma_stats.calls[(int)FID_MA_set_numalign]++;
+#endif /* STATS */
+
+    if ((value < 0) || (value > 30))
+    {
+        (void)sprintf(ma_ebuf,
+            "invalid alignment: %ld",
+            (long)value);
+        ma_error(EL_Nonfatal, ET_External, "MA_set_numalign", ma_ebuf);
+        return MA_FALSE;
+    }
+    ma_numalign = value;
+    return MA_TRUE;
+}
+
+/* ------------------------------------------------------------------------- */
+/*
  * Return the number of elements of datatype2 required to contain
  * nelem1 elements of datatype1.
  */
@@ -2975,7 +3078,8 @@ public Integer MA_sizeof_overhead(datatype)
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Print debugging information about all blocks currently in use
+ * on the heap or the stack.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -2987,7 +3091,21 @@ public void MA_summarize_allocated_blocks()
 
 /* ------------------------------------------------------------------------- */
 /*
- * 
+ * Control tracing of allocation and deallocation operations.
+ */
+/* ------------------------------------------------------------------------- */
+
+public void MA_trace(value)
+    Boolean	value;		/* on or off */
+{
+    ma_trace = value;
+}
+
+/* ------------------------------------------------------------------------- */
+/*
+ * Sanity check the internal state of MA and print the results.
+ *
+ * Return MA_TRUE upon success, or MA_FALSE upon failure.
  */
 /* ------------------------------------------------------------------------- */
 
@@ -3083,54 +3201,4 @@ public Boolean MA_verify_allocator_stuff()
     return MA_FALSE;
 
 #endif /* VERIFY */
-}
-
-/*
-what follows is a modification by
-M.G. Schuetz, Dep. Theoretical Chemistry, University Lund, Sweden, Nov. 1995
-to provide access to the datatype anchors...
-Roland Lindh <teohrl@castor.qcl.t.u-tokyo.ac.jp>
-*/
-
-public Pointer MA_get_mbase(datatype)
-    Integer     datatype;
-{
-#ifdef STATS
-    ma_stats.calls[(int)FID_MA_get_mbase]++;
-#endif /* STATS */
-
-    /* preinitialize if necessary */
-    ma_preinitialize("MA_get_mbase");
-
-    /* verify datatype */
-    if (!mt_valid(datatype))
-    {
-        (void)sprintf(ma_ebuf,
-            "invalid datatype: %ld",
-            (long)datatype);
-        ma_error(EL_Fatal, ET_External, "ma_get_mbase", ma_ebuf);
-        return NULL;
-    }
-
-    /* convert datatype to internal (index-suitable) value */
-    datatype = mt_import(datatype);
-
-    return ma_base[datatype];
-}
-
-public Boolean MA_set_numalign(int numalign)
-{
-  if ((numalign < 0) || (numalign > 30)) {
-    (void)sprintf(ma_ebuf,"invalid alignment requested");
-    ma_error(EL_Nonfatal, ET_External, "MA_set_numalign", ma_ebuf);
-    return MA_FALSE;
-  }
-  NUMALIGN = numalign;
-  return MA_TRUE;
-}
-
-public Boolean MA_get_numalign(int *numalign)
-{
-  *numalign = NUMALIGN;
-  return MA_TRUE;
 }

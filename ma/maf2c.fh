@@ -2,7 +2,7 @@
 #define _maf2c_fh
 
 c
-c     $Id: maf2c.fh,v 1.3 1999-10-19 01:01:07 d3g681 Exp $
+c     $Id: maf2c.fh,v 1.4 2000-07-04 05:54:56 d3g001 Exp $
 c
 
 c
@@ -30,6 +30,7 @@ c
       integer f2c_free_heap
       integer f2c_get_index
       integer f2c_get_next_memhandle
+      integer f2c_get_numalign
       integer f2c_inform_base
 #if defined(_CRAY) || defined(WIN32)
       integer f2c_inform_base_fcd
@@ -47,12 +48,12 @@ c     void f2c_print_stats
       integer f2c_set_auto_verify
       integer f2c_set_error_print
       integer f2c_set_hard_fail
+      integer f2c_set_numalign
       integer f2c_sizeof
       integer f2c_sizeof_overhead
 c     void f2c_summarize_allocated_blocks
+c     void f2c_trace
       integer f2c_verify_allocator_stuff
-      integer f2c_set_numalign
-      integer f2c_get_numalign
 
       external f2c_alloc_get
       external f2c_allocate_heap
@@ -60,6 +61,7 @@ c     void f2c_summarize_allocated_blocks
       external f2c_free_heap
       external f2c_get_index
       external f2c_get_next_memhandle
+      external f2c_get_numalign
       external f2c_inform_base
 #if defined(_CRAY) || defined(WIN32)
       external f2c_inform_base_fcd
@@ -77,9 +79,9 @@ c     void f2c_summarize_allocated_blocks
       external f2c_set_auto_verify
       external f2c_set_error_print
       external f2c_set_hard_fail
+      external f2c_set_numalign
       external f2c_sizeof
       external f2c_sizeof_overhead
       external f2c_summarize_allocated_blocks
+      external f2c_trace
       external f2c_verify_allocator_stuff
-      external f2c_set_numalign
-      external f2c_get_numalign

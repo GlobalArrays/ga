@@ -1,6 +1,9 @@
-/* file typesf2c.h */
 #ifndef _TYPES_F2C_H_
 #define _TYPES_F2C_H_
+
+/*
+ * $Id: typesf2c.h,v 1.3 2000-07-04 05:54:56 d3g001 Exp $
+ */
 
 #  ifdef WIN32
 #    include "winf2c.h"
@@ -35,4 +38,4 @@
         DoublePrecision imag;
    }DoubleComplex;
 
-#endif
+#endif /* _TYPES_F2C_H_ */

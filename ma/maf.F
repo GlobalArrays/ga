@@ -1,5 +1,5 @@
 c
-c     $Id: maf.F,v 1.10 1999-10-19 01:01:07 d3g681 Exp $
+c     $Id: maf.F,v 1.11 2000-07-04 05:54:55 d3g001 Exp $
 c
 
 c
@@ -55,12 +55,6 @@ cc
 c     In general, each routine simply calls its corresponding f2c_ C
 c     wrapper routine, which performs any necessary argument munging
 c     and then calls the corresponding C routine.
-
-
-      subroutine ma_trace(value)
-      integer value
-      call f2c_trace(value)
-      end
 
 c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
@@ -192,6 +186,22 @@ c     --------------------------------------------------------------- c
       else
           MA_get_next_memhandle = .false.
       endif
+
+      return
+      end
+
+c     --------------------------------------------------------------- c
+c     --------------------------------------------------------------- c
+
+      logical function MA_get_numalign (numalign)
+
+      implicit none
+
+      integer numalign
+
+#include "maf2c.fh"
+
+      MA_get_numalign = (f2c_get_numalign(numalign) .eq. MA_TRUE)
 
       return
       end
@@ -482,6 +492,22 @@ c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
 
+      logical function MA_set_numalign (numalign)
+
+      implicit none
+
+      integer numalign
+
+#include "maf2c.fh"
+
+      MA_set_numalign = (f2c_set_numalign(numalign) .eq. MA_TRUE)
+
+      return
+      end
+
+c     --------------------------------------------------------------- c
+c     --------------------------------------------------------------- c
+
       integer function MA_sizeof (datatype1, nelem1, datatype2)
 
       implicit none
@@ -530,6 +556,22 @@ c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
 c     --------------------------------------------------------------- c
 
+      subroutine ma_trace(value)
+
+      implicit none
+
+      integer value
+
+#include "maf2c.fh"
+
+      call f2c_trace(value)
+
+      return
+      end
+
+c     --------------------------------------------------------------- c
+c     --------------------------------------------------------------- c
+
       logical function MA_verify_allocator_stuff ()
 
       implicit none
@@ -543,23 +585,6 @@ c     --------------------------------------------------------------- c
       endif
 
       return
-      end
-
-      logical function MA_set_numalign (numalign)
-      implicit none
-#include "maf2c.fh"
-      integer numalign
-      
-      MA_set_numalign = (f2c_set_numalign(numalign) .eq. MA_TRUE)
-
-      end
-      logical function MA_get_numalign (numalign)
-      implicit none
-#include "maf2c.fh"
-      integer numalign
-      
-      MA_get_numalign = (f2c_get_numalign(numalign) .eq. MA_TRUE)
-
       end
 
 #undef MAF_INTERNAL
