@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.33 2003-02-25 16:54:46 d3g293 Exp $ */
+/* $Id: base.c,v 1.34 2003-02-25 19:09:38 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2510,7 +2510,7 @@ logical FATR ga_is_mirrored_(Integer *g_a)
   return ret;
 }
 
-logical FATR ga_merge_mirrored_(Integer *g_a)
+void FATR ga_merge_mirrored_(Integer *g_a)
 {
   Integer handle = GA_OFFSET + *g_a;
   Integer p_handle = GA[handle].p_handle;
