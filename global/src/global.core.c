@@ -1,4 +1,4 @@
-/*$Id: global.core.c,v 1.26 1996-07-19 20:05:32 d3h325 Exp $*/
+/*$Id: global.core.c,v 1.27 1996-08-15 21:59:49 d3h325 Exp $*/
 /*
  * module: global.core.c
  * author: Jarek Nieplocha
@@ -318,9 +318,14 @@ long *msg_buf;
        mcmsg_wire(MessageRcv,MSG_BUF_SIZE+PAGE_SIZE);
        mcmsg_wire(MessageSnd,MSG_BUF_SIZE+PAGE_SIZE);
 #   endif
-
     msg_buf = (long*)MessageRcv->buffer;
 
+    /* zero in pointers in GA array */
+    for(i=0;i<MAX_ARRAYS; i++) {
+       GA[i].ptr  = (char**)0;
+       GA[i].mapc = (int*)0;
+    }
+   
     ClustInfoInit(); /* learn about process configuration */
     if(ClusterMode){
        /*** current setup works only for one server per cluster ***
@@ -830,6 +835,26 @@ char    *array_name;
 
 }
 
+void gai_init_struct(handle)
+Integer handle;
+{
+     if(!GA[handle].ptr){
+        int len = MIN(GAnproc, MAX_PTR);
+        GA[handle].ptr = (char**)malloc(len*sizeof(char**));
+     }
+     if(!GA[handle].mapc){
+        int len = MIN(GAnproc, MAX_NPROC) +2;
+        GA[handle].mapc = (int*)malloc(len*sizeof(int));
+     }
+     if(!GA[handle].ptr)ga_error("malloc failed: ptr:",0);
+     if(!GA[handle].mapc)ga_error("malloc failed: mapc:",0);
+}
+
+
+
+#if defined(FIXHEAP) && defined(CRAY_T3D)
+int fix_heap=1;
+#endif
 
 
 /*\ CREATE A GLOBAL ARRAY -- IRREGULAR DISTRIBUTION
@@ -890,6 +915,7 @@ Integer  i, ga_handle, status;
       *g_a = (Integer)ga_handle - GA_OFFSET;
 
       /*** fill in Global Info Record for g_a ***/
+      gai_init_struct(ga_handle);
       GA[ga_handle].type = *type;
       GA[ga_handle].actv = 1;
       strcpy(GA[ga_handle].name, array_name);
@@ -952,6 +978,21 @@ Integer  i, ga_handle, status;
 
       /* determine pointers to individual blocks*/
       if(status) ga__set_ptr_array(*g_a, ptr);
+
+#     if defined(FIXHEAP) && defined(CRAY_T3D)
+         /* extend heap so that every address used in GA is valid on 
+          * every T3D processor - possible to do only with ga_initialize_ltd 
+          */ 
+
+         if(fix_heap && status && GA_memory_limited){ 
+           char *maxptr = 0;
+           for(i=0; i< GAnproc; i++)
+                    if(maxptr < GA[ga_handle].ptr[i]) 
+                       maxptr = GA[ga_handle].ptr[i];
+           malloc_brk(maxptr + GA_total_memory +  mem_size_proc);
+           fix_heap = 0;
+         } 
+#     endif
 
 #     ifdef SYSV
         /*** in cluster mode, master sends create request to data server ***/
@@ -1019,9 +1060,10 @@ logical ga_duplicate(g_a, g_b, array_name)
       * g_b           - Integer handle for new array [output]
       */
 {
-char     op='*', *ptr = NULL;
+char     op='*', *ptr = NULL, **save_ptr;
 Integer  mem_size, mem_size_proc, nelem;
 Integer  i, ga_handle, status;
+int      *save_mapc;
 
       ga_sync_();
 
@@ -1037,11 +1079,19 @@ Integer  i, ga_handle, status;
           ga_error("ga_duplicate: too many arrays ", (Integer)max_global_array);
       *g_b = (Integer)ga_handle - GA_OFFSET;
 
+      gai_init_struct(ga_handle);
+
+      /*** copy content of the data structure ***/
+      save_ptr = GA[ga_handle].ptr;
+      save_mapc = GA[ga_handle].mapc;
       GA[ga_handle] = GA[GA_OFFSET + *g_a];
       strcpy(GA[ga_handle].name, array_name);
-      nelem = GA[ga_handle].chunk[1]*GA[ga_handle].chunk[0];
+      GA[ga_handle].ptr = save_ptr;
+      GA[ga_handle].mapc = save_mapc;
+      for(i=0;i<MAPLEN; i++)GA[ga_handle].mapc[i] = GA[GA_OFFSET+ *g_a].mapc[i];
 
       /*** Memory Allocation & Initialization of GA Addressing Space ***/
+      nelem = GA[ga_handle].chunk[1]*GA[ga_handle].chunk[0];
 #     ifdef SYSV
             /* we have to recompute mem_size for the cluster */
             mem_size = ga__shmem_size(*g_a);
@@ -1161,11 +1211,12 @@ void ga_terminate_()
 Integer i, handle;
 
     if(!GAinitialized) return;
-    for (i=0;i<max_global_array;i++)
-          if(GA[i].actv){
-            handle = i - GA_OFFSET ;
-            ga_destroy_(&handle);
-          }
+    for (i=0;i<max_global_array;i++){
+          handle = i - GA_OFFSET ;
+          if(GA[i].actv) ga_destroy_(&handle);
+          if(GA[i].ptr) free(GA[i].ptr);
+          if(GA[i].mapc) free(GA[i].mapc);
+    }
     
     ga_sync_();
 

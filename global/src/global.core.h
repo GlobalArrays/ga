@@ -23,6 +23,8 @@
 #else
 #  define MAX_PTR 1
 #endif
+#define   MAPLEN  MAX_NPROC+2
+
 
 
 typedef struct {
@@ -30,8 +32,8 @@ typedef struct {
        int  chunk[2];           /* chunking                             */
        int  nblock[2];          /* number of chunks (blocks)            */
        double scale[2];         /* nblock/dim (precomputed)             */
-       char *ptr[MAX_PTR];      /* pointers to local/remote data        */
-       int  mapc[MAX_NPROC+2];  /* block distribution map               */
+       char **ptr;              /* arrays of pointers to remote data    */
+       int  *mapc;              /* block distribution map               */
        Integer type;            /* type of array                        */
        int  actv;               /* activity status                      */
        Integer ilo;             /* coordinates of local patch           */
