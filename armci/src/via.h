@@ -60,7 +60,7 @@ extern void armci_via_complete_buf(armci_via_field_t *,int,int,int,int);
 extern int armci_pin_memory(void *ptr, int stride_arr[], int count[], int lev);
 extern void armci_unpin_memory(void *ptr,int stride_arr[],int count[],int lev);
 extern void armci_client_send_ack(int p, int success);
-extern void armcill_server_wait_ack(int proc, int n);
+extern int armcill_server_wait_ack(int proc, int n);
 extern void armcill_server_put(int proc, void* s, void *d, int len);
 
 #endif

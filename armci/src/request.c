@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.50 2003-01-07 21:51:22 vinod Exp $ */
+/* $Id: request.c,v 1.51 2003-01-20 20:55:06 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -764,8 +764,12 @@ int armci_rem_strided(int op, void* scale, int proc,
           {
              if(!msginfo->pinned) armci_send_req(proc,msginfo,bufsize);
 
-             if(!armci_pin_memory(dst_ptr,dst_stride_arr,count, stride_levels))
-                                         return 1; /* failed:cannot do bypass */
+             if(!armci_pin_memory(dst_ptr,dst_stride_arr,count, stride_levels)){
+               armci_client_send_ack(proc, -1);
+              armci_rcv_strided_data_bypass(proc,msginfo,dst_ptr,stride_levels);
+               FREE_SEND_BUFFER(msginfo);
+               return 1; /* failed:cannot do bypass */
+             }
 
              if(msginfo->pinned) armci_send_req(proc,msginfo,bufsize);
              else armci_client_send_ack(proc, 1);

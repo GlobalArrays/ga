@@ -1,4 +1,4 @@
-/* $Id: via.c,v 1.26 2002-12-22 03:34:34 vinod Exp $ */
+/* $Id: via.c,v 1.27 2003-01-20 20:55:06 vinod Exp $ */
 #include <stdio.h>
 #include <strings.h>
 #include <assert.h>
@@ -1340,6 +1340,7 @@ VIP_DESCRIPTOR *pcmpl, *pdesc = dp->descr+MAX_DESCR-dp->avail;
 VIP_RETURN rc;
 void *ptr_ack=pinned_handle;
 
+    if(n==-1)*((int *)pinned_handle) = n;
     armci_iput((SRV_con+srv)->vi, pdesc, ptr_ack, client_memhandle,
                (SRV_ack+srv)->prem_handle, (SRV_ack+srv)->handle,
                sizeof(VIP_MEM_HANDLE));
@@ -1362,9 +1363,10 @@ void *ptr_ack=pinned_handle;
 
 
 VIP_MEM_HANDLE _armci_getval(VIP_MEM_HANDLE *p) { return *p; }
-void armcill_server_wait_ack(int proc, int n)
+int armcill_server_wait_ack(int proc, int n)
 {
 volatile VIP_MEM_HANDLE ack;
+volatile VIP_MEM_HANDLE *newack;
      if(DEBUG2){printf("%d(s):waiting for ack at%p\n",armci_me,CLN_handle+proc);
                 fflush(stdout);
      }
@@ -1372,6 +1374,9 @@ volatile VIP_MEM_HANDLE ack;
      if(DEBUG2){printf("%d(s): got memhandle %d from %d\n",armci_me,ack,proc);
         fflush(stdout);
      }
+     newack = &ack;
+     if(*(int *)newack==-1)return(0);
+     return(1);
 }
 
 VIP_MEM_HANDLE serv_pin_memhandle;
@@ -1412,7 +1417,8 @@ VIP_RETURN rc;
 int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
 {
     if(strides ==0)return armci_pin_contig(ptr,count[0]);
-    printf("%d: cannot pin stridedd",strides);
+    printf("%d:cannot pin strided, strides=%d count[0]=%d",armci_me,strides,
+           strides,count[0]);
     return 0;
 }
 

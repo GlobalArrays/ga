@@ -1,4 +1,4 @@
-/* $Id: ds-shared.c,v 1.22 2002-10-17 10:12:28 d3h325 Exp $ */
+/* $Id: ds-shared.c,v 1.23 2003-01-20 20:55:06 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "message.h"
@@ -136,7 +136,14 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
       fflush(stdout);
     }
     armci_pin_memory(loc_ptr, loc_stride_arr,count, stride_levels);
-    armcill_server_wait_ack(msginfo->from,1); /*wait until client ready*/
+    /*wait until client ready*/
+    if(!armcill_server_wait_ack(msginfo->from,1)){
+       /*client was not able to pin memory, it will revert to default protocol
+         hence, unpin the memory and leave. */
+       armci_unpin_memory(loc_ptr, loc_stride_arr,count, stride_levels);
+       return;
+    }
+
     armcill_server_put(msginfo->from,loc_ptr,rem_ptr,count[0]);
     armci_unpin_memory(loc_ptr, loc_stride_arr,count, stride_levels);
     if(DEBUG_){
@@ -180,7 +187,6 @@ int bytes;
                armci_me, msginfo->operation, bytes,msginfo->dscrlen,
                msginfo->datalen,proc); fflush(stdout);
     }
-
     if(bytes > len)armci_die2("armci_send_req:buffer overflow",bytes,len);
 
 #ifdef PIPE_BUFSIZE
