@@ -339,6 +339,7 @@ OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
 
 # This include file specifies how and where the library should be built
 # LIBRARY_PATH  is the library location
+LIB_TARGETS = *.x *.o
 
 include ../config/makelib.h
 
