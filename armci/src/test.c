@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.17 1999-11-22 22:12:35 d3h325 Exp $ */
+/* $Id: test.c,v 1.18 1999-11-25 00:22:20 d3h325 Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -577,7 +577,7 @@ void test_acc(int ndim)
             (void)ARMCI_AccS(ARMCI_ACC_DBL,&alpha,(double*)a + idx1, strideA, (double*)b[proc] + idx2, strideB, count, ndim-1, proc);
         }
 
-	sleep(1);
+/*	sleep(9);*/
         ARMCI_AllFence();
         MP_BARRIER();
 
@@ -669,12 +669,12 @@ void test_vector()
                ij[0] = loA[0]+i;
                ij[1] = loA[1]+i;
                idx = Index(ndim, ij, dimsA);
-               psrc[i]= (double*)a + Index(ndim, ij, dimsA);
+               psrc[i]= (double*)a + idx;
 
                ij[0] = loB[0]+i;
                ij[1] = loB[1]+i;
                idx = Index(ndim, ij, dimsB);
-               pdst[i]= (double*)b[proc] + Index(ndim, ij, dimsB);
+               pdst[i]= (double*)b[proc] + idx;
 
                dsc[i].bytes = (rows-i)*sizeof(double);
                dsc[i].src_ptr_array = &psrc[i];
@@ -857,12 +857,13 @@ void test_fetch_add()
 
     rc = ARMCI_Malloc((void**)arr,bytes);
     assert(rc==0);
+    MP_BARRIER();
 
     if(me == 0) *arr[0] = 0;  /* initialization */
 
     MP_BARRIER();
 
-    /* show that what everybody gets */
+    /* show what everybody gets */
     rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
     assert(rc==0);
 
@@ -874,8 +875,13 @@ void test_fetch_add()
         MP_BARRIER();
     }
 
-    if(me == 0)printf("\nIncrement the shared counter until reaches %d\n",LOOP);
+    if(me == 0){
+      printf("\nIncrement the shared counter until reaches %d\n",LOOP);
+      fflush(stdout);
+    }
     
+    MP_BARRIER();
+
     /* now increment the counter value until reaches LOOP */
     while(val<LOOP){
           rc = ARMCI_Rmw(ARMCI_FETCH_AND_ADD, &val, arr[0], 1, 0);
@@ -893,8 +899,12 @@ void test_fetch_add()
 
 
     if(me == 0) *arr[0] = 0;  /* set it back to 0 */
-    if(me == 0)printf("\nNow everybody increments the counter %d times\n",LOOP); 
+    if(me == 0){
+       printf("\nNow everybody increments the counter %d times\n",LOOP); 
+       fflush(stdout);
+    }
 
+    ARMCI_AllFence();
     MP_BARRIER();
 
     for(i = 0; i< LOOP; i++){
@@ -902,10 +912,13 @@ void test_fetch_add()
           assert(rc==0);
     }
 
+    ARMCI_AllFence();
     MP_BARRIER();
+
     if(me == 0){
-        printf("The final value is %d, should be %d.\n\n",*arr[0],LOOP*nproc); 
-        if( *arr[0] != LOOP*nproc) ARMCI_Error("failed ...",*arr[0]);
+       printf("The final value is %d, should be %d.\n\n",*arr[0],LOOP*nproc); 
+       fflush(stdout);
+       if( *arr[0] != LOOP*nproc) ARMCI_Error("failed ...",*arr[0]);
     }
 
     ARMCI_Free(arr[me]);
@@ -915,10 +928,9 @@ void test_fetch_add()
 void test_memlock()
 {
         int dim,elems,bytes;
-        int i, j,k, proc, rc, one=1;
+        int i, j,k, proc;
         double *b[MAXPROC];
         double *a, *c;
-        double alpha=0.1, scale;
         int *proclist = (int*)work;
                 void *pstart, *pend;
                 int first, last;
@@ -1014,6 +1026,7 @@ int main(int argc, char* argv[])
     ARMCI_Init();
 
 /*
+       if(me==1)armci_die("process 1 committing suicide",1);
 */
         if(me==0){
            printf("\nTesting strided gets and puts\n");
@@ -1034,7 +1047,6 @@ int main(int argc, char* argv[])
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_acc(ndim); 
         ARMCI_AllFence();
         MP_BARRIER();
-
 
         if(me==0){
            printf("\nTesting Vector Interface using triangular patches of a 2-D array\n\n");
@@ -1066,7 +1078,8 @@ int main(int argc, char* argv[])
 
         test_fetch_add();
 
-/*        test_memlock();*/
+
+        /*test_memlock();*/
 
         MP_BARRIER();
 	if(me==0){printf("All tests passed\n"); fflush(stdout);}
