@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.76 2003-08-01 01:06:40 manoj Exp $ */
+/* $Id: armci.c,v 1.77 2003-08-01 01:30:39 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -281,7 +281,7 @@ int ARMCI_Init()
 #endif
 #ifdef LAPI
     {
-       char *tmp1 = getenv("RT_GRQ"), tmp2 = getenv("AIXTHREAD_SCOPE");
+       char *tmp1 = getenv("RT_GRQ"), *tmp2 = getenv("AIXTHREAD_SCOPE");
        if(tmp1 == NULL || strcmp((const char *)tmp1,"ON")) 
 	  armci_die("Armci_Init: environment variable RT_GRQ not set. It should be set as RT_GRQ=ON, to restore original thread scheduling LAPI relies upon",0);
        if(tmp2 == NULL || strcmp((const char *)tmp2,"S")) 
