@@ -159,10 +159,11 @@ static int armci_mutex_free(int mutex, int proc)
 volatile int *mutex_ticket=glob_mutex[proc].turn + mutex;
 volatile int *turn = glob_mutex[proc].token  +mutex;
 
-       /* here we will put code to check if other processes on the node
-        * are waiting for this mutex
-        */
-
+      /* here we will put code to check if other processes on the node
+       * are waiting for this mutex
+       * lockinfo_node[me].ticket = mutex_ticket;
+       * lockinfo_node[me].mutex  = mutex;
+       */
 
        if(*mutex_ticket == *turn) return 1;
        else return 0;
@@ -310,6 +311,7 @@ int ack, len=sizeof(int);
 
 void ARMCI_Lock(int mutex, int proc)        
 {
+int direct;
 
         if(DEBUG)fprintf(stderr,"%d enter lock\n",armci_me);
 
@@ -322,7 +324,8 @@ void ARMCI_Lock(int mutex, int proc)
         if(armci_nproc == 1) return;
 
 #       if defined(SERVER_LOCK)
-           if(proc != armci_me) 
+           direct=SAMECLUSNODE(proc); 
+           if(!direct) 
               armci_rem_lock(mutex,proc, glob_mutex[proc].tickets + mutex );
            else
 #       endif
