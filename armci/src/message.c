@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.16 2000-06-13 22:06:44 d3h325 Exp $ */
+/* $Id: message.c,v 1.17 2000-06-13 23:18:59 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -421,6 +421,70 @@ void *origx =x;
 }
 
 
+void armci_msg_reduce_scope(int scope, void *x, int n, char* op, int type)
+{
+int root, up, left, right, size;
+int tag=ARMCI_TAG;
+int ndo, len, lenmes, ratio;
+
+
+    if(!x)armci_die("armci_msg_gop: NULL pointer", n);
+
+    armci_msg_bintree(scope, &root, &up, &left, &right);
+
+    if(type==ARMCI_INT) size = sizeof(int);
+        else if(type==ARMCI_LONG) size = sizeof(long);
+    else size = sizeof(double);
+
+    ratio = sizeof(double)/size;
+   
+    while ((ndo = (n<=BUF_SIZE*ratio) ? n : BUF_SIZE*ratio)) {
+         len = lenmes = ndo*size;
+
+         if (left > -1) {
+           armci_msg_rcv(tag, lwork, len, &lenmes, left);
+           if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
+           else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+           else ddoop(ndo, op, (double*)x, work);
+         }
+
+         if (right > -1) {
+           armci_msg_rcv(tag, lwork, len, &lenmes, right);
+           if(type==ARMCI_INT) idoop(ndo, op, (int*)x, iwork);
+           else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, lwork);
+           else ddoop(ndo, op, (double*)x, work);
+         }
+         if (armci_me != root) armci_msg_snd(tag, x, len, up);
+
+         n -=ndo;
+         x = len + (char*)x;
+     }
+}
+
+
+static void armci_msg_reduce(void *x, int n, char* op, int type)
+{
+    /* inter-node operation between masters */
+    if(armci_nclus>1)armci_msg_reduce_scope(SCOPE_MASTERS, x, n, op, type);
+
+    /* intra-node operation */
+    armci_msg_reduce_scope(SCOPE_NODE, x, n, op, type);
+}
+
+
+static void armci_msg_gop2(void *x, int n, char* op, int type)
+{
+int size, root=0;
+
+     if(type==ARMCI_INT) size = sizeof(int);
+        else if(type==ARMCI_LONG) size = sizeof(long);
+     else size = sizeof(double);
+
+     armci_msg_reduce(x, n, op, type);
+     armci_msg_bcast(x, size, root);
+}
+
+
 static void armci_sel(int type, char *op, void *x, void* work, int n)
 {
 int selected=0;
@@ -503,6 +567,7 @@ int len, lenmes, min;
 
 /*\ combine array of longs/ints/doubles accross all processes
 \*/
+#if 1
 void armci_msg_igop(int *x, int n, char* op)
 { armci_msg_gop(SCOPE_ALL,x, n, op, ARMCI_INT); }
 
@@ -511,6 +576,11 @@ void armci_msg_lgop(long *x, int n, char* op)
 
 void armci_msg_dgop(double *x, int n, char* op)
 { armci_msg_gop(SCOPE_ALL,x, n, op, ARMCI_DOUBLE); }
+#else
+void armci_msg_igop(int *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_INT); }
+void armci_msg_lgop(long *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_LONG); }
+void armci_msg_dgop(double *x, int n, char* op) { armci_msg_gop2(x, n, op, ARMCI_DOUBLE); }
+#endif
 
 
 /*\ add array of longs/ints within the same cluster 
