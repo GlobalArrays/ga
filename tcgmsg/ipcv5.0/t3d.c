@@ -138,7 +138,7 @@ long NXTVAL_(mproc)
 */
 {
   int server = MAX(0, (int) procs - 1);
-  volatile long old, new; 
+  long local; 
 
   me = NODEID_();
   procs = NNODES_();
@@ -151,9 +151,8 @@ long NXTVAL_(mproc)
 
      /* use atomic swap operation to increment nxtval counter */
 
-     while((old = shmem_swap(&nxtval_counter, BUSY, server)) == BUSY);
-     new = old + INCR;
-     shmem_swap(&nxtval_counter, new, server);
+     while((local = shmem_swap(&nxtval_counter, BUSY, server)) == BUSY);
+     shmem_swap(&nxtval_counter, (local+INCR), server);
 
   } else if (*mproc < 0) {
      
@@ -169,11 +168,11 @@ long NXTVAL_(mproc)
     barrier();
   }
   if (DEBUG_) {
-        printf("NVS: from=%d  mproc=%d val=%d\n", me, *mproc, old );
+        printf("NVS: from=%d  mproc=%d value=%d \n", me, *mproc, local );
         (void) fflush(stdout);
   }
 
-  return(old);
+  return(local);
 }
 
 

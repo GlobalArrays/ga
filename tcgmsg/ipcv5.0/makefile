@@ -33,12 +33,12 @@ ifeq ($(MACHINE),CRAY-T3D)
        FC = cf77
   DEFINES = -DCRAY_T3D -DCRAY -DSHMEM
  INCLUDES = -I.
-   FFLAGS =  -Ccray-t3d  -Wf-dp -Wl"-Drdahead=on"
-#   CFLAGS = -g $(DEFINES) $(INCLUDES) -Wl"-Drdahead=on"
-  CFLAGS = -O3 -h inline3 $(DEFINES) $(INCLUDES) -Wl"-Drdahead=on"
+   FFLAGS =  -Ccray-t3d -g -Wf-dp -Wl"-Drdahead=on"
+#  CFLAGS = -g $(DEFINES) $(INCLUDES) -Wl"-Drdahead=on"
+   CFLAGS = -O3 -h inline3 $(DEFINES) $(INCLUDES) -Wl"-Drdahead=on"
 # -happrentice
     EXTRA = t3d.o snd_rcv_probe.o
-    LIBS  = -lapp
+#   LIBS  = -lapp
 
  OBJ_CORE = pbegin.o queues.o  usleep.o mitob.o mdtob.o\
             async_send.o mtime.o memalign.o drand48.o checkbyte.o busy.o \
@@ -50,13 +50,10 @@ endif
 
   TARGETS = test.x test2 hello jacobi.x libtcgmsg.a pvm.ring
 
-all:	test.x testf.x
+all:	test.x
 
 test.x:	test.isend.o libtcgmsg.a
 	$(CC) $(CFLAGS) -o test.x test.isend.o  libtcgmsg.a $(LIBS)
-
-testf.x:	testf.o libtcgmsg.a
-	$(FC) $(FFLAGS) -o testf.x testf.o  libtcgmsg.a $(LIBS)
 
 test2:	test2.o libtcgmsg.a
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
@@ -75,7 +72,7 @@ libtcgmsg.a:	$(OBJ)
 	$(RANLIB) $@ 
 
 clean:
-	/bin/rm -f *.o $(TARGETS) core *.x
+	/bin/rm -f *.o $(TARGETS) core
 
 realclean:	clean
 	/bin/rm -f *~ \#*

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/checkbyte.c,v 1.1 1994-12-29 06:57:02 og845 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/checkbyte.c,v 1.2 1994-12-30 20:55:37 d3h325 Exp $ */
 
 unsigned char CheckByte(c, n)
     unsigned char *c;

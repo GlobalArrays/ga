@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/test.isend.c,v 1.1 1994-12-29 06:57:34 og845 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/test.isend.c,v 1.2 1994-12-30 20:56:23 d3h325 Exp $ */
 
 #include <stdio.h>
 #if !defined(SEQUENT) && !defined(CONVEX)

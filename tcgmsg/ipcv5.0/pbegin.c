@@ -137,9 +137,8 @@ void PBEGIN_(int argc, char **argv)
   }
 
 #ifdef CRAY_T3D
-  /* initialize T3D gops/broadcast/nxtval  */
+  /* initialize T3D gops/brodcast work array */
   t3d_gops_init();
-  {long reset = -TCGMSG_nnodes; NXTVAL_(&reset);};
 #endif
 
 

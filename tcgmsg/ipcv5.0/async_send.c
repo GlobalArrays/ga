@@ -14,8 +14,10 @@ extern void Busy(int);
 #ifdef KSR
        extern copyto(const void *,  void *, long);
        extern void copyfrom(const void *,  void *, long);
-#      define COPY_TO_SHMEM(src, dest, n, destnode) copyto(src, dest, n)
-#      define COPY_FROM_SHMEM(src, dest, n) copyfrom(src, dest, n)
+#      define COPY_TO_REMOTE(src, dest, n, destnode) copyto(src, dest, n)
+#      define COPY_FROM_REMOTE(src, dest, n, fromnode) copyfrom(src, dest, n)
+#      define COPY_TO_LOCAL(src, dest, n) copyto(src, dest, n)
+#      define COPY_FROM_LOCAL(src, dest, n) copyfrom(src, dest, n)
 #elif defined(CRAY_T3D)
 #      include <mpp/shmem.h>
 #      define FLUSH_CACHE           shmem_udcflush()
@@ -37,6 +39,12 @@ shmem_get((long*)(dest),(long*)(src),(int) ((n)>>3),(node))
 #else
 #define COPY_TO_SHMEM(src, dest, n, destnode) (void) memcpy(dest, src, (long) n)
 #define COPY_FROM_SHMEM(src, dest, n) (void)memcpy(dest, src, (long) n)
+#endif
+#ifndef FLUSH_CACHE 
+#	define FLUSH_CACHE          
+#endif
+#ifndef FLUSH_CACHE_LINE
+#     define FLUSH_CACHE_LINE(x) 
 #endif
 #endif
 
