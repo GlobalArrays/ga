@@ -1,4 +1,4 @@
-/* $Id: message.c,v 1.35 2002-03-21 23:34:14 d3h325 Exp $ */
+/* $Id: message.c,v 1.36 2002-03-22 00:26:33 d3h325 Exp $ */
 #if defined(PVM)
 #   include <pvm3.h>
 #elif defined(TCGMSG)
@@ -569,6 +569,47 @@ static void ldoop(int n, char *op, long *x, long* work)
     armci_die("ldoop: unknown operation requested", n);
 }
 
+/*\ reduce operation for long x= op(work,work2)
+\*/
+static void ldoop2(int n, char *op, long *x, long* work, long* work2)
+{
+  if (strncmp(op,"+",1) == 0)
+    while(n--)
+      *x++ = *work++ + *work2++;
+  else if (strncmp(op,"*",1) == 0)
+    while(n--)
+      *x++ = *work++ *  *work2++;
+  else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*work2, *work);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*work2, *work);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register long x1 = ABS(*work), x2 = ABS(*work2);
+      *x = MAX(x1, x2);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register long x1 = ABS(*work), x2 = ABS(*work2);
+      *x = MIN(x1, x2);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"or",2) == 0)
+    while(n--) {
+      *x |= *work;
+      x++; work++; work2++;
+    }
+  else
+    armci_die("ldoop2: unknown operation requested", n);
+}
+
 static void idoop(int n, char *op, int *x, int* work)
 {
   if (strncmp(op,"+",1) == 0)
@@ -606,6 +647,47 @@ static void idoop(int n, char *op, int *x, int* work)
     }
   else
     armci_die("idoop: unknown operation requested", n);
+}
+
+/*\ reduce operation for int x= op(work,work2)
+\*/
+static void idoop2(int n, char *op, int *x, int* work, int* work2)
+{
+  if (strncmp(op,"+",1) == 0)
+    while(n--)
+      *x++ = *work++ + *work2++;
+  else if (strncmp(op,"*",1) == 0)
+    while(n--)
+      *x++ = *work++ *  *work2++;
+  else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*work2, *work);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*work2, *work);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register int x1 = ABS(*work), x2 = ABS(*work2);
+      *x = MAX(x1, x2);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register int x1 = ABS(*work), x2 = ABS(*work2);
+      *x = MIN(x1, x2);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"or",2) == 0)
+    while(n--) {
+      *x |= *work;
+      x++; work++; work2++;
+    }
+  else
+    armci_die("idoop2: unknown operation requested", n);
 }
 
 
@@ -654,6 +736,53 @@ extern void FATR FORT_DMULT(int *, double *, double*);
     armci_die("ddoop: unknown operation requested", n);
 }
 
+/*\ reduce operation for double x= op(work,work2)
+\*/
+static void ddoop2(int n, char *op, double *x, double* work, double* work2)
+{
+#if defined(CRAY)  || defined(WIN32) || defined(HITACHI)
+#elif defined(AIX)
+#   define FORT_DADD2 fort_dadd2
+#   define FORT_DMULT2 fort_dmult2
+#else
+#   define FORT_DADD2 fort_dadd2_
+#   define FORT_DMULT2 fort_dmult2_
+#endif
+extern void FATR FORT_DADD2(int *, double *, double*,double*);
+extern void FATR FORT_DMULT2(int *, double *, double*,double*);
+
+  if (strncmp(op,"+",1) == 0){
+    if(n>63) FORT_DADD2(&n,x,work,work2);
+    else while(n--) *x++ = *work++ + *work2++;
+  }else if (strncmp(op,"*",1) == 0){
+    if(n>63) FORT_DMULT2(&n,x,work,work2);
+    while(n--) *x++ = *work++ *  *work2++;
+  }else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*work2, *work);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*work2, *work);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register double x1 = ABS(*work), x2 = ABS(*work2);
+      *x = MAX(x1, x2);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register double x1 = ABS(*work), x2 = ABS(*work2);
+      *x = MIN(x1, x2);
+      x++; work++; work2++;
+    }
+  else
+    armci_die("ddoop2: unknown operation requested", n);
+}
+
 
 static void fdoop(int n, char* op, float* x, float* work)
 {
@@ -687,6 +816,42 @@ static void fdoop(int n, char* op, float* x, float* work)
     }
   else
     armci_die("fdoop: unknown operation requested", n);
+}
+
+/*\ reduce operation for float x= op(work,work2)
+\*/
+static void fdoop2(int n, char *op, float *x, float* work, float* work2)
+{
+  if (strncmp(op,"+",1) == 0)
+    while(n--)
+      *x++ = *work++ + *work2++;
+  else if (strncmp(op,"*",1) == 0)
+    while(n--)
+      *x++ = *work++ *  *work2++;
+  else if (strncmp(op,"max",3) == 0)
+    while(n--) {
+      *x = MAX(*work2, *work);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"min",3) == 0)
+    while(n--) {
+      *x = MIN(*work2, *work);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"absmax",6) == 0)
+    while(n--) {
+      register float x1 = ABS(*work), x2 = ABS(*work2);
+      *x = MAX(x1, x2);
+      x++; work++; work2++;
+    }
+  else if (strncmp(op,"absmin",6) == 0)
+    while(n--) {
+      register float x1 = ABS(*work), x2 = ABS(*work2);
+      *x = MIN(x1, x2);
+      x++; work++; work2++;
+    }
+  else
+    armci_die("fdoop2: unknown operation requested", n);
 }
 
 
@@ -793,6 +958,30 @@ static void gop(int type, int ndo, char* op, void *x, void *work)
 }
 
 
+static void gop2(int type, int ndo, char* op, void *x, void *work, void *work2)
+{
+#if 0
+     int size;
+     if(type==ARMCI_INT) size = sizeof(int);
+        else if(type==ARMCI_LONG) size = sizeof(long);
+             else if(type==ARMCI_FLOAT) size = sizeof(float);
+     else size = sizeof(double);
+
+     armci_copy(work2,x,ndo*size);
+
+     if(type==ARMCI_INT) idoop(ndo, op, (int*)x, (int*)work);
+     else if(type==ARMCI_LONG) ldoop(ndo, op, (long*)x, (long*)work);
+     else if(type==ARMCI_FLOAT) fdoop(ndo, op, (float*)x, (float*)work);
+     else ddoop(ndo, op, (double*)x, (double*)work);
+#else
+     if(type==ARMCI_INT) idoop2(ndo, op, (int*)x, (int*)work, (int*)work2);
+     else if(type==ARMCI_LONG) ldoop2(ndo, op, (long*)x,(long*)work,(long*)work2);
+     else if(type==ARMCI_FLOAT)fdoop2(ndo,op,(float*)x,(float*)work,(float*)work2);
+     else ddoop2(ndo, op, (double*)x, (double*)work,(double*)work2);
+#endif
+}
+
+
 
 
 
@@ -820,14 +1009,15 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
        len = lenmes = ndo*size;
 
        armci_util_wait_int(&GOP_BUF(armci_me)->a.flag, EMPTY, 100);
-       armci_copy(x,GOP_BUF(armci_me)->array,len);
 
 #if 1
+       if(left==-1 && right==-1) armci_copy(x,GOP_BUF(armci_me)->array,len);
+
        /*  version oblivious to the order of data arrival */
        {
           int need_left = left >-1;
           int need_right = right >-1;
-          int from, maxspin=100, count=0;
+          int from, first =1, maxspin=100, count=0;
           bufstruct *b;
           
           while(need_left || need_right){
@@ -841,7 +1031,15 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
                }
                if(from != -1){
                   b = GOP_BUF(from);
+#if 1
+                  if(first)
+                     gop2(type, ndo, op, GOP_BUF(armci_me)->array, b->array,x);
+                  else
+                     gop(type, ndo, op, GOP_BUF(armci_me)->array, b->array);
+                  first =0;
+#else
                   gop(type, ndo, op, GOP_BUF(armci_me)->array, b->array);
+#endif
                   b->a.flag = EMPTY;
                }else  if((++count)<maxspin) armci_util_spin(count,_gop_buffer);
                       else{cpu_yield();count =0; }
@@ -849,6 +1047,8 @@ int nslave = armci_clus_info[armci_clus_me].nslave;
        }
 #else
                
+       armci_copy(x,GOP_BUF(armci_me)->array,len);
+
        /*  this version requires a specific order of data arrival */
        if (left >-1) {
          while(GOP_BUF(left)->a.flag != FULL) cpu_yield();
