@@ -1,4 +1,3 @@
-#$Id: Makefile.h,v 1.23 1995-02-03 18:23:04 d3h449 Exp $
 # Makefile.h, Wed Jan 25 13:01:15 PST 1995 
 #
 # Define TARGET to be the machine you wish to build for
@@ -182,7 +181,7 @@ endif
 #
 ifeq ($(TARGET),SP1)
 #
-# IBM SP1 under EUIH or MPL 
+# IBM SP-1 and SP-2 under EUIH or MPL 
 
        P_FILE = NO
 ifdef EUIH
@@ -192,13 +191,13 @@ GLOB_INCLUDES = -I. -I../../ma -I$(EUIH)
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX -DEUIH
       FLD_REN = -b  rename:.lockrnc_,.lockrnc
 else
-#           CC = mpcc_rnc
-#           FC = mpxlf_rnc
            CC = mpcc
            FC = mpxlf
  GLOB_DEFINES = -DSP1 -DEXTNAME -DAIX
 endif
 
+#   mpxlf fails with parallel make
+    MAKEFLAGS = -j 1
        RANLIB = ranlib
      FOPT_REN = -qEXTNAME
   CUR_VERSION = DISMEM
