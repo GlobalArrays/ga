@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.67 2004-02-27 15:08:24 vinod Exp $ */
+/* $Id: base.c,v 1.68 2004-03-25 20:18:38 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -949,6 +949,10 @@ void ga_set_ghosts_(Integer *g_a, Integer *width)
     GA[ga_handle].width[i] = (int)width[i];
     if (width[i] > 0) GA[ga_handle].ghosts = 1;
   }
+  if (GA[ga_handle].actv == 1) {
+    if (!ga_set_ghost_info_(g_a))
+      ga_error("Could not allocate update information for ghost cells",0);
+  }
   GA_POP_NAME;
 }
 
@@ -1018,7 +1022,7 @@ logical ga_allocate_( Integer *g_a)
   if (GA[ga_handle].ndim == -1)
     ga_error("Insufficient data to create global array",0);
   ga_sync_();
-  GA_PUSH_NAME("nga_allocate");
+  GA_PUSH_NAME("ga_allocate");
 
   if(!GAinitialized) ga_error("GA not initialized ", 0);
   if(!ma_address_init) gai_ma_address_init();

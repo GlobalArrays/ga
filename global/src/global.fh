@@ -21,6 +21,8 @@
       logical ga_update5_ghosts
       logical ga_update6_ghosts
       logical ga_update7_ghosts
+      logical ga_set_update4_info
+      logical ga_set_update5_info
       logical nga_update_ghost_dir
       logical ga_has_ghosts
       integer ga_create_handle

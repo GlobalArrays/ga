@@ -296,6 +296,7 @@ extern logical ga_update4_ghosts(Integer *g_a);
 extern logical ga_update5_ghosts(Integer *g_a);
 extern logical ga_update6_ghosts(Integer *g_a);
 extern logical ga_update7_ghosts(Integer *g_a);
+extern logical ga_set_update4_info(Integer *g_a);
 extern logical ga_set_update5_info(Integer *g_a);
 extern logical nga_update_ghost_dir(Integer *g_a, Integer *idim, 
                                     Integer *idir, logical *flag);

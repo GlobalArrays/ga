@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.18 2004-01-13 17:03:18 d3g293 Exp $ */
+/*$Id: base.h,v 1.19 2004-03-25 20:18:38 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -10,7 +10,7 @@ extern int* GA_Update_Signal;
 extern short int _ga_irreg_flag; 
 
 #define FNAM        31              /* length of array names   */
-#define CACHE_SIZE  256             /* size of the cache inside GA DS*/
+#define CACHE_SIZE  512             /* size of the cache inside GA DS*/
 
 typedef struct {
        int mirrored;
