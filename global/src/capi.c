@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.19 1999-11-18 21:37:26 d3h325 Exp $ */
+/* $Id: capi.c,v 1.20 1999-12-06 18:30:37 jju Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -236,6 +236,15 @@ void NGA_Acc(int g_a, int lo[], int hi[], void* buf,int ld[], void* alpha)
     COPYC2F(ld,_ga_work, ndim-1);
     nga_acc_(&a, _ga_lo, _ga_hi, buf, _ga_work, alpha);
 }    
+
+long NGA_Read_inc(int g_a, int subscript[], long inc)
+{
+    Integer a=(Integer)g_a;
+    Integer ndim = ga_ndim_(&a);
+    Integer in=(Integer)inc;
+    COPYINDEX_C2F(subscript, _ga_lo, ndim);
+    return (long)nga_read_inc_(&a, _ga_lo, &in);
+}
 
 
 void NGA_Distribution(int g_a, int iproc, int lo[], int hi[])
