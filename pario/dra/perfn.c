@@ -13,14 +13,14 @@
 #include "srftoc.h"
 
 #define NDIM 3
-#define SIZE 250
-#define NSIZE 1562500
-#define LSIZE 125000000
+#define SIZE 20
+#define NSIZE 8000
+#define LSIZE 64000
 #define MAXDIM 7
 #define TRUE (logical)1
 #define FALSE (logical)0
 
-#define MULTFILES 1
+#define MULTFILES 0
 
 #ifdef SOLARIS
 #  if MULTFILES
@@ -51,15 +51,15 @@ float ran0(long *idum)
 }
 
 
-void fill_random(double *a)
+void fill_random(double *a, int isize)
 {
   long *idum;
   long i, j;
 
   j = 38282;
-  *idum = j;
+  idum = &j;
   a[0] = (double)ran0(idum);
-  for (i=0; i<NSIZE; i++) {
+  for (i=0; i<(long)isize; i++) {
     a[i] = (double)(10000.0*ran0(idum));
   }
 }
@@ -73,13 +73,14 @@ void test_io_dbl()
   int i, req, loop;
   int dlo[MAXDIM],dhi[MAXDIM],glo[MAXDIM],ghi[MAXDIM];
   int dims[MAXDIM],reqdims[MAXDIM];
-  int me, nproc, plus, minus;
+  int me, nproc, isize;
+  double plus, minus;
   double *index;
   int ld[MAXDIM], chunk[MAXDIM];
 #if USEMULTFILES
   int ilen;
-  char filename[80], filename1[80];
 #endif
+  char filename[80], filename1[80];
   logical status;
  
   n = pow(NSIZE,1.0/ndim)+0.5;
@@ -116,8 +117,10 @@ void test_io_dbl()
 
   GA_Sync();
   NGA_Distribution(g_a, me, glo, ghi);
-  NGA_Access(g_a, glo, ghi, index, ld);
-  fill_random(index);
+  NGA_Access(g_a, glo, ghi, &index, ld);
+  isize = 1;
+  for (i=0; i<ndim; i++) isize *= (ghi[i]-glo[i]+1);
+  fill_random(index, isize);
   GA_Sync();
   GA_Zero(g_b);
 
@@ -160,7 +163,7 @@ void test_io_dbl()
   if (NDRA_Write(g_a, d_a, &req) != 0) GA_Error("NDRA_Write failed:",0);
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
   tt1 = tcgtime_() - tt0;
-  mbytes = 1.e-6 * mdtob_(pow(n,ndim));
+  mbytes = 1.e-6 * (double)(pow(n,ndim));
   if (me == 0) {
     printf("%11.2f MB  time = %f11.2 rate = %f11.3 MB/s\n",
         mbytes,tt1,mbytes/tt1);
@@ -209,7 +212,7 @@ void test_io_dbl()
   }
 #endif
   if (NDRA_Create(MT_DBL, ndim, dims, "B", filename1, DRA_RW,
-      reqdims, &d_a) != 0) GA_Error("NDRA_Create failed: ",0);
+      reqdims, &d_b) != 0) GA_Error("NDRA_Create failed: ",0);
 
   if (me == 0) printf("non alligned blocking write\n");
   if (me == 0) fflush(stdout);
@@ -227,7 +230,7 @@ void test_io_dbl()
 
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
   tt1 = tcgtime_() - tt0;
-  mbytes = 1.e-6*mdtob_(pow(n,ndim));
+  mbytes = 1.e-6*(double)(pow(n,ndim));
   if (me == 0) {
     printf("%11.2f MB  time = %f11.2 rate = %f11.3 MB/s\n",
         mbytes,tt1,mbytes/tt1);
