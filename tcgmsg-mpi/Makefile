@@ -92,6 +92,20 @@ endif
 
 #................................ CRAY-T3D ..................................
 #
+ifeq ($(MACHINE),CRAY-T3E)
+#
+           FC = f90
+         FOPT = -g
+          CPP = cpp
+     FOPT_REN = -Wf-dp
+ GLOB_DEFINES = -DCRAY_T3D -DCRAY_T3E
+    EXTRA_OBJ = memalign.o
+   NXTVAL_OBJ = nxtval.t3d.o
+ NXTVAL_AVAIL = yes
+endif
+
+#................................ CRAY-T3D ..................................
+#
 ifeq ($(MACHINE),CRAY-T3D)
 #
            FC = cf77
@@ -104,8 +118,8 @@ ifeq ($(MACHINE),CRAY-T3D)
  NXTVAL_AVAIL = yes
 endif
 
-#................................ KSR ......................................
 #
+#................................ KSR ......................................
 ifeq ($(MACHINE),KSR)
 #
 # KSR-2 running OSF 1.2.0.7
