@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.31 2002-12-17 13:05:42 vinod Exp $ */
+/* $Id: test.c,v 1.32 2002-12-17 19:27:27 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -700,9 +700,6 @@ int lenpergiov;
     assert(rc==0);assert(getsrc[me]);
     rc = ARMCI_Malloc(putdst,sizeof(double)*nproc*GIOV_ARR_LEN*lenpergiov);
     assert(rc==0);assert(putdst[me]);
-    /*we have to do mallocs for all the arrays instead of declaring them static
-      because some adamnt c compilers(like the sun c compiler) dont like 
-      non-constant expressions specifying array bounds*/
 
     /*first malloc for getdst and putsrc, both are 2d arrays*/
     getdst = (double *)malloc(sizeof(double)*nproc*GIOV_ARR_LEN*lenpergiov);
@@ -1467,11 +1464,9 @@ int main(int argc, char* argv[])
            fflush(stdout);
            sleep(1);
         }
-#if 0
         for(ndim=1; ndim<= MAXDIMS; ndim++) test_dim(ndim);
         ARMCI_AllFence();
         MP_BARRIER();
-#endif
 
 #if 1
         if(me==0){
