@@ -1,0 +1,33 @@
+OBJDIR=.\obj
+
+!IFNDEF GA_C_CORE
+error:
+	@echo "GA++ (optional) is not built, as GA_C_CORE is not defined."
+	exit
+!ENDIF
+
+#on NT we use MPI
+USE_MPI=y
+
+
+OBJ = $(OBJDIR)\init_term.obj $(OBJDIR)\GAServices.obj $(OBJDIR)\GlobalArray.obj $(OBJDIR)\overload.obj
+
+!IFDEF GA_USE_VAMPIR
+GA_EXTRA = $(OBJDIR)\ga_vampir.obj
+!ENDIF
+
+LOC_DEFINES = -DARMCI -DGA_C_CORE
+
+# you can restore the old threshold for default decomposition in ga_create
+# by uncommenting the following statement
+# LOC_DEFINES += -DOLD_DEFAULT_BLK
+
+INCDIR = ..\..\include
+LOC_INCLUDES = -I..\..\include -I$(MPI_INCLUDE) -I..\..\armci\src
+
+HEADERS = init_term.h GAServices.h GlobalArray.h "ga++.h"
+LIBRARY = ga++.lib
+LIB_DISTRIB = ..\..\lib\win32
+
+!INCLUDE ..\..\config\NTmakefile.h
+!INCLUDE ..\..\config\NTmakelib.h
