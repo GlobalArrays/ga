@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.54 2004-01-02 20:43:22 d3g293 Exp $
+c $Id: test.F,v 1.55 2004-01-02 23:58:08 d3g293 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -1860,7 +1860,7 @@ c
 c     every processor will be operating on somebody elses data
 c
 #ifndef MIRROR
-      lproc = nprocs - me - 1
+      lproc = nproc - me - 1
 #else
       lproc = nnodes-iproc-1
       lproc = inode*lprocs + lproc
