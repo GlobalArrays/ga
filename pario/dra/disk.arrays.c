@@ -1,4 +1,4 @@
-/*$Id: disk.arrays.c,v 1.52 2002-08-15 16:21:50 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.53 2002-08-16 14:48:30 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1427,9 +1427,9 @@ void nga_move(int op,             /*[input] flag for read or write */
           nelem3 = 0;
         }
         /* find corresponding indices of element from IO buffer */
+        itmp = ldg[0]*i;
+        jtmp = nelem3;
         for (j=0; j<ldg[0]; j++) {
-          itmp = ldg[0]*i+j;
-          jtmp = j*nelem2 + nelem3;
           switch(ga_type_c2f(type)){
             case MT_F_DBL:
               ((DoublePrecision*)buffer)[jtmp]
@@ -1450,6 +1450,8 @@ void nga_move(int op,             /*[input] flag for read or write */
                 = ((float*)base_addr)[itmp];
               break;
           }
+          itmp++;
+          jtmp += nelem2;
         }
       }
     } else {
@@ -1479,9 +1481,9 @@ void nga_move(int op,             /*[input] flag for read or write */
           nelem3 = 0;
         }
         /* find corresponding indices of element from IO buffer */
+        itmp = ldg[0]*i;
+        jtmp = nelem3;
         for (j=0; j<ldg[0]; j++) {
-          itmp = ldg[0]*i+j;
-          jtmp = j*nelem2 + nelem3;
           switch(ga_type_c2f(type)){
             case MT_F_DBL:
               ((DoublePrecision*)base_addr)[itmp]
@@ -1502,6 +1504,8 @@ void nga_move(int op,             /*[input] flag for read or write */
                 = ((float*)buffer)[jtmp];
               break;
           }
+          itmp++;
+          jtmp += nelem2;
         }
       }
       nga_put_sectM(gs_chunk, base_addr, ldt); 
