@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.8 2001-05-07 23:14:53 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbeginf.c,v 1.9 2001-05-25 19:28:48 edo Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -52,7 +52,7 @@ void PBEGINF_()
     len = hpargv_(&i, arg, &maxlen);
 #endif
     arg[len] = '\0';
-     printf("%10s, len=%d\n", arg, len);  fflush(stdout); 
+    /* printf("%10s, len=%d\n", arg, len);  fflush(stdout); */
     argv[i] = strdup(arg);
   }
 
