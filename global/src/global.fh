@@ -32,16 +32,6 @@ c
       external ga_destroy_mutexes
       external ga_valid_handle
       external ga_ndim
-#ifdef WIN32
-cDEC$ IF DEFINED(fix_this_stupid_compiler)
-#endif
-      external ga_init_fence, ga_fence
-      external ga_scatter, ga_gather, ga_get, ga_put
-      external ga_scale_patch, ga_add_patch
-      external ga_copy_patch, ga_print_patch, ga_fill_patch
-#ifdef WIN32
-cDEC$ ENDIF
-#endif
 #ifdef SCALAPACK
       external ga_spd_invert, ga_solve, ga_llt_solve, ga_cholesky
 #endif
