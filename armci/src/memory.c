@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.17 2000-09-08 23:10:13 d3h325 Exp $ */
+/* $Id: memory.c,v 1.18 2000-09-12 18:43:29 d3h325 Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -6,9 +6,14 @@
  
 #define DEBUG_ 0
 #define USE_MALLOC 
+#define USE_SHMEM_
 
 #if defined(SYSV) || defined(WIN32)
 #include "shmem.h"
+
+#if !(defined(LAPI)||defined(QUADRICS)||defined(SERVER_THREAD)) ||defined(USE_SHMEM)
+#define RMA_NEEDS_SHMEM  
+#endif
 
 void  armci_print_ptr(void **ptr_arr, int bytes, int size, void* myptr, int off)
 {
@@ -29,7 +34,7 @@ int nproc = armci_clus_info[armci_clus_me].nslave;
 }
 
 
-/*\ master experts its address of shmem region at the beggining of that region
+/*\ master exports its address of shmem region at the beggining of that region
 \*/
 static void armci_master_exp_attached_ptr(void* ptr)
 {
@@ -76,8 +81,8 @@ void armci_shmem_malloc(void *ptr_arr[],int bytes)
     /* master process creates shmem region and then others attach to it */
     if(armci_me == armci_master ){
 
-       /* we can use malloc if there is no data server and has 1 process/node */
-#      ifndef DATA_SERVER 
+       /* can malloc if there is no data server process and has 1 process/node*/
+#      ifndef RMA_NEEDS_SHMEM
              if(nproc == 1)
                 myptr = malloc(size);
              else
@@ -275,10 +280,10 @@ int ARMCI_Uses_shm()
     int uses=0;
 
 #if (defined(SYSV) || defined(WIN32)) && !defined(NO_SHM)
-#   if defined(LAPI) || defined(QUADRICS) || defined(SERVER_THREAD)
-      if(armci_nproc != armci_nclus)uses= 1;
+#   ifdef RMA_NEEDS_SHMEM
+      if(armci_nproc >1) uses= 1; /* always unless serial mode */
 #   else
-      if(armci_nproc >1) uses= 1;
+      if(armci_nproc != armci_nclus)uses= 1; /* only when > 1 node used */
 #   endif
 #endif
     if(DEBUG_) fprintf(stderr,"uses shmem %d\n",uses);
