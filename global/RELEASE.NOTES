@@ -27,7 +27,7 @@ GENERAL NOTES
 
   Version 3.0 of Global Arrsys Library
 
-  - supports a wide variety of platforms, from super computer, such as
+  - supports a wide variety of platforms, from supercomputer, such as
     IBM SP and CRAY T3E, to Linux clusters and Windows NT.
  
   - supports arbitrary dimensional array operations. 
@@ -65,6 +65,9 @@ HISTORY
 	      * improved interoperability with MPI on clusters of
 	        workstations
 	      * ports to Cray J90 and Windows NT (single machine)
+              * ga_create uses default distribution for block size <1
+                rather than <2 (the old scheme can be restored see
+                OLD_DEFAULT_BLK in src/GNUmakefile)
 
   version 2.3 * added lock operations: ga_lock, ga_unlock,
                 ga_create_mutex, ga_destroy_mutex
