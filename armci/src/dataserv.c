@@ -1,4 +1,4 @@
-/* $Id: dataserv.c,v 1.23 2002-01-09 18:56:41 vinod Exp $ */
+/* $Id: dataserv.c,v 1.24 2002-01-09 20:12:54 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "copy.h"
@@ -380,7 +380,7 @@ armci_giov_t *mydarr;
 	    GETBUF(dscr, int, mydarr[i].bytes);
             mydarr[i].dst_ptr_array=(void**)dscr;dscr+=mydarr[i].ptr_array_len*sizeof(char*);  
          }
-         j=armci_RecvVectorFromSocket(CLN_sock[p],mydarr,len,(struct iovec *)((char*)(msginfo+1)+bytes) );
+         j=armci_RecvVectorFromSocket(CLN_sock[p],mydarr,len,(struct iovec *)((char*)dscr+2*bytes) );
     }	  
     
     
