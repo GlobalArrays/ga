@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.17 2000-09-30 19:04:21 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/parallel.c,v 1.18 2000-10-12 22:43:46 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -403,16 +403,14 @@ int main(argc, argv)
 
   /* Since we only using sockets we can block in select when waiting for a message */
   SR_using_shmem = 0;
+  SR_nsock = 0;
   for (i=0; i<(SR_n_proc+1); i++) {
     if (SR_proc_info[i].sock >= 0) {
-      SR_socks[i] = SR_proc_info[i].sock;
-    }
-    else {
-      SR_socks[i] = 0;
+      SR_socks[SR_nsock] = SR_proc_info[i].sock;
+      SR_socks_proc[SR_nsock] = i;
+      SR_nsock++;
     }
   }
-  printf("%2ld: SETUP %d\n", NODEID_(), SR_using_shmem);
-  fflush(stdout);
 
   /* Provide the next value service ... exit gracefully when get termination
      message from everyone or detect error */

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.12 2000-09-30 19:04:21 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/pbegin.c,v 1.13 2000-10-12 22:43:46 d3g681 Exp $ */
 
 #include <stdio.h>
 #include <signal.h>
@@ -472,14 +472,12 @@ void PBEGIN_(argc, argv)
   ConnectAll();
 
   /* If we are only using sockets we can block in select when waiting for a message */
+  SR_nsock = 0;
   for (i=0; i<(SR_n_proc+1); i++) {
     if (SR_proc_info[i].sock >= 0) {
-      SR_socks[i] = SR_proc_info[i].sock;
-    }
-    else {
-      SR_socks[i] = 0;
-      if (i != NODEID_())
-	SR_using_shmem = 1;
+      SR_socks[SR_nsock] = SR_proc_info[i].sock;
+      SR_socks_proc[SR_nsock] = i;
+      SR_nsock++;
     }
   }
   /* Synchronize timers before returning to application 

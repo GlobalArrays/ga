@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/defglobals.h,v 1.6 2000-09-30 19:04:21 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/defglobals.h,v 1.7 2000-10-12 22:43:45 d3g681 Exp $ */
 
 #ifndef SNDRCVP
 #include "sndrcvP.h"
@@ -16,6 +16,8 @@ long SR_n_proc;                   /* No. of processes excluding dummy
 				     master process */
 
 int  SR_socks[MAX_PROCESS];
+int  SR_socks_proc[MAX_PROCESS];
+int  SR_nsock;
 long SR_using_shmem;
 
 long SR_clus_id;                  /* Logical id of current cluster */

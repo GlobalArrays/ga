@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.8 2000-09-30 19:04:22 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.9 2000-10-12 22:43:46 d3g681 Exp $ */
 
 
 #include <stdio.h>
@@ -61,10 +61,13 @@ again:
   nready = (long) select(sockmax+1, &ready, (fd_set *) NULL, (fd_set *) NULL,
 			 (struct timeval *) NULL);
   if (nready < 0) {
-    if (errno == EINTR)
+    if (errno == EINTR) {
+      fprintf(stderr,"wait in sockets got interrupted\n");
       goto again;
-    else
+    }
+    else {
       Error("WaitForSockets: error from select",  0L);
+    }
   }
   else {
     int n = 0;

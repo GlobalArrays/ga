@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.16 2000-09-30 19:04:21 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/snd.c,v 1.17 2000-10-12 22:43:46 d3g681 Exp $ */
 
 #include <stdio.h>
 #ifdef SEQUENT
@@ -589,13 +589,13 @@ static long NextReadyNode(type)
   if (!SR_using_shmem) {
     int list[MAX_PROCESS];
     int nready;
-    nready = WaitForSockets(SR_n_proc+1,SR_socks,list);
+    nready = WaitForSockets(SR_nsock,SR_socks,list);
     if (nready == 0) 
       Error("NextReadyNode: nready = 0\n", 0);
 
     /* Insert here type checking logic ... not yet done */
 
-    return list[0];
+    return SR_socks_proc[list[0]];
   }
 
   /* With both local and remote processes end up with a busy wait
