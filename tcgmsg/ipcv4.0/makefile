@@ -299,16 +299,26 @@ ifeq ($(TARGET),SUN77_2)
 endif
 
 ifeq ($(TARGET),SOLARIS)
-   DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN\
-             -DSUNF77_2
+   DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN -DSUNF77_2
       LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
     RANLIB = echo $*
 endif
+#
 ifeq ($(TARGET),SOLARIS64)
-    FFLAGS = -xarch=v9 -xtypemap=real:64,double:64,integer:64
-   DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN\
-             -DSUNF77_2
-    CFLAGS = -O -xarch=v9 -dalign $(DEFINES)
+  ifeq ($(_CC),fcc)
+     COPT_REN = -Kfast -KV9FMADD
+  else
+     COPT_REN = -xarch=v9 -dalign
+  endif
+  ifeq ($(_FC),frt)
+     FFLAGS = -Kfast -KV9FMADD -CcdII8
+      CMAIN = -Dmain=MAIN__
+  else
+     FFLAGS = -xarch=v9 -xtypemap=real:64,double:64,integer:64
+     FLD_REN = -xs
+  endif
+   DEFINES = -DSUN -DSOLARIS -DSYSV -DSHMEM  -DGOTXDR -DNOSPIN -DSUNF77_2
+    CFLAGS = -O $(COPT_REN) $(DEFINES)
       LIBS = /usr/ucblib/libucb.a -lsocket -lrpcsvc -lnsl
     RANLIB = echo $*
 endif
