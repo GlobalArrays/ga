@@ -1215,6 +1215,21 @@ Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
 
 
 
+#define gam_Loc_ptr(proc, g_handle,  subscript, ptr_loc)                  \
+{                                                                              \
+Integer _offset=0, _d, _factor=1, _last=GA[g_handle].ndim-1;                   \
+Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
+                                                                               \
+      ga_ownsM(g_handle, proc, _lo, _hi);                                      \
+      gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
+      for(_d=0; _d < _last; _d++)            {                                 \
+          _offset += (subscript[_d]-_lo[_d]) * _factor;                        \
+          _factor *= _hi[_d] - _lo[_d]+1;                                     \
+      }                                                                        \
+      _offset += (subscript[_last]-_lo[_last]) * _factor;                      \
+      *(ptr_loc) =  GA[g_handle].ptr[proc]+_offset*GA[g_handle].elemsize;      \
+}
+
 
 #define ga_check_regionM(g_a, ilo, ihi, jlo, jhi, string){                     \
    if (*(ilo) <= 0 || *(ihi) > GA[GA_OFFSET + *(g_a)].dims[0] ||               \
@@ -2141,6 +2156,44 @@ int rc;
 }
 
 
+/*\ based on subscripts compute pointers
+\*/
+void gai_sort_proc(Integer* g_a, Integer* sbar, Integer *nv, Integer list[], Integer proc[])
+{
+Integer k, ndim;
+extern void ga_sort_permutation();
+
+   if (*nv < 1) return;
+
+   ga_check_handleM(g_a, "gai_get_pointers");
+   ndim = GA[*g_a+GA_OFFSET].ndim;
+
+   for(k=0; k< *nv; k++)if(!nga_locate_(g_a, sbar+k*ndim, proc+k)){
+         print_subscript("invalid subscript",ndim, sbar +k*ndim,"\n");
+         ga_error("failed -element:",k);
+   }
+         
+   /* Sort the entries by processor */
+   ga_sort_permutation(nv, list, proc);
+}
+
+
+/*\ permutes input index list using sort routine used in scatter/gather
+\*/
+void FATR nga_sort_permut_(Integer* g_a, Integer index[], 
+                           Integer* subscr_arr, Integer *nv)
+{
+register int k;
+Integer pindex, phandle, ndim;
+
+  if (*nv < 1) return;
+
+  if(!MA_push_get(MT_F_INT,*nv, "nga_sort_permut--p", &phandle, &pindex))
+              ga_error("MA alloc failed ", *g_a);
+
+  gai_sort_proc(g_a, subscr_arr, nv, index, INT_MB+pindex);
+  if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+}
 
 
 /*\ SCATTER OPERATION elements of v into the global array
@@ -2342,6 +2395,150 @@ register Integer k, offset;
 }
 
 
+#define SCATTER -99
+#define GATHER -98
+
+
+/*\ GATHER OPERATION elements from the global array into v
+\*/
+void gai_gatscat(int op, Integer* g_a, void* v, Integer subscript[], 
+                 Integer* nv, double *locbytes, double* totbytes)
+{
+register Integer k, nelem, handle=*g_a+GA_OFFSET;
+Integer  ndim, item_size, first,p;
+Integer *proc, *list, phandle, lhandle; 
+
+  if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-p",&phandle))ga_error("MAfailed",*g_a);
+  if(!MA_get_pointer(phandle, &proc)) ga_error("MA pointer failed ", *g_a);
+  if(!MA_push_stack(MT_F_INT,*nv,"ga_gat-l",&lhandle))ga_error("MAfailed",*g_a);
+  if(!MA_get_pointer(lhandle, &list)) ga_error("MA pointer failed ", *g_a);
+
+  ndim = GA[handle].ndim;
+  for(k=0;k<*nv;k++)list[k]=k;
+  gai_sort_proc(g_a, subscript, nv, list, proc);
+
+  item_size = GA[handle].elemsize;
+  *totbytes += (double)item_size**nv;
+
+  /* go through the list executing gather/scatter for each processor */
+  first = 0;
+  do {
+      void **ptr_src, **ptr_dst;
+      char *ptr_ref;
+      armci_giov_t desc;
+
+      p  = proc[first];
+      nelem = 0;
+
+      /* count entries for proc from "first" to last */     
+      for(k=first; k< *nv; k++)
+        if(p == proc[k]) nelem++;
+        else break;
+
+      if(p == GAme) *locbytes += (double)item_size* nelem;
+
+      ptr_src = gai_malloc(2*nelem*sizeof(void*));
+      if(ptr_src==NULL)ga_error("gai_malloc failed",nelem);
+      else ptr_dst=ptr_src+ nelem;
+      desc.bytes = item_size;
+      desc.src_ptr_array = ptr_src;
+      desc.dst_ptr_array = ptr_dst;
+      desc.ptr_array_len = nelem;
+
+      switch(op){ 
+        case GATHER:
+          for(k=0; k<nelem; k++){
+            ptr_dst[k] = ((char*)v) + list[k+first]*item_size;
+            gam_Loc_ptr(p, handle,  (subscript+list[first+k]*ndim), ptr_src+k);
+          }
+          ARMCI_GetV(&desc, 1, (int)p);
+          break;
+        case SCATTER:
+          for(k=0; k<nelem; k++){
+            ptr_src[k] = ((char*)v) + list[first+k]*item_size;
+            gam_Loc_ptr(p, handle,  (subscript+list[first+k]*ndim), ptr_dst+k);
+          }
+          ARMCI_PutV(&desc, 1, (int)p);
+          break;
+        default: ga_error("operation not supported",op);
+      }
+
+      gai_free(ptr_src);
+      first += nelem;
+
+  }while (first< *nv);
+
+  if(! MA_pop_stack(lhandle)) ga_error(" pop stack failed!",lhandle);
+  if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
+
+}
+
+
+
+
+/*\ GATHER OPERATION elements from the global array into v
+\*/
+void FATR nga_gather_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
+{
+
+  if (*nv < 1) return;
+  ga_check_handleM(g_a, "nga_gather");
+  GA_PUSH_NAME("nga_gather");
+  GAstat.numgat++;
+
+  gai_gatscat(GATHER,g_a,v,subscript,nv,&GAbytes.gattot,&GAbytes.gatloc);
+
+  GA_POP_NAME;
+}
+
+
+void FATR nga_scatter_(Integer *g_a, void* v, Integer subscript[], Integer *nv)
+{
+
+  if (*nv < 1) return;
+  ga_check_handleM(g_a, "nga_scatter");
+  GA_PUSH_NAME("nga_scatter");
+  GAstat.numsca++;
+
+  gai_gatscat(SCATTER,g_a,v,subscript,nv,&GAbytes.scatot,&GAbytes.scaloc);
+
+  GA_POP_NAME;
+}
+
+void FATR  ga_gather000_(g_a, v, i, j, nv)
+     Integer *g_a, *nv, *i, *j;
+     Void *v;
+{
+int k;
+Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* *nv);
+     if(!sbar) ga_error("gather:malloc failed",*nv);
+     for(k=0;k<*nv;k++){
+          sbar[2*k] = i[k];
+          sbar[2*k+1] = j[k];
+     }
+     nga_gather_(g_a,v,sbar,nv);
+     free(sbar);
+}
+  
+
+
+/*\ SCATTER OPERATION elements of v into the global array
+\*/
+void FATR  ga_scatter000_(g_a, v, i, j, nv)
+     Integer *g_a, *nv, *i, *j;
+     Void *v;
+{
+int k;
+Integer *sbar = (Integer*)malloc(2*sizeof(Integer)* *nv);
+     if(!sbar) ga_error("scatter:malloc failed",*nv);
+     for(k=0;k<*nv;k++){
+          sbar[2*k] = i[k];
+          sbar[2*k+1] = j[k];
+     }
+     nga_scatter_(g_a,v,sbar,nv);
+     free(sbar);
+}
+
 
 /*\ GATHER OPERATION elements from the global array into v
 \*/
@@ -2359,7 +2556,6 @@ Integer first, proc;
   GA_PUSH_NAME("ga_gather");
   GAstat.numgat++;
 
-
   if(!MA_push_get(MT_F_INT, *nv, "ga_gather--p", &phandle, &pindex))
             ga_error("MA failed ", *g_a);
 
@@ -2375,9 +2571,7 @@ Integer first, proc;
   item_size = GA[GA_OFFSET + *g_a].elemsize;
   GAbytes.gattot += (double)item_size**nv;
 
-
   /* go through the list again executing gather for each processor */
-
   first = 0;
   do {
       proc  = INT_MB[pindex+first];
@@ -2389,9 +2583,7 @@ Integer first, proc;
         else break;
       }
 
-      if(proc == GAme){
-             GAbytes.gatloc += (double)item_size* nelem ;
-      }
+      if(proc == GAme) GAbytes.gatloc += (double)item_size* nelem;
 
       ga_gather_local(*g_a, ((char*)v)+item_size*first, i+first, j+first,
                        nelem, proc);
@@ -2400,7 +2592,6 @@ Integer first, proc;
   }while (first< *nv);
 
   if(! MA_pop_stack(phandle)) ga_error(" pop stack failed!",phandle);
-
   GA_POP_NAME;
 }
       
