@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.74 2003-10-28 19:01:39 vinod Exp $ */
+/* $Id: shmem.c,v 1.75 2004-03-30 23:18:01 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -806,7 +806,6 @@ char *Attach_Shared_Region(id, size, offset)
 {
 int reg, found, shmflag=0;
 static char *temp;
-long nsize = size;
 
 #if defined(SGI_N32) && defined(SHM_SGI_ANYADDR)
   shmflag= SHM_SGI_ANYADDR;
