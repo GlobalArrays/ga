@@ -98,6 +98,7 @@
 #define  ga_update3_ghosts_        GA_UPDATE3_GHOSTS
 #define  ga_update4_ghosts_        GA_UPDATE4_GHOSTS
 #define  ga_update5_ghosts_        GA_UPDATE5_GHOSTS
+#define  ga_update6_ghosts_        GA_UPDATE6_GHOSTS
 #define  ga_update_ghost_dir_      GA_UPDATE_GHOST_DIR
 #define  ga_update_ghosts_         GA_UPDATE_GHOSTS
 #define  ga_uses_ma_               GA_USES_MA
@@ -240,6 +241,7 @@
 #define  ga_update3_ghosts_        ga_update3_ghosts__    
 #define  ga_update4_ghosts_        ga_update4_ghosts__   
 #define  ga_update5_ghosts_        ga_update5_ghosts__  
+#define  ga_update6_ghosts_        ga_update6_ghosts__  
 #define  ga_update_ghost_dir_      ga_update_ghost_dir__   
 #define  ga_update_ghosts_         ga_update_ghosts__     
 #define  ga_uses_ma_               ga_uses_ma__             
