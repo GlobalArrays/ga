@@ -7,7 +7,7 @@
 #   ifdef AIX
 #         define SEMMSL 8094
 #   else
-#         define SEMMSL 25 
+#         define SEMMSL 12
 #   endif
 #endif
 
