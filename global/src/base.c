@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.92 2004-09-24 00:55:00 manoj Exp $ */
+/* $Id: base.c,v 1.93 2004-10-06 21:27:54 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -826,17 +826,12 @@ void gai_init_struct(int handle)
 void FATR ga_pgroup_set_default_(Integer *grp)
 {
     int local_sync_begin,local_sync_end;
-    Integer def_grp;
  
     local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
     _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
  
     /* force a hang if default group is not being set correctly */
-    if (local_sync_begin || local_sync_end) {
-       def_grp = (Integer)GA_Default_Proc_Group;
-       /* ga_pgroup_sync_(&def_grp); */ /* BRUCE: please check this */
-       ga_pgroup_sync_(grp);
-    }
+    if (local_sync_begin || local_sync_end) ga_pgroup_sync_(grp);
     GA_Default_Proc_Group = (int)(*grp);
 }
  
