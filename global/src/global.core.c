@@ -965,6 +965,16 @@ int heap_status;
          fprintf(stderr,"\n\n");
       }
 
+#ifdef CRAY_T3D
+      for(i=0;i<GAnproc;i++){
+          ga_distribution_(g_a,&i,&ilo,&ihi,&jlo,&jhi);
+          ncols = jhi-jlo+1;
+          if(ncols > maxcols) maxcols = ncols;
+      }
+      GA[ga_handle].lock = 1;
+#endif
+
+
       /*** determine which portion of the array I am supposed to hold ***/
       ga_distribution_(g_a, &GAme, &ilo, &ihi, &jlo, &jhi);
       GA[ga_handle].chunk[0] = (int) (ihi-ilo+1);
@@ -1042,32 +1052,23 @@ int heap_status;
       nlocks = (ncols + COLS_PER_LOCK - 1)/COLS_PER_LOCK;
       for(i=0;i<MAX_NPROC;i++) GA[ga_handle].newlock[i] = 0;
       ptr_long = (long *)shmalloc(nlocks*sizeof(long));
-      if(ptr_long==NULL){
-         status = 0;
-         ga_igop(GA_TYPE_SYN, &status, 1, op);
-         ga_error("ga_create_irreg: malloc failure for ptr_long",status);
-      }
+      if(ptr_long==NULL) status = 0;
       ga_igop(GA_TYPE_SYN, &status, 1, op);
+      if(!status)ga_error("ga_create_irreg:malloc failure for ptr_long",status);
       GA[ga_handle].newlock[GAme]=ptr_long;
-
 
       for(i=0;i<nlocks;i++) GA[ga_handle].newlock[GAme][i] = 1;
 
       ptr_Integer = (Integer *)malloc(nlocks*sizeof(Integer));
-      if(ptr_Integer==NULL){
-         status = 0;
-         ga_igop(GA_TYPE_SYN, &status, 1, op);
-         ga_error("ga_create_irreg: malloc failure for ptr_Integer",status);
-      }
+      if(ptr_Integer==NULL) status = 0;
       ga_igop(GA_TYPE_SYN, &status, 1, op);
+      if(!status)ga_error("ga_create_irreg: malloc failure for ptr_Integer",0);
       GA[ga_handle].lock_list=ptr_Integer;
 
       for(i=0;i<nlocks;i++) GA[ga_handle].lock_list[i]=0;
 
-/* learn where my fellow pes malloced their arrays - this avoids shmalloc */
-
+      /*learn where my fellow pes malloced their arrays -this avoids shmalloc */
       ga_igop(GA_TYPE_SYN, (Integer *)GA[ga_handle].newlock, GAnproc, &opadd);
-
 
 #endif
       ga_sync_();
@@ -1213,24 +1214,19 @@ long **ptr_ptr_long,*ptr_long;
       status=1;
       nlocks = (maxcols + COLS_PER_LOCK - 1)/COLS_PER_LOCK;
       for(i=0;i<MAX_NPROC;i++) GA[ga_handle].newlock[i] = 0;
+
       ptr_long = (long *)shmalloc(nlocks*sizeof(long));
-      if(ptr_long==NULL){
-         status = 0;
-         ga_igop(GA_TYPE_SYN, &status, 1, op);
-         ga_error("ga_duplicate: malloc failure for ptr_long",status);
-      }
+      if(ptr_long==NULL) status = 0;
       ga_igop(GA_TYPE_SYN, &status, 1, op);
+      if(!status) ga_error("ga_duplicate: malloc failure for ptr_long",status);
       GA[ga_handle].newlock[GAme]=ptr_long;
 
       for(i=0;i<nlocks;i++) GA[ga_handle].newlock[GAme][i]  = 1;
 
       ptr_Integer = (Integer *)malloc(nlocks*sizeof(Integer));
-      if(ptr_Integer==NULL){
-         status = 0;
-         ga_igop(GA_TYPE_SYN, &status, 1, op);
-         ga_error("ga_create_irreg: malloc failure for ptr_Integer",status);
-      }
+      if(ptr_Integer==NULL) status = 0;
       ga_igop(GA_TYPE_SYN, &status, 1, op);
+      if(!status)ga_error("ga_create_irreg: malloc failure for ptr_Integer",0);
       GA[ga_handle].lock_list=ptr_Integer;
 
       for(i=0;i<nlocks;i++) GA[ga_handle].lock_list[i] = 0;
@@ -1910,6 +1906,7 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
 #ifdef CRAY_T3D
 #  define LEN_DBL_BUF 500
 #  define LEN_BUF (LEN_DBL_BUF * sizeof(DoublePrecision))
+   global_array_t *ga_ptr;
    DoublePrecision acc_buffer[LEN_DBL_BUF], *pbuffer;
    Integer buflen,  bytes, handle, index;
    Integer jstop,jstart,jstop_b,jstart_b;
@@ -1928,9 +1925,9 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
 
 #  ifdef CRAY_T3D
 
+     bytes = rows*item_size;
      ga_ptr = &GA[GA_OFFSET + g_a];
 
-     bytes = rows*item_size;
      if(proc != GAme){
 
         buflen  = MIN(bytes,LEN_BUF)/item_size;
@@ -1947,7 +1944,8 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
                         ga_error("allocation of ga_acc buffer failed ",GAme);
                MA_get_pointer(handle, &pbuffer);
             }
-        }
+          }
+       }
 
 
        jproc = proc/ga_ptr->nblock[0];
@@ -1970,10 +1968,7 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
 
 
        if(proc == GAme) FLUSH_CACHE; /* cache coherency problem on T3D */
-       return;
-   }
-
-#  endif
+#   else
 
      if(GAnproc>1) LOCK(g_a, proc, ptr_dst);
        if(type==MT_F_DBL){
@@ -1987,13 +1982,11 @@ Integer  item_size, ldp, rows, cols, type = GA[GA_OFFSET + g_a].type;
                                          (Integer*)ptr_src, ld );
        }
 
-#      if defined(CRAY_T3D)
-        _memory_barrier(); /* flush write buffer before unlocking */
-#      endif
      if(GAnproc>1) UNLOCK(g_a, proc, ptr_dst);
 
      if(GAme == proc && !in_handler) 
         GAbytes.accloc += (double)item_size*rows*cols;
+#  endif
 
    GA_POP_NAME;
 }
