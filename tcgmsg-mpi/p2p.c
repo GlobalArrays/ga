@@ -5,11 +5,11 @@
 #define MAX_Q_LEN 1024         /* Maximum no. of outstanding messages */
 static struct msg_q_struct{
   MPI_Request request;
-  Int         node;
-  Int         type;
-  Int         lenbuf;
-  Int         snd;
-  Int         from;
+  Integer         node;
+  Integer         type;
+  Integer         lenbuf;
+  Integer         snd;
+  Integer         from;
 } msg_q[MAX_Q_LEN];
 
 static int n_in_msg_q=0;
@@ -17,12 +17,12 @@ static int n_in_msg_q=0;
 
 
 
-void SND_(type, buf, lenbuf, node, sync)
-     Int  *type;
+void FATR SND_(type, buf, lenbuf, node, sync)
+     Integer  *type;
      Void *buf;
-     Int  *lenbuf;
-     Int  *node;
-     Int  *sync;
+     Integer  *lenbuf;
+     Integer  *node;
+     Integer  *sync;
 {
 int ierr;
 int ttype = (int)*type;
@@ -54,17 +54,17 @@ int ttype = (int)*type;
 
 
 
-void RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
-     Int  *type;
+void FATR RCV_(type, buf, lenbuf, lenmes, nodeselect, nodefrom, sync)
+     Integer  *type;
      Void *buf;
-     Int  *lenbuf;
-     Int  *lenmes;
-     Int  *nodeselect;
-     Int  *nodefrom;
-     Int  *sync;
+     Integer  *lenbuf;
+     Integer  *lenmes;
+     Integer  *nodeselect;
+     Integer  *nodefrom;
+     Integer  *sync;
 {
 int ierr;
-int ttype, node, count = (int)*lenbuf;
+int node, count = (int)*lenbuf;
 MPI_Status status;
 MPI_Request request;
 
@@ -104,14 +104,14 @@ MPI_Request request;
       tcgmsg_test_statusM("RCV_:", ierr);
       ierr = MPI_Get_count(&status, MPI_CHAR, &count);
       tcgmsg_test_statusM("RCV:Get_count:", ierr);
-      *nodefrom = (Int)status.MPI_SOURCE; 
-      *lenmes   = (Int)count;
+      *nodefrom = (Integer)status.MPI_SOURCE; 
+      *lenmes   = (Integer)count;
     }
 }
 
 /* ignores nodesel !! */
-void WAITCOM_(nodesel)
-     Int *nodesel;
+void FATR WAITCOM_(nodesel)
+     Integer *nodesel;
 {
 int ierr, i;
 MPI_Status status;
@@ -130,9 +130,9 @@ MPI_Status status;
 
 
 
-Int PROBE_(type, node)
-    Int *type;
-    Int *node;  
+Integer FATR PROBE_(type, node)
+    Integer *type;
+    Integer *node;  
 {
 int flag, source, ierr ;
 MPI_Status status;

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evon.c,v 1.1 1995-10-12 00:06:25 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evon.c,v 1.2 1999-06-08 21:08:29 d3h325 Exp $ */
 
 /* Crude FORTRAN interface to C event logging routines.
    See evlog.c for more details.
@@ -40,6 +40,12 @@ extern void *malloc();
 extern char *malloc();
 #endif
 
+#ifdef WIN32
+#include "winf2c.h"
+#else
+#define FATR 
+#endif
+
 #include "evlog.h"
 
 /* These to get portable FORTRAN interface ... these routines
@@ -53,7 +59,7 @@ extern char *malloc();
 #define event_    event
 #endif
 
-#if (defined(CRAY) || defined(ARDENT))
+#if defined(CRAY) || defined(ARDENT) || defined(WIN32)
 #define evon_     EVON
 #define evoff_    EVOFF
 #define evbgin_   EVBGIN
@@ -73,35 +79,33 @@ struct char_desc {
 };
 #endif
 
-void evon_()
+void FATR evon_()
 {
 #ifdef EVENTLOG
   evlog(EVKEY_ENABLE, EVKEY_LAST_ARG);
 #endif
 }
 
-void evoff_()
+void FATR evoff_()
 {
 #ifdef EVENTLOG
   evlog(EVKEY_DISABLE, EVKEY_LAST_ARG);
 #endif
 }
 
-#ifdef ARDENT
+#if defined(ARDENT)
 void evbgin_(arg)
      struct char_desc *arg;
 {
   char *string = arg->string;
   int   len = arg->len;
-#endif
-#ifdef CRAY
-void evbgin_(arg)
+#elif defined(CRAY) || defined(WIN32)
+void FATR evbgin_(arg)
      _fcd arg;
 {
   char *string = _fcdtocp(arg);
   int len = _fcdlen(arg);
-#endif
-#if !defined(ARDENT) && !defined(CRAY)
+#else
 void evbgin_(string, len)
   char *string;
   int   len;
@@ -125,16 +129,14 @@ void evend_(arg)
 {
   char *string = arg->string;
   int   len = arg->len;
-#endif
-#ifdef CRAY
-void evend_(arg)
+#elif defined(CRAY) || defined(WIN32)
+void FATR evend_(arg)
      _fcd arg;
 {
   char *string = _fcdtocp(arg);
   int len = _fcdlen(arg);
-#endif
-#if !defined(CRAY) && !defined(ARDENT)
-void evend_(string, len)
+#else
+void FATR evend_(string, len)
   char *string;
   int   len;
 {
@@ -157,16 +159,14 @@ void event_(arg)
 {
   char *string = arg->string;
   int   len = arg->len;
-#endif
-#ifdef CRAY
-void event_(arg)
+#elif defined(CRAY) || defined(WIN32)
+void FATR event_(arg)
      _fcd arg;
 {
   char *string = _fcdtocp(arg);
   int len = _fcdlen(arg);
-#endif
-#if !defined(ARDENT) && !defined(CRAY)
-void event_(string, len)
+#else
+void FATR event_(string, len)
   char *string;
   int   len;
 {

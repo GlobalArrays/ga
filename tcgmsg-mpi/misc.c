@@ -7,7 +7,8 @@
 
 char      tcgmsg_err_string[ERR_STR_LEN];
 MPI_Comm  TCGMSG_Comm;
-Int       DEBUG_;
+int       _tcg_initialized=0;
+Integer       DEBUG_;
 int       SR_parallel; 
 int       SR_single_cluster =1;
 
@@ -15,31 +16,31 @@ int       SR_single_cluster =1;
 
 /*\ number of processes
 \*/
-Int NNODES_()
+Integer FATR NNODES_()
 {
 int numprocs;
 
    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 #  ifdef NXTVAL_SERVER
-     if(SR_parallel) return((Int)numprocs-1);
+     if(SR_parallel) return((Integer)numprocs-1);
 #  endif
-   return((Int)numprocs);
+   return((Integer)numprocs);
 }
 
 
 /*\ Get calling process id
 \*/
-Int NODEID_()
+Integer FATR NODEID_()
 {
 int myid;
 
     MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-    return((Int)myid);
+    return((Integer)myid);
 }
 
 void Error(string, code)
      char *string;
-     Int  code;
+     Integer  code;
 {
     fprintf(stdout,"%3ld: %s %ld (%#lx).\n", (long)NODEID_(), string,
            (long)code,(long)code);
@@ -62,6 +63,7 @@ void make_tcgmsg_comm()
 /*  this is based on the MPI Forum decision that MPI_COMM_WORLD 
  *  is a C constant 
  */
+extern int single_cluster();
 
 # ifdef NXTVAL_SERVER
     if( SR_parallel ){   
@@ -78,7 +80,7 @@ void make_tcgmsg_comm()
 #   endif
           TCGMSG_Comm = MPI_COMM_WORLD; 
 
-#if !defined(NXTVAL_SERVER) && defined(SGI)
+#if !defined(NXTVAL_SERVER) && !defined(ARMCI)
        SR_single_cluster = single_cluster();
        if(!SR_single_cluster)
          Error("native nxtval not supported multiple hosts",0); 
@@ -114,10 +116,10 @@ int numprocs, myid;
 
 /*\ shut down message-passing library
 \*/ 
-void PEND_()
+void FATR PEND_()
 {
 #   ifdef NXTVAL_SERVER
-       Int zero=0;
+       Integer zero=0;
        if( SR_parallel )  (void) NXTVAL_(&zero);
        MPI_Barrier(MPI_COMM_WORLD);
 #   endif
@@ -128,47 +130,53 @@ void PEND_()
 
 
 
-Double TCGTIME_()
+double FATR TCGTIME_()
 {
   static int first_call = 1;
-  static double first_time;
+  static double first_time, last_time, cur_time;
   double diff;
 
   if (first_call) {
     first_time = MPI_Wtime();
     first_call = 0;
+    last_time  = -1e-9; 
   }
 
-  diff = MPI_Wtime() - first_time;
+  cur_time = MPI_Wtime();
+  diff = cur_time - first_time;
 
-  return (Double)diff;                  /* Add logic here for clock wrap */
+  /* address crappy MPI_Wtime: consectutive calls must be at least 1ns apart  */
+  if(diff - last_time < 1e-9) diff +=1e-9;
+  last_time = diff;
+
+  return diff;                  /* Add logic here for clock wrap */
 }
 
 
 
-Int  MTIME_()
+Integer FATR MTIME_()
 {
-  return (Int) (TCGTIME_()*100.0); /* time in centiseconds */
+  return (Integer) (TCGTIME_()*100.0); /* time in centiseconds */
 }
 
 
 
-/*\ Interface from Fortran to C error routine
+/*\ Integererface from Fortran to C error routine
 \*/
-void PARERR_(code)
-   Int *code;
+void FATR PARERR_(code)
+   Integer *code;
 {
   Error("User detected error in FORTRAN", *code);
 }
 
 
-void SETDBG_(onoff)
-     Int *onoff;
+void FATR SETDBG_(onoff)
+     Integer *onoff;
 {
      DEBUG_ = *onoff;
 }
 
-void STATS_()
+void FATR STATS_()
 {
   printf("STATS not implemented\n");
 } 

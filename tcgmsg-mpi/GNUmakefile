@@ -31,6 +31,8 @@ USE_NATIVE_NXTVAL=1
 
 LIBRARY = libtcgmsg-mpi.a
 LIB_DISTRIB = ../lib
+INCDIR = ../include
+GLOB_INCLUDES += -I$(INCDIR)
 
 # name of MPI library
 ifndef LIBMPI
@@ -87,8 +89,16 @@ endif
 #................................ LINUX ....................................
 #
 ifeq ($(MACHINE),LINUX)
-     FOPT_REN = -Nl100
+           FC = g77
+     FOPT_REN = -Nl100 -fno-second-underscore
        RANLIB = ranlib
+endif
+
+ifeq ($(MACHINE),FREEBSD)
+           FC = g77
+     FOPT_REN = -Nl100 -fno-second-underscore
+       RANLIB = ranlib
+ GLOB_DEFINES += -DLINUX
 endif
 
 #................................ DEC ALPHA ................................
@@ -202,7 +212,7 @@ ifeq ($(MACHINE),SGI_N32)
 # SGI running IRIX 6.XX on 64-bit MIPS-4 processors
 #
  GLOB_DEFINES += -DSGI -DSGIUS
-   NXTVAL_OBJ = nxtval.sgius.o clustercheck.o
+   NXTVAL_OBJ = nxtval.sgius.o 
  NXTVAL_AVAIL = yes
      FOPT_REN = -n32
      COPT_REN = -n32
@@ -216,7 +226,7 @@ ifeq ($(MACHINE),SGITFP)
      COPT_REN = -64
      FOPT_REN = -i8 -64
  GLOB_DEFINES = -DSGI64 -DSGI -DSGIUS
-   NXTVAL_OBJ = nxtval.sgius.o clustercheck.o
+   NXTVAL_OBJ = nxtval.sgius.o 
  NXTVAL_AVAIL = yes
 endif
 
@@ -227,7 +237,7 @@ ifeq ($(MACHINE),SGI64)
  GLOB_DEFINES = -DSGI64 -DSGI -DSGIUS
      COPT_REN = -64
      FOPT_REN = -64
-   NXTVAL_OBJ = nxtval.sgius.o clustercheck.o
+   NXTVAL_OBJ = nxtval.sgius.o 
  NXTVAL_AVAIL = yes
 endif
 
@@ -286,7 +296,6 @@ ifeq ($(MACHINE),IBM)
 endif
 
 #.............................. LAPI .........................................
-# IBM SP using LAPI and MPI
 #
 ifeq ($(MACHINE),LAPI)
        FC = mpxlf
@@ -315,6 +324,7 @@ endif
 #...........................................................................
 
 
+ifndef USE_ARMCI
 ifneq ($(NXTVAL_AVAIL),yes)
  GLOB_DEFINES += -DNXTVAL_SERVER
     NXTVAL_OBJ = nxtval.o
@@ -323,6 +333,12 @@ else
    GLOB_DEFINES += -DNXTVAL_SERVER
       NXTVAL_OBJ = nxtval.o
  endif
+endif
+
+else
+  NXTVAL_OBJ = nxtval-armci.o
+  LOC_INCLUDES = -I../armci/src
+  GLOB_DEFINES += -DARMCI
 endif
 
       DEFINES = $(GLOB_DEFINES) $(LOC_DEFINES)
@@ -334,18 +350,32 @@ endif
 
 OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
       collect.o		misc.o		p2p.o		pfilecopy.o\
-      evlog.o		evon.o		random.o
+      evlog.o		evon.o		random.o clustercheck.o
+
 
       OBJ += $(EXTRA_OBJ) $(NXTVAL_OBJ) 
 
+HEADERS = sndrcv.h srftoc.h msgtypesc.h msgtypesf.h
+
 # This include file specifies how and where the library should be built
 # LIBRARY_PATH  is the library location
-LIB_TARGETS = *.x *.o
 
 include ../config/makelib.h
 
+ifeq ($(TARGET),CRAY-YMP)
+pbeginf.o:
+	$(CC) $(COPT) $(INCLUDES) $(DEFINES) -g -c pbeginf.c
+
+endif
+
+LIBS = -L$(LIBDIR)
+
+ifdef USE_ARMCI
+      LIBS += -larmci
+endif
+
 ifdef MPI_LIB
-      LIBS = -L$(MPI_LIB)
+      LIBS += -L$(MPI_LIB)
 endif
 
 LIBS += $(LIBMPI) $(EXTRA_LIBS)
@@ -368,12 +398,6 @@ test_arcv.x: test_arcv.o $(LIBRARY_PATH)
 test_asyn.x: test_asyn.o $(LIBRARY_PATH)
 	$(CC)  $(CLDOPT) -o $@ $^ $(LIBS)
 
-ifeq ($(TARGET),CRAY-YMP)
-pbeginf.o:
-	$(CC) -g -c pbeginf.c
-
-endif
-
 $(patsubst %,$(LIBRARY_PATH)(%),$(OBJ))      : tcgmsgP.h
 $(patsubst %,$(LIBRARY_PATH)(%),evon.o)      : evlog.h
 $(patsubst %,$(LIBRARY_PATH)(%),evlog.o)     : evlog.h
@@ -381,6 +405,5 @@ $(patsubst %,$(LIBRARY_PATH)(%),pfilecopy.o) : msgtypesc.h
 $(patsubst %,$(LIBRARY_PATH)(%),pbeginf.o))  : farg.h
 tcgmsgP.h: srftoc.h
 sndrcv.h: msgtypesc.h
-srftoc.h: types.h
 srftoc.h: sndrcv.h
 test.o hello.o: sndrcv.h

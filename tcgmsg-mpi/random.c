@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/random.c,v 1.2 1997-08-01 21:21:27 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/random.c,v 1.3 1999-06-08 21:08:34 d3h325 Exp $ */
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -363,21 +363,5 @@ random()
 	    }
 	}
 	return( i );
-}
-/*  Added by RJH ... usual FORTRAN drand interface */
-
-double drand_(flag)
-    unsigned long *flag;
-{
-  if (*flag)
-    srandom((unsigned) *flag);
-
-  return ((double) random()) * 4.6566128752458e-10;
-}
-
-double DRAND(flag)
-    unsigned long *flag;
-{
-return (drand_(flag));
 }
 

@@ -1,20 +1,15 @@
-
 #include <stdio.h>
+#include <stdlib.h>
+#ifdef WIN32
+#include <memory.h>
+#endif
 
 #include "sndrcv.h"
 #include "msgtypesc.h"
 
-#if defined(ULTRIX) || defined(SGI) || defined(NEXT) || defined(HPUX) || \
-    defined(KSR)    || defined(DECOSF)
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
 
-extern void free();
-
-void PFILECOPY_(type, node0, filename)
-     Int *type, *node0;
+void FATR PFILECOPY_(type, node0, filename)
+     Integer *type, *node0;
      char *filename;
 /*
   Process node0 has a file (assumed unopened) named fname.
@@ -33,9 +28,9 @@ void PFILECOPY_(type, node0, filename)
 {
   char *buffer;
   FILE *file;
-  Int length, nread=32768, len_nread=sizeof(Int);
-  Int typenr = (*type & 32767) | MSGINT;   /* Force user type integer */
-  Int typebuf =(*type & 32767) | MSGCHR;
+  Integer length, nread=32768, len_nread=sizeof(Integer);
+  Integer typenr = (*type & 32767) | MSGINT;   /* Force user type integer */
+  Integer typebuf =(*type & 32767) | MSGCHR;
 
   if (!(buffer = malloc((unsigned) nread)))
     Error("pfilecopy: failed to allocate the I/O buffer",nread);
@@ -86,7 +81,7 @@ void PFILECOPY_(type, node0, filename)
       if (nread) {
 	BRDCST_(&typebuf, buffer, &nread, node0);
 	typebuf++;
-	if (nread != fwrite(buffer, 1, (int) nread, file))
+	if (nread != (Integer)fwrite(buffer, 1, (int) nread, file))
 	  Error("pfilecopy: error data to duplicate file", nread);
       }
     }
@@ -100,13 +95,18 @@ void PFILECOPY_(type, node0, filename)
 }
 
 
-#ifdef IPSC
+#if defined(IPSC) || defined(WIN32)
 #define bcopy(a, b, n) memcpy((b), (a), (n))
 #endif
 
 #ifdef CRAY
 #include <fortran.h>
 #endif
+
+#ifdef WIN32
+#include "winf2c.h"
+#endif
+
 #ifdef ARDENT
 struct char_desc {
   char *string;
@@ -118,26 +118,26 @@ struct char_desc {
 
 #ifdef ARDENT
 void PFCOPY_(type, node0, arg)
-     Int *type;
-     Int *node0;
+     Integer *type;
+     Integer *node0;
      struct char_desc *arg;
 {
   char *fname = arg->string;
   int   len = arg->len;
 #endif
-#ifdef CRAY
-void PFCOPY_(type, node0, arg)
-     Int *type;
-     Int *node0;
+#if defined(CRAY) || defined(WIN32)
+void FATR PFCOPY_(type, node0, arg)
+     Integer *type;
+     Integer *node0;
      _fcd arg;
 {
   char *fname = _fcdtocp(arg);
   int len = _fcdlen(arg);
 #endif
-#if !defined(ARDENT) && !defined(CRAY)
-void PFCOPY_(type, node0, fname, len)
-  Int *type;
-  Int *node0;
+#if !defined(ARDENT) && !defined(CRAY) && !defined(WIN32)
+void FATR PFCOPY_(type, node0, fname, len)
+  Integer *type;
+  Integer *node0;
   char *fname;
   int   len;
 {
@@ -157,7 +157,7 @@ void PFCOPY_(type, node0, fname, len)
   while ((len > 0) && (fname[len-1] == ' '))
     len--;
   if (len <= 0)
-    Error("pfcopy_: file name length is toast", (Int) len);
+    Error("pfcopy_: file name length is toast", (Integer) len);
 
   /* Generate a NULL terminated string */
 
@@ -167,7 +167,7 @@ void PFCOPY_(type, node0, fname, len)
     filename[len] = '\0';
   }
   else
-    Error("PFCOPY_: failed to malloc space for filename", (Int) len);
+    Error("PFCOPY_: failed to malloc space for filename", (Integer) len);
 
   /* Now call the C routine to do the work */
 

@@ -4,59 +4,59 @@
 /*
   These routines use C's knowledge of the sizes of data types
   to generate a portable mechanism for FORTRAN to translate
-  between bytes, Ints and Doubles. 
+  between bytes, Integers and doubles. 
 */
 
 
 
-Int MDTOB_(n)
-     Int *n;
+Integer FATR MDTOB_(n)
+     Integer *n;
 /*
-  Return the no. of bytes that n Doubles occupy
+  Return the no. of bytes that n doubles occupy
 */
 {
   if (*n < 0)
     Error("MDTOB_: negative argument",*n);
 
-  return (Int) (*n * sizeof(Double));
+  return (Integer) (*n * sizeof(double));
 }
 
 
 
-Int MDTOI_(n)
-     Int *n;
+Integer FATR MDTOI_(n)
+     Integer *n;
 /*
-  Return the minimum no. of integers which will hold n Doubles.
+  Return the minimum no. of integers which will hold n doubles.
 */
 {
   if (*n < 0)
     Error("MDTOI_: negative argument",*n);
 
-   return (Int) ( (MDTOB_(n) + sizeof(Int) - 1) / sizeof(Int) );
+   return (Integer) ( (MDTOB_(n) + sizeof(Integer) - 1) / sizeof(Integer) );
 }
 
 
-Int MITOB_(n)
-     Int *n;
+Integer FATR MITOB_(n)
+     Integer *n;
 /*
-  Return the no. of bytes that n ints=Ints occupy
+  Return the no. of bytes that n ints=Integers occupy
 */
 {
   if (*n < 0)
     Error("MITOB_: negative argument",*n);
 
-  return (Int) (*n * sizeof(Int));
+  return (Integer) (*n * sizeof(Integer));
 }
 
 
-Int MITOD_(n)
-     Int *n;
+Integer FATR MITOD_(n)
+     Integer *n;
 /*
-  Return the minimum no. of Doubles in which we can store n Ints
+  Return the minimum no. of doubles in which we can store n Integers
 */
 {
   if (*n < 0)
     Error("MITOD_: negative argument",*n);
 
-  return (Int) ( (MITOB_(n) + sizeof(Double) - 1) / sizeof(Double) );
+  return (Integer) ( (MITOB_(n) + sizeof(double) - 1) / sizeof(double) );
 }

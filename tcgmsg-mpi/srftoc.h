@@ -20,9 +20,9 @@
   Note that pbegin and pfilecopy are only called from c.
 */
 
-#include "types.h"
+#include "typesf2c.h"
 
-#if (defined(CRAY) || defined(ARDENT))
+#if defined(CRAY) || defined(ARDENT) || defined(WIN32)
 
 #define NICEFTN_     NICEFTN
 #define NODEID_      NODEID

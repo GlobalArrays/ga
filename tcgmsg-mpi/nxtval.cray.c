@@ -8,10 +8,17 @@ long nxtval_counter=0;
 #define INCR 1                 /* increment for NXTVAL */
 #define BUSY -1L               /* indicates somebody else updating counter*/
 
+/* on j90 shmem barrier appaers to be broken */
+#if defined(CRAY_T3D) || defined(_CRAYMPP)
+#define SYNC barrier()
+#else
+#define SYNC MPI_Barrier(MPI_COMM_WORLD)
+#endif
 
 
-Int NXTVAL_(mproc)
-     Int  *mproc;
+
+Integer NXTVAL_(mproc)
+     Integer  *mproc;
 /*
   Get next value of shared counter.
 
@@ -33,10 +40,10 @@ Int NXTVAL_(mproc)
      }
 
      if (*mproc < 0) {
-           barrier();
+           SYNC;
            /* reset the counter value to zero */
            if( NODEID_() == server) nxtval_counter = 0;
-           barrier();
+           SYNC;
      }
      if (*mproc > 0) {
 
@@ -53,6 +60,7 @@ Int NXTVAL_(mproc)
            shmem_get(&local,&nxtval_counter,1,0);
            local +=INCR;
            shmem_put(&nxtval_counter,&local,1,0);
+           shmem_quiet();
 #          pragma _CRI endguard NXTVAL_GUARD
 
 #       endif
@@ -68,10 +76,10 @@ Int NXTVAL_(mproc)
       return 0;
     }
     else
-      Error("nxtval: sequential version with silly mproc ", (Int) *mproc);
+      Error("nxtval: sequential version with silly mproc ", (Integer) *mproc);
   }
 
-  return (Int)local;
+  return (Integer)local;
 }
 
 /*\ initialization for nxtval -- called in PBEGIN

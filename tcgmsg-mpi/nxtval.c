@@ -10,16 +10,16 @@ long nxtval_counter=0;
 
 void NextValueServer()
 {
-  Int  cnt     = 0;            /* actual counter */
-  Int  ndone   = 0;            /* no. finished for this loop */
+  Integer  cnt     = 0;            /* actual counter */
+  Integer  ndone   = 0;            /* no. finished for this loop */
   int  type    = TYPE_NXTVAL;  /* message type */
-  Int  buf[LEN];               /* buffer to get values */
-  Int  mproc;                  /* no. of processes running loop */
-  Int  nval;                   /* no. of values requested */
+  Integer  buf[LEN];               /* buffer to get values */
+  Integer  mproc;                  /* no. of processes running loop */
+  Integer  nval;                   /* no. of values requested */
   int  done_list[MAX_PROCESS]; /* list of processes finished with this loop */
   int  lenmes, nodefrom;
   int  node;
-  Int  ntermin=0;
+  Integer  ntermin=0;
   MPI_Status status;
 
 
@@ -32,7 +32,7 @@ void NextValueServer()
     nodefrom = status.MPI_SOURCE;
 
     if (lenmes != LEN) {
-      Error("NextValueServer: lenmes != LEN", (Int) lenmes);
+      Error("NextValueServer: lenmes != LEN", (Integer) lenmes);
       return;   /* Never actually gets here as does long jump */
     }
 
@@ -90,8 +90,8 @@ void NextValueServer()
 }
 
 
-Int NXTVAL_(mproc)
-     Int  *mproc;
+Integer NXTVAL_(mproc)
+     Integer  *mproc;
 /*
   Get next value of shared counter.
 
@@ -102,7 +102,7 @@ Int NXTVAL_(mproc)
 
 */
 {
-  Int  buf[2];
+  Integer  buf[2];
   MPI_Status status;
   int  type = TYPE_NXTVAL;
 
@@ -136,7 +136,7 @@ Int NXTVAL_(mproc)
       return 0;
     }
     else
-      Error("nxtval: sequential version with silly mproc ", (Int) *mproc);
+      Error("nxtval: sequential version with silly mproc ", (Integer) *mproc);
   }
 
   return 0;

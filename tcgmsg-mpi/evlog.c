@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.c,v 1.1 1995-10-12 00:06:22 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/evlog.c,v 1.2 1999-06-08 21:08:28 d3h325 Exp $ */
 
 /* Event logging routine with key driven varargs interface */
 

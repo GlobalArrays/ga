@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/msgtypesc.h,v 1.1 1995-10-12 00:06:35 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/msgtypesc.h,v 1.2 1999-06-08 21:08:31 d3h325 Exp $ */
 
 #ifndef MSGTYPES_H_
 #define MSGTYPES_H_

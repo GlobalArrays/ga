@@ -72,8 +72,8 @@ void ArenaAttach(arena_t id)
 
 
 
-Int NXTVAL_(mproc)
-     Int  *mproc;
+Integer NXTVAL_(mproc)
+     Integer  *mproc;
 /*
   Get next value of shared counter.
 
@@ -125,10 +125,10 @@ Int NXTVAL_(mproc)
       return 0;
     }
     else
-      Error("nxtval: sequential version with silly mproc ", (Int) *mproc);
+      Error("nxtval: sequential version with silly mproc ", (Integer) *mproc);
   }
 
-  return (Int)local;
+  return (Integer)local;
 }
 
 /*\ initialization for nxtval -- called in PBEGIN

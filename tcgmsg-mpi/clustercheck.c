@@ -1,6 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef WIN32
+#include <winsock.h>
+#else
 #include <unistd.h>
+#endif
 #include <mpi.h>
 
 #define HOSTNAME_LEN 128 

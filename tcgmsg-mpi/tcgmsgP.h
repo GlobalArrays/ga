@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "srftoc.h"
+#include "sndrcv.h"
 
 #define MAX_PROCESS 1024
 #define TYPE_NXTVAL 33333
@@ -8,7 +8,8 @@
 extern MPI_Comm TCGMSG_Comm;
 extern int      SR_parallel;
 extern int      SR_single_cluster;
-extern Int      DEBUG_;
+extern Integer      DEBUG_;
+extern int       _tcg_initialized;
 
 #ifdef  EXT_INT
 #  define TCG_INT MPI_LONG

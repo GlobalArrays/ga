@@ -1,4 +1,4 @@
-/* Use Intel NX hrecv to implement NXTVAL */ 
+/* Use Integerel NX hrecv to implement NXTVAL */ 
 
 #include <stdio.h>
 #include "sndrcv.h"
@@ -42,7 +42,7 @@ void install_nxtval()
 }
 
 
-Int NXTVAL_(mproc)
+Integer NXTVAL_(mproc)
      long *mproc;
 /*
   Get next value of shared counter.
