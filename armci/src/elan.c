@@ -1,4 +1,4 @@
-/* $Id: elan.c,v 1.17 2003-04-03 23:56:16 d3h325 Exp $ */
+/* $Id: elan.c,v 1.18 2003-04-10 00:16:10 d3h325 Exp $ */
 #include <elan/elan.h>
 #include <elan3/elan3.h>
 #include <stdio.h>
@@ -7,6 +7,12 @@
 #include "copy.h"
 
 #define DEBUG_ 0
+
+#if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,4,6) 
+#   define VCALLS 0
+#else
+#   define VCALLS 1
+#endif
 
 #ifdef ELAN_ACC
 static int armci_server_terminating=0;
@@ -43,10 +49,15 @@ static ops_t *ops_done_ar;
         elan_wait(elan_get(elan_base->state,src,dst,len,p),elan_base->waitType)
 #endif
 
+#if QSNETLIBS_VERSION_CODE >= QSNETLIBS_VERSION(1,4,6)
+static ELAN_PGCTRL *_pgctrl;
+static void *_qd;
+#endif
  
 
 void armci_init_connections()
 {
+
 ELAN_QUEUE *q;
 int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
 
@@ -60,6 +71,15 @@ int nslots=armci_nproc+562, slotsize=_ELAN_SLOTSIZE;
 #else
     if (!(mq = elan_mainQueueInit( elan_base->state, q, nslots, slotsize,
           0)))armci_die("Failed to initialise Main Q",0);
+    _qd = elan_gallocElan(elan_base, elan_base->allGroup, E3_QUEUE_ALIGN,
+                              elan_pgvGlobalMemSize(elan_base->state));
+
+    if(!_qd) armci_die("failed elan_gallocElan 1",0);
+    elan_gsync(elan_base->allGroup);
+    _pgctrl = elan_putgetInit(elan_base->state, _qd, 16, 4096, 4096, 32, ELAN_PGVINIT);
+    if(!_pgctrl) armci_die("failed elan_gallocElan 2",0);
+    printf("%d passed putgetInit\n",armci_me); fflush(stdout);
+    elan_gsync(elan_base->allGroup);
 #endif
 
     if(armci_me == armci_master) {
@@ -341,6 +361,63 @@ ELAN_LOCK *rem_locks = (ELAN_LOCK*)(all_locks + proc*num_locks);
 #endif
 
 /************************************************************************/
+#if VCALLS 
+
+#define MAX_VECS 600
+static void* _src[MAX_VECS], *_dst[MAX_VECS];
+void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+int _j, issued=0;
+char *ps=src_ptr, *pd=dst_ptr;
+
+    
+#if 0
+    printf("%d: getv %d\n", armci_me, count); fflush(stdout);
+#endif
+    for (_j = 0;  _j < count;  _j++ ){
+        _src[issued] = ps;
+        _dst[issued] = pd;
+        ps += src_stride;
+        pd += dst_stride;
+        issued++;
+        if(issued == MAX_VECS){
+           elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),100);
+           issued=0;
+        } 
+    }
+    if(issued)elan_wait(elan_getv(_pgctrl,_src,_dst,bytes,issued,proc),100);
+}
+
+void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+int _j, issued=0;
+char *ps=src_ptr, *pd=dst_ptr;
+
+#if 0
+    printf("%d: putv %d\n", armci_me, count); fflush(stdout);
+#endif
+
+    for (_j = 0;  _j < count;  _j++ ){
+        _src[issued] = ps;
+        _dst[issued] = pd;
+        ps += src_stride;
+        pd += dst_stride;
+        issued++;
+        if(issued == MAX_VECS){
+           elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),100);
+           issued=0;
+        }
+    }
+    if(issued)elan_wait(elan_putv(_pgctrl,_src,_dst,bytes,issued,proc),100);
+}
+
+void armcill_wait_get(){}
+void armcill_wait_put(){}
+
+#else
+
 #ifdef _ELAN_PUTGET_H
 
 /* might have to use MAX_SLOTS<MAX_PENDING due to throttling a problem in Elan*/
@@ -404,6 +481,7 @@ char *ps=src_ptr, *pd=dst_ptr;
 
 
 
+
 /*\ strided get, nonblocking
 \*/
 void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
@@ -444,7 +522,6 @@ char *ps=src_ptr, *pd=dst_ptr;
 #endif
 }
 
-
 void armcill_wait_get()
 {
 int i;
@@ -470,3 +547,5 @@ int i;
 }
 
 #endif
+#endif
+
