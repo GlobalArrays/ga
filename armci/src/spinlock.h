@@ -62,7 +62,7 @@ double  lock[DBL_PAD];
 #define PAD_LOCK_T pad_lock_t
 
 #if defined(__GNUC__)
-#   define inline 
+#   define INLINE inline 
 #else
 #   define INLINE 
 #endif
