@@ -3,7 +3,7 @@ This is an implementation of the TCGMSG library on top of MPI.
 Heteregenous platforms are currently not supported.
 
 The TCGSMG nxtval operation is implemented by either using
-shared/global memory, interrupt-receive, of with a "hidden process".
+shared/global memory, interrupt-receive, or with a "hidden process".
 
 In the latter case, the  number of processes TCGMSG application
 is able to use is equal to the size of MPI_GROUP_WORLD minus one.

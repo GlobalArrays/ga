@@ -14,12 +14,9 @@ else
 endif
 endif
 
-ifndef MPI_LIB
-        ERRMSG +=  "You must define location of MPI library(ies) -- MPI_LIB\\n"
-endif
 
-ifndef MPI_INCLUDE
-	ERRMSG += "You must define location of MPI include files -- MPI_INCLUDE"
+ifdef MPI_INCLUDE
+       GLOB_INCLUDES = -I$(MPI_INCLUDE)
 endif
 
 
@@ -37,7 +34,7 @@ LIB_DISTRIB = ../lib
 
 # name of MPI library
 ifndef LIBMPI
-  LIBMPI  = libmpi.a
+  LIBMPI  = -lmpi
 endif
 
 
@@ -56,7 +53,6 @@ endif
       ARFLAGS = r
     MAKEFLAGS = -j 1
         MKDIR = mkdir
-GLOB_INCLUDES = -I$(MPI_INCLUDE)
  GLOB_DEFINES = -D$(MACHINE)
 
   
@@ -120,6 +116,35 @@ ifeq ($(MACHINE),KSR)
    EXTRA_LIBS = -lrpc -para
 endif
 
+#................................ HP ......................................
+ifeq ($(TARGET),HPUX)
+           CC = gcc
+           FC = fort77
+          CPP = /lib/cpp
+     FOPT_REN = +ppu
+ GLOB_DEFINES = -DHPUX -DEXTNAME
+    EXTRA_OBJ = memalign.o
+endif
+
+#................................ CONVEX ...................................
+ifeq ($(TARGET),CONVEX-SPP)
+           FC = fc
+          CPP = /lib/cpp
+    ifeq ($(FOPT),-O)
+        FOPT = -O1
+    endif
+    ifeq ($(FOPT),-g)
+        FOPT = -no
+    endif
+    ifeq ($(COPT),-g)
+        COPT = -no
+    endif
+     COPT_REN = -or none
+     FOPT_REN = -ppu -or none
+ GLOB_DEFINES = -DCONVEX -DHPUX -DEXTNAME
+    EXTRA_OBJ = memalign.o
+endif
+
 #................................ SGI ......................................
 #
 ifeq ($(MACHINE),SGI)
@@ -127,7 +152,6 @@ ifeq ($(MACHINE),SGI)
 # SGI running IRIX 5.XX
 #
  GLOB_DEFINES = -DSGI
-   MPI_DEVICE = lib/IRIX/ch_shmem
 endif
 
 #............................. SGI Power Challenge ..........................
@@ -208,10 +232,10 @@ endif
 
       DEFINES = $(GLOB_DEFINES) $(LOC_DEFINES)
      INCLUDES = $(GLOB_INCLUDES) $(LOC_INCLUDES)
-       FFLAGS = $(FOPT) $(FOPT_REN) $(INCLUDES) $(DEFINES)
-       CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES)
-       FLDOPT = $(FOPT) $(FLD_REN)
-       CLDOPT = $(COPT) $(CLD_REN)
+       FFLAGS = $(FOPT) $(FOPT_REN) $(INCLUDES)
+       CFLAGS = $(COPT) $(COPT_REN) $(INCLUDES) $(DEFINES) $(CDEFS)
+       FLDOPT = $(FOPT) $(FOPT_REN) $(FLD_REN)
+       CLDOPT = $(COPT) $(COPT_REN) $(CLD_REN)
 
 OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
       collect.o		misc.o		p2p.o		pfilecopy.o\
@@ -224,7 +248,11 @@ OBJ = checkbyte.o	drand48.o	pbeginf.o	sizeof.o\
 
 include ../config/makelib.h
 
-LIBS = $(MPI_LIB)/$(LIBMPI) $(EXTRA_LIBS)
+ifdef MPI_LIB
+      LIBS = -L$(MPI_LIB)
+endif
+
+LIBS += $(LIBMPI) $(EXTRA_LIBS)
 
 all:	test.x testf.x
 

@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.1 1995-10-12 00:06:48 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.2 1996-03-20 01:08:54 d3h325 Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -23,7 +23,7 @@ void PBEGINF_()
 */
 {
   extern char *strdup();
-#if defined(SUNF77_2) || defined(PARAGON) 
+#if defined(SUNF77_2) || defined(PARAGON) || (defined(CONVEX) && defined (HPUX))
   extern int iargc_();
   extern void getarg_();
   int argc = iargc_() + 1;
@@ -40,7 +40,7 @@ void PBEGINF_()
   char *argv[256], arg[256];
 
   for (i=0; i<argc; i++) {
-#if defined(SUNF77_2) || defined(PARAGON)
+#if defined(SUNF77_2) || defined(PARAGON) || (defined(CONVEX) && defined (HPUX))
     getarg_(&i, arg, maxlen);
     for(len = maxlen-2; len && (arg[len] == ' '); len--);
     len++;
