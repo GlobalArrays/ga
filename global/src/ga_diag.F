@@ -69,10 +69,10 @@ c
       endif
 c
       n = dimA1
-c     if (n .lt. 128) then
-c        call ga_diag_seq(g_a, g_s, g_v, eval)
-c        return
-c     endif
+c$$$      if (n .lt. 128) then
+c$$$         call ga_diag_std_seq(g_a,  g_v, eval)
+c$$$         return
+c$$$      endif
 c
       call ga_sync()
 c
