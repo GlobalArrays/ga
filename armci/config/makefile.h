@@ -188,6 +188,22 @@ ifeq  ($(_CPU),x86_64)
         FOPT_REN  += -funroll-loops -fstrength-reduce -mfpmath=sse 
   endif
 endif
+ifeq  ($(_CPU),ppc64)
+  GLOB_DEFINES += -DNEED_MEM_SYNC
+  ifeq ($(_CC),xlc)
+     COPT_REN = -q64  -qlanglvl=extended
+  endif
+  ifeq ($(_FC),xlf)
+     FOPT_REN = -q64 -qEXTNAME
+  endif
+
+  ifeq ($(_FC),gcc)
+        COPT_REN  += -m64 -maix64
+  endif
+  ifeq ($(_FC),g77)
+        FOPT_REN  += -m64 -maix64 -funroll-loops -fstrength-reduce 
+  endif
+endif
 #----------------------------- Fujitsu ------------------------------
 ifeq ($(TARGET),FUJITSU-VPP)
            FC = frt
