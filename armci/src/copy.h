@@ -3,6 +3,9 @@
 #ifdef WIN32
 #  include <string.h>
 #endif
+#ifdef DECOSF
+#include <c_asm.h>
+#endif
 
 #ifdef NOFORT
 #  define MEMCPY
@@ -32,7 +35,9 @@
 #     define UPDATE_FENCE_STATE(p, op, nissued) 
 #   else
       int cmpl_proc;
-#     define FENCE_NODE(p) if(cmpl_proc == (p)){ shmem_quiet(); cmpl_proc=-1;}
+#     define FENCE_NODE(p) if(cmpl_proc == (p)){\
+             if(((p)<armci_clus_first)||((p)>armci_clus_last))shmem_quiet();\
+             else asm ("mb"); }
 #     define UPDATE_FENCE_STATE(p, op, nissued) if((op)==PUT) cmpl_proc=(p);
 #   endif
 
@@ -71,13 +76,13 @@ void FATR DCOPY1D(void*, void*, int*);
 
 #if defined(QUADRICS)
 #      define armci_put(src,dst,n,proc)\
-           if(proc==armci_me){\
+           if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
               armci_copy(src,dst,n);\
-           } else { shmem_int_put((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
+           } else { shmem_putmem((dst),(src),(int)(n),(proc));}
 #      define armci_get(src,dst,n,proc) \
-          if(proc==armci_me){\
+           if(((proc)<=armci_clus_last) && ((proc>= armci_clus_first))){\
              armci_copy(src,dst,n);\
-          } else { shmem_int_get((int*)(dst),(int*)(src),(int)(n)/sizeof(int),(proc));}
+           } else { shmem_getmem((dst),(src),(int)(n),(proc));}
 
 #elif defined(CRAY_T3E)
 #      define armci_copy_disabled(src,dst,n)\

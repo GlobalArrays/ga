@@ -3,7 +3,7 @@
 
 
 /* data structure for locking memory areas */
-#define MAX_SLOTS 16
+#define MAX_SLOTS 8
 typedef struct{
     void *start;
     void *end;

@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.30 2000-10-20 18:22:40 d3h325 Exp $ */
+/* $Id: strided.c,v 1.31 2001-04-13 19:05:12 d3h325 Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -203,6 +203,22 @@ void (ATR *func)(void*, int*, int*, void*, int*, void*, int*);
 }
 
 
+static void 
+armci_lockmem_patch(void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels, int proc)
+{
+    int  i, *buf_stride_arr = armci_iwork;
+    long span = count[stride_levels];
+
+    /* compute range of data to lock AND stride array for data in buffer*/
+    buf_stride_arr[0]=count[0];
+    for(i=0; i< stride_levels; i++) {
+         span *= dst_stride_arr[i];
+         buf_stride_arr[i+1]= buf_stride_arr[i]*count[i+1];
+    }
+    /* lock region of remote memory */
+    ARMCI_LOCKMEM(dst_ptr, span + (char*)dst_ptr, proc);
+}
+
 
 /*\ strided accumulate on top of remote memory copy:
  *  copies remote data to local buffer, accumulates, puts it back 
@@ -213,23 +229,21 @@ int armci_acc_copy_strided(int optype, void* scale, int proc,
 		                  void* dst_ptr, int dst_stride_arr[], 
                                   int count[], int stride_levels)
 {
-    int  *buf_stride_arr = armci_iwork; 
     void *buf_ptr = armci_internal_buffer;
-    int  rc, i, span = count[stride_levels];
+    int  rc, i, *buf_stride_arr = armci_iwork;
 
-    /* compute range of data to lock AND stride array for data in buffer*/
+    armci_lockmem_patch(dst_ptr,dst_stride_arr, count, stride_levels, proc);
+
+    /* setup stride array for internal buffer */
     buf_stride_arr[0]=count[0];
     for(i=0; i< stride_levels; i++) {
-         span *= dst_stride_arr[i];
          buf_stride_arr[i+1]= buf_stride_arr[i]*count[i+1];
     }
-
-    /* lock region of remote memory */
-    ARMCI_LOCKMEM(dst_ptr, span + (char*)dst_ptr, proc);
 
     /* get remote data to local buffer */
     rc = armci_op_strided(GET, scale, proc, dst_ptr, dst_stride_arr, 
                           buf_ptr, buf_stride_arr, count, stride_levels, 0);
+
     if(rc) { ARMCI_UNLOCKMEM(proc); return(rc); }
 
     /* call local accumulate with lockit=0 (we locked it already) and proc=me */
@@ -257,9 +271,7 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
                      int count[], int stride_levels, int lockit)
 {
     char *src = (char*)src_ptr, *dst=(char*)dst_ptr;
-    int s2, s3;
-
-    int i, j;
+    int s2, s3, i,j, unlockit=0;
     int total_of_2D;
     int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
     
@@ -277,6 +289,12 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
          else; /* do it directly through shared/local memory */
 #   endif
 
+      if(ACC(op) && (stride_levels>2) && lockit){
+         /* we need one lock operation only - must be done outside 2d acc */
+         armci_lockmem_patch(dst_ptr,dst_stride_arr, count, stride_levels, proc);
+         unlockit=1;
+         lockit =0;
+      }
 
 /*    if(proc!=armci_me) INTR_OFF;*/
 
@@ -355,6 +373,14 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr, int src_stride
 #endif
 
 /*    if(proc!=armci_me) INTR_ON;*/
+
+    if(unlockit){
+#      if defined(ACC_COPY)
+          FENCE_NODE(proc); 
+#      endif
+       ARMCI_UNLOCKMEM(proc);    /* release memory lock */
+    }
+
     return 0;
 }
 
