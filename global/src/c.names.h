@@ -177,6 +177,9 @@
 #define  ga_cluster_nnodes_        GA_CLUSTER_NNODES
 #define  ga_cluster_nprocs_        GA_CLUSTER_NPROCS
 #define  ga_cluster_procid_        GA_CLUSTER_PROCID
+#define  ga_dgemm_                 GA_DGEMM
+#define  ga_sgemm_                 GA_SGEMM
+#define  ga_zgemm_                 GA_ZGEMM
 
 #elif defined(F2C2_)
 
@@ -356,6 +359,9 @@
 #define  ga_cluster_nnodes_        ga_cluster_nnodes__
 #define  ga_cluster_nprocs_        ga_cluster_nprocs__
 #define  ga_cluster_procid_        ga_cluster_procid__
+#define  ga_dgemm_                 ga_dgemm__
+#define  ga_sgemm_                 ga_sgemm__
+#define  ga_zgemm_                 ga_zgemm__
 
 #endif
 
