@@ -1,5 +1,5 @@
-#define BASE_NAME  "da.try"
-#define BASE_NAME1 "da1.try"
+#define BASE_NAME  "/scratch/da.try"
+#define BASE_NAME1 "/scratch/da1.try"
 #  define FNAME   BASE_NAME
 #  define FNAME1  BASE_NAME1
 
@@ -11,11 +11,22 @@
 #include "dra.h"
 #include "sndrcv.h"
 #include "srftoc.h"
-
+/*
 #define NDIM 3
-#define SIZE 20
-#define NSIZE 8000
-#define LSIZE 64000
+#define SIZE 250
+#define NSIZE 15625000
+#define LSIZE 125000000
+
+#define NDIM 2
+#define SIZE 4000
+#define NSIZE 16000000
+#define LSIZE 64000000
+*/
+#define NDIM 1
+#define SIZE 16000000
+#define NSIZE 16000000
+#define LSIZE 32000000
+
 #define MAXDIM 7
 #define TRUE (logical)1
 #define FALSE (logical)0
@@ -27,7 +38,7 @@
 #    define USEMULTFILES 1
 #  endif
 #else
-#  define USEMULTFILES 1
+#  define USEMULTFILES 0
 #endif
 
 #define IA 16807
@@ -83,8 +94,8 @@ void test_io_dbl()
   char filename[80], filename1[80];
   logical status;
  
-  n = pow(NSIZE,1.0/ndim)+0.5;
-  m = pow(LSIZE,1.0/ndim)+0.5;
+  n = (int)(pow(NSIZE,1.0/(double)ndim)+0.5);
+  m = (int)(pow(LSIZE,1.0/(double)ndim)+0.5);
 
   loop  = 30;
   req = -1;
@@ -92,7 +103,7 @@ void test_io_dbl()
   me    = GA_Nodeid();
 
   if (me == 0) {
-    printf("Creating global arrays %d",n);
+    printf("Creating temporary global arrays %d",n);
     for (i=1; i<ndim; i++) {
       printf(" x %d",n);
     }
@@ -155,24 +166,26 @@ void test_io_dbl()
     filename[ilen+3] = '\0';
   }
 #endif
+  GA_Sync();
   if (NDRA_Create(MT_DBL, ndim, dims, "A", filename, DRA_RW,
-      reqdims, &d_a) != 0) GA_Error("NDRA_Create failed: ",0);
+      reqdims, &d_a) != 0) GA_Error("NDRA_Create failed(d_a): ",0);
   if (me == 0) printf("alligned blocking write\n");
   fflush(stdout);
   tt0 = tcgtime_();
-  if (NDRA_Write(g_a, d_a, &req) != 0) GA_Error("NDRA_Write failed:",0);
-  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
+  if (NDRA_Write(g_a, d_a, &req) != 0) GA_Error("NDRA_Write failed(d_a):",0);
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed(d_a): ",req);
   tt1 = tcgtime_() - tt0;
   mbytes = 1.e-6 * (double)(pow(n,ndim));
   if (me == 0) {
-    printf("%11.2f MB  time = %f11.2 rate = %f11.3 MB/s\n",
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
   }
 
-  if (DRA_Close(d_a) != 0) GA_Error("DRA_Close failed: ",d_a);
+  if (DRA_Close(d_a) != 0) GA_Error("DRA_Close failed(d_a): ",d_a);
   tt1 = tcgtime_() - tt0;
   if (me == 0) {
-    printf("%11.2f MB  time = %f11.2 rate = %f11.3 MB/s\n",
+    printf("Time including DRA_Close\n");
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
   }
 
@@ -212,7 +225,7 @@ void test_io_dbl()
   }
 #endif
   if (NDRA_Create(MT_DBL, ndim, dims, "B", filename1, DRA_RW,
-      reqdims, &d_b) != 0) GA_Error("NDRA_Create failed: ",0);
+      reqdims, &d_b) != 0) GA_Error("NDRA_Create failed(d_b): ",0);
 
   if (me == 0) printf("non alligned blocking write\n");
   if (me == 0) fflush(stdout);
@@ -228,18 +241,19 @@ void test_io_dbl()
                          d_b, dlo, dhi, &req) != 0)
       GA_Error("ndra_write_section failed:",0);
 
-  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
+  if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed(d_b): ",req);
   tt1 = tcgtime_() - tt0;
   mbytes = 1.e-6*(double)(pow(n,ndim));
   if (me == 0) {
-    printf("%11.2f MB  time = %f11.2 rate = %f11.3 MB/s\n",
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
   }
 
-  if (DRA_Close(d_b) != 0) GA_Error("DRA_Close failed: ",d_b);
+  if (DRA_Close(d_b) != 0) GA_Error("DRA_Close failed(d_b): ",d_b);
   tt1 = tcgtime_() - tt0;
   if (me == 0) {
-    printf("%11.2f MB  time = %f11.2 rate = %f11.3 MB/s\n",
+    printf("Time including DRA_Close\n");
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
   }
 
@@ -259,7 +273,7 @@ void test_io_dbl()
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",req);
   tt1 = tcgtime_() - tt0;
   if (me == 0) {
-    printf("%11.2f MB  time = %f11.2 rate = %f11.3 MB/s\n",
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
   }
   plus = 1.0;
@@ -285,7 +299,7 @@ void test_io_dbl()
   if (DRA_Wait(req) != 0) GA_Error("DRA_Wait failed: ",&req);
   tt1 = tcgtime_() - tt0;
   if (me == 0) {
-    printf("%11.2f MB  time = %f11.2 rate = %f11.3 MB/s\n",
+    printf("%11.2f MB  time = %11.2f rate = %11.3f MB/s\n",
         mbytes,tt1,mbytes/tt1);
   }
   GA_Add(&plus, g_a, &minus, g_b, g_b);
