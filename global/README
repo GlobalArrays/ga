@@ -38,7 +38,8 @@ MAKEFILES
    called in the directory above.
 
 
-BUILDING GA
+BUILDING GA 
+   (http://www.emsl.pnl.gov/docs/global/um/build.html)
 
    You need GNU make (version > 3.68) to build this software.
 
