@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.15 2003-09-06 01:29:19 edo Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/pbeginf.c,v 1.16 2004-01-17 01:39:04 edo Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -22,7 +22,7 @@ extern void FATR getarg_( NTYPE *, char*, int, NTYPE*);
 #define FATR 
 #endif
 
-#if defined(__crayx1) || defined(IFCV8)
+#if defined(__crayx1) 
 #define getarg_  pxfgetarg_
 #define IARGC  ipxfargc_
 #define NTYPE  int 
