@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.114 2005-02-22 22:47:08 manoj Exp $
+#$Id: makefile.h,v 1.115 2005-02-23 00:19:50 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -21,6 +21,11 @@
           _CC = $(notdir $(CC))
       COPT_NO = -g
       FOPT_NO = -g
+
+# enable -Wall when using GNU compilers
+ifdef USE_GNU_WALL
+   WALL = -Wall
+endif
 
 #-------------------------- Cygwin/Cygnus: GNU on Windows ------------
 ifeq ($(TARGET),CYGNUS) 
@@ -118,7 +123,7 @@ endif
 ifeq ($(_CC),gcc)
     ifeq ($(COPT),-O)
        COPT = -O2 -finline-functions -funroll-loops
-       COPT_REN += -Wall $(OPT_ALIGN)
+       COPT_REN += $(WALL) $(OPT_ALIGN)
     endif
 else
     EXTRA_OBJ += tas.o
@@ -237,7 +242,7 @@ ifeq  ($(_CPU),ia64)
   ifeq ($(_CC),gcc)
       COPT_NO = -g -O0
       COPT= -O0 -g
-      COPT_REN += -Wall
+      COPT_REN += $(WALL)
   endif
   ifeq ($(_CC),ecc)
      COPT_REN= -w1 #-fno-alias    
