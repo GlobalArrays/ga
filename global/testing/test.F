@@ -1,13 +1,17 @@
-c $Id: test.F,v 1.35 2000-11-04 01:47:15 d3h325 Exp $
+c $Id: test.F,v 1.36 2001-05-07 22:57:27 llt Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
 #elif defined(FUJITSU)
 # define THRESH 1d-12
+# define THRESHF 1e-7
 #else
 # define THRESH 1d-13
+# define THRESHF 1e-5
 #endif
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
+#define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF 
+
 
       program main
       implicit none
@@ -33,6 +37,7 @@ c     There are 2 choices: ga_initialize or ga_initialize_ltd.
 c     In the first case, there is no explicit limit on memory usage.
 c     In the second, user can set limit (per processor) in bytes.
 c
+      print*
       call ga_initialize()
       nproc = ga_nnodes()
       me = ga_nodeid()
@@ -90,6 +95,18 @@ c
 
       call check_int()
 c
+c
+c***  Check support for Float arrays
+c
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' CHECKING FLOAT  '
+         write(6,*)
+         call ffflush(6)
+      endif
+ 
+      call check_flt() 
+c
 c     
       if (me.eq.0) then
          write(6,*)
@@ -130,7 +147,7 @@ c
 #include "testutil.fh"
 c     
       integer n,m
-      parameter (n = 120)
+      parameter (n = 128)
       parameter (m = 2*n)
       double precision a(n,n), b(n,n), v(m),w(m)
       integer iv(m), jv(m)
@@ -189,6 +206,7 @@ c
          call ffflush(6)
       endif
       call ga_zero(g_a)
+
 c
 c     Check that it is indeed zero
 c
@@ -1535,6 +1553,558 @@ c
 c     
       end
 
+c---------------------------------------------------------------------
+
+      subroutine check_flt()
+      implicit none
+#include "mafdecls.fh"
+#include "global.fh"
+#include "testutil.fh"
+      integer n, m
+      parameter (n =128) 
+      parameter (m=2*n)
+      real a(n,n), b(n,n), v(m), w(m)
+      integer iv(m), jv(m)
+      logical status
+      integer g_a, g_b
+      integer iran, i, j, loop, nloop, maxloop, ilo, ihi, jlo, jhi, itmp
+      integer nproc, me, int, ij, inc, dimi,dimj,iproc, ii, jj
+      double precision nwords
+      parameter (maxloop = 100)
+      integer maxproc
+      parameter (maxproc = 128)
+      integer map(5,maxproc), found, np,k
+      double precision crap
+      real x, sum1, sum2
+      integer buf
+      intrinsic int
+      iran(i) = int(util_drand(0)*real(i)) + 1
+
+      nproc = ga_nnodes()
+      me    = ga_nodeid()
+      nloop = Min(maxloop,n)
+c     
+c     a() is a local copy of what the global array should start as
+c
+      do j = 1, n
+         do i = 1, n
+            a(i,j) = i-1 + (j-1)*n
+            b(i,j) = -1.
+         enddo
+      enddo
+
+c     
+c     Create a global array
+c
+      if (.not. ga_create(MT_REAL, n, n, 'a', 0, 0, g_a)) then
+         write(6,*) ' ga_create failed'
+         call ffflush(6)
+         call ga_error('... exiting ',0)
+      endif
+c
+c     check if handle is valid. be quiet unless error
+C
+      if(.not.ga_valid_handle(g_a)) call ga_error("invalid handle",g_a)
+c
+      call ga_distribution(g_a,me,ilo, ihi, jlo, jhi)
+      call ga_sync()      
+c     
+c     Zero the array
+c
+      if (me .eq. 0) then
+         write(6,21) 
+ 21      format(/'> Checking zero ... ')          
+         call ffflush(6)
+      endif
+      call ga_zero(g_a)
+c
+c     Check that it is indeed zero
+c
+      call ga_get(g_a, 1, n, 1, n, b, n)
+      call ga_sync()
+      do i = 1, n
+         do j = 1, n
+            if (b(i,j) .ne. 0.0) then
+               write(6,*) ' zero ', me, i, j, b(i,j)
+               call ffflush(6)
+               call ga_error('... exiting ',0)
+            endif
+         enddo
+      enddo
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' ga_zero is OK'
+         write(6,*)
+      endif
+      call ga_sync()
+c
+c     Each node fills in disjoint sections of the array
+c
+      if (me .eq. 0) then
+         write(6,2) 
+ 2       format(/'> Checking disjoint put ... ')   
+         call ffflush(6)
+      endif
+      call ga_sync()
+c
+      inc = (n-1)/20 + 1
+      ij = 0
+      do j = 1, n, inc
+         do i = 1, n, inc
+            if (mod(ij,nproc) .eq. me) then
+               ilo = i
+               ihi = min(i+inc, n)
+               jlo = j
+               jhi = min(j+inc, n)
+c               write(6,4) me, ilo, ihi, jlo, jhi
+c 4             format(' node ',i2,' checking put ',4i4)
+c               call ffflush(6)
+               call ga_put(g_a, ilo, ihi, jlo, jhi, a(ilo, jlo), n)
+            endif
+            ij = ij + 1
+         enddo
+      enddo
+      call ga_sync()
+c
+c     All nodes check all of a
+c
+      call ga_get(g_a, 1, n, 1, n, b, n)
+      do i = 1, n
+         do j = 1, n
+            if (b(i,j) .ne. a(i,j)) then
+               write(6,*) ' put ', me, i, j, a(i,j),b(i,j)
+               call ffflush(6)
+               call ga_error('... exiting ',0)
+            endif
+         enddo
+      enddo
+      call ga_sync()
+c
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' ga_put is OK'
+         write(6,*)
+      endif
+c
+c     Now check nloop random gets from each node
+c
+      if (me .eq. 0) then
+         write(6,5) nloop
+ 5       format(/'> Checking random get (',i5,' calls)...')
+         call ffflush(6)
+      endif
+      call ga_sync()
+c
+      nwords = 0
+c
+      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      do loop = 1, nloop
+         ilo = iran(loop)
+         ihi = iran(loop)
+         if (ihi.lt. ilo) then
+            itmp = ihi
+            ihi = ilo
+            ilo = itmp
+         endif
+         jlo = iran(loop)
+         jhi = iran(loop)
+         if (jhi.lt. jlo) then
+            itmp = jhi
+            jhi = jlo
+            jlo = itmp
+         endif
+c     
+         nwords = nwords + (ihi-ilo+1)*(jhi-jlo+1)
+c
+         call util_ifill(n*n, 0.0d0, b, 1)
+         call ga_get(g_a, ilo, ihi, jlo, jhi, b(ilo, jlo), n)
+c
+         if (me .eq. 0 .and. mod(loop-1, max(1,nloop/20)).eq.0) then
+            write(6,1) loop, me, ilo, ihi, jlo, jhi, nwords
+ 1          format(' call ',i5, ' node ',i2,' checking get ',4i4,
+     $           ' total ',d9.2)
+            call ffflush(6)
+         endif
+c
+         sum1 = 0.0d0
+         do j = jlo, jhi
+            do i = ilo, ihi
+               sum1 = sum1 + b(i,j)
+               if (b(i,j) .ne. a(i,j)) then
+                  write(6,*) 'error ', i, j, b(i,j), a(i,j)
+                  call ffflush(6)
+                  call ga_error('... exiting ',0)
+               endif
+            enddo
+         enddo
+      enddo
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' ga_get is OK'
+         write(6,*)
+      endif
+      call ga_sync()
+c
+c     Each node accumulates into disjoint sections of the array
+c
+      if (me .eq. 0) then
+         write(6,9)
+ 9       format(/'> Checking accumulate ... ')
+         call ffflush(6)
+      endif
+      call ga_sync()
+
+c
+      crap = util_drand(12345)       ! Same seed for each process
+      do j = 1, n
+         do i = 1, n
+c           b(i,j) = real(util_drand(0))
+            b(i,j) = i+j
+         enddo
+      enddo
+c
+      inc = (n-1)/20 + 1
+      ij = 0
+      do j = 1, n, inc
+         do i = 1, n, inc
+c           x = real(util_drand(0))
+            x = 10.
+            ilo = i
+            ihi = min(i+inc-1, n)
+            if(ihi.eq.n-1)ihi=n
+c           ihi = min(i+inc, n)
+            jlo = j
+            jhi = min(j+inc-1, n)
+            if(jhi.eq.n-1)jhi=n
+c           jhi = min(j+inc-1, n)
+*               call ffflush(6)
+            if (mod(ij,nproc) .eq. me) then
+c               print *, me, 'checking accumulate ',ilo,ihi,jlo,jhi,x
+* 11            format(' node ',i2,' checking accumulate ',4i4)
+*               call ffflush(6)
+               call ga_acc(g_a, ilo, ihi, jlo, jhi, b(ilo, jlo), n, x)
+            endif
+            ij = ij + 1
+c
+c           Each process applies all updates to its local copy
+c
+            do jj = jlo, jhi
+               do ii = ilo, ihi
+                  a(ii,jj) = a(ii,jj) + x * b(ii,jj)
+               enddo
+            enddo
+         enddo
+      enddo
+      call ga_sync()                       
+c
+c     All nodes check all of a
+c
+      call ga_get(g_a, 1, n, 1, n, b, n)
+      do j = 1, n
+         do i = 1, n
+            if(MISMATCHF(b(i,j),a(i,j)))then
+               write(6,*) ' acc ', me, i, j, a(i,j), b(i,j)
+               call ffflush(6)
+               call ga_error('... exiting ',0)
+            endif
+         enddo
+      enddo
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' disjoint ga_acc is OK'
+         write(6,*)
+      endif
+c
+c     overlapping accumulate
+      call ga_sync()
+      if (.not. ga_create(MT_REAL, n, n, 'b', 0, 0, g_b)) then
+         call ga_error('ga_create failed for second array ',0)
+      endif
+c
+      call ga_zero(g_b)
+      call ga_acc(g_b, n/2, n/2, n/2, n/2, 1.0, 1, 1.0)
+      call ga_sync()
+      if (me.eq.0) then
+         call ga_get(g_b, n/2, n/2, n/2, n/2, b(1,1), 1)
+         x = abs(b(1,1) -1*nproc)
+         if(x.gt. 1e-10)then
+            write(6,*)'val=',b(1,1),' expected=',nproc, x
+            call ga_error('overlapping accumulate failed',0)
+         endif
+         write(6,*)
+         write(6,*) ' overlapping ga_acc is OK'
+         write(6,*)
+      endif
+c
+c     Check the ga_add function
+c
+      if (me .eq. 0) then
+         write(6,91)
+ 91      format(/'> Checking add ...')
+         call ffflush(6)
+      endif                           
+c
+c
+      crap = util_drand(12345)       ! Everyone has same seed
+      do j = 1, n
+         do i = 1, n
+            b(i,j) = real(util_drand(0)*real(i)) + 1
+            a(i,j) = 0.1*a(i,j) + 0.9*b(i,j)
+         enddo
+      enddo
+      if (me.eq.0) call ga_put(g_b, 1, n, 1, n, b, n)
+      call ga_add(0.1, g_a, 0.9, g_b, g_b)
+      call ga_get(g_b, 1, n, 1, n, b, n)
+      do j = 1, n
+         do i = 1, n
+            if(MISMATCHF(b(i,j), a(i,j)))then
+               write(6,*) ' add ', me, i, j, a(i,j), b(i,j)
+               call ffflush(6)
+CCC               call ga_error('... exiting ',0)
+            endif
+         enddo
+      enddo
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' add is OK '
+         write(6,*)
+      endif
+      call ga_sync()
+c
+c     Check the fdot function
+c
+      if (me .eq. 0) then
+         write(6,19)
+ 19      format(/'> Checking fdot ...')
+         call ffflush(6)
+      endif
+      crap = util_drand(12345)       ! Everyone has same seed
+      sum1 = 0.0
+      do j = 1, n
+         do i = 1, n
+            b(i,j) = util_drand(0)
+            sum1 = sum1 + a(i,j)*b(i,j)
+         enddo
+      enddo
+      if (me.eq.0) then
+         call ga_put(g_b, 1, n, 1, n, b, n)
+         call ga_put(g_a, 1, n, 1, n, a, n)
+      endif
+      call ga_sync()
+      sum2 = ga_sdot(g_a,g_b)
+      if(MISMATCHF(sum1, sum2))then
+         write(6,*) ' fdot wrong ', sum1, sum2
+         call ffflush(6)
+CCC         call ga_error('... exiting ',0)
+      else if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' fdot is OK '
+         write(6,*)
+      endif
+c
+c     Check the ga_scale function
+c
+      if (me .eq. 0) then
+         write(6,92)
+ 92      format(/'> Checking scale ...')
+         call ffflush(6)
+      endif
+      call ga_scale(g_a, 0.123)
+      call ga_get(g_a, 1, n, 1, n, b, n)
+      do j = 1, n
+         do i = 1, n
+            a(i,j) = a(i,j)*0.123
+            if (MISMATCHF(b(i,j), a(i,j)))then
+               write(6,*) ' dscal ', me, i, j, a(i,j), b(i,j)
+               call ffflush(6)
+CCC               call ga_error('... exiting ',0)
+            endif
+         enddo
+      enddo
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' scale is OK '
+         write(6,*)
+      endif
+c                                
+c     Check the ga_copy function
+c
+      if (me .eq. 0) then
+         write(6,*)
+         write(6,*)'> Checking copy'
+         write(6,*)
+         call ffflush(6)
+      endif
+      if(me.eq.0) call ga_put(g_a, 1, n, 1, n, a, n)
+      call ga_copy(g_a, g_b)
+      call ga_get(g_b, 1, n, 1, n, b, n)
+      do j = 1, n
+         do i = 1, n
+            if (b(i,j) .ne. a(i,j)) then
+               write(6,*) ' copy ', me, i, j, a(i,j), b(i,j)
+               call ffflush(6)
+               call ga_error('... exiting ',0)
+            endif
+         enddo
+      enddo
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' copy is OK '
+         write(6,*)
+      endif
+c
+      call ga_sync()
+      if (me .eq. 0) then
+         write(6,*) '> Checking scatter/gather (might be slow)... '
+         call ffflush(6)
+      endif
+      call ga_sync()
+c
+      crap = util_drand(ga_nodeid()*51 + 1) ! Different seed for each process
+      do j = 1, 10
+       call ga_sync()
+       itmp = iran(nproc)-1
+       if(me.eq.itmp) then
+         do loop = 1,m
+           ilo = iran(n)
+           jlo = iran(n)
+           iv(loop) = ilo
+           jv(loop) = jlo
+         enddo
+         call ga_gather(g_a, v, iv, jv, m)
+         do loop = 1,m
+           ilo= iv(loop)
+           jlo= jv(loop)
+           call ga_get(g_a,ilo,ilo,jlo,jlo,v(loop),1)
+           if(v(loop)  .ne. a(ilo,jlo))then
+             write(6,*)me,' gather ', ilo,',',jlo,',', a(ilo,jlo)
+     &             ,' ',v(loop)
+             call ffflush(6)
+             call ga_error('... exiting ',0)
+           endif                                     
+         enddo
+       endif
+      enddo
+c
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' gather is  OK'
+         write(6,*)
+         call ffflush(6)
+      endif
+c
+ 
+      do j = 1,10
+       call ga_sync()
+       if(me.eq.iran(ga_nnodes())-1) then
+         do loop = 1,m
+           ilo = iran(n)
+           jlo = iran(n)
+           iv(loop) = ilo
+           jv(loop) = jlo
+c          v(loop) = DSIN(a(ilo,jlo)+b(ilo,jlo))
+           v(loop) = 1.0 *(ilo+jlo)
+         enddo
+         call ga_scatter(g_a, v, iv, jv, m)
+         do loop = 1,m
+           ilo= iv(loop)
+           jlo= jv(loop)
+           call ga_get(g_a,ilo,ilo,jlo,jlo,w(loop),1)
+c          if(v(loop)  .ne. w(loop))then
+           if(w(loop)  .ne. 1.0 *(ilo+jlo) )then
+             write(6,*)me,' scatter ', ilo,',',jlo,',',w(loop)
+     &             ,' ', 1.0 *(ilo+jlo)
+             call ffflush(6)
+             call ga_error('... exiting ',0)
+           endif
+         enddo
+       endif
+       call ga_sync()
+      enddo
+c
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' scatter is  OK'
+         write(6,*)
+      endif
+c
+      call ga_sync()
+c
+c     scatter-acc available in GA ver. 3.0
+#ifdef GA3                                         
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' checking scatter-accumulate'
+         write(6,*)
+      endif
+c
+      crap = util_drand(1234)
+      call ga_zero(g_a)
+c
+      do j = 1, n
+         do i = 1, n
+            b(i,j) =0.
+         enddo
+      enddo
+c
+      x = .1d0
+      ii =n
+      do jj = 1,1
+          call ga_sync()
+        do loop = 1, ii
+ 
+c          generate unique i,j pairs
+10         continue
+              i = iran(n)
+              j=iran(n)
+           if (found(i,j, iv, jv, loop-1) ) goto 10
+
+           iv(loop) = i
+           jv(loop) = j
+           v(loop) = 1.0 *(i+j)
+           b(i,j) = b(i,j) + nproc*x*v(loop) ! update local ref. array
+        enddo
+ 
+        call ga_scatter_acc(g_a,v,iv,jv, ii,x)
+ 
+c
+        call ga_sync()
+c
+c       check the result
+c
+        call ga_get(g_a, 1, n, 1,n, a, n)
+ 
+        do loop = 1,ii
+          i = iv(loop)
+          j = jv(loop)
+          if(MISMATCH(a(i,j),b(i,j)))then
+             print *,'Error',i,j,loop,a(i,j),'expected=',b(i,j)
+*            if(me.eq.0)then
+*              do ii=1,loop
+*                   print *,'element',ii, iv(ii),jv(ii)
+*              enddo
+*            endif
+             call ga_error('scatter-acc error in trial ',jj)
+          endif
+        enddo                                 
+          call ga_sync()
+ 
+      enddo
+ 
+      call ga_sync()
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' scatter-accumulate is  OK'
+         write(6,*)
+      endif
+#endif                      
+c
+c     Delete the global array
+c
+      status = ga_destroy(g_a)
+c     
+      end
+c_____________________________________________________________
 
       subroutine check_wrappers
       implicit none
@@ -1544,6 +2114,7 @@ c
       double precision sum
       integer isum, ibuf(2)
       integer me, nproc
+      real fsum
 c
       nproc = ga_nnodes()
       me = ga_nodeid()
@@ -1591,6 +2162,25 @@ c
          write(6,*)
       endif
 c
+      call ga_sync()
+      if (me .eq. 0) then
+         write(6,*)
+         write(6,*)'> Checking ga_sgop'
+         write(6,*)
+         call ffflush(6)
+      endif
+      fsum = 1.0 * me
+      call ga_sgop(10000, fsum, 1, '+')
+      if(Int(sum).ne.((nproc-1)*nproc/2))then
+        call ga_error('ga_fgop error',Int(sum))
+      endif
+      call ga_sync()
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' ga_sgop is  OK'
+         write(6,*)
+      endif
+c                                   
       call ga_sync()
       if (me .eq. 0) then
          write(6,*)
@@ -1827,4 +2417,5 @@ c
       endif
 c
       end
+
 
