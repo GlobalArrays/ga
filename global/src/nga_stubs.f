@@ -1,3 +1,4 @@
+c $Id: nga_stubs.f,v 1.2 1999-07-28 00:18:58 d3h325 Exp $
 c This file contains stubs for n-dimensional GA operations
 c It should be linked with GA <= 2.4 to preserve backward compatibility
 c of the GA Fortran header files
