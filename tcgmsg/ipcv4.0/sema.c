@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.8 1996-05-23 22:52:27 d3g681 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sema.c,v 1.9 1996-06-28 21:36:08 d3g681 Exp $ */
 
 /*
   These routines simplify the interface to semaphores for use in mutual
@@ -625,12 +625,15 @@ static volatile int *val;
 
 #include "sndrcvP.h"
 
+extern char *getenv(const char *);
 
 long SemSetCreate(long n_sem, long value)
 {
   int i;
+  char *tmp;
+  if (!(tmp = getenv("ARENA_DIR"))) tmp = "/tmp";
 
-   sprintf(arena_name,"/tmp/tcgmsg.arena.%ld",(long)getpid()); 
+   sprintf(arena_name,"%s/tcgmsg.arena.%ld",tmp, (long)getpid()); 
 #ifdef PRIVATE_ARENA
    (void) usconfig(CONF_ARENATYPE, US_SHAREDONLY);
 #endif

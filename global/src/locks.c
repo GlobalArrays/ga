@@ -8,15 +8,19 @@ ulock_t *lock_array[NUM_LOCKS];
 static char arena_name[FILE_LEN];
 usptr_t *arena_ptr;
 
+extern char *getenv(const char *);
+
 void CreateInitLocks(long num_locks, long *lockid)
 {
 #include "types.f2c.h"
 extern Integer cluster_nodes;
 long i;
+char *tmp;
 
    if(num_locks > NUM_LOCKS) ERROR("To many locks requested", num_locks);
    *lockid = (long)getpid();
-   sprintf(arena_name,"ga.arena.%ld", *lockid);
+   if (!(tmp = getenv("ARENA_DIR"))) tmp = "/tmp";
+   sprintf(arena_name,"%s/ga.arena.%ld", tmp,*lockid);
 
   (void) usconfig(CONF_ARENATYPE, US_GENERAL);
   (void) usconfig(CONF_INITUSERS, (unsigned int)cluster_nodes); 
@@ -33,7 +37,9 @@ long i;
 void InitLocks(long num_locks, long lockid)
 {
 long i;
-   sprintf(arena_name,"ga.arena.%ld", lockid);
+char *tmp;
+   if (!(tmp = getenv("ARENA_DIR"))) tmp = "/tmp";
+   sprintf(arena_name,"%s/ga.arena.%ld", tmp, lockid);
    (void) usconfig(CONF_ARENATYPE, US_GENERAL);
    arena_ptr = usinit(arena_name);
    if(!arena_ptr) ERROR("Failed to Attach to Arena", lockid);
@@ -47,7 +53,6 @@ void DeleteLocks(long lockid)
 {
   usdetach (arena_ptr);
   arena_ptr = 0;
-/*  sprintf(arena_name,"ga.arena.%ld", lockid);*/
   (void)unlink(arena_name); /* ignore error code -- file might be already gone*/
 }
 
