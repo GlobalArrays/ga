@@ -23,10 +23,9 @@
      HEADERS = dra.h dra.fh
       INCDIR = ../../include
 LIB_INCLUDES = -I$(INCDIR)
+    TESTUTIL = ffflush.o
 
-ifndef OLD_GA
 include ../../armci/config/makecoms.h
-endif
 include ../makefile.h
 include ../../config/makefile.h
 include ../../config/makelib.h
@@ -37,11 +36,11 @@ FOPT    = -g
 # a rule to build excutables: the filetype of an executable must be .x
 # for example, foo.x corresponds to either foo.f or foo.F or foo.c
 #
-%.x : %.o $(LIBRARY_PATH)  $(EXTRA)
+%.x : %.o $(TESTUTIL) $(LIBRARY_PATH)  $(EXTRA)
 	if [ -f $(basename $@).c ]; then\
 		$(LINK.c) $(CLDOPT) -o $@ $< $(LIBRARY_PATH) $(LIBS) $(CLIBS);\
 	else\
-		$(LINK.f) $(FOPT_REN) $(FLDOPT) -o $@ $< $(LIBRARY_PATH) $(LIBS) $(FLIBS);\
+		$(LINK.f) $(FOPT_REN) $(FLDOPT) -o $@ $< $(TESTUTIL) $(LIBRARY_PATH) $(LIBS) $(FLIBS);\
 	fi
 
 # *.p file is required for tcgmsg `parallel' command to run your program
