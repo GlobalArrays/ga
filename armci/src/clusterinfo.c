@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.15 2002-07-22 23:40:43 d3h325 Exp $ */
+/* $Id: clusterinfo.c,v 1.16 2002-07-23 00:53:23 d3h325 Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -232,7 +232,7 @@ ssize_t left;
 
     pos = strstr(haystack,needle);
     if (pos ==NULL) return NULL;
-    first= tmp = malloc(strlen(haystack)+nlen-len+1+1);
+    first= tmp = calloc(strlen(haystack)+nlen-len+1+1,1);
     if(first==NULL) return(NULL);
     bytes = pos - haystack;
     while(bytes){ *tmp = *haystack; tmp++; haystack++; bytes--;}
@@ -257,6 +257,13 @@ static char *new_hostname(char *host)
       if(nail == NULL) return NULL;
       *nail = '\0';
       nail++;
+      if(nail == (needle+1)){
+        char* tmp1 = calloc(strlen(host)+strlen(nail)+1,1);
+        if(tmp1 == NULL) return NULL;
+        strcpy(tmp1,host);
+        strcat(tmp1,nail);
+        return tmp1;
+      }
       return substr_replace(host,needle,nail);
   } else return NULL;
 }
