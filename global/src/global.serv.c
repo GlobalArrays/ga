@@ -587,7 +587,7 @@ Integer ga_read_inc_local();
                               if(!ga_create_irreg(& message->type, 
                                   &dim1, &dim2, array_name, (Integer*) map1, 
                                   &nblock1, (Integer*) map2, &nblock2, &g_a))
-                                     fprintf(stderr,"ga_server:create failed\n",
+                                  fprintf(stderr,"%d ga_server:create failed\n",
                                              ga_nodeid_());
                             }
                             break;                          
@@ -599,7 +599,7 @@ Integer ga_read_inc_local();
 
                               /* duplicate can fail due to memory limits */
                               if(!ga_duplicate(&g_a, &g_b, array_name))
-                                  fprintf(stderr,"duplicate failed\n",
+                                  fprintf(stderr,"%d duplicate failed\n",
                                            ga_nodeid_());
                             }
                             break;                          

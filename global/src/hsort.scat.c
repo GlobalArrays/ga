@@ -7,7 +7,7 @@
 \**************************************************************************/
 
   
-#include "types.f2c.h"
+#include "typesf2c.h"
 #include "macommon.h"
 extern void ga_error();
 

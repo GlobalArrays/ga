@@ -3,7 +3,7 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#include "types.f2c.h"
+#include "typesf2c.h"
 
 
 #ifdef FALSE

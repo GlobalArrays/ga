@@ -1,6 +1,6 @@
 #include "semaphores.h"
 #include <stdio.h>
-#include "types.f2c.h"
+#include "typesf2c.h"
 
 int num_sem_alloc=0;
 void perror();

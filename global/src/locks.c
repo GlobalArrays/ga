@@ -14,7 +14,7 @@ extern char *getenv(const char *);
 
 void CreateInitLocks(long num_locks, long *lockid)
 {
-#include "types.f2c.h"
+#include "typesf2c.h"
 extern Integer cluster_nodes;
 long i;
 char *tmp;

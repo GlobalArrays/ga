@@ -1,3 +1,8 @@
+#ifdef CRAY
+#define DGETRF SGETRF
+#define DGETRS SGETRS
+#endif
+
       subroutine ga_lu_solve_seq(trans,g_a, g_b)
       implicit none
 #include "mafdecls.fh"
@@ -76,14 +81,14 @@ c
 c
 c***     LU factorization
 c
-         call dgetrf(dimA1, dimA2, dbl_mb(adra), dimA1, int_mb(adri),
+         call DGETRF(dimA1, dimA2, dbl_mb(adra), dimA1, int_mb(adri),
      &                info)
 c
          if(info.eq.0)then
 c
 c***        solve
 c
-            call dgetrs(trans, dimA1, dimB2, dbl_mb(adra), dimA1, 
+            call DGETRS(trans, dimA1, dimB2, dbl_mb(adra), dimA1, 
      &                  int_mb(adri),dbl_mb(adrb), dimB1, info)
 c
             if(info.eq.0)then
