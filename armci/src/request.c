@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.57 2003-07-18 06:21:44 vinod Exp $ */
+/* $Id: request.c,v 1.58 2003-07-30 19:01:59 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -321,6 +321,34 @@ request_header_t *msginfo = &header;
        armci_send_data(msginfo, &ticket); 
 }
 
+#ifdef REGIONS_REQUIRE_MEMHDL
+void armci_serv_register_req(void *ptr,long sz,ARMCI_MEMHDL_T *memhdl)
+{
+char *buf;
+int bufsize = sizeof(request_header_t)+sizeof(long)+sizeof(void *)+sizeof(ARMCI_MEMHDL_T);
+request_header_t *msginfo = (request_header_t*)GET_SEND_BUFFER(bufsize,ATTACH,armci_me);
+
+    msginfo->from  = armci_me;
+    msginfo->to    = SERVER_NODE(armci_clus_me);
+    msginfo->dscrlen = sizeof(long)+sizeof(void *);
+    msginfo->datalen = sizeof(ARMCI_MEMHDL_T);
+    msginfo->operation =  REGISTER;
+    msginfo->bytes = msginfo->dscrlen+ msginfo->datalen;
+    msginfo->tag.ack = 0;
+    buf = (char *)(msginfo+1);
+    ADDBUF(buf,void*,ptr);
+    ADDBUF(buf,long,sz);
+    armci_send_req(armci_master, msginfo, bufsize);
+    buf= armci_rcv_data(armci_master, msginfo);  /* receive response */
+    armci_copy(buf,memhdl,sizeof(ARMCI_MEMHDL_T));
+    FREE_SEND_BUFFER(msginfo);
+
+    if(DEBUG_){
+          printf("%d:client register req sent ptr=%p %d bytes\n",armci_me,
+                  buf,bufsize);fflush(stdout);
+    }
+}
+#endif
 
 /*\ control message to the server, e.g.: ATTACH to shmem, return ptr etc.
 \*/
@@ -637,7 +665,6 @@ int armci_rem_strided(int op, void* scale, int proc,
 #endif
     if(ehlen>MAX_EHLEN || ehlen <0) 
        armci_die2("armci_rem_strided ehlen out of range",MAX_EHLEN,ehlen);
-
     /* calculate size of the buffer needed */
     for(i=0, bytes=1;i<=stride_levels;i++)bytes*=count[i];
     bufsize += bytes+sizeof(void*)+2*sizeof(int)*(stride_levels+1) +ehlen
@@ -754,6 +781,12 @@ int armci_rem_strided(int op, void* scale, int proc,
     msginfo->bytes = msginfo->datalen+msginfo->dscrlen;
 
     if(op == GET){
+#ifdef VAPI
+    if(msginfo->dscrlen < (bytes - sizeof(int)))
+       *(int*)(((char*)(msginfo+1))+(bytes-sizeof(int))) = ARMCI_VAPI_COMPLETE;
+    else
+       *(int*)(((char*)(msginfo+1))+(msginfo->dscrlen+bytes-sizeof(int))) = ARMCI_VAPI_COMPLETE;
+#endif            
 #      if defined(CLIENT_BUF_BYPASS) 
          if(msginfo->bypass){
 
@@ -819,7 +852,7 @@ int armci_rem_get(int proc,
                   void *src_ptr, int src_stride_arr[],
                   void* dst_ptr, int dst_stride_arr[],
                   int count[], int stride_levels,
-                  armci_ihdl_t nb_handle)
+                  armci_ihdl_t nb_handle,void *mhloc,void *mhrem)
 {
     char *buf, *buf0;
     request_header_t *msginfo;
@@ -832,6 +865,11 @@ int armci_rem_get(int proc,
     for(i=0, bytes=1;i<=stride_levels;i++)bytes*=count[i];
     bufsize += sizeof(void*)+2*sizeof(int)*(stride_levels+1) 
                +2*sizeof(double) + 16; /* +scale+alignment */
+#ifdef VAPI
+    /*need to send the rkey and lkey*/
+    /* lkey and rkey are unsigned its, but we cant trust it to stay like that*/
+    bufsize +=(sizeof(VAPI_lkey_t)+sizeof(VAPI_rkey_t));
+#endif
 
     buf = buf0= GET_SEND_BUFFER(bufsize,GET,proc);
     if(nb_handle){
@@ -854,6 +892,10 @@ int armci_rem_get(int proc,
     /* to bypass the client MessageSnd buffer in get we need to add source
        pointer and stride info - server will put data directly there */
     ADDBUF(buf,void*,dst_ptr);
+#ifdef VAPI
+    ADDBUF(buf,VAPI_rkey_t,((ARMCI_MEMHDL_T *)mhloc)->rkey);
+    ADDBUF(buf,VAPI_lkey_t,((ARMCI_MEMHDL_T *)mhrem)->lkey);
+#endif
     for(i=0;i<stride_levels;i++)((int*)buf)[i] = dst_stride_arr[i];
                                        buf += stride_levels*sizeof(int);
     /* fill message header */
@@ -869,10 +911,14 @@ int armci_rem_get(int proc,
     msginfo->bytes = msginfo->dscrlen;
 
 
-#ifdef GM
+#if defined(GM) || defined(VAPI)
     /* prepare for  set the stamp at the end of the user buffer */
     if(count[0]<sizeof(int))armci_die("armci_rem_get: wrong protocol",count[0]);
+#  ifdef GM
     *(int*)(((char*)(dst_ptr)) + (count[0] -sizeof(int))) = ARMCI_GM_COMPLETE;
+#  else
+    *(int*)(((char*)(dst_ptr)) + (count[0] -sizeof(int))) = ARMCI_VAPI_COMPLETE;
+#  endif
 #endif
 
     armci_send_req(proc,msginfo,bufsize);
@@ -970,7 +1016,7 @@ void armci_server(request_header_t *msginfo, char *dscr, char* buf, int buflen)
 
     if(msginfo->operation == GET){
     
-#      if defined(CLIENT_BUF_BYPASS) || defined(LAPI2) 
+#      if defined(CLIENT_BUF_BYPASS) || defined(LAPI2) || defined(VAPI)
          if(msginfo->bypass){
              armci_send_strided_data_bypass(proc, msginfo, buf, buflen, loc_ptr, loc_stride_arr, 
                        client_ptr, client_stride_arr, count, stride_levels);

@@ -29,7 +29,6 @@ extern void _armci_buf_clear_all();
    typedef void* msg_tag_t;
 #elif defined(VAPI)
 #  include "armci-vapi.h"
-   typedef void *msg_tag_t;
 #elif defined(SOCKETS)
 #  include "sockets.h" 
    typedef long msg_tag_t;
@@ -42,6 +41,7 @@ extern void _armci_buf_clear_all();
 #define ACK_QUIT 0
 #define QUIT 33
 #define ATTACH 34
+#define REGISTER 35
 
 /*\ the internal request structure for non-blocking api. 
 \*/
@@ -262,7 +262,7 @@ extern void armci_pipe_send_req(int proc, void *buf, int bytes);
 extern void armci_rcv_strided_data_bypass_both(int, request_header_t*,void*, int*, int);
 extern int armci_rem_get(int proc, void *src_ptr, int src_stride_arr[],
                   void* dst_ptr, int dst_stride_arr[], int count[], int stride_levels,
-                  armci_ihdl_t nb_handle);
+                  armci_ihdl_t nb_handle,void *mhloc,void *mhrem);
 
 
 #endif
