@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.1 2001-12-06 16:21:03 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.2 2001-12-06 19:34:31 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -2336,7 +2336,7 @@ void FATR ga_update_ghosts_(Integer *g_a)
      _ga_sync_begin = 1;
    }
 
-#ifdef CRAY-T3D
+#ifdef CRAY_T3D
    if (!ga_update5_ghosts_(g_a)) {
 #else
    if (!ga_update4_ghosts_(g_a)) {
