@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.66 2004-07-16 21:21:05 d3h325 Exp $ */
+/* $Id: copy.h,v 1.67 2004-07-28 19:43:29 d3h325 Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -89,10 +89,6 @@
 #else
 #     define DCOPY2D	dcopy2d_u_
 #     define DCOPY1D	dcopy1d_u_
-#     define DCOPY21	dcopy21_
-#     define DCOPY12	dcopy12_
-#     define DCOPY21	dcopy31_
-#     define DCOPY12	dcopy13_
 #endif
 void FATR DCOPY2D(int*, int*, void*, int*, void*, int*); 
 void FATR DCOPY1D(void*, void*, int*); 
