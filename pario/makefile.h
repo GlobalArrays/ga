@@ -1,8 +1,4 @@
 
-LIB_DEFINES += $(shell oslevel | awk -F. \
-		 '{ if ($$1 > 5 || ($$1 == 5 && $$2 > 1))\
-               print "-DAIX52" }')
-
 #under AIX, there can be problems with AIO and large files
 ifdef LARGE_FILES
   OSNAME =  $(shell uname | awk '{ print $1}')
@@ -11,6 +7,10 @@ ifdef LARGE_FILES
     LIB_DEFINES += $(shell oslevel | awk -F. \
               '{ if ($$1 > 4 || ($$1 == 4 && $$2 > 1))\
                print "-D_LARGE_FILES -D_LARGE_FILE_API" }')
+
+     LIB_DEFINES += $(shell oslevel | awk -F. \
+		      '{ if ($$1 > 5 || ($$1 == 5 && $$2 > 1))\
+                      print "-DAIX52" }')
 
 #   asynchronous I/O with large files supported starting with 4.2.1
 #   However, there is a bug in IBM libs on PNNL system that prevents us
