@@ -1,4 +1,4 @@
-#$Id: makefile,v 1.11 1995-11-03 20:42:22 d3g681 Exp $
+#$Id: makefile,v 1.12 1995-11-07 20:39:24 apsmith Exp $
 
 # Tiny makefile wrapper
 
@@ -19,7 +19,8 @@ global_stamp:	include_stamp
 	cp -p libglobal.a $(LIBDIR)
 
 include_stamp:	src/global.fh
-	cp src/global.fh da/da.fh $(INCDIR) 
+	cp src/global.fh da/da.fh src/global.h src/types.f2c.h\
+		src/c.names.h src/cray.names.h $(INCDIR) 
 	touch include_stamp
 
 realclean clean:	
