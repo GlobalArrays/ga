@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.54 2003-08-21 22:29:32 d3h325 Exp $ */
+/* $Id: copy.h,v 1.55 2003-08-25 20:27:47 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -230,7 +230,7 @@ void FATR DCOPY1D(void*, void*, int*);
 
 #if defined(NEED_MEM_SYNC)
 #  ifdef AIX
-#    define MEM_FENCE (int _dummy=1; _clear_lock((int *),&_dummy,0); }
+#    define MEM_FENCE {int _dummy=1; _clear_lock((int *)&_dummy,0); }
 #  elif defined(__ia64) && defined(__GNUC__)
 #    if defined(__GNUC__)
 #       define MEM_FENCE __asm__ __volatile__ ("mf" ::: "memory");
@@ -348,7 +348,7 @@ void FATR DCOPY1D(void*, void*, int*);
 #endif
 
 #ifndef MEM_FENCE
-#   define MEM_FENCE() 
+#   define MEM_FENCE
 #endif
 #ifndef armci_copy_fence
 #   define armci_copy_fence armci_copy
