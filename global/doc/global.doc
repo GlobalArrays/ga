@@ -131,6 +131,7 @@ distribute to other US Government contractors.
       ga_inquire        ... find the type and dimensions of the array
       ga_inquire_name   ... find the name of the array
       ga_inquire_memory ... find the ammount of memory in active arrays 
+      ga_memory_avail   ... find the ammount of memory left for GA 
       ga_summarize      ... prints summary info about allocated arrays
       ga_uses_ma        ... finds if memory in arrays comes from MA 
                             (memory allocator)
@@ -814,6 +815,12 @@ distribute to other US Government contractors.
 
       returns ammount of memory (in bytes) used in allocated global arrays
       on the calling processor
+
+      -------------------------------------------------------------------
+      integer function ga_memory_avail()
+
+      Returns ammout of memory left for allocation of new global arrays on
+      the calling processor. Returned value < 0 means that no limit was set. 
 
       -------------------------------------------------------------------
       logical function ga_uses_ma()
