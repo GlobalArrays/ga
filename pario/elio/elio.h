@@ -48,7 +48,6 @@ extern Fd_t   elio_gopen    _ARGS_((char *fname, int type));
 extern void   elio_close    _ARGS_((Fd_t fd));
 extern int    elio_stat     _ARGS_((char *fname));
        void   elio_init     _ARGS_(());
-       void   elio_terminate _ARGS_(());
 
 #undef _ARGS_
 
@@ -77,15 +76,12 @@ extern void fflush();
   fprintf(stderr, "ELIO fatal error: %s %d\n", msg, (int) val); \
   fprintf(stdout, "ELIO fatal error: %s %d\n", msg, (int) val); \
   fflush(stdout);\
+  perror("elio failed:");\
   exit(val); \
 }
 #endif
 
-#define ELIO_ABORT(msg, val) \
-{ \
-  elio_terminate(); \
-  PRINT_AND_ABORT(msg, val); \
-}
+#define ELIO_ABORT(msg, val) PRINT_AND_ABORT(msg, val)
 
 /************** this stuff is exported because EAF uses it **************/
 #define ELIO_FILENAME_MAX 1024
