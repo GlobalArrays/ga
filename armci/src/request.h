@@ -80,6 +80,13 @@ extern  char* MessageSndBuffer;
 #  endif
 #endif
 
+#ifdef ELAN
+#  define GET_SEND_BUFFER(_size,_op,_to) MessageSndBuffer;\
+                    while(((request_header_t*)MessageSndBuffer)->tag)\
+                    armci_util_spin(100, MessageSndBuffer)
+#  define FREE_SEND_BUFFER(_ptr) ((request_header_t*)MessageSndBuffer)->tag = (void*)0 
+#endif
+
 #ifndef GET_SEND_BUFFER
 #  define GET_SEND_BUFFER(_size,_op,_to) MessageSndBuffer
 #endif
