@@ -97,7 +97,6 @@ int _val_;\
 #define INIT_SEND_BUF(_cntr,_snd,_rcv)    INIT_COUNTER(_cntr,1)
 #define CLEAR_SEND_BUF_FIELD(_cntr, _s, _r,_t) CLEAR_COUNTER(_cntr)
 #define FIRST_INIT_SEND_BUF INIT_COUNTER
-#define STORE_BUFID
 #define SET_BUF_TAG _armci_buf_set_tag
 
 #define FENCE_NODE(p) CLEAR_COUNTER(cmpl_arr[(p)])

@@ -85,7 +85,6 @@ if((_cntr).done == ARMCI_GM_FAILED)\
 
 #define MULTIPLE_SND_BUFS 
 #ifdef MULTIPLE_SND_BUFS
-#  define STORE_BUFID 
 #  define BUF_ALLOCATE(_size) gm_dma_malloc(gmpi_gm_port,_size+256) 
 #  define BUF_EXTRA_FIELD_T armci_gm_context_t 
 #  define GET_SEND_BUFFER _armci_buf_get

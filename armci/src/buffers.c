@@ -1,4 +1,4 @@
-/* $Id: buffers.c,v 1.12 2002-10-30 18:41:29 vinod Exp $    **/
+/* $Id: buffers.c,v 1.13 2002-10-30 21:29:10 vinod Exp $    **/
 #define SIXTYFOUR 64
 #define DEBUG_  0
 #define DEBUG2_ 0
@@ -56,12 +56,9 @@ typedef struct {
 #define BUFID_PAD_T BUF_INFO_T
 #endif
 
-#define STORE_BUFID
 /* message send buffer data structure */
 typedef struct {
-#ifdef STORE_BUFID
   BUF_INFO_T id;
-#endif
 # ifdef BUF_EXTRA_FIELD_T
         BUF_EXTRA_FIELD_T field;
 # endif
@@ -89,12 +86,7 @@ typedef struct {
 				      sizeof(BUF_EXTRA_FIELD_T))
 #endif
 
-#ifdef STORE_BUFID
-#   define BUF_TO_BUFINDEX(buf) (BUF_TO_EBUF((buf)))->id.bufid
-#else
-#  define BUF_TO_BUFINDEX(buf)\
-          ((BUF_TO_EBUF((buf)))- _armci_buffers)/sizeof(buf_ext_t)
-#endif
+#define BUF_TO_BUFINDEX(buf) (BUF_TO_EBUF((buf)))->id.bufid
 
 
 
@@ -190,14 +182,12 @@ buf_state_t *buf_state = _armci_buf_state->table +idx;
       else{
        /* need to call platform specific function */
        CLEAR_SEND_BUF_FIELD(_armci_buf_state->buf[idx].field,buf_state->snd,buf_state->rcv,buf_state->to);
-#   ifdef STORE_BUFID
        /*later, we might just need to do this for all ops, not just get*/
        if(_armci_buf_state->buf[idx].id.tag!=0 &&(buf_state->op == GET)){
          armci_complete_req_buf(&(_armci_buf_state->buf[idx].id),
                                 _armci_buf_state->buf[idx].buffer);
          _armci_buf_state->buf[idx].id.tag=0;
        }
-#   endif
       }
 #   endif
 
@@ -319,11 +309,9 @@ int count=1, i;
        _armci_buf_state->table[avail+i].first = avail;
     }
 
-#ifdef STORE_BUFID
     _armci_buf_state->buf[avail].id.tag=0;
     _armci_buf_state->buf[avail].id.bufid=avail; 
     _armci_buf_state->buf[avail].id.protocol=0;
-#endif
 
 # ifdef BUF_EXTRA_FIELD_T
     INIT_SEND_BUF(_armci_buf_state->buf[avail].field,_armci_buf_state->table[avail].snd,_armci_buf_state->table[avail].rcv);

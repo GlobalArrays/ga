@@ -30,7 +30,6 @@ extern void armci_CreateSocketAndBind(int *sock, int *port);
 #define TIMEOUT_ACCEPT 60
 #define GET_SEND_BUFFER _armci_buf_get
 #define FREE_SEND_BUFFER _armci_buf_release
-#define STORE_BUFID
 
 #ifndef UIO_MAXIOV
 #define MAX_IOVEC 8

@@ -45,7 +45,6 @@ typedef struct {
     char r[64];
 } armci_via_field_t;
 
-#define STORE_BUFID
 #define BUF_EXTRA_FIELD_T armci_via_field_t 
 #define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to) armci_via_complete_buf((armci_via_field_t *)(&(_field)),(_snd),(_rcv),(_to));_snd=0;_rcv=0;_to=0
 #define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;if(operation==GET&&size>2*PIPE_MIN_BUFSIZE)_rcv=0
