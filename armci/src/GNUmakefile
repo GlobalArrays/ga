@@ -1,3 +1,4 @@
+#$Id: GNUmakefile,v 1.65 2003-02-05 23:33:25 d3h325 Exp $
          FOPT = -O
          COPT = -O
 
