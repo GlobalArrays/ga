@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.57 2003-03-20 01:37:24 vinod Exp $
+/* $Id: myrinet.c,v 1.58 2003-03-20 02:01:45 d3h325 Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -1069,6 +1069,7 @@ int armci_gm_server_init()
     unsigned int min_mesg_size, min_mesg_length;
     unsigned int max_mesg_size, max_mesg_length;
     unsigned int numofrcvbufs;
+    char *enval;
  
     /* allocate gm data structure for server */
     serv_gm->node_map = (int *)malloc(armci_nproc * sizeof(int));
@@ -1181,7 +1182,12 @@ int armci_gm_server_init()
         armci_die("malloc failed for ARMCI ops_done_ar",0);
 
     /* check if we can poll in the server thread */
-    if(getenv("ARMCI_SERVER_CAN_POLL")) server_can_poll=1;
+    enval = getenv("ARMCI_SERVER_CAN_POLL");
+    if(enval != NULL){
+       if((enval[0] != 'N') && (enval[0]!='n')) server_can_poll=1;
+    } else {
+      if(armci_clus_info[armci_clus_me].nslave < armci_getnumcpus()) server_can_poll=1;
+    }
     
     return TRUE;
 }
