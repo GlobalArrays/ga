@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.64 2003-03-07 23:37:03 manoj Exp $ */
+/* $Id: armci.c,v 1.65 2003-03-08 18:45:26 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -481,4 +481,24 @@ void ARMCI_SET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle) {
 void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle) {
       ((armci_ihdl_t)(nb_handle))->agg_flag = 0;
       ((armci_ihdl_t)(nb_handle))->proc = -1;
+}
+
+int armci_notify(int proc)
+{
+#ifdef GM
+extern int armci_inotify_proc(int);
+   return(armci_inotify_proc(proc));
+#else
+   return(0);
+#endif
+}
+
+int armci_notify_wait(int proc,int *pval)
+{
+#ifdef GM
+extern int armci_inotify_wait(int,int*);
+   return(armci_inotify_wait(proc,pval));
+#else
+   return(0);
+#endif
 }

@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.8 2003-03-08 00:37:52 vinod Exp $ */
+/* $Id: fence.c,v 1.9 2003-03-08 18:45:27 vinod Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -14,6 +14,9 @@
 void armci_init_fence()
 {
 #ifdef DATA_SERVER
+# ifdef GM /*when fence moves to ds-shared, fence_init would become common*/
+     armci_gm_fence_init();
+#endif
      _armci_fence_arr=calloc(armci_nproc,1);
      if(!_armci_fence_arr)armci_die("armci_init_fence: calloc failed",0);
 #endif

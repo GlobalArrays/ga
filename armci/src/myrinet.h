@@ -140,5 +140,5 @@ extern void armci_gm_free_send_buf(void *ptr);
 extern char* armci_gm_getbuf(size_t size);
 extern void armci_client_send_complete(armci_gm_context_t*);
 extern void  armci_check_context_for_complete(int);
-
+extern void armci_gm_fence_init();
 #endif /* MYRINET_H */

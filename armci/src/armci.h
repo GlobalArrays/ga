@@ -8,7 +8,8 @@ typedef struct {
     int  ptr_array_len;
     int bytes;
 } armci_giov_t;
-
+extern int armci_notify(int proc);
+extern int armci_notify_wait(int proc,int *pval);
 extern int ARMCI_Init(void);    /* initialize ARMCI */
 
 extern int ARMCI_Put(void *src, void* dst, int bytes, int proc);
