@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.5 2005-04-08 21:08:45 d3g293 Exp $
+C$Id: scf.F,v 1.6 2005-04-08 22:47:20 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -37,6 +37,7 @@ c
       call setarrays
       call ininrm
       call denges(dens, work)
+      call makoverlap
       tinit = timer()
 c
 c     make initial orthogonal orbital set for jacobi diagonalizer
@@ -60,8 +61,6 @@ c
 c     compute the two particle contribution and then add up the
 c     contributions from each process with ga_dgop
 c     
-c         call print_triangle(fock)
-c         call print_ga_block(g_fock)
          call twoel(dens, work, schwmax, fock, etwo)
 c         call ga_dgop(2, etwo, 1, '+')
          call ga_dgop(3, fock, nnbfn, '+')
@@ -69,7 +68,6 @@ c         call ga_dgop(2, etwo, 1, '+')
 c     
 c     only process 0 diagonalizes and updates the density
 c     
-c         call print_triangle(fock)
          if (me.eq.0) then
 c     
 c     diagonalize the fock matrix ...
@@ -80,15 +78,11 @@ c
 c     brodcast new density matrix and deltad to everyone
 c     
          call ga_brdcst(4+MSGDBL, orbs, mdtob(nbfn*nbfn), 0)
-c         call print_matrix(orbs)
-  837    format(10f10.4)
          tdiag = tdiag + timer()
-c         call print_ga_block(g_fock)
-c         call print_ga_block(g_ident)
-c         call ga_zero(g_orbs)
-         call makoverlap
+c
+c     diagonalize the fock matrix using sequential code
+c
          call ga_diag_seq(g_fock, g_ident, g_orbs, eigv)
-c         call print_ga_block(g_orbs)
 c     
 c     make the new density matrix in work from orbitals in orbs,
 c     compute the norm of the change in the density matrix and
@@ -117,11 +111,6 @@ c
            call prnout(iter, energy, deltad, tester)
            tprint = tprint + timer()
          endif
-c     
-c     brodcast new density matrix and deltad to everyone
-c     
-c         call ga_brdcst(4+MSGDBL, dens, mdtob(nnbfn), 0)
-c         call ga_brdcst(5+MSGDBL, deltad, mdtob(1), 0)
 c     
 c     if converged then exit iteration loop
 c     
@@ -712,17 +701,25 @@ c
 #include "global.fh"
 #include "tcgmsg.fh"
       dimension evals(nbfn), orbs(nbfn, nbfn)
+      integer lo(2),hi(2),ld
 c
 c     printout final results
 c
       if (ga_nodeid().ne.0) return
       write(6,1) energy
  1    format(//' final energy = ',f16.11//' eigenvalues')
-      call output(evals, 1, min(nbfn,nocc+5), 1, 1, nbfn, 1, 1)
+      call output(eigv, 1, min(nbfn,nocc+5), 1, 1, nbfn, 1, 1)
       write(6,2)
 2     format(//' eigenvectors ')
+      lo(1) = 1
+      lo(2) = 1
+      hi(1) = nbfn
+      hi(2) = nbfn
+      ld = nbfn
+      call nga_get(g_orbs,lo,hi,orbs,ld) 
       call output(orbs, 1, nbfn, 1, nocc, nbfn, nbfn, 1)
 c
+      return
       end
       subroutine g(value,i,j,k,l)
       implicit double precision (a-h, o-z)
