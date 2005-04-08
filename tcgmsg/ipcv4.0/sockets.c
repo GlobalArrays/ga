@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.11 2004-04-01 02:04:57 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/sockets.c,v 1.12 2005-04-08 16:55:04 vinodtipparaju Exp $ */
 
 
 #include <stdio.h>
@@ -234,6 +234,9 @@ void CreateSocketAndBind(sock, port)
   struct sockaddr_in server;
   int size = SR_SOCK_BUF_SIZE;
   int on = 1;
+#if defined(LINUX) && defined(__powerpc__)
+  int dupsock;
+#endif
 
   length = sizeof (struct sockaddr_in);
 
@@ -241,6 +244,12 @@ void CreateSocketAndBind(sock, port)
 
   if ( (*sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     Error("CreateSocketAndBind: socket creation failed", (long) *sock);
+
+#if defined(LINUX) && defined(__powerpc__)
+  if(*sock==0)
+    dupsock = dup(*sock);
+  *sock = dupsock;
+#endif
 
   if(setsockopt(*sock, SOL_SOCKET, SO_REUSEADDR, 
 		(char *) &on, sizeof on) == -1)
@@ -459,6 +468,9 @@ int CreateSocketAndConnect(hostname, cport)
 #ifndef SGI
   struct hostent *gethostbyname();
 #endif
+#if defined(LINUX) && defined(__powerpc__)
+  int dupsock;
+#endif
 
   /* Create socket */
 
@@ -467,6 +479,12 @@ int CreateSocketAndConnect(hostname, cport)
                    hostname, cport);
     Error("CreateSocketAndConnect: socket failed",  (long) sock);
   }
+
+#if defined(LINUX) && defined(__powerpc__)
+  if(sock==0)
+    dupsock = dup(sock);
+  sock = dupsock;
+#endif
 
   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, 
 		 (char *) &on, sizeof on) == -1)
