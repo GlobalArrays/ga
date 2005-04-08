@@ -87,3 +87,4 @@
       external ga_cluster_procid, ga_cluster_proc_nodeid
       external ga_is_mirrored
       integer ga_get_pgroup
+      external ga_get_pgroup
