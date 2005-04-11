@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.6 2005-04-08 22:47:20 d3g293 Exp $
+C$Id: scf.F,v 1.7 2005-04-11 15:47:56 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -37,7 +37,6 @@ c
       call setarrays
       call ininrm
       call denges(dens, work)
-      call makoverlap
       tinit = timer()
 c
 c     make initial orthogonal orbital set for jacobi diagonalizer
@@ -80,8 +79,11 @@ c
          call ga_brdcst(4+MSGDBL, orbs, mdtob(nbfn*nbfn), 0)
          tdiag = tdiag + timer()
 c
-c     diagonalize the fock matrix using sequential code
+c     diagonalize the fock matrix using sequential code. Keep remaking
+c     overlap matrix since ga_diag_seq does not guarantee that g_ident
+c     is preserved.
 c
+         call makoverlap
          call ga_diag_seq(g_fock, g_ident, g_orbs, eigv)
 c     
 c     make the new density matrix in work from orbitals in orbs,
@@ -139,6 +141,7 @@ c
 c     print out information on # integrals evaulated each iteration
 c     
          nints = nnbfn*(nnbfn+1)/2
+         nints = nbfn**4
          frac  = dble(icut3)/dble(nints)
          write(6,2) icut1, icut2, icut3, nints, frac
  2       format(/'       No. of integrals screened or computed '
@@ -522,7 +525,7 @@ c
           ij = iky(i) + j
           if (ij .eq. next) then
             if (schwarz(ij)*schwmax .lt. tol2e) then
-              icut1 = icut1 + ij
+c              icut1 = icut1 + ij
             else
               do 30 k = 1, i
                 lhi = k
@@ -530,9 +533,9 @@ c
                 do 40 l = 1, lhi
                   kl = iky(k) + l
                   if (schwarz(ij)*schwarz(kl).lt.tol2e) then
-                    icut2 = icut2 + 1
+c                    icut2 = icut2 + 1
                   else
-                    icut3 = icut3 + 1
+c                    icut3 = icut3 + 1
 c     
 c     compute value of integral (ij|kl) and add into fock matrix
 c     
@@ -562,10 +565,10 @@ c
       dotask = next_4chunk(lo,hi,it,jt,kt,lt)
       itask = 0
       do while (dotask)
-c        lo_ik(1) = lo(1)
-c        lo_ik(2) = lo(3)
-c        hi_ik(1) = hi(1)
-c        hi_ik(2) = hi(3)
+        lo_ik(1) = lo(1)
+        lo_ik(2) = lo(3)
+        hi_ik(1) = hi(1)
+        hi_ik(2) = hi(3)
         lo_jl(1) = lo(2)
         lo_jl(2) = lo(4)
         hi_jl(1) = hi(2)
@@ -588,31 +591,35 @@ c        hi_ik(2) = hi(3)
 #endif
         itask = itask + 1
         call clean_chunk(f_ij)
-c          call clean_chunk(f_ik)
+        call clean_chunk(f_ik)
         do i = lo(1), hi(1)
           iloc = i-lo(1) + 1
           do j = lo(2), hi(2)
             jloc = j-lo(2) + 1
-c            if (.not.(s_ij(iloc,jloc)*schwmax .lt. tol2e)) then
+            if (s_ij(iloc,jloc)*schwmax .lt. tol2e) then
+              icut1 = icut1 + (hi(1)-lo(1)+1)*(hi(2)-lo(2)+1)
+            else
               do k = lo(3), hi(3)
                 kloc = k-lo(3) + 1
                 do l = lo(4), hi(4)
                   lloc = l-lo(4) + 1
-c                  if (.not.(s_ij(iloc,jloc)*s_kl(kloc,lloc).lt.tol2e))
-c     +              then
+                  if (s_ij(iloc,jloc)*s_kl(kloc,lloc).lt.tol2e) then
+                    icut2 = icut2 + 1
+                  else
                     call g(gg, i, j, k, l)
                     f_ij(iloc,jloc) = f_ij(iloc,jloc)
      +                              + gg*d_kl(kloc,lloc)
-                    call g(gg, i, k, j, l)
-                    f_ij(iloc,jloc) = f_ij(iloc,jloc)
-     +                              - 0.5d00*gg*d_kl(kloc,lloc)
-c                  endif
+                    f_ik(iloc,kloc) = f_ik(iloc,kloc)
+     +                              - 0.5d00*gg*d_jl(jloc,lloc)
+                    icut3 = icut3 + 1
+                  endif
                 end do
               end do
-c            endif
+            endif
           end do
         end do
         call nga_acc(g_fock,lo,hi,f_ij,ich,one)
+        call nga_acc(g_fock,lo_ik,hi_ik,f_ik,ich,one)
         dotask = next_4chunk(lo,hi,it,jt,kt,lt)
       end do
       etwo = 0.5d00*contract_matrices(g_fock,g_dens)
