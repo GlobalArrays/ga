@@ -60,7 +60,7 @@ c
         do j = 1, 15
           x(ifcnt) = ax(i)
           y(ifcnt) = ay(i)
-          z(ifcnt) = ay(i)
+          z(ifcnt) = az(i)
           if (j.eq.10) then
             x(ifcnt) = x(ifcnt) + 1.6d00
           endif
