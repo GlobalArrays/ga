@@ -16,7 +16,7 @@ void GA_Register_stack_memory(void * (*ext_alloc)(), void (*ext_free)()) {
     ga_ext_alloc = ext_alloc; ga_ext_free  = ext_free; ga_usesMA=0;
 }
 
-void* FATR ga_malloc(Integer nelem, int type, char *name) {
+void* ga_malloc(Integer nelem, int type, char *name) {
     void *ptr;  
     unsigned long addr;
     Integer handle, adjust=0, bytes, item_size=GAsizeofM(ga_type_f2c(type));
@@ -51,7 +51,7 @@ void* FATR ga_malloc(Integer nelem, int type, char *name) {
     return ptr;
 }
 
-void FATR ga_free(void *ptr) {
+void ga_free(void *ptr) {
     Integer handle;
     ptr = ((char*)ptr)-ALIGNMENT;
     handle= *((Integer*)ptr); /* retreive handle */
