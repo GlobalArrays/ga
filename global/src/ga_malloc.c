@@ -2,7 +2,7 @@
 /** GA Memory Allocation Routines: uses either MA or external allocator */
 
 #include "globalp.h"
-#define GA_MAXMEM_AVAIL 786432  
+#define GA_MAXMEM_AVAIL ( ( (long)1 << (8*sizeof(Integer)-2) ) -1)
 #define CHECK           0
 #define ALIGNMENT       sizeof(DoubleComplex)
 
@@ -55,6 +55,7 @@ void FATR ga_free(void *ptr) {
     Integer handle;
     ptr = ((char*)ptr)-ALIGNMENT;
     handle= *((Integer*)ptr); /* retreive handle */
+
     if(ga_usesMA) {
       if(!MA_pop_stack(handle)) ga_error("ga_free: MA_pop_stack failed",0);}
     else /*make sure to free original(before address alignment) pointer*/
