@@ -2,7 +2,7 @@
 #define _memcpy_h
 
 /* 
- * $Id: memcpy.h,v 1.5 2002-05-16 18:47:01 d3h325 Exp $
+ * $Id: memcpy.h,v 1.6 2005-04-14 19:05:21 manoj Exp $
  */
 
 /* 
@@ -13,7 +13,7 @@
  * This file should only be included by internal C files.
  */
 
-#ifndef MACX
+#if !defined(MACX) && !defined(__FreeBSD__)
 #include <malloc.h>
 #endif
 
