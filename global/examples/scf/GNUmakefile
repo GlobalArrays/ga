@@ -20,7 +20,7 @@ endif
 
 all: scf.x
 
-BINARIES = scf.o diagon.o input.o integ.o output.o scfblas.o timer.o
+BINARIES = scf.o input.o integ.o output.o timer.o
 
 %.x :  $(BINARIES) $(LIBDIR)/libglobal.a $(LIBDIR)/libarmci.a  $(EXTRA)
 ifeq ($(P_FILE),YES)
