@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.8 2005-04-14 14:42:45 d3g293 Exp $
+C$Id: scf.F,v 1.9 2005-04-14 17:35:25 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -7,8 +7,6 @@ C$Id: scf.F,v 1.8 2005-04-14 14:42:45 d3g293 Exp $
 #include "tcgmsg.fh"
 
 #define USE_TRANSFORM 1
-      dimension orbs(maxnbfn*maxnbfn), dens(maxnnbfn), fock(maxnnbfn),
-     $     work(maxnbfn*maxnbfn), evals(maxnbfn)
       integer heap, stack
       data tinit, tonel, ttwoel, tdiag, tdens, tprint /6*0.0d0/
       data eone, etwo, energy, deltad /4*0.0d0/
@@ -41,12 +39,12 @@ c
       call input
       call setarrays
       call ininrm
-      call denges(dens, work)
+      call denges
       tinit = timer()
 c
 c     make initial orthogonal orbital set for jacobi diagonalizer
 c
-      call makeob(orbs, work)
+      call makeob
 c     
 c     iterate
 c     
@@ -54,76 +52,55 @@ c
 c     
 c     make info for sparsity test ... redone every iter to save space
 c     
-         call makesz(work, schwmax)
+         call makesz(schwmax)
 c
 c     make the one particle contribution to the fock matrix (in fock)
 c     and get the partial contribution to the energy
 c     
-         call oneel(dens, work, schwmax, fock, eone)
-c         call ga_dgop(1, eone, 1, '+')
+         call oneel(schwmax, eone)
          tonel = tonel + timer()
 c     
 c     compute the two particle contributions to the fock matrix and
 c     get the total energy.
 c     
-         call twoel(dens, work, schwmax, fock, etwo)
-c         call ga_dgop(2, etwo, 1, '+')
-         call ga_dgop(3, fock, nnbfn, '+')
+         call twoel(schwmax, etwo)
          ttwoel = ttwoel + timer()
 c     
-c     only process 0 diagonalizes and updates the density
-c     
-c         call print_triangle(fock)
-         if (me.eq.0) then
-c     
-c     diagonalize the fock matrix ...
-c     
-            call diagon(fock, orbs, evals, work, tester, iter)
-         endif
-         write(6,101) (evals(i),i=1,10)
-         write(6,*)
-c     
-c     brodcast new density matrix and deltad to everyone
-c     
-         call ga_brdcst(4+MSGDBL, orbs, mdtob(nbfn*nbfn), 0)
-         tdiag = tdiag + timer()
+c     Diagonalize the fock matrix. The diagonalizers used here are
+c     actually sequential, not parallel.
 c
-c     diagonalize the fock matrix using sequential code. Keep remaking
-c     overlap matrix since ga_diag_seq does not guarantee that g_ident
-c     is preserved.
-c
-c         call print_ga_block(g_fock)
 #if USE_TRANSFORM
+c
+c     use similarity transform to solve standard eigenvalue problem
+c     (overlap matrix has been transformed out of the problem)
+c
          call ga_dgemm('n','n',nbfn,nbfn,nbfn,r_one,g_fock,g_orbs,
      +                  r_zero,g_tfock)
          call ga_dgemm('t','n',nbfn,nbfn,nbfn,r_one,g_orbs,g_tfock,
      +                  r_zero,g_fock)
-#endif
-         call print_ga_block(g_fock)
-c         call print_ga_block(g_ident)
-#if USE_TRANSFORM
          call ga_copy(g_orbs,g_tfock)
          call ga_diag_std_seq(g_fock, g_work, eigv)
+c
+c     Back transform eigenvectors
+c
          call ga_dgemm('n','n',nbfn,nbfn,nbfn,r_one,g_tfock,g_work,
      +                  r_zero,g_orbs)
 #else
+c
+c     Keep remaking overlap matrix since ga_diag_seq does not
+c     guarantee that g_ident is preserved.
+c
          call makoverlap
          call ga_diag_seq(g_fock, g_ident, g_orbs, eigv)
 #endif
-         write(6,101) (eigv(i),i=1,10)
-         write(6,*)
-  101    format(10f10.4)
+         tdiag = tdiag + timer()
 c     
-c     make the new density matrix in work from orbitals in orbs,
+c     make the new density matrix in g_work from orbitals in g_orbs,
 c     compute the norm of the change in the density matrix and
-c     then update the density matrix in dens with damping.
+c     then update the density matrix in g_dens with damping.
 c     
-         call print_matrix_block(orbs,nbfn)
-         call print_ga_block(g_orbs)
-         call makden(orbs, work)
-c         call print_triangle(work)
-c         call print_ga_block(g_work)
-         deltad = dendif(dens, work)
+         call makden
+         deltad = dendif()
          if (iter.eq.1) then
             scale = 0.0d0
          else if (iter .le. 5) then
@@ -135,9 +112,7 @@ c         call print_ga_block(g_work)
          else
             scale = 0.0d0
          endif
-c         call print_triangle(dens)
-c         call print_ga_block(g_dens)
-         call damp(scale, dens, work)
+         call damp(scale)
          tdens = tdens + timer()
 c     
 c     add up energy and print out convergence information
@@ -165,7 +140,7 @@ c
 c     
 c     print out timing information
 c     
-         call prnfin(energy, evals, orbs)
+         call prnfin(energy)
          write(6,1) tinit, tonel, ttwoel, tdiag, tdens, tprint,
      $        nproc
  1       format(/'   init   onel  twoel   diag   dens   print  ncpu'/
@@ -196,55 +171,46 @@ c
 #endif
 c     
       end
-      subroutine makesz(schwarz, schwmax)
+c
+      subroutine makesz(schwmax)
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-      dimension schwarz(nnbfn)
-      dimension work(maxnbfn,maxnbfn)
-      integer lo(2),hi(2)
+      dimension work(ichunk,ichunk)
+      integer lo(2),hi(2),i,j,iloc,jloc,ld
+      logical dotask
 c
 c     schwarz(ij) = (ij|ij) for sparsity test
 c
       icut1 = 0
       icut2 = 0
       icut3 = 0
-      ij = 0
-      schwmax = 0.0d0
-      call dfill(nnbfn, 0.0d0, schwarz, 1)
-c
-      me = ga_nodeid()
-      nproc = ga_nnodes()
-      do 10 i = 1, nbfn
-         do 20 j = 1, i
-            ij = ij + 1
-            if (mod(ij,nproc).eq.me) then
-               call g(gg, i, j, i, j)
-               schwarz(ij) = sqrt(gg)
-               schwmax = max(schwmax, schwarz(ij))
-            endif
- 20      continue
- 10   continue
-c
-      call ga_dgop(101+MSGDBL, schwarz, nnbfn, '+')
-c      call ga_dgop(102+MSGDBL, schwmax, 1, 'max')
 c
       call ga_zero(g_schwarz)
+      call ga_zero(g_counter)
       schwmax = 0.0d0
-      call nga_distribution(g_schwarz,me,lo,hi)
-      do i = lo(1), hi(1)
-        do j = lo(2), hi(2)
-          call g(gg,i,j,i,j)
-          work(i,j) = sqrt(gg)
-          schwmax = max(schwmax, work(i,j))
+      dotask = next_chunk(lo,hi)
+      ld = ichunk
+      do while (dotask)
+        do i = lo(1), hi(1)
+          iloc = i - lo(1) + 1
+          do j = lo(2), hi(2)
+            jloc = j - lo(2) + 1
+            call g(gg,i,j,i,j)
+            work(iloc,jloc) = sqrt(gg)
+            schwmax = max(schwmax, work(iloc,jloc))
+          end do
         end do
+        call nga_put(g_schwarz,lo,hi,work,ld)
+        dotask = next_chunk(lo,hi)
       end do
-      call nga_put(g_schwarz,lo,hi,work(lo(1),lo(2)),maxnbfn)
-      call ga_dgop(103+MSGDBL, schwmax, 1, 'max')
+      call ga_dgop(11,schwmax,1,'max')
 c
+      return
       end
+c
       subroutine ininrm
       implicit double precision (a-h, o-z)
       include 'cscf.h'
@@ -335,33 +301,18 @@ c
      $     rnorm(i)*rnorm(j)
 c
       end
-      subroutine makden(orbs, dens)
+      subroutine makden
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-      dimension orbs(nbfn, nbfn), dens(nnbfn)
       dimension work(maxnbfn,maxnbfn), torbs(maxnbfn,maxnbfn)
       integer lo(2), hi(2), tlo(2), thi(2)
 c
 c     generate density matrix from orbitals in orbs. the first
-c     nocc orbitals are doubly occupied. Note that the diagonal
-c     elements are scaled by 0.5
+c     nocc orbitals are doubly occupied.
 c
-      ij = 0
-      do 10 i = 1, nbfn
-         do 20 j = 1, i
-            p = 0.0d0
-            do 30 k = 1, nocc
-               p = p + orbs(i,k)*orbs(j,k)
- 30         continue
-            ij = ij + 1
-            dens(ij) = 2.0d0 * p
- 20      continue
-         dens(ij) = dens(ij)*0.5d0
- 10   continue
-      
       me = ga_nodeid()
       call nga_distribution(g_work,me,lo,hi)
       tlo(1) = lo(1)
@@ -390,42 +341,40 @@ c
 c
       end
 c
-      subroutine oneel(dens, schwarz, schwmax, fock, eone)
+      subroutine oneel(schwmax, eone)
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-      integer lo(2), hi(2), ld
+      integer lo(2), hi(2), i, j, iloc, jloc, ld
       dimension dens(nnbfn), fock(nnbfn), schwarz(nnbfn)
-      dimension work(maxnbfn,maxnbfn),tfock(maxnbfn,maxnbfn)
+      dimension work(ichunk,ichunk),tfock(ichunk,ichunk)
+      logical dotask
 c
 c     fill in the one-electron part of the fock matrix and
 c     compute the one-electron energy contribution
 c
-c     simple structure to share out the work between processes
-c
       me = ga_nodeid()
       nproc = ga_nnodes()
 c
-      call dfill(nnbfn, 0.0d0, fock, 1)
-      do 10 i = me+1, nbfn, nproc
-         do 20 j = 1,i
-            ij = iky(i) + j
-            if (schwarz(ij)*schwmax.gt.tol2e) fock(ij) = h(i,j)
- 20      continue
- 10   continue
-      eone = scf_ddot(nnbfn, fock, 1, dens, 1)
-c
-      call nga_distribution(g_schwarz,me,lo,hi)
-      call nga_get(g_schwarz,lo,hi,work(lo(1),lo(2)),maxnbfn)
-      do j = lo(2), hi(2)
-        do i = lo(1), hi(1)
-          tfock(i,j) = 0.0d00
-          if (work(i,j)*schwmax.gt.tol2e) tfock(i,j) = h(i,j)
+      call ga_zero(g_counter)
+      dotask = next_chunk(lo,hi)
+      ld = ichunk
+      do while (dotask)
+        call nga_get(g_schwarz,lo,hi,work,ld)
+        do j = lo(2), hi(2)
+          jloc = j - lo(2) + 1
+          do i = lo(1), hi(1)
+            iloc = i - lo(1) + 1
+            tfock(iloc,jloc) = 0.0d00
+            if (work(iloc,jloc)*schwmax.gt.tol2e)
+     +        tfock(iloc,jloc) = h(i,j)
+          end do
         end do
+        call nga_put(g_fock,lo,hi,tfock,ld)
+        dotask = next_chunk(lo,hi)
       end do
-      call nga_put(g_fock,lo,hi,tfock(lo(1),lo(2)),maxnbfn)
       eone = 0.5d00*contract_matrices(g_fock,g_dens)
 c
       end
@@ -530,18 +479,16 @@ c
       return
       end
 c
-      subroutine twoel(dens, schwarz, schwmax, fock, etwo)
+      subroutine twoel(schwmax, etwo)
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-      dimension dens(nnbfn), fock(nnbfn), schwarz(nnbfn)
-      dimension work(maxnbfn,maxnbfn)
       double precision f_ij(ichunk,ichunk),d_kl(ichunk,ichunk)
       double precision f_ik(ichunk,ichunk),d_jl(ichunk,ichunk)
       double precision s_ij(ichunk,ichunk),s_kl(ichunk,ichunk)
-      double precision one
+      double precision schwmax, one
       integer nproc,lo(4),hi(4),ld,ich
       integer lo_ik(2),hi_ik(2),lo_jl(2),hi_jl(2)
       integer i,j,k,l,iloc,jloc,kloc,lloc,it,jt,kt,lt
@@ -550,49 +497,8 @@ c
 c     add in the two-electron contribution to the fock matrix
 c     
       nproc = ga_nnodes()
-c     
-      gg = 0.0d0
-c     
-      next = nnbfn - nxtask(nproc)
-      do 10 i = nbfn, 1, -1
-        do 20 j = i, 1, -1
-          ij = iky(i) + j
-          if (ij .eq. next) then
-            if (schwarz(ij)*schwmax .lt. tol2e) then
-c              icut1 = icut1 + ij
-            else
-              do 30 k = 1, i
-                lhi = k
-                if (k.eq.i) lhi = j
-                do 40 l = 1, lhi
-                  kl = iky(k) + l
-                  if (schwarz(ij)*schwarz(kl).lt.tol2e) then
-c                    icut2 = icut2 + 1
-                  else
-c                    icut3 = icut3 + 1
-c     
-c     compute value of integral (ij|kl) and add into fock matrix
-c     
-                    call g(gg, i, j, k, l)
-                    call addin(gg*0.5d0, i, j, k, l, fock,
-     $                         dens, iky)
-                  endif
- 40             continue
- 30           continue
-            endif
-            next = nnbfn - nxtask(nproc)
-          endif
- 20     continue
- 10   continue
-c
-      etwo = scf_ddot(nnbfn, fock, 1, dens, 1)
-      call ga_dgop(28,etwo,1,'+')
-c
-c     wait for all processes to finish work
-c
-      junk = nxtask(-nproc)
-c
       one = 1.0d00
+c
       call ga_zero(g_counter)
       ld = maxnbfn
       ich = ichunk
@@ -611,18 +517,6 @@ c
         call nga_get(g_schwarz,lo(3),hi(3),s_kl,ich)
         call nga_get(g_dens,lo(3),hi(3),d_kl,ich)
         call nga_get(g_dens,lo_jl,hi_jl,d_jl,ich)
-#if 0
-        if (itask.eq.0) then
-          write(6,*) ich
-          write(6,*) lo(1),hi(1)
-          write(6,*) lo(2),hi(2)
-          write(6,*) lo(3),hi(3)
-          write(6,*) lo(4),hi(4)
-          write(6,*)
-          call print_ga_block_ij(g_dens,lo(3))
-          call print_chunk_matrix(d_kl,ich) 
-        endif
-#endif
         itask = itask + 1
         call clean_chunk(f_ij)
         call clean_chunk(f_ik)
@@ -657,23 +551,24 @@ c
         dotask = next_4chunk(lo,hi,it,jt,kt,lt)
       end do
       etwo = 0.5d00*contract_matrices(g_fock,g_dens)
-c
+      return
       end
-      subroutine damp(fac, dens, work)
+c
+      subroutine damp(fac)
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-      dimension dens(nnbfn), work(nnbfn)
+c
+c    create damped density matrix as a linear combination of
+c    old density matrix and density matrix formed from new orbitals
 c
       ofac = 1.0d0 - fac
-      do 10 i = 1, nnbfn
-         dens(i) = fac*dens(i) + ofac*work(i)
-10    continue
       call ga_add(fac,g_dens,ofac,g_work,g_dens)
-c
+      return
       end
+c
       subroutine prnout(iter, energy, deltad, tester)
       implicit double precision (a-h, o-z)
       include 'cscf.h'
@@ -705,22 +600,6 @@ c
 c     compute largest change in density matrix elements
 c
       denmax = 0.0d0
-      do 10 i = 1, nnbfn
-         denmax = max(denmax, abs(work(i)-dens(i)))
-10    continue
-      dendif = denmax
-c
-      me = ga_nodeid()
-      call nga_distribution(g_dens, me, lo, hi)
-      ld2 = hi(2) - lo(2) + 1
-      call nga_access(g_dens, lo, hi, d_idx, ld1)
-      call nga_access(g_work, lo, hi, w_idx, ld1)
-      call find_max_diff(dbl_mb(d_idx),dbl_mb(w_idx),ld1,ld2,denmax)
-      call nga_release(g_dens)
-      call nga_release(g_work)
-      dendif = denmax
-
-      denmax = 0.0d0
       call ga_zero(g_counter)
       dotask = next_chunk(lo,hi)
       ld = ichunk
@@ -737,34 +616,16 @@ c
       end do
       call ga_dgop(1,denmax,1,'max')
       dendif = denmax
-c
-      end
-      subroutine find_max_diff(a, b, ld1, ld2, maxdiff)
-      implicit double precision (a-h, o-z)
-      include 'cscf.h'
-#include "mafdecls.fh"
-#include "global.fh"
-#include "tcgmsg.fh"
-      integer ld1, ld2
-      double precision a(ld1,ld2), b(ld1,ld2), maxdiff, xdiff
-      maxdiff = 0.0d00
-      do i = 1, ld1
-        do j = 1, ld2
-          xdiff = abs(a(i,j)-b(i,j))
-          if (xdiff.gt.maxdiff) maxdiff = xdiff
-        end do
-      end do
-      call ga_dgop(1,maxdiff,1,'max')
       return
       end
 c
-      subroutine prnfin(energy, evals, orbs)
+      subroutine prnfin(energy)
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-      dimension evals(nbfn), orbs(nbfn, nbfn)
+      dimension orbs(maxnbfn, maxnbfn)
       integer lo(2),hi(2),ld
 c
 c     printout final results
@@ -841,7 +702,6 @@ c
       call scf_dgemm('t', 'n', nbfn, nbfn, nbfn, 1.0d0, 
      $     orbs, nbfn, work2, nbfn, 0.0d0, work, nbfn)
       call zfold(nbfn, fock, work)
-      call print_triangle(fock)
 c
       iop1 = 1
       iop2 = 2
@@ -877,69 +737,50 @@ c
       endif
 c
       end
-      subroutine makeob(orbs, work)
+      subroutine makeob
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-      dimension orbs(nbfn,nbfn), work(nbfn,nbfn)
-      dimension tmp1(maxnbfn), tmp2(maxnbfn)
-      integer lo(2),hi(2),ld,me
+      double precision work(ichunk,ichunk),orbs(ichunk,ichunk)
+      double precision eval(maxnbfn)
+      integer lo(2),hi(2),ld,me,i,j,iloc,jloc
+      logical dotask
 c
-c     generate set of orthonormal vectors by orthoging twice
-c     a set of random vectors ... don't do this at home!
-c     ... should really diagonalize the overlap to get sym adaption
+c     generate set of orthonormal vectors by creating a random
+c     symmetric matrix and solving associated generalized eigenvalue
+c     problem using the correct overlap matrix.
 c
-      if (ga_nodeid().eq.0) then
-         call srand48(12345)
-         do 10 i = 1, nbfn
-            do 20 j = 1, nbfn
-               work(j,i) = s(i,j)
-               orbs(j,i) = drand48(0)
- 20         continue
- 10      continue
-         call orthv2(nbfn, orbs, work, tmp1, tmp2)
-         call orthv2(nbfn, orbs, work, tmp1, tmp2)
-      endif
-      call ga_brdcst(99+MSGDBL, orbs, mdtob(nbfn*nbfn), 0)
-c      call print_matrix(orbs)
-c
-#if 1
       me = ga_nodeid()
-      call nga_distribution(g_orbs,me,lo,hi)
-      do j = lo(2), hi(2)
-        do i = lo(1), hi(1)
-          work(i,j) = s(i,j)
-          orbs(i,j) = drand48(0)
+      call ga_zero(g_counter)
+      dotask = next_chunk(lo,hi)
+      ld = ichunk
+      do while (dotask)
+        do j = lo(2), hi(2)
+          jloc = j - lo(2) + 1
+          do i = lo(1), hi(1)
+            iloc = i - lo(1) + 1
+            work(iloc,jloc) = s(i,j)
+            orbs(iloc,jloc) = drand48(0)
+          end do
         end do
+        call nga_put(g_ident,lo,hi,work,ld)
+        call nga_put(g_fock,lo,hi,orbs,ld)
+        dotask = next_chunk(lo,hi)
       end do
-      ld = nbfn
-      call nga_put(g_ident,lo,hi,work(lo(1),lo(2)),ld)
-      call nga_put(g_fock,lo,hi,orbs(lo(1),lo(2)),ld)
       call ga_symmetrize(g_fock)
-      call ga_diag_seq(g_fock, g_ident, g_orbs, tmp1)
-#else
-      if (ga_nodeid().eq.0) then
-        lo(1) = 1
-        lo(2) = 1
-        hi(1) = nbfn
-        hi(2) = nbfn
-        ld = nbfn
-        call nga_put(g_orbs,lo,hi,orbs,ld)
-      endif
-#endif
-c      call print_ga_block(g_orbs)
+      call ga_diag_seq(g_fock, g_ident, g_orbs, eval)
 c
       return
       end
-      subroutine denges(dens, work)
+c
+      subroutine denges
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-      dimension dens(nnbfn), work(nbfn, nbfn)
 c
 c     Form guess density from superposition of atomic densities in the AO
 c     basis set ... instead of doing the atomic SCF hardwire for this
@@ -987,17 +828,6 @@ c
      $     0.001372,-0.009090,-0.008982,0.000124,0.000124,0.000124,
      $     0.000124,0.000124,0.000062/
 c
-      call dfill(nbfn*nbfn,0.0d0,work,1)
-      do 10 iat = 1,natom
-         ioff = (iat-1)*15
-         do 20 i = 1,15
-            do 30 j = 1,15
-               work(ioff+j,ioff+i) = atdens(j,i)*0.5d0
- 30         continue
- 20      continue
- 10   continue
-      call zfold(nbfn,dens,work)
-c
 c   Create initial guess for density matrix in global array
 c
       call ga_zero(g_dens)
@@ -1010,18 +840,19 @@ c
       do i = 1, ld
         atdens(i,i) = 2.0d00*atdens(i,i)
       end do
-  100 itask = nga_read_inc(g_counter,one,one)
-        if (itask.lt.natom) then
-          ioff = itask*15
-          lo(1) = ioff+1
-          lo(2) = ioff+1
-          hi(1) = ioff+15
-          hi(2) = ioff+15
-          call nga_put(g_dens,lo,hi,atdens,ld)
-          go to 100
-        endif
+      itask = nga_read_inc(g_counter,one,one)
+      do while(itask.lt.natom)
+        ioff = itask*15
+        lo(1) = ioff+1
+        lo(2) = ioff+1
+        hi(1) = ioff+15
+        hi(2) = ioff+15
+        call nga_put(g_dens,lo,hi,atdens,ld)
+        itask = nga_read_inc(g_counter,one,one)
+      end do
+      call ga_sync
 c
-c
+      return
       end
       subroutine setarrays
       implicit double precision (a-h, o-z)
@@ -1187,18 +1018,7 @@ c
       double precision value
       logical dotask
 c
-      me = ga_nodeid()
-      call nga_distribution(g_a, me, lo, hi)
-      ld1 = hi(1) - lo(1) + 1
-      ld2 = hi(2) - lo(2) + 1
-      call nga_access(g_a, lo, hi, ptr_a, ld)
-      call nga_distribution(g_b, me, lo, hi)
-      call nga_access(g_b, lo, hi, ptr_b, ld)
-      call ga_sync
-      call contract_chunk(dbl_mb(ptr_a),dbl_mb(ptr_b),ld1,ld2,value)
-      call nga_release(g_a)
-      call nga_release(g_b)
-      contract_matrices=value
+c   evalute sum_ij a_ij*b_ij
 c
       value = 0.0d00
       call ga_zero(g_counter)
@@ -1217,65 +1037,5 @@ c
       call ga_dgop(3,value,1,'+')
       contract_matrices=value
 c
-      return
-      end
-c
-      subroutine contract_chunk(a,b,ld1,ld2,val)
-      implicit double precision (a-h, o-z)
-      include 'cscf.h'
-#include "mafdecls.fh"
-#include "global.fh"
-#include "tcgmsg.fh"
-      integer ld1, ld2
-      double precision a(ld1, ld2),b(ld1, ld2),val
-      val = 0.0d00
-      do i = 1, ld1
-        do j = 1, ld2
-          val = val + a(i,j)*b(i,j)
-        end do
-      end do
-      call ga_dgop(7,val,1,'+')
-      return
-      end
-c
-      subroutine print_matrix(a)
-      implicit double precision (a-h,o-z)
-      include 'cscf.h'
-      double precision a(*)
-      integer i,j, ga_nodeid
-      me = ga_nodeid()
-      do i = 1, 10
-        write(6,100) (a(nbfn*j+i),j=0,9)
-  100   format(10f10.4)
-      end do
-      write(6,*)
-      return
-      end
-c
-      subroutine print_matrix_block(a,ich)
-      implicit double precision (a-h,o-z)
-      include 'cscf.h'
-      double precision a(*)
-      integer i,j,ich
-      do i = 1, 10
-        write(6,100) (a(ich*j+i),j=0,9)
-  100   format(10f10.4)
-      end do
-      write(6,*)
-      return
-      end
-c
-      subroutine print_triangle(a)
-      implicit double precision (a-h,o-z)
-      include 'cscf.h'
-      double precision a(*)
-      integer ij,i,j
-      ij = 0
-      do i = 1, 10
-        write(6,100) (a(ij+j),j=1,i)
-        ij = ij + i
-  100   format(10f10.4)
-      end do
-      write(6,*)
       return
       end
