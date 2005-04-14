@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.9 2005-04-14 17:35:25 d3g293 Exp $
+C$Id: scf.F,v 1.10 2005-04-14 18:45:10 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -307,38 +307,42 @@ c
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-      dimension work(maxnbfn,maxnbfn), torbs(maxnbfn,maxnbfn)
-      integer lo(2), hi(2), tlo(2), thi(2)
+c      dimension work(maxnbfn,maxnbfn), torbs(maxnbfn,maxnbfn)
+      dimension work(ichunk,ichunk), orbsi(ichunk,maxnbfn)
+      dimension orbsj(ichunk,maxnbfn)
+      integer lo(2), hi(2), tlo(2), thi(2), i, j, iloc, jloc, ld
+      logical dotask
 c
-c     generate density matrix from orbitals in orbs. the first
+c     generate density matrix from orbitals in g_orbs. the first
 c     nocc orbitals are doubly occupied.
 c
-      me = ga_nodeid()
-      call nga_distribution(g_work,me,lo,hi)
-      tlo(1) = lo(1)
-      thi(1) = hi(1)
-      tlo(2) = 1
-      thi(2) = nocc
-      ld = maxnbfn
-      call nga_get(g_orbs,tlo,thi,torbs(tlo(1),tlo(2)),ld)
-      if (lo(1).ne.lo(2).or.hi(1).ne.hi(2)) then
+      call ga_zero(g_counter)
+      dotask = next_chunk(lo,hi)
+      ld = ichunk
+      do while (dotask)
+        tlo(1) = lo(1)
+        thi(1) = hi(1)
+        tlo(2) = 1
+        thi(2) = nocc
+        call nga_get(g_orbs,tlo,thi,orbsi,ld)
         tlo(1) = lo(2)
         thi(1) = hi(2)
-        call nga_get(g_orbs,tlo,thi,torbs(tlo(1),tlo(2)),ld)
-      endif
-
-      pmax = 0.0d00
-      do i = lo(1), hi(1)
-        do j = lo(2), hi(2)
-          p = 0.0d00
-          do k = 1, nocc
-            p = p + torbs(i,k)*torbs(j,k)
+        call nga_get(g_orbs,tlo,thi,orbsj,ld)
+        do i = lo(1), hi(1)
+          iloc = i - lo(1) + 1
+          do j = lo(2), hi(2)
+            jloc = j - lo(2) + 1
+            p = 0.0d00
+            do k = 1, nocc
+              p = p + orbsi(iloc,k)*orbsj(jloc,k)
+            end do
+            work(iloc,jloc) = 2.0d00*p
           end do
-          work(i,j) = 2.0d00*p
         end do
+        call nga_put(g_work,lo,hi,work,ld)
+        dotask = next_chunk(lo,hi)
       end do
-      call nga_put(g_work,lo,hi,work(lo(1),lo(2)),ld)
-c
+      return
       end
 c
       subroutine oneel(schwmax, eone)
