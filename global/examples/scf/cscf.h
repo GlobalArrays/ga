@@ -56,6 +56,7 @@ c
 c    g_counter: global array used to assign next task
 c    g_dens:    global array used to store density matrix
 c    g_fock:    global array used to store fock matrix
+c    g_tfock:   global array used to store transformed fock matrix
 c    g_schwarz: global array used to store schwarz matrix
 c    g_work:    global array used to store work matrix
 c    g_ident:   global array used to store identity matrix
@@ -63,8 +64,8 @@ c    g_orbs:    global array used to store orbital vectors
 c
       parameter (ichunk = 30)
       common /g_arrays/ eigv(maxnbfn),
-     $     g_counter, g_dens, g_fock, g_schwarz, g_work,
+     $     g_counter, g_dens, g_fock, g_tfock, g_schwarz, g_work,
      $     g_ident, g_orbs
       double precision eigv
-      integer g_counter, g_dens, g_fock, g_schwarz, g_work,
+      integer g_counter, g_dens, g_fock, g_tfock, g_schwarz, g_work,
      $     g_ident, g_orbs
