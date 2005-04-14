@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.10 2005-04-14 18:45:10 d3g293 Exp $
+C$Id: scf.F,v 1.11 2005-04-14 21:12:10 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -10,7 +10,6 @@ C$Id: scf.F,v 1.10 2005-04-14 18:45:10 d3g293 Exp $
       integer heap, stack
       data tinit, tonel, ttwoel, tdiag, tdens, tprint /6*0.0d0/
       data eone, etwo, energy, deltad /4*0.0d0/
-      double precision r_one, r_zero
 c     
 c     initalize the parallel message passing environment
 c     
@@ -30,8 +29,6 @@ c
      +   call ga_error("ma_init failed",-1)
       me = ga_nodeid()
       nproc = ga_nnodes()
-      r_one = 1.0d00
-      r_zero = 0.0d00
 c     
 c     initialize a bunch of stuff and initial density matrix
 c     
@@ -66,33 +63,10 @@ c
          call twoel(schwmax, etwo)
          ttwoel = ttwoel + timer()
 c     
-c     Diagonalize the fock matrix. The diagonalizers used here are
-c     actually sequential, not parallel.
+c     Diagonalize the fock matrix. The diagonalizers used in this
+c     subroutine are actually sequential, not parallel.
 c
-#if USE_TRANSFORM
-c
-c     use similarity transform to solve standard eigenvalue problem
-c     (overlap matrix has been transformed out of the problem)
-c
-         call ga_dgemm('n','n',nbfn,nbfn,nbfn,r_one,g_fock,g_orbs,
-     +                  r_zero,g_tfock)
-         call ga_dgemm('t','n',nbfn,nbfn,nbfn,r_one,g_orbs,g_tfock,
-     +                  r_zero,g_fock)
-         call ga_copy(g_orbs,g_tfock)
-         call ga_diag_std_seq(g_fock, g_work, eigv)
-c
-c     Back transform eigenvectors
-c
-         call ga_dgemm('n','n',nbfn,nbfn,nbfn,r_one,g_tfock,g_work,
-     +                  r_zero,g_orbs)
-#else
-c
-c     Keep remaking overlap matrix since ga_diag_seq does not
-c     guarantee that g_ident is preserved.
-c
-         call makoverlap
-         call ga_diag_seq(g_fock, g_ident, g_orbs, eigv)
-#endif
+         call diagon(tester,iter)
          tdiag = tdiag + timer()
 c     
 c     make the new density matrix in g_work from orbitals in g_orbs,
@@ -587,18 +561,18 @@ c
       call flush(6)
 1     format(' iter=',i3,', energy=',f13.8,', deltad=',d9.2,
      $     ', deltaf=',d9.2)
-c
+      return
       end
-      double precision function dendif(dens, work)
+c
+      double precision function dendif()
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
       double precision xdiff
-      dimension dens(nnbfn), work(nnbfn)
       dimension dens_c(ichunk,ichunk),work_c(ichunk,ichunk)
-      integer me, lo(2), hi(2), ld1, ld2, ld, d_idx, w_idx
+      integer lo(2), hi(2), i, j, ld
       logical dotask
 c
 c     compute largest change in density matrix elements
@@ -620,6 +594,77 @@ c
       end do
       call ga_dgop(1,denmax,1,'max')
       dendif = denmax
+      return
+      end
+c
+      double precision function testfock()
+      implicit double precision (a-h, o-z)
+      include 'cscf.h'
+#include "mafdecls.fh"
+#include "global.fh"
+#include "tcgmsg.fh"
+      double precision xmax, xtmp
+      dimension work(ichunk,ichunk)
+      integer lo(2), hi(2), i, j, iloc, jloc, ld
+      logical dotask
+c
+c     compute largest change in density matrix elements
+c
+      xmax = 0.0d0
+      call ga_zero(g_counter)
+      dotask = next_chunk(lo,hi)
+      ld = ichunk
+      do while(dotask)
+        call nga_get(g_fock,lo,hi,work,ld)
+        do j = lo(2), hi(2)
+          jloc = j - lo(2) + 1
+          do i = lo(1), hi(1)
+            iloc = i - lo(1) + 1
+            if (i.ne.j) then
+              xtmp = abs(work(iloc,jloc))
+              if (xtmp.gt.xmax) xmax = xtmp
+            endif
+          end do
+        end do
+        dotask = next_chunk(lo,hi)
+      end do
+      call ga_dgop(1,xmax,1,'max')
+      testfock = xmax
+      return
+      end
+c
+      subroutine shiftfock(shift)
+      implicit double precision (a-h, o-z)
+      include 'cscf.h'
+#include "mafdecls.fh"
+#include "global.fh"
+#include "tcgmsg.fh"
+      double precision shift
+      dimension work(ichunk,ichunk)
+      integer lo(2), hi(2), i, j, iloc, jloc, ld, icnt
+      logical dotask
+c
+c     compute largest change in density matrix elements
+c
+      call ga_zero(g_counter)
+      dotask = next_chunk(lo,hi)
+      ld = ichunk
+      do while(dotask)
+        call nga_get(g_fock,lo,hi,work,ld)
+        icnt = 0
+        do j = lo(2), hi(2)
+          jloc = j - lo(2) + 1
+          do i = lo(1), hi(1)
+            iloc = i - lo(1) + 1
+            if (i.eq.j.and.i.gt.nocc) then
+              work(iloc,jloc) = work(iloc,jloc) + shift
+              icnt = icnt + 1
+            endif
+          end do
+        end do
+        if (icnt.gt.0) call nga_put(g_fock,lo,hi,work,ld)
+        dotask = next_chunk(lo,hi)
+      end do
       return
       end
 c
@@ -682,65 +727,60 @@ c
       call f0(f0val, fac*rpq2)
       value = (2.0d0 * pi**2.5d0 / denom) * exijkl * f0val *
      $    rnorm(i)*rnorm(j)*rnorm(k)*rnorm(l)
-c
+      return
       end
-      subroutine diagon(fock, orbs, evals, work, tester, iter)
+c
+      subroutine diagon(tester, iter)
+c      subroutine diagon(fock, orbs, evals, work, tester, iter)
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
 #include "global.fh"
 #include "tcgmsg.fh"
-      dimension fock(nnbfn), orbs(nbfn, nbfn), evals(nbfn),
-     $     work(nbfn*nbfn)
-      dimension ilifq(nbfn), work2(nbfn*nbfn)
+      double precision r_zero, r_one, shift, tester
 c
-      do 10 i = 1, nbfn
-         ilifq(i) = (i-1)*nbfn
- 10   continue
+#if USE_TRANSFORM
 c
-c     transform fock matrix from AO to MO basis
+c     use similarity transform to solve standard eigenvalue problem
+c     (overlap matrix has been transformed out of the problem)
 c
-      call zsqua(nbfn, fock, work)
-      call scf_dgemm('n', 'n', nbfn, nbfn, nbfn, 1.0d0, 
-     $     work, nbfn, orbs, nbfn, 0.0d0, work2, nbfn)
-      call scf_dgemm('t', 'n', nbfn, nbfn, nbfn, 1.0d0, 
-     $     orbs, nbfn, work2, nbfn, 0.0d0, work, nbfn)
-      call zfold(nbfn, fock, work)
-c
-      iop1 = 1
-      iop2 = 2
-      tester = 0.0d0
-      do 20 i = 2, nbfn
-         do 30 j = 1, i-1
-            tester = max(tester, abs(fock(iky(i)+j)))
- 30      continue
- 20   continue
-c
-      tester = 0.0d00
+      r_one = 1.0d00
+      r_zero = 0.0d00
+      call ga_dgemm('n','n',nbfn,nbfn,nbfn,r_one,g_fock,g_orbs,
+     +               r_zero,g_tfock)
+      call ga_dgemm('t','n',nbfn,nbfn,nbfn,r_one,g_orbs,g_tfock,
+     +               r_zero,g_fock)
+      tester = testfock()
       if (tester.gt.0.3d0) then
         shift = 0.3d0
-      else
-        if (nbfn .gt. 60) then
-           shift = 0.1d0
-        else
-           shift = 0.0d0
-        endif
-      endif	
-      if (iter.ge.2) then
-         do 40 i = nocc+1, nbfn
-            fock(iky(i)+i) = fock(iky(i)+i) + shift
- 40      continue
       endif
-      thresh = min(0.0001d0,max(1.0d-12,tester*0.01d0))
-      call jacobi(fock, iky, nbfn, orbs, ilifq, nbfn, evals, iop1,
-     *     iop2,thresh)
-      if (iter.ge.2) then
+      if (iter.ge.2.and.shift.ne.0.0d00) then
+        call shiftfock(shift)
+      endif
+      call ga_copy(g_orbs,g_tfock)
+      call ga_diag_std_seq(g_fock, g_work, eigv)
+c
+c     Back transform eigenvectors
+c
+      call ga_dgemm('n','n',nbfn,nbfn,nbfn,r_one,g_tfock,g_work,
+     +               r_zero,g_orbs)
+      if (iter.ge.2.and.shift.ne.0.0d00) then
          do 50 i = nocc+1, nbfn
-            evals(i) = evals(i) - shift
+            eigv(i) = eigv(i) - shift
  50      continue
       endif
+#else
 c
+c     Keep remaking overlap matrix since ga_diag_seq does not
+c     guarantee that g_ident is preserved.
+c
+         call makoverlap
+         call ga_diag_seq(g_fock, g_ident, g_orbs, eigv)
+         tester = 0.0d00
+#endif
+      return
       end
+c
       subroutine makeob
       implicit double precision (a-h, o-z)
       include 'cscf.h'
