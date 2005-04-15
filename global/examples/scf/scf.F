@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.11 2005-04-14 21:12:10 d3g293 Exp $
+C$Id: scf.F,v 1.12 2005-04-15 14:32:11 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -33,25 +33,38 @@ c
 c     initialize a bunch of stuff and initial density matrix
 c     
       rjunk = timer()
+c
+c     get input from file be.inpt
+c
       call input
+c
+c     create and allocate global arrays
+c
       call setarrays
       call ininrm
+c
+c     create initial guess for density matrix by using single atom
+c     densities
+c
       call denges
       tinit = timer()
+#if USE_TRANSFORM
 c
-c     make initial orthogonal orbital set for jacobi diagonalizer
+c     make initial orthogonal orbital set for solution method using
+c     similarity transform
 c
       call makeob
+#endif
+c     
+c     make info for sparsity test
+c     
+         call makesz(schwmax)
 c     
 c     iterate
 c     
       do 10 iter = 1, mxiter
-c     
-c     make info for sparsity test ... redone every iter to save space
-c     
-         call makesz(schwmax)
 c
-c     make the one particle contribution to the fock matrix (in fock)
+c     make the one particle contribution to the fock matrix
 c     and get the partial contribution to the energy
 c     
          call oneel(schwmax, eone)
@@ -137,6 +150,7 @@ c
          call stats
       endif
 c     
+      call closearrays
       call ga_terminate
 #ifdef MPI
       call mpi_finalize
@@ -895,9 +909,9 @@ c
         itask = nga_read_inc(g_counter,one,one)
       end do
       call ga_sync
-c
       return
       end
+c
       subroutine setarrays
       implicit double precision (a-h, o-z)
       include 'cscf.h'
@@ -950,6 +964,25 @@ c
       status = ga_allocate(g_orbs)
       call ga_zero(g_orbs)
 
+      return
+      end
+      subroutine closearrays
+      implicit double precision (a-h, o-z)
+      include 'cscf.h'
+#include "mafdecls.fh"
+#include "global.fh"
+#include "tcgmsg.fh"
+      logical status
+c
+      status = ga_destroy(g_counter)
+      status = ga_destroy(g_dens)
+      status = ga_destroy(g_schwarz)
+      status = ga_destroy(g_fock)
+      status = ga_destroy(g_tfock)
+      status = ga_destroy(g_work)
+      status = ga_destroy(g_ident)
+      status = ga_destroy(g_orbs)
+c
       return
       end
 c
