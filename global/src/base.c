@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.115 2005-03-11 01:23:06 manoj Exp $ */
+/* $Id: base.c,v 1.116 2005-04-19 16:52:29 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1250,9 +1250,8 @@ logical ga_allocate_( Integer *g_a)
   /* The data distribution has not been specified by the user. Create
      default distribution */
   if (GA[ga_handle].mapc[0] == -1) {
-    extern void ddb_h2(Integer ndims, Integer dims[], Integer npes,
-                       double thr, Integer bias, Integer blk[],
-                       Integer pedims[]);
+    extern void ddb(Integer ndims, Integer dims[], Integer npes,
+                    Integer blk[], Integer pedims[]);
 
     for (d=0; d<ndim; d++) {
       dims[d] = GA[ga_handle].dims[d];
@@ -1272,10 +1271,9 @@ logical ga_allocate_( Integer *g_a)
 
     /* ddb(ndim, dims, GAnproc, blk, pe);*/
     if(p_handle == 0) /* for mirrored arrays */
-       ddb_h2(ndim, dims, PGRP_LIST[p_handle].map_nproc, 0.0,
-              (Integer)0, blk, pe);
+       ddb(ndim, dims, PGRP_LIST[p_handle].map_nproc, blk, pe);
     else
-       ddb_h2(ndim, dims, grp_nproc, 0.0, (Integer)0, blk, pe);
+       ddb(ndim, dims, grp_nproc, blk, pe);
 
     for(d=0, map=mapALL; d< ndim; d++){
       Integer nblock;

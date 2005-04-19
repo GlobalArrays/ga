@@ -1,4 +1,4 @@
-/* $Id: decomp.c,v 1.8 2001-05-04 01:58:27 edo Exp $ */
+/* $Id: decomp.c,v 1.9 2005-04-19 16:52:29 d3g293 Exp $ */
 /***************************************************************************
  *--- 
  *--- The software in this file implements three heuristics for distributing
@@ -26,7 +26,8 @@
  *-- void ddb_h1 and ddb_h2 implement load-balancing heuristics
  *-- void ddb_ex implements an exhaustive search 
  */
-void ddb(long ndims, long ardims[], long npes, long blk[], long pedims[]);
+void ddb(Integer ndims, Integer ardims[], Integer npes, Integer blk[],
+         Integer pedims[]);
 void ddb_ex( long ndims, Integer ardims[], long npes, double threshold,
              Integer blk[], Integer pedims[]);
 void ddb_h1( long ndims, Integer ardims[], long npes, double threshold,
@@ -110,7 +111,8 @@ void dd_su(long ndims, Integer ardims[], Integer pedims[], Integer blk[]);
  *--  array dimensions. The resulting process grid also has ndims
  *--  dimensions but some of these can be degenerate.
  ************************************************************************/
-void ddb(long ndims, long ardims[], long npes, long blk[], long pedims[])
+void ddb(Integer ndims, Integer ardims[], Integer npes, Integer blk[],
+         Integer pedims[])
 {
     double ddb_threshold = 0.1;
     long ddb_bias = 0;
@@ -119,7 +121,7 @@ void ddb(long ndims, long ardims[], long npes, long blk[], long pedims[])
     Integer *tardim, *tblk, *tpedim;
     long tp, sp;
 
-    tp = npes;
+    tp = (long)npes;
 
     /* count how many axes have <don't care> block values.*/
     for(i=ndims-1;i>=0;i--){
@@ -127,13 +129,13 @@ void ddb(long ndims, long ardims[], long npes, long blk[], long pedims[])
           pedims[i] = -1;
           count += 1;
        } else {
-          sp = (ardims[i]+blk[i]-1)/blk[i];
+          sp = (long)(ardims[i]+blk[i]-1)/blk[i];
           if(sp>tp) {
              sp = tp; tp = 1;
-             pedims[i] = sp;
+             pedims[i] = (Integer)sp;
           } else {
              for(j=sp;j<tp&&(tp%j!=0);j++);
-             pedims[i] = j;
+             pedims[i] = (Integer)j;
              tp = tp / j;
           }
        }
@@ -163,7 +165,7 @@ void ddb(long ndims, long ardims[], long npes, long blk[], long pedims[])
        for(i=0,j=0;j<ndims;j++) 
           if(pedims[j]<0) tardim[i++] = ardims[j];
 
-       ddb_h2( count, tardim, tp, ddb_threshold, ddb_bias, tblk, tpedim);
+       ddb_h2( count, tardim, (Integer)tp, ddb_threshold, ddb_bias, tblk, tpedim);
        /* ddb_h1( count, tardim, tp, ddb_threshold, tblk, tpedim); */
 
        for(i=0,j=0;j<ndims;j++)
