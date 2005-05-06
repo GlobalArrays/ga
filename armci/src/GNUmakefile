@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.86 2005-03-10 19:11:23 vinodtipparaju Exp $
+#$Id: GNUmakefile,v 1.87 2005-05-06 21:54:04 vinod Exp $
          FOPT = -O
          COPT = -O
 
@@ -30,6 +30,7 @@ endif
 SYSTEM_V = SUN SOLARIS SOLARIS64 SGI SGI_N32 SGI64 SGITFP 
 SYSTEM_V += HPUX HPUX64 IBM IBM64 DECOSF LINUX LINUX64 INTERIX NEC
 SHMEM    = $(SYSTEM_V) LAPI LAPI64
+CHKPT = LINUX LINUX64 MACX
 SHMMMAP  = NEC
 SOCKETS  = $(SYSTEM_V)
 ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP CRAY-SV2  LAPI FUJITSU-VPP FUJITSU-AP
@@ -39,6 +40,12 @@ ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP CRAY-SV2  LAPI FUJITSU-VPP FUJIT
 ifeq ($(TARGET),$(findstring $(TARGET),$(USE_PTHREADS)))
      LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT
      EXTRA_LIBS += -lpthread
+endif
+
+ifeq ($(TARGET),$(findstring $(TARGET),$(CHKPT)))
+ifdef ENABLE_CHKPT
+     OBJ += armci_chkpt.o armci_storage.o
+endif
 endif
 
 ifeq ($(TARGET),HITACHI)
@@ -149,6 +156,10 @@ endif
 
 ifdef REPORT_SHMMAX
 LIB_DEFINES += -DREPORT_SHMMAX
+endif
+
+ifdef ENABLE_CHKPT
+LIB_DEFINES+=-DDO_CHKPT 
 endif
 
 #......................................................................

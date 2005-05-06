@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.24 2004-06-28 17:39:20 manoj Exp $ */
+/* $Id: signaltrap.c,v 1.25 2005-05-06 21:54:04 vinod Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -17,7 +17,7 @@
 #include <errno.h>
 #endif
 
-#define PAUSE_ON_ERROR__ 
+#define PAUSE_ON_ERROR__
 
 #define  Error armci_die 
 
@@ -295,6 +295,29 @@ SigType SigSegvHandler(sig)
 
   Error("Segmentation Violation error, status=",(int) sig);
 }
+#ifdef DO_CHKPT
+static void * signal_arr[100];
+SigType SigSegvActionSa(int sig,siginfo_t *sinfo, void *ptr)
+{
+  int (*func)();      
+  AR_caught_sig= sig;
+  AR_caught_sigsegv=1;
+  func = signal_arr[sig];
+  printf("\n%d:in sigaction %p, %d\n",armci_me,sinfo->si_addr,sinfo->si_errno);fflush(stdout);
+
+  if(func(sinfo->si_addr,sinfo->si_errno,sinfo->si_fd))
+     Error("Segmentation Violation error, status=",(int) SIGSEGV);
+}
+
+void TrapSigSegvSigaction()
+{
+  struct sigaction sa;
+    sa.sa_sigaction = (void *)SigSegvActionSa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sigaction(SIGSEGV, &sa, NULL);
+}
+#endif
 
 void TrapSigSegv()
 /*
@@ -314,7 +337,16 @@ void RestoreSigSegv()
 /*
   if(AR_caught_sigsegv) SigSegvOrig(SIGSEGV);
 */
+#ifdef DO_CHKPT__
+  struct sigaction sa;
+  sa.sa_handler = (void *)SigSegvOrig;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = SA_RESTART;
+  sigaction(SIGSEGV, &sa, NULL);
+  if(sigaction(SIGSEGV,&sa,NULL)==SIG_ERR)
+#else
   if ( signal(SIGSEGV,SigSegvOrig) == SIG_ERR)
+#endif
     Error("RestoreSigSegv: error from restoring signal SIGSEGV",0);
 }
 
@@ -531,7 +563,11 @@ void ARMCI_ChildrenTrapSignals()
 #endif
      TrapSigFpe();
      TrapSigIll();
+#ifdef DO_CHKPT
+     TrapSigSegvSigaction();
+#else
      TrapSigSegv(); 
+#endif
      TrapSigSys();
      TrapSigTrap();
      TrapSigAbort();
@@ -574,3 +610,12 @@ void ARMCI_ParentRestoreSignals()
      ARMCI_RestoreSignals();
      RestoreSigHup();
 }
+
+#ifdef DO_CHKPT
+/*user can register a function with 3 parameters, 1st offending address
+ * 2nd err number and third file descriptor*/
+void ARMCI_Register_Signal_Handler(int sig, void  (*func)())
+{
+    signal_arr[sig]=func;
+}
+#endif

@@ -328,4 +328,13 @@ extern void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 #define ARMCI_INIT_HANDLE(hdl) do {((double *)((hdl)->data))[0]=0; \
   ((double *)((hdl)->data))[1]=0; }while(0)
 
+#ifdef DO_CHKPT
+typedef struct {
+        void **ptr_arr;
+        size_t *sz;
+        int count;
+}armci_ckpt_ds_t;
+#endif
+
+  
 #endif /* _ARMCI_H */
