@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.97 2005-05-10 16:32:55 vinod Exp $ */
+/* $Id: armci.c,v 1.98 2005-05-10 22:14:58 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -376,7 +376,9 @@ int ARMCI_Init()
 #endif /* QUADRICS */
 
     armci_init_clusinfo();
+#ifdef MPI
     armci_create_world_group();
+#endif
     armci_krmalloc_init_localmem();
 
     /* trap signals to cleanup ARMCI system resources in case of crash */

@@ -155,6 +155,7 @@ int armci_init_checkpoint()
     ARMCI_Register_Signal_Handler(SIGSEGV,(void *)armci_ckpt_pgfh);
     checkpointing_initialized = 1;
     armci_dpage_info.touched_page_arr = (unsigned long *)malloc(sizeof(unsigned long)*100000);
+    armci_dpage_info.num_touched_pages=0;
     return(0);
 }
 
