@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.26 2005-05-10 16:32:55 vinod Exp $ */
+/* $Id: signaltrap.c,v 1.27 2005-05-10 19:53:50 vinod Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -303,7 +303,8 @@ SigType SigSegvActionSa(int sig,siginfo_t *sinfo, void *ptr)
   AR_caught_sig= sig;
   AR_caught_sigsegv=1;
   func = signal_arr[sig];
-  printf("\n%d:in sigaction %p, %d\n",armci_me,sinfo->si_addr,sinfo->si_errno);fflush(stdout);
+  printf("\n%d:in sigaction %p, %d\n",armci_me,sinfo->si_addr,sinfo->si_errno);
+  fflush(stdout);
 
   if(func(sinfo->si_addr,sinfo->si_errno,sinfo->si_fd))
      Error("Segmentation Violation error, status=",(int) SIGSEGV);
@@ -343,11 +344,11 @@ void RestoreSigSegv()
   sigemptyset(&sa.sa_mask);
   sa.sa_flags = SA_RESTART;
   sigaction(SIGSEGV, &sa, NULL);
-  if(sigaction(SIGSEGV,&sa,NULL)==SIG_ERR)
+  sigaction(SIGSEGV,&sa,NULL);
 #else
   if ( signal(SIGSEGV,SigSegvOrig) == SIG_ERR)
-#endif
     Error("RestoreSigSegv: error from restoring signal SIGSEGV",0);
+#endif
 }
 
 

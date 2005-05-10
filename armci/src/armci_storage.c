@@ -13,12 +13,12 @@
 #include "armci_storage.h"
 extern int armci_me;
 extern void armci_die(char *msg, int code);
-
+#define DEBUG 0
 FILE_DS armci_storage_fopen(char *filename)
 {
     FILE_DS file_d;
     file_d = fopen(filename,"w+");
-    printf("\n%d:filed=%p %s",armci_me,file_d,filename);
+   if(DEBUG) printf("\n%d:filed=%p %s",armci_me,file_d,filename);
     return(file_d);
 }
 void armci_storage_fclose(FILE_DS filed)
@@ -37,7 +37,7 @@ int armci_storage_read_ptr(FILE_DS file_d,void *ptr,int size,off_t ofs)
     while(orc!=isize){
        rc = fread(ptr,1,size,file_d);
        orc+=rc;
-       printf("\n%d:read %d so far of %d\n",armci_me,orc,isize);
+       if(DEBUG)printf("\n%d:read %d so far of %d\n",armci_me,orc,isize);
        if(orc!=isize){
          ptr+=rc;
          size-=rc;
@@ -72,7 +72,7 @@ int armci_storage_write_ptr(FILE_DS file_d,void *ptr,int size,off_t ofs)
     while(orc!=isize){
        rc = fwrite(ptr,1,size,file_d);
        orc+=rc;
-       printf("\n%d:wrote %d so far of %d\n",armci_me,orc,isize);
+       if(DEBUG)printf("\n%d:wrote %d so far of %d\n",armci_me,orc,isize);
        if(orc!=isize){
          ptr+=rc;
          size-=rc;

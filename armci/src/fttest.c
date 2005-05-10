@@ -41,18 +41,18 @@ int main(int argc, char* argv[])
     grp = ARMCI_Get_world_group();
     size = 131072;
     rc=ARMCI_Malloc((void **)ptr_arr,size*8);
-    (void)ARMCI_Ckpt_create_ds(&ckptds,4); 
-    ckptds.ptr_arr[0]=&me;
+    (void)ARMCI_Ckpt_create_ds(&ckptds,1); 
+    /*ckptds.ptr_arr[0]=&me;
     ckptds.ptr_arr[1]=&nproc;
-    ckptds.ptr_arr[2]=&size;
-    ckptds.ptr_arr[3]=ptr_arr[me];
-    ckptds.sz[0]=sizeof(int);
+    ckptds.ptr_arr[2]=&size;*/
+    ckptds.ptr_arr[0]=ptr_arr[me];
+    /*ckptds.sz[0]=sizeof(int);
     ckptds.sz[1]=sizeof(int);
-    ckptds.sz[2]=sizeof(long);
-    for(size=1;size<262144;size*=2){
-       ckptds.sz[3]=size*8;
+    ckptds.sz[2]=sizeof(long);*/
+    for(size=1024;size<2048;size*=2){
+       ckptds.sz[0]=size*8;
        rid=ARMCI_Ckpt_init(NULL,grp,0,0,&ckptds);
-       for(i=0;i<50;i++){
+       for(i=0;i<5;i++){
          rc = ARMCI_Ckpt(rid);
          do_work(size);
        }

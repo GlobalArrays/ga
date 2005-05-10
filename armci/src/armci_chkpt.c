@@ -122,13 +122,14 @@ static int armci_create_record(ARMCI_Group *group, int count)
 }
 
 
-static void armci_protect_pages(int startpagenum,int numpages)
+static void armci_protect_pages(unsigned long startpagenum,unsigned long numpages)
 {
     unsigned long i=0;
     for(i=startpagenum;i<startpagenum+numpages;i++){
        char *addr;
        addr =(char *)((unsigned long)(i*mypagesize));
        mprotect(addr, mypagesize,PROT_READ);
+       printf("\n%d:protecting address %p",armci_me,addr);
     }
 }
 
@@ -153,6 +154,7 @@ int armci_init_checkpoint()
    
     ARMCI_Register_Signal_Handler(SIGSEGV,(void *)armci_ckpt_pgfh);
     checkpointing_initialized = 1;
+    armci_dpage_info.touched_page_arr = (unsigned long *)malloc(sizeof(unsigned long)*100000);
     return(0);
 }
 
@@ -253,7 +255,7 @@ int armci_icheckpoint_init(char *filename,ARMCI_Group *grp, int savestack,
  * changed pages*/
 int armci_icheckpoint(int rid)
 {
-    int i,rc;
+    int i,j,rc;
     off_t ofs;
     char *addr;
     if(!setjmp(armci_storage_record[rid].jmp)){
@@ -277,6 +279,10 @@ int armci_icheckpoint(int rid)
            armci_monitor_address_t *addrds = &armci_storage_record[rid].user_addr[i];
            ofs=(off_t)(addrds->fileoffset);
            rc = armci_storage_write_pages(armci_storage_record[rid].fileinfo.fd,addrds->firstpage,addrds->touched_page_arr,addrds->num_touched_pages,mypagesize,ofs);
+           for(j=0;j<addrds->num_touched_pages;j++){
+             addr =(char *)(addrds->touched_page_arr[j]*mypagesize);
+             mprotect(addr, mypagesize,PROT_READ);
+           }
            bzero(addrds->touched_page_arr,sizeof(unsigned long)*addrds->num_touched_pages);
            addrds->num_touched_pages = 0;
          }
