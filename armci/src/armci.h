@@ -328,13 +328,19 @@ extern void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 #define ARMCI_INIT_HANDLE(hdl) do {((double *)((hdl)->data))[0]=0; \
   ((double *)((hdl)->data))[1]=0; }while(0)
 
-#ifdef DO_CHKPT
+#ifdef DO_CKPT
 typedef struct {
         void **ptr_arr;
         size_t *sz;
         int count;
 }armci_ckpt_ds_t;
+int ARMCI_Ckpt_create_ds(armci_ckpt_ds_t *ckptds, int count);
+int ARMCI_Ckpt_init(char *filename, ARMCI_Group *grp, int savestack, int saveheap, armci_ckpt_ds_t *ckptds);
+int ARMCI_Ckpt(int rid);
+void ARMCI_Ckpt_finalize(int rid);
 #endif
 
-  
+#ifdef MPI
+ARMCI_Group * ARMCI_Get_world_group();
+#endif
 #endif /* _ARMCI_H */

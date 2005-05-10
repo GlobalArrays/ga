@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.87 2005-05-06 21:54:04 vinod Exp $
+#$Id: GNUmakefile,v 1.88 2005-05-10 16:32:55 vinod Exp $
          FOPT = -O
          COPT = -O
 
@@ -30,7 +30,7 @@ endif
 SYSTEM_V = SUN SOLARIS SOLARIS64 SGI SGI_N32 SGI64 SGITFP 
 SYSTEM_V += HPUX HPUX64 IBM IBM64 DECOSF LINUX LINUX64 INTERIX NEC
 SHMEM    = $(SYSTEM_V) LAPI LAPI64
-CHKPT = LINUX LINUX64 MACX
+CKPT = LINUX LINUX64 MACX
 SHMMMAP  = NEC
 SOCKETS  = $(SYSTEM_V)
 ONESIDED_AVAILABLE = CRAY-T3D CRAY-T3E CRAY-YMP CRAY-SV2  LAPI FUJITSU-VPP FUJITSU-AP
@@ -42,8 +42,8 @@ ifeq ($(TARGET),$(findstring $(TARGET),$(USE_PTHREADS)))
      EXTRA_LIBS += -lpthread
 endif
 
-ifeq ($(TARGET),$(findstring $(TARGET),$(CHKPT)))
-ifdef ENABLE_CHKPT
+ifeq ($(TARGET),$(findstring $(TARGET),$(CKPT)))
+ifdef ENABLE_CKPT
      OBJ += armci_chkpt.o armci_storage.o
 endif
 endif
@@ -158,8 +158,8 @@ ifdef REPORT_SHMMAX
 LIB_DEFINES += -DREPORT_SHMMAX
 endif
 
-ifdef ENABLE_CHKPT
-LIB_DEFINES+=-DDO_CHKPT 
+ifdef ENABLE_CKPT
+MP_DEFINES+=-DDO_CKPT 
 endif
 
 #......................................................................

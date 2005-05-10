@@ -1,4 +1,4 @@
-/* $Id: signaltrap.c,v 1.25 2005-05-06 21:54:04 vinod Exp $ */
+/* $Id: signaltrap.c,v 1.26 2005-05-10 16:32:55 vinod Exp $ */
  /******************************************************\
  * Signal handler functions for the following signals:  *
  *        SIGINT, SIGCHLD, SIGBUS, SIGFPE, SIGILL,      *
@@ -295,7 +295,7 @@ SigType SigSegvHandler(sig)
 
   Error("Segmentation Violation error, status=",(int) sig);
 }
-#ifdef DO_CHKPT
+#ifdef DO_CKPT
 static void * signal_arr[100];
 SigType SigSegvActionSa(int sig,siginfo_t *sinfo, void *ptr)
 {
@@ -337,7 +337,7 @@ void RestoreSigSegv()
 /*
   if(AR_caught_sigsegv) SigSegvOrig(SIGSEGV);
 */
-#ifdef DO_CHKPT__
+#ifdef DO_CKPT__
   struct sigaction sa;
   sa.sa_handler = (void *)SigSegvOrig;
   sigemptyset(&sa.sa_mask);
@@ -563,7 +563,7 @@ void ARMCI_ChildrenTrapSignals()
 #endif
      TrapSigFpe();
      TrapSigIll();
-#ifdef DO_CHKPT
+#ifdef DO_CKPT
      TrapSigSegvSigaction();
 #else
      TrapSigSegv(); 
@@ -611,7 +611,7 @@ void ARMCI_ParentRestoreSignals()
      RestoreSigHup();
 }
 
-#ifdef DO_CHKPT
+#ifdef DO_CKPT
 /*user can register a function with 3 parameters, 1st offending address
  * 2nd err number and third file descriptor*/
 void ARMCI_Register_Signal_Handler(int sig, void  (*func)())

@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.96 2005-03-23 00:01:40 vinod Exp $ */
+/* $Id: armci.c,v 1.97 2005-05-10 16:32:55 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -298,6 +298,19 @@ static void armci_check_shmmax()
 }
 #endif
 
+#ifdef MPI
+ARMCI_Group armci_world_group;
+void armci_create_world_group()
+{
+int i,list[armci_nproc];
+    for(i=0;i<armci_nproc;i++)list[i] = i;
+    ARMCI_Group_create(armci_nproc,list,&armci_world_group);
+}
+ARMCI_Group *ARMCI_Get_world_group()
+{
+    return(&armci_world_group);
+}
+#endif
 
 void* test_ptr_arr[MAX_PROC];
 extern void armci_region_shm_malloc(void *ptr_arr[], size_t bytes);
@@ -363,7 +376,7 @@ int ARMCI_Init()
 #endif /* QUADRICS */
 
     armci_init_clusinfo();
-
+    armci_create_world_group();
     armci_krmalloc_init_localmem();
 
     /* trap signals to cleanup ARMCI system resources in case of crash */
@@ -461,6 +474,10 @@ int ARMCI_Init()
     armci_msg_barrier();
     armci_msg_gop_init();
 
+#ifdef DO_CKPT
+    armci_init_checkpoint();
+#endif
+    
 #ifdef ARMCI_PROFILE
     armci_profile_init();
 #endif
@@ -787,3 +804,31 @@ int direct=SAMECLUSNODE(nb_handle->proc);
     }
     return(success);
 }
+
+#ifdef DO_CKPT
+int ARMCI_Ckpt_create_ds(armci_ckpt_ds_t *ckptds, int count)
+{
+    return(armci_create_ckptds(ckptds,count));
+}
+
+int ARMCI_Ckpt_init(char *filename, ARMCI_Group *grp, int savestack, int saveheap, armci_ckpt_ds_t *ckptds)
+{
+int rid;
+    rid = armci_icheckpoint_init(filename,grp,savestack,saveheap,ckptds);
+    return(rid);
+}
+
+int ARMCI_Ckpt(int rid)
+{
+    return(armci_icheckpoint(rid));
+}
+
+void ARMCI_Ckpt_Recover(int rid)
+{
+    armci_irecover(rid);
+}
+void ARMCI_Ckpt_finalize(int rid)
+{
+    armci_icheckpoint_finalize(rid);
+}
+#endif

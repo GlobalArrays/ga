@@ -25,19 +25,19 @@
 #include "armci_storage.h"
 #include "armci_chkpt.h"
 
-#define DEBUG 0
+#define DEBUG 1
 
 /*\
  * ----------CORE FUNCTIONS -----------
  * armci_init_checkpoint() - the checkpointing code is initialized 
- * armci_icheckpoint_init() - called when user request to protect this ga
- * armci_icheckpoint_finalize() - called when user requests to destroy the ga
- * armci_icheckpoint() - called every time a ga is checkpointed
+ * armci_icheckpoint_init() - called when with first checkpoint
+ * armci_icheckpoint_finalize() - called when done with chkpt
+ * armci_icheckpoint() - called every time we checkpoint
  * armci_recover() - called to recoved
  * ----------SUPPORT FUNCTIONS -----------
  * armci_ckpt_pgfh() - pagefault handler, to set the list of dirty pages
  * armci_monitor_addr() - monitors address to look for and pages to set readonly
- * armci_create_record() - create the record for local part of ga being stored
+ * armci_create_record() - create the record for local part of data being stored
  * armci_protect_pages() - to protect pages in the dirty page list
  * armci_storage_read() - reads record from storage 
  * armci_storage_write() - writes into storage
@@ -49,9 +49,11 @@
 \*/
 static armci_storage_record_t armci_storage_record[1001];
 static int number_of_records=1;
+static int next_available_rid=0;
 static int mypagesize; 
 int **armci_rec_ind;
 static armci_page_info_t armci_dpage_info;
+static int checkpointing_initialized=0;
 
 
 /* ----------SUPPORT FUNCTIONS ----------- */
@@ -95,8 +97,12 @@ static int armci_create_record(ARMCI_Group *group, int count)
 
     rc = ARMCI_Group_rank(group,&relprocid);
     /*create and broadcast new index in the records data structure*/
-    if(relprocid==0)
-       ARMCI_Rmw(ARMCI_FETCH_AND_ADD,&recind,armci_rec_ind[0],1,0);
+    next_available_rid = 0;
+    if(next_available_rid==0){
+       if(relprocid==0)
+         ARMCI_Rmw(ARMCI_FETCH_AND_ADD,&recind,armci_rec_ind[0],1,0);
+    }
+    else recind=next_available_rid;
     armci_msg_group_bcast_scope(SCOPE_ALL,&recind,sizeof(int),0,group);
 
     if(recind>1001) armci_die("create_record, failure",recind);
@@ -107,7 +113,10 @@ static int armci_create_record(ARMCI_Group *group, int count)
     armci_storage_record[recind].user_addr = (armci_monitor_address_t *)malloc(sizeof(armci_monitor_address_t)*count);
     armci_storage_record[recind].user_addr_count=count;
 
-    number_of_records++;
+    if(next_available_rid!=0)
+       next_available_rid = 0;
+    else
+       number_of_records++;
 
     return(recind);
 }
@@ -132,16 +141,22 @@ int armci_init_checkpoint()
 {
     int val=1,rc;
     mypagesize = getpagesize();
-
+    if(checkpointing_initialized)return(0);
     armci_rec_ind = (int **)malloc(sizeof(int *)*armci_nproc);
-
-    rc = ARMCI_Malloc((void **)armci_rec_ind, 2*sizeof(int));
+    if(armci_me==0){
+       rc = ARMCI_Malloc((void **)armci_rec_ind, 2*sizeof(int));
+       armci_rec_ind[armci_me][0]=armci_rec_ind[armci_me][1]=1;
+    }
+    else
+       rc = ARMCI_Malloc((void **)armci_rec_ind, 0);
     assert(rc==0);
-
+   
     ARMCI_Register_Signal_Handler(SIGSEGV,(void *)armci_ckpt_pgfh);
+    checkpointing_initialized = 1;
+    return(0);
 }
 
-void armci_create_chkptds(armci_ckpt_ds_t *ckptds, int count)
+void armci_create_ckptds(armci_ckpt_ds_t *ckptds, int count)
 {
     ckptds->count=count;
     ckptds->ptr_arr=(void **)malloc(sizeof(void *)*count);
@@ -150,6 +165,11 @@ void armci_create_chkptds(armci_ckpt_ds_t *ckptds, int count)
       armci_die("malloc failed in armci_create_ckptds",sizeof(size_t)*count);
 }
 
+void armci_free_chkptds(armci_ckpt_ds_t *ckptds)
+{
+    free(ckptds->ptr_arr);
+    free(ckptds->sz);
+}
 /*called everytime a new checkpoint record is created*/
 int armci_icheckpoint_init(char *filename,ARMCI_Group *grp, int savestack, 
                 int saveheap, armci_ckpt_ds_t *ckptds)
@@ -158,22 +178,25 @@ int armci_icheckpoint_init(char *filename,ARMCI_Group *grp, int savestack,
     long bytes;
     void *startaddr;
     unsigned long laddr;
-    int totalpages=0,i=0;
+    int totalpages=0,i=0,j=0;
 
     /*create the record*/
     rid = armci_create_record(grp,ckptds->count);
+    printf("\n%d:ckptdscount=%d",armci_me,ckptds->count);
+    armci_storage_record[rid].ckpt_heap = saveheap;
+    armci_storage_record[rid].ckpt_stack = savestack;
 
-    if(DEBUG){
-       printf("\n%d:got rid = %d",armci_me,rid);fflush(stdout);
-    }
 
     /*******************user pages***********************/
     if(armci_storage_record[rid].ckpt_heap){
        return;
     }
+    if(DEBUG){
+       printf("\n%d:got rid = %d",armci_me,rid);fflush(stdout);
+    }
     for(i=0;i<ckptds->count;i++){
        armci_monitor_address_t *addrds =&armci_storage_record[rid].user_addr[i];
-       addrds->bytes = ckptds->sz[i];
+       bytes=addrds->bytes = ckptds->sz[i];
        addrds->ptr = ckptds->ptr_arr[i];
        laddr = (unsigned long)(addrds->ptr);
        addrds->firstpage = (unsigned long)((long)laddr/mypagesize);
@@ -184,9 +207,14 @@ int armci_icheckpoint_init(char *filename,ARMCI_Group *grp, int savestack,
        }
        else {
          int shift;
+         
          shift = laddr%mypagesize;
-         totalpages = 1+(bytes-shift)/mypagesize;
-         if((bytes-shift)%mypagesize)totalpages++;
+         printf("\n%d:shift = %d bytes=%ld",armci_me,shift,bytes);fflush(stdout);
+         if(bytes<shift)totalpages=1;
+         else{
+           totalpages = 1+(bytes-shift)/mypagesize;
+           if((bytes-shift)%mypagesize)totalpages++;
+         }
        }
        addrds->totalpages = totalpages;
        addrds->num_touched_pages = totalpages;
@@ -194,18 +222,30 @@ int armci_icheckpoint_init(char *filename,ARMCI_Group *grp, int savestack,
        if(addrds->touched_page_arr==NULL)
          armci_die("malloc failed in armci_icheckpoint_init",totalpages);
        addrds->touched_page_arr[0]=addrds->firstpage;
-       for(i=1;i<totalpages;i++){
-         addrds->touched_page_arr[i]=addrds->touched_page_arr[i-1]+1;
+       for(j=1;j<totalpages;j++){
+         addrds->touched_page_arr[j]=addrds->touched_page_arr[j-1]+1;
        }
+       printf("\n%d:first=%ld total=%ld %ld",armci_me,addrds->firstpage,addrds->totalpages,laddr);fflush(stdout);
+       fflush(stdout);
        armci_protect_pages(addrds->firstpage,addrds->totalpages);
     }
     
     /*open the file for reading and writing*/
+    if(filename == NULL){
+      filename = (char *)malloc(sizeof(char)*(11+1+6+1+4));
+      if(filename==NULL)armci_die("alloc for filename failed",11+1+6+1+4);
+      sprintf(filename,"%s","armci_chkpt_");
+      sprintf((filename+strlen(filename)),"%d",armci_me);
+      sprintf((filename+strlen(filename)),"%s","_");
+      sprintf(filename+strlen(filename),"%d",rid);
+    }
     armci_storage_record[rid].fileinfo.filename = malloc(sizeof(char)*strlen(filename));
     if(NULL==armci_storage_record[rid].fileinfo.filename)
       armci_die("malloc failed for filename in ga_icheckpoint_init",0);
     strcpy(armci_storage_record[rid].fileinfo.filename,filename);
     armci_storage_record[rid].fileinfo.fd = armci_storage_fopen(filename);
+    printf("\nfilename=%s",filename);fflush(stdout);
+    return(rid);
 }
 
 
@@ -245,7 +285,7 @@ int armci_icheckpoint(int rid)
     else { /*long jump brings us here */
        /*open the ckpt files*/
     }
-
+    //armci_msg_group_barrier(&armci_storage_record[rid].group);
     return(rc); /* 0 is good*/
 }
 
@@ -258,7 +298,7 @@ int armci_irecover(int rid,int iamreplacement)
     if(iamreplacement){
       rc=armci_storage_read_ptr(armci_storage_record[rid].fileinfo.fd,&armci_storage_record[rid].jmp,sizeof(jmp_buf),4*sizeof(int));
     }
-
+    //armci_msg_group_barrier(&armci_storage_record[rid].group);
     longjmp(armci_storage_record[rid].jmp,1);
 
     /*if we should never come here things are hosed */
@@ -267,8 +307,16 @@ int armci_irecover(int rid,int iamreplacement)
 }
 
 
-int armci_icheckpoint_finalize()
+void armci_icheckpoint_finalize(int rid)
 {
-    /*free the record id, make it available for next use*/
-    /*close the files used for checkpointing*/
+    int i;
+    //armci_msg_group_barrier(&armci_storage_record[rid].group);
+    for(i=0;i<armci_storage_record[rid].user_addr_count;i++){
+       armci_monitor_address_t *addrds=&armci_storage_record[rid].user_addr[i];
+       free(addrds->touched_page_arr);
+    }
+    free(armci_storage_record[rid].user_addr);
+    free(armci_storage_record[rid].fileinfo.filename);
+    armci_storage_fclose(armci_storage_record[rid].fileinfo.fd);
+    next_available_rid = rid;
 }

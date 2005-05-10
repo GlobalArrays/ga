@@ -21,7 +21,11 @@ FILE_DS armci_storage_fopen(char *filename)
     printf("\n%d:filed=%p %s",armci_me,file_d,filename);
     return(file_d);
 }
-
+void armci_storage_fclose(FILE_DS filed)
+{
+    int rc = fclose(filed);
+    if(rc !=0)printf("file could not be close");
+}
 
 int armci_storage_read_ptr(FILE_DS file_d,void *ptr,int size,off_t ofs)
 {
