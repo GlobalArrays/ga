@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.12 2005-04-15 14:32:11 d3g293 Exp $
+C$Id: scf.F,v 1.13 2005-05-12 15:20:01 d3g293 Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -765,6 +765,7 @@ c
       call ga_dgemm('t','n',nbfn,nbfn,nbfn,r_one,g_orbs,g_tfock,
      +               r_zero,g_fock)
       tester = testfock()
+      shift = 0.0d00
       if (tester.gt.0.3d0) then
         shift = 0.3d0
       endif
