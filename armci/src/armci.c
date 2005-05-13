@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.98 2005-05-10 22:14:58 vinod Exp $ */
+/* $Id: armci.c,v 1.99 2005-05-13 23:54:47 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -302,7 +302,7 @@ static void armci_check_shmmax()
 ARMCI_Group armci_world_group;
 void armci_create_world_group()
 {
-int i,list[armci_nproc];
+    int i, list[MAX_PROC];
     for(i=0;i<armci_nproc;i++)list[i] = i;
     ARMCI_Group_create(armci_nproc,list,&armci_world_group);
 }
