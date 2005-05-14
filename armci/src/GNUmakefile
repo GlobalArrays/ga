@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.88 2005-05-10 16:32:55 vinod Exp $
+#$Id: GNUmakefile,v 1.89 2005-05-14 00:21:29 manoj Exp $
          FOPT = -O
          COPT = -O
 
@@ -127,6 +127,10 @@ ifdef ARMCI_NETWORK
   LIBRARY_STAMP = $(ARMCI_NETWORK).$(MSG_COMMS)
 else
   # sockets
+  ARMCI_NETWORK = SOCKETS
+endif
+
+ifeq ($(ARMCI_NETWORK),SOCKETS)
   LIBRARY_STAMP = $(MSG_COMMS)
   ifeq ($(TARGET),$(findstring $(TARGET),$(SOCKETS)))
      OBJ += spawn.o dataserv.o sockets.o request.o ds-shared.o buffers.o async.o
