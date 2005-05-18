@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
        printf("\n%d:done for size %d",me,size);fflush(stdout);
     }
     j=0;
-    (void)ARMCI_Ckpt_create_ds(&ckptds,4); 
+    (void)ARMCI_Ckpt_create_ds(&ckptds,1); 
     /*ckptds.ptr_arr[0]=&me;
     ckptds.ptr_arr[1]=&nproc;
     ckptds.ptr_arr[2]=&size;*/
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
     for(size=1;size<262144;size*=2){
        t1 = MPI_Wtime();
        ckptds.sz[0]=size*8;
-       rid=ARMCI_Ckpt_init(NULL,grp,0,0,&ckptds);
+       rid=ARMCI_Ckpt_init(NULL,grp,1,0,&ckptds);
        for(i=0;i<5;i++){
          rc = ARMCI_Ckpt(rid);
          for(rc=0;rc<15;rc++)do_work(size);

@@ -1,3 +1,4 @@
+#include "armci_storage.h"
 typedef struct{
     void *ptr;
     size_t bytes;
