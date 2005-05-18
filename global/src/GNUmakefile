@@ -28,6 +28,10 @@ GA_EXTRA = global.periodic.o sparse.o select.o ghosts.o DP.o hsort.scat.o \
 ifdef GA_USE_VAMPIR
    GA_EXTRA += ga_vampir.o
 endif
+ifdef ENABLE_CKPT
+   GA_EXTRA += ga_ckpt.o
+   LIB_DEFINES += -DDO_CKPT
+endif
 
 # Linear Algebra
   GA_LIN_ALG = matmul.o ga_symmetr.o  elem_alg.o matrix.o xgemm.o fort.o

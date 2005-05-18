@@ -1,4 +1,3 @@
-#include "armci.h"
 #include "globalp.h"
 #include "base.h"
 #include <stdio.h>

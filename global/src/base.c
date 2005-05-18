@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.117 2005-05-06 14:34:23 d3g293 Exp $ */
+/* $Id: base.c,v 1.118 2005-05-18 23:05:00 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -87,6 +87,7 @@ int* GA_Proc_list = NULL;
 int* GA_inv_Proc_list=NULL;
 int GA_World_Proc_Group = -1;
 int GA_Default_Proc_Group = -1;
+int ga_armci_world_group=0;
 int GA_Init_Proc_Group = -2;
 
 /* MA addressing */
@@ -357,6 +358,9 @@ int bytes;
     for(i=0;i<MAX_ARRAYS; i++) {
        GA[i].ptr  = (char**)0;
        GA[i].mapc = (int*)0;
+#ifdef DO_CKPT
+       GA[i].record_id = 0;
+#endif
        PGRP_LIST[i].map_proc_list = (int*)0;
        PGRP_LIST[i].inv_map_proc_list = (int*)0;
        PGRP_LIST[i].actv = 0;
@@ -437,10 +441,13 @@ int bytes;
     MA_set_error_callback(ARMCI_Error);
 
     GAinitialized = 1;
+    for(i=0;i<GAnproc;i++)
+            printf("\n%d:i=%d proclist=%d",GAme,i,GA_proclist[i]);
 
 #ifdef GA_PROFILE 
     ga_profile_init();
 #endif
+
 #ifdef GA_USE_VAMPIR
     vampir_end(GA_INITIALIZE,__FILE__,__LINE__);
 #endif
@@ -4005,3 +4012,27 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   if (local_sync_end) ga_sync_();
   GA_POP_NAME;
 }
+
+#ifdef DO_CKPT
+void FATR ga_checkpoint_arrays_(Integer *gas,int *num)
+{
+   int ga = *(gas+0);
+   int hdl = GA_OFFSET + ga;
+   printf("\n%d:in checkpoint %d %d %d\n",GAme,ga,*(gas+1),*num);fflush(stdout);
+   if(GA[hdl].record_id==0)
+     ga_icheckpoint_init(gas,*num);
+   ga_icheckpoint(gas,*num);
+}
+
+
+int ga_recover_arrays(Integer *gas, int num)
+{
+    int i;
+    for(i=0;i<num;i++){
+       int ga = *(gas+i);
+       int hdl = GA_OFFSET + ga;
+       if(GA[hdl].record_id!=0)
+         ga_irecover(ga);
+    }
+}
+#endif

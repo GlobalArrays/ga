@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.82 2005-03-10 23:52:01 manoj Exp $ */
+/* $Id: capi.c,v 1.83 2005-05-18 23:05:00 vinod Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -62,7 +62,6 @@ void GA_Initialize_ltd(size_t limit)
 Integer lim = (Integer)limit;
      ga_initialize_ltd_(&lim);
 }
-    
 
 int NGA_Create(int type, int ndim,int dims[], char *name, int *chunk)
 {
@@ -1985,3 +1984,10 @@ int GA_Cluster_procid(int node, int loc_proc)
     return armci_domain_glob_proc_id(ARMCI_DOMAIN_SMP,
                                      node, loc_proc);
 }
+
+#ifdef DO_CKPT
+void GA_Checkpoint(int* gas, int num)
+{
+    ga_checkpoint_arrays_(gas,num);
+}
+#endif

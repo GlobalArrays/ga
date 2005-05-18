@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.34 2004-11-05 16:53:01 d3g293 Exp $ */
+/*$Id: base.h,v 1.35 2005-05-18 23:05:00 vinod Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -58,6 +58,9 @@ typedef struct {
        int p_handle;            /* pointer to processor list for array  */
        double *cache;           /* store for frequently accessed ptrs   */
        int corner_flag;         /* flag for updating corner ghost cells */
+#ifdef DO_CKPT
+       int record_id;           /* record id for writing ga to disk     */
+#endif
 } global_array_t;
 
 extern global_array_t *_ga_main_data_structure; 
