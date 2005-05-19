@@ -63,9 +63,10 @@ c    g_ident:   global array used to store identity matrix
 c    g_orbs:    global array used to store orbital vectors
 c
       parameter (ichunk = 10)
+      parameter (numarrays =5)
       common /g_arrays/ eigv(maxnbfn),
      $     g_counter, g_dens, g_fock, g_tfock, g_schwarz, g_work,
-     $     g_ident, g_orbs
+     $     g_ident, g_orbs, arraylist(1:5)
       double precision eigv
       integer g_counter, g_dens, g_fock, g_tfock, g_schwarz, g_work,
-     $     g_ident, g_orbs
+     $     g_ident, g_orbs, arraylist

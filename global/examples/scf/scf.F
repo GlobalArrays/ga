@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.13 2005-05-12 15:20:01 d3g293 Exp $
+C$Id: scf.F,v 1.14 2005-05-19 18:35:30 vinod Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -41,7 +41,9 @@ c
 c     create and allocate global arrays
 c
       call setarrays
+      write(6,*) 'done with setarrays'
       call ininrm
+      write(6,*) '1-done with setarrays'
 c
 c     create initial guess for density matrix by using single atom
 c     densities
@@ -63,6 +65,7 @@ c
 c     iterate
 c     
       do 10 iter = 1, mxiter
+         call ga_checkpoint_arrays(arraylist,numarrays)
 c
 c     make the one particle contribution to the fock matrix
 c     and get the partial contribution to the energy
@@ -954,6 +957,13 @@ c
       call ga_set_data(g_work, two, dims, MT_DBL)
       status = ga_allocate(g_work)
       call ga_zero(g_work)
+      arraylist(1) = g_counter
+      arraylist(2) = g_dens
+      arraylist(3) = g_schwarz
+      arraylist(4) = g_fock
+      arraylist(5) = g_work
+      write (6,*) arraylist(1),arraylist(2),arraylist(3)
+      call ga_checkpoint_arrays(arraylist,numarrays)
 
       g_ident = ga_create_handle()
       call ga_set_data(g_ident, two, dims, MT_DBL)
