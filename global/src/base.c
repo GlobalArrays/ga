@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.118 2005-05-18 23:05:00 vinod Exp $ */
+/* $Id: base.c,v 1.119 2005-05-19 19:48:16 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -441,13 +441,11 @@ int bytes;
     MA_set_error_callback(ARMCI_Error);
 
     GAinitialized = 1;
-    for(i=0;i<GAnproc;i++)
-            printf("\n%d:i=%d proclist=%d",GAme,i,GA_proclist[i]);
 
 #ifdef GA_PROFILE 
     ga_profile_init();
 #endif
-
+    
 #ifdef GA_USE_VAMPIR
     vampir_end(GA_INITIALIZE,__FILE__,__LINE__);
 #endif
