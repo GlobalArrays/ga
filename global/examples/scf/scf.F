@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.14 2005-05-19 18:35:30 vinod Exp $
+C$Id: scf.F,v 1.15 2005-05-19 18:40:01 vinod Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -65,7 +65,9 @@ c
 c     iterate
 c     
       do 10 iter = 1, mxiter
+#ifdef CHECKPOINT_SCF
          call ga_checkpoint_arrays(arraylist,numarrays)
+#endif
 c
 c     make the one particle contribution to the fock matrix
 c     and get the partial contribution to the energy
@@ -957,6 +959,7 @@ c
       call ga_set_data(g_work, two, dims, MT_DBL)
       status = ga_allocate(g_work)
       call ga_zero(g_work)
+#ifdef CHECKPOINT_SCF
       arraylist(1) = g_counter
       arraylist(2) = g_dens
       arraylist(3) = g_schwarz
@@ -964,6 +967,7 @@ c
       arraylist(5) = g_work
       write (6,*) arraylist(1),arraylist(2),arraylist(3)
       call ga_checkpoint_arrays(arraylist,numarrays)
+#endif
 
       g_ident = ga_create_handle()
       call ga_set_data(g_ident, two, dims, MT_DBL)
