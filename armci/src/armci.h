@@ -332,6 +332,7 @@ extern void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 typedef struct {
         void **ptr_arr;
         size_t *sz;
+        int *saveonce;
         int count;
 }armci_ckpt_ds_t;
 int ARMCI_Ckpt_create_ds(armci_ckpt_ds_t *ckptds, int count);

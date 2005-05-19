@@ -2,6 +2,7 @@
 typedef struct{
     void *ptr;
     size_t bytes;
+    int saveonce;
     unsigned long *touched_page_arr;
     unsigned long num_touched_pages;
     unsigned long firstpage;
