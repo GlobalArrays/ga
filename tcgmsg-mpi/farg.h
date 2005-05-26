@@ -1,5 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.11 2003-12-13 01:33:20 d3h325 Exp $ */
-
+/* $Header: /tmp/hpctools/ga/tcgmsg-mpi/farg.h,v 1.12 2005-05-26 19:06:21 manoj Exp $ */
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
   global variables to get at the command argument list in the
@@ -42,6 +41,10 @@
 #endif
 
 /* PGI compilers on Linux */
+#if (__GNUC__ >= 4) 
+#   define getarg_ _gfortran_getarg_i8
+#   define iargc_ _gfortran_iargc
+#endif
 #if defined(PGLINUX)
 #define ARGC_ __argc_save
 #define ARGV_ __argv_save

@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.129 2005-03-09 20:26:35 vinodtipparaju Exp $
+# $Id: makefile.h,v 1.130 2005-05-26 19:06:44 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -402,7 +402,11 @@ endif
   ifdef USE_INTEGER4
      FOPT_REN += -i4
   else
-     FOPT_REN += -i8 
+    ifneq (,$(findstring gfortran,$(_FC)))
+       FOPT_REN += -fdefault-integer-8
+    else
+       FOPT_REN += -i8 
+    endif
   endif
 ifneq (,$(findstring efc,$(_FC)))
      FLD_REN += -Vaxlib
@@ -464,7 +468,7 @@ endif
 # LINUX 64 CPU Specific Setup: Opteron
 #-------------------------------------
 ifeq  ($(_CPU),x86_64)
-_FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ')
+_FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit };/gcc version 4/ { print "gfortran"; exit }; /gcc version/ { print "g77"; exit }; /ifc/ { print "ifort" ; exit }; /ifort/ { print "ifort" ; exit }; /efc/ { print "efc" ; exit }; /pgf90/ { pgf90count++}; /pgf77/ { pgf77count++}; /PathScale/ { pathf90count++}; END {if(pgf77count)print "pgf77" ; if(pgf90count)print "pgf90" ; if(pathf90count)print "pathf90"} ')
 
 # As "pathf90 -v" also gives "gcc version" as output, if FC=pathf90, then
 # _FC will be "g77 pathf90". So we need to make sure _FC=pathf90
@@ -476,7 +480,11 @@ endif
     ifdef USE_INTEGER4
        FOPT_REN += -i4
     else
-       FOPT_REN += -i8
+      ifneq (,$(findstring gfortran,$(_FC)))
+         FOPT_REN += -fdefault-integer-8
+      else
+         FOPT_REN += -i8
+      endif
     endif
   endif
   ifeq ($(_FC),pgf90)
@@ -504,6 +512,10 @@ endif
        endif
        FLD_REN += -Vaxlib
    endif
+  ifeq ($(_FC),gfortran)
+#     FOPT_REN += -x f95-cpp-input
+#     FOPT_REN += -x f77-cpp-input
+  endif
    GLOB_DEFINES += -DNOUSE_MMAP
 endif
 #
