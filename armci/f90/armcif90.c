@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <armci.h>
 #include <arraydesc.h>
-
+#define HIDDEN_DESC
 #if defined(F90_SYM_CASE_LOWER)
 #  define ARMCI_Arr_init  F90_SYMBOL( armci_arr_init )
 #  define ARMCI_Arr_finalize  F90_SYMBOL( armci_arr_finalize )
@@ -87,19 +87,19 @@ void ARMCI_Arr_finalize()
 
 void ARMCI_Waitall_fa()
 {
-  ARMCI_WaitAll();
+          ARMCI_WaitAll();
 }
 
 void ARMCI_Notify_fa(int* proc)
 {
-int tempvar;
-   tempvar = armci_notify(*proc);
+        int tempvar;
+           tempvar = armci_notify(*proc);
 }
 
 void ARMCI_NotifyWait_fa(int* proc)
 {
-int rc,wc;
-  rc = armci_notify_wait(*proc,&wc);
+        int rc,wc;
+          rc = armci_notify_wait(*proc,&wc);
 }
 
 void armci_abort()
@@ -108,7 +108,7 @@ void armci_abort()
 void armci_abort_()
 {
 }
-
+        
 void ARMCI_Sync()
 {
   ARMCI_Barrier();
@@ -205,7 +205,7 @@ void ARMCI_Put_farrays(void* dv_src, array_slice_t* src_slc,
                   void* dv_h_src, void* dv_h_dst)
 {
   void *addr_src, *addr_dst, *dv_l_src, *dv_l_dst;
-  armci_arr_dsc_t *ad_src, *ad_dst;
+  armci_arr_dsc_t *ad_dst;
   void *ptr_src, *ptr_dst;
   int i;
   int src_count[MAXDIM+1];
@@ -221,28 +221,37 @@ void ARMCI_Put_farrays(void* dv_src, array_slice_t* src_slc,
   int ad_src_extent[MAXDIM];
   int ad_src_stride[MAXDIM];
   *rc = 0;
+
+#ifdef HIDDEN_DESC
   dv_l_src = cc.createArrayDesc(dv_src, dv_h_src, *rank, F90_ArrayPointer);
+#else
+  dv_l_src = dv_src;
+#endif
   if (dv_l_src == 0) {
-    fprintf(stderr, "ARMCI_Put_farray: ERROR in createArrayDesc\n");
+    fprintf(stderr, "ARMCI_Put_farrays: ERROR in createArrayDesc\n");
     *rc = -1;
     return;
   }
   addr_src = cc.getArrayBaseAddress(dv_l_src, *rank);
   if (addr_src == 0) {
-    fprintf(stderr, "ARMCI_Put_farray: ERROR in getArrayBaseAddress\n");
+    fprintf(stderr, "ARMCI_Put_farrays: ERROR in getArrayBaseAddress\n");
     *rc = -1;
     return;
   }
 
+#ifdef HIDDEN_DESC
   dv_l_dst = cc.createArrayDesc(dv_dst, dv_h_dst, *rank, F90_ArrayPointer);
+#else
+  dv_l_dst = dv_dst;
+#endif
   if (dv_l_dst == 0) {
-    fprintf(stderr, "ARMCI_Put_farray: ERROR in createArrayDesc\n");
+    fprintf(stderr, "ARMCI_Put_farrays: ERROR in createArrayDesc\n");
     *rc = -1;
     return;
   }
   addr_dst = cc.getArrayBaseAddress(dv_l_dst, *rank);
   if (addr_dst == 0) {
-    fprintf(stderr, "ARMCI_Put_farray: ERROR in getArrayBaseAddress\n");
+    fprintf(stderr, "ARMCI_Put_farrays: ERROR in getArrayBaseAddress\n");
     *rc = -1;
     return;
   }
@@ -252,7 +261,12 @@ void ARMCI_Put_farrays(void* dv_src, array_slice_t* src_slc,
 #endif
   /*
   ad_src = GET_ARR_DSC_FROM_ARRAY(addr_src);
+  Need to replace ad_src_rank, ad_src_lo, ad_src_extent, ad_src_stride,
+  and ad_src_elemsize with local stuff from the chasm interface.
+  No way to get elemsize from chasm stuff, so for
+  now take src_elemsize to be the same as dst_elemsize.
   */
+  
   ad_dst = GET_ARR_DSC_FROM_ARRAY(addr_dst);
   ad_src_elemsize = ad_dst->elemsize;
   ad_src_rank = ad_dst->rank;
@@ -263,15 +277,15 @@ void ARMCI_Put_farrays(void* dv_src, array_slice_t* src_slc,
     ad_src_stride[i] = cc.getArrayStrideMult(dv_l_src,ad_src_rank,i+1);
   }
 
-  ptr_src= Index(ad_src->rank, src_slc->lo, ad_src->lo, ad_src->extent)*ad_src->elemsize + (char*) addr_src; 
+  ptr_src= Index(ad_src_rank, src_slc->lo, ad_src_lo, ad_src_extent)*ad_src_elemsize + (char*) addr_src; 
   ptr_dst= Index(ad_dst->rank, dst_slc->lo, ad_dst->lo, ad_dst->extent)*ad_dst->elemsize + (char*) ad_dst->aptr[*proc]; 
 
-/* The following attempts to deal with non-unit stride. */
-/* Seems like we assume that src_slc->hi[i] >= src_slc->lo[i] and 
-   stride[i] > 0 for all i. One might wish to modify that 
-   assumption at some point. Should we check that the patches
-   are the same size, does ARMCI_Puts handle that?
-*/
+  /* The following attempts to deal with non-unit stride. */
+  /* Seems like we assume that src_slc->hi[i] >= src_slc->lo[i] and 
+     stride[i] > 0 for all i. One might wish to modify that 
+     assumption at some point. Should we check that the patches
+     are the same size, does ARMCI_Puts handle that?
+  */
   if (ad_dst->rank != ad_src_rank) {
     fprintf(stderr, "ARMCI_Put_farrays: ERROR ranks of src and dst do not match\n");
     *rc = -1;
@@ -355,9 +369,9 @@ void ARMCI_Put_farrays(void* dv_src, array_slice_t* src_slc,
     }
   }
 #if 0
-  printf(" ARMCI_Put(src): lo = %d hi = %d stride = %d\n",
+  printf(" ARMCI_Put_farrays(src): lo = %d hi = %d stride = %d\n",
          src_slc->lo[0], src_slc->hi[0], src_slc->stride[0]);
-  printf(" ARMCI_Put(dst): lo = %d hi = %d stride = %d on proc = %d\n",
+  printf(" ARMCI_Put_farrays(dst): lo = %d hi = %d stride = %d on proc = %d\n",
          dst_slc->lo[0], dst_slc->hi[0], dst_slc->stride[0], *proc);
 #endif
   /*
@@ -366,7 +380,7 @@ void ARMCI_Put_farrays(void* dv_src, array_slice_t* src_slc,
   ARMCI_PutS(ptr_src, src_stride, ptr_dst, dst_stride, src_count, mv_rank, *proc); 
 }
 
-void ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
+ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
                   void* dv_dst, array_slice_t* dst_slc,
                   int* proc, int* rank, int* rc,
                   void* dv_h_src, void* dv_h_dst)
@@ -420,13 +434,13 @@ void ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
   assert(addr_dst = g_save_addr);
 #endif
   /*
-  ad_src = GET_ARR_DSC_FROM_ARRAY(addr_src);
-  Need to replace ad_src_rank, ad_src_lo, ad_src_extent, ad_src_stride,
-  and ad_src_elemsize with local stuff from the chasm interface.
-  No way to get elemsize from chasm stuff, so for
-  now take src_elemsize to be the same as dst_elemsize.
-  */
-  
+   ad_src = GET_ARR_DSC_FROM_ARRAY(addr_src);
+   Need to replace ad_src_rank, ad_src_lo, ad_src_extent, ad_src_stride,
+   and ad_src_elemsize with local stuff from the chasm interface.
+   No way to get elemsize from chasm stuff, so for
+   now take src_elemsize to be the same as dst_elemsize.
+   */
+
   ad_dst = GET_ARR_DSC_FROM_ARRAY(addr_dst);
   ad_src_elemsize = ad_dst->elemsize;
   ad_src_rank = ad_dst->rank;
@@ -440,22 +454,22 @@ void ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
   /*
   fprintf(stdout," ad_src_rank = %d %d\n",ad_src_rank,ad_src_elemsize);
   for (i=0;i<ad_src_rank;i++) {
-    fprintf(stdout," ad_src_lo[%d] = %d\n",i,ad_src_lo[i]);
+  fprintf(stdout," ad_src_lo[%d] = %d\n",i,ad_src_lo[i]);
   }
   for (i=0;i<ad_src_rank;i++) {
-    fprintf(stdout," ad_src_extent[%d] = %d\n",i,ad_src_extent[i]);
+  fprintf(stdout," ad_src_extent[%d] = %d\n",i,ad_src_extent[i]);
   }
   for (i=0;i<ad_src_rank;i++) {
-    fprintf(stdout," ad_src_stride[%d] = %d\n",i,ad_src_stride[i]);
+  fprintf(stdout," ad_src_stride[%d] = %d\n",i,ad_src_stride[i]);
   }
   */
 
-  ptr_src= Index(ad_src_rank, src_slc->lo, ad_src_lo, ad_src_extent)*ad_src_elemsize + (char*) addr_src; 
-  ptr_dst= Index(ad_dst->rank, dst_slc->lo, ad_dst->lo, ad_dst->extent)*ad_dst->elemsize + (char*) ad_dst->aptr[*proc]; 
+  ptr_src= Index(ad_src_rank, src_slc->lo, ad_src_lo, ad_src_extent)*ad_src_elemsize + (char*) addr_src;
+  ptr_dst= Index(ad_dst->rank, dst_slc->lo, ad_dst->lo, ad_dst->extent)*ad_dst->elemsize + (char*) ad_dst->aptr[*proc];
 
   /* The following attempts to deal with non-unit stride. */
-  /* Seems like we assume that src_slc->hi[i] >= src_slc->lo[i] and 
-     stride[i] > 0 for all i. One might wish to modify that 
+  /* Seems like we assume that src_slc->hi[i] >= src_slc->lo[i] and
+     stride[i] > 0 for all i. One might wish to modify that
      assumption at some point. Should we check that the patches
      are the same size, does ARMCI_Puts handle that?
   */
@@ -469,7 +483,7 @@ void ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
   for(i=0; i< ad_src_rank;  i++) {
     if (src_slc->stride[i] > 1) {
       if (i == 0) {
-	src_first_stride_eq_1 = 0;
+        src_first_stride_eq_1 = 0;
       }
       src_unit_stride = 0;
       src_count[i] =   (int)((src_slc->hi[i] -src_slc->lo[i]+src_slc->stride[i])/src_slc->stride[i]);
@@ -482,7 +496,7 @@ void ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
   for(i=0; i< ad_dst->rank;  i++) {
     if (dst_slc->stride[i] > 1) {
       if (i == 0) {
-	dst_first_stride_eq_1 = 0;
+        dst_first_stride_eq_1 = 0;
       }
       dst_unit_stride = 0;
       dst_count[i] =   (int)((dst_slc->hi[i] -dst_slc->lo[i]+dst_slc->stride[i])/dst_slc->stride[i]);
@@ -491,8 +505,8 @@ void ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
     }
   }
   /* Might want to check that src_count and dst_count match here?,
-     perhaps that happens in ARMC_PutS but I think not. 
-  */
+   *      perhaps that happens in ARMC_PutS but I think not.
+   *        */
   for (i=0;i<ad_src_rank;i++) {
     if (dst_count[i] != src_count[i]) {
        fprintf(stderr, "nb_ARMCI_Put_farrays: ERROR counts of src and dst slices do not match\n");
@@ -500,7 +514,6 @@ void ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
        return;
     }
   }
-      
   if ((src_unit_stride != 0) && (dst_unit_stride != 0)) {
     mv_rank = ad_src_rank-1;
     for (i=0; i<mv_rank; i++) {
@@ -512,32 +525,32 @@ void ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
     src_count[0] *= ad_src_elemsize;
   } else {
     /* If first dimension strides are both 1, then we
-       can till use ad_src->rank-1 levels. Just 
-       the strides need changing.
-    */
-    
+     *        can till use ad_src->rank-1 levels. Just
+     *               the strides need changing.
+     *                   */
+
     if ((src_first_stride_eq_1 != 0) && (dst_first_stride_eq_1 != 0)) {
       mv_rank = ad_src_rank-1;
       src_count[0] *= ad_src_elemsize;
       for (i=0; i< mv_rank; i++) {
-	src_stride[i] = ad_src_stride[i+1]*src_slc->stride[i+1];
+        src_stride[i] = ad_src_stride[i+1]*src_slc->stride[i+1];
       }
       for (i=0; i< mv_rank; i++) {
-	dst_stride[i] = ad_dst->stride[i+1]*dst_slc->stride[i+1];
+        dst_stride[i] = ad_dst->stride[i+1]*dst_slc->stride[i+1];
       }
     } else {
       mv_rank = ad_src_rank;
       /* Shift counts, right, set count[0] to elemsize. */
       for (i=mv_rank;i>0;i--) {
-	src_count[i] = src_count[i-1];
+        src_count[i] = src_count[i-1];
       }
       src_count[0] = ad_src_elemsize;
       /* Adjust strides. */
       for (i=0;i<mv_rank;i++) {
-	src_stride[i] = ad_src_stride[i]*src_slc->stride[i];
+        src_stride[i] = ad_src_stride[i]*src_slc->stride[i];
       }
       for (i=0;i<mv_rank;i++) {
-	dst_stride[i] = ad_dst->stride[i]*dst_slc->stride[i];
+        dst_stride[i] = ad_dst->stride[i]*dst_slc->stride[i];
       }
     }
   }
@@ -548,10 +561,10 @@ void ARMCI_NbPut_farrays(void* dv_src, array_slice_t* src_slc,
          dst_slc->lo[0], dst_slc->hi[0], dst_slc->stride[0], *proc);
 #endif
   /*
-  ARMCI_PutS(ptr_src, ad_src->stride+1, ptr_dst, ad_dst->stride+1, count, ad_src->rank-1, *proc); 
-  */
-  ARMCI_NbPutS(ptr_src, src_stride, ptr_dst, dst_stride, src_count, mv_rank, *proc,NULL); 
-	     
+   *   ARMCI_PutS(ptr_src, ad_src->stride+1, ptr_dst, ad_dst->stride+1, count, ad_src->rank-1, *proc);
+   *     */
+  ARMCI_NbPutS(ptr_src, src_stride, ptr_dst, dst_stride, src_count, mv_rank, *proc,NULL);
+
 }
 
 
@@ -578,7 +591,12 @@ void ARMCI_Get_farrays(void* dv_src, array_slice_t* src_slc,
   int ad_dst_extent[MAXDIM];
   int ad_dst_stride[MAXDIM];
   *rc = 0;
+
+#ifdef HIDDEN_DESC
   dv_l_src = cc.createArrayDesc(dv_src, dv_h_src, *rank, F90_ArrayPointer);
+#else
+  dv_l_src = dv_src;
+#endif
   if (dv_l_src == 0) {
     fprintf(stderr, "ARMCI_Get_farrays: ERROR in createArrayDesc\n");
     *rc = -1;
@@ -591,7 +609,11 @@ void ARMCI_Get_farrays(void* dv_src, array_slice_t* src_slc,
     return;
   }
 
+#ifdef HIDDEN_DESC
   dv_l_dst = cc.createArrayDesc(dv_dst, dv_h_dst, *rank, F90_ArrayPointer);
+#else
+  dv_l_dst = dv_dst;
+#endif
   if (dv_l_dst == 0) {
     fprintf(stderr, "ARMCI_Get_farrays: ERROR in createArrayDesc\n");
     *rc = -1;
@@ -737,8 +759,6 @@ void ARMCI_Get_farrays(void* dv_src, array_slice_t* src_slc,
   ARMCI_GetS(ptr_src, src_stride, ptr_dst, dst_stride, src_count, mv_rank, *proc); 
 	     
 }
-
-
 void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
                   void* dv_dst, array_slice_t* dst_slc,
                   int* proc, int* rank, int* rc,
@@ -773,19 +793,6 @@ void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
     *rc = -1;
     return;
   }
-
-  dv_l_dst = cc.createArrayDesc(dv_dst, dv_h_dst, *rank, F90_ArrayPointer);
-  if (dv_l_dst == 0) {
-    fprintf(stderr, "ARMCI_Get_farrays: ERROR in createArrayDesc\n");
-    *rc = -1;
-    return;
-  }
-  addr_dst = cc.getArrayBaseAddress(dv_l_dst, *rank);
-  if (addr_dst == 0) {
-    fprintf(stderr, "ARMCI_Get_farrays: ERROR in getArrayBaseAddress\n");
-    *rc = -1;
-    return;
-  }
 #if 0
   assert(addr_src = g_save_addr);
   assert(addr_dst = g_save_addr);
@@ -793,8 +800,8 @@ void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
 
   ad_src = GET_ARR_DSC_FROM_ARRAY(addr_src);
   /*
-  ad_dst = GET_ARR_DSC_FROM_ARRAY(addr_dst);
-  */
+   *   ad_dst = GET_ARR_DSC_FROM_ARRAY(addr_dst);
+   *     */
   ad_dst_elemsize = ad_src->elemsize;
   ad_dst_rank     = ad_src->rank;
   for (i=0;i<ad_dst_rank;i++) {
@@ -803,29 +810,28 @@ void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
     ad_dst_stride[i] = cc.getArrayStrideMult(dv_l_dst,ad_dst_rank,i+1);
   }
   /*
-  fprintf(stdout," ad_dst_rank = %d\n",ad_dst_rank);
-  for (i=0;i<ad_dst_rank;i++) {
-    fprintf(stdout," ad_dst_lo[%d] = %d\n",i,ad_dst_lo[i]);
-  }
-  for (i=0;i<ad_dst_rank;i++) {
-    fprintf(stdout," ad_dst_extent[%d] = %d\n",i,ad_dst_extent[i]);
-  }
-  for (i=0;i<ad_dst_rank;i++) {
-    fprintf(stdout," ad_dst_stride[%d] = %d\n",i,ad_dst_stride[i]);
-  }
-  */
+   fprintf(stdout," ad_dst_rank = %d\n",ad_dst_rank);
+   for (i=0;i<ad_dst_rank;i++) {
+   fprintf(stdout," ad_dst_lo[%d] = %d\n",i,ad_dst_lo[i]);
+   }
+   for (i=0;i<ad_dst_rank;i++) {
+   fprintf(stdout," ad_dst_extent[%d] = %d\n",i,ad_dst_extent[i]);
+   }
+   for (i=0;i<ad_dst_rank;i++) {
+   fprintf(stdout," ad_dst_stride[%d] = %d\n",i,ad_dst_stride[i]);
+   }
+   */
   /* The following two lines are the only ones that change besides the
      ARMCI_GetS line from the ARMCI_Put_farrays routine.
   */
-
-  ptr_src= Index(ad_src->rank, src_slc->lo, ad_src->lo, ad_src->extent)*ad_src->elemsize + (char*) ad_src->aptr[*proc]; 
+  ptr_src= Index(ad_src->rank, src_slc->lo, ad_src->lo, ad_src->extent)*ad_src->elemsize + (char*) ad_src->aptr[*proc];
   ptr_dst= Index(ad_dst_rank, dst_slc->lo, ad_dst_lo, ad_dst_extent)*ad_dst_elemsize + (char*) addr_dst;
   /* The following attempts to deal with non-unit stride. */
-  /* Seems like we assume that src_slc->hi[i] >= src_slc->lo[i] and 
-     stride[i] > 0 for all i. One might wish to modify that 
-     assumption at some point. Should we check that the patches
-     are the same size, does ARMCI_Gets handle that?
-  */
+  /* Seems like we assume that src_slc->hi[i] >= src_slc->lo[i] and
+   *      stride[i] > 0 for all i. One might wish to modify that
+   *           assumption at some point. Should we check that the patches
+   *                are the same size, does ARMCI_Gets handle that?
+   *                  */
   if (ad_dst_rank != ad_src->rank) {
     fprintf(stderr, "ARMCI_Get_farrays: ERROR ranks of src and dst do not match\n");
     *rc = -1;
@@ -836,7 +842,7 @@ void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
   for(i=0; i< ad_src->rank;  i++) {
     if (src_slc->stride[i] > 1) {
       if (i == 0) {
-	src_first_stride_eq_1 = 0;
+        src_first_stride_eq_1 = 0;
       }
       src_unit_stride = 0;
       src_count[i] =   (int)((src_slc->hi[i] -src_slc->lo[i]+src_slc->stride[i])/src_slc->stride[i]);
@@ -849,7 +855,7 @@ void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
   for(i=0; i< ad_dst_rank;  i++) {
     if (dst_slc->stride[i] > 1) {
       if (i == 0) {
-	dst_first_stride_eq_1 = 0;
+        dst_first_stride_eq_1 = 0;
       }
       dst_unit_stride = 0;
       dst_count[i] =   (int)((dst_slc->hi[i] -dst_slc->lo[i]+dst_slc->stride[i])/dst_slc->stride[i]);
@@ -858,8 +864,8 @@ void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
     }
   }
   /* Might want to check that src_count and dst_count match here?,
-     perhaps that happens in ARMC_PutS but I think not. 
-  */
+   *      perhaps that happens in ARMC_PutS but I think not.
+   *        */
   for (i=0;i<ad_src->rank;i++) {
     if (dst_count[i] != src_count[i]) {
        fprintf(stderr, "ARMCI_Get_farrays: ERROR counts of src and dst slices do not match\n");
@@ -867,7 +873,7 @@ void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
        return;
     }
   }
-      
+
   if ((src_unit_stride != 0) && (dst_unit_stride != 0)) {
     mv_rank = ad_src->rank-1;
     for (i=0; i<mv_rank; i++) {
@@ -879,32 +885,31 @@ void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
     src_count[0] *= ad_src->elemsize;
   } else {
     /* If first dimension strides are both 1, then we
-       can till use ad_src->rank-1 levels. Just 
+       can till use ad_src->rank-1 levels. Just
        the strides need changing.
     */
-    
     if ((src_first_stride_eq_1 != 0) && (dst_first_stride_eq_1 != 0)) {
       mv_rank = ad_src->rank-1;
       src_count[0] *= ad_src->elemsize;
       for (i=0; i< mv_rank; i++) {
-	src_stride[i] = ad_src->stride[i+1]*src_slc->stride[i+1];
+        src_stride[i] = ad_src->stride[i+1]*src_slc->stride[i+1];
       }
       for (i=0; i< mv_rank; i++) {
-	dst_stride[i] = ad_dst_stride[i+1]*dst_slc->stride[i+1];
+        dst_stride[i] = ad_dst_stride[i+1]*dst_slc->stride[i+1];
       }
     } else {
       mv_rank = ad_src->rank;
       /* Shift counts, right, set count[0] to elemsize. */
       for (i=mv_rank;i>0;i--) {
-	src_count[i] = src_count[i-1];
+        src_count[i] = src_count[i-1];
       }
       src_count[0] = ad_src->elemsize;
       /* Adjust strides. */
       for (i=0;i<mv_rank;i++) {
-	src_stride[i] = ad_src->stride[i]*src_slc->stride[i];
+        src_stride[i] = ad_src->stride[i]*src_slc->stride[i];
       }
       for (i=0;i<mv_rank;i++) {
-	dst_stride[i] = ad_dst_stride[i]*dst_slc->stride[i];
+        dst_stride[i] = ad_dst_stride[i]*dst_slc->stride[i];
       }
     }
   }
@@ -915,9 +920,9 @@ void ARMCI_NbGet_farrays(void* dv_src, array_slice_t* src_slc,
          dst_slc->lo[0], dst_slc->hi[0], dst_slc->stride[0], *proc);
 #endif
   /*
-  ARMCI_GetS(ptr_src, ad_src->stride+1, ptr_dst, ad_dst->stride+1, count, ad_src->rank-1, *proc); 
+   *   ARMCI_GetS(ptr_src, ad_src->stride+1, ptr_dst, ad_dst->stride+1, count, ad_src->rank-1, *proc);
   */
-  ARMCI_NbGetS(ptr_src, src_stride, ptr_dst, dst_stride, src_count, mv_rank, *proc,NULL); 
-	     
+  ARMCI_NbGetS(ptr_src, src_stride, ptr_dst, dst_stride, src_count, mv_rank, *proc,NULL);
+
 }
 

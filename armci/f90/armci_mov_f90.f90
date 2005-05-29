@@ -1,2114 +1,2114 @@
-module ARMCI_Mov_F90
+module armci_mov_f90
 
-use ARMCI_Types
-interface ARMCI_Put_fa
-  module procedure ARMCI_Put_1DI4
-  module procedure ARMCI_Put_2DI4
-  module procedure ARMCI_Put_3DI4
-  module procedure ARMCI_Put_4DI4
-  module procedure ARMCI_Put_5DI4
-  module procedure ARMCI_Put_6DI4
-  module procedure ARMCI_Put_7DI4
-  module procedure ARMCI_Put_1DI8
-  module procedure ARMCI_Put_2DI8
-  module procedure ARMCI_Put_3DI8
-  module procedure ARMCI_Put_4DI8
-  module procedure ARMCI_Put_5DI8
-  module procedure ARMCI_Put_6DI8
-  module procedure ARMCI_Put_7DI8
-  module procedure ARMCI_Put_1DR4
-  module procedure ARMCI_Put_2DR4
-  module procedure ARMCI_Put_3DR4
-  module procedure ARMCI_Put_4DR4
-  module procedure ARMCI_Put_5DR4
-  module procedure ARMCI_Put_6DR4
-  module procedure ARMCI_Put_7DR4
-  module procedure ARMCI_Put_1DR8
-  module procedure ARMCI_Put_2DR8
-  module procedure ARMCI_Put_3DR8
-  module procedure ARMCI_Put_4DR8
-  module procedure ARMCI_Put_5DR8
-  module procedure ARMCI_Put_6DR8
-  module procedure ARMCI_Put_7DR8
-  module procedure ARMCI_Put_1DC4
-  module procedure ARMCI_Put_2DC4
-  module procedure ARMCI_Put_3DC4
-  module procedure ARMCI_Put_4DC4
-  module procedure ARMCI_Put_5DC4
-  module procedure ARMCI_Put_6DC4
-  module procedure ARMCI_Put_7DC4
-  module procedure ARMCI_Put_1DC8
-  module procedure ARMCI_Put_2DC8
-  module procedure ARMCI_Put_3DC8
-  module procedure ARMCI_Put_4DC8
-  module procedure ARMCI_Put_5DC8
-  module procedure ARMCI_Put_6DC8
-  module procedure ARMCI_Put_7DC8
+use armci_types
+interface armci_put_fa
+  module procedure armci_put_1di4
+  module procedure armci_put_2di4
+  module procedure armci_put_3di4
+  module procedure armci_put_4di4
+  module procedure armci_put_5di4
+  module procedure armci_put_6di4
+  module procedure armci_put_7di4
+  module procedure armci_put_1di8
+  module procedure armci_put_2di8
+  module procedure armci_put_3di8
+  module procedure armci_put_4di8
+  module procedure armci_put_5di8
+  module procedure armci_put_6di8
+  module procedure armci_put_7di8
+  module procedure armci_put_1dr4
+  module procedure armci_put_2dr4
+  module procedure armci_put_3dr4
+  module procedure armci_put_4dr4
+  module procedure armci_put_5dr4
+  module procedure armci_put_6dr4
+  module procedure armci_put_7dr4
+  module procedure armci_put_1dr8
+  module procedure armci_put_2dr8
+  module procedure armci_put_3dr8
+  module procedure armci_put_4dr8
+  module procedure armci_put_5dr8
+  module procedure armci_put_6dr8
+  module procedure armci_put_7dr8
+  module procedure armci_put_1dc4
+  module procedure armci_put_2dc4
+  module procedure armci_put_3dc4
+  module procedure armci_put_4dc4
+  module procedure armci_put_5dc4
+  module procedure armci_put_6dc4
+  module procedure armci_put_7dc4
+  module procedure armci_put_1dc8
+  module procedure armci_put_2dc8
+  module procedure armci_put_3dc8
+  module procedure armci_put_4dc8
+  module procedure armci_put_5dc8
+  module procedure armci_put_6dc8
+  module procedure armci_put_7dc8
 end interface
 
-interface ARMCI_Get_fa
-  module procedure ARMCI_Get_1DI4
-  module procedure ARMCI_Get_2DI4
-  module procedure ARMCI_Get_3DI4
-  module procedure ARMCI_Get_4DI4
-  module procedure ARMCI_Get_5DI4
-  module procedure ARMCI_Get_6DI4
-  module procedure ARMCI_Get_7DI4
-  module procedure ARMCI_Get_1DI8
-  module procedure ARMCI_Get_2DI8
-  module procedure ARMCI_Get_3DI8
-  module procedure ARMCI_Get_4DI8
-  module procedure ARMCI_Get_5DI8
-  module procedure ARMCI_Get_6DI8
-  module procedure ARMCI_Get_7DI8
-  module procedure ARMCI_Get_1DR4
-  module procedure ARMCI_Get_2DR4
-  module procedure ARMCI_Get_3DR4
-  module procedure ARMCI_Get_4DR4
-  module procedure ARMCI_Get_5DR4
-  module procedure ARMCI_Get_6DR4
-  module procedure ARMCI_Get_7DR4
-  module procedure ARMCI_Get_1DR8
-  module procedure ARMCI_Get_2DR8
-  module procedure ARMCI_Get_3DR8
-  module procedure ARMCI_Get_4DR8
-  module procedure ARMCI_Get_5DR8
-  module procedure ARMCI_Get_6DR8
-  module procedure ARMCI_Get_7DR8
-  module procedure ARMCI_Get_1DC4
-  module procedure ARMCI_Get_2DC4
-  module procedure ARMCI_Get_3DC4
-  module procedure ARMCI_Get_4DC4
-  module procedure ARMCI_Get_5DC4
-  module procedure ARMCI_Get_6DC4
-  module procedure ARMCI_Get_7DC4
-  module procedure ARMCI_Get_1DC8
-  module procedure ARMCI_Get_2DC8
-  module procedure ARMCI_Get_3DC8
-  module procedure ARMCI_Get_4DC8
-  module procedure ARMCI_Get_5DC8
-  module procedure ARMCI_Get_6DC8
-  module procedure ARMCI_Get_7DC8
+interface armci_get_fa
+  module procedure armci_get_1di4
+  module procedure armci_get_2di4
+  module procedure armci_get_3di4
+  module procedure armci_get_4di4
+  module procedure armci_get_5di4
+  module procedure armci_get_6di4
+  module procedure armci_get_7di4
+  module procedure armci_get_1di8
+  module procedure armci_get_2di8
+  module procedure armci_get_3di8
+  module procedure armci_get_4di8
+  module procedure armci_get_5di8
+  module procedure armci_get_6di8
+  module procedure armci_get_7di8
+  module procedure armci_get_1dr4
+  module procedure armci_get_2dr4
+  module procedure armci_get_3dr4
+  module procedure armci_get_4dr4
+  module procedure armci_get_5dr4
+  module procedure armci_get_6dr4
+  module procedure armci_get_7dr4
+  module procedure armci_get_1dr8
+  module procedure armci_get_2dr8
+  module procedure armci_get_3dr8
+  module procedure armci_get_4dr8
+  module procedure armci_get_5dr8
+  module procedure armci_get_6dr8
+  module procedure armci_get_7dr8
+  module procedure armci_get_1dc4
+  module procedure armci_get_2dc4
+  module procedure armci_get_3dc4
+  module procedure armci_get_4dc4
+  module procedure armci_get_5dc4
+  module procedure armci_get_6dc4
+  module procedure armci_get_7dc4
+  module procedure armci_get_1dc8
+  module procedure armci_get_2dc8
+  module procedure armci_get_3dc8
+  module procedure armci_get_4dc8
+  module procedure armci_get_5dc8
+  module procedure armci_get_6dc8
+  module procedure armci_get_7dc8
 end interface
 
 contains 
 
-subroutine ARMCI_Put_1DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_1di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I4), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  integer(kind=i4), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_1DI4
+end subroutine armci_put_1di4
 
-subroutine ARMCI_Put_2DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_2di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I4), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_2DI4
+end subroutine armci_put_2di4
 
-subroutine ARMCI_Put_3DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_3di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I4), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_3DI4
+end subroutine armci_put_3di4
 
-subroutine ARMCI_Put_4DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_4di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I4), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_4DI4
+end subroutine armci_put_4di4
 
-subroutine ARMCI_Put_5DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_5di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I4), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 5
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_5DI4
+end subroutine armci_put_5di4
 
-subroutine ARMCI_Put_6DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_6di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I4), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 6
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_6DI4
+end subroutine armci_put_6di4
 
-subroutine ARMCI_Put_7DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_7di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_7DI4
+end subroutine armci_put_7di4
 
-subroutine ARMCI_Put_1DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_1di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I8), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  integer(kind=i8), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_1DI8
+end subroutine armci_put_1di8
 
-subroutine ARMCI_Put_2DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_2di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I8), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_2DI8
+end subroutine armci_put_2di8
 
-subroutine ARMCI_Put_3DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_3di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I8), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_3DI8
+end subroutine armci_put_3di8
 
-subroutine ARMCI_Put_4DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_4di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I8), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_4DI8
+end subroutine armci_put_4di8
 
-subroutine ARMCI_Put_5DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_5di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I8), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 5
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_5DI8
+end subroutine armci_put_5di8
 
-subroutine ARMCI_Put_6DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_6di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I8), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 6
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_6DI8
+end subroutine armci_put_6di8
 
-subroutine ARMCI_Put_7DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_7di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  integer(kind=I8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_7DI8
+end subroutine armci_put_7di8
 
-subroutine ARMCI_Put_1DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_1dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R4), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  real(kind=r4), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_1DR4
+end subroutine armci_put_1dr4
 
-subroutine ARMCI_Put_2DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_2dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R4), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_2DR4
+end subroutine armci_put_2dr4
 
-subroutine ARMCI_Put_3DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_3dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R4), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_3DR4
+end subroutine armci_put_3dr4
 
-subroutine ARMCI_Put_4DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_4dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R4), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_4DR4
+end subroutine armci_put_4dr4
 
-subroutine ARMCI_Put_5DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_5dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R4), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 5
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_5DR4
+end subroutine armci_put_5dr4
 
-subroutine ARMCI_Put_6DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_6dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R4), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 6
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_6DR4
+end subroutine armci_put_6dr4
 
-subroutine ARMCI_Put_7DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_7dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_7DR4
+end subroutine armci_put_7dr4
 
-subroutine ARMCI_Put_1DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_1dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R8), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  real(kind=r8), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_1DR8
+end subroutine armci_put_1dr8
 
-subroutine ARMCI_Put_2DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_2dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R8), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_2DR8
+end subroutine armci_put_2dr8
 
-subroutine ARMCI_Put_3DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_3dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R8), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_3DR8
+end subroutine armci_put_3dr8
 
-subroutine ARMCI_Put_4DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_4dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R8), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_4DR8
+end subroutine armci_put_4dr8
 
-subroutine ARMCI_Put_5DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_5dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R8), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 5
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_5DR8
+end subroutine armci_put_5dr8
 
-subroutine ARMCI_Put_6DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_6dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R8), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 6
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_6DR8
+end subroutine armci_put_6dr8
 
-subroutine ARMCI_Put_7DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_7dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  real(kind=R8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_7DR8
+end subroutine armci_put_7dr8
 
-subroutine ARMCI_Put_1DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_1dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C4), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  complex(kind=c4), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_1DC4
+end subroutine armci_put_1dc4
 
-subroutine ARMCI_Put_2DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_2dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C4), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_2DC4
+end subroutine armci_put_2dc4
 
-subroutine ARMCI_Put_3DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_3dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C4), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_3DC4
+end subroutine armci_put_3dc4
 
-subroutine ARMCI_Put_4DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_4dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C4), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_4DC4
+end subroutine armci_put_4dc4
 
-subroutine ARMCI_Put_5DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_5dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C4), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 5
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_5DC4
+end subroutine armci_put_5dc4
 
-subroutine ARMCI_Put_6DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_6dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C4), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 6
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_6DC4
+end subroutine armci_put_6dc4
 
-subroutine ARMCI_Put_7DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_7dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_7DC4
+end subroutine armci_put_7dc4
 
-subroutine ARMCI_Put_1DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_1dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C8), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  complex(kind=c8), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_1DC8
+end subroutine armci_put_1dc8
 
-subroutine ARMCI_Put_2DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_2dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C8), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_2DC8
+end subroutine armci_put_2dc8
 
-subroutine ARMCI_Put_3DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_3dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C8), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_3DC8
+end subroutine armci_put_3dc8
 
-subroutine ARMCI_Put_4DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_4dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C8), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_4DC8
+end subroutine armci_put_4dc8
 
-subroutine ARMCI_Put_5DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_5dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C8), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 5
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_5DC8
+end subroutine armci_put_5dc8
 
-subroutine ARMCI_Put_6DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_6dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C8), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 6
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_6DC8
+end subroutine armci_put_6dc8
 
-subroutine ARMCI_Put_7DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_put_7dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_put_farrays
+    end subroutine armci_put_farrays
   end interface
-  complex(kind=C8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_put_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Put_7DC8
+end subroutine armci_put_7dc8
 
-!Get
+!get
 
-subroutine ARMCI_Get_1DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_1di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I4), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  integer(kind=i4), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_1DI4
+end subroutine armci_get_1di4
 
-subroutine ARMCI_Get_2DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_2di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I4), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_2DI4
+end subroutine armci_get_2di4
 
-subroutine ARMCI_Get_3DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_3di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I4), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_3DI4
+end subroutine armci_get_3di4
 
-subroutine ARMCI_Get_4DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_4di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I4), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_4DI4
+end subroutine armci_get_4di4
 
-subroutine ARMCI_Get_5DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_5di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I4), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer  :: rank
 
   rank = 5
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_5DI4
+end subroutine armci_get_5di4
 
-subroutine ARMCI_Get_6DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_6di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I4), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer  :: rank
 
   rank = 6
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_6DI4
+end subroutine armci_get_6di4
 
-subroutine ARMCI_Get_7DI4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_7di4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_7DI4
+end subroutine armci_get_7di4
 
-subroutine ARMCI_Get_1DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_1di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I8), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  integer(kind=i8), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_1DI8
+end subroutine armci_get_1di8
 
-subroutine ARMCI_Get_2DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_2di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I8), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_2DI8
+end subroutine armci_get_2di8
 
-subroutine ARMCI_Get_3DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_3di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I8), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_3DI8
+end subroutine armci_get_3di8
 
-subroutine ARMCI_Get_4DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_4di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I8), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_4DI8
+end subroutine armci_get_4di8
 
-subroutine ARMCI_Get_5DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_5di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I8), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer  :: rank
 
   rank = 5
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_5DI8
+end subroutine armci_get_5di8
 
-subroutine ARMCI_Get_6DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_6di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I8), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer  :: rank
 
   rank = 6
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_6DI8
+end subroutine armci_get_6di8
 
-subroutine ARMCI_Get_7DI8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_7di8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      integer(kind=I8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      integer(kind=i8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  integer(kind=I8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  integer(kind=i8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_7DI8
+end subroutine armci_get_7di8
 
-subroutine ARMCI_Get_1DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_1dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R4), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  real(kind=r4), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_1DR4
+end subroutine armci_get_1dr4
 
-subroutine ARMCI_Get_2DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_2dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R4), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_2DR4
+end subroutine armci_get_2dr4
 
-subroutine ARMCI_Get_3DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_3dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R4), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_3DR4
+end subroutine armci_get_3dr4
 
-subroutine ARMCI_Get_4DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_4dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R4), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_4DR4
+end subroutine armci_get_4dr4
 
-subroutine ARMCI_Get_5DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_5dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R4), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer  :: rank
 
   rank = 5
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_5DR4
+end subroutine armci_get_5dr4
 
-subroutine ARMCI_Get_6DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_6dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R4), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer  :: rank
 
   rank = 6
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_6DR4
+end subroutine armci_get_6dr4
 
-subroutine ARMCI_Get_7DR4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_7dr4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_7DR4
+end subroutine armci_get_7dr4
 
-subroutine ARMCI_Get_1DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_1dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R8), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  real(kind=r8), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_1DR8
+end subroutine armci_get_1dr8
 
-subroutine ARMCI_Get_2DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_2dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R8), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_2DR8
+end subroutine armci_get_2dr8
 
-subroutine ARMCI_Get_3DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_3dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R8), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_3DR8
+end subroutine armci_get_3dr8
 
-subroutine ARMCI_Get_4DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_4dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R8), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_4DR8
+end subroutine armci_get_4dr8
 
-subroutine ARMCI_Get_5DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_5dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R8), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer  :: rank
 
   rank = 5
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_5DR8
+end subroutine armci_get_5dr8
 
-subroutine ARMCI_Get_6DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_6dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R8), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer  :: rank
 
   rank = 6
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_6DR8
+end subroutine armci_get_6dr8
 
-subroutine ARMCI_Get_7DR8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_7dr8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      real(kind=R8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      real(kind=r8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  real(kind=R8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  real(kind=r8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_7DR8
+end subroutine armci_get_7dr8
 
-subroutine ARMCI_Get_1DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_1dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C4), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  complex(kind=c4), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_1DC4
+end subroutine armci_get_1dc4
 
-subroutine ARMCI_Get_2DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_2dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C4), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_2DC4
+end subroutine armci_get_2dc4
 
-subroutine ARMCI_Get_3DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_3dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C4), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_3DC4
+end subroutine armci_get_3dc4
 
-subroutine ARMCI_Get_4DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_4dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C4), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_4DC4
+end subroutine armci_get_4dc4
 
-subroutine ARMCI_Get_5DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_5dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C4), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer  :: rank
 
   rank = 5
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_5DC4
+end subroutine armci_get_5dc4
 
-subroutine ARMCI_Get_6DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_6dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C4), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer  :: rank
 
   rank = 6
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_6DC4
+end subroutine armci_get_6dc4
 
-subroutine ARMCI_Get_7DC4(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_7dc4(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c4), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_7DC4
+end subroutine armci_get_7dc4
 
-subroutine ARMCI_Get_1DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_1dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C8), dimension(:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)           :: src_slc, dst_slc
+  complex(kind=c8), dimension(:), pointer :: src, dst
+  type(armci_slice), intent(in)           :: src_slc, dst_slc
   integer, intent(in)                     :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 1
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_1DC8
+end subroutine armci_get_1dc8
 
-subroutine ARMCI_Get_2DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_2dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C8), dimension(:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 2
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_2DC8
+end subroutine armci_get_2dc8
 
-subroutine ARMCI_Get_3DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_3dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C8), dimension(:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 3
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_3DC8
+end subroutine armci_get_3dc8
 
-subroutine ARMCI_Get_4DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_4dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C8), dimension(:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer :: rank
 
   rank = 4
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_4DC8
+end subroutine armci_get_4dc8
 
-subroutine ARMCI_Get_5DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_5dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C8), dimension(:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                    :: rc
   integer  :: rank
 
   rank = 5
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_5DC8
+end subroutine armci_get_5dc8
 
-subroutine ARMCI_Get_6DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_6dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C8), dimension(:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer  :: rank
 
   rank = 6
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_6DC8
+end subroutine armci_get_6dc8
 
-subroutine ARMCI_Get_7DC8(src, src_slc, dst, dst_slc, proc, rc)
-  use DefineKind
-!  implicit none
+subroutine armci_get_7dc8(src, src_slc, dst, dst_slc, proc, rc)
+  use definekind
+  implicit none
   interface
-    subroutine ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
-      use DefineKind
-      use ARMCI_Types
-      complex(kind=C8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-      type(ARMCI_slice), intent(in) :: src_slc, dst_slc
+    subroutine armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+      use definekind
+      use armci_types
+      complex(kind=c8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+      type(armci_slice), intent(in) :: src_slc, dst_slc
       integer, intent(in) :: proc, rank
       integer, intent(out) :: rc
-    end subroutine ARMCI_Get_farrays
+    end subroutine armci_get_farrays
   end interface
-  complex(kind=C8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
-  type(ARMCI_slice), intent(in)             :: src_slc, dst_slc
+  complex(kind=c8), dimension(:,:,:,:,:,:,:), pointer :: src, dst
+  type(armci_slice), intent(in)             :: src_slc, dst_slc
   integer, intent(in)                       :: proc
   integer, intent(out)                      :: rc
   integer :: rank
 
   rank = 7
-  call ARMCI_Get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
+  call armci_get_farrays(src, src_slc, dst, dst_slc, proc, rank, rc)
 
-end subroutine ARMCI_Get_7DC8
+end subroutine armci_get_7dc8
 
-end module ARMCI_Mov_F90
+end module armci_mov_f90

@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.1 2005-03-04 00:40:56 vinod Exp $
+#$Id: GNUmakefile,v 1.2 2005-05-29 03:30:32 vinod Exp $
          FOPT = -g
          COPT = -O3
 
@@ -54,7 +54,7 @@ COPT = -O3
 %.x.p:%.x
 	echo "`whoami` `hostname` 4 `pwd`/$(basename $@) /tmp" > $@
 
-%.x:%.f90 testa_init.o checkput.o testfa_type.o testnbfa_type.o $(FULL_LIBRARY_PATH)
+%.x:%.F90 testa_init.o checkput.o testfa_type.o testnbfa_type.o $(FULL_LIBRARY_PATH)
 	$(FC) -g -I. $(FOPT_REN) $(MP_INCLUDES) $(MP_DEFINES) -o $@ $^ $(LIBS) -lm
 
 %.o:%.f90
