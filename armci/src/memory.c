@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.51 2005-02-11 08:17:36 manoj Exp $ */
+/* $Id: memory.c,v 1.52 2005-06-01 18:40:30 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -809,7 +809,6 @@ int ARMCI_Malloc_group(void *ptr_arr[], armci_size_t bytes,
 {
     void *ptr;
     int grp_me, grp_nproc;
-    armci_grp_attr_t *grp_attr=ARMCI_Group_getattr(group);
 #ifdef GA_USE_VAMPIR
     vampir_begin(ARMCI_MALLOC_GROUP,__FILE__,__LINE__);
 #endif
