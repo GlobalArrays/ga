@@ -262,9 +262,9 @@ IB_INCLUDE and IB_LIB for nonstandard installation of the libraries.
 
 7. Other issues 
 
-LINUX64 supports ALPHA and Itanium processors only. 
+(a) LINUX64 supports ALPHA and Itanium processors only. 
 
-The SGI_N32 version is recommended on all newer SGI boxes including
+(b) The SGI_N32 version is recommended on all newer SGI boxes including
 the O2, Octane, Origin, Indigo2, and PowerChallenge systems
 unless the system has lots of memory and your program uses 
 huge arrays (>4GB) in which case 64-bit addressing is required
@@ -272,12 +272,16 @@ huge arrays (>4GB) in which case 64-bit addressing is required
 variable can be used to choose the optimal compiler flags 
 for R8000 and R10000 processors.
 
-In 64 bit platforms, if you are not using native vendor specific blas 
+(c) In 64 bit platforms, if you are not using native vendor specific blas 
 library, (as the vendor blas libraries are mostly compiled with integer 
 as 4 bytes), then set the following environment variables:
 	setenv NATIVE_BLAS no
 	setenv BLAS_LIB specify_your_blas_library
 		e.g.setenv BLAS_LIB -L/usr/lib/libblas.a
+
+(d) support for two underscores in fortran names on Linux/Cygwin
+    is enabled by setting F2C_TWO_UNDERSCORES.
+          (e.g. setenv F2C_TWO_UNDERSCORES 1)
 
 8. Performance tuning
 
