@@ -86,7 +86,7 @@ c
       integer g_a, g_b, g_c 
       integer rows, cols, loop
       logical status, dist_same 
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(util_drand(1)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -525,7 +525,7 @@ c
       integer g_a, g_b, g_c 
       integer rows, cols, loop
       logical status, dist_same 
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(util_drand(1)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
@@ -965,7 +965,7 @@ c
       integer g_a, g_b, g_c
       integer rows, cols, loop
       logical status, dist_same
-      iran(i) = int(util_drand(0)*real(i)) + 1
+      iran(i) = int(util_drand(1)*real(i)) + 1
       dist_same = .false.
 c
       me = ga_nodeid()
