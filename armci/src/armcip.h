@@ -396,4 +396,19 @@ extern void armci_exchange_address_grp(void *ptr_arr[], int n, ARMCI_Group *grou
 #endif /* ifdef MPI */ 
 /* -------------------------------------------------------- */
 
+/* ------------ ARMCI Chekcpointing/Recovery -------------- */
+#ifdef DO_CKPT
+extern int armci_init_checkpoint();
+extern void armci_create_ckptds(armci_ckpt_ds_t *ckptds, int count);
+extern int armci_icheckpoint_init(char *filename, ARMCI_Group *grp,
+                                  int savestack, int saveheap,
+                                  armci_ckpt_ds_t *ckptds);
+extern int armci_icheckpoint(int rid);
+extern int armci_irecover(int rid,int iamreplacement);
+extern void armci_icheckpoint_finalize(int rid);
+
+
+#endif /* ifdef DO_CKPT */
+/* -------------------------------------------------------- */
+
 #endif
