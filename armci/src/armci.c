@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.99 2005-05-13 23:54:47 manoj Exp $ */
+/* $Id: armci.c,v 1.100 2005-06-06 21:28:14 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -808,9 +808,9 @@ int direct=SAMECLUSNODE(nb_handle->proc);
 }
 
 #ifdef DO_CKPT
-int ARMCI_Ckpt_create_ds(armci_ckpt_ds_t *ckptds, int count)
+void ARMCI_Ckpt_create_ds(armci_ckpt_ds_t *ckptds, int count)
 {
-    return(armci_create_ckptds(ckptds,count));
+    armci_create_ckptds(ckptds,count);
 }
 
 int ARMCI_Ckpt_init(char *filename, ARMCI_Group *grp, int savestack, int saveheap, armci_ckpt_ds_t *ckptds)
@@ -825,9 +825,9 @@ int ARMCI_Ckpt(int rid)
     return(armci_icheckpoint(rid));
 }
 
-void ARMCI_Ckpt_Recover(int rid)
+void ARMCI_Ckpt_Recover(int rid, int iamreplacement)
 {
-    armci_irecover(rid);
+    armci_irecover(rid, iamreplacement);
 }
 void ARMCI_Ckpt_finalize(int rid)
 {
