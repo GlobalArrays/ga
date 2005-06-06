@@ -56,7 +56,6 @@ static armci_page_info_t armci_dpage_info;
 static int checkpointing_initialized=0;
 static int armci_recovering=0;
 
-
 /* ----------SUPPORT FUNCTIONS ----------- */
 
 /* This function is called from ARMCI sigv and sigbus handler */
@@ -64,12 +63,11 @@ int armci_ckpt_pgfh(void *addr, int errno, int fd)
 {
     char *paddr;
     unsigned long pagenum;
-
     /*find the page number and the corresponding page aligned address*/
     pagenum = (unsigned long)((long)addr/mypagesize);
     (long)paddr = pagenum*mypagesize; 
 
-    if(DEBUG)printf("\n%d:paddr=%p addr=%p %d\n",armci_me,paddr,addr,pagenum);
+    if(DEBUG)printf("\n%d:paddr=%p addr=%p %lu\n",armci_me,paddr,addr,pagenum);
 
     /*page is being touched change page permission to READ/WRITE*/
     mprotect(paddr, mypagesize, PROT_READ | PROT_WRITE);
@@ -81,7 +79,9 @@ int armci_ckpt_pgfh(void *addr, int errno, int fd)
             armci_dpage_info.firstpage = pagenum;
     if(pagenum>armci_dpage_info.lastpage)
             armci_dpage_info.lastpage = pagenum;
-    printf("\n%d: came here success %d\n",armci_me,armci_dpage_info.num_touched_pages);fflush(stdout);
+    
+    printf("\n%d: came here success %ld\n",armci_me,armci_dpage_info.num_touched_pages);fflush(stdout);
+
     return(0);
 }
 
@@ -183,7 +183,7 @@ static void armci_create_protect_pages(armci_monitor_address_t *addrds, void *pt
     addrds->ptr=(void *)(ptr);
     addrds->bytes = bytes;
     laddr = (unsigned long)(addrds->ptr);
-    addrds->firstpage = (unsigned long)((long)laddr/mypagesize);
+    addrds->firstpage = (unsigned long)((unsigned long)laddr/mypagesize);
 
     if(laddr%mypagesize ==0){
        totalpages = (int)(bytes/mypagesize);
@@ -193,7 +193,7 @@ static void armci_create_protect_pages(armci_monitor_address_t *addrds, void *pt
        int shift;
        shift = mypagesize - laddr%mypagesize;
        if(DEBUG){
-         printf("\n%d:shift = %d bytes=%ld",armci_me,shift,bytes);
+         printf("\n%d:shift=%d bytes=%ld",armci_me,shift,bytes);
          fflush(stdout);
        }
        if(bytes<shift)totalpages=1;
@@ -212,7 +212,7 @@ static void armci_create_protect_pages(armci_monitor_address_t *addrds, void *pt
        addrds->touched_page_arr[j]=addrds->touched_page_arr[j-1]+1;
     }
     if(DEBUG){
-       printf("\n%d:first=%ld total=%ld %ld",armci_me,addrds->firstpage,addrds->totalpages,laddr);
+       printf("\n%d: first=%lu total=%lu laddr=%lu (%p)",armci_me, addrds->firstpage, addrds->totalpages, laddr, laddr);
        fflush(stdout);
     }
     if(callprotect){
@@ -264,7 +264,7 @@ int armci_icheckpoint_init(char *filename,ARMCI_Group *grp, int savestack,
       armci_die("malloc failed for filename in ga_icheckpoint_init",0);
     strcpy(armci_storage_record[rid].fileinfo.filename,filename);
     armci_storage_record[rid].fileinfo.fd = armci_storage_fopen(filename);
-    if(DEBUG){printf("\nfilename=%s",filename);fflush(stdout);}
+    if(DEBUG){printf("\nfilename=%s\n",filename);fflush(stdout);}
 
     sprintf(tmpfilename, "/proc/%d/maps",getpid());
     fp=fopen(tmpfilename, "r");
@@ -319,14 +319,15 @@ int armci_icheckpoint_init(char *filename,ARMCI_Group *grp, int savestack,
        mprotect(armci_dpage_info.touched_page_arr,sizeof(unsigned long)*99999999, PROT_READ | PROT_WRITE);
     }
     else {
-       if(ckptds!=NULL)for(i=0;i<ckptds->count;i++){
-          armci_monitor_address_t *addrds =&armci_storage_record[rid].user_addr[i];
-          addrds->saveonce = ckptds->saveonce[i];
-          if(addrds->saveonce)
-          armci_create_protect_pages(addrds,ckptds->ptr_arr[i],ckptds->sz[i],0);
-          else
-          armci_create_protect_pages(addrds,ckptds->ptr_arr[i],ckptds->sz[i],1);
-       }
+       if(ckptds!=NULL)
+          for(i=0;i<ckptds->count;i++){
+             armci_monitor_address_t *addrds =&armci_storage_record[rid].user_addr[i];
+             addrds->saveonce = ckptds->saveonce[i];
+             if(addrds->saveonce)
+                armci_create_protect_pages(addrds,ckptds->ptr_arr[i],ckptds->sz[i],0);
+             else
+                armci_create_protect_pages(addrds,ckptds->ptr_arr[i],ckptds->sz[i],1);
+          }
     }
     if(DEBUG){printf("\n%d:completed init\n",armci_me);fflush(stdout);}
     return(rid);
@@ -337,7 +338,7 @@ unsigned long i,j=0;
     tpa = (unsigned long *)malloc(sizeof(unsigned long)*armci_dpage_info.num_touched_pages);
     for(i=0;i<armci_dpage_info.num_touched_pages;i++){
        if(DEBUG){
-         printf("\n%d: armci_create_tpa %ld %ld %ld",armci_me,
+         printf("\n%d: armci_create_tpa %lu %lu %lu",armci_me,
                          armci_dpage_info.touched_page_arr[i],firstpage,
                          (firstpage+totalpages));
          fflush(stdout);
@@ -373,7 +374,7 @@ static void armci_ckpt_write_stack(int rid)
  * changed pages*/
 int armci_icheckpoint(int rid)
 {
-    int i,j,rc;
+    int i,j,rc=0;
     off_t ofs;
     char *addr;
     if(DEBUG){
