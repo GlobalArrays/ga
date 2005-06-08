@@ -112,9 +112,9 @@ static int armci_create_record(ARMCI_Group *group, int count)
     armci_storage_record[recind].rel_pid = relprocid;
     memcpy(&armci_storage_record[recind].group,group,sizeof(ARMCI_Group));
     if(count!=0)
-    armci_storage_record[recind].user_addr = (armci_monitor_address_t *)malloc(sizeof(armci_monitor_address_t)*count);
+       armci_storage_record[recind].user_addr = (armci_monitor_address_t *)malloc(sizeof(armci_monitor_address_t)*count);
     armci_storage_record[recind].user_addr_count=count;
-
+    
     if(next_available_rid!=0)
        next_available_rid = 0;
     else
@@ -139,22 +139,23 @@ static void armci_protect_pages(unsigned long startpagenum,unsigned long numpage
 int armci_init_checkpoint()
 {
     int val=1,rc;
+    armci_size_t rec_size=0;
+    
     mypagesize = getpagesize();
     if(checkpointing_initialized)return(0);
+
+    /* malloc for record index */
     armci_rec_ind = (int **)malloc(sizeof(int *)*armci_nproc);
-    if(armci_me==0){
-       rc = ARMCI_Malloc((void **)armci_rec_ind, 2*sizeof(int));
-       armci_rec_ind[armci_me][0]=armci_rec_ind[armci_me][1]=1;
-    }
-    else
-       rc = ARMCI_Malloc((void **)armci_rec_ind, 0);
-    assert(rc==0);
-   
+    if(armci_me==0) rec_size = 2*sizeof(int);
+    rc=ARMCI_Malloc((void **)armci_rec_ind, rec_size); assert(rc==0);    
+    if(armci_me==0) armci_rec_ind[armci_me][0]=armci_rec_ind[armci_me][1]=1;
+    
     ARMCI_Register_Signal_Handler(SIGSEGV,(void *)armci_ckpt_pgfh);
-    checkpointing_initialized = 1;
     armci_dpage_info.touched_page_arr = (unsigned long *)malloc(sizeof(unsigned long)*100000);
     armci_dpage_info.num_touched_pages=armci_dpage_info.lastpage=0;
     armci_dpage_info.firstpage = 99999999;
+
+    checkpointing_initialized = 1;
     return(0);
 }
 
@@ -239,14 +240,12 @@ int armci_icheckpoint_init(char *filename,ARMCI_Group *grp, int savestack,
     printf("\n%d:in armci ckpt init\n",armci_me);fflush(stdout);
     if(DEBUG && ckptds!=NULL)
             printf("\n%d:ckptdscount=%d",armci_me,ckptds->count);
+
     /*create the record*/
-    if(ckptds!=NULL)
-    rid = armci_create_record(grp,ckptds->count);
-    else
-    rid = armci_create_record(grp,0);
-    if(DEBUG){
-       printf("\n%d:got rid = %d",armci_me,rid);fflush(stdout);
-    }
+    if(ckptds!=NULL) rid = armci_create_record(grp,ckptds->count);
+    else rid = armci_create_record(grp,0);
+    if(DEBUG) printf("\n%d:got rid = %d",armci_me,rid);fflush(stdout);
+
     armci_storage_record[rid].ckpt_heap = saveheap;
     armci_storage_record[rid].ckpt_stack = savestack;
 
