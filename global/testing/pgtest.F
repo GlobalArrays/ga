@@ -1,4 +1,4 @@
-c $Id: pgtest.F,v 1.7 2005-02-11 21:29:44 manoj Exp $
+c $Id: pgtest.F,v 1.8 2005-07-07 00:18:19 manoj Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -26,8 +26,8 @@ c#define NGA_GATSCAT
 #include "testutil.fh"
       integer heap, stack, fudge, ma_heap, me, nproc
       integer inode,nnodes,proclist(100),i,j,nprocs
-      integer proc_group(0:100), my_proc_group, num_grp
-      integer midnode
+      integer proc_group(0:100), my_proc_group, grp, num_grp
+      integer midnode, splitnode, color, key
       logical status
       parameter (heap=200*200*4, fudge=100, stack=200*200)
 c     
@@ -88,11 +88,45 @@ c      call ga_pgroup_set_default(proc_group(inode))
         call runtest
       endif
 #else
-c     split into 2 groups
+c     split into 2 equal groups
+      if(me.eq.0) then
+         print *,' ************* Testing ga_pgroup_split ************ '
+         call ffflush(6)
+      endif
       num_grp = 2
-      my_proc_group = ga_pgroup_split(num_grp)
+      grp = ga_pgroup_get_default()
+      my_proc_group = ga_pgroup_split(grp, num_grp)
       call ga_pgroup_set_default(my_proc_group)
       call runtest
+c     reset to world group
+      call ga_pgroup_set_default(ga_pgroup_get_world())
+      call ga_sync()
+c     split into 2 irregular groups (33:67)
+      if(me.eq.0) then
+         print *,' ********* Testing ga_pgroup_split_irreg *********** '
+         call ffflush(6)
+      endif
+      num_grp = 2
+      grp = ga_pgroup_get_default()
+      splitnode = nproc/3
+      if(me.lt.splitnode) then
+         color=0
+      else
+         color=1
+      endif
+c     same key for all processes means automatic control of rank assignment
+      key = 0 
+      my_proc_group = ga_pgroup_split_irreg(grp, color, key)
+      call ga_pgroup_set_default(my_proc_group)
+      if(me.lt.splitnode) then
+         call runtest
+      endif
+      call ffflush(6)
+      call ga_sync()
+      if(me.ge.splitnode) then
+         call runtest
+      endif
+      call ga_sync()                  
 #endif
 
       call ga_sync()
@@ -129,6 +163,7 @@ c
       logical status
 
       me = ga_nodeid()
+      nproc = ga_nnodes()
 
       if(me.eq.0)then
 #ifdef MIRROR
