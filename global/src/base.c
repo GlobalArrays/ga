@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.121 2005-07-07 01:56:38 manoj Exp $ */
+/* $Id: base.c,v 1.122 2005-07-07 17:41:14 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -123,7 +123,10 @@ int  GA_stack_size=0;
 extern void gai_init_onesided();
 int gai_getmem(char* name, char **ptr_arr, Integer bytes, int type, long *id,
                int grp_id);
-
+#ifdef DO_CKPT
+static int ga_group_is_for_ft=0;
+int ga_spare_procs;
+#endif
 
 /*************************************************************************/
 
@@ -417,6 +420,7 @@ int bytes;
        PGRP_LIST[0].map_proc_list[i+j] = i;
        PGRP_LIST[0].inv_map_proc_list[i] = i+j;
     }
+    printf("\n%d:good so far\n",GAme);fflush(stdout);
 
     /* assure that GA will not alocate more shared memory than specified */
     if(ARMCI_Uses_shm())
@@ -445,6 +449,22 @@ int bytes;
 #ifdef GA_PROFILE 
     ga_profile_init();
 #endif
+#ifdef DO_CKPT
+    {
+    Integer tmplist[1000];
+    Integer tmpcount;
+    tmpcount = GAnproc-ga_spare_procs;
+    for(i=0;i<tmpcount;i++)
+            tmplist[i]=i;
+    ga_group_is_for_ft=1;
+    GA_Default_Proc_Group = ga_pgroup_create_(tmplist,&tmpcount);
+    ga_group_is_for_ft=0;
+    if(GAme>=tmpcount)
+      ga_irecover(0);
+    printf("\n%d:here done with initialize\n",GAme);
+                 
+    }
+#endif
     
 #ifdef GA_USE_VAMPIR
     vampir_end(GA_INITIALIZE,__FILE__,__LINE__);
@@ -452,6 +472,10 @@ int bytes;
 
 }
 
+void set_ga_group_is_for_ft(int val)
+{
+    ga_group_is_for_ft = val;
+}
 
 /*\ IS MA USED FOR ALLOCATION OF GA MEMORY ?
 \*/ 
@@ -857,6 +881,7 @@ int FATR ga_pgroup_create_(Integer *list, Integer *count)
     Integer pgrp_handle, i, j, nprocs, itmp;
     Integer tmp_list[MAX_NPROC], parent;
     int tmp2_list[MAX_NPROC], tmp_count;
+    ARMCI_Group *tmpgrp;
  
     GA_PUSH_NAME("ga_pgroup_create_");
     /*** Get next free process group handle ***/
@@ -871,6 +896,7 @@ int FATR ga_pgroup_create_(Integer *list, Integer *count)
     /* Check list for validity (no duplicates and no out of range entries) */
     nprocs = GAnproc;
     for (i=0; i<*count; i++) {
+            printf("\n%d:count%d i=%d list[i]=%d %d\n",GAme,*count,i,list[i],nprocs);fflush(stdout);
        if (list[i] <0 || list[i] >= nprocs)
 	  ga_error(" invalid element in list ", list[i]);
        for (j=i+1; j<*count; j++) {
@@ -924,7 +950,11 @@ int FATR ga_pgroup_create_(Integer *list, Integer *count)
   PGRP_LIST[pgrp_handle].mirrored = 0;
   PGRP_LIST[pgrp_handle].map_nproc = tmp_count;
 #ifdef MPI
-  ARMCI_Group_create(tmp_count, tmp2_list, &PGRP_LIST[pgrp_handle].group);
+  tmpgrp = &PGRP_LIST[pgrp_handle].group;
+  if(ga_group_is_for_ft)
+    tmpgrp = ARMCI_Get_ft_group();
+  else
+    ARMCI_Group_create(tmp_count, tmp2_list, &PGRP_LIST[pgrp_handle].group);
 #endif
  
  
