@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.119 2005-05-19 19:48:16 vinod Exp $ */
+/* $Id: base.c,v 1.120 2005-07-07 00:30:42 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -953,14 +953,19 @@ Integer FATR ga_pgroup_get_world_()
   return -1;
 }
 
-logical FATR ga_pgroup_split_(Integer *grp_num)
+Integer FATR ga_pgroup_split_(Integer *grp, Integer *grp_num)
 {
-  Integer nprocs, me, default_grp, world_grp;
+  Integer nprocs, me, default_grp;
   Integer ratio, start, end, grp_size;
   Integer i, icnt, nodes[MAX_NPROC];
-  Integer grp_id, ret;
+  Integer grp_id, ret=-1;
 
+  if(*grp_num<0) ga_error("Invalid argument (number of groups < 0)",*grp_num);
+  if(*grp_num==0) return *grp;
+  
   default_grp = ga_pgroup_get_default_();
+  ga_pgroup_set_default_(grp);
+  
 #if 0 /* This is wrong. Should split only default group and not world group */
   world_grp = ga_pgroup_get_world_();
   ga_pgroup_set_default_(&world_grp);
@@ -994,7 +999,40 @@ logical FATR ga_pgroup_split_(Integer *grp_num)
     ret = grp_id;
   }
   ga_pgroup_set_default_(&default_grp);
+  if(ret==-1) ga_error("ga_pgroup_split failed",ret);
   return ret;
+}
+
+Integer FATR ga_pgroup_split_irreg_(Integer *grp, Integer *mycolor, Integer *key)
+{
+  Integer nprocs, me, default_grp, grp_id;
+  Integer i, icnt=0, nodes[MAX_NPROC];
+  Integer *color_arr;
+  
+  if(*mycolor<0) ga_error("Invalid argument (color < 0)",*mycolor);
+
+  default_grp = ga_pgroup_get_default_();
+  ga_pgroup_set_default_(grp);
+  nprocs = ga_nnodes_();
+  me = ga_nodeid_();
+
+  /* Figure out what procs are in my group */
+  color_arr = (int*)malloc(nprocs*sizeof(int));
+  for(i=0; i<nprocs; i++) color_arr[i] = 0;
+  color_arr[me] = *mycolor;
+  ga_igop(GA_TYPE_GOP, color_arr, nprocs, "+");
+
+  for (icnt=0, i=0; i<nprocs; i++) {
+     if(color_arr[i] == *mycolor) {
+        nodes[icnt] = i;
+        icnt++;
+     }
+  }
+
+  grp_id = ga_pgroup_create_(nodes, &icnt);
+
+  ga_pgroup_set_default_(&default_grp);
+  return grp_id;
 }
 
 #ifdef MPI

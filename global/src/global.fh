@@ -30,6 +30,7 @@
       logical ga_allocate
       integer ga_pgroup_create
       integer ga_pgroup_split
+      integer ga_pgroup_split_irreg
       double precision ga_ddot, ga_ddot_patch
       double complex   ga_zdot, ga_zdot_patch
       double complex   nga_zdot_patch
@@ -72,6 +73,7 @@
       external ga_allocate
       external ga_pgroup_create
       external ga_pgroup_split
+      external ga_pgroup_split_irreg
       external ga_has_ghosts
       external ga_pgroup_get_default, ga_pgroup_get_mirror
       external ga_pgroup_get_world, ga_num_mirrored_seg
