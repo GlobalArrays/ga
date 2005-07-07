@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.120 2005-07-07 00:30:42 manoj Exp $ */
+/* $Id: base.c,v 1.121 2005-07-07 01:56:38 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1006,8 +1006,7 @@ Integer FATR ga_pgroup_split_(Integer *grp, Integer *grp_num)
 Integer FATR ga_pgroup_split_irreg_(Integer *grp, Integer *mycolor, Integer *key)
 {
   Integer nprocs, me, default_grp, grp_id;
-  Integer i, icnt=0, nodes[MAX_NPROC];
-  Integer *color_arr;
+  Integer i, icnt=0, nodes[MAX_NPROC], color_arr[MAX_NPROC];
   
   if(*mycolor<0) ga_error("Invalid argument (color < 0)",*mycolor);
 
@@ -1017,7 +1016,6 @@ Integer FATR ga_pgroup_split_irreg_(Integer *grp, Integer *mycolor, Integer *key
   me = ga_nodeid_();
 
   /* Figure out what procs are in my group */
-  color_arr = (int*)malloc(nprocs*sizeof(int));
   for(i=0; i<nprocs; i++) color_arr[i] = 0;
   color_arr[me] = *mycolor;
   ga_igop(GA_TYPE_GOP, color_arr, nprocs, "+");
