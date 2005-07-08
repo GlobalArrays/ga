@@ -1,6 +1,6 @@
 #ifdef __alpha
 #   include "tas-alpha.h"
-#elif defined(__i386__) 
+#elif defined(__i386__) || defined(__x86_64__)
 #   include "tas-i386.h"
 #elif defined(__ppc__)
 #   define PT_EI inline
