@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.100 2005-06-06 21:28:14 manoj Exp $ */
+/* $Id: armci.c,v 1.101 2005-07-08 16:52:40 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -315,6 +315,27 @@ ARMCI_Group *ARMCI_Get_world_group()
 void* test_ptr_arr[MAX_PROC];
 extern void armci_region_shm_malloc(void *ptr_arr[], size_t bytes);
 
+#ifdef DO_CKPT
+int armci_ft_spare_procs;
+void armci_set_spare_procs(int spare)
+{
+    armci_ft_spare_procs = spare;
+}
+ARMCI_Group armci_ft_group;
+ARMCI_Group *ARMCI_Get_ft_group()
+{
+    return(&armci_ft_group);
+}
+void armci_create_ft_group()
+{
+    int i, list[MAX_PROC];
+    for(i=0;i<armci_nproc-armci_ft_spare_procs;i++)list[i] = i;
+    printf("\n%d:here ok\n",armci_me);fflush(stdout);
+    ARMCI_Group_create((armci_nproc-armci_ft_spare_procs),list,&armci_ft_group);
+    printf("\n%d:done with group create\n",armci_me);fflush(stdout);
+}
+#endif
+
 int ARMCI_Init()
 {
     if(_armci_initialized>0) return 0;
@@ -476,9 +497,6 @@ int ARMCI_Init()
     armci_msg_barrier();
     armci_msg_gop_init();
 
-#ifdef DO_CKPT
-    armci_init_checkpoint();
-#endif
     
 #ifdef ARMCI_PROFILE
     armci_profile_init();
@@ -487,6 +505,9 @@ int ARMCI_Init()
     vampir_end(ARMCI_INIT,__FILE__,__LINE__);
 #endif    
     _armci_initialized++;
+#ifdef DO_CKPT
+    armci_init_checkpoint(armci_ft_spare_procs);
+#endif
     return 0;
 }
 
