@@ -345,5 +345,8 @@ void ARMCI_Ckpt_finalize(int rid);
 
 #ifdef MPI
 ARMCI_Group * ARMCI_Get_world_group();
+#ifdef DO_CKPT
+ARMCI_Group * ARMCI_Get_ft_group();
+#endif
 #endif
 #endif /* _ARMCI_H */

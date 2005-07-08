@@ -136,7 +136,7 @@ static void armci_protect_pages(unsigned long startpagenum,unsigned long numpage
 /*\ ----------CORE FUNCTIONS -----------
 \*/
 /*called in armci init*/
-int armci_init_checkpoint()
+int armci_init_checkpoint(int spare)
 {
     int val=1,rc;
     armci_size_t rec_size=0;
@@ -146,14 +146,19 @@ int armci_init_checkpoint()
 
     /* malloc for record index */
     armci_rec_ind = (int **)malloc(sizeof(int *)*armci_nproc);
-    if(armci_me==0) rec_size = 2*sizeof(int);
-    rc=ARMCI_Malloc((void **)armci_rec_ind, rec_size); assert(rc==0);    
-    if(armci_me==0) armci_rec_ind[armci_me][0]=armci_rec_ind[armci_me][1]=1;
-    
+    if(armci_me==0){
+       rc = ARMCI_Malloc((void **)armci_rec_ind, 2*sizeof(int));
+       armci_rec_ind[armci_me][0]=armci_rec_ind[armci_me][1]=1;
+    }
+    else
+       rc = ARMCI_Malloc((void **)armci_rec_ind, 0);
+    assert(rc==0);
+
     ARMCI_Register_Signal_Handler(SIGSEGV,(void *)armci_ckpt_pgfh);
     armci_dpage_info.touched_page_arr = (unsigned long *)malloc(sizeof(unsigned long)*100000);
     armci_dpage_info.num_touched_pages=armci_dpage_info.lastpage=0;
     armci_dpage_info.firstpage = 99999999;
+    armci_create_ft_group(spare);
 
     checkpointing_initialized = 1;
     return(0);
@@ -163,11 +168,11 @@ void armci_create_ckptds(armci_ckpt_ds_t *ckptds, int count)
 {
     printf("\n%d:in armci_create_ckptds with count=%d",armci_me,count);fflush(stdout);
     ckptds->count=count;
-    ckptds->ptr_arr=(void **)malloc(sizeof(void *)*count);
-    ckptds->sz=(size_t *)malloc(sizeof(size_t)*count);
-    ckptds->saveonce=(int *)calloc(count,sizeof(int));
+    ckptds->ptr_arr=(void **)malloc(sizeof(void *)*(count+1));
+    ckptds->sz=(size_t *)malloc(sizeof(size_t)*(count+1));
+    ckptds->saveonce=(int *)calloc((count+1),sizeof(int));
     if( ckptds->saveonce==NULL || ckptds->ptr_arr==NULL || ckptds->sz == NULL )
-      armci_die("malloc failed in armci_create_ckptds",sizeof(size_t)*count);
+      armci_die("malloc failed in armci_create_ckptds",count);
 }
 
 void armci_free_chkptds(armci_ckpt_ds_t *ckptds)
@@ -484,6 +489,7 @@ int armci_irecover(int rid,int iamreplacement)
     off_t ofs;
     /*restore jmpbuf and pid and longjmp*/
     if(iamreplacement){
+      /*first create a new armci group and make it the armci ft group*/
       rc=armci_storage_read_ptr(armci_storage_record[rid].fileinfo.fd,&armci_storage_record[rid].jmp,sizeof(jmp_buf),4*sizeof(int));
     }
     armci_msg_group_barrier(&armci_storage_record[rid].group);
