@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.123 2005-07-08 22:51:11 vinod Exp $ */
+/* $Id: base.c,v 1.124 2005-07-08 22:56:56 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -882,7 +882,9 @@ int FATR ga_pgroup_create_(Integer *list, Integer *count)
     Integer pgrp_handle, i, j, nprocs, itmp;
     Integer tmp_list[MAX_NPROC], parent;
     int tmp2_list[MAX_NPROC], tmp_count;
+#ifdef MPI
     ARMCI_Group *tmpgrp;
+#endif
  
     GA_PUSH_NAME("ga_pgroup_create_");
     /*** Get next free process group handle ***/
