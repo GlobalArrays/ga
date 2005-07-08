@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.122 2005-07-07 17:41:14 vinod Exp $ */
+/* $Id: base.c,v 1.123 2005-07-08 22:51:11 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -471,11 +471,12 @@ int bytes;
 #endif
 
 }
-
+#if DO_CKPT
 void set_ga_group_is_for_ft(int val)
 {
     ga_group_is_for_ft = val;
 }
+#endif
 
 /*\ IS MA USED FOR ALLOCATION OF GA MEMORY ?
 \*/ 
@@ -951,9 +952,11 @@ int FATR ga_pgroup_create_(Integer *list, Integer *count)
   PGRP_LIST[pgrp_handle].map_nproc = tmp_count;
 #ifdef MPI
   tmpgrp = &PGRP_LIST[pgrp_handle].group;
+#if DO_CKPT
   if(ga_group_is_for_ft)
     tmpgrp = ARMCI_Get_ft_group();
   else
+#endif
     ARMCI_Group_create(tmp_count, tmp2_list, &PGRP_LIST[pgrp_handle].group);
 #endif
  
