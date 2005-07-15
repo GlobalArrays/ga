@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.124 2005-07-08 22:56:56 vinod Exp $ */
+/* $Id: base.c,v 1.125 2005-07-15 17:44:36 vinod Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -420,7 +420,6 @@ int bytes;
        PGRP_LIST[0].map_proc_list[i+j] = i;
        PGRP_LIST[0].inv_map_proc_list[i] = i+j;
     }
-    printf("\n%d:good so far\n",GAme);fflush(stdout);
 
     /* assure that GA will not alocate more shared memory than specified */
     if(ARMCI_Uses_shm())
