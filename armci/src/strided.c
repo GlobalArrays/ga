@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.100 2005-01-08 06:12:26 manoj Exp $ */
+/* $Id: strided.c,v 1.101 2005-08-04 22:11:59 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -704,10 +704,11 @@ int ARMCI_PutS_flag_dir(
 	     ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],
 				     armci_clus_id(proc))){ 
 	     for(i=0;i<count[1];i++){
+                char *csp=(char *)src_ptr,*cdp=(char *)dst_ptr;
 		ARMCI_INIT_HANDLE(&nbhdlarr1[i%1000]);
 		ARMCI_NbPut(src_ptr,dst_ptr,count[0],proc,&nbhdlarr1[i%1000]);
-		(char *)src_ptr +=src_stride_arr[0];
-		(char *)dst_ptr +=dst_stride_arr[0];
+		csp +=src_stride_arr[0];
+		cdp +=dst_stride_arr[0];
 	     }
 	     valflagarr[proc]=val;
 	     ARMCI_NbPut(valflagarr+proc,flag,4,proc,&nbhdlarr1[i%1000]);

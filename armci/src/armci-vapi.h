@@ -1,11 +1,10 @@
-/*$Id: armci-vapi.h,v 1.12 2005-03-23 00:01:41 vinod Exp $ */
+/*$Id: armci-vapi.h,v 1.13 2005-08-04 22:11:59 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
 /*vapi includes*/
 #include <vapi.h>
 #include <evapi.h>
-#include <mpga.h>
 #include <mtl_common.h>
 
 #include <ib_defs.h>
