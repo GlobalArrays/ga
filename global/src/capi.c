@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.84 2005-07-07 00:30:42 manoj Exp $ */
+/* $Id: capi.c,v 1.85 2005-08-08 21:24:46 manoj Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -513,7 +513,7 @@ int GA_Pgroup_split_irreg(int grp_id, int color, int key)
     Integer acolor = (Integer)color;
     Integer akey = (Integer)key;
     Integer grp  = (Integer)grp_id;
-    return (int)ga_pgroup_split_irreg_(&grp, &color, &key);
+    return (int)ga_pgroup_split_irreg_(&grp, &acolor, &akey);
 }
 
 void GA_Update_ghosts(int g_a)
