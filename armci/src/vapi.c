@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.20 2005-03-23 00:01:42 vinod Exp $************************************************ 
+/* $Id: vapi.c,v 1.21 2005-08-10 20:37:20 vinod Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.
@@ -15,6 +15,7 @@
 #define DEBUG_INIT 0
 #define DEBUG_SERVER 0
 #define DEBUG_CLN 0
+#define TIME_INIT 0
 /* The device name is "InfiniHost0" */
 #  define VAPIDEV_NAME "InfiniHost0"
 #  define INVAL_HNDL 0xFFFFFFFF
@@ -201,6 +202,8 @@ static descr_pool_t client_descr_pool = {MAX_DESCR,0,(VAPI_rr_desc_t *)0};
 #define DSCRID_RMW 60000
 #define DSCRID_RMW_END 60000+9999
 
+extern double MPI_Wtime();
+static double inittime0=0,inittime1=0,inittime2=0,inittime3=0,inittime4=0;
 
 #define NUMOFBUFFERS 20
 #define DSCRID_FROMBUFS 1
@@ -524,8 +527,10 @@ VAPI_cqe_num_t num;
     /*set local variable values*/
     armci_max_num_sg_ent=nic->attr.max_num_sg_ent;
     armci_max_qp_ous_wr=nic->attr.max_qp_ous_wr;
-    if(armci_max_qp_ous_wr>(2*armci_nproc+16/*for descpool*/+NUMOFBUFFERS))
-       armci_max_qp_ous_wr=(4*armci_nproc+16/*for descpool*/+NUMOFBUFFERS);
+    /*
+    if(armci_max_qp_ous_wr>(2*armci_nproc+16+NUMOFBUFFERS))
+       armci_max_qp_ous_wr=(4*armci_nproc+16+NUMOFBUFFERS);
+    */
 }
 
 void armci_server_alloc_bufs()
@@ -643,7 +648,7 @@ void armci_init_connections()
 int c,s;
 int sz;
 int *tmparr;
-    
+    if(TIME_INIT)inittime0 = MPI_Wtime(); 
     /* initialize nic connection for qp numbers and lid's */
     armci_init_nic(SRV_nic,1,1);
     bzero(mark_buf_send_complete,sizeof(int)*NUMOFBUFFERS);
@@ -693,6 +698,7 @@ int *tmparr;
 
     handle_array = (armci_vapi_memhndl_t *)calloc(sizeof(armci_vapi_memhndl_t),armci_nproc);
     if(!handle_array)armci_die("handle_array malloc failed",0);
+    if(TIME_INIT)printf("\n%d:time for init_conn is %f",armci_me,MPI_Wtime()-inittime2);
 
 
 }
@@ -704,9 +710,10 @@ call_result_t rc;
 VAPI_qp_attr_t         qp_attr;
 VAPI_qp_cap_t          qp_cap;
 VAPI_qp_attr_mask_t    qp_attr_mask;
+    if(TIME_INIT)inittime0=MPI_Wtime();
     if(armci_me==armci_master)
-       armci_util_wait_int(&armci_vapi_server_stage1,1,10000);
-    armci_msg_barrier();
+       armci_util_wait_int(&armci_vapi_server_stage1,1,10);
+   if(TIME_INIT) printf("\n%d:wait for server to get to stage 1 time for vapi_connect_client is %f",armci_me,(inittime1=MPI_Wtime())-inittime0);
     sz = armci_nproc;
     if(armci_me==armci_master){
        armci_msg_gop_scope(SCOPE_MASTERS,_gtmparr,sz,"+",ARMCI_INT);
@@ -720,14 +727,14 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
        }
     }
 
+
     armci_vapi_client_stage1 = 1;
 
     /* allocate and initialize connection structs */
     sz = armci_nproc*(sizeof(VAPI_qp_num_t)/sizeof(int));
 
     if(armci_me==armci_master)
-       armci_util_wait_int(&armci_vapi_server_stage2,1,10000);
-    armci_msg_barrier();
+       armci_util_wait_int(&armci_vapi_server_stage2,1,10);
     for(c=0; c< armci_nproc; c++){
        armci_connect_t *con = CLN_con + c;
        if(armci_me!=armci_master){
@@ -742,6 +749,7 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
        armci_msg_gop_scope(SCOPE_ALL,con->rqpnum,sz,"+",ARMCI_INT);
     }
 
+   if(TIME_INIT) printf("\n%d:wait for server tog et to stage 2 time for vapi_connect_client is %f",armci_me,(inittime2=MPI_Wtime())-inittime1);
     /*armci_set_serv_mh();*/
 
     if(DEBUG_CLN){printf("%d:all connections ready\n",armci_me);fflush(stdout);}
@@ -766,6 +774,7 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
        armci_check_status(DEBUG_INIT, rc,"client connect requesti RST->INIT");
     }
 
+    if(TIME_INIT)printf("\n%d:to init time for vapi_connect_client is %f",armci_me,(inittime1=MPI_Wtime())-inittime2);
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state = VAPI_RTR;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
@@ -801,6 +810,7 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
 
     /*to to to RTS, other side must be in RTR*/
     armci_msg_barrier();
+    if(TIME_INIT)printf("\n%d:init to rtr time for vapi_connect_client is %f",armci_me,(inittime2=MPI_Wtime())-inittime1);
 
     armci_vapi_client_ready=1; 
 
@@ -826,6 +836,7 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
                          &qp_cap);
        armci_check_status(DEBUG_CLN, rc,"client connect request RTR->RTS");
     }
+    if(TIME_INIT)printf("\n%d:rtr to rts time for vapi_connect_client is %f",armci_me,(inittime1=MPI_Wtime())-inittime2);
 
 }
 
@@ -833,16 +844,18 @@ void armci_client_connect_to_servers()
 {
     /* initialize buffer managment module */
     extern void armci_util_wait_int(volatile int *,int,int);
+    if(TIME_INIT)inittime0=MPI_Wtime();
     _armci_buf_init();
 
     vapi_connect_client();
     if(armci_me==armci_master)
-      armci_util_wait_int(&armci_vapi_server_ready,1,10000);
+      armci_util_wait_int(&armci_vapi_server_ready,1,10);
     armci_msg_barrier();
     if(DEBUG_CLN && armci_me==armci_master){
        printf("\n%d:server_ready=%d\n",armci_me,armci_vapi_server_ready);
        fflush(stdout);
     }
+    if(TIME_INIT)printf("\n%d:time for client_connect_to_s is %f",armci_me,MPI_Wtime()-inittime0);
 }
 
 
@@ -1300,7 +1313,7 @@ VAPI_qp_attr_t         qp_attr;
 VAPI_qp_cap_t          qp_cap;
 VAPI_qp_attr_mask_t    qp_attr_mask;
 char *enval;
-
+    if(TIME_INIT)inittime0=MPI_Wtime();
     if(DEBUG_SERVER){ 
        printf("in server after fork %d (%d)\n",armci_me,getpid());
        fflush(stdout);
@@ -1312,7 +1325,8 @@ char *enval;
 
     _gtmparr[armci_me] = CLN_nic->lid_arr[armci_me];
     armci_vapi_server_stage1 = 1;
-    armci_util_wait_int(&armci_vapi_client_stage1,1,10000);
+    armci_util_wait_int(&armci_vapi_client_stage1,1,10);
+    if(TIME_INIT)printf("\n%d:wait for client time for server_initial_conn is %f",armci_me,(inittime4=MPI_Wtime())-inittime0);
 
     for(c=0; c< armci_nproc; c++){
        char *ptrr;
@@ -1321,7 +1335,6 @@ char *enval;
        if(DEBUG_SERVER){
          printf("\n%d:create qp before malloc c=%d\n",armci_me,c);
          fflush(stdout);
-         sleep(1);
        }
        ptrr = malloc(8+sizeof(VAPI_qp_num_t)*armci_nproc);
        extra = ALIGNLONGADD(ptrr);
@@ -1334,12 +1347,12 @@ char *enval;
        con->rqpnum[armci_me]  = con->qp_prop.qp_num;
        if(DEBUG_SERVER){
          printf("\n%d:create qp success  for server c=%d\n",armci_me,c);fflush(stdout);
-         sleep(1);
        }
     }
     if(DEBUG_SERVER){
        printf("\n%d:create qps success for server",armci_me);fflush(stdout);
     }
+    if(TIME_INIT)printf("\n%d:create qp time for server_initial_conn is %f",armci_me,(inittime1=MPI_Wtime())-inittime4);
 
     armci_vapi_server_stage2 = 1;
 
@@ -1358,6 +1371,7 @@ char *enval;
                            &qp_cap);
        armci_check_status(DEBUG_INIT, rc,"master connect request RST->INIT");
     }
+    if(TIME_INIT)printf("\n%d:to init time for server_initial_conn is %f",armci_me,(inittime2=MPI_Wtime())-inittime1);
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state = VAPI_RTR;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
@@ -1391,8 +1405,9 @@ char *enval;
                            &qp_cap);
        armci_check_status(DEBUG_SERVER, rc,"master connect request INIT->RTR");
     }
+    if(TIME_INIT)printf("\n%d:init to rtr time for server_initial_conn is %f",armci_me,(inittime3=MPI_Wtime())-inittime2);
 
-    armci_util_wait_int(&armci_vapi_client_ready,1,10000);
+    armci_util_wait_int(&armci_vapi_client_ready,1,10);
 
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state   = VAPI_RTS;
@@ -1413,6 +1428,7 @@ char *enval;
                            &qp_cap);
        armci_check_status(DEBUG_SERVER, rc,"master connect request RTR->RTS");
     }
+    if(TIME_INIT)printf("\n%d:rtr to rts time for server_initial_conn is %f",armci_me,(inittime4=MPI_Wtime())-inittime3);
 
     if(DEBUG_SERVER)
        printf("%d:server thread done with connections\n",armci_me);
@@ -1441,6 +1457,7 @@ char *enval;
                                EVAPI_POLL_CQ_UNBLOCK_HANDLER,NULL,
                                &(CLN_nic->rcq_eventh));
     armci_check_status(DEBUG_SERVER, rc,"EVAPI_set_comp_eventh"); 
+    if(TIME_INIT)printf("\n%d:post time for server_initial_conn is %f",armci_me,MPI_Wtime()-inittime4);
 
     armci_vapi_server_ready=1;
     /* check if we can poll in the server thread */
@@ -1460,6 +1477,7 @@ char *enval;
     if(DEBUG_SERVER){
        printf("%d: server connected to all clients\n",armci_me); fflush(stdout);
     }
+    if(TIME_INIT)printf("\n%d:time for server_initial_conn is %f",armci_me,MPI_Wtime()-inittime0);
 }
 
 
