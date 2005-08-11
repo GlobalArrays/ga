@@ -66,6 +66,21 @@ extern void _release_lock();
 #define TESTANDSET(x) (!_acquire_lock((x))) 
 #define RELEASE_SPINLOCK _release_lock 
 
+#elif defined(HPUX) && defined(__ia64) /* HPUX on IA64, non gcc */
+#  define SPINLOCK
+#  define USE_GCC_SPINLOCK 0 /*If gcc available, define USE_GCC_SPINLOCK=1 */
+#  if USE_GCC_SPINLOCK || defined(__GNUC__)
+#    define TESTANDSET gcc_testandset
+#    define RELEASE_SPINLOCK gcc_clear_spinlock
+     extern int gcc_testandset();
+     extern void gcc_clear_spinlock();
+#  else 
+     typedef unsigned int slock_t;
+#    include <ia64/sys/inline.h>
+#    define TESTANDSET(lock) _Asm_xchg(_SZ_W, lock, 1, _LDHINT_NONE)
+#    define RELEASE_SPINLOCK(lock) (*((volatile LOCK_T *) (lock)) = 0)
+#  endif
+
 #elif defined(NEC)
 extern ullong ts1am_2me();
 #define LOCK_T ullong
