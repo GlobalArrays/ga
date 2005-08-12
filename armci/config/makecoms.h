@@ -15,6 +15,19 @@ ifeq ($(ARMCI_NETWORK),GM)
   COMM_LIBS += $(GM_LIB_NAME) -lpthread
 endif
 
+ifeq ($(ARMCI_NETWORK),PORTALS)
+  COMM_DEFINES = -DPORTALS -DP3_NAL=\<p3nal\_utcp\.h\>
+  ifdef PORTALS_PATH
+    COMM_INCLUDES = -I$(PORTALS_PATH)/include
+    COMM_LIBS = -L$(PORTALS_PATH)/nal/utcp -L$(PORTALS_PATH)/user -L$(PORTALS_PATH)/kern
+  else
+    COMM_INCLUDES = -I/usr/local/include
+    COMM_LIBS = -L/usr/local/lib
+  endif
+  PORTALS_LIB_NAME = -l$(PORTALS_NAL)lib -lp3api -lp3lib -lp3rt
+  COMM_LIBS += $(PORTALS_LIB_NAME) -lpthread
+endif
+
 ifeq ($(ARMCI_NETWORK),VIA)
   COMM_DEFINES = -DVIA
   ifdef VIA_INCLUDE
