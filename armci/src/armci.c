@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.101 2005-07-08 16:52:40 vinod Exp $ */
+/* $Id: armci.c,v 1.102 2005-08-12 15:15:37 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -363,6 +363,10 @@ int ARMCI_Init()
     armci_init_lapi();
 #endif
 
+#ifdef PORTALS
+    armci_init_portals();
+#endif
+
 #ifdef QUADRICS
 #   ifdef DECOSF
     {
@@ -534,6 +538,10 @@ void ARMCI_Finalize()
     }
 #endif
 
+#ifdef PORTALS
+    armci_fini_portals();
+#endif
+
     ARMCI_Cleanup();
     armci_msg_barrier();
 #ifdef GA_USE_VAMPIR
@@ -634,6 +642,11 @@ int direct=SAMECLUSNODE(nb_handle->proc);
                return(success);
          }
 #       endif
+
+#ifdef PORTALS
+         armci_portals_complete(nb_handle);
+#endif
+
 #     endif
 #     ifdef COMPLETE_HANDLE
        COMPLETE_HANDLE(nb_handle->bufid,nb_handle->tag,(&success));

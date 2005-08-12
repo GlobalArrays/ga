@@ -58,9 +58,13 @@ typedef struct{
    short int agg_flag;
    int op;
    int proc;
+#ifdef PORTALS
+   int flag;
+#endif
 #ifdef NB_CMPL_T
    NB_CMPL_T cmpl_info;
 #endif
+
 } armci_ireq_t;
 /*\ the internal request structure for non-blocking api. 
 \*/

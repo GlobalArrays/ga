@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.18 2005-03-07 23:46:50 vinod Exp $ */
+/* $Id: kr_malloc.c,v 1.19 2005-08-12 15:15:37 vinod Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -87,6 +87,9 @@ static Header *morecore(size_t nu, context_t *ctx) {
     
     if ((cp =(char *)(*ctx->alloc_fptr)((size_t)nu * sizeof(Header))) == (char *)NULL)
       return (Header *) NULL;
+#ifdef PORTALS
+    armci_prepost_descriptor(cp,((size_t)nu * sizeof(Header)));
+#endif
 
     ctx->total += nu;   /* Have just got nu more units */
     ctx->nchunk++;      /* One more chunk */

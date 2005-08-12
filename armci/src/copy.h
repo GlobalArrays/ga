@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.77 2005-03-25 22:41:30 manoj Exp $ */
+/* $Id: copy.h,v 1.78 2005-08-12 15:15:37 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -197,6 +197,19 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #      define armci_put  CopyTo
 #      define armci_get  CopyFrom
 
+#elif defined(PORTALS)
+#include "portals.h"
+        
+    #define ARMCI_NB_PUT(src,dst,n,proc,nbhandle)\
+              if(proc==armci_me){\
+                 armci_copy(src,dst,n);\
+              } else {\
+              if(armci_portals_direct_send(src, dst, bytes, proc, &nbhandle))\
+                  ARMCI_Error("Portals_put failed",0); else; } 
+
+
+                              
+                              
 #elif  defined(LAPI)
 
 #      include <lapi.h>
