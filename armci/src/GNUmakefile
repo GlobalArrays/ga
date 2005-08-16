@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.91 2005-08-16 05:01:39 vinod Exp $
+#$Id: GNUmakefile,v 1.92 2005-08-16 16:03:28 vinod Exp $
          FOPT = -O
          COPT = -O
 
@@ -81,11 +81,6 @@ ifeq ($(TARGET),MACX)
  OBJ += semaphores.o 
 endif
 
-ifeq ($(ARMCI_NETWORK),PORTALS)
-  OBJ += portals.o ds-shared.o spawn.o request.o bufalloc.o async.o buffers.o
-  OBJ += regions.o
-  LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DALLOW_PIN -DSERVER_THREAD -D_REENTRANT
-endif
 ifeq ($(ARMCI_NETWORK),GM)
 #  OBJ += dataserv-myri.o myrinet.o spawn.o request.o 
   OBJ += dataserv-gm.o ds-shared.o myrinet.o spawn.o request.o bufalloc.o async.o buffers.o
