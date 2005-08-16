@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.22 2005-08-12 15:15:37 vinod Exp $ */
+/* $Id: fence.c,v 1.23 2005-08-16 05:01:39 vinod Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -21,7 +21,7 @@ char *_armci_fence_arr;
 #endif
 void armci_init_fence()
 {
-#ifdef DATA_SERVER
+#if defined (DATA_SERVER) || defined(PORTALS)
 # ifdef GM /*when fence moves to ds-shared, fence_init would become common*/
      armci_gm_fence_init();
 #endif
@@ -29,9 +29,6 @@ void armci_init_fence()
      if(!_armci_fence_arr)armci_die("armci_init_fence: calloc failed",0);
 #endif
 
-#ifdef PORTALS
-  _armci_fence_arr=calloc(armci_nproc,1);
-#endif  
 }
 
 void ARMCI_Fence(int proc)
@@ -45,13 +42,6 @@ void ARMCI_Fence(int proc)
  armci_profile_start(ARMCI_PROF_FENCE);
 #endif
 
-#ifdef PORTALS
- if(_armci_fence_arr[proc] && (armci_nclus >1)){
-        
- }
-#endif
-
- 
 #if defined(DATA_SERVER) && !(defined(GM) && defined(ACK_FENCE))
      if(_armci_fence_arr[proc] && (armci_nclus >1)){
          
