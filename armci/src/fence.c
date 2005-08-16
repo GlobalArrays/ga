@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.23 2005-08-16 05:01:39 vinod Exp $ */
+/* $Id: fence.c,v 1.24 2005-08-16 17:07:04 vinod Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -30,6 +30,17 @@ void armci_init_fence()
 #endif
 
 }
+
+#ifdef PORTALS
+void armci_update_fence_array(int proc, int inc)
+{
+    if (inc)
+       _armci_fence_arr[proc]++;
+    else
+       _armci_fence_arr[proc]--;
+}
+#endif
+
 
 void ARMCI_Fence(int proc)
 {

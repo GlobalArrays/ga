@@ -72,6 +72,7 @@ md_table_entry_t _armci_md_table[MAX_ENT];
 comp_desc _armci_portals_comp[MAX_OUT];
 int ptl_initialized = 0;
 int free_desc_index = 0;
+FILE *utcp_lib_out;
 
 void comp_desc_init()
 {
@@ -115,6 +116,7 @@ int armci_init_portals(void)
     ptl_initialized = 1;
     portals->num_match_entries = 0;
     comp_desc_init();
+    utcp_lib_out = stdout;
     return 0;   
 }        
 
@@ -252,7 +254,7 @@ int armci_client_complete(ptl_event_kind_t *evt,int proc_id, int nb_tag,comp_des
                 temp_comp = (comp_desc *)ev->md.user_ptr;
                 temp_proc = temp_comp->dest_id;
                 temp_comp->active = 2;
-                update_fence_array(temp_proc,0);              
+                armci_update_fence_array(temp_proc,0);              
                 portals->outstanding_puts--; 
         }
 
@@ -389,7 +391,7 @@ int armci_portals_direct_send(void *src, void* dst, int bytes, int proc, int tag
    }
     
    rc = armci_portals_put(client_md_h,dest_id,bytes,mb,local_offset,remote_offset,ack); 
-   update_fence_array(dest_id, 1);
+   armci_update_fence_array(dest_id, 1);
    if(!tag)
    {
            

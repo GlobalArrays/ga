@@ -106,7 +106,7 @@ extern thread_id_t armci_usr_tid;
 #endif
 
 #if defined (CRAY_T3E) || defined(FUJITSU) || defined(HITACHI)\
-     ||(defined(QUADRICS)&&!defined(ELAN_ACC))
+     ||(defined(QUADRICS)&&!defined(ELAN_ACC)) || defined(PORTALS)
 #define ACC_COPY
 #endif
 
