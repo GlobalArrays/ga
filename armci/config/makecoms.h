@@ -16,7 +16,10 @@ ifeq ($(ARMCI_NETWORK),GM)
 endif
 
 ifeq ($(ARMCI_NETWORK),PORTALS)
-  COMM_DEFINES = -DPORTALS -DP3_NAL=\<p3nal\_utcp\.h\>
+  ifndef PORTALS_NAL
+    PORTALS_NAL = utcp
+  endif
+  COMM_DEFINES = -DPORTALS -DP3_NAL=\<p3nal\_$(PORTALS_NAL)\.h\>
   ifdef PORTALS_PATH
     COMM_INCLUDES = -I$(PORTALS_PATH)/include
     COMM_LIBS = -L$(PORTALS_PATH)/nal/utcp -L$(PORTALS_PATH)/user -L$(PORTALS_PATH)/kern
@@ -24,7 +27,7 @@ ifeq ($(ARMCI_NETWORK),PORTALS)
     COMM_INCLUDES = -I/usr/local/include
     COMM_LIBS = -L/usr/local/lib
   endif
-  PORTALS_LIB_NAME = -l$(PORTALS_NAL)lib -lp3api -lp3lib -lp3rt
+  PORTALS_LIB_NAME = -lp3api -lp3lib -lp3rt -l$(PORTALS_NAL)lib
   COMM_LIBS += $(PORTALS_LIB_NAME) -lpthread
 endif
 
