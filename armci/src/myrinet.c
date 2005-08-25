@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.74 2005-03-17 01:34:13 vinod Exp $
+/* $Id: myrinet.c,v 1.75 2005-08-25 18:28:36 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -1049,7 +1049,6 @@ int armci_gm_serv_mem_free()
     int i,idx;
 
     free(serv_gm->proc_buf_ptr);
-    free(serv_gm->dma_buf);
 
     gm_dma_free(serv_gm->snd_port, serv_gm->proc_ack_ptr);
     gm_dma_free(serv_gm->rcv_port, serv_gm->ack);
@@ -1061,6 +1060,7 @@ int armci_gm_serv_mem_free()
         gm_dma_free(serv_gm->rcv_port, serv_gm->dma_buf[idx]);
         i = get_size_for_index(++idx);
     }
+    free(serv_gm->dma_buf);
     
     gm_dma_free(serv_gm->snd_port, MessageRcvBuffer);
 
