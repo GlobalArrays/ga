@@ -5,62 +5,7 @@
 #include <float.h>
 #include "armcip.h"
 #include <stdint.h>
-#if 0
-#include <portals3.h>
-#include P3_NAL
-#include <p3rt/p3rt.h>
-#include <p3api/debug.h>
-#include "portals.h"
-#include "armcip.h"                                                                                                        
-#define MAX_OUT 50
-#define MAX_ENT 64
-#define MAX_PREPOST 1
 
-typedef enum op {
-        ARMCI_PORTALS_PUT,
-        ARMCI_PORTALS_NBPUT,
-        ARMCI_PORTALS_GET, 
-        ARMCI_PORTALS_NBGET, 
-        ARMCI_PORTALS_ACC
-} optype;
-
-/* array of memory segments and corresponding memory descriptors */
-typedef struct md_table{
-        int id;
-        void * start;
-        void * end;
-        int bytes;       
-        ptl_md_t md;
-} md_table_entry_t;
-
-
-typedef struct desc{
-       int active;
-       unsigned int tag;      
-       int dest_id;
-       optype type;
-}comp_desc; 
-
-/* structure of computing process */
-
-typedef struct {
-  int armci_rank;  /* if different from portals_rank */      
-  int rank;       /* my rank*/
-  int size;       /* size of the group */
-  ptl_handle_me_t me_h[64];
-  ptl_handle_me_t md_h[64];
-
-  ptl_handle_eq_t eq_h;
-  ptl_handle_ni_t ni_h; 
-  ptl_pt_index_t ptl;
-  int outstanding_puts;
-  int outstanding_gets;
-  int outstanding_accs;
-  void * buffers; /* ptr to head of buffer */
-  int num_match_entries;
-} armci_portals_proc_t;
-
-#endif
 
 #define SENDER_MATCHING_BITS 100
 #define RECEIVER_MATCHING_BITS 100
@@ -73,6 +18,24 @@ comp_desc _armci_portals_comp[MAX_OUT];
 int ptl_initialized = 0;
 int free_desc_index = 0;
 FILE *utcp_lib_out;
+FILE* utcp_api_out;
+
+
+/* */
+void print_mem_desc_table()
+{
+  int i;
+  for (i = 0; i<portals->num_match_entries;i++)
+  {
+    printf ("%d: i=%d print_mem match_ent=%d,start:%p, end:%p, bytes:%d,
+                    %p-md.length=%llu, %p-md.start=%p\n",  
+            portals->rank,i,portals->num_match_entries,_armci_md_table[i].start,
+            _armci_md_table[i].end, _armci_md_table[i].bytes,&(_armci_md_table[i].md.length),
+             _armci_md_table[i].md.length,  &(_armci_md_table[i].md.start),_armci_md_table[i].md.start);
+    fflush(stdout);
+  }       
+        
+}
 
 void comp_desc_init()
 {
@@ -84,18 +47,20 @@ void comp_desc_init()
   }
 }
 
+
+
 int armci_init_portals(void)
 {
      
-    int rank,size;    
     int num_interface;
     int rc;
-    
+   
     if (PtlInit(&num_interface) != PTL_OK) {
         fprintf(stderr, "PtlInit() failed\n");
         exit(1);
     }
-  
+    portals->ptl = 4;
+
     /* should this be PTL_PID_ANY */ 
     if (PtlNIInit(PTL_IFACE_DEFAULT, PTL_PID_ANY, NULL, NULL, &(portals->ni_h)) != PTL_OK) {
         fprintf(stderr, "PtlNIInit() failed\n");
@@ -107,6 +72,9 @@ int armci_init_portals(void)
         exit(EXIT_FAILURE);
     }
 
+    printf("the rank is %d, size is %d\n",portals->rank,portals->size);
+    fflush(stdout);
+
     rc = PtlEQAlloc(portals->ni_h,64, PTL_EQ_HANDLER_NONE, &(portals->eq_h));
     if (rc != PTL_OK) {
             fprintf(stderr, "%d:PtlEQAlloc() failed: %s (%d)\n",
@@ -117,87 +85,102 @@ int armci_init_portals(void)
     portals->num_match_entries = 0;
     comp_desc_init();
     utcp_lib_out = stdout;
+    utcp_api_out = stdout;
     return 0;   
-}        
+}
+
 
 
 void armci_fini_portals()
 {
-    int rc;
     PtlNIFini(portals->ni_h);
     PtlFini();
 }
 
 
-/*if needed later */
-/*
-void armci_update_descriptor()
+int armci_pin_contig_hndl(void *ptr,int bytes, ARMCI_MEMHDL_T *reg_mem)
 {
+  int rc;
+  void * context;
+  ptl_md_t *md_ptr;
+  ptl_match_bits_t *mb;
+  ptl_process_id_t match_id;
 
+  printf("the malloced :%p\n", start);
+  fflush(stdout); 
+  md_ptr = &reg_mem->mem_dsc;
+  mb = &reg_mem->match_bits; 
+  //md_ptr = &(_armci_md_table[portals->num_match_entries].md);
+  //memset(&(_armci_md_table[portals->num_match_entries].md),0, sizeof(_armci_md_table[portals->num_match_entries].md));
+  context = NULL;
+  md_ptr->start = start;
+  md_ptr->length = bytes;
+  md_ptr->threshold = PTL_MD_THRESH_INF;
+  md_ptr->options =  PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE | PTL_MD_MANAGE_REMOTE;
+  md_ptr->user_ptr = context;
+  md_ptr->eq_handle = portals->eq_h;
+  md_ptr->max_size =0;
 
-}
-*/
-
-
-
-int armci_post_descriptor(ptl_md_t md)
-{
-  int rc;      
-  ptl_match_bits_t mb;
-  ptl_process_id_t src_id;
-   
-   mb = RECEIVER_MATCHING_BITS+portals->num_match_entries;
+  //print_mem_desc_table();
   
-  if (PtlGetRankId(PTL_NID_ANY,&src_id) != PTL_OK){
-               printf("ERROR IN CONVERTING SRC_ID\n");
-               fflush(stdout);
+  *mb = RECEIVER_MATCHING_BITS+portals->num_match_entries;
+ 
+  match_id.nid = PTL_NID_ANY;
+  match_id.pid = PTL_PID_ANY; 
+
+  printf("about to call attach\n");
+  fflush(stdout);
+
+  if(portals->num_match_entries == 0){
+    rc = PtlMEAttach(portals->ni_h,portals->ptl,match_id,*mb,0,PTL_RETAIN,PTL_INS_AFTER,
+                    &(portals->me_h[portals->num_match_entries])); 
+  }
+  else{
+    rc = PtlMEInsert(portals->me_h[(portals->num_match_entries - 1)],match_id,*mb,0, 
+                    PTL_RETAIN,PTL_INS_AFTER,
+                    &portals->me_h[(portals->num_match_entries)]);
   }
   
-  if(portals->num_match_entries == 0)
-    rc = PtlMEAttach(portals->ni_h,portals->ptl,src_id,mb,0,PTL_RETAIN,PTL_INS_AFTER,&portals->me_h[0]); 
-  else
-    rc = PtlMEInsert(portals->me_h[portals->num_match_entries],src_id,mb,0, PTL_RETAIN,PTL_INS_AFTER,&portals->me_h[(portals->num_match_entries)+1]);
-
   if (rc != PTL_OK) {
       fprintf(stderr, "%d:PtlMEAttach: %s\n", portals->rank, PtlErrorStr(rc));
       exit(EXIT_FAILURE); 
   }
-  rc = PtlMDAttach(portals->me_h[portals->num_match_entries],md,PTL_RETAIN,&portals->md_h[portals->num_match_entries]);
-  if (rc != PTL_OK) {
-       fprintf(stderr, "%d:PtlMDAttach: %s\n", portals->rank, PtlErrorStr(rc)); 
-       exit(EXIT_FAILURE);
-  } 
- 
-  return mb;  
-}
 
+  printf("about to call md attach\n");
+  fflush(stdout);
 
-/* to be called from ARMCI_PORTALS_Malloc */
-int armci_prepost_descriptor(void* start, long bytes)
-{
-  int options;
-  int rc;
-  ptl_md_t md;
-  ptl_handle_md_t md_h;
-  void * context;
-  int * index;
-  ptl_match_bits_t mb;
+  if(portals->num_match_entries == 0){
+    rc = PtlMDAttach(portals->me_h[portals->num_match_entries],*md_ptr,PTL_RETAIN,
+                    &(portals->md_h[portals->num_match_entries]));
+     if (rc != PTL_OK) {
+         fprintf(stderr, "%d:PtlMDAttach: %s\n", portals->rank, PtlErrorStr(rc)); 
+         exit(EXIT_FAILURE);
+     }
+     printf("%d: ,finished attach\n",portals->rank);
+     fflush(stdout);
+  }  
 
-  context = NULL;
-  options = PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE | PTL_MD_MANAGE_REMOTE;
-  md.start = start;
-  md.length = bytes;
-  md.threshold = PTL_MD_THRESH_INF;
-  md.options = options;
-  md.user_ptr = context;
-  md.eq_handle = portals->eq_h;
+  else{ 
+     rc = PtlMDAttach(portals->me_h[(portals->num_match_entries)],*md_ptr,
+                     PTL_RETAIN,&(portals->md_h[(portals->num_match_entries)]));
+     if (rc != PTL_OK) {
+         fprintf(stderr, "%d:PtlMDAttach: %s\n", portals->rank, PtlErrorStr(rc)); 
+         exit(EXIT_FAILURE);
+     } 
+  }  
 
-  mb = armci_post_descriptor(md);
-  _armci_md_table[portals->num_match_entries].start = start;
-  _armci_md_table[portals->num_match_entries].bytes = bytes;
-  _armci_md_table[portals->num_match_entries].md = md;
-  _armci_md_table[portals->num_match_entries].mb = mb;
+  
   portals->num_match_entries++;
+  print_mem_desc_table(); 
+  printf("%d:in prepost i=%d %p-start=%p,  %p-length=%llu table.eq_handle = %u\n",
+                portals->rank,(portals->num_match_entries - 1),
+                &(_armci_md_table[portals->num_match_entries - 1].md.start),
+                 _armci_md_table[portals->num_match_entries - 1].md.start,
+                &(_armci_md_table[portals->num_match_entries - 1].md.length),
+                 (_armci_md_table[portals->num_match_entries - 1].md.length),
+                _armci_md_table[portals->num_match_entries - 1].md.eq_handle);
+  fflush(stdout); 
+
   return rc;
 }
 
@@ -205,11 +188,10 @@ int armci_prepost_descriptor(void* start, long bytes)
 
 int armci_client_complete(ptl_event_kind_t *evt,int proc_id, int nb_tag,comp_desc *cdesc,int b_tag )
 {
-  int rank;
   int rc;  
-  ptl_event_t *ev;
-  armci_ihdl_t nb_handle;
-  comp_desc *temp_comp;
+  ptl_event_t *ev = NULL;
+  //armci_ihdl_t nb_handle;
+  comp_desc *temp_comp = NULL;
   int temp_tag;
   int temp_proc;;
   while(1)
@@ -272,13 +254,16 @@ int armci_client_complete(ptl_event_kind_t *evt,int proc_id, int nb_tag,comp_des
 
 
 
-
-int armci_get_offset(ptl_md_t md, void *ptr)
+/* XXX: need to add code in regions to exchange base ptr and size of each allocated region */
+ptl_size_t armci_get_offset(ptl_md_t md, void *ptr, int proc)
 {
   void * start_address;
-  int offset;
+  ptl_size_t offset;
   start_address = md.start;
-  offset =  ptr - start_address;
+  offset =  (char *)ptr - (char *)start_address;
+  printf("%d: start is %p, md.start is %p , offset is %llu\n", portals->rank,
+                  ptr, start_address,offset);
+  fflush(stdout); 
   return offset;
 }
 
@@ -297,23 +282,56 @@ int armci_portals_put(ptl_handle_md_t md_h,ptl_process_id_t dest_id,int bytes,in
      
 }
 
+int armci_portals_get(ptl_handle_md_t md_h,ptl_process_id_t dest_id,int bytes,int mb,int local_offset, int remote_offset)
+{
+     int rc;
+     printf("%d: about to call ptl_get, dest_id is %d, md_handle is %p\n",portals->rank,dest_id, md_h);
+     fflush(stdout);
+     rc = PtlGetRegion(md_h, local_offset, bytes,dest_id, portals->ptl, 0, mb,remote_offset);
+     if (rc != PTL_OK) {
+             fprintf(stderr, "%d:PtlGetRegion: %s\n", portals->rank, PtlErrorStr(rc));
+             exit(EXIT_FAILURE); 
+     }
+     return rc;
+     
+}
+
+
+
 
 
 int armci_get_md(void * start, int bytes , ptl_md_t * md_ptr, ptl_match_bits_t * mb_ptr)
 {
     int i;
-    int rc;
     int found = 0;
-
+    
+    printf("inside armci_get_md, the value of portals->num_match_ent is %d\n", portals->num_match_entries);
+    fflush(stdout);
+    
     for (i=0; i<portals->num_match_entries; i++){
          md_ptr = &(_armci_md_table[i].md);
-         if (start >= _armci_md_table[i].start && ((char *)start + bytes) <= (char *)_armci_md_table[i].end)
+         //md_ptr = _armci_md_table[i].md;
+         
+         printf("the value of start is %p,  bytes is %d, the value of table-start is %p,
+                         the value of table-end is %p,md_ptr->start is %p\n",start, 
+                         bytes,_armci_md_table[i].start, _armci_md_table[i].end, md_ptr->start);
+         fflush(stdout);
+         printf("%d: start: %p, tab.start: %p, start+bytes is %p, tab.end is %p\n",
+                         portals->rank,start, _armci_md_table[i].start,
+                         ((char *)start + bytes), (char *)_armci_md_table[i].end );
+         fflush(stdout);
+         if ( (start >= _armci_md_table[i].start)  && 
+                         ( ((char *)start + bytes) <= (char *)_armci_md_table[i].end)  )
          {
                  mb_ptr = &(_armci_md_table[i].mb);        
                  found = 1;
                  break;
          }        
     }
+    printf("%d: returning from get_md found is %d , entry is %d , md_ptr->start is %p, 
+                    md_ptr->eq_handle %u\n",portals->rank, found, i, md_ptr->start, 
+                    md_ptr->eq_handle);
+    fflush(stdout); 
          
     return found;
 }
@@ -321,7 +339,7 @@ int armci_get_md(void * start, int bytes , ptl_md_t * md_ptr, ptl_match_bits_t *
 
 
 
-comp_desc * get_free_comp_desc()
+comp_desc * get_free_comp_desc(int * comp_id)
 {
    comp_desc * c;     
    c = &(_armci_portals_comp[free_desc_index]);
@@ -330,41 +348,134 @@ comp_desc * get_free_comp_desc()
       armci_client_complete(NULL,c->dest_id,0,c,0); /* there should be a function for reseeting compl_desc*/
                                   
    }
-   free_desc_index = ((free_desc_index++) % MAX_OUT);
+   *comp_id = free_desc_index;
+   printf("the value of comp_desc_id is %d\n",*comp_id);
+   fflush(stdout);
+   free_desc_index = ((free_desc_index + 1) % MAX_OUT);
    return c;
 
 }
 
 
+int armci_client_direct_send(void *src, void* dst, int bytes, int proc, NB_CMPL_T *cmpl_info, int tag, ARMCI_MEMHDL_T *lochdl, ARMCI_MEMHDL_T *remhdl )
+{
+    int rc, i;
+    ptl_size_t offset_local, offset_remote;
+    ptl_match_bits_t mb;
+    ptl_md_t md, *md_local;
+    ptl_md_t * md_ptr;
+    ptl_match_bits_t * mb_ptr;
+    ptl_handle_md_t *md_hdl_local;
+    comp_desc *cdesc;
+    ptl_process_id_t dest_proc;
+    int c_info;
+    int lproc,rproc;
+    int ack = 1;
+ 
+    dest_proc.nid = proc;
+    dest_proc.pid = PTL_PID_ANY;
+    md_local = &lochdl->mem_dsc; 
+    md_hdl_local = &lochdl->mem_dsc_hndl; 
+    md_remote =&remhdl->mem_dsc;
+    offset_local = lochdl->offset;
+    offset_remote = remhdl->offset;
 
-/* direct protocol for put */
+    cdesc = get_free_comp_desc(&c_info);
+    *cmpl_info = c_info; /*TOED*/
+    if (!tag){
+       cdesc->tag = tag;
+       cdesc->dest_id = proc;
+       cdesc->type = ARMCI_PORTALS_PUT;
+       cdesc->active = 0;
+    }
+    else{
+       cdesc->tag = 999999;
+       cdesc->dest_id = proc;
+       cdesc->type = ARMCI_PORTALS_NBPUT; 
+       cdesc->active = 0;
+    }
+
+    md_local->user_ptr = (void *)cdesc;
+    md_local->eq_handle = portals->eq_h;
+
+    rc = PtlMDBind(portals->ni_h,*md_local, PTL_RETAIN, md_hdl_local);
+    if (rc != PTL_OK){
+       fprintf(stderr, "%d:PtlMDBind: %s\n", portals->rank, PtlErrorStr(rc));
+       armci_die("ptlmdbind failed",0);
+    }
+    
+    rc = PtlPutRegion(md_hdl_local,offset_local,bytes,ack,dest_proc,
+                   portals->ptl,
+                   0, mb,offset_remote, 0);
+    if (rc != PTL_OK){
+       fprintf(stderr, "%d:PtlPutRegion: %s\n", portals->rank,PtlErrorStr(rc));
+       exit(EXIT_FAILURE); 
+    }
+  
+    armci_update_fence_array(proc, 1);
+    if(!tag){
+       armci_client_complete(NULL,proc,0,NULL,1); /* check this later */
+    }
+    else
+       portals->outstanding_puts++;   
+    return rc;
+}
+
+#if 0
 int armci_portals_direct_send(void *src, void* dst, int bytes, int proc, int tag, NB_CMPL_T *cmpl_info)
 {
-   int rc;
-   int local_offset, remote_offset;
+   int rc, i;
+   ptl_size_t local_offset, remote_offset;
    ptl_match_bits_t mb;
    ptl_md_t md, md_client;
+   ptl_md_t * md_ptr;
+   ptl_match_bits_t * mb_ptr;
    ptl_handle_md_t client_md_h;
-   void * context;
    comp_desc *cdesc;
-   ptl_process_id_t dest_id;
-   int index;
+   ptl_process_id_t dest_proc;
+   int c_info;
+   int lproc,rproc;
   // mb = SENDER_MATCHING_BITS; 
    int ack = 1;
-   int found;
+   int found = -2;
 
-   dest_id.nid = proc;
-   found = armci_get_md(src, bytes, &md, &mb);
+   dest_proc.nid = proc;
+   dest_proc.pid = PTL_PID_ANY;
+
+   //found = armci_get_md(src, bytes, &md, &mb);
+    for (i=0; i<portals->num_match_entries; i++){
+         md_ptr = &(_armci_md_table[i].md);
+         //md_ptr = _armci_md_table[i].md;
+         
+         
+         printf("%d: start: %p, tab.start: %p, start+bytes is %p, tab.end is %p\n",portals->rank,
+                         src, _armci_md_table[i].start, ((char *)src + bytes), 
+                         (char *)_armci_md_table[i].end );
+         fflush(stdout);
+         
+         if ( (src >= _armci_md_table[i].start)  && ( ((char *)src + bytes) <= (char *)_armci_md_table[i].end)  )
+         {
+                 mb = (_armci_md_table[i].mb);        
+                 found = 1;
+                 break;
+         }        
+    }
+   
+   
+   
+   printf("%d: the val of found is %d\n",portals->rank,found);
+   fflush(stdout);
+   
    if (!found){
            fprintf(stderr, "unable to find preposted descriptor\n");
            exit(EXIT_FAILURE);
    }
    
-   local_offset = armci_get_offset(md,src);
-   remote_offset = armci_get_offset(md,dst);
+   local_offset = armci_get_offset(md,src,lproc);
+   remote_offset = armci_get_offset(md,dst,rproc);
 
-   cdesc = get_free_comp_desc();
-   *cmpl_info = 1; /*TOED*/
+   cdesc = get_free_comp_desc(&c_info);
+   *cmpl_info = c_info; /*TOED*/
    md_client.start = md.start;
    md_client.length = bytes;
    md_client.threshold = PTL_MD_THRESH_INF;
@@ -390,8 +501,16 @@ int armci_portals_direct_send(void *src, void* dst, int bytes, int proc, int tag
        exit(EXIT_FAILURE);
    }
     
-   rc = armci_portals_put(client_md_h,dest_id,bytes,mb,local_offset,remote_offset,ack); 
-   armci_update_fence_array(dest_id, 1);
+   //rc = armci_portals_put(client_md_h,dest_proc,bytes,mb,local_offset,remote_offset,ack); 
+   rc = PtlPutRegion(client_md_h, local_offset, bytes,ack,dest_proc, portals->ptl, 
+                   0, mb,remote_offset, 0);
+   if (rc != PTL_OK) {
+        fprintf(stderr, "%d:PtlPutRegion: %s\n", portals->rank, PtlErrorStr(rc));
+        exit(EXIT_FAILURE); 
+   }
+  
+  
+   armci_update_fence_array(proc, 1);
    if(!tag)
    {
            
@@ -401,6 +520,7 @@ int armci_portals_direct_send(void *src, void* dst, int bytes, int proc, int tag
         portals->outstanding_puts++;   
    return rc;
 }
+#endif
 
 
 
@@ -409,7 +529,8 @@ int armci_portals_complete(int tag, NB_CMPL_T *cmpl_info)
    int rc;
    int proc;
    /*TOED*/
-   armci_client_complete(NULL,proc,tag,NULL,0);
+   rc = armci_client_complete(NULL,proc,tag,NULL,0);
+   return rc;
 }
 
 
@@ -417,28 +538,64 @@ int armci_portals_complete(int tag, NB_CMPL_T *cmpl_info)
 /* direct protocol for get */
 int armci_portals_direct_get(void *src, void *dst, int bytes, int proc, int tag, NB_CMPL_T *cmpl_info)
 {
-   int rc;
-   int local_offset, remote_offset;
-   ptl_match_bits_t mb;
+   int rc, i, found = -2;
+   ptl_size_t local_offset, remote_offset;
+   ptl_match_bits_t mb, mb_ptr;
    ptl_md_t md, md_client;
+   ptl_md_t * md_ptr;
    ptl_handle_md_t client_md_h;
    comp_desc *cdesc;
-   int index;
+   int lproc,rproc;
+   int c_info = 9990; /* need to initialize this ***/
   // mb = SENDER_MATCHING_BITS; 
-   int ack = 1;
    ptl_process_id_t dest_proc;
-   int found;
-   found = armci_get_md(src, bytes,&md, &mb);
+   dest_proc.nid = proc;
+   dest_proc.pid = PTL_PID_ANY;
+   printf("the value of src is %p\n",src);
+   fflush(stdout);
+   //found = armci_get_md(src, bytes,&md, &mb);
+   
+    for (i=0; i<portals->num_match_entries; i++){
+         md_ptr = &(_armci_md_table[i].md);
+         //md_ptr = _armci_md_table[i].md;
+         
+         printf("the value of src is %p,  bytes is %d, the value of table-start is %p,
+                         the value of table-end is %p,md_ptr->start is %p\n",src, bytes,
+                         _armci_md_table[i].start, _armci_md_table[i].end, md_ptr->start);
+         fflush(stdout);
+         printf("%d: start: %p, tab.start: %p, start+bytes is %p, tab.end is %p\n",
+                         portals->rank,src, _armci_md_table[i].start,
+                         ((char *)src + bytes), (char *)_armci_md_table[i].end );
+         fflush(stdout);
+         
+         if ( (src >= _armci_md_table[i].start)  && 
+                         ( ((char *)src + bytes) <= (char *)_armci_md_table[i].end)  )
+         {
+                 mb = (_armci_md_table[i].mb);        
+                 found = 1;
+                 break;
+         }        
+    }
+   
+   
    if (!found){
            fprintf(stderr, "unable to find preposted descriptor for get\n");
            exit(EXIT_FAILURE);
    }
+  
    
-   local_offset = armci_get_offset(md,src);
-   remote_offset = armci_get_offset(md,dst);
+   printf("inside armci_portals_direct_get: calling local offset\n");
+   fflush(stdout);
+   printf("md structure : md.start is %p, md.length is %llu\n", md_ptr->start, md_ptr->length);
+   fflush(stdout);
+   local_offset = armci_get_offset(*md_ptr,src,lproc);
+   printf("calling remote offset\n");
+   fflush(stdout);
 
-   cdesc = get_free_comp_desc();
-   *cmpl_info = 1; /*TOED*/
+   remote_offset = armci_get_offset(*md_ptr,dst,rproc);
+
+   cdesc = get_free_comp_desc(&c_info);
+   //*cmpl_info = c_info; /*TOED*/
        
    md_client.start = md.start;
    md_client.length = bytes;
@@ -452,7 +609,7 @@ int armci_portals_direct_get(void *src, void *dst, int bytes, int proc, int tag,
    }
    else{
           cdesc->tag = 999999;
-          cdesc->dest_id = proc; 
+          cdesc->dest_id = proc;
           cdesc->type = ARMCI_PORTALS_GET;
           cdesc->active = 0;
    }
@@ -465,7 +622,19 @@ int armci_portals_direct_get(void *src, void *dst, int bytes, int proc, int tag,
        exit(EXIT_FAILURE);
    }
    /* need to rename this */ 
-   rc = armci_portals_put(client_md_h,dest_proc,bytes,mb,local_offset,remote_offset,ack); 
+   //rc = armci_portals_get(client_md_h,dest_proc,bytes,mb,local_offset,remote_offset); 
+   
+   printf("%d: about to call ptl_get, dest_id is %d, md_handle is %p\n"
+                   ,portals->rank,dest_proc.nid, client_md_h);
+   fflush(stdout);
+   rc = PtlGetRegion(client_md_h, local_offset, bytes,dest_proc, portals->ptl, 0, 
+                   mb,remote_offset);
+   if (rc != PTL_OK) {
+           fprintf(stderr, "%d:PtlGetRegion: %s\n", portals->rank, 
+                             PtlErrorStr(rc));
+             exit(EXIT_FAILURE); 
+   }
+     
    if(!tag)
    {
            
@@ -474,5 +643,6 @@ int armci_portals_direct_get(void *src, void *dst, int bytes, int proc, int tag,
    else
         portals->outstanding_gets++;   
 
+   return 1;
 }
 

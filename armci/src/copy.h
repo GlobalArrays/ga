@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.79 2005-08-16 05:01:39 vinod Exp $ */
+/* $Id: copy.h,v 1.80 2005-08-30 18:32:58 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -196,36 +196,6 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #      endif
 #      define armci_put  CopyTo
 #      define armci_get  CopyFrom
-
-#elif defined(PORTALS)
-        
-    #define ARMCI_NB_PUT(src,dst,n,proc,_cmplinfo)\
-              if(proc==armci_me){\
-                 armci_copy(src,dst,n);\
-              } else {\
-              if(armci_portals_direct_send(src, dst, n, proc, nb_handle->tag,_cmplinfo))\
-                  ARMCI_Error("Portals_put failed",0); else; } 
-
-    #define ARMCI_NB_GET(src,dst,n,proc,_cmplinfo)\
-              if(proc==armci_me){\
-                 armci_copy(src,dst,n);\
-              } else {\
-              if(armci_portals_direct_get(src, dst, n, proc, nb_handle->tag,_cmplinfo))\
-                  ARMCI_Error("Portals_put failed",0); else; } 
-
-    #define armci_put(src,dst,n,proc)\
-              if(proc==armci_me){\
-                 armci_copy(src,dst,n);\
-              } else {\
-              if(armci_portals_direct_send(src, dst, n, proc, 0,NULL))\
-                  ARMCI_Error("Portals_put failed",0); else; } 
-    #define armci_get(src,dst,n,proc)\
-              if(proc==armci_me){\
-                 armci_copy(src,dst,n);\
-              } else {\
-              if(armci_portals_direct_get(src, dst, n, proc, 0,NULL))\
-                  ARMCI_Error("Portals_put failed",0); else; } 
-
 
 #elif  defined(LAPI)
 
