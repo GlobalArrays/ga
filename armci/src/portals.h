@@ -95,6 +95,5 @@ extern int armci_portals_direct_get(void *src, void *dst, int bytes, int proc, i
 extern int armci_portals_complete(int nbtag, NB_CMPL_T *cmpl_info);
 extern void comp_desc_init();
 extern int armci_client_complete(ptl_event_kind_t *evt,int proc_id, int nb_tag ,comp_desc * cdesc,int b_tag);
-//extern int dummy(ptl_handle_me_t me_handle, ptl_md_t md);        
 
 #endif /* PORTALS_H */

@@ -27,8 +27,8 @@ void print_mem_desc_table()
   int i;
   for (i = 0; i<portals->num_match_entries;i++)
   {
-    printf ("%d: i=%d print_mem match_ent=%d,start:%p, end:%p, bytes:%d,
-                    %p-md.length=%llu, %p-md.start=%p\n",  
+    printf ("%d: i=%d print_mem match_ent=%d,start:%p, end:%p, bytes:%d,%p-md.length=%llu, %p-md.start=%p\n",  
+                    
             portals->rank,i,portals->num_match_entries,_armci_md_table[i].start,
             _armci_md_table[i].end, _armci_md_table[i].bytes,&(_armci_md_table[i].md.length),
              _armci_md_table[i].md.length,  &(_armci_md_table[i].md.start),_armci_md_table[i].md.start);
@@ -75,7 +75,7 @@ int armci_init_portals(void)
     printf("the rank is %d, size is %d\n",portals->rank,portals->size);
     fflush(stdout);
 
-    rc = PtlEQAlloc(portals->ni_h,64, PTL_EQ_HANDLER_NONE, &(portals->eq_h));
+    rc = PtlEQAlloc(portals->ni_h,64, PTL_EQ_NONE, &(portals->eq_h));
     if (rc != PTL_OK) {
             fprintf(stderr, "%d:PtlEQAlloc() failed: %s (%d)\n",
                             portals->rank, PtlErrorStr(rc), rc);
@@ -98,7 +98,7 @@ void armci_fini_portals()
 }
 
 
-int armci_pin_contig_hndl(void *ptr,int bytes, ARMCI_MEMHDL_T *reg_mem)
+int armci_pin_contig_hndl(void *start,int bytes, ARMCI_MEMHDL_T *reg_mem)
 {
   int rc;
   void * context;
@@ -106,12 +106,10 @@ int armci_pin_contig_hndl(void *ptr,int bytes, ARMCI_MEMHDL_T *reg_mem)
   ptl_match_bits_t *mb;
   ptl_process_id_t match_id;
 
-  printf("the malloced :%p\n", start);
-  fflush(stdout); 
   md_ptr = &reg_mem->mem_dsc;
   mb = &reg_mem->match_bits; 
-  //md_ptr = &(_armci_md_table[portals->num_match_entries].md);
-  //memset(&(_armci_md_table[portals->num_match_entries].md),0, sizeof(_armci_md_table[portals->num_match_entries].md));
+  /*md_ptr = &(_armci_md_table[portals->num_match_entries].md);*/
+  /*memset(&(_armci_md_table[portals->num_match_entries].md),0, sizeof(_armci_md_table[portals->num_match_entries].md));*/
   context = NULL;
   md_ptr->start = start;
   md_ptr->length = bytes;
@@ -121,7 +119,7 @@ int armci_pin_contig_hndl(void *ptr,int bytes, ARMCI_MEMHDL_T *reg_mem)
   md_ptr->eq_handle = portals->eq_h;
   md_ptr->max_size =0;
 
-  //print_mem_desc_table();
+  /*print_mem_desc_table();*/
   
   *mb = RECEIVER_MATCHING_BITS+portals->num_match_entries;
  
@@ -190,7 +188,7 @@ int armci_client_complete(ptl_event_kind_t *evt,int proc_id, int nb_tag,comp_des
 {
   int rc;  
   ptl_event_t *ev = NULL;
-  //armci_ihdl_t nb_handle;
+  /*armci_ihdl_t nb_handle;*/
   comp_desc *temp_comp = NULL;
   int temp_tag;
   int temp_proc;;
@@ -310,10 +308,10 @@ int armci_get_md(void * start, int bytes , ptl_md_t * md_ptr, ptl_match_bits_t *
     
     for (i=0; i<portals->num_match_entries; i++){
          md_ptr = &(_armci_md_table[i].md);
-         //md_ptr = _armci_md_table[i].md;
+         /*md_ptr = _armci_md_table[i].md;*/
          
-         printf("the value of start is %p,  bytes is %d, the value of table-start is %p,
-                         the value of table-end is %p,md_ptr->start is %p\n",start, 
+         printf("the value of start is %p,  bytes is %d, the value of table-start is %p,                the value of table-end is %p,md_ptr->start is %p\n",start, 
+         
                          bytes,_armci_md_table[i].start, _armci_md_table[i].end, md_ptr->start);
          fflush(stdout);
          printf("%d: start: %p, tab.start: %p, start+bytes is %p, tab.end is %p\n",
@@ -328,8 +326,8 @@ int armci_get_md(void * start, int bytes , ptl_md_t * md_ptr, ptl_match_bits_t *
                  break;
          }        
     }
-    printf("%d: returning from get_md found is %d , entry is %d , md_ptr->start is %p, 
-                    md_ptr->eq_handle %u\n",portals->rank, found, i, md_ptr->start, 
+    printf("%d: returning from get_md found is %d , entry is %d , md_ptr->start is %p,                 md_ptr->eq_handle %u\n",portals->rank, found, i, md_ptr->start, 
+    
                     md_ptr->eq_handle);
     fflush(stdout); 
          
@@ -362,7 +360,7 @@ int armci_client_direct_send(void *src, void* dst, int bytes, int proc, NB_CMPL_
     int rc, i;
     ptl_size_t offset_local, offset_remote;
     ptl_match_bits_t mb;
-    ptl_md_t md, *md_local;
+    ptl_md_t *md_remote,md, *md_local;
     ptl_md_t * md_ptr;
     ptl_match_bits_t * mb_ptr;
     ptl_handle_md_t *md_hdl_local;
@@ -435,7 +433,7 @@ int armci_portals_direct_send(void *src, void* dst, int bytes, int proc, int tag
    ptl_process_id_t dest_proc;
    int c_info;
    int lproc,rproc;
-  // mb = SENDER_MATCHING_BITS; 
+  /* mb = SENDER_MATCHING_BITS; */
    int ack = 1;
    int found = -2;
 
@@ -547,20 +545,20 @@ int armci_portals_direct_get(void *src, void *dst, int bytes, int proc, int tag,
    comp_desc *cdesc;
    int lproc,rproc;
    int c_info = 9990; /* need to initialize this ***/
-  // mb = SENDER_MATCHING_BITS; 
+   /*mb = SENDER_MATCHING_BITS; */
    ptl_process_id_t dest_proc;
    dest_proc.nid = proc;
    dest_proc.pid = PTL_PID_ANY;
    printf("the value of src is %p\n",src);
    fflush(stdout);
-   //found = armci_get_md(src, bytes,&md, &mb);
+   /*found = armci_get_md(src, bytes,&md, &mb);*/
    
     for (i=0; i<portals->num_match_entries; i++){
          md_ptr = &(_armci_md_table[i].md);
-         //md_ptr = _armci_md_table[i].md;
+         /*md_ptr = _armci_md_table[i].md;*/
          
-         printf("the value of src is %p,  bytes is %d, the value of table-start is %p,
-                         the value of table-end is %p,md_ptr->start is %p\n",src, bytes,
+         printf("the value of src is %p,  bytes is %d, the value of table-start is %p,                the value of table-end is %p,md_ptr->start is %p\n",src, bytes,
+         
                          _armci_md_table[i].start, _armci_md_table[i].end, md_ptr->start);
          fflush(stdout);
          printf("%d: start: %p, tab.start: %p, start+bytes is %p, tab.end is %p\n",
@@ -595,7 +593,7 @@ int armci_portals_direct_get(void *src, void *dst, int bytes, int proc, int tag,
    remote_offset = armci_get_offset(*md_ptr,dst,rproc);
 
    cdesc = get_free_comp_desc(&c_info);
-   //*cmpl_info = c_info; /*TOED*/
+   /**cmpl_info = c_info; */
        
    md_client.start = md.start;
    md_client.length = bytes;
@@ -622,7 +620,7 @@ int armci_portals_direct_get(void *src, void *dst, int bytes, int proc, int tag,
        exit(EXIT_FAILURE);
    }
    /* need to rename this */ 
-   //rc = armci_portals_get(client_md_h,dest_proc,bytes,mb,local_offset,remote_offset); 
+   /*rc = armci_portals_get(client_md_h,dest_proc,bytes,mb,local_offset,remote_offset); */
    
    printf("%d: about to call ptl_get, dest_id is %d, md_handle is %p\n"
                    ,portals->rank,dest_proc.nid, client_md_h);
