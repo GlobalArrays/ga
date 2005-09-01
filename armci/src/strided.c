@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.101 2005-08-04 22:11:59 vinod Exp $ */
+/* $Id: strided.c,v 1.102 2005-09-01 00:02:22 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -67,7 +67,7 @@ ARMCI_MEMHDL_T *mhloc=NULL,*mhrem=NULL;
 
 #ifdef HAS_RDMA_GET
         
-#  ifdef VAPI
+#  ifdef REGIONS_REQUIRE_MEMHDL 
    void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
          void** cptr,int nbtag,ARMCI_MEMHDL_T *lochdl,ARMCI_MEMHDL_T *remhdl);
 #  else

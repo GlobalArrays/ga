@@ -21,6 +21,7 @@
 #define MAX_OUT 50
 #define MAX_ENT 64
 #define MAX_PREPOST 1
+#define HAS_RDMA_GET
 
 typedef enum op {
         ARMCI_PORTALS_PUT,
