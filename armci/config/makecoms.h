@@ -32,9 +32,10 @@ ifeq ($(ARMCI_NETWORK),PORTALS)
     COMM_LIBS = -L$(PORTALS_LIB)
   endif
 
-  COMM_DEFINES = -DPORTALS
+  COMM_DEFINES = -DPORTALS -DP3_NAL=\<$(PORTALS_NAL)\.h\>
   ifndef PORTALS_LIB_NAMES
-    PORTALS_LIB_NAMES = -lp3api -lp3lib -lp3rt -l$(PORTALS_NAL)lib
+    PORTALS_NAL_STR = utcp
+    PORTALS_LIB_NAMES = -lp3api -lp3lib -lp3rt -l$(PORTALS_NAL_STR)lib
   endif
 
   COMM_LIBS += $(PORTALS_LIB_NAMES) 

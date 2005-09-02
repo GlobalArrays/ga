@@ -68,7 +68,7 @@ int rc;
     printf("the rank is %d, size is %d\n",portals->rank,portals->size);
     fflush(stdout);
 
-    rc = PtlEQAlloc(portals->ni_h,64, PTL_EQ_NONE, &(portals->eq_h));
+    rc = PtlEQAlloc(portals->ni_h,64, PTL_EQ_HANDLER_NONE, &(portals->eq_h));
     if (rc != PTL_OK) {
        fprintf(stderr, "%d:PtlEQAlloc() failed: %s (%d)\n",
                             portals->rank, PtlErrorStr(rc), rc);
@@ -111,7 +111,7 @@ ptl_process_id_t match_id;
 
     /*print_mem_desc_table();*/
   
-    *mb = RECEIVER_MATCHING_BITS+portals->num_match_entries;
+    *mb = 100+portals->num_match_entries;
  
     match_id.nid = PTL_NID_ANY;
     match_id.pid = PTL_PID_ANY; 
@@ -344,12 +344,11 @@ comp_desc * c;
     return c;
 }
 
-void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
-                             void** cptr,int nbtag,ARMCI_MEMHDL_T *lochdl,
+void armci_client_direct_get(int proc, void *src_buf, void *dst_buf, int bytes,
+                             void** cptr,int tag,ARMCI_MEMHDL_T *lochdl,
                              ARMCI_MEMHDL_T *remhdl)
 {
-comp_desc *cdesc;
-int clus = armci_clus_id(p);
+int clus = armci_clus_id(proc);
 int rc, i;
 ptl_size_t offset_local, offset_remote;
 ptl_match_bits_t mb;
@@ -371,7 +370,7 @@ int lproc,rproc;
     offset_remote = remhdl->offset;
 
     cdesc = get_free_comp_desc(&c_info);
-    if(nbtag)*cptr = c_info; /*TOED*/
+    if(tag)*cptr = c_info; /*TOED*/
     if (!tag){
        cdesc->tag = tag;
        cdesc->dest_id = proc;
@@ -396,7 +395,7 @@ int lproc,rproc;
     
     rc = PtlGetRegion(md_hdl_local,offset_local,bytes,dest_proc,
                    portals->ptl,
-                   0, mb,offset_remote, 0);
+                   0, mb,offset_remote);
     if (rc != PTL_OK){
        fprintf(stderr, "%d:PtlPutRegion: %s\n", portals->rank,PtlErrorStr(rc));
        armci_die("PtlGetRegion failed",0); 

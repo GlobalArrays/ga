@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.94 2005-08-31 11:10:16 vinod Exp $
+#$Id: GNUmakefile,v 1.95 2005-09-02 18:18:46 vinod Exp $
          FOPT = -O
          COPT = -O
 
@@ -95,7 +95,8 @@ endif
 
 ifeq ($(ARMCI_NETWORK),PORTALS)
   OBJ += portals.o regions.o
-  LIB_DEFINES += -DPORTALS -DALLOW_PIN -DXT3
+  LIB_DEFINES += -DPORTALS -DALLOW_PIN
+  EXTRA_LIBS += -lpthread
 endif
 
 ifeq ($(ARMCI_NETWORK),MELLANOX)
