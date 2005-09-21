@@ -62,7 +62,7 @@ ifeq ($(ARMCI_NETWORK),MELLANOX)
   ifdef IB_LIB
     COMM_LIBS = -L$(IB_LIB)
   endif
-  IB_LIB_NAME = -lvapi -lmosal -lmtl_common -lmpga
+  IB_LIB_NAME = -lvapi -lmosal -lmtl_common -lmpga -lpthread
   COMM_LIBS += $(IB_LIB_NAME)
 endif
 
