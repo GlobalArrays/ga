@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.13 2003-12-13 01:08:37 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv4.0/farg.h,v 1.14 2005-09-21 20:21:38 manoj Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -38,6 +38,11 @@
 #if defined(CRAY)
 #define ARGC_ _argc
 #define ARGV_ _argv
+#endif
+
+#if (__GNUC__ >= 4)
+#   define getarg_ _gfortran_getarg_i8
+#   define iargc_  _gfortran_iargc
 #endif
 
 #if defined(PGLINUX)
