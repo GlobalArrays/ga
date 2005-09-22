@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.44 2004-11-19 17:44:12 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.45 2005-09-22 19:50:12 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -65,10 +65,10 @@
 Integer _d, _factor = 1, _last=GA[handle].ndim - 1, _offset=0;                 \
 Integer _lo[MAXDIM], _hi[MAXDIM];                                              \
   ga_ownsM(handle, proc, _lo, _hi);                                            \
-  if (_last == 0) ld[0] = _hi[0] - _lo[0] + 1 + 2*GA[handle].width[0];         \
+  if (_last == 0) ld[0] = _hi[0] - _lo[0] + 1 + 2*(Integer)GA[handle].width[0];\
   for (_d = 0; _d < _last; _d++) {                                             \
     _offset += subscript[_d] * _factor;                                        \
-    ld[_d] = _hi[_d] - _lo[_d] + 1 + 2*GA[handle].width[_d];                   \
+    ld[_d] = _hi[_d] - _lo[_d] + 1 + 2*(Integer)GA[handle].width[_d];          \
     _factor *= ld[_d];                                                         \
   }                                                                            \
   _offset += subscript[_last] * _factor;                                       \
@@ -95,7 +95,7 @@ Integer ndim = GA[handle].ndim;
    gam_LocationWithGhosts(GAme, handle, dims, &lptr, ld);
    *(char**)ptr = lptr; 
    for (i=0; i < ndim; i++)
-     dims[i] = hi[i] - lo[i] + 1 + 2*GA[handle].width[i];
+     dims[i] = hi[i] - lo[i] + 1 + 2*(Integer)GA[handle].width[i];
    GA_POP_NAME;
 }
 
@@ -247,7 +247,7 @@ void FATR ga_update1_ghosts_(Integer *g_a)
   Integer plo_rem[MAXDIM], phi_rem[MAXDIM];
   Integer ld_loc[MAXDIM], ld_rem[MAXDIM];
   int corner_flag;
-  int stride_loc[MAXDIM], stride_rem[MAXDIM],count[MAXDIM];
+  int stride_loc[MAXDIM], stride_rem[MAXDIM], count[MAXDIM];
   char *ptr_loc, *ptr_rem;
   logical hasData = TRUE;
 
@@ -341,14 +341,14 @@ void FATR ga_update1_ghosts_(Integer *g_a)
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
-    width[idx] = GA[handle].width[idx];
-    dims[idx] = GA[handle].dims[idx];
+    width[idx] = (Integer)GA[handle].width[idx];
+    dims[idx] = (Integer)GA[handle].dims[idx];
     if (lo_loc[idx] == 0 && hi_loc[idx] == -1) hasData = FALSE;
   }
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
-    nwidth = width[idx];
+    nwidth = (Integer)width[idx];
 
     /* Do not bother with update if nwidth is zero or processor has
        no data */
@@ -658,8 +658,8 @@ logical FATR ga_update2_ghosts_(Integer *g_a)
   ndim = GA[handle].ndim;
   /* initialize ghost cell widths and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
-    width[idx] = GA[handle].width[idx];
-    dims[idx] = GA[handle].dims[idx];
+    width[idx] = (Integer)GA[handle].width[idx];
+    dims[idx] = (Integer)GA[handle].dims[idx];
   }
 
   /* Check to make sure that global array is well-behaved (all processors
@@ -939,8 +939,8 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
-    width[idx] = GA[handle].width[idx];
-    dims[idx] = GA[handle].dims[idx];
+    width[idx] = (Integer)GA[handle].width[idx];
+    dims[idx] = (Integer)GA[handle].dims[idx];
     if (lo_loc[idx] == 0 && hi_loc[idx] == -1) return FALSE;
   }
 
@@ -1156,8 +1156,8 @@ logical FATR ga_set_update4_info_(Integer *g_a)
   nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
-    width[idx] = GA[handle].width[idx];
-    dims[idx] = GA[handle].dims[idx];
+    width[idx] = (Integer)GA[handle].width[idx];
+    dims[idx] = (Integer)GA[handle].dims[idx];
     if (lo_loc[idx] == 0 && hi_loc[idx] == -1) {
       *(char**)cache = NULL;
       return FALSE;
@@ -1668,8 +1668,8 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
-    width[idx] = GA[handle].width[idx];
-    dims[idx] = GA[handle].dims[idx];
+    width[idx] = (Integer)GA[handle].width[idx];
+    dims[idx] = (Integer)GA[handle].dims[idx];
   }
 
   /* Check to make sure that global array is well-behaved (all processors
@@ -2112,8 +2112,8 @@ logical FATR ga_update55_ghosts_(Integer *g_a)
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
-    width[idx] = GA[handle].width[idx];
-    dims[idx] = GA[handle].dims[idx];
+    width[idx] = (Integer)GA[handle].width[idx];
+    dims[idx] = (Integer)GA[handle].dims[idx];
     if (lo_loc[idx] == 0 && hi_loc[idx] == -1) return FALSE;
   }
 
@@ -2324,8 +2324,8 @@ logical nga_update_ghost_dir_(Integer *g_a,    /* GA handle */
   ndim = GA[handle].ndim;
   /* initialize ghost cell widths and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
-    width[idx] = GA[handle].width[idx];
-    dims[idx] = GA[handle].dims[idx];
+    width[idx] = (Integer)GA[handle].width[idx];
+    dims[idx] = (Integer)GA[handle].dims[idx];
   }
 
   /* Check to make sure that global array is well-behaved (all processors
@@ -2529,7 +2529,7 @@ logical ga_update5_ghosts_(Integer *g_a)
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
   for (i=0; i<ndim; i++) {
-    width[i] = GA[handle].width[i];
+    width[i] = (Integer)GA[handle].width[i];
   }
 
   if (!gai_check_ghost_distr(g_a)) return FALSE;
@@ -2702,8 +2702,8 @@ logical ga_set_update5_info_(Integer *g_a)
   nga_distribution_(g_a,&GAme,lo_loc,hi_loc); 
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
-    width[idx] = GA[handle].width[idx];
-    dims[idx] = GA[handle].dims[idx];
+    width[idx] = (Integer)GA[handle].width[idx];
+    dims[idx] = (Integer)GA[handle].dims[idx];
     if (lo_loc[idx] == 0 && hi_loc[idx] == -1){
       *(char **)cache = NULL; 
       return FALSE;
@@ -2972,8 +2972,8 @@ logical FATR ga_update6_ghosts_(Integer *g_a)
   /* initialize range increments and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
     increment[idx] = 0;
-    width[idx] = GA[handle].width[idx];
-    dims[idx] = GA[handle].dims[idx];
+    width[idx] = (Integer)GA[handle].width[idx];
+    dims[idx] = (Integer)GA[handle].dims[idx];
   }
 
   /* Check to make sure that global array is well-behaved (all processors
@@ -3418,8 +3418,8 @@ logical FATR ga_update7_ghosts_(Integer *g_a)
   ndim = GA[handle].ndim;
   /* initialize ghost cell widths and get array dimensions */
   for (idx=0; idx < ndim; idx++) {
-    width[idx] = GA[handle].width[idx];
-    dims[idx] = GA[handle].dims[idx];
+    width[idx] = (Integer)GA[handle].width[idx];
+    dims[idx] = (Integer)GA[handle].dims[idx];
   }
 
   /* Check to make sure that global array is well-behaved (all processors
@@ -3577,8 +3577,8 @@ void FATR nga_nbget_ghost_dir_(Integer *g_a,
 
   /* locate data on remote processor */
   for (i=0; i<ndim; i++) {
-    dim = GA[handle].dims[i];
-    width = GA[handle].width[i];
+    dim = (Integer)GA[handle].dims[i];
+    width = (Integer)GA[handle].width[i];
     if (mask[i] == 1) {
       if (hi_loc[i] == dim) {
         lo_rem[i] = 1;

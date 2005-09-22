@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.63 2004-12-08 02:40:50 manoj Exp $ */
+/* $Id: onesided.c,v 1.64 2005-09-22 19:50:12 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -291,15 +291,16 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _pinv, _p_handle;                            \
                                                                                \
       ga_ownsM(g_handle, proc, _lo, _hi);                                      \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);               \
-      if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*GA[g_handle].width[0];             \
-      __CRAYX1_PRAGMA("_CRI shortloop");                                               \
+      if(_last==0) ld[0]=_hi[0]- _lo[0]+1+2*(Integer)GA[g_handle].width[0];    \
+      __CRAYX1_PRAGMA("_CRI shortloop");                                       \
       for(_d=0; _d < _last; _d++)            {                                 \
-          _w = GA[g_handle].width[_d];                                         \
+          _w = (Integer)GA[g_handle].width[_d];                                \
           _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                     \
           ld[_d] = _hi[_d] - _lo[_d] + 1 + 2*_w;                               \
           _factor *= ld[_d];                                                   \
       }                                                                        \
-      _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])       \
+      _offset += (subscript[_last]-_lo[_last]                                  \
+               + (Integer)GA[g_handle].width[_last])                           \
                * _factor;                                                      \
       _p_handle = GA[g_handle].p_handle;                                       \
       if (_p_handle != 0) {                                                    \
@@ -712,7 +713,7 @@ int num_loops=2; /* 1st loop for remote procs; 2nd loop for local procs */
 	    
 	    /* Find  visible portion of patch held by processor p and
 	       return the result in plo and phi. Also get actual processor
-	     index corresponding to p and store the result in proc. */
+	       index corresponding to p and store the result in proc. */
 	    gam_GetRangeFromMap(p, ndim, &plo, &phi);
 	    proc = (int)GA_proclist[p];
             /* BJP

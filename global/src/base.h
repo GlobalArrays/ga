@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.35 2005-05-18 23:05:00 vinod Exp $ */
+/*$Id: base.h,v 1.36 2005-09-22 19:50:12 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -19,6 +19,8 @@ extern short int _ga_irreg_flag;
 #define __CRAYX1_PRAGMA(_pragf)
 #endif
 
+typedef long C_Int64;
+
 typedef int ARMCI_Datatype;
 #include "armci.h"
 typedef struct {
@@ -38,22 +40,22 @@ typedef struct {
        short int  irreg;        /* 0-regular; 1-irregular distribution  */
        int  type;               /* data type in array                   */
        int  actv;               /* activity status                      */
-       int  size;               /* size of local data in bytes          */
+       C_Int64  size;           /* size of local data in bytes          */
        int  elemsize;           /* sizeof(datatype)                     */
        int  ghosts;             /* flag indicating presence of ghosts   */
        long lock;               /* lock                                 */
        long id;                 /* ID of shmem region / MA handle       */
-       int  dims[MAXDIM];       /* global array dimensions              */
-       int  chunk[MAXDIM];      /* chunking                             */
+       C_Int64  dims[MAXDIM];   /* global array dimensions              */
+       C_Int64  chunk[MAXDIM];  /* chunking                             */
        int  nblock[MAXDIM];     /* number of blocks per dimension       */
-       int  width[MAXDIM];      /* boundary cells per dimension         */
-       int  first[MAXDIM];      /* (Mirrored only) first local element  */
-       int  last[MAXDIM];       /* (Mirrored only) last local element   */
-       int  shm_length;         /* (Mirrored only) local shmem length   */
-       Integer lo[MAXDIM];      /* top/left corner in local patch       */
+       C_Int64  width[MAXDIM];  /* boundary cells per dimension         */
+       C_Int64  first[MAXDIM];  /* (Mirrored only) first local element  */
+       C_Int64  last[MAXDIM];   /* (Mirrored only) last local element   */
+       C_Int64  shm_length;     /* (Mirrored only) local shmem length   */
+       C_Int64  lo[MAXDIM];     /* top/left corner in local patch       */
        double scale[MAXDIM];    /* nblock/dim (precomputed)             */
        char **ptr;              /* arrays of pointers to remote data    */
-       int  *mapc;              /* block distribution map               */
+       C_Int64  *mapc;          /* block distribution map               */
        char name[FNAM+1];       /* array name                           */
        int p_handle;            /* pointer to processor list for array  */
        double *cache;           /* store for frequently accessed ptrs   */
@@ -101,9 +103,9 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 #define ga_ownsM_no_handle(ndim, dims, nblock, mapc, proc, lo, hi)             \
 {                                                                              \
    Integer _loc, _nb, _d, _index, _dim=ndim,_dimstart=0, _dimpos;              \
-   for(_nb=1, _d=0; _d<_dim; _d++)_nb *= nblock[_d];                           \
-   if(proc > _nb - 1 || proc<0){                                               \
-      __CRAYX1_PRAGMA("_CRI novector");                                               \
+   for(_nb=1, _d=0; _d<_dim; _d++)_nb *= (Integer)nblock[_d];                  \
+   if((Integer)proc > _nb - 1 || proc<0){                                      \
+      __CRAYX1_PRAGMA("_CRI novector");                                        \
            for(_d=0; _d<_dim; _d++){                                           \
          lo[_d] = (Integer)0;                                                  \
          hi[_d] = (Integer)-1;}                                                \
@@ -111,14 +113,14 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
    else{                                                                       \
          _index = proc;                                                        \
          if(GA_inv_Proc_list) _index = GA_inv_Proc_list[proc];                 \
-      __CRAYX1_PRAGMA("_CRI novector");                                               \
+      __CRAYX1_PRAGMA("_CRI novector");                                        \
          for(_d=0; _d<_dim; _d++){                                             \
-             _loc = _index% nblock[_d];                                        \
-             _index  /= nblock[_d];                                            \
+             _loc = _index% (Integer)nblock[_d];                               \
+             _index  /= (Integer)nblock[_d];                                   \
              _dimpos = _loc + _dimstart; /* correction to find place in mapc */\
-             _dimstart += nblock[_d];                                          \
-             lo[_d] = mapc[_dimpos];                                           \
-             if(_loc==nblock[_d]-1)hi[_d]=dims[_d];                            \
+             _dimstart += (Integer)nblock[_d];                                 \
+             lo[_d] = (Integer)mapc[_dimpos];                                  \
+             if (_loc==nblock[_d]-1) hi[_d]=dims[_d];                          \
              else hi[_d] = mapc[_dimpos+1]-1;                                  \
          }                                                                     \
    }                                                                           \
@@ -133,6 +135,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
 /* this macro computes the strides on both the remote and local
    processors that map out the data. ld and ldrem are the physical dimensions
    of the memory on both the local and remote processors. */
+/* NEEDS C_INT64 CONVERSION */
 #define gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc){\
   int _i;                                                            \
   stride_rem[0]= stride_loc[0] = (int)size;                          \
@@ -153,6 +156,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
   for(_d=0,*pelems=1; _d< ndim;_d++)  *pelems *= hi[_d]-lo[_d]+1;    \
 }
 
+/* NEEDS C_INT64 CONVERSION */
 #define gam_ComputeCount(ndim, lo, hi, count){                       \
   int _d;                                                            \
   __CRAYX1_PRAGMA("_CRI novector");                                         \
@@ -191,11 +195,12 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
       gaCheckSubscriptM(subscript, _lo, _hi, GA[g_handle].ndim);              \
   __CRAYX1_PRAGMA("_CRI novector");                                           \
       for(_d=0; _d < _last; _d++)            {                                \
-          _w = GA[g_handle].width[_d];                                        \
+          _w = (Integer)GA[g_handle].width[_d];                               \
           _offset += (subscript[_d]-_lo[_d]+_w) * _factor;                    \
           _factor *= _hi[_d] - _lo[_d]+1+2*_w;                                \
       }                                                                       \
-      _offset += (subscript[_last]-_lo[_last]+GA[g_handle].width[_last])      \
+      _offset += (subscript[_last]-_lo[_last]                                 \
+               + (Integer)GA[g_handle].width[_last])                          \
                * _factor;                                                     \
       if (_p_handle == 0) {                                                   \
         _iproc = PGRP_LIST[_p_handle].inv_map_proc_list[_iproc];              \
@@ -218,7 +223,7 @@ Integer _lo[MAXDIM], _hi[MAXDIM], _p_handle, _iproc;                          \
 #define gaCheckSubscriptM(subscr, lo, hi, ndim)                                \
 {                                                                              \
 Integer _d;                                                                    \
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
+  __CRAYX1_PRAGMA("_CRI novector");                                            \
    for(_d=0; _d<  ndim; _d++)                                                  \
       if( subscr[_d]<  lo[_d] ||  subscr[_d]>  hi[_d]){                        \
         sprintf(err_string,"check subscript failed:%ld not in (%ld:%ld) dim=", \
