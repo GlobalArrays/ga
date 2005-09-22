@@ -468,6 +468,10 @@ double FATR util_timer_()
 void FATR set_ma_use_armci_mem_() 
 {
     int retval;
+#ifdef SPARC64_GP
+    if((retval=putenv("MA_USE_ARMCI_MEM=YES")) != 0)       
+#else
     if((retval=setenv("MA_USE_ARMCI_MEM", "YES", 1)) != 0)
+#endif          
        ga_error("setenv failed: insufficient space in the environment",0);
 }
