@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.126 2005-09-22 19:50:12 d3g293 Exp $ */
+/* $Id: base.c,v 1.127 2005-09-27 23:31:32 nwchem Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1413,7 +1413,6 @@ logical ga_allocate_( Integer *g_a)
     }
     for(i = 0; i< maplen; i++) {
       GA[ga_handle].mapc[i] = (C_Int64)mapALL[i];
-      //printf("p[%d]: mapAll[%d]: %ld mapc[%d]: %ld\n",GAme,i,mapALL[i],i,GA[ga_handle].mapc[i]);
     }
     GA[ga_handle].mapc[maplen] = -1;
   }
