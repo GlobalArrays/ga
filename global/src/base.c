@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.127 2005-09-27 23:31:32 nwchem Exp $ */
+/* $Id: base.c,v 1.128 2005-09-28 14:51:30 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -114,7 +114,7 @@ long   *GAstat_arr;
 static Integer GA_memory_limit=0;
 Integer GAme, GAnproc;
 static Integer MPme;
-C_Int64 mapALL[MAX_NPROC+1];
+Integer mapALL[MAX_NPROC+1];
 
 char *GA_name_stack[NAME_STACK_LEN];  /* stack for storing names of GA ops */
 int  GA_stack_size=0;
@@ -1752,8 +1752,8 @@ logical status;
       nblock[0] = *nblock1;
       nblock[1] = *nblock2;
       map = mapALL;
-      for(i=0;i< *nblock1; i++) map[i] = (int)map1[i];
-      for(i=0;i< *nblock2; i++) map[i+ *nblock1] = (int)map2[i];
+      for(i=0;i< *nblock1; i++) map[i] = map1[i];
+      for(i=0;i< *nblock2; i++) map[i+ *nblock1] = map2[i];
       status = nga_create_ghosts_irreg(*type, ndim, dims, width,
           array_name, mapALL, nblock, g_a);
  
