@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.102 2005-08-12 15:15:37 vinod Exp $ */
+/* $Id: armci.c,v 1.103 2005-10-03 21:30:23 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -488,7 +488,7 @@ int ARMCI_Init()
 #   if defined(DATA_SERVER) || defined(ELAN_ACC)
        if(armci_nclus >1) armci_start_server();
 #   endif
-#if defined(GM) || defined(VAPI)
+#if defined(GM) || defined(VAPI) || defined (PORTALS)
     /* initialize registration of memory */
     armci_region_init();
 #endif

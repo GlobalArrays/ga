@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.80 2005-08-30 18:32:58 vinod Exp $ */
+/* $Id: copy.h,v 1.81 2005-10-03 21:30:24 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -202,7 +202,7 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #      include <lapi.h>
        extern lapi_handle_t lapi_handle;
 
-#      define armci_put(src,dst,n,proc)\
+#      define (src,dst,n,proc)\
               if(proc==armci_me){\
                  armci_copy(src,dst,n);\
               } else {\
@@ -238,7 +238,10 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #      define ARMCI_NB_WAIT(cmplt) CLEAR_COUNTER((cmplt))
 #      define ARMCI_NB_TEST(cmplt,_succ) TEST_COUNTER((cmplt),(_succ))
        
-
+#elif defined(PORTALS)
+#define armci_put ARMCI_Put
+#define armci_get ARMCI_Get
+       
 #else
 
 #      define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))

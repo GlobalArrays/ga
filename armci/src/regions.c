@@ -1,4 +1,4 @@
-/* $Id: regions.c,v 1.9 2005-09-02 18:18:46 vinod Exp $ interface to keep track of memory regions accross the cluster */
+/* $Id: regions.c,v 1.10 2005-10-03 21:30:24 vinod Exp $ interface to keep track of memory regions accross the cluster */
 /* 
  * armci_region_init - allocates list of regions, initialization
  * armci_region_register_shm - registers shared memory on the current node
@@ -220,7 +220,14 @@ int armci_region_both_found_hndl(void *loc, void *rem, int size, int node,
 #endif
 	 }
      }
+#ifdef PORTALS
+     if(found!=1){
+        *loc_memhdl=NULL;
+        found=1;
+     }
+#else
      if(!found) return 0;
+#endif
      else {*loc_memhdl=&((reg->list+i)->memhdl);}
       
 

@@ -18,7 +18,7 @@
 
 #endif
 
-#define MAX_OUT 50
+#define MAX_OUT  1000
 #define MAX_ENT 64
 #define MAX_PREPOST 1
 #define HAS_RDMA_GET
@@ -50,9 +50,9 @@ typedef struct desc{
 }comp_desc; 
 
 typedef struct region_memhdl{
-       ptl_md_t mem_dsc;
        ptl_match_bits_t match_bits;
        ptl_size_t offset;
+       ptl_md_t mem_dsc;
        ptl_handle_md_t mem_dsc_hndl;
 } region_memhdl_t;
 
@@ -91,7 +91,7 @@ extern int armci_get_md(void * start, int bytes , ptl_md_t * md, ptl_match_bits_
 extern int armci_portals_put(ptl_handle_md_t md_h,ptl_process_id_t dest_id,int bytes,int mb,int local_offset, int remote_offset,int ack );
 extern int armci_portals_get(ptl_handle_md_t md_h,ptl_process_id_t dest_id,int bytes,int mb,int local_offset, int remote_offset);
 extern comp_desc * get_free_comp_desc(int * c_info);
-extern int armci_portals_direct_send(void *src, void* dst, int bytes, int proc, int nbtag, NB_CMPL_T *cmpl_info);
+extern int armci_client_direct_send(int proc,void *src, void* dst, int bytes,  NB_CMPL_T *cmpl_info, int tag, ARMCI_MEMHDL_T *lochdl, ARMCI_MEMHDL_T *remhdl);
 extern int armci_portals_direct_get(void *src, void *dst, int bytes, int proc, int nbtag, NB_CMPL_T *cmpl_info);
 extern int armci_portals_complete(int nbtag, NB_CMPL_T *cmpl_info);
 extern void comp_desc_init();
