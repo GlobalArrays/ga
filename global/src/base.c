@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.128 2005-09-28 14:51:30 d3g293 Exp $ */
+/* $Id: base.c,v 1.129 2005-10-03 20:47:46 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -898,7 +898,6 @@ int FATR ga_pgroup_create_(Integer *list, Integer *count)
     /* Check list for validity (no duplicates and no out of range entries) */
     nprocs = GAnproc;
     for (i=0; i<*count; i++) {
-            printf("\n%d:count%d i=%d list[i]=%d %d\n",GAme,*count,i,list[i],nprocs);fflush(stdout);
        if (list[i] <0 || list[i] >= nprocs)
 	  ga_error(" invalid element in list ", list[i]);
        for (j=i+1; j<*count; j++) {
