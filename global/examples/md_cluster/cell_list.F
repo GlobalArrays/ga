@@ -20,7 +20,6 @@ c
       integer i,j,k,ipx,ipy,ipz,nlx,nly,nlz,ix,iy,iz
       integer idx,idy,idz,pnum,inode,ll,kk,l,lb,jj
       double precision rchk
-      integer check(1000,1000)
 c
 c    This subroutine locates the nearest neighbors of each atom
 c    using a link cell algorithm and constructs a neighbor list
@@ -31,11 +30,6 @@ c
       call factor(pnum,idx,idy,idz)
       inode = ga_nodeid()
       call i_proc_to_xyz(inode,ipx,ipy,ipz,idx,idy,idz)
-      do i = 1, atot
-        do j = 1, atot
-          check(i,j) = 0
-        end do
-      end do
 c
 c   determine the size of each spatial decomposition zone
 c   and then use this to divide each zone into cells
@@ -64,7 +58,7 @@ c
       ycl = ycl / dble(nly)
       zcl = zcl / dble(nlz)
 c
-c  I system is small, just use brute force neighbor list construction
+c  If system is small, just use brute force neighbor list construction
 c  and skip the link cell algorithm
 c
       if ((idx.eq.2.and.xcl*dble(nlx).ge.0.5d00*xbox/dble(idx)).or.
@@ -230,7 +224,6 @@ c
           dy(l) = ra(j,2,1)
           dz(l) = ra(j,3,1)
           j = link(j)
-          check(aidx(i),aidx(j)) = check(aidx(i),aidx(j)) + 1
           if (j.gt.0) go to 99
         endif
 c
@@ -270,7 +263,6 @@ c
               dy(l) = ra(j,2,1)
               dz(l) = ra(j,3,1)
               j = link(j)
-          check(aidx(i),aidx(j)) = check(aidx(i),aidx(j)) + 1
               if (j.gt.0) go to 199
             endif
           else
@@ -288,7 +280,6 @@ c
               bdy(lb) = ycrd(j)
               bdz(lb) = zcrd(j)
               j = blink(j)
-          check(aidx(i),bidx(j)) = check(aidx(i),bidx(j)) + 1
               if (j.gt.0) go to 299
             endif
           endif
@@ -363,12 +354,6 @@ c
   400   continue
         nblast(i) = ll - 1
         bblast(i) = kk - 1
-      end do
-      call ga_igop(21,check,1000000,'+')
-      do i = 1, atot
-        do j = 1, atot
-c          if (check(i,j).gt.1) write(6,*) 'Duplicate ',i,j
-        end do
       end do
       tmstat(23) = tmstat(23) + wraptime() - tbeg
 c
