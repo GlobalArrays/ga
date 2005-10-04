@@ -2,6 +2,8 @@
 #ifndef _ARMCI_H
 #define _ARMCI_H   
 
+extern int armci_sameclusnode(int proc);
+
 typedef struct {
     void **src_ptr_array;
     void **dst_ptr_array;
@@ -350,3 +352,5 @@ ARMCI_Group * ARMCI_Get_ft_group();
 #endif
 #endif
 #endif /* _ARMCI_H */
+
+

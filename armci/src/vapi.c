@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.21 2005-08-10 20:37:20 vinod Exp $************************************************ 
+/* $Id: vapi.c,v 1.22 2005-10-04 14:10:43 vinod Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.
@@ -10,6 +10,7 @@
 
 #include "armcip.h"
 #include "copy.h"
+#include "request.h"
 /*our incude*/
 #include "armci-vapi.h"
 #define DEBUG_INIT 0
@@ -533,6 +534,7 @@ VAPI_cqe_num_t num;
     */
 }
 
+extern gpc_buf_t *gpc_req;
 void armci_server_alloc_bufs()
 {
 VAPI_ret_t rc;
@@ -541,10 +543,11 @@ int mod, bytes, total, extra =sizeof(VAPI_rr_desc_t)*MAX_DESCR+SIXTYFOUR;
 int mhsize = armci_nproc*sizeof(armci_vapi_memhndl_t); /* ack */
 char *tmp, *tmp0; 
 int clients = armci_nproc,i,j=0;
-
+  
     /* allocate memory for the recv buffers-must be alligned on 64byte bnd */
     /* note we add extra one to repost it for the client we are received req */ 
-    bytes =(clients+1)*sizeof(vapibuf_t)+sizeof(vapibuf_ext_t) + extra+ mhsize;
+    bytes =(clients+1)*sizeof(vapibuf_t)+sizeof(vapibuf_ext_t) + extra+ mhsize
+      + MAX_GPC_REQ * sizeof(gpc_buf_t) + SIXTYFOUR;
     total = bytes + SIXTYFOUR;
     if(total%4096!=0) 
        total = total - (total%4096) + 4096;
@@ -558,6 +561,10 @@ int clients = armci_nproc,i,j=0;
     CLN_handle = (armci_vapi_memhndl_t*)tmp;
     memset(CLN_handle,0,mhsize); /* set it to zero */
     tmp += mhsize;
+    /* gpc_req memory*/
+    tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
+    gpc_req = (gpc_buf_t *)tmp;
+    tmp += MAX_GPC_REQ * sizeof(gpc_buf_t);
     /* setup descriptor memory */
     mod = ((ssize_t)tmp)%SIXTYFOUR;
     serv_descr_pool.descr= (VAPI_rr_desc_t*)(tmp+SIXTYFOUR-mod);
@@ -1487,12 +1494,15 @@ VAPI_ret_t rc=VAPI_CQ_EMPTY;
 vapibuf_t *vbuf,*vbufs;
 request_header_t *msginfo,*msg;
 int c,i,need_ack;
+
+    unblock_thread_signal(GPC_COMPLETION_SIGNAL);
     for(;;){
        VAPI_wc_desc_t *pdscr=NULL;
        VAPI_wc_desc_t pdscr1;
        pdscr = &pdscr1;
        rc=VAPI_CQ_EMPTY;
 
+       block_thread_signal(GPC_COMPLETION_SIGNAL);
        /*we just snoop to see if we have something */ 
        rc = VAPI_poll_cq(CLN_nic->handle, CLN_nic->rcq, pdscr);
        if(server_can_poll){
@@ -1515,7 +1525,7 @@ int c,i,need_ack;
            }
          }
        }
-
+       
        armci_check_status(DEBUG_SERVER, rc,"server poll/block");
        /*we can figure out which buffer we got data info from the wc_desc_t id
         * this can tell us from which process we go the buffer, as well */
@@ -1642,9 +1652,10 @@ int c,i,need_ack;
           printf("%d(s):Done processed request\n\n",armci_me);
           fflush(stdout);
        }
-	  
-   }/* end of for */
 
+       unblock_thread_signal(GPC_COMPLETION_SIGNAL);
+       cpu_yield();
+   }/* end of for */
 }
 
 
@@ -2031,7 +2042,7 @@ VAPI_ret_t rc=VAPI_CQ_EMPTY;
 VAPI_sr_desc_t *sdscr;
 VAPI_wc_desc_t *pdscr=NULL; 
 VAPI_wc_desc_t pdscr1;
-
+  
     pdscr = &pdscr1;
     sdscr=&serv_buf->snd_dscr;
 
@@ -2063,8 +2074,8 @@ VAPI_wc_desc_t pdscr1;
     armci_check_status(DEBUG_SERVER, rc,"server wait post send to client");
     if(pdscr->id != proc+armci_nproc)
        armci_die2("server send data to client wrong dscr completed",pdscr->id,
-                  proc+armci_nproc);
-       
+	            proc+armci_nproc);
+
 
 }
 

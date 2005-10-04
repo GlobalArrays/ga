@@ -1,7 +1,8 @@
-/* $Id: gpctest.c,v 1.1 2003-07-24 19:47:24 d3h325 Exp $ */
+/* $Id: gpctest.c,v 1.2 2005-10-04 14:10:43 vinod Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+
+#define RMW
 
 #ifdef WIN32
 #  include <windows.h>
@@ -110,7 +111,7 @@ usage:
 int hswap=0;
 void gpc_swap(int *loc, int *rem, int p)
 {
-armci_hdl_t nbh;
+gpc_hdl_t nbh;
 char rheader[100];
 int hlen, rhlen, rhsize;
 int rdsize;
@@ -121,19 +122,21 @@ extern int hswap;
      bzero(rheader,100);
      rhlen = hlen;
 
-     ARMCI_INIT_HANDLE(&nbh);
+     ARMCI_Gpc_init_handle(&nbh);
 
      if(ARMCI_Gpc_exec(hswap,p, &header, hlen, loc, sizeof(int), rheader, rhlen,
                        loc, sizeof(int), &nbh))
         fprintf(stderr,"ARMCI_Gpc_exec failed\n");
-     ARMCI_Wait(&nbh);
+
+     ARMCI_Gpc_wait(&nbh);
 }
 
 
-void gpc_swap_handler(int to, int from, void *hdr,   int hlen,
-                                    void *data,  int dlen,
-                                    void *rhdr,  int rhlen, int *rhsize,
-                                    void *rdata, int rdlen, int *rdsize)
+int gpc_swap_handler(int to, int from, void *hdr,   int hlen,
+		      void *data,  int dlen,
+		      void *rhdr,  int rhlen, int *rhsize,
+		      void *rdata, int rdlen, int *rdsize,
+		      int rtype)
 {
 int *rem;
 int tmp_swap;
@@ -141,6 +144,8 @@ int tmp_swap;
 #ifdef DEBUG_
      printf("executing swap handler from=%d to=%d\n"); fflush(stdout);
 #endif
+     
+/*       fprintf(stderr, "to:%d from:%d ==> Invoked gpc_swap_handler\n", to, from); */
 
      rem = (int*)ARMCI_Gpc_translate(*(void**)hdr,to,from);
 
@@ -153,6 +158,8 @@ int tmp_swap;
      *(int*)rhdr  = tmp_swap; /* 2nd copy just for debug purposes */
      *rhsize = sizeof(int);
      *rdsize = sizeof(int);
+
+     return GPC_DONE;
 }
 
 
@@ -167,7 +174,8 @@ void test_swap()
 
 
     rc = ARMCI_Malloc((void**)arr,bytes);
-    assert(rc==0);
+    if(rc!=0)
+      ARMCI_Error("test_swap: ARMCI_Malloc failed", 0);
     MP_BARRIER();
 
     hswap = ARMCI_Gpc_register(gpc_swap_handler);
@@ -181,7 +189,8 @@ void test_swap()
 
 #ifdef RMW
             rc = ARMCI_Rmw(ARMCI_SWAP, &val, arr[0], whatever, 0);
-            assert(rc==0);
+            if(rc != 0)
+	      ARMCI_Error("test_swap: ARMCI_Rmw failed", 0);
 #else
             gpc_swap(&val, arr[0], 0);
 #endif
@@ -191,7 +200,9 @@ void test_swap()
 
 #ifdef RMW
           rc = ARMCI_Rmw(ARMCI_SWAP, &val, arr[0], whatever, 0);
-          assert(rc==0);
+	  if(rc != 0)
+	    ARMCI_Error("test_swap: ARMCI_Malloc failed", 0);
+	    
 #else
           gpc_swap(&val, arr[0], 0);
 #endif
@@ -240,7 +251,11 @@ int main(int argc, char* argv[])
 
 
         if(me==0){
+#ifdef RMW
+           printf("\nTesting atomic swap using ARMCI_Rmw\n");
+#else
            printf("\nTesting atomic swap using GPC\n");
+#endif
            fflush(stdout);
         }
 

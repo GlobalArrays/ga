@@ -3,6 +3,7 @@
 #include "message.h"
 #include "memlock.h"
 #include "copy.h"
+#include "gpc.h"
 #include <stdio.h>
 #ifdef WIN32
 #include <process.h>
@@ -209,8 +210,12 @@ void armci_send_req(int proc, request_header_t* msginfo, int len)
 int hdrlen = sizeof(request_header_t);
 int bytes;
 
-    if(msginfo->operation == GET)
+    if(msginfo->operation == GET) {
+      if(msginfo->format==VECTOR && msginfo->ehlen > 0) 
+	bytes = msginfo->dscrlen + hdrlen + msginfo->datalen;
+      else
         bytes = msginfo->dscrlen + hdrlen;
+    }
     else
         bytes = msginfo->bytes + hdrlen;
 
@@ -516,7 +521,7 @@ void armci_data_server(void *mesg)
     void *descr;
     void *buffer;
     int buflen;
-    int from;
+    int from, i;
 
     /* read header, descriptor, data, and buffer length */
     armci_rcv_req(mesg, &msginfo, &descr, &buffer, &buflen );
@@ -667,8 +672,18 @@ void armci_start_server()
 
 
 
+
 void *armci_server_code(void *data)
 {
+#ifdef SERVER_THREAD
+#  ifdef PTHREADS
+  extern pthread_t data_server;
+  data_server = pthread_self();
+#  else  
+  armci_die("armci_server_code: threaded data servers not using pthreads not supported by gpc", 0);
+#  endif
+#endif
+
     if(DEBUG_)
         printf("%d: in server after creating thread.\n",armci_me);
 
@@ -680,6 +695,7 @@ void *armci_server_code(void *data)
         fflush(stdout);
     }
 
+    gpc_init();
     armci_call_data_server();
 
     armci_transport_cleanup();

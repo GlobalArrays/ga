@@ -1,9 +1,9 @@
-#$Id: GNUmakefile,v 1.95 2005-09-02 18:18:46 vinod Exp $
+#$Id: GNUmakefile,v 1.96 2005-10-04 14:10:42 vinod Exp $
          FOPT = -O
          COPT = -O
 
 OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o kr_malloc.o\
- memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o rtinfo.o
+ memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o rtinfo.o 
 
 OBJ_FRAGILE = message.o
 
@@ -84,7 +84,7 @@ endif
 ifeq ($(ARMCI_NETWORK),GM)
 #  OBJ += dataserv-myri.o myrinet.o spawn.o request.o 
   OBJ += dataserv-gm.o ds-shared.o myrinet.o spawn.o request.o bufalloc.o async.o buffers.o
-  OBJ += regions.o
+  OBJ += regions.o gpc.o
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DALLOW_PIN -DSERVER_THREAD -D_REENTRANT
 endif
 
@@ -101,7 +101,7 @@ endif
 
 ifeq ($(ARMCI_NETWORK),MELLANOX)
   OBJ += spawn.o  request.o vapi.o ds-shared.o buffers.o async.o
-  OBJ += regions.o
+  OBJ += regions.o gpc.o
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT -DMELLANOX -DVAPI -DALLOW_PIN
   EXTRA_LIBS += -lpthread
 endif
@@ -186,6 +186,8 @@ include ../config/makefile.h
 OBJ += $(EXTRA_OBJ)
 include ../config/makelib.h
 LIBS += $(EXTRA_LIBS)
+
+
 
 #......................................................................
 %.x.p:%.x

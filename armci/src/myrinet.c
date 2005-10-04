@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.75 2005-08-25 18:28:36 vinod Exp $
+/* $Id: myrinet.c,v 1.76 2005-10-04 14:10:43 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -44,6 +44,7 @@
 #include "gm.h"
 */
 #include "armcip.h"
+#include "request.h"
 
 #define DEBUG_ 0
 #define DEBUG2 0
@@ -1037,6 +1038,11 @@ int armci_gm_serv_mem_alloc()
 
     serv_gm->proc_ack_ptr = (long *)gm_dma_malloc(serv_gm->snd_port,
                                                   armci_nproc*sizeof(long));
+
+    /*Registered memory for GPC data structures*/
+    gpc_req = (gpc_buf_t *)gm_dma_malloc(serv_gm->snd_port, 
+					 MAX_GPC_REQ*sizeof(gpc_buf_t));
+
     if(serv_gm->proc_ack_ptr == 0) return FALSE;
 
     return TRUE;
@@ -1063,6 +1069,7 @@ int armci_gm_serv_mem_free()
     free(serv_gm->dma_buf);
     
     gm_dma_free(serv_gm->snd_port, MessageRcvBuffer);
+    gm_dma_free(serv_gm->snd_port, gpc_req);
 
     return TRUE;
 }
@@ -1502,8 +1509,10 @@ void armci_call_data_server()
         fflush(stdout);
     }
 
+    unblock_thread_signal(GPC_COMPLETION_SIGNAL);
     /* server main loop; wait for and service requests until QUIT requested */
     while(!iexit) {        
+      block_thread_signal(GPC_COMPLETION_SIGNAL);
         if(server_can_poll)
             event = gm_receive(serv_gm->rcv_port);
         else
@@ -1540,6 +1549,8 @@ void armci_call_data_server()
               gm_unknown(serv_gm->rcv_port, event);
               break;
         }
+	unblock_thread_signal(GPC_COMPLETION_SIGNAL);
+	cpu_yield();
     }
     
     if(DEBUG_) {printf("%d(server): done! closing\n",armci_me); fflush(stdout);}

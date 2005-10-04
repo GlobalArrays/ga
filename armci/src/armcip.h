@@ -41,6 +41,14 @@ extern void armci_elan_fence(int p);
 
 #endif
 
+/*\GPC call stuff
+\*/
+typedef struct {
+  int hndl, hlen, dlen;
+  void *hdr, *data;
+}gpc_send_t;
+
+
 /*\ Stuff for non-blocking API
 \*/ 
 #define NB_MULTI -1 /*more than one armci buffer(buffers.c) used for nbcall*/

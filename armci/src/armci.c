@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.103 2005-10-03 21:30:23 vinod Exp $ */
+/* $Id: armci.c,v 1.104 2005-10-04 14:10:42 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -483,6 +483,8 @@ int ARMCI_Init()
     armci_allocate_locks();
     armci_init_fence();
 
+    gpc_init_signals();
+
     /* NOTE: FOR PROCESS-BASED DATA SERVER WE CANNOT call ARMCI_Malloc yet */
 
 #   if defined(DATA_SERVER) || defined(ELAN_ACC)
@@ -501,13 +503,13 @@ int ARMCI_Init()
     armci_msg_barrier();
     armci_msg_gop_init();
 
-    
 #ifdef ARMCI_PROFILE
     armci_profile_init();
 #endif
 #ifdef GA_USE_VAMPIR
     vampir_end(ARMCI_INIT,__FILE__,__LINE__);
 #endif    
+
     _armci_initialized++;
 #ifdef DO_CKPT
     armci_init_checkpoint(armci_ft_spare_procs);
@@ -868,3 +870,60 @@ void ARMCI_Ckpt_finalize(int rid)
     armci_icheckpoint_finalize(rid);
 }
 #endif
+
+int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
+	      void *rhdr, int rhlen, void *rdata, int rdlen, 
+	      armci_hdl_t* nbh) {
+  armci_ihdl_t nb_handle = (armci_ihdl_t)nbh;
+  armci_giov_t darr[2] = {{&rhdr, &rhdr, 1, rhlen}, {&rdata, &rdata, 1, rdlen}};
+  gpc_send_t send;
+  char *ptr;
+  
+/*    if(hlen<0 || hlen>=ARMCI_Gpc_get_hlen()) */
+/*      return FAIL2; */
+/*    if(rhlen<0 || rhlen>=ARMCI_Gpc_get_hlen()) */
+/*      return FAIL2; */
+/*    if(dlen<0 || dlen>=ARMCI_Gpc_get_dlen())  */
+/*      return FAIL2; */
+/*    if(rdlen<0 || rdlen>=ARMCI_Gpc_get_dlen())  */
+/*      return FAIL2; */
+
+  if(hlen>0 && hdr==NULL) 
+    return FAIL3;
+  if(rhlen>0 && rhdr==NULL) 
+    return FAIL3;
+  if(dlen>0 && data==NULL) 
+    return FAIL3;
+  if(rdlen>0 && rdata==NULL) 
+    return FAIL3;
+
+  if(proc<0 || proc >= armci_nproc)
+    return FAIL4;
+
+  send.hndl = hndl;
+  send.hlen = hlen;
+  send.dlen = dlen;
+  send.hdr = hdr;
+  send.data = data;
+
+  if(nb_handle){
+    nb_handle->tag = GET_NEXT_NBTAG();
+    nb_handle->op  = GET;
+    nb_handle->proc= proc;
+    nb_handle->bufid=NB_NONE;
+  }
+  else {
+    ORDER(GET,proc); /*ensure ordering */      
+    nb_handle = NULL;
+  }  
+
+#if defined(GM) || defined(VAPI)
+  if(armci_rem_gpc(GET, darr, 2, &send, proc, 1, nb_handle))
+#endif
+    return FAIL2;
+  return 0;
+}
+
+int armci_sameclusnode(int proc) {
+  return SAMECLUSNODE(proc);
+}
