@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.81 2005-10-03 21:30:24 vinod Exp $ */
+/* $Id: copy.h,v 1.82 2005-10-04 17:56:04 vinod Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -202,7 +202,7 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #      include <lapi.h>
        extern lapi_handle_t lapi_handle;
 
-#      define (src,dst,n,proc)\
+#      define armci_put(src,dst,n,proc)\
               if(proc==armci_me){\
                  armci_copy(src,dst,n);\
               } else {\
