@@ -676,12 +676,14 @@ void armci_start_server()
 void *armci_server_code(void *data)
 {
 #ifdef SERVER_THREAD
+#if defined(GM) || defined(VAPI)
 #  ifdef PTHREADS
   extern pthread_t data_server;
   data_server = pthread_self();
 #  else  
   armci_die("armci_server_code: threaded data servers not using pthreads not supported by gpc", 0);
 #  endif
+#endif
 #endif
 
     if(DEBUG_)
