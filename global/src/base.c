@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.129 2005-10-03 20:47:46 manoj Exp $ */
+/* $Id: base.c,v 1.130 2005-10-11 14:53:18 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1104,7 +1104,7 @@ Integer ga_create_handle_()
 
 /*\ Set the dimensions and data type on a new global array
 \*/
-void ga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
+void FATR ga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
 {
   Integer i;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -1127,7 +1127,7 @@ void ga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type)
 
 /*\ Set the chunk array on a new global array
 \*/
-void ga_set_chunk_(Integer *g_a, Integer *chunk)
+void FATR ga_set_chunk_(Integer *g_a, Integer *chunk)
 {
   Integer i;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -1146,7 +1146,7 @@ void ga_set_chunk_(Integer *g_a, Integer *chunk)
 
 /*\ Set the array name on a new global array
 \*/
-void ga_set_array_name(Integer g_a, char *array_name)
+void FATR ga_set_array_name(Integer g_a, char *array_name)
 {
   Integer ga_handle = g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_array_name");
@@ -1177,7 +1177,7 @@ void FATR ga_set_array_name_(Integer *g_a, char* array_name, int slen)
 
 /*\ Set the processor configuration on a new global array
 \*/
-void ga_set_pgroup_(Integer *g_a, Integer *p_handle)
+void FATR ga_set_pgroup_(Integer *g_a, Integer *p_handle)
 {
   Integer ga_handle = *g_a + GA_OFFSET;
   GA_PUSH_NAME("ga_set_pgroup");
@@ -1209,7 +1209,7 @@ Integer ga_get_pgroup_size_(Integer *grp_id)
 
 /*\ Add ghost cells to a new global array
 \*/
-void ga_set_ghosts_(Integer *g_a, Integer *width)
+void FATR ga_set_ghosts_(Integer *g_a, Integer *width)
 {
   Integer i;
   Integer ga_handle = *g_a + GA_OFFSET;
@@ -1237,7 +1237,7 @@ void ga_set_ghosts_(Integer *g_a, Integer *width)
 
 /*\ Set irregular distribution in a new global array
 \*/
-void ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
+void FATR ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
 {
   Integer i, maplen;
   Integer ga_handle = *g_a + GA_OFFSET;
