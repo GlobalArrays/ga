@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.133 2005-09-21 20:24:01 manoj Exp $
+# $Id: makefile.h,v 1.134 2005-10-11 08:38:34 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -497,6 +497,18 @@ endif
      FOPT_REN +=  -fno-second-underscore
 #     CLD_REN += -static
 #     COPT +=  -static
+  endif
+  ifeq ($(FC),gfortran)
+     _FC=gfortran
+     FOPT_REN += -x f77-cpp-input -w
+     FOPT_REN += -fno-second-underscore -ffixed-form -ffixed-line-length-72
+     FLD = gfortran
+     FLD_REN=
+    ifdef USE_INTEGER4
+       FOPT_REN += -fdefault-integer-4
+    else
+       FOPT_REN += -fdefault-integer-8
+    endif
   endif
    ifeq ($(_FC),ifort)
        ifeq ($(FOPT),-O)
