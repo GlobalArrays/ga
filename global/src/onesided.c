@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.64 2005-09-22 19:50:12 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.65 2005-10-11 22:42:57 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -80,6 +80,7 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 
 /*\ SYNCHRONIZE ALL THE PROCESSES
 \*/
+#ifdef MPI
 void FATR ga_pgroup_sync_(Integer *grp_id)
 {
 #ifdef CHECK_MA
@@ -90,7 +91,9 @@ void FATR ga_pgroup_sync_(Integer *grp_id)
 #endif
  
     if (*grp_id > 0) {
-       ARMCI_AllFence();
+       /* fence on all processes in this group */
+       { int p; for(p=0;p<PGRP_LIST[*grp_id].map_nproc;p++)
+          ARMCI_Fence(ARMCI_Absolute_id(&PGRP_LIST[*grp_id].group, p)); }
        ga_msg_pgroup_sync_(grp_id);
        if(GA_fence_set)bzero(fence_array,(int)GAnproc);
        GA_fence_set=0;
@@ -107,6 +110,12 @@ void FATR ga_pgroup_sync_(Integer *grp_id)
     vampir_end(GA_PGROUP_SYNC,__FILE__,__LINE__);
 #endif
 }
+#else
+void FATR ga_pgroup_sync_(Integer *grp_id)
+{
+    ga_error("ga_pgroup_sync_(): MPI not defined. ga_pgroup_sync()  can be called only if GA is built with MPI", 0);
+}
+#endif
 
 /*\ SYNCHRONIZE ALL THE PROCESSES
 \*/
@@ -125,9 +134,8 @@ Integer status;
 	  if(GA_fence_set)bzero(fence_array,(int)GAnproc);
 	  GA_fence_set=0;
        } else {
-	  ARMCI_AllFence();
-	  ga_msg_sync_();
-	  if(GA_fence_set)bzero(fence_array,(int)GAnproc);
+         Integer grp_id = (Integer)GA_Default_Proc_Group;
+         ga_pgroup_sync_(&grp_id);
        }
 #ifdef CHECK_MA
        status = MA_verify_allocator_stuff();
