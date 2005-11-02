@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.45 2005-09-22 19:50:12 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.46 2005-11-02 20:46:56 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1084,6 +1084,7 @@ logical FATR ga_update3_ghosts_(Integer *g_a)
   return TRUE;
 }
 
+#define GHOST_PRINT 0
 /*\ UPDATE GHOST CELLS OF GLOBAL ARRAY USING SHIFT ALGORITHM AND
  *  MESSAGE PASSING
 \*/
@@ -1100,7 +1101,7 @@ logical FATR ga_set_update4_info_(Integer *g_a)
   Integer slo_rcv[MAXDIM], shi_rcv[MAXDIM];
   Integer plo_rcv[MAXDIM], phi_rcv[MAXDIM];
   Integer ld_loc[MAXDIM];
-  int *stride_snd, *stride_rcv, *count,cache_size;
+  int *stride_snd, *stride_rcv, *count, cache_size;
   int corner_flag;
   char **ptr_snd, **ptr_rcv, *cache;
   char *current;
@@ -1146,11 +1147,14 @@ logical FATR ga_set_update4_info_(Integer *g_a)
 
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
-  cache_size = 3*sizeof(char *)+3*sizeof(int)+4*sizeof(Integer);
-  cache_size = 2* ndim *((cache_size/8) + 1);
+  cache_size = 2*sizeof(char *)+3*ndim*sizeof(int)+3*sizeof(Integer);
+  cache_size = 2* ndim *((cache_size/8) + 1) + 1;
   GA[handle].cache = (double *)malloc(sizeof(double)*cache_size);
   cache = (char *)GA[handle].cache;
   corner_flag = GA[handle].corner_flag;
+#if GHOST_PRINT
+      printf("p[%d]a cache_size: %d\n",GAme,cache_size);
+#endif
 
   /* initialize range increments and get array dimensions */
   nga_distribution_(g_a,&GAme,lo_loc,hi_loc);
@@ -1182,9 +1186,17 @@ logical FATR ga_set_update4_info_(Integer *g_a)
     }
   }
   bufsize = (Integer*)cache;
+#if GHOST_PRINT
+      printf("p[%d]a initial pointer: %d\n",GAme,(Integer)bufsize);
+      fflush(stdout);
+#endif
   current = (char*)(bufsize+1);
 
   *bufsize = size*buflen;
+#if GHOST_PRINT
+      printf("p[%d]a buflen: %d size: %d bufsize: %d\n",GAme,buflen,size,*bufsize);
+      fflush(stdout);
+#endif
 
   /* loop over dimensions for sequential update using shift algorithm */
   for (idx=0; idx < ndim; idx++) {
@@ -1270,7 +1282,17 @@ logical FATR ga_set_update4_info_(Integer *g_a)
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
       gam_LocationWithGhosts(GAme, handle, plo_snd, ptr_snd, ld_loc);
+#if GHOST_PRINT
+      printf("p[%d]a 1: plo_snd[0]: %d plo_snd[1]: %d ptr_snd: %d\n",
+          GAme, plo_snd[0], plo_snd[1], (Integer)*ptr_snd);
+      fflush(stdout);
+#endif
       gam_LocationWithGhosts(GAme, handle, plo_rcv, ptr_rcv, ld_loc);
+#if GHOST_PRINT
+      printf("p[%d]a 1: plo_rcv[0]: %d plo_rcv[1]: %d ptr_rcv: %d\n",
+          GAme, plo_rcv[0], plo_rcv[1], (Integer)*ptr_rcv);
+      fflush(stdout);
+#endif
 
       /* Evaluate strides for send and recieve */
       gam_setstride(ndim, size, ld_loc, ld_loc, stride_rcv,
@@ -1283,6 +1305,20 @@ logical FATR ga_set_update4_info_(Integer *g_a)
       gam_CountElems(ndim, plo_snd, phi_snd, length);
       *length *= size;
       count[0] *= size;
+
+#if GHOST_PRINT
+      printf("p[%d]a 1: length: %d bufsize: %d proc_rem_snd: %d proc_rem_rcv: %d\n",
+          GAme, *length, *bufsize, (int)*proc_rem_snd, (int)*proc_rem_rcv);
+      printf("p[%d]a 1: count[0]: %d stride_rcv[0]: %d stride_rcv[1]: %d\n",
+          GAme, count[0], stride_rcv[0],stride_rcv[1]);
+      printf("p[%d]a 1: count[1]: %d stride_rcv[2]: %d stride_rcv[3]: %d\n",
+          GAme, count[1], stride_rcv[2],stride_rcv[3]);
+      printf("p[%d]a 1: count[2]: %d stride_snd[0]: %d stride_snd[1]: %d\n",
+          GAme, count[2], stride_snd[0],stride_snd[1]);
+      printf("p[%d]a 1: count[3]: %d stride_snd[2]: %d stride_snd[3]: %d\n",
+          GAme, count[3], stride_snd[2],stride_snd[3]);
+      fflush(stdout);
+#endif
 
       ptr_snd = (char**)current;
       ptr_rcv = (char**)(ptr_snd+1);
@@ -1361,7 +1397,17 @@ logical FATR ga_set_update4_info_(Integer *g_a)
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
       gam_LocationWithGhosts(GAme, handle, plo_snd, ptr_snd, ld_loc);
+#if GHOST_PRINT
+      printf("p[%d]a 2: plo_snd[0]: %d plo_snd[1]: %d ptr_snd: %d\n",
+          GAme, plo_snd[0], plo_snd[1], (Integer)*ptr_snd);
+      fflush(stdout);
+#endif
       gam_LocationWithGhosts(GAme, handle, plo_rcv, ptr_rcv, ld_loc);
+#if GHOST_PRINT
+      printf("p[%d]a 2: plo_rcv[0]: %d plo_rcv[1]: %d ptr_rcv: %d\n",
+          GAme, plo_rcv[0], plo_rcv[1], (Integer)*ptr_rcv);
+      fflush(stdout);
+#endif
 
       /* Evaluate strides for send and recieve */
       gam_setstride(ndim, size, ld_loc, ld_loc, stride_rcv,
@@ -1374,11 +1420,28 @@ logical FATR ga_set_update4_info_(Integer *g_a)
       gam_CountElems(ndim, plo_snd, phi_snd, length);
       *length *= size;
       count[0] *= size;
+#if GHOST_PRINT
+      printf("p[%d]a 2: length: %d bufsize: %d proc_rem_snd: %d proc_rem_rcv: %d\n",
+          GAme, *length, *bufsize, (int)*proc_rem_snd, (int)*proc_rem_rcv);
+      printf("p[%d]a 2: count[0]: %d stride_rcv[0]: %d stride_rcv[1]: %d\n",
+          GAme, count[0], stride_rcv[0],stride_rcv[1]);
+      printf("p[%d]a 2: count[1]: %d stride_rcv[2]: %d stride_rcv[3]: %d\n",
+          GAme, count[1], stride_rcv[2],stride_rcv[3]);
+      printf("p[%d]a 2: count[2]: %d stride_snd[0]: %d stride_snd[1]: %d\n",
+          GAme, count[2], stride_snd[0],stride_snd[1]);
+      printf("p[%d]a 2: count[3]: %d stride_snd[2]: %d stride_snd[3]: %d\n",
+          GAme, count[3], stride_snd[2],stride_snd[3]);
+      fflush(stdout);
+#endif
 
     }
     if (GA[handle].corner_flag)
       increment[idx] = 2*width[idx];
   }
+#if GHOST_PRINT
+      printf("p[%d]a final pointer: %d\n",GAme,(Integer)(Integer*)current);
+      fflush(stdout);
+#endif
   return TRUE;
 }
 
@@ -1441,6 +1504,10 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
   current = (char*)(size+1);
   bufsize = *size;
   buflen = bufsize/elemsize;
+#if GHOST_PRINT
+  printf("p[%d] bufsize: %d buflen: %d\n", GAme, bufsize, buflen);
+  fflush(stdout);
+#endif
 
   strcpy(send_name,"send_buffer");
   strcpy(rcv_name,"receive_buffer");
@@ -1467,8 +1534,29 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
       count = (int*)(length+1);
       current = (char*)(count+ndim);
 
+#if GHOST_PRINT
+      printf("p[%d] 1: ptr_snd: %d ptr_rcv: %d\n", GAme, (Integer)*ptr_snd,
+              (Integer)*ptr_rcv);
+      printf("p[%d] 1: length: %d proc_rem_snd: %d proc_rem_rcv: %d\n",
+          GAme, (int)*length, (int)*proc_rem_snd, (int)*proc_rem_rcv);
+      printf("p[%d] 1: count[0]: %d stride_rcv[0]: %d stride_rcv[1]: %d\n",
+          GAme, count[0], stride_rcv[0],stride_rcv[1]);
+      printf("p[%d] 1: count[1]: %d stride_rcv[2]: %d stride_rcv[3]: %d\n",
+          GAme, count[1], stride_rcv[2],stride_rcv[3]);
+      printf("p[%d] 1: count[2]: %d stride_snd[0]: %d stride_snd[1]: %d\n",
+          GAme, count[2], stride_snd[0],stride_snd[1]);
+      printf("p[%d] 1: count[3]: %d stride_snd[2]: %d stride_snd[3]: %d\n",
+          GAme, count[3], stride_snd[2],stride_snd[3]);
+      printf("p[%d] 1: snd_ptr: %d rcv_ptr: %d\n", GAme, (Integer)snd_ptr,
+          (Integer)rcv_ptr);
+      fflush(stdout);
+#endif
       /* Fill send buffer with data. */
       armci_write_strided(*ptr_snd, (int)ndim-1, stride_snd, count, snd_ptr);
+#if GHOST_PRINT
+      printf("p[%d] completed armci_write_strided\n",GAme);
+      fflush(stdout);
+#endif
 
       /* Send Messages. If processor has odd index in direction idx, it
        * sends message first, if processor has even index it receives
@@ -1514,6 +1602,10 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
       msgcnt++;
       /* copy data back into global array */
       armci_read_strided(*ptr_rcv, (int)ndim-1, stride_rcv, count, rcv_ptr);
+#if GHOST_PRINT
+      printf("p[%d] completed armci_read_strided\n",GAme);
+      fflush(stdout);
+#endif
 
       /* send messages in positive direction */
       snd_ptr = snd_ptr_orig;
@@ -1529,6 +1621,23 @@ logical FATR ga_update4_ghosts_(Integer *g_a)
       count = (int*)(length+1);
       current = (char*)(count+ndim);
 
+#if GHOST_PRINT
+      printf("p[%d] 2: ptr_snd: %d ptr_rcv: %d\n", GAme, (Integer)*ptr_snd,
+              (Integer)*ptr_rcv);
+      printf("p[%d] 2: length: %d proc_rem_snd: %d proc_rem_rcv: %d\n",
+          GAme, (int)*length, (int)*proc_rem_snd, (int)*proc_rem_rcv);
+      printf("p[%d] 2: count[0]: %d stride_rcv[0]: %d stride_rcv[1]: %d\n",
+          GAme, count[0], stride_rcv[0],stride_rcv[1]);
+      printf("p[%d] 2: count[1]: %d stride_rcv[2]: %d stride_rcv[3]: %d\n",
+          GAme, count[1], stride_rcv[2],stride_rcv[3]);
+      printf("p[%d] 2: count[2]: %d stride_snd[0]: %d stride_snd[1]: %d\n",
+          GAme, count[2], stride_snd[0],stride_snd[1]);
+      printf("p[%d] 2: count[3]: %d stride_snd[2]: %d stride_snd[3]: %d\n",
+          GAme, count[3], stride_snd[2],stride_snd[3]);
+      printf("p[%d] 2: snd_ptr: %d rcv_ptr: %d\n", GAme, (Integer)snd_ptr,
+          (Integer)rcv_ptr);
+      fflush(stdout);
+#endif
       /* Fill send buffer with data. */
       armci_write_strided(*ptr_snd, (int)ndim-1, stride_snd, count, snd_ptr);
 
@@ -1779,7 +1888,17 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
       gam_LocationWithGhosts(GAme, handle, plo_snd, &ptr_snd, ld_loc);
+#if GHOST_PRINT
+      printf("p[%d] 1: plo_snd[0]: %d plo_snd[1]: %d ptr_snd: %d\n",
+          GAme, plo_snd[0], plo_snd[1], (Integer)ptr_snd);
+      fflush(stdout);
+#endif
       gam_LocationWithGhosts(GAme, handle, plo_rcv, &ptr_rcv, ld_loc);
+#if GHOST_PRINT
+      printf("p[%d] 1: plo_rcv[0]: %d plo_rcv[1]: %d ptr_rcv: %d\n",
+          GAme, plo_rcv[0], plo_rcv[1], (Integer)ptr_rcv);
+      fflush(stdout);
+#endif
 
       /* Evaluate strides for send and recieve */
       gam_setstride(ndim, size, ld_loc, ld_loc, stride_rcv,
@@ -1794,6 +1913,23 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
       count[0] *= size;
 
       /* Fill send buffer with data. */
+#if GHOST_PRINT
+      printf("p[%d]b 1: ptr_snd: %d ptr_rcv: %d\n", GAme, (Integer)ptr_snd,
+              (Integer)ptr_rcv);
+      printf("p[%d]b 1: length: %d proc_rem_snd: %d proc_rem_rcv: %d\n",
+          GAme, (int)length, (int)proc_rem_snd, (int)proc_rem_rcv);
+      printf("p[%d]b 1: count[0]: %d stride_rcv[0]: %d stride_rcv[1]: %d\n",
+          GAme, count[0], stride_rcv[0],stride_rcv[1]);
+      printf("p[%d]b 1: count[1]: %d stride_rcv[2]: %d stride_rcv[3]: %d\n",
+          GAme, count[1], stride_rcv[2],stride_rcv[3]);
+      printf("p[%d]b 1: count[2]: %d stride_snd[0]: %d stride_snd[1]: %d\n",
+          GAme, count[2], stride_snd[0],stride_snd[1]);
+      printf("p[%d]b 1: count[3]: %d stride_snd[2]: %d stride_snd[3]: %d\n",
+          GAme, count[3], stride_snd[2],stride_snd[3]);
+      printf("p[%d]b 1: snd_ptr: %d rcv_ptr: %d\n", GAme, (Integer)snd_ptr,
+          (Integer)rcv_ptr);
+      fflush(stdout);
+#endif
       armci_write_strided(ptr_snd, (int)ndim-1, stride_snd, count, snd_ptr);
 
       /* Send Messages. If processor has odd index in direction idx, it
@@ -1802,6 +1938,11 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
        * for whether or not there are an odd number of processors along
        * update direction. */
 
+#if GHOST_PRINT
+      printf("p[%d] 1: msgcnt: %d length: %d bufsize: %d proc_rem_snd: %d proc_rem_rcv: %d\n",
+          GAme, msgcnt, length, bufsize, (int)proc_rem_snd, (int)proc_rem_rcv);
+      fflush(stdout);
+#endif
       if (GAme != proc_rem_snd) {
         if (GA[handle].nblock[idx]%2 == 0) {
           if (index[idx]%2 != 0) {
@@ -1908,7 +2049,17 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
       /* Get pointer to local data buffer and remote data
          buffer as well as lists of leading dimenstions */
       gam_LocationWithGhosts(GAme, handle, plo_snd, &ptr_snd, ld_loc);
+#if GHOST_PRINT
+      printf("p[%d] 2: plo_snd[0]: %d plo_snd[1]: %d ptr_snd: %d\n",
+          GAme, plo_snd[0], plo_snd[1], (Integer)ptr_snd);
+      fflush(stdout);
+#endif
       gam_LocationWithGhosts(GAme, handle, plo_rcv, &ptr_rcv, ld_loc);
+#if GHOST_PRINT
+      printf("p[%d] 2: plo_rcv[0]: %d plo_rcv[1]: %d ptr_rcv: %d\n",
+          GAme, plo_rcv[0], plo_rcv[1], (Integer)ptr_rcv);
+      fflush(stdout);
+#endif
 
       /* Evaluate strides for send and recieve */
       gam_setstride(ndim, size, ld_loc, ld_loc, stride_rcv,
@@ -1926,6 +2077,23 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
       /* TO DO */
 
       /* Fill send buffer with data. */
+#if GHOST_PRINT
+      printf("p[%d]b 2: ptr_snd: %d ptr_rcv: %d\n", GAme, (Integer)ptr_snd,
+              (Integer)ptr_rcv);
+      printf("p[%d]b 2: length: %d proc_rem_snd: %d proc_rem_rcv: %d\n",
+          GAme, (int)length, (int)proc_rem_snd, (int)proc_rem_rcv);
+      printf("p[%d]b 2: count[0]: %d stride_rcv[0]: %d stride_rcv[1]: %d\n",
+          GAme, count[0], stride_rcv[0],stride_rcv[1]);
+      printf("p[%d]b 2: count[1]: %d stride_rcv[2]: %d stride_rcv[3]: %d\n",
+          GAme, count[1], stride_rcv[2],stride_rcv[3]);
+      printf("p[%d]b 2: count[2]: %d stride_snd[0]: %d stride_snd[1]: %d\n",
+          GAme, count[2], stride_snd[0],stride_snd[1]);
+      printf("p[%d]b 2: count[3]: %d stride_snd[2]: %d stride_snd[3]: %d\n",
+          GAme, count[3], stride_snd[2],stride_snd[3]);
+      printf("p[%d]b 2: snd_ptr: %d rcv_ptr: %d\n", GAme, (Integer)snd_ptr,
+          (Integer)rcv_ptr);
+      fflush(stdout);
+#endif
       armci_write_strided(ptr_snd, (int)ndim-1, stride_snd, count, snd_ptr);
 
       /* Send Messages. If processor has odd index in direction idx, it
@@ -1934,6 +2102,11 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
        * for whether or not there are an odd number of processors along
        * update direction. */
 
+#if GHOST_PRINT
+      printf("p[%d] 2: msgcnt: %d length: %d bufsize: %d proc_rem_snd: %d proc_rem_rcv: %d\n",
+          GAme, msgcnt, length, bufsize, (int)proc_rem_snd, (int)proc_rem_rcv);
+      fflush(stdout);
+#endif
       if (GAme != proc_rem_rcv) {
         if (GA[handle].nblock[idx]%2 == 0) {
           if (index[idx]%2 != 0) {
@@ -2854,7 +3027,7 @@ void ga_update_ghosts_(Integer *g_a)
 #ifdef CRAY_T3D
    if (!ga_update5_ghosts_(g_a)) {
 #else
-   if (!ga_update44_ghosts_(g_a)) {
+   if (!ga_update4_ghosts_(g_a)) {
 #endif
      ga_update1_ghosts_(g_a);
    }

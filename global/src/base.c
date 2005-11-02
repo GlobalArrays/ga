@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.130 2005-10-11 14:53:18 d3g293 Exp $ */
+/* $Id: base.c,v 1.131 2005-11-02 20:46:56 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1115,6 +1115,7 @@ void FATR ga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type
   gam_checktype(ga_type_f2c(*type));
 
   GA[ga_handle].type = ga_type_f2c((int)(*type));
+  GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
 
   for (i=0; i<*ndim; i++) {
     GA[ga_handle].dims[i] = (C_Int64)dims[i];
@@ -1227,10 +1228,6 @@ void FATR ga_set_ghosts_(Integer *g_a, Integer *width)
   for (i=0; i<GA[ga_handle].ndim; i++) {
     GA[ga_handle].width[i] = (C_Int64)width[i];
     if (width[i] > 0) GA[ga_handle].ghosts = 1;
-  }
-  if (GA[ga_handle].actv == 0) {
-    if (!ga_set_ghost_info_(g_a))
-      ga_error("Could not allocate update information for ghost cells",0);
   }
   GA_POP_NAME;
 }
@@ -1437,7 +1434,6 @@ logical ga_allocate_( Integer *g_a)
      GA[ga_handle].scale[i] = (double)GA[ga_handle].nblock[i]
        / (double)GA[ga_handle].dims[i];
   }
-  GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
   /*** determine which portion of the array I am supposed to hold ***/
   if (p_handle == 0) { /* for mirrored arrays */
      Integer me_local = (Integer)PGRP_LIST[p_handle].map_proc_list[GAme];
@@ -1469,6 +1465,12 @@ logical ga_allocate_( Integer *g_a)
                              GA[ga_handle].type, &GA[ga_handle].id, p_handle);
   } else {
      GA[ga_handle].ptr[grp_me]=NULL;
+  }
+
+  /* Finish setting up information for ghost cell updates */
+  if (GA[ga_handle].ghosts == 1) {
+    if (!ga_set_ghost_info_(g_a))
+      ga_error("Could not allocate update information for ghost cells",0);
   }
 
   /* If array is mirrored, evaluate first and last indices */
