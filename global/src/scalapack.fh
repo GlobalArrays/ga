@@ -1,7 +1,11 @@
-      integer iam, nnodes,nprow,npcol, myrow, mycol, igctxt,iSLctxt
-      logical init
-      common /SLface/ iam, nnodes, nprow,npcol, myrow, mycol, init,
-     .                igctxt,iSLctxt
+      integer*4 iam, nnodes,nprow,npcol, myrow, mycol, iSLctxt,
+     A	maxproc, iSLctxt2,nprow2,npcol2, myrow2, mycol2
+      logical init,init2
+      common /SLface/ init, init2,
+     *     iam, nnodes, nprow,npcol, myrow, mycol,
+     *     iSLctxt,iSLctxt2,
+     *     maxproc,nprow2,npcol2, myrow2, mycol2
+
 #ifdef LINUX_DBL_UNDERSCORE
 #define blacs_pinfo blacs_pinfo_
 #define blacs_get blacs_get_
