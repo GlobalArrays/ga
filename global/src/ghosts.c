@@ -1,4 +1,4 @@
-/* $Id: ghosts.c,v 1.46 2005-11-02 20:46:56 d3g293 Exp $ */
+/* $Id: ghosts.c,v 1.47 2005-11-03 18:58:34 d3g293 Exp $ */
 /* 
  * module: ghosts.c
  * author: Bruce Palmer
@@ -1943,6 +1943,8 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
           GAme, msgcnt, length, bufsize, (int)proc_rem_snd, (int)proc_rem_rcv);
       fflush(stdout);
 #endif
+      snd_ptr = snd_ptr_orig;
+      rcv_ptr = rcv_ptr_orig;
       if (GAme != proc_rem_snd) {
         if (GA[handle].nblock[idx]%2 == 0) {
           if (index[idx]%2 != 0) {
@@ -2107,6 +2109,8 @@ logical FATR ga_update44_ghosts_(Integer *g_a)
           GAme, msgcnt, length, bufsize, (int)proc_rem_snd, (int)proc_rem_rcv);
       fflush(stdout);
 #endif
+      snd_ptr = snd_ptr_orig;
+      rcv_ptr = rcv_ptr_orig;
       if (GAme != proc_rem_rcv) {
         if (GA[handle].nblock[idx]%2 == 0) {
           if (index[idx]%2 != 0) {
