@@ -4,7 +4,7 @@ cedo#define USE_PDSYEVR 1
 #else
 #define INTGR4 integer*4
 #endif
-C     $Id: scalapack.F,v 1.8 2005-11-03 06:23:39 edo Exp $
+C     $Id: scalapack.F,v 1.9 2005-11-10 02:09:08 edo Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
@@ -33,7 +33,8 @@ c
 c
 #include "scalapack.fh"
 #include "global.fh"
-      external blacs_pinfo, blacs_get, blacs_gridinit, blacs_gridinfo
+      INTGR4 zero4
+      parameter(zero4=0)
 c
       if(init)return
 c
@@ -46,7 +47,7 @@ c
      W     write(0,'(A,I4,A,I4)') ' proc grid ',nprow,' X',npcol
       call ga_sync()
 c
-      call blacs_get (0, 0, icontxt)
+      call blacs_get (zero4, zero4, icontxt)
       call blacs_gridinit(icontxt, 'R', nprow, npcol)
       iSLctxt = icontxt
 c
@@ -64,6 +65,8 @@ c
 #include "global.fh"
       INTGR4 n
 c
+      INTGR4 zero4
+      parameter(zero4=0)
       INTGR4 slgetmxproc
       external slgetmxproc
 c
@@ -84,7 +87,7 @@ c
       endif
 c
 
-      call blacs_get( 0, 0, islctxt2 )
+      call blacs_get( zero4, zero4, islctxt2 )
       call blacs_gridinit(islctxt2, 'R', nprow2, npcol2)
 
 
@@ -468,10 +471,10 @@ c
 c
 c***  find SBS format parameters
 c
-      mpA = numroc(n, nb,myrow, 0, nprow)
-      nqA = numroc(n, nb,mycol, 0, npcol)
-      mpB = numroc(dimB1, nb,myrow, 0, nprow)
-      nqB = numroc(dimB2, nb,mycol, 0, npcol) 
+      mpA = numroc(n, nb,myrow, zero4, nprow)
+      nqA = numroc(n, nb,mycol, zero4, npcol)
+      mpB = numroc(dimB1, nb,myrow, zero4, nprow)
+      nqB = numroc(dimB2, nb,mycol, zero4, npcol) 
       lda = max(one4,mpA)
       ldb = max(one4,mpB)
 
@@ -504,11 +507,11 @@ c
 c     
 c***     fill SCALAPACK matrices descriptors
 c
-	 call descinit(descA, dimA1, dimA2, nb, nb, 0, 0, 
+	 call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4, 
      &                 iSLctxt, lda, info)
          if(info.ne.0) call ga_error(' ga_lu_solve: descinit A failed ',
      &                               -info)
-         call descinit(descB, dimB1, dimB2, nb, nb, 0, 0, 
+         call descinit(descB, dimB1, dimB2, nb, nb, zero4, zero4, 
      &                 iSLctxt, ldb, info)
          if(info.ne.0) call ga_error(' ga_lu_solve: descinit B failed ',
      &                               -info)
@@ -516,7 +519,7 @@ c
 c***     LU factorization
 c
          call ga_sync()
-	 call pdgetrf(n, n, dbl_mb(adrA), 1, 1, descA, 
+	 call pdgetrf(n, n, dbl_mb(adrA),one4,one4, descA, 
      &                int_mb(adrI), info)
          call ga_sync()
 c
@@ -525,8 +528,9 @@ c
 c
 c***        solve: forward/backward substitution
 c
-            call pdgetrs(trans, n, dimB2, dbl_mb(adrA), 1, 1, descA,
-     &                   int_mb(adrI), dbl_mb(adrB), 1, 1, descB, info)
+            call pdgetrs(trans, n, dimB2, dbl_mb(adrA),one4,one4, 
+     A           descA, int_mb(adrI), dbl_mb(adrB),
+     1           one4, one4, descB, info)
             if(info.eq.0)then
 c
 c***           copy solution matrix back to g_b
@@ -827,8 +831,8 @@ c**** Initialize SL Interface
 
 c**** Find SBS format parameters
       if(oactive) then
-         mpA = numroc(n, nb, myrow, 0, nprow)
-         nqA = numroc(n, nb, mycol, 0, npcol)
+         mpA = numroc(n, nb, myrow, zero4, nprow)
+         nqA = numroc(n, nb, mycol, zero4, npcol)
          ldA = max(one4,mpA)
          
          
@@ -844,7 +848,7 @@ c**** Copy ga to A using SBS ScaLAPACK format
          call ga_to_SL(g_a, n, n, nb, nb, dbl_mb(adrA), ldA, mpA, nqA)
          
 c**** Fill ScaLAPACK matrix descriptor
-         call descinit(descA, dimA1, dimA2, nb, nb, 0, 0,
+         call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
      &        iSLctxt, ldA, info)
          if(info.ne.0) call ga_error('ga_llt_f: descinit A failed',
      I        -info)
@@ -975,10 +979,10 @@ c**** Initialize SL Interface
       call SLinit()
 
 c**** Find SBS format parameters
-      mpA = numroc(n, nb, myrow, 0, nprow)
-      nqA = numroc(n, nb, mycol, 0, npcol)
-      mpB = numroc(n, nb, myrow, 0, nprow)
-      nqB = numroc(n, nb, mycol, 0, npcol)
+      mpA = numroc(n, nb, myrow, zero4, nprow)
+      nqA = numroc(n, nb, mycol, zero4, npcol)
+      mpB = numroc(n, nb, myrow, zero4, nprow)
+      nqB = numroc(n, nb, mycol, zero4, npcol)
       ldA = max(one4,mpA)
       ldB = max(one4,mpB)
 
@@ -1012,12 +1016,13 @@ c**** Allocate B and copy g_B to B in SBS SL format
       call ga_to_SL(g_B, n, dimB2, nb, nb, dbl_mb(adrB), ldB, mpB, nqB)
 c
 c**** Fill ScaLAPACK matrix descriptors for A and B
-      call descinit(descA, dimA1, dimA2, nb, nb, 0, 0,
+      call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
      &     iSLctxt, ldA, info)
       if(info.ne.0) call ga_error(' ga_llt_s: descinit A failed ',
      &     -info)
       
-      call descinit(descB, dimB1, dimB2, nb, nb, 0,0,iSLctxt, ldB, info)
+      call descinit(descB, dimB1, dimB2, nb, nb, zero4,zero4,
+     D     iSLctxt, ldB, info)
       if(info.ne.0) call ga_error('ga_llt_s: descinit B failed', -info)
      
 c**** CALL ScaLAPACK PDPOTRS solver routine ***********************
@@ -1125,8 +1130,8 @@ c      oactive=iam.lt.maxproc
       call ga_sync()
       if(oactive) then
 c**** Find SBS format parameters
-      mpA = numroc(n, nb, myrow, 0, nprow)
-      nqA = numroc(n, nb, mycol, 0, npcol)
+      mpA = numroc(n, nb, myrow, zero4, nprow)
+      nqA = numroc(n, nb, mycol, zero4, npcol)
       ldA = max(one4, mpA)
 
 
@@ -1152,7 +1157,7 @@ c****       if hsA was given the SBS SL conversion is avoided
 
 
 c**** Fill ScaLAPACK matrix descriptor for A
-      call descinit(descA, dimA1, dimA2, nb, nb, 0, 0,
+      call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
      &     iSLctxt, ldA, info)
       if (info.ne.0) call ga_error(' ga_llt_i: descinit A failed ',
      &     -info)
@@ -1459,11 +1464,11 @@ c
 c***  find SBS format parameters
 c     
 c     
-      mpA = numroc(dimA1, nb, myrow2, 0, nprow2)
-      nqA = numroc(dimA2, nb, mycol2, 0, npcol2)
+      mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
+      nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
 c     
-      mpB = numroc(dimB1, nb, myrow2, 0, nprow2)
-      nqB = numroc(dimB2, nb, mycol2, 0, npcol2) 
+      mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
+      nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
 c     
 c     
       lda = max(one4,mpA)
@@ -1505,7 +1510,7 @@ c
          if(info8.ne.0) call ga_error(' ga_pdsyev: descinit A failed ',
      .        -info8)
 c     
-         call descinit(descB, dimB1, dimB2, nb, nb, 0, 0,
+         call descinit(descB, dimB1, dimB2, nb, nb, zero4, zero4,
      .        islctxt2, ldb, info)
          info8=info
          if(info8.ne.0) call ga_error(' ga_pdsyev: descinit B failed ',
@@ -1515,12 +1520,12 @@ c
          uplo = 'L'
 c     
          nn = max(n, nb, two4)
-         np0 = numroc(nn, nb, 0, 0, nprow2)
-         mq0 = numroc(nn, nb, 0, 0, npcol2)
+         np0 = numroc(nn, nb, zero4, zero4, nprow2)
+         mq0 = numroc(nn, nb, zero4, zero4, npcol2)
 c     
 c     get lcwork
 c
-#if 0
+#if 1
          lcwork4=-1
          call pdsyev(jobz,  uplo,
      1        n, dbl_mb(adrA), one4, one4, descA,
@@ -1531,7 +1536,7 @@ c
 #else
          lcwork = 5*n +MAX(3*NB,NB*(NP0+1))
 c     lwmin
-         ldc=numroc(n,nb,myrow2,0,nnodes)
+         ldc=numroc(n,nb,myrow2,zero4,nnodes)
          ldc=max(1,ldc)
          lcwork=max(lcwork,5*n+n*ldc+1+max(2*n-2,8192))
 #endif
@@ -1698,11 +1703,11 @@ c
 c***  find SBS format parameters
 c     
 c     
-      mpA = numroc(dimA1, nb, myrow2, 0, nprow2)
-      nqA = numroc(dimA2, nb, mycol2, 0, npcol2)
+      mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
+      nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
 c     
-      mpB = numroc(dimB1, nb, myrow2, 0, nprow2)
-      nqB = numroc(dimB2, nb, mycol2, 0, npcol2) 
+      mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
+      nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
 c     
 c     
       lda = max(one4,mpA)
@@ -1766,7 +1771,7 @@ c
          if(info8.ne.0) call ga_error(' ga_pdsyevx: descinit A failed ',
      .        -info8)
 c     
-         call descinit(descB, dimB1, dimB2, nb, nb, 0, 0,
+         call descinit(descB, dimB1, dimB2, nb, nb, zero4, zero4,
      .        islctxt2, ldb, info)
          info8=info
          if(info8.ne.0) call ga_error(' ga_pdsyevx: descinit B failed ',
@@ -1796,8 +1801,8 @@ c
      &        call ga_error('ga_pdsyevx: mem alloc failed iwork  ', -1)
 c     
          nn = max(n, nb, two4)
-         np0 = numroc(nn, nb, 0, 0, nprow2)
-         mq0 = numroc(nn, nb, 0, 0, npcol2)
+         np0 = numroc(nn, nb, zero4, zero4, nprow2)
+         mq0 = numroc(nn, nb, zero4, zero4, npcol2)
 c     
 c     
          orfac = 1.d-3
@@ -2012,14 +2017,14 @@ c
 c***  find SBS format parameters
 c     
 c     
-      mpA = numroc(dimA1, nb, myrow2, 0, nprow2)
-      nqA = numroc(dimA2, nb, mycol2, 0, npcol2)
+      mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
+      nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
 c     
-      mpB = numroc(dimB1, nb, myrow2, 0, nprow2)
-      nqB = numroc(dimB2, nb, mycol2, 0, npcol2) 
+      mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
+      nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
 c     
-      mps = numroc(dims1, nb, myrow2, 0, nprow2)
-      nqs = numroc(dims2, nb, mycol2, 0, npcol2) 
+      mps = numroc(dims1, nb, myrow2, zero4, nprow2)
+      nqs = numroc(dims2, nb, mycol2, zero4, npcol2) 
 c     
 c     
       lda = max(one4,mpA)
@@ -2083,18 +2088,18 @@ c
 c     
 c***  fill SCALAPACK matrix descriptors
 c     
-         call descinit(descA, dimA1, dimA2, nb, nb, 0, 0,
+         call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
      $        islctxt2, lda, info)
          info8=info
          if(info8.ne.0) call ga_error(' ga_pdsygv: descinit A failed ',
      .        -info8)
 c     
-         call descinit(descB, dimB1, dimB2, nb, nb, 0, 0,
+         call descinit(descB, dimB1, dimB2, nb, nb, zero4, zero4,
      .        islctxt2, ldb, info)
          info8=info
          if(info8.ne.0) call ga_error(' ga_pdsygv: descinit B failed ',
      .        -info8)
-         call descinit(descs, dims1, dims2, nb, nb, 0, 0,
+         call descinit(descs, dims1, dims2, nb, nb, zero4, zero4,
      .        islctxt2, lds, info)
          info8=info
          if(info8.ne.0) call ga_error(' ga_pdsygv: descinit S failed ',
@@ -2122,8 +2127,8 @@ c
      &        call ga_error('ga_pdsygv: mem alloc failed iwork  ', -1)
 c     
          nn = max(n, nb, two4)
-         np0 = numroc(nn, nb, 0, 0, nprow2)
-         mq0 = numroc(nn, nb, 0, 0, npcol2)
+         np0 = numroc(nn, nb, zero4, zero4, nprow2)
+         mq0 = numroc(nn, nb, zero4, zero4, npcol2)
 c     
 c     
          orfac = 1.d-3
@@ -2304,11 +2309,11 @@ c
 c***  find SBS format parameters
 c     
 c     
-         mpA = numroc(dimA1, nb, myrow2, 0, nprow2)
-         nqA = numroc(dimA2, nb, mycol2, 0, npcol2)
+         mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
+         nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
 c     
-      mpB = numroc(dimB1, nb, myrow2, 0, nprow2)
-      nqB = numroc(dimB2, nb, mycol2, 0, npcol2) 
+      mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
+      nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
 c     
 c     
       lda = max(one4,mpA)
@@ -2346,13 +2351,13 @@ c
 c     
 c***  fill SCALAPACK matrix descriptors
 c     
-      call descinit(descA, dimA1, dimA2, nb, nb, 0, 0,
+      call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
      $     islctxt2, lda, info)
       info8=info
       if(info8.ne.0) call ga_error(' ga_pdsyevd: descinit A failed ',
      .     -info8)
 c     
-      call descinit(descB, dimB1, dimB2, nb, nb, 0, 0,
+      call descinit(descB, dimB1, dimB2, nb, nb, zero4, zero4,
      .     islctxt2, ldb, info)
       info8=info
       if(info8.ne.0) call ga_error(' ga_pdsyevd: descinit B failed ',
@@ -2371,8 +2376,8 @@ c
      &     call ga_error('ga_pdsyevd: mem alloc failed iwork  ', -1)
 c     
       nn = max(n, nb, two4)
-      IAROW = INDXG2P( 1, nb, MYROW2, DESCA( 7 ), NPROW2 )
-      IACOL = INDXG2P( 1, nb, MYCOL2, DESCA( 8 ), NPCOL2 )
+      IAROW = INDXG2P(one4, nb, MYROW2, DESCA( 7 ), NPROW2 )
+      IACOL = INDXG2P(one4, nb, MYCOL2, DESCA( 8 ), NPCOL2 )
             
       np = numroc(n, nb, myrow2, iarow, nprow2)
       nq = numroc(n, nb, mycol2, iacol, npcol2)
@@ -2558,11 +2563,11 @@ c
 c***  find SBS format parameters
 c     
 c     
-      mpA = numroc(dimA1, nb, myrow2, 0, nprow2)
-      nqA = numroc(dimA2, nb, mycol2, 0, npcol2)
+      mpA = numroc(dimA1, nb, myrow2, zero4, nprow2)
+      nqA = numroc(dimA2, nb, mycol2, zero4, npcol2)
 c     
-      mpB = numroc(dimB1, nb, myrow2, 0, nprow2)
-      nqB = numroc(dimB2, nb, mycol2, 0, npcol2) 
+      mpB = numroc(dimB1, nb, myrow2, zero4, nprow2)
+      nqB = numroc(dimB2, nb, mycol2, zero4, npcol2) 
 c     
 c     
       lda = max(one4,mpA)
@@ -2619,13 +2624,13 @@ c
 c     
 c***  fill SCALAPACK matrix descriptors
 c     
-         call descinit(descA, dimA1, dimA2, nb, nb, 0, 0,
+         call descinit(descA, dimA1, dimA2, nb, nb, zero4, zero4,
      $        islctxt2, lda, info)
          info8=info
          if(info.ne.0) call ga_error(' ga_pdsyevr: descinit A failed ',
      .        -info8)
 c     
-         call descinit(descB, dimB1, dimB2, nb, nb, 0, 0,
+         call descinit(descB, dimB1, dimB2, nb, nb, zero4, zero4,
      .        islctxt2, ldb, info)
          info8=info
          if(info.ne.0) call ga_error(' ga_pdsyevr: descinit B failed ',
@@ -2649,8 +2654,8 @@ c
      &        call ga_error('ga_pdsyevr: mem alloc failed iwork  ', -1)
 c     
          nn = max(n, nb, two4)
-         np0 = numroc(nn, nb, 0, 0, nprow2)
-         mq0 = numroc(nn, nb, 0, 0, npcol2)
+         np0 = numroc(nn, nb, zero4, zero4, nprow2)
+         mq0 = numroc(nn, nb, zero4, zero4, npcol2)
 c     
 c     
          orfac = 1.d-3
