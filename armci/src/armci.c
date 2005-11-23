@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.104 2005-10-04 14:10:42 vinod Exp $ */
+/* $Id: armci.c,v 1.105 2005-11-23 13:42:24 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -875,9 +875,21 @@ int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
 	      void *rhdr, int rhlen, void *rdata, int rdlen, 
 	      armci_hdl_t* nbh) {
   armci_ihdl_t nb_handle = (armci_ihdl_t)nbh;
-  armci_giov_t darr[2] = {{&rhdr, &rhdr, 1, rhlen}, {&rdata, &rdata, 1, rdlen}};
+  armci_giov_t darr[2]; /* = {{&rhdr, &rhdr, 1, rhlen}, {&rdata, &rdata, 1, rdlen}};*/
   gpc_send_t send;
   char *ptr;
+
+  /* initialize giov */
+  darr[0].src_ptr_array = &rhdr;
+  darr[0].dst_ptr_array = &rhdr;
+  darr[0].ptr_array_len = 1;
+  darr[0].bytes         = rhlen;
+
+  darr[1].src_ptr_array = &rdata;
+  darr[1].dst_ptr_array = &rdata;
+  darr[1].ptr_array_len = 1;
+  darr[1].bytes         = rdlen;
+
   
 /*    if(hlen<0 || hlen>=ARMCI_Gpc_get_hlen()) */
 /*      return FAIL2; */
