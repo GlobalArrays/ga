@@ -1,4 +1,4 @@
-c$Id: ndim.F,v 1.6 2000-09-12 18:29:45 d3h325 Exp $
+c$Id: ndim.F,v 1.7 2005-11-23 10:25:18 manoj Exp $
 #define  MAXLOOP 100
 
       program test
@@ -33,7 +33,7 @@ c
       call testit()
       if(ga_nodeid().eq.0)print *,' Testing 4-dimensional Arrays'
       call testit4()
-      if(ga_nodeid().eq.0)print *,' All tests succesful'
+      if(ga_nodeid().eq.0)print *,' All tests successful'
       call ga_terminate()
 c
 c***  Tidy up after message-passing library

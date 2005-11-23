@@ -1,4 +1,4 @@
-c $Id: testsolve.F,v 1.9 2000-05-25 01:09:21 d3h325 Exp $
+c $Id: testsolve.F,v 1.10 2005-11-23 10:25:18 manoj Exp $
       program test
       implicit none
 #include "mafdecls.fh"
@@ -28,6 +28,9 @@ c
 c
 c
       call testit()
+c
+      if(ga_nodeid().eq.0) print *,'All tests successful '
+c
       call ga_terminate()
 c
 #ifdef MPI

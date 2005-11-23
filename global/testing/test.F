@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.61 2004-11-06 00:35:36 d3g293 Exp $
+c $Id: test.F,v 1.62 2005-11-23 10:25:18 manoj Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -166,7 +166,7 @@ c
 c
       if(me.eq.0) call ga_print_stats()
       if(me.eq.0) print *,' ' 
-      if(me.eq.0) print *,'All tests succesful ' 
+      if(me.eq.0) print *,'All tests successful ' 
       status = ga_destroy(g_s)
 c
 c***  Tidy up the GA package

@@ -7,7 +7,7 @@
 #endif
 
       program ga_test
-c $Id: testmatmult.F,v 1.5 2005-01-07 23:32:01 manoj Exp $
+c $Id: testmatmult.F,v 1.6 2005-11-23 10:25:18 manoj Exp $
 c
 c     test ga_dgemm
 c     compile with make FLD_REN="optimized blas" testmatmult.x
@@ -168,7 +168,9 @@ c
 
  200  format(a15, i2, ': ', e12.4, ' seconds ',f12.1, 
      .     ' mflops/proc ', 3a2)
-
+c
+      if(ga_nodeid().eq.0) print *,'All tests successful '
+c      
       call ga_terminate
       call pend
 c     

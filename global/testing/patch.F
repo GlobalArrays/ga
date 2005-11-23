@@ -57,6 +57,8 @@ c
          print *,' '
       endif
       call spatch_test()
+c     
+      if(ga_nodeid().eq.0) print *,'All tests successful '
 c
       call ga_terminate()
 c

@@ -593,6 +593,8 @@ c
   500 format('   Average time for post sync  ',e12.3)
   127 continue
 c
+      if(ga_nodeid().eq.0) print *,'All tests successful '
+c      
 c***  Tidy up the GA package
 c
       call ga_terminate()

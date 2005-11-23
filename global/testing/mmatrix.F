@@ -426,6 +426,8 @@ c
 c
 c***  Tidy up the GA package
 c
+      if(ga_nodeid().eq.0)print *,' All tests successful'
+c      
       call ga_terminate()
 c
 c***  Tidy up after message-passing library

@@ -1,4 +1,4 @@
-c $Id: mulmatpatch.F,v 1.5 2005-01-07 23:32:01 manoj Exp $
+c $Id: mulmatpatch.F,v 1.6 2005-11-23 10:25:18 manoj Exp $
 #if (defined(CRAY) && !defined(__crayx1)) || defined(KSR)
 #   define xgemm SGEMM
 #   define ygemm CGEMM
@@ -58,6 +58,8 @@ c        print *, 'gasize and bufsize are ', gasize, bufsize
       call dpatch_test()
       call dpatch_test2()
 c
+      if(ga_nodeid().eq.0) print *,'All tests successful '
+c      
       call ga_terminate()
 c
 #ifdef MPI

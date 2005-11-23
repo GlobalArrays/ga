@@ -1,4 +1,4 @@
-c $Id: pgtest.F,v 1.8 2005-07-07 00:18:19 manoj Exp $
+c $Id: pgtest.F,v 1.9 2005-11-23 10:25:18 manoj Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -139,6 +139,9 @@ c
 c***  Tidy up the GA package
 c
       call ga_sync()
+c
+      if(ga_nodeid().eq.0) print *,'All tests successful '
+c
       write(6,*) 'Calling ga_terminate'
       call ga_terminate()
 c
