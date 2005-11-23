@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.134 2005-10-11 08:38:34 manoj Exp $
+# $Id: makefile.h,v 1.135 2005-11-23 12:27:39 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -472,6 +472,10 @@ _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit };/gcc ver
 ifneq (,$(findstring pathf90,$(_FC)))
     _FC = pathf90
 endif
+# for Intel compilers "ifort -V" should be used instead of "ifort -v"
+ifneq (,$(findstring ifort,$(FC)))
+    _FC = ifort
+endif
 
   ifneq ($(_FC),g77)
     ifdef USE_INTEGER4
@@ -497,7 +501,7 @@ endif
      FOPT_REN +=  -fno-second-underscore
 #     CLD_REN += -static
 #     COPT +=  -static
-  endif
+endif
   ifeq ($(FC),gfortran)
      _FC=gfortran
      FOPT_REN += -x f77-cpp-input -w
@@ -520,6 +524,7 @@ endif
          GLOB_DEFINES+= -DIFCV8
        endif
        FLD_REN += -Vaxlib
+       CLD_REN += -nofor_main
    endif
   ifeq ($(_FC),gfortran)
 #     FOPT_REN += -x f95-cpp-input
