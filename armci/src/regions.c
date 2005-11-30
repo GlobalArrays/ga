@@ -1,4 +1,4 @@
-/* $Id: regions.c,v 1.10 2005-10-03 21:30:24 vinod Exp $ interface to keep track of memory regions accross the cluster */
+/* $Id: regions.c,v 1.11 2005-11-30 10:20:53 vinod Exp $ interface to keep track of memory regions accross the cluster */
 /* 
  * armci_region_init - allocates list of regions, initialization
  * armci_region_register_shm - registers shared memory on the current node
@@ -150,6 +150,42 @@ void armci_region_init()
      if(needs_pin_ptr) armci_region_register_loc(needs_pin_ptr,needs_pin_size); 
      if(needs_pin_shmptr) armci_region_register_shm(needs_pin_shmptr,needs_pin_shmsize); 
 } 
+
+void armci_region_destroy()
+{
+armci_reglist_t *reg = &loc_regions_arr;
+int i; 
+ARMCI_MEMHDL_T *loc_memhdl;
+    if(!allow_pin) return;
+    for(i=0; i<reg->n; i++){
+#ifdef REGIONS_REQUIRE_MEMHDL
+       loc_memhdl=&((reg->list+i)->memhdl);
+       armci_network_client_deregister_memory(loc_memhdl);
+#endif
+    }
+
+    reg=clus_regions+armci_clus_me;
+    for(i=0; i<reg->n; i++){
+#ifdef REGIONS_REQUIRE_MEMHDL
+       loc_memhdl=&((reg->list+i)->memhdl);
+       armci_network_client_deregister_memory(loc_memhdl);
+#endif
+    }
+}
+
+void armci_server_region_destroy()
+{
+armci_reglist_t *reg;
+int i;
+ARMCI_MEMHDL_T *loc_memhdl;
+    reg=serv_regions+armci_clus_me;
+    for(i=0; i<reg->n; i++){
+#ifdef REGIONS_REQUIRE_MEMHDL
+       loc_memhdl=&((reg->list+i)->memhdl);
+       armci_network_server_deregister_memory(loc_memhdl);
+#endif
+    }
+}
  
 
 int armci_region_clus_found(int node, void *start, int size)

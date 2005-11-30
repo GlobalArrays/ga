@@ -1,6 +1,6 @@
-/* $Id: armci_profile.h,v 1.4 2004-07-21 00:29:59 manoj Exp $ */
+/* $Id: armci_profile.h,v 1.5 2005-11-30 10:20:53 vinod Exp $ */
 
-enum events {ARMCI_PROF_GET, ARMCI_PROF_PUT, ARMCI_PROF_ACC, /* get/put/acc */
+enum events {ARMCI_PROF_GET=0, ARMCI_PROF_PUT, ARMCI_PROF_ACC, /* get/put/acc */
 	     ARMCI_PROF_GETS, ARMCI_PROF_PUTS, ARMCI_PROF_ACCS, /* strided */
 	     ARMCI_PROF_GETV, ARMCI_PROF_PUTV, ARMCI_PROF_ACCV, /* vector */
 	     ARMCI_PROF_NBGET, ARMCI_PROF_NBPUT, ARMCI_PROF_NBACC,/*Non-block*/

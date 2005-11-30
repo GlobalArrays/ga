@@ -1,4 +1,4 @@
-/* $Id: fence.c,v 1.24 2005-08-16 17:07:04 vinod Exp $ */
+/* $Id: fence.c,v 1.25 2005-11-30 10:20:53 vinod Exp $ */
 #include "armcip.h"
 #include "armci.h"
 #include "copy.h"
@@ -50,6 +50,7 @@ void ARMCI_Fence(int proc)
         vampir_start_comm(proc,armci_me,0,ARMCI_FENCE);
 #endif
 #ifdef ARMCI_PROFILE
+ if (!SAMECLUSNODE(proc))
  armci_profile_start(ARMCI_PROF_FENCE);
 #endif
 
@@ -70,6 +71,7 @@ void ARMCI_Fence(int proc)
      MEM_FENCE;
 #endif
 #ifdef ARMCI_PROFILE
+ if (!SAMECLUSNODE(proc))
  armci_profile_stop(ARMCI_PROF_FENCE);
 #endif
 #ifdef GA_USE_VAMPIR

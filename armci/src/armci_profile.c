@@ -1,4 +1,4 @@
-/* $Id: armci_profile.c,v 1.7 2004-08-12 22:17:32 manoj Exp $ */
+/* $Id: armci_profile.c,v 1.8 2005-11-30 10:20:53 vinod Exp $ */
 
 /**
  * Set an environment variable as follows to enable ARMCI profiling
@@ -44,7 +44,7 @@
 
 
 #ifdef ARMCI_PROFILE
-
+#define DEBUG_ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -169,6 +169,15 @@ void armci_profile_init() {
 #define ARMCI_EVENT_NOTSET    -1
 
 static int armci_profile_set_event(int event_type, int range) {
+#ifdef DEBUG
+    if(SERVER_CONTEXT)
+       printf("\n%d(s):call profile set for %s isset is %d",armci_me,
+                                   gEventName[event_type],gCURRENT_EVNT.is_set);
+    else
+       printf("\n%d:call profile set for %s isset is %d",armci_me,
+                                   gEventName[event_type],gCURRENT_EVNT.is_set);
+    fflush(stdout);
+#endif
     if(gCURRENT_EVNT.is_set == 0) { /* set an event */
        gCURRENT_EVNT.is_set     = 1;
        gCURRENT_EVNT.event_type = event_type;
@@ -184,13 +193,24 @@ static int armci_profile_close_event(int event_type, int range, double *time,
 				     char *name) {
     
     int curr_event = gCURRENT_EVNT.event_type;
+#ifdef DEBUG
+    if(SERVER_CONTEXT)
+       printf("\n%d(s):call profile close for %s isset is %d",armci_me,
+                                   gEventName[event_type],gCURRENT_EVNT.is_set);
+    else
+       printf("\n%d:call profile close for %s isset is %d",armci_me,
+                                   gEventName[event_type],gCURRENT_EVNT.is_set);
+    fflush(stdout);
+#endif 
+
 
     if(gCURRENT_EVNT.is_set==1) { /* Yep, there is an event set. So close it.*/
        /*Check if "profile stop" is called for corresponding "profile start"*/
        if(event_type != curr_event) {
-	  fprintf(stderr, 
+	  printf( 
 		  "%d: %s: ERROR:Profile started for %s, but stopped for %s\n",
 		  armci_me,name,gEventName[curr_event],gEventName[event_type]);
+          fflush(stdout);
 	  armci_die("Profile_stop is called a different event", armci_me); 
        }
        
@@ -203,9 +223,10 @@ static int armci_profile_close_event(int event_type, int range, double *time,
        gCURRENT_EVNT.is_set--;
        if(gCURRENT_EVNT.is_set<=0) {
 	  char *msg="Profile_stop is called before profile_start";
-	    fprintf(stderr, "%d: %s: ERROR: %s. Event Name = %s\n", armci_me, 
+	    printf("%d: %s: ERROR: %s. Event Name = %s\n", armci_me, 
 		    name, msg, gEventName[curr_event]);
-	  armci_die(" profile_stop is called before profile_start", armci_me);
+            fflush(stdout);
+	    armci_die(" profile_stop is called before profile_start", armci_me);
        }
     }
     return ARMCI_EVENT_NOTCLOSED;
