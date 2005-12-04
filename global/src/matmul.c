@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.59 2005-12-04 07:18:21 manoj Exp $ */
+/* $Id: matmul.c,v 1.60 2005-12-04 07:52:34 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -146,7 +146,7 @@ gai_get_task_list(task_list_t *taskListA, task_list_t *taskListB,
 static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
 			       Integer *Kchunk,Integer *elems,Integer atype, 
 			       Integer m,Integer n,Integer k, short int nbuf,
-			       short int memory_flag, Integer a_grp) {
+			       short int use_armci_memory, Integer a_grp) {
     double temp;
     Integer min_tasks = MINTASKS; /* Increase tasks if there is load imbalance.
 				     This controls the granularity of chunks */
@@ -175,7 +175,7 @@ static void gai_get_chunk_size(int irregular,Integer *Ichunk,Integer *Jchunk,
       /* MAX: get the maximum chunk (or, block) size i.e  */
       max_chunk=MIN(max_chunk, (Integer)(sqrt( (double)((*elems-nbuf*NUM_MATS)/(nbuf*NUM_MATS)))));
 
-      if(!irregular && memory_flag==SET) 
+      if(!irregular && use_armci_memory==SET) 
 	 max_chunk = *Ichunk = *Jchunk = *Kchunk = BLOCK_SIZE;
     
       if(irregular) {
@@ -1035,7 +1035,7 @@ void ga_matmul(transa, transb, alpha, beta,
     Integer loC[2]={0,0}, hiC[2]={0,0};
     int local_sync_begin,local_sync_end;
     short int need_scaling=SET,use_NB_matmul=SET;
-    short int irregular=UNSET, memory_flag=UNSET;
+    short int irregular=UNSET, use_armci_memory=UNSET;
     Integer a_grp=ga_get_pgroup_(g_a), b_grp=ga_get_pgroup_(g_b);
     Integer c_grp=ga_get_pgroup_(g_c);
 
@@ -1169,8 +1169,10 @@ void ga_matmul(transa, transb, alpha, beta,
 
 	  {
 	     Integer irreg=0;
-	     if(Ichunk/Kchunk > GA_ASPECT_RATIO || 
-		Jchunk/Kchunk > GA_ASPECT_RATIO) irreg = SET;
+	     if(Ichunk/Kchunk > GA_ASPECT_RATIO || Kchunk/Ichunk > GA_ASPECT_RATIO || 
+		Jchunk/Kchunk > GA_ASPECT_RATIO || Kchunk/Jchunk > GA_ASPECT_RATIO) {
+                irreg = SET;
+             }
 	     ga_pgroup_igop(a_grp, GA_TYPE_GOP, &irreg, (Integer)1, "max");   
 	     if(irreg==SET) irregular = SET;
 	  }
@@ -1181,17 +1183,17 @@ void ga_matmul(transa, transb, alpha, beta,
 	  if(!irregular) {
 	     tmp = a_ar[0] =a=gai_get_armci_memory(Ichunk,Jchunk,Kchunk,
 						   nbuf, atype);
-	     if(tmp != NULL) memory_flag = SET;
+	     if(tmp != NULL) use_armci_memory = SET;
 	  }
 	  
 	  /* get ChunkSize (i.e.BlockSize), that fits in temporary buffer */
 	  gai_get_chunk_size(irregular, &Ichunk, &Jchunk, &Kchunk, &elems, 
-			     atype, m, n, k, nbuf, memory_flag, a_grp);
+			     atype, m, n, k, nbuf, use_armci_memory, a_grp);
 	  
 	  if(tmp == NULL) { /* try once again from armci for new chunk sizes */
 	     tmp = a_ar[0] =a=gai_get_armci_memory(Ichunk,Jchunk,Kchunk,
 						   nbuf, atype);
-	     if(tmp != NULL) memory_flag = SET;
+	     if(tmp != NULL) use_armci_memory = SET;
 	  }
 
 	  if(tmp == NULL) { /*if armci malloc fails again, then get from MA */
@@ -1252,7 +1254,7 @@ void ga_matmul(transa, transb, alpha, beta,
        }
 	     
        a = a_ar[0];
-       if(memory_flag == SET) ARMCI_Free_local(a);
+       if(use_armci_memory == SET) ARMCI_Free_local(a);
        else ga_free(a);
        
 #if DEBUG_
