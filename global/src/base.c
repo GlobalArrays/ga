@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.131 2005-11-02 20:46:56 d3g293 Exp $ */
+/* $Id: base.c,v 1.132 2005-12-04 12:11:56 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -3102,7 +3102,10 @@ Integer FATR ga_nnodes_()
 
 Integer FATR ga_pgroup_nnodes_(Integer *grp)
 {
-    return (Integer)PGRP_LIST[(int)(*grp)].map_nproc;
+    if(*grp >=0 )
+       return (Integer)PGRP_LIST[(int)(*grp)].map_nproc;
+    else
+       return ((Integer)GAnproc);
 }
 
 
