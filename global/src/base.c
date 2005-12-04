@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.132 2005-12-04 12:11:56 manoj Exp $ */
+/* $Id: base.c,v 1.133 2005-12-04 14:24:24 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1192,13 +1192,13 @@ void FATR ga_set_pgroup_(Integer *g_a, Integer *p_handle)
   GA_POP_NAME;
 }
 
-Integer ga_get_pgroup_(Integer *g_a)
+Integer FATR ga_get_pgroup_(Integer *g_a)
 {
     Integer ga_handle = *g_a + GA_OFFSET;
     return (Integer)GA[ga_handle].p_handle;
 }
  
-Integer ga_get_pgroup_size_(Integer *grp_id)
+Integer FATR ga_get_pgroup_size_(Integer *grp_id)
 {
     int p_handle = (int)(*grp_id);
     if (p_handle > 0) {
