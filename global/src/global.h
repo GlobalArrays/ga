@@ -44,6 +44,7 @@ extern Integer FATR ga_nnodes_   ARGS_(( void));
 extern Integer FATR ga_nodeid_   ARGS_(( void));
 extern Integer FATR ga_pgroup_nnodes_   ARGS_((Integer *grp_id));
 extern Integer FATR ga_pgroup_nodeid_   ARGS_((Integer *grp_id));
+extern Integer FATR ga_get_pgroup_ ARGS_((Integer *g_a));
 extern Integer FATR ga_inquire_memory_  ARGS_(( void));
 extern Integer FATR ga_memory_avail_ ARGS_(( void));
 extern Integer FATR ga_read_inc_ ARGS_((Integer*, Integer*, Integer*,
