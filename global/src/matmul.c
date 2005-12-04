@@ -1,4 +1,4 @@
-/* $Id: matmul.c,v 1.58 2005-01-08 03:16:00 manoj Exp $ */
+/* $Id: matmul.c,v 1.59 2005-12-04 07:18:21 manoj Exp $ */
 /*===========================================================
  *
  *         GA_Dgemm(): Parallel Matrix Multiplication
@@ -1026,14 +1026,7 @@ void ga_matmul(transa, transb, alpha, beta,
      void    *alpha, *beta;
      char    *transa, *transb;
 {
-#ifdef STATBUF /* Using static (memory) buffers */
-    /* approx. sqrt(2) ratio in chunk size to use the same buffer space */
-    DoubleComplex a[ICHUNK*KCHUNK], b[KCHUNK*JCHUNK], c[ICHUNK*JCHUNK];
-    DoubleComplex a_ar[2][ICHUNK*KCHUNK], b_ar[2][ICHUNK*KCHUNK],
-      c_ar[2][ICHUNK*KCHUNK];
-#else
     DoubleComplex *a=NULL, *b, *c, *a_ar[2], *b_ar[2], *c_ar[2];
-#endif
     Integer adim1=0, adim2=0, bdim1=0, bdim2=0, cdim1=0, cdim2=0, dims[2];
     Integer atype, btype, ctype, rank, me= ga_nodeid_();
     Integer n, m, k, Ichunk, Kchunk, Jchunk;
@@ -1153,12 +1146,6 @@ void ga_matmul(transa, transb, alpha, beta,
     nga_distribution_(g_b, &me, loB, hiB);
     nga_distribution_(g_c, &me, loC, hiC);
 
-#ifdef STATBUF /* Using static memory */
-    if(atype ==  C_DBL || atype == C_FLOAT)
-       Ichunk=D_CHUNK, Kchunk=D_CHUNK, Jchunk=D_CHUNK;
-    else 
-       Ichunk=ICHUNK; Kchunk=KCHUNK; Jchunk=JCHUNK;
-#else /* Using "Memory Allocator's" dynamic memory */
        {
 	  Integer elems, factor=sizeof(DoubleComplex)/GAsizeofM(atype);
 	  short int nbuf=1;
@@ -1219,7 +1206,6 @@ void ga_matmul(transa, transb, alpha, beta,
 	  
 	  c_ar[0] = c = tmp + (Kchunk*Jchunk)/factor + 1;
        }
-#endif  
        
        /** check if there is a need for scaling the data. 
 	   Note: if beta=0, then need_scaling=0  */
@@ -1265,11 +1251,9 @@ void ga_matmul(transa, transb, alpha, beta,
 				need_scaling, irregular);
        }
 	     
-#ifndef STATBUF
        a = a_ar[0];
        if(memory_flag == SET) ARMCI_Free_local(a);
        else ga_free(a);
-#endif
        
 #if DEBUG_
        Integer grp_me;
@@ -2209,3 +2193,7 @@ SET_GEMM_INDICES;
 #endif
 }
 
+/**
+ * 1. remove STATBUF
+ * 2. 
+ */

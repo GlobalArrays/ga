@@ -1,4 +1,4 @@
-/* $Id: matmul.h,v 1.14 2004-03-24 21:52:13 manoj Exp $ */
+/* $Id: matmul.h,v 1.15 2005-12-04 07:18:21 manoj Exp $ */
 #ifndef _MATMUL_H_
 #define _MATMUL_H_
 
@@ -44,13 +44,7 @@ extern void FATR ZGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
 #else
 #      define cptofcd(fcd) (fcd)
 #endif
-#ifdef STATBUF
-#  define C_CHUNK  92 
-#  define D_CHUNK  64
-#  define ICHUNK C_CHUNK
-#  define JCHUNK C_CHUNK
-#  define KCHUNK C_CHUNK
-#else
+
 /* min acceptable amount of memory (in elements) and default chunk size */
 #  define MINMEM 64
 #  define CHUNK_SIZE 256
@@ -60,7 +54,6 @@ extern void FATR ZGEMM(char*,int, char*,int, Integer*, Integer*, Integer*,
 #  define NUM_MATS 3 
 #  define MINTASKS 10 /* increase this if there is high load imbalance */
 #  define EXTRA 4
-#endif
 
 #define MIN_CHUNK_SIZE 256
 
