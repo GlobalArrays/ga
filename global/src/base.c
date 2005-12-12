@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.133 2005-12-04 14:24:24 manoj Exp $ */
+/* $Id: base.c,v 1.134 2005-12-12 17:49:50 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -121,7 +121,7 @@ int  GA_stack_size=0;
 
 /* Function prototypes */
 extern void gai_init_onesided();
-int gai_getmem(char* name, char **ptr_arr, Integer bytes, int type, long *id,
+int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
                int grp_id);
 #ifdef DO_CKPT
 static int ga_group_is_for_ft=0;
@@ -360,7 +360,7 @@ int bytes;
     PGRP_LIST = _proc_list_main_data_structure;
     for(i=0;i<MAX_ARRAYS; i++) {
        GA[i].ptr  = (char**)0;
-       GA[i].mapc = (C_Int64*)0;
+       GA[i].mapc = (C_Integer*)0;
 #ifdef DO_CKPT
        GA[i].record_id = 0;
 #endif
@@ -508,7 +508,7 @@ Integer  FATR ga_inquire_memory_()
 {
 Integer i, sum=0;
     for(i=0; i<_max_global_array; i++) 
-        if(GA[i].actv) sum += GA[i].size; 
+        if(GA[i].actv) sum += (Integer)GA[i].size; 
     return(sum);
 }
 
@@ -719,7 +719,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     /* Finally, evaluate absolute indices of first data point */
     for (i=0; i<ndim; i++) {
       GA[handle].first[i] = GA[handle].mapc[map_offset[i]+index[i]]
-                          + (C_Int64)subscript[i];
+                          + (C_Integer)subscript[i];
     }
     /* adjust upper bound */
     if (nlast > nfirst) {
@@ -770,7 +770,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     /* Finally, evaluate absolute indices of last data point */
     for (i=0; i<ndim; i++) {
       GA[handle].last[i] = GA[handle].mapc[map_offset[i]+index[i]]
-                          + (C_Int64)subscript[i];
+                          + (C_Integer)subscript[i];
     }
     /* find length of shared memory segment owned by this node. Adjust
      * length, if necessary, to account for gaps in memory between
@@ -821,7 +821,7 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
     for (i=0; i<ndim; i++) index[i] = (Integer)GA[handle].first[i];
     i = nga_locate_(g_a, index, &id);
     gam_Loc_ptr(id, handle, (Integer)GA[handle].first, &fptr);
-    GA[handle].shm_length = (C_Int64)(lptr - fptr + size);
+    GA[handle].shm_length = (C_Long)(lptr - fptr + size);
     GA_Default_Proc_Group = Save_default_group;
   } else {
     for (i=0; i<ndim; i++) {
@@ -854,7 +854,7 @@ void gai_init_struct(int handle)
      }
      if(!GA[handle].mapc){
         int len = (int)MAPLEN;
-        GA[handle].mapc = (C_Int64*)malloc(len*sizeof(C_Int64*));
+        GA[handle].mapc = (C_Integer*)malloc(len*sizeof(C_Integer*));
         GA[handle].mapc[0] = -1;
      }
      if(!GA[handle].ptr)ga_error("malloc failed: ptr:",0);
@@ -1118,7 +1118,7 @@ void FATR ga_set_data_(Integer *g_a, Integer *ndim, Integer *dims, Integer *type
   GA[ga_handle].elemsize = GAsizeofM(GA[ga_handle].type);
 
   for (i=0; i<*ndim; i++) {
-    GA[ga_handle].dims[i] = (C_Int64)dims[i];
+    GA[ga_handle].dims[i] = (C_Integer)dims[i];
     GA[ga_handle].chunk[i] = 0;
     GA[ga_handle].width[i] = 0;
   }
@@ -1139,7 +1139,7 @@ void FATR ga_set_chunk_(Integer *g_a, Integer *chunk)
     ga_error("Dimensions must be set before chunk array is specified",0);
   if (chunk) {
     for (i=0; i<GA[ga_handle].ndim; i++) {
-      GA[ga_handle].chunk[i] = (C_Int64)chunk[i];
+      GA[ga_handle].chunk[i] = (C_Integer)chunk[i];
     }
   }
   GA_POP_NAME;
@@ -1220,13 +1220,13 @@ void FATR ga_set_ghosts_(Integer *g_a, Integer *width)
   if (GA[ga_handle].ndim < 1)
     ga_error("Dimensions must be set before array widths are specified",0);
   for (i=0; i<GA[ga_handle].ndim; i++) {
-    if ((C_Int64)width[i] > GA[ga_handle].dims[i])
+    if ((C_Integer)width[i] > GA[ga_handle].dims[i])
       ga_error("Boundary width must be <= corresponding dimension",i);
-    if ((C_Int64)width[i] < 0)
+    if ((C_Integer)width[i] < 0)
       ga_error("Boundary width must be >= 0",i);
   }
   for (i=0; i<GA[ga_handle].ndim; i++) {
-    GA[ga_handle].width[i] = (C_Int64)width[i];
+    GA[ga_handle].width[i] = (C_Integer)width[i];
     if (width[i] > 0) GA[ga_handle].ghosts = 1;
   }
   GA_POP_NAME;
@@ -1244,15 +1244,15 @@ void FATR ga_set_irreg_distr_(Integer *g_a, Integer *mapc, Integer *nblock)
   if (GA[ga_handle].ndim < 1)
     ga_error("Dimensions must be set before irregular distribution is specified",0);
   for (i=0; i<GA[ga_handle].ndim; i++)
-    if ((C_Int64)nblock[i] > GA[ga_handle].dims[i])
+    if ((C_Integer)nblock[i] > GA[ga_handle].dims[i])
       ga_error("number of blocks must be <= corresponding dimension",i);
   maplen = 0;
   for (i=0; i<GA[ga_handle].ndim; i++) {
     maplen += nblock[i];
-    GA[ga_handle].nblock[i] = (C_Int64)nblock[i];
+    GA[ga_handle].nblock[i] = (C_Integer)nblock[i];
   }
   for (i=0; i<maplen; i++) {
-    GA[ga_handle].mapc[i] = (C_Int64)mapc[i];
+    GA[ga_handle].mapc[i] = (C_Integer)mapc[i];
   }
   GA[ga_handle].mapc[maplen] = -1;
   GA[ga_handle].irreg = 1;
@@ -1316,7 +1316,7 @@ logical ga_allocate_( Integer *g_a)
   if(!ma_address_init) gai_ma_address_init();
 
   ndim = GA[ga_handle].ndim;
-  for (i=0; i<ndim; i++) width[i] = (C_Int64)GA[ga_handle].width[i];
+  for (i=0; i<ndim; i++) width[i] = (C_Integer)GA[ga_handle].width[i];
 
   /* The data distribution has not been specified by the user. Create
      default distribution */
@@ -1408,7 +1408,7 @@ logical ga_allocate_( Integer *g_a)
       maplen += pe[i];
     }
     for(i = 0; i< maplen; i++) {
-      GA[ga_handle].mapc[i] = (C_Int64)mapALL[i];
+      GA[ga_handle].mapc[i] = (C_Integer)mapALL[i];
     }
     GA[ga_handle].mapc[maplen] = -1;
   }
@@ -1442,12 +1442,12 @@ logical ga_allocate_( Integer *g_a)
      nga_distribution_(g_a, &grp_me, GA[ga_handle].lo, hi);
   }
   for( i = 0, nelem=1; i< ndim; i++){
-       GA[ga_handle].chunk[i] = ((C_Int64)hi[i]-GA[ga_handle].lo[i]+1);
+       GA[ga_handle].chunk[i] = ((C_Integer)hi[i]-GA[ga_handle].lo[i]+1);
        nelem *= (hi[i]-(Integer)GA[ga_handle].lo[i]+1+2*width[i]);
   }
   mem_size = nelem * GA[ga_handle].elemsize;
   GA[ga_handle].id = INVALID_MA_HANDLE;
-  GA[ga_handle].size = (C_Int64)mem_size;
+  GA[ga_handle].size = (C_Long)mem_size;
   /* if requested, enforce limits on memory consumption */
   if(GA_memory_limited) GA_total_memory -= mem_size;
   /* check if everybody has enough memory left */
@@ -2031,7 +2031,7 @@ char* ptr_array[MAX_NPROC];
 /*\ get memory alligned w.r.t. MA base
  *  required on Linux as g77 ignores natural data alignment in common blocks
 \*/ 
-int gai_get_shmem(char **ptr_arr, Integer bytes, int type, long *adj,
+int gai_get_shmem(char **ptr_arr, C_Long bytes, int type, long *adj,
 		  int grp_id)
 {
 int status=0;
@@ -2059,7 +2059,7 @@ int i, nproc,grp_me=GAme;
 
     item_size = GAsizeofM(type);
 #   ifdef GA_ELEM_PADDING
-       bytes += item_size; 
+       bytes += (C_Long)item_size; 
 #   endif
 
 #endif
@@ -2131,11 +2131,12 @@ int gai_uses_shm(int grp_id)
       return ARMCI_Uses_shm();
 }
 
-int gai_getmem(char* name, char **ptr_arr, Integer bytes, int type, long *id,
+int gai_getmem(char* name, char **ptr_arr, C_Long bytes, int type, long *id,
 	       int grp_id)
 {
 Integer handle = INVALID_MA_HANDLE, index;
-Integer nproc=GAnproc, grp_me=GAme, nelem, item_size = GAsizeofM(type);
+Integer nproc=GAnproc, grp_me=GAme, item_size = GAsizeofM(type);
+C_Long nelem;
 char *ptr = (char*)0;
  
 
@@ -2149,7 +2150,7 @@ char *ptr = (char*)0;
 #else
    if(gai_uses_shm(grp_id)) return gai_get_shmem(ptr_arr, bytes, type, id, grp_id);
    else{
-     nelem = bytes/item_size + 1;
+     nelem = bytes/((C_Long)item_size) + 1;
      if(bytes)
         if(MA_alloc_get(type, nelem, name, &handle, &index)){
                 MA_get_pointer(handle, &ptr);}
@@ -2310,9 +2311,9 @@ logical ga_duplicate(Integer *g_a, Integer *g_b, char* array_name)
       */
 {
 char     **save_ptr;
-Integer  mem_size, mem_size_proc;
+C_Long  mem_size, mem_size_proc;
 Integer  i, ga_handle, status;
-C_Int64  *save_mapc;
+C_Integer  *save_mapc;
 int local_sync_begin,local_sync_end;
 Integer grp_id, grp_me=GAme, grp_nproc=GAnproc;
 
@@ -2431,7 +2432,7 @@ int GA_Assemble_duplicate(int g_a, char* array_name, void* ptr)
 {
 char     **save_ptr;
 int      i, ga_handle;
-C_Int64      *save_mapc;
+C_Integer      *save_mapc;
 int extra = sizeof(getmem_t)+GAnproc*sizeof(char*);
 getmem_t *info = (getmem_t *)((char*)ptr - extra);
 char **ptr_arr = (char**)(info+1);
@@ -2469,7 +2470,7 @@ int g_b;
       /* get ptrs and datatype from user memory */
       gam_checktype(ga_type_f2c(info->type));
       GA[ga_handle].type = ga_type_f2c(info->type);
-      GA[ga_handle].size = info->size;
+      GA[ga_handle].size = (C_Long)info->size;
       GA[ga_handle].id = info->id;
       memcpy(GA[ga_handle].ptr,ptr_arr,(size_t)GAnproc*sizeof(char**));
 
@@ -2644,7 +2645,7 @@ void FATR ga_fill_(Integer *g_a, void* val)
 int i,handle=GA_OFFSET + (int)*g_a;
 char *ptr;
 int local_sync_begin,local_sync_end;
-Integer elems;
+C_Long elems;
 Integer grp_id;
 
 #ifdef GA_USE_VAMPIR
@@ -2661,7 +2662,7 @@ Integer grp_id;
 
    ga_check_handleM(g_a, "ga_fill");
    gam_checktype(GA[handle].type);
-   elems = (Integer)GA[handle].size/GA[handle].elemsize;
+   elems = GA[handle].size/((C_Long)GA[handle].elemsize);
    
    /* Bruce..Please CHECK if this is correct */
    if (grp_id >= 0){  
@@ -2844,7 +2845,7 @@ Integer d, index, ndim, ga_handle = GA_OFFSET + *g_a;
 #define findblock(map_ij,n,scale,elem, block)\
 {\
 int candidate, found, b; \
-C_Int64 *map= (map_ij);\
+C_Integer *map= (map_ij);\
 \
     candidate = (int)(scale*(elem));\
     found = 0;\
@@ -3384,7 +3385,7 @@ void FATR ga_merge_mirrored_(Integer *g_a)
   Integer handle = GA_OFFSET + *g_a;
   Integer inode, nprocs, nnodes, zero, zproc, nblocks;
   int *blocks;
-  C_Int64  *map, *dims, *width;
+  C_Integer  *map, *dims, *width;
   Integer i, j, index[MAXDIM], itmp, ndim;
   Integer nelem, count, type, atype;
   char *zptr, *bptr, *nptr;
@@ -3672,7 +3673,7 @@ Integer FATR ga_num_mirrored_seg_(Integer *g_a)
   Integer handle = *g_a + GA_OFFSET;
   Integer i, j, ndim, map_offset[MAXDIM];
   int *nblock;
-  C_Int64 *first, *last;
+  C_Integer *first, *last;
   Integer lower[MAXDIM], upper[MAXDIM];
   Integer istart = 0, nproc, inode;
   Integer ret = 0, icheck, np;
@@ -3702,7 +3703,7 @@ Integer FATR ga_num_mirrored_seg_(Integer *g_a)
      * that contains start of shared memory segment */
     if (!istart) {
       for (j=0; j<ndim; j++) {
-        if (!(first[j] >= (C_Int64)lower[j] && first[j] <= (C_Int64)upper[j])) {
+        if (!(first[j] >= (C_Integer)lower[j] && first[j] <= (C_Integer)upper[j])) {
           icheck = 0;
           break;
         }
@@ -3713,7 +3714,7 @@ Integer FATR ga_num_mirrored_seg_(Integer *g_a)
     }
     icheck = 1;
     for (j=0; j<ndim; j++) {
-      if (!(last[j] >= (C_Int64)lower[j] && last[j] <= (C_Int64)upper[j])) {
+      if (!(last[j] >= (C_Integer)lower[j] && last[j] <= (C_Integer)upper[j])) {
         icheck = 0;
         break;
       }
@@ -3738,7 +3739,7 @@ void FATR ga_get_mirrored_block_(Integer *g_a,
 {
   Integer handle = *g_a + GA_OFFSET;
   Integer i, j, ndim, map_offset[MAXDIM];
-  C_Int64 *first, *last;
+  C_Integer *first, *last;
   int *nblock;
   Integer lower[MAXDIM], upper[MAXDIM];
   Integer istart = 0, nproc, inode;
@@ -3775,7 +3776,7 @@ void FATR ga_get_mirrored_block_(Integer *g_a,
      * that contains start of shared memory segment */
     if (!istart) {
       for (j=0; j<ndim; j++) {
-        if (!(first[j] >= (C_Int64)lower[j] && first[j] <= (C_Int64)upper[j])) {
+        if (!(first[j] >= (C_Integer)lower[j] && first[j] <= (C_Integer)upper[j])) {
           icheck = 0;
           break;
         }
@@ -3786,7 +3787,7 @@ void FATR ga_get_mirrored_block_(Integer *g_a,
     }
     icheck = 1;
     for (j=0; j<ndim; j++) {
-      if (!(last[j] >= (C_Int64)lower[j] && last[j] <= (C_Int64)upper[j])) {
+      if (!(last[j] >= (C_Integer)lower[j] && last[j] <= (C_Integer)upper[j])) {
         icheck = 0;
         break;
       }
@@ -3837,7 +3838,7 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
 {
   Integer handle = GA_OFFSET + *g_a;
   Integer inode, new_inode, nprocs, nnodes, new_nnodes, zero, zproc;
-  C_Int64 *map, *dims, *width;
+  C_Integer *map, *dims, *width;
   int *blocks;
   Integer i, j, index[MAXDIM], itmp, ndim;
   Integer nelem, count, type;
@@ -3966,7 +3967,7 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
       i = nga_locate_(g_a, index, &id);
       gam_Loc_ptr(id, handle, GA[handle].first, &fptr);
       for (i=0;i<ndim;i++) index[i] = (Integer)GA[handle].last[i];
-      slength = GA[handle].shm_length;
+      slength = (int)GA[handle].shm_length;
       if(nnodes>1){
         if(!powof2nodes && inode < 2*sizeB && groupA) {
           ilast = inode + 1;

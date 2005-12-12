@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.36 2005-09-22 19:50:12 d3g293 Exp $ */
+/*$Id: base.h,v 1.37 2005-12-12 17:49:51 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -19,7 +19,6 @@ extern short int _ga_irreg_flag;
 #define __CRAYX1_PRAGMA(_pragf)
 #endif
 
-typedef long C_Int64;
 
 typedef int ARMCI_Datatype;
 #include "armci.h"
@@ -35,27 +34,30 @@ typedef struct {
 #endif
 } proc_list_t;
 
+typedef Integer C_Integer;
+typedef armci_size_t C_Long;
+
 typedef struct {
        short int  ndim;         /* number of dimensions                 */
        short int  irreg;        /* 0-regular; 1-irregular distribution  */
        int  type;               /* data type in array                   */
        int  actv;               /* activity status                      */
-       C_Int64  size;           /* size of local data in bytes          */
+       C_Long   size;           /* size of local data in bytes          */
        int  elemsize;           /* sizeof(datatype)                     */
        int  ghosts;             /* flag indicating presence of ghosts   */
        long lock;               /* lock                                 */
        long id;                 /* ID of shmem region / MA handle       */
-       C_Int64  dims[MAXDIM];   /* global array dimensions              */
-       C_Int64  chunk[MAXDIM];  /* chunking                             */
+       C_Integer  dims[MAXDIM]; /* global array dimensions              */
+       C_Integer  chunk[MAXDIM];/* chunking                             */
        int  nblock[MAXDIM];     /* number of blocks per dimension       */
-       C_Int64  width[MAXDIM];  /* boundary cells per dimension         */
-       C_Int64  first[MAXDIM];  /* (Mirrored only) first local element  */
-       C_Int64  last[MAXDIM];   /* (Mirrored only) last local element   */
-       C_Int64  shm_length;     /* (Mirrored only) local shmem length   */
-       C_Int64  lo[MAXDIM];     /* top/left corner in local patch       */
+       C_Integer  width[MAXDIM];/* boundary cells per dimension         */
+       C_Integer  first[MAXDIM];/* (Mirrored only) first local element  */
+       C_Integer  last[MAXDIM]; /* (Mirrored only) last local element   */
+       C_Long  shm_length;      /* (Mirrored only) local shmem length   */
+       C_Integer  lo[MAXDIM];   /* top/left corner in local patch       */
        double scale[MAXDIM];    /* nblock/dim (precomputed)             */
        char **ptr;              /* arrays of pointers to remote data    */
-       C_Int64  *mapc;          /* block distribution map               */
+       C_Integer  *mapc;        /* block distribution map               */
        char name[FNAM+1];       /* array name                           */
        int p_handle;            /* pointer to processor list for array  */
        double *cache;           /* store for frequently accessed ptrs   */
