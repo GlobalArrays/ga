@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.107 2005-12-19 20:40:54 vinod Exp $ */
+/* $Id: armci.c,v 1.108 2005-12-19 21:02:11 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -872,7 +872,7 @@ void ARMCI_Ckpt_finalize(int rid)
     armci_icheckpoint_finalize(rid);
 }
 #endif
-
+#ifdef ARMCI_ENABLE_GPC_CALLS
 int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
 	      void *rhdr, int rhlen, void *rdata, int rdlen, 
 	      armci_hdl_t* nbh) {
@@ -941,3 +941,4 @@ int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
 int armci_sameclusnode(int proc) {
   return SAMECLUSNODE(proc);
 }
+#endif

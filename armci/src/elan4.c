@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.6 2005-12-19 20:40:54 vinod Exp $ */
+/* $Id: elan4.c,v 1.7 2005-12-19 21:02:11 vinod Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -164,7 +164,9 @@ int armcill_getbidx(int size, int proc, SERV_BUF_IDX_T *bufidx)
   return 0;
 }
 
+#ifdef ARMCI_ENABLE_GPC_CALLS
 extern gpc_buf_t *gpc_req;
+#endif
 void armci_init_connections()
 {
 ELAN_QUEUE *q, *qs;
@@ -175,7 +177,9 @@ char *enval;
   
     //_ELAN_SLOTSIZE = elan_queueMaxSlotSize(elan_base->state);
     slotsize=_ELAN_SLOTSIZE;
+#ifdef ARMCI_ENABLE_GPC_CALLS
     gpc_req = (gpc_buf_t *)malloc(MAX_GPC_REQ*sizeof(gpc_buf_t)+SIXTYFOUR);
+#endif
     if ((q = elan_gallocQueue(elan_base, elan_base->allGroup)) == NULL)
             armci_die( "elan_gallocElan",0 );
 #if NEWQAPI
@@ -921,7 +925,7 @@ ELAN_EVENT* o_cmpl;
        if(op==GET)
          o_cmpl = elan_get(elan_base->state,src,dst,count[0],proc);
        if(op==PUT){
-         if(nbhandle) 
+         if(nb_handle) 
            armci_elan_put_with_tracknotify(src,dst,count[0],proc,&o_cmpl);
          else
            o_cmpl = elan_put(elan_base->state,src,dst,count[0],proc);
@@ -937,7 +941,7 @@ ELAN_EVENT* o_cmpl;
        armci_die("network strided called for accumulate",proc);
 
     if(!nb_handle)
-       elan_wait(o_cmpl);
+       elan_wait(o_cmpl,elan_base->waitType);
     else
        nb_handle->cmpl_info = o_cmpl;
 }

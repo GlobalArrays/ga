@@ -1,4 +1,4 @@
-/* $Id: gpc.c,v 1.4 2005-12-19 20:40:54 vinod Exp $ *****************************************************
+/* $Id: gpc.c,v 1.5 2005-12-19 21:02:11 vinod Exp $ *****************************************************
   Prototype of Global Procedure Calls.
   July/03 JN - shared memory version  
   
@@ -17,7 +17,7 @@ static void *_table[GPC_SLOTS]={
 (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0,
 (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0};
 
-#if defined(GM) || defined(VAPI) || defined(QUADRICS)
+#if (defined(GM) || defined(VAPI) || defined(QUADRICS)) && defined(ARMCI_ENABLE_GPC_CALLS)
 
 /*\ callback functions must be registered -- user gets int handle back
 \*/

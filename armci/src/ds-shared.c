@@ -685,7 +685,7 @@ void armci_start_server()
 void *armci_server_code(void *data)
 {
 #ifdef SERVER_THREAD
-#if defined(GM) || defined(VAPI) || defined(QUADRICS)
+#if (defined(GM) || defined(VAPI) || defined(QUADRICS)) && defined(ARMCI_ENABLE_GPC_CALLS)
 #  ifdef PTHREADS
   extern pthread_t data_server;
   data_server = pthread_self();
