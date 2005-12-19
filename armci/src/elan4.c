@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.5 2005-12-19 18:03:47 vinod Exp $ */
+/* $Id: elan4.c,v 1.6 2005-12-19 20:40:54 vinod Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -164,6 +164,7 @@ int armcill_getbidx(int size, int proc, SERV_BUF_IDX_T *bufidx)
   return 0;
 }
 
+extern gpc_buf_t *gpc_req;
 void armci_init_connections()
 {
 ELAN_QUEUE *q, *qs;
@@ -174,10 +175,9 @@ char *enval;
   
     //_ELAN_SLOTSIZE = elan_queueMaxSlotSize(elan_base->state);
     slotsize=_ELAN_SLOTSIZE;
-
+    gpc_req = (gpc_buf_t *)malloc(MAX_GPC_REQ*sizeof(gpc_buf_t)+SIXTYFOUR);
     if ((q = elan_gallocQueue(elan_base, elan_base->allGroup)) == NULL)
             armci_die( "elan_gallocElan",0 );
-
 #if NEWQAPI
     _armci_buf_init();
     if(!(qrx = elan_queueRxInit(elan_base->state, q, nslots, slotsize, R, 0))) 
@@ -250,7 +250,7 @@ char *enval;
     }
 
     if(MessageSndBuffer){
-      ((request_header_t*)MessageSndBuffer)->tag = (void*)0;
+      ((request_header_t*)MessageSndBuffer)->tag.data_ptr = (void*)0;
     }else armci_die("armci_init_connections: buf not set",0);
 }
 
@@ -384,8 +384,13 @@ long usec_to_poll;
     if(DEBUG_){
         printf("%d(server): waiting for request\n",armci_me); fflush(stdout);
     }
- 
+#ifdef ARMCI_ENABLE_GPC_CALLS
+    unblock_thread_signal(GPC_COMPLETION_SIGNAL); 
+#endif
     while(1){
+#ifdef ARMCI_ENABLE_GPC_CALLS
+        block_thread_signal(GPC_COMPLETION_SIGNAL);
+#endif
 #       if NEWQAPI
            void *buf;
            buf = elan_queueRxWait(qrx, NULL, usec_to_poll);  
@@ -398,6 +403,9 @@ long usec_to_poll;
 
         /* free the buffer if used */
         if(bidx>=0) { armci_clearbflag(bidx); bidx =-1; }
+#ifdef ARMCI_ENABLE_GPC_CALLS
+        unblock_thread_signal(GPC_COMPLETION_SIGNAL);
+#endif
     }
 
     if(DEBUG_) {printf("%d(server): done! closing\n",armci_me); fflush(stdout);}
@@ -418,7 +426,7 @@ request_header_t *msginfo = (request_header_t *)mesg;
     if(DEBUG_ ) {
        printf("%d(server): got %d req (dscrlen=%d datalen=%d) from %d %p\n",
               armci_me, msginfo->operation, msginfo->dscrlen,
-              msginfo->datalen, msginfo->from,msginfo->tag); fflush(stdout);
+              msginfo->datalen, msginfo->from,msginfo->tag.data_ptr); fflush(stdout);
     }
 
     *buflen = MSG_BUFLEN - sizeof(request_header_t);
@@ -430,10 +438,10 @@ request_header_t *msginfo = (request_header_t *)mesg;
        if(msginfo->operation != GET){
           int payload = msginfo->datalen;
           int off =0;
-          char *rembuf = msginfo->tag;
+          char *rembuf = msginfo->tag.data_ptr;
    
           if(msginfo->inbuf){
-                bidx = (long)msginfo->tag;
+                bidx = (long)msginfo->tag.ack;
                 //printf("%ds bidx=%ld\n",armci_me,bidx); fflush(stdout);
                 if(bidx>MAX_BUFS || bidx<0) 
                    armci_die2("got wrong buffer index",(int)bidx,MAX_BUFS);
@@ -450,14 +458,14 @@ request_header_t *msginfo = (request_header_t *)mesg;
 
              if(!msginfo->inbuf){
 
-                void *flag_to_clear = ((void**)msginfo->tag)-1; 
+                void *flag_to_clear = ((void**)msginfo->tag.data_ptr)-1; 
                 MY_GET(rembuf,MessageBuffer,payload, msginfo->from);
 
                 /* mark sender buffer as free -- flag is before descriptor */
                 MY_PUT(&zero,flag_to_clear,sizeof(void*),msginfo->from);
                 if(DEBUG_){
                   printf("%d:serv &tag=%p tag=%p dscrlen=%d %d data to %p pdscr=%p pdata=%p\n",
-                         armci_me, flag_to_clear, msginfo->tag, msginfo->dscrlen, payload, 
+                         armci_me, flag_to_clear, msginfo->tag.ack, msginfo->dscrlen, payload, 
                          MessageBuffer,*(void **)pdescr, *(void **)pdata); fflush(stdout);
                 }
 
@@ -495,7 +503,7 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
          else { 
            printf("%ds: slotsize=%d flag=%d size=%d\n",armci_me,_ELAN_SLOTSIZE,
                   event_getbflag,msginfo->dscrlen+msginfo->datalen);
-           armci_die("protocol inconsitency",(int)(long)msginfo->tag);
+           armci_die("protocol inconsitency",(int)(long)msginfo->tag.ack);
          }   
          event_getbflag=NULL;
     }
@@ -512,7 +520,7 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
 
       if(msginfo->inbuf){
 
-         Bidx = (long)msginfo->tag;
+         Bidx = (long)msginfo->tag.ack;
          if(Bidx<0){ 
 
            msginfo->inbuf = 0;  /* no buf -> take the other path */
@@ -531,17 +539,17 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
       }
 
       /* set message tag -> has pointer to client buffer with descriptor+data */
-      msginfo->tag = (void *)(buf + sizeof(request_header_t));
+      msginfo->tag.data_ptr = (void *)(buf + sizeof(request_header_t));
       //printf("%d: SENDing for %d %p to %p %d bytes bidx=%d\n",armci_me,proc_serv,
       //      buf+off,MessageBuffer,payload,Bidx); fflush(stdout);
       //MY_PUT(buf+off,MessageBuffer,payload, proc_serv);
 
 
 
-      if(DEBUG_){ printf("%d:in SEND &tag=%p tag=%p\n",armci_me,&msginfo->tag,
-                msginfo->tag); fflush(stdout); }
+      if(DEBUG_){ printf("%d:in SEND &tag=%p tag=%p\n",armci_me,&msginfo->tag.data_ptr,
+                msginfo->tag.data_ptr); fflush(stdout); }
 
-    } else msginfo->tag=NULL; /* null tag means sender buffer is free */
+    } else msginfo->tag.data_ptr=NULL; /* null tag means sender buffer is free */
 
 #   if NEWQAPI
 #      ifdef BUF_EXTRA_FIELD_T
@@ -574,7 +582,7 @@ void armcill_clearbuf(ELAN_EVENT** handle)
 request_header_t *msginfo = (request_header_t *)(handle+1);
 
      elan_wait(*handle, elan_base->waitType); 
-     if(!msginfo->inbuf)while(msginfo->tag)armci_util_spin(100,msginfo);
+     if(!msginfo->inbuf)while(msginfo->tag.ack)armci_util_spin(100,msginfo);
 }
 
 int armcill_testbuf(ELAN_EVENT** handle)
@@ -585,7 +593,7 @@ request_header_t *msginfo = (request_header_t *)(handle+1);
      if(msginfo->inbuf)
         ret = !elan_poll(handle,1L);
      else
-        ret = (msginfo->tag)? 0: 1;
+        ret = (msginfo->tag.ack)? 0: 1;
 
      return ret;
 }

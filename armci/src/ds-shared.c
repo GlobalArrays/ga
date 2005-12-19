@@ -285,7 +285,8 @@ void armci_send_strided(int proc, request_header_t *msginfo, char *bdata,
     /*  copy into a buffer before sending */
    
 #  ifdef SERV_BUF_IDX_T
-    msginfo->inbuf = armcill_getbidx((msginfo->datalen+msginfo->dscrlen), proc, &msginfo->tag);
+    msginfo->inbuf = armcill_getbidx((msginfo->datalen+msginfo->dscrlen), proc, &msginfo->tag.ack);
+    msginfo->tag.data_ptr = &msginfo->tag.ack;
 #  endif
     armci_write_strided(ptr, strides, stride_arr, count, bdata);
     if(armci_send_req_msg(proc,msginfo, bytes))
@@ -450,7 +451,15 @@ void armci_send_data(request_header_t* msginfo, void *data)
         armci_WriteToDirect(to, msginfo, buf);
     }
 #else
+#ifdef ELAN4
+        /*this is because WriteToDirect is a no-op in elan4.c so we have
+         * to do a put. This will not cause problems anywhere else in the
+         * code and this part on elan4 will only be invoked in a GPC
+         */
+        ARMCI_Put(data,msginfo->tag.data_ptr,msginfo->datalen,to);
+#else
         armci_WriteToDirect(to, msginfo, data);
+#endif
 #endif
 }
 
@@ -676,7 +685,7 @@ void armci_start_server()
 void *armci_server_code(void *data)
 {
 #ifdef SERVER_THREAD
-#if defined(GM) || defined(VAPI)
+#if defined(GM) || defined(VAPI) || defined(QUADRICS)
 #  ifdef PTHREADS
   extern pthread_t data_server;
   data_server = pthread_self();

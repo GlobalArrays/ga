@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.106 2005-12-19 18:04:07 vinod Exp $ */
+/* $Id: armci.c,v 1.107 2005-12-19 20:40:54 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -931,7 +931,7 @@ int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
     nb_handle = NULL;
   }  
 
-#if defined(GM) || defined(VAPI)
+#if defined(GM) || defined(VAPI) || defined(QUADRICS)
   if(armci_rem_gpc(GET, darr, 2, &send, proc, 1, nb_handle))
 #endif
     return FAIL2;

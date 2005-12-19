@@ -23,7 +23,6 @@ extern void _armci_buf_clear_all();
 #  include "myrinet.h"
 #elif defined(DOELAN4)
 #  include "elandefs.h"
-   typedef void* msg_tag_t; 
 #elif defined(QUADRICS)
 #  include <elan/elan.h>
    typedef void* msg_tag_t; 

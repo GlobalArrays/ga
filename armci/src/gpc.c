@@ -1,4 +1,4 @@
-/* $Id: gpc.c,v 1.3 2005-10-04 14:10:43 vinod Exp $ *****************************************************
+/* $Id: gpc.c,v 1.4 2005-12-19 20:40:54 vinod Exp $ *****************************************************
   Prototype of Global Procedure Calls.
   July/03 JN - shared memory version  
   
@@ -17,7 +17,7 @@ static void *_table[GPC_SLOTS]={
 (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0,
 (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0, (void*)0};
 
-#if defined(GM) || defined(VAPI)
+#if defined(GM) || defined(VAPI) || defined(QUADRICS)
 
 /*\ callback functions must be registered -- user gets int handle back
 \*/
@@ -105,6 +105,7 @@ int ARMCI_Gpc_exec(int h, int p, void  *hdr, int hlen,  void *data,  int dlen,
 
   if(nbh)
     nbh->proc = p;
+#if 0
   if(SAMECLUSNODE(p)) {
     int rhsize, rdsize;
     int (*func)();
@@ -120,6 +121,7 @@ int ARMCI_Gpc_exec(int h, int p, void  *hdr, int hlen,  void *data,  int dlen,
     ARMCI_Fence(p);
     return 0;
   }
+#endif
 
 /*    fprintf(stderr, "%d:: armci gpc exec. invoking armci gpc\n", armci_me); */
   return armci_gpc(h, p, hdr, hlen,  data,  dlen,

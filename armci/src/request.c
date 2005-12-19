@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.68 2005-12-19 18:06:21 vinod Exp $ */
+/* $Id: request.c,v 1.69 2005-12-19 20:40:54 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -1133,7 +1133,7 @@ int armci_rem_get(int proc,
     msginfo->bytes = msginfo->dscrlen;
 
 
-#if defined(GM) || defined(VAPI)
+#if defined(GM) || defined(VAPI) || defined(QUADRICS)
     /* prepare for  set the stamp at the end of the user buffer */
     if(count[0]<sizeof(int))armci_die("armci_rem_get: wrong protocol",count[0]);
 #  ifdef GM
@@ -1379,10 +1379,13 @@ void armci_server_vector( request_header_t *msginfo,
 /**Server side routine to handle a GPC call request**/
 /*===============Register this memory=====================*/
 #ifdef ARMCI_ENABLE_GPC_CALLS
-#if defined(GM) || defined(VAPI)
+#if defined(GM) || defined(VAPI) || defined(QUADRICS)
 gpc_buf_t *gpc_req;
-
-#if defined(DATA_SERVER) && defined(SERVER_THREAD) 
+/*VT: I made the change below because DATA_SERVER is not defined for elan4
+ *VT: This will only be invoked in case of GPC call and should not intefere
+ *VT: with any other call
+ */
+#if (defined(ELAN4) || defined(DATA_SERVER)) && defined(SERVER_THREAD) 
 #  ifdef PTHREADS
 pthread_t data_server;
 #  else

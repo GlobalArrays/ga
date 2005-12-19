@@ -11,6 +11,11 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc,E
 
 typedef int ops_t;
 extern ops_t *rdma_ops_pending_ar;
+typedef struct {
+    void *data_ptr;         /* pointer where the data should go */
+    long ack;               /* header ack */
+    void *ack_ptr;          /* pointer where the data should go */
+} msg_tag_t;
 
 #define GET_SEND_BUFFER _armci_buf_get
 #define FREE_SEND_BUFFER _armci_buf_release
