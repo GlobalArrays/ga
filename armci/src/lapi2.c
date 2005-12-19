@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.13 2003-04-02 01:36:07 d3h325 Exp $ */
+/* $Id: lapi2.c,v 1.14 2005-12-19 18:03:47 vinod Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -231,7 +231,7 @@ int i,rc;
  *  completion counter should always be same for non-blk and blk code to be
  *  able to do ordering/fence.
 \*/
-void armci_lapi_strided(int op, void* scale, int proc,void *src_ptr,
+void armci_network_strided(int op, void* scale, int proc,void *src_ptr,
                    int src_stride_arr[], void* dst_ptr, int dst_stride_arr[],
                    int count[], int stride_levels, armci_ihdl_t nb_handle)
 {

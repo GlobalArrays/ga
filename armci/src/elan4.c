@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.4 2004-09-15 17:01:35 vinod Exp $ */
+/* $Id: elan4.c,v 1.5 2005-12-19 18:03:47 vinod Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -899,7 +899,40 @@ ELAN_EVENT* armcill_nbgetS(int proc, void* src_ptr, int src_stride_arr[],
 static void* _src[MAX_VECS], *_dst[MAX_VECS];
 
 
+void armci_network_strided(int op, void* scale, int proc,void *src_ptr,
+                   int src_stride_arr[], void* dst_ptr, int dst_stride_arr[],
+                   int count[], int stride_levels, armci_ihdl_t nb_handle)
+{
+int rc=0;
+int total_of_2D,i,j;    
+char *src = (char*)src_ptr, *dst=(char*)dst_ptr;
+char *bufptr;
+int dsize=3*sizeof(void*);
+ELAN_EVENT* o_cmpl;
+    if(stride_levels==0){
+       if(op==GET)
+         o_cmpl = elan_get(elan_base->state,src,dst,count[0],proc);
+       if(op==PUT){
+         if(nbhandle) 
+           armci_elan_put_with_tracknotify(src,dst,count[0],proc,&o_cmpl);
+         else
+           o_cmpl = elan_put(elan_base->state,src,dst,count[0],proc);
+       }
+    }
+    else if(op==GET)
+       o_cmpl = elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+                           dst_stride_arr, count, stride_levels, proc);
+    else if(op==PUT)
+       o_cmpl = elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+                           dst_stride_arr, count, stride_levels, proc);
+    else
+       armci_die("network strided called for accumulate",proc);
 
+    if(!nb_handle)
+       elan_wait(o_cmpl);
+    else
+       nb_handle->cmpl_info = o_cmpl;
+}
 void armcill_getv(int proc, int bytes, int count, void* src[], void* dst[])
 {
 int _j, issued=0;

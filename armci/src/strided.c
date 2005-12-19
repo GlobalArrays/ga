@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.102 2005-09-01 00:02:22 vinod Exp $ */
+/* $Id: strided.c,v 1.103 2005-12-19 18:03:38 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -387,7 +387,6 @@ int armci_acc_copy_strided(int optype, void* scale, int proc,
 
     return(rc);
 }
-    
 
 
 
@@ -426,11 +425,11 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
 
 /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  ifdef LAPI2 
+#  if defined(LAPI2) || defined(ELAN4) 
     /*even 1D armci_nbput has to use different origin counters for 1D */
     if(!ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
        !nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD)) 
-       armci_lapi_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
+       armci_network_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
                          dst_stride_arr,count,stride_levels,nb_handle);
     else
 #  endif
@@ -499,7 +498,7 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
     
     /* deal with non-blocking loads and stores */
 #if defined(LAPI) || defined(_ELAN_PUTGET_H)
-#   ifdef LAPI
+#   if defined(LAPI)
      if(!nb_handle)
 #   endif
     {
@@ -1350,7 +1349,9 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
-       
+#if defined(VAPI)
+      extern int armci_max_num_sg_ent;
+#endif
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
          ARMCI_Fence(proc);
@@ -1364,13 +1365,14 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
          return 0;
        }
 #if   defined(VAPI)
-       if(0&&stride_levels==1 && count[0]>VAPI_SGPUT_MIN_COLUMN &&
+       if(stride_levels==1 && /*count[0]>VAPI_SGPUT_MIN_COLUMN &&*/
+         (count[1] < armci_max_num_sg_ent || count[0] > VAPI_SGPUT_MIN_COLUMN)&&
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
          ARMCI_Fence(proc);
          armci_two_phase_send(proc, src_ptr, src_stride_arr, dst_ptr,
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);
 #        ifdef ARMCI_PROFILE
-	 armci_profile_stop_strided(ARMCI_PROF_NBPUTS);
+          armci_profile_stop_strided(ARMCI_PROF_NBPUTS);
 #        endif 
          return 0;  
        }
@@ -1470,6 +1472,9 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #ifndef LAPI2
     if(!direct){
 #     ifdef ALLOW_PIN
+#if defined(VAPI)
+      extern int armci_max_num_sg_ent;
+#endif
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
          ARMCI_Fence(proc);
@@ -1481,7 +1486,8 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
          return 0;
        }
 #if   defined(VAPI)
-       if(stride_levels==1 && count[0]>VAPI_SGGET_MIN_COLUMN &&
+       if(stride_levels==1 && 
+         (count[1] < armci_max_num_sg_ent || count[0] > VAPI_SGGET_MIN_COLUMN)&&
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
          ARMCI_Fence(proc);
           armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
