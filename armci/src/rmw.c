@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.20 2004-08-04 22:42:46 manoj Exp $ */
+/* $Id: rmw.c,v 1.21 2005-12-19 18:06:21 vinod Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -100,8 +100,10 @@ void armci_generic_rmw(int op, void *ploc, void *prem, int extra, int proc)
            break;
       default: armci_die("rmw: operation not supported",op);
     }
-
-    ARMCI_Fence(proc); /* we need fence before unlocking */
+#ifdef VAPI
+    if(!SERVER_CONTEXT)
+#endif
+      ARMCI_Fence(proc); 
     NATIVE_UNLOCK(lock,proc);
 }
 

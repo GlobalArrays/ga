@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.13 2005-08-04 22:11:59 vinod Exp $ */
+/*$Id: armci-vapi.h,v 1.14 2005-12-19 18:06:21 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -58,6 +58,7 @@ extern char * armci_vapi_client_mem_alloc(int);
 typedef struct { 
         int tag;
         VAPI_sr_desc_t descr;
+        VAPI_rr_desc_t rdescr;
         VAPI_sg_lst_entry_t sg_entry;
 } sdescr_t;
 

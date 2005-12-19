@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.22 2005-10-04 14:10:43 vinod Exp $************************************************ 
+/* $Id: vapi.c,v 1.23 2005-12-19 18:06:21 vinod Exp $************************************************ 
   Initial version of ARMCI Port for the Infiniband VAPI
   Contiguous sends and noncontiguous sends need a LOT of optimization
   most of the structures are very similar to those in VIA code.
@@ -11,9 +11,9 @@
 #include "armcip.h"
 #include "copy.h"
 #include "request.h"
-/*our incude*/
 #include "armci-vapi.h"
 #define DEBUG_INIT 0
+#define DEBUG_FINALIZE 0
 #define DEBUG_SERVER 0
 #define DEBUG_CLN 0
 #define TIME_INIT 0
@@ -31,7 +31,8 @@ armci_connect_t *CLN_con,*SRV_con;
 VAPI_hca_id_t   hca_id= VAPIDEV_NAME;
 
 u_int32_t armci_max_num_sg_ent;
-u_int32_t armci_max_qp_ous_wr;
+u_int32_t armci_max_qp_ous_swr;
+u_int32_t armci_max_qp_ous_rwr;
 
 /*\
  * datastrucure for infinihost NIC
@@ -210,7 +211,8 @@ static double inittime0=0,inittime1=0,inittime2=0,inittime3=0,inittime4=0;
 #define DSCRID_FROMBUFS 1
 #define DSCRID_FROMBUFS_END DSCRID_FROMBUFS+NUMOFBUFFERS
 static int mark_buf_send_complete[NUMOFBUFFERS];
-static sdescr_t armci_vapi_nbsdscr_array[MAX_PENDING];
+static sdescr_t armci_vapi_client_nbsdscr_array[MAX_PENDING];
+static sdescr_t armci_vapi_serv_nbsdscr_array[MAX_PENDING];
 
 /*\
  *   function to get the next available context for non-blocking RDMA. We limit
@@ -219,7 +221,18 @@ static sdescr_t armci_vapi_nbsdscr_array[MAX_PENDING];
 
 void armci_check_status(int,VAPI_ret_t,char*);
 static void posts_gather_desc(int , int, int); 
+void armci_vapi_check_return(int debug,VAPI_ret_t ret, const char *ss)
+{
+    if(ret!=VAPI_OK){
+       printf("\n%d:from %s ret=%d str=%s str_sym=%s\n",armci_me,ss,ret,VAPI_strerror(ret),VAPI_strerror_sym(ret));
+       fflush(stdout);
+    }
+    if(debug){
+       printf("\n%d:from %s ret=%d str=%s str_sym=%s\n",armci_me,ss,ret,VAPI_strerror(ret),VAPI_strerror_sym(ret));
+    }
+         
 
+}
 
 /*completion of gather send */
 void armci_server_send_complete(int proc,int num)
@@ -292,22 +305,25 @@ void client_rmw_complete(VAPI_sr_desc_t *snd_dscr, char *from)
       rc = VAPI_CQ_EMPTY;
     }while(pdscr->id != snd_dscr->id);
 }        
-
+extern double MPI_Wtime();
 
 void armci_client_send_complete(VAPI_sr_desc_t *snd_dscr, char *from)
 {
 VAPI_ret_t rc=VAPI_CQ_EMPTY;
 VAPI_wc_desc_t pdscr1;
 VAPI_wc_desc_t *pdscr=&pdscr1;
-
+//double t0,t1;
     if(DEBUG_CLN){
        printf("\n%d:client send complete called from %s id=%ld\n",armci_me,
                from,snd_dscr->id);fflush(stdout);
     }
     do{
+       //t0=MPI_Wtime();
        while(rc == VAPI_CQ_EMPTY){  
          rc = VAPI_poll_cq(SRV_nic->handle, SRV_nic->scq, pdscr);
        }  
+       //t1=MPI_Wtime();
+       //if(armci_me==0){printf("%d:polling took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout);}
        armci_check_status(DEBUG_CLN,rc,"client_send_complete wait for send");
        rc =VAPI_CQ_EMPTY;
 
@@ -325,35 +341,62 @@ VAPI_wc_desc_t *pdscr=&pdscr1;
          if(pdscr->id >=DSCRID_FROMBUFS && pdscr->id < DSCRID_FROMBUFS_END)
            mark_buf_send_complete[pdscr->id-DSCRID_FROMBUFS]=1;
          else if(pdscr->id >=DSCRID_NBDSCR && pdscr->id < DSCRID_NBDSCR_END)
-           armci_vapi_nbsdscr_array[pdscr->id-DSCRID_NBDSCR].tag=0;
+           armci_vapi_client_nbsdscr_array[pdscr->id-DSCRID_NBDSCR].tag=0;
          else armci_die("client send complete got weird id",pdscr->id);
        }
     }while(pdscr->id!=snd_dscr->id);
     if(pdscr->id >=DSCRID_NBDSCR && pdscr->id < DSCRID_NBDSCR_END)
-       armci_vapi_nbsdscr_array[pdscr->id-DSCRID_NBDSCR].tag=0;
+       armci_vapi_client_nbsdscr_array[pdscr->id-DSCRID_NBDSCR].tag=0;
 }
-
-sdescr_t *armci_vapi_get_next_descr(int nbtag)
+static int cur_serv_pend_descr;
+static int cur_client_pend_descr;
+sdescr_t *armci_vapi_serv_get_next_descr(int nbtag)
 {
 static int avail=-1;
 sdescr_t *retdscr;
     if(avail==-1){
        int i;
        for(i=0;i<MAX_PENDING;i++){
-         armci_vapi_nbsdscr_array[i].tag=0;
-         bzero(&armci_vapi_nbsdscr_array[i].descr,sizeof(VAPI_sr_desc_t));     
-         armci_vapi_nbsdscr_array[i].descr.id = DSCRID_NBDSCR + i; 
+         armci_vapi_serv_nbsdscr_array[i].tag=0;
+         bzero(&armci_vapi_serv_nbsdscr_array[i].descr,sizeof(VAPI_sr_desc_t));     
+         armci_vapi_serv_nbsdscr_array[i].descr.id = DSCRID_NBDSCR + i; 
        }
        avail=0;
     }
-    if(armci_vapi_nbsdscr_array[avail].tag!=0){
-       armci_client_send_complete(&armci_vapi_nbsdscr_array[avail].descr,
-                       "armci_vapi_get_next_descr");
+    if(armci_vapi_serv_nbsdscr_array[avail].tag!=0){
+       armci_client_send_complete(&armci_vapi_serv_nbsdscr_array[avail].descr,
+                       "armci_vapi_client_get_next_descr");
     }
-    armci_vapi_nbsdscr_array[avail].tag=nbtag;
-    retdscr= (armci_vapi_nbsdscr_array+avail);
+    armci_vapi_serv_nbsdscr_array[avail].tag=nbtag;
+    retdscr= (armci_vapi_serv_nbsdscr_array+avail);
     memset(&retdscr->descr,0,sizeof(VAPI_sr_desc_t));
     retdscr->descr.id = DSCRID_NBDSCR + avail;
+    cur_serv_pend_descr = avail;
+    avail = (avail+1)%MAX_PENDING;
+    return(retdscr);
+}
+sdescr_t *armci_vapi_client_get_next_descr(int nbtag)
+{
+static int avail=-1;
+sdescr_t *retdscr;
+    if(avail==-1){
+       int i;
+       for(i=0;i<MAX_PENDING;i++){
+         armci_vapi_client_nbsdscr_array[i].tag=0;
+         bzero(&armci_vapi_client_nbsdscr_array[i].descr,sizeof(VAPI_sr_desc_t));     
+         armci_vapi_client_nbsdscr_array[i].descr.id = DSCRID_NBDSCR + i; 
+       }
+       avail=0;
+    }
+    if(armci_vapi_client_nbsdscr_array[avail].tag!=0){
+       armci_client_send_complete(&armci_vapi_client_nbsdscr_array[avail].descr,
+                       "armci_vapi_client_get_next_descr");
+    }
+    armci_vapi_client_nbsdscr_array[avail].tag=nbtag;
+    retdscr= (armci_vapi_client_nbsdscr_array+avail);
+    memset(&retdscr->descr,0,sizeof(VAPI_sr_desc_t));
+    retdscr->descr.id = DSCRID_NBDSCR + avail;
+    cur_client_pend_descr = avail;
     avail = (avail+1)%MAX_PENDING;
     return(retdscr);
 }
@@ -390,11 +433,12 @@ void armci_check_status(int debug,VAPI_ret_t rc,char *msg)
     if(rc != VAPI_OK){
        char buf[100];
        if(armci_server_terminating){
+         armci_server_transport_cleanup();
          /* server got interrupted when clients terminate connections */
          sleep(1);
          _exit(0);
        }
-       fprintf(stderr,"%d in check FAILURE %s\n",armci_me,msg);
+       printf("%d in check FAILURE %s\n",armci_me,msg);fflush(stdout);
        assert(strlen(msg)<100-20);
        sprintf(buf,"ARMCI(vapi):failure:%d:%s code %d %d ",rc,msg,
                _s,_c);
@@ -431,13 +475,8 @@ VAPI_qp_init_attr_t initattr;
                nic->attr.max_num_ent_cq);
     }
 
-#if 1
-    initattr.cap.max_oust_wr_rq = armci_max_qp_ous_wr;
-    initattr.cap.max_oust_wr_sq = armci_max_qp_ous_wr;
-#else
-    initattr.cap.max_oust_wr_rq = DEFAULT_MAX_WQE;
-    initattr.cap.max_oust_wr_sq = DEFAULT_MAX_WQE;
-#endif
+    initattr.cap.max_oust_wr_rq = armci_max_qp_ous_rwr;
+    initattr.cap.max_oust_wr_sq = armci_max_qp_ous_swr;
 
     initattr.cap.max_sg_size_rq = armci_max_num_sg_ent;
     initattr.cap.max_sg_size_sq = armci_max_num_sg_ent;
@@ -456,8 +495,10 @@ VAPI_qp_init_attr_t initattr;
     rc = VAPI_create_qp(nic->handle, &initattr, qp, qp_prop);
     if(!armci_vapi_max_inline_size){
        armci_vapi_max_inline_size = qp_prop->cap.max_inline_data_sq;
-       if(DEBUG_CLN)
-       printf("\n%d:max inline size= %d\n",armci_me,armci_vapi_max_inline_size);
+       if(DEBUG_CLN){
+         printf("\n%d:maxinline size=%d\n",armci_me,armci_vapi_max_inline_size);
+         printf("\n%d:swr=%d rwr=%d ssg=%d rsg=%d\n",armci_me,qp_prop->cap.max_oust_wr_sq,qp_prop->cap.max_oust_wr_rq,qp_prop->cap.max_sg_size_sq,qp_prop->cap.max_sg_size_rq);fflush(stdout);
+       }
     }
 
     armci_check_status(DEBUG_INIT, rc,"create qp");
@@ -482,7 +523,7 @@ VAPI_cqe_num_t num;
     if(!nic->lid_arr)
        armci_die("malloc for nic_t arrays in vapi.c failed",0);
 
-    /*first open nic*/ 
+    /*first open nic, this is not necessary, says document*/ 
     rc = VAPI_open_hca(hca_id, &nic->handle);
     /*armci_check_status(DEBUG_INIT, rc,"open nic");*/
 
@@ -513,28 +554,87 @@ VAPI_cqe_num_t num;
     nic->rcq = INVAL_HNDL;
     /*do the actual queue creation */
     if(scq_entries){
-       rc = VAPI_create_cq(nic->handle,nic->attr.max_num_ent_cq, 
+       rc = VAPI_create_cq(nic->handle,4000, 
                            &nic->scq,&num);
        armci_check_status(DEBUG_INIT, rc,"create send completion queue");
     }
     if(rcq_entries){
        /*rc = VAPI_create_cq(nic->handle,(VAPI_cqe_num_t)rcq_entries, 
                            &nic->rcq,&num);*/
-       rc = VAPI_create_cq(nic->handle,nic->attr.max_num_ent_cq, 
+       rc = VAPI_create_cq(nic->handle,4000, 
                            &nic->rcq,&num);
        armci_check_status(DEBUG_INIT, rc,"create recv completion queue");
     }
     /*VAPIErrorCallback(nic->handle, 0, armci_err_callback);*/
     /*set local variable values*/
-    armci_max_num_sg_ent=nic->attr.max_num_sg_ent;
-    armci_max_qp_ous_wr=nic->attr.max_qp_ous_wr;
-    /*
-    if(armci_max_qp_ous_wr>(2*armci_nproc+16+NUMOFBUFFERS))
-       armci_max_qp_ous_wr=(4*armci_nproc+16+NUMOFBUFFERS);
-    */
+    armci_max_num_sg_ent=20;
+    armci_max_qp_ous_swr=800;
+    armci_max_qp_ous_rwr=400*16;
+    if(armci_nproc>200){
+       armci_max_qp_ous_swr=armci_nproc;
+       armci_max_qp_ous_rwr=armci_nproc*16;
+       if(armci_me==0)printf("\nARMCI:%d:qp_swr changed to %d qp_rwr changed to %d",armci_me,armci_max_qp_ous_swr,armci_max_qp_ous_rwr);
+    }
+    if(armci_max_qp_ous_rwr>nic->attr.max_qp_ous_wr){
+       armci_max_qp_ous_swr=nic->attr.max_qp_ous_wr/16;
+       armci_max_qp_ous_rwr=nic->attr.max_qp_ous_wr;
+       if(armci_me==0)printf("\nARMCI:%d:qp_swr changed to %d qp_rwr changed to %d",armci_me,armci_max_qp_ous_swr,armci_max_qp_ous_rwr);
+    }
+    if(armci_max_num_sg_ent>nic->attr.max_num_sg_ent)
+       armci_max_num_sg_ent=nic->attr.max_num_sg_ent;
 }
 
+static char * serv_malloc_buf_base;
+static void armci_finalize_nic(vapi_nic_t *nic)
+{
+VAPI_ret_t ret;
+VAPI_cqe_num_t ns,nr;
+VAPI_wc_desc_t com_desc_p;
+int i;
+
+    ret = VAPI_query_cq(nic->handle,nic->scq,&ns);
+    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:query_scq");
+    /*printf("\n%d:this many scq %d",armci_me,ns);*/
+    ret = EVAPI_peek_cq(nic->handle,nic->scq,1);
+    if(ret==VAPI_OK)printf("\n%d:finalize nic scq still has stuff in it",armci_me);
+
+#if 0
+    for(i=0;i<ns;i++){
+      ret = VAPI_poll_cq( nic->handle,nic->scq,&com_desc_p);
+      armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:poll_scq");
+    }
+    ret = VAPI_query_cq(nic->handle,nic->scq,&ns);
+    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:query_scq");
+    printf("\n%d:now this many scq %d",armci_me,ns);
+#endif
+
+    ret = VAPI_destroy_cq(nic->handle, nic->scq);
+    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:destroy_scq");
+
+    ret = VAPI_query_cq(nic->handle,nic->rcq,&nr);
+    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:query_rcq");
+    /*printf("\n%d:this many rcq %d",armci_me,nr);*/
+    ret = EVAPI_peek_cq(nic->handle,nic->rcq,1);
+    if(ret==VAPI_OK)printf("\n%d:finalize nic rcq still has stuff in it",armci_me);
+
+#if 0
+    for(i=0;i<nr;i++){
+      ret = VAPI_poll_cq( nic->handle,nic->rcq,&com_desc_p);
+      armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:poll_scq");
+    }
+    ret = VAPI_query_cq(nic->handle,nic->rcq,&nr);
+    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:query_rcq");
+    printf("\n%d:now this many rcq %d",armci_me,nr);
+#endif
+
+    ret = VAPI_destroy_cq(nic->handle, nic->rcq);
+    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:destroy_rcq");
+    ret = EVAPI_release_hca_hndl(nic->handle);
+    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:release_hca");
+}
+#ifdef ARMCI_ENABLE_GPC_CALLS
 extern gpc_buf_t *gpc_req;
+#endif
 void armci_server_alloc_bufs()
 {
 VAPI_ret_t rc;
@@ -547,11 +647,16 @@ int clients = armci_nproc,i,j=0;
     /* allocate memory for the recv buffers-must be alligned on 64byte bnd */
     /* note we add extra one to repost it for the client we are received req */ 
     bytes =(clients+1)*sizeof(vapibuf_t)+sizeof(vapibuf_ext_t) + extra+ mhsize
-      + MAX_GPC_REQ * sizeof(gpc_buf_t) + SIXTYFOUR;
+#if ARMCI_ENABLE_GPC_CALLS
+      + MAX_GPC_REQ * sizeof(gpc_buf_t) 
+#endif
+      + SIXTYFOUR;
     total = bytes + SIXTYFOUR;
     if(total%4096!=0) 
        total = total - (total%4096) + 4096;
     tmp0=tmp = VMALLOC(total);
+    serv_malloc_buf_base = tmp0;
+
     if(!tmp) armci_die("failed to malloc server vapibufs",total);
     /* stamp the last byte */
     serv_tail= tmp + bytes+SIXTYFOUR-1;
@@ -563,8 +668,10 @@ int clients = armci_nproc,i,j=0;
     tmp += mhsize;
     /* gpc_req memory*/
     tmp += SIXTYFOUR - ((ssize_t)tmp % SIXTYFOUR);
+#ifdef ARMCI_ENABLE_GPC_CALLS
     gpc_req = (gpc_buf_t *)tmp;
     tmp += MAX_GPC_REQ * sizeof(gpc_buf_t);
+#endif
     /* setup descriptor memory */
     mod = ((ssize_t)tmp)%SIXTYFOUR;
     serv_descr_pool.descr= (VAPI_rr_desc_t*)(tmp+SIXTYFOUR-mod);
@@ -832,7 +939,7 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RETRY_COUNT);
     qp_attr.rnr_retry     = 3;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RNR_RETRY);
-    qp_attr.ous_dst_rd_atom  = 4;
+    qp_attr.ous_dst_rd_atom  = 128;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_OUS_DST_RD_ATOM);
 
     start = (armci_clus_me==0)? armci_nclus-1 : armci_clus_me-1;
@@ -950,7 +1057,7 @@ void armci_init_vapibuf_send(VAPI_sr_desc_t *sd,VAPI_sg_lst_entry_t *sg_entry, c
      sd->sg_lst_p  = sg_entry;
      /*sd->id = 0;*/
      sd->remote_qkey=0;
-     sd->set_se = TRUE;
+     sd->set_se = FALSE;
      sd->fence = FALSE;
 
      sg_entry->lkey = mhandle->lkey;
@@ -969,24 +1076,22 @@ VAPI_sr_desc_t *sd;
 }
 
 
-static void posts_scatter_desc(int num, int id ,int type)
+static void posts_scatter_desc(int idtouse,sdescr_t *pend_dscr,int proc,int type)
 {
-    VAPI_rr_desc_t *rd;
-    VAPI_sg_lst_entry_t *sg;
-    VAPI_ret_t rc;
-    int cluster = armci_clus_id(id);
+VAPI_ret_t rc;
+int cluster = armci_clus_id(id);
+VAPI_rr_desc_t *scat_dscr;
+VAPI_sg_lst_entry_t *scat_dscr;
    
     if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ){
-       printf("%d(%d) : inside posts scatter dscr, num = %d\t,id is %d\n",
-	      armci_me,type,num,id);
+       printf("%d(%d) : inside posts scatter dscr, id is %d\n",
+	      armci_me,type,idtouse);
        fflush(stdout);
     }     
     
-    if(type == SERV)
-       rd = &scatter[id].scatter_dscr;
-    else if(type == CLN)
-       rd = &client_scatter[id].scatter_dscr;
-    
+    pend_dscr->proc = id;
+    gat_dscr = pend_dscr->descr;
+    gat_sglist = pend_dscr->sg_entry;
     memset(rd,0,sizeof(VAPI_rr_desc_t));
     rd->opcode = VAPI_RECEIVE;
     rd->comp_type = VAPI_SIGNALED;
@@ -1031,38 +1136,52 @@ static void posts_scatter_desc(int num, int id ,int type)
 }
 
 
-
 /*\
  *   posts a bunch of scatter descriptors
 \*/ 
-int armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[]
-     ,int stride_levels, armci_vapi_memhndl_t *mhandle,
-     int id, request_header_t * msginfo, int type)
+int armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[],
+     int stride_levels, armci_vapi_memhndl_t *mhandle,
+     int proc, int nbtag, int type)
 {
-   
-   /* first break into descriptor into segments , create scatter des */
-   int i;
-   int total_size = 0;
-   int total_of_2D = 1;
-   int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
-   int j,k,y,z;
-   char* src, *src1;
-   int num_dscr = 0; 
-   int num_xmit = 0, num_seg, max_seg, rem_seg,vecind;
+int i;
+int total_size = 0;
+int total_of_2D = 1;
+int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+int j,k,y,z;
+int num_dscr = 0; 
+int num_xmit = 0, num_seg, max_seg, rem_seg,vecind;
+char* src, *src1;
+sdescr_t *pend_dscr;
+VAPI_sg_lst_entry_t *scat_sglist;
+VAPI_rr_desc_t *scat_dscr;
 
-   max_seg =  armci_max_num_sg_ent;
-   index[2] = 0; unit[2] = 1;
-   if (type == SERV)
-      clear_scatterlist(1,id); /*scatter =1*/
-   else if(type == CLN)
-       clear_scatterlist(4,id);
+    if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ){
+       printf("%d(%d)  : inside post_scatter\n",armci_me,type);     
+       fflush(stdout);
+    }
+
+    max_seg =  armci_max_num_sg_ent;
+
+    if(type == CLN)
+       pend_dscr = armci_vapi_client_get_next_descr(nbtag);
+    else if (type == SERV)
+       pend_dscr = armci_vapi_serv_get_next_descr(nbtag);
+    
+    scat_dscr = pend_dscr->rdescr;
+    scat_sglist = pend_dscr->sg_entry;
+
+    if (type == CLN)
+       idtouse = ((++client_id_for_scatter)%9998);
+    else 
+       idtouse = ((++serv_id_for_scatter)%9998);
                        
-   if(stride_levels > 1){
-      total_of_2D = count[2];
-      for(j=3; j<=stride_levels; j++){
-              index[j] = 0; unit[j] = unit[j-1]*count[j-1];
-              total_of_2D*=count[j];
-      }
+    index[2] = 0; unit[2] = 1;
+    if(stride_levels > 1){
+       total_of_2D = count[2];
+       for(j=3; j<=stride_levels; j++){
+         index[j] = 0; unit[j] = unit[j-1]*count[j-1];
+         total_of_2D*=count[j];
+       }
     }
 
     num_xmit = total_of_2D*count[1]/max_seg;
@@ -1072,9 +1191,9 @@ int armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[]
 
 
     if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ){ 
-       printf("%d(%d) : armci_post_scatter num_xmit = %d\t, rem_seg = %d\n", 
+       printf("%d(%d):armci_post_scatter num_xmit = %d\t, rem_seg = %d\n", 
                armci_me,type,num_xmit,rem_seg);
-      fflush(stdout);
+       fflush(stdout);
     }
     
     k=0; vecind = 0;
@@ -1083,84 +1202,67 @@ int armci_post_scatter(void *dest_ptr, int dest_stride_arr[], int count[]
 
     y=0,z=0;
     for(i=0;i<total_of_2D;i++){
-      src = (char *)dest_ptr;
-      for(j=2;j<=stride_levels;j++){
-        src+= index[j]*dest_stride_arr[j-1];
-        if(((i+1)%unit[j]) == 0) index[j]++;
-        if(index[j] >= count[j]) index[j] =0;
-      }
-      src1 = src;
+       src = (char *)dest_ptr;
+       for(j=2;j<=stride_levels;j++){
+         src+= index[j]*dest_stride_arr[j-1];
+         if(((i+1)%unit[j]) == 0) index[j]++;
+         if(index[j] >= count[j]) index[j] =0;
+       }
+       src1 = src;
 
-      for(j=0; j<count[1]; j++, vecind++){
-        if(vecind == num_seg){
-          posts_scatter_desc(num_dscr,id, type);
-           
-          if(type == SERV)
-            scatter[id].num_elems = 0;
-          else if(type == CLN)
-            client_scatter[id].num_elems =0;
-                
-          num_dscr++; /* increase the scatter id */
-          y = 0; /* reuse the same scatter descriptor */
-          vecind=0;total_size=0;k++;
-          if(rem_seg!=0 && k==(num_xmit-1))num_seg = rem_seg;
-        }
-        /* fill the scatter descriptor */     
-        if(type == SERV){      
-          scatter[id].scatter_lst[y].addr = 
-                          (VAPI_virt_addr_t)(MT_virt_addr_t)src1;
-          scatter[id].scatter_lst[y].lkey = mhandle->lkey;
-          scatter[id].scatter_lst[y].len = count[0];
-          scatter[id].num_elems++;
-        } 
-        else if (type == CLN){
-          client_scatter[id].scatter_lst[y].addr =
-                         (VAPI_virt_addr_t)(MT_virt_addr_t)src1;
-          client_scatter[id].scatter_lst[y].lkey = mhandle->lkey;
-          client_scatter[id].scatter_lst[y].len = count[0];
-          client_scatter[id].num_elems++;
-        }         
-        src1 += dest_stride_arr[0];
-        y++;
+       for(j=0; j<count[1]; j++, vecind++){
+         if(vecind == num_seg){
+           posts_scatter_desc(idtouse,pend_dscr,proc,type);
+           num_posted++;
+          
+           pend_dscr->num_elems=0; 
+           y = 0; /* reuse the same scatter descriptor */
+           vecind=0;total_size=0;k++;
+           if(rem_seg!=0 && k==(num_xmit-1))num_seg = rem_seg;
+         }
+         /* fill the scatter descriptor */     
+         scat_sglst[y]->addr = (VAPI_virt_addr_t)(MT_virt_addr_t)src1;
+         scat_sglst[y]->lkey = mhandle->lkey;
+         scat_sglst[y]->len = count[0];
+         pend_dscr->num_elems++;
+         src1 += src_stride_arr[0];
+         y++;
 
-      }
+       }
 
-      if(vecind == num_seg){
-        posts_scatter_desc(num_dscr, id, type);
-        num_dscr++;
-        if(type == SERV)
-          scatter[id].num_elems = 0;
-        else if (type == CLN)
-          client_scatter[id].num_elems = 0; 
-        y =0 ;
-        vecind = 0; total_size=0; k++;
-        if(rem_seg!=0 && k==(num_xmit-1))num_seg=rem_seg;
-        else num_seg = max_seg;
-      }
+       if(vecind == num_seg){
+         posts_scatter_desc(idtouse,pend_dscr,proc,type);
+         num_posted++;
+         /* the previous one has been posted, start off new*/ 
+         pend_dscr->num_elems=0;
+         y =0 ;
+         vecind = 0; total_size=0; k++;
+         if(rem_seg!=0 && k==(num_xmit-1))num_seg=rem_seg;
+         else num_seg = max_seg;
+       }
 
     }
-    return(num_dscr);
+    return(num_posted);
 }
-
-
 
 /*\
  *  posts a bunch of gather descriptors
 \*/ 
-int armci_post_gather(void *src_ptr, int src_stride_arr[], int count[]
-     ,int stride_levels, armci_vapi_memhndl_t *mhandle,
-      int id, int type)
+int armci_post_gather(void *src_ptr, int src_stride_arr[], int count[],
+      int stride_levels, armci_vapi_memhndl_t *mhandle,
+      int proc,int nbtag, int type)
 {
-   
-    /* first break into descriptor into segments , create gather des */
-    int i;
-    int total_of_2D = 1;
-    int total_size = 0;
-    int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
-    int j,k,y,z;
-    int num_dscr = 0;
-    char *src, *src1;
-    int num_xmit = 0, num_seg, max_seg, rem_seg,vecind;
+int i;
+int total_of_2D = 1;
+int total_size = 0;
+int index[MAX_STRIDE_LEVEL], unit[MAX_STRIDE_LEVEL];
+int j,k,y,z;
+int num_posted = 0;
+char *src, *src1;
+int num_xmit = 0, num_seg, max_seg, rem_seg,vecind;
+sdescr_t *pend_dscr;
+VAPI_sg_lst_entry_t *gat_sglist;
+VAPI_sr_desc_t *gat_dscr;
 
     if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ){
       printf("%d(%d)  : inside post_gather\n",armci_me,type);     
@@ -1169,13 +1271,20 @@ int armci_post_gather(void *src_ptr, int src_stride_arr[], int count[]
 
     max_seg =  armci_max_num_sg_ent;
 
-    index[2] = 0; unit[2] = 1;
-   
     if(type == CLN)
-      clear_scatterlist(2,id ); 
+       pend_dscr = armci_vapi_client_get_next_descr(nbtag);
     else if (type == SERV)
-      clear_scatterlist(3,id);
+       pend_dscr = armci_vapi_serv_get_next_descr(nbtag);
+    
+    gat_dscr = pend_dscr->descr;
+    gat_sglist = pend_dscr->sg_entry;
 
+    if (type == CLN)
+       idtouse = ((++client_id_for_gather)%9998);
+    else 
+       idtouse = ((++serv_id_for_gather)%9998);
+
+    index[2] = 0; unit[2] = 1;
     if(stride_levels > 1){
       total_of_2D = count[2];
       for(j=3; j<=stride_levels; j++){
@@ -1190,8 +1299,7 @@ int armci_post_gather(void *src_ptr, int src_stride_arr[], int count[]
     else if(rem_seg!= 0)num_xmit++;
     
     if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ){ 
-       printf("%d(%d) : armci_post_gather total_2D = %d\t,num_xmit = %d\t, rem_seg = %d\t, count[1] = %d\n",armci_me,type,total_of_2D, num_xmit,rem_seg, 
-	      count[1]);
+       printf("%d(%d):armci_post_gather total_2D=%d, num_xmit=%d, rem_seg =%d, count[1] = %d\n",armci_me,type,total_of_2D, num_xmit,rem_seg,count[1]);
       fflush(stdout);
     }
     
@@ -1201,65 +1309,53 @@ int armci_post_gather(void *src_ptr, int src_stride_arr[], int count[]
 
     y=0,z=0;
     for(i=0;i<total_of_2D;i++){
-      src = (char *)src_ptr;
-      for(j=2;j<=stride_levels;j++){
-        src+= index[j]*src_stride_arr[j-1];
-        if(((i+1)%unit[j]) == 0) index[j]++;
-        if(index[j] >= count[j]) index[j] =0;
-      }
-      src1 = src;
+       src = (char *)src_ptr;
+       for(j=2;j<=stride_levels;j++){
+         src+= index[j]*src_stride_arr[j-1];
+         if(((i+1)%unit[j]) == 0) index[j]++;
+         if(index[j] >= count[j]) index[j] =0;
+       }
+       src1 = src;
 
-      for(j=0; j<count[1]; j++, vecind++){
-        if(vecind == num_seg){
-          posts_gather_desc(num_dscr,id,type);
-          num_dscr++; /*increment the gather id */
-          if(type == CLN)
-            gather[id].num_elems = 0;
-          else if(type == SERV)
-            server_gather[id].num_elems = 0;
-          y = 0; /*reuse the same gather desc */ 
-          vecind=0;total_size=0;k++;
-          if(rem_seg!=0 && k==(num_xmit-1))num_seg = rem_seg;
-        }
+       for(j=0; j<count[1]; j++, vecind++){
+         if(vecind == num_seg){
+           posts_gather_desc(idtouse,pend_dscr,proc,type);
+           num_posted++;
+
+           /* the previous one has been posted, start off new*/ 
+           pend_dscr->num_elems = 0;
+           y = 0; 
+           vecind=0;total_size=0;k++;
+           if(rem_seg!=0 && k==(num_xmit-1))num_seg = rem_seg;
+         }
             
-        /* fill the gather descriptor */ 
-        if(type == CLN){
-          gather[id].gather_lst[y].addr = 
-                          (VAPI_virt_addr_t)(MT_virt_addr_t)src1;
-          gather[id].gather_lst[y].lkey = mhandle->lkey;
-          gather[id].gather_lst[y].len = count[0];
-          gather[id].num_elems++;
-        }    
-        if(type == SERV){
-          server_gather[id].gather_lst[y].addr = 
-                        (VAPI_virt_addr_t)(MT_virt_addr_t)src1;
-          server_gather[id].gather_lst[y].lkey = mhandle->lkey;
-          server_gather[id].gather_lst[y].len = count[0];
-          server_gather[id].num_elems++;
-        }
-        src1 += src_stride_arr[0];
-        y++;
+         /* fill the gather descriptor */ 
+         gat_sglst[y]->addr = (VAPI_virt_addr_t)(MT_virt_addr_t)src1;
+         gat_sglst[y]->lkey = mhandle->lkey;
+         gat_sglst[y]->len = count[0];
+         pend_dscr->num_elems++;
+         src1 += src_stride_arr[0];
+         y++;
                        
-      }
+       }
 
-      if(vecind == num_seg){
-        posts_gather_desc(num_dscr, id,type);
-        if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ){
-          printf("%d(%d) :b: finished posting gather desc\n",armci_me,type);
-          fflush(stdout);
-        }
-        num_dscr++;
-        if(type == CLN)
-          gather[id].num_elems = 0;
-        else if (type == SERV)
-          server_gather[id].num_elems = 0;      
-        y = 0;        
-        vecind = 0; total_size=0; k++;
-        if(rem_seg!=0 && k==(num_xmit-1))num_seg=rem_seg;
-        else num_seg = max_seg;
-      }
+       if(vecind == num_seg){
+         posts_gather_desc(idtouse,pend_dscr,proc,type);
+         if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ){
+           printf("%d(%d)posts_gather_desc done\n",armci_me,type);
+           fflush(stdout);
+         }
+         num_posted++;
+
+         /* the previous one has been posted, start off new*/ 
+         pend_dscr->num_elems = 0;
+         y = 0;        
+         vecind = 0; total_size=0; k++;
+         if(rem_seg!=0 && k==(num_xmit-1))num_seg=rem_seg;
+         else num_seg = max_seg;
+       }
     }
-    return(num_dscr);
+    return(num_posted);
 }
 
 static void armci_init_vbuf_srdma(VAPI_sr_desc_t *sd, VAPI_sg_lst_entry_t *sg_entry, char* lbuf, char *rbuf, int len, armci_vapi_memhndl_t *lhandle,armci_vapi_memhndl_t *rhandle)
@@ -1272,7 +1368,7 @@ static void armci_init_vbuf_srdma(VAPI_sr_desc_t *sd, VAPI_sg_lst_entry_t *sg_en
      sd->remote_qkey=0;
      if(rhandle)sd->r_key = rhandle->rkey;
      sd->remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) rbuf;
-     sd->set_se = TRUE;
+     sd->set_se = FALSE;
      sd->fence = FALSE;
 
      if(lhandle)sg_entry->lkey = lhandle->lkey;
@@ -1292,7 +1388,7 @@ static void armci_init_vbuf_rrdma(VAPI_sr_desc_t *sd, VAPI_sg_lst_entry_t *sg_en
      sd->remote_qkey=0;
      if(rhandle)sd->r_key = rhandle->rkey;
      sd->remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) rbuf;
-     sd->set_se = TRUE;
+     sd->set_se = FALSE;
      sd->fence = FALSE;
 
      if(lhandle)sg_entry->lkey = lhandle->lkey;
@@ -1427,7 +1523,7 @@ char *enval;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RETRY_COUNT);
     qp_attr.rnr_retry     = 3;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_RNR_RETRY);
-    qp_attr.ous_dst_rd_atom  = 4;
+    qp_attr.ous_dst_rd_atom  = 128;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_OUS_DST_RD_ATOM);
     for(c=0; c< armci_nproc; c++){
        armci_connect_t *con = CLN_con + c;
@@ -1476,7 +1572,7 @@ char *enval;
       if(armci_clus_info[armci_clus_me].nslave < armci_getnumcpus()) 
         server_can_poll=1;
     }
-
+    server_can_poll=0;
 
     /* establish connections with compute processes/clients */
     /*vapi_connect_server();*/
@@ -1493,23 +1589,27 @@ void armci_call_data_server()
 VAPI_ret_t rc=VAPI_CQ_EMPTY;
 vapibuf_t *vbuf,*vbufs;
 request_header_t *msginfo,*msg;
-int c,i,need_ack;
-
+int c,i,need_ack,pollcount;
+#ifdef ARMCI_ENABLE_GPC_CALLS
     unblock_thread_signal(GPC_COMPLETION_SIGNAL);
+#endif
     for(;;){
        VAPI_wc_desc_t *pdscr=NULL;
        VAPI_wc_desc_t pdscr1;
        pdscr = &pdscr1;
        rc=VAPI_CQ_EMPTY;
 
+#ifdef ARMCI_ENABLE_GPC_CALLS
        block_thread_signal(GPC_COMPLETION_SIGNAL);
+#endif
        /*we just snoop to see if we have something */ 
-       rc = VAPI_poll_cq(CLN_nic->handle, CLN_nic->rcq, pdscr);
+	 rc = VAPI_poll_cq(CLN_nic->handle, CLN_nic->rcq, pdscr);
        if(server_can_poll){
          while(rc == VAPI_CQ_EMPTY){
            rc = VAPI_poll_cq(CLN_nic->handle, CLN_nic->rcq, pdscr);
            if(armci_server_terminating){
              /* server got interrupted when clients terminate connections */
+             armci_server_transport_cleanup();
              sleep(1);
              _exit(0);
            }
@@ -1520,9 +1620,16 @@ int c,i,need_ack;
            rc = EVAPI_poll_cq_block(CLN_nic->handle, CLN_nic->rcq, 0, pdscr);
            if(armci_server_terminating){
              /* server got interrupted when clients terminate connections */
+             armci_server_transport_cleanup();
              sleep(1);
              _exit(0);
            }
+           /*
+           if(rc==VAPI_CQ_EMPTY){
+             for(pollcount=0;pollcount<10,rc==VAPI_CQ_EMPTY;pollcount++)
+	       rc = VAPI_poll_cq(CLN_nic->handle, CLN_nic->rcq, pdscr);
+           }
+           */
          }
        }
        
@@ -1653,13 +1760,14 @@ int c,i,need_ack;
           fflush(stdout);
        }
 
+#ifdef ARMCI_ENABLE_GPC_CALLS
        unblock_thread_signal(GPC_COMPLETION_SIGNAL);
-       cpu_yield();
+#endif
    }/* end of for */
 }
 
 
-
+static char * client_malloc_buf_base;
 char * armci_vapi_client_mem_alloc(int size)
 {
 VAPI_ret_t rc;
@@ -1675,6 +1783,7 @@ char *tmp,*tmp0;
     if(total%4096!=0)  
        total = total - (total%4096) + 4096;
     tmp0  = tmp = VMALLOC(total);
+    client_malloc_buf_base = tmp;
     if(ALIGN64ADD(tmp0))tmp0+=ALIGN64ADD(tmp0);
     if(!tmp) armci_die("failed to malloc client bufs",total);
     /* stamp the last byte */
@@ -1721,7 +1830,6 @@ char *tmp,*tmp0;
        printf("%d: registered client memory %p %dsize tmp=%p \n",
                armci_me,tmp0, total, tmp);
        fflush(stdout);
-
     }
     /*now that we have the handle array, we get every body elses RDMA handle*/
     total = (sizeof(armci_vapi_memhndl_t)*armci_nproc)/sizeof(int);
@@ -1730,13 +1838,77 @@ char *tmp,*tmp0;
     return(tmp);
 
 }
-
-
-void armci_transport_cleanup()
+void armci_network_client_deregister_memory(ARMCI_MEMHDL_T *mh)
 {
+VAPI_ret_t rc;
+    rc = VAPI_deregister_mr(SRV_nic->handle,mh->memhndl);
+    armci_vapi_check_return(DEBUG_FINALIZE,rc,"armci_network_client_deregister_memory:deregister_mr");
+
+}
+void armci_network_server_deregister_memory(ARMCI_MEMHDL_T *mh)
+{
+VAPI_ret_t rc;
+    return;
+    printf("\n%d:deregister ptr=%p",armci_me,mh);fflush(stdout);
+    rc = VAPI_deregister_mr(CLN_nic->handle,mh->memhndl);
+    armci_vapi_check_return(DEBUG_FINALIZE,rc,"armci_network_server_deregister_memory:deregister_mr");
+}
+
+void armci_server_transport_cleanup()
+{
+int s;
+VAPI_ret_t rc;
+    if(serv_malloc_buf_base){
+       rc = VAPI_deregister_mr(CLN_nic->handle,serv_memhandle.memhndl);
+       armci_vapi_check_return(DEBUG_FINALIZE,rc,"armci_server_transport_cleanup:deregister_mr");
+       /*now free it*/
+       free(serv_malloc_buf_base);
+    }
+    /*now deregister all my regions from regionskk.c*/
+    armci_server_region_destroy();
+    if(CLN_con){
+       for(s=0; s< armci_nproc; s++){
+         armci_connect_t *con = CLN_con + s;
+         if(con->qp){
+           rc = VAPI_destroy_qp(CLN_nic->handle,con->qp);
+           armci_vapi_check_return(DEBUG_FINALIZE,rc,"armci_server_transport_cleanup:destroy_qp");
+         }
+         free(con->rqpnum);
+       }
+       free(CLN_con);
+    }
+    rc = EVAPI_clear_comp_eventh(CLN_nic->handle,(CLN_nic->rcq_eventh));
+    armci_vapi_check_return(DEBUG_FINALIZE,rc,"armci_server_transport_cleanup:clear_eventh");
+    armci_finalize_nic(CLN_nic);
 
 }
 
+void armci_transport_cleanup()
+{
+int s;
+VAPI_ret_t rc;
+    /*first deregister buffers memory */
+    if(client_malloc_buf_base){
+       rc = VAPI_deregister_mr(SRV_nic->handle,client_memhandle.memhndl);
+       armci_vapi_check_return(DEBUG_FINALIZE,rc,"armci_client_transport_cleanup:deregister_mr");
+       /*now free it*/
+       free(client_malloc_buf_base);
+    }
+    /*now deregister all my regions from regions.c*/
+    armci_region_destroy();
+    if(SRV_con){
+       for(s=0; s< armci_nclus; s++){
+         armci_connect_t *con = SRV_con + s;
+         if(con->qp){
+           rc = VAPI_destroy_qp(SRV_nic->handle,con->qp);
+           armci_vapi_check_return(DEBUG_FINALIZE,rc,"armci_client_transport_cleanup:destroy_qp");
+         }
+         free(con->rqpnum);
+       }
+       free(SRV_con);
+    }
+    armci_finalize_nic(SRV_nic);
+}
 
 
 void armci_vapi_complete_buf(armci_vapi_field_t *field,int snd,int rcv,int to,
@@ -1851,6 +2023,7 @@ int cluster = armci_clus_id(proc);
 request_header_t *msginfo = (request_header_t *)buf;
 VAPI_sr_desc_t *snd_dscr;
 VAPI_sg_lst_entry_t *ssg_lst; 
+//double t0,t1;
 
     snd_dscr = BUF_TO_SDESCR((char *)buf);
     ssg_lst  = BUF_TO_SSGLST((char *)buf);
@@ -1877,7 +2050,11 @@ VAPI_sg_lst_entry_t *ssg_lst;
     armci_init_vapibuf_send(snd_dscr, ssg_lst,buf, 
                             bytes, &client_memhandle);
 
+
+    //t0 = MPI_Wtime();
     armci_vapi_post_send(1,cluster,snd_dscr,"send_req_msg:post_send");
+    //t1 = MPI_Wtime();
+    //printf("%d:posting took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout);
 
     if(DEBUG_CLN){
        printf("%d:client sent REQ=%d %d bytes serv=%d qp=%ld id =%ld lkey=%d\n",
@@ -1911,7 +2088,7 @@ sdescr_t *dirdscr;
 int clus = armci_clus_id(p);
 
     /*ID for the desr that comes from get_next_descr is already set*/
-    dirdscr = armci_vapi_get_next_descr(nbtag);
+    dirdscr = armci_vapi_client_get_next_descr(nbtag);
     if(nbtag)*contextptr = dirdscr;
 
     armci_init_vbuf_srdma(&dirdscr->descr,&dirdscr->sg_entry,src_buf,dst_buf,
@@ -1933,9 +2110,9 @@ void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
 VAPI_ret_t rc=VAPI_CQ_EMPTY;
 sdescr_t *dirdscr;
 int clus = armci_clus_id(p);
-
+//double t0,t1;
     /*ID for the desr that comes from get_next_descr is already set*/
-    dirdscr = armci_vapi_get_next_descr(nbtag);
+    dirdscr = armci_vapi_client_get_next_descr(nbtag);
     if(nbtag)*cptr = dirdscr;
 
     if(DEBUG_CLN){
@@ -1945,13 +2122,16 @@ int clus = armci_clus_id(p);
 
     armci_init_vbuf_rrdma(&dirdscr->descr,&dirdscr->sg_entry,dst_buf,src_buf,
                           len,lochdl,remhdl);
-
+    //t0 = MPI_Wtime();
     rc = VAPI_post_sr(SRV_nic->handle,(SRV_con+clus)->qp,&(dirdscr->descr));
     armci_check_status(DEBUG_CLN, rc,"client_get_direct, get");
+    //t1 = MPI_Wtime();
+    //printf("%d:posting took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout);
     
 
-    if(!nbtag)
+    if(!nbtag){
        armci_client_send_complete(&(dirdscr->descr),"armci_client_direct_get");
+    }
 }
 
 
@@ -2067,14 +2247,16 @@ VAPI_wc_desc_t pdscr1;
     rc = VAPI_post_sr(CLN_nic->handle,(CLN_con+proc)->qp,&serv_buf->snd_dscr);
     armci_check_status(DEBUG_SERVER, rc,"server post send to client");
     pendingsend=1;
-    
+repeat_poll: 
     rc=VAPI_CQ_EMPTY;
     while(rc == VAPI_CQ_EMPTY)
        rc = VAPI_poll_cq(CLN_nic->handle,CLN_nic->scq,pdscr);
     armci_check_status(DEBUG_SERVER, rc,"server wait post send to client");
-    if(pdscr->id != proc+armci_nproc)
-       armci_die2("server send data to client wrong dscr completed",pdscr->id,
+    if(pdscr->id != proc+armci_nproc)goto repeat_poll;
+       /*
+         armci_die2("server send data to client wrong dscr completed",pdscr->id,
 	            proc+armci_nproc);
+       */
 
 
 }
@@ -2150,12 +2332,10 @@ VAPI_mrw_t mr_in,mr_out;
     memhdl->lkey = mr_out.l_key;
     memhdl->rkey = mr_out.r_key;
     if(DEBUG_SERVER){
-       printf("\n%d(s):registered lkey=%d rkey=%d ptr=%p end=%p\n",armci_me,
-               memhdl->lkey,memhdl->rkey,ptr,(char *)ptr+bytes);fflush(stdout);
+       printf("\n%d(s):registered lkey=%d rkey=%d ptr=%p end=%p %p\n",armci_me,
+               memhdl->lkey,memhdl->rkey,ptr,(char *)ptr+bytes,memhdl);fflush(stdout);
     }
 }
-
-
 
 int armci_pin_contig_hndl(void *ptr, int bytes, ARMCI_MEMHDL_T *memhdl)
 {
@@ -2178,95 +2358,63 @@ VAPI_mrw_t mr_in,mr_out;
                memhdl->lkey,memhdl->rkey,ptr,(char *)ptr+bytes);fflush(stdout);
     }
     return 1;
-}   
-
-
-
-
+}
 
 /*\
  *  function used by armci_post_gather to actually post the sctter list 
 \*/ 
-static void posts_gather_desc(int num, int id, int type)
+static void posts_gather_desc(int idtouse,sdescr_t *pend_dscr,int proc,int type)
 {
-    VAPI_sr_desc_t *sd;
-    VAPI_ret_t rc;
-    VAPI_sg_lst_entry_t *sg;
-    int cluster = armci_clus_id(id);
-  
-    if (type == CLN){
-       sd = &gather[id].gather_dscr;
-       gather[id].proc = id;
-    }
-    else if(type == SERV){
-       sd = &server_gather[id].gather_dscr;    
-       server_gather[id].proc = id;
-    }
+VAPI_ret_t rc;
+int cluster = armci_clus_id(proc);
+VAPI_rr_desc_t *gat_dscr;
+VAPI_sg_lst_entry_t *gat_sglist;
+
+    if((type==SERV && DEBUG_SERVER) || (type==CLN && DEBUG_CLN) ){
+       printf("%d(%d) : inside posts gather dscr, id is %d\n",
+	      armci_me,type,num,idtouse);
+       fflush(stdout);
+    }     
+    pend_dscr->proc = id;
+    gat_dscr = pend_dscr->descr;
+    gat_sglist = pend_dscr->sg_entry;
            
-    memset(sd, 0, sizeof(VAPI_sr_desc_t));
-    sd->opcode = VAPI_SEND;
+    memset(gat_dscr, 0, sizeof(VAPI_sr_desc_t));
+    gat_dscr->opcode = VAPI_SEND;
+
     if(type == CLN)
-       sd->comp_type = VAPI_SIGNALED;
+       gat_dscr->comp_type = VAPI_SIGNALED;
     else{
-       sd->comp_type = VAPI_UNSIGNALED;
+       gat_dscr->comp_type = VAPI_UNSIGNALED;
     }
 
-    sd->remote_qkey = 0;
+    gat_dscr->remote_qkey = 0;
 
-    if(type == CLN)
-       sg = gather[id].gather_lst;
-    else if(type == SERV)
-       sg = server_gather[id].gather_lst;
+    gat_dscr->sg_lst_p = gat_sglist;   
+
+    gat_dscr->sg_lst_len = pend_dscr->num_elems;
    
-    sd->sg_lst_p = sg;   
+    gat_dscr->set_se = FALSE;
+    gat_dscr->fence = FALSE;
 
-    if (type == CLN) 
-       sd->sg_lst_len = gather[id].num_elems;
-    else if(type == SERV)
-       sd->sg_lst_len = server_gather[id].num_elems;
-   
-    sd->set_se = TRUE;
-    sd->fence = FALSE;
-
-    if (type == CLN){
-       client_id_for_gather = ((++client_id_for_gather)%9998);
-       sd->id = DSCRID_GATHERCLIENT +client_id_for_gather;     
-       /*sd->id = DSCRID_GATHERCLIENT + 100*armci_me + num;*/
-    }
-    else if (type == SERV){
-       serv_id_for_gather = ((++serv_id_for_gather)%9998);
-       sd->id = DSCRID_GATHERSERVER+serv_id_for_gather;
-       /*sd->id = DSCRID_GATHERSERVER + 100*armci_me + num;*/
-    }
+    
+    gat_desc->id = DSCRID_GATHERCLIENT +client_id_for_gather;     
    
     if((type==CLN &&DEBUG_CLN) || (type==SERV && DEBUG_SERVER)){
-       printf("%d(%d) : list_length is %d\t, id is %ld\t, seg_leng is %d\n",
+       printf("%d(%d):list_length is %d\t, id is %ld\t, seg_leng is %d\n",
 	      armci_me,type,sd->sg_lst_len,sd->id, sd->sg_lst_p->len);
     }
+    rc=VAPI_CQ_EMPTY;
     if(type == CLN){
-       rc = VAPI_post_sr(SRV_nic->handle,(SRV_con+cluster)->qp,sd); 
-       armci_check_status(0,rc,"client posts 1 of several sends");
+       rc = VAPI_post_sr(SRV_nic->handle,(SRV_con+cluster)->qp,gat_dscr); 
+       armci_check_status(0,rc,"client posts a gather sends");
     }
-    if(type == SERV){
-       /*VAPI_wc_desc_t pdscr; */
-       rc=VAPI_CQ_EMPTY;
-       rc = VAPI_post_sr(CLN_nic->handle, (CLN_con + id)->qp, sd);     
-       /* 
-       while(VAPI_poll_cq(CLN_nic->handle,CLN_nic->scq, &pdscr)==VAPI_CQ_EMPTY);
-       */ 
-       armci_check_status(0,rc,"client posts 1 of several sends");
+    else(type == SERV){
+       rc = VAPI_post_sr(CLN_nic->handle, (CLN_con + id)->qp, gat_dscr);
+       armci_check_status(0,rc,"server posts a gather sends");
+       /*we dont poll for server's send to complete type is unsignalled*/
    }
-
-   if(type == CLN)
-      num_gather_snd[id]++; 
-   else
-      server_num_gather_snd[id]++;
 }
-
-
-
-
-
 
 void armci_server_direct_send(int dst, char *src_buf, char *dst_buf, int len,
                               VAPI_lkey_t *lkey,VAPI_rkey_t *rkey)
@@ -2395,8 +2543,8 @@ void armci_init_vapibuf_atomic(VAPI_sr_desc_t *sd, VAPI_sg_lst_entry_t * sg,
     if(rhandle)
        sd->r_key = rhandle->rkey; /* how do we get the remote key  */
     sd->id = DSCRID_RMW + armci_me;
-    sd->fence = FALSE;/*what should this be*/
-    sd->set_se = TRUE; 
+    sd->fence = FALSE;
+    sd->set_se = FALSE; 
 
     if(1){
        printf("%d(c) : finished initialising atomic send desc id is %ld,armci_ime = %d\n",armci_me,sd->id,armci_me);

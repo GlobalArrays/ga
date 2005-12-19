@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.67 2005-10-04 14:10:43 vinod Exp $ */
+/* $Id: request.c,v 1.68 2005-12-19 18:06:21 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -894,16 +894,14 @@ int armci_two_phase_send(int proc,void *src_ptr,int src_stride_arr[],
 char *buf, *buf0;
 request_header_t *msginfo;
 int bytes, i;
-int ehlen = 0;
+int ehlen = 0,nbtag;
 int *rem_ptr;
 int * rem_stride_arr;
 int bufsize = sizeof(request_header_t);
-
-/* for breaking into chinks */
-int armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int);
+int armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,int);
      
     bytes = 0;
-     
+    if(nbhandle)nbtag = nbhandle->tag;     
 
     /*calculate the size of buffer needed */
     bufsize += bytes+sizeof(void *) + 2*sizeof(int)*(stride_levels+1) + ehlen
@@ -954,17 +952,18 @@ int armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int);
        fflush(stdout);
     }        
                              
-    /* the client is now in the second phase, in a loop 
-       creates the gather descr one at a time and posts them */
+    /* 
+       the client is now in the second phase, in a loop 
+       creates the gather descr one at a time and posts them 
+    */
     armci_post_gather(src_ptr,src_stride_arr,count,stride_levels,
-                     mhloc,proc,CLN);
+                     mhloc,proc,nbtag,CLN);
     if(DEBUG_){
        printf("%d(c) : returned from armci_post_gather\n",armci_me);
        fflush(stdout);
     }
     if(!nbhandle){
-      armci_complete_multi_sglist_sends(proc);
-      FREE_SEND_BUFFER(msginfo);
+       FREE_SEND_BUFFER(msginfo);
     }
     else{
        BUF_INFO_T *info=NULL; 
@@ -984,12 +983,12 @@ int armci_two_phase_get(int proc, void*src_ptr, int src_stride_arr[],
 char *buf, *buf0;
 request_header_t *msginfo;
 int bytes;
-int ehlen = 0;
+int ehlen = 0,nbtag;
 int *rem_ptr;
 int num; 
 int *rem_stride_arr;
 int bufsize = sizeof(request_header_t);
-int armci_post_scatter(void *,int *,int *,int, armci_vapi_memhndl_t *,int,request_header_t * ,int);
+int armci_post_scatter(void *,int *,int *,int, armci_vapi_memhndl_t *,int,int,request_header_t * ,int);
 void armci_client_recv_complete(int, int, int);
 
     if(DEBUG_){
@@ -997,6 +996,7 @@ void armci_client_recv_complete(int, int, int);
                       armci_me,CLN);
        fflush(stdout);
     }    
+    if(nbhandle)nbtag = nbhandle->tag;     
     
     num =  armci_post_scatter(dst_ptr, dst_stride_arr, count, stride_levels, 
                    mhloc,proc,msginfo,CLN);
@@ -1043,19 +1043,13 @@ void armci_client_recv_complete(int, int, int);
        fflush(stdout);
     }
     if(!nb_handle){
-       extern int client_id_for_scatter;
        *(int *)((char *)msginfo+msginfo->bytes) = num;
-       armci_client_recv_complete(proc, num, client_id_for_scatter);
        FREE_SEND_BUFFER(msginfo);
     }
     else{
-       extern int client_id_for_scatter;
        armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
                                  stride_levels,1);
        *(int *)((char *)msginfo+msginfo->bytes) = num;
-       *(int *)((char *)msginfo+msginfo->bytes+sizeof(int))=client_id_for_scatter;
-       /*armci_client_recv_complete(proc, num,client_id_for_scatter);
-       *(int *)((char *)msginfo+msginfo->bytes) = 0; */
     }
     if(DEBUG_){
        printf("%d(c) : finished polling for scatter_recv\n",armci_me);
@@ -1309,7 +1303,7 @@ void armci_server_vector( request_header_t *msginfo,
     case GET:
 /*        fprintf(stderr, "%d:: Got a vector message!!\n", armci_me); */
       if(msginfo->ehlen) {
-#if defined(GM) || defined(VAPI)
+#if defined(ARMCI_ENABLE_GPC_CALLS) && (defined(GM) || defined(VAPI))
 	gpc_call_process(msginfo, len, dscr, buf, buflen, sbuf);
 #else
 	armci_die("Unexpected vector message with non-zero ehlen. GPC call?",
@@ -1384,7 +1378,7 @@ void armci_server_vector( request_header_t *msginfo,
 
 /**Server side routine to handle a GPC call request**/
 /*===============Register this memory=====================*/
-
+#ifdef ARMCI_ENABLE_GPC_CALLS
 #if defined(GM) || defined(VAPI)
 gpc_buf_t *gpc_req;
 
@@ -1681,5 +1675,4 @@ void gpc_init(void) {}
 void gpc_init_signals(void) {}
 
 #endif
-
-
+#endif
