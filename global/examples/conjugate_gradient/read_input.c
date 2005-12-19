@@ -1,0 +1,187 @@
+#include <stdio.h>
+#include <math.h>
+#include "ga.h"
+#include "macdecls.h"
+#include <mpi.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+
+extern int na;
+extern int nz;
+extern int bvec,dvec,amat,xvec,axvec,rvec,qvec,ridx,cidx;
+extern int me, nproc;
+extern int myfirstrow,mylastrow;
+static int *columnmap,*allfirstrow,*alllastrow;
+extern double *ga_vecptr;
+void read_and_create(int arcv, char **argv)
+{
+int ri,i,*iptr,zero=0,one=1;
+double d_one=1.0,d_zero=0.0;
+FILE *fd;
+double *a,*dptr,*x;
+int *icol, *irow;
+int dims[2];
+int tmp1,idealelementsperproc;
+int lo,hi,ld;
+    if(me==0){
+       fd = fopen("/home/vinod/matrix.bin", "r");
+       fread(&na, sizeof(na), 1, fd);
+       fread(&nz, sizeof(nz), 1, fd);
+       printf("\nReading CG input\n");
+       printf("Number of rows: %d\n", na);
+       printf("Number of non-zeros: %d\n", nz);
+
+       a = (double *)malloc(sizeof(double)*nz);
+       icol = (int *)malloc(sizeof(int)*(nz+1));
+       x = (double *)malloc(sizeof(double)*(na+1));
+       irow = (int *)malloc(sizeof(int)*(na+1));
+
+       for (i = 0; i < na + 1; i++)
+         x[i] = 1.0;
+
+       fread(a, sizeof(double), nz, fd);
+       fread(irow, sizeof(int), na + 1, fd);
+       fread(icol, sizeof(int), nz + 1, fd);
+       fread(x, sizeof(double), na + 1, fd);
+
+       /* the c adjustment */
+       for (i = 0; i < na + 1; i++)
+         irow[i] -= 1;
+       for (i = 0; i < nz + 1; i++)
+         icol[i] -= 1;
+       MPI_Bcast(&nz,1,MPI_INT,0,MPI_COMM_WORLD);
+       MPI_Bcast(&na,1,MPI_INT,0,MPI_COMM_WORLD);
+    }
+    else {
+       MPI_Bcast(&nz,1,MPI_INT,0,MPI_COMM_WORLD);
+       MPI_Bcast(&na,1,MPI_INT,0,MPI_COMM_WORLD);
+       /*for now, others dont need to malloc really*/
+       a = (double *)malloc(sizeof(double)*nz);
+       icol = (int *)malloc(sizeof(int)*(nz+1));
+       x = (double *)malloc(sizeof(double)*(na+1));
+       irow = (int *)malloc(sizeof(int)*(na+1));
+       if(!a || !icol || !x || !irow)GA_Error("malloc failed in ga_cg",0);
+    }
+    allfirstrow = (int *)malloc(sizeof(int)*nproc);
+    alllastrow = (int *)malloc(sizeof(int)*nproc);
+    columnmap = (int *)malloc(sizeof(int)*nproc);
+    if(!allfirstrow || !alllastrow || !columnmap)GA_Error("malloc failed in ga_cg",0);
+
+    /* 
+     * next decide who works on which rows, this will decide the
+     * distribution of a,d,r,q,x,and ax
+     */
+    /*create the mapping for all vectors, row matrix and column matrix*/
+    if(me==0){
+       idealelementsperproc = nz/nproc;
+       tmp1=0;
+       for(i=0;i<nproc;i++){
+         int elementsperproc=0;
+         allfirstrow[i]=tmp1;
+         for(ri=tmp1;ri<na;ri++,tmp1++){
+           elementsperproc+=(irow[ri+1]-irow[ri]);
+	   if(elementsperproc>=idealelementsperproc){
+             if((elementsperproc-idealelementsperproc) > 
+                idealelementsperproc-(elementsperproc-(irow[ri+1]-irow[ri]))){
+               alllastrow[i] = ri-1;  
+	       if((ri-1)<0)GA_Error("run on a smaller processor count",0);
+               tmp1--;
+             }
+             else{
+               alllastrow[i] = ri;  
+               if(ri<0)GA_Error("run on a smaller processor count",0);
+             }
+             elementsperproc=0;
+             break;
+	   }
+         }
+       }
+       alllastrow[nproc-1]=na-1;
+       for(i=0;i<nproc;i++)columnmap[i]=irow[allfirstrow[i]];
+    }
+    MPI_Bcast(columnmap,nproc,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(allfirstrow,nproc,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(alllastrow,nproc,MPI_INT,0,MPI_COMM_WORLD);
+    myfirstrow = allfirstrow[me];
+    mylastrow = alllastrow[me];
+
+    
+    /*now create column matrix */
+    amat = NGA_Create_irreg(MT_C_DBL, 1, &nz , "A", &nproc,columnmap);
+    if(!amat) GA_Error("create failed: A",nz); 
+    if(me==0){
+      lo=0;
+      hi=nz-1;
+      NGA_Put(amat,&lo,&hi,a,&hi);
+    }
+
+    cidx = NGA_Create_irreg(MT_C_INT, 1, &nz , "COLUMN",&nproc,columnmap);
+    if(!cidx) GA_Error("create cidx failed",nz); 
+    if(me==0){
+      lo=0;
+      hi=nz-1;
+      NGA_Put(cidx,&lo,&hi,icol,&hi);
+    }
+    GA_Print_distribution(cidx);
+    GA_Sync();
+    /* ************** */
+
+    /*now create row matrix and all vectors*/
+
+    ridx = NGA_Create_irreg(MT_C_INT, 1, &na , "ROW", &nproc,allfirstrow);
+    if(!ridx) GA_Error("create ridx failed",na); 
+    lo=0;
+    hi=na-1;
+    if(me==0){
+      NGA_Put(ridx,&lo,&hi,irow,&hi);
+    }
+    GA_Sync();
+    GA_Print_distribution(ridx);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    xvec = NGA_Create_irreg(MT_C_DBL, 1, &na , "X",&nproc,allfirstrow);
+    if(!xvec) GA_Error("create x failed",na); 
+    GA_Fill(xvec, &d_one);
+    /*GA_Print(xvec);*/
+
+    bvec = NGA_Create_irreg(MT_C_DBL, 1, &na , "B",&nproc,allfirstrow);
+    if(!bvec) GA_Error("create b failed",na); 
+    if(me==0){
+      lo=0;
+      hi=na-1;
+      NGA_Put(bvec,&lo,&hi,x,&hi);
+    }
+    /*GA_Print(xvec);*/
+
+    axvec = NGA_Create_irreg(MT_C_DBL, 1, &na , "Ax", &nproc,allfirstrow);
+    if(!axvec) GA_Error("create Ax failed",na); 
+
+    rvec = NGA_Create_irreg(MT_C_DBL, 1, &na , "R", &nproc, allfirstrow);
+    if(!rvec) GA_Error("create q failed",na); 
+
+#if 0
+    dims[0]=1;dims[1]=na;
+    t_rvec = NGA_Create(MT_C_DBL, 2, dims, "T_R", NULL);
+    if(!t_rvec) GA_Error("create q failed",na); 
+#endif
+
+    qvec = NGA_Create_irreg(MT_C_DBL, 1, &na , "Q", &nproc, allfirstrow);
+    if(!qvec) GA_Error("create q failed",na); 
+    /*GA_Print_distribution(qvec);*/
+
+    ga_vecptr = (double *)GA_Malloc_local(na*sizeof(double));
+
+    
+    if(me==0)fclose(fd);
+    /*dont forget to free mallocs*/
+    free(allfirstrow);
+    free(alllastrow);
+    free(columnmap);
+    free(a);
+    free(x);
+    free(irow);
+    free(icol);
+}
