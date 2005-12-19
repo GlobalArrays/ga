@@ -1,4 +1,5 @@
 #ifndef __GPCDEF
+#if defined(ARMCI_ENABLE_GPC_MEM)
 #define __GPCDEF
 
 #include "armci.h"
@@ -30,5 +31,5 @@ extern int ARMCI_Get_gpc_dlen();
 
 extern void ARMCI_Gpc_init_handle(gpc_hdl_t *nbh);
 extern void ARMCI_Gpc_wait(gpc_hdl_t *nbh);
-
+#endif
 #endif

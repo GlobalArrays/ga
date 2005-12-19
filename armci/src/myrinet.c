@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.76 2005-10-04 14:10:43 vinod Exp $
+/* $Id: myrinet.c,v 1.77 2005-12-19 18:04:07 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -1040,8 +1040,10 @@ int armci_gm_serv_mem_alloc()
                                                   armci_nproc*sizeof(long));
 
     /*Registered memory for GPC data structures*/
+#ifdef ARMCI_ENABLE_GPC_CALLS
     gpc_req = (gpc_buf_t *)gm_dma_malloc(serv_gm->snd_port, 
 					 MAX_GPC_REQ*sizeof(gpc_buf_t));
+#endif
 
     if(serv_gm->proc_ack_ptr == 0) return FALSE;
 
@@ -1069,7 +1071,9 @@ int armci_gm_serv_mem_free()
     free(serv_gm->dma_buf);
     
     gm_dma_free(serv_gm->snd_port, MessageRcvBuffer);
+#ifdef ARMCI_ENABLE_GPC_CALLS
     gm_dma_free(serv_gm->snd_port, gpc_req);
+#endif
 
     return TRUE;
 }

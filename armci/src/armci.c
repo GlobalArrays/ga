@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.105 2005-11-23 13:42:24 manoj Exp $ */
+/* $Id: armci.c,v 1.106 2005-12-19 18:04:07 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -483,7 +483,9 @@ int ARMCI_Init()
     armci_allocate_locks();
     armci_init_fence();
 
+#ifdef ARMCI_ENABLE_GPC_CALLS
     gpc_init_signals();
+#endif
 
     /* NOTE: FOR PROCESS-BASED DATA SERVER WE CANNOT call ARMCI_Malloc yet */
 

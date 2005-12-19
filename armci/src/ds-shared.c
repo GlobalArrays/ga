@@ -163,7 +163,7 @@ void armci_send_strided_data_bypass(int proc, request_header_t *msginfo,
       return;
     }
     else {
-      armci_die("***SOMETHING TERRIBLY WRONG IN send_strided_data_bypass***",0);
+      armci_die("***Contact Developers with machine/network info at hpctools@emsl.pnl.gov: bypass path wrongly invoked***",0);
     }
 #endif
     
@@ -628,7 +628,7 @@ void armci_data_server(void *mesg)
                      fflush(stdout);
                   }     
                  
-                  /*armci_server_send_complete(id ,num);    */
+                  /*armci_server_send_complete(id ,num);*/
                 
                   if(DEBUG1){
                      printf("%d(s):finished send completion for gather\n",
@@ -696,8 +696,9 @@ void *armci_server_code(void *data)
         printf("%d(server): connected to all computing processes\n",armci_me);
         fflush(stdout);
     }
-
+#ifdef ARMCI_ENABLE_GPC_CALLS
     gpc_init();
+#endif
     armci_call_data_server();
 
     armci_transport_cleanup();
