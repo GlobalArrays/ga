@@ -11,6 +11,7 @@ c vector boxes lack arithmetic precision
 #define MISMATCH(x,y) abs(x-y)/max(1d0,abs(x)).gt.THRESH
 #define MISMATCHF(x,y) abs(x-y)/max(1.0,abs(x)).gt.THRESHF
 
+#define USE_FAST_MERGE 0
 
       program main
       implicit none
@@ -37,6 +38,9 @@ c vector boxes lack arithmetic precision
       double precision tat(nmax, nmax)
       double precision start,start1,t1,t2,t3,t4,t5,t6,t7
       double precision alpha, beta
+#if USE_FAST_MERGE
+      integer mblock,iblock
+#endif
       logical status, ltest
       parameter (heap=400*400*4, fudge=100, stack=400*400*4)
 c
@@ -80,6 +84,13 @@ c
         print *, 'using ', ga_nnodes(), ' process(es)'
         call ffflush(6)
       endif
+#if USE_FAST_MERGE
+      if(me.eq.0)then
+        print *,'*'
+        print *,'* Using fast merge algorithm'
+        print *,'*'
+      endif
+#endif
 c
 c   Test matrix multiply for mirrored arrays
 c
@@ -218,6 +229,7 @@ c
         call ga_zero(g_c)
         start = util_timer()
         start1 = util_timer()
+#if !USE_FAST_MERGE
         ix = mod(inode,ndims(1))
         iy = (inode - ix)/ndims(1)
         xinc = dims(1)/ndims(1)
@@ -234,6 +246,11 @@ c
         else
           hi2(2) = dims(2)
         endif
+#else
+        mblock = ga_num_mirrored_seg(g_c)
+        do iblock = 1, mblock
+        call ga_get_mirrored_block(g_c,iblock,lo2,hi2)
+#endif
 c
 c      work out which chunk of matrix c this processor is responsible
 c      for
@@ -258,7 +275,7 @@ c
 c
         start1 = util_timer()
 #define DGEMM2 1
-#if DGEMM2
+#if (DGEMM2 && !USE_FAST_MERGE)
         lo4(1) = lo2(1)
         hi4(1) = hi2(1)
         lo4(2) = 1
@@ -313,9 +330,16 @@ c
         call nga_put(g_c,lo3,hi3,tc,ld)
         t6 = t6 + util_timer() - start1
 #endif
+#if USE_FAST_MERGE
+        end do
+#endif
         call ga_mask_sync(.true.,.false.)
         start1 = util_timer()
+#if USE_FAST_MERGE
+        call ga_fast_merge_mirrored(g_c) 
+#else
         call ga_merge_mirrored(g_c) 
+#endif
         t7 = t7 + util_timer() - start1
         t1 = t1 + util_timer() - start
 #else
