@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.134 2005-12-12 17:49:50 d3g293 Exp $ */
+/* $Id: base.c,v 1.135 2005-12-20 19:15:51 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -646,7 +646,10 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
       ilast = nelems-1;
     }
     /* ifirst and ilast correspond to offsets in shared memory. Find the
-       actual indices of the data elements corresponding to these offsets */
+       actual indices of the data elements corresponding to these offsets.
+       The map_offset array provides a convenient mechanism for extracting
+       the first indices on each processor along each coordinate dimension
+       from the mapc array. */
     for (i = 0; i<ndim; i++) {
       map_offset[i] = 0;
       for (j = 0; j<i; j++) {
@@ -673,10 +676,10 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
         }
       }
       icnt += nelems;
-      if (nfirst == -1 && ifirst < icnt) {
+      if (icnt-1 >= ifirst && nfirst < 0) {
         nfirst = i;
       }
-      if (nlast == -1 && ilast < icnt) {
+      if (ilast <= icnt-1 && nfirst >= 0 && nlast < 0) {
         nlast = i;
       }
     }
@@ -686,33 +689,36 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
        adusting the lower index */
     icnt = 0;
     for (i = 0; i<nfirst; i++) {
-      nga_proc_topology_(g_a, &i, index);
+      nga_distribution_(g_a, &i, lo, hi);
       nelems = 1;
       for (j = 0; j<ndim; j++) {
-        if (index[j] < GA[handle].nblock[j]-1) {
-          nelems *= ((Integer)GA[handle].mapc[map_offset[j]+index[j]+1]
-                 - (Integer)GA[handle].mapc[map_offset[j]+index[j]]);
+        if (hi[j] >= lo[j]) {
+          nelems *= (hi[j] - lo[j] + 1);
         } else {
-          nelems *= ((Integer)GA[handle].dims[j]
-                 - (Integer)GA[handle].mapc[map_offset[j]+index[j]] + 1);
+          nelems = 0;
         }
       }
       icnt += nelems;
     }
+    /* calculate offset in local block of memory */
     ifirst = ifirst - icnt;
     /* find dimensions of data on block nfirst */
-    np = 0;
-    for (i=0; i<inode; i++) np += ga_cluster_nprocs_(&i);
-    np += nfirst;
-    np = PGRP_LIST[grp_id].map_proc_list[np];
+    np = nfirst;
     nga_distribution_(g_a, &np, lo, hi);
-    for (i=0; i<ndim; i++) {
-      subscript[i] = ifirst%(hi[i] - lo[i] + 1);
-      ifirst /= (hi[i] - lo[i] + 1);
+    nelems = 1;
+    for (i=0; i<ndim-1; i++) {
+      nelems *= (hi[i] - lo[i] + 1);
     }
+    if (ifirst%nelems == 0) {
+      ifirst = ifirst/nelems;
+    } else {
+      ifirst = (ifirst-ifirst%nelems)/nelems;
+      ifirst++;
+    }
+    if (ifirst > GA[handle].dims[ndim-1]-1) ifirst=GA[handle].dims[ndim-1]-1;
     /* adjust value of ifirst */
     nga_proc_topology_(g_a, &nfirst, index);
-    ifirst = subscript[ndim-1];
+    subscript[ndim-1] = ifirst;
     for (i=0; i<ndim-1; i++) {
       subscript[i] = 0;
     }
@@ -721,39 +727,40 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
       GA[handle].first[i] = GA[handle].mapc[map_offset[i]+index[i]]
                           + (C_Integer)subscript[i];
     }
-    /* adjust upper bound */
+    /* adjust upper bound. If nlast = nfirst, just use old value of icnt */
     if (nlast > nfirst) {
       icnt = 0;
       for (i = 0; i<nlast; i++) {
-        nga_proc_topology_(g_a, &i, index);
+        nga_distribution_(g_a, &i, lo, hi);
         nelems = 1;
         for (j = 0; j<ndim; j++) {
-          if (index[j] < GA[handle].nblock[j]-1) {
-            nelems *= ((Integer)GA[handle].mapc[map_offset[j]+index[j]+1]
-                   - (Integer)GA[handle].mapc[map_offset[j]+index[j]]);
+          if (hi[j] >= lo[j]) {
+            nelems *= (hi[j] - lo[j] + 1);
           } else {
-            nelems *= ((Integer)GA[handle].dims[j]
-                   - (Integer)GA[handle].mapc[map_offset[j]+index[j]] + 1);
+            nelems = 0;
           }
         }
         icnt += nelems;
       }
     }
     ilast = ilast - icnt;
-    /* find dimensions of data on block nfirst */
-    np = 0;
-    for (i=0; i<inode; i++) np += ga_cluster_nprocs_(&i);
-    np += nlast;
-    np = PGRP_LIST[grp_id].map_proc_list[np];
+    /* find dimensions of data on block nlast */
+    np = nlast;
     nga_distribution_(g_a, &np, lo, hi);
-    for (i=0; i<ndim; i++) {
-      subscript[i] = ilast%(hi[i] - lo[i] + 1);
-      ilast /= (hi[i] - lo[i] + 1);
-    }
-    /* adjust value of ilast */
-    icheck = 1;
-    nga_proc_topology_(g_a, &nlast, index);
+    nelems = 1;
     for (i=0; i<ndim-1; i++) {
+      nelems *= (hi[i] - lo[i] + 1);
+    }
+    ilast = (ilast-ilast%nelems)/nelems;
+    /* adjust value of ilast */
+    subscript[ndim-1] = ilast;
+    for (i=0; i<ndim-1; i++) {
+      subscript[i] = (hi[i] - lo[i]);
+    }
+    nga_proc_topology_(g_a, &nlast, index);
+    /*
+    icheck = 1;
+    for (i=1; i<ndim; i++) {
       if (index[i] < GA[handle].nblock[i]-1) {
         itmp = (Integer)GA[handle].mapc[map_offset[i]+index[i]+1]
              - (Integer)GA[handle].mapc[map_offset[i]+index[i]];
@@ -765,12 +772,15 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
       subscript[i] = itmp-1;
     }
     if (!icheck) {
-      subscript[ndim-1]--;
-    }
+      subscript[0]--;
+    } */
     /* Finally, evaluate absolute indices of last data point */
     for (i=0; i<ndim; i++) {
       GA[handle].last[i] = GA[handle].mapc[map_offset[i]+index[i]]
                           + (C_Integer)subscript[i];
+      if (GA[handle].last[i] > GA[handle].dims[i]) {
+        GA[handle].last[i] = GA[handle].dims[i];
+      }
     }
     /* find length of shared memory segment owned by this node. Adjust
      * length, if necessary, to account for gaps in memory between
@@ -784,43 +794,14 @@ void ngai_get_first_last_indices( Integer *g_a)  /* array handle (input) */
       case C_DCPL: size = 2*sizeof(double); break;
       default: ga_error("type not supported",type);
     }
-    for (i=0; i<ndim; i++) index[i] = (Integer)GA[handle].last[i];
-    i = nga_locate_(g_a, index, &id);
-    nga_distribution_(g_a, &id, lo, hi);
-    /* check to see if last is the last element on the processor */
-    icheck = 1;
-    for (i=0; i<ndim; i++) {
-      if ((Integer)GA[handle].last[i] < hi[i]) icheck = 0;
-     /* BJP printf("p[%d] last[%d]: %d, hi[%d]: %d\n",GAme,i,GA[handle].last[i],i,hi[i]); */
-    }
-    /* if last is the last element on a processor that is NOT the last
-     * processor on the node then we need to get the first element on the
-     * next processor */
-    if (inode == nnodes - 1) icheck = 0;
-    if (icheck) {
-      /* BJP printf("p[%d] Augmenting index, inode: %d nproc: %d\n",GAme,inode,nproc); */
-      ilast = GA[handle].last[0]-1;
-      for (i=1; i<ndim; i++) {
-        ilast = ilast*((Integer)GA[handle].dims[i-1])+(Integer)GA[handle].last[i]-1;
-      }
-      ilast++;
-      for (i=ndim-1; i>=1; i--) {
-        subscript[i] = ilast%((Integer)GA[handle].dims[i-1]);
-        subscript[i]++;
-        /* BJP printf("p[%d] subscript[%d]: %d\n",GAme,i,subscript[i]); */
-        ilast /= (Integer)GA[handle].dims[i-1];
-      }
-      subscript[0] = ilast+1;
-      /* BJP printf("p[%d] subscript[%d]: %d\n",GAme,0,subscript[0]); */
-      i = nga_locate_(g_a, subscript, &id);
-      gam_Loc_ptr(id, handle, subscript, &lptr);
-      size = 0;
-    } else {
-      gam_Loc_ptr(id, handle, (Integer)GA[handle].last, &lptr);
-    }
     for (i=0; i<ndim; i++) index[i] = (Integer)GA[handle].first[i];
     i = nga_locate_(g_a, index, &id);
     gam_Loc_ptr(id, handle, (Integer)GA[handle].first, &fptr);
+
+    for (i=0; i<ndim; i++) index[i] = (Integer)GA[handle].last[i];
+    i = nga_locate_(g_a, index, &id);
+    gam_Loc_ptr(id, handle, (Integer)GA[handle].last, &lptr);
+
     GA[handle].shm_length = (C_Long)(lptr - fptr + size);
     GA_Default_Proc_Group = Save_default_group;
   } else {
@@ -3675,7 +3656,7 @@ Integer FATR ga_num_mirrored_seg_(Integer *g_a)
   int *nblock;
   C_Integer *first, *last;
   Integer lower[MAXDIM], upper[MAXDIM];
-  Integer istart = 0, nproc, inode;
+  Integer istart, nproc, inode;
   Integer ret = 0, icheck, np;
 
   if (!ga_is_mirrored_(g_a)) return ret;
@@ -3695,15 +3676,17 @@ Integer FATR ga_num_mirrored_seg_(Integer *g_a)
   /* loop over all data blocks on this node to find out how many
    * separate data blocks correspond to this segment of shared
    * memory */
+  istart = 0;
   for (i=0; i<nproc; i++) {
     /* BJP np = nproc*inode + i; */
     nga_distribution_(g_a,&i,lower,upper);
-    icheck = 1;
+    icheck = 0;
     /* see if processor corresponds to block of array data
      * that contains start of shared memory segment */
     if (!istart) {
+      icheck = 1;
       for (j=0; j<ndim; j++) {
-        if (!(first[j] >= (C_Integer)lower[j] && first[j] <= (C_Integer)upper[j])) {
+        if (first[j] < (C_Integer)lower[j] || first[j] > (C_Integer)upper[j]) {
           icheck = 0;
           break;
         }
@@ -3714,7 +3697,7 @@ Integer FATR ga_num_mirrored_seg_(Integer *g_a)
     }
     icheck = 1;
     for (j=0; j<ndim; j++) {
-      if (!(last[j] >= (C_Integer)lower[j] && last[j] <= (C_Integer)upper[j])) {
+      if (last[j] < (C_Integer)lower[j] || last[j] > (C_Integer)upper[j]) {
         icheck = 0;
         break;
       }
@@ -3742,8 +3725,11 @@ void FATR ga_get_mirrored_block_(Integer *g_a,
   C_Integer *first, *last;
   int *nblock;
   Integer lower[MAXDIM], upper[MAXDIM];
-  Integer istart = 0, nproc, inode;
-  Integer ret = 0, icheck, np;
+  Integer istart, nproc, inode;
+  Integer ipatch, tpatch, icheck, np;
+
+  /* Assume fortran indexing for npatch */
+  tpatch = *npatch - 1;
 
   if (!ga_is_mirrored_(g_a)) {
     for (j=0; j<GA[handle].ndim; j++) {
@@ -3768,15 +3754,18 @@ void FATR ga_get_mirrored_block_(Integer *g_a,
   /* loop over all data blocks on this node to find out how many
    * separate data blocks correspond to this segment of shared
    * memory */
+  ipatch = 0;
+  istart = 0;
   for (i=0; i<nproc; i++) {
     /* BJP np = nproc*inode + i; */
     nga_distribution_(g_a,&i,lower,upper);
-    icheck = 1;
+    icheck = 0;
     /* see if processor corresponds to block of array data
      * that contains start of shared memory segment */
     if (!istart) {
+      icheck = 1;
       for (j=0; j<ndim; j++) {
-        if (!(first[j] >= (C_Integer)lower[j] && first[j] <= (C_Integer)upper[j])) {
+        if (first[j] < (C_Integer)lower[j] || first[j] > (C_Integer)upper[j]) {
           icheck = 0;
           break;
         }
@@ -3787,14 +3776,14 @@ void FATR ga_get_mirrored_block_(Integer *g_a,
     }
     icheck = 1;
     for (j=0; j<ndim; j++) {
-      if (!(last[j] >= (C_Integer)lower[j] && last[j] <= (C_Integer)upper[j])) {
+      if (last[j] < (C_Integer)lower[j] || last[j] > (C_Integer)upper[j]) {
         icheck = 0;
         break;
       }
     }
-    if (istart && ret == *npatch) {
+    if (istart && ipatch == tpatch) {
       if (!icheck) {
-        if (ret == 0) {
+        if (ipatch == 0) {
           for (j=0; j<ndim; j++) {
             lo[j] = (Integer)first[j];
             hi[j] = upper[j];
@@ -3806,7 +3795,7 @@ void FATR ga_get_mirrored_block_(Integer *g_a,
           }
         }
       } else {
-        if (ret == 0) {
+        if (ipatch == 0) {
           for (j=0; j<ndim; j++) {
             lo[j] = (Integer)first[j];
             hi[j] = (Integer)last[j];
@@ -3821,7 +3810,7 @@ void FATR ga_get_mirrored_block_(Integer *g_a,
       GA_POP_NAME;
       return;
     }
-    if (istart) ret++;
+    if (istart) ipatch++;
   }
   for (j=0; j<ndim; j++) {
     lo[j] = 0;
