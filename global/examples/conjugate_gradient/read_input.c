@@ -11,25 +11,58 @@
 
 extern int na;
 extern int nz;
-extern int bvec,dvec,amat,xvec,axvec,rvec,qvec,ridx,cidx;
+extern int dmvec,svec,bvec,dvec,m_dvec,amat,xvec,axvec,rvec,qvec,ridx,cidx;
 extern int me, nproc;
 extern int myfirstrow,mylastrow;
 static int *columnmap,*allfirstrow,*alllastrow;
 extern double *ga_vecptr;
-void read_and_create(int arcv, char **argv)
+extern int isvectormirrored;
+static FILE *fd;
+
+void generate_random_file(int naa,int nnz){
+int irow[naa],icol[nnz];
+double A[nnz],b[naa];
+    fd = fopen("randominput.dat", "w");
+}
+
+void read_and_create(int argc, char **argv)
 {
 int ri,i,*iptr,zero=0,one=1;
+int ph;
 double d_one=1.0,d_zero=0.0;
-FILE *fd;
 double *a,*dptr,*x;
 int *icol, *irow;
 int dims[2];
 int tmp1,idealelementsperproc;
 int lo,hi,ld;
+
+    na = atoi(argv[1]);
+    nz = atoi(argv[2]);
+
+    if(strncmp("random",argv[3],6)){
+       if(me==0){
+         fd = fopen(argv[3], "r");
+         if(fd==NULL)GA_Error("unable to open given file",0);
+       }
+    }
+    else{
+       if(na==0 || nz==0){
+         printf("\nERROR:exiting-no input file given and na or nz is 0");
+         fflush(stdout);
+         GA_Terminate();
+         MPI_Finalize();
+         return;
+       }
+       if(me==0){
+         generate_random_file(na,nz);
+         fd = fopen("randominput.dat", "r");
+       }
+    }
     if(me==0){
-       fd = fopen("/home/vinod/matrix.bin", "r");
-       fread(&na, sizeof(na), 1, fd);
-       fread(&nz, sizeof(nz), 1, fd);
+       if(na==0)
+         fread(&na, sizeof(na), 1, fd);
+       if(nz==0)
+         fread(&nz, sizeof(nz), 1, fd);
        printf("\nReading CG input\n");
        printf("Number of rows: %d\n", na);
        printf("Number of non-zeros: %d\n", nz);
@@ -162,6 +195,10 @@ int lo,hi,ld;
     rvec = NGA_Create_irreg(MT_C_DBL, 1, &na , "R", &nproc, allfirstrow);
     if(!rvec) GA_Error("create q failed",na); 
 
+    dvec = GA_Duplicate(rvec,"D");                /* d = r */
+    svec = GA_Duplicate(rvec,"S");
+    dmvec = GA_Duplicate(rvec,"DM");
+
 #if 0
     dims[0]=1;dims[1]=na;
     t_rvec = NGA_Create(MT_C_DBL, 2, dims, "T_R", NULL);
@@ -171,6 +208,13 @@ int lo,hi,ld;
     qvec = NGA_Create_irreg(MT_C_DBL, 1, &na , "Q", &nproc, allfirstrow);
     if(!qvec) GA_Error("create q failed",na); 
     /*GA_Print_distribution(qvec);*/
+
+    if(isvectormirrored){
+       ph= GA_Pgroup_get_mirror();
+       m_dvec = 
+             NGA_Create_irreg_config(MT_C_DBL,1,&na,"mD",&nproc,allfirstrow,ph);
+       if(!m_dvec) GA_Error("create mirrored dvec failed",na);
+    }
 
     ga_vecptr = (double *)GA_Malloc_local(na*sizeof(double));
 
