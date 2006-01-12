@@ -1,4 +1,4 @@
-*README*                                       Last change: 2002 Jun 10
+*README*                                       Last change: 2005 Jan 11
 
                                    ARMCI
                    Aggregate Remote Memory Copy Interface
@@ -22,11 +22,11 @@
 =============================================================================
 
  1. Supported Platforms                       *supported-platforms*
-   1. shared-memory systems: SUN Solaris, SGI, IBM, Linux, DEC, HP, Cray SV1,
-      and Windows NT/95/2000
+   1. shared-memory systems: SUN Solaris, SGI, SGI Altix, IBM, Linux, DEC,
+      HP, Cray SV1, Cray X1, and Windows NT/95/2000
    2. distributed-memory systems: Cray T3E, IBM SP(TARGET=LAPI),
       FUJITSU VX/VPP.
-   3. clusters of workstations (over sockets, Myrinet,VIA and Quadrics)
+   3. clusters of workstations (over Myrinet, Quadrics, Infiniband, sockets, VIA)
 
 =============================================================================
 
