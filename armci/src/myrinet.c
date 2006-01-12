@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.77 2005-12-19 18:04:07 vinod Exp $
+/* $Id: myrinet.c,v 1.78 2006-01-12 01:15:07 vinod Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -1512,11 +1512,14 @@ void armci_call_data_server()
         fprintf(stdout, "%d(server): waiting for request\n",armci_me);
         fflush(stdout);
     }
-
+#ifdef ARMCI_ENABLE_GPC_CALLS
     unblock_thread_signal(GPC_COMPLETION_SIGNAL);
+#endif
     /* server main loop; wait for and service requests until QUIT requested */
     while(!iexit) {        
+#ifdef ARMCI_ENABLE_GPC_CALLS
       block_thread_signal(GPC_COMPLETION_SIGNAL);
+#endif
         if(server_can_poll)
             event = gm_receive(serv_gm->rcv_port);
         else
@@ -1553,8 +1556,9 @@ void armci_call_data_server()
               gm_unknown(serv_gm->rcv_port, event);
               break;
         }
+#ifdef ARMCI_ENABLE_GPC_CALLS
 	unblock_thread_signal(GPC_COMPLETION_SIGNAL);
-	cpu_yield();
+#endif
     }
     
     if(DEBUG_) {printf("%d(server): done! closing\n",armci_me); fflush(stdout);}
