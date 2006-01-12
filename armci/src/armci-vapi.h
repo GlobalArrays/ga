@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.14 2005-12-19 18:06:21 vinod Exp $ */
+/*$Id: armci-vapi.h,v 1.15 2006-01-12 01:08:04 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -57,10 +57,24 @@ extern char * armci_vapi_client_mem_alloc(int);
 
 typedef struct { 
         int tag;
+	int issg;
         VAPI_sr_desc_t descr;
-        VAPI_rr_desc_t rdescr;
-        VAPI_sg_lst_entry_t sg_entry;
+        VAPI_sg_lst_entry_t sg_entry[56]; /*ff:this has to be malloced*/
+        int numofsends;
+	int myindex;
 } sdescr_t;
+
+typedef struct { 
+        int tag;
+	int issg;
+        VAPI_rr_desc_t descr;
+        VAPI_sg_lst_entry_t sg_entry[56]; /*ff:this has to be malloced*/
+        int numofrecvs;
+	int myindex;
+} rdescr_t;
+
+void armci_client_nbsend_complete(sdescr_t *,int);
+void armci_vapi_set_mark_buf_send_complete(int);
 
 #define ARMCI_MEMHDL_T armci_vapi_memhndl_t
 
@@ -90,7 +104,7 @@ typedef struct {
 #define BUF_EXTRA_FIELD_T armci_vapi_field_t 
 #define GET_SEND_BUFFER _armci_buf_get
 #define FREE_SEND_BUFFER _armci_buf_release
-#define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;memset(&((_field).sdscr),0,sizeof(VAPI_sr_desc_t));(_field).sdscr.id=avail+1
+#define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;memset(&((_field).sdscr),0,sizeof(VAPI_sr_desc_t));(_field).sdscr.id=avail+1;armci_vapi_set_mark_buf_send_complete(avail+1)
 #define BUF_ALLOCATE armci_vapi_client_mem_alloc
 
 #define CLEAR_SEND_BUF_FIELD(_field,_snd,_rcv,_to,_op) armci_vapi_complete_buf((armci_vapi_field_t *)(&(_field)),(_snd),(_rcv),(_to),(_op));_snd=0;_rcv=0;_to=0
@@ -106,7 +120,7 @@ typedef struct {
 #if defined(ALLOW_PIN)
 #  define NB_CMPL_T sdescr_t*
 #  define ARMCI_NB_WAIT(_cntr) if(_cntr)if(nb_handle->tag==(_cntr)->tag)\
-          armci_client_send_complete(&((_cntr)->descr),"NB_WAIT");
+          armci_client_nbsend_complete(_cntr,nb_handle->tag);
 #  define CLEAR_HNDL_FIELD(_x) _x=NULL
 #endif
 
@@ -118,7 +132,7 @@ typedef struct {
 #define ARMCI_POST_SCATTER 1000000001
 #define ARMCI_VAPI_CLEAR 0
 #define VAPI_SGGET_MIN_COLUMN 720
-#define VAPI_SGPUT_MIN_COLUMN 1680
+#define VAPI_SGPUT_MIN_COLUMN 720
 #define DSCRID_SCATTERCLIENT 70000
 #define DSCRID_SCATTERCLIENT_END 70000+9999
 

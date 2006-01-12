@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.69 2005-12-19 20:40:54 vinod Exp $ */
+/* $Id: request.c,v 1.70 2006-01-12 01:08:04 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -789,10 +789,10 @@ int armci_rem_strided(int op, void* scale, int proc,
     default: slen=0;
     }
 	
-	/*
-	if(ACC(op))fprintf(stderr,"%d client len=%d alpha=%lf data=%lf,%lf\n",
+    /*	
+	if(ACC(op))printf("%d client len=%d alpha=%lf data=%lf,%lf\n",
 	     armci_me, buf-(char*)msginfo,((double*)buf)[0],*((double*)src_ptr),             ((double*)buf)[1]);
-	*/
+    */
 
     buf += slen;
 
@@ -894,11 +894,11 @@ int armci_two_phase_send(int proc,void *src_ptr,int src_stride_arr[],
 char *buf, *buf0;
 request_header_t *msginfo;
 int bytes, i;
-int ehlen = 0,nbtag;
+int ehlen = 0,nbtag=0;
 int *rem_ptr;
 int * rem_stride_arr;
 int bufsize = sizeof(request_header_t);
-int armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,int);
+void armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,int);
      
     bytes = 0;
     if(nbhandle)nbtag = nbhandle->tag;     
@@ -917,7 +917,7 @@ int armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,i
     armci_save_strided_dscr(&buf,rem_ptr,rem_stride_arr,count,stride_levels,0);
           
     if(DEBUG_){
-       printf(" CLIENT :the dest_ptr is %p\n", rem_ptr);
+       printf(" CLIENT :the dest_ptr is %p src is %p\n", rem_ptr,src_ptr);
        for(i =0; i<stride_levels; i++)
 	 printf("the value of stride_arr[i] is %d,value of count[i] is %d\n",
                                rem_stride_arr[i], count[i]);
@@ -962,14 +962,14 @@ int armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,i
        printf("%d(c) : returned from armci_post_gather\n",armci_me);
        fflush(stdout);
     }
-    if(!nbhandle){
-       FREE_SEND_BUFFER(msginfo);
-    }
-    else{
-       BUF_INFO_T *info=NULL; 
+    if(nbhandle){
+       BUF_INFO_T *info=NULL;
        info=BUF_TO_BUFINFO(buf0);
-       info->protocol=SDSCR_IN_PLACE; 
+       info->protocol=0;
     }
+
+    FREE_SEND_BUFFER(msginfo);
+
     return 0;
 }
 
@@ -983,23 +983,23 @@ int armci_two_phase_get(int proc, void*src_ptr, int src_stride_arr[],
 char *buf, *buf0;
 request_header_t *msginfo;
 int bytes;
-int ehlen = 0,nbtag;
+int ehlen = 0,nbtag=0;
 int *rem_ptr;
 int num; 
 int *rem_stride_arr;
 int bufsize = sizeof(request_header_t);
-int armci_post_scatter(void *,int *,int *,int, armci_vapi_memhndl_t *,int,int,request_header_t * ,int);
-void armci_client_recv_complete(int, int, int);
+extern void armci_post_scatter(void *,int *,int *,int, armci_vapi_memhndl_t *,int,int,int);
+extern void armci_wait_for_blocking_scatter();
 
     if(DEBUG_){
        printf("%d(c):about to call armci_post_scatter, CLN value is %d\n",
                       armci_me,CLN);
        fflush(stdout);
     }    
-    if(nbhandle)nbtag = nbhandle->tag;     
+    if(nb_handle)nbtag = nb_handle->tag;     
     
-    num =  armci_post_scatter(dst_ptr, dst_stride_arr, count, stride_levels, 
-                   mhloc,proc,msginfo,CLN);
+    armci_post_scatter(dst_ptr, dst_stride_arr, count, stride_levels,mhloc,
+                    proc,nbtag,CLN);
     if(DEBUG_){
        printf("\n%d: returned from armci_post_scatter %d\n",armci_me,num);
        fflush(stdout);
@@ -1042,15 +1042,18 @@ void armci_client_recv_complete(int, int, int);
        printf("%d(c) : finished sending get request to server\n",armci_me);     
        fflush(stdout);
     }
-    if(!nb_handle){
-       *(int *)((char *)msginfo+msginfo->bytes) = num;
-       FREE_SEND_BUFFER(msginfo);
+
+    if(nb_handle){
+       BUF_INFO_T *info=NULL;
+       info=BUF_TO_BUFINFO(buf0);
+       info->protocol=0;
     }
     else{
-       armci_save_strided_dscr(&buf0,dst_ptr,dst_stride_arr,count,
-                                 stride_levels,1);
-       *(int *)((char *)msginfo+msginfo->bytes) = num;
+       armci_wait_for_blocking_scatter();
     }
+
+    FREE_SEND_BUFFER(msginfo);
+
     if(DEBUG_){
        printf("%d(c) : finished polling for scatter_recv\n",armci_me);
        fflush(stdout);

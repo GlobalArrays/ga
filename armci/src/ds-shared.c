@@ -531,6 +531,7 @@ void armci_data_server(void *mesg)
     void *buffer;
     int buflen;
     int from, i;
+    static int mytag=1;
 
     /* read header, descriptor, data, and buffer length */
     armci_rcv_req(mesg, &msginfo, &descr, &buffer, &buflen );
@@ -593,7 +594,7 @@ void armci_data_server(void *mesg)
 #if defined(VAPI) && defined(MELLANOX) /* buffer bypass protocol */
               if(msginfo->pinned == 1){
                   int armci_post_gather(void *, int *, int *,int, 
-                                  armci_vapi_memhndl_t *,int,int);
+                                  armci_vapi_memhndl_t *,int,int,int);
                   void * src_ptr;
                   int stride_levels;
                   int count[MAX_STRIDE_LEVEL];
@@ -607,7 +608,6 @@ void armci_data_server(void *mesg)
                      fflush(stdout);
                   }
                   
-                  id = msginfo->from; 
                   src_ptr = *(void**)descr;
                   descr = (char*)descr + sizeof(void*);
                   stride_levels = *(int*)descr;
@@ -630,20 +630,15 @@ void armci_data_server(void *mesg)
                    
                   num =  armci_post_gather(src_ptr,src_stride_arr,
                                   count,stride_levels, mhandle,
-                                  id,SERV );
+                                  msginfo->from,mytag,SERV );
+                  mytag =  (mytag+1)%16;
+                  if(mytag==0)mytag=1;
                   if(DEBUG1){
                      printf("%d(s) : finished posting %d gather\n", 
                                      armci_me,num);
                      fflush(stdout);
                   }     
                  
-                  /*armci_server_send_complete(id ,num);*/
-                
-                  if(DEBUG1){
-                     printf("%d(s):finished send completion for gather\n",
-                             armci_me);
-                     fflush(stdout);
-                  }
               }
               else        
 #endif

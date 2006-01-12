@@ -1,4 +1,4 @@
-/* $Id: gpc.c,v 1.5 2005-12-19 21:02:11 vinod Exp $ *****************************************************
+/* $Id: gpc.c,v 1.6 2006-01-12 01:08:04 vinod Exp $ *****************************************************
   Prototype of Global Procedure Calls.
   July/03 JN - shared memory version  
   
@@ -118,7 +118,9 @@ int ARMCI_Gpc_exec(int h, int p, void  *hdr, int hlen,  void *data,  int dlen,
       func(p, armci_me, hdr, hlen, data, dlen, rhdr, rhlen, &rhsize,
 	   rdata, rdlen, &rdsize, GPC_WAIT);
     } 
+#ifndef VAPI
     ARMCI_Fence(p);
+#endif
     return 0;
   }
 #endif
