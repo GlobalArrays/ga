@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.24 2006-01-12 01:08:04 vinod Exp $ */
+/* $Id: vapi.c,v 1.25 2006-01-13 19:19:21 vinod Exp $ */
 /* 
    File organized as follows
 */
@@ -119,7 +119,7 @@ static int *flag_arr; /* flag indicates its receiving scatter data */
 
 
 
-#define MAX_DESCR 16
+#define MAX_DESCR 2
 typedef struct { 
     int avail; VAPI_qp_hndl_t qp; VAPI_rr_desc_t *descr;
 } descr_pool_t;
@@ -156,7 +156,7 @@ static descr_pool_t client_descr_pool = {MAX_DESCR,0,(VAPI_rr_desc_t *)0};
 /*\ descriptors will have unique ID's for the wait on descriptor routine to 
  * complete a descriptor and know where it came from
 \*/
-#define MAX_PENDING 16
+#define MAX_PENDING 8
 
 #define NUMOFBUFFERS 20
 #define DSCRID_FROMBUFS 1
@@ -274,9 +274,9 @@ int debug;
        while(rc == VAPI_CQ_EMPTY)     
          rc = VAPI_poll_cq(nic->handle, nic->rcq, pdscr);
        armci_check_status(debug,rc,"client_scatter_rcv");
-       if(debug);{
-       if(pdscr->id >= DSCRID_SCATGAT && pdscr->id < DSCRID_SCATGAT_END)
-          printf("\n%d:recv from %s complete id=%d num=%d",armci_me,
+       if(debug){
+         if(pdscr->id >= DSCRID_SCATGAT && pdscr->id < DSCRID_SCATGAT_END)
+           printf("\n%d:recv from %s complete id=%d num=%d",armci_me,
              from,pdscr->id,rdscr_arr[pdscr->id-DSCRID_SCATGAT].numofrecvs);
        }
        if(pdscr->id >= DSCRID_SCATGAT && pdscr->id < DSCRID_SCATGAT_END){

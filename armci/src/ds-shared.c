@@ -631,7 +631,7 @@ void armci_data_server(void *mesg)
                   num =  armci_post_gather(src_ptr,src_stride_arr,
                                   count,stride_levels, mhandle,
                                   msginfo->from,mytag,SERV );
-                  mytag =  (mytag+1)%16;
+                  mytag =  (mytag+1)%MAX_PENDING;
                   if(mytag==0)mytag=1;
                   if(DEBUG1){
                      printf("%d(s) : finished posting %d gather\n", 
