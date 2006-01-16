@@ -389,7 +389,7 @@ msginfo = (request_header_t *)GET_SEND_BUFFER(bufsize,ACK,destproc);
     msginfo->datalen =sizeof(int);
 
     if(DEBUG_){
-       printf("%d(c):sending ACK to %d clus=%d\n",armci_me,msginfo->to,clus);
+       printf("%d(c):sending ACKreq to %d clus=%d\n",armci_me,msginfo->to,clus);
         fflush(stdout);
     }
 

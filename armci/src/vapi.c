@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.25 2006-01-13 19:19:21 vinod Exp $ */
+/* $Id: vapi.c,v 1.26 2006-01-16 20:54:00 vinod Exp $ */
 /* 
    File organized as follows
 */
@@ -174,7 +174,7 @@ static descr_pool_t client_descr_pool = {MAX_DESCR,0,(VAPI_rr_desc_t *)0};
 extern double MPI_Wtime();
 static double inittime0=0,inittime1=0,inittime2=0,inittime3=0,inittime4=0;
 
-static int mark_buf_send_complete[NUMOFBUFFERS];
+static int mark_buf_send_complete[NUMOFBUFFERS+1];
 static sdescr_t armci_vapi_client_nbsdscr_array[MAX_PENDING];
 static rdescr_t armci_vapi_client_nbrdscr_array[MAX_PENDING];
 static sdescr_t armci_vapi_serv_nbsdscr_array[MAX_PENDING];
@@ -345,7 +345,7 @@ int debug;
          armci_check_status(DEBUG_CLN,rc,"armci_send_complete wait for send");
          //printf("%d:completed id %d\n",armci_me,pdscr->id);
          if(pdscr->id >=DSCRID_FROMBUFS && pdscr->id < DSCRID_FROMBUFS_END)
-           mark_buf_send_complete[pdscr->id-DSCRID_FROMBUFS]=1;
+           mark_buf_send_complete[pdscr->id]=1;
          else if(pdscr->id >=DSCRID_NBDSCR && pdscr->id < DSCRID_NBDSCR_END){
            sdscr_arr[pdscr->id-DSCRID_NBDSCR].tag=0;
          }
@@ -960,7 +960,7 @@ int *tmparr;
     if(TIME_INIT)inittime0 = MPI_Wtime(); 
     /* initialize nic connection for qp numbers and lid's */
     armci_init_nic(SRV_nic,1,1);
-    bzero(mark_buf_send_complete,sizeof(int)*NUMOFBUFFERS);
+    bzero(mark_buf_send_complete,sizeof(int)*(NUMOFBUFFERS+1));
     _gtmparr = (int *)calloc(armci_nproc,sizeof(int)); 
 
     /*qp_numbers and lids need to be exchanged globally*/
@@ -1752,8 +1752,8 @@ BUF_INFO_T *info;
          armci_dscrlist_send_complete(info->tag,"armci_vapi_complete_buf"); 
        }
        snd_dscr=&(field->sdscr);
-       if(mark_buf_send_complete[snd_dscr->id-1])
-         mark_buf_send_complete[snd_dscr->id-1]=0;
+       if(mark_buf_send_complete[snd_dscr->id])
+         mark_buf_send_complete[snd_dscr->id]=0;
        else
          armci_send_complete(snd_dscr,"armci_vapi_complete_buf");
     }

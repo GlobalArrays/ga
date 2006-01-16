@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.104 2006-01-12 01:08:04 vinod Exp $ */
+/* $Id: strided.c,v 1.105 2006-01-16 20:53:59 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -45,8 +45,11 @@ else\
 
 #define POSTPROCESS_STRIDED(tmp_count) if(tmp_count)seg_count[1]=tmp_count
  
-
-   
+#ifdef VAPI_
+#  define DO_FENCE(__proc)
+#else
+#  define DO_FENCE(__proc) ARMCI_Fence(__proc)   
+#endif
 
 
 #ifndef REGIONS_REQUIRE_MEMHDL 
@@ -574,7 +577,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-         /*ARMCI_Fence(proc);*/
+         DO_FENCE(proc);
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],NULL,0,mhloc,mhrem);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
@@ -585,7 +588,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #if   defined(VAPI)
        if(stride_levels==1 && count[0]>VAPI_SGPUT_MIN_COLUMN &&
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-           /*ARMCI_Fence(proc);*/
+           DO_FENCE(proc);
            armci_two_phase_send(proc, src_ptr, src_stride_arr, dst_ptr,
                           dst_stride_arr,count,stride_levels,NULL,NULL,mhloc);
 #          ifdef ARMCI_PROFILE
@@ -901,7 +904,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #     ifdef ALLOW_PIN
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
-         /*ARMCI_Fence(proc);*/
+         DO_FENCE(proc);
          ARMCI_REM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
@@ -912,7 +915,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #if   defined(VAPI)
        if(stride_levels==1 && count[0]>VAPI_SGGET_MIN_COLUMN &&
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
-          /*ARMCI_Fence(proc);*/
+          DO_FENCE(proc);
           armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
                           dst_stride_arr,count,stride_levels,NULL,NULL,mhloc);  
 #         ifdef ARMCI_PROFILE
@@ -1042,7 +1045,7 @@ int ARMCI_Put(void *src, void* dst, int bytes, int proc)
 #else
 #ifdef ALLOW_PIN
     if(ARMCI_REGION_BOTH_FOUND(src,dst,bytes,armci_clus_id(proc))){
-       /*ARMCI_Fence(proc);*/
+       DO_FENCE(proc);
        armci_client_direct_send(proc, src, dst, bytes,NULL,0,mhloc,mhrem);
     }else
 #endif
@@ -1072,7 +1075,7 @@ int ARMCI_Get(void *src, void* dst, int bytes, int proc)
 #else
 # ifdef ALLOW_PIN
     if(ARMCI_REGION_BOTH_FOUND(dst,src,bytes,armci_clus_id(proc))){
-       /*ARMCI_Fence(proc);*/
+       DO_FENCE(proc);
        ARMCI_REM_GET(proc, src,NULL,dst,NULL,&bytes, 0, NULL);
     }  else
 # endif
@@ -1354,7 +1357,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #endif
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-         /*ARMCI_Fence(proc);*/
+         DO_FENCE(proc);
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],
                                   (void **)(&nb_handle->cmpl_info),
                                   nb_handle->tag,mhloc,mhrem);
@@ -1368,7 +1371,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
        if(stride_levels==1 && /*count[0]>VAPI_SGPUT_MIN_COLUMN &&*/
          (count[1] < armci_max_num_sg_ent || count[0] > VAPI_SGPUT_MIN_COLUMN)&&
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-         /*ARMCI_Fence(proc);*/
+         DO_FENCE(proc);
          armci_two_phase_send(proc, src_ptr, src_stride_arr, dst_ptr,
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);
 #        ifdef ARMCI_PROFILE
@@ -1477,7 +1480,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #endif
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
-         /*ARMCI_Fence(proc);*/
+         DO_FENCE(proc);
          ARMCI_NBREM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
@@ -1489,7 +1492,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        if(stride_levels==1 && 
          (count[1] < armci_max_num_sg_ent || count[0] > VAPI_SGGET_MIN_COLUMN)&&
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
-         /*ARMCI_Fence(proc);*/
+         DO_FENCE(proc);
           armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);  
 #        ifdef ARMCI_PROFILE
@@ -1655,7 +1658,7 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 #     else
 #       ifdef ALLOW_PIN
        if(ARMCI_REGION_BOTH_FOUND(src,dst,bytes,armci_clus_id(proc))){
-         /*ARMCI_Fence(proc);*/
+         DO_FENCE(proc);
          INIT_NB_HANDLE(nb_handle,PUT,proc);
 	 nb_handle->tag = GET_NEXT_NBTAG();
 	 nb_handle->op  = PUT;
@@ -1715,7 +1718,7 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 #     else
 #       ifdef ALLOW_PIN
        if(ARMCI_REGION_BOTH_FOUND(dst,src,bytes,armci_clus_id(proc))){
-         /*ARMCI_Fence(proc);*/
+         DO_FENCE(proc);
          INIT_NB_HANDLE(nb_handle,PUT,proc);
 	 nb_handle->tag = GET_NEXT_NBTAG();
 	 nb_handle->op  = GET;
