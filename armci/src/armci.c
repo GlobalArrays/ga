@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.108 2005-12-19 21:02:11 vinod Exp $ */
+/* $Id: armci.c,v 1.109 2006-01-17 17:27:12 vinod Exp $ */
 
 /* DISCLAIMER
  *
@@ -65,7 +65,12 @@ double armci_internal_buffer[BUFSIZE_DBL];
     lockset_t lockid;
 #endif
 
-
+#ifdef ALLOW_PIN
+int* armci_prot_switch_fence=NULL;
+int armci_prot_switch_preproc = -1;
+int armci_prot_switch_preop = -1;
+#endif
+    
 #ifdef LIBELAN_ATOMICS
 ELAN_ATOMIC *a;
 #warning "Enabling new atomics"
@@ -487,6 +492,12 @@ int ARMCI_Init()
     gpc_init_signals();
 #endif
 
+#ifdef ALLOW_PIN
+    armci_prot_switch_fence = malloc(sizeof(int*)*armci_nproc);
+    armci_prot_switch_preproc = -1;
+    armci_prot_switch_preop = -1;
+#endif
+
     /* NOTE: FOR PROCESS-BASED DATA SERVER WE CANNOT call ARMCI_Malloc yet */
 
 #   if defined(DATA_SERVER) || defined(ELAN_ACC)
@@ -545,7 +556,9 @@ void ARMCI_Finalize()
 #ifdef PORTALS
     armci_fini_portals();
 #endif
-
+#ifdef ALLOW_PIN
+    free(armci_prot_switch_fence);
+#endif
     ARMCI_Cleanup();
     armci_msg_barrier();
 #ifdef GA_USE_VAMPIR

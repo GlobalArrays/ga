@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.105 2006-01-16 20:53:59 vinod Exp $ */
+/* $Id: strided.c,v 1.106 2006-01-17 17:27:12 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -44,11 +44,34 @@ else\
 }
 
 #define POSTPROCESS_STRIDED(tmp_count) if(tmp_count)seg_count[1]=tmp_count
- 
-#ifdef VAPI_
-#  define DO_FENCE(__proc)
+
+#define SERVER_GET 1
+#define SERVER_NBGET 2
+#define DIRECT_GET 3
+#define DIRECT_NBGET 4
+#define SERVER_PUT 5
+#define SERVER_NBPUT 6
+#define DIRECT_PUT 7
+#define DIRECT_NBPUT 8
+
+
+#ifdef ALLOW_PIN
+#  define DO_FENCE(__proc,__prot) if(__prot==SERVER_GET);\
+        else if(__prot==SERVER_PUT);\
+        else if(__prot==DIRECT_GET || __prot==DIRECT_NBGET){\
+          if(armci_prot_switch_fence[__proc]==SERVER_PUT)\
+            ARMCI_Fence(__proc);\
+        }\
+        else if(__prot==DIRECT_PUT || __prot==DIRECT_NBPUT){\
+          if(armci_prot_switch_fence[__proc]==SERVER_PUT)\
+            ARMCI_Fence(__proc);\
+        }\
+        else;\
+        armci_prot_switch_fence[__proc]==__prot
 #else
-#  define DO_FENCE(__proc) ARMCI_Fence(__proc)   
+
+#  define DO_FENCE(__proc,__prot)  
+        
 #endif
 
 
@@ -89,6 +112,12 @@ ARMCI_MEMHDL_T *mhloc=NULL,*mhrem=NULL;
     armci_rem_get((_p),(_s),(_sst),(_d),(_dst),(_cou),(_lev),(_hdl),(void *)mhloc,(void *)mhrem)
 #  define ARMCI_NBREM_GET ARMCI_REM_GET
         
+#endif
+
+#ifdef ALLOW_PIN
+ extern int* armci_prot_switch_fence;
+ extern int armci_prot_switch_preproc;
+ extern int armci_prot_switch_preop;
 #endif
 
         
@@ -577,7 +606,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #    ifdef ALLOW_PIN /*if we can pin, we do*/
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-         DO_FENCE(proc);
+         DO_FENCE(proc,DIRECT_PUT);
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],NULL,0,mhloc,mhrem);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
@@ -588,7 +617,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #if   defined(VAPI)
        if(stride_levels==1 && count[0]>VAPI_SGPUT_MIN_COLUMN &&
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-           DO_FENCE(proc);
+           DO_FENCE(proc,DIRECT_PUT);
            armci_two_phase_send(proc, src_ptr, src_stride_arr, dst_ptr,
                           dst_stride_arr,count,stride_levels,NULL,NULL,mhloc);
 #          ifdef ARMCI_PROFILE
@@ -600,6 +629,7 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #     endif
        
 #    endif
+       DO_FENCE(proc,SERVER_PUT);
 #if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API) 
        if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
            rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
@@ -607,8 +637,10 @@ int ARMCI_PutS( void *src_ptr,        /* pointer to 1st segment at source*/
        }
        else
 #endif
+       
        rc = armci_pack_strided(PUT, NULL, proc, src_ptr, src_stride_arr,dst_ptr,
                   dst_stride_arr, count, stride_levels, NULL, -1, -1, -1,NULL);
+
     }
     else
 #endif
@@ -904,7 +936,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #     ifdef ALLOW_PIN
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
-         DO_FENCE(proc);
+         DO_FENCE(proc,DIRECT_GET);
          ARMCI_REM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, NULL);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
@@ -915,7 +947,7 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #if   defined(VAPI)
        if(stride_levels==1 && count[0]>VAPI_SGGET_MIN_COLUMN &&
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
-          DO_FENCE(proc);
+          DO_FENCE(proc,DIRECT_GET);
           armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
                           dst_stride_arr,count,stride_levels,NULL,NULL,mhloc);  
 #         ifdef ARMCI_PROFILE
@@ -924,8 +956,8 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
           return 0;
        }
 #     endif
-       
 #     endif
+       DO_FENCE(proc,SERVER_GET);
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS))
        /* for larger strided or 1D reqests buffering can be avoided to send data
         * we can try to bypass the packetization step and send request directly
@@ -942,9 +974,11 @@ int ARMCI_GetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        }else
                DefaultPath: /* standard buffered path */
 #endif
+               
           rc = armci_pack_strided(GET, NULL, proc, src_ptr, src_stride_arr,
                                  dst_ptr,dst_stride_arr,count,stride_levels,
                                  NULL,-1,-1,-1,NULL);
+               
     }else
 #else
        /* avoid LAPI_GetV  - note count[0]<0 means disabled*/
@@ -1014,9 +1048,11 @@ int ARMCI_AccS( int  optype,            /* operation */
     if(direct)
       rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
                            dst_stride_arr, count, stride_levels,1,NULL);
-    else
+    else{
+      DO_FENCE(proc,SERVER_PUT);
       rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
                       dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,NULL);
+    }
 
     POSTPROCESS_STRIDED(tmp_count);
 #ifdef ARMCI_PROFILE
@@ -1045,7 +1081,7 @@ int ARMCI_Put(void *src, void* dst, int bytes, int proc)
 #else
 #ifdef ALLOW_PIN
     if(ARMCI_REGION_BOTH_FOUND(src,dst,bytes,armci_clus_id(proc))){
-       DO_FENCE(proc);
+       DO_FENCE(proc,DIRECT_PUT);
        armci_client_direct_send(proc, src, dst, bytes,NULL,0,mhloc,mhrem);
     }else
 #endif
@@ -1075,7 +1111,7 @@ int ARMCI_Get(void *src, void* dst, int bytes, int proc)
 #else
 # ifdef ALLOW_PIN
     if(ARMCI_REGION_BOTH_FOUND(dst,src,bytes,armci_clus_id(proc))){
-       DO_FENCE(proc);
+       DO_FENCE(proc,DIRECT_GET);
        ARMCI_REM_GET(proc, src,NULL,dst,NULL,&bytes, 0, NULL);
     }  else
 # endif
@@ -1357,7 +1393,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 #endif
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-         DO_FENCE(proc);
+         DO_FENCE(proc,DIRECT_NBPUT);
          armci_client_direct_send(proc, src_ptr, dst_ptr, count[0],
                                   (void **)(&nb_handle->cmpl_info),
                                   nb_handle->tag,mhloc,mhrem);
@@ -1371,7 +1407,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
        if(stride_levels==1 && /*count[0]>VAPI_SGPUT_MIN_COLUMN &&*/
          (count[1] < armci_max_num_sg_ent || count[0] > VAPI_SGPUT_MIN_COLUMN)&&
          ARMCI_REGION_BOTH_FOUND(src_ptr,dst_ptr,count[0],armci_clus_id(proc))){
-         DO_FENCE(proc);
+         DO_FENCE(proc,DIRECT_NBPUT);
          armci_two_phase_send(proc, src_ptr, src_stride_arr, dst_ptr,
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);
 #        ifdef ARMCI_PROFILE
@@ -1381,7 +1417,7 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
        }
 #     endif
 #     endif
-    ORDER(PUT,proc); /* ensure ordering */
+      DO_FENCE(proc,SERVER_NBPUT);
 #  if defined(DATA_SERVER) && defined(SOCKETS) && defined(USE_SOCKET_VECTOR_API)
        if(count[0]> LONG_PUT_THRESHOLD && stride_levels>0){
            rc = armci_rem_strided(PUT, NULL, proc, src_ptr, src_stride_arr,
@@ -1480,7 +1516,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
 #endif
        if(!stride_levels && 
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
-         DO_FENCE(proc);
+         DO_FENCE(proc,DIRECT_NBGET);
          ARMCI_NBREM_GET(proc, src_ptr,NULL,dst_ptr,NULL,count, 0, nb_handle);
          POSTPROCESS_STRIDED(tmp_count);
 #        ifdef ARMCI_PROFILE
@@ -1492,7 +1528,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        if(stride_levels==1 && 
          (count[1] < armci_max_num_sg_ent || count[0] > VAPI_SGGET_MIN_COLUMN)&&
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
-         DO_FENCE(proc);
+         DO_FENCE(proc,DIRECT_NBGET);
           armci_two_phase_get(proc, src_ptr, src_stride_arr, dst_ptr,
                        dst_stride_arr,count,stride_levels,NULL,nb_handle,mhloc);  
 #        ifdef ARMCI_PROFILE
@@ -1502,7 +1538,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
        }
 #     endif
 #     endif
-    ORDER(GET,proc); /* ensure ordering */
+       DO_FENCE(proc,SERVER_NBGET);
 #if defined(DATA_SERVER) && (defined(SOCKETS) || defined(CLIENT_BUF_BYPASS))
        /* for larger strided or 1D reqests buffering can be avoided to send data
         * we can try to bypass the packetization step and send request directly
@@ -1591,12 +1627,15 @@ int ARMCI_NbAccS( int  optype,            /* operation */
 
 
     ORDER(PUT,proc); /* ensure ordering */
-    if(direct)
+    if(direct){
       rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
 			    dst_stride_arr, count, stride_levels,1,NULL);
-    else
+    }
+    else{
+      DO_FENCE(proc,SERVER_NBPUT);
       rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
                     dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,nb_handle);
+    }
 
     POSTPROCESS_STRIDED(tmp_count);
 
@@ -1658,7 +1697,7 @@ int ARMCI_NbPut(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 #     else
 #       ifdef ALLOW_PIN
        if(ARMCI_REGION_BOTH_FOUND(src,dst,bytes,armci_clus_id(proc))){
-         DO_FENCE(proc);
+         DO_FENCE(proc,DIRECT_NBPUT);
          INIT_NB_HANDLE(nb_handle,PUT,proc);
 	 nb_handle->tag = GET_NEXT_NBTAG();
 	 nb_handle->op  = PUT;
@@ -1718,7 +1757,7 @@ int ARMCI_NbGet(void *src, void* dst, int bytes, int proc,armci_hdl_t* uhandle)
 #     else
 #       ifdef ALLOW_PIN
        if(ARMCI_REGION_BOTH_FOUND(dst,src,bytes,armci_clus_id(proc))){
-         DO_FENCE(proc);
+         DO_FENCE(proc,DIRECT_NBGET);
          INIT_NB_HANDLE(nb_handle,PUT,proc);
 	 nb_handle->tag = GET_NEXT_NBTAG();
 	 nb_handle->op  = GET;
