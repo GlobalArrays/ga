@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.26 2006-01-16 20:54:00 vinod Exp $ */
+/* $Id: vapi.c,v 1.27 2006-01-17 20:31:20 vinod Exp $ */
 /* 
    File organized as follows
 */
@@ -321,8 +321,8 @@ int debug;
     }
 
     if(debug){
-       printf("\n%d:send_complete called from %s id=%ld\n",armci_me,
-               from,snd_dscr->id);fflush(stdout);
+       printf("\n%d%s:send_complete called from %s id=%ld\n",armci_me,
+               ((SERVER_CONTEXT)?"(s)":" "),from,snd_dscr->id);fflush(stdout);
     }
     do{
        while(rc == VAPI_CQ_EMPTY){  
@@ -343,11 +343,12 @@ int debug;
        }
        else{
          armci_check_status(DEBUG_CLN,rc,"armci_send_complete wait for send");
-         //printf("%d:completed id %d\n",armci_me,pdscr->id);
+         /*printf("%d:completed id %d\n",armci_me,pdscr->id);*/
          if(pdscr->id >=DSCRID_FROMBUFS && pdscr->id < DSCRID_FROMBUFS_END)
            mark_buf_send_complete[pdscr->id]=1;
          else if(pdscr->id >=DSCRID_NBDSCR && pdscr->id < DSCRID_NBDSCR_END){
            sdscr_arr[pdscr->id-DSCRID_NBDSCR].tag=0;
+           sdscr_arr[pdscr->id-DSCRID_NBDSCR].numofsends=0;
          }
          else if(pdscr->id >=DSCRID_SCATGAT && pdscr->id < DSCRID_SCATGAT_END){
            sdscr_arr[pdscr->id-DSCRID_SCATGAT].numofsends--;
@@ -367,7 +368,7 @@ int debug;
 
 void armci_dscrlist_recv_complete(int tag, char* from)
 {
-int i,nr;
+int i,nr,j;
 rdescr_t *retdscr,*rdscr_arr;
 
     if(SERVER_CONTEXT)
@@ -383,15 +384,14 @@ rdescr_t *retdscr,*rdscr_arr;
     if(i==MAX_PENDING)return;
 
     nr = rdscr_arr[i].numofrecvs;
-    printf("\n%d:number of recv is %d",armci_me,nr);
-    for(i=0;i<nr;i++)
+    for(j=0;j<nr;j++)
         armci_recv_complete(&rdscr_arr[i].descr,"(s)list_send_complete");
 }
 
 
 void armci_dscrlist_send_complete(int tag,char *from)
 {
-int i,ns;
+int i,ns,j;
 sdescr_t *retdscr,*sdscr_arr;
 
     if(SERVER_CONTEXT)
@@ -405,11 +405,14 @@ sdescr_t *retdscr,*sdscr_arr;
     }
 
     if(i==MAX_PENDING)return;
-
+#if 0
+    printf("\n%d:i=%d tag=%d sdscr tag=%d id=%d",armci_me,i,tag,sdscr_arr[i].tag
+                    ,sdscr_arr[i].descr.id);
+#endif
     ns = sdscr_arr[i].numofsends;
 
-    for(i=0;i<ns;i++){
-        armci_send_complete(&sdscr_arr[i].descr,"dscrlist_send_complete");
+    for(j=0;j<ns;j++){
+        armci_send_complete(&(sdscr_arr[i].descr),"dscrlist_send_complete");
     }
 }
 
@@ -476,8 +479,10 @@ rdescr_t *retdscr,*rdscr_arr;
 
     if(sg)
        retdscr->descr.id = DSCRID_SCATGAT + avail;
-    else
+    else{
        retdscr->descr.id = DSCRID_NBDSCR + avail; 
+       retdscr->numofrecvs=1;
+    }
 
     newavail = (avail+1)%MAX_PENDING;
 
@@ -540,8 +545,10 @@ sdescr_t *retdscr,*sdscr_arr;
 
     if(sg)
        retdscr->descr.id = DSCRID_SCATGAT + avail;
-    else
+    else{
        retdscr->descr.id = DSCRID_NBDSCR + avail;
+       retdscr->numofsends=1;
+    }
 
     newavail = (avail+1)%MAX_PENDING;
 
@@ -1752,9 +1759,7 @@ BUF_INFO_T *info;
          armci_dscrlist_send_complete(info->tag,"armci_vapi_complete_buf"); 
        }
        snd_dscr=&(field->sdscr);
-       if(mark_buf_send_complete[snd_dscr->id])
-         mark_buf_send_complete[snd_dscr->id]=0;
-       else
+       if(mark_buf_send_complete[snd_dscr->id]==0)
          armci_send_complete(snd_dscr,"armci_vapi_complete_buf");
     }
    
@@ -1918,7 +1923,7 @@ int clus = armci_clus_id(p);
     armci_vapi_post_send(1,clus,&(dirdscr->descr),
                          "client_direct_send:post_send");
 
-    if(!nbtag)
+    if(nbtag==0)
        armci_send_complete(&(dirdscr->descr),"armci_client_direct_send");
 }
 
@@ -1966,10 +1971,9 @@ extern void armci_util_wait_int(volatile int *,int,int);
                 len,&(SRV_con+cluster)->qp); fflush(stdout);
     }
    
-    if(mark_buf_send_complete[evbuf->snd_dscr.id])
-       mark_buf_send_complete[evbuf->snd_dscr.id]=0;
-    else
+    if(mark_buf_send_complete[evbuf->snd_dscr.id]==0)
        armci_send_complete(&(evbuf->snd_dscr),"armci_ReadFromDirect"); 
+
     if(!msginfo->bypass){
        long *flag;
        int *last;
