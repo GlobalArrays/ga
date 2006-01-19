@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.136 2005-11-24 01:14:10 manoj Exp $
+# $Id: makefile.h,v 1.137 2006-01-19 02:18:49 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -219,6 +219,9 @@ ifeq ($(_FC),g77)
    ifeq ($(FOPT),-O)
       FOPT_REN += -O3 -funroll-loops $(OPT_ALIGN)
    endif
+endif
+ifeq ($(_FC),gfortran)
+       GLOB_DEFINES += -DGFORTRAN
 endif
 _REQUIRE_GCCLIBPATH = $(shell $(CC) --version 2>&1 | awk '/\(GCC\) 3.3/ {print "yes";exit}; /xlc/ {print "yes";exit}')
 ifeq ($(_REQUIRE_GCCLIBPATH),yes)

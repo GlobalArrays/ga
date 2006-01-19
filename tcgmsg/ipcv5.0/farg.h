@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/farg.h,v 1.4 2003-12-13 01:08:37 d3h325 Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/farg.h,v 1.5 2006-01-19 02:18:59 manoj Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -58,6 +58,11 @@
 #   define ARGV_ xargv
 #endif
 #endif
+#endif
+
+#if defined(GFORTRAN)
+#   define getarg_ _gfortran_getarg_i8
+#   define iargc_  _gfortran_iargc
 #endif
 
 

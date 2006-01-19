@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/pbeginf.c,v 1.3 2005-03-09 18:11:29 vinodtipparaju Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/pbeginf.c,v 1.4 2006-01-19 02:18:59 manoj Exp $ */
 
 #include <stdio.h>
 #include "farg.h"
@@ -7,7 +7,7 @@
 
 extern void PBEGIN_();
 
-#if defined(HPUX) || defined(SUNF77_2) ||defined(PARAGON) ||defined(FUJITSU) || defined(WIN32) || defined (XLFMAC) || defined(ABSOFTMAC)
+#if defined(HPUX) || defined(SUNF77_2) ||defined(PARAGON) ||defined(FUJITSU) || defined(WIN32) || defined (XLFMAC) || defined(ABSOFTMAC) ||defined (GFORTRAN)
 #define HAS_GETARG 1
 #endif
 
