@@ -594,7 +594,7 @@ void armci_data_server(void *mesg)
 #if defined(VAPI) && defined(MELLANOX) /* buffer bypass protocol */
               if(msginfo->pinned == 1){
                   int armci_post_gather(void *, int *, int *,int, 
-                                  armci_vapi_memhndl_t *,int,int,int);
+                                  armci_vapi_memhndl_t *,int,int,int,void *);
                   void * src_ptr;
                   int stride_levels;
                   int count[MAX_STRIDE_LEVEL];
@@ -630,7 +630,7 @@ void armci_data_server(void *mesg)
                    
                   num =  armci_post_gather(src_ptr,src_stride_arr,
                                   count,stride_levels, mhandle,
-                                  msginfo->from,mytag,SERV );
+                                  msginfo->from,mytag,SERV,NULL );
                   mytag =  (mytag+1)%MAX_PENDING;
                   if(mytag==0)mytag=1;
                   if(DEBUG1){

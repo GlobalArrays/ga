@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.16 2006-01-13 19:19:21 vinod Exp $ */
+/*$Id: armci-vapi.h,v 1.17 2006-01-20 21:25:17 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -58,11 +58,13 @@ extern char * armci_vapi_client_mem_alloc(int);
 typedef struct { 
         int tag;
 	int issg;
-        VAPI_sr_desc_t descr;
+        VAPI_sr_desc_t sdescr;
+        VAPI_rr_desc_t rdescr;
         VAPI_sg_lst_entry_t sg_entry[56]; /*ff:this has to be malloced*/
         int numofsends;
+        int numofrecvs;
 	int myindex;
-} sdescr_t;
+} sr_descr_t;
 
 typedef struct { 
         int tag;
@@ -73,7 +75,7 @@ typedef struct {
 	int myindex;
 } rdescr_t;
 
-void armci_client_nbsend_complete(sdescr_t *,int);
+void armci_client_nbcall_complete(sr_descr_t *,int,int);
 void armci_vapi_set_mark_buf_send_complete(int);
 
 #define ARMCI_MEMHDL_T armci_vapi_memhndl_t
@@ -118,9 +120,9 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define COMPLETE_HANDLE _armci_buf_complete_nb_request
 
 #if defined(ALLOW_PIN)
-#  define NB_CMPL_T sdescr_t*
+#  define NB_CMPL_T sr_descr_t*
 #  define ARMCI_NB_WAIT(_cntr) if(_cntr)if(nb_handle->tag==(_cntr)->tag)\
-          armci_client_nbsend_complete(_cntr,nb_handle->tag);
+          armci_client_nbcall_complete(_cntr,nb_handle->tag,nb_handle->op);
 #  define CLEAR_HNDL_FIELD(_x) _x=NULL
 #endif
 

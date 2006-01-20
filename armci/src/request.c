@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.70 2006-01-12 01:08:04 vinod Exp $ */
+/* $Id: request.c,v 1.71 2006-01-20 21:25:17 vinod Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -880,8 +880,6 @@ int armci_rem_strided(int op, void* scale, int proc,
 }
 
 
-
-
 #if defined(ALLOW_PIN) && defined(VAPI)
 /*\
  * two phase send
@@ -898,7 +896,7 @@ int ehlen = 0,nbtag=0;
 int *rem_ptr;
 int * rem_stride_arr;
 int bufsize = sizeof(request_header_t);
-void armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,int);
+void armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,int,NB_CMPL_T *);
      
     bytes = 0;
     if(nbhandle)nbtag = nbhandle->tag;     
@@ -944,20 +942,22 @@ void armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,
         printf("%d:CLIENT : finished sending first put request \n",armci_me);
         fflush(stdout);
     }
-     
+
     armci_wait_ack(buf0);
 
     if(DEBUG_){
        printf("\n%d: client got ack about to post gather\n",armci_me);
        fflush(stdout);
     }        
-                             
+
     /* 
        the client is now in the second phase, in a loop 
        creates the gather descr one at a time and posts them 
     */
+
     armci_post_gather(src_ptr,src_stride_arr,count,stride_levels,
-                     mhloc,proc,nbtag,CLN);
+                     mhloc,proc,nbtag,CLN,&nbhandle->cmpl_info);
+
     if(DEBUG_){
        printf("%d(c) : returned from armci_post_gather\n",armci_me);
        fflush(stdout);
@@ -971,8 +971,8 @@ void armci_post_gather(void *, int *, int *,int, armci_vapi_memhndl_t *,int,int,
     FREE_SEND_BUFFER(msginfo);
 
     return 0;
-}
 
+}
 
 
 int armci_two_phase_get(int proc, void*src_ptr, int src_stride_arr[], 
@@ -988,7 +988,7 @@ int *rem_ptr;
 int num; 
 int *rem_stride_arr;
 int bufsize = sizeof(request_header_t);
-extern void armci_post_scatter(void *,int *,int *,int, armci_vapi_memhndl_t *,int,int,int);
+extern void armci_post_scatter(void *,int *,int *,int, armci_vapi_memhndl_t *,int,int,int,NB_CMPL_T *);
 extern void armci_wait_for_blocking_scatter();
 
     if(DEBUG_){
@@ -996,10 +996,12 @@ extern void armci_wait_for_blocking_scatter();
                       armci_me,CLN);
        fflush(stdout);
     }    
+
     if(nb_handle)nbtag = nb_handle->tag;     
     
     armci_post_scatter(dst_ptr, dst_stride_arr, count, stride_levels,mhloc,
-                    proc,nbtag,CLN);
+                    proc,nbtag,CLN,&nb_handle->cmpl_info);
+
     if(DEBUG_){
        printf("\n%d: returned from armci_post_scatter %d\n",armci_me,num);
        fflush(stdout);
@@ -1010,18 +1012,14 @@ extern void armci_wait_for_blocking_scatter();
                            +2*sizeof(int) +2*sizeof(double) + 16;
 
     buf = buf0 = GET_SEND_BUFFER(bufsize,GET,proc);
-    if(nb_handle){
-      INIT_SENDBUF_INFO(nb_handle,buf,op,proc);
-      _armci_buf_set_tag(buf,nb_handle->tag,0);  
-      if(nb_handle->bufid == NB_NONE)
-        armci_set_nbhandle_bufid(nb_handle,buf,0);
-    }
+
     msginfo = (request_header_t *)buf;  
     buf += sizeof(request_header_t);
 
     rem_ptr = src_ptr;
     rem_stride_arr = src_stride_arr;
 
+    /*this call is to put the remote descriptor into the buffer to send*/
     armci_save_strided_dscr(&buf,rem_ptr,rem_stride_arr,count,stride_levels,0);
 
     msginfo->datalen = 0;
@@ -1061,13 +1059,7 @@ extern void armci_wait_for_blocking_scatter();
   
     return 0;  
 }
-
 #endif
-
-
-
-
-
 
 
 #if defined(ALLOW_PIN) || defined(LAPI2)
