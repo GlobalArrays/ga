@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.107 2006-01-20 21:25:17 vinod Exp $ */
+/* $Id: strided.c,v 1.108 2006-01-24 21:37:13 edo Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -1049,7 +1049,7 @@ int ARMCI_AccS( int  optype,            /* operation */
       rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
                            dst_stride_arr, count, stride_levels,1,NULL);
     else{
-      //DO_FENCE(proc,SERVER_PUT);
+      /*DO_FENCE(proc,SERVER_PUT);*/
       rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
                       dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,NULL);
     }
