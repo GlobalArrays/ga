@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.7 2005-12-19 21:02:11 vinod Exp $ */
+/* $Id: elan4.c,v 1.8 2006-01-28 00:07:01 vinod Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +10,7 @@
 #define DEBUG_ 0
 #define DEBUG_NOTIFY 0
 #ifndef DOELAN4
- what are we doing here?
+ what are we doing here
 #endif
 
 #define DBL_BUF_SIZE 50000
@@ -446,7 +446,9 @@ request_header_t *msginfo = (request_header_t *)mesg;
    
           if(msginfo->inbuf){
                 bidx = (long)msginfo->tag.ack;
-                //printf("%ds bidx=%ld\n",armci_me,bidx); fflush(stdout);
+                if(DEBUG_){
+                  printf("%ds bidx=%ld\n",armci_me,bidx); fflush(stdout);
+                }
                 if(bidx>MAX_BUFS || bidx<0) 
                    armci_die2("got wrong buffer index",(int)bidx,MAX_BUFS);
                 MessageBuffer= (char*) &elan4_serv_bufs[bidx][0];
@@ -461,8 +463,7 @@ request_header_t *msginfo = (request_header_t *)mesg;
           if((msginfo->dscrlen+msginfo->datalen)> MSG_DATA_LEN){
 
              if(!msginfo->inbuf){
-
-                void *flag_to_clear = ((void**)msginfo->tag.data_ptr)-1; 
+                void *flag_to_clear = ((void**)msginfo->tag.ack_ptr); 
                 MY_GET(rembuf,MessageBuffer,payload, msginfo->from);
 
                 /* mark sender buffer as free -- flag is before descriptor */
@@ -501,7 +502,7 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
     int payload=0;
     if(msginfo->operation==PUT || ACC(msginfo->operation))
        ops_pending_ar[cluster]++;
-
+    msginfo->tag.ack_ptr = &msginfo->tag.ack;
     if(msginfo->inbuf){
          if(event_getbflag)elan_wait(event_getbflag,elan_base->waitType);
          else { 
@@ -512,48 +513,54 @@ int armci_send_req_msg(int proc, void *vbuf, int len)
          event_getbflag=NULL;
     }
 
-    if(msginfo->operation != GET)if((msginfo->dscrlen+msginfo->datalen)> MSG_DATA_LEN){
+    if(msginfo->operation != GET){
+      if((msginfo->dscrlen+msginfo->datalen)> MSG_DATA_LEN){
       /* choose remote buffer */
       long Bidx;
       extern ELAN_EVENT *armci_sendq(void *,u_int,void*,int,void*,void*, int);
 
-      payload = msginfo->datalen;
-      if(msginfo->dscrlen > MSG_DATA_LEN){
+        payload = msginfo->datalen;
+        if(msginfo->dscrlen > MSG_DATA_LEN){
              payload += msginfo->dscrlen;
-      }else off+= msginfo->dscrlen;
+        }
+        else off+= msginfo->dscrlen;
 
-      if(msginfo->inbuf){
+        if(msginfo->inbuf){
 
-         Bidx = (long)msginfo->tag.ack;
-         if(Bidx<0){ 
+          Bidx = (long)msginfo->tag.ack;
+          if(Bidx<0){ 
+            msginfo->inbuf = 0;  /* no buf -> take the other path */
+          }
+          else {
+            MessageBuffer= (char*) &elan4_serv_bufs[Bidx][0];
+            if(DEBUG_){
+              printf("%d:SQ %p len=%d tag=%ld\n",armci_me,vbuf,len-payload,Bidx); 
+              fflush(stdout);
+            }
+            qtxevent =armci_sendq(_pgsstate, proc_serv, vbuf, len-payload, buf+off, 
+                                  MessageBuffer,payload);
+            buf -= sizeof(ELAN_EVENT*); *(ELAN_EVENT**)buf =  qtxevent;
 
-           msginfo->inbuf = 0;  /* no buf -> take the other path */
+            return 0;   /*********** DONE **********/
+          }
+        }
 
-         }else {
+        /* set message tag -> has pointer to client buffer with descriptor+data */
+        msginfo->tag.data_ptr = (void *)(buf + sizeof(request_header_t));
+        /*
+         printf("%d: SENDing for %d %p to %p %d bytes bidx=%d\n",armci_me,proc_serv,
+             buf+off,MessageBuffer,payload,Bidx); fflush(stdout);
+         MY_PUT(buf+off,MessageBuffer,payload, proc_serv);
+        */
+        if(DEBUG_){ printf("%d:in SEND &tag=%p %p tag=%p\n",armci_me,&msginfo->tag.ack,
+                  msginfo->tag.ack_ptr,msginfo->tag.data_ptr); fflush(stdout); }
 
-           MessageBuffer= (char*) &elan4_serv_bufs[Bidx][0];
-           //printf("%d:SQ %p len=%d tag=%ld\n",armci_me,vbuf,len-payload,Bidx); fflush(stdout);
-           qtxevent =armci_sendq(_pgsstate, proc_serv, vbuf, len-payload, buf+off, 
-                                 MessageBuffer,payload);
-           buf -= sizeof(ELAN_EVENT*); *(ELAN_EVENT**)buf =  qtxevent;
-
-           return 0;   /*********** DONE **********/
-         }
-
+      } 
+      else {
+            msginfo->tag.data_ptr=NULL; /* null tag means sender buffer is free */
+            msginfo->tag.ack=0L; /* tag=0 means sender buffer is free */
       }
-
-      /* set message tag -> has pointer to client buffer with descriptor+data */
-      msginfo->tag.data_ptr = (void *)(buf + sizeof(request_header_t));
-      //printf("%d: SENDing for %d %p to %p %d bytes bidx=%d\n",armci_me,proc_serv,
-      //      buf+off,MessageBuffer,payload,Bidx); fflush(stdout);
-      //MY_PUT(buf+off,MessageBuffer,payload, proc_serv);
-
-
-
-      if(DEBUG_){ printf("%d:in SEND &tag=%p tag=%p\n",armci_me,&msginfo->tag.data_ptr,
-                msginfo->tag.data_ptr); fflush(stdout); }
-
-    } else msginfo->tag.data_ptr=NULL; /* null tag means sender buffer is free */
+    }
 
 #   if NEWQAPI
 #      ifdef BUF_EXTRA_FIELD_T
@@ -586,7 +593,12 @@ void armcill_clearbuf(ELAN_EVENT** handle)
 request_header_t *msginfo = (request_header_t *)(handle+1);
 
      elan_wait(*handle, elan_base->waitType); 
-     if(!msginfo->inbuf)while(msginfo->tag.ack)armci_util_spin(100,msginfo);
+     if(!msginfo->inbuf){
+        while(msginfo->tag.ack){
+          armci_util_spin(100,msginfo);
+          msginfo->tag.data_ptr=NULL;
+        }
+     }
 }
 
 int armcill_testbuf(ELAN_EVENT** handle)
