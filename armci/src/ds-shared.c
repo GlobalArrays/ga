@@ -451,7 +451,7 @@ void armci_send_data(request_header_t* msginfo, void *data)
         armci_WriteToDirect(to, msginfo, buf);
     }
 #else
-#ifdef ELAN4
+#ifdef DOELAN4
         /*this is because WriteToDirect is a no-op in elan4.c so we have
          * to do a put. This will not cause problems anywhere else in the
          * code and this part on elan4 will only be invoked in a GPC

@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.108 2006-01-24 21:37:13 edo Exp $ */
+/* $Id: strided.c,v 1.109 2006-02-13 20:55:19 manoj Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -457,10 +457,10 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
 
 /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  if defined(LAPI2) || defined(ELAN4) 
+#  if defined(LAPI2) || defined(DOELAN4) 
     /*even 1D armci_nbput has to use different origin counters for 1D */
     if(!ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
-       !nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD)) 
+       (!nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD))) 
        armci_network_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
                          dst_stride_arr,count,stride_levels,nb_handle);
     else

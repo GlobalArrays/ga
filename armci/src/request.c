@@ -1,4 +1,4 @@
-/* $Id: request.c,v 1.71 2006-01-20 21:25:17 vinod Exp $ */
+/* $Id: request.c,v 1.72 2006-02-13 20:55:19 manoj Exp $ */
 #include "armcip.h"
 #include "request.h"
 #include "memlock.h"
@@ -1298,7 +1298,7 @@ void armci_server_vector( request_header_t *msginfo,
     case GET:
 /*        fprintf(stderr, "%d:: Got a vector message!!\n", armci_me); */
       if(msginfo->ehlen) {
-#if defined(ARMCI_ENABLE_GPC_CALLS) && (defined(GM) || defined(VAPI))
+#if defined(ARMCI_ENABLE_GPC_CALLS) && (defined(GM) || defined(VAPI) || defined(DOELAN4))
 	gpc_call_process(msginfo, len, dscr, buf, buflen, sbuf);
 #else
 	armci_die("Unexpected vector message with non-zero ehlen. GPC call?",
@@ -1380,7 +1380,7 @@ gpc_buf_t *gpc_req;
  *VT: This will only be invoked in case of GPC call and should not intefere
  *VT: with any other call
  */
-#if (defined(ELAN4) || defined(DATA_SERVER)) && defined(SERVER_THREAD) 
+#if (defined(DOELAN4) || defined(DATA_SERVER)) && defined(SERVER_THREAD) 
 #  ifdef PTHREADS
 pthread_t data_server;
 #  else
@@ -1549,7 +1549,6 @@ int gpc_call_process( request_header_t *msginfo, int len,
 			  gcall->hdr, gcall->hlen, gcall->data, gcall->dlen, 
 			  gcall->rhdr, gcall->rhlen, gcall->rdata, gcall->rdlen,
 			  GPC_INIT) == GPC_DONE) {
-   fprintf(stderr, "%d:: GPC call done. Returning results\n", armci_me);
    armci_send_data(&gbuf->msginfo, gbuf->reply);
    gpc_free_buf_handle(rbuf);
  }
