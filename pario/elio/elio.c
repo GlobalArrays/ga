@@ -37,7 +37,7 @@
 #undef CRAY
 #endif
 
-#if  defined(AIX) || defined(DECOSF) || defined(SGITFP) || defined(SGI64) || defined(SGI_N32) || defined(CRAY) || defined(PARAGON)
+#if  defined(AIX) || defined(DECOSF) || defined(SGITFP) || defined(SGI64) || defined(SGI_N32) || defined(CRAY) || defined(LINUXAIO)
      /* systems with Asynchronous I/O */
 #else
 #    ifndef NOAIO

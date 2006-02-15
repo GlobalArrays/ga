@@ -68,3 +68,8 @@ ifeq ($(TARGET), DECOSF)
   LOC_LIBS += -laio -lpthreads
 endif
 endif
+
+ifdef USE_LINUXAIO
+  LIB_DEFINES += -DLINUXAIO
+  COMM_LIBS += -lrt
+endif
