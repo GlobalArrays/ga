@@ -262,7 +262,7 @@ IB_INCLUDE and IB_LIB for nonstandard installation of the libraries.
 
 7. Other issues 
 
-(a) LINUX64 supports ALPHA and Itanium processors only. 
+(a) LINUX64 supports ALPHA, Itanium, Opteron, and Em64T processors only. 
 
 (b) The SGI_N32 version is recommended on all newer SGI boxes including
 the O2, Octane, Origin, Indigo2, and PowerChallenge systems
@@ -281,6 +281,8 @@ integer as 8 bytes, then set the following environment variables:
 (d) support for two underscores in fortran names on Linux/Cygwin
     is enabled by setting F2C_TWO_UNDERSCORES.
           (e.g. setenv F2C_TWO_UNDERSCORES 1)
+
+(e) To turn Async I/O on under Linux, set environment variable USE_LINUXAIO=y
 
 8. Performance tuning
 
