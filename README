@@ -272,10 +272,9 @@ huge arrays (>4GB) in which case 64-bit addressing is required
 variable can be used to choose the optimal compiler flags 
 for R8000 and R10000 processors.
 
-(c) In 64 bit platforms, if you are not using native vendor specific blas 
-library, (as the vendor blas libraries are mostly compiled with integer 
-as 4 bytes), then set the following environment variables:
-	setenv NATIVE_BLAS no
+(c) In 64 bit platforms, if you are using blas libraries that takes
+integer as 8 bytes, then set the following environment variables:
+	setenv BLAS_I8 yes
 	setenv BLAS_LIB specify_your_blas_library
 		e.g.setenv BLAS_LIB -L/usr/lib/libblas.a
 
