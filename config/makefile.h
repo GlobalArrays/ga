@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.137 2006-01-19 02:18:49 manoj Exp $
+# $Id: makefile.h,v 1.138 2006-02-15 21:27:17 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -906,8 +906,8 @@ ifdef GA_C_CORE
   DEFINES += -DGA_C_CORE
 endif
 
-# If user specifies a BLAS library instead of the NATIVE(/vendor) blas
-ifeq ($(NATIVE_BLAS), no)
+# If user specifies a BLAS library with 8 byte integers
+ifeq ($(BLAS_I8), yes)
      HAS_BLAS = 
      LIBBLAS = $(BLAS_LIB)
 endif
@@ -1060,7 +1060,7 @@ LIBS += -llinalg $(LOC_LIBS)
 ifeq ($(HAS_BLAS),yes)
   LIBS += $(LIBBLAS)
 endif
-ifeq ($(NATIVE_BLAS),no)
+ifeq ($(BLAS_I8), yes)
   LIBS += $(BLAS_LIB)
 endif
 
