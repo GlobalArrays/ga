@@ -89,7 +89,7 @@ class GAServices {
    * NULL if it fails to create a GA object.
    */
   GlobalArray * createGA(int type, int ndim, int dims[], char *arrayname, 
-			 int maps[], int block[]);
+			 int block[], int maps[]);
 
   /**
    * Creates a new array by applying all the properties of another existing 

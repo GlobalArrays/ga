@@ -29,7 +29,7 @@ GA::GAServices::createGA(int type, int ndim, int dims[],
 
 GA::GlobalArray *  
 GA::GAServices::createGA(int type, int ndim, int dims[], 
-			 char *arrayname, int maps[], int block[]) {
+			 char *arrayname, int block[], int maps[]) {
   
   GA::GlobalArray * GA = new GA::GlobalArray(type, ndim, dims, arrayname, 
 					     block, maps);
