@@ -1,7 +1,7 @@
  LIB_DISTRIB = ../../../lib
  LIB_TARGETS = *.x *.p
       INCDIR = ../../../include
-LIB_INCLUDES = -I$(INCDIR) -DCHECKPOINT_SCF
+LIB_INCLUDES = -I$(INCDIR)
 
 include ../../../armci/config/makecoms.h
 include ../../../armci/config/makemp.h

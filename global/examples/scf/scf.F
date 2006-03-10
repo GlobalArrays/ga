@@ -1,5 +1,5 @@
       program scf
-C$Id: scf.F,v 1.16 2005-07-07 17:41:07 vinod Exp $
+C$Id: scf.F,v 1.17 2006-03-10 18:00:36 vinod Exp $
       implicit double precision (a-h, o-z)
       include 'cscf.h'
 #include "mafdecls.fh"
@@ -19,7 +19,9 @@ c
 #else
       call pbeginf
 #endif
+#ifdef CHECKPOINT_SCF
       call ga_set_spare_procs(2);
+#endif
       call ga_initialize()
 c
 c   Allocate memory
