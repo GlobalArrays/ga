@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.8 2006-01-28 00:07:01 vinod Exp $ */
+/* $Id: elan4.c,v 1.9 2006-03-10 18:16:15 vinod Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -933,6 +933,8 @@ char *src = (char*)src_ptr, *dst=(char*)dst_ptr;
 char *bufptr;
 int dsize=3*sizeof(void*);
 ELAN_EVENT* o_cmpl;
+extern ELAN_EVENT *elan_getss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
+extern ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_arr, int *dst_stride_arr, u_int *count, u_int strides, u_int destvp);
     if(stride_levels==0){
        if(op==GET)
          o_cmpl = elan_get(elan_base->state,src,dst,count[0],proc);
