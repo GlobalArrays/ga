@@ -2,6 +2,11 @@
 #ifndef _ARMCI_H
 #define _ARMCI_H   
 
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
+#endif
+
+
 extern int armci_sameclusnode(int proc);
 
 typedef struct {
@@ -351,6 +356,11 @@ ARMCI_Group * ARMCI_Get_world_group();
 ARMCI_Group * ARMCI_Get_ft_group();
 #endif
 #endif
+
+#if defined(__cplusplus) || defined(c_plusplus)
+}
+#endif
+
 #endif /* _ARMCI_H */
 
 

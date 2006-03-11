@@ -4,6 +4,10 @@
 
 #include "armci.h"
 
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
+#endif   
+
 #define GPC_INIT 1
 #define GPC_PROBE 2
 #define GPC_WAIT 3
@@ -31,5 +35,10 @@ extern int ARMCI_Get_gpc_dlen();
 
 extern void ARMCI_Gpc_init_handle(gpc_hdl_t *nbh);
 extern void ARMCI_Gpc_wait(gpc_hdl_t *nbh);
+
+#if defined(__cplusplus) || defined(c_plusplus)
+}
+#endif
+
 #endif
 #endif
