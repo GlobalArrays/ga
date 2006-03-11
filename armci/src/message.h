@@ -1,6 +1,10 @@
 #ifndef _MESSAGE_H_
 #define _MESSAGE_H_
 
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
+#endif
+
 #define ARMCI_INT -99
 #define ARMCI_LONG -101
 #define ARMCI_FLOAT -306
@@ -44,4 +48,9 @@ extern void armci_msg_clus_fgop(float *x, int n, char* op);
 extern void armci_msg_clus_lgop(long *x, int n, char* op); 
 extern void armci_msg_clus_dgop(double *x, int n, char* op); 
 
+#if defined(__cplusplus) || defined(c_plusplus)
+}
+#endif
+
+  
 #endif
