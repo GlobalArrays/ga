@@ -39,4 +39,7 @@ typedef struct {
 #define LONG_PUT_THRESHOLD 128
 #define PACKPUT 32
 
+#define LONG_GET_THRESHOLD 128
+#define PACKGET 32
+
 #endif

@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.9 2006-03-10 18:16:15 vinod Exp $ */
+/* $Id: elan4.c,v 1.10 2006-03-14 17:55:03 vinod Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -945,20 +945,36 @@ extern ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_
            o_cmpl = elan_put(elan_base->state,src,dst,count[0],proc);
        }
     }
-    else if(op==GET)
-       o_cmpl = elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+    else if(stride_levels==1){ 
+      if(op==GET)
+        o_cmpl = elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+                            dst_stride_arr, count, stride_levels, proc);
+      else if(op==PUT)
+        o_cmpl = elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
                            dst_stride_arr, count, stride_levels, proc);
-    else if(op==PUT)
-       o_cmpl = elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+      else
+        armci_die("network strided called for accumulate",proc);
+    }
+    else if(stride_levels==2){
+      if(op==GET)
+        o_cmpl = elan_getss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
                            dst_stride_arr, count, stride_levels, proc);
-    else
-       armci_die("network strided called for accumulate",proc);
+      else if(op==PUT)
+        o_cmpl = elan_putss(_pgsstate,src_ptr,dst_ptr, src_stride_arr,
+                           dst_stride_arr, count, stride_levels, proc);
+      else
+        armci_die("network strided called for accumulate",proc);
+    }
+    else{
+       armci_die("network strided called for stride_levels>=3",proc);
+    }
 
     if(!nb_handle)
        elan_wait(o_cmpl,elan_base->waitType);
     else
        nb_handle->cmpl_info = o_cmpl;
 }
+
 void armcill_getv(int proc, int bytes, int count, void* src[], void* dst[])
 {
 int _j, issued=0;

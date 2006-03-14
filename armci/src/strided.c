@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.109 2006-02-13 20:55:19 manoj Exp $ */
+/* $Id: strided.c,v 1.110 2006-03-14 17:55:03 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -459,8 +459,12 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
 
 #  if defined(LAPI2) || defined(DOELAN4) 
     /*even 1D armci_nbput has to use different origin counters for 1D */
+#   if defined(LAPI2)
     if(!ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
        (!nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD))) 
+#   else
+    if(!ACC(op) && !SAMECLUSNODE(proc) && nb_handle && stride_levels<2)
+#   endif
        armci_network_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
                          dst_stride_arr,count,stride_levels,nb_handle);
     else
@@ -1378,10 +1382,10 @@ int ARMCI_NbPutS( void *src_ptr,        /* pointer to 1st segment at source*/
 
 #if defined(DOELAN4)
     if(!direct) switch(stride_levels) {
-          case 0:  direct =1; break;
-          case 1:  if((count[1]<PACKPUT)||count[0]>LONG_PUT_THRESHOLD) direct =1; break;
-          /*default: if(count[0]> LONG_PUT_THRESHOLD )direct=1; break;*/
-          default: break;
+       case 0:  direct =1; break;
+       case 1:  if((count[1]<PACKPUT)||count[0]>LONG_PUT_THRESHOLD) direct =1; break;
+       case 2:  direct =1; break;
+       default: break;
     }
 #endif
 
@@ -1476,7 +1480,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
     armci_profile_start_strided(seg_count, stride_levels, proc,
 				ARMCI_PROF_NBGETS);
 #endif
-#ifndef QUADRICS
+#if !defined(QUADRICS)
     direct=SAMECLUSNODE(proc);
 #endif
     PREPROCESS_STRIDED(tmp_count);
