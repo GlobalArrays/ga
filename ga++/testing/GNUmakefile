@@ -58,15 +58,15 @@ ifeq ($(P_FILE),YES)
 %.x : %.o $(TESTUTIL) $(LIBDIR)/libga++.a $(LIBDIR)/libglobal.a \
 		$(LIBDIR)/libarmci.a  $(EXTRA)
 	echo "`whoami` `hostname` 4 `pwd`/$@ /tmp" > $@.p
-	$(LINK.cc) $(NOPT) $(CXXLDOPT) -o $@ $< $(TESTUTIL) $(GXXLIBS) \
-		$(LIBS) $(CLIBS)
+	$(LINK.cc) $(NOPT) $(CXXLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) \
+		$(GXXLIBS) $(LIBS) $(CLIBS)
 
 else
 %.x : %.o $(TESTUTIL) $(LIBDIR)/libga++.a $(LIBDIR)/libglobal.a  \
 		$(LIBDIR)/libarmci.a $(EXTRA)
 	echo $(CXXLDOPT)
-	$(LINK.cc) $(NOPT) $(CXXLDOPT) -o $@ $< $(TESTUTIL) $(GXXLIBS) \
-		$(LIBS) $(CLIBS)
+	$(LINK.cc) $(NOPT) $(CXXLDOPT) -o $@ $< $(TESTUTIL) -L$(LIBDIR) \
+		$(GXXLIBS) $(LIBS) $(CLIBS)
 endif
 
 
