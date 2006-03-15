@@ -1,6 +1,7 @@
-#include <iostream.h>
-#include <stdio.h>
-#include <math.h>
+#include <iostream>
+#include <cstdio>
+#include <cmath>
+using namespace std;
 #include "ga++.h"
 
 

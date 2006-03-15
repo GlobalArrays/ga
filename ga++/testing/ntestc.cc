@@ -1,6 +1,7 @@
-#include <iostream.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+using namespace std;
 #include "testutil.h"
 #include "ga++.h"
 
