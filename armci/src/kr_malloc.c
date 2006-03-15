@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.20 2005-09-02 18:18:46 vinod Exp $ */
+/* $Id: kr_malloc.c,v 1.21 2006-03-15 03:18:00 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -142,8 +142,10 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
     size_t nunits;
     char *return_ptr;
 
+#if !(defined(SUN) || defined(SOLARIS))
     if(ctx->ctx_type == KR_CTX_SHMEM) return kr_malloc_shmem(nbytes,ctx);
-
+#endif
+    
     /* If first time in need to initialize the free list */
     if ((prevp = ctx->freep) == NULL) {
 
@@ -214,9 +216,11 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
 
 void kr_free(char *ap, context_t *ctx) {
     Header *bp, *p, **up;
-
+    
+#if !(defined(SUN) || defined(SOLARIS))
     if(ctx->ctx_type == KR_CTX_SHMEM) { kr_free_shmem(ap,ctx); return; }
-
+#endif
+    
     ctx->nfcalls++;
 
 
