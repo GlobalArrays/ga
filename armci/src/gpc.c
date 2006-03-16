@@ -1,4 +1,4 @@
-/* $Id: gpc.c,v 1.6 2006-01-12 01:08:04 vinod Exp $ *****************************************************
+/* $Id: gpc.c,v 1.7 2006-03-16 20:36:17 manoj Exp $ *****************************************************
   Prototype of Global Procedure Calls.
   July/03 JN - shared memory version  
   
@@ -69,7 +69,7 @@ int ARMCI_Gpc_exec(int h, int p, void  *hdr, int hlen,  void *data,  int dlen,
 {
   int hnd = -h + GPC_OFFSET;
   int err = 0;
-  armci_hdl_t *ahdl = (nbh ? &nbh->ahdl: NULL);
+  armci_hdl_t *ahdl = (nbh ? &(nbh->ahdl): NULL);
 
   if(hnd <0 || hnd>= GPC_SLOTS) 
     err += fprintf(stderr, "ARMCI_Gpc_exec: bad callback handle %d: %d\n",hnd,GPC_SLOTS);
@@ -105,8 +105,8 @@ int ARMCI_Gpc_exec(int h, int p, void  *hdr, int hlen,  void *data,  int dlen,
 
   if(nbh)
     nbh->proc = p;
-#if 0
-  if(SAMECLUSNODE(p)) {
+#if 1
+  if(SAMECLUSNODE(p) && armci_nproc==1) {
     int rhsize, rdsize;
     int (*func)();
 
