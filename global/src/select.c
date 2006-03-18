@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "global.h"
 #include "globalp.h"
 #include "../../armci/src/message.h"
@@ -139,7 +140,7 @@ int     participate=0;
    if(type==C_INT){
       int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
-      *(Integer*)val = (Integer)info.v.lval;
+      *(int*)val = (int)info.v.lval;
    }else if(type==C_LONG){
       int size = sizeof(double) + sizeof(Integer)*(int)ndim;
       armci_msg_sel(&info,size,op,ARMCI_LONG,participate);
