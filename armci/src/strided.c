@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.110 2006-03-14 17:55:03 vinod Exp $ */
+/* $Id: strided.c,v 1.111 2006-03-20 20:27:04 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -1053,7 +1053,7 @@ int ARMCI_AccS( int  optype,            /* operation */
       rc = armci_op_strided(optype,scale, proc, src_ptr, src_stride_arr,dst_ptr,
                            dst_stride_arr, count, stride_levels,1,NULL);
     else{
-      /*DO_FENCE(proc,SERVER_PUT);*/
+      DO_FENCE(proc,SERVER_PUT);
       rc = armci_pack_strided(optype,scale,proc,src_ptr, src_stride_arr,dst_ptr,
                       dst_stride_arr,count,stride_levels,NULL,-1,-1,-1,NULL);
     }
@@ -1529,7 +1529,7 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
          return 0;
        }
 #if   defined(VAPI)
-       if(stride_levels==1 && 
+       if(0 && stride_levels==1 && 
          (count[1] < armci_max_num_sg_ent || count[0] > VAPI_SGGET_MIN_COLUMN) && 
          ARMCI_REGION_BOTH_FOUND(dst_ptr,src_ptr,count[0],armci_clus_id(proc))){
          DO_FENCE(proc,DIRECT_NBGET);

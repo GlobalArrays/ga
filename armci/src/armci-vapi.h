@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.17 2006-01-20 21:25:17 vinod Exp $ */
+/*$Id: armci-vapi.h,v 1.18 2006-03-20 20:27:04 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -138,7 +138,7 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define DSCRID_SCATTERCLIENT 70000
 #define DSCRID_SCATTERCLIENT_END 70000+9999
 
-#define MAX_PENDING 8
+#define MAX_PENDING 32
 
 #define HAS_RDMA_GET
 
