@@ -1,4 +1,4 @@
-c $Id: testsolve.F,v 1.10 2005-11-23 10:25:18 manoj Exp $
+c $Id: testsolve.F,v 1.11 2006-03-20 20:02:29 manoj Exp $
       program test
       implicit none
 #include "mafdecls.fh"
@@ -126,7 +126,11 @@ c
       if (me .eq. 0) then
  	print *,' '
         print *, ' norm = ', dsqrt(sum)/n
-        if(dsqrt(sum)/n.lt.1d-10) print *, ' test passed '
+        if(dsqrt(sum)/n.lt.1d-10) then
+           print *, ' test passed '
+        else
+           call ga_error(' test failed ',3)
+        endif
  	print *,' '
         call ffflush(6)
       endif
@@ -150,7 +154,11 @@ c
       if (me .eq. 0) then
         print *,' '
         print *, ' norm = ', dsqrt(sum)/n
-        if(dsqrt(sum)/n.lt.1d-10) print *, ' test passed '
+        if(dsqrt(sum)/n.lt.1d-10) then
+           print *, ' test passed '
+        else
+           call ga_error(' test failed ',4)
+        endif           
         print *,' '
         call ffflush(6)
       endif
