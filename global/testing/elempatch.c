@@ -303,7 +303,7 @@ test_fun (int type, int dim, int OP)
   double boundmind,boundmaxd,wolfemind,aboundmind,aboundmaxd,awolfemind;
   long boundminl,boundmaxl,wolfeminl,aboundminl,aboundmaxl,awolfeminl;
   float boundminf,boundmaxf,wolfeminf,aboundminf,aboundmaxf,awolfeminf;
-  Integer boundmini,boundmaxi,wolfemini,aboundmini,aboundmaxi,awolfemini;
+  int boundmini,boundmaxi,wolfemini,aboundmini,aboundmaxi,awolfemini;
 
   int ONE = 1, ZERO = 0;	/* useful constants */
   int g_a, g_b, g_c, g_d, g_e;
@@ -353,7 +353,7 @@ test_fun (int type, int dim, int OP)
   int ok = 1;
   int result,result2, result3;
   void *max;
-  Integer imax;
+  int imax;
   float fmax;
   long lmax;
   double dmax;
@@ -374,7 +374,7 @@ test_fun (int type, int dim, int OP)
   long    resultl,aresultl;
   double  resultd,aresultd;
   float   resultf,aresultf;
-  Integer resulti,aresulti;
+  int resulti,aresulti;
 
   adc.real = 1.0;
   adc.imag = 0.0;
@@ -958,7 +958,7 @@ test_fun (int type, int dim, int OP)
 	  case C_INT:
 	    awolfemini = ((int)(((int)1)/((int)2))) - wolfemini;
 	    aboundmini = ((int)(((int)1)/((int)2))) - boundmini;
-	    aboundmaxi = (Integer)GA_INFINITY_I - boundmaxi;
+	    aboundmaxi = (int)GA_INFINITY_I - boundmaxi;
 	    break;
 	  case C_DBL:
 	    awolfemind = (((double)1.0)/((double)2.0)) - wolfemind;
@@ -1151,7 +1151,7 @@ test_fun (int type, int dim, int OP)
 	switch (type) 
 	  {
 	  case C_INT:
-	    if (aresulti == (Integer)0) {
+	    if (aresulti == 0) {
 	      result = 0;
 	    } else {
 	      result = 1;
@@ -1186,17 +1186,17 @@ test_fun (int type, int dim, int OP)
 	switch (type) 
 	  {
 	  case C_INT:
-	    if (awolfemini == ((Integer)0)) {
+	    if (awolfemini == 0) {
 	      result = 0;
 	    } else {
 	      result = 1;
 	    }
-	    if (aboundmini == ((Integer)0)) {
+	    if (aboundmini == 0) {
 	      result2 = 0;
 	    } else {
 	      result2 = 1;
 	    }
-	    if (aboundmaxi == ((Integer)0)) {
+	    if (aboundmaxi == 0) {
 	      result3 = 0;
 	    } else {
 	      result3 = 1;
