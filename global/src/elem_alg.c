@@ -1838,9 +1838,9 @@ void FATR ga_step_bound_info_patch_(
      Integer *g_t = &g_T;
      double dalpha = (double)1.0, dbeta = (double)(-1.0);
      long   lalpha = (long)1, lbeta = (long)(-1);
-     Integer ialpha = (int)1, ibeta = (int)(-1);
+     int ialpha = (int)1, ibeta = (int)(-1);
      float   falpha = (float)1.0, fbeta = (float)(-1.0);
-     Integer iresult,iresult2;
+     int iresult,iresult2;
      float   fresult,fresult2;
      Integer compatible;
      Integer compatible2;
@@ -2061,7 +2061,7 @@ void FATR ga_step_bound_info_patch_(
      switch (xxtype)
        {
        case C_INT:
-	 *(Integer*)wolfemin = ABS(MIN(iresult,iresult2));
+	 *(int*)wolfemin = ABS(MIN(iresult,iresult2));
 	 break;
        case C_DCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
@@ -2121,7 +2121,7 @@ void FATR ga_step_bound_info_patch_(
 	 /* This should be iresult but is lresult because of
 	    the strange implementation of nga_select_elem.
 	 */
-           *(Integer*)boundmin = iresult;
+           *(int*)boundmin = iresult;
            break;
        case C_DCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
@@ -2150,7 +2150,7 @@ void FATR ga_step_bound_info_patch_(
 	 /* This should be iresult but is lresult because of
 	    the strange implementation of nga_select_elem.
 	 */
-           *(Integer*)boundmax = iresult;
+           *(int*)boundmax = iresult;
            break;
        case C_DCPL:
 	 ga_error ("Ga_step_bound_info_patch_: unavalable for complex datatype.", 
@@ -2205,7 +2205,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
      Integer *g_c;
      Integer g_C;
      Integer g_A = *g_a, g_B = *g_b;
-     Integer iresult;
+     int iresult;
      Integer atotal,btotal;
      Integer me= ga_nodeid_();
      float   fresult;
@@ -2290,7 +2290,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
 	switch (atype)
 	  {
 	  case C_INT:
-	    *(Integer*)result = GA_INFINITY_I;
+	    *(int*)result = GA_INFINITY_I;
 	    break;
 	  case C_DCPL:
 	    ga_error ("Ga_step_max_patch_: unavailable for complex datatype.", 
@@ -2333,7 +2333,7 @@ void FATR ga_step_max_patch_(g_a,  alo, ahi, g_b,  blo, bhi, result)
 	switch (atype)
 	  {
 	  case C_INT:
-	    *(Integer*)result = ABS(iresult);
+	    *(int*)result = ABS(iresult);
 	    break;
 	  case C_DCPL:
 	    ga_error ("Ga_step_max_patch_: unavailable for complex datatype.", 
