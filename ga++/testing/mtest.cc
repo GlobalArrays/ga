@@ -36,7 +36,7 @@ test_scale_cols (GA::GlobalArray *g_a,
   
   int index[MAXDIM];
   void *min, *max;
-  Integer imin, imax;
+  int imin, imax;
   float fmin, fmax;
   long lmin, lmax;
   double dmin, dmax;
@@ -248,7 +248,7 @@ test_scale_rows (GA::GlobalArray *g_a,
   
   int index[MAXDIM];
   void *min, *max;
-  Integer imin, imax;
+  int imin, imax;
   float fmin, fmax;
   long lmin, lmax;
   double dmin, dmax;
@@ -463,7 +463,7 @@ test_median_patch (GA::GlobalArray * g_a, int *alo, int *ahi,
   GA::GlobalArray * g_e;
   int index[MAXDIM];
   void *min, *max;
-  Integer imin, imax;
+  int imin, imax;
   float fmin, fmax;
   long lmin, lmax;
   double dmin, dmax;
@@ -704,7 +704,7 @@ test_median (GA::GlobalArray * g_a, GA::GlobalArray * g_b,
   GA::GlobalArray *g_e;
   int index[MAXDIM];
   void *min, *max;
-  Integer imin, imax;
+  int imin, imax;
   float fmin, fmax;
   long lmin, lmax;
   double dmin, dmax;
