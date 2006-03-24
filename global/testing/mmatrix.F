@@ -61,7 +61,6 @@ c     There are 2 choices: ga_initialize or ga_initialize_ltd.
 c     In the first case, there is no explicit limit on memory usage.
 c     In the second, user can set limit (per processor) in bytes.
 c
-      print*
       call ga_initialize()
       me = ga_nodeid()
 c     we can also use GA_set_memory_limit BEFORE first ga_create call
