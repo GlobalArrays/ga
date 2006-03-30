@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.111 2006-03-20 20:27:04 vinod Exp $ */
+/* $Id: strided.c,v 1.112 2006-03-30 22:30:47 vinod Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -457,7 +457,7 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
 
 /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  if defined(LAPI2) || defined(DOELAN4) 
+#  if defined(LAPI2)
     /*even 1D armci_nbput has to use different origin counters for 1D */
 #   if defined(LAPI2)
     if(!ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
@@ -1511,6 +1511,17 @@ int ARMCI_NbGetS( void *src_ptr,  	/* pointer to 1st segment at source*/
       else
         nb_handle = armci_set_implicit_handle(GET, proc);
     }
+#ifdef DOELAN4
+    if(stride_levels==0){
+      ARMCI_NbGet(src_ptr,dst_ptr,count[0],proc,usr_hdl);
+      POSTPROCESS_STRIDED(tmp_count);
+#     ifdef ARMCI_PROFILE
+	 armci_profile_stop_strided(ARMCI_PROF_NBGETS);
+#     endif
+      return 0;
+
+    }
+#endif
     
 #ifndef LAPI2
     if(!direct){

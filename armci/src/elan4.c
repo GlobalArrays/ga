@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.10 2006-03-14 17:55:03 vinod Exp $ */
+/* $Id: elan4.c,v 1.11 2006-03-30 22:30:47 vinod Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -968,7 +968,6 @@ extern ELAN_EVENT *elan_putss (void *pgs, void *src, void *dst, int *src_stride_
     else{
        armci_die("network strided called for stride_levels>=3",proc);
     }
-
     if(!nb_handle)
        elan_wait(o_cmpl,elan_base->waitType);
     else
