@@ -53,25 +53,55 @@ typedef struct {
 } Range;
 
 
-int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo, Integer *hi,
+int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo_orig, Integer *hi_orig,
                          Integer range[][RANGE_BOUND], Integer range_num[],
                          Integer offset[][RANGE_BOUND/2], Integer op_code)
+/*
+  ndim                   - dimension of array [input]
+  dims[]                 - dimensions of each array component [input]
+  lo_orig[]              - lower bounds of request
+  hi_orig[]              - upper bounds of request
+  range[][]              - adjusted ranges for requests [output]
+  range_num[]            - number of ranges per axis 
+  offset[]               - offset between original request and shifted request [output]
+  op_code                - not used
+*/
 {
-    Integer i;
+    Integer lo[MAXDIM], hi[MAXDIM];
+    Integer i, rmndr, id;
     Range range_raw[MAXDIM];
-    Integer is_regular_patch;
+    Integer is_regular_patch, no_shift;
  
     /* check the patch is valid or not */
-    for(i=0; i<ndim; i++) {
-        if(op_code == PERIODIC_GET) {
-            if((hi[i] - lo[i] + 1) < 1) return 0;
-        }
-        else {
-            if(((hi[i]-lo[i]+1) > dims[i]) || ((hi[i]-lo[i]+1) < 1))
-                return 0;
-        }
+    for (i=0; i<ndim; i++) {
+      lo[i] = lo_orig[i];
+      hi[i] = hi_orig[i];
+      if ((hi[i] - lo[i] + 1) < 1 || (hi[i]-lo[i]+1) > 2*dims[i]) return 0;
     }
-    
+    /* move request so that it at least partially overlaps the array
+     * (if necessary)
+     */
+    no_shift = 1;
+    for(i=0; i<ndim; i++) {
+      if (lo[i] > dims[i]) {
+        rmndr = lo[i]%dims[i];
+        id = (lo[i]-rmndr)/dims[i]; 
+        lo[i] = lo[i] - id*dims[i];
+        hi[i] = hi[i] - id*dims[i];
+        if (id != 0) {
+          no_shift = 0;
+        }
+      }
+      if (hi[i] < 1) {
+        rmndr = -hi[i]%dims[i];
+        id = (hi[i]+rmndr)/dims[i]+1; 
+        lo[i] = lo[i] + id*dims[i];
+        hi[i] = hi[i] + id*dims[i];
+        if (id != 0) {
+          no_shift = 0;
+        }
+      }
+    }
     /* break the lo and hi into the corresponding ranges
      *
      * lo (if < 1)         1                dims[i]      hi (if > dims[i])
@@ -94,20 +124,26 @@ int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo, Integer *hi,
         range_raw[i].hig.isvalid = 0;
         
         if(lo[i] < 1) {
-            range_raw[i].low.lo = lo[i]; range_raw[i].low.isvalid = 1; }
-        else if(lo[i] > dims[i]) {
-            range_raw[i].hig.lo = lo[i]; range_raw[i].hig.isvalid = 1; }
-        else {
-            range_raw[i].mid.lo = lo[i]; range_raw[i].mid.isvalid = 1; }
+            range_raw[i].low.lo = lo[i];
+            range_raw[i].low.isvalid = 1;
+        } else if (lo[i] >= 1) {
+            range_raw[i].mid.lo = lo[i];
+            range_raw[i].mid.isvalid = 1;
+        }
 
-        if(hi[i] < 1) {
-            range_raw[i].low.hi = hi[i]; range_raw[i].low.isvalid = 1; }
-        else if(hi[i] > dims[i]) {
-            range_raw[i].hig.hi = hi[i]; range_raw[i].hig.isvalid = 1; }
-        else {
-            range_raw[i].mid.hi = hi[i]; range_raw[i].mid.isvalid = 1; }
+        if (lo[i] < 1 && hi[i] > dims[i]) {
+            range_raw[i].mid.isvalid = 1;
+        }
 
-        if((lo[i] < 1) && (hi[i] > dims[i])) range_raw[i].mid.isvalid = 1;
+
+        if(hi[i] > dims[i]) {
+            range_raw[i].hig.hi = hi[i];
+            range_raw[i].hig.isvalid = 1;
+        } else if (hi[i] <= dims[i]) {
+            range_raw[i].mid.hi = hi[i];
+            range_raw[i].mid.isvalid = 1;
+        }
+
     }
 
     /* check if this is a regular patch, not periodic operation needed */
@@ -116,7 +152,7 @@ int ngai_peri_get_range_(Integer ndim, Integer *dims, Integer *lo, Integer *hi,
         if(range_raw[i].low.isvalid || range_raw[i].hig.isvalid)
             is_regular_patch = 0;
 
-    if(is_regular_patch) return IS_REGULAR_PATCH;
+    if(is_regular_patch && no_shift) return IS_REGULAR_PATCH;
     
     /* adjust the range so that they are in the range of 1 to dims[i] */
     for(i=0; i<ndim; i++) {
