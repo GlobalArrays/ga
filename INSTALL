@@ -8,11 +8,13 @@ Note:
 ----
 
 Before building you must read the "HOW TO BUILD THE PACKAGE" 
-section in the README file in the same directory.
+section in the README file in the same directory and Chapter2
+in GA user manual.
+        http://www.emsl.pnl.gov/docs/global/user.html
 
 Also, it is recommended to refer the file NOTES located in the 
 same directory and also the GA support webpage:
-    http://www.emsl.pnl.gov/docs/global/support.html
+        http://www.emsl.pnl.gov/docs/global/support.html
 
 Help/Support:
 ------------

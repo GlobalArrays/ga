@@ -76,6 +76,8 @@ g
 
 HOW TO BUILD THE PACKAGE?
 ~~~~~~~~~~~~~~~~~~~~~~~~
+NOTE: Also, please refer GA user manual (Chapter 2) for more updated
+installation instructions. http://www.emsl.pnl.gov/docs/global/user.html
 
 1. MAKE program
 You can build GA, ARMCI, MA and TCGMSG libraries separately or all libraries
