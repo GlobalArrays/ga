@@ -1,4 +1,4 @@
-/* $Id: kr_malloc.c,v 1.21 2006-03-15 03:18:00 manoj Exp $ */
+/* $Id: kr_malloc.c,v 1.22 2006-04-05 21:12:59 manoj Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
@@ -142,7 +142,7 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
     size_t nunits;
     char *return_ptr;
 
-#if !(defined(SUN) || defined(SOLARIS))
+#if !((defined(SUN) || defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK))
     if(ctx->ctx_type == KR_CTX_SHMEM) return kr_malloc_shmem(nbytes,ctx);
 #endif
     
@@ -217,7 +217,7 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
 void kr_free(char *ap, context_t *ctx) {
     Header *bp, *p, **up;
     
-#if !(defined(SUN) || defined(SOLARIS))
+#if !((defined(SUN) || defined(SOLARIS)) && !defined(SHMMAX_SEARCH_NO_FORK))
     if(ctx->ctx_type == KR_CTX_SHMEM) { kr_free_shmem(ap,ctx); return; }
 #endif
     
