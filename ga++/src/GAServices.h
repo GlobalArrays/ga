@@ -66,7 +66,7 @@ class GAServices {
    * for each dimension. The array indices start at 0. For example, the 
    * following figure demonstrates distribution of a 2-dimensional array 8x10 
    * on 6 (or more) processors. nblock[2]={3,2}, the size of map array is s=5 
-   * and array map contains the following elements map={0,2,8, 0, 5}. The 
+   * and array map contains the following elements map={0,2,6, 0, 5}. The 
    * distribution is nonuniform because, P1 and P4 get 20 elements each and 
    * processors P0,P2,P3, and P5 only 10 elements each. 
    *        
