@@ -39,7 +39,8 @@ MAKEFILES
 
 
 BUILDING GA 
-   (http://www.emsl.pnl.gov/docs/global/um/build.html)
+   (For more updated build instructions, refer GA user manual chapter 2.
+    http://www.emsl.pnl.gov/docs/global/um/build.html)
 
    You need GNU make (version > 3.68) to build this software.
 
@@ -122,7 +123,7 @@ TEST PROGRAMS
 DOCUMENTATION
 
    The documentation is located in doc/ and on the web:
-   http://www.emsl.pnl.gov:2080/docs/global 
+   http://www.emsl.pnl.gov/docs/global 
 
 CONTACT
 
