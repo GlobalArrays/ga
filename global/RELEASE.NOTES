@@ -24,18 +24,17 @@ ACKNOWLEDGMENT
 
 
 GENERAL NOTES
-  Version 3.4 of Global Arrays Library:
   - supports a wide variety of platforms, from supercomputer, such as
-    IBM SP and CRAY T3E, to Linux clusters and Windows NT.
+    IBM SPs, CRAYs, to Linux clusters and Windows NT.
   - supports arbitrary dimensional array operations. 
   - supports multiple message-passing libraries: MPI, TCGMSG.
-  - provides C and Fortran interface to the library.
+  - provides C, C++ and Fortran interface to the library.
   - provides interface routines to ScaLAPACK
   - exploits native protocols of following networks: Giganet, Myrinet, Quadrics
 
-
 SUPPORTED PLATFORMS
-  * IBM SP, CRAY T3E & J90, SGI Origin, Fujitsu, Hitachi, MAC X, Cygwin
+  * IBM SP, CRAYs (X1, XD1, T3E, J90), SGIs (Altix, Origin), Fujitsu, Hitachi,
+  * MAC X, Cygwin
   * Cluster of workstations/servers: Solaris, IRIX, AIX, HPUX, Digital Unix
   * Linux clusters/servers
   * Windows NT, 2000, XP
@@ -51,7 +50,21 @@ DIRECTORY STRUCTURE
 
 
 HISTORY
-  version 3.3   July, 2003 (beta)
+  version 4.0   April 2006
+              * Support for multilevel parallelism: processor group awareness
+              * GA_Dgemm matrix multiplication based on SRUMMA
+              * Support for large arrays (a terabyte Global Array now possible)
+              * Optimized one-sided non-blocking operations
+              * Supports various platforms (Crays, IBM SPs, SGI Altix, ...) and
+                interconnects (Myrinet, Quadrics, Infiniband, ...)
+
+  version 3.4   2004 (beta)
+              * Initial support for multilevel parallelism
+              * processor group awareness
+              * nonblocking one-sided interfaces
+              * optimized port to Cray X1, SGI Altix
+
+  version 3.3   July, 2003
               * nonblocking one-sided interfaces
               * optimized matrix multiplication (ga_dgemm)
               * mirrored arrays
