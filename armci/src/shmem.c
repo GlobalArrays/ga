@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.86 2005-02-09 23:09:45 manoj Exp $ */
+/* $Id: shmem.c,v 1.87 2006-04-12 22:59:28 manoj Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -583,7 +583,7 @@ long sz=(long)size;
     printf("the system has sufficient amount of swap space. ");
     printf("Most UNIX systems can be easily reconfigured ");
     printf("to allow larger shared memory segments,\n");
-    printf("see http://www.emsl.pnl.gov:2080/docs/global/support.html\n");
+    printf("see http://www.emsl.pnl.gov/docs/global/support.html\n");
     printf("In some cases, the problem might be caused by insufficient swap space.\n");
     printf("*******************************************************\n");
 }
