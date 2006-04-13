@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.136 2006-04-13 15:38:44 d3g293 Exp $ */
+/* $Id: base.c,v 1.137 2006-04-13 19:30:19 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2402,6 +2402,7 @@ Integer grp_id, grp_me=GAme, grp_nproc=GAnproc;
          GAstat.maxmem  = (long)MAX(GAstat.maxmem, GAstat.curmem);
          return(TRUE);
       }else{ 
+         if (GA_memory_limited) GA_total_memory += mem_size_proc;
          ga_destroy_(g_b);
          return(FALSE);
       }
