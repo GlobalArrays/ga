@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.135 2005-12-20 19:15:51 d3g293 Exp $ */
+/* $Id: base.c,v 1.136 2006-04-13 15:38:44 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1252,7 +1252,7 @@ void FATR ga_set_irreg_flag_(Integer *g_a, logical *flag)
 
 /*\ Get dimension on a new global array
 \*/
-Integer ga_get_dimension_(Integer *g_a)
+Integer FATR ga_get_dimension_(Integer *g_a)
 {
   Integer ga_handle = *g_a + GA_OFFSET;
   return (Integer)GA[ga_handle].ndim;
@@ -1260,7 +1260,7 @@ Integer ga_get_dimension_(Integer *g_a)
 
 /*\  Allocate memory and complete setup of global array
 \*/
-logical ga_allocate_( Integer *g_a)
+logical FATR ga_allocate_( Integer *g_a)
 {
 
   Integer hi[MAXDIM];
@@ -1463,6 +1463,7 @@ logical ga_allocate_( Integer *g_a)
     GAstat.maxmem  = (long)MAX(GAstat.maxmem, GAstat.curmem);
     status = TRUE;
   } else {
+    if(GA_memory_limited) GA_total_memory += mem_size;
     ga_destroy_(g_a);
     status = FALSE;
   }
