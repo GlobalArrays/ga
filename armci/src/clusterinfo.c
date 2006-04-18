@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.30 2005-01-24 09:21:07 manoj Exp $ */
+/* $Id: clusterinfo.c,v 1.31 2006-04-18 00:46:39 manoj Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -20,15 +20,17 @@
 #  include <winsock.h>
 #endif
 
-/* SHMEM_HACK enables to simulate cluster environment on a single workstation.
+/* NO_SHMEM enables to simulate cluster environment on a single workstation.
  * Must define NO_SHMMAX_SEARCH in shmem.c to prevent depleting shared memory
  * due to a gready shmem request by the master process on cluster node 0.
  */ 
 #if defined(DECOSF) && defined(QUADRICS)
 #  if !defined(REGION_ALLOC)
-#    define SHMEM_HACK
+#    define NO_SHMEM
      extern int armci_enable_alpha_hack();
 #  endif
+#else
+#  define armci_enable_alpha_hack() 1
 #endif
 
 #define DEBUG  0
@@ -356,7 +358,7 @@ void armci_init_clusinfo()
      armci_die("armci: gethostname overrun name string length",len);
 #endif
 
-#ifdef SHMEM_HACK
+#ifdef NO_SHMEM
   if(armci_enable_alpha_hack()) {
     name[len]='0'+armci_me;
     name[len+1]='\0';
@@ -377,7 +379,7 @@ void armci_init_clusinfo()
 
   armci_master = armci_clus_info[armci_clus_me].master;
 
-#ifdef SHMEM_HACK
+#ifdef NO_SHMEM
   if(armci_enable_alpha_hack()) {
      int i;
      for(i=0;i<armci_nclus;i++){
