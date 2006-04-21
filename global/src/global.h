@@ -296,6 +296,7 @@ extern void ga_set_ghost_corner_flag(Integer *g_a, logical flag);
 extern Integer nga_get_dimension(Integer *g_a);
 extern logical ga_allocate(Integer *g_a);
 extern Integer ga_pgroup_create(Integer list[], Integer *count);
+extern Integer ga_pgroup_destroy(Integer *grp);
 extern Integer FATR ga_pgroup_split_( Integer *grp, Integer *num_group);
 extern Integer FATR ga_pgroup_split_irreg_(Integer *grp, Integer *mycolor, Integer *key);
    

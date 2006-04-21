@@ -163,6 +163,7 @@
 #define  ga_get_dimension_         GA_GET_DIMENSION
 #define  ga_allocate_              GA_ALLOCATE
 #define  ga_pgroup_create_         GA_PGROUP_CREATE
+#define  ga_pgroup_destroy_        GA_PGROUP_DESTROY
 #define  ga_pgroup_split_          GA_PGROUP_SPLIT
 #define  ga_pgroup_split_irreg_    GA_PGROUP_SPLIT_IRREG
 #define  nga_ddot_patch_           NGA_DDOT_PATCH
@@ -397,6 +398,7 @@
 #define  ga_get_dimension_         ga_get_dimension__
 #define  ga_allocate_              ga_allocate__
 #define  ga_pgroup_create_         ga_pgroup_create__ 
+#define  ga_pgroup_destroy_        ga_pgroup_destroy__ 
 #define  ga_pgroup_split_          ga_pgroup_split__ 
 #define  ga_pgroup_split_irreg_    ga_pgroup_split_irreg__ 
 #define  nga_ddot_patch_           nga_ddot_patch__         

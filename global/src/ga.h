@@ -80,6 +80,7 @@ extern void GA_Set_ghost_corner_flag(int g_a, int flag);
 extern int GA_Get_dimension(int g_a);
 extern int GA_Allocate(int g_a);
 extern int GA_Pgroup_create(int *list, int count);
+extern int GA_Pgroup_destroy(int grp);
 extern int GA_Pgroup_split(int grp_id, int num_group);
 extern int GA_Pgroup_split_irreg(int grp_id, int color, int key);
 extern void GA_Update_ghosts(int g_a);

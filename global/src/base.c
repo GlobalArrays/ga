@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.137 2006-04-13 19:30:19 d3g293 Exp $ */
+/* $Id: base.c,v 1.138 2006-04-21 22:30:59 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -949,6 +949,26 @@ int FATR ga_pgroup_create_(Integer *list, Integer *count)
   return ga_pgroup_get_default_();
 #endif
 }
+
+/*\ FREE UP PROCESSOR GROUP HANDLE FOR REUSE
+\*/
+logical FATR ga_pgroup_destroy_(Integer *grp)
+{
+  logical ret = TRUE;
+  Integer grp_id = *grp;
+
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
+
+  if (PGRP_LIST[grp_id].actv == 0) {
+    ret = FALSE;
+  }
+  PGRP_LIST[grp_id].actv = 0;
+
+  /* Deallocate memory for lists */
+  free(PGRP_LIST[grp_id].map_proc_list);
+  return ret;
+}
+
 
 /*\ SIMPLE FUNCTIONS TO RECOVER STANDARD PROCESSOR LISTS
 \*/
