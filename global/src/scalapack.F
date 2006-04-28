@@ -4,7 +4,7 @@ cedo#define USE_PDSYEVR 1
 #else
 #define INTGR4 integer*4
 #endif
-C     $Id: scalapack.F,v 1.9 2005-11-10 02:09:08 edo Exp $
+C     $Id: scalapack.F,v 1.10 2006-04-28 21:50:27 edo Exp $
 ****************************************************************************
 * GA to/from ScaLAPACK (square block scattered decomposition) interface    * 
 *                                                                          *
@@ -2516,6 +2516,7 @@ c
       integer info8,dblsize
 
       double precision pdlamch,dumm
+      INTGR4 dumm2
       external pdlamch
       INTGR4 iceil
 c     
@@ -2644,15 +2645,6 @@ c
          il = 0
          iu = 0
 c     
-c     ability to deal with orthonormality ; let's just
-c     have the regular scalapack stuff for the moment
-c     
-         liwork = 10*max(n, nprow2*npcol2+one4, four4) +2 *n
-         if(liwork.ne.0)status =
-     $        ma_push_get(MT_INT, liwork ,'iwork',hiwork,adriwork)
-         if(.not.status) 
-     &        call ga_error('ga_pdsyevr: mem alloc failed iwork  ', -1)
-c     
          nn = max(n, nb, two4)
          np0 = numroc(nn, nb, zero4, zero4, nprow2)
          mq0 = numroc(nn, nb, zero4, zero4, npcol2)
@@ -2663,19 +2655,30 @@ c
 c     
 #if 0
          lcwork4=-1
-
+         liwork4=-1
          call pdsyevr(jobz, range, uplo,
      1        n, dbl_mb(adrA), one4, one4, descA,vl, 
      2        vu, il, iu, m, nz, eval,  dbl_mb(adrB), one4, 
      3        one4, descB, dumm, lcwork4,
-     3        int_mb(adriwork), liwork4, info)
+     3        dumm2, liwork4, info)
 
          lcwork=dumm
+         liwork=dumm2
+         if(iam.eq.0) write(0,*) ' lcw liw ',lcwork,liwork
 #else
         lcwork = 5*n +MAX(18*NN,(NP0*MQ0 + 2*nb*nb))+
      +          (2 + ICEIL( N, NPROW2*NPCOL2))*NN+1
+        liwork = 12*max(n, nprow2*npcol2+one4, four4) +2 *n
 #endif
 
+c     
+c     ability to deal with orthonormality ; let's just
+c     have the regular scalapack stuff for the moment
+c     
+         if(liwork.ne.0)status =
+     $        ma_push_get(MT_INT, liwork ,'iwork',hiwork,adriwork)
+         if(.not.status) 
+     &        call ga_error('ga_pdsyevr: mem alloc failed iwork  ', -1)
 c     
          if(lcwork.ne.0)
      $        status = ma_push_get(MT_DBL, lcwork ,
@@ -2689,6 +2692,7 @@ c
 c     
          liwork4=liwork
          lcwork4=lcwork
+
          call pdsyevr(jobz, range, uplo,
      1        n, dbl_mb(adrA), one4, one4, descA,vl, 
      2        vu, il, iu, m, nz, eval,  dbl_mb(adrB), one4, 
