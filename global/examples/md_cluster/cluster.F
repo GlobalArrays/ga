@@ -134,7 +134,7 @@ c
       if (istep.eq.0.or.(mod(istep,ilist).eq.0.and.
      +    t_rmndr.eq.0.0d00)) then
         me = ga_nodeid()
-        if (istep.ge.516062.and.istep.le.516063) then
+        if (istep.ge.6932366) then
           debug = .false.
         else
           debug = .false.
@@ -238,8 +238,8 @@ c
       double precision vrdot, frdot, vfdot, a, b, c
       double precision t1, t2, tcut, comm(4), tmax, htausq
       double precision rnx, rny, rnz, vpx, vpy, vpz, vllx, vlly, vllz
-      double precision t3, t4, ax, ay, az, tchk, tmin
-      double precision r1x, r1y, r1z, r2x, r2y, r2z, rmax, rskin
+      double precision t3, t4, ax, ay, az, tchk, tmin, t_est
+      double precision r1x, r1y, r1z, r2x, r2y, r2z, rmax, rskin, rn
       double precision cluster_find_tau
       integer failsafe, ibuf(MD_MAXPROC), me, nproc, twohit
       logical debug
@@ -252,12 +252,12 @@ c
       endif
       me = ga_nodeid()
       nproc = ga_nnodes()
-      if (istep.ge.3943159) then
+      if (istep.ge.1405586.and.atot.eq.403) then
         debug = .false.
       else
         debug = .false.
       endif
-      rskin = 0.02
+      rskin = 0.02d00
       tmax = t_rmndr
       if (t_rmndr.eq.tau) cllsn_isav = 0
   100 dtmax = 2.0d00*t_rmndr
@@ -281,15 +281,16 @@ c
         rz = ra(ii,3,6) - cl_cmz
         r2 = rx**2 + ry**2 + rz**2
         r = sqrt(r2)
-        if (debug) write(6,*) me, 'ra(ii,1,6) ',ra(ii,1,6),istep
-        if (debug) write(6,*) me, 'ra(ii,2,6) ',ra(ii,2,6),istep
-        if (debug) write(6,*) me, 'ra(ii,3,6) ',ra(ii,3,6),istep
+c        if (debug) write(6,*) me, 'ra(ii,1,6) ',ra(ii,1,6),istep
+c        if (debug) write(6,*) me, 'ra(ii,2,6) ',ra(ii,2,6),istep
+c        if (debug) write(6,*) me, 'ra(ii,3,6) ',ra(ii,3,6),istep
         if (r.gt.r_cluster) then
           if (r.gt.rmax) rmax = r
           if (debug) write(6,*) me,' tmax = ',tmax,istep
           if (debug) write(6,*) me,' dtmax = ',dtmax,istep
           if (debug) write(6,*) me,' ii = ',ii,istep
           if (debug) write(6,*) me,' antot = ',antot,istep
+          if (debug) write(6,*) me,' r-r_cluster ',r-r_cluster,istep
           if (debug) write(6,*) me,' r_cluster = ',r_cluster,istep
           if (debug) write(6,*) me,' sqrt(r2) = ',sqrt(r2),istep
           if (debug) write(6,*) me,' ra(1) = ',ra(ii,1,6),istep
@@ -310,8 +311,13 @@ c
      +      + (cl_old(i,1,2)-cl_cm_old(1))**2
      +      + (cl_old(i,2,2)-cl_cm_old(2))**2
      +      + (cl_old(i,3,2)-cl_cm_old(3))**2)
+          rn = sqrt(rx**2+ry**2+rz**2)
+          vn = ra(ii,1,2)*rx+ra(ii,2,2)*ry+ra(ii,3,2)*rz
+          vn = vn/rn
+          t_est = vn*(rn-r_cluster)
           tcut = cluster_find_tau(ii,i,cllsn_isav,tmax,.false.)
           if (debug) write(6,*) me,' tcut = ',tcut,istep
+          if (debug) write(6,*) me,' t_est = ',t_est,istep
           if (debug) write(6,155) me,1,tcut,istep
   155     format(i3,' tcut at ',i1,': ',f12.4,' step: ',i8)
 c
@@ -335,10 +341,10 @@ c
      +               f16.8,' at step ',i8)
             endif
           else if (tcut.lt.0.0d00) then
-            write(6,*) ga_pgroup_nodeid(ga_pgroup_get_world()),
-     +        ' r-r_cluster ',r-r_cluster,istep
-            write(6,*) ga_pgroup_nodeid(ga_pgroup_get_world()),
-     +        ' Returned negative value at 1',istep
+            write(6,*) ga_nodeid(),' vn ',vn,istep
+            write(6,*) ga_nodeid(),' t_est ',t_est,istep
+            write(6,*) ga_nodeid(),' r-r_cluster ',r-r_cluster,istep
+            write(6,*) ga_nodeid(),' Returned negative value at 1',istep
             failsafe = 1
           endif
 #if 0
@@ -406,6 +412,7 @@ c
         if (ga_nodeid().eq.0) then
           write(6,*) ga_nodeid(),' Returned negative value at 2',istep
         endif
+        failcount = failcount + 1
         t_rmndr = 0.0d00
         t_done = tau
         return
@@ -600,7 +607,7 @@ c
 c  A particle lies outside the cutoff. Find particle that crosses
 c  cutoff first.
 c
-      if (istep.ge.3943159) then
+      if (istep.ge.1405586.and.atot.eq.403) then
         debug = .false.
       else
         debug = .false.
@@ -622,31 +629,25 @@ c  The r and v vectors are the relative coordinates and velocities of
 c  particle iat and the center of mass vectors. The vector f is the
 c  force along this relative coordinate.
 c
-      rx = cl_old(iloc,1,2) - rrx
-      ry = cl_old(iloc,2,2) - rry
-      rz = cl_old(iloc,3,2) - rrz
-      vx = cl_old(iloc,1,3) - vvx
-      vy = cl_old(iloc,2,3) - vvy
-      vz = cl_old(iloc,3,3) - vvz
-c
-c  Decompose velocity v into components that are parallel and perpendicular
-c  to r. Save this information for computing post-collision velocities.
+      rx = cl_old(iloc,1,2) - cl_cm_old(1)
+      ry = cl_old(iloc,2,2) - cl_cm_old(2)
+      rz = cl_old(iloc,3,2) - cl_cm_old(3)
+      vx = cl_old(iloc,1,3) - cl_vcm_old(1)
+      vy = cl_old(iloc,2,3) - cl_vcm_old(2)
+      vz = cl_old(iloc,3,3) - cl_vcm_old(3)
+      fx = ra(iat,1,3) - cl_acmx
+      fy = ra(iat,2,3) - cl_acmy
+      fz = ra(iat,3,3) - cl_acmz
 c
       r = sqrt(rx**2 + ry**2 + rz**2)
-c
-      fx = (cl_mass*cl_acmx - mass(iat)*ra(iat,1,3))/mmass
-      fy = (cl_mass*cl_acmy - mass(iat)*ra(iat,2,3))/mmass
-      fz = (cl_mass*cl_acmz - mass(iat)*ra(iat,3,3))/mmass
-      fx = ra(iat,1,3) - fx
-      fy = ra(iat,2,3) - fy
-      fz = ra(iat,3,3) - fz
 c
 c  Note that we are using acceleration instead of force,
 c  so factors of reduced mass disappear
 c
       vrdot = vx*rx + vy*ry + vz*rz
       frdot = fx*rx + fy*ry + fz*rz
-      clcut = cl_mass*r_cluster/mmass
+      vfdot = vx*fx + vy*fy + vz*fz
+      clcut = r_cluster
       v2 = vx**2 + vy**2 + vz**2
       a = v2+frdot
       b = 2.0d00*vrdot
@@ -657,7 +658,6 @@ c  Calculate c to minimize roundoff error from subtracting large numbers
 c
       dr = r - clcut
       c = 2.0d00*r*dr+dr**2
-      vfdot = vx*fx + vy*fy + vz*fz
       f2 = fx**2 + fy**2 + fz**2
 c
 c    Scan forwards from 0 to find a final value of t2. If no final
@@ -673,10 +673,12 @@ c
         t1 = 0.0d00
         ttmin = t1
         ttmax = t
+c        tlo = c + t1*(b + t1*(a+t1*(vfdot+t1*0.25d00*f2)))
         tlo = (-c-t1**2*(a+t1*(vfdot+t1*0.25d00*f2)))/b - t1
         do i = 1, 1000
           if (t.eq.tmax) then
             t2= tmax*dble(i)/1000.0d00
+c            thi = c + t2*(b + t2*(a+t2*(vfdot+t2*0.25d00*f2)))
             thi = (-c-t2**2*(a+t2*(vfdot+t2*0.25d00*f2)))/b - t2
             if ((thi.ge.0.0d00.and.tlo.le.0.0d00).or.
      +          (thi.le.0.0d00.and.tlo.ge.0.0d00)) then
@@ -698,10 +700,12 @@ c
       else
         t = 0.0d00
         t2 = tmax
+c        thi = c + t2*(b + t2*(a+t2*(vfdot+t2*0.25d00*f2)))
         thi = (-c-t2**2*(a+t2*(vfdot+t2*0.25d00*f2)))/b - t2
         do i = 1, 1000
           if (t.eq.0.0d00) then
             t1= tmax - tmax*dble(i)/1000.0d00
+c            tlo = c + t1*(b + t1*(a+t1*(vfdot+t1*0.25d00*f2)))
             tlo = (-c-t1**2*(a+t1*(vfdot+t1*0.25d00*f2)))/b - t1
             if ((thi.ge.0.0d00.and.tlo.le.0.0d00).or.
      +          (thi.le.0.0d00.and.tlo.ge.0.0d00)) then
@@ -726,11 +730,14 @@ c
         if (debug) write(6,*) me, 't1: ',t1
         if (debug) write(6,*) me, 't2: ',t2
       endif
+c  600 tlo = c + t1*(b + t1*(a+t1*(vfdot+t1*0.25d00*f2)))
+c      thi = c + t2*(b + t2*(a+t2*(vfdot+t2*0.25d00*f2)))
   600 tlo = (-c-t1**2*(a+t1*(vfdot+t1*0.25d00*f2)))/b - t1
       thi = (-c-t2**2*(a+t2*(vfdot+t2*0.25d00*f2)))/b - t2
       if ((thi.ge.0.0d00.and.tlo.le.0.0d00).or.
      +    (thi.le.0.0d00.and.tlo.ge.0.0d00)) then
         t = 0.5d00*(t1+t2)
+c        tmid = c + t*(b + t*(a+t*(vfdot+t*0.25d00*f2)))
         tmid = (-c-t**2*(a+t*(vfdot+t*0.25d00*f2)))/b - t
         if ((tmid.ge.0.0d00.and.thi.le.0.0d00).or.
      +      (tmid.le.0.0d00.and.thi.ge.0.0d00)) then
@@ -753,8 +760,9 @@ c
         open(unit=2,file='tau.dat',status='unknown')
         do j = 0, 1000
           t = tmax*dble(j)/1000.0d00
-          t1 = (-c-t**2*(a+t*(vfdot+t*0.25d00*f2)))/b
-          write(2,300) t,t1, t1-t
+          t1 = (-c-t**2*(a+t*(vfdot+t*0.25d00*f2)))/b - t
+          tmid = c + t*(b + t*(a+t*(vfdot+t*0.25d00*f2)))
+          write(2,300) t,t1, tmid
   300     format(3('    ',f16.8))
         end do
         close(2)
@@ -791,7 +799,7 @@ c   check to make sure that all cluster particles are within cluster
 c   radius
 c
       cl2 = 0.0d00
-      do i = 1, atot
+      do i = 1, antot
         if (at(i).eq.2) then
           rx = ra(i,1,6) - cl_cmx
           ry = ra(i,2,6) - cl_cmy
@@ -817,7 +825,7 @@ c
       logical force_move,debug
 c
       if (nocluster) return
-      if (istep.ge.543119) then
+      if (istep.ge.6932366) then
         debug = .false.
       else
         debug = .false.
@@ -1071,6 +1079,8 @@ c          endif
           cl_lower = cl_lower + mc_step*dble(ilow-1)
         endif
       endif
+      cl_upper = 3.5d00
+      cl_lower = 0.5d00
       cl_upper = 3.0d00
       cl_lower = 0.0d00
       mc_step = (cl_upper-cl_lower)/dble(mcbins)
