@@ -24,6 +24,7 @@ c
       if (ga_nodeid().eq.0.and.l_stdio) then
         write(6,100) pnum
         write(6,200) idx,idy,idz
+        write(6,300) failcount
       endif
 c
       call prtnrg
@@ -34,6 +35,7 @@ c
       return
   100 format('Total number of processors used in simulation      :',i9)
   200 format('Processors configured as ',i2,' X ',i2,' X ',i2,' grid')
+  300 format('Total number of collision failures                 :',i9)
       end
 c
       subroutine header
