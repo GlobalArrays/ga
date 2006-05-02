@@ -104,9 +104,9 @@ c
       common /md_buffer/xcrd(MAXAT),ycrd(MAXAT),zcrd(MAXAT),xfrc(MAXAT),
      +                  yfrc(MAXAT),zfrc(MAXAT),xacc(MAXAT),yacc(MAXAT),
      +                  zacc(MAXAT),mbuf(MAXAT),bidx(MAXAT),bat(MAXAT),
-     +                  btot
+     +                  btot,savtot
       double precision xcrd,ycrd,zcrd,xfrc,yfrc,zfrc,xacc,yacc,zacc,mbuf
-      integer bidx,bat,btot
+      integer bidx,bat,btot,savtot
 c
       common /md_cell/rcell,kcmax,nix(2000),niy(2000),niz(2000)
       double precision rcell
@@ -127,14 +127,13 @@ c
      +                zsbu(MAXAT),zsbd(MAXAT),
      +                clist(6,MAXAT),
      +                ixgru,ixgrd,iygru,iygrd,izgru,izgrd,
-     +                iygbu,iygbd,izgbu,izgbd,ixsbu,ixsbd,iysbu,iysbd,
-     +                izsbu,izsbd
+     +                iygbu,iygbd,izgbu,izgbd
       integer xgru,xgrd,ygru,ygrd,zgru,zgrd,
-     +        ygbu,ygbd,zgbu,zgbd,xsbu,xsbd,ysbu,ysbd,
-     +        zsbu,zsbd,
+     +        ygbu,ygbd,zgbu,zgbd,
      +        ixgru,ixgrd,iygru,iygrd,izgru,izgrd,
      +        iygbu,iygbd,izgbu,izgbd,ixsbu,ixsbd,iysbu,iysbd,
      +        izsbu,izsbd
+      logical xsbu,xsbd,ysbu,ysbd,zsbu,zsbd
       logical clist
 c
       common /neighbors/ nblist(MAXAT*MAXNB),nalast(MAXAT),
@@ -169,9 +168,10 @@ c
      +                        window_1, window_2
       double precision r_confine
       integer equil_1, equil_2, equil_3, window_1, window_2
-      common /cllsnpar/ mmass, cllsn_idx, l_cllsn, cllsn_cnt, cllsn_isav
+      common /cllsnpar/ mmass, cllsn_idx, l_cllsn, cllsn_cnt,
+     +                  cllsn_isav, failcount
       double precision mmass
-      integer cllsn_idx, cllsn_cnt, cllsn_isav
+      integer cllsn_idx, cllsn_cnt, cllsn_isav, failcount
       logical l_cllsn
       common /mcpar/ cl_lower, cl_upper, mc_step, mc_tmprtr, mc_dr,
      +               r_distr(0:MAXBINS), mcbins, mcfreq, mc_cnt
