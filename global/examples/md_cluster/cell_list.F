@@ -129,6 +129,7 @@ c
      +     iz.lt.1.or.iz.gt.nlz) then
           write(6,*) 'i = ',i
           write(6,*) 'antot = ',antot
+          write(6,*) 'atot = ',atot
           write(6,*) 'ra(i,1,1) = ',ra(i,1,1)
           write(6,*) 'ra(i,2,1) = ',ra(i,2,1)
           write(6,*) 'ra(i,3,1) = ',ra(i,3,1)
