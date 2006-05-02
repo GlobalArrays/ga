@@ -38,6 +38,7 @@ c
       do i = 1, MAXTIM
         tmstat(i) = 0.0d00
       end do
+      failcount = 0
 c
 c     assign atom masses
 c
