@@ -5,7 +5,7 @@ c
       double precision xcell,ycell,zcell
       double precision tbeg,wraptime
       integer snode,rnode,pnum,inode,idx,idy,idz,ipx,ipy,ipz
-      integer stot,is,i,inx,iny,inz
+      integer stot,i,inx,iny,inz
       logical nolist
 c
 c   This subroutine scatters the forces of all particles on
@@ -49,12 +49,11 @@ c
       if (idx.gt.1) then
         if (idx.eq.2) then
           stot = 0
+          savtot = 0
           if (nolist) then
-            ixsbu = 0
             do i = 1, btot
               if (xcrd(i).lt.xmin.or.xcrd(i).ge.xmax) then
-                ixsbu = ixsbu + 1
-                xsbu(ixsbu) = i
+                xsbu(i) = .true.
                 stot = stot + 1
                 xcrd(btot+stot) = xcrd(i)
                 ycrd(btot+stot) = ycrd(i)
@@ -63,27 +62,43 @@ c
                 yfrc(btot+stot) = yfrc(i)
                 zfrc(btot+stot) = zfrc(i)
                 bidx(btot+stot) = bidx(i)
+              else
+                xsbu(i) = .false.
+                savtot = savtot + 1
+                xcrd(savtot) = xcrd(i)
+                ycrd(savtot) = ycrd(i)
+                zcrd(savtot) = zcrd(i)
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
               endif
             end do
           else
-            do i = 1, ixsbu
-              is = xsbu(i)
-              stot = stot + 1
-              xfrc(btot+stot) = xfrc(is)
-              yfrc(btot+stot) = yfrc(is)
-              zfrc(btot+stot) = zfrc(is)
-              bidx(btot+stot) = bidx(is)
+            do i = 1, btot
+              if (xsbu(i)) then
+                stot = stot + 1
+                xfrc(btot+stot) = xfrc(i)
+                yfrc(btot+stot) = yfrc(i)
+                zfrc(btot+stot) = zfrc(i)
+                bidx(btot+stot) = bidx(i)
+              else
+                savtot = savtot + 1
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
+              endif
             end do
           endif
         else
           stot = 0
+          savtot = 0
           if (nolist) then
-            ixsbu = 0
             do i = 1, btot
               if ((xcrd(i).ge.xmax.and.xcrd(i)-xmax.lt.xcell).or.
      +            (xcrd(i).lt.xmin.and.xmin-xcrd(i).gt.xcell)) then
-                ixsbu = ixsbu + 1
-                xsbu(ixsbu) = i
+                xsbu(i) = .true.
                 stot = stot + 1
                 xcrd(btot+stot) = xcrd(i)
                 ycrd(btot+stot) = ycrd(i)
@@ -92,16 +107,33 @@ c
                 yfrc(btot+stot) = yfrc(i)
                 zfrc(btot+stot) = zfrc(i)
                 bidx(btot+stot) = bidx(i)
+              else
+                xsbu(i) = .false.
+                savtot = savtot + 1
+                xcrd(savtot) = xcrd(i)
+                ycrd(savtot) = ycrd(i)
+                zcrd(savtot) = zcrd(i)
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
               endif
             end do
           else
-            do i = 1, ixsbu
-              is = xsbu(i)
-              stot = stot + 1
-              xfrc(btot+stot) = xfrc(is)
-              yfrc(btot+stot) = yfrc(is)
-              zfrc(btot+stot) = zfrc(is)
-              bidx(btot+stot) = bidx(is)
+            do i = 1, btot
+              if (xsbu(i)) then
+                stot = stot + 1
+                xfrc(btot+stot) = xfrc(i)
+                yfrc(btot+stot) = yfrc(i)
+                zfrc(btot+stot) = zfrc(i)
+                bidx(btot+stot) = bidx(i)
+              else
+                savtot = savtot + 1
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
+              endif
             end do
           endif
         endif
@@ -117,13 +149,12 @@ c
       if (idx.gt.2) then
 c
         stot = 0
+        savtot = 0
         if (nolist) then
-          ixsbd = 0
           do i = 1, btot
             if ((xcrd(i).lt.xmin.and.xmin-xcrd(i).lt.xcell).or.
      +          (xcrd(i).gt.xmax.and.xcrd(i)-xmax.gt.xcell)) then
-              ixsbd = ixsbd + 1
-              xsbd(ixsbd) = i
+              xsbd(i) = .true.
               stot = stot + 1
               xcrd(btot+stot) = xcrd(i)
               ycrd(btot+stot) = ycrd(i)
@@ -132,16 +163,33 @@ c
               yfrc(btot+stot) = yfrc(i)
               zfrc(btot+stot) = zfrc(i)
               bidx(btot+stot) = bidx(i)
+            else
+              xsbd(i) = .false.
+              savtot = savtot + 1
+              xcrd(savtot) = xcrd(i)
+              ycrd(savtot) = ycrd(i)
+              zcrd(savtot) = zcrd(i)
+              xfrc(savtot) = xfrc(i)
+              yfrc(savtot) = yfrc(i)
+              zfrc(savtot) = zfrc(i)
+              bidx(savtot) = bidx(i)
             endif
           end do
         else
-          do i = 1, ixsbd
-            is = xsbd(i)
-            stot = stot + 1
-            xfrc(btot+stot) = xfrc(is)
-            yfrc(btot+stot) = yfrc(is)
-            zfrc(btot+stot) = zfrc(is)
-            bidx(btot+stot) = bidx(is)
+          do i = 1, btot
+            if (xsbd(i)) then
+              stot = stot + 1
+              xfrc(btot+stot) = xfrc(i)
+              yfrc(btot+stot) = yfrc(i)
+              zfrc(btot+stot) = zfrc(i)
+              bidx(btot+stot) = bidx(i)
+            else
+              savtot = savtot + 1
+              xfrc(savtot) = xfrc(i)
+              yfrc(savtot) = yfrc(i)
+              zfrc(savtot) = zfrc(i)
+              bidx(savtot) = bidx(i)
+            endif
           end do
         endif
 c
@@ -160,12 +208,11 @@ c
 c
         if (idy.eq.2) then
           stot = 0
+          savtot = 0
           if (nolist) then
-            iysbu = 0
             do i = 1, btot
               if (ycrd(i).lt.ymin.or.ycrd(i).ge.ymax) then
-                iysbu = iysbu + 1
-                ysbu(iysbu) = i
+                ysbu(i) = .true.
                 stot = stot + 1
                 xcrd(btot+stot) = xcrd(i)
                 ycrd(btot+stot) = ycrd(i)
@@ -174,27 +221,43 @@ c
                 yfrc(btot+stot) = yfrc(i)
                 zfrc(btot+stot) = zfrc(i)
                 bidx(btot+stot) = bidx(i)
+              else
+                ysbu(i) = .false.
+                savtot = savtot + 1
+                xcrd(savtot) = xcrd(i)
+                ycrd(savtot) = ycrd(i)
+                zcrd(savtot) = zcrd(i)
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
               endif
             end do
           else
-            do i = 1, iysbu
-              is = ysbu(i)
-              stot = stot + 1
-              xfrc(btot+stot) = xfrc(is)
-              yfrc(btot+stot) = yfrc(is)
-              zfrc(btot+stot) = zfrc(is)
-              bidx(btot+stot) = bidx(is)
+            do i = 1, btot
+              if (ysbu(i)) then
+                stot = stot + 1
+                xfrc(btot+stot) = xfrc(i)
+                yfrc(btot+stot) = yfrc(i)
+                zfrc(btot+stot) = zfrc(i)
+                bidx(btot+stot) = bidx(i)
+              else
+                savtot = savtot + 1
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
+              endif
             end do
           endif
         else
           stot = 0
+          savtot = 0
           if (nolist) then
-            iysbu = 0
             do i = 1, btot
               if ((ycrd(i).ge.ymax.and.ycrd(i)-ymax.lt.ycell).or.
      +            (ycrd(i).lt.ymin.and.ymin-ycrd(i).gt.ycell)) then
-                iysbu = iysbu + 1
-                ysbu(iysbu) = i
+                ysbu(i) = .true.
                 stot = stot + 1
                 xcrd(btot+stot) = xcrd(i)
                 ycrd(btot+stot) = ycrd(i)
@@ -203,16 +266,33 @@ c
                 yfrc(btot+stot) = yfrc(i)
                 zfrc(btot+stot) = zfrc(i)
                 bidx(btot+stot) = bidx(i)
+              else
+                ysbu(i) = .false.
+                savtot = savtot + 1
+                xcrd(savtot) = xcrd(i)
+                ycrd(savtot) = ycrd(i)
+                zcrd(savtot) = zcrd(i)
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
               endif
             end do
           else
-            do i = 1, iysbu
-              is = ysbu(i)
-              stot = stot + 1
-              xfrc(btot+stot) = xfrc(is)
-              yfrc(btot+stot) = yfrc(is)
-              zfrc(btot+stot) = zfrc(is)
-              bidx(btot+stot) = bidx(is)
+            do i = 1, btot
+              if (ysbu(i)) then
+                stot = stot + 1
+                xfrc(btot+stot) = xfrc(i)
+                yfrc(btot+stot) = yfrc(i)
+                zfrc(btot+stot) = zfrc(i)
+                bidx(btot+stot) = bidx(i)
+              else
+                savtot = savtot + 1
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
+              endif
             end do
           endif
         endif
@@ -229,13 +309,12 @@ c
       if (idy.gt.2) then
 c
         stot = 0
+        savtot = 0
         if (nolist) then
-          iysbd = 0
           do i = 1, btot
             if ((ycrd(i).lt.ymin.and.ymin-ycrd(i).lt.ycell).or.
      +          (ycrd(i).gt.ymax.and.ycrd(i)-ymax.gt.ycell)) then
-              iysbd = iysbd + 1
-              ysbd(iysbd) = i
+              ysbd(i) = .true.
               stot = stot + 1
               xcrd(btot+stot) = xcrd(i)
               ycrd(btot+stot) = ycrd(i)
@@ -244,16 +323,33 @@ c
               yfrc(btot+stot) = yfrc(i)
               zfrc(btot+stot) = zfrc(i)
               bidx(btot+stot) = bidx(i)
+            else
+              ysbd(i) = .false.
+              savtot = savtot + 1
+              xcrd(savtot) = xcrd(i)
+              ycrd(savtot) = ycrd(i)
+              zcrd(savtot) = zcrd(i)
+              xfrc(savtot) = xfrc(i)
+              yfrc(savtot) = yfrc(i)
+              zfrc(savtot) = zfrc(i)
+              bidx(savtot) = bidx(i)
             endif
           end do
         else
-          do i = 1, iysbd
-            is = ysbd(i)
-            stot = stot + 1
-            xfrc(btot+stot) = xfrc(is)
-            yfrc(btot+stot) = yfrc(is)
-            zfrc(btot+stot) = zfrc(is)
-            bidx(btot+stot) = bidx(is)
+          do i = 1, btot
+            if (ysbd(i)) then
+              stot = stot + 1
+              xfrc(btot+stot) = xfrc(i)
+              yfrc(btot+stot) = yfrc(i)
+              zfrc(btot+stot) = zfrc(i)
+              bidx(btot+stot) = bidx(i)
+            else
+              savtot = savtot + 1
+              xfrc(savtot) = xfrc(i)
+              yfrc(savtot) = yfrc(i)
+              zfrc(savtot) = zfrc(i)
+              bidx(savtot) = bidx(i)
+            endif
           end do
         endif
 c
@@ -272,12 +368,11 @@ c
 c
         if (idz.eq.2) then
           stot = 0
+          savtot = 0
           if (nolist) then
-            izsbu = 0
             do i = 1, btot
               if (zcrd(i).lt.zmin.or.zcrd(i).ge.zmax) then
-                izsbu = izsbu + 1
-                zsbu(izsbu) = i
+                zsbu(i) = .true.
                 stot = stot + 1
                 xcrd(btot+stot) = xcrd(i)
                 ycrd(btot+stot) = ycrd(i)
@@ -286,27 +381,43 @@ c
                 yfrc(btot+stot) = yfrc(i)
                 zfrc(btot+stot) = zfrc(i)
                 bidx(btot+stot) = bidx(i)
+              else
+                zsbu(i) = .false.
+                savtot = savtot + 1
+                xcrd(savtot) = xcrd(i)
+                ycrd(savtot) = ycrd(i)
+                zcrd(savtot) = zcrd(i)
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
               endif
             end do
           else
-            do i = 1, izsbu
-              is = zsbu(i)
-              stot = stot + 1
-              xfrc(btot+stot) = xfrc(is)
-              yfrc(btot+stot) = yfrc(is)
-              zfrc(btot+stot) = zfrc(is)
-              bidx(btot+stot) = bidx(is)
+            do i = 1, btot
+              if (zsbu(i)) then
+                stot = stot + 1
+                xfrc(btot+stot) = xfrc(i)
+                yfrc(btot+stot) = yfrc(i)
+                zfrc(btot+stot) = zfrc(i)
+                bidx(btot+stot) = bidx(i)
+              else
+                savtot = savtot + 1
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
+              endif
             end do
           endif
         else
           stot = 0
+          savtot = 0
           if (nolist) then
-            izsbu = 0
             do i = 1, btot
               if ((zcrd(i).ge.zmax.and.zcrd(i)-zmax.lt.zcell).or.
      +            (zcrd(i).lt.zmin.and.zmin-zcrd(i).gt.zcell)) then
-                izsbu = izsbu + 1
-                zsbu(izsbu) = i
+                zsbu(i) = .true.
                 stot = stot + 1
                 xcrd(btot+stot) = xcrd(i)
                 ycrd(btot+stot) = ycrd(i)
@@ -315,16 +426,33 @@ c
                 yfrc(btot+stot) = yfrc(i)
                 zfrc(btot+stot) = zfrc(i)
                 bidx(btot+stot) = bidx(i)
+              else
+                zsbu(i) = .false.
+                savtot = savtot + 1
+                xcrd(savtot) = xcrd(i)
+                ycrd(savtot) = ycrd(i)
+                zcrd(savtot) = zcrd(i)
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
               endif
             end do
           else
-            do i = 1, izsbu
-              is = zsbu(i)
-              stot = stot + 1
-              xfrc(btot+stot) = xfrc(is)
-              yfrc(btot+stot) = yfrc(is)
-              zfrc(btot+stot) = zfrc(is)
-              bidx(btot+stot) = bidx(is)
+            do i = 1, btot
+              if (zsbu(i)) then
+                stot = stot + 1
+                xfrc(btot+stot) = xfrc(i)
+                yfrc(btot+stot) = yfrc(i)
+                zfrc(btot+stot) = zfrc(i)
+                bidx(btot+stot) = bidx(i)
+              else
+                savtot = savtot + 1
+                xfrc(savtot) = xfrc(i)
+                yfrc(savtot) = yfrc(i)
+                zfrc(savtot) = zfrc(i)
+                bidx(savtot) = bidx(i)
+              endif
             end do
           endif
         endif
@@ -341,13 +469,12 @@ c
       if (idz.gt.2) then 
 c
         stot = 0
+        savtot = 0
         if (nolist) then
-          izsbd = 0
           do i = 1, btot
             if ((zcrd(i).lt.zmin.and.zmin-zcrd(i).lt.zcell).or.
      +          (zcrd(i).gt.zmax.and.zcrd(i)-zmax.gt.zcell)) then
-              izsbd = izsbd + 1
-              zsbd(izsbd) = i
+              zsbd(i) = .true.
               stot = stot + 1
               xcrd(btot+stot) = xcrd(i)
               ycrd(btot+stot) = ycrd(i)
@@ -356,16 +483,33 @@ c
               yfrc(btot+stot) = yfrc(i)
               zfrc(btot+stot) = zfrc(i)
               bidx(btot+stot) = bidx(i)
+            else
+              zsbd(i) = .false.
+              savtot = savtot + 1
+              xcrd(savtot) = xcrd(i)
+              ycrd(savtot) = ycrd(i)
+              zcrd(savtot) = zcrd(i)
+              xfrc(savtot) = xfrc(i)
+              yfrc(savtot) = yfrc(i)
+              zfrc(savtot) = zfrc(i)
+              bidx(savtot) = bidx(i)
             endif
           end do
         else
-          do i = 1, izsbd
-            is = zsbd(i)
-            stot = stot + 1
-            xfrc(btot+stot) = xfrc(is)
-            yfrc(btot+stot) = yfrc(is)
-            zfrc(btot+stot) = zfrc(is)
-            bidx(btot+stot) = bidx(is)
+          do i = 1, btot
+            if (zsbd(i)) then
+              stot = stot + 1
+              xfrc(btot+stot) = xfrc(i)
+              yfrc(btot+stot) = yfrc(i)
+              zfrc(btot+stot) = zfrc(i)
+              bidx(btot+stot) = bidx(i)
+            else
+              savtot = savtot + 1
+              xfrc(savtot) = xfrc(i)
+              yfrc(savtot) = yfrc(i)
+              zfrc(savtot) = zfrc(i)
+              bidx(savtot) = bidx(i)
+            endif
           end do
         endif
 c
@@ -446,6 +590,7 @@ c
       tbeg1 = wraptime()
       call ga_sync()
       tmstat(16) = tmstat(16) + wraptime() - tbeg1
+      btot = savtot
 
       gsize_hi = gsize_lo(rnode)
       call nga_get(g_size,gsize_lo(rnode),gsize_hi,rtot,one)
