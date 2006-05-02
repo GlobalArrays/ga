@@ -265,6 +265,16 @@ c
 c   This subroutine implements the predictor for a 3 point Gear
 c   predictor-corrector algorithm
 c
+      call cluster_com
+      call cluster_old_at
+      call cluster_therm
+c      rx = cluster_check_radius()
+c      if (rx.gt.r_cluster.and.istep.gt.equil_3) then
+c        write(6,*) ga_nodeid(),' Step ',istep
+c        write(6,*) ga_nodeid(),' t_done               ',t_done
+c        write(6,*) ga_nodeid(),' Radius out of bounds ',rx
+c        write(6,*) ga_nodeid(),' r_cluster            ',r_cluster
+c      endif
       if (t_done.eq.tau) then
         t_done = 0.0d00
         dt = tau
@@ -273,13 +283,11 @@ c
         dt = t_rmndr
       endif
 c
-      call cluster_therm
       c1 = dt
       c2 = dt * c1 / 2.0d00
 c
 c   predictor step for atoms
 c
-      call cluster_old_at
       do 200 j = 1, 3
         do 100 i = 1, antot
           ra(i,j,6) = ra(i,j,6) + c1 * ra(i,j,2) + c2 * ra(i,j,3)
