@@ -17,6 +17,12 @@ c
       integer i,j,me
       logical newcfg
       double precision cluster_check_radius
+      logical debug
+      if (istep.gt.3930438) then
+        debug = .false.
+      else
+        debug = .false.
+      endif
 c
 c   This routine guides the MD steps.
 c   Begin the main loop through the MD steps
@@ -152,6 +158,9 @@ c
             call ptstep
           endif
         endif
+            if (debug) then
+              write(6,*) ga_nodeid(),' Got to 1 at step ',istep
+            endif
 c
 c  Update remaining energy quantities
 c
@@ -175,8 +184,14 @@ c
           call cluster_mc
           if (me.eq.0.and.l_rad) write(7,7100) dble(istep)*tau,r_cluster
         endif
+            if (debug) then
+              write(6,*) ga_nodeid(),' Got to 2 at step ',istep
+            endif
         if (istep.gt.equil_2.and.r_cluster.le.cl_upper)
      +    call cluster_binr
+            if (debug) then
+              write(6,*) ga_nodeid(),' Got to 3 at step ',istep
+            endif
         if (istep.eq.window_1) call cluster_reset_binr(1)
         if (istep.eq.window_2) call cluster_reset_binr(2)
 c

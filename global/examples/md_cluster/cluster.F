@@ -243,7 +243,9 @@ c
       double precision cluster_find_tau
       integer failsafe, ibuf(MD_MAXPROC), me, nproc, twohit
       logical debug
+      integer iter
 c
+      iter = 0
       l_cllsn = .false.
       if (nocluster) then
         t_rmndr = 0.0d00
@@ -252,7 +254,7 @@ c
       endif
       me = ga_nodeid()
       nproc = ga_nnodes()
-      if (istep.ge.1405586.and.atot.eq.403) then
+      if (istep.ge.3930438) then
         debug = .false.
       else
         debug = .false.
@@ -440,8 +442,10 @@ c
         iat = 0
         iloc = 0
         cllsn_isav = 0
+        if (debug) write(6,*) me,' cllsn_isav(1): ',cllsn_isav
       else
         cllsn_isav = iat
+        if (debug) write(6,*) me,' cllsn_isav(2): ',cllsn_isav
       endif
 c
 c  Handle degenerate case of only two atoms in cluster, which will
@@ -507,6 +511,8 @@ c
         if (r.ge.r_cluster.and.ii.ne.cllsn_isav) then
           tchk = cluster_find_tau(ii,i,cllsn_isav,tcut,.false.)
           if (debug) write(6,155) me,7,tchk,istep
+          if (debug) write(6,*) me, 'ii: ',ii
+          if (debug) write(6,*) me, 'cllsn_isav: ',cllsn_isav
           reset = 1
           if (tchk.lt.tmin.and.tchk.gt.0.0d00) then
             if (debug) write(6,*) me,' Shorter collision found'
@@ -560,10 +566,13 @@ c
             iat = 0
             iloc = 0
             cllsn_isav = 0
+            if (debug) write(6,*) me,'cllsn_isav(3): ',cllsn_isav
           else
             cllsn_isav = imin
+            if (debug) write(6,*) me,'cllsn_isav(4): ',cllsn_isav
           endif
           tcut = a
+          tsav = a   !BJP is this correct?
           if (debug) write(6,155) me,3,tcut,istep
           if (iat.gt.0) then
             b = mass(iat)
@@ -572,6 +581,9 @@ c
           endif
           call ga_dgop(7,b,1,'+')
           call cluster_reset(0.0d00)
+          iter = iter + 1
+          if (iter.gt.100) debug = .true.
+          if (iter.gt.1000) call ga_error('Too many iterations',0)
           go to 1000
         endif
       endif
@@ -601,13 +613,13 @@ c
       double precision clcut, frdot, vrdot, vfdot, a, b, c
       double precision t, t1, t2, tcut, tmax, thi, tlo, tmid
       double precision ttmin,ttmax
-      integer i,j,me
+      integer i,j,me,iter
       logical forward, debug
 c
 c  A particle lies outside the cutoff. Find particle that crosses
 c  cutoff first.
 c
-      if (istep.ge.1405586.and.atot.eq.403) then
+      if (istep.ge.3930439) then
         debug = .false.
       else
         debug = .false.
@@ -663,6 +675,7 @@ c
 c    Scan forwards from 0 to find a final value of t2. If no final
 c    value found, then return with value of -1.
 c
+              if (debug) write(6,*) me, 'iat: ',iat
               if (debug) write(6,*) me, 'a: ',a
               if (debug) write(6,*) me, 'b: ',b
               if (debug) write(6,*) me, 'c: ',c
@@ -730,6 +743,7 @@ c
         if (debug) write(6,*) me, 't1: ',t1
         if (debug) write(6,*) me, 't2: ',t2
       endif
+      iter = 0
 c  600 tlo = c + t1*(b + t1*(a+t1*(vfdot+t1*0.25d00*f2)))
 c      thi = c + t2*(b + t2*(a+t2*(vfdot+t2*0.25d00*f2)))
   600 tlo = (-c-t1**2*(a+t1*(vfdot+t1*0.25d00*f2)))/b - t1
@@ -747,10 +761,14 @@ c        tmid = c + t*(b + t*(a+t*(vfdot+t*0.25d00*f2)))
             t2 = t
         endif
         tcut = 0.5d00*(t1+t2)
-        if (abs(t1-t2)/tau.gt.1.0d-12) go to 600
+        iter = iter + 1
+        if (abs(t1-t2)/tau.gt.1.0d-14.and.iter.lt.1000) go to 600
 c
 c  Protect against numerical roundoff errors
 c
+        if (iter.ge.1000) then
+          write(6,*) ga_nodeid(),' Maxed out on iterations'
+        endif
         if (forward.and.(tcut.lt.1.0d-10.or.
      +      abs(tcut-tmax).lt.1.0d-10)) then
           cluster_find_tau = -1.0d00
@@ -1082,6 +1100,8 @@ c          endif
       cl_upper = 3.5d00
       cl_lower = 0.5d00
       cl_upper = 3.0d00
+      cl_lower = 0.0d00
+      cl_upper = 2.5d00
       cl_lower = 0.0d00
       mc_step = (cl_upper-cl_lower)/dble(mcbins)
       call cluster_clear_binr

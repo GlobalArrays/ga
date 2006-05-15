@@ -54,11 +54,11 @@ c
 c   Create process groups
 c
 #if USE_SUBGROUPS
-      group_size = 2
+      group_size = 1
 #else
       group_size = ga_nnodes()
 #endif
-      max_task = 4
+      max_task = 8
       one = 1
       nprocs = ga_nnodes() 
       me = ga_nodeid()
@@ -112,8 +112,9 @@ c      write(6,105) me
 c        write(6,106) itask,me
   106   format('Executing task ',i3,' on proc ',i3)
         natom1 = 400
-c        natom1 = 0
+        natom1 = 0
         jtask = max_task - 1 - itask
+        natom2 = jtask*5 + 25
         natom2 = jtask + 2
         task_beg = wraptime()
         call cl_sim(natom1,natom2,jtask)

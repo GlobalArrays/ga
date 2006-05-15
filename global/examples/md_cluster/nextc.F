@@ -12,14 +12,25 @@ c   Products at Pacific Northwest Laboratory, Richland, Washington,  99352.
 c
       subroutine estep
 #include "common.fh"
+      integer iter
+      iter = 0
 c
       prsflg = .false.
       tmpflg = .false.
       ptflg = .false.
+
       do while (t_rmndr.gt.0.0d00)
+        iter = iter + 1
         call pred
         call force
         call corr
+        if (iter.gt.100) then
+          write(6,*) 'istep: ',istep
+          write(6,*) 't_rmndr: ',t_rmndr
+        endif
+        if (iter.gt.1000) then
+          call ga_error('Failed in estep',istep)
+        endif
       end do
 c
       return
@@ -27,14 +38,24 @@ c
 c
       subroutine pstep
 #include "common.fh"
+      integer iter
+      iter = 0
 c
       prsflg = .true.
       tmpflg = .false.
       ptflg = .false.
       do while (t_rmndr.gt.0.0d00)
+        iter = iter + 1
         call pred
         call force
         call corr
+        if (iter.gt.100) then
+          write(6,*) 'istep: ',istep
+          write(6,*) 't_rmndr: ',t_rmndr
+        endif
+        if (iter.gt.1000) then
+          call ga_error('Failed in pstep',istep)
+        endif
       end do
 c
       return
@@ -42,14 +63,24 @@ c
 c
       subroutine tstep
 #include "common.fh"
+      integer iter
+      iter = 0
 c
       prsflg = .false.
       tmpflg = .true.
       ptflg = .false.
       do while (t_rmndr.gt.0.0d00)
+        iter = iter + 1
         call pred
         call force
         call corr
+        if (iter.gt.100) then
+          write(6,*) 'istep: ',istep
+          write(6,*) 't_rmndr: ',t_rmndr
+        endif
+        if (iter.gt.1000) then
+          call ga_error('Failed in tstep',istep)
+        endif
       end do
 c
       return
@@ -60,6 +91,8 @@ c
 c
       double precision scale
       integer i,j
+      integer iter
+      iter = 0
 c
 c   This subroutine scales the atomic velocities and momenta
 c   so that the system temperature corresponds to the desired
@@ -81,9 +114,17 @@ c
       ptflg = .false.
       mbflg = .true.
       do while (t_rmndr.gt.0.0d00)
+        iter = iter + 1
         call pred
         call force
         call corr
+        if (iter.gt.100) then
+          write(6,*) 'istep: ',istep
+          write(6,*) 't_rmndr: ',t_rmndr
+        endif
+        if (iter.gt.1000) then
+          call ga_error('Failed in sstep',istep)
+        endif
       end do
 c
       return
@@ -94,6 +135,8 @@ c
 c
       double precision scale,ke
       integer i,j
+      integer iter
+      iter = 0
 c
 c   This subroutine adjusts the kinetic energy so that the
 c   average temperature corresponds to the target temperature
@@ -123,9 +166,17 @@ c
       ptflg = .false.
       mbflg = .true.
       do while (t_rmndr.gt.0.0d00)
+        iter = iter + 1
         call pred
         call force
         call corr
+        if (iter.gt.100) then
+          write(6,*) 'istep: ',istep
+          write(6,*) 't_rmndr: ',t_rmndr
+        endif
+        if (iter.gt.1000) then
+          call ga_error('Failed in kstep',istep)
+        endif
       end do
 c
       return
@@ -133,15 +184,24 @@ c
 c
       subroutine ptstep
 #include "common.fh"
+      integer iter
+      iter = 0
 c
-cbjp      call pin
       prsflg = .false.
       tmpflg = .false.
       ptflg = .true.
       do while (t_rmndr.gt.0.0d00)
+        iter = iter + 1
         call pred
         call force
         call corr
+        if (iter.gt.100) then
+          write(6,*) 'istep: ',istep
+          write(6,*) 't_rmndr: ',t_rmndr
+        endif
+        if (iter.gt.1000) then
+          call ga_error('Failed in ptstep',istep)
+        endif
       end do
       return
       end
@@ -151,6 +211,8 @@ c
 c
       double precision scl,gasdev
       integer i,j
+      integer iter
+      iter = 0
 c
 c   This subroutine updates configuration if only a single 
 c   configuration is available. It starts by assigning a
@@ -185,9 +247,17 @@ c
       mbflg = .true.
       cmflg = .true.
       do while (t_rmndr.gt.0.0d00)
+        iter = iter + 1
         call pred
         call force
         call corr
+        if (iter.gt.100) then
+          write(6,*) 'istep: ',istep
+          write(6,*) 't_rmndr: ',t_rmndr
+        endif
+        if (iter.gt.1000) then
+          call ga_error('Failed in mbstep',istep)
+        endif
       end do
 #if 0
       if (mod(istep,ilist).eq.0) then
@@ -211,6 +281,8 @@ c
 c
       double precision scale,sclinc
       integer i,j
+      integer iter
+      iter = 0
 c
       prsflg = .false.
       tmpflg = .false.
@@ -235,9 +307,17 @@ c
       endif
       mbflg = .true.
       do while (t_rmndr.gt.0.0d00)
+        iter = iter + 1
         call pred
         call force
         call corr
+        if (iter.gt.100) then
+          write(6,*) 'istep: ',istep
+          write(6,*) 't_rmndr: ',t_rmndr
+        endif
+        if (iter.gt.1000) then
+          call ga_error('Failed in vlstep',istep)
+        endif
       end do
       if (nrg(5).gt.0.0d00) then
         scale = sqrt(tmprtr / nrg(5))
@@ -261,13 +341,22 @@ c
       double precision rx,ry,rz,dt
       integer i,j
       double precision cluster_check_radius
+      logical debug
 c
 c   This subroutine implements the predictor for a 3 point Gear
 c   predictor-corrector algorithm
 c
+      if (istep.gt.3930438) then
+        debug = .false.
+      else
+        debug = .false.
+      endif
       call cluster_com
       call cluster_old_at
       call cluster_therm
+      if (debug) then
+        write(6,*) ga_nodeid(),' (pred) Got to 1 at step ',istep
+      endif
 c      rx = cluster_check_radius()
 c      if (rx.gt.r_cluster.and.istep.gt.equil_3) then
 c        write(6,*) ga_nodeid(),' Step ',istep
@@ -341,9 +430,15 @@ c
         scal2 = scal2 + c1 * scal3 
       endif
 c
+      if (debug) then
+        write(6,*) ga_nodeid(),' (pred) Got to 2 at step ',istep
+      endif
       call fixper
       if (istep.gt.equil_1) then
         call cluster_com
+      endif
+      if (debug) then
+        write(6,*) ga_nodeid(),' (pred) Got to 3 at step ',istep
       endif
       if (istep.gt.equil_1) then
         call cluster_check_cllsn
@@ -351,14 +446,23 @@ c
         t_rmndr = 0.0d00
         t_done = tau
       endif
+      if (debug) then
+        write(6,*) ga_nodeid(),' (pred) Got to 4 at step ',istep
+      endif
       if (.not.(ptflg.or.prsflg)) then
         if (t_rmndr.eq.0.0d00) call cluster_center
+      endif
+      if (debug) then
+        write(6,*) ga_nodeid(),' (pred) Got to 5 at step ',istep
       endif
       if (mod(istep,ilist).eq.0.and.t_rmndr.eq.0.0d00) then
         call update
       endif
       if (cllsn_cnt.gt.100) then
         call ga_error("Too many collisions ",istep)
+      endif
+      if (debug) then
+        write(6,*) ga_nodeid(),' (pred) Got to 6 at step ',istep
       endif
 c
       return
