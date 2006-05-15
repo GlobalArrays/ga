@@ -282,6 +282,7 @@ c
           write(6,3100)
         endif
         write(6,3200) iseed
+        write(6,4500) ga_pgroup_nodeid(ga_pgroup_get_world())
       endif
       iseed = iseed - 10*me
       x = ran1(iseed)
@@ -327,6 +328,7 @@ c
  4350 format('Neighbor list update frequency                     :',i9)
  4400 format('Potential set to zero at cutoff distance')
  4420 format('Potential and forces set to zero at cutoff distance')
+ 4500 format('Writing from node                                  :',i9)
       end
 c
       subroutine rdcfg
