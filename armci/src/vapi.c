@@ -1,4 +1,4 @@
-/* $Id: vapi.c,v 1.28 2006-01-20 21:25:17 vinod Exp $ */
+/* $Id: vapi.c,v 1.29 2006-06-05 21:13:13 vinod Exp $ */
 /* 
    File organized as follows
 */
@@ -45,6 +45,7 @@ typedef struct {
   VAPI_hca_cap_t attr;              /*IB nic attributes*/
   VAPI_pd_hndl_t ptag;              /*protection tag*/
   VAPI_hca_port_t hca_port;         /*mostly for getting lid*/
+  IB_port_t active_port;
   VAPI_cq_hndl_t scq;               /*send completion queue*/
   VAPI_cq_hndl_t rcq;               /*recv completion queue*/
   IB_lid_t *lid_arr;                /*we need to exchange lids, arr for that*/
@@ -640,6 +641,7 @@ static void armci_init_nic(vapi_nic_t *nic, int scq_entries, int rcq_entries)
 {
 VAPI_ret_t rc;
 VAPI_cqe_num_t num;
+int i;
 
     bzero(nic,sizeof(vapi_nic_t));
     /*hca_id = VAPIDEV_NAME;*/
@@ -660,9 +662,16 @@ VAPI_cqe_num_t num;
     armci_check_status(DEBUG_INIT, rc,"query nic");
 
     /*query nic port basically for lid, lid in IB is required*/
-    VAPI_query_hca_port_prop(nic->handle,(IB_port_t)DEFAULT_PORT,
+    for(i = 1; i <= 2; i++) {
+       rc = VAPI_query_hca_port_prop(nic->handle,(IB_port_t)i,
                              &(nic->hca_port));
-    armci_check_status(DEBUG_INIT, rc,"query for lid");
+       armci_check_status(DEBUG_INIT, rc,"query for lid");
+       if(PORT_ACTIVE == nic->hca_port.state) {
+         nic->active_port = i;
+         break;
+       }
+    }
+
 
     /*save the lid for doing a global exchange later */
     nic->lid_arr[armci_me] = nic->hca_port.lid;
@@ -1092,7 +1101,7 @@ VAPI_qp_attr_mask_t    qp_attr_mask;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
     qp_attr.pkey_ix  = DEFAULT_PKEY_IX;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PKEY_IX);
-    qp_attr.port     = DEFAULT_PORT;
+    qp_attr.port     = SRV_nic->active_port;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PORT);
     qp_attr.remote_atomic_flags = VAPI_EN_REM_WRITE | VAPI_EN_REM_READ;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_REMOTE_ATOMIC_FLAGS);
@@ -1330,7 +1339,7 @@ char *enval;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
     qp_attr.pkey_ix  = DEFAULT_PKEY_IX;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PKEY_IX);
-    qp_attr.port     = DEFAULT_PORT;
+    qp_attr.port     = CLN_nic->active_port;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PORT);
     qp_attr.remote_atomic_flags = VAPI_EN_REM_WRITE | VAPI_EN_REM_READ;
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_REMOTE_ATOMIC_FLAGS);
