@@ -61,9 +61,15 @@ c
 c  If system is small, just use brute force neighbor list construction
 c  and skip the link cell algorithm
 c
-      if ((idx.eq.2.and.xcl*dble(nlx).ge.0.5d00*xbox/dble(idx)).or.
-     +    (idy.eq.2.and.ycl*dble(nly).ge.0.5d00*ybox/dble(idy)).or.
-     +    (idz.eq.2.and.zcl*dble(nlz).ge.0.5d00*zbox/dble(idz))) then
+      ix = int(rcmax/xcl)
+      if (rcmax-xcl*dble(ix).gt.0.0d00) ix = ix+1
+      iy = int(rcmax/ycl)
+      if (rcmax-ycl*dble(iy).gt.0.0d00) iy = iy+1
+      iz = int(rcmax/zcl)
+      if (rcmax-zcl*dble(iz).gt.0.0d00) iz = iz+1
+      if ((idx.eq.2.and.xcl*dble(ix).ge.0.5d00*xbox/dble(idx)).or.
+     +    (idy.eq.2.and.ycl*dble(iy).ge.0.5d00*ybox/dble(idy)).or.
+     +    (idz.eq.2.and.zcl*dble(iz).ge.0.5d00*zbox/dble(idz))) then
         call small_list
         return
       endif
@@ -125,6 +131,7 @@ c
         j = ltop(ix,iy,iz)
         ltop(ix,iy,iz) = i
         link(i) = j
+#if 0
         if (ix.lt.1.or.ix.gt.nlx.or.iy.lt.1.or.iy.gt.nly.or.
      +     iz.lt.1.or.iz.gt.nlz) then
           write(6,*) 'i = ',i
@@ -146,6 +153,7 @@ c
           write(6,*) 'OUT OF BOUNDS AT 1 ON NODE ',ga_nodeid()
           call ga_error("Out of bounds error",0)
         endif
+#endif
       end do
       do i = 1, btot
         if ((xcrd(i).lt.xmin.and.xmin-xcrd(i).lt.rcmax).or.
@@ -190,12 +198,14 @@ c
         j = btop(ix,iy,iz)
         btop(ix,iy,iz) = i
         blink(i) = j
+#if 0
         if (ix.ge.1.and.ix.le.nlx.and.iy.ge.1.and.iy.le.nly.and.
      +     iz.ge.1.and.iz.le.nlz) then
           write(6,105) ga_nodeid(),istep
           write(6,*) 'OUT OF BOUNDS AT 2 ON NODE ',ga_nodeid()
           call ga_error("Out of bounds error",0)
         endif
+#endif
       end do
 c
 c  Link cell lists are complete. Now find neighbors and construct
