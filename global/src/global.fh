@@ -29,7 +29,6 @@
       integer ga_create_handle
       logical ga_allocate
       integer ga_pgroup_create
-      integer ga_pgroup_destroy
       integer ga_pgroup_split
       integer ga_pgroup_split_irreg
       double precision ga_ddot, ga_ddot_patch
@@ -91,3 +90,5 @@
       external ga_is_mirrored
       integer ga_get_pgroup
       external ga_get_pgroup
+      logical ga_pgroup_destroy
+      external ga_pgroup_destroy
