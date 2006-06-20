@@ -254,7 +254,7 @@ c
       endif
       me = ga_nodeid()
       nproc = ga_nnodes()
-      if (istep.ge.3930438) then
+      if (istep.ge.74905221.and.istep.le.74905223) then
         debug = .false.
       else
         debug = .false.
@@ -381,15 +381,15 @@ c
         endif
       end do 
 c
+c   Check to see if a collision occured on another processor
+c
       ibuf(1) = iat
       ibuf(2) = failsafe
       if (debug) write(6,*) me,' iat = ',iat,istep
       if (debug) write(6,*) me,' failsafe = ',failsafe,istep
       if (debug) write(6,*) me,' ibuf(1) = ',ibuf(1),istep
       if (debug) write(6,*) me,' ibuf(2) = ',ibuf(2),istep
-      call ga_sync
       call ga_igop(5,ibuf,2,'+')
-      call ga_sync
       if (debug) write(6,*) me,' ibuf(1) = ',ibuf(1),istep
       if (debug) write(6,*) me,' ibuf(2) = ',ibuf(2),istep
 c
@@ -420,14 +420,17 @@ c
         return
       endif
 c
-c   Check to find minimum time if collisions occur on more than one
-c   processor.
+c   At this point, a collision has been detected on at least on
+c   processor. Check to find minimum time if collisions occur on more
+c   than one processor.
 c
       if (iat.eq.0) then
         tsav = tau
       endif
       a = tsav
       call ga_dgop(6,a,1,'min')
+c
+c   Find mass of particle that has first collision with confining sphere
 c
       if (a.eq.tsav) then
         b = mass(iat)
@@ -522,6 +525,15 @@ c
             if (debug) write(6,155) me,5,tmin,istep
           else if (tchk.lt.0.0d00) then
             write(6,*) ga_nodeid(),' Returned negative value at 3',istep
+            failsafe = 1
+          else
+c
+c  This case should theoretically be impossible, but it may occur because of
+c  roundoff
+c
+            write(6,*) me,' tchk greater than or equal to tmin',istep
+            write(6,*) me,' tchk = ',tchk,istep
+            write(6,*) me,' tmin = ',tmin,istep
             failsafe = 1
           endif
         endif
@@ -1099,9 +1111,7 @@ c          endif
       endif
       cl_upper = 3.5d00
       cl_lower = 0.5d00
-      cl_upper = 3.0d00
-      cl_lower = 0.0d00
-      cl_upper = 2.5d00
+      cl_upper = 4.0d00
       cl_lower = 0.0d00
       mc_step = (cl_upper-cl_lower)/dble(mcbins)
       call cluster_clear_binr
