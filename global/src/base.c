@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.138 2006-04-21 22:30:59 d3g293 Exp $ */
+/* $Id: base.c,v 1.139 2006-06-20 00:17:00 manoj Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2165,6 +2165,16 @@ char *ptr = (char*)0;
 
      bzero((char*)ptr_arr,(int)nproc*sizeof(char*));
      ptr_arr[grp_me] = ptr;
+
+#ifndef _CHECK_MA_ALGN /* align */
+     {
+        long diff, adjust;  
+        diff = ((unsigned long)ptr_arr[grp_me]) % item_size; 
+        adjust = (diff > 0) ? item_size - diff : 0;
+        ptr_arr[grp_me] = adjust + (char*)ptr_arr[grp_me];
+     }
+#endif
+     
 #ifdef MPI
      if (grp_id > 0) {
         armci_exchange_address_grp((void**)ptr_arr,(int)nproc,
