@@ -1,4 +1,4 @@
-/* $Id: memory.c,v 1.52 2005-06-01 18:40:30 manoj Exp $ */
+/* $Id: memory.c,v 1.53 2006-07-12 18:12:39 manoj Exp $ */
 #include <stdio.h>
 #include <assert.h>
 #include "armcip.h"
@@ -99,6 +99,7 @@ void armci_altix_shm_malloc(void *ptr_arr[], armci_size_t bytes)
     for(i=0; i< armci_nproc; i++) if(i!=armci_me) ptr_arr[i]=shmem_ptr(ptr,i);
 }
 
+#ifdef MPI
 void armci_altix_shm_malloc_group(void *ptr_arr[], armci_size_t bytes, 
 				  ARMCI_Group *group) {
     long size=bytes;
@@ -116,6 +117,8 @@ void armci_altix_shm_malloc_group(void *ptr_arr[], armci_size_t bytes,
     ptr_arr[grp_me] = ptr;
     for(i=0; i< grp_nproc; i++) if(i!=grp_me) ptr_arr[i]=shmem_ptr(ptr,ARMCI_Absolute_id(group, i));
 }
+#endif
+
 #endif /* end ifdef SGIALTIX */
 /* ------------------ End Altix memory allocator ----------------- */
 
