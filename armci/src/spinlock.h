@@ -50,8 +50,13 @@
 #elif defined(MACX)
 #  define SPINLOCK  
 #  if defined(__GNUC__)
-#    include "tas-ppc.h"
-#    define TESTANDSET(x) (krspin_lock((long int *)(x)))
+#    if defined(__i386__)
+#      include "tas-i386.h"
+#      define TESTANDSET testandset
+#    else
+#      include "tas-ppc.h"
+#      define TESTANDSET(x) (krspin_lock((long int *)(x)))
+#    endif
 #  else
 #    define TESTANDSET gcc_testandset
 #    define RELEASE_SPINLOCK gcc_clear_spinlock
