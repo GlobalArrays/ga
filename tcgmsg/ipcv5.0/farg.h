@@ -1,4 +1,4 @@
-/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/farg.h,v 1.5 2006-01-19 02:18:59 manoj Exp $ */
+/* $Header: /tmp/hpctools/ga/tcgmsg/ipcv5.0/farg.h,v 1.6 2006-07-18 22:59:29 manoj Exp $ */
 
 /*
   This include file defines ARGC_ and ARGV_ which are the appropriate
@@ -61,10 +61,13 @@
 #endif
 
 #if defined(GFORTRAN)
+# ifdef EXT_INT
 #   define getarg_ _gfortran_getarg_i8
+# else
+#   define getarg_ _gfortran_getarg_i4
+# endif
 #   define iargc_  _gfortran_iargc
 #endif
-
 
 #ifdef SEQUENT
 #define ARGC_ _X_argc
