@@ -98,8 +98,10 @@ c
 c
 c   Initialize bins accumulating r_cluster values
 c
-      do i = 1, mcbins
-        r_distr(i) = 0
+      do j = 1, 10
+        do i = 1, mcbins
+          r_distr(i,j) = 0
+        end do
       end do
 c
 c   Initialize absolute coordinates
