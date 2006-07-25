@@ -1,6 +1,6 @@
-/* $Id: lapi.c,v 1.19 2003-01-22 22:47:20 vinod Exp $ */
+/* $id: lapi.c,v 1.19 2003/01/22 22:47:20 vinod Exp $ */
 /* initialization of data structures and setup of lapi internal parameters */ 
-
+ 
 #include <pthread.h>
 #include <stdio.h>
 #include "lapidefs.h"
@@ -33,6 +33,7 @@ double _armci_rcv_buf[MSG_BUFLEN_DBL];
 char* MessageRcvBuffer = (char*)_armci_rcv_buf;
 char* MessageSndBuffer = (char*)0;
 
+extern void armci_waitsome(int factor);
 
 /************* LAPI Active Message handlers *******************************/
  
@@ -112,7 +113,7 @@ int buflen=MSG_BUFLEN;
    }
 
    free(msginfo);
-   (void)fetch_and_add(&num_malloc,-1);
+   (void)fetch_and_addlp(&num_malloc, (long)-1);
 }
 
 
@@ -162,7 +163,7 @@ request_header_t *msginfo = (request_header_t *)uhdr;
          }
     }
 
-    (void)fetch_and_add(&num_malloc,1); /* AIX atomic increment */
+    (void)fetch_and_addlp(&num_malloc, (long)1); /* AIX atomic increment */
 
     msginfo  = (request_header_t*) malloc(uhdrlen); /* recycle pointer */
     if(!msginfo) ERROR("HH: malloc failed in header handler",num_malloc);
@@ -228,8 +229,8 @@ int rc;
       if(msginfo->operation==PUT || ACC(msginfo->operation)) 
                   UPDATE_FENCE_STATE(msginfo->to, msginfo->operation, 1);
 
-      if((rc=LAPI_Amsend(lapi_handle,(uint)msginfo->to,armci_header_handler,
-                         msginfo, msglen, NULL, 0, 
+      if((rc=LAPI_Amsend(lapi_handle,(uint)msginfo->to,
+			 (void*)armci_header_handler, msginfo, msglen, NULL, 0,
                          NULL, pcntr, pcmpl_cntr))) armci_die("AM failed",rc);
 
       if(DEBUG_) fprintf(stderr,"%d sending req=%d to %d\n",

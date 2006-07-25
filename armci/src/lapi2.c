@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.14 2005-12-19 18:03:47 vinod Exp $ */
+/* $Id: lapi2.c,v 1.15 2006-07-25 22:23:53 manoj Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -27,8 +27,8 @@ int offset=0;
     (*srcv)->info= (void **)(bufptr+offset);       offset+=dsize;
     (*dstv)->info= (void **)(bufptr+offset);       offset+=dsize;
     if(dlen!=0){
-       (*srcv)->len = (unsigned int *)(bufptr+offset); offset+=dlen;
-       (*dstv)->len = (unsigned int *)(bufptr+offset); offset+=dlen;
+       (*srcv)->len = (unsigned long *)(bufptr+offset); offset+=dlen;
+       (*dstv)->len = (unsigned long *)(bufptr+offset); offset+=dlen;
     }
     else {
        (*srcv)->len = (*dstv)->len = NULL;
@@ -128,8 +128,8 @@ int offset=0;
     dstv      = (lapi_vec_t *)(bufptr+offset);  offset+=sizeof(lapi_vec_t);
     srcv->info= (void **)(bufptr+offset);       offset+=iovlength*sizeof(void*);
     dstv->info= (void **)(bufptr+offset);       offset+=iovlength*sizeof(void*);
-    srcv->len = (unsigned int *)(bufptr+offset);offset+=iovlength*sizeof(int);
-    dstv->len = (unsigned int *)(bufptr+offset);offset+=iovlength*sizeof(int);
+    srcv->len = (unsigned long *)(bufptr+offset);offset+=iovlength*sizeof(int);
+    dstv->len = (unsigned long *)(bufptr+offset);offset+=iovlength*sizeof(int);
 
 
     srcv->vec_type = dstv->vec_type             = LAPI_GEN_IOVECTOR;
