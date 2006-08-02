@@ -337,6 +337,8 @@ extern void ARMCI_UNSET_AGGREGATE_HANDLE(armci_hdl_t* nb_handle);
 
 /* ------------------- ARMCI Checkpointing/Recovery ----------------- */
 #ifdef DO_CKPT
+#define ARMCI_CKPT    0
+#define ARMCI_RESTART 1
 typedef struct {
         void **ptr_arr;
         size_t *sz;
@@ -347,6 +349,7 @@ void ARMCI_Ckpt_create_ds(armci_ckpt_ds_t *ckptds, int count);
 int ARMCI_Ckpt_init(char *filename, ARMCI_Group *grp, int savestack, int saveheap, armci_ckpt_ds_t *ckptds);
 int ARMCI_Ckpt(int rid);
 void ARMCI_Ckpt_finalize(int rid);
+#define ARMCI_Restart_simulate armci_irecover
 #endif
 /* ------------------------------------------------------------------ */
 
