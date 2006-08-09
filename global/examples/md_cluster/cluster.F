@@ -970,13 +970,14 @@ c
 c
 c  Find slice for statistics
 c
-      if (istep.gt.window_2) then
-        isample = int(10.0d00*dble(istep-window_2)
-     +          / dble(nstep-window_2)+0.5d00)
+      if (istep.gt.mc_start) then
+        isample = int(10.0d00*(dble(istep-mc_start)-0.5d00)
+     +          / dble(nstep-mc_start)) + 1
         if (isample.gt.10) isample = 10
       else
         isample = 1
       endif
+      r_cnt(isample) = r_cnt(isample) + 1
       r_distr(ir,isample) = r_distr(ir,isample) + 1
       return
       end
@@ -1011,16 +1012,8 @@ c
 c
 c  Evaluate normalized distribution and uncertainty for P(r)
 c
-      if (istep.ge.nstep) then
-        itot = nstep - equil_2
-        isample = nstep - window_2
-      else
-        itot = istep - equil_2
-        isample = istep - window_2
-      endif
-      if (itot.le.0) return
+      if (mc_cnt.lt.0) return
       norm = dble(mc_cnt)
-      normi = dble(mc_cnt)/10.0d00
       do i = 1, mcbins
         rdist(i) = 0.0d00
         rdist2(i) = 0.0d00
@@ -1034,6 +1027,7 @@ c
         end do
       end do
       do j = 1, 10
+        normi = dble(r_cnt(j))
         do i = 1, mcbins
           rdist(i) = rdist(i) + dble(r_distr(i,j))/norm
           rdisti(i,j) = dble(r_distr(i,j))/normi
@@ -1065,6 +1059,7 @@ c
 c  Evaluate normalized distribution and uncertainty for P(V)
 c
       do j = 1, 10
+        normi = dble(r_cnt(j))
         do i = 1, mcbins
           r = cl_lower + (dble(i)-0.5d00)*mc_step
           rdist2(i) = rdist2(i) + dble(r_distr(i,j))/(r**2*norm)
@@ -1120,8 +1115,10 @@ c
         do i = 1, MAXBINS
           r_distr(i,j) = 0
         end do
+        r_cnt(j) = 0
       end do
       mc_cnt = 0
+      mc_start = istep
 c
       return
       end
@@ -1190,8 +1187,8 @@ c          endif
       endif
       cl_upper = 3.5d00
       cl_lower = 0.5d00
-      cl_upper = 4.0d00
-      cl_lower = 0.0d00
+      cl_upper = 4.5d00
+      cl_lower = 0.5d00
       mc_step = (cl_upper-cl_lower)/dble(mcbins)
       call cluster_clear_binr
       return

@@ -174,9 +174,10 @@ c
       integer cllsn_idx, cllsn_cnt, cllsn_isav, failcount
       logical l_cllsn
       common /mcpar/ cl_lower, cl_upper, mc_step, mc_tmprtr, mc_dr,
-     +               r_distr(0:MAXBINS,10), mcbins, mcfreq, mc_cnt
+     +               r_distr(0:MAXBINS,10), r_cnt(10), mcbins, mcfreq,
+     +               mc_cnt, mc_start
       double precision cl_lower, cl_upper, mc_step, mc_tmprtr, mc_dr
-      integer r_distr, mcbins, mcfreq, mc_cnt
+      integer r_distr, r_cnt, mcbins, mcfreq, mc_cnt, mc_start
       common /taskpar/ task_id, g_counter
       integer task_id, g_counter
       common /iopar/ l_stdio, l_rad, l_rst, l_step, l_oldcfg
