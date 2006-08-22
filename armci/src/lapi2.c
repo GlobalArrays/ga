@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.15 2006-07-25 22:23:53 manoj Exp $ */
+/* $Id: lapi2.c,v 1.16 2006-08-22 18:26:02 manoj Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -210,8 +210,8 @@ int i,rc;
          rc=LAPI_Get(lapi_handle,proc,bytes,(src_ptr),(dst_ptr),NULL,
                      &(o_cmpl->cntr));
        if(rc)ARMCI_Error("LAPI_put failed",0);
-       src_ptr+=src_stride;
-       dst_ptr+=dst_stride;
+       src_ptr = (void*) ((unsigned long)src_ptr+src_stride);
+       dst_ptr = (void*) ((unsigned long)dst_ptr+dst_stride);
     }
 }
 
@@ -359,10 +359,10 @@ int p=msginfo->from;
 
   LAPI_Setcntr(lapi_handle,&c,0);
  
-  src    = (lapi_vec_t *)(bufptr+offset);    offset+=sizeof(lapi_vec_t);
-  dst    = (lapi_vec_t *)(bufptr+offset);    offset+=sizeof(lapi_vec_t);
-  src->info  = (void **)(bufptr+offset);         offset+=3*sizeof(void *);
-  dst->info  = (void **)(bufptr+offset);         offset+=3*sizeof(void *);
+  src    = (lapi_vec_t *)((unsigned long)bufptr+offset);    offset+=sizeof(lapi_vec_t);
+  dst    = (lapi_vec_t *)((unsigned long)bufptr+offset);    offset+=sizeof(lapi_vec_t);
+  src->info  = (void **)((unsigned long)bufptr+offset);         offset+=3*sizeof(void *);
+  dst->info  = (void **)((unsigned long)bufptr+offset);         offset+=3*sizeof(void *);
 
 
   src->vec_type = dst->vec_type                   = LAPI_GEN_STRIDED_XFER;
