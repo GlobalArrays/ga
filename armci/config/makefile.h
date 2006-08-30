@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.120 2005-03-09 20:26:37 vinodtipparaju Exp $
+#$Id: makefile.h,v 1.121 2006-08-30 20:42:49 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -98,7 +98,7 @@ ifeq ($(TARGET),LINUX)
                      /i686/{ print "686" }; /i*86&&^i686/ { print "x86" } ' )
 
 ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { apgfcount++}; END {if(apgfcount)print "pgf77"} ' )
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { apgfcount++}; END {if(apgfcount)print "pgf77"} ; / frt / { print "frt" ; exit }' )
 endif
 ifneq (,$(findstring mpicc,$(_CC)))
          _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ {agcccount++}; END {if(agcccount)print "gcc"} ' )
@@ -201,6 +201,21 @@ else
    ifeq ($(_FC),xlf)
        FOPT_REN = -q32  -qEXTNAME
    endif
+
+#  Fujitsu Compilers
+   ifeq ($(_CC),mpifcc)
+      _CC = fcc
+   endif
+   ifeq ($(_CC),fcc)
+      COPT = -Kfast
+   endif
+   ifeq ($(_FC),mpifrt)
+      _FC = frt
+   endif
+   ifeq ($(_FC),frt)
+      FOPT = -Kfast
+      FOPT_REN += -X9 -Am
+   endif
 endif
 
 endif # end of LINUX
@@ -270,6 +285,21 @@ ifeq  ($(_CPU),ia64)
   ifeq ($(_CC),icc)
      COPT_REN= -w1 #-fno-alias    
   endif 
+
+# Fujitsu Compilers
+  ifeq ($(_CC),mpifcc)
+      _CC = fcc
+  endif
+  ifeq ($(_CC),fcc)
+     COPT = -Kfast
+  endif
+  ifeq ($(_FC),mpifrt)
+     _FC = frt
+  endif
+  ifeq ($(_FC),frt)
+     FOPT = -Kfast
+     FOPT_REN += -X9 -Am
+  endif
 
   GLOB_DEFINES += -DNEED_MEM_SYNC
 endif

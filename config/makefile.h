@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.139 2006-04-19 20:52:32 manoj Exp $
+# $Id: makefile.h,v 1.140 2006-08-30 20:42:54 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -265,7 +265,7 @@ ifeq ($(TARGET),LINUX)
                  awk ' /sparc/ { print "sparc" }; /i*86/ { print "x86" } ' )
 
 ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { pgfcount++}; END {if(pgfcount)print "pgf77"}; /ifc/ { print "ifc" ; exit }; /ifort/ { print "ifort" ; exit } ' )
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /pgf/ { pgfcount++}; END {if(pgfcount)print "pgf77"}; /ifc/ { print "ifc" ; exit }; /ifort/ { print "ifort" ; exit }; / frt / { print "frt" ; exit }' )
 endif
 ifneq (,$(findstring mpicc,$(_CC)))
          _CC = $(shell $(CC) -v 2>&1 | awk ' /gcc version/ {gcccount++}; END {if(gcccount)print "gcc"} ' )
@@ -343,6 +343,17 @@ else
      endif
    endif
 
+   # Fujitsu compilers
+   ifeq ($(_CC),mpifcc)
+       _CC = fcc
+   endif
+   ifeq ($(_CC),fcc)
+      COPT = -Kfast
+   endif
+   ifeq ($(_FC),frt)
+      FOPT = -Kfast
+      FOPT_REN += -X9 -Am
+   endif
 endif
 #
 #................................ LINUX64 ....................................
@@ -356,7 +367,7 @@ ifeq ($(TARGET),LINUX64)
        RANLIB = echo
 GLOB_DEFINES += -DLINUX 
 ifneq (,$(findstring mpif,$(_FC)))
-         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /ifort/ { print "ifort" ; exit } ' )
+         _FC = $(shell $(FC) -v 2>&1 | awk ' /g77 version/ { print "g77"; exit }; /efc/ { print "efc" ; exit }; /ifort/ { print "ifort" ; exit }; / frt / { print "frt" ; exit } ' )
 endif
 ifdef USE_INTEGER4
 else
@@ -398,6 +409,18 @@ ifeq ($(CC),gcc)
      COPT_REN += $(WALL)  -funroll-loops 
 endif
 
+# Fujitsu compilers
+ifeq ($(_CC),mpifcc)
+       _CC = fcc
+endif
+ifeq ($(_CC),fcc)
+      COPT = -Kfast
+endif
+ifeq ($(_FC),frt)
+      FOPT = -Kfast
+      FOPT_REN += -X9 -Am
+endif
+
 ifneq ($(_FC),g77)
   ifdef USE_INTEGER4
      FOPT_REN += -i4
@@ -406,7 +429,11 @@ ifneq ($(_FC),g77)
        FOPT_REN += -fdefault-integer-8
        GLOB_DEFINES += -DGFORTRAN
     else
+     ifeq ($(_FC),frt)
+       FOPT_REN += -CcdLL8 -CcdII8
+     else
        FOPT_REN += -i8 
+     endif
     endif
   endif
 endif
