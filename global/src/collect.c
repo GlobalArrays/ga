@@ -1,4 +1,4 @@
-/* $Id: collect.c,v 1.22 2004-08-11 17:16:57 d3h325 Exp $ */
+/* $Id: collect.c,v 1.23 2006-08-31 19:07:04 d3m782 Exp $ */
 #include "typesf2c.h"
 #include "globalp.h"
 #include "global.h"
@@ -240,6 +240,27 @@ long gtype,gn,grp;
 #endif
 }
 
+#if defined(CRAY) || defined(WIN32)
+void FATR GA_GOP(type, x, n, op)
+     _fcd op;
+#else
+void ga_gop_(type, x, n, op, len)
+     char *op;
+     int len;
+#endif
+     Integer *type, *n;
+     void *x;
+{
+long gtype,gn;
+     gtype = (long)ga_type_f2c(*type); gn = (long)*n;
+
+#if defined(CRAY) || defined(WIN32)
+     ga_gop(gtype, x, gn, _fcdtocp(op));
+#else
+     ga_gop(gtype, x, gn, op);
+#endif
+}
+
 void ga_type_gop(int Type, void *x, int n, char* op)
 {
 int atype, type=ga_type_f2c(Type);
@@ -415,7 +436,44 @@ void ga_fgop(type, x, n, op)
 #endif
      }
 }
- 
+
+void ga_gop(Integer type, void *x, Integer n, char *op)
+{
+    Integer ga_type_gop = GA_TYPE_GOP; 
+    switch (type){
+       Integer *ix=NULL;
+       DoublePrecision *dx=NULL;
+       float *fx=NULL;
+       long *lx=NULL;
+       case C_INT:
+          ix = (Integer*)x;
+          ga_igop(ga_type_gop, ix, n, op);
+          break;
+
+       case C_DCPL:
+          dx = (DoublePrecision*)x;
+          ga_dgop(ga_type_gop, dx, 2*n, op);
+          break;
+
+       case C_DBL:
+          dx = (DoublePrecision*)x;
+          ga_dgop(ga_type_gop, dx, n, op);
+          break;
+
+       case C_FLOAT:
+          fx = (float*)x;
+          ga_fgop(ga_type_gop, fx, n, op);
+          break;
+
+       case C_LONG:
+          lx = (long*)x;
+          ga_lgop(ga_type_gop, lx, n, op);
+          break;
+       default: ga_error(" wrong data type ",type);
+    }
+
+}    
+
 #if 0
 Integer ga_msg_nnodes_()
 {     

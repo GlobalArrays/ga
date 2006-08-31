@@ -90,6 +90,7 @@ extern void FATR ga_nbget_   ARGS_((Integer*, Integer*, Integer*, Integer*,
       Integer*, Void*, Integer*, Integer* ));
 extern void FATR ga_nbwait_  ARGS_((Integer*));
 extern void ga_dgop ARGS_((Integer, DoublePrecision*, Integer, char* ));
+extern void ga_gop ARGS_((Integer, void*, Integer, char* ));   
 extern void ga_pgroup_dgop ARGS_((Integer, Integer, DoublePrecision*, Integer, char* ));
 extern void ga_fgop     ARGS_((Integer, float*, Integer, char* ));
 extern void ga_pgroup_fgop     ARGS_((Integer, Integer, float*, Integer, char* ));

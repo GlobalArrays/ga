@@ -23,6 +23,7 @@
 #define  ga_destroy_               GA_DESTROY
 #define  ga_destroy_mutexes_       GA_DESTROY_MUTEXES
 #define  ga_dgop_                  GA_DGOP
+#define  ga_gop_                   GA_GOP
 #define  ga_pgroup_dgop_           GA_PGROUP_DGOP
 #define  ga_diag_                  GA_DIAG
 #define  ga_diag_reuse_            GA_DIAG_REUSE
@@ -256,7 +257,8 @@
 #define  ga_ddot_patch_dp_         ga_ddot_patch_dp__       
 #define  ga_destroy_               ga_destroy__             
 #define  ga_destroy_mutexes_       ga_destroy_mutexes__     
-#define  ga_dgop_                  ga_dgop__                
+#define  ga_dgop_                  ga_dgop__
+#define  ga_gop_                   ga_gop__                
 #define  ga_pgroup_dgop_           ga_pgroup_dgop__ 
 #define  ga_diag_                  ga_diag__                
 #define  ga_diag_reuse_            ga_diag_reuse__          

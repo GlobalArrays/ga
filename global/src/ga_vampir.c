@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.c,v 1.10 2004-12-08 02:40:50 manoj Exp $ */
+/* $Id: ga_vampir.c,v 1.11 2006-08-31 19:07:04 d3m782 Exp $ */
 #include "ga_vampir.h"
 
 void ga_vampir_init() {
@@ -19,6 +19,7 @@ void ga_vampir_init() {
     vampir_symdef(GA_DESTROY,                "GA_Destroy",                 "GA",__FILE__,__LINE__);
     vampir_symdef(GA_DESTROY_MUTEXES,        "GA_Destroy_mutexes",         "GA",__FILE__,__LINE__);
     vampir_symdef(GA_DGOP,                   "GA_Dgop",                    "GA_MATRIX",__FILE__,__LINE__);
+    vampir_symdef(GA_GOP,                    "GA_Gop",                     "GA_MATRIX",__FILE__,__LINE__);
     vampir_symdef(GA_DISTRIBUTION,           "GA_Distribution",            "GA",__FILE__,__LINE__);
     vampir_symdef(GA_DOT,                    "GA_Dot",
         "GA_MATRIX",__FILE__,__LINE__);

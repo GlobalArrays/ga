@@ -1,4 +1,4 @@
-/* $Id: ga_vampir.h,v 1.7 2004-08-17 23:42:49 manoj Exp $ */
+/* $Id: ga_vampir.h,v 1.8 2006-08-31 19:07:04 d3m782 Exp $ */
 #ifndef _GA_VAMPIR_H_
 #define _GA_VAMPIR_H_
 
@@ -25,6 +25,7 @@
 #define GA_DESTROY            32385
 #define GA_DESTROY_MUTEXES    32384
 #define GA_DGOP               32382
+#define GA_GOP                32381
 #define GA_DISTRIBUTION       32378
 #define GA_DOT                32377
 #define GA_DOT_PATCH          32376
