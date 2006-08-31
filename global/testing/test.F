@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.62 2005-11-23 10:25:18 manoj Exp $
+c $Id: test.F,v 1.63 2006-08-31 19:10:31 d3m782 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -2716,6 +2716,7 @@ c_____________________________________________________________
 #include "global.fh"
 #include "testutil.fh"
       double precision sum
+      double complex zsum, check
       integer isum, ibuf(2)
       integer me, nproc
       real fsum
@@ -2726,23 +2727,23 @@ c
       call ga_sync()
       if (me .eq. 0) then
          write(6,*)
-         write(6,*)'> Checking ga_igop'
+         write(6,*)'> Checking ga_gop (integer)'
          write(6,*)
          call ffflush(6)
       endif
       ibuf(1) = 1
       ibuf(2) =  me
-      call ga_igop(10000, ibuf, 2, '+')
+      call ga_gop(MT_INT, ibuf, 2, '+')
       if(ibuf(1).ne.nproc)then
-        call ga_error('ga_igop error',isum)
+        call ga_error('ga_gop error',isum)
       endif
       if(ibuf(2).ne.((nproc-1)*nproc/2))then
-        call ga_error('ga_igop error -2',isum)
+        call ga_error('ga_gop error -2',isum)
       endif
       call ga_sync()
       if (me.eq.0) then
          write(6,*)
-         write(6,*) ' ga_igop is  OK'
+         write(6,*) ' ga_gop (integer) is  OK'
          write(6,*)
       endif
       call ga_sync()
@@ -2750,38 +2751,58 @@ c
       call ga_sync()
       if (me .eq. 0) then
          write(6,*)
-         write(6,*)'> Checking ga_dgop'
+         write(6,*)'> Checking ga_gop (double)'
          write(6,*)
          call ffflush(6)
       endif
       sum = 1d0 * me
-      call ga_dgop(10000, sum, 1, '+')
+      call ga_gop(MT_DBL, sum, 1, '+')
       if(Int(sum).ne.((nproc-1)*nproc/2))then
-        call ga_error('ga_dgop error',Int(sum))
+        call ga_error('ga_gop error',Int(sum))
       endif
       call ga_sync()
       if (me.eq.0) then
          write(6,*)
-         write(6,*) ' ga_dgop is  OK'
+         write(6,*) ' ga_gop (double) is  OK'
          write(6,*)
       endif
 c
       call ga_sync()
       if (me .eq. 0) then
          write(6,*)
-         write(6,*)'> Checking ga_sgop'
+         write(6,*)'> Checking ga_gop (real)'
          write(6,*)
          call ffflush(6)
       endif
       fsum = 1.0 * me
-      call ga_sgop(10000, fsum, 1, '+')
+      call ga_gop(MT_REAL, fsum, 1, '+')
       if(Int(sum).ne.((nproc-1)*nproc/2))then
-        call ga_error('ga_fgop error',Int(sum))
+        call ga_error('ga_gop error',Int(sum))
       endif
       call ga_sync()
       if (me.eq.0) then
          write(6,*)
-         write(6,*) ' ga_sgop is  OK'
+         write(6,*) ' ga_gop (real) is  OK'
+         write(6,*)
+      endif
+c
+      call ga_sync()
+      if (me .eq. 0) then
+         write(6,*)
+         write(6,*)'> Checking ga_gop (double complex)'
+         write(6,*)
+         call ffflush(6)
+      endif
+      zsum = cmplx(1d0, 1d0 * me)
+      check= cmplx(nproc*1d0, (nproc-1)*nproc/2)
+      call ga_gop(MT_DCPL, zsum, 1, '+')
+      if(zsum.ne.check) then
+        call ga_error('ga_gop error', 1)
+      endif
+      call ga_sync()
+      if (me.eq.0) then
+         write(6,*)
+         write(6,*) ' ga_gop (double complex) is  OK'
          write(6,*)
       endif
 c                                   
