@@ -1,4 +1,4 @@
-c $Id: test.F,v 1.63 2006-08-31 19:10:31 d3m782 Exp $
+c $Id: test.F,v 1.64 2006-09-07 17:05:33 d3m782 Exp $
 c vector boxes lack arithmetic precision 
 #ifdef CRAY_YMP
 # define THRESH 1d-10
@@ -2715,11 +2715,13 @@ c_____________________________________________________________
 #include "mafdecls.fh"
 #include "global.fh"
 #include "testutil.fh"
-      double precision sum
-      double complex zsum, check
-      integer isum, ibuf(2)
-      integer me, nproc
-      real fsum
+      integer n
+      parameter (n=10000)
+      double precision sum(n)
+      double complex zsum(n), check(n)
+      integer isum(n), ibuf(2)
+      integer me, nproc, i
+      real fsum(n)
 c
       nproc = ga_nnodes()
       me = ga_nodeid()
@@ -2731,15 +2733,15 @@ c
          write(6,*)
          call ffflush(6)
       endif
-      ibuf(1) = 1
-      ibuf(2) =  me
-      call ga_gop(MT_INT, ibuf, 2, '+')
-      if(ibuf(1).ne.nproc)then
-        call ga_error('ga_gop error',isum)
-      endif
-      if(ibuf(2).ne.((nproc-1)*nproc/2))then
-        call ga_error('ga_gop error -2',isum)
-      endif
+      do i = 1, n 
+         isum(i) =  i + me
+      enddo
+      call ga_gop(MT_INT, isum, n, '+')
+      do i = 1, n 
+         if(isum(i).ne.(i*nproc + (nproc-1)*nproc/2))then
+            call ga_error('ga_gop error -2',isum(i))
+         endif
+      enddo
       call ga_sync()
       if (me.eq.0) then
          write(6,*)
@@ -2755,11 +2757,15 @@ c
          write(6,*)
          call ffflush(6)
       endif
-      sum = 1d0 * me
-      call ga_gop(MT_DBL, sum, 1, '+')
-      if(Int(sum).ne.((nproc-1)*nproc/2))then
-        call ga_error('ga_gop error',Int(sum))
-      endif
+      do i = 1, n
+         sum(i) = i + 1d0 * me
+      enddo
+      call ga_gop(MT_DBL, sum, n, '+')
+      do i = 1, n
+         if(Int(sum(i)).ne.(i*nproc + (nproc-1)*nproc/2))then
+            call ga_error('ga_gop error',Int(sum(i)))
+         endif
+      enddo
       call ga_sync()
       if (me.eq.0) then
          write(6,*)
@@ -2774,11 +2780,15 @@ c
          write(6,*)
          call ffflush(6)
       endif
-      fsum = 1.0 * me
-      call ga_gop(MT_REAL, fsum, 1, '+')
-      if(Int(sum).ne.((nproc-1)*nproc/2))then
-        call ga_error('ga_gop error',Int(sum))
-      endif
+      do i = 1, n 
+         fsum(i) = i + 1.0 * me
+      enddo
+      call ga_gop(MT_REAL, fsum, n, '+')
+      do i = 1, n 
+         if(Int(fsum(i)).ne.(i*nproc + (nproc-1)*nproc/2))then
+            call ga_error('ga_gop error',Int(fsum(i)))
+         endif
+      enddo
       call ga_sync()
       if (me.eq.0) then
          write(6,*)
@@ -2793,12 +2803,16 @@ c
          write(6,*)
          call ffflush(6)
       endif
-      zsum = cmplx(1d0, 1d0 * me)
-      check= cmplx(nproc*1d0, (nproc-1)*nproc/2)
-      call ga_gop(MT_DCPL, zsum, 1, '+')
-      if(zsum.ne.check) then
-        call ga_error('ga_gop error', 1)
-      endif
+      do i = 1, n
+         zsum(i) = cmplx(i+1d0, i + 1d0 * me)
+         check(i)= cmplx(nproc*i+nproc*1d0, nproc*i+(nproc-1)*nproc/2)
+      enddo
+      call ga_gop(MT_DCPL, zsum, n, '+')
+      do i = 1, n 
+         if(zsum(i).ne.check(i)) then
+            call ga_error('ga_gop error', 1)
+         endif
+      enddo
       call ga_sync()
       if (me.eq.0) then
          write(6,*)
