@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.110 2006-01-20 21:25:17 vinod Exp $ */
+/* $Id: armci.c,v 1.111 2006-09-07 18:16:10 manoj Exp $ */
 
 /* DISCLAIMER
  *
@@ -759,11 +759,7 @@ int armci_notify(int proc)
 #else
    armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
    pnotify->sent++;
-    if(SAMECLUSNODE(proc)){
-#ifdef MEM_FENCE
-       MEM_FENCE;
-#endif
-   }
+   if(SAMECLUSNODE(proc)) MEM_FENCE;
    ARMCI_Put(&pnotify->sent,&(_armci_notify_arr[proc]+armci_me)->received, 
              sizeof(pnotify->sent),proc);
    return(pnotify->sent);
@@ -782,9 +778,7 @@ int armci_notify_wait(int proc,int *pval)
 #endif
 #ifdef DOELAN4
   if(proc==armci_me){
-#ifdef MEM_FENCE
        MEM_FENCE;
-#endif
 #ifdef ARMCI_PROFILE
     armci_profile_stop(ARMCI_PROF_NOTIFY);
 #endif
