@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.98 2006-04-18 00:16:45 manoj Exp $
+#$Id: GNUmakefile,v 1.99 2006-09-07 18:33:57 manoj Exp $
          FOPT = -O
          COPT = -O
 
@@ -214,6 +214,7 @@ $(FULL_LIBRARY_PATH)(memory.o):      ./shmem.h ./message.h ./armcip.h ./kr_mallo
 $(FULL_LIBRARY_PATH)(memlock.o):     ./memlock.h ./locks.h ./copy.h ./armcip.h 
 $(FULL_LIBRARY_PATH)(locks.o):       ./locks.h ./armcip.h 
 $(FULL_LIBRARY_PATH)(lapi.o):        ./copy.h ./armcip.h ./lapidefs.h
+$(FULL_LIBRARY_PATH)(myrinet.o):     ./copy.h ./armcip.h ./request.h
 $(FULL_LIBRARY_PATH)(ipctest.o):     ./shmem.h ./locks.h 
 $(FULL_LIBRARY_PATH)(fence.o):       ./copy.h ./armcip.h ./armci.h 
 $(FULL_LIBRARY_PATH)(ds-shared.o):   ./myrinet.h ./request.h ./message.h ./memlock.h ./copy.h ./armcip.h 
