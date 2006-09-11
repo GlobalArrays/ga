@@ -1,4 +1,4 @@
-#$Id: makefile.h,v 1.121 2006-08-30 20:42:49 manoj Exp $
+#$Id: makefile.h,v 1.122 2006-09-11 22:48:51 manoj Exp $
            FC = f77
            CC = cc
            AR = ar
@@ -705,7 +705,7 @@ ifdef IBM_
        CDEFS += -DEXTNAME
            FC = xlf
 GLOB_DEFINES += -DAIX
-          _CPU = $(shell lsattr -El `lsdev -C -c processor -F name | head -1` | awk ' /POWER4/ { print "PWR4" }; /POWER5/ { print "PWR4" }')
+          _CPU = $(shell /usr/bin/lsattr -El `lsdev -C -c processor -F name | head -1` | awk ' /POWER4/ { print "PWR4" }; /POWER5/ { print "PWR4" }')
 endif
 #
 ifeq ($(_CPU),PWR4)
