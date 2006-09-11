@@ -3,12 +3,12 @@ OSNAME =  $(shell uname | awk '{ print $1}')
 
 #under AIX, AIX52 is defined to use POSIX API in AIX 5.2.0.0 or greater
 ifeq ($(OSNAME),AIX) 
-     LIB_DEFINES += $(shell oslevel | awk -F. \
+     LIB_DEFINES += $(shell /usr/bin/oslevel | awk -F. \
                       '{ if ($$1 > 5 || ($$1 == 5 && $$2 > 1))\
                       print "-DAIX52" }')
 #lsdev -C -l aio0
 #aio0 Defined  Asynchronous I/O (Legacy)
-USE_OLDAIO= $(shell lsdev -C -l aio0  2>&1|grep Lega|awk ' /Legacy/  {print "Y"}')
+USE_OLDAIO= $(shell /usr/sbin/lsdev -C -l aio0  2>&1|grep Lega|awk ' /Legacy/  {print "Y"}')
 
 ifeq ($(USE_OLDAIO),Y)
      LIB_DEFINES += -D_AIO_AIX_SOURCE
@@ -19,7 +19,7 @@ endif
 ifdef LARGE_FILES
 
   ifeq ($(OSNAME),AIX)
-    LIB_DEFINES += $(shell oslevel | awk -F. \
+    LIB_DEFINES += $(shell /usr/bin/oslevel | awk -F. \
               '{ if ($$1 > 4 || ($$1 == 4 && $$2 > 1))\
                print "-D_LARGE_FILES -D_LARGE_FILE_API" }')
 
@@ -27,7 +27,7 @@ ifdef LARGE_FILES
 #   However, there is a bug in IBM libs on PNNL system that prevents us
 #   from using AIO under 4.2.1 :-)
 #
-    AIO_LARGE_FILES = $(shell oslevel | awk -F. \
+    AIO_LARGE_FILES = $(shell /usr/bin/oslevel | awk -F. \
                '{ if ($$1 == 4 && $$2 == 2 && $$3 <= 0 ) \
                print  "NO"}')
   endif
