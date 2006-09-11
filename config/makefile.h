@@ -1,4 +1,4 @@
-# $Id: makefile.h,v 1.140 2006-08-30 20:42:54 manoj Exp $
+# $Id: makefile.h,v 1.141 2006-09-11 22:37:24 manoj Exp $
 # This is the main include file for GNU make. It is included by makefiles
 # in most subdirectories of the package.
 # It includes compiler flags, preprocessor and library definitions
@@ -342,6 +342,9 @@ else
      GLOB_DEFINES += -DXLFLINUX -DEXTNAME
      endif
    endif
+   ifeq ($(_FC),gfortran)
+      GLOB_DEFINES += -DGFORTRAN
+   endif
 
    # Fujitsu compilers
    ifeq ($(_CC),mpifcc)
@@ -608,6 +611,9 @@ ifeq ($(TARGET),CYGWIN)
  GLOB_DEFINES = -DCYGWIN
      COPT_REN = -malign-double
        RANLIB = ranlib
+   ifeq ($(_FC),gfortran)
+      GLOB_DEFINES += -DGFORTRAN
+   endif
 endif
 ifeq ($(TARGET),CYGNUS)
            FC = g77
