@@ -17,7 +17,7 @@ extern void _armci_buf_clear_all();
 #ifdef LAPI
 #  include "lapidefs.h"
 #elif PORTALS
-#  include "portals.h"
+#  include "armci_portals.h"
    typedef long msg_tag_t;
 #elif defined(GM)
 #  include "myrinet.h"

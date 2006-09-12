@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.112 2006-03-30 22:30:47 vinod Exp $ */
+/* $Id: strided.c,v 1.113 2006-09-12 20:51:56 andriy Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -457,13 +457,14 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
 
 /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  if defined(LAPI2)
+#  if defined(LAPI2) || defined(DOELAN4)
     /*even 1D armci_nbput has to use different origin counters for 1D */
 #   if defined(LAPI2)
     if(!ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
        (!nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD))) 
 #   else
-    if(!ACC(op) && !SAMECLUSNODE(proc) && nb_handle && stride_levels<2)
+    /*if(!ACC(op) && !SAMECLUSNODE(proc) && nb_handle && stride_levels<2)*/
+    if(!ACC(op) && !SAMECLUSNODE(proc) && stride_levels<2)
 #   endif
        armci_network_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
                          dst_stride_arr,count,stride_levels,nb_handle);
@@ -533,7 +534,7 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
     }
     
     /* deal with non-blocking loads and stores */
-#if defined(LAPI) || defined(_ELAN_PUTGET_H)
+#if defined(LAPI) || defined(_ELAN_PUTGET_H) || defined(NB_NONCONT)
 #   if defined(LAPI)
      if(!nb_handle)
 #   endif
@@ -2035,3 +2036,292 @@ int ARMCI_NbGetValue(void *src, void *dst, int proc, int bytes, armci_hdl_t* usr
 }
 #endif
 
+#if     0
+#ifdef  NB_STRIDED
+
+#define MAX_SLOTS_LL    64
+#define MIN_OUTSTANDING 6
+static int max_pending = 16; /* throttle number of outstanding nb calls */
+
+/* might have to use MAX_SLOTS_LL<MAX_PENDING due to throttling a problem in Elan*/
+#   define MAX_PENDING 6
+
+#if defined(QUADRICS)
+typedef ELAN_EVENT *HTYPE; 
+#elif defined(CRAY_SHMEM)
+typedef void *HTYPE;
+#else
+should not enter here, only QUADRICS and CRAY_SHMEM are supported
+#endif
+
+#define ZR  (HTYPE)0
+
+static HTYPE put_dscr[MAX_SLOTS_LL]= {
+ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,
+ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR};
+
+static HTYPE get_dscr[MAX_SLOTS_LL] = {
+ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,
+ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR,ZR};
+
+static int cur_get=0;
+static int cur_put=0;
+static int pending_get=0;
+static int pending_put=0;
+
+/*  strided put, nonblocking
+ */
+void armcill_put2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+    int _j, i, batch, issued=0;
+    char *ps=src_ptr, *pd=dst_ptr;
+
+    for (_j = 0;  _j < count;  ){
+      /* how big a batch of requests can we issue */
+      batch = (count - _j )<max_pending ? count - _j : max_pending;
+      _j += batch;
+#ifndef SHMEM_HANDLE_SUPPORTED
+      shmem_quiet();
+      for(i=0; i< batch; i++){
+        shmem_putmem_nb(pd, ps, (size_t)bytes, proc, NULL);
+#else
+      for(i=0; i< batch; i++){
+#   if   defined(QUADRICS)
+        if(put_dscr[cur_put])elan_wait(put_dscr[cur_put],100);
+#   elif defined(CRAY_SHMEM)
+        if(put_dscr[cur_put])shmem_wait_nb(put_dscr[cur_put]);
+#   endif
+        else pending_put++;
+#   if   defined(QUADRICS)
+        put_dscr[cur_put]= elan_put(elan_base->state,ps, pd,(size_t)bytes,proc);
+#   elif defined(CRAY_SHMEM)
+        put_dscr[cur_put] = shmem_putmem_nb(pd, ps, (size_t)bytes, proc,
+                                            put_dscr + cur_put);
+#   endif
+#endif/*SHMEM_HANDLE_SUPPORTED*/
+        issued++;
+        ps += src_stride;
+        pd += dst_stride;
+        cur_put++;
+        if(cur_put>=max_pending)cur_put=0;
+      }
+    }
+
+    if(issued != count)
+#if   defined(QUADRICS)
+       armci_die2("armci-elan put:mismatch %d %d \n", count,issued);
+#elif defined(CRAY_SHMEM)
+       armci_die2("armci-shmem put:mismatch %d %d \n", count,issued);
+#endif
+}
+
+
+/*  strided get, nonblocking
+*/
+void armcill_get2D(int proc, int bytes, int count, void* src_ptr,int src_stride,
+                                                   void* dst_ptr,int dst_stride)
+{
+    int _j, i, batch, issued=0;
+    char *ps=src_ptr, *pd=dst_ptr;
+
+    for (_j = 0;  _j < count;  ){
+      /* how big a batch of requests can we issue */
+      batch = (count - _j )<max_pending ? count - _j : max_pending;
+      _j += batch;
+#ifndef SHMEM_HANDLE_SUPPORTED
+      for(i=0; i< batch; i++){
+        shmem_getmem_nb(pd, ps, (size_t)bytes, proc, NULL);
+#else
+      for(i=0; i< batch; i++){
+#   if   defined(QUADRICS)
+        if(get_dscr[cur_get])elan_wait(get_dscr[cur_get],100);
+#   elif defined(CRAY_SHMEM)
+        if(get_dscr[cur_get])shmem_wait_nb(get_dscr[cur_get]);
+#   endif
+        else pending_get++;
+#   if   defined(QUADRICS)
+        get_dscr[cur_get]=elan_get(elan_base->state,ps,pd, (size_t)bytes, proc);
+#   elif defined(CRAY_SHMEM)
+        get_dscr[cur_get] = shmem_getmem_nb(pd, ps, (size_t)bytes, proc,
+                                            get_dscr + cur_get);
+#   endif
+#endif/*SHMEM_HANDLE_SUPPORTED*/
+        issued++;
+        ps += src_stride;
+        pd += dst_stride;
+        cur_get++;
+        if(cur_get>=max_pending)cur_get=0;
+      }
+    }
+    if(issued != count)
+#if   defined(QUADRICS)
+       armci_die2("armci-elan get:mismatch %d %d \n", count,issued);
+#elif defined(CRAY_SHMEM)
+       armci_die2("armci-shmem get:mismatch %d %d \n", count,issued);
+#endif
+}
+
+/*  blocking vector put
+ */
+void armcill_putv(int proc, int bytes, int count, void* src[], void* dst[])
+{
+    int _j, i, batch, issued=0;
+    void *ps, *pd;
+
+#if 0
+    printf("%d: putv %d\n", armci_me, count); fflush(stdout);
+#endif
+
+    for (_j = 0;  _j < count;  ){
+      /* how big a batch of requests can we issue */
+      batch = (count - _j )<max_pending ? count - _j : max_pending; 
+      _j += batch;
+#ifndef SHMEM_HANDLE_SUPPORTED
+      shmem_quiet();
+      for(i=0; i< batch; i++){
+        shmem_putmem_nb(pd, ps, (size_t)bytes, proc, NULL);
+#else
+      for(i=0; i< batch; i++){
+#   if   defined(QUADRICS)
+        if(put_dscr[cur_put])elan_wait(put_dscr[cur_put],100);
+#   elif defined(CRAY_SHMEM)
+        if(put_dscr[cur_put]) shmem_wait_nb(put_dscr[cur_put]);
+#   endif
+        else pending_put++;
+        ps = src[issued];
+        pd = dst[issued];
+#   if   defined(QUADRICS)
+        put_dscr[cur_put]= elan_put(elan_base->state,ps, pd,(size_t)bytes,proc);
+#   elif defined(CRAY_SHMEM)
+        put_dscr[cur_put] = shmem_putmem_nb(pd, ps, (size_t)bytes, proc,
+                                            put_dscr + cur_put);
+#   endif
+#endif/*SHMEM_HANDLE_SUPPORTED*/
+        issued++;
+        cur_put++;
+        if(cur_put>=max_pending)cur_put=0;
+      }
+    }
+    if(issued != count)
+#if   defined(QUADRICS)
+       armci_die2("armci-elan putv:mismatch\n", count,issued);
+#elif defined(CRAY_SHMEM)
+       armci_die2("armci-shmem putv:mismatch\n", count,issued);
+#endif
+
+    for(i=0; i<max_pending; i++) if(put_dscr[i]){
+#if   defined(QUADRICS)
+        elan_wait(put_dscr[i],100);
+#elif defined(CRAY_SHMEM)
+        shmem_wait_nb(put_dscr[i]);
+#endif
+        put_dscr[i]=ZR;
+    }
+}
+
+/*  blocking vector get 
+ */
+void armcill_getv(int proc, int bytes, int count, void* src[], void* dst[])
+{
+    int _j, i, batch, issued=0;
+    void *ps, *pd;
+
+#if 0
+    printf("%d: getv %d\n", armci_me, count); fflush(stdout);
+#endif
+
+    for (_j = 0;  _j < count;  ){
+      /* how big a batch of requests can we issue */
+      batch = (count - _j )<max_pending ? count - _j : max_pending;
+      _j += batch;
+#ifndef SHMEM_HANDLE_SUPPORTED
+      shmem_quiet();
+      for(i=0; i< batch; i++){
+        shmem_getmem_nb(pd, ps, (size_t)bytes, proc, NULL);
+#else
+      for(i=0; i< batch; i++){
+#   if   defined(QUADRICS)
+        if(get_dscr[cur_get])elan_wait(get_dscr[cur_get],100);
+#   elif defined(CRAY_SHMEM)
+        if(get_dscr[cur_get]) shmem_wait_nb(get_dscr[cur_get]);
+#   endif
+        else pending_get++;
+        ps = src[issued];
+        pd = dst[issued];
+#   if   defined(QUADRICS)
+        get_dscr[cur_get]= elan_get(elan_base->state,ps, pd,(size_t)bytes,proc);
+#   elif defined(CRAY_SHMEM)
+        get_dscr[cur_get] = shmem_getmem_nb(pd, ps, (size_t)bytes, proc,
+                                            get_dscr + cur_get);
+#   endif
+#endif/*SHMEM_HANDLE_SUPPORTED*/
+        issued++;
+        cur_get++;
+        if(cur_get>=max_pending)cur_get=0;
+      }
+    }
+    if(issued != count)
+#if   defined(QUADRICS)
+       armci_die2("armci-elan getv:mismatch %d %d \n", count,issued);
+#elif defined(CRAY_SHMEM)
+       armci_die2("armci-elan getv:mismatch %d %d \n", count,issued);
+#endif
+
+    for(i=0; i<max_pending; i++) if(get_dscr[i]){
+#if   defined(QUADRICS)
+        elan_wait(get_dscr[i],100);
+#elif defined(CRAY_SHMEM)
+        shmem_wait_nb(get_dscr[i]);
+#endif
+        get_dscr[i]=ZR;
+    }
+}
+
+
+void armcill_wait_get()
+{
+#ifndef SHMEM_HANDLE_SUPPORTED
+    shmem_quiet();
+#else
+    int i;
+
+    if(!pending_get)return;
+    else pending_get=0;
+    for(i=0; i<max_pending; i++) if(get_dscr[i]){
+#   if   defined(QUADRICS)
+        elan_wait(get_dscr[i],100);
+#   elif defined(CRAY_SHMEM)
+        shmem_wait_nb(get_dscr[i]);
+#   else
+should not enter here
+#   endif
+        get_dscr[i]=ZR;
+    }
+#endif
+}
+
+
+void armcill_wait_put()
+{
+#ifndef SHMEM_HANDLE_SUPPORTED
+    shmem_quiet();
+#else
+int i;
+    if(!pending_put)return;
+    else pending_put=0;
+    for(i=0; i<max_pending; i++) if(put_dscr[i]){
+#   if   defined(QUADRICS)
+        elan_wait(put_dscr[i],100);
+#   elif defined(CRAY_SHMEM)
+        shmem_wait_nb(put_dscr[i]);
+#   else
+should not enter here
+#   endif
+       put_dscr[i]=ZR;
+    }
+#endif
+}
+
+#endif/*NB_STRIDED*/
+#endif

@@ -1,4 +1,4 @@
-/* $Id: lapi2.c,v 1.16 2006-08-22 18:26:02 manoj Exp $ */
+/* $Id: lapi2.c,v 1.17 2006-09-12 20:51:55 andriy Exp $ */
 #define DEBUG 0
 #define DSCR_SIZE 4096*8  /*given that bufsize=30000*8,conservative,indeed*/
 
@@ -27,8 +27,8 @@ int offset=0;
     (*srcv)->info= (void **)(bufptr+offset);       offset+=dsize;
     (*dstv)->info= (void **)(bufptr+offset);       offset+=dsize;
     if(dlen!=0){
-       (*srcv)->len = (unsigned long *)(bufptr+offset); offset+=dlen;
-       (*dstv)->len = (unsigned long *)(bufptr+offset); offset+=dlen;
+       (*srcv)->len = (unsigned int *)(bufptr+offset); offset+=dlen;
+       (*dstv)->len = (unsigned int *)(bufptr+offset); offset+=dlen;
     }
     else {
        (*srcv)->len = (*dstv)->len = NULL;
@@ -128,8 +128,8 @@ int offset=0;
     dstv      = (lapi_vec_t *)(bufptr+offset);  offset+=sizeof(lapi_vec_t);
     srcv->info= (void **)(bufptr+offset);       offset+=iovlength*sizeof(void*);
     dstv->info= (void **)(bufptr+offset);       offset+=iovlength*sizeof(void*);
-    srcv->len = (unsigned long *)(bufptr+offset);offset+=iovlength*sizeof(int);
-    dstv->len = (unsigned long *)(bufptr+offset);offset+=iovlength*sizeof(int);
+    srcv->len = (unsigned int *)(bufptr+offset);offset+=iovlength*sizeof(int);
+    dstv->len = (unsigned int *)(bufptr+offset);offset+=iovlength*sizeof(int);
 
 
     srcv->vec_type = dstv->vec_type             = LAPI_GEN_IOVECTOR;
@@ -210,8 +210,8 @@ int i,rc;
          rc=LAPI_Get(lapi_handle,proc,bytes,(src_ptr),(dst_ptr),NULL,
                      &(o_cmpl->cntr));
        if(rc)ARMCI_Error("LAPI_put failed",0);
-       src_ptr = (void*) ((unsigned long)src_ptr+src_stride);
-       dst_ptr = (void*) ((unsigned long)dst_ptr+dst_stride);
+       src_ptr+=src_stride;
+       dst_ptr+=dst_stride;
     }
 }
 
@@ -359,10 +359,10 @@ int p=msginfo->from;
 
   LAPI_Setcntr(lapi_handle,&c,0);
  
-  src    = (lapi_vec_t *)((unsigned long)bufptr+offset);    offset+=sizeof(lapi_vec_t);
-  dst    = (lapi_vec_t *)((unsigned long)bufptr+offset);    offset+=sizeof(lapi_vec_t);
-  src->info  = (void **)((unsigned long)bufptr+offset);         offset+=3*sizeof(void *);
-  dst->info  = (void **)((unsigned long)bufptr+offset);         offset+=3*sizeof(void *);
+  src    = (lapi_vec_t *)(bufptr+offset);    offset+=sizeof(lapi_vec_t);
+  dst    = (lapi_vec_t *)(bufptr+offset);    offset+=sizeof(lapi_vec_t);
+  src->info  = (void **)(bufptr+offset);         offset+=3*sizeof(void *);
+  dst->info  = (void **)(bufptr+offset);         offset+=3*sizeof(void *);
 
 
   src->vec_type = dst->vec_type                   = LAPI_GEN_STRIDED_XFER;

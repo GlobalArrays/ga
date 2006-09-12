@@ -110,7 +110,7 @@ realclean:      clean
 ifdef SUBDIRS
 	$(MAKESUBDIRS)
 endif
-	-$(RM) -rf *~ \#*\#
+	-$(RM) -rf *.o?* *~ \#*\#
 
 .PHONY: cleanstamp
 cleanstamp: clean

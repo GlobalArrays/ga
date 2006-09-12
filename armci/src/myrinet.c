@@ -1,4 +1,4 @@
-/* $Id: myrinet.c,v 1.79 2006-09-07 18:33:57 manoj Exp $
+/* $Id: myrinet.c,v 1.80 2006-09-12 20:51:55 andriy Exp $
  * DISCLAIMER
  *
  * This material was prepared as an account of work sponsored by an
@@ -45,7 +45,6 @@
 */
 #include "armcip.h"
 #include "request.h"
-#include "copy.h"
 
 #define DEBUG_ 0
 #define DEBUG2 0
@@ -161,6 +160,9 @@ static int armci_gm_num_send_tokens=0;
 static int armci_gm_num_receive_tokens=0;
 
 GM_ENTRY_POINT char * _gm_get_kernel_build_id(struct gm_port *p);
+#if defined(__ia64__)
+extern void _armci_ia64_mb();
+#endif
 /*\
  * function to get the next available context for non-blocking RDMA. We limit
  * the number of uncompleted non-blocking RDMA sends to 8.
@@ -714,7 +716,9 @@ void armci_client_send_complete(armci_gm_context_t* context,char *st)
        fflush(stdout);
        armci_die("armci_client_send_complete: failed code=",context->done);
     }
-    MEM_FENCE;
+#if defined(__ia64__)
+    _armci_ia64_mb();   
+#endif
 }
 
 void armci_client_to_client_direct_send(int p, void *src_buf, void *dst_buf, int len)
@@ -951,7 +955,9 @@ char *armci_ReadFromDirect(int proc, request_header_t * msginfo, int len)
 
     /* reset tail ack */
     *tail = ARMCI_GM_CLEAR;
-    MEM_FENCE;
+#if defined(__ia64__)
+    _armci_ia64_mb();   
+#endif
     return(buf);
 }
 
@@ -1530,7 +1536,9 @@ void armci_call_data_server()
               tag = gm_ntohc(event->recv.tag);
               length = gm_ntohl(event->recv.length);
               buf = (char *)gm_ntohp(event->recv.buffer);
-              MEM_FENCE;
+#if          defined(__ia64__)
+              _armci_ia64_mb();
+#            endif
               armci_data_server(buf);
 #           ifdef ACK_FENCE
               armci_send_pendingop_ack(0);

@@ -1,4 +1,4 @@
-/* $Id: acc.c,v 1.10 2003-07-10 19:19:28 d3h325 Exp $ */
+/* $Id: acc.c,v 1.11 2006-09-12 20:51:54 andriy Exp $ */
 
 #if defined(__crayx1)
 #else
@@ -32,7 +32,7 @@ int i;
 }
 
 
-#ifdef CRAY_T3E
+#if defined(CRAY_T3E) || defined(CATAMOUNT)
 void  F_ACCUMULATE_2D_(float* alpha, int* rows, int* cols, float* a,
                       int* lda, float* b, int* ldb)
 {
@@ -71,7 +71,7 @@ int i,j;
    }
 }
 
-#ifndef CRAY_T3E
+#if !defined(CRAY_T3E) && !defined(CATAMOUNT)
 void  F_ACCUMULATE_2D(float* alpha, int* rows, int* cols, float* a,
                       int* lda, float* b, int* ldb)
 {

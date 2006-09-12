@@ -15,6 +15,17 @@ ifeq ($(ARMCI_NETWORK),GM)
   COMM_LIBS += $(GM_LIB_NAME) -lpthread
 endif
 
+ifeq ($(ARMCI_NETWORK),CRAY-SHMEM)
+  COMM_DEFINES += -DCRAY_SHMEM -DNO_SHM
+# COMM_DEFINES += -DCRAY_SHMEM -DNO_SHM -DNB_NONCONT
+ ifeq ($(TARGET),CATAMOUNT)
+    COMM_LIBS += -lsma
+  else
+    COMM_LIBS += -lshmem
+    COMM_DEFINES += -DSHMEM_HANDLE_SUPPORTED
+  endif 
+endif
+
 ifeq ($(ARMCI_NETWORK),PORTALS)
 
   ifndef PORTALS_NAL
@@ -38,7 +49,8 @@ ifeq ($(ARMCI_NETWORK),PORTALS)
     PORTALS_LIB_NAMES = -lp3api -lp3lib -lp3rt -l$(PORTALS_NAL_STR)lib
   endif
 
-  COMM_LIBS += $(PORTALS_LIB_NAMES) 
+#  COMM_LIBS += $(PORTALS_LIB_NAMES) 
+   COMM_LIBS += -lsma 
 
 endif
 
