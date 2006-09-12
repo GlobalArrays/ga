@@ -1,4 +1,4 @@
-/* $Id: rmw.c,v 1.22 2006-09-12 20:51:56 andriy Exp $ */
+/* $Id: rmw.c,v 1.23 2006-09-12 23:21:22 andriy Exp $ */
 #include "armcip.h"
 #include "locks.h"
 #include "copy.h"
@@ -122,7 +122,7 @@ int ARMCI_Rmw(int op, int *ploc, int *prem, int extra, int proc)
 #ifdef LAPI
     int  ival, rc, opcode=SWAP, *parg=ploc;
     lapi_cntr_t req_id;
-#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(CATAMOUNT)
+#elif defined(_CRAYMPP) || defined(QUADRICS)
     int  ival;
     long lval;
 #endif
@@ -142,7 +142,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 #endif
 
 #if defined(CLUSTER) && !defined(LAPI) && !defined(QUADRICS) &&!defined(CYGWIN)\
-										&&!defined(HITACHI) && !defined(CATAMOUNT)
+										&&!defined(HITACHI)
      if(!SAMECLUSNODE(proc)){
        armci_rem_rmw(op, ploc, prem,  extra, proc);
        return 0;
@@ -155,7 +155,7 @@ if(op==ARMCI_FETCH_AND_ADD_LONG || op==ARMCI_SWAP_LONG){
 
 
     switch (op) {
-#   if defined(QUADRICS) || defined(_CRAYMPP) || defined(CATAMOUNT)
+#   if defined(QUADRICS) || defined(_CRAYMPP)
       case ARMCI_FETCH_AND_ADD:
 #ifdef SHMEM_FADD
          /* printf(" calling intfdd arg %x %ld \n", prem, *prem); */

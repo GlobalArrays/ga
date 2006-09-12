@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.13 2006-09-12 20:51:55 andriy Exp $ */
+/* $Id: elan4.c,v 1.14 2006-09-12 23:21:21 andriy Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,17 +27,12 @@ extern void * pgs_ds_init (ELAN_STATE *state, void *qMem, void *dsqMem, int max)
 static int _ELAN_SLOTSIZE=700;
 static int server_can_poll=0;
 
-#ifndef  NB_NONCONT
 #define VCALLS 1
-/*#define HAS_PUTS_ 1 /* if set to 1 armcill_(put|get)2D are implemented using */
-/*#define HAS_GETS_ 1 /* elan_(put|get)ss, elan_(put|get)v otherwise           */
-#endif
-
-#if !VCALLS
+#if VCALLS
+#else
 #define MAX_SLOTS 64
 #define MIN_OUTSTANDING 6
 static int max_pending=16; /* throttle number of outstanding nb calls */
-
 #endif
 
 #ifdef ELAN_ACC
@@ -651,9 +646,7 @@ int loop=0;
     if(SAMECLUSNODE(proc)){
        remptr = verify_wait->recv_verify_smp_arr[proc]+armci_me;
        *(remptr)=verify_wait->verify_seq_ar[proc]++;
-#ifdef MEM_FENCE
        MEM_FENCE;
-#endif
        return((*remptr));
     }
     else{
@@ -737,16 +730,12 @@ long loop=0;
         printf("\n%d:verifyseq expecting%d have %d",armci_me,
                wait_val,armci_check_int_val(buf_notify));fflush(stdout);
       }
-#ifdef MEM_FENCE
-      MEM_FENCE;
-#endif
+      MEM_FENCE;      
       res = wait_val - armci_check_int_val(buf_notify);
       while(res>0){
         if(++loop == 1000) { loop=0;usleep(1); }
          armci_util_spin(loop, buf_notify);
-#ifdef MEM_FENCE
         MEM_FENCE;
-#endif
         res = wait_val - armci_check_int_val(buf_notify);
       }
       if(DEBUG_NOTIFY){
@@ -764,7 +753,7 @@ long loop=0;
     wait_fence = serv_count;
 
 
-    _armci_ia64_mb();
+    MEM_FENCE;
     res = wait_fence - armci_check_int_val(myserv_count);
 
     if(DEBUG_NOTIFY){
@@ -777,7 +766,7 @@ long loop=0;
       while(res>0){
         if(++loop == 1000) { loop=0;usleep(1); }
           armci_util_spin(loop, myserv_count);
-        _armci_ia64_mb();
+        MEM_FENCE;
         wait_fence=serv_count =verify_wait->recv_verify_arr[armci_me][3*proc+1];
         res = wait_fence - armci_check_int_val(myserv_count);
       }
@@ -1109,7 +1098,7 @@ char *ps=src_ptr, *pd=dst_ptr;
 void armcill_wait_get(){}
 void armcill_wait_put(){}
 
-#else /*#elif 0*/
+#else
 
 #ifdef _ELAN_PUTGET_H
 

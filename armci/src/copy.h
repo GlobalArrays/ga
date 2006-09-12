@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.83 2006-09-12 20:51:55 andriy Exp $ */
+/* $Id: copy.h,v 1.84 2006-09-12 23:21:21 andriy Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -11,8 +11,7 @@
 #include <c_asm.h>
 #endif
 
-#if defined(NOFORT) || defined(HITACHI) || defined(CRAY_T3E)\
-        || defined(CRAY_SHMEM)
+#if defined(NOFORT) || defined(HITACHI) || defined(CRAY_T3E)
 #  define MEMCPY
 #endif
 #if defined(LINUX64) && defined(SGIALTIX) && defined(MPI)
@@ -37,208 +36,13 @@
 #   define PTR_ALIGN
 #endif
 
-/* implement non-contiguous calls as series of non-blocking contiguous calls */
-#define NB_NONCONT
-
-#if defined(SHMEM_HANDLE_SUPPORTED) && !defined(CRAY_SHMEM)
-#warning SHMEM_HANDLE_SUPPORTED should not be defined on a non CRAY_SHMEM network
-#endif
-
-/* 08/30/06 moved up here from lines 252-397, MEM_FENCE before FENCE_NODE */
-#ifdef COPY686 
-     extern void *armci_asm_memcpy(void *dst, const void *src, size_t n, int tid);
-     extern void *armci_asm_memcpy_nofence(void *d,const void *s,size_t n, int id);
-#    ifdef SERVER_CONTEXT
-#      define armci_copy(src,dst,n) {\
-        int _id= (SERVER_CONTEXT)?1:0; armci_asm_memcpy((dst), (src), (n), _id);}
-#    else
-#      define armci_copy(src,dst,n)  armci_asm_memcpy((dst), (src), (n), 0)
-#    endif
-#    define armci_copy_nofence(_s,_d,_n) armci_asm_memcpy_nofence((_d),(_s),(_n),0)
-#    ifndef MEMCPY
-#       define MEMCPY
-#    endif
-#    define MEM_FENCE armci_asm_mem_fence()
-     extern void armci_asm_mem_fence();
-#endif
-                                                 
-#if  defined(MEMCPY)  && !defined(armci_copy)
-#    define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 
-#endif
-
-#ifdef NEC
-#    define MEM_FENCE {mpisx_clear_cache(); _armci_vec_sync_flag=1;mpisx_syncset0_long(&_armci_vec_sync_flag);}
-#endif
-
-#ifdef DECOSF
-#    define MEM_FENCE asm ("mb")
-#endif
-
-#if defined(NEED_MEM_SYNC)
-#  ifdef AIX
-#    define MEM_FENCE {int _dummy=1; _clear_lock((int *)&_dummy,0); }
-#  elif defined(__ia64)
-#    if defined(__GNUC__) && !defined (__INTEL_COMPILER)
-#       define MEM_FENCE __asm__ __volatile__ ("mf" ::: "memory");
-#    else /* Intel Compiler */ 
-        extern void _armci_ia64_mb();
-#       define MEM_FENCE _armci_ia64_mb();
-#    endif
-#  endif
-#endif
-
-#ifndef armci_copy
-# ifdef PTR_ALIGN
-#   define armci_copy(src,dst,n)     \
-     do if( ((n) < THRESH1D)   || ((n)%ALIGN_SIZE) || \
-            ((unsigned long)(src)%ALIGN_SIZE) ||\
-            ((unsigned long)(dst)%ALIGN_SIZE)) memcpy((dst),(src),(n));\
-        else{ int _bytes=(n)/sizeof(double); DCOPY1D((src),(dst),&_bytes);}\
-     while (0)
-# else
-#   define armci_copy(src,dst,n)     \
-     do if( ((n) < THRESH1D) || ((n)%ALIGN_SIZE) ) memcpy((dst), (src), (n));\
-          else{ int _bytes=(n)/sizeof(double); DCOPY1D((src),(dst),&_bytes);}\
-     while (0)
-# endif
-#endif
-
-/****************************** 2D Copy *******************/
-
-
-#ifndef MEMCPY
-#   define DCopy2D(rows, cols, src_ptr, src_ld, dst_ptr, dst_ld){\
-      int rrows, ldd, lds, ccols;\
-          rrows = (rows);\
-          lds =   (src_ld);\
-          ldd =   (dst_ld);\
-          ccols = (cols);\
-          DCOPY2D(&rrows, &ccols, src_ptr, &lds,dst_ptr,&ldd);\
-      }
-
-#else
-#   define DCopy2D(rows, cols, src_ptr, src_ld, dst_ptr, dst_ld){\
-    int j, nbytes = sizeof(double)* rows;\
-    char *ps=src_ptr, *pd=dst_ptr;\
-      for (j = 0;  j < cols;  j++){\
-          armci_copy(ps, pd, nbytes);\
-          ps += sizeof(double)* src_ld;\
-          pd += sizeof(double)* dst_ld;\
-      }\
-    }
-#endif
-
-
-#   define ByteCopy2D(bytes, count, src_ptr, src_stride, dst_ptr,dst_stride){\
-    int _j;\
-    char *ps=src_ptr, *pd=dst_ptr;\
-      for (_j = 0;  _j < count;  _j++){\
-          armci_copy(ps, pd, bytes);\
-          ps += src_stride;\
-          pd += dst_stride;\
-      }\
-    }
-
-#if defined(FUJITSU)
-
-#   define armci_put2D(p, bytes,count,src_ptr,src_stride,dst_ptr,dst_stride)\
-           CopyPatchTo(src_ptr, src_stride, dst_ptr, dst_stride, count,bytes, p)
-
-#   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
-           CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
-
-#elif defined(HITACHI) || defined(_ELAN_PUTGET_H) && !defined(NB_NONCONT)
-
-#if defined(QUADRICS)
-#if 0
-#   define WAIT_FOR_PUTS elan_putWaitAll(elan_base->state,200)
-#   define WAIT_FOR_GETS elan_getWaitAll(elan_base->state,200)
-#else
-#   define WAIT_FOR_PUTS armcill_wait_put()
-#   define WAIT_FOR_GETS armcill_wait_get()
-    extern void armcill_wait_put();
-    extern void armcill_wait_get();
-#endif
-#endif
-
-    extern void armcill_put2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-    extern void armcill_get2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-#   define armci_put2D armcill_put2D
-#   define armci_get2D armcill_get2D
-
-#elif defined(NB_NONCONT)
-
-    extern void armcill_wait_put();
-    extern void armcill_wait_get();
-#   define WAIT_FOR_PUTS armcill_wait_put()
-#   define WAIT_FOR_GETS armcill_wait_get()
- 
-    extern void armcill_put2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-    extern void armcill_get2D(int proc, int bytes, int count,
-                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
-#   define armci_put2D armcill_put2D
-#   define armci_get2D armcill_get2D
-
-#   if   defined(QUADRICS)
-
-#       define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
-               elan_put(elan_base->state,_src,_dst,(size_t)_sz,_proc)
-#       define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
-               elan_get(elan_base->state,_src,_dst,(size_t)_sz,_proc)
-#       define armcill_nb_wait(_hdl)\
-               elan_wait(_hdl,100)
-
-#   elif defined(CRAY_SHMEM)
-
-#       define armcill_nb_put(_dst, _src, _sz, _proc, _hdl)\
-               shmem_putmem_nb(_dst, _src, (size_t)_sz, _proc, _hdl)
-#       define armcill_nb_wait(_hdl)\
-               shmem_wait_nb(_hdl)
-
-#       if defined (CATAMOUNT)
-#           define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
-                   shmem_getmem(_dst, _src, (size_t)_sz, _proc)
-#       else
-#           define armcill_nb_get(_dst, _src, _sz, _proc, _hdl)\
-                   shmem_getmem_nb(_dst, _src, (size_t)_sz, _proc, _hdl)
-#       endif
-
-#   endif
-
-#else
-#   define armci_put2D(proc,bytes,count,src_ptr,src_stride,dst_ptr,dst_stride){\
-    int _j;\
-    char *ps=src_ptr, *pd=dst_ptr;\
-      for (_j = 0;  _j < count;  _j++){\
-          armci_put(ps, pd, bytes, proc);\
-          ps += src_stride;\
-          pd += dst_stride;\
-      }\
-    }
-
-
-#   define armci_get2D(proc,bytes,count,src_ptr,src_stride,dst_ptr,dst_stride){\
-    int _j;\
-    char *ps=src_ptr, *pd=dst_ptr;\
-      for (_j = 0;  _j < count;  _j++){\
-          armci_get(ps, pd, bytes, proc);\
-          ps += src_stride;\
-          pd += dst_stride;\
-      }\
-    }
-#endif
-   
 /* macros to ensure ordering of consecutive puts or gets following puts */
 #if defined(LAPI)
 
 #   include "lapidefs.h"
 
-#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1)\
-   || defined(CRAY_SHMEM)
-#if defined(CRAY) || defined(XT3)
+#elif defined(_CRAYMPP) || defined(QUADRICS) || defined(__crayx1)
+#ifdef CRAY
 #   include <mpp/shmem.h>
 #else
 #   include <unistd.h>
@@ -358,20 +162,16 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
              armci_copy(src,dst,n);\
            } else { qsw_get((src),(dst),(int)(n),(proc));}
 
-#elif defined(CRAY_T3E) || defined(CRAY_SHMEM)
+#elif defined(CRAY_T3E)
 #      define armci_copy_disabled(src,dst,n)\
         if((n)<256 || n%sizeof(long) ) memcpy((dst),(src),(n));\
-        else {\
-          shmem_put((long*)(dst),(long*)(src),(int)(n)/sizeof(long),armci_me);\
-          shmem_quiet(); }
+        else shmem_put((long*)(dst),(long*)(src),(int)(n)/sizeof(long),armci_me)
 
 #      define armci_put(src,dst,n,proc) \
-              shmem_put32((void *)(dst),(void *)(src),(int)(n)/4,(proc));\
-              shmem_quiet()
+              shmem_put32((void *)(dst),(void *)(src),(int)(n)/4,(proc))
 
 #      define armci_get(src,dst,n,proc) \
-              shmem_get32((void *)(dst),(void *)(src),(int)(n)/4,(proc));\
-              shmem_quiet()
+              shmem_get32((void *)(dst),(void *)(src),(int)(n)/4,(proc))
 
 #elif  defined(HITACHI)
 
@@ -447,6 +247,153 @@ extern void armci_elan_put_with_tracknotify(char *src,char *dst,int n,int proc, 
 #      define armci_get(src,dst,n,p)    armci_copy((src),(dst),(n))
 #      define armci_put(src,dst,n,p)    armci_copy((src),(dst),(n))
 
+#endif
+
+#ifdef COPY686 
+     extern void *armci_asm_memcpy(void *dst, const void *src, size_t n, int tid);
+     extern void *armci_asm_memcpy_nofence(void *d,const void *s,size_t n, int id);
+#    ifdef SERVER_CONTEXT
+#      define armci_copy(src,dst,n) {\
+        int _id= (SERVER_CONTEXT)?1:0; armci_asm_memcpy((dst), (src), (n), _id);}
+#    else
+#      define armci_copy(src,dst,n)  armci_asm_memcpy((dst), (src), (n), 0)
+#    endif
+#    define armci_copy_nofence(_s,_d,_n) armci_asm_memcpy_nofence((_d),(_s),(_n),0)
+#    ifndef MEMCPY
+#       define MEMCPY
+#    endif
+#    define MEM_FENCE armci_asm_mem_fence()
+     extern void armci_asm_mem_fence();
+#endif
+                                                 
+#if  defined(MEMCPY)  && !defined(armci_copy)
+#    define armci_copy(src,dst,n)  memcpy((dst), (src), (n)) 
+#endif
+
+#ifdef NEC
+#    define MEM_FENCE {mpisx_clear_cache(); _armci_vec_sync_flag=1;mpisx_syncset0_long(&_armci_vec_sync_flag);}
+#endif
+
+#ifdef DECOSF
+#    define MEM_FENCE asm ("mb")
+#endif
+
+#if defined(NEED_MEM_SYNC)
+#  ifdef AIX
+#    define MEM_FENCE {int _dummy=1; _clear_lock((int *)&_dummy,0); }
+#  elif defined(__ia64)
+#    if defined(__GNUC__) && !defined (__INTEL_COMPILER)
+#       define MEM_FENCE __asm__ __volatile__ ("mf" ::: "memory");
+#    else /* Intel Compiler */ 
+        extern void _armci_ia64_mb();
+#       define MEM_FENCE _armci_ia64_mb();
+#    endif
+#  endif
+#endif
+
+#ifndef armci_copy
+# ifdef PTR_ALIGN
+#   define armci_copy(src,dst,n)     \
+     do if( ((n) < THRESH1D)   || ((n)%ALIGN_SIZE) || \
+            ((unsigned long)(src)%ALIGN_SIZE) ||\
+            ((unsigned long)(dst)%ALIGN_SIZE)) memcpy((dst),(src),(n));\
+        else{ int _bytes=(n)/sizeof(double); DCOPY1D((src),(dst),&_bytes);}\
+     while (0)
+# else
+#   define armci_copy(src,dst,n)     \
+     do if( ((n) < THRESH1D) || ((n)%ALIGN_SIZE) ) memcpy((dst), (src), (n));\
+          else{ int _bytes=(n)/sizeof(double); DCOPY1D((src),(dst),&_bytes);}\
+     while (0)
+# endif
+#endif
+
+/****************************** 2D Copy *******************/
+
+
+#ifndef MEMCPY
+#   define DCopy2D(rows, cols, src_ptr, src_ld, dst_ptr, dst_ld){\
+      int rrows, ldd, lds, ccols;\
+          rrows = (rows);\
+          lds =   (src_ld);\
+          ldd =   (dst_ld);\
+          ccols = (cols);\
+          DCOPY2D(&rrows, &ccols, src_ptr, &lds,dst_ptr,&ldd);\
+      }
+
+#else
+#   define DCopy2D(rows, cols, src_ptr, src_ld, dst_ptr, dst_ld){\
+    int j, nbytes = sizeof(double)* rows;\
+    char *ps=src_ptr, *pd=dst_ptr;\
+      for (j = 0;  j < cols;  j++){\
+          armci_copy(ps, pd, nbytes);\
+          ps += sizeof(double)* src_ld;\
+          pd += sizeof(double)* dst_ld;\
+      }\
+    }
+#endif
+
+
+#   define ByteCopy2D(bytes, count, src_ptr, src_stride, dst_ptr,dst_stride){\
+    int _j;\
+    char *ps=src_ptr, *pd=dst_ptr;\
+      for (_j = 0;  _j < count;  _j++){\
+          armci_copy(ps, pd, bytes);\
+          ps += src_stride;\
+          pd += dst_stride;\
+      }\
+    }
+
+#if defined(FUJITSU) 
+
+#   define armci_put2D(p, bytes,count,src_ptr,src_stride,dst_ptr,dst_stride)\
+           CopyPatchTo(src_ptr, src_stride, dst_ptr, dst_stride, count,bytes, p)
+
+#   define armci_get2D(p, bytes, count, src_ptr,src_stride,dst_ptr,dst_stride)\
+           CopyPatchFrom(src_ptr, src_stride, dst_ptr, dst_stride,count,bytes,p)
+
+#elif defined(HITACHI) || defined(_ELAN_PUTGET_H)
+
+#ifdef QUADRICS
+#if 0
+#   define WAIT_FOR_PUTS elan_putWaitAll(elan_base->state,200)
+#   define WAIT_FOR_GETS elan_getWaitAll(elan_base->state,200)
+#else
+#   define WAIT_FOR_PUTS armcill_wait_put()
+#   define WAIT_FOR_GETS armcill_wait_get()
+    extern void armcill_wait_put();
+    extern void armcill_wait_get();
+#endif
+#endif
+
+    extern void armcill_put2D(int proc, int bytes, int count,
+                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
+    extern void armcill_get2D(int proc, int bytes, int count,
+                void* src_ptr,int src_stride, void* dst_ptr,int dst_stride);
+#   define armci_put2D armcill_put2D
+#   define armci_get2D armcill_get2D
+
+
+#else
+#   define armci_put2D(proc,bytes,count,src_ptr,src_stride,dst_ptr,dst_stride){\
+    int _j;\
+    char *ps=src_ptr, *pd=dst_ptr;\
+      for (_j = 0;  _j < count;  _j++){\
+          armci_put(ps, pd, bytes, proc);\
+          ps += src_stride;\
+          pd += dst_stride;\
+      }\
+    }
+
+
+#   define armci_get2D(proc,bytes,count,src_ptr,src_stride,dst_ptr,dst_stride){\
+    int _j;\
+    char *ps=src_ptr, *pd=dst_ptr;\
+      for (_j = 0;  _j < count;  _j++){\
+          armci_get(ps, pd, bytes, proc);\
+          ps += src_stride;\
+          pd += dst_stride;\
+      }\
+    }
 #endif
 
 #ifndef MEM_FENCE

@@ -2,7 +2,7 @@
  *    Author: Jialin Ju, PNNL
  */
 
-/* $Id: perf.c,v 1.20 2006-09-12 20:51:56 andriy Exp $ */
+/* $Id: perf.c,v 1.21 2006-09-12 23:21:21 andriy Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -569,16 +569,14 @@ void check_result(double *src_buf, double *dst_buf, int *stride, int *count,
         }
         
         size = count[0] / sizeof(double);
-        for(j=0; j<size; j++) {
-            double a, b;
-            a = ((double *)((char *)src_buf+idx))[j];
-            b = ((double *)((char *)dst_buf+idx))[j];
-            if(ABS(a - b) > 0.000001){
-                fprintf(stdout,"Error:%s comparison failed: (%d) (%.6f :%.6f) %d\n",
-                        check_type, j, a, b, count[0]);
+        for(j=0; j<size; j++)
+            if(ABS(((double *)((char *)src_buf+idx))[j] - 
+               ((double *)((char *)dst_buf+idx))[j]) > 0.000001 ){
+                fprintf(stdout,"Error:%s comparison failed: (%d) (%f :%f) %d\n",
+                        check_type, j, ((double *)((char *)src_buf+idx))[j],
+                        ((double *)((char *)dst_buf+idx))[j], count[0]);
                 ARMCI_Error("failed",0);
             }
-        }
     }
 }
 
@@ -618,4 +616,3 @@ void acc_array(double scale, double *array1, double *array2, int *stride,
 
     }
 }
-

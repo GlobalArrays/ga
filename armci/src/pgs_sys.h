@@ -1,10 +1,10 @@
-/* $Id: pgs_sys.h,v 1.4 2006-09-12 20:51:56 andriy Exp $ */
+/* $Id: pgs_sys.h,v 1.5 2006-09-12 23:21:22 andriy Exp $ */
 /* $Source: /tmp/hpctools/ga/armci/src/pgs_sys.h,v $ */
 
 #ifndef _ELAN_PGSSYS_H
 #define _ELAN_PGSSYS_H
 
-#ident	"@(#)$Id: pgs_sys.h,v 1.4 2006-09-12 20:51:56 andriy Exp $"
+#ident	"@(#)$Id: pgs_sys.h,v 1.5 2006-09-12 23:21:22 andriy Exp $"
 
 #define PGS_QSLOTSIZE    1024
 #define PGS_THREADSTACK 16384

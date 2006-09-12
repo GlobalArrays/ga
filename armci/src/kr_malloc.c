@@ -1,11 +1,10 @@
-/* $Id: kr_malloc.c,v 1.23 2006-09-12 20:51:55 andriy Exp $ */
+/* $Id: kr_malloc.c,v 1.24 2006-09-12 23:21:21 andriy Exp $ */
 #include <stdio.h>
 #include "kr_malloc.h"
 #include "armcip.h" /* for DEBUG purpose only. remove later */
 #include "locks.h"
 
 #define DEBUG 0
-#define DEBUG_ 0
 
 /* Storage allocator basically copied from ANSI K&R and corrupted */
 
@@ -210,10 +209,8 @@ char *kr_malloc(size_t nbytes, context_t *ctx) {
        }
     }
 
-#if DEBUG_
-    fprintf(stderr, "kr_malloc: %d bytes at %p\n", nbytes, return_ptr);
-#endif    
     return return_ptr;
+
 }
 
 
