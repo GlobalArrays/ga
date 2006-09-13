@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <assert.h>
 
 #   include <mpi.h>
@@ -10,8 +11,13 @@
 #   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
 
 #include "armci.h"
+
+#define MAXPROCS 128
+#define SIZE_    1024
+#define FAILURE_SIZE_    512
+
 int me,nproc;
-double **ptr_arr;
+double *ptr_arr[MAXPROCS];
 long size;
 void do_work(int sz)
 {
@@ -24,8 +30,7 @@ void do_work(int sz)
 static double time_array[100],time_array1[100],t1;
 int main(int argc, char* argv[])
 {
-    int ndim;
-    int rc,i,j=0,rid;
+    int rc,i,j=0,rid,ret;
     armci_ckpt_ds_t ckptds;
     ARMCI_Group *grp;
     MP_INIT(argc, argv);
@@ -33,49 +38,75 @@ int main(int argc, char* argv[])
     MP_MYID(&me);
 
     if(me==0){
-       printf("ARMCI test program (%d processes)\n",nproc); 
-       fflush(stdout);
-       sleep(1);
+       if(nproc > MAXPROCS) ARMCI_Error("nproc > MAXPROCS", nproc);
+       else {
+          printf("ARMCI test program (%d processes)\n",nproc); 
+          fflush(stdout);
+          sleep(1);
+       }
+       
     }
-    
+    armci_init_checkpoint2();
     ARMCI_Init();
     grp = ARMCI_Get_world_group();
-    size = 131072;
+    size = SIZE_;
     rc=ARMCI_Malloc((void **)ptr_arr,size*8);
-    for(size=1;size<262144;size*=2){
+    printf("ARMCI test program (%d processes)\n",nproc); 
+    fflush(stdout);
+    for(size=1;size<=SIZE_;size*=2){
        t1 = MPI_Wtime();
        for(i=0;i<5;i++){
          for(rc=0;rc<15;rc++)do_work(size);
        }
        time_array[j++]=MPI_Wtime()-t1;
        MP_BARRIER();
-       printf("\n%d:done for size %d",me,size);fflush(stdout);
+       printf("%d:done for size %ld\n",me,size);fflush(stdout);
     }
-    j=0;
-    (void)ARMCI_Ckpt_create_ds(&ckptds,1); 
-    /*ckptds.ptr_arr[0]=&me;
-    ckptds.ptr_arr[1]=&nproc;
-    ckptds.ptr_arr[2]=&size;*/
+    
+    (void)ARMCI_Ckpt_create_ds(&ckptds,1);
     ckptds.ptr_arr[0]=ptr_arr[me];
-    /*ckptds.sz[0]=sizeof(int);
-    ckptds.sz[1]=sizeof(int);
-    ckptds.sz[2]=sizeof(long);*/
-    for(size=1;size<262144;size*=2){
+    ckptds.sz[0]=SIZE_*8;
+    rid=ARMCI_Ckpt_init(NULL,grp,1,0,&ckptds);
+    printf("%d: After ARMCI_Ckpt_init(): \n", me);
+
+    j=0;
+    for(size=128;size<=SIZE_;size*=2){
+
+       int rc;
+       int simulate_restart=1;
        t1 = MPI_Wtime();
-       ckptds.sz[0]=size*8;
-       rid=ARMCI_Ckpt_init(NULL,grp,1,0,&ckptds);
-       for(i=0;i<5;i++){
-         rc = ARMCI_Ckpt(rid);
-         for(rc=0;rc<15;rc++)do_work(size);
+
+       ret=ARMCI_Ckpt(rid);
+       if(ret==ARMCI_CKPT)
+         printf("%d: Performed CHECKPOINT @ size=%ld\n",me,size);
+       else if(ret==ARMCI_RESTART) {
+         simulate_restart = 0;
+         printf("%d: Performed RESTART @ size=%ld\n", me,size);
        }
+       
+       for(i=0;i<5;i++){
+         for(rc=0;rc<15;rc++)
+            if(i==3 && rc==10) {
+            }
+            do_work(size);
+       }
+
        time_array1[j++]=MPI_Wtime()-t1;
-       MP_BARRIER();
-       ARMCI_Ckpt_finalize(rid);
-       printf("\n%d:done for size %d",me,size);fflush(stdout);
-       printf("\n%d:for size=%d regular=%f withckpt=%f",me,size,time_array[j-1],time_array1[j-1]);fflush(stdout);
        sleep(1);
+
+       if(simulate_restart && size == FAILURE_SIZE_) {
+          printf("%d: Simulating FAILURE @ size = %d\n", me, size);
+          ARMCI_Restart_simulate(rid,1);
+       }
+       
+       printf("%d: DONE for size=%ld regular=%f withckpt=%f\n\n",
+              me, size, time_array[j-1], time_array1[j-1]); fflush(stdout);
+       
     }
 
+    ARMCI_Ckpt_finalize(rid);
+    
+    printf("Before Finalize()\n");
     MP_BARRIER();
     ARMCI_Finalize();
     MP_FINALIZE();

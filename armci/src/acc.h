@@ -67,7 +67,7 @@ void ATR C_ACCUMULATE_1D(void*, void*, void*, int*);
 void ATR Z_ACCUMULATE_1D(void*, void*, void*, int*); 
 
 
-#if !defined(CRAY_T3E)
+#ifndef CRAY_T3E
 void ATR F_ACCUMULATE_2D(void*, int*, int*, void*, int*, void*, int*);
 void ATR F_ACCUMULATE_1D(void*, void*, void*, int*); 
 #else

@@ -17,27 +17,43 @@ extern void armci_die(char *msg, int code);
 FILE_DS armci_storage_fopen(char *filename)
 {
     FILE_DS file_d;
+    remove ( filename );
     file_d = fopen(filename,"w+");
-   if(DEBUG) printf("\n%d:filed=%p %s",armci_me,file_d,filename);
+    if(file_d==NULL) armci_die("armci_storage_fopen(): cannot open file",0);
+    if(DEBUG); printf("\n%d:filed=%p %s\n",armci_me,file_d,filename);
+    return(file_d);
+}
+FILE_DS armci_storage_fopen_RONLY(char *filename)
+{
+    FILE_DS file_d;
+    file_d = fopen(filename,"r");
+    if(file_d==NULL)
+       armci_die("armci_storage_fopen_RONLY():cannot open file",0);
+    if(DEBUG); printf("\n%d:filed=%p %s\n",armci_me,file_d,filename);
     return(file_d);
 }
 void armci_storage_fclose(FILE_DS filed)
 {
     int rc = fclose(filed);
-    if(rc !=0)printf("file could not be close");
+    if(rc!=0)armci_die("armci_storage_fclose(): cannot close file",0);
 }
 
-int armci_storage_read_ptr(FILE_DS file_d,void *ptr,int size,off_t ofs)
+int armci_storage_read_ptr(FILE_DS file_d,void *ptr,size_t size,off_t ofs)
 {
     int rc=0,orc=0,isize=size;
+
+    if(isize<0) armci_die("armci_storage_read_ptr(): Invalid size(<0)", isize);
     
     rc = fseek(file_d,ofs,SEEK_SET);
     if(rc)armci_die("fseek failed in armci_storage_read_ptr",rc);
 
     while(orc!=isize){
+       printf("ptr=%p ofs=%ld size=%ld filed=%p\n", ptr,ofs,size,file_d);
        rc = fread(ptr,1,size,file_d);
+       if(!rc) armci_die("armci_storage_read_ptr(): fread failed",0);
+       
        orc+=rc;
-       if(DEBUG)printf("\n%d:read %d so far of %d\n",armci_me,orc,isize);
+       if(DEBUG); printf("\n%d:read %d so far of %d\n",armci_me,orc,isize);
        if(orc!=isize){
          ptr+=rc;
          size-=rc;
@@ -62,7 +78,7 @@ int armci_storage_read_pages(FILE_DS file_d, unsigned long first_page,
     return rc;
 }
 
-int armci_storage_write_ptr(FILE_DS file_d,void *ptr,int size,off_t ofs)
+int armci_storage_write_ptr(FILE_DS file_d,void *ptr,size_t size,off_t ofs)
 {
     int rc=0,orc=0,isize=size;
     if(DEBUG)printf("in storage_write_ptr %ld is ofs\n",ofs); 
@@ -78,7 +94,7 @@ int armci_storage_write_ptr(FILE_DS file_d,void *ptr,int size,off_t ofs)
          size-=rc;
        }
     }
-    rc = fseek(file_d,0,SEEK_SET);
+    rc = fseek(file_d,0,SEEK_SET); /* for file sync. data flushed to disk  */
     if(rc)armci_die("fseek failed in armci_storage_write_ptr",rc);
     return 0;
 }
