@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.33 2006-09-12 23:21:21 andriy Exp $ */
+/* $Id: clusterinfo.c,v 1.34 2006-09-13 23:43:36 andriy Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -33,7 +33,7 @@
 #  define armci_enable_alpha_hack() 1
 #endif
 
-#define DEBUG  0
+#define DEBUG  1
 #define MAX_HOSTNAME 80
 #define CHECK_NODE_NAMES 
 
@@ -87,6 +87,12 @@ pid_t ppid;
 static int altix_gethostname(char *name, int len) {
     sprintf(name,"altix");
     return 0;
+}
+#elif defined(CATAMOUNT)
+#define GETHOSTNAME cnos_gethostname
+static int cnos_gethostname(char *name, int len)
+{
+    sprintf(name,"%d",cnos_get_rank());
 }
 #else
 # define GETHOSTNAME gethostname

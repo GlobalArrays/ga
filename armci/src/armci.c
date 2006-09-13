@@ -1,4 +1,4 @@
-/* $Id: armci.c,v 1.113 2006-09-12 23:21:21 andriy Exp $ */
+/* $Id: armci.c,v 1.114 2006-09-13 23:43:36 andriy Exp $ */
 
 /* DISCLAIMER
  *
@@ -49,6 +49,14 @@
 #include "armci_profile.h"
 #endif
 
+#ifdef CRAY_SHMEM
+#  ifdef XT3
+#    include <mpp/shmem.h>
+#  else
+#    include <shmem.h>
+#  endif
+#endif
+
 /* global variables */
 int armci_me, armci_nproc;
 int armci_clus_me, armci_nclus, armci_master;
@@ -60,7 +68,7 @@ armci_ireq_t armci_inb_handle[ARMCI_MAX_IMPLICIT];/*implicit non-blocking handle
 #ifndef HITACHI
 double armci_internal_buffer[BUFSIZE_DBL];
 #endif
-#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI)
+#if defined(SYSV) || defined(WIN32) || defined(MMAP) || defined(HITACHI) || defined(CATAMOUNT)
 #   include "locks.h"
     lockset_t lockid;
 #endif
@@ -194,12 +202,12 @@ void armci_die2(char *msg, int code1, int code2)
     else _armci_terminating=1;
 
     if(SERVER_CONTEXT){
-      fprintf(stdout,"%d(s):%s: (%d,%d)\n",armci_me,msg,code1,code2); 
-	  fflush(stdout);
+      fprintf(stdout,"%d(s):%s: (%d,%d)\n",armci_me,msg,code1,code2);
+      fflush(stdout);
       fprintf(stderr,"%d(s):%s: (%d,%d)\n",armci_me,msg,code1,code2);
     }else{
-      fprintf(stdout,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2); 
-	  fflush(stdout);
+      fprintf(stdout,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2);
+      fflush(stdout);
       fprintf(stderr,"%d:%s: (%d,%d)\n",armci_me,msg,code1,code2);
     }
 
@@ -215,13 +223,13 @@ void ARMCI_Error(char *msg, int code)
 
 void armci_allocate_locks()
 {
-    /* note that if ELAN_ACC is defined the scope of locks is limited to SMP */ 
-#if defined(HITACHI) || \
-     (defined(QUADRICS) && defined(_ELAN_LOCK_H) && !defined(ELAN_ACC))
+    /* note that if ELAN_ACC is defined the scope of locks is limited to SMP */
+#if !defined(CRAY_SHMEM) && (defined(HITACHI) || defined(CATAMOUNT) || \
+    (defined(QUADRICS) && defined(_ELAN_LOCK_H) && !defined(ELAN_ACC)))
        armcill_allocate_locks(NUM_LOCKS);
 #elif (defined(SYSV) || defined(WIN32) || defined(MMAP)) && !defined(HITACHI)
-       if(armci_nproc == 1)return;    
-#  if defined(SPINLOCK) || defined(PMUTEXES) 
+       if(armci_nproc == 1)return;
+#  if defined(SPINLOCK) || defined(PMUTEXES)
        CreateInitLocks(NUM_LOCKS, &lockid);
 #  else
        if(armci_master==armci_me)CreateInitLocks(NUM_LOCKS, &lockid);
@@ -229,7 +237,6 @@ void armci_allocate_locks()
        if(armci_master != armci_me)InitLocks(NUM_LOCKS, lockid);
 #  endif
 #endif
-    
 }
 
 
@@ -360,10 +367,10 @@ int ARMCI_Init()
 #ifdef LAPI
     {
        char *tmp1 = getenv("RT_GRQ"), *tmp2 = getenv("AIXTHREAD_SCOPE");
-       if(tmp1 == NULL || strcmp((const char *)tmp1,"ON")) 
-	  armci_die("Armci_Init: environment variable RT_GRQ not set. It should be set as RT_GRQ=ON, to restore original thread scheduling LAPI relies upon",0);
-       if(tmp2 == NULL || strcmp((const char *)tmp2,"S")) 
-	  armci_die("Armci_Init: environment variable AIXTHREAD_SCOPE=S should be set to assure correct operation of LAPI", 0);
+       if(tmp1 == NULL || strcmp((const char *)tmp1,"ON"))
+           armci_die("Armci_Init: environment variable RT_GRQ not set. It should be set as RT_GRQ=ON, to restore original thread scheduling LAPI relies upon",0);
+       if(tmp2 == NULL || strcmp((const char *)tmp2,"S"))
+           armci_die("Armci_Init: environment variable AIXTHREAD_SCOPE=S should be set to assure correct operation of LAPI", 0);
     }
     armci_init_lapi();
 #endif
@@ -377,15 +384,15 @@ int ARMCI_Init()
     {
        char *tmp = getenv("SHMEM_SMP_ENABLE");
        if(tmp == NULL || strcmp((const char *)tmp,"0"))
-	  printf("WARNING: On Tru64 (Compaq Alphaserver) it might be required to set the Quadrics environment variable SHMEM_SMP_ENABLE=0 as a work around for shmem_fadd problem.\n");
+           printf("WARNING: On Tru64 (Compaq Alphaserver) it might be required to set the Quadrics environment variable SHMEM_SMP_ENABLE=0 as a work around for shmem_fadd problem.\n");
     }
 #   endif
 
     /* Ensure we're linked with compatible software */
     if (!elan_checkVersion (ELAN_VERSION))
-	fprintf(stderr,
-		"libelan version '%s' incompatible with '%s' ('%s' expected)",
-		ELAN_VERSION, elan_version(), ELAN_VERSION);
+        fprintf(stderr,
+                "libelan version '%s' incompatible with '%s' ('%s' expected)",
+                ELAN_VERSION, elan_version(), ELAN_VERSION);
 
 #ifdef QSNETLIBS_VERSION_CODE
 #   if QSNETLIBS_VERSION_CODE < QSNETLIBS_VERSION(1,4,6)
@@ -397,13 +404,17 @@ int ARMCI_Init()
 
 #   ifdef LIBELAN_ATOMICS
     {
-	ELAN_QUEUE *q = elan_gallocQueue(elan_base, elan_base->allGroup);
-	a = elan_atomicInit(elan_base->state, q, 16, 0);
+        ELAN_QUEUE *q = elan_gallocQueue(elan_base, elan_base->allGroup);
+        a = elan_atomicInit(elan_base->state, q, 16, 0);
     }
 #   else
        shmem_init();
 #   endif
 #endif /* QUADRICS */
+
+#ifdef CRAY_SHMEM
+    shmem_init();
+#endif
 
     armci_init_clusinfo();
 #ifdef MPI
@@ -414,6 +425,11 @@ int ARMCI_Init()
     /* trap signals to cleanup ARMCI system resources in case of crash */
     if(armci_me==armci_master) ARMCI_ParentTrapSignals();
     ARMCI_ChildrenTrapSignals();
+
+    /* init K&R memory for CRAY-XT3 */
+#if defined(CRAY_SHMEM) && defined(XT3)
+    armci_cray_shm_init();
+#endif
 
 #if defined(SYSV) || defined(WIN32) || defined(MMAP)
     /* init shared/K&R memory */
@@ -434,15 +450,15 @@ int ARMCI_Init()
        ARMCI_Malloc(test_ptr_arr,256*1024*1024);
 #if 0
        {
-	  int i;
-	  armci_region_shm_malloc(test_ptr_arr, 100000000);
-	  *(long*)test_ptr_arr[armci_me]=10000+armci_me;
-	  armci_msg_barrier();
-	  for(i = 0; i < armci_clus_last -armci_clus_first+1; i++){
-	     printf("for %d got ptr is %p\n", armci_clus_first+i,(long*)test_ptr_arr[i+armci_clus_first]);
-	     printf("for %d got %ld\n",armci_clus_first+i, *(long*)test_ptr_arr[i+armci_clus_first]);
-	  }
-	  armci_msg_barrier();
+          int i;
+          armci_region_shm_malloc(test_ptr_arr, 100000000);
+          *(long*)test_ptr_arr[armci_me]=10000+armci_me;
+          armci_msg_barrier();
+          for(i = 0; i < armci_clus_last -armci_clus_first+1; i++){
+             printf("for %d got ptr is %p\n", armci_clus_first+i,(long*)test_ptr_arr[i+armci_clus_first]);
+             printf("for %d got %ld\n",armci_clus_first+i, *(long*)test_ptr_arr[i+armci_clus_first]);
+          }
+          armci_msg_barrier();
        }
 #endif
        ARMCI_Free(test_ptr_arr[armci_me]);
@@ -633,11 +649,11 @@ int direct=SAMECLUSNODE(nb_handle->proc);
     }
     if(nb_handle) {
       if(nb_handle->agg_flag) {
-	armci_agg_complete(nb_handle, UNSET);
+        armci_agg_complete(nb_handle, UNSET);
 #       ifdef ARMCI_PROFILE
-	armci_profile_stop(ARMCI_PROF_WAIT);
+        armci_profile_stop(ARMCI_PROF_WAIT);
 #       endif
-	return (success);
+        return (success);
       }
     }
 
@@ -648,7 +664,7 @@ int direct=SAMECLUSNODE(nb_handle->proc);
         if(nb_handle->tag==0){
               ARMCI_NB_WAIT(nb_handle->cmpl_info);
 #             ifdef ARMCI_PROFILE
-	      armci_profile_stop(ARMCI_PROF_WAIT);
+              armci_profile_stop(ARMCI_PROF_WAIT);
 #             endif
               return(success);
         }
@@ -656,7 +672,7 @@ int direct=SAMECLUSNODE(nb_handle->proc);
          if(nb_handle->tag!=0 && nb_handle->bufid==NB_NONE){
                ARMCI_NB_WAIT(nb_handle->cmpl_info);
 #              ifdef ARMCI_PROFILE
-	       armci_profile_stop(ARMCI_PROF_WAIT);
+               armci_profile_stop(ARMCI_PROF_WAIT);
 #              endif
                return(success);
          }
@@ -778,14 +794,13 @@ int armci_notify_wait(int proc,int *pval)
 #endif
 #ifdef DOELAN4
   if(proc==armci_me){
-       MEM_FENCE;
+    MEM_FENCE;
 #ifdef ARMCI_PROFILE
     armci_profile_stop(ARMCI_PROF_NOTIFY);
 #endif
     return 0;
   }
 #endif
-	  
 
 #if defined(GM) || (defined(DOELAN4) && defined(ELAN_ACC))
   {
@@ -797,11 +812,11 @@ int armci_notify_wait(int proc,int *pval)
      long loop=0;
      armci_notify_t *pnotify = _armci_notify_arr[armci_me]+proc;
      pnotify->waited++;
-     while( pnotify->waited > pnotify->received) { 
-	if(++loop == 1000) { loop=0;cpu_yield(); }
-	armci_util_spin(loop, pnotify);
+     while( pnotify->waited > pnotify->received) {
+         if(++loop == 1000) { loop=0;cpu_yield(); }
+         armci_util_spin(loop, pnotify);
      }
-     *pval = pnotify->waited; 
+     *pval = pnotify->waited;
      retval=pnotify->received;
   }
 #endif
@@ -883,8 +898,8 @@ void ARMCI_Ckpt_finalize(int rid)
 #endif
 #ifdef ARMCI_ENABLE_GPC_CALLS
 int armci_gpc(int hndl, int proc, void  *hdr, int hlen,  void *data,  int dlen,
-	      void *rhdr, int rhlen, void *rdata, int rdlen, 
-	      armci_hdl_t* nbh) {
+              void *rhdr, int rhlen, void *rdata, int rdlen,
+              armci_hdl_t* nbh) {
   armci_ihdl_t nb_handle = (armci_ihdl_t)nbh;
   armci_giov_t darr[2]; /* = {{&rhdr, &rhdr, 1, rhlen}, {&rdata, &rdata, 1, rdlen}};*/
   gpc_send_t send;

@@ -1,3 +1,4 @@
+/* $Id: locks.h,v 1.28 2006-09-13 23:43:36 andriy Exp $ */
 #ifndef _ARMCI_LOCKS_H_
 #define _ARMCI_LOCKS_H_
 #include <sys/types.h>
@@ -144,12 +145,14 @@ extern void armcill_unlock(int m, int proc);
    typedef int lockset_t;
 
 
-#elif defined(CRAY_T3E) || defined(QUADRICS) || defined(__crayx1)
+#elif defined(CRAY_T3E) || defined(QUADRICS) || defined(__crayx1)\
+        || defined(CATAMOUNT) || defined(CRAY_SHMEM)
 #  include <limits.h>
-#  ifdef CRAY
+#  if defined(CRAY) || defined(XT3)
 #    include <mpp/shmem.h>
 #  endif
-#if defined(DECOSF) || defined(LINUX64) || defined(__crayx1)
+#if defined(DECOSF) || defined(LINUX64) || defined(__crayx1)\
+        || defined(CATAMOUNT)
 #  define  _INT_MIN_64 (LONG_MAX-1)
 #endif
 #  undef NUM_LOCKS

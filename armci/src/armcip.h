@@ -29,7 +29,7 @@ extern void armci_elan_fence(int p);
 #include <unistd.h>
 #endif
 
-#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(HITACHI)
+#if (defined(SYSV) || defined(WIN32)|| defined(MMAP)) && !defined(NO_SHM) && !defined(HITACHI) && !defined(CATAMOUNT)
 #define CLUSTER 
 
 #ifdef SERVER_THREAD
@@ -89,7 +89,8 @@ extern thread_id_t armci_usr_tid;
 #  define SERVER_CONTEXT (armci_me<0)
 #endif
 
-#if defined(LAPI) || defined(CLUSTER) || defined(CRAY)
+#if defined(LAPI) || defined(CLUSTER) || defined(CRAY) || defined(XT3)\
+        || defined(CRAY_SHMEM)
 #  include "request.h"
 #endif
 
@@ -113,8 +114,9 @@ extern thread_id_t armci_usr_tid;
 # include <strings.h>
 #endif
 
-#if defined (CRAY_T3E) || defined(FUJITSU) || defined(HITACHI)\
-     ||(defined(QUADRICS)&&!defined(ELAN_ACC)) || defined(PORTALS)
+#if defined(CRAY_SHMEM) || defined(CRAY_T3E) || defined(FUJITSU)\
+       || defined(HITACHI) || (defined(QUADRICS) && !defined(ELAN_ACC))\
+       || defined(CATAMOUNT)
 #define ACC_COPY
 #endif
 
@@ -250,7 +252,8 @@ extern void armci_init_fence();
         if( proc == armci_me || ( ACC(op) && ACC(PENDING_OPER(proc))) );\
         else  FENCE_NODE(proc)
 #  define UPDATE_FENCE_INFO(proc_)
-#elif defined(CLUSTER) && !defined(QUADRICS) && !defined(HITACHI)
+#elif defined(CLUSTER) && !defined(QUADRICS) && !defined(HITACHI)\
+        && !defined(CRAY_SHMEM)
 #  define ORDER(op,proc)\
         if(!SAMECLUSNODE(proc) && op != GET )_armci_fence_arr[proc]=1
 #  define UPDATE_FENCE_INFO(proc_) if(!SAMECLUSNODE(proc_))_armci_fence_arr[proc_]=1

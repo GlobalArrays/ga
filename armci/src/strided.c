@@ -1,4 +1,4 @@
-/* $Id: strided.c,v 1.114 2006-09-12 23:21:22 andriy Exp $ */
+/* $Id: strided.c,v 1.115 2006-09-13 23:43:36 andriy Exp $ */
 #include "armcip.h"
 #include "copy.h"
 #include "acc.h"
@@ -457,13 +457,14 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
 
 /*    if(proc!=armci_me) INTR_OFF;*/
 
-#  if defined(LAPI2)
+#  if defined(LAPI2) || defined(DOELAN4)
     /*even 1D armci_nbput has to use different origin counters for 1D */
 #   if defined(LAPI2)
     if(!ACC(op) && !SAMECLUSNODE(proc) && (nb_handle || 
        (!nb_handle && stride_levels>=1 && count[0]<=LONG_PUT_THRESHOLD))) 
 #   else
-    if(!ACC(op) && !SAMECLUSNODE(proc) && nb_handle && stride_levels<2)
+    /*if(!ACC(op) && !SAMECLUSNODE(proc) && nb_handle && stride_levels<2)*/
+    if(!ACC(op) && !SAMECLUSNODE(proc) && stride_levels<2)
 #   endif
        armci_network_strided(op,scale,proc,src_ptr,src_stride_arr,dst_ptr,
                          dst_stride_arr,count,stride_levels,nb_handle);
@@ -533,7 +534,7 @@ int armci_op_strided(int op, void* scale, int proc,void *src_ptr,
     }
     
     /* deal with non-blocking loads and stores */
-#if defined(LAPI) || defined(_ELAN_PUTGET_H)
+#if defined(LAPI) || defined(_ELAN_PUTGET_H) || defined(NB_NONCONT)
 #   if defined(LAPI)
      if(!nb_handle)
 #   endif

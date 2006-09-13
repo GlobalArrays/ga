@@ -1,4 +1,4 @@
-/* $Id: elan4.c,v 1.14 2006-09-12 23:21:21 andriy Exp $ */
+/* $Id: elan4.c,v 1.15 2006-09-13 23:43:36 andriy Exp $ */
 #include <elan/elan.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,9 +27,11 @@ extern void * pgs_ds_init (ELAN_STATE *state, void *qMem, void *dsqMem, int max)
 static int _ELAN_SLOTSIZE=700;
 static int server_can_poll=0;
 
+#ifndef NB_NONCONT
 #define VCALLS 1
-#if VCALLS
-#else
+#endif
+
+#if !VCALLS
 #define MAX_SLOTS 64
 #define MIN_OUTSTANDING 6
 static int max_pending=16; /* throttle number of outstanding nb calls */
@@ -1098,7 +1100,7 @@ char *ps=src_ptr, *pd=dst_ptr;
 void armcill_wait_get(){}
 void armcill_wait_put(){}
 
-#else
+#elif 0 /*#else*/
 
 #ifdef _ELAN_PUTGET_H
 
