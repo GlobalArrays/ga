@@ -1,4 +1,4 @@
-/*
+/* $Id: noncont.c,v 1.2 2006-09-13 00:18:54 andriy Exp $
  * noncont.c
  *
  * Developed by Andriy Kot <andriy.kot@pnl.gov>
