@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.37 2005-12-12 17:49:51 d3g293 Exp $ */
+/*$Id: base.h,v 1.38 2006-09-14 20:08:43 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -38,32 +38,37 @@ typedef Integer C_Integer;
 typedef armci_size_t C_Long;
 
 typedef struct {
-       short int  ndim;         /* number of dimensions                 */
-       short int  irreg;        /* 0-regular; 1-irregular distribution  */
-       int  type;               /* data type in array                   */
-       int  actv;               /* activity status                      */
-       C_Long   size;           /* size of local data in bytes          */
-       int  elemsize;           /* sizeof(datatype)                     */
-       int  ghosts;             /* flag indicating presence of ghosts   */
-       long lock;               /* lock                                 */
-       long id;                 /* ID of shmem region / MA handle       */
-       C_Integer  dims[MAXDIM]; /* global array dimensions              */
-       C_Integer  chunk[MAXDIM];/* chunking                             */
-       int  nblock[MAXDIM];     /* number of blocks per dimension       */
-       C_Integer  width[MAXDIM];/* boundary cells per dimension         */
-       C_Integer  first[MAXDIM];/* (Mirrored only) first local element  */
-       C_Integer  last[MAXDIM]; /* (Mirrored only) last local element   */
-       C_Long  shm_length;      /* (Mirrored only) local shmem length   */
-       C_Integer  lo[MAXDIM];   /* top/left corner in local patch       */
-       double scale[MAXDIM];    /* nblock/dim (precomputed)             */
-       char **ptr;              /* arrays of pointers to remote data    */
-       C_Integer  *mapc;        /* block distribution map               */
-       char name[FNAM+1];       /* array name                           */
-       int p_handle;            /* pointer to processor list for array  */
-       double *cache;           /* store for frequently accessed ptrs   */
-       int corner_flag;         /* flag for updating corner ghost cells */
+       short int  ndim;             /* number of dimensions                 */
+       short int  irreg;            /* 0-regular; 1-irregular distribution  */
+       int  type;                   /* data type in array                   */
+       int  actv;                   /* activity status                      */
+       C_Long   size;               /* size of local data in bytes          */
+       int  elemsize;               /* sizeof(datatype)                     */
+       int  ghosts;                 /* flag indicating presence of ghosts   */
+       long lock;                   /* lock                                 */
+       long id;                     /* ID of shmem region / MA handle       */
+       C_Integer  dims[MAXDIM];     /* global array dimensions              */
+       C_Integer  chunk[MAXDIM];    /* chunking                             */
+       int  nblock[MAXDIM];         /* number of blocks per dimension       */
+       C_Integer  width[MAXDIM];    /* boundary cells per dimension         */
+       C_Integer  first[MAXDIM];    /* (Mirrored only) first local element  */
+       C_Integer  last[MAXDIM];     /* (Mirrored only) last local element   */
+       C_Long  shm_length;          /* (Mirrored only) local shmem length   */
+       C_Integer  lo[MAXDIM];       /* top/left corner in local patch       */
+       double scale[MAXDIM];        /* nblock/dim (precomputed)             */
+       char **ptr;                  /* arrays of pointers to remote data    */
+       C_Integer  *mapc;            /* block distribution map               */
+       char name[FNAM+1];           /* array name                           */
+       int p_handle;                /* pointer to processor list for array  */
+       double *cache;               /* store for frequently accessed ptrs   */
+       int corner_flag;             /* flag for updating corner ghost cells */
+       int block_flag;              /* flag to indicate block-cyclic data   */
+       C_Integer block_dims[MAXDIM];/* array of block dimensions            */
+       C_Integer num_blocks[MAXDIM];/* number of blocks in each dimension   */
+       C_Integer block_total;       /* total number of blocks in array      */
+
 #ifdef DO_CKPT
-       int record_id;           /* record id for writing ga to disk     */
+       int record_id;               /* record id for writing ga to disk     */
 #endif
 } global_array_t;
 
@@ -128,12 +133,48 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
    }                                                                           \
 }
 
+/* this macro finds the block indices for a given block */
+#define gam_find_block_indices(ga_handle,nblock,index) {                       \
+  int _tsize, _itmp, _i;                                                       \
+  int _ndim = GA[ga_handle].ndim;                                              \
+  _tsize = 1;                                                                  \
+  _itmp = nblock;                                                              \
+  index[0] = _itmp%GA[ga_handle].num_blocks[0];                                \
+  for (_i=1; _i<_ndim; _i++) {                                                 \
+    _itmp = (_itmp-index[_i-1])/GA[ga_handle].num_blocks[_i-1];                \
+    index[_i] = _itmp%GA[ga_handle].num_blocks[_i];                            \
+  }                                                                            \
+}
+
 /* this macro finds cordinates of the chunk of array owned by processor proc */
 #define ga_ownsM(ga_handle, proc, lo, hi)                                      \
-  ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims,                   \
-                     GA[ga_handle].nblock, GA[ga_handle].mapc,                 \
-                     proc,lo, hi )
+{                                                                              \
+  if (GA[ga_handle].block_flag ==0) {                                          \
+    ga_ownsM_no_handle(GA[ga_handle].ndim, GA[ga_handle].dims,                 \
+                       GA[ga_handle].nblock, GA[ga_handle].mapc,               \
+                       proc,lo, hi )                                           \
+  } else {                                                                     \
+    int _index[MAXDIM];                                                        \
+    int _i;                                                                    \
+    int _ndim = GA[ga_handle].ndim;                                            \
+    gam_find_block_indices(ga_handle,proc,_index);                             \
+    for (_i=0; _i<_ndim; _i++) {                                               \
+      lo[_i] = _index[_i]*GA[ga_handle].block_dims[_i]+1;    \
+      hi[_i] = (_index[_i]+1)*GA[ga_handle].block_dims[_i];  \
+      if (hi[_i] > GA[ga_handle].dims[_i]) hi[_i]=GA[ga_handle].dims[_i];      \
+    }                                                                          \
+  }                                                                            \
+}
 
+/* this macro finds the block corresponding to a given set of indices */
+#define gam_find_block_from_indices(ga_handle,nblock,index) {                  \
+  int _ndim = GA[ga_handle].ndim;                                              \
+  int _i;                                                                      \
+  nblock = index[0];                                                           \
+  for (_i==1; _i<_ndim; _i++) {                                                \
+    nblock  = nblock*GA[ga_handle].num_blocks[_i-1]+index[_i];                 \
+  }                                                                            \
+}
 /* this macro computes the strides on both the remote and local
    processors that map out the data. ld and ldrem are the physical dimensions
    of the memory on both the local and remote processors. */

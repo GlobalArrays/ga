@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.87 2006-08-31 19:07:04 d3m782 Exp $ */
+/* $Id: capi.c,v 1.88 2006-09-14 20:08:43 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -396,6 +396,15 @@ void GA_Set_pgroup(int g_a, int p_handle)
   aa = (Integer)g_a;
   pp = (Integer)p_handle;
   ga_set_pgroup_(&aa, &pp);
+}
+
+void GA_Set_block_cyclic(int g_a, int dims[])
+{
+    Integer aa, ndim;
+    aa = (Integer)g_a;
+    ndim = ga_get_dimension_(&aa);
+    COPYC2F(dims,_ga_dims, ndim);
+    ga_set_block_cyclic_(&aa, _ga_dims);
 }
 
 int GA_Get_pgroup(int g_a)
@@ -898,22 +907,6 @@ int GA_Compare_distr(int g_a, int g_b)
     else return 1;
 }
 
-void NGA_Distribution_no_handle(int ndim, const int dims[], const int nblock[], const int mapc[], int iproc, int lo[], int hi[])
-{
-     Integer p=(Integer)iproc;
-     Integer _ndim = ndim;
-     Integer _dims[MAXDIM];
-     Integer _nblock[MAXDIM];
-     COPYINDEX_C2F(dims, _dims, ndim);
-     COPYINDEX_C2F(nblock, _nblock, ndim);
-     COPYINDEX_C2F(mapc, _ga_map_capi, ndim);
-     nga_distribution_no_handle_(&_ndim, _dims, _nblock, _ga_map_capi,
-                                 &p, _ga_lo, _ga_hi);
-     COPYINDEX_F2C(_ga_lo,lo, ndim);
-     COPYINDEX_F2C(_ga_hi,hi, ndim);
-}
-
-
 void NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[])
 {
      Integer a=(Integer)g_a;
@@ -923,6 +916,13 @@ void NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[])
 
      nga_access_ptr(&a,_ga_lo, _ga_hi, ptr, _ga_work);
      COPYF2C(_ga_work,ld, ndim-1);
+}
+
+void NGA_Access_block_ptr(int g_a, int idx, void *ptr)
+{
+     Integer a=(Integer)g_a;
+     Integer iblock = (Integer)idx;
+     nga_access_block_ptr(&a,&iblock,ptr);
 }
 
 void NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[])
