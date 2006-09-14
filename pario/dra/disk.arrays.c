@@ -1,4 +1,9 @@
-/*$Id: disk.arrays.c,v 1.74 2005-01-24 12:27:18 manoj Exp $*/
+/*
+DRA operations with a buffer manager layer, modified by Bilash
+The buffer manager provides functionalities related to buffers
+*/
+
+/*$Id: disk.arrays.c,v 1.75 2006-09-14 23:09:44 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -34,20 +39,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "macdecls.h"
+#include "ga.h"
 #define WALLTIME 0
 #if WALLTIME
 #include "walltime.c"
 #endif
+#include "buffers.h"
 
 /************************** constants ****************************************/
-
-/*  buffer size --- adjust to be a multiplicity of the
-    striping factor in a parallel filesystem */
-#if defined(SP) || defined(LINUX64)
-#define DRA_DBL_BUF_SIZE 131072
-#else
-#define DRA_DBL_BUF_SIZE 100000 
-#endif
 
 #define DRA_FAIL  (Integer)1
 #define COLUMN    1
@@ -62,19 +61,14 @@
 
 #define DRA_OP_WRITE  777
 #define DRA_OP_READ   888
+#define PROBE 111
+#define WAIT 222
 
 #define MAX_REQ   5
 
 /* message type/tag used by DRA */
 #define  GA_TYPE_GSM 32760 - 6
 #define  GA_TYPE_GOP 32760 - 7
-
-/* alignment factor for the internal buffer */
-#if defined(CRAY)
-#   define ALIGN 512
-#else
-#   define ALIGN 16
-#endif
 
 #define INFINITE_NUM_PROCS  8094
 
@@ -101,26 +95,9 @@
 #  define DRA_NUM_FILE_MGR DRA_NUM_IOPROCS
 #endif
 
-#define DRA_BUF_SIZE     (DRA_DBL_BUF_SIZE*sizeof(DoublePrecision)) 
-#define DRA_INT_BUF_SIZE (DRA_BUF_SIZE/sizeof(Integer))
-/***************************** Global Data ***********************************/
+#define DRA_BUF_SIZE BUF_SIZE
 
-#ifndef USE_OLD_BUFFER
-int _dra_buffer_index = 0;
-#endif
-#ifdef STATBUF
-#  ifndef USE_OLD_BUFFER
-DoublePrecision _dra_dbl_buffer[DRA_DBL_BUF_SIZE];        /* DRA data buffer */
-#    ifdef DRA_DBLE_BUFFER
-DoublePrecision _dra_dbl_buffer_2[DRA_DBL_BUF_SIZE];
-#    endif
-#  endif
-#else
-#  ifdef USE_OLD_BUFFER
-char*           _dra_buffer;
-#  endif
-Integer         _idx_buffer, _handle_buffer;
-#endif
+/***************************** Global Data ***********************************/
 
 /* Default number of IO procs */
 Integer _dra_io_procs;
@@ -128,27 +105,19 @@ Integer _dra_io_procs;
 Integer _dra_number_of_files;
 
 disk_array_t *DRA;          /* array of struct for basic info about DRA arrays*/
+
+buf_context_t buf_ctxt; /* buffer context handle */
+int nbuf = 4; /* number of buffers to be used */
+
 Integer _max_disk_array;    /* max number of disk arrays open at a time      */
 logical dra_debug_flag;     /* globally defined debug parameter */
 
-
-request_t     Requests[MAX_REQ];
+request_t Requests[MAX_REQ];
 int num_pending_requests=0;
 Integer _dra_turn=0;
 int     Dra_num_serv=DRA_NUM_IOPROCS;
 
-#ifndef USE_OLD_BUFFER
-buffer_t _dra_buffer_state[2];
-#  ifdef STATBUF
-#    ifdef DRA_DBLE_BUFFER
-   _dra_buffer_state[0].buffer = (char*)_dra_dbl_buffer;
-   _dra_buffer_state[1].buffer = (char*)_dra_dbl_buffer_2;
-#    else
-   _dra_buffer_state[0].buffer = (char*)_dra_dbl_buffer;
-#    endif
-#  endif
-#endif
- 
+
 /****************************** Macros ***************************************/
 
 #define dai_sizeofM(_type) MA_sizeof(_type, 1, MT_C_CHAR)
@@ -334,51 +303,34 @@ Integer handle = d_a+DRA_OFFSET;
 }
 
 
-
-/*\  registers callback function associated with completion of asynch. I/O
-\*/
-#ifdef USE_OLD_BUFFER
-void dai_callback(int op, int transp, section_t gs_a, section_t ds_a, 
-                  section_t ds_chunk, Integer ld[], Integer req)
-#else
-void dai_callback(int op, int transp, section_t gs_a, section_t ds_a, 
-                  section_t ds_chunk, Integer ld[], int ibuf, Integer req)
-#endif
+void dai_callback(int op, int transp, section_t gs_a, section_t ds_a, section_t ds_chunk, Integer ld[], char *buf, Integer req)
 {
-  Integer i;
-#if WALLTIME
-  double ss0,tt0;
-#endif
-        if (Requests[req].callback==ON)
-          dai_error("DRA: callback not cleared",0);
+  int i;
+  buf_info *bi;
 
-#if WALLTIME
-        walltime_(&ss0,&tt0);
-        printf("p[%d] Creating callback for buffer %d: %16.6f\n",
-                ga_nodeid_(),ibuf,tt0);
-#endif
-        Requests[req].callback = ON;
-#ifdef USE_OLD_BUFFER
-        Requests[req].args.op = op;
-        Requests[req].args.transp = transp;
-        Requests[req].args.gs_a = gs_a;
-        Requests[req].args.ds_a = ds_a;
-        Requests[req].args.ds_chunk = ds_chunk;
-        Requests[req].args.ld[0] = ld[0];
-        for (i=1; i<gs_a.ndim-1; i++) Requests[req].args.ld[i] = ld[i];
-#else
-        Requests[req].ibuf = ibuf;
-        _dra_buffer_state[ibuf].args.op = op;
-        _dra_buffer_state[ibuf].args.transp = transp;
-        _dra_buffer_state[ibuf].args.gs_a = gs_a;
-        _dra_buffer_state[ibuf].args.ds_a = ds_a;
-        _dra_buffer_state[ibuf].args.ds_chunk = ds_chunk;
-        for (i=0; i<gs_a.ndim-1; i++)
-          _dra_buffer_state[ibuf].args.ld[i] = ld[i];
-#endif
+  bi = (buf_info*) buf;
+  if (bi->callback==ON)
+    dai_error("DRA: callback not cleared for a buffer",0);
+
+  bi->callback = ON;
+  bi->args.op = op;
+  bi->args.transp = transp;
+  bi->args.gs_a = gs_a;
+  bi->args.ds_a = ds_a;
+  bi->args.ds_chunk = ds_chunk;
+  for (i=0; i<gs_a.ndim-1; i++)
+    bi->args.ld[i] = ld[i];
+
+
 }
 
 
+/*
+function to release buffers by completing the transfers
+this function will be passed on as a parameter to a buffer management layer
+*/
+
+void wait_buf(char *buf);
 
 
 /*\ INITIALIZE DISK ARRAY DATA STRUCTURES
@@ -390,8 +342,8 @@ Integer FATR dra_init_(
         DoublePrecision *max_memory)      /* input */
 {
 #define DEF_MAX_ARRAYS 16
-#define MAX_ARRAYS 131072
-int i;
+#define MAX_ARRAYS 1024
+int i, buf_size;
         ga_sync_();
 
         if(*max_arrays<-1 || *max_arrays> MAX_ARRAYS)
@@ -404,78 +356,20 @@ int i;
         if(!DRA) dai_error("dra_init: memory alocation failed\n",0);
         for(i=0; i<_max_disk_array ; i++)DRA[i].actv=0;
 
-        for(i=0; i<MAX_REQ; i++)Requests[i].num_pending=0;
-
+        for(i=0; i<MAX_REQ; i++) Requests[i].num_pending=0;
+	
         dra_debug_flag = FALSE;
-#ifndef STATBUF
-        {
-            /* check if we have enough MA memory for DRA buffer on every node */
-            Integer avail = MA_inquire_avail(MT_C_DBL);
-            long diff;
-            ga_igop(GA_TYPE_GOP, &avail, (Integer)1, "min");
-            if(avail < (ALIGN -1 + DRA_DBL_BUF_SIZE) && ga_nodeid_() == 0)
-              dai_error("Not enough memory available from MA for DRA",avail);
-
-            /* get buffer memory */
-#ifdef USE_OLD_BUFFER
-            if(MA_alloc_get(MT_C_DBL, DRA_DBL_BUF_SIZE+ALIGN-1, "DRA buf", 
-              &_handle_buffer, &_idx_buffer))
-                MA_get_pointer(_handle_buffer, &_dra_buffer); 
-#else
-            if(MA_alloc_get(MT_C_DBL, DRA_DBL_BUF_SIZE+ALIGN-1, "DRA buf 0", 
-              &_handle_buffer, &_idx_buffer))
-                MA_get_pointer(_handle_buffer, &_dra_buffer_state[0].buffer); 
-#endif
-            else
-                dai_error("dra_init: ma_alloc_get failed",DRA_DBL_BUF_SIZE); 
-#ifndef USE_OLD_BUFFER
-  #ifdef DRA_DBLE_BUFFER
-            if(MA_alloc_get(MT_C_DBL, DRA_DBL_BUF_SIZE+ALIGN-1, "DRA buf 1", 
-              &_handle_buffer, &_idx_buffer))
-                MA_get_pointer(_handle_buffer, &_dra_buffer_state[1].buffer); 
-            else
-                dai_error("dra_init: ma_alloc_get failed",DRA_DBL_BUF_SIZE); 
-  #endif
-#endif
-
-            /* align buffer address */
-#ifdef USE_OLD_BUFFER
-            diff = ((long)_dra_buffer) % (sizeof(DoublePrecision)*ALIGN);
-            if(diff) _dra_buffer += (sizeof(DoublePrecision)*ALIGN - diff);
-#else
-            diff = ((long)_dra_buffer_state[0].buffer)
-              % (sizeof(DoublePrecision)*ALIGN);
-            if(diff) _dra_buffer_state[0].buffer
-              += (sizeof(DoublePrecision)*ALIGN - diff);
-  #ifdef DRA_DBLE_BUFFER
-            diff = ((long)_dra_buffer_state[1].buffer)
-              % (sizeof(DoublePrecision)*ALIGN);
-            if(diff) _dra_buffer_state[1].buffer
-              += (sizeof(DoublePrecision)*ALIGN - diff);
-  #endif
-#endif
-        }
-#endif
-
-#ifndef USE_OLD_BUFFER
-        /* Initialize buffer io descriptors */
-        _dra_buffer_state[0].id = ELIO_DONE;
-        _dra_buffer_state[0].args.gs_a.handle = 0;
-  #ifdef DRA_DBLE_BUFFER
-        _dra_buffer_state[1].id = ELIO_DONE;
-        _dra_buffer_state[1].args.gs_a.handle = 0;
-  #endif
-#endif
-
         _dra_io_procs = ga_cluster_nnodes_();
         _dra_number_of_files = ga_cluster_nnodes_();
- 
+
+	/* initialize Buffer Manager */
+	buf_size = sizeof (buf_info) + (int) DBL_BUF_SIZE;
+	buffer_init(&buf_ctxt, nbuf, buf_size, &wait_buf);
+
         ga_sync_();
 
         return(ELIO_OK);
 }
-
-
 
 /*\ correct chunk size to fit the buffer and introduce allignment
 \*/
@@ -683,7 +577,7 @@ Off_t offset;
 
         if(INDEPFILES(d_a) || DRA[handle].numfiles > 1) {
 
-          Integer   CR=0, i, nblocks; 
+          Integer   CR, i, nblocks; 
           section_t ds_a;
           /* number of processors that do io */
           Integer   ioprocs=dai_io_procs(d_a); 
@@ -748,8 +642,6 @@ void    dai_clear_buffer();
         if(rc !=  ELIO_OK) dai_error("dai_get failed", rc);
 }
 
-
-
 void dai_assign_request_handle(Integer* request)
 {
  int      i;
@@ -759,118 +651,19 @@ void dai_assign_request_handle(Integer* request)
                 *request = i;
                 break;
         }
-        /*for(i=0;i<MAX_REQ;i++) Requests[i].ibuf = -1; */
            
         if(*request ==-1) 
             dai_error("DRA: number of pending I/O requests exceeded",MAX_REQ);
            
         Requests[*request].na=0;
         Requests[*request].nu=0;
-#ifdef USE_OLD_BUFFER
-        Requests[*request].id = ELIO_DONE;
-#else
-        Requests[*request].ibuf=-1;
-#endif
-        Requests[*request].callback = OFF;
+	Requests[*request].call_id = *request;
         Requests[*request].num_pending = ON;
+	Requests[*request].call_id = *request;
 }
 
 
 
-/*\ CREATE A DISK ARRAY
-\*/
-Integer dra_create(
-        Integer *type,                     /*input*/
-        Integer *dim1,                     /*input*/
-        Integer *dim2,                     /*input*/
-        char    *name,                     /*input*/
-        char    *filename,                 /*input*/
-        Integer *mode,                     /*input*/
-        Integer *reqdim1,                  /*input: dim1 of typical request*/
-        Integer *reqdim2,                  /*input: dim2 of typical request*/
-        Integer *d_a)                      /*output:DRA handle*/
-{
-Integer handle, elem_size, ctype;
-
-        /* convert Fortran to C data type */
-        ctype = (Integer)ga_type_f2c((int)(*type));
-        ga_sync_();
-
-        /* if we have an error here, it is fatal */       
-        dai_check_typeM(ctype);    
-        if( *dim1 <= 0 )
-              dai_error("dra_create: disk array dimension1 invalid ",  *dim1);
-        else if( *dim2 <= 0)
-              dai_error("dra_create: disk array dimension2 invalid ",  *dim2);
-        if(strlen(filename)>DRA_MAX_FNAME)
-              dai_error("dra_create: filename too long", DRA_MAX_FNAME);
-
-       /*** Get next free DRA handle ***/
-       if( (handle = dai_get_handle()) == -1)
-           dai_error("dai_create: too many disk arrays ", _max_disk_array);
-       *d_a = handle - DRA_OFFSET;
-
-       /* determine disk array decomposition */ 
-        elem_size = dai_sizeofM(ctype);
-        dai_chunking( elem_size, *reqdim1, *reqdim2, *dim1, *dim2, 
-                    &DRA[handle].chunk[0], &DRA[handle].chunk[1]);
-
-       /* determine layout -- by row or column */
-        DRA[handle].layout = COLUMN;
-
-       /* complete initialization */
-        DRA[handle].dims[0] = *dim1;
-        DRA[handle].dims[1] = *dim2;
-        DRA[handle].ndim = 2;
-        DRA[handle].type = ctype;
-        DRA[handle].mode = (int)*mode;
-        strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
-        strncpy(DRA[handle].name, name, DRA_MAX_NAME );
-
-        DRA[handle].ioprocs = _dra_io_procs;
-        DRA[handle].numfiles = _dra_number_of_files;
-
-        dai_write_param(DRA[handle].fname, *d_a);      /* create param file */
-        DRA[handle].indep = dai_file_config(filename); /*check file configuration*/
-
-        /* create file */
-        if(dai_io_manage(*d_a)){ 
-
-           if (INDEPFILES(*d_a) || DRA[handle].numfiles > 1) {
-
-             sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
-             DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
-           } else {
-
-              /* collective open supported only on Paragon */
-#             ifdef PARAGON
-                 DRA[handle].fd = elio_gopen(DRA[handle].fname,(int)*mode); 
-#             else
-                 DRA[handle].fd = elio_open(DRA[handle].fname,(int)*mode, ELIO_SHARED); 
-#             endif
-           }
-
-           if(DRA[handle].fd==NULL)dai_error("dra_create:failed to open file",0);
-           if(DRA[handle].fd->fd==-1)dai_error("dra_create:failed to open file",0);
-        }
-
-        /*
-         *  Need to zero the last element in the array on the disk so that
-         *  we never read beyond EOF.
-         *
-         *  For multiple component files will stamp every one of them.
-         *
-         */
-        ga_sync_();
-
-        if(dai_file_master(*d_a) && dai_write_allowed(*d_a)) dai_zero_eof(*d_a);
-
-        ga_sync_();
-
-        return(ELIO_OK);
-}
-     
- 
 
 /*\ OPEN AN ARRAY THAT EXISTS ON THE DISK
 \*/
@@ -928,6 +721,7 @@ Integer handle;
 
         ga_sync_();
 
+	//printf("FILE OPENED!!\n");
         return(ELIO_OK);
 }
 
@@ -968,7 +762,7 @@ Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
               
        /* 
         * section [ilo:ihi, jlo:jhi] is decomposed into a number of
-        * 'aligned' and 'unaligned' (on chunk1/chunk2 boundary) subsections
+        * 'aligned' and 'unaligned' (on chunk1/chunk2 bounday) subsections
         * depending on the layout of the 2D array on the disk;
         *
         * 'cover' subsections correspond to 'unaligned' subsections and
@@ -1122,7 +916,7 @@ int       retval;
 
 int dai_myturn(section_t ds_chunk)
 {
-    /*Integer   handle = ds_chunk.handle+DRA_OFFSET; */
+Integer   handle = ds_chunk.handle+DRA_OFFSET;
 Integer   ioprocs = dai_io_procs(ds_chunk.handle);
 Integer   iome    = dai_io_nodeid(ds_chunk.handle);
     
@@ -1150,7 +944,7 @@ Integer ld, rows,cols;
 double *buf;  /*<<<<<*/
 {
    int i,j;
-   printf("\n ld=%ld rows=%ld cols=%ld\n",(long)ld,(long)rows,(long)cols);
+   printf("\n ld=%ld rows=%ld cols=%ld\n",ld,rows,cols);
  
    for (i=0; i<rows; i++){
    for (j=0; j<cols; j++)
@@ -1184,7 +978,7 @@ void ga_move_1d(int op, section_t gs_a, section_t ds_a,
                 section_t ds_chunk, void* buffer, Integer ldb)
 {
      Integer index, ldd = gs_a.hi[0] - gs_a.lo[0] + 1, one=1;
-     Integer atype, cols, rows, elemsize, ilo, ihi;
+     Integer atype, cols, rows, elemsize, ilo, ihi, jlo, jhi;
      Integer istart, iend, jstart, jend;
      void  (FATR *f)(Integer*,Integer*,Integer*,Integer*,Integer*,void*,Integer*); 
      char *buf = (char*)buffer;
@@ -1338,11 +1132,17 @@ void ga_move(int op, int trans, section_t gs_a, section_t ds_a,
     }
 }
 
-#define nga_get_sectM(sect, _buf, _ld)\
-   nga_get_(&sect.handle, sect.lo, sect.hi, _buf, _ld)
+#define nga_get_sectM(sect, _buf, _ld, hdl)\
+ if (hdl != NULL)\
+ nga_nbget_(&sect.handle, sect.lo, sect.hi, _buf, _ld, hdl);\
+ else\
+ nga_get_(&sect.handle, sect.lo, sect.hi, _buf, _ld);
 
-#define nga_put_sectM(sect, _buf, _ld)\
-   nga_put_(&sect.handle, sect.lo, sect.hi, _buf, _ld)
+#define nga_put_sectM(sect, _buf, _ld, hdl)\
+ if (hdl != NULL)\
+ nga_nbput_(&sect.handle, sect.lo, sect.hi, _buf, _ld, hdl);\
+ else\
+ nga_put_(&sect.handle, sect.lo, sect.hi, _buf, _ld);
 
 #define ndai_dest_indicesM(ds_chunk, ds_a, gs_chunk, gs_a)   \
 {\
@@ -1373,10 +1173,12 @@ void nga_move(int op,             /*[input] flag for read or write */
               section_t ds_chunk, /*[input] actual DRA chunk */
               void* buffer,       /*[input] pointer to io buffer containing
                                             DRA cover section */
-              Integer ldb[])
+              Integer ldb[],
+	      Integer *ga_movhdl)
 {
   Integer ndim = gs_a.ndim, i;
   logical consistent = TRUE;
+
 #if WALLTIME
   double ss0,tt0;
         walltime_(&ss0,&tt0);
@@ -1415,9 +1217,9 @@ void nga_move(int op,             /*[input] flag for read or write */
     }
     /* move data */
     if (op==LOAD) {
-      nga_get_sectM(gs_chunk, buffer, ldb);
+      nga_get_sectM(gs_chunk, buffer, ldb, ga_movhdl);
     } else {
-      nga_put_sectM(gs_chunk, buffer, ldb);
+      nga_put_sectM(gs_chunk, buffer, ldb, ga_movhdl);
     }
     
   } else if (trans && consistent) {
@@ -1451,7 +1253,7 @@ void nga_move(int op,             /*[input] flag for read or write */
       /* transpose buffer with data from global array */
       for (i=0; i<ndim; i++) ldg[i] = gs_chunk.hi[i] - gs_chunk.lo[i] + 1;
       /* copy data from global array to temporary buffer */
-      nga_get_sectM(gs_chunk, base_addr, ldg); 
+      nga_get_sectM(gs_chunk, base_addr, ldg, ga_movhdl); 
       for (i=0; i<nelem1; i++ ) {
         /* find indices of elements in MA buffer */
         if (ndim > 1) {
@@ -1551,7 +1353,7 @@ void nga_move(int op,             /*[input] flag for read or write */
           jtmp += nelem2;
         }
       }
-      nga_put_sectM(gs_chunk, base_addr, ldt); 
+      nga_put_sectM(gs_chunk, base_addr, ldt, ga_movhdl); 
     }
     MA_pop_stack(vhandle);
   } else {
@@ -1564,39 +1366,37 @@ void nga_move(int op,             /*[input] flag for read or write */
 }
 
 
-/*\  executes callback function associated with completion of asynch. I/O
-\*/
-void dai_exec_callback(request_t *request)
+/*\  executes callback function associated with completion of asynch. I/\O
+  \*/
+void dai_exec_callback(char *buf, int caller)
 {
-args_t   *arg;
-int   ibuf;
-char *buf;
+  args_t   *arg;
+  char *buffer;
+  buf_info *bi;
+
 #if WALLTIME
-double ss0,tt0;
+  double ss0,tt0;
 #endif
 
-        if(request->callback==OFF)return;
-        request->callback = OFF;
-#ifdef USE_OLD_BUFFER
-        arg = &request->args;
-        nga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk,
-                 _dra_buffer, arg->ld);
-#else
-        ibuf = request->ibuf;
+  bi = (buf_info*) buf;
+  if(bi->callback==OFF)
+    return;
+  
+  bi->callback = OFF;
 
-#  if WALLTIME
-        walltime(&ss0,&tt0);
-        printf("p[%d] Executing callback for buffer %d: %16.6f\n",
-                ga_nodeid_(),ibuf,tt0);
-#  endif
-        arg = &_dra_buffer_state[ibuf].args;
-        /* bail if there is no valid global array handle */
-        if (arg->gs_a.handle == 0) return;
-        buf = _dra_buffer_state[ibuf].buffer;
-        nga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk,
-                 buf, arg->ld);
-        /* arg->gs_a.handle = 0; */
-#endif
+  arg = &(bi->args);
+  /* bail if there is no valid global array handle */
+  if (arg->gs_a.handle == 0)
+    return;
+  
+  buffer = (char*) (buf + sizeof(buf_info));
+  if (caller == WAIT) {/* call blocking nga_move() */
+    nga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk, buffer, arg->ld, NULL);
+    free_buf(&buf_ctxt, buf);
+  }
+  else if (caller == PROBE) /* call non-blocking nga_move() */
+    nga_move(arg->op, arg->transp, arg->gs_a, arg->ds_a, arg->ds_chunk, buffer, arg->ld, &(bi->ga_movhdl));
+  
 }
 
 
@@ -1605,469 +1405,26 @@ double ss0,tt0;
 void dai_wait(Integer req0)
 {
 Integer req;
-#ifdef USE_OLD_BUFFER
-        /* until more sophisticated buffer management is implemented wait for
-           all requests to complete */
-        for(req=0; req<MAX_REQ; req++)
-          if (Requests[req].num_pending) {
-              if (elio_wait(&Requests[req].id)==ELIO_OK)
-                   dai_exec_callback(Requests + req);
-              else
-                   dai_error("dai_wait: DRA internal error",0);
-          }
-#else
 int ibuf;
  
         /* wait for all requests to complete on buffer Requests[req].ibuf */
 
-        ibuf = Requests[req0].ibuf;
+/*        ibuf = Requests[req0].ibuf;
         for(req=0; req<MAX_REQ; req++)
-        if (Requests[req].num_pending && Requests[req].ibuf == ibuf) {
-          if (elio_wait(&_dra_buffer_state[Requests[req].ibuf].id)==ELIO_OK)
-            dai_exec_callback(Requests + req);
-          else
-            dai_error("dai_wait: DRA internal error",0);
-	     }
-#endif
-}
-
-#ifndef USE_OLD_BUFFER
-/*\ wait until buffer space ibuf is avilable
-\*/
-void dai_wait_buf(int ibuf)
-{
-  Integer req;
-#  if WALLTIME
-  double ss0,tt0;
-#  endif
-        /* wait for request to complete on buffer ibuf */
-#  if WALLTIME
-        walltime(&ss0,&tt0);
-        printf("p[%d] Waiting for buffer %d: %16.6f\n",
-                ga_nodeid_(),ibuf,tt0);
-#  endif
-
-             if (elio_wait(&_dra_buffer_state[ibuf].id)==ELIO_OK) {
-                 req = _dra_buffer_state[ibuf].req;
+          if (Requests[req].num_pending && Requests[req].ibuf == ibuf)
+             if (elio_wait(&_dra_buffer_state[_dra_cur_buf].id)==ELIO_OK)
                  dai_exec_callback(Requests + req);
-             } else {
+             else
                  dai_error("dai_wait: DRA internal error",0);
-             }
+*/
 }
-#endif
-
-
-/*\ Write or Read Unaligned Subsections to/from disk: 
- *  always read a aligned extension of a section from disk to local buffer then 
- *  for read :  copy requested data from buffer to global array;
- *  for write: overwrite part of buffer with data from g_a and write all to disk
- *
-\*/
-void dai_transfer_unlgn(int opcode, int transp, 
-                        section_t ds_a, section_t gs_a, Integer req)
-{
-Integer   chunk_ld,  next, offset;
-int   type = DRA[ds_a.handle+DRA_OFFSET].type;
-section_t ds_chunk, ds_unlg;
-char      *buf, *buffer; 
-int        ibuf;
-
-   ds_chunk =  ds_unlg = ds_a;
-
-   for(next = 0; next < Requests[req].nu; next++){
-
-      ds_chunk.lo[0] = ds_chunk.lo[1] = 0; /* init */
-      while(dai_next_chunk(req, Requests[req].list_cover[next],&ds_chunk)){
-
-          if(dai_myturn(ds_chunk)){
-
-#ifdef USE_OLD_BUFFER
-              dai_wait(req); /* needs free buffer to proceed */
-#else
-              /* assign buffer */
-#  ifdef DRA_DBLE_BUFFER
-              ibuf = _dra_buffer_index;
-              _dra_buffer_index = 1 - ibuf;
-              _dra_buffer_index = 0;
-              ibuf = 1;
-#  else
-              _dra_buffer_index = 0;
-              ibuf = 1;
-#  endif
-              _dra_buffer_state[_dra_buffer_index].req = req;
-              dai_wait_buf(_dra_buffer_index); /* needs free buffer to proceed */
-
-              Requests[req].ibuf = _dra_buffer_index; 
-#endif
-
-             /*find corresponding to chunk of 'cover' unaligned sub-subsection*/
-              ds_unlg.lo[0] = Requests[req].list_unlgn[next][ ILO ];
-              ds_unlg.hi[0] = Requests[req].list_unlgn[next][ IHI ];
-              ds_unlg.lo[1] = Requests[req].list_unlgn[next][ JLO ];
-              ds_unlg.hi[1] = Requests[req].list_unlgn[next][ JHI ];
-
-              if(!dai_section_intersect(ds_chunk, &ds_unlg))
-                  dai_error("dai_transfer_unlgn: inconsistent cover",0);
-
-             /* copy data from disk to DRA buffer */
-              chunk_ld =  ds_chunk.hi[0] - ds_chunk.lo[0] + 1;
-#ifdef USE_OLD_BUFFER
-              dai_get(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
-              elio_wait(&Requests[req].id); 
-#else
-              buf = (char*)_dra_buffer_state[_dra_buffer_index].buffer;
-              dai_get(ds_chunk, buf, chunk_ld,
-                      &_dra_buffer_state[_dra_buffer_index].id);
-              elio_wait(&_dra_buffer_state[_dra_buffer_index].id); 
-#endif
-
-             /* determine location in the buffer where GA data should be */
-              offset  = (ds_unlg.lo[1] - ds_chunk.lo[1])*chunk_ld + 
-                         ds_unlg.lo[0] - ds_chunk.lo[0];
-#ifdef USE_OLD_BUFFER
-              buffer  = (char*)_dra_buffer;
-#else
-              buffer  = (char*)buf;
-#endif
-              buffer += offset * dai_sizeofM(type);
-
-              switch (opcode){
-              case DRA_OP_WRITE: 
-                 /* overwrite a part of buffer with data from g_a */  
-                 ga_move(LOAD, transp, gs_a, ds_a, ds_unlg, buffer, chunk_ld);
-
-                 /* write entire updated buffer back to disk */
-#ifdef USE_OLD_BUFFER
-                 dai_put(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
-#else
-                 dai_put(ds_chunk, buf, chunk_ld,
-                         &_dra_buffer_state[_dra_buffer_index].id);
-#endif
-                 break;
-
-              case DRA_OP_READ: 
-                 /* copy requested data from buffer to g_a */
-                 ga_move(STORE, transp, gs_a, ds_a, ds_unlg, buffer, chunk_ld);
-                 break;
-
-              default:
-                 dai_error("dai_transfer_unlg: invalid opcode",(Integer)opcode);
-              }
-
-#             ifdef DEBUG
-                fprintf(stderr,"%d transf unlg g[%d:%d,%d:%d]-d[%d:%d,%d:%d]\n",
-                   dai_io_nodeid(), gs_chunk.lo[0], gs_chunk.hi[0],
-                   gs_chunk.lo[1], gs_chunk.hi[1],
-                   ds_unlg.lo[0], ds_unlg.hi[0],
-                   ds_unlg.lo[1], ds_unlg.hi[1]);
-#             endif
-          }
-      }
-   }
-}
-
-
-
-/*\ write or read aligned subsections to disk 
-\*/
-void dai_transfer_algn(int opcode, int transp, 
-                       section_t ds_a, section_t gs_a, Integer req)
-{
-Integer   next, chunk_ld[MAXDIM];
-section_t ds_chunk = ds_a;
-char *buf;
-int   ibuf;
-
-   for(next = 0; next < Requests[req].na; next++){
-
-      ds_chunk.lo[0] = ds_chunk.lo[1] = 0; /* init */
-      while(dai_next_chunk(req, Requests[req].list_algn[next], &ds_chunk)){
-
-          if(dai_myturn(ds_chunk)){
-
-#ifdef USE_OLD_BUFFER
-              dai_wait(req); /* needs free buffer to proceed */
-#else
-              /* assign buffer */
-#  ifdef DRA_DBLE_BUFFER
-              ibuf = _dra_buffer_index;
-              _dra_buffer_index = 1 - ibuf;
-              _dra_buffer_index = 0;
-              ibuf = 1;
-#  else
-              _dra_buffer_index = 0;
-              ibuf = 1;
-#  endif
-              _dra_buffer_state[_dra_buffer_index].req = req;
-
-              dai_wait_buf(_dra_buffer_index); /* needs free buffer to proceed */
-              Requests[req].ibuf = _dra_buffer_index;
-#endif
-
-              chunk_ld[0] =  ds_chunk.hi[0] - ds_chunk.lo[0] + 1;
-
-#ifndef USE_OLD_BUFFER
-              buf = (char*)_dra_buffer_state[_dra_buffer_index].buffer;
-#endif
-              switch (opcode){
-
-              case DRA_OP_WRITE:
-#ifdef USE_OLD_BUFFER
-                 /* copy data from g_a to DRA buffer */
-                 ga_move(LOAD, transp, gs_a, ds_a, ds_chunk, _dra_buffer,
-                     chunk_ld[0]);
-
-                 /* copy data from DRA buffer to disk */
-                 dai_put(ds_chunk, _dra_buffer, chunk_ld[0], &Requests[req].id);
-#else
-                 /* copy data from g_a to DRA buffer */
-                 ga_move(LOAD, transp, gs_a, ds_a, ds_chunk, buf, chunk_ld[0]);
-
-                 /* copy data from DRA buffer to disk */
-                 dai_put(ds_chunk, buf, chunk_ld[0],
-                         &_dra_buffer_state[_dra_buffer_index].id);
-#endif
-                 break;
-
-              case DRA_OP_READ:
-#ifdef USE_OLD_BUFFER
-                 /* copy data from disk to DRA buffer */
-                 dai_get(ds_chunk, _dra_buffer, chunk_ld[0], &Requests[req].id);
-                 elio_wait(&Requests[req].id);
-
-                 /* copy data from DRA buffer to g_a */
-                 dai_callback(STORE, transp, gs_a, ds_a, ds_chunk, chunk_ld, req);
-#else
-                 /* copy data from disk to DRA buffer */
-                 dai_get(ds_chunk, buf, chunk_ld[0],
-                     &_dra_buffer_state[_dra_buffer_index].id);
-                 elio_wait(&_dra_buffer_state[_dra_buffer_index].id);
-
-                 /* copy data from DRA buffer to g_a */
-                 dai_callback(STORE,transp,gs_a,ds_a,ds_chunk,chunk_ld,
-                     _dra_buffer_index,req);
-#endif
-                 break;
-
-              default:
-
-                 dai_error("dai_transfer_algn: invalid opcode",(Integer)opcode);
-              }
-
-#             ifdef DEBUG
-                fprintf(stderr,"%d transf algn g[%d:%d,%d:%d]-d[%d:%d,%d:%d]\n",
-                   dai_io_nodeid(), gs_chunk.lo[0], gs_chunk.hi[0],
-                   gs_chunk.lo[1], gs_chunk.hi[1],
-                   ds_chunk.lo[0], ds_chunk.hi[0],
-                   ds_chunk.lo[1], ds_chunk.hi[1]);
-#             endif
-          }
-      }
-   }
-}
-
-
-
-/*\ WRITE SECTION g_a[gilo:gihi, gjlo:gjhi] TO d_a[dilo:dihi, djlo:djhi]
-\*/
-Integer FATR dra_write_section_(
-        logical *transp,                   /*input:transpose operator*/
-        Integer *g_a,                      /*input:GA handle*/ 
-        Integer *gilo,                     /*input*/
-        Integer *gihi,                     /*input*/
-        Integer *gjlo,                     /*input*/
-        Integer *gjhi,                     /*input*/
-        Integer *d_a,                      /*input:DRA handle*/ 
-        Integer *dilo,                     /*input*/
-        Integer *dihi,                     /*input*/
-        Integer *djlo,                     /*input*/
-        Integer *djhi,                     /*input*/
-        Integer *request)                  /*output: async. request id*/ 
-{
-Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
-section_t d_sect, g_sect;
-  
-   ga_sync_();
-
-   /* usual argument/type/range checking stuff */
-
-   dai_check_handleM(*d_a,"dra_write_sect");
-   ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
-   if(!dai_write_allowed(*d_a))dai_error("dra_write_sect: write not allowed",*d_a);
-   if(DRA[handle].type != (int)gtype)dai_error("dra_write_sect: type mismatch",gtype);
-   dai_check_rangeM(*gilo,*gihi, gdim1, "dra_write_sect: g_a dim1 error");
-   dai_check_rangeM(*gjlo,*gjhi, gdim2, "dra_write_sect: g_a dim2 error");
-   dai_check_rangeM(*dilo,*dihi,DRA[handle].dims[0],"dra_write_sect:d_a dim1 error");
-   dai_check_rangeM(*djlo,*djhi,DRA[handle].dims[1],"dra_write_sect:d_a dim2 error");
-
-   /* check if numbers of elements in g_a & d_a sections match */
-   if ((*dihi - *dilo + 1) * (*djhi - *djlo + 1) !=
-       (*gihi - *gilo + 1) * (*gjhi - *gjlo + 1))
-       dai_error("dra_write_sect: d_a and g_a sections do not match ", 0L);
-
-   dai_assign_request_handle(request);
-
-   /* decompose d_a section into aligned and unaligned subsections
-    * -- with respect to underlying array layout on the disk
-    */
-
-   Requests[*request].nu=MAX_ALGN;    
-   Requests[*request].na=MAX_UNLG;
-
-   fill_sectionM(d_sect, *d_a, *dilo, *dihi, *djlo, *djhi); 
-   fill_sectionM(g_sect, *g_a, *gilo, *gihi, *gjlo, *gjhi); 
-
-   dai_decomp_section(d_sect,
-                     Requests[*request].list_algn, 
-                    &Requests[*request].na,
-                     Requests[*request].list_cover, 
-                     Requests[*request].list_unlgn, 
-                    &Requests[*request].nu);
-   _dra_turn = 0;
-
-   /* process unaligned subsections */
-   dai_transfer_unlgn(DRA_OP_WRITE, (int)*transp, d_sect, g_sect, *request);
-                  
-   /* process aligned subsections */
-   dai_transfer_algn (DRA_OP_WRITE, (int)*transp, d_sect, g_sect, *request);
-
-   ga_sync_();
-
-   return(ELIO_OK);
-}
-
-/*\ WRITE g_a TO d_a
-\*/
-Integer FATR dra_write_(
-        Integer *g_a,                      /*input:GA handle*/
-        Integer *d_a,                      /*input:DRA handle*/
-        Integer *request)                  /*output: handle to async oper. */
-{
-Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
-logical transp = FALSE;
-Integer ilo, ihi, jlo, jhi;
-
-        ga_sync_();
-
-        /* usual argument/type/range checking stuff */
-
-        dai_check_handleM(*d_a,"dra_write");
-        if( !dai_write_allowed(*d_a))
-             dai_error("dra_write: write not allowed to this array",*d_a);
-
-        ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
-        if(DRA[handle].type != (int)gtype)dai_error("dra_write: type mismatch",gtype);
-        if(DRA[handle].dims[0] != gdim1)dai_error("dra_write: dim1 mismatch",gdim1);
-        if(DRA[handle].dims[1] != gdim2)dai_error("dra_write: dim2 mismatch",gdim2);
-
-        /* right now, naive implementation just calls dra_write_section */
-        ilo = 1; ihi = DRA[handle].dims[0];
-        jlo = 1; jhi = DRA[handle].dims[1];
-        return(dra_write_section_(&transp, g_a, &ilo, &ihi, &jlo, &jhi,
-                                          d_a, &ilo, &ihi, &jlo, &jhi,request));
-}
-
-
-
-/*\ READ SECTION g_a[gilo:gihi, gjlo:gjhi] FROM d_a[dilo:dihi, djlo:djhi]
-\*/
-Integer FATR dra_read_section_(
-        logical *transp,                   /*input:transpose operator*/
-        Integer *g_a,                      /*input:GA handle*/ 
-        Integer *gilo,                     /*input*/
-        Integer *gihi,                     /*input*/
-        Integer *gjlo,                     /*input*/
-        Integer *gjhi,                     /*input*/
-        Integer *d_a,                      /*input:DRA handle*/ 
-        Integer *dilo,                     /*input*/
-        Integer *dihi,                     /*input*/
-        Integer *djlo,                     /*input*/
-        Integer *djhi,                     /*input*/
-        Integer *request)                  /*output: request id*/ 
-{
-Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
-section_t d_sect, g_sect;
- 
-   ga_sync_();
-
-   /* usual argument/type/range checking stuff */
-   dai_check_handleM(*d_a,"dra_read_sect");
-   if(!dai_read_allowed(*d_a))dai_error("dra_read_sect: read not allowed",*d_a);
-   ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
-   if(DRA[handle].type != (int)gtype)dai_error("dra_read_sect: type mismatch",gtype);
-   dai_check_rangeM(*gilo, *gihi, gdim1, "dra_read_sect: g_a dim1 error");
-   dai_check_rangeM(*gjlo, *gjhi, gdim2, "dra_read_sect: g_a dim2 error");
-   dai_check_rangeM(*dilo, *dihi,DRA[handle].dims[0],"dra_read_sect:d_a dim1 error");
-   dai_check_rangeM(*djlo, *djhi,DRA[handle].dims[1],"dra_read_sect:d_a dim2 error");
-
-   /* check if numbers of elements in g_a & d_a sections match */
-   if ((*dihi - *dilo + 1) * (*djhi - *djlo + 1) !=
-       (*gihi - *gilo + 1) * (*gjhi - *gjlo + 1))
-       dai_error("dra_read_sect: d_a and g_a sections do not match ", 0L);
-       
-   dai_assign_request_handle(request);
-
-   /* decompose d_a section into aligned and unaligned subsections
-    * -- with respect to underlying array layout on the disk
-    */
-
-   Requests[*request].nu=MAX_ALGN;    
-   Requests[*request].na=MAX_UNLG;
-
-   fill_sectionM(d_sect, *d_a, *dilo, *dihi, *djlo, *djhi); 
-   fill_sectionM(g_sect, *g_a, *gilo, *gihi, *gjlo, *gjhi); 
-
-   dai_decomp_section(d_sect,
-                     Requests[*request].list_algn, 
-                    &Requests[*request].na,
-                     Requests[*request].list_cover, 
-                     Requests[*request].list_unlgn, 
-                    &Requests[*request].nu);
-
-   _dra_turn = 0;
-
-   /* process unaligned subsections */
-   dai_transfer_unlgn(DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
-           
-   /* process aligned subsections */
-   dai_transfer_algn (DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
-
-   return(ELIO_OK);
-}
-
-
-
-/*\ READ g_a FROM d_a
-\*/
-Integer FATR dra_read_(Integer* g_a, Integer* d_a, Integer* request)
-{
-Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
-logical transp = FALSE;
-Integer ilo, ihi, jlo, jhi;
-
-        ga_sync_();
-
-        /* usual argument/type/range checking stuff */
-        dai_check_handleM(*d_a,"dra_read");
-        if(!dai_read_allowed(*d_a))dai_error("dra_read: read not allowed",*d_a);
-        ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
-        if(DRA[handle].type != (int)gtype)dai_error("dra_read: type mismatch",gtype);
-        if(DRA[handle].dims[0] != gdim1)dai_error("dra_read: dim1 mismatch",gdim1);
-        if(DRA[handle].dims[1] != gdim2)dai_error("dra_read: dim2 mismatch",gdim2);
-
-        /* right now, naive implementation just calls dra_read_section */
-        ilo = 1; ihi = DRA[handle].dims[0];
-        jlo = 1; jhi = DRA[handle].dims[1];
-        return(dra_read_section_(&transp, g_a, &ilo, &ihi, &jlo, &jhi,
-                                         d_a, &ilo, &ihi, &jlo, &jhi, request));
-}
-
 
 
 /*\ WAIT FOR COMPLETION OF DRA OPERATION ASSOCIATED WITH request
 \*/ 
 Integer FATR dra_wait_(Integer* request)
 {
+  int i;
 #if WALLTIME
         double ss0, tt0;
 #endif
@@ -2077,22 +1434,17 @@ Integer FATR dra_wait_(Integer* request)
         printf("p[%d] executing dra_wait: %16.6f\n",ga_nodeid_(),tt0);
 #endif
 
-#ifdef USE_OLD_BUFFER
-        elio_wait(&Requests[*request].id);
-#else
-        if (_dra_buffer_state[0].req == *request)
-          elio_wait(&_dra_buffer_state[0].id);
-#  ifdef DRA_DBLE_BUFFER
-        if (_dra_buffer_state[1].req == *request)
-          elio_wait(&_dra_buffer_state[1].id);
-#  endif
-#endif
-        Requests[*request].num_pending=0;
-        dai_exec_callback(Requests + *request);
+	/* complete all outstanding operations and release the corresponding buffers invloved with this request */
 
+	buf_complete_call(&buf_ctxt, Requests[*request].call_id);
+
+	/* mark this request to be no longer pending */
+        Requests[*request].num_pending=0;
+	
         ga_sync_();
 
         return(ELIO_OK);
+
 }
 
 
@@ -2103,30 +1455,106 @@ Integer FATR dra_probe_(
         Integer *status)                   /*output*/
 {
 Integer done,  type=GA_TYPE_GSM;
-char *op="*";
-int  stat;
-
-        if(*request == DRA_REQ_INVALID){ *status = ELIO_DONE; return(ELIO_OK); }
-
-#ifdef USE_OLD_BUFFER
-        if(elio_probe(&Requests[*request].id, &stat)!=ELIO_OK)return(DRA_FAIL);
-#else
-        if(elio_probe(&_dra_buffer_state[Requests[*request].ibuf].id, &stat)
-            !=ELIO_OK)return(DRA_FAIL);
-#endif
-        *status = (Integer) stat;
+int  stat, i, k, call_id, count = 0, op_code, buf_cid, n_buf, ret;
+io_request_t *io_req;
+Integer *ga_movhdl;
+char *buf, *op = "*", *bufs[MAXBUF];
+int cb[MAXBUF]; /* will mark id of bufs for which we'll call a callback */
+buf_info *bi;
         
-        done = (*status==ELIO_DONE)? 1: 0;
+        k = 1; 
+	ret = ELIO_OK;
+	for (i = 0; i < MAXBUF; i++)
+	{
+	  cb[i] = 0;
+	  bufs[i] = NULL;
+	}
+
+        if(*request == DRA_REQ_INVALID || Requests[*request].num_pending ==0) {
+	  *status = ELIO_DONE;
+	  ret = ELIO_OK;
+	}
+	
+	call_id = Requests[*request].call_id;  
+	/* get the buffers associated with this call_id */
+	if (get_bufs_of_call_id(&buf_ctxt, call_id, &n_buf, bufs) != 0)
+	  ret = ELIO_OK;
+
+	for (i = 0; i < n_buf; i++) {
+	  bi = (buf_info*) bufs[i]; 
+       
+	  op_code = bi->op;
+	  io_req = &(bi->io_req);
+	  ga_movhdl = &(bi->ga_movhdl);
+	  
+	  if (op_code == DRA_OP_WRITE) {
+	    /* last op is a disk write */
+  	    if(elio_probe(io_req, &stat) != ELIO_OK) {
+	      ret = DRA_FAIL;
+	      k = 0;
+	      break;
+	    }
+	    if (stat != ELIO_DONE) {
+	      k = 0;
+	    }
+	    else {
+	      free_buf(&buf_ctxt, bufs[i]);
+	    }
+	  }
+	  else if (op_code == DRA_OP_READ) {
+	    /* last op depends on aligned or unaligned transfer */
+	    if (bi->align == 0) { /* unaligned read */
+	      /* last op is a ga move */
+	      if (NGA_NbTest(ga_movhdl) == 0) { /* ga op not complete */
+		k = 0;
+	      }
+	      else { /* ga op complete, free this buf */
+		free_buf(&buf_ctxt, bufs[i]);
+	      }
+	    }
+	    else { /* if aligned read, last op is a disk read */
+	      if(elio_probe(io_req, &stat) != ELIO_OK) {
+		ret = DRA_FAIL;
+		k = 0;
+	        break;
+	      }
+
+	      if (stat != ELIO_DONE) 
+		k = 0;
+	      else { /* disk read done, initiate/test ga move */
+		/* callback=OFF means ga move done/being done */
+		if (bi->callback == OFF && NGA_NbTest(ga_movhdl) == 0)
+		  k = 0;
+		else if (bi->callback == OFF && NGA_NbTest(ga_movhdl) ==1) {
+		  free_buf(&buf_ctxt, bufs[i]);
+		}
+		else if (bi->callback == ON) {/* need to call callback */
+		  k = 0;
+		  cb[i] = 1; /* mark for a ga move */
+		}
+	      }
+	    }
+	  }
+	}
+	    	  
+        done = (Integer) k;
+       
         /* determine global status */
-        ga_igop(type, &done, (Integer)1,op);
-        
-        if(done){
-            *status = ELIO_DONE;
-            Requests[*request].num_pending = 0;
-            dai_exec_callback(Requests + *request);
-        } else Requests[*request].num_pending = ELIO_PENDING;
+	ga_igop(type, &done, (Integer)1, op);
 
-        return(ELIO_OK);
+        if(done){
+	  *status = ELIO_DONE;
+  	  Requests[*request].num_pending = 0;
+	}
+	else {
+	  *status = 0;
+	  for (i = 0; i < n_buf; i++)
+	    if (cb[i]) 
+	      dai_exec_callback(bufs[i], PROBE);
+	}
+	if (ret == DRA_FAIL)
+	  *status = 0; /* basically value of status is irrelevant/undetermined in this case */
+        return ((Integer) ret);
 }
 
 
@@ -2134,20 +1562,13 @@ int  stat;
 \*/
 void dra_flick_()
 {
-Integer req;
-int stat;
-
-        if(!num_pending_requests)return; 
-
-        for(req=0; req<MAX_REQ; req++)
-          if(Requests[req].num_pending)
-#ifdef USE_OLD_BUFFER
-             if(elio_probe(&Requests[req].id, &stat)==ELIO_OK)
-#else
-             if(elio_probe(&_dra_buffer_state[Requests[req].ibuf].id, &stat)
-                 == ELIO_OK)
-#endif
-                if(stat == ELIO_DONE) dai_exec_callback(Requests + req); 
+Integer req, stat;
+ 
+ for (req = 0; req < MAX_REQ; req++) {
+   if (Requests[req].num_pending) {
+     dra_probe_(&req, &stat);
+   }
+ }
 }
         
 
@@ -2191,7 +1612,7 @@ int rc;
         if(dai_io_manage(*d_a)) if(ELIO_OK != (rc=elio_close(DRA[handle].fd)))
                             dai_error("dra_close: close failed",rc);
 
-        if(dai_file_master(*d_a)) {
+        if(dai_file_master(*d_a))
           if(INDEPFILES(*d_a) || DRA[handle].numfiles > 1){ 
              sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
              elio_delete(dummy_fname);
@@ -2200,7 +1621,6 @@ int rc;
              elio_delete(DRA[handle].fname);
 
           }
-	}
 
         dai_release_handle(d_a); 
 
@@ -2214,20 +1634,20 @@ int rc;
 Integer FATR dra_terminate_()
 {
         free(DRA);
-        MA_free_heap(_handle_buffer);
+	_dra_buf_terminate();
+
         ga_sync_();
         return(ELIO_OK);
 }
 
 void dai_clear_buffer()
 {
-int i;
-#ifdef USE_OLD_BUFFER
-     for (i=0;i<DRA_DBL_BUF_SIZE;i++) ((double*)_dra_buffer)[i]=0.;
-#else
+int i, j;
+/*
+for (j = 0; j < DRA_NBUF; j++) 
      for (i=0;i<DRA_DBL_BUF_SIZE;i++)
-       ((double*)_dra_buffer_state[0].buffer)[i]=0.;
-#endif
+       ((double*)_dra_buffer_state[j].buffer)[i]=0.;
+*/
 }
 
 /*\ routines for N-dimensional disk resident arrays
@@ -2418,7 +1838,7 @@ void ndai_file_location(section_t ds_a, Off_t* offset)
 Integer handle=ds_a.handle+DRA_OFFSET, ndim, i, j;
 Integer blocks[MAXDIM], part_chunk[MAXDIM], cur_ld[MAXDIM];
 long par_block[MAXDIM];
-long offelem=0;
+long offelem;
 
      
         ndim = DRA[handle].ndim;
@@ -2533,7 +1953,7 @@ Off_t offset;
 
         if(INDEPFILES(d_a) || DRA[handle].numfiles > 1) {
 
-          Integer   CR=0, i, nblocks; 
+          Integer   CR, i, nblocks; 
           section_t ds_a;
           /* number of processors that do io */
           Integer   ioprocs=dai_io_procs(d_a); 
@@ -2574,6 +1994,8 @@ Off_t offset;
 
         if(elio_write(DRA[handle].fd, offset-1, &byte, 1) != (Size_t)1)
                      dai_error("ndai_zero_eof: write error ",0);
+
+	elio_zero_eof(DRA[handle].fd);
 }
 
 /*\ SET CONFIGURATION FOR HANDLING DRAs STORED ON OPEN FILE SYSTEMS
@@ -2597,7 +2019,7 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
     if (ga_nodeid_() == 0) {
       printf("WARNING: Number of files requested exceeds number of\n");
       printf("processors. Value is reset to number of processors: %d\n",
-              (int)ga_nnodes_());
+              ga_nnodes_());
     }
     *number_of_files = ga_nnodes_();
   }
@@ -2606,7 +2028,7 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
       if (ga_nodeid_() == 0) {
         printf("WARNING: Number of IO processors is not equal to the\n");
         printf("number of files requested. Number of IO processors\n");
-        printf("is reset to number of files: %d\n",(int)*number_of_files);
+        printf("is reset to number of files: %d\n",*number_of_files);
       }
       *io_procs = *number_of_files;
     }
@@ -2617,7 +2039,7 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
         printf("WARNING: Number of requested IO processors\n");
         printf("exceeds number of available processors. Number of IO\n");
         printf("processors reset to the number of available processors %d\n",
-               (int)ga_nnodes_());
+               ga_nnodes_());
       }
       *io_procs = ga_nnodes_();
     }
@@ -2626,7 +2048,7 @@ void dai_set_config(Integer numfiles, Integer numioprocs,
     if (ga_nodeid_() == 0) {
       printf("WARNING: Number of files is greater than\n");
       printf("number of IO processors. Number of files reset to number of\n");
-      printf("IO processors: %d",(int)*io_procs);
+      printf("IO processors: %d",*io_procs);
     }
     *number_of_files = *io_procs;
   }
@@ -2647,6 +2069,7 @@ Integer ndra_create_config(
         Integer *d_a)                      /*output:DRA handle*/
 {
 Integer handle, elem_size, ctype, i;
+Integer nfile,nioproc;
 
         /* convert Fortran to C data type */
         ctype = (Integer)ga_type_f2c((int)(*type));
@@ -2742,6 +2165,102 @@ Integer ndra_create(
                             &files, &procs, d_a);
    return ret;
 }
+
+/*\ CREATE A 2-D DISK ARRAY
+\*/
+Integer dra_create(
+        Integer *type,                     /*input*/
+        Integer *dim1,                     /*input*/
+        Integer *dim2,                     /*input*/
+        char    *name,                     /*input*/
+        char    *filename,                 /*input*/
+        Integer *mode,                     /*input*/
+        Integer *reqdim1,                  /*input: dim1 of typical request*/
+        Integer *reqdim2,                  /*input: dim2 of typical request*/
+        Integer *d_a)                      /*output:DRA handle*/
+{
+  Integer ndim = 2;
+  Integer dims[2], reqdims[2];
+  dims[0] = *dim1; dims[1] = *dim2;
+  reqdims[0] = *reqdim1; reqdims[1] = *reqdim2;
+  return (ndra_create(type, &ndim, dims, name, filename, mode, reqdims, d_a));
+
+/*
+Integer handle, elem_size, ctype;
+
+        // convert Fortran to C data type 
+        ctype = (Integer)ga_type_f2c((int)(*type));
+        ga_sync_();
+
+        // if we have an error here, it is fatal        
+        dai_check_typeM(ctype);    
+        if( *dim1 <= 0 )
+              dai_error("dra_create: disk array dimension1 invalid ",  *dim1);
+        else if( *dim2 <= 0)
+              dai_error("dra_create: disk array dimension2 invalid ",  *dim2);
+        if(strlen(filename)>DRA_MAX_FNAME)
+              dai_error("dra_create: filename too long", DRA_MAX_FNAME);
+
+	//  Get next free DRA handle 
+       if( (handle = dai_get_handle()) == -1)
+           dai_error("dai_create: too many disk arrays ", _max_disk_array);
+       *d_a = handle - DRA_OFFSET;
+
+       // determine disk array decomposition  
+        elem_size = dai_sizeofM(ctype);
+        dai_chunking( elem_size, *reqdim1, *reqdim2, *dim1, *dim2, 
+                    &DRA[handle].chunk[0], &DRA[handle].chunk[1]);
+
+	// determine layout -- by row or column 
+        DRA[handle].layout = COLUMN;
+
+	// complete initialization 
+        DRA[handle].dims[0] = *dim1;
+        DRA[handle].dims[1] = *dim2;
+        DRA[handle].ndim = 2;
+        DRA[handle].type = ctype;
+        DRA[handle].mode = (int)*mode;
+        strncpy (DRA[handle].fname, filename,  DRA_MAX_FNAME);
+        strncpy(DRA[handle].name, name, DRA_MAX_NAME );
+
+        DRA[handle].ioprocs = _dra_io_procs;
+        DRA[handle].numfiles = _dra_number_of_files;
+
+        dai_write_param(DRA[handle].fname, *d_a);      
+        DRA[handle].indep = dai_file_config(filename); 
+        // create file 
+        if(dai_io_manage(*d_a)){ 
+
+           if (INDEPFILES(*d_a) || DRA[handle].numfiles > 1) {
+
+             sprintf(dummy_fname,"%s.%ld",DRA[handle].fname,(long)dai_io_nodeid(*d_a));
+             DRA[handle].fd = elio_open(dummy_fname,(int)*mode, ELIO_PRIVATE);
+           } else {
+
+	     // collective open supported only on Paragon 
+#             ifdef PARAGON
+                 DRA[handle].fd = elio_gopen(DRA[handle].fname,(int)*mode); 
+#             else
+                 DRA[handle].fd = elio_open(DRA[handle].fname,(int)*mode, ELIO_SHARED); 
+#             endif
+           }
+
+           if(DRA[handle].fd==NULL)dai_error("dra_create:failed to open file",0);
+           if(DRA[handle].fd->fd==-1)dai_error("dra_create:failed to open file",0);
+        }
+
+        
+        ga_sync_();
+
+        if(dai_file_master(*d_a) && dai_write_allowed(*d_a)) dai_zero_eof(*d_a);
+
+        ga_sync_();
+
+        return(ELIO_OK);
+*/
+
+}
+     
 
 /*\ write N-dimensional aligned block of data from memory buffer to d_a
 \*/
@@ -2842,7 +2361,7 @@ void ndai_decomp_section(
         Integer unaligned[][2*MAXDIM],    /*[output]: Indices of unaligned subsections.*/
         int *nu)                          /*[output]: Number of unaligned subsections.*/
 {
-  Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, chunk_units;
+  Integer a=0, u=0, handle = ds_a.handle+DRA_OFFSET, off, chunk_units, algn_flag;
   Integer i, j, idir, ndim = DRA[handle].ndim;
   Integer off_low[MAXDIM], off_hi[MAXDIM];
   Integer cover_lo[MAXDIM], cover_hi[MAXDIM];
@@ -3164,6 +2683,52 @@ int       retval, ndim = DRA[handle].ndim, i;
     return 1;
 }
 
+/* 
+function to complete an operation and release the buffer associated with a buffer id
+*/
+void wait_buf(char *buf)
+{
+  Integer *ga_movhdl;
+  io_request_t *io_req;
+  int op_code, i, buf_id = nbuf;
+  buf_info *bi;
+
+  if (buf == NULL) return;
+
+  bi = (buf_info*) buf;
+  op_code = bi->op;
+  io_req = &(bi->io_req);
+  ga_movhdl = &(bi->ga_movhdl);
+    
+  /*if (buf_id >= nbuf) {
+    printf("Wait_buf Error: No operation is associated with this buffer\n");
+    return;
+  }*/
+
+  switch(op_code) {
+    case DRA_OP_WRITE:
+      elio_wait(io_req);
+      break;
+
+    case DRA_OP_READ:
+      if (bi->align == 0)
+	nga_nbwait_(ga_movhdl);
+      else {
+	elio_wait(io_req);
+	dai_exec_callback(buf, WAIT);
+      }
+      break;
+
+    default:
+      return;
+  }
+
+#ifdef BUF_DEBUG
+  printf("Released a buffer\n");
+#endif
+  
+}
+
 /*\ Write or Read Unaligned Subsections to/from disk: 
  *  always read an aligned extension of a section from disk to local buffer then 
  *  for read :  copy requested data from buffer to global array;
@@ -3185,57 +2750,36 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
   Integer   ndim = DRA[ds_a.handle+DRA_OFFSET].ndim;
   section_t ds_chunk, ds_unlg;
   char      *buf, *buffer; 
-  int       ibuf;
+  Integer *ga_movhdl;
+  io_request_t *io_req;
+  int  *op, buf_id;
+  buf_info *bi;
 
   ds_chunk =  ds_unlg = ds_a;
   if (dra_debug_flag && 0) {
     for (i=0; i<ndim; i++) {
-      printf("ndai_transfer_unlgn: ds_chunk.lo[%d] = %d\n",(int)i,(int)ds_chunk.lo[i]);
-      printf("ndai_transfer_unlgn: ds_chunk.hi[%d] = %d\n",(int)i,(int)ds_chunk.hi[i]);
+      printf("ndai_transfer_unlgn: ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
+      printf("ndai_transfer_unlgn: ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
     }
     printf("ndai_transfer_unlgn: number of unaligned chunks = %d\n",
         Requests[req].nu);
     for (j=0; j<Requests[req].nu; j++) {
       for (i=0; i<ndim; i++) {
         printf("ndai_transfer_unlgn: list_cover[%d][%d] = %d\n",
-            (int)j,(int)(2*i),(int)Requests[req].list_cover[j][2*i]);
+            j,2*i,Requests[req].list_cover[j][2*i]);
         printf("ndai_transfer_unlgn: list_cover[%d][%d] = %d\n",
-            (int)j,(int)(2*i+1),(int)Requests[req].list_cover[j][2*i+1]);
+            j,2*i+1,Requests[req].list_cover[j][2*i+1]);
       }
     }
   }
 
   for(next = 0; next < Requests[req].nu; next++){
-
-    for (i=0; i<ndim; i++) ds_chunk.lo[i] = 0;   /* initialize */
-
-    while(ndai_next_chunk(req, Requests[req].list_cover[next],&ds_chunk)){
+    
+     for (i=0; i<ndim; i++) ds_chunk.lo[i] = 0;   /* initialize */
+     while(ndai_next_chunk(req, Requests[req].list_cover[next],&ds_chunk)){
 
       if(dai_myturn(ds_chunk)){
-#ifdef USE_OLD_BUFFER
-        dai_wait(req); /* needs free buffer to proceed */
-#else
-        /* assign buffer */
-        ibuf = _dra_buffer_index;
-        _dra_buffer_index = 1 - ibuf;
-        switch (opcode){
-          case DRA_OP_WRITE: 
-            _dra_buffer_index = 0;
-            ibuf = 1;
-            break;
-          case DRA_OP_READ: 
-            _dra_buffer_index = 0;
-            ibuf = 1;
-            break;
-          default:
-            break;
-        }
-        Requests[req].ibuf = _dra_buffer_index;
-        _dra_buffer_state[_dra_buffer_index].req = req;
-
-        dai_wait_buf(_dra_buffer_index); /* needs free buffer to proceed */
-#endif
-
+  
         /*find corresponding to chunk of 'cover' unaligned sub-subsection*/
         for (i=0; i<ndim; i++) {
           ds_unlg.lo[i] = Requests[req].list_unlgn[next][2*i];
@@ -3244,61 +2788,59 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
 
         if (dra_debug_flag && 0) {
           for (i=0; i<ndim; i++) {
-            printf("ndai_transfer_unlgn: ds_chunk.lo[%d] = %d\n",(int)i,(int)ds_chunk.lo[i]);
-            printf("ndai_transfer_unlgn: ds_chunk.hi[%d] = %d\n",(int)i,(int)ds_chunk.hi[i]);
+            printf("ndai_transfer_unlgn: ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
+            printf("ndai_transfer_unlgn: ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
           }
           for (i=0; i<ndim; i++) {
-            printf("ndai_transfer_unlgn: ds_unlg.lo[%d] = %d\n",(int)i,(int)ds_unlg.lo[i]);
-            printf("ndai_transfer_unlgn: ds_unlg.hi[%d] = %d\n",(int)i,(int)ds_unlg.hi[i]);
+            printf("ndai_transfer_unlgn: ds_unlg.lo[%d] = %d\n",i,ds_unlg.lo[i]);
+            printf("ndai_transfer_unlgn: ds_unlg.hi[%d] = %d\n",i,ds_unlg.hi[i]);
           }
         }
             
         if(!dai_section_intersect(ds_chunk, &ds_unlg))
-            dai_error("ndai_transfer_unlgn: inconsistent cover",0);
+            dai_error("ndai_transfer_unlgn: inconsistent cover", 0);
 
         /* copy data from disk to DRA buffer */
         for (i=0; i<ndim-1; i++) chunk_ld[i] = ds_chunk.hi[i] - ds_chunk.lo[i] + 1;
-#ifdef USE_OLD_BUFFER
-        ndai_get(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
-        elio_wait(&Requests[req].id); 
-#else
-        buf = (char*)_dra_buffer_state[_dra_buffer_index].buffer;
-        ndai_get(ds_chunk, buf, chunk_ld,
-                 &_dra_buffer_state[_dra_buffer_index].id);
-        elio_wait(&_dra_buffer_state[_dra_buffer_index].id); 
-#endif
+        /* get a free buffer */
+	buf = get_buf(&buf_ctxt, Requests[req].call_id);
 
+	bi = (buf_info*) buf;
+	io_req = &(bi->io_req);
+	ga_movhdl = &(bi->ga_movhdl);
+	bi->align = 0;
+	
+	buf = (char*) (buf + sizeof(buf_info));
+
+	ndai_get(ds_chunk, buf, chunk_ld, io_req);
+        elio_wait(io_req); 
         /* determine location in the buffer where GA data should be */
         offset = ds_unlg.lo[ndim-1]-ds_chunk.lo[ndim-1];
         for (i=ndim-2; i>=0; i--)  {
           offset = offset*chunk_ld[i];
           offset += ds_unlg.lo[i] - ds_chunk.lo[i];
         }
-#ifdef USE_OLD_BUFFER
-        buffer  = (char*)_dra_buffer;
-#else
         buffer  = (char*)buf;
-#endif
         buffer += offset * dai_sizeofM(type);
-
+	
         switch (opcode){
           case DRA_OP_WRITE: 
+	    bi->op = DRA_OP_WRITE;
             /* overwrite a part of buffer with data from g_a */  
-            nga_move(LOAD, transp, gs_a, ds_a, ds_unlg, buffer, chunk_ld);
+            nga_move(LOAD, transp, gs_a, ds_a, ds_unlg, buffer, chunk_ld, ga_movhdl);
+	    nga_nbwait_(ga_movhdl);
 
-            /* write entire updated buffer back to disk */
-#ifdef USE_OLD_BUFFER
-            ndai_put(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
-#else
-            ndai_put(ds_chunk, buf, chunk_ld,
-                     &_dra_buffer_state[_dra_buffer_index].id);
-#endif
+            /* write ENTIRE updated buffer back to disk */
+            ndai_put(ds_chunk, buf, chunk_ld, io_req);
+	    
             break;
 
-          case DRA_OP_READ: 
+          case DRA_OP_READ:
+	    bi->op = DRA_OP_READ;
             /* copy requested data from buffer to g_a */
-            nga_move(STORE, transp, gs_a, ds_a, ds_unlg, buffer, chunk_ld);
-            break;
+            nga_move(STORE, transp, gs_a, ds_a, ds_unlg, buffer, chunk_ld, ga_movhdl);
+	    
+	    break;
 
           default:
             dai_error("dai_transfer_unlg: invalid opcode",(Integer)opcode);
@@ -3311,12 +2853,16 @@ void ndai_transfer_unlgn(int opcode,    /*[input]: signal for read or write */
           ds_unlg.lo[0], ds_unlg.hi[0],
           ds_unlg.lo[1], ds_unlg.hi[1]);
 #       endif
+
       }
     }
   }
+ /*
+ returning from this function leaving some outstanding operations,
+ so that dra_read()/write() can be non-blocking to some extent. we will
+ have to call dra_wait() to make sure these operations are complete.
+ */
 }
-
-
 
 /*\ write or read aligned subsections to disk 
 \*/
@@ -3326,86 +2872,60 @@ void ndai_transfer_algn(int opcode, int transp,
   Integer  next, chunk_ld[MAXDIM], ndim = ds_a.ndim;
   Integer i;
   section_t ds_chunk = ds_a;
-  char *buf;
+  char *buf, *buffer;
+  Integer *ga_movhdl;
+  io_request_t *io_req;
+  int *op, buf_id;
+  buf_info *bi;
 
-  for(next = 0; next < Requests[req].na; next++){
-
-    for (i=0; i<ndim; i++) ds_chunk.lo[i] = 0; /*initialize */
+   for(next = 0; next < Requests[req].na; next++){
+     for (i=0; i<ndim; i++) ds_chunk.lo[i] = 0; /*initialize */
 
     while(ndai_next_chunk(req, Requests[req].list_algn[next], &ds_chunk)){
       if (dra_debug_flag && 0) { 
-        printf("ndai_transfer_algn: Request %d\n",(int)req);
+        printf("ndai_transfer_algn: Request %d\n",req);
         for (i=0; i<ndim; i++) {
-          printf("ndai_transfer_algn: ds_chunk.lo[%d] = %d\n",(int)i,(int)ds_chunk.lo[i]);
-          printf("ndai_transfer_algn: ds_chunk.hi[%d] = %d\n",(int)i,(int)ds_chunk.hi[i]);
+          printf("ndai_transfer_algn: ds_chunk.lo[%d] = %d\n",i,ds_chunk.lo[i]);
+          printf("ndai_transfer_algn: ds_chunk.hi[%d] = %d\n",i,ds_chunk.hi[i]);
         }
       }
 
       if(dai_myturn(ds_chunk)){
-#ifdef USE_OLD_BUFFER
-        dai_wait(req); /* needs free buffer to proceed */
-#else
-        /* assign buffer */
-        _dra_buffer_index = 1 - _dra_buffer_index;
-        switch (opcode){
-          case DRA_OP_WRITE: 
-            _dra_buffer_index = 0;
-            break;
-          case DRA_OP_READ: 
-#  ifndef DRA_DBLE_BUFFER
-            _dra_buffer_index = 0;
-#  endif
-            break;
-          default:
-            break;
-        }
-        _dra_buffer_state[_dra_buffer_index].req = req;
-        dai_wait_buf(_dra_buffer_index); /* needs free buffer to proceed */
-        Requests[req].ibuf = _dra_buffer_index;
-#endif
 
         for (i=0; i<ndim-1; i++) chunk_ld[i] = ds_chunk.hi[i] - ds_chunk.lo[i] + 1;
+	/* get a free buffer */
+	buf = get_buf(&buf_ctxt, Requests[req].call_id);
+	
+	bi = (buf_info*) buf;
+	io_req = &(bi->io_req);
+	ga_movhdl = &(bi->ga_movhdl);
+	bi->align = 1;
+	bi->callback = OFF;
 
-#ifndef USE_OLD_BUFFER
-        buf = (char*)_dra_buffer_state[_dra_buffer_index].buffer;
-#endif
+	buffer = buf;
+	buf = buf + sizeof(buf_info);
+
         switch (opcode){
 
           case DRA_OP_WRITE:
-#ifdef USE_OLD_BUFFER
-            /* copy data from g_a to DRA buffer */
-            nga_move(LOAD, transp, gs_a, ds_a, ds_chunk, _dra_buffer, chunk_ld);
-
+	    bi->op = DRA_OP_WRITE;
+	    /* copy data from g_a to DRA buffer */
+            nga_move(LOAD, transp, gs_a, ds_a, ds_chunk, buf, chunk_ld, ga_movhdl);
+	    nga_nbwait_(ga_movhdl);
+	    
             /* copy data from DRA buffer to disk */
-            ndai_put(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
-#else
-            /* copy data from g_a to DRA buffer */
-            nga_move(LOAD, transp, gs_a, ds_a, ds_chunk, buf, chunk_ld);
-
-            /* copy data from DRA buffer to disk */
-            ndai_put(ds_chunk, buf, chunk_ld,
-                     &_dra_buffer_state[_dra_buffer_index].id);
-#endif
-            break;
+            ndai_put(ds_chunk, buf, chunk_ld, io_req);
+	    
+	    break;
 
           case DRA_OP_READ:
-#ifdef USE_OLD_BUFFER
-            /* copy data from disk to DRA buffer */
-            ndai_get(ds_chunk, _dra_buffer, chunk_ld, &Requests[req].id);
-            elio_wait(&Requests[req].id);
-
+	    bi->op = DRA_OP_READ;
+	    /* copy data from disk to DRA buffer */
+            ndai_get(ds_chunk, buf, chunk_ld, io_req);
+            
             /* copy data from DRA buffer to g_a */
-            dai_callback(STORE, transp, gs_a, ds_a, ds_chunk, chunk_ld, req);
-#else
-            /* copy data from disk to DRA buffer */
-            ndai_get(ds_chunk, buf, chunk_ld,
-                     &_dra_buffer_state[_dra_buffer_index].id);
-            /*elio_wait(&_dra_buffer_state[_dra_buffer_index].id);*/
-
-            /* copy data from DRA buffer to g_a */
-            dai_callback(STORE,transp,gs_a,ds_a,ds_chunk,chunk_ld,
-                        _dra_buffer_index,req);
-#endif
+            /* nga_move(STORE, transp, gs_a, ds_a, ds_chunk, buf, chunk_ld, ga_movhdl); */
+	    dai_callback(STORE, transp, gs_a, ds_a, ds_chunk, chunk_ld, buffer, req);
             break;
 
           default:
@@ -3419,9 +2939,15 @@ void ndai_transfer_algn(int opcode, int transp,
                   ds_chunk.lo[0], ds_chunk.hi[0],
                   ds_chunk.lo[1], ds_chunk.hi[1]);
 #       endif
+
       }
     }
   }
+  /*
+  returning from this function leaving some outstanding operations,
+  so that dra_read()/write() can be non-blocking to some extent. we will 
+  have to call dra_wait() to make sure these operations are complete.
+ */
 }
 
 /*\ WRITE SECTION g_a[glo:ghi] TO d_a[dlo:dhi]
@@ -3549,17 +3075,18 @@ section_t d_sect, g_sect;
  
    ga_sync_();
    me = ga_nodeid_();
-
+   //printf("%d: CAME HERE!!!", me);
    /* usual argument/type/range checking stuff */
    dai_check_handleM(*d_a,"ndra_read_sect");
    if(!dai_read_allowed(*d_a))dai_error("ndra_read_sect: read not allowed",*d_a);
    nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
    if(DRA[handle].type != (int)gtype)dai_error("ndra_read_sect: type mismatch",gtype);
    if(DRA[handle].ndim != ndim)dai_error("ndra_read_sect: dimension mismatch", ndim);
-   for (i=0; i<ndim; i++) dai_check_rangeM(glo[i], ghi[i], gdims[i],
-       "ndra_write_sect: g_a dim error");
+   
+  for (i=0; i<ndim; i++) dai_check_rangeM(glo[i], ghi[i], gdims[i],
+       "ndra_read_sect: g_a dim error");
    for (i=0; i<ndim; i++) dai_check_rangeM(dlo[i], dhi[i], DRA[handle].dims[i],
-       "ndra_write_sect: d_a dim error");
+       "ndra_read_sect: d_a dim error");
 
    /* check if numbers of elements in g_a & d_a sections match */
    gelem = 1;
@@ -3570,7 +3097,7 @@ section_t d_sect, g_sect;
    }
    if (gelem != delem)
        dai_error("ndra_read_sect: d_a and g_a sections do not match ", 0L);
-       
+
    dai_assign_request_handle(request);
 
    /* decompose d_a section into aligned and unaligned subsections
@@ -3582,12 +3109,12 @@ section_t d_sect, g_sect;
 
    if (dra_debug_flag) {
      for (i=0; i<ndim; i++) {
-       printf("proc[%d] ndra_read_section: dlo[%d] = %d\n",(int)me,(int)i,(int)dlo[i]);
-       printf("proc[%d] ndra_read_section: dhi[%d] = %d\n",(int)me,(int)i,(int)dhi[i]);
+       printf("proc[%d] ndra_read_section: dlo[%d] = %d\n",me,i,dlo[i]);
+       printf("proc[%d] ndra_read_section: dhi[%d] = %d\n",me,i,dhi[i]);
      }
      for (i=0; i<ndim; i++) {
-       printf("proc[%d] ndra_read_section: glo[%d] = %d\n",(int)me,(int)i,(int)glo[i]);
-       printf("proc[%d] ndra_read_section: ghi[%d] = %d\n",(int)me,(int)i,(int)ghi[i]);
+       printf("proc[%d] ndra_read_section: glo[%d] = %d\n",me,i,glo[i]);
+       printf("proc[%d] ndra_read_section: ghi[%d] = %d\n",me,i,ghi[i]);
      }
    }
 
@@ -3609,15 +3136,15 @@ section_t d_sect, g_sect;
          Requests[*request].nu);
      for (i=0; i<2*ndim; i++) {
        printf("ndra_read_section: list_algn[%d] =  %d\n",
-           (int)i,(int)Requests[*request].list_algn[0][i]);
+           i,Requests[*request].list_algn[0][i]);
      }
      for (i=0; i<2*ndim; i++) {
        printf("ndra_read_section: list_cover[%d] =  %d\n",
-           (int)i,(int)Requests[*request].list_cover[0][i]);
+           i,Requests[*request].list_cover[0][i]);
      }
      for (i=0; i<2*ndim; i++) {
-       printf("ndra_read_section: list_unlgn[%d] =  %d\n",(int)i,
-           (int)Requests[*request].list_unlgn[0][i]);
+       printf("ndra_read_section: list_unlgn[%d] =  %d\n",i,
+           Requests[*request].list_unlgn[0][i]);
      } 
    }
 
@@ -3626,7 +3153,8 @@ section_t d_sect, g_sect;
            
    /* process aligned subsections */
    ndai_transfer_algn (DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
-
+   
+   //printf(" %d: CAME at the end of ndra_read_section!", me);
    return(ELIO_OK);
 }
 
@@ -3639,11 +3167,12 @@ logical transp = FALSE;
 Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
 
         ga_sync_();
-
+	//printf("%d: CAME AT ndra_read_!!\n", ga_nodeid_());
         /* usual argument/type/range checking stuff */
         dai_check_handleM(*d_a,"ndra_read");
         if(!dai_read_allowed(*d_a))dai_error("ndra_read: read not allowed",*d_a);
         nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
+	//printf("%d: CAME After nga_inquire_internals!!\n", ga_nodeid_());
         if(DRA[handle].type != (int)gtype)dai_error("ndra_read: type mismatch",gtype);
         if(DRA[handle].ndim != ndim)dai_error("ndra_read: dimension mismatch",ndim);
         for (i=0; i<ndim; i++) {
@@ -3658,6 +3187,233 @@ Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
         }
         return(ndra_read_section_(&transp, g_a, lo, hi, d_a, lo, hi, request));
 }
+
+/*\ WRITE SECTION g_a[gilo:gihi, gjlo:gjhi] TO d_a[dilo:dihi, djlo:djhi]
+\*/
+Integer FATR dra_write_section_(
+        logical *transp,                   /*input:transpose operator*/
+        Integer *g_a,                      /*input:GA handle*/ 
+        Integer *gilo,                     /*input*/
+        Integer *gihi,                     /*input*/
+        Integer *gjlo,                     /*input*/
+        Integer *gjhi,                     /*input*/
+        Integer *d_a,                      /*input:DRA handle*/ 
+        Integer *dilo,                     /*input*/
+        Integer *dihi,                     /*input*/
+        Integer *djlo,                     /*input*/
+        Integer *djhi,                     /*input*/
+        Integer *request)                  /*output: async. request id*/ 
+{
+
+  Integer glo[2], ghi[2], dlo[2], dhi[2];
+
+  glo[0] = *gilo;
+  glo[1] = *gjlo;
+  ghi[0] = *gihi;
+  ghi[1] = *gjhi;
+
+  dlo[0] = *dilo;
+  dlo[1] = *djlo;
+  dhi[0] = *dihi;
+  dhi[1] = *djhi;
+
+  return (ndra_write_section_(transp, g_a, glo, ghi, d_a, dlo, dhi, request));
+
+  /*
+Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
+section_t d_sect, g_sect;
+  
+   ga_sync_();
+
+   dai_check_handleM(*d_a,"dra_write_sect");
+   ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
+   if(!dai_write_allowed(*d_a))dai_error("dra_write_sect: write not allowed",*d_a);
+   if(DRA[handle].type != (int)gtype)dai_error("dra_write_sect: type mismatch",gtype);
+   dai_check_rangeM(*gilo,*gihi, gdim1, "dra_write_sect: g_a dim1 error");
+   dai_check_rangeM(*gjlo,*gjhi, gdim2, "dra_write_sect: g_a dim2 error");
+   dai_check_rangeM(*dilo,*dihi,DRA[handle].dims[0],"dra_write_sect:d_a dim1 error");
+   dai_check_rangeM(*djlo,*djhi,DRA[handle].dims[1],"dra_write_sect:d_a dim2 error");
+
+   
+   if ((*dihi - *dilo + 1) * (*djhi - *djlo + 1) !=
+       (*gihi - *gilo + 1) * (*gjhi - *gjlo + 1))
+       dai_error("dra_write_sect: d_a and g_a sections do not match ", 0L);
+
+   dai_assign_request_handle(request);
+
+   
+   Requests[*request].nu=MAX_ALGN;    
+   Requests[*request].na=MAX_UNLG;
+
+   fill_sectionM(d_sect, *d_a, *dilo, *dihi, *djlo, *djhi); 
+   fill_sectionM(g_sect, *g_a, *gilo, *gihi, *gjlo, *gjhi); 
+
+   dai_decomp_section(d_sect,
+                     Requests[*request].list_algn, 
+                    &Requests[*request].na,
+                     Requests[*request].list_cover, 
+                     Requests[*request].list_unlgn, 
+                    &Requests[*request].nu);
+   _dra_turn = 0;
+
+  
+   dai_transfer_unlgn(DRA_OP_WRITE, (int)*transp, d_sect, g_sect, *request);
+                  
+   
+   dai_transfer_algn (DRA_OP_WRITE, (int)*transp, d_sect, g_sect, *request);
+
+   ga_sync_();
+
+   return(ELIO_OK);
+  */
+}
+
+/*\ WRITE g_a TO d_a
+\*/
+Integer FATR dra_write_(
+        Integer *g_a,                      /*input:GA handle*/
+        Integer *d_a,                      /*input:DRA handle*/
+        Integer *request)                  /*output: handle to async oper. */
+{
+  
+  return (ndra_write_(g_a, d_a, request));
+/*
+Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
+logical transp = FALSE;
+Integer ilo, ihi, jlo, jhi;
+
+        ga_sync_();     
+
+        dai_check_handleM(*d_a,"dra_write");
+        if( !dai_write_allowed(*d_a))
+             dai_error("dra_write: write not allowed to this array",*d_a);
+
+        ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
+        if(DRA[handle].type != (int)gtype)dai_error("dra_write: type mismatch",gtype);
+        if(DRA[handle].dims[0] != gdim1)dai_error("dra_write: dim1 mismatch",gdim1);
+        if(DRA[handle].dims[1] != gdim2)dai_error("dra_write: dim2 mismatch",gdim2);
+
+        
+        ilo = 1; ihi = DRA[handle].dims[0];
+        jlo = 1; jhi = DRA[handle].dims[1];
+        return(dra_write_section_(&transp, g_a, &ilo, &ihi, &jlo, &jhi,
+                                          d_a, &ilo, &ihi, &jlo, &jhi,request));
+*/
+}
+
+
+
+/*\ READ SECTION g_a[gilo:gihi, gjlo:gjhi] FROM d_a[dilo:dihi, djlo:djhi]
+\*/
+Integer FATR dra_read_section_(
+        logical *transp,                   /*input:transpose operator*/
+        Integer *g_a,                      /*input:GA handle*/ 
+        Integer *gilo,                     /*input*/
+        Integer *gihi,                     /*input*/
+        Integer *gjlo,                     /*input*/
+        Integer *gjhi,                     /*input*/
+        Integer *d_a,                      /*input:DRA handle*/ 
+        Integer *dilo,                     /*input*/
+        Integer *dihi,                     /*input*/
+        Integer *djlo,                     /*input*/
+        Integer *djhi,                     /*input*/
+        Integer *request)                  /*output: request id*/ 
+{
+
+  Integer glo[2], ghi[2], dlo[2], dhi[2];
+  
+  glo[0] = *gilo;
+  glo[1] = *gjlo;
+  ghi[0] = *gihi;
+  ghi[1] = *gjhi;
+
+  dlo[0] = *dilo;
+  dlo[1] = *djlo;
+  dhi[0] = *dihi;
+  dhi[1] = *djhi;
+
+  return (ndra_read_section_(transp, g_a, glo, ghi, d_a, dlo, dhi, request));
+
+  /*
+Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
+section_t d_sect, g_sect;
+ 
+   ga_sync_();
+
+   dai_check_handleM(*d_a,"dra_read_sect");
+   if(!dai_read_allowed(*d_a))dai_error("dra_read_sect: read not allowed",*d_a);
+   ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
+   if(DRA[handle].type != (int)gtype)dai_error("dra_read_sect: type mismatch",gtype);
+   dai_check_rangeM(*gilo, *gihi, gdim1, "dra_read_sect: g_a dim1 error");
+   dai_check_rangeM(*gjlo, *gjhi, gdim2, "dra_read_sect: g_a dim2 error");
+   dai_check_rangeM(*dilo, *dihi,DRA[handle].dims[0],"dra_read_sect:d_a dim1 error");
+   dai_check_rangeM(*djlo, *djhi,DRA[handle].dims[1],"dra_read_sect:d_a dim2 error");
+
+  
+   if ((*dihi - *dilo + 1) * (*djhi - *djlo + 1) !=
+       (*gihi - *gilo + 1) * (*gjhi - *gjlo + 1))
+       dai_error("dra_read_sect: d_a and g_a sections do not match ", 0L);
+       
+   dai_assign_request_handle(request);
+
+  
+   Requests[*request].nu=MAX_ALGN;    
+   Requests[*request].na=MAX_UNLG;
+
+   fill_sectionM(d_sect, *d_a, *dilo, *dihi, *djlo, *djhi); 
+   fill_sectionM(g_sect, *g_a, *gilo, *gihi, *gjlo, *gjhi); 
+
+   dai_decomp_section(d_sect,
+                     Requests[*request].list_algn, 
+                    &Requests[*request].na,
+                     Requests[*request].list_cover, 
+                     Requests[*request].list_unlgn, 
+                    &Requests[*request].nu);
+
+   _dra_turn = 0;
+
+  
+   dai_transfer_unlgn(DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
+           
+  
+   dai_transfer_algn (DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
+
+   return(ELIO_OK);
+*/
+}
+
+
+
+/*\ READ g_a FROM d_a
+\*/
+Integer FATR dra_read_(Integer* g_a, Integer* d_a, Integer* request)
+{
+
+  return (ndra_read_(g_a, d_a, request));
+
+  /*
+Integer gdim1, gdim2, gtype, handle=*d_a+DRA_OFFSET;
+logical transp = FALSE;
+Integer ilo, ihi, jlo, jhi;
+
+        ga_sync_();
+
+        
+        dai_check_handleM(*d_a,"dra_read");
+        if(!dai_read_allowed(*d_a))dai_error("dra_read: read not allowed",*d_a);
+        ga_inquire_internal_(g_a, &gtype, &gdim1, &gdim2);
+        if(DRA[handle].type != (int)gtype)dai_error("dra_read: type mismatch",gtype);
+        if(DRA[handle].dims[0] != gdim1)dai_error("dra_read: dim1 mismatch",gdim1);
+        if(DRA[handle].dims[1] != gdim2)dai_error("dra_read: dim2 mismatch",gdim2);
+
+        
+        ilo = 1; ihi = DRA[handle].dims[0];
+        jlo = 1; jhi = DRA[handle].dims[1];
+        return(dra_read_section_(&transp, g_a, &ilo, &ihi, &jlo, &jhi,
+                                         d_a, &ilo, &ihi, &jlo, &jhi, request));
+*/
+}
+
 
 /*\ INQUIRE PARAMETERS OF EXISTING N-DIMENSIONAL DISK ARRAY
 \*/
