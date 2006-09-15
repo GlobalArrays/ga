@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.88 2006-09-14 20:08:43 d3g293 Exp $ */
+/* $Id: capi.c,v 1.89 2006-09-15 19:40:45 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -798,6 +798,11 @@ void NGA_NbPut(int g_a, int lo[], int hi[], void* buf, int ld[],
     COPYINDEX_C2F(hi,_ga_hi, ndim);
     COPYC2F(ld,_ga_work, ndim-1);
     nga_put_common(&a, _ga_lo, _ga_hi, buf, _ga_work,(Integer *)nbhandle);
+}
+
+int NGA_NbTest(ga_nbhdl_t* nbhandle)
+{
+    return(nga_test_internal((Integer *)nbhandle));
 }
 
 int NGA_NbWait(ga_nbhdl_t* nbhandle)

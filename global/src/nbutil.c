@@ -238,6 +238,46 @@ int retval = 0;
     return(0);
 }
 
+
+static int test_list_element(int index){
+ga_armcihdl_t *listele,*prev,*next;
+    if(DEBUG){
+       printf("\n%d:clearing handle %d\n",GAme,index);fflush(stdout);
+    }
+    listele = &(list_element_array[index]);
+
+    return (ARMCI_Test(listele->handle));
+}
+
+static int test_armci_handle_list(int elementtofree){
+ga_armcihdl_t *first = ga_ihdl_array[elementtofree].ahandle,*next;
+ int done = 1; 
+    /*call clear_list_element for every element in the list*/
+    while(first!=NULL){
+       next=first->next;
+       if (test_list_element(first->index) == 0) {
+	 done = 0;
+	 break;
+       }
+       first=next;
+    }
+    return (done);
+}
+
+/*\ the test routine which is called inside nga_nbtest
+\*/ 
+int nga_test_internal(Integer *nbhandle){
+gai_nbhdl_t *inbhandle = (gai_nbhdl_t *)nbhandle;
+int retval = 0;
+    if(inbhandle->ihdl_index==(NUM_HDLS+1))retval=0;
+    else if(inbhandle->ga_nbtag !=ga_ihdl_array[inbhandle->ihdl_index].ga_nbtag)
+       retval=0;
+    else
+       return (test_armci_handle_list(inbhandle->ihdl_index));
+    
+    return(0);
+}
+
 /*\ unlike in ARMCI, user doesnt have to initialize handle in GA.
  *  it is done by the get/put call instead.
 \*/
