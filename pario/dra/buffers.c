@@ -19,6 +19,7 @@ buffer management initialization routine
 
 void buffer_init(buf_context_t *ctxt, int nbuf, int buf_size, void (*fptr)(char*)) {
   int i;
+  long diff;
   if (nbuf < 1 || nbuf > MAXBUF) {
     printf("Too many (or too few) buffers requested, using default number (%d) of buffers", DEFBUF);
     nbuf = DEFBUF;
@@ -43,7 +44,6 @@ void buffer_init(buf_context_t *ctxt, int nbuf, int buf_size, void (*fptr)(char*
     bzero(buffers[i], sizeof(buffers[i]));
   }
 #else  
-  long diff;
 
   /* get buffer memory */
   for (i = 0; i < nbuf; i++) {
