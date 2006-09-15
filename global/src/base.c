@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.140 2006-09-14 20:08:43 d3g293 Exp $ */
+/* $Id: base.c,v 1.141 2006-09-15 19:45:12 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2318,20 +2318,6 @@ Integer ga_handle, p_handle, lproc, tproc;
 
    ga_check_handleM(g_a, "nga_distribution");
    ga_handle = (GA_OFFSET + *g_a);
-   /* BJP
-   p_handle = GA[ga_handle].p_handle;
-   if (GA_Default_Proc_Group != -1) {
-      tproc = PGRP_LIST[GA_Default_Proc_Group].inv_map_proc_list[*proc];
-   } else {
-      tproc = *proc;
-   }
-   if (p_handle < 0) {
-     lproc = tproc;
-   } else {
-     lproc = PGRP_LIST[p_handle].map_proc_list[tproc];
-   }
-   */
-   /* BJP */
 
    lproc = *proc;
    if (GA[ga_handle].block_flag == 0) {
@@ -2982,91 +2968,135 @@ logical FATR nga_locate_region_( Integer *g_a,
                         the upper indices of the first processor in
                         proclist, the next D elements are the lower
                         indices for the second processor in proclist, and
-                        so on. If a block-cyclic data distribution is used,
-                        nothing is done with map.
+                        so on.
       proclist [output] list of processors containing some portion of the
                         patch
       np       [output] total number of processors containing a portion
                         of the patch
+
+      If a block cyclic data distribution, then this function returns a list of
+      blocks that cover the region along with the lower and upper indices of
+      each block.
 */
 {
-int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
-Integer  proc, owner, i, ga_handle;
-Integer  d, dpos, ndim, elems, p_handle;
+  int  procT[MAXDIM], procB[MAXDIM], proc_subscript[MAXDIM];
+  Integer  proc, owner, i, ga_handle;
+  Integer  d, dpos, ndim, elems, p_handle, use_blocks;
 
-   ga_check_handleM(g_a, "nga_locate_region");
+  ga_check_handleM(g_a, "nga_locate_region");
 
-   ga_handle = GA_OFFSET + *g_a;
+  ga_handle = GA_OFFSET + *g_a;
 #ifdef __crayx1
 #pragma _CRI novector
 #endif
-   for(d = 0; d< GA[ga_handle].ndim; d++)
-     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
+  for(d = 0; d< GA[ga_handle].ndim; d++)
+    if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
-   ndim = GA[ga_handle].ndim;
+  ndim = GA[ga_handle].ndim;
+  use_blocks = GA[ga_handle].block_flag;
 
-   /* find "processor coordinates" for the top left corner and store them
-    * in ProcT */
+  if (!use_blocks) {
+    /* find "processor coordinates" for the top left corner and store them
+     * in ProcT */
 #ifdef __crayx1
 #pragma _CRI novector
 #endif
-   for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
-     findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
-         GA[ga_handle].scale[d], lo[d], &procT[d]);
-     dpos += GA[ga_handle].nblock[d];
-   }
+    for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
+      findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
+          GA[ga_handle].scale[d], lo[d], &procT[d]);
+      dpos += GA[ga_handle].nblock[d];
+    }
 
-   /* find "processor coordinates" for the right bottom corner and store
-    * them in procB */
+    /* find "processor coordinates" for the right bottom corner and store
+     * them in procB */
 #ifdef __crayx1
 #pragma _CRI novector
 #endif
-   for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
-     findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
-         GA[ga_handle].scale[d], hi[d], &procB[d]);
-     dpos += GA[ga_handle].nblock[d];
-   }
+    for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
+      findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
+          GA[ga_handle].scale[d], hi[d], &procB[d]);
+      dpos += GA[ga_handle].nblock[d];
+    }
 
-   *np = 0;
+    *np = 0;
 
-   /* Find total number of processors containing data and return the
-    * result in elems. Also find the lowest "processor coordinates" of the
-    * processor block containing data and return these in proc_subscript.
-    */
-   ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,GA[ga_handle].nblock);
+    /* Find total number of processors containing data and return the
+     * result in elems. Also find the lowest "processor coordinates" of the
+     * processor block containing data and return these in proc_subscript.
+     */
+    ga_InitLoopM(&elems, ndim, proc_subscript, procT,procB,GA[ga_handle].nblock);
 
-   p_handle = (Integer)GA[ga_handle].p_handle;
-   for(i= 0; i< elems; i++){ 
-     Integer _lo[MAXDIM], _hi[MAXDIM];
-     Integer  offset;
+    p_handle = (Integer)GA[ga_handle].p_handle;
+    for(i= 0; i< elems; i++){ 
+      Integer _lo[MAXDIM], _hi[MAXDIM];
+      Integer  offset;
 
-     /* convert i to owner processor id using the current values in
-        proc_subscript */
-     ga_ComputeIndexM(&proc, ndim, proc_subscript, GA[ga_handle].nblock); 
-     /* get range of global array indices that are owned by owner */
-     ga_ownsM(ga_handle, proc, _lo, _hi);
+      /* convert i to owner processor id using the current values in
+         proc_subscript */
+      ga_ComputeIndexM(&proc, ndim, proc_subscript, GA[ga_handle].nblock); 
+      /* get range of global array indices that are owned by owner */
+      ga_ownsM(ga_handle, proc, _lo, _hi);
 
-     offset = *np *(ndim*2); /* location in map to put patch range */
+      offset = *np *(ndim*2); /* location in map to put patch range */
 
 #ifdef __crayx1
 #pragma _CRI novector
 #endif
-     for(d = 0; d< ndim; d++)
-       map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
+      for(d = 0; d< ndim; d++)
+        map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
 #ifdef __crayx1
 #pragma _CRI novector
 #endif
-     for(d = 0; d< ndim; d++)
-       map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
+      for(d = 0; d< ndim; d++)
+        map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
-     owner = proc;
-     proclist[i] = owner;
-     /* Update to proc_subscript so that it corresponds to the next
-      * processor in the block of processors containing the patch */
-     ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].nblock);
-     (*np)++;
-   }
-   return(TRUE);
+      owner = proc;
+      proclist[i] = owner;
+      /* Update to proc_subscript so that it corresponds to the next
+       * processor in the block of processors containing the patch */
+      ga_UpdateSubscriptM(ndim,proc_subscript,procT,procB,GA[ga_handle].nblock);
+      (*np)++;
+    }
+  } else {
+    Integer nblocks = GA[ga_handle].block_total;
+    Integer chk, j, tlo[MAXDIM], thi[MAXDIM], cnt;
+    Integer offset;
+    cnt = 0;
+    for (i=0; i<nblocks; i++) {
+      /* check to see if this block overlaps with requested block
+       * defined by lo and hi */
+      chk = 1;
+      /* get limits on block i */
+      nga_distribution_(g_a,&i,tlo,thi);
+      for (j=0; j<ndim && chk==1; j++) {
+        /* check to see if at least one end point of the interval
+         * represented by blo and bhi falls in the interval
+         * represented by lo and hi */
+        if (!((tlo[j] >= lo[j] && tlo[j] <= hi[j]) ||
+              (thi[j] >= lo[j] && thi[j] <= hi[j]))) {
+          chk = 0;
+        }
+      }
+      /* store blocks that overlap request region in proclist */
+      if (chk) {
+        proclist[cnt] = i;
+        cnt++;
+      }
+    }
+    *np = cnt;
+
+    /* fill map array with block coordinates */
+    for (i=0; i<cnt; i++) {
+      offset = i*2*ndim;
+      j = proclist[i];
+      nga_distribution_(g_a,&j,tlo,thi);
+      for (j=0; j<ndim; j++) {
+        map[offset + j] = lo[j] < tlo[j] ? tlo[j] : lo[j];
+        map[offset + ndim + j] = hi[j] > thi[j] ? thi[j] : hi[j];
+      }
+    }
+  }
+  return(TRUE);
 }
 #ifdef __crayx1
 #pragma _CRI inline nga_locate_region_
