@@ -3,7 +3,7 @@ DRA operations with a buffer manager layer, modified by Bilash
 The buffer manager provides functionalities related to buffers
 */
 
-/*$Id: disk.arrays.c,v 1.76 2006-09-18 15:47:41 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.77 2006-09-18 18:01:25 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1634,7 +1634,7 @@ int rc;
 Integer FATR dra_terminate_()
 {
         free(DRA);
-        buf_terminate(&buf_ctxt);
+       /* buf_terminate(&buf_ctxt); */
 
         ga_sync_();
         return(ELIO_OK);
@@ -1995,7 +1995,11 @@ Off_t offset;
         if(elio_write(DRA[handle].fd, offset-1, &byte, 1) != (Size_t)1)
                      dai_error("ndai_zero_eof: write error ",0);
 
+        /* This is a modification added by Sriram. Not sure what it is suppose
+         * to do for you so I'm commenting it out for now. This function is
+         * strictly an addition to existing code.
 	elio_zero_eof(DRA[handle].fd);
+         */
 }
 
 /*\ SET CONFIGURATION FOR HANDLING DRAs STORED ON OPEN FILE SYSTEMS
