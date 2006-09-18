@@ -3,7 +3,7 @@ DRA operations with a buffer manager layer, modified by Bilash
 The buffer manager provides functionalities related to buffers
 */
 
-/*$Id: disk.arrays.c,v 1.75 2006-09-14 23:09:44 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.76 2006-09-18 15:47:41 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -1634,7 +1634,7 @@ int rc;
 Integer FATR dra_terminate_()
 {
         free(DRA);
-	_dra_buf_terminate();
+        buf_terminate(&buf_ctxt);
 
         ga_sync_();
         return(ELIO_OK);
