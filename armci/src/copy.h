@@ -1,4 +1,4 @@
-/* $Id: copy.h,v 1.85 2006-09-13 23:43:36 andriy Exp $ */
+/* $Id: copy.h,v 1.86 2006-09-19 23:22:40 andriy Exp $ */
 #ifndef _COPY_H_
 #define _COPY_H_
 
@@ -41,8 +41,8 @@
 #error NB_NONCONT can only be defined for CRAY-SHMEM and ELAN
 #endif
 
-#if defined(SHMEM_HANDLE_SUPPORTED) && !defined(CRAY_SHMEM)
-#warning SHMEM_HANDLE_SUPPORTED should not be defined on a non CRAY_SHMEM network
+#if defined(SHMEM_HANDLE_NOT_SUPPORTED) && !defined(CRAY_SHMEM)
+#error SHMEM_HANDLE_NOT_SUPPORTED should not be defined on a non CRAY_SHMEM network
 #endif
 
 /* 08/30/06 moved up here from lines 252-397, MEM_FENCE before FENCE_NODE */
