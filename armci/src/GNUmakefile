@@ -1,10 +1,9 @@
-#$Id: GNUmakefile,v 1.100 2006-09-13 23:38:34 andriy Exp $
+#$Id: GNUmakefile,v 1.101 2006-09-19 23:18:57 andriy Exp $
          FOPT = -O
          COPT = -O
 
 OBJ= strided.o armci.o memory.o fence.o rmw.o acc.o kr_malloc.o\
- memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o rtinfo.o\
- noncont.o
+ memlock.o pack.o vector.o clusterinfo.o mutex.o locks.o aggregate.o rtinfo.o
 
 OBJ_FRAGILE = message.o
 
@@ -13,6 +12,9 @@ OBJ_FRAGILE = message.o
 ifndef NOFORT
 OBJ += faccumulate.o fcopy.o
 endif
+
+# ARMCI can be build with strided opeations implemented using non-blocking calls
+#NB_NONCONT = 1
 
 
 #default message-passing library for ARMCI is MPI
@@ -128,7 +130,7 @@ ifeq ($(ARMCI_NETWORK),ELAN4)
     LIB_DEFINES += -DPTHREADS -DSERVER_THREAD -D_REENTRANT -DACC_SMP
     EXTRA_LIBS += -lpthread
 endif
-    
+
 
 ifdef ARMCI_NETWORK
   LIBRARY_STAMP = $(ARMCI_NETWORK).$(MSG_COMMS)
@@ -147,6 +149,15 @@ ifeq ($(ARMCI_NETWORK),SOCKETS)
      # EXTRA_LIBS += -lpthread
   endif
 endif
+
+ifdef NB_NONCONT
+	NB_NONCONT_NET = QUADRICS ELAN4 CRAY-SHMEM
+	ifeq ($(ARMCI_NETWORK),$(findstring $(ARMCI_NETWORK),$(NB_NONCONT_NET)))
+		LIB_DEFINES += -DNB_NONCONT
+		OBJ += noncont.o
+	endif
+endif
+
 
 ifdef GA_USE_VAMPIR
    OBJ += armci_vampir.o
