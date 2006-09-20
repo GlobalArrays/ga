@@ -73,7 +73,7 @@ int armci_ckpt_pgfh(void *addr, int errno, int fd)
     unsigned long pagenum;
     /*find the page number and the corresponding page aligned address*/
     pagenum = (unsigned long)((long)addr/mypagesize);
-    (long)paddr = pagenum*mypagesize; 
+    paddr = (char*)(pagenum*mypagesize); 
 
     if(DEBUG)printf("%d:paddr=%p addr=%p %lu\n",armci_me,paddr,addr,pagenum);
 
@@ -430,6 +430,7 @@ void what_is_going_on() {
   info, flush the stack registers to backing store and save backing store.
   NOTE: backing store is a cache to register stack. 
  */
+#if defined(__ia64)
 static void armci_ckpt_write_backstore(int rid) 
 {
     char *bspTop; /* in IA64 only, back store pointer (bsp) */
@@ -458,6 +459,7 @@ static void armci_ckpt_write_backstore(int rid)
                             armci_storage_record[rid].bsp_mon.fileoffset);
     
 }
+#endif
 
 static void armci_ckpt_write_stack(int rid)
 {
@@ -661,6 +663,7 @@ int armci_icheckpoint(int rid)
 /**
  * Recover Backing Store.
  */
+#if defined(__ia64)
 static void armci_recover_backstore(int rid) 
 {
     off_t offset = armci_storage_record[rid].bsp_mon.fileoffset;
@@ -690,7 +693,7 @@ static void armci_recover_backstore(int rid)
      * CHECK: Do nothing here. Recursive function in action.
      */
 }
-
+#endif
 
 
 /**
