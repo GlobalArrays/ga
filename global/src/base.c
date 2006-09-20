@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.142 2006-09-20 15:56:39 d3g293 Exp $ */
+/* $Id: base.c,v 1.143 2006-09-20 17:38:19 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -1100,6 +1100,8 @@ Integer ga_create_handle_()
   GA[ga_handle].ghosts = 0;
   GA[ga_handle].corner_flag = -1;
   GA[ga_handle].cache = NULL;
+  GA[ga_handle].block_flag = 0;
+  GA[ga_handle].block_total = -1;
   GA_POP_NAME;
   return g_a;
 }
