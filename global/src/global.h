@@ -349,6 +349,11 @@ extern logical FATR nga_locate_region_( Integer *g_a,
                                         Integer *proclist,
                                         Integer *np);
 
+extern Integer FATR nga_locate_num_blocks_( Integer *g_a,
+                                            Integer *lo,
+                                            Integer *hi);
+extern Integer FATR nga_total_blocks_( Integer *g_a );
+
 extern void nga_access_ptr(Integer* g_a, Integer lo[], Integer hi[],
                            void* ptr, Integer ld[]);
 extern void nga_access_ghost_ptr(Integer* g_a, Integer dims[],
@@ -358,6 +363,8 @@ extern void nga_access_ghost_element(Integer* g_a, void* ptr, Integer subscript[
 
 extern void FATR nga_access_(Integer* g_a, Integer lo[], Integer hi[],
                              Integer* index, Integer ld[]);
+extern void FATR nga_access_block_(Integer* g_a, Integer* idx, Integer* index, Integer ld[]);
+extern void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer ld[]);
 extern void FATR nga_access_ghosts_(Integer* g_a, Integer dims[],
                              Integer* index, Integer ld[]);
 extern void FATR nga_distribution_(Integer *g_a, Integer *proc, 

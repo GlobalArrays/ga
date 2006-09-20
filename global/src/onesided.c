@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.67 2006-09-14 20:08:44 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.68 2006-09-20 15:56:40 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -969,7 +969,7 @@ void FATR nga_get_common(Integer *g_a,
         /*printf("p[%d] Got to 3\n",GAme); */
           /*else {
             ++counter;
-            ARMCI_NbPutS(prem,stride_rem,pbuf,stride_loc,count, ndim-1,
+            ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count, ndim-1,
             proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
             } */
         }
@@ -1445,7 +1445,7 @@ Integer  ow,i,p_handle;
 
 /*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA BLOCK
 \*/
-void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr)
+void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
 {
   char *lptr;
   Integer  handle = GA_OFFSET + *g_a;
@@ -1471,6 +1471,11 @@ void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr)
     offset += tsum;
   }
   lptr = GA[handle].ptr[inode]+offset*GA[handle].elemsize;
+
+  ga_ownsM(handle,index,lo,hi); 
+  for (i=0; i<ndim-1; i++) {
+    ld[i] = hi[i]-lo[i]+1;
+  }
 
   *(char**)ptr = lptr; 
   GA_POP_NAME;
@@ -1570,7 +1575,7 @@ unsigned long    lref=0, lptr;
 
 /*\ PROVIDE ACCESS TO AN INDIVIDUAL DATA BLOCK OF A GLOBAL ARRAY
 \*/
-void FATR nga_access_block_(Integer* g_a, Integer* idx, Integer* index)
+void FATR nga_access_block_(Integer* g_a, Integer* idx, Integer* index, Integer *ld)
 {
 char     *ptr;
 Integer  handle = GA_OFFSET + *g_a;
@@ -1587,7 +1592,7 @@ unsigned long    lref=0, lptr;
    if (iblock < 0 || iblock >= GA[handle].block_total)
      ga_error("block index outside allowed values",iblock);
 
-   nga_access_block_ptr(g_a,&iblock,&ptr);
+   nga_access_block_ptr(g_a,&iblock,&ptr,ld);
    /*
     * return patch address as the distance elements from the reference address
     *

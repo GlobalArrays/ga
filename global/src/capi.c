@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.89 2006-09-15 19:40:45 d3g293 Exp $ */
+/* $Id: capi.c,v 1.90 2006-09-20 15:56:39 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -923,11 +923,13 @@ void NGA_Access(int g_a, int lo[], int hi[], void *ptr, int ld[])
      COPYF2C(_ga_work,ld, ndim-1);
 }
 
-void NGA_Access_block_ptr(int g_a, int idx, void *ptr)
+void NGA_Access_block_ptr(int g_a, int idx, void *ptr, int ld[])
 {
      Integer a=(Integer)g_a;
+     Integer ndim = ga_ndim_(&a);
      Integer iblock = (Integer)idx;
-     nga_access_block_ptr(&a,&iblock,ptr);
+     nga_access_block_ptr(&a,&iblock,ptr,_ga_work);
+     COPYF2C(_ga_work,ld, ndim-1);
 }
 
 void NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[])
@@ -1004,6 +1006,17 @@ int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[])
      }
      free(tmap);
      return (int)np;
+}
+
+int NGA_Locate_num_blocks(int g_a, int *lo, int *hi)
+{
+  Integer ret;
+  Integer a = (Integer)g_a;
+  Integer ndim = ga_ndim_(&a);
+  COPYINDEX_C2F(lo,_ga_lo,ndim);
+  COPYINDEX_C2F(hi,_ga_hi,ndim);
+  ret = nga_locate_num_blocks_(&a, _ga_lo, _ga_hi);
+  return (int)ret;
 }
 
 

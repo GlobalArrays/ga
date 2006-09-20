@@ -188,6 +188,7 @@ Integer  ndim, ndimb, type, typeb, me_a, me_b;
 Integer dimsb[MAXDIM],i;
 Integer nseg;
 Integer a_grp, b_grp, anproc, bnproc;
+Integer num_blocks_a, num_blocks_b;
 void *ptr_a, *ptr_b;
 int local_sync_begin,local_sync_end,use_put;
 
@@ -204,6 +205,8 @@ int local_sync_begin,local_sync_end,use_put;
    me_b = ga_pgroup_nodeid_(&b_grp);
    anproc = ga_get_pgroup_size_(&a_grp);
    bnproc = ga_get_pgroup_size_(&b_grp);
+   num_blocks_a = ga_total_blocks_(g_a);
+   num_blocks_b = ga_total_blocks_(g_b);
    if (anproc <= bnproc) {
      use_put = 1;
    } else {
@@ -239,21 +242,42 @@ int local_sync_begin,local_sync_end,use_put;
         Copy operation is straightforward */
 
      if (use_put) {
-       nga_distribution_(g_a, &me_a, lo, hi);
-     } else {
-       nga_distribution_(g_b, &me_b, lo, hi);
-     }
-
-     if(lo[0]>0){
-       if (use_put) {
-          nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
-          nga_put_(g_b, lo, hi, ptr_a, ld);
+       int cnt;
+       if (num_blocks_a < 0) {
+         nga_distribution_(g_a, &me_a, lo, hi);
+         if(lo[0]>0){
+           nga_access_ptr(g_a, lo, hi, &ptr_a, ld);
+           nga_put_(g_b, lo, hi, ptr_a, ld);
+         }
        } else {
-          nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
-          nga_get_(g_a, lo, hi, ptr_b, ld);
+         for (i=me_a; i<num_blocks_a; i += anproc) {
+           nga_distribution_(g_a, &i, lo, hi);
+           if (lo[0]>0) {
+           cnt++;
+             nga_access_block_ptr(g_a, &i, &ptr_a, ld);
+             nga_put_(g_b, lo, hi, ptr_a, ld);
+           }
+         }
+       }
+     } else {
+       int cnt;
+       if (num_blocks_b < 0) {
+         nga_distribution_(g_b, &me_b, lo, hi);
+         if(lo[0]>0){
+           nga_access_ptr(g_b, lo, hi, &ptr_b, ld);
+           nga_get_(g_a, lo, hi, ptr_b, ld);
+         }
+       } else {
+         for (i=me_b; i<num_blocks_b; i += bnproc) {
+           nga_distribution_(g_b, &i, lo, hi);
+           if (lo[0]>0) {
+           cnt++;
+             nga_access_block_ptr(g_b, &i, &ptr_b, ld);
+             nga_get_(g_a, lo, hi, ptr_b, ld);
+           }
+         }
        }
      }
-   
    } else {
      /* One global array is mirrored and the other is not */
      if (ga_is_mirrored_(g_a)) {

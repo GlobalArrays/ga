@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.141 2006-09-15 19:45:12 d3g293 Exp $ */
+/* $Id: base.c,v 1.142 2006-09-20 15:56:39 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2836,6 +2836,21 @@ Integer handle = GA_OFFSET + *g_a,i;
    for(i=0;i<*ndim;i++)dims[i]=(Integer)GA[handle].dims[i];
 }
 
+/*\ RETURN A POINTER TO LOCAL DATA FOR BLOCK-CYCLIC DISTRIBUTION AND
+ *  RETURN THE SIZE OF THE DATA BLOCK
+\*/
+void nga_inquire_block_internal(Integer* g_a, Integer proc, Integer *size, void* ptr)
+{
+  char *lptr;
+  Integer  handle = GA_OFFSET + *g_a;
+  Integer  i;
+
+  ga_check_handleM(g_a, "nga_inquire_block_internal");
+  ptr = GA[handle].ptr[proc];
+  
+}
+
+
 /*\ INQUIRE NAME OF A GLOBAL ARRAY
  *  Fortran version
 \*/
@@ -4161,6 +4176,60 @@ void FATR ga_fast_merge_mirrored_(Integer *g_a)
   GA_Default_Proc_Group = Save_default_group;
   if (local_sync_end) ga_sync_();
   GA_POP_NAME;
+}
+
+/*\ RETURN THE TOTAL NUMBER OF BLOCKS IN REGION (IF ANY)
+\*/
+Integer FATR nga_locate_num_blocks_(Integer *g_a, Integer *lo, Integer *hi)
+{
+  Integer ga_handle = GA_OFFSET + *g_a;
+  Integer ndim = GA[ga_handle].ndim;
+  Integer ret = -1, d;
+  Integer cnt;
+
+  GA_PUSH_NAME("nga_locate_num_blocks");
+  for(d = 0; d< GA[ga_handle].ndim; d++)
+    if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))
+      ga_error("Requested region out of bounds",0);
+
+  if (GA[ga_handle].block_flag) {
+    Integer nblocks = GA[ga_handle].block_total;
+    Integer chk, i, j, tlo[MAXDIM], thi[MAXDIM];
+    Integer offset;
+    cnt = 0;
+    for (i=0; i<nblocks; i++) {
+      /* check to see if this block overlaps with requested block
+       * defined by lo and hi */
+      chk = 1;
+      /* get limits on block i */
+      nga_distribution_(g_a,&i,tlo,thi);
+      for (j=0; j<ndim && chk==1; j++) {
+        /* check to see if at least one end point of the interval
+         * represented by blo and bhi falls in the interval
+         * represented by lo and hi */
+        if (!((tlo[j] >= lo[j] && tlo[j] <= hi[j]) ||
+              (thi[j] >= lo[j] && thi[j] <= hi[j]))) {
+          chk = 0;
+        }
+      }
+
+      if (chk) {
+        cnt++;
+      }
+    }
+    ret = cnt;
+  }
+
+  GA_POP_NAME;
+  return ret;
+}
+
+/*\ RETURN THE TOTAL NUMBER OF BLOCKS IN REGION (IF ANY)
+\*/
+Integer FATR ga_total_blocks_(Integer *g_a)
+{
+  Integer ga_handle = GA_OFFSET + *g_a;
+  return GA[ga_handle].block_total;
 }
 
 #ifdef DO_CKPT

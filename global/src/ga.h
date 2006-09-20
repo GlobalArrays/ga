@@ -137,6 +137,7 @@ extern void NGA_Scatter(int g_a, void *v, int* subsArray[], int n);
 extern void NGA_Gather(int g_a, void *v, int* subsArray[], int n);
 extern void GA_Error(char *message, int code);
 extern int NGA_Locate(int g_a, int subscript[]);
+extern int NGA_Locate_num_blocks(int g_a, int lo[], int hi[]);
 extern int NGA_Locate_region(int g_a,int lo[],int hi[],int map[],int procs[]);
 extern void NGA_Inquire(int g_a, int *type, int *ndim, int dims[]);
 extern size_t GA_Inquire_memory(void);
