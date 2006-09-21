@@ -29,7 +29,7 @@
 #   define MP_FINALIZE()     MPI_Finalize()
 #   define MP_INIT(arc,argv) MPI_Init(&(argc),&(argv))
 #   define MP_MYID(pid)      MPI_Comm_rank(MPI_COMM_WORLD, (pid))
-#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc));
+#   define MP_PROCS(pproc)   MPI_Comm_size(MPI_COMM_WORLD, (pproc))
 #   define MP_TIMER          MPI_Wtime
 #endif
 
