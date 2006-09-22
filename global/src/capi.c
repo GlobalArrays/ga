@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.90 2006-09-20 15:56:39 d3g293 Exp $ */
+/* $Id: capi.c,v 1.91 2006-09-22 22:28:08 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -930,6 +930,15 @@ void NGA_Access_block_ptr(int g_a, int idx, void *ptr, int ld[])
      Integer iblock = (Integer)idx;
      nga_access_block_ptr(&a,&iblock,ptr,_ga_work);
      COPYF2C(_ga_work,ld, ndim-1);
+}
+
+void NGA_Access_segment_ptr(int g_a, int proc, void *ptr, int *len)
+{
+     Integer a=(Integer)g_a;
+     Integer iblock = (Integer)proc;
+     Integer ilen = (Integer)len;
+     nga_access_block_ptr(&a,&iblock,ptr,&ilen);
+     *len = (int)ilen;
 }
 
 void NGA_Access_ghosts(int g_a, int dims[], void *ptr, int ld[])

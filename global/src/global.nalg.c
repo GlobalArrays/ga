@@ -42,32 +42,35 @@ int _i;\
 
 void FATR ga_zero_(Integer *g_a)
 {
-Integer ndim, type, me, elems, p_handle;
-void *ptr;
-register Integer i;
-int local_sync_begin,local_sync_end;
+  Integer ndim, type, me, elems, p_handle;
+  Integer num_blocks;
+  void *ptr;
+  register Integer i;
+  int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
-   vampir_begin(GA_ZERO,__FILE__,__LINE__);
+  vampir_begin(GA_ZERO,__FILE__,__LINE__);
 #endif
 
-   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   p_handle = ga_get_pgroup_(g_a);
-   
-   if(local_sync_begin) ga_pgroup_sync_(&p_handle);
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  p_handle = ga_get_pgroup_(g_a);
 
-   me = ga_pgroup_nodeid_(&p_handle);
+  if(local_sync_begin) ga_pgroup_sync_(&p_handle);
 
-   ga_check_handle(g_a, "ga_zero");
-   GA_PUSH_NAME("ga_zero");
+  me = ga_pgroup_nodeid_(&p_handle);
 
-   nga_inquire_internal_(g_a, &type, &ndim, dims);
-   elems = ga_pgroup_get_world_();
-   nga_distribution_(g_a, &me, lo, hi);
+  ga_check_handle(g_a, "ga_zero");
+  GA_PUSH_NAME("ga_zero");
 
-   if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
- 
+  num_blocks = ga_total_blocks_(g_a);
+
+  nga_inquire_internal_(g_a, &type, &ndim, dims);
+  if (num_blocks < 0) {
+    nga_distribution_(g_a, &me, lo, hi);
+
+    if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
+
       if (ga_has_ghosts_(g_a)) {
         nga_zero_patch_(g_a,lo,hi);
 #ifdef GA_USE_VAMPIR
@@ -84,34 +87,61 @@ int local_sync_begin,local_sync_end;
         float *fa;
         long *la;
         case C_INT:
-           ia = (int*)ptr;
-           for(i=0;i<elems;i++) ia[i]  = 0;
-           break;
+        ia = (int*)ptr;
+        for(i=0;i<elems;i++) ia[i]  = 0;
+        break;
         case C_DCPL:
-           elems *=2;
+        elems *=2;
         case C_DBL:
-           da = (double*)ptr;
-           for(i=0;i<elems;i++) da[i] = 0;
-           break;
+        da = (double*)ptr;
+        for(i=0;i<elems;i++) da[i] = 0;
+        break;
         case C_FLOAT:
-           fa = (float*)ptr;
-           for(i=0;i<elems;i++) fa[i]  = 0;
-           break;
+        fa = (float*)ptr;
+        for(i=0;i<elems;i++) fa[i]  = 0;
+        break;
         case C_LONG:
-           la = (long*)ptr;
-           for(i=0;i<elems;i++) la[i]  = 0;
-           break;                                 
+        la = (long*)ptr;
+        for(i=0;i<elems;i++) la[i]  = 0;
+        break;                                 
         default: ga_error(" wrong data type ",type);
       }
 
       /* release access to the data */
       nga_release_update_(g_a, lo, hi);
-   } 
-
-   if(local_sync_end)ga_pgroup_sync_(&p_handle);
-   GA_POP_NAME;
+    } 
+  } else {
+    ga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
+    switch (type){
+      int *ia;
+      double *da;
+      float *fa;
+      long *la;
+      case C_INT:
+      ia = (int*)ptr;
+      for(i=0;i<elems;i++) ia[i]  = 0;
+      break;
+      case C_DCPL:
+      elems *=2;
+      case C_DBL:
+      da = (double*)ptr;
+      for(i=0;i<elems;i++) da[i] = 0;
+      break;
+      case C_FLOAT:
+      fa = (float*)ptr;
+      for(i=0;i<elems;i++) fa[i]  = 0;
+      break;
+      case C_LONG:
+      la = (long*)ptr;
+      for(i=0;i<elems;i++) la[i]  = 0;
+      break;                                 
+      default: ga_error(" wrong data type ",type);
+    }
+  }
+  if(local_sync_end)ga_pgroup_sync_(&p_handle);
+  GA_POP_NAME;
 #ifdef GA_USE_VAMPIR
-   vampir_end(GA_ZERO,__FILE__,__LINE__);
+  vampir_end(GA_ZERO,__FILE__,__LINE__);
 #endif
 }
 
@@ -579,36 +609,39 @@ void FATR gai_zdot_(g_a, g_b, retval)
  
 void FATR ga_scale_(Integer *g_a, void* alpha)
 {
-Integer ndim, type, me, elems, grp_id;
-register Integer i;
-void *ptr;
-int local_sync_begin,local_sync_end;
+  Integer ndim, type, me, elems, grp_id;
+  register Integer i;
+  Integer num_blocks;
+  void *ptr;
+  int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
-   vampir_begin(GA_SCALE,__FILE__,__LINE__);
+  vampir_begin(GA_SCALE,__FILE__,__LINE__);
 #endif
 
-   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-   grp_id = ga_get_pgroup_(g_a);
-   if(local_sync_begin)ga_pgroup_sync_(&grp_id);
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  grp_id = ga_get_pgroup_(g_a);
+  if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
-   me = ga_pgroup_nodeid_(&grp_id);
+  me = ga_pgroup_nodeid_(&grp_id);
 
-   ga_check_handle(g_a, "ga_scale");
-   GA_PUSH_NAME("ga_scale");
+  ga_check_handle(g_a, "ga_scale");
+  GA_PUSH_NAME("ga_scale");
+  num_blocks = ga_total_blocks_(g_a);
 
-   nga_inquire_internal_(g_a, &type, &ndim, dims);
-   nga_distribution_(g_a, &me, lo, hi);
-   if (ga_has_ghosts_(g_a)) {
-     nga_scale_patch_(g_a, lo, hi, alpha);
+  nga_inquire_internal_(g_a, &type, &ndim, dims);
+  if (num_blocks < 0) {
+    nga_distribution_(g_a, &me, lo, hi);
+    if (ga_has_ghosts_(g_a)) {
+      nga_scale_patch_(g_a, lo, hi, alpha);
 #ifdef GA_USE_VAMPIR
-     vampir_end(GA_SCALE,__FILE__,__LINE__);
+      vampir_end(GA_SCALE,__FILE__,__LINE__);
 #endif
-     return;
-   }
+      return;
+    }
 
-   if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
+    if ( lo[0]> 0 ){ /* base index is 1: we get 0 if no elements stored on p */
 
       nga_access_ptr(g_a, lo, hi, &ptr, ld);
       GET_ELEMS(ndim,lo,hi,ld,&elems);
@@ -620,41 +653,76 @@ int local_sync_begin,local_sync_end;
         long *la;
         float *fa;
         case C_INT:
-           ia = (int*)ptr;
-           for(i=0;i<elems;i++) ia[i]  *= *(int*)alpha;
-           break;
+        ia = (int*)ptr;
+        for(i=0;i<elems;i++) ia[i]  *= *(int*)alpha;
+        break;
         case C_LONG:
-	   la = (long*)ptr;
-           for(i=0;i<elems;i++) la[i]  *= *(long*)alpha;
-	   break;
+        la = (long*)ptr;
+        for(i=0;i<elems;i++) la[i]  *= *(long*)alpha;
+        break;
         case C_DCPL:
-           ca = (DoubleComplex*)ptr;
-           scale= *(DoubleComplex*)alpha;
-           for(i=0;i<elems;i++){
-               DoubleComplex val = ca[i]; 
-               ca[i].real = scale.real*val.real  - val.imag * scale.imag;
-               ca[i].imag = scale.imag*val.real  + val.imag * scale.real;
-           }
-           break;
+        ca = (DoubleComplex*)ptr;
+        scale= *(DoubleComplex*)alpha;
+        for(i=0;i<elems;i++){
+          DoubleComplex val = ca[i]; 
+          ca[i].real = scale.real*val.real  - val.imag * scale.imag;
+          ca[i].imag = scale.imag*val.real  + val.imag * scale.real;
+        }
+        break;
         case C_DBL:
-           da = (double*)ptr;
-           for(i=0;i<elems;i++) da[i] *= *(double*)alpha;
-           break;
+        da = (double*)ptr;
+        for(i=0;i<elems;i++) da[i] *= *(double*)alpha;
+        break;
         case C_FLOAT:
-           fa = (float*)ptr;
-           for(i=0;i<elems;i++) fa[i]  *= *(float*)alpha;
-           break;       
+        fa = (float*)ptr;
+        for(i=0;i<elems;i++) fa[i]  *= *(float*)alpha;
+        break;       
         default: ga_error(" wrong data type ",type);
       }
 
       /* release access to the data */
       nga_release_update_(g_a, lo, hi);
-   }
-
-   GA_POP_NAME;
-   if(local_sync_end)ga_pgroup_sync_(&grp_id); 
+    }
+  } else {
+    ga_access_block_segment_ptr(g_a, &me, &ptr, &elems);
+    switch (type){
+      int *ia;
+      double *da;
+      DoubleComplex *ca, scale;
+      long *la;
+      float *fa;
+      case C_INT:
+      ia = (int*)ptr;
+      for(i=0;i<elems;i++) ia[i]  *= *(int*)alpha;
+      break;
+      case C_LONG:
+      la = (long*)ptr;
+      for(i=0;i<elems;i++) la[i]  *= *(long*)alpha;
+      break;
+      case C_DCPL:
+      ca = (DoubleComplex*)ptr;
+      scale= *(DoubleComplex*)alpha;
+      for(i=0;i<elems;i++){
+        DoubleComplex val = ca[i]; 
+        ca[i].real = scale.real*val.real  - val.imag * scale.imag;
+        ca[i].imag = scale.imag*val.real  + val.imag * scale.real;
+      }
+      break;
+      case C_DBL:
+      da = (double*)ptr;
+      for(i=0;i<elems;i++) da[i] *= *(double*)alpha;
+      break;
+      case C_FLOAT:
+      fa = (float*)ptr;
+      for(i=0;i<elems;i++) fa[i]  *= *(float*)alpha;
+      break;       
+      default: ga_error(" wrong data type ",type);
+    }
+  }
+  GA_POP_NAME;
+  if(local_sync_end)ga_pgroup_sync_(&grp_id); 
 #ifdef GA_USE_VAMPIR
-   vampir_end(GA_SCALE,__FILE__,__LINE__);
+  vampir_end(GA_SCALE,__FILE__,__LINE__);
 #endif
 }
 

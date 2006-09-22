@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.68 2006-09-20 15:56:40 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.69 2006-09-22 22:28:09 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1446,6 +1446,11 @@ Integer  ow,i,p_handle;
 /*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA BLOCK
 \*/
 void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
+            /* g_a: array handle [input]
+             * idx: block index  [input]
+             * ptr: pointer to data in block [output]
+             * ld:  array of strides for block data [output]
+             */
 {
   char *lptr;
   Integer  handle = GA_OFFSET + *g_a;
@@ -1477,6 +1482,45 @@ void nga_access_block_ptr(Integer* g_a, Integer *idx, void* ptr, Integer *ld)
     ld[i] = hi[i]-lo[i]+1;
   }
 
+  *(char**)ptr = lptr; 
+  GA_POP_NAME;
+}
+
+/*\ RETURN A POINTER TO BEGINNING OF LOCAL DATA ON A PROCESSOR CONTAINING
+ *  BLOCK-CYCLIC DATA
+\*/
+void ga_access_block_segment_ptr(Integer* g_a, Integer *proc, void* ptr, Integer *len)
+            /* g_a:  array handle [input]
+             * proc: processor for data [input]
+             * ptr:  pointer to data start of data on processor [output]
+             * len:  length of data contained on processor [output]
+             */
+{
+  char *lptr;
+  Integer  handle = GA_OFFSET + *g_a;
+  Integer  i, j, p_handle, nblocks, offset, tsum;
+  Integer ndim, lo[MAXDIM], hi[MAXDIM], index;
+
+  GA_PUSH_NAME("ga_access_block_segment_ptr");
+  p_handle = GA[handle].p_handle;
+  nblocks = GA[handle].block_total;
+  ndim = GA[handle].ndim;
+  index = *proc;
+  if (index < 0 || index >= GAnproc)
+    ga_error("processor index outside allowed values",index);
+
+  offset = 0;
+  for (i=index; i<nblocks; i += GAnproc) {
+    ga_ownsM(handle,i,lo,hi); 
+    tsum = 1;
+    for (j=0; j<ndim; j++) {
+      tsum *= (hi[j]-lo[j]+1);
+    }
+    offset += tsum;
+  }
+  lptr = GA[handle].ptr[index];
+
+  *len = offset;
   *(char**)ptr = lptr; 
   GA_POP_NAME;
 }
