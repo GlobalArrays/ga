@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.101 2006-09-19 23:18:57 andriy Exp $
+#$Id: GNUmakefile,v 1.102 2006-09-23 17:58:15 vinod Exp $
          FOPT = -O
          COPT = -O
 
@@ -99,6 +99,13 @@ endif
 ifeq ($(ARMCI_NETWORK),PORTALS)
   OBJ += portals.o regions.o
   LIB_DEFINES += -DPORTALS -DALLOW_PIN
+  EXTRA_LIBS += -lpthread
+endif
+
+ifeq ($(ARMCI_NETWORK),OPENIB)
+  OBJ += spawn.o  request.o vapi.o ds-shared.o buffers.o async.o
+  OBJ += regions.o gpc.o
+  LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT -DOPENIB -DVAPI -DALLOW_PIN
   EXTRA_LIBS += -lpthread
 endif
 
