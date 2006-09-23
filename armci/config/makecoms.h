@@ -65,6 +65,18 @@ ifeq ($(ARMCI_NETWORK),VIA)
   COMM_LIBS += $(VIA_LIB_NAME)
 endif
 
+ifeq ($(ARMCI_NETWORK),OPENIB)
+  COMM_DEFINES = -DOPENIB
+  ifdef IB_INCLUDE
+    COMM_INCLUDES = -I$(IB_INCLUDE)
+  endif
+  ifdef IB_LIB
+    COMM_LIBS = -L$(IB_LIB)
+  endif
+  IB_LIB_NAME = -libverbs
+  COMM_LIBS += $(IB_LIB_NAME)
+endif
+
 ifeq ($(ARMCI_NETWORK),MELLANOX)
   COMM_DEFINES = -DMELLANOX
   ifdef IB_INCLUDE
