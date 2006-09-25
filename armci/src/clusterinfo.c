@@ -1,4 +1,4 @@
-/* $Id: clusterinfo.c,v 1.34 2006-09-13 23:43:36 andriy Exp $ */
+/* $Id: clusterinfo.c,v 1.35 2006-09-25 20:56:40 andriy Exp $ */
 /****************************************************************************** 
 * file:    cluster.c
 * purpose: Determine cluster info i.e., number of machines and processes
@@ -33,7 +33,7 @@
 #  define armci_enable_alpha_hack() 1
 #endif
 
-#define DEBUG  1
+#define DEBUG  0
 #define MAX_HOSTNAME 80
 #define CHECK_NODE_NAMES 
 
