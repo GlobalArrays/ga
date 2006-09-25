@@ -3,7 +3,7 @@ DRA operations with a buffer manager layer, modified by Bilash
 The buffer manager provides functionalities related to buffers
 */
 
-/*$Id: disk.arrays.c,v 1.77 2006-09-18 18:01:25 d3g293 Exp $*/
+/*$Id: disk.arrays.c,v 1.78 2006-09-25 17:09:45 d3g293 Exp $*/
 
 /************************** DISK ARRAYS **************************************\
 |*         Jarek Nieplocha, Fri May 12 11:26:38 PDT 1995                     *|
@@ -721,7 +721,7 @@ Integer handle;
 
         ga_sync_();
 
-	//printf("FILE OPENED!!\n");
+	/* printf("FILE OPENED!!\n"); */
         return(ELIO_OK);
 }
 
@@ -3079,7 +3079,7 @@ section_t d_sect, g_sect;
  
    ga_sync_();
    me = ga_nodeid_();
-   //printf("%d: CAME HERE!!!", me);
+   /* printf("%d: CAME HERE!!!", me); */
    /* usual argument/type/range checking stuff */
    dai_check_handleM(*d_a,"ndra_read_sect");
    if(!dai_read_allowed(*d_a))dai_error("ndra_read_sect: read not allowed",*d_a);
@@ -3158,7 +3158,7 @@ section_t d_sect, g_sect;
    /* process aligned subsections */
    ndai_transfer_algn (DRA_OP_READ, (int)*transp,  d_sect, g_sect, *request);
    
-   //printf(" %d: CAME at the end of ndra_read_section!", me);
+   /* printf(" %d: CAME at the end of ndra_read_section!", me); */
    return(ELIO_OK);
 }
 
@@ -3171,12 +3171,12 @@ logical transp = FALSE;
 Integer lo[MAXDIM], hi[MAXDIM], ndim, i;
 
         ga_sync_();
-	//printf("%d: CAME AT ndra_read_!!\n", ga_nodeid_());
+	/* printf("%d: CAME AT ndra_read_!!\n", ga_nodeid_()); */
         /* usual argument/type/range checking stuff */
         dai_check_handleM(*d_a,"ndra_read");
         if(!dai_read_allowed(*d_a))dai_error("ndra_read: read not allowed",*d_a);
         nga_inquire_internal_(g_a, &gtype, &ndim, gdims);
-	//printf("%d: CAME After nga_inquire_internals!!\n", ga_nodeid_());
+	/* printf("%d: CAME After nga_inquire_internals!!\n", ga_nodeid_()); */
         if(DRA[handle].type != (int)gtype)dai_error("ndra_read: type mismatch",gtype);
         if(DRA[handle].ndim != ndim)dai_error("ndra_read: dimension mismatch",ndim);
         for (i=0; i<ndim; i++) {
