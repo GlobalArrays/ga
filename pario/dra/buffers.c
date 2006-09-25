@@ -6,8 +6,8 @@ Buffer Manager for managing buffers in any application
 #include <stdlib.h>
 #include "buffers.h"
 
-//#define STATBUF 1 /* set if static buffers will be used */
-//#define DEBUG 1
+/*#define STATBUF 1 */ /* set if static buffers will be used */
+/*#define DEBUG 1 */
 
 #define MAX_CTXT 5
 
@@ -164,10 +164,12 @@ int get_bufs_of_call_id(buf_context_t *ctxt, int call_id, int *n_buf, char *bufs
 void buf_terminate(buf_context_t *ctxt) {
 #ifndef STATBUF
   int i;
+  /* printf("In loop to free ctxt buffers\n"); */
   for (i = 0; i < ctxt->nbuf; i++)
     free(ctxt->buf[i].buffer);
 #endif
 
+  /* printf("Freeing ctxt\n"); */
   free(ctxt->buf);
   ctxt_count--; /* this context can be reallocated */
 }
