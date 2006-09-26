@@ -1,4 +1,4 @@
-/* $Id: capi.c,v 1.91 2006-09-22 22:28:08 d3g293 Exp $ */
+/* $Id: capi.c,v 1.92 2006-09-26 14:56:55 d3g293 Exp $ */
 #include "ga.h"
 #include "globalp.h"
 #include <stdio.h>
@@ -973,6 +973,22 @@ void NGA_Release(int g_a, int lo[], int hi[])
      nga_release_(&a,_ga_lo, _ga_hi);
 }
 
+void NGA_Release_block(int g_a, int idx)
+{
+     Integer a=(Integer)g_a;
+     Integer iblock = (Integer)idx;
+
+     nga_release_block_(&a, &iblock);
+}
+
+void GA_Release_block_segment(int g_a, int idx)
+{
+     Integer a=(Integer)g_a;
+     Integer iproc = (Integer)idx;
+
+     nga_release_block_(&a, &iproc);
+}
+
 int NGA_Locate(int g_a, int subscript[])
 {
     logical st;
@@ -1709,6 +1725,28 @@ extern void gai_print_distribution(int fstyle, Integer g_a);
 
 void NGA_Release_update(int g_a, int lo[], int hi[])
 {
+  Integer a = (Integer)g_a;
+  Integer ndim = ga_ndim_(&a);
+  COPYINDEX_C2F(lo,_ga_lo,ndim);
+  COPYINDEX_C2F(hi,_ga_hi,ndim);
+
+  nga_release_update_(&a,_ga_lo, _ga_hi);
+}
+
+void NGA_Release_update_block(int g_a, int idx)
+{
+     Integer a=(Integer)g_a;
+     Integer iblock = (Integer)idx;
+
+     nga_release_update_block_(&a, &iblock);
+}
+
+void GA_Release_update_block_segment(int g_a, int idx)
+{
+     Integer a=(Integer)g_a;
+     Integer iproc = (Integer)idx;
+
+     nga_release_update_block_(&a, &iproc);
 }
 
 

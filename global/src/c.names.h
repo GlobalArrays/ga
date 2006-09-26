@@ -193,6 +193,10 @@
 #define  nga_read_inc_             NGA_READ_INC
 #define  nga_release_              NGA_RELEASE
 #define  nga_release_update_       NGA_RELEASE_UPDATE
+#define  nga_release_block_        NGA_RELEASE_BLOCK
+#define  nga_release_update_block_ NGA_RELEASE_UPDATE_BLOCK
+#define  ga_release_block_segment_        GA_RELEASE_BLOCK_SEGMENT
+#define  ga_release_update_block_segment_ GA_RELEASE_UPDATE_BLOCK_SEGMENT
 #define  nga_scale_patch_          NGA_SCALE_PATCH
 #define  nga_scatter_              NGA_SCATTER
 #define  nga_scatter_acc_          NGA_SCATTER_ACC

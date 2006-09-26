@@ -137,6 +137,9 @@ void FATR ga_zero_(Integer *g_a)
       break;                                 
       default: ga_error(" wrong data type ",type);
     }
+
+    /* release access to the data */
+    ga_release_update_block_segment_(g_a, &me);
   }
   if(local_sync_end)ga_pgroup_sync_(&p_handle);
   GA_POP_NAME;
@@ -718,6 +721,8 @@ void FATR ga_scale_(Integer *g_a, void* alpha)
       break;       
       default: ga_error(" wrong data type ",type);
     }
+    /* release access to the data */
+    ga_release_update_block_segment_(g_a, &me);
   }
   GA_POP_NAME;
   if(local_sync_end)ga_pgroup_sync_(&grp_id); 

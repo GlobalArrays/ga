@@ -333,6 +333,10 @@ extern void FATR nga_acc_common(Integer *g_a, Integer *lo, Integer *hi,
 
 extern void FATR  nga_release_(Integer *g_a, Integer *lo, Integer *hi);
 extern void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi);
+extern void FATR  nga_release_block_(Integer *g_a, Integer *iblock);
+extern void FATR  nga_release_update_block_(Integer *g_a, Integer *iblock);
+extern void FATR  ga_release_block_segment_(Integer *g_a, Integer *iproc);
+extern void FATR  ga_release_update_block_segment_(Integer *g_a, Integer *iproc);
 extern void FATR  nga_inquire_(Integer *g_a, Integer *type, Integer *ndim,
     Integer *dims); 
 extern void FATR  nga_inquire_internal_(Integer *g_a, Integer *type, Integer *ndim,

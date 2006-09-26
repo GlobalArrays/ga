@@ -1,4 +1,4 @@
-/* $Id: base.c,v 1.143 2006-09-20 17:38:19 d3g293 Exp $ */
+/* $Id: base.c,v 1.144 2006-09-26 14:56:55 d3g293 Exp $ */
 /* 
  * module: base.c
  * author: Jarek Nieplocha
@@ -2696,61 +2696,87 @@ Integer FATR ga_verify_handle_(g_a)
 \*/
 void FATR ga_fill_(Integer *g_a, void* val)
 {
-int i,handle=GA_OFFSET + (int)*g_a;
-char *ptr;
-int local_sync_begin,local_sync_end;
-C_Long elems;
-Integer grp_id;
+  int i,handle=GA_OFFSET + (int)*g_a;
+  char *ptr;
+  int local_sync_begin,local_sync_end;
+  C_Long elems;
+  Integer grp_id;
+  Integer num_blocks;
 
 #ifdef GA_USE_VAMPIR
-   vampir_begin(GA_FILL,__FILE__,__LINE__);
+  vampir_begin(GA_FILL,__FILE__,__LINE__);
 #endif
 
-   GA_PUSH_NAME("ga_fill");
+  GA_PUSH_NAME("ga_fill");
 
-   local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-   _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
-   grp_id = ga_get_pgroup_(g_a);
-   if(local_sync_begin)ga_pgroup_sync_(&grp_id);
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous sync masking*/
+  grp_id = ga_get_pgroup_(g_a);
+  if(local_sync_begin)ga_pgroup_sync_(&grp_id);
 
 
-   ga_check_handleM(g_a, "ga_fill");
-   gam_checktype(GA[handle].type);
-   elems = GA[handle].size/((C_Long)GA[handle].elemsize);
-   
-   /* Bruce..Please CHECK if this is correct */
-   if (grp_id >= 0){  
+  ga_check_handleM(g_a, "ga_fill");
+  gam_checktype(GA[handle].type);
+  elems = GA[handle].size/((C_Long)GA[handle].elemsize);
+  num_blocks = GA[handle].block_total;
+
+  if (num_blocks < 0) {
+    /* Bruce..Please CHECK if this is correct */
+    if (grp_id >= 0){  
       Integer grp_me = PGRP_LIST[GA[handle].p_handle].map_proc_list[GAme];
       ptr = GA[handle].ptr[grp_me];
-   }
-   else  ptr = GA[handle].ptr[GAme];
+    }
+    else  ptr = GA[handle].ptr[GAme];
 
-   switch (GA[handle].type){
-   case C_DCPL: 
+    switch (GA[handle].type){
+      case C_DCPL: 
         for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
         break;
-   case C_DBL:  
+      case C_DBL:  
         for(i=0; i<elems;i++)((double*)ptr)[i]=*(double*)val;
         break;
-   case C_INT:  
+      case C_INT:  
         for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*)val;
         break;
-   case C_FLOAT:
+      case C_FLOAT:
         for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val;
         break;     
-   case C_LONG:
+      case C_LONG:
         for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val;
         break;
-   default:
+      default:
         ga_error("type not supported",GA[handle].type);
-   }
+    }
+  } else {
+    ga_access_block_segment_ptr(g_a,&GAme,&ptr,&elems);
+    switch (GA[handle].type){
+      case C_DCPL: 
+        for(i=0; i<elems;i++)((DoubleComplex*)ptr)[i]=*(DoubleComplex*)val;
+        break;
+      case C_DBL:  
+        for(i=0; i<elems;i++)((double*)ptr)[i]=*(double*)val;
+        break;
+      case C_INT:  
+        for(i=0; i<elems;i++)((int*)ptr)[i]=*(int*)val;
+        break;
+      case C_FLOAT:
+        for(i=0; i<elems;i++)((float*)ptr)[i]=*(float*)val;
+        break;     
+      case C_LONG:
+        for(i=0; i<elems;i++)((long*)ptr)[i]=*(long*)val;
+        break;
+      default:
+        ga_error("type not supported",GA[handle].type);
+    }
+    ga_release_block_segment_(g_a,&GAme);
+  }
 
-   if(local_sync_end)ga_pgroup_sync_(&grp_id);
+  if(local_sync_end)ga_pgroup_sync_(&grp_id);
 
-   GA_POP_NAME;
- 
+  GA_POP_NAME;
+
 #ifdef GA_USE_VAMPIR
-   vampir_end(GA_FILL,__FILE__,__LINE__);
+  vampir_end(GA_FILL,__FILE__,__LINE__);
 #endif
 }
 

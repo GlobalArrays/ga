@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.69 2006-09-22 22:28:09 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.70 2006-09-26 14:56:55 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -1739,6 +1739,26 @@ void FATR  ga_release_update_(g_a, ilo, ihi, jlo, jhi)
 /*\ RELEASE ACCESS & UPDATE A PATCH OF A GLOBAL ARRAY
 \*/
 void FATR  nga_release_update_(Integer *g_a, Integer *lo, Integer *hi)
+{}
+
+/*\ RELEASE ACCESS TO A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY
+\*/
+void FATR nga_release_block_(Integer *g_a, Integer *iblock)
+{}
+
+/*\ RELEASE ACCESS & UPDATE A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY
+\*/
+void FATR nga_release_update_block_(Integer *g_a, Integer *iblock)
+{}
+
+/*\ RELEASE ACCESS TO SEGMENT IN BLOCK-CYCLIC GLOBAL ARRAY
+\*/
+void FATR ga_release_block_segment_(Integer *g_a, Integer *iproc)
+{}
+
+/*\ RELEASE ACCESS & UPDATE A BLOCK IN BLOCK-CYCLIC GLOBAL ARRAY
+\*/
+void FATR ga_release_update_block_segment_(Integer *g_a, Integer *iproc)
 {}
 
 
