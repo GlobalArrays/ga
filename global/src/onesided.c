@@ -1,4 +1,4 @@
-/* $Id: onesided.c,v 1.70 2006-09-26 14:56:55 d3g293 Exp $ */
+/* $Id: onesided.c,v 1.71 2006-09-26 15:41:00 d3g293 Exp $ */
 /* 
  * module: onesided.c
  * author: Jarek Nieplocha
@@ -499,113 +499,110 @@ void nga_put_common(Integer *g_a,
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
   } else {
-    Integer offset = 0, last, pinv;
+    Integer offset, l_offset, last, pinv;
     Integer blo[MAXDIM],bhi[MAXDIM];
     Integer plo[MAXDIM],phi[MAXDIM];
-    Integer idx, i, j, jtot, chk;
+    Integer idx, i, j, jtot, chk, iproc;
     Integer idx_buf, ldrem[MAXDIM];
     Integer blk_tot = GA[handle].block_total;
     int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
     char *pbuf, *prem;
 
-    /* Loop through all blocks owned by this processor */
-    for (idx=0; idx<blk_tot; idx++) {
+    /* Loop through all blocks owned by this processor. Decompose
+       this loop into a loop over all processors and then a loop
+       over all blocks owned by this processor. */
+    for (iproc = 0; iproc<GAnproc; iproc++) {
 
-      /* get the block corresponding to the virtual processor proc */
-      ga_ownsM(handle, idx, blo, bhi);
-    /*  printf("p[%d] idx: %d\n",GAme,idx);
-      printf("p[%d] blo[0]: %d bhi[0]: %d\n",GAme,blo[0],bhi[0]);
-      printf("p[%d] blo[1]: %d bhi[1]: %d\n",GAme,blo[1],bhi[1]); */
+      /* Initialize offset for each processor to zero */
+      offset = 0;
+      for (idx=iproc; idx<blk_tot; idx += GAnproc) {
 
-      /* check to see if this block overlaps with requested block
-       * defined by lo and hi */
-      chk = 1;
-      for (j=0; j<ndim; j++) {
-        /* check to see if at least one end point of the interval
-         * represented by blo and bhi falls in the interval
-         * represented by lo and hi */
-        if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-              (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
-          chk = 0;
-        }
-      }
+        /* get the block corresponding to the virtual processor proc */
+        ga_ownsM(handle, idx, blo, bhi);
 
-      if (chk) {
-
-        /* evaluate offset for block idx */
-        offset = 0;
-        for (i=idx%GAnproc; i<idx; i += GAnproc) {
-          ga_ownsM(handle, i, plo, phi);
-          jtot = 1;
-          for (j=0; j<ndim; j++) {
-            jtot *= phi[j]-plo[j]+1;
+        /* check to see if this block overlaps with requested block
+         * defined by lo and hi */
+        chk = 1;
+        for (j=0; j<ndim; j++) {
+          /* check to see if at least one end point of the interval
+           * represented by blo and bhi falls in the interval
+           * represented by lo and hi */
+          if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
+                (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
+            chk = 0;
           }
-          offset += jtot;
         }
-        /*printf("p[%d] idx: %d offset: %d\n",GAme,idx,offset); */
 
-        /* get the patch of block that overlaps requested region */
-        gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
-/*      printf("p[%d] idx: %d\n",GAme,idx);
-      printf("p[%d] blo[0]: %d phi[0]: %d\n",GAme,plo[0],phi[0]);
-      printf("p[%d] blo[1]: %d phi[1]: %d\n",GAme,plo[1],phi[1]); */
+        if (chk) {
 
-        /* evaluate offset within block */
-        last = ndim - 1;
-        jtot = 1;
-        if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-        for (j=0; j<last; j++) {
-          offset += (plo[j]-blo[j])*jtot;
-          ldrem[j] = bhi[j]-blo[j]+1;
-          jtot = ldrem[j];
-        }
-        offset += (plo[last]-blo[last])*jtot;
+          /* get the patch of block that overlaps requested region */
+          gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
 
-        /* get pointer to data on remote block */
-        pinv = idx%GAnproc;
-        if (p_handle > 0) {
-          pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
-        }
-        prem =  GA[handle].ptr[pinv]+offset*GA[handle].elemsize;
+          /* evaluate offset within block */
+          last = ndim - 1;
+          jtot = 1;
+          if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
+          l_offset = 0;
+          for (j=0; j<last; j++) {
+            l_offset += (plo[j]-blo[j])*jtot;
+            ldrem[j] = bhi[j]-blo[j]+1;
+            jtot = ldrem[j];
+          }
+          l_offset += (plo[last]-blo[last])*jtot;
+          l_offset += offset;
 
-        gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
-        pbuf = size*idx_buf + (char*)buf;        
+          /* get pointer to data on remote block */
+          pinv = idx%GAnproc;
+          if (p_handle > 0) {
+            pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
+          }
+          prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
 
-        gam_ComputeCount(ndim, plo, phi, count); 
-        /* scale number of rows by element size */
-        count[0] *= size; 
-        gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
+          gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
+          pbuf = size*idx_buf + (char*)buf;        
 
-        proc = pinv;
-        if(GA_fence_set)fence_array[proc]=1;
+          gam_ComputeCount(ndim, plo, phi, count); 
+          /* scale number of rows by element size */
+          count[0] *= size; 
+          gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
+
+          proc = pinv;
+          if(GA_fence_set)fence_array[proc]=1;
 
 #ifndef NO_GA_STATS	    
-        if(proc == GAme){
-          gam_CountElems(ndim, plo, phi, &elems);
-          GAbytes.putloc += (double)size*elems;
-        }
+          if(proc == GAme){
+            gam_CountElems(ndim, plo, phi, &elems);
+            GAbytes.putloc += (double)size*elems;
+          }
 #endif
 
-        /*casting what ganb_get_armci_handle function returns to armci_hdl is 
-          very crucial here as on 64 bit platforms, pointer is 64 bits where 
-          as temporary is only 32 bits*/ 
+          /*casting what ganb_get_armci_handle function returns to armci_hdl is 
+            very crucial here as on 64 bit platforms, pointer is 64 bits where 
+            as temporary is only 32 bits*/ 
 #ifdef __crayx1
-        ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
-#else
-        if(nbhandle) 
-          ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,
-              proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
-        else {
-          /* do blocking put for local processes. If all processes
-             are remote processes then do blocking put for the last one */
-          /*if((loop==0 && counter==(int)np-1) || loop==1) */
           ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
-          /*else {
-            ++counter;
-            ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1,
-            proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
-            } */
+#else
+          if(nbhandle) 
+            ARMCI_NbPutS(pbuf, stride_loc, prem, stride_rem, count, ndim -1,
+                proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+          else {
+            /* do blocking put for local processes. If all processes
+               are remote processes then do blocking put for the last one */
+            if((loop==0 && counter==(int)np-1) || loop==1)
+              ARMCI_PutS(pbuf,stride_loc,prem,stride_rem,count,ndim-1,proc);
+            else {
+              ++counter;
+              ARMCI_NbPutS(pbuf,stride_loc,prem,stride_rem,count, ndim-1,
+                  proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+            }
+          }
         }
+        /* evaluate offset for block idx */
+        jtot = 1;
+        for (j=0; j<ndim; j++) {
+          jtot *= bhi[j]-blo[j]+1;
+        }
+        offset += jtot;
       }
     }
 #endif
@@ -870,109 +867,111 @@ void FATR nga_get_common(Integer *g_a,
     if(!nbhandle) nga_wait_internal(&ga_nbhandle);  
 #endif
   } else {
-    Integer offset = 0, last, pinv;
+    Integer offset, l_offset, last, pinv;
     Integer blo[MAXDIM],bhi[MAXDIM];
     Integer plo[MAXDIM],phi[MAXDIM];
-    Integer idx, i, j, jtot, chk;
+    Integer idx, i, j, jtot, chk, iproc;
     Integer idx_buf, ldrem[MAXDIM];
     Integer blk_tot = GA[handle].block_total;
     int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
     char *pbuf, *prem;
 
-    /* Loop through all blocks owned by this processor */
-    for (idx=0; idx<blk_tot; idx++) {
+    /* Loop through all blocks owned by this processor. Decompose
+       this loop into a loop over all processors and then a loop
+       over all blocks owned by a processor */
+    for (iproc = 0; iproc<GAnproc; iproc++) {
 
-      /* get the block corresponding to the virtual processor proc */
-      ga_ownsM(handle, idx, blo, bhi);
+      /* Initialize offset for each processor to zero */
+      offset = 0;
+      for (idx=iproc; idx<blk_tot; idx += GAnproc) {
 
-      /* check to see if this block overlaps with requested block
-       * defined by lo and hi */
-      chk = 1;
-      for (j=0; j<ndim; j++) {
-        /* check to see if at least one end point of the interval
-         * represented by blo and bhi falls in the interval
-         * represented by lo and hi */
-        if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-              (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
-          chk = 0;
-        }
-      }
+        /* get the block corresponding to the virtual processor proc */
+        ga_ownsM(handle, idx, blo, bhi);
 
-      if (chk) {
-
-        /* evaluate offset for block idx */
-        offset = 0;
-        for (i=idx%GAnproc; i<idx; i += GAnproc) {
-          ga_ownsM(handle, i, plo, phi);
-          jtot = 1;
-          for (j=0; j<ndim; j++) {
-            jtot *= phi[j]-plo[j]+1;
+        /* check to see if this block overlaps with requested block
+         * defined by lo and hi */
+        chk = 1;
+        for (j=0; j<ndim; j++) {
+          /* check to see if at least one end point of the interval
+           * represented by blo and bhi falls in the interval
+           * represented by lo and hi */
+          if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
+                (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
+            chk = 0;
           }
-          offset += jtot;
         }
 
-        /* get the patch of block that overlaps requested region */
-        gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
+        if (chk) {
+          /* get the patch of block that overlaps requested region */
+          gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
 
-        /* evaluate offset within block */
-        last = ndim - 1;
-        jtot = 1;
-        if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-        for (j=0; j<last; j++) {
-          offset += (plo[j]-blo[j])*jtot;
-          ldrem[j] = bhi[j]-blo[j]+1;
-          jtot = ldrem[j];
-        }
-        offset += (plo[last]-blo[last])*jtot;
+          /* evaluate offset within block */
+          last = ndim - 1;
+          jtot = 1;
+          if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
+          l_offset = 0;
+          for (j=0; j<last; j++) {
+            l_offset += (plo[j]-blo[j])*jtot;
+            ldrem[j] = bhi[j]-blo[j]+1;
+            jtot = ldrem[j];
+          }
+          l_offset += (plo[last]-blo[last])*jtot;
+          l_offset += offset;
 
-        /* get pointer to data on remote block */
-        pinv = idx%GAnproc;
-        if (p_handle > 0) {
-          pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
-        }
-        prem =  GA[handle].ptr[pinv]+offset*GA[handle].elemsize;
+          /* get pointer to data on remote block */
+          pinv = idx%GAnproc;
+          if (p_handle > 0) {
+            pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
+          }
+          prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
 
-        gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
-        pbuf = size*idx_buf + (char*)buf;        
+          gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
+          pbuf = size*idx_buf + (char*)buf;        
 
-        gam_ComputeCount(ndim, plo, phi, count); 
-        /* scale number of rows by element size */
-        count[0] *= size; 
-        gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
+          gam_ComputeCount(ndim, plo, phi, count); 
+          /* scale number of rows by element size */
+          count[0] *= size; 
+          gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
-        proc = pinv;
-        if(GA_fence_set)fence_array[proc]=1;
-        /*printf("p[%d] Got to 1\n",GAme); */
+          proc = pinv;
+          if(GA_fence_set)fence_array[proc]=1;
+          /*printf("p[%d] Got to 1\n",GAme); */
 
 #ifndef NO_GA_STATS	    
-        if(proc == GAme){
-          gam_CountElems(ndim, plo, phi, &elems);
-          GAbytes.putloc += (double)size*elems;
-        }
+          if(proc == GAme){
+            gam_CountElems(ndim, plo, phi, &elems);
+            GAbytes.putloc += (double)size*elems;
+          }
 #endif
 
-        /*casting what ganb_get_armci_handle function returns to armci_hdl is 
-          very crucial here as on 64 bit platforms, pointer is 64 bits where 
-          as temporary is only 32 bits*/ 
+          /*casting what ganb_get_armci_handle function returns to armci_hdl is 
+            very crucial here as on 64 bit platforms, pointer is 64 bits where 
+            as temporary is only 32 bits*/ 
 #ifdef __crayx1
-        ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
-#else
-        if(nbhandle) 
-          ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
-              proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
-        else {
-          /* do blocking put for local processes. If all processes
-             are remote processes then do blocking put for the last one */
-          /*if((loop==0 && counter==(int)np-1) || loop==1) */
-        /*printf("p[%d] Got to 2\n",GAme); */
           ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
-        /*printf("p[%d] Got to 3\n",GAme); */
-          /*else {
-            ++counter;
-            ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count, ndim-1,
-            proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
-            } */
+#else
+          if(nbhandle) 
+            ARMCI_NbGetS(prem, stride_rem, pbuf, stride_loc, count, ndim -1,
+                proc,(armci_hdl_t*)get_armci_nbhandle(nbhandle));
+          else {
+            /* do blocking put for local processes. If all processes
+               are remote processes then do blocking put for the last one */
+            if((loop==0 && counter==(int)np-1) || loop==1) 
+              ARMCI_GetS(prem,stride_rem,pbuf,stride_loc,count,ndim-1,proc);
+            else {
+              ++counter;
+              ARMCI_NbGetS(prem,stride_rem,pbuf,stride_loc,count, ndim-1,
+                  proc,(armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+            }
+          }
         }
+
+        /* evaluate size of  block idx and use it to increment offset */
+        jtot = 1;
+        for (j=0; j<ndim; j++) {
+          jtot *= bhi[j]-blo[j]+1;
+        }
+        offset += jtot;
       }
     }
 #endif
@@ -1210,105 +1209,109 @@ void FATR nga_acc_common(Integer *g_a,
   if(!nbhandle) nga_wait_internal(&ga_nbhandle);
 #endif
   } else {
-    Integer offset = 0, last, pinv;
+    Integer offset, l_offset, last, pinv;
     Integer blo[MAXDIM],bhi[MAXDIM];
     Integer plo[MAXDIM],phi[MAXDIM];
-    Integer idx, i, j, jtot, chk;
+    Integer idx, i, j, jtot, chk, iproc;
     Integer idx_buf, ldrem[MAXDIM];
     Integer blk_tot = GA[handle].block_total;
     int stride_rem[MAXDIM], stride_loc[MAXDIM], count[MAXDIM];
     char *pbuf, *prem;
 
-    /* Loop through all blocks owned by this processor */
-    for (idx=0; idx<blk_tot; idx++) {
+    /* Loop through all blocks owned by this processor. Decompose
+       this loop into a loop over all processors and then a loop
+       over all blocks owned by a processor */
+    for (iproc = 0; iproc<GAnproc; iproc++) {
 
-      /* get the block corresponding to the virtual processor proc */
-      ga_ownsM(handle, idx, blo, bhi);
+      /* Initialize offset for each processor to zero */
+      offset = 0;
+      for (idx=iproc; idx<blk_tot; idx += GAnproc) {
 
-      /* check to see if this block overlaps with requested block
-       * defined by lo and hi */
-      chk = 1;
-      for (j=0; j<ndim; j++) {
-        /* check to see if at least one end point of the interval
-         * represented by blo and bhi falls in the interval
-         * represented by lo and hi */
-        if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
-              (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
-          chk = 0;
-        }
-      }
+        /* get the block corresponding to the virtual processor proc */
+        ga_ownsM(handle, idx, blo, bhi);
 
-      if (chk) {
-
-        /* evaluate offset for block idx */
-        offset = 0;
-        for (i=idx%GAnproc; i<idx; i += GAnproc) {
-          ga_ownsM(handle, i, plo, phi);
-          jtot = 1;
-          for (j=0; j<ndim; j++) {
-            jtot *= phi[j]-plo[j]+1;
+        /* check to see if this block overlaps with requested block
+         * defined by lo and hi */
+        chk = 1;
+        for (j=0; j<ndim; j++) {
+          /* check to see if at least one end point of the interval
+           * represented by blo and bhi falls in the interval
+           * represented by lo and hi */
+          if (!((blo[j] >= lo[j] && blo[j] <= hi[j]) ||
+                (bhi[j] >= lo[j] && bhi[j] <= hi[j]))) {
+            chk = 0;
           }
-          offset += jtot;
         }
 
-        /* get the patch of block that overlaps requested region */
-        gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
+        if (chk) {
 
-        /* evaluate offset within block */
-        last = ndim - 1;
-        jtot = 1;
-        if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
-        for (j=0; j<last; j++) {
-          offset += (plo[j]-blo[j])*jtot;
-          ldrem[j] = bhi[j]-blo[j]+1;
-          jtot = ldrem[j];
-        }
-        offset += (plo[last]-blo[last])*jtot;
+          /* get the patch of block that overlaps requested region */
+          gam_GetBlockPatch(blo,bhi,lo,hi,plo,phi,ndim);
 
-        /* get pointer to data on remote block */
-        pinv = idx%GAnproc;
-        if (p_handle > 0) {
-          pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
-        }
-        prem =  GA[handle].ptr[pinv]+offset*GA[handle].elemsize;
+          /* evaluate offset within block */
+          last = ndim - 1;
+          jtot = 1;
+          if (last == 0) ldrem[0] = bhi[0] - blo[0] + 1;
+          l_offset = 0;
+          for (j=0; j<last; j++) {
+            l_offset += (plo[j]-blo[j])*jtot;
+            ldrem[j] = bhi[j]-blo[j]+1;
+            jtot = ldrem[j];
+          }
+          l_offset += (plo[last]-blo[last])*jtot;
+          l_offset += offset;
 
-        gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
-        pbuf = size*idx_buf + (char*)buf;        
+          /* get pointer to data on remote block */
+          pinv = idx%GAnproc;
+          if (p_handle > 0) {
+            pinv = PGRP_LIST[p_handle].inv_map_proc_list[pinv];
+          }
+          prem =  GA[handle].ptr[pinv]+l_offset*GA[handle].elemsize;
 
-        gam_ComputeCount(ndim, plo, phi, count); 
-        /* scale number of rows by element size */
-        count[0] *= size; 
-        gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
+          gam_ComputePatchIndex(ndim, lo, plo, ld, &idx_buf);
+          pbuf = size*idx_buf + (char*)buf;        
 
-        proc = pinv;
-        if(GA_fence_set)fence_array[proc]=1;
+          gam_ComputeCount(ndim, plo, phi, count); 
+          /* scale number of rows by element size */
+          count[0] *= size; 
+          gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
+
+          proc = pinv;
+          if(GA_fence_set)fence_array[proc]=1;
 
 #ifndef NO_GA_STATS	    
-        if(proc == GAme){
-          gam_CountElems(ndim, plo, phi, &elems);
-          GAbytes.putloc += (double)size*elems;
-        }
-#endif
-        if(nbhandle) 
-          ARMCI_NbAccS(optype, alpha, pbuf, stride_loc, prem,
-              stride_rem, count, ndim-1, proc,
-              (armci_hdl_t*)get_armci_nbhandle(nbhandle));
-        else {
-#  if 0 /* disabled, as nbacc fails in quadrics */
-          if((loop==0 && counter==(int)np-1) || loop==1)
-            ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, 
-                count, ndim-1, proc);
-          else {
-            ++counter;
-            ARMCI_NbAccS(optype, alpha, pbuf, stride_loc, prem, 
-                stride_rem, count, ndim-1, proc,
-                (armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+          if(proc == GAme){
+            gam_CountElems(ndim, plo, phi, &elems);
+            GAbytes.putloc += (double)size*elems;
           }
+#endif
+          if(nbhandle) 
+            ARMCI_NbAccS(optype, alpha, pbuf, stride_loc, prem,
+                stride_rem, count, ndim-1, proc,
+                (armci_hdl_t*)get_armci_nbhandle(nbhandle));
+          else {
+#  if 0 /* disabled, as nbacc fails in quadrics */
+            if((loop==0 && counter==(int)np-1) || loop==1)
+              ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem, 
+                  count, ndim-1, proc);
+            else {
+              ++counter;
+              ARMCI_NbAccS(optype, alpha, pbuf, stride_loc, prem, 
+                  stride_rem, count, ndim-1, proc,
+                  (armci_hdl_t*)get_armci_nbhandle(&ga_nbhandle));
+            }
 #  else
-          ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem,
-              count, ndim-1, proc);
+            ARMCI_AccS(optype, alpha, pbuf, stride_loc, prem, stride_rem,
+                count, ndim-1, proc);
 #  endif
+          }
         }
+        /* evaluate offset for block idx */
+        jtot = 1;
+        for (j=0; j<ndim; j++) {
+          jtot *= bhi[j]-blo[j]+1;
+        }
+        offset += jtot;
       }
     }
 #if 0
