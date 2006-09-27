@@ -155,94 +155,109 @@ void nga_copy_patch(char *trans,
                     Integer *g_a, Integer *alo, Integer *ahi,
                     Integer *g_b, Integer *blo, Integer *bhi)
 {
-    Integer i, j;
-    Integer idx, factor;
-    Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
-    Integer nelem;
-    Integer atotal, btotal;
-    Integer los[MAXDIM], his[MAXDIM];
-    Integer lod[MAXDIM], hid[MAXDIM];
-    Integer ld[MAXDIM], ald[MAXDIM], bld[MAXDIM];
-    void *src_data_ptr, *tmp_ptr;
-    Integer *src_idx_ptr, *dst_idx_ptr;
-    Integer bvalue[MAXDIM], bunit[MAXDIM];
-    Integer factor_idx1[MAXDIM], factor_idx2[MAXDIM], factor_data[MAXDIM];
-    Integer base;
-    Integer me_a, me_b;
-    Integer a_grp, b_grp, anproc, bnproc;
-    int use_put, has_intersection;
-    int local_sync_begin,local_sync_end;
+  Integer i, j;
+  Integer idx, factor;
+  Integer atype, btype, andim, adims[MAXDIM], bndim, bdims[MAXDIM];
+  Integer nelem;
+  Integer atotal, btotal;
+  Integer los[MAXDIM], his[MAXDIM];
+  Integer lod[MAXDIM], hid[MAXDIM];
+  Integer ld[MAXDIM], ald[MAXDIM], bld[MAXDIM];
+  void *src_data_ptr, *tmp_ptr;
+  Integer *src_idx_ptr, *dst_idx_ptr;
+  Integer bvalue[MAXDIM], bunit[MAXDIM];
+  Integer factor_idx1[MAXDIM], factor_idx2[MAXDIM], factor_data[MAXDIM];
+  Integer base;
+  Integer me_a, me_b;
+  Integer a_grp, b_grp, anproc, bnproc;
+  Integer num_blocks_a, num_blocks_b, chk;
+  int use_put, has_intersection;
+  int local_sync_begin,local_sync_end;
 
 #ifdef GA_USE_VAMPIR
-    vampir_begin(NGA_COPY_PATCH,__FILE__,__LINE__);
+  vampir_begin(NGA_COPY_PATCH,__FILE__,__LINE__);
 #endif    
 
-    local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
-    _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
-    a_grp = ga_get_pgroup_(g_a);
-    b_grp = ga_get_pgroup_(g_b);
-    me_a = ga_pgroup_nodeid_(&a_grp);
-    me_b = ga_pgroup_nodeid_(&b_grp);
-    anproc = ga_get_pgroup_size_(&a_grp);
-    bnproc = ga_get_pgroup_size_(&b_grp);
+  local_sync_begin = _ga_sync_begin; local_sync_end = _ga_sync_end;
+  _ga_sync_begin = 1; _ga_sync_end=1; /*remove any previous masking*/
+  a_grp = ga_get_pgroup_(g_a);
+  b_grp = ga_get_pgroup_(g_b);
+  me_a = ga_pgroup_nodeid_(&a_grp);
+  me_b = ga_pgroup_nodeid_(&b_grp);
+  anproc = ga_get_pgroup_size_(&a_grp);
+  bnproc = ga_get_pgroup_size_(&b_grp);
+  if (anproc <= bnproc) {
+    use_put = 1;
+  }  else {
+    use_put = 0;
+  }
+
+  /*if (a_grp != b_grp)
+    ga_error("All matrices must be on same group for nga_copy_patch", 0L); */
+  if(local_sync_begin) {
     if (anproc <= bnproc) {
-      use_put = 1;
-    }  else {
-      use_put = 0;
+      ga_pgroup_sync_(&a_grp);
+    } else if (a_grp == ga_pgroup_get_world_() &&
+        b_grp == ga_pgroup_get_world_()) {
+      ga_sync_();
+    } else {
+      ga_pgroup_sync_(&b_grp);
     }
+  }
 
-    /*if (a_grp != b_grp)
-      ga_error("All matrices must be on same group for nga_copy_patch", 0L); */
-    if(local_sync_begin) {
-      if (anproc <= bnproc) {
-        ga_pgroup_sync_(&a_grp);
-      } else if (a_grp == ga_pgroup_get_world_() &&
-                b_grp == ga_pgroup_get_world_()) {
-        ga_sync_();
-      } else {
-        ga_pgroup_sync_(&b_grp);
-      }
+
+  GA_PUSH_NAME("nga_copy_patch");
+
+  nga_inquire_internal_(g_a, &atype, &andim, adims);
+  nga_inquire_internal_(g_b, &btype, &bndim, bdims);
+
+  if(*g_a == *g_b)
+    /* they are the same patch */
+    if(ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) return;
+  /* they are in the same GA, but not the same patch */
+    else if (ngai_patch_intersect(alo, ahi, blo, bhi, andim))
+      ga_error("array patches cannot overlap ", 0L);
+
+  if(atype != btype ) ga_error("array type mismatch ", 0L);
+
+  /* check if patch indices and dims match */
+  for(i=0; i<andim; i++)
+    if(alo[i] <= 0 || ahi[i] > adims[i])
+      ga_error("g_a indices out of range ", 0L);
+  for(i=0; i<bndim; i++)
+    if(blo[i] <= 0 || bhi[i] > bdims[i])
+      ga_error("g_b indices out of range ", 0L);
+
+
+
+  /* check if numbers of elements in two patches match each other */
+  atotal = 1; btotal = 1;
+  for(i=0; i<andim; i++) atotal *= (ahi[i] - alo[i] + 1);
+  for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
+  if(atotal != btotal)
+    ga_error("capacities two of patches do not match ", 0L);
+
+  /* additional restrictions that apply if one or both arrays use
+     block-cyclic data distributions */
+  num_blocks_a = ga_total_blocks_(g_a);
+  num_blocks_b = ga_total_blocks_(g_b);
+  if (num_blocks_a >= 0 || num_blocks_b >= 0) {
+    if (!(*trans == 'n' || *trans == 'N')) {
+      ga_error("Transpose option not supported for block-cyclic data", 0L);
     }
+    if (!ngai_test_shape(alo, ahi, blo, bhi, andim, bndim)) {
+      ga_error("Change in shape not supported for block-cyclic data", 0L);
+    }
+  }
 
-    
-    GA_PUSH_NAME("nga_copy_patch");
-
-    nga_inquire_internal_(g_a, &atype, &andim, adims);
-    nga_inquire_internal_(g_b, &btype, &bndim, bdims);
-    
-    if(*g_a == *g_b)
-        /* they are the same patch */
-        if(ngai_comp_patch(andim, alo, ahi, bndim, blo, bhi)) return;
-        /* they are in the same GA, but not the same patch */
-        else if (ngai_patch_intersect(alo, ahi, blo, bhi, andim))
-            ga_error("array patches cannot overlap ", 0L);
-
-    if(atype != btype ) ga_error("array type mismatch ", 0L);
-    
-    /* check if patch indices and dims match */
-    for(i=0; i<andim; i++)
-        if(alo[i] <= 0 || ahi[i] > adims[i])
-            ga_error("g_a indices out of range ", 0L);
-    for(i=0; i<bndim; i++)
-        if(blo[i] <= 0 || bhi[i] > bdims[i])
-            ga_error("g_b indices out of range ", 0L);
-
-
-    
-    /* check if numbers of elements in two patches match each other */
-    atotal = 1; btotal = 1;
-    for(i=0; i<andim; i++) atotal *= (ahi[i] - alo[i] + 1);
-    for(i=0; i<bndim; i++) btotal *= (bhi[i] - blo[i] + 1);
-    if(atotal != btotal)
-        ga_error("capacities two of patches do not match ", 0L);
-    
+  if (num_blocks_a < 0 && num_blocks_b <0) {
     /* now find out cordinates of a patch of g_a that I own */
     if (use_put) {
       nga_distribution_(g_a, &me_a, los, his);
     } else {
       nga_distribution_(g_b, &me_b, los, his);
     }
-    
+
     /* copy my share of data */
     if (use_put) {
       has_intersection = ngai_patch_intersect(alo, ahi, los, his, andim);
@@ -255,41 +270,41 @@ void nga_copy_patch(char *trans,
       } else {
         nga_access_ptr(g_b, los, his, &src_data_ptr, ld); 
       }
-        
+
       /* calculate the number of elements in the patch that I own */
       nelem = 1; for(i=0; i<andim; i++) nelem *= (his[i] - los[i] + 1);
-        
+
       for(i=0; i<andim; i++) ald[i] = ahi[i] - alo[i] + 1;
       for(i=0; i<bndim; i++) bld[i] = bhi[i] - blo[i] + 1;
 
       base = 0; factor = 1;
       for(i=0; i<andim; i++) {
-          base += los[i] * factor;
-          factor *= ld[i];
+        base += los[i] * factor;
+        factor *= ld[i];
       }
-        
+
       /*** straight copy possible if there's no reshaping or transpose ***/
       if((*trans == 'n' || *trans == 'N') &&
-         ngai_test_shape(alo, ahi, blo, bhi, andim, bndim)) { 
-         /* find source[lo:hi] --> destination[lo:hi] */
-         if (use_put) {
-           ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
-           ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
-           nga_put_(g_b, lod, hid, src_data_ptr, ld);
-           nga_release_(g_a, los, his);
-         } else {
-           ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
-           ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
-           nga_get_(g_a, lod, hid, src_data_ptr, ld);
-           nga_release_(g_b, los, his);
-         }
+          ngai_test_shape(alo, ahi, blo, bhi, andim, bndim)) { 
+        /* find source[lo:hi] --> destination[lo:hi] */
+        if (use_put) {
+          ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
+          ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
+          nga_put_(g_b, lod, hid, src_data_ptr, ld);
+          nga_release_(g_a, los, his);
+        } else {
+          ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
+          ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
+          nga_get_(g_a, lod, hid, src_data_ptr, ld);
+          nga_release_(g_b, los, his);
+        }
         /*** due to generality of this transformation scatter is required ***/
       } else{
         if (use_put) {
           tmp_ptr = ga_malloc(nelem, atype, "v");
           src_idx_ptr = (Integer*) ga_malloc((andim*nelem), MT_F_INT, "si");
           dst_idx_ptr = (Integer*) ga_malloc((bndim*nelem), MT_F_INT, "di");
-                
+
           /* calculate the destination indices */
 
           /* given los and his, find indices for each elements
@@ -299,89 +314,89 @@ void nga_copy_patch(char *trans,
           for (i=0; i<andim; i++) {
             bvalue[i] = los[i];
             if (i == 0) bunit[i] = 1;
-              else bunit[i] = bunit[i-1] * (his[i-1] - los[i-1] + 1);
+            else bunit[i] = bunit[i-1] * (his[i-1] - los[i-1] + 1);
+          }
+
+          /* source indices */
+          for (i=0; i<nelem; i++) {
+            for (j=0; j<andim; j++){
+              src_idx_ptr[i*andim+j] = bvalue[j];
+              /* if the next element is the first element in
+               * one dimension, increment the index by 1
+               */
+              if (((i+1) % bunit[j]) == 0) bvalue[j]++;
+              /* if the index becomes larger than the upper
+               * bound in one dimension, reset it.
+               */
+              if(bvalue[j] > his[j]) bvalue[j] = los[j];
             }
+          }
 
-            /* source indices */
-            for (i=0; i<nelem; i++) {
-              for (j=0; j<andim; j++){
-                src_idx_ptr[i*andim+j] = bvalue[j];
-                /* if the next element is the first element in
-                 * one dimension, increment the index by 1
-                 */
-                if (((i+1) % bunit[j]) == 0) bvalue[j]++;
-                /* if the index becomes larger than the upper
-                 * bound in one dimension, reset it.
-                 */
-                if(bvalue[j] > his[j]) bvalue[j] = los[j];
-              }
-            }
-            
-            /* index factor: reshaping without transpose */
-            factor_idx1[0] = 1;
-            for (j=1; j<andim; j++) 
-              factor_idx1[j] = factor_idx1[j-1] * ald[j-1];
+          /* index factor: reshaping without transpose */
+          factor_idx1[0] = 1;
+          for (j=1; j<andim; j++) 
+            factor_idx1[j] = factor_idx1[j-1] * ald[j-1];
 
-            /* index factor: reshaping with transpose */
-            factor_idx2[andim-1] = 1;
-            for (j=(andim-1)-1; j>=0; j--)
-              factor_idx2[j] = factor_idx2[j+1] * ald[j+1];
+          /* index factor: reshaping with transpose */
+          factor_idx2[andim-1] = 1;
+          for (j=(andim-1)-1; j>=0; j--)
+            factor_idx2[j] = factor_idx2[j+1] * ald[j+1];
 
-            /* data factor */
-            factor_data[0] = 1;
-            for (j=1; j<andim; j++) 
-              factor_data[j] = factor_data[j-1] * ld[j-1];
-                    
-            /* destination indices */
-            for(i=0; i<nelem; i++) {
-              /* linearize the n-dimensional indices to one dimension */
-              idx = 0;
-              if (*trans == 'n' || *trans == 'N')
-                for (j=0; j<andim; j++) 
-                  idx += (src_idx_ptr[i*andim+j] - alo[j]) *
-                     factor_idx1[j];
-              else
+          /* data factor */
+          factor_data[0] = 1;
+          for (j=1; j<andim; j++) 
+            factor_data[j] = factor_data[j-1] * ld[j-1];
+
+          /* destination indices */
+          for(i=0; i<nelem; i++) {
+            /* linearize the n-dimensional indices to one dimension */
+            idx = 0;
+            if (*trans == 'n' || *trans == 'N')
+              for (j=0; j<andim; j++) 
+                idx += (src_idx_ptr[i*andim+j] - alo[j]) *
+                  factor_idx1[j];
+            else
               /* if the patch needs to be transposed, reverse
                * the indices: (i, j, ...) -> (..., j, i)
                */
-                for (j=(andim-1); j>=0; j--) 
-                  idx += (src_idx_ptr[i*andim+j] - alo[j]) *
-                    factor_idx2[j];
+              for (j=(andim-1); j>=0; j--) 
+                idx += (src_idx_ptr[i*andim+j] - alo[j]) *
+                  factor_idx2[j];
 
-              /* convert the one dimensional index to n-dimensional
-               * indices of destination
-               */
-              for (j=0; j<bndim; j++) {
-                dst_idx_ptr[i*bndim+j] = idx % bld[j] + blo[j]; 
-                  idx /= bld[j];
-              }
-                
-              /* move the data block to create a new block */
-              /* linearize the data indices */
-              idx = 0;
-              for (j=0; j<andim; j++) 
-                  idx += (src_idx_ptr[i*andim+j]) * factor_data[j];
+            /* convert the one dimensional index to n-dimensional
+             * indices of destination
+             */
+            for (j=0; j<bndim; j++) {
+              dst_idx_ptr[i*bndim+j] = idx % bld[j] + blo[j]; 
+              idx /= bld[j];
+            }
 
-              /* adjust the position
-               * base: starting address of the first element */
-              idx -= base;
-            
-              /* move the element to the temporary location */
-              switch(atype) {
-                case C_DBL: ((double*)tmp_ptr)[i] =
-                                     ((double*)src_data_ptr)[idx]; 
-                  break;
-                case C_INT:
-                  ((int *)tmp_ptr)[i] = ((int *)src_data_ptr)[idx];
-                  break;
-                case C_DCPL:((DoubleComplex *)tmp_ptr)[i] =
-                                 ((DoubleComplex *)src_data_ptr)[idx];
-                  break;
-                case C_FLOAT: ((float *)tmp_ptr)[i] =
-                                 ((float *)src_data_ptr)[idx]; 
-                  break;     
-                case C_LONG: ((long *)tmp_ptr)[i] =
-                                 ((long *)src_data_ptr)[idx];     
+            /* move the data block to create a new block */
+            /* linearize the data indices */
+            idx = 0;
+            for (j=0; j<andim; j++) 
+              idx += (src_idx_ptr[i*andim+j]) * factor_data[j];
+
+            /* adjust the position
+             * base: starting address of the first element */
+            idx -= base;
+
+            /* move the element to the temporary location */
+            switch(atype) {
+              case C_DBL: ((double*)tmp_ptr)[i] =
+                          ((double*)src_data_ptr)[idx]; 
+                          break;
+              case C_INT:
+                          ((int *)tmp_ptr)[i] = ((int *)src_data_ptr)[idx];
+                          break;
+              case C_DCPL:((DoubleComplex *)tmp_ptr)[i] =
+                          ((DoubleComplex *)src_data_ptr)[idx];
+                          break;
+              case C_FLOAT: ((float *)tmp_ptr)[i] =
+                            ((float *)src_data_ptr)[idx]; 
+                            break;     
+              case C_LONG: ((long *)tmp_ptr)[i] =
+                           ((long *)src_data_ptr)[idx];     
             }
           }
           nga_release_(g_a, los, his);
@@ -393,7 +408,7 @@ void nga_copy_patch(char *trans,
           tmp_ptr = ga_malloc(nelem, atype, "v");
           src_idx_ptr = (Integer*) ga_malloc((bndim*nelem), MT_F_INT, "si");
           dst_idx_ptr = (Integer*) ga_malloc((andim*nelem), MT_F_INT, "di");
-                
+
           /* calculate the destination indices */
 
           /* given los and his, find indices for each elements
@@ -403,89 +418,89 @@ void nga_copy_patch(char *trans,
           for (i=0; i<andim; i++) {
             bvalue[i] = los[i];
             if (i == 0) bunit[i] = 1;
-              else bunit[i] = bunit[i-1] * (his[i-1] - los[i-1] + 1);
+            else bunit[i] = bunit[i-1] * (his[i-1] - los[i-1] + 1);
+          }
+
+          /* destination indices */
+          for (i=0; i<nelem; i++) {
+            for (j=0; j<bndim; j++){
+              src_idx_ptr[i*bndim+j] = bvalue[j];
+              /* if the next element is the first element in
+               * one dimension, increment the index by 1
+               */
+              if (((i+1) % bunit[j]) == 0) bvalue[j]++;
+              /* if the index becomes larger than the upper
+               * bound in one dimension, reset it.
+               */
+              if(bvalue[j] > his[j]) bvalue[j] = los[j];
             }
+          }
 
-            /* destination indices */
-            for (i=0; i<nelem; i++) {
-              for (j=0; j<bndim; j++){
-                src_idx_ptr[i*bndim+j] = bvalue[j];
-                /* if the next element is the first element in
-                 * one dimension, increment the index by 1
-                 */
-                if (((i+1) % bunit[j]) == 0) bvalue[j]++;
-                /* if the index becomes larger than the upper
-                 * bound in one dimension, reset it.
-                 */
-                if(bvalue[j] > his[j]) bvalue[j] = los[j];
-              }
-            }
-            
-            /* index factor: reshaping without transpose */
-            factor_idx1[0] = 1;
-            for (j=1; j<bndim; j++) 
-              factor_idx1[j] = factor_idx1[j-1] * bld[j-1];
+          /* index factor: reshaping without transpose */
+          factor_idx1[0] = 1;
+          for (j=1; j<bndim; j++) 
+            factor_idx1[j] = factor_idx1[j-1] * bld[j-1];
 
-            /* index factor: reshaping with transpose */
-            factor_idx2[bndim-1] = 1;
-            for (j=(bndim-1)-1; j>=0; j--)
-              factor_idx2[j] = factor_idx2[j+1] * bld[j+1];
+          /* index factor: reshaping with transpose */
+          factor_idx2[bndim-1] = 1;
+          for (j=(bndim-1)-1; j>=0; j--)
+            factor_idx2[j] = factor_idx2[j+1] * bld[j+1];
 
-            /* data factor */
-            factor_data[0] = 1;
-            for (j=1; j<bndim; j++) 
-              factor_data[j] = factor_data[j-1] * ld[j-1];
-                    
-            /* destination indices */
-            for(i=0; i<nelem; i++) {
-              /* linearize the n-dimensional indices to one dimension */
-              idx = 0;
-              if (*trans == 'n' || *trans == 'N')
-                for (j=0; j<andim; j++) 
-                  idx += (src_idx_ptr[i*bndim+j] - blo[j]) *
-                     factor_idx1[j];
-              else
+          /* data factor */
+          factor_data[0] = 1;
+          for (j=1; j<bndim; j++) 
+            factor_data[j] = factor_data[j-1] * ld[j-1];
+
+          /* destination indices */
+          for(i=0; i<nelem; i++) {
+            /* linearize the n-dimensional indices to one dimension */
+            idx = 0;
+            if (*trans == 'n' || *trans == 'N')
+              for (j=0; j<andim; j++) 
+                idx += (src_idx_ptr[i*bndim+j] - blo[j]) *
+                  factor_idx1[j];
+            else
               /* if the patch needs to be transposed, reverse
                * the indices: (i, j, ...) -> (..., j, i)
                */
-                for (j=(andim-1); j>=0; j--) 
-                  idx += (src_idx_ptr[i*bndim+j] - blo[j]) *
-                    factor_idx2[j];
+              for (j=(andim-1); j>=0; j--) 
+                idx += (src_idx_ptr[i*bndim+j] - blo[j]) *
+                  factor_idx2[j];
 
-              /* convert the one dimensional index to n-dimensional
-               * indices of destination
-               */
-              for (j=0; j<andim; j++) {
-                dst_idx_ptr[i*bndim+j] = idx % ald[j] + alo[j]; 
-                  idx /= ald[j];
-              }
-                
-              /* move the data block to create a new block */
-              /* linearize the data indices */
-              idx = 0;
-              for (j=0; j<bndim; j++) 
-                  idx += (src_idx_ptr[i*bndim+j]) * factor_data[j];
+            /* convert the one dimensional index to n-dimensional
+             * indices of destination
+             */
+            for (j=0; j<andim; j++) {
+              dst_idx_ptr[i*bndim+j] = idx % ald[j] + alo[j]; 
+              idx /= ald[j];
+            }
 
-              /* adjust the position
-               * base: starting address of the first element */
-              idx -= base;
-            
-              /* move the element to the temporary location */
-              switch(atype) {
-                case C_DBL: ((double*)tmp_ptr)[i] =
-                                     ((double*)src_data_ptr)[idx]; 
-                  break;
-                case C_INT:
-                  ((int *)tmp_ptr)[i] = ((int *)src_data_ptr)[idx];
-                  break;
-                case C_DCPL:((DoubleComplex *)tmp_ptr)[i] =
-                                 ((DoubleComplex *)src_data_ptr)[idx];
-                  break;
-                case C_FLOAT: ((float *)tmp_ptr)[i] =
-                                 ((float *)src_data_ptr)[idx]; 
-                  break;     
-                case C_LONG: ((long *)tmp_ptr)[i] =
-                                 ((long *)src_data_ptr)[idx];     
+            /* move the data block to create a new block */
+            /* linearize the data indices */
+            idx = 0;
+            for (j=0; j<bndim; j++) 
+              idx += (src_idx_ptr[i*bndim+j]) * factor_data[j];
+
+            /* adjust the position
+             * base: starting address of the first element */
+            idx -= base;
+
+            /* move the element to the temporary location */
+            switch(atype) {
+              case C_DBL: ((double*)tmp_ptr)[i] =
+                          ((double*)src_data_ptr)[idx]; 
+                          break;
+              case C_INT:
+                          ((int *)tmp_ptr)[i] = ((int *)src_data_ptr)[idx];
+                          break;
+              case C_DCPL:((DoubleComplex *)tmp_ptr)[i] =
+                          ((DoubleComplex *)src_data_ptr)[idx];
+                          break;
+              case C_FLOAT: ((float *)tmp_ptr)[i] =
+                            ((float *)src_data_ptr)[idx]; 
+                            break;     
+              case C_LONG: ((long *)tmp_ptr)[i] =
+                           ((long *)src_data_ptr)[idx];     
             }
           }
           nga_release_(g_b, los, his);
@@ -496,19 +511,143 @@ void nga_copy_patch(char *trans,
         }
       }
     }
-    GA_POP_NAME;
-    if(local_sync_end) {
-      if (anproc <= bnproc) {
-        ga_pgroup_sync_(&a_grp);
-      } else if (a_grp == ga_pgroup_get_world_() &&
-                b_grp == ga_pgroup_get_world_()) {
-        ga_sync_();
+  } else {
+    Integer offset, last, jtot;
+    for (i=0; i<andim; i++) {
+      ald[i] = ahi[i] - alo[i] + 1;
+    }
+    for (i=0; i<bndim; i++) {
+      bld[i] = bhi[i] - blo[i] + 1;
+    }
+    if (use_put) {
+      /* Array a is block-cyclic distributed */
+      if (num_blocks_a >= 0) {
+        for (i = me_a; i < num_blocks_a; i += anproc) {
+          nga_distribution_(g_a, &i, los, his); 
+          /* make temporory copies of los, his since ngai_patch_intersection
+             destroys original versions */
+          for (j=0; j < andim; j++) {
+            lod[j] = los[j];
+            hid[j] = his[j];
+          }
+          if (ngai_patch_intersect(alo,ahi,los,his,andim)) {
+            nga_access_block_ptr(g_a, &i, &src_data_ptr, ld);
+            offset = 0;
+            last = andim - 1;
+            jtot = 1;
+            for (j=0; j<last; j++) {
+              offset += (los[j]-lod[j])*jtot;
+              jtot = ld[j];
+            }
+            offset += (los[last]-lod[last])*jtot;
+            switch(atype) {
+              case C_DBL:
+                src_data_ptr = (void*)((double*)(src_data_ptr) + offset); 
+                break;
+              case C_INT:
+                src_data_ptr = (void*)((int*)(src_data_ptr) + offset); 
+                break;
+              case C_DCPL:
+                src_data_ptr = (void*)((DoubleComplex*)(src_data_ptr) + offset); 
+                break;
+              case C_FLOAT:
+                src_data_ptr = (void*)((float*)(src_data_ptr) + offset); 
+                break;     
+              case C_LONG:
+                src_data_ptr = (void*)((long*)(src_data_ptr) + offset); 
+                break;
+              default:
+                break;
+            }
+            ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
+            ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
+            nga_put_(g_b, lod, hid, src_data_ptr, ld);
+            nga_release_block_(g_a, &i);
+          }
+        }
       } else {
-        ga_pgroup_sync_(&b_grp);
+        /* Array b is block-cyclic distributed */
+        nga_distribution_(g_a, &me_a, los, his); 
+        if (ngai_patch_intersect(alo,ahi,los,his,andim)) {
+          nga_access_ptr(g_a, los, his, &src_data_ptr, ld); 
+          ngai_dest_indices(andim, los, alo, ald, bndim, lod, blo, bld);
+          ngai_dest_indices(andim, his, alo, ald, bndim, hid, blo, bld);
+          nga_put_(g_b, lod, hid, src_data_ptr, ld);
+          nga_release_(g_a, los, his);
+        }
+      }
+    } else {
+      /* Array b is block-cyclic distributed */
+      if (num_blocks_b >= 0) {
+        for (i = me_b; i < num_blocks_b; i += bnproc) {
+          nga_distribution_(g_b, &i, los, his); 
+          /* make temporory copies of los, his since ngai_patch_intersection
+             destroys original versions */
+          for (j=0; j < andim; j++) {
+            lod[j] = los[j];
+            hid[j] = his[j];
+          }
+          if (ngai_patch_intersect(blo,bhi,los,his,andim)) {
+            nga_access_block_ptr(g_b, &i, &src_data_ptr, ld);
+            offset = 0;
+            last = bndim - 1;
+            jtot = 1;
+            for (j=0; j<last; j++) {
+              offset += (los[j]-lod[j])*jtot;
+              jtot = ld[j];
+            }
+            offset += (los[last]-lod[last])*jtot;
+            switch(atype) {
+              case C_DBL:
+                src_data_ptr = (void*)((double*)(src_data_ptr) + offset); 
+                break;
+              case C_INT:
+                src_data_ptr = (void*)((int*)(src_data_ptr) + offset); 
+                break;
+              case C_DCPL:
+                src_data_ptr = (void*)((DoubleComplex*)(src_data_ptr) + offset); 
+                break;
+              case C_FLOAT:
+                src_data_ptr = (void*)((float*)(src_data_ptr) + offset); 
+                break;     
+              case C_LONG:
+                src_data_ptr = (void*)((long*)(src_data_ptr) + offset); 
+                break;
+              default:
+                break;
+            }
+            ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
+            ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
+            nga_get_(g_a, lod, hid, src_data_ptr, ld);
+            nga_release_block_(g_b, &i);
+          }
+        }
+      } else {
+        /* Array a is block-cyclic distributed */
+        nga_distribution_(g_b, &me_b, los, his); 
+        if (ngai_patch_intersect(blo,bhi,los,his,bndim)) {
+          nga_access_ptr(g_b, los, his, &src_data_ptr, ld); 
+          ngai_dest_indices(bndim, los, blo, bld, andim, lod, alo, ald);
+          ngai_dest_indices(bndim, his, blo, bld, andim, hid, alo, ald);
+          nga_get_(g_a, lod, hid, src_data_ptr, ld);
+          nga_release_(g_b, los, his);
+        }
       }
     }
+  }
+  GA_POP_NAME;
+  if(local_sync_end) {
+    if (anproc <= bnproc) {
+      ga_pgroup_sync_(&a_grp);
+    } else if (a_grp == ga_pgroup_get_world_() &&
+        b_grp == ga_pgroup_get_world_()) {
+      ga_sync_();
+    } else {
+      ga_pgroup_sync_(&b_grp);
+    }
+  }
 #ifdef GA_USE_VAMPIR
-    vampir_end(NGA_COPY_PATCH,__FILE__,__LINE__);
+  vampir_end(NGA_COPY_PATCH,__FILE__,__LINE__);
 #endif    
 }
 
