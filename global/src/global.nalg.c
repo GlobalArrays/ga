@@ -371,6 +371,7 @@ float fsum=0.0;
 void *ptr_a, *ptr_b;
 int alen;
 Integer a_grp, b_grp;
+Integer num_blocks_a, num_blocks_b;
 
 Integer andim, adims[MAXDIM];
 Integer bndim, bdims[MAXDIM];
@@ -383,6 +384,18 @@ Integer bndim, bdims[MAXDIM];
    if (a_grp != b_grp)
      ga_error("Both arrays must be defined on same group",0L);
    me = ga_pgroup_nodeid_(&a_grp);
+
+   /* Check to see if either GA is block cyclic distributed */
+   num_blocks_a = ga_total_blocks_(g_a);
+   num_blocks_b = ga_total_blocks_(g_b);
+   if (num_blocks_a >= 0 || num_blocks_b >= 0) {
+     nga_inquire_internal_(g_a, &type, &andim, adims);
+     nga_inquire_internal_(g_b, &type, &bndim, bdims);
+     ngai_dot_patch(g_a, "n", one_arr, adims, g_b, "n", one_arr, bdims,
+         value);
+     GA_POP_NAME;
+     return;
+   }
 
    if(ga_compare_distr_(g_a,g_b) == FALSE ||
       ga_has_ghosts_(g_a) || ga_has_ghosts_(g_b)) {
