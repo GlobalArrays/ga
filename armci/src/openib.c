@@ -1,4 +1,4 @@
-/* $Id: openib.c,v 1.3 2006-10-12 19:30:53 vinod Exp $
+/* $Id: openib.c,v 1.4 2006-10-12 20:44:30 vinod Exp $
  *
  * File organized as follows
  */
@@ -1925,9 +1925,11 @@ extern void armci_util_wait_int(volatile int *,int,int);
            loop %=100000;
            if(loop==0){
              if(DEBUG_CLN){
+               /*
                printf("%d: client last(%p)=%d flag(%p)=%ld off=%d\n",
                       armci_me,last,*last,flag,*flag,msginfo->datalen);
                fflush(stdout);
+               */
              }
            }
          }
@@ -2040,9 +2042,10 @@ request_header_t *msginfo = (request_header_t *)vbuf->buf;
 /**********************SCATTER GATHER STUFF***********************************/
 static void posts_scatter_desc(sr_descr_t *pend_dscr,int proc,int type)
 {
-    int rc;
-    int cluster = armci_clus_id(proc);
-    struct ibv_recv_wr *scat_dscr;
+int rc;
+int cluster = armci_clus_id(proc);
+struct ibv_recv_wr *scat_dscr;
+struct ibv_recv_wr *bad_wr;
 
     scat_dscr = &pend_dscr->rdescr;
 
@@ -2053,7 +2056,6 @@ static void posts_scatter_desc(sr_descr_t *pend_dscr,int proc,int type)
        fflush(stdout);
     }
 
-    struct ibv_recv_wr *bad_wr;
     if(type == SERV)
         rc = ibv_post_recv((CLN_con + proc)->qp, scat_dscr, &bad_wr);
     else
@@ -2207,8 +2209,8 @@ static void posts_gather_desc(sr_descr_t *pend_dscr,int proc,int type)
 {
     int rc;
     int cluster = armci_clus_id(proc);
-
     struct ibv_send_wr *gat_dscr;
+    struct ibv_send_wr *bad_wr;
 
     gat_dscr = &pend_dscr->sdescr;
     /*armci_vapi_print_dscr_info(gat_dscr,NULL);*/
@@ -2220,7 +2222,6 @@ static void posts_gather_desc(sr_descr_t *pend_dscr,int proc,int type)
 
     rc = 0;
 
-    struct ibv_send_wr *bad_wr;
     if(type == CLN){
        rc = ibv_post_send((SRV_con+cluster)->qp, gat_dscr, &bad_wr);
        armci_check_status(DEBUG_CLN,rc,"client posts a gather sends");
@@ -2250,7 +2251,6 @@ void armci_post_gather(void *src_ptr, int src_stride_arr[], int count[],
     char *src, *src1;
     int num_xmit = 0, num_seg, max_seg, rem_seg,vecind;
     sr_descr_t *pend_dscr;
-
     struct ibv_sge *gat_sglist;
     struct ibv_send_wr *gat_dscr;
 
@@ -2276,7 +2276,6 @@ void armci_post_gather(void *src_ptr, int src_stride_arr[], int count[],
     gat_dscr->send_flags = IBV_SEND_SIGNALED;
     gat_dscr->sg_list = gat_sglist;
     gat_dscr->num_sge = 0;
-    gat_dscr->send_flags = 0;
 
     index[2] = 0; unit[2] = 1;
     if(stride_levels > 1){

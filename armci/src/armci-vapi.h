@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.20 2006-10-12 17:34:47 vinod Exp $ */
+/*$Id: armci-vapi.h,v 1.21 2006-10-12 20:44:30 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -177,8 +177,8 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define VAPI_SGPUT_MIN_COLUMN 720
 #endif
 #ifdef OPENIB
-#define VAPI_SGGET_MIN_COLUMN 20000000
-#define VAPI_SGPUT_MIN_COLUMN 20000000
+#define VAPI_SGGET_MIN_COLUMN 720
+#define VAPI_SGPUT_MIN_COLUMN 720
 #endif
 #define DSCRID_SCATTERCLIENT 70000
 #define DSCRID_SCATTERCLIENT_END 70000+9999
