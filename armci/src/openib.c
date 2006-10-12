@@ -1,4 +1,4 @@
-/* $Id: openib.c,v 1.2 2006-10-12 17:34:47 vinod Exp $
+/* $Id: openib.c,v 1.3 2006-10-12 19:30:53 vinod Exp $
  *
  * File organized as follows
  */
@@ -17,7 +17,6 @@
 #define DEBUG_SERVER 0
 #define DEBUG_CLN 0
 #define TIME_INIT 0
-/* The device name is "InfiniHost0" */
 #  define VAPIDEV_NAME "InfiniHost0"
 #  define INVAL_HNDL 0xFFFFFFFF
 #define RNR_TIMER 12
@@ -26,11 +25,8 @@ u_int32_t armci_max_num_sg_ent;
 u_int32_t armci_max_qp_ous_swr;
 u_int32_t armci_max_qp_ous_rwr;
 
-/* ??? VAPI_qp_num_t -> uint32_t ???
- * it seems there is no analog of  VAPI_qp_prop_t in OpenIB */
 typedef struct {
    struct ibv_qp *qp;
-/* VAPI_qp_prop_t qp_prop;         \*mostly for getting scq num*/
    uint32_t sqpnum;                /*we need to exchng qp nums,arr for that*/
    uint32_t *rqpnum;               /*we need rqp nums,arr for that*/
    uint16_t lid;
@@ -57,23 +53,6 @@ typedef struct {
   int scv;                          /*send completion vector*/
   int rcv;                          /*recv completion vector*/
 } vapi_nic_t;
-#if 0
-typedef struct {
-  VAPI_hca_hndl_t handle;           /*IB nic handle*/
-  VAPI_hca_id_t   hca_id;
-  VAPI_hca_vendor_t vendor;
-  VAPI_hca_cap_t attr;              /*IB nic attributes*/
-  VAPI_pd_hndl_t ptag;              /*protection tag*/
-  VAPI_hca_port_t hca_port;         /*mostly for getting lid*/
-  IB_port_t active_port;
-  VAPI_cq_hndl_t scq;               /*send completion queue*/
-  VAPI_cq_hndl_t rcq;               /*recv completion queue*/
-  IB_lid_t *lid_arr;                /*we need to exchange lids, arr for that*/
-  VAPI_qp_num_t rqpnum;            /*we need to exchng qp nums,arr for that*/
-  EVAPI_compl_handler_hndl_t rcq_eventh;
-  int maxtransfersize;
-} vapi_nic_t;
-#endif
 
 typedef struct {
   armci_vapi_memhndl_t *prem_handle; /*address server to store memory handle*/
@@ -136,9 +115,6 @@ static vapirmw_t rmw[64];
 static int *flag_arr; /* flag indicates its receiving scatter data */
 #define SERV 2
 #define CLN 1
-/*typedef enum TYPES{CLN=1,SERV}; */
-
-
 
 #define MAX_DESCR 2
 typedef struct {
@@ -210,35 +186,6 @@ void armci_check_status(int debug, int rc,char *msg)
     if(rc!=0)armci_die(msg,rc);
 }
 
-/*********************FUNCTIONS TO CHECK VAPI RETURN STATUS********************/
-#if 0
-void armci_check_status(int debug, int rc, char *msg)
-{
-    if(rc != VAPI_OK){
-       char buf[100];
-       if(armci_server_terminating){
-         armci_server_transport_cleanup();
-         /* server got interrupted when clients terminate connections */
-         sleep(1);
-         _exit(0);
-       }
-       printf("%d in check FAILURE %s\n",armci_me,msg);fflush(stdout);
-       assert(strlen(msg)<100-20);
-       sprintf(buf,"ARMCI(vapi):failure:%d:%s code %d %d ",rc,msg,
-               _s,_c);
-#     ifdef  PAUSE_ON_ERROR
-       printf("%d(%d): Error from VIPL: %s - pausing\n",
-              armci_me, getpid(), msg);
-       fflush(stdout);
-       pause();
-#     endif
-       armci_die(buf,(int)rc);
-    }else if(debug){
-       printf("%d:ARMCI(vapi): %s successful\n",armci_me,msg);
-       fflush(stdout);
-    }
-}
-#endif
 void armci_vapi_check_return(int debug, int ret, const char *ss)
 {
 #if 0
@@ -253,6 +200,7 @@ void armci_vapi_check_return(int debug, int ret, const char *ss)
     }
 #endif
 }
+
 void armci_vapi_print_dscr_info(struct ibv_send_wr *sr, struct ibv_recv_wr *rr)
 {
 int i;
@@ -278,7 +226,9 @@ int i;
 
 /*****************END FUNCTIONS TO CHECK VAPI RETURN STATUS********************/
 
-void armci_recv_complete(struct ibv_recv_wr *rcv_dscr, char *from, int numofrecvs) /*needs work*/
+
+/* This has to be modified to read numofrecv wr's at a time*/
+void armci_recv_complete(struct ibv_recv_wr *rcv_dscr, char *from, int numofrecvs) 
 {
 int rc=0;
 struct ibv_wc pdscr1;
@@ -335,6 +285,7 @@ void armci_vapi_set_mark_buf_send_complete(int id)
     mark_buf_send_complete[id]=0;
 }
 
+/* This has to be modified to read numoftimes wr's at a time*/
 void armci_send_complete(struct ibv_send_wr *snd_dscr, char *from,int numoftimes)
 {
 int rc=0;
@@ -451,11 +402,6 @@ sr_descr_t *retdscr,*sdscr_arr;
     }
     else
        retdscr=dscr;
-
-#if 0
-    printf("\n%d:i=%d tag=%d sdscr tag=%d id=%d",armci_me,i,tag,sdscr_arr[i].tag
-                    ,sdscr_arr[i].sdescr.id);
-#endif
 
     ns = retdscr->numofsends;
 
@@ -621,11 +567,8 @@ void armci_wait_for_server()
 }
 
 
-/*
- * create QP == create VI in via
- */
 /* ibv_create_qp does not use separate structure to return properties,
-   seems it is all inside ibv_qp */
+   it is all inside ibv_qp */
 static void armci_create_qp(vapi_nic_t *nic, struct ibv_qp **qp)
 {
     struct ibv_qp_init_attr initattr;
@@ -633,15 +576,6 @@ static void armci_create_qp(vapi_nic_t *nic, struct ibv_qp **qp)
     bzero(&initattr, sizeof(struct ibv_qp_init_attr));
     *qp=NULL;
 
-    if (DEBUG_INIT) {
-#if 0
-       printf("\n%d:max wqe=%d max sglist=%d maxcq=%d\n",armci_me,
-               nic->attr.max_qp_ous_wr,nic->attr.max_num_sg_ent,
-               nic->attr.max_num_ent_cq);
-#endif
-    }
-
-    /* THESE PARAMETERS FIELDS DO NOT EXIST IN ibv_qp_init_attr */
     initattr.cap.max_send_wr = armci_max_qp_ous_rwr;
     initattr.cap.max_recv_wr = armci_max_qp_ous_swr;
     initattr.cap.max_recv_sge = armci_max_num_sg_ent;
@@ -650,18 +584,8 @@ static void armci_create_qp(vapi_nic_t *nic, struct ibv_qp **qp)
     initattr.recv_cq = nic->rcq;
     initattr.qp_type = IBV_QPT_RC;
 
-#if 0
-    initattr.pd_hndl            = nic->ptag; /* passed separately in ibv_create_qp */
-    initattr.rdd_hndl           = VAPI_INVAL_HNDL;
-    initattr.rq_sig_type        = VAPI_SIGNAL_REQ_WR;
-    initattr.sq_sig_type        = VAPI_SIGNAL_REQ_WR;
-#endif
-
     if(DEBUG_INIT){
        printf("\n%d:here in create_qp before call\n",armci_me);
-#if 0
-       printf("\n%d:nic=%p,qp=%p,prop=%p\n",armci_me,nic,qp,qp_prop);
-#endif
     }
 
     *qp = ibv_create_qp(nic->ptag, &initattr);
@@ -830,9 +754,6 @@ void armci_server_alloc_bufs()
     serv_buf =(vapibuf_ext_t*)(serv_buf_arr[i]+clients+1);
     MessageRcvBuffer = serv_buf->buf;
 
-    /* set up server_scatter descriptor memory */
-    /*serv_scatter_arr = (VAPI_rr_desc_t *)malloc(sizeof(VAPI_rr_desc_t)*armci_nproc);*/
-
    flag_arr = (int *)malloc(sizeof(int)*armci_nproc);
    for (i =0; i<armci_nproc; i++) flag_arr[i] = 9999;
 
@@ -958,7 +879,7 @@ void armci_network_client_deregister_memory(ARMCI_MEMHDL_T *mh)
     int rc;
     rc = ibv_dereg_mr(mh->memhndl);
     armci_vapi_check_return(DEBUG_FINALIZE,rc,
-                            "armci_network_client_deregister_memory:deregister_mr");
+                        "armci_network_client_deregister_memory:deregister_mr");
 }
 void armci_network_server_deregister_memory(ARMCI_MEMHDL_T *mh)
 {
@@ -967,7 +888,7 @@ return; /* ??? why ??? */
     printf("\n%d:deregister ptr=%p",armci_me,mh);fflush(stdout);
     rc = ibv_dereg_mr(mh->memhndl);
     armci_vapi_check_return(DEBUG_FINALIZE,rc,
-                            "armci_network_server_deregister_memory:deregister_mr");
+                        "armci_network_server_deregister_memory:deregister_mr");
 }
 #else
 #   define armci_network_client_deregister_memory(mh)           \
@@ -997,8 +918,6 @@ int s, ratio = sizeof(ack_t)/sizeof(int);
     /* Finally save address corresponding to my id on each server */
     for(s=0; s< armci_nclus; s++){
        SRV_ack[s].prem_handle += armci_me;
-       /*printf("%d: my addr on %d = %p\n",armci_me,s,SRV_ack[s].prem_handle);
-         fflush(stdout); */
     }
 
 }
@@ -1038,14 +957,13 @@ int *tmparr;
     bzero(CLN_con,sizeof(armci_connect_t)*armci_nproc);
 
     /*every client creates a qp with every server other than the one on itself*/
-/* ??? VAPI_qp_num_t -> uint32_t ??? */
     sz = armci_nproc*(sizeof(uint32_t)/sizeof(int));
     armci_vapi_max_inline_size = 0;
     for(s=0; s< armci_nclus; s++){
        armci_connect_t *con = SRV_con + s;
        con->rqpnum = (uint32_t *)malloc(sizeof(uint32_t)*armci_nproc);
        bzero(con->rqpnum,sizeof(uint32_t)*armci_nproc);
-       /*if(armci_clus_me != s)*/
+       /*if(armci_clus_me != s) -- commented to allow local server to register*/
        {
          armci_create_qp(SRV_nic,&con->qp);
          con->sqpnum  = con->qp->qp_num;
@@ -1208,13 +1126,15 @@ static void vapi_connect_client()
 
 void armci_client_connect_to_servers()
 {
-    /* initialize buffer managment module */
     extern void armci_util_wait_int(volatile int *,int,int);
     if (TIME_INIT) inittime0 = MPI_Wtime();
+
+    /* initialize buffer managment module */
     _armci_buf_init();
 
     vapi_connect_client();
-    if (armci_me == armci_master) armci_util_wait_int(&armci_vapi_server_ready,1,10);
+    if (armci_me == armci_master) 
+       armci_util_wait_int(&armci_vapi_server_ready,1,10);
     armci_msg_barrier();
     if (DEBUG_CLN && armci_me == armci_master) {
        printf("\n%d:server_ready=%d\n",armci_me,armci_vapi_server_ready);
@@ -1229,10 +1149,6 @@ void armci_init_vapibuf_recv(struct ibv_recv_wr *rd, struct ibv_sge *sg_entry,
                              char *buf, int len, armci_vapi_memhndl_t *mhandle)
 {
      memset(rd,0,sizeof(struct ibv_recv_wr));
-#if 0
-     rd->opcode = VAPI_RECEIVE;
-     rd->comp_type = VAPI_SIGNALED;
-#endif
      rd->num_sge    = 1;
      rd->sg_list    = sg_entry;
      rd->wr_id      = 0;
@@ -1263,6 +1179,7 @@ static void armci_init_vbuf_srdma(struct ibv_send_wr *sd, struct ibv_sge *sg_ent
                                   armci_vapi_memhndl_t *lhandle,
                                   armci_vapi_memhndl_t *rhandle)
 {
+     /* NOTE: sd->wr is a union, sr->wr.ud might conflict with sr->wr.rdma */
      sd->opcode = IBV_WR_RDMA_WRITE;
      sd->send_flags = IBV_SEND_SIGNALED;
      sd->num_sge                    = 1;
@@ -1274,7 +1191,6 @@ static void armci_init_vbuf_srdma(struct ibv_send_wr *sd, struct ibv_sge *sg_ent
      if (lhandle) sg_entry->lkey    = lhandle->lkey;
      sg_entry->addr                 = (uint64_t)lbuf;
      sg_entry->length               = len;
-     /* sd->wr is a union, sr->wr.ud might conflict with sr->wr.rdma */
 }
 
 
@@ -1351,17 +1267,6 @@ void armci_server_initial_connection()
 
     armci_vapi_server_stage2 = 1;
 
-#if 0
-    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
-    qp_attr.qp_state = VAPI_INIT;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
-    qp_attr.pkey_ix  = DEFAULT_PKEY_IX;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PKEY_IX);
-    qp_attr.port     = CLN_nic->active_port;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_PORT);
-    qp_attr.remote_atomic_flags = VAPI_EN_REM_WRITE | VAPI_EN_REM_READ;
-    QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_REMOTE_ATOMIC_FLAGS);
-#else
     qp_attr_mask = IBV_QP_STATE
                  | IBV_QP_PKEY_INDEX
                  | IBV_QP_PORT
@@ -1371,7 +1276,7 @@ void armci_server_initial_connection()
     qp_attr.pkey_index      = DEFAULT_PKEY_IX;
     qp_attr.port_num        = CLN_nic->active_port;
     qp_attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ;
-#endif
+
     for (c = 0; c < armci_nproc; c++) {
        armci_connect_t *con = CLN_con + c;
        rc = ibv_modify_qp(con->qp, &qp_attr, qp_attr_mask);
@@ -1447,7 +1352,7 @@ void armci_server_initial_connection()
        armci_init_vapibuf_recv(&vbuf->dscr, &vbuf->sg_entry, vbuf->buf,
                                VBUF_DLEN, &serv_memhandle);
        /* we use index of the buffer to identify the buffer, this index is
-        * returned with a call to VAPI_poll_cq inside the VAPI_wc_desc_t */
+        * returned with a call to ibv_poll_cq inside the ibv_wr */
        vbuf->dscr.wr_id = c + armci_nproc;
        if (DEBUG_SERVER) {
          printf("\n%d(s):posted rr with lkey=%d",armci_me,vbuf->sg_entry.lkey);
@@ -1458,12 +1363,6 @@ void armci_server_initial_connection()
        armci_check_status(DEBUG_SERVER, rc,"server post recv vbuf");
     }
 
-    /* OpenIB doesn't have a corresponding function -- not required???
-    rc = EVAPI_set_comp_eventh(CLN_nic->handle,CLN_nic->rcq,
-                               EVAPI_POLL_CQ_UNBLOCK_HANDLER,NULL,
-                               &(CLN_nic->rcq_eventh));
-    armci_check_status(DEBUG_SERVER, rc,"EVAPI_set_comp_eventh");
-    */
     if (TIME_INIT) printf("\n%d:post time for server_initial_conn is %f",
                           armci_me, MPI_Wtime() - inittime4);
 
@@ -1504,33 +1403,6 @@ static void armci_finalize_nic(vapi_nic_t *nic)
     ret = ibv_close_device(nic->handle);
     armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:release_hca");
 
-/* several functions are missing in OpenIB */
-#if 0
-VAPI_ret_t ret;
-VAPI_cqe_num_t ns,nr;
-VAPI_wc_desc_t com_desc_p;
-int i;
-
-    ret = VAPI_query_cq(nic->handle,nic->scq,&ns);
-    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:query_scq");
-    /*printf("\n%d:this many scq %d",armci_me,ns);*/
-    ret = EVAPI_peek_cq(nic->handle,nic->scq,1);
-    if(ret==VAPI_OK)printf("\n%d:finalize nic scq still has stuff in it",armci_me);
-
-    ret = VAPI_destroy_cq(nic->handle, nic->scq);
-    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:destroy_scq");
-
-    ret = VAPI_query_cq(nic->handle,nic->rcq,&nr);
-    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:query_rcq");
-    /*printf("\n%d:this many rcq %d",armci_me,nr);*/
-    ret = EVAPI_peek_cq(nic->handle,nic->rcq,1);
-    if(ret==VAPI_OK)printf("\n%d:finalize nic rcq still has stuff in it",armci_me);
-
-    ret = VAPI_destroy_cq(nic->handle, nic->rcq);
-    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:destroy_rcq");
-    ret = EVAPI_release_hca_hndl(nic->handle);
-    armci_vapi_check_return(DEBUG_FINALIZE,ret,"armci_finalize_nic:release_hca");
-#endif
 }
 
 
@@ -1561,12 +1433,6 @@ void armci_server_transport_cleanup()
         }
         free(CLN_con);
     }
-#if 0
-    /* no corresponding OpenIB call */
-    rc = EVAPI_clear_comp_eventh(CLN_nic->handle,(CLN_nic->rcq_eventh));
-    armci_vapi_check_return(DEBUG_FINALIZE,rc,
-                    "armci_server_transport_cleanup:clear_eventh");
-#endif
     armci_finalize_nic(CLN_nic);
 }
 
@@ -1621,35 +1487,35 @@ void armci_call_data_server()
        /*we just snoop to see if we have something */
        rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
        if (server_can_poll) {
-           while (rc == 0) {
-               rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
-               if (armci_server_terminating) {
-                   /* server got interrupted when clients terminate connections */
-                   armci_server_transport_cleanup();
-                   sleep(1);
-                   _exit(0);
-               }
+         while (rc == 0) {
+           rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
+           if (armci_server_terminating) {
+             /* server got interrupted when clients terminate connections */
+             armci_server_transport_cleanup();
+             sleep(1);
+             _exit(0);
            }
+         }
        } else {
-           while (rc == 0) {
-               rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
-                   /* no corresponding call, usinf ibv_poll_cq
-                    * SHOULD probably use comp channel and ibv_req_notify_cq
-               rc = EVAPI_poll_cq_block(CLN_nic->handle, CLN_nic->rcq, 0, pdscr); */
-               if (armci_server_terminating) {
-                   /* server got interrupted when clients terminate connections */
-                   armci_server_transport_cleanup();
-                   sleep(1);
-                   _exit(0);
-               }
+         while (rc == 0) {
+           rc = ibv_poll_cq(CLN_nic->rcq, 1, pdscr);
+           /* no corresponding call, usinf ibv_poll_cq
+           * SHOULD probably use comp channel and ibv_req_notify_cq
+           rc = EVAPI_poll_cq_block(CLN_nic->handle, CLN_nic->rcq, 0, pdscr); */
+           if (armci_server_terminating) {
+             /* server got interrupted when clients terminate connections */
+             armci_server_transport_cleanup();
+             sleep(1);
+             _exit(0);
            }
+         }
        }
 
        if(DEBUG_SERVER){
-               printf("\n%d:pdscr=%p %p %d %d %d %d\n",armci_me,pdscr,&pdscr1,
-                               pdscr->status,pdscr->opcode,pdscr->vendor_err,
-                               pdscr->src_qp);
-               fflush(stdout);
+         printf("\n%d:pdscr=%p %p %d %d %d %d\n",armci_me,pdscr,&pdscr1,
+                         pdscr->status,pdscr->opcode,pdscr->vendor_err,
+                         pdscr->src_qp);
+         fflush(stdout);
        }
        if(rc<0)armci_check_status(DEBUG_SERVER, rc,"server poll/block");
        /*we can figure out which buffer we got data info from the wc_desc_t id
@@ -1661,7 +1527,7 @@ void armci_call_data_server()
           fflush(stdout);
        }
 
-       if (pdscr->wr_id >= DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END) {
+       if (pdscr->wr_id >= DSCRID_SCATGAT && pdscr->wr_id < DSCRID_SCATGAT_END){
          sr_descr_t *rdscr_arr;
          if (DEBUG_SERVER) {
              printf("%d(s) : received DATA id = %ld, length = %d\n",
@@ -1681,7 +1547,8 @@ void armci_call_data_server()
 
        if (DEBUG_SERVER) {
           printf("%d(s) : request id is %ld operation is %d, length is %d %d\n",
-           armci_me,pdscr->wr_id,msginfo->operation,pdscr->byte_len,msginfo->from);
+                          armci_me,pdscr->wr_id,msginfo->operation,
+                          pdscr->byte_len,msginfo->from);
           fflush(stdout);
        }
 
@@ -1904,7 +1771,6 @@ int armci_send_req_msg(int proc, void *buf, int bytes)
     request_header_t *msginfo = (request_header_t *)buf;
     struct ibv_send_wr *snd_dscr;
     struct ibv_sge *ssg_lst;
-//double t0,t1;
 
     snd_dscr = BUF_TO_SDESCR((char *)buf);
     ssg_lst  = BUF_TO_SSGLST((char *)buf);
@@ -1932,10 +1798,7 @@ int armci_send_req_msg(int proc, void *buf, int bytes)
                             bytes, &client_memhandle);
 
 
-    //t0 = MPI_Wtime();
     armci_vapi_post_send(1,cluster,snd_dscr,"send_req_msg:post_send");
-    //t1 = MPI_Wtime();
-    //printf("%d:posting took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout);
 
     if(DEBUG_CLN){
        printf("%d:client sent REQ=%d %d bytes serv=%d qp=%ld id =%ld lkey=%d\n",
@@ -1988,10 +1851,10 @@ void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
                              void** cptr,int nbtag,ARMCI_MEMHDL_T *lochdl,
                              ARMCI_MEMHDL_T *remhdl)
 {
-    int rc = 0;
-    sr_descr_t *dirdscr;
-    int clus = armci_clus_id(p);
-    //double t0,t1;
+int rc = 0;
+sr_descr_t *dirdscr;
+int clus = armci_clus_id(p);
+struct ibv_send_wr *bad_wr;
     /*ID for the desr that comes from get_next_descr is already set*/
     dirdscr = armci_vapi_get_next_sdescr(nbtag,0);
     if(nbtag)*cptr = dirdscr;
@@ -2003,12 +1866,8 @@ void armci_client_direct_get(int p, void *src_buf, void *dst_buf, int len,
 
     armci_init_vbuf_rrdma(&dirdscr->sdescr,dirdscr->sg_entry,dst_buf,src_buf,
                           len,lochdl,remhdl);
-    //t0 = MPI_Wtime();
-    struct ibv_send_wr *bad_wr;
     rc = ibv_post_send((SRV_con+clus)->qp, &(dirdscr->sdescr), &bad_wr);
     armci_check_status(DEBUG_CLN, rc,"armci_client_get_direct");
-    //t1 = MPI_Wtime();
-    //printf("%d:posting took %lf\n",armci_me,1e6*(t1-t0));fflush(stdout);
     if(!nbtag){
        armci_send_complete(&(dirdscr->sdescr),"armci_client_direct_get",1);
     }
@@ -2597,8 +2456,11 @@ int loop=0;
     }
 }
 
-/*************************END OF FILE UNUSED CODE BELOW********************/
 
+
+
+
+/***********************END OF USED PART: UNUSED CODE BELOW********************/
 int armci_pin_memory(void *ptr, int stride_arr[], int count[], int strides)
 {
     printf("\n%d:armci_pin_memory not implemented",armci_me);fflush(stdout);
