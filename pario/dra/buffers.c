@@ -48,6 +48,7 @@ void buffer_init(buf_context_t *ctxt, int nbuf, int buf_size, void (*fptr)(char*
   /* get buffer memory */
   for (i = 0; i < nbuf; i++) {
     ctxt->buf[i].buffer = (char*) malloc((buf_size + ALIGN-1) * sizeof(double));
+    
     if (ctxt->buf[i].buffer == NULL) {
       printf("Could not allocate memory for buffers!\n");
       return;
@@ -55,8 +56,9 @@ void buffer_init(buf_context_t *ctxt, int nbuf, int buf_size, void (*fptr)(char*
     bzero(ctxt->buf[i].buffer, sizeof(ctxt->buf[i].buffer));
     /* align buffer address */
     diff = ((long)(ctxt->buf[i].buffer)) % (sizeof(double)*ALIGN);
+    ctxt->buf[i].align_off = (int) (sizeof(double)*ALIGN - diff);
     if(diff)
-      ctxt->buf[i].buffer += (sizeof(double)*ALIGN - diff);
+      ctxt->buf[i].buffer += ctxt->buf[i].align_off;
   }
 #endif
   for (i = 0; i < nbuf; i++) {
@@ -164,12 +166,13 @@ int get_bufs_of_call_id(buf_context_t *ctxt, int call_id, int *n_buf, char *bufs
 void buf_terminate(buf_context_t *ctxt) {
 #ifndef STATBUF
   int i;
-  /* printf("In loop to free ctxt buffers\n"); */
-  for (i = 0; i < ctxt->nbuf; i++)
+  for (i = 0; i < ctxt->nbuf; i++) {
+    ctxt->buf[i].buffer -= ctxt->buf[i].align_off;
     free(ctxt->buf[i].buffer);
+  }
+  
 #endif
 
-  /* printf("Freeing ctxt\n"); */
   free(ctxt->buf);
   ctxt_count--; /* this context can be reallocated */
 }

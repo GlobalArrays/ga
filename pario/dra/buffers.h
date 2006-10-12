@@ -26,6 +26,7 @@
 /* internal buffer structure */
 typedef struct {
   char *buffer;
+  int align_off; /* caching alignment offset */
   int buf_hdl; /* buffer handle, basically index of the buffer in the ctxt*/
   int group_id; /* id to identify which callback function to use to release buffer  */
   int call_id; /* id to be used to complete an entire  call */
