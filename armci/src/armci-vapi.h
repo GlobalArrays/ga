@@ -1,4 +1,4 @@
-/*$Id: armci-vapi.h,v 1.19 2006-09-23 17:58:15 vinod Exp $ */
+/*$Id: armci-vapi.h,v 1.20 2006-10-12 17:34:47 vinod Exp $ */
 #ifndef _VAPI_H
 #define _VAPI_H
 
@@ -70,13 +70,13 @@ typedef struct {
 #ifdef OPENIB
         uint32_t rkey;
         uint32_t lkey;
-        ibv_mr memhndl;
+        struct ibv_mr *memhndl;
 #endif
 }armci_vapi_memhndl_t;
 
 extern char * armci_vapi_client_mem_alloc(int);
 
-typedef struct { 
+typedef struct {
         int tag;
 	int issg;
 #ifdef MELLANOX
@@ -85,16 +85,16 @@ typedef struct {
         VAPI_sg_lst_entry_t sg_entry[56]; /*ff:this has to be malloced*/
 #endif
 #ifdef OPENIB
-        ibv_send_wr sdescr;
-        ibv_recv_wr rdescr;
-        ibv_sge sg_entry[56]; /*ff:this has to be malloced*/
+        struct ibv_send_wr sdescr;
+        struct ibv_recv_wr rdescr;
+        struct ibv_sge sg_entry[56]; /*ff:this has to be malloced*/
 #endif
         int numofsends;
         int numofrecvs;
 	int myindex;
 } sr_descr_t;
 
-typedef struct { 
+typedef struct {
         int tag;
 	int issg;
 #ifdef MELLANOX
@@ -102,11 +102,11 @@ typedef struct {
         VAPI_sg_lst_entry_t sg_entry[56]; /*ff:this has to be malloced*/
 #endif
 #ifdef OPENIB
-        ibv_recv_wr descr;
-        ibv_send_wr sg_entry[56]; /*ff:this has to be malloced*/
+        struct ibv_recv_wr descr;
+        struct ibv_send_wr sg_entry[56]; /*ff:this has to be malloced*/
 #endif
         int numofrecvs;
-	int myindex;
+	    int myindex;
 } rdescr_t;
 
 void armci_client_nbcall_complete(sr_descr_t *,int,int);
@@ -144,7 +144,7 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;memset(&((_field).sdscr),0,sizeof(VAPI_sr_desc_t));(_field).sdscr.id=avail+1;armci_vapi_set_mark_buf_send_complete(avail+1)
 #endif
 #ifdef OPENIB
-#define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;memset(&((_field).sdscr),0,sizeof(ibv_send_wr));(_field).sdscr.id=avail+1;armci_vapi_set_mark_buf_send_complete(avail+1)
+#define INIT_SEND_BUF(_field,_snd,_rcv) _snd=1;_rcv=1;memset(&((_field).sdscr),0,sizeof(struct ibv_send_wr));(_field).sdscr.wr_id=avail+1;armci_vapi_set_mark_buf_send_complete(avail+1)
 #endif
 #define BUF_ALLOCATE armci_vapi_client_mem_alloc
 
@@ -172,8 +172,14 @@ void armci_vapi_set_mark_buf_send_complete(int);
 #define ARMCI_VAPI_COMPLETE 1088451863
 #define ARMCI_POST_SCATTER 1000000001
 #define ARMCI_VAPI_CLEAR 0
+#ifdef MELLANOX
 #define VAPI_SGGET_MIN_COLUMN 720
 #define VAPI_SGPUT_MIN_COLUMN 720
+#endif
+#ifdef OPENIB
+#define VAPI_SGGET_MIN_COLUMN 20000000
+#define VAPI_SGPUT_MIN_COLUMN 20000000
+#endif
 #define DSCRID_SCATTERCLIENT 70000
 #define DSCRID_SCATTERCLIENT_END 70000+9999
 

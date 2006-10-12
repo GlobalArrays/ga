@@ -1,4 +1,4 @@
-/* $Id: shmem.c,v 1.87 2006-04-12 22:59:28 manoj Exp $ */
+/* $Id: shmem.c,v 1.88 2006-10-12 17:34:47 vinod Exp $ */
 /* System V shared memory allocation and managment
  *
  * Interface:
@@ -81,7 +81,7 @@ static long max_alloc_munmap=MAX_ALLOC_MUNMAP;
  */
 
 /* under Myrinet GM, we cannot fork */
-#if defined(GM) || defined(MELLANOX)
+#if defined(GM) || defined(VAPI)
 #   define SHMMAX_SEARCH_NO_FORK 
 #endif
 #if defined(LAPI) || defined(AIX) || defined(SHMMAX_SEARCH_NO_FORK)

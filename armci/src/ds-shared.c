@@ -591,7 +591,7 @@ void armci_data_server(void *mesg)
           if(msginfo->format ==VECTOR)
               armci_server_vector(msginfo, descr, buffer, buflen);
           else if(msginfo->format ==STRIDED){
-#if defined(VAPI) && defined(MELLANOX) /* buffer bypass protocol */
+#if defined(VAPI) /* buffer bypass protocol */
               if(msginfo->pinned == 1){
                   int armci_post_gather(void *, int *, int *,int, 
                                   armci_vapi_memhndl_t *,int,int,int,void *);

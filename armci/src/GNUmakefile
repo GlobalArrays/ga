@@ -1,4 +1,4 @@
-#$Id: GNUmakefile,v 1.102 2006-09-23 17:58:15 vinod Exp $
+#$Id: GNUmakefile,v 1.103 2006-10-12 17:34:47 vinod Exp $
          FOPT = -O
          COPT = -O
 
@@ -103,7 +103,7 @@ ifeq ($(ARMCI_NETWORK),PORTALS)
 endif
 
 ifeq ($(ARMCI_NETWORK),OPENIB)
-  OBJ += spawn.o  request.o vapi.o ds-shared.o buffers.o async.o
+  OBJ += spawn.o  request.o ds-shared.o buffers.o async.o openib.o
   OBJ += regions.o gpc.o
   LIB_DEFINES += -DPTHREADS -DDATA_SERVER -DSERVER_THREAD -D_REENTRANT -DOPENIB -DVAPI -DALLOW_PIN
   EXTRA_LIBS += -lpthread
