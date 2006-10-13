@@ -1,4 +1,4 @@
-/*$Id: base.h,v 1.38 2006-09-14 20:08:43 d3g293 Exp $ */
+/*$Id: base.h,v 1.39 2006-10-13 19:51:10 d3g293 Exp $ */
 extern int _max_global_array;
 extern Integer *_ga_map;
 extern Integer GAme, GAnproc;
@@ -171,7 +171,7 @@ static char err_string[ ERR_STR_LEN]; /* string for extended error reporting */
   int _ndim = GA[ga_handle].ndim;                                              \
   int _i;                                                                      \
   nblock = index[0];                                                           \
-  for (_i==1; _i<_ndim; _i++) {                                                \
+  for (_i=1; _i<_ndim; _i++) {                                                \
     nblock  = nblock*GA[ga_handle].num_blocks[_i-1]+index[_i];                 \
   }                                                                            \
 }
